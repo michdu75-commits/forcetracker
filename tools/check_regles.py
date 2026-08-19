@@ -112,12 +112,37 @@ LIGNES_MINI = 15           # …ET au moins 15 lignes de fond (les deux, pas l'u
 # Fichiers RÉGÉNÉRÉS depuis le code : les réécrire EST leur mode de fonctionnement.
 GENERES = {"docs/INVENTAIRE.md", "docs/FIGURINES.html"}
 
+# ── 🚪 LA PORTE ÉTROITE : une RÉÉCRITURE VOLONTAIRE (19/08/2026) ─────────────
+# LE CAS QUI L'A CRÉÉE. Michel demande de réécrire un document en changeant l'ordre
+# des sections (« je voulais que tu parles de la 2ᵉ ia et ce que l'on fait
+# actuellement »). Le contenu est CONSERVÉ, mais les lignes sont re-coupées — or le
+# contrôle compare des lignes À L'IDENTIQUE. Verdict : « 78 % perdus ». C'est un
+# FAUX POSITIF, et un garde-fou qui crie sur un geste légitime finit désactivé (R19).
+#
+# ⚠️ MAIS ON N'AFFAIBLIT PAS LE SEUIL — ce contrôle existe parce qu'un script a
+# ÉCRASÉ l'archive le 04/08 : 297 entrées perdues, découvertes 2 jours plus tard PAR
+# HASARD. Baisser le seuil, ce serait rouvrir exactement cette porte-là.
+#
+# 👉 La porte est donc ÉTROITE et elle LAISSE UNE TRACE : le document doit porter
+# lui-même une ligne datée qui dit ce qui a été réécrit et pourquoi (R30 — un geste
+# volontaire s'écrit, sinon il redevient un bug ; R27 — le pourquoi vit à côté de ce
+# qu'il protège). Format attendu, en commentaire HTML, dans le document :
+#
+#     <!-- RÉÉCRITURE VOLONTAIRE 2026-08-19 : la raison, en une phrase -->
+#
+# ⚠️ Et ça ne rend PAS le contrôle muet : il affiche l'avertissement et la raison.
+# On voit passer la réécriture, on ne la découvre pas deux jours après.
+MARQUE_REECRITURE = re.compile(
+    r"<!--\s*R[ÉE]{1}[ÉE]?CRITURE\s+VOLONTAIRE\s+(\d{4}-\d{2}-\d{2})\s*:\s*(.{30,})?-->",
+    re.IGNORECASE)
+
 def _fond(t):
     """Les lignes qui portent du sens — on ignore le décor (vides, ---, titres seuls)."""
     return {l.strip() for l in t.split("\n")
             if len(l.strip()) > 40 and not set(l.strip()) <= set("-=_#>| ")}
 
 ecrases = []
+reecrits = []   # réécritures VOLONTAIRES, déclarées dans le document (voir la porte étroite)
 if git_ok:
     try:
         suivis = [f for f in _git("ls-files", "*.md").split("\n")
@@ -137,9 +162,20 @@ if git_ok:
             apres = _fond(p.read_text(encoding="utf-8", errors="replace")) if p.exists() else set()
             disparues = avant - apres - partout   # ni ici, ni ailleurs → vraiment perdues
             if len(disparues) >= LIGNES_MINI and len(disparues) / len(avant) >= PART_MINI:
-                ecrases.append((f, len(disparues), len(avant)))
+                brut = p.read_text(encoding="utf-8", errors="replace") if p.exists() else ""
+                m = MARQUE_REECRITURE.search(brut)
+                if m:
+                    reecrits.append((f, len(disparues), len(avant),
+                                     m.group(1), (m.group(2) or "").strip()))
+                else:
+                    ecrases.append((f, len(disparues), len(avant)))
     except Exception:
         pass                                   # jamais bloquer sur un pépin d'outillage
+
+# ⚠️ Une réécriture déclarée est SIGNALÉE, jamais silencieuse : on doit la voir passer.
+for f, n, tot, quand, pourquoi in reecrits:
+    print(f"🚪 {f} : réécriture VOLONTAIRE déclarée le {quand} "
+          f"({100*n/tot:.0f} % des lignes re-rédigées) — {pourquoi}")
 
 for f, n, tot in ecrases:
     erreurs.append(
