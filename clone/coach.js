@@ -2436,7 +2436,7 @@ TA MÉTHODE DE COACH (comment un vrai coach physique construit et coache — c'e
 - ⭐ LA PERSONNE ET SON OBJECTIF PASSENT AVANT LE PHYSIQUE « IDÉAL ». Tu ne corriges un point faible (ex. « rattrape ton haut du corps ») QUE si ça sert ce que LA PERSONNE veut. Si quelqu'un travaille clairement une zone par CHOIX (ex. le bas du corps pour la course, un sport, une préférence), ne lui impose PAS de « rééquilibrer » — c'est son corps et son objectif. ⚠️ Si tu ne connais pas encore son objectif ou ses priorités (profil/ADN pas remplis), NE PRÉSUME JAMAIS ce qu'elle veut : reflète ce que tu OBSERVES et DEMANDE-lui (« tu mets beaucoup l'accent sur le bas du corps — c'est un choix, ou tu veux qu'on équilibre ? »). Observer et comprendre AVANT de conseiller — jamais dire à quelqu'un qui il « doit » devenir.
 - 🚫 N'INVENTE JAMAIS de faits sur la personne. Tout ce que tu affirmes sur elle (blessure, antécédent médical, objectif, préférence, historique) doit venir EXPLICITEMENT des données plus bas (PROFIL ATHLÈTE et ce qui suit). Si une info n'y est PAS, tu ne la supposes pas comme un fait : tu formules une HYPOTHÈSE prudente OU tu poses une QUESTION (« as-tu déjà eu des soucis aux genoux ? »), jamais une affirmation (« vu tes genoux qui ont un historique… »). Une info absente = une question, jamais un fait. Mieux vaut demander que supposer.
 - ⛔ N'AJOUTE JAMAIS un DÉTAIL qu'elle n'a pas donné, MÊME à une info qu'elle vient de te dire. Si elle dit « j'ai eu un accident de moto », tu sais UNIQUEMENT « accident de moto » — ni la date (« il y a quelques années »), ni la gravité, ni la cause, ni les conséquences. Un détail manquant se DEMANDE ou s'omet ; il ne se remplit JAMAIS tout seul.
-- ⛔ Ne FABRIQUE JAMAIS de source. Pour une info qu'elle vient de te donner À L'INSTANT, ne dis pas « je vois ça dans tes antécédents » ni « d'après ce que je sais » — tu ne le savais pas, elle vient de te l'apprendre. Accueille-la comme NOUVELLE. Ne t'attribue jamais une connaissance que tu n'as pas.
+- ⛔ Ne FABRIQUE JAMAIS de source — NI INTERNE, NI EXTÉRIEURE. ① Une info qu'elle vient de te donner À L'INSTANT : ne dis pas « je vois ça dans tes antécédents » ni « d'après ce que je sais » — tu ne le savais pas, accueille-la comme NOUVELLE. ② Une source EXTÉRIEURE : n'invente ni étude, ni organisme (ANSES, OMS…), ni chiffre officiel, ni lien. ⚠️ TU N'AS AUCUN ACCÈS À INTERNET, tu ne peux rien vérifier — sans source sûre, parle en ton nom (« en général… ») et dis que ça mérite vérification. Surtout en SANTÉ et NUTRITION.
 - ⛔⛔ NE DONNE JAMAIS RAISON POUR FAIRE PLAISIR — VÉRIFIE D'ABORD. Si elle te reproche quelque chose que TU as proposé (ordre, charge, repos, choix d'exercice), RELIS-le plus bas dans ce contexte AVANT de répondre. Elle a raison → tu corriges. Ce que tu avais proposé correspond DÉJÀ à ce qu'elle décrit comme correct → tu le DIS calmement, sans t'excuser, en citant ce que tu vois. Tu ne peux pas vérifier → tu le dis, tu ne tranches pas. S'excuser d'une erreur que tu n'as pas faite est une information FAUSSE, pas de la politesse.
 - 🧭 PERMISSIONS BORNÉES — avant de SUPPOSER quoi que ce soit, réponds à DEUX questions : « qu'ai-je le droit de supposer ? » ET « dans quel DOMAINE ? ». Une permission de supposer n'est JAMAIS globale, elle est TOUJOURS limitée à un domaine précis. Trois niveaux :
   • LES FAITS (sur la personne, sa santé, son histoire, ses préférences) → AUCUNE hypothèse présentée comme un fait : tu décris uniquement ce qui est OBSERVÉ ou DÉJÀ CONNU (les données plus bas).
@@ -3013,6 +3013,25 @@ function _gardienSortie(text){
   const _promesse = /\b(je (le |te le |ça |cela )?(retiens|note)\b|je m'en (souviendrai|rappellerai)|je (le |m'en )?garde en (tête|mémoire)|(la )?prochaine fois j'y penserai)/i;
   if (_promesse.test(clean) && !/"retiens"/.test(raw)) {
     flags.push({ code:'promesse_vide', label:'promesse de mémoire sans rien enregistrer' });
+  }
+  /* 5) SOURCE EXTÉRIEURE FABRIQUÉE (19/08/2026) — question de Michel en relisant le prompt :
+     *« je n'ai pas vu de protection pour éviter à Milo d'aller sur internet »*.
+     ⭐ VÉRIFIÉ AVANT DE RÉPONDRE : Milo ne PEUT PAS y aller — l'appel API ne porte AUCUN champ
+     `tools`, aucune recherche web (worker.js). Ce n'est pas une consigne, c'est structurel, et
+     c'est la bonne façon de le garantir (R7 : ce qui doit être sûr ne passe pas par le prompt).
+     ⚠️ MAIS LE RISQUE VOISIN EST RÉEL ET N'ÉTAIT PAS COUVERT : il ne peut pas y ALLER, il peut
+     très bien PRÉTENDRE l'avoir fait — inventer une étude, un organisme, un lien. Et la règle du
+     prompt qui s'appelait « ne fabrique jamais de source » ne parlait que des sources INTERNES
+     (« je vois ça dans tes antécédents ») : elle a été élargie le même jour. C'est `BUGS.md`
+     famille 15 — la règle juste, définie trop étroit.
+     👉 CE QU'UN CONTRÔLE DÉTERMINISTE PEUT ATTRAPER : la FORME, jamais la vérité. Un LIEN est le
+     cas propre — Milo n'ayant aucun accès, il ne peut l'avoir vérifié, quelle qu'en soit l'origine.
+     ⛔ ON NE TENTE PAS de repérer « selon l'ANSES » : l'app CITE de vraies sources (Open Food
+     Facts, Nutri-Score) et Milo a le droit de les nommer. Un motif là-dessus produirait des faux
+     positifs sur des phrases justes — et un contrôle qui crie pour rien finit désactivé (R19).
+     ⚠️ SIGNALÉ, PAS RÉÉCRIT, comme les trois au-dessus : on ne charcute pas une phrase. */
+  if (/\bhttps?:\/\/|\bwww\.[a-z0-9-]+\.[a-z]{2,}|\b[a-z0-9-]+\.(?:com|org|net|fr|gov|edu)\/\S/i.test(clean)) {
+    flags.push({ code:'source_fabriquee', label:'lien cité alors que Milo n’a aucun accès internet' });
   }
   return { text: clean, flags: flags };
 }

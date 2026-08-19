@@ -397,7 +397,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v917`** (prochaine : `ft-v918`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v918`** (prochaine : `ft-v919`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -407,6 +407,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v918 — 🔗 MILO NE PEUT PAS ALLER SUR INTERNET, MAIS IL POUVAIT PRÉTENDRE L'AVOIR FAIT** — Michel, en relisant le prompt règle par règle : *« je n'ai pas vu de protection pour éviter à Milo d'aller sur internet »*.
+
+**⭐ VÉRIFIÉ AVANT DE RÉPONDRE, PAS SUPPOSÉ** : il ne **peut pas** y aller. L'appel API ne porte **aucun champ `tools`**, aucune recherche web (`worker.js` — 0 occurrence). Le modèle reçoit du texte et rend du texte. Ce n'est pas une consigne qu'on espère voir respectée, c'est **structurel** — et c'est exactement la bonne façon de le garantir (**R7** : ce qui doit être sûr ne passe pas par le prompt).
+
+**⚠️ MAIS LE RISQUE VOISIN N'ÉTAIT PAS COUVERT, ET IL EST RÉEL.** Il ne peut pas y *aller* ; il peut très bien **inventer une étude, un organisme, un chiffre « officiel », un lien**. Or la règle qui s'appelle pourtant *« ne FABRIQUE jamais de source »* ne parlait, en la lisant en entier, **que des sources INTERNES** : *« ne dis pas je vois ça dans tes antécédents »*. Rien sur l'extérieur. **C'est `BUGS.md` famille 15 dans sa forme exacte** — la règle juste, définie trop étroit — et c'est d'autant plus sensible que Milo parle de **santé et de nutrition**, où un « selon l'ANSES » inventé coûterait la confiance d'un coup.
+
+**👉 DEUX ÉTAGES, ET ILS NE FONT PAS LE MÊME TRAVAIL.** Le **prompt EMPÊCHE** : la règle couvre désormais l'extérieur, avec la raison écrite (*« tu n'as AUCUN accès à internet, tu ne peux rien vérifier — sans source sûre, parle en ton nom et dis que ça mérite vérification »*). Le **Gardien de sortie ATTRAPE** ce qui est détectable par motif : un **lien**. C'est le cas propre — Milo n'ayant aucun accès, il ne peut l'avoir vérifié, quelle qu'en soit l'origine.
+
+**⛔ ET ON NE TENTE PAS DE REPÉRER « SELON L'ANSES », C'EST DÉLIBÉRÉ** : l'app **cite de vraies sources** (Open Food Facts, Nutri-Score) et Milo a parfaitement le droit de les nommer. Un motif là-dessus crierait sur des phrases justes — et *un garde-fou qui crie pour rien finit désactivé* (**R19**). Un témoin vérifie explicitement ce faux positif : c'est le plus important des quatre.
+
+**⭐ RIEN DE NEUF CONSTRUIT (R13)** : le Gardien de la Constitution — Étage 1 existait déjà avec 4 contrôles (bloc technique, interrogatoire, diagnostic, promesse de mémoire vide). Il en a **5**. Et comme les autres, il **SIGNALE, il ne réécrit pas** — on ne charcute pas une phrase.
+
+**⚠️ ET LA MARGE EST RETOMBÉE À 15 CARACTÈRES**, c'est dit sans enjoliver : les 241 gagnés à ft-v917 sont repartis dans cette seule règle. Elle est passée devant parce qu'elle protège contre une **désinformation santé dans un produit qui donne des conseils santé** (**R11** : la sécurité prime). Conséquence directe : **l'arbitrage sur les 140 règles n'est plus optionnel** — il est désormais le seul moyen de faire entrer la suivante.
+Tests : **parcours 774/774** (+4, bloc LVIII), calculs 241/241, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v918. |
 
 **ft-v917 — 🧹 LE PROMPT DE MILO N'ÉTAIT PLUS QU'À 35 CARACTÈRES DE SON PLAFOND — et le témoin m'a appris où s'arrête la méthode** — Michel, après que je lui aie listé ce qui restait à faire : *« euh Milo là c'est le plus urgent »*. Il avait raison : **plus aucune règle générique ne pouvait entrer** dans le prompt commun sans qu'on en sorte une — je l'avais vécu deux heures plus tôt avec la règle de zone (ft-v914), qui a dû déménager faute de place.
 
@@ -644,25 +659,6 @@ Tests : parcours 722/722, **calculs 206/206** (+9, bloc 10), muscles 232/232, cr
 
 **⚠️ Les deux formes cohabitent** : un repas peut porter **une** description (comportement d'origine) ou **plusieurs**. Inutile de convertir tous les plans d'un coup — et un témoin vérifie que la forme simple marche toujours.
 Tests : parcours 722/722, **calculs 197/197** (+7, bloc rotation), muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **Le garde-fou était ROUGE avant les deux correctifs** — c'est lui qui les a trouvés. Fichiers : `state.js`, `tests/calculs/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v900. |
-
-**ft-v899 — 🥗 LE PLAN ALIMENTAIRE DONNE ENFIN SES PORTIONS — et le check-in se replie quand on a fini** — deux retours de Michel dans le même message.
-
-**① « LE CHECK-IN DU JOUR NE SE FERME PAS QUAND ON A ENREGISTRÉ »** — le bouton *Enregistrer* du sommeil est le **dernier** élément de la carte : une fois touché, on a fini de la remplir, elle se replie donc sur son résumé. **⚠️ Et rien d'autre ne la ferme, volontairement** : l'énergie, le moral et les douleurs sont des boutons à **un appui** (aucun « enregistrer »), et on peut vouloir en toucher plusieurs à la suite — replier après chacun serait insupportable.
-
-**② « DANS NUTRITION LE PLAN ALIMENTAIRE DU JOUR IL N'Y A PAS LES PROPORTIONS »** — il avait raison : `getMeals()` affichait *« Avoine + œufs + fruit »*, sans **aucune** quantité, depuis toujours. **⚠️ Et ce n'est PAS le plan de repas IA** (celui-là demande déjà des grammes dans son prompt) : ce sont **deux blocs différents** dans le même écran, et j'ai failli corriger le mauvais. Le plan affiche désormais **« Avoine 80 g + œufs 180 g + fruit 150 g »**, calculé depuis les calories du repas — donc **il s'adapte au gabarit de la personne**, ce qu'une table figée n'aurait jamais fait.
-
-**⚠️⚠️ TOUT EN GRAMMES, JAMAIS EN PIÈCES — et ce n'est pas un choix de style.** Les descriptions passent par `_adaptMealDesc()`, qui **REMPLACE** des aliments (végan, sans gluten, allergies). *« Œufs (3) » deviendrait « Tofu (3) » : trois tofus.* Une quantité en grammes, elle, survit à la substitution — d'où l'ordre **obligatoire** : on adapte au régime, **PUIS** on quantifie, sur l'aliment RÉELLEMENT affiché.
-
-**⚠️ ON N'INVENTE RIEN (R29)** : un aliment absent de la table ne reçoit **aucune** quantité — mieux vaut *« + Protéine »* que *« + Protéine 137 g »* sorti de nulle part. Et une quantité **déjà écrite** dans le plan (*« Amandes (20g) »*) n'est jamais doublée : elle a été posée exprès (**R30**).
-
-**⚠️ LES LÉGUMES ET LES FRUITS ONT UNE PORTION STANDARD.** Répartir les calories au prorata donnait *« fruit 280 g »* à un petit-déjeuner : un aliment à 60 kcal/100 g devait peser une tonne pour « prendre sa part ». Ce sont les aliments **denses** qui portent l'énergie du repas.
-
-**⭐⭐ TROIS DÉFAUTS TROUVÉS PAR LES TESTS, AUCUN À L'ŒIL** — et c'est la partie qui compte : ① la quantité collée **à la fin** du morceau donnait *« Œufs brouillés à l'huile d'olive 200 g »*, soit **200 g d'HUILE** → elle se pose désormais **juste après l'aliment** ; ② l'**unité** était déduite d'une relecture du texte, or le mot « huile » apparaît dans une phrase qui parle d'**œufs** → elle vient de la **table** ; ③ le motif `b[œo]euf` **ne matchait JAMAIS « bœuf »** (b+œ+u+f), donc c'est « Saumon » qui gagnait dans « Saumon/bœuf » — un motif mort depuis sa création.
-
-**⚠️ ET UN TÉMOIN EXISTANT A ÉTÉ AJUSTÉ, PAS AFFAIBLI** : il exigeait *« Œufs brouillés au beurre »* collés. Il exige maintenant *« Œufs brouillés( 200 g)? au beurre »* — **la tolérance ne porte que sur la quantité**, l'adjacence (donc l'absence de substitution, ce qu'il vérifie vraiment) est intacte. *Assouplir un test pour faire passer son propre code est une faute ; l'ajuster au format exact de ce qui a changé n'en est pas une — encore faut-il l'écrire.*
-
-**⏭️ CE QUI N'EST PAS FAIT, ET POURQUOI** : Michel demandait aussi *« une ligne de code pour changer tous les jours »*. **Ce n'en est pas une.** Il faut un vrai jeu de variantes, et **chaque aliment ajouté doit être connu des tables de substitution ET d'allergènes** — sinon un végan voit de la viande, ou quelqu'un qui a déclaré « fruits à coque » voit des amandes. C'est exactement le bug d'Emma du 02/08. À faire, séparément et proprement.
-Tests : parcours 717/717, **calculs 190/190** (+11, bloc portions), muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. Fichiers : `state.js`, `screens.js`, `tracking.js`, `tests/calculs/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v899. |
 
 **ft-v898 — 🧭 LES RENVOIS DE POSITION DU PROMPT SONT VÉRIFIÉS — et j'en avais cassé un la veille** — Michel : *« fais ce qu'il faut du moment que Milo assure toujours »*. **Sa condition oriente tout le travail** : l'option 2 (scinder le Gardien) est **écartée** — elle éloigne les zones de blessure de la règle pour un gain purement financier. À la place, on va chercher ce qui menace vraiment la qualité de Milo.
 

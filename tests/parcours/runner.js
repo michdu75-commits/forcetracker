@@ -6757,6 +6757,49 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LVIII - MILO NE PEUT PAS ALLER SUR INTERNET, MAIS IL POUVAIT PRETENDRE (19/08/2026) ==
+   Michel, en relisant le prompt : « je n'ai pas vu de protection pour eviter a Milo d'aller sur
+   internet ». ⭐ VERIFIE AVANT DE REPONDRE : il ne PEUT PAS y aller — l'appel API ne porte aucun
+   champ `tools`, aucune recherche web (worker.js). C'est structurel, pas une consigne (R7).
+   ⚠️ MAIS LE RISQUE VOISIN N'ETAIT PAS COUVERT : il peut PRETENDRE l'avoir fait. Et la regle du
+   prompt qui s'appelle « ne fabrique jamais de source » ne parlait que des sources INTERNES
+   (« je vois ca dans tes antecedents »). BUGS.md famille 15 — la regle juste, definie trop etroit.
+   👉 Deux etages : le prompt EMPECHE, le Gardien de sortie ATTRAPE le cas detectable (un lien). */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const R=await pg.evaluate(()=>{
+    const o={};
+    o.ctx=(typeof buildCoachContext==='function')?(buildCoachContext()||''):'';
+    /* ⚠️ On passe par _gardienSortie, present des DEUX cotes (4 controles avant, 5 apres) — un
+       temoin qui appellerait une fonction neuve planterait sur l'ancien code au lieu de rougir. */
+    const g=t=>{ try{ return (_gardienSortie(t).flags||[]).map(f=>f.code).join(','); }catch(e){ return 'ERREUR'; } };
+    o.lienHttps = g("Regarde https://exemple.com/etude pour plus d'infos");
+    o.lienWww   = g("Va voir sur www.anses.fr/creatine c'est explique");
+    o.vraieSrc  = g("D'apres le Nutri-Score, ce produit est en categorie C.");
+    o.normal    = g("Tu as bien bosse aujourd'hui, on garde cette charge.");
+    return o;
+  });
+  const C=R.ctx;
+  t('⭐⭐ LA REGLE SUR LES SOURCES COUVRE ENFIN L\'EXTERIEUR, pas seulement les antecedents',
+    /NI INTERNE, NI EXT/.test(C), (C.match(/.{0,50}NI INTERNE.{0,60}/)||[''])[0]);
+  t('⭐ ... et Milo sait qu\'il n\'a AUCUN acces internet (il ne peut donc rien verifier)',
+    /AUCUN ACC[EÈ]S [AÀ] INTERNET/.test(C), '');
+  t('⭐⭐ LE GARDIEN DE SORTIE ATTRAPE UN LIEN (Milo n\'a pas pu le verifier)',
+    /source_fabriquee/.test(R.lienHttps) && /source_fabriquee/.test(R.lienWww),
+    'https='+R.lienHttps+' · www='+R.lienWww);
+  /* ⚠️ LE CONTROLE ANTI-FAUX-POSITIF EST LE PLUS IMPORTANT DES QUATRE : l'app CITE de vraies
+     sources (Open Food Facts, Nutri-Score) et Milo a le DROIT de les nommer. Un garde-fou qui
+     crie sur une phrase juste finit desactive (R19). */
+  t('/!\\ ... et il NE crie PAS sur une vraie source citee sans lien (anti-faux-positif)',
+    !/source_fabriquee/.test(R.vraieSrc) && !/source_fabriquee/.test(R.normal),
+    'nutriscore=['+R.vraieSrc+'] normal=['+R.normal+']');
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
