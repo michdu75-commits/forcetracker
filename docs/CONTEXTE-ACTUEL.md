@@ -42,25 +42,31 @@
 > utilisateur, c'est inventer une donnée (R29). Elle ne vaudrait que si la même pente se retrouvait
 > chez plusieurs personnes — **1 cas ne fait pas une règle** (R22).
 >
-> ### 🌉 LE PONT EXISTE DÉJÀ — IL LUI MANQUE JUSTE LE SOMMEIL
+> ### ✅ LE PONT EXISTE — ET IL SAIT MAINTENANT RECEVOIR LE SOMMEIL ET LES PAS (ft-v916)
 > ⛔⛔ **CORRECTION DE MOI-MÊME, ET C'EST R23 UNE 2ᵉ FOIS** (après la prise de sang du 27/07) :
 > j'ai proposé à Michel de « construire un pont » avec un raccourci iOS. **Il existe depuis le
 > 16/08** (ft-v880 à ft-v884), c'est lui qui l'avait demandé, il tourne chez lui **tous les soirs
 > à 21 h** — et j'ai fallu qu'il me dise *« on a déjà créé un raccourci lol »* pour que je regarde.
 > *Une fonctionnalité que je n'ai pas lue est une fonctionnalité que je re-propose.*
 >
-> **Ce qui existe** — route `pushHealth` (`Code.js` @1224), **authentifiée** (`_authCheck_`),
-> **dédupliquée** (début + type), et qui **accepte plusieurs formats** exprès : un raccourci iOS
-> *ou* une app d'export publiant le sien. Elle reçoit :
-> · les **activités** → `healthInbox`, une boîte de réception (l'app propose, la personne valide — R29) ;
-> · la **FC au repos** → `healthDaily` (`{date, rhr}`, 120 jours).
+> **Ce qui existait déjà** — route `pushHealth` (`Code.js` @1247), **authentifiée**
+> (`_authCheck_`), **dédupliquée** (début + type), et qui **accepte plusieurs formats** exprès :
+> un raccourci iOS *ou* une app d'export publiant le sien. Elle recevait les **activités**
+> (`healthInbox`, une boîte de réception — l'app propose, la personne valide, R29) et la **FC au
+> repos** (`healthDaily`).
 >
-> **Ce qui manque : le sommeil.** Zéro occurrence dans la route.
-> **👉 Le delta est donc PETIT** : `healthDaily` est déjà la bonne maison (une valeur par jour,
-> déjà dédupliquée par date) — il s'agit d'ajouter un champ à côté de `rhr`, pas d'une brique.
-> ⚠️ **Et côté raccourci, la date est le piège** : à 21 h le soir du jour D, la nuit disponible est
-> celle qui s'est TERMINÉE le matin de D. Elle se date donc D (jour du réveil), et les échantillons
-> HealthKit d'une nuit chevauchent deux dates civiles.
+> **✅ LIVRÉ CE SOIR** — la route accepte désormais `sleep` (en heures, même unité que
+> `S.sleepLog[].hours`) et `steps`, **fusionnés** dans `healthDaily` par date. ⚠️ Au passage, un
+> **bug latent jamais déclenché** est corrigé : l'ancienne écriture **remplaçait toute l'entrée du
+> jour** à chaque appel — inoffensif tant qu'un seul champ existait, mais un futur appel
+> n'apportant que le sommeil aurait effacé la FC au repos du même jour. Vérifié par simulation
+> Node (5 cas, dont la fusion elle-même).
+> ⚠️ **Ne remplace pas `S.sleepLog`** — vient à côté, en comparaison (R29 : on montre les deux).
+> ⚠️ **Côté raccourci, la date est le piège** : à 21 h le soir du jour D, la nuit disponible est
+> celle qui s'est TERMINÉE le matin de D — elle se date donc D (jour du réveil).
+> ⏭️ **Ce qui reste à construire** : rien côté app n'affiche encore `healthDaily.sleep/steps`.
+> Les données arrivent et attendent dans le compte (R30, noté dans `state.js`) — l'écran de
+> comparaison déclaré/mesuré est la prochaine étape, après les 2 semaines d'usage nutrition.
 > ⚠️ Reste un **outil de testeur, pas une fonctionnalité produit** : Tatiana ne configurera jamais
 > un raccourci (`PERSONAS-FONDATEURS.md`). Le chemin grand public reste la coque native.
 >

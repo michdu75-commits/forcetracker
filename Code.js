@@ -1268,13 +1268,45 @@ function handlePushHealth_(body) {
        affinages de calculs, je ne suis pas d'accord »*. Il a raison, et c'est mesuré : les
        calories d'un bracelet en résistance corrèlent à r = 0,10-0,34 contre calorimétrie
        indirecte. Cette valeur-ci sert à la RÉCUPÉRATION, jamais à l'énergie dépensée. */
+    /* 😴🚶 SOMMEIL ET PAS — MÊME BOÎTE QUE LA FC AU REPOS (19/08/2026, ft-v916).
+       Michel a comparé son sleepLog SAISI à son export Garmin sur 10 semaines : la saisie est
+       bonne EN MOYENNE (+12 min), mais elle APLATIT ses mauvaises semaines — corrélation
+       sommeil réel / erreur de saisie : r = -0,96. Sur la semaine du 6-12 août, Garmin disait
+       5 h 38, l'app disait 6 h 43. Or `S.sleepLog` part dans le contexte de Milo : il sous-
+       estimait donc la dette de récupération exactement les semaines où elle comptait (R4).
+       ⭐ Vérifié AVANT de coder, pas supposé : Apple Santé écrit bien le sommeil ET les pas
+       depuis Garmin Connect (capture de Michel, moyenne 7 j identique au CSV Garmin au chiffre
+       près) — mais PAS la VFC (absente des réglages de synchronisation, sur son iPhone).
+       ⚠️ `sleep` est en HEURES (comme `S.sleepLog[].hours`, R2 : même unité que l'existant),
+       calculé par le raccourci — on ne transporte jamais le flux d'échantillons bruts, qui
+       ferait exploser le stockage comme le 29/07 (réservoir plein à 102 %). Le téléphone fait
+       le calcul, le serveur ne reçoit qu'un résultat.
+       ⚠️ ELLE NE REMPLACE PAS `sleepLog` — elle vient à CÔTÉ, en comparaison (R29 : on affiche
+       les deux, la personne choisit). Écraser une saisie manuelle depuis un point d'entrée
+       public serait exactement l'erreur que la note de sécurité ci-dessus interdit déjà. */
+    var _sleepH = Number(body.sleep != null ? body.sleep : (body.sleepHours != null ? body.sleepHours : NaN));
+    var _steps  = Number(body.steps != null ? body.steps : NaN);
     var _rhr = Number(body.restingHr != null ? body.restingHr
              : (body.rhr != null ? body.rhr : (body.restingHeartRate && body.restingHeartRate.qty)));
-    if (_rhr > 25 && _rhr < 130) {                              // hors de ça, ce n'est pas une FC de repos
+    var _okRhr   = _rhr > 25 && _rhr < 130;                     // hors de ça, ce n'est pas une FC de repos
+    var _okSleep = _sleepH > 0 && _sleepH < 16;                 // hors de ça, c'est une erreur d'unité
+    var _okSteps = _steps >= 0 && _steps < 100000;
+    var _entry = null;   // ⚠️ déclaré ici : la réponse plus bas le lit même si rien n'était valide
+    if (_okRhr || _okSleep || _okSteps) {
       var _d = String(body.date || body.start || new Date().toISOString()).slice(0, 10);
       var daily = data.healthDaily || [];
-      daily = daily.filter(function(x){ return x && x.date !== _d; });   // un jour = une valeur
-      daily.push({date:_d, rhr:Math.round(_rhr)});
+      /* ⚠️⚠️ FUSION, PAS REMPLACEMENT (corrigé le 19/08 en ajoutant ces deux champs). L'ancienne
+         version écrasait TOUTE l'entrée du jour à chaque appel — inoffensif tant qu'un seul
+         champ (rhr) existait, mais un bug latent : un appel qui n'apporte que le sommeil aurait
+         effacé la FC au repos déjà reçue le même jour, et réciproquement. Même famille que R2 —
+         une même date, DEUX écritures possibles, doit fusionner, pas se disputer. */
+      var _idx = -1;
+      for (var _di = 0; _di < daily.length; _di++) { if (daily[_di] && daily[_di].date === _d) { _idx = _di; break; } }
+      _entry = _idx >= 0 ? daily[_idx] : {date:_d};
+      if (_okRhr)   _entry.rhr   = Math.round(_rhr);
+      if (_okSleep) _entry.sleep = Math.round(_sleepH * 100) / 100;
+      if (_okSteps) _entry.steps = Math.round(_steps);
+      if (_idx >= 0) daily[_idx] = _entry; else daily.push(_entry);
       daily.sort(function(x, y){ return x.date < y.date ? 1 : -1; });
       data.healthDaily = daily.slice(0, 120);                   // ~4 mois, de quoi tenir une base
       saveUserData_(email, data);
@@ -1290,7 +1322,9 @@ function handlePushHealth_(body) {
        à expliquer. *Le coût est pour le serveur, pas pour la personne* (règle d'or #10). */
     if (!recues.length && (body.start || body.startDate)) recues = [body];
     if (!recues.length) return json_({status:'ok', count:0, total:(data.healthInbox||[]).length,
-                                      rhr:(_rhr>25&&_rhr<130)?Math.round(_rhr):null});
+                                      rhr:_okRhr?Math.round(_rhr):null,
+                                      sleep:(_okSleep&&_entry)?_entry.sleep:null,
+                                      steps:(_okSteps&&_entry)?_entry.steps:null});
     if (recues.length > 200) recues = recues.slice(0, 200);      // garde-fou de taille
 
     var inbox = data.healthInbox || [];
