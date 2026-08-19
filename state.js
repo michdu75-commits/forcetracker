@@ -28,7 +28,11 @@ let S={
   weightLog:[],
   dayStateLog:[],
   healthInbox:[],   // ⌚ activités reçues du téléphone (raccourci iOS → Santé) — voir app.js `_majHealthInbox`
-  healthDaily:[],   // ❤️ une valeur par jour venue de Santé (FC au repos) — voir tracking.js `_rhrEcart`
+  healthDaily:[],   // ❤️😴🚶 une entrée par jour venue de Santé ({date, rhr, sleep, steps}) — FC au
+                     // repos exploitée par tracking.js `_rhrEcart` ; sleep/steps reçus (ft-v916) mais
+                     // pas encore affichés côté app — ils dorment dans le compte, prêts pour la
+                     // comparaison avec `S.sleepLog` le jour où l'écran sera construit (R30 : pas un
+                     // oubli, une étape suivante non codée).
   strengthGoals:{},
   name:'',
   coachFree:0,
