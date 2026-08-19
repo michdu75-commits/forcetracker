@@ -397,7 +397,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v915`** (prochaine : `ft-v917` — ft-v916 est backend seul, pas de bump `sw.js`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v917`** (prochaine : `ft-v918`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -407,6 +407,19 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v917 — 🧹 LE PROMPT DE MILO N'ÉTAIT PLUS QU'À 35 CARACTÈRES DE SON PLAFOND — et le témoin m'a appris où s'arrête la méthode** — Michel, après que je lui aie listé ce qui restait à faire : *« euh Milo là c'est le plus urgent »*. Il avait raison : **plus aucune règle générique ne pouvait entrer** dans le prompt commun sans qu'on en sorte une — je l'avais vécu deux heures plus tôt avec la règle de zone (ft-v914), qui a dû déménager faute de place.
+
+**⭐ LA MÉTHODE QUI MARCHE, ET C'EST LA SEULE SÛRE** : on ne « compresse » pas de la prose — on **retire du prompt ce que le CODE garantit de façon DÉTERMINISTE** (R7 : le prompt est le dernier levier, et ce qui est déterministe ne doit pas dépendre d'un jour de fatigue du modèle). Deux cas nets :
+· le **barème des paliers** (40-50 %, +10-15 %, reps 5→3→2→1, au-delà de 85 % c'est 1-2 reps) est calculé par `_monteeEnCharge` + `_repsPalier` + `_pasCharge` — Milo n'a pas à le détailler ;
+· l'**explication physiologique du superset**, dont le refus dur vit déjà dans `_supersetInterdit`, avec son commentaire écrit le 12/08 : *« pourquoi le code et pas le prompt : le prompt est probabiliste, ce refus ne doit pas dépendre d'un jour de fatigue du modèle »*.
+
+**⚠️⚠️ ET LA MÉTHODE A UNE LIMITE QUE JE N'AVAIS PAS VUE — C'EST LE TÉMOIN QUI ME L'A APPRISE.** J'avais aussi retiré la règle de **DOSE** (4-5 paliers sur le premier mouvement, 2-4 sur une 2ᵉ barre, 0-2 sur un accessoire), en croyant qu'elle relevait du même calcul. Le témoin de **ft-v887** est passé au **ROUGE**, et il avait raison : en relisant `_monteeCompletee`, le code **COMPLÈTE** une montée mais **ne RETIRE JAMAIS un palier en trop** (invariant du 11/08). C'est donc le prompt, et lui seul, qui empêche Milo d'écrire cinq paliers sur un accessoire — exactement le bug que ft-v887 avait corrigé. Règle restaurée, et désormais écrite **avec sa raison** pour que personne ne refasse la coupe.
+
+**⭐ LE CRITÈRE EN SORT NET, ET IL EST RÉUTILISABLE** : *ce que le code **CALCULE** peut sortir du prompt ; ce que le code ne **CORRIGE** pas doit y rester.* La nuance n'est pas cosmétique — elle sépare « l'app fabrique le résultat » de « l'app accepte ce que Milo écrit ».
+
+**⚠️ ET LE GAIN EST MODESTE, C'EST DIT HONNÊTEMENT** : **46 465 → 46 259 caractères**, marge passée de **35 à 241**. Ça débloque la prochaine règle, pas les dix suivantes. *La vraie question n'est pas de compresser du texte : c'est de décider lesquelles des **180 règles** peuvent partir* — et ça, c'est un arbitrage produit, pas une optimisation. ⚠️ Mesuré au passage : **38 % du bloc** touche à seulement **8 thèmes récurrents** (« au plus une question » revient sur **8 lignes**, ~4 000 caractères ; « n'invente rien » sur 8 lignes aussi). Mais la répétition d'une règle dans plusieurs contextes est peut-être **porteuse**, pas gaspillée — on ne coupe pas là-dedans sans preuve, et `tests/milo` est déterministe : il prouve la PRÉSENCE, jamais l'OBÉISSANCE.
+Tests : **parcours 770/770**, calculs 241/241, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif ici** : on ne retire aucun comportement, on retire du texte redondant — le contrôle utile était le témoin de ft-v887, et il a rougi au bon moment. Fichiers : `coach.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v917. |
 
 **BACKEND — 😴🚶 LE SOMMEIL ET LES PAS PEUVENT ENFIN ARRIVER DE LA MONTRE — et un bug latent corrigé au passage (19/08/2026, ft-v916, Code.js)** — Michel : *« et bah voilà, y a plus qu'à automatiser le sommeil sur l'application »*, après qu'on ait comparé son `sleepLog` saisi à son export Garmin sur 10 semaines.
 

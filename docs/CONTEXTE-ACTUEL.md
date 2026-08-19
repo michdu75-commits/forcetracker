@@ -112,17 +112,18 @@
 > 2ᵉ défaut, structurel : *« toutes les ancres d'abord »* fabriquait des **zigzags de salle**.
 > On groupe par zone, sans toucher à « l'ancre la plus lourde reste 1ʳᵉ » ni au superset.
 >
-> ### 🚧 CE QUI EST MAINTENANT BLOQUANT POUR TOUTE RÈGLE FUTURE
-> **Le bloc commun de Milo est à 46 467 caractères pour un plafond de 46 500 — il reste 33
-> caractères.** Concrètement : *plus aucune règle générique ne peut entrer dans le prompt commun*
-> sans qu'on en sorte une. Le garde-fou a refusé ma 1ʳᵉ version ce soir et m'a obligé à déplacer
-> la règle de zone dans le bloc personnel — solution correcte ici (elle relève du budget de temps),
-> mais **elle ne se reproduira pas à chaque fois**.
-> ⚠️ **Le seuil ne doit PAS être relevé** : il porte depuis le 12/08 la consigne *« une relecture
-> dédiée, pas un relèvement de plus »*, et le vrai prix n'est pas la facture — c'est que **chaque
-> règle ajoutée dilue les autres** (R20).
-> **👉 Prochaine tâche prompt = une passe de dégraissage dédiée**, à faire tête reposée, avec
-> `tests/milo` en garde-fou. À ce moment-là, la règle de zone a vocation à remonter dans le commun.
+> ### 🧹 LE PROMPT — DÉBLOQUÉ D'UN CRAN (ft-v917), PAS RÉGLÉ
+> **46 465 → 46 259 caractères, marge 35 → 241.** De quoi faire entrer la prochaine règle, pas dix.
+> ⭐ **La méthode sûre, et le critère qui en sort** : on retire du prompt ce que le code garantit
+> de façon **déterministe** (R7). Mais attention — *ce que le code **CALCULE** peut sortir ; ce
+> que le code ne **CORRIGE** pas doit rester.* Exemple vécu ce soir : le barème des paliers est
+> calculé (`_monteeEnCharge`) → sorti ; la **dose** de paliers, elle, n'est jamais corrigée par
+> l'app (elle complète, elle ne retire pas) → le témoin de ft-v887 a rougi et la règle est restée.
+> ⚠️ **La vraie question reste entière** : lesquelles des **180 règles** peuvent partir ? Mesuré :
+> **38 % du bloc** tourne autour de **8 thèmes récurrents** (« au plus une question » sur 8 lignes,
+> ~4 000 car. ; « n'invente rien » sur 8 lignes). Mais la répétition d'une règle dans plusieurs
+> contextes est peut-être **porteuse** — et `tests/milo` est déterministe : il prouve la PRÉSENCE,
+> jamais l'OBÉISSANCE. **On ne coupe pas là-dedans sans arbitrage produit.**
 >
 > ### ⏭️ Écarté volontairement (R30)
 > **Modéliser le plan de la salle.** Ça marcherait pour Michel et pour personne d'autre — Tatiana
