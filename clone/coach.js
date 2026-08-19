@@ -324,6 +324,41 @@ function _ctxRythme(){
     +'annonces en fera 65 sans que tu t\'en rendes compte.'
     +'\n→ Un chiffre vaut mieux qu\'une promesse : annonce le nombre de séries et le temps que ça fait, pour qu\'elle puisse arbitrer elle-même.\n';
 }
+/* ⚖️ LES CHARGES QUE MILO ÉCRIT DOIVENT EXISTER DANS UNE VRAIE SALLE (19/08/2026)
+   Michel, pour la DEUXIÈME fois (1ʳᵉ le 15/08) : *« quand il me met 82,5 faut le trouver les
+   poids de 2,5 »*. Le 15/08 on avait créé `_pasCharge` (log.js), calibrée sur ses 31 séances —
+   et elle ne couvrait QUE les paliers fabriqués par l'app. Milo, lui, n'a jamais reçu la table :
+   **0 occurrence de `_pasCharge` dans ce fichier**. Il continuait donc d'écrire 82,5 et 27,5.
+   ⭐ C'est `BUGS.md` famille 15 dans sa forme exacte — *la règle juste, définie trop étroit* : le
+   mot « les charges que l'APP fabrique » excluait précisément celui qui écrit les charges.
+   ⚠️ ET LE COÛT N'EST PAS COSMÉTIQUE : une charge impossible, c'est une traversée de salle pour
+   fouiller un râtelier, au milieu d'une montée en charge. C'est du temps qui ne rentre dans aucun
+   budget — pile la plainte de Michel sur la durée réelle des séances. */
+function _ctxCharges(){
+  const T=(typeof _PAS_CHARGE_TABLE!=='undefined')?_PAS_CHARGE_TABLE:null;
+  if(!T) return '';   // ⚠️ pas de valeurs en dur ici : une 2ᵉ table finirait par diverger (R2)
+  return '\n⚖️ LES CHARGES QUE TU ÉCRIS DOIVENT EXISTER DANS SA SALLE — pas de demi-disque introuvable :'
+    +'\n- **Barre, machine, poulie : multiples de '+String(T.autre).replace('.',',')+' kg.** 82,5 kg n\'est pas une charge, c\'est une chasse au disque de 1,25 : écris **80** ou **85**.'
+    +'\n- **Haltères à deux bras : multiples de '+String(T.libre).replace('.',',')+' kg** (2 kg par haltère). **27,5 kg n\'existe pas** — écris 24 ou 28. Un seul haltère : multiples de '+String(T.libre_uni).replace('.',',')+'.'
+    +'\n- Élastique, TRX, poids du corps : multiples de '+String(T.elast).replace('.',',')+'.'
+    +'\n→ ⚠️ EN CAS DE DOUTE, ARRONDIS VERS LE BAS. Plus léger se rattrape avec une répétition de plus ; plus lourd fait rater la série.'
+    +'\n→ Ça vaut pour TOUT ce que tu écris : séries de travail, montées en charge, objectifs de progression.'
+    /* 🗺️ LA RÈGLE D'ORDRE EST ICI, ET PAS DANS LE BLOC COMMUN — c'est un ARBITRAGE, pas un oubli.
+       Écrite d'abord à côté de la définition ancre/accessoire (sa place « logique »), elle a fait
+       passer le bloc commun de 46 466 à 47 286 caractères, au-dessus du garde-fou de 46 500. Or
+       ce garde-fou porte une consigne explicite : *« il mérite une relecture dédiée — PAS un
+       relèvement de seuil de plus »*. On ne relève donc pas le seuil pour se faire de la place.
+       ⭐ ET ELLE EST MIEUX ICI : c'est une règle de DÉPENSE DU TEMPS, exactement comme le rythme
+       et le budget de séries juste au-dessus. Une traversée de salle coûte des minutes — sa place
+       est auprès de ce qui compte les minutes, pas auprès de ce qui définit un mouvement.
+       ⚠️ Le prix payé, écrit pour qu'il soit visible : cette règle est générique, donc la mettre
+       dans le bloc personnel la fait répéter par utilisateur au lieu d'être partagée. ~300
+       caractères, sans conséquence mesurable — mais si le bloc commun est un jour dégraissé, elle
+       a vocation à y remonter. */
+    +'\n\n🗺️ GROUPE LES EXERCICES PAR ZONE DE SALLE — les jambes sont ensemble, les bancs ensemble, les épaules ailleurs. Chaque changement de zone coûte une traversée (on marche, on cherche une machine libre, on refroidit).'
+    +'\n- ⚠️ « Toutes les ancres d\'abord, les accessoires ensuite » FABRIQUE des zigzags : squat → militaire → leg extension → élévations = **trois traversées** pour une séance qui n\'en demande qu\'une. **Termine une zone avant de passer à la suivante**, et dans chaque zone mets l\'ancre avant ses accessoires.'
+    +'\n- ⚠️ CE QUI NE CHANGE PAS : l\'ancre la PLUS LOURDE de la séance reste en premier, reposé — c\'est physiologique, ça prime sur la géographie. Et un SUPERSET antagoniste alterne EXPRÈS : ne le casse pas pour grouper.\n';
+}
 function _historiqueCompact(){
   try{
     if(!_memoireLargeOn())return '';
@@ -2452,7 +2487,6 @@ STRUCTURER UN PROGRAMME — EXERCICES « ANCRE » vs « ACCESSOIRE » (comment u
 - Un ANCRE = grand mouvement polyarticulaire de BASE qui PORTE la progression : squat, soulevé de terre / charnière de hanche, développé couché, développé militaire, rowing, traction / tirage. On le place en PREMIER (reposé), plus lourd, sur peu de reps, et on SUIT sa progression de charge dans le temps. Peu d'ancres par séance (souvent 1 à 3).
 - Un ACCESSOIRE = isolation ou mouvement secondaire : curls, extensions triceps, élévations, leg curl / leg extension, mollets, écarté / pec deck, fentes, gainage. Il sert à CIBLER un muscle, ajouter du VOLUME, combler un point faible ou une priorité. Plus de reps, plus de marge (on peut varier sans casser la logique).
 - RAISONNE avec cette distinction : construis toujours la séance AUTOUR des ancres, puis ajoute les accessoires ; pour un muscle en PRIORITÉ, garde l'ancre et empile des accessoires ciblés ; une STAGNATION sur un ancre (problème de force/technique/récup) ne se traite PAS comme un manque de volume d'accessoires — diagnostique la vraie cause. Dans la SÉANCE EN COURS, chaque exercice est déjà étiqueté [ancre] ou [accessoire] pour t'aider ; ailleurs, sais reconnaître toi-même le rôle de chaque mouvement.
-
 CHOISIR LES BONNES DONNÉES — LA PERTINENCE AVANT LA DISPONIBILITÉ (principe de conception central) :
 - Tu n'utilises JAMAIS une donnée juste parce qu'elle existe. Tu l'utilises seulement si elle AMÉLIORE réellement ta décision. La bonne question n'est pas « quelles données j'ai ? » mais « lesquelles sont vraiment PERTINENTES pour CETTE personne, dans CETTE situation ? ». Le contexte prime sur la donnée.
 - La pertinence est CONTEXTUELLE et VARIABLE : le même indicateur peut compter beaucoup pour l'un et presque rien pour l'autre. Type l'IMC — chez un pratiquant sec/musclé dont tu connais déjà la masse grasse, les perfs et la composition, il n'apporte quasi rien → SOUS-PONDÈRE-le et appuie-toi sur la masse grasse, le tour de taille (rapport taille/hauteur ≥ 0,5 = vigilance abdominale) et la tendance de poids ; chez une personne sédentaire sans autres données, il redevient utile. La question n'est jamais « ce chiffre est-il bon ? » mais « est-il pertinent ICI ? ». Des GUIDES, pas une table de coefficients.
@@ -2630,6 +2664,7 @@ ${_memoireLongue()}
 ${_historiqueCompact()}
 ${_ctxDiscipline()}
 ${_ctxRythme()}
+${_ctxCharges()}
 ${_ctxDureeSeance()}
 ${_ctxReposRegles()}
 ${(()=>{

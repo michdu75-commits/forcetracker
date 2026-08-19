@@ -6,9 +6,39 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v913` — fusionnée sur `master` le 19/08.
+- **Version en ligne (live) :** `ft-v914` — fusionnée sur `master` le 19/08.
 - **Rien en attente sur la branche.** Tout ce qui a été livré les 18 et 19/08 est en production.
   ⚠️ R18 — « j'ai poussé » ne veut pas dire « c'est en ligne » : le déploiement ne part que sur `master`.
+
+> ## ⚖️ 19/08 (soir) — ft-v914 : LES CHARGES DE MILO ET LA GÉOGRAPHIE DE LA SALLE
+>
+> Michel, pour la **2ᵉ fois** (1ʳᵉ le 15/08) : *« quand il me met 82,5 faut le trouver les poids
+> de 2,5 »*. `_pasCharge` existait depuis le 15/08 mais **n'était pas envoyée à Milo** (0 occurrence
+> dans `coach.js`) — sa définition disait *« QU'AUX CHARGES QUE L'APP FABRIQUE »*. `BUGS.md` §15 +
+> R4. Corrigé par `_PAS_CHARGE_TABLE`, **lue par l'app ET le prompt** (R2).
+> 2ᵉ défaut, structurel : *« toutes les ancres d'abord »* fabriquait des **zigzags de salle**.
+> On groupe par zone, sans toucher à « l'ancre la plus lourde reste 1ʳᵉ » ni au superset.
+>
+> ### 🚧 CE QUI EST MAINTENANT BLOQUANT POUR TOUTE RÈGLE FUTURE
+> **Le bloc commun de Milo est à 46 467 caractères pour un plafond de 46 500 — il reste 33
+> caractères.** Concrètement : *plus aucune règle générique ne peut entrer dans le prompt commun*
+> sans qu'on en sorte une. Le garde-fou a refusé ma 1ʳᵉ version ce soir et m'a obligé à déplacer
+> la règle de zone dans le bloc personnel — solution correcte ici (elle relève du budget de temps),
+> mais **elle ne se reproduira pas à chaque fois**.
+> ⚠️ **Le seuil ne doit PAS être relevé** : il porte depuis le 12/08 la consigne *« une relecture
+> dédiée, pas un relèvement de plus »*, et le vrai prix n'est pas la facture — c'est que **chaque
+> règle ajoutée dilue les autres** (R20).
+> **👉 Prochaine tâche prompt = une passe de dégraissage dédiée**, à faire tête reposée, avec
+> `tests/milo` en garde-fou. À ce moment-là, la règle de zone a vocation à remonter dans le commun.
+>
+> ### ⏭️ Écarté volontairement (R30)
+> **Modéliser le plan de la salle.** Ça marcherait pour Michel et pour personne d'autre — Tatiana
+> ne cartographiera pas sa salle. *« Groupe par zone »* marche partout sans rien demander.
+>
+> ### 📄 Hors dépôt, volontairement
+> Le dossier médical de Michel (bilans 2022-2026, 5 ans de sommeil et 10 ans d'activité Garmin,
+> PDF pour le cardiologue du 22/08) vit **uniquement dans le scratchpad de session**. Données de
+> santé personnelles : elles ne rentrent pas dans le dépôt, qui est public.
 
 > ## 📍 19/08/2026 — LA REVUE UX EXTÉRIEURE (à lire avant le bloc du 18/08 ci-dessous)
 >
