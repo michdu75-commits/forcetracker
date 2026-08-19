@@ -706,7 +706,7 @@ function doPost(e) {
   // Limite le nombre d'appels IA par jour (par email + global) pour éviter les abus
   // et l'explosion de la facture Anthropic. N'affecte PAS les actions sans IA
   // (loadProfile, saveProfile, logSession, validateCode, test…).
-  var AI_ACTIONS_ = ['coach','importProgram','importHistory','importMealPlan','estimateFood','foodLabel','readBarcode','morphoAnalysis','bodyStudy','importBodyScan','importBloodTest','summarizeCoach','generateMealPlan'];
+  var AI_ACTIONS_ = ['coach','importProgram','importHistory','importMealPlan','estimateFood','foodLabel','readBarcode','morphoAnalysis','bodyStudy','importBodyScan','importBloodTest','summarizeCoach','generateMealPlan','seanceJson'];
   if (AI_ACTIONS_.indexOf(body.action) >= 0) {
     var _q = _aiQuotaBlock_(body.email);
     if (_q.blocked) {

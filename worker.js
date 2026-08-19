@@ -27,7 +27,7 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh
 // ⚠️ Tenir cette liste alignée sur AI_PROXY_ACTIONS (constants.js) et AI_ACTIONS_ (Code.js).
 const _ACTIONS_IA = new Set(['importBodyScan','foodLabel','readBarcode','coach','importProgram',
   'importHistory','morphoAnalysis','bodyStudy','importBloodTest','summarizeCoach','estimateFood',
-  'importMealPlan','generateMealPlan']);
+  'importMealPlan','generateMealPlan','seanceJson']);
 let _capDate = '';      // jour où le plafond a été atteint (aaaa-mm-jj, heure de Paris)
 let _capScope = '';     // 'global' | 'email'
 function _jourParis(){
@@ -119,6 +119,7 @@ export default {
       if (body.action === 'bodyStudy')      return json(await bodyStudy(body, apiKey));
       if (body.action === 'importBloodTest') return json(await bloodTest(body, apiKey));
       if (body.action === 'summarizeCoach')  return json(await summarizeCoach(body, apiKey));
+      if (body.action === 'seanceJson')      return json(await seanceJson(body, apiKey));
       if (body.action === 'estimateFood')    return json(await estimateFood(body, apiKey));
       if (body.action === 'importMealPlan')  return json(await importMealPlan(body, apiKey));
       if (body.action === 'generateMealPlan') return json(await generateMealPlan(body, apiKey));
@@ -615,6 +616,52 @@ async function summarizeCoach(body, apiKey) {
     + 'Résume cette conversation coach/athlète en 2-3 phrases max (garde : objectifs, conseils clés, décisions, problèmes identifiés). Français uniquement.\n\nConversation :\n' + histText + '\n\nRésumé :';
   const summary = await callClaude(apiKey, { model: 'claude-haiku-4-5-20251001', max_tokens: 250, messages: [{ role: 'user', content: prompt }] });
   return { summary: summary || '' };
+}
+
+// ── 🫀 CERVELET — convertir la séance ÉCRITE EN CLAIR par Milo en données ─────
+// 19/08/2026, 1ʳᵉ brique de l'architecture cerveau/cervelet (docs/ARCHITECTURE-CERVEAU-CERVELET.md).
+//
+// AVANT : Milo devait produire SIMULTANÉMENT une réponse lisible ET un bloc JSON valide.
+// La spécification de ce bloc pesait ~3 700 caractères dans le prompt COMMUN — envoyé à
+// tout le monde, à chaque conversation, y compris à quelqu'un qui parle nutrition.
+//
+// MAINTENANT : Milo écrit sa séance en français, comme un coach. Ce service la traduit.
+// ⚠️ IL NE SAIT RIEN DE LA PERSONNE, et c'est le critère qui l'a fait naître : « est-ce que
+// ça a besoin de savoir QUI est la personne ? » — non → cervelet. Il ne reçoit ni profil,
+// ni records, ni historique, ni email : juste du texte. Il ne DÉCIDE rien, il TRADUIT.
+//
+// ⚠️ ET IL NE PARLE JAMAIS À L'UTILISATEUR (R6 — une seule voix). Sa sortie n'est pas
+// affichée : elle remplit l'écran Séance. Le jour où il parle en son nom, le produit a
+// deux personnalités.
+async function seanceJson(body, apiKey) {
+  if (!apiKey) return { status: 'error', error: 'Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
+  const texte = String(body.texte || '').trim().slice(0, 8000);
+  if (!texte) return { status: 'error', error: 'Texte vide' };
+  const prompt =
+    'Tu es un CONVERTISSEUR. Un coach vient d\'écrire un message à son athlète. Ta seule tâche : si ce message propose une séance à FAIRE MAINTENANT, la transcrire en JSON. Tu ne conseilles rien, tu ne corriges rien, tu ne complètes rien.\n\n'
+    + 'Message du coach :\n"""\n' + texte + '\n"""\n\n'
+    + 'Réponds UNIQUEMENT par un objet JSON valide, sans texte avant ni après, sans balises markdown.\n\n'
+    + 'SI ce n\'est PAS une séance à faire maintenant, réponds exactement : {"seance":null}\n'
+    + 'C\'est le cas pour : un DÉBRIEF ou bilan d\'une séance PASSÉE (charges déjà réalisées, « tu as fait », « bravo pour »), un programme sur PLUSIEURS jours/semaines, une explication, une simple discussion, une question.\n\n'
+    + 'SINON, réponds au format EXACT :\n'
+    + '{"seance":{"label":"<nom court, ex. Push, Jambes, Haut du corps>","exs":[{"name":"<nom de l\'exercice>","note":"<consigne du coach pour CET exercice>","supersetGroup":"A","sets":[{"reps":8,"kg":60,"type":"N","rest":180}]}]}}\n\n'
+    + 'RÈGLES DE TRANSCRIPTION :\n'
+    + '- name = le nom de l\'exercice EXACTEMENT tel que le coach l\'a écrit (sans les « 4×8 », sans la charge). ⛔ Ne le remplace JAMAIS par un exercice voisin : l\'athlète travaillerait sur autre chose que ce que son coach a prescrit.\n'
+    + '- sets = UNE entrée PAR SÉRIE. « 4×8 à 60 kg » donne 4 entrées {"reps":8,"kg":60}. « 12/10/8 » donne 3 entrées de reps différentes.\n'
+    + '- type = "N" (série normale), "É" (échauffement / montée en charge), "X" (à l\'échec, au max), "D" (dropset / dégressif). "N" par défaut.\n'
+    + '- kg = la charge en kg. Mets 0 si le coach ne la donne pas (l\'app la pré-remplira avec la dernière fois). Si c\'est « au ressenti » ou « au max », mets {"reps":0,"maxi":true}.\n'
+    + '- rest = le repos en SECONDES, repris de ce que le coach a écrit (« 3 min » → 180, « 90 s » → 90). Omets rest s\'il n\'en parle pas — n\'invente pas une valeur.\n'
+    + '- note = la consigne technique que le coach a écrite POUR CET EXERCICE, recopiée en une phrase courte (~120 caractères max). Omets note s\'il n\'a rien dit de particulier — ne meuble pas.\n'
+    + '- supersetGroup = seulement si le coach dit explicitement que deux exercices s\'enchaînent en superset : même étiquette ("A", "B") sur les deux. Sinon, omets la clé.\n\n'
+    + '⚠️ FIDÉLITÉ ABSOLUE — c\'est ta seule qualité :\n'
+    + '- TOUS les exercices du message, dans le MÊME ORDRE que le coach les a écrits.\n'
+    + '- ⛔ N\'en ajoute AUCUN, n\'en retire AUCUN, ne change ni une charge, ni un nombre de reps, ni un repos.\n'
+    + '- ⛔ Tu ne « complètes » pas une séance que tu trouverais incomplète, et tu ne corriges pas un choix que tu trouverais discutable. Ce n\'est pas ton rôle : le coach a ses raisons, et il connaît la personne — pas toi.\n'
+    + '- Une seule ligne d\'exercice ne fait pas une séance : s\'il n\'y en a qu\'un, réponds {"seance":null}.';
+  const text = await callClaude(apiKey, { model: 'claude-haiku-4-5-20251001', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] });
+  const d = firstJson(text);
+  if (!d) return { status: 'error', error: 'Conversion échouée' };
+  return { status: 'ok', seance: (d && d.seance) || null };
 }
 
 // ── Journal : estimer kcal+macros d'une description texte — handleEstimateFood_

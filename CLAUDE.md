@@ -134,7 +134,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v751`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v919`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -398,7 +398,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v918`** (prochaine : `ft-v919`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v919`** (prochaine : `ft-v920`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -408,6 +408,25 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v919 — 🫀 LE CERVELET : MILO PARLE, LE CERVELET TRADUIT — la 1ʳᵉ brique de l'architecture qu'il a nommée** — Michel, après qu'on ait écrit le document : *« bah donc c'est "simple" lol, milo est le cerveau et l'autre ia s'occupe du reste »*, puis *« vas y fait le stp »*.
+
+**LE DÉFAUT, ET IL EST MESURÉ, PAS SUPPOSÉ** : Milo devait produire **EN MÊME TEMPS** une réponse lisible **et** un bloc JSON valide. La spécification de ce bloc pesait **~3 700 caractères dans le prompt COMMUN** — celui qui part à **tout le monde, à chaque conversation**, y compris à quelqu'un qui parle nutrition et n'aura jamais de séance à charger. Et quand le JSON sortait mal formé, la séance ne se chargeait pas.
+
+**👉 IL ÉCRIT MAINTENANT SA SÉANCE EN FRANÇAIS, comme un coach.** Une 2ᵉ IA (Haiku, action `seanceJson` dans le worker) la convertit en données. **⭐ ELLE NE SAIT RIEN DE LA PERSONNE** — on ne lui envoie ni profil, ni records, ni historique, ni email, **rien que le texte** : c'est le critère qui la définit (*« est-ce que ça a besoin de savoir QUI est la personne ? »*), et **ne pas lui donner l'information est la garantie la plus simple qu'elle ne s'en servira pas**. ⚠️ Et **elle ne parle jamais** : sa sortie n'est pas affichée, elle remplit l'écran Séance (**R6**, une seule voix — le jour où elle parle en son nom, le produit a deux personnalités).
+
+**⭐⭐ LA CASCADE A TROIS ÉTAGES, ET L'ORDRE COMPTE** : ① le **bloc caché** s'il est encore là — le prompt commun est en **cache 1 h**, donc pendant une heure après la livraison Milo peut encore l'émettre, et ce serait un bug de le refuser · ② le **cervelet** traduit · ③ la **lecture déterministe du texte** (écrite le 04/08) reste le **filet** : plus pauvre (ni repos, ni consigne, ni type de série) mais **gratuite et hors ligne**. *On ne remplace jamais un chemin qui marche : on en ajoute un meilleur devant.*
+
+**⚠️ L'AIGUILLAGE EST DÉTERMINISTE ET VOLONTAIREMENT PLUS PERMISSIF QUE LE FILET** — ce n'est pas un oubli, c'est **R29**. Le filet **CONSTRUIT** la séance : une ligne mal lue ferait travailler la personne sur autre chose, donc il est strict. L'aiguillage ne fait qu'**ORIENTER** : au pire il dépense un appel pour rien, et le cervelet répond « ce n'est pas une séance ». *Deux coûts d'erreur différents, donc deux seuils — pas un seul.* Concrètement, l'ancre de fin de ligne saute : *« Développé couché 4×8 à 60 kg, repos 3 min »* est une vraie ligne de séance, et le filet la rejetait.
+
+**⭐⭐ ET UN BUG LATENT ATTRAPÉ PAR SON PROPRE TÉMOIN** : la traduction revient **en différé**, une seconde après l'affichage. D'ici là la personne a pu envoyer un autre message — le bouton, qui visait « la dernière bulle », se serait collé **sous une réponse qui n'a rien à voir**. La bulle est désormais **capturée au moment du rendu**. Le contrôle négatif le montre en une ligne : `pose sur : [bulle2]`.
+
+**⚠️ ET DEUX HONNÊTETÉS, ÉCRITES PARCE QU'ELLES COMPTENT.** ① La conversion **coûte maintenant un appel Haiku** par séance proposée, là où elle était incluse dans la réponse — c'est le prix du découplage, et il est assumé (le prompt commun, lui, est facturé au dixième mais **DILUE** les règles, et c'est ÇA qu'on achète). ② **On ne peut pas prouver localement que le cervelet traduit BIEN** : les témoins prouvent qu'il reçoit le bon texte, qu'il part au bon endroit et que sa sortie atteint l'écran — **la qualité de la traduction demande le vrai modèle**. C'est la même limite que `tests/milo`, et elle est écrite pour ne pas être oubliée.
+
+**⚠️ Un témoin RETOURNÉ, avec sa raison** : *« Milo REÇOIT la clé `supersetGroup`, sinon il ne peut pas s'en servir (R8) »* était juste tant que Milo formatait lui-même. **R8 n'est pas abandonné, il change de destinataire** — la spécification doit atteindre *celui qui l'emploie*. Trois témoins couvrent désormais les trois maillons (la clé a quitté le prompt · Milo dit le superset en clair · le convertisseur connaît la clé) : *s'il en manquait un, le superset disparaîtrait sans qu'aucune erreur ne le signale.*
+
+**Bloc commun : 46 485 → 44 157 caractères. Marge : 15 → 2 343.**
+Tests : **parcours 787/787** (+13 : bloc LIX, 10 témoins ; 3 ajustés avec leur justification), calculs 241/241, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 13 rouges**, exactement les 13 comportements changés. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** : le filet déterministe et le bloc caché doivent continuer de marcher — on n'a retiré aucun chemin. Fichiers : `coach.js`, `worker.js`, `constants.js`, `Code.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v919. |
 
 **ft-v918 — 🔗 MILO NE PEUT PAS ALLER SUR INTERNET, MAIS IL POUVAIT PRÉTENDRE L'AVOIR FAIT** — Michel, en relisant le prompt règle par règle : *« je n'ai pas vu de protection pour éviter à Milo d'aller sur internet »*.
 
@@ -660,19 +679,6 @@ Tests : parcours 722/722, **calculs 206/206** (+9, bloc 10), muscles 232/232, cr
 
 **⚠️ Les deux formes cohabitent** : un repas peut porter **une** description (comportement d'origine) ou **plusieurs**. Inutile de convertir tous les plans d'un coup — et un témoin vérifie que la forme simple marche toujours.
 Tests : parcours 722/722, **calculs 197/197** (+7, bloc rotation), muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **Le garde-fou était ROUGE avant les deux correctifs** — c'est lui qui les a trouvés. Fichiers : `state.js`, `tests/calculs/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v900. |
-
-**ft-v898 — 🧭 LES RENVOIS DE POSITION DU PROMPT SONT VÉRIFIÉS — et j'en avais cassé un la veille** — Michel : *« fais ce qu'il faut du moment que Milo assure toujours »*. **Sa condition oriente tout le travail** : l'option 2 (scinder le Gardien) est **écartée** — elle éloigne les zones de blessure de la règle pour un gain purement financier. À la place, on va chercher ce qui menace vraiment la qualité de Milo.
-
-**LE PROMPT DIT À MILO OÙ TROUVER LES CHOSES** — *« son cadre de travail CHIFFRÉ est plus bas »*, *« voir les consignes du Gardien plus haut »*, *« son historique, plus haut »*. Chacune de ces phrases est une **AFFIRMATION vérifiable**, et un renvoi faux envoie Milo chercher au mauvais endroit **sans lever la moindre erreur**.
-
-**⚠️⚠️ ET LE PLUS GRAVE ÉTAIT LE MIEN.** *« Ce qu'elle a réellement fait est dans son historique, **plus haut** »* — or ft-v896 a descendu `DERNIÈRES SÉANCES` tout en bas : l'historique était **14 138 caractères plus BAS**. **C'est la phrase PLANIFIÉ vs RÉALISÉ**, celle qui empêche Milo de féliciter quelqu'un pour une séance qu'il n'a **jamais faite** (`docs/MODELE-METIER.md`). *Je l'ai cassée moi-même en réordonnant, la veille, dans le commit qui se vantait d'avoir vérifié 258 lignes une à une* — la comparaison ligne à ligne prouvait que le TEXTE était intact, elle ne pouvait pas voir qu'une phrase était devenue FAUSSE en changeant de voisinage.
-
-**⭐ LE CORRECTIF N'EST PAS D'ÉCRIRE LA BONNE DIRECTION, C'EST DE NOMMER LE BLOC** (`le bloc « DERNIÈRES SÉANCES »`). *Une position écrite en toutes lettres se périme au premier déplacement, et personne ne va la relire.* Même remède que la veille pour la mémoire longue — **deux renvois faux en deux jours, tous deux silencieux**, donc ça devient un **témoin permanent** (bloc XLVII) qui vérifie chaque renvoi directionnel restant sur le contexte réellement produit.
-
-**⚠️ Un renvoi contrôlé et jugé SAIN, pour ne pas le « réparer » plus tard** : *« voir les consignes du Gardien plus haut »* est envoyé à tout le monde, alors que le bloc Gardien n'existe que pour les gens ayant déclaré une zone fragile. Ce n'est pas un bug — la phrase porte sur *« les zones fragiles DÉJÀ DÉCLARÉES »* : sans déclaration, la consigne est sans objet. Le témoin le teste donc avec un profil blessé, sinon il ne vérifierait rien.
-
-**⛔ ET L'OPTION 2 EST ÉCARTÉE, PAS ABANDONNÉE** — Michel : *« écris-le comme quoi on a écarté cette option mais il faut la garder sous le coude au cas où »*. C'est **R30** dans sa définition même : un retrait volontaire qui n'est pas écrit ne laisse qu'un code orphelin, et un code orphelin ressemble exactement à un oubli. `docs/AUDIT-CONTEXTE-MILO.md` **§13** porte le gain chiffré qui reste (**5 → 2 empreintes**), la raison du refus (elle éloigne les zones de la règle, et `tests/milo` est déterministe — il prouve la PRÉSENCE, jamais que l'information est SUIVIE), et surtout **les deux conditions qui la rendraient discutable** : un A/B sur le vrai modèle avec de vrais cas de blessure, ou une dégradation du ratio de cache (il *rapporte* depuis le 08/08).
-Tests : **parcours 717/717** (+4, bloc XLVII), calculs 179/179, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — le renvoi cassé par ft-v896 ressort bien comme faux sur le code d'hier. Fichiers : `coach.js`, `tests/parcours/runner.js`, `docs/AUDIT-CONTEXTE-MILO.md` (§13), `docs/CONTEXTE-ACTUEL.md`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v898. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
