@@ -6706,6 +6706,57 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     'actif='+R.boutonActif.trim()+' · '+R.creat.slice(0,60));
 }
 
+/* == BLOC LVII - LES CHARGES DE MILO ET LA GEOGRAPHIE DE LA SALLE (19/08/2026) ==
+   Michel, pour la DEUXIEME fois (1re le 15/08) : « il ne compte pas le deplacement dans la
+   salle, quand il me met 82,5 faut le trouver les poids de 2,5 ». Puis, decrivant sa salle :
+   « les jambes sont ensemble, les bancs a cote ; quand je fais les jambes et hop apres les
+   epaules c'est pas au meme endroit ».
+   ⚠️ LE 15/08 AVAIT PRODUIT `_pasCharge` (log.js), calibree sur ses 31 seances — mais sa
+   definition disait « ne s'applique QU'AUX CHARGES QUE L'APP FABRIQUE ». Milo n'a jamais recu
+   la table : 0 occurrence de `_pasCharge` dans coach.js. C'est BUGS.md famille 15 — la regle
+   juste, definie trop etroit — et c'est R4 : l'info existe et n'atteint pas le prompt.
+   ⚠️ ET LE 2e DEFAUT EST STRUCTUREL : « toutes les ancres d'abord » fabrique des zigzags
+   (squat → militaire → leg extension → elevations = 3 traversees pour une seance qui n'en
+   demande qu'une). On groupe par zone, SANS toucher a « l'ancre la plus lourde reste 1re ». */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    /* ⚠️ ON PASSE PAR buildCoachContext(), present des DEUX cotes — un temoin qui appellerait
+       _ctxCharges() directement leverait un ReferenceError sur l'ancien code et S'ARRETERAIT
+       au lieu de rougir. C'est le piege deja paye 6 fois (ft-v887, 890, 892, 901, 905, 906). */
+    o.ctx = (typeof buildCoachContext==='function') ? (buildCoachContext()||'') : '';
+    // la table doit rester UNIQUE : on verifie que l'app et le prompt disent la meme chose (R2)
+    o.pasBarre   = (typeof _pasCharge==='function') ? _pasCharge('Developpe Couche') : null;
+    o.pasHalt    = (typeof _pasCharge==='function') ? _pasCharge('Developpe Incline Halteres') : null;
+    return o;
+  });
+  const C=R.ctx;
+  t('⭐⭐ MILO RECOIT LA TABLE DES PAS DE CHARGE (multiples de 5 sur barre/machine)',
+    /multiples de 5 kg/.test(C), 'longueur contexte='+C.length);
+  t('⭐ ... et le cas 82,5 est nomme explicitement',
+    /82,5/.test(C), (C.match(/.{0,60}82,5.{0,50}/)||[''])[0]);
+  t('⭐ ... et les halteres a 27,5 aussi (multiples de 4)',
+    /multiples de 4 kg/.test(C) && /27,5/.test(C), (C.match(/.{0,40}27,5.{0,40}/)||[''])[0]);
+  t('/!\ arrondir VERS LE BAS en cas de doute (R29 : le cout de l\'erreur decide)',
+    /ARRONDIS VERS LE BAS/.test(C), '');
+  t('⭐⭐ LA CONSIGNE DE REGROUPEMENT PAR ZONE EST PRESENTE',
+    /GROUPE LES EXERCICES PAR ZONE DE SALLE/.test(C) && /Termine une zone avant de passer a la suivante/i.test(C.normalize('NFD').replace(/[\u0300-\u036f]/g,'')), '');
+  t('/!\ ... sans casser « l\'ancre la plus lourde reste en premier »',
+    /la PLUS LOURDE de la seance reste en premier/i.test(C.normalize('NFD').replace(/[\u0300-\u036f]/g,'')), '');
+  t('/!\ ... ni le superset antagoniste, qui alterne EXPRES',
+    /SUPERSET antagoniste/i.test(C), '');
+  /* ⚠️ UNE SEULE TABLE (R2) : si un jour quelqu'un ecrit des valeurs en dur dans coach.js,
+     l'app et le prompt divergeront en silence. On verifie que les deux concordent. */
+  t('⭐ UNE SEULE SOURCE : l\'app arrondit a 5 sur barre et a 4 en halteres',
+    R.pasBarre===5 && R.pasHalt===4, 'barre='+R.pasBarre+' halteres='+R.pasHalt);
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

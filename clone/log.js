@@ -1408,13 +1408,32 @@ const _MOV_MONTEE = ['squat','hip-hinge','poussee-horizontale','poussee-vertical
    que plus lourd fatigue avant la série de travail (R29 : le coût de l'erreur n'est pas
    symétrique). C'est aussi ce que Michel demande : « ou on choisit moins ou plus ».
    ⚠️ Ne s'applique QU'AUX CHARGES QUE L'APP FABRIQUE. Une charge écrite par Milo ou saisie à la
-   main n'est jamais retouchée : ce serait décider à sa place (PB-008). */
+   main n'est jamais retouchée : ce serait décider à sa place (PB-008).
+   ⭐⭐ ET C'EST EXACTEMENT CE TROU QUI A FAIT REVENIR MICHEL LE 19/08 : *« il ne compte pas le
+   déplacement dans la salle, quand il me met 82,5 faut le trouver les poids de 2,5 »*. La règle
+   ci-dessus a bien arrêté les 82,5 dans les paliers que l'APP fabrique — mais **Milo, lui, n'a
+   jamais reçu cette table**, donc il continuait d'écrire 82,5 et 27,5. `_pasCharge` n'apparaissait
+   nulle part dans `coach.js` (vérifié : 0 occurrence).
+   👉 Le correctif n'est PAS d'arrondir Milo après coup — ça, ce serait vraiment décider à sa
+   place, et PB-008 tient toujours. C'est de lui DONNER la table pour qu'il écrive 80 ou 85 du
+   premier coup (R4 : l'information doit descendre jusqu'à la donnée, ici jusqu'au prompt).
+   ⚠️ UNE SEULE TABLE, lue par les deux (R2) : `_PAS_CHARGE_TABLE` ci-dessous. La dupliquer dans
+   `coach.js` garantirait qu'un jour l'app arrondit à 4 kg pendant que Milo écrit des 2,5. */
+const _PAS_CHARGE_TABLE = {
+  libre_uni : 2,    // un seul haltère
+  libre     : 4,    // haltères 2 bras : 2 kg par haltère, additionnés
+  elast     : 2.5,  // élastiques / TRX / poids du corps : pas de disques, on reste fin
+  trx       : 2.5,
+  corps     : 2.5,
+  autre     : 5     // barre, machine, poulie : 2,5 kg par côté, ou cran de 5
+};
 function _pasCharge(nom){
   let eq='autre'; try{ eq=_exEquip(nom); }catch(e){}
   let uni=false; try{ uni=(typeof estUnilateral==='function') && estUnilateral(nom); }catch(e){}
-  if(eq==='libre') return uni ? 2 : 4;      // haltères : 2 kg par haltère (× 2 bras)
-  if(eq==='elast'||eq==='trx'||eq==='corps') return 2.5;   // pas de disques : on reste fin
-  return 5;                                  // barre, machine, poulie : 2,5 kg par côté / cran de 5
+  const T=_PAS_CHARGE_TABLE;
+  if(eq==='libre') return uni ? T.libre_uni : T.libre;
+  if(eq==='elast'||eq==='trx'||eq==='corps') return T[eq];
+  return T.autre;
 }
 /* 🔢 LES RÉPÉTITIONS D'UN PALIER SE LISENT SUR SA CHARGE, PAS SUR SA POSITION (17/08/2026)
    Michel, séance du 16/08, Tirage Poulie Haute : **5 · 3 · 5 · 3 · 3** répétitions en montant en
