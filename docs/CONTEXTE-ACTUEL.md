@@ -6,9 +6,29 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v914` — fusionnée sur `master` le 19/08.
+- **Version en ligne (live) :** `ft-v915` — fusionnée sur `master` le 19/08.
 - **Rien en attente sur la branche.** Tout ce qui a été livré les 18 et 19/08 est en production.
   ⚠️ R18 — « j'ai poussé » ne veut pas dire « c'est en ligne » : le déploiement ne part que sur `master`.
+
+> ## ⚖️ 19/08 (nuit) — ft-v915 : LE CRU/CUIT, DERNIÈRE BRIQUE AVANT L'USAGE RÉEL
+>
+> Michel commence à s'en servir **lundi**. C'était le dernier défaut qui fausse un chiffre au
+> quotidien : `_PORTIONS` mélangeait cru et cuit sans le dire (riz 350 = cru, légumineuses 116 =
+> cuites), et un paquet de pâtes scanné puis pesé cuit comptait **×2,7**.
+> **Biais systématique → survit au moyennage.** Corrigé en NOMMANT, jamais en convertissant (R29).
+>
+> ### ✅ L'écran nutrition est utilisable
+> Circuit complet : noter un repas (manuel · scan · photo · repas habituel en un appui) → la carte
+> « Où tu en es » répond sur des **jours terminés**, sans reproche et sans chiffre inventé.
+>
+> ### ⏭️ Ce qui reste, et qui n'est PAS bloquant
+> Briques **1** (base CIQUAL), **3** (générateur de repas), **4** (les 4 niveaux de précision).
+> Ce sont des améliorations de confort. **Deux semaines d'usage réel diront mieux que nous ce
+> qu'il faut construire ensuite** — c'est le bon moment pour s'arrêter et regarder.
+>
+> ### 🩺 En attente d'une décision de Michel (inchangé)
+> La contradiction protéique — fiche whey **1,6-2 g/kg** contre moteur **2,0-2,6**. Bloquée parce
+> que les références de l'auditeur sont **de mémoire** et doivent être contrôlées avant d'écrire.
 
 > ## ⚖️ 19/08 (soir) — ft-v914 : LES CHARGES DE MILO ET LA GÉOGRAPHIE DE LA SALLE
 >
@@ -257,9 +277,10 @@
 > source ni sa version → un chiffre n'est ni comparable ni rejouable).
 > **RÈGLE ÉTABLIE** : *l'IA lit la phrase, elle ne produit JAMAIS les nombres* — les chiffres viennent
 > de CIQUAL / Open Food Facts, ce qui rend une saisie reproductible.
-> **DÉCISION PRISE, PAS ENCORE CODÉE** : le **cru/cuit** devient un **défaut par catégorie d'aliment**
-> (protéine animale → cru, féculent → cuit), modifiable ligne par ligne, **jamais converti**.
-> Michel doit **peser son riz cru une fois** pour avoir son ratio perso.
+> **✅ LIVRÉ EN ft-v915** : le **cru/cuit** est **écrit, jamais converti**. ⚠️ Et la convention retenue
+> n'est PAS celle notée ici (« féculent → cuit ») : à l'écriture elle ne tient pas — le riz s'achète
+> sec, les lentilles arrivent cuites en boîte. **La convention suit l'ALIMENT**, chaque ligne porte
+> son état. Côté journal, une note prévient du piège ×2,7 sur les produits secs scannés.
 >
 > ### 📄 LIVRABLE DU JOUR, hors dépôt
 > La note **« Peser cru ou cuit »** pour Tatiana (objective, les deux méthodes défendues) :

@@ -955,28 +955,28 @@ const _PORTIONS=[
   //    part » d'un petit-déjeuner. Les légumes et les fruits ont une portion STANDARD, et ce
   //    sont les aliments denses qui portent l'énergie du repas. (Mesuré, pas supposé.)
   // — féculents / céréales
-  [/flocons de sarrasin|porridge|avoine/i,          370, 1.0, 10,  30, 150],
-  [/p[âa]tes de riz|p[âa]tes compl[èe]tes|p[âa]tes/i,350, 1.1, 10,  40, 200],
-  [/riz basmati|riz complet|riz blanc|riz/i,        350, 1.1, 10,  40, 200],
-  [/quinoa/i,                                       368, 1.0, 10,  30, 150],
-  [/semoule|couscous/i,                             360, 1.0, 10,  30, 150],
-  [/pain sans gluten|pain complet|pain/i,           250, 0.8, 10,  30, 120],
-  [/patate douce/i,                                  86, 1.2, 10,  80, 350],
-  [/pomme de terre/i,                                77, 1.2, 10,  80, 350],
-  [/l[ée]gumineuses|lentilles|pois chiches|haricots rouges/i, 116, 1.0, 10, 50, 250],
-  [/barre c[ée]r[ée]ale maison|c[ée]r[ée]ale compl[èe]te/i, 350, 0.7, 10, 25, 120],
+  [/flocons de sarrasin|porridge|avoine/i,          370, 1.0, 10,  30, 150, 0, 0, 'cru'],
+  [/p[âa]tes de riz|p[âa]tes compl[èe]tes|p[âa]tes/i,350, 1.1, 10,  40, 200, 0, 0, 'cru'],
+  [/riz basmati|riz complet|riz blanc|riz/i,        350, 1.1, 10,  40, 200, 0, 0, 'cru'],
+  [/quinoa/i,                                       368, 1.0, 10,  30, 150, 0, 0, 'cru'],
+  [/semoule|couscous/i,                             360, 1.0, 10,  30, 150, 0, 0, 'cru'],
+  [/pain sans gluten|pain complet|pain/i,           250, 0.8, 10,  30, 120, 0, 0, ''],
+  [/patate douce/i,                                  86, 1.2, 10,  80, 350, 0, 0, 'cru'],
+  [/pomme de terre/i,                                77, 1.2, 10,  80, 350, 0, 0, 'cru'],
+  [/l[ée]gumineuses|lentilles|pois chiches|haricots rouges/i, 116, 1.0, 10, 50, 250, 0, 0, 'cuit'],
+  [/barre c[ée]r[ée]ale maison|c[ée]r[ée]ale compl[èe]te/i, 350, 0.7, 10, 25, 120, 0, 0, ''],
   // — protéines animales
-  [/blanc de dinde|dinde/i,                         110, 1.0, 10,  80, 250],
-  [/poulet\/thon|poulet/i,                          120, 1.0, 10,  80, 250],
-  [/b(œ|oe)uf/i,                                    180, 0.9, 10,  70, 220],   // ⚠️ « bœuf » = b+œ+u+f : `b[œo]euf` ne matchait JAMAIS
-  [/saumon/i,                                       200, 0.9, 10,  70, 200],
-  [/poisson blanc|poisson maigre|poisson|cabillaud|thon/i, 105, 1.0, 10, 80, 250],
-  [/jambon/i,                                       120, 0.7, 10,  40, 150],
-  [/[œo]ufs? brouill[ée]s?|[œo]ufs? entiers?|[œo]ufs?/i,143, 0.9, 10, 50, 200],
+  [/blanc de dinde|dinde/i,                         110, 1.0, 10,  80, 250, 0, 0, 'cru'],
+  [/poulet\/thon|poulet/i,                          120, 1.0, 10,  80, 250, 0, 0, 'cru'],
+  [/b(œ|oe)uf/i,                                    180, 0.9, 10,  70, 220, 0, 0, 'cru'],   // ⚠️ « bœuf » = b+œ+u+f : `b[œo]euf` ne matchait JAMAIS
+  [/saumon/i,                                       200, 0.9, 10,  70, 200, 0, 0, 'cru'],
+  [/poisson blanc|poisson maigre|poisson|cabillaud|thon/i, 105, 1.0, 10, 80, 250, 0, 0, 'cru'],
+  [/jambon/i,                                       120, 0.7, 10,  40, 150, 0, 0, ''],
+  [/[œo]ufs? brouill[ée]s?|[œo]ufs? entiers?|[œo]ufs?/i,143, 0.9, 10, 50, 200, 0, 0, 'cru'],
   // — protéines végétales / substituts
-  [/tofu brouill[ée]|tofu/i,                        145, 0.9, 10,  60, 250],
-  [/seitan/i,                                       140, 0.9, 10,  60, 200],
-  [/tempeh/i,                                       190, 0.9, 10,  50, 180],
+  [/tofu brouill[ée]|tofu/i,                        145, 0.9, 10,  60, 250, 0, 0, ''],
+  [/seitan/i,                                       140, 0.9, 10,  60, 200, 0, 0, ''],
+  [/tempeh/i,                                       190, 0.9, 10,  50, 180, 0, 0, ''],
   // — laitages et poudres
   [/yaourt de soja|yaourt grec|yaourt/i,             90, 0.9, 10,  80, 300],
   [/fromage blanc 0%|fromage blanc/i,                75, 0.9, 10,  80, 350],
@@ -1019,7 +1019,7 @@ function _portionner(desc, kcalRepas){
     //    deux, elle se met donc AU BOUT (« Saumon/bœuf 70 g ») et jamais au milieu.
     const fin=/\//.test(txt) ? txt.length : m.index+m[0].length;
     return {txt,kcal100:p[1],poids:p[2],pas:p[3],min:p[4],max:p[5],fixe:p[6]||0,
-            fin, liquide:!!p[7]};
+            fin, liquide:!!p[7], etat:p[8]||''};
   });
   // les portions STANDARD (légumes, fruits) sont posées d'abord ; elles ne se disputent pas
   // les calories du repas, ce sont les aliments denses qui les portent
@@ -1043,7 +1043,25 @@ function _portionner(desc, kcalRepas){
        lactose, pas à l'œil. Et l'unité vient de la TABLE, jamais d'une relecture du texte :
        le mot « huile » apparaît dans cette phrase alors que l'aliment mesuré est l'œuf. */
     const unite=c.liquide?' ml':' g';
-    return c.txt.slice(0,c.fin)+' '+c.g+unite+c.txt.slice(c.fin);
+    /* ⚖️ L'ÉTAT EST ÉCRIT, JAMAIS CONVERTI (19/08/2026 — le défaut mesuré le 18/08).
+       La table mélangeait le cru et le cuit SANS LE DIRE : riz 350 kcal/100 g (cru), pâtes 350
+       (sèches), quinoa 368 (sec) — mais légumineuses 116 (**cuites**). Une ligne « Riz 80 g +
+       lentilles 120 g » demandait donc de peser l'un cru et l'autre cuit, sans un mot.
+       ⭐ ET CE N'EST PAS DU BRUIT QUI S'ANNULE SUR LA SEMAINE : c'est un biais SYSTÉMATIQUE,
+       toujours dans le même sens — la seule classe d'erreur que « cohérence > réactivité » ne
+       peut pas absorber. Des pâtes pesées cuites sur une valeur « sèche » comptent ×2,7.
+       ⛔ ON NE CONVERTIT PAS, ON NOMME. Convertir supposerait un ratio d'absorption d'eau qu'on
+       n'a pas (il dépend de la cuisson de chacun) — ce serait inventer un chiffre (R29). Écrire
+       l'état coûte trois mots et rend la pesée reproductible.
+       ⚠️ ET LA CONVENTION SUIT L'ALIMENT, PAS UNE RÈGLE GLOBALE : le riz s'achète sec et se pèse
+       cru, les lentilles arrivent souvent cuites en boîte. Forcer une convention unique
+       obligerait à mentir sur l'un des deux. Chaque ligne porte donc SON état, modifiable seule.
+       ⚠️ « pesé cru / pesé cuit » est INVARIABLE, exprès : « (cuites) » pour les lentilles et
+       « (cru) » pour le riz demanderait d'accorder en genre et en nombre un texte déjà passé par
+       les substitutions de régime — un accord faux se verrait plus qu'il n'aiderait. Et la forme
+       verbale dit l'ACTION à faire, pas seulement l'état de l'aliment. */
+    const etat=c.etat?' ('+(c.etat==='cru'?'pesé cru':'pesé cuit')+')':'';
+    return c.txt.slice(0,c.fin)+' '+c.g+unite+etat+c.txt.slice(c.fin);
   });
   return out.join(' + ')+(suffixe?' —'+suffixe:'');
 }

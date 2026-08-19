@@ -1137,10 +1137,10 @@ console.log('\n═══ 9. Les repas suggérés respectent le RÉGIME (kéto, v
   if(po.erreur){ t('X les portions', false, po.erreur); }
   else{
     t('⭐⭐ chaque aliment connu recoit une portion EN GRAMMES',
-      /Avoine \d+ g \+ œufs \d+ g \+ fruit \d+ g/.test(po.simple), po.simple);
+      /Avoine \d+ g( \(pes[ée] (cru|cuit)\))? \+ œufs \d+ g( \(pes[ée] (cru|cuit)\))? \+ fruit \d+ g/.test(po.simple), po.simple);
     t('/!\\/!\\ la quantite se pose APRES l\'aliment, pas a la fin du morceau'
       +' (« a l\'huile d\'olive 200 g » = 200 g d\'HUILE)',
-      /Œufs brouillés \d+ g à l'huile d'olive/.test(po.prepa), po.prepa);
+      /Œufs brouillés \d+ g( \(pes[ée] (cru|cuit)\))? à l'huile d'olive/.test(po.prepa), po.prepa);
     t('/!\\ ... et l\'unite vient de la TABLE, pas d\'une relecture du texte (« huile » y apparait)',
       !/Œufs brouillés \d+ ml/.test(po.prepa), po.prepa);
     t('/!\\ une quantite DEJA ECRITE dans le plan n\'est pas doublee (R30)',
@@ -1164,7 +1164,7 @@ console.log('\n═══ 9. Les repas suggérés respectent le RÉGIME (kéto, v
 }
 
   t('TÉMOIN : kéto seul garde bien œufs, beurre et fromage',
-    /Œufs brouillés( \d+ (g|ml))? au beurre/.test(cr.ketoSeul)&&/fromage à pâte dure/.test(cr.ketoSeul),
+    /Œufs brouillés( \d+ (g|ml))?( \(pes[ée] (cru|cuit)\))? au beurre/.test(cr.ketoSeul)&&/fromage à pâte dure/.test(cr.ketoSeul),
     (cr.ketoSeul||'').slice(0,80));
   await c.close();
 }
@@ -1545,6 +1545,53 @@ console.log('\n═══ 13. Supplements : ce qui est affiche est-il vrai ? ═�
     t('/!\\ on peut revenir a la suggestion de l\'app en un geste',
       S13.retour===S13.auto, 'auto='+S13.auto+' retour='+S13.retour);
   }
+}
+
+/* == BLOC 14 - LE CRU/CUIT EST ECRIT, JAMAIS CONVERTI (19/08/2026) ==
+   Defaut mesure le 18/08 : `_PORTIONS` melangeait le cru et le cuit SANS LE DIRE — riz 350
+   kcal/100 g (cru), pates 350 (seches), quinoa 368 (sec), mais legumineuses 116 (CUITES).
+   Une ligne « Riz 80 g + lentilles 120 g » demandait de peser l'un cru et l'autre cuit.
+   ⭐ Ce n'est pas du bruit qui s'annule sur la semaine : biais SYSTEMATIQUE, toujours dans le
+   meme sens — la seule classe d'erreur que « coherence > reactivite » ne peut pas absorber.
+   ⛔ ON NE CONVERTIT PAS (le ratio d'absorption d'eau depend de la cuisson de chacun : ce serait
+   inventer un chiffre, R29). On NOMME. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2000);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const R=await pg.evaluate(()=>{
+    const o={};
+    /* ⚠️ ON PASSE PAR _portionner, presente des DEUX cotes — un temoin qui lirait _PORTIONS[i][8]
+       directement planterait sur l'ancien code au lieu de rougir (piege paye 7 fois). */
+    o.mixte  = _portionner('Riz + lentilles + legumes', 700);
+    o.oeufs  = _portionner("Œufs brouillés à l'huile d'olive + pain complet + fruit", 500);
+    o.laitage= _portionner('Yaourt grec + amandes + banane', 350);
+    // la note du journal : elle doit se declencher sur un sec qui gonfle, et sur lui seul
+    o.noteAvant = (document.getElementById('af-etat-note')||{}).style ? document.getElementById('af-etat-note').style.display : 'absent';
+    if(typeof _afNoteEtat==='function'){
+      _afNoteEtat('Penne complètes bio');
+      o.notePates = document.getElementById('af-etat-note').textContent;
+      o.affPates  = document.getElementById('af-etat-note').style.display;
+      _afNoteEtat('Yaourt nature');
+      o.affYaourt = document.getElementById('af-etat-note').style.display;
+    }
+    return o;
+  });
+  t('⭐⭐ LE RIZ EST ANNONCE PESE CRU',
+    /Riz \d+ g \(pes[ée] cru\)/.test(R.mixte), R.mixte);
+  t('⭐⭐ ... et les LENTILLES pesees CUIT, dans la MEME ligne (l\'ambiguite devient visible)',
+    /lentilles \d+ g \(pes[ée] cuit\)/.test(R.mixte), R.mixte);
+  t('/!\\ un aliment ou le cru/cuit n\'a pas de sens ne recoit AUCUN etat (R29 : on se tait)',
+    !/pes[ée] (cru|cuit)/.test(R.laitage), R.laitage);
+  t('/!\\ l\'etat se pose apres la QUANTITE, pas a la fin du morceau',
+    /Œufs brouillés \d+ g \(pes[ée] cru\) à l'huile/.test(R.oeufs), R.oeufs);
+  t('⭐ LA NOTE DU JOURNAL PREVIENT SUR UN SEC QUI GONFLE (le piege du x2,7)',
+    /produit SEC/.test(R.notePates||'') && R.affPates==='block', (R.notePates||'').slice(0,70));
+  t('/!\\ ... et elle se REND sur un aliment qui ne gonfle pas (R15)',
+    R.affYaourt==='none', 'affichage='+R.affYaourt);
+  await cx.close();
 }
 
 await b.close(); srv.close();
