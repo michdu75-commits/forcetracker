@@ -6,9 +6,42 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v912` — fusionnée sur `master` le 18/08.
-- **Rien en attente sur la branche.** Tout ce qui a été livré le 18/08 est en production.
+- **Version en ligne (live) :** `ft-v913` — fusionnée sur `master` le 19/08.
+- **Rien en attente sur la branche.** Tout ce qui a été livré les 18 et 19/08 est en production.
   ⚠️ R18 — « j'ai poussé » ne veut pas dire « c'est en ligne » : le déploiement ne part que sur `master`.
+
+> ## 📍 19/08/2026 — LA REVUE UX EXTÉRIEURE (à lire avant le bloc du 18/08 ci-dessous)
+>
+> Michel : *« fais-moi un UX complet de la section nutrition avec des screens pour que je voie avec
+> GPT, voir si tout est cohérent, ainsi que l'autre Claude »*. Un dossier de **12 captures** a été
+> fabriqué avec le vrai code (`tools/captures-nutrition.js`, données fictives « Alex »), relu par
+> **GPT** et par **l'autre instance Claude (v1.4)**. Les deux convergent sur 4 points → **ft-v913**.
+>
+> | Ce qui a été corrigé | Pourquoi ça comptait |
+> |---|---|
+> | La fiche **créatine s'ouvrait sur la phase de CHARGE** → **20 g/jour** recommandés par défaut | L'app **avertit au-delà de 5 g** depuis ft-v910 : le même écran se contredisait (R2) |
+> | La moyenne comptait **la journée en cours** | Une journée incomplète par construction → chiffre faux **tous les matins** |
+> | L'écart s'affichait **dès 1 jour**, en orange | *« 2 367 kcal sous ta cible »* au premier repas = un reproche. Désormais **3 jours terminés**, et en gris |
+> | Le **% de protéines plafonné à 100** | Quelqu'un à 149 % lisait « 100 % ». Le plafond ne vaut que pour la **barre** |
+>
+> **⚠️⚠️ LE CONSTAT QUI PORTE LE PLUS LOIN EST SUR MA MÉTHODE, PAS SUR L'ÉCRAN.** Mon dossier
+> annonçait *« vérifié en JOUANT le parcours, pas en le décrivant »* — et **trois de ses captures
+> créatine étaient identiques** : je n'avais pas appliqué ce parcours à l'onglet Suppléments.
+> *Écrire la règle en tête d'un document ne la fait pas appliquer au bas de ce même document.*
+> ⭐ Et c'est **en cherchant pourquoi elles étaient identiques** que le vrai défaut est sorti — le
+> défaut de `creatPhase`. **Le bug est venu de l'audit de ma propre négligence.**
+>
+> **⚠️ ET LES TESTS NE POUVAIENT PAS LE VOIR** : tous les témoins existants ouvraient la fiche
+> **après** avoir choisi une phase. *Un test qui règle toujours l'état avant de mesurer ne verra
+> jamais l'état par défaut.* Nouveau témoin permanent (bloc LVI).
+>
+> **⚠️ Un témoin FAIBLE trouvé au passage** : mon motif `1[0-9][0-9]` attrapait « **100** » dans
+> « 100 % », donc il **passait au vert sur l'ancien code plafonné**. *Un test qui passe des deux
+> côtés ne prouve rien tant qu'on n'a pas vérifié qu'il DOIT rougir d'un côté.*
+>
+> **⏭️ CE QUI RESTE DE LA REVUE, non livré** : la contradiction protéique (1,6-2 g/kg sur la fiche
+> whey contre 2,0-2,6 dans le moteur) — bloquée parce que les références de l'auditeur sont **de
+> mémoire** ; et les briques 1 · 3 · 4 du chantier nutrition (voir le tableau plus bas).
 
 > ## 📍 OÙ ON EN EST — 18/08/2026 (à lire en premier, remplace le bloc du 17/08 plus bas)
 >

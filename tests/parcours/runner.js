@@ -6471,7 +6471,11 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
        espace insecable etroite (U+202F) dans le navigateur et une autre espace dans Node — le
        temoin rougissait sur la SEPARATION DES MILLIERS alors que l'app affichait le bon nombre.
        Un test qui echoue sur un caractere d'espacement ne mesure pas ce qu'il annonce. */
-    o.moy3=Math.round(4300/3);      // ce qu'il FAUT afficher
+    /* ⚠️ AJUSTÉ LE 19/08, ET LA RÈGLE PROTÉGÉE N'A PAS CHANGÉ : la moyenne ne doit jamais être
+       divisée par 7. Ce qui a changé, c'est le NUMÉRATEUR — la journée EN COURS (j(0)) n'y entre
+       plus, parce qu'elle est incomplète par construction (constat des deux relectures
+       extérieures). Restent donc j(1) et j(3) : 1500 + 1900 = 3400 sur 2 jours. */
+    o.moy3=Math.round(3400/2);      // ce qu'il FAUT afficher (jours TERMINÉS)
     o.moy7=Math.round(4300/7);      // le piege : diviser par 7
     // ── ③ aujourd'hui non note (les 3 jours sont dans le passe) ───────────────
     S.foodLog=[
@@ -6496,7 +6500,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       _sansEspaces(R.trois).includes(String(R.moy3)) && !_sansEspaces(R.trois).includes(String(R.moy7)),
       R.trois.slice(0,140));
     t('⭐⭐ ... et l\'ecran DIT sur combien de jours elle porte',
-      /3 jours notés sur 7/.test(R.trois), R.trois.slice(0,60));
+      /2 jours notés sur 7/.test(R.trois), R.trois.slice(0,60));
     t('/!\\ aujourd\'hui non note : on le dit, on n\'invente pas un zero',
       /Rien de noté/.test(R.sansAuj), R.sansAuj.slice(0,90));
     t('/!\\ ... et la moyenne reste calculee sur les 2 jours reellement notes',
@@ -6624,9 +6628,82 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       'onglet='+R.ongletApres+' modale='+R.modale);
     t('⭐⭐ APRES AVOIR NOTE, LA CARTE MONTRE LES CHIFFRES (elle restait figee sur l\'invitation)',
       /180/.test(R.apres) && !/premier repas/.test(R.apres), R.apres.slice(0,110));
-    t('/!\\ ... et elle dit qu\'un seul jour est note (pas de fausse moyenne de semaine)',
-      /1 jour noté sur 7/.test(R.apres));
+    /* ⚠️ AJUSTÉ LE 19/08 : apres le tout premier repas, il n'y a AUCUNE journee terminee — donc
+       pas de moyenne, et l'ecran le dit (« journée en cours »). Avant, il annoncait « 1 jour noté »
+       et calculait une moyenne sur une journee a peine commencee. */
+    t('/!\\ ... et il n\'y a PAS de moyenne apres le premier repas (aucune journee terminee)',
+      /journée en cours/.test(R.apres) && !/sous ta cible/.test(R.apres), R.apres.slice(0,110));
   }
+}
+
+/* == BLOC LVI - CE QUE DEUX RELECTURES EXTERIEURES ONT TROUVE (19/08/2026) ==
+   Retours croises GPT + instance Claude « analyse » sur la revue UX. Quatre constats verifies
+   dans le code avant correction :
+   A/E la moyenne comptait AUJOURD'HUI, journee par definition incomplete → « 2 367 kcal sous ta
+       cible » adresse a quelqu'un qui vient de noter son petit-dejeuner. Le meme defaut que le
+       « /7 » corrige la veille, deplace d'un cran ;
+   G   le pourcentage de proteines etait plafonne a 100 % → 149 % s'affichait « 100 % » ;
+   +   la fiche creatine s'ouvrait sur la phase de CHARGE : 20 g/jour recommandes par defaut,
+       alors que l'app AVERTIT au-dela de 5 g quand on regle a la main (R2). */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_goal:'recomp'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    const j=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
+    const e=(d,m,n,k,pr)=>({date:d,meal:m,name:n,kcal:k,prot:pr,carbs:0,fat:0,ts:Date.now()+Math.random()*1e3});
+    const T=()=>document.getElementById('nu-ou-en-es').textContent.replace(/\s+/g,' ').trim();
+    // ── ① un seul repas, aujourd'hui : AUCUN jugement ────────────────────────
+    S.foodLog=[e(j(0),'petitdej','Shaker',180,35)]; persist(); goScreen('nutrition',null);
+    await new Promise(r=>setTimeout(r,300));
+    o.jour1=T();
+    // ── ② deux jours TERMINES + aujourd'hui partiel ─────────────────────────
+    S.foodLog=[e(j(0),'petitdej','Shaker',180,35),
+               e(j(1),'dejeuner','Repas',2400,150), e(j(2),'dejeuner','Repas',2600,160)];
+    persist(); renderNutrition();
+    o.jour3=T();
+    // ── ③ trois jours termines : l'ecart devient legitime ───────────────────
+    S.foodLog=[e(j(1),'dejeuner','Repas',2400,150), e(j(2),'dejeuner','Repas',2600,160),
+               e(j(3),'dejeuner','Repas',2500,155)];
+    persist(); renderNutrition();
+    o.jour4=T();
+    // ── ④ le pourcentage de proteines depasse 100 ──────────────────────────
+    S.foodLog=[e(j(1),'dejeuner','Repas',2000,400)]; persist(); renderNutrition();
+    o.pctHaut=T();
+    S.foodLog=[]; persist();
+    // ── ⑤ la fiche creatine s'ouvre sur l'ENTRETIEN ────────────────────────
+    switchNuTab('suppl',document.getElementById('ntab-suppl'));
+    await new Promise(r=>setTimeout(r,200));
+    o.creat=(document.getElementById('creat-content')||{}).textContent||'';
+    o.boutonActif=(document.querySelector('.phase-toggle-small .ptbtn.active')||{}).textContent||'';
+    return o;
+  });
+  await cx.close();
+
+  console.log('\n-- LVI. Ce que deux relectures exterieures ont trouve --');
+  t('⭐⭐ UN SEUL REPAS AUJOURD\'HUI : aucun « sous ta cible » (c\'etait un reproche)',
+    !/sous ta cible/.test(R.jour1), R.jour1.slice(0,110));
+  t('⭐ ... et la moyenne ne compte pas la journee EN COURS',
+    /journée en cours/.test(R.jour1) || !/1 jour noté/.test(R.jour1), R.jour1.slice(0,90));
+  t('⭐⭐ AUJOURD\'HUI N\'ENTRE PAS DANS LA MOYENNE (2 jours termines, pas 3)',
+    /2 jours notés sur 7/.test(R.jour3), R.jour3.slice(0,90));
+  t('/!\\ ... et sous 3 jours termines, aucun ecart n\'est affiche',
+    !/sous ta cible|au-dessus/.test(R.jour3), R.jour3.slice(0,110));
+  t('⭐ a partir de 3 jours termines, l\'ecart devient legitime',
+    /sous ta cible|au-dessus|dans ta cible/.test(R.jour4), R.jour4.slice(0,110));
+  /* ⚠️ LE MOTIF DOIT EXCLURE 100 : mon 1er jet acceptait `1[0-9][0-9]`, qui matche « 100 » —
+     donc il passait AUSSI sur l'ancien code plafonne, et ne prouvait rien. On lit le nombre et
+     on exige qu'il depasse 100. */
+  const _pct=parseInt((String(R.pctHaut).match(/(\d+) % de ta cible/)||[])[1]||'0');
+  t('⭐⭐ LE POURCENTAGE DE PROTEINES N\'EST PLUS PLAFONNE A 100 %',
+    _pct>100, 'affiche='+_pct+' %');
+  t('⭐⭐ LA FICHE CREATINE S\'OUVRE SUR L\'ENTRETIEN, plus sur 20 g/jour',
+    !/20g \/ jour/.test(R.creat) && /Maintenance/i.test(R.boutonActif),
+    'actif='+R.boutonActif.trim()+' · '+R.creat.slice(0,60));
 }
 
 await b.close(); srv.close();

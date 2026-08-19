@@ -5,7 +5,18 @@
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
 // ─── SUPPLÉMENTS & PROTÉINES ──────────────────────────────────
-let creatPhase = 'charge';
+/* 💊 LE DÉFAUT EST L'ENTRETIEN, PLUS LA CHARGE (19/08/2026).
+   Découvert grâce à une revue UX extérieure : mes trois captures « entretien / dose à 8 g /
+   charge » étaient IDENTIQUES, et c'est en cherchant pourquoi que le défaut est apparu — la
+   fiche s'ouvrait sur la phase de CHARGE, donc l'app recommandait **20 g/jour, 4 × 5 g** à
+   quiconque ouvrait simplement l'onglet.
+   ⚠️⚠️ ET ÇA CONTREDISAIT L'APP ELLE-MÊME : depuis ft-v910 elle AVERTIT au-delà de 5 g — elle
+   affichait donc par défaut quatre fois la dose qu'elle signale quand on la règle à la main
+   (R2 : deux endroits qui disent l'inverse l'un de l'autre).
+   ⚠️ La charge n'est pas retirée : elle reste à un appui. C'est le DÉFAUT qui change, et il n'a
+   jamais eu de raison d'être la dose la plus haute — la charge n'a jamais fait mieux que
+   l'entretien, seulement plus vite (Hultman 1996). */
+let creatPhase = 'maintenance';
 
 // ⚠️ Les 5 fonctions suppléments (renderSupplements, renderCreatine, renderWhey,
 // setCreatPhase, updateProteinBar) vivent PLUS BAS dans ce fichier (une seule
@@ -1788,13 +1799,18 @@ function updateProteinBar() {
   const _saisi = document.getElementById('prot-eaten')?.value;
   const _duJournal = (typeof _foodTotals==='function') ? (_foodTotals(today()).prot||0) : 0;
   const eaten = (_saisi!==''&&_saisi!=null) ? (parseFloat(_saisi)||0) : _duJournal;
-  const pct = target > 0 ? Math.min(100, Math.round(eaten / target * 100)) : 0;
+  /* ⚠️ LE PLAFOND NE VAUT QUE POUR LA LARGEUR DE LA BARRE (19/08/2026) — relevé par la revue
+     UX extérieure. Le nombre affiché, lui, ne doit JAMAIS être plafonné : quelqu'un qui mange
+     149 % de sa cible lisait « 100 % » et se croyait exactement dessus. Le cas le pire est le
+     kéto, où les protéines sont contraintes et où le dépassement est justement l'information. */
+  const pct = target > 0 ? Math.round(eaten / target * 100) : 0;
+  const pctBarre = Math.min(100, pct);
   const remaining = Math.max(0, target - eaten);
   const bar = document.getElementById('prot-bar');
   const pctEl = document.getElementById('prot-pct-disp');
   const remEl = document.getElementById('prot-remaining');
   const targEl = document.getElementById('prot-target-disp');
-  if (bar) { bar.style.width = pct + '%'; bar.style.background = pct >= 100 ? 'var(--green)' : pct >= 70 ? 'var(--gold)' : 'var(--red)'; }
+  if (bar) { bar.style.width = pctBarre + '%'; bar.style.background = pct >= 100 ? 'var(--green)' : pct >= 70 ? 'var(--gold)' : 'var(--red)'; }
   if (pctEl) { pctEl.textContent = pct + '%'; pctEl.style.color = pct >= 100 ? 'var(--green)' : pct >= 70 ? 'var(--gold)' : 'var(--red)'; }
   if (remEl) remEl.textContent = remaining + 'g';
   if (targEl) targEl.textContent = target + 'g';
