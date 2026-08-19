@@ -977,6 +977,28 @@ let _bcNutr=null; // {name, kcal100, prot100, carbs100, fat100}
 const FOOD_LOG_V=1;
 let _afSrc=null;   // provenance de ce qui remplit ACTUELLEMENT le formulaire (null = saisie main)
 function _afSetSrc(o){ _afSrc=o||null; }
+/* ⚖️ LE PIÈGE DU ×2,7 — UN PAQUET DE PÂTES SCANNÉ PUIS PESÉ CUIT (19/08/2026).
+   Open Food Facts donne les valeurs « TELLES QUE VENDUES » : le paquet de pâtes annonce 350
+   kcal/100 g, ce sont des pâtes SÈCHES. Quelqu'un qui scanne son paquet puis pèse 200 g de pâtes
+   CUITES enregistre 700 kcal au lieu de 260 — un facteur 2,7, tous les jours, dans le même sens.
+   ⭐ C'est la même famille que le mélange cru/cuit du plan de repas : un biais SYSTÉMATIQUE, donc
+   il survit au moyennage hebdomadaire. C'est la seule classe d'erreur que « cohérence avant
+   réactivité » ne peut pas absorber.
+   ⛔ ON NE CONVERTIT RIEN, ON PRÉVIENT. Le ratio d'absorption d'eau dépend de la cuisson de
+   chacun : le calculer serait inventer un chiffre (R29). Et on ne bloque pas la saisie (R24) —
+   une note suffit, la personne sait ce qu'elle a dans son assiette, pas nous.
+   ⚠️ LA LISTE EST VOLONTAIREMENT COURTE : uniquement les aliments qui GONFLENT franchement à la
+   cuisson et qu'on achète secs. Un aliment dont le poids ne bouge pas (yaourt, fromage, huile)
+   n'a rien à faire ici — une note qui s'affiche pour tout n'est plus lue (R24). */
+const _SECS_QUI_GONFLENT=/p[âa]tes|spaghetti|macaroni|penne|tagliatelle|coquillettes|riz\b|basmati|quinoa|semoule|couscous|boulgour|lentille|pois cass|pois chiche|haricot sec|flageolet|avoine|floconn/i;
+function _afNoteEtat(nom){
+  const el=document.getElementById('af-etat-note'); if(!el) return;
+  if(nom && _SECS_QUI_GONFLENT.test(String(nom))){
+    el.textContent='⚖️ Les valeurs du paquet sont pour le produit SEC. Si tu pèses après cuisson, '
+      +'note le poids SEC (une portion cuite pèse 2 à 3 fois plus, et le compte serait faux d\'autant).';
+    el.style.display='block';
+  } else { el.style.display='none'; }
+}
 /* Construit le bloc de provenance au moment de l'enregistrement.
    ⚠️ `modifie` compare les macros FINALES à celles que la source avait produites : si la personne
    a retouché les chiffres, la source n'explique plus le résultat, et le dire est plus honnête que
@@ -989,6 +1011,11 @@ function _provFood(vals){
     p.origine=_afSrc.origine||'utilisateur';
     if(_afSrc.sourceId)p.sourceId=String(_afSrc.sourceId).slice(0,32);
     if(_afSrc.per100)p.per100=_afSrc.per100;
+    /* ⚖️ L'ÉTAT DESCEND ENFIN JUSQU'À LA DONNÉE (19/08/2026). Le champ existait depuis la
+       brique 0 (ft-v907) et valait TOUJOURS `null` : on savait que les valeurs d'Open Food Facts
+       sont « telles que vendues », c'était écrit en commentaire — et ça n'atteignait pas
+       l'entrée enregistrée. R4, dans le fichier qui documente R4. */
+    if(_afSrc.etat)p.etat=_afSrc.etat;
     const a=_afSrc.attendu;
     if(a&&vals) p.modifie=['kcal','prot','carbs','fat'].some(k=>(+a[k]||0)!==(+vals[k]||0));
   }
@@ -1159,8 +1186,10 @@ async function _lookupBarcode(ean){
   //    donne les valeurs SÈCHES. On enregistre donc `per100` et l'`origine` — c'est ce qui
   //    permettra, quand la base d'aliments existera, de rattraper l'état sans re-demander.
   _afSetSrc({saisie:'scan',origine:'off',sourceId:(typeof ean!=='undefined'?ean:null),
+    etat:'tel-que-vendu',
     per100:{kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
     attendu:_afLuFormulaire()});
+  _afNoteEtat(_bcNutr.name);
   // Score santé indicatif (Nutri-Score + NOVA + additifs) — module food-health.js
   try{ if(window.FoodHealth)FoodHealth.renderCard(p,'#af-health-card'); }catch(e){}
   toast('Produit trouvé ✅ — ajuste la quantité','success');
@@ -1267,6 +1296,7 @@ function openAddFood(){
      source qui n'a rien à voir. Une provenance fausse est pire que pas de provenance : elle se
      présente comme un fait vérifiable. */
   _afSetSrc(null);
+  _afNoteEtat('');   // R15 : la note se rend comme la provenance, sinon elle survit au produit suivant
   const bcRow=document.getElementById('af-bc-row');if(bcRow)bcRow.style.display='none';
   const hc=document.getElementById('af-health-card');if(hc)hc.innerHTML='';
   // Code-barres + score santé : GRATUIT pour tout le monde (client-side, 0 token).
