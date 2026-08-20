@@ -2374,6 +2374,12 @@ function _coachHistPayload(n){
     .filter(m => m && (m.role==='user'||m.role==='assistant') && m.content!=null && m.content!=='')
     .map(m => ({ role: m.role, content: m.content }));
 }
+// ⚠️ UNE SEULE LISTE D'INTERDITS KETO (R2). Elle est lue à DEUX endroits : la règle de fond
+// (bloc PROFIL, mis en cache) et le rappel de fin de prompt (jamais caché, ajouté le 20/08
+// après que le benchmark a montré Milo proposer riz/pâtes/pain à un profil keto). Deux listes
+// divergeraient : on interdirait le pain d'un côté et on l'autoriserait de l'autre.
+const _KETO_INTERDITS = 'riz, pâtes, pain, avoine, fruits sucrés, sucre';
+
 // @param {string|undefined} msg — le message que la personne vient d'écrire. Sert UNIQUEMENT
 //        à décider si les gros blocs liés à l'entraînement sont utiles (voir _ctxEntrainement).
 //        Non fourni = on envoie TOUT (appelants de diagnostic, laboratoire PT-001).
@@ -2837,7 +2843,7 @@ ${(S.beginnerJourney&&S.beginnerJourney.phase===1)?`- Il/elle a démarré son pa
 ${(()=>{const bmi=(S.bw&&S.height)?S.bw/((S.height/100)**2):0;return (bmi>=28||S.goal==='perte')?`- Attention au poids/articulations${bmi?` (IMC ~${Math.round(bmi)})`:''} : privilégie le cardio À FAIBLE IMPACT (vélo, marche rapide, elliptique, rameur — évite course/sauts qui tapent genoux et dos), une progression douce des charges, et un travail de gainage. Le cardio est important ici pour la santé cardiovasculaire et la perte de gras.`:''})()}
 - Calories cible: ${macros.calories || '—'} kcal | Protéines: ${macros.prot_g || '—'}g | Glucides: ${macros.carbs_g || '—'}g | Lipides: ${macros.fat_g || '—'}g
 ${(typeof dietSummary==='function'&&dietSummary())?`- ⚠️ RÉGIME ALIMENTAIRE À RESPECTER: ${dietSummary()} — ne propose JAMAIS d'aliment ou de supplément non conforme (ex. végan → pas de whey/œufs, propose protéine végétale + B12 ; halal/sans porc → aucun porc/gélatine porcine ni alcool si sans alcool).`:''}
-${S.keto?`- ⚠️ RÉGIME CÉTOGÈNE (KETO): très peu de glucides (~5%), beaucoup de lipides (~80%). Ne propose JAMAIS d'aliments riches en glucides (riz, pâtes, pain, avoine, fruits sucrés, sucre) ni de compléments sucrés. Privilégie viandes/poissons gras, œufs, avocat, fromage, oléagineux, huiles, légumes verts pauvres en glucides.`:''}
+${S.keto?`- ⚠️ RÉGIME CÉTOGÈNE (KETO): très peu de glucides (~5%), beaucoup de lipides (~80%). Ne propose JAMAIS d'aliments riches en glucides (${_KETO_INTERDITS}) ni de compléments sucrés. Privilégie viandes/poissons gras, œufs, avocat, fromage, oléagineux, huiles, légumes verts pauvres en glucides.`:''}
 ${S.foodMode==='lowcarb'?`- ⚠️ LOW CARB: glucides réduits (~25% des calories) SANS viser la cétose. Garde des glucides autour de l'entraînement, où ils servent. Ne propose pas de gros plats de pâtes/riz.`:''}
 ${S.foodMode==='paleo'?`- ⚠️ PALÉO: ni céréales (blé, riz, avoine, maïs), ni légumineuses, ni laitages, ni produits transformés. Viandes, poissons, œufs, légumes, fruits, oléagineux, patate douce.`:''}
 ${S.foodMode==='mediterraneen'?`- ⚠️ MÉDITERRANÉEN: beaucoup de végétaux, poisson, huile d'olive, légumineuses, céréales complètes ; viande rouge rare. Ne présente jamais ça comme un traitement médical.`:''}
@@ -3138,6 +3144,37 @@ ils ne partent que quand ils servent, sans jamais toucher à la partie mise en c
 MOMENT PRÉSENT (heure locale de la personne) :
 - On est ${_dateStr}, il est ${_timeStr} — c'est ${_period === 'nuit' && _h >= 22 ? 'le soir/la nuit (tard)' : _period}. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). ${_period === 'soirée' || _period === 'nuit' ? 'En soirée/la nuit : pense au sommeil et à la récupération ; une séance ou des stimulants (café, pré-workout) trop tard peuvent gêner l\'endormissement — mentionne-le avec tact si pertinent.' : _period === 'matin' ? 'Le matin : tu peux évoquer l\'énergie du réveil, un petit-déjeuner adapté avant/après séance.' : ''}${_coachGapText()}
 
+${(()=>{
+  /* ⛔⛔ RAPPEL DE RÉGIME — MESURÉ LE 20/08/2026, PAS SUPPOSÉ.
+     La 1ʳᵉ vraie passe du benchmark a montré Milo proposer « riz, pâtes, pain, patate douce »
+     à un profil KETO — sur les DEUX modèles et aux DEUX passes. Vérifié avant de coder :
+     `S.keto` était bien à true, et la règle « ne propose JAMAIS (riz, pâtes, pain…) » était
+     bien DANS le prompt. Ce n'est donc ni une donnée absente (R8) ni une règle manquante :
+     c'est une règle PRÉSENTE et NON APPLIQUÉE — exactement l'hypothèse que le benchmark
+     existait pour tester (§8 de docs/ARCHITECTURE-CERVEAU-CERVELET.md).
+     Le chiffre qui explique probablement pourquoi : la règle est à **67 % du prompt**, au
+     milieu de **56 autres « JAMAIS »**. C'est la dilution, avec un cas concret cette fois.
+     ⭐ LE CORRECTIF EST UN RAPPEL EN FIN DE PROMPT, dans la zone JAMAIS mise en cache : une
+     règle courte, au moment où elle compte, à l'endroit le mieux vu. C'est le levier §9 n°1.
+     ⚠️ ET LA RÈGLE D'ORIGINE N'EST PAS RETIRÉE : si la détection rate, on retombe sur le
+     comportement d'aujourd'hui — jamais sur une règle absente en silence. C'est la condition
+     que §9 pose lui-même, et elle n'est pas négociable.
+     ⚠️ R29 : se tromper ici ne coûte qu'une ligne redondante ; ne pas la mettre coûte une
+     assiette non conforme à quelqu'un qui suit un régime. Le détecteur est donc LARGE. */
+  const _reg=[];
+  if(S.keto) _reg.push('cétogène — aucun '+_KETO_INTERDITS);
+  if(typeof dietSummary==='function'&&dietSummary()) _reg.push(dietSummary());
+  if(S.foodMode==='paleo') _reg.push('paléo — ni céréales, ni légumineuses, ni laitages');
+  if(S.foodMode==='lowcarb') _reg.push('low carb — pas de gros plats de pâtes/riz');
+  if(!_reg.length) return '';
+  const _q=String(msg||'');
+  const _parleBouffe=/mang|repas|midi|soir[ée]|d[ée]jeun|d[îi]n|petit.?d[ée]j|collation|snack|assiette|recette|cuisin|aliment|nutrition|glucide|prot[ée]in|lipide|calorie|menu|courses/i.test(_q);
+  if(!_parleBouffe) return '';
+  return `\n⛔ RÉGIME À RESPECTER — LA QUESTION PORTE SUR L'ALIMENTATION, RELIS CECI AVANT DE RÉPONDRE :
+${_reg.map(r=>'   · '+r).join('\n')}
+   Aucun aliment non conforme, même « juste en exemple » ou « en petite quantité ». Si tu ne
+   sais pas quoi proposer dans ce cadre, dis-le — c'est mieux que de proposer hors régime.\n`;
+})()}
 RÉCUPÉRATION & SOMMEIL:
 ${(()=>{
   const score=calcRecoveryScore();
@@ -4545,12 +4582,25 @@ function _evBuildReport(SC, parPasse, compare){
   if(compare && parPasse.prod && parPasse.haiku){
     const rp = parPasse.prod.filter(x=>x.etat==='rouge').length;
     const rh = parPasse.haiku.filter(x=>x.etat==='rouge').length;
+    const ids = k => parPasse[k].filter(x=>x.etat==='rouge').map(x=>x.id);
+    const pH = ids('haiku').filter(i=>ids('prod').indexOf(i)<0);
+    const pP = ids('prod').filter(i=>ids('haiku').indexOf(i)<0);
+    // ⚠️ SEUIL MESURÉ, pas choisi — il vit dans le corpus (R2), jamais recopié ici.
+    const SEUIL = (window.EVAL_SCENARIOS && window.EVAL_SCENARIOS.ECART_MINIMAL) || 3;
     L.push('── SONNET vs HAIKU ─────────────────────────');
     L.push('Rouges : Sonnet '+rp+' · Haiku '+rh);
+    if(pH.length) L.push('Rouges propres à Haiku  : '+pH.join(', '));
+    if(pP.length) L.push('Rouges propres à Sonnet : '+pP.join(', '));
     L.push('');
-    if(rh>rp){
-      L.push('👉 Haiku est plus rouge : R9 est CONFIRMÉ par un chiffre sur ce prompt-ci.');
+    if(rh-rp>=SEUIL){
+      L.push('👉 Haiku est plus rouge de '+(rh-rp)+' (seuil '+SEUIL+') : R9 est CONFIRMÉ par un chiffre.');
       L.push('   La question « et si on passait tout le monde en Haiku ? » est close.');
+    }else if(rh>rp){
+      L.push('⚠️ Haiku est plus rouge de '+(rh-rp)+' seulement — CE N\'EST PAS CONCLUANT.');
+      L.push('   Deux passes du MÊME modèle varient déjà de ±1 (mesuré le 20/08 : 3 puis 4).');
+      L.push('   Il faut '+SEUIL+' rouges d\'écart, ou plusieurs passes, pour conclure.');
+      L.push('   ⭐ Regarde plutôt QUELS rouges sont propres à Haiku : leur nature dit plus');
+      L.push('     que le compte (une charge impossible, ou 3 questions d\'affilée, c\'est R9).');
     }else{
       L.push('⚠️ Haiku n\'est pas plus rouge — et ça ne ROUVRE RIEN.');
       L.push('   Un vert ne dit que « aucune violation détectable sur '+SC.length+' pièges ».');

@@ -286,12 +286,27 @@ function verifier(sc, reply) {
     });
     const rp = parPasse.prod .filter(r=>r.etat==='rouge').length;
     const rh = parPasse.haiku.filter(r=>r.etat==='rouge').length;
+    const idsR = k => new Set(parPasse[k].filter(r=>r.etat==='rouge').map(r=>r.id));
+    const propreHaiku = [...idsR('haiku')].filter(i=>!idsR('prod').has(i));
+    const propreProd  = [...idsR('prod')].filter(i=>!idsR('haiku').has(i));
     console.log('\n  Rouges : Sonnet ' + rp + ' · Haiku ' + rh + '   (' + ecart + ' scénario(s) où les deux diffèrent)');
+    if (propreHaiku.length) console.log('  Rouges propres à Haiku  : ' + propreHaiku.join(', '));
+    if (propreProd.length)  console.log('  Rouges propres à Sonnet : ' + propreProd.join(', '));
     console.log('');
     // ⚠️⚠️ LA LECTURE EST ASYMÉTRIQUE, et c'est le message le plus important du rapport.
-    if (rh > rp) {
-      console.log('  👉 Haiku est plus rouge : R9 est CONFIRMÉ par un chiffre sur CE prompt-ci.');
+    // ⚠️ ET ELLE A UN SEUIL, MESURÉ : deux passes du MÊME modèle ont donné 3 puis 4 rouges
+    //    le 20/08 — la variation naturelle est de ±1. On n'annonce donc rien en dessous de
+    //    SCENARIOS.ECART_MINIMAL rouges d'écart. Ce qui reste lisible sous ce seuil, ce n'est
+    //    pas le COMPTE, c'est la NATURE des rouges propres à chaque modèle (ci-dessus).
+    if (rh - rp >= SCENARIOS.ECART_MINIMAL) {
+      console.log('  👉 Haiku est plus rouge de ' + (rh-rp) + ' (seuil ' + SCENARIOS.ECART_MINIMAL + ') : R9 est CONFIRMÉ par un chiffre.');
       console.log('     La question « et si on passait tout le monde en Haiku ? » est close.');
+    } else if (rh > rp) {
+      console.log('  ⚠️ Haiku est plus rouge de ' + (rh-rp) + ' seulement — CE N\'EST PAS CONCLUANT.');
+      console.log('     Deux passes du même modèle varient déjà de ±1 (mesuré le 20/08 : 3 puis 4).');
+      console.log('     Il faut ' + SCENARIOS.ECART_MINIMAL + ' rouges d\'écart, ou plusieurs passes, pour conclure.');
+      console.log('     ⭐ Regarde plutôt QUELS rouges sont propres à Haiku : leur nature dit plus');
+      console.log('       que le compte (une charge impossible ou 3 questions d\'affilée, c\'est R9).');
     } else {
       console.log('  ⚠️ Haiku n\'est pas plus rouge — et ça ne ROUVRE RIEN.');
       console.log('     Un vert dit seulement « aucune violation détectable sur ' + liste.length + ' pièges ».');

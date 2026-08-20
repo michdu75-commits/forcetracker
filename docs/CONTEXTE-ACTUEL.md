@@ -6,7 +6,25 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v931` — fusionnée sur `master` le 20/08.
+- **Version en ligne (live) :** `ft-v933` — fusionnée sur `master` le 20/08.
+- 🥑 **LE BENCHMARK A TROUVÉ SON PREMIER VRAI DÉFAUT** (ft-v933) — Milo proposait **riz, pâtes,
+  pain** à un profil **keto**, sur les 2 modèles et aux 2 passes.
+  ⭐⭐ **Diagnostic fait AVANT de toucher au prompt (R7)** : `S.keto` était vrai, la règle était
+  bien dans le prompt. **Règle présente, non appliquée** — l'hypothèse du §8, enfin démontrée.
+  ⭐ **Le chiffre** : la règle était à **67 %** du prompt, parmi **56 « JAMAIS »**.
+  👉 **Correctif = le levier §9 n°1** : rappel court en **fin** de prompt (97 %), zone non
+  cachée, seulement si la question porte sur l'alimentation. ⛔ **La règle d'origine reste** —
+  une détection ratée ne doit jamais donner une règle absente en silence.
+  ⚠️ **L'instrument s'est trompé deux fois** : un faux rouge (1RM estimé pris pour une charge)
+  et une conclusion trop forte (« R9 CONFIRMÉ » sur 1 rouge d'écart, alors que le même modèle
+  varie de ±1). Seuil porté à **3 rouges d'écart**, sinon « PAS CONCLUANT ».
+  ⏭️ **À refaire** : une passe après ce correctif, pour voir si EV-012 passe au vert.
+  ⏭️ **Rouges non traités** : EV-003 (ordre du face pull) · EV-015 (rôle de complément au
+  coach humain) · EV-009 (matériel redemandé, intermittent).
+- 📋 **Le rapport du benchmark se copie** (ft-v932) — l'export rendait un fichier d'**une ligne**
+  (le titre du partage, pas le contenu). Bouton « 📋 Copier » ajouté, indépendant de toute
+  feuille de partage. ⚠️ Correction **étroite** : 8 autres exports partagent un fichier avec un
+  titre **et fonctionnent** — on n'a pas touché à ce qui marche.
 - 🧪 **LE BENCHMARK A UN BOUTON** (ft-v931) — Profil → Admin → « 🧪 Lancer le benchmark » ·
   « ⚖️ Comparer Sonnet et Haiku ». **Le coût est annoncé avant** de lancer.
   ⚠️ **Ce n'est pas du confort** : la ligne de commande ne peut tourner ni depuis une session
