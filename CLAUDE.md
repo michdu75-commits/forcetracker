@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v927`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v928`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v927`** (prochaine : `ft-v928`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v928`** (prochaine : `ft-v929`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,19 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v928 — 📋 LE RÉCAP DU DÉBRIEF EST ÉCRIT PAR LE CODE, plus par Milo** — Michel, après le débrief incomplet : *« comme le débrief est automatique autant le faire en haiku dans la conversation de Milo, ça coûte pas cher pis voilà, pas besoin de faire un truc de fou »*.
+
+**⚠️ ON N'A PAS CHANGÉ DE MODÈLE, ET LE CHIFFRE TRANCHE** : ~15 débriefs par mois, l'écart Sonnet/Haiku vaut **~0,17 €/mois**. Pour dix-sept centimes on dégraderait **précisément le message dont il venait de se plaindre**. Et **R9** le dit déjà : *un modèle léger suit MAL les consignes fines* — or on venait justement d'en ajouter une exigeante (« couvre les 5 exercices »). ⚠️ La décision *« Sonnet pour tout le monde »* est d'ailleurs écrite dans `worker.js` avec **ses mots du 10/08** (*« si les gens trouvent Milo nul ils ne vont pas le prendre »*) et marquée **à ne pas re-proposer** (**R30**) — la ré-ouvrir demandait de la mesurer, pas de la citer.
+
+**⭐⭐ MAIS SON INTUITION AVAIT UNE MOITIÉ JUSTE, ET C'EST EXACTEMENT SA PROPRE FRONTIÈRE.** Il sent que ce travail *ne mérite pas le gros cerveau* — c'est vrai, **pour la liste**. Or *lister* est une **TRANSFORMATION** et *commenter* est un **JUGEMENT** : c'est le critère cerveau/cervelet, appliqué à l'intérieur d'un seul message. Et la liste ne mérite alors même pas Haiku — **elle mérite du CODE**.
+
+**👉 CE QUI EST LIVRÉ** : `_recapSeance()` écrit la liste complète — nom, séries au format **reps × poids** (celui de l'app depuis ft-v396, **R2**), échauffements **comptés et non détaillés** — **au-dessus** de la réponse de Milo, **gratuitement et hors ligne**, exactement comme le récap de fin de séance. Sa consigne lui dit de **commenter sans recopier**.
+
+**⭐ LE CHANGEMENT DE NATURE EST LÀ** : *Milo ne PEUT plus sauter un exercice, au lieu qu'on lui DEMANDE de ne pas le faire.* ft-v927 posait la règle ; ici on retire le besoin de la suivre.
+
+**⚠️ PORTÉE HONNÊTE, écrite dans le code** : ça ne couvre que le débrief **AUTOMATIQUE**, dont le déclenchement est déterministe. Quand la personne demande *« que penses-tu de ma séance »* en plein chat, l'app ne peut pas le deviner sans **classer** le message — et une erreur de classement est silencieuse. Là, seule la règle du prompt reste, et elle est plus faible.
+Tests : **parcours 829/829** (+6, bloc LXV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif ici** : `_recapSeance` est une fonction NEUVE — un témoin tourné contre l'ancien code rendrait « fonction absente » au lieu de mesurer, le piège payé 8 fois. Ce que les témoins prouvent est autre chose et suffit : la liste est complète **par construction**, elle retombe sur la séance la plus récente si l'identifiant est inconnu, et elle ne peut jamais faire tomber le débrief. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v928. |
 
 **ft-v927 — 📋 UN DÉBRIEF COUVRE TOUS LES EXERCICES — il en sautait 2 sur 5** — Michel, en relisant sa séance : *« et il a oublié des exercices si je ne dis pas de connerie »*. Il ne disait pas de connerie.
 
@@ -718,15 +731,6 @@ Tests : **parcours 755/755** (+4, bloc LV), calculs 235/235, muscles 232/232, cr
 
 **⚠️ La provenance dit « reprise »** (brique 0) : ni une mesure fraîche, ni une saisie manuelle. Sans ça, un chiffre repris finirait par passer pour une mesure. Et un repas **déjà rejoué aujourd'hui** ne se re-propose pas.
 Tests : **parcours 751/751** (+7, bloc LIV), calculs 235/235, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. Fichiers : `app.js`, `screens.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v911. |
-
-**ft-v910 — 💊 LA DOSE EST LIBRE, ET C'EST L'AVERTISSEMENT QUI REMPLACE LE PLAFOND** — décision de Michel, en une phrase : *« pour moi on laisse le champ libre et il n'y a pas de taux légal en France. Mais avec un avertissement au-delà de 3-5 grammes »*.
-
-**⚠️⚠️ ET IL A RAISON SUR LE FOND — J'AVAIS ÉCRIT FAUX.** L'arrêté du 26/09/2016 fixe une dose journalière maximale de 3 g **pour les compléments alimentaires VENDUS en France** : ça engage le **fabricant** — ce qu'il a le droit de commercialiser et d'inscrire sur l'étiquette — **pas le consommateur**. *Personne n'est hors la loi en prenant 5 g.* Écrire « maximum légal » faisait passer un repère de **commercialisation** pour une **interdiction**, et l'app aurait sermonné quelqu'un qui ne fait rien d'illégal. **C'est exactement la dérive que la Constitution interdit** : on adapte, on n'interdit pas.
-
-**DEUX SEUILS, DEUX TONS — et ne pas les confondre est le cœur du correctif (R11)** : au-dessus de **3 g**, un simple **repère** qui dit *que c'est une règle de commercialisation, pas une limite pour toi* · au-dessus de **5 g**, un **avertissement** — on sort de ce que décrivent les sociétés savantes (3-5 g/j, ISSN), les doses supérieures documentées portent surtout sur des **phases de charge** ou des périodes de 4 à 12 semaines, et les preuves au long cours y sont limitées. **⚠️ Écrit noir sur blanc dans les deux cas : ce n'est pas un risque démontré, c'est une zone peu étudiée.** En dessous de 3 g : ni l'un ni l'autre — *on n'encombre pas un écran pour rien* (R24).
-
-**⚠️ ET LES BORNES DE SAISIE SONT VOLONTAIREMENT LARGES** (0,5 à 30 g) : elles n'existent que pour attraper une faute de frappe, **pas pour brider un choix**. 30 g/j pendant 5 ans est documenté comme toléré chez des sujets sains (Kreider 2017) — l'app n'a aucune raison de décider en dessous. Retour à la suggestion calculée en un geste, et la dose réglée à la main est **exclue du contexte de Milo** : c'est un choix personnel sur un complément, pas un fait sur la personne — le lui envoyer l'inviterait à commenter une décision qui ne lui appartient pas.
-Tests : parcours 744/744, **calculs 235/235** (+5), muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données **100 classées 0 trou** (le garde-fou a exigé le classement de `creatDose` avant de laisser passer). **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 3 rouges** — la dose de 8 g n'était tout simplement pas affichable. ⚠️ Un témoin de ft-v908 a été **ajusté, pas affaibli** : la formule « pas un risque démontré » a déménagé vers le seuil des 5 g, et le témoin vérifie désormais ce qui compte vraiment — *que le repère des 3 g ne soit jamais dramatisé*. Fichiers : `app.js`, `state.js`, `tests/calculs/runner.js`, `tests/donnees/donnees-milo.json`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v910. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
