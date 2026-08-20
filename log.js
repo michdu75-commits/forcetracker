@@ -2421,6 +2421,10 @@ const _MEX=[
   // sans le moindre abdominal (audit du 02/08). Le mouvement porte l'exercice, pas l'accessoire.
   {re:/russian twist|rotation russe/i,                                          p:['obliques','abs'],                   s:['hip-flexors','front-delt']},
   // Mollets (avant la presse, pour ne pas capter « presse mollets »)
+  // ⚠️ ORDRE VOLONTAIRE (20/08/2026) : « mollets ASSIS » doit être testé AVANT la règle
+  // générale des mollets, sinon elle gagne et le soléaire n'existe jamais — `_MEX` s'arrête au
+  // PREMIER match. C'est la faute que j'ai commise le matin même sur les adducteurs.
+  {re:/mollets?\s+(assis|machine assise)|seated calf|calf raise assis/i,       p:['soleus'],   s:['calves']},
   {re:/mollet|calf raise|talon|standing calf|extension mollet/i,                p:['calves'],                           s:[]},
   // Pectoraux — couché / chest press / peck deck / butterfly
   {re:/developpe couche|bench press|chest press|ecarte couche|pec dec|peck deck|butterfly/i, p:['pec'],                  s:['front-delt','triceps'],             i:['lats','biceps','abs','lower-back']},
@@ -2485,7 +2489,7 @@ const _MEX=[
   // les tables de classification). Les vrais « Rowing T-Bar » continuent de matcher.
   {re:/^(?!.*(upright|menton)).*(rowing|row barre|\brow\b|\bt[-\s]?bar|tirage horizontal|tirage bucheron|bucheron)/i, p:['lats','traps','rear-delt'],   s:['biceps','lower-back','forearms']}, // ⚠️ \brow\b attrapait « Upright ROW » (épaules/trapèzes, règle précise plus bas — ft-v686)
   // Dos — bras tendu / pull-over
-  {re:/bras tendu|straight.?arm|pull.?over/i,                                   p:['lats'],                             s:['triceps','pec']},
+  {re:/bras tendu|straight.?arm|pull.?over/i,                                   p:['lats'],                             s:['triceps','pec','serratus']},
   // Biceps
   {re:/^(?!.*(leg curl|ischio|jambier)).*(curl bicep|bicep curl|curl halter|preacher|curl marteau|hammer curl|curl biceps)/i, p:['biceps'],                s:['forearms']}, // ⚠️ exclusion : « Leg Curl Haltère » contient « curl halter » — un curl de JAMBE n'est pas un biceps (même maladie que poignet/leg curl, ft-v686)
   // Triceps
@@ -2563,7 +2567,7 @@ const _MEX=[
   // — Pectoraux : tout écarté / fly / crossover, et toutes les pompes
   {re:/ecarte|butterfly|\bfly\b|crossover|croise poulie/i,                     p:['pec'],                              s:['front-delt']},
   {re:/handstand|atr/i,                                                        p:['front-delt'],                       s:['triceps','traps']}, // ATR = développé militaire inversé : épaules d'abord, pas des pectoraux (mesuré au dump 01/08)
-  {re:/pompe|push.?up|dips? entre|dips? banc/i,                                 p:['pec','triceps'],                    s:['front-delt']},
+  {re:/pompe|push.?up|dips? entre|dips? banc/i,                                 p:['pec','triceps'],                    s:['front-delt','serratus']},
   // — Épaules : élévations latérales, tirage menton, rotations, développés restants
   //   ⚠️ « laterale » AVANT le développé générique (une élévation n'est pas un développé)
   {re:/elevation.? laterale|lateral raise|croix de fer/i,                       p:['side-delt'],                        s:['traps']},
@@ -2579,6 +2583,9 @@ const _MEX=[
   // — Triceps : barre au front, extensions nuque
   {re:/barre au front|skull ?crusher|extension nuque|extension triceps|french press/i, p:['triceps'],                    s:['front-delt']},
   // — Avant-bras
+  // ⚠️ MÊME MOTIF QUE L'ADDUCTEUR : extension et curl de poignet sont OPPOSÉS et rendaient
+  // tous deux `forearms:2`. La règle spécifique passe devant la générale (premier match gagnant).
+  {re:/extension\s+poignet|wrist extension|curl invers|reverse curl/i,          p:['forearm-ext'], s:[]},
   {re:/pronation|supination|poignet|wrist/i,                                   p:['forearms'],                         s:[]},
   // — Dos : tous les tirages restants (poulie basse, nuque, machine, incliné)
   {re:/tirage en rack|rack pull/i,                                             p:['lower-back','traps'],               s:['lats','glutes','hamstrings']},
@@ -2614,9 +2621,25 @@ const _MG={
   'front-delt': {paths:['front_deltoid_anterior_left','front_deltoid_anterior_right'], label:'Deltoïdes ant.'},
   'side-delt': {paths:['front_deltoid_lateral_left','front_deltoid_lateral_right'], label:'Deltoïdes lat.'},
   'biceps': {paths:['front_biceps_left','front_brachialis_left','front_biceps_right','front_brachialis_right'], label:'Biceps'},
-  'forearms': {paths:['front_forearm_flexor_left','front_forearm_flexor_right','back_forearm_flexor_left','back_forearm_extensor_left','back_forearm_flexor_right','back_forearm_extensor_right'], label:'Avant-bras'},
+  // ⚠️ `forearms` = la PRISE (fléchisseurs + brachioradial). C'est ce que 93 fiches sur 334
+  // désignent quand elles disent « avant-bras » : tenir une barre, un haltère, une poulie.
+  'forearms': {paths:['front_forearm_flexor_left','front_forearm_flexor_right','back_forearm_flexor_left','back_forearm_flexor_right'], label:'Avant-bras (prise)'},
+  // ─── ✋ EXTENSEURS DU POIGNET — sortis le 20/08/2026 ─────────────────────────────
+  // MÊME BUG QUE L'ADDUCTEUR, mesuré : « Curl Poignet » et « Extension Poignet » sont deux
+  // mouvements OPPOSÉS et rendaient tous les deux `forearms:2`. Le dessin les sépare pourtant
+  // depuis toujours (`back_forearm_extensor_*`, étiquette « Avant-bras — extenseurs »).
+  // ⚠️ La scission est PROPRE : les 93 autres fiches parlent de la PRISE, donc des fléchisseurs.
+  // Elles ne bougent pas, et elles ont toujours raison sans les extenseurs.
+  'forearm-ext': {paths:['back_forearm_extensor_left','back_forearm_extensor_right'], label:'Extenseurs poignet'},
   'abs': {paths:['front_rectus_abdominis_upper_left','front_rectus_abdominis_middle_left','front_rectus_abdominis_upper_right','front_rectus_abdominis_middle_right','front_rectus_abdominis_lower_left','front_rectus_abdominis_lower_right'], label:'Abdominaux'},
-  'obliques': {paths:['front_oblique_external_left','front_oblique_internal_left','front_oblique_external_right','front_oblique_internal_right','front_serratus_anterior_left','front_serratus_anterior_right'], label:'Obliques'},
+  'obliques': {paths:['front_oblique_external_left','front_oblique_internal_left','front_oblique_external_right','front_oblique_internal_right'], label:'Obliques'},
+  // ─── 🫁 DENTELÉ ANTÉRIEUR — sorti des OBLIQUES le 20/08/2026 ─────────────────────
+  // Ce n'était pas de l'imprécision, c'était un MAUVAIS RANGEMENT : le dentelé antérieur
+  // n'est pas un oblique. Il plaque l'omoplate contre la cage (pompes, pull-over) ; les
+  // obliques font tourner le tronc. Une rotation russe n'a jamais travaillé le dentelé.
+  // ⚠️ Scission PROPRE : les 30 fiches d'obliques (rotations, gainage latéral) gardent leur
+  // sens sans lui — c'est exactement ce qui rend la sortie sûre.
+  'serratus': {paths:['front_serratus_anterior_left','front_serratus_anterior_right'], label:'Dentelé antérieur'},
   'hip-flexors': {paths:['front_hip_flexor_left','front_hip_flexor_right'], label:'Fléchisseurs'},
   // ─── 🦵 ADDUCTEURS — séparés des fléchisseurs de hanche le 20/08/2026 ─────────────
   // ⚠️ CE MANQUE ÉTAIT ÉCRIT, DATÉ, ET IL ATTENDAIT MICHEL. Le 02/08, la relecture des
@@ -2642,7 +2665,14 @@ const _MG={
   'lower-back': {paths:['back_erector_spinae_left','back_quadratus_lumborum_left','back_erector_spinae_right','back_quadratus_lumborum_right'], label:'Bas du dos'},
   'glutes': {paths:['back_gluteus_medius_left','back_gluteus_maximus_left','back_gluteus_medius_right','back_gluteus_maximus_right'], label:'Fessiers'},
   'hamstrings': {paths:['back_hamstring_medial_left','back_hamstring_lateral_left','back_hamstring_medial_right','back_hamstring_lateral_right'], label:'Ischio-jambiers'},
-  'calves': {paths:['back_gastrocnemius_medial_left','back_gastrocnemius_lateral_left','back_soleus_left','back_gastrocnemius_medial_right','back_gastrocnemius_lateral_right','back_soleus_right'], label:'Mollets'},
+  'calves': {paths:['back_gastrocnemius_medial_left','back_gastrocnemius_lateral_left','back_gastrocnemius_medial_right','back_gastrocnemius_lateral_right'], label:'Mollets (jumeaux)'},
+  // ─── 🦵 SOLÉAIRE — sorti des MOLLETS le 20/08/2026 ──────────────────────────────
+  // LE CAS D'ÉCOLE, et tout pratiquant le connaît : mollets DEBOUT = jumeaux (genou tendu),
+  // mollets ASSIS = SOLÉAIRE (genou fléchi, les jumeaux sont relâchés). Mesuré avant de
+  // toucher : « Élévations Mollets Debout » et « Élévations Mollets Assis » rendaient toutes
+  // deux `calves:2` — deux exercices que personne ne confond, indistinguables pour l'app.
+  // ⚠️ Le soléaire était DÉJÀ DESSINÉ (`back_soleus_*`), rangé avec les jumeaux.
+  'soleus': {paths:['back_soleus_left','back_soleus_right'], label:'Soléaire'},
 };
 // Nom PRÉCIS de chaque tracé (ce que voit la personne quand elle tape un muscle).
 const _MSC_LBL={
@@ -3055,7 +3085,7 @@ function _mscScoresPlan(exs){
 
 // ─── Figurine « douleur » : réutilise la vraie figurine anatomique (_mscSVG) pour
 //     SÉLECTIONNER une zone qui fait mal. Tape un muscle → il devient rouge. (retour Michel, ft-v565)
-const _GRP2PAIN={pec:'pectoraux','front-delt':'epaule','side-delt':'epaule','rear-delt':'epaule',traps:'trapeze',abs:'abdos',obliques:'abdos',biceps:'biceps',triceps:'triceps',forearms:'avantbras',lats:'dorsaux','hip-flexors':'hanche','adductors':'adducteur',quads:'cuisse',tibialis:'mollet','lower-back':'lombaires',glutes:'fessier',hamstrings:'ischio',calves:'mollet'};
+const _GRP2PAIN={pec:'pectoraux','front-delt':'epaule','side-delt':'epaule','rear-delt':'epaule',traps:'trapeze',abs:'abdos',obliques:'abdos',serratus:'abdos',biceps:'biceps',triceps:'triceps',forearms:'avantbras','forearm-ext':'avantbras',lats:'dorsaux','hip-flexors':'hanche','adductors':'adducteur',quads:'cuisse',tibialis:'mollet','lower-back':'lombaires',glutes:'fessier',hamstrings:'ischio',calves:'mollet',soleus:'mollet'};
 function _painFig(painSet){
   painSet=painSet||new Set();
   const p2z={};

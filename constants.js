@@ -1192,12 +1192,14 @@ const EX_MUSCLES={
  //    se font sur des barres parallèles.
  'dips-paralleles':                       {p:['triceps'], s:['front-delt','pec','abs'], vu:'2026-08-03'},
  'dips-machine-assistee':                 {p:['pec','triceps'], s:['front-delt'], vu:'2026-08-02'},
- 'pompes-push-up':                        {p:['pec','triceps'], s:['front-delt','abs'], vu:'2026-08-02'},
- 'pompes-lestees':                        {p:['pec','triceps'], s:['front-delt','abs'], vu:'2026-08-02'},
- 'pompes-deficit-deficit-push-up':        {p:['pec','triceps'], s:['front-delt','abs'], vu:'2026-08-02'},
- 'pompes-inclinees-trx-sangles':          {p:['pec','triceps'], s:['front-delt','abs'], vu:'2026-08-02'},
+  // ✏️ 20/08/2026 — en appui mains au sol, le dentelé tient l'omoplate contre la cage. C'est ce
+ //    qui distingue une pompe d'un développé couché, où le banc fait ce travail à sa place.
+ 'pompes-push-up':                        {p:['pec','triceps'], s:['front-delt','abs','serratus'], vu:'2026-08-20'},
+  'pompes-lestees':                        {p:['pec','triceps'], s:['front-delt','abs','serratus'], vu:'2026-08-20'},
+  'pompes-deficit-deficit-push-up':        {p:['pec','triceps'], s:['front-delt','abs','serratus'], vu:'2026-08-20'},
+  'pompes-inclinees-trx-sangles':          {p:['pec','triceps'], s:['front-delt','abs','serratus'], vu:'2026-08-20'},
  // ✏️ CORRECTION : mains serrées = le TRICEPS devient le moteur, le pectoral suit.
- 'pompes-diamant':                        {p:['triceps','pec'], s:['front-delt','abs'], vu:'2026-08-02'},
+  'pompes-diamant':                        {p:['triceps','pec'], s:['front-delt','abs','serratus'], vu:'2026-08-20'},
  // ✏️ CORRECTION — mais PAS celle que j'avais faite d'abord, et l'histoire vaut d'être écrite.
  //    ① Constat de départ, juste : la fiche disait `p:['pec']` seul, le triceps relégué en
  //       secondaire. Or sur une machine à dips, le triceps est bien un MOTEUR.
@@ -1416,11 +1418,13 @@ const EX_MUSCLES={
  'suspension-passive-dead-hang':          {p:['forearms'], s:['lats','traps'], vu:'2026-08-02'},
  // ─── PULL-OVERS : grand dorsal moteur, pectoral et longue portion du triceps en soutien
  //     (le triceps y travaille comme extenseur d'ÉPAULE, pas du coude). Justes.
- 'pull-over':                             {p:['lats'], s:['pec','triceps'], vu:'2026-08-02'},
- 'pull-over-barre':                       {p:['lats'], s:['pec','triceps'], vu:'2026-08-02'},
- 'pull-over-haltere':                     {p:['lats'], s:['pec','triceps'], vu:'2026-08-02'},
- 'pull-over-poulie':                      {p:['lats'], s:['pec','triceps'], vu:'2026-08-02'},
- 'pullover-machine':                      {p:['lats'], s:['pec','triceps'], vu:'2026-08-02'},
+  // ✏️ 20/08/2026 — le DENTELÉ ANTÉRIEUR entre ici : il plaque l'omoplate pendant que le bras
+ //    passe au-dessus de la tête. En secondaire : il stabilise, il n'est pas moteur.
+ 'pull-over':                             {p:['lats'], s:['pec','triceps','serratus'], vu:'2026-08-20'},
+  'pull-over-barre':                       {p:['lats'], s:['pec','triceps','serratus'], vu:'2026-08-20'},
+  'pull-over-haltere':                     {p:['lats'], s:['pec','triceps','serratus'], vu:'2026-08-20'},
+  'pull-over-poulie':                      {p:['lats'], s:['pec','triceps','serratus'], vu:'2026-08-20'},
+  'pullover-machine':                      {p:['lats'], s:['pec','triceps','serratus'], vu:'2026-08-20'},
  // ─── CHARIOT DE PUISSANCE : on tire une charge en reculant ou de côté.
  'sled-pull':                             {p:['lats','traps'], s:['rear-delt','biceps','forearms'], vu:'2026-08-02'},
  'chariot-de-puissance-tirage-dos':       {p:['lats','traps'], s:['rear-delt','biceps','forearms'], vu:'2026-08-02'},
@@ -1865,13 +1869,15 @@ const EX_MUSCLES={
  // ⚠️ LIMITE DU GROUPE : la figurine ne connaît qu'un seul code « mollets ». Or debout
  //    (genou tendu) c'est le JUMEAU qui travaille, assis (genou plié) c'est le SOLÉAIRE —
  //    c'est toute la raison d'avoir les deux machines. On ne peut pas le distinguer ici.
- 'elevations-mollets-debout':             {p:['calves'], s:[], vu:'2026-08-02'},
- 'elevations-mollets-assis':              {p:['calves'], s:[], vu:'2026-08-02'},
- 'elevations-mollets-unilateral':         {p:['calves'], s:[], vu:'2026-08-02'},
- 'elevations-mollets-penche-donkey-calf-raise':{p:['calves'], s:[], vu:'2026-08-02'},
- 'mollets-machine-debout':                {p:['calves'], s:[], vu:'2026-08-02'},
- 'mollets-machine-assise':                {p:['calves'], s:[], vu:'2026-08-02'},
- 'presse-mollets-leg-press':              {p:['calves'], s:[], vu:'2026-08-02'},
+  'elevations-mollets-debout':             {p:['calves'], s:['soleus'], vu:'2026-08-20'},
+  // ✏️ 20/08/2026 — ASSIS = genou fléchi : les jumeaux sont relâchés, c'est le SOLÉAIRE qui
+ //    porte. Debout et assis rendaient exactement la même chose ; personne ne les confond en salle.
+ 'elevations-mollets-assis':              {p:['soleus'], s:['calves'], vu:'2026-08-20'},
+  'elevations-mollets-unilateral':         {p:['calves'], s:['soleus'], vu:'2026-08-20'},
+  'elevations-mollets-penche-donkey-calf-raise':{p:['calves'], s:['soleus'], vu:'2026-08-20'},
+  'mollets-machine-debout':                {p:['calves'], s:['soleus'], vu:'2026-08-20'},
+  'mollets-machine-assise':                {p:['soleus'], s:['calves'], vu:'2026-08-20'},
+  'presse-mollets-leg-press':              {p:['calves'], s:['soleus'], vu:'2026-08-20'},
  'sauts-a-la-corde':                      {p:['calves'], s:['quads'], vu:'2026-08-02'},
  // ─── TRAPÈZES (6) — relus un par un le 02/08/2026 ────────────────────────────────
  // Les haussements d'épaules : trapèzes moteurs, la PRISE en soutien (c'est elle qui lâche
@@ -1893,7 +1899,9 @@ const EX_MUSCLES={
  // Le FARMER'S WALK : c'est la PRISE qui lâche, pas les jambes (corrigé en ft-v730).
  'farmer-s-walk':                         {p:['forearms','traps'], s:['abs','glutes','quads'], vu:'2026-08-02'},
  'curl-poignet-barre':                    {p:['forearms'], s:[], vu:'2026-08-02'},
- 'extension-poignet-barre':               {p:['forearms'], s:[], vu:'2026-08-02'},
+  // ✏️ 20/08/2026 — l'EXTENSION de poignet est le mouvement OPPOSÉ du curl : elle travaille les
+ //    extenseurs (face dorsale). Les deux fiches étaient identiques.
+ 'extension-poignet-barre':               {p:['forearm-ext'], s:[], vu:'2026-08-20'},
  'pronation-supination-haltere':          {p:['forearms'], s:[], vu:'2026-08-02'},
  // ✏️ CORRECTION : la PLANCHE DE PRÉHENSION comptait les QUADRICEPS. On est debout, immobile,
  //    à serrer deux disques : les jambes ne font rien du tout. C'est un maintien de prise —

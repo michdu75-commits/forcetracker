@@ -133,8 +133,8 @@ const ATTENDU={'Pectoraux':['pec'],'Dos':['lats','traps','rear-delt','lower-back
  'Épaules':['front-delt','side-delt','rear-delt'],'Trapèzes':['traps','side-delt'],
  'Biceps':['biceps','forearms'],'Triceps':['triceps'],
  'Jambes':['quads','glutes','hamstrings','calves','adductors'],'Fessiers':['glutes','hamstrings'],
- 'Lombaires':['lower-back','glutes','abs'],'Abdominaux':['abs','obliques','hip-flexors'],
- 'Mollets':['calves'],'Avant-bras':['forearms']};
+ 'Lombaires':['lower-back','glutes','abs'],'Abdominaux':['abs','obliques','hip-flexors','serratus'],
+ 'Mollets':['calves','soleus'],'Avant-bras':['forearms','forearm-ext']};
 const grpKo=ex.filter(e=>{
   const a=ATTENDU[e.groupe]; if(!a||!e.p.length) return false;
   if(TOLERE.groupe[e.nom]) return false;
@@ -162,13 +162,13 @@ const PAT={'squat':['quads','glutes'],'fente':['quads','glutes'],
  'flexion-coude':['biceps','forearms'],'curl-biceps':['biceps','forearms'],
  'extension-coude':['triceps'],'extension-triceps':['triceps'],
  'extension-genou':['quads'],'flexion-genou':['hamstrings'],
- 'mollets':['calves'],'extension-cheville':['calves'],
+ 'mollets':['calves','soleus'],'extension-cheville':['calves'],
  'elevation-epaules':['front-delt','side-delt','rear-delt','traps'],
  'flexion-poignet':['forearms'],'abduction-hanche':['glutes'],
  // ── 6 schémas ajoutés à la table le 02/08 : ils existaient dans l'app mais PAS ici, donc
  //    19 exercices échappaient au croisement ⑤ sans que rien ne le dise. Un croisement qui
  //    ne couvre pas tout doit le dire — sinon on croit avoir tout vérifié.
- 'porte':['forearms','traps'],'poignet':['forearms'],'hanche-laterale':['glutes','adductors'],
+ 'porte':['forearms','traps'],'poignet':['forearms','forearm-ext'],'hanche-laterale':['glutes','adductors'],
  'saut-plyo':['quads','glutes','calves','hamstrings'],
  'halterophilie':['quads','glutes','front-delt','traps','hamstrings','lower-back'],
  'cardio':['quads','glutes','calves','front-delt','lats','abs','hamstrings']};

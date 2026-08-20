@@ -1,7 +1,7 @@
 {
  "genere": "2026-08-20",
  "total": 324,
- "nbRegles": 69,
+ "nbRegles": 71,
  "fragiles": 0,
  "ex": {
   "Abduction Cuisses (Leg Abduction)": {
@@ -669,7 +669,7 @@
    "frag": 0
   },
   "Extension Poignet Barre": {
-   "p": "forearms",
+   "p": "forearm-ext",
    "s": "",
    "pat": "poignet",
    "eq": "barre",
@@ -1149,8 +1149,8 @@
    "frag": 0
   },
   "Mollets Machine Assise": {
-   "p": "calves",
-   "s": "",
+   "p": "soleus",
+   "s": "calves",
    "pat": "mollets",
    "eq": "guide",
    "met": 4,
@@ -1158,7 +1158,7 @@
   },
   "Mollets Machine Debout": {
    "p": "calves",
-   "s": "",
+   "s": "soleus",
    "pat": "mollets",
    "eq": "guide",
    "met": 4,
@@ -1302,7 +1302,7 @@
   },
   "Pompes (Push-up)": {
    "p": "pec,triceps",
-   "s": "abs,front-delt",
+   "s": "abs,front-delt,serratus",
    "pat": "poussee-horizontale",
    "eq": "corps",
    "met": 5.5,
@@ -1310,7 +1310,7 @@
   },
   "Pompes Diamant": {
    "p": "pec,triceps",
-   "s": "abs,front-delt",
+   "s": "abs,front-delt,serratus",
    "pat": "poussee-horizontale",
    "eq": "corps",
    "met": 5.5,
@@ -1318,7 +1318,7 @@
   },
   "Pompes Déficit (Deficit Push-up)": {
    "p": "pec,triceps",
-   "s": "abs,front-delt",
+   "s": "abs,front-delt,serratus",
    "pat": "poussee-horizontale",
    "eq": "corps",
    "met": 5.5,
@@ -1326,7 +1326,7 @@
   },
   "Pompes Inclinées TRX (Sangles)": {
    "p": "pec,triceps",
-   "s": "abs,front-delt",
+   "s": "abs,front-delt,serratus",
    "pat": "poussee-horizontale",
    "eq": "trx",
    "met": 5.5,
@@ -1334,7 +1334,7 @@
   },
   "Pompes Lestées": {
    "p": "pec,triceps",
-   "s": "abs,front-delt",
+   "s": "abs,front-delt,serratus",
    "pat": "poussee-horizontale",
    "eq": "corps",
    "met": 5.5,
@@ -1390,7 +1390,7 @@
   },
   "Presse Mollets (Leg Press)": {
    "p": "calves",
-   "s": "",
+   "s": "soleus",
    "pat": "mollets",
    "eq": "guide",
    "met": 4,
@@ -1422,7 +1422,7 @@
   },
   "Pull-over": {
    "p": "lats",
-   "s": "pec,triceps",
+   "s": "pec,serratus,triceps",
    "pat": "tirage-horizontal",
    "eq": "barre",
    "met": 5.5,
@@ -1430,7 +1430,7 @@
   },
   "Pull-over Barre": {
    "p": "lats",
-   "s": "pec,triceps",
+   "s": "pec,serratus,triceps",
    "pat": "tirage-horizontal",
    "eq": "barre",
    "met": 5.5,
@@ -1438,7 +1438,7 @@
   },
   "Pull-over Haltère": {
    "p": "lats",
-   "s": "pec,triceps",
+   "s": "pec,serratus,triceps",
    "pat": "tirage-horizontal",
    "eq": "libre",
    "met": 5.5,
@@ -1446,7 +1446,7 @@
   },
   "Pull-over Poulie": {
    "p": "lats",
-   "s": "pec,triceps",
+   "s": "pec,serratus,triceps",
    "pat": "tirage-horizontal",
    "eq": "guide",
    "met": 5.5,
@@ -1454,7 +1454,7 @@
   },
   "Pullover Machine": {
    "p": "lats",
-   "s": "pec,triceps",
+   "s": "pec,serratus,triceps",
    "pat": "tirage-horizontal",
    "eq": "guide",
    "met": 5.5,
@@ -2565,8 +2565,8 @@
    "frag": 0
   },
   "Élévations Mollets Assis": {
-   "p": "calves",
-   "s": "",
+   "p": "soleus",
+   "s": "calves",
    "pat": "mollets",
    "eq": "autre",
    "met": 4,
@@ -2574,7 +2574,7 @@
   },
   "Élévations Mollets Debout": {
    "p": "calves",
-   "s": "",
+   "s": "soleus",
    "pat": "mollets",
    "eq": "autre",
    "met": 4,
@@ -2582,7 +2582,7 @@
   },
   "Élévations Mollets Penché (Donkey Calf Raise)": {
    "p": "calves",
-   "s": "",
+   "s": "soleus",
    "pat": "mollets",
    "eq": "autre",
    "met": 4,
@@ -2590,7 +2590,7 @@
   },
   "Élévations Mollets Unilatéral": {
    "p": "calves",
-   "s": "",
+   "s": "soleus",
    "pat": "mollets",
    "eq": "autre",
    "met": 4,

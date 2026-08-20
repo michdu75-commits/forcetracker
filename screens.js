@@ -1383,9 +1383,9 @@ function _calVolByDay(){
 // change sur AUCUN des 9 archétypes (le soulevé reste « full body »).
 const _CAL_REGIONS={
   haut: ['pec','front-delt','side-delt','triceps'],
-  dos:  ['lats','traps','rear-delt','biceps','forearms'],
-  bas:  ['quads','hamstrings','glutes','calves','hip-flexors','adductors','tibialis'],
-  tronc:['abs','obliques','lower-back']
+  dos:  ['lats','traps','rear-delt','biceps','forearms','forearm-ext'],
+  bas:  ['quads','hamstrings','glutes','calves','soleus','hip-flexors','adductors','tibialis'],
+  tronc:['abs','obliques','serratus','lower-back']
 };
 const _CAL_REGION_COLOR={haut:'var(--red)',dos:'var(--blue)',bas:'var(--purp)',tronc:'var(--orange)',full:'var(--green)'};
 const _calColorCache={};   // _mscScores est coûteux et le calendrier se redessine à chaque flèche

@@ -277,8 +277,8 @@ const CARDIO_KW = ['Corde à Sauter','Sauts à la Corde','Air Bike','Assault','S
 // lourde, déjà bien servie par la déduction (6,5 = bas du corps). Le bac « Cardio » du sélecteur
 // répond à « où le trouver ? » ; le MET répond à « combien ça coûte ? » — deux questions.
 const _MET_REGIONS = {
-  bas: ['quads','hamstrings','glutes','calves','hip-flexors','adductors','tibialis'],
-  haut:['pec','front-delt','side-delt','triceps','lats','traps','rear-delt','biceps','forearms']
+  bas: ['quads','hamstrings','glutes','calves','soleus','hip-flexors','adductors','tibialis'],
+  haut:['pec','front-delt','side-delt','triceps','lats','traps','rear-delt','biceps','forearms','forearm-ext']
 };
 function getExerciseMET(name) {
   const n = name || '';

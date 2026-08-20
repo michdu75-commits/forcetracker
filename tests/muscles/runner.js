@@ -128,8 +128,13 @@ const larges=await p.evaluate(()=>{
           tbarMachine:sc('Rowing T-Bar Machine'), tbarLandmine:sc('Rowing Landmine (T-Bar)')};
 });
 // `t.?bar` (écrit pour le T-Bar Row) attrapait « poigneT BARre » → dorsaux/trapèzes.
-t('⭐ « Extension Poignet Barre » = avant-bras (pas du dos !)',
-  larges.extPoignet.forearms===2&&!larges.extPoignet.lats, JSON.stringify(larges.extPoignet));
+/* ⚠️ AJUSTÉ le 20/08/2026, pas affaibli. Ce témoin protégeait contre une confusion de MOTS :
+   `t.?bar` (écrit pour le T-Bar Row) attrapait « poigneT BARre » et renvoyait vers le DOS.
+   C'est toujours ce qu'il vérifie — seul le muscle attendu change, puisque l'extension de
+   poignet a désormais son propre code (`forearm-ext`), distinct du curl qui est son opposé. */
+t('⭐ « Extension Poignet Barre » = les EXTENSEURS du poignet (pas du dos !)',
+  larges.extPoignet['forearm-ext']===2&&!larges.extPoignet.lats&&!larges.extPoignet.traps,
+  JSON.stringify(larges.extPoignet));
 t('⭐ « Curl Poignet Barre » = avant-bras (ni dos, ni biceps)',
   larges.curlPoignet.forearms===2&&!larges.curlPoignet.lats&&!larges.curlPoignet.biceps,
   JSON.stringify(larges.curlPoignet));
@@ -1379,8 +1384,48 @@ t('⭐⭐ la FIGURINE v2.1 est branchée : 41 muscles dessinés au lieu de 18 zo
   fg.nbTraces+' tracés · '+fg.fins+'/9 découpages fins présents');
 /* 18 → 19 le 20/08/2026 : le groupe `adductors` est né. Le nombre reste ÉPINGLÉ exprès —
    ajouter un muscle change ce que voit l'utilisateur, donc ça doit obliger à repasser ici. */
-t('⭐ l\'app pilote maintenant 19 codes (les ADDUCTEURS sont entrés le 20/08)',
-  !fg.erreur && fg.codes===19, String(fg.codes));
+/* 18 → 19 (adducteurs) → 22 le 20/08/2026 : soléaire, extenseurs du poignet, dentelé antérieur.
+   Le nombre reste ÉPINGLÉ exprès — ajouter un muscle change ce que voit l'utilisateur, donc ça
+   doit obliger à repasser ici (R29 : c'est l'arbitrage de Michel, jamais un effet de bord). */
+t('⭐ l\'app pilote maintenant 22 codes (adducteurs, soléaire, extenseurs poignet, dentelé)',
+  !fg.erreur && fg.codes===22, String(fg.codes));
+
+/* ═══ LES TROIS SCISSIONS « PROPRES » DU 20/08/2026 ═══════════════════════════════════
+   Elles ont un point commun qui les rend sûres : le RESTE du groupe garde son sens sans la
+   partie qu'on sort. C'est ça le critère, pas la finesse anatomique.
+   ⚠️ Et chacune corrige une paire d'exercices que PERSONNE ne confond en salle, mais que
+   l'app rendait identiques — le même défaut que l'adduction, mesuré avant de toucher. */
+const scis = await p.evaluate(()=>{
+ try{
+  const f=n=>{const d=_mscScores([{name:n,sets:[{kg:20,reps:12,done:true,type:'N'}]}])||{}; return d.sc||{};};
+  return {debout:f('Élévations Mollets Debout'), assis:f('Élévations Mollets Assis'),
+          curlP:f('Curl Poignet Barre'), extP:f('Extension Poignet Barre'),
+          pullover:f('Pull-over Haltère'), pompes:f('Pompes (Push-up)'),
+          rota:f('Rotation Russe (Russian Twist)'), squat:f('Squat à la Barre'),
+          libre1:f('mollets assis maison'), libre2:f('extension poignet maison')};
+ }catch(e){ return {erreur:String(e&&e.message||e)}; }
+});
+t('⭐⭐ MOLLETS : debout (jumeaux) et assis (SOLÉAIRE) ne disent plus la même chose',
+  !scis.erreur && scis.debout.calves===2 && scis.assis.soleus===2 && scis.assis.calves===1,
+  'debout '+JSON.stringify(scis.debout)+' · assis '+JSON.stringify(scis.assis));
+t('⭐⭐ POIGNET : le CURL et l\'EXTENSION sont opposés, ils ne rendent plus le même muscle',
+  !scis.erreur && scis.curlP.forearms===2 && !scis.curlP['forearm-ext']
+              && scis.extP['forearm-ext']===2 && !scis.extP.forearms,
+  'curl '+JSON.stringify(scis.curlP)+' · extension '+JSON.stringify(scis.extP));
+t('⭐⭐ DENTELÉ ANTÉRIEUR : il entre sur le pull-over et les pompes (il tient l\'omoplate)',
+  !scis.erreur && scis.pullover.serratus===1 && scis.pompes.serratus===1,
+  'pull-over '+JSON.stringify(scis.pullover));
+/* ⚠️ LE TÉMOIN QUI REND LA SCISSION CRÉDIBLE : une ROTATION ne travaille pas le dentelé.
+   S'il apparaissait ici, c'est qu'on l'aurait sorti des obliques sans y croire vraiment. */
+t('/!\\ ... et une ROTATION du tronc ne le mentionne PAS (la scission est propre)',
+  !scis.erreur && scis.rota.obliques===2 && !scis.rota.serratus, JSON.stringify(scis.rota));
+t('/!\\ ... et le SQUAT n\'a pas gagné de soléaire au passage (non-régression)',
+  !scis.erreur && scis.squat.calves===1 && !scis.squat.soleus, JSON.stringify(scis.squat));
+/* Un nom LIBRE (exercice perso, import) doit tomber sur la bonne règle : c'est là que se
+   joue le « premier match gagnant » — les règles spécifiques passent DEVANT les générales. */
+t('⭐ un nom LIBRE tombe sur la bonne règle (l\'ordre des règles est tenu)',
+  !scis.erreur && scis.libre1.soleus===2 && scis.libre2['forearm-ext']===2,
+  'mollets assis maison '+JSON.stringify(scis.libre1)+' · extension poignet maison '+JSON.stringify(scis.libre2));
 /* ⭐⭐ LA PREUVE VISIBLE — sans elle, les témoins ci-dessus ne prouvent qu'un chiffre.
    Ce qui compte pour la personne, c'est que la FIGURINE s'allume au bon endroit : on rend
    le dessin pour une adduction et on vérifie que ce sont bien les tracés `front_adductor_*`
