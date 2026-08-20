@@ -1493,6 +1493,7 @@ function _appendSaveProgBtn(prog){
   wrap.innerHTML='<button class="btn btn-red" style="width:100%;margin-top:10px;padding:11px;font-size:14px;border-radius:12px;" onclick="_saveForceProgram('+idx+',this)">💾 Enregistrer ce programme ('+nDays+(nDays>1?' séances':' séance')+')</button>';
   last.appendChild(wrap);
   _coachAuBas();
+  return true;
 }
 function _saveForceProgram(idx,btn){
   const prog=_pendingForceProgs[idx];
@@ -1721,9 +1722,24 @@ function _ressembleASeance(txt){
 // ne pas le lui donner est la garantie la plus simple qu'il ne s'en servira pas.
 async function _cerveletSeance(txt){
   try{
-    const r=await fetch(_aiUrl('seanceJson'),{method:'POST',redirect:'follow',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'seanceJson',texte:String(txt||'').slice(0,8000)})});
+    /* GARDE-FOU DELAI MAXIMUM (20/08/2026) — retour de terrain de Michel : « ca ne fonctionne
+       toujours pas », app bien en ft-v924, et son texte se lisait PARFAITEMENT en local
+       (5 exercices, bons noms, bon ordre). Le defaut n'etait donc pas la lecture, mais ce que je
+       ne pouvais pas simuler : `fetch` n'a AUCUN delai par defaut. Sur une 5G capricieuse —
+       c'est-a-dire a la salle — l'appel peut rester suspendu indefiniment : le `.then` ne part
+       jamais, le repli n'est jamais atteint, et le bouton n'arrive JAMAIS.
+       *Une panne franche se rattrape ; une attente infinie, non.*
+       12 s : bien au-dela d'une reponse Haiku normale (1-2 s), assez court pour retomber sur le
+       filet pendant que la personne lit encore sa seance. */
+    const stop=(typeof AbortController!=='undefined')?new AbortController():null;
+    const minuteur=setTimeout(()=>{ try{ stop&&stop.abort(); }catch(e){} }, 12000);
+    let r;
+    try{
+      r=await fetch(_aiUrl('seanceJson'),{method:'POST',redirect:'follow',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        signal:stop?stop.signal:undefined,
+        body:JSON.stringify({action:'seanceJson',texte:String(txt||'').slice(0,8000)})});
+    } finally { clearTimeout(minuteur); }
     if(!r.ok)return null;
     const d=await r.json();
     const s=d&&d.seance;
@@ -1950,20 +1966,26 @@ function _derniereBulleCoach(){
 // a pu envoyer un autre message — « la dernière bulle » ne serait alors plus la bonne, et
 // le bouton se collerait sous une réponse qui n'a rien à voir. On capture donc la bulle au
 // moment du rendu. Sans `cible`, comportement inchangé : la dernière.
+/* REND `true` SI LE BOUTON A ETE POSE (20/08/2026). Avant, la fonction sortait EN SILENCE dans
+   plusieurs cas — seance vide, seance dont tous les exercices perdent leurs series a la
+   normalisation, bulle disparue — et l'appelant n'en savait RIEN : il avait deja depense sa
+   tentative sur le cervelet et ne retombait jamais sur le filet.
+   *Un chemin qui echoue sans le dire empeche tout repli*, et c'est exactement ce motif qui fait
+   disparaitre le bouton sans qu'aucune erreur ne le signale. */
 function _appendStartSessionBtn(sess, cible){
-  if(!sess||typeof _normalizeMiloSession!=='function')return;
+  if(!sess||typeof _normalizeMiloSession!=='function')return false;
   const norm=_normalizeMiloSession(sess);
-  if(!norm||!norm.exs||!norm.exs.length)return;
+  if(!norm||!norm.exs||!norm.exs.length)return false;
   const idx=_pendingMiloSessions.push(norm)-1;
   const msgs=document.getElementById('coach-msgs');if(!msgs)return;
   let last=cible||null;
   if(last&&!msgs.contains(last))last=null;          // bulle disparue (fil vidé) → on renonce
-  if(last&&last.querySelector('.coach-prog-save'))return;   // déjà un bouton dessous
+  if(last&&last.querySelector('.coach-prog-save'))return true;   // déjà un bouton dessous
   if(!last){
     const bubbles=msgs.querySelectorAll('.msg-coach');
     last=bubbles[bubbles.length-1];
   }
-  if(!last)return;
+  if(!last)return false;
   const n=norm.exs.length;
   // ⚠️ Le libellé dit ce qui va VRAIMENT se passer (ft-v750) : tant qu'une séance est en cours,
   // le bouton ne « commence » rien — il ouvre la question « ajouter ou remplacer ? ». Avant, il
@@ -1975,6 +1997,7 @@ function _appendStartSessionBtn(sess, cible){
   wrap.innerHTML='<button class="btn btn-red" style="width:100%;margin-top:10px;padding:11px;font-size:14px;border-radius:12px;" onclick="_startSessionFromMilo('+idx+',this)">'+lbl+' ('+n+(n>1?' exercices':' exercice')+')</button>';
   last.appendChild(wrap);
   _coachAuBas();
+  return true;                    // posé — l'appelant peut cesser de chercher un repli
 }
 
 function updateCoachHeader() {
@@ -3620,8 +3643,13 @@ async function sendToCoach(customMsg, displayMsg, opts) {
       // ne doit JAMAIS retarder ni bloquer ce que la personne est venue lire (règle d'or #3).
       const _bulle = _derniereBulleCoach();
       const _filet = _dsFilet;
+      /* ON VERIFIE QUE LE BOUTON EST REELLEMENT POSE, et on retombe sur le filet sinon.
+         Avant : `_appendStartSessionBtn(_montee(s) || _filet)` — si le cervelet rendait une
+         seance STRUCTURELLEMENT pauvre (des exercices sans series), elle etait quand meme
+         « truthy », le `|| _filet` ne jouait pas, et la fonction sortait en silence.
+         Resultat : aucun bouton ET aucun repli. */
       _cerveletSeance(reply)
-        .then(s => _appendStartSessionBtn(_montee(s) || _filet, _bulle))
+        .then(s => { if (!_appendStartSessionBtn(_montee(s), _bulle)) _appendStartSessionBtn(_filet, _bulle); })
         .catch(() => _appendStartSessionBtn(_filet, _bulle));
     }
     else if (_dsFilet) _appendStartSessionBtn(_dsFilet);

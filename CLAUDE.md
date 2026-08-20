@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v924`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v925`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v924`** (prochaine : `ft-v925`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v925`** (prochaine : `ft-v926`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v925 — 🔁 LE BOUTON SORT ENFIN, MÊME QUAND TOUT TOMBE — un chemin qui échoue sans le dire empêche tout repli** — 2ᵉ retour de terrain le même jour : *« ça ne fonctionne toujours pas »*, app bien en **ft-v924**.
+
+**⭐ LA MESURE A CHANGÉ LA RECHERCHE.** Passé son texte réel dans le code : aiguillage **`true`**, filet **5 exercices**, bons noms, bon ordre. **Donc le défaut n'était PAS la lecture** — il était **après**. Sans cette mesure, je repartais corriger le détecteur, qui n'avait rien.
+
+**⚠️⚠️ DEUX TROUS, ET LES DEUX SONT SILENCIEUX.**
+
+**① La pose du bouton sortait EN SILENCE.** `_appendStartSessionBtn` renonce dans plusieurs cas — séance vide, séance dont tous les exercices perdent leurs séries à la normalisation, bulle disparue — **sans rien rendre**. Or l'appelant écrivait `_appendStartSessionBtn(_montee(s) || _filet)` : une séance **structurellement pauvre** reste **« truthy »**, donc le `|| _filet` ne jouait pas, et la fonction abandonnait. **Ni bouton, ni repli, ni erreur.**
+
+**② `fetch` n'a AUCUN délai par défaut.** Sur une 5G capricieuse — c'est-à-dire **à la salle** — l'appel peut rester **suspendu indéfiniment** : le `.then` ne part jamais, le `.catch` non plus, le repli n'est **jamais** atteint. *Une panne franche se rattrape ; une attente infinie, non.* C'est précisément ce que je ne pouvais pas simuler depuis ici, et c'est pour ça que tout était vert en local.
+
+**👉 CE QUI EST LIVRÉ** : la pose du bouton **REND** si elle a réussi · l'appelant **retombe sur le filet** dès qu'elle échoue · et l'appel est **coupé à 12 s** (bien au-delà d'une réponse Haiku normale de 1-2 s). **Six modes de panne** sont désormais joués par les témoins : cervelet correct · exercices sans séries · réseau coupé · serveur en erreur · réponse vide · appel avorté.
+
+**⚠️ ET MON PREMIER TÉMOIN NE PROUVAIT RIEN — 8ᵉ fois.** Je l'avais écrit avec la **nouvelle** façon d'appeler (`if(!poser(…)) poser(filet)`) : sur l'ancien code, la fonction rend `undefined`, donc « faux », donc le repli jouait quand même — **vert des deux côtés**. *Un témoin écrit avec la nouvelle convention ne peut pas voir l'ancienne.* Repassé sur la valeur **rendue**, qui est le vrai changement.
+Tests : **parcours 816/816** (+10, bloc LXIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 3 rouges** — le minuteur absent, et la pose qui ne dit ni « posé » ni « pas posé ». ⚠️ Les six modes de panne sont **verts des deux côtés dans ce test-ci, et c'est normal** : ils vérifient le comportement de la chaîne telle qu'elle s'écrit AUJOURD'HUI — ce sont des témoins de non-régression, pas la preuve du correctif. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v925. |
 
 **ft-v924 — 🔘 LE BOUTON N'APPARAISSAIT PAS SUR UNE VRAIE SÉANCE — et c'était ma livraison de la veille** — Michel, capture à l'appui : *« J'ai pas le bouton lancer la séance »*. Milo écrit pourtant *« La séance est prête, clique sur ⚡ Commencer cette séance juste en dessous »*. **Il n'y avait rien.**
 
@@ -706,23 +721,6 @@ Tests : **parcours 744/744** (+5, bloc LIII), calculs 230/230, muscles 232/232, 
 
 **⛔ CE QUI N'EST PAS CHANGÉ, ET POURQUOI C'EST ÉCRIT** : la dose de créatine. La formule `0,05 g/kg plafonnée à 5 g` **n'apparaît dans aucune source** — c'est une troisième règle inventée entre deux référentiels qui existent (**3 000 mg/j**, dose journalière maximale française, arrêté du 26/09/2016 ; **3 à 5 g/j** selon l'ISSN). ⭐ **Et l'auditeur corrige ici sa propre v1.1** : il avait d'abord conclu que l'app plafonnait *trop bas*, sur les seules sources anglo-saxonnes — l'ajout des sources publiques françaises **retourne la conclusion**. Baisser la recommandation par défaut de tout le monde est une décision **produit ET de santé** : elle appartient à Michel, pas à une correction de nuit (R29). En attendant, **on affiche le repère réglementaire au lieu de le taire** — un chiffre sans son cadre laisse croire qu'il en est un.
 Tests : parcours 739/739, **calculs 230/230** (+7, bloc 13), muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 6 rouges**, dont celui qui se lit tout seul — `reste=187g cible=187g` avec 60 g mangés. Fichiers : `app.js`, `tests/calculs/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v908. |
-
-**ft-v907 — 🧾 BRIQUE 0 : CHAQUE LIGNE DU JOURNAL PORTE ENFIN SA PROVENANCE** — Michel : *« fais tout ce que tu peux faire »*. Première brique du chantier nutrition, et **la seule qui ne se rattrape jamais**.
-
-**CE QU'UNE ENTRÉE ÉTAIT** : `{date, meal, name, kcal, prot, carbs, fat, ts}` — un **résultat** sans aucune trace de son origine. Ni la quantité mangée, ni la source du chiffre, ni la façon dont il a été saisi, ni l'état de l'aliment.
-
-**⚠️⚠️ POURQUOI CELLE-CI D'ABORD** : tout le reste (base d'aliments, générateur, niveaux de précision) peut se construire dans six mois **sur les données existantes**. Une entrée écrite sans ces champs, elle, ne les retrouvera pas — et chaque jour qui passe en fabrique d'autres. *Le retard est le seul du chantier à être définitif.*
-
-**⚠️ ET LE CHAMP LE PLUS COÛTEUX N'EST PAS LA SOURCE, C'EST LA QUANTITÉ.** Une ligne disait « 380 kcal » sans dire « 250 g de X » : même en connaissant plus tard la bonne valeur au 100 g, **on ne pouvait rien recalculer**. Or le scan et la photo d'étiquette **connaissaient le poids** (champ `af-bc-grams`) — ils ne l'enregistraient simplement pas. C'est **R4** : l'information existait et n'atteignait pas la donnée.
-
-**⭐ DEUX AXES, PAS UN — correction apportée par le contre-audit extérieur** : `saisie` dit **comment** c'est entré (manuel · scan · photo-ia · ia-texte · liste), `origine` dit **d'où vient le chiffre** (utilisateur · off · étiquette · ia · reprise). Les fusionner perdrait l'information dans les deux sens, et « manuel » finirait par désigner deux choses différentes selon le contexte. S'y ajoutent `per100` (les valeurs au 100 g quand la source les donne — c'est ce qui permettra de recalculer) et **`modifie`**, qui dit si la personne a retouché les macros après un remplissage automatique : *une source ne peut plus expliquer un chiffre qu'on a changé à la main.*
-
-**⚠️ ON N'INVENTE RIEN (R29)** : `etat` (cru/cuit) et `q` restent **`null`** quand on ne sait pas. L'état viendra de la base d'aliments (brique 1) — le champ existe dès maintenant pour que les entrées de demain puissent le porter, **pas pour être deviné aujourd'hui**.
-
-**⚠️ ET LA PROVENANCE NE SURVIT PAS D'UNE SAISIE À L'AUTRE** : elle est remise à zéro à l'ouverture du formulaire **et** après l'enregistrement (R15 — le marqueur se pose et se rend). Sans ça, un scan laisserait sa source sur la saisie manuelle suivante : *une provenance fausse est pire que pas de provenance, parce qu'elle se présente comme un fait vérifiable.*
-
-**⚠️ RÉTROCOMPATIBLE** : une entrée sans `v` est une entrée d'avant. On ne la réécrit pas et on ne lui suppose aucune provenance — on saura simplement qu'on ne sait pas.
-Tests : parcours 739/739, **calculs 223/223** (+8, bloc 12), muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 7 rouges**, et la sortie montre exactement l'ancienne forme. ⚠️ Le témoin a dû être réécrit : il sortait d'abord sur `_provFood absente`, rendant **un** rouge au lieu de mesurer les huit comportements (6ᵉ fois — ft-v887, 890, 892, 901, 905, 906). Il passe maintenant par `openAddFood`/`addFoodEntry`, présents des deux côtés. Fichiers : `app.js`, `tests/calculs/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v907. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
