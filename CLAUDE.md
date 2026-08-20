@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v928`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v929`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v928`** (prochaine : `ft-v929`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v929`** (prochaine : `ft-v930`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v929 — 🧪 LE BENCHMARK EXISTE : on ne SUPPOSE plus que Milo suit ses règles, on le MESURE** — Michel, avant de dépenser : *« ça me dérange pas du tout qu'on teste Milo, y a aucun problème. Par contre faut que je sois sûr que ça soit utile, parce que si je paye et que c'est pas utile c'est gaspiller de l'argent »* — puis, devant ma proposition de 5 cas : *« alors ça c'est un peu limite lol, au moins 10 ou 15 »*. Il a eu raison sur les deux points.
+
+**⭐⭐ LE DÉCLENCHEUR EST UNE PREUVE, PAS UNE INTUITION.** Le §8 de `docs/ARCHITECTURE-CERVEAU-CERVELET.md` posait que `tests/milo` prouve la **PRÉSENCE** d'une règle, jamais son **OBÉISSANCE**. **ft-v926 l'a démontré le jour même** : la règle *« avant de reprocher une charge, regarde qui l'a choisie — le marqueur te le dit, **ou tu la retrouves dans votre échange** »* était **dans le prompt**, la séance était **littéralement quelques messages plus haut**, et Milo a quand même reproché ses propres paliers. *Une règle présente n'est pas une règle appliquée* — et **rien ne mesurait ça**.
+
+**👉 CE QUI EST LIVRÉ** : **15 scénarios** (`tests/milo/eval-scenarios.js`) et leur runner (`tests/milo/eval.js`). **Six** viennent des bugs que Michel a vécus **en salle** du 15 au 20/08 — 82,5 kg, l'ordre des accessoires, le face pull mal placé, « c'est noté » qui ne note rien, les paliers reprochés, 2 exercices sur 5 sautés au débrief. Les **neuf** autres reprennent les règles de conversation/sécurité et les **3 personas fondateurs**.
+
+**⛔ AUCUN JUGE IA, ET C'EST UNE DÉCISION (R30).** Le framework prévoyait un juge LLM — et posait lui-même la bonne question : *« qui juge le juge ? »*. Un juge demande une calibration humaine permanente et un modèle épinglé, pour **doubler le coût** et **ajouter** une source d'erreur. Or **les vrais bugs de ce projet sont MÉCANIQUEMENT vérifiables** : un exercice absent, une charge de 82,5 kg sur une barre, un « c'est noté » sans bloc de mémoire, un lien inventé, un féculent proposé en keto. Les 15 vérificateurs sont donc du **JavaScript**. Le jour où un attendu ne sera pas exprimable en code, il restera au **juge HUMAIN** — c'est déjà ce que fait la carte VC dans l'app.
+
+**⚠️⚠️ UN VERT VAUT MOINS QU'UN ROUGE, et c'est écrit en tête du corpus.** Un **rouge est une PREUVE** : la règle a été violée sous une forme que le code reconnaît. Un **vert dit seulement « aucune violation DÉTECTABLE »**. On ne conclura donc jamais « Milo respecte ses règles » d'un run tout vert — seulement « ces 15 pièges-là n'ont pas pris ». Et les motifs sont **volontairement étroits** (**R19**) : on préfère **rater** une violation que rougir sur une réponse correcte, *un faux rouge ferait jeter le benchmark entier*.
+
+**⚠️ DEUX GARDE-FOUS DE COÛT — c'est le SEUL runner du dépôt qui dépense.** ① Sans `--go` il tourne **à blanc** : 0 appel, 0 €. Il construit quand même le **contexte réel** de chaque scénario (gratuit, tout est local) et en tire un devis **MESURÉ, pas deviné** — ~70 k caractères par scénario, soit **0,23 à 0,95 € la passe de 15**. ② Il n'est **PAS branché sur la suite de livraison** : *un test qui dépense à chaque `git push` finirait coupé* — et c'est le seul qui mesure vraiment Milo.
+
+**⭐ R13 DANS SA FORME PURE : rien de neuf construit côté navigateur.** `_vcApplyPersona` (remise à neutre de **tout** ce que lit `buildCoachContext`, puis injection du persona) et `_vcAsk` existaient déjà pour les cartes VC-001/002/003. Le seul changement : les **ATTENDUS**, jusque-là **cochés à la main** par un juge humain, deviennent du **code**.
+
+**⚠️⚠️ ET BRANCHER LE LABORATOIRE A RÉVÉLÉ DEUX DÉFAUTS DEDANS.** ① `_vcAsk` appelait `buildCoachContext()` **sans le message** — ce qui envoie **TOUT** (c'est le contrat documenté de la fonction pour les appelants de diagnostic), donc **plus** que ce que reçoit un vrai utilisateur : *une évaluation qui envoie plus que la réalité mesure une autre dilution que celle qu'on subit — donc un vert n'y prouverait rien.* ② Les personas annonçaient **« Haiku (défaut) »** alors que `worker.js` sert **Sonnet à tout le monde depuis le 10/08** : croire qu'on teste Haiku en testant Sonnet, c'est **corriger le mauvais cerveau** (**R9**). Deux notes périmées dans un outil de mesure — *exactement ce qui m'avait fait annoncer une faille déjà réparée le 17/08* (R23).
+Tests : parcours 829/829, calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif, et la raison est structurelle** : ce qu'on ajoute est un **outil de mesure**, pas un comportement de l'app — il n'existe aucun « ancien code » contre lequel le tourner. Ce qui remplace le témoin ici, c'est le **run à blanc**, qui prouve que les 15 scénarios se montent, que le contexte réel se construit pour chacun, et que le devis est calculé sur des caractères mesurés. Fichiers : `coach.js`, `tests/milo/eval-scenarios.js` (neuf), `tests/milo/eval.js` (neuf), `docs/FRAMEWORK-TESTS-MILO.md`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v929. |
 
 **ft-v928 — 📋 LE RÉCAP DU DÉBRIEF EST ÉCRIT PAR LE CODE, plus par Milo** — Michel, après le débrief incomplet : *« comme le débrief est automatique autant le faire en haiku dans la conversation de Milo, ça coûte pas cher pis voilà, pas besoin de faire un truc de fou »*.
 
@@ -718,19 +735,6 @@ Tests : **parcours 762/762** (+7, bloc LVI ; blocs LIII et LV ajustés, avec la 
 
 **👉 Deux chemins corrigés** : revenir sur l'onglet Macros le re-rend, et **noter un aliment rafraîchit la carte immédiatement**, sans même changer d'onglet.
 Tests : **parcours 755/755** (+4, bloc LV), calculs 235/235, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF : 2 rouges**, et la sortie montre exactement ce qu'il aurait vu — la carte encore sur *« Note un repas et cette carte te dira où tu en es »* après avoir noté. Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v912. |
-
-**ft-v911 — ⚡ « TES REPAS HABITUELS » — UN APPUI, ZÉRO FORMULAIRE** — Michel, en décrivant sa vraie journée : *« le matin je prends mon shaker de prot, je prends une banane ; le midi deux steaks hachés 5 %, 300 g de viande rouge, 200 g de riz et de la ratatouille ; le soir à peu près la même chose »*.
-
-**⭐ LE CONSTAT QUI DÉCIDE DE TOUT** : quelqu'un qui mange ça tous les jours n'a pas besoin d'un formulaire à cinq champs **trois fois par jour**. C'est le geste, pas le calcul, qui fait abandonner un suivi — et c'est exactement ce que disait son *« même moi ça me saoule de l'utiliser »*.
-
-**⚠️ ON N'INVENTE RIEN ET ON NE STOCKE RIEN DE PLUS.** Un « repas habituel » n'est pas déclaré, il est **observé** dans le journal : les aliments notés **ensemble**, le même jour, sur le même repas. Pas de liste à gérer, pas de bouton « enregistrer ce repas » supplémentaire — *la donnée était déjà là*. Un appui rejoue le tout sur le bon moment de la journée.
-
-**⚠️ AU MOINS DEUX FOIS POUR ÊTRE PROPOSÉ** : une fois c'est un repas, deux fois c'est une habitude. Proposer dès la première ferait de l'écran la liste de tout ce qu'on a mangé (R24).
-
-**⚠️⚠️ ET QUI MANGE DIFFÉREMMENT CHAQUE JOUR NE VOIT RIEN DU TOUT** — pas une section vide, qui serait un reproche déguisé. C'est la limite que **Michel a lui-même posée** quand j'avais conçu la brique sur son seul profil : *« ça c'est moi qui le fais, les autres peut-être pas »* (`docs/PERSONAS-FONDATEURS.md` : Tatiana = absence de présupposés).
-
-**⚠️ La provenance dit « reprise »** (brique 0) : ni une mesure fraîche, ni une saisie manuelle. Sans ça, un chiffre repris finirait par passer pour une mesure. Et un repas **déjà rejoué aujourd'hui** ne se re-propose pas.
-Tests : **parcours 751/751** (+7, bloc LIV), calculs 235/235, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. Fichiers : `app.js`, `screens.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v911. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

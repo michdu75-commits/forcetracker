@@ -6,7 +6,19 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v928` — fusionnée sur `master` le 20/08.
+- **Version en ligne (live) :** `ft-v929` — fusionnée sur `master` le 20/08.
+- 🧪 **LE BENCHMARK EXISTE** (ft-v929) — `node tests/milo/eval.js` (à blanc, 0 €) · `--go` (réel).
+  ⭐⭐ **Il répond à la seule question que `tests/milo` ne pouvait pas poser** : une règle **présente**
+  est-elle une règle **appliquée** ? ft-v926 a prouvé que non. **15 scénarios**, dont **6 tirés des
+  bugs vécus en salle** cette semaine.
+  ⛔ **Pas de juge IA** (décision, R30) : les bugs de ce projet sont mécaniquement vérifiables, les
+  15 vérificateurs sont du **code**.
+  ⚠️⚠️ **Un VERT vaut moins qu'un ROUGE** : un rouge est une preuve, un vert dit seulement « aucune
+  violation détectable ». Ne jamais conclure « Milo respecte ses règles » d'un run tout vert.
+  ⚠️ **Coût mesuré, pas deviné** : ~70 k car./scénario → **0,23 à 0,95 € la passe**. Il ne part
+  jamais tout seul et n'est **pas** dans la suite de livraison.
+  ⏭️ **La prochaine passe utile est un AVANT/APRÈS** autour d'un changement de prompt — c'est là
+  qu'il dit si le changement a servi.
 - 📋 **Le récap du débrief est écrit par le CODE** (ft-v928). ⭐ La frontière cerveau/cervelet
   appliquée DANS un message : *lister* est une transformation → code · *commenter* est un jugement
   → Milo. Il ne **peut** plus sauter un exercice, au lieu qu'on lui **demande** de ne pas le faire.
