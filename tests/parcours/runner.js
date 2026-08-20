@@ -7272,6 +7272,66 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXIV - MILO REPROCHE LES PALIERS QU'IL A LUI-MEME PRESCRITS (20/08/2026) ==
+   Retour de Michel apres sa seance : « regarde la discussion, il y a un truc qui va pas apres
+   avoir fini ma seance ». Dans le debrief, Milo ecrit « Lat Pulldown : 47 kg c'etait trop haut
+   pour demarrer » — alors qu'il avait prescrit « Palier : 45×5 » quelques messages plus haut.
+   ⚠️ 3e FOIS LE MEME INCIDENT : 15/08 (montee ecrite par l'app), 18/08 (montee prescrite par
+   Milo, chargee par le bouton), 20/08 (montee prescrite par Milo, saisie A LA MAIN parce que le
+   bouton ne sortait pas). Les deux premiers gardes-fous existent et ont tenu ; c'est le TROISIEME
+   auteur possible — « inconnu » — qui n'etait pas couvert.
+   ⭐ LE COMMENTAIRE DU 18/08 ANNONCAIT LA LIMITE, mot pour mot. La consigne du prompt qui devait
+   rattraper existe aussi, et elle n'a pas ete suivie : *une regle presente n'est pas une regle
+   appliquee* (§8 de docs/ARCHITECTURE-CERVEAU-CERVELET.md, cas reel).
+   👉 On NOMME l'incertitude dans la donnee au lieu de la taire. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  /* Trois seances identiques, seul l'AUTEUR change : app / Milo / inconnu. */
+  const mkEx = (marq) => Object.assign({name:'Soulevé de Terre', sets:[
+      {kg:60,reps:5,done:true,type:'É'},{kg:115,reps:3,done:true,type:'N'},
+      {kg:115,reps:3,done:true,type:'N'},{kg:115,reps:3,done:true,type:'N'}]}, marq);
+  const seed = seedScript({ ft4_sessions: JSON.stringify([{date:'2026-08-20', volume:2000,
+      exs:[mkEx({_milo:true})]}]) });
+  await pg.addInitScript(seed);
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const R=await pg.evaluate(()=>{
+    const base = {name:'Soulevé de Terre', sets:[
+      {kg:60,reps:5,done:true,type:'É'},{kg:115,reps:3,done:true,type:'N'},
+      {kg:115,reps:3,done:true,type:'N'},{kg:115,reps:3,done:true,type:'N'}]};
+    const ctx = auteur => {
+      const ex = Object.assign({}, base);
+      if(auteur==='milo') ex._milo=true;
+      if(auteur==='app')  ex._montee=true;
+      S.sessions=[{date:'2026-08-20', volume:2000, exs:[ex]}];
+      try{ return buildCoachContext('que penses-tu de ma séance')||''; }catch(e){ return 'ERREUR '+e.message; }
+    };
+    /* ⚠️ ON CHERCHE LA LIGNE DE SÉANCE, PAS LA RÈGLE DU PROMPT. Mon premier extracteur lisait
+       « montée en charge insuffisante » n'importe où — il attrapait donc la CONSIGNE (« quand une
+       ligne porte ⚠️ montée en charge insuffisante… ») et rendait un verdict même quand la séance
+       n'en portait aucun. *Un témoin qui mesure le mode d'emploi au lieu du résultat ne prouve
+       rien.* On exige le crochet ouvrant, qui n'existe que sur la ligne de la séance. */
+    const lire = t => {
+      const m = t.match(/\[⚠️ montée en charge insuffisante[^\]]*\]/);
+      return m ? m[0] : 'AUCUN VERDICT';
+    };
+    return { milo:lire(ctx('milo')), app:lire(ctx('app')), inconnu:lire(ctx('inconnu')) };
+  });
+  console.log('\n-- LXIV. Milo ne reproche plus les paliers qu\'il a prescrits --');
+  /* ⭐⭐ LE TÉMOIN DU JOUR : l'auteur INCONNU (séance saisie à la main). */
+  t('⭐⭐ AUTEUR INCONNU : le contexte le DIT, au lieu de laisser Milo supposer',
+    /AUTEUR DES CHARGES INCONNU/.test(R.inconnu), R.inconnu);
+  t('⭐⭐ ... et il demande de chercher dans l\'échange AVANT toute remarque',
+    /cherche cette séance dans votre échange/.test(R.inconnu), R.inconnu);
+  /* ⚠️ Les deux gardes-fous existants ne doivent pas avoir bougé — non-régression. */
+  t('/!\\ non-régression : une montée PRESCRITE PAR MILO reste attribuée à lui',
+    /TA PROPRE PRESCRIPTION/.test(R.milo) && !/INCONNU/.test(R.milo), R.milo);
+  t('/!\\ non-régression : une montée écrite par l\'APP ne produit AUCUN reproche',
+    R.app==='AUCUN VERDICT', R.app);
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

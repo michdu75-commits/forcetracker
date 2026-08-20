@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v925`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v926`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v925`** (prochaine : `ft-v926`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v926`** (prochaine : `ft-v927`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,19 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v926 — 🏷️ MILO REPROCHAIT LES PALIERS QU'IL AVAIT LUI-MÊME PRESCRITS — 3ᵉ fois, et cette fois l'auteur était INCONNU** — Michel, après sa séance : *« regarde la discussion avec Milo sur ma séance d'aujourd'hui, il y a un truc qui va pas après avoir fini ma séance, examine bien »*.
+
+**CE QUI EST ÉCRIT DANS SON DÉBRIEF** : *« Lat Pulldown : **47 kg c'était trop haut pour démarrer**. Tu étais déjà à 72 % de ta charge dès le premier palier »* · *« Rowing : démarrage à 40 kg… un palier raté c'est là qu'on se blesse »*. **Or Milo avait prescrit ces paliers lui-même**, quelques messages plus haut : *« Palier : 45×5 »* et *« Palier : 40×5 »*.
+
+**⚠️⚠️ ET LA CAUSE EST ENCHAÎNÉE AU BUG DU BOUTON.** Le bouton « Commencer cette séance » ne sortait pas (ft-v924/925), donc Michel a saisi sa séance **à la main** — donc **sans le marqueur `_milo`**, qui n'existe que sur le chemin du bouton. *Un bug d'affichage a produit un bug de comportement, deux couches plus loin.*
+
+**⭐ LE COMMENTAIRE DU 18/08 ANNONÇAIT CETTE LIMITE, MOT POUR MOT** : *« ce marqueur n'existe que si la séance a été chargée DEPUIS le chat ; ailleurs, seule la consigne du prompt peut rattraper »*. Les **deux** gardes-fous existants ont tenu (montée écrite par l'app, 15/08 · montée prescrite par Milo et chargée par le bouton, 18/08). C'est le **troisième auteur possible — inconnu** — qui n'était couvert par rien.
+
+**⭐⭐ ET LA CONSIGNE DU PROMPT EXISTE, ELLE N'A PAS ÉTÉ SUIVIE.** Elle dit noir sur blanc : *« avant de le dire, REGARDE QUI A CHOISI CES CHARGES : si elles viennent d'une séance que TU as prescrite (le marqueur te le dit, **ou tu la retrouves dans votre échange**)… »*. La séance était **littéralement dans la conversation**, quelques messages plus haut. **C'est un cas réel du prérequis écrit au §8 de `docs/ARCHITECTURE-CERVEAU-CERVELET.md`** : *une règle PRÉSENTE n'est pas une règle APPLIQUÉE* — et c'est précisément ce que `tests/milo` ne peut pas mesurer.
+
+**👉 CE QUI EST LIVRÉ** : on ne se tait pas (le défaut de montée est **vrai** et utile pour la suite) et on ne devine pas non plus — on **NOMME l'incertitude dans la DONNÉE** : *« auteur des charges inconnu (séance saisie à la main) : cherche cette séance dans votre échange AVANT toute remarque »*. *Une information absente laisse la place à une supposition ; une information présente, non* (**R4**).
+Tests : **parcours 820/820** (+4, bloc LXIV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 2 rouges**, et la sortie montre exactement le trou — `[⚠️ montée en charge insuffisante — saut de 48 % entre 60 et 115 kg]`, **sans dire qui a choisi**. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** : les gardes-fous du 15/08 et du 18/08 ne devaient PAS bouger. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v926. |
 
 **ft-v925 — 🔁 LE BOUTON SORT ENFIN, MÊME QUAND TOUT TOMBE — un chemin qui échoue sans le dire empêche tout repli** — 2ᵉ retour de terrain le même jour : *« ça ne fonctionne toujours pas »*, app bien en **ft-v924**.
 
@@ -710,17 +723,6 @@ Tests : parcours 744/744, **calculs 235/235** (+5), muscles 232/232, croisés 50
 
 **⚠️ Et la carte ne peut pas casser l'écran** : elle est appelée dans un `try` — c'est un ajout, pas un pré-requis. Si elle échoue, la nutrition s'affiche comme avant.
 Tests : **parcours 744/744** (+5, bloc LIII), calculs 230/230, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. ⚠️ Le témoin a d'abord rougi **à tort** : il comparait du texte formaté, et `toLocaleString` insère une espace insécable étroite (U+202F) différente entre Node et le navigateur — *un test qui échoue sur un caractère d'espacement ne mesure pas ce qu'il annonce*. Fichiers : `screens.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v909. |
-
-**ft-v908 — 💊 L'APP AFFIRMAIT QUELQUE CHOSE DE FAUX, ET TAISAIT CE QUI RELÈVE VRAIMENT DE LA SÉCURITÉ** — contre-audit **v1.2**, le premier écrit **avec accès au dépôt** : chaque constat porte son fichier et sa ligne, et **les cinq ont été revérifiés ici avant correction**.
-
-**① LA SEULE AFFIRMATION FAUSSE DES TROIS FICHES CRÉATINE.** L'app disait : *« la caféine peut réduire l'absorption de la créatine, espace-les de 2 h minimum »*. **L'absorption n'est pas en cause** — la caféine ne modifie ni la captation musculaire ni la pharmacocinétique (Vandenberghe 1996 · Vanakoski 1998). Un antagonisme existe, mais **ailleurs** : sur le temps de relaxation musculaire (Hespel 2002), et les travaux **divergent** sur la perte de bénéfice (pour : Vandenberghe, Hespel ; contre : Doherty 2002, Trexler 2016). **⛔ Et l'espacement de 2 h n'a JAMAIS été testé** : les protocoles portent sur plusieurs jours de caféine quotidienne, pas sur un intervalle dans la journée — la demi-vie de la caféine étant d'environ 5 h, décaler de 2 h ne changerait rien de toute façon. *On imposait une contrainte d'observance pour rien.* **⭐ La leçon de méthode, qui vaut au-delà de la caféine** : les trois dérives du dossier (charge, caféine, glucides) ont la même structure — **un vide comblé par un mécanisme vraisemblable**. Dire *« personne n'a mesuré ça »* est une information, et c'est ce qui distingue l'app de celles qui comblent le vide par du plausible.
-
-**⭐⭐ ② LES CONTRE-INDICATIONS N'ÉTAIENT AFFICHÉES NULLE PART.** L'ANSES déconseille la créatine en cas de **maladie rénale** (avis 2023-SA-0216), et son avis sur les compléments pour sportifs — renouvelé en 2024 — étend la réserve aux **facteurs de risque cardiovasculaire, cardiopathie, atteinte hépatique, troubles neuropsychiatriques, mineurs, grossesse et allaitement**. Elle recommande aussi de **ne pas cumuler les sources** et de choisir des produits conformes à **NF V 94-001 / EN 17444:2021**. *C'est le seul point de tout le dossier qui relève vraiment de la sécurité — donc le seul qui mérite d'être signalé fermement.* **⚠️ À ne pas confondre avec le dépassement des 3 g, qui est RÉGLEMENTAIRE et appelle un ton neutre** : mélanger les deux registres les affaiblit tous les deux (R11 — la hiérarchie compte plus que la présence). On renvoie au médecin, on n'interdit pas (Constitution), et ce n'est pas affiché en rouge (P21).
-
-**③ LA BARRE DE PROTÉINES NE LISAIT PAS LE JOURNAL.** `prot-eaten` était une **saisie manuelle que rien n'alimentait** : deux systèmes de suivi protéique dans la même app, dont l'un ignorait l'autre (**R2** + **R4**). Mesuré par le témoin : avec **60 g déjà notés au journal**, l'app affichait *« il te reste 187 g »* sur une cible de 187. **⚠️ La saisie manuelle reste prioritaire quand elle est remplie** — quelqu'un qui ne tient pas son journal doit pouvoir donner son chiffre, et on ne l'écrase pas (même arbitrage que `manualKcal`).
-
-**⛔ CE QUI N'EST PAS CHANGÉ, ET POURQUOI C'EST ÉCRIT** : la dose de créatine. La formule `0,05 g/kg plafonnée à 5 g` **n'apparaît dans aucune source** — c'est une troisième règle inventée entre deux référentiels qui existent (**3 000 mg/j**, dose journalière maximale française, arrêté du 26/09/2016 ; **3 à 5 g/j** selon l'ISSN). ⭐ **Et l'auditeur corrige ici sa propre v1.1** : il avait d'abord conclu que l'app plafonnait *trop bas*, sur les seules sources anglo-saxonnes — l'ajout des sources publiques françaises **retourne la conclusion**. Baisser la recommandation par défaut de tout le monde est une décision **produit ET de santé** : elle appartient à Michel, pas à une correction de nuit (R29). En attendant, **on affiche le repère réglementaire au lieu de le taire** — un chiffre sans son cadre laisse croire qu'il en est un.
-Tests : parcours 739/739, **calculs 230/230** (+7, bloc 13), muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 6 rouges**, dont celui qui se lit tout seul — `reste=187g cible=187g` avec 60 g mangés. Fichiers : `app.js`, `tests/calculs/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v908. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

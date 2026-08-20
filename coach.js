@@ -2531,7 +2531,25 @@ function buildCoachContext(msg) {
       let role='accessoire'; try{ role=_exRole(e.name); }catch(err){}
       if(role !== 'ancre') return '';                  // même règle que le générateur (R2)
       const d = _monteeDefauts(ech, kgT);
-      return d.length ? ` [⚠️ montée en charge insuffisante — ${d.join(' ; ')}]` : '';
+      /* ⛔⛔ ET ON DIT QUE L'AUTEUR EST INCONNU (20/08/2026) — 3ᵉ fois le même incident, apres le
+         15/08 (montee ecrite par l'app) et le 18/08 (montee prescrite par Milo).
+         CE QUI S'EST PASSE AUJOURD'HUI : le bouton « Commencer cette seance » ne sortait pas
+         (ft-v924/925), donc Michel a saisi sa seance A LA MAIN. Sans le chemin du bouton, pas de
+         marqueur `_milo` — et le debrief lui a reproche des paliers que MILO avait prescrits,
+         noir sur blanc quelques messages plus haut (« Lat Pulldown : 47 kg c'etait trop haut pour
+         demarrer », alors que Milo avait ecrit « Palier : 45×5 »).
+         ⚠️ LE COMMENTAIRE DU 18/08 ANNONCAIT DEJA CETTE LIMITE : *« ce marqueur n'existe que si la
+         seance a ete chargee DEPUIS le chat ; ailleurs, seule la consigne du prompt peut
+         rattraper »*. La consigne existe (elle dit d'aller verifier dans l'echange) — elle n'a pas
+         ete suivie. *Une regle presente n'est pas une regle appliquee* : c'est exactement le
+         prerequis ecrit au §8 de docs/ARCHITECTURE-CERVEAU-CERVELET.md, et en voici un cas reel.
+         👉 On ne se tait pas (le defaut de montee est vrai et utile), on ne devine pas non plus :
+         on NOMME l'incertitude dans la donnee, pour que Milo cesse de supposer que la personne a
+         choisi. Une information absente laisse la place a une supposition ; une information
+         presente, non (R4). */
+      return d.length
+        ? ` [⚠️ montée en charge insuffisante — ${d.join(' ; ')} · ⛔ AUTEUR DES CHARGES INCONNU (séance saisie à la main) : cherche cette séance dans votre échange AVANT toute remarque — si c'est toi qui l'as prescrite, corrige TA prescription ; sinon, dis-le sans reprocher]`
+        : '';
     }catch(err){ return ''; }
   };
   const _NB_DETAIL = 5;
