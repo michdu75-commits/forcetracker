@@ -7569,6 +7569,45 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXVIII - UN EXPORT QUI PERD SON CONTENU SANS RIEN DIRE (20/08/2026) ==
+   Michel lance le benchmark, appuie sur « Rapport (texte) », et le fichier qui lui revient
+   contient UNE SEULE LIGNE : « Benchmark Milo ». C'est le `title:` passe a navigator.share —
+   la feuille de partage iOS a garde le titre et jete le fichier.
+   ⭐ On ne remplace pas le partage : on ajoute un chemin qui ne depend d'aucune feuille
+   (copier), et on retire le titre pour que la cible n'ait QUE le fichier a prendre.
+   ⚠️ Le meme piege dormait dans les deux autres exports (VC, PT-001) — meme famille. */
+{
+  const C = fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
+  console.log('\n-- LXVIII. Un export ne doit pas pouvoir rendre un fichier vide --');
+
+  t('⭐ le rapport du benchmark a un chemin « copier », indépendant du partage',
+    /function copyEvalText/.test(C) && /copyEvalText\(\)/.test(C), '');
+
+  /* ⭐⭐ LE TÉMOIN CENTRAL — et il est VOLONTAIREMENT ÉTROIT (R19).
+     ⚠️ 8 AUTRES exports du dépôt partagent un fichier AVEC un titre (PT-001, VC, VM,
+     programme, étude du corps…) et ceux-là fonctionnent chez Michel. L'explication « le
+     titre survit au fichier » n'est donc PAS démontrée en général — elle est constatée
+     ICI, une fois. On corrige donc ICI, et on ne touche pas à ce qui marche : deviner deux
+     fois de suite a déjà coûté cher (BUGS.md 12ter). Le jour où un 2ᵉ export perd son
+     contenu, la famille sera prouvée et ce témoin s'élargira. */
+  /* ⚠️ On regarde l'APPEL, pas le corps de la fonction : ma 1ʳᵉ version cherchait `title:`
+     dans tout le corps, et le commentaire qui EXPLIQUE pourquoi on l'a retiré contient le
+     mot — le témoin rougissait sur sa propre explication. Un motif doit viser le code. */
+  const exp = (C.match(/async function exportEvalText\(\)\{[\s\S]*?\n\}/)||[''])[0];
+  const appels = exp.match(/navigator\.share\([^;]*\)/g) || [];
+  t('⭐⭐ l\'export du benchmark ne passe plus de `title:` au partage',
+    exp.length>0 && appels.length===1 && !/title:/.test(appels[0]),
+    exp ? (appels.join(' | ')||'aucun appel trouvé') : 'exportEvalText introuvable');
+
+  /* ⚠️ Le motif éprouvé du 13/08 : presse-papier → repli → et si les deux tombent, ON LE DIT.
+     Un bouton muet, de l'autre côté de l'écran, ça s'appelle « ça ne marche pas ». */
+  const bloc = (C.match(/function copyEvalText\(\)\{[\s\S]*?\n\}/)||[''])[0];
+  t('⭐ la copie a un repli execCommand ET un message quand tout échoue (leçon du 13/08)',
+    /execCommand\('copy'\)/.test(bloc) && /catch\(/.test(bloc) && /toast\(/.test(bloc), '');
+  t('/!\\ dernier recours : le rapport est AFFICHÉ, jamais perdu en silence',
+    /renderCoachMsg\('coach', txt\)/.test(bloc), '');
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
