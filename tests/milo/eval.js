@@ -64,6 +64,19 @@ const ONLY = (ARGV.find(a=>a.startsWith('--only='))||'').split('=')[1]
 const NMAX = parseInt((ARGV.find(a=>a.startsWith('--n='))||'').split('=')[1]
           || (ARGV[ARGV.indexOf('--n')+1]||''), 10);
 const COMPARE = ARGV.includes('--compare');
+// ⚠️⚠️ LE BENCHMARK RÉEL TOURNE SUR L'APP DÉPLOYÉE, PAS SUR UN SERVEUR LOCAL — et ce n'est
+//    pas un choix de confort. Le Worker porte un verrou anti-abus depuis le 27/07 :
+//    `ALLOWED_ORIGIN = 'https://michdu75-commits.github.io'`, et il refuse AVANT tout appel
+//    payant (403) toute origine inconnue. Depuis `http://localhost`, chaque scénario rendait
+//    « réseau: Failed to fetch » — le verrou faisait exactement son travail.
+//    ⭐ Et c'est plus honnête ainsi : on mesure le Milo que les gens ont vraiment, pas une
+//      copie de travail non déployée.
+//    ⚠️ CONSÉQUENCE À NE PAS OUBLIER : une modification locale du prompt n'est PAS mesurée
+//      tant qu'elle n'est pas en ligne (R18 — vérifier le déploiement, pas le push).
+// Le run À BLANC, lui, reste local : il ne fait aucun appel, donc aucun verrou à franchir,
+// et il continue de marcher hors ligne.
+const APP_LIVE = 'https://michdu75-commits.github.io/forcetracker/index.html';
+const LOCAL = ARGV.includes('--local');
 const MOD_ARG = ((ARGV.find(a=>a.startsWith('--modele='))||'').split('=')[1]
           || (ARGV[ARGV.indexOf('--modele')+1] && !ARGV[ARGV.indexOf('--modele')+1].startsWith('--') ? ARGV[ARGV.indexOf('--modele')+1] : '')
           || 'prod').toLowerCase();
@@ -153,8 +166,12 @@ function verifier(sc, reply) {
   console.log('║  🧪 BENCHMARK MILO (Tier 2) — est-ce qu\'il SUIT ses règles ?     ║');
   console.log('╚══════════════════════════════════════════════════════════════════╝');
   if (!GO) console.log('  Mode : À BLANC — aucun appel, aucun coût. Ajoute --go pour lancer.\n');
-  else if (COMPARE) console.log('  Mode : COMPARAISON — ' + (liste.length*2) + ' appels (' + liste.length + ' par modèle).\n');
-  else console.log('  Mode : RÉEL — ' + liste.length + ' appel(s) sur ' + MODELES[MOD_ARG].nom + '.\n');
+  else {
+    if (COMPARE) console.log('  Mode : COMPARAISON — ' + (liste.length*2) + ' appels (' + liste.length + ' par modèle).');
+    else console.log('  Mode : RÉEL — ' + liste.length + ' appel(s) sur ' + MODELES[MOD_ARG].nom + '.');
+    console.log('  App testée : ' + (LOCAL ? 'LOCALE ⚠️ (le Worker refusera : origine non autorisée)' : APP_LIVE));
+    console.log('  ⚠️ C\'est le Milo EN LIGNE qui est mesuré — une modif locale non déployée ne l\'est pas.\n');
+  }
 
   async function ouvrirPage() {
     const ctx = await nav.newContext({ serviceWorkers:'block', viewport:{width:390,height:844} });
@@ -165,7 +182,7 @@ function verifier(sc, reply) {
       for (const k in b) localStorage.setItem(k, b[k]);
     });
     const page = await ctx.newPage();
-    await page.goto('http://localhost:' + port + '/index.html');
+    await page.goto((GO && !LOCAL) ? APP_LIVE : ('http://localhost:' + port + '/index.html'));
     await page.waitForTimeout(2300);
     await page.evaluate(() => { document.querySelectorAll('.overlay').forEach(x => x.classList.remove('open')); });
     return { page, ctx };

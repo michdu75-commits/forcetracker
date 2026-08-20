@@ -159,6 +159,23 @@ sans ça un rapport pourrait annoncer « testé en Haiku » une passe entièreme
 c'est exactement l'erreur des personas VC, et une comparaison d'un modèle avec lui-même ne se
 voit pas à l'œil.
 
+### 6.3quater ⛔ OÙ IL PEUT TOURNER — et pourquoi pas depuis une session Claude Code
+
+Deux verrous, découverts en essayant (2 appels dépensés, ~6 centimes — c'est le prix d'un
+essai à un scénario avant d'en lancer trente, et il a payé) :
+
+1. **Le Worker refuse `localhost`.** `ALLOWED_ORIGIN = 'https://michdu75-commits.github.io'`
+   (verrou anti-abus du 27/07) : toute autre origine est rejetée **avant** le moindre appel
+   payant. Le benchmark pointe donc sur l'**app déployée**. ⭐ C'est plus honnête de toute
+   façon : on mesure le Milo que les gens ont vraiment. ⚠️ Corollaire — **une modif locale du
+   prompt n'est pas mesurée tant qu'elle n'est pas en ligne** (R18).
+2. **La session Claude Code n'a pas accès au réseau sortant** vers `workers.dev` ni vers
+   `github.io` (politique réseau de l'environnement distant : `CONNECT` → 403). Le run à blanc
+   marche (tout est local), **le run réel ne peut pas partir d'ici**.
+
+**👉 Le run réel se lance depuis une machine à internet normal**, avec Node et Playwright.
+Le run **à blanc** (0 €), lui, marche partout et hors ligne.
+
 ### 6.4 Il réutilise le laboratoire VC de l'app (R13)
 
 Rien de neuf construit côté navigateur : `_vcApplyPersona` (remise à neutre de **tout** ce que lit
