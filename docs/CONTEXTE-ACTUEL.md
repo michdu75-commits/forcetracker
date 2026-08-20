@@ -6,7 +6,12 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v925` — fusionnée sur `master` le 20/08.
+- **Version en ligne (live) :** `ft-v926` — fusionnée sur `master` le 20/08.
+- 🏷️ **Milo reprochait les paliers qu'il avait lui-même prescrits** (ft-v926, **3ᵉ fois**). Cause
+  enchaînée : le bouton ne sortait pas → séance saisie **à la main** → pas de marqueur `_milo`
+  (il n'existe que sur le chemin du bouton). ⭐ **La consigne du prompt qui devait rattraper EXISTE
+  et n'a pas été suivie** — cas réel du prérequis du §8 (une règle présente ≠ une règle appliquée).
+  L'app **nomme** désormais l'auteur inconnu au lieu de le taire.
 - 🔁 **Le bouton « Commencer cette séance » sort dans TOUS les modes de panne** (ft-v925). ⭐ La
   mesure a changé la recherche : le texte de Michel se lisait parfaitement en local, donc le
   défaut n'était pas la lecture. Deux trous **silencieux** : la pose du bouton renonçait sans rien
