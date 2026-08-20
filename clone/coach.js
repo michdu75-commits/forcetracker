@@ -1666,8 +1666,68 @@ async function _cerveletSeance(txt){
     const d=await r.json();
     const s=d&&d.seance;
     if(!s||!Array.isArray(s.exs)||!s.exs.length)return null;
-    return s;
+    return _cerveletFidele(s, txt);       // ⚠️ le modèle PROPOSE, le code VALIDE — voir juste en dessous
   }catch(e){ console.warn('[cervelet séance]',e); return null; }
+}
+
+// ─── 🛡️ LE MODÈLE PROPOSE, LE CODE VALIDE (20/08/2026) ───────────────────────
+// LE TROU. On DEMANDE au cervelet de reprendre le nom d'exercice « exactement tel que le coach
+// l'a écrit ». Personne ne le VÉRIFIAIT. S'il rendait « Développé Incliné » là où Milo avait
+// écrit « Développé Couché », la personne s'entraînait sur autre chose — sans un message.
+//
+// ⚠️⚠️ ET LA RÈGLE EXISTAIT DÉJÀ, appliquée au SEUL chemin en code. `_seanceDepuisTexte` refuse
+// depuis le 04/08 le rapprochement « par mots », avec sa mesure : il transformait « Curl Biceps
+// Haltères » en « Curl Barre » et « Élévations Latérales » en « Élévations Latérales Câble ».
+// La conclusion d'alors — *pour CONSTRUIRE une séance, on refuse le « à peu près »* — n'a jamais
+// été portée jusqu'au chemin du cervelet. C'est `BUGS.md` famille 15 : la règle juste, définie
+// trop étroit. Le 3ᵉ cas en trois jours.
+//
+// LA RÈGLE, volontairement simple et explicable : chaque nom rendu doit se RETROUVER dans ce que
+// Milo a écrit à l'écran — au moins un mot significatif, et au moins la MOITIÉ de ses mots.
+//   · « Développé Couché Barre » sur un texte qui dit « Développé couché »  → 2 mots sur 3 → GARDÉ
+//     (une précision de catalogue n'est pas une invention, et jeter là-dessus coûterait une séance)
+//   · « Développé Incliné Haltères » sur ce même texte → 1 mot sur 3 → ÉCARTÉ
+//   · « Leg Extension » absent du texte → 0 → ÉCARTÉ
+//
+// ⚠️ ON N'AVERTIT PAS LA PERSONNE, et c'est réfléchi : ce qu'on retire, elle ne l'a JAMAIS VU
+// (il n'était pas dans le texte de Milo). L'écarter REMET la séance en accord avec ce qu'elle a
+// lu — lui annoncer « j'ai retiré X » désignerait quelque chose qui n'a jamais existé pour elle.
+// La trace part dans la console, pour pouvoir diagnostiquer.
+//
+// ⚠️ ET SI LA TRADUCTION EST TROP ABÎMÉE (moins de 2 exercices survivants, ou plus d'un tiers
+// écarté), on ne rafistole pas : on rend `null` et la cascade repart sur le filet déterministe,
+// qui est fidèle PAR CONSTRUCTION puisqu'il lit les lignes de Milo. *Une séance à moitié juste
+// est pire qu'une séance plus pauvre mais vraie* (R29).
+function _cerveletFidele(sess, texte){
+  try{
+    const norm=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+                    .replace(/[^a-z0-9]+/g,' ').trim();
+    // ⚠️ LIGNE PAR LIGNE, PAS SUR LE TEXTE ENTIER — corrigé par son propre témoin, qui a rougi.
+    // Sur le texte entier, « Développé Incliné Haltères » trouvait « développé » sur la ligne du
+    // couché et « haltères » sur celle du curl : 2 mots sur 3, l'exercice passait. Or un nom
+    // d'exercice se trouve dans UNE ligne, pas éparpillé dans le message — c'est justement le
+    // renommage qui ferait travailler la personne ailleurs, donc le cas qui compte le plus.
+    const lignes=String(texte||'').split(/\n+/).map(norm).filter(Boolean);
+    if(!lignes.length) return sess;
+    const garde=[], jetes=[];
+    (sess.exs||[]).forEach(e=>{
+      const mots=norm(e&&e.name).split(' ').filter(m=>m.length>=4);
+      if(!mots.length){ garde.push(e); return; }        // nom trop court pour juger → on ne juge pas
+      // Sous-chaîne volontairement TOLÉRANTE (« curl » retrouve « curls ») : ici on cherche à
+      // éviter d'écarter à tort, pas à faire de l'analyse grammaticale.
+      let meilleur=0;
+      lignes.forEach(l=>{ meilleur=Math.max(meilleur, mots.filter(m=>l.indexOf(m)>=0).length); });
+      if(meilleur>=1 && meilleur/mots.length>=0.5) garde.push(e);
+      else jetes.push(e&&e.name);
+    });
+    if(!jetes.length) return sess;
+    console.warn('[cervelet] écarté(s), absent(s) du texte de Milo :', jetes.join(' · '));
+    if(garde.length<2 || jetes.length > (sess.exs.length/3)){
+      console.warn('[cervelet] traduction trop éloignée du texte → on repasse sur le filet');
+      return null;
+    }
+    return Object.assign({}, sess, {exs:garde});
+  }catch(e){ console.warn('[cervelet fidélité]',e); return sess; }   // jamais bloquant
 }
 
 // ─── MÉMOIRE DURABLE (profil conversationnel, étape 2 — demande Michel) ────────
