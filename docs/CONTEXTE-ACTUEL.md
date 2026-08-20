@@ -6,7 +6,12 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v923` — fusionnée sur `master` le 20/08.
+- **Version en ligne (live) :** `ft-v924` — fusionnée sur `master` le 20/08.
+- 🔘 **Le bouton « Commencer cette séance » ne sortait pas sur une VRAIE séance** (ft-v924, retour
+  terrain). Mon aiguillage de ft-v919 exigeait le nom et les séries sur la **même ligne** ; Milo
+  écrit un **bloc** (nom, paliers, séries, consigne). ⚠️ **Je l'avais validé sur mes propres
+  exemples, pas sur les siens** — le format réel était pourtant dans les captures de la veille.
+  ⭐ Son texte réel est désormais un **témoin permanent** (R17).
 - 🔀 **L'ORDRE DES ACCESSOIRES est enfin dit** (ft-v923) : la règle de zone de ft-v914 ordonnait
   l'ancre vs ses accessoires, et **rien entre accessoires** — Milo a écrit un face pull de 30 kg
   avant un leg curl de 55. Ajouté : *du plus lourd au plus léger dans une zone*, et *le petit

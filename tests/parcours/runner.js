@@ -7106,6 +7106,84 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXII - LE BOUTON N'APPARAISSAIT PAS SUR UNE VRAIE SEANCE (20/08/2026) ==
+   Retour de TERRAIN, capture a l'appui : « J'ai pas le bouton lancer la séance ». Milo ecrit
+   « La séance est prête, clique sur ⚡ Commencer cette séance » — et il n'y a aucun bouton.
+   ⚠️ C'ETAIT MA LIVRAISON DE LA VEILLE (ft-v919). Mesure sur SON texte reel : `_ressembleASeance`
+   rendait **false**, donc le cervelet n'etait meme pas appele ; et le filet rendait **RIEN**.
+   DEUX causes, trouvees l'une apres l'autre :
+   ① j'exigeais un NOM et des SERIES sur la MEME ligne. Milo ecrit un BLOC — nom sur sa ligne,
+      series sur la suivante. J'avais valide mon detecteur sur des textes que J'AVAIS ECRITS,
+      pas sur les siens : le piege classique de tester ses propres exemples.
+   ② la regex du filet est ancree en FIN de ligne, or « 3×3 à 130 kg — repos 3 min » a du texte
+      apres les kg → elle ne matchait pas du tout.
+   ⭐ CE BLOC FIGE SON TEXTE REEL : un bug de terrain devient un test permanent (R17). */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  /* Le texte de Milo, recopie de la capture du 20/08 — format en BLOCS. */
+  const VRAIE = [
+    "Tu es en Jour 2 de ton programme, mais vu ton niveau je te propose une vraie séance Pull :",
+    "",
+    "Échauffement — Elliptique 8 min (léger)",
+    "",
+    "Soulevé de Terre (ancre)",
+    "Paliers : 60×5 → 80×3 → 100×2 → 115×1",
+    "3×3 à 130 kg — repos 3 min",
+    "Barre collée aux tibias, gainage max, regard neutre",
+    "",
+    "Tirage Poulie Haute (Lat Pulldown)",
+    "1 palier : 45×5",
+    "3×8 à 65 kg — repos 2 min",
+    "Omoplates qui descendent, poitrine haute",
+    "",
+    "Rowing Haltère (Tirage Horizontal)",
+    "3×8 à 60 kg (par bras) — repos 90 s",
+    "",
+    "Tirage Visage (Face Pull)",
+    "3×12 à 30 kg — repos 60 s",
+    "",
+    "Leg Curl Couché Machine",
+    "3×10 à 55 kg — repos 90 s",
+    "",
+    "~18 séries effectives, environ 90 min avec les paliers. Ça te va ?"
+  ].join("\n");
+  const R=await pg.evaluate((VRAIE)=>{
+    const o={};
+    o.aiguillage=(typeof _ressembleASeance==='function')?_ressembleASeance(VRAIE):'ABSENTE';
+    const t=(typeof _seanceDepuisTexte==='function')?_seanceDepuisTexte(VRAIE):null;
+    o.filet = t ? t.exs.map(e=>e.name).join(' | ') : 'RIEN';
+    o.nb = t ? t.exs.length : 0;
+    o.series = (t&&t.exs[0]) ? t.exs[0].sets.length+'x'+t.exs[0].sets[0].reps+'@'+t.exs[0].sets[0].kg : '-';
+    /* ⚠️ Anti-faux-positif : une DISCUSSION qui cite des chiffres ne doit pas passer pour une séance. */
+    o.discu=(typeof _ressembleASeance==='function')?_ressembleASeance(
+      "La créatine se prend tous les jours, 3 à 5 g. Le moment n'a pas d'importance démontrée."):'ABSENTE';
+    /* ⚠️ Et la ligne de PALIERS ne doit jamais devenir un nom d'exercice. */
+    o.paliers = t ? t.exs.some(e=>/palier/i.test(e.name)) : true;
+    return o;
+  }, VRAIE);
+  console.log('\n-- LXII. Le bouton n\'apparaissait pas sur une vraie séance --');
+  t('⭐⭐ L\'AIGUILLAGE reconnaît enfin le format RÉEL de Milo (nom sur une ligne, séries sur la suivante)',
+    R.aiguillage===true, 'détecté='+R.aiguillage);
+  t('⭐⭐ LE FILET lit les 5 exercices de sa vraie séance (il rendait RIEN)',
+    R.nb===5, R.nb+' exercice(s) : '+R.filet);
+  t('⭐ ... avec les BONS noms, dans le BON ordre',
+    /^Soulevé de Terre \| Tirage Poulie Haute/.test(R.filet) && /Leg Curl Couché Machine$/.test(R.filet),
+    R.filet);
+  t('⭐ ... et les séries lues malgré le « — repos 3 min » qui traîne après les kg',
+    R.series==='3x3@130', R.series);
+  /* ⚠️ LE TÉMOIN QUI PROTÈGE LE PLUS : la ligne « Paliers : 60×5 → 80×3 » est entre le nom et les
+     séries. Sans la règle qui la saute, c'est ELLE qui deviendrait le nom de l'exercice. */
+  t('/!\\ ... et la ligne de PALIERS n\'est jamais prise pour un nom d\'exercice',
+    R.paliers===false, 'un exercice porte « palier » dans son nom');
+  t('/!\\ ... et une simple DISCUSSION chiffrée ne déclenche pas le cervelet (anti-faux-positif)',
+    R.discu===false, 'détecté='+R.discu);
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
