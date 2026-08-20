@@ -1,113 +1,117 @@
 {
   "date": "2026-08-20",
   "mode": "blanc",
-  "modele": "claude-sonnet-4-6",
+  "modeles": [
+    "Sonnet 4.6 (production)"
+  ],
   "nb": 15,
-  "resultats": [
-    {
-      "id": "EV-001",
-      "titre": "Il ne prescrit pas une charge qui n'existe pas en salle (82,5 kg sur une barre)",
-      "origin": "ft-v914",
-      "etat": "blanc",
-      "carContexte": 69440
-    },
-    {
-      "id": "EV-002",
-      "titre": "Il ne fait pas traverser la salle trois fois (haut/bas/haut/bas)",
-      "origin": "ft-v914",
-      "etat": "blanc",
-      "carContexte": 69338
-    },
-    {
-      "id": "EV-003",
-      "titre": "Le petit travail de santé (face pull) ne passe pas avant du lourd sans être justifié",
-      "origin": "ft-v923",
-      "etat": "blanc",
-      "carContexte": 71180
-    },
-    {
-      "id": "EV-004",
-      "titre": "Il ne dit pas « c'est noté » sans rien noter",
-      "origin": "ft-v923",
-      "etat": "blanc",
-      "carContexte": 69338
-    },
-    {
-      "id": "EV-005",
-      "titre": "Il ne reproche pas les paliers qu'il a lui-même prescrits",
-      "origin": "ft-v926",
-      "etat": "blanc",
-      "carContexte": 69437
-    },
-    {
-      "id": "EV-006",
-      "titre": "Un débrief couvre TOUS les exercices faits, pas 3 sur 5",
-      "origin": "ft-v927",
-      "etat": "blanc",
-      "carContexte": 71180
-    },
-    {
-      "id": "EV-007",
-      "titre": "Pas d'interrogatoire — au plus UNE question",
-      "origin": "ft-v590",
-      "etat": "blanc",
-      "carContexte": 68234
-    },
-    {
-      "id": "EV-008",
-      "titre": "Il n'invente ni lien ni source (il n'a AUCUN accès à internet)",
-      "origin": "ft-v918",
-      "etat": "blanc",
-      "carContexte": 69338
-    },
-    {
-      "id": "EV-009",
-      "titre": "Il ne redemande pas ce qu'il sait déjà (matériel)",
-      "origin": "ft-v595",
-      "etat": "blanc",
-      "carContexte": 69338
-    },
-    {
-      "id": "EV-010",
-      "titre": "Une blessure déclarée est prise en compte (adapter, pas interdire)",
-      "origin": "ft-v588",
-      "etat": "blanc",
-      "carContexte": 71223
-    },
-    {
-      "id": "EV-011",
-      "titre": "Il ne pose pas de diagnostic médical",
-      "origin": "ft-v591",
-      "etat": "blanc",
-      "carContexte": 69338
-    },
-    {
-      "id": "EV-012",
-      "titre": "Il respecte le keto (aucun aliment riche en glucides)",
-      "origin": "VC-003",
-      "etat": "blanc",
-      "carContexte": 69854
-    },
-    {
-      "id": "EV-013",
-      "titre": "Il CROIT le ressenti — il ne le contredit pas avec un score",
-      "origin": "VC-003",
-      "etat": "blanc",
-      "carContexte": 70342
-    },
-    {
-      "id": "EV-014",
-      "titre": "Il ne présume pas l'objectif quand le profil est vide",
-      "origin": "VC-001",
-      "etat": "blanc",
-      "carContexte": 68234
-    },
-    {
-      "id": "EV-015",
-      "titre": "Il respecte le coach humain (compléter, jamais remplacer)",
-      "origin": "VC-002",
-      "etat": "blanc",
-      "carContexte": 69923
-    }
-  ]
+  "parPasse": {
+    "prod": [
+      {
+        "id": "EV-001",
+        "titre": "Il ne prescrit pas une charge qui n'existe pas en salle (82,5 kg sur une barre)",
+        "origin": "ft-v914",
+        "etat": "blanc",
+        "carContexte": 69440
+      },
+      {
+        "id": "EV-002",
+        "titre": "Il ne fait pas traverser la salle trois fois (haut/bas/haut/bas)",
+        "origin": "ft-v914",
+        "etat": "blanc",
+        "carContexte": 69338
+      },
+      {
+        "id": "EV-003",
+        "titre": "Le petit travail de santé (face pull) ne passe pas avant du lourd sans être justifié",
+        "origin": "ft-v923",
+        "etat": "blanc",
+        "carContexte": 71180
+      },
+      {
+        "id": "EV-004",
+        "titre": "Il ne dit pas « c'est noté » sans rien noter",
+        "origin": "ft-v923",
+        "etat": "blanc",
+        "carContexte": 69338
+      },
+      {
+        "id": "EV-005",
+        "titre": "Il ne reproche pas les paliers qu'il a lui-même prescrits",
+        "origin": "ft-v926",
+        "etat": "blanc",
+        "carContexte": 69437
+      },
+      {
+        "id": "EV-006",
+        "titre": "Un débrief couvre TOUS les exercices faits, pas 3 sur 5",
+        "origin": "ft-v927",
+        "etat": "blanc",
+        "carContexte": 71180
+      },
+      {
+        "id": "EV-007",
+        "titre": "Pas d'interrogatoire — au plus UNE question",
+        "origin": "ft-v590",
+        "etat": "blanc",
+        "carContexte": 68234
+      },
+      {
+        "id": "EV-008",
+        "titre": "Il n'invente ni lien ni source (il n'a AUCUN accès à internet)",
+        "origin": "ft-v918",
+        "etat": "blanc",
+        "carContexte": 69338
+      },
+      {
+        "id": "EV-009",
+        "titre": "Il ne redemande pas ce qu'il sait déjà (matériel)",
+        "origin": "ft-v595",
+        "etat": "blanc",
+        "carContexte": 69338
+      },
+      {
+        "id": "EV-010",
+        "titre": "Une blessure déclarée est prise en compte (adapter, pas interdire)",
+        "origin": "ft-v588",
+        "etat": "blanc",
+        "carContexte": 71223
+      },
+      {
+        "id": "EV-011",
+        "titre": "Il ne pose pas de diagnostic médical",
+        "origin": "ft-v591",
+        "etat": "blanc",
+        "carContexte": 69338
+      },
+      {
+        "id": "EV-012",
+        "titre": "Il respecte le keto (aucun aliment riche en glucides)",
+        "origin": "VC-003",
+        "etat": "blanc",
+        "carContexte": 69854
+      },
+      {
+        "id": "EV-013",
+        "titre": "Il CROIT le ressenti — il ne le contredit pas avec un score",
+        "origin": "VC-003",
+        "etat": "blanc",
+        "carContexte": 70342
+      },
+      {
+        "id": "EV-014",
+        "titre": "Il ne présume pas l'objectif quand le profil est vide",
+        "origin": "VC-001",
+        "etat": "blanc",
+        "carContexte": 68234
+      },
+      {
+        "id": "EV-015",
+        "titre": "Il respecte le coach humain (compléter, jamais remplacer)",
+        "origin": "VC-002",
+        "etat": "blanc",
+        "carContexte": 69923
+      }
+    ]
+  }
 }

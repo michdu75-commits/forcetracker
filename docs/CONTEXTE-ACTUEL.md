@@ -6,7 +6,18 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v929` — fusionnée sur `master` le 20/08.
+- **Version en ligne (live) :** `ft-v930` — fusionnée sur `master` le 20/08.
+- ⚖️ **LE BENCHMARK COMPARE DEUX MODÈLES** (ft-v930) — `node tests/milo/eval.js --go --compare`.
+  ⭐⭐ **C'est la seule façon de FERMER la question « et si on passait tout le monde en Haiku ? »**,
+  qui revient parce que *« Sonnet pour tout le monde »* tient sur un **raisonnement** (R9) jamais
+  mesuré sur ce prompt-ci.
+  ⚠️⚠️ **Lecture ASYMÉTRIQUE, écrite aux trois endroits** : Haiku plus rouge → R9 **confirmé**,
+  question close · Haiku aussi vert → **ça ne rouvre RIEN** (le ton et le naturel ne sont dans
+  aucun de ces 15 motifs). **Il peut confirmer la décision, pas la renverser.**
+  ⛔ **La liste blanche du worker ne contient que des modèles MOINS CHERS que le défaut** — le pire
+  qu'un curieux puisse faire est de se rendre son propre Milo plus bête et moins cher. Le témoin
+  compare les **prix**, pas les noms.
+  ⏭️ **Reste à faire : la passe réelle.** Sonnet 0,23-0,95 € · Haiku 0,08-0,32 € · les deux ≈ la somme.
 - 🧪 **LE BENCHMARK EXISTE** (ft-v929) — `node tests/milo/eval.js` (à blanc, 0 €) · `--go` (réel).
   ⭐⭐ **Il répond à la seule question que `tests/milo` ne pouvait pas poser** : une règle **présente**
   est-elle une règle **appliquée** ? ft-v926 a prouvé que non. **15 scénarios**, dont **6 tirés des

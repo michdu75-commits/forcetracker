@@ -122,6 +122,43 @@ code, il restera au **juge HUMAIN** — c'est déjà ce que fait la carte VC dan
 2. **Il n'est PAS branché sur la suite de livraison.** Un test qui dépense à chaque `git push`
    finirait coupé — et c'est le seul qui mesure vraiment Milo.
 
+### 6.3bis ⚖️ COMPARER DEUX MODÈLES — et pourquoi la lecture est ASYMÉTRIQUE
+
+Michel, 20/08 : *« par la même occasion test en haiku non ? »*. **Oui — et c'est la seule façon
+de FERMER une question qui revient.** Aujourd'hui, *« Sonnet pour tout le monde »* (10/08) tient
+sur **R9** — *un modèle léger suit mal les consignes fines*. C'est un **raisonnement**, juste, mais
+**jamais mesuré sur CE prompt-ci**. `--compare` joue les 15 scénarios sur les deux et met les
+verdicts côte à côte.
+
+⚠️ **Ce n'est PAS une re-proposition de changer de modèle** (ce que R30 interdit) : c'est la
+mesure qu'il faudrait pour avoir le droit de rouvrir le sujet. Et la lecture du résultat est
+**asymétrique** :
+
+| Résultat | Ce qu'on en conclut |
+|---|---|
+| **Haiku nettement plus rouge** | R9 est **confirmé par un chiffre**. La question est **close**. |
+| **Haiku aussi vert** | ⚠️ **Ça ne rouvre RIEN.** Un vert ne dit que « aucune violation détectable sur 15 pièges ». Ce qui fait Milo — le **ton**, le **naturel**, le refus d'insister — n'est dans **aucun** de ces motifs. Et l'argument de Michel du 10/08 n'était pas technique : *« si les gens trouvent Milo nul ils ne vont pas le prendre »*. |
+
+**👉 Ce test peut CONFIRMER la décision, il ne peut pas la renverser.** C'est écrit dans le code,
+dans le worker et dans le rapport — pour que personne ne lise un tableau vert comme un feu vert.
+
+### 6.3ter ⛔ Accepter un modèle venu du client, sans ouvrir de trou
+
+Le modèle se décide dans `worker.js`, en dur. Pour comparer, il fallait pouvoir en demander un —
+c'est-à-dire accepter un paramètre du client, exactement le genre de porte qui coûte cher.
+
+**Ce qui la rend sûre tient en une phrase** : la liste blanche ne contient que des modèles
+**MOINS CHERS que le défaut**. Le pire qu'un curieux puisse faire est de se rendre son **propre**
+Milo plus bête et moins cher — ça ne touche personne d'autre et **ça ne peut pas faire monter la
+facture**. Tout ce qui n'est pas dans la liste est **ignoré** (repli silencieux vers le défaut,
+jamais une erreur). ⛔ **Ne jamais y ajouter un modèle plus cher que le défaut** — un témoin
+(`tests/parcours`, bloc LXVI) compare les **prix**, pas les noms, et rougit si quelqu'un le fait.
+
+⚠️ **Et le Worker rend le modèle qui a RÉELLEMENT servi** (`_model`), pas celui qu'on a demandé :
+sans ça un rapport pourrait annoncer « testé en Haiku » une passe entièrement jouée en Sonnet —
+c'est exactement l'erreur des personas VC, et une comparaison d'un modèle avec lui-même ne se
+voit pas à l'œil.
+
 ### 6.4 Il réutilise le laboratoire VC de l'app (R13)
 
 Rien de neuf construit côté navigateur : `_vcApplyPersona` (remise à neutre de **tout** ce que lit
@@ -153,7 +190,9 @@ ft-vNN est revenu »). Sortie **console + Markdown + JSON** (`tests/milo/report.
   **vérificateurs en code**. Six viennent des bugs vécus en salle du 15 au 20/08 ; les neuf autres
   reprennent les règles de conversation/sécurité et les trois personas fondateurs.
 - `tests/milo/eval.js` — le runner **Tier 2** : `node tests/milo/eval.js` (à blanc + devis),
-  `--go` (réel), `--only EV-001,EV-006`, `--n 4`. Rapports : `eval-report.json` / `.md`.
+  `--go` (réel), `--modele haiku`, `--compare` (les deux côte à côte), `--only EV-001,EV-006`,
+  `--n 4`. Rapports : `eval-report.json` / `.md`.
+  Devis mesuré pour les 15 : **Sonnet 0,23-0,95 €** · **Haiku 0,08-0,32 €** · comparaison ≈ la somme.
 - Vanilla JS, zéro dépendance de build. Ajouté à `.claspignore` (jamais poussé dans Apps Script).
 
 ## 9. Le pipeline bug → scénario (le réflexe)

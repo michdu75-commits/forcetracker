@@ -2545,3 +2545,13 @@ Tests : parcours 744/744, **calculs 235/235** (+5), muscles 232/232, croisés 50
 
 **⚠️ La provenance dit « reprise »** (brique 0) : ni une mesure fraîche, ni une saisie manuelle. Sans ça, un chiffre repris finirait par passer pour une mesure. Et un repas **déjà rejoué aujourd'hui** ne se re-propose pas.
 Tests : **parcours 751/751** (+7, bloc LIV), calculs 235/235, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. Fichiers : `app.js`, `screens.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v911. |
+
+
+**ft-v912 — 🔄 LA CARTE « OÙ TU EN ES » RESTAIT FIGÉE SUR SON INVITATION** — question de Michel devant l'écran : *« il y a marqué "note ton premier repas", et par la suite ça engendre quoi ? »*.
+
+**⭐ C'EST EN JOUANT LE PARCOURS POUR LUI RÉPONDRE QUE LE BUG EST APPARU** — pas en le décrivant. On appuie sur le bouton (il emmène bien au Journal et ouvre la saisie), on note son shaker, on revient sur Macros… **et la carte dit toujours « note ton premier repas »**. *Un écran se juge le doigt dessus.*
+
+**⚠️ LA CAUSE** : `switchNuTab` re-rendait le **Journal** et les **Suppléments**, jamais les **Macros**. Ce n'était pas un oubli à l'époque — jusqu'à ft-v909, cet onglet ne contenait que des chiffres qui ne bougent pas dans la journée (BMR, TDEE, cible). La carte a changé ça **la veille**, et personne n'a suivi. *La donnée avait changé, l'écran ne le savait pas.*
+
+**👉 Deux chemins corrigés** : revenir sur l'onglet Macros le re-rend, et **noter un aliment rafraîchit la carte immédiatement**, sans même changer d'onglet.
+Tests : **parcours 755/755** (+4, bloc LV), calculs 235/235, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF : 2 rouges**, et la sortie montre exactement ce qu'il aurait vu — la carte encore sur *« Note un repas et cette carte te dira où tu en es »* après avoir noté. Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v912. |
