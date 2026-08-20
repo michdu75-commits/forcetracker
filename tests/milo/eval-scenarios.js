@@ -39,6 +39,7 @@
 // Lancer :  node tests/milo/eval.js          (à blanc, 0 appel, 0 €)
 //           node tests/milo/eval.js --go     (pour de vrai)
 
+(function(){
 // ── Aides communes aux vérificateurs ────────────────────────────────────────────
 const U = {
   // Enlève les accents et met en minuscules — Milo écrit « Développé » ou « developpe ».
@@ -67,7 +68,7 @@ const U = {
 const BAS = /(squat|souleve de terre|presse a cuisses|leg press|leg curl|leg extension|fente|hip thrust|mollet|soleaire|adducteur|abducteur|ischio)/;
 const HAUT = /(developpe couche|developpe militaire|developpe incline|tirage|rowing|traction|curl biceps|extension triceps|elevations laterales|face pull|pec deck|dips|pull-over)/;
 
-module.exports = [
+const SCENARIOS = [
 
   // ───────────────────────────────────────────────────────────────────────────
   // A. LES CINQ BUGS QUE MICHEL A VÉCUS EN SALLE CETTE SEMAINE (15-20/08/2026)
@@ -332,4 +333,7 @@ module.exports = [
 
 ];
 
-module.exports.U = U;
+// ── Une seule définition, deux consommateurs ────────────────────────────────────
+if (typeof module !== 'undefined' && module.exports) { module.exports = SCENARIOS; module.exports.U = U; }
+else if (typeof window !== 'undefined') { window.EVAL_SCENARIOS = SCENARIOS; window.EVAL_U = U; }
+})();

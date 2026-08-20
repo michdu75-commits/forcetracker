@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v930`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v931`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v930`** (prochaine : `ft-v931`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v931`** (prochaine : `ft-v932`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v931 — 🧪 LE BENCHMARK A UN BOUTON DANS L'APP — un outil de mesure que personne ne peut lancer ne mesure rien** — Michel, devant le choix : **« un bouton dans l'app »**. C'était la bonne réponse, et pour une raison technique qu'on venait de découvrir.
+
+**⚠️ CE N'EST PAS DU CONFORT — la ligne de commande ne peut tourner NULLE PART d'utile.** Deux verrous, tous les deux légitimes, trouvés en dépensant **2 appels sur un seul scénario avant d'en lancer trente** : ① le **Worker refuse `localhost`** (`ALLOWED_ORIGIN = github.io`, verrou anti-abus du 27/07) — il rejette **avant** tout appel payant, et chaque scénario rendait *« réseau: Failed to fetch »* ; ② la **session Claude Code n'a aucun accès sortant** vers `workers.dev` ni `github.io` (`CONNECT` → 403). *L'essai à un scénario a payé son prix en six centimes.* **L'app, elle, est déjà sur la bonne origine.**
+
+**👉 Profil → Admin → « 🧪 Lancer le benchmark (15 scénarios) » et « ⚖️ Comparer Sonnet et Haiku ».** Le **coût est annoncé AVANT** (0,25-0,95 € · 0,30-1,30 €) — demande explicite de Michel : *« faut que je sois sûr que ça soit utile, si je paye et que c'est pas utile c'est gaspiller de l'argent »*.
+
+**⭐ R13 DANS SA FORME LA PLUS PURE : rien de neuf.** `_vcApplyPersona` (remise à neutre de tout ce que lit `buildCoachContext`), `_vcAsk`, le gel `window._demoMode` et la restauration par `load()` existaient **déjà** pour les cartes VC. On ajoute la **boucle** et l'**exécution des vérificateurs**. Le reste est du code de 2026-07 qui a déjà tourné.
+
+**⚠️⚠️ ET LE CORPUS N'EST PAS RECOPIÉ DANS L'APP (R2).** Les 15 scénarios et leurs vérificateurs vivent dans **un seul fichier**, `tests/milo/eval-scenarios.js`, lu par la ligne de commande **et** par le bouton (enveloppé dans une fonction anonyme pour ne rien laisser fuir dans les globales). *Les recopier garantirait qu'un jour l'app et la ligne de commande ne testeraient plus la même chose, sans que rien ne le signale.*
+
+**⛔ ET IL SE TÉLÉCHARGE À LA DEMANDE, jamais au démarrage** : l'app doit s'ouvrir instantanément à la salle (**règle d'or #4**). Un corpus de test dans le chemin de démarrage serait exactement ce que cette règle interdit — un témoin vérifie qu'il est **absent** tant qu'on n'a pas appuyé.
+
+**⭐⭐ LE TÉMOIN LE PLUS IMPORTANT N'EST PAS QUE ÇA MARCHE, C'EST QUE LES DONNÉES REVIENNENT.** On injecte **15 personas à la place du profil de la personne**. Si la restauration lâchait, on lui aurait **effacé son compte pour un test**. C'est la **règle d'or #3**, et elle passe avant la fonctionnalité : le témoin vérifie qu'après trois personas, `S.name` et `S.bw` sont ceux d'avant et que le gel des écritures est relâché.
+
+**⚠️ ET MES 4 PREMIERS ROUGES NE MESURAIENT RIEN — c'était le TEST qui était faux.** Il lisait `window._evReport`, or un **`let` en tête de script n'est PAS une propriété de `window`** : la variable existait, le rapport était bon, et le témoin lisait `undefined`. *Un test qui échoue ne prouve pas que le code est cassé — il faut savoir lequel des deux on regarde.* Trouvé en instrumentant la page, pas en relisant.
+Tests : **parcours 847/847** (+8, bloc LXVII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif** : les fonctions sont **neuves**, un témoin tourné contre l'ancien code rendrait « fonction absente » au lieu de mesurer — le piège payé 8 fois. Ce qui le remplace ici est le **réseau bouchonné** : chaque scénario reçoit une réponse **fabriquée dans le test**, donc on sait exactement quel verdict doit tomber — un débrief amputé rougit, une promesse de mémoire sans bloc rougit, une réponse correcte reste verte. Fichiers : `coach.js`, `index.html`, `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v931. |
 
 **ft-v930 — ⚖️ LE BENCHMARK SAIT COMPARER DEUX MODÈLES — la seule façon de FERMER une question qui revient** — Michel, dans la foulée : *« par la même occasion test en haiku non ? »*.
 
@@ -724,23 +741,6 @@ Tests : parcours 770/770, **calculs 241/241** (+6, bloc 14 ; 3 témoins de ft-v8
 
 **⚠️ Et un renvoi directionnel supprimé au passage** : ma version intermédiaire laissait *« la règle d'ORDRE est donnée plus bas »*. C'est exactement ce que **ft-v898** interdit — une position écrite en toutes lettres se périme au premier déplacement. Retiré, pas corrigé.
 Tests : **parcours 770/770** (+8, bloc LVII), calculs 235/235, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 7 rouges**, exactement les 7 comportements ajoutés. ⚠️ Le 8ᵉ témoin est **vert des deux côtés, et c'est voulu** : il ne surveille pas une régression, il garde la table unique pour l'avenir (R30 — un test peut protéger un invariant, pas seulement un correctif). Fichiers : `coach.js`, `log.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v914. |
-
-**ft-v913 — 💊 L'APP RECOMMANDAIT 20 g DE CRÉATINE PAR JOUR, ET AVERTISSAIT AU-DELÀ DE 5 — deux relectures extérieures du dossier UX** — Michel : *« fais-moi un UX complet de la section nutrition avec des screens pour que je voie avec GPT, voir si tout est cohérent, ainsi que l'autre Claude »*. Les deux revues sont revenues, et **elles convergent sur quatre points** — ce qui, à trois lecteurs indépendants, cesse d'être une question de goût (R22).
-
-**⚠️⚠️ ET LE CONSTAT LE PLUS UTILE PORTE SUR MA MÉTHODE, PAS SUR L'ÉCRAN.** Mon dossier annonçait, en toutes lettres, *« vérifié en JOUANT le parcours, pas en le décrivant »* — la leçon de la veille (ft-v912). Et **trois de ses captures créatine étaient identiques** : je n'avais pas appliqué ce parcours à l'onglet Suppléments, j'avais photographié le même écran trois fois en changeant la légende. *Écrire la règle en tête d'un document ne la fait pas appliquer au bas de ce même document.*
-
-**⭐⭐ C'EST EN CHERCHANT POURQUOI ELLES ÉTAIENT IDENTIQUES QUE LE VRAI DÉFAUT EST SORTI** : `creatPhase` démarrait sur **`'charge'`**. Quiconque ouvrait simplement l'onglet Suppléments lisait donc **20 g/jour, 4 × 5 g** — alors que **depuis la veille** (ft-v910) la même app **avertit au-delà de 5 g**, en expliquant qu'on sort de ce que décrivent les sociétés savantes. *Deux endroits du même écran qui se contredisent* (**R2**), et celui qui parlait le premier était celui qui n'avait rien demandé. **⚠️ La charge n'est pas retirée** — elle reste à un appui, et Michel l'a lui-même relativisée (*« la charge en créatine c'est pas très important »*). C'est le **défaut** qui change : il n'a jamais eu de raison d'être la dose la plus haute, la charge n'ayant jamais fait *mieux* que l'entretien, seulement plus *vite*.
-
-**⚠️ ET LE DÉFAUT ÉTAIT INVISIBLE AUX TESTS, PAR CONSTRUCTION** : tous les témoins existants ouvraient la fiche **après** avoir choisi une phase. *Un test qui règle toujours l'état avant de mesurer ne verra jamais l'état par défaut* — c'est la fenêtre aveugle du témoin, pas son erreur.
-
-**② LA MOYENNE COMPTAIT LA JOURNÉE EN COURS.** Le correctif de ft-v909 (diviser par les jours réellement notés, jamais par 7) était juste, et **le même défaut s'était simplement déplacé d'un cran** : une journée où l'on n'a noté que le petit-déjeuner est comptée comme une journée entière. *Aujourd'hui est, par construction, une journée incomplète* — la compter garantissait un chiffre faux **tous les matins**. La moyenne ne porte plus que sur les **jours terminés** ; tant qu'il n'y en a aucun, elle le dit (« elle apparaîtra dès qu'une journée entière sera derrière toi ») au lieu d'afficher un chiffre.
-
-**③ L'ÉCART SE LISAIT COMME UN REPROCHE.** Avec **un seul** jour noté, la carte annonçait *« 2 367 kcal sous ta cible »* **en orange** à quelqu'un qui venait de faire son tout premier geste. C'est exactement ce qu'on croyait avoir supprimé avec le « 0 / 2 547 » de ft-v909, reporté sur la moyenne. Il faut désormais **3 jours terminés** pour qu'un écart soit affiché — et il est en **gris**, pas en orange : *un écart est un constat, pas une alerte* (P21 — la nutrition ne doit jamais devenir une source de stress).
-
-**④ LE POURCENTAGE DE PROTÉINES ÉTAIT PLAFONNÉ À 100 %** — à deux endroits (la carte et la barre de l'onglet Suppléments). Quelqu'un à **149 %** lisait *« 100 % »* et se croyait exactement sur sa cible. Le plafond a du sens sur une **barre**, qui ne peut pas déborder ; aucun sur un **nombre**. Et le cas le pire est le **kéto**, précisément le régime où les protéines sont contraintes et où le dépassement **EST** l'information.
-
-**⚠️ ET UN TÉMOIN FAIBLE TROUVÉ EN ÉCRIVANT LE CONTRÔLE NÉGATIF** : mon motif cherchait `1[0-9][0-9]` dans le rendu — il attrapait donc « **100** » dans « 100 % », et **passait au vert sur l'ancien code plafonné**. *Un test qui passe des deux côtés ne prouve rien tant qu'on n'a pas vérifié qu'il DOIT rougir d'un côté.* Remplacé par une lecture du nombre (`parseInt(…) > 100`).
-Tests : **parcours 762/762** (+7, bloc LVI ; blocs LIII et LV ajustés, avec la justification écrite), calculs 235/235, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 9 rouges**, dont celui qui se lit tout seul — `actif=Charge (5-7j) · Dose quotidienne 20g / jour`. Fichiers : `app.js`, `screens.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v913. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

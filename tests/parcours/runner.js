@@ -7481,6 +7481,94 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     poseurs===1, poseurs+' occurrence(s)');
 }
 
+/* == BLOC LXVII - LE BENCHMARK TOURNE DEPUIS L'APP (20/08/2026) ==
+   Michel a choisi « un bouton dans l'app », et c'etait la bonne reponse : la ligne de commande
+   ne peut PAS partir d'une session Claude Code (reseau bloque vers workers.dev) ni d'un serveur
+   local (le Worker n'accepte que l'origine github.io, verrou du 27/07). Un outil de mesure que
+   personne ne peut lancer ne mesure rien.
+   ⭐ R13 : rien de neuf — _vcApplyPersona / _vcAsk / le gel _demoMode existaient deja.
+   ⚠️⚠️ CE QUI COMPTE LE PLUS ICI N'EST PAS QUE CA MARCHE, C'EST QUE LES DONNEES REVIENNENT.
+   On injecte 15 personas a la place du profil de la personne ; si la restauration lachait, on
+   lui aurait efface son compte pour un test. C'est la regle d'or n°3, et elle passe avant tout. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'87',ft4_age:'45'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    if(typeof _evCharger!=='function' || typeof _evRun!=='function'){ return {absente:true}; }
+
+    /* ① Le corpus se telecharge A LA DEMANDE (il ne doit PAS etre dans le demarrage). */
+    o.avantChargement = (typeof window.EVAL_SCENARIOS==='undefined');
+    let SC=null; try{ SC=await _evCharger(); }catch(e){ o.err='chargement: '+e.message; }
+    o.nb = SC ? SC.length : 0;
+    o.aDesVerifs = !!(SC && SC.every(x=>Array.isArray(x.verifs) && x.verifs.length>0));
+    o.uneSeuleSource = !!(SC && SC[0] && SC[0].origin);   // le corpus porte bien ses origines
+
+    if(!SC) return o;
+
+    /* ② On bouchonne le reseau : chaque scenario recoit une reponse FABRIQUEE ici, donc on
+       sait exactement quel verdict doit tomber. Aucun appel payant, aucun modele reel. */
+    const vraiFetch = window.fetch;
+    const REPONSES = {
+      /* EV-006 : debrief a qui il manque 2 exercices sur 5 → doit rougir. */
+      'EV-006': 'Beau travail sur le Soulevé de Terre, le Tirage Vertical et le Rowing Haltère.',
+      /* EV-004 : promet d'avoir note SANS bloc de memoire → doit rougir. */
+      'EV-004': 'Super, c\'est noté 💪',
+      /* EV-007 : une seule question → doit passer. */
+      'EV-007': 'Content de te lire. On commence doucement : tu préfères plutôt à la maison ou en salle ?'
+    };
+    window.fetch = async (url, opt) => {
+      let body={}; try{ body=JSON.parse((opt&&opt.body)||'{}'); }catch(e){}
+      const msg=String(body.message||'');
+      let cle='EV-007';
+      if(/débrief|debrief/i.test(msg)) cle='EV-006';
+      else if(/Note que je préfère/i.test(msg)) cle='EV-004';
+      const modele = body.evalModel || 'claude-sonnet-4-6';
+      return { ok:true, status:200, json:async()=>({reply:REPONSES[cle], _diag:'ok', _model:modele}) };
+    };
+
+    const sousEns = SC.filter(x=>['EV-004','EV-006','EV-007'].indexOf(x.id)>=0);
+    try{ await _evRun(sousEns, false); }catch(e){ o.errRun=e.message; }
+    window.fetch = vraiFetch;
+
+    const P = (_evReport && _evReport.parPasse && _evReport.parPasse.prod) || [];
+    const par = id => P.find(x=>x.id===id) || {};
+    o.rouge006 = par('EV-006').etat==='rouge';
+    o.det006   = ((par('EV-006').verdicts||[]).find(v=>!v.ok)||{}).detail||'';
+    o.rouge004 = par('EV-004').etat==='rouge';
+    o.vert007  = par('EV-007').etat==='vert';
+    o.rapport  = !!(_evReport && /VERT VAUT MOINS QU/.test(_evReport.text));
+
+    /* ③ ⭐⭐ LE TEMOIN LE PLUS IMPORTANT : les vraies donnees sont revenues. */
+    o.nomRestaure = (S.name==='Michel');
+    o.bwRestaure  = (Number(S.bw)===87);
+    o.degel       = (window._demoMode!==true);
+    return o;
+  });
+
+  console.log('\n-- LXVII. Le benchmark tourne depuis l\'app --');
+  if(R.absente){ t('⛔ le moteur de benchmark existe dans l\'app', false, 'fonctions absentes'); }
+  else{
+    t('⭐ le corpus n\'est PAS chargé au démarrage (règle d\'or #4)', R.avantChargement===true, '');
+    t('⭐⭐ ... et il se télécharge à la demande : 15 scénarios, une seule source (R2)',
+      R.nb===15 && R.aDesVerifs===true, 'nb='+R.nb+' verifs='+R.aDesVerifs+(R.err?' · '+R.err:''));
+    t('⭐ un débrief à qui il manque 2 exercices sur 5 est ROUGE',
+      R.rouge006===true, R.det006||JSON.stringify(R.errRun||''));
+    t('⭐ « c\'est noté » sans bloc de mémoire est ROUGE', R.rouge004===true, '');
+    t('⭐ ... et une réponse correcte reste VERTE (pas de faux rouge, R19)', R.vert007===true, '');
+    t('⭐ le rapport porte l\'avertissement « un vert vaut moins qu\'un rouge »', R.rapport===true, '');
+    /* ⚠️ Le plus important de tout le bloc. */
+    t('⭐⭐ RÈGLE D\'OR #3 : les vraies données sont REVENUES après 3 personas injectés',
+      R.nomRestaure===true && R.bwRestaure===true, 'name='+R.nomRestaure+' bw='+R.bwRestaure);
+    t('⭐ ... et le gel des écritures est bien relâché', R.degel===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
