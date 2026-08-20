@@ -1,5 +1,5 @@
 {
- "genere": "2026-08-13",
+ "genere": "2026-08-20",
  "total": 324,
  "nbRegles": 69,
  "fragiles": 0,
@@ -13,8 +13,8 @@
    "frag": 0
   },
   "Adduction Cuisses (Leg Adduction)": {
-   "p": "glutes",
-   "s": "quads",
+   "p": "adductors",
+   "s": "",
    "pat": "hanche-laterale",
    "eq": "guide",
    "met": 4,
@@ -238,7 +238,7 @@
   },
   "Cossack Squat": {
    "p": "glutes,quads",
-   "s": "abs,calves,hamstrings",
+   "s": "abs,adductors,calves,hamstrings",
    "pat": "fente",
    "eq": "corps",
    "met": 6.5,
@@ -838,7 +838,7 @@
   },
   "Fentes Latérales": {
    "p": "glutes,quads",
-   "s": "abs,calves,hamstrings",
+   "s": "abs,adductors,calves,hamstrings",
    "pat": "fente",
    "eq": "autre",
    "met": 6.5,
@@ -1870,7 +1870,7 @@
   },
   "Soulevé de Terre Sumo": {
    "p": "glutes,lower-back,quads",
-   "s": "forearms,hamstrings,lats,traps",
+   "s": "adductors,forearms,hamstrings,lats,traps",
    "pat": "hip-hinge",
    "eq": "barre",
    "met": 6.5,
@@ -2038,7 +2038,7 @@
   },
   "Squat Sumo": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "adductors,calves,hamstrings,lower-back",
    "pat": "squat",
    "eq": "barre",
    "met": 6.5,

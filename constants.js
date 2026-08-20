@@ -1350,7 +1350,7 @@ const EX_MUSCLES={
  //    position ouverte fait travailler davantage les QUADRICEPS et moins les ischios et le
  //    bas du dos — c'est même la raison pour laquelle beaucoup s'y mettent. Les deux fiches
  //    étaient identiques. (Les adducteurs, très sollicités, n'existent pas dans la figurine.)
- 'souleve-de-terre-sumo':                 {p:['glutes','quads','lower-back'], s:['hamstrings','traps','forearms','lats'], vu:'2026-08-02'},
+ 'souleve-de-terre-sumo':                 {p:['glutes','quads','lower-back'], s:['adductors','hamstrings','traps','forearms','lats'], vu:'2026-08-20'},
  // ✏️ CORRECTION : au rack pull la barre est lourde et l'amplitude courte — les FESSIERS sont
  //    moteurs et la PRISE (avant-bras) est ce qui lâche en premier. Les deux manquaient.
  'tirage-en-rack-rack-pull':              {p:['lower-back','glutes','traps'], s:['hamstrings','lats','forearms'], vu:'2026-08-02'},
@@ -1434,11 +1434,17 @@ const EX_MUSCLES={
  //    charge devant, dos appuyé sur un chariot, ou rien du tout. Cette information n'était
  //    nulle part.
  //
- // ⚠️ LIMITE DU GROUPE, écrite une fois pour toutes : les ADDUCTEURS n'existent pas dans la
- //    figurine (17 muscles). Ils sont pourtant moteurs au squat sumo, au cossack, aux fentes
- //    latérales et à l'adduction de cuisses. On ne les invente pas ailleurs : la fiche reste
- //    honnête et le manque est nommé. ⏭️ Ajouter un muscle change ce que voit l'utilisateur,
- //    donc c'est l'arbitrage de Michel (R29) — déjà signalé le 02/08.
+ // ✅ LIMITE LEVÉE LE 20/08/2026 — elle est gardée ici parce qu'elle explique les fiches.
+ //    Elle disait : « les ADDUCTEURS n'existent pas dans la figurine (17 muscles). Ils sont
+ //    pourtant moteurs au squat sumo, au cossack, aux fentes latérales et à l'adduction de
+ //    cuisses. On ne les invente pas ailleurs : la fiche reste honnête et le manque est nommé.
+ //    ⏭️ Ajouter un muscle change ce que voit l'utilisateur, donc c'est l'arbitrage de Michel. »
+ //    ⭐ La bonne décision : on n'a PAS bricolé, on a nommé le manque et on a attendu. Michel a
+ //    tranché le 20/08 (« Abducteur/Adducteur ce n'est pas pareil hein »), le groupe `adductors`
+ //    existe, et les quatre fiches nommées ci-dessus ont été reprises — elles portent `2026-08-20`.
+ //    ⚠️ Les adducteurs sont en SECONDAIRE sur les squats et les fentes, pas en moteur : les
+ //    moteurs restent quadriceps et fessiers. Seule l'adduction de cuisses, qui est une
+ //    ISOLATION, les porte en moteur.
  //
  // ─── SQUATS À LA BARRE, colonne chargée : les érecteurs travaillent, c'est normal.
  'squat-a-la-barre':                      {p:['quads','glutes'], s:['hamstrings','calves','lower-back'], vu:'2026-08-02'},
@@ -1448,7 +1454,7 @@ const EX_MUSCLES={
  'squat-bande-elastique':                 {p:['quads','glutes'], s:['hamstrings','calves','lower-back'], vu:'2026-08-02'},
  'squat-barre-avec-bandes-elastiques':    {p:['quads','glutes'], s:['hamstrings','calves','lower-back'], vu:'2026-08-02'},
  // Le SUMO ouvre les hanches : les fessiers passent devant. (Adducteurs : voir la limite ci-dessus.)
- 'squat-sumo':                            {p:['glutes','quads'], s:['hamstrings','calves','lower-back'], vu:'2026-08-02'},
+ 'squat-sumo':                            {p:['glutes','quads'], s:['adductors','hamstrings','calves','lower-back'], vu:'2026-08-20'},
  // ✏️ CORRECTION : le SQUAT AVANT n'est pas un squat arrière avec la barre devant. La barre
  //    posée sur les épaules doit être RETENUE — le haut du dos et les abdos empêchent le buste
  //    de plonger, et c'est ce qui limite la charge. Aucun des deux n'était compté.
@@ -1516,9 +1522,9 @@ const EX_MUSCLES={
  'smith-machine-fentes':                  {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
  'chariot-de-puissance-fentes-arriere':   {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
  // Fentes LATÉRALES et CROISÉES : le déplacement se fait sur le côté (adducteurs — voir limite).
- 'fentes-laterales':                      {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ 'fentes-laterales':                      {p:['quads','glutes'], s:['adductors','hamstrings','calves','abs'], vu:'2026-08-20'},
  'fentes-croisees-curtsy-lunge':          {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
- 'cossack-squat':                         {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ 'cossack-squat':                         {p:['quads','glutes'], s:['adductors','hamstrings','calves','abs'], vu:'2026-08-20'},
  'squat-bulgare':                         {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
  'squat-bulgare-elastique':               {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
  'split-squat-elastique-fente-statique':  {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
@@ -1541,7 +1547,11 @@ const EX_MUSCLES={
  //    ⏭️ ARBITRAGE MICHEL : ajouter les adducteurs à la figurine. Signalé le 02/08, toujours
  //    ouvert. Tant que ce n'est pas tranché, la fiche est fausse ET on le sait — c'est
  //    préférable à une fiche fausse dont personne ne se souvient.
- 'adduction-cuisses-leg-adduction':       {p:['glutes'], s:['quads'], vu:'2026-08-02'},
+  // ✏️ CORRECTION 20/08/2026 — elle disait `p:['glutes'], s:['quads']`, c'est-à-dire les
+ //    FESSIERS. C'est faux : la machine d'adduction ramène la cuisse vers l'intérieur, ce
+ //    sont les adducteurs (long, court, grand, gracile, pectiné). La fiche était juste au
+ //    02/08 *faute de vocabulaire* — le groupe `adductors` n'existait pas encore.
+ 'adduction-cuisses-leg-adduction':       {p:['adductors'], s:[], vu:'2026-08-20'},
  // ─── CHARIOT DE PUISSANCE : la poussée et le tirage inversé sont deux exercices différents,
  //     et ils étaient déjà distingués correctement (le tirage inversé est quadriceps-dominant).
  'sled-push':                             {p:['quads','glutes'], s:['calves','abs'], vu:'2026-08-02'},

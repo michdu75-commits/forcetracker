@@ -6,7 +6,13 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v920` — fusionnée sur `master` le 20/08.
+- **Version en ligne (live) :** `ft-v921` — fusionnée sur `master` le 20/08.
+- 🦵 **Les ADDUCTEURS sont entrés dans la figurine (ft-v921)** — 18 → **19 codes**. L'adduction de
+  cuisses comptait pour du **fessier** depuis toujours. ⚠️ Le manque était **écrit et daté** (02/08)
+  et attendait l'arbitrage de Michel ; il a tranché le 20/08. ⛔ **L'abduction n'a PAS bougé**
+  (mouvement opposé) — et séparer le **moyen fessier** du groupe Fessiers reste un chantier à part :
+  ça ferait cesser de le colorer sur *tous* les squats et hip thrusts. R30 : c'est écrit pour que
+  personne ne le « répare » par effet de bord.
 - **🫀 CHANTIER EN COURS — l'architecture CERVEAU / CERVELET** (`docs/ARCHITECTURE-CERVEAU-CERVELET.md`,
   idée de Michel : *« dans une entreprise il y a le boss et la secrétaire »*). Milo garde le jugement,
   une 2ᵉ IA fait le mécanique — **et elle n'existe pas pour l'utilisateur** (R6, une seule voix).

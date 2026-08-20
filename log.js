@@ -2495,7 +2495,16 @@ const _MEX=[
   {re:/tricep|skull crusher|extension tricep|barre front/i,                     p:['triceps'],                          s:['front-delt']},
   // Abducteurs / adducteurs (fessiers/hanche) — remplace l'ancien mapping erroné
   {re:/^(?!.*(epaule|shoulder|rotation)).*(abducteur|abduction)/i,              p:['glutes'],                           s:[]}, // ⚠️ « Rotation Externe Épaule Abduction » = coiffe des rotateurs, pas les fessiers (ft-v686)
-  {re:/adducteur|adduction/i,                                                   p:['glutes'],                           s:['quads']},
+  // ─── ADDUCTEURS vs ABDUCTEURS — deux mouvements OPPOSÉS (corrigé le 20/08/2026) ──
+  // ⚠️ Michel : « Abducteur/Adducteur ce n'est pas pareil hein ». Cette règle disait
+  // `glutes` + `quads` : l'ADDUCTION ramène la cuisse vers l'INTÉRIEUR — ce sont les
+  // adducteurs (long, court, grand, gracile, pectiné), pas les fessiers. Elle n'était pas
+  // négligente : le groupe `adductors` N'EXISTAIT PAS dans la figurine avant aujourd'hui,
+  // et le commentaire du 02/08 le disait déjà en toutes lettres (constants.js, groupe Jambes).
+  // ⚠️ ET ON CORRIGE ICI, on n'ajoute PAS une règle plus bas : `_MEX` s'arrête au PREMIER
+  // match (`break`), donc une règle juste placée derrière une règle fausse ne sert à rien.
+  // C'est la famille de bugs n°1 du projet — le « premier match gagnant », ≥12 fois (BUGS.md).
+  {re:/adducteur|adduction/i,                                                   p:['adductors'],                        s:[]},
   // Jambes — presse (toutes variantes fr/en)
   {re:/leg press|presse cuisse|press jambe|presse jambe|presse horizontale|presse verticale/i, p:['quads','glutes'],   s:['hamstrings','calves']},
   // Jambes — squats (couvre hack/belt/bulgare/sauté/poulie)
@@ -2608,7 +2617,22 @@ const _MG={
   'forearms': {paths:['front_forearm_flexor_left','front_forearm_flexor_right','back_forearm_flexor_left','back_forearm_extensor_left','back_forearm_flexor_right','back_forearm_extensor_right'], label:'Avant-bras'},
   'abs': {paths:['front_rectus_abdominis_upper_left','front_rectus_abdominis_middle_left','front_rectus_abdominis_upper_right','front_rectus_abdominis_middle_right','front_rectus_abdominis_lower_left','front_rectus_abdominis_lower_right'], label:'Abdominaux'},
   'obliques': {paths:['front_oblique_external_left','front_oblique_internal_left','front_oblique_external_right','front_oblique_internal_right','front_serratus_anterior_left','front_serratus_anterior_right'], label:'Obliques'},
-  'hip-flexors': {paths:['front_hip_flexor_left','front_hip_flexor_right','front_adductor_left','front_adductor_right'], label:'Fléchisseurs'},
+  'hip-flexors': {paths:['front_hip_flexor_left','front_hip_flexor_right'], label:'Fléchisseurs'},
+  // ─── 🦵 ADDUCTEURS — séparés des fléchisseurs de hanche le 20/08/2026 ─────────────
+  // ⚠️ CE MANQUE ÉTAIT ÉCRIT, DATÉ, ET IL ATTENDAIT MICHEL. Le 02/08, la relecture des
+  // 58 fiches Jambes s'était arrêtée sur cette limite, en toutes lettres dans constants.js :
+  // « les ADDUCTEURS n'existent pas dans la figurine (17 muscles). Ils sont pourtant moteurs
+  //   au squat sumo, au cossack, aux fentes latérales et à l'adduction de cuisses. On ne les
+  //   invente pas ailleurs : la fiche reste honnête et le manque est nommé. ⏭️ Ajouter un
+  //   muscle change ce que voit l'utilisateur, donc c'est l'arbitrage de Michel (R29). »
+  // Michel a tranché le 20/08, en une phrase : « Abducteur/Adducteur ce n'est pas pareil hein ».
+  //
+  // ⚠️ ET LE DESSIN LES CONNAISSAIT DÉJÀ : `front_adductor_left/right` existent depuis
+  // toujours, et l'étiquette au survol dit « Adducteurs ». Ils étaient simplement rattachés
+  // au groupe « Fléchisseurs » — donc AUCUN exercice ne pouvait les allumer, et l'adduction
+  // de cuisses colorait les FESSIERS. C'est **R31** : la figurine est le vocabulaire du
+  // système, et un muscle absent du vocabulaire est un muscle dont aucun module ne peut parler.
+  'adductors': {paths:['front_adductor_left','front_adductor_right'], label:'Adducteurs'},
   'quads': {paths:['front_vastus_lateralis_left','front_rectus_femoris_left','front_vastus_medialis_left','front_vastus_lateralis_right','front_rectus_femoris_right','front_vastus_medialis_right'], label:'Quadriceps'},
   'tibialis': {paths:['front_tibialis_anterior_left','front_tibialis_anterior_right'], label:'Tibialis'},
   'traps': {paths:['back_trapezius_upper_left','back_trapezius_middle_left','back_trapezius_lower_left','back_trapezius_upper_right','back_trapezius_middle_right','back_trapezius_lower_right'], label:'Trapèzes'},
@@ -3031,12 +3055,15 @@ function _mscScoresPlan(exs){
 
 // ─── Figurine « douleur » : réutilise la vraie figurine anatomique (_mscSVG) pour
 //     SÉLECTIONNER une zone qui fait mal. Tape un muscle → il devient rouge. (retour Michel, ft-v565)
-const _GRP2PAIN={pec:'pectoraux','front-delt':'epaule','side-delt':'epaule','rear-delt':'epaule',traps:'trapeze',abs:'abdos',obliques:'abdos',biceps:'biceps',triceps:'triceps',forearms:'avantbras',lats:'dorsaux','hip-flexors':'hanche',quads:'cuisse',tibialis:'mollet','lower-back':'lombaires',glutes:'fessier',hamstrings:'ischio',calves:'mollet'};
+const _GRP2PAIN={pec:'pectoraux','front-delt':'epaule','side-delt':'epaule','rear-delt':'epaule',traps:'trapeze',abs:'abdos',obliques:'abdos',biceps:'biceps',triceps:'triceps',forearms:'avantbras',lats:'dorsaux','hip-flexors':'hanche','adductors':'adducteur',quads:'cuisse',tibialis:'mollet','lower-back':'lombaires',glutes:'fessier',hamstrings:'ischio',calves:'mollet'};
 function _painFig(painSet){
   painSet=painSet||new Set();
   const p2z={};
   Object.entries(_MG).forEach(([g,d])=>{const z=_GRP2PAIN[g];if(z)d.paths.forEach(id=>{p2z[id]=z;});});
-  p2z['adductors-left']='adducteur';p2z['adductors-right']='adducteur'; // les adducteurs sont dans le groupe hip-flexors → on les sépare
+  // ⚠️ L'EXCEPTION MANUELLE A DISPARU (20/08/2026). Elle disait « les adducteurs sont dans le
+  // groupe hip-flexors → on les sépare » : c'était un rattrapage à la main, pour un seul
+  // usage, d'un manque connu depuis le 02/08. Les adducteurs sont maintenant un GROUPE, donc
+  // `_GRP2PAIN` s'en charge tout seul — une information, un seul propriétaire (R2).
   const defs=`<defs>
     <linearGradient id="pg-skin" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#E8A888"/><stop offset="100%" stop-color="#B86848"/></linearGradient>
     <linearGradient id="pg-base" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#C87868"/><stop offset="100%" stop-color="#7A3828"/></linearGradient>

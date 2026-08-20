@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v920`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v921`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v920`** (prochaine : `ft-v921`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v921`** (prochaine : `ft-v922`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v921 — 🦵 LES ADDUCTEURS EXISTENT ENFIN — l'adduction de cuisses comptait pour du FESSIER** — Michel, en me reprenant sur une phrase où je les avais mis sur la même ligne : *« Abducteur/Adducteur ce n'est pas pareil hein »*. Il a raison, et sa remarque a ouvert un vrai bug.
+
+**LA MESURE, avant de toucher à quoi que ce soit** : `Adduction Cuisses (Leg Adduction)` rendait **`glutes:2 · quads:1`**. La machine qui ramène la cuisse vers l'**INTÉRIEUR** colorait les **FESSIERS**. Ce n'est pas une nuance de vocabulaire : la figurine s'allumait au mauvais endroit, le calendrier héritait de la couleur, et Milo recevait *« il a travaillé les fessiers »*.
+
+**⚠️⚠️ ET LE MANQUE ÉTAIT ÉCRIT, DATÉ, ET IL ATTENDAIT MICHEL.** Le 02/08, la relecture une par une des 58 fiches Jambes s'était arrêtée dessus, en toutes lettres dans `constants.js` : *« les ADDUCTEURS n'existent pas dans la figurine (17 muscles). Ils sont pourtant moteurs au squat sumo, au cossack, aux fentes latérales et à l'adduction de cuisses. On ne les invente pas ailleurs : la fiche reste honnête et le manque est nommé. ⏭️ Ajouter un muscle change ce que voit l'utilisateur, donc c'est l'arbitrage de Michel (R29). »* ⭐ **C'était la bonne décision** : on n'a pas bricolé, on a **nommé** le manque et on a attendu. Le commentaire a même servi de liste de courses — il donnait déjà les quatre exercices à reprendre.
+
+**⚠️ ET LE DESSIN LES CONNAISSAIT DÉJÀ** : `front_adductor_left/right` existent depuis toujours, et l'étiquette au survol dit « Adducteurs ». Ils étaient simplement rattachés au groupe **« Fléchisseurs de hanche »** — donc **aucun exercice ne pouvait les allumer**. C'est **R31** dans sa forme exacte : *la figurine est le VOCABULAIRE du système, et un muscle absent du vocabulaire est un muscle dont aucun module ne pourra jamais parler.*
+
+**👉 CE QUI EST LIVRÉ** : le groupe **`adductors`** (18 → **19 codes**), sorti des fléchisseurs · **5 fiches** reprises — l'adduction de cuisses en **MOTEUR** (c'est une isolation), le squat sumo, le cossack, les fentes latérales et le soulevé sumo en **SECONDAIRE**, parce que leurs moteurs restent quadriceps et fessiers · les régions **calendrier** et **calories** complétées · et l'**exception manuelle** posée pour les zones de douleur (*« les adducteurs sont dans le groupe hip-flexors → on les sépare »*) a **disparu** : le groupe s'en charge, une information n'a qu'un propriétaire (**R2**).
+
+**⚠️ L'ABDUCTION NE BOUGE PAS, et c'est ce qui rend la correction crédible.** Mouvement **opposé** (moyen fessier), et le moyen fessier est dessiné **à l'intérieur** du groupe Fessiers : le séparer ferait cesser de le colorer sur **tous** les squats et hip thrusts — c'est un chantier à part, pas un effet de bord. Un témoin jumeau vérifie explicitement qu'elle est **intacte**.
+
+**⭐⭐ ET J'AVAIS D'ABORD AJOUTÉ MA RÈGLE DERRIÈRE UNE RÈGLE FAUSSE.** `_MEX` s'arrête au **PREMIER match** (`break`), et la règle 29 disait déjà `glutes` : ma règle 34, pourtant juste, ne servait à rien — la mesure le montrait (`Adducteur` rendait toujours `glutes:2 quads:1`). **C'est la famille de bugs n°1 du projet, le « premier match gagnant », ≥12 fois** (`BUGS.md`). Corrigé **EN PLACE**, et les deux règles mortes retirées.
+
+**⭐⭐ ET UN TÉMOIN A FAIT SON TRAVAIL EN ROUGISSANT.** Il s'appelait *« témoin honnête : l'ABDUCTION est juste (moyen fessier), l'ADDUCTION reste fausse »* et il **figeait le manque** pour que personne ne le découvre par surprise. Il n'a pas été affaibli, il a été **retourné** : *un test protège une ABSENCE aussi bien qu'une présence (R30) — quand l'absence est comblée, il change de camp.*
+Tests : parcours 793/793, calculs 241/241, **muscles 235/235** (+3), croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges**, exactement les 4 comportements changés. ⚠️ L'**empreinte du catalogue** a été régénérée et son diff relu ligne à ligne : **5 exercices bougent, pas un de plus** — c'est le garde-fou qui existe précisément pour ça. Fichiers : `log.js`, `constants.js`, `app.js`, `screens.js`, `tests/muscles/runner.js`, `tests/croises/runner.js` (+ empreinte), `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v921. |
 
 **ft-v920 — 🛡️ LE MODÈLE PROPOSE, LE CODE VALIDE — la règle existait, appliquée à UN SEUL des deux chemins** — Michel : *« bah non fait le comme ça je verrais de moi même si ça fonctionne »*.
 
@@ -680,17 +697,6 @@ Tests : **parcours 739/739** (+4, bloc LII), calculs 206/206, muscles 232/232, c
 
 **⚠️ ET ON NE BASCULE PAS TROP TÔT POUR AUTANT** : une **série de travail** non cochée bloque toujours (elle peut encore être faite), et un exercice qui n'aurait **que** des paliers n'avance pas non plus — sans série de travail validée, rien ne dit qu'on en a fini avec lui (R29 : le coût de l'erreur décide, et ici basculer à tort ferait perdre la série suivante de vue).
 Tests : **parcours 735/735** (+3, bloc LI), calculs 206/206, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge**, exactement le sien — paliers laissés vides → `label:""`, aucune bascule. ⚠️ Les deux autres témoins sont verts des deux côtés, et c'est voulu : l'un fige le cas qui marchait déjà (pour que le correctif ne le casse pas), l'autre l'interdiction de basculer trop tôt. Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v904. |
-
-**ft-v903 — 🛑 UNE MISE À JOUR NE TOMBE PLUS PENDANT UNE SÉANCE QUI COMMENCE PAR DU CARDIO — et c'est la DEUXIÈME fois qu'il le signale** — Michel, en séance : *« putain faut éviter de faire une mise à jour quand je suis en séance, ça me nique mon bilan de fin de séance »*. **La première fois, c'était le 15/08 — et elle avait créé ce garde-fou.** Il revient donc sur une règle qui existe et qui n'a pas tenu : *quand la même remarque revient, ce n'est pas la règle qu'il faut réécrire, c'est sa DÉFINITION qu'il faut aller regarder* (`docs/ORIGINE-DES-REGLES.md`).
-
-**⚠️⚠️ LE TROU : « séance en cours » SE MESURAIT AU NOMBRE D'EXERCICES.** La condition lisait `S.wkt.exs.length`. Une séance **commencée mais sans exercice encore saisi** — typiquement **20 minutes de vélo AVANT la musculation, exactement sa séance de ce matin** (ft-v901) — ne comptait donc pas comme une séance. Le seul rempart qui restait était *« on n'applique la mise à jour que sur l'Accueil »* : un simple aller-retour par l'accueil pendant le cardio, et le rechargement tombait au milieu.
-
-**👉 UNE SEULE DÉFINITION, LUE PAR TOUT LE MONDE (R2)** : `_seanceOuverte()` (log.js) — **démarrée** (`startTs`), **ou** avec des exercices, **ou** avec un cardio noté. **⚠️ Pause comprise** : une séance en pause n'est pas une séance finie, et la recharger coûterait exactement ce qu'il décrit — le récapitulatif de fin.
-
-**⚠️ ET ELLE NE SE CONFOND PAS AVEC SA VOISINE, c'est écrit à côté des deux** : `_seanceOuverte()` répond à *« y a-t-il une séance non terminée ? »* (pause **comprise** → retient la mise à jour) ; `_wktEnCours()` répond à *« est-ce que je m'entraîne LÀ, maintenant ? »* (pause **exclue** → tient l'écran allumé, ft-v902). Deux questions voisines, deux réponses différentes, **une seule base** — les fusionner ferait éteindre l'écran d'une séance en pause *ou* recharger l'app pendant qu'elle est en pause, selon le côté choisi.
-
-**⚠️ ET « OUVERTE » N'EST PAS « `S.wkt` EXISTE »** : `renderLog()` crée un objet de séance vide dès qu'on **affiche** l'écran Séance. Sans cette nuance, la mise à jour serait bloquée pour toujours dès que quelqu'un a jeté un œil à l'onglet Séance — un garde-fou qui ne se relâche jamais finit par être désactivé (R19).
-Tests : **parcours 732/732** (+6, bloc L), calculs 206/206, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 2 rouges**, et ce sont précisément les deux siens — *« 20 min de cardio sans exercice »* et *« chrono démarré sans exercice saisi »* laissaient tous deux passer la mise à jour. Fichiers : `log.js`, `app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v903. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
