@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v931`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v932`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v931`** (prochaine : `ft-v932`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v932`** (prochaine : `ft-v933`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,19 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v932 — 📋 LE RAPPORT DU BENCHMARK SE COPIE — l'export rendait un fichier d'UNE LIGNE** — Michel lance le benchmark, appuie sur « Rapport (texte) », et m'envoie le fichier reçu. Il contient **« Benchmark Milo »**, et rien d'autre.
+
+**CE N'EST PAS LE RAPPORT, C'EST SON TITRE.** `navigator.share({files:[…], title:'Benchmark Milo'})` — la feuille de partage a **gardé le titre et jeté le fichier**. *Un export qui perd son contenu sans rien dire, c'est un export qui ment* : rien n'a échoué, rien n'a prévenu, et de l'autre côté de l'écran il ne reste qu'un fichier vide.
+
+**👉 ON NE REMPLACE PAS LE PARTAGE, ON AJOUTE UN CHEMIN QUI NE DÉPEND D'AUCUNE FEUILLE** : **« 📋 Copier le rapport »**. C'est celui dont Michel a réellement besoin — il **colle le texte dans la conversation**, il ne classe pas des fichiers. *La bonne correction n'est pas toujours de réparer le chemin cassé ; c'est parfois d'en ouvrir un qui ne peut pas casser.*
+
+**⭐ R13 — le motif existait déjà, avec sa leçon écrite.** Repris tel quel de `copyAppLink` (13/08, quand Michel avait signalé un bouton « copier » muet) : presse-papier → repli `execCommand` → **et si les deux tombent, ON LE DIT**, avec en dernier recours le rapport **affiché dans le chat**. *Un bouton muet, de l'autre côté de l'écran, ça s'appelle « ça ne marche pas ».*
+
+**⚠️⚠️ ET LA CORRECTION EST VOLONTAIREMENT ÉTROITE (R19) — c'est le point de méthode.** **8 autres exports** du dépôt partagent un fichier **avec** un titre (PT-001, VC, VM, programme, étude du corps) — et **ceux-là fonctionnent chez Michel**. Donc l'explication *« le titre survit au fichier »* n'est **pas démontrée en général** : elle est **constatée ici, une fois**. On corrige ici et **on ne touche pas à ce qui marche** — *deviner deux fois de suite a déjà coûté cher* (`BUGS.md` 12ter). Le témoin le dit explicitement : le jour où un **2ᵉ** export perd son contenu, la famille sera prouvée et il s'élargira.
+
+**⚠️ ET MON PREMIER TÉMOIN ROUGISSAIT SUR SA PROPRE EXPLICATION.** Il cherchait `title:` dans **tout le corps** de la fonction — or le commentaire qui explique *pourquoi on l'a retiré* contient le mot. *Un motif doit viser le CODE, pas le texte qui l'entoure.* Corrigé pour n'examiner que l'appel lui-même.
+Tests : **parcours 851/851** (+4, bloc LXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif** : `copyEvalText` est une fonction **neuve** — un témoin tourné contre l'ancien code rendrait « fonction absente » au lieu de mesurer (le piège payé 8 fois). Ce qui le remplace : le témoin a **effectivement rougi** sur l'ancien appel avec `title:`, puis est passé au vert une fois le titre retiré — le va-et-vient a été observé, pas supposé. Fichiers : `coach.js`, `tests/milo/eval.js` (commentaire dupliqué retiré), `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v932. |
 
 **ft-v931 — 🧪 LE BENCHMARK A UN BOUTON DANS L'APP — un outil de mesure que personne ne peut lancer ne mesure rien** — Michel, devant le choix : **« un bouton dans l'app »**. C'était la bonne réponse, et pour une raison technique qu'on venait de découvrir.
 
@@ -726,21 +739,6 @@ Tests : **parcours 770/770**, calculs 241/241, muscles 232/232, croisés 50/50, 
 
 **⚠️ Et deux erreurs de ma part, gardées écrites** : mon témoin employait *« Oeufs »* (o+e) là où l'app écrit *« Œufs »* — il ne matchait donc pas l'œuf mais **l'huile d'olive**, et mesurait 10 ml au lieu de 150 g. Et mes regex d'extension portaient `\\(` au lieu de `\(` : un antislash littéral suivi d'une parenthèse ouvrante, donc un motif qui ne pouvait rien attraper. *Deux fautes d'échappement, deux témoins qui semblaient rouges pour une raison qui n'existait pas.*
 Tests : parcours 770/770, **calculs 241/241** (+6, bloc 14 ; 3 témoins de ft-v899 étendus), muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 5 rouges.** ⚠️ Le 6ᵉ témoin est vert des deux côtés, et c'est voulu : il vérifie qu'un aliment où le cru/cuit n'a **aucun sens** (yaourt, amandes, banane) ne reçoit **pas** d'état — il ne surveille pas l'ancien code, il surveille la sur-étiquetage. Fichiers : `state.js`, `app.js`, `index.html`, `tests/calculs/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v915. |
-
-**ft-v914 — ⚖️ MILO PRESCRIVAIT 82,5 kg, UNE CHARGE QUI N'EXISTE PAS DANS UNE SALLE — et c'est la DEUXIÈME fois que Michel le signale** — *« il ne compte pas le déplacement dans la salle, regarde quand il me met 82,5 faut le trouver les poids de 2,5 kilos »*. La première fois, c'était le **15/08**.
-
-**⚠️⚠️ ET LA RÈGLE EXISTAIT DÉJÀ, ELLE EXCLUAIT SIMPLEMENT CELUI QUI ÉCRIT LES CHARGES.** Le 15/08 avait produit `_pasCharge()` (log.js), calibrée sur ses **31 séances** — haltères ×4, barres ×5, machines ×5. Bien faite. Mais sa définition portait cette ligne : *« ne s'applique QU'AUX CHARGES QUE L'APP FABRIQUE »*. Vérifié : **`_pasCharge` n'apparaissait pas une seule fois dans `coach.js`**. L'app avait donc cessé d'écrire 82,5 dans ses propres paliers, pendant que **Milo continuait**. C'est **`BUGS.md` famille 15** dans sa forme exacte — *la règle juste, définie trop étroit* — et **R4** : l'information existe, mesurée, et n'atteint pas l'endroit qui en a besoin.
-
-**👉 ET LE CORRECTIF N'EST PAS D'ARRONDIR MILO APRÈS COUP** — ça, ce serait décider à la place de la personne, et **PB-008** tient toujours. C'est de lui **donner la table** pour qu'il écrive 80 ou 85 du premier coup. **⚠️ Une seule table (R2)** : `_PAS_CHARGE_TABLE` est lue par l'app **et** par le prompt — la dupliquer garantirait qu'un jour l'app arrondit à 4 pendant que Milo écrit des 2,5. Un témoin vérifie la concordance des deux.
-
-**⭐⭐ ET LE 2ᵉ DÉFAUT EST STRUCTUREL, trouvé en cherchant pourquoi les séances débordent** — Michel, décrivant sa salle : *« les jambes sont ensemble, les bancs plus ou moins à côté ; quand je fais les jambes et hop après les épaules c'est pas au même endroit »*. La consigne *« construis autour des ancres, PUIS ajoute les accessoires »* **fabrique des zigzags** : squat → militaire → leg extension → élévations = **trois traversées** pour une séance qui n'en demande **qu'une**. Milo ne faisait rien de mal : il appliquait la seule règle d'ordre qu'on lui avait donnée, **sans savoir qu'une salle a une géographie**. On groupe désormais par zone, l'ancre avant ses accessoires **dans** chaque zone — **⚠️ sans toucher à « l'ancre la plus lourde reste en premier »** (physiologique, ça prime) ni au **superset antagoniste**, qui alterne exprès.
-
-**⛔ ET ON NE MODÉLISE PAS LE PLAN DE SA SALLE**, écrit pour que personne ne le reproposse (R30) : ça marcherait pour Michel et pour personne d'autre — Tatiana ne cartographiera pas sa salle (`PERSONAS-FONDATEURS.md` : pas de présupposés). *« Groupe par zone »* marche partout **sans rien demander à personne**, et c'est meilleur à l'entraînement de toute façon.
-
-**⚠️⚠️ ET LE GARDE-FOU DE TAILLE A REFUSÉ MA PREMIÈRE VERSION — c'est le moment le plus utile de la livraison.** Écrite à sa place « logique » (à côté de la définition ancre/accessoire), la règle de zone a fait passer le bloc commun de **46 466 à 47 286 caractères**, pour un plafond de **46 500**. Or ce garde-fou porte, depuis le 12/08, une consigne explicite : *« il mérite une relecture dédiée — **PAS un relèvement de seuil de plus** »*. **Le seuil n'a pas été relevé.** La règle a déménagé auprès du **budget de temps de séance**, où elle a d'ailleurs plus de sens : *une traversée coûte des minutes, sa place est auprès de ce qui compte les minutes.* Prix payé et écrit : générique dans un bloc personnel, elle est répétée par utilisateur au lieu d'être partagée (~300 caractères, sans conséquence mesurable) — elle a vocation à remonter le jour où le bloc commun sera dégraissé.
-
-**⚠️ Et un renvoi directionnel supprimé au passage** : ma version intermédiaire laissait *« la règle d'ORDRE est donnée plus bas »*. C'est exactement ce que **ft-v898** interdit — une position écrite en toutes lettres se périme au premier déplacement. Retiré, pas corrigé.
-Tests : **parcours 770/770** (+8, bloc LVII), calculs 235/235, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 7 rouges**, exactement les 7 comportements ajoutés. ⚠️ Le 8ᵉ témoin est **vert des deux côtés, et c'est voulu** : il ne surveille pas une régression, il garde la table unique pour l'avenir (R30 — un test peut protéger un invariant, pas seulement un correctif). Fichiers : `coach.js`, `log.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v914. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

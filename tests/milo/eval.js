@@ -109,8 +109,6 @@ function serve() {
 }
 
 // ── Ce qui tourne DANS la page : on réutilise le laboratoire VC de l'app (R13) ──
-
-// ── Ce qui tourne DANS la page : on réutilise le laboratoire VC de l'app (R13) ──
 // `_vcApplyPersona` remet à neutre tout ce que lit buildCoachContext puis applique le
 // persona ; `_vcAsk` fait l'appel réel avec le MÊME contexte que le vrai chemin.
 // window._demoMode gèle toute écriture locale/cloud pendant la manœuvre.

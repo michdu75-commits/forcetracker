@@ -794,3 +794,27 @@ code fait exactement ce qui est écrit.
 
 *Dernière mise à jour : 18/08/2026 (familles 12ter — la fausse panne — et 15 — la règle définie trop étroit). À compléter à chaque nouveau bug — symptôme, cause, famille,
 et ce qui le protège désormais.*
+
+
+---
+
+## 🩹 L'EXPORT QUI PERD SON CONTENU SANS RIEN DIRE *(20/08/2026)*
+
+**À quoi on le reconnaît** : la personne appuie sur « exporter », il ne se passe **aucune
+erreur**… et le fichier reçu est **vide ou tronqué**. Ici : le rapport du benchmark est revenu
+avec **une seule ligne, « Benchmark Milo »** — c'est-à-dire le `title:` passé à
+`navigator.share`, pas le contenu. La feuille de partage a gardé le titre et jeté le fichier.
+
+**Pourquoi c'est vicieux** : c'est un **échec silencieux** de plus. Rien ne plante, aucun toast,
+aucun test rouge — le seul témoin est la personne qui ouvre le fichier plus tard. C'est la même
+signature que le bouton « copier » muet du 13/08 et que le débrief amputé du 20/08.
+
+**Ce qui protège aujourd'hui** : le rapport a un **deuxième chemin qui ne dépend d'aucune
+feuille de partage** (« 📋 Copier »), avec repli `execCommand`, puis affichage du texte dans le
+chat si tout tombe — *on ne laisse jamais la personne devant un bouton qui ne donne rien*.
+
+**⚠️ Ce qui N'EST PAS conclu** : 8 autres exports du dépôt partagent un fichier avec un titre et
+**fonctionnent**. La cause n'est donc pas prouvée en général — elle est constatée **une fois**.
+On a corrigé là où on l'a vue, et le test le dit : *au 2ᵉ export qui perd son contenu, la
+famille sera prouvée et le témoin s'élargira.* Deviner deux fois de suite a déjà coûté cher
+(famille 12ter).

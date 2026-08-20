@@ -4581,16 +4581,56 @@ function _evShowResultCard(){
     + 'jamais « Milo respecte ses règles ».</p>'
     + '<p style="margin:4px 0 2px">Tes données sont <b>intactes</b> ✅</p>'
     + '<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
-    + '<button class="btn btn-bg2" style="flex:1;min-width:150px;padding:10px;font-size:13px" onclick="exportEvalText()">📤 Rapport (texte)</button>'
+    + '<button class="btn btn-bg2" style="flex:1;min-width:140px;padding:10px;font-size:13px" onclick="copyEvalText()">📋 Copier le rapport</button>'
+    + '<button class="btn btn-bg2" style="flex:1;min-width:140px;padding:10px;font-size:13px" onclick="exportEvalText()">📤 Fichier</button>'
     + '</div>';
   msgs.appendChild(d); _coachAuBas();
+}
+
+/* ⚠️ POURQUOI UN BOUTON « COPIER » EN PLUS DU FICHIER (20/08/2026, retour de Michel).
+   Il a lancé le benchmark, appuyé sur « Rapport (texte) », et le fichier qui lui est revenu
+   contenait **une seule ligne : « Benchmark Milo »** — c'est-à-dire le `title:` passé à
+   `navigator.share`, PAS le contenu. La feuille de partage iOS a gardé le titre et jeté le
+   fichier. *Un export qui perd son contenu sans rien dire, c'est un export qui ment.*
+   ⭐ On ne remplace pas le fichier, on ajoute un chemin qui ne dépend d'aucune feuille de
+   partage — et c'est celui dont Michel a réellement besoin : il colle le texte dans la
+   conversation. Motif repris tel quel de `copyAppLink` (app.js, 13/08) : presse-papier →
+   repli `execCommand` → et si les deux tombent, **on le DIT** au lieu de rester muet. */
+function copyEvalText(){
+  if(!_evReport){ toast('Aucun rapport','error'); return; }
+  const txt=_evReport.text;
+  const _secours=()=>{
+    try{
+      const t=document.createElement('textarea');
+      t.value=txt; t.style.position='fixed'; t.style.opacity='0';
+      document.body.appendChild(t); t.focus(); t.select();
+      const ok=document.execCommand('copy'); document.body.removeChild(t);
+      if(ok){ toast('Rapport copié','success'); return true; }
+    }catch(e){}
+    return false;
+  };
+  // Dernier recours : on AFFICHE le rapport dans le chat, sélectionnable à la main.
+  // Mieux vaut un texte qu'on peut lire que trois boutons qui ne donnent rien.
+  const _echec=()=>{
+    try{ renderCoachMsg('coach', txt); }catch(e){}
+    toast('Copie refusée — le rapport est affiché ci-dessus','info');
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>toast('Rapport copié','success'))
+      .catch(()=>{ if(!_secours()) _echec(); });
+    return;
+  }
+  if(!_secours()) _echec();
 }
 
 async function exportEvalText(){
   if(!_evReport){ toast('Aucun rapport','error'); return; }
   const txt=_evReport.text, fname='benchmark-milo_'+_evReport.ymd+'.txt';
+  // ⚠️ PAS DE `title:` DANS LE PARTAGE. Le 20/08, la feuille iOS a gardé le titre et jeté le
+  // fichier : Michel a reçu un .txt d'une ligne (« Benchmark Milo »). Sans titre, la cible n'a
+  // que le fichier à prendre — et si elle ne sait pas le prendre, on passe au téléchargement.
   try{ const file=new File([txt],fname,{type:'text/plain'});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'Benchmark Milo'}); return; }
+    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file]}); return; }
   }catch(e){ if(e&&e.name==='AbortError')return; }
   try{ const blob=new Blob([txt],{type:'text/plain'}); const a=document.createElement('a');
     a.href=URL.createObjectURL(blob); a.download=fname; document.body.appendChild(a); a.click();
