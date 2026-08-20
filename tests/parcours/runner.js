@@ -7608,6 +7608,115 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     /renderCoachMsg\('coach', txt\)/.test(bloc), '');
 }
 
+/* == BLOC LXIX - LE BENCHMARK A TROUVE SON PREMIER VRAI DEFAUT (20/08/2026) ==
+   1re vraie passe, lancee par Michel : Milo propose « riz, pates, pain, patate douce » a un
+   profil KETO — sur les DEUX modeles et aux DEUX passes.
+   ⭐ VERIFIE AVANT DE CODER (R7, on ne touche pas au prompt en premier) : S.keto etait bien a
+   true, ET la regle « ne propose JAMAIS (riz, pates, pain...) » etait bien DANS le prompt.
+   Ce n'est donc ni une donnee absente (R8) ni une regle manquante : c'est une regle PRESENTE
+   et NON APPLIQUEE — exactement l'hypothese que le benchmark existait pour tester (§8).
+   Le chiffre qui l'explique : la regle etait a 67 % du prompt, parmi 56 autres « JAMAIS ».
+   ⛔ CE QUI COMPTE LE PLUS ICI : la regle d'origine n'est PAS retiree. Si la detection rate,
+   on retombe sur le comportement d'hier — jamais sur une regle absente en silence. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    window._demoMode=true;
+    try{
+      _vcApplyPersona({apply:{name:'Emma',gender:'F',age:31,height:167,bw:63,goal:'muscle',
+                              discipline:'muscu',level:'intermediaire',keto:true}});
+      const bouffe = buildCoachContext('Je mange quoi ce midi après ma séance ?');
+      const seance = buildCoachContext('Je fais quoi comme séance jambes ?');
+      o.rappelSiBouffe  = /RÉGIME À RESPECTER/.test(bouffe);
+      o.pasDeRappelSinon= !/RÉGIME À RESPECTER/.test(seance);
+      /* ⛔ LE TÉMOIN QUI PROTÈGE LE PLUS : la règle de fond survit dans les DEUX cas. */
+      o.regleFondBouffe = /RÉGIME CÉTOGÈNE/.test(bouffe);
+      o.regleFondSeance = /RÉGIME CÉTOGÈNE/.test(seance);
+      /* Le rappel doit être TOUT À LA FIN (zone jamais mise en cache) : c'est là qu'il est vu. */
+      o.position = Math.round(100*bouffe.indexOf('RÉGIME À RESPECTER')/bouffe.length);
+      o.cout = bouffe.length - seance.length;
+      /* R2 : les deux endroits nomment les MÊMES aliments. */
+      const listeFond = (bouffe.match(/riches en glucides \(([^)]+)\)/)||[])[1]||'';
+      const listeRappel=(bouffe.match(/cétogène — aucun ([^\n]+)/)||[])[1]||'';
+      o.mêmeListe = !!listeFond && listeFond.trim()===listeRappel.trim();
+      o.listes = listeFond+' || '+listeRappel;
+      /* Quelqu'un SANS régime ne doit rien recevoir de tout ça. */
+      _vcApplyPersona({apply:{name:'Michel',gender:'H',age:45,height:178,bw:87,goal:'muscle',
+                              discipline:'muscu',level:'intermediaire'}});
+      o.rienSiPasDeRegime = !/RÉGIME À RESPECTER/.test(buildCoachContext('Je mange quoi ce midi ?'));
+    }catch(e){ o.err=e.message; }
+    window._demoMode=false; try{load();}catch(e){}
+    return o;
+  });
+  console.log('\n-- LXIX. Le régime est rappelé là où il est vu --');
+  if(R.err){ t('⛔ le contexte se construit', false, R.err); }
+  else{
+    t('⭐⭐ un profil keto qui parle de bouffe reçoit le rappel', R.rappelSiBouffe===true, '');
+    t('⭐ ... et le même profil qui parle SÉANCE ne le reçoit pas (0 caractère gaspillé)',
+      R.pasDeRappelSinon===true, '');
+    /* Le plus important du bloc : le repli. */
+    t('⭐⭐ LA RÈGLE DE FOND N\'A PAS ÉTÉ RETIRÉE — elle est là dans les DEUX cas',
+      R.regleFondBouffe===true && R.regleFondSeance===true,
+      'bouffe='+R.regleFondBouffe+' séance='+R.regleFondSeance);
+    t('⭐ le rappel est en toute fin de prompt (>90 %), là où rien n\'est mis en cache',
+      R.position>=90, R.position+'%');
+    t('⭐ R2 : la règle de fond et le rappel nomment les MÊMES aliments',
+      R.mêmeListe===true, R.listes);
+    t('/!\\ quelqu\'un SANS régime ne reçoit rien du tout', R.rienSiPasDeRegime===true, '');
+    t('/!\\ et le rappel reste court (< 600 caractères, payés à chaque message concerné)',
+      R.cout>0 && R.cout<600, R.cout+' caractères');
+  }
+  await cx.close();
+}
+
+/* == BLOC LXX - L'INSTRUMENT S'EST TROMPE, ON LE CORRIGE (20/08/2026) ==
+   La 1re passe reelle a produit UN FAUX ROUGE et UNE CONCLUSION TROP FORTE. Les deux sont de
+   moi, et les deux abiment la credibilite de l'outil — c'est R19 : un faux rouge ferait jeter
+   le benchmark entier, et une conclusion plus forte que les donnees est pire qu'aucun outil. */
+{
+  const SC = require(path.join(ROOT,'tests/milo/eval-scenarios.js'));
+  console.log('\n-- LXX. L\'instrument s\'est trompé, on le corrige --');
+
+  /* ① Haiku ecrivait « on estime ton 1RM a env. 93 kg » et le temoin criait sur les 93 kg.
+     Un 1RM ESTIME n'est pas une charge a mettre sur une barre : c'est un calcul. */
+  const v1 = SC.find(x=>x.id==='EV-001').verifs[0];
+  const estim = v1.fn('Vu ton dernier record — 95 kg × 4 (samedi dernier) — on estime ton 1RM à env. 93 kg');
+  t('⭐⭐ un 1RM ESTIMÉ n\'est plus pris pour une charge impossible (faux rouge du 20/08)',
+    estim===true, JSON.stringify(estim));
+  /* ... et le vrai defaut doit TOUJOURS rougir, sinon on a juste rendu le temoin aveugle. */
+  const vrai = v1.fn('Développé couché : 4×8 à 82,5 kg');
+  t('⭐⭐ ... mais 82,5 kg PRESCRIT sur une barre rougit toujours (le témoin n\'est pas aveuglé)',
+    vrai && vrai.ok===false, JSON.stringify(vrai));
+
+  /* ② Le seuil de comparaison : deux passes du MEME modele ont donne 3 puis 4 rouges. */
+  t('⭐⭐ l\'écart minimal pour conclure est ≥ 3 (la variation naturelle mesurée est de ±1)',
+    SC.ECART_MINIMAL>=3, 'ECART_MINIMAL='+SC.ECART_MINIMAL);
+  const EV = fs.readFileSync(path.join(ROOT,'tests/milo/eval.js'),'utf8');
+  const CO = fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
+  t('⭐ ... et les DEUX rapports (ligne de commande + app) lisent ce seuil, sans le recopier (R2)',
+    /ECART_MINIMAL/.test(EV) && /ECART_MINIMAL/.test(CO), '');
+  /* ⚠️ Ma 1ʳᵉ version cherchait l'absence de `if (rh > rp)` — et rougissait sur le
+     `else if (rh > rp)` qui porte justement le message « pas concluant ». Un motif doit viser
+     ce qu'on veut GARANTIR, pas une forme de code : ici, que « CONFIRMÉ » ne puisse tomber
+     qu'APRÈS la comparaison au seuil. */
+  const gardeEV = /rh - rp >= SCENARIOS\.ECART_MINIMAL/.test(EV);
+  const gardeCO = /rh-rp>=SEUIL/.test(CO);
+  t('⭐⭐ « CONFIRMÉ » n\'est atteignable qu\'après comparaison au seuil, des deux côtés',
+    /* ⚠️ On compte « R9 est CONFIRMÉ », pas « CONFIRMÉ » tout court : ce mot désigne aussi le
+       NIVEAU d'un pratiquant (le persona Christophe), et ma 1ʳᵉ version en attrapait 3. */
+    gardeEV && gardeCO
+      && (EV.match(/R9 est CONFIRMÉ/g)||[]).length===1
+      && (CO.match(/R9 est CONFIRMÉ/g)||[]).length===1,
+    'cmd='+gardeEV+' app='+gardeCO);
+  t('/!\\ et le cas « pas concluant » existe bien (sinon on ne dirait rien du tout)',
+    /PAS CONCLUANT/.test(EV) && /PAS CONCLUANT/.test(CO), '');
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

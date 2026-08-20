@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v932`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v933`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v932`** (prochaine : `ft-v933`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v933`** (prochaine : `ft-v934`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v933 — 🥑 LE BENCHMARK A TROUVÉ SON PREMIER VRAI DÉFAUT : Milo proposait RIZ, PÂTES, PAIN à un profil KETO** — première vraie passe, lancée par Michel depuis l'app. Deux rapports, l'un de 15 scénarios, l'autre en comparaison Sonnet/Haiku.
+
+**⭐⭐ L'OUTIL A PAYÉ SA PREMIÈRE PASSE, ET PAS SUR UN DÉTAIL.** Le rouge le plus net : **EV-012**, régime cétogène. Milo propose *« riz, pâtes, pain, patate douce »* — les quatre aliments que la règle interdit **nommément** — sur **les deux modèles** et **aux deux passes**. Pas un hasard, pas une variation : un comportement stable que personne n'avait vu.
+
+**⭐⭐ ET LE DIAGNOSTIC A ÉTÉ FAIT AVANT DE TOUCHER AU PROMPT (R7 — le prompt est le DERNIER levier).** Mesuré dans le contexte réel : `S.keto` valait bien **true**, et la règle *« ne propose JAMAIS d'aliments riches en glucides (riz, pâtes, pain…) »* était bien **DANS le prompt envoyé**. Donc ni donnée absente (**R8**), ni règle manquante. C'est une **règle PRÉSENTE et NON APPLIQUÉE** — *exactement* l'hypothèse pour laquelle le benchmark a été construit (§8 de `docs/ARCHITECTURE-CERVEAU-CERVELET.md`). Elle n'est plus une intuition : elle a un cas, daté, reproductible.
+
+**⭐ LE CHIFFRE QUI L'EXPLIQUE** : la règle vivait à **67 % du prompt**, au milieu de **56 autres « JAMAIS »**. C'est la **dilution** dont parle le document depuis le 19/08 — avec enfin quelque chose de concret à montrer.
+
+**👉 LE CORRECTIF EST LE LEVIER §9 n°1, jamais utilisé jusqu'ici** : un **rappel court en toute fin de prompt** (mesuré à **97 %**), dans la zone **jamais mise en cache**, déclenché **seulement** quand la question porte sur l'alimentation — **346 caractères**, et **zéro** quand on parle séance. Il couvre keto, végan/halal (`dietSummary`), paléo et low carb.
+
+**⛔ ET LA RÈGLE D'ORIGINE N'EST PAS RETIRÉE — c'est la condition, pas un détail.** Si la détection rate, on retombe sur le comportement d'hier, **jamais sur une règle absente en silence**. §9 pose lui-même cette condition, et le témoin qui la garde est le plus important du bloc : la règle de fond est vérifiée présente **dans les deux cas**. ⚠️ **R2** : une seule liste d'aliments (`_KETO_INTERDITS`), lue aux deux endroits — deux listes finiraient par interdire le pain d'un côté et l'autoriser de l'autre.
+
+**⚠️⚠️ ET L'INSTRUMENT S'EST TROMPÉ DEUX FOIS, LES DEUX DE MOI.** ① **Un FAUX ROUGE** : Haiku écrivait *« vu ton record 95 kg × 4, on estime ton 1RM à env. 93 kg »* et mon témoin criait à la charge impossible — or **un 1RM estimé n'est pas une charge à mettre sur une barre**, c'est un calcul. C'est **R19** dans sa forme la plus concrète : *un faux rouge ferait jeter l'outil entier*. Corrigé, et vérifié **dans les deux sens** — 82,5 kg **prescrit** rougit toujours, sinon j'aurais juste rendu le témoin aveugle. ② **Une CONCLUSION TROP FORTE** : le rapport annonçait *« R9 est CONFIRMÉ »* dès que Haiku avait **un** rouge de plus. Or les deux passes du **même** modèle ont donné **3 puis 4** rouges : la variation naturelle est de **±1**, donc *« Sonnet 4 · Haiku 5 » ne prouvait rien*. Il faut désormais **3 rouges d'écart** (seuil unique, dans le corpus, lu par les deux rapports), et en dessous il écrit **« PAS CONCLUANT »** en toutes lettres. *Un outil de mesure qui conclut plus fort que ses données est pire qu'une absence d'outil.*
+
+**⭐ CE QUI RESTE LISIBLE SOUS LE SEUIL, c'est la NATURE des rouges** — le rapport liste maintenant ceux qui sont propres à chaque modèle. Ici, Haiku seul a échoué sur une **charge impossible** et sur **3 questions d'affilée** : ce sont précisément les deux défauts que R9 prédit, et ça vaut mieux qu'un compte.
+Tests : **parcours 864/864** (+13, blocs LXIX et LXX), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif sur le rappel** : c'est un bloc **neuf** du prompt, un témoin contre l'ancien code dirait « absent » au lieu de mesurer. Ce qui le remplace : le rappel est vérifié **présent quand on parle bouffe**, **absent sinon**, **absent pour qui n'a pas de régime**, et la règle de fond **intacte dans tous les cas**. ⚠️ **Et deux de mes témoins ont rougi à tort avant d'être corrigés** — l'un attrapait le `else if` légitime, l'autre comptait le mot « CONFIRMÉ » qui désigne aussi le **niveau** d'un pratiquant. *Un motif doit viser ce qu'on veut garantir, pas une forme de code.* Fichiers : `coach.js`, `tests/milo/eval-scenarios.js`, `tests/milo/eval.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v933. |
 
 **ft-v932 — 📋 LE RAPPORT DU BENCHMARK SE COPIE — l'export rendait un fichier d'UNE LIGNE** — Michel lance le benchmark, appuie sur « Rapport (texte) », et m'envoie le fichier reçu. Il contient **« Benchmark Milo »**, et rien d'autre.
 
@@ -718,27 +735,6 @@ Tests : **parcours 770/770**, calculs 241/241, muscles 232/232, croisés 50/50, 
 **⚠️ ELLE NE REMPLACE PAS `sleepLog`, ELLE VIENT À CÔTÉ.** Écraser une saisie manuelle depuis un point d'entrée public serait exactement l'erreur que la note de sécurité de la route interdit déjà (règle d'or #3). L'écran de comparaison reste à construire — **volontairement pas ce soir** (R30) : `healthDaily.sleep/steps` sont reçus et stockés, mais rien côté app ne les affiche encore. Noté dans `state.js` pour que ça ne se perde pas.
 
 **⚠️ Pas de bump `sw.js`** : Code.js seul, backend Apps Script (règle du projet). Déploiement automatique via `.github/workflows/deploy-appsscript.yml` dès le push sur `master`. Fichiers : `Code.js`, `state.js`, `CLAUDE.md`. |
-
-**ft-v915 — ⚖️ LE CRU/CUIT EST ÉCRIT, JAMAIS CONVERTI — le biais que le moyennage hebdomadaire ne peut pas absorber** — Michel : *« c'est parti, on ajustera après au pire »*. Dernière brique avant qu'il commence à s'en servir lundi.
-
-**LE DÉFAUT, mesuré le 18/08 et non corrigé jusqu'ici** : la table `_PORTIONS` (37 motifs, `state.js`) **mélangeait le cru et le cuit sans le dire**. Riz **350** kcal/100 g (cru), pâtes **350** (sèches), quinoa **368** (sec) — mais légumineuses **116** (**cuites**). Une ligne de plan *« Riz 80 g + lentilles 120 g »* demandait donc de peser l'un cru et l'autre cuit, **sans un mot**.
-
-**⭐⭐ ET CE N'EST PAS DU BRUIT QUI S'ANNULE SUR LA SEMAINE.** C'est un biais **systématique**, toujours dans le même sens — donc il **survit au moyennage**. C'est la seule classe d'erreur que *« cohérence avant réactivité »* (P19/P20) ne peut pas absorber, et c'est exactement ce qui fait qu'on suit sa nutrition un mois sans comprendre pourquoi rien ne bouge.
-
-**⛔ ON NE CONVERTIT PAS, ON NOMME.** Convertir supposerait un ratio d'absorption d'eau **qu'on n'a pas** — il dépend de la cuisson de chacun. Ce serait inventer un chiffre (**R29**). Écrire l'état coûte trois mots et rend la pesée **reproductible** : *« Riz 100 g (pesé cru) + lentilles 250 g (pesé cuit) »*.
-
-**⚠️ ET LA CONVENTION SUIT L'ALIMENT, PAS UNE RÈGLE GLOBALE.** `docs/CONTEXTE-ACTUEL.md` notait *« protéine animale → cru, féculent → cuit »* ; à l'écriture, ça ne tient pas : le riz s'achète **sec** et se pèse cru, les lentilles arrivent souvent **cuites en boîte**. Forcer une convention unique obligerait à **mentir sur l'un des deux**. Chaque ligne porte donc SON état, modifiable seule — et l'incohérence apparente devient **visible et vraie** au lieu d'être silencieuse et fausse.
-
-**⚠️ « pesé cru » est INVARIABLE, exprès** : accorder *« (cuites) »* pour les lentilles et *« (cru) »* pour le riz demanderait d'accorder en genre et en nombre un texte **déjà passé par les substitutions de régime** (`_adaptMealDesc`) — un accord faux se verrait plus qu'il n'aiderait. Et la forme verbale dit l'**ACTION**, pas seulement l'état.
-
-**⭐⭐ ET LE MÊME PIÈGE EXISTAIT CÔTÉ JOURNAL, EN PIRE** : Open Food Facts donne les valeurs **« telles que vendues »**. Un paquet de pâtes scanné annonce 350 kcal/100 g — c'est du **sec**. Quelqu'un qui pèse ensuite 200 g de pâtes **cuites** enregistre **700 kcal au lieu de 260** : un facteur **×2,7**, tous les jours. Une note prévient désormais, **sans bloquer** (R24) et **uniquement sur les aliments qui gonflent vraiment** — une note qui s'affiche pour tout n'est plus lue.
-
-**⭐ ET `etat` DESCEND ENFIN JUSQU'À LA DONNÉE** : le champ existait depuis la brique 0 (ft-v907) et valait **toujours `null`**. On *savait* que les valeurs d'OFF sont « telles que vendues » — c'était écrit en commentaire, à trois lignes de l'endroit qui ne l'enregistrait pas. **R4, dans le fichier qui documente R4.**
-
-**⚠️ TROIS TÉMOINS DE ft-v899 ONT ÉTÉ ÉTENDUS, PAS AFFAIBLIS** — ils exigeaient *« Œufs brouillés 200 g à l'huile »* **collés**. La tolérance ajoutée ne porte **que** sur le libellé d'état (`( \(pesé (cru|cuit)\))?`) ; l'**adjacence** — ce qu'ils vérifient vraiment, à savoir qu'aucune substitution de régime n'a coupé la phrase — est intacte. *Assouplir un test pour faire passer son propre code est une faute ; l'étendre au format exact de ce qui a changé n'en est pas une — encore faut-il l'écrire.*
-
-**⚠️ Et deux erreurs de ma part, gardées écrites** : mon témoin employait *« Oeufs »* (o+e) là où l'app écrit *« Œufs »* — il ne matchait donc pas l'œuf mais **l'huile d'olive**, et mesurait 10 ml au lieu de 150 g. Et mes regex d'extension portaient `\\(` au lieu de `\(` : un antislash littéral suivi d'une parenthèse ouvrante, donc un motif qui ne pouvait rien attraper. *Deux fautes d'échappement, deux témoins qui semblaient rouges pour une raison qui n'existait pas.*
-Tests : parcours 770/770, **calculs 241/241** (+6, bloc 14 ; 3 témoins de ft-v899 étendus), muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 5 rouges.** ⚠️ Le 6ᵉ témoin est vert des deux côtés, et c'est voulu : il vérifie qu'un aliment où le cru/cuit n'a **aucun sens** (yaourt, amandes, banane) ne reçoit **pas** d'état — il ne surveille pas l'ancien code, il surveille la sur-étiquetage. Fichiers : `state.js`, `app.js`, `index.html`, `tests/calculs/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v915. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

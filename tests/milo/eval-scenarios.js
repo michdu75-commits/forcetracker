@@ -88,6 +88,13 @@ const SCENARIOS = [
             // (en dessous, ce sont des haltères ou des disques ajoutés, pas de règle nette).
             if(!/barre|developpe couche|squat|souleve de terre/.test(l)) return false;
             if(/haltere|machine|poulie|elastique/.test(l)) return false;
+            // ⚠️⚠️ FAUX POSITIF RÉEL, 20/08/2026 — la 1ʳᵉ passe de Michel l'a produit.
+            // Haiku écrivait « vu ton record 95 kg × 4, on estime ton 1RM à env. 93 kg » et
+            // le témoin criait sur les 93 kg. Or **un 1RM ESTIMÉ n'est pas une charge à
+            // mettre sur une barre** : c'est un calcul, il n'a aucune raison de tomber sur
+            // un multiple de 5. On ne juge que ce qui est PRESCRIT.
+            // C'est R19 dans sa forme la plus concrète : un faux rouge ferait jeter l'outil.
+            if(/1rm|estim|record|maxi(mum)?\b|theorique/.test(l)) return false;
             return c.kg>=20 && (Math.round(c.kg*10)%50)!==0;
           });
           return mauvaises.length===0
@@ -332,6 +339,16 @@ const SCENARIOS = [
     ] },
 
 ];
+
+// ⚖️ COMBIEN DE ROUGES D'ÉCART AVANT DE CONCLURE QUOI QUE CE SOIT — mesuré, pas choisi.
+// Michel a lancé la passe de production DEUX fois le 20/08 : **3 rouges** puis **4 rouges**,
+// mêmes scénarios, même modèle. Le même Milo varie donc de **±1** d'une passe à l'autre.
+// Conséquence directe : un écart de 1 (voire 2) entre deux modèles ne dit RIEN — c'est du
+// bruit. Ma 1ʳᵉ version concluait « R9 est CONFIRMÉ » dès que Haiku avait un rouge de plus ;
+// sur les vrais chiffres (Sonnet 4 · Haiku 5) elle a proclamé une preuve qui n'existait pas.
+// ⚠️ Un outil de mesure qui conclut plus fort que ses données est pire qu'une absence d'outil.
+// Les deux consommateurs (ligne de commande + bouton) lisent CE seuil, jamais leur propre copie.
+SCENARIOS.ECART_MINIMAL = 3;
 
 // ── Une seule définition, deux consommateurs ────────────────────────────────────
 if (typeof module !== 'undefined' && module.exports) { module.exports = SCENARIOS; module.exports.U = U; }
