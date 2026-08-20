@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v926`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v927`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v926`** (prochaine : `ft-v927`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v927`** (prochaine : `ft-v928`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v927 — 📋 UN DÉBRIEF COUVRE TOUS LES EXERCICES — il en sautait 2 sur 5** — Michel, en relisant sa séance : *« et il a oublié des exercices si je ne dis pas de connerie »*. Il ne disait pas de connerie.
+
+**LE CONSTAT, VÉRIFIÉ** : sur ses 5 exercices, Milo en a commenté **3**. Absents : le **Tirage Visage (Face Pull)** — celui qu'il avait lui-même prescrit *« indispensable pour l'épaule droite »* — et le **Crunch Poulie**.
+
+**⭐ ET LES 5 ÉTAIENT BIEN TRANSMIS**, mesuré avant de toucher à quoi que ce soit. Ce n'est donc **pas** une perte de donnée (**R4**) : Milo les avait tous et en a choisi trois. *Vérifier d'abord évite de corriger le mauvais maillon.*
+
+**⚠️ SON ARGUMENT TRANCHE, ET IL EST IMPARABLE** : *« un débrief c'est un débrief »* — puis *« j'ai eu le débrief de fin de séance avec tout ce qui a été fait »*. **L'app en montre 5, Milo en montre 3.** Deux endroits racontent la même séance et se contredisent (**R2**) ; celui qui est incomplet est celui qui parle.
+
+**👉 CE QUI EST AJOUTÉ** : un débrief couvre **TOUS** les exercices faits — une ligne suffit quand il n'y a rien à dire (*« Face Pull 3×12 à 30 : fait, rien à signaler »*), mais l'exercice doit **APPARAÎTRE** · et un exercice qui **protège une zone fragile déclarée** ne se saute **jamais** : c'est celui dont la personne a le plus besoin de savoir qu'il a été fait.
+
+**⭐ ET ON LUI DONNE LE COMPTE, on ne lui demande pas de compter.** La ligne de séance porte désormais *« (5 exercices) »*. Une consigne qui dit *« n'en saute aucun »* sans fournir le nombre demande au modèle de recompter dans une ligne dense — c'est un **prompt qui compense une donnée absente** (**R8**), et le chiffre, lui, est calculé par l'app donc exact.
+
+**⚠️ LE MOTIF EST LE MÊME QU'À ft-v923, quelques heures plus tôt** : Milo traite les **petits accessoires comme négligeables** — il les range au hasard dans l'ordre, et il les oublie au débrief. *Deux symptômes, une seule attitude.*
+Tests : **parcours 823/823** (+3, bloc LXIV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v927. |
 
 **ft-v926 — 🏷️ MILO REPROCHAIT LES PALIERS QU'IL AVAIT LUI-MÊME PRESCRITS — 3ᵉ fois, et cette fois l'auteur était INCONNU** — Michel, après sa séance : *« regarde la discussion avec Milo sur ma séance d'aujourd'hui, il y a un truc qui va pas après avoir fini ma séance, examine bien »*.
 
@@ -712,17 +727,6 @@ Tests : **parcours 751/751** (+7, bloc LIV), calculs 235/235, muscles 232/232, c
 
 **⚠️ ET LES BORNES DE SAISIE SONT VOLONTAIREMENT LARGES** (0,5 à 30 g) : elles n'existent que pour attraper une faute de frappe, **pas pour brider un choix**. 30 g/j pendant 5 ans est documenté comme toléré chez des sujets sains (Kreider 2017) — l'app n'a aucune raison de décider en dessous. Retour à la suggestion calculée en un geste, et la dose réglée à la main est **exclue du contexte de Milo** : c'est un choix personnel sur un complément, pas un fait sur la personne — le lui envoyer l'inviterait à commenter une décision qui ne lui appartient pas.
 Tests : parcours 744/744, **calculs 235/235** (+5), muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données **100 classées 0 trou** (le garde-fou a exigé le classement de `creatDose` avant de laisser passer). **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 3 rouges** — la dose de 8 g n'était tout simplement pas affichable. ⚠️ Un témoin de ft-v908 a été **ajusté, pas affaibli** : la formule « pas un risque démontré » a déménagé vers le seuil des 5 g, et le témoin vérifie désormais ce qui compte vraiment — *que le repère des 3 g ne soit jamais dramatisé*. Fichiers : `app.js`, `state.js`, `tests/calculs/runner.js`, `tests/donnees/donnees-milo.json`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v910. |
-
-**ft-v909 — 🥗 « OÙ TU EN ES » — L'ÉCRAN NUTRITION RÉPOND ENFIN À LA VRAIE QUESTION** — Michel, sur sa propre application : *« même moi ça me saoule de l'utiliser, c'est assez mal fait »* · *« ce n'est pas intuitif ; je veux commencer la semaine prochaine pour voir **où j'en suis** »*.
-
-**⭐ LE DIAGNOSTIC N'EST PAS UN BUG, C'EST UNE QUESTION MAL POSÉE.** L'écran répondait à *« combien il te reste à manger aujourd'hui »* — une question qui n'a de sens **que si on a déjà tout noté**. Celui qui ouvre l'app veut savoir où il en est, pas ce qu'il lui reste à faire pour valider une journée parfaite. La carte est donc **la première chose affichée**, avant l'anneau des macros.
-
-**⚠️⚠️ LA RÈGLE QUI TIENT TOUT LE RESTE : UNE SEMAINE INCOMPLÈTE PRODUIT UNE MOYENNE HONNÊTE.** On divise par le nombre de jours **réellement notés**, jamais par 7, et **on écrit combien il y en a** (« 3 jours notés sur 7 »). *Diviser par 7 quand 3 jours sont notés affiche une sous-alimentation qui n'existe pas* — et c'est exactement le genre de chiffre faux qui fait abandonner un suivi au bout d'une semaine (P21 : la nutrition ne doit jamais devenir une source de stress). Le témoin vérifie les deux : que **1 433** apparaît (4 300 / 3) et que **614** (4 300 / 7) n'apparaît **pas**.
-
-**⚠️ ET ON N'AFFICHE RIEN QUAND ON NE SAIT RIEN** : zéro jour noté → une invitation à noter un premier repas, pas un « 0 / 2 600 kcal » qui se lit comme un reproche. Aujourd'hui non noté alors que la semaine l'est → *« Rien de noté pour l'instant »*, et la moyenne continue de porter sur les jours réels. **On ne fait pas dire à une absence de donnée ce qu'elle ne dit pas** (R29).
-
-**⚠️ Et la carte ne peut pas casser l'écran** : elle est appelée dans un `try` — c'est un ajout, pas un pré-requis. Si elle échoue, la nutrition s'affiche comme avant.
-Tests : **parcours 744/744** (+5, bloc LIII), calculs 230/230, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. ⚠️ Le témoin a d'abord rougi **à tort** : il comparait du texte formaté, et `toLocaleString` insère une espace insécable étroite (U+202F) différente entre Node et le navigateur — *un test qui échoue sur un caractère d'espacement ne mesure pas ce qu'il annonce*. Fichiers : `screens.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v909. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

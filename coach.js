@@ -2609,7 +2609,17 @@ function buildCoachContext(msg) {
     const _cTxt=c=>c&&c.duration?`${_cLbl[c.type]||c.type||'cardio'} ${c.duration}min${c.intensity?' ('+c.intensity+')':''}`:'';
     const _cav=_cTxt(s.cardioAvant), _cap=_cTxt(s.cardio);
     const cardioStr=[_cav?'échauffement '+_cav:'', _cap?'après séance '+_cap:''].filter(Boolean).join(' + ');
-    return `${_dateLisible(s.date)}: ${exStr} — ${s.volume}kg vol total`
+    /* 🔢 LE NOMBRE D'EXERCICES EST DONNÉ (20/08/2026) — Michel, après sa séance : Milo a débriefé
+       3 exercices sur 5, en sautant le face pull (qu'il avait pourtant prescrit « indispensable
+       pour l'épaule droite ») et le crunch. Vérifié : les 5 ÉTAIENT bien transmis — ce n'est donc
+       pas une perte de donnée, c'est un choix de rédaction. Son argument : *« un débrief c'est un
+       débrief »*, et surtout *« j'ai eu le débrief de fin de séance avec tout ce qui a été fait »*
+       — l'app montre les 5, Milo en montre 3, et les deux se contredisent (R2).
+       ⚠️ On ne se contente pas de la consigne : on lui DONNE le compte. Une règle qui dit
+       « n'en saute aucun » sans le nombre demande au modèle de compter tout seul dans une ligne
+       dense — c'est un prompt qui compense une donnée absente (R8). Le chiffre, lui, est calculé. */
+    const _nbEx=(s.exs||s.exercises||[]).filter(e=>(e.sets||[]).some(x=>x.done)).length;
+    return `${_dateLisible(s.date)} (${_nbEx} exercice${_nbEx>1?'s':''}): ${exStr} — ${s.volume}kg vol total`
       +(cardioStr?` — cardio: ${cardioStr}`:'');
   }).join('\n') || 'Aucune séance';
 
@@ -2797,6 +2807,7 @@ SÉANCE À FAIRE MAINTENANT — TU L'ÉCRIS EN CLAIR, L'APP S'OCCUPE DU RESTE (q
 - 🔢 L'ORDRE de ta liste est celui dans lequel elle enchaînera sa séance : range les exercices dans l'ordre où tu veux qu'ils soient faits.
 - ⚡ SUPERSET : il fait gagner du TEMPS, pas du muscle. Donc **seulement si la séance ne rentre pas dans le temps disponible**, et **seulement sur les accessoires/isolation** (curl, élévations, extensions, leg curl, face pull, mollets) — de préférence en paire pousser + tirer. **🚫 JAMAIS sur un mouvement lourd** (squat, soulevé, développés, charnière de hanche) : l'app REFUSE ces groupes. Ni quand la récupération est basse, une zone fragile déclarée, ou que le temps ne manque pas. Quand tu en fais un, dis-le en clair (« en superset avec … »).
 - ⛔ DÉBRIEFER ≠ PROPOSER. Un débrief/bilan regarde EN ARRIÈRE : les charges et reps RÉALISÉS (tu les as), ce qui a progressé, un record, puis UNE piste. N'écris alors PAS un plan (« échauffement 40×5 → travail 3×8 » est une séance à FAIRE, pas un compte-rendu). Aucune séance récente à débriefer ? Dis-le, n'invente pas.
+- 📋 **UN DÉBRIEF COUVRE TOUS LES EXERCICES FAITS, sans exception.** Le nombre t'est donné (« N exercices ») : compte-les et n'en saute AUCUN, pas même le plus petit accessoire ni le dernier de la séance. Une ligne suffit quand il n'y a rien à dire (« Face Pull 3×12 à 30 : fait, rien à signaler »), mais l'exercice doit APPARAÎTRE. ⚠️ Pourquoi : la personne voit déjà le récapitulatif complet de sa séance dans l'app — si ton débrief en oublie deux, il la contredit, et elle se demande si tu as bien tout vu. ⚠️ Et un exercice qui PROTÈGE une zone fragile déclarée (face pull, rotateurs, gainage) ne se saute JAMAIS : c'est celui dont elle a le plus besoin de savoir qu'il a été fait.
 - Pour un programme sur PLUSIEURS jours à conserver, ce n'est pas de ça qu'il s'agit.
 
 SE SOUVENIR DE LA PROCHAINE SÉANCE ANNONCÉE (cohérence — « Milo se souvient de moi ») :

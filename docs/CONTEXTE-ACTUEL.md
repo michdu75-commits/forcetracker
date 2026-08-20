@@ -6,7 +6,11 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v926` — fusionnée sur `master` le 20/08.
+- **Version en ligne (live) :** `ft-v927` — fusionnée sur `master` le 20/08.
+- 📋 **Un débrief couvre TOUS les exercices** (ft-v927) — Milo en sautait 2 sur 5, dont le face pull
+  qu'il avait prescrit « indispensable pour l'épaule droite ». ⭐ Les 5 étaient bien transmis : c'est
+  un choix de rédaction, pas une perte de donnée. On lui **donne le compte** au lieu de lui demander
+  de compter (R8). ⚠️ Même motif qu'à ft-v923 : les petits accessoires traités comme négligeables.
 - 🏷️ **Milo reprochait les paliers qu'il avait lui-même prescrits** (ft-v926, **3ᵉ fois**). Cause
   enchaînée : le bouton ne sortait pas → séance saisie **à la main** → pas de marqueur `_milo`
   (il n'existe que sur le chemin du bouton). ⭐ **La consigne du prompt qui devait rattraper EXISTE

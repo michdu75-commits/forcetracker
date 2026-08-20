@@ -7318,7 +7318,33 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     };
     return { milo:lire(ctx('milo')), app:lire(ctx('app')), inconnu:lire(ctx('inconnu')) };
   });
+  /* ⭐ ET LE DÉBRIEF DOIT COUVRIR TOUS LES EXERCICES (20/08/2026, même retour de Michel) :
+     Milo en a débriefé 3 sur 5, en sautant le face pull — qu'il avait pourtant prescrit
+     « indispensable pour l'épaule droite » — et le crunch. Vérifié : les 5 ÉTAIENT transmis.
+     Son argument : *« un débrief c'est un débrief »*, et surtout *« j'ai eu le débrief de fin de
+     séance avec tout ce qui a été fait »* — l'app en montre 5, Milo en montre 3, et les deux se
+     contredisent (R2). On lui DONNE le compte plutôt que de lui demander de compter (R8). */
+  const RD = await pg.evaluate(()=>{
+    const mk=(n,sets)=>({name:n,sets:sets.map(x=>({kg:x[0],reps:x[1],done:true,type:x[2]||'N'}))});
+    S.sessions=[{date:'2026-08-20', volume:9000, exs:[
+      mk('Soulevé de Terre',[[130,3],[130,3],[130,3]]),
+      mk('Tirage Poulie Haute (Lat Pulldown)',[[65,8],[65,8]]),
+      mk('Rowing Poitrine Appuyée (Chest Supported)',[[52,8]]),
+      mk('Tirage Visage (Face Pull)',[[30,12]]),
+      mk('Crunch Poulie',[[40,12]])
+    ]}];
+    const c=buildCoachContext('que penses-tu de ma séance')||'';
+    return { compte:/\(5 exercices\):/.test(c),
+             regle:/UN D[ÉE]BRIEF COUVRE TOUS LES EXERCICES/.test(c),
+             zone:/PROT[ÈE]GE une zone fragile/.test(c) };
+  });
   console.log('\n-- LXIV. Milo ne reproche plus les paliers qu\'il a prescrits --');
+  t('⭐⭐ LE DÉBRIEF doit couvrir TOUS les exercices (il en sautait 2 sur 5)',
+    RD.regle===true, 'la règle manque dans le prompt');
+  t('⭐⭐ ... et on lui DONNE le compte (« 5 exercices »), on ne lui demande pas de compter',
+    RD.compte===true, 'le nombre d\'exercices n\'est pas dans la ligne de séance');
+  t('⭐ ... et un exercice qui protège une zone fragile ne se saute JAMAIS',
+    RD.zone===true, '');
   /* ⭐⭐ LE TÉMOIN DU JOUR : l'auteur INCONNU (séance saisie à la main). */
   t('⭐⭐ AUTEUR INCONNU : le contexte le DIT, au lieu de laisser Milo supposer',
     /AUTEUR DES CHARGES INCONNU/.test(R.inconnu), R.inconnu);
