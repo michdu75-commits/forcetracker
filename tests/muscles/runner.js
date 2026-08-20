@@ -1095,11 +1095,23 @@ t('au GOOD MORNING les érecteurs sont MOTEURS, et le SWING a prise + gainage',
   'good morning '+JSON.stringify(fs2.gm)+' · swing '+JSON.stringify(fs2.swing));
 t('le hip thrust UNILATÉRAL retient le bassin (obliques), le bilatéral a le quadriceps',
   !fs2.erreur && fs2.hipU.obliques===1 && fs2.hipU.quads===1, JSON.stringify(fs2.hipU));
-t('⚠️ témoin honnête : l\'ABDUCTION est juste (moyen fessier), l\'ADDUCTION reste fausse',
-  // l'adducteur n'existe pas dans la figurine — arbitrage Michel en attente (R29).
-  // Ce test FIGE le fait qu'on le sait : le jour où les adducteurs entrent, il rougit.
-  !fs2.erreur && fs2.abd.glutes===2 && fs2.add.glutes===2,
-  'abduction '+JSON.stringify(fs2.abd)+' · adduction '+JSON.stringify(fs2.add));
+/* ⭐⭐ CE TÉMOIN A FAIT SON TRAVAIL, ET IL A ROUGI LE 20/08/2026.
+   Il disait : « témoin honnête : l'ABDUCTION est juste (moyen fessier), l'ADDUCTION reste
+   fausse » — il FIGEAIT un manque connu (« l'adducteur n'existe pas dans la figurine —
+   arbitrage Michel en attente, R29 ») pour que personne ne le découvre par surprise.
+   Michel a tranché le 20/08 : « Abducteur/Adducteur ce n'est pas pareil hein ». Le groupe
+   `adductors` existe, l'adduction ne colore plus les fessiers — donc le témoin s'inverse.
+   *Un test peut protéger une ABSENCE aussi bien qu'une présence (R30) ; quand l'absence est
+   comblée, il ne s'affaiblit pas, il change de camp.* */
+t('⭐⭐ L\'ADDUCTION EST ENFIN AUX ADDUCTEURS (elle comptait pour du FESSIER)',
+  !fs2.erreur && fs2.add.adductors===2 && !fs2.add.glutes,
+  'adduction '+JSON.stringify(fs2.add));
+/* ⚠️ ET SON JUMEAU, qui est ce qui rend la correction crédible : l'ABDUCTION ne bouge PAS.
+   Les deux mouvements sont opposés — si les toucher tous les deux d'un coup avait été
+   nécessaire, c'est qu'on aurait confondu la cause. */
+t('/!\\ ... et l\'ABDUCTION, elle, ne bouge pas (moyen fessier — mouvement OPPOSÉ)',
+  !fs2.erreur && fs2.abd.glutes===2 && !fs2.abd.adductors,
+  'abduction '+JSON.stringify(fs2.abd));
 
 // ── TRICEPS : les corrections trouvées en relisant les 25 fiches une par une (02/08).
 const tr2=await p.evaluate(()=>{
@@ -1365,8 +1377,33 @@ if(fg.erreur) console.log('     ⚠️  bloc figurine en ERREUR : '+fg.erreur);
 t('⭐⭐ la FIGURINE v2.1 est branchée : 41 muscles dessinés au lieu de 18 zones',
   !fg.erreur && fg.nbTraces>=95 && fg.fins===9,
   fg.nbTraces+' tracés · '+fg.fins+'/9 découpages fins présents');
-t('⭐ l\'app pilote toujours ses 18 codes (le dessin a pris de l\'avance, pas les données)',
-  !fg.erreur && fg.codes===18, String(fg.codes));
+/* 18 → 19 le 20/08/2026 : le groupe `adductors` est né. Le nombre reste ÉPINGLÉ exprès —
+   ajouter un muscle change ce que voit l'utilisateur, donc ça doit obliger à repasser ici. */
+t('⭐ l\'app pilote maintenant 19 codes (les ADDUCTEURS sont entrés le 20/08)',
+  !fg.erreur && fg.codes===19, String(fg.codes));
+/* ⭐⭐ LA PREUVE VISIBLE — sans elle, les témoins ci-dessus ne prouvent qu'un chiffre.
+   Ce qui compte pour la personne, c'est que la FIGURINE s'allume au bon endroit : on rend
+   le dessin pour une adduction et on vérifie que ce sont bien les tracés `front_adductor_*`
+   qui passent en primaire, et PAS les fessiers. R31 — la figurine est le vocabulaire, donc
+   c'est là que la correction se voit ou pas. */
+const fgAdd = await p.evaluate(()=>{
+ try{
+  const E=n=>({name:n,sets:[{kg:40,reps:12,done:true,type:'N'}]});
+  const lire=n=>{
+    const d=_mscScores([E(n)])||{};
+    const svg=_mscSVG({sc:d.sc||{}, ind:d.ind||{}});
+    return [...svg.matchAll(/<path id="([^"]+)"[^>]*url\(#g-prim\)/g)].map(m=>m[1]);
+  };
+  return {add:lire('Adduction Cuisses (Leg Adduction)'), abd:lire('Abduction Cuisses (Leg Abduction)')};
+ }catch(e){ return {erreur:String(e&&e.message||e)}; }
+});
+t('⭐⭐ LA FIGURINE allume enfin les ADDUCTEURS (et plus les fessiers)',
+  !fgAdd.erreur && fgAdd.add.some(i=>/front_adductor/.test(i)) && !fgAdd.add.some(i=>/gluteus/.test(i)),
+  'adduction → '+((fgAdd.add||[]).join(', ')||'aucun tracé'));
+t('/!\\ ... et l\'ABDUCTION allume toujours les FESSIERS (mouvement opposé, non touché)',
+  !fgAdd.erreur && fgAdd.abd.some(i=>/gluteus/.test(i)) && !fgAdd.abd.some(i=>/front_adductor/.test(i)),
+  'abduction → '+((fgAdd.abd||[]).join(', ')||'aucun tracé'));
+
 t('⭐ taper un muscle donne son nom PRÉCIS, pas celui du groupe',
   !fg.erreur && fg.lblPrecis==='Pectoral supérieur' && fg.sansLbl.length===0,
   'exemple : '+fg.lblPrecis+' · sans libellé : '+(fg.sansLbl||[]).slice(0,5).join(', '));

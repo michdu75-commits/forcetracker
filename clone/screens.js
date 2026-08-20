@@ -1384,7 +1384,7 @@ function _calVolByDay(){
 const _CAL_REGIONS={
   haut: ['pec','front-delt','side-delt','triceps'],
   dos:  ['lats','traps','rear-delt','biceps','forearms'],
-  bas:  ['quads','hamstrings','glutes','calves','hip-flexors','tibialis'],
+  bas:  ['quads','hamstrings','glutes','calves','hip-flexors','adductors','tibialis'],
   tronc:['abs','obliques','lower-back']
 };
 const _CAL_REGION_COLOR={haut:'var(--red)',dos:'var(--blue)',bas:'var(--purp)',tronc:'var(--orange)',full:'var(--green)'};
