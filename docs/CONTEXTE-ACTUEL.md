@@ -6,7 +6,18 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v921` — fusionnée sur `master` le 20/08.
+- **Version en ligne (live) :** `ft-v922` — fusionnée sur `master` le 20/08.
+- 💪 **LES GROUPES MUSCULAIRES — 18 → 22 codes en une journée** (ft-v921 puis ft-v922) : adducteurs ·
+  soléaire · extenseurs du poignet · dentelé antérieur. Les quatre étaient **déjà dessinés**, rangés
+  dans le mauvais groupe (**R31**).
+  ⭐ **Le critère de scission, à réutiliser** : *le RESTE du groupe garde-t-il son sens sans la partie
+  qu'on sort ?* Si oui, la scission est propre et coûte quelques fiches. Si non, il faut relire tout
+  le groupe.
+  ⏭️ **RESTE À ARBITRER** (chacun change ce que voit l'utilisateur, donc c'est la décision de Michel) :
+  **trapèzes** sup/moyen/inf (122 fiches — un shrug et un face pull sont opposés) · **rhomboïdes +
+  grand rond** sortis du grand dorsal (67) · **pectoral** haut/milieu/bas (55) · **moyen fessier**
+  (108). Les deux derniers ne sont **pas** des scissions propres : tous les développés et tous les
+  squats seraient à relire.
 - 🦵 **Les ADDUCTEURS sont entrés dans la figurine (ft-v921)** — 18 → **19 codes**. L'adduction de
   cuisses comptait pour du **fessier** depuis toujours. ⚠️ Le manque était **écrit et daté** (02/08)
   et attendait l'arbitrage de Michel ; il a tranché le 20/08. ⛔ **L'abduction n'a PAS bougé**

@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v921`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v922`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v921`** (prochaine : `ft-v922`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v922`** (prochaine : `ft-v923`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,28 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v922 — 💪 LES GROUPES MUSCULAIRES AU PROPRE : 3 scissions, 19 → 22 codes** — Michel, après les adducteurs : *« ah, et peut-être y'en a d'autres lol »*, puis *« il faut que les groupes musculaires soient au top »*.
+
+**MESURÉ AVANT DE TOUCHER À QUOI QUE CE SOIT** : **13 groupes sur 19** regroupaient plusieurs muscles distincts. Et surtout, **deux paires d'exercices que personne ne confond en salle rendaient exactement la même chose** :
+
+| Deux exercices opposés | Avant | Après |
+|---|---|---|
+| **Mollets debout ⟷ assis** | `calves:2` · identique | `calves:2` ⟷ **`soleus:2`** |
+| **Curl ⟷ Extension de poignet** | `forearms:2` · identique | `forearms:2` ⟷ **`forearm-ext:2`** |
+
+Le mollet assis est **le cas d'école** : debout = jumeaux (genou tendu), assis = **soléaire** (genou fléchi, les jumeaux sont relâchés). Et le poignet est le **jumeau EXACT de l'adducteur** livré le matin même — deux mouvements opposés, un seul résultat.
+
+**③ ET LE DENTELÉ ANTÉRIEUR ÉTAIT RANGÉ DANS LES OBLIQUES.** Ce n'était pas de l'imprécision, c'était un **mauvais rangement** : le dentelé plaque l'omoplate contre la cage (pompes, pull-over), les obliques font tourner le tronc. *Une rotation russe n'a jamais travaillé le dentelé.*
+
+**⭐⭐ LE CRITÈRE QUI REND CES TROIS SCISSIONS SÛRES — et ce n'est PAS la finesse anatomique** : *le RESTE du groupe garde-t-il son sens sans la partie qu'on sort ?* Les 93 fiches « avant-bras » désignent la **PRISE** (donc les fléchisseurs) · les 62 fiches « mollets » en secondaire (squats, fentes) parlent des **jumeaux** · les 30 fiches d'obliques ne travaillent pas le dentelé. **Elles ne bougent pas, et elles ont toujours raison.** Coût réel : **18 fiches reprises sur 334**, pas 194.
+
+**⚠️ Les trois muscles étaient DÉJÀ DESSINÉS** (`back_soleus_*`, `back_forearm_extensor_*`, `front_serratus_anterior_*`), rattachés au mauvais groupe — exactement comme les adducteurs. **R31** : la figurine est le vocabulaire, et un muscle absent du vocabulaire est un muscle dont aucun module ne peut parler.
+
+**⚠️ ET LES DEUX NOUVELLES RÈGLES DE REPLI SONT PLACÉES DEVANT LES GÉNÉRALES, pas derrière** — la leçon de ft-v921, apprise le matin même : `_MEX` s'arrête au **premier match**, donc une règle juste posée après une règle large ne sert à rien. Un témoin le vérifie sur des noms **libres** (« mollets assis maison », « extension poignet maison »), c'est-à-dire sur le chemin des exercices perso et des imports.
+
+**⛔ CE QUI N'EST PAS FAIT, ET POURQUOI C'EST ÉCRIT (R30)** : le **pectoral haut/milieu/bas** (55 fiches) et le **moyen fessier** (108). Là, la scission n'est **pas propre** — il faudrait relire **tous** les développés et **tous** les squats, et le sens de chaque fiche changerait vraiment. Restent aussi en attente les **trapèzes** (122 fiches : un shrug et un face pull sont opposés) et les **rhomboïdes + grand rond** sortis du grand dorsal (67). *Ajouter un muscle change ce que voit l'utilisateur : c'est l'arbitrage de Michel, jamais un effet de bord.*
+Tests : parcours 793/793, calculs 241/241, **muscles 241/241** (+6), croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 7 rouges**, exactement les 7 comportements changés. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** — ils vérifient qu'une rotation russe n'a PAS gagné de dentelé et qu'un squat n'a PAS gagné de soléaire : *c'est ce qui prouve que la scission est propre et non une sur-étiquette.* L'**empreinte du catalogue** a été régénérée et relue : **18 exercices bougent, pas un de plus.** Fichiers : `log.js`, `constants.js`, `app.js`, `screens.js`, `tests/muscles/runner.js`, `tests/croises/runner.js` (+ empreinte), `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v922. |
 
 **ft-v921 — 🦵 LES ADDUCTEURS EXISTENT ENFIN — l'adduction de cuisses comptait pour du FESSIER** — Michel, en me reprenant sur une phrase où je les avais mis sur la même ligne : *« Abducteur/Adducteur ce n'est pas pareil hein »*. Il a raison, et sa remarque a ouvert un vrai bug.
 
@@ -686,17 +708,6 @@ Tests : parcours 739/739, **calculs 215/215** (+9, bloc 11), muscles 232/232, cr
 
 **⚠️ PORTÉE HONNÊTE, écrite dans le code** : le marqueur n'existe que si la séance a été chargée **depuis le chat**. Passée par un **programme enregistré**, elle a perdu son auteur en route — c'était le cas ce jour-là. Seule la consigne du prompt peut alors rattraper, et elle a été amendée : *avant de le dire, regarde qui a choisi ces charges.*
 Tests : **parcours 739/739** (+4, bloc LII), calculs 206/206, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 3 rouges** — pas de numéro de série, paliers numérotés à tort, et aucune mention de l'auteur des paliers. ⚠️ Le 4ᵉ témoin est vert des deux côtés, et c'est voulu : sans marqueur d'auteur, le reproche normal doit rester — on n'a désactivé aucun contrôle. Fichiers : `coach.js`, `log.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v905. |
-
-**ft-v904 — ⏭️ L'EXERCICE SUIVANT S'OUVRE ENFIN — c'est l'app qui créait les lignes qui l'empêchaient de conclure** — Michel, en décrivant précisément ce qu'il attend : *« je finis ma dernière de développé couché et après je fais les épaules, et quand je valide ma dernière série de couché ça se réduit et l'exercice d'épaule s'ouvre en grand »* — plus, dans le même message, *« j'ai fini ma séance et je n'ai pas vu le message »*. **Ses deux remarques n'en font qu'une** : le message « ⏭️ Ensuite : … » et la bascule sont posés par le **même** morceau de code, donc ils manquent toujours ensemble.
-
-**⭐ REPRODUIT AVANT DE TOUCHER À QUOI QUE CE SOIT**, et c'est ce qui a évité de réparer au hasard : en cochant **toutes** les lignes, ça marche déjà (message + ouverture du suivant) ; en laissant **les paliers d'échauffement non cochés**, il ne se passe **rien du tout**.
-
-**⚠️⚠️ LA CAUSE : « TERMINÉ » SE LISAIT « TOUTES LES LIGNES COCHÉES »** (`every(s=>s.done)`). Or **depuis ft-v887, c'est l'app qui AJOUTE elle-même les paliers d'échauffement**. Quelqu'un qui attaque directement à sa charge de travail — ou qui s'échauffe sans le noter — laisse donc forcément des lignes vides, et son exercice n'est **jamais** considéré comme fini. *L'app crée les lignes qui l'empêchent ensuite de conclure* : le correctif de ft-v887 a fabriqué, sans qu'on le voie, la condition d'échec de ft-v825.
-
-**👉 ON REGARDE LES SÉRIES DE TRAVAIL, PAS LES LIGNES.** L'exercice est fini quand il n'en reste aucune à faire — c'est déjà la définition que le reste de l'app emploie : `finishWorkout` exclut É et W du décompte des séries **comme des records**. On ne change donc pas la règle, on cesse d'en avoir deux (R2).
-
-**⚠️ ET ON NE BASCULE PAS TROP TÔT POUR AUTANT** : une **série de travail** non cochée bloque toujours (elle peut encore être faite), et un exercice qui n'aurait **que** des paliers n'avance pas non plus — sans série de travail validée, rien ne dit qu'on en a fini avec lui (R29 : le coût de l'erreur décide, et ici basculer à tort ferait perdre la série suivante de vue).
-Tests : **parcours 735/735** (+3, bloc LI), calculs 206/206, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge**, exactement le sien — paliers laissés vides → `label:""`, aucune bascule. ⚠️ Les deux autres témoins sont verts des deux côtés, et c'est voulu : l'un fige le cas qui marchait déjà (pour que le correctif ne le casse pas), l'autre l'interdiction de basculer trop tôt. Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v904. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
