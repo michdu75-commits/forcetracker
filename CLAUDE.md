@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v923`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v924`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v923`** (prochaine : `ft-v924`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v924`** (prochaine : `ft-v925`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,32 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v924 — 🔘 LE BOUTON N'APPARAISSAIT PAS SUR UNE VRAIE SÉANCE — et c'était ma livraison de la veille** — Michel, capture à l'appui : *« J'ai pas le bouton lancer la séance »*. Milo écrit pourtant *« La séance est prête, clique sur ⚡ Commencer cette séance juste en dessous »*. **Il n'y avait rien.**
+
+**MESURÉ SUR SON TEXTE RÉEL, pas sur un exemple** : `_ressembleASeance` rendait **`false`** — donc le cervelet n'était **même pas appelé** — et le filet déterministe rendait **`RIEN`**. Aucun des trois étages de la cascade ne pouvait produire le bouton.
+
+**⚠️⚠️ DEUX CAUSES, ET LES DEUX SONT DE MOI (ft-v919, la veille).**
+
+**① J'exigeais un NOM et des SÉRIES sur la MÊME ligne.** Milo n'écrit pas *« Développé couché 4×8 »*. Il écrit un **bloc** :
+```
+Soulevé de Terre (ancre)
+Paliers : 60×5 → 80×3 → 100×2 → 115×1
+3×3 à 130 kg — repos 3 min
+Barre collée aux tibias, gainage max
+```
+Le nom est sur **sa** ligne, les séries sur la **suivante**. ⚠️ **Et j'avais validé mon détecteur sur des textes que j'avais écrits MOI-MÊME** — le piège classique : *tester ses propres exemples au lieu du réel*. Le format de Milo était pourtant sous mes yeux dans les captures de la veille.
+
+**② La regex du filet est ancrée en FIN de ligne** (`…kg\s*$`). Le *« — repos 3 min »* qui traîne derrière la faisait échouer **complètement** — pas partiellement, complètement.
+
+**👉 CE QUI EST CORRIGÉ** : l'aiguillage accepte une ligne de séries **sans nom** (il ne fait qu'**ORIENTER** — au pire un appel dépensé, **R29**) · et le filet va chercher le nom sur la **ligne précédente**, en remontant au plus 3 lignes.
+
+**⚠️ ET LA LIGNE DE PALIERS EST SAUTÉE, sinon elle DEVIENDRAIT le nom.** *« Paliers : 60×5 → 80×3 »* est assise pile entre le nom et les séries : sans la règle qui l'écarte, l'exercice s'appellerait « Paliers ». C'est le témoin qui protège le plus, et il est écrit.
+
+**⭐ SON TEXTE RÉEL DEVIENT UN TÉMOIN PERMANENT** (**R17** — un bug de terrain devient un test) : les **5 exercices**, dans l'ordre, avec les bons noms, et les séries lues malgré le texte qui traîne.
+
+**⚠️ La règle des NOMS n'a pas bougé** : ce qu'on lit est repris **TEL QUEL**, jamais rapproché « à peu près » d'un exercice voisin. C'est la leçon du 04/08, et elle tient toujours — on a élargi *ce qu'on sait lire*, pas *ce qu'on s'autorise à deviner*.
+Tests : **parcours 806/806** (+6, bloc LXII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 5 rouges**, et la sortie se lit toute seule — `détecté=false` et `0 exercice(s) : RIEN`. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** : la ligne de paliers ne devient jamais un nom, et une discussion chiffrée ne déclenche pas le cervelet. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v924. |
 
 **ft-v923 — 🔀 L'ORDRE DES ACCESSOIRES — et « c'est noté » ne notait rien** — Michel, deux captures : *« Regarde il a inversé encore »*.
 
@@ -697,21 +723,6 @@ Tests : parcours 739/739, **calculs 230/230** (+7, bloc 13), muscles 232/232, cr
 
 **⚠️ RÉTROCOMPATIBLE** : une entrée sans `v` est une entrée d'avant. On ne la réécrit pas et on ne lui suppose aucune provenance — on saura simplement qu'on ne sait pas.
 Tests : parcours 739/739, **calculs 223/223** (+8, bloc 12), muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 7 rouges**, et la sortie montre exactement l'ancienne forme. ⚠️ Le témoin a dû être réécrit : il sortait d'abord sur `_provFood absente`, rendant **un** rouge au lieu de mesurer les huit comportements (6ᵉ fois — ft-v887, 890, 892, 901, 905, 906). Il passe maintenant par `openAddFood`/`addFoodEntry`, présents des deux côtés. Fichiers : `app.js`, `tests/calculs/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v907. |
-
-**ft-v906 — 🛡️ L'APP PRESCRIVAIT UNE CIBLE QU'ELLE AURAIT SIGNALÉE SI ON L'AVAIT MANGÉE** — trouvé par un **contre-audit extérieur** (une autre instance de Claude, sans aucun accès au code, à partir des seuls `docs/NUTRITION-MOTEUR.md` et `NUTRITION-PHILOSOPHIE.md`), puis **vérifié ici dans le code avant d'y toucher**.
-
-**LE DÉFAUT** : `autoKcal()` était une addition sans plancher — TDEE + objectif + phase + cycle. Le **Gardien** de Milo, lui, alerte sous **1 500 kcal/j chez un homme et 1 200 chez une femme** (`coach.js`, GARDE-FOUS SANTÉ). *Les deux ne se parlaient pas* : c'est **R2** — deux sources pour la même règle — sur un sujet de **santé**.
-
-**⚠️ ET LA MESURE CORRIGE L'AUDIT AU PASSAGE** : il annonçait 947 kcal pour une femme de 55 kg sédentaire en perte ; refait avec nos règles, c'est **1 047** — il avait oublié le **+100 de la phase de charge**. En **décharge**, en revanche, on tombe bien à **847**. *Le défaut est réel, mais plus étroit que décrit* — il mord surtout en décharge et sur les profils sédentaires légers, pas sur les quatre cas de son tableau. On corrige ce qui existe, à la taille où il existe.
-
-**⚠️⚠️ ET L'ASYMÉTRIE EST PIRE QUE LE CHIFFRE, c'est le vrai apport de l'audit** : le Gardien ne s'allume que si la personne **tient son journal**. Or le principe 4 de la philosophie assume qu'une bonne partie ne le tiendra pas. Ceux-là voyaient la cible et n'avaient **aucun** garde-fou. *Le Gardien protégeait exactement la population qui en avait le moins besoin.*
-
-**⚠️ LE PLANCHER NE TOUCHE PAS `manualKcal`** : une cible saisie à la main est celle de la personne, et la lui relever en douce serait décider à sa place (R29 + Constitution : on adapte, on n'interdit pas). Il est en revanche **expliqué à l'écran** — *« ton calcul donnait 847 kcal, la cible est remontée à 1 200 : en dessous ce n'est plus un déficit, c'est une restriction »* — parce qu'une cible qui bouge sans raison visible est pire que pas de plancher (P21 : la nutrition ne doit jamais devenir une source de stress).
-
-**⭐ ET LE MÊME DÉFAUT SUR UN AUTRE LEVIER — LE KÉTO GÉNÉRAIT SA PROPRE ALERTE** : 15 % de protéines passe sous **0,8 g/kg** dès que le poids est élevé par rapport aux calories (100 kg à 1 950 kcal → **0,73 g/kg**). Plancher posé, et ce sont les **lipides** qui absorbent : les 5 % de glucides sont la contrainte qui *définit* le régime, on n'y touche pas.
-
-**⚠️ ET UNE ERREUR DE MON TÉMOIN, gardée écrite** : mon premier jet passait `phase=''` — **une valeur qui n'existe pas** (`nutritionPhase` est un interrupteur à deux positions, 'charge' ou 'decharge', jamais neutre). Il tombait donc dans la branche décharge et mesurait autre chose que ce qu'il annonçait. *Un témoin qui emploie une entrée impossible ne teste pas le produit, il teste une fiction.*
-Tests : parcours 739/739, **calculs 215/215** (+9, bloc 11), muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges** — 1 047 et 847 kcal prescrits, aucune explication possible, et le kéto à 0,73 g/kg. ⚠️ Le témoin a dû être réécrit **deux fois** : il plantait d'abord sur `plancherKcalActif is not defined` au lieu de rougir (5ᵉ fois — ft-v887, 890, 892, 901, 905). Fichiers : `state.js`, `screens.js`, `tests/calculs/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v906. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

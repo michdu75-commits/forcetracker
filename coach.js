@@ -1538,11 +1538,48 @@ function _seanceDepuisTexte(reply){
     // « 4×8 », « 4x8 », « 3 séries de 10 » — avec un poids éventuel « @ 80 kg », « 80kg ».
     const RE=/^\s*(?:[-•*–]|\d+[.)])?\s*(.{3,60}?)\s*[:—–-]?\s*(\d{1,2})\s*(?:[x×*]|\s+s[ée]ries?\s+de\s+)\s*(\d{1,3})\s*(?:reps?)?\s*(?:@?\s*(\d{1,3}(?:[.,]\d)?)\s*kg)?\s*$/i;
     const exs=[];
-    String(reply).split(/\n+/).forEach(l=>{
+    /* ⚠️ LE NOM PEUT ÊTRE SUR LA LIGNE PRÉCÉDENTE (20/08/2026, retour de Michel « j'ai pas le
+       bouton »). Milo écrit un BLOC, pas une ligne :
+            Soulevé de Terre (ancre)
+            Paliers : 60×5 → 80×3 → 100×2 → 115×1
+            3×3 à 130 kg — repos 3 min
+       Le filet n'attrapait que le format « Nom 4×8 » et rendait donc RIEN sur une vraie séance.
+       Depuis ft-v919 il est le SEUL repli si le cervelet tombe : sans ça, plus aucun bouton.
+       ⚠️ ON REMONTE AU PLUS 3 LIGNES, en sautant celles qui portent elles-mêmes des séries
+       (« Paliers : 60×5 → 80×3 ») — sinon c'est la ligne de paliers qui deviendrait le nom.
+       ⚠️ ET ON NE TOUCHE PAS À LA RÈGLE DES NOMS : ce qu'on lit est repris TEL QUEL, jamais
+       rapproché « à peu près » d'un exercice voisin (leçon du 04/08, elle tient toujours). */
+    const lignes=String(reply).split(/\n/);
+    const SERIES=/\d{1,3}\s*[x×*]\s*\d{1,3}/;
+    const nomAvant=i=>{
+      for(let k=i-1;k>=0&&k>=i-3;k--){
+        const c=lignes[k].replace(/\*\*/g,'').trim();
+        if(!c||c.length>60)continue;
+        if(SERIES.test(c))continue;                 // ligne de paliers → ce n'est pas le nom
+        if(!/[a-zà-ÿ]{3}/i.test(c))continue;
+        return c.replace(/\s*\((ancre|accessoire)\)\s*$/i,'').replace(/[:–—-]+$/,'').trim();
+      }
+      return '';
+    };
+    /* ⚠️ ET LA LIGNE DE SÉRIES SEULE A SA PROPRE LECTURE. `RE` est ancrée en FIN de ligne
+       (`…kg\s*$`) : « 3×3 à 130 kg — repos 3 min » ne matchait donc PAS DU TOUT, à cause du
+       « — repos 3 min » qui traîne derrière. C'est le 2ᵉ blocage trouvé le 20/08, après celui
+       du nom sur la ligne précédente — les deux ensemble expliquent le « RIEN » mesuré sur la
+       vraie séance de Michel. Ici on lit le début de la ligne et on laisse le reste. */
+    const RE_SEULE=/^\s*(?:[-•*–])?\s*(\d{1,2})\s*[x×*]\s*(\d{1,3})\s*(?:reps?)?\s*(?:(?:à|@)\s*(\d{1,3}(?:[.,]\d)?)\s*kg)?/i;
+    lignes.forEach((l,idx)=>{
       const t=l.replace(/\*\*/g,'').trim(); if(!t||t.length>90)return;
-      const m=t.match(RE); if(!m)return;
-      const brut=m[1].replace(/[:–—-]+$/,'').trim();
-      const nb=+m[2], reps=+m[3], kg=m[4]?parseFloat(String(m[4]).replace(',','.')):0;
+      let brut, nb, reps, kg;
+      const m=t.match(RE);
+      if(m){
+        brut=m[1].replace(/[:–—-]+$/,'').trim();
+        nb=+m[2]; reps=+m[3]; kg=m[4]?parseFloat(String(m[4]).replace(',','.')):0;
+      }else{
+        const m2=t.match(RE_SEULE); if(!m2)return;
+        brut=nomAvant(idx);                       // les séries seules → le nom est au-dessus
+        nb=+m2[1]; reps=+m2[2]; kg=m2[3]?parseFloat(String(m2[3]).replace(',','.')):0;
+      }
+      if(!brut||!/[a-zà-ÿ]{3}/i.test(brut))return;
       if(!(nb>=1&&nb<=12)||!(reps>=1&&reps<=100))return;
       const r=_matchExercise(brut)||{};
       // ⚠️ SEULEMENT `via:'exact'`. Le rapprochement « par mots » est trop permissif ici :
@@ -1657,8 +1694,22 @@ function _ressembleASeance(txt){
       const m=t.match(RE); if(!m)return;
       const nb=+m[1], reps=+m[2];
       if(!(nb>=1&&nb<=12)||!(reps>=1&&reps<=100))return;
-      // Il faut aussi un NOM devant : une ligne « 4×8 » toute seule ne dit pas quoi faire.
-      if(!/[a-zà-ÿ]{3}/i.test(t.slice(0, t.indexOf(m[0])+1)))return;
+      /* ⚠️⚠️ L'EXIGENCE « UN NOM SUR LA MÊME LIGNE » A ÉTÉ RETIRÉE LE 20/08/2026, et c'est un
+         retour de terrain de Michel : « J'ai pas le bouton lancer la séance », capture à l'appui.
+         Mesuré sur SA séance réelle : `_ressembleASeance` rendait **false**, donc le cervelet
+         n'était même pas appelé — aucun bouton.
+         LA CAUSE, et c'est ma faute de conception : Milo n'écrit pas « Développé couché 4×8 » sur
+         une ligne. Il écrit un BLOC :
+              Soulevé de Terre (ancre)
+              Paliers : 60×5 → 80×3 → 100×2 → 115×1
+              3×3 à 130 kg — repos 3 min
+              Barre collée aux tibias, gainage max
+         Le nom est sur SA ligne, les séries sur la SUIVANTE. J'avais supposé un format que Milo
+         n'emploie pas — et je l'ai vérifié sur des textes que j'avais écrits moi-même (le piège
+         classique : tester ses propres exemples au lieu du réel).
+         ⚠️ ET C'EST SANS DANGER ICI, parce que ce détecteur ne fait qu'ORIENTER (R29) : au pire on
+         dépense un appel Haiku et le cervelet répond « ce n'est pas une séance ». Les bornes
+         (1-12 séries, 1-100 reps) écartent déjà « 17 séries effectives » et « Paliers : 60×5 ». */
       n++;
     });
     return n>=2;                    // une seule ligne ≠ une séance (même règle qu'au 04/08)
