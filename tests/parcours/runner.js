@@ -7184,6 +7184,94 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXIII - LE BOUTON MANQUAIT ENCORE : UN CHEMIN QUI ECHOUE SANS LE DIRE (20/08/2026) ==
+   2e retour de terrain le meme jour : « ca ne fonctionne toujours pas », app bien en ft-v924.
+   ⭐ MESURE D'ABORD : son texte se lisait PARFAITEMENT en local — aiguillage true, filet 5
+   exercices, bons noms, bon ordre. Donc le defaut n'etait PAS la lecture. Il etait APRES.
+   DEUX TROUS, tous les deux INVISIBLES :
+   ① `_appendStartSessionBtn` sortait EN SILENCE quand la seance etait structurellement pauvre
+      (des exercices sans series). Comme l'appelant ecrivait `_montee(s) || _filet`, une seance
+      vide restait « truthy » : le repli ne jouait pas, et il n'y avait NI bouton NI filet.
+   ② `fetch` n'a AUCUN delai par defaut. Sur une 5G capricieuse — donc a la salle — l'appel peut
+      rester suspendu indefiniment : le `.then` ne part jamais, le repli n'est jamais atteint.
+      *Une panne franche se rattrape ; une attente infinie, non.*
+   👉 Le bouton REND desormais s'il a ete pose, l'appelant retombe sur le filet sinon, et l'appel
+   est coupe a 12 s. Ces temoins jouent les SIX modes de panne. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const VRAIE = [
+    "Voilà la séance, on y va 💪","",
+    "Soulevé de Terre","Paliers : 60×5 → 80×3 → 100×2 → 115×1","3×3 à 130 kg — repos 3 min","",
+    "Tirage Visage (Face Pull)","3×12 à 30 kg — repos 60 s",""
+  ].join("\n");
+  const R=await pg.evaluate(async (TXT)=>{
+    const o={};
+    if(typeof _cerveletSeance!=='function'){ o.absente=true; return o; }
+    const filet=(typeof _seanceDepuisTexte==='function')?_seanceDepuisTexte(TXT):null;
+    o.filet = filet ? filet.exs.length : 0;
+    const msgs=document.getElementById('coach-msgs');
+    const bulle=()=>{ msgs.innerHTML=''; const d=document.createElement('div'); d.className='msg msg-coach'; msgs.appendChild(d); return d; };
+    const vrai=window.fetch;
+    /* On rejoue EXACTEMENT le chemin de sendToCoach : cervelet, puis repli si rien n'est posé. */
+    const essai=async(faux)=>{ const d=bulle(); window.fetch=faux;
+      let s2=null; try{ s2=await _cerveletSeance(TXT); }catch(e){ s2=null; }
+      window.fetch=vrai;
+      try{ if(!_appendStartSessionBtn(_montee(s2), d)) _appendStartSessionBtn(filet, d); }
+      catch(e){ return 'EXCEPTION '+e.message; }
+      return d.querySelector('.coach-prog-save') ? 'ok' : 'aucun'; };
+    const ok = exs => (async()=>({ok:true,json:async()=>({status:'ok',seance:{label:'P',exs}})}));
+    o.normal = await essai(ok([{name:'Soulevé de Terre',sets:[{reps:3,kg:130,type:'N'}]},
+                               {name:'Tirage Visage (Face Pull)',sets:[{reps:12,kg:30,type:'N'}]}])());
+    /* ⚠️ LE CAS QUI CASSAIT TOUT, et il ne levait aucune erreur. */
+    o.sansSeries = await essai(ok([{name:'Soulevé de Terre',sets:[]},
+                                   {name:'Tirage Visage (Face Pull)',sets:[]}])());
+    o.reseau  = await essai(async()=>{ throw new Error('reseau coupe'); });
+    o.serveur = await essai(async()=>({ok:false,json:async()=>({})}));
+    o.vide    = await essai(async()=>({ok:true,json:async()=>({status:'ok'})}));
+    o.avorte  = await essai(async()=>{ const e=new Error('aborted'); e.name='AbortError'; throw e; });
+    o.minuteur = (/AbortController/.test(String(_cerveletSeance)) && /12000/.test(String(_cerveletSeance)));
+    /* ⚠️⚠️ CE QUI A VRAIMENT CHANGÉ EST LE CONTRAT DE RETOUR, et mes témoins ci-dessus ne le
+       mesuraient PAS : écrits avec la NOUVELLE façon d'appeler (`if(!poser(...)) poser(filet)`),
+       ils passaient aussi sur l'ancien code — où la fonction rend `undefined`, donc « faux »,
+       donc le repli jouait quand même. *Un témoin écrit avec la nouvelle convention ne peut pas
+       voir l'ancienne.* (8ᵉ fois ce piège — il mérite d'être écrit là où il se produit.)
+       👉 On mesure donc la valeur RENDUE, qui est le vrai changement : l'appelant doit pouvoir
+       distinguer « posé » de « pas posé ». Sans ça, `_montee(s) || _filet` gardait une séance
+       vide mais « truthy » et le repli n'était JAMAIS atteint. */
+    const d2=bulle();
+    o.rendVrai = _appendStartSessionBtn({label:'P',exs:[{name:'Soulevé de Terre',sets:[{reps:3,kg:130,type:'N'}]}]}, d2);
+    const d3=bulle();
+    o.rendFaux = _appendStartSessionBtn({label:'P',exs:[{name:'Soulevé de Terre',sets:[]}]}, d3);
+    return o;
+  }, VRAIE);
+  console.log('\n-- LXIII. Le bouton sort dans TOUS les modes de panne --');
+  if(R.absente){ t('⛔ le cervelet existe (aucun témoin ne vaut sans ça)', false, 'fonction absente'); }
+  else{
+    t('⭐ le filet lit bien la séance (le socle des témoins suivants)', R.filet===2, R.filet+' exercice(s)');
+    t('⭐ cervelet OK → bouton', R.normal==='ok', R.normal);
+    /* ⚠️ LE TÉMOIN CENTRAL : une séance « truthy » mais sans séries ne doit pas manger le repli. */
+    t('⭐⭐ CERVELET QUI REND DES EXERCICES SANS SÉRIES → on retombe sur le filet',
+      R.sansSeries==='ok', R.sansSeries);
+    t('⭐⭐ réseau coupé → le filet prend la main', R.reseau==='ok', R.reseau);
+    t('⭐ serveur en erreur → idem', R.serveur==='ok', R.serveur);
+    t('⭐ réponse vide → idem', R.vide==='ok', R.vide);
+    /* ⚠️ L'ATTENTE INFINIE : `fetch` n'a aucun délai par défaut — à la salle, c'est LE cas. */
+    t('⭐⭐ appel AVORTÉ par le minuteur → le filet prend la main', R.avorte==='ok', R.avorte);
+    t('⭐⭐ ... et le minuteur existe vraiment (12 s), sinon rien ne coupe une attente infinie',
+      R.minuteur===true, 'AbortController/12000 absents de _cerveletSeance');
+    /* ⭐⭐ LE CŒUR DU CORRECTIF : la pose du bouton DIT si elle a réussi. */
+    t('⭐⭐ POSER LE BOUTON REND `true` quand il est réellement affiché',
+      R.rendVrai===true, 'rendu : '+JSON.stringify(R.rendVrai));
+    t('⭐⭐ ... et `false` sur une séance sans séries (sinon l\'appelant croit avoir réussi)',
+      R.rendFaux===false, 'rendu : '+JSON.stringify(R.rendFaux));
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

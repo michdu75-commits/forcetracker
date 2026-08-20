@@ -2479,3 +2479,21 @@ Tests : **parcours 739/739** (+4, bloc LII), calculs 206/206, muscles 232/232, c
 
 **⚠️ ET UNE ERREUR DE MON TÉMOIN, gardée écrite** : mon premier jet passait `phase=''` — **une valeur qui n'existe pas** (`nutritionPhase` est un interrupteur à deux positions, 'charge' ou 'decharge', jamais neutre). Il tombait donc dans la branche décharge et mesurait autre chose que ce qu'il annonçait. *Un témoin qui emploie une entrée impossible ne teste pas le produit, il teste une fiction.*
 Tests : parcours 739/739, **calculs 215/215** (+9, bloc 11), muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges** — 1 047 et 847 kcal prescrits, aucune explication possible, et le kéto à 0,73 g/kg. ⚠️ Le témoin a dû être réécrit **deux fois** : il plantait d'abord sur `plancherKcalActif is not defined` au lieu de rougir (5ᵉ fois — ft-v887, 890, 892, 901, 905). Fichiers : `state.js`, `screens.js`, `tests/calculs/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v906. |
+
+
+**ft-v907 — 🧾 BRIQUE 0 : CHAQUE LIGNE DU JOURNAL PORTE ENFIN SA PROVENANCE** — Michel : *« fais tout ce que tu peux faire »*. Première brique du chantier nutrition, et **la seule qui ne se rattrape jamais**.
+
+**CE QU'UNE ENTRÉE ÉTAIT** : `{date, meal, name, kcal, prot, carbs, fat, ts}` — un **résultat** sans aucune trace de son origine. Ni la quantité mangée, ni la source du chiffre, ni la façon dont il a été saisi, ni l'état de l'aliment.
+
+**⚠️⚠️ POURQUOI CELLE-CI D'ABORD** : tout le reste (base d'aliments, générateur, niveaux de précision) peut se construire dans six mois **sur les données existantes**. Une entrée écrite sans ces champs, elle, ne les retrouvera pas — et chaque jour qui passe en fabrique d'autres. *Le retard est le seul du chantier à être définitif.*
+
+**⚠️ ET LE CHAMP LE PLUS COÛTEUX N'EST PAS LA SOURCE, C'EST LA QUANTITÉ.** Une ligne disait « 380 kcal » sans dire « 250 g de X » : même en connaissant plus tard la bonne valeur au 100 g, **on ne pouvait rien recalculer**. Or le scan et la photo d'étiquette **connaissaient le poids** (champ `af-bc-grams`) — ils ne l'enregistraient simplement pas. C'est **R4** : l'information existait et n'atteignait pas la donnée.
+
+**⭐ DEUX AXES, PAS UN — correction apportée par le contre-audit extérieur** : `saisie` dit **comment** c'est entré (manuel · scan · photo-ia · ia-texte · liste), `origine` dit **d'où vient le chiffre** (utilisateur · off · étiquette · ia · reprise). Les fusionner perdrait l'information dans les deux sens, et « manuel » finirait par désigner deux choses différentes selon le contexte. S'y ajoutent `per100` (les valeurs au 100 g quand la source les donne — c'est ce qui permettra de recalculer) et **`modifie`**, qui dit si la personne a retouché les macros après un remplissage automatique : *une source ne peut plus expliquer un chiffre qu'on a changé à la main.*
+
+**⚠️ ON N'INVENTE RIEN (R29)** : `etat` (cru/cuit) et `q` restent **`null`** quand on ne sait pas. L'état viendra de la base d'aliments (brique 1) — le champ existe dès maintenant pour que les entrées de demain puissent le porter, **pas pour être deviné aujourd'hui**.
+
+**⚠️ ET LA PROVENANCE NE SURVIT PAS D'UNE SAISIE À L'AUTRE** : elle est remise à zéro à l'ouverture du formulaire **et** après l'enregistrement (R15 — le marqueur se pose et se rend). Sans ça, un scan laisserait sa source sur la saisie manuelle suivante : *une provenance fausse est pire que pas de provenance, parce qu'elle se présente comme un fait vérifiable.*
+
+**⚠️ RÉTROCOMPATIBLE** : une entrée sans `v` est une entrée d'avant. On ne la réécrit pas et on ne lui suppose aucune provenance — on saura simplement qu'on ne sait pas.
+Tests : parcours 739/739, **calculs 223/223** (+8, bloc 12), muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 7 rouges**, et la sortie montre exactement l'ancienne forme. ⚠️ Le témoin a dû être réécrit : il sortait d'abord sur `_provFood absente`, rendant **un** rouge au lieu de mesurer les huit comportements (6ᵉ fois — ft-v887, 890, 892, 901, 905, 906). Il passe maintenant par `openAddFood`/`addFoodEntry`, présents des deux côtés. Fichiers : `app.js`, `tests/calculs/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v907. |

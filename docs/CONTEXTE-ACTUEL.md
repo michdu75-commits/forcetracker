@@ -6,7 +6,12 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v924` — fusionnée sur `master` le 20/08.
+- **Version en ligne (live) :** `ft-v925` — fusionnée sur `master` le 20/08.
+- 🔁 **Le bouton « Commencer cette séance » sort dans TOUS les modes de panne** (ft-v925). ⭐ La
+  mesure a changé la recherche : le texte de Michel se lisait parfaitement en local, donc le
+  défaut n'était pas la lecture. Deux trous **silencieux** : la pose du bouton renonçait sans rien
+  rendre (une séance vide restait « truthy », le repli ne jouait pas), et **`fetch` n'a aucun délai
+  par défaut** — sur une 5G de salle, l'appel reste suspendu et le repli n'est jamais atteint.
 - 🔘 **Le bouton « Commencer cette séance » ne sortait pas sur une VRAIE séance** (ft-v924, retour
   terrain). Mon aiguillage de ft-v919 exigeait le nom et les séries sur la **même ligne** ; Milo
   écrit un **bloc** (nom, paliers, séries, consigne). ⚠️ **Je l'avais validé sur mes propres
