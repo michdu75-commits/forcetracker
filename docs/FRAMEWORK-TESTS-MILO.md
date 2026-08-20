@@ -173,8 +173,17 @@ essai à un scénario avant d'en lancer trente, et il a payé) :
    `github.io` (politique réseau de l'environnement distant : `CONNECT` → 403). Le run à blanc
    marche (tout est local), **le run réel ne peut pas partir d'ici**.
 
-**👉 Le run réel se lance depuis une machine à internet normal**, avec Node et Playwright.
-Le run **à blanc** (0 €), lui, marche partout et hors ligne.
+**👉 D'où le BOUTON dans l'app** (ft-v931, choix de Michel) : **Profil → Admin → « 🧪 Lancer le
+benchmark »** et **« ⚖️ Comparer Sonnet et Haiku »**. L'app est déjà servie depuis `github.io`,
+donc le verrou ① est franchi naturellement et le verrou ② ne la concerne pas. Le coût est
+**annoncé avant** de lancer, et les vraies données sont **restaurées** à la fin (règle d'or #3 —
+c'est le témoin le plus important du bloc LXVII, pas celui qui vérifie que ça marche).
+La ligne de commande reste valable **depuis une machine à internet normal** (Node + Playwright),
+et le run **à blanc** (0 €) marche partout, hors ligne.
+
+⭐ **Une seule copie du corpus (R2)** : `tests/milo/eval-scenarios.js` est enveloppé dans une
+fonction anonyme et s'expose en `window.EVAL_SCENARIOS` — lu par Node **et** par le bouton.
+⛔ Il est **téléchargé à la demande**, jamais au démarrage (règle d'or #4).
 
 ### 6.4 Il réutilise le laboratoire VC de l'app (R13)
 

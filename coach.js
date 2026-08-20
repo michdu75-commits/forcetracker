@@ -4391,6 +4391,213 @@ const VM_TAXO_CASES=[
   {input:'Technogym Pulldown', pattern:'tirage-vertical'},              // marque → toujours tirage vertical
   {input:'Hammer Strength Chest Press', pattern:'poussee-horizontale'}  // marque → toujours poussée horizontale
 ];
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🧪 BENCHMARK (Tier 2) DEPUIS L'APP — Michel, 20/08/2026 : « un bouton dans l'app ».
+// ═══════════════════════════════════════════════════════════════════════════════
+// ⚠️ POURQUOI CE BOUTON EXISTE, ET CE N'EST PAS DU CONFORT. Le benchmark en ligne de
+//    commande ne peut PAS partir d'une session Claude Code (politique réseau : CONNECT vers
+//    workers.dev → 403), et il ne peut pas non plus partir d'un serveur local (le Worker
+//    n'accepte que l'origine github.io — verrou anti-abus du 27/07). *Un outil de mesure que
+//    personne ne peut lancer ne mesure rien.* Ici, l'app EST déjà sur la bonne origine.
+//
+// ⭐ R13 DANS SA FORME PURE : rien de neuf. On réutilise `_vcApplyPersona` (remise à neutre
+//    de tout ce que lit buildCoachContext), `_vcAsk` (l'appel instrumenté), le gel
+//    `window._demoMode` et la restauration par `load()`. Le seul ajout est la BOUCLE et
+//    l'exécution des vérificateurs.
+//
+// ⚠️⚠️ ET LE CORPUS N'EST PAS RECOPIÉ ICI (R2). Les 15 scénarios et leurs vérificateurs
+//    vivent dans `tests/milo/eval-scenarios.js`, lu par la ligne de commande ET par ce
+//    bouton. Les recopier garantirait qu'un jour les deux ne testent plus la même chose,
+//    sans que rien ne le signale.
+//
+// ⛔ ET IL SE TÉLÉCHARGE À LA DEMANDE, jamais au démarrage : l'app doit s'ouvrir
+//    instantanément à la salle (règle d'or #4). Un corpus de test dans le chemin de
+//    démarrage serait exactement ce que cette règle interdit.
+let _evRunning = false, _evReport = null;
+// ⚠️ Le clone de test vit dans /clone/ et référence les gros fichiers du parent via `../`
+// (aucun asset n'y est dupliqué). Le corpus suit la même règle, sinon le bouton y rendrait 404.
+const _EV_URL = ((typeof location!=='undefined' && location.pathname.indexOf('/clone/')>=0) ? '../' : '')
+              + 'tests/milo/eval-scenarios.js';
+
+function _evCharger(){
+  if (typeof window.EVAL_SCENARIOS !== 'undefined') return Promise.resolve(window.EVAL_SCENARIOS);
+  return new Promise((ok, ko) => {
+    const sc = document.createElement('script');
+    sc.src = _EV_URL + '?v=' + Date.now();   // jamais le cache : le corpus bouge à chaque bug
+    sc.onload  = () => window.EVAL_SCENARIOS ? ok(window.EVAL_SCENARIOS) : ko(new Error('corpus vide'));
+    sc.onerror = () => ko(new Error('téléchargement impossible'));
+    document.head.appendChild(sc);
+  });
+}
+
+// Les vérificateurs sont du CODE (aucun juge IA — voir l'en-tête du corpus).
+function _evVerifier(sc, reply){
+  return (sc.verifs||[]).map(v => {
+    let out; try{ out = v.fn(reply); }catch(e){ out = {ok:false, detail:'vérificateur cassé : '+e.message}; }
+    if (out === true)  out = {ok:true};
+    if (out === false) out = {ok:false};
+    return { nom:v.nom, ok:!!out.ok, detail:out.detail||'' };
+  });
+}
+
+function startEvalBench(compare){
+  if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
+  if(_evRunning){ toast('Benchmark déjà en cours…','info'); return; }
+  if(!S.url){ toast('URL du Coach IA absente','error'); return; }
+  _evCharger().then(SC => {
+    const n = SC.length * (compare ? 2 : 1);
+    // ⚠️ LE COÛT EST ANNONCÉ AVANT, PAS APRÈS — c'est la demande explicite de Michel
+    // (« faut que je sois sûr que ça soit utile, si je paye et que c'est pas utile c'est
+    // gaspiller de l'argent »). Fourchette mesurée sur le contexte réel, pas devinée.
+    const prix = compare ? '0,30 € à 1,30 €' : '0,25 € à 0,95 €';
+    const msg = (compare
+        ? 'On joue les '+SC.length+' scénarios DEUX fois : une sur Sonnet (le modèle de tout le monde), une sur Haiku.\n\n'
+          +'⚠️ Lecture asymétrique : si Haiku est nettement plus rouge, c\'est PROUVÉ qu\'un modèle léger suit moins bien les règles. '
+          +'S\'il est aussi vert, ça ne prouve RIEN — le ton et le naturel ne sont dans aucun de ces tests.'
+        : 'On joue les '+SC.length+' scénarios sur le modèle de production.')
+      + '\n\n'+n+' appels au Coach, soit environ '+prix+'.'
+      + '\n\n🛡️ Tes données ne sont PAS touchées : chaque scénario remplace ton profil le temps de la question, puis tout revient.'
+      + '\n\nLancer ?';
+    showConfirm('🧪 Benchmark Milo — '+SC.length+' scénarios', msg, ()=>_evRun(SC, !!compare));
+  }).catch(e => toast('Corpus introuvable : '+e.message,'error'));
+}
+
+async function _evRun(SC, compare){
+  _evRunning = true;
+  try{ if(typeof persist==='function') persist(); }catch(e){}   // vraies données sauvées AVANT le gel
+  try{ goScreen('coach', document.getElementById('nb-coach')); }catch(e){}
+  try{ _showCoachChat(); }catch(e){}
+  coachBusy = true; const sendBtn = document.getElementById('coach-send-btn'); if(sendBtn) sendBtn.disabled = true;
+
+  const passes = compare ? [{cle:'prod', nom:'Sonnet (production)', id:''},
+                            {cle:'haiku',nom:'Haiku 4.5',           id:'claude-haiku-4-5'}]
+                         : [{cle:'prod', nom:'Sonnet (production)', id:''}];
+  const parPasse = {};
+  window._demoMode = true;   // GEL : plus aucune écriture locale/cloud
+  try{
+    for(const P of passes){
+      _pt001Label('🧪 Benchmark — '+P.nom+' ('+SC.length+' scénarios)');
+      const res = [];
+      for(let i=0;i<SC.length;i++){
+        const sc = SC[i];
+        _pt001Label('· '+sc.id+' ('+(i+1)+'/'+SC.length+') — '+sc.titre);
+        _vcApplyPersona({ apply: sc.apply || {} });
+        let r = null;
+        try{
+          r = await _vcAsk({ scenario:sc.scenario, coachEmail:sc.coachEmail||'',
+                             history:sc.history||[], evalModel:P.id });
+        }catch(e){ r = {ok:false, kind:'error', err:(e&&e.message)||'?', reply:''}; }
+        if(!r.ok){
+          renderCoachMsg('coach', '⛔ '+sc.id+' — pas de réponse ('+r.kind+')');
+          res.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat:'muet', detail:r.err });
+          continue;
+        }
+        // ⚠️ On vérifie que le modèle DEMANDÉ est celui qui a SERVI : sans ça une passe
+        // « Haiku » entièrement jouée en Sonnet comparerait un modèle avec lui-même,
+        // et ça ne se voit pas à l'œil.
+        const attendu = P.id || 'claude-sonnet-4-6';
+        const bonModele = (r.modele === attendu);
+        const verdicts = _evVerifier(sc, r.reply);
+        const rouges = verdicts.filter(v=>!v.ok);
+        renderCoachMsg('coach', (rouges.length?'❌ ':'✅ ')+sc.id+' — '+sc.titre
+          + (rouges.length ? '\n' + rouges.map(v=>'   ↳ '+v.nom+(v.detail?' — '+v.detail:'')).join('\n') : '')
+          + (bonModele?'':'\n   ⚠️ servi par '+(r.modele||'?')+' au lieu de '+attendu));
+        res.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat:rouges.length?'rouge':'vert',
+                   ms:r.ms, modele:r.modele, bonModele, verdicts, reply:r.reply });
+        await _pt001Sleep(400);   // on ne mitraille pas l'API
+      }
+      parPasse[P.cle] = res;
+    }
+  }catch(e){ console.error('[benchmark]', e); }
+  finally{
+    window._demoMode = false;                                  // DÉGEL
+    try{ if(typeof load==='function') load(); }catch(e){}       // RESTAURE les vraies données
+  }
+  _evReport = _evBuildReport(SC, parPasse, compare);
+  _evShowResultCard();
+  coachBusy = false; if(sendBtn) sendBtn.disabled = false; _evRunning = false;
+  toast('Benchmark terminé — tes données sont intactes','success');
+}
+
+function _evBuildReport(SC, parPasse, compare){
+  const ymd = (typeof today==='function')?today():new Date().toISOString().slice(0,10);
+  const cles = Object.keys(parPasse);
+  const L = [];
+  L.push('═══════════════════════════════════════════');
+  L.push('  BENCHMARK MILO (Tier 2) — '+ymd);
+  L.push('═══════════════════════════════════════════');
+  L.push('');
+  L.push('⚠️ UN VERT VAUT MOINS QU\'UN ROUGE. Un rouge est une PREUVE : la règle a été');
+  L.push('   violée sous une forme que le code reconnaît. Un vert dit seulement « aucune');
+  L.push('   violation DÉTECTABLE » — jamais « Milo respecte ses règles ».');
+  L.push('');
+  cles.forEach(k=>{
+    const r = parPasse[k];
+    const verts = r.filter(x=>x.etat==='vert').length, rouges = r.filter(x=>x.etat==='rouge');
+    L.push('── '+k.toUpperCase()+' : '+verts+' vert(s) · '+rouges.length+' rouge(s) ──');
+    r.forEach(x=>{
+      L.push(({vert:'✅',rouge:'❌',muet:'⛔'}[x.etat]||'?')+' '+x.id+' ('+x.origin+') — '+x.titre);
+      (x.verdicts||[]).filter(v=>!v.ok).forEach(v=>L.push('     ↳ '+v.nom+(v.detail?' — '+v.detail:'')));
+      if(x.detail) L.push('     ↳ '+x.detail);
+    });
+    L.push('');
+  });
+  if(compare && parPasse.prod && parPasse.haiku){
+    const rp = parPasse.prod.filter(x=>x.etat==='rouge').length;
+    const rh = parPasse.haiku.filter(x=>x.etat==='rouge').length;
+    L.push('── SONNET vs HAIKU ─────────────────────────');
+    L.push('Rouges : Sonnet '+rp+' · Haiku '+rh);
+    L.push('');
+    if(rh>rp){
+      L.push('👉 Haiku est plus rouge : R9 est CONFIRMÉ par un chiffre sur ce prompt-ci.');
+      L.push('   La question « et si on passait tout le monde en Haiku ? » est close.');
+    }else{
+      L.push('⚠️ Haiku n\'est pas plus rouge — et ça ne ROUVRE RIEN.');
+      L.push('   Un vert ne dit que « aucune violation détectable sur '+SC.length+' pièges ».');
+      L.push('   Le ton, le naturel, le refus d\'insister ne sont dans AUCUN de ces motifs,');
+      L.push('   et l\'argument du 10/08 n\'était pas technique : « si les gens trouvent Milo');
+      L.push('   nul ils ne vont pas le prendre ».');
+      L.push('   👉 Ce test peut CONFIRMER la décision, il ne peut pas la renverser.');
+    }
+    L.push('');
+  }
+  L.push('═══════════════════════════════════════════');
+  return { text:L.join('\n'), ymd, parPasse, compare, n:SC.length };
+}
+
+function _evShowResultCard(){
+  const msgs = document.getElementById('coach-msgs'); if(!msgs||!_evReport) return;
+  const R = _evReport, cles = Object.keys(R.parPasse);
+  const ligne = k => { const r=R.parPasse[k];
+    return '<li style="margin:3px 0"><b>'+(k==='haiku'?'Haiku 4.5':'Sonnet (production)')+'</b> : '
+      + r.filter(x=>x.etat==='vert').length+' ✅ · '+r.filter(x=>x.etat==='rouge').length+' ❌'
+      + (r.some(x=>x.etat==='muet')?' · '+r.filter(x=>x.etat==='muet').length+' ⛔':'')+'</li>'; };
+  const d = document.createElement('div'); d.className='msg-bubble msg-coach';
+  d.style.cssText = 'background:var(--bg3);border:1px solid var(--sep);';
+  d.innerHTML = '<p style="font-weight:800;color:var(--red);margin:0 0 6px">🧪 Benchmark — '+R.n+' scénarios</p>'
+    + '<ul style="margin:2px 0;padding-left:16px">'+cles.map(ligne).join('')+'</ul>'
+    + '<p style="margin:8px 0 2px;font-size:12.5px;color:var(--t2);line-height:1.5">'
+    + '⚠️ Un <b>rouge</b> est une preuve. Un <b>vert</b> dit seulement « aucune violation détectable » — '
+    + 'jamais « Milo respecte ses règles ».</p>'
+    + '<p style="margin:4px 0 2px">Tes données sont <b>intactes</b> ✅</p>'
+    + '<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
+    + '<button class="btn btn-bg2" style="flex:1;min-width:150px;padding:10px;font-size:13px" onclick="exportEvalText()">📤 Rapport (texte)</button>'
+    + '</div>';
+  msgs.appendChild(d); _coachAuBas();
+}
+
+async function exportEvalText(){
+  if(!_evReport){ toast('Aucun rapport','error'); return; }
+  const txt=_evReport.text, fname='benchmark-milo_'+_evReport.ymd+'.txt';
+  try{ const file=new File([txt],fname,{type:'text/plain'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'Benchmark Milo'}); return; }
+  }catch(e){ if(e&&e.name==='AbortError')return; }
+  try{ const blob=new Blob([txt],{type:'text/plain'}); const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=fname; document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); toast('Rapport exporté','success');
+  }catch(e){ toast('Export impossible','error'); }
+}
+
 function startVmTest(){
   if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
   if(typeof _matchExercise!=='function'){ toast('Moteur de reconnaissance absent','error'); return; }

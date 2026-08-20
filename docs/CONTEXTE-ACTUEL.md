@@ -6,7 +6,15 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v930` — fusionnée sur `master` le 20/08.
+- **Version en ligne (live) :** `ft-v931` — fusionnée sur `master` le 20/08.
+- 🧪 **LE BENCHMARK A UN BOUTON** (ft-v931) — Profil → Admin → « 🧪 Lancer le benchmark » ·
+  « ⚖️ Comparer Sonnet et Haiku ». **Le coût est annoncé avant** de lancer.
+  ⚠️ **Ce n'est pas du confort** : la ligne de commande ne peut tourner ni depuis une session
+  Claude Code (réseau bloqué) ni depuis un serveur local (le Worker n'accepte que l'origine
+  `github.io`). *Un outil de mesure que personne ne peut lancer ne mesure rien.*
+  ⭐ **R2** : les 15 scénarios ne sont **pas recopiés** — un seul fichier, lu par les deux.
+  ⛔ Chargé **à la demande**, jamais au démarrage (règle d'or #4).
+  ⏭️ **Reste à faire : la première passe réelle**, par Michel depuis l'app.
 - ⚖️ **LE BENCHMARK COMPARE DEUX MODÈLES** (ft-v930) — `node tests/milo/eval.js --go --compare`.
   ⭐⭐ **C'est la seule façon de FERMER la question « et si on passait tout le monde en Haiku ? »**,
   qui revient parce que *« Sonnet pour tout le monde »* tient sur un **raisonnement** (R9) jamais
