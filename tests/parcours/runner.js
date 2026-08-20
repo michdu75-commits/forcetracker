@@ -7358,6 +7358,62 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXV - LE RECAP DU DEBRIEF EST ECRIT PAR LE CODE (20/08/2026) ==
+   Michel : « comme le debrief est automatique autant le faire en Haiku, ca coute pas cher ».
+   ⚠️ ON N'A PAS CHANGE DE MODELE (~0,17 €/mois d'ecart, et R9 : un modele leger suit mal les
+   consignes fines — on venait justement d'en ajouter une exigeante). Mais son intuition avait une
+   moitie juste, et c'est sa propre frontiere : LISTER est une transformation, COMMENTER est un
+   jugement. La liste ne merite donc meme pas Haiku — elle merite du CODE.
+   ⭐ Resultat : Milo ne PEUT plus sauter un exercice, au lieu qu'on lui DEMANDE de ne pas le faire. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const R=await pg.evaluate(()=>{
+    if(typeof _recapSeance!=='function') return {absente:true};
+    const mk=(n,sets)=>({name:n,sets:sets.map(x=>({kg:x[0],reps:x[1],done:true,type:x[2]||'N'}))});
+    S.sessions=[{id:'S-20', date:'2026-08-20', volume:9000, exs:[
+      mk('Soulevé de Terre',[[60,5,'É'],[100,2,'É'],[130,3],[130,3],[132,3]]),
+      mk('Tirage Poulie Haute (Lat Pulldown)',[[65,8],[65,8],[61,5]]),
+      mk('Rowing Poitrine Appuyée (Chest Supported)',[[52,8]]),
+      mk('Tirage Visage (Face Pull)',[[30,12]]),
+      mk('Crunch Poulie',[[40,12]])
+    ]}];
+    const o={};
+    o.txt = _recapSeance('S-20') || '';
+    o.parId   = /Soulevé de Terre/.test(o.txt);
+    o.tous    = ['Soulevé de Terre','Lat Pulldown','Rowing Poitrine Appuyée','Face Pull','Crunch Poulie']
+                  .every(n=>o.txt.indexOf(n)>=0);
+    o.compte  = /5 exercices/.test(o.txt);
+    o.charges = /3×130/.test(o.txt) && /3×132/.test(o.txt);
+    o.ech     = /\+2 échauffements/.test(o.txt);
+    o.repli   = (_recapSeance('inconnu')||'').indexOf('Soulevé de Terre')>=0;   // pid inconnu → la plus récente
+    /* ⚠️ jamais bloquant : pas de séance → chaîne vide, pas d'exception. */
+    const av=S.sessions; S.sessions=[];
+    try{ o.vide = _recapSeance('S-20')===''; }catch(e){ o.vide='EXCEPTION'; }
+    S.sessions=av;
+    return o;
+  });
+  console.log('\n-- LXV. Le récap du débrief est écrit par le CODE --');
+  if(R.absente){ t('⛔ _recapSeance existe', false, 'fonction absente'); }
+  else{
+    /* ⭐⭐ LE TÉMOIN CENTRAL : la liste est complète PAR CONSTRUCTION, pas par consigne. */
+    t('⭐⭐ LES 5 EXERCICES SONT LÀ, écrits par le code (Milo en sautait 2)',
+      R.tous===true, R.txt.replace(/\n/g,' | ').slice(0,220));
+    t('⭐ ... avec le compte annoncé', R.compte===true, R.txt.split('\n')[0]);
+    t('⭐ ... et les charges au format « reps × poids » de l\'app (ft-v396)',
+      R.charges===true, R.txt.split('\n')[1]||'');
+    t('⭐ les séries d\'ÉCHAUFFEMENT sont comptées, pas détaillées (le récap reste lisible)',
+      R.ech===true, R.txt.split('\n')[1]||'');
+    t('⭐ un identifiant inconnu retombe sur la séance la plus récente', R.repli===true, '');
+    t('/!\\ jamais bloquant : aucune séance → chaîne vide, pas d\'exception',
+      R.vide===true, String(R.vide));
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

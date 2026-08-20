@@ -3663,6 +3663,9 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     // Prochaine séance annoncée (ft-v601) : l'Accueil arrête de relancer « ça fait X jours » et devient cohérent
     const _plan = _extractPlannedSession(reply);
     if (_plan) { try { S.nextPlanned = _plan; persist(); if (typeof _cloudSyncDebounced==='function') _cloudSyncDebounced(); } catch(e){} }
+    /* 📋 LE RÉCAP FACTUEL PASSE DEVANT (20/08/2026) : écrit par le CODE, donc complet par
+       construction. Milo commente par-dessus — il ne peut plus sauter un exercice. */
+    if (opts.debriefSess) { try { const _rc=_recapSeance(opts.debriefSess); if(_rc) _disp = _rc + _disp; } catch(e){} }
     renderCoachMsg('coach', _disp);
     if (_fp) _appendSaveProgBtn(_fp);
     if (_ds) _appendStartSessionBtn(_ds);
@@ -3723,6 +3726,54 @@ async function sendToCoach(customMsg, displayMsg, opts) {
 
 function sendSuggestion(text) { sendToCoach(text); }
 
+// ─── 📋 LE RÉCAP FACTUEL DU DÉBRIEF EST ÉCRIT PAR LE CODE (20/08/2026) ──────────
+// Michel, après avoir vu Milo débriefer 3 exercices sur 5 : *« un débrief c'est un débrief »*,
+// puis *« comme le débrief est automatique autant le faire en Haiku, ça coûte pas cher »*.
+//
+// ⚠️ ON N'A PAS CHANGÉ DE MODÈLE, et le chiffre tranche : ~15 débriefs par mois, l'écart
+// Sonnet/Haiku vaut **~0,17 €/mois**. Pour ça on dégraderait précisément le message dont il
+// venait de se plaindre — et **R9** dit qu'un modèle léger suit MAL les consignes fines, or on
+// venait d'en ajouter une exigeante (« couvre les 5 »). La décision « Sonnet pour tout le
+// monde » est d'ailleurs écrite dans worker.js, avec ses mots du 10/08, marquée à ne pas
+// re-proposer (R30).
+//
+// ⭐⭐ MAIS SON INTUITION AVAIT UNE MOITIÉ JUSTE, et c'est exactement sa frontière
+// cerveau/cervelet : **lister les exercices est une TRANSFORMATION, commenter est un JUGEMENT.**
+// La liste ne mérite donc même pas Haiku — elle mérite du CODE. Écrite ici, elle est
+// GARANTIE COMPLÈTE, gratuite et hors ligne, comme le récap de fin de séance. Milo ne peut plus
+// en oublier : on ne lui DEMANDE plus de ne pas oublier.
+//
+// ⚠️ PORTÉE HONNÊTE : ça ne couvre que le débrief AUTOMATIQUE, dont le déclenchement est
+// déterministe. Quand la personne demande « que penses-tu de ma séance » en plein chat, l'app ne
+// peut pas le deviner sans classer le message — et une erreur de classement est silencieuse.
+// Là, c'est la règle du prompt (ft-v927) qui reste le seul filet, et elle est plus faible.
+function _recapSeance(pid){
+  try{
+    const list = (typeof S!=='undefined' && Array.isArray(S.sessions)) ? S.sessions : [];
+    if(!list.length) return '';
+    let s = null;
+    if(pid) s = list.find(x => x && String(x.id||x.ts||x.date) === String(pid)) || null;
+    if(!s) s = list[0];                                   // repli : la plus récente
+    const exs = (s.exs||s.exercises||[]).filter(e => (e.sets||[]).some(x=>x.done));
+    if(!exs.length) return '';
+    const lignes = exs.map(e=>{
+      const faits = (e.sets||[]).filter(x=>x.done);
+      const ech   = faits.filter(x=>x.type==='É'||x.type==='W').length;
+      const trav  = faits.filter(x=>x.type!=='É'&&x.type!=='W');
+      /* Format « reps × poids », le même que partout dans l'app depuis ft-v396 — deux écritures
+         différentes pour la même série, c'est la porte ouverte au contresens (R2). */
+      const det = (trav.length?trav:faits).map(x=>{
+        const r = x.maxi ? 'max' : (+x.reps||0);
+        return (+x.kg>0) ? `${r}×${x.kg}` : `${r}`;
+      }).join(', ');
+      return `• ${e.name} — ${det}${ech?` (+${ech} échauffement${ech>1?'s':''})`:''}`;
+    });
+    const d = (typeof _dateLisible==='function') ? _dateLisible(s.date) : (s.date||'');
+    return `📋 Ta séance — ${d} · ${exs.length} exercice${exs.length>1?'s':''}\n`
+         + lignes.join('\n') + '\n\n';
+  }catch(e){ return ''; }                                  // jamais bloquant : au pire, pas de récap
+}
+
 // ─── DÉBRIEF AUTOMATIQUE DE SÉANCE ────────────────────────────────
 // « Il doit sortir direct » (Michel) : après une séance, quand l'utilisateur ouvre le Coach,
 // Milo poste de LUI-MÊME un débrief (charges, records, conseil) — une seule fois par séance,
@@ -3743,6 +3794,8 @@ async function _maybeAutoDebrief(){
     +'⚠️ Cette piste doit aller dans le sens de MON objectif : si tu connais mon objectif/mes priorités, aligne-toi dessus ; '
     +'si tu ne les connais PAS (profil pas rempli), ne me fixe pas une direction à ma place (ex. « rattrape ton haut du corps ») — '
     +'reflète ce que tu observes et demande-moi ma priorité. Court, direct, motivant. Ne me redemande JAMAIS mes charges. '
+    +'📋 IMPORTANT : la LISTE COMPLÈTE de mes exercices et de mes charges est DÉJÀ affichée juste au-dessus de ta réponse, écrite par l\'app. '
+    +'Ne la recopie donc PAS exercice par exercice — tu la commentes. Mais tu peux et tu dois citer un exercice précis quand tu as quelque chose à en dire. '
     +'⚡ Et si un exercice de cette séance porte « ⚠️ montée en charge insuffisante », DIS-LE dans le débrief (c\'est un calcul de l\'app, pas un avis) : '
     +'ce qui manquait, pourquoi c\'est un risque de blessure, et les paliers à faire la prochaine fois.'
     +_DEBRIEF_CONTINUITY+_DEBRIEF_MEM_TAIL;

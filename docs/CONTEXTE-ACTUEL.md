@@ -6,7 +6,13 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v927` — fusionnée sur `master` le 20/08.
+- **Version en ligne (live) :** `ft-v928` — fusionnée sur `master` le 20/08.
+- 📋 **Le récap du débrief est écrit par le CODE** (ft-v928). ⭐ La frontière cerveau/cervelet
+  appliquée DANS un message : *lister* est une transformation → code · *commenter* est un jugement
+  → Milo. Il ne **peut** plus sauter un exercice, au lieu qu'on lui **demande** de ne pas le faire.
+  ⛔ **Le modèle n'a PAS changé** : ~0,17 €/mois d'écart, et R9 (un modèle léger suit mal les
+  consignes fines). ⚠️ Ne couvre que le débrief **automatique** — en plein chat, seule la règle
+  du prompt reste.
 - 📋 **Un débrief couvre TOUS les exercices** (ft-v927) — Milo en sautait 2 sur 5, dont le face pull
   qu'il avait prescrit « indispensable pour l'épaule droite ». ⭐ Les 5 étaient bien transmis : c'est
   un choix de rédaction, pas une perte de donnée. On lui **donne le compte** au lieu de lui demander
