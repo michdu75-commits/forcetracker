@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v919`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v920`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v919`** (prochaine : `ft-v920`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v920`** (prochaine : `ft-v921`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v920 — 🛡️ LE MODÈLE PROPOSE, LE CODE VALIDE — la règle existait, appliquée à UN SEUL des deux chemins** — Michel : *« bah non fait le comme ça je verrais de moi même si ça fonctionne »*.
+
+**LE TROU** : on **DEMANDE** au cervelet de reprendre le nom d'exercice *« exactement tel que le coach l'a écrit »*. **Personne ne le VÉRIFIAIT.** S'il rendait *« Développé Incliné »* là où Milo avait écrit *« Développé Couché »*, la personne s'entraînait sur autre chose — **sans un message**.
+
+**⚠️⚠️ ET LA RÈGLE EXISTAIT DÉJÀ DEPUIS LE 04/08, SUR L'AUTRE CHEMIN.** `_seanceDepuisTexte` refuse le rapprochement « par mots », et son commentaire porte la **mesure** qui l'a fait naître : il transformait *« Curl Biceps Haltères »* en *« Curl Barre »* et *« Élévations Latérales »* en *« Élévations Latérales Câble »*. La conclusion d'alors — *pour CONSTRUIRE une séance, on refuse le « à peu près »* — **n'a jamais été portée jusqu'au chemin du cervelet**, ouvert la veille. C'est **`BUGS.md` famille 15** (la règle juste, définie trop étroit), **3ᵉ fois en trois jours** — après la charge de 82,5 kg (ft-v914) et les sources inventées (ft-v918).
+
+**👉 LA RÈGLE, volontairement simple et explicable** : chaque nom rendu doit se retrouver dans ce que Milo a écrit — au moins un mot significatif, et au moins la **moitié** de ses mots. *« Développé Couché Barre »* passe (une précision de catalogue n'est pas une invention, et jeter là-dessus coûterait une séance) · *« Développé Incliné Haltères »* non · *« Leg Extension »* absent du texte, non.
+
+**⭐⭐ ET LA COMPARAISON SE FAIT LIGNE PAR LIGNE — corrigé par son propre témoin, qui a rougi.** Mon premier jet comparait au texte **entier** : *« développé »* venait de la ligne du couché, *« haltères »* de celle du curl → 2 mots sur 3, **le renommage passait**. Or un nom d'exercice vit dans **UNE** ligne, pas éparpillé dans le message. *Le cas qui compte le plus est précisément celui que la version large laissait filer.*
+
+**⚠️ ON N'AVERTIT PAS LA PERSONNE, et c'est réfléchi** : ce qu'on retire, elle ne l'a **JAMAIS VU** — il n'était pas dans le texte de Milo. L'écarter **REMET** la séance en accord avec ce qu'elle a lu ; lui annoncer *« j'ai retiré X »* désignerait quelque chose qui n'a jamais existé pour elle. La trace part dans la console, pour pouvoir diagnostiquer.
+
+**⚠️ ET SI LA TRADUCTION EST TROP ABÎMÉE** (moins de 2 survivants, ou plus d'un tiers écarté), on ne rafistole pas : on rend `null` et la cascade repart sur le **filet déterministe**, fidèle **par construction** puisqu'il lit les lignes de Milo. *Une séance à moitié juste est pire qu'une séance plus pauvre mais vraie* (R29).
+
+**⚠️ ET MON TÉMOIN A DÛ ÊTRE RÉÉCRIT — 7ᵉ fois.** Écrit d'abord contre `_cerveletFidele`, une fonction **neuve**, il rendait **1 rouge** (« fonction absente ») au lieu de mesurer les six comportements : *il échouait, il ne prouvait rien*. Repassé par `_cerveletSeance` — présente des deux côtés — avec un `fetch` bouchonné qui décide exactement ce que le cervelet rend.
+Tests : **parcours 793/793** (+6, bloc LX), calculs 241/241, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 3 rouges**, et la sortie se lit toute seule — `Developpe couche | Rowing barre | Leg Extension | Curl biceps halteres`. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** : la traduction fidèle doit continuer de passer intacte, et rien ne doit devenir bloquant. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v920. |
 
 **GOUVERNANCE + BACKEND — 📐 LA MESURE QUI CHANGE LE PLAN : décharger n'est PAS diluer moins · et 4 correctifs d'une lecture critique extérieure (19/08/2026, `worker.js`)** — Michel apporte un document de 8 pages écrit avec une autre instance : *« regarde je suis allé loin avec claude »*, puis *« vas y et essaie de voir d'autres solutions »*.
 
@@ -674,17 +691,6 @@ Tests : **parcours 735/735** (+3, bloc LI), calculs 206/206, muscles 232/232, cr
 
 **⚠️ ET « OUVERTE » N'EST PAS « `S.wkt` EXISTE »** : `renderLog()` crée un objet de séance vide dès qu'on **affiche** l'écran Séance. Sans cette nuance, la mise à jour serait bloquée pour toujours dès que quelqu'un a jeté un œil à l'onglet Séance — un garde-fou qui ne se relâche jamais finit par être désactivé (R19).
 Tests : **parcours 732/732** (+6, bloc L), calculs 206/206, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 2 rouges**, et ce sont précisément les deux siens — *« 20 min de cardio sans exercice »* et *« chrono démarré sans exercice saisi »* laissaient tous deux passer la mise à jour. Fichiers : `log.js`, `app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v903. |
-
-**ft-v902 — 🔆 L'ÉCRAN NE S'ÉTEINT PLUS QUAND ON VA PARLER À MILO — le verrou était accroché à l'ÉCRAN AFFICHÉ, pas à la séance** — Michel, en séance : *« l'écran s'éteint pendant la séance »*.
-
-**⚠️⚠️ LA CAUSE N'EST PAS LE VERROU, C'EST CE À QUOI IL ÉTAIT ATTACHÉ.** `goScreen` le relâchait pour **tout écran autre que Séance** — or pendant une séance on va justement ailleurs : parler à **Milo**, regarder ses records, noter une pesée. On revenait donc à un écran éteint **au milieu d'un repos**, exactement quand on a les mains occupées. *Le verrou appartient à l'ÉTAT « une séance tourne », pas à l'écran qu'on regarde* — c'est **R2** : une information, un propriétaire, et ici l'information est « je m'entraîne », pas « j'affiche l'écran Séance ».
-
-**⚠️ ET IL SE REND, sinon on aurait échangé un bug contre une batterie vide** : dès que la séance est **en pause** (une séance en pause n'est pas un entraînement), **annulée** — tout chemin de fermeture pose son marqueur (R15) — ou **terminée**.
-
-**⚠️ DEUX DÉFAUTS VOISINS TROUVÉS EN LISANT LE CHEMIN COMPLET** : ① le système **reprend** le verrou dès que l'app passe en arrière-plan, et **il ne revient jamais tout seul** — sans écouter l'événement `release`, la variable restait un objet mort et le garde « j'en tiens déjà un » aurait **empêché toute reprise**, donc l'écran se serait éteint pour de bon au premier coup d'œil à une notification ; ② appuyer sur **« Terminer » avec une séance vide** relâchait l'écran **AVANT** les contrôles : on recevait le message d'erreur *et* l'écran s'éteignait, alors que la séance continuait.
-
-**⚠️ LE TÉMOIN POSE UN FAUX VERROU, et sans ça il ne mesurerait RIEN** : `navigator.wakeLock` n'existe pas dans le navigateur de test, donc un témoin naïf serait **vert des deux côtés** — le piège déjà payé quatre fois (ft-v887, 890, 892, 901). Le doublon compte ce que l'app lui demande, et le scénario est celui de Michel : séance en cours → on part sur l'écran de Milo → l'écran est-il toujours tenu ?
-Tests : **parcours 726/726** (+4, bloc XLIX), calculs 206/206, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge**, et c'est exactement le sien — *« ON VA PARLER À MILO : l'écran reste allumé » → `tenu=false`*. Fichiers : `log.js`, `screens.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v902. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

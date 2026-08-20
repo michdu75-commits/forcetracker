@@ -6,11 +6,13 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v919` — fusionnée sur `master` le 19/08.
+- **Version en ligne (live) :** `ft-v920` — fusionnée sur `master` le 20/08.
 - **🫀 CHANTIER EN COURS — l'architecture CERVEAU / CERVELET** (`docs/ARCHITECTURE-CERVEAU-CERVELET.md`,
   idée de Michel : *« dans une entreprise il y a le boss et la secrétaire »*). Milo garde le jugement,
   une 2ᵉ IA fait le mécanique — **et elle n'existe pas pour l'utilisateur** (R6, une seule voix).
-  **Brique 1 LIVRÉE (ft-v919)** : la conversion séance→JSON est sortie du prompt (46 485 → 44 157 car.).
+  **Brique 1 LIVRÉE (ft-v919)**, et **validée par le code depuis ft-v920** (chaque nom rendu doit
+  se retrouver dans le texte de Milo — *le modèle propose, le code valide*).
+  **Brique 1 (rappel)** : la conversion séance→JSON est sortie du prompt (46 485 → 44 157 car.).
   **Ce qui reste à décharger**, par ordre de poids : les *réponses rapides* (~1 655 car.) · la
   *prochaine séance annoncée* (~825) · la **nutrition-outil** (~2 126 + les briques 1/3/4 à venir).
   ⛔ **Ce qui NE part PAS au cervelet, et c'est décidé** : la **composition d'un plan alimentaire**

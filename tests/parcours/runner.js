@@ -6967,6 +6967,81 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LX - LE MODELE PROPOSE, LE CODE VALIDE (20/08/2026) ==
+   Le cervelet recoit la consigne de reprendre le nom d'exercice « exactement tel que le coach l'a
+   ecrit ». Personne ne le VERIFIAIT. ⚠️ Or la regle existait deja, appliquee au SEUL chemin en
+   code : `_seanceDepuisTexte` refuse le rapprochement « par mots » depuis le 04/08 (il transformait
+   « Curl Biceps Halteres » en « Curl Barre »). BUGS.md famille 15 — la regle juste, definie trop
+   etroit, 3e fois en trois jours.
+   ⚠️ CE QUI EST DELICAT ICI, ce n'est pas d'ecarter : c'est de NE PAS ecarter a tort. Un
+   garde-fou qui jette une seance legitime coute plus cher que celui qu'il remplace (R19). Les
+   temoins verifient donc les DEUX sens, et le faux positif est le plus important. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  /* ⚠️ ON PASSE PAR `_cerveletSeance`, PRESENT DES DEUX COTES, avec un `fetch` bouchonne — et
+     PAS par la fonction neuve. Un temoin qui appelle une fonction qui n'existe pas encore rend UN
+     rouge (« fonction absente ») au lieu de mesurer les six comportements : il echoue, il ne
+     PROUVE rien. Piege deja paye 6 fois (ft-v887, 890, 892, 901, 905, 906, 907) — et refait ici. */
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    if(typeof _cerveletSeance!=='function'){ o.absente=true; return o; }
+    const texte = "Seance du jour :\n"
+      + "- Developpe couche : 4x8 a 60 kg, repos 3 min\n"
+      + "- Rowing barre : 4x10 a 50 kg\n"
+      + "- Curl biceps halteres : 3x12\n"
+      + "- Elevations laterales : 3x15\n";
+    const ex = n => ({name:n, sets:[{reps:8,kg:60,type:'N'}]});
+    const vrai = window.fetch;
+    /* Le cervelet est remplace par un bouchon : on decide EXACTEMENT ce qu'il rend, donc on mesure
+       ce que l'app en FAIT — c'est la seule chose qu'un test local puisse prouver. */
+    const rend = async exs => {
+      window.fetch = async () => ({ ok:true, json: async () => ({status:'ok', seance:{label:'P', exs}}) });
+      let r; try{ r = await _cerveletSeance(texte); }catch(e){ r = 'EXCEPTION '+e.message; }
+      window.fetch = vrai;
+      return (r && r.exs) ? r.exs.map(e=>e.name).join(' | ') : (typeof r==='string' ? r : 'NULL');
+    };
+    /* (1) le cas NORMAL : le cervelet a bien recopie ce que Milo a ecrit → on ne touche a rien */
+    o.fidele = await rend([ex('Developpe couche'), ex('Rowing barre'), ex('Curl biceps halteres'), ex('Elevations laterales')]);
+    /* (2) FAUX POSITIF — le temoin le plus important : une precision de catalogue n'est PAS une
+       invention. « Developpe Couche Barre » = 2 mots sur 3 sur SA ligne → doit etre GARDE. */
+    o.precision = await rend([ex('Developpe Couche Barre'), ex('Rowing barre'), ex('Curl biceps halteres')]);
+    /* (3) un exercice INVENTE, absent du texte → ecarte, les autres survivent */
+    o.invente = await rend([ex('Developpe couche'), ex('Rowing barre'), ex('Leg Extension'), ex('Curl biceps halteres')]);
+    /* (4) un RENOMMAGE grossier. ⚠️ C'est lui qui a fait rougir mon premier jet : sur le texte
+       ENTIER, « developpe » venait de la ligne du couche et « halteres » de celle du curl — 2 mots
+       sur 3, ca passait. La comparaison se fait LIGNE PAR LIGNE, un nom vit dans UNE ligne. */
+    o.renomme = await rend([ex('Developpe Incline Halteres'), ex('Rowing barre'), ex('Curl biceps halteres')]);
+    /* (5) traduction TROP abimee (plus d'un tiers ecarte) → null, la cascade repart sur le filet */
+    o.abimee = await rend([ex('Leg Extension'), ex('Presse a cuisses'), ex('Rowing barre')]);
+    /* (6) jamais bloquant : une entree bancale ne doit pas faire tomber la seance */
+    o.robuste = await rend([ex(''), ex('Rowing barre'), ex('Curl biceps halteres')]);
+    return o;
+  });
+  console.log('\n-- LX. Le modele propose, le code valide --');
+  if(R.absente){
+    t('⛔ le cervelet existe (aucun temoin ne vaut sans ca)', false, 'fonction absente');
+  }else{
+    t('⭐ une traduction FIDELE passe sans etre touchee (non-regression)',
+      R.fidele==='Developpe couche | Rowing barre | Curl biceps halteres | Elevations laterales', R.fidele);
+    /* ⚠️ LE PLUS IMPORTANT DES SIX : un garde-fou qui jette une seance juste finit desactive (R19). */
+    t('/!\\ ... et une PRECISION de catalogue n\'est PAS une invention (anti-faux-positif)',
+      /Developpe Couche Barre/.test(R.precision), R.precision);
+    t('⭐⭐ UN EXERCICE INVENTE EST ECARTE, les autres survivent',
+      !/Leg Extension/.test(R.invente) && /Rowing barre/.test(R.invente), R.invente);
+    t('⭐⭐ UN RENOMMAGE GROSSIER est ecarte (c\'est lui qui ferait travailler ailleurs)',
+      !/Incline/.test(R.renomme) && /Rowing barre/.test(R.renomme), R.renomme);
+    t('⭐ une traduction TROP abimee rend null → la cascade repart sur le filet',
+      R.abimee==='NULL', R.abimee);
+    t('⭐ jamais bloquant : un nom vide ne fait pas tomber la seance',
+      !/EXCEPTION/.test(R.robuste), R.robuste);
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
