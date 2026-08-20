@@ -438,6 +438,33 @@ async function coach(body, apiKey) {
   // le Gardien, « au plus UNE question », l'adaptation du ton, le refus d'inventer.
   let model = 'claude-sonnet-4-6';
   if (em === 'michdu75@gmail.com') model = MODELE_MICHEL;
+
+  // ── 🧪 BENCHMARK : le seul moyen de MESURER la décision « Sonnet pour tout le monde » ──
+  // Michel, 20/08/2026 : « par la même occasion test en haiku non ? ». Il a raison, et ce
+  // n'est PAS une re-proposition de changer de modèle (ce que R30 interdit) : c'est la seule
+  // façon d'ARRÊTER d'en discuter. Aujourd'hui l'argument est R9 (« un modèle léger suit mal
+  // les consignes fines ») — un RAISONNEMENT, juste, mais jamais mesuré SUR CE PROMPT-CI.
+  //
+  // ⚠️⚠️ ET LA COMPARAISON EST ASYMÉTRIQUE — à lire avant d'interpréter le résultat.
+  //   · Haiku nettement plus rouge  → R9 est CONFIRMÉ par un chiffre, la question est close.
+  //   · Haiku aussi vert que Sonnet → ça ne prouve RIEN et ne rouvre RIEN : un vert dit
+  //     seulement « aucune violation détectable sur 15 pièges ». Ce qui fait Milo (le ton,
+  //     le naturel, le refus d'insister) n'est pas dans ces 15 motifs — et l'argument de
+  //     Michel du 10/08 n'était pas technique : « si les gens trouvent Milo nul ils ne vont
+  //     pas le prendre ». Un benchmark ne mesure pas ça.
+  //   👉 Ce test peut CONFIRMER la décision, il ne peut pas la renverser.
+  //
+  // ⚠️ POURQUOI ACCEPTER UN MODÈLE VENU DU CLIENT N'OUVRE PAS DE TROU : la liste blanche ne
+  //    contient que des modèles **MOINS CHERS** que le défaut. Le pire qu'un curieux puisse
+  //    faire est de se rendre son PROPRE Milo plus bête et moins cher — ça ne touche personne
+  //    d'autre et ça ne peut pas faire monter la facture. Tout ce qui n'est pas dans la liste
+  //    est IGNORÉ (pas d'erreur : un repli silencieux vers le défaut est le comportement sûr).
+  //    ⛔ NE JAMAIS y ajouter un modèle plus cher que le défaut — ce serait exactement le trou
+  //    que cette forme évite.
+  const MODELES_BENCHMARK = ['claude-haiku-4-5'];
+  const _em = String(body.evalModel || '').trim();
+  if (_em && MODELES_BENCHMARK.indexOf(_em) >= 0) model = _em;
+
   const d = await callClaudeDiag(apiKey, { model, max_tokens: 1024, system, messages });
   // _diag = diagnostic technique (ignoré par l'app normale, lu par PT-001 / le laboratoire).
   // On NE change PAS le message utilisateur : Milo dit toujours « Désolé, réessaie. » si vide.
@@ -446,7 +473,11 @@ async function coach(body, apiKey) {
       : (d.status === 529 ? 'overloaded'
         : (d.status && d.status >= 400 ? ('api_error ' + d.status + (d.apiErr ? ' ' + d.apiErr : ''))
           : (d.apiErr ? ('error ' + d.apiErr) : 'empty'))));
-  return { reply: d.text || 'Désolé, réessaie.', _diag };
+  // ⚠️ `_model` = le modèle qui a RÉELLEMENT servi, pas celui qu'on a demandé. Sans lui, le
+  // benchmark pourrait annoncer « testé en Haiku » alors qu'un repli l'a mis sur Sonnet —
+  // c'est exactement l'erreur des personas VC (« Haiku (défaut) » pendant des semaines de
+  // Sonnet), et une évaluation qui se trompe de modèle fait corriger le mauvais cerveau (R9).
+  return { reply: d.text || 'Désolé, réessaie.', _diag, _model: model };
 }
 
 // ── Import de document : programme / historique — recopié de handleImportProgram_/handleImportHistory_

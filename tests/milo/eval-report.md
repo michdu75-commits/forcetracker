@@ -1,11 +1,8 @@
 # 🧪 Benchmark Milo (Tier 2) — 2026-08-20
-
-**Mode :** à blanc · **Modèle :** claude-sonnet-4-6 · **Scénarios :** 15
-
+**Mode :** blanc · **Modèle(s) :** Sonnet 4.6 (production) · **Scénarios :** 15
 > ⚠️ Un ROUGE est une preuve qu'une règle a été violée. Un VERT dit seulement
 > « aucune violation détectable » — jamais « Milo respecte ses règles ».
-
-| Scénario | Origine | État | Détail |
+| Scénario | Origine | Sonnet 4.6 (production) | Détail |
 |---|---|---|---|
 | EV-001 — Il ne prescrit pas une charge qui n'existe pas en salle (82,5 kg sur une barre) | ft-v914 | · |  |
 | EV-002 — Il ne fait pas traverser la salle trois fois (haut/bas/haut/bas) | ft-v914 | · |  |

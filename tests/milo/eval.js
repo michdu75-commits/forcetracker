@@ -21,9 +21,18 @@
  *    `_vcApplyPersona`, qui remet à neutre TOUT ce que lit `buildCoachContext`.
  *    Le navigateur est jetable, rien n'est écrit sur le compte de personne.
  *
+ * ⚠️ ET IL SAIT COMPARER DEUX MODÈLES (`--compare`) — c'est ce qui permet de MESURER la
+ *    décision « Sonnet pour tout le monde » au lieu d'en rediscuter. La comparaison est
+ *    ASYMÉTRIQUE, et c'est écrit partout où elle apparaît : Haiku nettement plus rouge
+ *    **confirme** R9 et ferme la question ; Haiku aussi vert ne **rouvre rien** (un vert ne
+ *    dit que « aucune violation détectable sur 15 pièges », et ce qui fait Milo — le ton, le
+ *    naturel, le refus d'insister — n'est dans aucun de ces 15 motifs).
+ *
  * Usage :
  *   node tests/milo/eval.js                     → à blanc (0 €), liste + devis
- *   node tests/milo/eval.js --go                → lance les 15
+ *   node tests/milo/eval.js --go                → lance les 15 sur le modèle de production
+ *   node tests/milo/eval.js --go --modele haiku → les 15 sur Haiku (~3× moins cher)
+ *   node tests/milo/eval.js --go --compare      → les deux, côte à côte (2× le coût)
  *   node tests/milo/eval.js --go --only EV-001,EV-006
  *   node tests/milo/eval.js --go --n 4          → les 4 premiers seulement
  *
@@ -37,7 +46,13 @@ const ROOT = path.resolve(__dirname, '..', '..');
 const SCENARIOS = require('./eval-scenarios.js');
 
 // ── Tarifs (vérifiés le 20/08/2026) — worker.js sert claude-sonnet-4-6 à TOUT LE MONDE ──
-const PRIX = { entree: 3.00, sortie: 15.00, cacheEcriture: 2.0, cacheLecture: 0.1 }; // $/M tokens, multiplicateurs
+// ⚠️ La liste blanche du Worker ne contient que des modèles MOINS CHERS que le défaut : toute
+//    entrée ajoutée ici doit l'être là-bas AUSSI, et jamais au-dessus du prix de production.
+const MODELES = {
+  prod : { id:'',                  nom:'Sonnet 4.6 (production)', entree:3.00, sortie:15.00 },
+  haiku: { id:'claude-haiku-4-5',  nom:'Haiku 4.5',               entree:1.00, sortie: 5.00 },
+};
+const CACHE_LECTURE = 0.1;   // multiplicateur d'une lecture de cache
 const CAR_PAR_TOKEN = 3.6;   // français, mesuré à la louche — sert au DEVIS, pas à la facture
 const SORTIE_ATTENDUE = 700; // tokens de réponse typiques d'un débrief/séance Milo
 
@@ -48,6 +63,13 @@ const ONLY = (ARGV.find(a=>a.startsWith('--only='))||'').split('=')[1]
           || (ARGV[ARGV.indexOf('--only')+1] && !ARGV[ARGV.indexOf('--only')+1].startsWith('--') ? ARGV[ARGV.indexOf('--only')+1] : '');
 const NMAX = parseInt((ARGV.find(a=>a.startsWith('--n='))||'').split('=')[1]
           || (ARGV[ARGV.indexOf('--n')+1]||''), 10);
+const COMPARE = ARGV.includes('--compare');
+const MOD_ARG = ((ARGV.find(a=>a.startsWith('--modele='))||'').split('=')[1]
+          || (ARGV[ARGV.indexOf('--modele')+1] && !ARGV[ARGV.indexOf('--modele')+1].startsWith('--') ? ARGV[ARGV.indexOf('--modele')+1] : '')
+          || 'prod').toLowerCase();
+if (!MODELES[MOD_ARG]) { console.error('Modèle inconnu : ' + MOD_ARG + ' (attendu : ' + Object.keys(MODELES).join(' | ') + ')'); process.exit(2); }
+// --compare joue TOUJOURS la production en premier : c'est la référence, pas le challenger.
+const PASSES = COMPARE ? ['prod','haiku'] : [MOD_ARG];
 
 let liste = SCENARIOS.slice();
 if (ONLY) { const ids = ONLY.split(',').map(s=>s.trim().toUpperCase()); liste = liste.filter(s=>ids.includes(s.id)); }
@@ -74,35 +96,50 @@ function serve() {
 }
 
 // ── Ce qui tourne DANS la page : on réutilise le laboratoire VC de l'app (R13) ──
+
+// ── Ce qui tourne DANS la page : on réutilise le laboratoire VC de l'app (R13) ──
 // `_vcApplyPersona` remet à neutre tout ce que lit buildCoachContext puis applique le
 // persona ; `_vcAsk` fait l'appel réel avec le MÊME contexte que le vrai chemin.
 // window._demoMode gèle toute écriture locale/cloud pendant la manœuvre.
-async function jouerDansLaPage(page, sc, pourDeVrai) {
-  return page.evaluate(async ({ sc, pourDeVrai }) => {
+async function jouerDansLaPage(page, sc, pourDeVrai, idModele) {
+  return page.evaluate(async ({ sc, pourDeVrai, idModele }) => {
     const manque = ['_vcApplyPersona','_vcAsk','buildCoachContext'].filter(f=>typeof window[f]!=='function');
     if (manque.length) return { erreur:'fonction(s) absente(s) : '+manque.join(', ') };
     window._demoMode = true;
     try {
       _vcApplyPersona({ apply: sc.apply || {} });
-      const persona = { scenario: sc.scenario, coachEmail: sc.coachEmail || '', history: sc.history || [] };
+      const persona = { scenario: sc.scenario, coachEmail: sc.coachEmail || '',
+                        history: sc.history || [], evalModel: idModele || '' };
       if (!pourDeVrai) {
         // À BLANC : on construit le contexte réel (gratuit, local) pour MESURER le devis.
         const ctx = buildCoachContext(sc.scenario);
-        const hist = JSON.stringify(sc.history || []).length;
-        return { blanc:true, carContexte: ctx.length, carHistorique: hist, carMessage: (sc.scenario||'').length };
+        return { blanc:true, carContexte: ctx.length,
+                 carHistorique: JSON.stringify(sc.history || []).length,
+                 carMessage: (sc.scenario||'').length };
       }
       const r = await _vcAsk(persona);
-      return { ok:!!r.ok, reply:r.reply||'', err:r.err||'', kind:r.kind||'', ms:r.ms||0, carContexte:(r.ctx||'').length };
+      return { ok:!!r.ok, reply:r.reply||'', err:r.err||'', kind:r.kind||'',
+               ms:r.ms||0, carContexte:(r.ctx||'').length, modele:r.modele||'' };
     } catch (e) {
       return { erreur: (e && e.message) || String(e) };
     } finally {
       window._demoMode = false;
       try { if (typeof load === 'function') load(); } catch (e) {}
     }
-  }, { sc, pourDeVrai });
+  }, { sc, pourDeVrai, idModele });
 }
 
 function euros(usd){ return (usd * 0.92).toFixed(2); } // ordre de grandeur, pas une facture
+
+// ── Les vérificateurs tournent ICI, dans Node : du code, pas un juge ──
+function verifier(sc, reply) {
+  return sc.verifs.map(v => {
+    let out; try { out = v.fn(reply); } catch (e) { out = { ok:false, detail:'vérificateur cassé : '+e.message }; }
+    if (out === true)  out = { ok:true };
+    if (out === false) out = { ok:false };
+    return { nom:v.nom, ok:!!out.ok, detail:out.detail || '' };
+  });
+}
 
 (async () => {
   if (!liste.length) { console.log('Aucun scénario ne correspond.'); process.exit(0); }
@@ -115,13 +152,11 @@ function euros(usd){ return (usd * 0.92).toFixed(2); } // ordre de grandeur, pas
   console.log('\n╔══════════════════════════════════════════════════════════════════╗');
   console.log('║  🧪 BENCHMARK MILO (Tier 2) — est-ce qu\'il SUIT ses règles ?     ║');
   console.log('╚══════════════════════════════════════════════════════════════════╝');
-  console.log(GO ? '  Mode : RÉEL — '+liste.length+' appel(s) à Milo vont être facturés.\n'
-                 : '  Mode : À BLANC — aucun appel, aucun coût. Ajoute --go pour lancer.\n');
+  if (!GO) console.log('  Mode : À BLANC — aucun appel, aucun coût. Ajoute --go pour lancer.\n');
+  else if (COMPARE) console.log('  Mode : COMPARAISON — ' + (liste.length*2) + ' appels (' + liste.length + ' par modèle).\n');
+  else console.log('  Mode : RÉEL — ' + liste.length + ' appel(s) sur ' + MODELES[MOD_ARG].nom + '.\n');
 
-  const resultats = [];
-  let totalCar = 0;
-
-  for (const sc of liste) {
+  async function ouvrirPage() {
     const ctx = await nav.newContext({ serviceWorkers:'block', viewport:{width:390,height:844} });
     await ctx.addInitScript(() => {
       // Compte minimal « déjà connecté » : le laboratoire écrase de toute façon tout le profil.
@@ -130,97 +165,154 @@ function euros(usd){ return (usd * 0.92).toFixed(2); } // ordre de grandeur, pas
       for (const k in b) localStorage.setItem(k, b[k]);
     });
     const page = await ctx.newPage();
-    const erreursPage = []; page.on('pageerror', e => erreursPage.push(e.message));
     await page.goto('http://localhost:' + port + '/index.html');
     await page.waitForTimeout(2300);
     await page.evaluate(() => { document.querySelectorAll('.overlay').forEach(x => x.classList.remove('open')); });
+    return { page, ctx };
+  }
 
-    const r = await jouerDansLaPage(page, {
-      apply: sc.apply, scenario: sc.scenario, coachEmail: sc.coachEmail, history: sc.history
-    }, GO);
-    await ctx.close();
+  const parPasse = {};   // { prod: [...], haiku: [...] }
+  let totalCar = 0;
 
-    if (r.erreur) {
-      console.log('  ⛔ ' + sc.id + ' — ' + r.erreur);
-      resultats.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat:'erreur', detail:r.erreur });
-      continue;
+  for (const passe of (GO ? PASSES : ['prod'])) {
+    const M = MODELES[passe];
+    if (GO && PASSES.length > 1) console.log('  ── ' + M.nom + ' ' + '─'.repeat(Math.max(0, 52 - M.nom.length)));
+    const resultats = [];
+
+    for (const sc of liste) {
+      const { page, ctx } = await ouvrirPage();
+      const r = await jouerDansLaPage(page, {
+        apply: sc.apply, scenario: sc.scenario, coachEmail: sc.coachEmail, history: sc.history
+      }, GO, M.id);
+      await ctx.close();
+
+      if (r.erreur) {
+        console.log('  ⛔ ' + sc.id + ' — ' + r.erreur);
+        resultats.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat:'erreur', detail:r.erreur });
+        continue;
+      }
+
+      if (!GO) {
+        const car = (r.carContexte||0) + (r.carHistorique||0) + (r.carMessage||0);
+        totalCar += car;
+        console.log('  · ' + sc.id + '  ' + String(Math.round(car/1000)).padStart(3) + ' k car.  ' + sc.titre);
+        resultats.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat:'blanc', carContexte:r.carContexte });
+        continue;
+      }
+
+      if (!r.ok) {
+        console.log('  ⛔ ' + sc.id + ' — pas de réponse (' + r.kind + ') : ' + r.err);
+        resultats.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat:'muet', detail:r.err });
+        continue;
+      }
+
+      // ⚠️ On vérifie que le modèle DEMANDÉ est bien celui qui a SERVI. Sans ça, un repli
+      // silencieux ferait annoncer « testé en Haiku » une passe entièrement jouée en Sonnet —
+      // et on comparerait un modèle avec lui-même sans le voir.
+      const servi = r.modele || '(non rapporté)';
+      const attendu = M.id || 'claude-sonnet-4-6';
+      const bonModele = (servi === attendu);
+
+      const verdicts = verifier(sc, r.reply);
+      const rouges = verdicts.filter(v => !v.ok);
+      console.log((rouges.length ? '  ❌ ' : '  ✅ ') + sc.id + ' — ' + sc.titre + '  (' + r.ms + ' ms)'
+        + (bonModele ? '' : '   ⚠️ servi par ' + servi + ' au lieu de ' + attendu));
+      verdicts.forEach(v => {
+        if (!v.ok) console.log('       ↳ ' + v.nom + (v.detail ? '\n         → ' + v.detail : ''));
+        else if (v.detail) console.log('       · ' + v.nom + ' — ' + v.detail);
+      });
+      totalCar += (r.carContexte||0);
+      resultats.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat: rouges.length?'rouge':'vert',
+                       ms:r.ms, modele:servi, bonModele, verdicts, reply:r.reply });
     }
 
-    if (!GO) {
-      const car = (r.carContexte||0) + (r.carHistorique||0) + (r.carMessage||0);
-      totalCar += car;
-      console.log('  · ' + sc.id + '  ' + String(Math.round(car/1000)).padStart(3) + ' k car.  ' + sc.titre);
-      resultats.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat:'blanc', carContexte:r.carContexte });
-      continue;
+    parPasse[passe] = resultats;
+    if (GO) {
+      const verts = resultats.filter(r=>r.etat==='vert').length;
+      const rouges= resultats.filter(r=>r.etat==='rouge');
+      const muets = resultats.filter(r=>r.etat==='muet'||r.etat==='erreur').length;
+      console.log('\n  ══ ' + M.nom + ' : ' + verts + ' vert(s) · ' + rouges.length + ' rouge(s)'
+        + (muets?' · '+muets+' sans réponse':''));
+      if (rouges.length) rouges.forEach(r => console.log('     🔴 ' + r.id + ' (' + r.origin + ') — ' + r.titre));
+      const faux = resultats.filter(r=>r.bonModele===false);
+      if (faux.length) console.log('     ⚠️ ' + faux.length + ' réponse(s) servies par un AUTRE modèle que celui demandé — résultat non comparable.');
+      console.log('');
     }
-
-    if (!r.ok) {
-      console.log('  ⛔ ' + sc.id + ' — pas de réponse (' + r.kind + ') : ' + r.err);
-      resultats.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat:'muet', detail:r.err });
-      continue;
-    }
-
-    // ── Les vérificateurs tournent ICI, dans Node : du code, pas un juge ──
-    const verdicts = sc.verifs.map(v => {
-      let out; try { out = v.fn(r.reply); } catch (e) { out = { ok:false, detail:'vérificateur cassé : '+e.message }; }
-      if (out === true)  out = { ok:true };
-      if (out === false) out = { ok:false };
-      return { nom:v.nom, ok:!!out.ok, detail:out.detail || '' };
-    });
-    const rouges = verdicts.filter(v => !v.ok);
-    console.log((rouges.length ? '  ❌ ' : '  ✅ ') + sc.id + ' — ' + sc.titre + '  (' + r.ms + ' ms)');
-    verdicts.forEach(v => {
-      if (!v.ok) console.log('       ↳ ' + v.nom + (v.detail ? '\n         → ' + v.detail : ''));
-      else if (v.detail) console.log('       · ' + v.nom + ' — ' + v.detail);
-    });
-    totalCar += (r.carContexte||0);
-    resultats.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat: rouges.length?'rouge':'vert',
-                     ms:r.ms, verdicts, reply:r.reply });
   }
 
   await nav.close(); srv.close();
 
-  // ── Devis (à blanc) ou bilan (réel) ──
-  console.log('');
+  // ── Devis (à blanc) ──
   if (!GO) {
     const tk = Math.round(totalCar / CAR_PAR_TOKEN);
-    const hautEntree = (tk / 1e6) * PRIX.entree;                       // pire cas : aucun cache
-    const basEntree  = (tk / 1e6) * PRIX.entree * PRIX.cacheLecture;   // meilleur cas : tout en cache
-    const sortie     = (liste.length * SORTIE_ATTENDUE / 1e6) * PRIX.sortie;
-    console.log('  📐 DEVIS MESURÉ (contexte réel construit, ' + Math.round(totalCar/1000) + ' k caractères au total)');
+    console.log('\n  📐 DEVIS MESURÉ (contexte réel construit, ' + Math.round(totalCar/1000) + ' k caractères au total)');
     console.log('     ≈ ' + tk.toLocaleString('fr-FR') + ' tokens d\'entrée + ' + (liste.length*SORTIE_ATTENDUE).toLocaleString('fr-FR') + ' de sortie');
-    console.log('     Coût d\'une passe : entre ' + euros(basEntree+sortie) + ' € (cache chaud) et ' + euros(hautEntree+sortie) + ' € (rien en cache)');
+    Object.keys(MODELES).forEach(k => {
+      const M = MODELES[k];
+      const haut = (tk/1e6)*M.entree, bas = haut*CACHE_LECTURE;
+      const sortie = (liste.length*SORTIE_ATTENDUE/1e6)*M.sortie;
+      console.log('     · ' + M.nom.padEnd(26) + ' entre ' + euros(bas+sortie) + ' € (cache chaud) et ' + euros(haut+sortie) + ' € (rien en cache)');
+    });
     console.log('     ⚠️ Ordre de grandeur, pas une facture — le découpage en tokens est estimé.');
-    console.log('\n  Rien n\'a été appelé. Pour lancer pour de vrai :  node tests/milo/eval.js --go\n');
-  } else {
-    const verts = resultats.filter(r=>r.etat==='vert').length;
-    const rouges= resultats.filter(r=>r.etat==='rouge');
-    const muets = resultats.filter(r=>r.etat==='muet'||r.etat==='erreur').length;
-    console.log('  ══ BILAN : ' + verts + ' vert(s) · ' + rouges.length + ' rouge(s)' + (muets?' · '+muets+' sans réponse':''));
-    if (rouges.length) {
-      console.log('\n  🔴 RÈGLES NON SUIVIES (ce sont des PREUVES) :');
-      rouges.forEach(r => console.log('     ' + r.id + ' (' + r.origin + ') — ' + r.titre));
+    console.log('\n  Rien n\'a été appelé. Pour lancer :  node tests/milo/eval.js --go   (ou --go --compare)\n');
+  }
+
+  // ── Comparaison des deux passes ──
+  if (GO && COMPARE && parPasse.prod && parPasse.haiku) {
+    console.log('  ══════════ SONNET (production) vs HAIKU ══════════');
+    console.log('  ' + 'Scénario'.padEnd(9) + 'Sonnet  Haiku');
+    let ecart = 0;
+    liste.forEach(sc => {
+      const a = (parPasse.prod .find(r=>r.id===sc.id)||{}).etat;
+      const b = (parPasse.haiku.find(r=>r.id===sc.id)||{}).etat;
+      const ic = e => ({vert:'  ✅  ',rouge:'  ❌  ',muet:'  ⛔  ',erreur:'  ⛔  '}[e]||'  ?   ');
+      if (a !== b) ecart++;
+      console.log('  ' + sc.id.padEnd(9) + ic(a) + ic(b) + (a!==b ? '  ← diffère' : ''));
+    });
+    const rp = parPasse.prod .filter(r=>r.etat==='rouge').length;
+    const rh = parPasse.haiku.filter(r=>r.etat==='rouge').length;
+    console.log('\n  Rouges : Sonnet ' + rp + ' · Haiku ' + rh + '   (' + ecart + ' scénario(s) où les deux diffèrent)');
+    console.log('');
+    // ⚠️⚠️ LA LECTURE EST ASYMÉTRIQUE, et c'est le message le plus important du rapport.
+    if (rh > rp) {
+      console.log('  👉 Haiku est plus rouge : R9 est CONFIRMÉ par un chiffre sur CE prompt-ci.');
+      console.log('     La question « et si on passait tout le monde en Haiku ? » est close.');
     } else {
-      console.log('     Aucune violation DÉTECTABLE. ⚠️ Ça ne veut pas dire « Milo respecte ses règles » :');
-      console.log('     ça veut dire que ces ' + liste.length + ' pièges-là n\'ont pas pris (voir l\'en-tête de eval-scenarios.js).');
+      console.log('  ⚠️ Haiku n\'est pas plus rouge — et ça ne ROUVRE RIEN.');
+      console.log('     Un vert dit seulement « aucune violation détectable sur ' + liste.length + ' pièges ».');
+      console.log('     Ce qui fait Milo (le ton, le naturel, le refus d\'insister) n\'est dans AUCUN');
+      console.log('     de ces motifs — et l\'argument de Michel du 10/08 n\'était pas technique :');
+      console.log('     « si les gens trouvent Milo nul ils ne vont pas le prendre ».');
+      console.log('     👉 Ce test peut CONFIRMER la décision, il ne peut pas la renverser.');
     }
     console.log('');
   }
 
   // ── Rapports ──
   const ymd = new Date().toISOString().slice(0,10);
-  const json = { date:ymd, mode: GO?'reel':'blanc', modele:'claude-sonnet-4-6', nb:liste.length, resultats };
+  const json = { date:ymd, mode: GO?(COMPARE?'comparaison':'reel'):'blanc',
+                 modeles: (GO?PASSES:['prod']).map(k=>MODELES[k].nom), nb:liste.length, parPasse };
   fs.writeFileSync(path.join(__dirname,'eval-report.json'), JSON.stringify(json,null,2));
+
+  const ic = e => ({vert:'✅',rouge:'❌',muet:'⛔',erreur:'⛔',blanc:'·'}[e]||'?');
   const md = ['# 🧪 Benchmark Milo (Tier 2) — ' + ymd,'',
-    '**Mode :** ' + (GO?'réel':'à blanc') + ' · **Modèle :** claude-sonnet-4-6 · **Scénarios :** ' + liste.length,'',
+    '**Mode :** ' + json.mode + ' · **Modèle(s) :** ' + json.modeles.join(' vs ') + ' · **Scénarios :** ' + liste.length,'',
     '> ⚠️ Un ROUGE est une preuve qu\'une règle a été violée. Un VERT dit seulement',
-    '> « aucune violation détectable » — jamais « Milo respecte ses règles ».','',
-    '| Scénario | Origine | État | Détail |','|---|---|---|---|']
-    .concat(resultats.map(r => '| ' + r.id + ' — ' + r.titre.replace(/\|/g,'/') + ' | ' + r.origin + ' | '
-      + ({vert:'✅',rouge:'❌',muet:'⛔',erreur:'⛔',blanc:'·'}[r.etat]||'?') + ' | '
-      + ((r.verdicts||[]).filter(v=>!v.ok).map(v=>v.nom+(v.detail?' ('+v.detail+')':'')).join(' · ') || r.detail || '') + ' |'));
-  fs.writeFileSync(path.join(__dirname,'eval-report.md'), md.join('\n') + '\n');
+    '> « aucune violation détectable » — jamais « Milo respecte ses règles ».',
+    (COMPARE ? '>\n> ⚠️⚠️ La comparaison est ASYMÉTRIQUE : Haiku plus rouge **confirme** R9 ; Haiku aussi\n> vert ne **rouvre rien** (le ton et le naturel ne sont dans aucun de ces motifs).' : ''),'',
+    '| Scénario | Origine | ' + (GO?PASSES:['prod']).map(k=>MODELES[k].nom).join(' | ') + ' | Détail |',
+    '|---|---|' + (GO?PASSES:['prod']).map(()=>'---|').join('') + '---|']
+    .concat(liste.map(sc => {
+      const cells = (GO?PASSES:['prod']).map(k => ic(((parPasse[k]||[]).find(r=>r.id===sc.id)||{}).etat));
+      const det = (GO?PASSES:['prod']).map(k => {
+        const r = (parPasse[k]||[]).find(x=>x.id===sc.id) || {};
+        return (r.verdicts||[]).filter(v=>!v.ok).map(v=>v.nom+(v.detail?' ('+v.detail+')':'')).join(' · ') || r.detail || '';
+      }).filter(Boolean).join(' — ');
+      return '| ' + sc.id + ' — ' + sc.titre.replace(/\|/g,'/') + ' | ' + sc.origin + ' | ' + cells.join(' | ') + ' | ' + det + ' |';
+    }));
+  fs.writeFileSync(path.join(__dirname,'eval-report.md'), md.filter(l=>l!=='').join('\n') + '\n');
   console.log('  📄 tests/milo/eval-report.json + eval-report.md\n');
 
-  process.exit(GO && resultats.some(r=>r.etat==='rouge') ? 1 : 0);
+  const aDesRouges = Object.keys(parPasse).some(k => parPasse[k].some(r=>r.etat==='rouge'));
+  process.exit(GO && aDesRouges ? 1 : 0);
 })().catch(e => { console.error('💥 ' + (e && e.stack || e)); process.exit(2); });

@@ -7414,6 +7414,73 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXVI - LE BENCHMARK PEUT DEMANDER UN MODELE, SANS OUVRIR DE TROU (20/08/2026) ==
+   Michel : « par la meme occasion test en haiku non ? ». Oui — et c'est la SEULE facon de
+   fermer une question qui revient : aujourd'hui « Sonnet pour tout le monde » repose sur R9
+   (un raisonnement juste, jamais mesure SUR CE PROMPT-CI).
+   ⚠️ MAIS accepter un modele venu du client est exactement le genre de porte qui coute cher.
+   Ce bloc verifie la seule chose qui la rend sure : la liste blanche ne contient QUE des
+   modeles MOINS CHERS que le defaut, et tout le reste est IGNORE (repli silencieux).
+   ⛔ Si quelqu'un ajoute un jour un modele plus cher dans cette liste, ce bloc rougit. */
+{
+  const W  = fs.readFileSync(path.join(ROOT,'worker.js'),'utf8');
+  const C  = fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
+  const EV = fs.readFileSync(path.join(ROOT,'tests/milo/eval.js'),'utf8');
+  console.log('\n-- LXVI. Le benchmark peut demander un modèle, sans ouvrir de trou --');
+
+  /* Prix $/M en entrée, pour pouvoir COMPARER au défaut au lieu de faire confiance à un nom. */
+  const PRIX={'claude-haiku-4-5':1,'claude-haiku-4-5-20251001':1,'claude-sonnet-4-6':3,
+              'claude-sonnet-5':3,'claude-opus-4-6':5,'claude-opus-4-8':5,'claude-opus-5':5,
+              'claude-fable-5':10};
+
+  const mListe = W.match(/const MODELES_BENCHMARK\s*=\s*\[([^\]]*)\]/);
+  const blanche = mListe ? (mListe[1].match(/'([^']+)'/g)||[]).map(x=>x.replace(/'/g,'')) : null;
+  t('⭐ la liste blanche existe dans worker.js', !!blanche, String(mListe));
+
+  if(blanche){
+    /* ⭐⭐ LE TÉMOIN CENTRAL, et le seul qui protège vraiment : aucun modèle au-dessus du prix
+       de production. Le pire qu'un curieux puisse faire reste de se rendre son PROPRE Milo
+       plus bête et moins cher — ça ne touche personne d'autre et ça ne fait pas monter la note. */
+    const defaut = PRIX['claude-sonnet-4-6'];
+    const chers = blanche.filter(m => !PRIX[m] || PRIX[m] > defaut);
+    t('⭐⭐ AUCUN modèle plus cher que la production dans la liste blanche',
+      chers.length===0, chers.length?('à retirer : '+chers.join(', ')):('liste : '+blanche.join(', ')));
+
+    /* Le repli doit être SILENCIEUX (pas d'erreur) : on rejoue la logique exacte du Worker. */
+    const applique = (dem) => { let model='claude-sonnet-4-6';
+      const _em=String(dem||'').trim(); if(_em && blanche.indexOf(_em)>=0) model=_em; return model; };
+    t('⭐ un modèle HORS liste est ignoré, pas honoré (claude-opus-5 → Sonnet)',
+      applique('claude-opus-5')==='claude-sonnet-4-6', applique('claude-opus-5'));
+    t('⭐ ... et une valeur vide/absurde retombe aussi sur le défaut',
+      applique('')==='claude-sonnet-4-6' && applique('{}')==='claude-sonnet-4-6', '');
+    t('⭐ le modèle de la liste, lui, est bien honoré',
+      applique('claude-haiku-4-5')==='claude-haiku-4-5', '');
+
+    /* R2 — deux endroits nomment des modèles ; ils doivent s'accorder, sinon le runner
+       demanderait un modèle que le Worker ignore et on comparerait Sonnet avec Sonnet. */
+    const dansRunner = (EV.match(/id:'(claude-[a-z0-9-]+)'/g)||[]).map(x=>x.replace(/id:'|'/g,''));
+    const orphelins = dansRunner.filter(m => blanche.indexOf(m)<0);
+    t('⭐⭐ R2 : tout modèle proposé par le runner est accepté par le Worker',
+      orphelins.length===0, orphelins.length?('ignoré(s) côté Worker : '+orphelins.join(', ')):dansRunner.join(', '));
+  }
+
+  /* ⚠️ Le Worker doit RENDRE le modèle qui a servi, et l'app doit le relire — sinon un rapport
+     peut annoncer « testé en Haiku » une passe entièrement jouée en Sonnet. C'est exactement
+     l'erreur des personas VC (« Haiku (défaut) » pendant des semaines de Sonnet). */
+  t('⭐ le Worker rend le modèle qui a RÉELLEMENT servi (_model)',
+    /_model:\s*model/.test(W), '');
+  t('⭐ ... l\'app le relit et le rend au benchmark',
+    /data\._model/.test(C) && /modele:servi/.test(C), '');
+  t('⭐ ... et le runner refuse de comparer si le modèle servi n\'est pas celui demandé',
+    /bonModele/.test(EV) && /au lieu de/.test(EV), '');
+
+  /* ⚠️ Rien dans l'APP ne doit poser evalModel : ce n'est pas un réglage produit. Le seul
+     endroit qui l'écrit est _vcAsk, sur demande explicite du persona de test. */
+  const poseurs = (C.match(/evalModel\s*=/g)||[]).length;
+  t('/!\\ un seul endroit pose evalModel dans l\'app (le laboratoire, jamais un écran)',
+    poseurs===1, poseurs+' occurrence(s)');
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

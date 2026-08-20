@@ -4236,6 +4236,11 @@ async function _vcAsk(persona){
   const t0=_now();
   let ctx=''; try{ ctx=buildCoachContext(persona.ctxComplet?undefined:persona.scenario); }catch(e){ return {ok:false,kind:'context_error',ms:0,err:'contexte: '+(e.message||'?'),reply:'',ctx:''}; }
   const payload={action:'coach',email:(persona.coachEmail||''),message:persona.scenario,context:ctx,history:(persona.history||[]),coachMemory:S.coachMemory||''};
+  // 🧪 `persona.evalModel` = demande de modèle pour le BENCHMARK uniquement. Le Worker n'accepte
+  // qu'une liste blanche de modèles MOINS CHERS que le défaut et ignore tout le reste — donc
+  // cette clé ne peut ni dégrader l'expérience de quelqu'un d'autre, ni faire monter la facture.
+  // ⚠️ Ce n'est PAS un réglage produit : rien dans l'app ne la pose, seul `tests/milo/eval.js`.
+  if(persona.evalModel) payload.evalModel=persona.evalModel;
   let lastErr='inconnue', lastKind='error', status=0;
   for(let a=1;a<=2;a++){
     const last=(a>=2); let resp=null;
@@ -4246,9 +4251,11 @@ async function _vcAsk(persona){
     if(to)clearTimeout(to); status=resp.status;
     if(!resp.ok){ lastKind='http_error'; lastErr='HTTP '+status; if(!last){await _pt001Sleep(1200);continue;} break; }
     let data=null; try{ data=await resp.json(); }catch(e){ lastKind='bad_json'; lastErr='JSON illisible'; if(!last){await _pt001Sleep(800);continue;} break; }
-    const reply=(data&&data.reply)||''; const diag=(data&&data._diag)||'';
+    const reply=(data&&data.reply)||''; const diag=(data&&data._diag)||''; const servi=(data&&data._model)||'';
     if(!reply || reply.trim()===_PT001_FALLBACK){ lastKind=(diag&&diag!=='ok')?String(diag).split(' ')[0]:'fallback'; lastErr=(diag&&diag!=='ok')?('Milo muet — '+diag):'Milo muet (fallback)'; if(!last){await _pt001Sleep(2000);continue;} break; }
-    return {ok:true,kind:'valid',ms:Math.round(_now()-t0),status,err:'',reply,ctx};
+    // ⚠️ On rend le modèle qui a SERVI (`servi`), pas celui qu'on a demandé : c'est la seule
+    // façon qu'un rapport ne mente pas sur ce qu'il a mesuré.
+    return {ok:true,kind:'valid',ms:Math.round(_now()-t0),status,err:'',reply,ctx,modele:servi};
   }
   return {ok:false,kind:lastKind,ms:Math.round(_now()-t0),status,err:lastErr,reply:'',ctx};
 }
