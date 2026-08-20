@@ -4152,8 +4152,8 @@ const VC_PERSONAS = {
       prs:{ 'Squat':{rm1:170,kg:150,reps:3,date:'2026-07-10'},
             'Développé Couché':{rm1:120,kg:105,reps:4,date:'2026-07-12'},
             'Soulevé de Terre':{rm1:200,kg:180,reps:3,date:'2026-07-08'} } },
-    coachEmail:'christophe@famillelanglois.fr', // → le Worker sert SONNET (le vrai modèle de Christophe)
-    modelNote:'Sonnet (modèle réel de Christophe)',
+    coachEmail:'christophe@famillelanglois.fr',
+    modelNote:'Sonnet — comme tout le monde depuis le 10/08 (vérifié dans worker.js)',
     scenario:'Salut ! Mon coach m\'a donné un nouveau programme force sur 6 semaines, je commence demain. Tu en penses quoi ?',
     memoire:'',
     attendus:[
@@ -4169,7 +4169,7 @@ const VC_PERSONAS = {
     // Phase menstruelle simulée via cycleStartDaysAgo (début du cycle il y a 1 j → Jour 2 = Menstruation, perf « low »).
     apply:{ name:'Emma', gender:'F', age:31, height:167, bw:63, goal:'muscle', discipline:'muscu', level:'intermediaire',
       keto:true, mensCycleDur:28, cycleStartDaysAgo:1, contraception:'' },
-    modelNote:'Haiku (modèle réel d\'Emma = la majorité)',
+    modelNote:'Sonnet — comme tout le monde depuis le 10/08 (vérifié dans worker.js)',
     scenario:'Coucou, je suis en plein dans mes règles et je me sens complètement naze. J\'ai une séance jambes de prévue aujourd\'hui, je fais quoi ?',
     memoire:'',
     attendus:[
@@ -4217,14 +4217,25 @@ function _vcApplyPersona(p){
   // — Divers —
   S.premium=true; S.coachFree=0; // évite un mur premium pendant le test
 }
-// Appel Milo instrumenté pour un persona : email = persona.coachEmail (→ le Worker choisit le
-// MODÈLE réel de cette personne : Sonnet pour Christophe, sinon Haiku = défaut/majorité),
-// history vide (1er message), classification comme PT-001.
+// Appel Milo instrumenté pour un persona. Classification des échecs comme PT-001.
+// ⚠️ LE MODÈLE EST LE MÊME POUR TOUT LE MONDE (vérifié dans worker.js le 20/08/2026) :
+//    `let model='claude-sonnet-4-6'` par défaut, et MODELE_MICHEL vaut la même chose. Les
+//    mentions « Haiku (défaut) » des personas datent d'AVANT la décision du 10/08 (« si les
+//    gens trouvent Milo nul ils ne vont pas le prendre »). On les corrige : croire qu'on teste
+//    Haiku alors qu'on teste Sonnet, c'est corriger le mauvais cerveau (R9).
+// ⚠️⚠️ ET LE CONTEXTE DOIT ÊTRE CELUI DU VRAI CHEMIN, PAS UN CONTEXTE DE DIAGNOSTIC.
+//    `buildCoachContext()` sans argument envoie TOUT (c'est son contrat, voir sa doc) ; les
+//    vrais appels passent le message (`buildCoachContext(msg)`), qui décide si les gros blocs
+//    d'entraînement sont utiles. Une évaluation qui envoie PLUS que la réalité mesure une
+//    autre dilution que celle que subit l'utilisateur — donc un vert n'y prouverait rien.
+//    On passe donc le message par défaut ; `ctxComplet:true` garde l'ancien comportement.
+// `persona.history` = tours précédents ([{role,content}]), pour les scénarios où le bug ne
+//    peut apparaître qu'au 2ᵉ message (ex. Milo qui reproche les paliers qu'il a prescrits).
 async function _vcAsk(persona){
   const _now=()=>(typeof performance!=='undefined'?performance.now():Date.now());
   const t0=_now();
-  let ctx=''; try{ ctx=buildCoachContext(); }catch(e){ return {ok:false,kind:'context_error',ms:0,err:'contexte: '+(e.message||'?'),reply:'',ctx:''}; }
-  const payload={action:'coach',email:(persona.coachEmail||''),message:persona.scenario,context:ctx,history:[],coachMemory:S.coachMemory||''};
+  let ctx=''; try{ ctx=buildCoachContext(persona.ctxComplet?undefined:persona.scenario); }catch(e){ return {ok:false,kind:'context_error',ms:0,err:'contexte: '+(e.message||'?'),reply:'',ctx:''}; }
+  const payload={action:'coach',email:(persona.coachEmail||''),message:persona.scenario,context:ctx,history:(persona.history||[]),coachMemory:S.coachMemory||''};
   let lastErr='inconnue', lastKind='error', status=0;
   for(let a=1;a<=2;a++){
     const last=(a>=2); let resp=null;
@@ -4285,7 +4296,7 @@ function _vcBuildReport(persona, res){
   L.push('  Persona : '+persona.nom+' — '+persona.resume);
   L.push('═══════════════════════════════════════════');
   L.push('Date : '+ymd+'   ·   Réponse : '+(ok?('valide · '+res.ms+' ms'):('❌ '+(res?res.err:'?'))));
-  L.push('Modèle testé : '+(persona.modelNote||'Haiku (défaut)'));
+  L.push('Modèle testé : '+(persona.modelNote||'Sonnet (défaut worker.js)'));
   L.push('');
   L.push('── ① SCÉNARIO ──────────────────────────────');
   L.push('Message joué : "'+persona.scenario+'"');

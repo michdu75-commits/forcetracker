@@ -2531,3 +2531,17 @@ Tests : **parcours 744/744** (+5, bloc LIII), calculs 230/230, muscles 232/232, 
 
 **⚠️ ET LES BORNES DE SAISIE SONT VOLONTAIREMENT LARGES** (0,5 à 30 g) : elles n'existent que pour attraper une faute de frappe, **pas pour brider un choix**. 30 g/j pendant 5 ans est documenté comme toléré chez des sujets sains (Kreider 2017) — l'app n'a aucune raison de décider en dessous. Retour à la suggestion calculée en un geste, et la dose réglée à la main est **exclue du contexte de Milo** : c'est un choix personnel sur un complément, pas un fait sur la personne — le lui envoyer l'inviterait à commenter une décision qui ne lui appartient pas.
 Tests : parcours 744/744, **calculs 235/235** (+5), muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données **100 classées 0 trou** (le garde-fou a exigé le classement de `creatDose` avant de laisser passer). **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 3 rouges** — la dose de 8 g n'était tout simplement pas affichable. ⚠️ Un témoin de ft-v908 a été **ajusté, pas affaibli** : la formule « pas un risque démontré » a déménagé vers le seuil des 5 g, et le témoin vérifie désormais ce qui compte vraiment — *que le repère des 3 g ne soit jamais dramatisé*. Fichiers : `app.js`, `state.js`, `tests/calculs/runner.js`, `tests/donnees/donnees-milo.json`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v910. |
+
+
+**ft-v911 — ⚡ « TES REPAS HABITUELS » — UN APPUI, ZÉRO FORMULAIRE** — Michel, en décrivant sa vraie journée : *« le matin je prends mon shaker de prot, je prends une banane ; le midi deux steaks hachés 5 %, 300 g de viande rouge, 200 g de riz et de la ratatouille ; le soir à peu près la même chose »*.
+
+**⭐ LE CONSTAT QUI DÉCIDE DE TOUT** : quelqu'un qui mange ça tous les jours n'a pas besoin d'un formulaire à cinq champs **trois fois par jour**. C'est le geste, pas le calcul, qui fait abandonner un suivi — et c'est exactement ce que disait son *« même moi ça me saoule de l'utiliser »*.
+
+**⚠️ ON N'INVENTE RIEN ET ON NE STOCKE RIEN DE PLUS.** Un « repas habituel » n'est pas déclaré, il est **observé** dans le journal : les aliments notés **ensemble**, le même jour, sur le même repas. Pas de liste à gérer, pas de bouton « enregistrer ce repas » supplémentaire — *la donnée était déjà là*. Un appui rejoue le tout sur le bon moment de la journée.
+
+**⚠️ AU MOINS DEUX FOIS POUR ÊTRE PROPOSÉ** : une fois c'est un repas, deux fois c'est une habitude. Proposer dès la première ferait de l'écran la liste de tout ce qu'on a mangé (R24).
+
+**⚠️⚠️ ET QUI MANGE DIFFÉREMMENT CHAQUE JOUR NE VOIT RIEN DU TOUT** — pas une section vide, qui serait un reproche déguisé. C'est la limite que **Michel a lui-même posée** quand j'avais conçu la brique sur son seul profil : *« ça c'est moi qui le fais, les autres peut-être pas »* (`docs/PERSONAS-FONDATEURS.md` : Tatiana = absence de présupposés).
+
+**⚠️ La provenance dit « reprise »** (brique 0) : ni une mesure fraîche, ni une saisie manuelle. Sans ça, un chiffre repris finirait par passer pour une mesure. Et un repas **déjà rejoué aujourd'hui** ne se re-propose pas.
+Tests : **parcours 751/751** (+7, bloc LIV), calculs 235/235, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. Fichiers : `app.js`, `screens.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v911. |
