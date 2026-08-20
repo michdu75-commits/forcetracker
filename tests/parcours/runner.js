@@ -7042,6 +7042,70 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXI - « C'EST NOTÉ » NE NOTAIT RIEN, ET L'ORDRE DES ACCESSOIRES (20/08/2026) ==
+   Michel envoie deux captures : « Regarde il a inversé encore ». Milo a écrit une seance qui
+   descend en charge — 130 → 65 → 60 → **30 → 55** : un face pull de 30 kg AVANT un leg curl de 55.
+   ⭐ DEUX CHOSES, VERIFIEES SEPAREMENT :
+   ① LA REGLE D'ORDRE ETAIT INCOMPLETE, et c'est MA regle (ft-v914, la veille) : elle ordonne
+      l'ANCRE par rapport a ses ACCESSOIRES dans une zone, et ne dit RIEN de l'ordre ENTRE
+      accessoires. Michel a confirme qu'il n'avait jamais demande ce placement — donc ce n'est pas
+      la memoire qui a lache, c'est la regle qui manquait.
+   ② EN CHERCHANT, un trou reel du Gardien : Milo ecrit « c'est noté » et RIEN n'est enregistre.
+      Le controle ne cherchait que la forme PERSONNELLE (« je note »). Mesure : « je le note » →
+      attrape · « c'est noté » → rien. BUGS.md famille 15, encore.
+   ⚠️ ET LE PIEGE DU CORRECTIF est double : le prompt DEMANDE « super, c'est noté 💪 » pour une
+      seance annoncee (legitime, il emet {"prevu"}) — et `\b` apres un « é » n'existe pas en
+      JavaScript, donc mon premier motif etait MUET. Les temoins couvrent les deux. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const R=await pg.evaluate(()=>{
+    const o={};
+    o.ctx=(typeof buildCoachContext==='function')?(buildCoachContext()||''):'';
+    const g=t=>{ try{ return (_gardienSortie(t).flags||[]).map(f=>f.code).join(',')||''; }catch(e){ return 'ERREUR'; } };
+    /* La phrase REELLE de la capture, apostrophe typographique comprise. */
+    o.reel   = g("Tu as raison, ma faute. Et le Leg Curl avant le Face Pull, c\u2019est noté.");
+    o.droite = g("Et le Leg Curl avant le Face Pull, c'est noté.");
+    o.bien   = g("Bien noté pour l\u2019ordre des exercices.");
+    o.perso  = g("Je le note pour la prochaine fois.");
+    /* ⚠️ LES TROIS ANTI-FAUX-POSITIFS, et ce sont les plus importants. */
+    o.legitBloc = g('Super, c\u2019est noté 💪 {"prevu":{"date":"2026-08-22","label":"pull"}}');
+    o.avecRetiens = g('C\u2019est noté. {"retiens":["tu veux le face pull en dernier"]}');
+    o.sain1  = g("Tu as bien bossé aujourd\u2019hui, on garde cette charge.");
+    o.sain2  = g("C\u2019est une bonne charge pour toi, ta séance est bien construite.");
+    return o;
+  });
+  const C=R.ctx;
+  console.log('\n-- LXI. « C\'est noté » ne notait rien, et l\'ordre des accessoires --');
+  t('⭐⭐ LA REGLE D\'ORDRE ENTRE ACCESSOIRES EXISTE (du plus lourd au plus léger)',
+    /DANS UNE ZONE, DU PLUS LOURD AU PLUS L[EÉ]GER/.test(C),
+    'la règle manque encore dans le prompt');
+  t('⭐⭐ ... et le petit travail de SANTÉ / rotation finit la séance (le cas du face pull)',
+    /face pull/i.test(C) && /FINIT la s[ée]ance/.test(C), '');
+  /* ⚠️ On n'INTERDIT pas l'activation avant un lourd : c'est un choix de coach valable. On demande
+     seulement qu'il soit DIT — sinon on ne distingue pas une intention d'un oubli. */
+  t('/!\\ ... sans INTERDIRE de le placer en activation, à condition de le dire (Constitution)',
+    /en activation avant un lourd/i.test(C), '');
+  t('⭐⭐ LE GARDIEN ATTRAPE ENFIN « c\u2019est noté » (la phrase réelle de la capture)',
+    /promesse_vide/.test(R.reel) && /promesse_vide/.test(R.droite),
+    'typographique=['+R.reel+'] droite=['+R.droite+']');
+  t('⭐ ... « bien noté » aussi, et « je le note » n\'a pas régressé',
+    /promesse_vide/.test(R.bien) && /promesse_vide/.test(R.perso),
+    'bien=['+R.bien+'] perso=['+R.perso+']');
+  /* ⚠️ LE TÉMOIN LE PLUS IMPORTANT : le prompt DEMANDE « super, c'est noté 💪 » quand la personne
+     annonce sa prochaine séance. Crier là-dessus ferait désactiver le garde-fou (R19). */
+  t('/!\\ ... et il NE crie PAS quand un bloc enregistre vraiment (prevu ou retiens)',
+    !/promesse_vide/.test(R.legitBloc) && !/promesse_vide/.test(R.avecRetiens),
+    'prevu=['+R.legitBloc+'] retiens=['+R.avecRetiens+']');
+  t('/!\\ ... ni sur une phrase saine qui contient « bien » ou « c\u2019est »',
+    !/promesse_vide/.test(R.sain1) && !/promesse_vide/.test(R.sain2),
+    'sain1=['+R.sain1+'] sain2=['+R.sain2+']');
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

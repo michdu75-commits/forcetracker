@@ -6,7 +6,15 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v922` — fusionnée sur `master` le 20/08.
+- **Version en ligne (live) :** `ft-v923` — fusionnée sur `master` le 20/08.
+- 🔀 **L'ORDRE DES ACCESSOIRES est enfin dit** (ft-v923) : la règle de zone de ft-v914 ordonnait
+  l'ancre vs ses accessoires, et **rien entre accessoires** — Milo a écrit un face pull de 30 kg
+  avant un leg curl de 55. Ajouté : *du plus lourd au plus léger dans une zone*, et *le petit
+  travail de santé/rotation finit la séance* (sans interdire l'activation, à condition de la dire).
+- 🛡️ **Le Gardien attrape « c'est noté »** — il ne cherchait que « je note ». ⚠️ Deux pièges gardés
+  écrits : le prompt DEMANDE « super, c'est noté 💪 » pour une séance annoncée (accepté quand un
+  bloc enregistre vraiment), et **`\b` après un « é » n'existe pas en JavaScript** — le motif était
+  muet, et ça ne se voit pas à la lecture.
 - 💪 **LES GROUPES MUSCULAIRES — 18 → 22 codes en une journée** (ft-v921 puis ft-v922) : adducteurs ·
   soléaire · extenseurs du poignet · dentelé antérieur. Les quatre étaient **déjà dessinés**, rangés
   dans le mauvais groupe (**R31**).

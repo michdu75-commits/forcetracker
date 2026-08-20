@@ -357,7 +357,18 @@ function _ctxCharges(){
        a vocation à y remonter. */
     +'\n\n🗺️ GROUPE LES EXERCICES PAR ZONE DE SALLE — les jambes sont ensemble, les bancs ensemble, les épaules ailleurs. Chaque changement de zone coûte une traversée (on marche, on cherche une machine libre, on refroidit).'
     +'\n- ⚠️ « Toutes les ancres d\'abord, les accessoires ensuite » FABRIQUE des zigzags : squat → militaire → leg extension → élévations = **trois traversées** pour une séance qui n\'en demande qu\'une. **Termine une zone avant de passer à la suivante**, et dans chaque zone mets l\'ancre avant ses accessoires.'
-    +'\n- ⚠️ CE QUI NE CHANGE PAS : l\'ancre la PLUS LOURDE de la séance reste en premier, reposé — c\'est physiologique, ça prime sur la géographie. Et un SUPERSET antagoniste alterne EXPRÈS : ne le casse pas pour grouper.\n';
+    +'\n- ⚠️ CE QUI NE CHANGE PAS : l\'ancre la PLUS LOURDE de la séance reste en premier, reposé — c\'est physiologique, ça prime sur la géographie. Et un SUPERSET antagoniste alterne EXPRÈS : ne le casse pas pour grouper.'
+    /* ⚠️ LE TROU DE MA PROPRE RÈGLE (20/08/2026, retour de Michel : « il a inversé encore »).
+       La règle ci-dessus ordonne l'ANCRE par rapport à ses ACCESSOIRES. Elle ne dit RIEN de
+       l'ordre ENTRE accessoires — or c'est là que ça s'est vu : Milo a écrit
+       130 kg → 65 → 60 → **30 → 55**, c'est-à-dire un face pull de 30 kg AVANT un leg curl de 55.
+       ⭐ Le principe est banal et il manquait quand même : plus c'est lourd et demandant, plus
+       c'est tôt — parce qu'on le fait avec ce qu'on a de frais.
+       ⚠️ ET ON N'INTERDIT PAS L'ACTIVATION : mettre un face pull AVANT un mouvement lourd est un
+       choix d'échauffement parfaitement valable. On demande juste qu'il soit DIT, sinon on ne
+       distingue pas une intention d'un oubli (Constitution : adapter, jamais interdire). */
+    +'\n- 📉 DANS UNE ZONE, DU PLUS LOURD AU PLUS LÉGER. Les accessoires ne se rangent pas au hasard : le plus demandant en premier (on le fait frais), la petite isolation ensuite. Un face pull à 30 kg placé AVANT un leg curl à 55 kg est une erreur d\'ordre.'
+    +'\n- 🩹 LE PETIT TRAVAIL DE SANTÉ / ROTATION (face pull, rotateurs externes, gainage, mollets) FINIT la séance : fatiguer les stabilisateurs avant un mouvement lourd le dessert. ⚠️ Sauf si tu le places EXPRÈS en activation avant un lourd — et alors DIS-LE en une phrase, sinon ça passe pour un oubli.\n';
 }
 function _historiqueCompact(){
   try{
@@ -3147,8 +3158,24 @@ function _gardienSortie(text){
      il SIGNALE, il ne réécrit pas (on ne charcute pas une phrase, cf. l'avertissement ci-dessus).
      Le vrai correctif est la règle du prompt ; ce témoin-ci le rend MESURABLE, et c'est justement
      ce qui manquait pour savoir si la règle « prend » (R9 : le modèle est une variable). */
-  const _promesse = /\b(je (le |te le |ça |cela )?(retiens|note)\b|je m'en (souviendrai|rappellerai)|je (le |m'en )?garde en (tête|mémoire)|(la )?prochaine fois j'y penserai)/i;
-  if (_promesse.test(clean) && !/"retiens"/.test(raw)) {
+  /* ⚠️ ÉLARGI LE 20/08/2026 — le contrôle ne cherchait que la forme PERSONNELLE (« JE note »,
+     « JE retiens »). Michel a montré une réponse où Milo écrivait *« Et le Leg Curl avant le Face
+     Pull, C'EST NOTÉ »* : **la formule impersonnelle passait au travers**, et rien n'était
+     enregistré. Mesuré avant correction : « je le note » → attrapé · « c'est noté » → RIEN.
+     C'est encore « la règle juste, définie trop étroit » (BUGS.md famille 15).
+     ⚠️⚠️ ET LE PIÈGE DU CORRECTIF, qui est la vraie difficulté : le prompt DEMANDE lui-même à Milo
+     de répondre « super, c'est noté 💪 » quand la personne annonce sa prochaine séance — et là
+     c'est LÉGITIME, puisqu'il émet le bloc {"prevu":…} qui, lui, enregistre vraiment. Ajouter le
+     motif sans cette exception ferait crier le garde-fou sur une phrase que NOUS avons demandée,
+     et *un garde-fou qui crie pour rien finit désactivé* (R19). D'où les DEUX blocs acceptés.
+     ⚠️⚠️ ET UN PIÈGE DE JAVASCRIPT QUI M'A EU : mon premier motif finissait par `not[ée]\b`, et il
+     n'attrapait RIEN. `\b` est ASCII : après un « é », il n'y a pas de frontière de mot, donc
+     l'ancre échouait sur « noté » et réussissait sur « note ». *Un accent suffit à rendre un
+     garde-fou muet* — et c'est invisible à la lecture. C'est le test qui l'a montré, pas ma relecture.
+     👉 Réflexe à garder : ne jamais terminer par `\b` un motif qui finit sur une lettre accentuée.
+     `c.est` couvre l'apostrophe droite ET la typographique (’) — même famille de piège. */
+  const _promesse = /\b(je (le |te le |ça |cela )?(retiens|note)\b|(c.est|bien) not[ée]e?|je m'en (souviendrai|rappellerai)|je (le |m'en )?garde en (tête|mémoire)|(la )?prochaine fois j'y penserai)/i;
+  if (_promesse.test(clean) && !/"retiens"/.test(raw) && !/"prevu"/.test(raw)) {
     flags.push({ code:'promesse_vide', label:'promesse de mémoire sans rien enregistrer' });
   }
   /* 5) SOURCE EXTÉRIEURE FABRIQUÉE (19/08/2026) — question de Michel en relisant le prompt :
