@@ -172,10 +172,35 @@ de repos et un jour de soulevé de terre lourd. Or l'app **sait déjà tout** :
 |---|---|
 | `S.wkt` — séance en cours | rien |
 | `S.sessions[].startHour` — l'heure des séances | rien |
-| `sess.calories` — les calories dépensées | rien (le TDEE ne bouge pas) |
+| `sess.calories` — les calories dépensées | ⚠️ **corrigé le 21/08, voir l'encadré** |
 | `_calSessRegion()` — haut / dos / bas / tronc / full | rien |
 | `S.discipline` + `_repartitionReps()` | rien côté nutrition |
 | `plannedSession()` — séance annoncée | rien |
+
+> ### ⚠️⚠️ CORRECTION DU 21/08/2026 — cette section était fausse sur un point, et il compte
+>
+> **Ce titre m'a fait dire une bêtise à Michel.** Je lui ai annoncé *« la nutrition ignore
+> complètement l'entraînement »* en le citant — **et le code m'a contredit**. L'écran Nutrition
+> affichait déjà « Séance » **et** « Total = dépense + séance ».
+>
+> ⭐⭐ **Le défaut réel était le CONTRAIRE : cette addition comptait la séance DEUX FOIS.** Le
+> multiplicateur d'activité s'appelle littéralement **« Modéré (3-4j) »** — les séances sont
+> déjà dedans, lissées sur la semaine. Et le total affiché **contredisait l'anneau** juste en
+> dessous, qui ne l'ajoute pas.
+>
+> ⚠️ **Et le vrai trou était encore ailleurs** : `applyFreqContext` demande à la personne
+> *« tu t'entraînes plutôt 5 fois maintenant ? »*, elle répond **oui**, et seul
+> `coachQuiz.answers.freq` est écrit — **`S.activityLevel` ne bougeait pas**. L'information
+> était collectée, **validée par elle**, stockée, et n'atteignait jamais le calcul (**R4**),
+> avec deux déclarations du même fait (**R2**). **Corrigé en ft-v949.**
+>
+> **👉 CE QUI RESTE VRAI DE CETTE SECTION** — et c'est l'essentiel : le **PLAN DE REPAS**, lui,
+> ignore toujours l'entraînement. Pas de repas pré/post les jours de séance, pas de glucides
+> déplacés, aucune prise en compte de l'heure réelle ni de la région travaillée. Les lignes
+> « ce qu'on devrait en faire » ci-dessous sont **toujours d'actualité**.
+>
+> ⚠️ **La leçon de méthode, c'est R23** : un document d'état qu'on ne corrige pas fait dire des
+> bêtises à celui qui le lit — moi, ici, en le citant de bonne foi.
 
 **Ce qu'on devrait en faire :**
 

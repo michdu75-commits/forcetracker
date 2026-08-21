@@ -7,6 +7,54 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🔋 LE SCORE DE RÉCUPÉRATION DOIT DIRE CE QUI MANQUE POUR ARRIVER À 100 (Michel, 21/08/2026)
+
+> *« merde je viens d'avoir une idée, par rapport à la récupération, je marque sinon je vais
+> oublier, on a le score de récupération mais il faudrait rajouter la donnée où on arrive à 100
+> (bon sauf moi qui suis fumeur) »*
+
+**L'idée** : le score de récup donne un **nombre**, il ne dit pas **ce qui coûte les points
+manquants**. Or c'est la seule information sur laquelle on peut agir. Un 72 sans explication est
+un jugement ; « 72 — il te manque surtout du sommeil cette semaine » est un levier.
+
+⭐ **C'est le motif « informer sans décider » (R29/R24)** : quand l'app renonce à trancher, elle
+**affiche les éléments** au lieu de poser une question à l'aveugle. Ici elle a déjà les éléments —
+elle ne les montre pas.
+
+### ⚠️⚠️ Et la parenthèse de Michel est le point le plus important, pas une blague
+
+*« sauf moi qui suis fumeur »*. **Si un facteur PERMANENT plafonne le score, le 100 devient
+inatteignable — et un plafond invisible transforme un outil de progrès en reproche quotidien.**
+C'est exactement ce que la Constitution interdit (P21, adapter plutôt qu'interdire ; la
+nutrition/le suivi ne doit jamais coûter plus de stress qu'il n'apporte).
+
+**Deux façons de traiter ça, à trancher :**
+
+| | Approche | Ce que ça donne |
+|---|---|---|
+| **A** | Le 100 reste absolu | Honnête, mais un fumeur voit un plafond qu'il ne peut pas atteindre — et il le voit **tous les jours** |
+| **B** | Le 100 est **ton** 100 | Le score se lit *« par rapport à ce que TU peux atteindre »* — ce qui est le sujet du produit (*« il se souvient de qui tu es devenu »*) |
+
+⭐ **Penchant : B**, mais **sans jamais cacher le A**. Le facteur permanent est nommé une fois,
+calmement, sans moraliser — et il n'est pas répété chaque jour. *On n'efface pas l'information,
+on arrête juste de la reprocher.*
+
+⛔ **Et surtout : aucun conseil d'arrêter de fumer.** Ce n'est ni le rôle de l'app ni celui de
+Milo (Constitution P13 : accompagnement, jamais thérapie). On dit ce que ça coûte **si on le
+demande**, on ne le rappelle pas spontanément.
+
+### 👉 Avant de coder — les 3 questions de R3
+① **Qui produit la donnée ?** — le score existe déjà ; il faut savoir s'il expose son détail par
+facteur ou seulement un total. ② **Qui l'exploite ?** — l'écran Accueil, et Milo. ③ **Quel
+comportement change ?** — la personne sait sur quoi appuyer. Les trois ont une réponse → l'idée
+est recevable.
+
+⏭️ **Première étape, gratuite** : ouvrir le calcul du score et mesurer **s'il garde le détail par
+facteur ou s'il l'écrase dans un total**. Sans ce détail, il n'y a rien à afficher — et c'est
+peut-être là que se trouve le vrai travail.
+
+---
+
 ## 🤸‍♂️ ÉCHAUFFEMENT & MOBILITÉ — le dossier à construire (Michel, 18/08/2026)
 
 > Michel, entre deux sujets nutrition : *« l'échauffement avant une séance de muscu et la mobilité,

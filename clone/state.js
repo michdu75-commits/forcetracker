@@ -654,6 +654,71 @@ function calcSportExtra(){
 }
 function calcTDEE(){return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra());}
 
+/* 🏋️ LE NIVEAU D'ACTIVITÉ CONTIENT DÉJÀ L'ENTRAÎNEMENT — et il ne se mettait JAMAIS à jour
+   (21/08/2026). Michel : « bon la nutrition lol ? ».
+   ⭐⭐ J'AI D'ABORD ANNONCÉ L'INVERSE, ET LE CODE M'A CONTREDIT. Je lui ai dit « la nutrition
+   ignore complètement l'entraînement ». C'est FAUX : l'écran Nutrition affichait déjà
+   « Total = dépense + séance ». Le vrai défaut est le contraire — cette addition COMPTE LA
+   SÉANCE DEUX FOIS. Le multiplicateur s'appelle littéralement « Modéré (3-4j) » : les 3-4
+   séances par semaine sont DÉJÀ dedans, lissées sur la semaine. Y rajouter la séance du jour
+   la facture une seconde fois. *Une vérification a retourné le diagnostic — c'est exactement
+   pour ça que R28 existe : on ne code pas sur une limite qu'on n'a pas ouverte.*
+   ⚠️⚠️ ET LE DÉFAUT DE FOND EST AILLEURS, IL EST PLUS GRAVE : `applyFreqContext` (tracking.js)
+   demande à la personne « tu t'entraînes plutôt 5 fois maintenant, on met à jour ? », elle
+   répond OUI… et ça n'écrit que `coachQuiz.answers.freq`. **`S.activityLevel` ne bouge pas.**
+   Donc le TDEE, les macros et l'anneau restent calés sur une fréquence que la personne a
+   elle-même corrigée. C'est **R4 dans sa forme la plus pure** : l'info est collectée, validée
+   par la personne, stockée — et n'atteint jamais le calcul qui en a besoin. Doublé de **R2** :
+   deux déclarations du MÊME fait (`coachQuiz.answers.freq` et `S.activityLevel`) qui peuvent
+   diverger sans que rien ne le signale.
+   ⛔ ON PROPOSE, ON N'APPLIQUE JAMAIS TOUT SEUL. Changer une cible calorique dans le dos de la
+   personne est typiquement « l'erreur qui la touche » (**R29**) : on montre les chiffres, elle
+   tranche. Même règle que `manualKcal`, qu'on ne relève jamais en douce. */
+const _ACT_PAR_FREQ={'1':1.375,'3':1.55,'4':1.55,'5':1.725};
+const ACT_LABELS={1.375:'Léger (1-2j)',1.55:'Modéré (3-4j)',1.725:'Actif (5-6j)',1.9:'Très actif'};
+function ecartNiveauActivite(){
+  try{
+    // R2/R13 : on RÉUTILISE le comptage du détecteur de fréquence (tracking.js) au lieu d'en
+    // écrire un second. Deux comptages de séances finiraient par ne plus dire la même chose.
+    if(typeof _weeklyCounts!=='function'||typeof _freqBucketOf!=='function')return null;
+    const wk=_weeklyCounts(4);
+    if(wk.filter(c=>c>0).length<3)return null;      // pas assez d'historique pour juger (même seuil)
+    /* ⚠️ LA COHÉRENCE AVANT LA RÉACTIVITÉ (R12) : il faut le MÊME rythme sur au moins 3 des 4
+       semaines. Une semaine chargée, une coupure, des vacances ne doivent pas déplacer une
+       cible calorique — sinon on change ce que la personne mange sur du bruit. */
+    const cnt={};
+    wk.forEach(c=>{ const b=_freqBucketOf(c); cnt[b]=(cnt[b]||0)+1; });
+    const bucket=Object.keys(cnt).find(b=>cnt[b]>=3);
+    const suggere=bucket?_ACT_PAR_FREQ[bucket]:null;
+    if(!suggere)return null;
+    const actuel=+S.activityLevel||1.55;
+    /* ⛔ « Très actif » (1.9) ne se redescend PAS sur un simple comptage de séances : c'est un
+       profil (double séance, métier physique, sport à côté) que le nombre de séances de
+       musculation ne mesure pas. On ne devine pas ce qu'on ne sait pas (R29). */
+    if(actuel>=1.9||suggere===actuel)return null;
+    /* ⛔ ANTI-HARCÈLEMENT : on ne repropose pas un niveau déjà REFUSÉ. Une carte qui revient
+       après un « Garder » se lit comme une insistance, et un garde-fou qui insiste finit
+       ignoré ou désactivé (R19/R24). Même mécanique que `registre.ctxFreq`. */
+    const cx=S.registre&&S.registre.ctxAct;
+    if(cx&&cx.result==='kept'&&+cx.niveau===suggere)return null;
+    const moy=wk.reduce((a,b)=>a+b,0)/wk.length;
+    return {actuel, suggere, moy:Math.round(moy*10)/10, semaines:wk,
+            labelActuel:ACT_LABELS[actuel]||String(actuel), labelSuggere:ACT_LABELS[suggere]};
+  }catch(e){ return null; }
+}
+/* Combien la bascule changerait la CIBLE — calculé, jamais annoncé au doigt mouillé : la
+   personne décide sur ce chiffre, donc il doit être le vrai. */
+function ecartNiveauKcal(ec){
+  try{
+    if(!ec)return 0;
+    const av=autoKcal(S.nutritionPhase);
+    const gard=S.activityLevel; S.activityLevel=ec.suggere;
+    const ap=autoKcal(S.nutritionPhase);
+    S.activityLevel=gard;                          // ⛔ on REMET, toujours : on simule, on n'applique pas
+    return ap-av;
+  }catch(e){ try{ S.activityLevel=(ec&&ec.actuel)||S.activityLevel; }catch(e2){} return 0; }
+}
+
 // ── Régime alimentaire + restrictions (végé, halal, allergies…) ──
 const DIET_LABELS={omnivore:'Omnivore',vegetarien:'Végétarien',vegan:'Végan',pescetarien:'Pescétarien'};
 const DIET_RESTR_LABELS={halal:'Halal',casher:'Casher',sansporc:'Sans porc',sansboeuf:'Sans bœuf / viande rouge',sansalcool:'Sans alcool',sanslactose:'Sans lactose',sansgluten:'Sans gluten'};

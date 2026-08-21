@@ -8749,6 +8749,158 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXXIX - LE NIVEAU D'ACTIVITE CONTIENT DEJA L'ENTRAINEMENT (21/08/2026) ==
+   Michel : « bon la nutrition lol ? ».
+   ⭐⭐ J'AI ANNONCE L'INVERSE ET LE CODE M'A CONTREDIT. J'ai dit « la nutrition ignore
+   completement l'entrainement » — FAUX : l'ecran affichait deja « Total = depense + seance ».
+   Le vrai defaut est le contraire : cette addition COMPTE LA SEANCE DEUX FOIS, puisque le
+   multiplicateur s'appelle « Modere (3-4j) ». Et pire, elle CONTREDISAIT l'anneau juste en
+   dessous, qui lui ne l'ajoute pas. Deux chiffres qui se contredisent sur le meme ecran.
+   ⚠️⚠️ ET LE DEFAUT DE FOND EST PLUS GRAVE : `applyFreqContext` demande « tu t'entraines
+   plutot 5 fois maintenant ? », la personne dit OUI, et seul `coachQuiz.answers.freq` est
+   ecrit — `S.activityLevel` ne bouge pas. L'info est collectee, VALIDEE par la personne, et
+   n'atteint jamais le calcul (R4). Doublee de R2 : deux declarations du meme fait. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_act:'1.55'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    const _j=(n)=>{ const d=new Date(); d.setDate(d.getDate()-n); return d.toISOString().slice(0,10); };
+    // 5 séances/semaine sur 4 semaines pleines : un rythme STABLE, pas un pic.
+    const faireSessions=(parSemaine)=>{
+      const out=[];
+      for(let w=0; w<4; w++) for(let i=0;i<parSemaine;i++)
+        out.push({date:_j(w*7+i), exs:[], vol:0, calories:400});
+      return out;
+    };
+    S.sessions=faireSessions(5); S.activityLevel=1.55; S.manualKcal=0;
+    try{ delete S.registre.ctxAct; }catch(e){}
+
+    /* ⛔① LE DOUBLE COMPTE : la tuile ne doit plus additionner dépense + séance. */
+    S.sessions[0].date=today();                      // une séance AUJOURD'HUI, 400 kcal
+    renderNutrition();
+    const _tdee=calcTDEE();
+    o.tuileSemaine = (document.getElementById('nu-week-sess')||{}).textContent||'';
+    o.plusDeTotal  = !document.getElementById('nu-total-cal');
+    o.pasDeDouble  = o.tuileSemaine.indexOf(String(_tdee+400))<0
+                  && o.tuileSemaine.indexOf((_tdee+400).toLocaleString('fr-FR'))<0;
+    o.seanceAffichee = ((document.getElementById('nu-session-cal')||{}).textContent||'').indexOf('400')>=0;
+    /* ⛔② L'ANNEAU ET LA TUILE NE SE CONTREDISENT PLUS : la cible ne contient toujours pas la
+       séance du jour, et plus rien à l'écran ne prétend le contraire. */
+    o.cibleSansSeance = calcMacros(S.nutritionPhase).calories === autoKcal(S.nutritionPhase);
+
+    /* ⚠️ LE GARDE NE VIENT QU'ICI, ET C'EST VOLONTAIRE. Les témoins ① et ② ci-dessus mesurent un
+       comportement qui EXISTAIT DÉJÀ (la tuile « Total » additionnait) : les mettre derrière un
+       garde « fonction absente » les empêcherait de tourner pendant le contrôle négatif — et un
+       témoin qui ne tourne pas n'est pas un témoin vert. Seul ce qui suit est neuf. */
+    if(typeof ecartNiveauActivite!=='function'){ o.absente=true; return o; }
+    /* ⭐③ L'ÉCART EST VU, et il pointe vers le bon niveau. */
+    const ec=ecartNiveauActivite();
+    o.ecartVu = !!ec && ec.suggere===1.725 && ec.actuel===1.55;
+    o.moy = ec&&ec.moy;
+    /* ⭐④ LE CHIFFRE ANNONCÉ EST CALCULÉ, et la simulation ne laisse AUCUNE trace. */
+    const _avant=S.activityLevel;
+    o.deltaKcal = ecartNiveauKcal(ec);
+    o.simulationPropre = (S.activityLevel===_avant);
+    o.deltaJuste = o.deltaKcal>0;
+
+    /* ⚠️⑤ LA COHÉRENCE AVANT LA RÉACTIVITÉ : un rythme INSTABLE ne déplace pas une cible.
+       ⚠️ MON PREMIER JEU DE DONNÉES ÉTAIT FAUX, ET C'EST INSTRUCTIF : j'avais mis 5-1-2-1, qui
+       SEMBLE instable à l'œil — mais 1, 2 et 1 tombent tous dans la même case « 1-2 fois », donc
+       c'est un rythme STABLE à 1-2, avec une semaine chargée. Le code avait raison, mon témoin
+       avait tort. *Un témoin doit construire son contre-exemple avec la règle, pas à vue de nez.*
+       Ici les quatre semaines tombent dans quatre cases différentes : aucune majorité. */
+    const _mk=(n,sem)=>{const a=[];for(let i=0;i<n;i++)a.push({date:_j(sem*7+i),exs:[],vol:0});return a;};
+    S.sessions=[].concat(_mk(5,0), _mk(4,1), _mk(3,2), _mk(1,3));
+    o.instablePasDEcart = ecartNiveauActivite()===null;
+    /* ⚠️⑥ ... et un historique TROP COURT non plus (2 semaines sur 4). */
+    S.sessions=[{date:_j(0),exs:[]},{date:_j(1),exs:[]},{date:_j(2),exs:[]},{date:_j(3),exs:[]},{date:_j(4),exs:[]},
+                {date:_j(7),exs:[]},{date:_j(8),exs:[]},{date:_j(9),exs:[]},{date:_j(10),exs:[]},{date:_j(11),exs:[]}];
+    o.courtPasDEcart = ecartNiveauActivite()===null;
+
+    /* ⛔⑦ LE TÉMOIN LE PLUS IMPORTANT : ÇA NE S'APPLIQUE JAMAIS TOUT SEUL. Trois rendus
+       d'affilée ne doivent pas déplacer d'un iota la cible calorique de la personne. */
+    S.sessions=faireSessions(5); S.activityLevel=1.55;
+    try{ delete S.registre.ctxAct; }catch(e){}
+    const _cibleAvant=calcMacros(S.nutritionPhase).calories;
+    renderNutrition(); renderNutrition(); renderNutrition();
+    o.jamaisAuto = (S.activityLevel===1.55) && (calcMacros(S.nutritionPhase).calories===_cibleAvant);
+    o.carteAffichee = ((document.getElementById('nu-act-drift')||{}).innerHTML||'').indexOf('1,725')<0
+                   && ((document.getElementById('nu-act-drift')||{}).innerHTML||'').length>50;
+
+    /* ⭐⑧ ... et quand la personne accepte, ça atteint VRAIMENT le calcul (le trou R4). */
+    appliquerNiveauActivite(1.725);
+    o.appliqueNiveau = (S.activityLevel===1.725);
+    o.appliqueCible  = calcMacros(S.nutritionPhase).calories > _cibleAvant;
+    o.selSuivi = (document.getElementById('act-sel')||{}).value==='1.725';
+
+    /* ⛔⑨ « GARDER » NE REVIENT PAS À LA CHARGE (R19/R24). */
+    S.activityLevel=1.55; try{ delete S.registre.ctxAct; }catch(e){}
+    garderNiveauActivite(1.725);
+    o.gardeRespecte = ecartNiveauActivite()===null;
+    // ... mais un AUTRE niveau, lui, reste proposable : on refuse une réponse, pas la mesure.
+    S.sessions=faireSessions(1);
+    o.autreNiveauProposable = !!ecartNiveauActivite();
+
+    /* ⚠️⑩ CIBLE RÉGLÉE À LA MAIN : on ne promet pas un changement qui n'aura pas lieu. */
+    S.sessions=faireSessions(5); S.activityLevel=1.55; S.manualKcal=2000;
+    try{ delete S.registre.ctxAct; }catch(e){}
+    renderNutrition();
+    const _h=(document.getElementById('nu-act-drift')||{}).innerHTML||'';
+    o.manuelPrevient = _h.indexOf('réglée à la main')>=0 && _h.indexOf('kcal)')<0;
+    S.manualKcal=0;
+    return o;
+  });
+
+  console.log('\n-- LXXIX. Le niveau d\'activite contient deja l\'entrainement --');
+  /* ⛔ LE DOUBLE COMPTE — le défaut que la vérification a retourné. Ces 4 témoins tournent
+     TOUJOURS, y compris contre l'ancien code : c'est là qu'ils prouvent quelque chose. */
+  t('⛔⛔ la tuile n\'additionne PLUS « dépense + séance » (double compte)',
+    R.plusDeTotal===true && R.pasDeDouble===true, 'tuile='+R.tuileSemaine);
+  t('⭐ ... elle dit ce qu\'on sait vraiment : le nombre de séances de la semaine',
+    /séance/.test(R.tuileSemaine||''), 'tuile='+R.tuileSemaine);
+  t('⛔ ... et la séance du jour reste affichée (c\'est une MESURE juste)',
+    R.seanceAffichee===true, '');
+  t('⛔ l\'anneau et la tuile ne se contredisent plus (la cible reste la cible)',
+    R.cibleSansSeance===true, '');
+  if(R.absente){ t('⛔ les fonctions d\'écart existent', false, 'fonctions absentes'); }
+  else{
+    /* ⭐⭐ LE TROU R4 : l\'info validée par la personne n\'atteignait pas le calcul. */
+    t('⭐⭐ l\'écart déclaré/réel est VU et pointe le bon niveau',
+      R.ecartVu===true, 'moyenne mesurée : '+R.moy);
+    t('⭐ ... et le chiffre annoncé est CALCULÉ, pas au doigt mouillé',
+      R.deltaJuste===true, 'delta='+R.deltaKcal);
+    t('⛔⛔ ... la simulation ne laisse AUCUNE trace (on simule, on n\'applique pas)',
+      R.simulationPropre===true, 'activityLevel modifié par le calcul du delta');
+    /* ⚠️ R12 — la cohérence avant la réactivité. */
+    t('⚠️ un rythme INSTABLE ne déplace pas une cible calorique',
+      R.instablePasDEcart===true, '');
+    t('⚠️ ... un historique trop court non plus (2 semaines sur 4)',
+      R.courtPasDEcart===true, '');
+    /* ⛔ LE TÉMOIN LE PLUS IMPORTANT DU BLOC. */
+    t('⛔⛔ ÇA NE S\'APPLIQUE JAMAIS TOUT SEUL (3 rendus, cible inchangée)',
+      R.jamaisAuto===true, 'la cible a bougé sans que personne ne décide');
+    t('⭐ ... la carte est bien affichée, en langage humain (pas « 1,725 »)',
+      R.carteAffichee===true, '');
+    t('⭐⭐ ... et quand la personne ACCEPTE, ça atteint enfin le CALCUL (R4)',
+      R.appliqueNiveau===true && R.appliqueCible===true,
+      'niveau='+R.appliqueNiveau+' cible='+R.appliqueCible);
+    t('⭐ ... et le réglage du Profil suit (une seule vérité, R2)', R.selSuivi===true, '');
+    /* ⛔ R19/R24 — un garde-fou qui insiste finit ignoré. */
+    t('⛔ « Garder » n\'est pas reproposé (anti-harcèlement)', R.gardeRespecte===true, '');
+    t('⭐ ... mais un AUTRE niveau reste proposable (on refuse une réponse, pas la mesure)',
+      R.autreNiveauProposable===true, '');
+    /* ⚠️ Un chiffre faux est pire qu'un silence. */
+    t('⚠️ cible réglée à la main : on prévient au lieu de promettre un gain qui n\'aura pas lieu',
+      R.manuelPrevient===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
