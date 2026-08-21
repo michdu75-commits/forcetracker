@@ -2805,3 +2805,18 @@ Le nom est sur **sa** ligne, les séries sur la **suivante**. ⚠️ **Et j'avai
 
 **⚠️ La règle des NOMS n'a pas bougé** : ce qu'on lit est repris **TEL QUEL**, jamais rapproché « à peu près » d'un exercice voisin. C'est la leçon du 04/08, et elle tient toujours — on a élargi *ce qu'on sait lire*, pas *ce qu'on s'autorise à deviner*.
 Tests : **parcours 806/806** (+6, bloc LXII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 5 rouges**, et la sortie se lit toute seule — `détecté=false` et `0 exercice(s) : RIEN`. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** : la ligne de paliers ne devient jamais un nom, et une discussion chiffrée ne déclenche pas le cervelet. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v924. |
+
+**ft-v925 — 🔁 LE BOUTON SORT ENFIN, MÊME QUAND TOUT TOMBE — un chemin qui échoue sans le dire empêche tout repli** — 2ᵉ retour de terrain le même jour : *« ça ne fonctionne toujours pas »*, app bien en **ft-v924**.
+
+**⭐ LA MESURE A CHANGÉ LA RECHERCHE.** Passé son texte réel dans le code : aiguillage **`true`**, filet **5 exercices**, bons noms, bon ordre. **Donc le défaut n'était PAS la lecture** — il était **après**. Sans cette mesure, je repartais corriger le détecteur, qui n'avait rien.
+
+**⚠️⚠️ DEUX TROUS, ET LES DEUX SONT SILENCIEUX.**
+
+**① La pose du bouton sortait EN SILENCE.** `_appendStartSessionBtn` renonce dans plusieurs cas — séance vide, séance dont tous les exercices perdent leurs séries à la normalisation, bulle disparue — **sans rien rendre**. Or l'appelant écrivait `_appendStartSessionBtn(_montee(s) || _filet)` : une séance **structurellement pauvre** reste **« truthy »**, donc le `|| _filet` ne jouait pas, et la fonction abandonnait. **Ni bouton, ni repli, ni erreur.**
+
+**② `fetch` n'a AUCUN délai par défaut.** Sur une 5G capricieuse — c'est-à-dire **à la salle** — l'appel peut rester **suspendu indéfiniment** : le `.then` ne part jamais, le `.catch` non plus, le repli n'est **jamais** atteint. *Une panne franche se rattrape ; une attente infinie, non.* C'est précisément ce que je ne pouvais pas simuler depuis ici, et c'est pour ça que tout était vert en local.
+
+**👉 CE QUI EST LIVRÉ** : la pose du bouton **REND** si elle a réussi · l'appelant **retombe sur le filet** dès qu'elle échoue · et l'appel est **coupé à 12 s** (bien au-delà d'une réponse Haiku normale de 1-2 s). **Six modes de panne** sont désormais joués par les témoins : cervelet correct · exercices sans séries · réseau coupé · serveur en erreur · réponse vide · appel avorté.
+
+**⚠️ ET MON PREMIER TÉMOIN NE PROUVAIT RIEN — 8ᵉ fois.** Je l'avais écrit avec la **nouvelle** façon d'appeler (`if(!poser(…)) poser(filet)`) : sur l'ancien code, la fonction rend `undefined`, donc « faux », donc le repli jouait quand même — **vert des deux côtés**. *Un témoin écrit avec la nouvelle convention ne peut pas voir l'ancienne.* Repassé sur la valeur **rendue**, qui est le vrai changement.
+Tests : **parcours 816/816** (+10, bloc LXIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 3 rouges** — le minuteur absent, et la pose qui ne dit ni « posé » ni « pas posé ». ⚠️ Les six modes de panne sont **verts des deux côtés dans ce test-ci, et c'est normal** : ils vérifient le comportement de la chaîne telle qu'elle s'écrit AUJOURD'HUI — ce sont des témoins de non-régression, pas la preuve du correctif. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v925. |

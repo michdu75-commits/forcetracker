@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v944`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v945`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v944`** (prochaine : `ft-v945`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v945`** (prochaine : `ft-v946`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,25 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v945 — 🌍 LA MESURE CONTINUE, CHEZ DE VRAIS UTILISATEURS — parce que le Milo de Michel est DÉBRIDÉ** — Michel : *« mais je veux une mesure continue »*. Mais c'est sa remarque d'avant qui a rendu cette version nécessaire : *« n'oublie pas Milo avec moi, il est débridé »*.
+
+**⭐⭐ VÉRIFIÉ DANS LE CODE, ET IL AVAIT RAISON.** `_estSuperAdmin()` lui ouvre **deux portes fermées à tout le monde** : ① il peut **citer, résumer et analyser ses propres consignes** (*« c'est lui qui les écrit »*) · ② **aucune restriction de sujet** (*« il teste son application »*), et le filtre hors-sujet **local** est même désactivé pour lui. ⚠️ Le **modèle**, lui, est le **même** — `MODELE_MICHEL` vaut exactement le défaut, Sonnet 4.6 pour tous.
+
+**⚠️⚠️ ET ÇA TOUCHE DIRECTEMENT ft-v944, LIVRÉ UNE HEURE PLUS TÔT.** Le Gardien venait d'être calibré sur **ses** 129 réponses — c'est-à-dire sur **l'échantillon le moins représentatif du parc**. L'un des 4 faux positifs retirés — *« Ce que je retiens : uniquement dans **ton profil**, ta mémoire à toi »* — **n'existe QUE parce qu'il est débridé** : Milo n'a pas le droit d'expliquer son fonctionnement aux autres. **C'est le cousin de R9** : *on évalue Milo sur ce que reçoivent les vrais utilisateurs, jamais sur la version du fondateur — sinon on corrige le mauvais cerveau.*
+
+**👉 LE COMPTEUR REMONTE DÉSORMAIS** avec la sauvegarde — vers Apps Script **et** le miroir Supabase (le corps est construit **une seule fois**, précisément pour qu'ils ne divergent pas — **R2**). Lisible dans **Profil → Admin → 🌍 Gardien — tous les comptes**, agrégé et par personne.
+
+**⛔ DES NOMBRES SEULEMENT — ~150 octets.** `{depuis, dernier, total, codes}`. Aucune phrase de Milo, aucun mot de la personne : **ses conversations ne quittent toujours pas son téléphone**. ⭐ Et le serveur **RECONSTRUIT** l'objet au lieu de le recopier : un client modifié ne peut pas glisser du texte dans le store par ce champ. *Le stockage a déjà lâché une fois (102 % le 29/07) ; on ne rouvre pas cette porte pour du confort.*
+
+**⚠️ ET ON NE LE CACHE PAS.** Michel : *« je ne veux pas leur cacher »*. La carte « Mes conversations avec Milo » le **dit en toutes lettres** aux testeurs — un compteur de bon fonctionnement, des nombres, jamais une phrase. *La promesse affichée dans l'app reste vraie, et c'est la seule condition qui comptait.*
+
+**⛔ MILO, LUI, NE REÇOIT PAS CE COMPTEUR.** Lui donner son propre score l'inviterait à **le commenter** — exactement la sortie de rôle qu'on traque. Un témoin le vérifie.
+
+**⚠️ ET LE GARDE-FOU R4a A REFUSÉ LA LIVRAISON** tant que `gardienStats` n'était pas **classée** : elle est **exclue**, avec la raison écrite. *On ne peut plus oublier — on peut seulement décider.*
+
+**⚠️ Une erreur payée** : mon témoin attrapait le **miroir Supabase** (corps enveloppé dans `p_data`) et rendait *« compteur absent »* alors qu'il partait bien. *Un témoin qui lit la mauvaise enveloppe accuse le code d'un défaut qu'il n'a pas.* Il déballe désormais et couvre **les deux** chemins.
+Tests : **parcours 941/941** (+3, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données **102 classées 0 trou**. Fichiers : `coach.js`, `state.js`, `setup.js`, `Code.js`, `index.html`, `clone/index.html`, `tests/donnees/donnees-milo.json`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v945. |
 
 **ft-v944 — 🛡️ LE GARDIEN TOURNE ENFIN LÀ OÙ LES GENS VIVENT — et il a fallu le CALIBRER d'abord** — Michel exporte ses conversations et dit simplement : *« Regarde »*. **258 messages, 4 discussions, 25 jours, 142 425 caractères.**
 
@@ -703,21 +722,6 @@ Tests : **parcours 823/823** (+3, bloc LXIV), calculs 241/241, muscles 241/241, 
 
 **👉 CE QUI EST LIVRÉ** : on ne se tait pas (le défaut de montée est **vrai** et utile pour la suite) et on ne devine pas non plus — on **NOMME l'incertitude dans la DONNÉE** : *« auteur des charges inconnu (séance saisie à la main) : cherche cette séance dans votre échange AVANT toute remarque »*. *Une information absente laisse la place à une supposition ; une information présente, non* (**R4**).
 Tests : **parcours 820/820** (+4, bloc LXIV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 2 rouges**, et la sortie montre exactement le trou — `[⚠️ montée en charge insuffisante — saut de 48 % entre 60 et 115 kg]`, **sans dire qui a choisi**. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** : les gardes-fous du 15/08 et du 18/08 ne devaient PAS bouger. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v926. |
-
-**ft-v925 — 🔁 LE BOUTON SORT ENFIN, MÊME QUAND TOUT TOMBE — un chemin qui échoue sans le dire empêche tout repli** — 2ᵉ retour de terrain le même jour : *« ça ne fonctionne toujours pas »*, app bien en **ft-v924**.
-
-**⭐ LA MESURE A CHANGÉ LA RECHERCHE.** Passé son texte réel dans le code : aiguillage **`true`**, filet **5 exercices**, bons noms, bon ordre. **Donc le défaut n'était PAS la lecture** — il était **après**. Sans cette mesure, je repartais corriger le détecteur, qui n'avait rien.
-
-**⚠️⚠️ DEUX TROUS, ET LES DEUX SONT SILENCIEUX.**
-
-**① La pose du bouton sortait EN SILENCE.** `_appendStartSessionBtn` renonce dans plusieurs cas — séance vide, séance dont tous les exercices perdent leurs séries à la normalisation, bulle disparue — **sans rien rendre**. Or l'appelant écrivait `_appendStartSessionBtn(_montee(s) || _filet)` : une séance **structurellement pauvre** reste **« truthy »**, donc le `|| _filet` ne jouait pas, et la fonction abandonnait. **Ni bouton, ni repli, ni erreur.**
-
-**② `fetch` n'a AUCUN délai par défaut.** Sur une 5G capricieuse — c'est-à-dire **à la salle** — l'appel peut rester **suspendu indéfiniment** : le `.then` ne part jamais, le `.catch` non plus, le repli n'est **jamais** atteint. *Une panne franche se rattrape ; une attente infinie, non.* C'est précisément ce que je ne pouvais pas simuler depuis ici, et c'est pour ça que tout était vert en local.
-
-**👉 CE QUI EST LIVRÉ** : la pose du bouton **REND** si elle a réussi · l'appelant **retombe sur le filet** dès qu'elle échoue · et l'appel est **coupé à 12 s** (bien au-delà d'une réponse Haiku normale de 1-2 s). **Six modes de panne** sont désormais joués par les témoins : cervelet correct · exercices sans séries · réseau coupé · serveur en erreur · réponse vide · appel avorté.
-
-**⚠️ ET MON PREMIER TÉMOIN NE PROUVAIT RIEN — 8ᵉ fois.** Je l'avais écrit avec la **nouvelle** façon d'appeler (`if(!poser(…)) poser(filet)`) : sur l'ancien code, la fonction rend `undefined`, donc « faux », donc le repli jouait quand même — **vert des deux côtés**. *Un témoin écrit avec la nouvelle convention ne peut pas voir l'ancienne.* Repassé sur la valeur **rendue**, qui est le vrai changement.
-Tests : **parcours 816/816** (+10, bloc LXIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 3 rouges** — le minuteur absent, et la pose qui ne dit ni « posé » ni « pas posé ». ⚠️ Les six modes de panne sont **verts des deux côtés dans ce test-ci, et c'est normal** : ils vérifient le comportement de la chaîne telle qu'elle s'écrit AUJOURD'HUI — ce sont des témoins de non-régression, pas la preuve du correctif. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v925. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

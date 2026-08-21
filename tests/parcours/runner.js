@@ -8489,11 +8489,14 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
-  await pg.addInitScript(seedScript({ft4_name:'Michel'}));   // ⚠️ PAS admin : on teste l'utilisateur normal
+  // ⚠️ PAS admin : on teste l'utilisateur normal. L'e-mail est nécessaire, sinon `_cloudSync`
+  // sort tout de suite (`if(!S.email||!S.url)return;`) et le témoin mesurerait sa garde, pas
+  // le payload.
+  await pg.addInitScript(seedScript({ft4_name:'Michel', ft4_email:'test@exemple.fr', ft4_ok:'1'}));
   await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
   await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
 
-  const R=await pg.evaluate(()=>{
+  const R=await pg.evaluate(async()=>{
     if(typeof _gardienSortie!=='function'||typeof _gardienCompter!=='function') return {absente:true};
     const o={};
     o.pasClone = (window.__FT_CLONE__!==true);   // on est bien dans l'app, pas le bac à sable
@@ -8551,6 +8554,35 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     try{ localStorage.setItem('ft4_admin_ok','1'); }catch(e){}
     try{ renderCoachMsg('coach','Et le Rowing avant le Squat, c\'est noté.'); }catch(e){}
     o.badgeAdmin = document.querySelectorAll('.gardien-flag').length;
+
+    /* ⑥ 🌍 LE COMPTEUR PART AVEC LA SAUVEGARDE — on intercepte le vrai `fetch` pour lire le
+       payload réellement construit, plutôt que de relire le code source. */
+    _gardienCompter([{code:'promesse_vide',label:'x'}]);
+    let corps=null; const vf=window.fetch;
+    window.fetch=(u,opt)=>{ try{ if(opt&&opt.body&&/saveProfile/.test(String(opt.body))) corps=String(opt.body); }catch(e){}
+                            return Promise.resolve({ok:true,status:200,json:async()=>({status:'ok'})}); };
+    try{ if(typeof _cloudSync==='function') await _cloudSync(); }catch(e){ o.errSync=e.message; }
+    window.fetch=vf;
+    // Le compteur part aux DEUX destinations (Apps Script + miroir Supabase) — c'est voulu :
+    // le corps est construit une seule fois, précisément pour qu'ils ne divergent pas (R2).
+    o.dansPayload = !!(corps && /"gardienStats"/.test(corps));
+    if(corps){
+      /* ⚠️ `_cloudSync` construit le corps UNE fois et le sert à DEUX destinations : Apps
+         Script (à plat) et le miroir Supabase (enveloppé dans `p_data`). Mon 1ᵉʳ témoin
+         lisait la racine et tombait sur l'enveloppe — il rendait « absent » alors que le
+         compteur partait bien. On déballe donc, et le témoin couvre les deux chemins. */
+      try{ const brut=JSON.parse(corps); const p=brut.p_data||brut; const g=p.gardienStats||{};
+        // ⛔ Que des NOMBRES et des dates : aucune valeur de plus de 12 caractères.
+        const vals=Object.keys(g.codes||{}).map(k=>g.codes[k]);
+        o.payloadSansTexte = vals.every(v=>typeof v==='number')
+          && String(g.depuis||'').length<=10 && String(g.dernier||'').length<=10
+          && typeof g.total==='number';
+      }catch(e){ o.payloadSansTexte=false; o.errPayload=e.message; }
+      try{ const b2=JSON.parse(corps); o.gardienBrut=JSON.stringify((b2.p_data||b2).gardienStats); }catch(e){ o.gardienBrut='parse KO'; }
+    }
+    /* ⑦ ⛔ Et Milo, lui, ne doit PAS le voir : lui donner son propre score l'inviterait à le
+       commenter — exactement la sortie de rôle qu'on traque. */
+    o.pasDansContexte = !/gardienStats|promesse_vide/.test(buildCoachContext('Fais-moi une séance'));
     return o;
   });
 
@@ -8578,6 +8610,17 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⚠️ AUCUN badge pour un utilisateur normal (ça ferait douter de son coach)',
       R.badgeNormal===0, R.badgeNormal+' badge(s)');
     t('⭐ ... mais le badge apparaît bien pour l\'admin', R.badgeAdmin===1, R.badgeAdmin+' badge(s)');
+    /* 🌍 LA MESURE CONTINUE (ft-v945) — Michel : « mais je veux une mesure continue ».
+       ⭐⭐ Le fond : SON Milo est DÉBRIDÉ (`_estSuperAdmin` lui ouvre tous les sujets et le
+       droit de citer ses propres consignes), donc ses conversations ne mesurent pas ce que
+       reçoivent les autres. Calibrer sur le seul compte non représentatif du parc, c'est le
+       cousin de R9 — on corrigerait le mauvais Milo. */
+    t('⭐⭐ le compteur part avec la sauvegarde (mesure chez de VRAIS utilisateurs)',
+      R.dansPayload===true, 'gardienStats absent du payload saveProfile');
+    t('⛔⛔ ... mais SEULEMENT des nombres : le payload ne porte AUCUNE phrase',
+      R.payloadSansTexte===true, 'reçu='+(R.gardienBrut||'?'));
+    t('⛔ Milo ne reçoit PAS ce compteur (c\'est une mesure SUR lui, pas une info sur la personne)',
+      R.pasDansContexte===true, 'gardienStats se retrouve dans le contexte du Coach');
   }
   await cx.close();
 }

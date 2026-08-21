@@ -28,7 +28,11 @@ let S={
   weightLog:[],
   dayStateLog:[],
   healthInbox:[],   // ⌚ activités reçues du téléphone (raccourci iOS → Santé) — voir app.js `_majHealthInbox`
-  healthDaily:[],   // ❤️ une valeur par jour venue de Santé (FC au repos) — voir tracking.js `_rhrEcart`
+  healthDaily:[],   // ❤️😴🚶 une entrée par jour venue de Santé ({date, rhr, sleep, steps}) — FC au
+                     // repos exploitée par tracking.js `_rhrEcart` ; sleep/steps reçus (ft-v916) mais
+                     // pas encore affichés côté app — ils dorment dans le compte, prêts pour la
+                     // comparaison avec `S.sleepLog` le jour où l'écran sera construit (R30 : pas un
+                     // oubli, une étape suivante non codée).
   strengthGoals:{},
   name:'',
   coachFree:0,
@@ -172,6 +176,11 @@ function load(){
     S.bodyScanImports=parseInt(localStorage.getItem('ft4_bsimports')||'0')||0;
     S.progImports=parseInt(localStorage.getItem('ft4_progimports')||'0')||0; // imports IA de programme (limite gratuite, décision 31/07)
     S.coachMemory=localStorage.getItem('ft4_coach_mem')||'';
+    /* 🛡️ Compteur du Gardien — DES NOMBRES, jamais une phrase (ft-v944/945). Écrit par
+       `_gardienCompter` (coach.js), reflété ici pour partir avec la sauvegarde : c'est ce
+       qui permet une mesure CONTINUE chez les vrais utilisateurs, et pas seulement chez le
+       fondateur — dont le Milo est débridé, donc pas représentatif (cousin de R9). */
+    try{ S.gardienStats=JSON.parse(localStorage.getItem('ft4_gardienStats')||'null'); }catch(e){ S.gardienStats=null; }
     try{S.coachConversations=JSON.parse(localStorage.getItem('ft4_coach_convs')||'[]')||[];}catch(e){S.coachConversations=[];}
     S.premium=localStorage.getItem('ft4_premium')==='1';
     // Fondateurs/testeurs premium à vie : premium accordé côté client (indépendant du serveur, cf. PREMIUM_CLIENT_EMAILS)

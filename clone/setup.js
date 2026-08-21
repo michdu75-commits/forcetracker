@@ -322,6 +322,9 @@ function _cloudSync(){
       bodyScanImports:S.bodyScanImports||0,
       progImports:S.progImports||0,
       coachMemory:S.coachMemory||'',
+      // 🛡️ Compteur du Gardien : ~150 octets de NOMBRES. Aucune phrase de Milo, aucun mot de
+      // la personne — ses conversations, elles, ne quittent toujours pas son téléphone.
+      gardienStats:S.gardienStats||null,
       // Photos d'exercices = LOCAL SEULEMENT (n'alourdissent plus le store cloud de 9 Mo) :
       // on envoie les exos perso SANS leur photo (img), et on n'envoie plus exPhotos du tout.
       customExercises:(S.customExercises||[]).map(function(e){var c={};for(var k in e){if(k!=='img')c[k]=e[k];}return c;}),
