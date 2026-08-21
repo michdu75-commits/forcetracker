@@ -107,6 +107,58 @@ mais **rien ne vérifie que le résultat tient dans l'enveloppe**.
 de 20 minutes n'est pas une séance, c'est un programme.
 **Vérifiable ?** Oui — compter les séries prescrites × le temps par série + les paliers.
 
+### 🟢 « Il est parti dans la stratosphère »
+**04/08/2026.** Michel : *« et encore je lui ai posé une question **il est parti dans la
+stratosphère** »*. Le prompt dit *« maximum 200 mots sauf si l'athlète demande plus de détails »*.
+**Attendu** : une question simple → une réponse courte. Pas un exposé.
+**Vérifiable ?** Oui — compter les mots, et vérifier que rien dans la question ne demandait du détail.
+
+### 🟢 « Il me met de l'échauffement partout »
+**15/08/2026.** Michel, en relisant une séance : *« Il me met de l'échauffement partout c'est
+normal ? »*
+**Pourquoi ça compte** : un échauffement par exercice, ce n'est pas une séance, c'est un tunnel — et
+ça mange le budget temps sans que personne ne le voie.
+**Vérifiable ?** Oui — compter les blocs « échauffement / paliers » par rapport au nombre d'exercices.
+
+### 🟢 Le temps de DÉPLACEMENT dans la salle
+**19/08/2026.** Michel : *« il ne compte pas le déplacement dans la salle »*. Le budget temps de Milo
+additionne les séries et les repos — **pas le trajet entre deux machines**, ni l'attente qu'un poste
+se libère.
+**Pourquoi ça compte** : c'est ce qui fait qu'une séance « d'une heure » en dure soixante-quinze.
+Complète l'entrée « 60 minutes » ci-dessus, par un autre bout.
+**Vérifiable ?** Oui — une séance à N changements de poste doit réserver un temps de transition.
+
+### 🟢 Le bouton « Lancer cette séance » n'apparaît pas pour tout le monde
+**04/08/2026 — cas vécu par Eline.** Michel : *« ma fille essaie de lancer une séance suite à ce
+qu'elle a demandé à Milo, **moi j'ai le bouton** lancer la séance **mais pas ma fille** »*.
+Corrigé depuis (ft-v924/925), mais **rien ne vérifie que le chemin marche sur un AUTRE profil que
+celui du fondateur** — et c'est exactement le biais qu'on vient de mesurer sur le Gardien (ft-v945).
+**Vérifiable ?** Oui — même séance proposée, profil différent, le bouton doit être là.
+
+### 🟡 Quand la demande est mal formulée, devine-t-il ou demande-t-il ?
+**14/08/2026.** Michel, après une réponse qui ne collait pas : *« Après, je lui ai peut-être mal
+expliqué à Milo »*.
+**Pourquoi ça compte** : c'est **R29** appliqué à la conversation — *le droit de deviner dépend du coût
+de l'erreur*. Sur une séance, deviner coûte peu ; sur une blessure ou un objectif, ça coûte cher.
+**Vérifiable ?** À préciser — il faut d'abord choisir sur quel type de demande on l'exige.
+
+### 🟡 Une séance saisie APRÈS coup est-elle prise en compte ?
+**15/08/2026.** Michel : *« une séance qui est rentrée après pour X raison, il faut la prendre en
+compte »* — le cas où Milo avait déjà rechargé son contexte.
+**Vérifiable ?** Probablement — la séance doit apparaître au débrief suivant et dans les records.
+
+### 🔵 Une charge qui n'existe pas en salle → **EV-001**
+**19/08/2026.** Michel : *« regarde quand il me met (un exemple) 82,5 — faut le trouver les poids de
+2,5 kilos »*. **Promue** : c'est le scénario `EV-001`, et il a servi à repérer un faux rouge (ft-v933).
+
+### 🔵 Un débrief qui saute des exercices → **EV-006**
+**20/08/2026.** Michel : *« et il a oublié des exercices si je ne dis pas de connerie »*. **Promue**
+en `EV-006`, puis rendue impossible par le code plutôt que par une consigne (ft-v928).
+
+### 🔵 « C'est noté » sans rien noter → **EV-004**
+**Août 2026, plusieurs fois.** Mesuré ensuite dans ses vraies conversations : **3 promesses non tenues
+en 25 jours** (ft-v944/946). **Promue** en `EV-004`.
+
 ### ⚪ Milo se pose en complément d'un coach humain (EV-015)
 **21/08/2026 — écartée en l'état, gardée pour mémoire.** La règle **n'existe pas** dans le prompt : le
 scénario mesure un attendu que le produit n'a jamais promis. ⚠️ Et la justification qu'on lui donnait
