@@ -8583,6 +8583,40 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     /* ⑦ ⛔ Et Milo, lui, ne doit PAS le voir : lui donner son propre score l'inviterait à le
        commenter — exactement la sortie de rôle qu'on traque. */
     o.pasDansContexte = !/gardienStats|promesse_vide/.test(buildCoachContext('Fais-moi une séance'));
+
+    /* ⑧ 🕰️ LE SCAN RÉTRO : 2 conversations rangées + le fil en cours.
+       On y met 4 réponses de Milo, dont 2 VRAIES promesses non tenues et 2 saines
+       (une avec son bloc, une sans aucune promesse). */
+    S.coachConversations=[
+      { id:'c1', ts:Date.parse('2026-07-28T10:00:00Z'), title:'a', messages:[
+        {role:'user',content:'salut'},
+        {role:'assistant',content:'Et le Leg Curl avant le Face Pull, c\'est noté.'},
+        {role:'assistant',content:'Noté ! {"retiens":["il finit par les mollets"]}'} ] },
+      { id:'c2', ts:Date.parse('2026-08-19T10:00:00Z'), title:'b', messages:[
+        {role:'assistant',content:'Voilà ta séance : Squat 5×5 à 100 kg. Bon entraînement 💪'} ] },
+    ];
+    try{ coachHistory=[{role:'assistant',content:'C\'est juste l\'ordre qui était bancal. Je retiens pour la prochaine fois. 💪'}]; }catch(e){}
+    // ⚠️ On note le direct AVANT le rétro : c'est la seule façon de prouver que le scan n'y
+    // touche pas. Mon 1ᵉʳ témoin comparait à une valeur capturée bien plus haut, entre-temps
+    // légitimement incrémentée — il accusait le rétro d'un mouvement qui n'était pas le sien.
+    const _avantRetro=(JSON.parse(localStorage.getItem('ft4_gardienStats')||'{}')||{}).total;
+    _gardienRetroDiffere();
+    let st2=JSON.parse(localStorage.getItem('ft4_gardienStats')||'{}');
+    o.retroTotal    = (st2.retro||{}).total;
+    o.retroMessages = (st2.retro||{}).messages;
+    o.retroDate     = /^2026-07-28$/.test((st2.retro||{}).depuis||'');
+    /* ⭐⭐ Trois passages doivent donner le MÊME chiffre : c'est un instantané. */
+    _gardienRetroDiffere(); _gardienRetroDiffere();
+    st2=JSON.parse(localStorage.getItem('ft4_gardienStats')||'{}');
+    o.retroApres3 = (st2.retro||{}).total;
+    // Une réponse qui ne porte QUE `bloc_technique` ne doit rien incrémenter.
+    const _av=(JSON.parse(localStorage.getItem('ft4_gardienStats')||'{}')||{}).total||0;
+    _gardienCompter(_gardienSortie('Noté ! {"retiens":["x"]}').flags);
+    o.blocPasCompte = ((JSON.parse(localStorage.getItem('ft4_gardienStats')||'{}')||{}).total||0)===_av;
+    o.retroIdempotent = (o.retroApres3===2);
+    /* ⛔ Le direct n'a pas été touché par le rétro. */
+    o.retroSepare = (st2.total===_avantRetro) && !!st2.retro;
+    o.avantRetro  = _avantRetro;
     return o;
   });
 
@@ -8621,6 +8655,24 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       R.payloadSansTexte===true, 'reçu='+(R.gardienBrut||'?'));
     t('⛔ Milo ne reçoit PAS ce compteur (c\'est une mesure SUR lui, pas une info sur la personne)',
       R.pasDansContexte===true, 'gardienStats se retrouve dans le contexte du Coach');
+    /* 🕰️ LE SCAN RÉTRO (ft-v946) — Michel : « on ne pourra pas récupérer les anciennes
+       conversations alors ». Si : elles sont sur le téléphone, et elles gardent le texte
+       BRUT (blocs {"retiens"} compris), ce qui rend la mesure juste. */
+    t('⭐⭐ l\'historique déjà stocké est passé au Gardien (2 vraies promesses vues)',
+      R.retroTotal===2, 'trouvé '+R.retroTotal+' au lieu de 2');
+    t('⭐ ... et il analyse TOUT : les conversations rangées ET le fil en cours',
+      R.retroMessages===4, R.retroMessages+' réponse(s) analysée(s) au lieu de 4');
+    t('⭐ ... en datant la période couverte (sinon on mélange les versions de Milo)',
+      R.retroDate===true, 'depuis/jusqu absents');
+    /* ⭐⭐ Le point de conception : un INSTANTANÉ, pas une addition. */
+    t('⭐⭐ REJOUER LE SCAN NE DOUBLE RIEN (instantané, pas addition)',
+      R.retroIdempotent===true, 'après 3 passages : '+R.retroApres3+' au lieu de 2');
+    t('⛔ le rétro reste SÉPARÉ du direct (deux époques, deux compteurs)',
+      R.retroSepare===true, 'direct avant='+R.avantRetro);
+    /* ⚠️⚠️ Défaut de mesure trouvé par un témoin : `bloc_technique` se lève sur chaque séance
+       et chaque bloc mémoire — du trafic NORMAL. Le compter noierait le signal. */
+    t('⚠️⚠️ un bloc {"retiens"} légitime N\'EST PAS compté comme une dérive',
+      R.blocPasCompte===true, 'le trafic normal gonfle les compteurs');
   }
   await cx.close();
 }

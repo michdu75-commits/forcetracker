@@ -3418,13 +3418,26 @@ function _gardienSortie(text){
    ⛔ RÈGLE D'OR #3 : ça ne doit JAMAIS menacer une séance. Tout est sous `try`, et si le
    stockage refuse (quota), on retire la clé et on continue sans un mot. */
 const _GARDIEN_CLE='ft4_gardienStats';
+/* ⚠️⚠️ ON NE COMPTE PAS TOUS LES DRAPEAUX — trouvé par un témoin le 21/08, et c'est un vrai
+   défaut de mesure. `bloc_technique` se lève sur CHAQUE séance proposée, CHAQUE bloc de
+   mémoire {"retiens"}, CHAQUE liste de réponses rapides : c'est du trafic NORMAL, pas une
+   dérive. Le compter le rendrait majoritaire et noierait le signal — on mesurerait le bon
+   fonctionnement de Milo en croyant mesurer ses écarts.
+   👉 Il reste AFFICHÉ dans le badge (il sert en développement à voir ce qui a été retiré de
+   l'écran), il n'entre simplement pas dans les compteurs. Une seule liste, lue par le
+   compteur en direct ET par le scan de l'historique (R2) : deux listes finiraient par ne
+   plus compter la même chose, et on ne saurait pas laquelle croire. */
+const _GARDIEN_DERIVES = ['promesse_vide','interrogatoire','diagnostic','source_fabriquee'];
+const _estDerive = (f)=> !!f && _GARDIEN_DERIVES.indexOf(f.code)>=0;
 function _gardienCompter(flags){
   try{
     const o=JSON.parse(localStorage.getItem(_GARDIEN_CLE)||'{}')||{};
+    const vrais=(flags||[]).filter(_estDerive);
+    if(!vrais.length) return;                     // que du trafic normal : rien à compter
     const j=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
     o.depuis=o.depuis||j; o.dernier=j; o.codes=o.codes||{};
-    (flags||[]).forEach(f=>{ o.codes[f.code]=(o.codes[f.code]||0)+1; });
-    o.total=(o.total||0)+1;                       // nombre de RÉPONSES portant au moins 1 drapeau
+    vrais.forEach(f=>{ o.codes[f.code]=(o.codes[f.code]||0)+1; });
+    o.total=(o.total||0)+1;                       // nombre de RÉPONSES portant au moins 1 dérive
     localStorage.setItem(_GARDIEN_CLE, JSON.stringify(o));
     /* ⚠️ UN SEUL PROPRIÉTAIRE (R2) : cette fonction est le seul endroit qui écrit le
        compteur. `S.gardienStats` en est le reflet en mémoire, lu par la sauvegarde cloud —
@@ -3433,13 +3446,82 @@ function _gardienCompter(flags){
     try{ if(typeof S!=='undefined') S.gardienStats=o; }catch(e2){}
   }catch(e){ try{ localStorage.removeItem(_GARDIEN_CLE); S.gardienStats=null; }catch(e2){} }
 }
+/* 🕰️ PASSER L'HISTORIQUE DÉJÀ STOCKÉ AU GARDIEN (ft-v946) — Michel : « attend une chose on
+   ne pourra pas récupérer les anciennes conversations alors ».
+   ⭐ Il avait raison : le compteur de ft-v944 ne compte qu'à partir de son branchement. Or
+   les conversations SONT là, sur le téléphone (jusqu'à 30 rangées + le fil en cours), et
+   VÉRIFIÉ : elles gardent le texte BRUT, blocs {"retiens"} compris — c'est précisément ce
+   qui rend la mesure juste, et pas une approximation.
+   ⭐⭐ CONSÉQUENCE : au lieu d'attendre des semaines que les compteurs se remplissent, on a
+   l'historique complet dès la prochaine ouverture. Et ça ne coûte RIEN : du code local,
+   aucun appel, quelques millisecondes.
+   ⭐ C'EST UN INSTANTANÉ, PAS UNE ADDITION. On REMPLACE le bloc `retro` à chaque passage au
+   lieu d'incrémenter : rejouer dix fois donne exactement le même résultat. Ça évite d'avoir
+   à retenir « l'ai-je déjà fait ? » — un drapeau qu'on oublie de poser double les chiffres,
+   et un chiffre doublé ne se voit pas.
+   ⛔ ET IL RESTE SÉPARÉ DU COMPTEUR EN DIRECT. Mélanger « mesuré depuis ft-v944 » et
+   « retrouvé dans l'historique » donnerait un total qui couvre deux époques — dont une
+   ANTÉRIEURE aux correctifs. On saurait combien, on ne saurait plus de quoi.
+   ⛔ Toujours des NOMBRES : aucune phrase n'est stockée ni envoyée. */
+function _gardienRetro(){
+  try{
+    if(typeof _gardienSortie!=='function') return null;
+    const fils=[];
+    try{ if(Array.isArray(S.coachConversations)) S.coachConversations.forEach(c=>fils.push(c)); }catch(e){}
+    // Le fil EN COURS n'est pas encore rangé : sans lui, on raterait la conversation du jour.
+    try{ if(Array.isArray(coachHistory) && coachHistory.length)
+           fils.push({ ts:Date.now(), messages:coachHistory }); }catch(e){}
+    if(!fils.length) return null;
+    const codes={}; let vus=0, tot=0, tsMin=null, tsMax=null;
+    fils.forEach(c=>{
+      const ts=Number(c.ts)||0;
+      if(ts){ if(tsMin===null||ts<tsMin) tsMin=ts; if(tsMax===null||ts>tsMax) tsMax=ts; }
+      (c.messages||[]).forEach(m=>{
+        if(!m || m.role!=='assistant' || typeof m.content!=='string') return;
+        vus++;
+        let fl=[]; try{ fl=(_gardienSortie(m.content).flags||[]).filter(_estDerive); }catch(e){ return; }
+        if(!fl.length) return;                    // même règle que le compteur en direct (R2)
+        tot++; fl.forEach(f=>{ codes[f.code]=(codes[f.code]||0)+1; });
+      });
+    });
+    const jour=(t)=>t?new Date(t).toISOString().slice(0,10):'?';
+    return { faitLe:(typeof today==='function')?today():new Date().toISOString().slice(0,10),
+             messages:vus, total:tot, codes:codes, depuis:jour(tsMin), jusqu:jour(tsMax) };
+  }catch(e){ return null; }
+}
+/* Lancé UNE fois, APRÈS le démarrage et jamais pendant : l'app doit s'ouvrir instantanément
+   à la salle (règle d'or #4). C'est local et instantané, mais la règle ne dit pas « rapide »,
+   elle dit « le démarrage n'attend rien ». */
+function _gardienRetroDiffere(){
+  try{
+    const r=_gardienRetro(); if(!r) return;
+    let o={}; try{ o=JSON.parse(localStorage.getItem(_GARDIEN_CLE)||'{}')||{}; }catch(e){}
+    o.retro=r;                                   // instantané : on REMPLACE
+    localStorage.setItem(_GARDIEN_CLE, JSON.stringify(o));
+    try{ if(typeof S!=='undefined') S.gardienStats=o; }catch(e){}
+  }catch(e){ /* jamais bloquant : c'est une mesure, pas une fonctionnalité */ }
+}
+try{ if(typeof window!=='undefined') window.addEventListener('load',()=>setTimeout(_gardienRetroDiffere,4000)); }catch(e){}
+
 /* Lisible dans Profil → Admin. Répond à la seule question utile : « est-ce que ça arrive
    vraiment, et à quelle fréquence ? » — au lieu de la deviner. */
 function _gardienStatsTexte(){
   let o={}; try{ o=JSON.parse(localStorage.getItem(_GARDIEN_CLE)||'{}')||{}; }catch(e){}
   const codes=o.codes||{}, cles=Object.keys(codes);
-  if(!cles.length) return '🛡️ Gardien : aucune dérive détectée depuis l\'installation.';
+  const R=o.retro||null;
+  if(!cles.length && !(R&&R.total)) return '🛡️ Gardien : aucune dérive détectée'
+    + (R? (' sur les '+R.messages+' réponse(s) de l\'historique ('+R.depuis+' → '+R.jusqu+').') : '.');
   const L=['🛡️ GARDIEN — dérives détectées'];
+  if(R){
+    L.push('');
+    L.push('🕰️ DANS L\'HISTORIQUE DÉJÀ STOCKÉ ('+R.depuis+' → '+R.jusqu+')');
+    L.push('   '+R.total+' réponse(s) marquée(s) sur '+R.messages+' analysée(s).');
+    Object.keys(R.codes||{}).sort((a,b)=>R.codes[b]-R.codes[a]).forEach(c=>L.push('     · '+c+' : '+R.codes[c]));
+    L.push('   ⚠️ Ces conversations couvrent PLUSIEURS versions de Milo, dont des');
+    L.push('      antérieures aux correctifs : à lire avec les dates, jamais comme un total.');
+    L.push('');
+    L.push('📡 MESURÉ EN DIRECT (depuis ft-v944)');
+  }
   L.push('Depuis le '+(o.depuis||'?')+' · dernière le '+(o.dernier||'?'));
   L.push(o.total+' réponse(s) de Milo portant au moins un drapeau.');
   L.push('');
@@ -3483,12 +3565,19 @@ async function _gardienStatsTous(){
     if(cles.length){ L.push('TOTAL, tous comptes confondus :');
       cles.sort((a,b)=>g[b]-g[a]).forEach(c=>L.push('  · '+c+' : '+g[c])); L.push(''); }
     (d.users||[]).forEach(u=>{
-      L.push('— '+u.nom+' : '+u.total+' réponse(s) marquée(s)  ('+u.depuis+' → '+u.dernier+')');
-      Object.keys(u.codes||{}).forEach(c=>L.push('      '+c+' : '+u.codes[c]));
+      L.push('— '+u.nom);
+      if(u.total){ L.push('   📡 en direct : '+u.total+' réponse(s)  ('+u.depuis+' → '+u.dernier+')');
+        Object.keys(u.codes||{}).forEach(c=>L.push('        '+c+' : '+u.codes[c])); }
+      const R=u.retro;
+      if(R && R.total){ L.push('   🕰️ historique : '+R.total+' sur '+R.messages+' réponse(s)  ('+R.depuis+' → '+R.jusqu+')');
+        Object.keys(R.codes||{}).forEach(c=>L.push('        '+c+' : '+R.codes[c])); }
+      else if(R){ L.push('   🕰️ historique : rien sur '+R.messages+' réponse(s) analysée(s)'); }
     });
     if(!d.comptes) L.push('Aucune dérive remontée pour l\'instant.');
     L.push(''); L.push('⛔ Des NOMBRES uniquement : aucune phrase n\'a quitté leur téléphone.');
     L.push('⚠️ Un compte n\'apparaît qu\'après sa prochaine sauvegarde.');
+    L.push('⚠️ 🕰️ L\'historique couvre PLUSIEURS versions de Milo, dont des antérieures aux');
+    L.push('   correctifs. À lire avec les dates — ce n\'est pas comparable au 📡 direct.');
     showConfirm('🌍 Gardien — tous les comptes', L.join('\n'), function(){}, 'Fermer');
   }catch(e){ toast('Lecture impossible : '+(e.message||'réseau'),'error'); }
 }

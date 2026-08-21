@@ -401,11 +401,11 @@ function doGet(e) {
       try {
         const d = JSON.parse(_unpackUser_(props[k]));
         const g = d.profile && d.profile.gardienStats;
-        if (!g || !g.total) return;
+        if (!g || (!g.total && !(g.retro && g.retro.total))) return;
         Object.keys(g.codes || {}).forEach(function(c){ global[c] = (global[c]||0) + g.codes[c]; });
         lignes.push({ nom: (d.profile && d.profile.name) || '?',
-                      total: g.total, depuis: g.depuis || '?', dernier: g.dernier || '?',
-                      codes: g.codes || {} });
+                      total: g.total || 0, depuis: g.depuis || '?', dernier: g.dernier || '?',
+                      codes: g.codes || {}, retro: g.retro || null });
       } catch(e) {}
     });
     lignes.sort(function(a,b){ return (b.total||0) - (a.total||0); });
@@ -964,9 +964,26 @@ function handleSaveProfile_(body) {
         });
         // ⛔ On RECONSTRUIT l'objet au lieu de le recopier : un client bavard (ou modifié)
         // ne doit pas pouvoir glisser du texte dans le store par ce champ.
+        // 🕰️ Le bloc RÉTRO (ft-v946) : l'historique déjà stocké sur le téléphone, passé au
+        // Gardien une fois. Gardé SÉPARÉ du direct — il couvre des versions ANTÉRIEURES aux
+        // correctifs, donc l'additionner donnerait un total qui ne veut rien dire.
+        let retro = null;
+        if (g.retro) {
+          const rc = {};
+          Object.keys(g.retro.codes || {}).slice(0, 20).forEach(function(k){
+            const n = Number(g.retro.codes[k]);
+            if (isFinite(n) && n >= 0) rc[String(k).slice(0, 40)] = Math.min(n, 1e6);
+          });
+          retro = { faitLe:  String(g.retro.faitLe||'').slice(0,10),
+                    depuis:  String(g.retro.depuis||'').slice(0,10),
+                    jusqu:   String(g.retro.jusqu||'').slice(0,10),
+                    messages: Math.min(Number(g.retro.messages)||0, 1e6),
+                    total:    Math.min(Number(g.retro.total)||0, 1e6), codes: rc };
+        }
         profile.gardienStats = { depuis: String(g.depuis||'').slice(0,10),
                                  dernier: String(g.dernier||'').slice(0,10),
-                                 total: Math.min(Number(g.total)||0, 1e6), codes: codes };
+                                 total: Math.min(Number(g.total)||0, 1e6), codes: codes,
+                                 retro: retro };
       } catch(e) {}
     }
     if (body.bday          !== undefined) profile.bday          = _ps_(body.bday,          profile.bday);
