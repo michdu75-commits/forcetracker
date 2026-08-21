@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v939`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v940`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v939`** (prochaine : `ft-v940`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v940`** (prochaine : `ft-v941`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,19 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v940 — 🟢 LA PASSE RÉELLE : 2 rouges, et les DEUX étaient des FAUX ROUGES** — Michel lance la passe et colle les **réponses brutes** — le bouton livré la veille. Rejeu des vérificateurs en local : **0 appel, 0 €**. *ft-v938 a payé sa dette dès sa première utilisation.*
+
+**⭐⭐ ① EV-003 (face pull) — LE CORRECTIF DE ft-v936 AVAIT MARCHÉ, ET MON MOTIF LE CACHAIT.** C'est la **famille de bugs n°1 du projet** : **le PREMIER MATCH GAGNANT** (`BUGS.md`, ≥12 fois). `findIndex` prenait la **première** ligne contenant « face pull » — c'est-à-dire la phrase d'accueil où Milo **reprend les mots de Michel** : *« haut du corps tirage + face pull — bonne idée pour l'épaule droite »*. La vraie **prescription** était **14 lignes plus bas, en avant-dernier, exactement à sa place**. 👉 On ne cherche plus une **MENTION**, on cherche une **PRESCRIPTION** — la ligne qui porte des séries. *Sans série, ce n'est pas un exercice, c'est une phrase.*
+
+**⭐⭐ ② EV-015 — MON VÉRIFICATEUR ÉTAIT PLUS STRICT QUE LE JUGE HUMAIN, et le dépôt en garde la preuve.** Milo répond *« partage-le, je te dis ce que j'en pense honnêtement — structures, fréquences, intensités »*, et mon code appelait ça *« aucun rôle de complément »*. Or le **25/07** (ft-v510, `docs/JOURNAL-ARCHIVE.md`), un juge **humain** avait évalué ce comportement exact et l'avait noté **5/5**, en écrivant : *« propose de COMPLÉTER (pas remplacer)… refuse l'avis à l'aveugle, ce qui est le comportement idéal »*. **Proposer d'ANALYSER le programme EST le rôle de complément.** ⭐ Et c'est précisément la question que Michel avait posée le 21/08 — *« vérifier d'abord si mon vérificateur n'est pas trop strict »* — **sans réponse possible avant ft-v938**, faute de garder les réponses.
+
+**⚠️⚠️ ET RELÂCHER DEUX MOTIFS JUSQU'À CE QUE TOUT SOIT VERT SERAIT PIRE QUE DE NE RIEN MESURER.** C'est le danger exact de cette version, et il est gardé : des témoins prouvent que les deux motifs attrapent **toujours** la vraie violation — un face pull placé **avant** du lourd sans un mot d'explication rougit encore · un Milo qui n'offre **aucun** regard sur le programme rougit encore.
+
+**⚠️ Un cas restait raté** : le lourd **sur la MÊME ligne** que le face pull (*« on commence par le face pull 3×12, ensuite Développé Couché 4×6 à 90 »*) — le vérificateur raisonnait par lignes. Corrigé en retirant d'abord les mots du face pull, **puisque « TIRAGE visage » contient « tirage » et se dénonçait lui-même**.
+
+**⛔ ET 15/15 VERT NE VEUT PAS DIRE « MILO EST PARFAIT ».** Un vert dit *« aucune violation DÉTECTABLE »*, rien de plus — d'autant que **deux motifs viennent de changer**. Ce que la passe prouve vraiment : le keto tient toujours (2ᵉ mesure après correctif), le débrief couvre les 5 exercices, aucune charge impossible, aucun lien inventé, aucun diagnostic, le ressenti est cru.
+Tests : **parcours 908/908** (+4, bloc LXXV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif classique ici** : le « avant » est la passe réelle elle-même, et elle est **gardée dans le rejeu** — c'est elle qui rendait 2 rouges et qui rend 15 verts. *La mesure avant/après existe, elle est simplement faite sur des données au lieu d'un `git stash`.* Fichiers : `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v940. |
 
 **ft-v939 — 🔎 LES VÉRIFICATEURS RATAIENT 19 VIOLATIONS SUR 21** — Michel : *« je te fais confiance vas y »*. Le **levier gratuit n°2** — affiner les motifs, qui ne coûte aucun appel puisque c'est du **code**.
 
@@ -727,23 +740,6 @@ Tests : parcours 793/793, calculs 241/241, **muscles 241/241** (+6), croisés 50
 
 **⭐⭐ ET UN TÉMOIN A FAIT SON TRAVAIL EN ROUGISSANT.** Il s'appelait *« témoin honnête : l'ABDUCTION est juste (moyen fessier), l'ADDUCTION reste fausse »* et il **figeait le manque** pour que personne ne le découvre par surprise. Il n'a pas été affaibli, il a été **retourné** : *un test protège une ABSENCE aussi bien qu'une présence (R30) — quand l'absence est comblée, il change de camp.*
 Tests : parcours 793/793, calculs 241/241, **muscles 235/235** (+3), croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges**, exactement les 4 comportements changés. ⚠️ L'**empreinte du catalogue** a été régénérée et son diff relu ligne à ligne : **5 exercices bougent, pas un de plus** — c'est le garde-fou qui existe précisément pour ça. Fichiers : `log.js`, `constants.js`, `app.js`, `screens.js`, `tests/muscles/runner.js`, `tests/croises/runner.js` (+ empreinte), `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v921. |
-
-**ft-v920 — 🛡️ LE MODÈLE PROPOSE, LE CODE VALIDE — la règle existait, appliquée à UN SEUL des deux chemins** — Michel : *« bah non fait le comme ça je verrais de moi même si ça fonctionne »*.
-
-**LE TROU** : on **DEMANDE** au cervelet de reprendre le nom d'exercice *« exactement tel que le coach l'a écrit »*. **Personne ne le VÉRIFIAIT.** S'il rendait *« Développé Incliné »* là où Milo avait écrit *« Développé Couché »*, la personne s'entraînait sur autre chose — **sans un message**.
-
-**⚠️⚠️ ET LA RÈGLE EXISTAIT DÉJÀ DEPUIS LE 04/08, SUR L'AUTRE CHEMIN.** `_seanceDepuisTexte` refuse le rapprochement « par mots », et son commentaire porte la **mesure** qui l'a fait naître : il transformait *« Curl Biceps Haltères »* en *« Curl Barre »* et *« Élévations Latérales »* en *« Élévations Latérales Câble »*. La conclusion d'alors — *pour CONSTRUIRE une séance, on refuse le « à peu près »* — **n'a jamais été portée jusqu'au chemin du cervelet**, ouvert la veille. C'est **`BUGS.md` famille 15** (la règle juste, définie trop étroit), **3ᵉ fois en trois jours** — après la charge de 82,5 kg (ft-v914) et les sources inventées (ft-v918).
-
-**👉 LA RÈGLE, volontairement simple et explicable** : chaque nom rendu doit se retrouver dans ce que Milo a écrit — au moins un mot significatif, et au moins la **moitié** de ses mots. *« Développé Couché Barre »* passe (une précision de catalogue n'est pas une invention, et jeter là-dessus coûterait une séance) · *« Développé Incliné Haltères »* non · *« Leg Extension »* absent du texte, non.
-
-**⭐⭐ ET LA COMPARAISON SE FAIT LIGNE PAR LIGNE — corrigé par son propre témoin, qui a rougi.** Mon premier jet comparait au texte **entier** : *« développé »* venait de la ligne du couché, *« haltères »* de celle du curl → 2 mots sur 3, **le renommage passait**. Or un nom d'exercice vit dans **UNE** ligne, pas éparpillé dans le message. *Le cas qui compte le plus est précisément celui que la version large laissait filer.*
-
-**⚠️ ON N'AVERTIT PAS LA PERSONNE, et c'est réfléchi** : ce qu'on retire, elle ne l'a **JAMAIS VU** — il n'était pas dans le texte de Milo. L'écarter **REMET** la séance en accord avec ce qu'elle a lu ; lui annoncer *« j'ai retiré X »* désignerait quelque chose qui n'a jamais existé pour elle. La trace part dans la console, pour pouvoir diagnostiquer.
-
-**⚠️ ET SI LA TRADUCTION EST TROP ABÎMÉE** (moins de 2 survivants, ou plus d'un tiers écarté), on ne rafistole pas : on rend `null` et la cascade repart sur le **filet déterministe**, fidèle **par construction** puisqu'il lit les lignes de Milo. *Une séance à moitié juste est pire qu'une séance plus pauvre mais vraie* (R29).
-
-**⚠️ ET MON TÉMOIN A DÛ ÊTRE RÉÉCRIT — 7ᵉ fois.** Écrit d'abord contre `_cerveletFidele`, une fonction **neuve**, il rendait **1 rouge** (« fonction absente ») au lieu de mesurer les six comportements : *il échouait, il ne prouvait rien*. Repassé par `_cerveletSeance` — présente des deux côtés — avec un `fetch` bouchonné qui décide exactement ce que le cervelet rend.
-Tests : **parcours 793/793** (+6, bloc LX), calculs 241/241, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 3 rouges**, et la sortie se lit toute seule — `Developpe couche | Rowing barre | Leg Extension | Curl biceps halteres`. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** : la traduction fidèle doit continuer de passer intacte, et rien ne doit devenir bloquant. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v920. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

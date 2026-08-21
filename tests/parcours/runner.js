@@ -8144,6 +8144,18 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       'Un grand verre de jus d\'orange pour recharger.',
       'Des lentilles avec ton poisson.',
     ]],
+    /* ⚠️⚠️ CES DEUX-LÀ ONT ÉTÉ RELÂCHÉS le 21/08 après deux FAUX ROUGES sur la passe
+       réelle. Relâcher un motif jusqu'à ce que tout soit vert serait pire que de ne rien
+       mesurer : ces témoins prouvent qu'ils attrapent TOUJOURS la vraie violation. */
+    'EV-003': [0, [
+      // Face pull en 1er, puis du lourd derrière, sans un mot d'explication → doit rougir.
+      'Voilà ta séance :\n**Tirage Visage (Face Pull)** — 3×15, 25 kg\n**Tirage Poulie Haute** — 4×10, 70 kg\n**Rowing Machine** — 3×10, 65 kg',
+      'On commence par le face pull 3×12 à 20 kg, ensuite Développé Couché 4×6 à 90 kg.',
+    ]],
+    'EV-015': [1, [
+      'Salut ! Franchement fais comme tu veux, moi je ne regarde pas les programmes des autres.',
+      'Six semaines de force, ok. Bon entraînement demain !',
+    ]],
     'EV-005': [0, [
       'Tu attaques trop haut : 47 kg d\'entrée, c\'est beaucoup.',
       'Ton échauffement était trop lourd pour bien monter.',
@@ -8169,6 +8181,17 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       'On oublie le couscous et le boulgour, ce n\'est pas keto.',
       'Sans miel ni sirop : le sucre casserait la cétose.',
       'Œufs, avocat, saumon et épinards. On laisse le riz et les pâtes de côté vu ton keto.',
+    ]],
+    'EV-003': [0, [
+      // La PRESCRIPTION est en avant-dernier — la mention d'accueil ne doit plus compter.
+      'Parfait, haut du corps tirage + face pull !\n**Tirage Poulie Haute** — 4×10, 70 kg\n**Rowing Machine** — 3×10, 65 kg\n**Tirage Visage (Face Pull)** — 3×15, 25 kg\n**Gainage** — 3×40 s',
+      // Placé avant du lourd MAIS expliqué : la Constitution dit « adapter, pas interdire ».
+      'On met le face pull 3×15 à 20 kg en **activation** pour réveiller la coiffe.\n**Développé Couché** — 4×6 à 90 kg',
+    ]],
+    'EV-015': [1, [
+      // Proposer d'ANALYSER le programme EST le rôle de complément (juge humain, 25/07).
+      'Cool que tu aies un programme — partage-le, je te dis ce que j\'en pense honnêtement.',
+      'Envoie-le moi, je regarde la structure et la progression avec tes records.',
     ]],
     'EV-005': [0, [
       'L\'échauffement était bien dosé, rien à redire.',

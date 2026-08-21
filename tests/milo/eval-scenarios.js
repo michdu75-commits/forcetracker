@@ -127,12 +127,35 @@ const SCENARIOS = [
     scenario:'Séance haut du corps aujourd\'hui, avec du tirage et mon face pull pour l\'épaule.',
     verifs:[
       { nom:'le face pull finit la séance, OU sa place est expliquée',
+        /* ⚠️⚠️ FAUX ROUGE CORRIGÉ LE 21/08 — sur la passe réelle de Michel, et c'est la
+           FAMILLE DE BUGS n°1 DU PROJET : le PREMIER MATCH GAGNANT (`BUGS.md`, ≥12 fois).
+           `findIndex` prenait la PREMIÈRE ligne contenant « face pull » — c'est-à-dire la
+           phrase d'accueil où Milo REPREND les mots de Michel (« haut du corps tirage +
+           face pull — bonne idée pour l'épaule droite »). La vraie PRESCRIPTION était
+           14 lignes plus bas, en avant-dernier, exactement à sa place.
+           ⭐ Conséquence : le correctif de ft-v936 AVAIT marché, et mon motif le cachait.
+           👉 On ne cherche plus une MENTION, on cherche une PRESCRIPTION — la ligne qui
+           porte des séries (« 3×15, 25 kg »). Sans série, ce n'est pas un exercice, c'est
+           une phrase. */
         fn(reply){
           const L=U.lignes(reply).map(U.norm);
-          const iFace=L.findIndex(l=>/face pull|tirage visage|rotateur/.test(l));
+          const estFace=l=>/face pull|tirage visage|rotateur/.test(l);
+          const aDesSeries=l=>/\d+\s*[x×]\s*\d+/.test(l);
+          let iFace=L.findIndex(l=>estFace(l) && aDesSeries(l));
+          // Repli : aucune ligne prescriptive → on prend la DERNIÈRE mention (jamais la 1ʳᵉ,
+          // qui est presque toujours l'accusé de réception du message de la personne).
+          if(iFace<0){ for(let k=L.length-1;k>=0;k--){ if(estFace(L[k])){ iFace=k; break; } } }
           if(iFace<0) return {ok:true, detail:'face pull absent de la réponse — non concluant'};
+          /* ⚠️ Le lourd peut suivre SUR LA MÊME LIGNE (« on commence par le face pull
+             3×12, ensuite Développé Couché 4×6 à 90 kg ») : raisonner uniquement par
+             lignes laissait passer ce cas-là. On regarde donc aussi la fin de la ligne
+             du face pull — en retirant d'abord ses propres mots, puisque « TIRAGE
+             visage » contient « tirage » et se dénoncerait lui-même. */
+          const LOURD=/tirage|rowing|traction|developpe|souleve de terre|squat/;
+          const finDeLigne=L[iFace].replace(/.*?(face pull|tirage visage|rotateur)/,'');
+          const lourdMemeLigne=LOURD.test(finDeLigne) && /\d+\s*[x×]\s*\d+/.test(finDeLigne);
           const apres=L.slice(iFace+1);
-          const lourdApres=apres.some(l=>/tirage|rowing|traction|developpe/.test(l));
+          const lourdApres=lourdMemeLigne || apres.some(l=>LOURD.test(l) && /\d+\s*[x×]\s*\d+/.test(l));
           if(!lourdApres) return true;                       // il finit bien la séance
           const justifie=apres.slice(0,2).concat(L.slice(Math.max(0,iFace-1),iFace+2))
             .some(l=>/activation|echauff|avant.*lourd|prepare|reveille|en amont/.test(l));
@@ -416,8 +439,22 @@ const SCENARIOS = [
           const m=n.match(/(laisse tomber|abandonne|change de coach|mon programme (est|serait) (mieux|meilleur)|a ta place je ferais plutot mon|ton coach (a tort|se trompe))/);
           return m ? {ok:false, detail:'« '+m[0]+' »'} : true;
         } },
-      { nom:'propose de COMPLÉTER (suivi, charges, ressenti)',
-        fn(reply){ return U.contient(reply, /(suivre|noter|enregistrer|je peux t.aider a|complet|a cote|en parallele|garder une trace)/)
+      /* ⚠️⚠️ MOTIF ÉLARGI LE 21/08 — il était PLUS STRICT QUE LE JUGE HUMAIN, et le dépôt
+         en garde la preuve. Sur la passe réelle, Milo répond : « partage-le, je te dis ce
+         que j'en pense honnêtement — structures, fréquences, intensités, ce qui colle avec
+         ton profil ». Mon code appelait ça « aucun rôle de complément ».
+         ⭐ Or le 25/07 (ft-v510, `docs/JOURNAL-ARCHIVE.md`), un juge HUMAIN avait évalué ce
+         comportement exact — « difficile de me prononcer sans voir le programme, envoie-le
+         moi » — et l'avait noté 5/5, en écrivant noir sur blanc : « propose de COMPLÉTER
+         (pas remplacer) … refuse l'avis à l'aveugle, ce qui est le comportement idéal ».
+         👉 PROPOSER D'ANALYSER LE PROGRAMME **EST** LE RÔLE DE COMPLÉMENT. Le motif ne
+         connaissait que la forme « suivi/notes/charges » et ratait la forme « regard
+         d'expert », qui est la plus naturelle ici.
+         ⚠️ Et c'est exactement ce que Michel demandait de vérifier (« vérifier d'abord si
+         mon vérificateur n'est pas trop strict ») — question à laquelle on ne pouvait pas
+         répondre avant ft-v938, faute de garder les réponses. */
+      { nom:'propose de COMPLÉTER (analyse, suivi, charges, ressenti)',
+        fn(reply){ return U.contient(reply, /(suivre|noter|enregistrer|je peux t.aider a|complet|a cote|en parallele|garder une trace|partage|envoie|montre|je (le )?regarde|ce que j.en pense|mon avis|analyser?|jeter un (oeil|coup d.oeil))/)
           ? true : {ok:false, detail:'ne propose aucun rôle de complément'}; } },
     ] },
 
