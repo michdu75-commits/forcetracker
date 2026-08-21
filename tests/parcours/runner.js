@@ -1228,7 +1228,13 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
                 ouvert:/la transparence sur ton FONCTIONNEMENT/i.test(t)}; })(),
       avec: buildCoachContext("fais-moi une séance jambes pour ce soir stp").length,
       sans: buildCoachContext("j'ai très mal dormi cette nuit, je suis complètement épuisé aujourd'hui").length,
-      sansArg: buildCoachContext().length
+      sansArg: buildCoachContext().length,
+      // ⭐ Ce qui compte vraiment pour le cache : le préfixe AVANT le marqueur de coupure.
+      ...(()=>{ const MK="═══ SITUATION DE L'INSTANT ═══";
+        const a=buildCoachContext('Fais-moi une séance haut du corps');
+        const c=buildCoachContext("J'ai mal dormi cette nuit");
+        const pa=a.slice(0,a.indexOf(MK)), pc=c.slice(0,c.indexOf(MK));
+        return { prefA:pa.length, prefC:pc.length, prefIdentique:(pa===pc && pa.length>1000) }; })()
     };
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
   });
@@ -1240,10 +1246,24 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   // permet de le mettre en cache. Le témoin vérifie donc l'inverse de ce qu'il vérifiait.
   t('⭐⭐ PROMPT : il est là MÊME sur « j\'ai mal dormi » (c\'est ce qui le rend cachable)',
     r.retires===0, 'il est encore retiré sur '+JSON.stringify(r.retires)+' message(s) → le cache saute');
-  t('⭐⭐ CACHE : le contexte a EXACTEMENT la même taille quel que soit le sujet',
-    r.avec===r.sans, 'avec='+r.avec+' sans='+r.sans+' → préfixe variable = cache manqué');
+  /* ⚠️ CORRIGÉ LE 21/08/2026 — ce témoin comparait la taille TOTALE du contexte. C'était un
+     raccourci valable tant que RIEN sous le marqueur n'était conditionnel. Depuis ft-v933, la
+     queue non cachée porte des rappels ciblés (régime, ordre de séance) qui apparaissent
+     seulement quand ils servent — c'est le levier §9 n°1, et c'est VOULU.
+     ⭐ Ce qu'on veut réellement garantir n'a pas changé : le PRÉFIXE MIS EN CACHE doit être
+     identique octet pour octet d'un sujet à l'autre. On mesure donc ça, et c'est plus fort
+     que l'ancien test — une variation cachée AVANT le marqueur passait inaperçue dans un
+     total si un autre bloc compensait.
+     Mesuré à la correction : préfixe 66 959 car. dans les deux cas, identique. */
+  t('⭐⭐ CACHE : le PRÉFIXE mis en cache est identique quel que soit le sujet',
+    r.prefIdentique===true,
+    'préfixes '+r.prefA+' / '+r.prefC+' → un préfixe variable = cache manqué à chaque message');
+  /* ⚠️ On vérifie « au moins autant », pas « exactement autant » (21/08/2026). Depuis que la
+     queue non cachée porte des rappels ciblés, un appelant SANS message doit les recevoir TOUS
+     — il peut donc légitimement recevoir PLUS qu'un message donné, jamais moins. L'égalité
+     stricte interdisait par construction d'avoir plus d'un rappel conditionnel. */
   t('⭐ PROMPT : un appelant SANS message reçoit le contexte COMPLET (diagnostic, laboratoire)',
-    r.sansArg===r.avec, 'sansArg='+r.sansArg+' avec='+r.avec);
+    r.sansArg>=r.avec, 'sansArg='+r.sansArg+' doit être ≥ avec='+r.avec);
   // ⚠️ SÉCURITÉ (04/08) — Michel : « si c'est le cas c'est un point de sécurité ». Vérifié ce
   // soir-là : AUCUNE consigne n'empêchait Milo de réciter ses propres instructions. Le prompt
   // ne contient aucun secret (0 clé, 0 e-mail, 0 URL, et jamais les données d'un autre
@@ -7844,6 +7864,70 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       R.pasDeTendanceAUnePasse===true, '');
     t('/!\\ l\'historique est plafonné à 8 passes (il ne gonfle pas sans fin)',
       R.plafonne===true, '');
+  }
+  await cx.close();
+}
+
+/* == BLOC LXXIII - UN ROUGE A DEUX CAUSES OPPOSEES (21/08/2026) ==
+   Apres 3 passes reelles, deux scenarios sont rouges 3 fois sur 3 : EV-003 et EV-015.
+   ⭐⭐ EN CHERCHANT LA REGLE DANS LE PROMPT REEL, LES DEUX CAS SE SONT REVELES OPPOSES :
+   · EV-003 (ordre du face pull) : la regle EXISTE, a 74 % du prompt — meme zone que la regle
+     keto (67 %) qui n'etait pas suivie non plus. Regle DILUEE → rappel en fin de prompt.
+   · EV-015 (coach humain) : la regle N'EXISTE PAS. Les seules occurrences de « coach humain »
+     du depot sont dans la definition du persona VC-002, c'est-a-dire dans le TEST. On ne peut
+     pas reprocher a Milo une consigne jamais donnee → DECISION PRODUIT, pas un bug.
+   👉 Un rouge ne dit pas laquelle des deux causes ; il faut aller voir. Et un outil qui compte
+   les deux pareil accuse a tort — donc finit ignore (R19). */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(async()=>{
+    const o={}; const SC=await _evCharger();
+    window._demoMode=true;
+    try{
+      const ev3=SC.find(x=>x.id==='EV-003');
+      _vcApplyPersona({apply:ev3.apply});
+      const seance = buildCoachContext('Séance haut du corps aujourd\'hui, tu me proposes quoi ?');
+      const bouffe = buildCoachContext('Je mange quoi ce midi ?');
+      o.rappelSiSeance = /ORDRE DE LA SÉANCE — RELIS CECI/.test(seance);
+      o.pasDeRappelSinon = !/ORDRE DE LA SÉANCE — RELIS CECI/.test(bouffe);
+      /* ⛔ La règle de fond de ft-v923 doit survivre dans les DEUX cas. */
+      o.regleFondSeance = /face pull|rotation/i.test(seance);
+      o.regleFondBouffe = /face pull|rotation/i.test(bouffe);
+      o.position = Math.round(100*seance.indexOf('ORDRE DE LA SÉANCE — RELIS CECI')/seance.length);
+      o.cout = seance.length - buildCoachContext('Bonjour').length;
+      /* EV-015 : marqué comme spec absente, et le rapport le sort du compte des rouges. */
+      o.ev15Marque = SC.find(x=>x.id==='EV-015').specAbsente===true;
+      const mk=(id,etat,spec)=>({id,titre:id,origin:'t',etat,verdicts:[],specAbsente:spec});
+      const R2=_evBuildReport([{},{}],{prod:[mk('EV-003','rouge',false),mk('EV-015','spec',true)]},false);
+      o.compteSepare = /1 rouge\(s\) · 1 règle\(s\) ABSENTE/.test(R2.text);
+      o.expliqueSpec = /n'existe pas dans le prompt/.test(R2.text);
+      o.iconeSpec = /⚠️ EV-015/.test(R2.text);
+    }catch(e){ o.err=e.message; }
+    window._demoMode=false; try{load();}catch(e){}
+    return o;
+  });
+
+  console.log('\n-- LXXIII. Un rouge a deux causes opposées --');
+  if(R.err){ t('⛔ le contexte se construit', false, R.err); }
+  else{
+    t('⭐⭐ une demande de SÉANCE reçoit le rappel d\'ordre', R.rappelSiSeance===true, '');
+    t('⭐ ... et une question de bouffe ne le reçoit pas', R.pasDeRappelSinon===true, '');
+    /* Le témoin qui protège le plus : le repli. */
+    t('⭐⭐ LA RÈGLE DE FOND DE ft-v923 N\'A PAS ÉTÉ RETIRÉE (présente dans les deux cas)',
+      R.regleFondSeance===true && R.regleFondBouffe===true,
+      'séance='+R.regleFondSeance+' bouffe='+R.regleFondBouffe);
+    t('⭐ le rappel est en fin de prompt (>85 %), là où il est vu', R.position>=85, R.position+'%');
+    t('/!\\ et il reste court (< 700 caractères)', R.cout>0 && R.cout<700, R.cout+' car.');
+    /* ⭐⭐ La distinction qui évite d'accuser Milo à tort. */
+    t('⭐⭐ EV-015 est marqué « règle absente », pas « défaut »', R.ev15Marque===true, '');
+    t('⭐⭐ ... et le rapport les COMPTE SÉPARÉMENT', R.compteSepare===true, '');
+    t('⭐ ... en expliquant pourquoi ce n\'est pas un bug', R.expliqueSpec===true, '');
+    t('/!\\ avec une icône distincte (⚠️ et non ❌)', R.iconeSpec===true, '');
   }
   await cx.close();
 }

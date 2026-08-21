@@ -3167,13 +3167,40 @@ ${(()=>{
   if(S.foodMode==='paleo') _reg.push('paléo — ni céréales, ni légumineuses, ni laitages');
   if(S.foodMode==='lowcarb') _reg.push('low carb — pas de gros plats de pâtes/riz');
   if(!_reg.length) return '';
+  /* ⚠️ CONTRAT DE buildCoachContext : « msg non fourni = on envoie TOUT » (appelants de
+     diagnostic, laboratoire). Un bloc conditionnel doit donc s'INCLURE quand il n'y a pas de
+     message — sinon l'outil de diagnostic voit moins que la réalité. Témoin cassé le 21/08. */
   const _q=String(msg||'');
   const _parleBouffe=/mang|repas|midi|soir[ée]|d[ée]jeun|d[îi]n|petit.?d[ée]j|collation|snack|assiette|recette|cuisin|aliment|nutrition|glucide|prot[ée]in|lipide|calorie|menu|courses/i.test(_q);
-  if(!_parleBouffe) return '';
+  /* ⚠️ « msg non fourni = on envoie TOUT » — c'est le contrat écrit de buildCoachContext pour
+     les appelants de diagnostic. Un bloc conditionnel doit donc s'inclure ENTIÈREMENT dans ce
+     cas, sinon l'outil de diagnostic voit MOINS que ce que reçoit un vrai utilisateur. */
+  if(msg!=null && !_parleBouffe) return '';
   return `\n⛔ RÉGIME À RESPECTER — LA QUESTION PORTE SUR L'ALIMENTATION, RELIS CECI AVANT DE RÉPONDRE :
 ${_reg.map(r=>'   · '+r).join('\n')}
    Aucun aliment non conforme, même « juste en exemple » ou « en petite quantité ». Si tu ne
    sais pas quoi proposer dans ce cadre, dis-le — c'est mieux que de proposer hors régime.\n`;
+})()}
+${(()=>{
+  /* ⛔ RAPPEL D'ORDRE DE SÉANCE — 2ᵉ usage du levier §9 n°1, et il est MESURÉ (21/08/2026).
+     Le benchmark a montré EV-003 rouge aux TROIS passes : Milo place le face pull avant du
+     lourd sans un mot d'explication. Diagnostic fait avant de coder (R7) : la règle de
+     ft-v923 est bien DANS le prompt — elle vit à **74 %** du texte, exactement la même zone
+     que la règle keto (67 %) qui n'était pas suivie non plus. Ce n'est donc pas une règle
+     manquante, c'est une règle DILUÉE. Même cause, même remède.
+     ⚠️ ET LA RÈGLE D'ORIGINE RESTE EN PLACE : une détection ratée doit retomber sur le
+     comportement d'hier, jamais sur une règle absente en silence (condition posée par §9).
+     ⚠️ R29 : se tromper ici ne coûte qu'une ligne inutile ; ne pas la mettre coûte une séance
+     mal ordonnée. Le détecteur est donc LARGE. */
+  const _q=String(msg||'');
+  const _demandeSeance=/s[ée]ance|entra[îi]n|programme|exercices?|workout|muscu|je fais quoi|on fait quoi|propose.{0,20}(moi|une)/i.test(_q);
+  if(msg!=null && !_demandeSeance) return '';   // idem : sans message, on envoie tout
+  return `\n⛔ ORDRE DE LA SÉANCE — RELIS CECI AVANT DE PROPOSER DES EXERCICES :
+   · Termine une zone avant de passer à la suivante ; dans une zone, l'ancre AVANT ses accessoires.
+   · Entre accessoires d'une même zone : du plus LOURD au plus LÉGER.
+   · Le petit travail de SANTÉ / ROTATION (face pull, rotateurs, gainage, mollets) FINIT la séance.
+     Tu peux le placer avant un mouvement lourd si c'est un choix d'activation — mais alors DIS-LE
+     en une demi-phrase, sinon ça passe pour un oubli.\n`;
 })()}
 RÉCUPÉRATION & SOMMEIL:
 ${(()=>{
@@ -4552,10 +4579,15 @@ async function _evRun(SC, compare, rep){
         const montre = _passes.find(vs=>vs.some(v=>!v.ok)) || _passes[0] || [];
         const rouges = montre.filter(v=>!v.ok);
         const taux = rep>1 ? '  🔁 rouge '+nbRouges+'/'+_passes.length : '';
-        renderCoachMsg('coach', (nbRouges?'❌ ':'✅ ')+sc.id+' — '+sc.titre+taux
+        renderCoachMsg('coach', (nbRouges?(sc.specAbsente?'⚠️ ':'❌ '):'✅ ')+sc.id+' — '+sc.titre+taux
           + (rouges.length ? '\n' + rouges.map(v=>'   ↳ '+v.nom+(v.detail?' — '+v.detail:'')).join('\n') : '')
           + (bonModele?'':'\n   ⚠️ servi par '+(r.modele||'?')+' au lieu de '+attendu));
-        res.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat:nbRouges?'rouge':'vert',
+        /* ⚠️ Un scénario dont la RÈGLE N'EXISTE PAS dans le prompt n'est pas un défaut de
+           Milo : on ne peut pas lui reprocher une consigne jamais donnée. Il est classé à
+           part (« spec ») pour ne pas gonfler le compte des rouges — sinon l'outil accuse
+           à tort, et un outil qui accuse à tort finit ignoré (R19). */
+        const _etat = nbRouges ? (sc.specAbsente ? 'spec' : 'rouge') : 'vert';
+        res.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat:_etat,
                    ms:r.ms, modele:r.modele, bonModele, verdicts:montre, reply:r.reply,
                    passes:_passes.length, nbRouges });
         await _pt001Sleep(400);   // on ne mitraille pas l'API
@@ -4617,9 +4649,15 @@ function _evBuildReport(SC, parPasse, compare){
   cles.forEach(k=>{
     const r = parPasse[k];
     const verts = r.filter(x=>x.etat==='vert').length, rouges = r.filter(x=>x.etat==='rouge');
-    L.push('── '+k.toUpperCase()+' : '+verts+' vert(s) · '+rouges.length+' rouge(s) ──');
+    const specs = r.filter(x=>x.etat==='spec');
+    L.push('── '+k.toUpperCase()+' : '+verts+' vert(s) · '+rouges.length+' rouge(s)'
+      + (specs.length? ' · '+specs.length+' règle(s) ABSENTE(S) du prompt':'') + ' ──');
+    if(specs.length){
+      L.push('  ⚠️ « règle absente » ≠ défaut de Milo : la consigne n\'existe pas dans le prompt,');
+      L.push('     donc il ne peut pas la suivre. C\'est une DÉCISION PRODUIT en attente, pas un bug.');
+    }
     r.forEach(x=>{
-      L.push(({vert:'✅',rouge:'❌',muet:'⛔'}[x.etat]||'?')+' '+x.id+' ('+x.origin+') — '+x.titre);
+      L.push(({vert:'✅',rouge:'❌',spec:'⚠️',muet:'⛔'}[x.etat]||'?')+' '+x.id+' ('+x.origin+') — '+x.titre);
       (x.verdicts||[]).filter(v=>!v.ok).forEach(v=>L.push('     ↳ '+v.nom+(v.detail?' — '+v.detail:'')));
       if(x.detail) L.push('     ↳ '+x.detail);
     });

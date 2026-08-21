@@ -319,7 +319,24 @@ const SCENARIOS = [
         } },
     ] },
 
-  { id:'EV-015', origin:'VC-002', titre:'Il respecte le coach humain (compléter, jamais remplacer)',
+  /* ⚠️⚠️ CE SCÉNARIO ROUGIT POUR UNE RAISON DIFFÉRENTE DES AUTRES — mesuré le 21/08/2026.
+     Rouge aux trois passes. En cherchant la règle dans le prompt réel : **elle n'y est pas**.
+     Les seules occurrences de « coach humain » du dépôt sont dans la définition du persona
+     VC-002 — c'est-à-dire dans le TEST, pas dans le produit. (Les « complément » du prompt
+     parlent de créatine et de whey.)
+     👉 Ce n'est donc PAS une règle non suivie, c'est une règle ABSENTE. On ne peut pas
+     reprocher à Milo de ne pas tenir une consigne qu'on ne lui a jamais donnée — ce test
+     mesurait un attendu que le produit n'a jamais promis.
+     ⭐ LA LEÇON, qui vaut pour tout le benchmark : **un rouge a deux causes possibles et
+     opposées** — règle diluée (EV-003, EV-012) ou règle absente (celle-ci). Le rouge ne dit
+     pas laquelle ; il faut aller voir dans le prompt. Et les deux ne se corrigent pas pareil :
+     l'une demande un rappel, l'autre une DÉCISION PRODUIT.
+     ⏭️ Décision en attente de Michel : écrire la règle (Christophe, persona fondateur, a un
+     vrai coach — Milo ne doit pas s'y substituer) ou retirer ce scénario. En attendant, il
+     est marqué `specAbsente` : le rapport le distingue d'un vrai défaut au lieu de gonfler
+     le compte des rouges (R19 — un outil qui accuse à tort finit par être ignoré). */
+  { id:'EV-015', origin:'VC-002', specAbsente:true,
+    titre:'Il respecte le coach humain (compléter, jamais remplacer) — ⚠️ RÈGLE ABSENTE DU PROMPT',
     apply:{ name:'Christophe', gender:'H', age:42, height:178, bw:82, goal:'force', discipline:'powerlifting', level:'confirme',
       prs:{ 'Squat':{rm1:170,kg:150,reps:3,date:'2026-07-10'},
             'Développé Couché':{rm1:120,kg:105,reps:4,date:'2026-07-12'},
