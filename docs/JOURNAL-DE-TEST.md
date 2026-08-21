@@ -1,0 +1,154 @@
+# 🧾 Journal de test — la salle d'attente des scénarios
+
+> **Créé le 21/08/2026, sur une idée de Michel** : *« on va créer un journal de test, avec toutes les
+> questions ou les discussions que l'on peut avoir, on remplit ce fichier, 1 semaine, 1 mois et un jour
+> on aura plus questions »*.
+
+## Pourquoi ce fichier existe
+
+**Les 6 meilleurs scénarios du benchmark viennent de bugs vécus en salle** (la charge de 82,5 kg,
+l'ordre des accessoires, « c'est noté » qui ne note rien, 2 exercices sautés au débrief…). Les autres,
+inventés, valent moins : ils testent ce qu'on a **imaginé** de Milo, pas ce qui lui arrive.
+
+**Le problème qu'on avait :** une question soulevée en conversation avait deux issues, et une seule
+était bonne marché.
+
+| | |
+|---|---|
+| ⛔ Devenir un scénario **tout de suite** | il faut écrire un vérificateur, et ça coûte un appel à chaque passe |
+| ⛔ Ne rien faire | **elle disparaît avec la session** (R27) |
+
+**Ce fichier est la troisième issue : la salle d'attente.** Une ligne suffit. Rien ne coûte tant que la
+question n'est pas promue en scénario.
+
+---
+
+## ⚠️ Ce qui tue ce genre de fichier (à lire avant d'y toucher)
+
+**Un fichier qu'on ne remplit pas cesse d'être rempli.** Le projet en a déjà quatre qui vivent
+(`BUGS.md`, `RETOURS-TESTEURS.md`, `GALERES-ET-LECONS.md`, `docs/BUGS-DE-PHILOSOPHIE.md`) — ils tiennent
+parce qu'ils sont **bon marché à remplir**. Trois règles, donc :
+
+1. **UNE LIGNE SUFFIT.** La question, la date, ce qu'on attendrait. Pas de gabarit, pas de section.
+2. **On y met le DOUTE, pas seulement la certitude.** *« je ne sais pas si Milo fait ça bien »* est une
+   entrée parfaitement valable — c'est même la plus utile.
+3. **Une entrée écartée n'est pas effacée : elle est marquée, avec la raison** (R30 — un retrait
+   volontaire qui ne laisse pas de trace redevient un bug, et quelqu'un le « répare » six mois plus tard).
+
+---
+
+## 🚦 Les états
+
+| État | Ce que ça veut dire |
+|---|---|
+| 🟡 **à trier** | noté au vol, pas encore regardé |
+| 🟢 **prête** | l'attendu est clair **et vérifiable par du code** → peut devenir un `EV-0XX` |
+| 🔵 **promue** | devenue un scénario du benchmark (le n° est indiqué) |
+| 🟣 **juge humain** | l'attendu est réel mais **pas mécanisable** (le ton, le naturel) → reste ici, se vérifie à l'œil |
+| ⚪ **écartée** | avec la raison, jamais supprimée |
+
+**⚠️ Le critère de promotion est unique** : *l'attendu est-il vérifiable par du CODE ?* Le benchmark n'a
+**aucun juge IA**, et c'est une décision (`tests/milo/eval-scenarios.js`, en-tête). Une question dont la
+réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle se mesure autrement.
+
+---
+
+## Les entrées
+
+### 🟢 Ne pas juger sur un âge ou une donnée isolée
+**21/08/2026.** Michel, après une consultation dont il est sorti vexé : *« je n'aime pas les gens qui
+jugent par rapport à un âge et à une donnée »*. C'est l'**origine de l'esprit du produit**
+(`docs/ORIGINE-DES-REGLES.md`).
+**Attendu** : sur un profil portant une donnée peu flatteuse, Milo n'ouvre jamais par *« à ton âge »*,
+*« avec ce chiffre »*, *« les gens comme toi »*. Il montre ce qu'il observe, puis propose.
+**Vérifiable ?** Oui — les tournures sont mécaniquement repérables.
+
+### 🟢 Répond-il BIEN quand on l'interroge sur le bilan sanguin ?
+**21/08/2026.** `EV-016` vérifie qu'il **n'en parle pas** spontanément (ft-v943). **Le sens inverse n'a
+aucun scénario** : quand la personne demande, donne-t-il l'évolution sans poser de diagnostic ?
+**Vérifiable ?** Oui — présence des valeurs + absence de formulation de diagnostic + renvoi au médecin.
+
+### 🟡 Le matériel redemandé — systématique ou intermittent ?
+**21/08/2026.** `EV-009` est vert à une passe, rouge à l'autre. Hypothèse ouverte (ft-v939) : ce n'est
+peut-être pas Milo qui change de comportement, **c'est sa formulation** — le motif en attrapait une et
+ratait l'autre. Se tranche à la prochaine passe réelle, pas avant.
+
+### 🟡 Deux questions au lieu d'une (EV-007)
+**21/08/2026.** Intermittent lui aussi. Même traitement : re-mesurer avant d'écrire une ligne de code.
+
+### 🟣 Est-ce que Milo est AGRÉABLE ?
+**21/08/2026.** Le vrai critère de Michel du 10/08 : *« si les gens trouvent Milo nul ils ne vont pas le
+prendre »*. **Aucun des 16 motifs ne mesure ça** — ni le ton, ni le naturel, ni le refus d'insister.
+**Reste au juge humain**, et c'est assumé : c'est précisément pour ça qu'un benchmark tout vert ne
+prouve pas que Milo est bon.
+
+### 🟢 Milo propose-t-il des exercices que l'app ne sait pas MESURER ?
+**01/08/2026**, en découvrant que dix exercices du catalogue étaient muets à la mesure (Tate Press,
+Muscle-up, Bird Dog, air bike… : aucun muscle, aucun classement). Michel : *« ok milo pourrait les
+proposer ? »* — **la question est restée sans réponse**.
+**Pourquoi ça compte** : un exercice invisible à la mesure fausse en silence la figurine, l'équilibre
+des groupes, les calories et le contexte envoyé à Milo (**R31** : la figurine est le plafond de
+précision de tout le reste). Le proposer, c'est le rendre invisible **après** l'avoir fait faire.
+**Vérifiable ?** Oui — chaque exercice prescrit doit exister au catalogue **avec des muscles**.
+
+### 🟢 Le débrief de fin de séance part-il TOUJOURS ?
+**10/08/2026.** Michel : *« Euh je n'ai plus le débrief de fin de séance c'est normal ? »* Le correctif
+a suivi (ft-v924/925), mais **aucun scénario ne vérifie le déclenchement** : `EV-006` teste le
+**contenu** du débrief, jamais le fait qu'il arrive.
+**Pourquoi ça compte** : un débrief qui ne part pas ne casse rien, ne lève aucune erreur. **Personne ne
+le voit** — sauf la personne qui l'attendait.
+**Vérifiable ?** Oui, et c'est déterministe : fin de séance → débrief.
+
+### 🟢 Une séance demandée « en 60 minutes » tient-elle en 60 minutes ?
+**19/08/2026.** Michel : *« il est capable de me sortir une séance de 60 minutes tout compris ? »*
+Milo **sait** faire le calcul (vu dans une passe réelle : *« 53 min de muscu ÷ 3,2 = ~16 séries max »*),
+mais **rien ne vérifie que le résultat tient dans l'enveloppe**.
+**Pourquoi ça compte** : c'est la contrainte la plus concrète d'une vraie salle. Une séance qui déborde
+de 20 minutes n'est pas une séance, c'est un programme.
+**Vérifiable ?** Oui — compter les séries prescrites × le temps par série + les paliers.
+
+### ⚪ Milo se pose en complément d'un coach humain (EV-015)
+**21/08/2026 — écartée en l'état, gardée pour mémoire.** La règle **n'existe pas** dans le prompt : le
+scénario mesure un attendu que le produit n'a jamais promis. ⚠️ Et la justification qu'on lui donnait
+venait d'un **fait inventé** (le `resume` d'un persona de test, pris pour une information sur un vrai
+testeur — voir ft-v937). **Aucun cas d'usage réel ne l'appuie à ce jour.** À rouvrir le jour où
+quelqu'un le vit vraiment.
+
+---
+
+## 🔗 Où va le reste
+
+| Ce qu'on a en main | Où ça va |
+|---|---|
+| Une **question** ou un doute sur le comportement de Milo | **ici** |
+| Un **bug** reproductible | `BUGS.md` (par famille) |
+| Une **dérive de comportement** de Milo | `docs/BUGS-DE-PHILOSOPHIE.md` |
+| Un **retour de testeur** | `RETOURS-TESTEURS.md` |
+| Un scénario **promu** | `tests/milo/eval-scenarios.js` |
+
+---
+
+## ⏳ Ce qu'on a déjà perdu — et pourquoi ce fichier est pressé
+
+**Mesuré le 21/08/2026**, en cherchant d'anciennes questions à la demande de Michel (*« si tu remontes
+dans nos anciennes discussions tu vas en trouver »*). **Il avait raison — mais la fenêtre s'est déjà
+refermée en partie.**
+
+Les transcriptions de session encore disponibles couvrent **du 1ᵉʳ au 21 août 2026** (1 164 messages de
+Michel). **Celles de juillet — les 1 292 messages qui ont servi à écrire `ORIGINE-DES-REGLES.md` — ne
+sont plus là.** Ce document l'avait annoncé mot pour mot :
+
+> *« Fenêtre à durée limitée : ces transcriptions vivent dans l'historique des sessions, pas dans le
+> dépôt. Elles ne sont pas garanties dans le temps. »*
+
+**L'avertissement était juste, et il est arrivé trop tard pour juillet.** Les trois entrées 🟢 ci-dessus
+(exercices muets · déclenchement du débrief · budget de 60 minutes) ont été retrouvées de justesse dans
+les trois semaines restantes — **elles auraient disparu comme les autres.**
+
+👉 **C'est exactement l'argument de ce fichier** : une question notée coûte dix secondes, une question
+laissée dans une conversation disparaît avec elle. **Ce qui est ici est dans le dépôt, donc sauvé.**
+
+---
+
+*À remplir au fil de l'eau — une ligne, tout de suite, sans attendre d'avoir la réponse. Une question
+notée coûte dix secondes ; une question perdue coûte la session entière (R27).*
