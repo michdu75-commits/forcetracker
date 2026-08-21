@@ -6,7 +6,23 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v939` — fusionnée sur `master` le 21/08.
+- **Version en ligne (live) :** `ft-v940` — fusionnée sur `master` le 21/08.
+- 🟢 **LA PASSE RÉELLE : 2 rouges, et les DEUX étaient des FAUX ROUGES** (ft-v940). Michel a
+  lancé la passe et collé les **réponses brutes** — le bouton de ft-v938, qui a payé sa dette
+  dès sa première utilisation (rejeu en local : **0 appel, 0 €**).
+  ⭐⭐ **EV-003** : le correctif de ft-v936 **avait marché**, mon motif le cachait — `findIndex`
+  prenait la 1ʳᵉ ligne contenant « face pull », c'est-à-dire la phrase d'accueil où Milo répète
+  les mots de Michel. La vraie prescription était 14 lignes plus bas, **à sa place**. C'est la
+  **famille de bugs n°1** du projet : le PREMIER MATCH GAGNANT.
+  ⭐⭐ **EV-015** : mon vérificateur était **plus strict que le juge humain** — le 25/07
+  (ft-v510), un humain avait noté **5/5** ce comportement exact. *Proposer d'analyser le
+  programme EST le rôle de complément.*
+  ⚠️ **15/15 vert ≠ « Milo est parfait »** : un vert dit « aucune violation détectable », et
+  deux motifs viennent de changer. Ce qui est réellement prouvé : keto tenu (2ᵉ mesure après
+  correctif), débrief complet, aucune charge impossible, aucun lien inventé, aucun diagnostic.
+  ⏭️ **EV-009 et EV-007 sont verts** — mais une passe ne suffit pas : leur intermittence se
+  re-mesure au bouton 🔁, et l'hypothèse « c'était le motif, pas Milo » reste ouverte.
+- 🔎 **LES VÉRIFICATEURS RATAIENT 19 VIOLATIONS SUR 21** (ft-v939) — levier gratuit n°2.
 - 🔎 **LES VÉRIFICATEURS RATAIENT 19 VIOLATIONS SUR 21** (ft-v939) — levier gratuit n°2.
   Mesuré avant de coder : EV-009 **8/8** ratées · EV-011 **5/6** · EV-012 **5/5** · EV-005 **3/4**.
   Cause identique partout : **chaque motif ne connaissait qu'une façon de dire la chose**
