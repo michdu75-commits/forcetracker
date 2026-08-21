@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v946`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v947`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v946`** (prochaine : `ft-v947`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v947`** (prochaine : `ft-v948`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v947 — 🔬 LES 4 DRAPEAUX RESTANTS, LUS UN PAR UN — et 3 étaient des FAUX POSITIFS** — Michel : *« regarde les 3 diagnostic et le lien, et dit si les testeurs testent milo »*.
+
+**⭐⭐ LES 3 « DIAGNOSTIC » VIENNENT TOUS DU MÊME DÉFAUT.** Le motif attrapait `tu es (en |atteint)` — or **« TU ES EN » tout seul est une tournure française ordinaire**. Les trois cas, dans ses vraies conversations : *« tu es en **Jour 2** de ton programme »* · *« tu es en **plein dans la zone** »* (une TSH normale) · *« tu es en **phase de charge** initiale ? »*. **Aucun n'a le moindre rapport avec la médecine.**
+
+**⚠️ Et le même défaut dormait dans `tu fais (une |un |de l)`** — *« tu fais une belle séance »* l'aurait déclenché. Il n'a pas tiré sur ces 129 réponses ; c'est un **hasard**, pas une garantie.
+
+**👉 Les deux tournures exigent désormais une PATHOLOGIE derrière.** *« je te diagnostique »* et *« tu souffres de »* restent seuls — eux ne peuvent pas être anodins. Vérifié **dans les deux sens** : **6/6** vrais diagnostics vus, **0/5** faux positifs, et *« ça **peut** être une sciatique »* reste **vert** (l'hypothèse nommée que la Constitution autorise).
+
+**⚠️⚠️ ET LE RESSERRAGE A D'ABORD RENDU LE GARDE-FOU MUET.** `\\b` au lieu de `\b` dans la chaîne : **une barre oblique de trop, et il n'attrapait plus rien** — 5 vrais diagnostics sur 5 ratés. C'est le **cousin du piège déjà payé ici** (le `\b` après un accent, qui rendait le motif « noté » aveugle). *Un motif construit par concaténation se vérifie en le JOUANT, jamais en le relisant.*
+
+**⭐ LE 4ᵉ DRAPEAU EST GARDÉ TEL QUEL, ET C'EST UNE DÉCISION.** Milo cite `claude.ai` — un lien réel, dans une conversation **débridée** où Michel l'interroge sur son propre prompt. C'est un faux positif **léger** : 1 sur 129. Resserrer le motif des liens risquerait de rater une **vraie** source fabriquée, et *R19 coupe dans les deux sens* : un garde-fou trop bavard finit désactivé, un garde-fou trop timide ne sert à rien.
+
+**👉 BILAN HONNÊTE SUR SES 25 JOURS : 4 drapeaux, dont 3 VRAIES promesses de mémoire non tenues.** C'est tout ce que le Gardien a trouvé de solide sur 129 réponses.
+
+**⭐⭐ ET LA SECONDE QUESTION A RÉVÉLÉ UN TROU DANS CE QUI VENAIT D'ÊTRE LIVRÉ.** *« Est-ce que les testeurs testent Milo ? »* — avec le filtre d'hier (au moins une dérive), **un testeur qui utilise Milo sans déraper n'apparaissait pas du tout** : impossible de distinguer *« ne l'utilise pas »* de *« l'utilise et tout va bien »*. Or `retro.messages` compte ses réponses de Milo : **c'est littéralement la mesure d'usage**. La vue affiche désormais **tous** les comptes, avec *« N réponses de Milo, AUCUNE dérive ✅ »* — et *« n'a jamais parlé à Milo »* quand c'est le cas.
+Tests : **parcours 950/950** (+3, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `coach.js`, `Code.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v947. |
 
 **ft-v946 — 🕰️ L'HISTORIQUE DÉJÀ STOCKÉ PASSE AU GARDIEN — plus besoin d'attendre** — Michel : *« attend une chose on ne pourra pas récupérer les anciennes conversations alors »*.
 
@@ -711,21 +728,6 @@ Tests : parcours 829/829, calculs 241/241, muscles 241/241, croisés 50/50, date
 
 **⚠️ PORTÉE HONNÊTE, écrite dans le code** : ça ne couvre que le débrief **AUTOMATIQUE**, dont le déclenchement est déterministe. Quand la personne demande *« que penses-tu de ma séance »* en plein chat, l'app ne peut pas le deviner sans **classer** le message — et une erreur de classement est silencieuse. Là, seule la règle du prompt reste, et elle est plus faible.
 Tests : **parcours 829/829** (+6, bloc LXV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif ici** : `_recapSeance` est une fonction NEUVE — un témoin tourné contre l'ancien code rendrait « fonction absente » au lieu de mesurer, le piège payé 8 fois. Ce que les témoins prouvent est autre chose et suffit : la liste est complète **par construction**, elle retombe sur la séance la plus récente si l'identifiant est inconnu, et elle ne peut jamais faire tomber le débrief. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v928. |
-
-**ft-v927 — 📋 UN DÉBRIEF COUVRE TOUS LES EXERCICES — il en sautait 2 sur 5** — Michel, en relisant sa séance : *« et il a oublié des exercices si je ne dis pas de connerie »*. Il ne disait pas de connerie.
-
-**LE CONSTAT, VÉRIFIÉ** : sur ses 5 exercices, Milo en a commenté **3**. Absents : le **Tirage Visage (Face Pull)** — celui qu'il avait lui-même prescrit *« indispensable pour l'épaule droite »* — et le **Crunch Poulie**.
-
-**⭐ ET LES 5 ÉTAIENT BIEN TRANSMIS**, mesuré avant de toucher à quoi que ce soit. Ce n'est donc **pas** une perte de donnée (**R4**) : Milo les avait tous et en a choisi trois. *Vérifier d'abord évite de corriger le mauvais maillon.*
-
-**⚠️ SON ARGUMENT TRANCHE, ET IL EST IMPARABLE** : *« un débrief c'est un débrief »* — puis *« j'ai eu le débrief de fin de séance avec tout ce qui a été fait »*. **L'app en montre 5, Milo en montre 3.** Deux endroits racontent la même séance et se contredisent (**R2**) ; celui qui est incomplet est celui qui parle.
-
-**👉 CE QUI EST AJOUTÉ** : un débrief couvre **TOUS** les exercices faits — une ligne suffit quand il n'y a rien à dire (*« Face Pull 3×12 à 30 : fait, rien à signaler »*), mais l'exercice doit **APPARAÎTRE** · et un exercice qui **protège une zone fragile déclarée** ne se saute **jamais** : c'est celui dont la personne a le plus besoin de savoir qu'il a été fait.
-
-**⭐ ET ON LUI DONNE LE COMPTE, on ne lui demande pas de compter.** La ligne de séance porte désormais *« (5 exercices) »*. Une consigne qui dit *« n'en saute aucun »* sans fournir le nombre demande au modèle de recompter dans une ligne dense — c'est un **prompt qui compense une donnée absente** (**R8**), et le chiffre, lui, est calculé par l'app donc exact.
-
-**⚠️ LE MOTIF EST LE MÊME QU'À ft-v923, quelques heures plus tôt** : Milo traite les **petits accessoires comme négligeables** — il les range au hasard dans l'ordre, et il les oublie au débrief. *Deux symptômes, une seule attitude.*
-Tests : **parcours 823/823** (+3, bloc LXIV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v927. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

@@ -3331,8 +3331,24 @@ function _gardienSortie(text){
     if (/^\s*(?:\d+[.)]|[-–•*])\s+/.test(ln) && /\?/.test(ln)) listQ++;
   });
   if (listQ >= 2) flags.push({ code:'interrogatoire', label: listQ + ' questions en liste' });
-  // 3) diagnostic médical (formulations affirmatives, conservatrices pour éviter les faux positifs)
-  if (/\b(je (te )?diagnostique|tu souffres d|tu es (en |atteint)|tu fais (une |un |de l)|c'est (une |un |de l')?(d[ée]pression|burn ?out|arthrose|tendinite|hernie|pathologie|maladie|un trouble))/i.test(clean)) {
+  /* 3) DIAGNOSTIC MÉDICAL — MOTIF RESSERRÉ LE 21/08, après l'avoir joué sur 129 vraies
+     réponses de Milo : il faisait **3 faux positifs sur 3**, et toujours pour la même raison.
+     Il attrapait « tu es (en |atteint) » — or « TU ES EN » tout seul est une tournure
+     française ordinaire : « tu es en Jour 2 de ton programme », « tu es en plein dans la
+     zone », « tu es en phase de charge ». Aucune n'a le moindre rapport avec la médecine.
+     ⚠️ Le même défaut dormait dans « tu fais (une |un |de l) » : « tu fais une belle séance »
+     l'aurait déclenché. Il n'a pas tiré sur ces 129 réponses, mais c'est un hasard.
+     👉 Les deux tournures exigent désormais une PATHOLOGIE derrière. « tu souffres de » et
+     « je te diagnostique » restent seuls, eux : ils ne peuvent pas être anodins.
+     ⚠️ Et le cas qui m'a fait douter mérite d'être noté : sur une question créatine, Milo
+     écrivait « tu surcharges tes reins » — mais il ajoutait « mentionne-le à ton médecin ».
+     Ce n'est pas le motif qui l'avait vu, et il n'y avait rien à corriger. */
+  const _MAL = "(d[ée]pression|burn ?out|arthrose|tendinite|hernie|sciatique|lumbago|pathologie|maladie|trouble)";
+  if (new RegExp("\\b(je (te )?diagnostique|tu souffres d"
+      + "|tu es atteint"
+      + "|tu es en (une |un |de la |du |l')?" + _MAL
+      + "|tu fais (une |un |de l')?" + _MAL
+      + "|c'est (une |un |de l')?" + _MAL + ")", "i").test(clean)) {
     flags.push({ code:'diagnostic', label:'formulation de diagnostic médical' });
   }
   /* 4) PROMESSE DE MÉMOIRE VIDE (17/08/2026) — « je retiens pour la prochaine fois » sans le bloc.
@@ -3560,7 +3576,7 @@ async function _gardienStatsTous(){
     if(typeof _adminTokRefuse==='function' && _adminTokRefuse(d)){ toast('Jeton refusé — relance','error'); return; }
     if(d.status!=='ok'){ toast('Erreur : '+(d.error||'?'),'error'); return; }
     const L=['🛡️ GARDIEN — TOUS LES COMPTES','',
-             d.comptes+' compte(s) ayant au moins une dérive détectée.',''];
+             d.comptes+' compte(s) ayant déjà parlé à Milo.',''];
     const g=d.global||{}; const cles=Object.keys(g);
     if(cles.length){ L.push('TOTAL, tous comptes confondus :');
       cles.sort((a,b)=>g[b]-g[a]).forEach(c=>L.push('  · '+c+' : '+g[c])); L.push(''); }
@@ -3571,9 +3587,14 @@ async function _gardienStatsTous(){
       const R=u.retro;
       if(R && R.total){ L.push('   🕰️ historique : '+R.total+' sur '+R.messages+' réponse(s)  ('+R.depuis+' → '+R.jusqu+')');
         Object.keys(R.codes||{}).forEach(c=>L.push('        '+c+' : '+R.codes[c])); }
-      else if(R){ L.push('   🕰️ historique : rien sur '+R.messages+' réponse(s) analysée(s)'); }
+      // ⭐ Zéro dérive n'est PAS zéro usage : `messages` dit combien de fois Milo a répondu.
+      else if(R){ L.push('   🕰️ historique : '+R.messages+' réponse(s) de Milo, AUCUNE dérive ✅'
+                         +'  ('+R.depuis+' → '+R.jusqu+')'); }
+      if(R && !R.messages) L.push('   ⚠️ n\'a jamais parlé à Milo');
     });
-    if(!d.comptes) L.push('Aucune dérive remontée pour l\'instant.');
+    if(!d.comptes) L.push('Personne n\'a encore rouvert l\'app depuis le branchement.');
+    L.push('');
+    L.push('👉 « réponse(s) de Milo » = la MESURE D\'USAGE : un compte à 0 ne teste pas Milo.');
     L.push(''); L.push('⛔ Des NOMBRES uniquement : aucune phrase n\'a quitté leur téléphone.');
     L.push('⚠️ Un compte n\'apparaît qu\'après sa prochaine sauvegarde.');
     L.push('⚠️ 🕰️ L\'historique couvre PLUSIEURS versions de Milo, dont des antérieures aux');

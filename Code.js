@@ -401,7 +401,13 @@ function doGet(e) {
       try {
         const d = JSON.parse(_unpackUser_(props[k]));
         const g = d.profile && d.profile.gardienStats;
-        if (!g || (!g.total && !(g.retro && g.retro.total))) return;
+        /* ⭐ ON GARDE AUSSI LES COMPTES SANS AUCUNE DÉRIVE — question de Michel le 21/08 :
+           « dis si les testeurs testent Milo ». Avec l'ancien filtre (au moins une dérive),
+           un testeur qui utilise Milo SANS déraper n'apparaissait pas du tout : impossible
+           de distinguer « ne l'utilise pas » de « l'utilise et tout va bien ». Or
+           `retro.messages` compte ses réponses de Milo — c'est LITTÉRALEMENT la mesure
+           d'usage. Un compte sans bloc `retro` n'a simplement pas encore rouvert l'app. */
+        if (!g || (!g.total && !(g.retro && (g.retro.total || g.retro.messages)))) return;
         Object.keys(g.codes || {}).forEach(function(c){ global[c] = (global[c]||0) + g.codes[c]; });
         lignes.push({ nom: (d.profile && d.profile.name) || '?',
                       total: g.total || 0, depuis: g.depuis || '?', dernier: g.dernier || '?',
