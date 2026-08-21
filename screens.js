@@ -1829,6 +1829,58 @@ function _renderOuTuEnEs(macros){
     +'</div>';
 }
 
+/* 🏋️ « TU T'ENTRAÎNES PLUS QUE CE QUE TON RÉGLAGE SUPPOSE » — observer, expliquer, proposer,
+   décider (docs/PROFIL-VIVANT.md). La carte vit sur l'écran NUTRITION, c'est-à-dire là où les
+   calories vivent : la personne ne peut pas voir sa cible changer sans avoir lu pourquoi.
+   ⛔ ELLE NE S'APPLIQUE JAMAIS TOUTE SEULE, et le bouton annonce le chiffre AVANT (R29). */
+function _renderEcartActivite(){
+  const el=document.getElementById('nu-act-drift'); if(!el)return;
+  const ec=(typeof ecartNiveauActivite==='function')?ecartNiveauActivite():null;
+  if(!ec){ el.innerHTML=''; return; }
+  const d=(typeof ecartNiveauKcal==='function')?ecartNiveauKcal(ec):0;
+  const monte=ec.suggere>ec.actuel;
+  const chiffre=(d>0?'+':'')+d.toLocaleString('fr-FR')+' kcal';
+  /* ⚠️ SI LA CIBLE EST RÉGLÉE À LA MAIN, ON LE DIT AU LIEU DE PROMETTRE UN CHANGEMENT QUI
+     N'AURA PAS LIEU : `manualKcal` gagne sur le calcul, donc l'anneau ne bougera pas d'un
+     kcal. Annoncer « +250 » serait faux, et un chiffre faux est pire qu'un silence. */
+  const manuel=(typeof S.manualKcal==='number'&&S.manualKcal>0);
+  el.innerHTML='<div style="display:flex;flex-direction:column;gap:8px;background:var(--bg2);border:1px solid var(--sep);border-radius:12px;padding:11px 12px;margin-top:8px;">'
+    +'<div style="font-size:12.5px;color:var(--t2);line-height:1.45;">🏋️ Sur les 4 dernières semaines tu t\'entraînes <b style="color:var(--t1);">'+ec.moy.toString().replace('.',',')+' fois par semaine</b> en moyenne. Ton réglage dit <b>'+ec.labelActuel+'</b>.</div>'
+    +'<div style="font-size:11.5px;color:var(--t3);line-height:1.45;">Ce réglage est ce qui fixe ta dépense — et donc ta cible. '+(monte?'Il est peut-être sous-évalué&nbsp;: tu manges sans doute un peu moins que ce que tu dépenses.':'Il est peut-être surévalué&nbsp;: ta cible est sans doute un peu haute.')+'</div>'
+    +(manuel?'<div style="font-size:11.5px;color:var(--gold);line-height:1.45;">⚠️ Ta cible est réglée à la main, elle ne bougera pas&nbsp;: seul le chiffre de dépense affiché sera corrigé. C\'est toi qui décides de la suivre ou non.</div>':'')
+    +'<div style="display:flex;gap:8px;">'
+    +'<button onclick="appliquerNiveauActivite('+ec.suggere+')" class="btn" style="flex:1;padding:9px;font-size:12.5px;font-weight:700;">Passer en '+ec.labelSuggere+(manuel?'':' ('+chiffre+')')+'</button>'
+    +'<button onclick="garderNiveauActivite('+ec.suggere+')" class="btn" style="flex:0 0 auto;padding:9px 14px;font-size:12.5px;background:var(--bg3);color:var(--t2);border:1px solid var(--sep);font-weight:700;">Garder</button>'
+    +'</div></div>';
+}
+/* ⛔ ET C'EST LE SEUL ENDROIT QUI ÉCRIT `activityLevel` DEPUIS UNE OBSERVATION (R2) — avec la
+   même mémoire d'arbitrage que le détecteur de fréquence : on ne redemande pas pour un niveau
+   déjà refusé, sinon la carte devient du harcèlement et finit ignorée (R19/R24). */
+function _stampNiveauActivite(suggere,result){
+  try{
+    if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};
+    S.registre.ctxAct={niveau:suggere,at:today(),result:result};
+    S.registre.lastObsAt=today();
+  }catch(e){}
+}
+function appliquerNiveauActivite(suggere){
+  try{
+    S.activityLevel=+suggere;
+    const sel=document.getElementById('act-sel'); if(sel)sel.value=String(suggere);
+    _stampNiveauActivite(+suggere,'updated');
+    persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+    renderNutrition();
+    if(typeof toast==='function')toast('Mis à jour 👍 Ta dépense est calée sur ton vrai rythme.','success');
+  }catch(e){console.warn('[FT act] apply',e);}
+}
+function garderNiveauActivite(suggere){
+  try{
+    _stampNiveauActivite(+suggere,'kept');
+    persist();
+    const el=document.getElementById('nu-act-drift'); if(el)el.innerHTML='';
+    if(typeof toast==='function')toast("Ok, je garde ton réglage 👍",'info');
+  }catch(e){console.warn('[FT act] keep',e);}
+}
 function renderNutrition(){try{
   renderSupplements();
   // Phase buttons
@@ -1873,9 +1925,24 @@ function renderNutrition(){try{
   const todayStr=today();
   const todaySess=S.sessions.find(s=>s.date===todayStr);
   const sessCals=todaySess&&todaySess.calories?todaySess.calories:0;
-  const totalCals=tdee+sessCals;
   document.getElementById('nu-session-cal').textContent=sessCals>0?sessCals.toLocaleString('fr-FR')+' kcal':'— (pas de séance)';
-  document.getElementById('nu-total-cal').textContent=(sessCals>0?totalCals:tdee).toLocaleString('fr-FR')+' kcal';
+  /* 🏋️ ON N'ADDITIONNE PLUS « dépense + séance » (21/08/2026) — c'était un DOUBLE COMPTE.
+     Le niveau d'activité s'appelle « Modéré (3-4j) » : les séances sont déjà dedans, lissées
+     sur la semaine. La tuile affichait donc un total plus gros que la réalité, et — pire — il
+     CONTREDISAIT l'anneau juste en dessous, qui lui ne l'ajoutait pas. Deux chiffres qui se
+     contredisent sur le même écran, sans rien pour dire lequel commande la cible : c'est la
+     famille de bugs « deux sources qui se contredisent » (BUGS.md), et elle est plus vicieuse
+     que l'absence, parce que la personne VOIT les deux.
+     👉 La tuile dit désormais ce qu'on sait vraiment : combien de séances cette semaine, et si
+     ça colle au niveau déclaré. La séance du jour reste affichée à côté — c'est une MESURE
+     juste, elle n'a simplement rien à faire dans une addition. */
+  const _wkEl=document.getElementById('nu-week-sess');
+  if(_wkEl){
+    const _wk=(typeof _weeklyCounts==='function')?_weeklyCounts(1)[0]:null;
+    _wkEl.textContent = _wk===null ? '—' : (_wk+' séance'+(_wk>1?'s':''));
+    _wkEl.style.color = 'var(--orange)';
+  }
+  try{ _renderEcartActivite(); }catch(e){ /* jamais bloquant : la carte est un ajout */ }
   document.getElementById('nu-hydra').textContent=hydra;
 
   // ── MODE ALIMENTAIRE + JEÛNE (02/08) ────────────────────────────────────────

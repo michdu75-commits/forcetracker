@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v948` — fusionnée sur `master` le 21/08.
+- **Version en ligne (live) :** `ft-v949` — fusionnée sur `master` le 21/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,28 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- 🏋️ **LE NIVEAU D'ACTIVITÉ CONTIENT DÉJÀ L'ENTRAÎNEMENT** (ft-v949) — Michel : *« bon la
+  nutrition lol ? »*.
+  ⭐⭐ **J'ai annoncé l'inverse et le code m'a contredit.** J'ai dit *« la nutrition ignore
+  complètement l'entraînement »* (c'est même écrit dans `NUTRITION-MOTEUR.md`) — **faux** :
+  l'écran affichait déjà « Total = dépense + séance ». Le vrai défaut est le **contraire** :
+  cette addition **compte la séance deux fois** (le multiplicateur s'appelle « Modéré (3-4j) »).
+  ⛔ Et elle **contredisait l'anneau** juste en dessous, qui ne l'ajoute pas.
+  ⚠️⚠️ **Le défaut de fond est plus grave** : `applyFreqContext` demande *« tu t'entraînes plutôt
+  5 fois maintenant ? »*, la personne dit **oui**, et seul `coachQuiz.answers.freq` est écrit —
+  **`S.activityLevel` ne bouge pas**. L'info est collectée, **validée par elle**, stockée, et
+  n'atteint jamais le calcul (**R4**), avec deux déclarations du même fait (**R2**).
+  👉 La tuile dit le **nombre de séances de la semaine** ; une carte propose de recaler le
+  niveau, gain en kcal **calculé**. ⛔ **Jamais appliqué tout seul** (R29).
+  ⏭️ **À suivre côté nutrition** : brique 1 (CIQUAL, **DEUX bases** — voir `BRIEF-NUTRITION.md`
+  §6.4) toujours **différée exprès** pour construire sur du vrai usage.
+- 🔋 **IDÉE NOTÉE (pas commencée)** — Michel, 21/08 : *« on a le score de récupération mais il
+  faudrait rajouter la donnée où on arrive à 100 (bon sauf moi qui suis fumeur) »*.
+  ⚠️ **La parenthèse est le point principal** : si un facteur **permanent** plafonne le score,
+  le 100 devient inatteignable — et un plafond invisible transforme un outil de progrès en
+  reproche quotidien. Détail + arbitrage A/B dans `IDEES-FUTURES.md`.
+  ⏭️ **Première étape gratuite** : ouvrir le calcul du score et mesurer s'il **garde le détail
+  par facteur** ou s'il l'écrase dans un total. Sans détail, il n'y a rien à afficher.
 - 📤 **LE COMPTEUR NE PARTAIT QUE SI LA PERSONNE FAISAIT QUELQUE CHOSE** (ft-v948) — Michel :
   *« à partir de quel moment tu pourras lire le Milo à Eline ? »*.
   ⭐⭐ **Réponse honnête avant le correctif : peut-être jamais.** Le scan rétro tournait bien au
