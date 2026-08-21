@@ -6,7 +6,23 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v943` — fusionnée sur `master` le 21/08.
+- **Version en ligne (live) :** `ft-v944` — fusionnée sur `master` le 21/08.
+- 🛡️ **LE GARDIEN TOURNE ENFIN LÀ OÙ LES GENS VIVENT** (ft-v944). Michel a exporté ses
+  conversations — **258 messages, 25 jours, 142 425 caractères** — et on y a mesuré
+  **3 vraies promesses de mémoire non tenues**, que **rien** ne voyait passer : le Gardien de
+  sortie ne tournait que sur le **clone**.
+  ⚠️⚠️ **Le brancher tel quel aurait été pire** : sur ces 129 vraies réponses il criait
+  **7 fois**, dont **4 faux positifs**. Calibré d'abord → **7 → 3**, exactement les 3 vraies.
+  ⛔ **Le texte affiché ne change pas d'un caractère** — on ajoute une mesure, pas un filtre.
+  ⚠️ **On mesure chez tout le monde, on affiche chez nous** : badge réservé (clone + admin),
+  compteur pour les autres, qui ne garde **que des nombres** (P3).
+  ⚠️ Les 3 cas sont **antérieurs au correctif du 20/08** (ou non datables) : rien ne prouve
+  que ft-v923 a échoué — le vrai apport, c'est qu'on le **saura** désormais.
+  ⏭️ **CE QUE LE FICHIER A AUSSI MESURÉ**, sur la question « pourquoi ne pas tout envoyer à
+  Milo » : 25 jours = **2× le contexte entier**, un an ≈ **30×** · et **86,4 % du volume,
+  c'est Milo qui parle** (Michel : 13,6 %). ⚠️ Ce n'est **pas** un problème de place
+  (40 000 tokens rentrent) — c'est la **dilution** et la **croissance**.
+- 📈 **L'ÉVOLUTION DU BILAN SANGUIN ATTEINT MILO** (ft-v943).
 - 📈 **L'ÉVOLUTION DU BILAN SANGUIN ATTEINT MILO — mais il ne l'ouvre jamais lui-même**
   (ft-v943). Michel : *« qu'il voie l'évolution, comme la courbe du poids, et tous les
   marqueurs, mais il ne le dit que si on lui demande par contre »*.

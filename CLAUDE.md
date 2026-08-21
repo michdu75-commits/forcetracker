@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v943`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v944`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v943`** (prochaine : `ft-v944`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v944`** (prochaine : `ft-v945`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v944 — 🛡️ LE GARDIEN TOURNE ENFIN LÀ OÙ LES GENS VIVENT — et il a fallu le CALIBRER d'abord** — Michel exporte ses conversations et dit simplement : *« Regarde »*. **258 messages, 4 discussions, 25 jours, 142 425 caractères.**
+
+**⭐⭐ CE QU'ON Y A MESURÉ : 3 vraies promesses de mémoire NON TENUES** — *« le Leg Curl avant le Face Pull, c'est noté »*, *« je retiens ça pour les prochaines fois »*, *« je retiens pour la prochaine fois »* — **sans qu'un seul bloc soit enregistré**. Et **rien ne les voyait passer** : le Gardien de sortie ne tournait **que sur le clone**. *Un garde-fou qui ne tourne pas là où les gens vivent ne garde rien.*
+
+**⚠️⚠️ MAIS LE BRANCHER TEL QUEL AURAIT ÉTÉ PIRE QUE DE NE RIEN FAIRE.** Joué sur ces **129 vraies réponses**, le motif criait **7 fois** : 3 vraies, et **4 phrases qui n'en sont pas du tout** — un débrief qui commence par *« ce que je retiens : »*, Milo qui **explique comment sa mémoire fonctionne**, un simple accusé de réception, une offre conditionnelle. *Un garde-fou juste une fois sur deux ne survit pas à son premier mois* (**R19**). Il a donc été **calibré sur ces vraies données avant d'être branché** : **7 alertes → 3**, et ce sont **exactement** les 3 vraies.
+
+**⛔ ET LE TEXTE AFFICHÉ NE CHANGE PAS D'UN CARACTÈRE.** `_gardienSortie` commence par `_stripCoachTech` — précisément ce que faisait déjà la production — et se contente ensuite de **lever des drapeaux** : il ne réécrit jamais une phrase. **On ajoute une MESURE, pas un filtre.** C'est le témoin le plus important du bloc, et il est vérifié sur des réponses qui lèvent effectivement des drapeaux.
+
+**⚠️ ON MESURE CHEZ TOUT LE MONDE, ON AFFICHE CHEZ NOUS.** Le badge reste réservé (clone + admin) : voir *« promesse de mémoire sans rien enregistrer »* sous une réponse **ferait douter n'importe qui de son coach**, pour un défaut qui nous regarde, nous. Chez les autres, la dérive est **comptée**.
+
+**⛔ ET LE COMPTEUR NE GARDE QUE DES NOMBRES** — aucune phrase de Milo, aucun mot de la personne. *Une dérive de comportement se mesure par sa FRÉQUENCE, pas par son contenu* ; stocker le contenu fabriquerait un journal de conversation que personne n'a demandé (**Constitution P3**). Lisible dans **Profil → Admin**.
+
+**⚠️ ET L'HONNÊTETÉ SUR LA DATE COMPTE AUTANT QUE LA MESURE** : les 3 cas trouvés sont tous **antérieurs au correctif du 20/08** — ou dans le fil en cours, **non datable depuis l'export**. **Rien ne prouve que ft-v923 a échoué.** Ce qui change, c'est qu'à partir d'aujourd'hui **on le saura** au lieu de le supposer.
+Tests : **parcours 938/938** (+10, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge** — les fonctions n'existent pas. ⚠️ **Et 9 témoins ne se sont pas exécutés du tout** : *un témoin qui ne tourne pas n'est pas un témoin vert* — 929 exécutés au lieu de 938. Fichiers : `coach.js`, `index.html`, `clone/index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v944. |
 
 **ft-v943 — 📈 L'ÉVOLUTION DU BILAN SANGUIN ATTEINT MILO — mais il ne l'ouvre JAMAIS lui-même** — Michel : *« qu'il voie l'évolution, comme la courbe du poids, et tous les marqueurs, mais il ne le dit que si on lui demande par contre »*.
 
@@ -703,32 +718,6 @@ Tests : **parcours 820/820** (+4, bloc LXIV), calculs 241/241, muscles 241/241, 
 
 **⚠️ ET MON PREMIER TÉMOIN NE PROUVAIT RIEN — 8ᵉ fois.** Je l'avais écrit avec la **nouvelle** façon d'appeler (`if(!poser(…)) poser(filet)`) : sur l'ancien code, la fonction rend `undefined`, donc « faux », donc le repli jouait quand même — **vert des deux côtés**. *Un témoin écrit avec la nouvelle convention ne peut pas voir l'ancienne.* Repassé sur la valeur **rendue**, qui est le vrai changement.
 Tests : **parcours 816/816** (+10, bloc LXIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 3 rouges** — le minuteur absent, et la pose qui ne dit ni « posé » ni « pas posé ». ⚠️ Les six modes de panne sont **verts des deux côtés dans ce test-ci, et c'est normal** : ils vérifient le comportement de la chaîne telle qu'elle s'écrit AUJOURD'HUI — ce sont des témoins de non-régression, pas la preuve du correctif. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v925. |
-
-**ft-v924 — 🔘 LE BOUTON N'APPARAISSAIT PAS SUR UNE VRAIE SÉANCE — et c'était ma livraison de la veille** — Michel, capture à l'appui : *« J'ai pas le bouton lancer la séance »*. Milo écrit pourtant *« La séance est prête, clique sur ⚡ Commencer cette séance juste en dessous »*. **Il n'y avait rien.**
-
-**MESURÉ SUR SON TEXTE RÉEL, pas sur un exemple** : `_ressembleASeance` rendait **`false`** — donc le cervelet n'était **même pas appelé** — et le filet déterministe rendait **`RIEN`**. Aucun des trois étages de la cascade ne pouvait produire le bouton.
-
-**⚠️⚠️ DEUX CAUSES, ET LES DEUX SONT DE MOI (ft-v919, la veille).**
-
-**① J'exigeais un NOM et des SÉRIES sur la MÊME ligne.** Milo n'écrit pas *« Développé couché 4×8 »*. Il écrit un **bloc** :
-```
-Soulevé de Terre (ancre)
-Paliers : 60×5 → 80×3 → 100×2 → 115×1
-3×3 à 130 kg — repos 3 min
-Barre collée aux tibias, gainage max
-```
-Le nom est sur **sa** ligne, les séries sur la **suivante**. ⚠️ **Et j'avais validé mon détecteur sur des textes que j'avais écrits MOI-MÊME** — le piège classique : *tester ses propres exemples au lieu du réel*. Le format de Milo était pourtant sous mes yeux dans les captures de la veille.
-
-**② La regex du filet est ancrée en FIN de ligne** (`…kg\s*$`). Le *« — repos 3 min »* qui traîne derrière la faisait échouer **complètement** — pas partiellement, complètement.
-
-**👉 CE QUI EST CORRIGÉ** : l'aiguillage accepte une ligne de séries **sans nom** (il ne fait qu'**ORIENTER** — au pire un appel dépensé, **R29**) · et le filet va chercher le nom sur la **ligne précédente**, en remontant au plus 3 lignes.
-
-**⚠️ ET LA LIGNE DE PALIERS EST SAUTÉE, sinon elle DEVIENDRAIT le nom.** *« Paliers : 60×5 → 80×3 »* est assise pile entre le nom et les séries : sans la règle qui l'écarte, l'exercice s'appellerait « Paliers ». C'est le témoin qui protège le plus, et il est écrit.
-
-**⭐ SON TEXTE RÉEL DEVIENT UN TÉMOIN PERMANENT** (**R17** — un bug de terrain devient un test) : les **5 exercices**, dans l'ordre, avec les bons noms, et les séries lues malgré le texte qui traîne.
-
-**⚠️ La règle des NOMS n'a pas bougé** : ce qu'on lit est repris **TEL QUEL**, jamais rapproché « à peu près » d'un exercice voisin. C'est la leçon du 04/08, et elle tient toujours — on a élargi *ce qu'on sait lire*, pas *ce qu'on s'autorise à deviner*.
-Tests : **parcours 806/806** (+6, bloc LXII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 5 rouges**, et la sortie se lit toute seule — `détecté=false` et `0 exercice(s) : RIEN`. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** : la ligne de paliers ne devient jamais un nom, et une discussion chiffrée ne déclenche pas le cervelet. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v924. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

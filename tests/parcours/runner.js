@@ -8472,6 +8472,116 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXXVIII - LE GARDIEN TOURNE ENFIN LA OU LES GENS VIVENT (21/08/2026) ==
+   Michel a exporte ses conversations (« Regarde ») : 258 messages, 4 discussions, 25 jours.
+   ⭐⭐ ON Y A MESURE 3 VRAIES PROMESSES DE MEMOIRE NON TENUES — « c'est note », « je retiens
+   pour la prochaine fois » — sans qu'un seul bloc soit enregistre. Et RIEN ne les voyait
+   passer : le Gardien de sortie ne tournait que sur le CLONE. Un garde-fou qui ne tourne pas
+   la ou les gens vivent ne garde rien.
+   ⚠️⚠️ MAIS BRANCHER LE MOTIF TEL QUEL AURAIT ETE PIRE : joue sur ces 129 vraies reponses, il
+   criait 7 fois — 3 vraies, 4 phrases qui n'en sont pas (un debrief « ce que je retiens : »,
+   une explication de sa propre memoire, un accuse de reception, une offre conditionnelle).
+   Un garde-fou juste une fois sur deux ne survit pas a son premier mois (R19). Il a donc ete
+   CALIBRE sur ces vraies donnees d'abord — le fichier de Michel a servi de banc d'essai.
+   ⛔ ET LE TEXTE AFFICHE NE CHANGE PAS D'UN CARACTERE : on ajoute une MESURE, pas un filtre.
+   C'est le temoin le plus important du bloc — brancher un garde-fou qui reecrirait les
+   reponses de Milo chez tout le monde serait un tout autre changement, non demande. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_name:'Michel'}));   // ⚠️ PAS admin : on teste l'utilisateur normal
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(()=>{
+    if(typeof _gardienSortie!=='function'||typeof _gardienCompter!=='function') return {absente:true};
+    const o={};
+    o.pasClone = (window.__FT_CLONE__!==true);   // on est bien dans l'app, pas le bac à sable
+
+    /* ① ⛔ LE TEXTE EST IDENTIQUE À CE QUE FAISAIT LA PROD. Sur des réponses qui LÈVENT des
+       drapeaux : un garde-fou qui charcuterait une phrase serait un autre produit. */
+    const ech=[
+      'Voilà ta séance : Squat 5×5 à 100 kg. Bon entraînement 💪',
+      'Et le Leg Curl avant le Face Pull, c\'est noté.',
+      'Regarde ici https://exemple.fr/etude pour la créatine.',
+      'Séance prête ```json\n{"seance":{"exs":[]}}\n``` bon courage !',
+    ];
+    o.texteIdentique = ech.every(x=>_gardienSortie(x).text === _stripCoachTech(x));
+
+    /* ② ⭐⭐ LE MOTIF CALIBRÉ, sur les VRAIES phrases tirées de ses conversations. */
+    const drapeau=(txt)=>_gardienSortie(txt).flags.some(f=>f.code==='promesse_vide');
+    o.vraies = [
+      'Et le Leg Curl avant le Face Pull, c\'est noté. Dis-moi par quoi tu veux remplacer le rowing.',
+      'Pour que ce soit clair que c\'est à venir, pas déjà fait. Je retiens ça pour les prochaines fois. 👍',
+      'Les charges et le volume étaient bons, c\'est juste l\'ordre qui était bancal. Je retiens pour la prochaine fois. 💪',
+    ].filter(drapeau).length;
+    o.fausses = [
+      'En attendant, dis-le moi ici et je le retiens direct !',
+      'Oui, bien noté — aujourd\'hui tu as fait : Leg Curl Assis Machine à la place du rowing.',
+      'C\'est une limite importante à comprendre. **Ce que je retiens :** uniquement dans ton profil, ta mémoire à toi.',
+      'La séance Push de ce matin était solide. Voilà ce que je retiens : les points positifs, Larsen 85×3×5 tenu.',
+    ].filter(drapeau).length;
+    /* ⛔ Et une promesse ACCOMPAGNÉE de son bloc ne doit jamais rougir : c'est le cas SAIN. */
+    o.avecBlocMuet = !drapeau('Noté ! {"retiens":["il finit par les mollets"]}');
+
+    /* ③ LE COMPTEUR : il monte, et il ne garde AUCUN texte. */
+    try{ localStorage.removeItem('ft4_gardienStats'); }catch(e){}
+    _gardienCompter([{code:'promesse_vide',label:'x'}]);
+    _gardienCompter([{code:'promesse_vide',label:'x'},{code:'source_fabriquee',label:'y'}]);
+    const brut=localStorage.getItem('ft4_gardienStats')||'';
+    const st=JSON.parse(brut||'{}');
+    o.compteReponses = st.total;                         // 2 réponses
+    o.comptePromesses= (st.codes||{}).promesse_vide;     // 2 promesses
+    o.compteSources  = (st.codes||{}).source_fabriquee;  // 1 source
+    o.aucunTexte = !/Leg Curl|retiens[^"]|mollets|Milo/.test(brut) && brut.length<300;
+
+    /* ④ ⛔ Un stockage qui REFUSE ne fait rien tomber. */
+    const vraiSet=localStorage.setItem.bind(localStorage);
+    localStorage.setItem=(k,v)=>{ if(k==='ft4_gardienStats') throw new Error('quota'); return vraiSet(k,v); };
+    let planta=false;
+    try{ _gardienCompter([{code:'promesse_vide',label:'x'}]); }catch(e){ planta=true; }
+    localStorage.setItem=vraiSet;
+    o.quotaOK = !planta && localStorage.getItem('ft4_gardienStats')===null;
+
+    /* ⑤ ⚠️ AUCUN BADGE pour un utilisateur normal. */
+    try{ _showCoachChat(); }catch(e){}
+    try{ renderCoachMsg('coach','Et le Leg Curl avant le Face Pull, c\'est noté.'); }catch(e){}
+    o.badgeNormal = document.querySelectorAll('.gardien-flag').length;
+    /* ... mais OUI pour l'admin. */
+    try{ localStorage.setItem('ft4_admin_ok','1'); }catch(e){}
+    try{ renderCoachMsg('coach','Et le Rowing avant le Squat, c\'est noté.'); }catch(e){}
+    o.badgeAdmin = document.querySelectorAll('.gardien-flag').length;
+    return o;
+  });
+
+  console.log('\n-- LXXVIII. Le Gardien tourne la ou les gens vivent --');
+  if(R.absente){ t('⛔ le Gardien de sortie existe', false, 'fonctions absentes'); }
+  else{
+    t('⭐⭐ le Gardien tourne DANS L\'APP, plus seulement sur le clone',
+      R.pasClone===true && R.texteIdentique!==undefined, 'clone='+(!R.pasClone));
+    /* ⛔ Le témoin le plus important : on ajoute une mesure, pas un filtre. */
+    t('⛔⛔ ... et le TEXTE AFFICHÉ ne change pas d\'un caractère (mesure, pas filtre)',
+      R.texteIdentique===true, '');
+    /* ⭐⭐ La calibration, figée sur les vraies phrases de Michel (R17). */
+    t('⭐⭐ CALIBRÉ : les 3 VRAIES promesses non tenues sont vues (3/3)',
+      R.vraies===3, R.vraies+'/3');
+    t('⭐⭐ ... et les 4 phrases qui n\'en sont PAS ne crient plus (0/4) — R19',
+      R.fausses===0, R.fausses+' faux positif(s) sur 4');
+    t('⛔ une promesse ACCOMPAGNÉE de son bloc reste muette', R.avecBlocMuet===true, '');
+    /* ⭐ Mesurer sans rien garder de ce qui s'est dit. */
+    t('⭐ le compteur monte : 2 réponses · 2 promesses · 1 source',
+      R.compteReponses===2 && R.comptePromesses===2 && R.compteSources===1,
+      'rép='+R.compteReponses+' prom='+R.comptePromesses+' src='+R.compteSources);
+    t('⛔ ... et il ne garde AUCUN texte de la conversation (P3)', R.aucunTexte===true, '');
+    t('⛔ un stockage qui REFUSE ne fait rien tomber', R.quotaOK===true, '');
+    /* ⚠️ On mesure chez tout le monde, on affiche chez nous. */
+    t('⚠️ AUCUN badge pour un utilisateur normal (ça ferait douter de son coach)',
+      R.badgeNormal===0, R.badgeNormal+' badge(s)');
+    t('⭐ ... mais le badge apparaît bien pour l\'admin', R.badgeAdmin===1, R.badgeAdmin+' badge(s)');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
