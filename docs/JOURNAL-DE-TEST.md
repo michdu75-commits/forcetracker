@@ -21,6 +21,20 @@ inventés, valent moins : ils testent ce qu'on a **imaginé** de Milo, pas ce qu
 **Ce fichier est la troisième issue : la salle d'attente.** Une ligne suffit. Rien ne coûte tant que la
 question n'est pas promue en scénario.
 
+**⏳ ET LE BENCHMARK ATTEND CE FICHIER.** Décision de Michel le 21/08 : *« on met de côté le benchmark,
+on n'a pas assez de pièges pour Milo »*, puis *« dès que tu auras marqué 25 questions ou pièges on le
+relance »* — et la précision qui compte : *« quand je dis 25 **c'est au moins** »*.
+
+**⚠️⚠️ 25 est un PLANCHER, pas une cible.** Lu comme un objectif, un seuil produit deux dérives opposées :
+
+| Dérive | Ce qu'elle donne |
+|---|---|
+| **Remplir pour atteindre le chiffre** | des entrées inventées — or *les bonnes viennent du vécu* |
+| **S'arrêter une fois atteint** | le fichier se ferme, et les pièges suivants se reperdent |
+
+Le seuil dit seulement : *« à partir d'ici, relancer le benchmark a un sens »*. **Il ne dit jamais que
+c'est fini.**
+
 ---
 
 ## ⚠️ Ce qui tue ce genre de fichier (à lire avant d'y toucher)
@@ -82,6 +96,52 @@ prendre »*. **Aucun des 16 motifs ne mesure ça** — ni le ton, ni le naturel,
 **Reste au juge humain**, et c'est assumé : c'est précisément pour ça qu'un benchmark tout vert ne
 prouve pas que Milo est bon.
 
+### 🟢⭐ Milo repropose un exercice que la personne a DÉJÀ refusé
+**16/08/2026, en pleine séance.** Michel : *« **Je lui ai déjà dit** que cet exercice ne me convient
+pas, trop long »*.
+**⭐ POURQUOI C'EST GRAVE** : c'est le pendant de « c'est noté » sans rien noter (`EV-004`), vu de
+l'autre côté. Là, Milo ne promet rien — **il oublie simplement**, et la personne doit répéter. *Devoir
+redire la même chose est ce qui fait abandonner un coach*, humain ou non.
+**Lien** : c'est aussi la sortie manquante de **R4b** — une préférence exprimée en conversation doit
+descendre jusqu'à la DONNÉE, sinon elle n'existe pas.
+**Vérifiable ?** Oui — un exercice refusé dans l'historique ne doit pas reparaître sans que Milo
+explique pourquoi il y revient.
+
+### 🟢 Milo ne voit que les dernières séances — pas les longues interruptions
+**02/08/2026.** Michel : *« l'historique, on avait fait en sorte que Milo se souvienne que **pendant
+trois mois t'étais pas allé au sport**, et pourquoi il prend que les dernières séances ? Je ne comprends
+pas ça, je pense qu'il y a eu un problème quelque part »*.
+**Pourquoi ça compte** : c'est **l'ADN du produit** — *« le sportif ne repart jamais de zéro »*. Une
+coupure de trois mois change tout (reprise progressive, charges à revoir), et une fenêtre glissante sur
+les N dernières séances la rend **invisible**.
+**Vérifiable ?** Oui — un profil avec un trou de 3 mois puis 5 séances doit faire apparaître la coupure
+dans le contexte envoyé à Milo.
+
+### 🟡 La montée en charge est-elle la bonne méthode ?
+**10/08/2026.** Michel, devant ses paliers : *« il me donne trois exercices en chauffe — une série de 5
+à 70 kg, une de 3 à 100, trois à 115, puis trois séries de trois à 130. Je vais les faire, mais je
+pense, **et à vérifier**, que c'est pas la bonne méthode »*.
+**⚠️ Entrée honnête : c'est un DOUTE, pas un constat.** Elle est ici précisément pour ça — le fichier
+dit qu'*« un doute est l'entrée la plus utile »*. À trancher par une recherche, pas par une intuition.
+
+### 🟡 Changer un exercice ne met pas à jour la séance EN COURS
+**03/08/2026, pendant une séance.** Michel : *« je lui ai demandé de changer l'exercice, sauf qu'il me
+propose bien une nouvelle séance mais **ça ne met pas à jour la séance actuelle qui est déjà en
+cours** »*.
+**Pourquoi ça compte** : Milo fait son travail, **l'app ne le suit pas**. C'est **R4** — l'intelligence
+existe dans le texte et n'atteint pas la donnée. ⚠️ À vérifier : peut-être déjà corrigé depuis.
+
+### 🟡 Le chrono démarre trop tôt — et une séance rattrapée n'a pas de temps
+**14/08/2026.** Michel : *« quand il incorpore une séance il démarre déjà le chrono, et ça c'est chiant.
+Pour moi le chrono devrait démarrer **à partir du moment où il a rentré sa première série**. Après ça
+peut être bâtard, parce que si on veut rattraper une séance qu'on a oublié de noter, on n'aura pas
+cette donnée »*.
+**⭐ Il pose le problème ET son revers dans la même phrase** — c'est ce qui en fait une bonne entrée.
+Une durée fausse est le premier poste d'erreur des calories (`docs/DOSSIER-MET-MESURES.md` : *la durée
+est la vraie source d'erreur, pas l'intensité* — le modèle était à 12 %, la durée à 300 %).
+**Vérifiable ?** Oui pour le démarrage. ⚠️ Le cas « séance rattrapée » demande une **décision** avant un
+test : que vaut une séance sans durée ? On la refuse, on l'estime, ou on l'accepte sans calories ?
+
 ### 🟢 Milo propose-t-il des exercices que l'app ne sait pas MESURER ?
 **01/08/2026**, en découvrant que dix exercices du catalogue étaient muets à la mesure (Tate Press,
 Muscle-up, Bird Dog, air bike… : aucun muscle, aucun classement). Michel : *« ok milo pourrait les
@@ -133,12 +193,16 @@ stratosphère** »*. Le prompt dit *« maximum 200 mots sauf si l'athlète deman
 **Attendu** : une question simple → une réponse courte. Pas un exposé.
 **Vérifiable ?** Oui — compter les mots, et vérifier que rien dans la question ne demandait du détail.
 
-### 🟢 « Il me met de l'échauffement partout »
-**15/08/2026.** Michel, en relisant une séance : *« Il me met de l'échauffement partout c'est
-normal ? »*
-**Pourquoi ça compte** : un échauffement par exercice, ce n'est pas une séance, c'est un tunnel — et
-ça mange le budget temps sans que personne ne le voie.
-**Vérifiable ?** Oui — compter les blocs « échauffement / paliers » par rapport au nombre d'exercices.
+### 🟢⭐ « J'ai passé presque la MOITIÉ de ma séance sur des exercices d'échauffement »
+**15 puis 17/08/2026** — signalé deux fois, la seconde avec le chiffre. D'abord : *« Il me met de
+l'échauffement partout c'est normal ? »*. Puis, après un soulevé de terre : *« j'ai passé **presque la
+moitié de ma séance** sur des exercices d'échauffement […] **je ne veux pas qu'il propose à des clients
+des trucs bizarres qui vont les soûler** »*.
+**⭐ La deuxième phrase donne le vrai critère** — ce n'est pas « est-ce trop ? », c'est *« est-ce que ça
+va soûler quelqu'un qui découvre l'app ? »*.
+**Vérifiable ?** Oui, et le seuil est donné : **le temps d'échauffement ne doit pas approcher la moitié
+de la séance**. ⚠️ Michel demandait aussi de **vérifier si c'est fondé** avant de trancher — la règle
+d'échauffement peut être juste, c'est sa quantité qui est en cause.
 
 ### 🟢 Le temps de DÉPLACEMENT dans la salle
 **19/08/2026.** Michel : *« il ne compte pas le déplacement dans la salle »*. Le budget temps de Milo

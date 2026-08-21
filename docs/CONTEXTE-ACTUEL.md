@@ -16,7 +16,16 @@
   la **règle d'or #12** (le seul fichier auto-chargé) **et sur un compteur dans
   `tools/check_regles.py`**, qui affiche l'état à chaque livraison. *Une intention qu'aucun
   outil ne rappelle finit par s'éteindre.*
-  ⏭️ **État au 21/08 : 18 entrées (13 à promouvoir · 3 promues) — encore 7 avant relance.**
+  ⚠️⚠️ **25 est un PLANCHER, pas une cible** (*« quand je dis 25 c'est **au moins** »*) : on ne remplit
+  pas pour atteindre le chiffre, **et on ne s'arrête pas en l'atteignant**.
+  ⏭️ **État au 21/08 (soir) : 25 entrées — plancher ATTEINT, 20 à promouvoir.**
+  ⭐ **Toutes viennent de cas RÉELS**, remontés des transcriptions du 1ᵉʳ au 21/08 avec les mots
+  exacts de Michel. Les plus fortes : *« il n'y a pas l'image du mouvement »* (séance d'**Eline**,
+  débutante — elle ne pouvait pas exécuter sa séance) · *« je lui ai **déjà dit** que cet exercice
+  ne me convient pas »* · *« presque **la moitié** de ma séance en échauffement »* · *« il prend
+  que les dernières séances »* alors qu'une coupure de **3 mois** doit rester visible.
+  ⚠️ **Leçon de fouille écrite dans le fichier** : mon filtre cherchait le mot « Milo » et a raté
+  le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
 - 🔬 **LES 4 DRAPEAUX RESTANTS, LUS UN PAR UN** (ft-v947) — Michel : *« regarde les 3
