@@ -3426,7 +3426,12 @@ function _gardienCompter(flags){
     (flags||[]).forEach(f=>{ o.codes[f.code]=(o.codes[f.code]||0)+1; });
     o.total=(o.total||0)+1;                       // nombre de RÉPONSES portant au moins 1 drapeau
     localStorage.setItem(_GARDIEN_CLE, JSON.stringify(o));
-  }catch(e){ try{ localStorage.removeItem(_GARDIEN_CLE); }catch(e2){} }
+    /* ⚠️ UN SEUL PROPRIÉTAIRE (R2) : cette fonction est le seul endroit qui écrit le
+       compteur. `S.gardienStats` en est le reflet en mémoire, lu par la sauvegarde cloud —
+       deux compteurs qui s'incrémenteraient séparément finiraient par ne plus dire la même
+       chose, et on ne saurait pas lequel croire. */
+    try{ if(typeof S!=='undefined') S.gardienStats=o; }catch(e2){}
+  }catch(e){ try{ localStorage.removeItem(_GARDIEN_CLE); S.gardienStats=null; }catch(e2){} }
 }
 /* Lisible dans Profil → Admin. Répond à la seule question utile : « est-ce que ça arrive
    vraiment, et à quelle fréquence ? » — au lieu de la deviner. */
@@ -3446,7 +3451,46 @@ function _gardienStatsTexte(){
 }
 function showGardienStats(){
   if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
-  showConfirm('🛡️ Gardien', _gardienStatsTexte(), function(){}, 'Fermer');
+  // « Fermer » ferme ; c'est le bouton SECONDAIRE qui va chercher les autres comptes.
+  showConfirm('🛡️ Gardien — ce téléphone', _gardienStatsTexte(),
+    function(){}, 'Fermer', '🌍 Voir TOUS les comptes', function(){ _gardienStatsTous(); });
+}
+
+/* 🌍 LA MESURE CONTINUE, CHEZ DE VRAIS UTILISATEURS — demande de Michel le 21/08 :
+   *« mais je veux une mesure continue »*.
+   ⭐⭐ POURQUOI ÇA COMPTE : son propre Milo est DÉBRIDÉ (il peut parler de tout et citer ses
+   propres consignes — `_estSuperAdmin`). Ses conversations ne mesurent donc PAS ce que
+   reçoivent Christophe, Tatiana, Emma ou Eline. Calibrer les garde-fous sur le seul compte
+   non représentatif du parc, c'est le cousin de R9 : on corrigerait le mauvais Milo.
+   ⛔ CE QUI REMONTE : des NOMBRES. Un prénom, un compteur par code de dérive, deux dates.
+   Aucune phrase de Milo, aucun mot de la personne — ses conversations ne quittent toujours
+   pas son téléphone, et c'est toujours écrit dans l'app.
+   ⚠️ LE JETON EST DEMANDÉ À LA VOLÉE (`_adminTok`), jamais écrit dans un fichier servi : la
+   faille de la boîte à idées (jeton en clair dans `app.js`, dépôt public) a été fermée le
+   07/08 et un test permanent la surveille. On ne la rouvre pas par confort. */
+async function _gardienStatsTous(){
+  if(!S.url){ toast('Serveur absent','error'); return; }
+  if(typeof _adminTok!=='function'){ toast('Jeton admin indisponible','error'); return; }
+  toast('Lecture des compteurs…','info');
+  try{
+    const r=await fetch(S.url+'?action=gardienStats&token='+encodeURIComponent(_adminTok()),{method:'GET'});
+    const d=await r.json();
+    if(typeof _adminTokRefuse==='function' && _adminTokRefuse(d)){ toast('Jeton refusé — relance','error'); return; }
+    if(d.status!=='ok'){ toast('Erreur : '+(d.error||'?'),'error'); return; }
+    const L=['🛡️ GARDIEN — TOUS LES COMPTES','',
+             d.comptes+' compte(s) ayant au moins une dérive détectée.',''];
+    const g=d.global||{}; const cles=Object.keys(g);
+    if(cles.length){ L.push('TOTAL, tous comptes confondus :');
+      cles.sort((a,b)=>g[b]-g[a]).forEach(c=>L.push('  · '+c+' : '+g[c])); L.push(''); }
+    (d.users||[]).forEach(u=>{
+      L.push('— '+u.nom+' : '+u.total+' réponse(s) marquée(s)  ('+u.depuis+' → '+u.dernier+')');
+      Object.keys(u.codes||{}).forEach(c=>L.push('      '+c+' : '+u.codes[c]));
+    });
+    if(!d.comptes) L.push('Aucune dérive remontée pour l\'instant.');
+    L.push(''); L.push('⛔ Des NOMBRES uniquement : aucune phrase n\'a quitté leur téléphone.');
+    L.push('⚠️ Un compte n\'apparaît qu\'après sa prochaine sauvegarde.');
+    showConfirm('🌍 Gardien — tous les comptes', L.join('\n'), function(){}, 'Fermer');
+  }catch(e){ toast('Lecture impossible : '+(e.message||'réseau'),'error'); }
 }
 
 function renderCoachMsg(role, text) {

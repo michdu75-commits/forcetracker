@@ -389,6 +389,29 @@ function doGet(e) {
     } catch(err) { return json_({status:'error', error:err.message}); }
   }
 
+  // 🛡️ Dérives du Gardien, agrégées sur TOUS les comptes — ?action=gardienStats&token=…
+  // Répond à la seule question utile : « est-ce que ça arrive chez de VRAIS utilisateurs,
+  // et à quelle fréquence ? » — au lieu de la déduire du compte du fondateur, dont le Milo
+  // est débridé. ⛔ Ne renvoie que des NOMBRES et des prénoms : jamais une phrase.
+  if (p.action === 'gardienStats') {
+    if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
+    const props = PropertiesService.getScriptProperties().getProperties();
+    const lignes = [], global = {};
+    Object.keys(props).filter(function(k){ return k.indexOf('u_') === 0; }).forEach(function(k){
+      try {
+        const d = JSON.parse(_unpackUser_(props[k]));
+        const g = d.profile && d.profile.gardienStats;
+        if (!g || !g.total) return;
+        Object.keys(g.codes || {}).forEach(function(c){ global[c] = (global[c]||0) + g.codes[c]; });
+        lignes.push({ nom: (d.profile && d.profile.name) || '?',
+                      total: g.total, depuis: g.depuis || '?', dernier: g.dernier || '?',
+                      codes: g.codes || {} });
+      } catch(e) {}
+    });
+    lignes.sort(function(a,b){ return (b.total||0) - (a.total||0); });
+    return json_({status:'ok', comptes:lignes.length, global:global, users:lignes});
+  }
+
   // Lecture des idées des testeurs (boîte à idées) — ?action=getIdees&token=…
   if (p.action === 'getIdees') {
     if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
@@ -924,6 +947,28 @@ function handleSaveProfile_(body) {
     if (body.morphotype    !== undefined) profile.morphotype    = _ps_(body.morphotype,    profile.morphotype);
     if (body.colorblind    !== undefined) profile.colorblind    = _ps_(body.colorblind,    profile.colorblind);
     if (body.coachMemory   !== undefined) profile.coachMemory   = _ps_(body.coachMemory,   profile.coachMemory);
+    // 🛡️ Compteur du Gardien (ft-v945) — DES NOMBRES SEULEMENT : {depuis, dernier, total,
+    // codes:{code:n}}. ~150 octets. Aucune phrase de Milo, aucun mot de la personne : ses
+    // conversations restent sur son téléphone, c'est écrit dans l'app et ça le reste.
+    // ⚠️ Pourquoi ça remonte : le Milo du fondateur est DÉBRIDÉ (il peut parler de tout et
+    // citer ses propres consignes), donc ses conversations ne mesurent pas ce que reçoivent
+    // les vrais utilisateurs. Sans cette remontée, on calibrerait les garde-fous sur le seul
+    // compte non représentatif du parc (cousin de R9).
+    if (body.gardienStats !== undefined && body.gardienStats !== null) {
+      try {
+        const g = body.gardienStats;
+        const codes = {};
+        Object.keys(g.codes || {}).slice(0, 20).forEach(function(k){
+          const n = Number(g.codes[k]);
+          if (isFinite(n) && n >= 0) codes[String(k).slice(0, 40)] = Math.min(n, 1e6);
+        });
+        // ⛔ On RECONSTRUIT l'objet au lieu de le recopier : un client bavard (ou modifié)
+        // ne doit pas pouvoir glisser du texte dans le store par ce champ.
+        profile.gardienStats = { depuis: String(g.depuis||'').slice(0,10),
+                                 dernier: String(g.dernier||'').slice(0,10),
+                                 total: Math.min(Number(g.total)||0, 1e6), codes: codes };
+      } catch(e) {}
+    }
     if (body.bday          !== undefined) profile.bday          = _ps_(body.bday,          profile.bday);
     // Nombres physiques : 0 n'écrase pas une valeur existante
     if (body.bw            !== undefined) profile.bw            = _pn_(body.bw,            profile.bw);

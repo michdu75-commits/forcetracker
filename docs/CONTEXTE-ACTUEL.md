@@ -6,7 +6,21 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v944` — fusionnée sur `master` le 21/08.
+- **Version en ligne (live) :** `ft-v945` — fusionnée sur `master` le 21/08.
+- 🌍 **LA MESURE CONTINUE, CHEZ DE VRAIS UTILISATEURS** (ft-v945). Michel : *« mais je veux
+  une mesure continue »* — après avoir signalé *« n'oublie pas Milo avec moi, il est débridé »*.
+  ⭐⭐ **Vérifié : il avait raison.** `_estSuperAdmin()` lui ouvre 2 portes fermées aux autres
+  (citer ses propres consignes · aucune restriction de sujet). Le **modèle est le même**.
+  ⚠️ **Donc le Gardien de ft-v944 avait été calibré sur l'échantillon le moins représentatif** —
+  un des 4 faux positifs n'existe que chez lui. **Cousin de R9.**
+  👉 Le compteur remonte avec la sauvegarde (Apps Script + miroir), lisible dans
+  **Profil → Admin → 🌍 Gardien — tous les comptes**.
+  ⛔ **Des nombres seulement** (~150 o) · le serveur **reconstruit** l'objet · les conversations
+  ne quittent pas le téléphone · **et l'app le dit aux testeurs** (« je ne veux pas leur cacher »).
+  ⛔ Milo ne reçoit pas ce compteur (il commenterait son propre score).
+  ⏭️ **À SUIVRE** : il faut attendre que les testeurs **sauvegardent** pour voir leurs chiffres.
+  Un compte n'apparaît qu'après sa prochaine synchro.
+- 🛡️ **LE GARDIEN TOURNE ENFIN LÀ OÙ LES GENS VIVENT** (ft-v944).
 - 🛡️ **LE GARDIEN TOURNE ENFIN LÀ OÙ LES GENS VIVENT** (ft-v944). Michel a exporté ses
   conversations — **258 messages, 25 jours, 142 425 caractères** — et on y a mesuré
   **3 vraies promesses de mémoire non tenues**, que **rien** ne voyait passer : le Gardien de
