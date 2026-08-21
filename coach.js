@@ -4200,6 +4200,16 @@ let _vcReport  = null;
 // n'est pas coach, c'est un sportif qui fait du body ». Un décor de test pris pour la
 // réalité, c'est exactement l'hypothèse-présentée-comme-un-fait que la Constitution interdit
 // à Milo — elle vaut aussi pour celui qui écrit le code.
+// ⚠️ ET LE MOT « FONDATEUR » NE DÉSIGNE PAS UNE PERSONNE. `docs/PERSONAS-FONDATEURS.md`
+// parle de « personas fondateurs » au sens de DIMENSIONS fondatrices du projet (Terrain &
+// Métier, Personnalisation, Physiologie) — le doc précise « Michel = le fondateur, à part ».
+// J'ai écrit « Christophe, persona fondateur » : ça transforme un nom de dimension en titre.
+// Michel : « Christophe n'est pas un fondateur hein, c'est un testeur ». Les vraies infos sur
+// les testeurs vivent dans RETOURS-TESTEURS.md — pas ici, et pas dans un nom de dimension.
+// ⭐ Michel complete : « comme Tatiana et Emma, ils n'ont aucune action directe sur
+// l'application ». Ce sont des TESTEURS : ils remontent des retours, MICHEL DECIDE.
+// LA REGLE : toute affirmation sur une personne reelle vient de RETOURS-TESTEURS.md ou de
+// Michel — jamais d'un nom de dimension, jamais d'un champ de persona.
 const VC_PERSONAS = {
   'VC-001': {
     id:'VC-001', nom:'Tatiana',

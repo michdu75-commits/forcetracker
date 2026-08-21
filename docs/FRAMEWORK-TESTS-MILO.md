@@ -214,7 +214,7 @@ ft-vNN est revenu »). Sortie **console + Markdown + JSON** (`tests/milo/report.
   assertions, sort le rapport. **Une commande** : `node tests/milo/runner.js`. **0 appel, 0 €.**
 - `tests/milo/eval-scenarios.js` — le corpus **Tier 2** : 15 scénarios, chacun avec ses
   **vérificateurs en code**. Six viennent des bugs vécus en salle du 15 au 20/08 ; les neuf autres
-  reprennent les règles de conversation/sécurité et les trois personas fondateurs.
+  reprennent les règles de conversation/sécurité et les trois personas du labo (VC-001/002/003).
 - `tests/milo/eval.js` — le runner **Tier 2** : `node tests/milo/eval.js` (à blanc + devis),
   `--go` (réel), `--modele haiku`, `--compare` (les deux côte à côte), `--only EV-001,EV-006`,
   `--n 4`. Rapports : `eval-report.json` / `.md`.
