@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v941`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v942`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v941`** (prochaine : `ft-v942`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v942`** (prochaine : `ft-v943`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v942 — 🔐 L'APP DEMANDE LE MOT DE PASSE D'UN PDF PROTÉGÉ** — Michel : *« j'ai envie de mettre ma prise de sang mais c'est protégé par un mot de passe, je vais comment ? »*.
+
+**Les laboratoires livrent très souvent leurs bilans en PDF chiffré.** L'app rendait *« Souci lecture fichier »* — **un message qui dit qu'il y a un problème sans dire LEQUEL**, donc sans dire quoi faire. La personne n'avait aucun moyen de deviner qu'il suffisait d'un mot de passe.
+
+**⭐ LE CORRECTIF VIT DANS `_pdfOuvrir`, PAS DANS L'IMPORT DU BILAN (R2).** **Quatre** imports lisent des PDF — bilan sanguin, programme, historique, repas — et ils héritent tous du même comportement. *Un seul propriétaire de l'ouverture, donc aucune divergence possible.* Un témoin vérifie qu'il n'y a bien qu'**un seul** `getDocument` dans tout `log.js`.
+
+**⛔ LE MOT DE PASSE NE QUITTE JAMAIS LE TÉLÉPHONE.** pdf.js déchiffre **en local**, dans le navigateur ; ce sont les **images rendues** qui partent ensuite. Il n'est ni stocké, ni synchronisé, ni envoyé — et le témoin ne se contente pas de le dire, il **compte 0 appel réseau** pendant toute l'ouverture. ⚠️ **Honnêteté écrite dans le code** : `prompt()` affiche ce qu'on tape **en clair**, ce n'est pas un champ masqué. Sur son propre téléphone c'est acceptable ; le taire ne l'aurait pas été.
+
+**⛔⛔ LES DEUX TÉMOINS QUI PROTÈGENT LE PLUS SONT DES SORTIES** : **annuler** sort et ne redemande pas · **trois** mauvais mots de passe **arrêtent tout**. *Sans ce plafond, un mot de passe qu'on ne retrouve pas piégerait la personne dans une suite de fenêtres sans fin* — et c'est le genre de piège qu'aucun test de « ça marche » ne trouve.
+
+**⚠️ ET LE GARDE EST ÉTROIT (R19)** : pdf.js signale le chiffrement par une exception **nommée**, donc un fichier **corrompu** remonte tel quel et ne fait réclamer **aucun** mot de passe qui n'existe pas. *Réclamer un secret pour un fichier simplement abîmé ferait douter la personne de sa mémoire au lieu de son fichier.*
+
+**⚠️ Un détail payé au passage** : une **copie fraîche du tampon à chaque essai**. pdf.js prend possession du buffer et le **détache** — le réutiliser ferait échouer la 2ᵉ tentative pour une raison qui n'a rien à voir avec le mot de passe. *Un bug qui se serait présenté comme « le bon mot de passe ne marche pas ».*
+Tests : **parcours 919/919** (+9, bloc LXXVI), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge** — `_pdfOuvrir` absente. ⚠️ **Et 8 témoins ne se sont pas exécutés du tout** (ils vivent sous le garde « fonction absente ») : *un témoin qui ne tourne pas n'est pas un témoin vert* — 911 exécutés au lieu de 919. Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v942. |
 
 **ft-v941 — 🚪 UN STOCKAGE QUI SURVIT DERRIÈRE UNE PORTE QUI NE SURVIT PAS NE SERT À RIEN** — Michel, en voulant vérifier lui-même : *« je ne peux pas rejouer j'ai plus les cases »*.
 
@@ -714,28 +729,6 @@ Tests : **parcours 806/806** (+6, bloc LXII), calculs 241/241, muscles 241/241, 
 
 **⚠️⚠️ ET LE CORRECTIF AVAIT UN DOUBLE PIÈGE, dont un que je n'ai vu que par la mesure.** ① Le prompt **DEMANDE lui-même** à Milo de répondre *« super, c'est noté 💪 »* quand la personne annonce sa prochaine séance — et là c'est **légitime**, puisqu'il émet le bloc `{"prevu"}` qui enregistre vraiment. Ajouter le motif sans cette exception ferait crier le garde-fou sur une phrase **que nous avons demandée** (**R19**). ② **`\b` après un « é » n'existe pas en JavaScript** : mon premier motif se terminait par `not[ée]\b` et n'attrapait **RIEN** — il marchait sur « note », pas sur « noté ». *Un accent suffit à rendre un garde-fou muet, et ça ne se voit pas à la lecture.* Le réflexe est écrit dans le code.
 Tests : **parcours 800/800** (+7, bloc LXI), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 5 rouges**, et la sortie se lit toute seule — `typographique=[] droite=[]`, rien n'était attrapé. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** : ils vérifient que le Gardien **ne crie PAS** quand un bloc enregistre vraiment, ni sur une phrase saine contenant « bien » ou « c'est ». Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v923. |
-
-**ft-v922 — 💪 LES GROUPES MUSCULAIRES AU PROPRE : 3 scissions, 19 → 22 codes** — Michel, après les adducteurs : *« ah, et peut-être y'en a d'autres lol »*, puis *« il faut que les groupes musculaires soient au top »*.
-
-**MESURÉ AVANT DE TOUCHER À QUOI QUE CE SOIT** : **13 groupes sur 19** regroupaient plusieurs muscles distincts. Et surtout, **deux paires d'exercices que personne ne confond en salle rendaient exactement la même chose** :
-
-| Deux exercices opposés | Avant | Après |
-|---|---|---|
-| **Mollets debout ⟷ assis** | `calves:2` · identique | `calves:2` ⟷ **`soleus:2`** |
-| **Curl ⟷ Extension de poignet** | `forearms:2` · identique | `forearms:2` ⟷ **`forearm-ext:2`** |
-
-Le mollet assis est **le cas d'école** : debout = jumeaux (genou tendu), assis = **soléaire** (genou fléchi, les jumeaux sont relâchés). Et le poignet est le **jumeau EXACT de l'adducteur** livré le matin même — deux mouvements opposés, un seul résultat.
-
-**③ ET LE DENTELÉ ANTÉRIEUR ÉTAIT RANGÉ DANS LES OBLIQUES.** Ce n'était pas de l'imprécision, c'était un **mauvais rangement** : le dentelé plaque l'omoplate contre la cage (pompes, pull-over), les obliques font tourner le tronc. *Une rotation russe n'a jamais travaillé le dentelé.*
-
-**⭐⭐ LE CRITÈRE QUI REND CES TROIS SCISSIONS SÛRES — et ce n'est PAS la finesse anatomique** : *le RESTE du groupe garde-t-il son sens sans la partie qu'on sort ?* Les 93 fiches « avant-bras » désignent la **PRISE** (donc les fléchisseurs) · les 62 fiches « mollets » en secondaire (squats, fentes) parlent des **jumeaux** · les 30 fiches d'obliques ne travaillent pas le dentelé. **Elles ne bougent pas, et elles ont toujours raison.** Coût réel : **18 fiches reprises sur 334**, pas 194.
-
-**⚠️ Les trois muscles étaient DÉJÀ DESSINÉS** (`back_soleus_*`, `back_forearm_extensor_*`, `front_serratus_anterior_*`), rattachés au mauvais groupe — exactement comme les adducteurs. **R31** : la figurine est le vocabulaire, et un muscle absent du vocabulaire est un muscle dont aucun module ne peut parler.
-
-**⚠️ ET LES DEUX NOUVELLES RÈGLES DE REPLI SONT PLACÉES DEVANT LES GÉNÉRALES, pas derrière** — la leçon de ft-v921, apprise le matin même : `_MEX` s'arrête au **premier match**, donc une règle juste posée après une règle large ne sert à rien. Un témoin le vérifie sur des noms **libres** (« mollets assis maison », « extension poignet maison »), c'est-à-dire sur le chemin des exercices perso et des imports.
-
-**⛔ CE QUI N'EST PAS FAIT, ET POURQUOI C'EST ÉCRIT (R30)** : le **pectoral haut/milieu/bas** (55 fiches) et le **moyen fessier** (108). Là, la scission n'est **pas propre** — il faudrait relire **tous** les développés et **tous** les squats, et le sens de chaque fiche changerait vraiment. Restent aussi en attente les **trapèzes** (122 fiches : un shrug et un face pull sont opposés) et les **rhomboïdes + grand rond** sortis du grand dorsal (67). *Ajouter un muscle change ce que voit l'utilisateur : c'est l'arbitrage de Michel, jamais un effet de bord.*
-Tests : parcours 793/793, calculs 241/241, **muscles 241/241** (+6), croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 7 rouges**, exactement les 7 comportements changés. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** — ils vérifient qu'une rotation russe n'a PAS gagné de dentelé et qu'un squat n'a PAS gagné de soléaire : *c'est ce qui prouve que la scission est propre et non une sur-étiquette.* L'**empreinte du catalogue** a été régénérée et relue : **18 exercices bougent, pas un de plus.** Fichiers : `log.js`, `constants.js`, `app.js`, `screens.js`, `tests/muscles/runner.js`, `tests/croises/runner.js` (+ empreinte), `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v922. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

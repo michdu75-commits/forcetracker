@@ -4563,10 +4563,54 @@ function _loadPDFJS(){
     document.head.appendChild(s);
   });
 }
-async function _pdfToImages(f){
+/* 🔐 OUVRIR UN PDF, MÊME PROTÉGÉ PAR MOT DE PASSE — Michel, 21/08 : « j'ai envie de mettre
+   ma prise de sang mais c'est protégé par un mot de passe, je vais comment ? ». Les
+   laboratoires livrent très souvent leurs bilans en PDF chiffré. Jusqu'ici l'app rendait
+   « Souci lecture fichier » : un message qui dit qu'il y a un problème sans dire LEQUEL,
+   donc sans dire quoi faire. La personne n'avait aucun moyen de deviner qu'il suffisait
+   d'un mot de passe.
+   ⭐ LE CORRECTIF VIT ICI, PAS DANS L'IMPORT DU BILAN (R2) : quatre imports lisent des PDF
+   (bilan sanguin, programme, historique, repas). Un seul propriétaire de l'ouverture =
+   les quatre héritent du même comportement et ne peuvent pas diverger.
+   ⛔ LE MOT DE PASSE NE QUITTE JAMAIS LE TÉLÉPHONE. Il sert à déchiffrer le PDF EN LOCAL
+   (pdf.js tourne dans le navigateur) ; ce sont les IMAGES rendues qui partent ensuite. Il
+   n'est ni stocké, ni synchronisé, ni envoyé — cette fonction ne touche ni `S`, ni le
+   réseau. ⚠️ Honnêteté : `prompt()` affiche ce qu'on tape en clair, ce n'est pas un champ
+   masqué. Sur son propre téléphone, c'est acceptable ; le dire l'est aussi.
+   ⚠️ ET ON NE DEMANDE UN MOT DE PASSE QUE SI C'EN EST UN. pdf.js signale le chiffrement par
+   une exception NOMMÉE ; tout autre échec (fichier corrompu, pas un PDF) remonte tel quel.
+   Sans cette distinction, un fichier abîmé ferait réclamer un mot de passe qui n'existe pas. */
+const _PDF_ESSAIS_MAX = 3;
+async function _pdfOuvrir(f){
   await _loadPDFJS();
   const buf=await f.arrayBuffer();
-  const pdf=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
+  let mdp;
+  for(let essai=0; essai<_PDF_ESSAIS_MAX; essai++){
+    try{
+      // ⚠️ Une COPIE fraîche à chaque essai : pdf.js prend possession du tampon et le
+      // détache. Le réutiliser tel quel ferait échouer la 2ᵉ tentative pour une raison
+      // qui n'a rien à voir avec le mot de passe.
+      const opts={ data:new Uint8Array(buf.slice(0)) };
+      if(mdp!==undefined) opts.password=mdp;
+      return await pdfjsLib.getDocument(opts).promise;
+    }catch(e){
+      const estMdp = !!(e && (e.name==='PasswordException' || e.code===1 || e.code===2));
+      if(!estMdp) throw e;
+      const rep = prompt(e.code===2
+        ? 'Mot de passe incorrect. Réessaie :'
+        : 'Ce PDF est protégé par un mot de passe.\n\nEntre-le (souvent ta date de naissance).\n\nIl reste sur ton téléphone : il sert à ouvrir le fichier ici, il n\'est jamais envoyé.');
+      // ⛔ Renoncer est une réponse valable : on sort, on ne redemande pas en boucle.
+      if(rep===null) throw new Error('mot de passe non saisi');
+      mdp=rep;
+    }
+  }
+  // ⛔ Sortie garantie : sans ce plafond, un mot de passe qu'on ne retrouve pas piégerait
+  // la personne dans une suite de fenêtres sans fin.
+  throw new Error('mot de passe refusé '+_PDF_ESSAIS_MAX+' fois');
+}
+
+async function _pdfToImages(f){
+  const pdf=await _pdfOuvrir(f);
   const MAX_PAGES=8,MAX_DIM=1200;
   const pages=[];
   for(let i=1;i<=Math.min(pdf.numPages,MAX_PAGES);i++){
@@ -4592,9 +4636,7 @@ async function _pdfToImages(f){
 // Extraction de la COUCHE TEXTE d'un PDF (100% local, 0 IA) — pour le Mode Test VM.
 // Regroupe les fragments par ligne via leur coordonnée Y. Renvoie [] si PDF scanné (pas de texte).
 async function _pdfToText(f){
-  await _loadPDFJS();
-  const buf=await f.arrayBuffer();
-  const pdf=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
+  const pdf=await _pdfOuvrir(f);   // même porte d'entrée que _pdfToImages (R2)
   const MAX_PAGES=15, lines=[];
   for(let i=1;i<=Math.min(pdf.numPages,MAX_PAGES);i++){
     const page=await pdf.getPage(i);
