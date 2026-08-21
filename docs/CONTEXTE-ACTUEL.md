@@ -6,7 +6,19 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v935` — fusionnée sur `master` le 21/08.
+- **Version en ligne (live) :** `ft-v936` — fusionnée sur `master` le 21/08.
+- 🔀 **UN ROUGE A DEUX CAUSES OPPOSÉES** (ft-v936) — les deux rouges systématiques n'avaient
+  rien à voir, et le diagnostic (R7, avant de coder) les a séparés :
+  · **EV-003** (face pull) : règle **présente à 74 %** du prompt → **diluée** → rappel ciblé en
+  fin de prompt (2ᵉ usage du levier §9 n°1, après le keto).
+  · **EV-015** (coach humain) : règle **ABSENTE** — elle n'existe que dans le persona VC-002,
+  donc dans le *test*, pas dans le produit. Marqué `specAbsente`, **compté à part** (⚠️).
+  ⏭️ **DÉCISION EN ATTENTE DE MICHEL** : écrire la règle « Milo complète un coach humain, il ne
+  s'y substitue pas » — ou retirer le scénario. Christophe (persona fondateur) a un vrai coach.
+  ⚠️ **Deux témoins existants mesuraient un raccourci devenu faux** : le cache comparait la
+  taille TOTALE (mesuré : le préfixe est identique, 66 959 car. — le cache n'était pas cassé),
+  et « sans message » exigeait l'égalité stricte au lieu de « au moins autant ».
+  ⏭️ **Prochaine passe** : voir si EV-003 passe au vert. Restent EV-009 et EV-007, intermittents.
 - 📊 **HISTORIQUE PAR SCÉNARIO** (ft-v935) — 3ᵉ passe réelle, la 1ʳᵉ après un correctif.
   ⭐⭐ **EV-012 (keto) est passé au VERT** : première mesure avant/après du projet, le rappel
   de fin de prompt de ft-v933 a marché.
