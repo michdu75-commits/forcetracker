@@ -107,6 +107,26 @@ mais **rien ne vérifie que le résultat tient dans l'enveloppe**.
 de 20 minutes n'est pas une séance, c'est un programme.
 **Vérifiable ?** Oui — compter les séries prescrites × le temps par série + les paliers.
 
+### 🟢⭐ Milo propose à une DÉBUTANTE un exercice sans image du mouvement
+**08/08/2026, 10h45 — cas vécu par Eline.** Michel envoie la capture : *« c'est la séance de ma fille
+Eline. **Il n'y a pas l'image du mouvement** et le reste je n'avais pas forcément vu »*. Dans l'heure
+qui suit, il envoie des lots de GIFs (dos, abdos) — il était en train de combler le trou à la main.
+**⭐ POURQUOI C'EST PEUT-ÊTRE LE PLUS IMPORTANT DU FICHIER** : pour Michel, un exercice sans
+illustration est un détail — il sait le faire. **Pour une débutante, c'est un exercice qu'elle ne peut
+pas faire.** Milo lui a donc donné une séance qu'elle ne pouvait pas exécuter, sans que rien ne le
+signale. *Le même défaut ne coûte pas le même prix selon qui le reçoit.*
+**Lien** : même racine que « exercices muets à la mesure » (01/08) — un exercice hors du catalogue bien
+équipé n'a ni muscles, ni image, ni GIF. Mais l'angle est différent, et il est prioritaire pour
+`level = débutant`.
+**Vérifiable ?** Oui — tout exercice prescrit à un profil débutant doit avoir une illustration.
+
+### 🟢 « 45 minutes, pas 30 exercices »
+**16/08/2026.** Michel, avec le chiffre : *« si je lui demande une séance de 45 minutes, faut pas qu'il
+me mette 30 exercices, la séance va se transformer en 1h30 »*.
+**C'est la version chiffrée** de l'entrée « 60 minutes » — et la plus facile à vérifier, parce qu'elle
+donne le seuil de l'absurde : **le double de l'enveloppe demandée**.
+**Vérifiable ?** Oui — durée estimée ≤ enveloppe demandée + une marge à fixer.
+
 ### 🟢 « Il est parti dans la stratosphère »
 **04/08/2026.** Michel : *« et encore je lui ai posé une question **il est parti dans la
 stratosphère** »*. Le prompt dit *« maximum 200 mots sauf si l'athlète demande plus de détails »*.
@@ -165,6 +185,24 @@ scénario mesure un attendu que le produit n'a jamais promis. ⚠️ Et la justi
 venait d'un **fait inventé** (le `resume` d'un persona de test, pris pour une information sur un vrai
 testeur — voir ft-v937). **Aucun cas d'usage réel ne l'appuie à ce jour.** À rouvrir le jour où
 quelqu'un le vit vraiment.
+
+---
+
+## ⚠️ Comment fouiller les conversations (leçon du 21/08)
+
+En remontant trois semaines de transcriptions, mon filtre cherchait le mot **« Milo »**, **« coach »**,
+**« débrief »** + un marqueur de doute. **Il a raté le meilleur cas du fichier** — celui d'Eline —
+parce que la phrase ne contient **aucun de ces mots** : *« c'est la séance de ma fille Eline. Il n'y a
+pas l'image du mouvement »*. C'est Michel qui l'a signalé : *« et tu n'as rien capté sur le Milo
+d'Eline ? »*
+
+👉 **Les observations les plus utiles ne nomment pas Milo.** Elles décrivent **ce qu'on a sous les
+yeux** : *« il n'y a pas… »*, *« c'est normal que… »*, *« ça n'a pas… »*, une capture d'écran avec
+trois mots. Chercher le nom du coach, c'est ne trouver que les conversations **sur** lui, pas les
+constats **sur ce qu'il produit**.
+
+⚠️ **Et c'est un argument de plus pour ce fichier** : une fouille rate des choses, une note prise sur
+le moment n'en rate aucune.
 
 ---
 
