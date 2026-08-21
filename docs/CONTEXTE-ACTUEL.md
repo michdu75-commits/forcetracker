@@ -21,6 +21,14 @@
   fiction** écrite pour le test. ⭐ **Les personas portent le prénom de vrais testeurs, mais
   leur contenu est inventé** — ne jamais en tirer un fait sur la personne réelle. La décision
   EV-015 se rouvre donc sur ses seuls mérites, aucun cas d'usage réel ne l'appuie.
+  ⚠️ **Et « persona fondateur » était faux aussi** (2ᵉ correction) : *« Christophe n'est pas
+  un fondateur hein, c'est un testeur »*. « Personas **fondateurs** » désigne les **dimensions**
+  fondatrices du projet, pas un statut de personne — le doc dit lui-même « Michel = le
+  fondateur, à part ». Mot retiré partout où je l'appliquais à quelqu'un.
+  ⭐⭐ Michel : *« comme Tatiana et Emma, ils n'ont aucune action directe sur l'application »* —
+  **ce sont des testeurs, ils remontent des retours, Michel décide**. Avertissement posé en tête
+  de `docs/PERSONAS-FONDATEURS.md` (R27) : *toute affirmation sur une personne réelle vient de
+  `RETOURS-TESTEURS.md` ou de Michel — jamais d'un nom de dimension, jamais d'un champ de persona.*
   ⚠️ **Deux témoins existants mesuraient un raccourci devenu faux** : le cache comparait la
   taille TOTALE (mesuré : le préfixe est identique, 66 959 car. — le cache n'était pas cassé),
   et « sans message » exigeait l'égalité stricte au lieu de « au moins autant ».

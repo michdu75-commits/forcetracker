@@ -23,6 +23,19 @@ progresser ? »**
   vrai testeur** ET par un **persona VC** (fictif, dérivé du vrai testeur) qui sert à valider
   le comportement de Milo. *(Voir `RETOURS-TESTEURS.md` pour les vrais retours.)*
 
+⛔ **CE QUE « FONDATEUR » NE VEUT PAS DIRE — ajouté le 21/08/2026, après l'avoir fait dire à ce
+document deux corrections de suite.** « Fondateur » qualifie la **DIMENSION**, jamais la
+personne. **Christophe, Tatiana et Emma sont des TESTEURS** — Michel : *« ils n'ont aucune
+action directe sur l'application »*. Ils remontent des retours, **Michel décide**. Écrire
+« Christophe, persona fondateur » — ce que j'ai fait dans le journal de ft-v936 — transforme
+un nom de dimension en **titre**, et laisse croire à un rôle dans le projet qui n'existe pas.
+⚠️ **Et le piège se double** : le persona VC porte le **prénom** du testeur mais son contenu
+est **inventé** (le `resume` de VC-002 dit « a déjà un coach humain » — c'est un décor de test,
+pas une information sur Christophe, qui est *« un sportif qui fait du body »*). **Les deux
+erreurs se ressemblent** : un mot du vocabulaire interne relu comme un fait sur quelqu'un de
+réel. ⭐ **La règle** : toute affirmation sur une personne réelle vient de `RETOURS-TESTEURS.md`
+ou de Michel — jamais d'un nom de dimension, jamais d'un champ de persona.
+
 ---
 
 ## Les Personas Fondateurs
