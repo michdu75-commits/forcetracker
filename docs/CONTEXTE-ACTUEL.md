@@ -6,7 +6,19 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v938` — fusionnée sur `master` le 21/08.
+- **Version en ligne (live) :** `ft-v939` — fusionnée sur `master` le 21/08.
+- 🔎 **LES VÉRIFICATEURS RATAIENT 19 VIOLATIONS SUR 21** (ft-v939) — levier gratuit n°2.
+  Mesuré avant de coder : EV-009 **8/8** ratées · EV-011 **5/6** · EV-012 **5/5** · EV-005 **3/4**.
+  Cause identique partout : **chaque motif ne connaissait qu'une façon de dire la chose**
+  (« quel matériel » mais pas « tu as quoi comme matériel ? » · un simple **adverbe** cassait
+  la reconnaissance du diagnostic · riz/pâtes/pain mais ni couscous ni miel ni jus d'orange).
+  ⭐⭐ **ET ÇA PEUT EXPLIQUER L'INTERMITTENCE D'EV-009** : ce n'est peut-être pas Milo qui
+  change de comportement, c'est sa **formulation** — le motif en attrapait une et ratait
+  l'autre. ⚠️ **Hypothèse, pas conclusion** : elle se vérifie à la prochaine passe.
+  ⏭️ **CE QUE LA PROCHAINE PASSE DOIT DIRE** : ① EV-003 est-il passé au vert (correctif
+  ft-v936) ? ② EV-009 devient-il systématique (→ l'intermittence venait du motif) ?
+  ③ EV-007 se confirme-t-il ? ④ Et elle laisse enfin **les réponses** derrière elle.
+- 💾 **GARDER LES RÉPONSES — le gisement gratuit du benchmark** (ft-v938).
 - 💾 **GARDER LES RÉPONSES — le gisement gratuit du benchmark** (ft-v938). Michel : *« on ne
   peut pas améliorer le benchmark ou il faut plus de passes ? »*.
   ⭐⭐ Une passe coûte 0,25-0,95 € et produit 15 vraies réponses de Milo — **elles étaient

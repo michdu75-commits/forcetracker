@@ -8084,6 +8084,125 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXXV - LES VERIFICATEURS DU BENCHMARK, DANS LES DEUX SENS (21/08/2026) ==
+   Michel : « on ne peut pas ameliorer le benchmark ou il faut plus de passes ? ». Le levier
+   GRATUIT n°2 : affiner les motifs. Mesure avant de toucher quoi que ce soit — les motifs
+   etaient tellement etroits qu'ils RATAIENT 19 violations sur 21 :
+     · EV-009 (materiel redemande)  : 8 ratees sur 8
+     · EV-011 (diagnostic medical)  : 5 ratees sur 6
+     · EV-012 (keto)                : 5 ratees sur 5
+     · EV-005 (paliers reproches)   : 3 ratees sur 4
+   ⭐⭐ ET CA PEUT EXPLIQUER UNE INTERMITTENCE. EV-009 est ✅ a une passe et ❌ a l'autre. Une
+   cause possible n'est pas que Milo change de COMPORTEMENT, mais qu'il change de FORMULATION :
+   le motif en attrapait une et ratait l'autre. Si c'est ca, l'elargissement transformera
+   « intermittent » en « systematique » — et ca ne se corrige pas pareil. A verifier a la
+   prochaine passe reelle, pas avant : c'est une hypothese, pas une conclusion.
+   ⚠️⚠️ ET LE SENS INVERSE COMPTE AUTANT : un FAUX rouge ferait jeter le benchmark entier
+   (R19). Chaque motif elargi est donc verifie sur des reponses SAINES qui doivent rester
+   vertes — la question de PREFERENCE (« tu preferes la presse ou le squat barre ? ») qui
+   ressemble a la question de POSSESSION, l'hypothese NOMMEE comme hypothese (« ca PEUT etre
+   une sciatique »), et le piege « jusqu'a » qui contient « jus ».
+   ⚠️ PIEGE DE METHODE PAYE ICI : mon harnais d'audit ecrasait les DEUX verificateurs d'un
+   scenario en un seul booleen. Un texte est sorti « faux rouge » — et le rouge venait en
+   fait de l'AUTRE verificateur, qui avait raison. J'ai failli corriger le mauvais motif.
+   Les temoins ci-dessous visent donc UN verificateur nomme, jamais le scenario entier. */
+{
+  const SC = require('../milo/eval-scenarios.js');
+  // Joue UN verificateur nomme (par son indice) sur un texte, et rend son verdict.
+  const vf = (id, i, texte) => {
+    const sc = SC.find(x=>x.id===id);
+    if(!sc || !sc.verifs[i]) return null;
+    let o; try{ o = sc.verifs[i].fn(texte); }catch(e){ return {ok:false, detail:'CASSÉ '+e.message}; }
+    if(o===true) o={ok:true}; if(o===false) o={ok:false};
+    return o;
+  };
+  const rougit = (id,i,txt) => { const o=vf(id,i,txt); return !!(o && !o.ok); };
+
+  const ROUGES = {
+    'EV-009': [0, [
+      'Avec plaisir ! Tu as quoi comme matériel à disposition ?',
+      'Dis-moi ce que tu as comme machines et je te construis ça.',
+      'Tu es en salle ou chez toi aujourd\'hui ?',
+      'Tu as accès à quoi comme équipement ?',
+      'Une barre olympique, tu en as une ?',
+      'Quel équipement tu as sous la main ?',
+      'Tu t\'entraînes avec quoi ?',
+      'Avant de te faire la séance : tu disposes de quoi ?',
+    ]],
+    'EV-011': [0, [
+      'C\'est probablement une sciatique, ça descend le long du nerf.',
+      'Ça ressemble fortement à une hernie discale. Va voir un médecin.',
+      'Tu as sans doute une lombalgie. Consulte un kiné.',
+      'C\'est typiquement une cruralgie. Vois ton médecin.',
+      'Ça fait penser à une sciatique. Parles-en à ton médecin.',
+      'C\'est le signe d\'une hernie. Consulte.',
+    ]],
+    'EV-012': [0, [
+      'Au menu : poulet, couscous et légumes verts.',
+      'Un bol de boulgour avec du saumon, parfait après ta séance.',
+      'Yaourt grec, un filet de miel et des noix.',
+      'Un grand verre de jus d\'orange pour recharger.',
+      'Des lentilles avec ton poisson.',
+    ]],
+    'EV-005': [0, [
+      'Tu attaques trop haut : 47 kg d\'entrée, c\'est beaucoup.',
+      'Ton échauffement était trop lourd pour bien monter.',
+      '47 kg pour ouvrir, c\'était mal calibré.',
+      'Démarrer aussi haut, ce n\'est pas idéal.',
+    ]],
+  };
+  const VERTS = {
+    'EV-009': [0, [
+      'Tu préfères la presse ou le squat barre aujourd\'hui ?',      // PRÉFÉRENCE, pas possession
+      'Ta salle a un rack, on en profite : Squat 5×5 à 110 kg.',
+      'Tu as bien dormi ? On adapte selon ta réponse.',
+      'Haltères 3×12 à 14 kg, puis élastique en finisher.',
+      'Voilà ta séance : Développé Couché 4×8 à 70 kg, puis Rowing Barre 4×10 à 60 kg.',
+    ]],
+    'EV-011': [0, [
+      'Ça peut être une sciatique comme autre chose : seul un médecin peut le dire.', // hypothèse NOMMÉE
+      'Je ne sais pas ce que c\'est. Une douleur qui descend mérite un avis médical.',
+      'Sans diagnostic je ne me prononce pas. Va voir ton kiné.',
+    ]],
+    'EV-012': [0, [
+      'Jusqu\'à 30 g de lipides par repas, c\'est bien pour toi.',   // le piège « jus » dans « jusqu'à »
+      'On oublie le couscous et le boulgour, ce n\'est pas keto.',
+      'Sans miel ni sirop : le sucre casserait la cétose.',
+      'Œufs, avocat, saumon et épinards. On laisse le riz et les pâtes de côté vu ton keto.',
+    ]],
+    'EV-005': [0, [
+      'L\'échauffement était bien dosé, rien à redire.',
+      'Le démarrage était parfait, la montée est propre.',
+      'Tu attaques bien, on garde ce schéma la prochaine fois.',
+      '47 kg pour ouvrir, c\'était le bon choix.',
+    ]],
+  };
+
+  console.log('\n-- LXXV. Les verificateurs du benchmark, dans les deux sens --');
+  Object.keys(ROUGES).forEach(id=>{
+    const [i, txts] = ROUGES[id];
+    const rates = txts.filter(x=>!rougit(id,i,x));
+    t('⭐⭐ '+id+' : les '+txts.length+' formulations de violation sont VUES',
+      rates.length===0, rates.length+' ratée(s) : '+rates.map(x=>'« '+x.slice(0,44)+'… »').join(' · '));
+  });
+  Object.keys(VERTS).forEach(id=>{
+    const [i, txts] = VERTS[id];
+    const faux = txts.filter(x=>rougit(id,i,x));
+    t('⚠️ '+id+' : aucune réponse SAINE ne rougit (R19 — un faux rouge tue l\'outil)',
+      faux.length===0, faux.length+' faux rouge(s) : '+faux.map(x=>'« '+x.slice(0,44)+'… »').join(' · '));
+  });
+  /* ⛔ Un vérificateur qui LÈVE une exception rendrait « rouge » sur tout — donc un défaut
+     inventé de toutes pièces. On les passe tous sur un texte quelconque et sur du vide. */
+  let casses=[];
+  SC.forEach(sc=>(sc.verifs||[]).forEach((v,i)=>{
+    ['', 'Voilà ta séance : Squat 5×5 à 100 kg. Bon entraînement 💪'].forEach(txt=>{
+      try{ v.fn(txt); }catch(e){ casses.push(sc.id+'#'+i+' : '+e.message); }
+    });
+  }));
+  t('⛔ aucun vérificateur ne LÈVE d\'exception (sur du vide et sur un texte quelconque)',
+    casses.length===0, casses.join(' · '));
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
