@@ -8251,6 +8251,126 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     casses.length===0, casses.join(' · '));
 }
 
+/* == BLOC LXXVI - UN PDF PROTEGE PAR MOT DE PASSE (21/08/2026) ==
+   Michel : « j'ai envie de mettre ma prise de sang mais c'est protege par un mot de passe, je
+   vais comment ? ». Les laboratoires livrent tres souvent leurs bilans en PDF chiffre, et
+   l'app rendait « Souci lecture fichier » — un message qui dit qu'il y a un probleme sans
+   dire LEQUEL, donc sans dire quoi faire.
+   ⭐ LE CORRECTIF VIT DANS `_pdfOuvrir` (R2) : quatre imports lisent des PDF (bilan sanguin,
+   programme, historique, repas). Un seul proprietaire de l'ouverture = les quatre heritent
+   du meme comportement et ne peuvent pas diverger.
+   ⛔ LES DEUX TEMOINS QUI PROTEGENT LE PLUS sont des SORTIES : annuler doit sortir, et trois
+   mauvais mots de passe doivent s'arreter. Sans plafond, un mot de passe qu'on ne retrouve
+   pas piegerait la personne dans une suite de fenetres sans fin.
+   ⚠️ ET LE GARDE EST ETROIT (R19) : un fichier corrompu ne doit PAS faire reclamer un mot de
+   passe qui n'existe pas. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_name:'Michel'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(async()=>{
+    if(typeof _pdfOuvrir!=='function') return {absente:true};
+    const o={};
+    const fichier=()=>new File([new Uint8Array([37,80,68,70])],'bilan.pdf',{type:'application/pdf'});
+    // Bouchon de pdf.js : `scenario` decide de ce que rend chaque appel.
+    const monter=(scenario)=>{
+      const vus=[];
+      window.pdfjsLib={ getDocument:(opts)=>{ vus.push(opts.password);
+        const r=scenario(vus.length, opts.password);
+        return { promise: r instanceof Error ? Promise.reject(r) : Promise.resolve(r) }; } };
+      return vus;
+    };
+    const erreurMdp=(code)=>{ const e=new Error('mdp'); e.name='PasswordException'; e.code=code; return e; };
+    let demandes=[]; window.prompt=(txt)=>{ demandes.push(txt); return window.__rep.shift(); };
+    let reseau=0; const vraiFetch=window.fetch; window.fetch=(...a)=>{ reseau++; return vraiFetch(...a); };
+
+    /* ① PDF NON protege : aucune fenetre ne s'ouvre. */
+    demandes=[]; window.__rep=[];
+    let vus=monter(()=>({numPages:1}));
+    o.simpleOK = !!(await _pdfOuvrir(fichier()));
+    o.simpleSansDemande = (demandes.length===0);
+
+    /* ② PDF protege : UNE demande, et le mot de passe atteint bien pdf.js. */
+    demandes=[]; window.__rep=['1975'];
+    vus=monter((n)=> n===1 ? erreurMdp(1) : ({numPages:2}));
+    o.protegeOK = !!(await _pdfOuvrir(fichier()));
+    o.protegeUneDemande = (demandes.length===1);
+    o.mdpTransmis = (vus[1]==='1975');
+    o.messageParleMdp = /mot de passe/i.test(demandes[0]||'');
+    o.messageRassure  = /jamais envoy/i.test(demandes[0]||'');
+
+    /* ③ Mot de passe FAUX puis bon : la 2e demande le dit. */
+    demandes=[]; window.__rep=['faux','bon'];
+    vus=monter((n)=> n===1 ? erreurMdp(1) : n===2 ? erreurMdp(2) : ({numPages:3}));
+    o.reessaiOK = !!(await _pdfOuvrir(fichier()));
+    o.reessaiDitIncorrect = /incorrect/i.test(demandes[1]||'');
+
+    /* ④ ⛔ ANNULER sort proprement — et ne redemande pas. */
+    demandes=[]; window.__rep=[null];
+    vus=monter(()=>erreurMdp(1));
+    o.annuleErr=''; try{ await _pdfOuvrir(fichier()); }catch(e){ o.annuleErr=e.message; }
+    o.annuleUneSeuleDemande = (demandes.length===1);
+
+    /* ⑤ ⛔ TROIS mauvais mots de passe : ca s'ARRETE (pas de boucle infinie). */
+    demandes=[]; window.__rep=['a','b','c','d','e','f'];
+    vus=monter(()=>erreurMdp(2));
+    o.troisErr=''; try{ await _pdfOuvrir(fichier()); }catch(e){ o.troisErr=e.message; }
+    o.plafonne = (demandes.length<=3);
+
+    /* ⑥ ⚠️ Une erreur qui n'est PAS un mot de passe ne doit RIEN demander. */
+    demandes=[]; window.__rep=['xx'];
+    vus=monter(()=>new Error('fichier corrompu'));
+    o.autreErr=''; try{ await _pdfOuvrir(fichier()); }catch(e){ o.autreErr=e.message; }
+    o.autreSansDemande = (demandes.length===0);
+
+    /* ⑦ ⛔ Le mot de passe ne part nulle part : aucun appel reseau pendant tout ca. */
+    o.reseau = reseau;
+    window.fetch = vraiFetch;
+    return o;
+  });
+
+  // R2 : une seule porte d'entree, et les deux lecteurs de PDF y passent.
+  const _L = fs.readFileSync(path.join(__dirname,'..','..','log.js'),'utf8');
+  const unSeulGetDocument = (_L.match(/pdfjsLib\.getDocument\(/g)||[]).length===1;
+  const lesDeuxPassentPar = /async function _pdfToImages\([\s\S]{0,200}?_pdfOuvrir\(/.test(_L)
+                         && /async function _pdfToText\([\s\S]{0,200}?_pdfOuvrir\(/.test(_L);
+
+  console.log('\n-- LXXVI. Un PDF protege par mot de passe --');
+  if(R.absente){ t('⛔ l\'ouverture de PDF avec mot de passe existe', false, '_pdfOuvrir absente'); }
+  else{
+    t('/!\\ un PDF NON protégé s\'ouvre sans rien demander',
+      R.simpleOK===true && R.simpleSansDemande===true, 'ok='+R.simpleOK+' sansDemande='+R.simpleSansDemande);
+    t('⭐ un PDF protégé demande le mot de passe UNE fois, et il atteint pdf.js',
+      R.protegeOK===true && R.protegeUneDemande===true && R.mdpTransmis===true,
+      'ok='+R.protegeOK+' 1demande='+R.protegeUneDemande+' transmis='+R.mdpTransmis);
+    t('⭐ le message dit ce qu\'on demande ET que ça ne sort pas du téléphone',
+      R.messageParleMdp===true && R.messageRassure===true,
+      'mdp='+R.messageParleMdp+' rassure='+R.messageRassure);
+    t('/!\\ un mot de passe faux est signalé comme tel au 2ᵉ essai',
+      R.reessaiOK===true && R.reessaiDitIncorrect===true,
+      'ok='+R.reessaiOK+' dit incorrect='+R.reessaiDitIncorrect);
+    /* ⛔ Les deux témoins qui protègent le plus. */
+    t('⛔ ANNULER sort proprement et ne redemande pas',
+      /non saisi/.test(R.annuleErr) && R.annuleUneSeuleDemande===true,
+      'err="'+R.annuleErr+'" 1demande='+R.annuleUneSeuleDemande);
+    t('⛔⛔ TROIS mots de passe faux ARRÊTENT tout (aucune boucle sans fin)',
+      R.plafonne===true && /refus/.test(R.troisErr), 'demandes≤3='+R.plafonne+' err="'+R.troisErr+'"');
+    /* ⚠️ Le garde est étroit : on ne réclame pas un mot de passe qui n'existe pas. */
+    t('⚠️ un fichier CORROMPU ne fait réclamer AUCUN mot de passe (R19)',
+      R.autreSansDemande===true && /corrompu/.test(R.autreErr),
+      'sansDemande='+R.autreSansDemande+' err="'+R.autreErr+'"');
+    t('⛔ le mot de passe ne part nulle part : 0 appel réseau pendant l\'ouverture',
+      R.reseau===0, R.reseau+' appel(s)');
+    t('⭐⭐ R2 : UNE seule porte d\'entrée, et les deux lecteurs de PDF y passent',
+      unSeulGetDocument===true && lesDeuxPassentPar===true,
+      'unSeulGetDocument='+unSeulGetDocument+' lesDeux='+lesDeuxPassentPar);
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

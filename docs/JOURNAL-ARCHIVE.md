@@ -2742,3 +2742,25 @@ Tests : **parcours 793/793** (+6, bloc LX), calculs 241/241, muscles 232/232, cr
 
 **⭐⭐ ET UN TÉMOIN A FAIT SON TRAVAIL EN ROUGISSANT.** Il s'appelait *« témoin honnête : l'ABDUCTION est juste (moyen fessier), l'ADDUCTION reste fausse »* et il **figeait le manque** pour que personne ne le découvre par surprise. Il n'a pas été affaibli, il a été **retourné** : *un test protège une ABSENCE aussi bien qu'une présence (R30) — quand l'absence est comblée, il change de camp.*
 Tests : parcours 793/793, calculs 241/241, **muscles 235/235** (+3), croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges**, exactement les 4 comportements changés. ⚠️ L'**empreinte du catalogue** a été régénérée et son diff relu ligne à ligne : **5 exercices bougent, pas un de plus** — c'est le garde-fou qui existe précisément pour ça. Fichiers : `log.js`, `constants.js`, `app.js`, `screens.js`, `tests/muscles/runner.js`, `tests/croises/runner.js` (+ empreinte), `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v921. |
+
+**ft-v922 — 💪 LES GROUPES MUSCULAIRES AU PROPRE : 3 scissions, 19 → 22 codes** — Michel, après les adducteurs : *« ah, et peut-être y'en a d'autres lol »*, puis *« il faut que les groupes musculaires soient au top »*.
+
+**MESURÉ AVANT DE TOUCHER À QUOI QUE CE SOIT** : **13 groupes sur 19** regroupaient plusieurs muscles distincts. Et surtout, **deux paires d'exercices que personne ne confond en salle rendaient exactement la même chose** :
+
+| Deux exercices opposés | Avant | Après |
+|---|---|---|
+| **Mollets debout ⟷ assis** | `calves:2` · identique | `calves:2` ⟷ **`soleus:2`** |
+| **Curl ⟷ Extension de poignet** | `forearms:2` · identique | `forearms:2` ⟷ **`forearm-ext:2`** |
+
+Le mollet assis est **le cas d'école** : debout = jumeaux (genou tendu), assis = **soléaire** (genou fléchi, les jumeaux sont relâchés). Et le poignet est le **jumeau EXACT de l'adducteur** livré le matin même — deux mouvements opposés, un seul résultat.
+
+**③ ET LE DENTELÉ ANTÉRIEUR ÉTAIT RANGÉ DANS LES OBLIQUES.** Ce n'était pas de l'imprécision, c'était un **mauvais rangement** : le dentelé plaque l'omoplate contre la cage (pompes, pull-over), les obliques font tourner le tronc. *Une rotation russe n'a jamais travaillé le dentelé.*
+
+**⭐⭐ LE CRITÈRE QUI REND CES TROIS SCISSIONS SÛRES — et ce n'est PAS la finesse anatomique** : *le RESTE du groupe garde-t-il son sens sans la partie qu'on sort ?* Les 93 fiches « avant-bras » désignent la **PRISE** (donc les fléchisseurs) · les 62 fiches « mollets » en secondaire (squats, fentes) parlent des **jumeaux** · les 30 fiches d'obliques ne travaillent pas le dentelé. **Elles ne bougent pas, et elles ont toujours raison.** Coût réel : **18 fiches reprises sur 334**, pas 194.
+
+**⚠️ Les trois muscles étaient DÉJÀ DESSINÉS** (`back_soleus_*`, `back_forearm_extensor_*`, `front_serratus_anterior_*`), rattachés au mauvais groupe — exactement comme les adducteurs. **R31** : la figurine est le vocabulaire, et un muscle absent du vocabulaire est un muscle dont aucun module ne peut parler.
+
+**⚠️ ET LES DEUX NOUVELLES RÈGLES DE REPLI SONT PLACÉES DEVANT LES GÉNÉRALES, pas derrière** — la leçon de ft-v921, apprise le matin même : `_MEX` s'arrête au **premier match**, donc une règle juste posée après une règle large ne sert à rien. Un témoin le vérifie sur des noms **libres** (« mollets assis maison », « extension poignet maison »), c'est-à-dire sur le chemin des exercices perso et des imports.
+
+**⛔ CE QUI N'EST PAS FAIT, ET POURQUOI C'EST ÉCRIT (R30)** : le **pectoral haut/milieu/bas** (55 fiches) et le **moyen fessier** (108). Là, la scission n'est **pas propre** — il faudrait relire **tous** les développés et **tous** les squats, et le sens de chaque fiche changerait vraiment. Restent aussi en attente les **trapèzes** (122 fiches : un shrug et un face pull sont opposés) et les **rhomboïdes + grand rond** sortis du grand dorsal (67). *Ajouter un muscle change ce que voit l'utilisateur : c'est l'arbitrage de Michel, jamais un effet de bord.*
+Tests : parcours 793/793, calculs 241/241, **muscles 241/241** (+6), croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 7 rouges**, exactement les 7 comportements changés. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** — ils vérifient qu'une rotation russe n'a PAS gagné de dentelé et qu'un squat n'a PAS gagné de soléaire : *c'est ce qui prouve que la scission est propre et non une sur-étiquette.* L'**empreinte du catalogue** a été régénérée et relue : **18 exercices bougent, pas un de plus.** Fichiers : `log.js`, `constants.js`, `app.js`, `screens.js`, `tests/muscles/runner.js`, `tests/croises/runner.js` (+ empreinte), `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v922. |

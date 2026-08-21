@@ -6,7 +6,19 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v941` — fusionnée sur `master` le 21/08.
+- **Version en ligne (live) :** `ft-v942` — fusionnée sur `master` le 21/08.
+- 🔐 **L'APP DEMANDE LE MOT DE PASSE D'UN PDF PROTÉGÉ** (ft-v942). Les labos livrent souvent
+  les bilans en PDF chiffré ; l'app rendait « Souci lecture fichier » — un message qui dit
+  qu'il y a un problème **sans dire lequel**.
+  ⭐ Corrigé dans **`_pdfOuvrir`** (R2) : les **4** imports de PDF en héritent (bilan sanguin,
+  programme, historique, repas). ⛔ Le mot de passe **ne quitte pas le téléphone** (0 appel
+  réseau, vérifié par un témoin). ⛔ Sorties garanties : annuler sort · 3 essais maximum.
+  ⚠️ Garde étroit : un fichier corrompu ne fait réclamer aucun mot de passe.
+  ⏭️ **TROU CONNU, repéré le même jour** : l'écran du bilan sanguin compare bien chaque
+  marqueur au **bilan précédent** (flèches ▲/▼ chiffrées), mais **Milo ne reçoit QUE le
+  dernier bilan** (`bt[0]` dans `buildCoachContext`) — il ne peut donc parler d'aucune
+  évolution. C'est **R4/R8** : la donnée existe, elle n'atteint pas Milo. Arbitrage Michel.
+- 🚪 **UN STOCKAGE QUI SURVIT DERRIÈRE UNE PORTE QUI NE SURVIT PAS** (ft-v941).
 - 🚪 **UN STOCKAGE QUI SURVIT DERRIÈRE UNE PORTE QUI NE SURVIT PAS NE SERT À RIEN** (ft-v941).
   Michel : *« je ne peux pas rejouer j'ai plus les cases »*. Les deux boutons **gratuits** ne
   vivaient que sur la **carte de résultat**, qui vit dans le chat — donc qui meurt au
