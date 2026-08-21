@@ -6,7 +6,21 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v945` — fusionnée sur `master` le 21/08.
+- **Version en ligne (live) :** `ft-v946` — fusionnée sur `master` le 21/08.
+- 🕰️ **L'HISTORIQUE DÉJÀ STOCKÉ PASSE AU GARDIEN** (ft-v946). Michel : *« on ne pourra pas
+  récupérer les anciennes conversations alors »*. Si : elles sont sur le téléphone (30 rangées
+  + le fil en cours) et gardent le **texte brut**, blocs `{"retiens"}` compris — ce qui rend
+  la mesure juste. Scan local, **0 appel**, une fois **après** le démarrage (règle d'or #4).
+  ⭐⭐ **Instantané, pas addition** : on remplace le bloc `retro`, donc rejouer ne double rien.
+  ⛔ **Séparé du direct** : l'historique couvre plusieurs versions de Milo, dont des
+  antérieures aux correctifs. Deux blocs, deux périodes datées.
+  ⚠️⚠️ **Défaut de mesure trouvé par un témoin** : `bloc_technique` se lève sur chaque séance
+  et chaque bloc mémoire — **du trafic normal**. Le compter aurait noyé le signal. Retiré des
+  compteurs (`_GARDIEN_DERIVES`, une seule liste lue par les deux — R2).
+  ⭐ **Mesuré sur les 25 vrais jours de Michel : 7 dérives / 129 réponses** (diagnostic 3 ·
+  promesse_vide 3 · source_fabriquee 1). ⚠️ **Des drapeaux, pas des preuves** — seules les
+  3 promesses ont été vérifiées à la main. ⏭️ **Les 4 autres restent à lire.**
+- 🌍 **LA MESURE CONTINUE, CHEZ DE VRAIS UTILISATEURS** (ft-v945).
 - 🌍 **LA MESURE CONTINUE, CHEZ DE VRAIS UTILISATEURS** (ft-v945). Michel : *« mais je veux
   une mesure continue »* — après avoir signalé *« n'oublie pas Milo avec moi, il est débridé »*.
   ⭐⭐ **Vérifié : il avait raison.** `_estSuperAdmin()` lui ouvre 2 portes fermées aux autres

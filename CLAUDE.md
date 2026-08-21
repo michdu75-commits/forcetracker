@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v945`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v946`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v945`** (prochaine : `ft-v946`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v946`** (prochaine : `ft-v947`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v946 — 🕰️ L'HISTORIQUE DÉJÀ STOCKÉ PASSE AU GARDIEN — plus besoin d'attendre** — Michel : *« attend une chose on ne pourra pas récupérer les anciennes conversations alors »*.
+
+**Il avait raison** : le compteur de ft-v944 ne compte qu'à partir de son branchement. Il aurait fallu **des semaines** pour savoir quoi que ce soit sur les testeurs.
+
+**⭐ MAIS LES CONVERSATIONS SONT LÀ**, sur leur téléphone — jusqu'à **30 rangées + le fil en cours**, chacune datée. Et **vérifié avant de coder** : elles gardent le texte **BRUT**, blocs `{"retiens"}` compris. *C'est précisément ce qui rend la mesure juste* — sur du texte déjà nettoyé, chaque promesse tenue serait comptée comme une promesse vide. Un scan **local**, **0 appel**, quelques millisecondes, lancé **une fois APRÈS le démarrage** — jamais pendant (**règle d'or #4** : le démarrage n'attend rien).
+
+**⭐⭐ C'EST UN INSTANTANÉ, PAS UNE ADDITION.** On **remplace** le bloc `retro` à chaque passage : rejouer dix fois donne exactement le même résultat. *Ça évite d'avoir à retenir « l'ai-je déjà fait ? » — un drapeau qu'on oublie de poser double les chiffres, et un chiffre doublé ne se voit pas.*
+
+**⛔ ET IL RESTE SÉPARÉ DU DIRECT.** L'historique couvre **plusieurs versions de Milo**, dont des **antérieures aux correctifs** : les additionner donnerait un total qui ne veut rien dire. Deux blocs, deux périodes **datées**, et l'avertissement écrit dans les deux affichages.
+
+**⚠️⚠️ ET UN TÉMOIN A TROUVÉ UN VRAI DÉFAUT DE MESURE — dans ce que je comptais depuis ft-v944.** `bloc_technique` se lève sur **chaque séance proposée**, **chaque bloc de mémoire**, **chaque liste de réponses rapides** : c'est du **trafic NORMAL**, pas une dérive. Le compter l'aurait rendu **majoritaire** et aurait noyé le signal — ***on aurait mesuré le BON fonctionnement de Milo en croyant mesurer ses écarts.*** Il reste affiché dans le badge (il sert en développement), il n'entre plus dans les compteurs. ⭐ Une seule liste `_GARDIEN_DERIVES`, lue par le compteur en direct **et** par le scan (**R2**).
+
+**⭐ MESURE SUR LES 25 VRAIS JOURS DE MICHEL : 7 dérives sur 129 réponses** — `diagnostic` 3 · `promesse_vide` 3 · `source_fabriquee` 1. ⚠️ **Ce sont des DRAPEAUX, pas des preuves** : seules les 3 promesses ont été vérifiées à la main. Les autres restent à lire.
+
+**⚠️ Deux fois mon témoin s'est trompé, pas le code.** Il attendait 2 dérives et en trouvait 3 — c'était le bloc `{"retiens"}` légitime, et **c'est comme ça que le défaut ci-dessus a été trouvé**. Puis il comparait le compteur direct à une valeur capturée bien plus haut, **entre-temps légitimement incrémentée** : il accusait le scan d'un mouvement qui n'était pas le sien. *Un témoin qui prend la mauvaise référence désigne le mauvais coupable.*
+Tests : **parcours 947/947** (+6, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `coach.js`, `Code.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v946. |
 
 **ft-v945 — 🌍 LA MESURE CONTINUE, CHEZ DE VRAIS UTILISATEURS — parce que le Milo de Michel est DÉBRIDÉ** — Michel : *« mais je veux une mesure continue »*. Mais c'est sa remarque d'avant qui a rendu cette version nécessaire : *« n'oublie pas Milo avec moi, il est débridé »*.
 
@@ -709,19 +726,6 @@ Tests : **parcours 829/829** (+6, bloc LXV), calculs 241/241, muscles 241/241, c
 
 **⚠️ LE MOTIF EST LE MÊME QU'À ft-v923, quelques heures plus tôt** : Milo traite les **petits accessoires comme négligeables** — il les range au hasard dans l'ordre, et il les oublie au débrief. *Deux symptômes, une seule attitude.*
 Tests : **parcours 823/823** (+3, bloc LXIV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v927. |
-
-**ft-v926 — 🏷️ MILO REPROCHAIT LES PALIERS QU'IL AVAIT LUI-MÊME PRESCRITS — 3ᵉ fois, et cette fois l'auteur était INCONNU** — Michel, après sa séance : *« regarde la discussion avec Milo sur ma séance d'aujourd'hui, il y a un truc qui va pas après avoir fini ma séance, examine bien »*.
-
-**CE QUI EST ÉCRIT DANS SON DÉBRIEF** : *« Lat Pulldown : **47 kg c'était trop haut pour démarrer**. Tu étais déjà à 72 % de ta charge dès le premier palier »* · *« Rowing : démarrage à 40 kg… un palier raté c'est là qu'on se blesse »*. **Or Milo avait prescrit ces paliers lui-même**, quelques messages plus haut : *« Palier : 45×5 »* et *« Palier : 40×5 »*.
-
-**⚠️⚠️ ET LA CAUSE EST ENCHAÎNÉE AU BUG DU BOUTON.** Le bouton « Commencer cette séance » ne sortait pas (ft-v924/925), donc Michel a saisi sa séance **à la main** — donc **sans le marqueur `_milo`**, qui n'existe que sur le chemin du bouton. *Un bug d'affichage a produit un bug de comportement, deux couches plus loin.*
-
-**⭐ LE COMMENTAIRE DU 18/08 ANNONÇAIT CETTE LIMITE, MOT POUR MOT** : *« ce marqueur n'existe que si la séance a été chargée DEPUIS le chat ; ailleurs, seule la consigne du prompt peut rattraper »*. Les **deux** gardes-fous existants ont tenu (montée écrite par l'app, 15/08 · montée prescrite par Milo et chargée par le bouton, 18/08). C'est le **troisième auteur possible — inconnu** — qui n'était couvert par rien.
-
-**⭐⭐ ET LA CONSIGNE DU PROMPT EXISTE, ELLE N'A PAS ÉTÉ SUIVIE.** Elle dit noir sur blanc : *« avant de le dire, REGARDE QUI A CHOISI CES CHARGES : si elles viennent d'une séance que TU as prescrite (le marqueur te le dit, **ou tu la retrouves dans votre échange**)… »*. La séance était **littéralement dans la conversation**, quelques messages plus haut. **C'est un cas réel du prérequis écrit au §8 de `docs/ARCHITECTURE-CERVEAU-CERVELET.md`** : *une règle PRÉSENTE n'est pas une règle APPLIQUÉE* — et c'est précisément ce que `tests/milo` ne peut pas mesurer.
-
-**👉 CE QUI EST LIVRÉ** : on ne se tait pas (le défaut de montée est **vrai** et utile pour la suite) et on ne devine pas non plus — on **NOMME l'incertitude dans la DONNÉE** : *« auteur des charges inconnu (séance saisie à la main) : cherche cette séance dans votre échange AVANT toute remarque »*. *Une information absente laisse la place à une supposition ; une information présente, non* (**R4**).
-Tests : **parcours 820/820** (+4, bloc LXIV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 2 rouges**, et la sortie montre exactement le trou — `[⚠️ montée en charge insuffisante — saut de 48 % entre 60 et 115 kg]`, **sans dire qui a choisi**. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** : les gardes-fous du 15/08 et du 18/08 ne devaient PAS bouger. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v926. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
