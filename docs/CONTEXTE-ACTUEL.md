@@ -7,6 +7,18 @@
 ---
 
 - **Version en ligne (live) :** `ft-v947` — fusionnée sur `master` le 21/08.
+- ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
+  on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
+  pièges** on le relance »*.
+  👉 **La priorité est d'ALIMENTER `docs/JOURNAL-DE-TEST.md`** — et sa demande explicite était
+  *« il faut que tu fasses en sorte d'alimenter ce fichier **et que tu t'en souviennes** »*.
+  ⭐ **« S'en souvenir » ne repose pas sur la bonne volonté d'une session** : c'est branché sur
+  la **règle d'or #12** (le seul fichier auto-chargé) **et sur un compteur dans
+  `tools/check_regles.py`**, qui affiche l'état à chaque livraison. *Une intention qu'aucun
+  outil ne rappelle finit par s'éteindre.*
+  ⏭️ **État au 21/08 : 18 entrées (13 à promouvoir · 3 promues) — encore 7 avant relance.**
+  ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
+  chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
 - 🔬 **LES 4 DRAPEAUX RESTANTS, LUS UN PAR UN** (ft-v947) — Michel : *« regarde les 3
   diagnostic et le lien »*.
   ⭐⭐ **Les 3 `diagnostic` sont des faux positifs, tous du même défaut** : le motif attrapait

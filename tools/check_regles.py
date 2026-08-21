@@ -203,6 +203,42 @@ print(f"✅ {len(n_court)} règles d'or cohérentes · journal récent : {len(en
       f"(seuil {SEUIL_JOURNAL}) · CLAUDE.md {len(court.split())} mots")
 print(f"✅ archive : {len(maintenant)} entrées, 0 perdue"
       + ("" if git_ok else " (⚠️ git indisponible — contrôle non effectué)"))
+# ────────────────────────────────────────────────────────────────────────────────
+# 🧾 LE JOURNAL DE TEST — compter les entrées, parce qu'une intention qu'aucun outil
+# ne rappelle finit par s'éteindre.
+#
+# Michel, le 21/08/2026 : « on met de côté le benchmark, on n'a pas assez de pièges
+# pour Milo », puis « dès que tu auras marqué 25 questions ou pièges on le relance »,
+# et surtout : « il faut que tu fasses en sorte d'alimenter ce fichier ET QUE TU T'EN
+# SOUVIENNES ».
+#
+# ⭐ « S'en souvenir » ne peut pas reposer sur la bonne volonté d'une session : elles
+#    se terminent. Ça repose donc sur un COMPTEUR qui s'affiche à chaque livraison —
+#    le même mécanisme qui garde le journal des versions sous son seuil.
+# ⚠️ Ce n'est PAS bloquant : un journal peu rempli n'est pas une erreur, c'est un
+#    état. On le SIGNALE, on ne refuse pas la livraison (R19 — un outil qui bloque
+#    pour du confort finit contourné).
+SEUIL_PIEGES = 25
+try:
+    jt = (racine / "docs" / "JOURNAL-DE-TEST.md").read_text(encoding="utf-8")
+    # Une entrée = un titre de niveau 3 portant un état. Les états sont dans le fichier.
+    _ETATS = "🟡🟢🔵🟣⚪"
+    _ent = [l for l in jt.split("\n")
+            if l.startswith("### ") and any(e in l[:8] for e in _ETATS)]
+    _ouvertes = [l for l in _ent if ("🟡" in l[:8] or "🟢" in l[:8])]
+    _promues  = [l for l in _ent if "🔵" in l[:8]]
+    if len(_ent) >= SEUIL_PIEGES:
+        print(f"🎯 JOURNAL DE TEST : {len(_ent)} entrées (seuil {SEUIL_PIEGES} ATTEINT) — "
+              f"Michel a demandé de RELANCER LE BENCHMARK à ce palier.")
+    else:
+        print(f"🧾 journal de test : {len(_ent)} entrées "
+              f"({len(_ouvertes)} à promouvoir · {len(_promues)} promues) — "
+              f"benchmark en pause, encore {SEUIL_PIEGES - len(_ent)} avant relance.")
+except FileNotFoundError:
+    print("⚠️ docs/JOURNAL-DE-TEST.md introuvable — le réflexe de la règle #12 n'a plus de fichier.")
+except Exception:
+    pass                                       # jamais bloquer sur un pépin d'outillage
+
 print(f"✅ documents : aucun écrasement"
       + (f" ({len(suivis)} fichiers .md surveillés)" if git_ok and 'suivis' in dir() else
          " (⚠️ git indisponible — contrôle non effectué)"))
