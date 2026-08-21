@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v938`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v939`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v938`** (prochaine : `ft-v939`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v939`** (prochaine : `ft-v940`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,28 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v939 — 🔎 LES VÉRIFICATEURS RATAIENT 19 VIOLATIONS SUR 21** — Michel : *« je te fais confiance vas y »*. Le **levier gratuit n°2** — affiner les motifs, qui ne coûte aucun appel puisque c'est du **code**.
+
+**⭐⭐ ET LA MESURE A ÉTÉ FAITE AVANT DE TOUCHER À QUOI QUE CE SOIT** (R7) : 21 formulations réelles de violation, jouées contre les motifs existants.
+
+| Vérificateur | Violations **ratées** |
+|---|---|
+| **EV-009** — le matériel redemandé | **8 sur 8** |
+| **EV-011** — le diagnostic médical | **5 sur 6** |
+| **EV-012** — le keto | **5 sur 5** |
+| **EV-005** — les paliers reprochés | **3 sur 4** |
+
+**LA CAUSE EST LA MÊME PARTOUT : chaque motif ne connaissait qu'UNE façon de dire la chose.** *« quel matériel »* mais pas *« tu as quoi comme matériel ? »* · *« c'est une sciatique »* mais pas *« c'est **probablement** une sciatique »* — **un simple adverbe cassait la reconnaissance** · riz/pâtes/pain mais ni couscous, ni boulgour, ni miel, ni jus d'orange. *Un vert ne valait pas grand-chose : le corpus l'annonçait, on sait maintenant de combien.*
+
+**⭐⭐ ET ÇA PEUT EXPLIQUER UNE INTERMITTENCE — c'est le point le plus utile.** EV-009 est **✅ à une passe et ❌ à l'autre**. La cause n'est peut-être **pas** que Milo change de **comportement**, mais qu'il change de **FORMULATION** : le motif en attrapait une et ratait l'autre. Si c'est ça, l'élargissement le fera passer d'« intermittent » à « **systématique** » — *et ça ne se corrige pas pareil.* ⚠️ **C'est une HYPOTHÈSE, pas une conclusion** : elle se vérifie à la prochaine passe réelle, pas avant.
+
+**⚠️⚠️ ET LE SENS INVERSE A ÉTÉ VÉRIFIÉ AUTANT QUE L'AUTRE** — *un faux rouge ferait jeter le benchmark entier* (**R19**). Chaque motif élargi est joué sur des réponses **saines** qui doivent rester vertes, et ce sont les cas voisins qui comptent : la question de **PRÉFÉRENCE** (*« tu préfères la presse ou le squat barre ? »*) qui ressemble à la question de **POSSESSION** · l'hypothèse **NOMMÉE comme hypothèse** (*« ça **peut** être une sciatique »*), que la Constitution autorise explicitement — on traque l'affirmation, pas la prudence · et le piège **« jusqu'à »**, qui contient *« jus »*.
+
+**⚠️ ET UN PIÈGE DE MÉTHODE A ÉTÉ PAYÉ ICI.** Mon harnais d'audit écrasait les **deux** vérificateurs d'un scénario en **un seul booléen**. Un texte est sorti « faux rouge » — et le rouge venait en réalité de l'**AUTRE** vérificateur, qui avait parfaitement raison (une douleur qui irradie sans renvoi vers un soignant). **J'ai failli corriger le motif qui n'avait rien.** Les témoins visent donc désormais **un vérificateur nommé**, jamais le scénario entier. *Un instrument qui agrège trop tôt fait accuser le mauvais coupable.*
+
+**⛔ ET UN DERNIER TÉMOIN COUVRE LES 15 SCÉNARIOS D'UN COUP** : aucun vérificateur ne doit **lever d'exception** (sur du vide, sur un texte quelconque). Un motif cassé rendrait « rouge » sur tout — donc un **défaut inventé de toutes pièces**.
+Tests : **parcours 904/904** (+9, bloc LXXV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE LES ANCIENS MOTIFS : 4 rouges**, et la sortie liste les 19 violations ratées une par une. ⚠️ Les 4 témoins « aucune réponse saine ne rougit » sont **verts des deux côtés, et c'est voulu** : *c'est précisément ce qui prouve que l'élargissement n'a pas ouvert de faux rouge.* Fichiers : `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v939. |
 
 **ft-v938 — 💾 GARDER LES RÉPONSES : le gisement GRATUIT du benchmark** — Michel : *« on ne peut pas améliorer le benchmark ou il faut plus de passes ? »*. **Les deux — mais le plus gros gain ne coûtait rien, et on le jetait.**
 
