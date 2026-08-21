@@ -2779,3 +2779,29 @@ Tests : parcours 793/793, calculs 241/241, **muscles 241/241** (+6), croisés 50
 
 **⚠️⚠️ ET LE CORRECTIF AVAIT UN DOUBLE PIÈGE, dont un que je n'ai vu que par la mesure.** ① Le prompt **DEMANDE lui-même** à Milo de répondre *« super, c'est noté 💪 »* quand la personne annonce sa prochaine séance — et là c'est **légitime**, puisqu'il émet le bloc `{"prevu"}` qui enregistre vraiment. Ajouter le motif sans cette exception ferait crier le garde-fou sur une phrase **que nous avons demandée** (**R19**). ② **`\b` après un « é » n'existe pas en JavaScript** : mon premier motif se terminait par `not[ée]\b` et n'attrapait **RIEN** — il marchait sur « note », pas sur « noté ». *Un accent suffit à rendre un garde-fou muet, et ça ne se voit pas à la lecture.* Le réflexe est écrit dans le code.
 Tests : **parcours 800/800** (+7, bloc LXI), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 5 rouges**, et la sortie se lit toute seule — `typographique=[] droite=[]`, rien n'était attrapé. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** : ils vérifient que le Gardien **ne crie PAS** quand un bloc enregistre vraiment, ni sur une phrase saine contenant « bien » ou « c'est ». Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v923. |
+
+**ft-v924 — 🔘 LE BOUTON N'APPARAISSAIT PAS SUR UNE VRAIE SÉANCE — et c'était ma livraison de la veille** — Michel, capture à l'appui : *« J'ai pas le bouton lancer la séance »*. Milo écrit pourtant *« La séance est prête, clique sur ⚡ Commencer cette séance juste en dessous »*. **Il n'y avait rien.**
+
+**MESURÉ SUR SON TEXTE RÉEL, pas sur un exemple** : `_ressembleASeance` rendait **`false`** — donc le cervelet n'était **même pas appelé** — et le filet déterministe rendait **`RIEN`**. Aucun des trois étages de la cascade ne pouvait produire le bouton.
+
+**⚠️⚠️ DEUX CAUSES, ET LES DEUX SONT DE MOI (ft-v919, la veille).**
+
+**① J'exigeais un NOM et des SÉRIES sur la MÊME ligne.** Milo n'écrit pas *« Développé couché 4×8 »*. Il écrit un **bloc** :
+```
+Soulevé de Terre (ancre)
+Paliers : 60×5 → 80×3 → 100×2 → 115×1
+3×3 à 130 kg — repos 3 min
+Barre collée aux tibias, gainage max
+```
+Le nom est sur **sa** ligne, les séries sur la **suivante**. ⚠️ **Et j'avais validé mon détecteur sur des textes que j'avais écrits MOI-MÊME** — le piège classique : *tester ses propres exemples au lieu du réel*. Le format de Milo était pourtant sous mes yeux dans les captures de la veille.
+
+**② La regex du filet est ancrée en FIN de ligne** (`…kg\s*$`). Le *« — repos 3 min »* qui traîne derrière la faisait échouer **complètement** — pas partiellement, complètement.
+
+**👉 CE QUI EST CORRIGÉ** : l'aiguillage accepte une ligne de séries **sans nom** (il ne fait qu'**ORIENTER** — au pire un appel dépensé, **R29**) · et le filet va chercher le nom sur la **ligne précédente**, en remontant au plus 3 lignes.
+
+**⚠️ ET LA LIGNE DE PALIERS EST SAUTÉE, sinon elle DEVIENDRAIT le nom.** *« Paliers : 60×5 → 80×3 »* est assise pile entre le nom et les séries : sans la règle qui l'écarte, l'exercice s'appellerait « Paliers ». C'est le témoin qui protège le plus, et il est écrit.
+
+**⭐ SON TEXTE RÉEL DEVIENT UN TÉMOIN PERMANENT** (**R17** — un bug de terrain devient un test) : les **5 exercices**, dans l'ordre, avec les bons noms, et les séries lues malgré le texte qui traîne.
+
+**⚠️ La règle des NOMS n'a pas bougé** : ce qu'on lit est repris **TEL QUEL**, jamais rapproché « à peu près » d'un exercice voisin. C'est la leçon du 04/08, et elle tient toujours — on a élargi *ce qu'on sait lire*, pas *ce qu'on s'autorise à deviner*.
+Tests : **parcours 806/806** (+6, bloc LXII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 5 rouges**, et la sortie se lit toute seule — `détecté=false` et `0 exercice(s) : RIEN`. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** : la ligne de paliers ne devient jamais un nom, et une discussion chiffrée ne déclenche pas le cervelet. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v924. |

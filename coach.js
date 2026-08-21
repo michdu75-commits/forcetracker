@@ -3365,7 +3365,28 @@ function _gardienSortie(text){
      👉 Réflexe à garder : ne jamais terminer par `\b` un motif qui finit sur une lettre accentuée.
      `c.est` couvre l'apostrophe droite ET la typographique (’) — même famille de piège. */
   const _promesse = /\b(je (le |te le |ça |cela )?(retiens|note)\b|(c.est|bien) not[ée]e?|je m'en (souviendrai|rappellerai)|je (le |m'en )?garde en (tête|mémoire)|(la )?prochaine fois j'y penserai)/i;
-  if (_promesse.test(clean) && !/"retiens"/.test(raw) && !/"prevu"/.test(raw)) {
+  /* ⭐⭐ CALIBRÉ LE 21/08 SUR 129 VRAIES RÉPONSES DE MILO — pas sur des exemples inventés.
+     Michel a exporté ses conversations (« Regarde ») : 258 messages, 4 discussions, 25 jours.
+     Passé au motif ci-dessus, il criait **7 fois**. En les lisant une par une : **3 vraies
+     promesses non tenues, et 4 phrases qui n'en sont pas du tout**. Un garde-fou juste une
+     fois sur deux ne survit pas à son premier mois (R19).
+     👉 LES TROIS FORMES RETIRÉES, chacune vue dans ses vraies conversations :
+       ① « **Ce que je retiens :** … » ouvre un DÉBRIEF ou une EXPLICATION de comment sa
+          mémoire marche — c'est un résumé de ce qui vient de se passer, pas un engagement.
+       ② « dis-le moi ici et **je le retiens** » est CONDITIONNEL : la promesse n'est pas
+          encore due, elle attend une réponse.
+       ③ « **bien noté** — aujourd'hui tu as fait : … » est un ACCUSÉ DE RÉCEPTION d'une
+          liste que la personne vient de donner. Rien à mémoriser pour plus tard.
+     ⚠️ ET LES TROIS VRAIES PASSENT TOUJOURS — vérifié dans les deux sens sur le même fichier :
+     « le Leg Curl avant le Face Pull, c'est noté », « je retiens ça pour les prochaines
+     fois », « je retiens pour la prochaine fois ». Ce sont bien celles-là qu'on veut voir. */
+  const _pasUnePromesse = [
+    /ce que je retiens\s*:/i,
+    /(dis-(le )?moi|si tu (me |m'en )?)[^.\n]{0,45}je (le |m'en )?retiens/i,
+    /(c.est|bien) not[ée]e?\s*[—:,-]?\s*(oui,?\s*)?(aujourd.hui|voil[àa]|tu as (fait|not[ée]))/i,
+  ];
+  if (_promesse.test(clean) && !_pasUnePromesse.some(re=>re.test(clean))
+      && !/"retiens"/.test(raw) && !/"prevu"/.test(raw)) {
     flags.push({ code:'promesse_vide', label:'promesse de mémoire sans rien enregistrer' });
   }
   /* 5) SOURCE EXTÉRIEURE FABRIQUÉE (19/08/2026) — question de Michel en relisant le prompt :
@@ -3389,6 +3410,45 @@ function _gardienSortie(text){
   }
   return { text: clean, flags: flags };
 }
+/* 📊 COMPTER LES DÉRIVES, SANS RIEN STOCKER DE CE QUI S'EST DIT.
+   ⛔ ON NE GARDE QUE DES NOMBRES : le code du drapeau et un compteur. Aucune phrase de Milo,
+   aucun mot de la personne — une dérive de comportement se mesure par sa FRÉQUENCE, pas par
+   son contenu, et stocker le contenu créerait un journal de conversation que personne n'a
+   demandé (Constitution P3 : rien n'est gardé sans accord).
+   ⛔ RÈGLE D'OR #3 : ça ne doit JAMAIS menacer une séance. Tout est sous `try`, et si le
+   stockage refuse (quota), on retire la clé et on continue sans un mot. */
+const _GARDIEN_CLE='ft4_gardienStats';
+function _gardienCompter(flags){
+  try{
+    const o=JSON.parse(localStorage.getItem(_GARDIEN_CLE)||'{}')||{};
+    const j=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
+    o.depuis=o.depuis||j; o.dernier=j; o.codes=o.codes||{};
+    (flags||[]).forEach(f=>{ o.codes[f.code]=(o.codes[f.code]||0)+1; });
+    o.total=(o.total||0)+1;                       // nombre de RÉPONSES portant au moins 1 drapeau
+    localStorage.setItem(_GARDIEN_CLE, JSON.stringify(o));
+  }catch(e){ try{ localStorage.removeItem(_GARDIEN_CLE); }catch(e2){} }
+}
+/* Lisible dans Profil → Admin. Répond à la seule question utile : « est-ce que ça arrive
+   vraiment, et à quelle fréquence ? » — au lieu de la deviner. */
+function _gardienStatsTexte(){
+  let o={}; try{ o=JSON.parse(localStorage.getItem(_GARDIEN_CLE)||'{}')||{}; }catch(e){}
+  const codes=o.codes||{}, cles=Object.keys(codes);
+  if(!cles.length) return '🛡️ Gardien : aucune dérive détectée depuis l\'installation.';
+  const L=['🛡️ GARDIEN — dérives détectées'];
+  L.push('Depuis le '+(o.depuis||'?')+' · dernière le '+(o.dernier||'?'));
+  L.push(o.total+' réponse(s) de Milo portant au moins un drapeau.');
+  L.push('');
+  cles.sort((a,b)=>codes[b]-codes[a]).forEach(c=>L.push('  · '+c+' : '+codes[c]));
+  L.push('');
+  L.push('⚠️ Un drapeau n\'est PAS une preuve : c\'est un motif qui a reconnu une forme.');
+  L.push('   Ce qu\'il mesure vraiment, c\'est une FRÉQUENCE — « est-ce que ça arrive ? ».');
+  return L.join('\n');
+}
+function showGardienStats(){
+  if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
+  showConfirm('🛡️ Gardien', _gardienStatsTexte(), function(){}, 'Fermer');
+}
+
 function renderCoachMsg(role, text) {
   const msgs = document.getElementById('coach-msgs');
   if (!msgs) return;
@@ -3396,11 +3456,23 @@ function renderCoachMsg(role, text) {
   div.className = 'msg-bubble ' + (role === 'user' ? 'msg-user' : 'msg-coach');
   let _gFlags = [];
   if (role === 'coach') {
-    // Gardien de la Constitution (Étage 1) sur le CLONE ; en prod, comportement identique (_stripCoachTech verbatim)
-    if (typeof window !== 'undefined' && window.__FT_CLONE__ && typeof _gardienSortie === 'function') {
+    /* 🛡️ LE GARDIEN TOURNE MAINTENANT POUR TOUT LE MONDE (21/08/2026), plus seulement sur le
+       clone. Michel a exporté ses conversations et on y a mesuré 3 vraies promesses de mémoire
+       non tenues en 25 jours — que RIEN ne voyait passer, puisque le Gardien était réservé au
+       bac à sable. Un garde-fou qui ne tourne pas là où les gens vivent ne garde rien.
+       ⛔ ET LE TEXTE AFFICHÉ NE CHANGE PAS D'UN CARACTÈRE : `_gardienSortie` commence par
+       `_stripCoachTech` (exactement ce que faisait la prod) et se contente ensuite de LEVER
+       DES DRAPEAUX — il ne réécrit jamais une phrase. On ajoute une mesure, pas un filtre.
+       ⚠️ Le badge, lui, reste réservé (clone + admin) : « 🛡️ promesse de mémoire sans rien
+       enregistrer » sous une réponse de Milo ferait douter n'importe qui de son coach, pour
+       un défaut qui nous regarde, nous. On MESURE chez tout le monde, on AFFICHE chez nous. */
+    if (typeof _gardienSortie === 'function') {
       const _g = _gardienSortie(text);
       text = _g.text; _gFlags = _g.flags;
-      if (_gFlags.length) { try { console.warn('[Gardien-sortie]', _gFlags.map(f=>f.code).join(', ')); } catch(e){} }
+      if (_gFlags.length) {
+        try { console.warn('[Gardien-sortie]', _gFlags.map(f=>f.code).join(', ')); } catch(e){}
+        try { _gardienCompter(_gFlags); } catch(e){}
+      }
     } else {
       text = _stripCoachTech(text); // jamais de JSON brut à l'écran ni au partage (dataset.raw)
     }
@@ -3430,8 +3502,11 @@ function renderCoachMsg(role, text) {
         + '<button class="coach-share-btn" onclick="shareCoachReply(this)" aria-label="Partager cette réponse"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Partager</button>';
       div.appendChild(foot);
     }
-    // Badge dev clone-only : rend visibles les dérives détectées (jamais en prod)
-    if (_gFlags.length && typeof window !== 'undefined' && window.__FT_CLONE__) {
+    // Badge réservé (clone + admin) : voir « promesse de mémoire sans rien enregistrer »
+    // sous une réponse ferait douter n'importe qui de son coach, pour un défaut qui nous
+    // regarde. Chez tout le monde, la dérive est COMPTÉE (ci-dessus), pas affichée.
+    if (_gFlags.length && typeof window !== 'undefined'
+        && (window.__FT_CLONE__ || (typeof _isAdminUnlocked==='function' && _isAdminUnlocked()))) {
       const badge = document.createElement('div');
       badge.className = 'gardien-flag';
       badge.textContent = '🛡️ Gardien : ' + _gFlags.map(function(f){ return f.label; }).join(' · ');
