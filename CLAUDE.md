@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v934`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v935`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v934`** (prochaine : `ft-v935`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v935`** (prochaine : `ft-v936`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v935 — 📊 LE TOTAL NE BOUGE PAS, LA COMPOSITION SI — l'historique par scénario** — 3ᵉ passe réelle de Michel, la première **après** un correctif.
+
+**⭐⭐ LE CORRECTIF A MARCHÉ, ET C'EST LA PREMIÈRE MESURE AVANT/APRÈS DU PROJET.** **EV-012 (keto) est passé au VERT** : Milo ne propose plus riz/pâtes/pain à un profil cétogène. Le rappel de fin de prompt de ft-v933 — le levier §9 n°1, jamais utilisé jusque-là — a fait ce qu'on attendait de lui. *On ne suppose plus qu'un correctif a servi : on le voit.*
+
+**⚠️⚠️ MAIS LE PIÈGE EST JUSTE À CÔTÉ, ET IL A FAILLI PASSER.** **4 rouges hier, 4 rouges aujourd'hui.** En ne regardant que le compte, on conclurait *« rien n'a changé »*. **C'est faux : ce n'est pas le même 4.** Un défaut corrigé (EV-012), deux autres apparus (EV-007, EV-009). *Un total stable peut cacher une correction ET une régression qui se compensent* — et le rapport, tel qu'il était, ne permettait pas de le voir.
+
+**👉 CE QUI EST LIVRÉ** : le rapport garde le verdict de **chaque scénario, passe après passe** (localStorage admin, 8 dernières, jamais synchronisé) et affiche **`❌ ❌ ✅`** avec sa lecture — **SYSTÉMATIQUE** · *intermittent (n/m)* · *stable au vert*. ⭐ **Ça sépare le vrai défaut du bruit sans dépenser un seul appel de plus** — là où le mode répétition de ft-v934, lui, coûte des appels.
+
+**⚠️ Une seule passe ne produit AUCUNE tendance** (2 minimum) : une ligne d'historique à une entrée ne dit rien, et l'afficher inviterait à conclure sur un tirage.
+
+**⭐ L'ÉTAT MESURÉ SUR 3 PASSES, et c'est directement actionnable** : **EV-003** (le face pull placé avant du lourd) et **EV-015** (proposer de compléter le coach humain) sont rouges **3 fois sur 3** — ce sont de vrais défauts, à corriger. **EV-009** (le matériel redemandé) et **EV-007** (deux questions au lieu d'une) sont **intermittents** — à re-mesurer avant d'écrire une ligne de code. *Sans l'historique, on aurait traité les quatre pareil.*
+
+**⚠️ ET MON TÉMOIN A ENCORE ROUGI À TORT.** Il exigeait qu'un scénario vu une seule fois soit **absent de TOUT le rapport** — or il figure légitimement dans la liste des résultats ; ce qu'on veut garantir est seulement son absence du bloc **HISTORIQUE**. *Un motif doit viser ce qu'on veut garantir, pas plus large.* Troisième fois en deux jours que je paie cette erreur-là.
+Tests : **parcours 876/876** (+7, bloc LXXII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif** : l'historique est un comportement **neuf**. Ce qui le remplace est plus parlant — deux passes fabriquées **au même total (2 rouges) mais pas les mêmes** : le témoin exige que le correctif ET la régression soient tous deux lisibles, donc il rougirait aussi bien si l'outil n'historisait rien que s'il se contentait du compte. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v935. |
 
 **ft-v934 — 🔁 REJOUER LES ROUGES : le verdict devient un TAUX, plus un booléen** — Michel, après avoir lu que la comparaison Sonnet/Haiku n'était pas concluante : *« sinon on passe à 20 passes non ? »*.
 
@@ -723,19 +738,6 @@ Tests : **parcours 787/787** (+13 : bloc LIX, 10 témoins ; 3 ajustés avec leur
 
 **⚠️ ET LA MARGE EST RETOMBÉE À 15 CARACTÈRES**, c'est dit sans enjoliver : les 241 gagnés à ft-v917 sont repartis dans cette seule règle. Elle est passée devant parce qu'elle protège contre une **désinformation santé dans un produit qui donne des conseils santé** (**R11** : la sécurité prime). Conséquence directe : **l'arbitrage sur les 140 règles n'est plus optionnel** — il est désormais le seul moyen de faire entrer la suivante.
 Tests : **parcours 774/774** (+4, bloc LVIII), calculs 241/241, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v918. |
-
-**ft-v917 — 🧹 LE PROMPT DE MILO N'ÉTAIT PLUS QU'À 35 CARACTÈRES DE SON PLAFOND — et le témoin m'a appris où s'arrête la méthode** — Michel, après que je lui aie listé ce qui restait à faire : *« euh Milo là c'est le plus urgent »*. Il avait raison : **plus aucune règle générique ne pouvait entrer** dans le prompt commun sans qu'on en sorte une — je l'avais vécu deux heures plus tôt avec la règle de zone (ft-v914), qui a dû déménager faute de place.
-
-**⭐ LA MÉTHODE QUI MARCHE, ET C'EST LA SEULE SÛRE** : on ne « compresse » pas de la prose — on **retire du prompt ce que le CODE garantit de façon DÉTERMINISTE** (R7 : le prompt est le dernier levier, et ce qui est déterministe ne doit pas dépendre d'un jour de fatigue du modèle). Deux cas nets :
-· le **barème des paliers** (40-50 %, +10-15 %, reps 5→3→2→1, au-delà de 85 % c'est 1-2 reps) est calculé par `_monteeEnCharge` + `_repsPalier` + `_pasCharge` — Milo n'a pas à le détailler ;
-· l'**explication physiologique du superset**, dont le refus dur vit déjà dans `_supersetInterdit`, avec son commentaire écrit le 12/08 : *« pourquoi le code et pas le prompt : le prompt est probabiliste, ce refus ne doit pas dépendre d'un jour de fatigue du modèle »*.
-
-**⚠️⚠️ ET LA MÉTHODE A UNE LIMITE QUE JE N'AVAIS PAS VUE — C'EST LE TÉMOIN QUI ME L'A APPRISE.** J'avais aussi retiré la règle de **DOSE** (4-5 paliers sur le premier mouvement, 2-4 sur une 2ᵉ barre, 0-2 sur un accessoire), en croyant qu'elle relevait du même calcul. Le témoin de **ft-v887** est passé au **ROUGE**, et il avait raison : en relisant `_monteeCompletee`, le code **COMPLÈTE** une montée mais **ne RETIRE JAMAIS un palier en trop** (invariant du 11/08). C'est donc le prompt, et lui seul, qui empêche Milo d'écrire cinq paliers sur un accessoire — exactement le bug que ft-v887 avait corrigé. Règle restaurée, et désormais écrite **avec sa raison** pour que personne ne refasse la coupe.
-
-**⭐ LE CRITÈRE EN SORT NET, ET IL EST RÉUTILISABLE** : *ce que le code **CALCULE** peut sortir du prompt ; ce que le code ne **CORRIGE** pas doit y rester.* La nuance n'est pas cosmétique — elle sépare « l'app fabrique le résultat » de « l'app accepte ce que Milo écrit ».
-
-**⚠️ ET LE GAIN EST MODESTE, C'EST DIT HONNÊTEMENT** : **46 465 → 46 259 caractères**, marge passée de **35 à 241**. Ça débloque la prochaine règle, pas les dix suivantes. *La vraie question n'est pas de compresser du texte : c'est de décider lesquelles des **180 règles** peuvent partir* — et ça, c'est un arbitrage produit, pas une optimisation. ⚠️ Mesuré au passage : **38 % du bloc** touche à seulement **8 thèmes récurrents** (« au plus une question » revient sur **8 lignes**, ~4 000 caractères ; « n'invente rien » sur 8 lignes aussi). Mais la répétition d'une règle dans plusieurs contextes est peut-être **porteuse**, pas gaspillée — on ne coupe pas là-dedans sans preuve, et `tests/milo` est déterministe : il prouve la PRÉSENCE, jamais l'OBÉISSANCE.
-Tests : **parcours 770/770**, calculs 241/241, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif ici** : on ne retire aucun comportement, on retire du texte redondant — le contrôle utile était le témoin de ft-v887, et il a rougi au bon moment. Fichiers : `coach.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v917. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

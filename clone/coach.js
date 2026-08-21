@@ -4573,6 +4573,35 @@ async function _evRun(SC, compare, rep){
   toast('Benchmark terminé — tes données sont intactes','success');
 }
 
+/* 📊 L'HISTORIQUE PAR SCÉNARIO — le défaut que la 3ᵉ passe réelle a révélé (21/08/2026).
+   Passe du 20/08 : 4 rouges. Passe du 21/08 : 4 rouges. En ne regardant que le COMPTE, on
+   conclurait « rien n'a changé ». C'est FAUX : ce n'est pas le même 4. Le keto (EV-012) est
+   passé au vert grâce au correctif de ft-v933, et deux autres rouges sont apparus ailleurs.
+   ⚠️ Un total qui ne bouge pas peut cacher une correction ET une régression qui se compensent.
+   👉 On garde donc le verdict de chaque scénario, passe après passe, en local (admin, jamais
+   synchronisé). Le rapport affiche « ❌ ❌ ✅ » et l'œil voit la tendance sans rien calculer.
+   ⚠️ Ça distingue aussi le SYSTÉMATIQUE de l'INTERMITTENT sans dépenser un seul appel de plus :
+   trois rouges d'affilée = un vrai défaut ; un rouge sur trois = du bruit à re-mesurer. */
+const _EV_HIST_CLE = 'ft4_evalHist';
+const _EV_HIST_MAX = 8;   // on garde les 8 dernières passes, pas l'historique entier
+
+function _evHistLire(){
+  try{ return JSON.parse(localStorage.getItem(_EV_HIST_CLE)||'{}')||{}; }catch(e){ return {}; }
+}
+function _evHistEcrire(parPasse){
+  try{
+    const h=_evHistLire(), ymd=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
+    // On n'historise QUE la passe de production : comparer prod et haiku dans la même
+    // colonne mélangerait deux modèles et rendrait la tendance illisible.
+    (parPasse.prod||[]).forEach(x=>{
+      if(x.etat!=='rouge' && x.etat!=='vert') return;          // muet/erreur : pas un verdict
+      h[x.id]=(h[x.id]||[]).concat([{d:ymd,e:x.etat==='rouge'?'R':'V'}]).slice(-_EV_HIST_MAX);
+    });
+    localStorage.setItem(_EV_HIST_CLE, JSON.stringify(h));
+    return h;
+  }catch(e){ return _evHistLire(); }   // jamais bloquant : un historique est un confort
+}
+
 function _evBuildReport(SC, parPasse, compare){
   const ymd = (typeof today==='function')?today():new Date().toISOString().slice(0,10);
   const cles = Object.keys(parPasse);
@@ -4628,7 +4657,6 @@ function _evBuildReport(SC, parPasse, compare){
     }
     L.push('');
   }
-  L.push('═══════════════════════════════════════════');
   /* ⛔ PLAFOND ANTI-ABUS : 50 appels/jour/personne (worker.js). On propose une répétition qui
      RENTRE dedans, sinon le run se ferait couper en cours et on paierait un rapport tronqué.
      On garde une marge : la personne a pu utiliser Milo normalement dans la journée. */
@@ -4636,8 +4664,31 @@ function _evBuildReport(SC, parPasse, compare){
   Object.keys(parPasse).forEach(k=>parPasse[k].forEach(x=>{
     if(x.etat==='rouge' && _rougesIds.indexOf(x.id)<0) _rougesIds.push(x.id); }));
   const _rep = _rougesIds.length ? Math.max(2, Math.min(10, Math.floor(30/_rougesIds.length))) : 0;
+  /* L'historique est écrit APRÈS coup, donc la passe du jour y figure déjà. */
+  let _hist={}; try{ _hist=_evHistEcrire(parPasse); }catch(e){}
+  const _lignesHist=[];
+  (parPasse.prod||[]).forEach(x=>{
+    const h=_hist[x.id]||[];
+    if(h.length<2) return;                       // une seule passe ne fait pas une tendance
+    const suite=h.map(z=>z.e==='R'?'❌':'✅').join(' ');
+    const nR=h.filter(z=>z.e==='R').length;
+    const lect = nR===h.length ? 'SYSTÉMATIQUE'
+               : nR===0        ? 'stable au vert'
+               : 'intermittent ('+nR+'/'+h.length+')';
+    _lignesHist.push('  '+x.id+'  '+suite+'   → '+lect);
+  });
+  if(_lignesHist.length){
+    L.push('── HISTORIQUE (les '+_EV_HIST_MAX+' dernières passes de production) ──');
+    L.push('  ⚠️ Le TOTAL peut ne pas bouger alors que la composition change : une correction et');
+    L.push('     une régression se compensent. C\'est la ligne par scénario qui parle.');
+    L.push('');
+    _lignesHist.forEach(l=>L.push(l));
+    L.push('');
+  }
+  L.push('═══════════════════════════════════════════');
   return { text:L.join('\n'), ymd, parPasse, compare, n:SC.length,
-           rougesIds:_rougesIds, rejouable:(_rougesIds.length>0 && _rep>=2), repSugg:_rep };
+           rougesIds:_rougesIds, rejouable:(_rougesIds.length>0 && _rep>=2), repSugg:_rep,
+           hist:_hist };
 }
 
 function _evShowResultCard(){

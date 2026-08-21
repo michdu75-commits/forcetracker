@@ -6,7 +6,18 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v934` — fusionnée sur `master` le 21/08.
+- **Version en ligne (live) :** `ft-v935` — fusionnée sur `master` le 21/08.
+- 📊 **HISTORIQUE PAR SCÉNARIO** (ft-v935) — 3ᵉ passe réelle, la 1ʳᵉ après un correctif.
+  ⭐⭐ **EV-012 (keto) est passé au VERT** : première mesure avant/après du projet, le rappel
+  de fin de prompt de ft-v933 a marché.
+  ⚠️⚠️ **Mais 4 rouges hier, 4 rouges aujourd'hui** — ce n'est PAS le même 4. *Un total stable
+  peut cacher une correction et une régression qui se compensent.* Le rapport garde donc
+  `❌ ❌ ✅` par scénario, **sans dépenser un appel de plus**.
+  ⏭️ **À CORRIGER (rouges 3/3, donc réels)** : **EV-003** (le face pull passe avant du lourd
+  sans un mot d'explication — la règle de ft-v923 n'est pas suivie) · **EV-015** (Milo ne
+  propose aucun rôle de complément au coach humain — ⚠️ vérifier d'abord si mon vérificateur
+  n'est pas trop strict).
+  ⏭️ **À RE-MESURER avant de coder** : EV-009 (matériel) et EV-007 (2 questions) — intermittents.
 - 🔁 **REJOUER LES ROUGES** (ft-v934) — Michel : *« sinon on passe à 20 passes non ? »*.
   ⭐ **L'intuition est juste** : répéter est la seule façon de battre le bruit (3 puis 4 rouges
   sur deux passes du même modèle).
