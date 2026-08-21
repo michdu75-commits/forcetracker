@@ -136,7 +136,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v947`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v948`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v947`** (prochaine : `ft-v948`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v948`** (prochaine : `ft-v949`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v948 — 📤 LE COMPTEUR NE PARTAIT QUE SI LA PERSONNE FAISAIT QUELQUE CHOSE** — Michel : *« à partir de quel moment tu pourras lire le Milo à Eline ? »*.
+
+**⭐⭐ ET LA RÉPONSE HONNÊTE, AVANT DE CODER, ÉTAIT : peut-être jamais.** Le scan rétro de ft-v946 tourne bien 4 s après le démarrage, sur son téléphone. Mais **la sauvegarde, elle, ne part que sur une ACTION** — une séance, un réglage, un message. **Quelqu'un qui ouvre l'app, lit ses conversations et referme n'envoyait rien.**
+
+**⚠️⚠️ ET LE PIÈGE EST QU'ON AURAIT LU CE SILENCE COMME UNE RÉPONSE.** « Aucun compteur pour Eline » se serait lu *« elle ne s'en sert pas »* — alors qu'on n'avait simplement **pas le chiffre**. C'est le défaut exact corrigé la veille (ft-v947 : un testeur sans dérive était invisible), **d'un cran plus haut** : on avait réparé l'affichage, pas le chemin. *Une mesure qui n'arrive jamais et une mesure à zéro se ressemblent — et c'est la pire des confusions, parce qu'elle ne se voit pas.*
+
+**👉 LE SCAN POUSSE DÉSORMAIS LA SAUVEGARDE LUI-MÊME.** Ouvrir l'app suffit.
+
+**⛔ MAIS PAS À CHAQUE OUVERTURE, et c'est la moitié qui protège.** L'instantané est **stable** — mêmes conversations, même résultat (c'est le choix de conception de ft-v946) — donc il ne repart **que quand il y a du NOUVEAU**. Une écriture par nouveauté, pas une par démarrage : *le stockage a déjà saturé une fois (29/07, 102 %), on ne rouvre pas cette porte pour du confort.*
+
+**⚠️⚠️ ET MON PREMIER JET AURAIT ENVOYÉ UNE SAUVEGARDE PAR JOUR ET PAR PERSONNE.** Je comparais l'instantané **entier** — `faitLe` compris. Or **`faitLe` est la date du SCAN, pas une mesure** : elle change **toute seule à minuit**. Le code aurait donc cru à une nouveauté chaque matin, pour zéro information nouvelle. ⭐ La signature ne compare plus que **ce qu'on mesure** (réponses vues, dérives, codes, période couverte), jamais l'horodatage de la mesure — et un témoin **simule le lendemain** en vieillissant le champ. *Un défaut qui ne se serait manifesté que le jour d'après, donc jamais pendant un test écrit le même jour.*
+
+**⭐ ET LE CONTRE-TÉMOIN EST INDISPENSABLE** : une **vraie** nouvelle conversation repart bien. Sans lui, **rendre le compteur muet aurait passé tous les autres témoins** — trois verts qui n'auraient prouvé que le silence.
+
+**⛔ CE QUI PART NE CHANGE PAS D'UN MOT** : ~150 octets de **NOMBRES**. Aucune phrase de Milo, aucun mot de la personne — les conversations ne quittent toujours pas le téléphone, et la carte « Mes conversations avec Milo » le dit toujours en toutes lettres.
+Tests : **parcours 954/954** (+4, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges** — aucune sauvegarde n'est déclenchée du tout. ⚠️ **Et un 2ᵉ contrôle, plus instructif, contre le code que j'ai FAILLI livrer** (la comparaison naïve avec `faitLe`) : **2 rouges**, dont exactement le témoin du lendemain. *Le défaut évité a été mesuré, pas seulement raconté.* Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v948. |
 
 **ft-v947 — 🔬 LES 4 DRAPEAUX RESTANTS, LUS UN PAR UN — et 3 étaient des FAUX POSITIFS** — Michel : *« regarde les 3 diagnostic et le lien, et dit si les testeurs testent milo »*.
 
@@ -716,19 +733,6 @@ Tests : **parcours 839/839** (+10, bloc LXVI), calculs 241/241, muscles 241/241,
 
 **⚠️⚠️ ET BRANCHER LE LABORATOIRE A RÉVÉLÉ DEUX DÉFAUTS DEDANS.** ① `_vcAsk` appelait `buildCoachContext()` **sans le message** — ce qui envoie **TOUT** (c'est le contrat documenté de la fonction pour les appelants de diagnostic), donc **plus** que ce que reçoit un vrai utilisateur : *une évaluation qui envoie plus que la réalité mesure une autre dilution que celle qu'on subit — donc un vert n'y prouverait rien.* ② Les personas annonçaient **« Haiku (défaut) »** alors que `worker.js` sert **Sonnet à tout le monde depuis le 10/08** : croire qu'on teste Haiku en testant Sonnet, c'est **corriger le mauvais cerveau** (**R9**). Deux notes périmées dans un outil de mesure — *exactement ce qui m'avait fait annoncer une faille déjà réparée le 17/08* (R23).
 Tests : parcours 829/829, calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif, et la raison est structurelle** : ce qu'on ajoute est un **outil de mesure**, pas un comportement de l'app — il n'existe aucun « ancien code » contre lequel le tourner. Ce qui remplace le témoin ici, c'est le **run à blanc**, qui prouve que les 15 scénarios se montent, que le contexte réel se construit pour chacun, et que le devis est calculé sur des caractères mesurés. Fichiers : `coach.js`, `tests/milo/eval-scenarios.js` (neuf), `tests/milo/eval.js` (neuf), `docs/FRAMEWORK-TESTS-MILO.md`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v929. |
-
-**ft-v928 — 📋 LE RÉCAP DU DÉBRIEF EST ÉCRIT PAR LE CODE, plus par Milo** — Michel, après le débrief incomplet : *« comme le débrief est automatique autant le faire en haiku dans la conversation de Milo, ça coûte pas cher pis voilà, pas besoin de faire un truc de fou »*.
-
-**⚠️ ON N'A PAS CHANGÉ DE MODÈLE, ET LE CHIFFRE TRANCHE** : ~15 débriefs par mois, l'écart Sonnet/Haiku vaut **~0,17 €/mois**. Pour dix-sept centimes on dégraderait **précisément le message dont il venait de se plaindre**. Et **R9** le dit déjà : *un modèle léger suit MAL les consignes fines* — or on venait justement d'en ajouter une exigeante (« couvre les 5 exercices »). ⚠️ La décision *« Sonnet pour tout le monde »* est d'ailleurs écrite dans `worker.js` avec **ses mots du 10/08** (*« si les gens trouvent Milo nul ils ne vont pas le prendre »*) et marquée **à ne pas re-proposer** (**R30**) — la ré-ouvrir demandait de la mesurer, pas de la citer.
-
-**⭐⭐ MAIS SON INTUITION AVAIT UNE MOITIÉ JUSTE, ET C'EST EXACTEMENT SA PROPRE FRONTIÈRE.** Il sent que ce travail *ne mérite pas le gros cerveau* — c'est vrai, **pour la liste**. Or *lister* est une **TRANSFORMATION** et *commenter* est un **JUGEMENT** : c'est le critère cerveau/cervelet, appliqué à l'intérieur d'un seul message. Et la liste ne mérite alors même pas Haiku — **elle mérite du CODE**.
-
-**👉 CE QUI EST LIVRÉ** : `_recapSeance()` écrit la liste complète — nom, séries au format **reps × poids** (celui de l'app depuis ft-v396, **R2**), échauffements **comptés et non détaillés** — **au-dessus** de la réponse de Milo, **gratuitement et hors ligne**, exactement comme le récap de fin de séance. Sa consigne lui dit de **commenter sans recopier**.
-
-**⭐ LE CHANGEMENT DE NATURE EST LÀ** : *Milo ne PEUT plus sauter un exercice, au lieu qu'on lui DEMANDE de ne pas le faire.* ft-v927 posait la règle ; ici on retire le besoin de la suivre.
-
-**⚠️ PORTÉE HONNÊTE, écrite dans le code** : ça ne couvre que le débrief **AUTOMATIQUE**, dont le déclenchement est déterministe. Quand la personne demande *« que penses-tu de ma séance »* en plein chat, l'app ne peut pas le deviner sans **classer** le message — et une erreur de classement est silencieuse. Là, seule la règle du prompt reste, et elle est plus faible.
-Tests : **parcours 829/829** (+6, bloc LXV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif ici** : `_recapSeance` est une fonction NEUVE — un témoin tourné contre l'ancien code rendrait « fonction absente » au lieu de mesurer, le piège payé 8 fois. Ce que les témoins prouvent est autre chose et suffit : la liste est complète **par construction**, elle retombe sur la séance la plus récente si l'identifiant est inconnu, et elle ne peut jamais faire tomber le débrief. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v928. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

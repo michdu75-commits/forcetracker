@@ -8600,15 +8600,41 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     // touche pas. Mon 1ᵉʳ témoin comparait à une valeur capturée bien plus haut, entre-temps
     // légitimement incrémentée — il accusait le rétro d'un mouvement qui n'était pas le sien.
     const _avantRetro=(JSON.parse(localStorage.getItem('ft4_gardienStats')||'{}')||{}).total;
+    /* ⭐⭐ ON COMPTE LES SAUVEGARDES DÉCLENCHÉES (ft-v948) — Michel : « à partir de quel
+       moment tu pourras lire le Milo d'Eline ? ». Réponse : jamais, tant que le compteur
+       restait coincé sur son téléphone. La sauvegarde ne part que sur une ACTION ; quelqu'un
+       qui ouvre l'app, lit et referme n'envoyait rien. On remplace la vraie sauvegarde par un
+       compteur : le réseau n'est pas le sujet, le DÉCLENCHEMENT l'est. */
+    let _syncs=0; window._cloudSyncDebounced=function(){ _syncs++; };
     _gardienRetroDiffere();
+    o.syncApres1=_syncs;
     let st2=JSON.parse(localStorage.getItem('ft4_gardienStats')||'{}');
     o.retroTotal    = (st2.retro||{}).total;
     o.retroMessages = (st2.retro||{}).messages;
     o.retroDate     = /^2026-07-28$/.test((st2.retro||{}).depuis||'');
     /* ⭐⭐ Trois passages doivent donner le MÊME chiffre : c'est un instantané. */
     _gardienRetroDiffere(); _gardienRetroDiffere();
+    o.syncApres3=_syncs;   // ⛔ toujours 1 : rien de nouveau, donc rien à envoyer
     st2=JSON.parse(localStorage.getItem('ft4_gardienStats')||'{}');
     o.retroApres3 = (st2.retro||{}).total;
+    /* ⚠️ ET LA DATE DU SCAN NE DOIT PAS COMPTER COMME UNE NOUVEAUTÉ. `faitLe` change tout
+       seul à minuit : si la comparaison la prenait, une sauvegarde partirait CHAQUE JOUR pour
+       zéro information nouvelle — une écriture quotidienne par personne, sur un stockage qui
+       a déjà saturé une fois (29/07). On simule le lendemain en vieillissant `faitLe`. */
+    st2.retro.faitLe='2026-01-01';
+    localStorage.setItem('ft4_gardienStats', JSON.stringify(st2));
+    _gardienRetroDiffere();
+    o.syncLendemain=_syncs;   // ⛔ toujours 1
+    /* ⭐ ... mais une VRAIE nouveauté, elle, repart. Sinon on aurait juste rendu le compteur
+       muet, ce qui passerait tous les témoins ci-dessus sans rien mesurer. */
+    try{ coachHistory=[{role:'assistant',content:'C\'est juste l\'ordre qui était bancal. Je retiens pour la prochaine fois. 💪'},
+                       {role:'assistant',content:'Le Face Pull en premier, c\'est noté.'}]; }catch(e){}
+    _gardienRetroDiffere();
+    o.syncNouveaute=_syncs;   // ⭐ passe à 2
+    o.retroNouveau=(JSON.parse(localStorage.getItem('ft4_gardienStats')||'{}').retro||{}).total;
+    // On remet le décor d'avant pour les témoins suivants.
+    try{ coachHistory=[{role:'assistant',content:'C\'est juste l\'ordre qui était bancal. Je retiens pour la prochaine fois. 💪'}]; }catch(e){}
+    _gardienRetroDiffere();
     // Une réponse qui ne porte QUE `bloc_technique` ne doit rien incrémenter.
     const _av=(JSON.parse(localStorage.getItem('ft4_gardienStats')||'{}')||{}).total||0;
     _gardienCompter(_gardienSortie('Noté ! {"retiens":["x"]}').flags);
@@ -8683,6 +8709,24 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       R.retroIdempotent===true, 'après 3 passages : '+R.retroApres3+' au lieu de 2');
     t('⛔ le rétro reste SÉPARÉ du direct (deux époques, deux compteurs)',
       R.retroSepare===true, 'direct avant='+R.avantRetro);
+    /* 📤 ft-v948 — Michel : « à partir de quel moment tu pourras lire le Milo d'Eline ? ».
+       ⭐⭐ Le trou : le compteur restait sur son téléphone tant qu'elle ne FAISAIT rien.
+       Ouvrir, lire, refermer n'envoyait rien — et on aurait conclu « elle ne s'en sert pas »
+       alors qu'on n'avait simplement pas le chiffre. */
+    t('⭐⭐ le scan rétro DÉCLENCHE la sauvegarde (sinon le compteur ne part jamais)',
+      R.syncApres1===1, R.syncApres1+' sauvegarde(s) au lieu de 1');
+    /* ⛔ Et le point qui protège le stockage : une par NOUVEAUTÉ, pas une par ouverture. */
+    t('⛔⛔ ... UNE SEULE FOIS : rejouer le scan n\'envoie rien de plus',
+      R.syncApres3===1, R.syncApres3+' sauvegarde(s) après 3 scans au lieu de 1');
+    /* ⚠️ Le défaut trouvé en écrivant ce bloc : `faitLe` est la date du SCAN, pas une mesure.
+       La comparer aurait fait partir une sauvegarde CHAQUE JOUR sans qu'une conversation
+       bouge — le stockage a déjà saturé une fois (29/07). */
+    t('⚠️⚠️ ... et le LENDEMAIN non plus (la date du scan n\'est pas une nouveauté)',
+      R.syncLendemain===1, R.syncLendemain+' sauvegarde(s) au lieu de 1');
+    /* ⭐ Le contre-témoin : sans lui, rendre le compteur muet passerait les 3 ci-dessus. */
+    t('⭐ ... mais une VRAIE nouvelle conversation, elle, repart bien',
+      R.syncNouveaute===2 && R.retroNouveau===3,
+      'sync='+R.syncNouveaute+' (attendu 2) · dérives='+R.retroNouveau+' (attendu 3)');
     /* ⚠️⚠️ Défaut de mesure trouvé par un témoin : `bloc_technique` se lève sur chaque séance
        et chaque bloc mémoire — du trafic NORMAL. Le compter noierait le signal. */
     t('⚠️⚠️ un bloc {"retiens"} légitime N\'EST PAS compté comme une dérive',
