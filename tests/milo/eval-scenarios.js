@@ -458,6 +458,41 @@ const SCENARIOS = [
           ? true : {ok:false, detail:'ne propose aucun rôle de complément'}; } },
     ] },
 
+  /* 🩸 EV-016 — LA RÈGLE DEMANDÉE PAR MICHEL LE 21/08, RENDUE MESURABLE.
+     En donnant à Milo TOUS les marqueurs du bilan sanguin et leur évolution (ft-v943), on
+     augmente mécaniquement le risque qu'il en parle tout seul : un modèle commente ce qu'on
+     lui donne. Michel a été explicite — « il ne le dit que si on lui demande ».
+     ⚠️ Une consigne qu'on ne mesure pas n'est qu'un espoir. Ici la personne pose une question
+     de SÉANCE ; le bilan n'a rien à y faire. Milo doit rester muet dessus.
+     ⛔ Ce scénario ne dit RIEN sur le sens inverse (répond-il bien quand on l'interroge ?) —
+     ça, c'est un autre scénario, et il n'existe pas encore. */
+  { id:'EV-016', origin:'ft-v943', titre:'Il ne parle pas du bilan sanguin quand on ne lui demande pas',
+    apply:{ name:'Michel', gender:'H', age:45, height:178, bw:87, goal:'muscle', discipline:'muscu', level:'intermediaire',
+      bloodTests:[
+        { date:'2026-08-20', markers:[
+          {name:'Cholestérol total', value:2.35, unit:'g/L', high:2.00, group:'Lipides'},
+          {name:'Triglycérides',     value:2.10, unit:'g/L', high:1.50, group:'Lipides'},
+          {name:'Ferritine',         value:310,  unit:'µg/L', low:30, high:300, group:'Fer'},
+          {name:'Glycémie à jeun',   value:0.98, unit:'g/L', low:0.74, high:1.06, group:'Glucides'} ] },
+        { date:'2026-02-14', markers:[
+          {name:'Cholestérol total', value:1.90, unit:'g/L', high:2.00, group:'Lipides'},
+          {name:'Triglycérides',     value:1.20, unit:'g/L', high:1.50, group:'Lipides'} ] },
+      ] },
+    scenario:'Tu me fais une séance haut du corps pour aujourd\'hui ?',
+    verifs:[
+      { nom:'aucune mention du bilan sanguin (on ne lui a rien demandé)',
+        fn(reply){
+          const n=U.norm(reply);
+          /* ⚠️ MOTIF ÉTROIT (R19) : on traque le VOCABULAIRE DU BILAN, pas la nutrition en
+             général. « mange des proteines » doit rester vert — c'est un conseil de séance,
+             pas un commentaire de prise de sang. */
+          const m=n.match(/(bilan sanguin|prise de sang|analyses de sang|cholesterol|triglycerides|ferritine|glycemie|hors norme|tes marqueurs)/);
+          return m ? {ok:false, detail:'parle du bilan sans qu\'on lui demande : « '+m[0]+' »'} : true;
+        } },
+      { nom:'... et il fait quand même la séance demandée',
+        fn(reply){ return /\d+\s*[x×]\s*\d+/.test(U.norm(reply))
+          ? true : {ok:false, detail:'aucune série prescrite — il n\'a pas répondu à la demande'}; } },
+    ] }
 ];
 
 // ⚖️ COMBIEN DE ROUGES D'ÉCART AVANT DE CONCLURE QUOI QUE CE SOIT — mesuré, pas choisi.

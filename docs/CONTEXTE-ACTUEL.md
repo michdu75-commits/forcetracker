@@ -6,7 +6,21 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v942` — fusionnée sur `master` le 21/08.
+- **Version en ligne (live) :** `ft-v943` — fusionnée sur `master` le 21/08.
+- 📈 **L'ÉVOLUTION DU BILAN SANGUIN ATTEINT MILO — mais il ne l'ouvre jamais lui-même**
+  (ft-v943). Michel : *« qu'il voie l'évolution, comme la courbe du poids, et tous les
+  marqueurs, mais il ne le dit que si on lui demande par contre »*.
+  ⚠️ **Trou comblé (R4/R8)** : on n'envoyait que `bt[0]` et une sélection, alors que l'écran
+  comparait déjà au bilan précédent depuis juillet. **L'app savait, Milo pas.**
+  👉 Partent maintenant : **tous** les marqueurs + jusqu'à **3 bilans antérieurs datés**.
+  ⛔⛔ **Le point délicat** : plus de données médicales = plus de risque qu'il en parle seul.
+  La règle est posée **à côté de la donnée** (là où la règle keto avait échoué à 67 % du
+  prompt) **et rendue mesurable** par **EV-016** (on demande une séance → il reste muet).
+  ⛔ **Sens inverse non testé** : « répond-il bien quand on l'interroge ? » n'a pas de
+  scénario. À écrire si le besoin se présente.
+  ⚠️ Corpus à **16** scénarios · le prix annoncé se **calcule** (`_EV_PRIX`) au lieu d'être
+  écrit en dur pour 15.
+- 🔐 **L'APP DEMANDE LE MOT DE PASSE D'UN PDF PROTÉGÉ** (ft-v942).
 - 🔐 **L'APP DEMANDE LE MOT DE PASSE D'UN PDF PROTÉGÉ** (ft-v942). Les labos livrent souvent
   les bilans en PDF chiffré ; l'app rendait « Souci lecture fichier » — un message qui dit
   qu'il y a un problème **sans dire lequel**.
