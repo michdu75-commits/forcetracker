@@ -6,6 +6,14 @@ existe**. Elle ne remplace pas la Constitution — elle l'éclaire.
 
 > Rédigée par Michel (avec ChatGPT), validée le 19/07/2026. À relire quand on
 > doute de la direction : c'est le **cap**.
+>
+> 🌱 **D'OÙ ÇA VIENT, ajouté le 21/08/2026** — un mois après, Michel raconte être sorti vexé
+> d'une consultation : *« il m'a vexé sans apprendre à me connaître […] je n'aime pas les
+> gens qui jugent par rapport à un âge et à une donnée »*. Puis, en découvrant que tout ce
+> document dit déjà cela : *« mon appli me reflète encore plus que ce que je croyais »*.
+> **Cette Vision n'est pas un choix de positionnement : elle vient d'une expérience vécue
+> d'être réduit à une catégorie.** C'est ce qui la rend non négociable — le détail dans
+> `docs/ORIGINE-DES-REGLES.md`.
 
 ---
 

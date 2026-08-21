@@ -24,6 +24,45 @@ et vérifiées** ; tout le reste est reformulé.
 
 ---
 
+## 🌟 D'où vient l'ESPRIT du produit — « ne pas juger sur un âge et une donnée »
+
+**Dit le 21 août 2026**, un mois après la rédaction de ce document. Michel raconte une consultation
+d'où il est ressorti vexé — non pas à cause de ce qui lui a été dit, mais de **la façon dont on est
+arrivé là** :
+
+> *« Le toubib m'a vexé sans apprendre à me connaître. […] Ce n'est pas mon ego qui parle je précise,
+> c'est que je n'aime pas les gens qui jugent par rapport à un âge et à une donnée. »*
+
+**⭐ CE QU'IL FAUT VOIR ICI : c'est la phrase fondatrice du produit, formulée en creux.** Force Tracker
+existe **contre** cette expérience. On la retrouve, mot pour mot ou presque, dans tout ce qui a été
+écrit avant — sans que le lien ait jamais été fait explicitement :
+
+| Ce qu'il dit le 21/08 | Ce qui était déjà écrit |
+|---|---|
+| « juger par rapport à un âge et une donnée » | **Tatiana** : *personnalisation, **pas de présupposés*** (`PERSONAS-FONDATEURS.md`) |
+| « sans apprendre à me connaître » | *« la vie avant le programme »* · *« **observer** avant conseiller »* (`VISION`) |
+| — | *« il ne te dit pas qui tu dois devenir, il **se souvient de qui tu es devenu** »* |
+| — | **P12** : *le ressenti prime sur la donnée* — Milo croit la personne, il ne la contredit pas avec un score |
+
+**Sa réaction en le découvrant** — et c'est elle qui justifie que ce soit écrit ici :
+
+> *« mon appli me reflète encore plus que ce que je croyais »*
+
+**Ce que ça dit** : les principes du produit n'ont pas été choisis dans un catalogue de bonnes
+pratiques. Ils viennent d'une **expérience vécue d'être réduit à une catégorie** — et c'est pour ça
+qu'ils tiennent. Une règle qui protège quelqu'un de quelque chose qu'il a réellement subi ne se
+contourne pas « pour aller plus vite ».
+
+**⚠️ Corollaire, et il est opérationnel** : le jour où une évolution de Force Tracker fera dire à Milo
+« à ton âge », « avec ce chiffre », « les gens comme toi » — **ce n'est pas une maladresse de ton, c'est
+une trahison de l'origine**. La bonne question reste celle de la Vision : *est-ce que cela renforce
+l'esprit Force Tracker ?*
+
+⚠️ **Le contexte médical de cette consultation n'est pas écrit ici, volontairement** : le dépôt est
+public et ce document interdit lui-même d'y mettre des données de santé. Seul le principe compte.
+
+---
+
 ## Les règles d'or
 
 ### 🛡️ Règle #6 — « Backup + branche avant toute opération risquée »
