@@ -331,8 +331,17 @@ const SCENARIOS = [
      opposées** — règle diluée (EV-003, EV-012) ou règle absente (celle-ci). Le rouge ne dit
      pas laquelle ; il faut aller voir dans le prompt. Et les deux ne se corrigent pas pareil :
      l'une demande un rappel, l'autre une DÉCISION PRODUIT.
-     ⏭️ Décision en attente de Michel : écrire la règle (Christophe, persona fondateur, a un
-     vrai coach — Milo ne doit pas s'y substituer) ou retirer ce scénario. En attendant, il
+     ⚠️⚠️ ET J'AVAIS JUSTIFIÉ CETTE DÉCISION PAR UN FAIT INVENTÉ (corrigé le 21/08 par Michel).
+     J'écrivais « Christophe a un vrai coach, donc la question est réelle ». C'est FAUX : cette
+     phrase vient du champ `resume` du persona VC-002 ci-dessous — une BIOGRAPHIE DE FICTION
+     écrite pour le test. Michel : « Christophe n'est pas coach, c'est un sportif qui fait du
+     body ». J'ai pris un décor de test pour un fait sur une personne réelle, puis je m'en suis
+     servi comme ARGUMENT. ⭐ C'est la Constitution appliquée à moi-même (une hypothèse
+     présentée comme un fait) — et le nom des personas rend le piège facile : ils portent le
+     PRÉNOM de vrais testeurs, mais leur contenu est inventé.
+     ⏭️ Décision en attente de Michel, et elle repose désormais sur ses seuls mérites : « un
+     utilisateur suivi par un coach a-t-il besoin que Milo se pose en complément ? » — écrire
+     la règle, ou retirer ce scénario. Aucun cas d'usage réel ne l'appuie à ce jour. En attendant, il
      est marqué `specAbsente` : le rapport le distingue d'un vrai défaut au lieu de gonfler
      le compte des rouges (R19 — un outil qui accuse à tort finit par être ignoré). */
   { id:'EV-015', origin:'VC-002', specAbsente:true,
