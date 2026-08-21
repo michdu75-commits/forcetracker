@@ -8045,14 +8045,35 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     return o;
   });
 
-  /* ⑨ Les reponses survivent a un rechargement (c'est tout l'interet). */
-  let survit=false;
+  /* ⑨ Les reponses survivent a un rechargement — et SURTOUT il reste un chemin pour les
+     rejouer APRES ce rechargement. Bug du 21/08, signale par Michel : « je ne peux pas
+     rejouer j'ai plus les cases ». Les deux boutons gratuits ne vivaient QUE sur la carte de
+     resultat, qui vit dans le chat — donc qui MEURT au rechargement, alors que le stockage,
+     lui, a ete concu pour y survivre. ⭐ Un stockage qui survit derriere une porte qui ne
+     survit pas ne sert a RIEN : c'est le trou que ce temoin ferme. */
+  let survit=false, froidOK=false, froidEstRejeu=false;
   if(!R.absente){
-    await pg.evaluate(()=>{ try{ localStorage.setItem('ft4_evalReps', JSON.stringify({ymd:'2026-08-21',reps:[{id:'EV-001',cle:'prod',reply:'texte garde'}]})); }catch(e){} });
-    await pg.reload(); await pg.waitForTimeout(2000);
-    survit = await pg.evaluate(()=>{ const st=(typeof _evRepsLire==='function')?_evRepsLire():null;
-      return !!(st && st.reps && st.reps[0] && st.reps[0].reply==='texte garde'); });
+    await pg.evaluate(()=>{ try{ localStorage.setItem('ft4_evalReps', JSON.stringify({ymd:'2026-08-21',reps:[{id:'EV-001',cle:'prod',reply:'Développé Couché 4×6 à 80 kg, repos 2 min.'}]})); }catch(e){} });
+    await pg.reload(); await pg.waitForTimeout(2300);
+    await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+    const F = await pg.evaluate(async()=>{
+      const st=(typeof _evRepsLire==='function')?_evRepsLire():null;
+      const o={ survit: !!(st && st.reps && st.reps[0] && /80 kg/.test(st.reps[0].reply)) };
+      // DEPART A FROID : aucun rapport en memoire, aucune carte a l'ecran.
+      o.rapportAvant = (typeof _evReport!=='undefined' && _evReport!==null);
+      try{ rejouerVerifs(); }catch(e){ o.err=e.message; }
+      await new Promise(r=>setTimeout(r,700));
+      o.rapportApres = !!(typeof _evReport!=='undefined' && _evReport && _evReport.text);
+      o.estRejeu     = !!(typeof _evReport!=='undefined' && _evReport && _evReport.rejeu===true);
+      return o;
+    });
+    survit=F.survit; froidOK=(F.rapportAvant===false && F.rapportApres===true); froidEstRejeu=F.estRejeu;
   }
+  // Le chemin doit exister dans l'app ET dans le clone (deux fichiers HTML distincts).
+  const _H = fs.readFileSync(path.join(__dirname,'..','..','index.html'),'utf8');
+  const _HC= fs.readFileSync(path.join(__dirname,'..','..','clone','index.html'),'utf8');
+  const boutonsAdmin = /onclick="rejouerVerifs\(\)"/.test(_H)  && /onclick="copyEvalReponses\(\)"/.test(_H)
+                    && /onclick="rejouerVerifs\(\)"/.test(_HC) && /onclick="copyEvalReponses\(\)"/.test(_HC);
 
   console.log('\n-- LXXIV. Garder les reponses : le gisement gratuit --');
   if(R.absente){ t('⛔ le stockage des réponses existe', false, R.err||'fonctions absentes'); }
@@ -8060,6 +8081,10 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⭐ les réponses de Milo sont GARDÉES après une passe', R.garde===true && R.texteGarde===true,
       'garde='+R.garde+' texte='+R.texteGarde+(R.errRun?' · '+R.errRun:''));
     t('⭐ ... et elles survivent à un rechargement de l\'app', survit===true, '');
+    t('⭐⭐ ... ET IL RESTE UN CHEMIN POUR LES REJOUER après rechargement (Profil → Admin)',
+      boutonsAdmin===true, 'boutons admin absents de index.html et/ou clone/index.html');
+    t('⭐⭐ ... le rejeu part À FROID : aucun rapport en mémoire → rapport produit',
+      froidOK===true && froidEstRejeu===true, 'froid='+froidOK+' marqué rejeu='+froidEstRejeu);
     t('/!\\ la vraie passe écrit bien UNE entrée d\'historique', R.histApresPasse===1, 'hist='+R.histApresPasse);
     /* ⭐⭐ Le témoin central : le rejeu est gratuit ET ne falsifie pas la tendance. */
     t('⭐⭐ LE REJEU NE FAIT AUCUN APPEL (0 €)', R.appelsPendantRejeu===0,
