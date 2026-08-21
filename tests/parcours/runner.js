@@ -8613,6 +8613,20 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     const _av=(JSON.parse(localStorage.getItem('ft4_gardienStats')||'{}')||{}).total||0;
     _gardienCompter(_gardienSortie('Noté ! {"retiens":["x"]}').flags);
     o.blocPasCompte = ((JSON.parse(localStorage.getItem('ft4_gardienStats')||'{}')||{}).total||0)===_av;
+
+    /* ⑨ Le motif « diagnostic », dans les deux sens. */
+    const _diag=(x)=>(_gardienSortie(x).flags||[]).some(f=>f.code==='diagnostic');
+    o.diagVrais=[
+      'C\'est une tendinite, repose-toi.', 'Tu souffres d\'une sciatique.',
+      'Tu es atteint d\'arthrose.', 'Tu es en dépression, c\'est clair.',
+      'Je te diagnostique un burn out.', 'C\'est une hernie discale.',
+    ].filter(_diag).length;
+    o.diagFaux=[
+      'Tu es en Jour 2 de ton programme.', 'Tu es en plein dans la zone, ta TSH est normale.',
+      'Tu es en phase de charge initiale ?', 'Tu fais une belle séance aujourd\'hui.',
+      'Tu fais un squat propre.',
+    ].filter(_diag).length;
+    o.diagHypothese = !_diag('Ça peut être une sciatique, vois ton médecin.');
     o.retroIdempotent = (o.retroApres3===2);
     /* ⛔ Le direct n'a pas été touché par le rétro. */
     o.retroSepare = (st2.total===_avantRetro) && !!st2.retro;
@@ -8673,6 +8687,20 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
        et chaque bloc mémoire — du trafic NORMAL. Le compter noierait le signal. */
     t('⚠️⚠️ un bloc {"retiens"} légitime N\'EST PAS compté comme une dérive',
       R.blocPasCompte===true, 'le trafic normal gonfle les compteurs');
+    /* ⚠️⚠️ LE MOTIF « DIAGNOSTIC » FAISAIT 3 FAUX POSITIFS SUR 3 (mesuré le 21/08 sur les
+       129 vraies réponses de Michel). Il attrapait « tu es (en |atteint) » — or « TU ES EN »
+       tout seul est une tournure ordinaire : « tu es en Jour 2 », « tu es en plein dans la
+       zone », « tu es en phase de charge ». Le même défaut dormait dans « tu fais (une |un ) ».
+       ⚠️ Et le resserrage a d'abord rendu le garde-fou MUET : `\\\\b` au lieu de `\\b` dans la
+       chaîne — une barre oblique de trop, et il n'attrapait plus rien. C'est le cousin du
+       piège déjà payé ici (`\b` après un accent) : un motif construit en chaîne se vérifie
+       en le JOUANT, jamais en le relisant. */
+    t('⭐⭐ DIAGNOSTIC : les vraies formulations sont toujours vues (6/6)',
+      R.diagVrais===6, R.diagVrais+'/6');
+    t('⭐⭐ ... et les tournures ORDINAIRES ne rougissent plus (0/5) — R19',
+      R.diagFaux===0, R.diagFaux+' faux positif(s) sur 5');
+    t('⛔ « ça PEUT être une sciatique » reste vert (hypothèse nommée, Constitution)',
+      R.diagHypothese===true, '');
   }
   await cx.close();
 }

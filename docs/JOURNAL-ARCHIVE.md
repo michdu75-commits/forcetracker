@@ -2833,3 +2833,18 @@ Tests : **parcours 816/816** (+10, bloc LXIII), calculs 241/241, muscles 241/241
 
 **👉 CE QUI EST LIVRÉ** : on ne se tait pas (le défaut de montée est **vrai** et utile pour la suite) et on ne devine pas non plus — on **NOMME l'incertitude dans la DONNÉE** : *« auteur des charges inconnu (séance saisie à la main) : cherche cette séance dans votre échange AVANT toute remarque »*. *Une information absente laisse la place à une supposition ; une information présente, non* (**R4**).
 Tests : **parcours 820/820** (+4, bloc LXIV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 2 rouges**, et la sortie montre exactement le trou — `[⚠️ montée en charge insuffisante — saut de 48 % entre 60 et 115 kg]`, **sans dire qui a choisi**. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** : les gardes-fous du 15/08 et du 18/08 ne devaient PAS bouger. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v926. |
+
+**ft-v927 — 📋 UN DÉBRIEF COUVRE TOUS LES EXERCICES — il en sautait 2 sur 5** — Michel, en relisant sa séance : *« et il a oublié des exercices si je ne dis pas de connerie »*. Il ne disait pas de connerie.
+
+**LE CONSTAT, VÉRIFIÉ** : sur ses 5 exercices, Milo en a commenté **3**. Absents : le **Tirage Visage (Face Pull)** — celui qu'il avait lui-même prescrit *« indispensable pour l'épaule droite »* — et le **Crunch Poulie**.
+
+**⭐ ET LES 5 ÉTAIENT BIEN TRANSMIS**, mesuré avant de toucher à quoi que ce soit. Ce n'est donc **pas** une perte de donnée (**R4**) : Milo les avait tous et en a choisi trois. *Vérifier d'abord évite de corriger le mauvais maillon.*
+
+**⚠️ SON ARGUMENT TRANCHE, ET IL EST IMPARABLE** : *« un débrief c'est un débrief »* — puis *« j'ai eu le débrief de fin de séance avec tout ce qui a été fait »*. **L'app en montre 5, Milo en montre 3.** Deux endroits racontent la même séance et se contredisent (**R2**) ; celui qui est incomplet est celui qui parle.
+
+**👉 CE QUI EST AJOUTÉ** : un débrief couvre **TOUS** les exercices faits — une ligne suffit quand il n'y a rien à dire (*« Face Pull 3×12 à 30 : fait, rien à signaler »*), mais l'exercice doit **APPARAÎTRE** · et un exercice qui **protège une zone fragile déclarée** ne se saute **jamais** : c'est celui dont la personne a le plus besoin de savoir qu'il a été fait.
+
+**⭐ ET ON LUI DONNE LE COMPTE, on ne lui demande pas de compter.** La ligne de séance porte désormais *« (5 exercices) »*. Une consigne qui dit *« n'en saute aucun »* sans fournir le nombre demande au modèle de recompter dans une ligne dense — c'est un **prompt qui compense une donnée absente** (**R8**), et le chiffre, lui, est calculé par l'app donc exact.
+
+**⚠️ LE MOTIF EST LE MÊME QU'À ft-v923, quelques heures plus tôt** : Milo traite les **petits accessoires comme négligeables** — il les range au hasard dans l'ordre, et il les oublie au débrief. *Deux symptômes, une seule attitude.*
+Tests : **parcours 823/823** (+3, bloc LXIV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v927. |

@@ -6,7 +6,23 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v946` — fusionnée sur `master` le 21/08.
+- **Version en ligne (live) :** `ft-v947` — fusionnée sur `master` le 21/08.
+- 🔬 **LES 4 DRAPEAUX RESTANTS, LUS UN PAR UN** (ft-v947) — Michel : *« regarde les 3
+  diagnostic et le lien »*.
+  ⭐⭐ **Les 3 `diagnostic` sont des faux positifs, tous du même défaut** : le motif attrapait
+  « tu es (en |atteint) », or **« tu es en » est une tournure ordinaire** (« tu es en Jour 2 »,
+  « tu es en plein dans la zone », « tu es en phase de charge »). Même défaut dormant dans
+  « tu fais (une |un ) ». → une **pathologie** est désormais exigée derrière.
+  Vérifié dans les 2 sens : **6/6** vrais vus, **0/5** faux, hypothèse nommée verte.
+  ⚠️⚠️ **Le resserrage a d'abord rendu le garde-fou MUET** : `\\b` au lieu de `\b`. Cousin du
+  piège déjà payé ici. *Un motif concaténé se vérifie en le jouant, pas en le relisant.*
+  ⭐ **Le lien `claude.ai` est gardé** : faux positif léger (1/129), dans une conversation
+  débridée sur le prompt. Resserrer risquerait de rater une vraie source fabriquée.
+  👉 **Bilan sur les 25 jours : 4 drapeaux, dont 3 vraies promesses non tenues.**
+  ⭐⭐ **Trou comblé sur « les testeurs testent-ils Milo ? »** : un compte SANS dérive
+  n'apparaissait pas. Or `retro.messages` = la mesure d'usage. La vue les montre tous.
+  ⏭️ **À suivre** : voir les chiffres des testeurs à leur prochaine ouverture.
+- 🕰️ **L'HISTORIQUE DÉJÀ STOCKÉ PASSE AU GARDIEN** (ft-v946).
 - 🕰️ **L'HISTORIQUE DÉJÀ STOCKÉ PASSE AU GARDIEN** (ft-v946). Michel : *« on ne pourra pas
   récupérer les anciennes conversations alors »*. Si : elles sont sur le téléphone (30 rangées
   + le fil en cours) et gardent le **texte brut**, blocs `{"retiens"}` compris — ce qui rend
