@@ -3063,13 +3063,36 @@ ${(()=>{
   if(!ms.length)return '';
   const out=(m)=>{if(m.value==null)return false;if(m.low!=null&&m.value<m.low)return true;if(m.high!=null&&m.value>m.high)return true;return false;};
   const line=(m)=>`${m.name}: ${m.value}${m.unit?(' '+m.unit):''}${(m.low!=null||m.high!=null)?` (réf. ${m.low!=null?m.low:''}${(m.low!=null&&m.high!=null)?'-':''}${m.high!=null?m.high:''})`:''}${out(m)?' [hors norme]':''}`;
+  /* 📈 L'ÉVOLUTION, PAS SEULEMENT LA DERNIÈRE VALEUR — Michel, 21/08 : « qu'il voie
+     l'évolution, comme la courbe du poids, et tous les marqueurs ».
+     ⚠️ AVANT, ON N'ENVOYAIT QUE `bt[0]` : l'écran du bilan comparait pourtant déjà chaque
+     marqueur au bilan précédent (flèches ▲/▼). L'app savait, Milo pas — c'est R4/R8 dans
+     sa forme la plus nette : la donnée existait et n'atteignait pas celui qui en parle.
+     ⭐ R13 : le motif « valeur + écart vs bilan précédent » vient du BILAN CORPOREL juste
+     au-dessus. On ne réinvente pas une façon de dire l'évolution, on reprend la sienne. */
+  const anciens=bt.slice(1,4);                  // jusqu'à 3 bilans antérieurs
+  const hist=(m)=>{
+    const pts=anciens.map(b=>{
+      const p=(b.markers||[]).find(x=>x.name===m.name);
+      return (p&&p.value!=null)?`${p.value} le ${b.date||'?'}`:null;
+    }).filter(Boolean);
+    return pts.length?`  ← avant : ${pts.join(' · ')}`:'';
+  };
+  const ligneEvo=(m)=>line(m)+hist(m);
+  /* ⚠️ TOUS les marqueurs partent, plus une sélection — c'est la demande. Le plafond
+     n'existe que pour borner un bilan exceptionnellement long ; ce qui ne rentre pas est
+     COMPTÉ et ANNONCÉ, jamais coupé en silence (une donnée absente sans le dire ferait
+     conclure à Milo qu'elle n'a pas été mesurée). */
+  const MAX=45;
   const outs=ms.filter(out);
-  const keys=['ferritine','glyc','cholest','hdl','ldl','triglyc','tsh','hémoglobine','vitamine d','testost','crp','asat','alat','ggt','créatinine'];
-  const key=ms.filter(m=>keys.some(k=>String(m.name||'').toLowerCase().indexOf(k)>=0));
-  const sel=[];const seen={};
-  outs.concat(key).forEach(m=>{if(!seen[m.name]){seen[m.name]=1;sel.push(m);}});
+  const reste=ms.filter(m=>outs.indexOf(m)<0);
+  const sel=outs.concat(reste);                 // les hors-norme d'abord s'il faut trancher
   if(!sel.length)return '';
-  return `\nBILAN SANGUIN (labo, le ${t.date||'?'}) — marqueurs clés:\n- ${sel.slice(0,16).map(line).join('\n- ')}\n⚠️ MÉDICAL : ce sont des chiffres recopiés du labo. Tu peux en parler en lien avec l'entraînement/récup/nutrition (ex. ferritine, glycémie, cholestérol) MAIS tu ne poses JAMAIS de diagnostic, tu ne dis jamais si c'est grave. Pour toute valeur [hors norme] ou toute inquiétude, renvoie SYSTÉMATIQUEMENT vers le médecin. Ne remplace jamais un professionnel de santé.\n`;
+  const gardes=sel.slice(0,MAX), coupes=sel.length-gardes.length;
+  const nHist=anciens.length;
+  return `\nBILAN SANGUIN (labo, le ${t.date||'?'}) — ${gardes.length} marqueur(s)${nHist?`, avec l'historique des ${nHist} bilan(s) précédent(s)`:''}:\n- ${gardes.map(ligneEvo).join('\n- ')}${coupes?`\n(+ ${coupes} marqueur(s) non listés ici, faute de place — ils EXISTENT dans son bilan.)`:''}
+⛔ TU N'EN PARLES QUE SI ON TE LE DEMANDE. Ces chiffres sont là pour que tu RAISONNES juste (fatigue, récup, nutrition, charge d'entraînement), pas pour que tu les commentes. N'ouvre JAMAIS le sujet toi-même : pas de « au fait, ton cholestérol… », pas de bilan spontané, pas de remarque sur une valeur au détour d'une réponse sur autre chose. Il te les demande → tu réponds. Il ne demande rien → tu n'en dis pas un mot.
+⚠️ MÉDICAL : ce sont des chiffres recopiés du labo. Quand il t'interroge dessus, tu peux les relier à l'entraînement/récup/nutrition (ex. ferritine, glycémie, cholestérol) MAIS tu ne poses JAMAIS de diagnostic, tu ne dis jamais si c'est grave, et tu n'expliques jamais une évolution par une cause médicale. Pour toute valeur [hors norme] ou toute inquiétude, renvoie SYSTÉMATIQUEMENT vers le médecin. Ne remplace jamais un professionnel de santé.\n`;
 })()}
 MÉTHODE DE COACHING (très important) :
 - ADAPTE la profondeur à son niveau : débutant → simple, pédagogue, priorité technique + sécurité ; intermédiaire/confirmé → technique, périodisation (phases de charge/décharge), notion de RPE et d'autorégulation. Jamais de conseils « bateau » servis à tout le monde.
@@ -4523,6 +4546,12 @@ function _evVerifier(sc, reply){
   });
 }
 
+/* 💶 Fourchette MESURÉE par appel au Coach (contexte réel ~70 000 caractères), une seule
+   fois pour tout le benchmark : le lancement, la comparaison et le rejeu des rouges lisent
+   les mêmes bornes. Deux barèmes finiraient par annoncer deux prix différents. */
+const _EV_PRIX = { bas:0.015, haut:0.065 };
+const _evPrix = (n)=> (n*_EV_PRIX.bas).toFixed(2).replace('.',',')+' € à '+(n*_EV_PRIX.haut).toFixed(2).replace('.',',')+' €';
+
 function startEvalBench(compare){
   if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
   if(_evRunning){ toast('Benchmark déjà en cours…','info'); return; }
@@ -4532,7 +4561,11 @@ function startEvalBench(compare){
     // ⚠️ LE COÛT EST ANNONCÉ AVANT, PAS APRÈS — c'est la demande explicite de Michel
     // (« faut que je sois sûr que ça soit utile, si je paye et que c'est pas utile c'est
     // gaspiller de l'argent »). Fourchette mesurée sur le contexte réel, pas devinée.
-    const prix = compare ? '0,30 € à 1,30 €' : '0,25 € à 0,95 €';
+    /* ⚠️ LE PRIX SE CALCULE, IL N'EST PLUS ÉCRIT EN DUR (R2). Il l'était pour 15 scénarios ;
+       en passant à 16 (EV-016), il serait devenu faux en silence — et un coût annoncé faux
+       est pire qu'un coût non annoncé, puisque Michel décide de dépenser sur ce chiffre.
+       Les bornes viennent de `_EV_PRIX`, la MÊME source que « rejouer les rouges ». */
+    const prix = _evPrix(n);
     const msg = (compare
         ? 'On joue les '+SC.length+' scénarios DEUX fois : une sur Sonnet (le modèle de tout le monde), une sur Haiku.\n\n'
           +'⚠️ Lecture asymétrique : si Haiku est nettement plus rouge, c\'est PROUVÉ qu\'un modèle léger suit moins bien les règles. '
@@ -4943,7 +4976,7 @@ function rejouerRouges(){
     const sous=SC.filter(x=>ids.indexOf(x.id)>=0);
     if(!sous.length){ toast('Scénarios introuvables','error'); return; }
     const n=sous.length*rep;
-    const bas=(n*0.015).toFixed(2), haut=(n*0.065).toFixed(2);
+    const bas=(n*_EV_PRIX.bas).toFixed(2), haut=(n*_EV_PRIX.haut).toFixed(2);   // même source (R2)
     showConfirm('🔁 Rejouer les '+sous.length+' rouge(s) ×'+rep,
       'On rejoue UNIQUEMENT ce qui est rouge : '+ids.join(', ')+'.\n\n'
       +'Pourquoi : un rouge isolé peut être un hasard. En le rejouant '+rep+' fois, tu sauras s\'il '

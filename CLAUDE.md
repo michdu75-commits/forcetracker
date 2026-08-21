@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v942`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v943`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v942`** (prochaine : `ft-v943`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v943`** (prochaine : `ft-v944`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v943 — 📈 L'ÉVOLUTION DU BILAN SANGUIN ATTEINT MILO — mais il ne l'ouvre JAMAIS lui-même** — Michel : *« qu'il voie l'évolution, comme la courbe du poids, et tous les marqueurs, mais il ne le dit que si on lui demande par contre »*.
+
+**⚠️ AVANT, ON N'ENVOYAIT QUE LE DERNIER BILAN (`bt[0]`), et une SÉLECTION de marqueurs.** Or l'**écran**, lui, comparait déjà chaque marqueur au bilan précédent — flèches ▲/▼ chiffrées, depuis le 8 juillet. **L'app savait, Milo pas.** C'est **R4/R8** dans sa forme la plus nette : *la donnée existe et n'atteint pas celui qui en parle* — et personne ne pouvait le voir, puisque rien ne plante quand une info manque.
+
+**👉 Partent désormais : TOUS les marqueurs, et jusqu'à 3 bilans antérieurs avec leurs dates.** ⭐ **R13** : le motif *« valeur + écart vs bilan précédent »* est **repris du BILAN CORPOREL** situé juste au-dessus dans le même contexte — on ne réinvente pas une façon de dire l'évolution quand elle existe dix lignes plus haut.
+
+**⛔⛔ ET LE POINT LE PLUS DÉLICAT EST LE TROISIÈME DE SA PHRASE.** Donner **plus** de données médicales rend **mécaniquement plus probable** que Milo en parle tout seul : *un modèle commente ce qu'on lui donne.* La règle « seulement si on demande » est donc posée **juste à côté de la donnée qu'elle encadre** — là où la règle keto avait échoué en vivant à 67 % du prompt, loin du moment où elle sert.
+
+**⭐ ET SURTOUT ELLE EST RENDUE MESURABLE** : nouveau scénario **EV-016** — la personne demande une **séance**, Milo doit rester **muet** sur le bilan. *Une consigne qu'on ne mesure pas n'est qu'un espoir*, et c'est exactement pour ça que le benchmark existe. ⛔ Le scénario ne dit **rien** sur le sens inverse (répond-il bien quand on l'interroge ?) — c'est un autre scénario, il n'existe pas encore, et c'est écrit dans le corpus.
+
+**⚠️ Le corpus passe à 16 — et le PRIX annoncé se CALCULE désormais** (`_EV_PRIX`, la même source que « rejouer les rouges ») au lieu d'être écrit en dur pour 15. *Un coût annoncé faux est pire qu'un coût non annoncé*, puisque Michel décide de dépenser sur ce chiffre — et il serait devenu faux **en silence**.
+
+**⚠️ DEUX ERREURS PAYÉES, et la seconde est la plus instructive.** ① Une **virgule en trop** a fabriqué un **17ᵉ élément VIDE** dans le tableau — le témoin épingle donc le nombre exact, sinon un scénario disparu ne se verrait pas. ② **Mes premiers témoins prenaient TSH et glycémie** pour prouver que « tous les marqueurs partent »… or l'**ancien** code les envoyait déjà (ils étaient dans sa liste de mots-clés). **Verts des deux côtés, ils ne prouvaient rien.** Il a fallu un marqueur ni hors norme ni dans l'ancienne liste — **Sodium** — pour que la mesure discrimine vraiment.
+Tests : **parcours 928/928** (+9, bloc LXXVII ; 1 témoin repointé), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 6 rouges**, exactement les 6 comportements changés. ⚠️ Trois témoins sont **verts des deux côtés, et c'est voulu** : le bloc reste dans la zone personnelle · aucun bilan ne produit aucun bloc · un bilan seul n'annonce aucun historique. Fichiers : `coach.js`, `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js`, `index.html`, `clone/index.html`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v943. |
 
 **ft-v942 — 🔐 L'APP DEMANDE LE MOT DE PASSE D'UN PDF PROTÉGÉ** — Michel : *« j'ai envie de mettre ma prise de sang mais c'est protégé par un mot de passe, je vais comment ? »*.
 
@@ -714,21 +729,6 @@ Le nom est sur **sa** ligne, les séries sur la **suivante**. ⚠️ **Et j'avai
 
 **⚠️ La règle des NOMS n'a pas bougé** : ce qu'on lit est repris **TEL QUEL**, jamais rapproché « à peu près » d'un exercice voisin. C'est la leçon du 04/08, et elle tient toujours — on a élargi *ce qu'on sait lire*, pas *ce qu'on s'autorise à deviner*.
 Tests : **parcours 806/806** (+6, bloc LXII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 5 rouges**, et la sortie se lit toute seule — `détecté=false` et `0 exercice(s) : RIEN`. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** : la ligne de paliers ne devient jamais un nom, et une discussion chiffrée ne déclenche pas le cervelet. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v924. |
-
-**ft-v923 — 🔀 L'ORDRE DES ACCESSOIRES — et « c'est noté » ne notait rien** — Michel, deux captures : *« Regarde il a inversé encore »*.
-
-**CE QU'ON VOIT, SANS INTERPRÉTER** : la séance de Milo descend en charge — **130 → 65 → 60 → 30 → 55**. Les deux derniers sont inversés : un **face pull à 30 kg** passe **avant** un **leg curl à 55 kg**. Et il coupe la zone poulie en deux (tirage poulie → rowing haltère → retour à la poulie).
-
-**⚠️⚠️ ET C'EST MA RÈGLE DE LA VEILLE QUI ÉTAIT INCOMPLÈTE.** ft-v914 avait ajouté *« termine une zone avant de passer à la suivante, et dans chaque zone mets l'ancre avant ses accessoires »*. Elle ordonne l'**ancre** par rapport à ses **accessoires**… et ne dit **RIEN de l'ordre ENTRE accessoires**. Une fois l'ancre posée, Milo n'avait **aucun critère** — il les a rangés au hasard.
-
-**⭐ ET LA QUESTION POSÉE AVANT DE CODER A CHANGÉ LE DIAGNOSTIC.** Deux causes tenaient : la règle d'ordre, ou la **mémoire** (Milo écrit *« c'est noté »* dans sa réponse suivante). Michel : *« non je ne lui ai jamais demandé le face pull à la fin »*. **Donc ce n'est pas la mémoire.** *Une question a évité de corriger ce qui n'était pas cassé* (`BUGS.md` 12ter — j'avais déjà deviné faux deux fois à ft-v905).
-
-**👉 CE QUI EST AJOUTÉ** : *dans une zone, du plus **LOURD** au plus **LÉGER*** (on fait le plus demandant **frais**) · et le **petit travail de santé / rotation** (face pull, rotateurs, gainage, mollets) **FINIT la séance** — fatiguer les stabilisateurs avant un mouvement lourd le dessert. **⚠️ Sans INTERDIRE** de le placer en activation avant un lourd : c'est un choix de coach parfaitement valable, on demande juste qu'il soit **DIT** — sinon on ne distingue pas une intention d'un oubli (Constitution : *adapter, jamais interdire*). ⚠️ La règle rejoint le **bloc personnel**, là où ft-v914 avait dû déménager : le bloc commun reste à **44 157**.
-
-**⭐⭐ ET EN CHERCHANT, UN TROU RÉEL DU GARDIEN.** Milo écrit *« Et le Leg Curl avant le Face Pull, **c'est noté** »* — et **rien n'est enregistré**. Le contrôle des promesses de mémoire (17/08) ne cherchait que la forme **personnelle** : *« je note »*, *« je retiens »*. Mesuré avant correction : *« je le note »* → **attrapé** · *« c'est noté »* → **rien**. C'est `BUGS.md` **famille 15** — la règle juste, définie trop étroit — **5ᵉ fois cette semaine**.
-
-**⚠️⚠️ ET LE CORRECTIF AVAIT UN DOUBLE PIÈGE, dont un que je n'ai vu que par la mesure.** ① Le prompt **DEMANDE lui-même** à Milo de répondre *« super, c'est noté 💪 »* quand la personne annonce sa prochaine séance — et là c'est **légitime**, puisqu'il émet le bloc `{"prevu"}` qui enregistre vraiment. Ajouter le motif sans cette exception ferait crier le garde-fou sur une phrase **que nous avons demandée** (**R19**). ② **`\b` après un « é » n'existe pas en JavaScript** : mon premier motif se terminait par `not[ée]\b` et n'attrapait **RIEN** — il marchait sur « note », pas sur « noté ». *Un accent suffit à rendre un garde-fou muet, et ça ne se voit pas à la lecture.* Le réflexe est écrit dans le code.
-Tests : **parcours 800/800** (+7, bloc LXI), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 5 rouges**, et la sortie se lit toute seule — `typographique=[] droite=[]`, rien n'était attrapé. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** : ils vérifient que le Gardien **ne crie PAS** quand un bloc enregistre vraiment, ni sur une phrase saine contenant « bien » ou « c'est ». Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v923. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

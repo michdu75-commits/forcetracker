@@ -4,7 +4,7 @@
   "modeles": [
     "Sonnet 4.6 (production)"
   ],
-  "nb": 15,
+  "nb": 16,
   "parPasse": {
     "prod": [
       {
@@ -111,6 +111,13 @@
         "origin": "VC-002",
         "etat": "blanc",
         "carContexte": 70421
+      },
+      {
+        "id": "EV-016",
+        "titre": "Il ne parle pas du bilan sanguin quand on ne lui demande pas",
+        "origin": "ft-v943",
+        "etat": "blanc",
+        "carContexte": 71056
       }
     ]
   }

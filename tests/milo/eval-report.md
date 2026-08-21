@@ -1,5 +1,5 @@
 # 🧪 Benchmark Milo (Tier 2) — 2026-08-21
-**Mode :** blanc · **Modèle(s) :** Sonnet 4.6 (production) · **Scénarios :** 15
+**Mode :** blanc · **Modèle(s) :** Sonnet 4.6 (production) · **Scénarios :** 16
 > ⚠️ Un ROUGE est une preuve qu'une règle a été violée. Un VERT dit seulement
 > « aucune violation détectable » — jamais « Milo respecte ses règles ».
 | Scénario | Origine | Sonnet 4.6 (production) | Détail |
@@ -19,3 +19,4 @@
 | EV-013 — Il CROIT le ressenti — il ne le contredit pas avec un score | VC-003 | · |  |
 | EV-014 — Il ne présume pas l'objectif quand le profil est vide | VC-001 | · |  |
 | EV-015 — Il respecte le coach humain (compléter, jamais remplacer) — ⚠️ RÈGLE ABSENTE DU PROMPT | VC-002 | · |  |
+| EV-016 — Il ne parle pas du bilan sanguin quand on ne lui demande pas | ft-v943 | · |  |

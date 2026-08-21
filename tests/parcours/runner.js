@@ -7574,8 +7574,11 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   if(R.absente){ t('⛔ le moteur de benchmark existe dans l\'app', false, 'fonctions absentes'); }
   else{
     t('⭐ le corpus n\'est PAS chargé au démarrage (règle d\'or #4)', R.avantChargement===true, '');
-    t('⭐⭐ ... et il se télécharge à la demande : 15 scénarios, une seule source (R2)',
-      R.nb===15 && R.aDesVerifs===true, 'nb='+R.nb+' verifs='+R.aDesVerifs+(R.err?' · '+R.err:''));
+    // ⚠️ Ce nombre est ÉPINGLÉ exprès : un scénario qui disparaîtrait du corpus (fichier
+    // tronqué, virgule en trop créant un trou dans le tableau) ne se verrait pas autrement.
+    // Le 21/08, une virgule en trop a justement fabriqué un 17e élément VIDE.
+    t('⭐⭐ ... et il se télécharge à la demande : 16 scénarios, une seule source (R2)',
+      R.nb===16 && R.aDesVerifs===true, 'nb='+R.nb+' verifs='+R.aDesVerifs+(R.err?' · '+R.err:''));
     t('⭐ un débrief à qui il manque 2 exercices sur 5 est ROUGE',
       R.rouge006===true, R.det006||JSON.stringify(R.errRun||''));
     t('⭐ « c\'est noté » sans bloc de mémoire est ROUGE', R.rouge004===true, '');
@@ -8367,6 +8370,104 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⭐⭐ R2 : UNE seule porte d\'entrée, et les deux lecteurs de PDF y passent',
       unSeulGetDocument===true && lesDeuxPassentPar===true,
       'unSeulGetDocument='+unSeulGetDocument+' lesDeux='+lesDeuxPassentPar);
+  }
+  await cx.close();
+}
+
+/* == BLOC LXXVII - L'EVOLUTION DU BILAN SANGUIN ATTEINT MILO (21/08/2026) ==
+   Michel : « qu'il voie l'evolution, comme la courbe du poids, et tous les marqueurs, mais
+   il ne le dit que si on lui demande par contre ».
+   ⚠️ AVANT, ON N'ENVOYAIT QUE LE DERNIER BILAN (`bt[0]`) — alors que l'ECRAN, lui, comparait
+   deja chaque marqueur au bilan precedent (fleches ▲/▼ chiffrees). L'app savait, Milo pas :
+   R4/R8 dans sa forme la plus nette, la donnee existe et n'atteint pas celui qui en parle.
+   ⛔⛔ ET LE POINT LE PLUS DELICAT EST LE 3e : donner PLUS de donnees medicales rend
+   mecaniquement plus probable que Milo en parle tout seul — un modele commente ce qu'on lui
+   donne. La regle « seulement si on demande » est donc posee JUSTE A COTE de la donnee
+   qu'elle encadre, et rendue MESURABLE par un scenario du benchmark (EV-016). Une consigne
+   qu'on ne mesure pas n'est qu'un espoir. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'87',ft4_admin_ok:'1'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(()=>{
+    if(typeof buildCoachContext!=='function') return {absente:true};
+    const o={};
+    const mk=(n,v,u,lo,hi)=>({name:n,value:v,unit:u,low:lo,high:hi,group:'T'});
+    S.bloodTests=[
+      { date:'2026-08-20', markers:[mk('Cholestérol total',2.35,'g/L',null,2.0), mk('Ferritine',310,'µg/L',30,300),
+                                    mk('Glycémie à jeun',0.98,'g/L',0.74,1.06), mk('TSH',1.8,'mUI/L',0.4,4.0),
+                                    /* ⚠️ CE MARQUEUR-CI EST LE SEUL QUI DISCRIMINE : ni hors norme, ni dans
+                                       l'ancienne liste de mots-clés — donc l'ancien code ne l'envoyait PAS.
+                                       Mes 1ers témoins prenaient TSH et glycémie, que l'ancien code envoyait
+                                       déjà : verts des deux côtés, ils ne prouvaient rien. */
+                                    mk('Sodium',140,'mmol/L',136,145)] },
+      { date:'2026-02-14', markers:[mk('Cholestérol total',1.90,'g/L',null,2.0), mk('Ferritine',250,'µg/L',30,300)] },
+      { date:'2025-09-02', markers:[mk('Cholestérol total',1.70,'g/L',null,2.0)] },
+    ];
+    const c=buildCoachContext('Fais-moi une séance');
+    o.aBloc      = /BILAN SANGUIN/.test(c);
+    // ① TOUS les marqueurs partent, pas une sélection de « clés ».
+    o.sodium     = c.indexOf('Sodium')>=0;   // ⭐ le seul que l'ancien code n'envoyait PAS
+    o.tsh        = c.indexOf('TSH')>=0;
+    o.glycemie   = c.indexOf('Glycémie à jeun')>=0;
+    // ② L'HISTORIQUE est là : les valeurs anciennes ET leurs dates.
+    o.histValeur = c.indexOf('1.9')>=0 && c.indexOf('1.7')>=0;
+    o.histDate   = c.indexOf('2026-02-14')>=0 && c.indexOf('2025-09-02')>=0;
+    o.annonceHist= /historique des 2 bilan/.test(c);
+    // ③ ⛔ LA RÈGLE DE RETENUE, et elle est explicite.
+    o.regleMuet  = /N.EN PARLES QUE SI ON TE LE DEMANDE/.test(c);
+    o.regleOuvre = /N.ouvre JAMAIS le sujet toi-même/i.test(c);
+    // ④ La règle médicale d'origine n'a pas été perdue au passage.
+    o.regleMedic = /renvoie SYSTÉMATIQUEMENT vers le médecin/.test(c);
+    o.pasDeCause = /jamais une évolution par une cause médicale/.test(c);
+    // ⑤ Le bloc reste dans la zone PERSONNELLE (avant le marqueur de l'instant).
+    const MK="═══ SITUATION DE L'INSTANT ═══";
+    o.avantMarqueur = c.indexOf('BILAN SANGUIN') < c.indexOf(MK);
+    // ⑥ ⚠️ Sans bilan, AUCUN bloc — on n'envoie pas un en-tête vide.
+    S.bloodTests=[];
+    o.sansBilan = !/BILAN SANGUIN/.test(buildCoachContext('Fais-moi une séance'));
+    // ⑦ Un bilan SEUL (aucun antérieur) ne doit pas annoncer d'historique.
+    S.bloodTests=[{ date:'2026-08-20', markers:[mk('Ferritine',310,'µg/L',30,300)] }];
+    const c1=buildCoachContext('Fais-moi une séance');
+    o.seulSansHist = /BILAN SANGUIN/.test(c1) && !/historique des/.test(c1) && !/← avant/.test(c1);
+    return o;
+  });
+
+  // Le scénario qui rend la règle mesurable, et le prix qui ne peut plus dériver.
+  const _SC = require('../milo/eval-scenarios.js');
+  const ev16 = _SC.find(x=>x.id==='EV-016');
+  const _C = fs.readFileSync(path.join(__dirname,'..','..','coach.js'),'utf8');
+  const prixCalcule = /const prix = _evPrix\(n\)/.test(_C) && /_EV_PRIX\s*=\s*\{/.test(_C)
+                   && !/'0,25 € à 0,95 €'/.test(_C);
+
+  console.log('\n-- LXXVII. L\'evolution du bilan sanguin atteint Milo --');
+  if(R.absente){ t('⛔ le contexte de Milo se construit', false, 'buildCoachContext absente'); }
+  else{
+    t('⭐ TOUS les marqueurs partent, plus une sélection de « clés »',
+      R.aBloc===true && R.sodium===true && R.tsh===true && R.glycemie===true,
+      'bloc='+R.aBloc+' Sodium(discriminant)='+R.sodium+' TSH='+R.tsh+' glycémie='+R.glycemie);
+    t('⭐⭐ ... avec l\'ÉVOLUTION : valeurs anciennes ET dates (R4/R8 comblé)',
+      R.histValeur===true && R.histDate===true && R.annonceHist===true,
+      'valeurs='+R.histValeur+' dates='+R.histDate+' annonce='+R.annonceHist);
+    /* ⛔ Le témoin qui porte la demande de Michel. */
+    t('⛔⛔ LA RÈGLE « seulement si on demande » est écrite À CÔTÉ de la donnée',
+      R.regleMuet===true && R.regleOuvre===true,
+      'muet='+R.regleMuet+' n\'ouvre pas='+R.regleOuvre);
+    t('⛔ ... et la protection MÉDICALE d\'origine n\'a pas été perdue',
+      R.regleMedic===true && R.pasDeCause===true,
+      'médecin='+R.regleMedic+' pas de cause='+R.pasDeCause);
+    t('/!\\ le bloc reste dans la zone personnelle (avant le marqueur de l\'instant)',
+      R.avantMarqueur===true, '');
+    t('/!\\ aucun bilan → aucun bloc (pas d\'en-tête vide)', R.sansBilan===true, '');
+    t('/!\\ un bilan SEUL n\'annonce aucun historique', R.seulSansHist===true, '');
+    /* ⚠️ Une consigne qu'on ne mesure pas n'est qu'un espoir. */
+    t('⭐⭐ la règle est MESURABLE : le scénario EV-016 existe et vérifie le silence',
+      !!ev16 && ev16.verifs.length===2, ev16?('verifs='+ev16.verifs.length):'EV-016 absent');
+    t('⭐ le prix annoncé se CALCULE (16 scénarios) au lieu d\'être écrit en dur (R2)',
+      prixCalcule===true, '');
   }
   await cx.close();
 }
