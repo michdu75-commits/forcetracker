@@ -228,12 +228,17 @@ try:
     _ouvertes = [l for l in _ent if ("🟡" in l[:8] or "🟢" in l[:8])]
     _promues  = [l for l in _ent if "🔵" in l[:8]]
     if len(_ent) >= SEUIL_PIEGES:
-        print(f"🎯 JOURNAL DE TEST : {len(_ent)} entrées (seuil {SEUIL_PIEGES} ATTEINT) — "
-              f"Michel a demandé de RELANCER LE BENCHMARK à ce palier.")
+        # ⚠️ Le seuil est un PLANCHER, pas une cible (Michel : « quand je dis 25 c'est AU MOINS »).
+        #    On annonce donc que la relance est POSSIBLE, jamais que le travail est fini : un
+        #    compteur qui dit « objectif atteint » fait arrêter de remplir.
+        print(f"🎯 journal de test : {len(_ent)} entrées "
+              f"({len(_ouvertes)} à promouvoir · {len(_promues)} promues) — "
+              f"plancher de {SEUIL_PIEGES} ATTEINT, le benchmark peut être relancé. "
+              f"On continue d'alimenter : le fichier ne se ferme pas.")
     else:
         print(f"🧾 journal de test : {len(_ent)} entrées "
               f"({len(_ouvertes)} à promouvoir · {len(_promues)} promues) — "
-              f"benchmark en pause, encore {SEUIL_PIEGES - len(_ent)} avant relance.")
+              f"benchmark en pause, encore {SEUIL_PIEGES - len(_ent)} avant le plancher de {SEUIL_PIEGES}.")
 except FileNotFoundError:
     print("⚠️ docs/JOURNAL-DE-TEST.md introuvable — le réflexe de la règle #12 n'a plus de fichier.")
 except Exception:
