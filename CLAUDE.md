@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v933`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v934`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v933`** (prochaine : `ft-v934`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v934`** (prochaine : `ft-v935`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v934 — 🔁 REJOUER LES ROUGES : le verdict devient un TAUX, plus un booléen** — Michel, après avoir lu que la comparaison Sonnet/Haiku n'était pas concluante : *« sinon on passe à 20 passes non ? »*.
+
+**⭐ SON INTUITION EST JUSTE, ET C'EST LA BONNE MÉTHODE** : répéter est la **seule** façon de battre le bruit. On l'a mesuré la veille — deux passes du **même** modèle ont donné **3 puis 4** rouges.
+
+**⛔ MAIS PAS 20 × 15 = 300 APPELS, et la raison n'est pas que le prix.** C'est **4,60 à 19 €**, et surtout c'est **au-dessus du plafond anti-abus** (`worker.js` : **50 appels/jour/personne**, 600 au total, écrit le 08/08 pour « borner le coût en cas d'abus »). *Un run coupé au milieu, c'est payer des appels pour un rapport tronqué.* Le runner **refuse net** au-delà de 45 appels, avec le motif écrit.
+
+**👉 ON RÉPÈTE CE QUI COMPTE, PAS TOUT.** Bouton **« 🔁 Rejouer les rouges »** sur la carte de résultat : il ne rejoue **que** les scénarios rouges, et le nombre de répétitions **s'adapte à leur nombre** pour tenir sous le plafond — 3 rouges × 10 = **30 appels ≈ 0,45 €**, au lieu de 300.
+
+**⭐⭐ ET LE VERDICT CHANGE DE NATURE : « rouge 5/10 » au lieu de « rouge ».** C'est le vrai apport, plus que l'économie. La question utile n'est pas *rouge ou vert*, c'est ***« ce défaut tombe-t-il À CHAQUE FOIS, ou une fois sur cinq ? »*** — un défaut **systématique** et un défaut **intermittent** ne se corrigent pas pareil, et *un outil qui écrase l'intermittence en booléen ferait chercher un bug systématique là où il n'y en a pas.* C'est exactement le cas d'**EV-009** (le matériel redemandé), rouge à une passe et vert à l'autre.
+
+**⚠️ Un défaut intermittent reste classé ROUGE** : on mesure sa fréquence, on ne l'excuse pas.
+
+**⚠️ Chaque passe repart d'un navigateur NEUF et d'un profil remis à neutre** — sinon on mesurerait la mémoire de Milo au lieu de la règle, et dix passes identiques ne prouveraient rien.
+
+En ligne de commande : `--repeat N`, à combiner avec `--only`. Le devis à blanc compte les répétitions.
+Tests : **parcours 869/869** (+5, bloc LXXI), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif** : la répétition est un comportement **neuf**, un témoin contre l'ancien code rendrait « fonction absente » au lieu de mesurer. Ce qui le remplace est plus parlant — un **Milo bouchonné qui échoue une fois sur deux** : le témoin exige *« rouge 5/10 »*, donc il rougirait aussi bien si l'outil comptait mal que s'il écrasait le taux en booléen. Fichiers : `coach.js`, `tests/milo/eval.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v934. |
 
 **ft-v933 — 🥑 LE BENCHMARK A TROUVÉ SON PREMIER VRAI DÉFAUT : Milo proposait RIZ, PÂTES, PAIN à un profil KETO** — première vraie passe, lancée par Michel depuis l'app. Deux rapports, l'un de 15 scénarios, l'autre en comparaison Sonnet/Haiku.
 
@@ -719,22 +736,6 @@ Tests : **parcours 774/774** (+4, bloc LVIII), calculs 241/241, muscles 232/232,
 
 **⚠️ ET LE GAIN EST MODESTE, C'EST DIT HONNÊTEMENT** : **46 465 → 46 259 caractères**, marge passée de **35 à 241**. Ça débloque la prochaine règle, pas les dix suivantes. *La vraie question n'est pas de compresser du texte : c'est de décider lesquelles des **180 règles** peuvent partir* — et ça, c'est un arbitrage produit, pas une optimisation. ⚠️ Mesuré au passage : **38 % du bloc** touche à seulement **8 thèmes récurrents** (« au plus une question » revient sur **8 lignes**, ~4 000 caractères ; « n'invente rien » sur 8 lignes aussi). Mais la répétition d'une règle dans plusieurs contextes est peut-être **porteuse**, pas gaspillée — on ne coupe pas là-dedans sans preuve, et `tests/milo` est déterministe : il prouve la PRÉSENCE, jamais l'OBÉISSANCE.
 Tests : **parcours 770/770**, calculs 241/241, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif ici** : on ne retire aucun comportement, on retire du texte redondant — le contrôle utile était le témoin de ft-v887, et il a rougi au bon moment. Fichiers : `coach.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v917. |
-
-**BACKEND — 😴🚶 LE SOMMEIL ET LES PAS PEUVENT ENFIN ARRIVER DE LA MONTRE — et un bug latent corrigé au passage (19/08/2026, ft-v916, Code.js)** — Michel : *« et bah voilà, y a plus qu'à automatiser le sommeil sur l'application »*, après qu'on ait comparé son `sleepLog` saisi à son export Garmin sur 10 semaines.
-
-**⭐⭐ LA MESURE QUI DÉCLENCHE TOUT** : la saisie de Michel est bonne **en moyenne** (+12 min sur 10 semaines, sans biais de direction) — mais elle **aplatit ses mauvaises semaines**. Corrélation entre le sommeil réellement mesuré et l'erreur de sa saisie : **r = −0,96** sur les semaines complètes. Semaine du 6-12 août : Garmin disait **5 h 38**, l'app disait **6 h 43**. Or `S.sleepLog` part dans le contexte de Milo — il sous-estimait donc la dette de récupération **exactement les semaines où elle comptait le plus** (R4).
-
-**⚠️⚠️ ET J'AI PROPOSÉ DE « CONSTRUIRE UN PONT » ALORS QU'IL EXISTAIT DÉJÀ** — R23 pour la 2ᵉ fois (après la prise de sang du 27/07). La route `pushHealth` tourne depuis le **16/08** (ft-v880 à ft-v884), Michel l'avait demandée lui-même, elle reçoit déjà les activités et la FC au repos, tous les soirs à 21 h, via son raccourci iOS. Il a fallu *« on a déjà créé un raccourci lol »* pour que j'aille lire le code au lieu de proposer à côté. **Une fonctionnalité non relue est une fonctionnalité qu'on re-propose.**
-
-**⭐ VÉRIFIÉ AVANT DE CODER, PAS SUPPOSÉ** : Michel a ouvert Apple Santé et comparé à l'œil — sommeil ✅ (moyenne 7 jours identique au CSV Garmin au chiffre près), pas ✅ (données quotidiennes complètes), **VFC ⛔** (absente de la liste des types que Garmin Connect synchronise, sur son iPhone — vérifié dans les réglages, pas cherché sur le web). La VFC est donc écartée, et ce n'est pas une limite de la montre : Garmin ne la mesure même pas en instantané, seulement en synthèse hebdomadaire (« Statut VFC »), et cette synthèse ne sort jamais vers Santé.
-
-**👉 CE QUI EST LIVRÉ** : `handlePushHealth_` accepte désormais `sleep` (en HEURES, même unité que `S.sleepLog[].hours` — R2) et `steps`, rangés dans `data.healthDaily` à côté de la FC au repos. **Le téléphone calcule, le serveur ne reçoit qu'un résultat** — jamais le flux d'échantillons bruts, qui referait exploser le stockage comme le 29/07 (réservoir plein à 102 %).
-
-**⭐⭐ ET UN BUG LATENT CORRIGÉ EN CHEMIN, JAMAIS DÉCLENCHÉ JUSQU'ICI** : l'ancienne écriture de `healthDaily` **écrasait toute l'entrée du jour** à chaque appel — inoffensif tant qu'un seul champ (`rhr`) existait, mais un appel n'apportant que le sommeil aurait effacé la FC au repos déjà reçue le même jour, et réciproquement. Passé en **fusion par date** : chaque champ s'écrit sans toucher aux autres. Vérifié par simulation Node (5 cas : RHR seul → sommeil+pas sur le même jour sans effacer le RHR → jour différent → valeur aberrante rejetée sans polluer le reste → aucun champ valide sans exception).
-
-**⚠️ ELLE NE REMPLACE PAS `sleepLog`, ELLE VIENT À CÔTÉ.** Écraser une saisie manuelle depuis un point d'entrée public serait exactement l'erreur que la note de sécurité de la route interdit déjà (règle d'or #3). L'écran de comparaison reste à construire — **volontairement pas ce soir** (R30) : `healthDaily.sleep/steps` sont reçus et stockés, mais rien côté app ne les affiche encore. Noté dans `state.js` pour que ça ne se perde pas.
-
-**⚠️ Pas de bump `sw.js`** : Code.js seul, backend Apps Script (règle du projet). Déploiement automatique via `.github/workflows/deploy-appsscript.yml` dès le push sur `master`. Fichiers : `Code.js`, `state.js`, `CLAUDE.md`. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

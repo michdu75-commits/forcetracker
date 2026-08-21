@@ -6,7 +6,19 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v933` — fusionnée sur `master` le 20/08.
+- **Version en ligne (live) :** `ft-v934` — fusionnée sur `master` le 21/08.
+- 🔁 **REJOUER LES ROUGES** (ft-v934) — Michel : *« sinon on passe à 20 passes non ? »*.
+  ⭐ **L'intuition est juste** : répéter est la seule façon de battre le bruit (3 puis 4 rouges
+  sur deux passes du même modèle).
+  ⛔ **Mais pas 20 × 15 = 300 appels** : 4,60 à 19 €, et surtout **au-dessus du plafond
+  anti-abus** (50/jour/personne). Le runner refuse net au-delà de 45.
+  👉 **Bouton « 🔁 Rejouer les rouges »** : ne rejoue que les scénarios rouges, répétition
+  adaptée à leur nombre (3 rouges × 10 = 30 appels ≈ 0,45 €).
+  ⭐⭐ **Le verdict devient un TAUX** — « rouge 5/10 » au lieu de « rouge ». *Un défaut
+  systématique et un défaut intermittent ne se corrigent pas pareil.* Cas concret : EV-009.
+  ⚠️ **Le garde-fou des documents excluait mal les rapports générés** — il criait « 79 %
+  perdus » sur le fonctionnement normal du benchmark. Aucun seuil baissé : on a retiré de la
+  surveillance des fichiers qui ne sont pas des documents.
 - 🥑 **LE BENCHMARK A TROUVÉ SON PREMIER VRAI DÉFAUT** (ft-v933) — Milo proposait **riz, pâtes,
   pain** à un profil **keto**, sur les 2 modèles et aux 2 passes.
   ⭐⭐ **Diagnostic fait AVANT de toucher au prompt (R7)** : `S.keto` était vrai, la règle était

@@ -64,6 +64,17 @@ const ONLY = (ARGV.find(a=>a.startsWith('--only='))||'').split('=')[1]
 const NMAX = parseInt((ARGV.find(a=>a.startsWith('--n='))||'').split('=')[1]
           || (ARGV[ARGV.indexOf('--n')+1]||''), 10);
 const COMPARE = ARGV.includes('--compare');
+// 🔁 RÉPÉTITION — Michel, 21/08 : « sinon on passe à 20 passes non ? ». L'intuition est juste :
+// répéter est la SEULE façon de battre le bruit (deux passes du même modèle ont donné 3 puis
+// 4 rouges). Mais répéter les 15 coûte cher ET dépasse le plafond anti-abus (50 appels/jour/
+// personne, 600 au total) : 20 × 15 = 300 appels.
+// ⭐ La bonne façon est donc de répéter CE QUI COMPTE, pas tout : `--only EV-012 --repeat 20`
+//    = 20 appels (~0,30 €), et ça répond à la vraie question — « ce rouge tombe-t-il À CHAQUE
+//    FOIS, ou une fois sur cinq ? ». Un rouge intermittent et un rouge systématique ne se
+//    corrigent pas pareil.
+// ⚠️ Le verdict devient un TAUX, plus un booléen : « rouge 8 fois sur 10 ».
+const REPEAT = Math.max(1, parseInt((ARGV.find(a=>a.startsWith('--repeat='))||'').split('=')[1]
+          || (ARGV[ARGV.indexOf('--repeat')+1]||''), 10) || 1);
 // ⚠️⚠️ LE BENCHMARK RÉEL TOURNE SUR L'APP DÉPLOYÉE, PAS SUR UN SERVEUR LOCAL — et ce n'est
 //    pas un choix de confort. Le Worker porte un verrou anti-abus depuis le 27/07 :
 //    `ALLOWED_ORIGIN = 'https://michdu75-commits.github.io'`, et il refuse AVANT tout appel
@@ -165,8 +176,17 @@ function verifier(sc, reply) {
   console.log('╚══════════════════════════════════════════════════════════════════╝');
   if (!GO) console.log('  Mode : À BLANC — aucun appel, aucun coût. Ajoute --go pour lancer.\n');
   else {
-    if (COMPARE) console.log('  Mode : COMPARAISON — ' + (liste.length*2) + ' appels (' + liste.length + ' par modèle).');
-    else console.log('  Mode : RÉEL — ' + liste.length + ' appel(s) sur ' + MODELES[MOD_ARG].nom + '.');
+    const _n = liste.length * REPEAT;
+    if (COMPARE) console.log('  Mode : COMPARAISON — ' + (_n*2) + ' appels (' + _n + ' par modèle).');
+    else console.log('  Mode : RÉEL — ' + _n + ' appel(s) sur ' + MODELES[MOD_ARG].nom + '.');
+    if (REPEAT > 1) console.log('  🔁 Chaque scénario est rejoué ' + REPEAT + ' fois — le verdict devient un TAUX.');
+    /* ⛔ PLAFOND ANTI-ABUS : 50 appels/jour/personne, 600 au total (worker.js). Au-delà, le
+       benchmark se ferait couper EN COURS et on paierait des appels pour un rapport tronqué. */
+    if (_n * (COMPARE?2:1) > 45) {
+      console.log('\n  ⛔ ' + (_n*(COMPARE?2:1)) + ' appels : au-dessus du plafond de 50/jour/personne.');
+      console.log('     Le run serait coupé en cours de route. Réduis --repeat ou --only.\n');
+      process.exit(2);
+    }
     console.log('  App testée : ' + (LOCAL ? 'LOCALE ⚠️ (le Worker refusera : origine non autorisée)' : APP_LIVE));
     console.log('  ⚠️ C\'est le Milo EN LIGNE qui est mesuré — une modif locale non déployée ne l\'est pas.\n');
   }
@@ -195,11 +215,19 @@ function verifier(sc, reply) {
     const resultats = [];
 
     for (const sc of liste) {
-      const { page, ctx } = await ouvrirPage();
-      const r = await jouerDansLaPage(page, {
-        apply: sc.apply, scenario: sc.scenario, coachEmail: sc.coachEmail, history: sc.history
-      }, GO, M.id);
-      await ctx.close();
+      /* 🔁 On rejoue le MÊME scénario REPEAT fois. Chaque passe est un navigateur neuf : aucun
+         état ne fuit de l'une à l'autre, sinon on mesurerait la mémoire et pas la règle. */
+      const passes = [];
+      let r = null;
+      for (let k = 0; k < (GO ? REPEAT : 1); k++) {
+        const { page, ctx } = await ouvrirPage();
+        r = await jouerDansLaPage(page, {
+          apply: sc.apply, scenario: sc.scenario, coachEmail: sc.coachEmail, history: sc.history
+        }, GO, M.id);
+        await ctx.close();
+        if (GO && r && r.ok) passes.push(verifier(sc, r.reply));
+        if (GO && REPEAT > 1) await new Promise(z => setTimeout(z, 400)); // on ne mitraille pas
+      }
 
       if (r.erreur) {
         console.log('  ⛔ ' + sc.id + ' — ' + r.erreur);
@@ -228,17 +256,24 @@ function verifier(sc, reply) {
       const attendu = M.id || 'claude-sonnet-4-6';
       const bonModele = (servi === attendu);
 
-      const verdicts = verifier(sc, r.reply);
+      const verdicts = passes[passes.length-1] || verifier(sc, r.reply);
       const rouges = verdicts.filter(v => !v.ok);
-      console.log((rouges.length ? '  ❌ ' : '  ✅ ') + sc.id + ' — ' + sc.titre + '  (' + r.ms + ' ms)'
+      /* Sur plusieurs passes, ce qui compte n'est plus « rouge ou vert » mais COMBIEN DE FOIS. */
+      const nbRouges = passes.filter(vs => vs.some(v => !v.ok)).length;
+      const taux = passes.length > 1 ? '  🔁 rouge ' + nbRouges + '/' + passes.length : '';
+      console.log((nbRouges ? '  ❌ ' : '  ✅ ') + sc.id + ' — ' + sc.titre
+        + (passes.length > 1 ? taux : '  (' + r.ms + ' ms)')
         + (bonModele ? '' : '   ⚠️ servi par ' + servi + ' au lieu de ' + attendu));
-      verdicts.forEach(v => {
+      /* On montre les motifs de la DERNIÈRE passe rouge, pas d'une passe verte au hasard. */
+      const montre = passes.find(vs => vs.some(v => !v.ok)) || verdicts;
+      montre.forEach(v => {
         if (!v.ok) console.log('       ↳ ' + v.nom + (v.detail ? '\n         → ' + v.detail : ''));
         else if (v.detail) console.log('       · ' + v.nom + ' — ' + v.detail);
       });
-      totalCar += (r.carContexte||0);
-      resultats.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat: rouges.length?'rouge':'vert',
-                       ms:r.ms, modele:servi, bonModele, verdicts, reply:r.reply });
+      totalCar += (r.carContexte||0) * (passes.length||1);
+      resultats.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat: nbRouges?'rouge':'vert',
+                       ms:r.ms, modele:servi, bonModele, verdicts:montre, reply:r.reply,
+                       passes:passes.length, nbRouges });
     }
 
     parPasse[passe] = resultats;
@@ -259,13 +294,13 @@ function verifier(sc, reply) {
 
   // ── Devis (à blanc) ──
   if (!GO) {
-    const tk = Math.round(totalCar / CAR_PAR_TOKEN);
+    const tk = Math.round(totalCar * REPEAT / CAR_PAR_TOKEN);
     console.log('\n  📐 DEVIS MESURÉ (contexte réel construit, ' + Math.round(totalCar/1000) + ' k caractères au total)');
-    console.log('     ≈ ' + tk.toLocaleString('fr-FR') + ' tokens d\'entrée + ' + (liste.length*SORTIE_ATTENDUE).toLocaleString('fr-FR') + ' de sortie');
+    console.log('     ≈ ' + tk.toLocaleString('fr-FR') + ' tokens d\'entrée + ' + (liste.length*REPEAT*SORTIE_ATTENDUE).toLocaleString('fr-FR') + ' de sortie');
     Object.keys(MODELES).forEach(k => {
       const M = MODELES[k];
       const haut = (tk/1e6)*M.entree, bas = haut*CACHE_LECTURE;
-      const sortie = (liste.length*SORTIE_ATTENDUE/1e6)*M.sortie;
+      const sortie = (liste.length*REPEAT*SORTIE_ATTENDUE/1e6)*M.sortie;
       console.log('     · ' + M.nom.padEnd(26) + ' entre ' + euros(bas+sortie) + ' € (cache chaud) et ' + euros(haut+sortie) + ' € (rien en cache)');
     });
     console.log('     ⚠️ Ordre de grandeur, pas une facture — le découpage en tokens est estimé.');

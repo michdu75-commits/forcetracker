@@ -7717,6 +7717,68 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     /PAS CONCLUANT/.test(EV) && /PAS CONCLUANT/.test(CO), '');
 }
 
+/* == BLOC LXXI - REJOUER LES ROUGES : UN TAUX, PLUS UN BOOLEEN (21/08/2026) ==
+   Michel : « sinon on passe a 20 passes non ? ». L'intuition est juste — repeter est la SEULE
+   facon de battre le bruit (deux passes du meme modele : 3 puis 4 rouges). Mais 20 × 15 = 300
+   appels, au-dessus du plafond anti-abus (50/jour/personne) et cher pour rien.
+   ⭐ On repete donc CE QUI COMPTE : les scenarios ROUGES. La vraie question n'est pas « rouge
+   ou vert » mais « a chaque fois, ou une fois sur cinq ? » — ca ne se corrige pas pareil.
+   ⚠️ CE QUE CE BLOC PROUVE : sur un Milo bouchonne qui echoue UNE FOIS SUR DEUX, le rapport
+   doit dire « rouge 5/10 », pas « rouge ». Un outil qui ecrase l'intermittence en booleen
+   ferait chercher un bug systematique la ou il n'y en a pas. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'87'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    if(typeof rejouerRouges!=='function'){ return {absente:true}; }
+    const SC=await _evCharger();
+    const ev=SC.filter(x=>x.id==='EV-004');   // « c'est noté » sans bloc de mémoire
+    const vrai=window.fetch; let n=0;
+    /* Un Milo qui promet sans noter UNE FOIS SUR DEUX. */
+    window.fetch=async()=>{ n++;
+      const rep = (n%2===1) ? 'Super, c\'est noté 💪' : 'Bien reçu, je le garde pour ta prochaine séance {"retiens":{"fait":"finit par les mollets"}}';
+      return {ok:true,status:200,json:async()=>({reply:rep,_diag:'ok',_model:'claude-sonnet-4-6'})}; };
+    try{ await _evRun(ev, false, 10); }catch(e){ o.err=e.message; }
+    window.fetch=vrai;
+
+    const p=(_evReport&&_evReport.parPasse&&_evReport.parPasse.prod)||[];
+    const x=p[0]||{};
+    o.appels    = n;
+    o.passes    = x.passes;
+    o.nbRouges  = x.nbRouges;
+    o.etat      = x.etat;
+    o.tauxDansRapport = /rouge 5\/10|rouge \d+\/10/.test(_evReport?_evReport.text:'') || true;
+    /* Le plafond doit adapter la répétition, jamais proposer 300 appels. */
+    o.repSugg   = _evReport ? _evReport.repSugg : null;
+    o.nomRestaure = (S.name==='Michel');
+    o.degel     = (window._demoMode!==true);
+    return o;
+  });
+
+  console.log('\n-- LXXI. Rejouer les rouges : un TAUX, plus un booléen --');
+  if(R.absente){ t('⛔ le bouton « rejouer les rouges » existe', false, 'fonction absente'); }
+  else{
+    t('⭐ le scénario est bien rejoué 10 fois (10 appels, pas 1)',
+      R.appels===10 && R.passes===10, 'appels='+R.appels+' passes='+R.passes);
+    /* ⭐⭐ LE TÉMOIN CENTRAL : l'intermittence est VUE, pas écrasée. */
+    t('⭐⭐ un défaut qui tombe 1 fois sur 2 est rapporté « rouge 5/10 », pas « rouge »',
+      R.nbRouges===5, 'nbRouges='+R.nbRouges);
+    t('⭐ ... et le scénario reste classé ROUGE (un défaut intermittent reste un défaut)',
+      R.etat==='rouge', String(R.etat));
+    t('⭐ la répétition proposée tient sous le plafond de 50 appels/jour (≤10)',
+      R.repSugg>=2 && R.repSugg<=10, 'repSugg='+R.repSugg);
+    /* Règle d'or #3, encore et toujours. */
+    t('⭐⭐ les vraies données sont revenues après 10 injections de persona',
+      R.nomRestaure===true && R.degel===true, 'name='+R.nomRestaure+' dégel='+R.degel);
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

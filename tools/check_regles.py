@@ -110,7 +110,16 @@ if git_ok and perdues:
 PART_MINI  = 0.25          # il faut perdre au moins un quart du fichier…
 LIGNES_MINI = 15           # …ET au moins 15 lignes de fond (les deux, pas l'un ou l'autre)
 # Fichiers RÉGÉNÉRÉS depuis le code : les réécrire EST leur mode de fonctionnement.
-GENERES = {"docs/INVENTAIRE.md", "docs/FIGURINES.html"}
+# ⚠️ AJOUT 21/08/2026 — les RAPPORTS DE TEST. `tests/milo/report.md` et
+# `tests/milo/eval-report.md` sont réécrits par leur runner à chaque exécution, et leur
+# taille dépend du nombre de scénarios joués : une passe `--only EV-012` en produit un de
+# 4 lignes après une passe de 15. Le contrôle criait donc « 79 % perdus » sur le
+# fonctionnement NORMAL de l'outil — et un garde-fou qui crie pour rien finit désactivé (R19).
+# ⛔ On ne baisse AUCUN seuil : on retire de la surveillance des fichiers qui ne sont pas
+# des documents. Ce qui protège les vrais documents (leçon du 04/08, 297 entrées écrasées)
+# reste exactement aussi strict.
+GENERES = {"docs/INVENTAIRE.md", "docs/FIGURINES.html",
+           "tests/milo/report.md", "tests/milo/eval-report.md"}
 
 # ── 🚪 LA PORTE ÉTROITE : une RÉÉCRITURE VOLONTAIRE (19/08/2026) ─────────────
 # LE CAS QUI L'A CRÉÉE. Michel demande de réécrire un document en changeant l'ordre
