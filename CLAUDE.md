@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v940`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v941`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v940`** (prochaine : `ft-v941`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v941`** (prochaine : `ft-v942`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,19 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v941 — 🚪 UN STOCKAGE QUI SURVIT DERRIÈRE UNE PORTE QUI NE SURVIT PAS NE SERT À RIEN** — Michel, en voulant vérifier lui-même : *« je ne peux pas rejouer j'ai plus les cases »*.
+
+**Le bug est de moi, et il date de ft-v938 — c'est-à-dire de l'avant-veille.** Les deux boutons **gratuits** (🔬 rejouer les vérificateurs · 📥 copier les réponses) ne vivaient **que sur la carte de résultat**. Or cette carte vit **dans le chat** : elle disparaît au rechargement de l'app.
+
+**⭐ ET ÇA ANNULAIT TOUT L'INTÉRÊT DE ft-v938.** La promesse était *« on paie une fois, on exploite dix fois »*. Les réponses avaient été stockées en local **exprès** pour survivre à une fermeture — et un témoin le vérifiait. Mais le **moyen d'y accéder**, lui, mourait avec la session. *La matière était là, la porte n'existait plus.*
+
+**👉 Les deux boutons vivent maintenant dans Profil → Admin**, à côté de « Lancer le benchmark » — un endroit qui ne dépend d'aucune session de chat.
+
+**⚠️ ET LE CONTRÔLE NÉGATIF DIT EXACTEMENT LA BONNE CHOSE : un seul rouge, le chemin manquant.** Le témoin « départ à froid » est **vert des deux côtés, et c'est voulu** — `rejouerVerifs()` a toujours fonctionné quand on l'appelait. ⭐ **Ce qui manquait n'était pas une fonction, c'était un POINT D'ENTRÉE** — et c'est un défaut qu'aucun test de la fonction elle-même n'aurait pu trouver. *On teste souvent que le moteur tourne, rarement qu'il reste une clé de contact.*
+
+**⚠️ Le témoin lit les DEUX fichiers HTML** (l'app et le clone) : un chemin présent d'un seul côté finirait par diverger sans que rien ne le signale (**R2**).
+Tests : **parcours 910/910** (+2, bloc LXXIV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN HTML : 1 rouge**, le chemin absent. Fichiers : `index.html`, `clone/index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v941. |
 
 **ft-v940 — 🟢 LA PASSE RÉELLE : 2 rouges, et les DEUX étaient des FAUX ROUGES** — Michel lance la passe et colle les **réponses brutes** — le bouton livré la veille. Rejeu des vérificateurs en local : **0 appel, 0 €**. *ft-v938 a payé sa dette dès sa première utilisation.*
 
@@ -723,23 +736,6 @@ Le mollet assis est **le cas d'école** : debout = jumeaux (genou tendu), assis 
 
 **⛔ CE QUI N'EST PAS FAIT, ET POURQUOI C'EST ÉCRIT (R30)** : le **pectoral haut/milieu/bas** (55 fiches) et le **moyen fessier** (108). Là, la scission n'est **pas propre** — il faudrait relire **tous** les développés et **tous** les squats, et le sens de chaque fiche changerait vraiment. Restent aussi en attente les **trapèzes** (122 fiches : un shrug et un face pull sont opposés) et les **rhomboïdes + grand rond** sortis du grand dorsal (67). *Ajouter un muscle change ce que voit l'utilisateur : c'est l'arbitrage de Michel, jamais un effet de bord.*
 Tests : parcours 793/793, calculs 241/241, **muscles 241/241** (+6), croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 7 rouges**, exactement les 7 comportements changés. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** — ils vérifient qu'une rotation russe n'a PAS gagné de dentelé et qu'un squat n'a PAS gagné de soléaire : *c'est ce qui prouve que la scission est propre et non une sur-étiquette.* L'**empreinte du catalogue** a été régénérée et relue : **18 exercices bougent, pas un de plus.** Fichiers : `log.js`, `constants.js`, `app.js`, `screens.js`, `tests/muscles/runner.js`, `tests/croises/runner.js` (+ empreinte), `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v922. |
-
-**ft-v921 — 🦵 LES ADDUCTEURS EXISTENT ENFIN — l'adduction de cuisses comptait pour du FESSIER** — Michel, en me reprenant sur une phrase où je les avais mis sur la même ligne : *« Abducteur/Adducteur ce n'est pas pareil hein »*. Il a raison, et sa remarque a ouvert un vrai bug.
-
-**LA MESURE, avant de toucher à quoi que ce soit** : `Adduction Cuisses (Leg Adduction)` rendait **`glutes:2 · quads:1`**. La machine qui ramène la cuisse vers l'**INTÉRIEUR** colorait les **FESSIERS**. Ce n'est pas une nuance de vocabulaire : la figurine s'allumait au mauvais endroit, le calendrier héritait de la couleur, et Milo recevait *« il a travaillé les fessiers »*.
-
-**⚠️⚠️ ET LE MANQUE ÉTAIT ÉCRIT, DATÉ, ET IL ATTENDAIT MICHEL.** Le 02/08, la relecture une par une des 58 fiches Jambes s'était arrêtée dessus, en toutes lettres dans `constants.js` : *« les ADDUCTEURS n'existent pas dans la figurine (17 muscles). Ils sont pourtant moteurs au squat sumo, au cossack, aux fentes latérales et à l'adduction de cuisses. On ne les invente pas ailleurs : la fiche reste honnête et le manque est nommé. ⏭️ Ajouter un muscle change ce que voit l'utilisateur, donc c'est l'arbitrage de Michel (R29). »* ⭐ **C'était la bonne décision** : on n'a pas bricolé, on a **nommé** le manque et on a attendu. Le commentaire a même servi de liste de courses — il donnait déjà les quatre exercices à reprendre.
-
-**⚠️ ET LE DESSIN LES CONNAISSAIT DÉJÀ** : `front_adductor_left/right` existent depuis toujours, et l'étiquette au survol dit « Adducteurs ». Ils étaient simplement rattachés au groupe **« Fléchisseurs de hanche »** — donc **aucun exercice ne pouvait les allumer**. C'est **R31** dans sa forme exacte : *la figurine est le VOCABULAIRE du système, et un muscle absent du vocabulaire est un muscle dont aucun module ne pourra jamais parler.*
-
-**👉 CE QUI EST LIVRÉ** : le groupe **`adductors`** (18 → **19 codes**), sorti des fléchisseurs · **5 fiches** reprises — l'adduction de cuisses en **MOTEUR** (c'est une isolation), le squat sumo, le cossack, les fentes latérales et le soulevé sumo en **SECONDAIRE**, parce que leurs moteurs restent quadriceps et fessiers · les régions **calendrier** et **calories** complétées · et l'**exception manuelle** posée pour les zones de douleur (*« les adducteurs sont dans le groupe hip-flexors → on les sépare »*) a **disparu** : le groupe s'en charge, une information n'a qu'un propriétaire (**R2**).
-
-**⚠️ L'ABDUCTION NE BOUGE PAS, et c'est ce qui rend la correction crédible.** Mouvement **opposé** (moyen fessier), et le moyen fessier est dessiné **à l'intérieur** du groupe Fessiers : le séparer ferait cesser de le colorer sur **tous** les squats et hip thrusts — c'est un chantier à part, pas un effet de bord. Un témoin jumeau vérifie explicitement qu'elle est **intacte**.
-
-**⭐⭐ ET J'AVAIS D'ABORD AJOUTÉ MA RÈGLE DERRIÈRE UNE RÈGLE FAUSSE.** `_MEX` s'arrête au **PREMIER match** (`break`), et la règle 29 disait déjà `glutes` : ma règle 34, pourtant juste, ne servait à rien — la mesure le montrait (`Adducteur` rendait toujours `glutes:2 quads:1`). **C'est la famille de bugs n°1 du projet, le « premier match gagnant », ≥12 fois** (`BUGS.md`). Corrigé **EN PLACE**, et les deux règles mortes retirées.
-
-**⭐⭐ ET UN TÉMOIN A FAIT SON TRAVAIL EN ROUGISSANT.** Il s'appelait *« témoin honnête : l'ABDUCTION est juste (moyen fessier), l'ADDUCTION reste fausse »* et il **figeait le manque** pour que personne ne le découvre par surprise. Il n'a pas été affaibli, il a été **retourné** : *un test protège une ABSENCE aussi bien qu'une présence (R30) — quand l'absence est comblée, il change de camp.*
-Tests : parcours 793/793, calculs 241/241, **muscles 235/235** (+3), croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges**, exactement les 4 comportements changés. ⚠️ L'**empreinte du catalogue** a été régénérée et son diff relu ligne à ligne : **5 exercices bougent, pas un de plus** — c'est le garde-fou qui existe précisément pour ça. Fichiers : `log.js`, `constants.js`, `app.js`, `screens.js`, `tests/muscles/runner.js`, `tests/croises/runner.js` (+ empreinte), `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v921. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

@@ -6,7 +6,16 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v940` — fusionnée sur `master` le 21/08.
+- **Version en ligne (live) :** `ft-v941` — fusionnée sur `master` le 21/08.
+- 🚪 **UN STOCKAGE QUI SURVIT DERRIÈRE UNE PORTE QUI NE SURVIT PAS NE SERT À RIEN** (ft-v941).
+  Michel : *« je ne peux pas rejouer j'ai plus les cases »*. Les deux boutons **gratuits** ne
+  vivaient que sur la **carte de résultat**, qui vit dans le chat — donc qui meurt au
+  rechargement, alors que les réponses avaient été stockées exprès pour y survivre.
+  👉 Ils vivent maintenant dans **Profil → Admin**, à côté de « Lancer le benchmark ».
+  ⭐ **Le défaut était un POINT D'ENTRÉE, pas une fonction** — le témoin « départ à froid »
+  est vert des deux côtés : `rejouerVerifs()` marchait, il manquait la clé de contact.
+  *On teste souvent que le moteur tourne, rarement qu'il reste un moyen de le démarrer.*
+- 🟢 **LA PASSE RÉELLE : 2 rouges, et les DEUX étaient des FAUX ROUGES** (ft-v940).
 - 🟢 **LA PASSE RÉELLE : 2 rouges, et les DEUX étaient des FAUX ROUGES** (ft-v940). Michel a
   lancé la passe et collé les **réponses brutes** — le bouton de ft-v938, qui a payé sa dette
   dès sa première utilisation (rejeu en local : **0 appel, 0 €**).
