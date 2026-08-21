@@ -41,6 +41,14 @@
 
 (function(){
 // ── Aides communes aux vérificateurs ────────────────────────────────────────────
+/* 🧾 D'OÙ VIENNENT LES SCÉNARIOS — et où va une question qui n'en est pas encore un.
+   Les 6 meilleurs d'ici viennent de bugs que Michel a VÉCUS en salle ; les autres, inventés,
+   valent moins — ils testent ce qu'on a imaginé de Milo, pas ce qui lui arrive.
+   👉 Une question soulevée en conversation se note d'abord dans `docs/JOURNAL-DE-TEST.md`
+   (une ligne, zéro coût), et n'entre ICI que si son attendu est vérifiable PAR DU CODE.
+   ⚠️ Ce qui dépend du goût — le ton, le naturel, « est-ce que Milo est agréable ? » — reste
+   au juge HUMAIN et ne devient jamais un scénario : il n'y a aucun juge IA ici, c'est une
+   décision (voir l'en-tête de ce fichier). */
 const U = {
   // Enlève les accents et met en minuscules — Milo écrit « Développé » ou « developpe ».
   norm(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); },
