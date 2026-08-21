@@ -35,6 +35,17 @@
  *   node tests/milo/eval.js --go --compare      → les deux, côte à côte (2× le coût)
  *   node tests/milo/eval.js --go --only EV-001,EV-006
  *   node tests/milo/eval.js --go --n 4          → les 4 premiers seulement
+ *   node tests/milo/eval.js --rejouer <fichier> → 🔬 REJOUE LES VÉRIFICATEURS, 0 appel, 0 €
+ *
+ * ⭐ `--rejouer` EST LE MODE LE PLUS RENTABLE, et il n'existait pas jusqu'à ft-v938.
+ *    Une passe coûte 0,25-0,95 € et produit 15 vraies réponses de Milo — qui étaient JETÉES.
+ *    Elles sont désormais gardées par l'app (bouton « 📥 Copier les réponses »), et ce mode
+ *    les relit pour repasser les motifs dessus SANS rien redemander à Milo. On paie une
+ *    fois, on exploite dix fois : corriger un faux rouge, ou élargir un motif, se vérifie
+ *    alors sur du VRAI texte au lieu de se faire à l'aveugle.
+ * ⚠️ ET CE N'EST PAS UNE MESURE DE MILO : il n'a pas reparlé. Ce mode mesure le
+ *    VÉRIFICATEUR. Un rouge qui apparaît ici veut dire « mon motif attrape ça maintenant »,
+ *    jamais « Milo s'est dégradé ».
  *
  * Sortie : console + tests/milo/eval-report.json + tests/milo/eval-report.md
  */
@@ -98,6 +109,50 @@ const PASSES = COMPARE ? ['prod','haiku'] : [MOD_ARG];
 let liste = SCENARIOS.slice();
 if (ONLY) { const ids = ONLY.split(',').map(s=>s.trim().toUpperCase()); liste = liste.filter(s=>ids.includes(s.id)); }
 if (Number.isFinite(NMAX) && NMAX > 0) liste = liste.slice(0, NMAX);
+
+/* 🔬 REJEU DES VÉRIFICATEURS — 0 appel, 0 €, et pas même un navigateur.
+   Le fichier attendu a la forme d'un `eval-report.json` (clé `parPasse`), qui est aussi
+   celle que l'app exporte — MÊME FORME DES DEUX CÔTÉS (R2). Deux formats finiraient par
+   diverger, et le jour où l'un des deux ne serait plus relu, rien ne le signalerait. */
+const REJOUER = (ARGV.find(a=>a.startsWith('--rejouer='))||'').split('=')[1]
+        || (ARGV[ARGV.indexOf('--rejouer')+1] && !ARGV[ARGV.indexOf('--rejouer')+1].startsWith('--') ? ARGV[ARGV.indexOf('--rejouer')+1] : '');
+if (REJOUER) {
+  let src;
+  try { src = JSON.parse(fs.readFileSync(path.resolve(REJOUER), 'utf8')); }
+  catch (e) { console.error('Fichier illisible : ' + REJOUER + ' — ' + e.message); process.exit(2); }
+  const pp = src.parPasse || {};
+  const cles = Object.keys(pp);
+  if (!cles.length) { console.error('Aucune réponse dans ' + REJOUER + ' (clé `parPasse` attendue).'); process.exit(2); }
+  console.log('');
+  console.log('🔬 REJEU DES VÉRIFICATEURS — 0 appel, 0 €');
+  console.log('   Source : ' + REJOUER + (src.date ? '   (réponses du ' + src.date + ')' : ''));
+  console.log('   ⚠️ Ce n\'est PAS une mesure de Milo — il n\'a pas reparlé. On mesure les MOTIFS.\n');
+  let nRej = 0, nSansTexte = 0, nInconnus = 0;
+  cles.forEach(k => {
+    const rs = (pp[k]||[]).filter(r => r && r.reply);
+    nSansTexte += (pp[k]||[]).length - rs.length;
+    const verts = [], rouges = [];
+    rs.forEach(r => {
+      const sc = SCENARIOS.find(x => x.id === r.id);
+      if (!sc) { nInconnus++; return; }              // scénario retiré du corpus depuis la passe
+      nRej++;
+      const v = verifier(sc, r.reply);
+      const ko = v.filter(x => !x.ok);
+      (ko.length ? rouges : verts).push({ sc, ko });
+    });
+    console.log('── ' + k.toUpperCase() + ' : ' + verts.length + ' vert(s) · ' + rouges.length + ' rouge(s) ──');
+    rouges.forEach(x => {
+      console.log('  ❌ ' + x.sc.id + ' (' + x.sc.origin + ') — ' + x.sc.titre);
+      x.ko.forEach(v => console.log('       ↳ ' + v.nom + (v.detail ? '\n         → ' + v.detail : '')));
+    });
+    verts.forEach(x => console.log('  ✅ ' + x.sc.id + ' — ' + x.sc.titre));
+    console.log('');
+  });
+  if (nSansTexte) console.log('  ⚠️ ' + nSansTexte + ' entrée(s) sans texte de réponse — ignorées (un run à blanc n\'en produit aucun).');
+  if (nInconnus)  console.log('  ⚠️ ' + nInconnus + ' réponse(s) d\'un scénario absent du corpus actuel — ignorées.');
+  console.log('  ' + nRej + ' réponse(s) rejouée(s). Rien n\'a été appelé, rien n\'a été facturé.\n');
+  process.exit(0);
+}
 
 // ── Playwright ──
 let chromium;

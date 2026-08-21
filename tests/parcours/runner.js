@@ -7621,9 +7621,25 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
 
   /* ⚠️ Le motif éprouvé du 13/08 : presse-papier → repli → et si les deux tombent, ON LE DIT.
      Un bouton muet, de l'autre côté de l'écran, ça s'appelle « ça ne marche pas ». */
-  const bloc = (C.match(/function copyEvalText\(\)\{[\s\S]*?\n\}/)||[''])[0];
+  /* ⚠️ ft-v938 : l'enchainement presse-papier vit desormais dans `_evCopier`, partage par le
+     rapport ET par les reponses (R2 — deux copies du meme code finiraient par diverger, l'une
+     recevrait un correctif et pas l'autre). Le temoin regarde donc la fonction qui PORTE le
+     comportement, pas celle qui l'appelle : lire le corps de `copyEvalText` mesurait un
+     raccourci devenu faux le jour ou le code a demenage — exactement le piege paye a ft-v936. */
+  const bloc = (C.match(/function _evCopier\([\s\S]*?\n\}/)||[''])[0];
   t('⭐ la copie a un repli execCommand ET un message quand tout échoue (leçon du 13/08)',
     /execCommand\('copy'\)/.test(bloc) && /catch\(/.test(bloc) && /toast\(/.test(bloc), '');
+  /* ⚠️ ET CE TEMOIN A ROUGI A TORT AVANT D'ETRE RECENTRE : il exigeait UN SEUL
+     `execCommand('copy')` dans TOUT coach.js — or il y en a un deuxieme, legitime et sans
+     rapport (copier une reponse de Milo dans le chat, ecrit bien avant). Ce qu'on veut
+     garantir n'est pas « une seule copie dans le fichier », c'est « les deux boutons du
+     benchmark DELEGUENT au lieu de recopier ». Un motif doit viser la garantie, pas une
+     forme de code (R19 — 3e fois cette semaine). */
+  const _bText=(C.match(/function copyEvalText\(\)\{[\s\S]*?\n\}/)||[''])[0];
+  const _bReps=(C.match(/function copyEvalReponses\(\)\{[\s\S]*?\n\}/)||[''])[0];
+  t('⭐⭐ ... et ce chemin est PARTAGÉ (rapport et réponses), pas recopié (R2)',
+    /_evCopier\(/.test(_bText) && /_evCopier\(/.test(_bReps)
+    && !/execCommand/.test(_bText) && !/execCommand/.test(_bReps), '');
   t('/!\\ dernier recours : le rapport est AFFICHÉ, jamais perdu en silence',
     /renderCoachMsg\('coach', txt\)/.test(bloc), '');
 }
@@ -7928,6 +7944,142 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⭐⭐ ... et le rapport les COMPTE SÉPARÉMENT', R.compteSepare===true, '');
     t('⭐ ... en expliquant pourquoi ce n\'est pas un bug', R.expliqueSpec===true, '');
     t('/!\\ avec une icône distincte (⚠️ et non ❌)', R.iconeSpec===true, '');
+  }
+  await cx.close();
+}
+
+/* == BLOC LXXIV - GARDER LES REPONSES : LE GISEMENT GRATUIT (21/08/2026) ==
+   Michel : « on ne peut pas ameliorer le benchmark ou il faut plus de passes ? ». Les deux —
+   mais le plus gros gain ne coutait rien et on le JETAIT : une passe coute 0,25-0,95 € et
+   produit 15 vraies reponses de Milo, perdues a la fermeture (le rapport ne gardait que les
+   verdicts). Or les verificateurs sont du CODE : les rejouer ne coute AUCUN appel.
+   ⚠️⚠️ LE PIEGE DE CE BLOC EST SILENCIEUX : un REJEU n'est PAS une nouvelle passe. Milo n'a
+   pas reparle ; ce qu'on mesure, c'est le VERIFICATEUR. L'ecrire dans l'historique
+   fabriquerait une mesure qui n'a jamais eu lieu, et la lecture « systematique vs
+   intermittent » — celle qui decide de ce qu'on corrige — deviendrait fausse sans que rien
+   ne le signale. C'est le temoin central d'ici.
+   ⛔ ET LA REGLE D'OR n°3 PASSE AVANT LA FONCTIONNALITE : ces textes ne doivent jamais
+   menacer les seances de la personne. Si le stockage refuse, le benchmark reussit quand
+   meme et les vraies donnees reviennent. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  // ⚠️ Le rejeu est reserve a l'admin (comme le benchmark) : sans ce drapeau, rejouerVerifs
+  // sort tout de suite et le temoin mesurerait la porte, pas le rejeu.
+  await pg.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'87',ft4_age:'45',ft4_admin_ok:'1'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    if(typeof _evRun!=='function' || typeof _evRepsLire!=='function' || typeof rejouerVerifs!=='function')
+      return {absente:true};
+    o.porteAdmin = (typeof _isAdminUnlocked==='function' && _isAdminUnlocked()===true);
+    let SC=null; try{ SC=await _evCharger(); }catch(e){ return {absente:true, err:e.message}; }
+
+    /* Reseau bouchonne : la reponse est FABRIQUEE ici, donc on sait quel verdict doit tomber.
+       On choisit EV-001 (la charge de barre) : un texte VERT, pour pouvoir ensuite montrer
+       qu'un verificateur MODIFIE change le verdict SANS que Milo ait reparle. */
+    const vraiFetch=window.fetch;
+    const TEXTE='Vu ton record de 95 kg x 4, on estime ton 1RM a environ 93 kg. Seance : Developpe Couche 4x6 a 80 kg.';
+    window.fetch=async(url,opt)=>{
+      let body={}; try{ body=JSON.parse((opt&&opt.body)||'{}'); }catch(e){}
+      return { ok:true, status:200, json:async()=>({reply:TEXTE, _diag:'ok', _model:body.evalModel||'claude-sonnet-4-6'}) };
+    };
+    const sous=SC.filter(x=>x.id==='EV-001');
+    try{ localStorage.removeItem('ft4_evalHist'); localStorage.removeItem('ft4_evalReps'); }catch(e){}
+    try{ await _evRun(sous, false); }catch(e){ o.errRun=e.message; }
+    window.fetch=vraiFetch;
+
+    /* ① Les reponses sont GARDEES (avant, elles mouraient a la fermeture). */
+    const st=_evRepsLire();
+    o.garde       = !!(st && st.reps && st.reps.length===1);
+    o.texteGarde  = !!(st && st.reps[0] && st.reps[0].reply===TEXTE);
+    o.survitReload= false;   // rempli plus bas
+    o.vertApres   = ((_evReport.parPasse.prod||[])[0]||{}).etat==='vert';
+
+    /* ② L'historique porte UNE entree (la vraie passe). */
+    const h1=JSON.parse(localStorage.getItem('ft4_evalHist')||'{}');
+    o.histApresPasse = (h1['EV-001']||[]).length;
+
+    /* ③ ⭐⭐ LE REJEU N'APPELLE RIEN — on casse fetch : s'il l'utilisait, ca leverait. */
+    window.fetch=()=>{ throw new Error('le rejeu ne doit appeler AUCUN reseau'); };
+    let appels=0; const _f=window.fetch;
+    window.fetch=(...a)=>{ appels++; return _f(...a); };
+    try{ rejouerVerifs(); }catch(e){ o.errRejeu=e.message; }
+    await new Promise(r=>setTimeout(r,600));
+    window.fetch=vraiFetch;
+    o.appelsPendantRejeu = appels;
+
+    /* ④ ⭐⭐ ET SURTOUT : le rejeu n'a RIEN ajoute a l'historique. */
+    const h2=JSON.parse(localStorage.getItem('ft4_evalHist')||'{}');
+    o.histApresRejeu = (h2['EV-001']||[]).length;
+
+    /* ⑤ Le rapport DIT que c'est un rejeu (sinon on le lit comme une mesure de Milo). */
+    o.rapportDitRejeu = !!(_evReport && /REJEU DES V/.test(_evReport.text) && /pas reparl/.test(_evReport.text));
+    o.drapeauRejeu    = _evReport.rejeu===true;
+
+    /* ⑥ ⭐ LA VALEUR DU TRUC : un verificateur MODIFIE change le verdict sur la MEME reponse,
+       sans un seul appel. On remplace le motif d'EV-001 par un motif qui attrape « 1RM ». */
+    const sc=SC.find(x=>x.id==='EV-001');
+    const vraiVerifs=sc.verifs;
+    sc.verifs=[{ nom:'motif elargi (test)', fn:r=>/1rm/i.test(r)?{ok:false,detail:'attrape 1RM'}:{ok:true} }];
+    try{ rejouerVerifs(); }catch(e){ o.errRejeu2=e.message; }
+    await new Promise(r=>setTimeout(r,600));
+    o.rougeApresMotifElargi = ((_evReport.parPasse.prod||[])[0]||{}).etat==='rouge';
+    const h3=JSON.parse(localStorage.getItem('ft4_evalHist')||'{}');
+    o.histApres2Rejeux = (h3['EV-001']||[]).length;
+    sc.verifs=vraiVerifs;
+
+    /* ⑦ ⛔ REGLE D'OR n°3 : les vraies donnees sont revenues. */
+    o.nomRestaure=(S.name==='Michel'); o.bwRestaure=(Number(S.bw)===87); o.degel=(window._demoMode!==true);
+
+    /* ⑧ Un stockage qui REFUSE ne casse rien (quota plein). */
+    const vraiSet=localStorage.setItem.bind(localStorage);
+    localStorage.setItem=(k,v)=>{ if(k==='ft4_evalReps') throw new Error('quota'); return vraiSet(k,v); };
+    let planta=false;
+    try{ _evRepsEcrire({prod:[{id:'EV-001',reply:'x'}]},'2026-08-21',false); }catch(e){ planta=true; }
+    localStorage.setItem=vraiSet;
+    o.quotaNeCassePas = !planta;
+    o.cleNettoyee     = (localStorage.getItem('ft4_evalReps')===null);
+    return o;
+  });
+
+  /* ⑨ Les reponses survivent a un rechargement (c'est tout l'interet). */
+  let survit=false;
+  if(!R.absente){
+    await pg.evaluate(()=>{ try{ localStorage.setItem('ft4_evalReps', JSON.stringify({ymd:'2026-08-21',reps:[{id:'EV-001',cle:'prod',reply:'texte garde'}]})); }catch(e){} });
+    await pg.reload(); await pg.waitForTimeout(2000);
+    survit = await pg.evaluate(()=>{ const st=(typeof _evRepsLire==='function')?_evRepsLire():null;
+      return !!(st && st.reps && st.reps[0] && st.reps[0].reply==='texte garde'); });
+  }
+
+  console.log('\n-- LXXIV. Garder les reponses : le gisement gratuit --');
+  if(R.absente){ t('⛔ le stockage des réponses existe', false, R.err||'fonctions absentes'); }
+  else{
+    t('⭐ les réponses de Milo sont GARDÉES après une passe', R.garde===true && R.texteGarde===true,
+      'garde='+R.garde+' texte='+R.texteGarde+(R.errRun?' · '+R.errRun:''));
+    t('⭐ ... et elles survivent à un rechargement de l\'app', survit===true, '');
+    t('/!\\ la vraie passe écrit bien UNE entrée d\'historique', R.histApresPasse===1, 'hist='+R.histApresPasse);
+    /* ⭐⭐ Le témoin central : le rejeu est gratuit ET ne falsifie pas la tendance. */
+    t('⭐⭐ LE REJEU NE FAIT AUCUN APPEL (0 €)', R.appelsPendantRejeu===0,
+      R.appelsPendantRejeu+' appel(s)'+(R.errRejeu?' · '+R.errRejeu:''));
+    t('⭐⭐ ... ET IL N\'ÉCRIT RIEN DANS L\'HISTORIQUE (un rejeu n\'est pas une mesure de Milo)',
+      R.histApresRejeu===1 && R.histApres2Rejeux===1,
+      'après 1 rejeu='+R.histApresRejeu+' · après 2='+R.histApres2Rejeux+' (doit rester 1)');
+    t('⭐ le rapport DIT que Milo n\'a pas reparlé', R.rapportDitRejeu===true && R.drapeauRejeu===true,
+      'texte='+R.rapportDitRejeu+' drapeau='+R.drapeauRejeu);
+    /* ⭐ Ce à quoi tout ça sert : corriger un motif et le vérifier sur du VRAI texte. */
+    t('⭐⭐ un vérificateur ÉLARGI change le verdict sur la MÊME réponse, sans un appel',
+      R.vertApres===true && R.rougeApresMotifElargi===true,
+      'avant='+R.vertApres+' après='+R.rougeApresMotifElargi+(R.errRejeu2?' · '+R.errRejeu2:''));
+    /* ⛔ La règle d'or #3 passe avant la fonctionnalité. */
+    t('⛔ les vraies données sont revenues (règle d\'or #3)',
+      R.nomRestaure===true && R.bwRestaure===true && R.degel===true,
+      'nom='+R.nomRestaure+' bw='+R.bwRestaure+' dégel='+R.degel);
+    t('⛔ un stockage qui REFUSE (quota plein) ne fait rien tomber',
+      R.quotaNeCassePas===true && R.cleNettoyee===true,
+      'ok='+R.quotaNeCassePas+' clé nettoyée='+R.cleNettoyee);
   }
   await cx.close();
 }

@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v937`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v938`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v937`** (prochaine : `ft-v938`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v938`** (prochaine : `ft-v939`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v938 — 💾 GARDER LES RÉPONSES : le gisement GRATUIT du benchmark** — Michel : *« on ne peut pas améliorer le benchmark ou il faut plus de passes ? »*. **Les deux — mais le plus gros gain ne coûtait rien, et on le jetait.**
+
+**⭐⭐ LE CONSTAT, mesuré dans le code avant de proposer quoi que ce soit.** Une passe coûte **0,25-0,95 €** et produit **15 vraies réponses de Milo**. Elles vivaient en mémoire le temps de la session, puis **disparaissaient à la fermeture** — le rapport ne gardait que les **verdicts**. Or les vérificateurs sont du **CODE** : les rejouer sur des réponses gardées ne coûte **AUCUN appel**. *On paie une fois, on exploite dix fois.*
+
+**⭐ ET LE CAS RÉEL QUI L'A MOTIVÉ EST DE LA VEILLE** : le faux rouge **EV-001** (*« on estime ton 1RM à 93 kg »* pris pour une charge à mettre sur une barre) a été corrigé **à l'aveugle**, sur le texte que Michel avait collé dans la conversation. Sa question *« vérifier d'abord si mon vérificateur n'est pas trop strict »* sur EV-015 était, elle, **sans réponse possible** sans repayer une passe. Ça n'arrivera plus.
+
+**👉 CE QUI EST LIVRÉ** : les réponses sont **gardées en local** (admin, jamais synchronisé) · bouton **« 🔬 Rejouer les vérificateurs (0 €) »** · bouton **« 📥 Copier les réponses »** · et en ligne de commande **`node tests/milo/eval.js --rejouer <fichier>`** — **même forme des deux côtés** (**R2** : deux formats finiraient par diverger, et le jour où l'un ne serait plus relu, rien ne le signalerait).
+
+**⚠️⚠️ ET LE PIÈGE DE CE BLOC EST SILENCIEUX : un REJEU N'EST PAS UNE NOUVELLE PASSE.** Milo **n'a pas reparlé** — ce qu'on mesure, c'est le **VÉRIFICATEUR**. L'écrire dans l'historique fabriquerait une mesure **qui n'a jamais eu lieu**, et la lecture *« systématique vs intermittent »* — celle qui décide de ce qu'on corrige et de ce qu'on re-mesure — deviendrait fausse **sans que rien ne le signale**. D'où le drapeau `sansHist`, un rapport qui le **DIT** en toutes lettres, et le témoin central du bloc : après **deux** rejeux, l'historique porte toujours **une** entrée.
+
+**⛔ ET LA RÈGLE D'OR #3 PASSE AVANT LA FONCTIONNALITÉ.** Ces textes ne doivent **jamais** menacer les séances de la personne : plafond **par réponse** (8 000 car.) **et au total** (200 000), et si le navigateur refuse (quota plein), on **retire la clé** et on continue **sans rien dire**. *Un confort de diagnostic ne fait pas tomber une sauvegarde.* Le témoin le joue pour de bon : stockage saboté → le benchmark réussit quand même, la clé est propre.
+
+**⚠️ ET DEUX TÉMOINS EXISTANTS ONT ROUGI — de mon fait.** Ils lisaient le **corps de `copyEvalText`**, où le code de copie **n'est plus** : il vit désormais dans `_evCopier`, **partagé** par les deux boutons (**R2** — deux copies du même enchaînement presse-papier finiraient par diverger, l'une recevant un correctif et pas l'autre). *Un témoin doit viser la fonction qui PORTE le comportement, pas celle qui l'appelle* — c'est le raccourci devenu faux, payé deux jours de suite. ⚠️ **Et le témoin que j'ai écrit pour le remplacer a rougi à tort lui aussi** : il exigeait **un seul** `execCommand('copy')` dans **tout** `coach.js` — or il y en a un **deuxième, légitime et sans rapport** (copier une réponse de Milo dans le chat). Ce qu'on veut garantir n'est pas *« une seule copie dans le fichier »* mais *« les deux boutons DÉLÈGUENT »*. **3ᵉ fois cette semaine qu'un motif vise plus large que sa garantie** (R19).
+Tests : **parcours 895/895** (+10, bloc LXXIV ; 2 témoins repointés, 1 ajouté), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges** — les 3 de la copie (`_evCopier` n'existe pas) et le stockage absent. ⚠️ **Et 8 témoins ne se sont pas exécutés du tout** (ils vivent sous le garde « fonctions absentes ») : *un témoin qui ne tourne pas n'est pas un témoin vert, et le total le montre — 887 exécutés au lieu de 895.* Fichiers : `coach.js`, `tests/milo/eval.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v938. |
 
 **ft-v937 — 🖊️ UN DÉCOR DE TEST PRIS POUR UN FAIT RÉEL — et je m'en étais servi comme ARGUMENT** — Michel, en relisant le journal de la veille : *« Christophe a un vrai coach, donc la question est réelle, qui a dit ça ? Christophe n'est pas coach c'est un sportif qui fait du body »*.
 

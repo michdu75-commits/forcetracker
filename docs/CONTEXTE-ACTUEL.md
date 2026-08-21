@@ -6,7 +6,23 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v936` — fusionnée sur `master` le 21/08.
+- **Version en ligne (live) :** `ft-v938` — fusionnée sur `master` le 21/08.
+- 💾 **GARDER LES RÉPONSES — le gisement gratuit du benchmark** (ft-v938). Michel : *« on ne
+  peut pas améliorer le benchmark ou il faut plus de passes ? »*.
+  ⭐⭐ Une passe coûte 0,25-0,95 € et produit 15 vraies réponses de Milo — **elles étaient
+  jetées** à la fermeture (seuls les verdicts survivaient). Les vérificateurs étant du CODE,
+  les rejouer ne coûte **aucun appel**.
+  👉 Livré : réponses gardées en local (admin) · **🔬 Rejouer les vérificateurs (0 €)** ·
+  **📥 Copier les réponses** · `node tests/milo/eval.js --rejouer <fichier>` (même forme, R2).
+  ⚠️⚠️ **Un rejeu n'est PAS une passe** : Milo n'a pas reparlé, on mesure le VÉRIFICATEUR —
+  donc rien n'est écrit dans l'historique, sinon la lecture « systématique vs intermittent »
+  deviendrait fausse en silence.
+  ⏭️ **Les 3 leviers d'amélioration, par rapport qualité/prix** : ① garder les réponses
+  (**fait**) · ② affiner les vérificateurs (gratuit, et désormais **vérifiable sur du vrai
+  texte**) · ③ plus de scénarios / conversations à plusieurs tours (**payant** : 15 scénarios
+  couvrent ~10 % des règles du prompt, et presque tous sont un message unique alors que les
+  vrais bugs de terrain viennent d'échanges).
+- 🖊️ **UN DÉCOR DE TEST PRIS POUR UN FAIT RÉEL** (ft-v937) — corrigé deux fois par Michel.
 - 🔀 **UN ROUGE A DEUX CAUSES OPPOSÉES** (ft-v936) — les deux rouges systématiques n'avaient
   rien à voir, et le diagnostic (R7, avant de coder) les a séparés :
   · **EV-003** (face pull) : règle **présente à 74 %** du prompt → **diluée** → rappel ciblé en

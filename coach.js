@@ -4619,6 +4619,9 @@ async function _evRun(SC, compare, rep){
     try{ if(typeof load==='function') load(); }catch(e){}       // RESTAURE les vraies données
   }
   _evReport = _evBuildReport(SC, parPasse, compare);
+  // 💾 Les réponses sont gardées APRÈS le dégel et APRÈS la restauration des vraies données :
+  // jamais pendant, pour qu'un échec d'écriture ne puisse pas croiser le chemin du profil.
+  try{ _evRepsEcrire(parPasse, _evReport.ymd, compare); }catch(e){}
   _evShowResultCard();
   coachBusy = false; if(sendBtn) sendBtn.disabled = false; _evRunning = false;
   toast('Benchmark terminé — tes données sont intactes','success');
@@ -4633,6 +4636,98 @@ async function _evRun(SC, compare, rep){
    synchronisé). Le rapport affiche « ❌ ❌ ✅ » et l'œil voit la tendance sans rien calculer.
    ⚠️ Ça distingue aussi le SYSTÉMATIQUE de l'INTERMITTENT sans dépenser un seul appel de plus :
    trois rouges d'affilée = un vrai défaut ; un rouge sur trois = du bruit à re-mesurer. */
+/* 💾 GARDER LES RÉPONSES — le gisement GRATUIT du benchmark (ft-v938).
+   Michel : « on ne peut pas améliorer le benchmark ou il faut plus de passes ? ». Les deux —
+   mais le plus gros gain ne coûte rien, et jusqu'ici on le JETAIT.
+   ⭐ LE CONSTAT, mesuré dans le code : une passe coûte 0,25-0,95 € et produit 15 vraies
+   réponses de Milo. Elles vivaient en mémoire le temps de la session, puis disparaissaient
+   à la fermeture — le rapport ne gardait que les VERDICTS. Or les vérificateurs sont du
+   CODE : les rejouer sur des réponses gardées ne coûte AUCUN appel. On paie une fois, on
+   exploite dix fois.
+   ⭐ LE CAS RÉEL QUI L'A MOTIVÉ : le faux rouge EV-001 (« on estime ton 1RM à 93 kg » pris
+   pour une charge à mettre sur une barre) a été corrigé À L'AVEUGLE, sur le texte que Michel
+   avait collé dans la conversation. Avec les réponses gardées, on corrige ET on vérifie sur
+   les vraies réponses des passes déjà payées.
+   ⚠️⚠️ REJOUER LES VÉRIFICATEURS N'EST PAS UNE NOUVELLE PASSE — c'est le piège de ce bloc,
+   et il serait SILENCIEUX. Un replay mesure le VÉRIFICATEUR, pas Milo : Milo n'a pas
+   reparlé. L'écrire dans l'historique fabriquerait une mesure qui n'a jamais eu lieu et
+   fausserait la lecture « systématique vs intermittent » — celle qui décide justement de ce
+   qu'on corrige et de ce qu'on re-mesure. C'est pour ça que `_evBuildReport` prend un
+   drapeau `sansHist` et que le rapport le DIT en toutes lettres.
+   ⛔ RÈGLE D'OR #3 — ces textes ne doivent JAMAIS menacer les séances de la personne. Le
+   stockage est plafonné par réponse ET au total ; si le navigateur refuse (quota plein), on
+   RETIRE la clé et on continue sans rien dire. Un confort de diagnostic ne fait jamais
+   tomber une sauvegarde. */
+const _EV_REPS_CLE = 'ft4_evalReps';
+const _EV_REP_MAX  = 8000;     // caractères gardés par réponse (au-delà : coupé, jamais perdu en silence)
+const _EV_REPS_MAX = 200000;   // plafond total, tous scénarios confondus
+
+function _evRepsLire(){
+  try{ const o=JSON.parse(localStorage.getItem(_EV_REPS_CLE)||'null'); return (o&&o.reps&&o.reps.length)?o:null; }
+  catch(e){ return null; }
+}
+function _evRepsEcrire(parPasse, ymd, compare){
+  try{
+    const reps=[]; let total=0;
+    Object.keys(parPasse).forEach(k=>(parPasse[k]||[]).forEach(x=>{
+      if(!x.reply) return;
+      let t=String(x.reply);
+      const coupe = t.length>_EV_REP_MAX;
+      if(coupe) t=t.slice(0,_EV_REP_MAX);
+      if(total+t.length>_EV_REPS_MAX) return;      // plafond atteint : on s'arrête, on n'écrase rien
+      total+=t.length;
+      reps.push({ id:x.id, cle:k, modele:x.modele||'', reply:t, coupe:coupe });
+    }));
+    if(!reps.length){ try{ localStorage.removeItem(_EV_REPS_CLE); }catch(e){} return null; }
+    const o={ ymd:ymd, compare:!!compare, reps:reps };
+    localStorage.setItem(_EV_REPS_CLE, JSON.stringify(o));
+    return o;
+  }catch(e){
+    // Quota plein ou stockage refusé : on nettoie et on se tait. Le benchmark, lui, a réussi.
+    try{ localStorage.removeItem(_EV_REPS_CLE); }catch(e2){}
+    return null;
+  }
+}
+
+/* 🔁 REJOUER LES VÉRIFICATEURS — 0 appel, 0 €. C'est le pendant gratuit de « rejouer les
+   rouges » : celui-ci ne redemande RIEN à Milo, il repasse les motifs sur les réponses déjà
+   payées. Sert à deux choses : vérifier qu'un vérificateur corrigé ne crie plus à tort, et
+   voir ce qu'un vérificateur élargi attrape en plus — sans repayer une passe pour le savoir. */
+function rejouerVerifs(){
+  if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
+  const st=_evRepsLire();
+  if(!st){ toast('Aucune réponse gardée — lance une passe d\'abord','info'); return; }
+  _evCharger().then(SC=>{
+    const parPasse={};
+    st.reps.forEach(r=>{
+      const sc=SC.find(x=>x.id===r.id); if(!sc) return;   // scénario retiré du corpus depuis
+      const verdicts=_evVerifier(sc, r.reply);
+      const nbRouges=verdicts.some(v=>!v.ok)?1:0;
+      const etat = nbRouges ? (sc.specAbsente?'spec':'rouge') : 'vert';
+      (parPasse[r.cle]=parPasse[r.cle]||[]).push({ id:sc.id, titre:sc.titre, origin:sc.origin,
+        etat:etat, modele:r.modele, verdicts:verdicts, reply:r.reply, passes:1, nbRouges:nbRouges });
+    });
+    if(!Object.keys(parPasse).length){ toast('Aucun scénario ne correspond','error'); return; }
+    try{ goScreen('coach', document.getElementById('nb-coach')); }catch(e){}
+    try{ _showCoachChat(); }catch(e){}
+    // ⚠️ `sansHist` = true : un replay n'est PAS une mesure de Milo (voir le bloc ci-dessus).
+    _evReport=_evBuildReport(SC, parPasse, !!st.compare, true, st.ymd);
+    _evShowResultCard();
+    toast('Vérificateurs rejoués — 0 appel, 0 €','success');
+  }).catch(e=>toast('Corpus introuvable : '+e.message,'error'));
+}
+
+/* 📋 Copier les RÉPONSES (et pas le rapport) : c'est le corpus brut, au format que la ligne
+   de commande sait relire (`node tests/milo/eval.js --rejouer <fichier>`). Même forme des
+   deux côtés — R2 : deux formats finiraient par diverger sans que rien ne le signale. */
+function copyEvalReponses(){
+  const st=_evRepsLire();
+  if(!st){ toast('Aucune réponse gardée','error'); return; }
+  const json=JSON.stringify({ date:st.ymd, mode:'reponses-gardees',
+    parPasse:st.reps.reduce((a,r)=>{ (a[r.cle]=a[r.cle]||[]).push({id:r.id,modele:r.modele,reply:r.reply}); return a; },{}) }, null, 1);
+  _evCopier(json, (st.reps.length)+' réponse(s) copiée(s)');
+}
+
 const _EV_HIST_CLE = 'ft4_evalHist';
 const _EV_HIST_MAX = 8;   // on garde les 8 dernières passes, pas l'historique entier
 
@@ -4653,8 +4748,8 @@ function _evHistEcrire(parPasse){
   }catch(e){ return _evHistLire(); }   // jamais bloquant : un historique est un confort
 }
 
-function _evBuildReport(SC, parPasse, compare){
-  const ymd = (typeof today==='function')?today():new Date().toISOString().slice(0,10);
+function _evBuildReport(SC, parPasse, compare, sansHist, ymdForce){
+  const ymd = ymdForce || ((typeof today==='function')?today():new Date().toISOString().slice(0,10));
   const cles = Object.keys(parPasse);
   const L = [];
   L.push('═══════════════════════════════════════════');
@@ -4665,6 +4760,15 @@ function _evBuildReport(SC, parPasse, compare){
   L.push('   violée sous une forme que le code reconnaît. Un vert dit seulement « aucune');
   L.push('   violation DÉTECTABLE » — jamais « Milo respecte ses règles ».');
   L.push('');
+  /* ⚠️ Un replay doit se DIRE, sinon on lit ce rapport comme une nouvelle mesure de Milo.
+     Il n'en est pas une : Milo n'a pas reparlé, ce sont les VÉRIFICATEURS qui ont rejoué. */
+  if(sansHist){
+    L.push('🔁 REJEU DES VÉRIFICATEURS — 0 appel, 0 €.');
+    L.push('   Réponses de Milo du '+ymd+', rejouées avec les motifs D\'AUJOURD\'HUI.');
+    L.push('   ⚠️ Ce n\'est PAS une nouvelle mesure de Milo : il n\'a pas reparlé. Ce qui est');
+    L.push('      mesuré ici, c\'est le VÉRIFICATEUR. Rien n\'est ajouté à l\'historique.');
+    L.push('');
+  }
   cles.forEach(k=>{
     const r = parPasse[k];
     const verts = r.filter(x=>x.etat==='vert').length, rouges = r.filter(x=>x.etat==='rouge');
@@ -4721,8 +4825,11 @@ function _evBuildReport(SC, parPasse, compare){
   Object.keys(parPasse).forEach(k=>parPasse[k].forEach(x=>{
     if(x.etat==='rouge' && _rougesIds.indexOf(x.id)<0) _rougesIds.push(x.id); }));
   const _rep = _rougesIds.length ? Math.max(2, Math.min(10, Math.floor(30/_rougesIds.length))) : 0;
-  /* L'historique est écrit APRÈS coup, donc la passe du jour y figure déjà. */
-  let _hist={}; try{ _hist=_evHistEcrire(parPasse); }catch(e){}
+  /* L'historique est écrit APRÈS coup, donc la passe du jour y figure déjà.
+     ⛔ Sauf sur un REJEU : y inscrire un replay fabriquerait une mesure qui n'a jamais eu
+     lieu, et la lecture « systématique vs intermittent » — celle qui décide de ce qu'on
+     corrige — deviendrait fausse sans que rien ne le signale. */
+  let _hist={}; try{ _hist = sansHist ? _evHistLire() : _evHistEcrire(parPasse); }catch(e){}
   const _lignesHist=[];
   (parPasse.prod||[]).forEach(x=>{
     const h=_hist[x.id]||[];
@@ -4743,7 +4850,7 @@ function _evBuildReport(SC, parPasse, compare){
     L.push('');
   }
   L.push('═══════════════════════════════════════════');
-  return { text:L.join('\n'), ymd, parPasse, compare, n:SC.length,
+  return { text:L.join('\n'), ymd, parPasse, compare, n:SC.length, rejeu:!!sansHist,
            rougesIds:_rougesIds, rejouable:(_rougesIds.length>0 && _rep>=2), repSugg:_rep,
            hist:_hist };
 }
@@ -4766,8 +4873,17 @@ function _evShowResultCard(){
     + (R.rejouable ? '<p style="margin:8px 0 2px;font-size:12.5px;color:var(--t2);line-height:1.5">'
         + '🔁 Un rouge peut être un hasard. Rejoue-les pour savoir s\'il tombe <b>à chaque fois</b> '
         + 'ou <b>une fois sur cinq</b> — ça ne se corrige pas pareil.</p>' : '')
+    + (R.rejeu ? '<p style="margin:8px 0 2px;font-size:12.5px;color:var(--t2);line-height:1.5">'
+        + '🔬 <b>Rejeu</b> : Milo n\'a pas reparlé. Ce sont les <b>vérificateurs</b> qui ont rejoué sur '
+        + 'les réponses du '+R.ymd+'. Rien n\'a été ajouté à l\'historique.</p>' : '')
     + '<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
     + (R.rejouable ? '<button class="btn btn-bg2" style="flex:1;min-width:150px;padding:10px;font-size:13px" onclick="rejouerRouges()">🔁 Rejouer les rouges ×'+R.repSugg+'</button>' : '')
+    /* 💾 Les deux boutons GRATUITS n'apparaissent que si des réponses sont gardées. Le prix
+       est écrit DESSUS (« 0 € ») pour qu'on ne confonde jamais avec « Rejouer les rouges »,
+       qui, lui, dépense — deux boutons voisins nommés « rejouer » sans leur coût, c'est un
+       clic à 0,45 € pris pour un clic gratuit. */
+    + (_evRepsLire() ? '<button class="btn btn-bg2" style="flex:1;min-width:150px;padding:10px;font-size:13px" onclick="rejouerVerifs()">🔬 Rejouer les vérificateurs (0 €)</button>'
+                     + '<button class="btn btn-bg2" style="flex:1;min-width:140px;padding:10px;font-size:13px" onclick="copyEvalReponses()">📥 Copier les réponses</button>' : '')
     + '<button class="btn btn-bg2" style="flex:1;min-width:140px;padding:10px;font-size:13px" onclick="copyEvalText()">📋 Copier le rapport</button>'
     + '<button class="btn btn-bg2" style="flex:1;min-width:140px;padding:10px;font-size:13px" onclick="exportEvalText()">📤 Fichier</button>'
     + '</div>';
@@ -4785,14 +4901,19 @@ function _evShowResultCard(){
    repli `execCommand` → et si les deux tombent, **on le DIT** au lieu de rester muet. */
 function copyEvalText(){
   if(!_evReport){ toast('Aucun rapport','error'); return; }
-  const txt=_evReport.text;
+  _evCopier(_evReport.text, 'Rapport copié');
+}
+/* ⚠️ UN SEUL chemin de copie pour le rapport ET pour les réponses (R2). Deux copies du même
+   enchaînement presse-papier → repli → aveu finiraient par diverger : l'une gagnerait un
+   correctif, l'autre non, et personne ne le verrait. */
+function _evCopier(txt, okMsg){
   const _secours=()=>{
     try{
       const t=document.createElement('textarea');
       t.value=txt; t.style.position='fixed'; t.style.opacity='0';
       document.body.appendChild(t); t.focus(); t.select();
       const ok=document.execCommand('copy'); document.body.removeChild(t);
-      if(ok){ toast('Rapport copié','success'); return true; }
+      if(ok){ toast(okMsg,'success'); return true; }
     }catch(e){}
     return false;
   };
@@ -4800,10 +4921,10 @@ function copyEvalText(){
   // Mieux vaut un texte qu'on peut lire que trois boutons qui ne donnent rien.
   const _echec=()=>{
     try{ renderCoachMsg('coach', txt); }catch(e){}
-    toast('Copie refusée — le rapport est affiché ci-dessus','info');
+    toast('Copie refusée — le texte est affiché ci-dessus','info');
   };
   if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(txt).then(()=>toast('Rapport copié','success'))
+    navigator.clipboard.writeText(txt).then(()=>toast(okMsg,'success'))
       .catch(()=>{ if(!_secours()) _echec(); });
     return;
   }
