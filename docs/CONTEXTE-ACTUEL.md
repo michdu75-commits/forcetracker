@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v947` — fusionnée sur `master` le 21/08.
+- **Version en ligne (live) :** `ft-v948` — fusionnée sur `master` le 21/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,22 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- 📤 **LE COMPTEUR NE PARTAIT QUE SI LA PERSONNE FAISAIT QUELQUE CHOSE** (ft-v948) — Michel :
+  *« à partir de quel moment tu pourras lire le Milo à Eline ? »*.
+  ⭐⭐ **Réponse honnête avant le correctif : peut-être jamais.** Le scan rétro tournait bien au
+  démarrage, mais **la sauvegarde ne part que sur une ACTION** — ouvrir, lire, refermer
+  n'envoyait rien.
+  ⚠️⚠️ **Et on aurait lu ce silence comme une réponse** : « aucun compteur pour Eline » se serait
+  lu *« elle ne s'en sert pas »*. *Une mesure qui n'arrive jamais et une mesure à zéro se
+  ressemblent.* C'est le défaut de ft-v947 **d'un cran plus haut** : on avait réparé
+  l'affichage, pas le chemin.
+  👉 **Le scan pousse désormais la sauvegarde lui-même — ouvrir l'app suffit.**
+  ⛔ **Mais une écriture par NOUVEAUTÉ, pas une par démarrage** (le stockage a saturé le 29/07).
+  ⚠️⚠️ **Mon 1ᵉʳ jet aurait envoyé une sauvegarde par jour et par personne** : je comparais
+  `faitLe`, **la date du scan**, qui change toute seule à minuit. *Un défaut qui ne se serait
+  vu que le lendemain — donc jamais dans un test écrit le même jour.*
+  ⏭️ **À suivre** : les chiffres d'Eline arrivent à sa prochaine ouverture. Le **contenu** de ses
+  conversations, lui, reste sur son téléphone — il faudrait qu'elle l'exporte elle-même.
 - 🔬 **LES 4 DRAPEAUX RESTANTS, LUS UN PAR UN** (ft-v947) — Michel : *« regarde les 3
   diagnostic et le lien »*.
   ⭐⭐ **Les 3 `diagnostic` sont des faux positifs, tous du même défaut** : le motif attrapait

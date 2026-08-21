@@ -3508,13 +3508,30 @@ function _gardienRetro(){
 /* Lancé UNE fois, APRÈS le démarrage et jamais pendant : l'app doit s'ouvrir instantanément
    à la salle (règle d'or #4). C'est local et instantané, mais la règle ne dit pas « rapide »,
    elle dit « le démarrage n'attend rien ». */
+/* ⚠️ LA SIGNATURE IGNORE `faitLe`, ET CE N'EST PAS UN DÉTAIL. `faitLe` est la date du SCAN,
+   pas une mesure : elle change toute seule à minuit. La comparer ferait partir une
+   sauvegarde CHAQUE JOUR sans qu'une seule conversation ait bougé — une écriture par jour et
+   par personne, pour zéro information nouvelle. On compare ce qu'on MESURE (messages vus,
+   dérives, codes, période couverte), jamais l'horodatage de la mesure. */
+const _retroSig = (r)=> r ? JSON.stringify([r.messages,r.total,r.codes,r.depuis,r.jusqu]) : 'null';
 function _gardienRetroDiffere(){
   try{
     const r=_gardienRetro(); if(!r) return;
     let o={}; try{ o=JSON.parse(localStorage.getItem(_GARDIEN_CLE)||'{}')||{}; }catch(e){}
+    const avant=_retroSig(o.retro||null);
     o.retro=r;                                   // instantané : on REMPLACE
     localStorage.setItem(_GARDIEN_CLE, JSON.stringify(o));
     try{ if(typeof S!=='undefined') S.gardienStats=o; }catch(e){}
+    /* ⭐ ET ON POUSSE — mais SEULEMENT si le résultat a changé (Michel, 21/08 : « à partir de
+       quel moment tu pourras lire le Milo d'Eline ? »).
+       ⚠️ SANS ÇA, LE COMPTEUR RESTAIT COINCÉ SUR SON TÉLÉPHONE : la sauvegarde ne part que sur
+       une ACTION (séance, réglage, message). Quelqu'un qui ouvre l'app, lit et referme
+       n'envoyait rien — on aurait attendu sans savoir quoi, et on aurait conclu « elle ne
+       s'en sert pas » alors qu'on n'avait simplement pas le chiffre.
+       ⛔ Et on ne pousse pas à CHAQUE ouverture : l'instantané est stable (mêmes conversations
+       → même résultat), donc il ne part que quand il y a du NOUVEAU. Une écriture par
+       nouveauté, pas une par démarrage — le stockage a déjà saturé une fois (29/07). */
+    if(_retroSig(r)!==avant && typeof _cloudSyncDebounced==='function') _cloudSyncDebounced();
   }catch(e){ /* jamais bloquant : c'est une mesure, pas une fonctionnalité */ }
 }
 try{ if(typeof window!=='undefined') window.addEventListener('load',()=>setTimeout(_gardienRetroDiffere,4000)); }catch(e){}

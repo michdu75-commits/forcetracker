@@ -2848,3 +2848,17 @@ Tests : **parcours 820/820** (+4, bloc LXIV), calculs 241/241, muscles 241/241, 
 
 **⚠️ LE MOTIF EST LE MÊME QU'À ft-v923, quelques heures plus tôt** : Milo traite les **petits accessoires comme négligeables** — il les range au hasard dans l'ordre, et il les oublie au débrief. *Deux symptômes, une seule attitude.*
 Tests : **parcours 823/823** (+3, bloc LXIV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v927. |
+
+
+**ft-v928 — 📋 LE RÉCAP DU DÉBRIEF EST ÉCRIT PAR LE CODE, plus par Milo** — Michel, après le débrief incomplet : *« comme le débrief est automatique autant le faire en haiku dans la conversation de Milo, ça coûte pas cher pis voilà, pas besoin de faire un truc de fou »*.
+
+**⚠️ ON N'A PAS CHANGÉ DE MODÈLE, ET LE CHIFFRE TRANCHE** : ~15 débriefs par mois, l'écart Sonnet/Haiku vaut **~0,17 €/mois**. Pour dix-sept centimes on dégraderait **précisément le message dont il venait de se plaindre**. Et **R9** le dit déjà : *un modèle léger suit MAL les consignes fines* — or on venait justement d'en ajouter une exigeante (« couvre les 5 exercices »). ⚠️ La décision *« Sonnet pour tout le monde »* est d'ailleurs écrite dans `worker.js` avec **ses mots du 10/08** (*« si les gens trouvent Milo nul ils ne vont pas le prendre »*) et marquée **à ne pas re-proposer** (**R30**) — la ré-ouvrir demandait de la mesurer, pas de la citer.
+
+**⭐⭐ MAIS SON INTUITION AVAIT UNE MOITIÉ JUSTE, ET C'EST EXACTEMENT SA PROPRE FRONTIÈRE.** Il sent que ce travail *ne mérite pas le gros cerveau* — c'est vrai, **pour la liste**. Or *lister* est une **TRANSFORMATION** et *commenter* est un **JUGEMENT** : c'est le critère cerveau/cervelet, appliqué à l'intérieur d'un seul message. Et la liste ne mérite alors même pas Haiku — **elle mérite du CODE**.
+
+**👉 CE QUI EST LIVRÉ** : `_recapSeance()` écrit la liste complète — nom, séries au format **reps × poids** (celui de l'app depuis ft-v396, **R2**), échauffements **comptés et non détaillés** — **au-dessus** de la réponse de Milo, **gratuitement et hors ligne**, exactement comme le récap de fin de séance. Sa consigne lui dit de **commenter sans recopier**.
+
+**⭐ LE CHANGEMENT DE NATURE EST LÀ** : *Milo ne PEUT plus sauter un exercice, au lieu qu'on lui DEMANDE de ne pas le faire.* ft-v927 posait la règle ; ici on retire le besoin de la suivre.
+
+**⚠️ PORTÉE HONNÊTE, écrite dans le code** : ça ne couvre que le débrief **AUTOMATIQUE**, dont le déclenchement est déterministe. Quand la personne demande *« que penses-tu de ma séance »* en plein chat, l'app ne peut pas le deviner sans **classer** le message — et une erreur de classement est silencieuse. Là, seule la règle du prompt reste, et elle est plus faible.
+Tests : **parcours 829/829** (+6, bloc LXV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif ici** : `_recapSeance` est une fonction NEUVE — un témoin tourné contre l'ancien code rendrait « fonction absente » au lieu de mesurer, le piège payé 8 fois. Ce que les témoins prouvent est autre chose et suffit : la liste est complète **par construction**, elle retombe sur la séance la plus récente si l'identifiant est inconnu, et elle ne peut jamais faire tomber le débrief. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v928. |
