@@ -7779,6 +7779,75 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXXII - LE TOTAL NE BOUGE PAS, LA COMPOSITION SI (21/08/2026) ==
+   3e passe reelle de Michel, apres le correctif keto de ft-v933. Passe du 20/08 : 4 rouges.
+   Passe du 21/08 : 4 rouges. En ne regardant QUE le compte, on conclurait « rien n'a change ».
+   ⚠️ C'EST FAUX : ce n'est pas le meme 4. EV-012 (keto) est passe au VERT — le correctif a
+   marche — et deux autres rouges sont apparus ailleurs. Un total stable peut cacher une
+   correction ET une regression qui se compensent.
+   👉 On garde donc le verdict de CHAQUE scenario passe apres passe (en local, admin), et le
+   rapport affiche « ❌ ❌ ✅ ». Ca distingue le SYSTEMATIQUE de l'INTERMITTENT sans depenser
+   un seul appel de plus. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(()=>{
+    const o={};
+    if(typeof _evBuildReport!=='function' || typeof _evHistLire!=='function') return {absente:true};
+    try{ localStorage.removeItem('ft4_evalHist'); }catch(e){}
+    const mk=(id,etat)=>({id, titre:id, origin:'test', etat, verdicts:[]});
+
+    /* Passe 1 : EV-012 et EV-003 rouges. */
+    _evBuildReport([{},{},{}], { prod:[mk('EV-003','rouge'), mk('EV-012','rouge'), mk('EV-009','vert')] }, false);
+    /* Passe 2 : le keto est corrigé, mais EV-009 tombe. TOTAL IDENTIQUE (2 rouges). */
+    const R2=_evBuildReport([{},{},{}], { prod:[mk('EV-003','rouge'), mk('EV-012','vert'), mk('EV-009','rouge')] }, false);
+
+    o.txt = R2.text;
+    o.aHistorique   = /HISTORIQUE/.test(R2.text);
+    /* ⭐⭐ Les trois lectures que le compte seul ne donne pas. */
+    o.ketoCorrige   = /EV-012\s+❌ ✅\s+→ intermittent/.test(R2.text);
+    o.faceSystem    = /EV-003\s+❌ ❌\s+→ SYSTÉMATIQUE/.test(R2.text);
+    o.materielApparu= /EV-009\s+✅ ❌\s+→ intermittent/.test(R2.text);
+    o.avertissement = /le TOTAL peut ne pas bouger/i.test(R2.text);
+    /* Un scénario vu une seule fois ne doit PAS produire de tendance. */
+    const R3=_evBuildReport([{}], { prod:[mk('EV-999','rouge')] }, false);
+    /* ⚠️ EV-999 apparaît LÉGITIMEMENT dans la liste des résultats — ma 1ʳᵉ version cherchait
+       son absence dans TOUT le rapport et rougissait pour ça. Ce qu'on veut garantir est
+       plus étroit : il ne doit pas apparaître dans le bloc HISTORIQUE, où une seule passe
+       ne fait pas une tendance. On ne regarde donc que ce bloc. */
+    const _blocHist = (R3.text.split('── HISTORIQUE')[1]||'').split('═══')[0];
+    o.pasDeTendanceAUnePasse = !/EV-999/.test(_blocHist);
+    /* L'historique ne doit pas gonfler sans fin. */
+    for(let k=0;k<12;k++) _evBuildReport([{}], { prod:[mk('EV-003','rouge')] }, false);
+    o.plafonne = (_evHistLire()['EV-003']||[]).length<=8;
+    try{ localStorage.removeItem('ft4_evalHist'); }catch(e){}
+    return o;
+  });
+
+  console.log('\n-- LXXII. Le total ne bouge pas, la composition si --');
+  if(R.absente){ t('⛔ l\'historique par scénario existe', false, 'fonction absente'); }
+  else{
+    t('⭐ le rapport porte un bloc HISTORIQUE', R.aHistorique===true, '');
+    /* ⭐⭐ LE TÉMOIN CENTRAL : deux passes à 2 rouges, mais pas les mêmes. */
+    t('⭐⭐ un correctif se VOIT (EV-012 : ❌ puis ✅) alors que le total n\'a pas bougé',
+      R.ketoCorrige===true, (R.txt||'').split('\n').filter(l=>/EV-012/.test(l)).join(' | '));
+    t('⭐⭐ un défaut présent à toutes les passes est marqué SYSTÉMATIQUE',
+      R.faceSystem===true, (R.txt||'').split('\n').filter(l=>/EV-003/.test(l)).join(' | '));
+    t('⭐ une régression apparue se voit aussi (EV-009 : ✅ puis ❌)',
+      R.materielApparu===true, (R.txt||'').split('\n').filter(l=>/EV-009/.test(l)).join(' | '));
+    t('⭐ ... et le rapport AVERTIT que le total peut mentir', R.avertissement===true, '');
+    t('/!\\ une seule passe ne produit AUCUNE tendance (2 minimum)',
+      R.pasDeTendanceAUnePasse===true, '');
+    t('/!\\ l\'historique est plafonné à 8 passes (il ne gonfle pas sans fin)',
+      R.plafonne===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
