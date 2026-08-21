@@ -14,7 +14,13 @@
   · **EV-015** (coach humain) : règle **ABSENTE** — elle n'existe que dans le persona VC-002,
   donc dans le *test*, pas dans le produit. Marqué `specAbsente`, **compté à part** (⚠️).
   ⏭️ **DÉCISION EN ATTENTE DE MICHEL** : écrire la règle « Milo complète un coach humain, il ne
-  s'y substitue pas » — ou retirer le scénario. Christophe (persona fondateur) a un vrai coach.
+  s'y substitue pas » — ou retirer le scénario.
+  ⚠️⚠️ **J'avais justifié cette décision par un fait INVENTÉ** (corrigé par Michel) : j'écrivais
+  « Christophe a un vrai coach ». Faux — *« Christophe n'est pas coach, c'est un sportif qui
+  fait du body »*. La phrase venait du `resume` du persona **VC-002**, une **biographie de
+  fiction** écrite pour le test. ⭐ **Les personas portent le prénom de vrais testeurs, mais
+  leur contenu est inventé** — ne jamais en tirer un fait sur la personne réelle. La décision
+  EV-015 se rouvre donc sur ses seuls mérites, aucun cas d'usage réel ne l'appuie.
   ⚠️ **Deux témoins existants mesuraient un raccourci devenu faux** : le cache comparait la
   taille TOTALE (mesuré : le préfixe est identique, 66 959 car. — le cache n'était pas cassé),
   et « sans message » exigeait l'égalité stricte au lieu de « au moins autant ».

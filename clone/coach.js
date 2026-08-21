@@ -4191,6 +4191,15 @@ async function exportPt001Pdf(){
 let _vcRunning = false;
 let _vcReport  = null;
 // Registre des personas. `apply` = les champs appliqués à S ; le reste est remis à neutre.
+// ⚠️⚠️ CES PERSONAS SONT DES FICTIONS — ne JAMAIS en tirer un fait sur une personne réelle.
+// Ils portent le PRÉNOM de vrais testeurs (Tatiana, Christophe, Emma) parce qu'ils sont
+// INSPIRÉS d'eux, mais leurs champs (records, objectif, situation) sont INVENTÉS pour créer
+// un piège de test. Le 21/08/2026, j'ai lu « a DÉJÀ un coach humain » dans le `resume` de
+// VC-002 et je l'ai écrit dans le journal comme un fait — puis je m'en suis servi comme
+// ARGUMENT pour justifier d'ajouter une règle au prompt. Michel a corrigé : « Christophe
+// n'est pas coach, c'est un sportif qui fait du body ». Un décor de test pris pour la
+// réalité, c'est exactement l'hypothèse-présentée-comme-un-fait que la Constitution interdit
+// à Milo — elle vaut aussi pour celui qui écrit le code.
 const VC_PERSONAS = {
   'VC-001': {
     id:'VC-001', nom:'Tatiana',

@@ -135,7 +135,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v936`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v937`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -399,7 +399,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v936`** (prochaine : `ft-v937`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v937`** (prochaine : `ft-v938`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -409,6 +409,19 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v937 — 🖊️ UN DÉCOR DE TEST PRIS POUR UN FAIT RÉEL — et je m'en étais servi comme ARGUMENT** — Michel, en relisant le journal de la veille : *« Christophe a un vrai coach, donc la question est réelle, qui a dit ça ? Christophe n'est pas coach c'est un sportif qui fait du body »*.
+
+**C'est moi qui l'ai dit, et c'est faux.** La phrase vient du champ `resume` du persona **VC-002** dans `coach.js`, écrit le 25/07 : *« Pratiquant CONFIRMÉ qui a DÉJÀ un coach humain »*. C'est une **biographie de FICTION**, fabriquée pour tendre un piège à Milo.
+
+**⭐⭐ ET LE PROBLÈME N'EST PAS L'ERREUR, C'EST CE QUE J'EN AI FAIT.** Je ne me suis pas contenté de l'écrire : je m'en suis servi comme **ARGUMENT** — *« Christophe, persona fondateur, a un vrai coach, **donc** la question est réelle »* — pour justifier d'ajouter une règle au prompt. **Un fait inventé a failli produire une décision produit.** C'est exactement l'*hypothèse présentée comme un fait* que la Constitution interdit à Milo (`docs/BUGS-DE-PHILOSOPHIE.md`, PB-001) — appliquée cette fois à **celui qui écrit le code**.
+
+**⚠️ ET LE PIÈGE EST STRUCTUREL, pas une étourderie.** Les personas portent le **PRÉNOM de vrais testeurs** (Tatiana, Christophe, Emma) parce qu'ils s'en **inspirent** — mais leurs champs (records, objectif, situation) sont **inventés**. Un `resume` de fiction et une note sur une vraie personne se lisent **exactement pareil** dans le code, et rien ne les distingue.
+
+**👉 L'AVERTISSEMENT EST DONC POSÉ LÀ OÙ LE PIÈGE SE TEND** — en tête de `VC_PERSONAS`, à côté du `resume` qui m'a trompé — et pas seulement dans le journal (**R27** : le *pourquoi* s'écrit dans le code, à côté de ce qu'il protège ; un document qu'on n'ouvre pas ne protège personne).
+
+**⏭️ CONSÉQUENCE SUR LA DÉCISION EN COURS** : l'arbitrage EV-015 **ne repose plus sur rien**. Il se rouvre sur ses seuls mérites — *« un utilisateur suivi par un coach a-t-il besoin que Milo se pose en complément ? »* — et **aucun cas d'usage réel ne l'appuie à ce jour**.
+⚠️ **Aucun changement de comportement** : correction de documentation + un commentaire. Tests : parcours 885/885, calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif, et c'est normal** : il n'y a **rien à mesurer** — aucune ligne exécutable ne change. *Un test sur une correction de texte donnerait un vert qui ne prouve rien.* Fichiers : `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `tests/milo/eval-scenarios.js`, `coach.js` (commentaire), `sw.js`, `clone/*`. sw.js ft-v937. |
 
 **ft-v936 — 🔀 UN ROUGE A DEUX CAUSES OPPOSÉES — et on ne les corrige pas pareil** — après 3 passes réelles, deux scénarios sont rouges **3 fois sur 3** : EV-003 et EV-015. On aurait pu les traiter pareil. **Ils n'ont rien à voir.**
 
@@ -420,7 +433,9 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 **👉 LA LEÇON, et elle vaut pour tout le benchmark** : un rouge a **deux causes opposées** — une règle **diluée** ou une règle **absente** — et le rouge ne dit pas laquelle. Il faut aller voir dans le prompt. L'une demande un **rappel**, l'autre une **décision produit**.
 
-**⚠️ EV-015 est donc marqué `specAbsente` et COMPTE À PART** (⚠️ et non ❌), avec la raison écrite dans le rapport. *Un outil qui accuse à tort finit ignoré* (**R19**) — et laisser ce rouge gonfler le compte aurait fait croire à un défaut de Milo. Écrire la règle ou retirer le scénario est l'arbitrage de Michel (Christophe, persona fondateur, a un vrai coach).
+**⚠️ EV-015 est donc marqué `specAbsente` et COMPTE À PART** (⚠️ et non ❌), avec la raison écrite dans le rapport. *Un outil qui accuse à tort finit ignoré* (**R19**) — et laisser ce rouge gonfler le compte aurait fait croire à un défaut de Milo. Écrire la règle ou retirer le scénario est l'arbitrage de Michel.
+
+**⚠️⚠️ ET J'AI JUSTIFIÉ CETTE DÉCISION PAR UN FAIT INVENTÉ — corrigé par Michel dans la foulée.** J'avais écrit ici *« Christophe, persona fondateur, a un vrai coach »*. **C'est faux.** Michel : *« Christophe n'est pas coach, c'est un sportif qui fait du body »*. La phrase vient du champ `resume` du persona **VC-002** dans `coach.js` — une **biographie de FICTION** écrite le 25/07 pour un scénario de test. **J'ai pris un décor de test pour un fait sur une personne réelle, puis je m'en suis servi comme ARGUMENT.** ⭐ C'est la Constitution appliquée à moi-même — *une hypothèse présentée comme un fait* — et le piège est structurel : **les personas portent le PRÉNOM de vrais testeurs, mais leur contenu est inventé.** ⏭️ **Conséquence** : la décision EV-015 ne repose plus sur rien et se rouvre sur ses seuls mérites — *« un utilisateur suivi par un coach a-t-il besoin que Milo se pose en complément ? »* Aucun cas d'usage réel ne l'appuie à ce jour.
 
 **⛔ Et la règle de fond de ft-v923 n'est pas retirée** : une détection ratée retombe sur le comportement d'hier, jamais sur une règle absente en silence.
 
