@@ -4499,7 +4499,15 @@ function startEvalBench(compare){
   }).catch(e => toast('Corpus introuvable : '+e.message,'error'));
 }
 
-async function _evRun(SC, compare){
+/* 🔁 `rep` = combien de fois chaque scénario est rejoué. Michel, 21/08 : « sinon on passe à
+   20 passes non ? ». L'intuition est juste — répéter est la SEULE façon de battre le bruit
+   (deux passes du même modèle ont donné 3 puis 4 rouges). Mais répéter les 15 coûterait cher
+   ET dépasserait le plafond anti-abus (50 appels/jour/personne) : 20 × 15 = 300 appels.
+   ⭐ On répète donc CE QUI COMPTE : les scénarios ROUGES d'une passe précédente. La question
+   utile n'est pas « rouge ou vert » mais « ce rouge tombe-t-il À CHAQUE FOIS ou une fois sur
+   cinq ? » — un défaut systématique et un défaut intermittent ne se corrigent pas pareil. */
+async function _evRun(SC, compare, rep){
+  rep = Math.max(1, rep||1);
   _evRunning = true;
   try{ if(typeof persist==='function') persist(); }catch(e){}   // vraies données sauvées AVANT le gel
   try{ goScreen('coach', document.getElementById('nb-coach')); }catch(e){}
@@ -4517,14 +4525,19 @@ async function _evRun(SC, compare){
       const res = [];
       for(let i=0;i<SC.length;i++){
         const sc = SC[i];
-        _pt001Label('· '+sc.id+' ('+(i+1)+'/'+SC.length+') — '+sc.titre);
-        _vcApplyPersona({ apply: sc.apply || {} });
+        _pt001Label('· '+sc.id+' ('+(i+1)+'/'+SC.length+')'+(rep>1?' ×'+rep:'')+' — '+sc.titre);
+        const _passes=[];
         let r = null;
-        try{
-          r = await _vcAsk({ scenario:sc.scenario, coachEmail:sc.coachEmail||'',
-                             history:sc.history||[], evalModel:P.id });
-        }catch(e){ r = {ok:false, kind:'error', err:(e&&e.message)||'?', reply:''}; }
-        if(!r.ok){
+        for(let k=0;k<rep;k++){
+          _vcApplyPersona({ apply: sc.apply || {} });   // profil remis à neutre à CHAQUE passe
+          try{
+            r = await _vcAsk({ scenario:sc.scenario, coachEmail:sc.coachEmail||'',
+                               history:sc.history||[], evalModel:P.id });
+          }catch(e){ r = {ok:false, kind:'error', err:(e&&e.message)||'?', reply:''}; }
+          if(r.ok) _passes.push(_evVerifier(sc, r.reply));
+          if(k<rep-1) await _pt001Sleep(400);
+        }
+        if(!_passes.length){
           renderCoachMsg('coach', '⛔ '+sc.id+' — pas de réponse ('+r.kind+')');
           res.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat:'muet', detail:r.err });
           continue;
@@ -4534,13 +4547,17 @@ async function _evRun(SC, compare){
         // et ça ne se voit pas à l'œil.
         const attendu = P.id || 'claude-sonnet-4-6';
         const bonModele = (r.modele === attendu);
-        const verdicts = _evVerifier(sc, r.reply);
-        const rouges = verdicts.filter(v=>!v.ok);
-        renderCoachMsg('coach', (rouges.length?'❌ ':'✅ ')+sc.id+' — '+sc.titre
+        /* Sur plusieurs passes, le verdict devient un TAUX, plus un booléen. */
+        const nbRouges = _passes.filter(vs=>vs.some(v=>!v.ok)).length;
+        const montre = _passes.find(vs=>vs.some(v=>!v.ok)) || _passes[0] || [];
+        const rouges = montre.filter(v=>!v.ok);
+        const taux = rep>1 ? '  🔁 rouge '+nbRouges+'/'+_passes.length : '';
+        renderCoachMsg('coach', (nbRouges?'❌ ':'✅ ')+sc.id+' — '+sc.titre+taux
           + (rouges.length ? '\n' + rouges.map(v=>'   ↳ '+v.nom+(v.detail?' — '+v.detail:'')).join('\n') : '')
           + (bonModele?'':'\n   ⚠️ servi par '+(r.modele||'?')+' au lieu de '+attendu));
-        res.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat:rouges.length?'rouge':'vert',
-                   ms:r.ms, modele:r.modele, bonModele, verdicts, reply:r.reply });
+        res.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat:nbRouges?'rouge':'vert',
+                   ms:r.ms, modele:r.modele, bonModele, verdicts:montre, reply:r.reply,
+                   passes:_passes.length, nbRouges });
         await _pt001Sleep(400);   // on ne mitraille pas l'API
       }
       parPasse[P.cle] = res;
@@ -4612,7 +4629,15 @@ function _evBuildReport(SC, parPasse, compare){
     L.push('');
   }
   L.push('═══════════════════════════════════════════');
-  return { text:L.join('\n'), ymd, parPasse, compare, n:SC.length };
+  /* ⛔ PLAFOND ANTI-ABUS : 50 appels/jour/personne (worker.js). On propose une répétition qui
+     RENTRE dedans, sinon le run se ferait couper en cours et on paierait un rapport tronqué.
+     On garde une marge : la personne a pu utiliser Milo normalement dans la journée. */
+  const _rougesIds = [];
+  Object.keys(parPasse).forEach(k=>parPasse[k].forEach(x=>{
+    if(x.etat==='rouge' && _rougesIds.indexOf(x.id)<0) _rougesIds.push(x.id); }));
+  const _rep = _rougesIds.length ? Math.max(2, Math.min(10, Math.floor(30/_rougesIds.length))) : 0;
+  return { text:L.join('\n'), ymd, parPasse, compare, n:SC.length,
+           rougesIds:_rougesIds, rejouable:(_rougesIds.length>0 && _rep>=2), repSugg:_rep };
 }
 
 function _evShowResultCard(){
@@ -4630,7 +4655,11 @@ function _evShowResultCard(){
     + '⚠️ Un <b>rouge</b> est une preuve. Un <b>vert</b> dit seulement « aucune violation détectable » — '
     + 'jamais « Milo respecte ses règles ».</p>'
     + '<p style="margin:4px 0 2px">Tes données sont <b>intactes</b> ✅</p>'
+    + (R.rejouable ? '<p style="margin:8px 0 2px;font-size:12.5px;color:var(--t2);line-height:1.5">'
+        + '🔁 Un rouge peut être un hasard. Rejoue-les pour savoir s\'il tombe <b>à chaque fois</b> '
+        + 'ou <b>une fois sur cinq</b> — ça ne se corrige pas pareil.</p>' : '')
     + '<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
+    + (R.rejouable ? '<button class="btn btn-bg2" style="flex:1;min-width:150px;padding:10px;font-size:13px" onclick="rejouerRouges()">🔁 Rejouer les rouges ×'+R.repSugg+'</button>' : '')
     + '<button class="btn btn-bg2" style="flex:1;min-width:140px;padding:10px;font-size:13px" onclick="copyEvalText()">📋 Copier le rapport</button>'
     + '<button class="btn btn-bg2" style="flex:1;min-width:140px;padding:10px;font-size:13px" onclick="exportEvalText()">📤 Fichier</button>'
     + '</div>';
@@ -4671,6 +4700,30 @@ function copyEvalText(){
     return;
   }
   if(!_secours()) _echec();
+}
+
+/* 🔁 REJOUER LES ROUGES — la version utilisable de « on passe à 20 passes ».
+   ⭐ On ne rejoue QUE les scénarios rouges : 3 rouges × 10 = 30 appels (~0,45 €) au lieu de
+   20 × 15 = 300 appels, qui coûteraient cher ET dépasseraient le plafond de 50/jour/personne.
+   ⚠️ Le nombre de répétitions s'ADAPTE au nombre de rouges pour tenir sous le plafond. */
+function rejouerRouges(){
+  if(!_evReport || !_evReport.rejouable){ toast('Aucun rouge à rejouer','info'); return; }
+  if(_evRunning){ toast('Benchmark déjà en cours…','info'); return; }
+  const ids=_evReport.rougesIds, rep=_evReport.repSugg;
+  _evCharger().then(SC=>{
+    const sous=SC.filter(x=>ids.indexOf(x.id)>=0);
+    if(!sous.length){ toast('Scénarios introuvables','error'); return; }
+    const n=sous.length*rep;
+    const bas=(n*0.015).toFixed(2), haut=(n*0.065).toFixed(2);
+    showConfirm('🔁 Rejouer les '+sous.length+' rouge(s) ×'+rep,
+      'On rejoue UNIQUEMENT ce qui est rouge : '+ids.join(', ')+'.\n\n'
+      +'Pourquoi : un rouge isolé peut être un hasard. En le rejouant '+rep+' fois, tu sauras s\'il '
+      +'tombe à chaque fois (défaut réel) ou une fois sur cinq (défaut intermittent) — ça ne se '
+      +'corrige pas pareil.\n\n'
+      +n+' appels au Coach, soit environ '+bas+' € à '+haut+' €.\n\n'
+      +'🛡️ Tes données ne sont pas touchées.\n\nLancer ?',
+      ()=>_evRun(sous, false, rep));
+  }).catch(e=>toast('Corpus introuvable : '+e.message,'error'));
 }
 
 async function exportEvalText(){
