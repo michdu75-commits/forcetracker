@@ -136,7 +136,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v965`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v966`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v965`** (prochaine : `ft-v966`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v966`** (prochaine : `ft-v967`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,19 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v966 — 🧮 « POUR TES 30 G » — deux nombres de protéines, et rien ne disait lequel était le sien** — Michel : *« j'ai trouvé un bug mais pas vraiment un bug lol »*. **Il avait raison au mot près.**
+
+**⭐ SA VIDÉO A MONTRÉ QUE L'APP AVAIT ENTIÈREMENT RAISON** : Quantité **30 g**, champs à **117 kcal · 26 g de protéines · 1 · 1** — exact au gramme près pour une poudre à 88 g/100 g. Le **88** qu'il lisait est la **carte Open Food Facts**, titrée *« Valeurs pour 100 g »*.
+
+**⛔⛔ AUCUN DES DEUX NOMBRES N'EST FAUX — c'est leur VOISINAGE MUET qui trompe.** *Et c'est plus vicieux qu'une erreur : il n'y a rien à corriger, donc rien ne se signale.* Le 88 est **en vert vif et en gros** ; ses vrais 26 g vivaient beaucoup plus bas, **hors écran**. C'est la famille §7 de `BUGS.md` (deux sources qui se contredisent), à ceci près qu'ici **les deux disent vrai**.
+
+**⭐ LA LIGNE VA DANS LA RANGÉE QUANTITÉ, PAS DANS LA CARTE** : c'est là que se porte l'attention au moment où l'on règle les grammes. La corriger dans la carte aurait déplacé la réponse loin de la question.
+
+**⭐⭐ R2 — ELLE NE CALCULE RIEN.** Elle **relit** les champs que `_bcApplyGrams` vient d'écrire. *Deux calculs du même nombre finiraient par diverger, et on ne saurait plus lequel croire* — un témoin vérifie qu'elle **suit** quand on passe à 60 g (→ 53 g). ⛔ Elle n'affiche **jamais** la valeur pour 100 g (témoin dédié), et **disparaît** si la quantité est vide plutôt que d'annoncer « pour tes 0 g ».
+
+**⚠️⚠️ ET CETTE VERSION CORRIGE UNE FAUSSE CAUSE DE LA MIENNE.** ft-v965 affirmait que *« la quantité était restée à 100 »*. **C'était faux.** J'avais **déduit le mécanisme d'un SEUL NOMBRE** — 88 = exactement 100 g d'une poudre titrant 88 g/100 g — **sans demander l'écran**, alors que Michel envoie des captures spontanément. *Une coïncidence parfaite est exactement ce qui rend une fausse cause crédible : il n'y a aucun frottement pour vous arrêter.* Le déplacement du champ reste bon ; **la raison écrite à côté était inventée**. Corrigé dans le journal **en le disant** (**R23/R27**), et nouvelle famille **`BUGS.md` 12quater — la cause déduite d'un seul nombre**.
+Tests : **parcours 1089/1089** (+4, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `app.js`, `index.html`, `clone/*`, `tests/parcours/runner.js`, `BUGS.md`, `docs/JOURNAL-DE-TEST.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v966. |
 
 **ft-v965 — ⚖️ LA QUANTITÉ ÉTAIT AU-DESSUS DU CHAMP OÙ L'ON TAPE** — Michel : *« j'ai trouvé un bug mais pas vraiment un bug lol »*, puis : *« j'ai mis 30 grammes de protéine mais en fait c'est pas ça, j'ai voulu mettre 30 grammes de POUDRE de protéine, et ça fait 88 grammes de protéine »*.
 
@@ -705,23 +718,6 @@ Tests : **parcours 954/954** (+4, bloc LXXVIII), calculs 241/241, muscles 241/24
 
 **⭐⭐ ET LA SECONDE QUESTION A RÉVÉLÉ UN TROU DANS CE QUI VENAIT D'ÊTRE LIVRÉ.** *« Est-ce que les testeurs testent Milo ? »* — avec le filtre d'hier (au moins une dérive), **un testeur qui utilise Milo sans déraper n'apparaissait pas du tout** : impossible de distinguer *« ne l'utilise pas »* de *« l'utilise et tout va bien »*. Or `retro.messages` compte ses réponses de Milo : **c'est littéralement la mesure d'usage**. La vue affiche désormais **tous** les comptes, avec *« N réponses de Milo, AUCUNE dérive ✅ »* — et *« n'a jamais parlé à Milo »* quand c'est le cas.
 Tests : **parcours 950/950** (+3, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `coach.js`, `Code.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v947. |
-
-**ft-v946 — 🕰️ L'HISTORIQUE DÉJÀ STOCKÉ PASSE AU GARDIEN — plus besoin d'attendre** — Michel : *« attend une chose on ne pourra pas récupérer les anciennes conversations alors »*.
-
-**Il avait raison** : le compteur de ft-v944 ne compte qu'à partir de son branchement. Il aurait fallu **des semaines** pour savoir quoi que ce soit sur les testeurs.
-
-**⭐ MAIS LES CONVERSATIONS SONT LÀ**, sur leur téléphone — jusqu'à **30 rangées + le fil en cours**, chacune datée. Et **vérifié avant de coder** : elles gardent le texte **BRUT**, blocs `{"retiens"}` compris. *C'est précisément ce qui rend la mesure juste* — sur du texte déjà nettoyé, chaque promesse tenue serait comptée comme une promesse vide. Un scan **local**, **0 appel**, quelques millisecondes, lancé **une fois APRÈS le démarrage** — jamais pendant (**règle d'or #4** : le démarrage n'attend rien).
-
-**⭐⭐ C'EST UN INSTANTANÉ, PAS UNE ADDITION.** On **remplace** le bloc `retro` à chaque passage : rejouer dix fois donne exactement le même résultat. *Ça évite d'avoir à retenir « l'ai-je déjà fait ? » — un drapeau qu'on oublie de poser double les chiffres, et un chiffre doublé ne se voit pas.*
-
-**⛔ ET IL RESTE SÉPARÉ DU DIRECT.** L'historique couvre **plusieurs versions de Milo**, dont des **antérieures aux correctifs** : les additionner donnerait un total qui ne veut rien dire. Deux blocs, deux périodes **datées**, et l'avertissement écrit dans les deux affichages.
-
-**⚠️⚠️ ET UN TÉMOIN A TROUVÉ UN VRAI DÉFAUT DE MESURE — dans ce que je comptais depuis ft-v944.** `bloc_technique` se lève sur **chaque séance proposée**, **chaque bloc de mémoire**, **chaque liste de réponses rapides** : c'est du **trafic NORMAL**, pas une dérive. Le compter l'aurait rendu **majoritaire** et aurait noyé le signal — ***on aurait mesuré le BON fonctionnement de Milo en croyant mesurer ses écarts.*** Il reste affiché dans le badge (il sert en développement), il n'entre plus dans les compteurs. ⭐ Une seule liste `_GARDIEN_DERIVES`, lue par le compteur en direct **et** par le scan (**R2**).
-
-**⭐ MESURE SUR LES 25 VRAIS JOURS DE MICHEL : 7 dérives sur 129 réponses** — `diagnostic` 3 · `promesse_vide` 3 · `source_fabriquee` 1. ⚠️ **Ce sont des DRAPEAUX, pas des preuves** : seules les 3 promesses ont été vérifiées à la main. Les autres restent à lire.
-
-**⚠️ Deux fois mon témoin s'est trompé, pas le code.** Il attendait 2 dérives et en trouvait 3 — c'était le bloc `{"retiens"}` légitime, et **c'est comme ça que le défaut ci-dessus a été trouvé**. Puis il comparait le compteur direct à une valeur capturée bien plus haut, **entre-temps légitimement incrémentée** : il accusait le scan d'un mouvement qui n'était pas le sien. *Un témoin qui prend la mauvaise référence désigne le mauvais coupable.*
-Tests : **parcours 947/947** (+6, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `coach.js`, `Code.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v946. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

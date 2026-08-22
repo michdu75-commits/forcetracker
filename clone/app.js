@@ -1222,6 +1222,23 @@ function _bcApplyGrams(){
   document.getElementById('af-prot').value=Math.round(_bcNutr.prot100*f);
   document.getElementById('af-carbs').value=Math.round(_bcNutr.carbs100*f);
   document.getElementById('af-fat').value=Math.round(_bcNutr.fat100*f);
+  _bcMontrerTotal(g);
+}
+/* ⭐ CE QUE ÇA FAIT POUR TA QUANTITÉ (ft-v966) — Michel a lu « 88 g de protéines » sur la carte
+   produit (titrée « Valeurs pour 100 g ») et a cru que c'était son apport. **L'app avait raison** :
+   ses vrais chiffres étaient 117 kcal / 26 g, mais tout en bas de l'écran.
+   ⛔ DEUX NOMBRES DE PROTÉINES SUR LE MÊME ÉCRAN, et rien ne disait lequel était le sien. *Aucun
+   des deux n'est faux — c'est leur VOISINAGE MUET qui trompe*, ce qui est plus vicieux qu'une
+   erreur : il n'y a rien à corriger, donc rien ne se signale.
+   ⭐⭐ R2 — CETTE LIGNE NE CALCULE RIEN. Elle RELIT les champs que `_bcApplyGrams` vient d'écrire :
+   deux calculs du même nombre finiraient par diverger, et on ne saurait plus lequel croire. */
+function _bcMontrerTotal(g){
+  const el=document.getElementById('af-bc-total'); if(!el) return;
+  const lu=id=>parseInt((document.getElementById(id)||{}).value)||0;
+  if(!(g>0)){ el.style.display='none'; el.textContent=''; return; }
+  el.textContent='→ pour tes '+(Math.round(g*10)/10)+' g : '+lu('af-kcal')+' kcal · '
+    +lu('af-prot')+' g de protéines · '+lu('af-carbs')+' g de glucides · '+lu('af-fat')+' g de lipides';
+  el.style.display='block';
 }
 /* ═══ « TES REPAS HABITUELS » — UN APPUI, ZÉRO FORMULAIRE (18/08/2026) ═════════════════════
    Michel, en décrivant sa vraie journée : *« le matin je prends mon shaker de prot, je prends une

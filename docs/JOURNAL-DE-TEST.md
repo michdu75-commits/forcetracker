@@ -69,6 +69,40 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟢 Milo remplace un exercice DEMANDÉ par un autre
+**22/08/2026, conversation réelle.** Michel : *« Pk tu as mis soulevé de terre ? J'ai dit développé
+couché et Butterfly en début de séance »*. Milo a lu *« tirage »* dans « Développé Couché + Tirage »
+et a mis du **SDT**. Il l'a reconnu : *« j'ai vu "tirage" et j'ai mis du SDT, mauvaise lecture »*.
+**Attendu** : un exercice **nommé explicitement** par la personne se retrouve dans la séance proposée,
+et aucun exercice lourd non demandé ne le remplace.
+**Vérifiable ?** ⭐ **Oui, mécaniquement** : on cherche les noms demandés dans la séance rendue.
+
+### 🟢 Une séance PRÉVUE annoncée comme FAITE
+**22/08/2026, conversation réelle.** Michel : *« Pourquoi as-tu mis en page d'accueil si c'était la
+séance Larsen ? »*. Milo a reconnu : *« j'ai formulé le label de façon ambiguë, comme si la Larsen
+Press c'était la séance que tu venais de faire, alors que c'est celle prévue samedi »*.
+**Attendu** : le libellé distingue **planifié** et **réalisé** — c'est le principe fondateur de
+`docs/MODELE-METIER.md`, et le confondre fausse ce que la personne croit avoir accompli.
+**Vérifiable ?** ⭐ **Oui** : présence d'un marqueur de temps/état dans le libellé.
+
+### 🟡 L'ordre des exercices part dans tous les sens
+**22/08/2026, conversation réelle.** Michel : *« la dernière séance est un peu bizarre, tu m'as fait
+commencer par le soulevé de terre, après du tirage, et on est retourné sur les jambes, c'est
+normal ? »*. Milo a reconnu : *« j'ai mélangé les schémas moteurs, on aurait dû regrouper proprement »*.
+**Attendu** : on ne revient pas sur une région déjà quittée.
+**Vérifiable ?** ⚠️ **En partie** — « regrouper » est mesurable (les blocs d'une même région se
+suivent), mais l'ordre *idéal* relève du métier. **Mesurer le va-et-vient, pas le classement parfait.**
+
+### 🟡 « Tu me mets tout le temps les mêmes exercices »
+**22/08/2026, conversation réelle.** Michel, en précisant que **ce n'est pas une demande de changer** :
+*« c'est juste pour savoir pourquoi tu ne varies pas plus »*.
+**Attendu** : ⚠️ **inconnu, et c'est le sujet.** Répéter est parfois **juste** (progresser sur un
+mouvement demande de le refaire) ; ce qui manque, c'est que Milo **dise pourquoi** il répète, au lieu
+de laisser croire à une panne d'imagination.
+**Vérifiable ?** ⚠️ La **variété** se compte (exercices distincts sur N séances) ; *« est-ce le bon
+choix ? »* **non** → juge humain. ⛔ Ne pas transformer en règle « il faut varier » : ce serait
+imposer une préférence, et Michel a explicitement dit le contraire.
+
 ### 🟡 Un aliment CRU choisi quand la personne a mangé CUIT — faut-il l'aider ?
 **22/08/2026.** Michel, sur son journal : *« ya œuf cru (lol) pas cuit »*. **Vérifié : ce n'était pas
 un trou de la base** — « Oeuf dur » sort même **premier** dans la liste, il a pris le 2ᵉ. Sur un œuf

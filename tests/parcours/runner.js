@@ -9768,6 +9768,28 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     o.posQte=_pos('af-bc-row'); o.posKcal=_pos('af-kcal');
     o.ordreQte = o.posDesc>=0 && o.posSugg>o.posDesc && o.posQte>o.posSugg && o.posKcal>o.posQte;
 
+    /* ⛔⛔ « POUR TES 30 G » — Michel a lu 88 g de proteines sur la CARTE PRODUIT (« valeurs pour
+       100 g ») en croyant que c'etait son apport. Ses vrais chiffres (117 kcal / 26 g) etaient
+       justes mais tout en bas. Deux nombres, rien ne disait lequel etait le sien. */
+    if(typeof _bcMontrerTotal==='function'){
+      _bcNutr={name:'Iso zero protein (ASL)',kcal100:389,prot100:88,carbs100:3,fat100:3};
+      document.getElementById('af-bc-row').style.display='block';
+      document.getElementById('af-bc-grams').value=30;
+      _bcApplyGrams();
+      const tot=document.getElementById('af-bc-total');
+      o.totalVisible = tot && tot.style.display!=='none';
+      o.totalTexte = tot ? tot.textContent : '';
+      o.totalDit30 = /30\s*g/.test(o.totalTexte);
+      o.totalDit26 = /26\s*g de protéines/.test(o.totalTexte);
+      o.totalPasDe88 = o.totalTexte.indexOf('88')<0;          // ⛔ jamais la valeur pour 100 g
+      /* ⭐ R2 : la ligne RELIT les champs, elle ne recalcule pas — donc elle suit toute correction. */
+      document.getElementById('af-bc-grams').value=60; _bcApplyGrams();
+      o.totalSuit = /60\s*g/.test(tot.textContent) && /53\s*g de protéines/.test(tot.textContent);
+      /* ⛔ quantite vide : on n'affiche pas « pour tes 0 g ». */
+      document.getElementById('af-bc-grams').value=''; _bcApplyGrams();
+      o.totalCacheSiVide = tot.style.display==='none';
+    } else o.absenteTotal=true;
+
     /* ⭐ R2 : SON PROPRE JOURNAL se cherche de la meme facon. */
     S.foodLog=[{date:today(),meal:'diner',name:'Amande grillée',kcal:60,prot:2,carbs:2,fat:5,ts:Date.now()}];
     o.journalPluriel=_afSuggLocales('amandes').length===1;
@@ -9808,6 +9830,14 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       R.torsadeIntacte===true, '');
     t('⛔⛔ la QUANTITÉ est SOUS le champ de recherche et AU-DESSUS des macros qu\'elle pilote',
       R.ordreQte===true, 'desc='+R.posDesc+' sugg='+R.posSugg+' qté='+R.posQte+' kcal='+R.posKcal);
+    if(R.absenteTotal){ t('⛔ la ligne « pour tes N g » existe', false, 'fonction absente'); }
+    else{
+      t('⭐⭐ « pour tes 30 g » s\'affiche À CÔTÉ de la quantité (le 88 g de la carte est pour 100 g)',
+        R.totalVisible===true && R.totalDit30===true && R.totalDit26===true, R.totalTexte);
+      t('⛔⛔ ... et cette ligne ne montre JAMAIS la valeur pour 100 g (88)', R.totalPasDe88===true, R.totalTexte);
+      t('⭐ R2 : elle RELIT les champs, donc elle suit (60 g → 53 g de protéines)', R.totalSuit===true, '');
+      t('⛔ quantité vide : on n\'affiche pas « pour tes 0 g »', R.totalCacheSiVide===true, '');
+    }
     t('⭐ R2 : son propre JOURNAL se cherche pareil (« amandes » trouve « Amande grillée »)',
       R.journalPluriel===true, '');
     t('⛔ ... sans régresser sur le singulier', R.journalSingulier===true, '');
