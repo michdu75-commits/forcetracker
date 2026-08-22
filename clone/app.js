@@ -1724,9 +1724,22 @@ const _AF_SUGG_DELAI=450;      // on ne part pas au réseau à chaque lettre
    quasiment toujours, sur iPhone \u2014 rendait Z\u00c9RO r\u00e9sultat, alors que l'aliment existe. Le
    \u00ab poulet \u00bb de Michel n'avait rien \u00e0 voir (juste une version pas encore rafra\u00eechie), mais ce
    bug-l\u00e0 est r\u00e9el et touche bien plus de monde : \u0153uf, b\u0153uf, s\u0153ur, c\u0153ur, n\u0153ud, v\u0153u\u2026 */
+/* \u26a0\ufe0f SUITE DU BUG DE LA LIGATURE (22/08/2026) \u2014 Michel : \u00ab faut aller voir aussi avec les
+   accents, le E tr\u00e9ma, tous les caract\u00e8res sp\u00e9ciaux \u00bb. V\u00e9rifi\u00e9 SYST\u00c9MATIQUEMENT sur les deux
+   bases (CIQUAL + Compl'Alim, ~132 000 noms) plut\u00f4t que de deviner :
+     \u00b7 accents (\u00e9, \u00e8, \u00ea, \u00e0\u2026), TR\u00c9MA (\u00eb, \u00ef, \u00fc) et C\u00c9DILLE (\u00e7) \u2192 d\u00e9j\u00e0 corrects, NFD les d\u00e9compose
+       tous en lettre + accent, et la ligne suivante les retire ;
+     \u00b7 APOSTROPHE : le clavier iPhone convertit AUTOMATIQUEMENT l'apostrophe droite (') tap\u00e9e
+       en apostrophe COURBE (') pendant la frappe. 238 aliments CIQUAL en portent une
+       (\u00ab Soupe \u00e0 l'oignon \u00bb, \u00ab Saut\u00e9 d'agneau \u00bb\u2026) \u2014 mesur\u00e9 : \u00ab aujourd'hui \u00bb (droite, tap\u00e9e) et
+       \u00ab aujourd'hui \u00bb (courbe, stock\u00e9e) ne se reconnaissaient PAS comme le m\u00eame mot. On la
+       retire purement et simplement (elle ne porte aucun sens pour la recherche), avec ses
+       variantes \u2018 \u00b4 ` rencontr\u00e9es dans les donn\u00e9es (parfois des coquilles d'origine, ex.
+       \u00ab PROBIO\u00b4DIET \u00bb, \u00ab l'acide hyaluronique \u00bb). */
 function _afNorm(t){
   return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    .replace(/\u0153/g,'oe').replace(/\u00e6/g,'ae').trim();
+    .replace(/\u0153/g,'oe').replace(/\u00e6/g,'ae')
+    .replace(/['\u2019\u2018`\u00b4\u02bc]/g,'').trim();
 }
 /* ① CE QU'IL A DÉJÀ NOTÉ. Dédoublonné par nom, le plus RÉCENT gagne : si la quantité a changé,
    c'est la dernière qui reflète ce qu'il mange aujourd'hui. */

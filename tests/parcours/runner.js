@@ -9340,6 +9340,11 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     o.oeufLigature = _ciqualChercher('œuf',6).some(a=>/Oeuf/.test(a[1]));
     o.boeufLigature = _ciqualChercher('bœuf',6).some(a=>/oeuf/i.test(a[1]));
     o.oeufSansLigature = _ciqualChercher('oeuf',6).some(a=>/Oeuf/.test(a[1]));   // ne doit pas régresser
+    /* ⚠️⚠️ MÊME BUG, SUR L'APOSTROPHE — Michel : « faut aller voir aussi les caractères
+       spéciaux ». Le clavier iPhone convertit l'apostrophe droite tapée en apostrophe COURBE
+       pendant la frappe ; 238 aliments CIQUAL en portent une (« Soupe à l'oignon »). */
+    o.apostropheCourbe = _ciqualChercher('à l’oignon',6).some(a=>/oignon/i.test(a[1]));
+    o.apostropheDroite = _ciqualChercher("à l'oignon",6).some(a=>/oignon/i.test(a[1]));
     /* ⛔⛔ AUCUN aliment sans calories déterminées n'est proposé : dans CIQUAL « - » veut dire
        NON DÉTERMINÉ, pas zéro — on ne peut pas enregistrer une ligne pareille. */
     o.jamaisSansKcal = ['banane','riz','poulet','lait','pomme','pain'].every(q=>
@@ -9429,6 +9434,10 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⚠️ ... même chose pour « bœuf »', R.boeufLigature===true, '');
     t('⚠️ ... et « oeuf » sans ligature continue de marcher (pas de régression)',
       R.oeufSansLigature===true, '');
+    t('⚠️⚠️ MÊME BUG SUR L\'APOSTROPHE : « à l\'oignon » (courbe, tapée sur iPhone) retrouve l\'aliment',
+      R.apostropheCourbe===true, '');
+    t('⚠️ ... et l\'apostrophe droite continue de marcher (pas de régression)',
+      R.apostropheDroite===true, '');
     /* ⛔⛔ Le point de rigueur : « - » veut dire NON DÉTERMINÉ, pas zéro. */
     t('⛔⛔ aucun aliment SANS calories déterminées n\'est proposé (« - » ≠ 0)',
       R.jamaisSansKcal===true, '');

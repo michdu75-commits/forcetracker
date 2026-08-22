@@ -136,7 +136,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v959`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v960`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v959`** (prochaine : `ft-v960`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v960`** (prochaine : `ft-v961`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,17 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v960 — 🔤 MÊME BUG, SUR L'APOSTROPHE — Michel avait raison de creuser** — après la ligature du blanc d'œuf : *« faut aller voir aussi avec les accents, le E tréma, tous les caractères spéciaux quoi »*.
+
+**⭐ VÉRIFIÉ SYSTÉMATIQUEMENT sur les ~132 000 noms des deux bases** (CIQUAL + Compl'Alim), plutôt que de deviner un caractère au hasard. **Accents, tréma (ë, ï, ü), cédille (ç) étaient déjà corrects** : `NFD` les décompose tous en lettre + accent, déjà retirés par le code précédent.
+
+**⚠️⚠️ MAIS L'APOSTROPHE AVAIT EXACTEMENT LE MÊME DÉFAUT QUE LA LIGATURE DE LA VEILLE.** Le clavier iPhone convertit **automatiquement** l'apostrophe droite tapée en apostrophe **courbe** pendant la frappe. **238 aliments CIQUAL** en portent une (*« Soupe à l'oignon »*, *« Sauté d'agneau »*). Mesuré : *« aujourd'hui »* tapé (droite) et *« aujourd'hui »* stocké (courbe) ne se reconnaissaient **pas** comme le même mot.
+
+**⛔ CORRIGÉ en RETIRANT l'apostrophe et ses variantes** (courbe droite/gauche, accent grave, accent aigu isolé) — elle ne porte aucun sens pour une recherche. Et ça a révélé un détail au passage : certaines entrées utilisent ces mêmes variantes comme **coquille d'origine** (*« PROBIO´DIET »*), pas seulement l'autocorrection du clavier — le retrait les couvre aussi.
+
+**⭐ Toujours dans la même fonction, partagée par CIQUAL et les suggestions locales** (R2) — corriger une fois répare les deux recherches.
+Tests : **parcours 1046/1046** (+2), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** exact. Fichiers : `app.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v960. |
 
 **ft-v959 — 🥚 UN BUG TROUVÉ EN CHERCHANT AUTRE CHOSE — la ligature Œ cassait la recherche CIQUAL** — Michel a montré une photo de blanc d'œuf liquide en demandant comment il serait nommé dans la base, après avoir signalé que *« poulet »* ne trouvait rien (ce second point n'était qu'une version pas encore rafraîchie sur son téléphone).
 
@@ -709,19 +720,6 @@ Tests : **parcours 919/919** (+9, bloc LXXVI), calculs 241/241, muscles 241/241,
 
 **⚠️ Le témoin lit les DEUX fichiers HTML** (l'app et le clone) : un chemin présent d'un seul côté finirait par diverger sans que rien ne le signale (**R2**).
 Tests : **parcours 910/910** (+2, bloc LXXIV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN HTML : 1 rouge**, le chemin absent. Fichiers : `index.html`, `clone/index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v941. |
-
-**ft-v940 — 🟢 LA PASSE RÉELLE : 2 rouges, et les DEUX étaient des FAUX ROUGES** — Michel lance la passe et colle les **réponses brutes** — le bouton livré la veille. Rejeu des vérificateurs en local : **0 appel, 0 €**. *ft-v938 a payé sa dette dès sa première utilisation.*
-
-**⭐⭐ ① EV-003 (face pull) — LE CORRECTIF DE ft-v936 AVAIT MARCHÉ, ET MON MOTIF LE CACHAIT.** C'est la **famille de bugs n°1 du projet** : **le PREMIER MATCH GAGNANT** (`BUGS.md`, ≥12 fois). `findIndex` prenait la **première** ligne contenant « face pull » — c'est-à-dire la phrase d'accueil où Milo **reprend les mots de Michel** : *« haut du corps tirage + face pull — bonne idée pour l'épaule droite »*. La vraie **prescription** était **14 lignes plus bas, en avant-dernier, exactement à sa place**. 👉 On ne cherche plus une **MENTION**, on cherche une **PRESCRIPTION** — la ligne qui porte des séries. *Sans série, ce n'est pas un exercice, c'est une phrase.*
-
-**⭐⭐ ② EV-015 — MON VÉRIFICATEUR ÉTAIT PLUS STRICT QUE LE JUGE HUMAIN, et le dépôt en garde la preuve.** Milo répond *« partage-le, je te dis ce que j'en pense honnêtement — structures, fréquences, intensités »*, et mon code appelait ça *« aucun rôle de complément »*. Or le **25/07** (ft-v510, `docs/JOURNAL-ARCHIVE.md`), un juge **humain** avait évalué ce comportement exact et l'avait noté **5/5**, en écrivant : *« propose de COMPLÉTER (pas remplacer)… refuse l'avis à l'aveugle, ce qui est le comportement idéal »*. **Proposer d'ANALYSER le programme EST le rôle de complément.** ⭐ Et c'est précisément la question que Michel avait posée le 21/08 — *« vérifier d'abord si mon vérificateur n'est pas trop strict »* — **sans réponse possible avant ft-v938**, faute de garder les réponses.
-
-**⚠️⚠️ ET RELÂCHER DEUX MOTIFS JUSQU'À CE QUE TOUT SOIT VERT SERAIT PIRE QUE DE NE RIEN MESURER.** C'est le danger exact de cette version, et il est gardé : des témoins prouvent que les deux motifs attrapent **toujours** la vraie violation — un face pull placé **avant** du lourd sans un mot d'explication rougit encore · un Milo qui n'offre **aucun** regard sur le programme rougit encore.
-
-**⚠️ Un cas restait raté** : le lourd **sur la MÊME ligne** que le face pull (*« on commence par le face pull 3×12, ensuite Développé Couché 4×6 à 90 »*) — le vérificateur raisonnait par lignes. Corrigé en retirant d'abord les mots du face pull, **puisque « TIRAGE visage » contient « tirage » et se dénonçait lui-même**.
-
-**⛔ ET 15/15 VERT NE VEUT PAS DIRE « MILO EST PARFAIT ».** Un vert dit *« aucune violation DÉTECTABLE »*, rien de plus — d'autant que **deux motifs viennent de changer**. Ce que la passe prouve vraiment : le keto tient toujours (2ᵉ mesure après correctif), le débrief couvre les 5 exercices, aucune charge impossible, aucun lien inventé, aucun diagnostic, le ressenti est cru.
-Tests : **parcours 908/908** (+4, bloc LXXV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif classique ici** : le « avant » est la passe réelle elle-même, et elle est **gardée dans le rejeu** — c'est elle qui rendait 2 rouges et qui rend 15 verts. *La mesure avant/après existe, elle est simplement faite sur des données au lieu d'un `git stash`.* Fichiers : `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v940. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
