@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v964` — fusionnée sur `master` le 22/08.
+- **Version en ligne (live) :** `ft-v965` — fusionnée sur `master` le 22/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,16 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- ⚖️ **LA QUANTITÉ ÉTAIT AU-DESSUS DU CHAMP OÙ L'ON TAPE** (ft-v965) — Michel : *« j'ai voulu
+  mettre 30 g de POUDRE de protéine, et ça fait 88 g de protéine »*.
+  ⭐⭐ **88 g de protéine = exactement 100 g de poudre** : la quantité était restée par défaut.
+  ⛔⛔ **Le calcul n'a jamais été faux, c'était le PLACEMENT** : le bloc « Quantité » vivait AVANT
+  le champ de recherche (logique pour le code-barres, à contresens depuis ft-v956/957).
+  ⭐ Déplacé **juste au-dessus des macros qu'il pilote** — il sert les deux chemins.
+  ⚠️⚠️ **Coût réel et silencieux** : 100 g de whey au lieu de 30 = +64 g de protéine, ~250 kcal.
+  Même famille que le pluriel (ft-v963) : une valeur **plausible** mais fausse. **R14.**
+  ⚠️ La valeur par défaut de 100 g **ne bouge pas** : la « corriger » demanderait de deviner une
+  portion (30 g de whey ? 250 g de riz ?) — faux-précis, **R29**.
 - 🔤 **CES MOTS-LÀ NE S'ÉCRIVENT PAS** (ft-v964) — Michel : *« je voulais mettre coquilette »*
   (**un seul L**) → zéro résultat. ⭐ 6 autres graphies échouaient : spagetti, tagliatele, farfale,
   fusili, linguini, pene — consonnes doublées et h muets.

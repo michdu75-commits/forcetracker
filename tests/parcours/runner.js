@@ -9760,6 +9760,14 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     /* ⛔ ET « torsade » est RETIRE de la liste : CIQUAL l'emploie pour un biscuit aperitif (R30). */
     o.torsadeIntacte=!/^Pâtes/.test(top('torsade'));
 
+    /* ⛔⛔ LA QUANTITE DOIT ETRE SOUS LE CHAMP DE RECHERCHE, PAS AU-DESSUS (ft-v965).
+       Michel a enregistre 88 g de proteine au lieu de ~26 : la quantite etait restee a 100 g
+       parce qu'elle vivait AVANT le champ ou il tapait. Le calcul etait juste, le placement non. */
+    const _pos=id=>{const e=document.getElementById(id);return e?[].indexOf.call(document.querySelectorAll('*'),e):-1;};
+    o.posDesc=_pos('af-desc'); o.posSugg=_pos('af-sugg');
+    o.posQte=_pos('af-bc-row'); o.posKcal=_pos('af-kcal');
+    o.ordreQte = o.posDesc>=0 && o.posSugg>o.posDesc && o.posQte>o.posSugg && o.posKcal>o.posQte;
+
     /* ⭐ R2 : SON PROPRE JOURNAL se cherche de la meme facon. */
     S.foodLog=[{date:today(),meal:'diner',name:'Amande grillée',kcal:60,prot:2,carbs:2,fat:5,ts:Date.now()}];
     o.journalPluriel=_afSuggLocales('amandes').length===1;
@@ -9798,6 +9806,8 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       R.macaronIntact===true && R.macaronsIntact===true, '');
     t('⛔ ... et « torsade » aussi (retiré de la liste : biscuit apéritif chez CIQUAL)',
       R.torsadeIntacte===true, '');
+    t('⛔⛔ la QUANTITÉ est SOUS le champ de recherche et AU-DESSUS des macros qu\'elle pilote',
+      R.ordreQte===true, 'desc='+R.posDesc+' sugg='+R.posSugg+' qté='+R.posQte+' kcal='+R.posKcal);
     t('⭐ R2 : son propre JOURNAL se cherche pareil (« amandes » trouve « Amande grillée »)',
       R.journalPluriel===true, '');
     t('⛔ ... sans régresser sur le singulier', R.journalSingulier===true, '');

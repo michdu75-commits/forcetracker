@@ -136,7 +136,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v964`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v965`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v964`** (prochaine : `ft-v965`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v965`** (prochaine : `ft-v966`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v965 — ⚖️ LA QUANTITÉ ÉTAIT AU-DESSUS DU CHAMP OÙ L'ON TAPE** — Michel : *« j'ai trouvé un bug mais pas vraiment un bug lol »*, puis : *« j'ai mis 30 grammes de protéine mais en fait c'est pas ça, j'ai voulu mettre 30 grammes de POUDRE de protéine, et ça fait 88 grammes de protéine »*.
+
+**⭐⭐ LE CHIFFRE DIT LA CAUSE À LUI SEUL : 88 g de protéine = EXACTEMENT 100 g de poudre.** La quantité n'avait jamais été changée — elle était restée sur sa valeur par défaut. *Il avait raison sur les deux points : c'en est un, et ce n'en est pas un.*
+
+**⛔⛔ LE CALCUL N'A JAMAIS ÉTÉ FAUX — C'ÉTAIT LE PLACEMENT.** Le bloc « Quantité » vivait **AVANT** le champ de recherche. Conçu pour le **code-barres** (on scanne, *puis* on ajuste), il est devenu **à contresens** quand la recherche par nom est arrivée (ft-v956/957) : *on tape en bas, on choisit en bas, les macros se remplissent en bas* — et le réglage qui **commande tout ça** restait hors du regard, plus haut dans la page.
+
+**⭐ DÉPLACÉ JUSTE AU-DESSUS DES MACROS QU'IL PILOTE**, il sert désormais les **deux** chemins : après un scan comme après une recherche, il apparaît là où l'attention est **déjà**.
+
+**⚠️⚠️ ET LE COÛT ÉTAIT RÉEL ET SILENCIEUX** : 100 g de whey au lieu de 30, c'est **+64 g de protéine et ~250 kcal** enregistrés sans que rien ne le signale. *C'est la même famille que le pluriel de ft-v963 — une valeur **plausible** mais fausse, qu'on enregistre sans se méfier.* ⛔ Et c'est **un défaut de conception que j'ai introduit** en ajoutant la recherche : *déplacer l'entrée d'un formulaire déplace aussi le sens de son ordre* (**R14** — un comportement copié d'un contexte à l'autre peut devenir faux).
+
+**⭐ LE TÉMOIN ÉPINGLE L'ORDRE DU DOM LUI-MÊME** (recherche < suggestions < quantité < macros). *Une disposition ne casse aucun test fonctionnel : sans ce témoin, rien d'autre ne l'aurait vue* — le formulaire « marchait » parfaitement.
+
+**⚠️ RIEN D'AUTRE NE BOUGE** : ni le calcul, ni la valeur par défaut de 100 g. La corriger demanderait de **deviner une portion** — 30 g pour une whey, 250 g pour du riz ? — et ce serait un **faux-précis** (**R29**). *Rendre le réglage visible vaut mieux que deviner à la place de la personne.*
+Tests : **parcours 1085/1085** (+1, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge**, exactement l'ordre — et c'est ici un contrôle **instructif**, pas un « la fonction n'existe pas » : le témoin **tourne** des deux côtés et mesure une disposition qui existait déjà, mal. Fichiers : `index.html`, `clone/index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v965. |
 
 **ft-v964 — 🔤 CES MOTS-LÀ NE S'ÉCRIVENT PAS** — Michel, **juste après** ft-v963 : *« oui j'ai mis ça, après je voulais mettre coquilette »*.
 
@@ -705,25 +720,6 @@ Tests : **parcours 950/950** (+3, bloc LXXVIII), calculs 241/241, muscles 241/24
 
 **⚠️ Deux fois mon témoin s'est trompé, pas le code.** Il attendait 2 dérives et en trouvait 3 — c'était le bloc `{"retiens"}` légitime, et **c'est comme ça que le défaut ci-dessus a été trouvé**. Puis il comparait le compteur direct à une valeur capturée bien plus haut, **entre-temps légitimement incrémentée** : il accusait le scan d'un mouvement qui n'était pas le sien. *Un témoin qui prend la mauvaise référence désigne le mauvais coupable.*
 Tests : **parcours 947/947** (+6, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `coach.js`, `Code.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v946. |
-
-**ft-v945 — 🌍 LA MESURE CONTINUE, CHEZ DE VRAIS UTILISATEURS — parce que le Milo de Michel est DÉBRIDÉ** — Michel : *« mais je veux une mesure continue »*. Mais c'est sa remarque d'avant qui a rendu cette version nécessaire : *« n'oublie pas Milo avec moi, il est débridé »*.
-
-**⭐⭐ VÉRIFIÉ DANS LE CODE, ET IL AVAIT RAISON.** `_estSuperAdmin()` lui ouvre **deux portes fermées à tout le monde** : ① il peut **citer, résumer et analyser ses propres consignes** (*« c'est lui qui les écrit »*) · ② **aucune restriction de sujet** (*« il teste son application »*), et le filtre hors-sujet **local** est même désactivé pour lui. ⚠️ Le **modèle**, lui, est le **même** — `MODELE_MICHEL` vaut exactement le défaut, Sonnet 4.6 pour tous.
-
-**⚠️⚠️ ET ÇA TOUCHE DIRECTEMENT ft-v944, LIVRÉ UNE HEURE PLUS TÔT.** Le Gardien venait d'être calibré sur **ses** 129 réponses — c'est-à-dire sur **l'échantillon le moins représentatif du parc**. L'un des 4 faux positifs retirés — *« Ce que je retiens : uniquement dans **ton profil**, ta mémoire à toi »* — **n'existe QUE parce qu'il est débridé** : Milo n'a pas le droit d'expliquer son fonctionnement aux autres. **C'est le cousin de R9** : *on évalue Milo sur ce que reçoivent les vrais utilisateurs, jamais sur la version du fondateur — sinon on corrige le mauvais cerveau.*
-
-**👉 LE COMPTEUR REMONTE DÉSORMAIS** avec la sauvegarde — vers Apps Script **et** le miroir Supabase (le corps est construit **une seule fois**, précisément pour qu'ils ne divergent pas — **R2**). Lisible dans **Profil → Admin → 🌍 Gardien — tous les comptes**, agrégé et par personne.
-
-**⛔ DES NOMBRES SEULEMENT — ~150 octets.** `{depuis, dernier, total, codes}`. Aucune phrase de Milo, aucun mot de la personne : **ses conversations ne quittent toujours pas son téléphone**. ⭐ Et le serveur **RECONSTRUIT** l'objet au lieu de le recopier : un client modifié ne peut pas glisser du texte dans le store par ce champ. *Le stockage a déjà lâché une fois (102 % le 29/07) ; on ne rouvre pas cette porte pour du confort.*
-
-**⚠️ ET ON NE LE CACHE PAS.** Michel : *« je ne veux pas leur cacher »*. La carte « Mes conversations avec Milo » le **dit en toutes lettres** aux testeurs — un compteur de bon fonctionnement, des nombres, jamais une phrase. *La promesse affichée dans l'app reste vraie, et c'est la seule condition qui comptait.*
-
-**⛔ MILO, LUI, NE REÇOIT PAS CE COMPTEUR.** Lui donner son propre score l'inviterait à **le commenter** — exactement la sortie de rôle qu'on traque. Un témoin le vérifie.
-
-**⚠️ ET LE GARDE-FOU R4a A REFUSÉ LA LIVRAISON** tant que `gardienStats` n'était pas **classée** : elle est **exclue**, avec la raison écrite. *On ne peut plus oublier — on peut seulement décider.*
-
-**⚠️ Une erreur payée** : mon témoin attrapait le **miroir Supabase** (corps enveloppé dans `p_data`) et rendait *« compteur absent »* alors qu'il partait bien. *Un témoin qui lit la mauvaise enveloppe accuse le code d'un défaut qu'il n'a pas.* Il déballe désormais et couvre **les deux** chemins.
-Tests : **parcours 941/941** (+3, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données **102 classées 0 trou**. Fichiers : `coach.js`, `state.js`, `setup.js`, `Code.js`, `index.html`, `clone/index.html`, `tests/donnees/donnees-milo.json`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v945. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
