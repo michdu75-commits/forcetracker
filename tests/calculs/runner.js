@@ -1594,6 +1594,115 @@ console.log('\n═══ 13. Supplements : ce qui est affiche est-il vrai ? ═�
   await cx.close();
 }
 
+/* == LE PLAN DE REPAS LES JOURS DE SEANCE (21/08/2026) ==
+   Michel : « ok maintenant le plan de repas les jours de seance ».
+   ⭐⭐ LE DEFAUT ALLAIT DANS LES DEUX SENS, et c'est ce qui le rendait invisible : les plans
+   muscle/force/endurance affichaient « Pre-entrainement » et « Post-entrainement » TOUS LES
+   JOURS — jusqu'a 40 % des calories d'un dimanche de repos rangees autour d'une seance qui
+   n'existe pas — pendant que le plan perte n'en a AUCUN, meme un jour de squat lourd.
+   ⛔ ET LE POINT QUI COMPTE LE PLUS N'EST PAS L'INTITULE : les calories du jour ne doivent pas
+   bouger d'un kcal. On corrige un libelle qui ment, on ne change pas ce que quelqu'un mange. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_goal:'muscle'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(1800);
+
+  console.log('\n-- LE PLAN DE REPAS LES JOURS DE SEANCE --');
+  const R=await pg.evaluate(()=>{
+    const o={};
+    const noms=(m)=>m.map(x=>x.name).join(' | ');
+    const somme=(m)=>m.reduce((a,x)=>a+x.kcal,0);
+    const cible=()=>calcMacros('normal').calories;
+    S.foodMode=''; S.fasting=''; S.keto=false; S.goal='muscle';
+
+    /* ① JOUR DE REPOS : aucune séance faite, aucune en cours, aucune annoncée. */
+    S.sessions=[]; S.wkt=null; S.nextPlanned=null;
+    const repos=getMeals(calcMacros('normal'),'normal');
+    o.reposNoms=noms(repos);
+    o.reposSansSeance=!/entraînement/i.test(o.reposNoms);
+    o.reposKcal=somme(repos); o.cible=cible();
+
+    /* ⛔② ... ET LES CALORIES DU JOUR N'ONT PAS BOUGÉ (redistribuées, pas retirées). */
+    o.reposConserve=Math.abs(o.reposKcal-o.cible)<=repos.length;   // arrondi au repas près
+
+    /* ③ JOUR DE SÉANCE FAITE, avec l'heure. */
+    S.sessions=[{date:today(),startHour:18,exs:[],vol:0,calories:400}];
+    const seance=getMeals(calcMacros('normal'),'normal');
+    o.seanceNoms=noms(seance);
+    o.seanceAvecPrePost=/pré-entraînement/i.test(o.seanceNoms)&&/post-entraînement/i.test(o.seanceNoms);
+    o.heureNommee=/avant ta séance de 18 h/.test(o.seanceNoms)&&/après ta séance de 18 h/.test(o.seanceNoms);
+    o.seanceKcal=somme(seance);
+    o.memeTotal=Math.abs(o.seanceKcal-o.reposKcal)<=Math.max(repos.length,seance.length);
+
+    /* ⚠️④ HEURE INCONNUE → on n'en INVENTE pas une. */
+    S.sessions=[{date:today(),exs:[],vol:0}];
+    o.sansHeure=noms(getMeals(calcMacros('normal'),'normal'));
+    o.pasDHeureInventee=/pré-entraînement/i.test(o.sansHeure)&&!/séance de/.test(o.sansHeure);
+
+    /* ⑤ SÉANCE EN COURS et SÉANCE ANNONCÉE comptent aussi comme un jour de séance. */
+    S.sessions=[]; S.wkt={date:today(),startHour:7,exs:[]};
+    o.enCours=/pré-entraînement/i.test(noms(getMeals(calcMacros('normal'),'normal')));
+    o.enCoursHeure=/séance de 7 h/.test(noms(getMeals(calcMacros('normal'),'normal')));
+    S.wkt=null; S.nextPlanned={date:today(),label:'Haut du corps'};
+    o.annoncee=/pré-entraînement/i.test(noms(getMeals(calcMacros('normal'),'normal')));
+    /* ⛔ ... mais une séance annoncée pour DEMAIN ne fait pas d'aujourd'hui un jour de séance. */
+    const dm=new Date(); dm.setDate(dm.getDate()+1);
+    S.nextPlanned={date:dm.toISOString().slice(0,10),label:'Demain'};
+    o.demainNonCompte=!/entraînement/i.test(noms(getMeals(calcMacros('normal'),'normal')));
+    S.nextPlanned=null;
+
+    /* ⑥ LE JEÛNE CONTINUE DE MARCHER — il passe par la MÊME redistribution (R2). */
+    S.sessions=[]; S.fasting='16-8';
+    const jeune=getMeals(calcMacros('normal'),'normal');
+    o.jeuneNoms=noms(jeune);
+    o.jeunePasDePtitDej=!/petit-déjeuner/i.test(o.jeuneNoms)&&/Rupture du jeûne/.test(o.jeuneNoms);
+    o.jeuneKcal=somme(jeune);
+    o.jeuneConserve=Math.abs(o.jeuneKcal-o.cible)<=jeune.length;
+    /* ⛔ ... et jeûne + jour de repos CUMULÉS ne vident pas la journée. */
+    S.sessions=[]; S.fasting='20-4';
+    const cumul=getMeals(calcMacros('normal'),'normal');
+    o.cumulNonVide=cumul.length>0 && Math.abs(somme(cumul)-o.cible)<=cumul.length;
+    S.fasting='';
+
+    /* ⚠️⑦ PORTÉE HONNÊTE : le plan « perte » n'a aucun repas pré/post — rien ne change pour
+       lui, même un jour de séance. Le témoin l'ÉPINGLE pour que ça reste une décision. */
+    S.goal='perte'; S.sessions=[{date:today(),startHour:18,exs:[]}];
+    const perteS=noms(getMeals(calcMacros('normal'),'normal'));
+    S.sessions=[];
+    const perteR=noms(getMeals(calcMacros('normal'),'normal'));
+    o.perteIdentique=(perteS===perteR)&&!/entraînement/i.test(perteS);
+    S.goal='muscle';
+    return o;
+  });
+
+  t('⭐⭐ JOUR DE REPOS : plus aucun repas « entraînement » (il n\'y a pas de séance)',
+    R.reposSansSeance===true, R.reposNoms);
+  t('⛔⛔ ... et les CALORIES DU JOUR ne bougent pas d\'un kcal (redistribuées, pas retirées)',
+    R.reposConserve===true, 'repos='+R.reposKcal+' cible='+R.cible);
+  t('⭐ JOUR DE SÉANCE : les repas pré et post sont bien là',
+    R.seanceAvecPrePost===true, R.seanceNoms);
+  t('⭐⭐ ... et ils NOMMENT L\'HEURE RÉELLE de la séance',
+    R.heureNommee===true, R.seanceNoms);
+  t('⛔ ... pour le MÊME total calorique qu\'un jour de repos',
+    R.memeTotal===true, 'séance='+R.seanceKcal+' repos='+R.reposKcal);
+  t('⚠️ heure inconnue → on n\'en INVENTE pas une (R29)',
+    R.pasDHeureInventee===true, R.sansHeure);
+  t('⭐ une séance EN COURS compte aussi (on n\'attend pas qu\'elle soit finie)',
+    R.enCours===true && R.enCoursHeure===true, '');
+  t('⭐ ... une séance ANNONCÉE pour aujourd\'hui aussi', R.annoncee===true, '');
+  t('⛔ ... mais une séance annoncée pour DEMAIN ne compte pas',
+    R.demainNonCompte===true, '');
+  t('⭐⭐ le JEÛNE passe par la même redistribution et marche toujours (R2)',
+    R.jeunePasDePtitDej===true && R.jeuneConserve===true,
+    'jeûne='+R.jeuneKcal+' cible='+R.cible+' | '+R.jeuneNoms);
+  t('⛔⛔ ... jeûne + jour de repos CUMULÉS ne vident jamais la journée',
+    R.cumulNonVide===true, '');
+  t('⚠️ PORTÉE ÉPINGLÉE : le plan « perte » n\'a pas de pré/post — rien ne change pour lui',
+    R.perteIdentique===true, 'le plan perte a changé sans qu\'on l\'ait décidé');
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL LINÉAIRE : '+ok+' ✅ · '+ko+' ❌ ════');

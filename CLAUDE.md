@@ -136,7 +136,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v949`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v950`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v949`** (prochaine : `ft-v950`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v950`** (prochaine : `ft-v951`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v950 — 🍽️ LES REPAS D'ENTRAÎNEMENT N'EXISTENT PLUS QUE LES JOURS D'ENTRAÎNEMENT** — Michel : *« ok maintenant le plan de repas les jours de séance »*.
+
+**⭐⭐ LE DÉFAUT ALLAIT DANS LES DEUX SENS, et c'est exactement ce qui le rendait invisible.** Les plans **muscle / force / endurance** affichaient « ⚡ Pré-entraînement » **et** « 💪 Post-entraînement » **TOUS LES JOURS** — soit, un dimanche de repos, jusqu'à **40 % des calories de la journée** (force : 15 % + 25 %) rangées autour d'une séance **qui n'existe pas**. Et pendant ce temps le plan **perte** n'en a **AUCUN**, même un jour de squat lourd. *Un plan qui parle d'entraînement un jour de repos n'est pas seulement inutile : il apprend à ne plus lire les intitulés.*
+
+**⛔⛔ ET LE POINT QUI COMPTE LE PLUS N'EST PAS L'INTITULÉ : les calories du jour ne bougent pas d'un kcal.** Elles sont **redistribuées** sur les repas restants, jamais retirées. *On corrige un libellé qui ment, on ne modifie pas ce que quelqu'un mange* — changer un apport sans le dire est précisément « l'erreur qui touche la personne » (**R29**). C'est le témoin central du bloc.
+
+**⭐ R2 — LA REDISTRIBUTION EXISTAIT DÉJÀ, on ne l'a pas réécrite.** Le **jeûne intermittent** l'avait posée en juillet, avec sa raison : *« sinon on afficherait une journée incomplète, ce qui pousserait à sous-manger »*. Il n'y a aucune raison que cette règle change selon le **motif** du retrait — donc **une seule fonction** pour les deux usages. Deux copies finiraient par ne plus redistribuer pareil, et **personne ne le verrait**. Un témoin vérifie que le jeûne marche toujours, et qu'un jeûne **cumulé** à un jour de repos ne vide jamais la journée.
+
+**⭐⭐ ET UN JOUR DE SÉANCE, LES REPAS NOMMENT L'HEURE RÉELLE** : *« ⚡ Pré-entraînement — avant ta séance de 18 h »*. ⚠️ **Et si l'heure est inconnue, on n'en invente pas une** : écrire « vers 17 h » supposerait de connaître la durée de la séance, qu'on n'a pas au moment du plan — et pour une séance seulement **annoncée**, on n'a même pas l'heure. *« Avant ta séance de 18 h » est vrai partout où on l'affiche* (**R29**).
+
+**⛔ TROIS SOURCES, DANS L'ORDRE DE CERTITUDE** : la séance **FAITE** (elle a eu lieu, on a l'heure) → **EN COURS** → **ANNONCÉE pour aujourd'hui**. Jamais un jour de la semaine : le déduire supposerait un rythme. Un témoin vérifie qu'une séance annoncée pour **demain** ne fait pas d'aujourd'hui un jour de séance.
+
+**⚠️ DEUX LIMITES ÉCRITES, ET L'UNE EST ÉPINGLÉE PAR UN TÉMOIN** (**R30** — un non-choix qui n'est pas écrit se relit comme un oubli) : ① les plans **perte / recomp** n'ont pas de repas pré/post, donc **rien ne change pour eux** — leur en ajouter demanderait d'écrire du contenu neuf *et* de trancher s'il est pertinent en déficit, c'est une autre décision ; ② la journée **n'est pas réordonnée** selon l'heure — une séance à **7 h** devrait logiquement placer le pré-entraînement **avant** le petit-déjeuner, c'est vrai et ce n'est pas fait, parce que déplacer des repas touche tous les plans, tous les régimes et le jeûne en même temps.
+
+**⚠️ Une dette notée au lieu d'être payée au mauvais moment** : le repli `startHour` → horodatage existe déjà en **deux** variantes (badges dans `app.js`, matin/soir dans `tracking.js`), avec des nuances propres à chacune. Les unifier dans une version qui parle de **repas** changerait leur comportement — c'est **R14**. La 3ᵉ est écrite proprement et la dette est nommée dans le code.
+Tests : **calculs 253/253** (+12), parcours 970/970, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges**, exactement les 4 comportements changés. ⚠️ Les autres sont **verts des deux côtés, et c'est voulu** : les pré/post existaient déjà un jour de séance, les calories étaient déjà conservées, le jeûne marchait déjà, et le plan « perte » ne devait justement **pas** bouger. Fichiers : `state.js`, `tests/calculs/runner.js`, `docs/NUTRITION-MOTEUR.md`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v950. |
 
 **ft-v949 — 🏋️ LE NIVEAU D'ACTIVITÉ CONTIENT DÉJÀ L'ENTRAÎNEMENT — et il ne se mettait JAMAIS à jour** — Michel : *« bon la nutrition lol ? »*.
 
@@ -718,21 +735,6 @@ Tests : **parcours 851/851** (+4, bloc LXVIII), calculs 241/241, muscles 241/241
 
 **⚠️ ET MES 4 PREMIERS ROUGES NE MESURAIENT RIEN — c'était le TEST qui était faux.** Il lisait `window._evReport`, or un **`let` en tête de script n'est PAS une propriété de `window`** : la variable existait, le rapport était bon, et le témoin lisait `undefined`. *Un test qui échoue ne prouve pas que le code est cassé — il faut savoir lequel des deux on regarde.* Trouvé en instrumentant la page, pas en relisant.
 Tests : **parcours 847/847** (+8, bloc LXVII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif** : les fonctions sont **neuves**, un témoin tourné contre l'ancien code rendrait « fonction absente » au lieu de mesurer — le piège payé 8 fois. Ce qui le remplace ici est le **réseau bouchonné** : chaque scénario reçoit une réponse **fabriquée dans le test**, donc on sait exactement quel verdict doit tomber — un débrief amputé rougit, une promesse de mémoire sans bloc rougit, une réponse correcte reste verte. Fichiers : `coach.js`, `index.html`, `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v931. |
-
-**ft-v930 — ⚖️ LE BENCHMARK SAIT COMPARER DEUX MODÈLES — la seule façon de FERMER une question qui revient** — Michel, dans la foulée : *« par la même occasion test en haiku non ? »*.
-
-**⭐⭐ SA QUESTION EST MEILLEURE QU'ELLE N'EN A L'AIR.** *« Sonnet pour tout le monde »* (10/08) tient aujourd'hui sur **R9** — *un modèle léger suit mal les consignes fines*. C'est un **raisonnement**, il est juste, et il n'a **jamais été mesuré sur CE prompt-ci**. Tant qu'il reste un raisonnement, la question revient : elle est revenue à ft-v928, la veille. `--compare` joue les **15 scénarios sur les deux modèles** et met les verdicts **côte à côte**.
-
-**⚠️ CE N'EST PAS UNE RE-PROPOSITION DE CHANGER DE MODÈLE** — ce que **R30** interdit explicitement dans `worker.js`. C'est exactement l'inverse : la **mesure** qu'il faudrait produire pour avoir le droit de rouvrir le sujet.
-
-**⚠️⚠️ ET LA LECTURE EST ASYMÉTRIQUE — écrit dans le worker, dans le runner ET dans le rapport.** *Haiku nettement plus rouge* → **R9 est confirmé par un chiffre, la question est close**. *Haiku aussi vert* → **ça ne rouvre RIEN** : un vert ne dit que *« aucune violation détectable sur 15 pièges »*, et **ce qui fait Milo — le ton, le naturel, le refus d'insister — n'est dans AUCUN de ces motifs**. L'argument de Michel du 10/08 n'était d'ailleurs pas technique : *« si les gens trouvent Milo nul ils ne vont pas le prendre »*. **👉 Ce test peut CONFIRMER la décision, il ne peut pas la renverser** — et c'est répété aux trois endroits pour que personne ne lise un tableau vert comme un feu vert.
-
-**⛔ ACCEPTER UN MODÈLE VENU DU CLIENT, SANS OUVRIR DE TROU.** Le modèle se décide dans `worker.js`, en dur ; comparer imposait d'accepter un paramètre du client — le genre de porte qui coûte cher. **Ce qui la rend sûre tient en une phrase** : la liste blanche ne contient que des modèles **MOINS CHERS que le défaut**. Le pire qu'un curieux puisse faire est de se rendre son **propre** Milo plus bête et moins cher — ça ne touche personne d'autre et **ça ne peut pas faire monter la facture**. Tout le reste est **ignoré** (repli silencieux vers le défaut, jamais une erreur). ⭐ **Et le témoin compare les PRIX, pas les noms** : si quelqu'un ajoute un jour un modèle plus cher, il rougit — *un garde-fou qui fait confiance à un nom de modèle ne protège de rien.*
-
-**⚠️ LE WORKER REND LE MODÈLE QUI A RÉELLEMENT SERVI (`_model`), pas celui qu'on a demandé.** Sans ça, un repli silencieux ferait annoncer *« testé en Haiku »* une passe **entièrement jouée en Sonnet** — c'est **l'erreur exacte des personas VC**, corrigée la veille, et *une comparaison d'un modèle avec lui-même ne se voit pas à l'œil.* Le runner refuse de comparer si les deux ne correspondent pas.
-
-**Devis mesuré (les mêmes 15)** : **Sonnet 0,23-0,95 €** · **Haiku 0,08-0,32 €** · une comparaison ≈ la somme. Le run à blanc reste à **0 appel, 0 €**.
-Tests : **parcours 839/839** (+10, bloc LXVI), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges**, et ce sont les quatre bons — la liste blanche n'existait pas (`null`), le worker ne rendait pas le modèle servi, l'app ne le relisait pas, et **zéro** endroit posait `evalModel`. ⚠️ **Et 5 témoins ne se sont pas exécutés du tout** (ils vivent sous `if(blanche)`, donc une liste absente les saute) : *un témoin qui ne tourne pas n'est pas un témoin vert, et le total le montre — 834 au lieu de 839.* Le 10ᵉ est **vert des deux côtés, et c'est voulu** : il porte sur le runner de test, qui est le même fichier dans les deux passes. Fichiers : `worker.js`, `coach.js`, `tests/milo/eval.js`, `tests/parcours/runner.js`, `docs/FRAMEWORK-TESTS-MILO.md`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v930. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
