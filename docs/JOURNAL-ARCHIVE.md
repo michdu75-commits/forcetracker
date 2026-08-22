@@ -3083,3 +3083,18 @@ Tests : **parcours 908/908** (+4, bloc LXXV), calculs 241/241, muscles 241/241, 
 
 **⚠️ Le témoin lit les DEUX fichiers HTML** (l'app et le clone) : un chemin présent d'un seul côté finirait par diverger sans que rien ne le signale (**R2**).
 Tests : **parcours 910/910** (+2, bloc LXXIV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN HTML : 1 rouge**, le chemin absent. Fichiers : `index.html`, `clone/index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v941. |
+
+**ft-v942 — 🔐 L'APP DEMANDE LE MOT DE PASSE D'UN PDF PROTÉGÉ** — Michel : *« j'ai envie de mettre ma prise de sang mais c'est protégé par un mot de passe, je vais comment ? »*.
+
+**Les laboratoires livrent très souvent leurs bilans en PDF chiffré.** L'app rendait *« Souci lecture fichier »* — **un message qui dit qu'il y a un problème sans dire LEQUEL**, donc sans dire quoi faire. La personne n'avait aucun moyen de deviner qu'il suffisait d'un mot de passe.
+
+**⭐ LE CORRECTIF VIT DANS `_pdfOuvrir`, PAS DANS L'IMPORT DU BILAN (R2).** **Quatre** imports lisent des PDF — bilan sanguin, programme, historique, repas — et ils héritent tous du même comportement. *Un seul propriétaire de l'ouverture, donc aucune divergence possible.* Un témoin vérifie qu'il n'y a bien qu'**un seul** `getDocument` dans tout `log.js`.
+
+**⛔ LE MOT DE PASSE NE QUITTE JAMAIS LE TÉLÉPHONE.** pdf.js déchiffre **en local**, dans le navigateur ; ce sont les **images rendues** qui partent ensuite. Il n'est ni stocké, ni synchronisé, ni envoyé — et le témoin ne se contente pas de le dire, il **compte 0 appel réseau** pendant toute l'ouverture. ⚠️ **Honnêteté écrite dans le code** : `prompt()` affiche ce qu'on tape **en clair**, ce n'est pas un champ masqué. Sur son propre téléphone c'est acceptable ; le taire ne l'aurait pas été.
+
+**⛔⛔ LES DEUX TÉMOINS QUI PROTÈGENT LE PLUS SONT DES SORTIES** : **annuler** sort et ne redemande pas · **trois** mauvais mots de passe **arrêtent tout**. *Sans ce plafond, un mot de passe qu'on ne retrouve pas piégerait la personne dans une suite de fenêtres sans fin* — et c'est le genre de piège qu'aucun test de « ça marche » ne trouve.
+
+**⚠️ ET LE GARDE EST ÉTROIT (R19)** : pdf.js signale le chiffrement par une exception **nommée**, donc un fichier **corrompu** remonte tel quel et ne fait réclamer **aucun** mot de passe qui n'existe pas. *Réclamer un secret pour un fichier simplement abîmé ferait douter la personne de sa mémoire au lieu de son fichier.*
+
+**⚠️ Un détail payé au passage** : une **copie fraîche du tampon à chaque essai**. pdf.js prend possession du buffer et le **détache** — le réutiliser ferait échouer la 2ᵉ tentative pour une raison qui n'a rien à voir avec le mot de passe. *Un bug qui se serait présenté comme « le bon mot de passe ne marche pas ».*
+Tests : **parcours 919/919** (+9, bloc LXXVI), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge** — `_pdfOuvrir` absente. ⚠️ **Et 8 témoins ne se sont pas exécutés du tout** (ils vivent sous le garde « fonction absente ») : *un témoin qui ne tourne pas n'est pas un témoin vert* — 911 exécutés au lieu de 919. Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v942. |

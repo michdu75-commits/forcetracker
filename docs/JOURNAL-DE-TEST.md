@@ -69,6 +69,19 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 Un aliment CRU choisi quand la personne a mangé CUIT — faut-il l'aider ?
+**22/08/2026.** Michel, sur son journal : *« ya œuf cru (lol) pas cuit »*. **Vérifié : ce n'était pas
+un trou de la base** — « Oeuf dur » sort même **premier** dans la liste, il a pris le 2ᵉ. Sur un œuf
+l'écart est de **12 kcal**, donc sans conséquence. ⚠️ **Mais sur un féculent, le même geste coûte ×3** :
+choisir « Riz blanc, **cru** » pour 200 g de riz **cuit** triple les calories notées.
+**La question ouverte** : l'app doit-elle repérer qu'un aliment **cru** a été choisi avec un poids qui
+ressemble à une portion **cuite**, et le signaler ? (L'avertissement de ft-v956 existe, mais il s'affiche
+sur le NOM, il ne regarde pas la cohérence poids ↔ état.)
+**Vérifiable ?** ⚠️ **Pas sûr** — « 200 g de riz, c'est cru ou cuit ? » n'a pas de réponse certaine :
+quelqu'un peut vraiment peser 200 g de riz sec pour 4 personnes. **R29 s'applique** (le droit de deviner
+dépend du coût de l'erreur) — ici l'erreur d'un faux avertissement est faible, celle d'un silence est
+un compte faux de ×3. **À observer avant de trancher** : est-ce que ça arrive vraiment ?
+
 ### 🟢 Ne pas juger sur un âge ou une donnée isolée
 **21/08/2026.** Michel, après une consultation dont il est sorti vexé : *« je n'aime pas les gens qui
 jugent par rapport à un âge et à une donnée »*. C'est l'**origine de l'esprit du produit**
