@@ -30,7 +30,11 @@
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
 - ⚖️ **LA QUANTITÉ ÉTAIT AU-DESSUS DU CHAMP OÙ L'ON TAPE** (ft-v965) — Michel : *« j'ai voulu
   mettre 30 g de POUDRE de protéine, et ça fait 88 g de protéine »*.
-  ⭐⭐ **88 g de protéine = exactement 100 g de poudre** : la quantité était restée par défaut.
+  ⚠️⚠️ **CORRIGÉ le soir même : ma cause était FAUSSE.** Sa vidéo montre Quantité **30 g** et des
+  champs à **117 kcal / 26 g de protéines** — l'app avait entièrement raison, aucun bug. Le 88 qu'il
+  lisait est la **carte produit** (« Valeurs pour 100 g »), en vert vif, loin de ses vrais chiffres.
+  **J'ai déduit un mécanisme d'un seul nombre au lieu de demander l'écran** (R28, 3ᵉ fois en 2 jours).
+  Le déplacement du champ reste bon ; **la raison affichée était inventée**.
   ⛔⛔ **Le calcul n'a jamais été faux, c'était le PLACEMENT** : le bloc « Quantité » vivait AVANT
   le champ de recherche (logique pour le code-barres, à contresens depuis ft-v956/957).
   ⭐ Déplacé **juste au-dessus des macros qu'il pilote** — il sert les deux chemins.
