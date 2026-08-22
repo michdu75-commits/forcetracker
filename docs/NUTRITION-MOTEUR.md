@@ -228,6 +228,12 @@ Il n'y a **aucune** table d'aliments : seulement 25 phrases et une table de 40 m
 portions. Conséquences :
 
 - **la variété est plafonnée** — 3 variantes écrites à la main, et c'est tout ;
+- ⚠️ **CÔTÉ JOURNAL, PARTIELLEMENT COMBLÉ EN ft-v956** : taper un aliment propose désormais
+  ① ce que la personne a **déjà noté** (local, hors ligne, zéro invention) et ② une **recherche
+  Open Food Facts** (gratuite, sans quota). Plus besoin de dépenser une estimation IA pour une
+  banane. ⛔ **Mais ce n'est PAS la base d'aliments** : OFF est une base de **produits de
+  marque**, pas d'aliments génériques. CIQUAL reste à faire, et la décision §6.4 du
+  `BRIEF-NUTRITION.md` (**DEUX bases**, journal vs générateur) reste entière ;
 - **chaque aliment nouveau est un risque** : il doit être ajouté à `_PORTIONS`, `_DIET_SWAPS` et
   `_ALLERGENES`, sinon un végan voit de la viande. *C'est exactement ce qui a été trouvé le 18/08 :*
   **« Thon » seul n'était couvert par aucune substitution, depuis toujours** ;

@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v955` — fusionnée sur `master` le 22/08.
+- **Version en ligne (live) :** `ft-v956` — fusionnée sur `master` le 22/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,20 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- 🔎 **DES PROPOSITIONS QUAND ON TAPE UN ALIMENT** (ft-v956) — Michel, après son **premier vrai
+  repas noté** : *« il n'y a pas de choix de propositions donc je suis obligé de faire
+  fonctionner l'IA »*. **Le trou n°1 du dossier nutrition, remonté par l'usage réel.**
+  ⭐ **Deux sources, aucune inventée** : ① ce qu'il a **déjà noté** (instantané, hors ligne,
+  dédoublonné, la plus récente gagne) ② la **recherche Open Food Facts** (gratuite, sans quota,
+  même serveur que le code-barres).
+  ⛔⛔ **Aucun essai IA consommé** — vérifié en COMPTANT les appels réseau réels.
+  ⭐ **R2** : un résultat de recherche passe par le **même chemin** que le code-barres, donc
+  l'avertissement **cru/cuit** (×2,7) marche aussi pour lui.
+  ⚠️ **Limite écrite** : OFF est une base de **produits de marque**. **CIQUAL** (3 484
+  génériques) reste le bon outil et **n'est pas là** — je ne peux pas la télécharger depuis la
+  session (réseau bloqué), et écrire des valeurs de mémoire serait le faux-précis interdit.
+  ⏭️ **La suite si Michel fournit CIQUAL** : brique 1 pour de vrai, avec ⚠️ **DEUX bases** —
+  journal (couverture) vs générateur (sûreté), `BRIEF-NUTRITION.md` §6.4.
 - 🧹 **LE MÉNAGE DU MENU ADMIN** (ft-v955) — Michel : *« retire ce qui est inutile, mais marque
   dans les journaux pourquoi ils ont été nécessaires »*.
   ⭐⭐ **Rien n'était inutile — R28 payé DEUX FOIS dans la même tâche, par moi.**

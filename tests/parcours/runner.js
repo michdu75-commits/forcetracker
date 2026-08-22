@@ -9221,6 +9221,125 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     !/VC-00\d \((Tatiana|Christophe|Emma)/.test(zA) && !/VC-00\d \((Tatiana|Christophe|Emma)/.test(zC), '');
 }
 
+/* == BLOC LXXXII - DES PROPOSITIONS QUAND ON TAPE UN ALIMENT (22/08/2026) ==
+   Michel, apres son PREMIER vrai repas note : « pour rentrer les aliments il n'y a pas de choix
+   de propositions donc je suis oblige de faire fonctionner l'IA ».
+   ⭐⭐ IL A RAISON : le champ « a la main » etait un texte VIDE — soit on connait ses macros par
+   coeur, soit on depense une estimation IA pour une banane.
+   ⛔ LE TEMOIN CENTRAL EST CELUI-LA : ces deux chemins ne consomment AUCUN essai IA. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    if(typeof _afSuggInput!=='function') return {absente:true};
+    /* On compte TOUS les appels réseau : c'est la seule façon de prouver « zéro appel IA »
+       et « zéro réseau pour les suggestions locales ». */
+    const vrai=window.fetch; let urls=[];
+    window.fetch=function(u,opt){ urls.push(String(u)); return vrai.apply(this,arguments); };
+    S.foodLog=[
+      {date:today(),meal:'petitdej',name:'30g protéine + banane',kcal:245,prot:30,carbs:27,fat:2,ts:Date.now()-1000,origine:'utilisateur'},
+      {date:today(),meal:'dejeuner', name:'Pâtes complètes 200 g',kcal:700,prot:24,carbs:140,fat:4,ts:Date.now()-2000,origine:'utilisateur'},
+      {date:today(),meal:'diner',    name:'30g protéine + banane',kcal:250,prot:30,carbs:28,fat:2,ts:Date.now()-9e6,origine:'utilisateur'},
+    ];
+    openAddFood();
+    const d=document.getElementById('af-desc');
+
+    /* ⭐① CE QU'IL A DÉJÀ NOTÉ REMONTE — et SANS AUCUN RÉSEAU. */
+    urls=[];
+    d.value='ban'; _afSuggInput();
+    const h1=(document.getElementById('af-sugg')||{}).innerHTML||'';
+    o.localeVue=/30g protéine \+ banane/.test(h1);
+    o.zeroReseau=urls.length===0;
+    /* ⛔ Dédoublonné, et c'est la PLUS RÉCENTE qui gagne (245, pas 250). */
+    o.uneSeuleFois=(h1.match(/30g protéine \+ banane/g)||[]).length===1;
+    o.laPlusRecente=/245 kcal/.test(h1);
+    /* ⚠️② Les accents ne doivent pas empêcher de retrouver « Pâtes ». */
+    d.value='pates'; _afSuggInput();
+    o.accents=/Pâtes complètes/.test((document.getElementById('af-sugg')||{}).innerHTML||'');
+    /* ⚠️③ Une seule lettre ne propose RIEN : tout matcherait, la liste serait du bruit. */
+    d.value='b'; _afSuggInput();
+    o.uneLettreRien=((document.getElementById('af-sugg')||{}).innerHTML||'')==='';
+
+    /* ⭐④ REPRENDRE UNE ENTRÉE REMPLIT LES 4 MACROS, sans rien recalculer. */
+    d.value='ban'; _afSuggInput();
+    _afSuggPrendreLocale(0);
+    const g=id=>parseInt((document.getElementById(id)||{}).value)||0;
+    o.rempli = (g('af-kcal')===245 && g('af-prot')===30 && g('af-carbs')===27 && g('af-fat')===2);
+    o.nomRepris = (document.getElementById('af-desc').value==='30g protéine + banane');
+    o.listeFermee = ((document.getElementById('af-sugg')||{}).innerHTML||'')==='';
+    /* ⛔⑤ ET LA PROVENANCE DIT « historique », PAS « saisie neuve » : la brique 0 sépare
+       exprès COMMENT c'est entré et D'OÙ vient le chiffre. */
+    const prov=_provFood(_afLuFormulaire());
+    o.provenance = (prov.saisie==='historique' && prov.origine==='utilisateur');
+    /* ⛔⑥ LE TÉMOIN CENTRAL : AUCUN appel IA n'a été consommé sur tout ce parcours. */
+    o.aucunAppelIA = !urls.some(u=>/action=coach|estimate|\/exec/i.test(u));
+    o.appels = urls.length;
+
+    /* ⭐⑦ R2 : un résultat de RECHERCHE passe par le MÊME chemin que le code-barres —
+       donc l'avertissement cru/cuit (le piège du ×2,7) marche aussi pour lui. */
+    o.memeChemin = (typeof _offRemplirFormulaire==='function');
+    _afSuggOff=[{code:'123',product_name_fr:'Pâtes sèches',brands:'Marque',
+                 nutriments:{'energy-kcal_100g':350,'proteins_100g':12,'carbohydrates_100g':70,'fat_100g':2}}];
+    _afSuggPrendreOff(0);
+    o.offRempli = (g('af-kcal')===350);                       // 100 g par défaut
+    const p2=_provFood(_afLuFormulaire());
+    o.offProv = (p2.saisie==='recherche' && p2.origine==='off' && p2.etat==='tel-que-vendu');
+    o.offNote = (((document.getElementById('af-etat-note')||{}).style||{}).display!=='none');
+
+    /* ⚠️⑧ HORS LIGNE : la recherche distante rend une liste vide et ne casse RIEN — les
+       suggestions locales, elles, continuent de marcher. */
+    window.fetch=function(){ return Promise.reject(new Error('hors ligne')); };
+    o.offlineOK = (await _offRechercher('banane')).length===0;
+    d.value='ban'; _afSuggInput();
+    o.localesSurvivent = /30g protéine \+ banane/.test((document.getElementById('af-sugg')||{}).innerHTML||'');
+
+    /* ⛔⑨ R15 : rouvrir le formulaire REND la liste (sinon un tap remplirait un formulaire
+       que la personne croyait neuf). */
+    openAddFood();
+    o.rouvertVide = ((document.getElementById('af-sugg')||{}).innerHTML||'')==='';
+    window.fetch=vrai;
+    return o;
+  });
+
+  console.log('\n-- LXXXII. Des propositions quand on tape un aliment --');
+  if(R.absente){ t('⛔ le moteur de suggestions existe', false, '_afSuggInput absente'); }
+  else{
+    t('⭐⭐ ce qu\'il a DÉJÀ noté remonte quand il tape', R.localeVue===true, '');
+    t('⛔⛔ ... SANS AUCUN appel réseau (instantané, marche hors ligne)',
+      R.zeroReseau===true, R.appels+' appel(s)');
+    t('⭐ ... dédoublonné, et c\'est la plus RÉCENTE qui gagne (245, pas 250)',
+      R.uneSeuleFois===true && R.laPlusRecente===true, '');
+    t('⚠️ les accents n\'empêchent pas de retrouver « Pâtes » en tapant « pates »',
+      R.accents===true, '');
+    t('⚠️ une seule lettre ne propose RIEN (tout matcherait : ce serait du bruit)',
+      R.uneLettreRien===true, '');
+    t('⭐⭐ reprendre une entrée remplit les 4 macros et le nom, sans rien recalculer',
+      R.rempli===true && R.nomRepris===true, '');
+    t('⛔ ... la provenance dit « historique », pas une saisie neuve (brique 0)',
+      R.provenance===true, '');
+    /* ⛔⛔ La raison d'être de toute la version. */
+    t('⛔⛔ AUCUN essai IA n\'est consommé par ce chemin',
+      R.aucunAppelIA===true, R.appels+' appel(s) réseau au total');
+    /* ⭐ R2 : un seul chemin pour tout produit Open Food Facts. */
+    t('⭐⭐ un résultat de RECHERCHE passe par le MÊME chemin que le code-barres (R2)',
+      R.memeChemin===true && R.offRempli===true, '');
+    t('⛔ ... donc la provenance ET l\'avertissement cru/cuit marchent aussi pour lui',
+      R.offProv===true && R.offNote===true, '');
+    /* ⚠️ Le réseau ne doit jamais casser ce qui marche en local. */
+    t('⚠️ HORS LIGNE : la recherche rend une liste vide et ne casse rien',
+      R.offlineOK===true, '');
+    t('⚠️ ... et les suggestions LOCALES continuent de marcher', R.localesSurvivent===true, '');
+    t('⛔ rouvrir le formulaire REND la liste (R15 — sinon un tap remplit un formulaire cru neuf)',
+      R.rouvertVide===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
