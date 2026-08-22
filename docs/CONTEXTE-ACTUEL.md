@@ -28,6 +28,17 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- 🔴 **PROCHAINE PRIORITÉ — ft-v923 NE TIENT PAS** (mesuré 22/08 23:37, écrans du Gardien) :
+  **`promesse_vide : 5` EN DIRECT entre le 21 et le 22/08**, sur le Milo d'après les correctifs.
+  ⭐ **Vérification croisée réussie** : scan rétro de l'app **et** scan hors-ligne du fichier exporté
+  donnent exactement le même historique (4/119 · promesse_vide 3 · source_fabriquee 1).
+  ⚠️⚠️ **Mon analyse datée sous-estimait** : « 1 sur 29 » lu dans l'**export**, contre **5** en direct
+  — *un export ne contient pas tout ce qui a été généré.*
+  ⚠️ **R9** : ces 5 viennent du Milo **débridé** de Michel ; **Eline est à 1 sur 14**, c'est elle
+  l'échantillon qui juge le produit.
+  ⛔ **R7 — ne pas durcir le prompt en réflexe** (ce serait le 4ᵉ sur ce symptôme). Les cas lus sont
+  des **excuses** après correction (« t'as raison, j'ai merdé… je note »), pas des promesses cyniques.
+  *Question à trancher d'abord : peut-il POSER un bloc dans ces moments, ou n'a-t-il rien à noter ?*
 - 🧮 **« POUR TES 30 G »** (ft-v966) — deux nombres de protéines sur le même écran (88 pour 100 g,
   26 pour lui) et **rien ne disait lequel était le sien**. Une ligne dans la rangée Quantité le dit.
   ⭐⭐ **R2** : elle **relit** les champs, elle ne recalcule pas. ⛔ Jamais la valeur pour 100 g.

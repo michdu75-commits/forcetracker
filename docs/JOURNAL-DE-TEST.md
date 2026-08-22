@@ -69,6 +69,28 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🔴 ft-v923 NE TIENT PAS — 5 promesses de mémoire en 2 jours, MESURÉ EN DIRECT
+**22/08/2026, 23:37.** Les écrans du Gardien envoyés par Michel donnent le premier chiffre **en
+direct** sur le Milo d'**après** les correctifs : **`promesse_vide : 5` entre le 21 et le 22/08**
+(7 réponses marquées au total, dont 2 `bloc_technique` qui sont du trafic normal et un résidu
+d'avant ft-v946).
+⭐ **Vérification croisée réussie au passage** : le scan rétro de l'app et mon scan hors-ligne du
+fichier exporté donnent **exactement** le même historique — 4 dérives sur 119, promesse_vide 3 +
+source_fabriquee 1. *Deux mesures indépendantes, même résultat : le compteur est fiable.*
+⚠️⚠️ **Et mon analyse datée d'une heure plus tôt sous-estimait le problème** : je lisais « 1 dérive
+sur 29 » dans la conversation **exportée**, alors que le compteur en direct en voit **5**. *Un export
+ne contient pas tout ce qui a été généré — mesurer sur le fichier, c'est mesurer ce qui a survécu.*
+**Attendu** : Milo qui dit *« c'est noté »*, *« je retiens »*, *« on aurait dû »* pose un bloc
+`{retiens}` — ou ne le dit pas.
+**Vérifiable ?** ⭐ **Oui, déjà** : le motif existe et fonctionne (contrôle positif 5/5). Ce qui
+manque n'est pas la mesure, c'est le **correctif**.
+⚠️ **R9 — lire le bon échantillon** : ces 5 viennent du Milo **débridé** de Michel. **Eline est à
+1 dérive sur 14 réponses**, et c'est elle qui représente le produit réel.
+⛔ **Piste à ne pas prendre trop vite** : les 3 cas lus en clair sont des **excuses** après une
+correction (*« t'as raison, j'ai merdé… je note »*), pas des promesses cyniques. Durcir le prompt
+serait le 4ᵉ durcissement sur ce symptôme (**R7** : le prompt est le DERNIER levier). *La question
+à traiter d'abord : peut-il POSER le bloc dans ces moments-là, ou n'a-t-il rien à enregistrer ?*
+
 ### 🟢 Milo remplace un exercice DEMANDÉ par un autre
 **22/08/2026, conversation réelle.** Michel : *« Pk tu as mis soulevé de terre ? J'ai dit développé
 couché et Butterfly en début de séance »*. Milo a lu *« tirage »* dans « Développé Couché + Tirage »
