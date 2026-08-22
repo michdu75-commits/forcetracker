@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v959` — fusionnée sur `master` le 22/08.
+- **Version en ligne (live) :** `ft-v960` — fusionnée sur `master` le 22/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,11 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- 🔤 **MÊME BUG, SUR L'APOSTROPHE** (ft-v960) — Michel : *« faut aller voir aussi les
+  caractères spéciaux »*. Vérifié systématiquement sur ~132 000 noms : accents/tréma/cédille
+  étaient déjà bons. L'apostrophe avait le même défaut que la ligature — clavier iPhone la
+  convertit en courbe à la frappe, 238 aliments CIQUAL en portent une. **Retirée purement**
+  (elle ne porte aucun sens pour la recherche), même fonction partagée (R2).
 - 🥚 **BUG DE LA LIGATURE ŒUF** (ft-v959) — trouvé en vérifiant un produit d'œuf que Michel
   montrait en photo. `normalize('NFD')` ne décompose que les **accents**, jamais les **ligatures**
   œ/æ — et le clavier iPhone corrige « oeuf » en « œuf » en tapant, pendant que CIQUAL écrit
