@@ -1174,6 +1174,15 @@ async function _lookupBarcode(ean){
     fat100:Math.round(n['fat_100g']||0)
   };
   if(!_bcNutr.kcal100&&!_bcNutr.prot100&&!_bcNutr.carbs100&&!_bcNutr.fat100){toast('Produit trouvé mais sans infos nutritionnelles — saisis à la main','error');return;}
+  _offRemplirFormulaire(p, ean, 'scan');
+  toast('Produit trouvé ✅ — ajuste la quantité','success');
+}
+/* 🍽️ REMPLIR LE FORMULAIRE À PARTIR D'UN PRODUIT OPEN FOOD FACTS (22/08/2026).
+   ⭐ SORTI DE `_lookupBarcode` parce que la RECHERCHE PAR NOM doit suivre EXACTEMENT le même
+   chemin : mêmes grammes, même provenance, même avertissement cru/cuit, même score santé.
+   Deux chemins séparés finiraient par diverger — et c'est l'avertissement du ×2,7 (le paquet
+   de pâtes scanné puis pesé cuit) qui serait perdu d'un côté sans que personne ne le voie (R2). */
+function _offRemplirFormulaire(p, sourceId, saisie){
   // Quantité par défaut : portion si connue, sinon 100 g
   const serv=parseFloat(p.serving_quantity)||0;
   const g=serv>0?serv:100;
@@ -1185,14 +1194,13 @@ async function _lookupBarcode(ean){
   // ⚠️ Les valeurs d'Open Food Facts sont « TELLES QUE VENDUES » : un paquet de pâtes scanné
   //    donne les valeurs SÈCHES. On enregistre donc `per100` et l'`origine` — c'est ce qui
   //    permettra, quand la base d'aliments existera, de rattraper l'état sans re-demander.
-  _afSetSrc({saisie:'scan',origine:'off',sourceId:(typeof ean!=='undefined'?ean:null),
+  _afSetSrc({saisie:saisie||'scan',origine:'off',sourceId:sourceId?String(sourceId).slice(0,32):null,
     etat:'tel-que-vendu',
     per100:{kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
     attendu:_afLuFormulaire()});
   _afNoteEtat(_bcNutr.name);
   // Score santé indicatif (Nutri-Score + NOVA + additifs) — module food-health.js
   try{ if(window.FoodHealth)FoodHealth.renderCard(p,'#af-health-card'); }catch(e){}
-  toast('Produit trouvé ✅ — ajuste la quantité','success');
 }
 // Lit les 4 macros telles qu'elles sont dans le formulaire À CET INSTANT (pour détecter, à
 // l'enregistrement, si la personne les a retouchées après un remplissage automatique).
@@ -1297,6 +1305,10 @@ function openAddFood(){
      présente comme un fait vérifiable. */
   _afSetSrc(null);
   _afNoteEtat('');   // R15 : la note se rend comme la provenance, sinon elle survit au produit suivant
+  /* R15 encore : les propositions se rendent AUSSI. Sans ça, la liste du produit précédent
+     resterait affichée sous un champ vide — et un tap dessus remplirait un formulaire que la
+     personne croyait neuf. */
+  try{ if(_afSuggTimer) clearTimeout(_afSuggTimer); _afSuggVider(); }catch(e){}
   const bcRow=document.getElementById('af-bc-row');if(bcRow)bcRow.style.display='none';
   const hc=document.getElementById('af-health-card');if(hc)hc.innerHTML='';
   // Code-barres + score santé : GRATUIT pour tout le monde (client-side, 0 token).
@@ -1522,6 +1534,151 @@ async function estimateFoodAI(){
     toast('Estimé ✅ — ajuste si besoin','success');
   }catch(e){toast('Erreur réseau : '+e.message,'error');}
   finally{if(btn){btn.disabled=false;btn.textContent='🤖 Estimer les calories avec l\'IA';}}
+}
+/* ═══ 🔎 DES PROPOSITIONS QUAND ON TAPE UN ALIMENT (22/08/2026) ═══════════════════════════
+   Michel, après son PREMIER vrai repas noté : *« pour rentrer les aliments il n'y a pas de choix
+   de propositions donc je suis obligé de faire fonctionner l'IA »*.
+   ⭐⭐ IL A RAISON, ET C'EST LE TROU N°1 DU DOSSIER NUTRITION. Le champ « à la main » était un
+   texte VIDE : soit on connaît ses macros par cœur, soit on dépense une estimation IA — pour
+   une banane. Le code-barres, lui, ne sert que si on a l'emballage sous la main.
+   ⭐ DEUX SOURCES, ET AUCUNE INVENTÉE :
+     ① CE QUE LA PERSONNE A DÉJÀ NOTÉ — instantané, hors ligne, ZÉRO invention : ce sont ses
+        propres entrées, avec ses propres grammages. Au 3ᵉ jour, son petit-déjeuner se note en
+        un tap. C'est aussi ce qui branche enfin la matière de « tes repas habituels ».
+     ② LA RECHERCHE OPEN FOOD FACTS — l'app lui parle DÉJÀ pour les codes-barres : même serveur,
+        gratuit, sans clé ni quota. De vraies valeurs, avec leur provenance enregistrée.
+   ⛔ AUCUN APPEL IA N'EST CONSOMMÉ par ces deux chemins.
+   ⛔ ET RIEN AU DÉMARRAGE : tout part d'une frappe, jamais de l'ouverture de l'app (règle d'or
+      #4 — l'app doit s'ouvrir à la salle sans attendre le réseau).
+   ⚠️ LIMITE ÉCRITE : Open Food Facts est une base de PRODUITS DE MARQUE. « Banane » y rend des
+      bananes de marque, pas l'aliment générique — la base CIQUAL (3 484 aliments génériques)
+      reste le bon outil pour ça, et elle n'est pas encore là. On ne fait pas semblant du
+      contraire, et on n'invente surtout pas de valeurs génériques nous-mêmes (R29). */
+let _afSuggTimer=null, _afSuggLoc=[], _afSuggOff=[];
+const _AF_SUGG_MIN=2;          // en dessous, tout matche : la liste serait du bruit
+const _AF_SUGG_DELAI=450;      // on ne part pas au réseau à chaque lettre
+
+// Normalisation légère : accents et casse ne doivent pas empêcher de retrouver « pâtes ».
+function _afNorm(t){
+  return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+}
+/* ① CE QU'IL A DÉJÀ NOTÉ. Dédoublonné par nom, le plus RÉCENT gagne : si la quantité a changé,
+   c'est la dernière qui reflète ce qu'il mange aujourd'hui. */
+function _afSuggLocales(q){
+  const n=_afNorm(q); if(n.length<_AF_SUGG_MIN) return [];
+  const vus=new Set(), out=[];
+  (S.foodLog||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(e=>{
+    if(!e||!e.name) return;
+    const cle=_afNorm(e.name);
+    if(vus.has(cle)) return;
+    if(cle.indexOf(n)<0) return;
+    vus.add(cle);
+    if(out.length<5) out.push(e);
+  });
+  return out;
+}
+/* ② LA RECHERCHE OPEN FOOD FACTS. Même serveur que le code-barres, gratuit et sans clé.
+   ⚠️ On demande explicitement les champs utiles : sans `fields`, la réponse pèse des centaines
+   de Ko par produit, sur la 4G de quelqu'un qui est à la salle. */
+async function _offRechercher(q){
+  const url='https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(q)
+    +'&search_simple=1&action=process&json=1&page_size=6&sort_by=unique_scans_n'
+    +'&fields=code,product_name,product_name_fr,generic_name,generic_name_fr,brands,quantity,serving_quantity,nutriments,nutriscore_grade,nova_group,additives_n,labels_tags';
+  try{
+    const r=await fetch(url,{headers:{'Accept':'application/json'}});
+    if(!r.ok) return [];
+    const d=await r.json();
+    return (d&&d.products||[]).filter(p=>{
+      const nn=p&&p.nutriments||{};
+      return (p.product_name_fr||p.product_name) && (nn['energy-kcal_100g']||nn['energy_100g']);
+    }).slice(0,6);
+  }catch(e){ return []; }   // hors ligne : on garde les suggestions locales, on ne bloque rien
+}
+function _afSuggNom(p){
+  return ((p.product_name_fr||p.product_name||p.generic_name_fr||p.generic_name||'Produit')
+    +(p.brands?' ('+String(p.brands).split(',')[0].trim()+')':'')).slice(0,60);
+}
+function _afSuggKcal100(p){
+  const n=p.nutriments||{};
+  return Math.round(n['energy-kcal_100g']||(n['energy_100g']?n['energy_100g']/4.184:0)||0);
+}
+function _afSuggRendu(){
+  const el=document.getElementById('af-sugg'); if(!el) return;
+  if(!_afSuggLoc.length && !_afSuggOff.length){ el.innerHTML=''; return; }
+  const ligne=(ic,titre,detail,onclick)=>
+    '<button onclick="'+onclick+'" style="width:100%;text-align:left;display:flex;gap:9px;align-items:baseline;'
+    +'padding:9px 11px;border:none;border-bottom:1px solid var(--sep);background:none;cursor:pointer;'
+    +'font-family:var(--font);-webkit-tap-highlight-color:transparent;touch-action:manipulation;">'
+    +'<span style="flex:none;font-size:14px;">'+ic+'</span>'
+    +'<span style="flex:1;min-width:0;"><span style="display:block;font-size:13.5px;color:var(--t1);font-weight:600;'
+    +'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+titre+'</span>'
+    +'<span style="display:block;font-size:11.5px;color:var(--t3);">'+detail+'</span></span></button>';
+  let h='<div style="border:1px solid var(--sep);border-radius:12px;background:var(--bg2);overflow:hidden;margin-bottom:10px;">';
+  if(_afSuggLoc.length){
+    h+='<div style="font-size:11px;color:var(--t3);padding:7px 11px 4px;font-weight:700;">DÉJÀ NOTÉ PAR TOI</div>';
+    _afSuggLoc.forEach((e,i)=>{ h+=ligne('🕘', e.name,
+      (e.kcal||0)+' kcal · P '+(e.prot||0)+' · G '+(e.carbs||0)+' · L '+(e.fat||0),
+      '_afSuggPrendreLocale('+i+')'); });
+  }
+  if(_afSuggOff.length){
+    h+='<div style="font-size:11px;color:var(--t3);padding:7px 11px 4px;font-weight:700;">OPEN FOOD FACTS</div>';
+    _afSuggOff.forEach((p,i)=>{ h+=ligne('🔎', _afSuggNom(p),
+      _afSuggKcal100(p)+' kcal/100 g', '_afSuggPrendreOff('+i+')'); });
+  }
+  el.innerHTML=h+'</div>';
+}
+function _afSuggVider(){ _afSuggLoc=[]; _afSuggOff=[]; _afSuggRendu(); }
+/* Déclenché à la frappe. Les LOCALES sortent tout de suite (aucun réseau) ; la recherche
+   distante attend une pause de frappe — sinon on interroge Open Food Facts à chaque lettre. */
+function _afSuggInput(){
+  const q=(document.getElementById('af-desc')||{}).value||'';
+  _afSuggLoc=_afSuggLocales(q);
+  _afSuggOff=[];
+  _afSuggRendu();
+  if(_afSuggTimer) clearTimeout(_afSuggTimer);
+  if(_afNorm(q).length<3) return;
+  _afSuggTimer=setTimeout(async()=>{
+    const enCours=(document.getElementById('af-desc')||{}).value||'';
+    if(_afNorm(enCours)!==_afNorm(q)) return;      // la frappe a continué : ce résultat est périmé
+    const res=await _offRechercher(q.trim());
+    const apres=(document.getElementById('af-desc')||{}).value||'';
+    if(_afNorm(apres)!==_afNorm(q)) return;        // ... et on re-vérifie APRÈS l'appel
+    _afSuggOff=res; _afSuggRendu();
+  }, _AF_SUGG_DELAI);
+}
+/* ① On reprend une entrée passée TELLE QUELLE : mêmes macros, même nom, même quantité.
+   ⛔ La provenance dit `historique` et NON `utilisateur` : c'est la même personne, mais ce
+   n'est pas une saisie neuve — sans ça, on ne pourrait plus distinguer ce qu'elle a tapé de
+   ce qu'elle a re-cliqué (la brique 0 sépare exprès « comment c'est entré » et « d'où vient
+   le chiffre »). */
+function _afSuggPrendreLocale(i){
+  const e=_afSuggLoc[i]; if(!e) return;
+  document.getElementById('af-desc').value=e.name||'';
+  document.getElementById('af-kcal').value=e.kcal||0;
+  document.getElementById('af-prot').value=e.prot||0;
+  document.getElementById('af-carbs').value=e.carbs||0;
+  document.getElementById('af-fat').value=e.fat||0;
+  const row=document.getElementById('af-bc-row'); if(row)row.style.display='none';
+  _bcNutr=null;
+  _afSetSrc({saisie:'historique', origine:e.origine||'utilisateur',
+             sourceId:e.sourceId||null, etat:e.etat||null, per100:e.per100||null,
+             attendu:_afLuFormulaire()});
+  _afNoteEtat(e.name||'');
+  _afSuggVider();
+  toast('Repris de ton journal 👍','success');
+}
+/* ② Un résultat de recherche est un produit Open Food Facts comme un autre : il passe par le
+   MÊME chemin que le code-barres (grammes, provenance, avertissement cru/cuit, score santé). */
+function _afSuggPrendreOff(i){
+  const p=_afSuggOff[i]; if(!p) return;
+  const n=p.nutriments||{};
+  _bcNutr={ name:_afSuggNom(p), kcal100:_afSuggKcal100(p),
+            prot100:Math.round(n['proteins_100g']||0),
+            carbs100:Math.round(n['carbohydrates_100g']||0),
+            fat100:Math.round(n['fat_100g']||0) };
+  _offRemplirFormulaire(p, p.code||null, 'recherche');
+  _afSuggVider();
+  toast('Ajuste la quantité ✅','success');
 }
 function addFoodEntry(){
   const name=(document.getElementById('af-desc').value||'').trim();

@@ -2119,7 +2119,11 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     </div>
     <div id="af-health-card" style="margin-bottom:14px;"></div>
     <div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Ce que tu as mangé</div>
-    <textarea id="af-desc" placeholder="Ex : 2 œufs, 100g de riz, brocolis, 1 yaourt" rows="2" style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);resize:vertical;margin-bottom:10px;"></textarea>
+    <textarea id="af-desc" placeholder="Tape un aliment : banane, riz, poulet…" rows="2" oninput="_afSuggInput()" style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);resize:vertical;margin-bottom:10px;"></textarea>
+    <!-- 🔎 Propositions : ce que tu as DÉJÀ noté (instantané, hors ligne) puis Open Food
+         Facts (gratuit, sans quota). Vide tant qu'on n'a pas tapé 2 lettres — voir
+         `_afSuggInput` (app.js). Aucun appel IA n'est consommé par ce chemin. -->
+    <div id="af-sugg"></div>
     <button class="btn btn-bg2" id="af-ai-btn" onclick="estimateFoodAI()" style="width:100%;margin-bottom:6px;">🤖 Estimer les calories avec l'IA</button>
     <div id="af-ai-note" style="font-size:11px;color:var(--t3);text-align:center;margin-bottom:16px;line-height:1.4;"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">

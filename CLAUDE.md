@@ -136,7 +136,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v955`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v956`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v955`** (prochaine : `ft-v956`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v956`** (prochaine : `ft-v957`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,25 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v956 — 🔎 DES PROPOSITIONS QUAND ON TAPE UN ALIMENT — plus besoin de l'IA pour une banane** — Michel, après son **premier vrai repas noté** : *« pour rentrer les aliments il n'y a pas de choix de propositions donc je suis obligé de faire fonctionner l'IA »*.
+
+**⭐⭐ IL A RAISON, ET C'EST LE TROU N°1 DU DOSSIER NUTRITION.** Le champ « à la main » était un **texte vide** : soit on connaît ses macros par cœur, soit on **dépense une estimation IA pour une banane**. Le code-barres, lui, ne sert que si on a l'emballage sous la main. *C'est exactement le défaut que les briques 1/3/4 devaient combler — et il est remonté par l'usage réel, ce pour quoi elles avaient été différées.*
+
+**⭐ DEUX SOURCES, ET AUCUNE INVENTÉE.** ① **Ce qu'il a DÉJÀ noté** — instantané, hors ligne, **zéro invention** : ses propres entrées avec ses propres grammages, dédoublonnées, la **plus récente** gagnant (si la quantité a changé, c'est celle-là qui reflète ce qu'il mange). ② **La recherche Open Food Facts** — l'app lui parle **déjà** pour les codes-barres : même serveur, **gratuit, sans clé ni quota**, de vraies valeurs avec leur provenance enregistrée.
+
+**⛔⛔ LE TÉMOIN CENTRAL EST LA RAISON D'ÊTRE DE LA VERSION : aucun essai IA n'est consommé.** Et il le **compte sur les appels réseau réels**, il ne le suppose pas — c'est la seule façon de prouver à la fois « zéro IA » et « zéro réseau pour les suggestions locales ».
+
+**⭐⭐ R2 — UN RÉSULTAT DE RECHERCHE EST UN PRODUIT COMME UN AUTRE.** `_offRemplirFormulaire` est **sorti de `_lookupBarcode`** pour que les deux chemins partagent tout : grammes, provenance, score santé, et surtout **l'avertissement cru/cuit** (le piège du ×2,7 — le paquet de pâtes scanné puis pesé cuit). *Deux chemins séparés auraient fini par perdre cet avertissement d'un côté, et personne ne l'aurait vu.*
+
+**⛔ RIEN AU DÉMARRAGE** (règle d'or #4) : tout part d'une frappe. Les locales sortent **sans réseau** ; la recherche distante attend une pause de frappe, et vérifie **deux fois** que la frappe n'a pas continué — avant l'appel et après, sinon un résultat périmé écraserait la liste du mot suivant. **Hors ligne**, elle rend une liste vide et **les locales continuent de marcher**.
+
+**⚠️ ET DEUX GARDE-FOUS DE BRUIT** : moins de 2 lettres ne propose **rien** (tout matcherait), et les accents ne bloquent pas — *« pates »* retrouve *« Pâtes complètes »*.
+
+**⛔ LA PROVENANCE DIT « historique », PAS UNE SAISIE NEUVE** : c'est la même personne, mais ce n'est pas une saisie — la brique 0 (ft-v907) sépare exprès *comment c'est entré* et *d'où vient le chiffre*, et confondre les deux rendrait ce champ inutile.
+
+**⚠️ LIMITE ÉCRITE, PAS CONTOURNÉE** : Open Food Facts est une base de **produits de marque**. *« Banane »* y rend des bananes de marque, pas l'aliment générique — **CIQUAL** (3 484 génériques) reste le bon outil et **n'est pas là**. On ne fait pas semblant du contraire, et **on n'invente surtout pas de valeurs génériques nous-mêmes** (R29 : le faux-précis coûte plus cher que l'absence).
+Tests : **parcours 1021/1021** (+13, bloc LXXXII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — le moteur n'existe pas. ⚠️ **Peu instructif et autant l'écrire** : les 12 autres témoins vivent sous le garde « fonction absente », donc ils **ne tournent pas** contre l'ancien code. *Un témoin qui ne tourne pas n'est pas un témoin vert.* Ce qui est réellement prouvé ici l'est sur le code neuf : zéro appel IA, zéro réseau en local, hors ligne intact. Fichiers : `app.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v956. |
 
 **ft-v955 — 🧹 LE MÉNAGE DU MENU ADMIN — et DEUX FOIS je me suis trompé sur ce qui était inutile** — Michel : *« retire ce qui est inutile. Par contre marque bien dans les journaux qu'on les a retirés et pourquoi ils ont été nécessaires. Ça permet d'avoir une traçabilité de ce qui a été fait. »*
 
@@ -716,25 +735,6 @@ Tests : **parcours 895/895** (+10, bloc LXXIV ; 2 témoins repointés, 1 ajouté
 
 **⏭️ CONSÉQUENCE SUR LA DÉCISION EN COURS** : l'arbitrage EV-015 **ne repose plus sur rien**. Il se rouvre sur ses seuls mérites — *« un utilisateur suivi par un coach a-t-il besoin que Milo se pose en complément ? »* — et **aucun cas d'usage réel ne l'appuie à ce jour**.
 ⚠️ **Aucun changement de comportement** : correction de documentation + un commentaire. Tests : parcours 885/885, calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif, et c'est normal** : il n'y a **rien à mesurer** — aucune ligne exécutable ne change. *Un test sur une correction de texte donnerait un vert qui ne prouve rien.* Fichiers : `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `tests/milo/eval-scenarios.js`, `coach.js` (commentaire), `sw.js`, `clone/*`. sw.js ft-v937. |
-
-**ft-v936 — 🔀 UN ROUGE A DEUX CAUSES OPPOSÉES — et on ne les corrige pas pareil** — après 3 passes réelles, deux scénarios sont rouges **3 fois sur 3** : EV-003 et EV-015. On aurait pu les traiter pareil. **Ils n'ont rien à voir.**
-
-**⭐⭐ LE DIAGNOSTIC A ÉTÉ FAIT AVANT DE CODER (R7), ET IL A SÉPARÉ LES DEUX CAS.**
-
-**① EV-003 — le face pull placé avant du lourd : LA RÈGLE EXISTE.** Elle vit à **74 % du prompt** — exactement la zone de la règle keto (**67 %**), qui n'était pas suivie non plus et qu'on a corrigée hier. Même cause, même remède : **2ᵉ usage du levier §9 n°1**, un rappel court en toute fin de prompt, déclenché seulement quand la personne demande une séance.
-
-**② EV-015 — respecter le coach humain : LA RÈGLE N'EXISTE PAS.** Les seules occurrences de « coach humain » du dépôt sont dans la **définition du persona VC-002** — c'est-à-dire **dans le test, pas dans le produit**. *On ne peut pas reprocher à Milo une consigne qu'on ne lui a jamais donnée* : ce scénario mesurait un attendu que le produit n'a **jamais promis**.
-
-**👉 LA LEÇON, et elle vaut pour tout le benchmark** : un rouge a **deux causes opposées** — une règle **diluée** ou une règle **absente** — et le rouge ne dit pas laquelle. Il faut aller voir dans le prompt. L'une demande un **rappel**, l'autre une **décision produit**.
-
-**⚠️ EV-015 est donc marqué `specAbsente` et COMPTE À PART** (⚠️ et non ❌), avec la raison écrite dans le rapport. *Un outil qui accuse à tort finit ignoré* (**R19**) — et laisser ce rouge gonfler le compte aurait fait croire à un défaut de Milo. Écrire la règle ou retirer le scénario est l'arbitrage de Michel.
-
-**⚠️⚠️ ET J'AI JUSTIFIÉ CETTE DÉCISION PAR UN FAIT INVENTÉ — corrigé par Michel dans la foulée.** J'avais écrit ici *« Christophe, persona fondateur, a un vrai coach »*. **Deux erreurs.** Michel, en deux temps : *« Christophe n'est pas coach, c'est un sportif qui fait du body »*, puis *« Christophe n'est pas un fondateur hein, c'est un testeur »*. La phrase vient du champ `resume` du persona **VC-002** dans `coach.js` — une **biographie de FICTION** écrite le 25/07 pour un scénario de test. **J'ai pris un décor de test pour un fait sur une personne réelle, puis je m'en suis servi comme ARGUMENT.** ⭐ C'est la Constitution appliquée à moi-même — *une hypothèse présentée comme un fait* — et le piège est structurel : **les personas portent le PRÉNOM de vrais testeurs, mais leur contenu est inventé.** ⏭️ **Conséquence** : la décision EV-015 ne repose plus sur rien et se rouvre sur ses seuls mérites — *« un utilisateur suivi par un coach a-t-il besoin que Milo se pose en complément ? »* Aucun cas d'usage réel ne l'appuie à ce jour.
-
-**⛔ Et la règle de fond de ft-v923 n'est pas retirée** : une détection ratée retombe sur le comportement d'hier, jamais sur une règle absente en silence.
-
-**⚠️⚠️ ET DEUX TÉMOINS EXISTANTS ONT ROUGI — les deux mesuraient un RACCOURCI devenu faux.** ① Celui du **cache** comparait la **taille TOTALE** du contexte. C'était un proxy valable tant que rien sous le marqueur n'était conditionnel — or depuis ft-v933 la queue non cachée porte des rappels ciblés, **et c'est voulu**. ⭐ **Mesuré avant de le corriger** (on ne touche pas à un garde-fou de cache sur une intuition) : le **préfixe caché fait 66 959 caractères dans les deux cas, identique octet pour octet** — le cache n'était pas cassé. Le témoin mesure désormais le **préfixe**, ce qui est **plus fort** que l'ancien : une variation cachée *avant* le marqueur passait inaperçue dans un total si un autre bloc la compensait. ② L'autre exigeait qu'un appelant **sans message** reçoive **exactement** autant qu'un message donné ; le contrat dit *« on envoie TOUT »*, donc il doit en recevoir **au moins** autant. *L'égalité stricte interdisait par construction d'avoir plus d'un rappel conditionnel.*
-Tests : **parcours 885/885** (+9, bloc LXXIII ; 2 témoins corrigés), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif sur le rappel** : c'est un bloc **neuf** du prompt. Ce qui le remplace : présent quand on demande une séance, **absent sinon**, règle de fond **intacte dans les deux cas**, et le contrat « sans message = tout » **vérifié**. Fichiers : `coach.js`, `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v936. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
