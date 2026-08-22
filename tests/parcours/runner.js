@@ -9436,6 +9436,62 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXXXIII - UN AUTRE COMPLEMENT, IDENTIFICATION SEULEMENT (22/08/2026) ==
+   Michel a fourni le registre Compl'Alim (5 fichiers, 142 928 declarations), puis : « je ne
+   demande pas a ce que tout soit detaille, mais peut-etre simplifier l'approche ».
+   ⛔⛔ LE TEMOIN LE PLUS IMPORTANT DU BLOC : aucune dose, aucune mise en garde, aucune
+   composition n'est jamais affichee — c'est une fiche D'IDENTIFICATION, pas un conseil. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    if(typeof _complCharger!=='function'){ o.absente=true; return o; }
+    o.pasChargeAuDepart = (_compl===null);
+    const d=document.getElementById('compl-desc');
+    d.value='magnesium'; _complSuggInput();
+    await new Promise(r=>setTimeout(r,1500));
+    o.chargeALaFrappe = !!_compl;
+    o.nbProduits = _compl ? _compl.a.length : 0;
+    const h=(document.getElementById('compl-sugg')||{}).innerHTML||'';
+    o.resultatVu = h.length>50;
+    o.sourceCitee = /Compl'Alim/.test(h);
+    /* ⛔⛔ LE GARDE-FOU CENTRAL : aucun mot de dose/mise en garde n'apparaît JAMAIS à l'écran. */
+    o.jamaisDeDose = !/mises_en_garde|dose_journaliere|posologie|\b\d+\s*(mg|g)\s*\/\s*j\b/i.test(h);
+    /* ⭐ Le désordre marche, comme pour CIQUAL. */
+    d.value='creatine wam'; _complSuggInput();
+    await new Promise(r=>setTimeout(r,50));
+    o.desordre = /WAM/i.test((document.getElementById('compl-sugg')||{}).innerHTML||'');
+    /* ⚠️ Un échec de chargement ne casse rien. */
+    _compl=null; _complEnCours=null;
+    const vrai=window.fetch;
+    window.fetch=function(){ return Promise.reject(new Error('hors ligne')); };
+    o.echecNonBloquant = ((await _complCharger())===null);
+    window.fetch=vrai;
+    return o;
+  });
+
+  console.log('\n-- LXXXIII. Un autre complement, identification seulement --');
+  if(R.absente){ t('⛔ le moteur ComplAlim existe', false, 'fonction absente'); }
+  else{
+    t('⛔⛔ pas chargé au démarrage, chargé à la première frappe (règle d\'or #4)',
+      R.pasChargeAuDepart===true && R.chargeALaFrappe===true, R.nbProduits+' produits');
+    t('⭐ la base est complète (129 033 produits autorisés, dédoublonnés)',
+      R.nbProduits===129033, R.nbProduits+' produits');
+    t('⭐ un résultat remonte, avec la source citée', R.resultatVu===true && R.sourceCitee===true, '');
+    /* ⛔⛔ La décision centrale du bloc. */
+    t('⛔⛔ AUCUNE dose ni mise en garde n\'est jamais affichée (identification, pas conseil)',
+      R.jamaisDeDose===true, '');
+    t('⭐ les mots dans le désordre marchent', R.desordre===true, '');
+    t('⚠️ un échec de chargement ne bloque rien', R.echecNonBloquant===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

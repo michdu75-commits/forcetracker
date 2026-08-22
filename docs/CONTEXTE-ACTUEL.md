@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v957` — fusionnée sur `master` le 22/08.
+- **Version en ligne (live) :** `ft-v958` — fusionnée sur `master` le 22/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,16 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- 🔍 **UN AUTRE COMPLÉMENT — identification seulement** (ft-v958) — Michel a fourni **Compl'Alim**
+  (5 fichiers, 142 928 déclarations), puis a demandé de **simplifier l'approche**.
+  ⛔⛔ **Nom + marque + catégorie déclarée uniquement** — 129 033 produits. **Aucune dose,
+  aucune mise en garde** : identification, pas conseil (créatine/whey restent les seules avec
+  ce traitement).
+  ⚠️ **Corrigé avant de coder** : Compl'Alim n'a **aucune valeur nutritive** — vérifié dans le
+  fichier. Pour ça, c'est Open Food Facts (déjà branché).
+  ⛔ **Recherche seule, rien n'est journalisé.**
+  ⛔⛔ Chargée à la demande (6,5 Mo → 1,58 Mo gzippé), même règle que CIQUAL.
+  ⚠️ Licence data.gouv.fr non vérifiée (réseau bloqué) — écrit tel quel.
 - 🥗 **LA BASE CIQUAL — brique 1 LIVRÉE** (ft-v957) — Michel a fourni le fichier de l'ANSES.
   **3 484 aliments génériques** : « banane » existe enfin comme aliment, pas comme marque.
   ⚠️ **Licence Ouverte / Etalab** → la source est **citée dans la liste**, ce n'est pas optionnel.

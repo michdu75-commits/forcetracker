@@ -1541,6 +1541,82 @@ async function estimateFoodAI(){
   }catch(e){toast('Erreur réseau : '+e.message,'error');}
   finally{if(btn){btn.disabled=false;btn.textContent='🤖 Estimer les calories avec l\'IA';}}
 }
+/* ═══ 🔍 UN AUTRE COMPLÉMENT — identification, PAS un conseil (22/08/2026) ═════════════════
+   Michel : « si tu veux, j'ai aussi les compléments alimentaires », après avoir fourni le
+   registre officiel Compl'Alim (data.gouv.fr, 5 fichiers, 142 928 déclarations).
+   ⛔⛔ APPROCHE VOLONTAIREMENT SIMPLIFIÉE, décidée avec Michel : *« je ne demande pas à ce que
+   tout soit détaillé, mais peut-être simplifier l'approche »*. On ne garde QUE l'identification
+   — nom, marque, catégorie déclarée. AUCUNE dose, AUCUNE mise en garde, AUCUNE composition :
+   les afficher rapprocherait l'app du conseil sur des substances (seule la créatine a ce
+   traitement aujourd'hui, avec des précautions écrites à la main et sourcées ANSES). C'est une
+   fiche D'IDENTIFICATION — « est-ce le bon produit ? » — pas un moteur de recommandation.
+   ⚠️ CE N'EST PAS UNE BASE NUTRITIONNELLE : Compl'Alim ne donne aucune valeur kcal/protéines/
+   glucides/lipides (vérifié dans le fichier). Pour les valeurs nutritives d'un complément
+   (whey, barre…), c'est Open Food Facts qu'il faut chercher — déjà branché (ft-v956).
+   ⛔ ET CE N'EST QU'UNE RECHERCHE, PAS UN JOURNAL : rien n'est enregistré nulle part. Construire
+   un suivi quotidien pour un complément arbitraire (dose, seuils, historique) est un tout autre
+   chantier, non demandé — la créatine et la whey le font déjà pour ce qui est courant.
+   ⛔⛔ CHARGÉE À LA DEMANDE, JAMAIS AU DÉMARRAGE — même règle que CIQUAL (règle d'or #4).
+   ⚠️ SOURCE : Compl'Alim (déclarations officielles), data.gouv.fr. Licence à confirmer — la
+   mention affichée le dit en l'état, sans citer un texte de licence que je n'ai pas pu vérifier
+   depuis cette session (réseau bloqué). Conversion : `tools/complalim.py`. */
+let _compl=null, _complEnCours=null, _complSuggTimer=null;
+async function _complCharger(){
+  if(_compl) return _compl;
+  if(_complEnCours) return _complEnCours;
+  _complEnCours=(async()=>{
+    try{
+      const r=await fetch('../data/complalim.json',{headers:{'Accept':'application/json'}});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const d=await r.json();
+      if(!d||!Array.isArray(d.a)) throw new Error('format');
+      _compl=d; return d;
+    }catch(e){ _complEnCours=null; return null; }   // jamais bloquant
+  })();
+  return _complEnCours;
+}
+/* Même logique que `_ciqualChercher` (R13) : tous les mots tapés doivent être présents, dans
+   n'importe quel ordre. */
+function _complChercher(q, max){
+  if(!_compl) return [];
+  const mots=_afNorm(q).split(/\s+/).filter(m=>m.length>1);
+  if(!mots.length) return [];
+  const out=[];
+  for(const a of _compl.a){
+    const n=_afNorm(a[0]+' '+(a[1]||''));
+    let ok=true;
+    for(const m of mots){ if(n.indexOf(m)<0){ ok=false; break; } }
+    if(!ok) continue;
+    out.push([_afNorm(a[0]).indexOf(_afNorm(mots[0]))===0?0:1, a[0].length, a]);
+    if(out.length>400) break;
+  }
+  out.sort((x,y)=> x[0]-y[0] || x[1]-y[1]);
+  return out.slice(0, max||6).map(x=>x[2]);
+}
+function _complSuggRendu(liste){
+  const el=document.getElementById('compl-sugg'); if(!el) return;
+  if(!liste || !liste.length){ el.innerHTML=''; return; }
+  let h='<div style="border:1px solid var(--sep);border-radius:12px;background:var(--bg2);overflow:hidden;">';
+  liste.forEach(a=>{
+    const cats=(a[2]||[]).join(' · ');
+    h+='<div style="padding:9px 11px;border-bottom:1px solid var(--sep);">'
+      +'<div style="font-size:13.5px;color:var(--t1);font-weight:600;">'+a[0]+'</div>'
+      +(a[1]?'<div style="font-size:11.5px;color:var(--t3);">'+a[1]+'</div>':'')
+      +(cats?'<div style="font-size:11px;color:var(--green);margin-top:2px;">'+cats+'</div>':'')
+      +'</div>';
+  });
+  h+='<div style="font-size:10.5px;color:var(--t3);padding:6px 11px 8px;">Identification : Compl\'Alim — data.gouv.fr</div></div>';
+  el.innerHTML=h;
+}
+function _complSuggInput(){
+  const q=(document.getElementById('compl-desc')||{}).value||'';
+  if(_afNorm(q).length<_AF_SUGG_MIN){ _complSuggRendu([]); return; }
+  _complCharger().then(()=>{
+    const enCours=(document.getElementById('compl-desc')||{}).value||'';
+    if(_afNorm(enCours)!==_afNorm(q)) return;      // la frappe a continué : résultat périmé
+    _complSuggRendu(_complChercher(q,6));
+  });
+}
 /* ═══ 🥗 LA BASE CIQUAL — LES ALIMENTS GÉNÉRIQUES (22/08/2026) ════════════════════════════
    Michel a fourni `Table_Ciqual_2025_complete.xlsx` après ft-v956 : Open Food Facts ne rend que
    des PRODUITS DE MARQUE, jamais « banane » tout court. C'est la brique 1 du dossier nutrition.
@@ -1558,7 +1634,7 @@ async function _ciqualCharger(){
   if(_ciqualEnCours) return _ciqualEnCours;           // une seule requête même si on tape vite
   _ciqualEnCours=(async()=>{
     try{
-      const r=await fetch('../data/ciqual.json',{headers:{'Accept':'application/json'}});
+      const r=await fetch('data/ciqual.json',{headers:{'Accept':'application/json'}});
       if(!r.ok) throw new Error('HTTP '+r.status);
       const d=await r.json();
       if(!d||!Array.isArray(d.a)) throw new Error('format');
