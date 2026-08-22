@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v952` — fusionnée sur `master` le 21/08.
+- **Version en ligne (live) :** `ft-v953` — fusionnée sur `master` le 22/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,15 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- ⏳ **QUAND SERAI-JE REVENU AU MAX** (ft-v953) — Michel : *« on ne sait pas quand on aura
+  récupéré au max »*.
+  ⛔⛔ **On donne un MOMENT, jamais un chiffre projeté** : un score futur supposerait de connaître
+  des nuits qui n'ont pas eu lieu (R29 · Principe 18).
+  ⚠️⚠️ **ET ÇA CORRIGE UNE ERREUR DE ft-v952** : « ton maximum est 93 » était **faux** — le bonus
+  de repos (+12 après 4 jours) compense les permanents, donc **100 reste atteignable**, en ne
+  s'entraînant pas. Reformulé en *« tant que tu t'entraînes régulièrement »*, l'absolu nommé à
+  côté. Témoin qui **mesure** le 100, pas qui le suppose.
+  ⚠️ Témoin ayant attrapé un **décalage d'une minute** (`Math.round(0.5)` rend 1).
 - 🔋 **OÙ ON ARRIVE À 100 — et pour Michel, 100 n'existe pas** (ft-v952) — son idée du 21/08,
   reprise le jour même : *« ET reprend mon idée aussi pour la recup faut pas l'oublier »*.
   ⭐ **La 1ʳᵉ étape gratuite a répondu oui** : le calcul **gardait déjà** le détail par facteur,

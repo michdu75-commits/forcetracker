@@ -699,10 +699,17 @@ function _recoManqueHtml(d){
   let h='';
   if(plaf<100){
     const noms=(d.plafondFacteurs||[]).map(f=>f.ic+' '+f.label.toLowerCase()).join(' · ');
+    /* ⚠️ FORMULATION CORRIGÉE LE 21/08 (le lendemain de ft-v952) : dire « ton maximum est 93 »
+       tout court était FAUX. Le bonus de repos (+12 après 4 jours sans séance) peut compenser
+       les facteurs permanents, donc 100 reste atteignable — en ne s'entraînant pas. On le dit,
+       parce qu'un plafond annoncé trop bas ferait renoncer à un chiffre réellement possible. */
+    const abs=(typeof d.plafondAbsolu==='number')?d.plafondAbsolu:plaf;
     h+='<div style="margin-top:14px;background:var(--bg2);border:1px solid var(--sep);border-radius:12px;padding:11px 13px;">'
-      +'<div style="font-size:13px;color:var(--t2);line-height:1.5;">🔒 <b style="color:var(--t1);">Ton maximum atteignable est '+plaf+'</b>, pas 100'+(noms?' — '+noms:'')+'. '
+      +'<div style="font-size:13px;color:var(--t2);line-height:1.5;">🔒 <b style="color:var(--t1);">Tant que tu t\'entraînes régulièrement, ton maximum est '+plaf+'</b>'+(noms?' — '+noms:'')+'. '
       +'Ces facteurs-là ne se rattrapent pas d\'un jour à l\'autre : ils ne sont pas un retard, ils déplacent la ligne d\'arrivée. '
-      +'<span style="color:var(--t3);">Un '+plaf+' chez toi, c\'est un 100.</span></div></div>';
+      +'<span style="color:var(--t3);">Un '+plaf+' chez toi, c\'est un 100.</span>'
+      +(abs>plaf?' <span style="color:var(--t3);">(Le bonus de repos peut te porter jusqu\'à '+abs+', mais il faut 4 jours sans séance.)</span>':'')
+      +'</div></div>';
   }
   if(manque.length){
     const tot=manque.reduce((a,m)=>a+m.cout,0);
@@ -715,7 +722,36 @@ function _recoManqueHtml(d){
   }else if(plaf<100){
     h+='<div style="margin-top:10px;font-size:12.5px;color:var(--green);text-align:center;">✅ Rien ne te sépare de ton maximum aujourd\'hui.</div>';
   }
+  h+=_recoQuandHtml(d);
   return h;
+}
+/* ⏳ « QUAND SERAI-JE AU MAX ? » — Michel : « là on ne sait pas quand on aura récupéré au max ».
+   ⛔⛔ ON DONNE UN MOMENT, JAMAIS UN CHIFFRE PROJETÉ. Annoncer « tu seras à 93 jeudi »
+   supposerait de connaître les nuits qui n'ont pas encore eu lieu — or le sommeil EST la base du
+   score. On rend donc ce qui est exact (la fatigue mécanique) et on NOMME ce qui dépendra
+   d'elle, sans le chiffrer (R29 · Principe 18 : ne jamais faire semblant de savoir). */
+function _recoQuandHtml(d){
+  const p=(typeof projectionRecup==='function')?projectionRecup(d):null;
+  if(!p) return '';
+  if(p.dejaAuMax){
+    return '<div style="margin-top:10px;background:rgba(52,199,89,.08);border:1px solid rgba(52,199,89,.25);border-radius:12px;padding:10px 13px;font-size:12.5px;color:var(--t2);line-height:1.5;">'
+      +'⏳ <b style="color:var(--t1);">Ta fatigue d\'entraînement est déjà partie.</b> Ce qui reste dépend de tes nuits et de ta forme du jour.</div>';
+  }
+  const t=new Date(p.quand);
+  const jours=Math.round((new Date(t.toISOString().slice(0,10)+'T12:00:00')-new Date(today()+'T12:00:00'))/864e5);
+  const JJ=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+  const quandTxt = jours===0?'aujourd\'hui' : jours===1?'demain'
+                 : (jours>=2&&jours<=6)?JJ[t.getDay()] : 'le '+t.toISOString().slice(8,10)+'/'+t.toISOString().slice(5,7);
+  // L'heure n'a de sens que pour la fatigue de séance (connue à la minute) ; l'enchaînement de
+  // jours, lui, se vide au changement de date — annoncer « à 0 h 00 » serait un faux précis.
+  const heure = p.source==='seance' ? (' vers '+t.getHours()+' h') : '';
+  const reste = (p.restant||[]).length ? ' Ensuite, il restera '+p.restant.join(' et ')+'.' : '';
+  return '<div style="margin-top:10px;background:var(--bg2);border:1px solid var(--sep);border-radius:12px;padding:11px 13px;">'
+    +'<div style="font-size:13px;color:var(--t2);line-height:1.5;">⏳ <b style="color:var(--t1);">Ta fatigue d\'entraînement sera partie '+quandTxt+heure+'</b>'
+    +(p.source==='seance'?' — c\'est l\'effet de ta dernière séance, il s\'efface en continu.'
+                         :' — le temps que ton enchaînement de jours se vide.')
+    +reste+'</div>'
+    +'<div style="font-size:11.5px;color:var(--t3);line-height:1.5;margin-top:6px;">On ne te donne pas un score à l\'avance&nbsp;: il dépendrait de nuits qui n\'ont pas encore eu lieu. Ça, c\'est le moment où <b>la partie mécanique</b> sera revenue à zéro.</div></div>';
 }
 // ─── « Pourquoi ce score ? » — explication claire de la récup (retour GPT, ft-v564) ──
 function openRecoWhy(){
