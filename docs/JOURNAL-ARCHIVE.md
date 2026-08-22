@@ -3147,3 +3147,20 @@ Tests : **parcours 938/938** (+10, bloc LXXVIII), calculs 241/241, muscles 241/2
 
 **⚠️ Une erreur payée** : mon témoin attrapait le **miroir Supabase** (corps enveloppé dans `p_data`) et rendait *« compteur absent »* alors qu'il partait bien. *Un témoin qui lit la mauvaise enveloppe accuse le code d'un défaut qu'il n'a pas.* Il déballe désormais et couvre **les deux** chemins.
 Tests : **parcours 941/941** (+3, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données **102 classées 0 trou**. Fichiers : `coach.js`, `state.js`, `setup.js`, `Code.js`, `index.html`, `clone/index.html`, `tests/donnees/donnees-milo.json`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v945. |
+
+**ft-v946 — 🕰️ L'HISTORIQUE DÉJÀ STOCKÉ PASSE AU GARDIEN — plus besoin d'attendre** — Michel : *« attend une chose on ne pourra pas récupérer les anciennes conversations alors »*.
+
+**Il avait raison** : le compteur de ft-v944 ne compte qu'à partir de son branchement. Il aurait fallu **des semaines** pour savoir quoi que ce soit sur les testeurs.
+
+**⭐ MAIS LES CONVERSATIONS SONT LÀ**, sur leur téléphone — jusqu'à **30 rangées + le fil en cours**, chacune datée. Et **vérifié avant de coder** : elles gardent le texte **BRUT**, blocs `{"retiens"}` compris. *C'est précisément ce qui rend la mesure juste* — sur du texte déjà nettoyé, chaque promesse tenue serait comptée comme une promesse vide. Un scan **local**, **0 appel**, quelques millisecondes, lancé **une fois APRÈS le démarrage** — jamais pendant (**règle d'or #4** : le démarrage n'attend rien).
+
+**⭐⭐ C'EST UN INSTANTANÉ, PAS UNE ADDITION.** On **remplace** le bloc `retro` à chaque passage : rejouer dix fois donne exactement le même résultat. *Ça évite d'avoir à retenir « l'ai-je déjà fait ? » — un drapeau qu'on oublie de poser double les chiffres, et un chiffre doublé ne se voit pas.*
+
+**⛔ ET IL RESTE SÉPARÉ DU DIRECT.** L'historique couvre **plusieurs versions de Milo**, dont des **antérieures aux correctifs** : les additionner donnerait un total qui ne veut rien dire. Deux blocs, deux périodes **datées**, et l'avertissement écrit dans les deux affichages.
+
+**⚠️⚠️ ET UN TÉMOIN A TROUVÉ UN VRAI DÉFAUT DE MESURE — dans ce que je comptais depuis ft-v944.** `bloc_technique` se lève sur **chaque séance proposée**, **chaque bloc de mémoire**, **chaque liste de réponses rapides** : c'est du **trafic NORMAL**, pas une dérive. Le compter l'aurait rendu **majoritaire** et aurait noyé le signal — ***on aurait mesuré le BON fonctionnement de Milo en croyant mesurer ses écarts.*** Il reste affiché dans le badge (il sert en développement), il n'entre plus dans les compteurs. ⭐ Une seule liste `_GARDIEN_DERIVES`, lue par le compteur en direct **et** par le scan (**R2**).
+
+**⭐ MESURE SUR LES 25 VRAIS JOURS DE MICHEL : 7 dérives sur 129 réponses** — `diagnostic` 3 · `promesse_vide` 3 · `source_fabriquee` 1. ⚠️ **Ce sont des DRAPEAUX, pas des preuves** : seules les 3 promesses ont été vérifiées à la main. Les autres restent à lire.
+
+**⚠️ Deux fois mon témoin s'est trompé, pas le code.** Il attendait 2 dérives et en trouvait 3 — c'était le bloc `{"retiens"}` légitime, et **c'est comme ça que le défaut ci-dessus a été trouvé**. Puis il comparait le compteur direct à une valeur capturée bien plus haut, **entre-temps légitimement incrémentée** : il accusait le scan d'un mouvement qui n'était pas le sien. *Un témoin qui prend la mauvaise référence désigne le mauvais coupable.*
+Tests : **parcours 947/947** (+6, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `coach.js`, `Code.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v946. |

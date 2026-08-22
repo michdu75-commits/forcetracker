@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v965` — fusionnée sur `master` le 22/08.
+- **Version en ligne (live) :** `ft-v966` — fusionnée sur `master` le 22/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,13 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- 🧮 **« POUR TES 30 G »** (ft-v966) — deux nombres de protéines sur le même écran (88 pour 100 g,
+  26 pour lui) et **rien ne disait lequel était le sien**. Une ligne dans la rangée Quantité le dit.
+  ⭐⭐ **R2** : elle **relit** les champs, elle ne recalcule pas. ⛔ Jamais la valeur pour 100 g.
+  ⭐ **Scan Gardien de ses 119 réponses, DATÉ** (il a prévenu : *« il y a des vieux trucs »*) :
+  **22/08 → 1 dérive / 29 réponses** · 19/08 → 1/20 · 09/08 → 2/60 · 28/07 → 0/10.
+  ⚠️ **Ne PAS additionner les époques** (règle de ft-v946, que j'avais moi-même enfreinte) :
+  seul le 22/08 mesure le Milo d'après les correctifs. ft-v923 tient mieux, **sans fermer**.
 - ⚖️ **LA QUANTITÉ ÉTAIT AU-DESSUS DU CHAMP OÙ L'ON TAPE** (ft-v965) — Michel : *« j'ai voulu
   mettre 30 g de POUDRE de protéine, et ça fait 88 g de protéine »*.
   ⚠️⚠️ **CORRIGÉ le soir même : ma cause était FAUSSE.** Sa vidéo montre Quantité **30 g** et des
