@@ -204,15 +204,19 @@ de repos et un jour de soulevé de terre lourd. Or l'app **sait déjà tout** :
 
 **Ce qu'on devrait en faire :**
 
-- **jour d'entraînement vs repos** → glucides plus hauts les jours de séance, plus bas au repos
-  (à calories hebdomadaires égales) ;
+- ✅ **jour d'entraînement vs repos** → glucides plus hauts les jours de séance, plus bas au repos
+  (à calories hebdomadaires égales) — **FAIT en ft-v951**. ⭐ Le levier réel, c'est les **lipides** :
+  les glucides étant le *reste* du calcul, ils montent quand les lipides descendent. La
+  compensation est calée sur la **fréquence réelle** (`D(7−f)/7` vs `D·f/7`) → somme hebdomadaire
+  **exactement nulle**. ⛔ Désactivé en kéto et low carb (le % **définit** le régime) ;
 - ✅ **les repas pré et post ne devraient exister QUE les jours de séance** — **FAIT en ft-v950**.
   Un jour de repos, ils sont retirés et **leurs calories redistribuées** (le total du jour ne bouge
   pas d'un kcal). Un jour de séance, ils **nomment l'heure réelle** (« avant ta séance de 18 h »).
   ⚠️ **Deux limites écrites** : les plans `perte`/`recomp` n'ont aucun pré/post, donc **rien ne
   change pour eux** ; et la journée **n'est pas réordonnée** selon l'heure (une séance à 7 h
   devrait logiquement placer le pré-entraînement avant le petit-déjeuner — ce n'est pas fait) ;
-- **séance de jambes lourdes** → plus de glucides que « bras + épaules » ;
+- ✅ **séance de jambes lourdes** → plus de glucides que « bras + épaules » — **FAIT en ft-v951**
+  via `_calSessRegion`. ⚠️ Les facteurs sont un **ordre de grandeur assumé, pas une mesure** ;
 - **calories réellement dépensées** → proposer (jamais imposer) un ajustement.
 
 ⚠️ **Garde-fou** : la Constitution P21 interdit d'en faire une source de stress. Donc **proposer,

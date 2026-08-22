@@ -136,7 +136,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v950`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v951`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v950`** (prochaine : `ft-v951`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v951`** (prochaine : `ft-v952`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,25 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v951 — 🍚 LES GLUCIDES PLUS HAUTS LES JOURS DE SÉANCE — mais le levier, ce sont les LIPIDES** — Michel : *« les glucides plus hauts les jours de séance et adaptés »*.
+
+**⭐⭐ ET IL N'Y AVAIT RIEN À AJOUTER AUX GLUCIDES.** Dans le calcul standard, les protéines et les lipides sont fixés au **poids de corps**, et **les glucides sont le RESTE** (`macrosForKcal`). Pour qu'ils montent à calories constantes, ce sont donc les **lipides** qui doivent descendre — et remonter les jours de repos. *C'est aussi le bon geste physiologiquement : les glucides alimentent l'effort, les lipides sont le carburant des jours calmes.*
+
+**⛔⛔ ET LE TOTAL DE LA SEMAINE NE BOUGE PAS D'UN GRAMME.** C'est la condition, pas un raffinement : *monter les glucides des jours de séance sans les baisser ailleurs, ce n'est pas du cycling, c'est manger plus sans le dire* (**R29**). La compensation est calée sur la **fréquence réelle** — on retire `D·(7−f)/7` les jours de séance, on ajoute `D·f/7` les jours de repos, et la somme vaut **exactement zéro quelle que soit `f`**. Le témoin central le vérifie de **1 à 6 séances/semaine** : une seule fréquence n'aurait rien prouvé, puisque la compensation dépend de `f`.
+
+**⚠️ ET LES CALORIES DU JOUR NE BOUGENT PAS NON PLUS** : on échange des lipides contre des glucides à énergie égale. **L'anneau ne bouge pas**, seule la répartition change — c'est **R12** appliqué à la cible elle-même.
+
+**⭐ « ET ADAPTÉS » : une séance de JAMBES donne plus qu'une séance de BRAS** (`_calSessRegion`). ⚠️ Les facteurs sont **un ordre de grandeur assumé, pas une mesure** — on ne connaît pas le coût glycogénique exact d'une séance, et trois décimales seraient un faux-précis. ⭐ **Et la neutralité tient quand même** : les jours de repos rendent la **moyenne des facteurs de SES propres séances récentes**, ce qui annule la somme exactement.
+
+**⛔⛔ NI EN KÉTO NI EN LOW CARB.** Là, le pourcentage de glucides **définit le régime** (5 % et 25 %) : le faire varier avec l'entraînement, ce n'est plus adapter un plan, c'est **sortir la personne de son régime sans le lui demander**. Deux témoins l'épinglent.
+
+**⛔ ET ÇA SE DIT À L'ÉCRAN.** Une ligne annonce *« jour de séance — +20 g de glucides, compensés par les lipides · sur la semaine le total est le même »*. Sans elle, la répartition changerait d'un jour à l'autre **sans raison visible** — et un chiffre qui bouge tout seul se lit comme un bug, ou se contourne (leçon du plancher calorique de ft-v906).
+
+**⚠️ Un plancher lipidique à 0,6 g/kg, ÉCRIT comme un choix** : contrairement aux calories et aux protéines, le Gardien de Milo n'a **aucun** seuil sur les lipides (vérifié). *Un seuil qu'on invente doit se dire, sinon il se relit un jour comme une règle établie.* S'il mord, l'amplitude est rabotée **des deux côtés** pour que la neutralité tienne.
+
+**⚠️⚠️ ET UN ARRONDI APPLIQUÉ TROP TÔT DEVIENT UN BIAIS — trouvé par le témoin, pas par relecture.** J'arrondissais les lipides **avant** d'en déduire les glucides : ~1 g d'erreur par jour, et **le sens de l'arrondi n'étant pas le même les jours de séance et de repos, elle ne se compensait pas** — jusqu'à **9 g d'écart sur la semaine**. Le témoin de neutralité a rougi ; j'ai supprimé la cause au lieu d'élargir la tolérance.
+Tests : **calculs 266/266** (+13), parcours 970/970, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges**, exactement les 4 comportements neufs. ⚠️ Les autres sont **verts des deux côtés, et c'est voulu** : sans cycling la neutralité hebdomadaire est vraie par construction, les calories ne bougeaient pas, le kéto était déjà figé et le plancher n'était pas menacé. Fichiers : `state.js`, `screens.js`, `index.html`, `tests/calculs/runner.js`, `docs/NUTRITION-MOTEUR.md`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v951. |
 
 **ft-v950 — 🍽️ LES REPAS D'ENTRAÎNEMENT N'EXISTENT PLUS QUE LES JOURS D'ENTRAÎNEMENT** — Michel : *« ok maintenant le plan de repas les jours de séance »*.
 
@@ -718,23 +737,6 @@ Tests : **parcours 864/864** (+13, blocs LXIX et LXX), calculs 241/241, muscles 
 
 **⚠️ ET MON PREMIER TÉMOIN ROUGISSAIT SUR SA PROPRE EXPLICATION.** Il cherchait `title:` dans **tout le corps** de la fonction — or le commentaire qui explique *pourquoi on l'a retiré* contient le mot. *Un motif doit viser le CODE, pas le texte qui l'entoure.* Corrigé pour n'examiner que l'appel lui-même.
 Tests : **parcours 851/851** (+4, bloc LXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif** : `copyEvalText` est une fonction **neuve** — un témoin tourné contre l'ancien code rendrait « fonction absente » au lieu de mesurer (le piège payé 8 fois). Ce qui le remplace : le témoin a **effectivement rougi** sur l'ancien appel avec `title:`, puis est passé au vert une fois le titre retiré — le va-et-vient a été observé, pas supposé. Fichiers : `coach.js`, `tests/milo/eval.js` (commentaire dupliqué retiré), `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v932. |
-
-**ft-v931 — 🧪 LE BENCHMARK A UN BOUTON DANS L'APP — un outil de mesure que personne ne peut lancer ne mesure rien** — Michel, devant le choix : **« un bouton dans l'app »**. C'était la bonne réponse, et pour une raison technique qu'on venait de découvrir.
-
-**⚠️ CE N'EST PAS DU CONFORT — la ligne de commande ne peut tourner NULLE PART d'utile.** Deux verrous, tous les deux légitimes, trouvés en dépensant **2 appels sur un seul scénario avant d'en lancer trente** : ① le **Worker refuse `localhost`** (`ALLOWED_ORIGIN = github.io`, verrou anti-abus du 27/07) — il rejette **avant** tout appel payant, et chaque scénario rendait *« réseau: Failed to fetch »* ; ② la **session Claude Code n'a aucun accès sortant** vers `workers.dev` ni `github.io` (`CONNECT` → 403). *L'essai à un scénario a payé son prix en six centimes.* **L'app, elle, est déjà sur la bonne origine.**
-
-**👉 Profil → Admin → « 🧪 Lancer le benchmark (15 scénarios) » et « ⚖️ Comparer Sonnet et Haiku ».** Le **coût est annoncé AVANT** (0,25-0,95 € · 0,30-1,30 €) — demande explicite de Michel : *« faut que je sois sûr que ça soit utile, si je paye et que c'est pas utile c'est gaspiller de l'argent »*.
-
-**⭐ R13 DANS SA FORME LA PLUS PURE : rien de neuf.** `_vcApplyPersona` (remise à neutre de tout ce que lit `buildCoachContext`), `_vcAsk`, le gel `window._demoMode` et la restauration par `load()` existaient **déjà** pour les cartes VC. On ajoute la **boucle** et l'**exécution des vérificateurs**. Le reste est du code de 2026-07 qui a déjà tourné.
-
-**⚠️⚠️ ET LE CORPUS N'EST PAS RECOPIÉ DANS L'APP (R2).** Les 15 scénarios et leurs vérificateurs vivent dans **un seul fichier**, `tests/milo/eval-scenarios.js`, lu par la ligne de commande **et** par le bouton (enveloppé dans une fonction anonyme pour ne rien laisser fuir dans les globales). *Les recopier garantirait qu'un jour l'app et la ligne de commande ne testeraient plus la même chose, sans que rien ne le signale.*
-
-**⛔ ET IL SE TÉLÉCHARGE À LA DEMANDE, jamais au démarrage** : l'app doit s'ouvrir instantanément à la salle (**règle d'or #4**). Un corpus de test dans le chemin de démarrage serait exactement ce que cette règle interdit — un témoin vérifie qu'il est **absent** tant qu'on n'a pas appuyé.
-
-**⭐⭐ LE TÉMOIN LE PLUS IMPORTANT N'EST PAS QUE ÇA MARCHE, C'EST QUE LES DONNÉES REVIENNENT.** On injecte **15 personas à la place du profil de la personne**. Si la restauration lâchait, on lui aurait **effacé son compte pour un test**. C'est la **règle d'or #3**, et elle passe avant la fonctionnalité : le témoin vérifie qu'après trois personas, `S.name` et `S.bw` sont ceux d'avant et que le gel des écritures est relâché.
-
-**⚠️ ET MES 4 PREMIERS ROUGES NE MESURAIENT RIEN — c'était le TEST qui était faux.** Il lisait `window._evReport`, or un **`let` en tête de script n'est PAS une propriété de `window`** : la variable existait, le rapport était bon, et le témoin lisait `undefined`. *Un test qui échoue ne prouve pas que le code est cassé — il faut savoir lequel des deux on regarde.* Trouvé en instrumentant la page, pas en relisant.
-Tests : **parcours 847/847** (+8, bloc LXVII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif** : les fonctions sont **neuves**, un témoin tourné contre l'ancien code rendrait « fonction absente » au lieu de mesurer — le piège payé 8 fois. Ce qui le remplace ici est le **réseau bouchonné** : chaque scénario reçoit une réponse **fabriquée dans le test**, donc on sait exactement quel verdict doit tomber — un débrief amputé rougit, une promesse de mémoire sans bloc rougit, une réponse correcte reste verte. Fichiers : `coach.js`, `index.html`, `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v931. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

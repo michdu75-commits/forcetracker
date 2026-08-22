@@ -848,14 +848,102 @@ function plancherKcalActif(phase){
   const p=PLANCHER_KCAL[(S.gender==='F')?'F':'H'];
   return brut<p?{brut:Math.round(brut),plancher:p}:null;
 }
+/* 🍚 LES GLUCIDES PLUS HAUTS LES JOURS DE SÉANCE (21/08/2026) — Michel : « les glucides plus
+   hauts les jours de séance et adaptés ».
+   ⭐⭐ LE LEVIER N'EST PAS LES GLUCIDES, CE SONT LES LIPIDES. Dans le calcul standard, les
+   protéines et les lipides sont fixés au **poids de corps** et les **glucides sont le RESTE**
+   (`macrosForKcal`). Il n'y a donc rien à « ajouter » aux glucides : pour qu'ils montent à
+   calories constantes, ce sont les lipides qui doivent descendre — et remonter les jours de
+   repos. C'est aussi le bon geste physiologiquement : les glucides alimentent l'effort, les
+   lipides sont le carburant des jours calmes.
+   ⛔⛔ ET LE TOTAL DE LA SEMAINE NE BOUGE PAS D'UN GRAMME. C'est la condition, pas un détail :
+   *monter les glucides des jours de séance sans les baisser ailleurs, ce n'est pas du cycling,
+   c'est manger plus sans le dire* (**R29**). La compensation est calée sur la FRÉQUENCE réelle :
+   sur `f` jours de séance et `7−f` de repos, on retire `D·(7−f)/7` de lipides les jours de
+   séance et on en rajoute `D·f/7` les jours de repos — la somme sur la semaine vaut exactement
+   zéro, quelle que soit `f`. Un témoin le vérifie sur plusieurs fréquences.
+   ⛔ NI EN KÉTO NI EN LOW CARB. Là, le pourcentage de glucides **définit le régime** (5 % et
+   25 %) : le faire varier avec l'entraînement, ce n'est plus adapter un plan, c'est sortir la
+   personne de son régime sans le lui demander.
+   ⚠️ ET LES CALORIES DU JOUR NE BOUGENT PAS NON PLUS : on échange des lipides contre des
+   glucides à l'identique (9 kcal/g contre 4). L'anneau ne bouge pas, seule la répartition
+   change — c'est « la cohérence avant la réactivité » (R12) appliquée à la cible elle-même.
+   ⚠️ PLANCHER LIPIDIQUE : on ne descend jamais sous 0,6 g/kg. ⚠️ Et ce plancher est ÉCRIT ICI
+   faute de mieux — contrairement aux calories et aux protéines, le Gardien de Milo n'a AUCUN
+   seuil sur les lipides (vérifié). *Un seuil qu'on invente doit se dire, sinon il se relit un
+   jour comme une règle établie.* Si le plancher mord, on réduit l'amplitude **des deux côtés**
+   pour que la neutralité hebdomadaire tienne quand même. */
+const _CYCLE_AMPLI=0.30;                 // part des lipides qu'on accepte de déplacer
+const _CYCLE_FAT_MIN=0.6;                // g/kg — plancher, voir ci-dessus
+/* « ET ADAPTÉS » : une séance de jambes ne vide pas les réserves comme une séance de bras.
+   ⚠️ CES FACTEURS SONT UN CHOIX MODESTE, PAS UNE MESURE. On ne connaît pas le coût
+   glycogénique exact d'une séance ; annoncer trois décimales serait un faux-précis (principe 5
+   de la philosophie nutrition). Ils disent un ORDRE, et c'est tout ce qu'on prétend. */
+const _CYCLE_REGION={bas:1.25, full:1.15, dos:1.0, haut:0.8, tronc:0.8};
+function _facteurRegion(s){
+  try{
+    if(typeof _calSessRegion!=='function') return 1;
+    const r=_calSessRegion(s);
+    return (r&&_CYCLE_REGION[r])||1;
+  }catch(e){ return 1; }
+}
+function cycleGlucides(m, kcal){
+  try{
+    if(!m) return m;
+    if(S.foodMode==='keto'||S.keto||S.foodMode==='lowcarb') return m;   // le % EST le régime
+    if(typeof _weeklyCounts!=='function') return m;
+    const wk=_weeklyCounts(4);
+    const f=Math.round(wk.reduce((a,b)=>a+b,0)/wk.length);
+    /* ⛔ Aucun contraste à créer : 0 séance par semaine, ou 7 sur 7. Dans les deux cas il n'y a
+       pas de « jour de repos » à compenser — on ne cycle pas, et on le dit. */
+    if(!(f>0&&f<7)) return m;
+    const js=jourSeance();
+    /* r̄ = facteur de région MOYEN de SES séances récentes. C'est lui qui rend la neutralité
+       exacte : les jours de repos rendent la moyenne de ce que les jours de séance ont pris. */
+    const t=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
+    const recentes=(S.sessions||[]).filter(s=>{
+      if(!s||!s.date) return false;
+      const d=Math.round((new Date(t+'T12:00:00')-new Date(s.date+'T12:00:00'))/864e5);
+      return d>=0&&d<28;
+    });
+    const facteurs=recentes.map(_facteurRegion);
+    const rMoy=facteurs.length?facteurs.reduce((a,b)=>a+b,0)/facteurs.length:1;
+    const rJour=js.seance
+      ? _facteurRegion((S.sessions||[]).find(s=>s&&s.date===t)||S.wkt||null)
+      : rMoy;
+    // Amplitude, rabotée si le plancher lipidique mord un jour de séance (les deux côtés).
+    let D=m.fat_g*_CYCLE_AMPLI;
+    const plancher=(S.bw||0)*_CYCLE_FAT_MIN;
+    const retraitMax=Math.max(0, m.fat_g-plancher);
+    const retrait=(x)=>x*rJour*(7-f)/7;
+    if(rJour>0 && retrait(D)>retraitMax) D=retraitMax/(rJour*(7-f)/7);
+    if(!(D>0)) return m;
+    const dFat = js.seance ? -(D*rJour*(7-f)/7) : +(D*rMoy*f/7);
+    const fatExact=m.fat_g+dFat;
+    const fat_g=Math.round(fatExact);
+    /* Les glucides reprennent EXACTEMENT les calories libérées : on recalcule le reste comme
+       `macrosForKcal` le fait, plutôt que de convertir à part — une deuxième formule de
+       conversion finirait par ne plus donner le même total (R2).
+       ⚠️ ET ON PART DE LA VALEUR NON ARRONDIE. Arrondir les lipides d'abord injecte jusqu'à
+       0,5 g × 9 kcal ≈ 1 g de glucides d'erreur PAR JOUR — et comme le sens de l'arrondi n'est
+       pas le même les jours de séance et de repos, l'erreur ne se compense pas : elle
+       s'accumule sur la semaine (mesuré : jusqu'à 9 g d'écart, ce qui a fait rougir le témoin
+       de neutralité). *Un arrondi appliqué trop tôt dans une compensation devient un biais.* */
+    const carbs_g=Math.max(0,Math.round((kcal-m.prot_g*4-fatExact*9)/4));
+    return {prot_g:m.prot_g, fat_g, carbs_g,
+            cycle:{jour:js.seance?'seance':'repos', freq:f, dFat:Math.round(dFat),
+                   dCarbs:carbs_g-m.carbs_g, region:js.seance?rJour:null}};
+  }catch(e){ return m; }
+}
 function calcMacros(phase){
   const auto=autoKcal(phase);
   // Réglage manuel (comme MyFitnessPal) : si l'utilisateur a fixé ses calories à la main,
   // on les utilise ; les protéines/lipides restent sains, les glucides s'ajustent.
   const manual=(typeof S.manualKcal==='number'&&S.manualKcal>0)?Math.round(S.manualKcal):0;
   const calories=manual||auto;
-  const m=macrosForKcal(calories);
-  return{calories,prot_g:m.prot_g,fat_g:m.fat_g,carbs_g:m.carbs_g,autoCalories:auto,isManual:!!manual};
+  const m=cycleGlucides(macrosForKcal(calories), calories);
+  return{calories,prot_g:m.prot_g,fat_g:m.fat_g,carbs_g:m.carbs_g,autoCalories:auto,
+         isManual:!!manual, cycle:m.cycle||null};
 }
 
 // ─── LES REPAS SUGGÉRÉS DOIVENT RESPECTER LE RÉGIME (02/08, retour Emma via Michel) ──────
