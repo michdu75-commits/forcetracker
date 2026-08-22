@@ -9692,6 +9692,98 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXXXVI - LE PLURIEL, ET LES FORMES DE PATES (22/08/2026) ==
+   Michel : « j'ai cherche les pates, j'ai pas trouve — enfin si, mais pas ce que je voulais
+   trouver ». ⚠️ Son explication (« ah c'est pates et pas pates lol », l'accent) etait FAUSSE :
+   les accents sont retires depuis ft-v960. ⛔⛔ LE VRAI DEFAUT : CIQUAL nomme au SINGULIER,
+   on tape au PLURIEL — 97% de la base inatteignable, et on tombait sur les PLATS composes.
+   ⛔ LES TEMOINS LES PLUS IMPORTANTS SONT LES NON-REGRESSIONS : mon 1er jet rendait « Pate
+   breton » pour « pates » et « Poireau » pour « pois ». */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    /* ⚠️ LE GARDE NE PORTE QUE SUR `_ciqualChercher`, PAS SUR `_afRang` — et c'est délibéré.
+       Ces témoins mesurent le RÉSULTAT d'une recherche, pas la présence d'une fonction neuve :
+       ils doivent donc TOURNER contre l'ancien code et y rougir. Un garde sur `_afRang` les
+       aurait tous sautés, et le contrôle négatif n'aurait rien dit d'autre que « la fonction
+       n'existe pas » — leçon déjà payée à ft-v949 et ft-v953. */
+    if(typeof _ciqualChercher!=='function'){ o.absente=true; return o; }
+    await _ciqualCharger();
+    o.base=!!(_ciqual&&_ciqual.a&&_ciqual.a.length>3000);
+    const top=q=>{ const r=_ciqualChercher(q,1); return r.length?r[0][1]:''; };
+
+    /* ⚠️ D'ABORD : L'ACCENT N'A JAMAIS ETE LE PROBLEME — sinon on corrigerait un faux coupable. */
+    o.accentIdentique = top('pâtes')===top('pates') && top('pates').length>0;
+
+    /* ⭐⭐ LE PLURIEL : on tombait sur les PLATS COMPOSES, pas sur l'aliment. */
+    o.amandes=/^Amande/.test(top('amandes'));
+    o.lentilles=/^Lentille/.test(top('lentilles'));
+    o.tomates=/^Tomate/.test(top('tomates'));
+    o.pommes=/^Pomme/.test(top('pommes'));
+    /* ⭐ ... et certains ne rendaient RIEN DU TOUT. */
+    o.courgettes=/^Courgette/.test(top('courgettes'));
+    o.figues=/^Figue/.test(top('figues'));
+
+    /* ⛔⛔ LES NON-REGRESSIONS QUE MON 1er JET CASSAIT. */
+    o.patesPasPate=/^Pâtes sèches/.test(top('pates'));      // pas « Pâté breton »
+    o.poisPasPoireau=/^Pois/.test(top('pois'));                 // pas « Poireau »
+    o.patePate=/^Pâté/.test(top('pate'));                    // « pate » veut toujours dire pâté
+    /* ⛔ ... et le reste ne bouge pas. */
+    o.stable=top('oeuf')==='Oeuf dur' && /^Riz/.test(top('riz')) && /^Poulet/.test(top('poulet'))
+             && /^Ananas/.test(top('ananas')) && /^Pois chiche/.test(top('pois chiche'));
+
+    /* ⭐⭐ LES FORMES DE PATES — 0 resultat avant, et « spaghetti » rendait la COURGE. */
+    o.spaghetti=/^Pâtes/.test(top('spaghetti'));
+    o.penne=/^Pâtes/.test(top('penne'));
+    o.macaroni=/^Pâtes/.test(top('macaroni'));
+    o.coquillettes=/^Pâtes/.test(top('coquillettes'));
+    /* ⛔ ... ET LA COURGE SPAGHETTI RESTE TROUVABLE (on ajoute une porte, on n'en ferme aucune). */
+    o.courgeIntacte=/^Courge spaghetti/.test(top('courge spaghetti'));
+    /* ⭐ le mot d'etat continue de marcher par-dessus le synonyme. */
+    o.spaghettiCuit=/cuites/.test(top('spaghetti cuit'));
+
+    /* ⭐ R2 : SON PROPRE JOURNAL se cherche de la meme facon. */
+    S.foodLog=[{date:today(),meal:'diner',name:'Amande grillée',kcal:60,prot:2,carbs:2,fat:5,ts:Date.now()}];
+    o.journalPluriel=_afSuggLocales('amandes').length===1;
+    o.journalSingulier=_afSuggLocales('amande').length===1;   // ne regresse pas
+
+    return o;
+  });
+
+  console.log('\n-- LXXXVI. Le pluriel, et les formes de pâtes --');
+  if(R.absente){ t('⛔ la recherche CIQUAL existe', false, 'fonction absente'); }
+  else{
+    t('la base CIQUAL est chargée', R.base===true, '');
+    t('⚠️ L\'ACCENT N\'A JAMAIS ÉTÉ LE PROBLÈME : « pâtes » et « pates » rendent la même chose',
+      R.accentIdentique===true, '');
+    t('⭐⭐ « amandes » rend l\'AMANDE, plus le croissant aux amandes', R.amandes===true, '');
+    t('⭐⭐ « lentilles » rend la LENTILLE, plus la soupe aux lentilles', R.lentilles===true, '');
+    t('⭐ « tomates » et « pommes » aussi', R.tomates===true && R.pommes===true, '');
+    t('⭐ « courgettes » et « figues » ne rendaient RIEN DU TOUT', R.courgettes===true && R.figues===true, '');
+    t('⛔⛔ NON-RÉGRESSION : « pates » rend les PÂTES, pas « Pâté breton »', R.patesPasPate===true, '');
+    t('⛔⛔ NON-RÉGRESSION : « pois » rend les POIS, pas « Poireau »', R.poisPasPoireau===true, '');
+    t('⛔ « pate » (singulier) veut toujours dire pâté', R.patePate===true, '');
+    t('⛔ œuf · riz · poulet · ananas · pois chiche ne bougent pas', R.stable===true, '');
+    t('⭐⭐ « spaghetti » rend des PÂTES — il rendait la courge spaghetti', R.spaghetti===true, '');
+    t('⭐⭐ « penne », « macaroni », « coquillettes » rendaient ZÉRO résultat',
+      R.penne===true && R.macaroni===true && R.coquillettes===true, '');
+    t('⛔ ... et la COURGE spaghetti reste trouvable (on ajoute une porte, on n\'en ferme aucune)',
+      R.courgeIntacte===true, '');
+    t('⭐ « spaghetti cuit » rend bien la version CUITE (l\'état passe par-dessus)',
+      R.spaghettiCuit===true, '');
+    t('⭐ R2 : son propre JOURNAL se cherche pareil (« amandes » trouve « Amande grillée »)',
+      R.journalPluriel===true, '');
+    t('⛔ ... sans régresser sur le singulier', R.journalSingulier===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
