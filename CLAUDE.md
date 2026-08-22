@@ -136,7 +136,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v962`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v963`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v962`** (prochaine : `ft-v963`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v963`** (prochaine : `ft-v964`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v963 — 🔎 LE PLURIEL — 97 % DE LA BASE ÉTAIT INATTEIGNABLE** — Michel : *« c'est comme j'ai cherché les pâtes, j'ai pas trouvé — enfin si, mais pas ce que je voulais trouver, et je n'ai plus la boîte pour le code-barre »*.
+
+**⚠️⚠️ ET SA PROPRE EXPLICATION ÉTAIT FAUSSE — c'est la première chose qu'il a fallu vérifier.** Il a ensuite pensé à l'accent : *« ah c'est pâtes et pas pates lol »*. **Mesuré : « pâtes » et « pates » rendent EXACTEMENT la même liste** depuis ft-v960 (`NFD` retire les accents). *Le croire aurait fermé le sujet sur un faux coupable et laissé le vrai en place* — **R28 coupe dans les deux sens**, y compris quand c'est Michel qui diagnostique.
+
+**⛔⛔ LE VRAI DÉFAUT : CIQUAL NOMME AU SINGULIER, ON TAPE AU PLURIEL.** « Amande, grillée » · « Lentille verte, sèche » · « Tomate, crue » — mais personne ne mange *une* amande. **Mesuré sur toute la base : 97 % des 3 341 aliments étaient inatteignables au pluriel.**
+
+**⭐⭐ ET LE PIRE N'EST PAS LE VIDE, C'EST LE FAUX.** Les **plats composés**, eux, emploient le pluriel : *« amandes »* rendait **Croissant aux amandes**, *« lentilles »* rendait **Soupe aux lentilles**, *« tomates »* rendait **Caviar de tomates**. *Une recherche qui rend le mauvais aliment coûte plus cher qu'une recherche vide : on l'enregistre sans se méfier.*
+
+**⛔ MÊME TROU EN VOCABULAIRE POUR LES PÂTES** — et c'est très probablement ce qu'il a vu. CIQUAL ne connaît que « Pâtes sèches » : **penne, macaroni, coquillettes, fusilli, farfalle, rigatoni, conchiglie, linguine rendaient ZÉRO résultat**, et *« spaghetti »* rendait… **la courge spaghetti**. ⚠️ Ce ne sont pas des aliments différents, ce sont des **formes de la même semoule** : on n'invente aucune valeur, on ouvre une porte vers celles de CIQUAL. La liste reste courte et explicite — elle dit une équivalence de forme, elle ne juge rien (**R29**). ⛔ Et **la courge reste trouvable** : on ajoute une porte, on n'en ferme aucune.
+
+**⭐⭐ L'ORDRE DE PRÉFÉRENCE EST CE QUI ÉVITE LES DÉGÂTS, ET IL A FALLU DEUX ESSAIS.** Mon 1ᵉʳ jet retirait le « s » sans plus de façons — et **fabriquait deux régressions en réparant** : *« pâtes »* rendait **Pâté breton**, *« pois »* rendait **Poireau**. 👉 On classe donc : ① le nom **commence** par le mot · ② la forme **EXACTE** avant la dépluralisée · ③ le nom le plus court. **Mesuré : 0 régression sur 50 requêtes courantes**, et les deux cassés sont devenus des témoins permanents (**R17**).
+
+**⭐ R2 — UN SEUL PROPRIÉTAIRE DE « CHERCHER ».** Les **trois** recherches — CIQUAL, les compléments, et **son propre journal** — avaient le même défaut. Elles le corrigent donc **au même endroit** : sinon la prochaine correction n'en réparerait qu'une, et *personne ne le verrait*. Un témoin vérifie que *« amandes »* retrouve son *« Amande grillée »* à lui.
+
+**⚠️ Le plafond de 400 reste tel quel, et c'est une décision mesurée** (**R30**) : il ne fausse qu'*« eau »* (*robinet* au lieu de *coco*), et les deux se valent — le relever échangerait un résultat correct contre un autre.
+Tests : **parcours 1079/1079** (+16, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 8 rouges**, exactement les 8 comportements changés. ⭐ **Et cette fois les 16 témoins se sont TOUS exécutés** — mon 1ᵉʳ jet les mettait derrière un garde « `_afRang` absente », donc ils **ne tournaient pas** contre l'ancien code et le contrôle ne disait qu'une chose : *« la fonction n'existe pas »*. Le garde ne porte plus que sur `_ciqualChercher`, qui existe **des deux côtés**. *Un témoin qui ne tourne pas n'est pas un témoin vert* — 3ᵉ fois que ça se paie (ft-v949, ft-v953). ⚠️ Les **8 verts des deux côtés sont ici les plus importants** : l'accent, « pâtes », « pois », « pâté », œuf/riz/poulet, la courge et le singulier du journal **devaient rester intacts** — *une correction de recherche se juge à ce qui n'a PAS bougé*. Fichiers : `app.js`, `clone/app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v963. |
 
 **ft-v962 — ⚖️ MODIFIER LE POIDS D'UNE ENTRÉE — au lieu de recalculer les 4 macros à la main** — Michel, devant un « Oeuf cru » dans son journal : *« ya œuf cru (lol) pas cuit. Et on ne peut pas modifier le poids »*.
 
@@ -707,21 +724,6 @@ Tests : **parcours 941/941** (+3, bloc LXXVIII), calculs 241/241, muscles 241/24
 
 **⚠️ ET L'HONNÊTETÉ SUR LA DATE COMPTE AUTANT QUE LA MESURE** : les 3 cas trouvés sont tous **antérieurs au correctif du 20/08** — ou dans le fil en cours, **non datable depuis l'export**. **Rien ne prouve que ft-v923 a échoué.** Ce qui change, c'est qu'à partir d'aujourd'hui **on le saura** au lieu de le supposer.
 Tests : **parcours 938/938** (+10, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge** — les fonctions n'existent pas. ⚠️ **Et 9 témoins ne se sont pas exécutés du tout** : *un témoin qui ne tourne pas n'est pas un témoin vert* — 929 exécutés au lieu de 938. Fichiers : `coach.js`, `index.html`, `clone/index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v944. |
-
-**ft-v943 — 📈 L'ÉVOLUTION DU BILAN SANGUIN ATTEINT MILO — mais il ne l'ouvre JAMAIS lui-même** — Michel : *« qu'il voie l'évolution, comme la courbe du poids, et tous les marqueurs, mais il ne le dit que si on lui demande par contre »*.
-
-**⚠️ AVANT, ON N'ENVOYAIT QUE LE DERNIER BILAN (`bt[0]`), et une SÉLECTION de marqueurs.** Or l'**écran**, lui, comparait déjà chaque marqueur au bilan précédent — flèches ▲/▼ chiffrées, depuis le 8 juillet. **L'app savait, Milo pas.** C'est **R4/R8** dans sa forme la plus nette : *la donnée existe et n'atteint pas celui qui en parle* — et personne ne pouvait le voir, puisque rien ne plante quand une info manque.
-
-**👉 Partent désormais : TOUS les marqueurs, et jusqu'à 3 bilans antérieurs avec leurs dates.** ⭐ **R13** : le motif *« valeur + écart vs bilan précédent »* est **repris du BILAN CORPOREL** situé juste au-dessus dans le même contexte — on ne réinvente pas une façon de dire l'évolution quand elle existe dix lignes plus haut.
-
-**⛔⛔ ET LE POINT LE PLUS DÉLICAT EST LE TROISIÈME DE SA PHRASE.** Donner **plus** de données médicales rend **mécaniquement plus probable** que Milo en parle tout seul : *un modèle commente ce qu'on lui donne.* La règle « seulement si on demande » est donc posée **juste à côté de la donnée qu'elle encadre** — là où la règle keto avait échoué en vivant à 67 % du prompt, loin du moment où elle sert.
-
-**⭐ ET SURTOUT ELLE EST RENDUE MESURABLE** : nouveau scénario **EV-016** — la personne demande une **séance**, Milo doit rester **muet** sur le bilan. *Une consigne qu'on ne mesure pas n'est qu'un espoir*, et c'est exactement pour ça que le benchmark existe. ⛔ Le scénario ne dit **rien** sur le sens inverse (répond-il bien quand on l'interroge ?) — c'est un autre scénario, il n'existe pas encore, et c'est écrit dans le corpus.
-
-**⚠️ Le corpus passe à 16 — et le PRIX annoncé se CALCULE désormais** (`_EV_PRIX`, la même source que « rejouer les rouges ») au lieu d'être écrit en dur pour 15. *Un coût annoncé faux est pire qu'un coût non annoncé*, puisque Michel décide de dépenser sur ce chiffre — et il serait devenu faux **en silence**.
-
-**⚠️ DEUX ERREURS PAYÉES, et la seconde est la plus instructive.** ① Une **virgule en trop** a fabriqué un **17ᵉ élément VIDE** dans le tableau — le témoin épingle donc le nombre exact, sinon un scénario disparu ne se verrait pas. ② **Mes premiers témoins prenaient TSH et glycémie** pour prouver que « tous les marqueurs partent »… or l'**ancien** code les envoyait déjà (ils étaient dans sa liste de mots-clés). **Verts des deux côtés, ils ne prouvaient rien.** Il a fallu un marqueur ni hors norme ni dans l'ancienne liste — **Sodium** — pour que la mesure discrimine vraiment.
-Tests : **parcours 928/928** (+9, bloc LXXVII ; 1 témoin repointé), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 6 rouges**, exactement les 6 comportements changés. ⚠️ Trois témoins sont **verts des deux côtés, et c'est voulu** : le bloc reste dans la zone personnelle · aucun bilan ne produit aucun bloc · un bilan seul n'annonce aucun historique. Fichiers : `coach.js`, `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js`, `index.html`, `clone/index.html`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v943. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

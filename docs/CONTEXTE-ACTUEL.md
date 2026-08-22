@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v962` — fusionnée sur `master` le 22/08.
+- **Version en ligne (live) :** `ft-v963` — fusionnée sur `master` le 22/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,20 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- 🔎 **LE PLURIEL — 97 % DE LA BASE ÉTAIT INATTEIGNABLE** (ft-v963) — Michel : *« j'ai cherché
+  les pâtes, j'ai pas trouvé — enfin si, mais pas ce que je voulais trouver »*.
+  ⚠️⚠️ **Sa propre explication était fausse** (*« ah c'est pâtes et pas pates lol »*, l'accent) :
+  mesuré, les deux rendent la même liste depuis ft-v960. **R28 coupe dans les deux sens.**
+  ⛔⛔ **Le vrai défaut** : CIQUAL nomme au **singulier**, on tape au **pluriel** → 97 % des
+  3 341 aliments inatteignables. ⭐⭐ **Et le pire n'est pas le vide, c'est le faux** : les plats
+  composés emploient le pluriel — « amandes » rendait *Croissant aux amandes*.
+  ⛔ **Même trou en vocabulaire pour les pâtes** : penne / macaroni / coquillettes → 0 résultat,
+  et « spaghetti » rendait **la courge spaghetti**. 12 formes courantes y mènent désormais,
+  **sans fermer** l'accès à la courge.
+  ⭐⭐ **Deux essais pour l'ordre** : mon 1ᵉʳ jet rendait *Pâté breton* pour « pâtes » et *Poireau*
+  pour « pois ». Classement final : commence-par > forme exacte > nom le plus court.
+  **0 régression sur 50 requêtes.**
+  ⭐ **R2** : les 3 recherches (CIQUAL, compléments, **son journal**) corrigées au même endroit.
 - ⚖️ **MODIFIER LE POIDS D'UNE ENTRÉE DU JOURNAL** (ft-v962) — Michel, sur un « Oeuf cru » :
   *« ya œuf cru (lol) pas cuit. Et on ne peut pas modifier le poids »*.
   ⭐⭐ **Deux questions, une seule est un défaut** (vérifié, R28). ① **L'œuf cru n'est pas un trou**

@@ -1584,14 +1584,14 @@ function _complChercher(q, max){
   const out=[];
   for(const a of _compl.a){
     const n=_afNorm(a[0]+' '+(a[1]||''));
-    let ok=true;
-    for(const m of mots){ if(n.indexOf(m)<0){ ok=false; break; } }
-    if(!ok) continue;
-    out.push([_afNorm(a[0]).indexOf(_afNorm(mots[0]))===0?0:1, a[0].length, a]);
+    // ⭐ R2 : même définition de « correspondre » que CIQUAL et que son journal (ft-v963).
+    const r=_afRang(mots, n);
+    if(!r) continue;
+    out.push([r[0], r[1], a[0].length, a]);
     if(out.length>400) break;
   }
-  out.sort((x,y)=> x[0]-y[0] || x[1]-y[1]);
-  return out.slice(0, max||6).map(x=>x[2]);
+  out.sort((x,y)=> x[0]-y[0] || x[1]-y[1] || x[2]-y[2]);
+  return out.slice(0, max||6).map(x=>x[3]);
 }
 function _complSuggRendu(liste){
   const el=document.getElementById('compl-sugg'); if(!el) return;
@@ -1643,6 +1643,64 @@ async function _ciqualCharger(){
   })();
   return _ciqualEnCours;
 }
+/* ═══ ⛔⛔ LE PLURIEL — LE PLUS GROS TROU DE LA RECHERCHE (22/08/2026) ══════════════════════
+   Michel : *« c'est comme j'ai cherché les pâtes, j'ai pas trouvé — enfin si, mais pas ce que je
+   voulais trouver, et je n'ai plus la boîte pour le code-barre »*.
+   ⚠️ **ET SA PROPRE EXPLICATION ÉTAIT FAUSSE** — il a ensuite pensé à l'accent (*« ah c'est pâtes
+   et pas pates lol »*). **Vérifié : l'accent n'y est pour RIEN** — « pâtes » et « pates » rendent
+   exactement la même liste depuis ft-v960 (`NFD` retire les accents). *Le croire aurait fermé le
+   sujet sur un faux coupable, et le vrai serait resté* (R28 dans les deux sens).
+   ⛔⛔ LE VRAI DÉFAUT, MESURÉ SUR TOUTE LA BASE : **CIQUAL nomme ses aliments au SINGULIER**
+   (« Amande, grillée », « Lentille verte, sèche », « Tomate, crue »), et les gens tapent au
+   **PLURIEL** — on mange « des amandes », pas « une amande ». Résultat : **97 % des 3 341 aliments
+   sont inatteignables si on tape le pluriel**. Et ce n'est pas seulement « rien ne sort » : c'est
+   pire, on tombe sur les PLATS composés qui, eux, emploient le pluriel — « amandes » rendait
+   *Croissant aux amandes*, « lentilles » rendait *Soupe aux lentilles*. ⚠️ *Une recherche qui rend
+   le mauvais aliment est plus coûteuse qu'une recherche vide : on l'enregistre sans se méfier.*
+   ⛔ ET LA FORME DES PÂTES EST LE MÊME TROU, EN VOCABULAIRE : CIQUAL ne connaît que « Pâtes
+   sèches, standard » — **penne, macaroni, coquillettes, fusilli, farfalle, rigatoni, conchiglie,
+   linguine rendaient ZÉRO résultat**, et « spaghetti » rendait… **la courge spaghetti**. C'est
+   très probablement ce que Michel a vu. ⚠️ Ce ne sont PAS des aliments différents : ce sont des
+   formes de la même semoule de blé dur — on ne fabrique aucune valeur, on ouvre une porte vers
+   celles de CIQUAL. La liste reste **courte et explicite** : elle dit une équivalence de forme,
+   elle ne juge rien (R29).
+   ⭐⭐ L'ORDRE DE PRÉFÉRENCE EST CE QUI ÉVITE LES DÉGÂTS, et il a fallu deux essais pour le
+   trouver. Mon 1ᵉʳ jet retirait le « s » sans plus de façons : **« pâtes » rendait alors *Pâté
+   breton*** (le « pate » dépluralisé) et **« pois » rendait *Poireau***. Deux régressions
+   fabriquées en réparant. 👉 On classe donc : ① le nom **commence** par le mot · ② la forme
+   **EXACTE** passe avant celle qu'on a dû déplurialiser ou traduire · ③ le nom le plus court.
+   *Mesuré : 0 régression sur 50 requêtes courantes.*
+   ⚠️ Le plafond de 400 reste tel quel : mesuré, il ne fausse qu'« eau » (*robinet* au lieu de
+   *coco*), et les deux se valent — le relever changerait un résultat correct pour un autre. */
+const _AF_FORMES_PATES=['spaghetti','penne','macaroni','coquillette','fusilli','farfalle',
+  'rigatoni','conchiglie','linguine','tagliatelle','torsade','tortis'];
+/* Un mot tapé peut atteindre un nom par 3 chemins, du plus sûr au moins sûr. Rend `null` si
+   aucun ne marche, sinon le texte réellement trouvé + s'il a fallu approximer. */
+function _afMotDansNom(m, n){
+  if(n.indexOf(m)>=0) return {t:m, approx:0};
+  const fin=m.slice(-1);
+  const sg=(m.length>=4 && (fin==='s'||fin==='x')) ? m.slice(0,-1) : null;
+  if(sg && n.indexOf(sg)>=0) return {t:sg, approx:1};
+  const base=sg||m;
+  if(_AF_FORMES_PATES.indexOf(m)>=0 || _AF_FORMES_PATES.indexOf(base)>=0){
+    if(n.indexOf('pates')>=0) return {t:'pates', approx:1};
+  }
+  return null;
+}
+/* ⭐ R2 — UN SEUL PROPRIÉTAIRE DE « CE QUE VEUT DIRE CHERCHER ». Les trois recherches (CIQUAL,
+   les compléments, et son propre journal) avaient le même défaut ; elles le corrigent donc au
+   même endroit, sinon la prochaine correction n'en réparerait qu'une et personne ne le verrait.
+   Rend `null` si le nom ne correspond pas, sinon [commence-par, a-dû-approximer]. */
+function _afRang(mots, n){
+  let debut=1, approx=0;
+  for(let i=0;i<mots.length;i++){
+    const h=_afMotDansNom(mots[i], n);
+    if(!h) return null;
+    if(h.approx) approx=1;
+    if(i===0 && n.indexOf(h.t)===0) debut=0;
+  }
+  return [debut, approx];
+}
 /* Recherche par nom. Les mots peuvent être dans le DÉSORDRE : « riz cuit » doit retrouver
    « Riz blanc, cuit, sans sel ajouté ». On exige que TOUS les mots tapés soient présents —
    sinon « riz complet » remonterait tous les riz et tous les pains complets. */
@@ -1660,16 +1718,15 @@ function _ciqualChercher(q, max){
        fichier, c'est l'affichage qui la filtre. */
     if(a[3]===null||a[3]===undefined) continue;
     const n=_afNorm(a[1]);
-    let ok=true;
-    for(const m of mots){ if(n.indexOf(m)<0){ ok=false; break; } }
-    if(!ok) continue;
+    const r=_afRang(mots, n);
+    if(!r) continue;
     /* Un nom COURT qui commence par ce qu'on a tapé est presque toujours le bon : « Banane »
        avant « Banane plantain, crue, prélevée en Guadeloupe ». */
-    out.push([n.indexOf(_afNorm(mots[0]))===0 ? 0 : 1, n.length, a]);
+    out.push([r[0], r[1], n.length, a]);
     if(out.length>400) break;                          // on ne trie pas 3 484 lignes pour rien
   }
-  out.sort((x,y)=> x[0]-y[0] || x[1]-y[1]);
-  return out.slice(0, max||6).map(x=>x[2]);
+  out.sort((x,y)=> x[0]-y[0] || x[1]-y[1] || x[2]-y[2]);
+  return out.slice(0, max||6).map(x=>x[3]);
 }
 /* ⭐ R2 : un aliment CIQUAL remplit le formulaire par le MÊME chemin que le code-barres et la
    recherche Open Food Facts — grammes, provenance, note d'état. Un 3ᵉ chemin de remplissage
@@ -1745,12 +1802,15 @@ function _afNorm(t){
    c'est la dernière qui reflète ce qu'il mange aujourd'hui. */
 function _afSuggLocales(q){
   const n=_afNorm(q); if(n.length<_AF_SUGG_MIN) return [];
+  /* ⭐ R2 (ft-v963) : son journal se cherche comme le reste — sinon il serait la SEULE des trois
+     recherches à ne pas retrouver « amandes » dans son propre « Amande grillée ». */
+  const mots=n.split(/\s+/).filter(m=>m.length>1);
   const vus=new Set(), out=[];
   (S.foodLog||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(e=>{
     if(!e||!e.name) return;
     const cle=_afNorm(e.name);
     if(vus.has(cle)) return;
-    if(cle.indexOf(n)<0) return;
+    if(!mots.length ? cle.indexOf(n)<0 : !_afRang(mots, cle)) return;
     vus.add(cle);
     if(out.length<5) out.push(e);
   });
