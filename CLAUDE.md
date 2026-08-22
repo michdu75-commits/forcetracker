@@ -136,7 +136,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v963`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v964`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v963`** (prochaine : `ft-v964`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v964`** (prochaine : `ft-v965`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v964 — 🔤 CES MOTS-LÀ NE S'ÉCRIVENT PAS** — Michel, **juste après** ft-v963 : *« oui j'ai mis ça, après je voulais mettre coquilette »*.
+
+**⛔⛔ IL L'ÉCRIT AVEC UN SEUL L**, et ma liste de synonymes portait « coquillette ». **Sa graphie à lui rendait ZÉRO résultat.** *La correction de la veille marchait donc pour l'orthographe parfaite — c'est-à-dire pour ceux qui n'en avaient pas besoin.*
+
+**⭐ MESURÉ, PAS DEVINÉ : 6 autres graphies plausibles échouaient aussi** — *spagetti · tagliatele · farfale · fusili · linguini · pene*. Toutes des variantes de **consonne doublée** ou de **h muet** : exactement là où ces mots italiens se trompent.
+
+**⛔ LA TOLÉRANCE NE S'APPLIQUE QU'À LA LISTE FERMÉE DE 12 FORMES**, jamais à la base. On compare la frappe aux 12 mots connus — donc **aucun rapprochement hasardeux possible** sur 3 341 aliments. *C'est ce qui distingue une tolérance bornée d'une recherche floue, qui aurait ramené n'importe quoi.*
+
+**⚠️⚠️ ET DEUX PIÈGES TROUVÉS EN LE MESURANT, PAS EN LE RELISANT :**
+**① Ma 1ʳᵉ version retirait aussi la VOYELLE FINALE — et « macaroni » devenait « macaron ».** ⛔ **La pâtisserie serait partie sur les pâtes.** Le retrait de la voyelle finale a donc sauté, et *« linguini »* (graphie anglaise) est **simplement ajouté** à la liste : *plus honnête qu'une règle qui rabote au hasard pour rattraper un cas.*
+**② « torsade » est RETIRÉ de la liste** (**R30** — un retrait s'écrit) : CIQUAL l'emploie pour un **biscuit apéritif feuilleté**, usage au moins aussi courant que la pâte. *Entre détourner un vrai aliment et rater une forme rare, on rate la forme rare.*
+
+**⭐ VÉRIFIÉ SUR LES 2 261 MOTS DISTINCTS DE CIQUAL** : la seule collision restante est *« spaghetti »* (**la courge**), et elle est **voulue** — la courge garde sa correspondance EXACTE, donc elle reste trouvable. *On ajoute une porte, on n'en ferme aucune.*
+Tests : **parcours 1084/1084** (+5, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Pas de contrôle négatif séparé** : la version corrige ft-v963, livrée il y a vingt minutes, et **ses 8 rouges couvrent déjà le mécanisme**. Ce qui compte ici est ailleurs — les **2 témoins qui protègent macaron et torsade** sont verts **des deux côtés**, et c'est le but : *ils gardent une absence, pas une nouveauté.* Fichiers : `app.js`, `clone/app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v964. |
 
 **ft-v963 — 🔎 LE PLURIEL — 97 % DE LA BASE ÉTAIT INATTEIGNABLE** — Michel : *« c'est comme j'ai cherché les pâtes, j'ai pas trouvé — enfin si, mais pas ce que je voulais trouver, et je n'ai plus la boîte pour le code-barre »*.
 
@@ -709,21 +724,6 @@ Tests : **parcours 947/947** (+6, bloc LXXVIII), calculs 241/241, muscles 241/24
 
 **⚠️ Une erreur payée** : mon témoin attrapait le **miroir Supabase** (corps enveloppé dans `p_data`) et rendait *« compteur absent »* alors qu'il partait bien. *Un témoin qui lit la mauvaise enveloppe accuse le code d'un défaut qu'il n'a pas.* Il déballe désormais et couvre **les deux** chemins.
 Tests : **parcours 941/941** (+3, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données **102 classées 0 trou**. Fichiers : `coach.js`, `state.js`, `setup.js`, `Code.js`, `index.html`, `clone/index.html`, `tests/donnees/donnees-milo.json`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v945. |
-
-**ft-v944 — 🛡️ LE GARDIEN TOURNE ENFIN LÀ OÙ LES GENS VIVENT — et il a fallu le CALIBRER d'abord** — Michel exporte ses conversations et dit simplement : *« Regarde »*. **258 messages, 4 discussions, 25 jours, 142 425 caractères.**
-
-**⭐⭐ CE QU'ON Y A MESURÉ : 3 vraies promesses de mémoire NON TENUES** — *« le Leg Curl avant le Face Pull, c'est noté »*, *« je retiens ça pour les prochaines fois »*, *« je retiens pour la prochaine fois »* — **sans qu'un seul bloc soit enregistré**. Et **rien ne les voyait passer** : le Gardien de sortie ne tournait **que sur le clone**. *Un garde-fou qui ne tourne pas là où les gens vivent ne garde rien.*
-
-**⚠️⚠️ MAIS LE BRANCHER TEL QUEL AURAIT ÉTÉ PIRE QUE DE NE RIEN FAIRE.** Joué sur ces **129 vraies réponses**, le motif criait **7 fois** : 3 vraies, et **4 phrases qui n'en sont pas du tout** — un débrief qui commence par *« ce que je retiens : »*, Milo qui **explique comment sa mémoire fonctionne**, un simple accusé de réception, une offre conditionnelle. *Un garde-fou juste une fois sur deux ne survit pas à son premier mois* (**R19**). Il a donc été **calibré sur ces vraies données avant d'être branché** : **7 alertes → 3**, et ce sont **exactement** les 3 vraies.
-
-**⛔ ET LE TEXTE AFFICHÉ NE CHANGE PAS D'UN CARACTÈRE.** `_gardienSortie` commence par `_stripCoachTech` — précisément ce que faisait déjà la production — et se contente ensuite de **lever des drapeaux** : il ne réécrit jamais une phrase. **On ajoute une MESURE, pas un filtre.** C'est le témoin le plus important du bloc, et il est vérifié sur des réponses qui lèvent effectivement des drapeaux.
-
-**⚠️ ON MESURE CHEZ TOUT LE MONDE, ON AFFICHE CHEZ NOUS.** Le badge reste réservé (clone + admin) : voir *« promesse de mémoire sans rien enregistrer »* sous une réponse **ferait douter n'importe qui de son coach**, pour un défaut qui nous regarde, nous. Chez les autres, la dérive est **comptée**.
-
-**⛔ ET LE COMPTEUR NE GARDE QUE DES NOMBRES** — aucune phrase de Milo, aucun mot de la personne. *Une dérive de comportement se mesure par sa FRÉQUENCE, pas par son contenu* ; stocker le contenu fabriquerait un journal de conversation que personne n'a demandé (**Constitution P3**). Lisible dans **Profil → Admin**.
-
-**⚠️ ET L'HONNÊTETÉ SUR LA DATE COMPTE AUTANT QUE LA MESURE** : les 3 cas trouvés sont tous **antérieurs au correctif du 20/08** — ou dans le fil en cours, **non datable depuis l'export**. **Rien ne prouve que ft-v923 a échoué.** Ce qui change, c'est qu'à partir d'aujourd'hui **on le saura** au lieu de le supposer.
-Tests : **parcours 938/938** (+10, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge** — les fonctions n'existent pas. ⚠️ **Et 9 témoins ne se sont pas exécutés du tout** : *un témoin qui ne tourne pas n'est pas un témoin vert* — 929 exécutés au lieu de 938. Fichiers : `coach.js`, `index.html`, `clone/index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v944. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

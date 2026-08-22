@@ -9748,6 +9748,18 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     /* ⭐ le mot d'etat continue de marcher par-dessus le synonyme. */
     o.spaghettiCuit=/cuites/.test(top('spaghetti cuit'));
 
+    /* ⛔⛔ ET CES MOTS NE S'ECRIVENT PAS — Michel ecrit « coquilette » avec UN SEUL L. */
+    o.coquilette=/^Pâtes/.test(top('coquilette'));          // SA graphie a lui
+    o.coquilettes=/^Pâtes/.test(top('coquilettes'));
+    o.coquillette=/^Pâtes/.test(top('coquillette'));        // et la graphie correcte aussi
+    o.autresGraphies=['spagetti','tagliatele','farfale','fusili','linguini','pene']
+      .every(q=>/^Pâtes/.test(top(q)));
+    /* ⛔⛔ MAIS LE MACARON RESTE UNE PATISSERIE (ma 1re version le detournait vers les pates). */
+    o.macaronIntact=/^Macaron/i.test(top('macaron')) || !/^Pâtes/.test(top('macaron'));
+    o.macaronsIntact=!/^Pâtes/.test(top('macarons'));
+    /* ⛔ ET « torsade » est RETIRE de la liste : CIQUAL l'emploie pour un biscuit aperitif (R30). */
+    o.torsadeIntacte=!/^Pâtes/.test(top('torsade'));
+
     /* ⭐ R2 : SON PROPRE JOURNAL se cherche de la meme facon. */
     S.foodLog=[{date:today(),meal:'diner',name:'Amande grillée',kcal:60,prot:2,carbs:2,fat:5,ts:Date.now()}];
     o.journalPluriel=_afSuggLocales('amandes').length===1;
@@ -9777,6 +9789,15 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       R.courgeIntacte===true, '');
     t('⭐ « spaghetti cuit » rend bien la version CUITE (l\'état passe par-dessus)',
       R.spaghettiCuit===true, '');
+    t('⛔⛔ « coquilette » (SA graphie, un seul L) trouve les pâtes', R.coquilette===true, '');
+    t('⛔ ... au pluriel aussi, et la graphie correcte ne régresse pas',
+      R.coquilettes===true && R.coquillette===true, '');
+    t('⭐ 6 autres graphies plausibles : spagetti · tagliatele · farfale · fusili · linguini · pene',
+      R.autresGraphies===true, '');
+    t('⛔⛔ MAIS « macaron » reste une PÂTISSERIE (ma 1ʳᵉ version le détournait)',
+      R.macaronIntact===true && R.macaronsIntact===true, '');
+    t('⛔ ... et « torsade » aussi (retiré de la liste : biscuit apéritif chez CIQUAL)',
+      R.torsadeIntacte===true, '');
     t('⭐ R2 : son propre JOURNAL se cherche pareil (« amandes » trouve « Amande grillée »)',
       R.journalPluriel===true, '');
     t('⛔ ... sans régresser sur le singulier', R.journalSingulier===true, '');

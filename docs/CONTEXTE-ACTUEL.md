@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v963` — fusionnée sur `master` le 22/08.
+- **Version en ligne (live) :** `ft-v964` — fusionnée sur `master` le 22/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,13 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- 🔤 **CES MOTS-LÀ NE S'ÉCRIVENT PAS** (ft-v964) — Michel : *« je voulais mettre coquilette »*
+  (**un seul L**) → zéro résultat. ⭐ 6 autres graphies échouaient : spagetti, tagliatele, farfale,
+  fusili, linguini, pene — consonnes doublées et h muets.
+  ⛔ Tolérance **bornée à la liste fermée de 12 formes**, jamais à la base.
+  ⚠️⚠️ **Deux pièges trouvés en mesurant** : ① ma 1ʳᵉ version envoyait **« macaron » sur les pâtes**
+  (retrait de la voyelle finale — supprimé) ; ② **« torsade » retiré** (biscuit apéritif chez
+  CIQUAL, R30). Seule collision restante : « spaghetti » la courge, **voulue** (elle reste trouvable).
 - 🔎 **LE PLURIEL — 97 % DE LA BASE ÉTAIT INATTEIGNABLE** (ft-v963) — Michel : *« j'ai cherché
   les pâtes, j'ai pas trouvé — enfin si, mais pas ce que je voulais trouver »*.
   ⚠️⚠️ **Sa propre explication était fausse** (*« ah c'est pâtes et pas pates lol »*, l'accent) :
