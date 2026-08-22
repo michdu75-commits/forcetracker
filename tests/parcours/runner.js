@@ -9254,7 +9254,14 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     d.value='ban'; _afSuggInput();
     const h1=(document.getElementById('af-sugg')||{}).innerHTML||'';
     o.localeVue=/30g protéine \+ banane/.test(h1);
-    o.zeroReseau=urls.length===0;
+    /* ⚠️ TÉMOIN CORRIGÉ (22/08) : il exigeait « zéro appel réseau », et c'est devenu FAUX quand
+       la base CIQUAL est arrivée — taper déclenche son chargement. Mais la garantie qui compte
+       n'a pas changé : les suggestions LOCALES s'affichent **sans attendre** quoi que ce soit
+       (elles sont là AVANT que le moindre appel ait pu répondre), et le seul appel possible est
+       un FICHIER, jamais l'IA. *On rend le témoin exact plutôt que de l'affaiblir.* */
+    o.localesSansAttendre = o.localeVue;                 // rendu synchrone, avant tout réseau
+    o.seulementLeFichier = urls.every(u=>/ciqual\.json/.test(u));
+    o.appelsFrappe = urls.length;
     /* ⛔ Dédoublonné, et c'est la PLUS RÉCENTE qui gagne (245, pas 250). */
     o.uneSeuleFois=(h1.match(/30g protéine \+ banane/g)||[]).length===1;
     o.laPlusRecente=/245 kcal/.test(h1);
@@ -9303,6 +9310,62 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     openAddFood();
     o.rouvertVide = ((document.getElementById('af-sugg')||{}).innerHTML||'')==='';
     window.fetch=vrai;
+
+    /* ═══ 🥗 LA BASE CIQUAL (ANSES) — brique 1 ═══════════════════════════════════════════
+       ⛔ LE POINT QUI DÉCIDE DE TOUT : elle ne doit RIEN coûter au démarrage. */
+    /* ⚠️ GARDE : sans lui, le contrôle négatif ne rougit pas — il fait PLANTER tout le bloc
+       (`_ciqual` n'existe pas encore), et le runner meurt avant d'afficher le moindre verdict.
+       *Un témoin qui tue le harnais ne mesure rien du tout.* */
+    if(typeof _ciqualCharger!=='function'){ o.ciqAbsente=true; window.fetch=vrai; return o; }
+    urls=[]; window.fetch=function(u){ urls.push(String(u)); return vrai.apply(this,arguments); };
+    o.pasChargeeAuDepart = (_ciqual===null);            // l'app tourne depuis 2 s, elle n'a rien chargé
+    const d2=document.getElementById('af-desc');
+    openAddFood();
+    d2.value='banane'; _afSuggInput();
+    await new Promise(r=>setTimeout(r,1500));
+    o.chargeeALaFrappe = !!_ciqual;
+    o.nbAliments = _ciqual ? _ciqual.a.length : 0;
+    /* ⭐ L'aliment GÉNÉRIQUE remonte, et avant les produits de marque. */
+    const hc=(document.getElementById('af-sugg')||{}).innerHTML||'';
+    o.ciqualVu = /CIQUAL · ANSES/.test(hc) && /Banane/.test(hc);
+    o.sourceCitee = /table Ciqual 2025 — ANSES/.test(hc);   // Licence Ouverte : citation obligatoire
+    /* ⭐ Les mots peuvent être dans le désordre : « riz cuit » trouve « Riz blanc, cuit… ». */
+    o.desordre = _ciqualChercher('riz cuit',6).some(a=>/Riz blanc, cuit/.test(a[1]));
+    /* ⛔⛔ AUCUN aliment sans calories déterminées n'est proposé : dans CIQUAL « - » veut dire
+       NON DÉTERMINÉ, pas zéro — on ne peut pas enregistrer une ligne pareille. */
+    o.jamaisSansKcal = ['banane','riz','poulet','lait','pomme','pain'].every(q=>
+      _ciqualChercher(q,20).every(a=>typeof a[3]==='number'));
+    /* ... et la donnée reste bien dans le FICHIER (c'est l'affichage qui filtre, pas la base). */
+    o.nullsGardes = _ciqual.a.some(a=>a[3]===null);
+    /* ⭐ Prendre un aliment CIQUAL remplit par le MÊME chemin (100 g par défaut). */
+    _afSuggCiq=_ciqualChercher('banane',6);
+    const ban=_afSuggCiq[0];
+    _afSuggPrendreCiqual(0);
+    o.rempliCiq = (g('af-kcal')===Math.round(ban[3]));
+    const p3=_provFood(_afLuFormulaire());
+    o.provCiq = (p3.saisie==='ciqual' && p3.origine==='ciqual' && String(p3.sourceId||'').indexOf('ciqual:')===0);
+    /* ⛔ Pas d'état « tel-que-vendu » : CIQUAL dit le cru/cuit DANS LE NOM. */
+    o.pasTelQueVendu = (p3.etat===null);
+    /* ⚠️ Et aucune carte de score santé : une banane n'a ni Nutri-Score ni NOVA. */
+    o.pasDeScore = (((document.getElementById('af-health-card')||{}).innerHTML)||'')==='';
+    /* ⭐ LE CAS RÉEL DE TOUS LES JOURS : une fois la base en mémoire, taper ne déclenche
+       PLUS AUCUN appel — ni fichier, ni IA. C'est ce que vit la personne à partir de la 2ᵉ
+       recherche, et c'est ce qu'il fallait mesurer.
+       ⚠️ CE BLOC DOIT VENIR **AVANT** LA REMISE À ZÉRO CI-DESSOUS. Mon premier jet l'avait
+       placé après : le témoin rougissait en accusant le code, alors que c'était mon décor de
+       test qui avait effacé la base juste avant de la chercher. Troisième fois cette semaine
+       qu'un témoin désigne le mauvais coupable — un décor se relit dans l'ORDRE. */
+    urls=[];
+    d2.value='riz'; _afSuggInput();
+    o.zeroApresCharge = (urls.length===0); o.urlsApres=urls.slice(0,3);
+    o.ciqRizVu = _ciqualChercher('riz',6).length>0;
+    /* ⚠️ Un échec de chargement ne casse rien : les locales continuent. */
+    _ciqual=null; _ciqualEnCours=null;
+    window.fetch=function(){ return Promise.reject(new Error('hors ligne')); };
+    o.echecNonBloquant = ((await _ciqualCharger())===null);
+    d2.value='ban'; _afSuggInput();
+    o.localesApresEchec = /30g protéine \+ banane/.test((document.getElementById('af-sugg')||{}).innerHTML||'');
+    window.fetch=vrai;
     return o;
   });
 
@@ -9310,8 +9373,10 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   if(R.absente){ t('⛔ le moteur de suggestions existe', false, '_afSuggInput absente'); }
   else{
     t('⭐⭐ ce qu\'il a DÉJÀ noté remonte quand il tape', R.localeVue===true, '');
-    t('⛔⛔ ... SANS AUCUN appel réseau (instantané, marche hors ligne)',
-      R.zeroReseau===true, R.appels+' appel(s)');
+    t('⛔⛔ ... AFFICHÉES SANS ATTENDRE le réseau (rendu synchrone)',
+      R.localesSansAttendre===true, '');
+    t('⛔ ... et le seul appel déclenché est un FICHIER, jamais l\'IA',
+      R.seulementLeFichier===true, R.appelsFrappe+' appel(s) : '+(R.seulementLeFichier?'ciqual.json':'AUTRE'));
     t('⭐ ... dédoublonné, et c\'est la plus RÉCENTE qui gagne (245, pas 250)',
       R.uneSeuleFois===true && R.laPlusRecente===true, '');
     t('⚠️ les accents n\'empêchent pas de retrouver « Pâtes » en tapant « pates »',
@@ -9336,6 +9401,37 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⚠️ ... et les suggestions LOCALES continuent de marcher', R.localesSurvivent===true, '');
     t('⛔ rouvrir le formulaire REND la liste (R15 — sinon un tap remplit un formulaire cru neuf)',
       R.rouvertVide===true, '');
+    /* ═══ 🥗 LA BASE CIQUAL ═══ */
+    if(R.ciqAbsente){ t('⛔ la base CIQUAL est branchée', false, 'moteur CIQUAL absent'); }
+    else{
+    t('⛔⛔ la base CIQUAL n\'est PAS chargée au démarrage (règle d\'or #4)',
+      R.pasChargeeAuDepart===true, 'elle a été chargée sans qu\'on la demande');
+    t('⭐⭐ ... elle se charge à la PREMIÈRE frappe, et elle est complète',
+      R.chargeeALaFrappe===true && R.nbAliments===3484, R.nbAliments+' aliments');
+    t('⭐⭐ « banane » remonte l\'aliment GÉNÉRIQUE (ce qu\'Open Food Facts ne sait pas faire)',
+      R.ciqualVu===true, '');
+    t('⚠️ ... et la SOURCE est citée (Licence Ouverte / Etalab : ce n\'est pas optionnel)',
+      R.sourceCitee===true, '');
+    t('⭐ les mots dans le désordre marchent : « riz cuit » trouve « Riz blanc, cuit… »',
+      R.desordre===true, '');
+    /* ⛔⛔ Le point de rigueur : « - » veut dire NON DÉTERMINÉ, pas zéro. */
+    t('⛔⛔ aucun aliment SANS calories déterminées n\'est proposé (« - » ≠ 0)',
+      R.jamaisSansKcal===true, '');
+    t('⛔ ... mais la donnée reste dans le FICHIER : c\'est l\'affichage qui filtre, pas la base',
+      R.nullsGardes===true, '');
+    t('⭐ prendre un aliment remplit par le MÊME chemin que le scan (R2)',
+      R.rempliCiq===true, '');
+    t('⛔ ... avec sa provenance CIQUAL et son code d\'aliment (vérifiable)',
+      R.provCiq===true, '');
+    t('⛔ ... et PAS d\'état « tel-que-vendu » : CIQUAL dit le cru/cuit dans le NOM',
+      R.pasTelQueVendu===true, '');
+    t('⚠️ aucune carte de score santé sur un aliment brut (une banane n\'a pas de Nutri-Score)',
+      R.pasDeScore===true, '');
+    t('⭐⭐ une fois la base chargée, taper ne déclenche PLUS AUCUN appel (le cas de tous les jours)',
+      R.zeroApresCharge===true && R.ciqRizVu===true, JSON.stringify(R.urlsApres||[]));
+    t('⚠️ un échec de chargement ne bloque RIEN — les suggestions locales continuent',
+      R.echecNonBloquant===true && R.localesApresEchec===true, '');
+    }
   }
   await cx.close();
 }

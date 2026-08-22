@@ -228,7 +228,13 @@ Il n'y a **aucune** table d'aliments : seulement 25 phrases et une table de 40 m
 portions. Conséquences :
 
 - **la variété est plafonnée** — 3 variantes écrites à la main, et c'est tout ;
-- ⚠️ **CÔTÉ JOURNAL, PARTIELLEMENT COMBLÉ EN ft-v956** : taper un aliment propose désormais
+- ✅ **CÔTÉ JOURNAL, COMBLÉ EN ft-v957** : la **table Ciqual 2025 (ANSES)** est dans l'app —
+  **3 484 aliments génériques**, chargés **à la demande** (250 Ko · 68 Ko gzippés), source citée
+  (Licence Ouverte / Etalab). ⛔ « - » = **non déterminé**, pas zéro : 143 aliments gardent `null`
+  et sont écartés de l'affichage. Convertisseur : `tools/ciqual.py`.
+  ⏭️ **Reste la 2ᵉ base** — celle du **générateur** (~300 aliments `composable`, liste blanche
+  relue à la main). Voir `BRIEF-NUTRITION.md` §6.4 : *deux bases, pas une*.
+- ⚠️ **Étape intermédiaire, ft-v956** : taper un aliment propose désormais
   ① ce que la personne a **déjà noté** (local, hors ligne, zéro invention) et ② une **recherche
   Open Food Facts** (gratuite, sans quota). Plus besoin de dépenser une estimation IA pour une
   banane. ⛔ **Mais ce n'est PAS la base d'aliments** : OFF est une base de **produits de
