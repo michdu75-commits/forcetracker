@@ -96,6 +96,31 @@ prendre »*. **Aucun des 16 motifs ne mesure ça** — ni le ton, ni le naturel,
 **Reste au juge humain**, et c'est assumé : c'est précisément pour ça qu'un benchmark tout vert ne
 prouve pas que Milo est bon.
 
+### 🟢⭐ Une promesse de mémoire non tenue chez ELINE — le premier cas hors du fondateur
+**22/08/2026, première remontée réelle du parc.** Le Gardien mesure sur son téléphone :
+**14 réponses de Milo (13/08 → 22/08), dont 1 `promesse_vide`.**
+
+**⭐⭐ POURQUOI CETTE ENTRÉE COMPTE PLUS QUE LES AUTRES DE SA FAMILLE** : jusqu'ici, les 3 promesses
+non tenues qu'on connaissait venaient toutes des conversations de **Michel** — c'est-à-dire du seul
+compte **débridé** du parc (`_estSuperAdmin` lui ouvre tous les sujets et le droit de citer ses
+consignes). *On corrigeait potentiellement le mauvais cerveau* (**R9**). Celle-ci vient d'un Milo
+**NORMAL**, celui que reçoivent les vrais utilisateurs. **Le défaut n'était donc pas un artefact du
+mode débridé.**
+
+**⚠️ ET CE N'EST PAS ENCORE UNE PREUVE** : le compteur dit *qu'une* réponse a levé le drapeau, pas
+**laquelle**, ni si le motif a raison — on ne stocke que des nombres, et c'est volontaire
+(Constitution P3 : ses phrases ne quittent pas son téléphone). Sur les 4 drapeaux de Michel, **3
+étaient des faux positifs** une fois relus à la main (ft-v947). *Un drapeau n'est pas un bug tant
+qu'on ne l'a pas lu.*
+
+**👉 CE QU'IL FAUDRAIT POUR TRANCHER** : qu'elle exporte ses conversations (bouton « 💬 Exporter mes
+conversations ») et les envoie — comme Michel l'a fait le 21/08. **On ne peut pas le faire à sa
+place, et on ne le fera pas.**
+
+**Vérifiable par du CODE ?** Le scénario générique existe déjà (**EV-004**, « c'est noté » sans bloc
+enregistré). Ce qui n'est **pas** vérifiable, c'est *pourquoi* ça se produit encore après le
+correctif de ft-v923 — ça demande de lire le texte réel.
+
 ### 🟢⭐ Milo repropose un exercice que la personne a DÉJÀ refusé
 **16/08/2026, en pleine séance.** Michel : *« **Je lui ai déjà dit** que cet exercice ne me convient
 pas, trop long »*.

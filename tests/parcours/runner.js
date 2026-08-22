@@ -9098,6 +9098,67 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⛔ ... et il DIT pourquoi', P.ditQueCaDepend===true, '');
     t('⭐ ... en nommant ce qui restera, sans le chiffrer', P.nommeLeReste===true, '');
   }
+
+  /* == LE TOTAL DU GARDIEN CONTREDISAIT SON PROPRE DETAIL (22/08/2026) ==
+     Michel, devant l'ecran : le bloc annonce « TOTAL, tous comptes confondus » et n'agrege que
+     le DIRECT — donc il affichait « bloc_technique : 2 » pendant que le detail juste en dessous
+     montrait 2 promesses de memoire chez lui et 1 chez Eline. Famille « deux sources qui se
+     contredisent » (BUGS.md) : plus vicieuse que l'absence, parce qu'on VOIT les deux.
+     ⛔ ET ON NE LES ADDITIONNE PAS : deux epoques, deux versions de Milo (decision ft-v946). */
+  const G=await pg.evaluate(()=>{
+    const o={};
+    if(typeof _gardienStatsRendu!=='function') return {absente:true};
+    // Le cas RÉEL de sa capture du 22/08, chiffres compris.
+    const d={status:'ok', comptes:2,
+      global:{bloc_technique:2},
+      globalRetro:{promesse_vide:3, source_fabriquee:1},
+      retroMessages:115, retroTotal:4,
+      users:[
+        {nom:'Michel', total:2, depuis:'2026-08-21', dernier:'2026-08-21', codes:{bloc_technique:2},
+         retro:{total:3, messages:101, depuis:'2026-07-28', jusqu:'2026-08-22',
+                codes:{promesse_vide:2, source_fabriquee:1}}},
+        {nom:'Eline', total:0, depuis:'?', dernier:'?', codes:{},
+         retro:{total:1, messages:14, depuis:'2026-08-13', jusqu:'2026-08-22',
+                codes:{promesse_vide:1}}},
+      ]};
+    const txt=_gardienStatsRendu(d);
+    o.txt=txt;
+    /* ⛔① LE TOTAL DIT DÉSORMAIS CE QU'IL COMPTE. */
+    o.directNomme=/TOTAL 📡 EN DIRECT/.test(txt);
+    o.plusDeTotalFlou=txt.indexOf('TOTAL, tous comptes confondus')<0;
+    /* ⭐② ... ET L'HISTORIQUE A LE SIEN, avec les dérives qui manquaient. */
+    o.histNomme=/TOTAL 🕰️ HISTORIQUE/.test(txt);
+    o.histChiffres=/4 réponse\(s\) avec dérive sur 115 analysée\(s\)/.test(txt);
+    o.promesseVisible=/promesse_vide : 3/.test(txt);
+    /* ⛔③ LE TÉMOIN QUI COMPTE : plus aucun total ne contredit son détail. La somme des
+       promesses vues chez les gens (2 + 1) doit se retrouver dans UN total affiché. */
+    const somme=d.users.reduce((a,u)=>a+((u.retro&&u.retro.codes&&u.retro.codes.promesse_vide)||0),0);
+    o.coherent=(somme===3) && /promesse_vide : 3/.test(txt);
+    /* ⛔④ ON NE LES ADDITIONNE PAS, ET ON LE DIT. */
+    o.pasDAddition=txt.indexOf('Ne s\'additionne PAS au direct')>=0;
+    o.pasDeTotalFondu=txt.indexOf('bloc_technique : 2')>=0 && !/promesse_vide : 5|total général|TOTAL GÉNÉRAL/i.test(txt);
+    /* ⚠️⑤ Un parc SANS aucun historique n'affiche pas un bloc historique vide. */
+    const vide=_gardienStatsRendu({status:'ok',comptes:1,global:{promesse_vide:1},
+      globalRetro:{}, retroMessages:0, retroTotal:0,
+      users:[{nom:'X',total:1,depuis:'a',dernier:'b',codes:{promesse_vide:1},retro:null}]});
+    o.pasDeBlocVide=vide.indexOf('TOTAL 🕰️ HISTORIQUE')<0;
+    return o;
+  });
+
+  console.log('\n-- LXXX ter. Le total du Gardien contredisait son detail --');
+  if(G.absente){ t('⛔ le rendu du Gardien est isolable', false, '_gardienStatsRendu absente'); }
+  else{
+    t('⛔⛔ le total DIT ce qu\'il compte (« TOTAL 📡 EN DIRECT »)',
+      G.directNomme===true && G.plusDeTotalFlou===true, '');
+    t('⭐⭐ ... et l\'historique a le sien, avec les dérives qui manquaient',
+      G.histNomme===true && G.histChiffres===true, '');
+    t('⛔⛔ PLUS AUCUN TOTAL NE CONTREDIT SON DÉTAIL (2 + 1 promesses = 3 affichées)',
+      G.coherent===true && G.promesseVisible===true, '');
+    t('⛔ ... et les deux ne sont PAS additionnés (deux époques) — c\'est écrit',
+      G.pasDAddition===true && G.pasDeTotalFondu===true, '');
+    t('⚠️ un parc sans historique n\'affiche pas un bloc historique vide',
+      G.pasDeBlocVide===true, '');
+  }
   await cx.close();
 }
 
