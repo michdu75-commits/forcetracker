@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v961` — fusionnée sur `master` le 22/08.
+- **Version en ligne (live) :** `ft-v962` — fusionnée sur `master` le 22/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,19 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- ⚖️ **MODIFIER LE POIDS D'UNE ENTRÉE DU JOURNAL** (ft-v962) — Michel, sur un « Oeuf cru » :
+  *« ya œuf cru (lol) pas cuit. Et on ne peut pas modifier le poids »*.
+  ⭐⭐ **Deux questions, une seule est un défaut** (vérifié, R28). ① **L'œuf cru n'est pas un trou**
+  de la base : « Oeuf dur » sort **premier** quand on tape « œuf », avec poché / à la coque /
+  brouillé / au plat — il a pris le 2ᵉ. Et l'écart est de **12 kcal** sur ses 4 œufs (le cru/cuit
+  compte énormément pour les féculents, presque pas ici). **Rien à corriger.**
+  ⛔⛔ ② **Le poids, lui, était un vrai défaut** : la modale ne montrait que les 4 macros brutes —
+  changer une portion demandait 4 règles de trois à la main.
+  ⭐ **R13** : on branche `_bcApplyGrams()` (déjà utilisée à l'ajout) sur `e.per100`.
+  ⭐⭐ **C'est R4 qui paye** : ce `per100` était stocké depuis la brique 0 et n'atteignait **aucun
+  écran** — rien à collecter, seulement à brancher.
+  ⛔⛔ **Le témoin central est un REFUS** : pas de champ si `per100` est absent (une saisie à la main
+  n'a pas de pour-100 g — en inventer un serait un faux-précis, R29).
 - 📅 **NAVIGUER DANS LE JOURNAL — voir ET modifier un autre jour** (ft-v961) — Michel : *« on ne
   sait pas ce que l'on a mangé dans la journée et on ne peut même pas le modifier »*.
   ⭐ **Vérifié avant de coder** : le Journal était câblé en dur sur `today()`, sans navigation.

@@ -136,7 +136,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v961`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v962`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v961`** (prochaine : `ft-v962`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v962`** (prochaine : `ft-v963`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v962 — ⚖️ MODIFIER LE POIDS D'UNE ENTRÉE — au lieu de recalculer les 4 macros à la main** — Michel, devant un « Oeuf cru » dans son journal : *« ya œuf cru (lol) pas cuit. Et on ne peut pas modifier le poids »*.
+
+**⭐⭐ DEUX QUESTIONS DANS LA MÊME PHRASE, ET UNE SEULE EST UN DÉFAUT** — vérifié avant de coder (**R28**), pas supposé.
+
+**⚠️ ① L'ŒUF CRU N'EST PAS UN TROU DE LA BASE.** Mesuré : quand on tape « œuf », **« Oeuf dur » sort PREMIER**, avant « Oeuf cru » — et *poché*, *à la coque*, *brouillé*, *au plat* sont là aussi (141 résultats). **Il a pris le 2ᵉ de la liste.** ⭐ **Et l'écart est minuscule sur un œuf entier** : 140 contre 134 kcal/100 g, soit **12 kcal** sur ses 200 g. *Le cru/cuit compte énormément pour les féculents (×3 sur des pâtes, d'où l'avertissement de ft-v956), presque pas pour un œuf.* **On ne corrige donc RIEN côté base : la donnée était là, le choix aussi.** *Deuxième fois cette semaine qu'un « ça manque » se dissout en rejouant le cas exact — après le « poulet » de ft-v959.*
+
+**⛔⛔ ② LE POIDS, LUI, ÉTAIT UN VRAI DÉFAUT.** La modale « Modifier l'aliment » ne montrait que les **4 macros brutes** : pour passer de 200 à 150 g, il fallait recalculer kcal, protéines, glucides **et** lipides soi-même — sur un écran qui sait pourtant faire exactement ce calcul. *Quelqu'un qui se pesait pour la première fois de sa vie le matin même n'allait pas faire quatre règles de trois pour corriger une portion.*
+
+**⭐ R13 — ON NE RÉINVENTE RIEN.** `_bcApplyGrams()` fait déjà ce calcul à l'**AJOUT** (scan, CIQUAL, recherche) depuis ft-v956/957. On branche la **même** logique sur `e.per100`, le pour-100 g que `_provFood` enregistre depuis la **brique 0** (ft-v907).
+
+**⭐⭐ ET C'EST R4 QUI PAYE, AVEC DEUX SEMAINES DE RETARD** : ce `per100` était **stocké sur chaque entrée** et n'atteignait **aucun écran**. *Il existait, il ne servait à rien* — la donnée morte que R5 demande justement de chercher à l'envers. Il n'y avait rien à collecter, seulement à brancher.
+
+**⛔⛔ LE TÉMOIN CENTRAL EST UN REFUS : le champ n'apparaît QUE si `per100` existe.** Une entrée tapée à la main n'a pas de pour-100 g — en fabriquer un supposerait de deviner à quel poids correspondent ses 80 kcal, et ce serait un **faux-précis** (**R29**). *Sa modale ne bouge pas d'un pixel*, et deux témoins le vérifient : pas de champ, et **aucune quantité inventée** dans l'entrée sauvegardée.
+
+**⚠️ ET LA QUANTITÉ SE RE-ENREGISTRE (`q`/`u`)** : sans ça, la modification **suivante** repartirait du poids d'origine et **annulerait la précédente en silence** — le genre de défaut qu'on ne voit qu'à la deuxième correction, donc jamais pendant un test écrit d'un seul jet.
+Tests : **parcours 1063/1063** (+8, bloc LXXXV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — `_efApplyGrams` absente. ⚠️ **Peu instructif et autant l'écrire** : les 7 autres témoins vivent sous le garde « fonction absente », donc ils **ne tournent pas** contre l'ancien code. *Un témoin qui ne tourne pas n'est pas un témoin vert.* Fichiers : `app.js`, `clone/app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v962. |
 
 **ft-v961 — 📅 NAVIGUER DANS LE JOURNAL — voir ET modifier un autre jour** — Michel : *« on ne sait pas ce que l'on a mangé dans la journée et on ne peut même pas le modifier de ce fait »*.
 
@@ -705,21 +722,6 @@ Tests : **parcours 938/938** (+10, bloc LXXVIII), calculs 241/241, muscles 241/2
 
 **⚠️ DEUX ERREURS PAYÉES, et la seconde est la plus instructive.** ① Une **virgule en trop** a fabriqué un **17ᵉ élément VIDE** dans le tableau — le témoin épingle donc le nombre exact, sinon un scénario disparu ne se verrait pas. ② **Mes premiers témoins prenaient TSH et glycémie** pour prouver que « tous les marqueurs partent »… or l'**ancien** code les envoyait déjà (ils étaient dans sa liste de mots-clés). **Verts des deux côtés, ils ne prouvaient rien.** Il a fallu un marqueur ni hors norme ni dans l'ancienne liste — **Sodium** — pour que la mesure discrimine vraiment.
 Tests : **parcours 928/928** (+9, bloc LXXVII ; 1 témoin repointé), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 6 rouges**, exactement les 6 comportements changés. ⚠️ Trois témoins sont **verts des deux côtés, et c'est voulu** : le bloc reste dans la zone personnelle · aucun bilan ne produit aucun bloc · un bilan seul n'annonce aucun historique. Fichiers : `coach.js`, `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js`, `index.html`, `clone/index.html`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v943. |
-
-**ft-v942 — 🔐 L'APP DEMANDE LE MOT DE PASSE D'UN PDF PROTÉGÉ** — Michel : *« j'ai envie de mettre ma prise de sang mais c'est protégé par un mot de passe, je vais comment ? »*.
-
-**Les laboratoires livrent très souvent leurs bilans en PDF chiffré.** L'app rendait *« Souci lecture fichier »* — **un message qui dit qu'il y a un problème sans dire LEQUEL**, donc sans dire quoi faire. La personne n'avait aucun moyen de deviner qu'il suffisait d'un mot de passe.
-
-**⭐ LE CORRECTIF VIT DANS `_pdfOuvrir`, PAS DANS L'IMPORT DU BILAN (R2).** **Quatre** imports lisent des PDF — bilan sanguin, programme, historique, repas — et ils héritent tous du même comportement. *Un seul propriétaire de l'ouverture, donc aucune divergence possible.* Un témoin vérifie qu'il n'y a bien qu'**un seul** `getDocument` dans tout `log.js`.
-
-**⛔ LE MOT DE PASSE NE QUITTE JAMAIS LE TÉLÉPHONE.** pdf.js déchiffre **en local**, dans le navigateur ; ce sont les **images rendues** qui partent ensuite. Il n'est ni stocké, ni synchronisé, ni envoyé — et le témoin ne se contente pas de le dire, il **compte 0 appel réseau** pendant toute l'ouverture. ⚠️ **Honnêteté écrite dans le code** : `prompt()` affiche ce qu'on tape **en clair**, ce n'est pas un champ masqué. Sur son propre téléphone c'est acceptable ; le taire ne l'aurait pas été.
-
-**⛔⛔ LES DEUX TÉMOINS QUI PROTÈGENT LE PLUS SONT DES SORTIES** : **annuler** sort et ne redemande pas · **trois** mauvais mots de passe **arrêtent tout**. *Sans ce plafond, un mot de passe qu'on ne retrouve pas piégerait la personne dans une suite de fenêtres sans fin* — et c'est le genre de piège qu'aucun test de « ça marche » ne trouve.
-
-**⚠️ ET LE GARDE EST ÉTROIT (R19)** : pdf.js signale le chiffrement par une exception **nommée**, donc un fichier **corrompu** remonte tel quel et ne fait réclamer **aucun** mot de passe qui n'existe pas. *Réclamer un secret pour un fichier simplement abîmé ferait douter la personne de sa mémoire au lieu de son fichier.*
-
-**⚠️ Un détail payé au passage** : une **copie fraîche du tampon à chaque essai**. pdf.js prend possession du buffer et le **détache** — le réutiliser ferait échouer la 2ᵉ tentative pour une raison qui n'a rien à voir avec le mot de passe. *Un bug qui se serait présenté comme « le bon mot de passe ne marche pas ».*
-Tests : **parcours 919/919** (+9, bloc LXXVI), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge** — `_pdfOuvrir` absente. ⚠️ **Et 8 témoins ne se sont pas exécutés du tout** (ils vivent sous le garde « fonction absente ») : *un témoin qui ne tourne pas n'est pas un témoin vert* — 911 exécutés au lieu de 919. Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v942. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

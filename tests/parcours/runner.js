@@ -9621,6 +9621,77 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXXXV - MODIFIER LE POIDS D'UNE ENTRÉE DU JOURNAL (22/08/2026) ==
+   Michel, sur un « Oeuf cru » : « on ne peut pas modifier le poids ». VRAI : la modale ne
+   montrait que les 4 macros brutes. ⭐ R13 : on branche `_bcApplyGrams()` (déjà utilisée à
+   l'AJOUT) sur `e.per100`, déjà enregistré depuis ft-v907/956/957. ⛔⛔ LE TÉMOIN CENTRAL : le
+   champ grammes n'apparaît QUE si `per100` est connu — une entrée tapée à la main garde
+   exactement l'ancienne modale (R29 : pas de pour-100g inventé). */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(()=>{
+    const o={};
+    if(typeof _efApplyGrams!=='function'){ o.absente=true; return o; }
+    const tsAvecPer100=Date.now(), tsManuel=Date.now()+1;
+    S.foodLog=[
+      {date:today(),meal:'dejeuner',name:'Riz (CIQUAL)',kcal:150,prot:15,carbs:30,fat:8,
+       per100:{kcal:100,prot:10,carbs:20,fat:5},q:150,u:'g',ts:tsAvecPer100},
+      {date:today(),meal:'diner',name:'Manuel',kcal:80,prot:2,carbs:10,fat:2,per100:null,ts:tsManuel},
+    ];
+
+    /* ⭐① UNE ENTRÉE AVEC `per100` : le champ grammes existe, pré-rempli avec la quantité
+       enregistrée (150 g), pas recalculé depuis les macros. */
+    openEditFood(tsAvecPer100);
+    const gEl=document.getElementById('ef-grams');
+    o.champPresent=!!gEl;
+    o.grammesInit=gEl&&parseFloat(gEl.value)===150;
+
+    /* ⭐⭐ CHANGER LES GRAMMES RECALCULE LES 4 MACROS — même calcul que `_bcApplyGrams()`. */
+    gEl.value=200; _efApplyGrams();
+    o.kcalRecalc=parseFloat(document.getElementById('ef-kcal').value)===200;
+    o.protRecalc=parseFloat(document.getElementById('ef-prot').value)===20;
+    o.carbsRecalc=parseFloat(document.getElementById('ef-carbs').value)===40;
+    o.fatRecalc=parseFloat(document.getElementById('ef-fat').value)===10;
+
+    /* ⛔ ENREGISTRER MET À JOUR LA QUANTITÉ, PAS SEULEMENT LES MACROS. */
+    saveEditFood();
+    const eApres=S.foodLog.find(e=>e.ts===tsAvecPer100);
+    o.kcalSauve=eApres.kcal===200;
+    o.qSauve=eApres.q===200 && eApres.u==='g';
+
+    /* ⛔⛔ UNE ENTRÉE MANUELLE (per100 null) : PAS de champ grammes — modale inchangée. */
+    openEditFood(tsManuel);
+    o.champAbsentManuel=!document.getElementById('ef-grams');
+    document.getElementById('ef-kcal').value=90;
+    saveEditFood();
+    const mApres=S.foodLog.find(e=>e.ts===tsManuel);
+    o.manuelSauve=mApres.kcal===90;
+    o.manuelPasDeQ=mApres.q===undefined;
+
+    return o;
+  });
+
+  console.log('\n-- LXXXV. Modifier le poids d\'une entrée du journal --');
+  if(R.absente){ t('⛔ le recalcul par grammes existe', false, 'fonction absente'); }
+  else{
+    t('⭐ une entrée avec per100 affiche un champ « quantité (g) »', R.champPresent===true, '');
+    t('⭐ pré-rempli avec la quantité déjà enregistrée (150 g), pas recalculée', R.grammesInit===true, '');
+    t('⭐⭐ changer les grammes recalcule les 4 macros (pour-100g × grammes/100)',
+      R.kcalRecalc===true && R.protRecalc===true && R.carbsRecalc===true && R.fatRecalc===true, '');
+    t('⛔ enregistrer sauve les macros recalculées', R.kcalSauve===true, '');
+    t('⛔ ... et la nouvelle quantité (q/u), pour la prochaine modification', R.qSauve===true, '');
+    t('⛔⛔ une entrée MANUELLE (per100 null) n\'a PAS de champ grammes', R.champAbsentManuel===true, '');
+    t('⛔ elle reste modifiable comme avant (macros brutes)', R.manuelSauve===true, '');
+    t('⛔ ... et on n\'invente pas une quantité qu\'elle n\'a jamais eue', R.manuelPasDeQ===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

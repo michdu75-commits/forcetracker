@@ -1933,18 +1933,37 @@ function journalNav(dir){
   renderFoodJournal();
 }
 let _editFoodTs=null, _editFoodMeal='dejeuner';
+/* ⚖️ MODIFIER LE POIDS D'UNE ENTRÉE (22/08/2026) — Michel, sur un « Oeuf cru » : « on ne peut
+   pas modifier le poids ». VRAI : la modale ne montrait que les 4 macros brutes — pour ajuster
+   une portion il fallait recalculer les 4 chiffres à la main.
+   ⭐ R13 (enrichir l'existant) : `_bcApplyGrams()` fait déjà exactement ça à l'AJOUT (scan/CIQUAL/
+   recherche). On ne réinvente rien, on branche la MÊME logique ici, sur `e.per100` — le pour-100g
+   que `_provFood` enregistre déjà depuis ft-v907/956/957.
+   ⛔ SEULEMENT SI `per100` EXISTE : une entrée tapée à la main (`per100:null`) n'a pas de « pour
+   100 g » à partir duquel recalculer — la modale reste identique à avant pour elle (R29 : on ne
+   invente pas un pour-100g qui n'existe pas). */
 function openEditFood(ts){
   const e=(S.foodLog||[]).find(x=>x.ts===ts); if(!e)return;
   _editFoodTs=ts; _editFoodMeal=e.meal||'dejeuner';
   let ov=document.getElementById('ov-edit-food');
   if(!ov){ov=document.createElement('div');ov.id='ov-edit-food';ov.className='overlay';ov.style.zIndex='500';ov.onclick=ev=>{if(ev.target===ov)ov.classList.remove('open');};document.body.appendChild(ov);}
   const fld=(id,lbl,val)=>'<div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">'+lbl+'</div><input id="'+id+'" type="number" inputmode="numeric" value="'+(val||0)+'" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>';
+  let gramsFld='';
+  if(e.per100){
+    let gInit;
+    if(e.q&&e.u==='g') gInit=Math.round(e.q);
+    else if(e.per100.kcal>0) gInit=Math.round((e.kcal||0)/e.per100.kcal*100);
+    else gInit=100;
+    gramsFld='<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité (g) <span style="font-weight:400;">— recalcule les macros ci-dessous</span></div>'
+      +'<input id="ef-grams" type="number" inputmode="numeric" value="'+gInit+'" oninput="_efApplyGrams()" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>';
+  }
   ov.innerHTML='<div class="modal" style="max-width:94vw;width:400px;padding:16px;">'
     +'<div style="font-weight:800;font-size:16px;color:var(--t1);margin-bottom:12px;">Modifier l\'aliment</div>'
     +'<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Nom</div>'
     +'<input id="ef-name" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);margin-bottom:12px;">'
     +'<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:6px;">Repas</div>'
     +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">'+FOOD_MEALS.map(m=>'<button id="ef-meal-'+m.k+'" onclick="_setEditFoodMeal(\''+m.k+'\')" style="flex:1;min-width:70px;padding:9px 6px;border-radius:10px;border:none;font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;background:var(--bg3);color:var(--t2);">'+m.ic+'<br>'+m.lbl+'</button>').join('')+'</div>'
+    +gramsFld
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">'+fld('ef-kcal','Calories (kcal)',e.kcal)+fld('ef-prot','Protéines (g)',e.prot)+fld('ef-carbs','Glucides (g)',e.carbs)+fld('ef-fat','Lipides (g)',e.fat)+'</div>'
     +'<button class="btn btn-red" onclick="saveEditFood()" style="width:100%;padding:13px;font-size:15px;">✅ Enregistrer</button>'
     +'<button class="btn btn-bg2" onclick="confirmRemoveFood('+ts+')" style="width:100%;margin-top:8px;color:var(--red);">🗑 Supprimer</button>'
@@ -1956,6 +1975,16 @@ function openEditFood(ts){
 }
 function _setEditFoodMeal(k){_editFoodMeal=k;_renderEditFoodMeals();}
 function _renderEditFoodMeals(){FOOD_MEALS.forEach(m=>{const b=document.getElementById('ef-meal-'+m.k);if(!b)return;const sel=m.k===_editFoodMeal;b.style.background=sel?'var(--red)':'var(--bg3)';b.style.color=sel?'#fff':'var(--t2)';});}
+// Même calcul que `_bcApplyGrams()` (R2) : pour-100g × grammes/100, appliqué aux 4 champs macro.
+function _efApplyGrams(){
+  const e=(S.foodLog||[]).find(x=>x.ts===_editFoodTs); if(!e||!e.per100) return;
+  const g=parseFloat((document.getElementById('ef-grams')||{}).value)||0;
+  const f=g/100;
+  document.getElementById('ef-kcal').value=Math.round((e.per100.kcal||0)*f);
+  document.getElementById('ef-prot').value=Math.round((e.per100.prot||0)*f);
+  document.getElementById('ef-carbs').value=Math.round((e.per100.carbs||0)*f);
+  document.getElementById('ef-fat').value=Math.round((e.per100.fat||0)*f);
+}
 function saveEditFood(){
   const e=(S.foodLog||[]).find(x=>x.ts===_editFoodTs); if(!e){toast('Entrée introuvable','error');return;}
   const name=(document.getElementById('ef-name').value||'').trim();
@@ -1965,6 +1994,10 @@ function saveEditFood(){
   e.prot=parseInt(document.getElementById('ef-prot').value)||0;
   e.carbs=parseInt(document.getElementById('ef-carbs').value)||0;
   e.fat=parseInt(document.getElementById('ef-fat').value)||0;
+  // La quantité ne se met à jour QUE si le champ était affiché (per100 connu) — sinon `q`/`u`
+  // ne veulent rien dire et on ne les invente pas (R29).
+  const gEl=document.getElementById('ef-grams');
+  if(gEl){ e.q=parseFloat(gEl.value)||0; e.u='g'; }
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   const ov=document.getElementById('ov-edit-food'); if(ov)ov.classList.remove('open');
   renderFoodJournal();
