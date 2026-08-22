@@ -9331,6 +9331,15 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     o.sourceCitee = /table Ciqual 2025 — ANSES/.test(hc);   // Licence Ouverte : citation obligatoire
     /* ⭐ Les mots peuvent être dans le désordre : « riz cuit » trouve « Riz blanc, cuit… ». */
     o.desordre = _ciqualChercher('riz cuit',6).some(a=>/Riz blanc, cuit/.test(a[1]));
+    /* ⚠️⚠️ LE BUG DU « BLANC D'ŒUF » (22/08/2026) — Michel tape « poulet » et ne trouve rien ;
+       en creusant sur un produit d'œuf, le vrai coupable était la LIGATURE Œ. `normalize('NFD')`
+       décompose les ACCENTS, jamais les ligatures œ/æ — et le clavier iPhone en français
+       CORRIGE AUTOMATIQUEMENT « oeuf » en « œuf » pendant la frappe, pendant que CIQUAL écrit
+       tous ses noms en « oe » séparé (« Oeuf, blanc… »). Sur iPhone, quasiment personne ne
+       pouvait retrouver l'œuf, le bœuf, une sœur, un cœur. */
+    o.oeufLigature = _ciqualChercher('œuf',6).some(a=>/Oeuf/.test(a[1]));
+    o.boeufLigature = _ciqualChercher('bœuf',6).some(a=>/oeuf/i.test(a[1]));
+    o.oeufSansLigature = _ciqualChercher('oeuf',6).some(a=>/Oeuf/.test(a[1]));   // ne doit pas régresser
     /* ⛔⛔ AUCUN aliment sans calories déterminées n'est proposé : dans CIQUAL « - » veut dire
        NON DÉTERMINÉ, pas zéro — on ne peut pas enregistrer une ligne pareille. */
     o.jamaisSansKcal = ['banane','riz','poulet','lait','pomme','pain'].every(q=>
@@ -9414,6 +9423,12 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       R.sourceCitee===true, '');
     t('⭐ les mots dans le désordre marchent : « riz cuit » trouve « Riz blanc, cuit… »',
       R.desordre===true, '');
+    /* ⚠️⚠️ LE BUG DU « BLANC D'ŒUF », trouvé sur un vrai produit de Michel. */
+    t('⚠️⚠️ taper « œuf » (ligature, tapée automatiquement sur iPhone) retrouve l\'aliment',
+      R.oeufLigature===true, 'CIQUAL écrit "Oeuf" en oe séparé — la ligature ne matchait rien');
+    t('⚠️ ... même chose pour « bœuf »', R.boeufLigature===true, '');
+    t('⚠️ ... et « oeuf » sans ligature continue de marcher (pas de régression)',
+      R.oeufSansLigature===true, '');
     /* ⛔⛔ Le point de rigueur : « - » veut dire NON DÉTERMINÉ, pas zéro. */
     t('⛔⛔ aucun aliment SANS calories déterminées n\'est proposé (« - » ≠ 0)',
       R.jamaisSansKcal===true, '');
