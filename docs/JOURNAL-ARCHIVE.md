@@ -3128,3 +3128,22 @@ Tests : **parcours 928/928** (+9, bloc LXXVII ; 1 témoin repointé), calculs 24
 
 **⚠️ ET L'HONNÊTETÉ SUR LA DATE COMPTE AUTANT QUE LA MESURE** : les 3 cas trouvés sont tous **antérieurs au correctif du 20/08** — ou dans le fil en cours, **non datable depuis l'export**. **Rien ne prouve que ft-v923 a échoué.** Ce qui change, c'est qu'à partir d'aujourd'hui **on le saura** au lieu de le supposer.
 Tests : **parcours 938/938** (+10, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge** — les fonctions n'existent pas. ⚠️ **Et 9 témoins ne se sont pas exécutés du tout** : *un témoin qui ne tourne pas n'est pas un témoin vert* — 929 exécutés au lieu de 938. Fichiers : `coach.js`, `index.html`, `clone/index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v944. |
+
+**ft-v945 — 🌍 LA MESURE CONTINUE, CHEZ DE VRAIS UTILISATEURS — parce que le Milo de Michel est DÉBRIDÉ** — Michel : *« mais je veux une mesure continue »*. Mais c'est sa remarque d'avant qui a rendu cette version nécessaire : *« n'oublie pas Milo avec moi, il est débridé »*.
+
+**⭐⭐ VÉRIFIÉ DANS LE CODE, ET IL AVAIT RAISON.** `_estSuperAdmin()` lui ouvre **deux portes fermées à tout le monde** : ① il peut **citer, résumer et analyser ses propres consignes** (*« c'est lui qui les écrit »*) · ② **aucune restriction de sujet** (*« il teste son application »*), et le filtre hors-sujet **local** est même désactivé pour lui. ⚠️ Le **modèle**, lui, est le **même** — `MODELE_MICHEL` vaut exactement le défaut, Sonnet 4.6 pour tous.
+
+**⚠️⚠️ ET ÇA TOUCHE DIRECTEMENT ft-v944, LIVRÉ UNE HEURE PLUS TÔT.** Le Gardien venait d'être calibré sur **ses** 129 réponses — c'est-à-dire sur **l'échantillon le moins représentatif du parc**. L'un des 4 faux positifs retirés — *« Ce que je retiens : uniquement dans **ton profil**, ta mémoire à toi »* — **n'existe QUE parce qu'il est débridé** : Milo n'a pas le droit d'expliquer son fonctionnement aux autres. **C'est le cousin de R9** : *on évalue Milo sur ce que reçoivent les vrais utilisateurs, jamais sur la version du fondateur — sinon on corrige le mauvais cerveau.*
+
+**👉 LE COMPTEUR REMONTE DÉSORMAIS** avec la sauvegarde — vers Apps Script **et** le miroir Supabase (le corps est construit **une seule fois**, précisément pour qu'ils ne divergent pas — **R2**). Lisible dans **Profil → Admin → 🌍 Gardien — tous les comptes**, agrégé et par personne.
+
+**⛔ DES NOMBRES SEULEMENT — ~150 octets.** `{depuis, dernier, total, codes}`. Aucune phrase de Milo, aucun mot de la personne : **ses conversations ne quittent toujours pas son téléphone**. ⭐ Et le serveur **RECONSTRUIT** l'objet au lieu de le recopier : un client modifié ne peut pas glisser du texte dans le store par ce champ. *Le stockage a déjà lâché une fois (102 % le 29/07) ; on ne rouvre pas cette porte pour du confort.*
+
+**⚠️ ET ON NE LE CACHE PAS.** Michel : *« je ne veux pas leur cacher »*. La carte « Mes conversations avec Milo » le **dit en toutes lettres** aux testeurs — un compteur de bon fonctionnement, des nombres, jamais une phrase. *La promesse affichée dans l'app reste vraie, et c'est la seule condition qui comptait.*
+
+**⛔ MILO, LUI, NE REÇOIT PAS CE COMPTEUR.** Lui donner son propre score l'inviterait à **le commenter** — exactement la sortie de rôle qu'on traque. Un témoin le vérifie.
+
+**⚠️ ET LE GARDE-FOU R4a A REFUSÉ LA LIVRAISON** tant que `gardienStats` n'était pas **classée** : elle est **exclue**, avec la raison écrite. *On ne peut plus oublier — on peut seulement décider.*
+
+**⚠️ Une erreur payée** : mon témoin attrapait le **miroir Supabase** (corps enveloppé dans `p_data`) et rendait *« compteur absent »* alors qu'il partait bien. *Un témoin qui lit la mauvaise enveloppe accuse le code d'un défaut qu'il n'a pas.* Il déballe désormais et couvre **les deux** chemins.
+Tests : **parcours 941/941** (+3, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données **102 classées 0 trou**. Fichiers : `coach.js`, `state.js`, `setup.js`, `Code.js`, `index.html`, `clone/index.html`, `tests/donnees/donnees-milo.json`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v945. |

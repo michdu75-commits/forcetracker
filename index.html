@@ -2117,15 +2117,6 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <!-- Produit sans code / étiquette : photo IA -->
     <button class="btn btn-bg2" onclick="readFoodLabel()" style="width:100%;margin-bottom:14px;">📸 Ou lire l'étiquette nutritionnelle (IA)</button>
     <input type="file" id="af-label-input" accept="image/*" capture="environment" style="display:none" onchange="onFoodLabelFile(this)">
-    <div id="af-bc-row" style="display:none;background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
-      <div id="af-bc-name" style="font-size:12px;color:var(--t2);margin-bottom:8px;font-weight:600;"></div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:13px;color:var(--t3);">Quantité</span>
-        <input id="af-bc-grams" type="number" inputmode="numeric" value="100" oninput="_bcApplyGrams()" style="flex:1;box-sizing:border-box;padding:9px;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);">
-        <span style="font-size:13px;color:var(--t3);">g</span>
-      </div>
-      <div id="af-etat-note" style="display:none;font-size:11.5px;line-height:1.4;color:var(--orange);margin-top:7px;"></div>
-    </div>
     <div id="af-health-card" style="margin-bottom:14px;"></div>
     <div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Ce que tu as mangé</div>
     <textarea id="af-desc" placeholder="Tape un aliment : banane, riz, poulet…" rows="2" oninput="_afSuggInput()" style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);resize:vertical;margin-bottom:10px;"></textarea>
@@ -2135,6 +2126,25 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div id="af-sugg"></div>
     <button class="btn btn-bg2" id="af-ai-btn" onclick="estimateFoodAI()" style="width:100%;margin-bottom:6px;">🤖 Estimer les calories avec l'IA</button>
     <div id="af-ai-note" style="font-size:11px;color:var(--t3);text-align:center;margin-bottom:16px;line-height:1.4;"></div>
+    <!-- ⚠️⚠️ LA QUANTITÉ EST ICI, ET C'EST UN DÉPLACEMENT VOULU (22/08/2026, ft-v965).
+         Michel : « j'ai mis 30 grammes de protéine mais en fait… j'ai voulu mettre 30 grammes de
+         POUDRE de protéine, et ça fait 88 grammes de protéine ». 88 g de protéine = exactement
+         100 g de poudre : la quantité était restée à sa valeur par défaut.
+         ⛔ LA CAUSE ÉTAIT LE PLACEMENT, pas le calcul : ce bloc vivait AVANT le champ de recherche.
+         Conçu pour le code-barres (on scanne, PUIS on ajuste), il est devenu à contresens quand la
+         recherche par nom est arrivée (ft-v956/957) — on tape en bas, on choisit en bas, les macros
+         se remplissent en bas, et le réglage qui COMMANDE tout ça restait hors du regard, plus haut.
+         ⭐ Placé juste au-dessus des macros qu'il pilote, il sert les DEUX chemins : après un scan
+         comme après une recherche, il apparaît là où se porte déjà l'attention. -->
+    <div id="af-bc-row" style="display:none;background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
+      <div id="af-bc-name" style="font-size:12px;color:var(--t2);margin-bottom:8px;font-weight:600;"></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:13px;color:var(--t3);">Quantité</span>
+        <input id="af-bc-grams" type="number" inputmode="numeric" value="100" oninput="_bcApplyGrams()" style="flex:1;box-sizing:border-box;padding:9px;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);">
+        <span style="font-size:13px;color:var(--t3);">g</span>
+      </div>
+      <div id="af-etat-note" style="display:none;font-size:11.5px;line-height:1.4;color:var(--orange);margin-top:7px;"></div>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
       <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Calories (kcal)</div><input id="af-kcal" type="number" inputmode="numeric" placeholder="0" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
       <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Protéines (g)</div><input id="af-prot" type="number" inputmode="numeric" placeholder="0" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
