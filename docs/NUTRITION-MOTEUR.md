@@ -206,8 +206,12 @@ de repos et un jour de soulevé de terre lourd. Or l'app **sait déjà tout** :
 
 - **jour d'entraînement vs repos** → glucides plus hauts les jours de séance, plus bas au repos
   (à calories hebdomadaires égales) ;
-- **les repas pré et post ne devraient exister QUE les jours de séance**, et être placés **autour de
-  l'heure réelle** de l'entraînement, pas à heure fixe ;
+- ✅ **les repas pré et post ne devraient exister QUE les jours de séance** — **FAIT en ft-v950**.
+  Un jour de repos, ils sont retirés et **leurs calories redistribuées** (le total du jour ne bouge
+  pas d'un kcal). Un jour de séance, ils **nomment l'heure réelle** (« avant ta séance de 18 h »).
+  ⚠️ **Deux limites écrites** : les plans `perte`/`recomp` n'ont aucun pré/post, donc **rien ne
+  change pour eux** ; et la journée **n'est pas réordonnée** selon l'heure (une séance à 7 h
+  devrait logiquement placer le pré-entraînement avant le petit-déjeuner — ce n'est pas fait) ;
 - **séance de jambes lourdes** → plus de glucides que « bras + épaules » ;
 - **calories réellement dépensées** → proposer (jamais imposer) un ajustement.
 

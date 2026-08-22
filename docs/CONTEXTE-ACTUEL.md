@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v949` — fusionnée sur `master` le 21/08.
+- **Version en ligne (live) :** `ft-v950` — fusionnée sur `master` le 21/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,21 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- 🍽️ **LES REPAS D'ENTRAÎNEMENT N'EXISTENT PLUS QUE LES JOURS D'ENTRAÎNEMENT** (ft-v950) —
+  Michel : *« ok maintenant le plan de repas les jours de séance »*.
+  ⭐⭐ **Le défaut allait dans les deux sens** : muscle/force/endurance affichaient « ⚡ Pré » et
+  « 💪 Post » **tous les jours** (jusqu'à **40 %** des calories d'un dimanche de repos), pendant
+  que le plan **perte** n'en a **aucun**, même un jour de squat lourd.
+  ⛔⛔ **Les calories du jour ne bougent pas d'un kcal** : redistribuées, jamais retirées (R29).
+  ⭐ **R2** : c'est la MÊME redistribution que le jeûne intermittent, pas une deuxième.
+  ⭐⭐ Un jour de séance, les repas **nomment l'heure réelle** ; heure inconnue → on n'en
+  invente pas une. 3 sources : séance **faite** → **en cours** → **annoncée aujourd'hui**.
+  ⚠️ **Deux limites écrites et épinglées par un témoin (R30)** : ① `perte`/`recomp` n'ont pas de
+  pré/post, donc rien ne change pour eux ; ② la journée **n'est pas réordonnée** selon l'heure
+  (une séance à 7 h devrait placer le pré-entraînement avant le petit-déjeuner).
+  ⏭️ **Les 2 suites naturelles**, dans `NUTRITION-MOTEUR.md` §3.1 : les **glucides plus hauts
+  les jours de séance** (à calories hebdo égales) et la **région travaillée** (jambes lourdes vs
+  bras) — ni l'une ni l'autre n'est commencée.
 - 🏋️ **LE NIVEAU D'ACTIVITÉ CONTIENT DÉJÀ L'ENTRAÎNEMENT** (ft-v949) — Michel : *« bon la
   nutrition lol ? »*.
   ⭐⭐ **J'ai annoncé l'inverse et le code m'a contredit.** J'ai dit *« la nutrition ignore

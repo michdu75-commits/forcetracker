@@ -1170,6 +1170,59 @@ function _varianteDuJour(desc, jour){
   if(!desc.length) return '';
   return desc[((jour%desc.length)+desc.length)%desc.length];
 }
+/* 🏋️ EST-CE UN JOUR DE SÉANCE, ET À QUELLE HEURE ? (21/08/2026) — Michel : « ok maintenant le
+   plan de repas les jours de séance ».
+   ⭐⭐ LE DÉFAUT EST DANS LES DEUX SENS, et c'est ce qui le rendait invisible :
+     · les plans muscle / force / endurance affichent « ⚡ Pré-entraînement » et
+       « 💪 Post-entraînement » **TOUS LES JOURS**, y compris un dimanche de repos — soit
+       jusqu'à **40 % des calories du jour** (force : 15 % + 25 %) rangées autour d'une séance
+       qui n'existe pas ;
+     · le plan perte, lui, n'en a **AUCUN**, même un jour de squat lourd.
+   *Un plan qui parle d'entraînement un jour de repos n'est pas juste inutile : il apprend à ne
+   plus lire les intitulés.*
+   ⛔ TROIS SOURCES, DANS L'ORDRE DE CERTITUDE : la séance FAITE (elle a eu lieu, on a l'heure)
+   → la séance EN COURS → la séance ANNONCÉE (prévue, donc sans heure). On ne devine jamais un
+   jour de séance à partir d'un jour de la semaine : ce serait supposer un rythme (R29).
+   ⚠️ L'heure est lue avec le repli `startHour` → horodatage, comme ailleurs dans l'app. Deux
+   variantes de ce repli existent déjà (app.js badges, tracking.js matin/soir) avec des nuances
+   qui leur sont propres ; les unifier ici changerait leur comportement pour une version qui
+   parle de repas — c'est exactement R14. On note la dette au lieu de la payer au mauvais
+   moment : à traiter à part. */
+function _heureSeance(s){
+  try{
+    if(!s) return null;
+    if(typeof s.startHour==='number' && s.startHour>=0 && s.startHour<=23) return s.startHour;
+    const t=s.ts||s.startTs||s.id;
+    if(!t) return null;
+    const h=new Date(t).getHours();
+    return (h>=0&&h<=23)?h:null;
+  }catch(e){ return null; }
+}
+function jourSeance(){
+  try{
+    const t=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
+    const faite=(S.sessions||[]).find(s=>s&&s.date===t);
+    if(faite) return {seance:true, heure:_heureSeance(faite), source:'faite'};
+    if(S.wkt && S.wkt.date===t) return {seance:true, heure:_heureSeance(S.wkt), source:'encours'};
+    const pl=(typeof plannedSession==='function')?plannedSession():null;
+    if(pl && pl.date===t) return {seance:true, heure:null, source:'annoncee'};
+    return {seance:false, heure:null, source:'repos'};
+  }catch(e){ return {seance:false, heure:null, source:'repos'}; }
+}
+/* ⛔ RETIRER UN REPAS NE RETIRE JAMAIS SES CALORIES — elles sont redistribuées sur les repas
+   restants. Sinon on afficherait une journée incomplète, ce qui pousse à sous-manger : c'est
+   déjà la règle écrite pour le jeûne intermittent, et il n'y a aucune raison qu'elle change
+   selon la raison du retrait. Une seule fonction pour les deux usages (R2) : deux copies
+   finiraient par ne plus redistribuer pareil, et personne ne le verrait. */
+function _retirerRepas(plan, estAretirer){
+  const restants=plan.filter(r=>!estAretirer(r));
+  if(!restants.length) return plan;                 // on ne rend JAMAIS une journée vide
+  const perdu=plan.filter(estAretirer).reduce((a,[p])=>a+p,0);
+  if(!(perdu>0)) return restants;
+  const bonus=perdu/restants.length;
+  return restants.map(([p,nom,d])=>[p+bonus,nom,d]);
+}
+const _REPAS_SEANCE=/pré-entraînement|post-entraînement/i;
 /* @param jourForce — n'existe QUE pour les tests : il leur permet de parcourir TOUTES les
    variantes. Sans lui, un test de régime ne vérifierait que la variante du jour où il
    tourne, et une variante dangereuse ne sortirait que certains jours. */
@@ -1275,12 +1328,37 @@ function getMeals(macros,phase,jourForce){
   let plan2=plan;
   if(S.fasting){
     const FEN={'16-8':'12 h → 20 h','18-6':'13 h → 19 h','20-4':'15 h → 19 h'}[S.fasting]||'';
-    const restants=plan.filter(([,nom])=>!/petit-déjeuner/i.test(nom));
-    if(restants.length){
-      const perdu=plan.filter(([,nom])=>/petit-déjeuner/i.test(nom)).reduce((a,[p])=>a+p,0);
-      const bonus=perdu/restants.length;
-      plan2=restants.map(([p,nom,d],i)=>[p+bonus, (i===0?'⏳ Rupture du jeûne'+(FEN?' ('+FEN.split('→')[0].trim()+')':''):nom), d]);
-    }
+    const avant=plan2;
+    plan2=_retirerRepas(plan2, ([,nom])=>/petit-déjeuner/i.test(nom));
+    if(plan2!==avant) plan2=plan2.map(([p,nom,d],i)=>
+      [p, (i===0?'⏳ Rupture du jeûne'+(FEN?' ('+FEN.split('→')[0].trim()+')':''):nom), d]);
+  }
+  /* 🏋️ LES REPAS D'ENTRAÎNEMENT N'EXISTENT QUE LES JOURS D'ENTRAÎNEMENT (21/08/2026).
+     ⛔ ET LES CALORIES DU JOUR NE CHANGENT PAS D'UN KCAL : elles sont redistribuées, jamais
+     retirées. *On corrige un intitulé qui ment, on ne modifie pas ce que quelqu'un mange* —
+     changer un apport sans le dire est exactement l'erreur qui touche la personne (R29).
+     ⚠️ PORTÉE HONNÊTE, à ne pas surestimer : les plans `perte` et `recomp` n'ont AUCUN repas
+     pré/post, donc pour eux **rien ne change**, même un jour de séance. Leur en ajouter
+     supposerait d'écrire du contenu nouveau (et de trancher s'il est pertinent en déficit) —
+     c'est une autre décision, elle n'est pas prise ici.
+     ⛔ ET ON NE RÉORDONNE PAS LA JOURNÉE selon l'heure : une séance à 7 h devrait logiquement
+     placer le pré-entraînement avant le petit-déjeuner. C'est vrai, et ce n'est PAS fait —
+     déplacer des repas dans la liste touche tous les plans, tous les régimes et le jeûne à la
+     fois. Le retrait est écrit ici pour ne pas être relu comme un oubli (R30). */
+  const _js=jourSeance();
+  if(!_js.seance){
+    plan2=_retirerRepas(plan2, ([,nom])=>_REPAS_SEANCE.test(nom));
+  }else if(_js.heure!=null){
+    /* ⭐ ON NOMME L'HEURE RÉELLE, ON N'EN INVENTE PAS UNE. Écrire « vers 17 h » pour un
+       pré-entraînement supposerait de connaître la durée de la séance — on ne l'a pas au
+       moment du plan, et pour une séance seulement ANNONCÉE on n'a même pas l'heure. Dire
+       « avant ta séance de 18 h » est vrai dans tous les cas où on l'affiche. */
+    const h=_js.heure+' h';
+    plan2=plan2.map(([p,nom,d])=>{
+      if(/pré-entraînement/i.test(nom))  return [p, nom+' — avant ta séance de '+h, d];
+      if(/post-entraînement/i.test(nom)) return [p, nom+' — après ta séance de '+h, d];
+      return [p,nom,d];
+    });
   }
   return plan2.map(([pct,name,descBrut])=>{
     const desc0=_varianteDuJour(descBrut,_jour);
