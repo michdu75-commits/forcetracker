@@ -642,6 +642,50 @@ c'est l'instrument qui ment.*
 
 ---
 
+## 12quater. 📸 LA CAUSE DÉDUITE D'UN SEUL NOMBRE — *sans jamais regarder l'écran* **(22/08/2026)**
+
+> **Michel** : *« j'ai trouvé un bug mais pas vraiment un bug lol »*, puis *« j'ai mis 30 grammes de
+> protéine mais en fait… j'ai voulu mettre 30 grammes de POUDRE de protéine, et ça fait 88 grammes
+> de protéine »*.
+
+**Ce que j'ai fait.** J'ai calculé que **88 g de protéine = exactement 100 g** d'une poudre titrant
+88 g/100 g, j'en ai **déduit** que la quantité était restée à sa valeur par défaut, j'ai trouvé une
+explication élégante (le champ « Quantité » placé **avant** le champ de recherche), **et j'ai livré
+ft-v965 sur cette cause.**
+
+**Ce que l'écran montrait.** Michel a envoyé la vidéo :
+
+| Ce que j'affirmais | Ce que l'écran montrait |
+|---|---|
+| Quantité restée à **100 g** | Quantité : **30 g** ✅ |
+| Macros fausses | **117 kcal · 26 g de protéines** — exactes ✅ |
+| Bug de saisie | **Aucun bug** : le 88 était la **carte produit**, titrée *« Valeurs pour 100 g »* |
+
+**Pourquoi c'était crédible — et c'est là le piège.** La coïncidence était **parfaite** : cette poudre
+titre justement **88 g/100 g**, donc mon calcul « tombait juste ». *Une coïncidence parfaite est
+exactement ce qui rend une fausse cause convaincante* — il n'y avait aucun frottement pour m'arrêter.
+
+**À quoi on la reconnaît.**
+- On explique un symptôme à partir d'**un seul nombre** rapporté, sans voir l'état réel.
+- L'explication est **élégante** et referme le sujet d'un coup.
+- On n'a **pas demandé** la capture / la vidéo alors qu'elle était à un message de distance — et la
+  personne en envoie d'habitude.
+
+**Ce qui protège.**
+- ⛔ **Demander l'écran avant d'expliquer**, quand le symptôme est visuel. Michel envoie des captures
+  spontanément : le coût de la question est nul, celui d'une fausse cause est une version livrée.
+- ⭐ **Rejouer le cas exact** (déjà la leçon de ft-v959 avec « poulet », et de ft-v963 avec l'accent).
+- ⚠️ Et si on a livré : **corriger le journal en le DISANT**, pas en le réécrivant en douce — sinon la
+  fausse cause devient la mémoire du projet (**R23/R27**).
+
+**Le défaut n'était pas le code livré.** Déplacer la quantité près des macros reste bon, et le témoin
+d'ordre est gardé. **Ce qui était faux, c'est la RAISON écrite à côté** — et une raison inventée
+survit bien plus longtemps qu'un bug, parce que rien ne la teste.
+
+**⭐ Le vrai défaut, lui, était ailleurs** : **deux nombres de protéines sur le même écran** (88 et 26)
+sans que rien ne dise lequel est le sien. C'est la famille **§7 — deux sources qui se contredisent**,
+sauf qu'ici aucune des deux n'est fausse : *c'est leur voisinage muet qui trompe.*
+
 ## 13. 🔑 Le NOM comme clé primaire — *la racine commune*
 
 **Ce n'est pas un bug, c'est ce qui en produit.** Sur les 19 défauts trouvés le 02/08, **6
