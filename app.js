@@ -1271,7 +1271,7 @@ function rejouerRepas(sig){
   r.items.forEach(e=>{
     const vals={kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0};
     const prov=(typeof _provFood==='function')?_provFood(vals):{};
-    S.foodLog.push(Object.assign({date:today(),meal:r.meal,name:e.name,ts:Date.now()},vals,prov,{q:null,u:null}));
+    S.foodLog.push(Object.assign({date:_journalJourActif(),meal:r.meal,name:e.name,ts:Date.now()},vals,prov,{q:null,u:null}));
   });
   if(typeof _afSetSrc==='function')_afSetSrc(av);   // on rend le marqueur (R15)
   persist();
@@ -1396,13 +1396,13 @@ function quickAddFood(i){
      ment pas en héritant de la source d'origine, qu'on n'a pas conservée sur les favoris. */
   const _vals={kcal:it.kcal||0,prot:it.prot||0,carbs:it.carbs||0,fat:it.fat||0};
   _afSetSrc({saisie:'liste',origine:'reprise'});
-  S.foodLog.push(Object.assign({date:today(),meal:_afMeal,name:(it.name||'').slice(0,80),ts:Date.now()},_vals,_provFood(_vals)));
+  S.foodLog.push(Object.assign({date:_journalJourActif(),meal:_afMeal,name:(it.name||'').slice(0,80),ts:Date.now()},_vals,_provFood(_vals)));
   _afSetSrc(null);
   _unhideFood(it.name);
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   closeAddFood(); renderFoodJournal();
   try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}
-  toast('Ajouté au journal 🍽️','success');
+  toast(_journalJourActif()===today()?'Ajouté au journal 🍽️':'Ajouté au jour consulté 🍽️','success');
 }
 function toggleFavFood(i){
   const it=_afQuickItems[i]; if(!it)return;
@@ -1888,7 +1888,7 @@ function addFoodEntry(){
   if(!name){toast('Donne un nom à l\'aliment','error');return;}
   if(!kcal&&!prot&&!carbs&&!fat){toast('Renseigne au moins les calories','error');return;}
   if(!S.foodLog)S.foodLog=[];
-  S.foodLog.push(Object.assign({date:today(),meal:_afMeal,name:name.slice(0,80),kcal,prot,carbs,fat,ts:Date.now()},
+  S.foodLog.push(Object.assign({date:_journalJourActif(),meal:_afMeal,name:name.slice(0,80),kcal,prot,carbs,fat,ts:Date.now()},
     _provFood({kcal,prot,carbs,fat})));
   _afSetSrc(null);   // la provenance ne survit pas à l'enregistrement (R15 : le marqueur se pose et se rend)
   _unhideFood(name);
@@ -1897,7 +1897,7 @@ function addFoodEntry(){
   renderFoodJournal();
   try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}   // la carte « Où tu en es » suit
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
-  toast('Ajouté au journal 🍽️','success');
+  toast(_journalJourActif()===today()?'Ajouté au journal 🍽️':'Ajouté au jour consulté 🍽️','success');
 }
 function removeFoodEntry(ts){
   if(!S.foodLog)return;
@@ -1915,6 +1915,23 @@ function confirmRemoveFood(ts){
   else doit();
 }
 // ─── MODIFIER une entrée du journal (repas + nom + valeurs) ──────────────────
+/* 📅 NAVIGUER DANS LE JOURNAL — voir et modifier un AUTRE jour (22/08/2026).
+   Michel : « on ne sait pas ce que l'on a mangé dans la journée et on ne peut même pas le
+   modifier de ce fait ». ⭐ VÉRIFIÉ AVANT DE CODER : le Journal était câblé en dur sur
+   `today()`, sans aucune navigation — on ne pouvait ni VOIR ni MODIFIER un autre jour, ce qui
+   est exactement ce qu'il décrit. ⛔ `null` = aujourd'hui (jamais figé en dur : le jour change
+   tout seul à minuit). ⛔ ET ON NE VA JAMAIS DANS LE FUTUR : demain n'a encore rien à montrer,
+   et y naviguer donnerait l'impression qu'on peut noter un repas à l'avance. */
+let _journalJour=null;
+function _journalJourActif(){ return _journalJour || today(); }
+function journalNav(dir){
+  const d=new Date(_journalJourActif()+'T12:00:00');
+  d.setDate(d.getDate()+dir);
+  const ymd=d.toISOString().slice(0,10);
+  if(ymd>today()) return;                          // ⛔ jamais dans le futur
+  _journalJour=(ymd===today())?null:ymd;
+  renderFoodJournal();
+}
 let _editFoodTs=null, _editFoodMeal='dejeuner';
 function openEditFood(ts){
   const e=(S.foodLog||[]).find(x=>x.ts===ts); if(!e)return;

@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v960` — fusionnée sur `master` le 22/08.
+- **Version en ligne (live) :** `ft-v961` — fusionnée sur `master` le 22/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,16 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- 📅 **NAVIGUER DANS LE JOURNAL — voir ET modifier un autre jour** (ft-v961) — Michel : *« on ne
+  sait pas ce que l'on a mangé dans la journée et on ne peut même pas le modifier »*.
+  ⭐ **Vérifié avant de coder** : le Journal était câblé en dur sur `today()`, sans navigation.
+  ⭐ **Même repère** que le calendrier de l'Accueil (flèches ‹ ›). ⛔⛔ **Jamais vers le futur**.
+  ⭐⭐ **Le témoin central** : un jour passé est **modifiable**, pas juste consultable — édition
+  et suppression marchent comme pour aujourd'hui, sans toucher au jour présent.
+  ⭐ **Ajouter en consultant le passé DATE sur ce jour-là** (backfill) — sinon on n'aurait résolu
+  que la moitié du problème (voir, pas corriger).
+  ⚠️ Un jour clos n'a plus de « restantes » (libellé en comparaison simple) ; l'objectif affiché
+  reste celui d'aujourd'hui (pas de faux-précis historique, R29).
 - 🔤 **MÊME BUG, SUR L'APOSTROPHE** (ft-v960) — Michel : *« faut aller voir aussi les
   caractères spéciaux »*. Vérifié systématiquement sur ~132 000 noms : accents/tréma/cédille
   étaient déjà bons. L'apostrophe avait le même défaut que la ligature — clavier iPhone la

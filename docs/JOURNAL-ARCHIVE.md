@@ -3069,3 +3069,17 @@ Tests : **parcours 904/904** (+9, bloc LXXV), calculs 241/241, muscles 241/241, 
 
 **⛔ ET 15/15 VERT NE VEUT PAS DIRE « MILO EST PARFAIT ».** Un vert dit *« aucune violation DÉTECTABLE »*, rien de plus — d'autant que **deux motifs viennent de changer**. Ce que la passe prouve vraiment : le keto tient toujours (2ᵉ mesure après correctif), le débrief couvre les 5 exercices, aucune charge impossible, aucun lien inventé, aucun diagnostic, le ressenti est cru.
 Tests : **parcours 908/908** (+4, bloc LXXV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif classique ici** : le « avant » est la passe réelle elle-même, et elle est **gardée dans le rejeu** — c'est elle qui rendait 2 rouges et qui rend 15 verts. *La mesure avant/après existe, elle est simplement faite sur des données au lieu d'un `git stash`.* Fichiers : `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v940. |
+
+
+**ft-v941 — 🚪 UN STOCKAGE QUI SURVIT DERRIÈRE UNE PORTE QUI NE SURVIT PAS NE SERT À RIEN** — Michel, en voulant vérifier lui-même : *« je ne peux pas rejouer j'ai plus les cases »*.
+
+**Le bug est de moi, et il date de ft-v938 — c'est-à-dire de l'avant-veille.** Les deux boutons **gratuits** (🔬 rejouer les vérificateurs · 📥 copier les réponses) ne vivaient **que sur la carte de résultat**. Or cette carte vit **dans le chat** : elle disparaît au rechargement de l'app.
+
+**⭐ ET ÇA ANNULAIT TOUT L'INTÉRÊT DE ft-v938.** La promesse était *« on paie une fois, on exploite dix fois »*. Les réponses avaient été stockées en local **exprès** pour survivre à une fermeture — et un témoin le vérifiait. Mais le **moyen d'y accéder**, lui, mourait avec la session. *La matière était là, la porte n'existait plus.*
+
+**👉 Les deux boutons vivent maintenant dans Profil → Admin**, à côté de « Lancer le benchmark » — un endroit qui ne dépend d'aucune session de chat.
+
+**⚠️ ET LE CONTRÔLE NÉGATIF DIT EXACTEMENT LA BONNE CHOSE : un seul rouge, le chemin manquant.** Le témoin « départ à froid » est **vert des deux côtés, et c'est voulu** — `rejouerVerifs()` a toujours fonctionné quand on l'appelait. ⭐ **Ce qui manquait n'était pas une fonction, c'était un POINT D'ENTRÉE** — et c'est un défaut qu'aucun test de la fonction elle-même n'aurait pu trouver. *On teste souvent que le moteur tourne, rarement qu'il reste une clé de contact.*
+
+**⚠️ Le témoin lit les DEUX fichiers HTML** (l'app et le clone) : un chemin présent d'un seul côté finirait par diverger sans que rien ne le signale (**R2**).
+Tests : **parcours 910/910** (+2, bloc LXXIV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN HTML : 1 rouge**, le chemin absent. Fichiers : `index.html`, `clone/index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v941. |
