@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v951` — fusionnée sur `master` le 21/08.
+- **Version en ligne (live) :** `ft-v952` — fusionnée sur `master` le 21/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,18 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- 🔋 **OÙ ON ARRIVE À 100 — et pour Michel, 100 n'existe pas** (ft-v952) — son idée du 21/08,
+  reprise le jour même : *« ET reprend mon idée aussi pour la recup faut pas l'oublier »*.
+  ⭐ **La 1ʳᵉ étape gratuite a répondu oui** : le calcul **gardait déjà** le détail par facteur,
+  il n'était pas exploité. Rien à construire, tout à brancher.
+  ⭐⭐ **Sa parenthèse était calculable** : âge et tabac sont les deux facteurs **permanents** →
+  à 48 ans et fumeur, le maximum atteignable est **93**.
+  ⛔⛔ **Mais le score n'est PAS re-barêmé** : « sur 93 » aurait réécrit tout l'historique. On
+  garde l'échelle absolue, on **ajoute** le plafond. *L'idée proposait A ou B ; c'était les deux.*
+  ⛔ Les permanents **ne comptent pas comme un manque** (ils déplacent la ligne d'arrivée).
+  ⛔ **Aucun conseil d'arrêter de fumer** dans le bloc (P13) — vérifié par un témoin sur le texte
+  réellement produit.
+  ⏭️ **Rien d'ouvert sur cette idée** ; l'entrée d'`IDEES-FUTURES.md` est marquée LIVRÉE (R23).
 - 🍚 **LES GLUCIDES PLUS HAUTS LES JOURS DE SÉANCE** (ft-v951) — Michel : *« les glucides plus
   hauts les jours de séance et adaptés »*.
   ⭐⭐ **Le levier n'est pas les glucides, ce sont les LIPIDES** : protéines et lipides sont fixés

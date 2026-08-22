@@ -8901,6 +8901,107 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXXX - OU ON ARRIVE A 100 (21/08/2026) ==
+   Michel : « on a le score de recuperation mais il faudrait rajouter la donnee ou on arrive a
+   100 (bon sauf moi qui suis fumeur) ».
+   ⭐⭐ SA PARENTHESE EST LE POINT PRINCIPAL, ET ELLE EST CALCULABLE. Deux facteurs sont
+   PERMANENTS et toujours negatifs : l'age et le tabac. A 48 ans et fumeur, le maximum
+   atteignable n'est pas 100, c'est 93 — et rien ne le disait. Un plafond invisible transforme
+   un outil de progres en reproche quotidien : on vise chaque jour un 100 qui n'existe pas.
+   ⛔⛔ MAIS ON NE RE-BAREME PAS LE SCORE : ramener le chiffre « sur 93 » reecrirait
+   silencieusement tout l'historique. On garde l'echelle absolue, on AJOUTE le plafond. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_age:'48'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(()=>{
+    const o={};
+    if(typeof calcRecoveryDetail!=='function') return {absente:true};
+    const nuitParfaite=()=>{ S.sleepLog=[0,1,2].map(n=>{const d=new Date();d.setDate(d.getDate()-n);
+      return {date:d.toISOString().slice(0,10),hours:9,quality:4};}); };
+    // Décor : nuits parfaites, aucune séance récente, aucun état du jour → seuls les
+    // permanents peuvent encore coûter des points.
+    nuitParfaite(); S.sessions=[]; S.dayState=null; S.smoker=false; S.age=30;
+    const d0=calcRecoveryDetail();
+    o.plafondSain=d0.plafond; o.scoreSain=d0.score;
+
+    /* ⭐⭐ LE CAS DE MICHEL : 48 ans ET fumeur → plafond 93, pas 100. */
+    S.age=48; S.smoker=true;
+    const d1=calcRecoveryDetail();
+    o.plafondMichel=d1.plafond;                      // 100 − 3 (âge) − 4 (tabac)
+    o.plafondFacteurs=(d1.plafondFacteurs||[]).map(f=>f.label).sort().join(',');
+    /* ⛔ LE SCORE, LUI, N'EST PAS RE-BARÊMÉ : il reste sur l'échelle absolue. */
+    o.scoreAbsolu=d1.score;
+    o.pasRebareme=(d1.score<=d1.plafond) && (d1.score===Math.min(100,d1.score));
+    /* ⛔ ET LES PERMANENTS NE SONT PAS COMPTÉS COMME UN « MANQUE » : ils déplacent la ligne
+       d'arrivée, ils ne sont pas un retard qu'on pourrait rattraper ce soir. */
+    o.manqueLabels=(d1.manque||[]).map(m=>m.label).join(',');
+    o.permanentsHorsManque=!/Âge|Tabac/.test(o.manqueLabels);
+    /* ⭐ Nuits parfaites + repos → plus rien ne sépare de SON maximum. */
+    o.manqueVide=(d1.manque||[]).length===0;
+
+    /* ⭐③ CE QUI COÛTE LES POINTS EST LISTÉ, DU PLUS LOURD AU PLUS LÉGER. */
+    S.sleepLog=[{date:today(),hours:4,quality:1}];    // mauvaise nuit → gros manque
+    S.dayState={date:today(),energy:0,pains:[]};      // 😴 crevé → −10
+    const d2=calcRecoveryDetail();
+    o.manque2=(d2.manque||[]).map(m=>m.label+':'+m.cout);
+    o.trie=(d2.manque||[]).every((m,i,a)=>i===0||a[i-1].cout>=m.cout);
+    o.sommeilEnTete=/Sommeil/.test((d2.manque||[])[0]?(d2.manque[0].label):'');
+    /* ⛔ La somme des manques + les permanents reconstituent EXACTEMENT le score. */
+    const totManque=(d2.manque||[]).reduce((a,m)=>a+m.cout,0);
+    o.coherent=(d2.plafond-totManque===d2.score);
+    o.recalc=d2.plafond-totManque; o.score2=d2.score;
+
+    /* ⛔④ AUCUN CONSEIL D'ARRÊTER DE FUMER DANS LE NOUVEAU BLOC (Constitution P13). */
+    const h=(typeof _recoManqueHtml==='function')?_recoManqueHtml(d2):'';
+    o.htmlLong=h.length>80;
+    o.pasDeMorale=!/arrête|arrete|stopper|sevrage|devrais/i.test(h);
+    o.plafondDit=h.indexOf('93')>=0;
+    /* ⚠️ ... et le bloc plafond ne s'affiche PAS pour quelqu'un sans facteur permanent : on
+       n'invente pas un plafond à 100, ça n'aurait aucun sens à lire. */
+    S.age=30; S.smoker=false;
+    const hSain=(typeof _recoManqueHtml==='function')?_recoManqueHtml(calcRecoveryDetail()):'';
+    o.sainSansPlafond=hSain.indexOf('maximum atteignable')<0;
+    return o;
+  });
+
+  console.log('\n-- LXXX. Ou on arrive a 100 --');
+  if(R.absente){ t('⛔ le détail de récup existe', false, 'fonction absente'); }
+  else{
+    t('⭐ sans facteur permanent, le plafond est bien 100',
+      R.plafondSain===100, 'plafond='+R.plafondSain);
+    /* ⭐⭐ Le cœur de son idée. */
+    t('⭐⭐ 48 ans + fumeur → le maximum atteignable est 93, pas 100',
+      R.plafondMichel===93, 'plafond='+R.plafondMichel+' facteurs='+R.plafondFacteurs);
+    t('⭐ ... et les deux facteurs sont NOMMÉS (âge, tabac)',
+      R.plafondFacteurs==='Tabac,Âge', R.plafondFacteurs);
+    /* ⛔⛔ Ne pas réécrire l'historique. */
+    t('⛔⛔ le score N\'EST PAS re-barêmé (l\'échelle absolue est gardée)',
+      R.pasRebareme===true, 'score='+R.scoreAbsolu+' plafond='+R.plafondMichel);
+    t('⛔ les permanents ne sont PAS comptés comme un « manque » (ils déplacent la ligne)',
+      R.permanentsHorsManque===true, 'manque='+R.manqueLabels);
+    t('⭐ nuits parfaites + repos → plus rien ne sépare de SON maximum',
+      R.manqueVide===true, 'manque='+R.manqueLabels);
+    /* ⭐ Ce qui est actionnable, trié. */
+    t('⭐⭐ ce qui coûte les points est LISTÉ, du plus lourd au plus léger',
+      R.trie===true && R.manque2.length>0, JSON.stringify(R.manque2));
+    t('⭐ ... et une mauvaise nuit arrive bien en tête', R.sommeilEnTete===true, JSON.stringify(R.manque2));
+    /* ⛔ Le témoin d'exactitude : les chiffres doivent se reconstituer. */
+    t('⛔⛔ plafond − somme des manques = LE SCORE EXACT (aucun point fantôme)',
+      R.coherent===true, 'recalculé='+R.recalc+' score='+R.score2);
+    /* ⛔ Constitution P13 : on nomme le fait, on ne fait pas la morale. */
+    t('⛔⛔ AUCUN conseil d\'arrêter de fumer dans le bloc (P13 : jamais thérapie)',
+      R.pasDeMorale===true && R.htmlLong===true, '');
+    t('⭐ le plafond est bien DIT à l\'écran', R.plafondDit===true, '');
+    t('⚠️ ... et rien ne s\'affiche pour qui n\'a aucun facteur permanent (pas de plafond à 100)',
+      R.sainSansPlafond===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

@@ -2463,7 +2463,37 @@ function calcRecoveryDetail(){
   if(dayEnergyAdj<0) tips.push('Journée sans énergie — une séance plus courte reste bénéfique.');
   if(rhrAdj<=-5) tips.push('Ta FC au repos est nettement au-dessus de ta normale — séance allégée, et regarde comment tu te sens.');
   if(!tips.length) tips.push(score>=80?'Tu es au top — profites-en pour une séance intensive ! 💪':'Récup correcte — séance normale, et une bonne nuit ce soir.');
-  return {score,base,factors,tips:tips.slice(0,2),dayPains};
+  /* 🔋 « OÙ ON ARRIVE À 100 » (21/08/2026) — Michel : « on a le score de récupération mais il
+     faudrait rajouter la donnée où on arrive à 100 (bon sauf moi qui suis fumeur) ».
+     ⭐ LE SCORE DONNE UN NOMBRE, IL NE DIT PAS CE QUI COÛTE LES POINTS MANQUANTS — or c'est la
+     seule chose sur laquelle on peut agir. *Un 72 sans explication est un jugement ; « 72, il te
+     manque surtout du sommeil » est un levier.* C'est « informer sans décider » (R29/R24) : on
+     AFFICHE les éléments, la personne tranche.
+     ⭐⭐ ET SA PARENTHÈSE EST LE POINT PRINCIPAL, PAS UNE BLAGUE — elle est même CALCULABLE.
+     Deux facteurs sont PERMANENTS et toujours négatifs : l'âge et le tabac. Pour quelqu'un de
+     48 ans qui fume, le maximum atteignable n'est pas 100, c'est **93** — et jusqu'ici rien ne
+     le disait. *Un plafond invisible transforme un outil de progrès en reproche quotidien* :
+     on vise chaque jour un 100 qui n'existe pas, et on ne comprend pas pourquoi on n'y arrive
+     jamais. C'est exactement ce que la Constitution interdit (P21 : le suivi ne doit pas coûter
+     plus de stress qu'il n'apporte).
+     ⛔⛔ ON NE RE-BARÈME PAS LE SCORE POUR AUTANT. Ramener le score « sur 93 » réécrirait
+     silencieusement TOUT l'historique : un 85 d'il y a trois mois ne voudrait plus dire la même
+     chose, et les courbes deviendraient fausses sans que rien ne le signale. On garde l'échelle
+     absolue et on AJOUTE le plafond — la personne sait alors ce que 100 veut dire POUR ELLE.
+     ⛔ ET AUCUN CONSEIL D'ARRÊTER DE FUMER ICI. On nomme le fait, sans le commenter et sans le
+     répéter : ce n'est ni le rôle de l'app ni celui de Milo (Constitution P13, accompagnement
+     jamais thérapie). Le facteur est déjà listé plus haut avec sa raison, ça suffit. */
+  const permanents=factors.filter(f=>!f.base&&f.val<0&&(f.label==='Âge'||f.label==='Tabac'));
+  const plafond=Math.max(0,Math.min(100,100+permanents.reduce((a,f)=>a+f.val,0)));
+  /* Ce qui coûte les points manquants AUJOURD'HUI — donc hors permanents (eux ne se rattrapent
+     pas : ils fixent le plafond, ils ne sont pas un « manque »). Le sommeil compte pour ce qui
+     lui manque jusqu'à 100, puisque c'est LUI la base. */
+  const manque=[];
+  if(base<100) manque.push({ic:'😴',label:hasSleep?'Sommeil':'Sommeil non renseigné',cout:100-base});
+  factors.forEach(f=>{ if(!f.base&&f.val<0&&permanents.indexOf(f)<0) manque.push({ic:f.ic,label:f.label,cout:-f.val}); });
+  manque.sort((a,b)=>b.cout-a.cout);
+  return {score,base,factors,tips:tips.slice(0,2),dayPains,
+          plafond, plafondFacteurs:permanents.map(f=>({ic:f.ic,label:f.label,val:f.val})), manque};
 }
 function calcRecoveryScore(){return calcRecoveryDetail().score;}
 function getRecoveryInfo(score){

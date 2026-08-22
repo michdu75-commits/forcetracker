@@ -684,6 +684,39 @@ function _renderHomeHero(){
     +oubliHtml+'</div>';
 }
 
+/* 🔋 « CE QU'IL TE MANQUE POUR ARRIVER À 100 » (21/08/2026) — l'idée de Michel.
+   ⭐ Le score donnait un chiffre sans dire ce qui coûte les points manquants — la seule chose
+   sur laquelle on peut agir. On AFFICHE les éléments, on ne décide pas à sa place (R29).
+   ⭐⭐ ET ON DIT SON PLAFOND RÉEL quand il est sous 100 : à 48 ans et fumeur, le maximum
+   atteignable est 93. *Viser chaque jour un 100 qui n'existe pas, c'est un reproche
+   quotidien déguisé en objectif.*
+   ⛔ Le ton est FACTUEL et il ne se répète pas : le facteur permanent est nommé une fois, sans
+   commentaire et sans conseil de le corriger (Constitution P13). */
+function _recoManqueHtml(d){
+  if(!d) return '';
+  const plaf=(typeof d.plafond==='number')?d.plafond:100;
+  const manque=d.manque||[];
+  let h='';
+  if(plaf<100){
+    const noms=(d.plafondFacteurs||[]).map(f=>f.ic+' '+f.label.toLowerCase()).join(' · ');
+    h+='<div style="margin-top:14px;background:var(--bg2);border:1px solid var(--sep);border-radius:12px;padding:11px 13px;">'
+      +'<div style="font-size:13px;color:var(--t2);line-height:1.5;">🔒 <b style="color:var(--t1);">Ton maximum atteignable est '+plaf+'</b>, pas 100'+(noms?' — '+noms:'')+'. '
+      +'Ces facteurs-là ne se rattrapent pas d\'un jour à l\'autre : ils ne sont pas un retard, ils déplacent la ligne d\'arrivée. '
+      +'<span style="color:var(--t3);">Un '+plaf+' chez toi, c\'est un 100.</span></div></div>';
+  }
+  if(manque.length){
+    const tot=manque.reduce((a,m)=>a+m.cout,0);
+    h+='<div style="margin-top:10px;background:var(--bg2);border:1px solid var(--sep);border-radius:12px;padding:11px 13px;">'
+      +'<div style="font-size:12.5px;color:var(--t3);margin-bottom:7px;">Ce qui te sépare de '+plaf+' aujourd\'hui — <b style="color:var(--t2);">'+tot+' point'+(tot>1?'s':'')+'</b>, du plus lourd au plus léger</div>'
+      +manque.map(m=>'<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:4px 0;">'
+        +'<span style="font-size:13px;color:var(--t2);">'+m.ic+' '+m.label+'</span>'
+        +'<b style="font-size:13px;color:#FF8A72;white-space:nowrap;">−'+m.cout+'</b></div>').join('')
+      +'</div>';
+  }else if(plaf<100){
+    h+='<div style="margin-top:10px;font-size:12.5px;color:var(--green);text-align:center;">✅ Rien ne te sépare de ton maximum aujourd\'hui.</div>';
+  }
+  return h;
+}
 // ─── « Pourquoi ce score ? » — explication claire de la récup (retour GPT, ft-v564) ──
 function openRecoWhy(){
   const d=(typeof calcRecoveryDetail==='function')?calcRecoveryDetail():null;
@@ -705,6 +738,7 @@ function openRecoWhy(){
     +'<div style="font-size:14px;font-weight:700;color:'+info.color+';margin-top:2px;">'+info.label+'</div></div>'
     +'<div style="font-size:13px;color:var(--t2);line-height:1.5;margin:12px 0 8px;">Ce score estime à quel point ton corps est <b>prêt à s\'entraîner</b> aujourd\'hui (100 = parfaitement frais). Voici ce qui l\'a fait bouger :</div>'
     +factorsHtml
+    +_recoManqueHtml(d)
     +'<div style="margin-top:14px;background:var(--bg3);border-radius:12px;padding:11px 13px;font-size:13px;color:var(--t2);line-height:1.5;">'+info.rec+'</div>'
     +'<div style="margin-top:10px;font-size:11.5px;color:var(--t3);line-height:1.5;text-align:center;">Il se recalcule chaque jour et remonte au fil de la journée. Ce n\'est qu\'un repère — <b>ton ressenti prime toujours</b>.</div>';
   document.getElementById('ov-reco-why').classList.add('open');
