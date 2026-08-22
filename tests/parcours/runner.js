@@ -8532,6 +8532,20 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     /* ⛔ Et une promesse ACCOMPAGNÉE de son bloc ne doit jamais rougir : c'est le cas SAIN. */
     o.avecBlocMuet = !drapeau('Noté ! {"retiens":["il finit par les mollets"]}');
 
+    /* ⭐⭐ 4e FORME ECARTEE (ft-v967) — LA NOTE HONOREE DANS LA MEME REPONSE. Michel a envoye la
+       reponse exacte qui levait le drapeau : « je note, c'est ton choix » … et le Pec Deck EST
+       dans la seance reconstruite dix lignes plus bas. Il note ET applique : rien a differer,
+       donc rien a enregistrer. Le critere est OBSERVABLE : une seance produite (>=3 blocs NxN)
+       et aucun mot de report. */
+    o.noteHonoree = !drapeau("Et le Butterfly (Pec Deck) en début de séance — je note, c'est ton "
+      +"choix, je le respecte. Je refais proprement : Développé Couché 3×5 à 95 kg, Pec Deck "
+      +"3×12 à 61 kg, Rowing Barre 3×5 à 80 kg, Développé Militaire 3×6 à 40 kg, Face Pull 3×12 à 30 kg");
+    /* ⛔⛔ MAIS LE REPORT L'EMPORTE TOUJOURS : sinon il suffirait de joindre un tableau pour
+       desarmer le garde-fou. */
+    o.reportGagne = drapeau("Je note pour la prochaine fois. Voici : Développé Couché 3×5 à 95 kg, "
+      +"Pec Deck 3×12 à 61 kg, Face Pull 3×12 à 30 kg, Rowing 3×8 à 56 kg");
+    /* ⛔ et une note SANS seance produite reste un drapeau (les 3 vraies ci-dessus le prouvent). */
+
     /* ③ LE COMPTEUR : il monte, et il ne garde AUCUN texte. */
     try{ localStorage.removeItem('ft4_gardienStats'); }catch(e){}
     _gardienCompter([{code:'promesse_vide',label:'x'}]);
@@ -8679,6 +8693,10 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⭐⭐ ... et les 4 phrases qui n\'en sont PAS ne crient plus (0/4) — R19',
       R.fausses===0, R.fausses+' faux positif(s) sur 4');
     t('⛔ une promesse ACCOMPAGNÉE de son bloc reste muette', R.avecBlocMuet===true, '');
+    t('⭐⭐ « je note » + la SÉANCE produite dans la même réponse = note HONORÉE, pas de drapeau',
+      R.noteHonoree===true, '');
+    t('⛔⛔ ... mais « pour la prochaine fois » l\'emporte, même avec une séance jointe',
+      R.reportGagne===true, '');
     /* ⭐ Mesurer sans rien garder de ce qui s'est dit. */
     t('⭐ le compteur monte : 2 réponses · 2 promesses · 1 source',
       R.compteReponses===2 && R.comptePromesses===2 && R.compteSources===1,

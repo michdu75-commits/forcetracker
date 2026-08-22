@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v966` — fusionnée sur `master` le 22/08.
+- **Version en ligne (live) :** `ft-v967` — fusionnée sur `master` le 22/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,8 +28,13 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
-- 🔴 **PROCHAINE PRIORITÉ — ft-v923 NE TIENT PAS** (mesuré 22/08 23:37, écrans du Gardien) :
-  **`promesse_vide : 5` EN DIRECT entre le 21 et le 22/08**, sur le Milo d'après les correctifs.
+- 🟡 **PROCHAINE PRIORITÉ — 5 drapeaux en direct, NON LUS** (22/08 23:37, écrans du Gardien) :
+  `promesse_vide : 5` entre le 21 et le 22/08. ⚠️⚠️ **J'avais titré « ft-v923 NE TIENT PAS » —
+  c'était faux** : Michel a envoyé la réponse exacte d'un de ces drapeaux, et c'était un **faux
+  positif** (« je note » + la séance appliquée dans le même message). Motif recalibré en ft-v967.
+  ⛔ **Conclure d'un compteur sans lire ce qu'il compte** = `BUGS.md` 12quater, refaite **deux
+  heures après avoir écrit la famille qui la décrit**. Tant que les 5 ne sont pas lus, on ne conclut
+  ni « ça tient » ni « ça ne tient pas ».
   ⭐ **Vérification croisée réussie** : scan rétro de l'app **et** scan hors-ligne du fichier exporté
   donnent exactement le même historique (4/119 · promesse_vide 3 · source_fabriquee 1).
   ⚠️⚠️ **Mon analyse datée sous-estimait** : « 1 sur 29 » lu dans l'**export**, contre **5** en direct

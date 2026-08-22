@@ -3401,7 +3401,26 @@ function _gardienSortie(text){
     /(dis-(le )?moi|si tu (me |m'en )?)[^.\n]{0,45}je (le |m'en )?retiens/i,
     /(c.est|bien) not[ée]e?\s*[—:,-]?\s*(oui,?\s*)?(aujourd.hui|voil[àa]|tu as (fait|not[ée]))/i,
   ];
-  if (_promesse.test(clean) && !_pasUnePromesse.some(re=>re.test(clean))
+  /* ⭐⭐ 4ᵉ FORME ÉCARTÉE — LA NOTE HONORÉE DANS LA MÊME RÉPONSE (22/08/2026, ft-v967).
+     Michel envoie la réponse exacte qui avait levé un drapeau : *« Et le Butterfly (Pec Deck) en
+     début de séance — **je note**, c'est ton choix, je le respecte »*… et **le Pec Deck est dans la
+     séance qu'il reconstruit dix lignes plus bas**. Il note ET applique dans le même message :
+     ⛔ **il n'y a rien à différer, donc rien à enregistrer.** Ce n'est pas une promesse vide, c'est
+     un accusé de réception suivi de son exécution.
+     👉 LE CRITÈRE EST OBSERVABLE, pas une devinette : *« une SÉANCE est-elle produite ici ? »*
+     (au moins 3 blocs `N×N`) **et** *« aucun mot de report ? »* — alors la note est **honorée**.
+     ⚠️ ET LE REPORT L'EMPORTE TOUJOURS : « je note **pour la prochaine fois** » suivi d'une séance
+     reste un drapeau. *Sinon il suffirait de joindre un tableau pour désarmer le garde-fou.*
+     ⭐ MESURÉ DANS LES DEUX SENS avant d'être écrit : sur ses 119 réponses, **3 drapeaux → 2**, et
+     les 2 gardés sont exactement les vrais (« pour les prochaines fois », « pour la prochaine
+     fois »). Les 3 vraies de ft-v944 — dont *« le Leg Curl avant le Face Pull, c'est noté »*, qui
+     n'a AUCUN mot de report — **restent gardées**, parce qu'elles ne produisent pas de séance.
+     ⚠️ *Un garde-fou juste une fois sur deux ne survit pas à son premier mois* (**R19**) — c'est la
+     2ᵉ calibration de ce motif sur de VRAIES conversations, et la 2ᵉ fois qu'elle vient de Michel. */
+  const _SEANCE_PRODUITE=/\d+\s*[×x]\s*\d+/g;
+  const _REPORT=/pour (la |les )?prochaine|à l'avenir|d[ée]sormais|dor[ée]navant|pour la suite|pour plus tard|la prochaine fois/i;
+  const _noteHonoree = (clean.match(_SEANCE_PRODUITE)||[]).length>=3 && !_REPORT.test(clean);
+  if (_promesse.test(clean) && !_pasUnePromesse.some(re=>re.test(clean)) && !_noteHonoree
       && !/"retiens"/.test(raw) && !/"prevu"/.test(raw)) {
     flags.push({ code:'promesse_vide', label:'promesse de mémoire sans rien enregistrer' });
   }
