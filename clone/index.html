@@ -836,6 +836,15 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div class="suppl-header"><div class="suppl-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px;display:block;"><path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8"/><path d="M5 8h14"/><path d="M7 15a6.47 6.47 0 0 1 5 0 6.47 6.47 0 0 0 5 0"/><path d="m12 8 1-6h2"/></svg></div><div><div class="suppl-name">Whey</div><div class="suppl-sub">Protéines rapides post-workout</div></div></div>
       <div class="suppl-body" id="whey-content"></div>
     </div>
+    <!-- 🔍 Autres compléments — Compl'Alim (identification uniquement, 22/08/2026). Vide tant
+         qu'on n'a pas tapé 2 lettres. AUCUNE dose ni mise en garde ici : voir app.js. -->
+    <div class="sec">Un autre complément ?</div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:8px;">
+      <input id="compl-desc" type="text" placeholder="Tape un nom : magnésium, ZMA, BCAA…" oninput="_complSuggInput()"
+        style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);">
+      <div id="compl-sugg"></div>
+      <div style="font-size:11px;color:var(--t3);line-height:1.4;">Identification officielle uniquement (nom, marque, usage déclaré) — aucune dose ni mise en garde ici. Pour la créatine et la whey, vois les cartes au-dessus.</div>
+    </div>
     <div id="suppl-combos"></div>
   </div>
 
