@@ -7,7 +7,21 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
-## 🔋 LE SCORE DE RÉCUPÉRATION DOIT DIRE CE QUI MANQUE POUR ARRIVER À 100 (Michel, 21/08/2026)
+## ✅ LE SCORE DE RÉCUPÉRATION DIT CE QUI MANQUE POUR ARRIVER À 100 — LIVRÉ (ft-v952, 21/08/2026)
+
+> ⭐ **Fait le jour même.** Michel : *« ET reprend mon idée aussi pour la recup faut pas l'oublier »*.
+> **Le détail par facteur existait déjà** (`calcRecoveryDetail` rend `{ic,label,val,why}`) — la
+> première étape « gratuite » ci-dessous n'a rien coûté et la réponse était oui.
+> ⭐⭐ **Et sa parenthèse était CALCULABLE** : âge et tabac sont les deux facteurs permanents →
+> à 48 ans et fumeur, le maximum atteignable est **93**, pas 100.
+> ⛔ **L'arbitrage A/B ci-dessous a été tranché autrement, et c'est mieux** : ni A ni B seul, mais
+> **l'échelle absolue GARDÉE + le plafond AJOUTÉ**. Re-barêmer « sur 93 » aurait réécrit
+> silencieusement tout l'historique — un 85 d'il y a trois mois n'aurait plus voulu dire la même
+> chose. *On n'efface pas l'information, on arrête juste de la reprocher* — et on ne touche pas
+> aux courbes passées.
+> ⏭️ **Ce qui reste ouvert** : rien sur cette idée. Gardé ici pour la trace du raisonnement.
+
+## 🔋 (l'idée d'origine, telle qu'elle a été notée)
 
 > *« merde je viens d'avoir une idée, par rapport à la récupération, je marque sinon je vais
 > oublier, on a le score de récupération mais il faudrait rajouter la donnée où on arrive à 100

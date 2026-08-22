@@ -136,7 +136,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v951`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v952`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v951`** (prochaine : `ft-v952`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v952`** (prochaine : `ft-v953`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v952 — 🔋 OÙ ON ARRIVE À 100 — et pour Michel, 100 n'existe pas** — Michel, en pleine autre tâche : *« merde je viens d'avoir une idée, par rapport à la récupération, je marque sinon je vais oublier, on a le score de récupération mais il faudrait rajouter la donnée où on arrive à 100 (bon sauf moi qui suis fumeur) »*.
+
+**⭐ LE SCORE DONNAIT UN NOMBRE SANS DIRE CE QUI COÛTE LES POINTS MANQUANTS** — or c'est la **seule** chose sur laquelle on peut agir. *Un 72 sans explication est un jugement ; « 72 — il te manque surtout du sommeil » est un levier.* C'est **R29/R24** : quand l'app renonce à trancher, elle **affiche les éléments** au lieu de laisser deviner.
+
+**⭐ ET LA PREMIÈRE ÉTAPE ÉTAIT GRATUITE — elle a répondu oui.** La question posée avant de coder était *« le calcul garde-t-il le détail par facteur, ou l'écrase-t-il dans un total ? »*. Il le garde : `calcRecoveryDetail` rend déjà `{ic, label, val, why}` pour chacun, tabac compris. **Il n'était simplement pas exploité** — rien à construire, tout à brancher.
+
+**⭐⭐ ET SA PARENTHÈSE ÉTAIT LE POINT PRINCIPAL, PAS UNE BLAGUE — elle est CALCULABLE.** Deux facteurs sont **permanents** et toujours négatifs : l'**âge** et le **tabac**. À 48 ans et fumeur, le maximum atteignable n'est pas 100, c'est **93** — et rien ne le disait. *Un plafond invisible transforme un outil de progrès en reproche quotidien : on vise chaque jour un 100 qui n'existe pas, et on ne comprend pas pourquoi on n'y arrive jamais* (**Constitution P21** : le suivi ne doit pas coûter plus de stress qu'il n'apporte).
+
+**⛔⛔ MAIS ON NE RE-BARÊME PAS LE SCORE POUR AUTANT, et c'est l'arbitrage central.** Ramener le chiffre « sur 93 » aurait **réécrit silencieusement tout l'historique** : un 85 d'il y a trois mois n'aurait plus voulu dire la même chose, et les courbes seraient devenues fausses **sans que rien ne le signale**. 👉 On garde l'**échelle absolue** et on **AJOUTE** le plafond — la personne sait alors ce que 100 veut dire *pour elle*, sans qu'aucune donnée passée ne change de sens. *L'idée notée le matin proposait A ou B ; la bonne réponse était les deux.*
+
+**⛔ LES PERMANENTS NE SONT PAS COMPTÉS COMME UN « MANQUE »** : ils **déplacent la ligne d'arrivée**, ils ne sont pas un retard qu'on rattraperait ce soir. Les mélanger aux leviers du jour (sommeil, séance récente, forme) rendrait la liste inactionnable — et ferait relire un fait comme une faute.
+
+**⛔⛔ ET AUCUN CONSEIL D'ARRÊTER DE FUMER dans ce bloc.** On **nomme** le fait, sans le commenter et sans le répéter : ce n'est ni le rôle de l'app ni celui de Milo (**Constitution P13**, accompagnement jamais thérapie). Un témoin le vérifie sur le texte réellement produit.
+
+**⛔ LE TÉMOIN D'EXACTITUDE** : *plafond − somme des manques = LE SCORE EXACT*. Sans lui, un point fantôme pourrait se promener entre l'explication et le chiffre affiché — et une explication qui ne retombe pas sur son propre score détruit la confiance dans les deux.
+Tests : **parcours 982/982** (+12, bloc LXXX), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 9 rouges** — le plafond et la liste n'existent pas. ⚠️ Trois témoins sont **verts des deux côtés**, et c'est un artefact honnête : sur l'ancien code `plafond` et `manque` valent `undefined`, ce qui satisfait par hasard « les permanents ne sont pas dans le manque » et « rien ne s'affiche ». *Un vert obtenu sur une absence ne prouve rien — les 9 rouges, si.* Fichiers : `tracking.js`, `screens.js`, `tests/parcours/runner.js`, `IDEES-FUTURES.md`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v952. |
 
 **ft-v951 — 🍚 LES GLUCIDES PLUS HAUTS LES JOURS DE SÉANCE — mais le levier, ce sont les LIPIDES** — Michel : *« les glucides plus hauts les jours de séance et adaptés »*.
 
@@ -724,19 +741,6 @@ Tests : **parcours 869/869** (+5, bloc LXXI), calculs 241/241, muscles 241/241, 
 
 **⭐ CE QUI RESTE LISIBLE SOUS LE SEUIL, c'est la NATURE des rouges** — le rapport liste maintenant ceux qui sont propres à chaque modèle. Ici, Haiku seul a échoué sur une **charge impossible** et sur **3 questions d'affilée** : ce sont précisément les deux défauts que R9 prédit, et ça vaut mieux qu'un compte.
 Tests : **parcours 864/864** (+13, blocs LXIX et LXX), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif sur le rappel** : c'est un bloc **neuf** du prompt, un témoin contre l'ancien code dirait « absent » au lieu de mesurer. Ce qui le remplace : le rappel est vérifié **présent quand on parle bouffe**, **absent sinon**, **absent pour qui n'a pas de régime**, et la règle de fond **intacte dans tous les cas**. ⚠️ **Et deux de mes témoins ont rougi à tort avant d'être corrigés** — l'un attrapait le `else if` légitime, l'autre comptait le mot « CONFIRMÉ » qui désigne aussi le **niveau** d'un pratiquant. *Un motif doit viser ce qu'on veut garantir, pas une forme de code.* Fichiers : `coach.js`, `tests/milo/eval-scenarios.js`, `tests/milo/eval.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v933. |
-
-**ft-v932 — 📋 LE RAPPORT DU BENCHMARK SE COPIE — l'export rendait un fichier d'UNE LIGNE** — Michel lance le benchmark, appuie sur « Rapport (texte) », et m'envoie le fichier reçu. Il contient **« Benchmark Milo »**, et rien d'autre.
-
-**CE N'EST PAS LE RAPPORT, C'EST SON TITRE.** `navigator.share({files:[…], title:'Benchmark Milo'})` — la feuille de partage a **gardé le titre et jeté le fichier**. *Un export qui perd son contenu sans rien dire, c'est un export qui ment* : rien n'a échoué, rien n'a prévenu, et de l'autre côté de l'écran il ne reste qu'un fichier vide.
-
-**👉 ON NE REMPLACE PAS LE PARTAGE, ON AJOUTE UN CHEMIN QUI NE DÉPEND D'AUCUNE FEUILLE** : **« 📋 Copier le rapport »**. C'est celui dont Michel a réellement besoin — il **colle le texte dans la conversation**, il ne classe pas des fichiers. *La bonne correction n'est pas toujours de réparer le chemin cassé ; c'est parfois d'en ouvrir un qui ne peut pas casser.*
-
-**⭐ R13 — le motif existait déjà, avec sa leçon écrite.** Repris tel quel de `copyAppLink` (13/08, quand Michel avait signalé un bouton « copier » muet) : presse-papier → repli `execCommand` → **et si les deux tombent, ON LE DIT**, avec en dernier recours le rapport **affiché dans le chat**. *Un bouton muet, de l'autre côté de l'écran, ça s'appelle « ça ne marche pas ».*
-
-**⚠️⚠️ ET LA CORRECTION EST VOLONTAIREMENT ÉTROITE (R19) — c'est le point de méthode.** **8 autres exports** du dépôt partagent un fichier **avec** un titre (PT-001, VC, VM, programme, étude du corps) — et **ceux-là fonctionnent chez Michel**. Donc l'explication *« le titre survit au fichier »* n'est **pas démontrée en général** : elle est **constatée ici, une fois**. On corrige ici et **on ne touche pas à ce qui marche** — *deviner deux fois de suite a déjà coûté cher* (`BUGS.md` 12ter). Le témoin le dit explicitement : le jour où un **2ᵉ** export perd son contenu, la famille sera prouvée et il s'élargira.
-
-**⚠️ ET MON PREMIER TÉMOIN ROUGISSAIT SUR SA PROPRE EXPLICATION.** Il cherchait `title:` dans **tout le corps** de la fonction — or le commentaire qui explique *pourquoi on l'a retiré* contient le mot. *Un motif doit viser le CODE, pas le texte qui l'entoure.* Corrigé pour n'examiner que l'appel lui-même.
-Tests : **parcours 851/851** (+4, bloc LXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif** : `copyEvalText` est une fonction **neuve** — un témoin tourné contre l'ancien code rendrait « fonction absente » au lieu de mesurer (le piège payé 8 fois). Ce qui le remplace : le témoin a **effectivement rougi** sur l'ancien appel avec `title:`, puis est passé au vert une fois le titre retiré — le va-et-vient a été observé, pas supposé. Fichiers : `coach.js`, `tests/milo/eval.js` (commentaire dupliqué retiré), `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v932. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
