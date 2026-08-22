@@ -69,7 +69,70 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
-### 🔴 ft-v923 NE TIENT PAS — 5 promesses de mémoire en 2 jours, MESURÉ EN DIRECT
+### 🟢 NE PAS ATTRIBUER À MILO LES CHOIX DE L'UTILISATEUR — *le faux positif de benchmark*
+**22/08/2026, analyse de GPT sur une séance réelle + confirmation de Michel** (*« le superset c'est
+moi qui l'ai imposé »*). ⭐⭐ **C'est le point le plus important du document**, et il a bien failli me
+coûter une erreur : j'allais compter cette séance contre Milo alors qu'il y **fait bien son travail**
+— garder le Pec Deck demandé, garder le superset demandé, ne pas remplacer les préférences par ce
+qu'il croit optimal.
+**Attendu** : un exercice ou une structure **explicitement demandés** se retrouvent dans la séance,
+et **ne sont jamais reprochés à Milo** lors d'une évaluation.
+**Vérifiable ?** ⭐ **Oui — mais SEULEMENT si la provenance est enregistrée** (voir l'entrée suivante).
+Aujourd'hui rien ne distingue *ce que la personne a exigé* de *ce que Milo a décidé* : **tout
+benchmark de séance produira donc des faux positifs.** ⛔ C'est un **prérequis**, pas une option.
+
+### 🟡 LA PROVENANCE DES DÉCISIONS D'UNE SÉANCE (idée GPT, §17)
+**22/08/2026.** Marquer, pour chaque élément d'une séance, **d'où vient la décision** :
+`user_requested` · `milo_decision` · `existing_program` · `system_constraint` · `safety_adjustment`.
+⭐⭐ **Ce n'est pas une idée neuve dans ce projet — c'est EXACTEMENT le motif de la brique 0
+nutrition** (`_provFood`, ft-v907), qui sépare déjà *« comment c'est entré »* de *« d'où vient le
+chiffre »*. **R13** : on ne réinventerait rien, on transposerait un motif éprouvé aux séances.
+**Ce que ça débloque** : évaluer Milo **uniquement sur ses propres décisions**, auditer une séance,
+et supprimer les faux positifs du futur benchmark comportemental.
+**Vérifiable ?** ⭐ Oui, une fois la donnée là. ⛔ **Avant, non** — d'où le classement en prérequis.
+
+### 🟢 Le repos ne suit pas l'INTENSITÉ — **une prescription INFAISABLE, confirmée par l'athlète**
+**⭐⭐ MICHEL A TRANCHÉ LUI-MÊME, ET C'EST LA PREUVE LA PLUS FORTE QU'ON PUISSE AVOIR** : *« GPT a raison sur le développé couché — même si je sais que je peux faire un **3×3**, un **3×5 avec 90 secondes de repos c'est IMPOSSIBLE** »*. ⚠️ Ce n'est donc plus une prescription *discutable*, c'est une prescription **INEXÉCUTABLE** — et c'est celui qui soulève la barre qui le dit, pas un pourcentage théorique. *Un plan qu'on ne peut pas faire ne se discute pas : il se corrige.*
+⭐ **Et sa nuance est le vrai enseignement** : la CHARGE n'est pas le problème (95 kg passe en 3×3), c'est le **couple charge × répétitions × repos** qui ne tient pas. GPT avait refusé de condamner les 95 kg seuls — il avait raison, et Michel le confirme dans le détail.
+
+**22/08/2026, analyse GPT §7-8.** Milo prescrit **3×5 à 95 kg** (≈ 86 % d'un 1RM à 110) avec
+**90 s** de repos. Pour du lourd à 5 répétitions, 3 à 4 min seraient plus cohérents.
+**⚠️ ET GPT SE TROMPE À MOITIÉ — vérifié dans le code (R28)** : il écrit que *« le repos ne devrait
+pas être une constante attachée à un exercice »*. **C'est déjà fait** : `S.exRestPref` retient le
+repos **exercice par exercice** et **est transmis à Milo depuis le 12/08** (c'était l'un des deux
+trous connus du garde-fou `tests/donnees`, il est comblé).
+**Ce qui reste vrai, et n'est PAS fait** : le repos ne dépend pas de la **charge relative** ni du
+nombre de répétitions. *Un 3×5 à 86 % et un 3×12 de finition n'appellent pas le même repos, quel que
+soit l'exercice.*
+**⭐ Et la prudence de GPT vaut d'être gardée** : il refuse de dire « 95 kg est trop lourd » sans
+regarder l'historique récent — c'est **R29** appliqué par quelqu'un d'autre, mot pour mot.
+**Vérifiable ?** ⭐ Oui : repos prescrit vs (charge / 1RM) et nombre de reps.
+
+### 🟡 La consigne de superset est ambiguë à exécuter
+**22/08/2026, analyse GPT §12.** Milo écrit *« Rowing Barre : 3×5 — repos 90 s **après chaque
+paire** »* puis *« Développé Militaire : 3×6 — repos 90 s »*. **On ne sait pas quoi faire** :
+enchaîner puis 90 s, ou 90 s entre les deux ?
+**Attendu** : *« une prescription sportive doit pouvoir être exécutée sans interprétation »* — un seul
+repos, nommé, pour le couple.
+**Vérifiable ?** ⭐ **Oui** : un superset ne doit pas porter deux mentions de repos concurrentes.
+⚠️ **Et ça se lit à la salle, en sueur, entre deux séries** — c'est le pire moment pour interpréter.
+
+### 🟡 ft-v923 : 5 drapeaux en direct — mais **NON LUS**, et le motif était trop large
+
+**⚠️⚠️ CORRIGÉ UNE HEURE PLUS TARD, ET C'EST LA 3ᵉ FOIS CE SOIR.** Michel a envoyé **la réponse
+exacte** qui levait l'un de ces drapeaux : *« Et le Butterfly (Pec Deck) en début de séance — je
+note, c'est ton choix, je le respecte »*… **et le Pec Deck est dans la séance qu'il reconstruit dix
+lignes plus bas.** Ce n'est **pas** une promesse vide : il note **et applique dans le même message**.
+👉 **Le motif a été recalibré** (ft-v967, 4ᵉ forme écartée) : sur ses 119 réponses, **3 drapeaux → 2**,
+et les 2 gardés sont exactement les vrais.
+⛔⛔ **DONC MON TITRE ÉTAIT FAUX.** J'ai écrit *« ft-v923 NE TIENT PAS — mesuré »* à partir d'un
+compteur **dont je n'avais lu aucun des 5 textes**. C'est **exactement** l'erreur de `BUGS.md`
+12quater commise deux heures plus tôt — *conclure d'un nombre sans regarder ce qu'il compte* — et je
+l'ai refaite **après** avoir écrit la famille qui la décrit.
+**Ce qui est réellement établi** : **2 vraies promesses non tenues** dans l'historique, toutes deux
+**antérieures** aux correctifs (09/08 et 19/08). Les 5 en direct restent **non lus** : on ne sait pas
+combien étaient de la même forme que celui de Michel. ⛔ *Tant qu'on ne les a pas lus, on ne conclut
+rien* — ni « ça tient », ni « ça ne tient pas.
 **22/08/2026, 23:37.** Les écrans du Gardien envoyés par Michel donnent le premier chiffre **en
 direct** sur le Milo d'**après** les correctifs : **`promesse_vide : 5` entre le 21 et le 22/08**
 (7 réponses marquées au total, dont 2 `bloc_technique` qui sont du trafic normal et un résidu

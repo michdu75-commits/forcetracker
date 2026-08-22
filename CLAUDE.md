@@ -136,7 +136,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v966`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v967`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v966`** (prochaine : `ft-v967`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v967`** (prochaine : `ft-v968`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v967 — 🛡️ « JE NOTE » PUIS LA SÉANCE : la note est HONORÉE, pas vide** — Michel envoie **la réponse exacte** qui levait le drapeau : *« Et le Butterfly (Pec Deck) en début de séance — **je note**, c'est ton choix, je le respecte »*.
+
+**⛔ ET LE PEC DECK EST DANS LA SÉANCE QU'IL RECONSTRUIT DIX LIGNES PLUS BAS.** Il note **et applique dans le même message** : *il n'y a rien à différer, donc rien à enregistrer.* Ce n'est pas une promesse vide, c'est un **accusé de réception suivi de son exécution**.
+
+**⭐ LE CRITÈRE EST OBSERVABLE, PAS UNE DEVINETTE** : *une SÉANCE est-elle produite ici* (au moins 3 blocs `N×N`) **et** *aucun mot de report* ? — alors la note est honorée. **⛔⛔ Et le report l'emporte toujours** : *« je note **pour la prochaine fois** »* suivi d'une séance **reste** un drapeau — *sinon il suffirait de joindre un tableau pour désarmer le garde-fou.*
+
+**⭐ MESURÉ DANS LES DEUX SENS AVANT D'ÊTRE ÉCRIT** : sur ses 119 réponses, **3 drapeaux → 2**, et les 2 gardés sont exactement les vrais. Les **3 vraies de ft-v944 restent gardées** — dont *« le Leg Curl avant le Face Pull, c'est noté »*, qui n'a **aucun** mot de report, parce qu'elle **ne produit pas de séance**.
+
+**⚠️⚠️ ET CETTE VERSION CORRIGE UN VERDICT QUE J'AVAIS ÉCRIT UNE HEURE PLUS TÔT.** J'ai titré *« ft-v923 NE TIENT PAS — mesuré »* à partir d'un compteur **dont je n'avais lu aucun des 5 textes**. **C'est exactement `BUGS.md` 12quater** — *conclure d'un nombre sans regarder ce qu'il compte* — **refaite deux heures après avoir écrit la famille qui la décrit.** 👉 Ce qui est réellement établi : **2 vraies promesses non tenues, toutes deux ANTÉRIEURES aux correctifs** (09/08 et 19/08). Les 5 en direct restent **non lus** : *on ne conclut ni « ça tient » ni « ça ne tient pas ».*
+
+**⚠️ 2ᵉ CALIBRATION DE CE MOTIF SUR DE VRAIES CONVERSATIONS — et la 2ᵉ fois qu'elle vient de Michel** (**R19** : un garde-fou juste une fois sur deux ne survit pas à son premier mois).
+
+**⭐⭐ ET LA SOIRÉE A PRODUIT 5 SCÉNARIOS DE PLUS** (journal de test à **36**), dont l'analyse de GPT sur cette même séance : ⛔ **ne pas attribuer à Milo les choix de l'utilisateur** (le superset ET le Pec Deck étaient **imposés par Michel** — Milo y fait bien son travail) · ⭐ la **provenance des décisions**, qui est le motif de `_provFood` transposé aux séances (**R13**) · ⚠️ le **repos qui ne suit pas l'intensité** — et **Michel a tranché lui-même** : *« un 3×5 avec 90 secondes de repos c'est IMPOSSIBLE »*, donc une prescription **inexécutable**, pas discutable. ⭐ **GPT se trompe sur un point, vérifié dans le code** (**R28**) : `exRestPref` est **déjà** transmis à Milo depuis le 12/08.
+Tests : **parcours 1091/1091** (+2, bloc LXXVIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `coach.js`, `clone/coach.js`, `tests/parcours/runner.js`, `docs/JOURNAL-DE-TEST.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v967. |
 
 **ft-v966 — 🧮 « POUR TES 30 G » — deux nombres de protéines, et rien ne disait lequel était le sien** — Michel : *« j'ai trouvé un bug mais pas vraiment un bug lol »*. **Il avait raison au mot près.**
 
@@ -701,23 +716,6 @@ Tests : **parcours 970/970** (+16, bloc LXXIX), calculs 241/241, muscles 241/241
 
 **⛔ CE QUI PART NE CHANGE PAS D'UN MOT** : ~150 octets de **NOMBRES**. Aucune phrase de Milo, aucun mot de la personne — les conversations ne quittent toujours pas le téléphone, et la carte « Mes conversations avec Milo » le dit toujours en toutes lettres.
 Tests : **parcours 954/954** (+4, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges** — aucune sauvegarde n'est déclenchée du tout. ⚠️ **Et un 2ᵉ contrôle, plus instructif, contre le code que j'ai FAILLI livrer** (la comparaison naïve avec `faitLe`) : **2 rouges**, dont exactement le témoin du lendemain. *Le défaut évité a été mesuré, pas seulement raconté.* Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v948. |
-
-**ft-v947 — 🔬 LES 4 DRAPEAUX RESTANTS, LUS UN PAR UN — et 3 étaient des FAUX POSITIFS** — Michel : *« regarde les 3 diagnostic et le lien, et dit si les testeurs testent milo »*.
-
-**⭐⭐ LES 3 « DIAGNOSTIC » VIENNENT TOUS DU MÊME DÉFAUT.** Le motif attrapait `tu es (en |atteint)` — or **« TU ES EN » tout seul est une tournure française ordinaire**. Les trois cas, dans ses vraies conversations : *« tu es en **Jour 2** de ton programme »* · *« tu es en **plein dans la zone** »* (une TSH normale) · *« tu es en **phase de charge** initiale ? »*. **Aucun n'a le moindre rapport avec la médecine.**
-
-**⚠️ Et le même défaut dormait dans `tu fais (une |un |de l)`** — *« tu fais une belle séance »* l'aurait déclenché. Il n'a pas tiré sur ces 129 réponses ; c'est un **hasard**, pas une garantie.
-
-**👉 Les deux tournures exigent désormais une PATHOLOGIE derrière.** *« je te diagnostique »* et *« tu souffres de »* restent seuls — eux ne peuvent pas être anodins. Vérifié **dans les deux sens** : **6/6** vrais diagnostics vus, **0/5** faux positifs, et *« ça **peut** être une sciatique »* reste **vert** (l'hypothèse nommée que la Constitution autorise).
-
-**⚠️⚠️ ET LE RESSERRAGE A D'ABORD RENDU LE GARDE-FOU MUET.** `\\b` au lieu de `\b` dans la chaîne : **une barre oblique de trop, et il n'attrapait plus rien** — 5 vrais diagnostics sur 5 ratés. C'est le **cousin du piège déjà payé ici** (le `\b` après un accent, qui rendait le motif « noté » aveugle). *Un motif construit par concaténation se vérifie en le JOUANT, jamais en le relisant.*
-
-**⭐ LE 4ᵉ DRAPEAU EST GARDÉ TEL QUEL, ET C'EST UNE DÉCISION.** Milo cite `claude.ai` — un lien réel, dans une conversation **débridée** où Michel l'interroge sur son propre prompt. C'est un faux positif **léger** : 1 sur 129. Resserrer le motif des liens risquerait de rater une **vraie** source fabriquée, et *R19 coupe dans les deux sens* : un garde-fou trop bavard finit désactivé, un garde-fou trop timide ne sert à rien.
-
-**👉 BILAN HONNÊTE SUR SES 25 JOURS : 4 drapeaux, dont 3 VRAIES promesses de mémoire non tenues.** C'est tout ce que le Gardien a trouvé de solide sur 129 réponses.
-
-**⭐⭐ ET LA SECONDE QUESTION A RÉVÉLÉ UN TROU DANS CE QUI VENAIT D'ÊTRE LIVRÉ.** *« Est-ce que les testeurs testent Milo ? »* — avec le filtre d'hier (au moins une dérive), **un testeur qui utilise Milo sans déraper n'apparaissait pas du tout** : impossible de distinguer *« ne l'utilise pas »* de *« l'utilise et tout va bien »*. Or `retro.messages` compte ses réponses de Milo : **c'est littéralement la mesure d'usage**. La vue affiche désormais **tous** les comptes, avec *« N réponses de Milo, AUCUNE dérive ✅ »* — et *« n'a jamais parlé à Milo »* quand c'est le cas.
-Tests : **parcours 950/950** (+3, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `coach.js`, `Code.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v947. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

@@ -3164,3 +3164,20 @@ Tests : **parcours 941/941** (+3, bloc LXXVIII), calculs 241/241, muscles 241/24
 
 **⚠️ Deux fois mon témoin s'est trompé, pas le code.** Il attendait 2 dérives et en trouvait 3 — c'était le bloc `{"retiens"}` légitime, et **c'est comme ça que le défaut ci-dessus a été trouvé**. Puis il comparait le compteur direct à une valeur capturée bien plus haut, **entre-temps légitimement incrémentée** : il accusait le scan d'un mouvement qui n'était pas le sien. *Un témoin qui prend la mauvaise référence désigne le mauvais coupable.*
 Tests : **parcours 947/947** (+6, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `coach.js`, `Code.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v946. |
+
+**ft-v947 — 🔬 LES 4 DRAPEAUX RESTANTS, LUS UN PAR UN — et 3 étaient des FAUX POSITIFS** — Michel : *« regarde les 3 diagnostic et le lien, et dit si les testeurs testent milo »*.
+
+**⭐⭐ LES 3 « DIAGNOSTIC » VIENNENT TOUS DU MÊME DÉFAUT.** Le motif attrapait `tu es (en |atteint)` — or **« TU ES EN » tout seul est une tournure française ordinaire**. Les trois cas, dans ses vraies conversations : *« tu es en **Jour 2** de ton programme »* · *« tu es en **plein dans la zone** »* (une TSH normale) · *« tu es en **phase de charge** initiale ? »*. **Aucun n'a le moindre rapport avec la médecine.**
+
+**⚠️ Et le même défaut dormait dans `tu fais (une |un |de l)`** — *« tu fais une belle séance »* l'aurait déclenché. Il n'a pas tiré sur ces 129 réponses ; c'est un **hasard**, pas une garantie.
+
+**👉 Les deux tournures exigent désormais une PATHOLOGIE derrière.** *« je te diagnostique »* et *« tu souffres de »* restent seuls — eux ne peuvent pas être anodins. Vérifié **dans les deux sens** : **6/6** vrais diagnostics vus, **0/5** faux positifs, et *« ça **peut** être une sciatique »* reste **vert** (l'hypothèse nommée que la Constitution autorise).
+
+**⚠️⚠️ ET LE RESSERRAGE A D'ABORD RENDU LE GARDE-FOU MUET.** `\\b` au lieu de `\b` dans la chaîne : **une barre oblique de trop, et il n'attrapait plus rien** — 5 vrais diagnostics sur 5 ratés. C'est le **cousin du piège déjà payé ici** (le `\b` après un accent, qui rendait le motif « noté » aveugle). *Un motif construit par concaténation se vérifie en le JOUANT, jamais en le relisant.*
+
+**⭐ LE 4ᵉ DRAPEAU EST GARDÉ TEL QUEL, ET C'EST UNE DÉCISION.** Milo cite `claude.ai` — un lien réel, dans une conversation **débridée** où Michel l'interroge sur son propre prompt. C'est un faux positif **léger** : 1 sur 129. Resserrer le motif des liens risquerait de rater une **vraie** source fabriquée, et *R19 coupe dans les deux sens* : un garde-fou trop bavard finit désactivé, un garde-fou trop timide ne sert à rien.
+
+**👉 BILAN HONNÊTE SUR SES 25 JOURS : 4 drapeaux, dont 3 VRAIES promesses de mémoire non tenues.** C'est tout ce que le Gardien a trouvé de solide sur 129 réponses.
+
+**⭐⭐ ET LA SECONDE QUESTION A RÉVÉLÉ UN TROU DANS CE QUI VENAIT D'ÊTRE LIVRÉ.** *« Est-ce que les testeurs testent Milo ? »* — avec le filtre d'hier (au moins une dérive), **un testeur qui utilise Milo sans déraper n'apparaissait pas du tout** : impossible de distinguer *« ne l'utilise pas »* de *« l'utilise et tout va bien »*. Or `retro.messages` compte ses réponses de Milo : **c'est littéralement la mesure d'usage**. La vue affiche désormais **tous** les comptes, avec *« N réponses de Milo, AUCUNE dérive ✅ »* — et *« n'a jamais parlé à Milo »* quand c'est le cas.
+Tests : **parcours 950/950** (+3, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `coach.js`, `Code.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v947. |
