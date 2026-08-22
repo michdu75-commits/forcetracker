@@ -2322,6 +2322,19 @@ function _rhrAjust(e){
   const brut=(d>0 ? -(d-2) : -(d+2))*2;
   return Math.max(-RHR_MAX_ADJ, Math.min(RHR_MAX_ADJ, Math.round(brut)));
 }
+/* Le COÛT en fatigue d'une séance, en points. Sortie de `calcRecoveryDetail` le 21/08 pour
+   que la PROJECTION (« quand serai-je au max ? ») lise exactement le même chiffre : deux
+   formules de fatigue finiraient par annoncer une date qui ne correspond pas au score (R2). */
+function _penaliteSeance(sess){
+  let load=0;
+  ((sess&&(sess.exs||sess.exercises))||[]).forEach(ex=>(ex.sets||[]).forEach(s=>{
+    if(!s.done||s.type==='W'||s.type==='É')return;      // exclut échauffement
+    load += s.type==='E'?1.5:s.type==='D'?1.3:1;         // échec/drop = plus fatigant
+  }));
+  // Plafond relevé de 30 à 38 (02/08) : mesuré, une séance de 24 séries de squat la veille
+  // ne coûtait que 10 points — l'app affichait « Bonne récup » le lendemain d'un gros leg day.
+  return Math.max(6,Math.min(38,Math.round(load*1.7))); // ~ -10 (abdos) à -38 (grosse séance), min -6
+}
 function calcRecoveryDetail(){
   // Sommeil non renseigné → base neutre « invisible » (70) : le score reste
   // fonctionnel pour tout le monde, les autres facteurs (séance, âge, cycle…)
@@ -2366,16 +2379,7 @@ function calcRecoveryDetail(){
   if(lastSess&&lastSess.date){
     const dCal=Math.round((new Date(today()+'T12:00:00')-new Date(lastSess.date+'T12:00:00'))/864e5);
     const tsSess=lastSess.ts||lastSess.id;
-    const calcPen0=()=>{
-      let load=0;
-      (lastSess.exs||lastSess.exercises||[]).forEach(ex=>(ex.sets||[]).forEach(s=>{
-        if(!s.done||s.type==='W'||s.type==='É')return;      // exclut échauffement
-        load += s.type==='E'?1.5:s.type==='D'?1.3:1;         // échec/drop = plus fatigant
-      }));
-      // Plafond relevé de 30 à 38 (02/08) : mesuré, une séance de 24 séries de squat la veille
-      // ne coûtait que 10 points — l'app affichait « Bonne récup » le lendemain d'un gros leg day.
-      return Math.max(6,Math.min(38,Math.round(load*1.7))); // ~ -10 (abdos) à -38 (grosse séance), min -6
-    };
+    const calcPen0=()=>_penaliteSeance(lastSess);
     if(tsSess){
       // Effacement sur 48 h et non 36 h (02/08) : à 36 h, une grosse séance de jambes pesait
       // déjà zéro. 48 h correspond mieux à ce qu'on ressent réellement après du lourd.
@@ -2484,7 +2488,17 @@ function calcRecoveryDetail(){
      répéter : ce n'est ni le rôle de l'app ni celui de Milo (Constitution P13, accompagnement
      jamais thérapie). Le facteur est déjà listé plus haut avec sa raison, ça suffit. */
   const permanents=factors.filter(f=>!f.base&&f.val<0&&(f.label==='Âge'||f.label==='Tabac'));
+  /* ⚠️⚠️ CORRECTION DU 21/08, LE LENDEMAIN DE ft-v952 : ce plafond N'EST PAS le maximum absolu,
+     et l'annoncer comme tel était FAUX. Le bonus de REPOS (`sessAdj` positif : +6 à +12 après
+     2 à 4 jours sans séance) peut compenser les permanents — 100 de sommeil + 12 de repos − 3
+     d'âge − 4 de tabac = 105, ramené à 100. **Donc 100 EST atteignable, mais seulement en ne
+     s'entraînant pas pendant 4 jours.** C'est pour ça qu'on nomme ce chiffre `plafond` « en
+     t'entraînant régulièrement » et qu'on affiche l'autre à côté quand ils diffèrent : *un
+     plafond annoncé trop bas est aussi trompeur qu'un plafond invisible — il ferait renoncer à
+     un chiffre réellement atteignable.* */
   const plafond=Math.max(0,Math.min(100,100+permanents.reduce((a,f)=>a+f.val,0)));
+  const BONUS_REPOS_MAX=12;   // 4 jours sans séance — voir `sessAdj` plus haut
+  const plafondAbsolu=Math.max(0,Math.min(100,100+permanents.reduce((a,f)=>a+f.val,0)+BONUS_REPOS_MAX));
   /* Ce qui coûte les points manquants AUJOURD'HUI — donc hors permanents (eux ne se rattrapent
      pas : ils fixent le plafond, ils ne sont pas un « manque »). Le sommeil compte pour ce qui
      lui manque jusqu'à 100, puisque c'est LUI la base. */
@@ -2493,8 +2507,72 @@ function calcRecoveryDetail(){
   factors.forEach(f=>{ if(!f.base&&f.val<0&&permanents.indexOf(f)<0) manque.push({ic:f.ic,label:f.label,cout:-f.val}); });
   manque.sort((a,b)=>b.cout-a.cout);
   return {score,base,factors,tips:tips.slice(0,2),dayPains,
-          plafond, plafondFacteurs:permanents.map(f=>({ic:f.ic,label:f.label,val:f.val})), manque};
+          plafond, plafondAbsolu,
+          plafondFacteurs:permanents.map(f=>({ic:f.ic,label:f.label,val:f.val})), manque};
 }
+/* ⏳ QUAND SERAI-JE REVENU AU MAX ? (21/08/2026) — Michel : « peut-on rajouter un indicateur où
+   l'on peut retrouver 100 % de notre forme ? en plus de ce qu'il y a actuellement, parce que là
+   on ne sait pas quand on aura récupéré au max ».
+   ⭐ LE SCORE DIT OÙ ON EN EST, PAS QUAND ÇA SERA FINI. Or c'est la question qu'on se pose
+   vraiment le lendemain d'un gros leg day — et la réponse est CALCULABLE, exactement.
+   ⛔⛔ ET ON NE PROJETTE AUCUN CHIFFRE, C'EST LA DÉCISION CENTRALE. Annoncer « tu seras à 93
+   jeudi » supposerait de connaître **les nuits qui n'ont pas encore eu lieu** — or le sommeil
+   est la BASE du score, et c'est la part qu'on ne peut pas prévoir. Un nombre projeté serait
+   une invention présentée comme un calcul (R29, et Principe 18 : ne jamais faire semblant de
+   savoir). 👉 On rend donc ce qui est EXACT — le moment où la fatigue MÉCANIQUE sera partie —
+   et on dit en clair ce qui, lui, dépendra de la personne.
+   ⭐ DEUX SOURCES MÉCANIQUES, et on prend la PLUS TARDIVE : la fatigue de la dernière séance
+   (elle s'efface en continu sur 48 h, donc l'heure est connue à la minute) et l'enchaînement de
+   jours (il se vide quand la fenêtre de 3 jours glisse). Les deux se lisent dans les mêmes
+   fonctions que le score — pas de deuxième barème (R2). */
+function projectionRecup(d){
+  try{
+    d = d || calcRecoveryDetail();
+    const now=Date.now();
+    let finFat=null;
+    const ls=S.sessions&&S.sessions[0];
+    if(ls&&ls.date){
+      const ts=ls.ts||ls.id;
+      const pen=_penaliteSeance(ls);
+      if(ts){
+        /* La pénalité vaut `round(pen*(48−h)/48)` : elle tombe à zéro dès que ce produit passe
+           sous 0,5, donc un peu AVANT 48 h. On rend l'instant exact plutôt que « 48 h », sinon
+           on annoncerait une attente que le code n'applique pas. */
+        /* ⚠️ +1 MINUTE, ET CE N'EST PAS DE LA COQUETTERIE. À l'instant EXACT `48 − 24/pen`, le
+           produit vaut pile 0,5 — et `Math.round(0.5)` rend **1**, pas 0. Sans cette minute,
+           on annoncerait la fin de la fatigue une minute avant qu'elle ne parte vraiment.
+           *Un témoin l'a attrapé ; à la relecture, la formule semblait juste.* */
+        const hFin=Math.max(0,48-24/Math.max(1,pen))+1/60;
+        const t=ts+hFin*36e5;
+        if(t>now) finFat=t;
+      }else{
+        // Séance sans heure connue : l'ancien barème par jour, la fatigue part à J+2.
+        const t=new Date(ls.date+'T12:00:00').getTime()+2*864e5;
+        if(t>now) finFat=t;
+      }
+    }
+    /* L'enchaînement : `accumAdj` s'annule dès qu'il reste moins de 2 jours de séance distincts
+       dans la fenêtre des 3 derniers jours. On fait GLISSER la fenêtre au lieu de refaire le
+       calcul à la main — c'est la même règle, jouée en avant. */
+    let finAcc=null;
+    const dates=[...new Set((S.sessions||[]).filter(s=>s&&s.date).map(s=>s.date))];
+    for(let d=0; d<=7; d++){
+      const ref=new Date(today()+'T12:00:00').getTime()+d*864e5;
+      const n=dates.filter(ds=>{
+        const dd=Math.round((ref-new Date(ds+'T12:00:00').getTime())/864e5);
+        return dd>=0&&dd<=2;
+      }).length;
+      if(n<2){ if(d>0) finAcc=ref; break; }
+    }
+    const quand=Math.max(finFat||0, finAcc||0)||null;
+    /* Ce qui restera à la charge de la personne — nommé, jamais chiffré à l'avance. */
+    const restant=[];
+    if(d && d.base<100) restant.push('tes nuits');
+    if(S.dayState&&S.dayState.date===today()&&S.dayState.energy!=null&&S.dayState.energy<=1) restant.push('ta forme du jour');
+    return {quand:quand, dejaAuMax:!quand, source:(finFat&&(!finAcc||finFat>=finAcc))?'seance':'jours', restant};
+  }catch(e){ return {quand:null, dejaAuMax:true, source:null, restant:[]}; }
+}
+
 function calcRecoveryScore(){return calcRecoveryDetail().score;}
 function getRecoveryInfo(score){
   if(score===null)return{label:'—',color:'var(--t3)',icon:'❓',rec:'Enregistre ton sommeil pour obtenir ton score de récupération.'};

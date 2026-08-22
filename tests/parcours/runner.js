@@ -8999,6 +8999,105 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⚠️ ... et rien ne s\'affiche pour qui n\'a aucun facteur permanent (pas de plafond à 100)',
       R.sainSansPlafond===true, '');
   }
+
+  /* == QUAND SERAI-JE REVENU AU MAX ? (21/08/2026) ==
+     Michel : « peut-on rajouter un indicateur ou l'on peut retrouver 100 % de notre forme ? en
+     plus de ce qu'il y a actuellement, parce que la on ne sait pas quand on aura recupere au max ».
+     ⛔⛔ ON DONNE UN MOMENT, JAMAIS UN CHIFFRE PROJETE : annoncer « tu seras a 93 jeudi »
+     supposerait de connaitre les nuits qui n'ont pas encore eu lieu.
+     ⚠️⚠️ ET CE BLOC CORRIGE AUSSI UNE ERREUR DE ft-v952, livree la veille : « ton maximum est
+     93 » etait FAUX tout court — le bonus de REPOS (+12 apres 4 jours sans seance) compense les
+     permanents, donc 100 reste atteignable, en ne s'entrainant pas. */
+  const P=await pg.evaluate(()=>{
+    const o={};
+    S.age=48; S.smoker=true; S.dayState=null;
+    S.sleepLog=[0,1,2].map(n=>{const d=new Date();d.setDate(d.getDate()-n);
+      return {date:d.toISOString().slice(0,10),hours:9,quality:4};});
+
+    /* ⚠️① LA CORRECTION : les deux plafonds sont distincts et le second vaut 100. */
+    S.sessions=[];
+    const d0=calcRecoveryDetail();
+    o.plafondEntrainement=d0.plafond; o.plafondAbsolu=d0.plafondAbsolu;
+    /* ... et le bonus de repos porte VRAIMENT le score jusqu'à 100 (ce n'est pas théorique). */
+    const j4=new Date(); j4.setDate(j4.getDate()-4);
+    S.sessions=[{date:j4.toISOString().slice(0,10),exs:[{name:'Squat',sets:[{kg:100,reps:5,done:true,type:'N'}]}]}];
+    o.scoreApres4j=calcRecoveryDetail().score;
+
+    /* ⚠️ LE GARDE NE VIENT QU'ICI : les deux témoins du plafond ci-dessus mesurent la CORRECTION
+       d'un comportement livré la veille — les mettre derrière un garde « fonction absente » les
+       empêcherait de tourner pendant le contrôle négatif, et un témoin qui ne tourne pas n'est
+       pas un témoin vert. Seule la projection est neuve. */
+    if(typeof projectionRecup!=='function'){ o.absente=true; return o; }
+    /* ⭐② UNE SÉANCE RÉCENTE → un MOMENT est rendu, dans le futur, sous 48 h. */
+    const ts=Date.now()-6*36e5;                        // il y a 6 h
+    S.sessions=[{date:today(),ts:ts,exs:[{name:'Squat',sets:Array.from({length:20},()=>({kg:120,reps:5,done:true,type:'N'}))}]}];
+    const p1=projectionRecup();
+    o.donneUnMoment=!p1.dejaAuMax && p1.quand>Date.now();
+    o.dansLes48=(p1.quand-ts)/36e5;                    // doit être un peu sous 48 h
+    o.source1=p1.source;
+    /* ⛔③ ET LE MOMENT COLLE AU SCORE : à l'instant rendu, la pénalité de séance vaut ZÉRO —
+       une date qui ne correspond pas au calcul serait pire que pas de date du tout. */
+    o.penNulle=(function(){
+      const h=(p1.quand-ts)/36e5;
+      const pen=_penaliteSeance(S.sessions[0]);
+      return Math.round(pen*(48-h)/48)===0;
+    })();
+    /* ... et JUSTE AVANT, elle ne l'est pas encore (sinon on annoncerait trop tard). */
+    o.penNonNulleAvant=(function(){
+      const h=(p1.quand-ts)/36e5-0.5;
+      const pen=_penaliteSeance(S.sessions[0]);
+      return Math.round(pen*(48-h)/48)>0;
+    })();
+
+    /* ⭐④ AUCUNE SÉANCE → « déjà au max » (on n'invente pas une attente). */
+    S.sessions=[];
+    o.dejaAuMax=projectionRecup().dejaAuMax===true;
+
+    /* ⭐⑤ L'ENCHAÎNEMENT DE JOURS compte aussi, et il peut être PLUS TARDIF que la séance. */
+    const jm=(n)=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    S.sessions=[{date:jm(0),ts:Date.now()-1*36e5,exs:[]},{date:jm(1),exs:[]},{date:jm(2),exs:[]}];
+    const p2=projectionRecup();
+    o.accumVu=!p2.dejaAuMax && p2.quand>Date.now();
+
+    /* ⛔⑥ LE TEXTE NE PROMET AUCUN SCORE FUTUR. */
+    S.sessions=[{date:today(),ts:Date.now()-6*36e5,exs:[{name:'Squat',sets:Array.from({length:20},()=>({kg:120,reps:5,done:true,type:'N'}))}]}];
+    S.sleepLog=[{date:today(),hours:5,quality:2}];      // le sommeil coûte des points
+    const h=(typeof _recoQuandHtml==='function')?_recoQuandHtml(calcRecoveryDetail()):'';
+    o.htmlLong=h.length>100;
+    o.aucunScorePromis=!/seras à \d|atteindras \d|tu auras \d+\s*\/\s*100/i.test(h);
+    o.ditQueCaDepend=/nuits qui n'ont pas encore eu lieu/.test(h);
+    o.nommeLeReste=/il restera tes nuits/.test(h);
+    return o;
+  });
+
+  console.log('\n-- LXXX bis. Quand serai-je revenu au max --');
+  /* ⚠️⚠️ La correction de l'erreur de la veille — ces 2 témoins tournent TOUJOURS. */
+  t('⚠️⚠️ CORRIGÉ : 93 est le max EN S\'ENTRAÎNANT — l\'absolu reste 100 (bonus de repos)',
+    P.plafondEntrainement===93 && P.plafondAbsolu===100,
+    'entraînement='+P.plafondEntrainement+' absolu='+P.plafondAbsolu);
+  t('⛔ ... et ce n\'est pas théorique : 4 jours de repos + nuits parfaites donnent bien 100',
+    P.scoreApres4j===100, 'score='+P.scoreApres4j);
+  if(P.absente){ t('⛔ la projection existe', false, 'fonction absente'); }
+  else{
+    /* ⭐ La demande elle-même. */
+    t('⭐⭐ une séance récente rend un MOMENT, dans le futur',
+      P.donneUnMoment===true, 'source='+P.source1);
+    t('⭐ ... un peu sous 48 h après la séance (le barème réel, pas « 48 h » arrondi)',
+      P.dansLes48>46 && P.dansLes48<48, 'h='+(P.dansLes48||0).toFixed(2));
+    /* ⛔ Le témoin d'exactitude : une date qui ne colle pas au score serait pire que rien. */
+    t('⛔⛔ à l\'instant annoncé, la pénalité de séance vaut EXACTEMENT zéro',
+      P.penNulle===true, '');
+    t('⛔ ... et une demi-heure plus tôt, elle ne l\'est pas encore (pas annoncé trop tard)',
+      P.penNonNulleAvant===true, '');
+    t('⭐ aucune séance → « déjà au max » (on n\'invente pas une attente)',
+      P.dejaAuMax===true, '');
+    t('⭐ l\'enchaînement de jours est vu lui aussi', P.accumVu===true, '');
+    /* ⛔⛔ La décision centrale du bloc. */
+    t('⛔⛔ LE TEXTE NE PROMET AUCUN SCORE FUTUR (les nuits n\'ont pas eu lieu)',
+      P.aucunScorePromis===true && P.htmlLong===true, '');
+    t('⛔ ... et il DIT pourquoi', P.ditQueCaDepend===true, '');
+    t('⭐ ... en nommant ce qui restera, sans le chiffrer', P.nommeLeReste===true, '');
+  }
   await cx.close();
 }
 
