@@ -9162,6 +9162,65 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXXXI - LE MENAGE DU MENU ADMIN (22/08/2026) ==
+   Michel : « dans le menu admin, il va falloir faire un peu le menage ».
+   ⭐⭐ ON RANGE, ON NE SUPPRIME PAS. J'avais propose de retirer PT-001 et le recalage des
+   anciennes seances ; verification faite, LES DEUX ONT ENCORE UN ROLE — PT-001 mesure la
+   MEMOIRE LONGUE (le benchmark ne teste que des messages isoles) et le recalage sert encore
+   apres un import d'historique. *Un outil de diagnostic qu'on retire est exactement celui dont
+   on a besoin le jour ou ca casse* (R30).
+   ⛔ CE TEMOIN PROTEGE UN RANGEMENT, PAS UNE FONCTIONNALITE : il verifie qu'AUCUN bouton n'a
+   ete perdu en deplaçant 19 cartes. C'est precisement le genre d'erreur qu'un refactoring HTML
+   fait sans rien casser de visible. */
+{
+  const fs2=require('fs');
+  const H=fs2.readFileSync(ROOT+'/index.html','utf8');
+  const HC=fs2.readFileSync(ROOT+'/clone/index.html','utf8');
+  const zone=(t)=>{ const i=t.indexOf('id="setup-connexion"'); return t.slice(i, t.indexOf('<!-- PROFIL -->', i)); };
+  const zA=zone(H), zC=zone(HC);
+  const nb=(z,re)=>(z.match(re)||[]).length;
+
+  console.log('\n-- LXXXI. Le menage du menu admin --');
+  t('⭐⭐ le menu admin est RANGÉ en 6 sections repliables',
+    nb(zA,/<details class="adm-grp"/g)===6 && nb(zA,/<\/details>/g)===6,
+    nb(zA,/<details class="adm-grp"/g)+' section(s)');
+  /* ⛔ Le témoin qui compte : déplacer 19 cartes ne doit RIEN perdre. */
+  t('⛔⛔ ... et AUCUNE carte ni AUCUN bouton n\'a été perdu au passage',
+    nb(zA,/class="card cp"/g)===19 && nb(zA,/onclick=/g)===34,
+    nb(zA,/class="card cp"/g)+' cartes · '+nb(zA,/onclick=/g)+' boutons');
+  /* ⛔ Ce qu'on a REFUSÉ de retirer doit rester joignable — sinon le « rangement » a
+     supprimé en douce (R30 : un retrait se décide, il ne se constate pas). */
+  t('⛔ PT-001 est TOUJOURS joignable (il mesure la mémoire longue, rien d\'autre ne le fait)',
+    zA.indexOf('startPt001Test()')>=0, '');
+  t('⛔ ... le recalage des anciennes séances aussi (il resert après un import d\'historique)',
+    zA.indexOf('_recalerAnciennesSeances()')>=0 && zA.indexOf('_annulerRecalageCalories()')>=0, '');
+  /* ⚠️ Une seule section ouverte : celle qu'on regarde sans raison particulière. */
+  t('⚠️ seule la SURVEILLANCE est ouverte par défaut (les autres se déplient)',
+    nb(zA,/<details class="adm-grp" open>/g)===1, nb(zA,/<details class="adm-grp" open>/g)+' ouverte(s)');
+  /* ⛔ R2 : le clone doit avoir EXACTEMENT le même menu, sinon les deux divergent en silence. */
+  t('⛔ le clone a le même menu (cartes, boutons et sections)',
+    nb(zC,/class="card cp"/g)===nb(zA,/class="card cp"/g)
+    && nb(zC,/onclick=/g)===nb(zA,/onclick=/g)
+    && nb(zC,/<details class="adm-grp"/g)===nb(zA,/<details class="adm-grp"/g),
+    'clone : '+nb(zC,/class="card cp"/g)+' cartes · '+nb(zC,/onclick=/g)+' boutons');
+  /* ⭐⭐ LE VRAI NETTOYAGE : les personas ne portent PLUS le prénom de vrais testeurs.
+     Le 21/08, j'ai lu le `resume` de VC-002 comme un FAIT sur le vrai Christophe et je m'en
+     suis servi comme ARGUMENT. Un décor de test et une note sur une personne réelle se
+     lisaient exactement pareil — le piège était structurel. */
+  const CJ=fs2.readFileSync(ROOT+'/coach.js','utf8');
+  const iP=CJ.indexOf('const VC_PERSONAS'), fP=CJ.indexOf('\n};', iP);
+  const perso=CJ.slice(iP, fP);
+  t('⭐⭐ les personas de test ne portent PLUS le prénom d\'un vrai testeur',
+    !/Tatiana|Christophe|Emma|Eline/.test(perso.replace(/\/\*[\s\S]*?\*\//g,'')),
+    'prénom réel encore présent dans VC_PERSONAS');
+  t('⛔ ... y compris le prénom INJECTÉ à Milo (sinon il s\'adresse à « Tatiana » en test)',
+    !/name:'(Tatiana|Christophe|Emma|Eline)'/.test(perso), '');
+  t('⭐ ... et les 3 personas existent toujours (on renomme, on ne supprime pas)',
+    /'VC-001'/.test(perso) && /'VC-002'/.test(perso) && /'VC-003'/.test(perso), '');
+  t('⛔ les boutons ne les nomment plus non plus',
+    !/VC-00\d \((Tatiana|Christophe|Emma)/.test(zA) && !/VC-00\d \((Tatiana|Christophe|Emma)/.test(zC), '');
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

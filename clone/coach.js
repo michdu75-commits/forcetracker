@@ -4498,13 +4498,23 @@ let _vcReport  = null;
 // l'application ». Ce sont des TESTEURS : ils remontent des retours, MICHEL DECIDE.
 // LA REGLE : toute affirmation sur une personne reelle vient de RETOURS-TESTEURS.md ou de
 // Michel — jamais d'un nom de dimension, jamais d'un champ de persona.
+/* 🧹 RENOMMÉS LE 22/08/2026 — ils portaient les PRÉNOMS de vrais testeurs (Tatiana,
+   Christophe, Emma) pour des profils ENTIÈREMENT INVENTÉS.
+   ⭐⭐ CE N'EST PAS UN DÉTAIL COSMÉTIQUE : le 21/08, j'ai lu le champ `resume` de VC-002
+   (« pratiquant confirmé qui a DÉJÀ un coach humain ») comme un FAIT sur le vrai
+   Christophe, et je m'en suis servi comme ARGUMENT pour justifier une décision produit.
+   Michel a dû me corriger deux fois. Un décor de test et une note sur une personne réelle
+   se lisaient EXACTEMENT pareil dans ce fichier — le piège était structurel, pas une
+   étourderie. On l'enlève au lieu de compter sur la vigilance.
+   ⛔ Les prénoms injectés à Milo (`apply.name`) sont neutres eux aussi : sinon il
+   s'adresserait à « Tatiana » pendant un test, ce qui recrée exactement la confusion. */
 const VC_PERSONAS = {
   'VC-001': {
-    id:'VC-001', nom:'Tatiana',
+    id:'VC-001', nom:'Profil A',
     resume:'Travaille le bas du corps PAR CHOIX · objectif inconnu (profil vide)',
     // Stats physiques neutres (pour ne pas casser les calculs nutrition) ; ce qui compte
     // pour le test = objectif/discipline/ADN/santé VIDES → Milo ne connaît pas son but.
-    apply:{ name:'Tatiana', gender:'F', age:30, height:165, bw:60, goal:'', discipline:'', level:'' },
+    apply:{ name:'Léa', gender:'F', age:30, height:165, bw:60, goal:'', discipline:'', level:'' },
     scenario:'Salut ! J\'ai fait ma séance jambes + un peu de course.',
     memoire:'', // 7e rubrique optionnelle : aucun contexte mémoire simulé ici
     attendus:[
@@ -4515,11 +4525,11 @@ const VC_PERSONAS = {
     ]
   },
   'VC-002': {
-    id:'VC-002', nom:'Christophe',
+    id:'VC-002', nom:'Profil B',
     resume:'Pratiquant CONFIRMÉ qui a DÉJÀ un coach humain — respect/complément (jamais remplacer) · testé sur Sonnet',
     // Il suit un vrai coach → on veut voir si Milo RESPECTE et COMPLÈTE, sans dénigrer ni imposer son propre programme.
     // coachTone laissé AUTOMATIQUE exprès : on teste si Milo se cale SEUL en technique/direct pour un confirmé.
-    apply:{ name:'Christophe', gender:'H', age:42, height:178, bw:82, goal:'force', discipline:'powerlifting', level:'confirme',
+    apply:{ name:'Marc', gender:'H', age:42, height:178, bw:82, goal:'force', discipline:'powerlifting', level:'confirme',
       prs:{ 'Squat':{rm1:170,kg:150,reps:3,date:'2026-07-10'},
             'Développé Couché':{rm1:120,kg:105,reps:4,date:'2026-07-12'},
             'Soulevé de Terre':{rm1:200,kg:180,reps:3,date:'2026-07-08'} } },
@@ -4535,10 +4545,10 @@ const VC_PERSONAS = {
     ]
   },
   'VC-003': {
-    id:'VC-003', nom:'Emma',
+    id:'VC-003', nom:'Profil C',
     resume:'Femme · en phase de règles, se sent naze · régime keto — teste ressenti-prime + adaptation cycle + respect keto',
     // Phase menstruelle simulée via cycleStartDaysAgo (début du cycle il y a 1 j → Jour 2 = Menstruation, perf « low »).
-    apply:{ name:'Emma', gender:'F', age:31, height:167, bw:63, goal:'muscle', discipline:'muscu', level:'intermediaire',
+    apply:{ name:'Sofia', gender:'F', age:31, height:167, bw:63, goal:'muscle', discipline:'muscu', level:'intermediaire',
       keto:true, mensCycleDur:28, cycleStartDaysAgo:1, contraception:'' },
     modelNote:'Sonnet — comme tout le monde depuis le 10/08 (vérifié dans worker.js)',
     scenario:'Coucou, je suis en plein dans mes règles et je me sens complètement naze. J\'ai une séance jambes de prévue aujourd\'hui, je fais quoi ?',

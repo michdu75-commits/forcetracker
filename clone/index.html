@@ -855,65 +855,17 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   <!-- CONNEXION (admin) -->
   <div id="setup-connexion" style="display:none;padding:0 16px;flex-direction:column;gap:12px;">
     <div class="sec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;margin-right:5px;"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>Administration</div>
-    <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
-      <div class="fg">
-        <label>Email Admin</label>
-        <input type="email" id="email-inp" placeholder="ton@email.com" inputmode="email" oninput="S.email=this.value.trim();persist();">
-      </div>
-      <button class="btn btn-bg2" onclick="restoreFromEmail()" style="padding:13px;font-size:15px;">☁️ Restaurer depuis mon email</button>
-      <button class="btn btn-red" onclick="testConn()" style="padding:13px;font-size:15px;">🔌 Tester la connexion</button>
-      <button class="btn btn-bg2" onclick="debugRestore()" style="padding:11px;font-size:14px;color:var(--t3);">🔍 Voir réponse brute API</button>
-    </div>
-    <div class="status-row"><div class="sdot" id="setup-dot"></div><span id="setup-txt">En attente</span></div>
-    <!-- JOURNAL DES ERREURS (pour diagnostiquer ce qui n'arrive que sur un téléphone) -->
+    <details class="adm-grp" open>
+      <summary>🩺 Surveillance — ce qui se passe chez les autres <span class="adm-n">4</span></summary>
+      <div class="adm-intro">Les 4 alertes qui ne préviennent personne. La panne du 29/07 (stockage plein à 102 %, plus aucune écriture pendant 2 jours) était lisible ici dès le 1ᵉʳ jour.</div>
+    <!-- Exporter ses propres conversations (05/08, demande de Michel). Le fil des échanges
+         vit UNIQUEMENT sur le téléphone : un changement d'appareil l'efface. On donne donc
+         un FICHIER que la personne emporte, plutôt que d'envoyer ses conversations sur un
+         serveur — la donnée sensible ne bouge pas, c'est elle qui décide. -->
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
-      <div style="font-weight:700;color:var(--t1);font-size:15px;">🐞 Dernières erreurs</div>
-      <div id="admin-errlog" style="font-size:11.5px;color:var(--t2);line-height:1.5;background:var(--bg3);border-radius:8px;padding:10px 12px;font-family:'SF Mono',ui-monospace,monospace;word-break:break-word;max-height:220px;overflow:auto;">—</div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-bg2" onclick="renderErrLog()" style="padding:10px;font-size:13px;">🔄 Rafraîchir</button>
-        <button class="btn btn-bg2" onclick="clearErrLog()" style="padding:10px;font-size:13px;color:var(--t3);">🗑️ Vider</button>
-      </div>
-    </div>
-    <!-- CARTE DEBUG PREMIUM -->
-    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
-      <div style="font-weight:700;color:var(--t1);font-size:15px;">🔑 Statut Premium</div>
-      <div id="admin-premium-info" style="font-size:12px;color:var(--t2);line-height:1.9;background:var(--bg3);border-radius:8px;padding:10px 12px;font-family:'SF Mono',ui-monospace,monospace;word-break:break-all;min-height:48px;">—</div>
-      <button class="btn btn-bg2" onclick="debugPremiumCheck()" style="padding:11px;font-size:14px;">🔑 Vérifier premium (serveur)</button>
-    </div>
-    <!-- CARTE SYNC SHEETS -->
-    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
-      <div style="font-weight:700;color:var(--t1);font-size:15px;">☁️ Synchronisation Sheets</div>
-      <div id="admin-sync-info" style="font-size:12px;color:var(--t2);line-height:1.9;background:var(--bg3);border-radius:8px;padding:10px 12px;font-family:'SF Mono',ui-monospace,monospace;min-height:36px;">—</div>
-      <button class="btn btn-bg2" onclick="_retrySheetQueue()" style="padding:11px;font-size:14px;">🔄 Resynchroniser les séances</button>
-    </div>
-    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
-      <div style="font-weight:700;color:var(--t1);font-size:15px;">🔍 Doublons d'exercices</div>
-      <button class="btn btn-bg2" onclick="detectDuplicates()" style="padding:11px;font-size:14px;">🔍 Analyser les doublons</button>
-      <div id="admin-dupes" style="display:none;flex-direction:column;gap:8px;font-size:13px;"></div>
-    </div>
-    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
-      <div style="font-weight:700;color:var(--t1);font-size:15px;">🎬 Mode démo</div>
-      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Pour montrer les fonctions à quelqu'un (morphologie, coach, étude du corps…) <strong>sans toucher ton compte</strong>. Une fois activé, <strong>rien n'est enregistré</strong> (ni en local, ni dans le cloud). En quittant, tes vraies données reviennent intactes.</div>
-      <button class="btn btn-bg2" onclick="enterDemoMode()" style="padding:11px;font-size:14px;">🎬 Activer le mode démo</button>
-    </div>
-    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
-      <div style="font-weight:700;color:var(--t1);font-size:15px;">📸 Mon suivi photos</div>
-      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Le même suivi photos que Christophe, pour <strong>ton compte</strong> : séries de 4 photos (jusqu'à 4/mois), bilan complet et <strong>comparaison d'évolution</strong> entre tes séries.</div>
-      <button class="btn btn-bg2" onclick="openBodySeries()" style="padding:11px;font-size:14px;">📸 Ouvrir mon suivi photos</button>
-    </div>
-    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
-      <div style="font-weight:700;color:var(--t1);font-size:15px;">💡 Boîte à idées (test)</div>
-      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">La même boîte à idées que les testeurs, pour <strong>tester en direct</strong> — reproduire les bugs, vérifier l'envoi des photos… Ce que tu envoies part vers <strong>forcetracker.app@gmail.com</strong>.</div>
-      <button class="btn btn-bg2" onclick="openTesterSpace()" style="padding:11px;font-size:14px;">💡 Ouvrir la boîte à idées</button>
-    </div>
-    <!-- Qui a VRAIMENT protégé son compte (04/08) — né de la découverte que loadProfile sert un
-         compte entier quand la personne n'a pas posé de code perso. Cette carte ne lit AUCUNE
-         donnée : la route authStatus ne renvoie que {hasCode, emailVerified}. -->
-    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
-      <div style="font-weight:700;color:var(--t1);font-size:15px;">🔐 Qui a protégé son compte</div>
-      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Un compte <strong>sans code perso</strong> est lisible côté serveur par qui connaît l'adresse. Cette liste dit qui en a un — <strong>sans lire aucune donnée personnelle</strong>.</div>
-      <button class="btn btn-bg2" onclick="loadAuthStatusAdmin()" style="padding:11px;font-size:14px;">🔐 Vérifier les comptes</button>
-      <div id="admin-auth-list" style="margin-top:4px;"></div>
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">💬 Mes conversations avec Milo</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Tes échanges avec Milo vivent <strong>uniquement sur ce téléphone</strong> — ils ne partent sur aucun serveur, et c'est voulu. Mais du coup, <strong>un changement d'appareil les efface</strong>. Ce bouton te les donne dans un fichier texte que tu gardes où tu veux.<br><br>ℹ️ Seule exception, et elle ne contient <strong>aucun texte</strong> : un petit <strong>compteur de bon fonctionnement</strong> part avec ta sauvegarde — des <strong>nombres</strong> («&nbsp;3 réponses signalées ce mois-ci&nbsp;»), jamais une phrase de Milo ni un mot de toi. Il sert à repérer quand Milo dérape, chez de vrais utilisateurs et pas seulement chez Michel.</div>
+      <button class="btn btn-bg2" onclick="exporterConversationsMilo()" style="padding:11px;font-size:14px;">💬 Exporter mes conversations</button>
     </div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
       <div style="font-weight:700;color:var(--t1);font-size:15px;">📥 Idées reçues des testeurs</div>
@@ -930,46 +882,25 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="btn btn-bg2" onclick="loadCustomExAdmin()" style="padding:11px;font-size:14px;">🏋️ Voir les exercices demandés</button>
       <div id="admin-cex-list" style="margin-top:4px;"></div>
     </div>
-    <!-- Les 4 sondes de diagnostic existaient déjà, mais il fallait taper une URL avec un jeton
-         à la main — donc personne ne les consultait. La panne du 29/07 (réservoir plein à 102 %,
-         plus aucune écriture pendant 2 jours) était visible par `storeHealth` : elle n'a été vue
-         que 2 jours plus tard. Même leçon que le Google Sheet : la donnée doit venir à toi. -->
-    <!-- Exporter ses propres conversations (05/08, demande de Michel). Le fil des échanges
-         vit UNIQUEMENT sur le téléphone : un changement d'appareil l'efface. On donne donc
-         un FICHIER que la personne emporte, plutôt que d'envoyer ses conversations sur un
-         serveur — la donnée sensible ne bouge pas, c'est elle qui décide. -->
+    <!-- Qui a VRAIMENT protégé son compte (04/08) — né de la découverte que loadProfile sert un
+         compte entier quand la personne n'a pas posé de code perso. Cette carte ne lit AUCUNE
+         donnée : la route authStatus ne renvoie que {hasCode, emailVerified}. -->
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
-      <div style="font-weight:700;color:var(--t1);font-size:15px;">💬 Mes conversations avec Milo</div>
-      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Tes échanges avec Milo vivent <strong>uniquement sur ce téléphone</strong> — ils ne partent sur aucun serveur, et c'est voulu. Mais du coup, <strong>un changement d'appareil les efface</strong>. Ce bouton te les donne dans un fichier texte que tu gardes où tu veux.<br><br>ℹ️ Seule exception, et elle ne contient <strong>aucun texte</strong> : un petit <strong>compteur de bon fonctionnement</strong> part avec ta sauvegarde — des <strong>nombres</strong> («&nbsp;3 réponses signalées ce mois-ci&nbsp;»), jamais une phrase de Milo ni un mot de toi. Il sert à repérer quand Milo dérape, chez de vrais utilisateurs et pas seulement chez Michel.</div>
-      <button class="btn btn-bg2" onclick="exporterConversationsMilo()" style="padding:11px;font-size:14px;">💬 Exporter mes conversations</button>
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🔐 Qui a protégé son compte</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Un compte <strong>sans code perso</strong> est lisible côté serveur par qui connaît l'adresse. Cette liste dit qui en a un — <strong>sans lire aucune donnée personnelle</strong>.</div>
+      <button class="btn btn-bg2" onclick="loadAuthStatusAdmin()" style="padding:11px;font-size:14px;">🔐 Vérifier les comptes</button>
+      <div id="admin-auth-list" style="margin-top:4px;"></div>
     </div>
-    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
-      <div style="font-weight:700;color:var(--t1);font-size:15px;">🩺 Santé du système</div>
-      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Les 5 alertes qui ne préviennent personne : le <strong>stockage</strong> (c'est lui qui a lâché le 29 juillet), les <strong>sauvegardes</strong> de la nuit, les <strong>mails</strong> qui ne partent pas, la <strong>consommation IA</strong>, et les <strong>mises en ligne</strong> (un déploiement raté est totalement silencieux). À regarder de temps en temps.</div>
-      <button class="btn btn-bg2" onclick="loadHealthAdmin()" style="padding:11px;font-size:14px;">🩺 Vérifier maintenant</button>
-      <div id="admin-health" style="margin-top:4px;"></div>
-    </div>
-    <!-- Le miroir Supabase (04/08). Une sauvegarde dont on ne vérifie jamais qu'elle écrit
-         n'est pas une sauvegarde : c'est exactement ce qui s'est passé avec la sauvegarde
-         nocturne, arrêtée pendant 36 jours sans que personne ne le voie. D'où un bouton qui
-         écrit POUR DE VRAI plutôt qu'un voyant vert décoratif. -->
-    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
-      <div style="font-weight:700;color:var(--t1);font-size:15px;">🪞 Copie miroir Supabase</div>
-      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Une <strong>deuxième copie</strong> des comptes, à côté de Google. Google reste la source de vérité — Supabase ne fait que <strong>recevoir</strong>. <strong>Écriture seule</strong> : la clé publiée dans l'app ne peut pas <em>relire</em> les comptes. Le bouton écrit une ligne de test <strong>pour de vrai</strong> et dit ce qui cloche si ça rate.</div>
-      <button class="btn btn-bg2" onclick="loadSbAdmin()" style="padding:11px;font-size:14px;">🪞 Tester la copie miroir</button>
-      <div id="admin-sb" style="margin-top:4px;"></div>
-    </div>
-    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
-      <div style="font-weight:700;color:var(--t1);font-size:15px;">🧪 Laboratoire Milo · PT-001 (continuité)</div>
-      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Rejoue <strong>tout ton historique</strong> de séances dans l'ordre : Milo débriefe chacune et <strong>vérifie l'objectif de la fois d'avant</strong>. Sert à valider la <strong>continuité de sa mémoire</strong> et à voir si <strong>ça sature</strong> sur un gros historique. À la fin : la question « Qui suis-je en tant que sportif&nbsp;? » + un <strong>rapport exportable</strong> (texte + PDF). Prend plusieurs minutes, coûte quelques appels au modèle. Aucune donnée effacée.</div>
-      <button class="btn btn-bg2" onclick="startPt001Test()" style="padding:11px;font-size:14px;">🧪 Lancer PT-001 (rejeu historique)</button>
-    </div>
+    </details>
+    <details class="adm-grp">
+      <summary>🛡️ Milo — le mesurer <span class="adm-n">2</span></summary>
+      <div class="adm-intro">Le benchmark mesure 16 messages ISOLÉS. PT-001 mesure sa MÉMOIRE sur tout un historique. Ce ne sont pas les mêmes questions.</div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
       <div style="font-weight:700;color:var(--t1);font-size:15px;">🎭 Laboratoire Milo · VC (comportement)</div>
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Vérifie le <strong>comportement</strong> de Milo : on injecte un <strong>persona</strong> (sportif fictif) <strong>temporairement, à la place de tes données</strong> (rien n'est écrit — tes vraies données reviennent après), on lui envoie un message et on regarde s'il respecte les <strong>attendus</strong>. Juge humain (toi + moi), rapport exportable.</div>
-      <button class="btn btn-bg2" onclick="startVcTest('VC-001')" style="padding:11px;font-size:14px;">🎭 Lancer VC-001 (Tatiana)</button>
-      <button class="btn btn-bg2" onclick="startVcTest('VC-002')" style="padding:11px;font-size:14px;">🎭 Lancer VC-002 (Christophe · Sonnet)</button>
-      <button class="btn btn-bg2" onclick="startVcTest('VC-003')" style="padding:11px;font-size:14px;">🎭 Lancer VC-003 (Emma · cycle)</button>
+      <button class="btn btn-bg2" onclick="startVcTest('VC-001')" style="padding:11px;font-size:14px;">🎭 Lancer VC-001 (profil A · objectif inconnu)</button>
+      <button class="btn btn-bg2" onclick="startVcTest('VC-002')" style="padding:11px;font-size:14px;">🎭 Lancer VC-002 (profil B · a déjà un coach)</button>
+      <button class="btn btn-bg2" onclick="startVcTest('VC-003')" style="padding:11px;font-size:14px;">🎭 Lancer VC-003 (profil C · cycle)</button>
       <div style="font-weight:700;color:var(--t1);font-size:14px;margin-top:6px;">🧪 Laboratoire Milo · BENCHMARK (est-ce qu'il SUIT ses règles ?)</div>
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Joue <strong>16 pièges</strong> d'un coup — dont <strong>6 tirés de vrais bugs vécus en salle</strong> (charge de 82,5 kg, ordre des accessoires, « c'est noté » qui ne note rien, exercices sautés au débrief…). Ici le juge n'est pas un humain : ce sont des <strong>vérifications automatiques</strong>. <strong>Le coût est annoncé avant</strong> de lancer, et tes données ne sont pas touchées.<br><br>⚠️ <strong>Un rouge est une preuve</strong> qu'une règle n'a pas été suivie. <strong>Un vert ne prouve presque rien</strong> — il dit seulement « aucune violation détectable ».</div>
       <button class="btn btn-bg2" onclick="startEvalBench(false)" style="padding:11px;font-size:14px;">🧪 Lancer le benchmark (16 scénarios)</button>
@@ -989,6 +920,63 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="btn btn-bg2" onclick="startVmBench()" style="padding:11px;font-size:14px;">🧪 Mode Test VM — Banc d'essai (programmes tordus)</button>
       <button class="btn btn-bg2" onclick="openVmBenchCustom()" style="padding:11px;font-size:14px;">📋 Tester MON programme (coller une liste)</button>
     </div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🧪 Laboratoire Milo · PT-001 (continuité)</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Rejoue <strong>tout ton historique</strong> de séances dans l'ordre : Milo débriefe chacune et <strong>vérifie l'objectif de la fois d'avant</strong>. Sert à valider la <strong>continuité de sa mémoire</strong> et à voir si <strong>ça sature</strong> sur un gros historique. À la fin : la question « Qui suis-je en tant que sportif&nbsp;? » + un <strong>rapport exportable</strong> (texte + PDF). Prend plusieurs minutes, coûte quelques appels au modèle. Aucune donnée effacée.</div>
+      <button class="btn btn-bg2" onclick="startPt001Test()" style="padding:11px;font-size:14px;">🧪 Lancer PT-001 (rejeu historique)</button>
+    </div>
+    </details>
+    <details class="adm-grp">
+      <summary>🔧 Le compte et la connexion <span class="adm-n">4</span></summary>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
+      <div class="fg">
+        <label>Email Admin</label>
+        <input type="email" id="email-inp" placeholder="ton@email.com" inputmode="email" oninput="S.email=this.value.trim();persist();">
+      </div>
+      <button class="btn btn-bg2" onclick="restoreFromEmail()" style="padding:13px;font-size:15px;">☁️ Restaurer depuis mon email</button>
+      <button class="btn btn-red" onclick="testConn()" style="padding:13px;font-size:15px;">🔌 Tester la connexion</button>
+      <button class="btn btn-bg2" onclick="debugRestore()" style="padding:11px;font-size:14px;color:var(--t3);">🔍 Voir réponse brute API</button>
+    </div>
+    <!-- CARTE DEBUG PREMIUM -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🔑 Statut Premium</div>
+      <div id="admin-premium-info" style="font-size:12px;color:var(--t2);line-height:1.9;background:var(--bg3);border-radius:8px;padding:10px 12px;font-family:'SF Mono',ui-monospace,monospace;word-break:break-all;min-height:48px;">—</div>
+      <button class="btn btn-bg2" onclick="debugPremiumCheck()" style="padding:11px;font-size:14px;">🔑 Vérifier premium (serveur)</button>
+    </div>
+    <!-- CARTE SYNC SHEETS -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">☁️ Synchronisation Sheets</div>
+      <div id="admin-sync-info" style="font-size:12px;color:var(--t2);line-height:1.9;background:var(--bg3);border-radius:8px;padding:10px 12px;font-family:'SF Mono',ui-monospace,monospace;min-height:36px;">—</div>
+      <button class="btn btn-bg2" onclick="_retrySheetQueue()" style="padding:11px;font-size:14px;">🔄 Resynchroniser les séances</button>
+    </div>
+    <!-- Le miroir Supabase (04/08). Une sauvegarde dont on ne vérifie jamais qu'elle écrit
+         n'est pas une sauvegarde : c'est exactement ce qui s'est passé avec la sauvegarde
+         nocturne, arrêtée pendant 36 jours sans que personne ne le voie. D'où un bouton qui
+         écrit POUR DE VRAI plutôt qu'un voyant vert décoratif. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🪞 Copie miroir Supabase</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Une <strong>deuxième copie</strong> des comptes, à côté de Google. Google reste la source de vérité — Supabase ne fait que <strong>recevoir</strong>. <strong>Écriture seule</strong> : la clé publiée dans l'app ne peut pas <em>relire</em> les comptes. Le bouton écrit une ligne de test <strong>pour de vrai</strong> et dit ce qui cloche si ça rate.</div>
+      <button class="btn btn-bg2" onclick="loadSbAdmin()" style="padding:11px;font-size:14px;">🪞 Tester la copie miroir</button>
+      <div id="admin-sb" style="margin-top:4px;"></div>
+    </div>
+    </details>
+    <details class="adm-grp">
+      <summary>🧰 Diagnostic ponctuel <span class="adm-n">3</span></summary>
+      <div class="adm-intro">Des outils qu'on sort quand quelque chose cloche — pas tous les jours.</div>
+    <!-- JOURNAL DES ERREURS (pour diagnostiquer ce qui n'arrive que sur un téléphone) -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🐞 Dernières erreurs</div>
+      <div id="admin-errlog" style="font-size:11.5px;color:var(--t2);line-height:1.5;background:var(--bg3);border-radius:8px;padding:10px 12px;font-family:'SF Mono',ui-monospace,monospace;word-break:break-word;max-height:220px;overflow:auto;">—</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-bg2" onclick="renderErrLog()" style="padding:10px;font-size:13px;">🔄 Rafraîchir</button>
+        <button class="btn btn-bg2" onclick="clearErrLog()" style="padding:10px;font-size:13px;color:var(--t3);">🗑️ Vider</button>
+      </div>
+    </div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🔍 Doublons d'exercices</div>
+      <button class="btn btn-bg2" onclick="detectDuplicates()" style="padding:11px;font-size:14px;">🔍 Analyser les doublons</button>
+      <div id="admin-dupes" style="display:none;flex-direction:column;gap:8px;font-size:13px;"></div>
+    </div>
     <!-- ⏱️ RECALAGE DES ANCIENNES SÉANCES — admin uniquement -->
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
       <div style="font-weight:700;color:var(--t1);font-size:15px;">⏱️ Recaler les calories des anciennes séances</div>
@@ -1004,6 +992,33 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="btn btn-bg2" id="admin-recal-undo" onclick="_annulerRecalageCalories()" style="padding:11px;font-size:14px;color:var(--red);display:none;">↩️ Annuler le recalage</button>
       <div id="admin-recal-res" style="font-size:12.5px;color:var(--t2);line-height:1.55;"></div>
     </div>
+    </details>
+    <details class="adm-grp">
+      <summary>📸 Mes données à moi <span class="adm-n">3</span></summary>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">📸 Mon suivi photos</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Le même suivi photos que Christophe, pour <strong>ton compte</strong> : séries de 4 photos (jusqu'à 4/mois), bilan complet et <strong>comparaison d'évolution</strong> entre tes séries.</div>
+      <button class="btn btn-bg2" onclick="openBodySeries()" style="padding:11px;font-size:14px;">📸 Ouvrir mon suivi photos</button>
+    </div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">💡 Boîte à idées (test)</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">La même boîte à idées que les testeurs, pour <strong>tester en direct</strong> — reproduire les bugs, vérifier l'envoi des photos… Ce que tu envoies part vers <strong>forcetracker.app@gmail.com</strong>.</div>
+      <button class="btn btn-bg2" onclick="openTesterSpace()" style="padding:11px;font-size:14px;">💡 Ouvrir la boîte à idées</button>
+    </div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🩺 Santé du système</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Les 5 alertes qui ne préviennent personne : le <strong>stockage</strong> (c'est lui qui a lâché le 29 juillet), les <strong>sauvegardes</strong> de la nuit, les <strong>mails</strong> qui ne partent pas, la <strong>consommation IA</strong>, et les <strong>mises en ligne</strong> (un déploiement raté est totalement silencieux). À regarder de temps en temps.</div>
+      <button class="btn btn-bg2" onclick="loadHealthAdmin()" style="padding:11px;font-size:14px;">🩺 Vérifier maintenant</button>
+      <div id="admin-health" style="margin-top:4px;"></div>
+    </div>
+    </details>
+    <details class="adm-grp">
+      <summary>🧪 Bac à sable (clone et démo) <span class="adm-n">3</span></summary>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🎬 Mode démo</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Pour montrer les fonctions à quelqu'un (morphologie, coach, étude du corps…) <strong>sans toucher ton compte</strong>. Une fois activé, <strong>rien n'est enregistré</strong> (ni en local, ni dans le cloud). En quittant, tes vraies données reviennent intactes.</div>
+      <button class="btn btn-bg2" onclick="enterDemoMode()" style="padding:11px;font-size:14px;">🎬 Activer le mode démo</button>
+    </div>
     <!-- Réservé au CLONE de test (affiché seulement si window.__FT_CLONE__) -->
     <div class="card cp" id="admin-clone-reset-card" style="display:none;flex-direction:column;gap:10px;">
       <div style="font-weight:700;color:var(--t1);font-size:15px;">🔄 Refaire l'inscription <span style="font-size:11px;color:var(--red);">(clone)</span></div>
@@ -1015,6 +1030,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Par défaut le clone se comporte comme un <strong>vrai compte gratuit (10 questions)</strong> pour tester la vraie découverte et le mur premium. Passe en <strong>illimité</strong> quand tu veux une longue conversation de test, puis reviens en normal.</div>
       <button class="btn btn-bg2" id="admin-clone-unlim-btn" onclick="toggleCloneUnlimited()" style="padding:11px;font-size:14px;">♾️ Passer en illimité</button>
     </div>
+    </details>
   </div>
 
   <!-- PROFIL -->

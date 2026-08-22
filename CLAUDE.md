@@ -136,7 +136,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v954`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v955`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v954`** (prochaine : `ft-v955`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v955`** (prochaine : `ft-v956`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v955 — 🧹 LE MÉNAGE DU MENU ADMIN — et DEUX FOIS je me suis trompé sur ce qui était inutile** — Michel : *« retire ce qui est inutile. Par contre marque bien dans les journaux qu'on les a retirés et pourquoi ils ont été nécessaires. Ça permet d'avoir une traçabilité de ce qui a été fait. »*
+
+**⭐⭐ SA CONSIGNE EST PLUS FINE QU'ELLE N'EN A L'AIR, et c'est elle qui a sauvé la version.** Il ne demande pas *« pourquoi on retire »* mais *« pourquoi ça a été NÉCESSAIRE »*. Or c'est en cherchant cette raison, outil par outil, que **les deux retraits que j'avais proposés se sont effondrés**. *La traçabilité demandée pour l'après a servi d'abord à l'avant.*
+
+**⚠️⚠️ ① PT-001 — J'AVAIS ANNONCÉ « le benchmark l'a remplacé ». C'EST FAUX.** Il rejoue **tout l'historique dans l'ordre**, fait débriefer chaque séance par Milo, vérifie qu'il **se souvient de l'objectif de la fois d'avant**, et finit par *« Qui suis-je en tant que sportif ? »*. C'est un test de **MÉMOIRE LONGUE** ; le benchmark, lui, joue **16 messages ISOLÉS**. *Il mesure la promesse centrale du produit — « tu ne repars jamais de zéro » — et rien d'autre ne le fait.*
+
+**⚠️⚠️ ② LE RECALAGE des anciennes séances — je le croyais one-shot.** Or **l'import d'historique existe** : des séances importées n'ont pas l'heure de leurs séries, donc elles auraient besoin d'être recalées. La fonction est idempotente et rend *« rien à recaler »* quand il n'y a rien. **Elle n'est pas finie, elle dort.**
+
+**⭐ C'est R28 payé DEUX FOIS dans la même tâche** — *une limite non vérifiée devient une règle de conception silencieuse* — et cette fois c'est moi qui affirmais, pas Michel. **Le plus utile n'était pas de supprimer pour avoir l'air décisif, c'était de le dire.**
+
+**👉 CE QUI EST LIVRÉ : on RANGE.** 36 boutons à plat → **6 sections `<details>`** repliables (Surveillance · Milo · Le compte · Diagnostic · Mes données · Bac à sable). Seule la **Surveillance** reste ouverte — c'est la seule qu'on regarde sans raison particulière. `<details>` natif : **zéro JS**, donc ça tient même si un script tombe.
+
+**⛔ ET LE TÉMOIN CENTRAL EST CELUI-LÀ : déplacer 19 cartes ne doit RIEN perdre.** 19 cartes, 34 boutons, comptés des deux côtés (app **et** clone — sinon les deux menus divergent en silence). *Un refactoring HTML perd un bouton sans rien casser de visible : aucun test fonctionnel ne l'attraperait.* Deux autres témoins vérifient que **PT-001 et le recalage restent joignables** — sinon le « rangement » aurait supprimé en douce (**R30** : un retrait se décide, il ne se constate pas).
+
+**⭐⭐ LE SEUL VRAI NETTOYAGE ÉTAIT AILLEURS : les personas VC.** Ils portaient les **prénoms de vrais testeurs** — Tatiana, Christophe, Emma — pour des profils **entièrement inventés**. Le 21/08, j'ai lu le champ `resume` de VC-002 (*« pratiquant confirmé qui a DÉJÀ un coach humain »*) comme un **fait sur le vrai Christophe**, et je m'en suis servi comme **argument** pour justifier une décision produit. Michel a dû me corriger **deux fois**. **Le piège était STRUCTUREL, pas une étourderie** : un décor de test et une note sur une personne réelle se lisaient *exactement pareil* dans ce fichier. 👉 Renommés **profil A / B / C**, ⛔ **prénoms injectés à Milo compris** — sinon il s'adresserait à « Tatiana » pendant un test, ce qui recrée la confusion qu'on vient d'enlever. *On supprime le piège au lieu de compter sur la vigilance.*
+Tests : **parcours 1008/1008** (+10, bloc LXXXI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 5 rouges**, exactement les 5 changements. ⚠️ **Et les 5 verts des deux côtés sont ici les plus importants** : cartes, boutons, PT-001 et le recalage étaient déjà là et **devaient le rester**. *Un rangement se juge à ce qui n'a PAS bougé.* Fichiers : `index.html`, `style.css`, `coach.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v955. |
 
 **ft-v954 — 🧮 LE TOTAL DU GARDIEN CONTREDISAIT SON PROPRE DÉTAIL** — Michel, devant l'écran, après la **première remontée réelle** : *« oui corrige le total »*.
 
@@ -718,21 +735,6 @@ Tests : **parcours 895/895** (+10, bloc LXXIV ; 2 témoins repointés, 1 ajouté
 
 **⚠️⚠️ ET DEUX TÉMOINS EXISTANTS ONT ROUGI — les deux mesuraient un RACCOURCI devenu faux.** ① Celui du **cache** comparait la **taille TOTALE** du contexte. C'était un proxy valable tant que rien sous le marqueur n'était conditionnel — or depuis ft-v933 la queue non cachée porte des rappels ciblés, **et c'est voulu**. ⭐ **Mesuré avant de le corriger** (on ne touche pas à un garde-fou de cache sur une intuition) : le **préfixe caché fait 66 959 caractères dans les deux cas, identique octet pour octet** — le cache n'était pas cassé. Le témoin mesure désormais le **préfixe**, ce qui est **plus fort** que l'ancien : une variation cachée *avant* le marqueur passait inaperçue dans un total si un autre bloc la compensait. ② L'autre exigeait qu'un appelant **sans message** reçoive **exactement** autant qu'un message donné ; le contrat dit *« on envoie TOUT »*, donc il doit en recevoir **au moins** autant. *L'égalité stricte interdisait par construction d'avoir plus d'un rappel conditionnel.*
 Tests : **parcours 885/885** (+9, bloc LXXIII ; 2 témoins corrigés), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif sur le rappel** : c'est un bloc **neuf** du prompt. Ce qui le remplace : présent quand on demande une séance, **absent sinon**, règle de fond **intacte dans les deux cas**, et le contrat « sans message = tout » **vérifié**. Fichiers : `coach.js`, `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v936. |
-
-**ft-v935 — 📊 LE TOTAL NE BOUGE PAS, LA COMPOSITION SI — l'historique par scénario** — 3ᵉ passe réelle de Michel, la première **après** un correctif.
-
-**⭐⭐ LE CORRECTIF A MARCHÉ, ET C'EST LA PREMIÈRE MESURE AVANT/APRÈS DU PROJET.** **EV-012 (keto) est passé au VERT** : Milo ne propose plus riz/pâtes/pain à un profil cétogène. Le rappel de fin de prompt de ft-v933 — le levier §9 n°1, jamais utilisé jusque-là — a fait ce qu'on attendait de lui. *On ne suppose plus qu'un correctif a servi : on le voit.*
-
-**⚠️⚠️ MAIS LE PIÈGE EST JUSTE À CÔTÉ, ET IL A FAILLI PASSER.** **4 rouges hier, 4 rouges aujourd'hui.** En ne regardant que le compte, on conclurait *« rien n'a changé »*. **C'est faux : ce n'est pas le même 4.** Un défaut corrigé (EV-012), deux autres apparus (EV-007, EV-009). *Un total stable peut cacher une correction ET une régression qui se compensent* — et le rapport, tel qu'il était, ne permettait pas de le voir.
-
-**👉 CE QUI EST LIVRÉ** : le rapport garde le verdict de **chaque scénario, passe après passe** (localStorage admin, 8 dernières, jamais synchronisé) et affiche **`❌ ❌ ✅`** avec sa lecture — **SYSTÉMATIQUE** · *intermittent (n/m)* · *stable au vert*. ⭐ **Ça sépare le vrai défaut du bruit sans dépenser un seul appel de plus** — là où le mode répétition de ft-v934, lui, coûte des appels.
-
-**⚠️ Une seule passe ne produit AUCUNE tendance** (2 minimum) : une ligne d'historique à une entrée ne dit rien, et l'afficher inviterait à conclure sur un tirage.
-
-**⭐ L'ÉTAT MESURÉ SUR 3 PASSES, et c'est directement actionnable** : **EV-003** (le face pull placé avant du lourd) et **EV-015** (proposer de compléter le coach humain) sont rouges **3 fois sur 3** — ce sont de vrais défauts, à corriger. **EV-009** (le matériel redemandé) et **EV-007** (deux questions au lieu d'une) sont **intermittents** — à re-mesurer avant d'écrire une ligne de code. *Sans l'historique, on aurait traité les quatre pareil.*
-
-**⚠️ ET MON TÉMOIN A ENCORE ROUGI À TORT.** Il exigeait qu'un scénario vu une seule fois soit **absent de TOUT le rapport** — or il figure légitimement dans la liste des résultats ; ce qu'on veut garantir est seulement son absence du bloc **HISTORIQUE**. *Un motif doit viser ce qu'on veut garantir, pas plus large.* Troisième fois en deux jours que je paie cette erreur-là.
-Tests : **parcours 876/876** (+7, bloc LXXII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif** : l'historique est un comportement **neuf**. Ce qui le remplace est plus parlant — deux passes fabriquées **au même total (2 rouges) mais pas les mêmes** : le témoin exige que le correctif ET la régression soient tous deux lisibles, donc il rougirait aussi bien si l'outil n'historisait rien que s'il se contentait du compte. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v935. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

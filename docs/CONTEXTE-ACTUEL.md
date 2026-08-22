@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v954` — fusionnée sur `master` le 22/08.
+- **Version en ligne (live) :** `ft-v955` — fusionnée sur `master` le 22/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,18 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- 🧹 **LE MÉNAGE DU MENU ADMIN** (ft-v955) — Michel : *« retire ce qui est inutile, mais marque
+  dans les journaux pourquoi ils ont été nécessaires »*.
+  ⭐⭐ **Rien n'était inutile — R28 payé DEUX FOIS dans la même tâche, par moi.**
+  ① **PT-001 n'est PAS remplacé par le benchmark** : il mesure la **mémoire longue** (rejeu de
+  tout l'historique), le benchmark teste 16 messages **isolés**. ② **Le recalage n'est pas
+  one-shot** : l'import d'historique produit des séances sans heure de séries.
+  👉 **On range** : 36 boutons → **6 sections repliables**, seule la Surveillance ouverte.
+  ⛔ **19 cartes, 34 boutons, zéro perdu** — témoin central, des deux côtés (app + clone).
+  ⭐⭐ **Le vrai nettoyage** : les personas VC portaient les **prénoms de vrais testeurs** pour
+  des profils inventés → **profil A/B/C**, prénoms injectés à Milo compris. C'est le piège qui
+  m'a fait affirmer une fausseté sur Christophe le 21/08.
+  ⏭️ **Rien n'est en attente** sur ce sujet. R30 enrichie d'un 2ᵉ cas réel.
 - 🧮 **LE TOTAL DU GARDIEN CONTREDISAIT SON PROPRE DÉTAIL** (ft-v954) — *« oui corrige le total »*.
   ⭐⭐ **PREMIÈRE REMONTÉE RÉELLE DU PARC, et elle a marché** : **Eline — 14 réponses de Milo
   (13/08 → 22/08), 1 promesse de mémoire non tenue.** Elle a ouvert l'app, le scan a tourné, la
