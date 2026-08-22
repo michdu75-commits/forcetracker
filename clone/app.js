@@ -1634,7 +1634,7 @@ async function _ciqualCharger(){
   if(_ciqualEnCours) return _ciqualEnCours;           // une seule requête même si on tape vite
   _ciqualEnCours=(async()=>{
     try{
-      const r=await fetch('data/ciqual.json',{headers:{'Accept':'application/json'}});
+      const r=await fetch('../data/ciqual.json',{headers:{'Accept':'application/json'}});
       if(!r.ok) throw new Error('HTTP '+r.status);
       const d=await r.json();
       if(!d||!Array.isArray(d.a)) throw new Error('format');
@@ -1715,8 +1715,18 @@ const _AF_SUGG_MIN=2;          // en dessous, tout matche : la liste serait du b
 const _AF_SUGG_DELAI=450;      // on ne part pas au réseau à chaque lettre
 
 // Normalisation légère : accents et casse ne doivent pas empêcher de retrouver « pâtes ».
+/* \u26a0\ufe0f LE BUG DU \u00ab BLANC D'\u0152UF \u00bb (22/08/2026) \u2014 Michel tape \u00ab poulet \u00bb et ne trouve rien ; en
+   creusant sur un produit d'\u0153uf liquide, le vrai coupable \u00e9tait le \u018e LIGATURE. `normalize('NFD')`
+   d\u00e9compose les ACCENTS (\u00e9 \u2192 e + accent), mais PAS les ligatures \u0153/\u00e6 \u2014 ce sont deux lettres
+   fusionn\u00e9es en UNE, pas une lettre accentu\u00e9e. Or le clavier iPhone en fran\u00e7ais CORRIGE
+   AUTOMATIQUEMENT \u00ab oeuf \u00bb en \u00ab \u0153uf \u00bb pendant la frappe, et CIQUAL \u00e9crit tous ses noms en
+   \u00ab oe \u00bb s\u00e9par\u00e9 (\u00ab Oeuf, blanc\u2026 \u00bb). R\u00e9sultat mesur\u00e9 : taper \u00ab \u0153uf \u00bb ou \u00ab b\u0153uf \u00bb \u2014 donc
+   quasiment toujours, sur iPhone \u2014 rendait Z\u00c9RO r\u00e9sultat, alors que l'aliment existe. Le
+   \u00ab poulet \u00bb de Michel n'avait rien \u00e0 voir (juste une version pas encore rafra\u00eechie), mais ce
+   bug-l\u00e0 est r\u00e9el et touche bien plus de monde : \u0153uf, b\u0153uf, s\u0153ur, c\u0153ur, n\u0153ud, v\u0153u\u2026 */
 function _afNorm(t){
-  return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/\u0153/g,'oe').replace(/\u00e6/g,'ae').trim();
 }
 /* ① CE QU'IL A DÉJÀ NOTÉ. Dédoublonné par nom, le plus RÉCENT gagne : si la quantité a changé,
    c'est la dernière qui reflète ce qu'il mange aujourd'hui. */

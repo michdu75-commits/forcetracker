@@ -3032,3 +3032,26 @@ Tests : **parcours 885/885** (+9, bloc LXXIII ; 2 témoins corrigés), calculs 2
 
 **⚠️ ET DEUX TÉMOINS EXISTANTS ONT ROUGI — de mon fait.** Ils lisaient le **corps de `copyEvalText`**, où le code de copie **n'est plus** : il vit désormais dans `_evCopier`, **partagé** par les deux boutons (**R2** — deux copies du même enchaînement presse-papier finiraient par diverger, l'une recevant un correctif et pas l'autre). *Un témoin doit viser la fonction qui PORTE le comportement, pas celle qui l'appelle* — c'est le raccourci devenu faux, payé deux jours de suite. ⚠️ **Et le témoin que j'ai écrit pour le remplacer a rougi à tort lui aussi** : il exigeait **un seul** `execCommand('copy')` dans **tout** `coach.js` — or il y en a un **deuxième, légitime et sans rapport** (copier une réponse de Milo dans le chat). Ce qu'on veut garantir n'est pas *« une seule copie dans le fichier »* mais *« les deux boutons DÉLÈGUENT »*. **3ᵉ fois cette semaine qu'un motif vise plus large que sa garantie** (R19).
 Tests : **parcours 895/895** (+10, bloc LXXIV ; 2 témoins repointés, 1 ajouté), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges** — les 3 de la copie (`_evCopier` n'existe pas) et le stockage absent. ⚠️ **Et 8 témoins ne se sont pas exécutés du tout** (ils vivent sous le garde « fonctions absentes ») : *un témoin qui ne tourne pas n'est pas un témoin vert, et le total le montre — 887 exécutés au lieu de 895.* Fichiers : `coach.js`, `tests/milo/eval.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v938. |
+
+
+**ft-v939 — 🔎 LES VÉRIFICATEURS RATAIENT 19 VIOLATIONS SUR 21** — Michel : *« je te fais confiance vas y »*. Le **levier gratuit n°2** — affiner les motifs, qui ne coûte aucun appel puisque c'est du **code**.
+
+**⭐⭐ ET LA MESURE A ÉTÉ FAITE AVANT DE TOUCHER À QUOI QUE CE SOIT** (R7) : 21 formulations réelles de violation, jouées contre les motifs existants.
+
+| Vérificateur | Violations **ratées** |
+|---|---|
+| **EV-009** — le matériel redemandé | **8 sur 8** |
+| **EV-011** — le diagnostic médical | **5 sur 6** |
+| **EV-012** — le keto | **5 sur 5** |
+| **EV-005** — les paliers reprochés | **3 sur 4** |
+
+**LA CAUSE EST LA MÊME PARTOUT : chaque motif ne connaissait qu'UNE façon de dire la chose.** *« quel matériel »* mais pas *« tu as quoi comme matériel ? »* · *« c'est une sciatique »* mais pas *« c'est **probablement** une sciatique »* — **un simple adverbe cassait la reconnaissance** · riz/pâtes/pain mais ni couscous, ni boulgour, ni miel, ni jus d'orange. *Un vert ne valait pas grand-chose : le corpus l'annonçait, on sait maintenant de combien.*
+
+**⭐⭐ ET ÇA PEUT EXPLIQUER UNE INTERMITTENCE — c'est le point le plus utile.** EV-009 est **✅ à une passe et ❌ à l'autre**. La cause n'est peut-être **pas** que Milo change de **comportement**, mais qu'il change de **FORMULATION** : le motif en attrapait une et ratait l'autre. Si c'est ça, l'élargissement le fera passer d'« intermittent » à « **systématique** » — *et ça ne se corrige pas pareil.* ⚠️ **C'est une HYPOTHÈSE, pas une conclusion** : elle se vérifie à la prochaine passe réelle, pas avant.
+
+**⚠️⚠️ ET LE SENS INVERSE A ÉTÉ VÉRIFIÉ AUTANT QUE L'AUTRE** — *un faux rouge ferait jeter le benchmark entier* (**R19**). Chaque motif élargi est joué sur des réponses **saines** qui doivent rester vertes, et ce sont les cas voisins qui comptent : la question de **PRÉFÉRENCE** (*« tu préfères la presse ou le squat barre ? »*) qui ressemble à la question de **POSSESSION** · l'hypothèse **NOMMÉE comme hypothèse** (*« ça **peut** être une sciatique »*), que la Constitution autorise explicitement — on traque l'affirmation, pas la prudence · et le piège **« jusqu'à »**, qui contient *« jus »*.
+
+**⚠️ ET UN PIÈGE DE MÉTHODE A ÉTÉ PAYÉ ICI.** Mon harnais d'audit écrasait les **deux** vérificateurs d'un scénario en **un seul booléen**. Un texte est sorti « faux rouge » — et le rouge venait en réalité de l'**AUTRE** vérificateur, qui avait parfaitement raison (une douleur qui irradie sans renvoi vers un soignant). **J'ai failli corriger le motif qui n'avait rien.** Les témoins visent donc désormais **un vérificateur nommé**, jamais le scénario entier. *Un instrument qui agrège trop tôt fait accuser le mauvais coupable.*
+
+**⛔ ET UN DERNIER TÉMOIN COUVRE LES 15 SCÉNARIOS D'UN COUP** : aucun vérificateur ne doit **lever d'exception** (sur du vide, sur un texte quelconque). Un motif cassé rendrait « rouge » sur tout — donc un **défaut inventé de toutes pièces**.
+Tests : **parcours 904/904** (+9, bloc LXXV), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE LES ANCIENS MOTIFS : 4 rouges**, et la sortie liste les 19 violations ratées une par une. ⚠️ Les 4 témoins « aucune réponse saine ne rougit » sont **verts des deux côtés, et c'est voulu** : *c'est précisément ce qui prouve que l'élargissement n'a pas ouvert de faux rouge.* Fichiers : `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v939. |

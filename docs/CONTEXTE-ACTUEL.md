@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v958` — fusionnée sur `master` le 22/08.
+- **Version en ligne (live) :** `ft-v959` — fusionnée sur `master` le 22/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,13 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- 🥚 **BUG DE LA LIGATURE ŒUF** (ft-v959) — trouvé en vérifiant un produit d'œuf que Michel
+  montrait en photo. `normalize('NFD')` ne décompose que les **accents**, jamais les **ligatures**
+  œ/æ — et le clavier iPhone corrige « oeuf » en « œuf » en tapant, pendant que CIQUAL écrit
+  « oe » séparé. **Zéro résultat** pour œuf/bœuf sur iPhone, corrigé dans `_afNorm` (R2 : une
+  seule fonction pour CIQUAL et les suggestions locales).
+  ⚠️ « poulet » (signalé avant) était un faux problème — version pas rafraîchie, rejoué et
+  confirmé sain.
 - 🔍 **UN AUTRE COMPLÉMENT — identification seulement** (ft-v958) — Michel a fourni **Compl'Alim**
   (5 fichiers, 142 928 déclarations), puis a demandé de **simplifier l'approche**.
   ⛔⛔ **Nom + marque + catégorie déclarée uniquement** — 129 033 produits. **Aucune dose,
