@@ -2946,3 +2946,21 @@ Tests : **parcours 851/851** (+4, bloc LXVIII), calculs 241/241, muscles 241/241
 
 **⭐ CE QUI RESTE LISIBLE SOUS LE SEUIL, c'est la NATURE des rouges** — le rapport liste maintenant ceux qui sont propres à chaque modèle. Ici, Haiku seul a échoué sur une **charge impossible** et sur **3 questions d'affilée** : ce sont précisément les deux défauts que R9 prédit, et ça vaut mieux qu'un compte.
 Tests : **parcours 864/864** (+13, blocs LXIX et LXX), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif sur le rappel** : c'est un bloc **neuf** du prompt, un témoin contre l'ancien code dirait « absent » au lieu de mesurer. Ce qui le remplace : le rappel est vérifié **présent quand on parle bouffe**, **absent sinon**, **absent pour qui n'a pas de régime**, et la règle de fond **intacte dans tous les cas**. ⚠️ **Et deux de mes témoins ont rougi à tort avant d'être corrigés** — l'un attrapait le `else if` légitime, l'autre comptait le mot « CONFIRMÉ » qui désigne aussi le **niveau** d'un pratiquant. *Un motif doit viser ce qu'on veut garantir, pas une forme de code.* Fichiers : `coach.js`, `tests/milo/eval-scenarios.js`, `tests/milo/eval.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v933. |
+
+
+**ft-v934 — 🔁 REJOUER LES ROUGES : le verdict devient un TAUX, plus un booléen** — Michel, après avoir lu que la comparaison Sonnet/Haiku n'était pas concluante : *« sinon on passe à 20 passes non ? »*.
+
+**⭐ SON INTUITION EST JUSTE, ET C'EST LA BONNE MÉTHODE** : répéter est la **seule** façon de battre le bruit. On l'a mesuré la veille — deux passes du **même** modèle ont donné **3 puis 4** rouges.
+
+**⛔ MAIS PAS 20 × 15 = 300 APPELS, et la raison n'est pas que le prix.** C'est **4,60 à 19 €**, et surtout c'est **au-dessus du plafond anti-abus** (`worker.js` : **50 appels/jour/personne**, 600 au total, écrit le 08/08 pour « borner le coût en cas d'abus »). *Un run coupé au milieu, c'est payer des appels pour un rapport tronqué.* Le runner **refuse net** au-delà de 45 appels, avec le motif écrit.
+
+**👉 ON RÉPÈTE CE QUI COMPTE, PAS TOUT.** Bouton **« 🔁 Rejouer les rouges »** sur la carte de résultat : il ne rejoue **que** les scénarios rouges, et le nombre de répétitions **s'adapte à leur nombre** pour tenir sous le plafond — 3 rouges × 10 = **30 appels ≈ 0,45 €**, au lieu de 300.
+
+**⭐⭐ ET LE VERDICT CHANGE DE NATURE : « rouge 5/10 » au lieu de « rouge ».** C'est le vrai apport, plus que l'économie. La question utile n'est pas *rouge ou vert*, c'est ***« ce défaut tombe-t-il À CHAQUE FOIS, ou une fois sur cinq ? »*** — un défaut **systématique** et un défaut **intermittent** ne se corrigent pas pareil, et *un outil qui écrase l'intermittence en booléen ferait chercher un bug systématique là où il n'y en a pas.* C'est exactement le cas d'**EV-009** (le matériel redemandé), rouge à une passe et vert à l'autre.
+
+**⚠️ Un défaut intermittent reste classé ROUGE** : on mesure sa fréquence, on ne l'excuse pas.
+
+**⚠️ Chaque passe repart d'un navigateur NEUF et d'un profil remis à neutre** — sinon on mesurerait la mémoire de Milo au lieu de la règle, et dix passes identiques ne prouveraient rien.
+
+En ligne de commande : `--repeat N`, à combiner avec `--only`. Le devis à blanc compte les répétitions.
+Tests : **parcours 869/869** (+5, bloc LXXI), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif** : la répétition est un comportement **neuf**, un témoin contre l'ancien code rendrait « fonction absente » au lieu de mesurer. Ce qui le remplace est plus parlant — un **Milo bouchonné qui échoue une fois sur deux** : le témoin exige *« rouge 5/10 »*, donc il rougirait aussi bien si l'outil comptait mal que s'il écrasait le taux en booléen. Fichiers : `coach.js`, `tests/milo/eval.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v934. |

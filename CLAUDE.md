@@ -136,7 +136,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v953`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v954`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v953`** (prochaine : `ft-v954`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v954`** (prochaine : `ft-v955`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,19 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v954 — 🧮 LE TOTAL DU GARDIEN CONTREDISAIT SON PROPRE DÉTAIL** — Michel, devant l'écran, après la **première remontée réelle** : *« oui corrige le total »*.
+
+**⭐⭐ ET C'EST LA PREMIÈRE VRAIE MESURE DU PARC QUI L'A RÉVÉLÉ.** Eline a ouvert l'app : **14 réponses de Milo, du 13/08 au 22/08, 1 promesse de mémoire non tenue.** ft-v948 a fait exactement son travail — elle a ouvert, le scan a tourné, la sauvegarde est partie **toute seule**. *C'est aussi le Milo NORMAL, pas la version débridée du fondateur : l'échantillon qui compte (R9).*
+
+**⛔ MAIS L'ÉCRAN AFFICHAIT UN TOTAL QUI MENTAIT.** Le bloc annonçait *« TOTAL, tous comptes confondus »* et n'agrégeait en réalité que le **📡 direct** — il montrait donc `bloc_technique : 2` pendant que le détail, **juste en dessous**, portait 2 promesses de mémoire chez Michel et 1 chez Eline. C'est la famille *« deux sources qui se contredisent »* (`BUGS.md`), et *elle est plus vicieuse que l'absence : la personne VOIT les deux et ne sait pas laquelle croire.*
+
+**⛔⛔ ET ON NE LES ADDITIONNE PAS POUR AUTANT — c'est l'arbitrage.** Le direct et l'historique couvrent **deux époques** : l'historique remonte à des versions de Milo **antérieures aux correctifs**. Les fondre donnerait un total qui ne veut rien dire — c'est exactement ce que ft-v946 avait décidé, et cette version ne le défait pas. 👉 **Deux totaux NOMMÉS** au lieu d'un total qui ment sur ce qu'il compte, avec *« ne s'additionne PAS au direct »* écrit à l'écran. *Le défaut n'était pas le chiffre, c'était le libellé.*
+
+**⭐ LE RENDU EST SORTI DE L'APPEL RÉSEAU** (`_gardienStatsRendu`) — sans ça, aucun témoin ne pouvait jouer l'affichage sans serveur. Le **cas réel de sa capture est désormais figé dans les tests**, chiffres compris (R17) : le témoin central vérifie que 2 + 1 promesses se retrouvent bien dans **un** total affiché.
+
+**⚠️ ET LE `bloc_technique : 2` VISIBLE CHEZ MICHEL N'EST PAS UN BUG** : c'est un **résidu** d'avant ft-v946, le correctif qui l'a sorti des dérives (il se lève sur chaque séance proposée — du trafic normal). Le compteur étant **cumulatif**, l'ancien chiffre reste affiché ; le code actuel, lui, ne le compte plus. *Vérifié dans `_GARDIEN_DERIVES` avant de l'affirmer, plutôt que de le supposer.*
+Tests : **parcours 998/998** (+5, bloc LXXX ter), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — et il est **peu instructif, honnêtement** : le rendu n'existait pas séparément, il était **soudé à l'appel réseau**. C'est précisément ce que l'extraction corrige, donc le « avant » ne peut pas être rejoué. *Un contrôle négatif qui ne dit que « la fonction n'existe pas » ne prouve rien — autant l'écrire.* Fichiers : `coach.js`, `Code.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v954. |
 
 **ft-v953 — ⏳ QUAND SERAI-JE REVENU AU MAX — et le 93 d'hier était FAUX** — Michel : *« peut-on rajouter un indicateur où l'on peut retrouver 100 % de notre forme ? en plus de ce qu'il y a actuellement, parce que là on ne sait pas quand on aura récupéré au max »*.
 
@@ -720,23 +733,6 @@ Tests : **parcours 885/885** (+9, bloc LXXIII ; 2 témoins corrigés), calculs 2
 
 **⚠️ ET MON TÉMOIN A ENCORE ROUGI À TORT.** Il exigeait qu'un scénario vu une seule fois soit **absent de TOUT le rapport** — or il figure légitimement dans la liste des résultats ; ce qu'on veut garantir est seulement son absence du bloc **HISTORIQUE**. *Un motif doit viser ce qu'on veut garantir, pas plus large.* Troisième fois en deux jours que je paie cette erreur-là.
 Tests : **parcours 876/876** (+7, bloc LXXII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif** : l'historique est un comportement **neuf**. Ce qui le remplace est plus parlant — deux passes fabriquées **au même total (2 rouges) mais pas les mêmes** : le témoin exige que le correctif ET la régression soient tous deux lisibles, donc il rougirait aussi bien si l'outil n'historisait rien que s'il se contentait du compte. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v935. |
-
-**ft-v934 — 🔁 REJOUER LES ROUGES : le verdict devient un TAUX, plus un booléen** — Michel, après avoir lu que la comparaison Sonnet/Haiku n'était pas concluante : *« sinon on passe à 20 passes non ? »*.
-
-**⭐ SON INTUITION EST JUSTE, ET C'EST LA BONNE MÉTHODE** : répéter est la **seule** façon de battre le bruit. On l'a mesuré la veille — deux passes du **même** modèle ont donné **3 puis 4** rouges.
-
-**⛔ MAIS PAS 20 × 15 = 300 APPELS, et la raison n'est pas que le prix.** C'est **4,60 à 19 €**, et surtout c'est **au-dessus du plafond anti-abus** (`worker.js` : **50 appels/jour/personne**, 600 au total, écrit le 08/08 pour « borner le coût en cas d'abus »). *Un run coupé au milieu, c'est payer des appels pour un rapport tronqué.* Le runner **refuse net** au-delà de 45 appels, avec le motif écrit.
-
-**👉 ON RÉPÈTE CE QUI COMPTE, PAS TOUT.** Bouton **« 🔁 Rejouer les rouges »** sur la carte de résultat : il ne rejoue **que** les scénarios rouges, et le nombre de répétitions **s'adapte à leur nombre** pour tenir sous le plafond — 3 rouges × 10 = **30 appels ≈ 0,45 €**, au lieu de 300.
-
-**⭐⭐ ET LE VERDICT CHANGE DE NATURE : « rouge 5/10 » au lieu de « rouge ».** C'est le vrai apport, plus que l'économie. La question utile n'est pas *rouge ou vert*, c'est ***« ce défaut tombe-t-il À CHAQUE FOIS, ou une fois sur cinq ? »*** — un défaut **systématique** et un défaut **intermittent** ne se corrigent pas pareil, et *un outil qui écrase l'intermittence en booléen ferait chercher un bug systématique là où il n'y en a pas.* C'est exactement le cas d'**EV-009** (le matériel redemandé), rouge à une passe et vert à l'autre.
-
-**⚠️ Un défaut intermittent reste classé ROUGE** : on mesure sa fréquence, on ne l'excuse pas.
-
-**⚠️ Chaque passe repart d'un navigateur NEUF et d'un profil remis à neutre** — sinon on mesurerait la mémoire de Milo au lieu de la règle, et dix passes identiques ne prouveraient rien.
-
-En ligne de commande : `--repeat N`, à combiner avec `--only`. Le devis à blanc compte les répétitions.
-Tests : **parcours 869/869** (+5, bloc LXXI), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif** : la répétition est un comportement **neuf**, un témoin contre l'ancien code rendrait « fonction absente » au lieu de mesurer. Ce qui le remplace est plus parlant — un **Milo bouchonné qui échoue une fois sur deux** : le témoin exige *« rouge 5/10 »*, donc il rougirait aussi bien si l'outil comptait mal que s'il écrasait le taux en booléen. Fichiers : `coach.js`, `tests/milo/eval.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v934. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

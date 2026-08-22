@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v953` — fusionnée sur `master` le 22/08.
+- **Version en ligne (live) :** `ft-v954` — fusionnée sur `master` le 22/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,20 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- 🧮 **LE TOTAL DU GARDIEN CONTREDISAIT SON PROPRE DÉTAIL** (ft-v954) — *« oui corrige le total »*.
+  ⭐⭐ **PREMIÈRE REMONTÉE RÉELLE DU PARC, et elle a marché** : **Eline — 14 réponses de Milo
+  (13/08 → 22/08), 1 promesse de mémoire non tenue.** Elle a ouvert l'app, le scan a tourné, la
+  sauvegarde est partie **toute seule** (ft-v948). ⭐ Et c'est le Milo **normal**, pas la version
+  débridée du fondateur — l'échantillon qui compte (R9).
+  ⛔ Mais le bloc annonçait « TOTAL, tous comptes confondus » en n'agrégeant que le **direct** →
+  il contredisait son propre détail. **Deux totaux nommés** désormais, et ⛔ **on ne les
+  additionne pas** (deux époques — décision ft-v946), c'est écrit à l'écran.
+  ⭐ Le **rendu est sorti de l'appel réseau** → le cas réel de sa capture est **figé dans les
+  tests**, chiffres compris.
+  ⚠️ Le `bloc_technique : 2` chez Michel est un **résidu d'avant ft-v946**, pas un bug (compteur
+  cumulatif ; le code actuel ne le compte plus — vérifié).
+  ⏭️ **À suivre** : les autres testeurs à leur prochaine ouverture. Et **1 promesse vide chez
+  Eline** — c'est un cas RÉEL à lire, candidat pour `docs/JOURNAL-DE-TEST.md`.
 - ⏳ **QUAND SERAI-JE REVENU AU MAX** (ft-v953) — Michel : *« on ne sait pas quand on aura
   récupéré au max »*.
   ⛔⛔ **On donne un MOMENT, jamais un chiffre projeté** : un score futur supposerait de connaître

@@ -3592,11 +3592,31 @@ async function _gardienStatsTous(){
     const d=await r.json();
     if(typeof _adminTokRefuse==='function' && _adminTokRefuse(d)){ toast('Jeton refusé — relance','error'); return; }
     if(d.status!=='ok'){ toast('Erreur : '+(d.error||'?'),'error'); return; }
+    showConfirm('🌍 Gardien — tous les comptes', _gardienStatsRendu(d), function(){}, 'Fermer');
+  }catch(e){ toast('Lecture impossible : '+(e.message||'réseau'),'error'); }
+}
+/* Le RENDU seul, séparé de l'appel réseau (22/08/2026) — pour qu'un témoin puisse le jouer sur
+   des chiffres connus sans toucher au serveur. C'est ce qui a permis de figer le cas réel de la
+   capture de Michel : un total qui contredisait son propre détail. */
+function _gardienStatsRendu(d){
     const L=['🛡️ GARDIEN — TOUS LES COMPTES','',
              d.comptes+' compte(s) ayant déjà parlé à Milo.',''];
+    /* ⚠️ DEUX TOTAUX NOMMÉS, PAS UN TOTAL QUI MENT (22/08/2026) — Michel, devant l'écran :
+       le bloc annonçait « TOTAL, tous comptes confondus » et n'agrégeait que le 📡 DIRECT.
+       Il CONTREDISAIT donc son propre détail juste en dessous. ⛔ Et on ne les additionne pas :
+       les deux couvrent des ÉPOQUES différentes (ft-v946) — un total fondu ne voudrait rien
+       dire. On NOMME ce que chaque total compte, c'est tout ce qui manquait. */
     const g=d.global||{}; const cles=Object.keys(g);
-    if(cles.length){ L.push('TOTAL, tous comptes confondus :');
+    if(cles.length){ L.push('TOTAL 📡 EN DIRECT (mesuré depuis le branchement) :');
       cles.sort((a,b)=>g[b]-g[a]).forEach(c=>L.push('  · '+c+' : '+g[c])); L.push(''); }
+    const gr=d.globalRetro||{}; const clesR=Object.keys(gr);
+    if(clesR.length||d.retroMessages){
+      L.push('TOTAL 🕰️ HISTORIQUE (retrouvé sur leurs téléphones) :');
+      L.push('  · '+(d.retroTotal||0)+' réponse(s) avec dérive sur '+(d.retroMessages||0)+' analysée(s)');
+      clesR.sort((a,b)=>gr[b]-gr[a]).forEach(c=>L.push('  · '+c+' : '+gr[c]));
+      L.push('  ⚠️ Ne s\'additionne PAS au direct : deux périodes, deux versions de Milo.');
+      L.push('');
+    }
     (d.users||[]).forEach(u=>{
       L.push('— '+u.nom);
       if(u.total){ L.push('   📡 en direct : '+u.total+' réponse(s)  ('+u.depuis+' → '+u.dernier+')');
@@ -3616,8 +3636,7 @@ async function _gardienStatsTous(){
     L.push('⚠️ Un compte n\'apparaît qu\'après sa prochaine sauvegarde.');
     L.push('⚠️ 🕰️ L\'historique couvre PLUSIEURS versions de Milo, dont des antérieures aux');
     L.push('   correctifs. À lire avec les dates — ce n\'est pas comparable au 📡 direct.');
-    showConfirm('🌍 Gardien — tous les comptes', L.join('\n'), function(){}, 'Fermer');
-  }catch(e){ toast('Lecture impossible : '+(e.message||'réseau'),'error'); }
+    return L.join('\n');
 }
 
 function renderCoachMsg(role, text) {

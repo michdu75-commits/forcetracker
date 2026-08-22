@@ -396,7 +396,18 @@ function doGet(e) {
   if (p.action === 'gardienStats') {
     if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
     const props = PropertiesService.getScriptProperties().getProperties();
-    const lignes = [], global = {};
+    /* ⚠️ DEUX TOTAUX, PAS UN (22/08/2026) — Michel, devant l'écran : le bloc annonçait
+       « TOTAL, tous comptes confondus » et n'agrégeait en réalité que le 📡 DIRECT. On lisait
+       donc un total qui CONTREDISAIT son propre détail juste en dessous (2 promesses de
+       mémoire chez lui, 1 chez Eline… absentes du « total »). C'est la famille de bugs
+       « deux sources qui se contredisent » (BUGS.md), et elle est plus vicieuse que l'absence
+       parce que la personne VOIT les deux.
+       ⛔ ET ON NE LES ADDITIONNE PAS POUR AUTANT : le direct et l'historique couvrent deux
+       ÉPOQUES — l'historique remonte à des versions de Milo antérieures aux correctifs. Les
+       fondre donnerait un chiffre qui ne veut rien dire (décision de ft-v946). On rend donc
+       DEUX totaux nommés, au lieu d'un total qui ment sur ce qu'il compte. */
+    const lignes = [], global = {}, globalRetro = {};
+    let retroMessages = 0, retroTotal = 0;
     Object.keys(props).filter(function(k){ return k.indexOf('u_') === 0; }).forEach(function(k){
       try {
         const d = JSON.parse(_unpackUser_(props[k]));
@@ -409,13 +420,19 @@ function doGet(e) {
            d'usage. Un compte sans bloc `retro` n'a simplement pas encore rouvert l'app. */
         if (!g || (!g.total && !(g.retro && (g.retro.total || g.retro.messages)))) return;
         Object.keys(g.codes || {}).forEach(function(c){ global[c] = (global[c]||0) + g.codes[c]; });
+        if (g.retro) {
+          Object.keys(g.retro.codes || {}).forEach(function(c){ globalRetro[c] = (globalRetro[c]||0) + g.retro.codes[c]; });
+          retroMessages += Number(g.retro.messages) || 0;
+          retroTotal    += Number(g.retro.total)    || 0;
+        }
         lignes.push({ nom: (d.profile && d.profile.name) || '?',
                       total: g.total || 0, depuis: g.depuis || '?', dernier: g.dernier || '?',
                       codes: g.codes || {}, retro: g.retro || null });
       } catch(e) {}
     });
     lignes.sort(function(a,b){ return (b.total||0) - (a.total||0); });
-    return json_({status:'ok', comptes:lignes.length, global:global, users:lignes});
+    return json_({status:'ok', comptes:lignes.length, global:global, users:lignes,
+                  globalRetro:globalRetro, retroMessages:retroMessages, retroTotal:retroTotal});
   }
 
   // Lecture des idées des testeurs (boîte à idées) — ?action=getIdees&token=…
