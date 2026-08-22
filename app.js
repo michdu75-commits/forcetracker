@@ -1673,7 +1673,29 @@ async function _ciqualCharger(){
    ⚠️ Le plafond de 400 reste tel quel : mesuré, il ne fausse qu'« eau » (*robinet* au lieu de
    *coco*), et les deux se valent — le relever changerait un résultat correct pour un autre. */
 const _AF_FORMES_PATES=['spaghetti','penne','macaroni','coquillette','fusilli','farfalle',
-  'rigatoni','conchiglie','linguine','tagliatelle','torsade','tortis'];
+  'rigatoni','conchiglie','linguine','linguini','tagliatelle','tortis'];
+/* ⛔⛔ ET CES MOTS-LÀ NE S'ÉCRIVENT PAS (22/08/2026) — Michel, juste après : *« oui j'ai mis ça,
+   après je voulais mettre coquilette »*. **Il l'écrit avec UN SEUL L**, et la liste ci-dessus a
+   « coquillette » : sa graphie à lui ne trouvait donc RIEN. ⭐ Mesuré : 6 autres graphies
+   plausibles échouaient aussi — *spagetti, tagliatele, farfale, fusili, linguini, pene*. Ce sont
+   toutes des variantes de **consonne doublée** ou de **h muet**, c'est-à-dire exactement là où
+   ces mots italiens se trompent. *Une liste de synonymes qui exige l'orthographe parfaite ne sert
+   qu'à ceux qui n'en avaient pas besoin.*
+   ⛔ LA TOLÉRANCE NE S'APPLIQUE QU'À CETTE LISTE FERMÉE DE 12 MOTS, jamais à la base : on compare
+   la frappe aux 12 formes connues, donc aucun risque de rapprochement hasardeux sur 3 341 aliments.
+   ⚠️⚠️ ET DEUX PIÈGES ONT ÉTÉ TROUVÉS EN LE MESURANT, pas en le relisant :
+     ① Ma 1ʳᵉ version retirait aussi la **voyelle finale** — et « macaroni » devenait alors « macaron ».
+        **La pâtisserie serait partie sur les pâtes.** Le retrait de la voyelle finale a donc sauté ;
+        « linguini » (graphie anglaise) est simplement ajouté à la liste, ce qui est plus honnête
+        qu'une règle qui rabote au hasard.
+     ② **« torsade » est RETIRÉ de la liste** (**R30** — un retrait s'écrit) : CIQUAL l'emploie pour
+        un **biscuit apéritif feuilleté**, et c'est un usage au moins aussi courant que la pâte.
+        *Entre détourner un vrai aliment et rater une forme rare, on rate la forme rare.*
+   ⭐ Vérifié sur les 2 261 mots distincts de CIQUAL : la seule collision restante est « spaghetti »
+   (la COURGE), et elle est voulue — la courge garde sa correspondance EXACTE, donc elle reste
+   trouvable ; on ajoute une porte, on n'en ferme aucune. */
+function _afSqueeze(m){ return m.replace(/h/g,'').replace(/(.)\1+/g,'$1'); }
+const _AF_FORMES_CLES=_AF_FORMES_PATES.map(_afSqueeze);
 /* Un mot tapé peut atteindre un nom par 3 chemins, du plus sûr au moins sûr. Rend `null` si
    aucun ne marche, sinon le texte réellement trouvé + s'il a fallu approximer. */
 function _afMotDansNom(m, n){
@@ -1681,9 +1703,12 @@ function _afMotDansNom(m, n){
   const fin=m.slice(-1);
   const sg=(m.length>=4 && (fin==='s'||fin==='x')) ? m.slice(0,-1) : null;
   if(sg && n.indexOf(sg)>=0) return {t:sg, approx:1};
-  const base=sg||m;
-  if(_AF_FORMES_PATES.indexOf(m)>=0 || _AF_FORMES_PATES.indexOf(base)>=0){
-    if(n.indexOf('pates')>=0) return {t:'pates', approx:1};
+  if(n.indexOf('pates')>=0){
+    for(const c of [m, sg]){
+      if(!c) continue;
+      if(_AF_FORMES_PATES.indexOf(c)>=0 || _AF_FORMES_CLES.indexOf(_afSqueeze(c))>=0)
+        return {t:'pates', approx:1};
+    }
   }
   return null;
 }
