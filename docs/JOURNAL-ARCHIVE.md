@@ -2964,3 +2964,19 @@ Tests : **parcours 864/864** (+13, blocs LXIX et LXX), calculs 241/241, muscles 
 
 En ligne de commande : `--repeat N`, à combiner avec `--only`. Le devis à blanc compte les répétitions.
 Tests : **parcours 869/869** (+5, bloc LXXI), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif** : la répétition est un comportement **neuf**, un témoin contre l'ancien code rendrait « fonction absente » au lieu de mesurer. Ce qui le remplace est plus parlant — un **Milo bouchonné qui échoue une fois sur deux** : le témoin exige *« rouge 5/10 »*, donc il rougirait aussi bien si l'outil comptait mal que s'il écrasait le taux en booléen. Fichiers : `coach.js`, `tests/milo/eval.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v934. |
+
+
+**ft-v935 — 📊 LE TOTAL NE BOUGE PAS, LA COMPOSITION SI — l'historique par scénario** — 3ᵉ passe réelle de Michel, la première **après** un correctif.
+
+**⭐⭐ LE CORRECTIF A MARCHÉ, ET C'EST LA PREMIÈRE MESURE AVANT/APRÈS DU PROJET.** **EV-012 (keto) est passé au VERT** : Milo ne propose plus riz/pâtes/pain à un profil cétogène. Le rappel de fin de prompt de ft-v933 — le levier §9 n°1, jamais utilisé jusque-là — a fait ce qu'on attendait de lui. *On ne suppose plus qu'un correctif a servi : on le voit.*
+
+**⚠️⚠️ MAIS LE PIÈGE EST JUSTE À CÔTÉ, ET IL A FAILLI PASSER.** **4 rouges hier, 4 rouges aujourd'hui.** En ne regardant que le compte, on conclurait *« rien n'a changé »*. **C'est faux : ce n'est pas le même 4.** Un défaut corrigé (EV-012), deux autres apparus (EV-007, EV-009). *Un total stable peut cacher une correction ET une régression qui se compensent* — et le rapport, tel qu'il était, ne permettait pas de le voir.
+
+**👉 CE QUI EST LIVRÉ** : le rapport garde le verdict de **chaque scénario, passe après passe** (localStorage admin, 8 dernières, jamais synchronisé) et affiche **`❌ ❌ ✅`** avec sa lecture — **SYSTÉMATIQUE** · *intermittent (n/m)* · *stable au vert*. ⭐ **Ça sépare le vrai défaut du bruit sans dépenser un seul appel de plus** — là où le mode répétition de ft-v934, lui, coûte des appels.
+
+**⚠️ Une seule passe ne produit AUCUNE tendance** (2 minimum) : une ligne d'historique à une entrée ne dit rien, et l'afficher inviterait à conclure sur un tirage.
+
+**⭐ L'ÉTAT MESURÉ SUR 3 PASSES, et c'est directement actionnable** : **EV-003** (le face pull placé avant du lourd) et **EV-015** (proposer de compléter le coach humain) sont rouges **3 fois sur 3** — ce sont de vrais défauts, à corriger. **EV-009** (le matériel redemandé) et **EV-007** (deux questions au lieu d'une) sont **intermittents** — à re-mesurer avant d'écrire une ligne de code. *Sans l'historique, on aurait traité les quatre pareil.*
+
+**⚠️ ET MON TÉMOIN A ENCORE ROUGI À TORT.** Il exigeait qu'un scénario vu une seule fois soit **absent de TOUT le rapport** — or il figure légitimement dans la liste des résultats ; ce qu'on veut garantir est seulement son absence du bloc **HISTORIQUE**. *Un motif doit viser ce qu'on veut garantir, pas plus large.* Troisième fois en deux jours que je paie cette erreur-là.
+Tests : **parcours 876/876** (+7, bloc LXXII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 101 classées 0 trou. ⚠️ **Pas de contrôle négatif** : l'historique est un comportement **neuf**. Ce qui le remplace est plus parlant — deux passes fabriquées **au même total (2 rouges) mais pas les mêmes** : le témoin exige que le correctif ET la régression soient tous deux lisibles, donc il rougirait aussi bien si l'outil n'historisait rien que s'il se contentait du compte. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v935. |

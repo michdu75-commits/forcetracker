@@ -258,7 +258,25 @@ disponible n'en gardaient trace.
   absence aussi bien qu'une présence ;
 - ⚠️ **corollaire** : du code orphelin ne prouve rien. Avant de « réparer », chercher la décision
   (journal, git) — et si on ne trouve rien, **demander** au lieu de supposer.
-*Origine : 02/08/2026 · miroir de R23 · voisine de R28 (une limite non vérifiée).*
+**⭐⭐ 2ᵉ CAS RÉEL (22/08/2026) — et il ajoute une nuance que le premier n'avait pas.** Michel
+demande de nettoyer le menu admin : *« retire ce qui est inutile. Par contre marque bien dans les
+journaux qu'on les a retirés **et pourquoi ils ont été nécessaires**. Ça permet d'avoir une
+traçabilité de ce qui a été fait. »*
+**Sa consigne dit « pourquoi ça a été NÉCESSAIRE », pas « pourquoi on retire ».** Et c'est en
+cherchant cette raison, outil par outil, que **les deux retraits proposés se sont effondrés** :
+- **PT-001** — j'avais écrit « le benchmark l'a remplacé ». **Faux** : il rejoue *tout*
+  l'historique et vérifie que Milo se souvient de la séance d'avant — un test de **mémoire
+  longue**, quand le benchmark joue 16 messages **isolés**. Il mesure la promesse centrale du
+  produit, et rien d'autre ne le fait.
+- **Le recalage des anciennes séances** — cru one-shot. Or l'**import d'historique** existe, et
+  des séances importées auraient besoin d'être recalées. *Elle n'est pas finie, elle dort.*
+👉 **La leçon qui s'ajoute à R30** : chercher *pourquoi un outil a été nécessaire* est le meilleur
+test de son inutilité présente. Un outil dont on retrouve la raison d'être **et** un cas où elle
+vaut encore n'est pas mort — il dort. **On range, on ne supprime pas** ; ce qui a vraiment été
+retiré, c'est le **piège** (les personas de test portaient les prénoms de vrais testeurs).
+*C'est aussi **R28** payé deux fois dans la même tâche — et cette fois c'est celui qui écrit le
+code qui affirmait une limite sans la vérifier.*
+*Origine : 02/08/2026 · miroir de R23 · voisine de R28 (une limite non vérifiée) · 2ᵉ cas 22/08/2026.*
 
 ---
 
