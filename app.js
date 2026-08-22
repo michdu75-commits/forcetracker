@@ -1199,8 +1199,14 @@ function _offRemplirFormulaire(p, sourceId, saisie){
     per100:{kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
     attendu:_afLuFormulaire()});
   _afNoteEtat(_bcNutr.name);
-  // Score santé indicatif (Nutri-Score + NOVA + additifs) — module food-health.js
-  try{ if(window.FoodHealth)FoodHealth.renderCard(p,'#af-health-card'); }catch(e){}
+  /* Score santé indicatif (Nutri-Score + NOVA + additifs) — module food-health.js.
+     ⚠️ Seulement pour un VRAI produit Open Food Facts : un aliment brut CIQUAL n'a ni
+     Nutri-Score ni groupe NOVA, et afficher une carte vide laisserait croire à une absence
+     de score alors qu'il n'y en a simplement pas pour une banane. */
+  const hc=document.getElementById('af-health-card');
+  if(p && p.nutriments && Object.keys(p.nutriments).length){
+    try{ if(window.FoodHealth)FoodHealth.renderCard(p,'#af-health-card'); }catch(e){}
+  } else if(hc){ hc.innerHTML=''; }
 }
 // Lit les 4 macros telles qu'elles sont dans le formulaire À CET INSTANT (pour détecter, à
 // l'enregistrement, si la personne les a retouchées après un remplissage automatique).
@@ -1535,6 +1541,80 @@ async function estimateFoodAI(){
   }catch(e){toast('Erreur réseau : '+e.message,'error');}
   finally{if(btn){btn.disabled=false;btn.textContent='🤖 Estimer les calories avec l\'IA';}}
 }
+/* ═══ 🥗 LA BASE CIQUAL — LES ALIMENTS GÉNÉRIQUES (22/08/2026) ════════════════════════════
+   Michel a fourni `Table_Ciqual_2025_complete.xlsx` après ft-v956 : Open Food Facts ne rend que
+   des PRODUITS DE MARQUE, jamais « banane » tout court. C'est la brique 1 du dossier nutrition.
+   ⚠️ SOURCE : table Ciqual 2025, ANSES — Licence Ouverte / Etalab. La réutilisation est libre
+   **à condition de citer la source** : la mention est affichée dans la liste, ce n'est pas
+   optionnel. Conversion : `tools/ciqual.py` (les 4 formes de valeur y sont expliquées).
+   ⛔⛔ CHARGÉE À LA DEMANDE, JAMAIS AU DÉMARRAGE — 250 Ko (68 Ko gzippés). La règle d'or #4 dit
+   que l'app s'ouvre instantanément à la salle : elle n'attend aucune requête. Le fichier n'est
+   demandé qu'à la PREMIÈRE frappe dans le champ d'aliment, puis gardé en mémoire.
+   ⚠️ ET UN ÉCHEC N'EST JAMAIS BLOQUANT : hors ligne ou fichier absent, on garde les suggestions
+   locales et Open Food Facts. La base est un PLUS, pas un pré-requis. */
+let _ciqual=null, _ciqualEnCours=null;
+async function _ciqualCharger(){
+  if(_ciqual) return _ciqual;
+  if(_ciqualEnCours) return _ciqualEnCours;           // une seule requête même si on tape vite
+  _ciqualEnCours=(async()=>{
+    try{
+      const r=await fetch('data/ciqual.json',{headers:{'Accept':'application/json'}});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const d=await r.json();
+      if(!d||!Array.isArray(d.a)) throw new Error('format');
+      _ciqual=d; return d;
+    }catch(e){ _ciqualEnCours=null; return null; }     // jamais bloquant
+  })();
+  return _ciqualEnCours;
+}
+/* Recherche par nom. Les mots peuvent être dans le DÉSORDRE : « riz cuit » doit retrouver
+   « Riz blanc, cuit, sans sel ajouté ». On exige que TOUS les mots tapés soient présents —
+   sinon « riz complet » remonterait tous les riz et tous les pains complets. */
+function _ciqualChercher(q, max){
+  if(!_ciqual) return [];
+  const mots=_afNorm(q).split(/\s+/).filter(m=>m.length>1);
+  if(!mots.length) return [];
+  const out=[];
+  for(const a of _ciqual.a){
+    /* ⛔ ON ÉCARTE LES ALIMENTS SANS CALORIES DÉTERMINÉES (143 sur 3 484). Dans CIQUAL, « - »
+       veut dire « non déterminé », PAS zéro — et `tools/ciqual.py` le garde exprès à `null`
+       plutôt que d'inventer un 0. Mais un aliment dont on ne connaît pas les calories ne peut
+       pas servir un journal alimentaire : le proposer serait offrir une ligne qu'on ne peut
+       pas enregistrer. C'est un RETRAIT DÉCIDÉ, donc écrit (R30) — la donnée reste dans le
+       fichier, c'est l'affichage qui la filtre. */
+    if(a[3]===null||a[3]===undefined) continue;
+    const n=_afNorm(a[1]);
+    let ok=true;
+    for(const m of mots){ if(n.indexOf(m)<0){ ok=false; break; } }
+    if(!ok) continue;
+    /* Un nom COURT qui commence par ce qu'on a tapé est presque toujours le bon : « Banane »
+       avant « Banane plantain, crue, prélevée en Guadeloupe ». */
+    out.push([n.indexOf(_afNorm(mots[0]))===0 ? 0 : 1, n.length, a]);
+    if(out.length>400) break;                          // on ne trie pas 3 484 lignes pour rien
+  }
+  out.sort((x,y)=> x[0]-y[0] || x[1]-y[1]);
+  return out.slice(0, max||6).map(x=>x[2]);
+}
+/* ⭐ R2 : un aliment CIQUAL remplit le formulaire par le MÊME chemin que le code-barres et la
+   recherche Open Food Facts — grammes, provenance, note d'état. Un 3ᵉ chemin de remplissage
+   finirait par diverger des deux autres. */
+function _afSuggPrendreCiqual(i){
+  const a=_afSuggCiq[i]; if(!a) return;
+  _bcNutr={ name:a[1].slice(0,60), kcal100:a[3]||0,
+            prot100:Math.round(a[4]||0), carbs100:Math.round(a[5]||0), fat100:Math.round(a[6]||0) };
+  /* ⚠️ PAS D'ÉTAT « tel-que-vendu » DANS LA PROVENANCE, et c'est une vraie différence avec
+     Open Food Facts : un produit emballé donne toujours ses valeurs TELLES QUE VENDUES (donc
+     sèches pour des pâtes), alors que CIQUAL dit l'état EN TOUTES LETTRES dans le nom — « Riz
+     blanc, cuit, sans sel ajouté ». Marquer `tel-que-vendu` serait donc faux ici.
+     ⭐ La NOTE d'avertissement, elle, continue de se lever (elle lit le nom) : c'est utile,
+     puisqu'un « Riz blanc, cru » pèse bien 3 fois moins que le même riz cuit. */
+  _offRemplirFormulaire({serving_quantity:0, nutriments:{}}, 'ciqual:'+a[0], 'ciqual');
+  _afSetSrc({saisie:'ciqual', origine:'ciqual', sourceId:'ciqual:'+a[0], etat:null,
+             per100:{kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
+             attendu:_afLuFormulaire()});
+  _afSuggVider();
+  toast('Ajuste la quantité ✅','success');
+}
 /* ═══ 🔎 DES PROPOSITIONS QUAND ON TAPE UN ALIMENT (22/08/2026) ═══════════════════════════
    Michel, après son PREMIER vrai repas noté : *« pour rentrer les aliments il n'y a pas de choix
    de propositions donc je suis obligé de faire fonctionner l'IA »*.
@@ -1554,7 +1634,7 @@ async function estimateFoodAI(){
       bananes de marque, pas l'aliment générique — la base CIQUAL (3 484 aliments génériques)
       reste le bon outil pour ça, et elle n'est pas encore là. On ne fait pas semblant du
       contraire, et on n'invente surtout pas de valeurs génériques nous-mêmes (R29). */
-let _afSuggTimer=null, _afSuggLoc=[], _afSuggOff=[];
+let _afSuggTimer=null, _afSuggLoc=[], _afSuggOff=[], _afSuggCiq=[];
 const _AF_SUGG_MIN=2;          // en dessous, tout matche : la liste serait du bruit
 const _AF_SUGG_DELAI=450;      // on ne part pas au réseau à chaque lettre
 
@@ -1604,7 +1684,7 @@ function _afSuggKcal100(p){
 }
 function _afSuggRendu(){
   const el=document.getElementById('af-sugg'); if(!el) return;
-  if(!_afSuggLoc.length && !_afSuggOff.length){ el.innerHTML=''; return; }
+  if(!_afSuggLoc.length && !_afSuggCiq.length && !_afSuggOff.length){ el.innerHTML=''; return; }
   const ligne=(ic,titre,detail,onclick)=>
     '<button onclick="'+onclick+'" style="width:100%;text-align:left;display:flex;gap:9px;align-items:baseline;'
     +'padding:9px 11px;border:none;border-bottom:1px solid var(--sep);background:none;cursor:pointer;'
@@ -1620,21 +1700,41 @@ function _afSuggRendu(){
       (e.kcal||0)+' kcal · P '+(e.prot||0)+' · G '+(e.carbs||0)+' · L '+(e.fat||0),
       '_afSuggPrendreLocale('+i+')'); });
   }
+  /* ⭐ CIQUAL AVANT OPEN FOOD FACTS, et c'est un choix : quand on tape « banane », l'aliment
+     GÉNÉRIQUE est presque toujours ce qu'on cherche — les bananes de marque viennent après. */
+  if(_afSuggCiq.length){
+    h+='<div style="font-size:11px;color:var(--t3);padding:7px 11px 4px;font-weight:700;">ALIMENTS (CIQUAL · ANSES)</div>';
+    _afSuggCiq.forEach((a,i)=>{ h+=ligne('🥗', a[1],
+      (a[3]||0)+' kcal/100 g · P '+(a[4]==null?'?':a[4])+' · G '+(a[5]==null?'?':a[5])+' · L '+(a[6]==null?'?':a[6]),
+      '_afSuggPrendreCiqual('+i+')'); });
+  }
   if(_afSuggOff.length){
-    h+='<div style="font-size:11px;color:var(--t3);padding:7px 11px 4px;font-weight:700;">OPEN FOOD FACTS</div>';
+    h+='<div style="font-size:11px;color:var(--t3);padding:7px 11px 4px;font-weight:700;">PRODUITS DE MARQUE (OPEN FOOD FACTS)</div>';
     _afSuggOff.forEach((p,i)=>{ h+=ligne('🔎', _afSuggNom(p),
       _afSuggKcal100(p)+' kcal/100 g', '_afSuggPrendreOff('+i+')'); });
   }
+  /* ⚠️ LA MENTION DE LA SOURCE N'EST PAS DÉCORATIVE : la table Ciqual est publiée sous
+     Licence Ouverte / Etalab, qui autorise la réutilisation À CONDITION de citer la source. */
+  if(_afSuggCiq.length) h+='<div style="font-size:10.5px;color:var(--t3);padding:6px 11px 8px;line-height:1.4;">Données aliments : table Ciqual 2025 — ANSES</div>';
   el.innerHTML=h+'</div>';
 }
-function _afSuggVider(){ _afSuggLoc=[]; _afSuggOff=[]; _afSuggRendu(); }
+function _afSuggVider(){ _afSuggLoc=[]; _afSuggOff=[]; _afSuggCiq=[]; _afSuggRendu(); }
 /* Déclenché à la frappe. Les LOCALES sortent tout de suite (aucun réseau) ; la recherche
    distante attend une pause de frappe — sinon on interroge Open Food Facts à chaque lettre. */
 function _afSuggInput(){
   const q=(document.getElementById('af-desc')||{}).value||'';
   _afSuggLoc=_afSuggLocales(q);
-  _afSuggOff=[];
+  _afSuggOff=[]; _afSuggCiq=[];
   _afSuggRendu();
+  /* CIQUAL est LOCAL une fois chargé — donc pas de délai, mais le tout PREMIER accès doit
+     aller chercher le fichier. On le déclenche ici et jamais au démarrage (règle d'or #4). */
+  if(_afNorm(q).length>=_AF_SUGG_MIN){
+    _ciqualCharger().then(()=>{
+      const enCours=(document.getElementById('af-desc')||{}).value||'';
+      if(_afNorm(enCours)!==_afNorm(q)) return;    // la frappe a continué : résultat périmé
+      _afSuggCiq=_ciqualChercher(q,6); _afSuggRendu();
+    });
+  }
   if(_afSuggTimer) clearTimeout(_afSuggTimer);
   if(_afNorm(q).length<3) return;
   _afSuggTimer=setTimeout(async()=>{

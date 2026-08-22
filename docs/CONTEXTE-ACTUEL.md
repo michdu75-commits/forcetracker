@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v956` — fusionnée sur `master` le 22/08.
+- **Version en ligne (live) :** `ft-v957` — fusionnée sur `master` le 22/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,18 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- 🥗 **LA BASE CIQUAL — brique 1 LIVRÉE** (ft-v957) — Michel a fourni le fichier de l'ANSES.
+  **3 484 aliments génériques** : « banane » existe enfin comme aliment, pas comme marque.
+  ⚠️ **Licence Ouverte / Etalab** → la source est **citée dans la liste**, ce n'est pas optionnel.
+  ⛔⛔ **Chargée à la demande, jamais au démarrage** (250 Ko · 68 Ko gzippés) — **mesuré**, pas
+  supposé, comme le dossier l'exigeait. ⛔ Pas dans le PRECACHE du SW (250 Ko à chaque version).
+  ⛔⛔ **« - » = NON DÉTERMINÉ, pas zéro** : 143 aliments gardent `null` et sont **écartés de
+  l'affichage**, la donnée restant dans le fichier. `traces` et `< 0,55` valent 0.
+  ⭐ Protéines **N×6.25** (cohérent avec l'énergie Règlement UE 1169/2011, celle des emballages).
+  ⏭️ **Ce qui reste du dossier nutrition** : brique 3 (**générateur** de repas — c'est là que la
+  décision « DEUX bases » de `BRIEF-NUTRITION.md` §6.4 joue vraiment : le générateur veut ~300
+  aliments `composable` en **liste blanche relue à la main**, pas les 3 484) et brique 4 (les 4
+  niveaux de précision).
 - 🔎 **DES PROPOSITIONS QUAND ON TAPE UN ALIMENT** (ft-v956) — Michel, après son **premier vrai
   repas noté** : *« il n'y a pas de choix de propositions donc je suis obligé de faire
   fonctionner l'IA »*. **Le trou n°1 du dossier nutrition, remonté par l'usage réel.**
