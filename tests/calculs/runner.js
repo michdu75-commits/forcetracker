@@ -1700,6 +1700,124 @@ console.log('\n═══ 13. Supplements : ce qui est affiche est-il vrai ? ═�
     R.cumulNonVide===true, '');
   t('⚠️ PORTÉE ÉPINGLÉE : le plan « perte » n\'a pas de pré/post — rien ne change pour lui',
     R.perteIdentique===true, 'le plan perte a changé sans qu\'on l\'ait décidé');
+
+  /* == LES GLUCIDES PLUS HAUTS LES JOURS DE SEANCE (21/08/2026) ==
+     Michel : « les glucides plus hauts les jours de seance et adaptes ».
+     ⭐⭐ LE LEVIER N'EST PAS LES GLUCIDES, CE SONT LES LIPIDES : proteines et lipides sont fixes
+     au poids de corps, les glucides sont le RESTE. Pour monter les glucides a calories
+     constantes, les lipides doivent descendre — et remonter les jours de repos.
+     ⛔⛔ LE TEMOIN CENTRAL EST LA NEUTRALITE HEBDOMADAIRE : monter les glucides des jours de
+     seance sans les baisser ailleurs, ce n'est pas du cycling, c'est manger plus sans le dire. */
+  console.log('\n-- LES GLUCIDES PLUS HAUTS LES JOURS DE SEANCE --');
+  const C=await pg.evaluate(()=>{
+    const o={};
+    const _j=(n)=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    S.foodMode=''; S.keto=false; S.fasting=''; S.goal='muscle'; S.manualKcal=0; S.wkt=null; S.nextPlanned=null;
+    const SQUAT={name:'Squat Barre',sets:[{kg:100,reps:5,done:true,type:'N'}]};
+    // 4 séances/semaine sur 4 semaines : un rythme net, et f = 4.
+    const semaine=(f)=>{const out=[];for(let w=0;w<4;w++)for(let i=0;i<f;i++)
+      out.push({date:_j(w*7+i+1),exs:[SQUAT],vol:100,calories:400});return out;};
+
+    /* ① UN JOUR DE SÉANCE MONTE LES GLUCIDES, UN JOUR DE REPOS LES BAISSE. */
+    S.sessions=semaine(4);
+    const repos=calcMacros('normal');                       // aucune séance aujourd'hui
+    S.sessions=[{date:today(),exs:[SQUAT],vol:100,calories:400}].concat(semaine(4));
+    const seance=calcMacros('normal');
+    o.carbsSeance=seance.carbs_g; o.carbsRepos=repos.carbs_g;
+    o.monteBienLeJourJ=seance.carbs_g>repos.carbs_g;
+    o.lipidesCompensent=seance.fat_g<repos.fat_g;
+    /* ⛔② LES CALORIES DU JOUR NE BOUGENT PAS (on échange, on n'ajoute pas). */
+    o.kcalIdentiques=(seance.calories===repos.calories);
+    const kc=(m)=>m.prot_g*4+m.carbs_g*4+m.fat_g*9;
+    o.sommeSeance=kc(seance); o.sommeRepos=kc(repos); o.cible=seance.calories;
+    o.sommesTiennent=Math.abs(kc(seance)-kc(repos))<=12;    // arrondis au gramme près
+    /* ⛔③ ET LES PROTÉINES NE SONT JAMAIS LA VARIABLE D'AJUSTEMENT. */
+    o.protIntactes=(seance.prot_g===repos.prot_g);
+
+    /* ⛔⛔④ LE TÉMOIN CENTRAL : SUR LA SEMAINE, LE TOTAL NE BOUGE PAS D'UN GRAMME.
+       On le vérifie sur PLUSIEURS fréquences — la compensation dépend de f, donc une seule
+       fréquence ne prouverait rien. */
+    o.hebdo={};
+    [1,2,3,4,5,6].forEach(f=>{
+      const base=semaine(f);
+      S.sessions=base; const r=calcMacros('normal');
+      S.sessions=[{date:today(),exs:[SQUAT],vol:100,calories:400}].concat(base);
+      const s=calcMacros('normal');
+      // f jours de séance + (7−f) jours de repos, comparés au calcul SANS cycling
+      S.sessions=[]; const nu=macrosForKcal(s.calories);
+      const totalCycle = f*s.carbs_g + (7-f)*r.carbs_g;
+      const totalNu    = 7*nu.carbs_g;
+      o.hebdo[f]={ecart:Math.round(totalCycle-totalNu), jour:s.carbs_g-r.carbs_g};
+    });
+    o.hebdoNeutre=Object.values(o.hebdo).every(x=>Math.abs(x.ecart)<=7);   // 1 g/jour d'arrondi
+    o.hebdoContraste=Object.values(o.hebdo).every(x=>x.jour>0);
+
+    /* ⭐⑤ « ET ADAPTÉS » : une séance de JAMBES donne plus qu'une séance de BRAS. */
+    const CURL={name:'Curl Biceps Haltères',sets:[{kg:15,reps:10,done:true,type:'N'}]};
+    S.sessions=[{date:today(),exs:[SQUAT],vol:100,calories:400}].concat(semaine(4));
+    const jambes=calcMacros('normal').carbs_g;
+    S.sessions=[{date:today(),exs:[CURL],vol:30,calories:200}].concat(semaine(4));
+    const bras=calcMacros('normal').carbs_g;
+    o.jambes=jambes; o.bras=bras;
+    o.regionAdapte=jambes>bras;
+
+    /* ⛔⑥ NI EN KÉTO NI EN LOW CARB : le pourcentage de glucides DÉFINIT le régime. */
+    S.sessions=[{date:today(),exs:[SQUAT],vol:100,calories:400}].concat(semaine(4));
+    S.foodMode='keto'; const ketoS=calcMacros('normal');
+    S.sessions=semaine(4); const ketoR=calcMacros('normal');
+    o.ketoFige=(ketoS.carbs_g===ketoR.carbs_g)&&(ketoS.fat_g===ketoR.fat_g)&&!ketoS.cycle;
+    S.foodMode='lowcarb';
+    S.sessions=[{date:today(),exs:[SQUAT],vol:100,calories:400}].concat(semaine(4));
+    const lcS=calcMacros('normal'); S.sessions=semaine(4); const lcR=calcMacros('normal');
+    o.lowcarbFige=(lcS.carbs_g===lcR.carbs_g)&&!lcS.cycle;
+    S.foodMode='';
+
+    /* ⚠️⑦ 0 SÉANCE ET 7 SÉANCES : aucun contraste à créer, donc aucun cycling. */
+    S.sessions=[]; o.zeroPasDeCycle=!calcMacros('normal').cycle;
+    S.sessions=semaine(7); o.septPasDeCycle=!calcMacros('normal').cycle;
+
+    /* ⛔⑧ LE PLANCHER LIPIDIQUE TIENT (0,6 g/kg), même à 1 séance/semaine — là où le retrait
+       du jour de séance est le plus gros (6/7 de l'amplitude). */
+    S.bw=80; S.sessions=[{date:today(),exs:[SQUAT],vol:100,calories:400}].concat(semaine(1));
+    const min1=calcMacros('normal');
+    o.plancherOK=(min1.fat_g>=Math.round(80*0.6));
+    o.fatMin=min1.fat_g;
+    /* ... et sur un gabarit où il MORD vraiment (peu de calories, poids élevé). */
+    S.bw=110; S.manualKcal=1800;
+    const mord=calcMacros('normal');
+    o.plancherMord=(mord.fat_g>=Math.round(110*0.6)-1);
+    o.fatMord=mord.fat_g; o.fatSeuil=Math.round(110*0.6);
+    S.bw=80; S.manualKcal=0; S.sessions=[];
+    return o;
+  });
+
+  t('⭐⭐ jour de SÉANCE : plus de glucides · jour de REPOS : moins',
+    C.monteBienLeJourJ===true, 'séance='+C.carbsSeance+' g · repos='+C.carbsRepos+' g');
+  t('⭐ ... et ce sont les LIPIDES qui compensent (les glucides sont le reste)',
+    C.lipidesCompensent===true, '');
+  t('⛔ les CALORIES DU JOUR ne bougent pas (on échange, on n\'ajoute pas)',
+    C.kcalIdentiques===true && C.sommesTiennent===true,
+    'séance='+C.sommeSeance+' repos='+C.sommeRepos+' cible='+C.cible);
+  t('⛔ les PROTÉINES ne sont jamais la variable d\'ajustement',
+    C.protIntactes===true, '');
+  /* ⛔⛔ Le témoin qui décide de tout. */
+  t('⛔⛔ SUR LA SEMAINE, LE TOTAL DE GLUCIDES NE BOUGE PAS (1→6 séances/sem)',
+    C.hebdoNeutre===true, JSON.stringify(C.hebdo));
+  t('⭐ ... tout en créant un vrai contraste à chaque fréquence',
+    C.hebdoContraste===true, JSON.stringify(C.hebdo));
+  /* ⭐ « et adaptés ». */
+  t('⭐⭐ ADAPTÉS : une séance de JAMBES donne plus de glucides qu\'une séance de BRAS',
+    C.regionAdapte===true, 'jambes='+C.jambes+' g · bras='+C.bras+' g');
+  /* ⛔ Le piège de ce bloc : sortir quelqu'un de son régime sans le lui demander. */
+  t('⛔⛔ AUCUN cycling en KÉTO (les 5 % DÉFINISSENT le régime)', C.ketoFige===true, '');
+  t('⛔ ... ni en LOW CARB', C.lowcarbFige===true, '');
+  t('⚠️ 0 séance/semaine → aucun cycling (rien à compenser)', C.zeroPasDeCycle===true, '');
+  t('⚠️ 7 séances/semaine → aucun cycling non plus (aucun jour de repos)',
+    C.septPasDeCycle===true, '');
+  t('⛔ le plancher lipidique tient à 1 séance/sem (le retrait le plus gros)',
+    C.plancherOK===true, 'lipides='+C.fatMin+' g');
+  t('⛔⛔ ... et il tient AUSSI là où il mord (110 kg à 1 800 kcal)',
+    C.plancherMord===true, 'lipides='+C.fatMord+' g · plancher='+C.fatSeuil+' g');
   await cx.close();
 }
 

@@ -1995,6 +1995,28 @@ function renderNutrition(){try{
   document.getElementById('m-prot').textContent=macros.prot_g;
   document.getElementById('m-carbs').textContent=macros.carbs_g;
   document.getElementById('m-fat').textContent=macros.fat_g;
+  /* 🍚 ON DIT POURQUOI LES GLUCIDES NE SONT PAS LES MÊMES QU'HIER (21/08/2026).
+     ⛔ Ce n'est pas décoratif : sans cette ligne, la répartition change d'un jour à l'autre
+     SANS RAISON VISIBLE — et un chiffre qui bouge tout seul se lit comme un bug, ou pire, se
+     contourne. C'est la leçon du plancher calorique de ft-v906, appliquée aux macros.
+     ⭐ On annonce aussi que le TOTAL DE LA SEMAINE ne change pas : c'est la seule chose qui
+     transforme « on me fait manger plus » en « on répartit autrement ». */
+  const _cy=document.getElementById('nu-cycle');
+  if(_cy){
+    const c=macros.cycle;
+    if(!c||!c.dCarbs){ _cy.innerHTML=''; }
+    else{
+      const seance=c.jour==='seance';
+      const signe=(c.dCarbs>0?'+':'')+c.dCarbs;
+      _cy.innerHTML='<div style="display:flex;gap:8px;background:var(--bg2);border:1px solid var(--sep);border-radius:10px;padding:9px 11px;margin-top:10px;">'
+        +'<span style="font-size:11.5px;color:var(--t2);line-height:1.45;">'
+        +(seance?'🍚 <b style="color:var(--t1);">Jour de séance</b> — '
+                 :'😴 <b style="color:var(--t1);">Jour de repos</b> — ')
+        +'<b>'+signe+' g</b> de glucides, compensés par les lipides. '
+        +'<span style="color:var(--t3);">Tes calories du jour ne changent pas, et sur la semaine le total est le même : les glucides vont là où tu t\'entraînes.</span>'
+        +'</span></div>';
+    }
+  }
   // Barres macros = part des calories (prot/glucides 4 kcal/g, lipides 9 kcal/g)
   (function(){
     const kP=(macros.prot_g||0)*4, kC=(macros.carbs_g||0)*4, kF=(macros.fat_g||0)*9;

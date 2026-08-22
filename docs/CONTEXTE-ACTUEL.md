@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v950` — fusionnée sur `master` le 21/08.
+- **Version en ligne (live) :** `ft-v951` — fusionnée sur `master` le 21/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,24 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- 🍚 **LES GLUCIDES PLUS HAUTS LES JOURS DE SÉANCE** (ft-v951) — Michel : *« les glucides plus
+  hauts les jours de séance et adaptés »*.
+  ⭐⭐ **Le levier n'est pas les glucides, ce sont les LIPIDES** : protéines et lipides sont fixés
+  au poids de corps, les glucides sont le **reste**. Ils montent quand les lipides descendent.
+  ⛔⛔ **Le total de la semaine ne bouge pas d'un gramme** — compensation calée sur la fréquence
+  réelle, somme **exactement nulle**, vérifiée de **1 à 6 séances/semaine**.
+  ⚠️ Les **calories du jour** ne bougent pas non plus : l'anneau est stable, seule la
+  répartition change (R12).
+  ⭐ **« Adaptés »** : jambes > bras (`_calSessRegion`) — facteurs assumés comme un **ordre**,
+  pas une mesure. La neutralité tient parce que les jours de repos rendent la **moyenne des
+  facteurs de SES séances**.
+  ⛔⛔ **Aucun cycling en kéto ni low carb** : le % **définit** le régime.
+  ⚠️ Plancher lipidique **0,6 g/kg, écrit comme un CHOIX** — le Gardien n'a aucun seuil lipides.
+  ⚠️⚠️ **Défaut trouvé par le témoin** : arrondir les lipides avant d'en déduire les glucides
+  injectait ~1 g/jour qui **ne se compensait pas** (jusqu'à 9 g/semaine). Cause supprimée,
+  tolérance **pas** élargie.
+  ⏭️ **Ce qui reste de `NUTRITION-MOTEUR.md` §3.1** : rien sur cette ligne. Les 2 bullets sont
+  faites. Restent les briques 1/3/4 (CIQUAL, générateur, 4 niveaux de précision).
 - 🍽️ **LES REPAS D'ENTRAÎNEMENT N'EXISTENT PLUS QUE LES JOURS D'ENTRAÎNEMENT** (ft-v950) —
   Michel : *« ok maintenant le plan de repas les jours de séance »*.
   ⭐⭐ **Le défaut allait dans les deux sens** : muscle/force/endurance affichaient « ⚡ Pré » et
