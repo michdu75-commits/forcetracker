@@ -4603,8 +4603,13 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     const b=(N.boutons||[]).join(' ');
     t('⭐⭐ le Journal montre les trois façons d\'ajouter (code-barres · étiquette · à la main)',
       /Code-barres/.test(b) && /Étiquette/.test(b) && /Àlamain/.test(b), 'reçu : '+b);
-    t('⭐ le code-barres est le PREMIER (gratuit et illimité, il ne doit pas être caché derrière l\'IA)',
-      /Code-barres/.test((N.boutons||[])[0]||''), 'premier bouton : '+((N.boutons||[])[0]||'(aucun)'));
+    /* ⚠️ ON NE REGARDE QUE LES 3 BOUTONS D'AJOUT, PAS « LE 1ᵉʳ BOUTON DE LA PAGE » (22/08/2026) —
+       depuis ft-v961 (navigation par jour), les flèches ‹ › précèdent ce bloc dans le DOM. Elles
+       ne font pas partie des « façons d'ajouter » : le test ne doit juger que l'ordre ENTRE les
+       3 méthodes, pas leur rang absolu sur l'écran. */
+    const _methodes=(N.boutons||[]).filter(x=>/Code-barres|Étiquette|Àlamain/.test(x));
+    t('⭐ le code-barres est le PREMIER des 3 méthodes (gratuit et illimité, pas caché derrière l\'IA)',
+      /Code-barres/.test(_methodes[0]||''), 'premier des 3 : '+(_methodes[0]||'(aucun)'));
     t('⭐⭐ le raccourci ouvre la MÊME modale, sur le bloc code-barres (aucune étape en plus)',
       N.ouverte===true && N.blocBc==='block', 'ouverte : '+N.ouverte+' · bloc : '+N.blocBc);
     t('⚠️ la saisie à la main reste offerte et ouvre la même modale', N.ouverte2===true);
@@ -9512,6 +9517,106 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       R.jamaisDeDose===true, '');
     t('⭐ les mots dans le désordre marchent', R.desordre===true, '');
     t('⚠️ un échec de chargement ne bloque rien', R.echecNonBloquant===true, '');
+  }
+  await cx.close();
+}
+
+/* == BLOC LXXXIV - NAVIGUER DANS LE JOURNAL, VOIR ET MODIFIER UN AUTRE JOUR (22/08/2026) ==
+   Michel : « on ne sait pas ce que l'on a mangé dans la journee et on ne peut meme pas le
+   modifier de ce fait ». VERIFIE AVANT DE CODER : le Journal etait cable en dur sur today(),
+   sans aucune navigation. ⛔⛔ LE TEMOIN CENTRAL : on peut voir ET MODIFIER un jour passe,
+   jamais aller dans le futur, et un ajout pendant qu'on consulte le passe se date sur CE
+   jour-la (backfill), pas sur aujourd'hui. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(()=>{
+    const o={};
+    if(typeof journalNav!=='function'){ o.absente=true; return o; }
+    const _j=(n)=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    S.foodLog=[
+      {date:_j(0),meal:'petitdej',name:'Aujourd\'hui',kcal:300,prot:20,carbs:30,fat:5,ts:Date.now()},
+      {date:_j(1),meal:'dejeuner',name:'Hier midi',kcal:500,prot:30,carbs:50,fat:10,ts:Date.now()-1000},
+      {date:_j(3),meal:'diner',name:'Il y a 3 jours',kcal:400,prot:25,carbs:40,fat:8,ts:Date.now()-2000},
+    ];
+    _journalJour=null; switchNuTab('journal',null);
+
+    /* ⭐① AUJOURD'HUI : le comportement d'origine ne change pas. */
+    o.aujHtml=(document.getElementById('food-journal')||{}).innerHTML||'';
+    o.aujVu=/Aujourd'hui/.test(o.aujHtml) && /Aujourd\'hui/.test(o.aujHtml);
+    o.aujCorrect=o.aujHtml.indexOf('Hier midi')<0;      // ne montre QUE le jour actif
+    // La flèche « jour suivant » est désactivée sur aujourd'hui (pas de futur à montrer).
+    o.flecheSuivDesactivee=/journalNav\(1\)"[^>]*disabled|disabled[^>]*onclick="journalNav\(1\)"/.test(o.aujHtml)
+      || /<button disabled[^>]*>›/.test(o.aujHtml);
+
+    /* ⭐② UNE FLÈCHE ARRIÈRE MONTRE HIER — le vrai trou signalé. */
+    journalNav(-1);
+    const hHtml=(document.getElementById('food-journal')||{}).innerHTML||'';
+    o.hierVu=/Hier midi/.test(hHtml) && /Hier/.test(hHtml);
+    o.hierPasAujourdhui=hHtml.indexOf('Aujourd\'hui')<0 || !/font-weight:800[^>]*>Aujourd/.test(hHtml);
+
+    /* ⛔② LE TÉMOIN LE PLUS IMPORTANT : on peut MODIFIER un jour passé, pas seulement le voir. */
+    const eHier=S.foodLog.find(e=>e.name==='Hier midi');
+    o.editableHier=(typeof openEditFood==='function');
+    openEditFood(eHier.ts);
+    document.getElementById('ef-kcal').value=520;
+    saveEditFood();
+    o.hierModifie=(S.foodLog.find(e=>e.ts===eHier.ts)||{}).kcal===520;
+    o.pasTouchAujourdhui=(S.foodLog.find(e=>e.name==='Aujourd\'hui')||{}).kcal===300;
+
+    /* ⛔③ ET SUPPRIMER UNE ENTRÉE D'UN JOUR PASSÉ MARCHE AUSSI. */
+    if(typeof removeFoodEntry==='function'){
+      const av=S.foodLog.length;
+      removeFoodEntry(eHier.ts);
+      o.suppressionHier=(S.foodLog.length===av-1);
+    } else o.suppressionHier=true;
+
+    /* ⭐④ NAVIGUER PLUS LOIN : 2 jours en arrière depuis hier = il y a 3 jours. */
+    journalNav(-1); journalNav(-1);
+    const h3=(document.getElementById('food-journal')||{}).innerHTML||'';
+    o.troisJoursVu=/Il y a 3 jours/.test(h3);
+
+    /* ⛔⛔ ON NE VA JAMAIS DANS LE FUTUR. */
+    _journalJour=null; renderFoodJournal();            // retour à aujourd'hui
+    const avantFutur=_journalJourActif();
+    journalNav(1);                                      // tentative vers demain
+    o.pasDeFutur=(_journalJourActif()===avantFutur);
+
+    /* ⭐⑤ AJOUTER UN ALIMENT EN CONSULTANT UN JOUR PASSÉ LE DATE SUR CE JOUR (backfill),
+       PAS SUR AUJOURD'HUI — c'est le comportement qui rend la navigation vraiment utile. */
+    journalNav(-1);                                      // hier
+    const jourVise=_journalJourActif();
+    document.getElementById('af-desc').value='';
+    openAddFood();
+    document.getElementById('af-desc').value='Ajout en remontant';
+    document.getElementById('af-kcal').value=200;
+    addFoodEntry();
+    const ajoute=S.foodLog.find(e=>e.name==='Ajout en remontant');
+    o.backfillDate=ajoute && ajoute.date===jourVise;
+    o.backfillPasAujourdhui=jourVise!==today();
+
+    return o;
+  });
+
+  console.log('\n-- LXXXIV. Naviguer dans le journal, voir et modifier un autre jour --');
+  if(R.absente){ t('⛔ la navigation du journal existe', false, 'fonction absente'); }
+  else{
+    t('⭐ aujourd\'hui : ne montre que les entrées du jour, comme avant', R.aujCorrect===true, '');
+    t('⚠️ la flèche « jour suivant » est désactivée sur aujourd\'hui (pas de futur à montrer)',
+      R.flecheSuivDesactivee===true, '');
+    t('⭐⭐ une flèche arrière montre HIER, avec ses propres entrées', R.hierVu===true, '');
+    t('⛔⛔ LE JOUR PASSÉ EST MODIFIABLE — pas seulement visible', R.hierModifie===true, '');
+    t('⛔ ... et ça ne touche PAS l\'entrée d\'aujourd\'hui', R.pasTouchAujourdhui===true, '');
+    t('⛔ ... et on peut aussi SUPPRIMER une entrée d\'un jour passé', R.suppressionHier===true, '');
+    t('⭐ naviguer plus loin en arrière fonctionne (il y a 3 jours)', R.troisJoursVu===true, '');
+    t('⛔⛔ ON NE PEUT JAMAIS ALLER DANS LE FUTUR (demain n\'a rien à montrer)',
+      R.pasDeFutur===true, '');
+    t('⭐⭐ ajouter un aliment en consultant un jour passé le DATE sur CE JOUR (backfill)',
+      R.backfillDate===true && R.backfillPasAujourdhui===true, '');
   }
   await cx.close();
 }

@@ -2228,15 +2228,34 @@ function _renderMealDay(day,isPrem,canRegen){
 }
 
 // ─── JOURNAL ALIMENTAIRE (rendu) ──────────────────────────────
+/* 📅 NAVIGUER DANS LE JOURNAL — voir et modifier un AUTRE jour (22/08/2026), voir app.js pour
+   le pourquoi. ⚠️ UN JOUR PASSÉ EST CLOS : « restantes » n'a plus de sens (on ne va pas manger
+   davantage hier) — le libellé passe en simple comparaison à l'objectif du jour, sans laisser
+   croire qu'il reste quelque chose à faire. Le TARGET affiché reste celui d'AUJOURD'HUI (on ne
+   recalcule pas un objectif historique, on n'a pas ce qu'il fallait pour le faire honnêtement :
+   R29) — le libellé le dit pour ne pas laisser croire à une précision qu'on n'a pas. */
 function renderFoodJournal(){
   const el=document.getElementById('food-journal');if(!el)return;
-  const td=today();
+  const td=_journalJourActif();
+  const estAuj=(td===today());
   const hasProfile=S.bw&&S.age&&S.height;
   const target=hasProfile?calcMacros(S.nutritionPhase):null;
   const tot=(typeof _foodTotals==='function')?_foodTotals(td):{kcal:0,prot:0,carbs:0,fat:0};
   const entries=(S.foodLog||[]).filter(e=>e.date===td).sort((a,b)=>b.ts-a.ts);
 
   let html='';
+  // Navigation jour par jour — même repère visuel que le calendrier de l'Accueil (R13).
+  const _navBtn=(dir,txt,actif)=>'<button '+(actif?'onclick="journalNav('+dir+')"':'disabled')
+    +' style="width:32px;height:32px;border-radius:9px;border:none;background:var(--bg3);color:'+(actif?'var(--t1)':'var(--t3)')+';font-size:17px;font-weight:700;cursor:'+(actif?'pointer':'default')+';display:flex;align-items:center;justify-content:center;touch-action:manipulation;opacity:'+(actif?'1':'.4')+';">'+txt+'</button>';
+  const _jr=new Date(td+'T12:00:00');
+  const _hier=new Date(today()+'T12:00:00'); _hier.setDate(_hier.getDate()-1);
+  const jourLabel = estAuj?'Aujourd\'hui' : (td===_hier.toISOString().slice(0,10))?'Hier'
+    : _jr.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
+    +_navBtn(-1,'‹',true)
+    +'<span style="font-weight:800;font-size:14px;color:var(--t1);text-transform:capitalize;">'+jourLabel+'</span>'
+    +_navBtn(1,'›',!estAuj)
+    +'</div>';
   // Résumé du jour
   if(target){
     const rem=target.calories-tot.kcal;
@@ -2244,8 +2263,10 @@ function renderFoodJournal(){
     const remCol=rem<0?'var(--red)':'var(--green)';
     html+=`<div style="background:var(--bg2);border-radius:16px;padding:16px;box-shadow:inset 0 0 0 1px var(--sep);">`
       +`<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">`
-        +`<span style="font-size:12px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Aujourd'hui</span>`
-        +`<span style="font-size:12px;color:${remCol};font-weight:700;">${rem>=0?rem+' kcal restantes':Math.abs(rem)+' kcal au-dessus'}</span>`
+        +`<span style="font-size:12px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;">`+(estAuj?'Aujourd\'hui':'Objectif du jour')+`</span>`
+        +(estAuj
+          ?`<span style="font-size:12px;color:${remCol};font-weight:700;">${rem>=0?rem+' kcal restantes':Math.abs(rem)+' kcal au-dessus'}</span>`
+          :`<span style="font-size:12px;color:${remCol};font-weight:700;">${rem>=0?rem+' kcal en dessous':Math.abs(rem)+' kcal au-dessus'}</span>`)
       +`</div>`
       +`<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:10px;">`
         +`<span style="font-family:var(--font-cond);font-size:30px;font-weight:900;color:var(--t1);line-height:1;">${tot.kcal}</span>`
@@ -2324,7 +2345,7 @@ function renderFoodJournal(){
     });
     html+=`</div>`;
   }else{
-    html+=`<div style="text-align:center;color:var(--t3);font-size:12px;padding:16px 8px;">Aucun aliment noté aujourd'hui. Ajoute ton premier repas 👆</div>`;
+    html+=`<div style="text-align:center;color:var(--t3);font-size:12px;padding:16px 8px;">`+(estAuj?`Aucun aliment noté aujourd'hui. Ajoute ton premier repas 👆`:`Rien de noté ce jour-là.`)+`</div>`;
   }
   el.innerHTML=html;
 }
