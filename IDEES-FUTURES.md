@@ -69,6 +69,33 @@ peut-être là que se trouve le vrai travail.
 
 ---
 
+## 🥑 EN RECOMP, LE PLAFOND DE LIPIDES EST TRÈS SERRÉ (Michel, 22/08/2026, usage réel)
+
+> *« les lipides je sais mais il y a un sujet sur les lipides justement »*, après avoir buté
+> deux fois dans la même soirée (huile d'olive + fromage au dîner, puis des œufs entiers).
+
+**Le constat** : en recomposition, les lipides ne représentent que **17 % des calories** (63 g
+pour lui, à 3 360 kcal). C'est la conséquence directe des protéines très hautes (2,6 g/kg) et des
+glucides cycling (ft-v951) — à calories fixes, monter les deux revient forcément à comprimer le
+troisième. **Un peu d'huile de cuisson + du fromage suffit à épuiser tout le budget du jour**, et
+un œuf entier (contrairement à ce qu'on pourrait croire d'un aliment « protéiné ») est en réalité
+assez gras (~9-10 g/100 g).
+
+⚠️ **Ce n'est pas un bug** — le calcul est exact et cohérent (vérifié le 22/08 : TDEE 3 510 −
+250 + 100 phase = 3 360, retombe pile). C'est une **tension de conception réelle** : un plafond de
+lipides aussi serré est difficile à respecter avec une cuisine normale (huile, fromage, œufs
+entiers), pas seulement avec des excès.
+
+**Pistes à explorer si ça revient** (aucune tranchée) :
+- un **plancher de lipides plus généreux** en recomp (aujourd'hui le ratio est fixe à 0,85 g/kg,
+  pas ajusté par objectif) ;
+- ou une **explication à l'écran** quand le plafond est atteint tôt dans la journée, du même
+  esprit que la carte du plancher calorique (ft-v906) — nommer le fait plutôt que le laisser
+  surprendre en soirée.
+
+**Critère de retour à 3 paliers (R22)** : c'est la 1ʳᵉ fois qu'il le signale → on **observe**. Pas
+d'action tant que ça ne revient pas une 2ᵉ ou 3ᵉ fois.
+
 ## 🤸‍♂️ ÉCHAUFFEMENT & MOBILITÉ — le dossier à construire (Michel, 18/08/2026)
 
 > Michel, entre deux sujets nutrition : *« l'échauffement avant une séance de muscu et la mobilité,
