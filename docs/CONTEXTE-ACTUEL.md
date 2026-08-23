@@ -6,7 +6,15 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v983` — sur la branche, **pas encore fusionnée**.
+- **Version en ligne (live) :** `ft-v984` — sur la branche, **pas encore fusionnée**.
+- ⚖️ **LA QUANTITÉ SUIT L'ALIMENT REPRIS** (ft-v984). Michel : *« comment ça se fait que je ne
+  peux pas mettre la quantité, sérieux c'est relou »*. **Reproduit avant de coder** : le bloc
+  est là par CIQUAL, absent quand on reprend l'aliment depuis **son propre journal** — alors que
+  `per100` y est. `_afSuggPrendreLocale` le cachait sans condition et transmettait `per100` deux
+  lignes plus bas (**R4**). ⚠️ Le mécanisme marchait donc **la 1ʳᵉ fois** et disparaissait toutes
+  les suivantes. ⛔ Les macros corrigées à la main **ne sont pas écrasées** à l'arrivée.
+  ⚠️ **Non couvert et écrit comme tel** : une entrée ancienne sans `per100` (sa ratatouille)
+  reste sans quantité — le correctif n'est pas rétroactif.
 - 🩺 **LE DIAGNOSTIC MÉDICAL NE PASSE PLUS SEUL** (ft-v983) — 3ᵉ et dernier bloquant.
   **Mesuré : sur les 5 contrôles du Gardien de SORTIE, un seul retirait vraiment quelque
   chose.** Les 4 autres étaient comptés puis affichés. Pour trois, un compteur suffit ; pas

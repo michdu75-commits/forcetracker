@@ -11354,6 +11354,87 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* ═══ CII. LA QUANTITÉ SUIT L'ALIMENT QUAND ON LE REPREND (ft-v984) ════════════════════════
+   Michel, capture à l'appui : « comment ça se fait que je ne peux pas mettre la quantité,
+   sérieux c'est relou ».
+   ⛔⛔ REPRODUIT DANS UN NAVIGATEUR AVANT DE TOUCHER AU CODE : par le chemin CIQUAL le bloc
+   Quantité est là ; par le chemin de SON PROPRE JOURNAL — celui qu'on emprunte dès la 2ᵉ
+   fois — il ne l'était pas, **alors que `per100` est présent dans la source**. R4, à deux
+   lignes d'écart : la donnée existait et n'atteignait pas l'écran.
+   ⭐ Le bloc passe par le VRAI chemin (on tape, le code remplit ses suggestions, on clique) —
+   toucher `_afSuggLoc` à la main ne mesurerait rien : c'est une variable de script, pas
+   `window`, et mon premier essai a « mesuré » un libellé resté de l'étape d'avant.            */
+{
+  console.log('\n── CII. La quantité suit l\'aliment repris ──');
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); pg.on('pageerror',e=>console.log('PAGEERROR',e.message));
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const Q=await pg.evaluate(async()=>{
+    const o={}; const vis=id=>{const e=document.getElementById(id);return !!e && e.style.display!=='none';};
+    const vlog=S.foodLog;
+    try{
+      await _ciqualCharger();
+      // ① on note l'aliment une 1ʳᵉ fois par CIQUAL, comme Michel
+      S.foodLog=[];
+      openAddFood();
+      const res=_ciqualChercher('oeuf blanc',5);
+      if(!res.length){ o.pasDeCiqual=true; return o; }
+      _afSuggCiq=res; _afSuggPrendreCiqual(0);
+      o.premiereFois={ bloc:vis('af-bc-row') };
+      document.getElementById('af-kcal').value='29';    // il corrige à la main
+      document.getElementById('af-prot').value='7';
+      addFoodEntry();
+      o.enregistre={ per100:!!((S.foodLog||[])[0]||{}).per100 };
+
+      // ② il le reprend depuis SON JOURNAL — le vrai chemin
+      openAddFood();
+      document.getElementById('af-desc').value='oeuf';
+      _afSuggInput();
+      await new Promise(r=>setTimeout(r,300));
+      const btn=[...document.querySelectorAll('#af-sugg [onclick]')]
+                  .find(x=>/PrendreLocale/.test(x.getAttribute('onclick')||''));
+      o.suggTrouvee=!!btn;
+      if(btn){
+        btn.click();
+        o.repris={ bloc:vis('af-bc-row'),
+                   libelle:(document.getElementById('af-bc-name')||{}).textContent,
+                   kcal:document.getElementById('af-kcal').value };
+        document.getElementById('af-bc-grams').value='50'; _bcApplyGrams();
+        o.a50g={ kcal:document.getElementById('af-kcal').value, prot:document.getElementById('af-prot').value };
+      }
+
+      // ③ une entrée tapée À LA MAIN n'a pas de per100 → pas de bloc, aucun poids inventé
+      openAddFood();
+      S.foodLog.push({name:'Truc tape a la main',kcal:200,prot:10,carbs:5,fat:8,ts:Date.now(),date:today()});
+      document.getElementById('af-desc').value='truc';
+      _afSuggInput();
+      await new Promise(r=>setTimeout(r,300));
+      const b2=[...document.querySelectorAll('#af-sugg [onclick]')]
+                 .find(x=>/PrendreLocale/.test(x.getAttribute('onclick')||''));
+      if(b2){ b2.click(); o.sansPer100={ bloc:vis('af-bc-row') }; }
+    } finally { S.foodLog=vlog; try{ closeAddFood(); }catch(e){} }
+    return o;
+  });
+  t('QUANTITÉ : la 1ʳᵉ fois (CIQUAL), le bloc est là — c\'est ce qui marchait déjà',
+    Q.premiereFois && Q.premiereFois.bloc===true, JSON.stringify(Q));
+  t('… et l\'entrée enregistrée porte bien son pour-100 g', Q.enregistre && Q.enregistre.per100===true, JSON.stringify(Q));
+  t('⭐⭐ QUANTITÉ : en le REPRENANT depuis son journal, le bloc est là AUSSI (il manquait)',
+    Q.repris && Q.repris.bloc===true, JSON.stringify(Q.repris));
+  t('… et il dit d\'où vient la référence (« ta dernière saisie »)',
+    Q.repris && /dernière saisie/.test(Q.repris.libelle||''), JSON.stringify(Q.repris));
+  t('⛔⛔ QUANTITÉ : les macros CORRIGÉES À LA MAIN ne sont pas écrasées à l\'arrivée (29, pas 48)',
+    Q.repris && Q.repris.kcal==='29', JSON.stringify(Q.repris));
+  t('⭐ … mais elles suivent dès qu\'on change la quantité (50 g → 24 kcal · 6 g)',
+    Q.a50g && Q.a50g.kcal==='24' && Q.a50g.prot==='6', JSON.stringify(Q.a50g));
+  t('⛔⛔ QUANTITÉ : une entrée tapée à la main n\'a PAS le bloc — aucun poids inventé (R29)',
+    Q.sansPer100 && Q.sansPer100.bloc===false, JSON.stringify(Q.sansPer100));
+
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

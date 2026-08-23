@@ -405,7 +405,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v983`** (prochaine : `ft-v984`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v984`** (prochaine : `ft-v985`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -415,6 +415,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v984 — ⚖️ LA QUANTITÉ SUIT L'ALIMENT QUAND ON LE REPREND — « sérieux c'est relou »** — Michel, trois captures à l'appui : *« Bah non beug, comment ça se fait que je ne peux pas mettre la quantité »*.
+
+**⛔⛔ REPRODUIT DANS UN NAVIGATEUR AVANT DE TOUCHER AU CODE** — la leçon `BUGS.md` **12quater**, appliquée cette fois. Par le chemin **CIQUAL** : `blocQuantite: true`. Par le chemin de **son propre journal** — celui qu'on emprunte dès la 2ᵉ fois — `blocQuantite: false`, **alors que `per100` est bien présent dans la source**.
+
+**⛔ `_afSuggPrendreLocale` CACHAIT LE BLOC SANS CONDITION… et transmettait `per100` deux lignes plus bas.** *C'est **R4** à deux lignes d'écart : l'information existait, et n'atteignait pas l'écran.*
+
+**⚠️ LA CONSÉQUENCE VÉCUE EST CE QUI REND LE DÉFAUT VICIEUX** : le mécanisme de ft-v962/965 marchait **la première fois** qu'on note un aliment, et disparaissait **toutes les suivantes**. *Un défaut qui ne se manifeste qu'à la DEUXIÈME saisie ne se voit jamais en testant une fois.*
+
+**⭐ R13/R2 — ON NE RÉINVENTE RIEN** : on reconstruit `_bcNutr` depuis le `per100` déjà enregistré, et le bloc existant fait le reste, exactement comme après un scan. Le libellé dit **d'où vient la référence** (*« ta dernière saisie »*), et la quantité reprend **celle de la fois d'avant**.
+
+**⛔⛔ ET ON NE RECALCULE PAS LES MACROS EN ARRIVANT.** Elles sont déjà justes, et la personne a pu les **corriger à la main**. ⭐ **Mesuré** : son *29 kcal* corrigé reste **29**, pas 48. *Les réécrire aurait effacé sa correction sans le dire* (**R29**). Le recalcul part au **premier changement de quantité**, quand elle le demande : 50 g → 24 kcal · 6 g.
+
+**⛔ Une entrée tapée À LA MAIN n'a pas de pour-100 g, donc pas de bloc** — aucun poids inventé.
+
+**⚠️ ET CE QUI N'EST PAS EXPLIQUÉ EST ÉCRIT AUSSI** : sa 3ᵉ capture montre une **ratatouille sans pour-100 g** (*« cette ligne n'a pas de quantité connue »*). **Ce correctif ne la répare pas rétroactivement** — une entrée ancienne, ou entrée par un chemin qui n'enregistrait pas encore `per100`, reste sans quantité. *On ne prétend pas avoir tout couvert.*
+Tests : **parcours 1263/1263** (+7, bloc CII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 3 rouges**, et il est **instructif** — les détails **sont la capture de Michel** : `{"bloc":false}`, et après avoir mis 50 g, `{"kcal":"29","prot":"7"}`, c'est-à-dire *rien ne bouge*. ⭐ **Et 3 des 4 verts sont de VRAIS verts** : le chemin CIQUAL, le `per100` enregistré et surtout **les macros corrigées non écrasées** ne devaient pas bouger — ils n'ont pas bougé. ⚠️ Le 4ᵉ (« pas de bloc sans `per100` ») est un demi-faux vert : avant, il n'y avait jamais de bloc. ⚠️ **Et mon 1ᵉʳ essai de mesure n'a rien mesuré** : j'écrivais `window._afSuggLoc`, qui est une variable de **script** et non `window` — le test lisait un libellé **resté de l'étape d'avant**. *Même famille que `_miloPendingIdx` deux heures plus tôt.* Le bloc passe désormais par le **vrai chemin** : on tape, le code remplit ses suggestions, on clique. Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v984. |
 
 **ft-v983 — 🩺 LE DIAGNOSTIC MÉDICAL NE PASSE PLUS SEUL — « détecté » n'était pas « empêché »** — 3ᵉ et dernier bloquant de la contre-analyse.
 
@@ -729,21 +746,6 @@ Tests : **parcours 1089/1089** (+4, bloc LXXXVI), calculs 266/266, muscles 241/2
 
 **⚠️ RIEN D'AUTRE NE BOUGE** : ni le calcul, ni la valeur par défaut de 100 g. La corriger demanderait de **deviner une portion** — 30 g pour une whey, 250 g pour du riz ? — et ce serait un **faux-précis** (**R29**). *Rendre le réglage visible vaut mieux que deviner à la place de la personne.*
 Tests : **parcours 1085/1085** (+1, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge**, exactement l'ordre — et c'est ici un contrôle **instructif**, pas un « la fonction n'existe pas » : le témoin **tourne** des deux côtés et mesure une disposition qui existait déjà, mal. Fichiers : `index.html`, `clone/index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v965. |
-
-**ft-v964 — 🔤 CES MOTS-LÀ NE S'ÉCRIVENT PAS** — Michel, **juste après** ft-v963 : *« oui j'ai mis ça, après je voulais mettre coquilette »*.
-
-**⛔⛔ IL L'ÉCRIT AVEC UN SEUL L**, et ma liste de synonymes portait « coquillette ». **Sa graphie à lui rendait ZÉRO résultat.** *La correction de la veille marchait donc pour l'orthographe parfaite — c'est-à-dire pour ceux qui n'en avaient pas besoin.*
-
-**⭐ MESURÉ, PAS DEVINÉ : 6 autres graphies plausibles échouaient aussi** — *spagetti · tagliatele · farfale · fusili · linguini · pene*. Toutes des variantes de **consonne doublée** ou de **h muet** : exactement là où ces mots italiens se trompent.
-
-**⛔ LA TOLÉRANCE NE S'APPLIQUE QU'À LA LISTE FERMÉE DE 12 FORMES**, jamais à la base. On compare la frappe aux 12 mots connus — donc **aucun rapprochement hasardeux possible** sur 3 341 aliments. *C'est ce qui distingue une tolérance bornée d'une recherche floue, qui aurait ramené n'importe quoi.*
-
-**⚠️⚠️ ET DEUX PIÈGES TROUVÉS EN LE MESURANT, PAS EN LE RELISANT :**
-**① Ma 1ʳᵉ version retirait aussi la VOYELLE FINALE — et « macaroni » devenait « macaron ».** ⛔ **La pâtisserie serait partie sur les pâtes.** Le retrait de la voyelle finale a donc sauté, et *« linguini »* (graphie anglaise) est **simplement ajouté** à la liste : *plus honnête qu'une règle qui rabote au hasard pour rattraper un cas.*
-**② « torsade » est RETIRÉ de la liste** (**R30** — un retrait s'écrit) : CIQUAL l'emploie pour un **biscuit apéritif feuilleté**, usage au moins aussi courant que la pâte. *Entre détourner un vrai aliment et rater une forme rare, on rate la forme rare.*
-
-**⭐ VÉRIFIÉ SUR LES 2 261 MOTS DISTINCTS DE CIQUAL** : la seule collision restante est *« spaghetti »* (**la courge**), et elle est **voulue** — la courge garde sa correspondance EXACTE, donc elle reste trouvable. *On ajoute une porte, on n'en ferme aucune.*
-Tests : **parcours 1084/1084** (+5, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Pas de contrôle négatif séparé** : la version corrige ft-v963, livrée il y a vingt minutes, et **ses 8 rouges couvrent déjà le mécanisme**. Ce qui compte ici est ailleurs — les **2 témoins qui protègent macaron et torsade** sont verts **des deux côtés**, et c'est le but : *ils gardent une absence, pas une nouveauté.* Fichiers : `app.js`, `clone/app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v964. |
 
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
