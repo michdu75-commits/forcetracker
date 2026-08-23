@@ -6,7 +6,23 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v977` — fusionnée sur `master` le 23/08.
+- **Version en ligne (live) :** `ft-v978` — fusionnée sur `master` le 23/08.
+- 🔍 **AUDIT DU DOSSIER DE 200 PAGES + ses 3 premières corrections** (ft-v978). Rapport complet :
+  artefact « Le dossier face au code ». ⭐⭐ **Le PDF de Milo n'était pas cassé** — mesuré, le
+  texte sort intact (81/81, 323/345, 9769/9769) ; c'est `title:'Conseil de '+coach` que Michel
+  recevait, la feuille de partage gardant le titre et jetant le fichier. **Correctif déjà écrit
+  le 20/08, posé sur 1 export sur 10** → posé partout (3ᵉ « correctif d'un seul côté » en 2 jours).
+  ⛔ La phrase *« on y perd du muscle avant du gras »* est retirée (fausse), sans seuil inventé
+  en échange. ⛔ Le marqueur « masse maigre DÉDUITE » n'est plus jeté (R33).
+  ⏭️ **La suite proposée, dans cet ordre** : ① le vocabulaire de Milo (*« masse maigre MESURÉE …
+  chiffre SOLIDE … sans réserve »*, contredit R32 et s'applique même à un % de gras tapé à la
+  main) — **c'est le sujet le plus important, et ce n'est pas un P0** ; ② les repères
+  alimentaires ; ③ renommer « À la main » + l'ordre des boutons ; ④ afficher les pas déjà reçus.
+  ⛔ **Le cycle menstruel ne se touche pas sans sources** : ses règles modifient réellement des
+  calories, des macros et un score de récup.
+  ⚠️ **Trouvaille non corrigée (P2)** : les deux défauts de sexe se contredisent — le BMR traite
+  un sexe absent en **femme** (`gender==='H'`), le plancher en **homme** (`gender==='F'`). Seule
+  porte non validée : `setup.js:2390` (restauration cloud).
 - 📐 **HEADER COMPACTÉ PROMU** (ft-v977) — le 1ᵉʳ des 5 essais parqués tranché. ⚠️ **Trois de ses
   quatre règles n'auraient rien fait** : en perdant `html.is-clone` elles perdent leur
   spécificité, et sont redéfinies plus bas dans `style.css` — le témoin lit donc le style

@@ -3824,7 +3824,22 @@ async function exportCoachPdf(btn){
     const blob=doc.output('blob');
     const file=new File([blob],fname,{type:'application/pdf'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){
-      try{ await navigator.share({files:[file],title:'Conseil de '+coach}); return; }
+  /* ⛔⛔ PAS DE `title:` DANS UN PARTAGE DE FICHIER (23/08/2026, ft-v978, 2ᵉ occurrence).
+     Michel : *« dans Milo, le pdf ne fonctionne pas, il y a juste "Conseil de Milo" »* — c'est-à-dire
+     EXACTEMENT la chaîne qui était passée ici en `title:`. Même signature que le 20/08, où le
+     rapport du benchmark était revenu en une ligne, « Benchmark Milo » : la feuille de partage
+     garde le titre et jette le fichier.
+     ⭐ MESURÉ AVANT DE TOUCHER : le contenu n'est PAS en cause. `_coachPdfText` rend 81 caractères
+     sur 81, 323 sur 345 et 9 769 sur 9 769 selon le format. Le PDF est bon — c'est la LIVRAISON
+     qui échoue.
+     ⚠️ ET CE QUI N'EST PAS PROUVÉ EST ÉCRIT AUSSI : on n'a pas pu reproduire l'échec (il demande
+     un vrai Safari iOS), et la note du 20/08 relève que d'autres exports passaient un titre en
+     fonctionnant — donc le titre seul n'explique probablement pas tout, l'application choisie
+     dans la feuille de partage compte. Ce qu'on sait : sans titre, la cible n'a QUE le fichier
+     à prendre. C'est le correctif qui a marché une fois, il est maintenant posé PARTOUT (0 des
+     10 partages de fichier garde un titre, contre 1 sur 10 avant).
+     ⛔ Les partages de LIEN, eux, gardent leur titre : c'est là qu'il sert vraiment. */
+      try{ await navigator.share({files:[file]}); return; }
       catch(err){ if(err&&err.name==='AbortError')return; }
     }
     const url=URL.createObjectURL(blob);
@@ -4468,7 +4483,7 @@ async function exportPt001Text(){
   const txt=_pt001Report.text, fname='PT-001_continuite_'+_pt001Report.ymd+'.txt';
   try{
     const file=new File([txt],fname,{type:'text/plain'});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'PT-001'}); return; }
+    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file]}); return; }
   }catch(e){ if(e&&e.name==='AbortError')return; }
   try{
     const blob=new Blob([txt],{type:'text/plain'});
@@ -4512,7 +4527,7 @@ async function exportPt001Pdf(){
     const fname='PT-001_continuite_'+R.ymd+'.pdf';
     const blob=doc.output('blob');
     try{ const file=new File([blob],fname,{type:'application/pdf'});
-      if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'PT-001'}); return; } }catch(e){ if(e&&e.name==='AbortError')return; }
+      if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file]}); return; } }catch(e){ if(e&&e.name==='AbortError')return; }
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname;
     document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
     toast('PDF exporté','success');
@@ -4770,7 +4785,7 @@ function _vcShowResultCard(){
 async function exportVcText(){
   if(!_vcReport){ toast('Aucun rapport VC','error'); return; }
   const txt=_vcReport.text, fname=_vcReport.persona.id+'_'+_vcReport.persona.nom+'_'+_vcReport.ymd+'.txt';
-  try{ const file=new File([txt],fname,{type:'text/plain'}); if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:_vcReport.persona.id}); return; } }catch(e){ if(e&&e.name==='AbortError')return; }
+  try{ const file=new File([txt],fname,{type:'text/plain'}); if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file]}); return; } }catch(e){ if(e&&e.name==='AbortError')return; }
   try{ const blob=new Blob([txt],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); toast('Rapport VC exporté','success'); }catch(e){ toast('Export impossible','error'); }
 }
 
@@ -5391,7 +5406,7 @@ function _vmRun(){
 async function exportVmText(){
   if(!_vmReport){ toast('Aucun rapport VM','error'); return; }
   const txt=_vmReport.text, fname='VM_reconnaissance_exercices_'+_vmReport.ymd+'.txt';
-  try{ const file=new File([txt],fname,{type:'text/plain'}); if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'VM'}); return; } }catch(e){ if(e&&e.name==='AbortError')return; }
+  try{ const file=new File([txt],fname,{type:'text/plain'}); if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file]}); return; } }catch(e){ if(e&&e.name==='AbortError')return; }
   try{ const blob=new Blob([txt],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); toast('Rapport VM exporté','success'); }catch(e){ toast('Export impossible','error'); }
 }
 
@@ -5538,7 +5553,7 @@ async function exportVmBenchCsv(){
   }
   const csv=rows.map(r=>r.map(c=>{const s=(''+c);return /[";\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(';')).join('\r\n');
   const fname='VM_banc_essai_'+_vmBenchLast.date+'.csv';
-  try{ const file=new File([csv],fname,{type:'text/csv'}); if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'VM CSV'}); return; } }catch(e){ if(e&&e.name==='AbortError')return; }
+  try{ const file=new File([csv],fname,{type:'text/csv'}); if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file]}); return; } }catch(e){ if(e&&e.name==='AbortError')return; }
   try{ const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); toast('CSV exporté','success'); }catch(e){ toast('Export impossible','error'); }
 }
 

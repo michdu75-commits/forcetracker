@@ -857,11 +857,35 @@ signature que le bouton « copier » muet du 13/08 et que le débrief amputé du
 feuille de partage** (« 📋 Copier »), avec repli `execCommand`, puis affichage du texte dans le
 chat si tout tombe — *on ne laisse jamais la personne devant un bouton qui ne donne rien*.
 
-**⚠️ Ce qui N'EST PAS conclu** : 8 autres exports du dépôt partagent un fichier avec un titre et
-**fonctionnent**. La cause n'est donc pas prouvée en général — elle est constatée **une fois**.
-On a corrigé là où on l'a vue, et le test le dit : *au 2ᵉ export qui perd son contenu, la
-famille sera prouvée et le témoin s'élargira.* Deviner deux fois de suite a déjà coûté cher
-(famille 12ter).
+**⚠️ Ce qui N'ÉTAIT PAS conclu le 20/08** : 8 autres exports du dépôt partagent un fichier avec
+un titre et **fonctionnent**. La cause n'était donc pas prouvée en général — elle était constatée
+**une fois**. On a corrigé là où on l'a vue, et le test le disait : *au 2ᵉ export qui perd son
+contenu, la famille sera prouvée et le témoin s'élargira.*
+
+**✅ LE 2ᵉ EST ARRIVÉ — 23/08/2026, ft-v978.** Michel : *« dans Milo, le pdf ne fonctionne pas, il
+y a juste **Conseil de Milo** »*. Le code passait `title:'Conseil de '+coach`. **Même signature,
+au mot près, sur une autre fonctionnalité et un autre format de fichier** (.pdf au lieu de .txt).
+
+**⭐ Et cette fois le contenu a été MESURÉ avant de conclure** (la leçon de 12quater) :
+`_coachPdfText` rend **81 caractères sur 81**, **323 sur 345**, **9 769 sur 9 769** selon le
+format. *Le fichier est bon. C'est la livraison qui échoue.* Les deux hypothèses proposées par
+l'audit — « le PDF est vide » et « le PDF est trop pauvre » — étaient fausses toutes les deux.
+
+**⛔⛔ ET LE VRAI DÉFAUT N'ÉTAIT PAS LE BUG, C'ÉTAIT SA PROPAGATION.** Le correctif était écrit
+depuis le 20/08, dans ce dépôt, avec sa raison : *« PAS DE title: DANS LE PARTAGE »*. **Il avait
+été posé sur 1 export sur 10.** C'est la 3ᵉ fois en deux jours qu'un correctif juste ne vit que
+d'un côté (voir la famille « le correctif posé d'un seul côté »).
+
+**Ce qui protège aujourd'hui** : **aucun** des 10 partages de fichier ne passe de titre, et un
+témoin compte les deux populations séparément — *fichier sans titre* d'un côté, *lien avec titre*
+de l'autre (un lien, lui, a besoin du sien). Un nouveau partage de fichier avec titre fait rougir
+la livraison.
+
+**⚠️ Ce qui reste NON prouvé, et c'est écrit à côté du code** : l'échec lui-même n'a jamais été
+reproduit — il demande un vrai Safari iOS. Et puisque d'autres exports fonctionnaient **avec** un
+titre, le titre seul n'explique probablement pas tout : ce qui varie est sans doute l'application
+choisie dans la feuille de partage. *On corrige avec ce qui a marché une fois, en disant ce qu'on
+ne sait pas.*
 
 ---
 

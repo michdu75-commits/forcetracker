@@ -405,7 +405,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v977`** (prochaine : `ft-v978`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v978`** (prochaine : `ft-v979`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -415,6 +415,27 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v978 — 🔍 LES TROIS CORRECTIONS DE L'AUDIT — et le PDF n'était pas cassé, c'est la livraison** — Michel envoie un dossier d'audit de **200 pages**, avec une consigne explicite : *« ne rien coder immédiatement, lire, classer, dédoublonner et confronter au code »*. Puis, le rapport lu : *« il n'y a que ça comme conclusion ? »*, et enfin *« vas-y fais les 3 corrections de vingt minutes »*.
+
+**⭐⭐ LE DOSSIER MET LE PDF DE MILO EN P0, ET SES DEUX HYPOTHÈSES SONT FAUSSES.** Il proposait ① le PDF ne contient que le titre (bug d'extraction) ou ② le PDF est correct mais trop pauvre. **Mesuré dans un vrai navigateur : `_coachPdfText` rend 81 caractères sur 81, 323 sur 345, 9 769 sur 9 769** selon le format. *Le contenu est intact — c'est la LIVRAISON qui échoue.*
+
+**⛔⛔ LA VRAIE CAUSE ÉTAIT LITTÉRALE** : `navigator.share({files:[file], title:'Conseil de '+coach})`. *« Conseil de » + « Milo »* = **mot pour mot ce que Michel voyait**. Il ne recevait pas un PDF amputé : il recevait le **titre de la feuille de partage**, le fichier ayant été jeté.
+
+**⭐⭐ ET LE CORRECTIF EXISTAIT DÉJÀ DANS LE DÉPÔT — POSÉ D'UN SEUL CÔTÉ.** Le 20/08, même symptôme sur le rapport du benchmark (*« Benchmark Milo »*, une ligne), avec cette note écrite ce jour-là : *« ⚠️ PAS DE title: DANS LE PARTAGE. La feuille iOS a gardé le titre et jeté le fichier. »* **Un seul export l'avait reçue ; neuf le gardaient.** C'est la **3ᵉ fois en deux jours** (ft-v973, ft-v975), d'où la leçon appliquée ici : *compter les endroits, deux nombres et pas un.* **0 des 10 partages de fichier garde un titre**, contre 1 sur 10 avant. ⛔ Les partages de **LIEN** gardent le leur : c'est là qu'un titre sert.
+
+**⚠️ ET CE QUI N'EST PAS PROUVÉ EST ÉCRIT AUSSI** : l'échec lui-même n'a pas pu être reproduit (il demande un vrai Safari iOS), et la note du 20/08 relevait que d'autres exports passaient un titre **en fonctionnant** — le titre seul n'explique donc probablement pas tout, l'application choisie dans la feuille compte. *On corrige avec ce qui a marché une fois, en disant ce qu'on ne sait pas.*
+
+**⛔ 2ᵉ CORRECTION — « ON Y PERD DU MUSCLE AVANT DU GRAS » EST RETIRÉE.** La phrase s'affichait sous le plancher calorique. Le corps n'a pas d'interrupteur qui basculerait de la graisse au muscle. Remplacée par ce qui est **vrai** : *plus le déficit est fort et long, plus il devient difficile de garder son muscle — les protéines et la muscu aident, sans compenser tout.* ⛔ **Et aucun seuil n'est inventé en échange** (**R29**) : *« sous X kcal le muscle part »* n'existe pas sous cette forme, un témoin refuse tout chiffre de ce genre.
+
+**⛔⛔ 3ᵉ CORRECTION — LE MARQUEUR « VALEUR DÉDUITE » QUE J'AVAIS JETÉ MOI-MÊME.** En ft-v974, le lecteur marquait `_maigreDeduite` quand la masse maigre est retrouvée par **soustraction**… puis je **supprimais ce marqueur** avant de remplir le formulaire. Elle arrivait donc indiscernable d'une valeur **lue**. *Six mois plus tard, 68,7 kg ne dirait plus s'il a été lu, calculé ou tapé* (**R33**). Le drapeau est conservé et **enregistré avec le bilan**, à côté de sa provenance.
+
+**⚠️ COMPORTEMENT DIFFÉRÉ MAIS NOMMÉ (R3)** : personne ne lit encore ce drapeau. Il existe pour la correction suivante — le prompt de Milo présente aujourd'hui cette valeur comme *« MASSE MAIGRE MESURÉE … chiffre SOLIDE … tu peux t'appuyer dessus sans réserve »*, y compris quand elle vient d'une pesée dont le **% de gras a été tapé à la main**.
+
+**👉 CE QUE L'AUDIT A VRAIMENT MONTRÉ, et c'est le plus utile** : il n'y a pas 25 problèmes, il y en a **un, vingt-cinq fois** — *une phrase écrite par une version antérieure du produit, restée en place pendant que le moteur, lui, a appris.* `bmrDetail()` nomme sa méthode ET sa raison avec soin, la phrase qui le décrit dit « sans réserve ». `calcSportExtra()` justifie ses +150 sur huit lignes, `calcWorkExtra()` juste au-dessus n'en justifie aucune. La branche **contraception** dit *« entraîne-toi selon ta forme du jour »*, la branche **cycle naturel**, dans la MÊME fonction, dit *« c'est le meilleur moment pour tenter des PR »*. **Dans presque chaque cas, le bon comportement existe déjà à quelques lignes de là.**
+
+**⭐ ET UNE TROUVAILLE QUE LE DOSSIER N'AVAIT VUE QU'À MOITIÉ** : il signale *« tout ce qui n'est pas F devient un homme »*. **Les deux défauts coexistent** — le BMR Mifflin s'écrit `gender==='H'` (donc un sexe absent est traité en **femme**, −161 kcal), le plancher calorique s'écrit `gender==='F'` (donc en **homme**, 1500). *Un profil abîmé serait calculé comme l'une et plafonné comme l'autre.* Une seule porte n'est pas validée : `setup.js:2390`, à la restauration cloud. **Non corrigé ici** — c'est un P2 et il demande de décider ce que « inconnu » veut dire.
+Tests : **parcours 1192/1192** (+10, bloc XCVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : **6 rouges lus** (mes 2 derniers témoins sont tombés hors de ma fenêtre de lecture ; ils portent sur un drapeau qui n'existe pas dans l'ancien code, donc rouges aussi). ⭐⭐ **Les 3 VERTS DES DEUX CÔTÉS sont ici les plus importants**, et l'un d'eux est la démonstration centrale : *« l'extraction du texte du PDF ne perd rien »* est vert **avant comme après** — c'est exactement ce qui prouve que **le contenu n'a jamais été le problème**, et que les deux hypothèses de l'audit étaient fausses. Les deux autres gardent une absence : aucun seuil chiffré n'était inventé, et les partages de LIEN n'ont pas perdu leur titre au passage.**. Fichiers : `screens.js`, `coach.js`, `tracking.js`, `app.js`, `log.js`, `setup.js`, `tests/parcours/runner.js`, `constants.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v978. |
 
 **ft-v977 — 📐 LE HEADER COMPACTÉ SORT DU PLACARD — et trois de ses quatre règles n'auraient RIEN fait** — Michel, aussitôt après le retrait du clone : *« le header compacté oui, promeus-le »*.
 
@@ -703,19 +724,6 @@ Tests : **parcours 1046/1046** (+2), calculs 266/266, muscles 241/241, croisés 
 
 **⚠️ Et « poulet » était un faux problème** : rejoué dans un navigateur avec le code déployé, il trouvait bien 69 résultats. La leçon reste utile : *toujours REJOUER le cas exact avant de conclure à un bug* — ici ça a évité de chasser un fantôme, et ça a laissé le temps de trouver le vrai.
 Tests : **parcours 1044/1044** (+3), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 2 rouges** exactement (œuf et bœuf en ligature) — le mot sans ligature ne régresse pas. Fichiers : `app.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v959. |
-
-**ft-v958 — 🔍 UN AUTRE COMPLÉMENT — identification seulement, jamais un conseil** — Michel a fourni **Compl'Alim** (registre officiel data.gouv.fr, 5 fichiers, 142 928 déclarations), puis : *« je ne demande pas à ce que tout soit détaillé, mais peut-être simplifier l'approche »*.
-
-**⛔⛔ APPROCHE VOLONTAIREMENT SIMPLIFIÉE** — on ne garde que l'**identification** : nom, marque, catégorie déclarée. **129 033 produits autorisés**, dédoublonnés. **Aucune dose, aucune mise en garde, aucune composition** : les afficher rapprocherait l'app du conseil sur des substances — seule la créatine a ce traitement aujourd'hui, avec des précautions écrites à la main et sourcées ANSES. C'est une fiche *« est-ce le bon produit ? »*, pas un moteur de recommandation. **Le témoin central du bloc vérifie qu'aucun mot de dose ou de mise en garde n'apparaît jamais à l'écran.**
-
-**⚠️ CORRIGÉ AVANT DE CODER** : Michel avait supposé que cette base donnerait aussi *« les valeurs nutritives »*. **Vérifié dans le fichier : aucune colonne kcal/protéines/glucides/lipides.** Compl'Alim est un registre réglementaire (ce qui est déclaré et autorisé), pas une table de composition. Pour les valeurs nutritives d'un complément, c'est **Open Food Facts** — déjà branché (ft-v956).
-
-**⛔ CE N'EST QU'UNE RECHERCHE, PAS UN JOURNAL** : rien n'est enregistré. Construire un suivi quotidien pour un complément arbitraire (dose, seuils, historique) est un autre chantier, **non demandé** — la créatine et la whey le font déjà pour ce qui est courant.
-
-**⛔⛔ CHARGÉE À LA DEMANDE, JAMAIS AU DÉMARRAGE**, même règle que CIQUAL (règle d'or #4) : **6,5 Mo → 1,58 Mo gzippé**, mesuré avant de coder — 24× plus lourd que CIQUAL, mais toujours dans l'esprit « chargé à la première frappe ».
-
-**⚠️ SOURCE** : Compl'Alim, data.gouv.fr — la licence exacte n'a pas pu être vérifiée depuis cette session (réseau bloqué), c'est écrit tel quel dans le code plutôt que de citer un texte inventé.
-Tests : **parcours 1041/1041** (+6, bloc LXXXIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — fonction absente. Fichiers : `data/complalim.json` (neuf), `tools/complalim.py` (neuf), `app.js`, `index.html`, `sw.js`, `clone/*`, `tests/parcours/runner.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v958. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

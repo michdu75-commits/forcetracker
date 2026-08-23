@@ -4633,7 +4633,7 @@ function shareTesterPhotos(){
   if(!_testerIdeaFiles.length){toast('Ajoute d’abord une photo 🙂','info');return;}
   const who=(S.name||'Testeur');
   if(navigator.share&&navigator.canShare&&navigator.canShare({files:_testerIdeaFiles})){
-    navigator.share({files:_testerIdeaFiles.slice(),title:'💡 Photos idée Force Tracker — '+who,text:'Photos pour Michel (Force Tracker)'})
+    navigator.share({files:_testerIdeaFiles.slice(),text:'Photos pour Michel (Force Tracker)'})
       .then(()=>{ _testerIdeaFiles=[]; _renderTesterSpace(); toast('Photos partagées ✅','success'); })
       .catch(err=>{ if(!(err&&err.name==='AbortError'))toast('Partage impossible sur cet appareil','error'); });
   } else { toast('Le partage de photos n’est pas dispo sur cet appareil','info'); }

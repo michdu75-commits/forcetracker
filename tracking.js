@@ -771,6 +771,7 @@ const _BS_SEG_FIELDS=[
 ];
 let _bsEditIdx=-1;
 let _bsSource='manuel';   // 'manuel' · 'ocr' · 'ia' — provenance du bilan en cours de saisie (R33)
+let _bsLmDeduite=false;  // 🏷️ true si la masse maigre a été DÉDUITE (poids − gras) et non lue (R33)
 let _bsListOpen=false; // liste des bilans/pesées de la balance : réduite par défaut (gagne de la place), tap pour ouvrir
 function toggleBsList(){_bsListOpen=!_bsListOpen;renderBodyScanCard();}
 function renderBodyScanCard(){
@@ -1241,7 +1242,11 @@ async function _ocrRapportBalance(dataUrl){
     const v=_mbcVerifier(lu.champs);
     window._ocrDernier={lus:lu.lus.length,ok:v.ok,ctrl:v.ctrl,manque:v.manque};  // diagnostic
     if(!v.ok)return null;                                // l'arithmétique ne ferme pas → on passe la main
-    delete lu.champs._maigreDeduite;
+    /* 🏷️ ON NE JETTE PLUS LE MARQUEUR « VALEUR DÉDUITE » (23/08/2026, ft-v978).
+       Il était supprimé ici même, en ft-v974 : la masse maigre retrouvée par SOUSTRACTION
+       arrivait donc au formulaire indiscernable d'une valeur LUE sur le rapport. Or R33 demande
+       que ce qui est normalisé garde d'où il vient — *sinon, six mois plus tard, 68,7 kg ne dira
+       plus s'il a été lu, calculé ou tapé.* Et Milo, lui, la présente comme « MESURÉE ». */
     return lu.champs;
   }catch(e){
     window._ocrDernier={erreur:(e&&e.message)||'inconnue'};
@@ -1259,6 +1264,7 @@ async function _bsRemplirFormulaire(o,source){
   const ouvert=document.getElementById('ov-bodyscan-form');
   if(!ouvert||!ouvert.classList.contains('open'))return 0;
   _bsSource=source||'manuel';     // APRÈS l'ouverture, qui vient de le remettre à « manuel »
+  _bsLmDeduite=!!(o&&o._maigreDeduite);   // 🏷️ la masse maigre a-t-elle été DÉDUITE (poids − gras) ?
   if(o.date){const dEl=document.getElementById('bs-date');if(dEl)dEl.value=o.date;}
   let remplis=0;
   _BS_FIELDS.concat(_BS_SEG_FIELDS).forEach(f=>{
@@ -1450,7 +1456,7 @@ async function openBodyScanForm(idx){
   /* 🏷️ D'OÙ VIENT CE BILAN (R33) — remis à « saisie main » à CHAQUE ouverture, et reposé
      ensuite par `_bsRemplirFormulaire` si la lecture vient de l'OCR ou de l'IA. Sans ce
      retour à zéro, un bilan tapé à la main hériterait de la provenance du précédent. */
-  _bsSource='manuel';
+  _bsSource='manuel'; _bsLmDeduite=false;
   _bsEditIdx=idx;
   const grid=document.getElementById('bs-grid');
   const dateEl=document.getElementById('bs-date');
@@ -1479,6 +1485,12 @@ function saveBodyScan(){
   /* 🏷️ CE QUI EST NORMALISÉ GARDE D'OÙ IL VIENT (R33). Sans ça, impossible d'auditer plus tard
      une valeur douteuse — ni de savoir si elle a été LUE, CALCULÉE ou tapée à la main. */
   if(_bsSource&&_bsSource!=='manuel')obj.src=_bsSource;
+  /* 🏷️ ET SI LA MASSE MAIGRE A ÉTÉ DÉDUITE, LE BILAN LE DIT (ft-v978). Elle n'est alors pas une
+     lecture mais une soustraction (poids − masse grasse), elle-même issue d'un pourcentage de
+     gras ESTIMÉ par la balance. ⚠️ Comportement différé mais NOMMÉ (R3) : personne ne lit encore
+     ce drapeau — il existe pour la correction du vocabulaire de Milo, qui présente aujourd'hui
+     cette valeur comme « MESURÉE … chiffre SOLIDE … sans réserve » (audit du 23/08). */
+  if(_bsLmDeduite&&obj.leanMass!=null)obj.lmDeduite=true;
   S.bodyScans=S.bodyScans||[];
   if(_bsEditIdx>=0&&S.bodyScans[_bsEditIdx]){S.bodyScans[_bsEditIdx]=obj;}
   else{const ex=S.bodyScans.findIndex(s=>s.date===date);if(ex>=0)S.bodyScans[ex]=obj;else S.bodyScans.push(obj);}
