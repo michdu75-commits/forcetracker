@@ -406,7 +406,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v985`** (prochaine : `ft-v986`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v986`** (prochaine : `ft-v987`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -416,6 +416,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v986 — ✏️ « À LA MAIN » EN PREMIER ET EN ROUGE — et deux témoins qui rougissaient à minuit** — Michel : *« intervertis, à la main en premier et en rouge »*.
+
+**⚠️⚠️ CE CHANGEMENT REMPLACE UNE DÉCISION QUI AVAIT SA RAISON ÉCRITE (R30), et la raison d'avant reste lisible** : le code-barres était premier depuis le 15/08 parce qu'il est **gratuit, illimité et pas caché derrière l'IA**. Elle est conservée **dans le code ET dans le témoin** — *sinon quelqu'un « répare » ça dans six mois en croyant retrouver un oubli.*
+
+**⛔ ET LA DONNÉE MESURÉE VA DANS LE SENS DE L'ANCIEN ORDRE, autant l'écrire.** Sur les **23 entrées réelles** de son journal : **scan 6 · ciqual 4 · historique 4 · ia-texte 3 · recherche 1 · manuel 1**. *Le chemin le plus emprunté passe en 3ᵉ position, le moins emprunté passe en rouge.* 👉 **On applique quand même** : c'est un arbitrage d'**usage**, pas un fait technique, et c'est Michel qui décide. **La mesure est là pour pouvoir revenir en arrière en connaissance de cause, pas pour contredire la consigne.**
+
+**⚠️ ET LE VRAI COÛT EST AILLEURS** : *« à la main » n'est **pas** gratuit* — le champ libre part en **estimation IA** (c'est le chemin de son huile d'olive à 135 kcal). On met donc en rouge le bouton qui **consomme du quota**, à la place de celui qui n'en consomme pas. À surveiller dans `origine` : si `ia` grimpe, c'est ce bouton.
+
+**⭐⭐ MAIS LE PLUS IMPORTANT DE CETTE VERSION N'EST PAS LE BOUTON : DEUX TÉMOINS SONT PASSÉS AU ROUGE TOUT SEULS, À 00 H 34, SANS QU'AUCUN CODE APPLICATIF N'AIT BOUGÉ.** ⭐ **Cause** : `today()` calcule le jour en heure **LOCALE** (`state.js:529` — *« l'heure du téléphone, pas Greenwich »*), et **six fixtures de test** le calculaient en **UTC**. Entre 22 h UTC et minuit, les deux ne désignent plus le même jour — et *« demain » en UTC vaut « aujourd'hui » à Paris*.
+
+**⭐⭐ L'APP EST JUSTE ; CE SONT LES TÉMOINS QUI MENTAIENT.** Ils étaient **verts 22 heures par jour et rouges 2 heures**. *Un témoin qui dépend de l'heure à laquelle on le lance ne protège rien — il rassure.* C'est la famille **fuseaux horaires** de `BUGS.md`, cette fois **dans l'outil de mesure lui-même**.
+
+**⛔ COMPTER LES ENDROITS — 6ᵉ fois cette semaine, et c'est ce qui a payé** : **5 fixtures dans `parcours` + 1 dans `calculs`**, dont **une seule rougissait ce soir**. *Les cinq autres étaient latentes* — elles auraient rougi un autre soir, sur un autre témoin, et on aurait cherché dans le code applicatif. Toutes repartent désormais du **`today()` de l'app** et marchent **à MIDI**, comme `journalNav` : **une seule définition du jour** (**R2**).
+
+**🧪 ET LE BENCHMARK PASSE DE 16 À 21 SCÉNARIOS** — 5 pièges promus depuis `docs/JOURNAL-DE-TEST.md`, **tous vécus en salle, aucun inventé** : represcrire demain ce qui a été fait aujourd'hui (**EV-017**) · un repos inexécutable sur du lourd (**EV-018**) · une charge au-dessus du tenable (**EV-019**) · une variation de balance à 24 h lue comme du tissu (**EV-020**) · la récitation du contexte système (**EV-021**). ⚠️ **Motifs volontairement étroits** (**R19**) — et EV-017 ne rougit que si l'exercice est **prescrit** (ligne portant des séries), jamais s'il est **nommé pour dire qu'on l'évite : c'est le bon comportement, il devait rester vert.**
+Tests : **parcours 1271/1271** (+2), calculs **266/266** (le rouge de minuit corrigé), muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Pas de contrôle négatif ici, et autant le dire** : un changement d'**ordre** ne se juge pas contre l'ancien code (le témoin d'avant exigeait l'inverse, il rougirait par construction) — il se juge à **ce qui n'a pas bougé**, et les 1 269 autres témoins sont restés verts sans le clone ni le catalogue. ⭐ **Le vrai contrôle de cette version est temporel** : les 6 fixtures corrigées ont été vérifiées **à l'heure exacte qui les faisait échouer**. Fichiers : `screens.js`, `tests/parcours/runner.js`, `tests/calculs/runner.js`, `tests/milo/eval-scenarios.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v986. |
 
 **ft-v985 — 🗑️ LA CONFIRMATION PASSAIT DERRIÈRE — « le bouton supprimer ne fonctionne pas »** — Michel, capture à l'appui.
 
@@ -732,20 +749,6 @@ Tests : **parcours 1100/1100** (+9, bloc LXXXVII), calculs 266/266, muscles 241/
 
 **⭐⭐ ET LA SOIRÉE A PRODUIT 5 SCÉNARIOS DE PLUS** (journal de test à **36**), dont l'analyse de GPT sur cette même séance : ⛔ **ne pas attribuer à Milo les choix de l'utilisateur** (le superset ET le Pec Deck étaient **imposés par Michel** — Milo y fait bien son travail) · ⭐ la **provenance des décisions**, qui est le motif de `_provFood` transposé aux séances (**R13**) · ⚠️ le **repos qui ne suit pas l'intensité** — et **Michel a tranché lui-même** : *« un 3×5 avec 90 secondes de repos c'est IMPOSSIBLE »*, donc une prescription **inexécutable**, pas discutable. ⭐ **GPT se trompe sur un point, vérifié dans le code** (**R28**) : `exRestPref` est **déjà** transmis à Milo depuis le 12/08.
 Tests : **parcours 1091/1091** (+2, bloc LXXVIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `coach.js`, `clone/coach.js`, `tests/parcours/runner.js`, `docs/JOURNAL-DE-TEST.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v967. |
-
-**ft-v966 — 🧮 « POUR TES 30 G » — deux nombres de protéines, et rien ne disait lequel était le sien** — Michel : *« j'ai trouvé un bug mais pas vraiment un bug lol »*. **Il avait raison au mot près.**
-
-**⭐ SA VIDÉO A MONTRÉ QUE L'APP AVAIT ENTIÈREMENT RAISON** : Quantité **30 g**, champs à **117 kcal · 26 g de protéines · 1 · 1** — exact au gramme près pour une poudre à 88 g/100 g. Le **88** qu'il lisait est la **carte Open Food Facts**, titrée *« Valeurs pour 100 g »*.
-
-**⛔⛔ AUCUN DES DEUX NOMBRES N'EST FAUX — c'est leur VOISINAGE MUET qui trompe.** *Et c'est plus vicieux qu'une erreur : il n'y a rien à corriger, donc rien ne se signale.* Le 88 est **en vert vif et en gros** ; ses vrais 26 g vivaient beaucoup plus bas, **hors écran**. C'est la famille §7 de `BUGS.md` (deux sources qui se contredisent), à ceci près qu'ici **les deux disent vrai**.
-
-**⭐ LA LIGNE VA DANS LA RANGÉE QUANTITÉ, PAS DANS LA CARTE** : c'est là que se porte l'attention au moment où l'on règle les grammes. La corriger dans la carte aurait déplacé la réponse loin de la question.
-
-**⭐⭐ R2 — ELLE NE CALCULE RIEN.** Elle **relit** les champs que `_bcApplyGrams` vient d'écrire. *Deux calculs du même nombre finiraient par diverger, et on ne saurait plus lequel croire* — un témoin vérifie qu'elle **suit** quand on passe à 60 g (→ 53 g). ⛔ Elle n'affiche **jamais** la valeur pour 100 g (témoin dédié), et **disparaît** si la quantité est vide plutôt que d'annoncer « pour tes 0 g ».
-
-**⚠️⚠️ ET CETTE VERSION CORRIGE UNE FAUSSE CAUSE DE LA MIENNE.** ft-v965 affirmait que *« la quantité était restée à 100 »*. **C'était faux.** J'avais **déduit le mécanisme d'un SEUL NOMBRE** — 88 = exactement 100 g d'une poudre titrant 88 g/100 g — **sans demander l'écran**, alors que Michel envoie des captures spontanément. *Une coïncidence parfaite est exactement ce qui rend une fausse cause crédible : il n'y a aucun frottement pour vous arrêter.* Le déplacement du champ reste bon ; **la raison écrite à côté était inventée**. Corrigé dans le journal **en le disant** (**R23/R27**), et nouvelle famille **`BUGS.md` 12quater — la cause déduite d'un seul nombre**.
-Tests : **parcours 1089/1089** (+4, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `app.js`, `index.html`, `clone/*`, `tests/parcours/runner.js`, `BUGS.md`, `docs/JOURNAL-DE-TEST.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v966. |
-
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

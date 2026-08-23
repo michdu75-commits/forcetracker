@@ -6,7 +6,25 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v985`.
+- **Version en ligne (live) :** `ft-v986`.
+- ✏️ **« À LA MAIN » EN PREMIER ET EN ROUGE** (ft-v986). Michel : *« intervertis, à la main en
+  premier et en rouge »*. ⚠️⚠️ **Remplace une décision qui avait sa raison écrite (R30)** — le
+  code-barres était premier depuis le 15/08 parce qu'il est **gratuit et pas caché derrière
+  l'IA** ; la raison d'avant reste dans le code **et** dans le témoin. ⛔ **Et la donnée mesurée
+  va dans le sens de l'ancien ordre** : sur ses 23 entrées réelles, **scan 6 · ciqual 4 ·
+  historique 4 · ia-texte 3 · recherche 1 · manuel 1**. *Arbitrage d'usage assumé, pas une
+  correction de bug.* ⚠️ **Vrai coût** : « à la main » n'est **pas** gratuit (champ libre →
+  estimation IA) — on met en rouge le bouton qui consomme du quota. À surveiller dans `origine`.
+- ⏰⭐⭐ **DEUX TÉMOINS ROUGES À MINUIT, SANS QU'AUCUN CODE N'AIT BOUGÉ** (ft-v986). `today()`
+  calcule le jour en heure **LOCALE** (`state.js:529`) ; **6 fixtures de test** le calculaient en
+  **UTC**. Entre 22 h UTC et minuit, *« demain » en UTC vaut « aujourd'hui » à Paris*.
+  ⭐ **L'app est juste, ce sont les témoins qui mentaient** — verts 22 h par jour, rouges 2 h.
+  ⛔ **Compter les endroits (6ᵉ fois)** : 5 dans `parcours` + 1 dans `calculs`, **une seule
+  rougissait**, les 5 autres étaient latentes. Toutes repartent du `today()` de l'app (**R2**).
+- 🧪 **BENCHMARK : 16 → 21 SCÉNARIOS** (ft-v986) — 5 pièges promus depuis `JOURNAL-DE-TEST.md`,
+  tous **vécus en salle** : EV-017 (represcrire ce qui a été fait aujourd'hui) · EV-018 (repos
+  inexécutable) · EV-019 (charge au-dessus du tenable) · EV-020 (variation BIA lue comme du
+  tissu) · EV-021 (récitation du contexte système). Le plancher de 25 entrées est **atteint (49)**.
 - 🧠⭐⭐ **LE CONTEXTE DE MILO — MESURE DU 23/08 AU SOIR** (aucun code modifié ;
   `docs/AUDIT-CONTEXTE-MILO.md` **§14**). Michel : *« attends, de 40 000 on est passé à
   70 000 ? »* puis *« on l'a diminué y'a 3 jours exprès, y'a un truc qui va pas là »*.

@@ -3459,3 +3459,17 @@ Tests : **parcours 1084/1084** (+5, bloc LXXXVI), calculs 266/266, muscles 241/2
 
 **⚠️ RIEN D'AUTRE NE BOUGE** : ni le calcul, ni la valeur par défaut de 100 g. La corriger demanderait de **deviner une portion** — 30 g pour une whey, 250 g pour du riz ? — et ce serait un **faux-précis** (**R29**). *Rendre le réglage visible vaut mieux que deviner à la place de la personne.*
 Tests : **parcours 1085/1085** (+1, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge**, exactement l'ordre — et c'est ici un contrôle **instructif**, pas un « la fonction n'existe pas » : le témoin **tourne** des deux côtés et mesure une disposition qui existait déjà, mal. Fichiers : `index.html`, `clone/index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v965. |
+
+
+**ft-v966 — 🧮 « POUR TES 30 G » — deux nombres de protéines, et rien ne disait lequel était le sien** — Michel : *« j'ai trouvé un bug mais pas vraiment un bug lol »*. **Il avait raison au mot près.**
+
+**⭐ SA VIDÉO A MONTRÉ QUE L'APP AVAIT ENTIÈREMENT RAISON** : Quantité **30 g**, champs à **117 kcal · 26 g de protéines · 1 · 1** — exact au gramme près pour une poudre à 88 g/100 g. Le **88** qu'il lisait est la **carte Open Food Facts**, titrée *« Valeurs pour 100 g »*.
+
+**⛔⛔ AUCUN DES DEUX NOMBRES N'EST FAUX — c'est leur VOISINAGE MUET qui trompe.** *Et c'est plus vicieux qu'une erreur : il n'y a rien à corriger, donc rien ne se signale.* Le 88 est **en vert vif et en gros** ; ses vrais 26 g vivaient beaucoup plus bas, **hors écran**. C'est la famille §7 de `BUGS.md` (deux sources qui se contredisent), à ceci près qu'ici **les deux disent vrai**.
+
+**⭐ LA LIGNE VA DANS LA RANGÉE QUANTITÉ, PAS DANS LA CARTE** : c'est là que se porte l'attention au moment où l'on règle les grammes. La corriger dans la carte aurait déplacé la réponse loin de la question.
+
+**⭐⭐ R2 — ELLE NE CALCULE RIEN.** Elle **relit** les champs que `_bcApplyGrams` vient d'écrire. *Deux calculs du même nombre finiraient par diverger, et on ne saurait plus lequel croire* — un témoin vérifie qu'elle **suit** quand on passe à 60 g (→ 53 g). ⛔ Elle n'affiche **jamais** la valeur pour 100 g (témoin dédié), et **disparaît** si la quantité est vide plutôt que d'annoncer « pour tes 0 g ».
+
+**⚠️⚠️ ET CETTE VERSION CORRIGE UNE FAUSSE CAUSE DE LA MIENNE.** ft-v965 affirmait que *« la quantité était restée à 100 »*. **C'était faux.** J'avais **déduit le mécanisme d'un SEUL NOMBRE** — 88 = exactement 100 g d'une poudre titrant 88 g/100 g — **sans demander l'écran**, alors que Michel envoie des captures spontanément. *Une coïncidence parfaite est exactement ce qui rend une fausse cause crédible : il n'y a aucun frottement pour vous arrêter.* Le déplacement du champ reste bon ; **la raison écrite à côté était inventée**. Corrigé dans le journal **en le disant** (**R23/R27**), et nouvelle famille **`BUGS.md` 12quater — la cause déduite d'un seul nombre**.
+Tests : **parcours 1089/1089** (+4, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `app.js`, `index.html`, `clone/*`, `tests/parcours/runner.js`, `BUGS.md`, `docs/JOURNAL-DE-TEST.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v966. |

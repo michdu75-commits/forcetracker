@@ -2333,10 +2333,30 @@ function renderFoodJournal(){
     }
   }catch(e){ /* jamais bloquant : c'est un raccourci, pas un pré-requis */ }
 
+  /* ✏️ « À LA MAIN » EN PREMIER ET EN ROUGE (23/08/2026) — demande explicite de Michel :
+     *« intervertis, à la main en premier et en rouge »*, après *« le code-barres et à la main
+     dans nutrition n'ont pas été échangés, il doit y avoir un autre ordre »*.
+
+     ⚠️⚠️ CE CHANGEMENT REMPLACE UNE DÉCISION QUI AVAIT SA RAISON ÉCRITE (R30), et il faut
+     que la raison d'avant reste lisible pour qui passera après : le code-barres était premier
+     depuis le 15/08 parce qu'il est **gratuit, illimité et pas caché derrière l'IA**.
+
+     ⛔ ET LA DONNÉE MESURÉE VA DANS LE SENS DE L'ANCIEN ORDRE, autant l'écrire. Sur les 23
+     entrées réelles du journal de Michel (export du 23/08) : **scan 6 · ciqual 4 · historique
+     4 · ia-texte 3 · recherche 1 · manuel 1** (+4 anciennes sans provenance). Le chemin
+     code-barres est donc le plus emprunté, et « à la main » le moins.
+     👉 On applique quand même : c'est un arbitrage d'USAGE, pas un fait technique, et c'est
+     Michel qui décide. La mesure est ici pour qu'on puisse revenir en arrière en connaissance
+     de cause — pas pour contredire la consigne.
+
+     ⚠️ ET « À LA MAIN » N'EST PAS GRATUIT : le champ libre part en estimation IA (c'est le
+     chemin de son huile d'olive à 135 kcal). Mettre en rouge le bouton qui consomme du quota,
+     à la place de celui qui n'en consomme pas, est le vrai coût de ce changement. À surveiller
+     dans `origine` : si `ia` grimpe nettement, c'est ce bouton qui l'aura provoqué. */
   html+=`<div style="display:flex;gap:8px;margin-top:12px;">`
-    +`<button class="btn btn-red" onclick="addFoodVia('bc')" style="flex:1;padding:12px 6px;font-size:13px;line-height:1.25;">📷<br>Code-barres</button>`
+    +`<button class="btn btn-red" onclick="addFoodVia('main')" style="flex:1;padding:12px 6px;font-size:13px;line-height:1.25;">✏️<br>À la main</button>`
     +`<button class="btn btn-bg2" onclick="addFoodVia('label')" style="flex:1;padding:12px 6px;font-size:13px;line-height:1.25;">📸<br>Étiquette</button>`
-    +`<button class="btn btn-bg2" onclick="addFoodVia('main')" style="flex:1;padding:12px 6px;font-size:13px;line-height:1.25;">✏️<br>À la main</button>`
+    +`<button class="btn btn-bg2" onclick="addFoodVia('bc')" style="flex:1;padding:12px 6px;font-size:13px;line-height:1.25;">📷<br>Code-barres</button>`
     +`</div>`;
 
   /* 📋 RANGÉ PAR REPAS, EN SECTIONS DÉROULANTES (23/08/2026) — Michel : *« c'est un peu le

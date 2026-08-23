@@ -156,7 +156,8 @@ console.log('\n═══ 2 bis. BMR : Katch-McArdle quand la masse maigre est co
   const r=await p.evaluate(()=>{
    try{
     const out={};
-    const jour=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    const jour=n=>/* ⏰ ANCRÉ SUR LE today() DE L'APP, PAS SUR UTC (23/08/2026). L'app calcule son jour en heure LOCALE (state.js:529) ; ces fixtures le calculaient en UTC. Entre 22 h et minuit UTC l'été, « demain » en UTC vaut « aujourd'hui » à Paris — le témoin « une séance annoncée pour DEMAIN ne compte pas » est passé au rouge tout seul à 00 h 47, sans qu'aucun code applicatif ait bougé. On repart de today() et on marche à MIDI. */
+    {const d=new Date(today()+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
     S.bw=80;S.height=178;S.age=30;S.gender='H';S.smoker=false;S.bodyScans=[];S.weightLog=[];
     out.mifflin=calcBMR();                                    // 1768, aucune mesure
 
@@ -1652,7 +1653,7 @@ console.log('\n═══ 13. Supplements : ce qui est affiche est-il vrai ? ═�
     S.wkt=null; S.nextPlanned={date:today(),label:'Haut du corps'};
     o.annoncee=/pré-entraînement/i.test(noms(getMeals(calcMacros('normal'),'normal')));
     /* ⛔ ... mais une séance annoncée pour DEMAIN ne fait pas d'aujourd'hui un jour de séance. */
-    const dm=new Date(); dm.setDate(dm.getDate()+1);
+    const dm=new Date(today()+'T12:00:00'); dm.setDate(dm.getDate()+1);
     S.nextPlanned={date:dm.toISOString().slice(0,10),label:'Demain'};
     o.demainNonCompte=!/entraînement/i.test(noms(getMeals(calcMacros('normal'),'normal')));
     S.nextPlanned=null;
@@ -1716,7 +1717,7 @@ console.log('\n═══ 13. Supplements : ce qui est affiche est-il vrai ? ═�
   console.log('\n-- LES GLUCIDES PLUS HAUTS LES JOURS DE SEANCE --');
   const C=await pg.evaluate(()=>{
     const o={};
-    const _j=(n)=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    const _j=(n)=>{const d=new Date(today()+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
     S.foodMode=''; S.keto=false; S.fasting=''; S.goal='muscle'; S.manualKcal=0; S.wkt=null; S.nextPlanned=null;
     const SQUAT={name:'Squat Barre',sets:[{kg:100,reps:5,done:true,type:'N'}]};
     // 4 séances/semaine sur 4 semaines : un rythme net, et f = 4.

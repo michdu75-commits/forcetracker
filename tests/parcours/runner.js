@@ -3255,7 +3255,8 @@ console.log('\n═══ V. Métabolisme de base — d\'où vient le chiffre ═
   const V=await pv.evaluate(async()=>{
    try{
     const o={};
-    const jour=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    const jour=n=>/* ⏰ ANCRÉ SUR LE today() DE L'APP, PAS SUR UTC (23/08/2026, 00h34 à Paris). L'app calcule son jour en heure LOCALE (state.js:529) ; ces fixtures le calculaient en UTC. Entre 22 h et minuit UTC l'été, les deux ne désignent plus le même jour — le témoin du bloc LXXXIV est passé au rouge tout seul, sans qu'aucun code applicatif ait bougé. On repart donc de today() et on marche à MIDI, comme journalNav. */
+    {const d=new Date(today()+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
     const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
 
@@ -4584,6 +4585,10 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       .filter(x=>x.getBoundingClientRect().height>0)
       .map(x=>x.textContent.replace(/\s+/g,'').slice(0,20));
     const o={boutons:btns};
+    // ⭐ ON LIT AUSSI LA CLASSE : « en rouge » est une demande explicite, donc elle se mesure.
+    o.rouge=[...(j?j.querySelectorAll('button'):[])]
+      .filter(x=>x.getBoundingClientRect().height>0 && /Code-barres|Étiquette|Àlamain/.test(x.textContent.replace(/\s+/g,'')))
+      .map(x=>x.textContent.replace(/\s+/g,'').slice(0,12)+':'+(x.classList.contains('btn-red')?'ROUGE':'gris'));
     // ① le raccourci code-barres ouvre la modale sur le bon bloc
     addFoodVia('bc');
     const ov=document.getElementById('ov-add-food');
@@ -4608,8 +4613,21 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
        ne font pas partie des « façons d'ajouter » : le test ne doit juger que l'ordre ENTRE les
        3 méthodes, pas leur rang absolu sur l'écran. */
     const _methodes=(N.boutons||[]).filter(x=>/Code-barres|Étiquette|Àlamain/.test(x));
-    t('⭐ le code-barres est le PREMIER des 3 méthodes (gratuit et illimité, pas caché derrière l\'IA)',
-      /Code-barres/.test(_methodes[0]||''), 'premier des 3 : '+(_methodes[0]||'(aucun)'));
+    /* ⚠️⚠️ CE TÉMOIN A CHANGÉ DE CAMP LE 23/08/2026, ET LA RAISON D'AVANT RESTE ÉCRITE (R30).
+       Du 15/08 au 23/08 il exigeait l'inverse — « le code-barres est le PREMIER des 3 méthodes
+       (gratuit et illimité, pas caché derrière l'IA) » — et cet argument était bon.
+       Michel a tranché autrement : *« intervertis, à la main en premier et en rouge »*.
+       ⛔ ET LA MESURE ALLAIT DANS LE SENS DE L'ANCIEN ORDRE : sur ses 23 entrées réelles,
+       scan 6 · ciqual 4 · historique 4 · ia-texte 3 · recherche 1 · **manuel 1**. C'est donc
+       un arbitrage d'usage assumé, pas une correction de bug — écrit ici pour que personne ne
+       le « répare » dans six mois en croyant retrouver un oubli. */
+    t('⭐ « À la main » est le PREMIER des 3 méthodes (décision Michel, 23/08 — remplace « code-barres d\'abord »)',
+      /Àlamain/.test(_methodes[0]||''), 'premier des 3 : '+(_methodes[0]||'(aucun)'));
+    t('⭐ ... et c\'est LUI qui est en rouge (le bouton principal, demande explicite)',
+      /Àlamain:ROUGE/.test((N.rouge||[]).join(' ')) && !/Code-barres:ROUGE/.test((N.rouge||[]).join(' ')),
+      (N.rouge||[]).join(' · '));
+    t('⚠️ les 3 méthodes restent offertes — on a changé l\'ordre, pas retiré un chemin',
+      _methodes.length===3, _methodes.length+' méthode(s) : '+_methodes.join(' · '));
     t('⭐⭐ le raccourci ouvre la MÊME modale, sur le bloc code-barres (aucune étape en plus)',
       N.ouverte===true && N.blocBc==='block', 'ouverte : '+N.ouverte+' · bloc : '+N.blocBc);
     t('⚠️ la saisie à la main reste offerte et ouvre la même modale', N.ouverte2===true);
@@ -7584,8 +7602,10 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     // ⚠️ Ce nombre est ÉPINGLÉ exprès : un scénario qui disparaîtrait du corpus (fichier
     // tronqué, virgule en trop créant un trou dans le tableau) ne se verrait pas autrement.
     // Le 21/08, une virgule en trop a justement fabriqué un 17e élément VIDE.
-    t('⭐⭐ ... et il se télécharge à la demande : 16 scénarios, une seule source (R2)',
-      R.nb===16 && R.aDesVerifs===true, 'nb='+R.nb+' verifs='+R.aDesVerifs+(R.err?' · '+R.err:''));
+    // 16 → 21 le 23/08/2026 : 5 pièges promus depuis docs/JOURNAL-DE-TEST.md (EV-017→021),
+    // tous VÉCUS en salle par Michel. Le nombre reste épinglé pour la raison d'origine.
+    t('⭐⭐ ... et il se télécharge à la demande : 21 scénarios, une seule source (R2)',
+      R.nb===21 && R.aDesVerifs===true, 'nb='+R.nb+' verifs='+R.aDesVerifs+(R.err?' · '+R.err:''));
     t('⭐ un débrief à qui il manque 2 exercices sur 5 est ROUGE',
       R.rouge006===true, R.det006||JSON.stringify(R.errRun||''));
     t('⭐ « c\'est noté » sans bloc de mémoire est ROUGE', R.rouge004===true, '');
@@ -8794,7 +8814,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
 
   const R=await pg.evaluate(async()=>{
     const o={};
-    const _j=(n)=>{ const d=new Date(); d.setDate(d.getDate()-n); return d.toISOString().slice(0,10); };
+    const _j=(n)=>{const d=new Date(today()+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
     // 5 séances/semaine sur 4 semaines pleines : un rythme STABLE, pas un pic.
     const faireSessions=(parSemaine)=>{
       const out=[];
@@ -9079,7 +9099,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     o.dejaAuMax=projectionRecup().dejaAuMax===true;
 
     /* ⭐⑤ L'ENCHAÎNEMENT DE JOURS compte aussi, et il peut être PLUS TARDIF que la séance. */
-    const jm=(n)=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    const jm=(n)=>{const d=new Date(today()+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
     S.sessions=[{date:jm(0),ts:Date.now()-1*36e5,exs:[]},{date:jm(1),exs:[]},{date:jm(2),exs:[]}];
     const p2=projectionRecup();
     o.accumVu=!p2.dejaAuMax && p2.quand>Date.now();
@@ -9554,7 +9574,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   const R=await pg.evaluate(()=>{
     const o={};
     if(typeof journalNav!=='function'){ o.absente=true; return o; }
-    const _j=(n)=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    const _j=(n)=>{const d=new Date(today()+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
     S.foodLog=[
       {date:_j(0),meal:'petitdej',name:'Aujourd\'hui',kcal:300,prot:20,carbs:30,fat:5,ts:Date.now()},
       {date:_j(1),meal:'dejeuner',name:'Hier midi',kcal:500,prot:30,carbs:50,fat:10,ts:Date.now()-1000},
@@ -11160,7 +11180,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     const o={}; const v={wl:S.weightLog,bs:S.bodyScans,bw:S.bw,h:S.height,a:S.age,g:S.gender,ss:S.sessions};
     try{
       S.bw=80;S.height=178;S.age=30;S.gender='H';S.bodyScans=[];
-      const j=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+      const j=n=>{const d=new Date(today()+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
       // ⭐⭐ LA CLÉ QUE LA PRODUCTION ÉCRIT VRAIMENT
       S.weightLog=[{date:j(2),kg:80,bf:20}];
       o.kg={lm:leanMassRecente(), methode:bmrDetail().methode};
