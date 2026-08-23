@@ -2374,6 +2374,27 @@ function updateProteinBar() {
   if (pctEl) { pctEl.textContent = pct + '%'; pctEl.style.color = pct >= 100 ? 'var(--green)' : pct >= 70 ? 'var(--gold)' : 'var(--red)'; }
   if (remEl) remEl.textContent = remaining + 'g';
   if (targEl) targEl.textContent = target + 'g';
+  /* ⭐ ON NOMME LA SOURCE (ft-v969) — Michel : *« sur cette image c'est la portion ou juste le
+     nombre de protéine ? »*. **La question montrait le trou** : le champ ne dit pas QUI le
+     remplit. Quand le Journal porte des protéines, le champ reste VIDE (placeholder « 0 »)
+     pendant que la barre affiche le vrai total — *deux nombres qui se contredisent, et rien ne
+     dit lequel commande*. Même famille que le « 88 g » de ft-v966.
+     ⛔ CETTE LIGNE NE CALCULE RIEN : elle relit `eaten` et dit d'où il sort (R2). */
+  const srcEl = document.getElementById('prot-src');
+  if (srcEl) {
+    if (_saisi!==''&&_saisi!=null) {
+      srcEl.textContent = '✍️ Chiffre que tu as tapé — efface le champ pour reprendre ton Journal.';
+      srcEl.style.display = 'block';
+    } else if (_duJournal > 0) {
+      srcEl.textContent = '🍽️ '+Math.round(_duJournal)+' g lus dans ton Journal du jour — tape un nombre ici pour le remplacer.';
+      srcEl.style.display = 'block';
+    } else {
+      /* ⛔ RIEN NOTÉ : on ne dit pas « 0 g lus dans ton Journal », ce qui se lirait comme un
+         constat alors que c'est simplement une journée qui commence (R24). */
+      srcEl.textContent = 'Rien de noté aujourd\'hui — ça se remplit tout seul depuis le Journal, ou tape ton total ici. En grammes de protéines, pas en poids d\'aliment.';
+      srcEl.style.display = 'block';
+    }
+  }
 }
 
 // ─── ONBOARDING ──────────────────────────────────────────────

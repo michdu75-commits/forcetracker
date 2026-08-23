@@ -750,6 +750,15 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
         <div class="fg" style="flex:1;"><label>Protéines mangées (g)</label><input type="number" id="prot-eaten" placeholder="0" min="0" max="500" inputmode="numeric" enterkeyhint="done" oninput="updateProteinBar()"></div>
         <div style="text-align:center;"><div style="font-family:var(--font-cond);font-size:26px;font-weight:900;color:var(--green);" id="prot-pct-disp">0%</div><div style="font-size:12px;color:var(--t2);">objectif</div></div>
       </div>
+      <!-- ⭐ D'OÙ VIENT LE CHIFFRE (ft-v969). Michel : « sur cette image c'est la portion ou
+           juste le nombre de protéine ? » — la question elle-même montrait le trou : le champ
+           dit « Protéines mangées (g) » sans dire QUI le remplit. Quand le Journal porte des
+           protéines, le champ reste VIDE avec un placeholder « 0 » pendant que la barre affiche
+           le vrai total : deux nombres qui se contredisent, et rien ne dit lequel commande.
+           ⛔ MÊME FAMILLE QUE LE « 88 g » DE ft-v966 — aucun des deux n'est faux, c'est leur
+           voisinage muet qui trompe. ⭐ R2 : cette ligne ne calcule rien, elle NOMME la source
+           que `updateProteinBar()` vient d'utiliser. -->
+      <div id="prot-src" style="display:none;font-size:11.5px;line-height:1.4;color:var(--t3);"></div>
       <div class="protein-bar-wrap"><div class="protein-bar-fill" id="prot-bar" style="width:0%;background:var(--green);"></div></div>
       <div style="display:flex;justify-content:space-between;font-size:13px;">
         <span style="color:var(--t2);">Objectif : <strong id="prot-target-disp">—</strong></span>

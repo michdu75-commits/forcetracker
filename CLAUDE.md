@@ -136,7 +136,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v968`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v969`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v968`** (prochaine : `ft-v969`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v969`** (prochaine : `ft-v970`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v969 — 🧮 D'OÙ VIENT LE CHIFFRE DE PROTÉINES** — Michel, devant l'onglet Suppléments : *« sur cette image c'est la portion ou juste le nombre de protéine ? »*.
+
+**⭐⭐ LA QUESTION ELLE-MÊME ÉTAIT LE DÉFAUT.** Le champ s'appelle « Protéines mangées (g) » et ne dit **jamais qui le remplit**. Quand le Journal porte des protéines, le champ reste **vide avec un placeholder « 0 »** pendant que la barre affiche le vrai total : *deux nombres qui se contredisent, et rien ne dit lequel commande.*
+
+**⛔ MÊME FAMILLE QUE LE « 88 g » DE ft-v966** — aucun des deux n'est faux, c'est leur **voisinage muet** qui trompe. *Et c'est plus vicieux qu'une erreur : il n'y a rien à corriger, donc rien ne se signale.* Deux fois en deux jours, sur deux écrans différents.
+
+**⭐ R2 — LA LIGNE NE CALCULE RIEN.** Elle **relit** le chiffre que `updateProteinBar()` vient d'utiliser et **nomme sa source**. Deux calculs du même nombre finiraient par diverger, et on ne saurait plus lequel croire.
+
+**👉 TROIS ÉTATS, ET LE PREMIER RÉPOND EXACTEMENT À SA QUESTION** : rien de noté → *« ça se remplit tout seul depuis le Journal, ou tape ton total ici. **En grammes de protéines, pas en poids d'aliment.** »* · le Journal remplit → *« 🍽️ 46 g lus dans ton Journal du jour — tape un nombre ici pour le remplacer »* · saisie manuelle → *« ✍️ chiffre que **tu** as tapé — efface le champ pour reprendre ton Journal »*.
+
+**⛔ ET ON NE DIT PAS « 0 g lus dans ton Journal » QUAND RIEN N'EST NOTÉ** : ça se lirait comme un constat alors que c'est simplement une journée qui commence (**R24**).
+
+**⛔⛔ LE TÉMOIN QUI PROTÈGE LE PLUS EST CELUI D'AVANT** : la saisie manuelle n'est **jamais écrasée** par le Journal (**R29**, même arbitrage que `manualKcal`). *Il est vert des DEUX côtés — c'est le but : une correction d'affichage se juge à ce qui n'a pas bougé.*
+Tests : **parcours 1109/1109** (+9, bloc LXXXVIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 6 rouges**, exactement les 6 comportements neufs — et **3 verts des deux côtés**, qui sont les non-régressions (la barre lit le Journal, la saisie manuelle prime, elle n'est pas écrasée). Fichiers : `app.js`, `index.html`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v969. |
 
 **ft-v968 — 📋 LE JOURNAL RANGÉ PAR REPAS, ET UNE 2ᵉ COLLATION** — Michel, capture à l'appui : *« c'est un peu le foutoir là, il faudrait ranger tout ça. Là c'est une liste, il faut les ranger et créer des lignes déroulantes pour chaque section »*, puis *« pouvoir rajouter une collation aussi, il y en a qui prennent une collation le matin et le soir »*.
 
@@ -699,23 +714,6 @@ Tests : **calculs 266/266** (+13), parcours 970/970, muscles 241/241, croisés 5
 
 **⚠️ Une dette notée au lieu d'être payée au mauvais moment** : le repli `startHour` → horodatage existe déjà en **deux** variantes (badges dans `app.js`, matin/soir dans `tracking.js`), avec des nuances propres à chacune. Les unifier dans une version qui parle de **repas** changerait leur comportement — c'est **R14**. La 3ᵉ est écrite proprement et la dette est nommée dans le code.
 Tests : **calculs 253/253** (+12), parcours 970/970, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges**, exactement les 4 comportements changés. ⚠️ Les autres sont **verts des deux côtés, et c'est voulu** : les pré/post existaient déjà un jour de séance, les calories étaient déjà conservées, le jeûne marchait déjà, et le plan « perte » ne devait justement **pas** bouger. Fichiers : `state.js`, `tests/calculs/runner.js`, `docs/NUTRITION-MOTEUR.md`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v950. |
-
-**ft-v949 — 🏋️ LE NIVEAU D'ACTIVITÉ CONTIENT DÉJÀ L'ENTRAÎNEMENT — et il ne se mettait JAMAIS à jour** — Michel : *« bon la nutrition lol ? »*.
-
-**⭐⭐ J'AI ANNONCÉ L'INVERSE, ET LE CODE M'A CONTREDIT.** Je lui ai dit *« la nutrition ignore complètement l'entraînement »* — la phrase est même dans `docs/NUTRITION-MOTEUR.md`. **C'est faux à l'écran** : la carte affichait déjà « Séance » **et** « Total = dépense + séance ». Le vrai défaut est le **contraire** : cette addition **compte la séance DEUX FOIS**. Le multiplicateur s'appelle littéralement **« Modéré (3-4j) »** — les 3-4 séances par semaine sont **déjà dedans**, lissées sur la semaine. *Une vérification a retourné le diagnostic avant que j'écrive une ligne : c'est exactement pour ça que **R28** existe.*
-
-**⛔ ET C'ÉTAIT PIRE QU'UN CHIFFRE FAUX : il CONTREDISAIT l'anneau juste en dessous**, qui lui n'ajoute pas la séance. **Deux nombres qui se contredisent sur le même écran**, sans rien pour dire lequel commande la cible — la famille « deux sources qui se contredisent » (`BUGS.md`), et *elle est plus vicieuse que l'absence, parce que la personne VOIT les deux.*
-
-**⚠️⚠️ ET LE DÉFAUT DE FOND EST AILLEURS, IL EST PLUS GRAVE.** `applyFreqContext` (tracking.js) demande *« tu t'entraînes plutôt 5 fois maintenant, on met à jour ? »*, la personne répond **OUI**… et seul `coachQuiz.answers.freq` est écrit. **`S.activityLevel` ne bouge pas.** Le TDEE, les macros et l'anneau restent donc calés sur une fréquence **que la personne a elle-même corrigée**. C'est **R4 dans sa forme la plus pure** — l'info est collectée, **validée par elle**, stockée, et n'atteint **jamais** le calcul — doublée de **R2** : deux déclarations du même fait qui peuvent diverger sans que rien ne le signale.
-
-**👉 CE QUI EST LIVRÉ** : la tuile dit désormais **le nombre de séances de la semaine** au lieu d'un total faux (la séance du jour reste affichée à côté — c'est une **mesure juste**, elle n'avait rien à faire dans une addition), et une carte propose de recaler le niveau, **avec le gain en kcal CALCULÉ** en simulant le changement — *la personne décide sur ce chiffre, donc il doit être le vrai*, et la simulation remet toujours la valeur d'origine.
-
-**⛔ ON PROPOSE, ON N'APPLIQUE JAMAIS TOUT SEUL.** Changer une cible calorique dans le dos de quelqu'un est typiquement *« l'erreur qui touche la personne »* (**R29**) — même règle que `manualKcal`, qu'on ne relève jamais en douce. Le témoin le plus important du bloc est celui-là : **trois rendus d'affilée ne déplacent pas la cible d'un kcal.**
-
-**⚠️ ET LA COHÉRENCE AVANT LA RÉACTIVITÉ (R12)** : il faut le **même rythme sur 3 semaines sur 4**. Une semaine chargée, une coupure, des vacances ne doivent pas changer ce que quelqu'un mange. ⛔ *« Très actif »* ne se **redescend** pas sur un comptage de séances de musculation — c'est un profil que ce comptage ne mesure pas (**R29** : on ne devine pas ce qu'on ne sait pas). ⚠️ Et si la cible est **réglée à la main**, on le **dit** au lieu d'annoncer un gain qui n'aura pas lieu : *un chiffre faux est pire qu'un silence.*
-
-**⚠️ UN TÉMOIN À MOI A ROUGI, ET IL AVAIT TORT.** J'avais construit un rythme « instable » à **5-1-2-1** — instable **à l'œil**. Mais 1, 2 et 1 tombent tous dans la même case *« 1-2 fois »* : c'est un rythme **stable** avec une semaine chargée, et le code avait raison. *Un contre-exemple se construit avec la règle, pas à vue de nez.*
-Tests : **parcours 970/970** (+16, bloc LXXIX), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 3 rouges**, dont **2 sur le double compte lui-même**. ⚠️ **Et il a fallu s'y reprendre pour qu'il mesure quelque chose** : mes témoins du double compte étaient d'abord derrière le garde « fonction absente », donc ils **ne tournaient pas** — or eux testent un comportement **qui existait déjà**. Sortis du garde, ils rougissent contre l'ancien code, ce qui est tout l'intérêt. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** : l'anneau n'a jamais inclus la séance, et la tuile « Séance » a toujours dit vrai. Fichiers : `state.js`, `screens.js`, `index.html`, `tests/parcours/runner.js`, `IDEES-FUTURES.md`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v949. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
