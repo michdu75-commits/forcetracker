@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v974`** (prochaine : `ft-v975`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v975`** (prochaine : `ft-v976`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v975 — ⚖️ « JE NE PEUX PAS METTRE DE POIDS » — la quantité sur une phrase libre** — Michel, capture à l'appui, devant une huile d'olive estimée par l'IA (135 kcal · 15 g de lipides) : *« Je ne peux pas mettre de poids »*.
+
+**⛔⛔ ET C'EST LE MOTIF DE ft-v973, DEUX JOURS DE SUITE : le mécanisme EXISTAIT, posé d'un seul côté.** ft-v972 a donné le rescale par proportion à la modale « **Modifier** l'aliment » ; le formulaire d'**AJOUT**, lui, n'a de champ « Quantité » que si un **pour-100 g** est connu (scan, CIQUAL, recherche). Une phrase estimée par l'IA n'en a pas — donc **aucun réglage**, et quatre chiffres à recalculer soi-même. *Une correction faite d'un côté et pas de l'autre est un oubli, pas un arbitrage* (**R8**).
+
+**⭐⭐ CE QUI REND LA CHOSE POSSIBLE EST CÔTÉ SERVEUR, ET C'EST UNE LIGNE DE CONSIGNE.** Le modèle **choisissait déjà une portion** — sa consigne dit *« si les quantités ne sont pas précisées, estime une portion normale »* — mais **en silence**. Il l'**annonce** désormais (`g`), et une estimation **aveugle** devient une estimation **ANCRÉE**. *Le repère existait dans la tête du modèle ; il ne sortait simplement pas.* C'est **R4** au mot près : l'information ne descendait pas jusqu'à la donnée.
+
+**👉 TROIS SOURCES POUR LA RÉFÉRENCE, DE LA PLUS SÛRE À LA MOINS SÛRE** : ① le `per100` connu (bloc du scan, inchangé) · ② le **poids supposé par l'IA** · ③ le nombre écrit dans la phrase.
+
+**⚠️⚠️ ET L'ORDRE ENTRE ② ET ③ N'EST PAS UN DÉTAIL.** Sur *« 3 œufs et 200 g de riz »*, le nombre écrit ne désigne **qu'un composant** — le prendre pour référence reviendrait à dire que toute l'assiette pèse 200 g. Le poids de l'IA, lui, porte sur le **total**. ⛔ **Mais il n'appartient qu'à LA PHRASE QUI A ÉTÉ ESTIMÉE** : si la phrase change, il est périmé et on ne s'en sert plus. *Une référence qui survit à son sujet est pire que pas de référence : elle a l'air d'un fait.*
+
+**⛔ SANS AUCUN ANCRAGE, AUCUN POIDS INVENTÉ** (**R29**) : des **portions** (½ · 1½ · ×2 · ×3), vraies quelle que soit la portion de départ — *un « ×2 » est juste, un « 60 g » deviné est faux* — et l'écran dit **pourquoi**. ⚠️ Le poids de l'IA est **présenté comme une estimation**, pas comme une mesure (**R32**).
+
+**⛔ ET IL EST BORNÉ CÔTÉ SERVEUR** : au-delà de 5 kg pour un repas, c'est une hallucination et non une portion — *mieux vaut aucun repère qu'un repère faux*. `g` absent reste absent.
+
+**⚠️⚠️ UN DÉGÂT ÉVITÉ DE JUSTESSE, ET IL VAUT D'ÊTRE ÉCRIT** : en synchronisant le clone j'ai fait un `cp` un peu vite et **effacé 91 lignes de `clone/index.html`** — le shim qui isole ses données des vraies. Repéré et restauré. ⭐ **Or un script de synchro existait** (`build_clone.py`), avec justement un garde-fou *« shim clone introuvable — abandon, rien écrasé »*. *Un outil qu'on contourne ne protège rien.* C'est ce qui a mené à la question de Michel juste après — et à la décision de retirer le clone.
+Tests : **parcours 1176/1176** (+12, bloc XCIV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Le contrôle négatif serait peu instructif** (le bloc vit sous le garde « `_afMajAncre` absente »), **et il est ailleurs** : les témoins qui comptent sont ceux du **non-empilement** (20 → 30 donne ×2, pas ×2 sur ×2) et du **poids périmé** — deux défauts qui ne se voient qu'à la DEUXIÈME action, donc jamais en testant une fois. Fichiers : `app.js`, `index.html`, `Code.js`, `worker.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v975. |
 
 **ft-v974 — 🔤 LE RAPPORT DE BALANCE LU SUR LE TÉLÉPHONE — gratuit, hors ligne, zéro appel IA** — Michel : *« on construit, parce que je l'utilise souvent — il faut que je te sorte les données de mon ancienne balance »*.
 
@@ -698,23 +715,6 @@ Tests : **parcours 1035/1035** (+14, bloc LXXXII), calculs 266/266, muscles 241/
 
 **⚠️ LIMITE ÉCRITE, PAS CONTOURNÉE** : Open Food Facts est une base de **produits de marque**. *« Banane »* y rend des bananes de marque, pas l'aliment générique — **CIQUAL** (3 484 génériques) reste le bon outil et **n'est pas là**. On ne fait pas semblant du contraire, et **on n'invente surtout pas de valeurs génériques nous-mêmes** (R29 : le faux-précis coûte plus cher que l'absence).
 Tests : **parcours 1021/1021** (+13, bloc LXXXII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — le moteur n'existe pas. ⚠️ **Peu instructif et autant l'écrire** : les 12 autres témoins vivent sous le garde « fonction absente », donc ils **ne tournent pas** contre l'ancien code. *Un témoin qui ne tourne pas n'est pas un témoin vert.* Ce qui est réellement prouvé ici l'est sur le code neuf : zéro appel IA, zéro réseau en local, hors ligne intact. Fichiers : `app.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v956. |
-
-**ft-v955 — 🧹 LE MÉNAGE DU MENU ADMIN — et DEUX FOIS je me suis trompé sur ce qui était inutile** — Michel : *« retire ce qui est inutile. Par contre marque bien dans les journaux qu'on les a retirés et pourquoi ils ont été nécessaires. Ça permet d'avoir une traçabilité de ce qui a été fait. »*
-
-**⭐⭐ SA CONSIGNE EST PLUS FINE QU'ELLE N'EN A L'AIR, et c'est elle qui a sauvé la version.** Il ne demande pas *« pourquoi on retire »* mais *« pourquoi ça a été NÉCESSAIRE »*. Or c'est en cherchant cette raison, outil par outil, que **les deux retraits que j'avais proposés se sont effondrés**. *La traçabilité demandée pour l'après a servi d'abord à l'avant.*
-
-**⚠️⚠️ ① PT-001 — J'AVAIS ANNONCÉ « le benchmark l'a remplacé ». C'EST FAUX.** Il rejoue **tout l'historique dans l'ordre**, fait débriefer chaque séance par Milo, vérifie qu'il **se souvient de l'objectif de la fois d'avant**, et finit par *« Qui suis-je en tant que sportif ? »*. C'est un test de **MÉMOIRE LONGUE** ; le benchmark, lui, joue **16 messages ISOLÉS**. *Il mesure la promesse centrale du produit — « tu ne repars jamais de zéro » — et rien d'autre ne le fait.*
-
-**⚠️⚠️ ② LE RECALAGE des anciennes séances — je le croyais one-shot.** Or **l'import d'historique existe** : des séances importées n'ont pas l'heure de leurs séries, donc elles auraient besoin d'être recalées. La fonction est idempotente et rend *« rien à recaler »* quand il n'y a rien. **Elle n'est pas finie, elle dort.**
-
-**⭐ C'est R28 payé DEUX FOIS dans la même tâche** — *une limite non vérifiée devient une règle de conception silencieuse* — et cette fois c'est moi qui affirmais, pas Michel. **Le plus utile n'était pas de supprimer pour avoir l'air décisif, c'était de le dire.**
-
-**👉 CE QUI EST LIVRÉ : on RANGE.** 36 boutons à plat → **6 sections `<details>`** repliables (Surveillance · Milo · Le compte · Diagnostic · Mes données · Bac à sable). Seule la **Surveillance** reste ouverte — c'est la seule qu'on regarde sans raison particulière. `<details>` natif : **zéro JS**, donc ça tient même si un script tombe.
-
-**⛔ ET LE TÉMOIN CENTRAL EST CELUI-LÀ : déplacer 19 cartes ne doit RIEN perdre.** 19 cartes, 34 boutons, comptés des deux côtés (app **et** clone — sinon les deux menus divergent en silence). *Un refactoring HTML perd un bouton sans rien casser de visible : aucun test fonctionnel ne l'attraperait.* Deux autres témoins vérifient que **PT-001 et le recalage restent joignables** — sinon le « rangement » aurait supprimé en douce (**R30** : un retrait se décide, il ne se constate pas).
-
-**⭐⭐ LE SEUL VRAI NETTOYAGE ÉTAIT AILLEURS : les personas VC.** Ils portaient les **prénoms de vrais testeurs** — Tatiana, Christophe, Emma — pour des profils **entièrement inventés**. Le 21/08, j'ai lu le champ `resume` de VC-002 (*« pratiquant confirmé qui a DÉJÀ un coach humain »*) comme un **fait sur le vrai Christophe**, et je m'en suis servi comme **argument** pour justifier une décision produit. Michel a dû me corriger **deux fois**. **Le piège était STRUCTUREL, pas une étourderie** : un décor de test et une note sur une personne réelle se lisaient *exactement pareil* dans ce fichier. 👉 Renommés **profil A / B / C**, ⛔ **prénoms injectés à Milo compris** — sinon il s'adresserait à « Tatiana » pendant un test, ce qui recrée la confusion qu'on vient d'enlever. *On supprime le piège au lieu de compter sur la vigilance.*
-Tests : **parcours 1008/1008** (+10, bloc LXXXI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 5 rouges**, exactement les 5 changements. ⚠️ **Et les 5 verts des deux côtés sont ici les plus importants** : cartes, boutons, PT-001 et le recalage étaient déjà là et **devaient le rester**. *Un rangement se juge à ce qui n'a PAS bougé.* Fichiers : `index.html`, `style.css`, `coach.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v955. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

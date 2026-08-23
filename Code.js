@@ -1866,11 +1866,11 @@ function handleEstimateFood_(body) {
     const prompt = 'Tu es un expert en nutrition. Estime les valeurs nutritionnelles TOTALES de ce que la personne a mangé.\n\n'
       + 'Repas décrit : "' + desc + '"\n\n'
       + 'Retourne UNIQUEMENT un objet JSON valide, sans texte avant ni après, sans balises markdown :\n'
-      + '{"name":"résumé court du repas","kcal":650,"prot":40,"carbs":70,"fat":18}\n\n'
+      + '{"name":"résumé court du repas","g":320,"kcal":650,"prot":40,"carbs":70,"fat":18}\n\n'
       + 'Règles :\n'
       + '- kcal = calories totales (nombre entier).\n'
       + '- prot, carbs, fat = grammes totaux de protéines, glucides, lipides (nombres entiers).\n'
-      + '- Si les quantités ne sont pas précisées, estime une portion normale.\n'
+      + '- Si les quantités ne sont pas précisées, estime une portion normale.\n- g = le POIDS TOTAL en grammes sur lequel portent ces valeurs (nombre entier). C\'est le poids de l\'aliment lui-même, pas celui d\'un de ses composants : pour \"30 g de poudre de protéine\" c\'est 30, pas la quantité de protéines. Si la personne a précisé une quantité, reprends-la exactement. Sinon, donne le poids de la portion que tu as supposée. Omets g SEULEMENT si un poids n\'a aucun sens (une boisson comptée en verres, un plat que tu ne sais pas peser).\n'
       + '- name = résumé court et propre du repas (max 40 caractères).\n'
       + '- Sois réaliste, ne mets jamais 0 kcal si un aliment est cité.\n'
       + 'Réponds UNIQUEMENT avec le JSON.';
@@ -1896,13 +1896,23 @@ function handleEstimateFood_(body) {
     try { d = JSON.parse(match[0]); }
     catch(e){ return json_({status:'error', error:'JSON invalide'}); }
 
-    return json_({status:'ok',
+    /* ⚖️ LE POIDS SUPPOSÉ EST RENVOYÉ (23/08/2026, ft-v975). Michel, devant une huile d'olive
+       estimée par l'IA : « je ne peux pas mettre de poids ». Le modèle choisissait une portion
+       en silence — l'app n'avait donc AUCUN repère pour la rescaler.
+       ⛔ Il n'est jamais inventé : `g` absent reste absent, et l'app se rabat sur des portions
+       plutôt que d'afficher un poids qu'elle aurait deviné (R29).
+       ⛔ Et il est BORNÉ : au-delà de 5 kg pour un repas, c'est une hallucination, pas une
+       portion — mieux vaut aucun repère qu'un repère faux. */
+    var _g = parseInt(d.g);
+    var out = {status:'ok',
       name:  String(d.name || desc).slice(0, 60),
       kcal:  Math.max(0, parseInt(d.kcal)  || 0),
       prot:  Math.max(0, parseInt(d.prot)  || 0),
       carbs: Math.max(0, parseInt(d.carbs) || 0),
       fat:   Math.max(0, parseInt(d.fat)   || 0)
-    });
+    };
+    if (!isNaN(_g) && _g > 0 && _g <= 5000) out.g = _g;
+    return json_(out);
   } catch(err) {
     return json_({status:'error', error: err.message});
   }

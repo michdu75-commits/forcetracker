@@ -1349,6 +1349,10 @@ function openAddFood(){
      personne croyait neuf. */
   try{ if(_afSuggTimer) clearTimeout(_afSuggTimer); _afSuggVider(); }catch(e){}
   const bcRow=document.getElementById('af-bc-row');if(bcRow)bcRow.style.display='none';
+  /* R15 : le poids supposé par l'IA et le bloc « Quantité » se rendent comme la provenance —
+     sinon la référence du produit précédent piloterait la saisie suivante, en silence. */
+  window._afIaGrammes=0; window._afIaDesc='';
+  try{ _afPropCacher(); }catch(e){}
   const coh=document.getElementById('af-coherence');if(coh){coh.style.display='none';coh.innerHTML='';}
   const hc=document.getElementById('af-health-card');if(hc)hc.innerHTML='';
   // Code-barres + score santé : GRATUIT pour tout le monde (client-side, 0 token).
@@ -1566,6 +1570,12 @@ async function estimateFoodAI(){
     document.getElementById('af-fat').value=d.fat||0;
     _afCoherence();        // une estimation IA incohérente se voit tout de suite
     if(d.name)document.getElementById('af-desc').value=d.name;
+    /* ⚖️ LE POIDS QUE L'IA A SUPPOSÉ (ft-v975) — Michel : « je ne peux pas mettre de poids ».
+       ⛔ Jamais inventé : `g` absent laisse `_afIaGrammes` à 0, et le bloc se rabat sur des
+       portions plutôt que d'afficher un poids que personne n'a donné (R29). */
+    window._afIaGrammes=(d.g>0&&d.g<=5000)?d.g:0;
+    window._afIaDesc=(document.getElementById('af-desc')||{}).value||'';
+    _afMajAncre();
     // ⚠️ L'IA ne donne PAS de valeur au 100 g ni de quantité : elle rend un total estimé pour la
     //    phrase. On enregistre donc l'origine et rien d'autre — inventer un `per100` ici ferait
     //    passer une estimation pour une mesure (R29).
@@ -2207,8 +2217,91 @@ function _efCorrigerKcal(v){
    l'enregistrer »*. Attraper le chiffre pendant qu'il est encore sous les yeux vaut mieux que de
    le retrouver le lendemain : sa journée était déjà faussée de 1 000 kcal quand il l'a vu. */
 function _afCoherence(){ _coherenceKcal('af','_afCorrigerKcal'); }
+
+/* ⚖️ LA QUANTITÉ À L'AJOUT, PAS SEULEMENT À LA MODIFICATION (23/08/2026, ft-v975)
+   Michel, devant une huile d'olive estimée par l'IA : *« je ne peux pas mettre de poids »*.
+
+   ⛔⛔ ET C'EST EXACTEMENT LE MOTIF DE ft-v973 : le mécanisme EXISTAIT, posé d'un seul côté.
+   ft-v972 a donné le rescale par proportion à la modale « Modifier l'aliment » ; le formulaire
+   d'AJOUT, lui, n'a de champ « Quantité » que si un `per100` est connu (scan, CIQUAL, recherche).
+   Une phrase estimée par l'IA n'en a pas — donc aucun réglage, et 4 chiffres à recalculer à la
+   main. *Une correction faite d'un côté et pas de l'autre est un oubli, pas un arbitrage* (R8).
+
+   👉 TROIS SOURCES POUR LA RÉFÉRENCE, DE LA PLUS SÛRE À LA MOINS SÛRE :
+     ① `per100` connu → grammes absolus (`af-bc-row`, ft-v965/966, inchangé) ;
+     ② ⭐ LE POIDS QUE L'IA A SUPPOSÉ (`g`, ft-v975) — le modèle choisissait une portion en
+        SILENCE ; il l'annonce désormais, et une estimation aveugle devient une estimation
+        ANCRÉE. C'est ça qui rend la case « poids » possible sur une phrase libre ;
+     ③ le nombre écrit dans la phrase (« 20 g d'huile d'olive »).
+   ⛔ ET SANS AUCUN ANCRAGE, on n'invente pas un poids : des **portions** (½ · 1½ · ×2 · ×3),
+   vraies quelle que soit la portion de départ. *Un « ×2 » est juste ; un « 60 g » deviné est faux.*
+
+   ⚠️ LE POIDS DE L'IA RESTE UNE ESTIMATION, ET C'EST ÉCRIT À L'ÉCRAN (R32/R29) : on ne le
+   présente pas comme une mesure, on dit d'où il vient. La personne le corrige, tout suit. */
+let _afRef=null;          // {base:{kcal,prot,carbs,fat}, q, u, src}
+function _afPropSetBase(){
+  const n=id=>parseInt((document.getElementById(id)||{}).value)||0;
+  return {kcal:n('af-kcal'),prot:n('af-prot'),carbs:n('af-carbs'),fat:n('af-fat')};
+}
+/* ⛔ On repart TOUJOURS de `base`, jamais des champs affichés — sinon deux réglages successifs
+   s'empileraient, et l'erreur grandirait à chaque frappe (même piège qu'en ft-v972). */
+function _afProp(f){
+  if(!_afRef) return;
+  const b=_afRef.base;
+  const P=(id,v)=>{const el=document.getElementById(id);if(el)el.value=Math.round(v);};
+  P('af-kcal',b.kcal*f); P('af-prot',b.prot*f); P('af-carbs',b.carbs*f); P('af-fat',b.fat*f);
+  _afCoherence();
+}
+function _afApplyProp(){
+  if(!_afRef||!(_afRef.q>0)) return;
+  const v=parseFloat((document.getElementById('af-prop')||{}).value);
+  if(!(v>0)) return;                       // champ vidé pendant la frappe : on ne touche à rien
+  _afProp(v/_afRef.q);
+}
+function _afApplyPortion(x){ _afProp(x); }
+function _afPropCacher(){
+  _afRef=null;
+  const el=document.getElementById('af-prop-row');
+  if(el){el.style.display='none';el.innerHTML='';}
+}
+/* Décide de la source et (re)construit le bloc. ⚠️ Appelée seulement quand la SOURCE des valeurs
+   change — estimation IA, ou sortie d'un champ (`onchange`, donc au blur). Jamais à chaque frappe :
+   reconstruire le bloc pendant qu'on tape dedans ferait perdre le curseur. */
+function _afMajAncre(){
+  const el=document.getElementById('af-prop-row'); if(!el) return;
+  if(_bcNutr){ _afPropCacher(); return; }          // ① un pour-100 g est connu : `af-bc-row` s'en charge
+  const base=_afPropSetBase();
+  if(!(base.kcal>0)){ _afPropCacher(); return; }   // rien à rescaler tant qu'il n'y a pas de valeurs
+  const nom=String((document.getElementById('af-desc')||{}).value||'');
+  const m=nom.match(/(\d+(?:[.,]\d+)?)\s*(g|ml)\b/i);
+  /* ⚠️ LE POIDS DE L'IA PASSE DEVANT LE NOMBRE LU DANS LA PHRASE, ET CE N'EST PAS UN DÉTAIL.
+     Sur « 3 œufs et 200 g de riz », le nombre écrit ne désigne QU'UN COMPOSANT — le rescaler
+     ferait comme si toute l'assiette pesait 200 g. Le poids de l'IA, lui, porte sur le total.
+     ⛔ MAIS IL N'APPARTIENT QU'À LA PHRASE QUI A ÉTÉ ESTIMÉE : si la phrase a changé depuis,
+     il est périmé et on ne s'en sert plus. *Une référence qui survit à son sujet est pire que
+     pas de référence : elle a l'air d'un fait.* */
+  const iaValide = window._afIaGrammes>0 && String(window._afIaDesc||'')===nom;
+  const ancre = iaValide ? {v:window._afIaGrammes,u:'g',src:'poids estimé par l\'IA'}
+              : (m ? {v:parseFloat(m[1].replace(',','.')),u:m[2].toLowerCase(),src:'lu dans ta phrase'} : null);
+  const style='width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);';
+  if(ancre && ancre.v>0){
+    _afRef={base:base,q:ancre.v,u:ancre.u,src:ancre.src};
+    el.innerHTML='<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité ('+ancre.u+') <span style="font-weight:400;">— recalcule les 4 valeurs</span></div>'
+      +'<input id="af-prop" type="number" inputmode="decimal" step="any" value="'+ancre.v+'" oninput="_afApplyProp()" style="'+style+'">'
+      +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Référence : '+ancre.v+' '+ancre.u+' ('+ancre.src+'). Corrige-la, les 4 valeurs suivent en proportion.</div>';
+  }else{
+    _afRef={base:base,q:1,u:'',src:'portion'};
+    const b=(x,l)=>'<button onclick="_afApplyPortion('+x+')" style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t2);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">'+l+'</button>';
+    el.innerHTML='<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Portion <span style="font-weight:400;">— multiplie les 4 valeurs</span></div>'
+      +'<div style="display:flex;gap:6px;">'+b(0.5,'½')+b(1,'1')+b(1.5,'1½')+b(2,'2')+b(3,'3')+'</div>'
+      +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Aucune quantité connue — on ne peut pas inventer un poids. Mets-la dans ta phrase (ex. « 20 g d\'huile d\'olive ») et ce sera un vrai poids.</div>';
+  }
+  el.style.display='block';
+}
+
 function _afCorrigerKcal(v){
   const el=document.getElementById('af-kcal'); if(el)el.value=v;
+  if(_afRef)_afRef.base.kcal=v;   // la référence suit, sinon un rescale ferait revenir l'ancien chiffre
   _afCoherence();
 }
 // Même calcul que `_bcApplyGrams()` (R2) : pour-100g × grammes/100, appliqué aux 4 champs macro.
