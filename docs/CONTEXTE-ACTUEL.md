@@ -6,7 +6,13 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v972` — fusionnée sur `master` le 22/08.
+- **Version en ligne (live) :** `ft-v973` — fusionnée sur `master` le 23/08.
+- ⬇️ **DÉFILER JUSQU'EN BAS, SUR TOUS LES ÉCRANS** (ft-v973) — Michel : *« Beug, je ne peux plus
+  défiler en bas »*. Safari n'ajoute pas le `padding-bottom` d'un conteneur flex qui défile ;
+  le correctif (un vrai **élément**) existait **depuis ft-v670** mais n'était posé que sur
+  l'écran Progrès. ⚠️ **Ma 1ʳᵉ hypothèse était fausse** : rejoué sur le code d'avant ft-v968, la
+  dernière ligne était **déjà** cachée (827 px pour une nav à 770). ⭐ Un **témoin structurel**
+  fait désormais rougir la livraison si un écran futur n'a pas son espaceur.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.

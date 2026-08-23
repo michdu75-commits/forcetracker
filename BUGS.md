@@ -862,3 +862,38 @@ chat si tout tombe — *on ne laisse jamais la personne devant un bouton qui ne 
 On a corrigé là où on l'a vue, et le test le dit : *au 2ᵉ export qui perd son contenu, la
 famille sera prouvée et le témoin s'élargira.* Deviner deux fois de suite a déjà coûté cher
 (famille 12ter).
+
+---
+
+## 🧱 LE CORRECTIF POSÉ D'UN SEUL CÔTÉ *(23/08/2026, ft-v973)*
+
+> **Michel**, capture du Journal à l'appui : *« Beug, je ne peux plus défiler en bas »* — sa
+> dernière ligne restait coincée sous la barre de navigation.
+
+**Le mécanisme** : le correctif **existait**, juste, éprouvé… mais posé sur **un seul** des six
+écrans concernés. Safari n'ajoute pas le `padding-bottom` d'un conteneur flex qui défile à sa
+hauteur défilable ; l'espaceur qui répare ça avait été ajouté en **ft-v670** — à l'écran Progrès
+seulement. Les cinq autres ont gardé pendant des mois un padding que l'iPhone ignore.
+
+**Pourquoi c'est vicieux, et pourquoi ça dure** :
+- **rien n'échoue** — les cinq écrans marchent parfaitement partout ailleurs (Chrome compte le
+  padding), et l'iPhone ne lève aucune erreur ;
+- **ça ne mord qu'au-delà d'un seuil** : tant que le contenu tient dans l'écran, on ne voit rien.
+  Le défaut attend qu'une page s'allonge — ici, que Michel se mette vraiment à noter ses repas ;
+- **la présence du correctif ailleurs rassure** : on se souvient de l'avoir traité, donc on ne
+  cherche plus.
+
+**À quoi on le reconnaît** : un correctif nommé, commenté, documenté… et **un seul appelant**.
+La question à poser est toujours la même : *« combien d'endroits ont ce problème, et combien
+portent le correctif ? »* — deux nombres, pas un.
+
+**⚠️ Et la fausse piste est presque garantie** : j'ai d'abord accusé la version de la veille
+(ft-v968, qui avait rallongé la page de 155 px). Rejoué sur le code d'avant avec les mêmes
+données : la dernière ligne était **déjà** cachée. *Un défaut ancien qui se révèle ressemble
+exactement à un défaut neuf* — et le dernier changement est toujours le suspect le plus
+disponible (famille 12quater).
+
+**Ce qui protège aujourd'hui** : un témoin **structurel** qui lit le DOM et exige l'espaceur sur
+**chaque** écran qui défile — donc valable pour n'importe quel moteur, et **un écran futur sans
+espaceur fait rougir la livraison**. *Le correctif de ft-v670 était juste ; ce qui manquait,
+c'est ce qui empêche de l'oublier ailleurs* (**R8/R13**).

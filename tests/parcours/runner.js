@@ -10323,6 +10323,85 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC XCII - ON DOIT POUVOIR DEFILER JUSQU'EN BAS, SUR TOUS LES ECRANS (23/08/2026) ==
+   Michel, capture du Journal a l'appui : « Beug, je ne peux plus defiler en bas » - sa derniere
+   ligne (Riz Basmati) restait sous la barre de navigation.
+   ⛔⛔ SAFARI N'AJOUTE PAS le padding-bottom d'un conteneur flex qui defile a sa hauteur
+   defilable. Le correctif - un vrai ELEMENT, toujours compte - existait depuis ft-v670, mais
+   n'avait ete pose que sur l'ecran Progres. Les cinq autres gardaient un padding que l'iPhone
+   ignorait (R8/R13 : le motif etait bon, applique d'un seul cote).
+   ⭐ LES DEUX TEMOINS SONT DE NATURES DIFFERENTES, ET C'EST VOULU :
+     · le premier est STRUCTUREL - il lit le DOM, donc il vaut pour n'importe quel moteur, et un
+       ECRAN FUTUR sans espaceur fera rougir la livraison ;
+     · le second MESURE le defilement, en simulant le defaut de Safari (padding annule). Chromium
+       seul ne reproduit rien : il compte le padding, donc tout marchait deja chez lui. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    /* 1. STRUCTUREL - chaque ecran qui defile porte son espaceur. L'ecran Coach est le seul
+       exclu : il ne defile pas lui-meme (overflow:hidden), son fil de discussion a le sien. */
+    const ecrans=[...document.querySelectorAll('.screen')].filter(s=>!s.classList.contains('coach-screen'));
+    o.nbEcrans=ecrans.length;
+    o.sansEspaceur=ecrans.filter(s=>!s.querySelector(':scope > .scroll-spacer')).map(s=>s.id);
+    /* 2. LES DEUX MECANISMES NE SE CUMULENT JAMAIS : un padding-bottom de retour donnerait
+       280 px de vide sur Chrome, et l'iPhone n'en verrait toujours qu'un seul. */
+    o.padTropGrand=ecrans.filter(s=>parseFloat(getComputedStyle(s).paddingBottom)>10)
+      .map(s=>s.id+':'+getComputedStyle(s).paddingBottom);
+
+    /* 3. MESURE - on simule le defaut de Safari, puis on defile a fond. */
+    const css=document.createElement('style');
+    css.textContent='.screen{padding-bottom:0 !important;}';
+    document.head.appendChild(css);
+
+    const d=today(); S.foodLog=[]; let ts=1;
+    [['petitdej',2],['collation',2],['dejeuner',3]].forEach(([m,n])=>{
+      for(let i=0;i<n;i++) S.foodLog.push({ts:ts++,date:d,name:m+' '+i,meal:m,kcal:200,prot:20,carbs:30,fat:5});
+    });
+    persist();
+
+    const navTop=Math.round(document.querySelector('.nav').getBoundingClientRect().top);
+    o.navTop=navTop;
+    const finDuContenu=async(id,prep)=>{
+      goScreen(id); if(prep)prep();
+      await new Promise(r=>setTimeout(r,350));
+      const sc=document.getElementById('s-'+id);
+      sc.scrollTop=999999;
+      await new Promise(r=>setTimeout(r,150));
+      /* Ou finit le VRAI contenu une fois qu'on a defile a fond : l'espaceur ne compte pas,
+         c'est du vide exprès. Mesure independante du moteur - pas de « dernier element » a
+         deviner (un accordeon replie garde des enfants de hauteur non nulle : le premier jet
+         de ce temoin accusait un bouton INVISIBLE et rendait un faux rouge). */
+      const sp=sc.querySelector(':scope > .scroll-spacer');
+      return Math.round(sc.getBoundingClientRect().top + sc.scrollHeight - sc.scrollTop - (sp?sp.offsetHeight:0));
+    };
+    o.finJournal=await finDuContenu('nutrition',()=>switchNuTab('journal',document.getElementById('ntab-journal')));
+    o.finMacros =await finDuContenu('nutrition',()=>switchNuTab('macros', document.getElementById('ntab-macros')));
+    o.finProfil =await finDuContenu('setup');
+    o.finAccueil=await finDuContenu('home');
+    css.remove();
+    return o;
+  });
+
+  console.log('\n═══ BLOC XCII. Defiler jusqu\'en bas — sur TOUS les ecrans ═══');
+  t('⛔⛔ chaque ecran qui defile porte son espaceur (un ecran FUTUR sans espaceur rougit ici)',
+    R.nbEcrans>=6 && R.sansEspaceur.length===0, 'sans espaceur : '+R.sansEspaceur.join(', ')+' / '+R.nbEcrans+' ecrans');
+  t('⛔ ... et aucun n\'a garde de padding-bottom (les deux mecanismes ne se cumulent jamais)',
+    R.padTropGrand.length===0, R.padTropGrand.join(', '));
+  t('⭐⭐ SIMULATION SAFARI — le Journal descend jusqu\'au bout (le cas exact de Michel)',
+    R.finJournal<=R.navTop, 'fin du contenu '+R.finJournal+' > nav '+R.navTop);
+  t('⭐ ... l\'onglet Macros aussi', R.finMacros<=R.navTop, 'fin '+R.finMacros+' > nav '+R.navTop);
+  t('⭐ ... le Profil aussi', R.finProfil<=R.navTop, 'fin '+R.finProfil+' > nav '+R.navTop);
+  t('⭐ ... et l\'Accueil aussi', R.finAccueil<=R.navTop, 'fin '+R.finAccueil+' > nav '+R.navTop);
+
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
