@@ -6,16 +6,21 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v975` — fusionnée sur `master` le 23/08.
+- **Version en ligne (live) :** `ft-v976` — fusionnée sur `master` le 23/08.
 - ⚖️ **LA QUANTITÉ SUR UNE PHRASE LIBRE** (ft-v975) — Michel : *« je ne peux pas mettre de
   poids »*. Le rescale par proportion existait depuis ft-v972… **côté modification seulement**.
   ⭐ Le modèle **annonce désormais le poids qu'il a supposé** (`g`) : une estimation aveugle
   devient ancrée (**R4**). ⛔ Sans ancrage, des **portions**, jamais un poids inventé (R29).
-- 🧪 **DÉCISION DE MICHEL (23/08) : le clone `/clone/` est RETIRÉ** — *« plus besoin des clones,
+- 🧪 **LE CLONE `/clone/` EST RETIRÉ** (ft-v976, décision de Michel) — *« plus besoin des clones,
   ça permettra de gagner du temps »*. Mesuré : sur les **60 dernières versions**, `clone/` a
   changé à chaque fois et **zéro fois tout seul** — il ne servait plus de bac à sable, il
   recopiait. Il coûtait 8 fichiers à dupliquer par version, et il a failli coûter cher le jour
   même (91 lignes du shim d'isolation effacées par un `cp` trop rapide, restaurées).
+  ⏭️ **À TRANCHER, et c'est le vrai reste** : cinq essais vivaient derrière `__FT_CLONE__` et
+  n'ont plus aucun moyen d'être testés — zones de santé lues dans le texte · header compacté
+  (*« à promouvoir si Michel valide »* depuis ft-v610) · promesse d'inscription · consigne de
+  mémoire des blessures · outils de test. **Les gardes sont conservées exprès** : les retirer
+  rendrait ces essais soit universels, soit perdus. Chacun se décide séparément.
 - 🔤 **LE RAPPORT DE BALANCE LU SUR LE TÉLÉPHONE** (ft-v974) — décision de Michel : *« on
   construit, parce que je l'utilise souvent »*. Première mise en œuvre de l'**échelle des
   sources** de R33 (OCR local avant l'appel IA, échec propre). Mesuré : **0,3 s** de chargement,

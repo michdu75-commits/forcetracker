@@ -285,16 +285,21 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - ⚠️ **Ce code est la brique clé pour un futur « photos cryptées sur le Drive »** (chiffrement côté téléphone avec une clé dérivée du code perso → même l'admin ne voit que du charabia). Voir IDEES-FUTURES.md.
 
 
-### 🧪 Clone de test (`/clone/`) — bac à sable restylage (✅ 2026-07-04)
-- **But** : copie fonctionnelle et LIVE de l'app pour faire le restylage complet **sans toucher la prod**. Stratégie « copie test en off » du fichier idées. URL : `https://michdu75-commits.github.io/forcetracker/clone/`.
-- **⚠️ Impossible en repo séparé** (l'accès GitHub de Claude Code web est limité à `michdu75-commits/forcetracker`) → le clone vit dans un **sous-dossier `/clone/` du même repo**. La prod (racine) n'est jamais modifiée.
-- **Contenu de `/clone/`** : copies de code uniquement (index.html, style.css, les 8 JS, manifest.json, sw.js). **Aucun asset dupliqué** — les images/polices lourdes (anatomy 22M, muscles 17M, exercises 6.7M…) sont référencées via `../` vers le parent (réécriture `sed` des chemins `anatomy/`→`../anatomy/`, etc.).
-- **Isolation stockage** : un shim en tête de `clone/index.html` **redéfinit `window.localStorage`** pour préfixer toutes les clés en `cl_` → le clone a SES données, ne lit/écrit JAMAIS les `ft4_*` de l'app réelle. Vérifié en test (le clone voit `null` pour `ft4_name` de la prod, la prod reste intacte). *(Fallback si un navigateur refuse la redéfinition : partage — donc sur iPhone, considérer que le clone PEUT partager les données ; l'utiliser surtout pour le rendu.)*
-- **Service Worker du clone** (`clone/sw.js`) : réseau natif pur (scope `/clone/`), **ne touche jamais** le Cache Storage de la prod (partagé par origine — ne PAS y faire `caches.delete`). Garantit toujours la dernière version pour tester. Un reload one-shot au 1er chargement (controllerchange) est normal.
-- **Badge `🧪 CLONE`** injecté en haut pour ne jamais confondre avec l'app réelle.
-- **⚠️ Réécriture `sed` — piège** : `machine/` a été remplacé à tort dans un **regex** `.../epaules machine/i` de `log.js` (le `/` était le délimiteur de regex, pas un chemin). Corrigé. **Règle** : si on régénère le clone, ne préfixer que les tokens précédés d'une quote/paren, jamais dans un regex.
-- **Workflow** : restyler dans `/clone/`, Michel valide sur l'URL clone, puis on **promeut** vers la racine (copier les fichiers validés de `clone/` → racine + bump `sw.js`).
-
+### 🧪 Clone de test (`/clone/`) — ⛔ RETIRÉ le 23/08/2026 (ft-v976)
+- **Ce qu'il était** : une copie fonctionnelle et live de l'app, dans un sous-dossier du même
+  dépôt (un dépôt séparé m'étant impossible), pour essayer un restylage **sans toucher la prod**.
+  Stockage isolé par un shim `cl_`, service worker propre, badge « 🧪 CLONE ».
+- **Pourquoi il est parti** (décision de Michel : *« plus besoin des clones, ça permettra de
+  gagner du temps »*) : **mesuré sur les 60 dernières versions, `clone/` a changé à chaque fois
+  et zéro fois tout seul** — il ne servait plus de bac à sable, il recopiait. Coût réel : 8
+  fichiers à dupliquer par version, un correctif propre au clone à re-poser, 2,8 Mo, et une
+  deuxième source de vérité. Le jour même, un `cp` trop rapide a effacé 91 lignes de son shim
+  d'isolation (restaurées) — le genre de dégât qu'il fabriquait en silence.
+- ⛔ **Les gardes `window.__FT_CLONE__` restent dans le code, exprès** : des essais vivent
+  derrière (voir le journal ft-v976). Ne pas les « réparer » ni les retirer sans décider de
+  chaque essai.
+- 👉 **Pour le refaire** : copier les fichiers servis dans un sous-dossier, réécrire les chemins
+  d'assets vers `../`, poser le shim de stockage préfixé et un service worker réseau-first.
 
 ---
 
@@ -400,7 +405,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v975`** (prochaine : `ft-v976`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v976`** (prochaine : `ft-v977`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +415,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v976 — 🧪 LE CLONE DE TEST EST RETIRÉ** — Michel : *« ai-je encore besoin du clone ? »*, puis, la mesure en main : *« plus besoin des clones, ça permettra de gagner du temps »*.
+
+**⭐ MESURÉ AVANT DE COUPER (R30 — un retrait se décide, il ne se constate pas), et le chiffre est net** : sur les **60 dernières versions**, le dossier `clone/` a changé **à chaque fois**… et **zéro fois tout seul**. *Il n'a donc jamais servi de bac à sable sur cette période — il recopiait la prod.* Sa raison d'être (04/07/2026) était d'essayer un restylage complet **avant** la prod, parce qu'un dépôt séparé m'était impossible. Cette raison n'a plus de cas actuel.
+
+**⛔ CE QU'IL COÛTAIT ÉTAIT RÉEL** : 8 fichiers à dupliquer par version, un correctif propre au clone à re-poser (les chemins `../data/`), son `sw.js` à synchroniser, 2,8 Mo, et une **deuxième source de vérité** qui peut diverger sans rien casser.
+
+**⚠️⚠️ ET LE PIÈGE S'EST DÉCLENCHÉ LE JOUR MÊME, C'EST CE QUI A DÉCLENCHÉ SA QUESTION** : en synchronisant, un `cp` un peu vite a **effacé 91 lignes de `clone/index.html`** — le shim qui isole ses données des vraies. Repéré et restauré. ⭐ **Or un script de synchro existait** (`build_clone.py`), avec justement un garde-fou *« shim clone introuvable — abandon, rien écrasé »*. *Un outil qu'on contourne ne protège rien.*
+
+**⛔⛔ LES GARDES `window.__FT_CLONE__` SONT CONSERVÉES EXPRÈS, ET LA RAISON EST ÉCRITE DANS LE CODE** : plusieurs **essais** vivent derrière elles, et les débrancher les rendrait soit **universels**, soit **perdus** — deux changements de comportement que personne n'a demandés. *On a supprimé le clone, pas arbitré ses expériences.*
+
+**👉 CE QUI SE RETROUVE DONC PARQUÉ SANS MOYEN DE L'ESSAYER, et c'est à trancher séparément** : ① les **zones de santé lues dans le texte** d'une mémoire acceptée (`coach.js`) · ② le **header compacté** (`style.css`, marqué *« à promouvoir si Michel valide »* depuis ft-v610) · ③ la **« promesse » d'inscription** (`.ob-clone-only`) · ④ la consigne de **mémoire des blessures** (retenir la conséquence durable, pas l'anecdote) · ⑤ les outils de test (questions illimitées, refaire l'inscription). ⚠️ **Le badge du Gardien, lui, ne se perd pas** : il est aussi ouvert à l'admin.
+
+**⛔ DEUX TÉMOINS ONT DÛ ÊTRE TRAITÉS, ET DIFFÉREMMENT** : celui des boutons de rejeu est **reciblé** (la garantie ne change pas, elle ne porte plus que sur un fichier) ; celui qui vérifiait que *« le clone a exactement le même menu »* est **retiré avec sa raison écrite à sa place** — *ce qu'il protégeait, deux copies qui dérivent, a disparu avec la seconde copie.*
+
+**👉 ET SI UN BAC À SABLE REDEVIENT NÉCESSAIRE**, il se refabrique depuis la prod en quelques minutes — c'est exactement comme ça qu'il est né.
+Tests : **parcours 1175/1175** (−1, exactement le témoin de parité du clone retiré), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Un retrait ne se juge pas à un contrôle négatif mais à ce qui n'a PAS bougé** : les 1 176 témoins de la version précédente doivent rester verts sans le clone. Fichiers : `clone/*` (supprimé), `build_clone.py` (supprimé), `app.js`, `tests/parcours/runner.js`, `tests/milo/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v976. |
 
 **ft-v975 — ⚖️ « JE NE PEUX PAS METTRE DE POIDS » — la quantité sur une phrase libre** — Michel, capture à l'appui, devant une huile d'olive estimée par l'IA (135 kcal · 15 g de lipides) : *« Je ne peux pas mettre de poids »*.
 
@@ -696,25 +718,6 @@ Tests : **parcours 1041/1041** (+6, bloc LXXXIII), calculs 266/266, muscles 241/
 
 **⚠️ DEUX FOIS MON TÉMOIN A ACCUSÉ LE CODE À TORT.** ① Il exigeait *« zéro appel réseau »* en tapant — devenu **faux** puisque la base se charge à la frappe. La garantie qui compte n'avait pas changé (les locales s'affichent **sans attendre**, et le seul appel est un **fichier**, jamais l'IA) : *j'ai rendu le témoin exact au lieu de l'affaiblir.* ② Puis mon décor **effaçait la base juste avant de la chercher** — 3ᵉ fois cette semaine qu'un témoin désigne le mauvais coupable. *Un décor se relit dans l'ORDRE.*
 Tests : **parcours 1035/1035** (+14, bloc LXXXII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Contrôle négatif : le bloc est GARDÉ mais peu instructif** — sans le moteur, le témoin rend « CIQUAL absente » au lieu de mesurer. *Et sans ce garde il ne rougissait pas : il faisait PLANTER le runner avant tout verdict — un témoin qui tue le harnais ne mesure rien du tout.* Fichiers : `data/ciqual.json` (neuf), `tools/ciqual.py` (neuf), `app.js`, `sw.js`, `clone/*`, `tests/parcours/runner.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v957. |
-
-**ft-v956 — 🔎 DES PROPOSITIONS QUAND ON TAPE UN ALIMENT — plus besoin de l'IA pour une banane** — Michel, après son **premier vrai repas noté** : *« pour rentrer les aliments il n'y a pas de choix de propositions donc je suis obligé de faire fonctionner l'IA »*.
-
-**⭐⭐ IL A RAISON, ET C'EST LE TROU N°1 DU DOSSIER NUTRITION.** Le champ « à la main » était un **texte vide** : soit on connaît ses macros par cœur, soit on **dépense une estimation IA pour une banane**. Le code-barres, lui, ne sert que si on a l'emballage sous la main. *C'est exactement le défaut que les briques 1/3/4 devaient combler — et il est remonté par l'usage réel, ce pour quoi elles avaient été différées.*
-
-**⭐ DEUX SOURCES, ET AUCUNE INVENTÉE.** ① **Ce qu'il a DÉJÀ noté** — instantané, hors ligne, **zéro invention** : ses propres entrées avec ses propres grammages, dédoublonnées, la **plus récente** gagnant (si la quantité a changé, c'est celle-là qui reflète ce qu'il mange). ② **La recherche Open Food Facts** — l'app lui parle **déjà** pour les codes-barres : même serveur, **gratuit, sans clé ni quota**, de vraies valeurs avec leur provenance enregistrée.
-
-**⛔⛔ LE TÉMOIN CENTRAL EST LA RAISON D'ÊTRE DE LA VERSION : aucun essai IA n'est consommé.** Et il le **compte sur les appels réseau réels**, il ne le suppose pas — c'est la seule façon de prouver à la fois « zéro IA » et « zéro réseau pour les suggestions locales ».
-
-**⭐⭐ R2 — UN RÉSULTAT DE RECHERCHE EST UN PRODUIT COMME UN AUTRE.** `_offRemplirFormulaire` est **sorti de `_lookupBarcode`** pour que les deux chemins partagent tout : grammes, provenance, score santé, et surtout **l'avertissement cru/cuit** (le piège du ×2,7 — le paquet de pâtes scanné puis pesé cuit). *Deux chemins séparés auraient fini par perdre cet avertissement d'un côté, et personne ne l'aurait vu.*
-
-**⛔ RIEN AU DÉMARRAGE** (règle d'or #4) : tout part d'une frappe. Les locales sortent **sans réseau** ; la recherche distante attend une pause de frappe, et vérifie **deux fois** que la frappe n'a pas continué — avant l'appel et après, sinon un résultat périmé écraserait la liste du mot suivant. **Hors ligne**, elle rend une liste vide et **les locales continuent de marcher**.
-
-**⚠️ ET DEUX GARDE-FOUS DE BRUIT** : moins de 2 lettres ne propose **rien** (tout matcherait), et les accents ne bloquent pas — *« pates »* retrouve *« Pâtes complètes »*.
-
-**⛔ LA PROVENANCE DIT « historique », PAS UNE SAISIE NEUVE** : c'est la même personne, mais ce n'est pas une saisie — la brique 0 (ft-v907) sépare exprès *comment c'est entré* et *d'où vient le chiffre*, et confondre les deux rendrait ce champ inutile.
-
-**⚠️ LIMITE ÉCRITE, PAS CONTOURNÉE** : Open Food Facts est une base de **produits de marque**. *« Banane »* y rend des bananes de marque, pas l'aliment générique — **CIQUAL** (3 484 génériques) reste le bon outil et **n'est pas là**. On ne fait pas semblant du contraire, et **on n'invente surtout pas de valeurs génériques nous-mêmes** (R29 : le faux-précis coûte plus cher que l'absence).
-Tests : **parcours 1021/1021** (+13, bloc LXXXII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — le moteur n'existe pas. ⚠️ **Peu instructif et autant l'écrire** : les 12 autres témoins vivent sous le garde « fonction absente », donc ils **ne tournent pas** contre l'ancien code. *Un témoin qui ne tourne pas n'est pas un témoin vert.* Ce qui est réellement prouvé ici l'est sur le code neuf : zéro appel IA, zéro réseau en local, hors ligne intact. Fichiers : `app.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v956. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
