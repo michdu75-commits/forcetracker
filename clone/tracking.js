@@ -1077,12 +1077,38 @@ function onBodyScanPhoto(input){
       if(data.status!=='ok'||!data.data)throw new Error(data.error||'lecture impossible');
       const o=data.data;
       if(!unlimited){S.bodyScanImports=(S.bodyScanImports||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();}
-      _hideBsScan(()=>{
-        openBodyScanForm(-1);
+      /* ⛔⛔ `openBodyScanForm` EST `async` — IL FAUT L'ATTENDRE (23/08/2026, ft-v971).
+         Michel : *« c'est la 2ᵉ fois que je scanne, mes poids ne prennent pas sur la première
+         analyse, il faut que je remette une 2ᵉ fois — ça fait 4 appels API au lieu de 2 »*.
+         ⭐ MESURÉ DANS UN VRAI NAVIGATEUR, pas déduit : à la 1ʳᵉ passe, **0 champ sur 16** est
+         trouvé, et à la 2ᵉ les 16 sont remplis **puis effacés**.
+         👉 LA CAUSE : `openBodyScanForm` est devenue `async` en ft-v758 (le verrou santé y a
+         ajouté `await _healthGate()`). Appelée SANS `await`, elle rend la main **avant** de
+         construire la grille de champs — donc `getElementById('bs-weight')` renvoie `null`, rien
+         n'est rempli, puis la construction repart et remplace tout par des champs VIDES.
+         ⚠️ *Le drame est qu'aucune erreur n'est levée* : `if(el && ...)` avale silencieusement
+         l'absence, et la lecture IA — qui a bien réussi et coûté son appel — est jetée. **C'est
+         `R14` : rendre une fonction asynchrone change le contrat de TOUS ses appelants**, et
+         celui-ci n'avait pas été revu.
+         ⛔ ET ÇA COÛTE DE L'ARGENT, pas seulement du confort : chaque tentative est un appel
+         vision facturé. Un défaut d'ordonnancement se payait en quota IA. */
+      _hideBsScan(async()=>{
+        await openBodyScanForm(-1);
+        /* ⚠️ Si le verrou santé a refusé, la modale n'est pas ouverte : on ne remplit pas des
+           champs invisibles et on ne prétend pas que le rapport est prêt. */
+        const ouvert=document.getElementById('ov-bodyscan-form');
+        if(!ouvert||!ouvert.classList.contains('open')) return;
         if(o.date){const dEl=document.getElementById('bs-date');if(dEl)dEl.value=o.date;}
-        _BS_FIELDS.forEach(f=>{const el=document.getElementById('bs-'+f.k);if(el&&o[f.k]!=null&&o[f.k]!=='')el.value=o[f.k];});
-        _BS_SEG_FIELDS.forEach(f=>{const el=document.getElementById('bs-'+f.k);if(el&&o[f.k]!=null&&o[f.k]!=='')el.value=o[f.k];});
-        toast('Rapport lu ✅ Vérifie puis Enregistre','success');
+        let remplis=0;
+        _BS_FIELDS.concat(_BS_SEG_FIELDS).forEach(f=>{
+          const el=document.getElementById('bs-'+f.k);
+          if(el&&o[f.k]!=null&&o[f.k]!==''){el.value=o[f.k];remplis++;}
+        });
+        /* ⛔ ON NE DIT PAS « Rapport lu ✅ » SI RIEN N'A ÉTÉ REMPLI. C'est précisément ce qui a
+           masqué le bug pendant deux imports : le message de succès s'affichait alors que le
+           formulaire était vide, donc rien ne signalait que l'appel venait d'être gaspillé. */
+        toast(remplis?('Rapport lu ✅ '+remplis+' valeurs — vérifie puis Enregistre')
+                     :'Rapport lu mais aucune valeur reconnue — saisis à la main','warn');
       });
     }catch(e){
       // Diagnostic : nb de tranches + poids du paquet + type d'erreur → on voit tout de suite si c'est la taille.

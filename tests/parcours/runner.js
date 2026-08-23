@@ -10035,6 +10035,294 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXXXIX - L'EVOLUTION DU BILAN CORPOREL ATTEINT MILO (23/08/2026) ==
+   Michel envoie 5 rapports de balance pro sur 27 jours. En verifiant ce que Milo en ferait :
+   il ne recevait que le DERNIER bilan + son ecart au PRECEDENT. Chez lui ce serait 23/08 vs
+   22/08 — un jour d'ecart, donc de l'EAU, pas de la graisse. Sa vraie information (-1,4 kg de
+   masse grasse en 27 jours) lui restait invisible. ⭐ R13 : le motif existe deja pour le sang
+   (ft-v943), il n'avait ete applique qu'a un cote. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(()=>{
+    const o={};
+    if(typeof buildCoachContext!=='function'){ o.absente=true; return o; }
+    /* Les 5 vrais bilans de Michel (R17 : le cas reel devient un temoin permanent). */
+    S.bodyScans=[
+      {date:'2026-07-27',weight:86.95,bf:20.7,fatMass:18.0,leanMass:69.0,skMuscle:39.6},
+      {date:'2026-08-08',weight:84.95,bf:19.6,fatMass:16.7,leanMass:68.3,skMuscle:39.1},
+      {date:'2026-08-17',weight:85.20,bf:18.9,fatMass:16.1,leanMass:69.1,skMuscle:39.6},
+      {date:'2026-08-22',weight:86.55,bf:20.0,fatMass:17.3,leanMass:69.2,skMuscle:39.7},
+      {date:'2026-08-23',weight:85.30,bf:19.5,fatMass:16.6,leanMass:68.7,skMuscle:39.3},
+    ];
+    const ctx=buildCoachContext();
+    o.aBloc=/BILAN CORPOREL/.test(ctx);
+    /* ⭐⭐ LE TEMOIN CENTRAL : les bilans ANTERIEURS sont la, avec leurs DATES. */
+    o.aHistorique=/← avant :/.test(ctx);
+    o.annonceNbBilans=/historique des 3 bilan/.test(ctx);
+    o.dateAncienne=ctx.indexOf('2026-08-17')>=0 && ctx.indexOf('2026-08-08')>=0;
+    /* ⛔ L'ECART AU PRECEDENT EST GARDE — on ajoute, on ne remplace pas. */
+    o.ecartGarde=/vs bilan préc\./.test(ctx);
+    /* ⛔⛔ ET ON PREVIENT CONTRE LE BRUIT : deux mesures rapprochees different par l'HYDRATATION. */
+    o.avertitBruit=/hydratation|HYDRATATION/i.test(ctx) && /9 ?000 kcal/.test(ctx);
+    o.ditPasCommenter=/ne commente jamais une variation de quelques jours/i.test(ctx);
+    /* ⛔ UN SEUL BILAN : pas d'historique annonce, et le bloc reste correct (pas de « ← avant » vide). */
+    S.bodyScans=[{date:'2026-08-23',weight:85.30,bf:19.5,fatMass:16.6,leanMass:68.7}];
+    const ctx1=buildCoachContext();
+    o.seul_pasDHistorique=!/← avant :/.test(ctx1) && !/historique des/.test(ctx1);
+    o.seul_blocPresent=/BILAN CORPOREL/.test(ctx1);
+    /* ⛔ AUCUN BILAN : aucun bloc du tout (pas de section vide). */
+    S.bodyScans=[];
+    o.zero_pasDeBloc=!/BILAN CORPOREL/.test(buildCoachContext());
+    return o;
+  });
+
+  console.log('\n-- LXXXIX. L\'évolution du bilan corporel atteint Milo --');
+  if(R.absente){ t('⛔ le contexte de Milo existe', false, 'fonction absente'); }
+  else{
+    t('le bloc bilan corporel part bien à Milo', R.aBloc===true, '');
+    t('⭐⭐ les bilans ANTÉRIEURS partent avec lui, avec leurs DATES', R.aHistorique===true && R.dateAncienne===true, '');
+    t('⭐ ... et le nombre de bilans d\'historique est annoncé', R.annonceNbBilans===true, '');
+    t('⛔ l\'écart au bilan précédent est GARDÉ (on ajoute, on ne remplace pas)', R.ecartGarde===true, '');
+    t('⛔⛔ Milo est prévenu que 2 mesures rapprochées diffèrent par l\'HYDRATATION, pas la graisse',
+      R.avertitBruit===true, '');
+    t('⛔ ... et qu\'il ne doit pas commenter une variation de quelques jours', R.ditPasCommenter===true, '');
+    t('⚠️ UN SEUL bilan : pas d\'historique annoncé, et le bloc reste correct',
+      R.seul_pasDHistorique===true && R.seul_blocPresent===true, '');
+    t('⛔ AUCUN bilan : aucun bloc (pas de section vide)', R.zero_pasDeBloc===true, '');
+  }
+  await cx.close();
+}
+
+/* == BLOC XC - LE SCAN DE BILAN NE PERDAIT PAS LE POIDS PAR HASARD (23/08/2026) ==
+   Michel : « c'est la 2e fois que je scanne, mes poids ne prennent pas sur la premiere analyse,
+   il faut que je remette une 2e fois — ca fait 4 appels API au lieu de 2 ».
+   ⛔⛔ CAUSE MESUREE : `openBodyScanForm` est `async` depuis le verrou sante (ft-v758) et etait
+   appelee SANS `await` — elle rend la main AVANT de construire la grille, donc les champs
+   n'existent pas encore. Aucune erreur levee : `if(el && ...)` avale l'absence, et la lecture IA
+   deja payee est jetee. R14 : rendre une fonction asynchrone change le contrat de ses appelants. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.addInitScript(()=>{ try{ localStorage.setItem('ft4_hascode','1'); }catch(e){} });
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    if(typeof openBodyScanForm!=='function'||typeof _BS_FIELDS==='undefined'){ o.absente=true; return o; }
+    /* ⭐ LE TEMOIN DE FOND : la fonction EST asynchrone. Si quelqu'un la rend synchrone un jour,
+       ce test le dit — et l'`await` de l'appelant devient inutile mais pas faux. */
+    o.estAsync=(openBodyScanForm.constructor.name==='AsyncFunction');
+    /* ⛔⛔ LE TEMOIN QUI DISCRIMINE VRAIMENT — et il a fallu s'en apercevoir.
+       Mes témoins ci-dessous reproduisent le chemin de `onBodyScanPhoto` **en écrivant `await`
+       moi-même** : ils passaient donc AUSSI contre l'ancien code (contrôle négatif identique,
+       1122 des deux côtés). *Un témoin qui rejoue le motif corrigé teste le TEST, pas l'app.*
+       👉 Celui-ci lit la SOURCE de l'appelant réel : c'est le seul endroit où le défaut vivait. */
+    o.appelantAttend=/_hideBsScan\(\s*async\s*\(\s*\)\s*=>\s*\{[\s\S]{0,200}?await\s+openBodyScanForm/
+      .test(String(onBodyScanPhoto));
+
+    const faux={date:'2026-08-23',weight:85.3,bf:19.5,fatMass:16.6,muscle:64.0,skMuscle:39.3};
+    /* Reproduit le chemin REEL de `onBodyScanPhoto` apres une lecture IA reussie. */
+    const remplir=async()=>{
+      await openBodyScanForm(-1);
+      const ouvert=document.getElementById('ov-bodyscan-form');
+      if(!ouvert||!ouvert.classList.contains('open')) return {nuls:99,vus:0};
+      let vus=0,nuls=0;
+      _BS_FIELDS.concat(_BS_SEG_FIELDS).forEach(f=>{
+        const el=document.getElementById('bs-'+f.k);
+        if(!el){nuls++;return;} if(faux[f.k]!=null){el.value=faux[f.k];vus++;}
+      });
+      return {vus,nuls};
+    };
+    /* ⛔⛔ LE TEMOIN CENTRAL : DES LA PREMIERE PASSE, les champs existent et le poids TIENT. */
+    const p1=await remplir();
+    o.p1_aucunChampManquant=(p1.nuls===0);
+    o.p1_aRempli=(p1.vus>=5);
+    o.p1_poidsImmediat=(document.getElementById('bs-weight')||{}).value;
+    /* ⛔ ET IL SURVIT A LA MICROTACHE : c'est elle qui effacait tout (reconstruction de la grille). */
+    await new Promise(r=>setTimeout(r,250));
+    o.p1_poidsApresDelai=(document.getElementById('bs-weight')||{}).value;
+    o.p1_bfApresDelai=(document.getElementById('bs-bf')||{}).value;
+    return o;
+  });
+
+  console.log('\n-- XC. Le scan de bilan garde le poids DÈS la première analyse --');
+  if(R.absente){ t('⛔ le formulaire de bilan existe', false, 'fonction absente'); }
+  else{
+    t('⚠️ `openBodyScanForm` est bien asynchrone (verrou santé) — donc elle DOIT être attendue',
+      R.estAsync===true, '');
+    t('⛔⛔ ET L\'APPELANT RÉEL L\'ATTEND (le seul témoin qui discrimine : les autres rejouaient le motif corrigé)',
+      R.appelantAttend===true, '');
+    t('⛔⛔ DÈS LA 1ʳᵉ PASSE : aucun champ manquant (avant : 16 sur 16 introuvables)',
+      R.p1_aucunChampManquant===true, '');
+    t('⭐⭐ ... et les valeurs sont écrites', R.p1_aRempli===true, '');
+    t('⛔⛔ LE POIDS SURVIT à la reconstruction de la grille (c\'est elle qui l\'effaçait)',
+      R.p1_poidsApresDelai==='85.3', 'immédiat='+R.p1_poidsImmediat+' après='+R.p1_poidsApresDelai);
+    t('⛔ ... la graisse aussi (ce n\'était pas propre au poids)', R.p1_bfApresDelai==='19.5', '');
+  }
+  await cx.close();
+}
+
+/* == BLOC XCI - LA QUANTITE POUR TOUTES LES ENTREES + LES KCAL QUI NE COLLENT PAS (23/08/2026) ==
+   Michel, sur une ligne « 30g de proteines » : « en fait on ne peut pas modifier le poids, je
+   modifie le nom ca ne change pas la valeur, il faut rajouter une ligne poids qui va modifier la
+   valeur des calories et des autres lignes ». Puis, decouvrant le 1117 kcal : « putain je ne
+   l'avais meme pas vu, j'etais axe sur les calories, ca c'est un beug de fou ».
+   ⭐ LE RESCALE PAR PROPORTION NE DEMANDE AUCUN per100 : X × (nouvelle / reference). */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(()=>{
+    const o={};
+    if(typeof _efCoherence!=='function'||typeof _efApplyProp!=='function'){ o.absente=true; return o; }
+    const t=today(), ts1=Date.now(), ts2=Date.now()+1, ts3=Date.now()+2;
+    S.foodLog=[
+      /* LA VRAIE LIGNE DE MICHEL, chiffres compris (R17). */
+      {date:t,meal:'petitdej',name:'30g de protéines',kcal:1117,prot:26,carbs:1,fat:1,ts:ts1},
+      /* sans ancrage : ni per100, ni q, ni quantite dans le nom */
+      {date:t,meal:'diner',name:'Poulet riz fromages',kcal:665,prot:52,carbs:68,fat:18,ts:ts2},
+      /* coherente : l'alerte ne doit PAS se lever */
+      {date:t,meal:'dejeuner',name:'200 g de riz',kcal:260,prot:5,carbs:56,fat:1,ts:ts3},
+    ];
+
+    /* ⭐⭐ ① LA QUANTITE EST LUE DANS LE NOM (« 30g ») — aucun per100 necessaire. */
+    openEditFood(ts1);
+    const prop=document.getElementById('ef-prop');
+    o.champProp=!!prop;
+    o.propInit=prop?prop.value:'';
+    o.refAffichee=/lu dans le nom/.test((document.getElementById('ov-edit-food')||{}).innerHTML||'');
+    /* ⛔⛔ ② L'INCOHERENCE SE VOIT DES L'OUVERTURE, sans rien toucher. */
+    const coh=document.getElementById('ef-coherence');
+    o.alerteVue=coh&&coh.style.display!=='none';
+    o.alerteDit117=coh?/117/.test(coh.textContent):false;
+    o.alerteDit1117=coh?/1117/.test(coh.textContent):false;
+    /* ⛔ ON NE CORRIGE PAS TOUT SEUL : la valeur saisie est intacte tant qu'on n'a rien demande. */
+    o.pasAutoCorrige=(document.getElementById('ef-kcal')||{}).value==='1117';
+    /* ⭐ le bouton corrige quand ON le demande. */
+    _efCorrigerKcal(117);
+    o.corrigeSurDemande=(document.getElementById('ef-kcal')||{}).value==='117';
+    o.alerteDisparait=(document.getElementById('ef-coherence')||{}).style.display==='none';
+    /* ⭐⭐ ③ CHANGER LA QUANTITE RESCALE LES 4 VALEURS (30 -> 60 = x2). */
+    document.getElementById('ef-prop').value=60; _efApplyProp();
+    const L=id=>(document.getElementById(id)||{}).value;
+    o.x2 = L('ef-kcal')==='234' && L('ef-prot')==='52' && L('ef-carbs')==='2' && L('ef-fat')==='2';
+    /* ⛔⛔ ET DEUX REGLAGES DE SUITE NE S'EMPILENT PAS (on repart toujours de la base). */
+    document.getElementById('ef-prop').value=90; _efApplyProp();
+    o.pasDEmpilement = L('ef-prot')==='78';        // 26 x 3, pas 26 x 2 x 3
+    document.getElementById('ef-prop').value=30; _efApplyProp();
+    o.retourBase = L('ef-prot')==='26';
+    saveEditFood();
+
+    /* ⛔ ④ SANS AUCUN ANCRAGE : pas de champ poids invente, mais des PORTIONS. */
+    openEditFood(ts2);
+    o.pasDeChampPoids=!document.getElementById('ef-prop');
+    o.aDesPortions=/_efApplyPortion/.test((document.getElementById('ov-edit-food')||{}).innerHTML||'');
+    _efApplyPortion(2);
+    o.portionX2=(document.getElementById('ef-kcal')||{}).value==='1330';
+
+    /* ⛔⛔ ⑤ UNE LIGNE COHERENTE NE DECLENCHE AUCUNE ALERTE (R19 : pas de cri pour un arrondi). */
+    openEditFood(ts3);
+    const c3=document.getElementById('ef-coherence');
+    o.pasDAlerteSiCoherent=!c3||c3.style.display==='none';
+    document.querySelectorAll('.overlay').forEach(x=>x.classList.remove('open'));
+
+    /* ⭐⭐ ⑥ ET EN DIRECT A LA SAISIE — Michel : « et en direct, pas au moment de l'enregistrer ».
+       C'est le moment ou le chiffre est encore sous les yeux ; a la relecture, la journee est
+       deja faussee. */
+    if(typeof _afCoherence!=='function'){ o.pasDeSaisie=true; return o; }
+    openAddFood();
+    const ca=document.getElementById('af-coherence');
+    o.saisie_existe=!!ca;
+    o.saisie_vierge=ca&&ca.style.display==='none';       // formulaire vide : aucun cri
+    document.getElementById('af-kcal').value=1117;
+    document.getElementById('af-prot').value=26;
+    document.getElementById('af-carbs').value=1;
+    document.getElementById('af-fat').value=1;
+    _afCoherence();
+    o.saisie_alerte=ca&&ca.style.display!=='none'&&/117/.test(ca.textContent);
+    o.saisie_pasAutoCorrige=document.getElementById('af-kcal').value==='1117';
+    _afCorrigerKcal(117);
+    o.saisie_corrige=document.getElementById('af-kcal').value==='117'
+      && document.getElementById('af-coherence').style.display==='none';
+    /* ⛔ R2 : le MEME seuil des deux cotes — une valeur juste sous le seuil ne crie nulle part. */
+    const pose=(p,k,pr,c,f)=>{['kcal','prot','carbs','fat'].forEach((n,i)=>{
+      const el=document.getElementById(p+'-'+n); if(el)el.value=[k,pr,c,f][i];});};
+    pose('af',200,20,20,4); _afCoherence();                 // theo=196, ecart 4 -> muet
+    o.memeSeuil_af=document.getElementById('af-coherence').style.display==='none';
+
+    /* ⛔⛔ L'ALCOOL : 7 kcal/g, aucun champ pour lui — une biere REELLE afficherait 69 % d'ecart.
+       Trouve en testant les cas limites sur l'etiquette de Michel, pas apres coup (R19 : un
+       garde-fou qui se trompe sur la biere ne survit pas au premier apero). */
+    const desc=document.getElementById('af-desc');
+    if(desc)desc.value='Bière blonde 500 ml';
+    pose('af',215,1.5,15,0); _afCoherence();                // theo=66, ecart 149 (69 %)
+    o.alcoolMuet=document.getElementById('af-coherence').style.display==='none';
+    if(desc)desc.value='Verre de vin rouge';
+    pose('af',125,0.1,4,0); _afCoherence();
+    o.vinMuet=document.getElementById('af-coherence').style.display==='none';
+    /* ⛔ MAIS LE MEME ECART SUR UN ALIMENT ORDINAIRE CRIE TOUJOURS — la liste se TAIT, elle
+       n'ouvre pas une porte pour tout le monde. */
+    if(desc)desc.value='Blanc de poulet';
+    pose('af',215,1.5,15,0); _afCoherence();
+    o.pouletCrie=document.getElementById('af-coherence').style.display!=='none';
+    /* ⛔ ET DES CALORIES MANQUANTES (kcal < theo) crient MEME sur une biere : l'alcool ajoute
+       des calories, il n'en retire pas. */
+    if(desc)desc.value='Bière blonde 500 ml';
+    pose('af',60,10,40,10); _afCoherence();                 // theo=290, kcal BIEN plus bas
+    o.alcoolMaisManquantCrie=document.getElementById('af-coherence').style.display!=='none';
+    return o;
+  });
+
+  console.log('\n-- XCI. La quantité pour toutes les entrées + les kcal qui ne collent pas --');
+  if(R.absente){ t('⛔ le rescale par proportion existe', false, 'fonction absente'); }
+  else{
+    t('⭐⭐ la quantité est LUE DANS LE NOM (« 30g de protéines ») — aucun per100 nécessaire',
+      R.champProp===true && R.propInit==='30', 'init='+R.propInit);
+    t('⭐ ... et la référence est annoncée à l\'écran', R.refAffichee===true, '');
+    t('⛔⛔ 1117 kcal pour 26 P / 1 G / 1 L : l\'alerte se voit DÈS L\'OUVERTURE',
+      R.alerteVue===true && R.alerteDit117===true && R.alerteDit1117===true, '');
+    t('⛔⛔ ... mais RIEN n\'est corrigé tout seul (R29 — on montre, la personne tranche)',
+      R.pasAutoCorrige===true, '');
+    t('⭐ le bouton corrige quand on le demande, et l\'alerte disparaît',
+      R.corrigeSurDemande===true && R.alerteDisparait===true, '');
+    t('⭐⭐ changer la quantité (30 → 60) RESCALE les 4 valeurs', R.x2===true, '');
+    t('⛔⛔ deux réglages de suite ne s\'EMPILENT pas (30→60→90 donne ×3, pas ×6)',
+      R.pasDEmpilement===true && R.retourBase===true, '');
+    t('⛔ sans aucun ancrage : AUCUN poids inventé, on propose des PORTIONS',
+      R.pasDeChampPoids===true && R.aDesPortions===true, '');
+    t('⭐ ... et une portion ×2 double bien les valeurs', R.portionX2===true, '');
+    t('⛔⛔ une ligne COHÉRENTE ne déclenche aucune alerte (un contrôle qui crie pour rien meurt)',
+      R.pasDAlerteSiCoherent===true, '');
+    if(R.pasDeSaisie){ t('⛔ le contrôle existe aussi À LA SAISIE', false, 'fonction absente'); }
+    else{
+      t('⭐⭐ EN DIRECT À LA SAISIE : 1117 kcal pour 26 P / 1 G / 1 L lève l\'alerte tout de suite',
+        R.saisie_existe===true && R.saisie_alerte===true, '');
+      t('⛔ un formulaire VIERGE ne crie pas', R.saisie_vierge===true, '');
+      t('⛔ ... et rien n\'est corrigé tout seul là non plus', R.saisie_pasAutoCorrige===true, '');
+      t('⭐ le bouton corrige et l\'alerte disparaît', R.saisie_corrige===true, '');
+      t('⛔⛔ R2 : le MÊME seuil des deux côtés (200 kcal pour 196 théoriques = muet)',
+        R.memeSeuil_af===true, '');
+      t('⛔⛔ L\'ALCOOL ne déclenche RIEN (7 kcal/g sans champ — une bière réelle ferait 69 % d\'écart)',
+        R.alcoolMuet===true && R.vinMuet===true, '');
+      t('⛔ ... mais le MÊME écart sur un aliment ordinaire crie toujours (la liste se tait, elle n\'ouvre pas de porte)',
+        R.pouletCrie===true, '');
+      t('⛔ ... et des calories MANQUANTES crient même sur une bière (l\'alcool ajoute, il ne retire pas)',
+        R.alcoolMaisManquantCrie===true, '');
+    }
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

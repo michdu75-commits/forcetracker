@@ -3047,14 +3047,38 @@ ${(()=>{
   const sc=(S.bodyScans||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
   if(!sc.length)return '';
   const L=sc[0],P=sc[1];
-  const p=(k,lbl,u)=>{if(L[k]==null)return '';let e='';if(P&&P[k]!=null){const d=+(L[k]-P[k]).toFixed(1);if(d!==0)e=` (${d>0?'+':''}${d} vs bilan préc.)`;}return `${lbl}: ${L[k]}${u||''}${e}`;};
+  /* 📈 L'ÉVOLUTION SUR PLUSIEURS BILANS, PAS LE SEUL ÉCART DE LA VEILLE (23/08/2026, ft-v970).
+     Michel a envoyé 5 rapports de balance pro couvrant 27 jours. En vérifiant ce que Milo en
+     ferait, le défaut saute : il ne recevait que le DERNIER bilan et son écart au PRÉCÉDENT.
+     ⛔⛔ CHEZ LUI, CE SERAIT 23/08 COMPARÉ AU 22/08 — un jour d'écart, donc de l'EAU et du
+     contenu digestif, pas de la graisse (1,25 kg en 24 h demanderait ~9 000 kcal). Milo aurait
+     donc commenté du BRUIT en croyant lire un progrès, pendant que la vraie information —
+     **−1,4 kg de masse grasse en 27 jours, à masse maigre quasi constante** — lui restait
+     invisible. *Un écart calculé sur deux points trop rapprochés n'est pas une tendance*
+     (**R12** : cohérence avant réactivité · `BUGS.md` 6bis, l'indicateur calculé sur DEUX points).
+     ⭐ R13 — LE MOTIF EXISTE DÉJÀ, ON LE REPREND : le BILAN SANGUIN juste en dessous envoie
+     « valeur ← avant : X le JJ/MM · Y le JJ/MM » depuis ft-v943, écrit ce jour-là sur la demande
+     de Michel (*« qu'il voie l'évolution, comme la courbe du poids »*). La même demande valait
+     pour le corps ; elle n'avait été appliquée qu'au sang. *Une correction faite d'un côté et
+     pas de l'autre est un oubli, pas un arbitrage* — c'est le corollaire coûteux de **R8**.
+     ⚠️ L'ÉCART AU PRÉCÉDENT EST GARDÉ : il reste juste, et c'est le seul repère quand il n'y a
+     que deux bilans. On AJOUTE l'historique daté à côté, on ne remplace rien. */
+  const anciensSc=sc.slice(1,4);                // jusqu'à 3 bilans antérieurs, comme le sang
+  const histSc=(k)=>{
+    const pts=anciensSc.map(b=>(b&&b[k]!=null)?`${b[k]} le ${b.date||'?'}`:null).filter(Boolean);
+    return pts.length?`  ← avant : ${pts.join(' · ')}`:'';
+  };
+  const p=(k,lbl,u)=>{if(L[k]==null)return '';let e='';if(P&&P[k]!=null){const d=+(L[k]-P[k]).toFixed(1);if(d!==0)e=` (${d>0?'+':''}${d} vs bilan préc.)`;}return `${lbl}: ${L[k]}${u||''}${e}${histSc(k)}`;};
   const parts=[p('weight','poids','kg'),p('bf','graisse','%'),p('fatMass','masse grasse','kg'),p('muscle','muscle','kg'),p('skMuscle','muscle squelettique','kg'),p('leanMass','masse maigre','kg'),p('bone','masse osseuse','kg'),p('water','eau','kg'),p('protein','protéine','kg'),p('visceral','graisse viscérale',''),p('subFat','graisse sous-cutanée','%'),p('bmr','métabolisme de base','kcal'),p('smi','indice muscle squelettique','kg/m²'),p('metaAge','âge corporel','ans'),p('imc','IMC',''),p('bodyScore','score corporel','/100')].filter(Boolean);
   const seg=[];
   const sp=(k,lbl,u)=>{if(L[k]!=null)seg.push(`${lbl}: ${L[k]}${u||''}`);};
   sp('armMuscleL','muscle bras G','kg');sp('armMuscleR','muscle bras D','kg');sp('trunkMuscle','muscle tronc','kg');sp('legMuscleL','muscle jambe G','kg');sp('legMuscleR','muscle jambe D','kg');
   sp('armFatL','graisse bras G','kg');sp('armFatR','graisse bras D','kg');sp('trunkFat','graisse tronc','kg');sp('legFatL','graisse jambe G','kg');sp('legFatR','graisse jambe D','kg');
   const segTxt=seg.length?`\nDÉTAIL PAR SEGMENT:\n- ${seg.join('\n- ')}`:'';
-  return `\nBILAN CORPOREL (balance pro, le ${L.date}):\n- ${parts.join('\n- ')}${segTxt}\n⚠️ IMPORTANT: utilise UNIQUEMENT les chiffres ci-dessus. N'invente JAMAIS une valeur qui n'y figure pas (ni masse osseuse, ni détail bras/tronc/jambes, ni autre) — si tu ne l'as pas, ne cite aucun chiffre pour ça, parle en termes généraux. Rappelle que l'IMC seul est trompeur chez une personne musclée. Ne pose jamais de diagnostic médical.\n`;
+  const nHistSc=anciensSc.length;
+  return `\nBILAN CORPOREL (balance pro, le ${L.date})${nHistSc?`, avec l'historique des ${nHistSc} bilan(s) précédent(s)`:''}:\n- ${parts.join('\n- ')}${segTxt}
+⚠️ LIS L'ÉVOLUTION SUR LA DURÉE, PAS L'ÉCART AU DERNIER BILAN. Deux mesures d'impédancemétrie rapprochées (quelques jours) diffèrent surtout par l'HYDRATATION, le contenu digestif et l'heure de la pesée — pas par la graisse ou le muscle. Un écart de 1 kg en 24-48 h n'est PAS une perte de gras : il faudrait un déficit d'environ 9 000 kcal. Sers-toi des dates pour juger d'une tendance ; ne commente jamais une variation de quelques jours comme un progrès ou une régression.
+⚠️ IMPORTANT: utilise UNIQUEMENT les chiffres ci-dessus. N'invente JAMAIS une valeur qui n'y figure pas (ni masse osseuse, ni détail bras/tronc/jambes, ni autre) — si tu ne l'as pas, ne cite aucun chiffre pour ça, parle en termes généraux. Rappelle que l'IMC seul est trompeur chez une personne musclée. Ne pose jamais de diagnostic médical.\n`;
 })()}
 ${(()=>{
   const bt=(S.bloodTests||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));

@@ -136,7 +136,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v969`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v972`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v969`** (prochaine : `ft-v970`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v972`** (prochaine : `ft-v973`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,49 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v972 — ⚖️ LA QUANTITÉ POUR TOUTES LES ENTRÉES, ET LES CALORIES QUI NE COLLENT PAS** — Michel : *« en fait on ne peut pas modifier le poids, je modifie le nom ça ne change pas la valeur. Il faut rajouter une ligne poids qui va modifier la valeur des calories et des autres lignes »*, puis, découvrant une ligne à **1117 kcal** pour 26 P / 1 G / 1 L : *« putain je ne l'avais même pas vu, j'étais axé sur les calories »*, puis *« et en direct, pas au moment de l'enregistrer »*.
+
+**⭐⭐ LE RESCALE NE DEMANDE AUCUN `per100`.** Ma limite de ft-v962 mordait : le champ n'apparaissait que pour un scan / CIQUAL / recherche. Une ligne tapée à la main — **la sienne** — restait 4 chiffres à recalculer soi-même. On ne rescale donc pas depuis une composition, mais **par PROPORTION** : `X × (nouvelle / référence)`. *Il suffit de connaître la référence, pas la composition pour 100 g.*
+
+**⭐ ET LA RÉFÉRENCE EST DÉJÀ ÉCRITE — DANS LE NOM.** « 30**g** de protéines » porte son ancrage : on lit ce que Michel a mis, au lieu de le lui redemander. Trois sources dans l'ordre : `per100` → `q` enregistré → **le nom**. ⛔ Sans aucun ancrage, **aucun poids inventé** : des **portions** (½ · 1½ · 2 · 3), vraies quelle que soit la portion de départ.
+
+**⛔⛔ ET LES CALORIES DOIVENT COLLER À LEURS PROPRES MACROS.** `4×26 + 4×1 + 9×1 = 117`. Sa ligne en affichait **1117** — un « 1 » de trop, **1 000 kcal** ajoutés à sa journée, et **rien ne le signalait**. ⭐ **Son étiquette réelle l'a confirmé au dixième** : 116,6 kcal et 26,4 g de protéines pour 30 g.
+
+**⛔ ON NE CORRIGE JAMAIS TOUT SEUL** (**R29**) : on montre l'écart, un bouton propose, la personne tranche. *Réécrire un chiffre saisi, c'est décider à sa place.*
+
+**⭐ EN DIRECT À CINQ MOMENTS** — chaque frappe · après un scan · après une estimation IA · en reprenant une entrée du journal · à l'ouverture de la modale. *Attraper à la SAISIE vaut mieux qu'à la relecture : il a vu son 1117 le lendemain, la journée était déjà faussée.* ⭐ **R2** : une **seule** définition de « ces calories sont impossibles », partagée par la saisie et la modification.
+
+**⛔⛔ ET L'ALCOOL NE DÉCLENCHE RIEN.** 7 kcal/g sans champ dédié : une **bière réelle** afficherait **69 %** d'écart, un verre de vin **87 %**. *Un garde-fou qui se trompe sur la bière ne survit pas au premier apéro* (**R19**). Trouvé **en testant les cas limites sur son étiquette**, pas après coup. ⚠️ La liste se **tait** seulement : le même écart sur « blanc de poulet » **crie toujours**, et des calories **manquantes** crient **même sur une bière** — l'alcool ajoute des calories, il n'en retire pas.
+Tests : **parcours 1141/1141** (+19, bloc XCI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `app.js`, `index.html`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v972. |
+
+**ft-v971 — 📷 LE SCAN DE BILAN PERDAIT LE POIDS À LA 1ʳᵉ ANALYSE — 4 appels IA au lieu de 2** — Michel : *« c'est la 2ᵉ fois que je scanne, mes poids ne prennent pas sur la première prise d'analyse, il faut que je remette une 2ᵉ fois pour qu'il la prenne en compte. Ça fait 4 appels API au lieu de 2 »*.
+
+**⭐ MESURÉ DANS UN VRAI NAVIGATEUR, PAS DÉDUIT.** C'est la leçon de `BUGS.md` **12quater**, écrite la veille et appliquée cette fois : à la **1ʳᵉ passe, 0 champ sur 16** est trouvé ; à la 2ᵉ, les 16 sont remplis **puis effacés**.
+
+**⛔⛔ LA CAUSE : `openBodyScanForm` est devenue `async` en ft-v758** — le verrou santé y a ajouté `await _healthGate()` — **et l'appelant ne l'attendait pas**. Elle rend donc la main **avant** de construire la grille de champs : `getElementById('bs-weight')` renvoie `null`, rien n'est écrit, puis la construction repart et remplace tout par des champs **vides**.
+
+**⚠️⚠️ ET AUCUNE ERREUR N'ÉTAIT LEVÉE.** Le test `if(el && …)` avalait silencieusement l'absence, et le message **« Rapport lu ✅ »** s'affichait **devant un formulaire vide**. *Un appel vision déjà payé était jeté, et l'écran annonçait un succès.*
+
+**⭐ C'EST R14 DANS SA FORME LA PLUS COÛTEUSE** : *rendre une fonction asynchrone change le CONTRAT DE TOUS SES APPELANTS.* Celui-ci n'avait pas été revu — et le défaut d'ordonnancement se payait en **quota IA**, pas seulement en confort.
+
+**⛔ DEUXIÈME CORRECTIF, AUSSI IMPORTANT QUE LE PREMIER** : le message **compte** désormais les valeurs écrites (*« Rapport lu ✅ 12 valeurs »*) et dit *« aucune valeur reconnue »* quand il n'y en a pas. **C'est précisément ce silence qui a masqué le bug pendant deux imports** — rien ne signalait qu'un appel venait d'être gaspillé.
+
+**⚠️ Et si le verrou santé refuse, on ne remplit pas des champs invisibles** et on ne prétend pas que le rapport est prêt.
+Tests : **parcours 1122/1122** (+5, bloc XC), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `tracking.js`, `clone/tracking.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v971. |
+
+**ft-v970 — 📈 L'ÉVOLUTION DU BILAN CORPOREL ATTEINT MILO — et mon analyse de ce matin était fausse** — Michel envoie **5 rapports de balance pro** sur 27 jours, puis : *« tu avais fait un calcul approfondi sur mes mesures de balance comme quoi il y avait beaucoup de mytho dedans »*.
+
+**⚠️⚠️ IL AVAIT RAISON, ET C'ÉTAIT ÉCRIT DANS LE DÉPÔT.** Deux fois : **ft-v323** (son propre retour — *« masse grasse qui saute de ~15 % à 20,6 % en changeant de balance »*) et **ft-v833** (*« on n'avale pas le chiffre de la balance : il sort d'une formule propre au fabricant, invérifiable »*). **Je ne l'avais pas relu avant de parler** — R23 dans sa forme la plus nette : *une connaissance qu'on ne consulte pas fait dire des bêtises à celui qui l'ignore.*
+
+**⛔⛔ CE QUE J'AVAIS ANNONCÉ NE TENAIT PAS, ET C'EST MESURABLE SUR SES PROPRES CHIFFRES.** J'avais dit *« −1,4 kg de gras, soit 85 % de ce qu'il a perdu »*. Or sa masse maigre fait `69,0 · 68,3 · 69,1 · 69,2 · 68,7` : **jusqu'à 0,8 kg d'écart entre deux mesures consécutives**, quand ma « tendance » sur 27 jours en valait **0,3**. *Ma tendance était plus petite que le bruit.* Côté gras, 1,4 kg de « tendance » pour **1,3 kg** de bruit — un seul écart de mesure. **Ce qui reste vrai : le POIDS (−1,65 kg). Une balance pèse ; le partage gras/maigre, lui, est une déduction.**
+
+**👉 CE QUI EST LIVRÉ** : Milo reçoit désormais les **3 bilans corporels antérieurs avec leurs dates**, exactement comme le **bilan sanguin** depuis ft-v943 (**R13** — le motif existait, il n'avait été appliqué qu'à un côté ; *une correction faite d'un côté et pas de l'autre est un oubli, pas un arbitrage*, corollaire de **R8**).
+
+**⛔ SANS ÇA, CHEZ MICHEL, MILO AURAIT COMPARÉ LE 23/08 AU 22/08** — un jour d'écart, donc de l'eau et du contenu digestif (1,25 kg en 24 h demanderait ~9 000 kcal). *Il aurait commenté du bruit en croyant lire un progrès.* L'écart au bilan précédent est **gardé** — on ajoute l'historique daté, on ne remplace rien.
+
+**⚠️ ET L'AVERTISSEMENT EST ÉCRIT DANS SON CONTEXTE** : deux mesures rapprochées diffèrent par l'**hydratation**, pas par la graisse ; ne jamais commenter une variation de quelques jours comme un progrès ou une régression.
+Tests : **parcours 1117/1117** (+8, bloc LXXXIX), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges**, exactement les 4 comportements neufs — et **4 verts des deux côtés** (l'écart au précédent, le cas « un seul bilan », le cas « aucun bilan ») : *ils devaient rester intacts.* Fichiers : `coach.js`, `clone/coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v970. |
 
 **ft-v969 — 🧮 D'OÙ VIENT LE CHIFFRE DE PROTÉINES** — Michel, devant l'onglet Suppléments : *« sur cette image c'est la portion ou juste le nombre de protéine ? »*.
 
@@ -648,72 +691,6 @@ Tests : **parcours 1008/1008** (+10, bloc LXXXI), calculs 266/266, muscles 241/2
 
 **⚠️ ET LE `bloc_technique : 2` VISIBLE CHEZ MICHEL N'EST PAS UN BUG** : c'est un **résidu** d'avant ft-v946, le correctif qui l'a sorti des dérives (il se lève sur chaque séance proposée — du trafic normal). Le compteur étant **cumulatif**, l'ancien chiffre reste affiché ; le code actuel, lui, ne le compte plus. *Vérifié dans `_GARDIEN_DERIVES` avant de l'affirmer, plutôt que de le supposer.*
 Tests : **parcours 998/998** (+5, bloc LXXX ter), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — et il est **peu instructif, honnêtement** : le rendu n'existait pas séparément, il était **soudé à l'appel réseau**. C'est précisément ce que l'extraction corrige, donc le « avant » ne peut pas être rejoué. *Un contrôle négatif qui ne dit que « la fonction n'existe pas » ne prouve rien — autant l'écrire.* Fichiers : `coach.js`, `Code.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v954. |
-
-**ft-v953 — ⏳ QUAND SERAI-JE REVENU AU MAX — et le 93 d'hier était FAUX** — Michel : *« peut-on rajouter un indicateur où l'on peut retrouver 100 % de notre forme ? en plus de ce qu'il y a actuellement, parce que là on ne sait pas quand on aura récupéré au max »*.
-
-**⭐ LE SCORE DIT OÙ ON EN EST, PAS QUAND ÇA SERA FINI.** C'est pourtant la question qu'on se pose vraiment le lendemain d'un gros leg day — et la réponse est **calculable à la minute** : la fatigue de séance s'efface en continu sur 48 h, et l'enchaînement de jours se vide quand la fenêtre glisse.
-
-**⛔⛔ MAIS ON NE PROJETTE AUCUN CHIFFRE, ET C'EST LA DÉCISION CENTRALE.** Annoncer *« tu seras à 93 jeudi »* supposerait de connaître **les nuits qui n'ont pas encore eu lieu** — or le sommeil **EST** la base du score. Un nombre projeté serait *une invention présentée comme un calcul* (**R29**, et **Principe 18** : ne jamais faire semblant de savoir). 👉 On rend donc ce qui est **exact** — le moment où la fatigue **mécanique** sera partie — et on **nomme** ce qui dépendra de la personne, sans le chiffrer. Trois témoins gardent ça, dont un qui vérifie que le texte ne promet **aucun** score futur et **dit pourquoi**.
-
-**⚠️⚠️ ET CETTE VERSION CORRIGE UNE ERREUR DE ft-v952, LIVRÉE LA VEILLE.** *« Ton maximum atteignable est 93 »* était **faux tout court**. Le **bonus de repos** (`sessAdj` positif, +12 après 4 jours sans séance) **compense les facteurs permanents** : 100 de sommeil + 12 de repos − 3 d'âge − 4 de tabac = **105**, ramené à 100. **Donc 100 EST atteignable — mais en ne s'entraînant pas pendant 4 jours.** Le texte dit désormais *« tant que tu t'entraînes régulièrement, ton maximum est 93 »* et nomme l'autre à côté. *Un plafond annoncé trop bas est aussi trompeur qu'un plafond invisible : il ferait renoncer à un chiffre réellement atteignable.* ⭐ Et le témoin **MESURE** le 100 après 4 jours de repos au lieu de le supposer — c'est ce qui distingue une correction d'une reformulation.
-
-**⭐ R2 — UNE DATE QUI NE COLLE PAS AU SCORE SERAIT PIRE QUE PAS DE DATE.** La pénalité de fatigue est sortie de `calcRecoveryDetail` en fonction commune, pour que la **date annoncée** lise exactement le **même chiffre** que le score. Deux barèmes finiraient par diverger, et l'app annoncerait un moment que son propre calcul ne respecte pas. Deux témoins l'épinglent : à l'instant rendu la pénalité vaut **zéro**, et une demi-heure plus tôt elle ne l'est **pas encore**.
-
-**⚠️ ET UN TÉMOIN A ATTRAPÉ UN DÉCALAGE D'UNE MINUTE que la relecture ne voyait pas** : à l'instant exact `48 − 24/pen`, le produit vaut **pile 0,5**, et `Math.round(0.5)` rend **1**, pas 0. On annonçait la fin de la fatigue **une minute avant** qu'elle ne parte. *La formule avait l'air juste ; seul le fait de la jouer l'a démentie.*
-Tests : **parcours 993/993** (+11, bloc LXXX bis), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 2 rouges** — la projection absente, **et le plafond faux d'hier**. ⚠️ Ce 2ᵉ rouge n'existe que parce que les témoins du plafond ont été **sortis du garde « fonction absente »** : ils mesurent une correction, pas une nouveauté, et derrière le garde ils **ne tournaient pas**. *Un témoin qui ne tourne pas n'est pas un témoin vert* — 3ᵉ fois cette semaine. Fichiers : `tracking.js`, `screens.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v953. |
-
-**ft-v952 — 🔋 OÙ ON ARRIVE À 100 — et pour Michel, 100 n'existe pas** — Michel, en pleine autre tâche : *« merde je viens d'avoir une idée, par rapport à la récupération, je marque sinon je vais oublier, on a le score de récupération mais il faudrait rajouter la donnée où on arrive à 100 (bon sauf moi qui suis fumeur) »*.
-
-**⭐ LE SCORE DONNAIT UN NOMBRE SANS DIRE CE QUI COÛTE LES POINTS MANQUANTS** — or c'est la **seule** chose sur laquelle on peut agir. *Un 72 sans explication est un jugement ; « 72 — il te manque surtout du sommeil » est un levier.* C'est **R29/R24** : quand l'app renonce à trancher, elle **affiche les éléments** au lieu de laisser deviner.
-
-**⭐ ET LA PREMIÈRE ÉTAPE ÉTAIT GRATUITE — elle a répondu oui.** La question posée avant de coder était *« le calcul garde-t-il le détail par facteur, ou l'écrase-t-il dans un total ? »*. Il le garde : `calcRecoveryDetail` rend déjà `{ic, label, val, why}` pour chacun, tabac compris. **Il n'était simplement pas exploité** — rien à construire, tout à brancher.
-
-**⭐⭐ ET SA PARENTHÈSE ÉTAIT LE POINT PRINCIPAL, PAS UNE BLAGUE — elle est CALCULABLE.** Deux facteurs sont **permanents** et toujours négatifs : l'**âge** et le **tabac**. À 48 ans et fumeur, le maximum atteignable n'est pas 100, c'est **93** — et rien ne le disait. *Un plafond invisible transforme un outil de progrès en reproche quotidien : on vise chaque jour un 100 qui n'existe pas, et on ne comprend pas pourquoi on n'y arrive jamais* (**Constitution P21** : le suivi ne doit pas coûter plus de stress qu'il n'apporte).
-
-**⛔⛔ MAIS ON NE RE-BARÊME PAS LE SCORE POUR AUTANT, et c'est l'arbitrage central.** Ramener le chiffre « sur 93 » aurait **réécrit silencieusement tout l'historique** : un 85 d'il y a trois mois n'aurait plus voulu dire la même chose, et les courbes seraient devenues fausses **sans que rien ne le signale**. 👉 On garde l'**échelle absolue** et on **AJOUTE** le plafond — la personne sait alors ce que 100 veut dire *pour elle*, sans qu'aucune donnée passée ne change de sens. *L'idée notée le matin proposait A ou B ; la bonne réponse était les deux.*
-
-**⛔ LES PERMANENTS NE SONT PAS COMPTÉS COMME UN « MANQUE »** : ils **déplacent la ligne d'arrivée**, ils ne sont pas un retard qu'on rattraperait ce soir. Les mélanger aux leviers du jour (sommeil, séance récente, forme) rendrait la liste inactionnable — et ferait relire un fait comme une faute.
-
-**⛔⛔ ET AUCUN CONSEIL D'ARRÊTER DE FUMER dans ce bloc.** On **nomme** le fait, sans le commenter et sans le répéter : ce n'est ni le rôle de l'app ni celui de Milo (**Constitution P13**, accompagnement jamais thérapie). Un témoin le vérifie sur le texte réellement produit.
-
-**⛔ LE TÉMOIN D'EXACTITUDE** : *plafond − somme des manques = LE SCORE EXACT*. Sans lui, un point fantôme pourrait se promener entre l'explication et le chiffre affiché — et une explication qui ne retombe pas sur son propre score détruit la confiance dans les deux.
-Tests : **parcours 982/982** (+12, bloc LXXX), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 9 rouges** — le plafond et la liste n'existent pas. ⚠️ Trois témoins sont **verts des deux côtés**, et c'est un artefact honnête : sur l'ancien code `plafond` et `manque` valent `undefined`, ce qui satisfait par hasard « les permanents ne sont pas dans le manque » et « rien ne s'affiche ». *Un vert obtenu sur une absence ne prouve rien — les 9 rouges, si.* Fichiers : `tracking.js`, `screens.js`, `tests/parcours/runner.js`, `IDEES-FUTURES.md`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v952. |
-
-**ft-v951 — 🍚 LES GLUCIDES PLUS HAUTS LES JOURS DE SÉANCE — mais le levier, ce sont les LIPIDES** — Michel : *« les glucides plus hauts les jours de séance et adaptés »*.
-
-**⭐⭐ ET IL N'Y AVAIT RIEN À AJOUTER AUX GLUCIDES.** Dans le calcul standard, les protéines et les lipides sont fixés au **poids de corps**, et **les glucides sont le RESTE** (`macrosForKcal`). Pour qu'ils montent à calories constantes, ce sont donc les **lipides** qui doivent descendre — et remonter les jours de repos. *C'est aussi le bon geste physiologiquement : les glucides alimentent l'effort, les lipides sont le carburant des jours calmes.*
-
-**⛔⛔ ET LE TOTAL DE LA SEMAINE NE BOUGE PAS D'UN GRAMME.** C'est la condition, pas un raffinement : *monter les glucides des jours de séance sans les baisser ailleurs, ce n'est pas du cycling, c'est manger plus sans le dire* (**R29**). La compensation est calée sur la **fréquence réelle** — on retire `D·(7−f)/7` les jours de séance, on ajoute `D·f/7` les jours de repos, et la somme vaut **exactement zéro quelle que soit `f`**. Le témoin central le vérifie de **1 à 6 séances/semaine** : une seule fréquence n'aurait rien prouvé, puisque la compensation dépend de `f`.
-
-**⚠️ ET LES CALORIES DU JOUR NE BOUGENT PAS NON PLUS** : on échange des lipides contre des glucides à énergie égale. **L'anneau ne bouge pas**, seule la répartition change — c'est **R12** appliqué à la cible elle-même.
-
-**⭐ « ET ADAPTÉS » : une séance de JAMBES donne plus qu'une séance de BRAS** (`_calSessRegion`). ⚠️ Les facteurs sont **un ordre de grandeur assumé, pas une mesure** — on ne connaît pas le coût glycogénique exact d'une séance, et trois décimales seraient un faux-précis. ⭐ **Et la neutralité tient quand même** : les jours de repos rendent la **moyenne des facteurs de SES propres séances récentes**, ce qui annule la somme exactement.
-
-**⛔⛔ NI EN KÉTO NI EN LOW CARB.** Là, le pourcentage de glucides **définit le régime** (5 % et 25 %) : le faire varier avec l'entraînement, ce n'est plus adapter un plan, c'est **sortir la personne de son régime sans le lui demander**. Deux témoins l'épinglent.
-
-**⛔ ET ÇA SE DIT À L'ÉCRAN.** Une ligne annonce *« jour de séance — +20 g de glucides, compensés par les lipides · sur la semaine le total est le même »*. Sans elle, la répartition changerait d'un jour à l'autre **sans raison visible** — et un chiffre qui bouge tout seul se lit comme un bug, ou se contourne (leçon du plancher calorique de ft-v906).
-
-**⚠️ Un plancher lipidique à 0,6 g/kg, ÉCRIT comme un choix** : contrairement aux calories et aux protéines, le Gardien de Milo n'a **aucun** seuil sur les lipides (vérifié). *Un seuil qu'on invente doit se dire, sinon il se relit un jour comme une règle établie.* S'il mord, l'amplitude est rabotée **des deux côtés** pour que la neutralité tienne.
-
-**⚠️⚠️ ET UN ARRONDI APPLIQUÉ TROP TÔT DEVIENT UN BIAIS — trouvé par le témoin, pas par relecture.** J'arrondissais les lipides **avant** d'en déduire les glucides : ~1 g d'erreur par jour, et **le sens de l'arrondi n'étant pas le même les jours de séance et de repos, elle ne se compensait pas** — jusqu'à **9 g d'écart sur la semaine**. Le témoin de neutralité a rougi ; j'ai supprimé la cause au lieu d'élargir la tolérance.
-Tests : **calculs 266/266** (+13), parcours 970/970, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges**, exactement les 4 comportements neufs. ⚠️ Les autres sont **verts des deux côtés, et c'est voulu** : sans cycling la neutralité hebdomadaire est vraie par construction, les calories ne bougeaient pas, le kéto était déjà figé et le plancher n'était pas menacé. Fichiers : `state.js`, `screens.js`, `index.html`, `tests/calculs/runner.js`, `docs/NUTRITION-MOTEUR.md`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v951. |
-
-**ft-v950 — 🍽️ LES REPAS D'ENTRAÎNEMENT N'EXISTENT PLUS QUE LES JOURS D'ENTRAÎNEMENT** — Michel : *« ok maintenant le plan de repas les jours de séance »*.
-
-**⭐⭐ LE DÉFAUT ALLAIT DANS LES DEUX SENS, et c'est exactement ce qui le rendait invisible.** Les plans **muscle / force / endurance** affichaient « ⚡ Pré-entraînement » **et** « 💪 Post-entraînement » **TOUS LES JOURS** — soit, un dimanche de repos, jusqu'à **40 % des calories de la journée** (force : 15 % + 25 %) rangées autour d'une séance **qui n'existe pas**. Et pendant ce temps le plan **perte** n'en a **AUCUN**, même un jour de squat lourd. *Un plan qui parle d'entraînement un jour de repos n'est pas seulement inutile : il apprend à ne plus lire les intitulés.*
-
-**⛔⛔ ET LE POINT QUI COMPTE LE PLUS N'EST PAS L'INTITULÉ : les calories du jour ne bougent pas d'un kcal.** Elles sont **redistribuées** sur les repas restants, jamais retirées. *On corrige un libellé qui ment, on ne modifie pas ce que quelqu'un mange* — changer un apport sans le dire est précisément « l'erreur qui touche la personne » (**R29**). C'est le témoin central du bloc.
-
-**⭐ R2 — LA REDISTRIBUTION EXISTAIT DÉJÀ, on ne l'a pas réécrite.** Le **jeûne intermittent** l'avait posée en juillet, avec sa raison : *« sinon on afficherait une journée incomplète, ce qui pousserait à sous-manger »*. Il n'y a aucune raison que cette règle change selon le **motif** du retrait — donc **une seule fonction** pour les deux usages. Deux copies finiraient par ne plus redistribuer pareil, et **personne ne le verrait**. Un témoin vérifie que le jeûne marche toujours, et qu'un jeûne **cumulé** à un jour de repos ne vide jamais la journée.
-
-**⭐⭐ ET UN JOUR DE SÉANCE, LES REPAS NOMMENT L'HEURE RÉELLE** : *« ⚡ Pré-entraînement — avant ta séance de 18 h »*. ⚠️ **Et si l'heure est inconnue, on n'en invente pas une** : écrire « vers 17 h » supposerait de connaître la durée de la séance, qu'on n'a pas au moment du plan — et pour une séance seulement **annoncée**, on n'a même pas l'heure. *« Avant ta séance de 18 h » est vrai partout où on l'affiche* (**R29**).
-
-**⛔ TROIS SOURCES, DANS L'ORDRE DE CERTITUDE** : la séance **FAITE** (elle a eu lieu, on a l'heure) → **EN COURS** → **ANNONCÉE pour aujourd'hui**. Jamais un jour de la semaine : le déduire supposerait un rythme. Un témoin vérifie qu'une séance annoncée pour **demain** ne fait pas d'aujourd'hui un jour de séance.
-
-**⚠️ DEUX LIMITES ÉCRITES, ET L'UNE EST ÉPINGLÉE PAR UN TÉMOIN** (**R30** — un non-choix qui n'est pas écrit se relit comme un oubli) : ① les plans **perte / recomp** n'ont pas de repas pré/post, donc **rien ne change pour eux** — leur en ajouter demanderait d'écrire du contenu neuf *et* de trancher s'il est pertinent en déficit, c'est une autre décision ; ② la journée **n'est pas réordonnée** selon l'heure — une séance à **7 h** devrait logiquement placer le pré-entraînement **avant** le petit-déjeuner, c'est vrai et ce n'est pas fait, parce que déplacer des repas touche tous les plans, tous les régimes et le jeûne en même temps.
-
-**⚠️ Une dette notée au lieu d'être payée au mauvais moment** : le repli `startHour` → horodatage existe déjà en **deux** variantes (badges dans `app.js`, matin/soir dans `tracking.js`), avec des nuances propres à chacune. Les unifier dans une version qui parle de **repas** changerait leur comportement — c'est **R14**. La 3ᵉ est écrite proprement et la dette est nommée dans le code.
-Tests : **calculs 253/253** (+12), parcours 970/970, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges**, exactement les 4 comportements changés. ⚠️ Les autres sont **verts des deux côtés, et c'est voulu** : les pré/post existaient déjà un jour de séance, les calories étaient déjà conservées, le jeûne marchait déjà, et le plan « perte » ne devait justement **pas** bouger. Fichiers : `state.js`, `tests/calculs/runner.js`, `docs/NUTRITION-MOTEUR.md`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v950. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

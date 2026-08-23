@@ -389,6 +389,79 @@ lui.** (ft-v662 → ft-v663.)
 *Origine : 29/07/2026, conversation Michel ↔ Claude · voisine de R10 (permissions bornées) et de
 R24 (informer sans bloquer).*
 
+### R32 — Une donnée peut être EXACTE dans le rapport et FAUSSE à lire littéralement
+Une bio-impédance ne mesure ni la graisse, ni le muscle, ni l'eau : elle mesure un **poids** et
+une **impédance électrique**, puis le fabricant **estime** le reste avec ses équations. Toutes les
+lignes d'un rapport n'ont donc pas le même statut, et les confondre est le vrai piège — bien plus
+que d'éventuels chiffres absurdes.
+**Les trois niveaux, à distinguer explicitement** (proposition GPT, 23/08/2026) :
+- **A — MESURÉ** : poids, impédances (Ω).
+- **B — ESTIMÉ** : masse grasse, % de gras, muscle, muscle squelettique, eau, graisse viscérale.
+- **C — PROPRIÉTAIRE** : IMC, score corporel, âge corporel, poids cible, « coaching expert ».
+  ⛔ *Le poids cible du fabricant ne devient JAMAIS l'objectif de la personne* — ce sont deux
+  concepts différents, et l'un vient d'un modèle qu'on ne peut pas ouvrir.
+
+**⭐⭐ LE CAS QUI L'A FONDÉE EST MESURÉ, PAS THÉORIQUE.** Sur les 5 rapports de Michel
+(27/07 → 23/08/2026), les variations de la ligne « muscle » et celles de la ligne « eau » ont une
+corrélation de **r = 0,998** — même sens à chaque pas, rapport constant de 1,2 à 2,0. *La valeur
+« muscle » n'est pas influencée par l'hydratation : elle EST l'estimation d'eau redimensionnée.*
+Lire une variation de muscle comme du tissu n'a donc aucun sens à court terme.
+⚠️ **Et il n'y avait aucune incohérence à trouver** : `poids × %gras = masse grasse` et
+`poids − gras = maigre` tombent juste à **0,05 kg près** sur les 5 rapports. *La machine applique
+correctement ses équations — c'est notre lecture qui était trop précise.*
+
+**La règle opérationnelle** : jamais présenter une variation **à court terme** de masse grasse ou
+musculaire issue d'une BIA comme un changement tissulaire certain. On privilégie ① la **tendance**
+sur plusieurs mesures · ② des **conditions comparables** (même appareil, même heure, à jeun) ·
+③ le croisement avec le **poids**, les **performances**, l'**entraînement** et la **nutrition**.
+⛔ **Et on ne fabrique pas un « score de fiabilité » chiffré** (« fiabilité 92 % ») sans méthode
+validée pour le calculer : ce serait remplacer une fausse précision par une autre (**R29**).
+Des mots honnêtes suffisent : *conditions comparables · donnée estimée · tendance émergente ·
+données insuffisantes*.
+
+*Origine : 23/08/2026 · Michel envoie 5 rapports MyBodyCheck puis me reprend — « tu avais fait un
+calcul approfondi comme quoi il y avait beaucoup de mytho dedans ». Il avait raison : c'était écrit
+en ft-v323 (sa masse grasse sautait de 15 % à 20,6 % en changeant de balance) et ft-v833 (« on
+n'avale pas le chiffre de la balance »), et je ne l'avais pas relu avant d'annoncer une perte de
+gras chiffrée (**R23**). Analyse croisée de GPT, dont la corrélation eau/muscle a été vérifiée ici.
+· voisine de **R29** (le droit de deviner dépend du coût de l'erreur) et de **R12** (cohérence
+avant réactivité).*
+
+### R33 — Le format du FABRICANT ne devient jamais le format INTERNE
+Un rapport de balance, un export de montre, un bilan de labo arrivent chacun avec **son propre
+vocabulaire** : *« Muscle squelettique »* chez MyBodyCheck, *« SMM »* chez InBody, *« Skeletal
+Muscle »* ailleurs. Si l'app stocke ces libellés tels quels, le **deuxième** fabricant oblige à
+retoucher tout ce qui lit la donnée — Milo compris.
+👉 **Un seul nom interne par grandeur** (`skeletal_muscle_mass_kg`), et la traduction se fait
+**à l'entrée**, une fois. Milo et l'Observateur n'ont alors jamais à connaître les particularités
+d'une marque. *C'est **R2** appliqué au vocabulaire : une grandeur, un propriétaire, un nom.*
+⚠️ **Corollaire de provenance** : ce qui est normalisé doit garder **d'où il vient** (marque,
+type de document, méthode d'extraction). Sans ça on ne peut plus auditer une valeur douteuse, ni
+savoir si elle a été lue, calculée ou devinée.
+
+**⛔ ET L'ORDRE DES SOURCES EST UNE ÉCHELLE, PAS UN CHOIX** : donnée **structurée** native (CSV,
+export, API) → **PDF texte** → **OCR** → **IA multimodale** → **échec propre**. *Prendre une photo
+d'un tableau qu'on pourrait exporter, pour la faire relire par une IA, est le chemin le plus cher
+et le moins fiable des quatre.* ⭐ On descend d'un cran **seulement** quand le précédent échoue.
+
+**⚠️ CE QUE CETTE RÈGLE N'AUTORISE PAS : construire le pipeline avant d'en avoir le volume.**
+Proposition GPT du 23/08 : ajouter OCR local + parsers par fabricant pour supprimer les appels IA.
+**Mesuré avant de refuser** : l'app n'embarque **aucun** moteur OCR, en ajouter un coûte **2 à
+4 Mo** (3 à 5× la plus grosse bibliothèque actuelle) et heurte la **règle d'or #4** — pendant que
+le volume réel est de **5 imports en un mois**. *Une architecture dimensionnée pour 1 000 imports
+qu'on n'a pas est une dette, pas une optimisation* (**R19**). Sa propre conclusion le dit :
+*« il vaut mieux un appel IA fiable qu'un parser local faux »*.
+👉 **Ce qu'on garde tout de suite, parce que c'est gratuit** : le nom interne, la provenance,
+l'échelle des sources, et **l'échec propre** (`document non reconnu` vaut mieux qu'une donnée
+inventée — c'est ft-v971).
+⛔ **Et pas de faux score de confiance** (« fiabilité 97,4 % ») sans méthode qui le calcule
+vraiment : des états nommés — *validé · partiel · ambigu · non reconnu* — sont plus honnêtes (**R29**).
+
+*Origine : 23/08/2026 · note d'architecture de GPT sur l'import universel, après le cas des
+5 rapports MyBodyCheck. Ses §8-9, §10, §33 et §36 sont adoptés ; son pipeline OCR+parsers est
+différé faute de volume, avec la mesure qui le justifie. · voisine de **R2** (un propriétaire par
+information), **R19** (la gouvernance sert le produit) et **R32** (mesuré / estimé / propriétaire).*
+
 ## 🔗 Où va le reste
 
 | Sujet | Document |

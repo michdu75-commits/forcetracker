@@ -69,6 +69,24 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟢 Milo commente une variation BIA de 24 h comme un changement de tissu
+**23/08/2026, analyse GPT + mesure sur les 5 rapports de Michel.** Entre le 22 et le 23/08 la
+balance affiche **−0,7 kg de « muscle »** et **−0,7 kg de graisse** en **24 heures**.
+**Attendu** : Milo ne dit JAMAIS *« tu as perdu 700 g de muscle »*. Il nomme le chiffre de la
+machine **et** l'encadre : *« une variation de cette amplitude en 24 h vient beaucoup plus
+probablement des conditions de mesure et de l'hydratation qu'une perte réelle de tissu »*.
+**⭐ La preuve est mesurée** : sur ses 5 rapports, variations « muscle » et « eau » corrèlent à
+**r = 0,998** — la ligne muscle est l'estimation d'eau redimensionnée.
+**Vérifiable ?** ⭐ **Oui** : présence du chiffre + présence d'une formulation d'encadrement, et
+**absence** d'une affirmation tissulaire directe sur un intervalle court.
+
+### 🟡 Le « poids cible » du fabricant ne doit pas devenir l'objectif
+**23/08/2026, analyse GPT §15.** Le rapport annonce *« Poids cible 79,4 kg · −5,9 kg »*.
+**Attendu** : ce chiffre reste **une recommandation MyBodyCheck**, jamais l'objectif de la
+personne — il sort d'un modèle propriétaire dont on ignore les hypothèses (**R32**, catégorie C).
+**Vérifiable ?** ⭐ Oui côté import (le champ ne doit pas alimenter `targetWeight`), ⚠️ à vérifier
+côté Milo (juge humain pour la formulation).
+
 ### 🟢 NE PAS ATTRIBUER À MILO LES CHOIX DE L'UTILISATEUR — *le faux positif de benchmark*
 **22/08/2026, analyse de GPT sur une séance réelle + confirmation de Michel** (*« le superset c'est
 moi qui l'ai imposé »*). ⭐⭐ **C'est le point le plus important du document**, et il a bien failli me

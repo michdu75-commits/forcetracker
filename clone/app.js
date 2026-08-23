@@ -1238,6 +1238,7 @@ function _bcApplyGrams(){
   document.getElementById('af-carbs').value=Math.round(_bcNutr.carbs100*f);
   document.getElementById('af-fat').value=Math.round(_bcNutr.fat100*f);
   _bcMontrerTotal(g);
+  _afCoherence();          // les macros viennent de changer : le contrôle suit (R2)
 }
 /* ⭐ CE QUE ÇA FAIT POUR TA QUANTITÉ (ft-v966) — Michel a lu « 88 g de protéines » sur la carte
    produit (titrée « Valeurs pour 100 g ») et a cru que c'était son apport. **L'app avait raison** :
@@ -1348,6 +1349,7 @@ function openAddFood(){
      personne croyait neuf. */
   try{ if(_afSuggTimer) clearTimeout(_afSuggTimer); _afSuggVider(); }catch(e){}
   const bcRow=document.getElementById('af-bc-row');if(bcRow)bcRow.style.display='none';
+  const coh=document.getElementById('af-coherence');if(coh){coh.style.display='none';coh.innerHTML='';}
   const hc=document.getElementById('af-health-card');if(hc)hc.innerHTML='';
   // Code-barres + score santé : GRATUIT pour tout le monde (client-side, 0 token).
   // Les fonctions IA (📸 étiquette, 🤖 estimation) restent freemium (25 essais puis Premium).
@@ -1562,6 +1564,7 @@ async function estimateFoodAI(){
     document.getElementById('af-prot').value=d.prot||0;
     document.getElementById('af-carbs').value=d.carbs||0;
     document.getElementById('af-fat').value=d.fat||0;
+    _afCoherence();        // une estimation IA incohérente se voit tout de suite
     if(d.name)document.getElementById('af-desc').value=d.name;
     // ⚠️ L'IA ne donne PAS de valeur au 100 g ni de quantité : elle rend un total estimé pour la
     //    phrase. On enregistre donc l'origine et rien d'autre — inventer un `per100` ici ferait
@@ -1974,6 +1977,7 @@ function _afSuggPrendreLocale(i){
   document.getElementById('af-prot').value=e.prot||0;
   document.getElementById('af-carbs').value=e.carbs||0;
   document.getElementById('af-fat').value=e.fat||0;
+  _afCoherence();          // une ancienne entrée fausse se signale au moment où on la reprend
   const row=document.getElementById('af-bc-row'); if(row)row.style.display='none';
   _bcNutr=null;
   _afSetSrc({saisie:'historique', origine:e.origine||'utilisateur',
@@ -2071,8 +2075,31 @@ function openEditFood(ts){
   _editFoodTs=ts; _editFoodMeal=e.meal||'dejeuner';
   let ov=document.getElementById('ov-edit-food');
   if(!ov){ov=document.createElement('div');ov.id='ov-edit-food';ov.className='overlay';ov.style.zIndex='500';ov.onclick=ev=>{if(ev.target===ov)ov.classList.remove('open');};document.body.appendChild(ov);}
-  const fld=(id,lbl,val)=>'<div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">'+lbl+'</div><input id="'+id+'" type="number" inputmode="numeric" value="'+(val||0)+'" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>';
+  const fld=(id,lbl,val)=>'<div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">'+lbl+'</div><input id="'+id+'" type="number" inputmode="numeric" value="'+(val||0)+'" oninput="_efCoherence()" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>';
+  /* ⚖️ LE CHAMP QUANTITÉ POUR TOUTES LES ENTRÉES (23/08/2026, ft-v972) — Michel, devant une ligne
+     « 30g de protéines » : *« en fait on ne peut pas modifier le poids, je modifie le nom ça ne
+     change pas la valeur. Il faut rajouter une ligne poids je pense, qui va modifier la valeur des
+     calories et des autres lignes »*.
+     ⭐ IL A RAISON, ET C'EST MA LIMITE DE ft-v962 QUI MORD : le champ n'apparaissait QUE si
+     l'entrée portait un `per100` (scan, CIQUAL, recherche). Une ligne tapée à la main ou estimée
+     par l'IA — donc **la sienne** — n'en a pas, et restait 4 chiffres à recalculer soi-même.
+     ⭐⭐ LA SOLUTION NE DEMANDE AUCUN `per100` : on ne rescale pas depuis une composition, on
+     rescale **par PROPORTION**. Si la ligne vaut X pour une quantité de référence Q, elle vaut
+     X × (nouvelle/Q). *Il suffit de connaître Q, pas la composition pour 100 g.*
+     👉 TROIS SOURCES POUR Q, DE LA PLUS SÛRE À LA MOINS SÛRE :
+       ① `per100` connu → grammes absolus, comme avant (ft-v962, inchangé) ;
+       ② `q` enregistré → c'est la quantité réellement saisie ;
+       ③ ⭐ LE NOM LUI-MÊME — « 30g de protéines » porte son ancrage. On lit le nombre suivi de
+          `g`/`ml`, et on s'en sert comme référence. *C'est là que Michel écrit déjà la quantité :
+          on lit ce qu'il a mis au lieu de lui redemander.*
+     ⛔ ET S'IL N'Y A AUCUN ANCRAGE, on ne devine pas un poids : on offre des **portions**
+     (½ · 1½ · 2 ·…) qui multiplient les 4 macros sans jamais prétendre connaître des grammes.
+     *Un « ×2 » est vrai quelle que soit la portion de départ ; un « 60 g » inventé serait faux.* */
   let gramsFld='';
+  const _mNom=String(e.name||'').match(/(\d+(?:[.,]\d+)?)\s*(g|ml)\b/i);
+  const _ancre = e.per100 ? null
+    : (e.q>0 ? {v:e.q, u:e.u||'g', src:'quantité enregistrée'}
+    : (_mNom ? {v:parseFloat(_mNom[1].replace(',','.')), u:_mNom[2].toLowerCase(), src:'lu dans le nom'} : null));
   if(e.per100){
     let gInit;
     if(e.q&&e.u==='g') gInit=Math.round(e.q);
@@ -2080,6 +2107,17 @@ function openEditFood(ts){
     else gInit=100;
     gramsFld='<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité (g) <span style="font-weight:400;">— recalcule les macros ci-dessous</span></div>'
       +'<input id="ef-grams" type="number" inputmode="numeric" value="'+gInit+'" oninput="_efApplyGrams()" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>';
+  } else if(_ancre && _ancre.v>0){
+    _efRef={base:{kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0}, q:_ancre.v};
+    gramsFld='<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité ('+_ancre.u+') <span style="font-weight:400;">— recalcule les macros ci-dessous</span></div>'
+      +'<input id="ef-prop" type="number" inputmode="decimal" step="any" value="'+_ancre.v+'" oninput="_efApplyProp()" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);">'
+      +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Référence '+_ancre.src+' : '+_ancre.v+' '+_ancre.u+'. Les 4 valeurs suivent en proportion.</div></div>';
+  } else {
+    _efRef={base:{kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0}, q:1};
+    const b=(x,l)=>'<button onclick="_efApplyPortion('+x+')" style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t2);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">'+l+'</button>';
+    gramsFld='<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Portion <span style="font-weight:400;">— multiplie les 4 valeurs</span></div>'
+      +'<div style="display:flex;gap:6px;">'+b(0.5,'½')+b(1,'1')+b(1.5,'1½')+b(2,'2')+b(3,'3')+'</div>'
+      +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Cette ligne n\'a pas de quantité connue — on ne peut pas inventer un poids. Mets la quantité dans le nom (ex. « 30 g de whey ») et le champ deviendra un poids.</div></div>';
   }
   ov.innerHTML='<div class="modal" style="max-width:94vw;width:400px;padding:16px;">'
     +'<div style="font-weight:800;font-size:16px;color:var(--t1);margin-bottom:12px;">Modifier l\'aliment</div>'
@@ -2088,17 +2126,91 @@ function openEditFood(ts){
     +'<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:6px;">Repas</div>'
     +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">'+FOOD_MEALS.map(m=>'<button id="ef-meal-'+m.k+'" onclick="_setEditFoodMeal(\''+m.k+'\')" style="flex:1;min-width:70px;padding:9px 6px;border-radius:10px;border:none;font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;background:var(--bg3);color:var(--t2);">'+m.ic+'<br>'+m.lbl+'</button>').join('')+'</div>'
     +gramsFld
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">'+fld('ef-kcal','Calories (kcal)',e.kcal)+fld('ef-prot','Protéines (g)',e.prot)+fld('ef-carbs','Glucides (g)',e.carbs)+fld('ef-fat','Lipides (g)',e.fat)+'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">'+fld('ef-kcal','Calories (kcal)',e.kcal)+fld('ef-prot','Protéines (g)',e.prot)+fld('ef-carbs','Glucides (g)',e.carbs)+fld('ef-fat','Lipides (g)',e.fat)+'</div>'
+    +'<div id="ef-coherence" style="display:none;font-size:12px;line-height:1.45;color:var(--orange);background:var(--bg3);border-radius:10px;padding:10px 11px;margin-bottom:14px;"></div>'
     +'<button class="btn btn-red" onclick="saveEditFood()" style="width:100%;padding:13px;font-size:15px;">✅ Enregistrer</button>'
     +'<button class="btn btn-bg2" onclick="confirmRemoveFood('+ts+')" style="width:100%;margin-top:8px;color:var(--red);">🗑 Supprimer</button>'
     +'<button class="btn btn-bg2" onclick="document.getElementById(\'ov-edit-food\').classList.remove(\'open\')" style="width:100%;margin-top:8px;">Annuler</button>'
     +'</div>';
   document.getElementById('ef-name').value=e.name||''; // évite tout souci d'échappement dans l'attribut
   _renderEditFoodMeals();
+  _efCoherence();                     // l'incohérence se voit À L'OUVERTURE, sans rien toucher
   ov.classList.add('open');
 }
 function _setEditFoodMeal(k){_editFoodMeal=k;_renderEditFoodMeals();}
 function _renderEditFoodMeals(){FOOD_MEALS.forEach(m=>{const b=document.getElementById('ef-meal-'+m.k);if(!b)return;const sel=m.k===_editFoodMeal;b.style.background=sel?'var(--red)':'var(--bg3)';b.style.color=sel?'#fff':'var(--t2)';});}
+/* ⚖️ RESCALER PAR PROPORTION quand on n'a pas de pour-100 g (ft-v972). `_efRef` garde les valeurs
+   de DÉPART et la quantité de référence : on multiplie par (nouvelle / référence).
+   ⛔ On repart TOUJOURS de `base`, jamais des champs affichés — sinon deux réglages successifs
+   s'empileraient (30 → 60 → 90 donnerait ×2 puis ×1,5 = ×3 au lieu de ×3… et l'erreur grandirait
+   à chaque frappe, chiffre par chiffre pendant la saisie). */
+let _efRef=null;
+function _efProp(f){
+  if(!_efRef) return;
+  const b=_efRef.base;
+  const P=(id,v)=>{const el=document.getElementById(id);if(el)el.value=Math.round(v);};
+  P('ef-kcal',b.kcal*f); P('ef-prot',b.prot*f); P('ef-carbs',b.carbs*f); P('ef-fat',b.fat*f);
+  _efCoherence();
+}
+function _efApplyProp(){
+  if(!_efRef||!(_efRef.q>0)) return;
+  const v=parseFloat((document.getElementById('ef-prop')||{}).value);
+  if(!(v>0)) return;                       // champ vidé pendant la frappe : on ne touche à rien
+  _efProp(v/_efRef.q);
+}
+function _efApplyPortion(x){ _efProp(x); }
+/* ⛔⛔ LES CALORIES DOIVENT COLLER À LEURS PROPRES MACROS (ft-v972) — Michel, devant une ligne
+   « 30g de protéines » à **1117 kcal** pour 26 P · 1 G · 1 L : *« putain je ne l'avais même pas vu,
+   j'étais axé sur les calories »*. **4×26 + 4×1 + 9×1 = 117.** Il y a un « 1 » de trop, et cette
+   seule ligne gonflait sa journée de **1 000 kcal**.
+   ⚠️ ON NE SAIT PAS D'OÙ VIENT LE 1117 — frappe, ou estimation IA. *Et c'est justement pour ça
+   que le contrôle doit exister* : il attrape les deux, sans avoir à trancher lequel.
+   ⛔ ON NE CORRIGE JAMAIS TOUT SEUL : on montre l'écart et on propose. Réécrire un chiffre que la
+   personne a saisi, c'est décider à sa place (**R29**) — et l'app peut se tromper (aliment très
+   alcoolisé, fibres, polyols : l'alcool fait 7 kcal/g et n'a pas de champ ici).
+   ⚠️ LE SEUIL EST LARGE EXPRÈS (25 % ET 60 kcal d'écart) : un contrôle qui crie pour un arrondi
+   finit désactivé (**R19**). Ici l'écart est de 855 %. */
+/* ⭐ R2 — UNE SEULE DÉFINITION DE « CES CALORIES SONT IMPOSSIBLES ». Le contrôle sert la modale de
+   MODIFICATION (`ef-*`) et le formulaire d'AJOUT (`af-*`) : deux copies finiraient par ne plus
+   avoir le même seuil, et on ne saurait plus lequel croire. `pfx` est le seul paramètre. */
+/* ⛔⛔ L'ALCOOL FAIT 7 kcal/g ET N'A AUCUN CHAMP ICI (23/08/2026) — trouvé en testant les cas
+   limites sur l'étiquette réelle de Michel, pas après coup : une bière (215 kcal pour 1,5 P /
+   15 G / 0 L) affiche **69 % d'écart**, un verre de vin **87 %**. Ce sont de VRAIES valeurs, et
+   l'alerte serait fausse à chaque fois.
+   ⭐ *Un garde-fou qui se trompe sur la bière ne survit pas au premier apéro* (**R19**).
+   ⚠️ LA LISTE EST COURTE ET EXPLICITE, et elle ne fait que SE TAIRE : elle n'invente aucune
+   valeur, ne corrige rien, et un aliment mal nommé retombe simplement dans le cas général. */
+const _KCAL_ALCOOL=/\b(bi[eè]re|vin\b|ros[eé]\b|champagne|cidre|whisky|vodka|rhum|gin\b|t[eé]quila|punch|mojito|ap[eé]ritif|ap[eé]ro|alcool|liqueur|porto|pastis|cocktail|spritz|sangria|kir\b|calvados|cognac|armagnac|hydromel|saké|sake)\b/i;
+function _coherenceKcal(pfx, corrigeur){
+  const el=document.getElementById(pfx+'-coherence'); if(!el) return;
+  const g=id=>parseFloat((document.getElementById(pfx+'-'+id)||{}).value)||0;
+  const nom=String((document.getElementById(pfx+'-'+(pfx==='af'?'desc':'name'))||{}).value||'');
+  const kcal=g('kcal'), theo=4*g('prot')+4*g('carbs')+9*g('fat');
+  const ecart=Math.abs(kcal-theo);
+  if(!(kcal>0) || !(theo>0) || ecart<60 || ecart/Math.max(kcal,theo)<0.25
+     || (kcal>theo && _KCAL_ALCOOL.test(nom))){   // ⛔ calories « en trop » sur une boisson alcoolisée : normal
+    el.style.display='none'; el.innerHTML=''; return;
+  }
+  el.innerHTML='⚠️ <b>'+Math.round(kcal)+' kcal</b> ne colle pas à ces macros : '
+    +g('prot')+' g de protéines, '+g('carbs')+' g de glucides et '+g('fat')+' g de lipides '
+    +'donnent <b>'+Math.round(theo)+' kcal</b>. '
+    +'<button onclick="'+corrigeur+'('+Math.round(theo)+')" style="margin-top:6px;display:block;padding:7px 12px;border-radius:9px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:12.5px;font-weight:700;font-family:var(--font);cursor:pointer;">Mettre '+Math.round(theo)+' kcal</button>';
+  el.style.display='block';
+}
+function _efCoherence(){ _coherenceKcal('ef','_efCorrigerKcal'); }
+function _efCorrigerKcal(v){
+  const el=document.getElementById('ef-kcal'); if(el)el.value=v;
+  if(_efRef)_efRef.base.kcal=v;            // la référence suit, sinon un rescale la ferait revenir
+  _efCoherence();
+}
+/* ⛔⛔ ET EN DIRECT À LA SAISIE (ft-v972) — Michel : *« et en direct, pas au moment de
+   l'enregistrer »*. Attraper le chiffre pendant qu'il est encore sous les yeux vaut mieux que de
+   le retrouver le lendemain : sa journée était déjà faussée de 1 000 kcal quand il l'a vu. */
+function _afCoherence(){ _coherenceKcal('af','_afCorrigerKcal'); }
+function _afCorrigerKcal(v){
+  const el=document.getElementById('af-kcal'); if(el)el.value=v;
+  _afCoherence();
+}
 // Même calcul que `_bcApplyGrams()` (R2) : pour-100g × grammes/100, appliqué aux 4 champs macro.
 function _efApplyGrams(){
   const e=(S.foodLog||[]).find(x=>x.ts===_editFoodTs); if(!e||!e.per100) return;
