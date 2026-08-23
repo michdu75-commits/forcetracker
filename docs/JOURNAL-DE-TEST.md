@@ -69,6 +69,44 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟢 ⭐⭐ MILO VÉRIFIE APRÈS, PAS AVANT — *le même défaut trois fois dans une seule séance*
+**23/08/2026, séance de Michel** (*« il m'a reproposé un repos de 1 min 30 sur du lourd »* ·
+*« comment il a pu déduire que je pouvais faire 3 séries de 5 reps à 95, c'est impossible »*).
+**⭐⭐ CE N'EST PAS UN DÉFAUT DE JUGEMENT, ET C'EST LA DÉCOUVERTE.** Sur les deux points, Milo
+**avait le bon raisonnement — il ne l'a simplement pas appliqué de lui-même** :
+- **le repos** : il propose 90 s, puis, questionné, écrit *« ton réglage dans l'app est à 1 min 30,
+  c'était probablement calibré pour du volume léger — passe-le à 3 min »*. **Il le voit, il
+  l'explique, il le corrige.** Mais seulement après.
+- **la charge** : il propose 95×5, puis, questionné, calcule *« 105×2 → 1RM ~108 · 95×5 ≈ **88 %**,
+  très lourd pour 3×5, on vise 80-85 %, soit 85-90 kg »* et **corrige à 90**. Michel a répondu
+  *« ne corrige pas »* — Milo a obéi (**c'est le bon comportement**, cf. l'entrée sur les choix
+  de l'utilisateur).
+**⭐ ET LA RÉALITÉ A TRANCHÉ POUR LES DEUX** : mesuré dans la séance enregistrée — **95×3 avec
+pose de barre à la 2ᵉ rep, deux fois**, puis 90×3. *Michel avait raison (ce n'est pas faisable),
+et le 90 corrigé de Milo est exactement là où il a fini.*
+**Attendu** : le contrôle d'intensité (charge × reps vs 1RM connu) et le contrôle de repos se
+déclenchent **à la proposition**, pas à la question.
+**Vérifiable ?** ⭐⭐ **Oui, et par du CODE, sans appel IA** (**R7** : est-ce structurel ? oui →
+le prompt est le dernier levier). L'app connaît `S.prs` : elle peut calculer le % du 1RM d'une
+séance dictée **avant** de l'afficher. Idem pour le couple charge × reps × repos.
+
+### 🟢 LE SUPERSET RESTE DANS LE TEXTE ET N'ATTEINT PAS LA DONNÉE — **R4 au mot près**
+**23/08/2026.** Michel : *« et en plus le superset n'a pas fonctionné »*. **Mesuré, il a raison** :
+la séance proposée dit noir sur blanc *« **Rowing Barre** (ancre) **en superset avec Tirage Visage
+(Face Pull)** — repos 90 s après chaque paire »*, et dans la séance enregistrée
+**`supersetGroup` vaut `None` sur les 5 exercices**.
+**⚠️ ET LE GARDE-FOU N'EST PAS EN CAUSE — vérifié plutôt que supposé (R28)** : `_supersetInterdit`
+rend **false** pour le Rowing Barre (`tirage-horizontal`) comme pour le Face Pull
+(`elevation-epaules`). Le code lit bien `supersetGroup` depuis le 12/08. **C'est donc Milo qui ne
+l'a pas émis dans son bloc technique**, alors qu'il l'écrit dans sa phrase.
+**⭐ L'INDICE QUI LE CONFIRME** : le Face Pull est enregistré avec **`rest: 0`** sur ses séries —
+c'est exactement la signature d'un partenaire de superset. *L'intention est arrivée, le
+groupement s'est perdu.* **R4 : l'information doit descendre jusqu'à la DONNÉE, pas rester dans
+le TEXTE.**
+**Vérifiable ?** ⭐⭐ **Oui, et c'est un scénario idéal** : une réponse qui contient le mot
+« superset » **doit** produire au moins deux exercices partageant la même étiquette. Le
+vérificateur est du texte contre de la donnée, aucun juge nécessaire.
+
 ### 🟣 ⭐⭐ CE QUI COMPTE LE PLUS EST CE QU'IL LAISSE TOMBER LE PREMIER
 **23/08/2026, relu dans les vraies conversations de Michel (soirée du 09/08).** L'utilisateur
 confie un **événement personnel grave** (santé d'un proche, opération le lendemain, pronostic
