@@ -180,6 +180,7 @@ const _HELP_DATA={
   setup:{
     title:'👤 Profil',
     tips:[
+      {i:'📷',t:'<b>Bilan corporel</b> (Profil → Composition) : la photo de ton rapport de balance est lue <b>sur ton téléphone</b>, gratuitement et sans réseau. L\'app <b>vérifie son propre travail</b> — les lignes du rapport se recoupent — et si le compte n\'y est pas, elle préfère ne rien te proposer plutôt que de te donner un chiffre faux. Vérifie toujours avant d\'enregistrer.'},
       {i:'📂',t:'Le Profil est organisé en sections repliables (Identité · Objectif · Discipline · Composition · Morphologie · Santé · Cycle · Accessibilité) : tape un titre pour l\'ouvrir. Le bouton "Enregistrer" confirme par une notification verte.'},
       {i:'⚖️',t:'Poids, taille et âge sont indispensables pour calculer ton TDEE (besoins caloriques) dans Nutrition.'},
       {i:'🎯',t:'L\'objectif principal (muscle, perte de poids, force, rééquilibrage...) adapte tes macros et les conseils du Coach IA. Tu peux aussi ajouter une « priorité complémentaire » (2e objectif) : elle affine les conseils de Milo et ton entraînement, mais la NUTRITION suit toujours l\'objectif principal (elle ne peut viser qu\'une seule direction de calories). Pour « perdre du gras ET prendre du muscle », prends l\'objectif « Perte de gras + muscle ».'},

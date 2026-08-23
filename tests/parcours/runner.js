@@ -10124,8 +10124,27 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
        moi-même** : ils passaient donc AUSSI contre l'ancien code (contrôle négatif identique,
        1122 des deux côtés). *Un témoin qui rejoue le motif corrigé teste le TEST, pas l'app.*
        👉 Celui-ci lit la SOURCE de l'appelant réel : c'est le seul endroit où le défaut vivait. */
-    o.appelantAttend=/_hideBsScan\(\s*async\s*\(\s*\)\s*=>\s*\{[\s\S]{0,200}?await\s+openBodyScanForm/
-      .test(String(onBodyScanPhoto));
+    /* ⚠️ RECIBLÉ EN ft-v974, PAS AFFAIBLI. Le remplissage du formulaire a été SORTI de
+       `onBodyScanPhoto` pour être partagé par la lecture locale (OCR) et la lecture IA (R2) :
+       le `await` ne vit donc plus chez l'appelant, il vit dans la fonction commune. Ce témoin
+       épingle désormais les DEUX moitiés de la garantie — sinon il aurait suffi de déplacer le
+       code pour le rendre vert.
+       ① la fonction qui ouvre le formulaire ET écrit dedans attend bien l'ouverture ;
+       ② et personne d'autre ne rouvre le formulaire dans son coin (c'est ce qui recréerait le
+          défaut ailleurs, sans que rien ne le signale). */
+    const srcRemplir=(typeof _bsRemplirFormulaire==='function')?String(_bsRemplirFormulaire):'';
+    // (le nettoyage des commentaires est défini juste en dessous, il ne sert qu'à l'appelant)
+    o.remplirEstAsync=/^async\s/.test(srcRemplir);
+    o.remplirAttend=/await\s+openBodyScanForm/.test(srcRemplir);
+    /* ⚠️ ON RETIRE LES COMMENTAIRES AVANT DE CHERCHER. Le gros commentaire de ft-v971 vit DANS
+       `onBodyScanPhoto` et y nomme `openBodyScanForm` : sans ce nettoyage, le témoin accusait le
+       texte d'explication au lieu du code. *Un témoin qui lit des commentaires ne mesure pas le
+       comportement* — 4ᵉ fois cette semaine qu'un témoin désigne le mauvais coupable. */
+    const sansCom=t=>String(t).replace(/\/\*[\s\S]*?\*\//g,'').replace(/\/\/[^\n]*/g,'');
+    const srcAppelant=sansCom(onBodyScanPhoto);
+    o.appelantDelegue=srcAppelant.indexOf('_bsRemplirFormulaire')>=0;
+    o.appelantNOuvrePas=srcAppelant.indexOf('openBodyScanForm')<0;
+    o.appelantAttend=o.remplirEstAsync&&o.remplirAttend&&o.appelantDelegue&&o.appelantNOuvrePas;
 
     const faux={date:'2026-08-23',weight:85.3,bf:19.5,fatMass:16.6,muscle:64.0,skMuscle:39.3};
     /* Reproduit le chemin REEL de `onBodyScanPhoto` apres une lecture IA reussie. */
@@ -10157,8 +10176,9 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   else{
     t('⚠️ `openBodyScanForm` est bien asynchrone (verrou santé) — donc elle DOIT être attendue',
       R.estAsync===true, '');
-    t('⛔⛔ ET L\'APPELANT RÉEL L\'ATTEND (le seul témoin qui discrimine : les autres rejouaient le motif corrigé)',
-      R.appelantAttend===true, '');
+    t('⛔⛔ ET LE CODE QUI OUVRE LE FORMULAIRE L\'ATTEND (le seul témoin qui discrimine : les autres rejouaient le motif corrigé)',
+      R.appelantAttend===true,
+      'async='+R.remplirEstAsync+' await='+R.remplirAttend+' délègue='+R.appelantDelegue+' n\'ouvre pas lui-même='+R.appelantNOuvrePas);
     t('⛔⛔ DÈS LA 1ʳᵉ PASSE : aucun champ manquant (avant : 16 sur 16 introuvables)',
       R.p1_aucunChampManquant===true, '');
     t('⭐⭐ ... et les valeurs sont écrites', R.p1_aRempli===true, '');
