@@ -405,7 +405,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v978`** (prochaine : `ft-v979`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v984`** (prochaine : `ft-v985`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -415,6 +415,110 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v984 — ⚖️ LA QUANTITÉ SUIT L'ALIMENT QUAND ON LE REPREND — « sérieux c'est relou »** — Michel, trois captures à l'appui : *« Bah non beug, comment ça se fait que je ne peux pas mettre la quantité »*.
+
+**⛔⛔ REPRODUIT DANS UN NAVIGATEUR AVANT DE TOUCHER AU CODE** — la leçon `BUGS.md` **12quater**, appliquée cette fois. Par le chemin **CIQUAL** : `blocQuantite: true`. Par le chemin de **son propre journal** — celui qu'on emprunte dès la 2ᵉ fois — `blocQuantite: false`, **alors que `per100` est bien présent dans la source**.
+
+**⛔ `_afSuggPrendreLocale` CACHAIT LE BLOC SANS CONDITION… et transmettait `per100` deux lignes plus bas.** *C'est **R4** à deux lignes d'écart : l'information existait, et n'atteignait pas l'écran.*
+
+**⚠️ LA CONSÉQUENCE VÉCUE EST CE QUI REND LE DÉFAUT VICIEUX** : le mécanisme de ft-v962/965 marchait **la première fois** qu'on note un aliment, et disparaissait **toutes les suivantes**. *Un défaut qui ne se manifeste qu'à la DEUXIÈME saisie ne se voit jamais en testant une fois.*
+
+**⭐ R13/R2 — ON NE RÉINVENTE RIEN** : on reconstruit `_bcNutr` depuis le `per100` déjà enregistré, et le bloc existant fait le reste, exactement comme après un scan. Le libellé dit **d'où vient la référence** (*« ta dernière saisie »*), et la quantité reprend **celle de la fois d'avant**.
+
+**⛔⛔ ET ON NE RECALCULE PAS LES MACROS EN ARRIVANT.** Elles sont déjà justes, et la personne a pu les **corriger à la main**. ⭐ **Mesuré** : son *29 kcal* corrigé reste **29**, pas 48. *Les réécrire aurait effacé sa correction sans le dire* (**R29**). Le recalcul part au **premier changement de quantité**, quand elle le demande : 50 g → 24 kcal · 6 g.
+
+**⛔ Une entrée tapée À LA MAIN n'a pas de pour-100 g, donc pas de bloc** — aucun poids inventé.
+
+**⚠️ ET CE QUI N'EST PAS EXPLIQUÉ EST ÉCRIT AUSSI** : sa 3ᵉ capture montre une **ratatouille sans pour-100 g** (*« cette ligne n'a pas de quantité connue »*). **Ce correctif ne la répare pas rétroactivement** — une entrée ancienne, ou entrée par un chemin qui n'enregistrait pas encore `per100`, reste sans quantité. *On ne prétend pas avoir tout couvert.*
+Tests : **parcours 1263/1263** (+7, bloc CII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 3 rouges**, et il est **instructif** — les détails **sont la capture de Michel** : `{"bloc":false}`, et après avoir mis 50 g, `{"kcal":"29","prot":"7"}`, c'est-à-dire *rien ne bouge*. ⭐ **Et 3 des 4 verts sont de VRAIS verts** : le chemin CIQUAL, le `per100` enregistré et surtout **les macros corrigées non écrasées** ne devaient pas bouger — ils n'ont pas bougé. ⚠️ Le 4ᵉ (« pas de bloc sans `per100` ») est un demi-faux vert : avant, il n'y avait jamais de bloc. ⚠️ **Et mon 1ᵉʳ essai de mesure n'a rien mesuré** : j'écrivais `window._afSuggLoc`, qui est une variable de **script** et non `window` — le test lisait un libellé **resté de l'étape d'avant**. *Même famille que `_miloPendingIdx` deux heures plus tôt.* Le bloc passe désormais par le **vrai chemin** : on tape, le code remplit ses suggestions, on clique. Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v984. |
+
+**ft-v983 — 🩺 LE DIAGNOSTIC MÉDICAL NE PASSE PLUS SEUL — « détecté » n'était pas « empêché »** — 3ᵉ et dernier bloquant de la contre-analyse.
+
+**⛔⛔ CE QUE L'AUDIT DU GARDIEN DE SORTIE A DONNÉ, MESURÉ** : sur ses **5 contrôles, un seul retire vraiment** quelque chose — le bloc technique, via `_stripCoachTech`. Les quatre autres (**interrogatoire · diagnostic médical · promesse vide · source douteuse**) sont **comptés puis affichés tels quels**. *Détecté n'est pas empêché.*
+
+**👉 POUR TROIS D'ENTRE EUX, UN COMPTEUR SUFFIT : ils nous regardent, nous. Pas pour le diagnostic.** La Constitution (**P13/P22**) dit que Milo ne diagnostique jamais et renvoie au médecin — *si la phrase sort quand même, c'est à l'app de poser le renvoi.*
+
+**⛔⛔ ON N'A PAS RÉÉCRIT LA RÉPONSE, ET C'EST DÉLIBÉRÉ.** Le code disait déjà, à propos de ce contrôle précis : *« il attrape la FORMULE, pas l'intention — donc il SIGNALE, il ne réécrit pas (on ne charcute pas une phrase) »*. Charcuter produirait des phrases incompréhensibles sur les faux positifs, **et un faux positif est ici certain à terme**. On **ajoute** donc une ligne sous la réponse, sans en modifier un caractère — *additif, visible, réversible*. **Si le motif se trompe, le pire est un rappel de bon sens en trop, pas une phrase mutilée** (**R29** : le coût de l'erreur décide).
+
+**⚠️ ET LE MOTIF EST DÉJÀ CALIBRÉ, c'est ce qui rend l'affichage supportable** : resserré le 21/08 après **3 faux positifs sur 3** sur de vraies réponses (*« tu es en Jour 2 »*, *« tu es en phase de charge »*). Il exige désormais une **pathologie nommée** et ne tirait sur **aucune** des 129 réponses mesurées. *Il est rare — donc il sera lu.*
+
+**⛔ LE TON EST CELUI D'UN RAPPEL, PAS D'UNE ALARME** : *« Milo est un coach sportif, pas un médecin — il peut se tromper sur ce genre de sujet. Pour tout ce qui touche à ta santé, c'est ton médecin qui tranche. »* Trait plein et sobre, pour le distinguer du badge Gardien (pointillé rouge vif) qui, lui, est un outil interne réservé à l'admin.
+Tests : **parcours 1256/1256** (+7, bloc CI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 2 rouges**, exactement les 2 comportements neufs. ⭐⭐ **ET LES DEUX TÉMOINS QUI COMPTENT LE PLUS SONT VERTS DES DEUX CÔTÉS** : le texte de Milo **et** son `dataset.raw` (partage / PDF) sont **intacts avant comme après** — *c'est précisément ce qui prouve qu'on a AJOUTÉ et non charcuté*. ⚠️ Les 3 autres verts, eux, sont de **faux verts** : sans la fonction, « pas de rappel sur une réponse normale » passe tout seul. Fichiers : `coach.js`, `style.css`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v983. |
+
+**ft-v982 — 🩹 UNE BLESSURE DITE À MILO ATTEINT ENFIN LE GARDIEN — et l'essai était parqué pour une bonne raison** — Michel : *« fais tout ce que tu peux, je veux que Milo soit fiable »*. C'était le point n°1 de la contre-analyse.
+
+**⛔⛔ LE CHEMIN ÉTAIT ÉTEINT EN PRODUCTION**, derrière `window.__FT_CLONE__`. Une personne pouvait dire sa blessure à Milo, l'accepter en mémoire, **et le Gardien déterministe n'en savait rien**. ⭐ **Mesuré contre l'ancien code** : Profil Santé `""`, Gardien `[]`, consigne absente du contexte. *C'est exactement la question que Michel avait posée — la réponse était oui.*
+
+**⚠️ L'AUDIT EXTÉRIEUR Y VOYAIT UNE RÉGRESSION du retrait du clone. C'est faux, et la nuance compte** : essai **jamais promu**, listé comme tel le jour même en ft-v976. *Personne n'avait rien cassé — une décision n'avait jamais été prise.*
+
+**⭐⭐ ET EN LA PRENANT, ON A TROUVÉ POURQUOI L'ESSAI ÉTAIT PARQUÉ.** `_gardienZonesFromText` détecte des **NOMS DE MUSCLES**, pas des blessures. Mesuré sur 9 formes de mémoire parfaitement anodines : **7 faux positifs**. *« Michel veut prioriser le dos et les épaules »* produisait **deux zones fragiles** ; *« Travaille les biceps le jeudi »* en produisait une. **Le promouvoir tel quel aurait été PIRE que de ne rien faire** — Milo se serait mis à protéger des zones parfaitement saines, et à appauvrir les séances de gens qui n'ont rien.
+
+**⛔ L'ESSAI N'ÉTAIT PAS OUBLIÉ, IL ÉTAIT INCOMPLET** — il lui manquait la moitié qui distingue *« parler de son dos »* de *« avoir mal au dos »*. 👉 D'où `_texteDitUneLimitation()` : **il faut DEUX choses**, une zone **et** un mot de limitation. Après : **0 faux positif et 0 raté sur 17 phrases**. *(C'est la forme du `_noteHonoree` de ft-v967 — un critère observable à deux conditions vaut mieux qu'une devinette.)*
+
+**⭐ AU PASSAGE, « TALON » EST AJOUTÉ à la zone cheville** : c'est le mot que Michel emploie pour sa propre gêne (*« un point douloureux au talon qui réapparaît »*), et **rien ne l'attrapait**.
+
+**⭐⭐ ET LA SECONDE MOITIÉ ÉTAIT ÉTEINTE AUSSI** : la consigne du prompt *« nomme toujours la ZONE »* vivait derrière le **même** garde. Sans elle, Milo ne nomme pas la zone — et le pont ne peut lire que ce qui est écrit. *Un garde-fou dont la moitié amont est débranchée n'est pas à moitié utile : il est inutile.*
+
+**⛔ R2 — LE FILTRE VIT DANS LE PONT, PAS DANS `_gardienZonesFromText`** : l'autre lecteur de cette fonction, les **notes du Profil Santé**, ne contient QUE des blessures par construction. Y mettre le filtre ferait **rater de vraies limitations déjà déclarées à la main**. ⚠️ Et le mode d'échec choisi est la **sur-protection**, jamais la sous-protection : *une adaptation inutile coûte une séance prudente, une protection manquante coûte une blessure* (**R29**).
+
+**⭐ UN TÉMOIN EXISTANT A ROUGI, ET IL AVAIT RAISON** : en activant la consigne, la règle *« accident de moto »* se retrouvait écrite **deux fois** dans le prompt. **Exemple dédoublonné plutôt que témoin désarmé** — le prompt y gagne (**R20**).
+
+**👉 ET LA LEÇON MONTE EN R30, dans le sens inverse** : *avant de PROMOUVOIR un essai parqué, chercher pourquoi il était parqué.* Un garde d'essai est une **question non résolue**, pas un interrupteur — le retirer sans retrouver la question, c'est répondre au hasard.
+Tests : **parcours 1249/1249** (+12, bloc C), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 8 rouges**, et il est **instructif** — les détails imprimés *sont* le trou : Profil Santé `""`, Gardien `[]`, `{"consigne":false,"zone":false}`. ⚠️ **Et 2 des 4 verts sont de FAUX VERTS, autant l'écrire** : *« une préférence n'ajoute rien à la santé »* et *« un Non n'alimente jamais la santé »* étaient verts avant **parce que rien n'ajoutait jamais rien**. Les 2 vrais verts sont ceux du registre, qui ne devait pas bouger. Fichiers : `coach.js`, `tests/parcours/runner.js`, `docs/REGLES-ARCHITECTURE.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v982. |
+
+**ft-v981 — 🧮 LES DEUX BUGS DE CALCUL DE L'AUDIT — et les deux tests qui les protégeaient** — Michel, devant la contre-analyse : *« franchement j'en sais rien, il y a énormément d'information… je vois qu'il y a pas mal de problèmes que je n'avais pas vu »*, puis : *« fais tout ce que tu peux, je veux que Milo soit fiable »*.
+
+**⛔⛔ 1ᵉʳ BUG — L'OBJECTIF « ÉQUILIBRE » RECEVAIT +350 KCAL.** La ligne s'écrivait `{…equilibre:0…}[goal]||350`, et **en JavaScript, 0 est considéré comme faux** : `0||350` rend **350**. ⭐ **Mesuré** sur un profil à 2 740 kcal de TDEE : « équilibre » rendait **3 190 kcal — exactement la valeur de « prise de muscle »**. *Quelqu'un qui choisit « maintien » recevait une cible de prise de masse*, +350 kcal par jour, sans que rien ne le signale. Corrigé à **2 840** = TDEE + phase, écart **0**.
+
+**⚠️⚠️ ET LA TABLE ÉTAIT DUPLIQUÉE** — la même ligne, mot pour mot, dans `state.js:820` **et** `screens.js:1963`. *Corriger celle que l'audit nomme aurait laissé l'écran annoncer un écart et le moteur en appliquer un autre* — **deux sources qui se contredisent**, la famille la plus vicieuse du projet. Un seul propriétaire désormais, `goalDeltaKcal()` (**R2**). ⛔ **Le repli à 350 est conservé** pour un objectif inconnu : on teste l'**appartenance** à la table, ce qui distingue *« absent »* de *« vaut zéro »*.
+
+**⛔⛔ 2ᵉ BUG — KATCH LISAIT UNE CLÉ QUI N'EXISTE PAS.** `leanMassRecente()` cherchait `w.bw` alors que **tous** les producteurs écrivent `kg` (`tracking.js` 421 · 668 · 729 · 938 · 1504). ⭐ **Mesuré** : avec `kg` → *mifflin, « aucune mesure de composition corporelle »* ; avec `bw` → *katch*. **La branche « pesée + % de gras → masse maigre » n'a jamais tourné en production.** ⚠️ Ce n'était pas un chiffre faux, c'était **un meilleur calcul jamais activé** — *une donnée morte ne plante pas, elle appauvrit en silence* (**R5**).
+
+**⭐⭐ ET LES DEUX BUGS ÉTAIENT PROTÉGÉS PAR DES FIXTURES FAUSSES.** Les tests écrivaient `bw`, la production écrit `kg` : le témoin était vert **sur une forme de donnée que l'app ne produit pas**. 👉 **Les fixtures ont été corrigées AVANT le code, et elles ont rougi** — *c'est ce rouge qui prouve le bug, pas ma relecture.* **Un test qui n'emploie pas le schéma de la production ne teste rien : il rassure.**
+
+**⭐ TROUVÉ EN VÉRIFIANT L'AUDIT, QUI NE L'AVAIT PAS VU** : un **2ᵉ lecteur cassé**. `_bilanMois()` (`app.js:3816`) lisait `pesees[0].bw` — donc la ligne *« ⚖️ Poids de corps 85 → 84 kg »* du **bilan mensuel ne s'affichait jamais**, protégée elle aussi par sa **propre fixture fausse**. *Une clé fausse ne se trouve jamais toute seule* (**R8**).
+
+**⛔ ET LE REPLI `bw` RESTE LU** : une sauvegarde cloud ancienne peut en porter, et *perdre une mesure en corrigeant un bug serait un mauvais échange*.
+Tests : **parcours 1237/1237** (+10, bloc XCIX), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 8 rouges**, exactement les 8 comportements corrigés — et **il est INSTRUCTIF, pas un « la fonction n'existe pas »** : les détails imprimés *montrent le bug lui-même* (`equilibre: 3190` à côté de `muscle: 3190`, `{"lm":null,"methode":"mifflin"}`, un bilan mensuel `{}`). ⭐ **Et les 3 verts des deux côtés sont les non-régressions** : le repli à 350 pour un objectif inconnu, le repli `bw` pour une vieille sauvegarde, et *aucune masse maigre inventée* sans % de gras — **ils ne devaient pas bouger, ils n'ont pas bougé**. Fichiers : `state.js`, `screens.js`, `app.js`, `tests/calculs/runner.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v981. |
+
+**ft-v980 — ⚡ LE CONTRÔLE D'INTENSITÉ EN CODE — « 3 séries de 5 à 95, c'est impossible »** — Michel : *« comment il a pu déduire que je pouvais faire 3 séries de 5 reps à 95 ? je ne suis pas encore assez fort »*.
+
+**⭐⭐ ET MILO NE L'AVAIT PAS DÉDUIT — IL L'AVAIT LUI-MÊME DÉMENTI.** Questionné (*« tu es sûr de toi ? »*), il répond : *« 105×2 → 1RM ~108 · 95×5 ≈ **88 %**, très lourd pour 3 séries de 5, on vise 80-85 %, soit 85-90 kg. **Je corrige : 3×5 à 90 kg.** »* Michel a dit *« ne corrige pas »* — Milo a obéi, **et c'est le bon comportement**. 👉 *Le défaut n'est donc pas son jugement : c'est que son contrôle ne se déclenche QUE SI ON LE QUESTIONNE.* **Il vérifie APRÈS, jamais AVANT.**
+
+**⭐ LA RÉALITÉ A TRANCHÉ, ET ELLE EST DANS LES DONNÉES** : ce jour-là, **95×3 avec « pose de la barre à la rép. 2 », deux fois**, puis **90×3**. *Michel avait raison (infaisable), et le 90 corrigé de Milo est exactement là où il a fini.*
+
+**⛔⛔ POURQUOI EN CODE ET PAS DANS LE PROMPT — R7 au pied de la lettre.** *« 88 % du 1RM sur 3×5, est-ce tenable ? »* est une question **arithmétique**. La confier à un modèle, c'est la faire dépendre d'un jour de fatigue — et **R9** rappelle qu'on évalue sur le modèle des **vrais** utilisateurs, pas sur celui du fondateur.
+
+**⭐⭐ ET LA FORMULE REPRODUIT LA CORRECTION DE MILO, INDÉPENDAMMENT — c'est ce qui la valide.** On **inverse `bz()`** (Brzycki — **R2**, jamais une 2ᵉ formule de 1RM) pour obtenir la charge d'une série **maximale** à R répétitions, puis on applique un coefficient de tenue de **0,93**, parce que trois séries ne sont pas une série. Résultat : **89,5 kg conseillés** là où Milo disait **90**. ⚠️ Le coefficient est un **jugement**, vérifié sur toute la plage contre les barèmes : 3 reps → 88 % (barème 85-90) · 5 reps → **83 %** (*le chiffre que Milo a cité lui-même*) · 8 reps → 75 %.
+
+**⛔⛔ ON SIGNALE, ON NE CORRIGE JAMAIS TOUT SEUL (R29).** Michel **voulait** ses 95 kg pour tester son max, et il en avait le droit : les charges partent **intactes**, l'avertissement est attaché à l'exercice et reste **lisible pendant la séance** — un toast aurait disparu avant la 1ʳᵉ série. ⛔ **Et sans record connu, la fonction SE TAIT** : jamais un 1RM inventé. Une **seule** série à 95 ne déclenche rien non plus.
+
+**⛔ LE REPOS SUIT LA MÊME RÈGLE, ET C'EST MICHEL QUI L'A TRANCHÉE** : *« un 3×5 avec 90 secondes de repos c'est IMPOSSIBLE »* — donc une prescription **inexécutable**, pas discutable.
+
+**⭐ R4 : LE CALCUL ATTEINT LE CONTEXTE DE MILO**, jumeau de `_verdictMontee` et posé **le même jour** que lui pour ne pas répéter le « correctif d'un seul côté » de la semaine (**R8**). Avec l'**auteur nommé**, et un **4ᵉ cas de figure** écrit noir sur blanc : *une charge assumée en connaissance de cause ne se juge pas.*
+
+**⚠️⚠️ ET UN TÉMOIN M'A FAIT CORRIGER MA PROPRE POSE — la 4ᵉ fois de la semaine.** J'avais branché le contrôle sur `_applyMiloSession` seul, **la porte « une séance tourne déjà »** : il n'aurait **jamais** tourné dans le cas normal, celui de Michel. Il vit désormais dans `_appliqueMiloSession`, **le seul point que les DEUX portes traversent** (**R2**). ⛔ **Et ça a révélé un 2ᵉ défaut** : `_milo:true` **manquait** sur cette porte — une séance chargée en mode « remplacer » perdait son **auteur**, donc Milo pouvait reprocher à la personne des charges qu'il avait prescrits. *C'est l'incident du 18/08, par une porte qu'on n'avait pas regardée.*
+Tests : **parcours 1227/1227** (+18, bloc XCVIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 13 rouges sur 18 — ⚠️ ET LES 5 « VERTS » SONT DE FAUX VERTS, autant l'écrire** : sans la fonction, les témoins de *silence* (« ne déclenche rien », « se tait ») testent `undefined` et passent tout seuls. *Un témoin qui ne tourne pas n'est pas un témoin vert* — **4ᵉ fois que ça se paie** (ft-v949, ft-v953, ft-v963). Ce qui est réellement démontré, ce sont les 13 comportements neufs ; les silences ne sont prouvés que par la passe **normale**. Fichiers : `log.js`, `coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v980. |
+
+**ft-v979 — 📋 LE DÉBRIEF NE SE PERD PLUS — « je n'ai pas eu de briefing à cause de la mise à jour »** — Michel, en découvrant que sa séance du jour n'avait laissé aucune trace : *« je n'ai pas eu de briefing parce qu'il y a eu la mise à jour de l'application »*. **Il avait raison, et le mécanisme est dans le code.**
+
+**⛔⛔ LE DÉBRIEF ÉTAIT DÉCROCHÉ AVANT D'ÊTRE LIVRÉ.** L'ancien code retirait le jeton **avant** l'appel et ne le remettait que `if(!ok)` — donc **seulement quand l'appel échoue proprement**. Si l'app se recharge pendant ces quelques secondes, cette ligne ne s'exécute jamais : *le débrief n'est pas reporté, il est **perdu**, sans message et sans trace.*
+
+**⚠️⚠️ ET LE MOMENT N'EST PAS UN HASARD.** Une mise à jour en attente **refuse de s'appliquer pendant une séance** (`_majPeutSAppliquer`) — c'est voulu — et s'applique **dès l'Accueil**… où `finishWorkout` dépose justement la personne. *La mise à jour attend sagement la fin de la séance pour tomber précisément dans la fenêtre du débrief.* Six versions ont été déployées le 23/08.
+
+**⭐ MESURÉ DANS SES DONNÉES, PAS SUPPOSÉ** : **5 séances sur 36 sans aucun débrief** (08, 10, 15, 18 et 23/08), **toutes complètes** — 18 à 29 séries validées. Et une séance d'**un exercice et 3 séries**, elle, débriefée. *L'app débriefait 3 séries et ratait 29.* C'est **R4a** dans sa forme la plus coûteuse : rien ne plante, rien ne rougit, Milo répond juste un peu moins bien.
+
+**⛔ ON NE POUVAIT PAS SIMPLEMENT « RETIRER LE JETON APRÈS LA RÉPONSE »** : prendre le jeton en amont est un **correctif voulu** (le double débrief du 22/08, deux objectifs mémorisés contradictoires). Le défaire ici l'aurait fait revenir de l'autre côté (**R30** — *un correctif dont on a oublié la raison finit par être contourné*). Le jeton n'est donc plus **détruit** : il passe **« en cours »**, horodaté, et un « en cours » retrouvé au démarrage retourne dans la file. *Il n'est plus jamais nulle part.*
+
+**⛔ ET C'EST UNE FILE, PLUS UN EMPLACEMENT UNIQUE** : `setItem` n'avait **qu'une place** — deux séances sans ouvrir Milo entre les deux, et la seconde écrasait la première **en silence**.
+
+**⭐⭐ 3ᵉ FILET, ET IL NE DÉPEND D'AUCUN DRAPEAU** : on compare ce qu'on a **fait** (`S.sessions`) à ce qui a été **débriefé**. *C'est R5 à l'envers : au lieu de « où cette donnée ressort-elle ? », on demande « qu'est-ce qui aurait dû laisser une trace et n'en a pas laissé ? ».* ⛔ **Une seule séance, la plus récente**, et **périmée à 36 h** : la consigne commence par *« je viens de terminer ma séance »* — le faire dire d'une séance vieille de deux semaines serait un **mensonge sur le QUAND**, et un débrief qui ment sur sa date vaut moins que pas de débrief (**R29**). ⚠️ **Ses séances du 08 au 18/08 ne reviendront donc pas** — c'est délibéré, et c'est écrit pour que personne ne « répare » ça plus tard (**R30**).
+
+**⭐⭐ ET UN TÉMOIN EXISTANT A ATTRAPÉ UN DÉFAUT DE MA PROPRE CONCEPTION.** Mon rattrapage prenait `S.registre.sessionLog` pour preuve qu'une séance était débriefée. **Le témoin est passé au rouge, et il avait raison** : ce registre n'est écrit que si Milo termine par son **bloc technique caché**. Une réponse sans bloc aurait donc fait re-débriefer la **même séance à chaque lancement**, **en payant un appel au modèle à chaque fois**, sans que rien ne le signale. *Le filet destiné à rattraper un oubli serait devenu une fuite silencieuse.* 👉 *« un débrief a été LIVRÉ »* et *« Milo a produit une mémoire »* sont deux faits différents : ils ont désormais chacun leur propriétaire (**R2**).
+
+**⛔ CORRIGÉ AU PASSAGE, ET C'EST LA CAUSE D'UN VIEUX SYMPTÔME** : la déduplication comparait `sessId===sid` en **strict**, alors que les deux chemins ne passent pas le même **type** (`id` numérique côté séance, **chaîne** côté Coach). `"1787227670282" === 1787227670282` est faux → le doublon n'était pas vu. Mesuré : **4 dates en double** dans son registre (30/07, 31/07, 03/08, 05/08) — *et c'est ce qui lui a fait dire « on avait pas dit samedi les pecs ? »*. Le correctif de course du 22/08 fermait la porte ; le type laissait la fenêtre ouverte.
+Tests : **parcours 1209/1209** (+18, bloc XCVII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 16 rouges**, exactement les 16 comportements neufs. ⚠️ **Peu instructif en soi** (la file n'existe pas de l'autre côté) — **et ce qui compte est ailleurs, dans les 2 VERTS DES DEUX CÔTÉS** : *« la séance n'est débriefée QU'UNE FOIS même si le Coach s'ouvre pendant l'appel »* et *« le jeton est consommé »*. **C'est exactement ce qu'il fallait voir** : le correctif anti-double-débrief du 22/08 ne devait pas bouger d'un pouce, et il n'a pas bougé. Fichiers : `coach.js`, `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v979. |
 
 **ft-v978 — 🔍 LES TROIS CORRECTIONS DE L'AUDIT — et le PDF n'était pas cassé, c'est la livraison** — Michel envoie un dossier d'audit de **200 pages**, avec une consigne explicite : *« ne rien coder immédiatement, lire, classer, dédoublonner et confronter au code »*. Puis, le rapport lu : *« il n'y a que ça comme conclusion ? »*, et enfin *« vas-y fais les 3 corrections de vingt minutes »*.
 
@@ -643,87 +747,6 @@ Tests : **parcours 1089/1089** (+4, bloc LXXXVI), calculs 266/266, muscles 241/2
 **⚠️ RIEN D'AUTRE NE BOUGE** : ni le calcul, ni la valeur par défaut de 100 g. La corriger demanderait de **deviner une portion** — 30 g pour une whey, 250 g pour du riz ? — et ce serait un **faux-précis** (**R29**). *Rendre le réglage visible vaut mieux que deviner à la place de la personne.*
 Tests : **parcours 1085/1085** (+1, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge**, exactement l'ordre — et c'est ici un contrôle **instructif**, pas un « la fonction n'existe pas » : le témoin **tourne** des deux côtés et mesure une disposition qui existait déjà, mal. Fichiers : `index.html`, `clone/index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v965. |
 
-**ft-v964 — 🔤 CES MOTS-LÀ NE S'ÉCRIVENT PAS** — Michel, **juste après** ft-v963 : *« oui j'ai mis ça, après je voulais mettre coquilette »*.
-
-**⛔⛔ IL L'ÉCRIT AVEC UN SEUL L**, et ma liste de synonymes portait « coquillette ». **Sa graphie à lui rendait ZÉRO résultat.** *La correction de la veille marchait donc pour l'orthographe parfaite — c'est-à-dire pour ceux qui n'en avaient pas besoin.*
-
-**⭐ MESURÉ, PAS DEVINÉ : 6 autres graphies plausibles échouaient aussi** — *spagetti · tagliatele · farfale · fusili · linguini · pene*. Toutes des variantes de **consonne doublée** ou de **h muet** : exactement là où ces mots italiens se trompent.
-
-**⛔ LA TOLÉRANCE NE S'APPLIQUE QU'À LA LISTE FERMÉE DE 12 FORMES**, jamais à la base. On compare la frappe aux 12 mots connus — donc **aucun rapprochement hasardeux possible** sur 3 341 aliments. *C'est ce qui distingue une tolérance bornée d'une recherche floue, qui aurait ramené n'importe quoi.*
-
-**⚠️⚠️ ET DEUX PIÈGES TROUVÉS EN LE MESURANT, PAS EN LE RELISANT :**
-**① Ma 1ʳᵉ version retirait aussi la VOYELLE FINALE — et « macaroni » devenait « macaron ».** ⛔ **La pâtisserie serait partie sur les pâtes.** Le retrait de la voyelle finale a donc sauté, et *« linguini »* (graphie anglaise) est **simplement ajouté** à la liste : *plus honnête qu'une règle qui rabote au hasard pour rattraper un cas.*
-**② « torsade » est RETIRÉ de la liste** (**R30** — un retrait s'écrit) : CIQUAL l'emploie pour un **biscuit apéritif feuilleté**, usage au moins aussi courant que la pâte. *Entre détourner un vrai aliment et rater une forme rare, on rate la forme rare.*
-
-**⭐ VÉRIFIÉ SUR LES 2 261 MOTS DISTINCTS DE CIQUAL** : la seule collision restante est *« spaghetti »* (**la courge**), et elle est **voulue** — la courge garde sa correspondance EXACTE, donc elle reste trouvable. *On ajoute une porte, on n'en ferme aucune.*
-Tests : **parcours 1084/1084** (+5, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Pas de contrôle négatif séparé** : la version corrige ft-v963, livrée il y a vingt minutes, et **ses 8 rouges couvrent déjà le mécanisme**. Ce qui compte ici est ailleurs — les **2 témoins qui protègent macaron et torsade** sont verts **des deux côtés**, et c'est le but : *ils gardent une absence, pas une nouveauté.* Fichiers : `app.js`, `clone/app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v964. |
-
-**ft-v963 — 🔎 LE PLURIEL — 97 % DE LA BASE ÉTAIT INATTEIGNABLE** — Michel : *« c'est comme j'ai cherché les pâtes, j'ai pas trouvé — enfin si, mais pas ce que je voulais trouver, et je n'ai plus la boîte pour le code-barre »*.
-
-**⚠️⚠️ ET SA PROPRE EXPLICATION ÉTAIT FAUSSE — c'est la première chose qu'il a fallu vérifier.** Il a ensuite pensé à l'accent : *« ah c'est pâtes et pas pates lol »*. **Mesuré : « pâtes » et « pates » rendent EXACTEMENT la même liste** depuis ft-v960 (`NFD` retire les accents). *Le croire aurait fermé le sujet sur un faux coupable et laissé le vrai en place* — **R28 coupe dans les deux sens**, y compris quand c'est Michel qui diagnostique.
-
-**⛔⛔ LE VRAI DÉFAUT : CIQUAL NOMME AU SINGULIER, ON TAPE AU PLURIEL.** « Amande, grillée » · « Lentille verte, sèche » · « Tomate, crue » — mais personne ne mange *une* amande. **Mesuré sur toute la base : 97 % des 3 341 aliments étaient inatteignables au pluriel.**
-
-**⭐⭐ ET LE PIRE N'EST PAS LE VIDE, C'EST LE FAUX.** Les **plats composés**, eux, emploient le pluriel : *« amandes »* rendait **Croissant aux amandes**, *« lentilles »* rendait **Soupe aux lentilles**, *« tomates »* rendait **Caviar de tomates**. *Une recherche qui rend le mauvais aliment coûte plus cher qu'une recherche vide : on l'enregistre sans se méfier.*
-
-**⛔ MÊME TROU EN VOCABULAIRE POUR LES PÂTES** — et c'est très probablement ce qu'il a vu. CIQUAL ne connaît que « Pâtes sèches » : **penne, macaroni, coquillettes, fusilli, farfalle, rigatoni, conchiglie, linguine rendaient ZÉRO résultat**, et *« spaghetti »* rendait… **la courge spaghetti**. ⚠️ Ce ne sont pas des aliments différents, ce sont des **formes de la même semoule** : on n'invente aucune valeur, on ouvre une porte vers celles de CIQUAL. La liste reste courte et explicite — elle dit une équivalence de forme, elle ne juge rien (**R29**). ⛔ Et **la courge reste trouvable** : on ajoute une porte, on n'en ferme aucune.
-
-**⭐⭐ L'ORDRE DE PRÉFÉRENCE EST CE QUI ÉVITE LES DÉGÂTS, ET IL A FALLU DEUX ESSAIS.** Mon 1ᵉʳ jet retirait le « s » sans plus de façons — et **fabriquait deux régressions en réparant** : *« pâtes »* rendait **Pâté breton**, *« pois »* rendait **Poireau**. 👉 On classe donc : ① le nom **commence** par le mot · ② la forme **EXACTE** avant la dépluralisée · ③ le nom le plus court. **Mesuré : 0 régression sur 50 requêtes courantes**, et les deux cassés sont devenus des témoins permanents (**R17**).
-
-**⭐ R2 — UN SEUL PROPRIÉTAIRE DE « CHERCHER ».** Les **trois** recherches — CIQUAL, les compléments, et **son propre journal** — avaient le même défaut. Elles le corrigent donc **au même endroit** : sinon la prochaine correction n'en réparerait qu'une, et *personne ne le verrait*. Un témoin vérifie que *« amandes »* retrouve son *« Amande grillée »* à lui.
-
-**⚠️ Le plafond de 400 reste tel quel, et c'est une décision mesurée** (**R30**) : il ne fausse qu'*« eau »* (*robinet* au lieu de *coco*), et les deux se valent — le relever échangerait un résultat correct contre un autre.
-Tests : **parcours 1079/1079** (+16, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 8 rouges**, exactement les 8 comportements changés. ⭐ **Et cette fois les 16 témoins se sont TOUS exécutés** — mon 1ᵉʳ jet les mettait derrière un garde « `_afRang` absente », donc ils **ne tournaient pas** contre l'ancien code et le contrôle ne disait qu'une chose : *« la fonction n'existe pas »*. Le garde ne porte plus que sur `_ciqualChercher`, qui existe **des deux côtés**. *Un témoin qui ne tourne pas n'est pas un témoin vert* — 3ᵉ fois que ça se paie (ft-v949, ft-v953). ⚠️ Les **8 verts des deux côtés sont ici les plus importants** : l'accent, « pâtes », « pois », « pâté », œuf/riz/poulet, la courge et le singulier du journal **devaient rester intacts** — *une correction de recherche se juge à ce qui n'a PAS bougé*. Fichiers : `app.js`, `clone/app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v963. |
-
-**ft-v962 — ⚖️ MODIFIER LE POIDS D'UNE ENTRÉE — au lieu de recalculer les 4 macros à la main** — Michel, devant un « Oeuf cru » dans son journal : *« ya œuf cru (lol) pas cuit. Et on ne peut pas modifier le poids »*.
-
-**⭐⭐ DEUX QUESTIONS DANS LA MÊME PHRASE, ET UNE SEULE EST UN DÉFAUT** — vérifié avant de coder (**R28**), pas supposé.
-
-**⚠️ ① L'ŒUF CRU N'EST PAS UN TROU DE LA BASE.** Mesuré : quand on tape « œuf », **« Oeuf dur » sort PREMIER**, avant « Oeuf cru » — et *poché*, *à la coque*, *brouillé*, *au plat* sont là aussi (141 résultats). **Il a pris le 2ᵉ de la liste.** ⭐ **Et l'écart est minuscule sur un œuf entier** : 140 contre 134 kcal/100 g, soit **12 kcal** sur ses 200 g. *Le cru/cuit compte énormément pour les féculents (×3 sur des pâtes, d'où l'avertissement de ft-v956), presque pas pour un œuf.* **On ne corrige donc RIEN côté base : la donnée était là, le choix aussi.** *Deuxième fois cette semaine qu'un « ça manque » se dissout en rejouant le cas exact — après le « poulet » de ft-v959.*
-
-**⛔⛔ ② LE POIDS, LUI, ÉTAIT UN VRAI DÉFAUT.** La modale « Modifier l'aliment » ne montrait que les **4 macros brutes** : pour passer de 200 à 150 g, il fallait recalculer kcal, protéines, glucides **et** lipides soi-même — sur un écran qui sait pourtant faire exactement ce calcul. *Quelqu'un qui se pesait pour la première fois de sa vie le matin même n'allait pas faire quatre règles de trois pour corriger une portion.*
-
-**⭐ R13 — ON NE RÉINVENTE RIEN.** `_bcApplyGrams()` fait déjà ce calcul à l'**AJOUT** (scan, CIQUAL, recherche) depuis ft-v956/957. On branche la **même** logique sur `e.per100`, le pour-100 g que `_provFood` enregistre depuis la **brique 0** (ft-v907).
-
-**⭐⭐ ET C'EST R4 QUI PAYE, AVEC DEUX SEMAINES DE RETARD** : ce `per100` était **stocké sur chaque entrée** et n'atteignait **aucun écran**. *Il existait, il ne servait à rien* — la donnée morte que R5 demande justement de chercher à l'envers. Il n'y avait rien à collecter, seulement à brancher.
-
-**⛔⛔ LE TÉMOIN CENTRAL EST UN REFUS : le champ n'apparaît QUE si `per100` existe.** Une entrée tapée à la main n'a pas de pour-100 g — en fabriquer un supposerait de deviner à quel poids correspondent ses 80 kcal, et ce serait un **faux-précis** (**R29**). *Sa modale ne bouge pas d'un pixel*, et deux témoins le vérifient : pas de champ, et **aucune quantité inventée** dans l'entrée sauvegardée.
-
-**⚠️ ET LA QUANTITÉ SE RE-ENREGISTRE (`q`/`u`)** : sans ça, la modification **suivante** repartirait du poids d'origine et **annulerait la précédente en silence** — le genre de défaut qu'on ne voit qu'à la deuxième correction, donc jamais pendant un test écrit d'un seul jet.
-Tests : **parcours 1063/1063** (+8, bloc LXXXV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — `_efApplyGrams` absente. ⚠️ **Peu instructif et autant l'écrire** : les 7 autres témoins vivent sous le garde « fonction absente », donc ils **ne tournent pas** contre l'ancien code. *Un témoin qui ne tourne pas n'est pas un témoin vert.* Fichiers : `app.js`, `clone/app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v962. |
-
-**ft-v961 — 📅 NAVIGUER DANS LE JOURNAL — voir ET modifier un autre jour** — Michel : *« on ne sait pas ce que l'on a mangé dans la journée et on ne peut même pas le modifier de ce fait »*.
-
-**⭐ VÉRIFIÉ AVANT DE CODER (R28)** : le Journal était câblé en dur sur `today()`, sans aucune navigation — impossible de voir **ou** de modifier un autre jour que celui du moment, exactement ce qu'il décrivait.
-
-**⭐ MÊME REPÈRE VISUEL que le calendrier de l'Accueil** (flèches ‹ ›, **R13**) : *Aujourd'hui / Hier / date complète*, navigation illimitée vers le passé. **⛔⛔ Et on ne va jamais dans le futur** : demain n'a rien à montrer, y naviguer donnerait l'impression qu'on peut noter un repas à l'avance — la flèche avant est désactivée dès qu'on est sur aujourd'hui.
-
-**⭐⭐ LE TÉMOIN CENTRAL : un jour passé est MODIFIABLE, pas seulement consultable.** On édite et supprime une entrée d'hier exactement comme aujourd'hui, sans toucher à l'entrée du jour présent.
-
-**⭐ ET AJOUTER UN ALIMENT EN CONSULTANT LE PASSÉ LE DATE SUR CE JOUR-LÀ** (backfill), jamais sur aujourd'hui — sinon la navigation aurait servi à *regarder* mais pas à *corriger un oubli*, ce qui aurait raté la moitié de la demande.
-
-**⚠️ UN JOUR CLOS N'A PLUS DE « restantes »** : le libellé passe en simple comparaison à l'objectif (on ne va pas manger davantage hier), et l'objectif affiché reste explicitement celui **d'aujourd'hui** — recalculer un objectif historique aurait été un faux-précis qu'on n'a pas les moyens de garantir (**R29**).
-Tests : **parcours 1055/1055** (+9, bloc LXXXIV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — fonction absente (peu instructif, toute la brique est neuve). ⚠️ Un test existant (l'ordre des 3 méthodes d'ajout) a dû être **reciblé** : les nouvelles flèches précèdent désormais ces boutons dans le DOM, donc « premier bouton de la page » n'était plus la bonne question — « premier des 3 méthodes » l'est. Fichiers : `app.js`, `screens.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v961. |
-
-**ft-v960 — 🔤 MÊME BUG, SUR L'APOSTROPHE — Michel avait raison de creuser** — après la ligature du blanc d'œuf : *« faut aller voir aussi avec les accents, le E tréma, tous les caractères spéciaux quoi »*.
-
-**⭐ VÉRIFIÉ SYSTÉMATIQUEMENT sur les ~132 000 noms des deux bases** (CIQUAL + Compl'Alim), plutôt que de deviner un caractère au hasard. **Accents, tréma (ë, ï, ü), cédille (ç) étaient déjà corrects** : `NFD` les décompose tous en lettre + accent, déjà retirés par le code précédent.
-
-**⚠️⚠️ MAIS L'APOSTROPHE AVAIT EXACTEMENT LE MÊME DÉFAUT QUE LA LIGATURE DE LA VEILLE.** Le clavier iPhone convertit **automatiquement** l'apostrophe droite tapée en apostrophe **courbe** pendant la frappe. **238 aliments CIQUAL** en portent une (*« Soupe à l'oignon »*, *« Sauté d'agneau »*). Mesuré : *« aujourd'hui »* tapé (droite) et *« aujourd'hui »* stocké (courbe) ne se reconnaissaient **pas** comme le même mot.
-
-**⛔ CORRIGÉ en RETIRANT l'apostrophe et ses variantes** (courbe droite/gauche, accent grave, accent aigu isolé) — elle ne porte aucun sens pour une recherche. Et ça a révélé un détail au passage : certaines entrées utilisent ces mêmes variantes comme **coquille d'origine** (*« PROBIO´DIET »*), pas seulement l'autocorrection du clavier — le retrait les couvre aussi.
-
-**⭐ Toujours dans la même fonction, partagée par CIQUAL et les suggestions locales** (R2) — corriger une fois répare les deux recherches.
-Tests : **parcours 1046/1046** (+2), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** exact. Fichiers : `app.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v960. |
-
-**ft-v959 — 🥚 UN BUG TROUVÉ EN CHERCHANT AUTRE CHOSE — la ligature Œ cassait la recherche CIQUAL** — Michel a montré une photo de blanc d'œuf liquide en demandant comment il serait nommé dans la base, après avoir signalé que *« poulet »* ne trouvait rien (ce second point n'était qu'une version pas encore rafraîchie sur son téléphone).
-
-**⭐⭐ MAIS EN VÉRIFIANT LE PRODUIT D'ŒUF, UN VRAI BUG EST APPARU.** `normalize('NFD')` décompose les **accents** (é → e + accent), mais **jamais les ligatures œ/æ** — ce sont deux lettres fusionnées en une seule, pas une lettre accentuée. Or **le clavier iPhone en français corrige automatiquement** « oeuf » en « œuf » pendant la frappe, pendant que CIQUAL écrit tous ses noms en **oe séparé** (*« Oeuf, blanc… »*). Mesuré : taper le mot avec ligature rendait **zéro résultat** pour œuf, bœuf — donc quasiment **toujours sur iPhone**, pour un aliment qui existe pourtant dans la base.
-
-**⛔ CORRIGÉ dans `_afNorm`** : deux remplacements supplémentaires (œ→oe, æ→ae) avant le NFD qui gère les accents. **Une seule fonction, partagée par CIQUAL et les suggestions locales** (R2) — la corriger une fois répare les deux recherches d'un coup.
-
-**⚠️ Et « poulet » était un faux problème** : rejoué dans un navigateur avec le code déployé, il trouvait bien 69 résultats. La leçon reste utile : *toujours REJOUER le cas exact avant de conclure à un bug* — ici ça a évité de chasser un fantôme, et ça a laissé le temps de trouver le vrai.
-Tests : **parcours 1044/1044** (+3), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 2 rouges** exactement (œuf et bœuf en ligature) — le mot sans ligature ne régresse pas. Fichiers : `app.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v959. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

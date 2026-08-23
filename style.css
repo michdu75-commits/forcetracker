@@ -876,6 +876,10 @@ html.is-clone .ob-clone-only{ display:block; }
 .coach-share-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:9px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:.12s;}
 .coach-share-btn:hover{color:var(--t1);}
 .gardien-flag{margin-top:8px;padding:5px 9px;border-radius:8px;background:rgba(255,45,85,.10);border:1px dashed rgba(255,45,85,.5);color:#FF2D55;font-size:11px;font-weight:700;line-height:1.35;}
+/* 🩺 Le rappel santé (ft-v983) — il s'adresse à la PERSONNE, pas à l'admin : il est donc
+   posé, lisible et sobre, pas alarmant. Le trait plein le distingue du badge Gardien, qui
+   est un outil de diagnostic interne (trait pointillé, rouge vif). */
+.coach-sante-rappel{margin-top:9px;padding:8px 11px;border-radius:10px;background:var(--bg3);border-left:3px solid var(--orange,#FF9500);color:var(--t2);font-size:12px;line-height:1.45;}
 .coach-share-btn:active{transform:scale(.94);}
 /* HISTORIQUE DISCUSSIONS COACH */
 .cconv-row{display:flex;align-items:center;gap:10px;background:var(--bg2);border-radius:14px;box-shadow:inset 0 0 0 1px var(--sep);padding:12px 14px;cursor:pointer;transition:.12s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}

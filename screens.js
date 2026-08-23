@@ -1960,7 +1960,9 @@ function renderNutrition(){try{
   document.getElementById('pb-decharge').classList.toggle('active',S.nutritionPhase==='decharge');
   // Goal banner
   const goal=S.goal||'muscle';
-  const goalDelta={muscle:350,perte:-450,recomp:-250,force:200,equilibre:0,endurance:100}[goal]||350;
+  // ⚖️ ft-v981 : la table vivait ici EN DOUBLE, avec le même `||350` qui transformait
+  // l'objectif « équilibre » en prise de muscle. Un seul propriétaire désormais (state.js, R2).
+  const goalDelta=(typeof goalDeltaKcal==='function')?goalDeltaKcal(goal):0;
   const goalColors={muscle:'rgba(255,45,85,.1)',perte:'rgba(255,149,0,.1)',recomp:'rgba(170,0,255,.1)',force:'rgba(41,121,255,.1)',equilibre:'rgba(52,199,89,.1)',endurance:'rgba(170,0,255,.1)'};
   const goalBorderColors={muscle:'rgba(255,45,85,.3)',perte:'rgba(255,149,0,.3)',recomp:'rgba(170,0,255,.3)',force:'rgba(41,121,255,.3)',equilibre:'rgba(52,199,89,.3)',endurance:'rgba(170,0,255,.3)'};
   const goalIcons={muscle:'💪',perte:'🔥',recomp:'✨',force:'🏋️',equilibre:'⚖️',endurance:'🏃'};

@@ -190,7 +190,12 @@ console.log('\n═══ 2 bis. BMR : Katch-McArdle quand la masse maigre est co
 
     // ⑥ une PESÉE avec % de gras marche aussi, et la source la PLUS RÉCENTE gagne
     S.bodyScans=[{date:jour(60),weight:80,leanMass:60}];
-    S.weightLog=[{date:jour(2),bw:80,bf:20}];                 // → masse maigre 64
+    /* ⛔⛔ CETTE FIXTURE ÉCRIVAIT `bw`, ET LA PRODUCTION ÉCRIT `kg` (ft-v981).
+       C'est le faux vert le plus coûteux du dépôt : le témoin passait depuis toujours, sur une
+       forme de donnée que `tracking.js` n'a JAMAIS produite. Mesuré avant correction — avec
+       `kg` : méthode « mifflin », raison « aucune mesure de composition corporelle ». Avec
+       `bw` : Katch, masse maigre 64. *Le test prouvait un chemin mort.* */
+    S.weightLog=[{date:jour(2),kg:80,bf:20}];                 // → masse maigre 64
     out.viaPesee=calcBMR(); out.viaPeseeAttendu=Math.round(370+21.6*64);
     out.sourceLaPlusRecente=bmrDetail().lm&&bmrDetail().lm.src;
 

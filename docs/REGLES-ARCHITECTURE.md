@@ -276,7 +276,30 @@ vaut encore n'est pas mort — il dort. **On range, on ne supprime pas** ; ce qu
 retiré, c'est le **piège** (les personas de test portaient les prénoms de vrais testeurs).
 *C'est aussi **R28** payé deux fois dans la même tâche — et cette fois c'est celui qui écrit le
 code qui affirmait une limite sans la vérifier.*
-*Origine : 02/08/2026 · miroir de R23 · voisine de R28 (une limite non vérifiée) · 2ᵉ cas 22/08/2026.*
+**⭐⭐ 3ᵉ CAS RÉEL (23/08/2026) — LE MIROIR DU MIROIR, et il vaut autant que la règle.** R30
+dit : *avant de retirer, cherche pourquoi c'était nécessaire*. Le cas de ce soir dit
+l'inverse et il est tout aussi coûteux : **avant de PROMOUVOIR un essai parqué, cherche
+pourquoi il était parqué.**
+Un audit extérieur signale que le pont « blessure dite à Milo → Profil Santé » est éteint
+derrière `window.__FT_CLONE__`, et conclut que **le retrait du clone a créé une régression de
+sécurité**. Deux choses sont fausses là-dedans :
+- ce n'était **pas une régression** : l'essai n'avait jamais été promu, et ft-v976 l'avait
+  listé comme tel le jour même. *Personne n'avait rien cassé — une décision n'avait jamais
+  été prise* ;
+- et surtout, **le promouvoir tel quel aurait été PIRE que de ne rien faire**. Mesuré avant
+  de toucher au code : `_gardienZonesFromText` détecte des **noms de muscles**, pas des
+  blessures — **7 faux positifs sur 9** phrases anodines. *« Michel veut prioriser le dos et
+  les épaules »* produisait deux zones fragiles. Milo se serait mis à protéger des zones
+  parfaitement saines chez des gens qui n'ont rien.
+👉 **L'essai n'était pas OUBLIÉ, il était INCOMPLET — et le drapeau le savait.** Il lui
+manquait la moitié qui distingue *« parler de son dos »* de *« avoir mal au dos »*. Une fois
+ce second critère écrit : **0 faux positif, 0 raté sur 17 phrases**.
+⚠️ **Ce qui rend la règle opérationnelle** : un garde `__FT_CLONE__`, un `if(false)`, un
+drapeau d'essai sont des **questions non résolues**, pas des interrupteurs. Les retirer sans
+retrouver la question, c'est répondre au hasard. *Et le fait qu'un audit extérieur réclame la
+promotion ne remplace pas la mesure* (**R28**).
+*Origine : 02/08/2026 · miroir de R23 · voisine de R28 (une limite non vérifiée) · 2ᵉ cas
+22/08/2026 · 3ᵉ cas 23/08/2026, le sens inverse.*
 
 ---
 

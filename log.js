@@ -611,11 +611,23 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   const nextEi=ex.group?_nextInGroup(ei):null;
   const nextExName=nextEi!==null?S.wkt.exs[nextEi].name:null;
 
+  /* ⚡ LE BANDEAU D'INTENSITÉ — il doit être lisible AU MOMENT de faire l'exercice, pas
+     seulement au chargement de la séance : un toast disparaît avant la 1ʳᵉ série.
+     ⛔ ET IL DIT LE CALCUL, PAS UN VERDICT. « 88 % de ton 1RM » se vérifie ; « attention,
+     c'est trop lourd » ne se vérifie pas et se lit comme un ordre (R29 : informer sans
+     décider). La personne a tout ce qu'il faut pour trancher elle-même. */
+  const _intensiteBandeau=(ex)=>{
+    const d=(ex&&Array.isArray(ex.intensiteWarn))?ex.intensiteWarn:null;
+    if(!d||!d.length) return '';
+    const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return `<div style="font-size:11.5px;color:var(--orange);line-height:1.45;padding:0 10px 7px;word-break:break-word;" onclick="event.stopPropagation()">⚡ ${d.map(esc).join('<br>⚡ ')}</div>`;
+  };
   // Vue réduite
   if(!isExpanded){
     const _dsLbl=ex.dropset?'palier':'série';
     const summary=`${doneSets.length}/${ex.sets.length} ${_dsLbl}${ex.sets.length>1?'s':''}${ex.dropset?' · '+ex.dropset.paliers+'P '+(ex.dropset.direction==='down'?'⬇':'⬆'):''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · ~'+fmt(maxRM)+'kg 1RM':''}`;
-    const notePreview=ex.note?`<div style="font-size:11.5px;color:var(--gold);font-style:italic;line-height:1.4;padding:0 10px 7px;word-break:break-word;" onclick="event.stopPropagation()">💬 ${(ex.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`:'';
+    const notePreview=ex.note?`<div style="font-size:11.5px;color:var(--gold);font-style:italic;line-height:1.4;padding:0 10px 7px;word-break:break-word;" onclick="event.stopPropagation()">💬 ${(ex.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`:''
+      + _intensiteBandeau(ex);
     const selStyle=isSelected?'box-shadow:inset 0 0 0 2px var(--orange);':(!_groupMode?'opacity:.75':'');
     const clickAttr=_groupMode
       ?` onclick="toggleGroupSelect(${ei})" style="cursor:pointer;${selStyle}"`
@@ -728,6 +740,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
     +`<button onclick="openExMenu(${ei},${hasLocalGif})" style="width:34px;height:34px;border-radius:10px;background:var(--bg3);border:1px solid var(--sep);font-size:18px;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;letter-spacing:2px;line-height:1;">⋯</button>`
     +`</div></div>`
     +`<div id="ex-gif-${ei}" style="display:none;" data-open="0" data-loaded="0"></div>`
+    +_intensiteBandeau(ex)          // ⚡ le calcul reste visible aussi dans la carte dépliée
     +useSetsHdr
     +useRows
     +suiteBanner+useDropBanner
@@ -1604,6 +1617,106 @@ function _monteeDefauts(echauffements, kgTravail){
       out.push(r+' reps à '+k+' kg = '+pct(k)+' % de la charge : c\'est déjà une série de travail');
     }
   }
+  return out;
+}
+
+/* ═══ LE CONTRÔLE D'INTENSITÉ (ft-v980) ══════════════════════════════════════════════════
+   Michel, 23/08/2026 : *« comment il a pu déduire que je pouvais faire 3 séries de 5 reps à
+   95, c'est impossible je ne suis pas encore assez fort »*.
+
+   ⭐⭐ ET LA DÉCOUVERTE EST QUE MILO NE L'AVAIT PAS DÉDUIT — IL L'AVAIT LUI-MÊME DÉMENTI.
+   Questionné (« tu es sûr de toi ? »), il répond : *« ton record 105×2 → 1RM ~108 · 95×5 ≈
+   88 %, très lourd pour 3 séries de 5, on vise 80-85 %, soit 85-90 kg. Je corrige : 3×5 à
+   90 kg. »* Michel a dit « ne corrige pas », Milo a obéi — et c'est le bon comportement.
+   👉 **Le défaut n'est donc PAS son jugement : c'est que son contrôle ne se déclenche que si
+   on le questionne.** Il vérifie APRÈS, jamais AVANT.
+
+   ⭐ LA RÉALITÉ A TRANCHÉ, ET ELLE EST DANS LES DONNÉES : ce jour-là, 95×**3** avec « pose de
+   la barre à la rép. 2 », deux fois, puis **90×3**. *Michel avait raison (infaisable) et le
+   90 corrigé de Milo est exactement là où il a fini.*
+
+   ⛔⛔ POURQUOI EN CODE ET PAS DANS LE PROMPT — c'est **R7** au pied de la lettre. La question
+   « 88 % du 1RM sur 3 séries de 5, est-ce tenable ? » est **arithmétique**. La confier à un
+   modèle, c'est la faire dépendre d'un jour de fatigue ; et **R9** rappelle qu'on évalue sur
+   le modèle des VRAIS utilisateurs, pas sur celui du fondateur. Durcir la consigne n'aurait
+   fait que déplacer le problème d'un cran.
+
+   ⭐⭐ ET LA FORMULE REPRODUIT LA CORRECTION DE MILO, INDÉPENDAMMENT — c'est ce qui la valide.
+   On part de `bz()` (Brzycki, state.js) qu'on **inverse** : à partir du 1RM, quelle charge
+   constitue une série MAXIMALE à R répétitions ? `1RM × (1,0278 − 0,0278·R)`. Pour Michel :
+   108 × 0,889 = **96 kg** — donc son 95×5 est à 99 % de son maximum estimé **pour une seule
+   série**. ⛔ Or trois séries ne sont pas une série : on applique un coefficient de tenue.
+   108 × 0,889 × 0,93 = **89,3 kg**. *Milo, de son côté, avait dit 90.*
+   ⚠️ **R2 : on n'écrit pas une deuxième formule de 1RM.** `bz` est le propriétaire, on ne
+   fait que la retourner — sinon les deux divergeraient un jour et on ne saurait plus laquelle
+   croire.
+
+   ⚠️ LE COEFFICIENT 0,93 EST UN JUGEMENT, ET IL FAUT SAVOIR POURQUOI IL VAUT ÇA. Vérifié sur
+   toute la plage contre les barèmes classiques : 3 reps → 88 % (barème 85-90) · 5 reps →
+   83 % (barème 80-85, et c'est **le chiffre que Milo a cité lui-même**) · 8 reps → 75 %
+   (barème 72-75). Il tient aux trois bouts ; s'il devait bouger, c'est cette ligne qu'on
+   corrige, pas trois seuils dispersés.
+
+   ⛔⛔ ON SIGNALE, ON NE CORRIGE JAMAIS TOUT SEUL (**R29**). Le cas de Michel le prouve : il
+   VOULAIT ses 95 kg pour tester son max, et il avait le droit. Une app qui aurait réécrit 90
+   à sa place aurait décidé de son entraînement. *On montre le calcul, la personne tranche.*
+
+   ⛔ ET SI ON NE SAIT PAS, ON SE TAIT. Sans 1RM connu pour l'exercice, la fonction rend un
+   tableau VIDE — jamais une estimation de repli. Inventer un 1RM à partir de rien, puis
+   avertir sur cette base, serait un faux-précis (R29) et détruirait la confiance dans les
+   avertissements qui, eux, sont fondés.                                                     */
+const _INT_TENUE   = 0.93;   // une série maximale ≠ N séries : coefficient de tenue (voir ci-dessus)
+const _INT_LOURD   = 0.80;   // au-delà de ce % du 1RM, on parle de charge lourde
+const _INT_REPOS   = 150;    // secondes : en dessous, le repos ne suit pas une charge lourde
+
+/**
+ * Les défauts d'INTENSITÉ d'un exercice, en clair. Même forme que `_monteeDefauts` (R13) et
+ * même double usage : ① prévenir la personne quand une séance dictée arrive ; ② le DIRE à
+ * Milo, pour qu'il corrige SA prescription au lieu de commenter des charges brutes (R4).
+ * @param {string} nom   nom de l'exercice (sert à retrouver le 1RM)
+ * @param {object[]} sets  séries telles qu'appliquées ({kg, reps, type, rest})
+ * @returns {string[]} — vide si tout va bien, VIDE AUSSI si on ne sait pas (R29)
+ */
+function _intensiteDefauts(nom, sets){
+  const out=[];
+  try{
+    const pr=(S.prs||{})[nom];
+    const rm1=pr?(+pr.rm1||0):0;
+    if(!(rm1>0)) return out;                       // aucun record : on se tait (R29)
+    // Séries de TRAVAIL seulement — un échauffement lourd est déjà l'affaire de `_monteeDefauts`.
+    const trav=(sets||[]).filter(s=>s&&s.type!=='É'&&(+s.kg>0)&&(+s.reps>0));
+    if(!trav.length) return out;
+    // On regroupe par (charge, reps) : « 3 séries de 5 à 95 » est un fait, « une série » en est
+    // un autre. C'est le NOMBRE de séries à cette charge qui décide du coefficient de tenue.
+    const paq={};
+    trav.forEach(s=>{ const k=(+s.kg)+'×'+(+s.reps); (paq[k]=paq[k]||{kg:+s.kg,reps:+s.reps,n:0,rest:[]}).n++;
+                      if(s.rest!=null) paq[k].rest.push(+s.rest||0); });
+    Object.keys(paq).forEach(k=>{
+      const p=paq[k];
+      // ⚠️ `bz` INVERSÉE — le même 1,0278/0,0278, jamais recopié en dur ailleurs (R2).
+      const maxUneSerie = rm1*(1.0278-0.0278*Math.min(p.reps,20));
+      if(!(maxUneSerie>0)) return;
+      const plafond = (p.n>=2) ? maxUneSerie*_INT_TENUE : maxUneSerie;
+      const pct = Math.round(100*p.kg/rm1);
+      if(p.kg > plafond*1.02){                     // 2 % de marge : on n'ergote pas sur un demi-kilo
+        const conseil=Math.round(plafond*2)/2;     // arrondi au demi-kilo, comme les disques
+        out.push(p.n+'×'+p.reps+' à '+p.kg+' kg = '+pct+' % de ton 1RM estimé ('+Math.round(rm1)+' kg)'
+          +(p.n>=2?' — tenable sur UNE série max, pas sur '+p.n+' (viser ~'+conseil+' kg)'
+                  :' — au-dessus de ton maximum estimé pour '+p.reps+' reps'));
+      }
+      // ⛔ LE REPOS QUI NE SUIT PAS L'INTENSITÉ — et c'est MICHEL qui a tranché, pas un barème :
+      // « un 3×5 avec 90 secondes de repos c'est IMPOSSIBLE ». Ce n'est donc pas une
+      // prescription discutable, c'est une prescription INEXÉCUTABLE — dit par celui qui
+      // soulève la barre. ⚠️ Et ce n'est pas la charge seule qui pose problème : c'est le
+      // couple charge × répétitions × repos.
+      if(p.kg >= rm1*_INT_LOURD && p.rest.length){
+        const r=Math.min.apply(null,p.rest);
+        if(r>0 && r<_INT_REPOS){
+          out.push('repos de '+r+' s à '+pct+' % du 1RM : trop court pour du lourd (viser 3 min)');
+        }
+      }
+    });
+  }catch(e){ /* jamais bloquant : c'est un avertissement, pas une fonctionnalité */ }
   return out;
 }
 
@@ -3270,7 +3383,13 @@ async function finishWorkout(){
   try{localStorage.setItem('ft4_wkt','null');localStorage.removeItem('ft4_wkt_draft');}catch(e){}
   // DÉBRIEF AUTO : Milo débriefera de lui-même la prochaine fois que l'utilisateur ouvre le Coach
   // (une seule fois par séance ; seulement si de vrais exercices ont été validés, pas un cardio seul).
-  if(_hasExs&&hasDone){try{localStorage.setItem('ft4_pending_debrief',String(sess.id||sess.ts||sess.date));}catch(e){}}
+  // ⚠️ UNE FILE, PLUS UN EMPLACEMENT UNIQUE (ft-v979) : `setItem` n'avait qu'une place, donc
+  // deux séances sans ouvrir Milo entre les deux et la première disparaissait SANS BRUIT.
+  if(_hasExs&&hasDone){
+    const _sid=String(sess.id||sess.ts||sess.date);
+    if(typeof _dbfAjouter==='function') _dbfAjouter(_sid);
+    else try{localStorage.setItem('ft4_pending_debrief',JSON.stringify([_sid]));}catch(e){}
+  }
   persist();
   // Registre Athlète (brique 2) : recalcule les faits mesurés après la séance.
   try{if(typeof computeRegistreFacts==='function'){computeRegistreFacts();persist();}}catch(e){}
@@ -3400,11 +3519,13 @@ async function _runSeDebrief(sess,prCount){
   // `_maybeAutoDebrief()`, qui voyait le flag encore posé et lançait un DEUXIÈME débrief.
   // On prend donc le jeton AVANT l'appel — exactement ce que fait déjà `_maybeAutoDebrief`
   // (R2 : une seule règle, appliquée pareil des deux côtés) — et on le REND si l'appel échoue.
-  let _pid=null; try{ _pid=localStorage.getItem('ft4_pending_debrief'); }catch(e){}
+  // ⚠️ ft-v979 : `_dbfPrendre()` ne DÉTRUIT plus le jeton, il le met « en cours » avec son
+  // heure. Un rechargement de mise à jour pendant l'appel ne le fait donc plus disparaître —
+  // il retourne dans la file au démarrage suivant (`_dbfRecuperer`).
+  const _pid=(typeof _dbfPrendre==='function')?_dbfPrendre():null;
   // Le Coach a déjà débriefé cette séance : on ne repaie pas un appel — mais on le DIT,
   // sinon l'écran de fin paraît vide de l'analyse alors qu'elle existe, dans le Coach.
   if(!_pid){ slot.innerHTML=avec('\ud83d\udcac Milo a déjà débriefé cette séance — retrouve-la dans l\'onglet Coach.',false); return; }
-  try{ localStorage.removeItem('ft4_pending_debrief'); }catch(e){}
   const instr='[DÉBRIEF AUTO] Je viens de terminer ma séance (la plus récente dans mes dernières séances). '
     +'Débriefe-la MAINTENANT, directement : analyse-la (progression, stabilité, points d\'attention) '
     +'en t\'appuyant sur mes charges par exercice (tu les as), tiens compte d\'une éventuelle douleur du jour, et termine par UNE piste '
@@ -3450,12 +3571,17 @@ async function _runSeDebrief(sess,prCount){
       if(coachHistory.length>=4 && S.url && S.email && typeof _saveCoachMemory==='function')_saveCoachMemory();
       const nb=document.getElementById('coach-new-btn'); if(nb)nb.style.display='flex';
     }catch(e){}
+    // Livré : le jeton « en cours » disparaît pour de bon (ft-v979).
+    try{ if(typeof _dbfFini==='function') _dbfFini(_pid); }catch(e){}
   }catch(e){
     // Échec réseau → résumé local, et on REND le jeton pour que le Coach réessaie à son ouverture
     // On REND le jeton (le Coach réessaiera à son ouverture) ET ON LE DIT. Le `catch`
     // attrape tout — réseau coupé, HTTP 4xx/5xx, quota, réponse vide : on ne prétend pas
     // savoir laquelle, on annonce le fait et on propose un nouvel essai.
-    try{ localStorage.setItem('ft4_pending_debrief', _pid); }catch(_){}
+    // Échec PROPRE : le jeton repart EN TÊTE de file (ft-v979) — plus un simple `setItem`,
+    // qui écrasait la file entière et faisait disparaître les autres séances en attente.
+    try{ if(typeof _dbfRendre==='function') _dbfRendre(_pid);
+         else localStorage.setItem('ft4_pending_debrief', JSON.stringify([_pid])); }catch(_){}
     slot.innerHTML=avec('\u26a0\ufe0f Milo n\'a pas pu analyser ta séance. Rien n\'est perdu : il le fera à l\'ouverture du Coach.',true);
   }
 }
@@ -5472,7 +5598,13 @@ function _applyMiloSession(mode){
   const bloque=[];
   const newExs=(data.exs||[]).map(e=>{
     const pv=prev?(prev(e.name)||[]):[];
-    const obj={name:e.name,note:e.note||'',sets:(e.sets||[]).map((s,i)=>{
+    /* ⛔ `_milo:true` MANQUAIT SUR CETTE PORTE (trouvé le 23/08 en branchant le contrôle
+       d'intensité). `_startSessionFromMilo` le pose, `_applyMiloSession` ne le posait pas —
+       donc une séance chargée en mode « remplacer » perdait son AUTEUR en route, et Milo
+       reprochait ensuite à la personne des charges qu'il avait lui-même prescrites. C'est
+       très exactement l'incident du 18/08, par une porte qu'on n'avait pas regardée.
+       *Le même marqueur, deux portes, une seule équipée* — R8 encore. */
+    const obj={name:e.name,note:e.note||'',_milo:true,sets:(e.sets||[]).map((s,i)=>{
       const pp=pv.length?(pv[i]||pv[pv.length-1]):null;
       return {kg:(s.kg>0)?s.kg:(pp?pp.kg:0),
               reps:s.maxi?0:((s.reps>0)?s.reps:(pp?pp.reps:10)),
@@ -5502,6 +5634,30 @@ function _applyMiloSession(mode){
 }
 /** L'écriture elle-même. `mode` : 'start' (aucune séance) · 'add' · 'replace'. */
 function _appliqueMiloSession(newExs, data, mode, btn){
+  /* ⚡ LE CONTRÔLE D'INTENSITÉ (ft-v980) — il se déclenche À LA PROPOSITION, c'est tout son
+     intérêt. Milo sait faire ce calcul (il l'a fait dès que Michel a demandé) ; ce qu'il ne
+     fait pas, c'est le faire de lui-même. Le code, lui, le fait à chaque fois.
+
+     ⛔⛔ ET IL EST POSÉ **ICI**, PAS PLUS HAUT — un témoin me l'a fait corriger, et c'est
+     exactement l'erreur de la semaine reproduite une 4ᵉ fois. Il y a **DEUX** portes vers une
+     séance de Milo : `_startSessionFromMilo` (aucune séance en cours — **le cas normal**, celui
+     de Michel) et `_applyMiloSession` (une séance tourne déjà, on a demandé remplacer/ajouter).
+     Je l'avais mis sur la seconde seulement : le contrôle n'aurait jamais tourné dans le cas
+     le plus fréquent. **`_appliqueMiloSession` est le seul point que les deux traversent** —
+     donc le seul endroit juste (R2 : un propriétaire par comportement).
+
+     ⛔ ON N'A RIEN CHANGÉ DANS `newExs` : les charges de Milo partent INTACTES. On ATTACHE un
+     avertissement, la personne décide (R29). Michel voulait ses 95 kg — il les a eus. */
+  const alertes=[];
+  (newExs||[]).forEach(o=>{
+    const d=(typeof _intensiteDefauts==='function')?_intensiteDefauts(o.name,o.sets):[];
+    if(d.length){ o.intensiteWarn=d; alertes.push(o.name); }
+  });
+  /* ⚠️ ON PRÉVIENT, ON NE BLOQUE PAS (R24 : informer sans bloquer). La séance démarre
+     normalement ; l'avertissement reste attaché à l'exercice, donc lisible AU MOMENT de le
+     faire — un toast seul aurait disparu avant la première série. */
+  if(alertes.length&&typeof toast==='function')
+    toast('⚡ Charge élevée sur '+alertes[0]+(alertes.length>1?' (+'+(alertes.length-1)+')':'')+' — détail dans la séance','info');
   if(mode==='add'){
     S.wkt.exs=S.wkt.exs.concat(newExs);
   }else if(mode==='replace'){

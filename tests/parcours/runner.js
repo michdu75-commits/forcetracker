@@ -4633,7 +4633,9 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       {date:'2026-07-20',volume:6000,calories:350,exs:[{name:'Développé Couché',sets:[{kg:85,reps:5,done:true,type:'N'}]}]},
       {date:'2026-06-10',volume:4000,calories:200,exs:[{name:'Squat à la Barre',sets:[{kg:90,reps:5,done:true,type:'N'}]}]}];
     S.prs={'Développé Couché':{kg:85,reps:5,rm1:95,date:'2026-07-20'}};
-    S.weightLog=[{date:'2026-07-02',bw:85},{date:'2026-07-29',bw:84}];
+    // ⛔ 2ᵉ FIXTURE FAUSSE (ft-v981) : elle écrivait `bw`, la production écrit `kg`. Le bilan
+    // mensuel n'affichait donc JAMAIS sa ligne de poids, et ce témoin ne le voyait pas.
+    S.weightLog=[{date:'2026-07-02',kg:85},{date:'2026-07-29',kg:84}];
     const b=_bilanMois('2026-07');
     o.nSess=b.nSess; o.series=b.series; o.jours=b.jours; o.kcal=b.kcal;
     o.prs=b.prs.length; o.bw=b.bw; o.comp=b.comp;
@@ -10827,6 +10829,608 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   t('⭐⭐ ... et il est ENREGISTRE avec le bilan, a cote de sa provenance (R33)',
     /_bsLmDeduite\s*&&\s*obj\.leanMass\s*!=\s*null\)\s*obj\.lmDeduite\s*=\s*true/.test(TR),
     'l\'enregistrement du drapeau est absent');
+
+  await cx.close();
+}
+
+/* ═══ XCVII. LE DÉBRIEF NE SE PERD PLUS (ft-v979) ══════════════════════════════════════════
+   Michel : « je n'ai pas eu de briefing parce qu'il y a eu la mise à jour de l'application ».
+   ⛔ L'ancien code retirait le jeton AVANT l'appel et ne le remettait que `if(!ok)` — donc un
+   rechargement pendant l'appel le faisait disparaître pour de bon, en silence.
+   ⭐⭐ LE TÉMOIN CENTRAL SIMULE EXACTEMENT ÇA : on abandonne l'appel EN VOL (comme un
+   `location.reload()`), et on vérifie qu'au démarrage suivant la séance est de nouveau en
+   file. Sans ce scénario, tous les autres restent verts : le défaut ne se voit qu'au
+   DEUXIÈME lancement — donc jamais en testant une fois.                                     */
+{
+  console.log('\n── XCVII. Le débrief ne se perd plus ──');
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); pg.on('pageerror',e=>console.log('PAGEERROR',e.message));
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const F=await pg.evaluate(()=>{
+    const o={};
+    o.api = ['_dbfLire','_dbfAjouter','_dbfPrendre','_dbfFini','_dbfRendre','_dbfRecuperer','_dbfRattraper']
+              .every(n=>typeof window[n]==='function');
+    if(!o.api) return o;
+    const raz=()=>{ localStorage.removeItem('ft4_pending_debrief'); localStorage.removeItem('ft4_debrief_encours'); };
+
+    // ① UNE FILE, PLUS UNE SEULE PLACE — deux séances sans ouvrir Milo entre les deux.
+    raz(); _dbfAjouter('S1'); _dbfAjouter('S2');
+    o.deuxGardees = _dbfLire().length===2 && _dbfLire()[0]==='S1';
+    // idempotent : la même séance ne s'inscrit jamais deux fois
+    _dbfAjouter('S1'); o.idempotent = _dbfLire().length===2;
+
+    // ② LE JETON N'EST PLUS DÉTRUIT : il passe « en cours », donc il existe TOUJOURS quelque part.
+    const pris=_dbfPrendre();
+    o.prisLePlusAncien = pris==='S1';
+    o.plusDansLaFile   = _dbfLire().indexOf('S1')<0;
+    o.maisEnCours      = !!localStorage.getItem('ft4_debrief_encours');
+
+    // ⭐⭐ ③ L'APPEL EST INTERROMPU (mise à jour / app fermée) : on ne revient JAMAIS.
+    //    Au démarrage suivant, `_dbfRecuperer()` doit le remettre en file.
+    _dbfRecuperer();
+    o.recupereApresCoupure = _dbfLire().indexOf('S1')>=0;
+
+    // ④ SUCCÈS : le jeton disparaît pour de bon (pas de débrief fantôme au prochain lancement).
+    raz(); _dbfAjouter('S9'); const p9=_dbfPrendre(); _dbfFini(p9);
+    _dbfRecuperer();
+    o.succesNeRevientPas = _dbfLire().length===0 && !localStorage.getItem('ft4_debrief_encours');
+    // ⭐⭐ … et la LIVRAISON est notée à part, sans dépendre du bloc mémoire de Milo
+    o.livraisonNotee = _dbfFaits().indexOf('S9')>=0;
+
+    // ⑤ ÉCHEC PROPRE : le jeton repart EN TÊTE, et n'écrase PAS les autres en attente.
+    raz(); _dbfAjouter('A'); _dbfAjouter('B'); const pa=_dbfPrendre(); _dbfRendre(pa);
+    o.echecEnTete = JSON.stringify(_dbfLire())===JSON.stringify(['A','B']);
+
+    // ⑥ PÉREMPTION : un jeton vieux ne revient pas — « je viens de terminer » serait FAUX (R29).
+    raz();
+    localStorage.setItem('ft4_debrief_encours', JSON.stringify({id:'VIEUX', ts:Date.now()-40*3600*1000}));
+    _dbfRecuperer();
+    o.vieuxNeRevientPas = _dbfLire().length===0;
+
+    // ⑦ RÉTROCOMPATIBLE : un téléphone qui avait l'ANCIEN format (chaîne nue) ne perd rien.
+    raz(); localStorage.setItem('ft4_pending_debrief','ANCIEN-ID');
+    o.ancienFormatLu = _dbfLire().length===1 && _dbfLire()[0]==='ANCIEN-ID';
+    raz();
+    return o;
+  });
+  t('DÉBRIEF : la file expose bien ses 7 fonctions', F.api===true, JSON.stringify(F));
+  t('⭐⭐ DÉBRIEF : deux séances d\'affilée → les DEUX sont gardées (plus d\'écrasement silencieux)',
+    F.deuxGardees===true, JSON.stringify(F));
+  t('DÉBRIEF : la même séance ne s\'inscrit jamais deux fois', F.idempotent===true, JSON.stringify(F));
+  t('DÉBRIEF : on prend la PLUS ANCIENNE, et elle sort de la file (anti double-débrief)',
+    F.prisLePlusAncien===true && F.plusDansLaFile===true, JSON.stringify(F));
+  t('⭐⭐ DÉBRIEF : le jeton n\'est plus DÉTRUIT — il est « en cours », donc jamais nulle part',
+    F.maisEnCours===true, JSON.stringify(F));
+  t('⭐⭐ DÉBRIEF : appel interrompu (mise à jour) → la séance REVIENT en file au démarrage',
+    F.recupereApresCoupure===true, JSON.stringify(F));
+  t('DÉBRIEF : une fois LIVRÉ, il ne revient pas (pas de débrief fantôme)',
+    F.succesNeRevientPas===true, JSON.stringify(F));
+  t('⭐⭐ DÉBRIEF : la LIVRAISON est notée à part — elle ne dépend pas du bloc mémoire de Milo',
+    F.livraisonNotee===true, JSON.stringify(F));
+  t('DÉBRIEF : échec propre → le jeton repart en tête SANS écraser les autres en attente',
+    F.echecEnTete===true, JSON.stringify(F));
+  t('⛔ DÉBRIEF : un jeton périmé ne revient PAS — « je viens de terminer » serait faux (R29)',
+    F.vieuxNeRevientPas===true, JSON.stringify(F));
+  t('⚠️ DÉBRIEF : l\'ANCIEN format (chaîne nue) est encore lu — personne ne perd son débrief à la mise à jour',
+    F.ancienFormatLu===true, JSON.stringify(F));
+
+  /* ⭐ LE FILET QUI NE DÉPEND D'AUCUN DRAPEAU : on compare ce qu'on a FAIT à ce qui a été
+     DÉBRIEFÉ. C'est lui qui rattrape une séance dont le jeton a disparu pour une raison
+     qu'on ne connaîtra jamais. */
+  const R=await pg.evaluate(()=>{
+    const o={}; if(typeof _dbfRattraper!=='function') return o;
+    const raz=()=>{ localStorage.removeItem('ft4_pending_debrief'); localStorage.removeItem('ft4_debrief_encours');
+                    localStorage.removeItem('ft4_debrief_faits'); };
+    const faire=(id,ageH,done)=>({id:id, ts:Date.now()-ageH*3600*1000, date:'2026-08-23',
+      exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:done,type:'N'}]}]});
+    const vs=S.sessions, vr=S.registre;
+    try{
+      // une séance récente, validée, JAMAIS débriefée → rattrapée
+      raz(); S.sessions=[faire('X1',3,true)]; S.registre={sessionLog:[]};
+      _dbfRattraper(); o.rattrapee=_dbfLire().indexOf('X1')>=0;
+
+      // ⛔ déjà débriefée → on ne repaie pas un appel. Et le sessId est ici une CHAÎNE alors
+      //    que l'id est un NOMBRE : c'est exactement le type qui cassait la déduplication.
+      raz(); S.sessions=[faire(1787501464557,3,true)];
+      S.registre={sessionLog:[{sessId:'1787501464557',objectif:'x'}]};
+      _dbfRattraper(); o.pasDeDoublonMalgreLeType=_dbfLire().length===0;
+
+      // ⛔ un cardio seul (aucune série validée) ne déclenche rien — même règle qu'en fin de séance
+      raz(); S.sessions=[faire('X2',3,false)]; S.registre={sessionLog:[]};
+      _dbfRattraper(); o.cardioSeulIgnore=_dbfLire().length===0;
+
+      // ⛔ trop vieille → on ne la ressort pas (R29)
+      raz(); S.sessions=[faire('X3',72,true)]; S.registre={sessionLog:[]};
+      _dbfRattraper(); o.vieilleIgnoree=_dbfLire().length===0;
+
+      // ⛔ plusieurs en retard → UNE SEULE, la plus récente (pas 5 appels d'un coup)
+      raz(); S.sessions=[faire('V1',30,true),faire('V2',2,true),faire('V3',10,true)];
+      S.registre={sessionLog:[]};
+      _dbfRattraper(); o.uneSeuleLaPlusRecente=JSON.stringify(_dbfLire())===JSON.stringify(['V2']);
+
+      /* ⭐⭐ LE TÉMOIN QUI M'A FAIT CORRIGER MA PROPRE CONCEPTION. Une réponse de Milo SANS
+         bloc technique n'écrit rien dans le Registre. Si le rattrapage ne regardait que lui,
+         il ré-inscrirait la séance à CHAQUE lancement — un appel au modèle payé chaque fois,
+         en silence. Ici : Registre VIDE, mais débrief LIVRÉ → on ne repaie pas. */
+      raz(); S.sessions=[faire('Z1',2,true)]; S.registre={sessionLog:[]};
+      _dbfMarquerFait('Z1');
+      _dbfRattraper(); o.livreSansMemoireNeRepasse=_dbfLire().length===0;
+      raz();
+    } finally { S.sessions=vs; S.registre=vr; }
+    return o;
+  });
+  t('⭐⭐ RATTRAPAGE : une séance validée SANS aucun débrief revient dans la file',
+    R.rattrapee===true, JSON.stringify(R));
+  t('⭐⭐ RATTRAPAGE : une séance DÉJÀ débriefée ne revient pas — même quand le sessId est une chaîne et l\'id un nombre',
+    R.pasDeDoublonMalgreLeType===true, JSON.stringify(R));
+  t('⛔ RATTRAPAGE : un cardio seul ne déclenche aucun débrief (même règle qu\'en fin de séance)',
+    R.cardioSeulIgnore===true, JSON.stringify(R));
+  t('⛔ RATTRAPAGE : une séance trop vieille reste dehors — un débrief qui ment sur le QUAND vaut moins que rien',
+    R.vieilleIgnoree===true, JSON.stringify(R));
+  t('⛔⛔ RATTRAPAGE : plusieurs séances en retard → UNE SEULE, la plus récente (pas 5 appels d\'un coup)',
+    R.uneSeuleLaPlusRecente===true, JSON.stringify(R));
+  t('⛔⛔ RATTRAPAGE : un débrief LIVRÉ mais sans bloc mémoire ne se repaie pas à chaque lancement',
+    R.livreSansMemoireNeRepasse===true, JSON.stringify(R));
+
+  await cx.close();
+}
+
+/* ═══ XCVIII. LE CONTRÔLE D'INTENSITÉ (ft-v980) ════════════════════════════════════════════
+   Michel : « comment il a pu déduire que je pouvais faire 3 séries de 5 reps à 95, c'est
+   impossible je ne suis pas encore assez fort ».
+   ⭐⭐ LE TÉMOIN LE PLUS FORT DU BLOC EST ①-b : le code conseille **89,5 kg** là où Milo, une
+   fois questionné, avait répondu **90 kg**. Deux chemins indépendants tombent au même endroit
+   — c'est ça qui valide le coefficient, pas mon opinion sur sa valeur.
+   ⛔ ET LA MOITIÉ DES TÉMOINS GARDE UN SILENCE, pas une alerte : un contrôle qui crie sur tout
+   ne sert à rien, et celui-ci doit se taire sur ce que Michel fait d'habitude, sur une série
+   unique de test, et surtout quand il ne SAIT pas (R29).                                     */
+{
+  console.log('\n── XCVIII. Le contrôle d\'intensité ──');
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); pg.on('pageerror',e=>console.log('PAGEERROR',e.message));
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const I=await pg.evaluate(()=>{
+    const o={}; if(typeof _intensiteDefauts!=='function'){o.absente=true;return o;}
+    const vp=S.prs;
+    try{
+      // LE CAS RÉEL : son record est 105×2 le 27/07 → 1RM estimé 108
+      S.prs={'Développé Couché':{kg:105,reps:2,rm1:108,date:'2026-07-27'}};
+      const S3=(kg,reps,rest)=>[{kg,reps,type:'N',rest},{kg,reps,type:'N',rest},{kg,reps,type:'N',rest}];
+      o.michel   = _intensiteDefauts('Développé Couché', S3(95,5,90));
+      o.corrige  = _intensiteDefauts('Développé Couché', S3(90,5,180));
+      o.habituel = _intensiteDefauts('Développé Couché', S3(85,5,180));
+      o.uneSerie = _intensiteDefauts('Développé Couché', [{kg:95,reps:5,type:'N',rest:180}]);
+      o.sansPR   = _intensiteDefauts('Rowing Barre', S3(70,8,90));
+      o.echauf   = _intensiteDefauts('Développé Couché',
+                     [{kg:100,reps:5,type:'É',rest:0},{kg:80,reps:5,type:'N',rest:180}]);
+      // le repos seul : charge raisonnable mais lourde (85 % ) et 90 s
+      o.reposSeul= _intensiteDefauts('Développé Couché', S3(88,3,90));
+    } finally { S.prs=vp; }
+    return o;
+  });
+  t('INTENSITÉ : la fonction existe', !I.absente, JSON.stringify(I));
+  t('⭐⭐ ① le cas de Michel est attrapé — 3×5 à 95 kg sur un 1RM de 108',
+    (I.michel||[]).some(x=>/88 ?%/.test(x)&&/pas sur 3/.test(x)), JSON.stringify(I.michel));
+  t('⭐⭐ ①-b … et la charge conseillée (~89,5 kg) tombe sur le 90 kg que MILO avait corrigé',
+    (I.michel||[]).some(x=>/viser ~89[.,]5 kg/.test(x)), JSON.stringify(I.michel));
+  t('⭐ ①-c … et le repos de 90 s sur du lourd est signalé séparément (« IMPOSSIBLE », Michel)',
+    (I.michel||[]).some(x=>/repos de 90 s/.test(x)&&/3 min/.test(x)), JSON.stringify(I.michel));
+  t('⛔ ② les 90 kg corrigés par Milo ne déclenchent RIEN (sinon le contrôle crie sur du juste)',
+    (I.corrige||[]).length===0, JSON.stringify(I.corrige));
+  t('⛔ ③ son 85×5 habituel ne déclenche rien non plus',
+    (I.habituel||[]).length===0, JSON.stringify(I.habituel));
+  t('⭐⭐ ④ UNE seule série à 95 kg est ACCEPTÉE — tester son max est une décision légitime (R29)',
+    (I.uneSerie||[]).length===0, JSON.stringify(I.uneSerie));
+  t('⛔⛔ ⑤ SANS RECORD CONNU, la fonction SE TAIT — jamais un 1RM inventé (R29)',
+    (I.sansPR||[]).length===0, JSON.stringify(I.sansPR));
+  t('⛔ ⑥ un échauffement lourd est ignoré (c\'est l\'affaire de _monteeDefauts, R2)',
+    (I.echauf||[]).length===0, JSON.stringify(I.echauf));
+  t('⭐ ⑦ le repos seul suffit à alerter, même quand la charge passe (3×3 à 88 kg en 90 s)',
+    (I.reposSeul||[]).length===1 && /repos de 90 s/.test(I.reposSeul[0]), JSON.stringify(I.reposSeul));
+
+  /* ⛔⛔ ON SIGNALE, ON NE CORRIGE JAMAIS — le témoin qui garde la décision à la personne.
+     Michel VOULAIT ses 95 kg. Une app qui les aurait réécrits en 90 aurait décidé de son
+     entraînement à sa place. */
+  /* ⭐⭐ ET ON PASSE PAR `_appliqueMiloSession` — le point que les DEUX portes traversent.
+     Ma 1ʳᵉ version branchait le contrôle sur `_applyMiloSession` seul (la porte « une séance
+     tourne déjà »), donc il n'aurait JAMAIS tourné dans le cas normal. C'est ce témoin qui l'a
+     dit ; sans lui, la livraison partait verte et inutile. */
+  const A=await pg.evaluate(()=>{
+    const o={}; const vp=S.prs, vw=S.wkt;
+    const lourd=()=>[{name:'Développé Couché',note:'',_milo:true,
+      sets:[{kg:95,reps:5,type:'N',rest:90,done:false},{kg:95,reps:5,type:'N',rest:90,done:false},
+            {kg:95,reps:5,type:'N',rest:90,done:false}]}];
+    try{
+      S.prs={'Développé Couché':{kg:105,reps:2,rm1:108,date:'2026-07-27'}};
+      S.wkt=null;
+      _appliqueMiloSession(lourd(), {label:'Push'}, 'start', null);
+      const ex=(S.wkt&&S.wkt.exs&&S.wkt.exs[0])||null;
+      o.chargesIntactes = !!ex && ex.sets.every(s=>s.kg===95 && s.reps===5);
+      o.avertissement   = !!(ex&&Array.isArray(ex.intensiteWarn)&&ex.intensiteWarn.length);
+      goScreen('log'); renderLog();
+      o.visible = /% de ton 1RM/.test(document.getElementById('s-log').innerText||'');
+      // ⛔ LA 2ᵉ PORTE : une séance tourne déjà, on remplace — le contrôle doit tourner AUSSI
+      _appliqueMiloSession(lourd(), {label:'Push'}, 'replace', null);
+      const ex2=(S.wkt&&S.wkt.exs&&S.wkt.exs[0])||null;
+      o.deuxiemePorte = !!(ex2&&Array.isArray(ex2.intensiteWarn)&&ex2.intensiteWarn.length);
+    } finally { S.prs=vp; S.wkt=vw; }
+    return o;
+  });
+  t('⛔⛔ APPLICATION : les charges de Milo partent INTACTES — l\'app ne corrige pas à sa place (R29)',
+    A.chargesIntactes===true, JSON.stringify(A));
+  t('⭐⭐ … mais l\'avertissement est attaché à l\'exercice', A.avertissement===true, JSON.stringify(A));
+  t('⭐ … et il est LISIBLE à l\'écran Séance, pas seulement dans un toast qui disparaît',
+    A.visible===true, JSON.stringify(A));
+  t('⭐⭐ … et il tourne sur LES DEUX PORTES (démarrer ET remplacer) — la leçon de la semaine',
+    A.deuxiemePorte===true, JSON.stringify(A));
+
+  /* ⛔ LE MARQUEUR D'AUTEUR MANQUAIT SUR UNE DES DEUX PORTES — trouvé en branchant le contrôle.
+     Sans `_milo`, Milo reproche à la personne des charges qu'il a lui-même prescrites : c'est
+     l'incident du 18/08, par une porte qu'on n'avait pas regardée. */
+  const AU=await pg.evaluate(()=>{
+    const src=String(_applyMiloSession);
+    return {porte2Marque:/_milo\s*:\s*true/.test(src),
+            porte1Marque:/_milo\s*:\s*true/.test(String(_startSessionFromMilo))};
+  });
+  t('⛔⛔ AUTEUR : les DEUX portes posent `_milo` — une charge prescrite ne se reproche pas à la personne',
+    AU.porte1Marque===true && AU.porte2Marque===true, JSON.stringify(AU));
+
+  /* ⭐ R4 — CE QUE L'APP SAIT DOIT ATTEINDRE MILO. Sans ça il ne voit que des charges brutes
+     et peut féliciter une série qui n'est pas passée. Jumeau de `_verdictMontee`, posé le même
+     jour pour ne pas répéter le « correctif d'un seul côté » de la semaine (R8). */
+  const C=await pg.evaluate(()=>{
+    const o={}; const vp=S.prs, vs=S.sessions;
+    try{
+      S.prs={'Développé Couché':{kg:105,reps:2,rm1:108,date:'2026-07-27'}};
+      S.sessions=[{date:'2026-08-23',id:1,volume:1425,exs:[{name:'Développé Couché',_milo:true,
+        sets:[{kg:95,reps:5,type:'N',rest:90,done:true},{kg:95,reps:5,type:'N',rest:90,done:true},
+              {kg:95,reps:5,type:'N',rest:90,done:true}]}]}];
+      const ctx=buildCoachContext('test');
+      o.intensiteTransmise = /⚡ intensité/.test(ctx) && /88 ?%/.test(ctx);
+      o.auteurNomme        = /TA PROPRE PRESCRIPTION/.test(ctx);
+      o.pasDeJugement      = /décision légitime/.test(ctx);
+    } finally { S.prs=vp; S.sessions=vs; }
+    return o;
+  });
+  t('⭐⭐ R4 : le calcul d\'intensité ATTEINT le contexte de Milo (il ne reste pas dans l\'écran)',
+    C.intensiteTransmise===true, JSON.stringify(C));
+  t('⛔ … et l\'AUTEUR des charges est nommé : une charge prescrite par Milo ne se reproche pas à la personne',
+    C.auteurNomme===true, JSON.stringify(C));
+  t('⛔⛔ … et le 4ᵉ cas de figure est couvert : une charge assumée en connaissance de cause ne se juge pas',
+    C.pasDeJugement===true, JSON.stringify(C));
+
+  await cx.close();
+}
+
+/* ═══ XCIX. LES DEUX BUGS DE CALCUL DE L'AUDIT (ft-v981) ═══════════════════════════════════
+   Michel : « je vois qu'il y a pas mal de problèmes que je n'avais pas vu », puis « fais tout
+   ce que tu peux, je veux que Milo soit fiable ».
+   ⭐⭐ CE BLOC EXISTE PARCE QUE LES DEUX BUGS ÉTAIENT **PROTÉGÉS PAR DES FIXTURES FAUSSES**.
+   Les tests écrivaient `bw`, la production écrit `kg` : le témoin était vert sur une forme de
+   donnée que l'app ne produit pas. *Un test qui n'emploie pas le schéma de la production ne
+   teste rien — il rassure.* Les fixtures ont été corrigées AVANT le code, et elles ont rougi.  */
+{
+  console.log('\n── XCIX. Les deux bugs de calcul ──');
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); pg.on('pageerror',e=>console.log('PAGEERROR',e.message));
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const G=await pg.evaluate(()=>{
+    const o={}; const v={bw:S.bw,h:S.height,a:S.age,g:S.gender,act:S.activityLevel,wt:S.workType,go:S.goal,wl:S.weightLog,bs:S.bodyScans};
+    try{
+      S.bw=80;S.height=178;S.age=30;S.gender='H';S.activityLevel=1.55;S.workType='bureau';
+      S.weightLog=[];S.bodyScans=[];
+      const tdee=Math.round(calcTDEE());
+      o.tdee=tdee;
+      const par={};
+      ['muscle','perte','recomp','force','equilibre','endurance'].forEach(g=>{S.goal=g;par[g]=Math.round(_autoKcalBrut('charge'));});
+      o.par=par;
+      // ⛔⛔ LE BUG : `0||350` rendait 350 — « équilibre » valait exactement « muscle ».
+      o.equilibreNeutre = par.equilibre === tdee+100;
+      o.equilibrePasMuscle = par.equilibre !== par.muscle;
+      // ⛔ et le repli à 350 tient toujours pour un objectif INCONNU (profil abîmé)
+      S.goal='nimportequoi'; o.inconnuGarde350 = Math.round(_autoKcalBrut('charge')) === tdee+100+350;
+      // ⭐ R2 : un seul propriétaire, et l'écran lit LA MÊME fonction
+      o.fonctionPartagee = typeof goalDeltaKcal==='function';
+      o.ecranNaPlusSaCopie = !/equilibre:\s*0[^}]*\}\[goal\]\s*\|\|/.test(String(renderNutrition));
+      o.valeurs = o.fonctionPartagee ? {eq:goalDeltaKcal('equilibre'), mu:goalDeltaKcal('muscle'), inc:goalDeltaKcal('zzz')} : null;
+    } finally { S.bw=v.bw;S.height=v.h;S.age=v.a;S.gender=v.g;S.activityLevel=v.act;S.workType=v.wt;S.goal=v.go;S.weightLog=v.wl;S.bodyScans=v.bs; }
+    return o;
+  });
+  t('⭐⭐ ÉQUILIBRE : l\'objectif « maintien » ne reçoit plus +350 kcal fantômes',
+    G.equilibreNeutre===true, JSON.stringify(G.par)+' tdee='+G.tdee);
+  t('⭐⭐ … et il n\'est plus IDENTIQUE à « prise de muscle »', G.equilibrePasMuscle===true, JSON.stringify(G.par));
+  t('⛔ … mais un objectif INCONNU garde bien son repli à 350 (« absent » ≠ « vaut zéro »)',
+    G.inconnuGarde350===true, JSON.stringify(G));
+  t('⭐ R2 : une seule table d\'objectifs, exposée par `goalDeltaKcal`', G.fonctionPartagee===true, JSON.stringify(G));
+  t('⭐⭐ … et l\'écran Nutrition n\'a plus sa propre copie de la table',
+    G.ecranNaPlusSaCopie===true, JSON.stringify(G));
+  t('… les valeurs sont les bonnes (équilibre 0, muscle 350, inconnu 350)',
+    G.valeurs && G.valeurs.eq===0 && G.valeurs.mu===350 && G.valeurs.inc===350, JSON.stringify(G.valeurs));
+
+  const K=await pg.evaluate(()=>{
+    const o={}; const v={wl:S.weightLog,bs:S.bodyScans,bw:S.bw,h:S.height,a:S.age,g:S.gender,ss:S.sessions};
+    try{
+      S.bw=80;S.height=178;S.age=30;S.gender='H';S.bodyScans=[];
+      const j=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+      // ⭐⭐ LA CLÉ QUE LA PRODUCTION ÉCRIT VRAIMENT
+      S.weightLog=[{date:j(2),kg:80,bf:20}];
+      o.kg={lm:leanMassRecente(), methode:bmrDetail().methode};
+      // ⛔ le repli `bw` reste lu : une vieille sauvegarde cloud ne doit pas perdre sa mesure
+      S.weightLog=[{date:j(2),bw:80,bf:20}];
+      o.bwRepli={lm:!!leanMassRecente(), methode:bmrDetail().methode};
+      // ⛔ sans % de gras, aucune masse maigre inventée
+      S.weightLog=[{date:j(2),kg:80}];
+      o.sansBf=leanMassRecente();
+      // ⭐ le 2e lecteur cassé : la ligne de poids du bilan mensuel
+      const ym=new Date().toISOString().slice(0,7);
+      S.weightLog=[{date:ym+'-02',kg:85},{date:ym+'-27',kg:84}];
+      // `_bilanMois` rend null sans séance dans le mois — il en faut une pour l'atteindre
+      S.sessions=[{date:ym+'-15',volume:5000,calories:300,
+        exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true,type:'N'}]}]}];
+      o.bilan=(typeof _bilanMois==='function')?(_bilanMois(ym)||{}).bw:null;
+    } finally { S.weightLog=v.wl;S.bodyScans=v.bs;S.bw=v.bw;S.height=v.h;S.age=v.a;S.gender=v.g;S.sessions=v.ss; }
+    return o;
+  });
+  t('⭐⭐ KATCH : une pesée avec % de gras (clé `kg`, celle de la PRODUCTION) active enfin Katch',
+    K.kg && K.kg.lm && K.kg.methode==='katch', JSON.stringify(K.kg));
+  t('⛔ … et l\'ancienne clé `bw` reste lue en repli (une sauvegarde ancienne ne perd rien)',
+    K.bwRepli && K.bwRepli.bwRepli!==false && K.bwRepli.methode==='katch', JSON.stringify(K.bwRepli));
+  t('⛔⛔ … mais SANS % de gras, aucune masse maigre n\'est inventée (R29)',
+    K.sansBf===null, JSON.stringify(K.sansBf));
+  t('⭐⭐ BILAN MENSUEL : la ligne « Poids de corps » s\'affiche enfin (2ᵉ lecteur cassé, non vu par l\'audit)',
+    K.bilan && K.bilan.debut===85 && K.bilan.fin===84, JSON.stringify(K.bilan));
+
+  await cx.close();
+}
+
+/* ═══ C. UNE BLESSURE DITE À MILO ATTEINT LE GARDIEN (ft-v982) ═════════════════════════════
+   Michel : « je veux que Milo soit fiable ». C'est le point n°1 de la contre-analyse.
+   ⛔⛔ LE CHEMIN ÉTAIT ÉTEINT EN PROD derrière `__FT_CLONE__`, et l'audit y voyait une
+   régression du retrait du clone. **C'est faux** : essai jamais promu, listé comme tel.
+   ⭐⭐ ET EN LE PROMOUVANT ON A TROUVÉ POURQUOI IL ÉTAIT PARQUÉ : `_gardienZonesFromText`
+   détecte des NOMS DE MUSCLES. Mesuré, **7 faux positifs sur 9** phrases anodines.
+   Les 17 phrases mesurées ce soir sont figées ici (R17) — c'est le seul moyen d'empêcher
+   qu'une future retouche du motif ré-ouvre l'un ou l'autre côté.                             */
+{
+  console.log('\n── C. La blessure dite à Milo atteint le Gardien ──');
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); pg.on('pageerror',e=>console.log('PAGEERROR',e.message));
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const Z=await pg.evaluate(()=>{
+    const o={};
+    o.existe = typeof _texteDitUneLimitation==='function';
+    if(!o.existe) return o;
+    const zone=t=>(_texteDitUneLimitation(t)?_gardienZonesFromText(t):[]);
+    const ANODINES=[
+      "Michel veut prioriser le dos et les épaules ce trimestre",
+      "Préfère le développé couché au pec deck",
+      "Fait ses abdos en fin de séance, jamais avant",
+      "Travaille les biceps le jeudi",
+      "N'aime pas les squats, préfère la presse pour les cuisses",
+      "Objectif : gagner du volume sur les pectoraux",
+      "S'entraîne avec une coach le mardi",
+      "Fait 8 min d'elliptique en échauffement",
+      "Veut du gainage à chaque séance"];
+    const VRAIES=[
+      "Épaule droite fragile, limitée en développé au-dessus de la tête",
+      "Douleur au genou droit depuis une vieille blessure de foot",
+      "Hernie discale L5-S1, éviter les charges axiales",
+      "Tendinite au coude gauche, en cours de rééducation",
+      "Point douloureux au talon qui réapparaît après les séances",
+      "Opéré de la coiffe des rotateurs il y a deux ans",
+      "Mal au bas du dos quand il fait du soulevé de terre lourd",
+      "Poignet cassé en 2019, gêne sur les prises en pronation"];
+    o.fauxPositifs = ANODINES.filter(t=>zone(t).length).map(t=>t.slice(0,34)+'…');
+    o.ratees       = VRAIES.filter(t=>!zone(t).length).map(t=>t.slice(0,34)+'…');
+    // ⭐ le talon de Michel, que RIEN n'attrapait avant
+    o.talon = _gardienZonesFromText('point douloureux au talon').indexOf('cheville')>=0;
+    // ⛔ la fonction de zones, elle, ne DOIT PAS filtrer : le Profil Santé ne contient que
+    //    des blessures par construction (R2 — une fonction, un rôle)
+    o.zonesNeFiltrePas = _gardienZonesFromText('dos').indexOf('dorsaux')>=0;
+    return o;
+  });
+  t('BLESSURE : le 2ᵉ critère existe (`_texteDitUneLimitation`)', Z.existe===true, JSON.stringify(Z));
+  t('⛔⛔ BLESSURE : 0 faux positif sur 9 préférences anodines (7 avant)',
+    Z.fauxPositifs && Z.fauxPositifs.length===0, JSON.stringify(Z.fauxPositifs));
+  t('⭐⭐ BLESSURE : 0 vraie limitation ratée sur 8', Z.ratees && Z.ratees.length===0, JSON.stringify(Z.ratees));
+  t('⭐ BLESSURE : le « point douloureux au talon » de Michel est enfin attrapé', Z.talon===true, JSON.stringify(Z));
+  t('⛔ R2 : `_gardienZonesFromText` ne filtre PAS — le Profil Santé ne contient que des blessures',
+    Z.zonesNeFiltrePas===true, JSON.stringify(Z));
+
+  /* ⭐⭐ LE TÉMOIN CENTRAL : le chemin COMPLET, de la mémoire acceptée jusqu'à `_gardienZones()`.
+     C'est la question exacte de Michel — « Milo peut-il sembler l'avoir mémorisée sans que le
+     Gardien en tienne compte ? ». Ici on va jusqu'au bout, pas jusqu'au registre. */
+  const P=await pg.evaluate(()=>{
+    const o={}; const v={hp:S.healthProfile, rg:S.registre, pm:window._pendingMiloMemory};
+    try{
+      S.healthProfile={injuries:[],conditions:[],notes:''};
+      S.registre={facts:{},observations:[],updatedAt:''};
+      window._pendingMiloMemory=["Épaule droite fragile depuis une chute, limitée au-dessus de la tête",
+                                 "Veut prioriser le dos ce trimestre"];
+      _confirmMiloMemory(0,true,null);
+      o.notes = (S.healthProfile.notes||'');
+      o.dansGardien = Object.keys((typeof _gardienZones==='function')?_gardienZones():{});
+      o.registre = (S.registre.observations||[]).length;
+      // ⛔ et la préférence anodine ne doit RIEN ajouter à la santé
+      const avant=S.healthProfile.notes;
+      _confirmMiloMemory(1,true,null);
+      o.anodineNAjouteRien = S.healthProfile.notes===avant;
+      o.registreApres = (S.registre.observations||[]).length;
+      // ⛔ « Non, oublie » ne doit jamais alimenter la santé
+      S.healthProfile.notes='';
+      window._pendingMiloMemory=["Genou douloureux, éviter les fentes"];
+      _confirmMiloMemory(0,false,null);
+      o.refusNAjouteRien = !S.healthProfile.notes;
+    } finally { S.healthProfile=v.hp; S.registre=v.rg; window._pendingMiloMemory=v.pm; }
+    return o;
+  });
+  t('⭐⭐ CHEMIN COMPLET : une blessure acceptée arrive dans le Profil Santé',
+    /paule droite fragile/.test(P.notes||''), JSON.stringify(P.notes));
+  t('⭐⭐ … et le GARDIEN la voit — c\'est la question exacte de Michel',
+    (P.dansGardien||[]).indexOf('epaule')>=0, JSON.stringify(P.dansGardien));
+  t('… sans cesser d\'alimenter le registre (les deux, pas l\'un OU l\'autre)', P.registre===1, JSON.stringify(P));
+  t('⛔⛔ … une PRÉFÉRENCE acceptée n\'ajoute RIEN à la santé (le défaut qui a parqué l\'essai)',
+    P.anodineNAjouteRien===true, JSON.stringify(P));
+  t('… mais elle entre bien au registre (elle n\'est pas perdue)', P.registreApres===2, JSON.stringify(P));
+  t('⛔ … et un « Non, oublie » n\'alimente jamais la santé', P.refusNAjouteRien===true, JSON.stringify(P));
+
+  /* ⭐ LA SECONDE MOITIÉ : sans la consigne, Milo ne NOMME pas la zone, et le pont n'a rien à lire. */
+  const C2=await pg.evaluate(()=>{
+    const ctx=buildCoachContext('test');
+    return {consigne:/BLESSURE \/ ACCIDENT \/ SANT/.test(ctx), zone:/Nomme toujours la ZONE/.test(ctx)};
+  });
+  t('⭐⭐ … et la CONSIGNE « nomme toujours la ZONE » est enfin dans le contexte (2ᵉ moitié, éteinte elle aussi)',
+    C2.consigne===true && C2.zone===true, JSON.stringify(C2));
+
+  await cx.close();
+}
+
+/* ═══ CI. LE DIAGNOSTIC MÉDICAL NE PASSE PLUS SEUL (ft-v983) ═══════════════════════════════
+   ⛔⛔ AUDIT DU GARDIEN DE SORTIE : sur ses 5 contrôles, **un seul retire vraiment** quelque
+   chose. Les 4 autres sont comptés puis affichés tels quels. Pour trois d'entre eux un
+   compteur suffit — pas pour le **diagnostic médical** (Constitution P13/P22).
+   ⛔ ON N'A PAS RÉÉCRIT LA RÉPONSE : on AJOUTE un renvoi au médecin. Les témoins ci-dessous
+   vérifient les deux moitiés — que le rappel apparaisse, ET que le texte ne bouge pas.       */
+{
+  console.log('\n── CI. Le diagnostic médical ne passe plus seul ──');
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); pg.on('pageerror',e=>console.log('PAGEERROR',e.message));
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const D=await pg.evaluate(()=>{
+    const o={};
+    const msgs=document.getElementById('coach-msgs'); if(msgs)msgs.innerHTML='';
+    const rendre=t=>{ const av=msgs.children.length; renderCoachMsg('coach',t);
+                      return msgs.children[msgs.children.length-1]; };
+    const DIAG="Vu ce que tu décris, tu souffres d'une tendinite de l'épaule. Repose-toi une semaine.";
+    const b1=rendre(DIAG);
+    o.rappelPresent = !!b1.querySelector('.coach-sante-rappel');
+    o.rappelParleDuMedecin = /m[ée]decin/i.test((b1.querySelector('.coach-sante-rappel')||{}).textContent||'');
+    // ⛔⛔ LE TEXTE DE MILO NE BOUGE PAS D'UN CARACTÈRE — on ajoute, on ne charcute pas
+    o.texteIntact = b1.innerText.indexOf("tu souffres d'une tendinite de l'épaule")>=0;
+    o.rawIntact = b1.dataset.raw===DIAG;
+
+    // ⛔ une réponse NORMALE n'a aucun rappel — sinon il devient du bruit et on cesse de le lire
+    const b2=rendre("Belle séance : 3×5 à 90 kg, propre. On monte à 92,5 la prochaine fois 💪");
+    o.pasDeRappelSurNormal = !b2.querySelector('.coach-sante-rappel');
+    // ⛔ et les faux positifs resserrés le 21/08 ne doivent PAS le déclencher
+    const b3=rendre("Tu es en Jour 2 de ton programme, et tu es en phase de charge.");
+    o.pasDeFauxPositif = !b3.querySelector('.coach-sante-rappel');
+    const b4=rendre("Tu fais une belle progression sur le développé couché.");
+    o.pasDeFauxPositif2 = !b4.querySelector('.coach-sante-rappel');
+    // ⭐ une promesse vide, elle, reste COMPTÉE sans rien afficher (ce défaut nous regarde)
+    const b5=rendre("C'est noté, je retiens pour la prochaine fois 💪");
+    o.promesseNAfficheRien = !b5.querySelector('.coach-sante-rappel');
+    if(msgs)msgs.innerHTML='';
+    return o;
+  });
+  t('⭐⭐ SANTÉ : une formulation de diagnostic déclenche le renvoi au médecin',
+    D.rappelPresent===true, JSON.stringify(D));
+  t('… et le rappel nomme bien le médecin (Constitution P13/P22)', D.rappelParleDuMedecin===true, JSON.stringify(D));
+  t('⛔⛔ SANTÉ : le texte de Milo n\'est PAS modifié — on ajoute, on ne charcute pas',
+    D.texteIntact===true, JSON.stringify(D));
+  t('⛔ … et le texte partagé/exporté non plus (`dataset.raw` intact)', D.rawIntact===true, JSON.stringify(D));
+  t('⛔ SANTÉ : une réponse normale n\'affiche AUCUN rappel (sinon il devient du bruit)',
+    D.pasDeRappelSurNormal===true, JSON.stringify(D));
+  t('⛔⛔ … et les 2 faux positifs resserrés le 21/08 ne le déclenchent toujours pas',
+    D.pasDeFauxPositif===true && D.pasDeFauxPositif2===true, JSON.stringify(D));
+  t('⛔ … une promesse de mémoire vide reste COMPTÉE sans rien afficher (ce défaut nous regarde)',
+    D.promesseNAfficheRien===true, JSON.stringify(D));
+
+  await cx.close();
+}
+
+/* ═══ CII. LA QUANTITÉ SUIT L'ALIMENT QUAND ON LE REPREND (ft-v984) ════════════════════════
+   Michel, capture à l'appui : « comment ça se fait que je ne peux pas mettre la quantité,
+   sérieux c'est relou ».
+   ⛔⛔ REPRODUIT DANS UN NAVIGATEUR AVANT DE TOUCHER AU CODE : par le chemin CIQUAL le bloc
+   Quantité est là ; par le chemin de SON PROPRE JOURNAL — celui qu'on emprunte dès la 2ᵉ
+   fois — il ne l'était pas, **alors que `per100` est présent dans la source**. R4, à deux
+   lignes d'écart : la donnée existait et n'atteignait pas l'écran.
+   ⭐ Le bloc passe par le VRAI chemin (on tape, le code remplit ses suggestions, on clique) —
+   toucher `_afSuggLoc` à la main ne mesurerait rien : c'est une variable de script, pas
+   `window`, et mon premier essai a « mesuré » un libellé resté de l'étape d'avant.            */
+{
+  console.log('\n── CII. La quantité suit l\'aliment repris ──');
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); pg.on('pageerror',e=>console.log('PAGEERROR',e.message));
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const Q=await pg.evaluate(async()=>{
+    const o={}; const vis=id=>{const e=document.getElementById(id);return !!e && e.style.display!=='none';};
+    const vlog=S.foodLog;
+    try{
+      await _ciqualCharger();
+      // ① on note l'aliment une 1ʳᵉ fois par CIQUAL, comme Michel
+      S.foodLog=[];
+      openAddFood();
+      const res=_ciqualChercher('oeuf blanc',5);
+      if(!res.length){ o.pasDeCiqual=true; return o; }
+      _afSuggCiq=res; _afSuggPrendreCiqual(0);
+      o.premiereFois={ bloc:vis('af-bc-row') };
+      document.getElementById('af-kcal').value='29';    // il corrige à la main
+      document.getElementById('af-prot').value='7';
+      addFoodEntry();
+      o.enregistre={ per100:!!((S.foodLog||[])[0]||{}).per100 };
+
+      // ② il le reprend depuis SON JOURNAL — le vrai chemin
+      openAddFood();
+      document.getElementById('af-desc').value='oeuf';
+      _afSuggInput();
+      await new Promise(r=>setTimeout(r,300));
+      const btn=[...document.querySelectorAll('#af-sugg [onclick]')]
+                  .find(x=>/PrendreLocale/.test(x.getAttribute('onclick')||''));
+      o.suggTrouvee=!!btn;
+      if(btn){
+        btn.click();
+        o.repris={ bloc:vis('af-bc-row'),
+                   libelle:(document.getElementById('af-bc-name')||{}).textContent,
+                   kcal:document.getElementById('af-kcal').value };
+        document.getElementById('af-bc-grams').value='50'; _bcApplyGrams();
+        o.a50g={ kcal:document.getElementById('af-kcal').value, prot:document.getElementById('af-prot').value };
+      }
+
+      // ③ une entrée tapée À LA MAIN n'a pas de per100 → pas de bloc, aucun poids inventé
+      openAddFood();
+      S.foodLog.push({name:'Truc tape a la main',kcal:200,prot:10,carbs:5,fat:8,ts:Date.now(),date:today()});
+      document.getElementById('af-desc').value='truc';
+      _afSuggInput();
+      await new Promise(r=>setTimeout(r,300));
+      const b2=[...document.querySelectorAll('#af-sugg [onclick]')]
+                 .find(x=>/PrendreLocale/.test(x.getAttribute('onclick')||''));
+      if(b2){ b2.click(); o.sansPer100={ bloc:vis('af-bc-row') }; }
+    } finally { S.foodLog=vlog; try{ closeAddFood(); }catch(e){} }
+    return o;
+  });
+  t('QUANTITÉ : la 1ʳᵉ fois (CIQUAL), le bloc est là — c\'est ce qui marchait déjà',
+    Q.premiereFois && Q.premiereFois.bloc===true, JSON.stringify(Q));
+  t('… et l\'entrée enregistrée porte bien son pour-100 g', Q.enregistre && Q.enregistre.per100===true, JSON.stringify(Q));
+  t('⭐⭐ QUANTITÉ : en le REPRENANT depuis son journal, le bloc est là AUSSI (il manquait)',
+    Q.repris && Q.repris.bloc===true, JSON.stringify(Q.repris));
+  t('… et il dit d\'où vient la référence (« ta dernière saisie »)',
+    Q.repris && /dernière saisie/.test(Q.repris.libelle||''), JSON.stringify(Q.repris));
+  t('⛔⛔ QUANTITÉ : les macros CORRIGÉES À LA MAIN ne sont pas écrasées à l\'arrivée (29, pas 48)',
+    Q.repris && Q.repris.kcal==='29', JSON.stringify(Q.repris));
+  t('⭐ … mais elles suivent dès qu\'on change la quantité (50 g → 24 kcal · 6 g)',
+    Q.a50g && Q.a50g.kcal==='24' && Q.a50g.prot==='6', JSON.stringify(Q.a50g));
+  t('⛔⛔ QUANTITÉ : une entrée tapée à la main n\'a PAS le bloc — aucun poids inventé (R29)',
+    Q.sansPer100 && Q.sansPer100.bloc===false, JSON.stringify(Q.sansPer100));
 
   await cx.close();
 }

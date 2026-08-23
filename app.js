@@ -1988,8 +1988,37 @@ function _afSuggPrendreLocale(i){
   document.getElementById('af-carbs').value=e.carbs||0;
   document.getElementById('af-fat').value=e.fat||0;
   _afCoherence();          // une ancienne entrée fausse se signale au moment où on la reprend
-  const row=document.getElementById('af-bc-row'); if(row)row.style.display='none';
-  _bcNutr=null;
+  /* ⚖️ LA QUANTITÉ SUIT L'ALIMENT QUAND ON LE REPREND (ft-v984)
+     Michel, capture à l'appui : *« comment ça se fait que je ne peux pas mettre la quantité,
+     sérieux c'est relou »*. **Reproduit dans un navigateur, pas déduit** : par le chemin
+     CIQUAL, `blocQuantite: true`. Par le chemin de SON PROPRE JOURNAL — celui qu'il emprunte
+     dès la 2ᵉ fois — `blocQuantite: false`, **alors que `per100` est bien là dans la source**.
+
+     ⛔⛔ CETTE LIGNE CACHAIT LE BLOC SANS CONDITION, et transmettait `per100` juste en dessous.
+     *L'information existait, et n'atteignait pas l'écran* — **R4**, à deux lignes d'écart.
+     👉 Conséquence vécue : le mécanisme de ft-v962/965 marchait la PREMIÈRE fois qu'on note un
+     aliment, et disparaissait toutes les suivantes. *Un défaut qui ne se voit qu'à la deuxième
+     saisie, donc jamais en testant une fois.*
+
+     ⭐ R13/R2 — ON NE RÉINVENTE RIEN : on reconstruit `_bcNutr` depuis le `per100` déjà
+     enregistré, et le bloc `af-bc-row` fait le reste, exactement comme après un scan.
+     ⛔ ET ON NE RECALCULE PAS LES MACROS EN ARRIVANT : elles sont déjà justes, et la personne a
+     pu les corriger à la main après coup. Les réécrire effacerait sa correction sans le dire
+     (R29). Le recalcul part au premier changement de quantité, quand elle le demande. */
+  const row=document.getElementById('af-bc-row');
+  const P=e.per100;
+  if(P && (+P.kcal>0 || +P.prot>0 || +P.carbs>0 || +P.fat>0)){
+    _bcNutr={ name:(e.name||'').slice(0,60), kcal100:+P.kcal||0,
+              prot100:+P.prot||0, carbs100:+P.carbs||0, fat100:+P.fat||0 };
+    const g=document.getElementById('af-bc-grams');
+    if(g) g.value=(+e.q>0 && (!e.u||e.u==='g')) ? e.q : 100;   // la quantité de la dernière fois
+    const nm=document.getElementById('af-bc-name');
+    if(nm) nm.textContent=_bcNutr.name+' · '+Math.round(_bcNutr.kcal100)+' kcal/100g (ta dernière saisie)';
+    if(row) row.style.display='block';
+  }else{
+    if(row) row.style.display='none';
+    _bcNutr=null;
+  }
   _afSetSrc({saisie:'historique', origine:e.origine||'utilisateur',
              sourceId:e.sourceId||null, etat:e.etat||null, per100:e.per100||null,
              attendu:_afLuFormulaire()});
@@ -3813,7 +3842,13 @@ function _bilanMois(ym){
   // Poids de corps : première et dernière pesée du mois
   const pesees=(S.weightLog||[]).filter(w=>w&&w.date&&String(w.date).slice(0,7)===ym)
     .sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-  const bw = pesees.length ? {debut:pesees[0].bw, fin:pesees[pesees.length-1].bw} : null;
+  /* ⛔ LE MÊME `bw` FAUX QU'EN state.js, ET IL N'AVAIT PAS ÉTÉ VU (corrigé ft-v981).
+     La ligne « ⚖️ Poids de corps 85 → 84 kg » du bilan mensuel ne s'affichait donc JAMAIS :
+     `debut`/`fin` valaient `undefined`, et le test d'affichage plus bas échouait en silence.
+     ⚠️ *Une clé fausse ne se trouve jamais toute seule* — quand on en trouve une, il faut
+     chercher ses jumelles (R8). Celle-ci était protégée par sa propre fixture fausse. */
+  const _pKg = w => (w && w.kg!=null) ? w.kg : (w?w.bw:undefined);
+  const bw = pesees.length ? {debut:_pKg(pesees[0]), fin:_pKg(pesees[pesees.length-1])} : null;
   // ⚠️ La comparaison n'a de sens que si le mois précédent existe VRAIMENT dans l'historique.
   // Comparer à un mois où l'app n'était pas encore installée annoncerait « −100 % » à quelqu'un
   // qui n'a rien manqué du tout (R29 : le coût d'un chiffre faux n'est pas nul).

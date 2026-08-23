@@ -3360,3 +3360,85 @@ Tests : **parcours 1035/1035** (+14, bloc LXXXII), calculs 266/266, muscles 241/
 
 **⚠️ SOURCE** : Compl'Alim, data.gouv.fr — la licence exacte n'a pas pu être vérifiée depuis cette session (réseau bloqué), c'est écrit tel quel dans le code plutôt que de citer un texte inventé.
 Tests : **parcours 1041/1041** (+6, bloc LXXXIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — fonction absente. Fichiers : `data/complalim.json` (neuf), `tools/complalim.py` (neuf), `app.js`, `index.html`, `sw.js`, `clone/*`, `tests/parcours/runner.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v958. |
+
+**ft-v959 — 🥚 UN BUG TROUVÉ EN CHERCHANT AUTRE CHOSE — la ligature Œ cassait la recherche CIQUAL** — Michel a montré une photo de blanc d'œuf liquide en demandant comment il serait nommé dans la base, après avoir signalé que *« poulet »* ne trouvait rien (ce second point n'était qu'une version pas encore rafraîchie sur son téléphone).
+
+**⭐⭐ MAIS EN VÉRIFIANT LE PRODUIT D'ŒUF, UN VRAI BUG EST APPARU.** `normalize('NFD')` décompose les **accents** (é → e + accent), mais **jamais les ligatures œ/æ** — ce sont deux lettres fusionnées en une seule, pas une lettre accentuée. Or **le clavier iPhone en français corrige automatiquement** « oeuf » en « œuf » pendant la frappe, pendant que CIQUAL écrit tous ses noms en **oe séparé** (*« Oeuf, blanc… »*). Mesuré : taper le mot avec ligature rendait **zéro résultat** pour œuf, bœuf — donc quasiment **toujours sur iPhone**, pour un aliment qui existe pourtant dans la base.
+
+**⛔ CORRIGÉ dans `_afNorm`** : deux remplacements supplémentaires (œ→oe, æ→ae) avant le NFD qui gère les accents. **Une seule fonction, partagée par CIQUAL et les suggestions locales** (R2) — la corriger une fois répare les deux recherches d'un coup.
+
+**⚠️ Et « poulet » était un faux problème** : rejoué dans un navigateur avec le code déployé, il trouvait bien 69 résultats. La leçon reste utile : *toujours REJOUER le cas exact avant de conclure à un bug* — ici ça a évité de chasser un fantôme, et ça a laissé le temps de trouver le vrai.
+Tests : **parcours 1044/1044** (+3), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 2 rouges** exactement (œuf et bœuf en ligature) — le mot sans ligature ne régresse pas. Fichiers : `app.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v959. |
+
+**ft-v960 — 🔤 MÊME BUG, SUR L'APOSTROPHE — Michel avait raison de creuser** — après la ligature du blanc d'œuf : *« faut aller voir aussi avec les accents, le E tréma, tous les caractères spéciaux quoi »*.
+
+**⭐ VÉRIFIÉ SYSTÉMATIQUEMENT sur les ~132 000 noms des deux bases** (CIQUAL + Compl'Alim), plutôt que de deviner un caractère au hasard. **Accents, tréma (ë, ï, ü), cédille (ç) étaient déjà corrects** : `NFD` les décompose tous en lettre + accent, déjà retirés par le code précédent.
+
+**⚠️⚠️ MAIS L'APOSTROPHE AVAIT EXACTEMENT LE MÊME DÉFAUT QUE LA LIGATURE DE LA VEILLE.** Le clavier iPhone convertit **automatiquement** l'apostrophe droite tapée en apostrophe **courbe** pendant la frappe. **238 aliments CIQUAL** en portent une (*« Soupe à l'oignon »*, *« Sauté d'agneau »*). Mesuré : *« aujourd'hui »* tapé (droite) et *« aujourd'hui »* stocké (courbe) ne se reconnaissaient **pas** comme le même mot.
+
+**⛔ CORRIGÉ en RETIRANT l'apostrophe et ses variantes** (courbe droite/gauche, accent grave, accent aigu isolé) — elle ne porte aucun sens pour une recherche. Et ça a révélé un détail au passage : certaines entrées utilisent ces mêmes variantes comme **coquille d'origine** (*« PROBIO´DIET »*), pas seulement l'autocorrection du clavier — le retrait les couvre aussi.
+
+**⭐ Toujours dans la même fonction, partagée par CIQUAL et les suggestions locales** (R2) — corriger une fois répare les deux recherches.
+Tests : **parcours 1046/1046** (+2), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** exact. Fichiers : `app.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v960. |
+
+**ft-v961 — 📅 NAVIGUER DANS LE JOURNAL — voir ET modifier un autre jour** — Michel : *« on ne sait pas ce que l'on a mangé dans la journée et on ne peut même pas le modifier de ce fait »*.
+
+**⭐ VÉRIFIÉ AVANT DE CODER (R28)** : le Journal était câblé en dur sur `today()`, sans aucune navigation — impossible de voir **ou** de modifier un autre jour que celui du moment, exactement ce qu'il décrivait.
+
+**⭐ MÊME REPÈRE VISUEL que le calendrier de l'Accueil** (flèches ‹ ›, **R13**) : *Aujourd'hui / Hier / date complète*, navigation illimitée vers le passé. **⛔⛔ Et on ne va jamais dans le futur** : demain n'a rien à montrer, y naviguer donnerait l'impression qu'on peut noter un repas à l'avance — la flèche avant est désactivée dès qu'on est sur aujourd'hui.
+
+**⭐⭐ LE TÉMOIN CENTRAL : un jour passé est MODIFIABLE, pas seulement consultable.** On édite et supprime une entrée d'hier exactement comme aujourd'hui, sans toucher à l'entrée du jour présent.
+
+**⭐ ET AJOUTER UN ALIMENT EN CONSULTANT LE PASSÉ LE DATE SUR CE JOUR-LÀ** (backfill), jamais sur aujourd'hui — sinon la navigation aurait servi à *regarder* mais pas à *corriger un oubli*, ce qui aurait raté la moitié de la demande.
+
+**⚠️ UN JOUR CLOS N'A PLUS DE « restantes »** : le libellé passe en simple comparaison à l'objectif (on ne va pas manger davantage hier), et l'objectif affiché reste explicitement celui **d'aujourd'hui** — recalculer un objectif historique aurait été un faux-précis qu'on n'a pas les moyens de garantir (**R29**).
+Tests : **parcours 1055/1055** (+9, bloc LXXXIV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — fonction absente (peu instructif, toute la brique est neuve). ⚠️ Un test existant (l'ordre des 3 méthodes d'ajout) a dû être **reciblé** : les nouvelles flèches précèdent désormais ces boutons dans le DOM, donc « premier bouton de la page » n'était plus la bonne question — « premier des 3 méthodes » l'est. Fichiers : `app.js`, `screens.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v961. |
+
+**ft-v962 — ⚖️ MODIFIER LE POIDS D'UNE ENTRÉE — au lieu de recalculer les 4 macros à la main** — Michel, devant un « Oeuf cru » dans son journal : *« ya œuf cru (lol) pas cuit. Et on ne peut pas modifier le poids »*.
+
+**⭐⭐ DEUX QUESTIONS DANS LA MÊME PHRASE, ET UNE SEULE EST UN DÉFAUT** — vérifié avant de coder (**R28**), pas supposé.
+
+**⚠️ ① L'ŒUF CRU N'EST PAS UN TROU DE LA BASE.** Mesuré : quand on tape « œuf », **« Oeuf dur » sort PREMIER**, avant « Oeuf cru » — et *poché*, *à la coque*, *brouillé*, *au plat* sont là aussi (141 résultats). **Il a pris le 2ᵉ de la liste.** ⭐ **Et l'écart est minuscule sur un œuf entier** : 140 contre 134 kcal/100 g, soit **12 kcal** sur ses 200 g. *Le cru/cuit compte énormément pour les féculents (×3 sur des pâtes, d'où l'avertissement de ft-v956), presque pas pour un œuf.* **On ne corrige donc RIEN côté base : la donnée était là, le choix aussi.** *Deuxième fois cette semaine qu'un « ça manque » se dissout en rejouant le cas exact — après le « poulet » de ft-v959.*
+
+**⛔⛔ ② LE POIDS, LUI, ÉTAIT UN VRAI DÉFAUT.** La modale « Modifier l'aliment » ne montrait que les **4 macros brutes** : pour passer de 200 à 150 g, il fallait recalculer kcal, protéines, glucides **et** lipides soi-même — sur un écran qui sait pourtant faire exactement ce calcul. *Quelqu'un qui se pesait pour la première fois de sa vie le matin même n'allait pas faire quatre règles de trois pour corriger une portion.*
+
+**⭐ R13 — ON NE RÉINVENTE RIEN.** `_bcApplyGrams()` fait déjà ce calcul à l'**AJOUT** (scan, CIQUAL, recherche) depuis ft-v956/957. On branche la **même** logique sur `e.per100`, le pour-100 g que `_provFood` enregistre depuis la **brique 0** (ft-v907).
+
+**⭐⭐ ET C'EST R4 QUI PAYE, AVEC DEUX SEMAINES DE RETARD** : ce `per100` était **stocké sur chaque entrée** et n'atteignait **aucun écran**. *Il existait, il ne servait à rien* — la donnée morte que R5 demande justement de chercher à l'envers. Il n'y avait rien à collecter, seulement à brancher.
+
+**⛔⛔ LE TÉMOIN CENTRAL EST UN REFUS : le champ n'apparaît QUE si `per100` existe.** Une entrée tapée à la main n'a pas de pour-100 g — en fabriquer un supposerait de deviner à quel poids correspondent ses 80 kcal, et ce serait un **faux-précis** (**R29**). *Sa modale ne bouge pas d'un pixel*, et deux témoins le vérifient : pas de champ, et **aucune quantité inventée** dans l'entrée sauvegardée.
+
+**⚠️ ET LA QUANTITÉ SE RE-ENREGISTRE (`q`/`u`)** : sans ça, la modification **suivante** repartirait du poids d'origine et **annulerait la précédente en silence** — le genre de défaut qu'on ne voit qu'à la deuxième correction, donc jamais pendant un test écrit d'un seul jet.
+Tests : **parcours 1063/1063** (+8, bloc LXXXV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — `_efApplyGrams` absente. ⚠️ **Peu instructif et autant l'écrire** : les 7 autres témoins vivent sous le garde « fonction absente », donc ils **ne tournent pas** contre l'ancien code. *Un témoin qui ne tourne pas n'est pas un témoin vert.* Fichiers : `app.js`, `clone/app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v962. |
+
+**ft-v963 — 🔎 LE PLURIEL — 97 % DE LA BASE ÉTAIT INATTEIGNABLE** — Michel : *« c'est comme j'ai cherché les pâtes, j'ai pas trouvé — enfin si, mais pas ce que je voulais trouver, et je n'ai plus la boîte pour le code-barre »*.
+
+**⚠️⚠️ ET SA PROPRE EXPLICATION ÉTAIT FAUSSE — c'est la première chose qu'il a fallu vérifier.** Il a ensuite pensé à l'accent : *« ah c'est pâtes et pas pates lol »*. **Mesuré : « pâtes » et « pates » rendent EXACTEMENT la même liste** depuis ft-v960 (`NFD` retire les accents). *Le croire aurait fermé le sujet sur un faux coupable et laissé le vrai en place* — **R28 coupe dans les deux sens**, y compris quand c'est Michel qui diagnostique.
+
+**⛔⛔ LE VRAI DÉFAUT : CIQUAL NOMME AU SINGULIER, ON TAPE AU PLURIEL.** « Amande, grillée » · « Lentille verte, sèche » · « Tomate, crue » — mais personne ne mange *une* amande. **Mesuré sur toute la base : 97 % des 3 341 aliments étaient inatteignables au pluriel.**
+
+**⭐⭐ ET LE PIRE N'EST PAS LE VIDE, C'EST LE FAUX.** Les **plats composés**, eux, emploient le pluriel : *« amandes »* rendait **Croissant aux amandes**, *« lentilles »* rendait **Soupe aux lentilles**, *« tomates »* rendait **Caviar de tomates**. *Une recherche qui rend le mauvais aliment coûte plus cher qu'une recherche vide : on l'enregistre sans se méfier.*
+
+**⛔ MÊME TROU EN VOCABULAIRE POUR LES PÂTES** — et c'est très probablement ce qu'il a vu. CIQUAL ne connaît que « Pâtes sèches » : **penne, macaroni, coquillettes, fusilli, farfalle, rigatoni, conchiglie, linguine rendaient ZÉRO résultat**, et *« spaghetti »* rendait… **la courge spaghetti**. ⚠️ Ce ne sont pas des aliments différents, ce sont des **formes de la même semoule** : on n'invente aucune valeur, on ouvre une porte vers celles de CIQUAL. La liste reste courte et explicite — elle dit une équivalence de forme, elle ne juge rien (**R29**). ⛔ Et **la courge reste trouvable** : on ajoute une porte, on n'en ferme aucune.
+
+**⭐⭐ L'ORDRE DE PRÉFÉRENCE EST CE QUI ÉVITE LES DÉGÂTS, ET IL A FALLU DEUX ESSAIS.** Mon 1ᵉʳ jet retirait le « s » sans plus de façons — et **fabriquait deux régressions en réparant** : *« pâtes »* rendait **Pâté breton**, *« pois »* rendait **Poireau**. 👉 On classe donc : ① le nom **commence** par le mot · ② la forme **EXACTE** avant la dépluralisée · ③ le nom le plus court. **Mesuré : 0 régression sur 50 requêtes courantes**, et les deux cassés sont devenus des témoins permanents (**R17**).
+
+**⭐ R2 — UN SEUL PROPRIÉTAIRE DE « CHERCHER ».** Les **trois** recherches — CIQUAL, les compléments, et **son propre journal** — avaient le même défaut. Elles le corrigent donc **au même endroit** : sinon la prochaine correction n'en réparerait qu'une, et *personne ne le verrait*. Un témoin vérifie que *« amandes »* retrouve son *« Amande grillée »* à lui.
+
+**⚠️ Le plafond de 400 reste tel quel, et c'est une décision mesurée** (**R30**) : il ne fausse qu'*« eau »* (*robinet* au lieu de *coco*), et les deux se valent — le relever échangerait un résultat correct contre un autre.
+Tests : **parcours 1079/1079** (+16, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 8 rouges**, exactement les 8 comportements changés. ⭐ **Et cette fois les 16 témoins se sont TOUS exécutés** — mon 1ᵉʳ jet les mettait derrière un garde « `_afRang` absente », donc ils **ne tournaient pas** contre l'ancien code et le contrôle ne disait qu'une chose : *« la fonction n'existe pas »*. Le garde ne porte plus que sur `_ciqualChercher`, qui existe **des deux côtés**. *Un témoin qui ne tourne pas n'est pas un témoin vert* — 3ᵉ fois que ça se paie (ft-v949, ft-v953). ⚠️ Les **8 verts des deux côtés sont ici les plus importants** : l'accent, « pâtes », « pois », « pâté », œuf/riz/poulet, la courge et le singulier du journal **devaient rester intacts** — *une correction de recherche se juge à ce qui n'a PAS bougé*. Fichiers : `app.js`, `clone/app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v963. |
+
+**ft-v964 — 🔤 CES MOTS-LÀ NE S'ÉCRIVENT PAS** — Michel, **juste après** ft-v963 : *« oui j'ai mis ça, après je voulais mettre coquilette »*.
+
+**⛔⛔ IL L'ÉCRIT AVEC UN SEUL L**, et ma liste de synonymes portait « coquillette ». **Sa graphie à lui rendait ZÉRO résultat.** *La correction de la veille marchait donc pour l'orthographe parfaite — c'est-à-dire pour ceux qui n'en avaient pas besoin.*
+
+**⭐ MESURÉ, PAS DEVINÉ : 6 autres graphies plausibles échouaient aussi** — *spagetti · tagliatele · farfale · fusili · linguini · pene*. Toutes des variantes de **consonne doublée** ou de **h muet** : exactement là où ces mots italiens se trompent.
+
+**⛔ LA TOLÉRANCE NE S'APPLIQUE QU'À LA LISTE FERMÉE DE 12 FORMES**, jamais à la base. On compare la frappe aux 12 mots connus — donc **aucun rapprochement hasardeux possible** sur 3 341 aliments. *C'est ce qui distingue une tolérance bornée d'une recherche floue, qui aurait ramené n'importe quoi.*
+
+**⚠️⚠️ ET DEUX PIÈGES TROUVÉS EN LE MESURANT, PAS EN LE RELISANT :**
+**① Ma 1ʳᵉ version retirait aussi la VOYELLE FINALE — et « macaroni » devenait « macaron ».** ⛔ **La pâtisserie serait partie sur les pâtes.** Le retrait de la voyelle finale a donc sauté, et *« linguini »* (graphie anglaise) est **simplement ajouté** à la liste : *plus honnête qu'une règle qui rabote au hasard pour rattraper un cas.*
+**② « torsade » est RETIRÉ de la liste** (**R30** — un retrait s'écrit) : CIQUAL l'emploie pour un **biscuit apéritif feuilleté**, usage au moins aussi courant que la pâte. *Entre détourner un vrai aliment et rater une forme rare, on rate la forme rare.*
+
+**⭐ VÉRIFIÉ SUR LES 2 261 MOTS DISTINCTS DE CIQUAL** : la seule collision restante est *« spaghetti »* (**la courge**), et elle est **voulue** — la courge garde sa correspondance EXACTE, donc elle reste trouvable. *On ajoute une porte, on n'en ferme aucune.*
+Tests : **parcours 1084/1084** (+5, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Pas de contrôle négatif séparé** : la version corrige ft-v963, livrée il y a vingt minutes, et **ses 8 rouges couvrent déjà le mécanisme**. Ce qui compte ici est ailleurs — les **2 témoins qui protègent macaron et torsade** sont verts **des deux côtés**, et c'est le but : *ils gardent une absence, pas une nouveauté.* Fichiers : `app.js`, `clone/app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v964. |

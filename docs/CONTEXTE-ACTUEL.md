@@ -6,7 +6,79 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v978` — fusionnée sur `master` le 23/08.
+- **Version en ligne (live) :** `ft-v984` — sur la branche, **pas encore fusionnée**.
+- ⚖️ **LA QUANTITÉ SUIT L'ALIMENT REPRIS** (ft-v984). Michel : *« comment ça se fait que je ne
+  peux pas mettre la quantité, sérieux c'est relou »*. **Reproduit avant de coder** : le bloc
+  est là par CIQUAL, absent quand on reprend l'aliment depuis **son propre journal** — alors que
+  `per100` y est. `_afSuggPrendreLocale` le cachait sans condition et transmettait `per100` deux
+  lignes plus bas (**R4**). ⚠️ Le mécanisme marchait donc **la 1ʳᵉ fois** et disparaissait toutes
+  les suivantes. ⛔ Les macros corrigées à la main **ne sont pas écrasées** à l'arrivée.
+  ⚠️ **Non couvert et écrit comme tel** : une entrée ancienne sans `per100` (sa ratatouille)
+  reste sans quantité — le correctif n'est pas rétroactif.
+- 🩺 **LE DIAGNOSTIC MÉDICAL NE PASSE PLUS SEUL** (ft-v983) — 3ᵉ et dernier bloquant.
+  **Mesuré : sur les 5 contrôles du Gardien de SORTIE, un seul retirait vraiment quelque
+  chose.** Les 4 autres étaient comptés puis affichés. Pour trois, un compteur suffit ; pas
+  pour le diagnostic (Constitution P13/P22). ⛔ **On AJOUTE un renvoi au médecin, on ne
+  réécrit pas** — le texte de Milo et son `dataset.raw` sont vérifiés intacts.
+  ✅ **Les 3 bloquants de la contre-analyse sont traités** (ft-v981 · ft-v982 · ft-v983).
+  ⏭️ **Reste pour l'ouverture large** : ① un **point de refus unique** avant « Commencer »
+  (exSwaps, zone active, doublon) · ② le **vocabulaire Katch** — ⚠️ *corriger le témoin
+  `tests/parcours/runner.js:3273` AVANT la phrase, il protège la mauvaise* · ③ la **mémoire à
+  deux vitesses** (`MEMOIRE_LARGE_EMAILS` = 2 comptes) · ④ la **course `_saveCoachMemory`**,
+  à prouver ou réfuter par un test avant de toucher au code.
+- 🩹 **LA BLESSURE DITE À MILO ATTEINT ENFIN LE GARDIEN** (ft-v982) — le point n°1 de la
+  contre-analyse. Le chemin était éteint derrière `__FT_CLONE__` : mesuré, Profil Santé `""`,
+  Gardien `[]`. ⚠️ **Ce n'était PAS une régression du retrait du clone** (essai jamais promu).
+  ⭐⭐ **Et en le promouvant on a trouvé pourquoi il était parqué** : `_gardienZonesFromText`
+  détecte des **noms de muscles** — **7 faux positifs sur 9**. Le promouvoir tel quel aurait
+  été *pire* que rien. D'où `_texteDitUneLimitation()` (zone **ET** mot de limitation) → **0
+  faux positif, 0 raté sur 17**. La **2ᵉ moitié** (la consigne « nomme la ZONE ») était éteinte
+  aussi. ⭐ « talon » ajouté — le mot de Michel, que rien n'attrapait. **Leçon montée en R30 :
+  avant de promouvoir un essai parqué, chercher pourquoi il l'était.**
+- 🔬 **CONTRE-ANALYSE DE L'AUDIT ft-v978** (23/08, artefact « Milo face au code »). Verdict :
+  l'audit est **juste sur ses deux P0**, il **se trompe sur un point de méthode** (le pont
+  blessure n'est pas une régression du retrait du clone — c'est un **essai jamais promu**), et
+  il **manque deux défauts** trouvés en le vérifiant (2ᵉ lecteur `bw` cassé, table d'objectifs
+  dupliquée). ⭐ **Niveau recommandé : 50-200 bêta-testeurs.** Un seul mécanisme l'empêche de
+  monter — la blessure dite en conversation n'atteint pas le Gardien — et **à 200 personnes il
+  se neutralise par un message**, à 20 000 non.
+- 🧮 **LES DEUX BUGS DE CALCUL CORRIGÉS** (ft-v981). « Équilibre » rendait **3 190 kcal, comme
+  « prise de muscle »** (`0||350`) → **2 840**, écart 0. Katch lisait `w.bw` quand la production
+  écrit `kg` → la branche « pesée + % de gras » n'avait **jamais** tourné. ⭐⭐ **Les deux étaient
+  protégés par des fixtures fausses** : corrigées EN PREMIER, elles ont rougi.
+  ⏭️ **CE QUI RESTE, dans l'ordre** : ① **le pont blessure** (`__FT_CLONE__`, coach.js:1869 —
+  et la consigne « nomme la ZONE » est derrière le même drapeau : **les deux moitiés sont
+  éteintes**) · ② **le diagnostic médical détecté mais affiché** (1 seul des 5 contrôles de
+  sortie retire vraiment) · ③ **un point de refus unique** avant « Commencer » (exSwaps, zone
+  active) · ④ le vocabulaire Katch **et son témoin, à corriger d'abord** · ⑤ la mémoire à deux
+  vitesses (`MEMOIRE_LARGE_EMAILS` = 2 comptes — **Milo ne s'évalue pas depuis le compte de
+  Michel**).
+- ⚡ **LE CONTRÔLE D'INTENSITÉ EN CODE** (ft-v980). Michel : *« 3 séries de 5 reps à 95, c'est
+  impossible »*. ⭐⭐ **Milo ne l'avait pas déduit — il l'avait lui-même démenti** (88 % du 1RM,
+  « je corrige : 90 kg »), et Michel a maintenu. *Le défaut n'est pas son jugement : son contrôle
+  ne se déclenche que si on le questionne.* Le code le fait maintenant **à la proposition** :
+  `bz()` inversée + coefficient de tenue 0,93 → **89,5 kg conseillés** là où Milo disait 90.
+  ⛔ On **signale**, on ne corrige jamais (R29) · ⛔ sans record connu, **silence** · ⭐ R4 : le
+  calcul atteint le contexte de Milo, avec l'auteur nommé.
+  ⚠️ **Un témoin m'a fait corriger ma propre pose** (4ᵉ « correctif d'un seul côté » de la
+  semaine) et a révélé que `_milo:true` manquait sur la porte « remplacer ».
+- 📋 **LE DÉBRIEF NE SE PERD PLUS** (ft-v979). Michel : *« je n'ai pas eu de briefing parce
+  qu'il y a eu la mise à jour de l'application »* — **il avait raison**. Le jeton était retiré
+  **avant** l'appel et remis seulement `if(!ok)` : un rechargement pendant l'appel le faisait
+  disparaître **pour de bon**. Et le moment n'est pas un hasard — la mise à jour attend la fin
+  de la séance pour s'appliquer **sur l'Accueil**, où `finishWorkout` dépose la personne.
+  **Mesuré : 5 séances sur 36 sans aucun débrief** (08, 10, 15, 18, 23/08), toutes complètes,
+  pendant qu'une séance de 3 séries était débriefée. Trois correctifs : jeton **« en cours »**
+  au lieu de détruit · **file** au lieu d'une place unique · **rattrapage** au démarrage
+  (1 séance, ≤ 36 h — au-delà *« je viens de terminer »* serait faux). ⭐⭐ **Un témoin existant
+  a attrapé un défaut de ma conception** : le rattrapage prenait le Registre pour preuve, or il
+  n'est écrit que si Milo produit son bloc caché → la même séance aurait été re-débriefée **et
+  repayée** à chaque lancement.
+  ⏭️ **À TRANCHER AVEC MICHEL, il vient de les signaler (23/08 au soir)** : ① **le repos de
+  1 min 30 sur du lourd** — déjà noté au journal de test, *« un 3×5 à 90 s c'est IMPOSSIBLE »* ;
+  ② **d'où sort « 3×5 à 95 kg »** alors qu'il tourne à 85×5 (Milo l'avait lui-même calculé à
+  88 % du 1RM, proposé 90, puis **laissé 95 quand Michel a insisté**) ; ③ **le superset n'a pas
+  fonctionné** dans la séance du jour.
 - 🔍 **AUDIT DU DOSSIER DE 200 PAGES + ses 3 premières corrections** (ft-v978). Rapport complet :
   artefact « Le dossier face au code ». ⭐⭐ **Le PDF de Milo n'était pas cassé** — mesuré, le
   texte sort intact (81/81, 323/345, 9769/9769) ; c'est `title:'Conseil de '+coach` que Michel
