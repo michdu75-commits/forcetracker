@@ -2,8 +2,48 @@
 
 Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'est en cours.
 
+---
 
+## 📤 EXPORTER **SEULEMENT L'HISTORIQUE DES SÉANCES** — à faire (noté le 23/08/2026)
 
+> Michel : *« rajoute à la liste aussi la possibilité d'exporter que l'historique des séances »*.
+
+**Ce qui existe déjà** (vérifié dans le code — `#ov-export-choix`, `index.html`) : la modale
+d'export propose **deux** boutons, *Exporter* et *Exporter **avec mes discussions***. Le premier
+envoie déjà **tout** le reste : séances, records, bilans, programmes, **santé**, mémoire de Milo.
+Il n'existe aucun moyen de n'emporter **que** l'entraînement.
+
+**Ce qui manque** : un **troisième** choix, plus étroit que les deux autres — *les séances, rien
+d'autre*.
+
+### ⭐ Pourquoi ça compte plus qu'un confort
+
+Le fichier d'export sert **à être donné** : à ChatGPT pour une analyse, à une autre app, à un
+coach, à moi pour déboguer. Or aujourd'hui **le seul geste possible est « tout donner »**. Le
+bandeau d'avertissement de la modale le dit déjà pour les discussions — *« tu y parles de ton
+corps, de ton moral, de tes blessures »* — mais **le même argument vaut pour le bilan sanguin, le
+bilan corporel, le TRT et le profil santé**, qui partent aujourd'hui dans l'export « normal » sans
+que rien ne le signale.
+👉 *Un export tout-ou-rien pousse à partager plus que nécessaire.* C'est un sujet de
+**confidentialité** (Constitution), pas seulement d'ergonomie.
+
+### ⛔ Les points à trancher AVANT de coder (ne pas les découvrir en route)
+
+- **Que contient exactement « l'historique des séances » ?** `S.sessions` seul, ou aussi
+  `S.prs` (les records) et `S.programmes` ? *Un historique sans records se lit mal ; des records
+  sans dates ne servent à rien* (leçon ft-v660). **Proposition** : séances + records + poids de
+  corps, **rien de santé, rien de nutrition, rien de Milo**.
+- **Le format** : le même JSON que l'export complet (donc **réimportable**), ou un fichier plus
+  lisible pour un humain / une IA ? ⚠️ **R2** — si on invente un 2ᵉ format, il divergera. Partir
+  du JSON existant en **retirant** des clés, jamais en réécrivant un exporteur.
+- **Le nom du fichier doit dire ce qu'il contient** (`forcetracker-seances-…`), sinon on
+  redonnera le mauvais fichier par erreur.
+- **R13** : la modale a déjà le bon motif (des **boutons**, pas des cases — voir le commentaire
+  au-dessus de `#ov-export-choix`, où les cases à cocher ont été retirées exprès). Un 3ᵉ bouton,
+  pas une case.
+
+⏭️ **Non commencé.** Noté pendant la nuit du 23/08, à côté du chantier « intégration des
+informations des codes-barres et des scans » et de l'inversion des boutons de la nutrition.
 
 ---
 
