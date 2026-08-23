@@ -710,14 +710,22 @@ async function estimateFood(body, apiKey) {
   const prompt = 'Tu es un expert en nutrition. Estime les valeurs nutritionnelles TOTALES de ce que la personne a mangé.\n\n'
     + 'Repas décrit : "' + desc + '"\n\n'
     + 'Retourne UNIQUEMENT un objet JSON valide, sans texte avant ni après, sans balises markdown :\n'
-    + '{"name":"résumé court du repas","kcal":650,"prot":40,"carbs":70,"fat":18}\n\n'
+    + '{"name":"résumé court du repas","g":320,"kcal":650,"prot":40,"carbs":70,"fat":18}\n\n'
     + 'Règles :\n- kcal = calories totales (nombre entier).\n- prot, carbs, fat = grammes totaux de protéines, glucides, lipides (nombres entiers).\n'
-    + '- Si les quantités ne sont pas précisées, estime une portion normale.\n- name = résumé court et propre du repas (max 40 caractères).\n'
+    + '- Si les quantités ne sont pas précisées, estime une portion normale.\n- g = le POIDS TOTAL en grammes sur lequel portent ces valeurs (nombre entier). C\'est le poids de l\'aliment lui-même, pas celui d\'un de ses composants : pour \"30 g de poudre de protéine\" c\'est 30, pas la quantité de protéines. Si la personne a précisé une quantité, reprends-la exactement. Sinon, donne le poids de la portion que tu as supposée. Omets g SEULEMENT si un poids n\'a aucun sens (une boisson comptée en verres, un plat que tu ne sais pas peser).\n- name = résumé court et propre du repas (max 40 caractères).\n'
     + '- Sois réaliste, ne mets jamais 0 kcal si un aliment est cité.\nRéponds UNIQUEMENT avec le JSON.';
   const text = await callClaude(apiKey, { model: 'claude-haiku-4-5-20251001', max_tokens: 400, messages: [{ role: 'user', content: prompt }] });
   const d = firstJson(text);
   if (!d) return { status: 'error', error: 'Estimation échouée' };
-  return {
+  /* ⚖️ LE POIDS SUPPOSÉ EST RENVOYÉ (23/08/2026, ft-v975). Michel, devant une huile d'olive
+   estimée par l'IA : « je ne peux pas mettre de poids ». Le modèle choisissait une portion
+   en silence — l'app n'avait donc AUCUN repère pour la rescaler.
+   ⛔ Il n'est jamais inventé : `g` absent reste absent, et l'app se rabat sur des portions
+   plutôt que d'afficher un poids qu'elle aurait deviné (R29).
+   ⛔ Et il est BORNÉ : au-delà de 5 kg pour un repas, c'est une hallucination, pas une
+   portion — mieux vaut aucun repère qu'un repère faux. */
+  const g = parseInt(d.g);
+  const out = {
     status: 'ok',
     name: String(d.name || desc).slice(0, 60),
     kcal: Math.max(0, parseInt(d.kcal) || 0),
@@ -725,6 +733,8 @@ async function estimateFood(body, apiKey) {
     carbs: Math.max(0, parseInt(d.carbs) || 0),
     fat: Math.max(0, parseInt(d.fat) || 0),
   };
+  if (!isNaN(g) && g > 0 && g <= 5000) out.g = g;
+  return out;
 }
 
 // ── Import plan diététicien (photo/PDF/texte) — handleImportMealPlan_ ─────────

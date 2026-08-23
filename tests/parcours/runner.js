@@ -10558,6 +10558,131 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC XCIV - LA QUANTITE SUR UNE PHRASE LIBRE (23/08/2026, ft-v975) ==
+   Michel, capture a l'appui, devant une huile d'olive estimee par l'IA (135 kcal / 15 L) :
+   « Je ne peux pas mettre de poids ».
+
+   ⛔⛔ ET C'EST LE MOTIF DE ft-v973, DEUX JOURS DE SUITE : le mecanisme EXISTAIT, pose d'un seul
+   cote. ft-v972 a donne le rescale par proportion a la modale « Modifier l'aliment » ; le
+   formulaire d'AJOUT n'avait de champ « Quantite » que si un pour-100 g etait connu. Une phrase
+   estimee par l'IA n'en a pas — donc aucun reglage, et 4 chiffres a recalculer a la main.
+
+   ⭐ CE QUI REND LA CHOSE POSSIBLE EST COTE SERVEUR : le modele choisissait une portion en
+   SILENCE. Il l'annonce desormais (`g`), et une estimation aveugle devient une estimation
+   ANCREE. ⛔ Jamais inventee : `g` absent → des PORTIONS, pas un poids devine (R29). */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    if(typeof _afMajAncre!=='function'){o.absent=true;return o;}
+    const V=id=>(document.getElementById(id)||{}).value;
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v;};
+    const macros=(k,p,c,f)=>{set('af-kcal',k);set('af-prot',p);set('af-carbs',c);set('af-fat',f);};
+    const lus=()=>[V('af-kcal'),V('af-prot'),V('af-carbs'),V('af-fat')].join('/');
+    const bloc=()=>document.getElementById('af-prop-row');
+    const visible=()=>bloc().style.display!=='none';
+
+    openAddFood();
+    /* ⛔ A L'OUVERTURE, RIEN : proposer des portions sur un formulaire vide serait du bruit. */
+    o.vide_cache=!visible();
+
+    /* ── ① LE CAS DE MICHEL : l'IA a estime, et elle dit desormais le poids suppose ── */
+    set('af-desc',"Huile d'olive vierge extra");
+    macros(135,0,0,15);
+    window._afIaGrammes=15; window._afIaDesc="Huile d'olive vierge extra";
+    _afMajAncre();
+    o.ia_visible=visible();
+    o.ia_champPoids=!!document.getElementById('af-prop');
+    o.ia_valeurInitiale=V('af-prop');
+    o.ia_ditSource=/estim[ée] par l.IA/i.test(bloc().textContent);
+    /* ⭐⭐ 15 g -> 20 g : les 4 valeurs suivent en proportion (135 x 20/15 = 180). */
+    set('af-prop',20); _afApplyProp();
+    o.ia_apres20=lus();
+    /* ⛔ DEUX REGLAGES DE SUITE NE S'EMPILENT PAS : 20 puis 30 doit donner x2, pas x2 x1,5 sur x2. */
+    set('af-prop',30); _afApplyProp();
+    o.ia_apres30=lus();
+    set('af-prop',15); _afApplyProp();
+    o.ia_retourBase=lus();
+
+    /* ── ② LE POIDS DE L'IA N'APPARTIENT QU'A SA PHRASE ── */
+    set('af-desc','Tout autre chose');
+    _afMajAncre();
+    o.phraseChangee_pasDePoidsIA=!document.getElementById('af-prop');
+    o.phraseChangee_portions=/Portion/i.test(bloc().textContent);
+
+    /* ── ③ SANS IA, LE NOMBRE ECRIT DANS LA PHRASE SERT DE REPERE ── */
+    openAddFood();
+    set('af-desc',"20 g d'huile d'olive");
+    macros(180,0,0,20);
+    _afMajAncre();
+    o.nom_champPoids=!!document.getElementById('af-prop');
+    o.nom_valeur=V('af-prop');
+    o.nom_ditSource=/lu dans ta phrase/i.test(bloc().textContent);
+    set('af-prop',40); _afApplyProp();
+    o.nom_apres40=lus();
+
+    /* ── ④ AUCUN ANCRAGE : DES PORTIONS, JAMAIS UN POIDS INVENTE (R29) ── */
+    openAddFood();
+    set('af-desc','Assiette de ratatouille');
+    macros(200,4,20,10);
+    _afMajAncre();
+    o.rien_pasDeChampPoids=!document.getElementById('af-prop');
+    o.rien_aDesPortions=/Portion/i.test(bloc().textContent);
+    o.rien_ditPourquoi=/inventer un poids/i.test(bloc().textContent);
+    _afApplyPortion(2);
+    o.rien_x2=lus();
+
+    /* ── ⑤ UN POUR-100 g CONNU GARDE LA MAIN (le bloc du scan, ft-v965 — R2) ── */
+    openAddFood();
+    _bcNutr={kcal100:100,prot100:10,carbs100:5,fat100:2};
+    set('af-desc','Produit scanne'); macros(100,10,5,2);
+    _afMajAncre();
+    o.scan_blocPropCache=!visible();
+    _bcNutr=null;
+
+    /* ── ⑥ R15 : rouvrir le formulaire REND le poids de l'IA et le bloc ── */
+    window._afIaGrammes=15; window._afIaDesc='Huile';
+    openAddFood();
+    o.reouverture_rendu=(!visible() && !(window._afIaGrammes>0));
+    return o;
+  });
+
+  console.log('\n═══ BLOC XCIV. La quantite sur une phrase libre ═══');
+  if(R.absent){ t('⛔ le bloc quantite existe', false, '_afMajAncre absente'); }
+  else{
+    t('⛔ un formulaire VIERGE ne propose rien', R.vide_cache===true, '');
+    t('⭐⭐ LE CAS DE MICHEL : apres une estimation IA, un vrai champ POIDS apparait, ancre sur le poids suppose',
+      R.ia_visible===true && R.ia_champPoids===true && R.ia_valeurInitiale==='15',
+      'visible='+R.ia_visible+' champ='+R.ia_champPoids+' valeur='+R.ia_valeurInitiale);
+    t('⭐ ... et l\'ecran DIT que ce poids est une estimation, pas une mesure (R32)',
+      R.ia_ditSource===true, '');
+    t('⭐⭐ 15 g -> 20 g : les 4 valeurs suivent (135 -> 180 kcal, 15 -> 20 g de lipides)',
+      R.ia_apres20==='180/0/0/20', 'lu : '+R.ia_apres20);
+    t('⛔⛔ deux reglages de suite ne s\'EMPILENT pas (20 puis 30 = x2, pas x2 sur x2)',
+      R.ia_apres30==='270/0/0/30' && R.ia_retourBase==='135/0/0/15',
+      '30g='+R.ia_apres30+' retour='+R.ia_retourBase);
+    t('⛔⛔ LE POIDS DE L\'IA N\'APPARTIENT QU\'A SA PHRASE : elle change, il ne sert plus',
+      R.phraseChangee_pasDePoidsIA===true && R.phraseChangee_portions===true, '');
+    t('⭐ sans IA, le nombre ecrit dans la phrase sert de repere (« 20 g d\'huile d\'olive »)',
+      R.nom_champPoids===true && R.nom_valeur==='20' && R.nom_ditSource===true,
+      'champ='+R.nom_champPoids+' valeur='+R.nom_valeur);
+    t('⭐ ... et le doubler double les valeurs', R.nom_apres40==='360/0/0/40', 'lu : '+R.nom_apres40);
+    t('⛔⛔ AUCUN ANCRAGE : des PORTIONS, jamais un poids invente (R29)',
+      R.rien_pasDeChampPoids===true && R.rien_aDesPortions===true && R.rien_ditPourquoi===true, '');
+    t('⭐ ... et une portion x2 double bien les 4 valeurs', R.rien_x2==='400/8/40/20', 'lu : '+R.rien_x2);
+    t('⛔⛔ R2 : un pour-100 g connu GARDE la main (le bloc du scan ne se dedouble pas)',
+      R.scan_blocPropCache===true, '');
+    t('⛔ R15 : rouvrir le formulaire rend le poids de l\'IA et le bloc',
+      R.reouverture_rendu===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
