@@ -2240,3 +2240,76 @@ la lira, pas ici.
 **⭐ Pourquoi cette entrée existe** : l'idée a été re-proposée le 10/08 par Claude, alors qu'elle
 était déjà tranchée — simplement parce qu'elle n'était **écrite nulle part**. C'est exactement
 R30 : *un retrait volontaire non écrit redevient une proposition.*
+---
+
+## 🔍 OCR LOCAL AVANT L'IA — LA MESURE EST FAITE, LE VERDICT EST NUANCÉ (23/08/2026)
+
+**D'où ça vient** : GPT propose (23/08) un pipeline « donnée structurée → PDF texte → OCR → IA ».
+J'ai d'abord refusé sur le coût, en raisonnant sur le volume de Michel (5 imports/mois). **Il m'a
+repris** : *« oui mais là tu penses à moi seulement, imagine avec des dizaines d'utilisateurs »*.
+Puis : *« l'OCR pourrait fonctionner aussi pour d'autres choses utiles comme la prise de sang ? »*
+
+**⭐ IL A RAISON SUR L'AMPLEUR — mesuré : 9 des 14 actions IA de l'app lisent une image**
+(`importBloodTest`, `importBodyScan`, `foodLabel`, `importProgram`, `importHistory`,
+`importMealPlan`, `readBarcode` — déjà local via ZXing —, `morphoAnalysis`, `bodyStudy`).
+L'investissement s'amortirait sur presque tout, pas sur un seul écran.
+
+**⚠️ MAIS LE COÛT N'EST PAS L'ARGUMENT** — chiffré sur Haiku 4.5, ~3 tranches d'image par import :
+10 utilisateurs = **0,19 $/mois** · 200 = **3,76 $** · 1000 = **18,80 $/mois** (226 $/an). *Construire
+et maintenir un OCR + un parser par fabricant coûte bien plus que 226 $/an.*
+**⭐⭐ ET LE VRAI PROBLÈME D'ÉCHELLE EST AILLEURS** : `BODYSCAN_FREE_LIMIT = 2`. Un utilisateur non
+premium a droit à **deux** lectures photo. Le scénario « 1000 imports = 1000 appels » **n'existe
+pas** — l'app le plafonne déjà. *À l'échelle, le défaut n'est pas que ça coûte cher, c'est que la
+fonction n'est presque pas disponible.* ⏭️ Le geste gratuit correspondant : **ouvrir à tous
+l'import CSV/Excel** (`_isScaleCsvBeta`, réservé aux testeurs) — zéro OCR, zéro IA, déjà écrit.
+
+### ⭐ CE QUE LA MESURE DIT VRAIMENT (Tesseract 5.3 + fra, sur SA photo d'étiquette)
+
+Photo réelle : **4032×3024, tournée à 90°, reflets, surface courbe** — le pire cas.
+
+| | |
+|---|---|
+| Valeurs retrouvées | **13 / 17 (76 %)** avec gris + contraste ×2,2 + agrandissement ×1,6 + netteté, `--psm 11` |
+| Séparation des 2 colonnes (100 g / 30 g) | ✅ **fonctionne** par coordonnées (`image_to_data`) |
+| Bruit | **55 nombres extraits pour 17 voulus** (le tableau d'acides aminés pollue) |
+| Défaut systématique | le **`g` final lu `9`** (`3.39` = 3,3 g · `26.49` = 26,4 g) — corrigeable par règle |
+
+**⚠️⚠️ J'AVAIS PRÉDIT UN ÉCHEC. C'ÉTAIT FAUX** — et Michel m'avait cité approbativement, donc le
+corriger comptait double. L'OCR lit bien mieux que je ne l'annonçais sur une photo difficile.
+
+**⛔⛔ MAIS LE DÉFAUT QUI DÉCIDE : le « 88 g » de PROTÉINES pour 100 g est TOTALEMENT ABSENT**
+(vérifié : introuvable dans les 228 mots lus). *Sur une protéine en poudre, l'OCR perd la teneur en
+protéines.* Idem pour glucides/100 g et fibres.
+👉 **Et le pire n'est pas ce qu'il rate, c'est qu'il n'a aucun moyen de savoir qu'il l'a raté.** Un
+pipeline qui rend « 388,5 kcal, 0 g de protéines » sans broncher, c'est le défaut de **ft-v971** :
+un succès annoncé devant un résultat vide.
+
+### ⭐⭐ LA CONVERGENCE QUI REND LA CHOSE FAISABLE
+
+**Le contrôle de cohérence livré le matin même (ft-v972) attrape exactement ce cas** : sans les
+protéines, `4×0 + 4×0 + 9×3,3 = 30 kcal` contre **388,5 annoncées** → **92 % d'écart** → alerte.
+
+```
+OCR → contrôle de cohérence (DÉJÀ EN PLACE)
+        ├── ça tient        → 0 appel IA
+        └── ça ne tient pas → l'IA prend le relais
+```
+
+C'est l'échelle de **R33**, avec le **juge automatique** qui décide de basculer — et il existe déjà.
+Michel l'avait formulé lui-même : *« en cas d'échec on bascule à l'IA »*.
+
+### ⏭️ CE QU'IL RESTE À MESURER AVANT DE DÉCIDER
+
+⛔ **Les 5 rapports de balance n'ont PAS pu être testés** — ils n'étaient pas enregistrés sur le
+disque de la session. Or ce sont des documents **propres** (captures droites, fort contraste), donc
+le cas *favorable*. **Le chiffre qui manque est celui-là**, pas celui de l'étiquette.
+⚠️ **Et le coût réel du chantier n'est pas l'OCR, c'est le PARSER** : l'OCR rend du texte, pas une
+structure. Savoir que « Ferritine 45 ng/mL (30-400) » est un nom + une valeur + une unité + des
+bornes se refait **à chaque format de labo**. C'est précisément là que l'IA gagne son prix.
+
+**Critère de décision proposé** : mesurer sur 2-3 rapports de balance réels. **≥ 80 % des champs,
+attribués correctement** → le chantier vaut le coup. **≤ 50 %** → on garde l'IA et on n'en reparle
+plus. *Poids embarqué à prévoir : 2 à 4 Mo pour un moteur OCR, contre 880 Ko pour la plus grosse
+bibliothèque actuelle — et la règle d'or #4 (ouverture instantanée) impose un chargement à la
+demande, comme CIQUAL.*
+
