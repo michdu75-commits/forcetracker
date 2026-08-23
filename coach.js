@@ -2066,8 +2066,14 @@ function updateCoachHeader() {
       badge.innerHTML = '<div class="coach-quota">∞ questions (clone illimité)</div>';
     } else {
       const left = Math.max(0, _coachFreeLimit() - (S.coachFree || 0));
-      // 🧪 CLONE-ONLY (ft-v611) : badge plus compact (« 8 questions » au lieu de « 8 questions gratuites »)
-      // pour gagner un peu de place dans le header. PROD garde le libellé complet. Gaté __FT_CLONE__.
+      /* 🧪 ESSAI ft-v611 — DÉLIBÉRÉMENT **NON PROMU** LE 23/08/2026 (R30 : un retrait, comme un
+         maintien sous garde, s'écrit — sinon le suivant « répare » une décision).
+         Michel a validé le header compacté (ft-v977) ; celui-ci NE L'EST PAS, et pour une raison
+         qui n'est pas cosmétique : il enlève le mot « GRATUITES ». « 8 questions » se lit comme
+         un plafond définitif, alors que « 8 questions gratuites » dit qu'il y a une suite. On ne
+         gagne pas 30 px sur le dos de ce que la personne comprend de son propre compte.
+         ⚠️ Le clone ayant été retiré (ft-v976), cette branche n'est plus atteignable : c'est
+         voulu, ce n'est pas un oubli. La retirer changerait le libellé pour tout le monde. */
       const _compact = (typeof window!=='undefined' && window.__FT_CLONE__);
       badge.innerHTML = _compact
         ? `<div class="coach-quota">${left} question${left!==1?'s':''}</div>`

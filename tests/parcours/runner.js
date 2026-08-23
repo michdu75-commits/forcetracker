@@ -10680,6 +10680,78 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC XCV - LE HEADER COMPACTE EST PROMU EN PROD (23/08/2026, ft-v977) ==
+   Michel : « le header compacte oui, promeus-le ». Essaye en ft-v610, il attendait sa validation
+   derriere `html.is-clone` ; le clone retire (ft-v976), il n'avait plus AUCUN moyen d'etre
+   essaye — un essai parque sans porte de sortie finit oublie, pas decide (R30).
+
+   ⚠️⚠️ LE TEMOIN CENTRAL N'EST PAS « les regles existent », C'EST « elles GAGNENT ».
+   En retirant `html.is-clone` les quatre regles perdent leur specificite, et TROIS d'entre elles
+   sont redefinies PLUS BAS dans style.css : empilees en haut du fichier, elles auraient ete
+   ecrasees et la promotion n'aurait RIEN fait, sans que rien ne le signale. On lit donc le style
+   CALCULE, pas le fichier.
+
+   🔴 ET LA REGLE D'OR #9 : le bouton central « + » se MESURE, il ne se regarde pas. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    const cs=(sel,prop)=>{const e=document.querySelector(sel);return e?getComputedStyle(e)[prop]:null;};
+
+    /* ⛔⛔ LE STYLE CALCULE, pas le fichier : c'est le seul qui dit si la regle GAGNE. */
+    o.topbarBas=cs('.topbar','paddingBottom');
+    o.topbarHaut=cs('.topbar','paddingTop');
+
+    // 🔴 REGLE D'OR #9 — le bouton central, AVANT toute navigation
+    const fab=document.getElementById('nb-log');
+    const nav=document.querySelector('.nav');
+    o.fabTop=Math.round(fab.getBoundingClientRect().top);
+    o.fabH=Math.round(fab.getBoundingClientRect().height);
+    o.navTop=Math.round(nav.getBoundingClientRect().top);
+
+    goScreen('coach'); await new Promise(r=>setTimeout(r,400));
+    o.coachHeaderBas=cs('.coach-header','paddingBottom');
+    o.coachHeaderHaut=cs('.coach-header','paddingTop');
+    o.sousTitre=cs('.coach-header-sub','fontSize');
+    const q=document.querySelector('.coach-quota');
+    o.quotaPad=q?getComputedStyle(q).padding:null;
+    o.headerH=Math.round(document.querySelector('.coach-header').getBoundingClientRect().height);
+
+    /* ⛔ CE QUI NE DOIT PAS AVOIR BOUGE : l'identite. Ni le logo, ni le titre, ni les boutons. */
+    o.titre=cs('.tb-title','fontSize');
+    o.sousTitreBarre=cs('.tb-sub','fontSize');
+
+    /* ⛔ ft-v611 N'EST PAS PROMU : le badge garde le mot « gratuites » (voir coach.js). */
+    o.badgeDitGratuites=/gratuite/i.test((q&&q.textContent)||'');
+
+    goScreen('home'); await new Promise(r=>setTimeout(r,300));
+    o.fabTopApres=Math.round(document.getElementById('nb-log').getBoundingClientRect().top);
+    return o;
+  });
+
+  console.log('\n═══ BLOC XCV. Le header compacte, promu en prod ═══');
+  t('⛔⛔ LA BARRE DU HAUT EST REELLEMENT COMPACTEE (style CALCULE, pas le fichier)',
+    R.topbarBas==='8px' && R.topbarHaut==='38px', 'haut='+R.topbarHaut+' bas='+R.topbarBas);
+  t('⛔⛔ ... ET LE HEADER DE MILO AUSSI — les 3 regles redefinies plus bas GAGNENT bien',
+    R.coachHeaderHaut==='2px' && R.coachHeaderBas==='6px' && R.sousTitre==='11px' && R.quotaPad==='4px 10px',
+    'haut='+R.coachHeaderHaut+' bas='+R.coachHeaderBas+' sous-titre='+R.sousTitre+' badge='+R.quotaPad);
+  t('⭐ le header de Milo mesure moins de 60 px (83 avant)', R.headerH<60, R.headerH+' px');
+  t('🔴 REGLE D\'OR #9 : le bouton central « + » ne bouge PAS (mesure, pas regarde)',
+    R.fabTop===792 && R.fabH===44 && R.fabTopApres===792,
+    'haut='+R.fabTop+' hauteur='+R.fabH+' apres navigation='+R.fabTopApres);
+  t('🔴 ... et la barre de navigation non plus', R.navTop===770, R.navTop+' px');
+  t('⛔ L\'IDENTITE NE BOUGE PAS : ni le titre, ni son sous-titre (le gain vient des ESPACEMENTS)',
+    R.titre==='21px' && R.sousTitreBarre==='13.5px', 'titre='+R.titre+' sous-titre='+R.sousTitreBarre);
+  t('⛔⛔ ft-v611 N\'EST PAS PROMU : le badge dit toujours « gratuites » (« 8 questions » se lirait comme un plafond)',
+    R.badgeDitGratuites===true, 'badge sans le mot « gratuites »');
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
