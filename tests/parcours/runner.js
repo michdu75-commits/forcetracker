@@ -11297,6 +11297,63 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* ═══ CI. LE DIAGNOSTIC MÉDICAL NE PASSE PLUS SEUL (ft-v983) ═══════════════════════════════
+   ⛔⛔ AUDIT DU GARDIEN DE SORTIE : sur ses 5 contrôles, **un seul retire vraiment** quelque
+   chose. Les 4 autres sont comptés puis affichés tels quels. Pour trois d'entre eux un
+   compteur suffit — pas pour le **diagnostic médical** (Constitution P13/P22).
+   ⛔ ON N'A PAS RÉÉCRIT LA RÉPONSE : on AJOUTE un renvoi au médecin. Les témoins ci-dessous
+   vérifient les deux moitiés — que le rappel apparaisse, ET que le texte ne bouge pas.       */
+{
+  console.log('\n── CI. Le diagnostic médical ne passe plus seul ──');
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); pg.on('pageerror',e=>console.log('PAGEERROR',e.message));
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const D=await pg.evaluate(()=>{
+    const o={};
+    const msgs=document.getElementById('coach-msgs'); if(msgs)msgs.innerHTML='';
+    const rendre=t=>{ const av=msgs.children.length; renderCoachMsg('coach',t);
+                      return msgs.children[msgs.children.length-1]; };
+    const DIAG="Vu ce que tu décris, tu souffres d'une tendinite de l'épaule. Repose-toi une semaine.";
+    const b1=rendre(DIAG);
+    o.rappelPresent = !!b1.querySelector('.coach-sante-rappel');
+    o.rappelParleDuMedecin = /m[ée]decin/i.test((b1.querySelector('.coach-sante-rappel')||{}).textContent||'');
+    // ⛔⛔ LE TEXTE DE MILO NE BOUGE PAS D'UN CARACTÈRE — on ajoute, on ne charcute pas
+    o.texteIntact = b1.innerText.indexOf("tu souffres d'une tendinite de l'épaule")>=0;
+    o.rawIntact = b1.dataset.raw===DIAG;
+
+    // ⛔ une réponse NORMALE n'a aucun rappel — sinon il devient du bruit et on cesse de le lire
+    const b2=rendre("Belle séance : 3×5 à 90 kg, propre. On monte à 92,5 la prochaine fois 💪");
+    o.pasDeRappelSurNormal = !b2.querySelector('.coach-sante-rappel');
+    // ⛔ et les faux positifs resserrés le 21/08 ne doivent PAS le déclencher
+    const b3=rendre("Tu es en Jour 2 de ton programme, et tu es en phase de charge.");
+    o.pasDeFauxPositif = !b3.querySelector('.coach-sante-rappel');
+    const b4=rendre("Tu fais une belle progression sur le développé couché.");
+    o.pasDeFauxPositif2 = !b4.querySelector('.coach-sante-rappel');
+    // ⭐ une promesse vide, elle, reste COMPTÉE sans rien afficher (ce défaut nous regarde)
+    const b5=rendre("C'est noté, je retiens pour la prochaine fois 💪");
+    o.promesseNAfficheRien = !b5.querySelector('.coach-sante-rappel');
+    if(msgs)msgs.innerHTML='';
+    return o;
+  });
+  t('⭐⭐ SANTÉ : une formulation de diagnostic déclenche le renvoi au médecin',
+    D.rappelPresent===true, JSON.stringify(D));
+  t('… et le rappel nomme bien le médecin (Constitution P13/P22)', D.rappelParleDuMedecin===true, JSON.stringify(D));
+  t('⛔⛔ SANTÉ : le texte de Milo n\'est PAS modifié — on ajoute, on ne charcute pas',
+    D.texteIntact===true, JSON.stringify(D));
+  t('⛔ … et le texte partagé/exporté non plus (`dataset.raw` intact)', D.rawIntact===true, JSON.stringify(D));
+  t('⛔ SANTÉ : une réponse normale n\'affiche AUCUN rappel (sinon il devient du bruit)',
+    D.pasDeRappelSurNormal===true, JSON.stringify(D));
+  t('⛔⛔ … et les 2 faux positifs resserrés le 21/08 ne le déclenchent toujours pas',
+    D.pasDeFauxPositif===true && D.pasDeFauxPositif2===true, JSON.stringify(D));
+  t('⛔ … une promesse de mémoire vide reste COMPTÉE sans rien afficher (ce défaut nous regarde)',
+    D.promesseNAfficheRien===true, JSON.stringify(D));
+
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

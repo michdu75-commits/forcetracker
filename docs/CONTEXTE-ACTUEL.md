@@ -6,7 +6,18 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v982` — sur la branche, **pas encore fusionnée**.
+- **Version en ligne (live) :** `ft-v983` — sur la branche, **pas encore fusionnée**.
+- 🩺 **LE DIAGNOSTIC MÉDICAL NE PASSE PLUS SEUL** (ft-v983) — 3ᵉ et dernier bloquant.
+  **Mesuré : sur les 5 contrôles du Gardien de SORTIE, un seul retirait vraiment quelque
+  chose.** Les 4 autres étaient comptés puis affichés. Pour trois, un compteur suffit ; pas
+  pour le diagnostic (Constitution P13/P22). ⛔ **On AJOUTE un renvoi au médecin, on ne
+  réécrit pas** — le texte de Milo et son `dataset.raw` sont vérifiés intacts.
+  ✅ **Les 3 bloquants de la contre-analyse sont traités** (ft-v981 · ft-v982 · ft-v983).
+  ⏭️ **Reste pour l'ouverture large** : ① un **point de refus unique** avant « Commencer »
+  (exSwaps, zone active, doublon) · ② le **vocabulaire Katch** — ⚠️ *corriger le témoin
+  `tests/parcours/runner.js:3273` AVANT la phrase, il protège la mauvaise* · ③ la **mémoire à
+  deux vitesses** (`MEMOIRE_LARGE_EMAILS` = 2 comptes) · ④ la **course `_saveCoachMemory`**,
+  à prouver ou réfuter par un test avant de toucher au code.
 - 🩹 **LA BLESSURE DITE À MILO ATTEINT ENFIN LE GARDIEN** (ft-v982) — le point n°1 de la
   contre-analyse. Le chemin était éteint derrière `__FT_CLONE__` : mesuré, Profil Santé `""`,
   Gardien `[]`. ⚠️ **Ce n'était PAS une régression du retrait du clone** (essai jamais promu).

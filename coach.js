@@ -3838,6 +3838,34 @@ function renderCoachMsg(role, text) {
         + '<button class="coach-share-btn" onclick="shareCoachReply(this)" aria-label="Partager cette réponse"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Partager</button>';
       div.appendChild(foot);
     }
+    /* 🩺 LE SEUL CONTRÔLE DE SORTIE QUI AGIT, ET C'EST LA SANTÉ QUI L'IMPOSE (ft-v983)
+       ⛔⛔ MESURÉ EN AUDITANT LE GARDIEN DE SORTIE : sur ses 5 contrôles, **un seul retire
+       vraiment** quelque chose (le bloc technique, via `_stripCoachTech`). Les quatre autres —
+       interrogatoire, **diagnostic médical**, promesse vide, source douteuse — sont **comptés
+       puis affichés tels quels**. *Détecté n'est pas empêché.*
+       👉 Pour trois d'entre eux, un compteur suffit : ils nous regardent, nous. **Pas pour le
+       diagnostic.** La Constitution (P13/P22) dit que Milo ne diagnostique jamais et renvoie au
+       médecin — si la phrase sort quand même, l'app doit poser le renvoi elle-même.
+
+       ⛔ ON N'A PAS RÉÉCRIT LA RÉPONSE, ET C'EST DÉLIBÉRÉ. Le code dit déjà, à propos de ce
+       même contrôle : *« il attrape la FORMULE, pas l'intention — donc il SIGNALE, il ne
+       réécrit pas (on ne charcute pas une phrase) »*. Charcuter produirait des phrases
+       incompréhensibles sur les faux positifs, et un faux positif est ici certain à terme.
+       👉 On **AJOUTE** donc une ligne, sous la réponse, sans en modifier un caractère.
+       *Additif, visible, réversible* — et si le motif se trompe, le pire est un rappel de bon
+       sens en trop, pas une phrase mutilée (R29 : le coût de l'erreur décide).
+
+       ⚠️ ET LE MOTIF EST DÉJÀ CALIBRÉ : resserré le 21/08 après **3 faux positifs sur 3** sur
+       de vraies réponses (« tu es en Jour 2 », « tu es en phase de charge »). Il exige
+       désormais une PATHOLOGIE nommée, et ne tirait sur aucune des 129 réponses mesurées.
+       *C'est ce qui rend cet affichage supportable : il est rare.* */
+    if (_gFlags.some(function(f){ return f.code==='diagnostic'; })) {
+      const soin = document.createElement('div');
+      soin.className = 'coach-sante-rappel';
+      soin.textContent = '🩺 Milo est un coach sportif, pas un médecin — il peut se tromper sur '
+        + 'ce genre de sujet. Pour tout ce qui touche à ta santé, c\'est ton médecin qui tranche.';
+      div.appendChild(soin);
+    }
     // Badge réservé (clone + admin) : voir « promesse de mémoire sans rien enregistrer »
     // sous une réponse ferait douter n'importe qui de son coach, pour un défaut qui nous
     // regarde. Chez tout le monde, la dérive est COMPTÉE (ci-dessus), pas affichée.

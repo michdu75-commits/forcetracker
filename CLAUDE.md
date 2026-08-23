@@ -405,7 +405,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v982`** (prochaine : `ft-v983`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v983`** (prochaine : `ft-v984`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -415,6 +415,19 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v983 — 🩺 LE DIAGNOSTIC MÉDICAL NE PASSE PLUS SEUL — « détecté » n'était pas « empêché »** — 3ᵉ et dernier bloquant de la contre-analyse.
+
+**⛔⛔ CE QUE L'AUDIT DU GARDIEN DE SORTIE A DONNÉ, MESURÉ** : sur ses **5 contrôles, un seul retire vraiment** quelque chose — le bloc technique, via `_stripCoachTech`. Les quatre autres (**interrogatoire · diagnostic médical · promesse vide · source douteuse**) sont **comptés puis affichés tels quels**. *Détecté n'est pas empêché.*
+
+**👉 POUR TROIS D'ENTRE EUX, UN COMPTEUR SUFFIT : ils nous regardent, nous. Pas pour le diagnostic.** La Constitution (**P13/P22**) dit que Milo ne diagnostique jamais et renvoie au médecin — *si la phrase sort quand même, c'est à l'app de poser le renvoi.*
+
+**⛔⛔ ON N'A PAS RÉÉCRIT LA RÉPONSE, ET C'EST DÉLIBÉRÉ.** Le code disait déjà, à propos de ce contrôle précis : *« il attrape la FORMULE, pas l'intention — donc il SIGNALE, il ne réécrit pas (on ne charcute pas une phrase) »*. Charcuter produirait des phrases incompréhensibles sur les faux positifs, **et un faux positif est ici certain à terme**. On **ajoute** donc une ligne sous la réponse, sans en modifier un caractère — *additif, visible, réversible*. **Si le motif se trompe, le pire est un rappel de bon sens en trop, pas une phrase mutilée** (**R29** : le coût de l'erreur décide).
+
+**⚠️ ET LE MOTIF EST DÉJÀ CALIBRÉ, c'est ce qui rend l'affichage supportable** : resserré le 21/08 après **3 faux positifs sur 3** sur de vraies réponses (*« tu es en Jour 2 »*, *« tu es en phase de charge »*). Il exige désormais une **pathologie nommée** et ne tirait sur **aucune** des 129 réponses mesurées. *Il est rare — donc il sera lu.*
+
+**⛔ LE TON EST CELUI D'UN RAPPEL, PAS D'UNE ALARME** : *« Milo est un coach sportif, pas un médecin — il peut se tromper sur ce genre de sujet. Pour tout ce qui touche à ta santé, c'est ton médecin qui tranche. »* Trait plein et sobre, pour le distinguer du badge Gardien (pointillé rouge vif) qui, lui, est un outil interne réservé à l'admin.
+Tests : **parcours 1256/1256** (+7, bloc CI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 2 rouges**, exactement les 2 comportements neufs. ⭐⭐ **ET LES DEUX TÉMOINS QUI COMPTENT LE PLUS SONT VERTS DES DEUX CÔTÉS** : le texte de Milo **et** son `dataset.raw` (partage / PDF) sont **intacts avant comme après** — *c'est précisément ce qui prouve qu'on a AJOUTÉ et non charcuté*. ⚠️ Les 3 autres verts, eux, sont de **faux verts** : sans la fonction, « pas de rappel sur une réponse normale » passe tout seul. Fichiers : `coach.js`, `style.css`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v983. |
 
 **ft-v982 — 🩹 UNE BLESSURE DITE À MILO ATTEINT ENFIN LE GARDIEN — et l'essai était parqué pour une bonne raison** — Michel : *« fais tout ce que tu peux, je veux que Milo soit fiable »*. C'était le point n°1 de la contre-analyse.
 
@@ -731,23 +744,6 @@ Tests : **parcours 1085/1085** (+1, bloc LXXXVI), calculs 266/266, muscles 241/2
 
 **⭐ VÉRIFIÉ SUR LES 2 261 MOTS DISTINCTS DE CIQUAL** : la seule collision restante est *« spaghetti »* (**la courge**), et elle est **voulue** — la courge garde sa correspondance EXACTE, donc elle reste trouvable. *On ajoute une porte, on n'en ferme aucune.*
 Tests : **parcours 1084/1084** (+5, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Pas de contrôle négatif séparé** : la version corrige ft-v963, livrée il y a vingt minutes, et **ses 8 rouges couvrent déjà le mécanisme**. Ce qui compte ici est ailleurs — les **2 témoins qui protègent macaron et torsade** sont verts **des deux côtés**, et c'est le but : *ils gardent une absence, pas une nouveauté.* Fichiers : `app.js`, `clone/app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v964. |
-
-**ft-v963 — 🔎 LE PLURIEL — 97 % DE LA BASE ÉTAIT INATTEIGNABLE** — Michel : *« c'est comme j'ai cherché les pâtes, j'ai pas trouvé — enfin si, mais pas ce que je voulais trouver, et je n'ai plus la boîte pour le code-barre »*.
-
-**⚠️⚠️ ET SA PROPRE EXPLICATION ÉTAIT FAUSSE — c'est la première chose qu'il a fallu vérifier.** Il a ensuite pensé à l'accent : *« ah c'est pâtes et pas pates lol »*. **Mesuré : « pâtes » et « pates » rendent EXACTEMENT la même liste** depuis ft-v960 (`NFD` retire les accents). *Le croire aurait fermé le sujet sur un faux coupable et laissé le vrai en place* — **R28 coupe dans les deux sens**, y compris quand c'est Michel qui diagnostique.
-
-**⛔⛔ LE VRAI DÉFAUT : CIQUAL NOMME AU SINGULIER, ON TAPE AU PLURIEL.** « Amande, grillée » · « Lentille verte, sèche » · « Tomate, crue » — mais personne ne mange *une* amande. **Mesuré sur toute la base : 97 % des 3 341 aliments étaient inatteignables au pluriel.**
-
-**⭐⭐ ET LE PIRE N'EST PAS LE VIDE, C'EST LE FAUX.** Les **plats composés**, eux, emploient le pluriel : *« amandes »* rendait **Croissant aux amandes**, *« lentilles »* rendait **Soupe aux lentilles**, *« tomates »* rendait **Caviar de tomates**. *Une recherche qui rend le mauvais aliment coûte plus cher qu'une recherche vide : on l'enregistre sans se méfier.*
-
-**⛔ MÊME TROU EN VOCABULAIRE POUR LES PÂTES** — et c'est très probablement ce qu'il a vu. CIQUAL ne connaît que « Pâtes sèches » : **penne, macaroni, coquillettes, fusilli, farfalle, rigatoni, conchiglie, linguine rendaient ZÉRO résultat**, et *« spaghetti »* rendait… **la courge spaghetti**. ⚠️ Ce ne sont pas des aliments différents, ce sont des **formes de la même semoule** : on n'invente aucune valeur, on ouvre une porte vers celles de CIQUAL. La liste reste courte et explicite — elle dit une équivalence de forme, elle ne juge rien (**R29**). ⛔ Et **la courge reste trouvable** : on ajoute une porte, on n'en ferme aucune.
-
-**⭐⭐ L'ORDRE DE PRÉFÉRENCE EST CE QUI ÉVITE LES DÉGÂTS, ET IL A FALLU DEUX ESSAIS.** Mon 1ᵉʳ jet retirait le « s » sans plus de façons — et **fabriquait deux régressions en réparant** : *« pâtes »* rendait **Pâté breton**, *« pois »* rendait **Poireau**. 👉 On classe donc : ① le nom **commence** par le mot · ② la forme **EXACTE** avant la dépluralisée · ③ le nom le plus court. **Mesuré : 0 régression sur 50 requêtes courantes**, et les deux cassés sont devenus des témoins permanents (**R17**).
-
-**⭐ R2 — UN SEUL PROPRIÉTAIRE DE « CHERCHER ».** Les **trois** recherches — CIQUAL, les compléments, et **son propre journal** — avaient le même défaut. Elles le corrigent donc **au même endroit** : sinon la prochaine correction n'en réparerait qu'une, et *personne ne le verrait*. Un témoin vérifie que *« amandes »* retrouve son *« Amande grillée »* à lui.
-
-**⚠️ Le plafond de 400 reste tel quel, et c'est une décision mesurée** (**R30**) : il ne fausse qu'*« eau »* (*robinet* au lieu de *coco*), et les deux se valent — le relever échangerait un résultat correct contre un autre.
-Tests : **parcours 1079/1079** (+16, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 8 rouges**, exactement les 8 comportements changés. ⭐ **Et cette fois les 16 témoins se sont TOUS exécutés** — mon 1ᵉʳ jet les mettait derrière un garde « `_afRang` absente », donc ils **ne tournaient pas** contre l'ancien code et le contrôle ne disait qu'une chose : *« la fonction n'existe pas »*. Le garde ne porte plus que sur `_ciqualChercher`, qui existe **des deux côtés**. *Un témoin qui ne tourne pas n'est pas un témoin vert* — 3ᵉ fois que ça se paie (ft-v949, ft-v953). ⚠️ Les **8 verts des deux côtés sont ici les plus importants** : l'accent, « pâtes », « pois », « pâté », œuf/riz/poulet, la courge et le singulier du journal **devaient rester intacts** — *une correction de recherche se juge à ce qui n'a PAS bougé*. Fichiers : `app.js`, `clone/app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v963. |
 
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
