@@ -3441,7 +3441,21 @@ function _agPremiumCta(){
   try{goScreen('coach',document.getElementById('nb-coach'));}catch(e){}
 }
 
-// ── OUTILS CLONE DE TEST (visibles uniquement dans /clone/) ───
+/* ── OUTILS CLONE DE TEST — ⚠️ LE CLONE A ÉTÉ RETIRÉ LE 23/08/2026 (ft-v976) ───────────────
+   Décision de Michel : *« plus besoin des clones, ça permettra de gagner du temps »*.
+   MESURÉ avant de couper : sur les 60 dernières versions, `clone/` a changé à chaque fois et
+   **zéro fois tout seul** — il ne servait plus de bac à sable, il recopiait la prod. Il coûtait
+   8 fichiers à dupliquer par version, et il a failli coûter cher le jour même (91 lignes du shim
+   d'isolation effacées par un `cp` trop rapide, restaurées de justesse).
+
+   ⛔⛔ CES GARDES `window.__FT_CLONE__` SONT VOLONTAIREMENT CONSERVÉES, ET CE N'EST PAS UN OUBLI
+   (R30 — un retrait s'écrit, sinon le suivant « répare » une décision). Les retirer changerait
+   des COMPORTEMENTS, pas seulement du code mort : plusieurs essais vivent derrière ces gardes et
+   les débrancher les rendrait soit universels, soit perdus. On a supprimé le clone, pas arbitré
+   ses expériences — c'est une décision séparée, listée dans le journal de ft-v976.
+   👉 Si un bac à sable redevient nécessaire, il se refabrique depuis la prod : c'est exactement
+   comme ça qu'il est né le 04/07/2026. Ces gardes rendent la reconstruction immédiate.
+   ────────────────────────────────────────────────────────────────────────────────────────── */
 // Affiche les éléments réservés au clone (le clone pose window.__FT_CLONE__=true dans son shim).
 function _initCloneTools(){
   if(!window.__FT_CLONE__)return;

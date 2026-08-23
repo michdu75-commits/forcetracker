@@ -74,7 +74,7 @@ function inPageCheck(scenario) {
     const page = await ctx.newPage();
     const jsErrors = [];
     page.on('pageerror', e => jsErrors.push(e.message));
-    const base = sc.clone ? '/clone/index.html' : '/index.html';
+    const base = '/index.html';   // le clone a ete retire en ft-v976 (aucun scenario ne l'utilisait)
     try {
       await page.goto(`http://localhost:${PORT}${base}`, { waitUntil: 'domcontentloaded' });
       await page.waitForTimeout(900);

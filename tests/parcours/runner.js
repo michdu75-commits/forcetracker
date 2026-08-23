@@ -8077,11 +8077,11 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     });
     survit=F.survit; froidOK=(F.rapportAvant===false && F.rapportApres===true); froidEstRejeu=F.estRejeu;
   }
-  // Le chemin doit exister dans l'app ET dans le clone (deux fichiers HTML distincts).
+  /* ⚠️ Ce temoin lisait AUSSI clone/index.html — le clone a ete retire en ft-v976 (decision de
+     Michel : « plus besoin des clones, ca permettra de gagner du temps »). La garantie n'a pas
+     change, elle ne porte plus que sur un seul fichier. */
   const _H = fs.readFileSync(path.join(__dirname,'..','..','index.html'),'utf8');
-  const _HC= fs.readFileSync(path.join(__dirname,'..','..','clone','index.html'),'utf8');
-  const boutonsAdmin = /onclick="rejouerVerifs\(\)"/.test(_H)  && /onclick="copyEvalReponses\(\)"/.test(_H)
-                    && /onclick="rejouerVerifs\(\)"/.test(_HC) && /onclick="copyEvalReponses\(\)"/.test(_HC);
+  const boutonsAdmin = /onclick="rejouerVerifs\(\)"/.test(_H) && /onclick="copyEvalReponses\(\)"/.test(_H);
 
   console.log('\n-- LXXIV. Garder les reponses : le gisement gratuit --');
   if(R.absente){ t('⛔ le stockage des réponses existe', false, R.err||'fonctions absentes'); }
@@ -8090,7 +8090,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       'garde='+R.garde+' texte='+R.texteGarde+(R.errRun?' · '+R.errRun:''));
     t('⭐ ... et elles survivent à un rechargement de l\'app', survit===true, '');
     t('⭐⭐ ... ET IL RESTE UN CHEMIN POUR LES REJOUER après rechargement (Profil → Admin)',
-      boutonsAdmin===true, 'boutons admin absents de index.html et/ou clone/index.html');
+      boutonsAdmin===true, 'boutons admin absents de index.html');
     t('⭐⭐ ... le rejeu part À FROID : aucun rapport en mémoire → rapport produit',
       froidOK===true && froidEstRejeu===true, 'froid='+froidOK+' marqué rejeu='+froidEstRejeu);
     t('/!\\ la vraie passe écrit bien UNE entrée d\'historique', R.histApresPasse===1, 'hist='+R.histApresPasse);
@@ -9198,9 +9198,8 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
 {
   const fs2=require('fs');
   const H=fs2.readFileSync(ROOT+'/index.html','utf8');
-  const HC=fs2.readFileSync(ROOT+'/clone/index.html','utf8');
   const zone=(t)=>{ const i=t.indexOf('id="setup-connexion"'); return t.slice(i, t.indexOf('<!-- PROFIL -->', i)); };
-  const zA=zone(H), zC=zone(HC);
+  const zA=zone(H);   // le clone a ete retire en ft-v976 : plus qu'un seul fichier a comparer
   const nb=(z,re)=>(z.match(re)||[]).length;
 
   console.log('\n-- LXXXI. Le menage du menu admin --');
@@ -9220,12 +9219,10 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   /* ⚠️ Une seule section ouverte : celle qu'on regarde sans raison particulière. */
   t('⚠️ seule la SURVEILLANCE est ouverte par défaut (les autres se déplient)',
     nb(zA,/<details class="adm-grp" open>/g)===1, nb(zA,/<details class="adm-grp" open>/g)+' ouverte(s)');
-  /* ⛔ R2 : le clone doit avoir EXACTEMENT le même menu, sinon les deux divergent en silence. */
-  t('⛔ le clone a le même menu (cartes, boutons et sections)',
-    nb(zC,/class="card cp"/g)===nb(zA,/class="card cp"/g)
-    && nb(zC,/onclick=/g)===nb(zA,/onclick=/g)
-    && nb(zC,/<details class="adm-grp"/g)===nb(zA,/<details class="adm-grp"/g),
-    'clone : '+nb(zC,/class="card cp"/g)+' cartes · '+nb(zC,/onclick=/g)+' boutons');
+  /* ⛔ CE TEMOIN A ETE RETIRE EN ft-v976 (R30 — un retrait s'ecrit) : il verifiait que le CLONE
+     avait exactement le meme menu que la prod, « sinon les deux divergent en silence ». Il n'a
+     plus d'objet — le clone lui-meme a ete supprime, sur decision de Michel. Ce qu'il protegeait
+     (deux copies qui derivent) a disparu avec la seconde copie. */
   /* ⭐⭐ LE VRAI NETTOYAGE : les personas ne portent PLUS le prénom de vrais testeurs.
      Le 21/08, j'ai lu le `resume` de VC-002 comme un FAIT sur le vrai Christophe et je m'en
      suis servi comme ARGUMENT. Un décor de test et une note sur une personne réelle se
@@ -9241,7 +9238,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   t('⭐ ... et les 3 personas existent toujours (on renomme, on ne supprime pas)',
     /'VC-001'/.test(perso) && /'VC-002'/.test(perso) && /'VC-003'/.test(perso), '');
   t('⛔ les boutons ne les nomment plus non plus',
-    !/VC-00\d \((Tatiana|Christophe|Emma)/.test(zA) && !/VC-00\d \((Tatiana|Christophe|Emma)/.test(zC), '');
+    !/VC-00\d \((Tatiana|Christophe|Emma)/.test(zA), '');
 }
 
 /* == BLOC LXXXII - DES PROPOSITIONS QUAND ON TAPE UN ALIMENT (22/08/2026) ==
