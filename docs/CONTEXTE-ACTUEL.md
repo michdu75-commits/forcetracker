@@ -6,7 +6,14 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v984` — sur la branche, **pas encore fusionnée**.
+- **Version en ligne (live) :** `ft-v985`.
+- 🗑️ **LA CONFIRMATION PASSAIT DERRIÈRE** (ft-v985). Michel : *« le bouton supprimer ne
+  fonctionne pas »*. ⛔⛔ **Il fonctionnait** — la question s'ouvrait derrière la fenêtre de
+  modification (`elementsFromPoint` → `["EDIT","CONFIRM"]`). ⭐⭐ **Michel l'a confirmé sans le
+  savoir** : *« ça a fonctionné après »* — en fermant la modale, la confirmation devient
+  visible. ⭐ Cause : `#ov-confirm` **500** = `#ov-edit-food` **500**, et à égalité c'est
+  l'ordre du DOM qui tranche. ⛔ **Systémique** : 25 appels à `showConfirm`, **19 overlays**
+  au-dessus ou à égalité. Un seul correctif (R2) : la confirmation passe au-dessus de tout.
 - ⚖️ **LA QUANTITÉ SUIT L'ALIMENT REPRIS** (ft-v984). Michel : *« comment ça se fait que je ne
   peux pas mettre la quantité, sérieux c'est relou »*. **Reproduit avant de coder** : le bloc
   est là par CIQUAL, absent quand on reprend l'aliment depuis **son propre journal** — alors que

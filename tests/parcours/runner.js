@@ -11435,6 +11435,83 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* ═══ CIII. LA CONFIRMATION PASSE DEVANT TOUT (ft-v985) ════════════════════════════════════
+   Michel : « le bouton supprimer ne fonctionne pas ». ⛔⛔ IL FONCTIONNAIT — la question
+   s'ouvrait DERRIÈRE la fenêtre de modification. `elementsFromPoint` rendait
+   `["EDIT","CONFIRM"]`. ⭐ Confirmé par Michel lui-même : « ça a fonctionné après » — en
+   fermant la modale d'édition, la confirmation restée dessous devient visible.
+   ⭐⭐ LE TÉMOIN NE VÉRIFIE PAS UN CAS, IL VÉRIFIE LA RÈGLE : la confirmation doit être
+   au-dessus de **TOUS** les overlays de l'app. 17 d'entre eux étaient ≥ 500, dont 13 à 9999 —
+   corriger le seul `ov-edit-food` aurait laissé les seize autres.                            */
+{
+  console.log('\n── CIII. La confirmation passe devant tout ──');
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); pg.on('pageerror',e=>console.log('PAGEERROR',e.message));
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const Z=await pg.evaluate(()=>{
+    const o={};
+    const zi=el=>{ const v=getComputedStyle(el).zIndex; return v==='auto'?0:(+v||0); };
+    const cf=document.getElementById('ov-confirm');
+    o.zConfirm=zi(cf);
+    /* ⛔⛔ LA RÈGLE, PAS LE CAS : aucun overlay ne doit atteindre la confirmation.
+       Un `>=` et non un `>` — à z-index ÉGAL c'est l'ordre du DOM qui tranche, donc
+       l'égalité est déjà un défaut (c'est exactement ce qui s'est passé ici). */
+    o.auDessusOuEgal=[...document.querySelectorAll('.overlay')]
+      .filter(x=>x.id!=='ov-confirm' && zi(x)>=o.zConfirm)
+      .map(x=>x.id+':'+zi(x));
+    // le toast aussi : il ne doit pas couvrir une question bloquante
+    const t=document.getElementById('toast');
+    o.zToast=t?zi(t):null;
+    o.toastDerriere = !t || zi(t) < o.zConfirm;
+    return o;
+  });
+  t('⭐⭐ CONFIRMATION : AUCUN overlay n\'atteint son niveau (la règle, pas le cas)',
+    Z.auDessusOuEgal && Z.auDessusOuEgal.length===0, JSON.stringify(Z.auDessusOuEgal));
+  t('… et le toast reste derrière une question bloquante', Z.toastDerriere===true, JSON.stringify(Z));
+
+  /* ⭐⭐ LE TÉMOIN CENTRAL : le cas réel de Michel, joué en entier — on ouvre la modale
+     d'édition, on CLIQUE sur Supprimer, et on lit la PILE au centre de la confirmation.
+     C'est la seule mesure qui distingue « la modale existe » de « on peut la voir ». */
+  const P=await pg.evaluate(async()=>{
+    const o={}; const v=S.foodLog;
+    try{
+      const ts=Date.now();
+      S.foodLog=[{name:'Ratatouille Cassegrain',kcal:195,prot:3,carbs:17,fat:11,meal:'diner',ts:ts,date:today()}];
+      openEditFood(ts);
+      await new Promise(r=>setTimeout(r,200));
+      const ef=document.getElementById('ov-edit-food'), cf=document.getElementById('ov-confirm');
+      const btn=[...ef.querySelectorAll('button')].find(x=>/Supprimer/.test(x.textContent||''));
+      o.bouton=!!btn;
+      if(!btn) return o;
+      btn.click();
+      await new Promise(r=>setTimeout(r,200));
+      o.confirmOuverte=cf.classList.contains('open');
+      const r0=cf.querySelector('.modal').getBoundingClientRect();
+      const pile=document.elementsFromPoint(r0.left+r0.width/2, r0.top+r0.height/2)
+        .map(el=>(cf.contains(el)||el===cf)?'CONFIRM':((ef.contains(el)||el===ef)?'EDIT':null)).filter(Boolean);
+      o.pile=pile.filter((x,i)=>pile.indexOf(x)===i);
+      o.confirmDevant = o.pile[0]==='CONFIRM';
+      // ⭐ et la suppression aboutit VRAIMENT quand on répond oui
+      document.getElementById('confirm-ok').click();
+      await new Promise(r=>setTimeout(r,200));
+      o.supprime = (S.foodLog||[]).length===0;
+      o.modalesFermees = !ef.classList.contains('open') && !cf.classList.contains('open');
+    } finally { S.foodLog=v; try{ closeConfirm(); }catch(e){}
+               try{ document.getElementById('ov-edit-food').classList.remove('open'); }catch(e){} }
+    return o;
+  });
+  t('CONFIRMATION : le bouton Supprimer existe et ouvre bien la question', P.bouton===true && P.confirmOuverte===true, JSON.stringify(P));
+  t('⭐⭐ … et la question est DEVANT la fenêtre de modification (elle était derrière)',
+    P.confirmDevant===true, JSON.stringify(P.pile));
+  t('⭐ … répondre « Supprimer » retire vraiment l\'aliment', P.supprime===true, JSON.stringify(P));
+  t('… et les deux fenêtres se referment', P.modalesFermees===true, JSON.stringify(P));
+
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

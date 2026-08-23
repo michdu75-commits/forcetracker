@@ -701,7 +701,26 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
    d'une séance passée). Sans ça, le popup s'ouvrait derrière → « la croix ne
    marche pas » (ft-v297). */
 #mod-ex{z-index:300;}
-#ov-confirm{z-index:500;}
+/* ⚠️⚠️ LA CONFIRMATION PASSE DEVANT TOUT — 10000, ET C'EST UN MINIMUM (ft-v985)
+   Michel, capture à l'appui : *« le bouton supprimer ne fonctionne pas »*.
+   ⛔⛔ IL FONCTIONNAIT PARFAITEMENT. Mesuré dans un navigateur : la question
+   « Supprimer l'aliment ? » s'ouvrait bel et bien — **DERRIÈRE** la fenêtre de
+   modification. `document.elementsFromPoint` au centre de la confirmation rendait
+   `["EDIT", "CONFIRM"]` : la modale d'édition peignait par-dessus.
+   ⭐ LA CAUSE EXACTE : `#ov-confirm` valait **500**, et `#ov-edit-food` vaut **500**
+   aussi. **À z-index ÉGAL, c'est l'ordre du DOM qui tranche** — et `ov-edit-food` est
+   créé dynamiquement puis ajouté à la FIN du body, donc après le `ov-confirm` statique.
+   *Deux règles à égalité, c'est le hasard du DOM qui décide.*
+   ⛔ ET LE DÉFAUT ÉTAIT SYSTÉMIQUE, PAS PROPRE À CET ÉCRAN. Compté : **25 appels** à
+   `showConfirm` dans 5 fichiers, et **17 overlays** ont un z-index supérieur ou égal
+   à 500 — dont **13 à 9999**. Toute confirmation demandée depuis l'une d'elles était
+   invisible. *Corriger `ov-edit-food` seul aurait laissé les seize autres.*
+   ⭐ R2 — UN SEUL ENDROIT : la confirmation est l'écran le plus prioritaire de l'app
+   par nature (elle INTERROMPT pour poser une question dont dépend une suppression).
+   Elle passe donc au-dessus de tout le monde, y compris du toast (600).
+   ⚠️ SI UN JOUR UN OVERLAY DOIT PASSER DEVANT ELLE, c'est presque sûrement une erreur :
+   ce qui se met devant une question bloquante empêche d'y répondre. */
+#ov-confirm{z-index:10000;}
 .modal{background:var(--bg2);border-radius:24px 24px 0 0;padding:22px;width:100%;max-width:430px;max-height:85dvh;overflow-y:auto;border-top:1px solid var(--sep);}
 /* Guide de l'appli & questionnaire : le contenu défile, la barre du bas (Suivant/Précédent) reste TOUJOURS visible (fix « Suivant coupé » sur petits écrans). */
 #ov-appguide .modal, #ov-coach-quiz .modal{ display:flex; flex-direction:column; overflow:hidden; padding-bottom:calc(22px + env(safe-area-inset-bottom)); }

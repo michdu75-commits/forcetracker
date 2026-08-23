@@ -406,7 +406,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v984`** (prochaine : `ft-v985`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v985`** (prochaine : `ft-v986`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -416,6 +416,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v985 — 🗑️ LA CONFIRMATION PASSAIT DERRIÈRE — « le bouton supprimer ne fonctionne pas »** — Michel, capture à l'appui.
+
+**⛔⛔ IL FONCTIONNAIT PARFAITEMENT.** Mesuré dans un navigateur : la question *« Supprimer l'aliment ? »* s'ouvrait bel et bien — **mais derrière la fenêtre de modification**. `document.elementsFromPoint` au centre de la confirmation rendait **`["EDIT", "CONFIRM"]`**. *La question existait, personne ne pouvait la voir — donc rien ne semblait se passer.*
+
+**⭐⭐ ET MICHEL L'A CONFIRMÉ LUI-MÊME SANS LE SAVOIR** : *« ça a fonctionné après »*. En fermant la modale d'édition, la confirmation restée dessous devient visible et il a pu répondre. **La preuve terrain et la mesure disent exactement la même chose** — c'est le meilleur cas de figure qu'on puisse avoir.
+
+**⭐ LA CAUSE EXACTE** : `#ov-confirm` valait **500**… et `#ov-edit-food` vaut **500 aussi**. **À z-index égal, c'est l'ordre du DOM qui tranche** — et `ov-edit-food` est créé dynamiquement puis **ajouté à la fin du body**, donc après le `ov-confirm` statique. *Deux règles à égalité, c'est le hasard du DOM qui décide.*
+
+**⛔⛔ ET LE DÉFAUT ÉTAIT SYSTÉMIQUE, PAS PROPRE À CET ÉCRAN.** Compté : **25 appels** à `showConfirm` dans 5 fichiers, et **19 overlays** au-dessus ou à égalité — dont **13 à 9999**, plus le **toast** à 600. *Corriger le seul `ov-edit-food` aurait laissé les dix-huit autres* — c'est la 6ᵉ fois cette semaine que « compter les endroits » évite un correctif d'un seul côté.
+
+**⭐ R2 — UN SEUL ENDROIT.** La confirmation est l'écran le plus prioritaire de l'app **par nature** : elle interrompt pour poser une question dont dépend une suppression. Elle passe donc au-dessus de tout le monde, toast compris. ⚠️ *Si un jour un overlay doit passer devant elle, c'est presque sûrement une erreur : ce qui se met devant une question bloquante empêche d'y répondre.*
+
+**⭐⭐ ET LE TÉMOIN NE VÉRIFIE PAS LE CAS, IL VÉRIFIE LA RÈGLE** : *aucun overlay ne doit ATTEINDRE son niveau* — un `>=` et non un `>`, **parce que l'égalité est déjà le défaut**. Un futur overlay à 10000 fera rougir la livraison.
+Tests : **parcours 1269/1269** (+6, bloc CIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 3 rouges**, dont la liste complète des **19 overlays** fautifs et la pile `["EDIT","CONFIRM"]` — *le bug imprimé noir sur blanc*. ⭐⭐ **Et les 3 VERTS DES DEUX CÔTÉS sont ici la démonstration centrale** : le bouton ouvre bien la question, répondre « Supprimer » retire vraiment l'aliment, les deux fenêtres se referment. **C'est exactement ce qui prouve que le mécanisme n'a jamais été cassé — seule la visibilité l'était.** Fichiers : `style.css`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v985. |
 
 **ft-v984 — ⚖️ LA QUANTITÉ SUIT L'ALIMENT QUAND ON LE REPREND — « sérieux c'est relou »** — Michel, trois captures à l'appui : *« Bah non beug, comment ça se fait que je ne peux pas mettre la quantité »*.
 
@@ -730,23 +745,6 @@ Tests : **parcours 1091/1091** (+2, bloc LXXVIII), calculs 266/266, muscles 241/
 
 **⚠️⚠️ ET CETTE VERSION CORRIGE UNE FAUSSE CAUSE DE LA MIENNE.** ft-v965 affirmait que *« la quantité était restée à 100 »*. **C'était faux.** J'avais **déduit le mécanisme d'un SEUL NOMBRE** — 88 = exactement 100 g d'une poudre titrant 88 g/100 g — **sans demander l'écran**, alors que Michel envoie des captures spontanément. *Une coïncidence parfaite est exactement ce qui rend une fausse cause crédible : il n'y a aucun frottement pour vous arrêter.* Le déplacement du champ reste bon ; **la raison écrite à côté était inventée**. Corrigé dans le journal **en le disant** (**R23/R27**), et nouvelle famille **`BUGS.md` 12quater — la cause déduite d'un seul nombre**.
 Tests : **parcours 1089/1089** (+4, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `app.js`, `index.html`, `clone/*`, `tests/parcours/runner.js`, `BUGS.md`, `docs/JOURNAL-DE-TEST.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v966. |
-
-**ft-v965 — ⚖️ LA QUANTITÉ ÉTAIT AU-DESSUS DU CHAMP OÙ L'ON TAPE** — Michel : *« j'ai trouvé un bug mais pas vraiment un bug lol »*, puis : *« j'ai mis 30 grammes de protéine mais en fait c'est pas ça, j'ai voulu mettre 30 grammes de POUDRE de protéine, et ça fait 88 grammes de protéine »*.
-
-**⚠️⚠️ CORRECTION DU 22/08 AU SOIR — MA CAUSE ÉTAIT FAUSSE, ET C'EST SA VIDÉO QUI L'A MONTRÉ.** J'avais écrit *« 88 g de protéine = exactement 100 g de poudre, donc la quantité était restée par défaut »*. **L'enregistrement d'écran dit le contraire** : la Quantité affichait bien **30 g**, et les champs enregistrés valaient **117 kcal · 26 g de protéines · 1 · 1** — c'est-à-dire **exactement juste** pour 30 g d'une poudre à 88 g/100 g. **Il n'y avait AUCUN bug de calcul, et aucune quantité restée à 100.** ⛔ **Le 88 qu'il lisait était la CARTE PRODUIT**, dont le titre dit pourtant *« Valeurs pour 100 g »* — mais le chiffre y est **en vert vif et en gros**, pendant que ses vrais 26 g vivent beaucoup plus bas, hors écran. *Michel avait raison au mot près : « un bug mais pas vraiment un bug ».*
-
-**⭐ CE QUE ÇA APPREND, ET C'EST LA 3ᵉ FOIS EN DEUX JOURS (R28) :** j'ai **déduit un mécanisme d'un seul nombre** (88 = 100 g) au lieu de demander l'écran. La coïncidence était parfaite — la poudre titre justement 88 — et *une coïncidence parfaite est exactement ce qui rend une fausse cause crédible*. ⚠️ **Le déplacement du champ reste bon** (la quantité doit toucher les macros qu'elle pilote, et le témoin d'ordre est gardé), **mais il a été livré avec une raison inventée** — c'est le défaut, pas le code.
-
-**⛔⛔ LE CALCUL N'A JAMAIS ÉTÉ FAUX — C'ÉTAIT LE PLACEMENT.** Le bloc « Quantité » vivait **AVANT** le champ de recherche. Conçu pour le **code-barres** (on scanne, *puis* on ajuste), il est devenu **à contresens** quand la recherche par nom est arrivée (ft-v956/957) : *on tape en bas, on choisit en bas, les macros se remplissent en bas* — et le réglage qui **commande tout ça** restait hors du regard, plus haut dans la page.
-
-**⭐ DÉPLACÉ JUSTE AU-DESSUS DES MACROS QU'IL PILOTE**, il sert désormais les **deux** chemins : après un scan comme après une recherche, il apparaît là où l'attention est **déjà**.
-
-**⚠️⚠️ ET LE COÛT ÉTAIT RÉEL ET SILENCIEUX** : 100 g de whey au lieu de 30, c'est **+64 g de protéine et ~250 kcal** enregistrés sans que rien ne le signale. *C'est la même famille que le pluriel de ft-v963 — une valeur **plausible** mais fausse, qu'on enregistre sans se méfier.* ⛔ Et c'est **un défaut de conception que j'ai introduit** en ajoutant la recherche : *déplacer l'entrée d'un formulaire déplace aussi le sens de son ordre* (**R14** — un comportement copié d'un contexte à l'autre peut devenir faux).
-
-**⭐ LE TÉMOIN ÉPINGLE L'ORDRE DU DOM LUI-MÊME** (recherche < suggestions < quantité < macros). *Une disposition ne casse aucun test fonctionnel : sans ce témoin, rien d'autre ne l'aurait vue* — le formulaire « marchait » parfaitement.
-
-**⚠️ RIEN D'AUTRE NE BOUGE** : ni le calcul, ni la valeur par défaut de 100 g. La corriger demanderait de **deviner une portion** — 30 g pour une whey, 250 g pour du riz ? — et ce serait un **faux-précis** (**R29**). *Rendre le réglage visible vaut mieux que deviner à la place de la personne.*
-Tests : **parcours 1085/1085** (+1, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge**, exactement l'ordre — et c'est ici un contrôle **instructif**, pas un « la fonction n'existe pas » : le témoin **tourne** des deux côtés et mesure une disposition qui existait déjà, mal. Fichiers : `index.html`, `clone/index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v965. |
 
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
