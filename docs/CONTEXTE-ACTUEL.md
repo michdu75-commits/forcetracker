@@ -6,7 +6,17 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v973` — fusionnée sur `master` le 23/08.
+- **Version en ligne (live) :** `ft-v974` — fusionnée sur `master` le 23/08.
+- 🔤 **LE RAPPORT DE BALANCE LU SUR LE TÉLÉPHONE** (ft-v974) — décision de Michel : *« on
+  construit, parce que je l'utilise souvent »*. Première mise en œuvre de l'**échelle des
+  sources** de R33 (OCR local avant l'appel IA, échec propre). Mesuré : **0,3 s** de chargement,
+  **3,2-3,7 s** de lecture, **≈ 2 Mo** une seule fois et jamais au démarrage, **14 valeurs sur
+  16** lues sur les 5 rapports. ⭐⭐ **Le lecteur vérifie sa propre lecture** — une virgule perdue
+  donne un nombre crédible (protéine 13,8 → 18,8), et seule l'arithmétique du rapport
+  (`gras+eau+protéine+os = poids`, juste à 0,05 kg) l'attrape. ⛔ **« Poids cible » jamais lu**
+  (R32) · **« graisse sous-cutanée » retirée** (mal lue 4 fois sur 5, R30).
+  ⏭️ **En attente** : le fichier de son **ancienne balance**, pour l'import CSV/Excel (l'outil
+  existe déjà — Profil → « Importer un fichier balance » — et Michel y a accès).
 - ⬇️ **DÉFILER JUSQU'EN BAS, SUR TOUS LES ÉCRANS** (ft-v973) — Michel : *« Beug, je ne peux plus
   défiler en bas »*. Safari n'ajoute pas le `padding-bottom` d'un conteneur flex qui défile ;
   le correctif (un vrai **élément**) existait **depuis ft-v670** mais n'était posé que sur

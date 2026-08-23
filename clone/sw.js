@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v973'; // ⬇️ ft-v973 = ON DOIT POUVOIR DEFILER JUSQU'EN BAS — SUR TOUS LES ECRANS, PAS SEULEMENT UN. Michel, capture du Journal a l'appui : « Beug, je ne peux plus defiler en bas » — sa derniere ligne (Riz Basmati) restait coincee sous la barre de navigation. ⛔⛔ LA CAUSE : SAFARI N'AJOUTE PAS le padding-bottom d'un conteneur flex qui defile a sa hauteur defilable. Le correctif — un vrai ELEMENT, toujours compte — existait DEPUIS ft-v670, mais n'avait ete pose que sur l'ecran Progres ; les cinq autres gardaient un padding que l'iPhone ignorait (R8/R13 : le motif etait bon, applique d'un seul cote). ⚠️⚠️ ET MA PREMIERE HYPOTHESE ETAIT FAUSSE, la mesure l'a dit : je croyais que ft-v968 (le rangement par repas) avait cree le probleme en allongeant la page. Rejoue sur le code d'avant, avec les MEMES entrees : la derniere ligne finissait deja a 827 px pour une nav a 770 — elle etait DEJA cachee. ft-v968 a ajoute 155 px, il n'a rien cree. Ce qui a change, c'est que Michel utilise vraiment le Journal depuis cette semaine. ⭐ CHROMIUM NE REPRODUIT RIEN (il compte le padding) : le defaut a ete mesure en SIMULANT le comportement de Safari, padding annule — 4 ecrans rouges avant, 0 apres, le contenu finissant 44 px au-dessus de la nav partout. ⛔ LES DEUX MECANISMES NE SE CUMULENT JAMAIS : le padding tombe a 8 px partout (sinon 280 px de vide sur Chrome, et l'iPhone n'en verrait toujours qu'un). ⭐⭐ LE TEMOIN STRUCTUREL EST LE PLUS UTILE : il lit le DOM, donc il vaut pour n'importe quel moteur — un ECRAN FUTUR sans espaceur fera rougir la livraison. ⚠️ Et mon premier temoin de mesure accusait un bouton INVISIBLE (un accordeon replie garde des enfants de hauteur non nulle) : la mesure porte desormais sur la fin du contenu, pas sur un « dernier element » a deviner.
+const CACHE = 'ft-v974'; // 🔤 ft-v974 = LE RAPPORT DE BALANCE LU SUR LE TELEPHONE — gratuit, hors ligne, zero appel IA. Michel : « on construit, parce que je l'utilise souvent — il faut que je te sorte les donnees de mon ancienne balance ». ⭐ PREMIERE MISE EN OEUVRE DE L'ECHELLE DES SOURCES (R33) : donnee structuree -> texte -> OCR -> IA -> echec propre. La lecture locale passe AVANT l'appel serveur, et avant les deux verrous (S.url, quota) — elle n'a besoin ni de reseau ni de credit. ⭐⭐ LE POINT QUI DECIDE DE TOUT N'EST PAS « ca lit », C'EST « ca REFUSE DE LIRE QUAND C'EST FAUX » : mesure, en resolution reduite la proteine de Michel (13,8) sort a 18,8 — faux et parfaitement CREDIBLE, aucune borne physique ne l'attrape. Ce qui l'attrape est la REDONDANCE du rapport : gras+eau+proteine+os = poids, juste a 0,05 kg pres sur ses 5 rapports, et 90,1 pour 85,2 ici. Si l'arithmetique ne ferme pas, on ne propose RIEN. 👉 MESURE DANS UN VRAI NAVIGATEUR : 0,3 s de chargement, 3,2-3,7 s de lecture, ≈ 2 Mo une SEULE fois et seulement au premier scan (regle d'or #4), 14 valeurs sur 16 lues, 4 controles verts 5 fois sur 5. ⛔⛔ ET LE PLUS IMPORTANT EST CE QU'ON NE LIT PAS : « poids cible » (valeur PROPRIETAIRE, R32 — le chiffre d'un fabricant ne devient jamais l'objectif de la personne) et « graisse sous-cutanee » (RETIREE, R30 — 13,5/14,0/14,3/14,0 sortent en 135/140/43/140, sa ligne chevauche le tableau d'impedance, et le « 43 » tombe DANS le domaine plausible sans qu'aucune equation puisse le dementir). ⛔ TIROIR DE CACHE A PART : le tiroir normal est VERSIONNE donc vide a chaque livraison — les 2 Mo y repartiraient plusieurs fois par jour. ⚠️⚠️ TROIS DEFAUTS TROUVES EN ETENDANT LES CONTROLES, pas en relisant : un controle CIRCULAIRE (la masse maigre deduite se verifiait par la soustraction qui l'avait produite — vert sur tout), une valeur ecartee par ses bornes qui EMPORTAIT l'equation la demasquant (« Muscle 4.5 » passait pour correct), et _hideBsScan qui aurait ferme l'ecran de scan en pleine lecture IA. ⭐ R2 : UN SEUL endroit qui remplit le formulaire, OCR et IA confondus — sinon le correctif d'ordonnancement de ft-v971 n'aurait plus tenu que d'un cote.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -129,6 +129,16 @@ const PRECACHE_SENTINEL = './style.css';
 //   sont téléchargées UNE SEULE FOIS (1re install) puis CONSERVÉES sur le téléphone. Fini le
 //   re-téléchargement des 15 Mo à chaque MAJ (qui mangeait la data et saturait la 4G).
 const IMG_CACHE = 'ft-images';
+/* 🔤 TIROIR STABLE DU MOTEUR OCR (23/08/2026, ft-v974) — ≈ 2,5 Mo (wasm + modèle français).
+   ⛔ Il n'est PAS dans le PRECACHE : la plupart des gens ne scanneront jamais un rapport de
+   balance, et l'ouverture ne doit rien attendre (règle d'or #4). Il se télécharge à la
+   PREMIÈRE lecture d'un rapport, comme CIQUAL.
+   ⛔⛔ MAIS IL A SON PROPRE TIROIR, et c'est le point qui compte : le tiroir CACHE est
+   VERSIONNÉ, donc vidé à chaque livraison. Le laisser là-dedans ferait re-télécharger 2,5 Mo
+   à chaque version — plusieurs fois par jour en ce moment. Ce tiroir-ci, comme celui des
+   images, n'est jamais vidé par une mise à jour : téléchargé UNE fois, gardé. */
+const OCR_CACHE = 'ft-ocr';
+const OCR_RE = /\/lib\/ocr\//;
 const IMG_RE = /\/(exercises|anatomy|guide|accessoires|muscles)\//;
 const IMG_ASSETS = PRECACHE.filter(u => IMG_RE.test(u));
 
@@ -202,7 +212,7 @@ self.addEventListener('message', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE && k !== IMG_CACHE).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE && k !== IMG_CACHE && k !== OCR_CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
       .then(() => self.clients.matchAll({includeUncontrolled:true}).then(clients =>
         clients.forEach(c => c.postMessage({type:'SW_UPDATED'}))
@@ -257,7 +267,7 @@ self.addEventListener('fetch', e => {
       return fetch(e.request).then(r => {
         if (r && r.status === 200) {
           const cl=r.clone();
-          const target = IMG_RE.test(url.pathname) ? IMG_CACHE : CACHE;
+          const target = OCR_RE.test(url.pathname) ? OCR_CACHE : (IMG_RE.test(url.pathname) ? IMG_CACHE : CACHE);
           caches.open(target).then(c => c.put(e.request, cl));
         }
         return r;

@@ -770,6 +770,7 @@ const _BS_SEG_FIELDS=[
   {k:'legFatL',l:'Graisse jambe G',u:'kg'},{k:'legFatR',l:'Graisse jambe D',u:'kg'}
 ];
 let _bsEditIdx=-1;
+let _bsSource='manuel';   // 'manuel' · 'ocr' · 'ia' — provenance du bilan en cours de saisie (R33)
 let _bsListOpen=false; // liste des bilans/pesées de la balance : réduite par défaut (gagne de la place), tap pour ouvrir
 function toggleBsList(){_bsListOpen=!_bsListOpen;renderBodyScanCard();}
 function renderBodyScanCard(){
@@ -1035,15 +1036,281 @@ function _resizeReport(file,cb){
   };
   reader.readAsDataURL(file);
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   🔤 LIRE UN RAPPORT DE BALANCE SUR LE TÉLÉPHONE — sans appel IA (23/08, ft-v974)
+
+   Michel : *« on construit, parce que je l'utilise souvent »*. Jusqu'ici, chaque photo de
+   rapport partait vers le serveur IA : un appel facturé, du réseau obligatoire, un quota.
+
+   ⭐ L'ÉCHELLE DES SOURCES (R33) : donnée structurée → texte → OCR → IA → échec propre.
+   On descend d'un cran SEULEMENT quand le précédent échoue. L'OCR local est donc essayé
+   d'abord ; l'appel IA reste là, intact, pour tout ce que le lecteur ne sait pas lire.
+
+   ⛔ RIEN AU DÉMARRAGE (règle d'or #4) : le moteur (≈ 2,5 Mo) ne se télécharge qu'au premier
+   rapport scanné, comme CIQUAL et le lecteur Excel. Il vit ensuite dans un tiroir de cache
+   STABLE (`ft-ocr`, voir sw.js) — sinon il repartirait à chaque livraison.
+
+   ⭐⭐ ET LE LECTEUR VÉRIFIE SA PROPRE LECTURE. C'est ce qui sépare « lu » de « juste » :
+   mesuré sur les 5 rapports de Michel, une virgule perdue par l'OCR donne un nombre
+   parfaitement CRÉDIBLE (sa protéine à 13,8 est sortie à 18,8 en résolution réduite). Aucune
+   borne n'attrape ça. Les lignes du rapport, elles, se recoupent — et à 0,05 kg près. Si
+   l'arithmétique ne ferme pas, on refuse la lecture et on passe la main à l'IA.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ⚠️ CE QU'ON NE LIT JAMAIS (R32) : « Poids cible », « Mon coaching Expert », « Corpulence ».
+   Ce sont des valeurs PROPRIÉTAIRES, sorties d'un modèle du fabricant qu'on ne peut pas ouvrir.
+   Le poids cible d'une balance ne devient JAMAIS l'objectif de la personne. */
+
+// Le vocabulaire du fabricant ne devient jamais le vocabulaire interne (R33) : la traduction se
+// fait ICI, une fois. Aucun autre module n'a à connaître les mots de MyBodyCheck.
+const _MBC_TABLE=[
+  {re:/^poids\s/i,                 kg:'weight'},
+  {re:/^graisse\s+corporelle\s/i,  kg:'fatMass', pct:'bf'},
+  {re:/^masse\s+osseuse\s/i,       kg:'bone'},
+  {re:/^prot[ée]ine\s/i,           kg:'protein'},
+  {re:/^eau\s+corporelle\s/i,      kg:'water'},
+  {re:/^muscle\s+squelettique\s/i, kg:'skMuscle'},
+  {re:/^muscle\s/i,                kg:'muscle'}        // APRÈS « muscle squelettique »
+];
+const _MBC_INDIC=[
+  {re:/indice\s+de\s+graisse\s+visc[ée]rale\D{0,4}([\d.,]+)/i,            k:'visceral'},
+  {re:/taux\s+m[ée]tabolique\s+de\s+base\D{0,4}([\d.,]+)\s*k?cal/i,       k:'bmr'},
+  {re:/masse\s+maigre\D{0,4}([\d.,]+)\s*kg/i,                             k:'leanMass'},
+  {re:/indice\s+de\s+masse\s+musculaire\s+squelettique\D{0,4}([\d.,]+)/i, k:'smi'},
+  {re:/[ÂA]ge\s+corporel\D{0,4}([\d.,]+)/i,                               k:'metaAge'}
+];
+/* ⛔ AUCUNE VALEUR N'EST ACCEPTÉE HORS DE SON DOMAINE PHYSIQUE.
+   ⛔⛔ ET « GRAISSE SOUS-CUTANÉE » N'EST PAS LUE DU TOUT (R30 — un retrait s'écrit). Mesuré sur
+   les 5 rapports : 13,5 / 14,0 / 14,3 / 14,0 sortent en « 135 », « 140 », « 43 », « 140 » — la
+   virgule est mangée à chaque fois, parce que la ligne chevauche le tableau d'impédance juste à
+   côté. Quatre lectures fausses sur cinq, et « 43 » tombe DANS le domaine plausible. Or aucune
+   équation du rapport ne la recoupe : rien ne pourrait la démentir.
+   *Une valeur qu'on ne sait ni lire ni vérifier ne s'affiche pas.* Le champ reste saisissable. */
+const _MBC_BORNES={
+  weight:[20,300], bf:[2,70], fatMass:[0.5,150], muscle:[10,120], skMuscle:[5,80],
+  bone:[0.3,8], water:[10,120], protein:[1,40], visceral:[1,60], bmr:[600,4500],
+  metaAge:[10,110], bodyScore:[20,130], leanMass:[15,150], smi:[2,25]
+};
+/* ⛔⛔ LES 8 VALEURS DU TABLEAU PRINCIPAL SONT OBLIGATOIRES. Sans elles, on ne présente PAS une
+   lecture « vérifiée » : un champ écarté par ses bornes emporte avec lui l'équation qui l'aurait
+   démasqué — donc l'absence se déguiserait en succès. Trouvé en ÉTENDANT le contrôle positif
+   (« Muscle 4.5 » passait pour une lecture correcte). Rapport incomplet → on passe la main. */
+const _MBC_ESSENTIELS=['weight','bf','fatMass','bone','protein','water','muscle','skMuscle'];
+const _MBC_MOIS={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+
+function _mbcNum(s){const n=parseFloat(String(s).replace(/\s/g,'').replace(',','.'));return isNaN(n)?null:n;}
+function _mbcBorne(k,v){const b=_MBC_BORNES[k];if(v==null)return null;if(b&&(v<b[0]||v>b[1]))return null;return v;}
+
+/* Est-ce bien un rapport de composition corporelle ? On ne devine pas : deux marqueurs. */
+function _mbcReconnu(txt){
+  const t=String(txt||'').toLowerCase();
+  return /composition\s+corporelle/.test(t) && /muscle\s+squelettique/.test(t);
+}
+
+function _mbcLire(txt){
+  const lignes=String(txt||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  const o={}, lus=[];
+  const pose=(k,v)=>{v=_mbcBorne(k,v);if(v!=null&&o[k]==null){o[k]=v;lus.push(k);}};
+
+  /* 1. Le tableau principal : « Libellé  <kg> (<plage>)  <part %>  <évaluation> »
+     ⚠️ LA PLAGE ENTRE PARENTHÈSES EST UN PIÈGE CONNU (corrigé côté serveur en @71) : elle est
+     consommée explicitement par le motif, jamais laissée au hasard d'un « premier nombre ». */
+  lignes.forEach(l=>{
+    for(const d of _MBC_TABLE){
+      if(!d.re.test(l))continue;
+      const m=l.match(/^\D+?([\d.,]+)\s*\(\s*[\d.,]+\s*[-–]\s*[\d.,]+\s*\)\s*([\d.,]+)?/);
+      if(!m)break;
+      pose(d.kg,_mbcNum(m[1]));
+      if(d.pct&&m[2]!=null)pose(d.pct,_mbcNum(m[2]));
+      break;                                   // une ligne = un libellé
+    }
+  });
+
+  const plat=lignes.join('\n');
+  // 2. « Autres indicateurs » — une paire libellé/valeur par ligne
+  _MBC_INDIC.forEach(d=>{const m=plat.match(d.re);if(m)pose(d.k,_mbcNum(m[1]));});
+
+  /* 3. Le score corporel (« 83/100Points »). ⚠️ L'OCR coupe parfois le nombre en deux
+     (« 8 1 100Points » sur le rapport du 27/07) : la borne basse à 20 refuse ce « 1 » — le champ
+     reste vide plutôt que d'annoncer un score corporel de 1 sur 100. */
+  const sc=plat.match(/(\d{1,3})\s*[\/|]?\s*100\s*Points/i);
+  if(sc)pose('bodyScore',_mbcNum(sc[1]));
+
+  // 4. La date de la mesure — mois en anglais abrégé dans ce rapport
+  const dm=plat.match(/mesures?\s*:?\s*([A-Za-zÉé]{3})\w*\.?\s*(\d{1,2})\s*,\s*(\d{4})/);
+  if(dm){
+    const mo=_MBC_MOIS[dm[1].slice(0,3).toLowerCase()];
+    if(mo)o.date=dm[3]+'-'+String(mo).padStart(2,'0')+'-'+String(+dm[2]).padStart(2,'0');
+  }
+
+  /* 5. LA MASSE MAIGRE SE RETROUVE PAR SOUSTRACTION quand l'OCR la perd (les deux colonnes du
+     rapport s'entrelacent parfois). Même repli déterministe que le backend depuis le 30/07/2026 :
+     jamais d'IA là où une soustraction suffit. */
+  if(o.leanMass==null&&o.weight!=null&&o.fatMass!=null){
+    pose('leanMass',Math.round((o.weight-o.fatMass)*10)/10);
+    o._maigreDeduite=true;   // ⚠️ marquée DÉDUITE : elle ne peut plus servir à se vérifier elle-même
+  }
+  return {champs:o,lus:lus};
+}
+
+function _mbcVerifier(o){
+  const T=0.35, ctrl=[];
+  const dit=(nom,a,b)=>{if(a==null||b==null)return;ctrl.push({nom:nom,ecart:Math.round(Math.abs(a-b)*100)/100,ok:Math.abs(a-b)<=T});};
+  if(o.weight!=null&&o.bf!=null) dit('gras = poids × %',o.weight*o.bf/100,o.fatMass);
+  /* ⛔⛔ UN CONTRÔLE CIRCULAIRE EST UN FAUX VERT. Quand la masse maigre a été DÉDUITE par
+     soustraction, « maigre = poids − gras » se vérifie lui-même : il ne peut pas échouer, donc
+     il ne mesure rien. On ne le compte que si la valeur a vraiment été LUE sur le rapport. */
+  if(o.weight!=null&&o.fatMass!=null&&!o._maigreDeduite)
+    dit('maigre = poids − gras',o.weight-o.fatMass,o.leanMass);
+  if(o.fatMass!=null&&o.water!=null&&o.protein!=null&&o.bone!=null)
+    dit('gras+eau+protéine+os = poids',o.fatMass+o.water+o.protein+o.bone,o.weight);
+  if(o.muscle!=null&&o.bone!=null&&o.fatMass!=null)
+    dit('muscle+os+gras = poids',o.muscle+o.bone+o.fatMass,o.weight);
+  const manque=_MBC_ESSENTIELS.filter(k=>o[k]==null);
+  return {ok:manque.length===0&&ctrl.length>=2&&ctrl.every(c=>c.ok),ctrl:ctrl,manque:manque};
+}
+
+/* ── Le moteur, chargé à la demande (même motif que le lecteur Excel `_loadXlsx`) ────────── */
+let _ocrLoad=null;
+function _loadOcr(){
+  if(window.Tesseract)return Promise.resolve();
+  if(_ocrLoad)return _ocrLoad;
+  _ocrLoad=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='./lib/ocr/tesseract.min.js';
+    s.onload=res;
+    s.onerror=()=>{_ocrLoad=null;rej(new Error('moteur de lecture indisponible'));};
+    document.head.appendChild(s);
+  });
+  return _ocrLoad;
+}
+
+/* ⚠️ L'OCR NE LIT PAS L'IMAGE RÉDUITE DE `_resizeReport` (1000 px de large) : c'est EXACTEMENT à
+   cette largeur que les virgules disparaissent — mesuré, la protéine sortait à 18,8 au lieu de
+   13,8. On repart donc de la photo d'origine, plafonnée à 1900 px. R14 : une image préparée pour
+   l'IA n'est pas une image préparée pour l'OCR. */
+const _OCR_LARGEUR=1900;
+function _ocrImage(dataUrl){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onerror=()=>rej(new Error('image illisible'));
+    img.onload=()=>{
+      try{
+        if(img.width<=_OCR_LARGEUR)return res(img);
+        const sc=_OCR_LARGEUR/img.width;
+        const c=document.createElement('canvas');
+        c.width=_OCR_LARGEUR; c.height=Math.round(img.height*sc);
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        const out=new Image();
+        out.onload=()=>res(out);
+        out.onerror=()=>rej(new Error('image illisible'));
+        out.src=c.toDataURL('image/png');
+      }catch(err){rej(new Error('image trop grande'));}
+    };
+    img.src=dataUrl;
+  });
+}
+// Lit le fichier UNE fois en dataURL : la même sert à l'aperçu du scan et à l'OCR (R2).
+function _ocrDataUrl(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onerror=()=>rej(new Error('image illisible'));
+    r.onload=e=>res(e.target.result);
+    r.readAsDataURL(file);
+  });
+}
+
+/* Lit la photo SUR LE TÉLÉPHONE. Rend `null` — jamais une exception — dès que quoi que ce soit
+   cloche : ce chemin est un BONUS, il ne doit jamais empêcher la lecture IA de se produire. */
+async function _ocrRapportBalance(dataUrl){
+  try{
+    await _loadOcr();
+    const img=await _ocrImage(dataUrl);
+    const w=await window.Tesseract.createWorker('fra',1,{
+      workerPath:'./lib/ocr/worker.min.js',
+      corePath:'./lib/ocr/',
+      langPath:'./lib/ocr/',
+      logger:function(){}
+    });
+    let txt='';
+    try{ const r=await w.recognize(img); txt=(r&&r.data&&r.data.text)||''; }
+    finally{ try{ await w.terminate(); }catch(_){} }
+    if(!_mbcReconnu(txt))return null;                    // pas un rapport de ce type → échec propre
+    const lu=_mbcLire(txt);
+    const v=_mbcVerifier(lu.champs);
+    window._ocrDernier={lus:lu.lus.length,ok:v.ok,ctrl:v.ctrl,manque:v.manque};  // diagnostic
+    if(!v.ok)return null;                                // l'arithmétique ne ferme pas → on passe la main
+    delete lu.champs._maigreDeduite;
+    return lu.champs;
+  }catch(e){
+    window._ocrDernier={erreur:(e&&e.message)||'inconnue'};
+    return null;
+  }
+}
+
+/* R2 — UN SEUL ENDROIT QUI REMPLIT LE FORMULAIRE, que la lecture vienne de l'OCR ou de l'IA.
+   Deux chemins séparés finiraient par diverger, et le correctif d'ordonnancement de ft-v971
+   (« openBodyScanForm est async, il faut l'attendre ») ne tiendrait plus que d'un côté. */
+async function _bsRemplirFormulaire(o,source){
+  await openBodyScanForm(-1);
+  /* ⚠️ Si le verrou santé a refusé, la modale n'est pas ouverte : on ne remplit pas des champs
+     invisibles et on ne prétend pas que le rapport est prêt. */
+  const ouvert=document.getElementById('ov-bodyscan-form');
+  if(!ouvert||!ouvert.classList.contains('open'))return 0;
+  _bsSource=source||'manuel';     // APRÈS l'ouverture, qui vient de le remettre à « manuel »
+  if(o.date){const dEl=document.getElementById('bs-date');if(dEl)dEl.value=o.date;}
+  let remplis=0;
+  _BS_FIELDS.concat(_BS_SEG_FIELDS).forEach(f=>{
+    const el=document.getElementById('bs-'+f.k);
+    if(el&&o[f.k]!=null&&o[f.k]!==''){el.value=o[f.k];remplis++;}
+  });
+  /* ⛔ ON NE DIT PAS « Rapport lu ✅ » SI RIEN N'A ÉTÉ REMPLI. C'est précisément ce silence qui a
+     masqué le bug de ft-v971 pendant deux imports : le message de succès s'affichait devant un
+     formulaire vide, donc rien ne signalait que l'appel venait d'être gaspillé. */
+  if(!remplis){toast('Rapport lu mais aucune valeur reconnue — saisis à la main','warn');return 0;}
+  toast((source==='ocr'?'Rapport lu sur ton téléphone ✅ ':'Rapport lu ✅ ')
+        +remplis+' valeurs — vérifie puis Enregistre','success');
+  return remplis;
+}
+
 function importBodyScanPhoto(){const inp=document.getElementById('bs-photo-input');if(inp){inp.value='';inp.click();}}
 const BODYSCAN_FREE_LIMIT=2; // décision Michel 31/07 : 2 lectures photo gratuites, ILLIMITÉ en Premium (avant : 10 pour tous, le Premium ne levait même pas la limite). Saisie main/code toujours gratuite.
 function _bodyScanPhotoUnlimited(){return !!S.premium||(typeof _isSuperTester==='function'&&_isSuperTester());}
-function onBodyScanPhoto(input){
+async function onBodyScanPhoto(input){
   const file=input.files&&input.files[0];if(!file)return;input.value='';
-  if(!S.url){toast('Coach non configuré (Profil > Admin)','error');return;}
+
+  /* ⭐ ÉTAGE 1 — LA LECTURE SUR LE TÉLÉPHONE (ft-v974). Gratuite, hors ligne, sans quota.
+     ⛔⛔ ET ELLE PASSE AVANT LES DEUX VERROUS DU DESSOUS, EXPRÈS : ni `S.url` (elle n'a besoin
+     d'aucun serveur) ni le quota de lectures IA (elle ne coûte aucun appel). Quelqu'un qui a
+     épuisé ses lectures gratuites peut donc quand même scanner son rapport.
+     ⛔ Si quoi que ce soit cloche — moteur indisponible, document non reconnu, arithmétique qui
+     ne ferme pas — `_ocrRapportBalance` rend `null` et on descend d'un cran (R33). */
+  let apercu=null;
+  try{ apercu=await _ocrDataUrl(file); }catch(_){}
+  if(apercu){
+    _showBsScan(apercu,'🔍 Lecture du rapport…','Sur ton téléphone, sans réseau','Chargement du lecteur…');
+    const local=await _ocrRapportBalance(apercu);
+    if(local){
+      _hideBsScan(()=>{ _bsRemplirFormulaire(local,'ocr'); });
+      return;                                   // 0 appel IA, 0 quota consommé
+    }
+    /* ⛔ ON NE FERME PAS L'ÉCRAN DE SCAN ICI. `_hideBsScan` attend 1,4 s AVANT de fermer : la
+       lecture IA rouvrirait l'écran juste après, et le minuteur le refermerait en pleine
+       analyse. On laisse l'écran ouvert et on change seulement son texte — il sera fermé par le
+       chemin IA, ou tout de suite par les deux sorties ci-dessous. */
+    const st=document.getElementById('bs-scan-sub');
+    if(st)st.textContent='Lecture approfondie…';
+  }
+  const _fermeScan=()=>{const ov=document.getElementById('ov-bs-scan');if(ov)ov.classList.remove('open');};
+
+  /* ÉTAGE 2 — la lecture par l'IA, inchangée : c'est elle qui traite tout ce que le lecteur
+     local ne sait pas lire (autres marques, photos de travers, rapports partiels). */
+  if(!S.url){_fermeScan();toast('Coach non configuré (Profil > Admin)','error');return;}
   // Lecture photo : illimitée pour super-testeurs (Michel/Christophe), 1 seule fois pour les autres. Saisie main/code = gratuite.
   const unlimited=_bodyScanPhotoUnlimited();
   if(!unlimited&&(S.bodyScanImports||0)>=BODYSCAN_FREE_LIMIT){
+    _fermeScan();
     toast('Lecture photo : tes '+BODYSCAN_FREE_LIMIT+' lectures gratuites sont utilisées 🙂 Illimitée en Premium — la saisie à la main reste gratuite.','info');
     if(typeof openPremiumInfo==='function')setTimeout(openPremiumInfo,600);
     return;
@@ -1092,24 +1359,11 @@ function onBodyScanPhoto(input){
          celui-ci n'avait pas été revu.
          ⛔ ET ÇA COÛTE DE L'ARGENT, pas seulement du confort : chaque tentative est un appel
          vision facturé. Un défaut d'ordonnancement se payait en quota IA. */
-      _hideBsScan(async()=>{
-        await openBodyScanForm(-1);
-        /* ⚠️ Si le verrou santé a refusé, la modale n'est pas ouverte : on ne remplit pas des
-           champs invisibles et on ne prétend pas que le rapport est prêt. */
-        const ouvert=document.getElementById('ov-bodyscan-form');
-        if(!ouvert||!ouvert.classList.contains('open')) return;
-        if(o.date){const dEl=document.getElementById('bs-date');if(dEl)dEl.value=o.date;}
-        let remplis=0;
-        _BS_FIELDS.concat(_BS_SEG_FIELDS).forEach(f=>{
-          const el=document.getElementById('bs-'+f.k);
-          if(el&&o[f.k]!=null&&o[f.k]!==''){el.value=o[f.k];remplis++;}
-        });
-        /* ⛔ ON NE DIT PAS « Rapport lu ✅ » SI RIEN N'A ÉTÉ REMPLI. C'est précisément ce qui a
-           masqué le bug pendant deux imports : le message de succès s'affichait alors que le
-           formulaire était vide, donc rien ne signalait que l'appel venait d'être gaspillé. */
-        toast(remplis?('Rapport lu ✅ '+remplis+' valeurs — vérifie puis Enregistre')
-                     :'Rapport lu mais aucune valeur reconnue — saisis à la main','warn');
-      });
+      /* R2 — LE MÊME REMPLISSAGE QUE LA LECTURE LOCALE. `_bsRemplirFormulaire` porte le
+         `await openBodyScanForm(-1)` de ft-v971, le refus silencieux du verrou santé et le
+         compte de valeurs. Deux copies finiraient par diverger, et le correctif ne tiendrait
+         plus que d'un côté. */
+      _hideBsScan(()=>{ _bsRemplirFormulaire(o,'ia'); });
     }catch(e){
       // Diagnostic : nb de tranches + poids du paquet + type d'erreur → on voit tout de suite si c'est la taille.
       const detail=(e&&e.message)||'erreur inconnue';
@@ -1193,6 +1447,10 @@ function pasteBodyScan(){
 }
 async function openBodyScanForm(idx){
   if(!await _healthGate())return;          // verrou santé (Michel, 04/08)
+  /* 🏷️ D'OÙ VIENT CE BILAN (R33) — remis à « saisie main » à CHAQUE ouverture, et reposé
+     ensuite par `_bsRemplirFormulaire` si la lecture vient de l'OCR ou de l'IA. Sans ce
+     retour à zéro, un bilan tapé à la main hériterait de la provenance du précédent. */
+  _bsSource='manuel';
   _bsEditIdx=idx;
   const grid=document.getElementById('bs-grid');
   const dateEl=document.getElementById('bs-date');
@@ -1218,6 +1476,9 @@ function saveBodyScan(){
   const obj={date};
   _BS_FIELDS.concat(_BS_SEG_FIELDS).forEach(f=>{const e=document.getElementById('bs-'+f.k);if(!e)return;const v=parseFloat(e.value);if(!isNaN(v))obj[f.k]=v;});
   if((obj.imc==null||isNaN(obj.imc))&&S.height){obj.imc=+(weight/Math.pow(S.height/100,2)).toFixed(1);}
+  /* 🏷️ CE QUI EST NORMALISÉ GARDE D'OÙ IL VIENT (R33). Sans ça, impossible d'auditer plus tard
+     une valeur douteuse — ni de savoir si elle a été LUE, CALCULÉE ou tapée à la main. */
+  if(_bsSource&&_bsSource!=='manuel')obj.src=_bsSource;
   S.bodyScans=S.bodyScans||[];
   if(_bsEditIdx>=0&&S.bodyScans[_bsEditIdx]){S.bodyScans[_bsEditIdx]=obj;}
   else{const ex=S.bodyScans.findIndex(s=>s.date===date);if(ex>=0)S.bodyScans[ex]=obj;else S.bodyScans.push(obj);}

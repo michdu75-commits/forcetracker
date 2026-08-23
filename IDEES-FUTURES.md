@@ -2313,3 +2313,32 @@ plus. *Poids embarqué à prévoir : 2 à 4 Mo pour un moteur OCR, contre 880 Ko
 bibliothèque actuelle — et la règle d'or #4 (ouverture instantanée) impose un chargement à la
 demande, comme CIQUAL.*
 
+
+
+---
+
+## ✅ FAIT — le lecteur de rapport de balance sur le téléphone *(ft-v974, 23/08/2026)*
+
+La mesure de faisabilité notée plus haut a été **construite** le jour même, sur décision de
+Michel (*« on construit, parce que je l'utilise souvent »*). Ce qui est mesuré, dans un vrai
+navigateur, sur ses 5 rapports MyBodyCheck :
+
+| | |
+|---|---|
+| chargement du moteur | 0,3 s |
+| lecture d'un rapport | 3,2 à 3,7 s |
+| poids sur le réseau | ≈ 2 Mo, **une seule fois**, au premier scan |
+| valeurs lues | 14 sur 16 (la masse maigre par soustraction, la 15ᵉ) |
+| contrôles arithmétiques | 4/4 verts sur les 5 rapports |
+
+⚠️ **Deux chiffres à ne pas oublier si quelqu'un reprend le sujet** :
+- **la résolution décide de tout** : à 990 px de large, la protéine sort à 18,8 au lieu de 13,8 ;
+  à 1900 px elle est juste. L'image préparée pour l'IA (1000 px) ne convient donc **pas** à l'OCR
+  (**R14**) ;
+- **« graisse sous-cutanée » est illisible** dans ce rapport (4 lectures fausses sur 5) parce que
+  sa ligne chevauche le tableau d'impédance. Ce n'est pas une question de moteur.
+
+⏭️ **Ce qui reste ouvert** : le même chemin pour la **prise de sang** (`importBloodTest`). Le
+moteur est là, il ne coûte plus rien ; ce qui manque, ce sont les **règles de lecture** et,
+surtout, un contrôle équivalent à l'arithmétique du rapport de balance — *sans lui, on ne saurait
+pas si la lecture est juste*, et sur un bilan sanguin l'erreur coûte beaucoup plus cher.
