@@ -9863,6 +9863,108 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXXXVII - LE JOURNAL RANGE PAR REPAS + LA 2e COLLATION (23/08/2026) ==
+   Michel : « c'est un peu le foutoir la, il faudrait ranger tout ca. La c'est une liste, il faut
+   les ranger et creer des lignes deroulantes pour chaque section » + « pouvoir rajouter une
+   collation aussi, il y en a qui prennent une collation le matin et le soir ».
+   ⛔⛔ LE TEMOIN CENTRAL EST UN NON-PERTE : regrouper ne doit faire disparaitre AUCUN aliment. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(()=>{
+    const o={};
+    /* ⛔⛔ CE TEMOIN-LA EST HORS DU GARDE, ET C'EST VOLONTAIRE : il mesure un comportement qui
+       EXISTAIT DEJA — un repas inconnu doit retomber sur le DEJEUNER. Le repli valait
+       `FOOD_MEALS[1]`, qui DESIGNAIT le dejeuner ; en passant la liste en ordre de journee,
+       l'index 1 devient la COLLATION, et l'entree serait devenue une collation EN SILENCE (R14).
+       Il est donc VERT DES DEUX COTES — c'est exactement le but : *une correction de rangement se
+       juge a ce qui n'a PAS bouge.* Derriere le garde, il n'aurait rien mesure du tout. */
+    if(typeof _foodMealInfo==='function')
+      o.repliDejeuner=_foodMealInfo('cle-qui-nexiste-pas').lbl===_foodMealInfo('dejeuner').lbl;
+    /* ⚠️ LE GARDE DOIT COUVRIR `_journalPli`, PAS SEULEMENT `FOOD_MEALS` — leçon de ft-v957.
+       `FOOD_MEALS` et `renderFoodJournal` existent DES DEUX CÔTÉS : sans ce garde, le bloc
+       appelait `_journalPli` (absente avant ft-v968), l'exception remontait hors de
+       `pg.evaluate`, et le runner MOURAIT avant d'imprimer le moindre verdict.
+       *Un témoin qui tue le harnais ne mesure rien du tout* — il faut qu'il rougisse. */
+    if(typeof FOOD_MEALS==='undefined'||typeof renderFoodJournal!=='function'
+       ||typeof _journalPli!=='function'){ o.absente=true; return o; }
+    o.cles=FOOD_MEALS.map(m=>m.k).join(',');
+    o.aDeuxCollations=FOOD_MEALS.filter(m=>/^collation/.test(m.k)).length===2;
+    /* ⭐ L'ORDRE EST CELUI DE LA JOURNEE — c'est lui qui range les sections. */
+    o.ordreJournee=o.cles==='petitdej,collation,dejeuner,collation2,diner';
+
+    const t=today();
+    S.foodLog=[
+      {date:t,meal:'diner',    name:'Spaghetti',   kcal:431,prot:16,carbs:85,fat:2, ts:Date.now()},
+      {date:t,meal:'petitdej', name:'Banane',      kcal:240,prot:26,carbs:28,fat:3, ts:Date.now()-1e3},
+      {date:t,meal:'collation',name:'Pomme',       kcal:51, prot:1, carbs:11,fat:1, ts:Date.now()-2e3},
+      {date:t,meal:'collation2',name:'Amandes',    kcal:160,prot:6, carbs:6, fat:14,ts:Date.now()-3e3},
+      {date:t,meal:'dejeuner', name:'Poulet riz',  kcal:665,prot:52,carbs:68,fat:18,ts:Date.now()-4e3},
+      {date:t,meal:'diner',    name:'Huile olive', kcal:135,prot:0, carbs:0, fat:15,ts:Date.now()-5e3},
+      {date:t,meal:'vieuxrepas',name:'Orphelin',   kcal:99, prot:6, carbs:10,fat:3, ts:Date.now()-6e3},
+    ];
+    _journalReplie={}; _journalJour=null;
+    switchNuTab('journal',null);
+    const h=(document.getElementById('food-journal')||{}).innerHTML||'';
+    o.html=h;
+
+    /* ⛔⛔ AUCUN ALIMENT PERDU — un regroupement qui en escamote un ne casse aucun test fonctionnel. */
+    o.tousPresents=['Spaghetti','Banane','Pomme','Amandes','Poulet riz','Huile olive','Orphelin']
+      .every(n=>h.indexOf(n)>=0);
+    /* ⭐ DES SECTIONS DEROULANTES, PAS UNE LISTE A PLAT. */
+    o.nbSections=(h.match(/<details class="jr-sec"/g)||[]).length;
+    /* ⭐ LES SECTIONS SUIVENT L'ORDRE DE LA JOURNEE, pas l'heure de saisie. */
+    const pos=n=>h.indexOf(n);
+    o.ordreSections = pos('Petit-déj')<pos('Collation')
+                   && pos('Collation')<pos('Déjeuner')
+                   && pos('Déjeuner')<pos('Collation 2')
+                   && pos('Collation 2')<pos('Dîner');
+    /* ⭐ CHAQUE SECTION PORTE SON TOTAL — le dîner vaut 431+135. */
+    o.totalDiner=h.indexOf('566')>=0;
+    /* ⛔ UNE SECTION VIDE NE S'AFFICHE PAS (aucun aliment noté à ce repas). */
+    S.foodLog=[{date:t,meal:'diner',name:'Seul',kcal:100,prot:1,carbs:1,fat:1,ts:Date.now()}];
+    _journalReplie={}; renderFoodJournal();
+    const h2=(document.getElementById('food-journal')||{}).innerHTML||'';
+    o.uneSeule=(h2.match(/<details class="jr-sec"/g)||[]).length===1;
+    o.pasDeSectionVide=h2.indexOf('Petit-déj')<0 && h2.indexOf('Collation')<0;
+
+    /* ⭐⭐ L'ETAT PLIE SURVIT AU RE-RENDU : sinon ajouter un aliment redeplierait tout. */
+    _journalPli('Dîner', false);              // la personne replie le dîner
+    renderFoodJournal();
+    const h3=(document.getElementById('food-journal')||{}).innerHTML||'';
+    o.pliSurvit=/<details class="jr-sec"\s+ontoggle/.test(h3) || h3.indexOf('open')<0;
+    _journalPli('Dîner', true);               // elle le rouvre
+    renderFoodJournal();
+    o.depliSurvit=/<details class="jr-sec" open/.test((document.getElementById('food-journal')||{}).innerHTML||'');
+    return o;
+  });
+
+  console.log('\n-- LXXXVII. Le journal rangé par repas + la 2ᵉ collation --');
+  /* ⛔⛔ HORS DU GARDE : ce témoin tourne des DEUX côtés et doit rester vert des deux côtés. */
+  t('⛔⛔ PIÈGE DU RÉORDONNANCEMENT : un repas inconnu retombe sur DÉJEUNER, pas sur collation',
+    R.repliDejeuner===true, '');
+  if(R.absente){ t('⛔ le journal groupé existe', false, 'fonction absente'); }
+  else{
+    t('⭐ il y a DEUX collations (Michel : « certains en prennent le matin et le soir »)',
+      R.aDeuxCollations===true, R.cles);
+    t('⭐ les repas sont dans l\'ordre de la JOURNÉE, pas l\'ordre d\'origine', R.ordreJournee===true, R.cles);
+    t('⛔⛔ REGROUPER NE PERD AUCUN ALIMENT (orphelin d\'un repas inconnu compris)',
+      R.tousPresents===true, '');
+    t('⭐⭐ des sections déroulantes, une par repas utilisé', R.nbSections===6, 'sections='+R.nbSections);
+    t('⭐ les sections suivent l\'ordre de la journée, pas l\'heure de saisie', R.ordreSections===true, '');
+    t('⭐ chaque section porte son total (dîner = 431 + 135 = 566)', R.totalDiner===true, '');
+    t('⛔ une section VIDE ne s\'affiche pas (pas de liste de ce qu\'on n\'a PAS mangé)',
+      R.uneSeule===true && R.pasDeSectionVide===true, '');
+    t('⭐⭐ l\'état plié/déplié SURVIT au re-rendu (sinon un ajout redéplie tout)',
+      R.depliSurvit===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

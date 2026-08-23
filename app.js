@@ -929,15 +929,30 @@ function switchNuTab(tab, btn) {
 }
 
 // ─── JOURNAL ALIMENTAIRE ──────────────────────────────────────
+/* 🍎 DEUX COLLATIONS, ET L'ORDRE EST CELUI DE LA JOURNÉE (23/08/2026) — Michel : *« pouvoir
+   rajouter une collation aussi, il y en a qui prennent une collation le matin et le soir »*.
+   ⭐ L'ORDRE A CHANGÉ EXPRÈS : la liste était `petit-déj · déjeuner · collation · dîner`, elle
+   suit maintenant la journée réelle. C'est cet ordre qui range les sections du Journal — une
+   collation affichée après le dîner se lirait comme une erreur de tri.
+   ⛔ `collation` GARDE SA CLÉ : renommer aurait orphelin toutes les entrées déjà notées, qui
+   seraient tombées dans le repas par défaut sans que rien ne le signale.
+   ⚠️ ET LES LIBELLÉS RESTENT NEUTRES (« Collation 2 », pas « Collation du soir ») : on ne sait
+   pas à quelle heure la personne la prend, et l'étiqueter à sa place serait un faux-précis (R29).
+   Michel dit « matin et soir », d'autres prendront un goûter à 16 h — les deux doivent tenir. */
 const FOOD_MEALS = [
-  {k:'petitdej', ic:'🌅', lbl:'Petit-déj'},
-  {k:'dejeuner', ic:'🍽️', lbl:'Déjeuner'},
-  {k:'collation',ic:'🍎', lbl:'Collation'},
-  {k:'diner',    ic:'🌙', lbl:'Dîner'}
+  {k:'petitdej',  ic:'🌅', lbl:'Petit-déj'},
+  {k:'collation', ic:'🍎', lbl:'Collation'},
+  {k:'dejeuner',  ic:'🍽️', lbl:'Déjeuner'},
+  {k:'collation2',ic:'🥜', lbl:'Collation 2'},
+  {k:'diner',     ic:'🌙', lbl:'Dîner'}
 ];
 let _afMeal='dejeuner';
 const FOOD_AI_FREE_LIMIT=25; // ~ une semaine de notes IA en gratuit (illimité en Premium)
-function _foodMealInfo(k){return FOOD_MEALS.find(m=>m.k===k)||FOOD_MEALS[1];}
+/* ⚠️ LE REPLI EST NOMMÉ, PAS POSITIONNEL (23/08/2026). Il valait `FOOD_MEALS[1]`, qui DÉSIGNAIT
+   le déjeuner — jusqu'à ce que l'ordre passe en ordre de journée : l'index 1 est devenu la
+   collation, et une entrée au repas inconnu serait silencieusement devenue une collation.
+   *Un index qui dépend de l'ordre d'un tableau devient faux le jour où on trie ce tableau* (R14). */
+function _foodMealInfo(k){return FOOD_MEALS.find(m=>m.k===k)||FOOD_MEALS.find(m=>m.k==='dejeuner');}
 function _foodAiLeft(){return Math.max(0,FOOD_AI_FREE_LIMIT-(S.foodAiUses||0));}
 function showFoodWall(){const el=document.getElementById('ov-food-wall');if(el)el.classList.add('open');}
 function closeFoodWall(){const el=document.getElementById('ov-food-wall');if(el)el.classList.remove('open');}
@@ -2025,6 +2040,13 @@ function confirmRemoveFood(ts){
    tout seul à minuit). ⛔ ET ON NE VA JAMAIS DANS LE FUTUR : demain n'a encore rien à montrer,
    et y naviguer donnerait l'impression qu'on peut noter un repas à l'avance. */
 let _journalJour=null;
+/* 📋 L'ÉTAT PLIÉ/DÉPLIÉ DES SECTIONS DU JOURNAL (ft-v968) — il vit ICI et pas dans le DOM, parce
+   que `renderFoodJournal()` reconstruit tout son HTML : sans mémoire, ajouter un aliment
+   redéplierait tout ce que la personne vient de replier. ⛔ En mémoire seulement, pas dans
+   `localStorage` : c'est un confort d'affichage, pas une donnée — le stockage a déjà saturé une
+   fois (29/07) et on n'y écrit pas pour ça. */
+let _journalReplie={};
+function _journalPli(lbl,ouvert){ _journalReplie[lbl]=!ouvert; }
 function _journalJourActif(){ return _journalJour || today(); }
 function journalNav(dir){
   const d=new Date(_journalJourActif()+'T12:00:00');

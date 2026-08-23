@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v967` — fusionnée sur `master` le 22/08.
+- **Version en ligne (live) :** `ft-v968` — fusionnée sur `master` le 22/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,16 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- 📋 **LE JOURNAL RANGÉ PAR REPAS + 2ᵉ COLLATION** (ft-v968) — Michel : *« c'est un peu le foutoir,
+  il faut les ranger et créer des lignes déroulantes pour chaque section »* + *« pouvoir rajouter
+  une collation, il y en a qui en prennent le matin et le soir »*.
+  ⭐⭐ **Le vrai défaut était le TRI, pas l'affichage** : la liste suivait l'heure de **saisie** — on
+  note son petit-déj à midi. C'est l'ordre du **repas** qui commande maintenant.
+  ⭐ **R13** : `<details>` natif comme le menu admin, zéro JS. Total kcal/protéines par section.
+  ⛔ Section vide **masquée** (R24) · état plié **conservé au re-rendu** (sinon un ajout redéplie tout).
+  ⛔⛔ **Piège silencieux évité** : le repli valait `FOOD_MEALS[1]` = *déjeuner* ; réordonner en
+  faisait la *collation*. Repli désormais **nommé** (**R14**), avec témoin.
+  ⚠️ Libellés **neutres** (« Collation 2 », pas « du soir ») — R29.
 - 🟡 **PROCHAINE PRIORITÉ — 5 drapeaux en direct, NON LUS** (22/08 23:37, écrans du Gardien) :
   `promesse_vide : 5` entre le 21 et le 22/08. ⚠️⚠️ **J'avais titré « ft-v923 NE TIENT PAS » —
   c'était faux** : Michel a envoyé la réponse exacte d'un de ces drapeaux, et c'était un **faux

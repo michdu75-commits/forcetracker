@@ -2328,20 +2328,53 @@ function renderFoodJournal(){
     +`<button class="btn btn-bg2" onclick="addFoodVia('main')" style="flex:1;padding:12px 6px;font-size:13px;line-height:1.25;">✏️<br>À la main</button>`
     +`</div>`;
 
-  // Liste des entrées du jour
+  /* 📋 RANGÉ PAR REPAS, EN SECTIONS DÉROULANTES (23/08/2026) — Michel : *« c'est un peu le
+     foutoir là, il faudrait ranger tout ça. Là c'est une liste, il faut les ranger et créer des
+     lignes déroulantes pour chaque section »*.
+     ⭐ IL A RAISON, ET SA CAPTURE LE MONTRE : dîner, collation, déjeuner et petit-déj se
+     suivaient dans le désordre parce que la liste était triée par HEURE DE SAISIE. On note son
+     petit-déjeuner à midi, sa collation le soir — l'ordre de saisie n'est pas l'ordre du repas.
+     ⭐ R13 — MÊME MOTIF QUE LE MENU ADMIN (ft-v955) : `<details>` natif, donc **zéro JS** ; ça
+     tient même si un script tombe, et le clavier/lecteur d'écran le gèrent gratuitement.
+     ⛔ UNE SECTION VIDE NE S'AFFICHE PAS : proposer « Collation 2 — 0 aliment » chaque jour
+     ferait de l'écran une liste de ce qu'on n'a PAS mangé (R24).
+     ⚠️ ET L'ÉTAT PLIÉ/DÉPLIÉ SURVIT AU RE-RENDU (`_journalReplie`) : sans ça, ajouter un aliment
+     redéplierait tout ce que la personne vient de replier — le genre de détail qu'on ne voit
+     qu'à la deuxième action, donc jamais en testant une fois. */
   if(entries.length){
-    html+=`<div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;">`;
-    entries.forEach(e=>{
-      const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(e.meal):{ic:'🍽️',lbl:''};
-      html+=`<div onclick="openEditFood(${e.ts})" style="background:var(--bg2);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;box-shadow:inset 0 0 0 1px var(--sep);cursor:pointer;">`
-        +`<span style="font-size:20px;flex-shrink:0;">${mi.ic}</span>`
-        +`<div style="flex:1;min-width:0;">`
-          +`<div style="font-size:13px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escFood(e.name)}</div>`
-          +`<div style="font-size:11px;color:var(--t3);">${mi.lbl} · P ${e.prot||0} · G ${e.carbs||0} · L ${e.fat||0} · ✎ modifier</div>`
-        +`</div>`
-        +`<span style="font-size:13px;font-weight:700;color:var(--red);flex-shrink:0;">${e.kcal||0}</span>`
-        +`<button onclick="event.stopPropagation();confirmRemoveFood(${e.ts})" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:2px 4px;flex-shrink:0;line-height:1;">✕</button>`
-      +`</div>`;
+    const groupes=(typeof FOOD_MEALS!=='undefined'?FOOD_MEALS:[]).map(m=>({
+      m:m, items:entries.filter(e=>(e.meal||'dejeuner')===m.k)
+    })).filter(g=>g.items.length);
+    /* ⚠️ Un repas INCONNU (clé d'une ancienne version, ou donnée abîmée) ne doit pas disparaître
+       de l'écran en silence : il est rattaché à un dernier groupe plutôt qu'escamoté. */
+    const connues=(typeof FOOD_MEALS!=='undefined'?FOOD_MEALS:[]).map(m=>m.k);
+    const orphelins=entries.filter(e=>connues.indexOf(e.meal||'dejeuner')<0);
+    if(orphelins.length) groupes.push({m:{ic:'🍽️',lbl:'Autres'}, items:orphelins});
+
+    html+=`<div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">`;
+    groupes.forEach(g=>{
+      const kc=g.items.reduce((a,e)=>a+(e.kcal||0),0);
+      const pr=g.items.reduce((a,e)=>a+(e.prot||0),0);
+      const ouvert=!(_journalReplie&&_journalReplie[g.m.lbl]);
+      html+=`<details class="jr-sec" ${ouvert?'open':''} ontoggle="_journalPli('${_escFood(g.m.lbl)}',this.open)" style="background:var(--bg2);border-radius:14px;box-shadow:inset 0 0 0 1px var(--sep);overflow:hidden;">`
+        +`<summary style="list-style:none;cursor:pointer;padding:11px 13px;display:flex;align-items:center;gap:9px;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;">`
+          +`<span style="font-size:18px;flex-shrink:0;">${g.m.ic}</span>`
+          +`<span style="flex:1;min-width:0;font-size:13.5px;font-weight:700;color:var(--t1);">${g.m.lbl}`
+            +`<span style="font-weight:400;color:var(--t3);font-size:11.5px;"> · ${g.items.length} aliment${g.items.length>1?'s':''} · P ${pr}</span></span>`
+          +`<span style="font-size:13.5px;font-weight:800;color:var(--red);flex-shrink:0;">${kc}</span>`
+        +`</summary>`
+        +`<div style="display:flex;flex-direction:column;gap:6px;padding:0 8px 9px;">`;
+      g.items.forEach(e=>{
+        html+=`<div onclick="openEditFood(${e.ts})" style="background:var(--bg3);border-radius:11px;padding:9px 11px;display:flex;align-items:center;gap:9px;cursor:pointer;">`
+          +`<div style="flex:1;min-width:0;">`
+            +`<div style="font-size:13px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escFood(e.name)}</div>`
+            +`<div style="font-size:11px;color:var(--t3);">P ${e.prot||0} · G ${e.carbs||0} · L ${e.fat||0} · ✎ modifier</div>`
+          +`</div>`
+          +`<span style="font-size:13px;font-weight:700;color:var(--red);flex-shrink:0;">${e.kcal||0}</span>`
+          +`<button onclick="event.stopPropagation();confirmRemoveFood(${e.ts})" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:2px 4px;flex-shrink:0;line-height:1;">✕</button>`
+        +`</div>`;
+      });
+      html+=`</div></details>`;
     });
     html+=`</div>`;
   }else{
