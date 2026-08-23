@@ -9965,6 +9965,76 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC LXXXVIII - D'OU VIENT LE CHIFFRE DE PROTEINES (23/08/2026) ==
+   Michel, devant l'onglet Supplements : « sur cette image c'est la portion ou juste le nombre de
+   proteine ? ». LA QUESTION MONTRAIT LE TROU : le champ ne dit pas QUI le remplit. Quand le
+   Journal porte des proteines, le champ reste VIDE (placeholder « 0 ») pendant que la barre
+   affiche le vrai total — deux nombres qui se contredisent. Meme famille que le « 88 g ». */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(()=>{
+    const o={};
+    if(typeof updateProteinBar!=='function'){ o.absente=true; return o; }
+    const src=()=>{const e=document.getElementById('prot-src');return e?{t:e.textContent,vu:e.style.display!=='none'}:null;};
+    o.existe=!!document.getElementById('prot-src');
+    const inp=document.getElementById('prot-eaten');
+
+    /* ① RIEN DE NOTE : on explique l'unite, on ne dit PAS « 0 g lus dans ton Journal ». */
+    S.foodLog=[]; if(inp) inp.value='';
+    updateProteinBar();
+    const a=src()||{t:'',vu:false};
+    o.videVu=a.vu;
+    o.videDitUnite=/grammes de prot/i.test(a.t);
+    o.videPasDeZeroLu=!/0\s*g lus/i.test(a.t);
+
+    /* ② ⭐⭐ LE JOURNAL REMPLIT : la ligne NOMME la source et donne le chiffre. */
+    S.foodLog=[{date:today(),meal:'dejeuner',name:'Poulet',kcal:400,prot:46,carbs:0,fat:8,ts:Date.now()}];
+    if(inp) inp.value='';
+    updateProteinBar();
+    const b2=src()||{t:'',vu:false};
+    o.journalNomme=/Journal/i.test(b2.t) && /46/.test(b2.t);
+    o.journalDitCommentRemplacer=/tape|remplacer/i.test(b2.t);
+    /* ⛔ et la BARRE lit bien le journal (comportement d'avant, ne doit pas bouger). */
+    o.barreLitJournal=(document.getElementById('prot-pct-disp')||{}).textContent!=='0%';
+
+    /* ③ ⭐ SAISIE MANUELLE : elle prime, et la ligne le DIT (sinon on croirait le Journal). */
+    if(inp) inp.value='120';
+    updateProteinBar();
+    const c=src()||{t:'',vu:false};
+    o.manuelNomme=/tap[ée]/i.test(c.t) && !/lus dans ton Journal/i.test(c.t);
+    o.manuelDitCommentRevenir=/efface/i.test(c.t);
+    /* ⛔⛔ LE TEMOIN QUI PROTEGE LE PLUS : la saisie manuelle n'est JAMAIS ecrasee (R29). */
+    o.manuelPasEcrase=(document.getElementById('prot-eaten')||{}).value==='120';
+
+    return o;
+  });
+
+  console.log('\n-- LXXXVIII. D\'où vient le chiffre de protéines --');
+  if(R.absente){ t('⛔ la ligne de provenance existe', false, 'fonction absente'); }
+  else{
+    t('⭐ une ligne dit d\'où vient le chiffre', R.existe===true && R.videVu===true, '');
+    t('⭐⭐ rien de noté : elle explique l\'UNITÉ (grammes de protéines, pas poids d\'aliment)',
+      R.videDitUnite===true, '');
+    t('⛔ ... et ne dit PAS « 0 g lus dans ton Journal » (une journée qui commence n\'est pas un constat)',
+      R.videPasDeZeroLu===true, '');
+    t('⭐⭐ le Journal remplit : la ligne NOMME la source et donne le chiffre (46 g)',
+      R.journalNomme===true, '');
+    t('⭐ ... et dit comment le remplacer', R.journalDitCommentRemplacer===true, '');
+    t('⛔ la barre lit toujours le Journal (comportement de ft-v9xx, inchangé)',
+      R.barreLitJournal===true, '');
+    t('⭐ saisie manuelle : la ligne dit que c\'est TON chiffre, pas celui du Journal',
+      R.manuelNomme===true, '');
+    t('⭐ ... et comment revenir au Journal (effacer le champ)', R.manuelDitCommentRevenir===true, '');
+    t('⛔⛔ la saisie manuelle n\'est JAMAIS écrasée par le Journal (R29)', R.manuelPasEcrase===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
