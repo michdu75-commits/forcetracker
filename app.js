@@ -3813,7 +3813,13 @@ function _bilanMois(ym){
   // Poids de corps : première et dernière pesée du mois
   const pesees=(S.weightLog||[]).filter(w=>w&&w.date&&String(w.date).slice(0,7)===ym)
     .sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-  const bw = pesees.length ? {debut:pesees[0].bw, fin:pesees[pesees.length-1].bw} : null;
+  /* ⛔ LE MÊME `bw` FAUX QU'EN state.js, ET IL N'AVAIT PAS ÉTÉ VU (corrigé ft-v981).
+     La ligne « ⚖️ Poids de corps 85 → 84 kg » du bilan mensuel ne s'affichait donc JAMAIS :
+     `debut`/`fin` valaient `undefined`, et le test d'affichage plus bas échouait en silence.
+     ⚠️ *Une clé fausse ne se trouve jamais toute seule* — quand on en trouve une, il faut
+     chercher ses jumelles (R8). Celle-ci était protégée par sa propre fixture fausse. */
+  const _pKg = w => (w && w.kg!=null) ? w.kg : (w?w.bw:undefined);
+  const bw = pesees.length ? {debut:_pKg(pesees[0]), fin:_pKg(pesees[pesees.length-1])} : null;
   // ⚠️ La comparaison n'a de sens que si le mois précédent existe VRAIMENT dans l'historique.
   // Comparer à un mois où l'app n'était pas encore installée annoncerait « −100 % » à quelqu'un
   // qui n'a rien manqué du tout (R29 : le coût d'un chiffre faux n'est pas nul).

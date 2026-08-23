@@ -405,7 +405,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v980`** (prochaine : `ft-v981`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v981`** (prochaine : `ft-v982`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -415,6 +415,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v981 — 🧮 LES DEUX BUGS DE CALCUL DE L'AUDIT — et les deux tests qui les protégeaient** — Michel, devant la contre-analyse : *« franchement j'en sais rien, il y a énormément d'information… je vois qu'il y a pas mal de problèmes que je n'avais pas vu »*, puis : *« fais tout ce que tu peux, je veux que Milo soit fiable »*.
+
+**⛔⛔ 1ᵉʳ BUG — L'OBJECTIF « ÉQUILIBRE » RECEVAIT +350 KCAL.** La ligne s'écrivait `{…equilibre:0…}[goal]||350`, et **en JavaScript, 0 est considéré comme faux** : `0||350` rend **350**. ⭐ **Mesuré** sur un profil à 2 740 kcal de TDEE : « équilibre » rendait **3 190 kcal — exactement la valeur de « prise de muscle »**. *Quelqu'un qui choisit « maintien » recevait une cible de prise de masse*, +350 kcal par jour, sans que rien ne le signale. Corrigé à **2 840** = TDEE + phase, écart **0**.
+
+**⚠️⚠️ ET LA TABLE ÉTAIT DUPLIQUÉE** — la même ligne, mot pour mot, dans `state.js:820` **et** `screens.js:1963`. *Corriger celle que l'audit nomme aurait laissé l'écran annoncer un écart et le moteur en appliquer un autre* — **deux sources qui se contredisent**, la famille la plus vicieuse du projet. Un seul propriétaire désormais, `goalDeltaKcal()` (**R2**). ⛔ **Le repli à 350 est conservé** pour un objectif inconnu : on teste l'**appartenance** à la table, ce qui distingue *« absent »* de *« vaut zéro »*.
+
+**⛔⛔ 2ᵉ BUG — KATCH LISAIT UNE CLÉ QUI N'EXISTE PAS.** `leanMassRecente()` cherchait `w.bw` alors que **tous** les producteurs écrivent `kg` (`tracking.js` 421 · 668 · 729 · 938 · 1504). ⭐ **Mesuré** : avec `kg` → *mifflin, « aucune mesure de composition corporelle »* ; avec `bw` → *katch*. **La branche « pesée + % de gras → masse maigre » n'a jamais tourné en production.** ⚠️ Ce n'était pas un chiffre faux, c'était **un meilleur calcul jamais activé** — *une donnée morte ne plante pas, elle appauvrit en silence* (**R5**).
+
+**⭐⭐ ET LES DEUX BUGS ÉTAIENT PROTÉGÉS PAR DES FIXTURES FAUSSES.** Les tests écrivaient `bw`, la production écrit `kg` : le témoin était vert **sur une forme de donnée que l'app ne produit pas**. 👉 **Les fixtures ont été corrigées AVANT le code, et elles ont rougi** — *c'est ce rouge qui prouve le bug, pas ma relecture.* **Un test qui n'emploie pas le schéma de la production ne teste rien : il rassure.**
+
+**⭐ TROUVÉ EN VÉRIFIANT L'AUDIT, QUI NE L'AVAIT PAS VU** : un **2ᵉ lecteur cassé**. `_bilanMois()` (`app.js:3816`) lisait `pesees[0].bw` — donc la ligne *« ⚖️ Poids de corps 85 → 84 kg »* du **bilan mensuel ne s'affichait jamais**, protégée elle aussi par sa **propre fixture fausse**. *Une clé fausse ne se trouve jamais toute seule* (**R8**).
+
+**⛔ ET LE REPLI `bw` RESTE LU** : une sauvegarde cloud ancienne peut en porter, et *perdre une mesure en corrigeant un bug serait un mauvais échange*.
+Tests : **parcours 1237/1237** (+10, bloc XCIX), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 8 rouges**, exactement les 8 comportements corrigés — et **il est INSTRUCTIF, pas un « la fonction n'existe pas »** : les détails imprimés *montrent le bug lui-même* (`equilibre: 3190` à côté de `muscle: 3190`, `{"lm":null,"methode":"mifflin"}`, un bilan mensuel `{}`). ⭐ **Et les 3 verts des deux côtés sont les non-régressions** : le repli à 350 pour un objectif inconnu, le repli `bw` pour une vieille sauvegarde, et *aucune masse maigre inventée* sans % de gras — **ils ne devaient pas bouger, ils n'ont pas bougé**. Fichiers : `state.js`, `screens.js`, `app.js`, `tests/calculs/runner.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v981. |
 
 **ft-v980 — ⚡ LE CONTRÔLE D'INTENSITÉ EN CODE — « 3 séries de 5 à 95, c'est impossible »** — Michel : *« comment il a pu déduire que je pouvais faire 3 séries de 5 reps à 95 ? je ne suis pas encore assez fort »*.
 
@@ -729,19 +744,6 @@ Tests : **parcours 1079/1079** (+16, bloc LXXXVI), calculs 266/266, muscles 241/
 
 **⚠️ ET LA QUANTITÉ SE RE-ENREGISTRE (`q`/`u`)** : sans ça, la modification **suivante** repartirait du poids d'origine et **annulerait la précédente en silence** — le genre de défaut qu'on ne voit qu'à la deuxième correction, donc jamais pendant un test écrit d'un seul jet.
 Tests : **parcours 1063/1063** (+8, bloc LXXXV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — `_efApplyGrams` absente. ⚠️ **Peu instructif et autant l'écrire** : les 7 autres témoins vivent sous le garde « fonction absente », donc ils **ne tournent pas** contre l'ancien code. *Un témoin qui ne tourne pas n'est pas un témoin vert.* Fichiers : `app.js`, `clone/app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v962. |
-
-**ft-v961 — 📅 NAVIGUER DANS LE JOURNAL — voir ET modifier un autre jour** — Michel : *« on ne sait pas ce que l'on a mangé dans la journée et on ne peut même pas le modifier de ce fait »*.
-
-**⭐ VÉRIFIÉ AVANT DE CODER (R28)** : le Journal était câblé en dur sur `today()`, sans aucune navigation — impossible de voir **ou** de modifier un autre jour que celui du moment, exactement ce qu'il décrivait.
-
-**⭐ MÊME REPÈRE VISUEL que le calendrier de l'Accueil** (flèches ‹ ›, **R13**) : *Aujourd'hui / Hier / date complète*, navigation illimitée vers le passé. **⛔⛔ Et on ne va jamais dans le futur** : demain n'a rien à montrer, y naviguer donnerait l'impression qu'on peut noter un repas à l'avance — la flèche avant est désactivée dès qu'on est sur aujourd'hui.
-
-**⭐⭐ LE TÉMOIN CENTRAL : un jour passé est MODIFIABLE, pas seulement consultable.** On édite et supprime une entrée d'hier exactement comme aujourd'hui, sans toucher à l'entrée du jour présent.
-
-**⭐ ET AJOUTER UN ALIMENT EN CONSULTANT LE PASSÉ LE DATE SUR CE JOUR-LÀ** (backfill), jamais sur aujourd'hui — sinon la navigation aurait servi à *regarder* mais pas à *corriger un oubli*, ce qui aurait raté la moitié de la demande.
-
-**⚠️ UN JOUR CLOS N'A PLUS DE « restantes »** : le libellé passe en simple comparaison à l'objectif (on ne va pas manger davantage hier), et l'objectif affiché reste explicitement celui **d'aujourd'hui** — recalculer un objectif historique aurait été un faux-précis qu'on n'a pas les moyens de garantir (**R29**).
-Tests : **parcours 1055/1055** (+9, bloc LXXXIV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — fonction absente (peu instructif, toute la brique est neuve). ⚠️ Un test existant (l'ordre des 3 méthodes d'ajout) a dû être **reciblé** : les nouvelles flèches précèdent désormais ces boutons dans le DOM, donc « premier bouton de la page » n'était plus la bonne question — « premier des 3 méthodes » l'est. Fichiers : `app.js`, `screens.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v961. |
 
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.

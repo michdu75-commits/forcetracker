@@ -6,7 +6,25 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v980` — sur la branche, **pas encore fusionnée** (Michel n'a pas donné le feu vert).
+- **Version en ligne (live) :** `ft-v981` — sur la branche, **pas encore fusionnée**.
+- 🔬 **CONTRE-ANALYSE DE L'AUDIT ft-v978** (23/08, artefact « Milo face au code »). Verdict :
+  l'audit est **juste sur ses deux P0**, il **se trompe sur un point de méthode** (le pont
+  blessure n'est pas une régression du retrait du clone — c'est un **essai jamais promu**), et
+  il **manque deux défauts** trouvés en le vérifiant (2ᵉ lecteur `bw` cassé, table d'objectifs
+  dupliquée). ⭐ **Niveau recommandé : 50-200 bêta-testeurs.** Un seul mécanisme l'empêche de
+  monter — la blessure dite en conversation n'atteint pas le Gardien — et **à 200 personnes il
+  se neutralise par un message**, à 20 000 non.
+- 🧮 **LES DEUX BUGS DE CALCUL CORRIGÉS** (ft-v981). « Équilibre » rendait **3 190 kcal, comme
+  « prise de muscle »** (`0||350`) → **2 840**, écart 0. Katch lisait `w.bw` quand la production
+  écrit `kg` → la branche « pesée + % de gras » n'avait **jamais** tourné. ⭐⭐ **Les deux étaient
+  protégés par des fixtures fausses** : corrigées EN PREMIER, elles ont rougi.
+  ⏭️ **CE QUI RESTE, dans l'ordre** : ① **le pont blessure** (`__FT_CLONE__`, coach.js:1869 —
+  et la consigne « nomme la ZONE » est derrière le même drapeau : **les deux moitiés sont
+  éteintes**) · ② **le diagnostic médical détecté mais affiché** (1 seul des 5 contrôles de
+  sortie retire vraiment) · ③ **un point de refus unique** avant « Commencer » (exSwaps, zone
+  active) · ④ le vocabulaire Katch **et son témoin, à corriger d'abord** · ⑤ la mémoire à deux
+  vitesses (`MEMOIRE_LARGE_EMAILS` = 2 comptes — **Milo ne s'évalue pas depuis le compte de
+  Michel**).
 - ⚡ **LE CONTRÔLE D'INTENSITÉ EN CODE** (ft-v980). Michel : *« 3 séries de 5 reps à 95, c'est
   impossible »*. ⭐⭐ **Milo ne l'avait pas déduit — il l'avait lui-même démenti** (88 % du 1RM,
   « je corrige : 90 kg »), et Michel a maintenu. *Le défaut n'est pas son jugement : son contrôle

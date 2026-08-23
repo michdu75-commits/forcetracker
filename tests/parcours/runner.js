@@ -4633,7 +4633,9 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       {date:'2026-07-20',volume:6000,calories:350,exs:[{name:'Développé Couché',sets:[{kg:85,reps:5,done:true,type:'N'}]}]},
       {date:'2026-06-10',volume:4000,calories:200,exs:[{name:'Squat à la Barre',sets:[{kg:90,reps:5,done:true,type:'N'}]}]}];
     S.prs={'Développé Couché':{kg:85,reps:5,rm1:95,date:'2026-07-20'}};
-    S.weightLog=[{date:'2026-07-02',bw:85},{date:'2026-07-29',bw:84}];
+    // ⛔ 2ᵉ FIXTURE FAUSSE (ft-v981) : elle écrivait `bw`, la production écrit `kg`. Le bilan
+    // mensuel n'affichait donc JAMAIS sa ligne de poids, et ce témoin ne le voyait pas.
+    S.weightLog=[{date:'2026-07-02',kg:85},{date:'2026-07-29',kg:84}];
     const b=_bilanMois('2026-07');
     o.nSess=b.nSess; o.series=b.series; o.jours=b.jours; o.kcal=b.kcal;
     o.prs=b.prs.length; o.bw=b.bw; o.comp=b.comp;
@@ -11102,6 +11104,90 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     C.auteurNomme===true, JSON.stringify(C));
   t('⛔⛔ … et le 4ᵉ cas de figure est couvert : une charge assumée en connaissance de cause ne se juge pas',
     C.pasDeJugement===true, JSON.stringify(C));
+
+  await cx.close();
+}
+
+/* ═══ XCIX. LES DEUX BUGS DE CALCUL DE L'AUDIT (ft-v981) ═══════════════════════════════════
+   Michel : « je vois qu'il y a pas mal de problèmes que je n'avais pas vu », puis « fais tout
+   ce que tu peux, je veux que Milo soit fiable ».
+   ⭐⭐ CE BLOC EXISTE PARCE QUE LES DEUX BUGS ÉTAIENT **PROTÉGÉS PAR DES FIXTURES FAUSSES**.
+   Les tests écrivaient `bw`, la production écrit `kg` : le témoin était vert sur une forme de
+   donnée que l'app ne produit pas. *Un test qui n'emploie pas le schéma de la production ne
+   teste rien — il rassure.* Les fixtures ont été corrigées AVANT le code, et elles ont rougi.  */
+{
+  console.log('\n── XCIX. Les deux bugs de calcul ──');
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); pg.on('pageerror',e=>console.log('PAGEERROR',e.message));
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const G=await pg.evaluate(()=>{
+    const o={}; const v={bw:S.bw,h:S.height,a:S.age,g:S.gender,act:S.activityLevel,wt:S.workType,go:S.goal,wl:S.weightLog,bs:S.bodyScans};
+    try{
+      S.bw=80;S.height=178;S.age=30;S.gender='H';S.activityLevel=1.55;S.workType='bureau';
+      S.weightLog=[];S.bodyScans=[];
+      const tdee=Math.round(calcTDEE());
+      o.tdee=tdee;
+      const par={};
+      ['muscle','perte','recomp','force','equilibre','endurance'].forEach(g=>{S.goal=g;par[g]=Math.round(_autoKcalBrut('charge'));});
+      o.par=par;
+      // ⛔⛔ LE BUG : `0||350` rendait 350 — « équilibre » valait exactement « muscle ».
+      o.equilibreNeutre = par.equilibre === tdee+100;
+      o.equilibrePasMuscle = par.equilibre !== par.muscle;
+      // ⛔ et le repli à 350 tient toujours pour un objectif INCONNU (profil abîmé)
+      S.goal='nimportequoi'; o.inconnuGarde350 = Math.round(_autoKcalBrut('charge')) === tdee+100+350;
+      // ⭐ R2 : un seul propriétaire, et l'écran lit LA MÊME fonction
+      o.fonctionPartagee = typeof goalDeltaKcal==='function';
+      o.ecranNaPlusSaCopie = !/equilibre:\s*0[^}]*\}\[goal\]\s*\|\|/.test(String(renderNutrition));
+      o.valeurs = o.fonctionPartagee ? {eq:goalDeltaKcal('equilibre'), mu:goalDeltaKcal('muscle'), inc:goalDeltaKcal('zzz')} : null;
+    } finally { S.bw=v.bw;S.height=v.h;S.age=v.a;S.gender=v.g;S.activityLevel=v.act;S.workType=v.wt;S.goal=v.go;S.weightLog=v.wl;S.bodyScans=v.bs; }
+    return o;
+  });
+  t('⭐⭐ ÉQUILIBRE : l\'objectif « maintien » ne reçoit plus +350 kcal fantômes',
+    G.equilibreNeutre===true, JSON.stringify(G.par)+' tdee='+G.tdee);
+  t('⭐⭐ … et il n\'est plus IDENTIQUE à « prise de muscle »', G.equilibrePasMuscle===true, JSON.stringify(G.par));
+  t('⛔ … mais un objectif INCONNU garde bien son repli à 350 (« absent » ≠ « vaut zéro »)',
+    G.inconnuGarde350===true, JSON.stringify(G));
+  t('⭐ R2 : une seule table d\'objectifs, exposée par `goalDeltaKcal`', G.fonctionPartagee===true, JSON.stringify(G));
+  t('⭐⭐ … et l\'écran Nutrition n\'a plus sa propre copie de la table',
+    G.ecranNaPlusSaCopie===true, JSON.stringify(G));
+  t('… les valeurs sont les bonnes (équilibre 0, muscle 350, inconnu 350)',
+    G.valeurs && G.valeurs.eq===0 && G.valeurs.mu===350 && G.valeurs.inc===350, JSON.stringify(G.valeurs));
+
+  const K=await pg.evaluate(()=>{
+    const o={}; const v={wl:S.weightLog,bs:S.bodyScans,bw:S.bw,h:S.height,a:S.age,g:S.gender,ss:S.sessions};
+    try{
+      S.bw=80;S.height=178;S.age=30;S.gender='H';S.bodyScans=[];
+      const j=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+      // ⭐⭐ LA CLÉ QUE LA PRODUCTION ÉCRIT VRAIMENT
+      S.weightLog=[{date:j(2),kg:80,bf:20}];
+      o.kg={lm:leanMassRecente(), methode:bmrDetail().methode};
+      // ⛔ le repli `bw` reste lu : une vieille sauvegarde cloud ne doit pas perdre sa mesure
+      S.weightLog=[{date:j(2),bw:80,bf:20}];
+      o.bwRepli={lm:!!leanMassRecente(), methode:bmrDetail().methode};
+      // ⛔ sans % de gras, aucune masse maigre inventée
+      S.weightLog=[{date:j(2),kg:80}];
+      o.sansBf=leanMassRecente();
+      // ⭐ le 2e lecteur cassé : la ligne de poids du bilan mensuel
+      const ym=new Date().toISOString().slice(0,7);
+      S.weightLog=[{date:ym+'-02',kg:85},{date:ym+'-27',kg:84}];
+      // `_bilanMois` rend null sans séance dans le mois — il en faut une pour l'atteindre
+      S.sessions=[{date:ym+'-15',volume:5000,calories:300,
+        exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true,type:'N'}]}]}];
+      o.bilan=(typeof _bilanMois==='function')?(_bilanMois(ym)||{}).bw:null;
+    } finally { S.weightLog=v.wl;S.bodyScans=v.bs;S.bw=v.bw;S.height=v.h;S.age=v.a;S.gender=v.g;S.sessions=v.ss; }
+    return o;
+  });
+  t('⭐⭐ KATCH : une pesée avec % de gras (clé `kg`, celle de la PRODUCTION) active enfin Katch',
+    K.kg && K.kg.lm && K.kg.methode==='katch', JSON.stringify(K.kg));
+  t('⛔ … et l\'ancienne clé `bw` reste lue en repli (une sauvegarde ancienne ne perd rien)',
+    K.bwRepli && K.bwRepli.bwRepli!==false && K.bwRepli.methode==='katch', JSON.stringify(K.bwRepli));
+  t('⛔⛔ … mais SANS % de gras, aucune masse maigre n\'est inventée (R29)',
+    K.sansBf===null, JSON.stringify(K.sansBf));
+  t('⭐⭐ BILAN MENSUEL : la ligne « Poids de corps » s\'affiche enfin (2ᵉ lecteur cassé, non vu par l\'audit)',
+    K.bilan && K.bilan.debut===85 && K.bilan.fin===84, JSON.stringify(K.bilan));
 
   await cx.close();
 }

@@ -606,7 +606,18 @@ function leanMassRecente(){
   });
   (S.weightLog||[]).forEach(w=>{
     if(!w||!w.date)return;
-    const bf=Number(w.bf),bw=Number(w.bw);
+    /* ⛔⛔ LA CLÉ EST `kg`, PAS `bw` (corrigé ft-v981) — et le test le disait faux depuis
+       toujours. **Tous** les producteurs écrivent `kg` (tracking.js 421 · 668 · 729 · 938 ·
+       1504), aucun n'écrit `bw` : cette branche ne s'est donc JAMAIS exécutée en production.
+       ⚠️ Ce n'était pas un chiffre faux, c'était un meilleur calcul jamais activé : qui note
+       son poids ET son % de gras restait sur Mifflin au lieu de Katch, sans que rien ne le
+       signale. *Une donnée morte ne plante pas — elle appauvrit en silence* (R5).
+       ⚠️ ET LA FIXTURE DU TEST ÉCRIVAIT `bw`, donc le témoin était vert sur une forme de
+       donnée que l'app ne produit pas. **La fixture a été corrigée AVANT le code, et elle a
+       rougi** — c'est ce rouge qui prouve le bug, pas ma lecture.
+       ⚠️ On garde `bw` en REPLI : une sauvegarde cloud ancienne peut en porter, et perdre une
+       mesure en corrigeant un bug serait un mauvais échange. */
+    const bf=Number(w.bf), bw=Number(w.kg!=null?w.kg:w.bw);
     if(!(isFinite(bf)&&bf>0&&bf<70&&isFinite(bw)&&bw>0))return;
     cand.push({date:w.date,lm:Math.round(bw*(1-bf/100)*10)/10,poids:bw,src:'pesée'});
   });
@@ -809,6 +820,23 @@ function macrosForKcal(kcal){
 // ⚠️ `autoKcal` = la cible RETENUE (plancher compris). `_autoKcalBrut` = le calcul nu, qui
 //    n'existe que pour pouvoir DIRE de combien le plancher a relevé la cible. Une seule table
 //    d'objectifs, lue par les deux — la recopier serait R2 dans sa forme la plus banale.
+/* ⚖️ L'ÉCART CALORIQUE DE CHAQUE OBJECTIF — UN SEUL PROPRIÉTAIRE (ft-v981)
+   ⛔⛔ LE BUG : la ligne s'écrivait `{…, equilibre:0, …}[goal]||350`. En JavaScript, **0 est
+   considéré comme faux** — donc `0||350` rend **350**. Mesuré avant correction, sur un profil
+   à 2 740 kcal de TDEE : l'objectif « équilibre » rendait **3 190 kcal**, c'est-à-dire
+   *exactement* la valeur de « prise de muscle ». Quelqu'un qui choisit « maintien » recevait
+   une cible de prise de masse — **+350 kcal par jour**, sans que rien ne le signale.
+   ⚠️ ET LA TABLE ÉTAIT DUPLIQUÉE : la même ligne, mot pour mot, vivait aussi dans
+   `screens.js` (bandeau Nutrition). Corriger une seule des deux aurait laissé l'écran annoncer
+   un écart et le moteur en appliquer un autre — *deux sources qui se contredisent, la famille
+   de bugs la plus vicieuse du projet* (**R2**). Elle vit donc ici, et ici seulement.
+   ⛔ Le repli à 350 est CONSERVÉ pour un objectif inconnu (profil ancien, donnée abîmée) — on
+   teste l'APPARTENANCE à la table, ce qui distingue « absent » de « vaut zéro ». */
+const _GOAL_DELTA_KCAL={muscle:350,perte:-450,recomp:-250,force:200,equilibre:0,endurance:100};
+function goalDeltaKcal(goal){
+  const g=goal||'muscle';
+  return Object.prototype.hasOwnProperty.call(_GOAL_DELTA_KCAL,g) ? _GOAL_DELTA_KCAL[g] : 350;
+}
 function autoKcal(phase){ return _plancherKcal(_autoKcalBrut(phase)); }
 function _autoKcalBrut(phase){
   const tdee=calcTDEE();
@@ -817,7 +845,7 @@ function _autoKcalBrut(phase){
   const lutealBonus=cp&&cp.phase==='Lutéale'?150:0;
   // recomp (perte de gras + muscle) : léger déficit — le corps pioche dans le gras,
   // les protéines élevées (voir macrosForKcal) protègent le muscle → pas de « skinny fat ».
-  const goalDelta={muscle:350,perte:-450,recomp:-250,force:200,equilibre:0,endurance:100}[goal]||350;
+  const goalDelta=goalDeltaKcal(goal);
   const phaseAdj=phase==='charge'?100:-100;
   return tdee+goalDelta+phaseAdj+lutealBonus;
 }

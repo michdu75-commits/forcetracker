@@ -3380,3 +3380,16 @@ Tests : **parcours 1044/1044** (+3), calculs 266/266, muscles 241/241, croisés 
 
 **⭐ Toujours dans la même fonction, partagée par CIQUAL et les suggestions locales** (R2) — corriger une fois répare les deux recherches.
 Tests : **parcours 1046/1046** (+2), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** exact. Fichiers : `app.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v960. |
+
+**ft-v961 — 📅 NAVIGUER DANS LE JOURNAL — voir ET modifier un autre jour** — Michel : *« on ne sait pas ce que l'on a mangé dans la journée et on ne peut même pas le modifier de ce fait »*.
+
+**⭐ VÉRIFIÉ AVANT DE CODER (R28)** : le Journal était câblé en dur sur `today()`, sans aucune navigation — impossible de voir **ou** de modifier un autre jour que celui du moment, exactement ce qu'il décrivait.
+
+**⭐ MÊME REPÈRE VISUEL que le calendrier de l'Accueil** (flèches ‹ ›, **R13**) : *Aujourd'hui / Hier / date complète*, navigation illimitée vers le passé. **⛔⛔ Et on ne va jamais dans le futur** : demain n'a rien à montrer, y naviguer donnerait l'impression qu'on peut noter un repas à l'avance — la flèche avant est désactivée dès qu'on est sur aujourd'hui.
+
+**⭐⭐ LE TÉMOIN CENTRAL : un jour passé est MODIFIABLE, pas seulement consultable.** On édite et supprime une entrée d'hier exactement comme aujourd'hui, sans toucher à l'entrée du jour présent.
+
+**⭐ ET AJOUTER UN ALIMENT EN CONSULTANT LE PASSÉ LE DATE SUR CE JOUR-LÀ** (backfill), jamais sur aujourd'hui — sinon la navigation aurait servi à *regarder* mais pas à *corriger un oubli*, ce qui aurait raté la moitié de la demande.
+
+**⚠️ UN JOUR CLOS N'A PLUS DE « restantes »** : le libellé passe en simple comparaison à l'objectif (on ne va pas manger davantage hier), et l'objectif affiché reste explicitement celui **d'aujourd'hui** — recalculer un objectif historique aurait été un faux-précis qu'on n'a pas les moyens de garantir (**R29**).
+Tests : **parcours 1055/1055** (+9, bloc LXXXIV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — fonction absente (peu instructif, toute la brique est neuve). ⚠️ Un test existant (l'ordre des 3 méthodes d'ajout) a dû être **reciblé** : les nouvelles flèches précèdent désormais ces boutons dans le DOM, donc « premier bouton de la page » n'était plus la bonne question — « premier des 3 méthodes » l'est. Fichiers : `app.js`, `screens.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v961. |
