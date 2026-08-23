@@ -6,7 +6,16 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v981` — sur la branche, **pas encore fusionnée**.
+- **Version en ligne (live) :** `ft-v982` — sur la branche, **pas encore fusionnée**.
+- 🩹 **LA BLESSURE DITE À MILO ATTEINT ENFIN LE GARDIEN** (ft-v982) — le point n°1 de la
+  contre-analyse. Le chemin était éteint derrière `__FT_CLONE__` : mesuré, Profil Santé `""`,
+  Gardien `[]`. ⚠️ **Ce n'était PAS une régression du retrait du clone** (essai jamais promu).
+  ⭐⭐ **Et en le promouvant on a trouvé pourquoi il était parqué** : `_gardienZonesFromText`
+  détecte des **noms de muscles** — **7 faux positifs sur 9**. Le promouvoir tel quel aurait
+  été *pire* que rien. D'où `_texteDitUneLimitation()` (zone **ET** mot de limitation) → **0
+  faux positif, 0 raté sur 17**. La **2ᵉ moitié** (la consigne « nomme la ZONE ») était éteinte
+  aussi. ⭐ « talon » ajouté — le mot de Michel, que rien n'attrapait. **Leçon montée en R30 :
+  avant de promouvoir un essai parqué, chercher pourquoi il l'était.**
 - 🔬 **CONTRE-ANALYSE DE L'AUDIT ft-v978** (23/08, artefact « Milo face au code »). Verdict :
   l'audit est **juste sur ses deux P0**, il **se trompe sur un point de méthode** (le pont
   blessure n'est pas une régression du retrait du clone — c'est un **essai jamais promu**), et

@@ -1861,12 +1861,30 @@ function _confirmMiloMemory(idx,ok,btn){
       status:ok?'validated':'rejected',source:'conversation',proposedAt:(typeof today==='function'?today():''),
       validatedAt:ok?(typeof today==='function'?today():''):undefined});
   }
-  // 🩹 CLONE : si le trait retenu nomme une ZONE du corps (conséquence d'une blessure/accident), on l'ajoute
-  //    AUSSI au Profil Santé (notes) → le GARDIEN la protège dans TOUTES les séances/programmes, pas juste
-  //    « Milo le sait quand on en parle ». Automatique au « Oui, retiens » (l'accord est déjà donné).
-  //    ⚠️ Domaine délicat : ça alimente le Gardien (qui ADAPTE/protège, jamais ne diagnostique) — Milo reste dans son couloir.
+  /* 🩹 UNE BLESSURE DITE À MILO DOIT ATTEINDRE LE GARDIEN (promu en prod, ft-v982)
+     Si le trait retenu nomme une ZONE du corps **et** décrit une limitation, on l'ajoute AUSSI
+     au Profil Santé (notes) → le **Gardien** la protège dans TOUTES les séances, pas seulement
+     « Milo le sait quand on en parle ». Automatique au « Oui, retiens » : l'accord est déjà donné.
+
+     ⛔⛔ CE CHEMIN ÉTAIT ÉTEINT EN PRODUCTION, derrière `window.__FT_CLONE__` — et le clone a
+     été retiré en ft-v976. Un audit extérieur l'a signalé comme une **régression** ; **c'est
+     faux, et la nuance compte** : c'était un **essai jamais promu**, listé comme tel le jour du
+     retrait. Personne n'avait rien cassé — une décision n'avait jamais été prise.
+
+     ⭐⭐ ET EN LA PRENANT, ON A TROUVÉ POURQUOI. Mesuré sur 9 formes de mémoire anodines :
+     **7 faux positifs**. *« Michel veut prioriser le dos et les épaules »* produisait deux
+     zones fragiles. **Promouvoir le garde tel quel aurait été PIRE que de ne rien faire** :
+     Milo aurait protégé des zones parfaitement saines chez des gens qui n'ont rien.
+     👉 D'où la **2ᵉ condition** (`_texteDitUneLimitation`). Après : **0 faux positif et 0 raté
+     sur 17 phrases**, dont le « point douloureux au talon » de Michel, que rien n'attrapait.
+
+     ⚠️ Domaine délicat, et le couloir ne bouge pas : ça alimente le **Gardien**, qui ADAPTE et
+     protège — il ne diagnostique jamais (Constitution P13/P22). Le mode d'échec choisi est la
+     SUR-protection, jamais la sous-protection : *une adaptation inutile coûte une séance un peu
+     prudente ; une protection manquante coûte une blessure* (R29). */
   var _toHealth=false;
-  if(ok && (typeof window!=='undefined'&&window.__FT_CLONE__) && typeof _gardienZonesFromText==='function'){
+  if(ok && typeof _gardienZonesFromText==='function'
+        && typeof _texteDitUneLimitation==='function' && _texteDitUneLimitation(t)){
     try{
       if(_gardienZonesFromText(t).length){
         if(!S.healthProfile||typeof S.healthProfile!=='object')S.healthProfile={injuries:[],conditions:[],notes:''};
@@ -2258,7 +2276,10 @@ function _gardienZonesFromText(t){
   if(/coude|epicondyl|tennis elbow/.test(s))out.push('coude');
   if(/poignet|canal carpien/.test(s))out.push('poignet');
   if(/hanche|psoas|bassin/.test(s))out.push('hanche');
-  if(/cheville|achille/.test(s))out.push('cheville');
+  // ⭐ « talon » ajouté ft-v982 — c'est le mot que Michel emploie pour sa propre gêne
+  // (« un point douloureux au talon qui réapparaît »), et il n'était couvert par rien.
+  // Profite aux DEUX lecteurs : le Profil Santé comme le pont conversationnel.
+  if(/cheville|achille|talon/.test(s))out.push('cheville');
   if(/trapeze/.test(s))out.push('trapeze');
   if(/pectora|\bpec\b/.test(s))out.push('pectoraux');
   if(/abdo|gainage|\bcore\b/.test(s))out.push('abdos');
@@ -2273,6 +2294,40 @@ function _gardienZonesFromText(t){
   if(/avant.?bras|forearm/.test(s))out.push('avantbras');
   return out;
 }
+/* ═══ EST-CE QU'ON PARLE D'UNE LIMITATION, OU JUSTE D'UN MUSCLE ? (ft-v982) ══════════════
+   ⛔⛔ LA MESURE QUI A FAIT ÉCRIRE CETTE FONCTION. `_gardienZonesFromText` détecte des NOMS
+   DE MUSCLES, pas des blessures. Joué sur 9 formes de mémoire parfaitement anodines :
+   **7 faux positifs**. *« Michel veut prioriser le dos et les épaules »* rendait **épaule +
+   dorsaux**, *« Travaille les biceps le jeudi »* rendait **biceps**, *« Veut du gainage à
+   chaque séance »* rendait **abdos**.
+
+   ⭐⭐ C'EST DONC ÇA QUE LE DRAPEAU `__FT_CLONE__` PROTÉGEAIT — et c'est ce que la
+   contre-analyse de l'audit avait manqué, moi compris. L'essai n'était pas « oublié derrière
+   un garde » : il était **incomplet**. Le promouvoir tel quel aurait fait protéger par le
+   Gardien des zones parfaitement saines, et appauvri les séances de gens qui n'ont rien.
+   *Un garde-fou qui se déclenche 7 fois sur 9 à tort ne survit pas à son premier mois* (R19).
+
+   👉 IL FAUT DEUX CHOSES, PAS UNE : une **zone** nommée **et** un mot qui dit la
+   **limitation**. Même forme que le `_noteHonoree` de ft-v967 — *un critère observable à deux
+   conditions vaut mieux qu'une devinette*.
+
+   ⛔ ET ELLE VIT ICI, PAS DANS `_gardienZonesFromText` (R2 — une fonction, un rôle). Cette
+   dernière répond à *« quelles zones sont nommées ? »*, et son autre lecteur — les **notes du
+   Profil Santé** — ne contient QUE des blessures par construction : y ajouter ce filtre
+   ferait rater de vraies limitations déjà déclarées à la main.                              */
+const _MOTS_LIMITATION = new RegExp([
+  'douleur','douloureu','mal a','mal au','mal aux','fait mal','souffr',
+  'bless','fragil','sensible','gene\\b','genant','limit','eviter','menag','proteg',
+  'tendinite','hernie','sciatique','lumbago','arthrose','entorse','dechirure','claquage',
+  'elongation','contracture','inflammation','luxation','fracture','cass','foul',
+  'opere','operation','prothese','reeduc','kine','convalescen','rechute','chronique',
+  'raide','coince','bloque','pince','instab','faibl'
+].join('|'),'i');
+function _texteDitUneLimitation(t){
+  const s=(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+  return _MOTS_LIMITATION.test(s);
+}
+
 /* Les ZONES FRAGILES de la personne — une seule fonction, DEUX lecteurs : le bloc de
    règles du Gardien (en tête du contexte) et la note sur la séance du jour (rangée en
    bas depuis le 18/08). Les faire calculer deux fois, c'est se garantir qu'ils
@@ -2776,7 +2831,14 @@ RETENIR DURABLEMENT CE QUE TU APPRENDS (mémoire — avec l'accord de la personn
 - N'INVENTE jamais : ne propose de retenir que ce que la personne a réellement dit ou clairement confirmé.
 - ⛔⛔ NE PROMETS JAMAIS DE MÉMOIRE EN TOUTES LETTRES. « je retiens », « je note ça », « je m'en souviendrai », « la prochaine fois j'y penserai » sont INTERDITS sans le bloc « retiens » dans LE MÊME message : sans lui, RIEN n'est enregistré, et la personne compte sur une promesse fausse. Sinon, dis ce que tu comprends et ENCHAÎNE sur l'action, sans rien promettre pour plus tard.
 - ⛔ Le trait retenu = EXACTEMENT ce qu'elle a dit, sans le moindre détail ajouté (même règle que « n'ajoute jamais un détail » plus haut) : un détail qui manque se DEMANDE, il n'entre pas en mémoire tant qu'elle ne l'a pas confirmé.
-${(typeof window!=='undefined'&&window.__FT_CLONE__)?`- BLESSURE / ACCIDENT / SANTÉ : retiens la CONSÉQUENCE DURABLE (la ZONE touchée + la limitation), PAS l'anecdote — ex. « épaule fragile / limitée » plutôt que « accident de moto il y a X ans » (l'événement seul n'aide pas à coacher, et il ne protège rien). Nomme toujours la ZONE (épaule, genou, dos, poignet, cou…) : c'est ce qui permet de PROTÉGER la personne dans ses séances. Et une fois noté, ENCHAÎNE : tiens-en compte tout de suite (protège la zone, adapte les mouvements) — ne t'arrête pas à « c'est noté ».
+${/* ⭐⭐ LA SECONDE MOITIÉ DU MÊME MÉCANISME (promue ft-v982). Cette consigne vivait derrière
+      le MÊME garde __FT_CLONE__ que le pont mémoire→santé : LES DEUX MOITIÉS étaient éteintes
+      en production. Sans elle, Milo n'a même pas l'instruction de NOMMER la zone — et le pont,
+      lui, ne peut extraire que ce qui est écrit. Un garde-fou dont la moitié amont est
+      débranchée n'est pas à moitié utile : il est inutile.
+      ⚠️ Gardée en « true? » plutôt que supprimée : la promotion se lit dans le diff, et se
+      défait en un mot si elle se révèle mauvaise (R30 — un retrait comme un ajout s'écrit). */
+  true?`- BLESSURE / ACCIDENT / SANTÉ : retiens la CONSÉQUENCE DURABLE (la ZONE touchée + la limitation), PAS l'anecdote — ex. « épaule fragile / limitée » plutôt que le récit de l'événement et sa date (l'anecdote seule n'aide pas à coacher, et elle ne protège rien). Nomme toujours la ZONE (épaule, genou, dos, poignet, cou…) : c'est ce qui permet de PROTÉGER la personne dans ses séances. Et une fois noté, ENCHAÎNE : tiens-en compte tout de suite (protège la zone, adapte les mouvements) — ne t'arrête pas à « c'est noté ».
 `:''}
 STRUCTURER UN PROGRAMME — EXERCICES « ANCRE » vs « ACCESSOIRE » (comment un vrai coach organise une séance) :
 - Un ANCRE = grand mouvement polyarticulaire de BASE qui PORTE la progression : squat, soulevé de terre / charnière de hanche, développé couché, développé militaire, rowing, traction / tirage. On le place en PREMIER (reposé), plus lourd, sur peu de reps, et on SUIT sa progression de charge dans le temps. Peu d'ancres par séance (souvent 1 à 3).

@@ -405,7 +405,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v981`** (prochaine : `ft-v982`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v982`** (prochaine : `ft-v983`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -415,6 +415,27 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v982 — 🩹 UNE BLESSURE DITE À MILO ATTEINT ENFIN LE GARDIEN — et l'essai était parqué pour une bonne raison** — Michel : *« fais tout ce que tu peux, je veux que Milo soit fiable »*. C'était le point n°1 de la contre-analyse.
+
+**⛔⛔ LE CHEMIN ÉTAIT ÉTEINT EN PRODUCTION**, derrière `window.__FT_CLONE__`. Une personne pouvait dire sa blessure à Milo, l'accepter en mémoire, **et le Gardien déterministe n'en savait rien**. ⭐ **Mesuré contre l'ancien code** : Profil Santé `""`, Gardien `[]`, consigne absente du contexte. *C'est exactement la question que Michel avait posée — la réponse était oui.*
+
+**⚠️ L'AUDIT EXTÉRIEUR Y VOYAIT UNE RÉGRESSION du retrait du clone. C'est faux, et la nuance compte** : essai **jamais promu**, listé comme tel le jour même en ft-v976. *Personne n'avait rien cassé — une décision n'avait jamais été prise.*
+
+**⭐⭐ ET EN LA PRENANT, ON A TROUVÉ POURQUOI L'ESSAI ÉTAIT PARQUÉ.** `_gardienZonesFromText` détecte des **NOMS DE MUSCLES**, pas des blessures. Mesuré sur 9 formes de mémoire parfaitement anodines : **7 faux positifs**. *« Michel veut prioriser le dos et les épaules »* produisait **deux zones fragiles** ; *« Travaille les biceps le jeudi »* en produisait une. **Le promouvoir tel quel aurait été PIRE que de ne rien faire** — Milo se serait mis à protéger des zones parfaitement saines, et à appauvrir les séances de gens qui n'ont rien.
+
+**⛔ L'ESSAI N'ÉTAIT PAS OUBLIÉ, IL ÉTAIT INCOMPLET** — il lui manquait la moitié qui distingue *« parler de son dos »* de *« avoir mal au dos »*. 👉 D'où `_texteDitUneLimitation()` : **il faut DEUX choses**, une zone **et** un mot de limitation. Après : **0 faux positif et 0 raté sur 17 phrases**. *(C'est la forme du `_noteHonoree` de ft-v967 — un critère observable à deux conditions vaut mieux qu'une devinette.)*
+
+**⭐ AU PASSAGE, « TALON » EST AJOUTÉ à la zone cheville** : c'est le mot que Michel emploie pour sa propre gêne (*« un point douloureux au talon qui réapparaît »*), et **rien ne l'attrapait**.
+
+**⭐⭐ ET LA SECONDE MOITIÉ ÉTAIT ÉTEINTE AUSSI** : la consigne du prompt *« nomme toujours la ZONE »* vivait derrière le **même** garde. Sans elle, Milo ne nomme pas la zone — et le pont ne peut lire que ce qui est écrit. *Un garde-fou dont la moitié amont est débranchée n'est pas à moitié utile : il est inutile.*
+
+**⛔ R2 — LE FILTRE VIT DANS LE PONT, PAS DANS `_gardienZonesFromText`** : l'autre lecteur de cette fonction, les **notes du Profil Santé**, ne contient QUE des blessures par construction. Y mettre le filtre ferait **rater de vraies limitations déjà déclarées à la main**. ⚠️ Et le mode d'échec choisi est la **sur-protection**, jamais la sous-protection : *une adaptation inutile coûte une séance prudente, une protection manquante coûte une blessure* (**R29**).
+
+**⭐ UN TÉMOIN EXISTANT A ROUGI, ET IL AVAIT RAISON** : en activant la consigne, la règle *« accident de moto »* se retrouvait écrite **deux fois** dans le prompt. **Exemple dédoublonné plutôt que témoin désarmé** — le prompt y gagne (**R20**).
+
+**👉 ET LA LEÇON MONTE EN R30, dans le sens inverse** : *avant de PROMOUVOIR un essai parqué, chercher pourquoi il était parqué.* Un garde d'essai est une **question non résolue**, pas un interrupteur — le retirer sans retrouver la question, c'est répondre au hasard.
+Tests : **parcours 1249/1249** (+12, bloc C), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 8 rouges**, et il est **instructif** — les détails imprimés *sont* le trou : Profil Santé `""`, Gardien `[]`, `{"consigne":false,"zone":false}`. ⚠️ **Et 2 des 4 verts sont de FAUX VERTS, autant l'écrire** : *« une préférence n'ajoute rien à la santé »* et *« un Non n'alimente jamais la santé »* étaient verts avant **parce que rien n'ajoutait jamais rien**. Les 2 vrais verts sont ceux du registre, qui ne devait pas bouger. Fichiers : `coach.js`, `tests/parcours/runner.js`, `docs/REGLES-ARCHITECTURE.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v982. |
 
 **ft-v981 — 🧮 LES DEUX BUGS DE CALCUL DE L'AUDIT — et les deux tests qui les protégeaient** — Michel, devant la contre-analyse : *« franchement j'en sais rien, il y a énormément d'information… je vois qu'il y a pas mal de problèmes que je n'avais pas vu »*, puis : *« fais tout ce que tu peux, je veux que Milo soit fiable »*.
 
@@ -727,23 +748,6 @@ Tests : **parcours 1084/1084** (+5, bloc LXXXVI), calculs 266/266, muscles 241/2
 
 **⚠️ Le plafond de 400 reste tel quel, et c'est une décision mesurée** (**R30**) : il ne fausse qu'*« eau »* (*robinet* au lieu de *coco*), et les deux se valent — le relever échangerait un résultat correct contre un autre.
 Tests : **parcours 1079/1079** (+16, bloc LXXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 8 rouges**, exactement les 8 comportements changés. ⭐ **Et cette fois les 16 témoins se sont TOUS exécutés** — mon 1ᵉʳ jet les mettait derrière un garde « `_afRang` absente », donc ils **ne tournaient pas** contre l'ancien code et le contrôle ne disait qu'une chose : *« la fonction n'existe pas »*. Le garde ne porte plus que sur `_ciqualChercher`, qui existe **des deux côtés**. *Un témoin qui ne tourne pas n'est pas un témoin vert* — 3ᵉ fois que ça se paie (ft-v949, ft-v953). ⚠️ Les **8 verts des deux côtés sont ici les plus importants** : l'accent, « pâtes », « pois », « pâté », œuf/riz/poulet, la courge et le singulier du journal **devaient rester intacts** — *une correction de recherche se juge à ce qui n'a PAS bougé*. Fichiers : `app.js`, `clone/app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v963. |
-
-**ft-v962 — ⚖️ MODIFIER LE POIDS D'UNE ENTRÉE — au lieu de recalculer les 4 macros à la main** — Michel, devant un « Oeuf cru » dans son journal : *« ya œuf cru (lol) pas cuit. Et on ne peut pas modifier le poids »*.
-
-**⭐⭐ DEUX QUESTIONS DANS LA MÊME PHRASE, ET UNE SEULE EST UN DÉFAUT** — vérifié avant de coder (**R28**), pas supposé.
-
-**⚠️ ① L'ŒUF CRU N'EST PAS UN TROU DE LA BASE.** Mesuré : quand on tape « œuf », **« Oeuf dur » sort PREMIER**, avant « Oeuf cru » — et *poché*, *à la coque*, *brouillé*, *au plat* sont là aussi (141 résultats). **Il a pris le 2ᵉ de la liste.** ⭐ **Et l'écart est minuscule sur un œuf entier** : 140 contre 134 kcal/100 g, soit **12 kcal** sur ses 200 g. *Le cru/cuit compte énormément pour les féculents (×3 sur des pâtes, d'où l'avertissement de ft-v956), presque pas pour un œuf.* **On ne corrige donc RIEN côté base : la donnée était là, le choix aussi.** *Deuxième fois cette semaine qu'un « ça manque » se dissout en rejouant le cas exact — après le « poulet » de ft-v959.*
-
-**⛔⛔ ② LE POIDS, LUI, ÉTAIT UN VRAI DÉFAUT.** La modale « Modifier l'aliment » ne montrait que les **4 macros brutes** : pour passer de 200 à 150 g, il fallait recalculer kcal, protéines, glucides **et** lipides soi-même — sur un écran qui sait pourtant faire exactement ce calcul. *Quelqu'un qui se pesait pour la première fois de sa vie le matin même n'allait pas faire quatre règles de trois pour corriger une portion.*
-
-**⭐ R13 — ON NE RÉINVENTE RIEN.** `_bcApplyGrams()` fait déjà ce calcul à l'**AJOUT** (scan, CIQUAL, recherche) depuis ft-v956/957. On branche la **même** logique sur `e.per100`, le pour-100 g que `_provFood` enregistre depuis la **brique 0** (ft-v907).
-
-**⭐⭐ ET C'EST R4 QUI PAYE, AVEC DEUX SEMAINES DE RETARD** : ce `per100` était **stocké sur chaque entrée** et n'atteignait **aucun écran**. *Il existait, il ne servait à rien* — la donnée morte que R5 demande justement de chercher à l'envers. Il n'y avait rien à collecter, seulement à brancher.
-
-**⛔⛔ LE TÉMOIN CENTRAL EST UN REFUS : le champ n'apparaît QUE si `per100` existe.** Une entrée tapée à la main n'a pas de pour-100 g — en fabriquer un supposerait de deviner à quel poids correspondent ses 80 kcal, et ce serait un **faux-précis** (**R29**). *Sa modale ne bouge pas d'un pixel*, et deux témoins le vérifient : pas de champ, et **aucune quantité inventée** dans l'entrée sauvegardée.
-
-**⚠️ ET LA QUANTITÉ SE RE-ENREGISTRE (`q`/`u`)** : sans ça, la modification **suivante** repartirait du poids d'origine et **annulerait la précédente en silence** — le genre de défaut qu'on ne voit qu'à la deuxième correction, donc jamais pendant un test écrit d'un seul jet.
-Tests : **parcours 1063/1063** (+8, bloc LXXXV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — `_efApplyGrams` absente. ⚠️ **Peu instructif et autant l'écrire** : les 7 autres témoins vivent sous le garde « fonction absente », donc ils **ne tournent pas** contre l'ancien code. *Un témoin qui ne tourne pas n'est pas un témoin vert.* Fichiers : `app.js`, `clone/app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v962. |
 
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.

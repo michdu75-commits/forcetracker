@@ -11192,6 +11192,111 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* ═══ C. UNE BLESSURE DITE À MILO ATTEINT LE GARDIEN (ft-v982) ═════════════════════════════
+   Michel : « je veux que Milo soit fiable ». C'est le point n°1 de la contre-analyse.
+   ⛔⛔ LE CHEMIN ÉTAIT ÉTEINT EN PROD derrière `__FT_CLONE__`, et l'audit y voyait une
+   régression du retrait du clone. **C'est faux** : essai jamais promu, listé comme tel.
+   ⭐⭐ ET EN LE PROMOUVANT ON A TROUVÉ POURQUOI IL ÉTAIT PARQUÉ : `_gardienZonesFromText`
+   détecte des NOMS DE MUSCLES. Mesuré, **7 faux positifs sur 9** phrases anodines.
+   Les 17 phrases mesurées ce soir sont figées ici (R17) — c'est le seul moyen d'empêcher
+   qu'une future retouche du motif ré-ouvre l'un ou l'autre côté.                             */
+{
+  console.log('\n── C. La blessure dite à Milo atteint le Gardien ──');
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); pg.on('pageerror',e=>console.log('PAGEERROR',e.message));
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const Z=await pg.evaluate(()=>{
+    const o={};
+    o.existe = typeof _texteDitUneLimitation==='function';
+    if(!o.existe) return o;
+    const zone=t=>(_texteDitUneLimitation(t)?_gardienZonesFromText(t):[]);
+    const ANODINES=[
+      "Michel veut prioriser le dos et les épaules ce trimestre",
+      "Préfère le développé couché au pec deck",
+      "Fait ses abdos en fin de séance, jamais avant",
+      "Travaille les biceps le jeudi",
+      "N'aime pas les squats, préfère la presse pour les cuisses",
+      "Objectif : gagner du volume sur les pectoraux",
+      "S'entraîne avec une coach le mardi",
+      "Fait 8 min d'elliptique en échauffement",
+      "Veut du gainage à chaque séance"];
+    const VRAIES=[
+      "Épaule droite fragile, limitée en développé au-dessus de la tête",
+      "Douleur au genou droit depuis une vieille blessure de foot",
+      "Hernie discale L5-S1, éviter les charges axiales",
+      "Tendinite au coude gauche, en cours de rééducation",
+      "Point douloureux au talon qui réapparaît après les séances",
+      "Opéré de la coiffe des rotateurs il y a deux ans",
+      "Mal au bas du dos quand il fait du soulevé de terre lourd",
+      "Poignet cassé en 2019, gêne sur les prises en pronation"];
+    o.fauxPositifs = ANODINES.filter(t=>zone(t).length).map(t=>t.slice(0,34)+'…');
+    o.ratees       = VRAIES.filter(t=>!zone(t).length).map(t=>t.slice(0,34)+'…');
+    // ⭐ le talon de Michel, que RIEN n'attrapait avant
+    o.talon = _gardienZonesFromText('point douloureux au talon').indexOf('cheville')>=0;
+    // ⛔ la fonction de zones, elle, ne DOIT PAS filtrer : le Profil Santé ne contient que
+    //    des blessures par construction (R2 — une fonction, un rôle)
+    o.zonesNeFiltrePas = _gardienZonesFromText('dos').indexOf('dorsaux')>=0;
+    return o;
+  });
+  t('BLESSURE : le 2ᵉ critère existe (`_texteDitUneLimitation`)', Z.existe===true, JSON.stringify(Z));
+  t('⛔⛔ BLESSURE : 0 faux positif sur 9 préférences anodines (7 avant)',
+    Z.fauxPositifs && Z.fauxPositifs.length===0, JSON.stringify(Z.fauxPositifs));
+  t('⭐⭐ BLESSURE : 0 vraie limitation ratée sur 8', Z.ratees && Z.ratees.length===0, JSON.stringify(Z.ratees));
+  t('⭐ BLESSURE : le « point douloureux au talon » de Michel est enfin attrapé', Z.talon===true, JSON.stringify(Z));
+  t('⛔ R2 : `_gardienZonesFromText` ne filtre PAS — le Profil Santé ne contient que des blessures',
+    Z.zonesNeFiltrePas===true, JSON.stringify(Z));
+
+  /* ⭐⭐ LE TÉMOIN CENTRAL : le chemin COMPLET, de la mémoire acceptée jusqu'à `_gardienZones()`.
+     C'est la question exacte de Michel — « Milo peut-il sembler l'avoir mémorisée sans que le
+     Gardien en tienne compte ? ». Ici on va jusqu'au bout, pas jusqu'au registre. */
+  const P=await pg.evaluate(()=>{
+    const o={}; const v={hp:S.healthProfile, rg:S.registre, pm:window._pendingMiloMemory};
+    try{
+      S.healthProfile={injuries:[],conditions:[],notes:''};
+      S.registre={facts:{},observations:[],updatedAt:''};
+      window._pendingMiloMemory=["Épaule droite fragile depuis une chute, limitée au-dessus de la tête",
+                                 "Veut prioriser le dos ce trimestre"];
+      _confirmMiloMemory(0,true,null);
+      o.notes = (S.healthProfile.notes||'');
+      o.dansGardien = Object.keys((typeof _gardienZones==='function')?_gardienZones():{});
+      o.registre = (S.registre.observations||[]).length;
+      // ⛔ et la préférence anodine ne doit RIEN ajouter à la santé
+      const avant=S.healthProfile.notes;
+      _confirmMiloMemory(1,true,null);
+      o.anodineNAjouteRien = S.healthProfile.notes===avant;
+      o.registreApres = (S.registre.observations||[]).length;
+      // ⛔ « Non, oublie » ne doit jamais alimenter la santé
+      S.healthProfile.notes='';
+      window._pendingMiloMemory=["Genou douloureux, éviter les fentes"];
+      _confirmMiloMemory(0,false,null);
+      o.refusNAjouteRien = !S.healthProfile.notes;
+    } finally { S.healthProfile=v.hp; S.registre=v.rg; window._pendingMiloMemory=v.pm; }
+    return o;
+  });
+  t('⭐⭐ CHEMIN COMPLET : une blessure acceptée arrive dans le Profil Santé',
+    /paule droite fragile/.test(P.notes||''), JSON.stringify(P.notes));
+  t('⭐⭐ … et le GARDIEN la voit — c\'est la question exacte de Michel',
+    (P.dansGardien||[]).indexOf('epaule')>=0, JSON.stringify(P.dansGardien));
+  t('… sans cesser d\'alimenter le registre (les deux, pas l\'un OU l\'autre)', P.registre===1, JSON.stringify(P));
+  t('⛔⛔ … une PRÉFÉRENCE acceptée n\'ajoute RIEN à la santé (le défaut qui a parqué l\'essai)',
+    P.anodineNAjouteRien===true, JSON.stringify(P));
+  t('… mais elle entre bien au registre (elle n\'est pas perdue)', P.registreApres===2, JSON.stringify(P));
+  t('⛔ … et un « Non, oublie » n\'alimente jamais la santé', P.refusNAjouteRien===true, JSON.stringify(P));
+
+  /* ⭐ LA SECONDE MOITIÉ : sans la consigne, Milo ne NOMME pas la zone, et le pont n'a rien à lire. */
+  const C2=await pg.evaluate(()=>{
+    const ctx=buildCoachContext('test');
+    return {consigne:/BLESSURE \/ ACCIDENT \/ SANT/.test(ctx), zone:/Nomme toujours la ZONE/.test(ctx)};
+  });
+  t('⭐⭐ … et la CONSIGNE « nomme toujours la ZONE » est enfin dans le contexte (2ᵉ moitié, éteinte elle aussi)',
+    C2.consigne===true && C2.zone===true, JSON.stringify(C2));
+
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
