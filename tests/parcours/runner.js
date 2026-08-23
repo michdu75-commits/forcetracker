@@ -10752,6 +10752,85 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC XCVI - LES TROIS CORRECTIONS DE L'AUDIT DU 23/08 (ft-v978) ==
+   Michel, apres lecture du rapport : « vas-y fais les 3 corrections de vingt minutes ».
+   Le dossier d'audit exigeait de NE RIEN CODER avant verification ; les trois sujets ci-dessous
+   ont ete confirmes dans le code, et pour le PDF, MESURES dans un vrai navigateur. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const fs3=require('fs');
+  const SRC={};
+  ['app.js','coach.js','log.js','setup.js','screens.js','tracking.js'].forEach(f=>{
+    SRC[f]=fs3.readFileSync(ROOT+'/'+f,'utf8');
+  });
+  /* ⚠️ Les COMMENTAIRES sont retires avant de chercher : ils citent les phrases corrigees, et
+     un temoin qui accuse un commentaire designe le mauvais coupable (4 fois cette semaine). */
+  const sansCom=t=>t.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+
+  // ── ① LA PHRASE « ON PERD DU MUSCLE AVANT DU GRAS » ────────────────────────
+  console.log('\n═══ BLOC XCVI. Les trois corrections de l\'audit ═══');
+  const SC=sansCom(SRC['screens.js']);
+  t('⛔⛔ LA PHRASE FAUSSE A DISPARU : le corps n\'a pas d\'interrupteur graisse→muscle',
+    SC.indexOf('muscle avant du gras')<0, 'la phrase est encore la');
+  t('⭐ ... remplacee par le RISQUE, qui est ce qui est vrai',
+    /difficile de garder ton muscle/.test(SC), 'formulation de remplacement absente');
+  t('⛔ ... et AUCUN seuil invente en echange (R29 : on ne remplace pas un faux par un faux)',
+    !/sous \d+ ?kcal|en dessous de \d+ ?kcal/i.test(SC), 'un seuil chiffre est apparu');
+
+  // ── ② LE TITRE DANS LES PARTAGES DE FICHIER ────────────────────────────────
+  let avecTitre=[], sansTitre=0, liensAvecTitre=0;
+  Object.keys(SRC).forEach(f=>{
+    const t2=sansCom(SRC[f]);
+    (t2.match(/navigator\.share\(\{[^)]*\)/g)||[]).forEach(ap=>{
+      const fichier=/files\s*:/.test(ap), titre=/title\s*:/.test(ap);
+      if(fichier&&titre) avecTitre.push(f);
+      else if(fichier) sansTitre++;
+      else if(titre) liensAvecTitre++;
+    });
+  });
+  t('⛔⛔ AUCUN partage de FICHIER ne passe plus de titre (« Conseil de Milo » etait ce titre)',
+    avecTitre.length===0, 'restent : '+avecTitre.join(', '));
+  t('⭐⭐ ... et la correction est posee PARTOUT, pas d\'un seul cote (la lecon de la semaine)',
+    sansTitre>=9, sansTitre+' partage(s) de fichier sans titre');
+  t('⛔ ... tandis que les partages de LIEN gardent le leur (c\'est la qu\'un titre sert)',
+    liensAvecTitre>=3, liensAvecTitre+' partage(s) de lien avec titre');
+  /* ⭐ Ce qui n'a PAS bouge : le contenu n'a jamais ete en cause. Mesure avant correction —
+     81/81, 323/345, 9769/9769 caracteres. On le re-verifie ici pour que ca reste vrai. */
+  const T=await pg.evaluate(()=>{
+    if(typeof _coachPdfText!=='function')return null;
+    const r=_coachPdfText('Garde 3 series de 5 repetitions a 95 kg cette semaine.');
+    return {n:r.length, vide:!r.trim()};
+  });
+  t('⭐ ... et l\'extraction du texte du PDF ne perd toujours rien (elle n\'etait pas en cause)',
+    T && T.vide===false && T.n>=50, JSON.stringify(T));
+
+  // ── ③ LE MARQUEUR « VALEUR DEDUITE » ───────────────────────────────────────
+  const TR=sansCom(SRC['tracking.js']);
+  t('⛔⛔ LE MARQUEUR « masse maigre DEDUITE » N\'EST PLUS JETE a la lecture',
+    !/delete\s+lu\.champs\._maigreDeduite/.test(TR), 'le delete est encore la');
+  const R3=await pg.evaluate(()=>{
+    const o={};
+    o.declare = typeof _bsLmDeduite!=='undefined';
+    if(!o.declare) return o;
+    // le drapeau se REND a chaque ouverture (R15), puis se pose depuis la lecture
+    _bsLmDeduite=true;
+    o.rendu = (function(){ _bsSource='manuel'; _bsLmDeduite=false; return _bsLmDeduite===false; })();
+    return o;
+  });
+  t('⭐ le drapeau existe et se rend a chaque ouverture (R15)',
+    R3.declare===true && R3.rendu===true, JSON.stringify(R3));
+  t('⭐⭐ ... et il est ENREGISTRE avec le bilan, a cote de sa provenance (R33)',
+    /_bsLmDeduite\s*&&\s*obj\.leanMass\s*!=\s*null\)\s*obj\.lmDeduite\s*=\s*true/.test(TR),
+    'l\'enregistrement du drapeau est absent');
+
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

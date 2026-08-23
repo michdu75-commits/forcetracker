@@ -6035,7 +6035,7 @@ async function exportProgPdf(idx){
     const blob=doc.output('blob');
     const file=new File([blob],fname,{type:'application/pdf'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){
-      try{ await navigator.share({files:[file],title:p.name||'Programme'}); return; }
+      try{ await navigator.share({files:[file]}); return; }
       catch(err){ if(err&&err.name==='AbortError')return; }
     }
     const url=URL.createObjectURL(blob);

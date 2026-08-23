@@ -275,6 +275,7 @@ const _HELP_DATA={
   coach:{
     title:'🤖 Coach IA',
     tips:[
+      {i:'📄',t:'<b>Exporter une réponse en PDF</b> : le bouton sous chaque réponse de Milo. Si tu avais reçu « Conseil de Milo » au lieu de ton document, c\'est réparé — c\'était le titre de la feuille de partage, pas ton PDF (qui était complet et l\'est toujours). Ça valait aussi pour le PDF de programme et l\'étude du corps.'},
       {i:'💬',t:'Ton profil complet (poids, objectif, discipline, PRs, morphologie) est injecté automatiquement — pas besoin de te présenter à chaque fois.'},
       {i:'🎯',t:'Milo raisonne comme un vrai coach : il t\'évalue avant de conseiller (il peut te poser des questions), croise tes données (records, morpho, bilan corporel), justifie ses choix, s\'adapte à ta vie (horaires, travail de nuit, temps dispo) et te dit la vérité sans complaisance. Demande-lui « fais-moi un programme » ou « pourquoi je stagne au couché ? ».'},
       {i:'🗣️',t:'Milo t\'AIDE d\'abord, il ne t\'interroge pas : dès ton 1er message il te propose un vrai point de départ concret (structure + exercices), adapté à toi ET à tes zones fragiles (il te montre comment il les protège) — puis, au plus, UNE question pour affiner. Quand une question a quelques réponses simples, des BOUTONS de réponse rapide apparaissent (tu peux toujours écrire, ou ne pas répondre). Répondre à une question de Milo ne coûte jamais de question gratuite.'},
@@ -2056,10 +2057,17 @@ function renderNutrition(){try{
          (state.js). Une cible qui ne correspond pas au calcul annoncé (« TDEE − 450 ») et qui
          change sans explication est pire que pas de plancher du tout : la personne croit à un
          bug, ou pire, cherche à le contourner. On explique en une phrase, et on ne moralise pas
-         (Constitution P21 : la nutrition ne doit jamais devenir une source de stress). */
+         (Constitution P21 : la nutrition ne doit jamais devenir une source de stress).
+         ⛔⛔ ET LA PHRASE NE DIT PLUS « ON Y PERD DU MUSCLE AVANT DU GRAS » (23/08/2026, ft-v978).
+         C'était faux : le corps n'a pas d'interrupteur qui basculerait de la graisse au muscle,
+         il utilise plusieurs substrats en permanence. Ce qui est vrai, c'est que le RISQUE de
+         perdre de la masse maigre augmente quand le déficit est fort ou prolongé — et que les
+         protéines et la musculation le réduisent sans l'annuler.
+         ⛔ On ne remplace pas une affirmation fausse par une autre : aucun seuil n'est donné
+         (« sous X kcal le muscle part » n'existe pas sous cette forme) — R29. */
       const _pl=(typeof plancherKcalActif==='function')?plancherKcalActif(S.nutritionPhase):null;
       adj.innerHTML=(_pl?'<div style="display:flex;gap:8px;background:var(--bg2);border:1px solid var(--sep);border-radius:12px;padding:9px 12px;margin-bottom:8px;">'
-          +'<span style="font-size:12.5px;color:var(--t2);line-height:1.4;">🛡️ Ton calcul donnait <b>'+_pl.brut.toLocaleString('fr-FR')+' kcal</b>. La cible est remontée à <b style="color:var(--t1);">'+_pl.plancher.toLocaleString('fr-FR')+' kcal</b> : en dessous, ce n\'est plus un déficit, c\'est une restriction — et on y perd du muscle avant du gras. Tu peux la fixer toi-même si tu suis un protocole encadré.</span></div>':'')
+          +'<span style="font-size:12.5px;color:var(--t2);line-height:1.4;">🛡️ Ton calcul donnait <b>'+_pl.brut.toLocaleString('fr-FR')+' kcal</b>. La cible est remontée à <b style="color:var(--t1);">'+_pl.plancher.toLocaleString('fr-FR')+' kcal</b> : plus le déficit est fort et long, plus il devient <b>difficile de garder ton muscle</b> — les protéines et la muscu aident, mais elles ne compensent pas tout. Tu peux la fixer toi-même si tu suis un protocole encadré.</span></div>':'')
         +'<button onclick="openKcalEdit()" class="btn" style="width:100%;padding:11px;font-size:13.5px;background:var(--bg2);color:var(--t2);border:1px solid var(--sep);font-weight:700;">✎ Ajuster mes calories à la main</button>';
     }
   }
