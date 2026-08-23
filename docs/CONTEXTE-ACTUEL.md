@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v969` — fusionnée sur `master` le 22/08.
+- **Version en ligne (live) :** `ft-v972` — fusionnée sur `master` le 22/08.
 - ⏸️ **LE BENCHMARK EST EN PAUSE — décision de Michel, 21/08** : *« on met de côté le benchmark,
   on n'a pas assez de "pièges" pour Milo »*, puis *« dès que tu auras marqué **25 questions ou
   pièges** on le relance »*.
@@ -28,6 +28,29 @@
   le meilleur cas (celui d'Eline) — *les observations les plus utiles ne nomment pas le coach*.
   ⚠️ **Ne pas remplir pour remplir** : le seuil sert à avoir de la matière, pas à faire du
   chiffre. Une entrée doit venir d'un cas RÉEL (les 6 meilleurs scénarios en viennent).
+- ⚖️ **QUANTITÉ POUR TOUTES LES ENTRÉES + CALORIES INCOHÉRENTES** (ft-v972) — rescale **par
+  proportion** (aucun `per100` requis), référence lue dans le **nom** (« 30g de protéines »), et
+  **portions** quand il n'y a aucun ancrage. ⛔⛔ Contrôle `4P+4G+9L` **en direct à 5 moments** :
+  sa ligne à **1117 kcal** en valait **117** — 1 000 kcal fantômes que rien ne signalait.
+  ⛔ On ne corrige jamais tout seul (R29). ⛔⛔ **L'alcool est exclu** (7 kcal/g sans champ) —
+  trouvé en testant les cas limites, pas après coup (R19).
+- 📐 **R32 et R33 écrites** — *une donnée peut être exacte dans le rapport et fausse à lire
+  littéralement* (mesuré/estimé/propriétaire, r=0,998 eau↔muscle) · *le format du fabricant ne
+  devient jamais le format interne* (échelle structuré → PDF → OCR → IA → échec propre, avec la
+  mesure qui justifie de ne PAS construire le pipeline OCR aujourd'hui).
+- 📷 **LE SCAN DE BILAN PERDAIT LE POIDS À LA 1ʳᵉ ANALYSE** (ft-v971) — Michel : *« mes poids ne
+  prennent pas sur la première prise d'analyse… ça fait 4 appels API au lieu de 2 »*.
+  ⭐ **Mesuré dans un vrai navigateur** (leçon `BUGS.md` 12quater, appliquée) : 0 champ sur 16 à
+  la 1ʳᵉ passe. ⛔⛔ `openBodyScanForm` est `async` depuis ft-v758 et **n'était pas attendue**.
+  ⚠️ **Aucune erreur levée**, et « Rapport lu ✅ » s'affichait devant un formulaire vide — *un
+  appel vision payé était jeté et l'écran annonçait un succès*. **R14.**
+  ⛔ Le message **compte** maintenant les valeurs écrites.
+- 📈 **L'ÉVOLUTION DU BILAN CORPOREL ATTEINT MILO** (ft-v970) — 3 bilans antérieurs datés, comme
+  le sang depuis ft-v943 (**R13**). Sinon Milo comparait 23/08 à 22/08 : **du bruit**.
+  ⚠️⚠️ **Et mon analyse du matin était fausse** : j'avais annoncé « −1,4 kg de gras, 85 % ».
+  Mesuré sur ses chiffres, **la tendance est plus petite que le bruit** (maigre : 0,3 kg de
+  tendance pour 0,8 kg de bruit). Michel me l'a rappelé — c'était écrit en ft-v323 et ft-v833,
+  **je ne l'avais pas relu** (R23). Ce qui tient : **le poids** (−1,65 kg).
 - 🧮 **D'OÙ VIENT LE CHIFFRE DE PROTÉINES** (ft-v969) — Michel : *« c'est la portion ou juste le
   nombre de protéine ? »*. ⭐⭐ **La question était le défaut** : le champ ne disait pas qui le
   remplit, et restait vide (placeholder « 0 ») pendant que la barre affichait le total du Journal.
