@@ -3369,3 +3369,14 @@ Tests : **parcours 1041/1041** (+6, bloc LXXXIII), calculs 266/266, muscles 241/
 
 **⚠️ Et « poulet » était un faux problème** : rejoué dans un navigateur avec le code déployé, il trouvait bien 69 résultats. La leçon reste utile : *toujours REJOUER le cas exact avant de conclure à un bug* — ici ça a évité de chasser un fantôme, et ça a laissé le temps de trouver le vrai.
 Tests : **parcours 1044/1044** (+3), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 2 rouges** exactement (œuf et bœuf en ligature) — le mot sans ligature ne régresse pas. Fichiers : `app.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v959. |
+
+**ft-v960 — 🔤 MÊME BUG, SUR L'APOSTROPHE — Michel avait raison de creuser** — après la ligature du blanc d'œuf : *« faut aller voir aussi avec les accents, le E tréma, tous les caractères spéciaux quoi »*.
+
+**⭐ VÉRIFIÉ SYSTÉMATIQUEMENT sur les ~132 000 noms des deux bases** (CIQUAL + Compl'Alim), plutôt que de deviner un caractère au hasard. **Accents, tréma (ë, ï, ü), cédille (ç) étaient déjà corrects** : `NFD` les décompose tous en lettre + accent, déjà retirés par le code précédent.
+
+**⚠️⚠️ MAIS L'APOSTROPHE AVAIT EXACTEMENT LE MÊME DÉFAUT QUE LA LIGATURE DE LA VEILLE.** Le clavier iPhone convertit **automatiquement** l'apostrophe droite tapée en apostrophe **courbe** pendant la frappe. **238 aliments CIQUAL** en portent une (*« Soupe à l'oignon »*, *« Sauté d'agneau »*). Mesuré : *« aujourd'hui »* tapé (droite) et *« aujourd'hui »* stocké (courbe) ne se reconnaissaient **pas** comme le même mot.
+
+**⛔ CORRIGÉ en RETIRANT l'apostrophe et ses variantes** (courbe droite/gauche, accent grave, accent aigu isolé) — elle ne porte aucun sens pour une recherche. Et ça a révélé un détail au passage : certaines entrées utilisent ces mêmes variantes comme **coquille d'origine** (*« PROBIO´DIET »*), pas seulement l'autocorrection du clavier — le retrait les couvre aussi.
+
+**⭐ Toujours dans la même fonction, partagée par CIQUAL et les suggestions locales** (R2) — corriger une fois répare les deux recherches.
+Tests : **parcours 1046/1046** (+2), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** exact. Fichiers : `app.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v960. |

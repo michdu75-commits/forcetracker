@@ -10976,6 +10976,136 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* ═══ XCVIII. LE CONTRÔLE D'INTENSITÉ (ft-v980) ════════════════════════════════════════════
+   Michel : « comment il a pu déduire que je pouvais faire 3 séries de 5 reps à 95, c'est
+   impossible je ne suis pas encore assez fort ».
+   ⭐⭐ LE TÉMOIN LE PLUS FORT DU BLOC EST ①-b : le code conseille **89,5 kg** là où Milo, une
+   fois questionné, avait répondu **90 kg**. Deux chemins indépendants tombent au même endroit
+   — c'est ça qui valide le coefficient, pas mon opinion sur sa valeur.
+   ⛔ ET LA MOITIÉ DES TÉMOINS GARDE UN SILENCE, pas une alerte : un contrôle qui crie sur tout
+   ne sert à rien, et celui-ci doit se taire sur ce que Michel fait d'habitude, sur une série
+   unique de test, et surtout quand il ne SAIT pas (R29).                                     */
+{
+  console.log('\n── XCVIII. Le contrôle d\'intensité ──');
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); pg.on('pageerror',e=>console.log('PAGEERROR',e.message));
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const I=await pg.evaluate(()=>{
+    const o={}; if(typeof _intensiteDefauts!=='function'){o.absente=true;return o;}
+    const vp=S.prs;
+    try{
+      // LE CAS RÉEL : son record est 105×2 le 27/07 → 1RM estimé 108
+      S.prs={'Développé Couché':{kg:105,reps:2,rm1:108,date:'2026-07-27'}};
+      const S3=(kg,reps,rest)=>[{kg,reps,type:'N',rest},{kg,reps,type:'N',rest},{kg,reps,type:'N',rest}];
+      o.michel   = _intensiteDefauts('Développé Couché', S3(95,5,90));
+      o.corrige  = _intensiteDefauts('Développé Couché', S3(90,5,180));
+      o.habituel = _intensiteDefauts('Développé Couché', S3(85,5,180));
+      o.uneSerie = _intensiteDefauts('Développé Couché', [{kg:95,reps:5,type:'N',rest:180}]);
+      o.sansPR   = _intensiteDefauts('Rowing Barre', S3(70,8,90));
+      o.echauf   = _intensiteDefauts('Développé Couché',
+                     [{kg:100,reps:5,type:'É',rest:0},{kg:80,reps:5,type:'N',rest:180}]);
+      // le repos seul : charge raisonnable mais lourde (85 % ) et 90 s
+      o.reposSeul= _intensiteDefauts('Développé Couché', S3(88,3,90));
+    } finally { S.prs=vp; }
+    return o;
+  });
+  t('INTENSITÉ : la fonction existe', !I.absente, JSON.stringify(I));
+  t('⭐⭐ ① le cas de Michel est attrapé — 3×5 à 95 kg sur un 1RM de 108',
+    (I.michel||[]).some(x=>/88 ?%/.test(x)&&/pas sur 3/.test(x)), JSON.stringify(I.michel));
+  t('⭐⭐ ①-b … et la charge conseillée (~89,5 kg) tombe sur le 90 kg que MILO avait corrigé',
+    (I.michel||[]).some(x=>/viser ~89[.,]5 kg/.test(x)), JSON.stringify(I.michel));
+  t('⭐ ①-c … et le repos de 90 s sur du lourd est signalé séparément (« IMPOSSIBLE », Michel)',
+    (I.michel||[]).some(x=>/repos de 90 s/.test(x)&&/3 min/.test(x)), JSON.stringify(I.michel));
+  t('⛔ ② les 90 kg corrigés par Milo ne déclenchent RIEN (sinon le contrôle crie sur du juste)',
+    (I.corrige||[]).length===0, JSON.stringify(I.corrige));
+  t('⛔ ③ son 85×5 habituel ne déclenche rien non plus',
+    (I.habituel||[]).length===0, JSON.stringify(I.habituel));
+  t('⭐⭐ ④ UNE seule série à 95 kg est ACCEPTÉE — tester son max est une décision légitime (R29)',
+    (I.uneSerie||[]).length===0, JSON.stringify(I.uneSerie));
+  t('⛔⛔ ⑤ SANS RECORD CONNU, la fonction SE TAIT — jamais un 1RM inventé (R29)',
+    (I.sansPR||[]).length===0, JSON.stringify(I.sansPR));
+  t('⛔ ⑥ un échauffement lourd est ignoré (c\'est l\'affaire de _monteeDefauts, R2)',
+    (I.echauf||[]).length===0, JSON.stringify(I.echauf));
+  t('⭐ ⑦ le repos seul suffit à alerter, même quand la charge passe (3×3 à 88 kg en 90 s)',
+    (I.reposSeul||[]).length===1 && /repos de 90 s/.test(I.reposSeul[0]), JSON.stringify(I.reposSeul));
+
+  /* ⛔⛔ ON SIGNALE, ON NE CORRIGE JAMAIS — le témoin qui garde la décision à la personne.
+     Michel VOULAIT ses 95 kg. Une app qui les aurait réécrits en 90 aurait décidé de son
+     entraînement à sa place. */
+  /* ⭐⭐ ET ON PASSE PAR `_appliqueMiloSession` — le point que les DEUX portes traversent.
+     Ma 1ʳᵉ version branchait le contrôle sur `_applyMiloSession` seul (la porte « une séance
+     tourne déjà »), donc il n'aurait JAMAIS tourné dans le cas normal. C'est ce témoin qui l'a
+     dit ; sans lui, la livraison partait verte et inutile. */
+  const A=await pg.evaluate(()=>{
+    const o={}; const vp=S.prs, vw=S.wkt;
+    const lourd=()=>[{name:'Développé Couché',note:'',_milo:true,
+      sets:[{kg:95,reps:5,type:'N',rest:90,done:false},{kg:95,reps:5,type:'N',rest:90,done:false},
+            {kg:95,reps:5,type:'N',rest:90,done:false}]}];
+    try{
+      S.prs={'Développé Couché':{kg:105,reps:2,rm1:108,date:'2026-07-27'}};
+      S.wkt=null;
+      _appliqueMiloSession(lourd(), {label:'Push'}, 'start', null);
+      const ex=(S.wkt&&S.wkt.exs&&S.wkt.exs[0])||null;
+      o.chargesIntactes = !!ex && ex.sets.every(s=>s.kg===95 && s.reps===5);
+      o.avertissement   = !!(ex&&Array.isArray(ex.intensiteWarn)&&ex.intensiteWarn.length);
+      goScreen('log'); renderLog();
+      o.visible = /% de ton 1RM/.test(document.getElementById('s-log').innerText||'');
+      // ⛔ LA 2ᵉ PORTE : une séance tourne déjà, on remplace — le contrôle doit tourner AUSSI
+      _appliqueMiloSession(lourd(), {label:'Push'}, 'replace', null);
+      const ex2=(S.wkt&&S.wkt.exs&&S.wkt.exs[0])||null;
+      o.deuxiemePorte = !!(ex2&&Array.isArray(ex2.intensiteWarn)&&ex2.intensiteWarn.length);
+    } finally { S.prs=vp; S.wkt=vw; }
+    return o;
+  });
+  t('⛔⛔ APPLICATION : les charges de Milo partent INTACTES — l\'app ne corrige pas à sa place (R29)',
+    A.chargesIntactes===true, JSON.stringify(A));
+  t('⭐⭐ … mais l\'avertissement est attaché à l\'exercice', A.avertissement===true, JSON.stringify(A));
+  t('⭐ … et il est LISIBLE à l\'écran Séance, pas seulement dans un toast qui disparaît',
+    A.visible===true, JSON.stringify(A));
+  t('⭐⭐ … et il tourne sur LES DEUX PORTES (démarrer ET remplacer) — la leçon de la semaine',
+    A.deuxiemePorte===true, JSON.stringify(A));
+
+  /* ⛔ LE MARQUEUR D'AUTEUR MANQUAIT SUR UNE DES DEUX PORTES — trouvé en branchant le contrôle.
+     Sans `_milo`, Milo reproche à la personne des charges qu'il a lui-même prescrites : c'est
+     l'incident du 18/08, par une porte qu'on n'avait pas regardée. */
+  const AU=await pg.evaluate(()=>{
+    const src=String(_applyMiloSession);
+    return {porte2Marque:/_milo\s*:\s*true/.test(src),
+            porte1Marque:/_milo\s*:\s*true/.test(String(_startSessionFromMilo))};
+  });
+  t('⛔⛔ AUTEUR : les DEUX portes posent `_milo` — une charge prescrite ne se reproche pas à la personne',
+    AU.porte1Marque===true && AU.porte2Marque===true, JSON.stringify(AU));
+
+  /* ⭐ R4 — CE QUE L'APP SAIT DOIT ATTEINDRE MILO. Sans ça il ne voit que des charges brutes
+     et peut féliciter une série qui n'est pas passée. Jumeau de `_verdictMontee`, posé le même
+     jour pour ne pas répéter le « correctif d'un seul côté » de la semaine (R8). */
+  const C=await pg.evaluate(()=>{
+    const o={}; const vp=S.prs, vs=S.sessions;
+    try{
+      S.prs={'Développé Couché':{kg:105,reps:2,rm1:108,date:'2026-07-27'}};
+      S.sessions=[{date:'2026-08-23',id:1,volume:1425,exs:[{name:'Développé Couché',_milo:true,
+        sets:[{kg:95,reps:5,type:'N',rest:90,done:true},{kg:95,reps:5,type:'N',rest:90,done:true},
+              {kg:95,reps:5,type:'N',rest:90,done:true}]}]}];
+      const ctx=buildCoachContext('test');
+      o.intensiteTransmise = /⚡ intensité/.test(ctx) && /88 ?%/.test(ctx);
+      o.auteurNomme        = /TA PROPRE PRESCRIPTION/.test(ctx);
+      o.pasDeJugement      = /décision légitime/.test(ctx);
+    } finally { S.prs=vp; S.sessions=vs; }
+    return o;
+  });
+  t('⭐⭐ R4 : le calcul d\'intensité ATTEINT le contexte de Milo (il ne reste pas dans l\'écran)',
+    C.intensiteTransmise===true, JSON.stringify(C));
+  t('⛔ … et l\'AUTEUR des charges est nommé : une charge prescrite par Milo ne se reproche pas à la personne',
+    C.auteurNomme===true, JSON.stringify(C));
+  t('⛔⛔ … et le 4ᵉ cas de figure est couvert : une charge assumée en connaissance de cause ne se juge pas',
+    C.pasDeJugement===true, JSON.stringify(C));
+
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

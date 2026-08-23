@@ -405,7 +405,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v979`** (prochaine : `ft-v980`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v980`** (prochaine : `ft-v981`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -415,6 +415,25 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v980 — ⚡ LE CONTRÔLE D'INTENSITÉ EN CODE — « 3 séries de 5 à 95, c'est impossible »** — Michel : *« comment il a pu déduire que je pouvais faire 3 séries de 5 reps à 95 ? je ne suis pas encore assez fort »*.
+
+**⭐⭐ ET MILO NE L'AVAIT PAS DÉDUIT — IL L'AVAIT LUI-MÊME DÉMENTI.** Questionné (*« tu es sûr de toi ? »*), il répond : *« 105×2 → 1RM ~108 · 95×5 ≈ **88 %**, très lourd pour 3 séries de 5, on vise 80-85 %, soit 85-90 kg. **Je corrige : 3×5 à 90 kg.** »* Michel a dit *« ne corrige pas »* — Milo a obéi, **et c'est le bon comportement**. 👉 *Le défaut n'est donc pas son jugement : c'est que son contrôle ne se déclenche QUE SI ON LE QUESTIONNE.* **Il vérifie APRÈS, jamais AVANT.**
+
+**⭐ LA RÉALITÉ A TRANCHÉ, ET ELLE EST DANS LES DONNÉES** : ce jour-là, **95×3 avec « pose de la barre à la rép. 2 », deux fois**, puis **90×3**. *Michel avait raison (infaisable), et le 90 corrigé de Milo est exactement là où il a fini.*
+
+**⛔⛔ POURQUOI EN CODE ET PAS DANS LE PROMPT — R7 au pied de la lettre.** *« 88 % du 1RM sur 3×5, est-ce tenable ? »* est une question **arithmétique**. La confier à un modèle, c'est la faire dépendre d'un jour de fatigue — et **R9** rappelle qu'on évalue sur le modèle des **vrais** utilisateurs, pas sur celui du fondateur.
+
+**⭐⭐ ET LA FORMULE REPRODUIT LA CORRECTION DE MILO, INDÉPENDAMMENT — c'est ce qui la valide.** On **inverse `bz()`** (Brzycki — **R2**, jamais une 2ᵉ formule de 1RM) pour obtenir la charge d'une série **maximale** à R répétitions, puis on applique un coefficient de tenue de **0,93**, parce que trois séries ne sont pas une série. Résultat : **89,5 kg conseillés** là où Milo disait **90**. ⚠️ Le coefficient est un **jugement**, vérifié sur toute la plage contre les barèmes : 3 reps → 88 % (barème 85-90) · 5 reps → **83 %** (*le chiffre que Milo a cité lui-même*) · 8 reps → 75 %.
+
+**⛔⛔ ON SIGNALE, ON NE CORRIGE JAMAIS TOUT SEUL (R29).** Michel **voulait** ses 95 kg pour tester son max, et il en avait le droit : les charges partent **intactes**, l'avertissement est attaché à l'exercice et reste **lisible pendant la séance** — un toast aurait disparu avant la 1ʳᵉ série. ⛔ **Et sans record connu, la fonction SE TAIT** : jamais un 1RM inventé. Une **seule** série à 95 ne déclenche rien non plus.
+
+**⛔ LE REPOS SUIT LA MÊME RÈGLE, ET C'EST MICHEL QUI L'A TRANCHÉE** : *« un 3×5 avec 90 secondes de repos c'est IMPOSSIBLE »* — donc une prescription **inexécutable**, pas discutable.
+
+**⭐ R4 : LE CALCUL ATTEINT LE CONTEXTE DE MILO**, jumeau de `_verdictMontee` et posé **le même jour** que lui pour ne pas répéter le « correctif d'un seul côté » de la semaine (**R8**). Avec l'**auteur nommé**, et un **4ᵉ cas de figure** écrit noir sur blanc : *une charge assumée en connaissance de cause ne se juge pas.*
+
+**⚠️⚠️ ET UN TÉMOIN M'A FAIT CORRIGER MA PROPRE POSE — la 4ᵉ fois de la semaine.** J'avais branché le contrôle sur `_applyMiloSession` seul, **la porte « une séance tourne déjà »** : il n'aurait **jamais** tourné dans le cas normal, celui de Michel. Il vit désormais dans `_appliqueMiloSession`, **le seul point que les DEUX portes traversent** (**R2**). ⛔ **Et ça a révélé un 2ᵉ défaut** : `_milo:true` **manquait** sur cette porte — une séance chargée en mode « remplacer » perdait son **auteur**, donc Milo pouvait reprocher à la personne des charges qu'il avait prescrits. *C'est l'incident du 18/08, par une porte qu'on n'avait pas regardée.*
+Tests : **parcours 1227/1227** (+18, bloc XCVIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 13 rouges sur 18 — ⚠️ ET LES 5 « VERTS » SONT DE FAUX VERTS, autant l'écrire** : sans la fonction, les témoins de *silence* (« ne déclenche rien », « se tait ») testent `undefined` et passent tout seuls. *Un témoin qui ne tourne pas n'est pas un témoin vert* — **4ᵉ fois que ça se paie** (ft-v949, ft-v953, ft-v963). Ce qui est réellement démontré, ce sont les 13 comportements neufs ; les silences ne sont prouvés que par la passe **normale**. Fichiers : `log.js`, `coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v980. |
 
 **ft-v979 — 📋 LE DÉBRIEF NE SE PERD PLUS — « je n'ai pas eu de briefing à cause de la mise à jour »** — Michel, en découvrant que sa séance du jour n'avait laissé aucune trace : *« je n'ai pas eu de briefing parce qu'il y a eu la mise à jour de l'application »*. **Il avait raison, et le mécanisme est dans le code.**
 
@@ -723,17 +742,6 @@ Tests : **parcours 1063/1063** (+8, bloc LXXXV), calculs 266/266, muscles 241/24
 
 **⚠️ UN JOUR CLOS N'A PLUS DE « restantes »** : le libellé passe en simple comparaison à l'objectif (on ne va pas manger davantage hier), et l'objectif affiché reste explicitement celui **d'aujourd'hui** — recalculer un objectif historique aurait été un faux-précis qu'on n'a pas les moyens de garantir (**R29**).
 Tests : **parcours 1055/1055** (+9, bloc LXXXIV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — fonction absente (peu instructif, toute la brique est neuve). ⚠️ Un test existant (l'ordre des 3 méthodes d'ajout) a dû être **reciblé** : les nouvelles flèches précèdent désormais ces boutons dans le DOM, donc « premier bouton de la page » n'était plus la bonne question — « premier des 3 méthodes » l'est. Fichiers : `app.js`, `screens.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v961. |
-
-**ft-v960 — 🔤 MÊME BUG, SUR L'APOSTROPHE — Michel avait raison de creuser** — après la ligature du blanc d'œuf : *« faut aller voir aussi avec les accents, le E tréma, tous les caractères spéciaux quoi »*.
-
-**⭐ VÉRIFIÉ SYSTÉMATIQUEMENT sur les ~132 000 noms des deux bases** (CIQUAL + Compl'Alim), plutôt que de deviner un caractère au hasard. **Accents, tréma (ë, ï, ü), cédille (ç) étaient déjà corrects** : `NFD` les décompose tous en lettre + accent, déjà retirés par le code précédent.
-
-**⚠️⚠️ MAIS L'APOSTROPHE AVAIT EXACTEMENT LE MÊME DÉFAUT QUE LA LIGATURE DE LA VEILLE.** Le clavier iPhone convertit **automatiquement** l'apostrophe droite tapée en apostrophe **courbe** pendant la frappe. **238 aliments CIQUAL** en portent une (*« Soupe à l'oignon »*, *« Sauté d'agneau »*). Mesuré : *« aujourd'hui »* tapé (droite) et *« aujourd'hui »* stocké (courbe) ne se reconnaissaient **pas** comme le même mot.
-
-**⛔ CORRIGÉ en RETIRANT l'apostrophe et ses variantes** (courbe droite/gauche, accent grave, accent aigu isolé) — elle ne porte aucun sens pour une recherche. Et ça a révélé un détail au passage : certaines entrées utilisent ces mêmes variantes comme **coquille d'origine** (*« PROBIO´DIET »*), pas seulement l'autocorrection du clavier — le retrait les couvre aussi.
-
-**⭐ Toujours dans la même fonction, partagée par CIQUAL et les suggestions locales** (R2) — corriger une fois répare les deux recherches.
-Tests : **parcours 1046/1046** (+2), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** exact. Fichiers : `app.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v960. |
 
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.

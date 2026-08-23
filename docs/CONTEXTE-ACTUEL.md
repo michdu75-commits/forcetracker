@@ -6,7 +6,16 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v979` — fusionnée sur `master` le 23/08.
+- **Version en ligne (live) :** `ft-v980` — sur la branche, **pas encore fusionnée** (Michel n'a pas donné le feu vert).
+- ⚡ **LE CONTRÔLE D'INTENSITÉ EN CODE** (ft-v980). Michel : *« 3 séries de 5 reps à 95, c'est
+  impossible »*. ⭐⭐ **Milo ne l'avait pas déduit — il l'avait lui-même démenti** (88 % du 1RM,
+  « je corrige : 90 kg »), et Michel a maintenu. *Le défaut n'est pas son jugement : son contrôle
+  ne se déclenche que si on le questionne.* Le code le fait maintenant **à la proposition** :
+  `bz()` inversée + coefficient de tenue 0,93 → **89,5 kg conseillés** là où Milo disait 90.
+  ⛔ On **signale**, on ne corrige jamais (R29) · ⛔ sans record connu, **silence** · ⭐ R4 : le
+  calcul atteint le contexte de Milo, avec l'auteur nommé.
+  ⚠️ **Un témoin m'a fait corriger ma propre pose** (4ᵉ « correctif d'un seul côté » de la
+  semaine) et a révélé que `_milo:true` manquait sur la porte « remplacer ».
 - 📋 **LE DÉBRIEF NE SE PERD PLUS** (ft-v979). Michel : *« je n'ai pas eu de briefing parce
   qu'il y a eu la mise à jour de l'application »* — **il avait raison**. Le jeton était retiré
   **avant** l'appel et remis seulement `if(!ok)` : un rechargement pendant l'appel le faisait

@@ -2504,6 +2504,32 @@ function buildCoachContext(msg) {
      L'app aurait donc JUGÉ la montée d'un Pec Deck alors qu'elle refuse désormais d'en produire
      une — deux sources qui se contredisent, la famille la plus vicieuse du projet (R2). Les deux
      lisent maintenant `_exRole`. */
+  /* ⚡ LE VERDICT D'INTENSITÉ (ft-v980) — jumeau de `_verdictMontee`, et posé le même jour que
+     lui pour ne pas répéter l'erreur de la semaine : *une correction faite d'un seul côté est
+     un oubli, pas un arbitrage* (R8). L'app CALCULE le % du 1RM ; sans cette ligne, Milo ne
+     voit que des charges brutes et peut féliciter une série qui n'est pas passée. **R4 : ce
+     que l'app sait doit atteindre la DONNÉE qu'on lui envoie, pas rester dans l'écran.**
+
+     ⛔⛔ ET ON NOMME L'AUTEUR, exactement comme pour la montée — c'est le même incident qui
+     s'est produit trois fois (15/08, 18/08, 20/08). Une charge prescrite par Milo ne doit
+     JAMAIS être reprochée à la personne : *un reproche injuste coûte la confiance dans
+     l'outil, un conseil manqué ne coûte qu'un conseil* (R29).
+     ⚠️ ET LE CAS DU 23/08 EST UN 4ᵉ CAS DE FIGURE, qu'aucun des trois précédents ne couvre :
+     la charge venait de Milo, **Michel l'a explicitement maintenue** (« ne corrige pas, je
+     vais faire mon max ») après que Milo eut proposé de la baisser. *Personne n'a tort ici* —
+     et c'est précisément ce qu'il faut dire, plutôt que de laisser Milo choisir un coupable. */
+  const _verdictIntensite = (e, doneSets) => {
+    try{
+      if(typeof _intensiteDefauts !== 'function') return '';
+      const d = _intensiteDefauts(e && e.name, doneSets);
+      if(!d.length) return '';
+      return ` [⚡ intensité — ${d.join(' ; ')} · ⛔ CE CALCUL VIENT DE L'APP, pas d'un avis : le 1RM est celui de ses records.`
+        + (e && e._milo
+            ? ' CES CHARGES VIENNENT DE TA PROPRE PRESCRIPTION : corrige-les pour la prochaine fois, ne les reproche PAS à la personne.'
+            : ' AUTEUR DES CHARGES INCONNU : cherche cette séance dans votre échange AVANT toute remarque.')
+        + ' ⛔ Et si elle a choisi cette charge en connaissance de cause, dis-le sans juger — tester un maximum est une décision légitime]';
+    }catch(err){ return ''; }
+  };
   const _verdictMontee = (e, doneSets) => {
     try{
       if(typeof _monteeDefauts !== 'function') return '';
@@ -2611,7 +2637,7 @@ function buildCoachContext(msg) {
       // charge dérisoire pour un dos, alors que 28 kg d'une seule main est une vraie série.
       // Le marqueur est SUR la donnée, pas seulement dans la consigne (R4).
       const uni=(typeof estUnilateral==='function'&&estUnilateral(e.name))?` [${uniLabel(e.name)}, ${ds.length} série${ds.length>1?'s':''} DE CHAQUE CÔTÉ]`:'';
-      return `${e.name}: ${setsStr}${uni}${e.note?' [note: '+e.note+']':''}${_verdictMontee(e, ds)}`;
+      return `${e.name}: ${setsStr}${uni}${e.note?' [note: '+e.note+']':''}${_verdictMontee(e, ds)}${_verdictIntensite(e, ds)}`;
     }).join(' · ');
     // Le CARDIO de la séance (mesuré le 02/08 : il n'était PAS transmis — Milo ignorait
     // 25 min de tapis notées après la muscu). Les deux moments sont nommés, parce qu'un
