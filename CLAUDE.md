@@ -405,7 +405,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v976`** (prochaine : `ft-v977`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v977`** (prochaine : `ft-v978`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -415,6 +415,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v977 — 📐 LE HEADER COMPACTÉ SORT DU PLACARD — et trois de ses quatre règles n'auraient RIEN fait** — Michel, aussitôt après le retrait du clone : *« le header compacté oui, promeus-le »*.
+
+**⭐ C'EST LE PREMIER DES CINQ ESSAIS PARQUÉS À ÊTRE TRANCHÉ.** Il attendait derrière `html.is-clone` depuis **ft-v610**, marqué *« à promouvoir si Michel valide »* — et le retrait du clone (ft-v976) venait de lui enlever son dernier moyen d'être essayé. *Un essai parqué sans porte de sortie finit oublié, pas décidé* (**R30**).
+
+**⚠️⚠️ ET LA PROMOTION AURAIT ÉTÉ UN NO-OP SILENCIEUX.** En retirant `html.is-clone`, les quatre règles **perdent leur spécificité** — or **trois d'entre elles sont redéfinies PLUS BAS** dans `style.css` (`.coach-header` l. 798, `.coach-header-sub` l. 800, `.coach-quota` l. 897). Empilées en haut du fichier, elles auraient été **écrasées**, et « c'est promu » aurait été faux **sans qu'aucun test ne rougisse**. Les quatre valeurs sont donc écrites **dans la règle d'origine** : *deux règles qui se disputent la même propriété, c'est une de trop* (**R2**).
+
+**⭐⭐ D'OÙ LE TÉMOIN : il ne vérifie pas que les règles EXISTENT, il vérifie qu'elles GAGNENT.** Il lit le style **calculé** par le navigateur, pas le fichier — la seule mesure qui distingue « écrit » de « appliqué ».
+
+**🔴 RÈGLE D'OR #9 — MESURÉ, PAS REGARDÉ** : le bouton central « + » est à **792 px avant et 792 px après**, hauteur **44 → 44**, et il ne bouge pas non plus après une navigation. La barre de navigation reste à 770.
+
+**👉 LE GAIN EST RÉEL ET IL VA AU BON ENDROIT** : le header de Milo passe de **83 à 50 px**, ce qui rend **+45 px** au fil de discussion et **+12 px** à l'Accueil. La barre de saisie ne bouge pas. ⛔ **Et l'identité ne bouge pas non plus** : le titre reste à 21 px, son sous-titre à 13,5 px — *le gain vient des ESPACEMENTS seuls*, un témoin l'épingle. ⛔ La marge **haute** n'est pas réductible davantage : au-dessus du logo, c'est la barre d'état de l'iPhone.
+
+**⛔⛔ ET UN SECOND ESSAI EST DÉLIBÉRÉMENT **NON** PROMU (ft-v611), avec sa raison écrite dans le code** : il raccourcissait *« 8 questions gratuites »* en *« 8 questions »*. Ça gagne quelques pixels **sur le dos de ce que la personne comprend de son compte** — *« 8 questions » se lit comme un plafond définitif*. On ne prend pas de la place à la clarté. *Un maintien sous garde s'écrit comme un retrait* (**R30**), sinon le suivant « répare » une décision.
+Tests : **parcours 1182/1182** (+7, bloc XCV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `style.css`, `coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v977. |
 
 **ft-v976 — 🧪 LE CLONE DE TEST EST RETIRÉ** — Michel : *« ai-je encore besoin du clone ? »*, puis, la mesure en main : *« plus besoin des clones, ça permettra de gagner du temps »*.
 
@@ -701,23 +716,6 @@ Tests : **parcours 1044/1044** (+3), calculs 266/266, muscles 241/241, croisés 
 
 **⚠️ SOURCE** : Compl'Alim, data.gouv.fr — la licence exacte n'a pas pu être vérifiée depuis cette session (réseau bloqué), c'est écrit tel quel dans le code plutôt que de citer un texte inventé.
 Tests : **parcours 1041/1041** (+6, bloc LXXXIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — fonction absente. Fichiers : `data/complalim.json` (neuf), `tools/complalim.py` (neuf), `app.js`, `index.html`, `sw.js`, `clone/*`, `tests/parcours/runner.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v958. |
-
-**ft-v957 — 🥗 LA BASE CIQUAL : « banane » existe enfin comme ALIMENT, pas comme marque** — Michel a demandé *« mais comment trouver sur Internet, le téléchargement de la base alimentaire ? »*, puis a fourni le fichier de l'ANSES. **C'est la brique 1 du dossier nutrition**, différée depuis des semaines — et livrée le jour où l'usage réel l'a réclamée.
-
-**⭐ 3 484 aliments génériques**, convertis par `tools/ciqual.py`. Là où Open Food Facts rend des *bananes de marque*, CIQUAL rend **« Banane, pulpe, crue »** — et les noms portent le **cru/cuit en toutes lettres**, ce qu'aucun code-barres ne sait faire.
-
-**⚠️ SOURCE ET LICENCE, ET CE N'EST PAS UNE FORMALITÉ** : Licence Ouverte / Etalab — la réutilisation est libre **à condition de citer la source**. La mention *« Données aliments : table Ciqual 2025 — ANSES »* est **affichée dans la liste**, et un témoin vérifie qu'elle y est.
-
-**⛔⛔ LE POINT QUI DÉCIDE DE TOUT : elle ne coûte RIEN au démarrage.** 250 Ko (68 Ko gzippés), chargés **à la première frappe** dans le champ d'aliment, jamais à l'ouverture. Un témoin le **mesure** — après 2 s d'app, la base n'est pas chargée — au lieu de le supposer, ce que le dossier demandait explicitement. ⛔ Elle n'est pas non plus dans le **PRECACHE** du service worker : ce serait 250 Ko re-téléchargés **à chaque version**, pour une base que beaucoup n'ouvriront jamais. *Retrait décidé, donc écrit* (**R30**) — elle est mise en cache à la demande, donc disponible hors ligne dès la 1ʳᵉ recherche.
-
-**⛔⛔ ET LE POINT DE RIGUEUR : dans CIQUAL, « - » veut dire NON DÉTERMINÉ, pas zéro.** 143 aliments n'ont pas de calories déterminées. Le convertisseur les garde à **`null`** au lieu d'inventer un 0 — *transformer « on ne sait pas » en 0 fabriquerait un fait* (**R29** : un `null` ne doit jamais être remplacé par une valeur par défaut). Et l'affichage les **écarte**, parce qu'un aliment sans calories ne peut pas servir un journal alimentaire. ⭐ **La donnée reste dans le fichier, c'est la VUE qui filtre** — deux témoins l'épinglent, un pour chaque moitié. *« traces »* et *« < 0,55 »* valent **0**, eux, parce que c'est exactement ce qu'ils veulent dire.
-
-**⭐ PROTÉINES N×6.25, PAS FACTEUR DE JONES** — elles diffèrent sur **711 aliments**. La colonne d'énergie retenue est celle du **Règlement UE 1169/2011**, c'est-à-dire celle que la personne lit sur ses emballages. *Mélanger deux conventions dans la même ligne donnerait des macros qui ne retombent pas sur leurs propres calories.*
-
-**⭐ R2 — TROISIÈME CHEMIN, MÊME PORTE.** Un aliment CIQUAL remplit le formulaire par la fonction commune sortie à ft-v956 : grammes, provenance, note d'état. ⛔ Mais **pas d'état « tel-que-vendu »** : un produit emballé donne toujours ses valeurs sèches, alors que CIQUAL dit l'état **dans le nom**. Le marquer serait faux. ⚠️ Et **aucune carte de score santé** sur un aliment brut — une banane n'a ni Nutri-Score ni NOVA, et une carte vide se lirait comme un score absent.
-
-**⚠️ DEUX FOIS MON TÉMOIN A ACCUSÉ LE CODE À TORT.** ① Il exigeait *« zéro appel réseau »* en tapant — devenu **faux** puisque la base se charge à la frappe. La garantie qui compte n'avait pas changé (les locales s'affichent **sans attendre**, et le seul appel est un **fichier**, jamais l'IA) : *j'ai rendu le témoin exact au lieu de l'affaiblir.* ② Puis mon décor **effaçait la base juste avant de la chercher** — 3ᵉ fois cette semaine qu'un témoin désigne le mauvais coupable. *Un décor se relit dans l'ORDRE.*
-Tests : **parcours 1035/1035** (+14, bloc LXXXII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Contrôle négatif : le bloc est GARDÉ mais peu instructif** — sans le moteur, le témoin rend « CIQUAL absente » au lieu de mesurer. *Et sans ce garde il ne rougissait pas : il faisait PLANTER le runner avant tout verdict — un témoin qui tue le harnais ne mesure rien du tout.* Fichiers : `data/ciqual.json` (neuf), `tools/ciqual.py` (neuf), `app.js`, `sw.js`, `clone/*`, `tests/parcours/runner.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v957. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

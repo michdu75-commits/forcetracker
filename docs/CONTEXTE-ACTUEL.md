@@ -6,7 +6,13 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v976` — fusionnée sur `master` le 23/08.
+- **Version en ligne (live) :** `ft-v977` — fusionnée sur `master` le 23/08.
+- 📐 **HEADER COMPACTÉ PROMU** (ft-v977) — le 1ᵉʳ des 5 essais parqués tranché. ⚠️ **Trois de ses
+  quatre règles n'auraient rien fait** : en perdant `html.is-clone` elles perdent leur
+  spécificité, et sont redéfinies plus bas dans `style.css` — le témoin lit donc le style
+  **calculé**, pas le fichier. 🔴 Bouton central mesuré : **792 → 792**, inchangé. Gain : header
+  Milo 83 → 50 px, **+45 px** pour la discussion. ⛔ ft-v611 (« 8 questions » sans « gratuites »)
+  **non promu**, raison écrite dans `coach.js`.
 - ⚖️ **LA QUANTITÉ SUR UNE PHRASE LIBRE** (ft-v975) — Michel : *« je ne peux pas mettre de
   poids »*. Le rescale par proportion existait depuis ft-v972… **côté modification seulement**.
   ⭐ Le modèle **annonce désormais le poids qu'il a supposé** (`g`) : une estimation aveugle
@@ -19,7 +25,8 @@
   ⏭️ **À TRANCHER, et c'est le vrai reste** : cinq essais vivaient derrière `__FT_CLONE__` et
   n'ont plus aucun moyen d'être testés — zones de santé lues dans le texte · header compacté
   (*« à promouvoir si Michel valide »* depuis ft-v610) · promesse d'inscription · consigne de
-  mémoire des blessures · outils de test. **Les gardes sont conservées exprès** : les retirer
+  mémoire des blessures · outils de test. **Le header compacté est promu** (ft-v977) ; il en
+  reste **quatre**. **Les gardes sont conservées exprès** : les retirer
   rendrait ces essais soit universels, soit perdus. Chacun se décide séparément.
 - 🔤 **LE RAPPORT DE BALANCE LU SUR LE TÉLÉPHONE** (ft-v974) — décision de Michel : *« on
   construit, parce que je l'utilise souvent »*. Première mise en œuvre de l'**échelle des
