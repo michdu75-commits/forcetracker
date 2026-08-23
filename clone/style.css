@@ -446,6 +446,15 @@ details.acc>summary{list-style:none;cursor:pointer;padding:15px 16px;display:fle
 details.acc>summary::-webkit-details-marker{display:none;}
 details.acc>summary::after{content:'';margin-left:auto;flex-shrink:0;width:8px;height:8px;border-right:2px solid var(--t3);border-bottom:2px solid var(--t3);transform:rotate(-45deg);transition:transform .2s;}
 details.acc[open]>summary::after{transform:rotate(45deg);}
+/* 📋 SECTIONS DÉROULANTES DU JOURNAL ALIMENTAIRE (ft-v968) — Michel : « c'est un peu le foutoir,
+   il faut les ranger et créer des lignes déroulantes pour chaque section ». Même motif que
+   `details.acc` et que le menu admin (R13) : `<details>` natif, zéro JS.
+   ⚠️ Le masquage du marqueur DOIT être en CSS : `::-webkit-details-marker` ne s'écrit pas en
+   attribut `style`, et sans lui Safari iOS affiche son propre triangle en plus du chevron. */
+details.jr-sec>summary::-webkit-details-marker{display:none;}
+details.jr-sec>summary::after{content:'';flex-shrink:0;width:7px;height:7px;border-right:2px solid var(--t3);border-bottom:2px solid var(--t3);transform:rotate(-45deg);transition:transform .2s;margin-right:2px;}
+details.jr-sec[open]>summary::after{transform:rotate(45deg);}
+
 .acc-inner{padding:2px 16px 16px;display:flex;flex-direction:column;gap:12px;}
 #root.a11y-lv details.acc>summary{font-size:16px;}
 .goal-btn.active{background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;border-color:transparent;box-shadow:0 3px 12px rgba(255,45,85,.3);}

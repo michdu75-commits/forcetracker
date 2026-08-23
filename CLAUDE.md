@@ -136,7 +136,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v967`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v968`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v967`** (prochaine : `ft-v968`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v968`** (prochaine : `ft-v969`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v968 — 📋 LE JOURNAL RANGÉ PAR REPAS, ET UNE 2ᵉ COLLATION** — Michel, capture à l'appui : *« c'est un peu le foutoir là, il faudrait ranger tout ça. Là c'est une liste, il faut les ranger et créer des lignes déroulantes pour chaque section »*, puis *« pouvoir rajouter une collation aussi, il y en a qui prennent une collation le matin et le soir »*.
+
+**⭐⭐ LE VRAI PROBLÈME N'ÉTAIT PAS L'AFFICHAGE, C'ÉTAIT LE TRI.** Sa capture montre dîner → dîner → collation → déjeuner → petit-déj dans le désordre, parce que la liste était triée par **heure de SAISIE**. *On note son petit-déjeuner à midi et sa collation le soir : l'ordre où l'on tape n'est pas l'ordre où l'on mange.* C'est désormais l'ordre du **repas** qui commande, et `FOOD_MEALS` suit l'ordre de la journée.
+
+**⭐ R13 — MÊME MOTIF QUE LE MÉNAGE DU MENU ADMIN** (ft-v955) : `<details>` natif, donc **zéro JS** — ça tient même si un script tombe, et le clavier comme les lecteurs d'écran le gèrent gratuitement. Chaque section porte son **total kcal et protéines** : on voit d'un coup où partent les calories.
+
+**⛔ UNE SECTION VIDE NE S'AFFICHE PAS.** Annoncer *« Collation 2 — 0 aliment »* tous les jours ferait de l'écran la liste de ce qu'on n'a **pas** mangé — un reproche déguisé (**R24**).
+
+**⭐⭐ ET L'ÉTAT PLIÉ SURVIT AU RE-RENDU.** `renderFoodJournal()` reconstruit tout son HTML : sans mémoire, **ajouter un aliment redéplierait tout ce que la personne vient de replier**. *C'est un défaut qui ne se manifeste qu'à la DEUXIÈME action, donc jamais en testant une fois.* ⛔ En mémoire seulement, jamais dans `localStorage` : c'est un confort d'affichage, pas une donnée — le stockage a déjà saturé une fois (29/07).
+
+**⛔⛔ LE PIÈGE ÉVITÉ, ET IL ÉTAIT SILENCIEUX.** Le repli de `_foodMealInfo` valait `FOOD_MEALS[1]`, qui **désignait le déjeuner**. En passant la liste en ordre de journée, l'index 1 devient la **collation** — et toute entrée au repas inconnu serait devenue une collation **sans que rien ne le signale**. *Un index qui dépend de l'ordre d'un tableau devient faux le jour où on trie ce tableau* (**R14**). Le repli est maintenant **nommé**, et un témoin l'épingle.
+
+**⛔ `collation` GARDE SA CLÉ** : la renommer aurait orphelin toutes les entrées déjà notées, qui seraient tombées dans le repas par défaut en silence. **⚠️ Et les libellés restent NEUTRES** — « Collation 2 », pas « Collation du soir » : Michel dit *matin et soir*, quelqu'un d'autre prendra un goûter à 16 h, et étiqueter l'heure à sa place serait un **faux-précis** (**R29**).
+
+**⭐ LES 5 BOUTONS DE REPAS N'ONT DEMANDÉ AUCUN CODE** : la modale d'ajout et celle de modification se génèrent déjà depuis `FOOD_MEALS`. *Une liste qui est la source de vérité (R1) fait apparaître la nouveauté partout d'un coup.*
+Tests : **parcours 1100/1100** (+9, bloc LXXXVII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge** — le regroupement n'existe pas. ⚠️ **Peu instructif, et autant l'écrire** : 7 témoins vivent sous le garde, donc ils **ne tournent pas** (1093 exécutées au lieu de 1100). ⭐⭐ **MAIS UN TÉMOIN EST SORTI DU GARDE EXPRÈS, et c'est le plus important du bloc** : *un repas inconnu retombe sur DÉJEUNER*. Il mesure un comportement qui **existait déjà**, il est donc **vert des deux côtés** — et c'est exactement ce qu'on veut voir : *un rangement se juge à ce qui n'a PAS bougé.* Derrière le garde, il n'aurait rien mesuré. ⚠️⚠️ **ET J'AI DÛ M'Y REPRENDRE À TROIS FOIS POUR OBTENIR CE CHIFFRE.** ① J'ai lancé le contrôle négatif **pendant qu'une autre passe tournait** : le `git stash` a échangé les fichiers **au milieu** du run, qui a planté — *une trace d'erreur qui n'accusait que ma propre concurrence.* ② Puis le bloc **tuait le runner** contre l'ancien code (`_journalPli` absente, exception hors de `pg.evaluate`) : **aucun verdict imprimé du tout**, pas même un rouge. C'est la leçon de ft-v957 repayée — *un témoin qui tue le harnais ne mesure rien*. Le garde couvre désormais la fonction réellement neuve. Fichiers : `app.js`, `screens.js`, `style.css`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v968. |
 
 **ft-v967 — 🛡️ « JE NOTE » PUIS LA SÉANCE : la note est HONORÉE, pas vide** — Michel envoie **la réponse exacte** qui levait le drapeau : *« Et le Butterfly (Pec Deck) en début de séance — **je note**, c'est ton choix, je le respecte »*.
 
@@ -699,23 +716,6 @@ Tests : **calculs 253/253** (+12), parcours 970/970, muscles 241/241, croisés 5
 
 **⚠️ UN TÉMOIN À MOI A ROUGI, ET IL AVAIT TORT.** J'avais construit un rythme « instable » à **5-1-2-1** — instable **à l'œil**. Mais 1, 2 et 1 tombent tous dans la même case *« 1-2 fois »* : c'est un rythme **stable** avec une semaine chargée, et le code avait raison. *Un contre-exemple se construit avec la règle, pas à vue de nez.*
 Tests : **parcours 970/970** (+16, bloc LXXIX), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 3 rouges**, dont **2 sur le double compte lui-même**. ⚠️ **Et il a fallu s'y reprendre pour qu'il mesure quelque chose** : mes témoins du double compte étaient d'abord derrière le garde « fonction absente », donc ils **ne tournaient pas** — or eux testent un comportement **qui existait déjà**. Sortis du garde, ils rougissent contre l'ancien code, ce qui est tout l'intérêt. ⚠️ Deux témoins sont **verts des deux côtés, et c'est voulu** : l'anneau n'a jamais inclus la séance, et la tuile « Séance » a toujours dit vrai. Fichiers : `state.js`, `screens.js`, `index.html`, `tests/parcours/runner.js`, `IDEES-FUTURES.md`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v949. |
-
-**ft-v948 — 📤 LE COMPTEUR NE PARTAIT QUE SI LA PERSONNE FAISAIT QUELQUE CHOSE** — Michel : *« à partir de quel moment tu pourras lire le Milo à Eline ? »*.
-
-**⭐⭐ ET LA RÉPONSE HONNÊTE, AVANT DE CODER, ÉTAIT : peut-être jamais.** Le scan rétro de ft-v946 tourne bien 4 s après le démarrage, sur son téléphone. Mais **la sauvegarde, elle, ne part que sur une ACTION** — une séance, un réglage, un message. **Quelqu'un qui ouvre l'app, lit ses conversations et referme n'envoyait rien.**
-
-**⚠️⚠️ ET LE PIÈGE EST QU'ON AURAIT LU CE SILENCE COMME UNE RÉPONSE.** « Aucun compteur pour Eline » se serait lu *« elle ne s'en sert pas »* — alors qu'on n'avait simplement **pas le chiffre**. C'est le défaut exact corrigé la veille (ft-v947 : un testeur sans dérive était invisible), **d'un cran plus haut** : on avait réparé l'affichage, pas le chemin. *Une mesure qui n'arrive jamais et une mesure à zéro se ressemblent — et c'est la pire des confusions, parce qu'elle ne se voit pas.*
-
-**👉 LE SCAN POUSSE DÉSORMAIS LA SAUVEGARDE LUI-MÊME.** Ouvrir l'app suffit.
-
-**⛔ MAIS PAS À CHAQUE OUVERTURE, et c'est la moitié qui protège.** L'instantané est **stable** — mêmes conversations, même résultat (c'est le choix de conception de ft-v946) — donc il ne repart **que quand il y a du NOUVEAU**. Une écriture par nouveauté, pas une par démarrage : *le stockage a déjà saturé une fois (29/07, 102 %), on ne rouvre pas cette porte pour du confort.*
-
-**⚠️⚠️ ET MON PREMIER JET AURAIT ENVOYÉ UNE SAUVEGARDE PAR JOUR ET PAR PERSONNE.** Je comparais l'instantané **entier** — `faitLe` compris. Or **`faitLe` est la date du SCAN, pas une mesure** : elle change **toute seule à minuit**. Le code aurait donc cru à une nouveauté chaque matin, pour zéro information nouvelle. ⭐ La signature ne compare plus que **ce qu'on mesure** (réponses vues, dérives, codes, période couverte), jamais l'horodatage de la mesure — et un témoin **simule le lendemain** en vieillissant le champ. *Un défaut qui ne se serait manifesté que le jour d'après, donc jamais pendant un test écrit le même jour.*
-
-**⭐ ET LE CONTRE-TÉMOIN EST INDISPENSABLE** : une **vraie** nouvelle conversation repart bien. Sans lui, **rendre le compteur muet aurait passé tous les autres témoins** — trois verts qui n'auraient prouvé que le silence.
-
-**⛔ CE QUI PART NE CHANGE PAS D'UN MOT** : ~150 octets de **NOMBRES**. Aucune phrase de Milo, aucun mot de la personne — les conversations ne quittent toujours pas le téléphone, et la carte « Mes conversations avec Milo » le dit toujours en toutes lettres.
-Tests : **parcours 954/954** (+4, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges** — aucune sauvegarde n'est déclenchée du tout. ⚠️ **Et un 2ᵉ contrôle, plus instructif, contre le code que j'ai FAILLI livrer** (la comparaison naïve avec `faitLe`) : **2 rouges**, dont exactement le témoin du lendemain. *Le défaut évité a été mesuré, pas seulement raconté.* Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v948. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

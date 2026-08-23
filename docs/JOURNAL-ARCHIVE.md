@@ -3181,3 +3181,20 @@ Tests : **parcours 947/947** (+6, bloc LXXVIII), calculs 241/241, muscles 241/24
 
 **⭐⭐ ET LA SECONDE QUESTION A RÉVÉLÉ UN TROU DANS CE QUI VENAIT D'ÊTRE LIVRÉ.** *« Est-ce que les testeurs testent Milo ? »* — avec le filtre d'hier (au moins une dérive), **un testeur qui utilise Milo sans déraper n'apparaissait pas du tout** : impossible de distinguer *« ne l'utilise pas »* de *« l'utilise et tout va bien »*. Or `retro.messages` compte ses réponses de Milo : **c'est littéralement la mesure d'usage**. La vue affiche désormais **tous** les comptes, avec *« N réponses de Milo, AUCUNE dérive ✅ »* — et *« n'a jamais parlé à Milo »* quand c'est le cas.
 Tests : **parcours 950/950** (+3, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `coach.js`, `Code.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v947. |
+
+**ft-v948 — 📤 LE COMPTEUR NE PARTAIT QUE SI LA PERSONNE FAISAIT QUELQUE CHOSE** — Michel : *« à partir de quel moment tu pourras lire le Milo à Eline ? »*.
+
+**⭐⭐ ET LA RÉPONSE HONNÊTE, AVANT DE CODER, ÉTAIT : peut-être jamais.** Le scan rétro de ft-v946 tourne bien 4 s après le démarrage, sur son téléphone. Mais **la sauvegarde, elle, ne part que sur une ACTION** — une séance, un réglage, un message. **Quelqu'un qui ouvre l'app, lit ses conversations et referme n'envoyait rien.**
+
+**⚠️⚠️ ET LE PIÈGE EST QU'ON AURAIT LU CE SILENCE COMME UNE RÉPONSE.** « Aucun compteur pour Eline » se serait lu *« elle ne s'en sert pas »* — alors qu'on n'avait simplement **pas le chiffre**. C'est le défaut exact corrigé la veille (ft-v947 : un testeur sans dérive était invisible), **d'un cran plus haut** : on avait réparé l'affichage, pas le chemin. *Une mesure qui n'arrive jamais et une mesure à zéro se ressemblent — et c'est la pire des confusions, parce qu'elle ne se voit pas.*
+
+**👉 LE SCAN POUSSE DÉSORMAIS LA SAUVEGARDE LUI-MÊME.** Ouvrir l'app suffit.
+
+**⛔ MAIS PAS À CHAQUE OUVERTURE, et c'est la moitié qui protège.** L'instantané est **stable** — mêmes conversations, même résultat (c'est le choix de conception de ft-v946) — donc il ne repart **que quand il y a du NOUVEAU**. Une écriture par nouveauté, pas une par démarrage : *le stockage a déjà saturé une fois (29/07, 102 %), on ne rouvre pas cette porte pour du confort.*
+
+**⚠️⚠️ ET MON PREMIER JET AURAIT ENVOYÉ UNE SAUVEGARDE PAR JOUR ET PAR PERSONNE.** Je comparais l'instantané **entier** — `faitLe` compris. Or **`faitLe` est la date du SCAN, pas une mesure** : elle change **toute seule à minuit**. Le code aurait donc cru à une nouveauté chaque matin, pour zéro information nouvelle. ⭐ La signature ne compare plus que **ce qu'on mesure** (réponses vues, dérives, codes, période couverte), jamais l'horodatage de la mesure — et un témoin **simule le lendemain** en vieillissant le champ. *Un défaut qui ne se serait manifesté que le jour d'après, donc jamais pendant un test écrit le même jour.*
+
+**⭐ ET LE CONTRE-TÉMOIN EST INDISPENSABLE** : une **vraie** nouvelle conversation repart bien. Sans lui, **rendre le compteur muet aurait passé tous les autres témoins** — trois verts qui n'auraient prouvé que le silence.
+
+**⛔ CE QUI PART NE CHANGE PAS D'UN MOT** : ~150 octets de **NOMBRES**. Aucune phrase de Milo, aucun mot de la personne — les conversations ne quittent toujours pas le téléphone, et la carte « Mes conversations avec Milo » le dit toujours en toutes lettres.
+Tests : **parcours 954/954** (+4, bloc LXXVIII), calculs 241/241, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges** — aucune sauvegarde n'est déclenchée du tout. ⚠️ **Et un 2ᵉ contrôle, plus instructif, contre le code que j'ai FAILLI livrer** (la comparaison naïve avec `faitLe`) : **2 rouges**, dont exactement le témoin du lendemain. *Le défaut évité a été mesuré, pas seulement raconté.* Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v948. |
