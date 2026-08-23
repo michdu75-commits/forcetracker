@@ -42,6 +42,7 @@ Rapport complet : artefact *« Milo face au code »*.
 | **Le débrief de séance se perdait** | `ft-v979` | **5 séances sur 36 sans aucun débrief.** File d'attente + jeton « en cours » + rattrapage au démarrage. |
 | **Le contrôle d'intensité n'existait pas** | `ft-v980` | `bz()` inversée + coefficient de tenue → le code refait, **à la proposition**, le calcul que Milo ne faisait que si on le questionnait. |
 | **La quantité disparaissait à la 2ᵉ saisie** | `ft-v984` | Le bloc était caché sans condition quand on reprend un aliment de son propre journal, `per100` transmis deux lignes plus bas. |
+| **La confirmation s'ouvrait DERRIÈRE la modale** | `ft-v985` | `#ov-confirm` était à z-index **500**, comme `#ov-edit-food` — à égalité, c'est l'ordre du DOM qui tranche. **19 overlays** au-dessus ou à égalité, pas un seul. |
 
 ---
 
@@ -56,6 +57,7 @@ Rapport complet : artefact *« Milo face au code »*.
 | **La mémoire à deux vitesses** | `MEMOIRE_LARGE_EMAILS` = **2 comptes**. Un utilisateur normal n'a pas les séances 6→35 sur 60 jours. **Michel juge Milo sur une mémoire que personne d'autre n'a.** | Faible — c'est une **décision**, pas du code |
 | **Rejouer le benchmark** | Il existe, il tourne, **il n'a pas encore vu les correctifs de ft-v979→984**. | Faible |
 | **`exSwaps` réellement opposable** | « Ne me remets plus cet exercice » tient tant que le modèle suit sa consigne. Rien ne l'impose. | Faible, une fois le point de refus posé |
+| **⛔ Le plafond du bloc commun est DÉPASSÉ chez un profil blessé** | Mesuré 23/08 : **47 119 pour un plafond de 46 500**. Le témoin teste des profils **sans blessure**, donc il reste vert. Annoncé au §3 de `AUDIT-CONTEXTE-MILO.md`, **jamais chiffré comme dépassement effectif**. | Faible — étendre le témoin aux profils blessés |
 
 ### 🔵 Peut attendre après la mise en production
 
@@ -66,6 +68,7 @@ Rapport complet : artefact *« Milo face au code »*.
 - **Sommeil et pas** — reçus dans `healthDaily`, stockés, synchronisés, **jamais lus**. Seul `rhr` sert.
 - **Deux conventions de sexe opposées** — Mifflin `gender==='H'`, plancher `gender==='F'`. *Un profil abîmé serait calculé comme l'une et plafonné comme l'autre.* Demande de décider ce que « inconnu » veut dire.
 - **La course `_saveCoachMemory`** — ⚠️ **à prouver ou réfuter par un test AVANT de toucher au code.**
+- **⭐⭐ Le bloc « personnel » de Milo est générique à 92 %** — mesuré le 23/08 sur 3 profils opposés (`AUDIT-CONTEXTE-MILO.md` §14) : sur ~21 200 caractères facturés par personne à chaque message, **13 452 sont identiques chez tout le monde**, ~6 000 dépendent du **lieu** (5 variantes, pas N) et **~1 700 seulement sont vraiment personnels**. ⛔ **Ce n'est PAS un appel à supprimer du texte** : le but est de le **reclasser**, à information constante. ⚠️ Gain réel **non mesuré** (il dépend du nombre de personnes qui discutent dans la même fenêtre de cache) et **aucun outil local ne sait vérifier qu'une règle déplacée est toujours suivie** (§13).
 
 ### ⚪ Décisions produit / science (pas des bugs)
 
@@ -98,6 +101,8 @@ Elles valent plus que les correctifs, parce qu'elles se rappliquent :
 3. **⭐ Reproduire dans un navigateur avant de conclure** (`BUGS.md` **12quater**). Appliqué pour la quantité ; **et une fois de plus mon premier essai de mesure n'a rien mesuré** (`_afSuggLoc` est une variable de script, pas `window`) — il lisait un libellé resté de l'étape d'avant.
 4. **⭐ Compter les endroits, pas les corriger.** *« Un correctif posé d'un seul côté est un oubli, pas un arbitrage. »* Cinq fois cette semaine : le défilement (1/6), la quantité (1/2), le titre de partage (1/10), le contrôle d'intensité (1/2), la clé `bw` (1/2).
 5. **⛔ Un contrôle négatif peut mentir.** Quand un témoin vérifie une *absence* et que la fonction n'existe pas de l'autre côté, il passe tout seul. **Les vrais verts sont ceux qui tournent des deux côtés.**
+6. **⭐⭐ Comparer deux mesures suppose que la FRONTIÈRE n'ait pas bougé entre les deux.** J'ai annoncé à Michel *« le bloc personnel a été multiplié par 5 »* : calcul juste, conclusion trompeuse — le point de comparaison (29/07) n'avait pas le même découpage, et une bonne part de l'écart est du texte qui a **changé de côté**, pas du texte **ajouté**. *Un nombre juste peut porter une conclusion fausse* (`BUGS.md` **12quater**, version longue).
+7. **⛔ Régler le mauvais champ produit une mesure propre et fausse.** J'ai d'abord classé le catalogue d'exercices « 100 % générique » en réglant `S.place` — le code lit `S.coachQuiz.answers.place`. Le test tournait, ne plantait pas, et donnait **19 541 au lieu de 13 452**. *Avant de conclure d'une mesure, vérifier que le levier qu'on actionne est celui que le code lit.*
 
 ---
 
@@ -109,4 +114,5 @@ Elles valent plus que les correctifs, parce qu'elles se rappliquent :
 - **Ce fichier n'est pas un journal** : il ne raconte rien, il dit *où on en est*. Le récit est dans
   `CLAUDE.md`.
 
-*Dernière mise à jour : 23/08/2026 au soir, `ft-v984` en ligne.*
+*Dernière mise à jour : 23/08/2026, nuit — `ft-v985` en ligne. Ajout : le bloc personnel de Milo
+mesuré générique à 92 % (`AUDIT-CONTEXTE-MILO.md` §14) et le plafond dépassé chez un profil blessé.*

@@ -18,7 +18,7 @@
 |---|---|---|
 | Écrans | 7 | 0 |
 | Lignes de menu | 6 | 1 |
-| Fenêtres (modales) | 61 | 13 |
+| Fenêtres (modales) | 61 | 12 |
 | Actions du serveur | 41 | 0 |
 | Fonctions JS | 560 | — |
 | Nouveautés annoncées | 56 | — |
@@ -136,7 +136,7 @@ Chaque action = une capacité côté serveur (IA, sauvegarde, import, premium…
 | `ov-import-hist` | ✅ |
 | `ov-hist-wall` | ✅ |
 | `ov-day-sel` | ✅ |
-| `ov-export-choix` | ❓ |
+| `ov-export-choix` | ✅ |
 | `ov-ex-swap` | ❓ |
 | `ov-milo-seance` | ❓ |
 | `ov-morpho-analysis` | ✅ |

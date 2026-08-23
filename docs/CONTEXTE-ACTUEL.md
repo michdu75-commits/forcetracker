@@ -7,6 +7,28 @@
 ---
 
 - **Version en ligne (live) :** `ft-v985`.
+- 🧠⭐⭐ **LE CONTEXTE DE MILO — MESURE DU 23/08 AU SOIR** (aucun code modifié ;
+  `docs/AUDIT-CONTEXTE-MILO.md` **§14**). Michel : *« attends, de 40 000 on est passé à
+  70 000 ? »* puis *« on l'a diminué y'a 3 jours exprès, y'a un truc qui va pas là »*.
+  ✅ **Le dégraissage du 19/08 a TENU** : bloc commun **46 467 (18/08) → 44 844 (21/08)**,
+  soit **−1 623**. Rien n'a été annulé. ⭐ La mesure recoupe le §5 de l'audit du 17/08 à
+  **1 caractère près** (44 684 / 44 685).
+  ⭐⭐ **Le vrai constat : 92 % du bloc « personnel » n'est pas personnel.** Sur 3 profils
+  opposés (dont un **blessé** et un **à la maison**), sur ~21 200 caractères facturés par
+  personne à chaque message : **13 452 sont identiques chez tout le monde**, ~6 000 dépendent
+  du **LIEU** (5 variantes, pas N — même motif que les 2 variantes admin/non-admin de
+  ft-v767), et **~1 700 seulement sont vraiment personnels**.
+  ⛔ **Ce n'est PAS un appel à supprimer du texte** — le but est de **reclasser**, à
+  information constante. ⚠️ **Gain réel non mesuré** (dépend du nombre de personnes dans la
+  même fenêtre de cache) et **aucun outil local ne sait vérifier qu'une règle déplacée est
+  toujours suivie** (§13).
+  ⛔ **Trouvé au passage** : le plafond du bloc commun **est dépassé chez un profil blessé**
+  (**47 119 > 46 500**) — le témoin teste des profils **sains**, donc il reste vert.
+  ⚠️⚠️ **Et deux de mes mesures étaient fausses avant d'être bonnes**, c'est écrit au §14 :
+  ① *« le bloc personnel a été multiplié par 5 »* comparait **deux découpages différents**
+  (le marqueur d'instant n'existait pas au 29/07) ; ② j'avais classé le catalogue « 100 %
+  générique » en réglant `S.place`, alors que le code lit `S.coachQuiz.answers.place`.
+  *Un nombre juste peut porter une conclusion fausse.*
 - 🗑️ **LA CONFIRMATION PASSAIT DERRIÈRE** (ft-v985). Michel : *« le bouton supprimer ne
   fonctionne pas »*. ⛔⛔ **Il fonctionnait** — la question s'ouvrait derrière la fenêtre de
   modification (`elementsFromPoint` → `["EDIT","CONFIRM"]`). ⭐⭐ **Michel l'a confirmé sans le

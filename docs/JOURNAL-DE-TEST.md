@@ -550,6 +550,52 @@ venait d'un **fait inventé** (le `resume` d'un persona de test, pris pour une i
 testeur — voir ft-v937). **Aucun cas d'usage réel ne l'appuie à ce jour.** À rouvrir le jour où
 quelqu'un le vit vraiment.
 
+### 🟢⭐⭐ MILO REPROPOSE POUR DEMAIN CE QUI A ÉTÉ FAIT AUJOURD'HUI
+**23/08/2026, Michel, export de conversation à l'appui** : *« déjà j'ai eu mon débrief quand j'ai
+ouvert Milo, ensuite je lui ai demandé une séance pour demain, il m'a sorti le développé couché
+alors que j'ai fait aujourd'hui et la suite est pareille. Ça ne va pas du tout. »*
+
+**⚠️ CE QUI EST DÉJÀ MESURÉ, ET QUI ÉCARTE LA CAUSE ÉVIDENTE** : la séance du jour **est bien dans
+le contexte**, et elle est **explicitement datée « (aujourd'hui) »** —
+`dimanche 2026-08-23 (aujourd'hui) (5 exercices): Développé Couché: S1 95×3 · …`.
+*Ce n'est donc pas un trou de données (R4). L'information est là, elle n'est pas utilisée.*
+
+**⭐ LA PISTE MESURÉE** : il n'existe **aucune consigne de récupération par groupe musculaire**
+dans le contexte (`consigneRecupGroupe: false`). Milo n'a jamais reçu la règle *« ne repropose pas
+un groupe travaillé hier »* — **on lui reproche de ne pas suivre une règle qu'on ne lui a pas
+donnée** (**R8**). ⚠️ **Hypothèse concurrente non écartée** : la **dilution** (§14 de
+`AUDIT-CONTEXTE-MILO.md` — 70 580 caractères, dont 92 % du bloc personnel générique).
+
+**Attendu vérifiable par du code** : après une séance datée d'aujourd'hui, une séance proposée
+« pour demain » ne doit pas reprendre les **exercices** de cette séance. ⚠️ **Le vérificateur est
+faisable sur les exercices ; pas sur les groupes musculaires**, tant que la règle n'existe pas.
+👉 **Prête à promouvoir dès que la règle est écrite** — sinon le scénario mesurerait un attendu
+que le produit ne promet pas (leçon EV-015 ci-dessus).
+
+### 🟢 MILO LANCE UNE SÉANCE SANS QU'ON LE LUI DEMANDE
+**23/08/2026, Michel** : *« et il lance une séance sans que je lui demande »*, alors qu'il venait
+d'écrire *« attends avant de me proposer de lancer la séance »*.
+
+**Mesuré : 5 occurrences du bloc `{"prevu"…}` dans la seule discussion en cours**, dont plusieurs
+après la demande d'attendre. **Attendu vérifiable** : après un message contenant une demande
+d'attente explicite, la réponse suivante ne doit pas émettre `prevu`.
+⚠️ **À reproduire d'abord** — on ne sait pas encore si le bloc est émis par le modèle ou posé par
+le code (`_appliqueMiloSession` a deux portes, voir ft-v980).
+
+### 🟡 LE COMPTEUR DU GARDIEN MÉLANGE DEUX VERSIONS DE LA MÊME RÈGLE
+**23/08/2026, capture du panneau Gardien** : *11 « promesse vide » sur 13 réponses*. **Rejoué sur
+les 46 vraies réponses de Michel avec le détecteur d'aujourd'hui : 2.**
+
+**⭐ Ce n'est pas un bug du détecteur, c'est un bug du COMPTEUR** : `_gardienCompter` **additionne**,
+il ne recalcule pas. Or **ft-v967 a resserré la règle le 22/08, en plein milieu de la période
+comptée** — le panneau additionne donc des drapeaux levés par **deux règles différentes** et les
+présente sous un seul chiffre.
+⚠️ **Conséquence à retenir** : *un compteur cumulatif devient faux le jour où on change la règle
+qu'il compte.* Il faudrait soit horodater la version de règle, soit remettre le compteur à zéro à
+chaque changement — **et c'est une décision, pas un correctif évident**.
+👉 **Reste ici, pas promu** : ce n'est pas un comportement de Milo, c'est un affichage d'outil
+interne réservé à l'admin.
+
 ---
 
 ## ⚠️ Comment fouiller les conversations (leçon du 21/08)

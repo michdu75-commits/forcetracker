@@ -868,3 +868,129 @@ Elle redevient discutable **si et seulement si** l'un de ces deux points est ré
 
 **En attendant : on n'y touche pas.** Le témoin XLVI (`tests/parcours`) garde l'état actuel ; le jour
 où quelqu'un déplacera les zones, il rougira et renverra à cette page.
+
+---
+
+## 14. 🔁 REMESURE DU 23/08/2026 (ft-v985) — *« de 40 000 on est passé à 70 000 ? »*
+
+> **Déclencheur** : Michel, en lisant une mesure de contexte : *« attend de 40000 on est passé a
+> 70000 ? »*, puis *« mais non c'est pas possible on l'a diminué ya 3 jours exprès, y'a un truc qui
+> va pas là »*.
+>
+> **Nature : mesure seule. Aucun fichier de code modifié.** Version mesurée : **ft-v985**.
+> Même méthode qu'au §1 (Chromium sans tête, `buildCoachContext()` exécutée, marqueurs du Worker).
+
+### 14.1 Les trois blocs aujourd'hui
+
+| Bloc | Contenu | Taille | Cache |
+|---|---|---:|---|
+| ① **commun** | avant `PROFIL ATHLÈTE:` | **45 363** | 1 h, partagé par tous |
+| ② **personnel** | jusqu'au marqueur d'instant | **21 200 – 22 300** | 5 min, **par personne** |
+| ③ **instant** | après le marqueur | **2 962** | jamais |
+| | **total** | **70 580** | |
+
+### 14.2 ✅ LE DÉGRAISSAGE DU 19/08 A TENU — c'est la réponse à la question de Michel
+
+| date | version | bloc commun |
+|---|---|---:|
+| 10/08 | ft-v823 | 44 685 |
+| 18/08 | ft-v898 | **46 467** |
+| 21/08 | ft-v946 | **44 844** |
+| 23/08 | ft-v985 | 45 363 |
+
+**−1 623 caractères entre le 18 et le 21.** Le texte retiré est bien parti, rien n'a été annulé.
+
+⭐ **Et la mesure se recoupe avec le §5 de cet audit, faite six jours plus tôt et indépendamment** :
+10 août → **44 684** au §5, **44 685** ici. *Un caractère d'écart entre deux campagnes séparées.*
+
+### 14.3 ⚠️⚠️ CE QUE J'AI DIT À MICHEL ET QUI ÉTAIT TROMPEUR
+
+Je lui ai annoncé : *« la feuille personnelle est passée de ~4 000 à 22 255, elle a été multipliée
+par 5 »*. **Le calcul est juste, la phrase induit en erreur, et il faut l'écrire.**
+
+Le chiffre de 4 057 vient de **ft-v670 (29/07)**, où le marqueur d'instant **n'existait pas encore**
+et où les consignes étaient placées **avant** le profil. Ce que je comparais n'était donc pas
+« la même feuille qui grossit » mais **deux découpages différents** : une bonne partie de l'écart
+est du texte qui a **changé de côté**, pas du texte **ajouté**.
+👉 *Comparer deux mesures suppose que la frontière n'ait pas bougé entre les deux.* Ici elle avait
+bougé. **C'est `BUGS.md` 12quater dans sa version longue : un nombre juste, une conclusion fausse.**
+
+### 14.4 ⭐⭐ LE VRAI CONSTAT — 92 % du bloc « personnel » n'est pas personnel
+
+**Méthode** : on construit le contexte pour **trois profils volontairement opposés** et on compare
+le bloc personnel **ligne à ligne**. Une ligne n'est déclarée générique que si elle est présente
+**telle quelle chez les trois**.
+
+| profil | |
+|---|---|
+| **A** | Michel — H, 46 ans, confirmé, prise de muscle, premium, séances + records |
+| **B** | Sophie — F, 28 ans, débutante, perte de poids, aucune séance |
+| **C** | Karim — H, 61 ans, **tendinite épaule**, **entraînement à la maison**, équilibre |
+
+| | caractères | part |
+|---|---:|---:|
+| identique chez les **trois** → **générique** | **13 452** | **63 %** |
+| dépend du **LIEU** (le catalogue) | ~6 000 | 28 % |
+| **vraiment personnel** | **~1 700** | **8 %** |
+
+**Sur ~21 200 caractères facturés comme personnels à chaque message, ~1 700 le sont réellement.**
+
+Les plus gros morceaux génériques mal classés : le **rythme réel** (3 525), les **objectifs**
+(2 154), la règle de **montée en charge** (1 541), la règle de **notation** (878), le choix du
+**ton** (497).
+
+### 14.5 ⛔ LE CATALOGUE N'EST NI GÉNÉRIQUE NI PERSONNEL — il est PAR LIEU
+
+Le plus gros bloc (**~11 600 caractères**) est le catalogue d'exercices. **Première mesure
+fausse de ma part** : je l'avais classé 100 % générique parce que j'avais réglé `S.place`, **qui
+n'est pas le champ lu**. `_catalogueContext()` lit `S.coachQuiz.answers.place` et filtre les bacs
+via `_CAT_LIEUX` — **5 variantes** (`salle` · `basic` · `maison` · `pdc` · non renseigné).
+
+👉 **Il ne peut donc pas rejoindre le bloc commun tel quel.** Mais il n'a pas besoin d'une entrée
+de cache par personne non plus : **5 entrées partagées suffisent**. *C'est exactement le motif
+déjà en place pour les 2 variantes admin / non-admin (ft-v767) — « 2 entrées de cache, pas N ».*
+
+⚠️ **Et il y est arrivé par une décision documentée, pas par accident** : le commentaire de
+`coach.js` (10/08, ft-v819) dit qu'on a retiré `_ctxEntrainement()` pour que le catalogue parte
+**toujours, dans la zone cachée** — *« 10× moins cher »*. Le raisonnement était bon ; ce qui n'a
+pas été vu, c'est qu'il atterrissait dans la zone cachée **personnelle**, donc payée par personne
+au lieu d'être mutualisée. **R30 : la décision est écrite, on ne la « répare » pas — on la
+complète.**
+
+### 14.6 ⛔ AU PASSAGE — le plafond du bloc commun EST dépassé, et le garde-fou ne peut pas le voir
+
+| profil | bloc commun | plafond 46 500 |
+|---|---:|---|
+| Michel (sain) | 45 363 | ✅ |
+| Sophie (saine) | 45 363 | ✅ |
+| **Karim (tendinite épaule)** | **47 119** | **❌ +619** |
+
+Le §3 de cet audit l'annonçait — *« le bloc commun n'est commun que pour les gens en bonne
+santé »* — **mais il n'avait jamais été chiffré comme un dépassement effectif du plafond.** Le
+témoin `tests/parcours` teste des profils **sans blessure**, donc il reste vert.
+*Une chose surveillée, sa jumelle pas du tout* — la famille la plus fréquente du projet.
+
+### 14.7 Ce qui n'est **PAS** mesuré ici, et qu'il ne faut pas déduire
+
+- **Les tokens et le coût réel.** Aucune clé API dans l'environnement. Tout est en **caractères**.
+  Le coût dépend de `input_tokens` / `cache_creation_input_tokens` / `cache_read_input_tokens` /
+  `output_tokens`, qui ne sont pas relevés ici. ⛔ **70 000 caractères ≠ 70 000 tokens**, et
+  ⛔ **chaque message ne repaie pas l'intégralité du contexte.**
+- **Le gain réel d'un reclassement.** Il dépend du nombre de personnes qui discutent dans la même
+  fenêtre de cache. Avec un seul utilisateur par jour, il est **nul**.
+- **La qualité des réponses de Milo après déplacement.** Déplacer du texte change sa **position**
+  dans le prompt, et le §13 de ce document rappelle qu'aucun outil local ne sait vérifier qu'une
+  règle est *suivie* — seulement qu'elle est *présente*.
+
+### 14.8 Ce qui est à trancher (dans cet ordre)
+
+1. **Déplacer les 13 452 caractères strictement génériques** au-dessus de `PROFIL ATHLÈTE:`.
+   Aucune information retirée, aucun changement pour Milo **sauf la position**.
+2. **Donner au catalogue sa propre coupure de cache** — 5 entrées partagées au lieu d'une par
+   personne. Plus gros gain, plus gros risque de régression.
+3. **Étendre le garde-fou de taille aux profils blessés** (§14.6) — indépendant des deux autres,
+   et c'est le seul point qui protège d'une récidive.
+
+⛔ **Aucun de ces trois points n'est un appel à SUPPRIMER du texte.** Le critère de réussite n'est
+pas *« Milo est passé de 70 000 à 50 000 »* — c'est *« Milo reçoit la même chose, et ce qui est
+facturé comme personnel diminue »*.

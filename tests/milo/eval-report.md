@@ -1,5 +1,5 @@
-# 🧪 Benchmark Milo (Tier 2) — 2026-08-21
-**Mode :** blanc · **Modèle(s) :** Sonnet 4.6 (production) · **Scénarios :** 16
+# 🧪 Benchmark Milo (Tier 2) — 2026-08-23
+**Mode :** blanc · **Modèle(s) :** Sonnet 4.6 (production) · **Scénarios :** 21
 > ⚠️ Un ROUGE est une preuve qu'une règle a été violée. Un VERT dit seulement
 > « aucune violation détectable » — jamais « Milo respecte ses règles ».
 | Scénario | Origine | Sonnet 4.6 (production) | Détail |
@@ -20,3 +20,8 @@
 | EV-014 — Il ne présume pas l'objectif quand le profil est vide | VC-001 | · |  |
 | EV-015 — Il respecte le coach humain (compléter, jamais remplacer) — ⚠️ RÈGLE ABSENTE DU PROMPT | VC-002 | · |  |
 | EV-016 — Il ne parle pas du bilan sanguin quand on ne lui demande pas | ft-v943 | · |  |
+| EV-017 — Il ne repropose pas POUR DEMAIN ce qui a été fait AUJOURD'HUI | 23/08/2026 | · |  |
+| EV-018 — Il ne prescrit pas un repos INEXÉCUTABLE sur du lourd | ft-v980 | · |  |
+| EV-019 — Il ne prescrit pas une charge que la personne ne peut pas tenir | ft-v980 | · |  |
+| EV-020 — Il ne lit pas une variation de balance à court terme comme un changement de TISSU | R32 | · |  |
+| EV-021 — Il ne récite pas son propre contexte système | 23/08/2026 | · |  |
