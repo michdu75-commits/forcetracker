@@ -10831,6 +10831,151 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* ═══ XCVII. LE DÉBRIEF NE SE PERD PLUS (ft-v979) ══════════════════════════════════════════
+   Michel : « je n'ai pas eu de briefing parce qu'il y a eu la mise à jour de l'application ».
+   ⛔ L'ancien code retirait le jeton AVANT l'appel et ne le remettait que `if(!ok)` — donc un
+   rechargement pendant l'appel le faisait disparaître pour de bon, en silence.
+   ⭐⭐ LE TÉMOIN CENTRAL SIMULE EXACTEMENT ÇA : on abandonne l'appel EN VOL (comme un
+   `location.reload()`), et on vérifie qu'au démarrage suivant la séance est de nouveau en
+   file. Sans ce scénario, tous les autres restent verts : le défaut ne se voit qu'au
+   DEUXIÈME lancement — donc jamais en testant une fois.                                     */
+{
+  console.log('\n── XCVII. Le débrief ne se perd plus ──');
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); pg.on('pageerror',e=>console.log('PAGEERROR',e.message));
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const F=await pg.evaluate(()=>{
+    const o={};
+    o.api = ['_dbfLire','_dbfAjouter','_dbfPrendre','_dbfFini','_dbfRendre','_dbfRecuperer','_dbfRattraper']
+              .every(n=>typeof window[n]==='function');
+    if(!o.api) return o;
+    const raz=()=>{ localStorage.removeItem('ft4_pending_debrief'); localStorage.removeItem('ft4_debrief_encours'); };
+
+    // ① UNE FILE, PLUS UNE SEULE PLACE — deux séances sans ouvrir Milo entre les deux.
+    raz(); _dbfAjouter('S1'); _dbfAjouter('S2');
+    o.deuxGardees = _dbfLire().length===2 && _dbfLire()[0]==='S1';
+    // idempotent : la même séance ne s'inscrit jamais deux fois
+    _dbfAjouter('S1'); o.idempotent = _dbfLire().length===2;
+
+    // ② LE JETON N'EST PLUS DÉTRUIT : il passe « en cours », donc il existe TOUJOURS quelque part.
+    const pris=_dbfPrendre();
+    o.prisLePlusAncien = pris==='S1';
+    o.plusDansLaFile   = _dbfLire().indexOf('S1')<0;
+    o.maisEnCours      = !!localStorage.getItem('ft4_debrief_encours');
+
+    // ⭐⭐ ③ L'APPEL EST INTERROMPU (mise à jour / app fermée) : on ne revient JAMAIS.
+    //    Au démarrage suivant, `_dbfRecuperer()` doit le remettre en file.
+    _dbfRecuperer();
+    o.recupereApresCoupure = _dbfLire().indexOf('S1')>=0;
+
+    // ④ SUCCÈS : le jeton disparaît pour de bon (pas de débrief fantôme au prochain lancement).
+    raz(); _dbfAjouter('S9'); const p9=_dbfPrendre(); _dbfFini(p9);
+    _dbfRecuperer();
+    o.succesNeRevientPas = _dbfLire().length===0 && !localStorage.getItem('ft4_debrief_encours');
+    // ⭐⭐ … et la LIVRAISON est notée à part, sans dépendre du bloc mémoire de Milo
+    o.livraisonNotee = _dbfFaits().indexOf('S9')>=0;
+
+    // ⑤ ÉCHEC PROPRE : le jeton repart EN TÊTE, et n'écrase PAS les autres en attente.
+    raz(); _dbfAjouter('A'); _dbfAjouter('B'); const pa=_dbfPrendre(); _dbfRendre(pa);
+    o.echecEnTete = JSON.stringify(_dbfLire())===JSON.stringify(['A','B']);
+
+    // ⑥ PÉREMPTION : un jeton vieux ne revient pas — « je viens de terminer » serait FAUX (R29).
+    raz();
+    localStorage.setItem('ft4_debrief_encours', JSON.stringify({id:'VIEUX', ts:Date.now()-40*3600*1000}));
+    _dbfRecuperer();
+    o.vieuxNeRevientPas = _dbfLire().length===0;
+
+    // ⑦ RÉTROCOMPATIBLE : un téléphone qui avait l'ANCIEN format (chaîne nue) ne perd rien.
+    raz(); localStorage.setItem('ft4_pending_debrief','ANCIEN-ID');
+    o.ancienFormatLu = _dbfLire().length===1 && _dbfLire()[0]==='ANCIEN-ID';
+    raz();
+    return o;
+  });
+  t('DÉBRIEF : la file expose bien ses 7 fonctions', F.api===true, JSON.stringify(F));
+  t('⭐⭐ DÉBRIEF : deux séances d\'affilée → les DEUX sont gardées (plus d\'écrasement silencieux)',
+    F.deuxGardees===true, JSON.stringify(F));
+  t('DÉBRIEF : la même séance ne s\'inscrit jamais deux fois', F.idempotent===true, JSON.stringify(F));
+  t('DÉBRIEF : on prend la PLUS ANCIENNE, et elle sort de la file (anti double-débrief)',
+    F.prisLePlusAncien===true && F.plusDansLaFile===true, JSON.stringify(F));
+  t('⭐⭐ DÉBRIEF : le jeton n\'est plus DÉTRUIT — il est « en cours », donc jamais nulle part',
+    F.maisEnCours===true, JSON.stringify(F));
+  t('⭐⭐ DÉBRIEF : appel interrompu (mise à jour) → la séance REVIENT en file au démarrage',
+    F.recupereApresCoupure===true, JSON.stringify(F));
+  t('DÉBRIEF : une fois LIVRÉ, il ne revient pas (pas de débrief fantôme)',
+    F.succesNeRevientPas===true, JSON.stringify(F));
+  t('⭐⭐ DÉBRIEF : la LIVRAISON est notée à part — elle ne dépend pas du bloc mémoire de Milo',
+    F.livraisonNotee===true, JSON.stringify(F));
+  t('DÉBRIEF : échec propre → le jeton repart en tête SANS écraser les autres en attente',
+    F.echecEnTete===true, JSON.stringify(F));
+  t('⛔ DÉBRIEF : un jeton périmé ne revient PAS — « je viens de terminer » serait faux (R29)',
+    F.vieuxNeRevientPas===true, JSON.stringify(F));
+  t('⚠️ DÉBRIEF : l\'ANCIEN format (chaîne nue) est encore lu — personne ne perd son débrief à la mise à jour',
+    F.ancienFormatLu===true, JSON.stringify(F));
+
+  /* ⭐ LE FILET QUI NE DÉPEND D'AUCUN DRAPEAU : on compare ce qu'on a FAIT à ce qui a été
+     DÉBRIEFÉ. C'est lui qui rattrape une séance dont le jeton a disparu pour une raison
+     qu'on ne connaîtra jamais. */
+  const R=await pg.evaluate(()=>{
+    const o={}; if(typeof _dbfRattraper!=='function') return o;
+    const raz=()=>{ localStorage.removeItem('ft4_pending_debrief'); localStorage.removeItem('ft4_debrief_encours');
+                    localStorage.removeItem('ft4_debrief_faits'); };
+    const faire=(id,ageH,done)=>({id:id, ts:Date.now()-ageH*3600*1000, date:'2026-08-23',
+      exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:done,type:'N'}]}]});
+    const vs=S.sessions, vr=S.registre;
+    try{
+      // une séance récente, validée, JAMAIS débriefée → rattrapée
+      raz(); S.sessions=[faire('X1',3,true)]; S.registre={sessionLog:[]};
+      _dbfRattraper(); o.rattrapee=_dbfLire().indexOf('X1')>=0;
+
+      // ⛔ déjà débriefée → on ne repaie pas un appel. Et le sessId est ici une CHAÎNE alors
+      //    que l'id est un NOMBRE : c'est exactement le type qui cassait la déduplication.
+      raz(); S.sessions=[faire(1787501464557,3,true)];
+      S.registre={sessionLog:[{sessId:'1787501464557',objectif:'x'}]};
+      _dbfRattraper(); o.pasDeDoublonMalgreLeType=_dbfLire().length===0;
+
+      // ⛔ un cardio seul (aucune série validée) ne déclenche rien — même règle qu'en fin de séance
+      raz(); S.sessions=[faire('X2',3,false)]; S.registre={sessionLog:[]};
+      _dbfRattraper(); o.cardioSeulIgnore=_dbfLire().length===0;
+
+      // ⛔ trop vieille → on ne la ressort pas (R29)
+      raz(); S.sessions=[faire('X3',72,true)]; S.registre={sessionLog:[]};
+      _dbfRattraper(); o.vieilleIgnoree=_dbfLire().length===0;
+
+      // ⛔ plusieurs en retard → UNE SEULE, la plus récente (pas 5 appels d'un coup)
+      raz(); S.sessions=[faire('V1',30,true),faire('V2',2,true),faire('V3',10,true)];
+      S.registre={sessionLog:[]};
+      _dbfRattraper(); o.uneSeuleLaPlusRecente=JSON.stringify(_dbfLire())===JSON.stringify(['V2']);
+
+      /* ⭐⭐ LE TÉMOIN QUI M'A FAIT CORRIGER MA PROPRE CONCEPTION. Une réponse de Milo SANS
+         bloc technique n'écrit rien dans le Registre. Si le rattrapage ne regardait que lui,
+         il ré-inscrirait la séance à CHAQUE lancement — un appel au modèle payé chaque fois,
+         en silence. Ici : Registre VIDE, mais débrief LIVRÉ → on ne repaie pas. */
+      raz(); S.sessions=[faire('Z1',2,true)]; S.registre={sessionLog:[]};
+      _dbfMarquerFait('Z1');
+      _dbfRattraper(); o.livreSansMemoireNeRepasse=_dbfLire().length===0;
+      raz();
+    } finally { S.sessions=vs; S.registre=vr; }
+    return o;
+  });
+  t('⭐⭐ RATTRAPAGE : une séance validée SANS aucun débrief revient dans la file',
+    R.rattrapee===true, JSON.stringify(R));
+  t('⭐⭐ RATTRAPAGE : une séance DÉJÀ débriefée ne revient pas — même quand le sessId est une chaîne et l\'id un nombre',
+    R.pasDeDoublonMalgreLeType===true, JSON.stringify(R));
+  t('⛔ RATTRAPAGE : un cardio seul ne déclenche aucun débrief (même règle qu\'en fin de séance)',
+    R.cardioSeulIgnore===true, JSON.stringify(R));
+  t('⛔ RATTRAPAGE : une séance trop vieille reste dehors — un débrief qui ment sur le QUAND vaut moins que rien',
+    R.vieilleIgnoree===true, JSON.stringify(R));
+  t('⛔⛔ RATTRAPAGE : plusieurs séances en retard → UNE SEULE, la plus récente (pas 5 appels d\'un coup)',
+    R.uneSeuleLaPlusRecente===true, JSON.stringify(R));
+  t('⛔⛔ RATTRAPAGE : un débrief LIVRÉ mais sans bloc mémoire ne se repaie pas à chaque lancement',
+    R.livreSansMemoireNeRepasse===true, JSON.stringify(R));
+
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

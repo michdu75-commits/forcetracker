@@ -405,7 +405,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v978`** (prochaine : `ft-v979`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v979`** (prochaine : `ft-v980`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -415,6 +415,25 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v979 — 📋 LE DÉBRIEF NE SE PERD PLUS — « je n'ai pas eu de briefing à cause de la mise à jour »** — Michel, en découvrant que sa séance du jour n'avait laissé aucune trace : *« je n'ai pas eu de briefing parce qu'il y a eu la mise à jour de l'application »*. **Il avait raison, et le mécanisme est dans le code.**
+
+**⛔⛔ LE DÉBRIEF ÉTAIT DÉCROCHÉ AVANT D'ÊTRE LIVRÉ.** L'ancien code retirait le jeton **avant** l'appel et ne le remettait que `if(!ok)` — donc **seulement quand l'appel échoue proprement**. Si l'app se recharge pendant ces quelques secondes, cette ligne ne s'exécute jamais : *le débrief n'est pas reporté, il est **perdu**, sans message et sans trace.*
+
+**⚠️⚠️ ET LE MOMENT N'EST PAS UN HASARD.** Une mise à jour en attente **refuse de s'appliquer pendant une séance** (`_majPeutSAppliquer`) — c'est voulu — et s'applique **dès l'Accueil**… où `finishWorkout` dépose justement la personne. *La mise à jour attend sagement la fin de la séance pour tomber précisément dans la fenêtre du débrief.* Six versions ont été déployées le 23/08.
+
+**⭐ MESURÉ DANS SES DONNÉES, PAS SUPPOSÉ** : **5 séances sur 36 sans aucun débrief** (08, 10, 15, 18 et 23/08), **toutes complètes** — 18 à 29 séries validées. Et une séance d'**un exercice et 3 séries**, elle, débriefée. *L'app débriefait 3 séries et ratait 29.* C'est **R4a** dans sa forme la plus coûteuse : rien ne plante, rien ne rougit, Milo répond juste un peu moins bien.
+
+**⛔ ON NE POUVAIT PAS SIMPLEMENT « RETIRER LE JETON APRÈS LA RÉPONSE »** : prendre le jeton en amont est un **correctif voulu** (le double débrief du 22/08, deux objectifs mémorisés contradictoires). Le défaire ici l'aurait fait revenir de l'autre côté (**R30** — *un correctif dont on a oublié la raison finit par être contourné*). Le jeton n'est donc plus **détruit** : il passe **« en cours »**, horodaté, et un « en cours » retrouvé au démarrage retourne dans la file. *Il n'est plus jamais nulle part.*
+
+**⛔ ET C'EST UNE FILE, PLUS UN EMPLACEMENT UNIQUE** : `setItem` n'avait **qu'une place** — deux séances sans ouvrir Milo entre les deux, et la seconde écrasait la première **en silence**.
+
+**⭐⭐ 3ᵉ FILET, ET IL NE DÉPEND D'AUCUN DRAPEAU** : on compare ce qu'on a **fait** (`S.sessions`) à ce qui a été **débriefé**. *C'est R5 à l'envers : au lieu de « où cette donnée ressort-elle ? », on demande « qu'est-ce qui aurait dû laisser une trace et n'en a pas laissé ? ».* ⛔ **Une seule séance, la plus récente**, et **périmée à 36 h** : la consigne commence par *« je viens de terminer ma séance »* — le faire dire d'une séance vieille de deux semaines serait un **mensonge sur le QUAND**, et un débrief qui ment sur sa date vaut moins que pas de débrief (**R29**). ⚠️ **Ses séances du 08 au 18/08 ne reviendront donc pas** — c'est délibéré, et c'est écrit pour que personne ne « répare » ça plus tard (**R30**).
+
+**⭐⭐ ET UN TÉMOIN EXISTANT A ATTRAPÉ UN DÉFAUT DE MA PROPRE CONCEPTION.** Mon rattrapage prenait `S.registre.sessionLog` pour preuve qu'une séance était débriefée. **Le témoin est passé au rouge, et il avait raison** : ce registre n'est écrit que si Milo termine par son **bloc technique caché**. Une réponse sans bloc aurait donc fait re-débriefer la **même séance à chaque lancement**, **en payant un appel au modèle à chaque fois**, sans que rien ne le signale. *Le filet destiné à rattraper un oubli serait devenu une fuite silencieuse.* 👉 *« un débrief a été LIVRÉ »* et *« Milo a produit une mémoire »* sont deux faits différents : ils ont désormais chacun leur propriétaire (**R2**).
+
+**⛔ CORRIGÉ AU PASSAGE, ET C'EST LA CAUSE D'UN VIEUX SYMPTÔME** : la déduplication comparait `sessId===sid` en **strict**, alors que les deux chemins ne passent pas le même **type** (`id` numérique côté séance, **chaîne** côté Coach). `"1787227670282" === 1787227670282` est faux → le doublon n'était pas vu. Mesuré : **4 dates en double** dans son registre (30/07, 31/07, 03/08, 05/08) — *et c'est ce qui lui a fait dire « on avait pas dit samedi les pecs ? »*. Le correctif de course du 22/08 fermait la porte ; le type laissait la fenêtre ouverte.
+Tests : **parcours 1209/1209** (+18, bloc XCVII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 16 rouges**, exactement les 16 comportements neufs. ⚠️ **Peu instructif en soi** (la file n'existe pas de l'autre côté) — **et ce qui compte est ailleurs, dans les 2 VERTS DES DEUX CÔTÉS** : *« la séance n'est débriefée QU'UNE FOIS même si le Coach s'ouvre pendant l'appel »* et *« le jeton est consommé »*. **C'est exactement ce qu'il fallait voir** : le correctif anti-double-débrief du 22/08 ne devait pas bouger d'un pouce, et il n'a pas bougé. Fichiers : `coach.js`, `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v979. |
 
 **ft-v978 — 🔍 LES TROIS CORRECTIONS DE L'AUDIT — et le PDF n'était pas cassé, c'est la livraison** — Michel envoie un dossier d'audit de **200 pages**, avec une consigne explicite : *« ne rien coder immédiatement, lire, classer, dédoublonner et confronter au code »*. Puis, le rapport lu : *« il n'y a que ça comme conclusion ? »*, et enfin *« vas-y fais les 3 corrections de vingt minutes »*.
 
@@ -716,14 +735,6 @@ Tests : **parcours 1055/1055** (+9, bloc LXXXIV), calculs 266/266, muscles 241/2
 **⭐ Toujours dans la même fonction, partagée par CIQUAL et les suggestions locales** (R2) — corriger une fois répare les deux recherches.
 Tests : **parcours 1046/1046** (+2), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** exact. Fichiers : `app.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v960. |
 
-**ft-v959 — 🥚 UN BUG TROUVÉ EN CHERCHANT AUTRE CHOSE — la ligature Œ cassait la recherche CIQUAL** — Michel a montré une photo de blanc d'œuf liquide en demandant comment il serait nommé dans la base, après avoir signalé que *« poulet »* ne trouvait rien (ce second point n'était qu'une version pas encore rafraîchie sur son téléphone).
-
-**⭐⭐ MAIS EN VÉRIFIANT LE PRODUIT D'ŒUF, UN VRAI BUG EST APPARU.** `normalize('NFD')` décompose les **accents** (é → e + accent), mais **jamais les ligatures œ/æ** — ce sont deux lettres fusionnées en une seule, pas une lettre accentuée. Or **le clavier iPhone en français corrige automatiquement** « oeuf » en « œuf » pendant la frappe, pendant que CIQUAL écrit tous ses noms en **oe séparé** (*« Oeuf, blanc… »*). Mesuré : taper le mot avec ligature rendait **zéro résultat** pour œuf, bœuf — donc quasiment **toujours sur iPhone**, pour un aliment qui existe pourtant dans la base.
-
-**⛔ CORRIGÉ dans `_afNorm`** : deux remplacements supplémentaires (œ→oe, æ→ae) avant le NFD qui gère les accents. **Une seule fonction, partagée par CIQUAL et les suggestions locales** (R2) — la corriger une fois répare les deux recherches d'un coup.
-
-**⚠️ Et « poulet » était un faux problème** : rejoué dans un navigateur avec le code déployé, il trouvait bien 69 résultats. La leçon reste utile : *toujours REJOUER le cas exact avant de conclure à un bug* — ici ça a évité de chasser un fantôme, et ça a laissé le temps de trouver le vrai.
-Tests : **parcours 1044/1044** (+3), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 2 rouges** exactement (œuf et bœuf en ligature) — le mot sans ligature ne régresse pas. Fichiers : `app.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v959. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

@@ -3311,7 +3311,16 @@ function _recordDebriefMemory(reply, sess){
     if(!S.registre) S.registre = {facts:{},observations:[],updatedAt:''};
     if(!Array.isArray(S.registre.sessionLog)) S.registre.sessionLog = [];
     const sid = sess ? (sess.id||sess.ts||sess.date||null) : null;
-    if(sid && S.registre.sessionLog.some(x=>x && x.sessId===sid)) return false; // dédup : 1 entrée par séance
+    /* ⚠️ COMPARAISON EN TEXTE, ET CE N'EST PAS UN DÉTAIL (23/08/2026). Les deux chemins de
+       débrief ne passent pas le même TYPE : l'écran de fin passe la vraie séance (`id`
+       NUMÉRIQUE), le Coach passe `{id: opts.debriefSess}` relu du stockage (une CHAÎNE).
+       `"1787227670282" === 1787227670282` est faux → la déduplication ne voyait pas le
+       doublon, et la même séance pouvait s'inscrire DEUX FOIS avec deux objectifs
+       contradictoires. Mesuré dans les données de Michel : 4 dates en double dans son
+       `sessionLog` (30/07, 31/07, 03/08, 05/08) — et c'est ce qui lui a fait dire « on avait
+       pas dit samedi les pecs ? ». Le correctif de course du 22/08 fermait la porte ; le
+       type, lui, laissait la fenêtre ouverte. */
+    if(sid && S.registre.sessionLog.some(x=>x && x.sessId!=null && String(x.sessId)===String(sid))) return false;
     S.registre.sessionLog.push({
       date: (sess&&sess.date) || (typeof today==='function'?today():new Date().toISOString().slice(0,10)),
       sessId: sid,
@@ -4190,19 +4199,188 @@ function _recapSeance(pid){
   }catch(e){ return ''; }                                  // jamais bloquant : au pire, pas de récap
 }
 
+/* ═══ FILE D'ATTENTE DES DÉBRIEFS (ft-v979) ════════════════════════════════════════════
+   Michel, 23/08/2026 : *« je n'ai pas eu de briefing parce qu'il y a eu la mise à jour de
+   l'application »*. **Il avait raison, et le mécanisme est dans le code.**
+
+   ⛔⛔ LE DÉBRIEF ÉTAIT DÉCROCHÉ AVANT D'ÊTRE LIVRÉ. L'ancien code retirait le jeton AVANT
+   l'appel et ne le remettait que `if(!ok)` — donc **seulement quand l'appel échoue proprement**.
+   Si l'app se recharge pendant ces quelques secondes, cette ligne ne s'exécute jamais : le
+   débrief n'est pas reporté, il est **perdu**, sans message et sans trace.
+   ⚠️ ET LE MOMENT N'EST PAS UN HASARD : une mise à jour en attente refuse de s'appliquer
+   pendant une séance (`_majPeutSAppliquer`) et s'applique dès l'ACCUEIL… où `finishWorkout`
+   dépose justement la personne. *La mise à jour attend la fin de la séance pour tomber
+   exactement dans la fenêtre du débrief.*
+
+   ⛔ ON NE PEUT PAS SIMPLEMENT « RETIRER LE JETON APRÈS LA RÉPONSE » : prendre le jeton en
+   amont est un CORRECTIF VOULU (le double débrief du 22/08, deux objectifs mémorisés
+   contradictoires — voir `_seDebrief` dans log.js). Le défaire ici le ferait revenir de
+   l'autre côté (**R30** : un correctif dont on a oublié la raison finit par être contourné).
+   👉 On garde donc la prise immédiate, mais **le jeton n'est plus DÉTRUIT** : il passe dans un
+   emplacement « en cours », horodaté. Un « en cours » retrouvé au démarrage = un appel
+   interrompu → il retourne dans la file. *Le jeton n'est plus jamais nulle part.*
+
+   ⛔ ET C'EST UNE FILE, PLUS UN EMPLACEMENT UNIQUE. `setItem('ft4_pending_debrief', id)`
+   n'avait **qu'une place** : deux séances sans ouvrir Milo entre les deux, et la seconde
+   écrasait la première **en silence**. Mesuré chez Michel : **5 séances sur 36 sans aucun
+   débrief** (08, 10, 15, 18 et 23/08), toutes des séances complètes de 18 à 29 séries — et
+   une séance d'UN exercice et 3 séries, elle, débriefée. C'est **R4a** dans sa forme la plus
+   coûteuse : *l'oubli est silencieux, rien ne plante, rien ne rougit.*
+
+   ⚠️ RÉTROCOMPATIBLE : l'ancien format était une chaîne nue. Un téléphone qui a un débrief en
+   attente au moment de la mise à jour ne doit pas le perdre à cause du changement de format —
+   ce serait exactement le défaut qu'on corrige.                                              */
+const _DBF_FILE    = 'ft4_pending_debrief';   // file : JSON [id,…] — tolère l'ancienne chaîne nue
+const _DBF_ENCOURS = 'ft4_debrief_encours';   // jeton pris, appel en vol : {id, ts}
+const _DBF_FAITS   = 'ft4_debrief_faits';     // séances RÉELLEMENT débriefées (voir ci-dessous)
+const _DBF_MAX     = 3;                       // au-delà, ce sont les PLUS ANCIENNES qui sortent
+
+/* ⭐⭐ POURQUOI UNE LISTE « FAITS » SÉPARÉE DU REGISTRE — et c'est un TÉMOIN qui l'a trouvée.
+   Ma première version du rattrapage prenait `S.registre.sessionLog` comme preuve qu'une séance
+   avait été débriefée. **Un témoin existant est passé au rouge**, et il avait raison : le
+   `sessionLog` n'est écrit que si Milo termine sa réponse par le bloc technique caché
+   `{"objectif":…}`. Une réponse SANS ce bloc — il en existe, le test en produit une — laissait
+   donc la séance éternellement « jamais débriefée ».
+   ⛔ CONSÉQUENCE SI C'ÉTAIT PARTI : l'app aurait re-débriefé la MÊME séance à chaque
+   lancement, **en payant un appel au modèle à chaque fois**, sans que rien ne le signale.
+   *Le filet destiné à rattraper un oubli se serait transformé en fuite silencieuse.*
+   👉 « un débrief a été LIVRÉ » et « Milo a produit une mémoire » sont deux faits différents.
+   Ils ont donc chacun leur propriétaire (**R2**) — le second reste au Registre. */
+function _dbfFaits(){
+  try{ const v=JSON.parse(localStorage.getItem(_DBF_FAITS)||'[]'); return Array.isArray(v)?v.map(String):[]; }
+  catch(e){ return []; }
+}
+function _dbfMarquerFait(id){
+  if(!id) return;
+  try{
+    const l=_dbfFaits(), s=String(id);
+    if(l.indexOf(s)<0){ l.push(s); localStorage.setItem(_DBF_FAITS, JSON.stringify(l.slice(-40))); }
+  }catch(e){}
+}
+
+function _dbfLire(){
+  let raw=null; try{ raw=localStorage.getItem(_DBF_FILE); }catch(e){}
+  if(!raw) return [];
+  try{ const v=JSON.parse(raw); return Array.isArray(v)?v.filter(Boolean).map(String):[String(v)]; }
+  catch(e){ return [String(raw)]; }           // ancien format : une chaîne nue = un seul id
+}
+function _dbfEcrire(l){
+  try{
+    const propre=(l||[]).filter(Boolean).map(String).slice(-_DBF_MAX);
+    if(propre.length) localStorage.setItem(_DBF_FILE, JSON.stringify(propre));
+    else localStorage.removeItem(_DBF_FILE);
+  }catch(e){}
+}
+// Ajoute une séance à débriefer. Idempotent : la même séance ne s'inscrit jamais deux fois.
+function _dbfAjouter(id){
+  if(!id) return;
+  const l=_dbfLire(), s=String(id);
+  if(l.indexOf(s)<0){ l.push(s); _dbfEcrire(l); }
+}
+// Prend le jeton le PLUS ANCIEN et le met « en cours ». Rend null si la file est vide.
+function _dbfPrendre(){
+  const l=_dbfLire(); if(!l.length) return null;
+  const id=l.shift(); _dbfEcrire(l);
+  try{ localStorage.setItem(_DBF_ENCOURS, JSON.stringify({id:id, ts:Date.now()})); }catch(e){}
+  return id;
+}
+// Succès : l'appel a abouti, le jeton disparaît pour de bon — et la séance est marquée
+// LIVRÉE, que Milo ait produit son bloc mémoire ou non (voir le commentaire de `_dbfFaits`).
+function _dbfFini(id){
+  _dbfMarquerFait(id);
+  try{
+    const e=JSON.parse(localStorage.getItem(_DBF_ENCOURS)||'null');
+    if(!e || !id || String(e.id)===String(id)) localStorage.removeItem(_DBF_ENCOURS);
+  }catch(e2){ try{ localStorage.removeItem(_DBF_ENCOURS); }catch(e3){} }
+}
+// Échec PROPRE (réseau, quota, réponse vide) : le jeton repasse EN TÊTE de file.
+function _dbfRendre(id){
+  if(!id){ _dbfFini(null); return; }
+  const l=_dbfLire(), s=String(id);
+  if(l.indexOf(s)<0) l.unshift(s);
+  _dbfEcrire(l); _dbfFini(id);
+}
+/* ⭐ LE RATTRAPAGE AU DÉMARRAGE — c'est lui qui répare le cas de Michel.
+   Un « en cours » encore posé signifie qu'on est parti en appel et qu'on n'en est jamais
+   revenu : rechargement de mise à jour, app fermée, onglet tué. On le remet dans la file.
+   ⚠️ AVEC UNE PÉREMPTION. Un jeton vieux de plusieurs jours ne mérite pas un « je viens de
+   terminer ma séance » — ce serait faux, et un débrief qui ment sur QUAND vaut moins que pas
+   de débrief (R29). Au-delà, on le laisse tomber, mais le rattrapage n°3 le reverra s'il
+   compte encore. */
+const _DBF_PEREMPTION = 36*3600*1000;         // 36 h : couvre une nuit et le lendemain
+function _dbfRecuperer(){
+  let e=null; try{ e=JSON.parse(localStorage.getItem(_DBF_ENCOURS)||'null'); }catch(e2){}
+  if(!e || !e.id){ try{ localStorage.removeItem(_DBF_ENCOURS); }catch(e3){} return; }
+  const age=Date.now()-(Number(e.ts)||0);
+  try{ localStorage.removeItem(_DBF_ENCOURS); }catch(e3){}
+  if(age>=0 && age<_DBF_PEREMPTION) _dbfAjouter(e.id);
+}
+
+/* ⭐⭐ RATTRAPAGE N°3 — LE FILET QUI NE DÉPEND D'AUCUN DRAPEAU (ft-v979)
+   Les deux mécanismes ci-dessus réparent le jeton. Celui-ci se passe de jeton : il compare
+   ce qu'on A FAIT (`S.sessions`) à ce qui a été DÉBRIEFÉ (`S.registre.sessionLog`). Une
+   séance validée qui n'a aucune entrée de débrief retourne dans la file, même si son drapeau
+   a disparu il y a longtemps et pour une raison qu'on ne connaîtra jamais.
+   *C'est R5 à l'envers : au lieu de demander « où cette donnée ressort-elle ? », on demande
+   « qu'est-ce qui aurait dû produire une trace et n'en a pas produit ? ».*
+
+   ⛔ UNE SEULE SÉANCE, LA PLUS RÉCENTE. Michel a 5 séances sans débrief : les rattraper
+   toutes lancerait 5 appels au modèle d'un coup, et personne n'a demandé ça.
+   ⛔⛔ ET SURTOUT, LA PÉREMPTION N'EST PAS UNE PRÉCAUTION DE COÛT, C'EST UNE QUESTION DE
+   VÉRITÉ : la consigne du débrief commence par « **Je viens de terminer ma séance** ». La
+   faire dire d'une séance vieille de deux semaines serait un mensonge sur le QUAND, et un
+   débrief qui ment sur la date vaut moins que pas de débrief (R29). Ses séances des 08 au
+   18/08 ne reviendront donc pas — c'est délibéré, et c'est écrit ici pour que personne ne
+   « répare » ça plus tard (R30).
+   ⚠️ Le seuil est le MÊME que `_DBF_PEREMPTION` : deux seuils qui disent la même chose
+   finiraient par diverger (R2). */
+function _dbfRattraper(){
+  try{
+    if(!S || !Array.isArray(S.sessions) || !S.sessions.length) return;
+    const log=(S.registre&&Array.isArray(S.registre.sessionLog))?S.registre.sessionLog:[];
+    // DEUX preuves, pas une : la mémoire produite (Registre) OU le débrief livré (`_dbfFaits`).
+    // Le Registre seul ne suffit pas — une réponse sans bloc technique n'y écrit rien.
+    const debriefees=new Set(log.map(x=>x&&x.sessId!=null?String(x.sessId):null).filter(Boolean));
+    _dbfFaits().forEach(x=>debriefees.add(String(x)));
+    const enFile=new Set(_dbfLire());
+    let cible=null;
+    S.sessions.forEach(s=>{
+      if(!s) return;
+      // Même condition qu'à la fin d'une séance : de VRAIS exercices validés, pas un cardio seul.
+      const exs=s.exs||s.exercises||[];
+      if(!exs.length || !exs.some(e=>e&&(e.sets||[]).some(st=>st&&st.done))) return;
+      const sid=s.id||s.ts||s.date; if(!sid) return;
+      if(debriefees.has(String(sid)) || enFile.has(String(sid))) return;
+      const q=Number(s.ts)||Number(s.id)||0;
+      if(!q || (Date.now()-q)>=_DBF_PEREMPTION) return;   // trop vieille : « je viens de terminer » serait faux
+      if(!cible || q>cible.q) cible={id:sid, q:q};
+    });
+    if(cible) _dbfAjouter(cible.id);
+  }catch(e){ /* jamais bloquant : c'est un filet, pas une fonctionnalité */ }
+}
+/* Lancé APRÈS le démarrage, jamais pendant : l'app doit s'ouvrir instantanément à la salle
+   (règle d'or #4). C'est local et instantané, mais la règle dit « le démarrage n'attend rien ».
+   ⚠️ L'ORDRE COMPTE : on récupère d'abord le jeton en vol, ENSUITE on compare les séances —
+   sinon le rattrapage ré-inscrirait une séance dont le jeton vient d'être remis en file, et
+   `_dbfAjouter` la verrait déjà présente. Les deux sont idempotents, l'ordre les rend lisibles. */
+try{ if(typeof window!=='undefined') window.addEventListener('load',()=>setTimeout(()=>{
+  try{ _dbfRecuperer(); _dbfRattraper(); }catch(e){}
+},3000)); }catch(e){}
+
 // ─── DÉBRIEF AUTOMATIQUE DE SÉANCE ────────────────────────────────
 // « Il doit sortir direct » (Michel) : après une séance, quand l'utilisateur ouvre le Coach,
 // Milo poste de LUI-MÊME un débrief (charges, records, conseil) — une seule fois par séance,
 // sans bulle « toi » et SANS consommer de question gratuite (c'est Milo qui vient à toi).
 // Local d'abord : les chiffres viennent des données (buildCoachContext), Milo ne fait que raconter.
 async function _maybeAutoDebrief(){
-  let pid=null; try{ pid=localStorage.getItem('ft4_pending_debrief'); }catch(e){}
-  if(!pid) return;
+  if(!_dbfLire().length) return;
   if(coachBusy) return;
-  // Pas de réseau → on GARDE le flag (on réessaiera à la prochaine ouverture du Coach)
+  // Pas de réseau → on GARDE la file (on réessaiera à la prochaine ouverture du Coach)
   if(!S.url || (typeof navigator!=='undefined' && navigator.onLine===false)) return;
-  // On retire le flag AVANT l'appel (anti double-déclenchement) ; on le remet si l'appel échoue
-  try{ localStorage.removeItem('ft4_pending_debrief'); }catch(e){}
+  // On prend le jeton AVANT l'appel (anti double-déclenchement) — mais on ne le DÉTRUIT plus :
+  // il passe « en cours », donc un rechargement pendant l'appel ne le fait plus disparaître.
+  const pid=_dbfPrendre();
+  if(!pid) return;
   try{ _showCoachChat(); }catch(e){}
   const instr='[DÉBRIEF AUTO] Je viens de terminer ma séance (la plus récente dans mes dernières séances). '
     +'Débriefe-la MAINTENANT, directement : rappelle mes charges par exercice (tu les as), dis ce qui a bien marché, '
@@ -4216,7 +4394,9 @@ async function _maybeAutoDebrief(){
     +'ce qui manquait, pourquoi c\'est un risque de blessure, et les paliers à faire la prochaine fois.'
     +_DEBRIEF_CONTINUITY+_DEBRIEF_MEM_TAIL;
   const ok = await sendToCoach(instr, null, {silent:true, noQuota:true, debriefSess: pid});
-  if(!ok){ try{ localStorage.setItem('ft4_pending_debrief', pid); }catch(e){} } // échec réseau → on réarme
+  if(ok) _dbfFini(pid); else _dbfRendre(pid);   // échec propre → le jeton repart en tête de file
+  // ⚠️ Et si on n'arrive JAMAIS jusqu'ici (rechargement de mise à jour, app fermée), le jeton
+  // reste « en cours » et `_dbfRecuperer()` le remet dans la file au prochain démarrage.
 }
 
 // ─── PT-001 · PROTOCOLE DE TEST « CONTINUITÉ MÉMOIRE » (admin) ──────────────
@@ -4305,7 +4485,9 @@ function startPt001Test(){
 }
 async function _pt001Run(allSessions){
   _pt001Running=true;
-  try{ localStorage.removeItem('ft4_pending_debrief'); }catch(e){} // pas de débrief auto parasite
+  // Pas de débrief auto parasite : PT-001 rejoue TOUT l'historique, la file n'a plus de sens
+  // pendant ce temps. On vide les deux emplacements (file ET jeton en cours).
+  try{ localStorage.removeItem(_DBF_FILE); localStorage.removeItem(_DBF_ENCOURS); }catch(e){}
   // Ordre chronologique ASCENDANT (la plus ancienne d'abord)
   const sessions=allSessions.slice().sort((a,b)=>{
     const ta=a.ts||Date.parse(a.id)||Date.parse(a.date)||0, tb=b.ts||Date.parse(b.id)||Date.parse(b.date)||0;

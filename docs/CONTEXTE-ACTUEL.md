@@ -6,7 +6,24 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v978` — fusionnée sur `master` le 23/08.
+- **Version en ligne (live) :** `ft-v979` — fusionnée sur `master` le 23/08.
+- 📋 **LE DÉBRIEF NE SE PERD PLUS** (ft-v979). Michel : *« je n'ai pas eu de briefing parce
+  qu'il y a eu la mise à jour de l'application »* — **il avait raison**. Le jeton était retiré
+  **avant** l'appel et remis seulement `if(!ok)` : un rechargement pendant l'appel le faisait
+  disparaître **pour de bon**. Et le moment n'est pas un hasard — la mise à jour attend la fin
+  de la séance pour s'appliquer **sur l'Accueil**, où `finishWorkout` dépose la personne.
+  **Mesuré : 5 séances sur 36 sans aucun débrief** (08, 10, 15, 18, 23/08), toutes complètes,
+  pendant qu'une séance de 3 séries était débriefée. Trois correctifs : jeton **« en cours »**
+  au lieu de détruit · **file** au lieu d'une place unique · **rattrapage** au démarrage
+  (1 séance, ≤ 36 h — au-delà *« je viens de terminer »* serait faux). ⭐⭐ **Un témoin existant
+  a attrapé un défaut de ma conception** : le rattrapage prenait le Registre pour preuve, or il
+  n'est écrit que si Milo produit son bloc caché → la même séance aurait été re-débriefée **et
+  repayée** à chaque lancement.
+  ⏭️ **À TRANCHER AVEC MICHEL, il vient de les signaler (23/08 au soir)** : ① **le repos de
+  1 min 30 sur du lourd** — déjà noté au journal de test, *« un 3×5 à 90 s c'est IMPOSSIBLE »* ;
+  ② **d'où sort « 3×5 à 95 kg »** alors qu'il tourne à 85×5 (Milo l'avait lui-même calculé à
+  88 % du 1RM, proposé 90, puis **laissé 95 quand Michel a insisté**) ; ③ **le superset n'a pas
+  fonctionné** dans la séance du jour.
 - 🔍 **AUDIT DU DOSSIER DE 200 PAGES + ses 3 premières corrections** (ft-v978). Rapport complet :
   artefact « Le dossier face au code ». ⭐⭐ **Le PDF de Milo n'était pas cassé** — mesuré, le
   texte sort intact (81/81, 323/345, 9769/9769) ; c'est `title:'Conseil de '+coach` que Michel

@@ -3270,7 +3270,13 @@ async function finishWorkout(){
   try{localStorage.setItem('ft4_wkt','null');localStorage.removeItem('ft4_wkt_draft');}catch(e){}
   // DÉBRIEF AUTO : Milo débriefera de lui-même la prochaine fois que l'utilisateur ouvre le Coach
   // (une seule fois par séance ; seulement si de vrais exercices ont été validés, pas un cardio seul).
-  if(_hasExs&&hasDone){try{localStorage.setItem('ft4_pending_debrief',String(sess.id||sess.ts||sess.date));}catch(e){}}
+  // ⚠️ UNE FILE, PLUS UN EMPLACEMENT UNIQUE (ft-v979) : `setItem` n'avait qu'une place, donc
+  // deux séances sans ouvrir Milo entre les deux et la première disparaissait SANS BRUIT.
+  if(_hasExs&&hasDone){
+    const _sid=String(sess.id||sess.ts||sess.date);
+    if(typeof _dbfAjouter==='function') _dbfAjouter(_sid);
+    else try{localStorage.setItem('ft4_pending_debrief',JSON.stringify([_sid]));}catch(e){}
+  }
   persist();
   // Registre Athlète (brique 2) : recalcule les faits mesurés après la séance.
   try{if(typeof computeRegistreFacts==='function'){computeRegistreFacts();persist();}}catch(e){}
@@ -3400,11 +3406,13 @@ async function _runSeDebrief(sess,prCount){
   // `_maybeAutoDebrief()`, qui voyait le flag encore posé et lançait un DEUXIÈME débrief.
   // On prend donc le jeton AVANT l'appel — exactement ce que fait déjà `_maybeAutoDebrief`
   // (R2 : une seule règle, appliquée pareil des deux côtés) — et on le REND si l'appel échoue.
-  let _pid=null; try{ _pid=localStorage.getItem('ft4_pending_debrief'); }catch(e){}
+  // ⚠️ ft-v979 : `_dbfPrendre()` ne DÉTRUIT plus le jeton, il le met « en cours » avec son
+  // heure. Un rechargement de mise à jour pendant l'appel ne le fait donc plus disparaître —
+  // il retourne dans la file au démarrage suivant (`_dbfRecuperer`).
+  const _pid=(typeof _dbfPrendre==='function')?_dbfPrendre():null;
   // Le Coach a déjà débriefé cette séance : on ne repaie pas un appel — mais on le DIT,
   // sinon l'écran de fin paraît vide de l'analyse alors qu'elle existe, dans le Coach.
   if(!_pid){ slot.innerHTML=avec('\ud83d\udcac Milo a déjà débriefé cette séance — retrouve-la dans l\'onglet Coach.',false); return; }
-  try{ localStorage.removeItem('ft4_pending_debrief'); }catch(e){}
   const instr='[DÉBRIEF AUTO] Je viens de terminer ma séance (la plus récente dans mes dernières séances). '
     +'Débriefe-la MAINTENANT, directement : analyse-la (progression, stabilité, points d\'attention) '
     +'en t\'appuyant sur mes charges par exercice (tu les as), tiens compte d\'une éventuelle douleur du jour, et termine par UNE piste '
@@ -3450,12 +3458,17 @@ async function _runSeDebrief(sess,prCount){
       if(coachHistory.length>=4 && S.url && S.email && typeof _saveCoachMemory==='function')_saveCoachMemory();
       const nb=document.getElementById('coach-new-btn'); if(nb)nb.style.display='flex';
     }catch(e){}
+    // Livré : le jeton « en cours » disparaît pour de bon (ft-v979).
+    try{ if(typeof _dbfFini==='function') _dbfFini(_pid); }catch(e){}
   }catch(e){
     // Échec réseau → résumé local, et on REND le jeton pour que le Coach réessaie à son ouverture
     // On REND le jeton (le Coach réessaiera à son ouverture) ET ON LE DIT. Le `catch`
     // attrape tout — réseau coupé, HTTP 4xx/5xx, quota, réponse vide : on ne prétend pas
     // savoir laquelle, on annonce le fait et on propose un nouvel essai.
-    try{ localStorage.setItem('ft4_pending_debrief', _pid); }catch(_){}
+    // Échec PROPRE : le jeton repart EN TÊTE de file (ft-v979) — plus un simple `setItem`,
+    // qui écrasait la file entière et faisait disparaître les autres séances en attente.
+    try{ if(typeof _dbfRendre==='function') _dbfRendre(_pid);
+         else localStorage.setItem('ft4_pending_debrief', JSON.stringify([_pid])); }catch(_){}
     slot.innerHTML=avec('\u26a0\ufe0f Milo n\'a pas pu analyser ta séance. Rien n\'est perdu : il le fera à l\'ouverture du Coach.',true);
   }
 }

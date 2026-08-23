@@ -3360,3 +3360,12 @@ Tests : **parcours 1035/1035** (+14, bloc LXXXII), calculs 266/266, muscles 241/
 
 **⚠️ SOURCE** : Compl'Alim, data.gouv.fr — la licence exacte n'a pas pu être vérifiée depuis cette session (réseau bloqué), c'est écrit tel quel dans le code plutôt que de citer un texte inventé.
 Tests : **parcours 1041/1041** (+6, bloc LXXXIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 1 rouge** — fonction absente. Fichiers : `data/complalim.json` (neuf), `tools/complalim.py` (neuf), `app.js`, `index.html`, `sw.js`, `clone/*`, `tests/parcours/runner.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v958. |
+
+**ft-v959 — 🥚 UN BUG TROUVÉ EN CHERCHANT AUTRE CHOSE — la ligature Œ cassait la recherche CIQUAL** — Michel a montré une photo de blanc d'œuf liquide en demandant comment il serait nommé dans la base, après avoir signalé que *« poulet »* ne trouvait rien (ce second point n'était qu'une version pas encore rafraîchie sur son téléphone).
+
+**⭐⭐ MAIS EN VÉRIFIANT LE PRODUIT D'ŒUF, UN VRAI BUG EST APPARU.** `normalize('NFD')` décompose les **accents** (é → e + accent), mais **jamais les ligatures œ/æ** — ce sont deux lettres fusionnées en une seule, pas une lettre accentuée. Or **le clavier iPhone en français corrige automatiquement** « oeuf » en « œuf » pendant la frappe, pendant que CIQUAL écrit tous ses noms en **oe séparé** (*« Oeuf, blanc… »*). Mesuré : taper le mot avec ligature rendait **zéro résultat** pour œuf, bœuf — donc quasiment **toujours sur iPhone**, pour un aliment qui existe pourtant dans la base.
+
+**⛔ CORRIGÉ dans `_afNorm`** : deux remplacements supplémentaires (œ→oe, æ→ae) avant le NFD qui gère les accents. **Une seule fonction, partagée par CIQUAL et les suggestions locales** (R2) — la corriger une fois répare les deux recherches d'un coup.
+
+**⚠️ Et « poulet » était un faux problème** : rejoué dans un navigateur avec le code déployé, il trouvait bien 69 résultats. La leçon reste utile : *toujours REJOUER le cas exact avant de conclure à un bug* — ici ça a évité de chasser un fantôme, et ça a laissé le temps de trouver le vrai.
+Tests : **parcours 1044/1044** (+3), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 2 rouges** exactement (œuf et bœuf en ligature) — le mot sans ligature ne régresse pas. Fichiers : `app.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v959. |
