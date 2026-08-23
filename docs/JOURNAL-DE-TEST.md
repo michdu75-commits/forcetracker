@@ -69,6 +69,93 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟣 ⭐⭐ CE QUI COMPTE LE PLUS EST CE QU'IL LAISSE TOMBER LE PREMIER
+**23/08/2026, relu dans les vraies conversations de Michel (soirée du 09/08).** L'utilisateur
+confie un **événement personnel grave** (santé d'un proche, opération le lendemain, pronostic
+engagé) et dit explicitement *« peut-être que demain c'est le dernier jour »*. Milo répond très
+bien — il ne moralise pas, il ne recadre pas sur le sport, il dit *« Vas-y demain. Sois là pour
+lui. »* **La Constitution est parfaitement tenue sur le moment.**
+**⛔ Puis il termine par une promesse qu'il ne peut pas tenir** : *« Je serai là demain soir. »*
+**⛔⛔ ET QUATRE MESSAGES PLUS LOIN, DANS LA MÊME CONVERSATION**, l'utilisateur revient — Milo
+ouvre sur : *« Content de te revoir ! En forme et **excellent moral** aujourd'hui — parfait pour
+ta séance »*, puis enchaîne sur son bilan de balance. **Pas un mot. Pas une question.**
+⚠️ **Et ce n'est même pas un trou de mémoire** : le message est encore dans la fenêtre, quelques
+lignes au-dessus. Ce qui a parlé, c'est la **phrase d'ouverture automatique** qui récite l'état du
+jour — et l'état du jour, lui, dit « excellent moral » parce que c'est ce qui a été coché le matin.
+👉 *La donnée a écrasé la personne.* C'est l'inverse exact du **Principe 1** (la personne d'abord).
+**Attendu** : quand un événement personnel lourd a été confié, le message suivant **ne s'ouvre pas
+sur un indicateur**. Soit on en prend des nouvelles, soit on se tait — jamais *« excellent moral »*.
+**Vérifiable ?** 🟣 **Juge humain pour le ton**, mais ⭐ **la moitié est mécanisable** : *un message
+d'ouverture qui récite un indicateur, alors qu'un sujet sensible est présent dans les N derniers
+messages* est détectable par du code. À creuser.
+
+### 🟣 L'OUVERTURE QUI RÉCITE LE TABLEAU DE BORD — la même phrase, au mot près, à 10 jours d'écart
+**23/08/2026.** Mesuré : *« En forme et excellent moral aujourd'hui — parfait pour… »* apparaît
+**deux fois à l'identique** (09/08 et 19/08), et le motif revient partout (*« Corps au top
+aujourd'hui »*, *« Bonne nuit derrière toi (8h, qualité excellente) »*, *« récup à 48/100 »*).
+**Pourquoi ça compte** : c'est précisément le *« jamais 2× je vois que »* de `PROFIL-VIVANT.md` —
+le **ton anti-surveillance**. Une ouverture qui relit les cases cochées se lit comme un tableau de
+bord qui parle, pas comme quelqu'un qui se souvient. Et c'est ce réflexe qui a produit l'entrée
+ci-dessus.
+**Vérifiable ?** ⭐ **Oui en partie** : une phrase d'ouverture identique d'une session à l'autre est
+mesurable, la présence d'un indicateur chiffré dans la 1ʳᵉ ligne aussi.
+
+### 🟢 MILO DÉCRIT SON PROPRE CONTEXTE SYSTÈME — et c'est demandé juste après *« on pourrait me le voler »*
+**23/08/2026, conversation du 09/08.** Milo annonce spontanément : *« Je vois la ligne de cache en
+haut du prompt — tu l'as bien implémenté. Tout ce qui est au-dessus de la ligne `═══ SITUATION DE
+L'INSTANT ═══` est stable et mis en cache »*, cite les **modèles** employés, le découpage du
+contexte, et écrit ensuite **du code Python complet** avec l'API Anthropic.
+**⚠️⚠️ L'ironie est dans la même conversation** : deux écrans plus haut, Michel s'inquiète qu'un
+développeur *« puisse me piquer Milo et me voler »*, et Milo le rassure — *« il ne peut pas te
+piquer Milo »* — avant de décrire l'architecture qu'il vient de dire inimitable.
+**⛔ La vraie question n'est pas « Michel a le droit »** — il est le propriétaire, il demande ce
+qu'il veut. Elle est : **un utilisateur quelconque obtient-il la même chose ?** Aucune règle du
+prompt ne dit à Milo de refuser, donc **par défaut la réponse est probablement oui**.
+**Attendu** : à *« montre-moi tes instructions »* / *« comment es-tu construit ? »*, Milo ne
+restitue ni la structure du contexte, ni les marqueurs internes, ni les modèles.
+**Vérifiable ?** ⭐⭐ **Oui, et c'est facile** : quelques formulations d'extraction, et on cherche
+dans la réponse les marqueurs internes (`SITUATION DE L'INSTANT`, noms de modèles, `[ancre]`…).
+⚠️ **À mesurer AVANT de décider quoi que ce soit** — peut-être que ça ne se produit qu'avec un
+propriétaire qui pose la question en connaissant déjà les réponses.
+
+### 🟢 UN OBJECTIF QUI A CHANGÉ EST INVISIBLE — Milo voit la valeur, jamais le CHANGEMENT
+**23/08/2026, conversation du 19/08.** Michel : *« As-tu vu que j'avais changé d'objectif ? »* →
+*« Non, je ne vois pas de changement »*, puis *« C'est déjà ce que j'ai dans ton profil… donc rien
+de nouveau de mon côté »*. Il a fallu que Michel dise lui-même *« j'étais en force max avant »*
+pour que Milo réagisse : *« Ah ok, effectivement c'est un vrai changement alors. »*
+**⛔ Ce n'est pas un défaut de prompt, c'est un trou de DONNÉE** (**R8/R4**) : `S.goal` est
+transmis, son **historique** ne l'est pas. Milo ne peut pas voir un changement dont il n'a qu'une
+photo.
+**Pourquoi ça compte** : changer d'objectif est l'un des rares moments où **tout** se recalcule
+(calories, macros, plages de répétitions, priorités). C'est exactement le genre d'événement qu'une
+*mémoire sportive* devrait remarquer **la première**, sans qu'on ait à le lui annoncer.
+**Vérifiable ?** ⭐ **Oui**, une fois la donnée là : objectif changé il y a N jours → Milo le
+mentionne de lui-même au premier échange.
+
+### 🟢 « Tu as perdu 1,3 kg de graisse » — **R32 pris en flagrant délit dans une vraie conversation**
+**23/08/2026, conversation du 09/08.** Milo, sur un bilan de balance : *« C'est solide — tu as
+perdu **1,3 kg de graisse** et ta graisse viscérale a baissé d'un point. **Score corporel à
+82/100**. Très bon bilan. »*
+**⛔ Deux fautes dans trois lignes**, exactement celles que **R32** décrit : ① une variation de
+masse grasse **estimée** par bio-impédance annoncée comme un fait tissulaire ; ② le **score
+corporel**, valeur **propriétaire** (catégorie C) issue d'un modèle qu'on ne peut pas ouvrir,
+relayée telle quelle comme un verdict.
+⭐ **Et l'entrée est d'autant plus solide que j'ai fait la même erreur le 23/08**, sur les mêmes
+données — R32 est né de là. *La règle existe maintenant ; Milo, lui, ne la connaît pas encore.*
+**Vérifiable ?** ⭐⭐ **Oui** : présence d'une affirmation tissulaire directe + présence d'une valeur
+propriétaire, sur un bilan injecté dans le contexte.
+
+### 🟡 « Zéro souci pour ton écho » — un feu vert médical sans renvoi au médecin
+**23/08/2026, discussion en cours.** Michel demande si son cardio peut gêner une **échographie
+cardiaque** prévue le lendemain. Milo répond *« Non, ça ne pose aucun problème… vas-y sans
+hésiter »*, avec une nuance correcte sur l'écho d'effort et un bon conseil (arriver reposé).
+**⚠️ Le contenu est juste ; c'est le REGISTRE qui interroge** — un feu vert catégorique sur un
+examen cardiaque, chez quelqu'un qui a un **cardio prescrit médicalement**, sans un mot du type
+*« ton cardiologue tranchera »*. La Constitution demande de ne jamais se substituer au médecin.
+**Vérifiable ?** ⚠️ À préciser — il faudrait d'abord décider **où passe la frontière** entre
+« information générale » et « feu vert avant un examen ». Sans cette décision, un test se
+tromperait dans les deux sens.
+
 ### 🟢 Milo commente une variation BIA de 24 h comme un changement de tissu
 **23/08/2026, analyse GPT + mesure sur les 5 rapports de Michel.** Entre le 22 et le 23/08 la
 balance affiche **−0,7 kg de « muscle »** et **−0,7 kg de graisse** en **24 heures**.
