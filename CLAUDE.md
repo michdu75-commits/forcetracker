@@ -136,7 +136,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v972`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v973`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -400,7 +400,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v972`** (prochaine : `ft-v973`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v973`** (prochaine : `ft-v974`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -410,6 +410,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v973 — ⬇️ ON DOIT POUVOIR DÉFILER JUSQU'EN BAS — sur TOUS les écrans, pas seulement un** — Michel, capture du Journal à l'appui : *« Beug, je ne peux plus défiler en bas »*. Sa dernière ligne (Riz Basmati) restait coincée sous la barre de navigation.
+
+**⚠️⚠️ ET MA PREMIÈRE HYPOTHÈSE ÉTAIT FAUSSE — c'est la mesure qui l'a dit, pas moi.** Je croyais que ft-v968 (le rangement par repas) avait créé le problème en allongeant la page. **Rejoué sur le code d'avant, avec exactement les mêmes entrées : la dernière ligne finissait déjà à 827 px pour une nav à 770.** *Elle était DÉJÀ cachée.* ft-v968 a ajouté 155 px — il a aggravé, il n'a rien créé. Ce qui a changé, c'est que Michel **utilise vraiment le Journal** depuis cette semaine.
+
+**⛔⛔ LA CAUSE : Safari n'ajoute PAS le `padding-bottom` d'un conteneur flex qui défile à sa hauteur défilable.** Le correctif — *un vrai ÉLÉMENT, lui, est toujours compté* — **existait depuis ft-v670**… mais n'avait été posé que sur l'écran **Progrès**. Les cinq autres gardaient un padding que l'iPhone ignore. **C'est R8/R13 dans leur forme la plus bête** : le motif était bon, il n'avait été appliqué qu'à un seul côté — *une correction faite d'un côté et pas de l'autre est un oubli, pas un arbitrage.*
+
+**⭐ CHROMIUM NE REPRODUIT RIEN**, et c'est le piège : il compte le padding, donc tout marchait déjà chez lui. Le défaut a été mesuré en **simulant** le comportement de Safari (padding annulé) — **4 écrans rouges avant, 0 après**, le contenu finissant partout **44 px au-dessus** de la nav.
+
+**⛔ LES DEUX MÉCANISMES NE SE CUMULENT JAMAIS** : le padding tombe à 8 px partout, l'espaceur porte seul la place. Le laisser donnerait **280 px de vide** sur Chrome, et l'iPhone n'en verrait toujours qu'un — *deux correctifs pour un défaut, c'est un de trop* (**R2**).
+
+**⭐⭐ LE TÉMOIN QUI PROTÈGE LE PLUS EST LE STRUCTUREL** : il lit le DOM, donc il vaut pour **n'importe quel moteur** — et **un écran FUTUR sans espaceur fera rougir la livraison**. *Le correctif de ft-v670 était juste ; ce qui manquait, c'est ce qui empêche de l'oublier ailleurs.*
+
+**⚠️ ET MON PREMIER TÉMOIN DE MESURE ACCUSAIT UN BOUTON INVISIBLE** — un accordéon **replié** (`overflow:hidden`) garde des enfants de hauteur non nulle, donc « le dernier élément » désignait un bouton que personne ne voit. *3ᵉ fois cette semaine qu'un témoin désigne le mauvais coupable.* La mesure porte désormais sur **où finit le contenu**, pas sur un dernier élément à deviner.
+Tests : **parcours 1147/1147** (+6, bloc XCII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : **5 rouges lus dans la sortie** (ma fenêtre de lecture a coupé le 6ᵉ témoin ; l'Accueil donne le même `844 > 770` dans la mesure autonome) — et le contrôle est **instructif**, pas un « la fonction n'existe pas » : les 6 témoins **tournent des deux côtés**, ils mesurent une disposition qui existait déjà, mal. Le seul vert des deux côtés est l'écran **Progrès**, et c'est exactement le but : *il portait déjà l'espaceur depuis ft-v670, il ne devait pas bouger***. Fichiers : `style.css`, `index.html`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v973. |
 
 **ft-v972 — ⚖️ LA QUANTITÉ POUR TOUTES LES ENTRÉES, ET LES CALORIES QUI NE COLLENT PAS** — Michel : *« en fait on ne peut pas modifier le poids, je modifie le nom ça ne change pas la valeur. Il faut rajouter une ligne poids qui va modifier la valeur des calories et des autres lignes »*, puis, découvrant une ligne à **1117 kcal** pour 26 P / 1 G / 1 L : *« putain je ne l'avais même pas vu, j'étais axé sur les calories »*, puis *« et en direct, pas au moment de l'enregistrer »*.
 
