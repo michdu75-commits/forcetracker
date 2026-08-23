@@ -462,6 +462,23 @@ vraiment : des états nommés — *validé · partiel · ambigu · non reconnu* 
 différé faute de volume, avec la mesure qui le justifie. · voisine de **R2** (un propriétaire par
 information), **R19** (la gouvernance sert le produit) et **R32** (mesuré / estimé / propriétaire).*
 
+**⭐ PREMIÈRE MISE EN ŒUVRE, LE MÊME JOUR (ft-v974) — et le différé a sauté sur décision de
+Michel** : *« on construit, parce que je l'utilise souvent »*. Ce qui a rendu l'échelle des
+sources réellement applicable n'est pas le moteur OCR (0,3 s de chargement, 3,2-3,7 s de lecture,
+≈ 2 Mo une seule fois) — **c'est de savoir DIRE NON**. Une valeur mal lue par un OCR n'est pas
+absurde, elle est **crédible** : mesuré, la protéine de 13,8 kg sort à 18,8. Aucune borne
+physique ne l'attrape.
+👉 **Ce qui l'attrape, c'est la REDONDANCE du document lui-même** — `gras + eau + protéine + os =
+poids`, juste à 0,05 kg près sur les 5 rapports. **La règle qui s'ajoute donc à R33** : *avant de
+descendre d'un cran dans l'échelle des sources, chercher ce qui, DANS le document, permet de
+vérifier la lecture.* Sans ce recoupement, un cran de plus n'est pas une source moins fiable :
+c'est une source **dont on ne saura pas si elle a menti**. C'est la raison écrite pour laquelle le
+même chemin n'a **pas** été ouvert à la prise de sang — un bilan sanguin n'a pas cette
+arithmétique interne, et l'erreur y coûte beaucoup plus cher.
+⛔ **Et le corollaire de fabrication** : un contrôle qui compare une valeur à la formule qui l'a
+produite est un **vert qui ne peut pas rougir** (voir `BUGS.md`). Il faut le voir échouer avant
+de lui faire confiance.
+
 ## 🔗 Où va le reste
 
 | Sujet | Document |

@@ -10402,6 +10402,142 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* == BLOC XCIII - LIRE UN RAPPORT DE BALANCE SUR LE TELEPHONE, SANS APPEL IA (23/08/2026) ==
+   Michel : « on construit, parce que je l'utilise souvent ». Chaque photo de rapport partait
+   jusqu'ici vers le serveur IA : un appel facture, du reseau obligatoire, un quota.
+
+   ⚠️⚠️ LE RAPPORT D'EXEMPLE EST FABRIQUE, ET C'EST VOULU. Le lecteur a ete calibre sur 5 VRAIS
+   rapports de Michel — mais ceux-ci portent son prenom, son age, sa taille et sa composition
+   corporelle, et CE DEPOT EST PUBLIC. Ils restent hors du depot. Le texte ci-dessous reprend
+   exactement la MISE EN FORME observee (colonnes entrelacees, plages entre parentheses, notes
+   de bas de page) avec des chiffres inventes mais arithmetiquement coherents.
+
+   ⭐⭐ LE TEMOIN CENTRAL N'EST PAS « ca lit », C'EST « ca REFUSE de lire quand c'est faux ».
+   Mesure : en resolution reduite, la proteine de Michel (13,8) sortait a 18,8 — faux, et
+   parfaitement CREDIBLE. Aucune borne n'attrape ca. Les lignes du rapport, elles, se recoupent
+   a 0,05 kg pres : gras + eau + proteine + os = poids. Si l'arithmetique ne ferme pas, on
+   refuse la lecture et on passe la main a l'IA (R33 : l'echec propre). */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    if(typeof _mbcLire!=='function'){o.absent=true;return o;}
+
+    const RAPPORT=[
+      "Rapport d'analyse de la composition corporelle",
+      "Pseudo:Testeur Sexe:Homme Age:40 Taille:178cm Date des mesures:Mar.09,2026 08:14:02",
+      "Analyse de la composition corporelle Score corporel",
+      "Poids 78.40 (60.6-82.0) 100.0 Eleve 76 100Points",
+      "Graisse corporelle 17.6 (8.6-17.1) 22.5 Normal",
+      "Masse osseuse 4.2 (3.5-4.3) 5.4 Excellent",
+      "Un athlete tres muscle peut obtenir plus de 100 points.",
+      "Proteine 12.1 (10.4-13.0) 15.4 Eleve",
+      "Eau corporelle 44.5 (38.1-47.5) 56.8 Excellent Mon coaching Expert",
+      "Muscle 56.6 (48.5-60.5) 72.2 Excellent Poids cible 71.2kg",
+      "Muscle squelettique 33.0 (30.6-37.4) 42.1 Excellent Masse graisseuse -6.4kg",
+      "Autres indicateurs",
+      "Indice de graisse viscerale 8",
+      "Taux Metabolique de Base 1710kcal",
+      "Masse maigre 60.8kg",
+      "20(kHz) 262.6 265.5 17.6 258.6 260.5 Graisse sous-cutanee 165%",
+      "Indice de masse musculaire squelettique 8.9kg/m?",
+      "Age corporel 41"
+    ].join('\n');
+
+    o.reconnu=_mbcReconnu(RAPPORT);
+    o.reconnuAutre=_mbcReconnu('Hemoglobine 14.2 g/dL Ferritine 210 ng/mL');
+    o.reconnuVide=_mbcReconnu('');
+
+    const lu=_mbcLire(RAPPORT), c=lu.champs;
+    o.nb=lu.lus.length;
+    o.weight=c.weight; o.bf=c.bf; o.fatMass=c.fatMass; o.bone=c.bone;
+    o.protein=c.protein; o.water=c.water; o.muscle=c.muscle; o.skMuscle=c.skMuscle;
+    o.visceral=c.visceral; o.bmr=c.bmr; o.smi=c.smi; o.metaAge=c.metaAge;
+    o.bodyScore=c.bodyScore; o.leanMass=c.leanMass; o.date=c.date;
+    o.subFat=(c.subFat===undefined)?'absent':c.subFat;
+
+    const v=_mbcVerifier(c);
+    o.verifOk=v.ok; o.nbCtrl=v.ctrl.length; o.manque=v.manque.join(',');
+
+    // ⭐⭐ L'ERREUR CREDIBLE : la proteine mal lue (12.1 -> 17.1). Aucune borne ne l'attrape.
+    const faux1=_mbcLire(RAPPORT.replace('Proteine 12.1','Proteine 17.1')).champs;
+    const v1=_mbcVerifier(faux1);
+    o.fauxProteineLue=faux1.protein;      // elle EST lue (donc plausible)
+    o.fauxProteineRefus=(v1.ok===false);  // ... et pourtant refusee
+
+    // Un poids mal lu, un %gras mal lu
+    o.fauxPoidsRefus =(_mbcVerifier(_mbcLire(RAPPORT.replace('Poids 78.40','Poids 58.40')).champs).ok===false);
+    o.fauxGrasRefus  =(_mbcVerifier(_mbcLire(RAPPORT.replace('(8.6-17.1) 22.5','(8.6-17.1) 12.5')).champs).ok===false);
+
+    // Une valeur hors bornes disparait -> le rapport devient INCOMPLET, donc refuse
+    const v2=_mbcVerifier(_mbcLire(RAPPORT.replace('Muscle 56.6','Muscle 5.6')).champs);
+    o.incompletRefus=(v2.ok===false); o.incompletManque=v2.manque.join(',');
+
+    // La masse maigre absente est DEDUITE, et le controle circulaire n'est pas compte
+    const sansMaigre=_mbcLire(RAPPORT.replace(/^Masse maigre.*$/m,'')).champs;
+    o.maigreDeduite=sansMaigre.leanMass;
+    o.maigreCtrl=_mbcVerifier(sansMaigre).ctrl.some(x=>/maigre/.test(x.nom));
+
+    // Le moteur n'est PAS charge au demarrage (regle d'or #4)
+    o.moteurAbsentAuDemarrage=(typeof window.Tesseract==='undefined');
+
+    // Le moteur n'est pas non plus preche par le service worker
+    const sw=await (await fetch('sw.js')).text();
+    const pre=sw.slice(sw.indexOf('const PRECACHE'), sw.indexOf('PRECACHE_SENTINEL'));
+    o.ocrHorsPrecache=(pre.indexOf('lib/ocr')<0);
+    o.ocrTiroirStable=(sw.indexOf("const OCR_CACHE = 'ft-ocr'")>=0 && sw.indexOf("k !== OCR_CACHE")>=0);
+    return o;
+  });
+
+  console.log('\n═══ BLOC XCIII. Lire un rapport de balance SUR LE TELEPHONE ═══');
+  if(R.absent){ t('⛔ le lecteur de rapport existe', false, '_mbcLire absente'); }
+  else{
+    t('⭐ un rapport de composition corporelle est RECONNU, un autre document non',
+      R.reconnu===true && R.reconnuAutre===false && R.reconnuVide===false, JSON.stringify(R).slice(0,120));
+    t('⭐⭐ les 8 valeurs du tableau principal sont lues',
+      R.weight===78.4&&R.bf===22.5&&R.fatMass===17.6&&R.bone===4.2&&
+      R.protein===12.1&&R.water===44.5&&R.muscle===56.6&&R.skMuscle===33,
+      JSON.stringify([R.weight,R.bf,R.fatMass,R.bone,R.protein,R.water,R.muscle,R.skMuscle]));
+    t('⭐ ... et les indicateurs de droite aussi (viscerale, metabolisme, indice, age, score)',
+      R.visceral===8&&R.bmr===1710&&R.smi===8.9&&R.metaAge===41&&R.bodyScore===76,
+      JSON.stringify([R.visceral,R.bmr,R.smi,R.metaAge,R.bodyScore]));
+    t('⛔⛔ « POIDS CIBLE » N\'EST JAMAIS LU (R32) — le chiffre du fabricant ne devient pas l\'objectif',
+      R.weight===78.4, 'poids lu : '+R.weight+' (71.2 = le poids cible)');
+    t('⛔ la plage entre parentheses n\'est jamais prise pour une valeur (os = 4.2, pas 3.5)',
+      R.bone===4.2, 'os : '+R.bone);
+    t('⛔⛔ « graisse sous-cutanee » n\'est PAS lue du tout (4 lectures fausses sur 5 — R30)',
+      R.subFat==='absent', 'valeur lue : '+R.subFat);
+    t('⭐ la date de la mesure est lue (mois en anglais abrege)', R.date==='2026-03-09', 'date : '+R.date);
+    t('⭐ un rapport complet et coherent est ACCEPTE', R.verifOk===true && R.manque==='', 'manque : '+R.manque);
+
+    t('⭐⭐ UNE PROTEINE MAL LUE EST PLAUSIBLE... ET POURTANT REFUSEE (le coeur du garde-fou)',
+      R.fauxProteineLue===17.1 && R.fauxProteineRefus===true,
+      'lue='+R.fauxProteineLue+' refus='+R.fauxProteineRefus);
+    t('⭐ un poids mal lu est refuse', R.fauxPoidsRefus===true, '');
+    t('⭐ un pourcentage de gras mal lu est refuse', R.fauxGrasRefus===true, '');
+    t('⛔⛔ un rapport INCOMPLET est refuse (une valeur ecartee emporte l\'equation qui la demasquait)',
+      R.incompletRefus===true && R.incompletManque==='muscle', 'manque : '+R.incompletManque);
+
+    t('⭐ la masse maigre absente est DEDUITE par soustraction (78.4 - 17.6)',
+      R.maigreDeduite===60.8, 'deduite : '+R.maigreDeduite);
+    t('⛔⛔ ... et le controle « maigre = poids - gras » n\'est PAS compte quand elle est deduite (faux vert)',
+      R.maigreCtrl===false, '');
+
+    t('⛔⛔ LE MOTEUR N\'EST PAS CHARGE AU DEMARRAGE (regle d\'or #4)',
+      R.moteurAbsentAuDemarrage===true, '');
+    t('⛔ ... ni preche par le service worker (2,5 Mo que la plupart n\'ouvriront jamais)',
+      R.ocrHorsPrecache===true, '');
+    t('⛔⛔ ... et il a son PROPRE tiroir de cache, jamais vide par une mise a jour',
+      R.ocrTiroirStable===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

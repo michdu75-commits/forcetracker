@@ -897,3 +897,36 @@ disponible (famille 12quater).
 **chaque** écran qui défile — donc valable pour n'importe quel moteur, et **un écran futur sans
 espaceur fait rougir la livraison**. *Le correctif de ft-v670 était juste ; ce qui manquait,
 c'est ce qui empêche de l'oublier ailleurs* (**R8/R13**).
+
+
+---
+
+## 🔁 LE CONTRÔLE CIRCULAIRE — *un vert qui ne peut pas rougir* **(23/08/2026, ft-v974)**
+
+**À quoi on le reconnaît** : un contrôle qui **compare une valeur à la formule qui l'a produite**.
+Ici, le lecteur de rapport de balance retrouve la masse maigre par soustraction quand l'OCR la
+perd (`poids − gras`), puis un contrôle vérifiait… `maigre = poids − gras`. **Il était vert sur
+les 5 rapports, et il l'aurait été sur n'importe quoi** — y compris sur une lecture entièrement
+fausse.
+
+**Pourquoi c'est vicieux** : ça ne ressemble pas du tout à un bug. Le contrôle est **écrit**, il
+**tourne**, il est **vert** — et il gonfle le compte de contrôles réussis, donc il *renforce* la
+confiance qu'il devrait mettre à l'épreuve. C'est le cousin exact des **faux zéros** du Gardien
+(§12) : le chiffre rassurant venait de ce que rien n'était réellement mesuré.
+
+**Ce qui l'a démasqué** : pas une relecture — **l'extension du contrôle positif**. En injectant
+des erreurs une par une (protéine, poids, %gras, muscle, eau), deux d'entre elles passaient au
+vert. C'est le même réflexe que pour le Gardien : *un garde-fou qu'on n'a pas vu rougir n'est pas
+un garde-fou.*
+
+**Et il en cachait un second**, trouvé dans le même mouvement : une valeur **écartée par ses
+bornes** emportait avec elle l'équation qui l'aurait démasquée — « Muscle 4.5 » passait donc pour
+une lecture correcte, par simple disparition. Un contrôle ne peut pas se contenter de vérifier ce
+qui est **présent** : il doit aussi exiger ce qui **doit** l'être.
+
+**Ce qui protège aujourd'hui** : la valeur déduite est **marquée** comme telle et ne sert plus à
+se vérifier elle-même ; les 8 valeurs du tableau principal sont **obligatoires** ; et les deux
+comportements sont épinglés par des témoins qui injectent l'erreur au lieu de constater le succès.
+
+**Le réflexe à garder** : devant un contrôle vert, se demander *« qu'est-ce qui le ferait
+rougir ? »*. Si la réponse ne vient pas en une phrase, il ne mesure probablement rien.
