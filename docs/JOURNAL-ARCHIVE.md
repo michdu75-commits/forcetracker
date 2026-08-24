@@ -3537,3 +3537,18 @@ Tests : **parcours 1109/1109** (+9, bloc LXXXVIII), calculs 266/266, muscles 241
 
 **⚠️ ET L'AVERTISSEMENT EST ÉCRIT DANS SON CONTEXTE** : deux mesures rapprochées diffèrent par l'**hydratation**, pas par la graisse ; ne jamais commenter une variation de quelques jours comme un progrès ou une régression.
 Tests : **parcours 1117/1117** (+8, bloc LXXXIX), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges**, exactement les 4 comportements neufs — et **4 verts des deux côtés** (l'écart au précédent, le cas « un seul bilan », le cas « aucun bilan ») : *ils devaient rester intacts.* Fichiers : `coach.js`, `clone/coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v970. |
+
+**ft-v971 — 📷 LE SCAN DE BILAN PERDAIT LE POIDS À LA 1ʳᵉ ANALYSE — 4 appels IA au lieu de 2** — Michel : *« c'est la 2ᵉ fois que je scanne, mes poids ne prennent pas sur la première prise d'analyse, il faut que je remette une 2ᵉ fois pour qu'il la prenne en compte. Ça fait 4 appels API au lieu de 2 »*.
+
+**⭐ MESURÉ DANS UN VRAI NAVIGATEUR, PAS DÉDUIT.** C'est la leçon de `BUGS.md` **12quater**, écrite la veille et appliquée cette fois : à la **1ʳᵉ passe, 0 champ sur 16** est trouvé ; à la 2ᵉ, les 16 sont remplis **puis effacés**.
+
+**⛔⛔ LA CAUSE : `openBodyScanForm` est devenue `async` en ft-v758** — le verrou santé y a ajouté `await _healthGate()` — **et l'appelant ne l'attendait pas**. Elle rend donc la main **avant** de construire la grille de champs : `getElementById('bs-weight')` renvoie `null`, rien n'est écrit, puis la construction repart et remplace tout par des champs **vides**.
+
+**⚠️⚠️ ET AUCUNE ERREUR N'ÉTAIT LEVÉE.** Le test `if(el && …)` avalait silencieusement l'absence, et le message **« Rapport lu ✅ »** s'affichait **devant un formulaire vide**. *Un appel vision déjà payé était jeté, et l'écran annonçait un succès.*
+
+**⭐ C'EST R14 DANS SA FORME LA PLUS COÛTEUSE** : *rendre une fonction asynchrone change le CONTRAT DE TOUS SES APPELANTS.* Celui-ci n'avait pas été revu — et le défaut d'ordonnancement se payait en **quota IA**, pas seulement en confort.
+
+**⛔ DEUXIÈME CORRECTIF, AUSSI IMPORTANT QUE LE PREMIER** : le message **compte** désormais les valeurs écrites (*« Rapport lu ✅ 12 valeurs »*) et dit *« aucune valeur reconnue »* quand il n'y en a pas. **C'est précisément ce silence qui a masqué le bug pendant deux imports** — rien ne signalait qu'un appel venait d'être gaspillé.
+
+**⚠️ Et si le verrou santé refuse, on ne remplit pas des champs invisibles** et on ne prétend pas que le rapport est prêt.
+Tests : **parcours 1122/1122** (+5, bloc XC), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `tracking.js`, `clone/tracking.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v971. |

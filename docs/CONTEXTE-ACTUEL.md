@@ -6,7 +6,24 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v990`.
+- **Version en ligne (live) :** `ft-v991`.
+- ⚖️⭐⭐ **LE VOCABULAIRE KATCH DE MILO — LIVRÉ** (ft-v991). Priorité ③, dernier point ouvert du
+  contre-audit. ⛔⛔ **Mesuré dans un vrai navigateur avant de coder** : les **trois** provenances
+  de la masse maigre — **lue** sur un rapport · **DÉDUITE** par soustraction · calculée depuis un
+  **% de gras TAPÉ AU CLAVIER** — donnaient une phrase **identique mot pour mot** :
+  *« MASSE MAIGRE MESURÉE … chiffre SOLIDE … sans réserve »*.
+  ⚠️⚠️ **Le brief annonçait un « motif regex qui capture trop tôt » — c'est faux**, et c'est la
+  mesure qui l'a dit : aucun motif ne capture trop tôt, la provenance **n'atteint jamais la
+  sortie** (**R4**). Le drapeau `lmDeduite` était écrit par `tracking.js` et `leanMassRecente()`
+  ne le transportait pas. ⛔ **R32** : une balance MESURE un poids et une impédance, elle ESTIME
+  tout le reste — dire « mesurée » d'un % tapé au clavier est **un fait faux sur la santé de
+  quelqu'un**. ⭐⭐ **Et le témoin protégeait la mauvaise phrase** (il épinglait le mot
+  « MESURÉE ») : toute correction de R32 le faisait rougir et ressemblait à une régression — d'où
+  la consigne de `SUIVI-AUDIT.md` de le corriger **d'abord**. ⭐ **Katch n'est pas dévalué** : le
+  prompt garde « un MEILLEUR point de départ » et l'écart chiffré (+180 kcal/j mesurés, ft-v833).
+  ⚠️ **Non prouvé, et écrit comme tel** : que Milo *obéisse* à la nuance — `tests/milo` prouve la
+  PRÉSENCE d'une règle, jamais son OBÉISSANCE ; seul un A/B sur le vrai modèle le dirait.
+  ⏭️ **Reste : ④⑤** (reclassement du contexte, caches par lieu) — gated par **R34**.
 - 💰⭐⭐ **INSTRUMENTATION DU COÛT RÉEL PAR APPEL API — LIVRÉE** (ft-v990). Priorité 3 de
   Michel, en parallèle de ①②. Capture `data.usage` (déjà renvoyé par l'API, jeté jusqu'ici)
   au seul point commun (`callClaude`/`callClaudeDiag`). Ne change RIEN au comportement de

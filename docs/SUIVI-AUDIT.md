@@ -42,6 +42,7 @@ Rapport complet : artefact *« Milo face au code »*.
 | **2ᵉ lecteur `bw` cassé** *(non vu par l'audit)* | `ft-v981` | `_bilanMois()` — la ligne « Poids de corps » du bilan mensuel ne s'affichait jamais. |
 | **Blessure dite à Milo → Gardien** | `ft-v982` | Chemin éteint derrière `__FT_CLONE__`. Mesuré avant : Profil Santé `""`, Gardien `[]`. **Les DEUX moitiés** étaient éteintes (le pont **et** la consigne « nomme la ZONE »). |
 | **Le diagnostic médical passait tel quel** | `ft-v983` | Sur les **5 contrôles de sortie, un seul retirait vraiment**. Le diagnostic déclenche désormais un renvoi au médecin — **par ajout, sans réécrire la réponse**. |
+| **Le vocabulaire Katch de Milo** | `ft-v991` | Les **trois** provenances de la masse maigre (lue · **déduite** par soustraction · % de gras **tapé au clavier**) donnaient une phrase **identique mot pour mot** : *« MESURÉE … SOLIDE … sans réserve »*. La provenance descend maintenant jusqu'à la donnée (`nature`, **R4**) et Milo reçoit le mot **ESTIMATION** avec sa raison. ⭐⭐ **Le témoin épinglait « MESURÉE », donc il protégeait la mauvaise phrase** — corrigé en premier, comme prévu ici. ⚠️ Le brief annonçait un « motif regex » : **faux**, c'était R4. ⭐ Katch n'est pas dévalué (l'écart chiffré avec Mifflin reste). |
 | **Le débrief de séance se perdait** | `ft-v979` | **5 séances sur 36 sans aucun débrief.** File d'attente + jeton « en cours » + rattrapage au démarrage. |
 | **Le contrôle d'intensité n'existait pas** | `ft-v980` | `bz()` inversée + coefficient de tenue → le code refait, **à la proposition**, le calcul que Milo ne faisait que si on le questionnait. |
 | **La quantité disparaissait à la 2ᵉ saisie** | `ft-v984` | Le bloc était caché sans condition quand on reprend un aliment de son propre journal, `per100` transmis deux lignes plus bas. |
@@ -93,7 +94,6 @@ règle en même temps que ④ (les deux touchent le même bloc commun), mais Mic
 
 | Sujet | Pourquoi ça compte | Difficulté |
 |---|---|---|
-| **Le vocabulaire Katch de Milo** | *« MASSE MAIGRE MESURÉE … chiffre SOLIDE … sans réserve »* contredit **R32**, et s'applique même à un % de gras **tapé à la main**. | Faible — ⚠️ **corriger le témoin `tests/parcours/runner.js:3273` D'ABORD**, il protège la mauvaise phrase |
 | **La mémoire à deux vitesses** | `MEMOIRE_LARGE_EMAILS` = **2 comptes**. Un utilisateur normal n'a pas les séances 6→35 sur 60 jours. **Michel juge Milo sur une mémoire que personne d'autre n'a.** | Faible — c'est une **décision**, pas du code |
 | **Rejouer le benchmark** | Il existe, il tourne, **il n'a pas encore vu les correctifs de ft-v979→988**. | Faible — ⚠️ demande un vrai appel API |
 | **`exSwaps` réellement opposable** | « Ne me remets plus cet exercice » tient tant que le modèle suit sa consigne. Rien ne l'impose. | Faible, une fois ① posée |

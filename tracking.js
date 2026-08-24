@@ -1487,9 +1487,9 @@ function saveBodyScan(){
   if(_bsSource&&_bsSource!=='manuel')obj.src=_bsSource;
   /* 🏷️ ET SI LA MASSE MAIGRE A ÉTÉ DÉDUITE, LE BILAN LE DIT (ft-v978). Elle n'est alors pas une
      lecture mais une soustraction (poids − masse grasse), elle-même issue d'un pourcentage de
-     gras ESTIMÉ par la balance. ⚠️ Comportement différé mais NOMMÉ (R3) : personne ne lit encore
-     ce drapeau — il existe pour la correction du vocabulaire de Milo, qui présente aujourd'hui
-     cette valeur comme « MESURÉE … chiffre SOLIDE … sans réserve » (audit du 23/08). */
+     gras ESTIMÉ par la balance. ✅ LU DEPUIS ft-v991 : `leanMassRecente()` le transporte en
+     `nature:'deduite'` et Milo l'apprend en toutes lettres. Le comportement différé annoncé ici
+     par ft-v978 est donc HONORÉ — le prompt ne dit plus « MESURÉE … SOLIDE … sans réserve ». */
   if(_bsLmDeduite&&obj.leanMass!=null)obj.lmDeduite=true;
   S.bodyScans=S.bodyScans||[];
   if(_bsEditIdx>=0&&S.bodyScans[_bsEditIdx]){S.bodyScans[_bsEditIdx]=obj;}

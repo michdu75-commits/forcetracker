@@ -422,7 +422,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v990`** (prochaine : `ft-v991`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v991`** (prochaine : `ft-v992`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -432,6 +432,25 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v991 — ⚖️ « MESURÉE » DEVIENT « ESTIMÉE » — le vocabulaire Katch de Milo** — priorité ③ tranchée par Michel, dernier point ouvert du contre-audit du 24/08.
+
+**⛔⛔ MESURÉ DANS UN VRAI NAVIGATEUR AVANT DE TOUCHER AU CODE, et le résultat est net** : les **trois** provenances possibles de la masse maigre — ① **lue** sur un rapport de balance · ② **DÉDUITE** par soustraction (poids − masse grasse) · ③ calculée depuis un **% de gras TAPÉ AU CLAVIER** — produisaient une phrase **IDENTIQUE MOT POUR MOT** dans le prompt : *« CALCULÉ SUR SA MASSE MAIGRE **MESURÉE** (…) C'est un chiffre **SOLIDE** (…) Tu peux t'appuyer dessus **sans réserve**. »*
+
+**⚠️⚠️ ET LE BRIEF DE DÉPART SE TROMPAIT DE CAUSE — c'est la mesure qui l'a dit, pas ma relecture.** Il annonçait *« motif regex qui capture trop tôt, repositionner ou affiner le motif »*. **Faux** : aucun motif ne capture trop tôt, la provenance **n'atteint jamais la sortie**. C'est **R4** dans sa forme la plus classique — *l'information existe dans la donnée et reste dans la donnée.* Le drapeau `lmDeduite` était bien écrit par `tracking.js`, et `leanMassRecente()` ne le transportait pas.
+
+**⛔⛔ POURQUOI C'EST PLUS QU'UN MOT — R32.** Une balance **MESURE** un poids et une impédance ; elle **ESTIME** tout le reste avec la formule de son fabricant. Dire *« mesurée »* d'un pourcentage de gras **tapé au clavier** n'est pas une approximation de langage : c'est **un fait faux sur la santé de quelqu'un**, présenté avec l'autorité d'un appareil. Trois phrases distinctes désormais, chacune nommant sa vraie source.
+
+**⭐⭐ ET LE TÉMOIN PROTÉGEAIT LA MAUVAISE PHRASE — c'est tout l'intérêt du cas.** Il épinglait le mot `MASSE MAIGRE MESURÉE` : **toute correction de R32 le faisait rougir et ressemblait donc à une régression**. C'est exactement pour ça que `docs/SUIVI-AUDIT.md` disait de le **corriger D'ABORD**. *Un test peut figer un bug aussi solidement qu'il protège un correctif — et rien ne distingue les deux de l'extérieur.*
+
+**⭐ KATCH N'EST PAS DÉVALUÉ POUR AUTANT, et c'était le vrai risque.** Le prompt garde *« un MEILLEUR point de départ que la formule habituelle »* et l'**écart chiffré** avec Mifflin. Corriger un excès par l'excès inverse aurait fait douter Milo d'un calcul qui **reste le bon** — mesuré en ft-v833 : **+180 kcal/jour** chez Michel. On retire l'aplomb, pas la formule.
+
+**⭐ LE DRAPEAU DE ft-v978 ÉTAIT ÉCRIT PUIS JAMAIS LU.** Son commentaire disait lui-même *« comportement différé mais NOMMÉ (R3) : il existe pour la correction du vocabulaire de Milo »*. C'est fait — et le commentaire est **mis à jour**, sinon il annonce dans six mois une correction déjà livrée (**R23**).
+
+**⚠️ COMPTÉ LES ENDROITS (famille #3 de `BUGS.md`)** : la phrase n'existait qu'à **UN seul endroit** en production — pas de jumelle posée d'un côté et pas de l'autre, contrairement à ft-v973/975/984.
+
+**⭐ ET L'ÉCRAN ÉTAIT DÉJÀ PLUS HONNÊTE QUE LE PROMPT**, ce qui est le motif exact de ft-v978 : l'aide du BMR dit depuis toujours *« chaque marque a sa formule secrète, invérifiable »* pendant que Milo, lui, disait *« sans réserve »*. **Dans presque chaque cas, le bon comportement existe déjà à quelques lignes de là.**
+Tests : **parcours 1315+8/1315+8** (bloc BMR étendu), et les témoins voisins (Katch par pesée, marqueur déduit, affichage écran) **verts sans modification**. ⚠️ **Ce qui n'est PAS prouvé ici, et autant l'écrire** : que Milo *obéisse* à la nuance. `tests/milo` prouve la **PRÉSENCE** d'une règle dans le contexte, jamais son **OBÉISSANCE** — seul un A/B sur le vrai modèle le dirait, et il coûte des appels. Fichiers : `state.js`, `coach.js`, `tracking.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`. sw.js ft-v991. |
 
 **ft-v990 — 💰 INSTRUMENTATION DU COÛT RÉEL PAR APPEL API** — priorité 3 tranchée par Michel après le contre-audit du 24/08, **en parallèle** de la validation unique (①②, ft-v989) : *« instrumentation fine du coût réel par appel API »*.
 
@@ -759,21 +778,6 @@ Tests : **parcours 1147/1147** (+6, bloc XCII), calculs 266/266, muscles 241/241
 
 **⛔⛔ ET L'ALCOOL NE DÉCLENCHE RIEN.** 7 kcal/g sans champ dédié : une **bière réelle** afficherait **69 %** d'écart, un verre de vin **87 %**. *Un garde-fou qui se trompe sur la bière ne survit pas au premier apéro* (**R19**). Trouvé **en testant les cas limites sur son étiquette**, pas après coup. ⚠️ La liste se **tait** seulement : le même écart sur « blanc de poulet » **crie toujours**, et des calories **manquantes** crient **même sur une bière** — l'alcool ajoute des calories, il n'en retire pas.
 Tests : **parcours 1141/1141** (+19, bloc XCI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `app.js`, `index.html`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v972. |
-
-**ft-v971 — 📷 LE SCAN DE BILAN PERDAIT LE POIDS À LA 1ʳᵉ ANALYSE — 4 appels IA au lieu de 2** — Michel : *« c'est la 2ᵉ fois que je scanne, mes poids ne prennent pas sur la première prise d'analyse, il faut que je remette une 2ᵉ fois pour qu'il la prenne en compte. Ça fait 4 appels API au lieu de 2 »*.
-
-**⭐ MESURÉ DANS UN VRAI NAVIGATEUR, PAS DÉDUIT.** C'est la leçon de `BUGS.md` **12quater**, écrite la veille et appliquée cette fois : à la **1ʳᵉ passe, 0 champ sur 16** est trouvé ; à la 2ᵉ, les 16 sont remplis **puis effacés**.
-
-**⛔⛔ LA CAUSE : `openBodyScanForm` est devenue `async` en ft-v758** — le verrou santé y a ajouté `await _healthGate()` — **et l'appelant ne l'attendait pas**. Elle rend donc la main **avant** de construire la grille de champs : `getElementById('bs-weight')` renvoie `null`, rien n'est écrit, puis la construction repart et remplace tout par des champs **vides**.
-
-**⚠️⚠️ ET AUCUNE ERREUR N'ÉTAIT LEVÉE.** Le test `if(el && …)` avalait silencieusement l'absence, et le message **« Rapport lu ✅ »** s'affichait **devant un formulaire vide**. *Un appel vision déjà payé était jeté, et l'écran annonçait un succès.*
-
-**⭐ C'EST R14 DANS SA FORME LA PLUS COÛTEUSE** : *rendre une fonction asynchrone change le CONTRAT DE TOUS SES APPELANTS.* Celui-ci n'avait pas été revu — et le défaut d'ordonnancement se payait en **quota IA**, pas seulement en confort.
-
-**⛔ DEUXIÈME CORRECTIF, AUSSI IMPORTANT QUE LE PREMIER** : le message **compte** désormais les valeurs écrites (*« Rapport lu ✅ 12 valeurs »*) et dit *« aucune valeur reconnue »* quand il n'y en a pas. **C'est précisément ce silence qui a masqué le bug pendant deux imports** — rien ne signalait qu'un appel venait d'être gaspillé.
-
-**⚠️ Et si le verrou santé refuse, on ne remplit pas des champs invisibles** et on ne prétend pas que le rapport est prêt.
-Tests : **parcours 1122/1122** (+5, bloc XC), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `tracking.js`, `clone/tracking.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v971. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

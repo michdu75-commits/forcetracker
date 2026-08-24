@@ -3349,10 +3349,34 @@ console.log('\n═══ V. Métabolisme de base — d\'où vient le chiffre ═
     o.affiche=document.getElementById('nu-bmr').textContent;
     o.attendu=Math.round(370+21.6*65).toLocaleString('fr-FR');
     const ctx=buildCoachContext();
-    o.ctxKatch=/CALCULÉ SUR SA MASSE MAIGRE MESURÉE/.test(ctx);
+    /* ⚠️⚠️ CE TÉMOIN ÉPINGLAIT LE MOT « MESURÉE », donc il PROTÉGEAIT LA MAUVAISE PHRASE.
+       C'est pour ça que `docs/SUIVI-AUDIT.md` disait de le corriger AVANT le code : tant qu'il
+       exigeait ce mot, toute correction de R32 le faisait rougir et passait pour une régression.
+       Il n'exige plus que la partie VRAIE (le calcul est bien fait sur la masse maigre). */
+    o.ctxKatch=/CALCULÉ SUR SA MASSE MAIGRE/.test(ctx);
     o.ctxFormule=/Katch-McArdle/.test(ctx);
     o.ctxEcart=/kcal\/jour/.test(ctx);
     o.ctxPasDeuxFois=!/ESTIMÉ sur poids\/taille\/âge/.test(ctx);   // jamais les deux à la fois
+    // ⛔ R32 : une BIA MESURE un poids et une impédance, elle ESTIME tout le reste.
+    o.ctxPasMesuree=!/MASSE MAIGRE MESURÉE/.test(ctx);
+    o.ctxPasSolide=!/chiffre SOLIDE|sans réserve/.test(ctx);
+    o.ctxDitEstimation=/est une ESTIMATION, pas une mesure/.test(ctx);
+    o.ctxAntiMicro=/variation de quelques centaines de grammes/.test(ctx);
+    o.natLue=(bmrDetail().lm||{}).nature;
+
+    // ── ②bis LES TROIS PROVENANCES ne se ressemblent plus (avant : identiques mot pour mot)
+    const phrase=()=>{const c=buildCoachContext(),i=c.indexOf('- BMR:');return c.slice(i,c.indexOf('\n',i));};
+    o.phLue=phrase();
+    // masse maigre DÉDUITE par soustraction (drapeau posé par tracking.js, ft-v978)
+    S.bodyScans=[{date:jour(10),weight:80,leanMass:65,lmDeduite:true}];
+    o.natDeduite=(bmrDetail().lm||{}).nature; o.phDeduite=phrase();
+    o.ditSoustraction=/retrouvée par SOUSTRACTION/.test(o.phDeduite);
+    // % de gras TAPÉ AU CLAVIER dans une pesée — le maillon le plus faible des trois
+    S.bodyScans=[]; S.weightLog=[{date:jour(10),kg:80,bf:20}];
+    o.natSaisie=(bmrDetail().lm||{}).nature; o.phSaisie=phrase();
+    o.ditSaisi=/SAISI lui\/elle-même/.test(o.phSaisie);
+    o.troisDistinctes=(new Set([o.phLue,o.phDeduite,o.phSaisie])).size===3;
+    S.weightLog=[]; S.bodyScans=[{date:jour(10),weight:80,leanMass:65}];
 
     // ── ③ BILAN TROP VIEUX : l'écran signale que le bilan n'a PAS servi (il y a une action)
     S.bodyScans=[{date:jour(200),weight:80,leanMass:65}]; renderNutrition();
@@ -3381,6 +3405,23 @@ console.log('\n═══ V. Métabolisme de base — d\'où vient le chiffre ═
   tv('⭐⭐ bilan récent : l\'écran affiche « selon ta masse maigre »', V.ditMasseMaigre===true);
   tv('… et c\'est bien le chiffre de Katch qui s\'affiche', V.affiche===V.attendu, V.affiche+' vs '+V.attendu);
   tv('⭐⭐ Milo reçoit la méthode ET la formule nommée', V.ctxKatch===true&&V.ctxFormule===true);
+  // ── R32 : MESURÉ ≠ ESTIMÉ. Une balance mesure un poids et une impédance ; le reste, elle
+  //    l'estime avec la formule de son fabricant. Milo ne doit donc jamais dire « mesurée »,
+  //    ni « sans réserve » — surtout quand le % de gras a été tapé au clavier.
+  tv('⛔⛔ Milo ne dit JAMAIS « MASSE MAIGRE MESURÉE » (R32 : la BIA estime, elle ne mesure pas)',
+    V.ctxPasMesuree===true, V.phLue);
+  tv('⛔ … ni « chiffre SOLIDE » / « sans réserve » sur une estimation', V.ctxPasSolide===true, V.phLue);
+  tv('⭐⭐ … il reçoit à la place le mot ESTIMATION et la raison', V.ctxDitEstimation===true, V.phLue);
+  tv('⭐ … et l\'interdiction de lire une variation de quelques centaines de grammes comme du tissu',
+    V.ctxAntiMicro===true);
+  tv('⭐⭐ LA PROVENANCE DESCEND JUSQU\'À LA DONNÉE (R4) : lue · déduite · saisie',
+    V.natLue==='lue'&&V.natDeduite==='deduite'&&V.natSaisie==='saisie',
+    JSON.stringify([V.natLue,V.natDeduite,V.natSaisie]));
+  tv('⭐⭐ … et les TROIS phrases sont DIFFÉRENTES (avant le correctif : identiques mot pour mot)',
+    V.troisDistinctes===true, 'lue/déduite/saisie confondues');
+  tv('⭐ masse maigre DÉDUITE (poids − gras) : Milo l\'apprend', V.ditSoustraction===true, V.phDeduite);
+  tv('⭐⭐ % de gras TAPÉ À LA MAIN : Milo sait que c\'est une saisie, pas un appareil',
+    V.ditSaisi===true, V.phSaisie);
   tv('⭐ … et l\'ÉCART avec l\'autre formule (sinon il ne peut pas nuancer)', V.ctxEcart===true);
   tv('⭐ jamais les deux versions dans le même contexte (deux sources = il croit la pire)',
     V.ctxPasDeuxFois===true);

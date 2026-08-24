@@ -602,7 +602,12 @@ function leanMassRecente(){
   (S.bodyScans||[]).forEach(sc=>{
     if(!sc||!sc.date)return;
     const lm=Number(sc.leanMass);
-    if(isFinite(lm)&&lm>0)cand.push({date:sc.date,lm:lm,poids:Number(sc.weight)||null,src:'bilan corporel'});
+    /* 🏷️ `nature` DIT COMMENT CE CHIFFRE EXISTE — il ne suffit pas de transporter la valeur.
+       `lmDeduite` est posé par tracking.js quand la masse maigre n'était PAS lisible sur le
+       rapport et a été retrouvée par soustraction (poids − masse grasse, ft-v978). Sans ce
+       transport, la nuance reste dans la donnée et n'atteint jamais Milo — R4 exactement. */
+    if(isFinite(lm)&&lm>0)cand.push({date:sc.date,lm:lm,poids:Number(sc.weight)||null,
+      src:'bilan corporel',nature:sc.lmDeduite?'deduite':'lue'});
   });
   (S.weightLog||[]).forEach(w=>{
     if(!w||!w.date)return;
@@ -619,7 +624,10 @@ function leanMassRecente(){
        mesure en corrigeant un bug serait un mauvais échange. */
     const bf=Number(w.bf), bw=Number(w.kg!=null?w.kg:w.bw);
     if(!(isFinite(bf)&&bf>0&&bf<70&&isFinite(bw)&&bw>0))return;
-    cand.push({date:w.date,lm:Math.round(bw*(1-bf/100)*10)/10,poids:bw,src:'pesée'});
+    /* 🏷️ `nature:'saisie'` — sur ce chemin le % de gras a été TAPÉ AU CLAVIER par la personne.
+       C'est le maillon le plus faible des trois, et c'est justement celui qui ressemblait le
+       plus à une mesure d'appareil dans le prompt (« MASSE MAIGRE MESURÉE … pesée du … »). */
+    cand.push({date:w.date,lm:Math.round(bw*(1-bf/100)*10)/10,poids:bw,src:'pesée',nature:'saisie'});
   });
   if(!cand.length)return null;
   cand.sort((a,b)=>b.date.localeCompare(a.date));
