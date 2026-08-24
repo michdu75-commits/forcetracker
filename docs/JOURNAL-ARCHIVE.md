@@ -3638,3 +3638,18 @@ Tests : **parcours 1176/1176** (+12, bloc XCIV), calculs 266/266, muscles 241/24
 
 **👉 ET SI UN BAC À SABLE REDEVIENT NÉCESSAIRE**, il se refabrique depuis la prod en quelques minutes — c'est exactement comme ça qu'il est né.
 Tests : **parcours 1175/1175** (−1, exactement le témoin de parité du clone retiré), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Un retrait ne se juge pas à un contrôle négatif mais à ce qui n'a PAS bougé** : les 1 176 témoins de la version précédente doivent rester verts sans le clone. Fichiers : `clone/*` (supprimé), `build_clone.py` (supprimé), `app.js`, `tests/parcours/runner.js`, `tests/milo/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v976. |
+
+**ft-v977 — 📐 LE HEADER COMPACTÉ SORT DU PLACARD — et trois de ses quatre règles n'auraient RIEN fait** — Michel, aussitôt après le retrait du clone : *« le header compacté oui, promeus-le »*.
+
+**⭐ C'EST LE PREMIER DES CINQ ESSAIS PARQUÉS À ÊTRE TRANCHÉ.** Il attendait derrière `html.is-clone` depuis **ft-v610**, marqué *« à promouvoir si Michel valide »* — et le retrait du clone (ft-v976) venait de lui enlever son dernier moyen d'être essayé. *Un essai parqué sans porte de sortie finit oublié, pas décidé* (**R30**).
+
+**⚠️⚠️ ET LA PROMOTION AURAIT ÉTÉ UN NO-OP SILENCIEUX.** En retirant `html.is-clone`, les quatre règles **perdent leur spécificité** — or **trois d'entre elles sont redéfinies PLUS BAS** dans `style.css` (`.coach-header` l. 798, `.coach-header-sub` l. 800, `.coach-quota` l. 897). Empilées en haut du fichier, elles auraient été **écrasées**, et « c'est promu » aurait été faux **sans qu'aucun test ne rougisse**. Les quatre valeurs sont donc écrites **dans la règle d'origine** : *deux règles qui se disputent la même propriété, c'est une de trop* (**R2**).
+
+**⭐⭐ D'OÙ LE TÉMOIN : il ne vérifie pas que les règles EXISTENT, il vérifie qu'elles GAGNENT.** Il lit le style **calculé** par le navigateur, pas le fichier — la seule mesure qui distingue « écrit » de « appliqué ».
+
+**🔴 RÈGLE D'OR #9 — MESURÉ, PAS REGARDÉ** : le bouton central « + » est à **792 px avant et 792 px après**, hauteur **44 → 44**, et il ne bouge pas non plus après une navigation. La barre de navigation reste à 770.
+
+**👉 LE GAIN EST RÉEL ET IL VA AU BON ENDROIT** : le header de Milo passe de **83 à 50 px**, ce qui rend **+45 px** au fil de discussion et **+12 px** à l'Accueil. La barre de saisie ne bouge pas. ⛔ **Et l'identité ne bouge pas non plus** : le titre reste à 21 px, son sous-titre à 13,5 px — *le gain vient des ESPACEMENTS seuls*, un témoin l'épingle. ⛔ La marge **haute** n'est pas réductible davantage : au-dessus du logo, c'est la barre d'état de l'iPhone.
+
+**⛔⛔ ET UN SECOND ESSAI EST DÉLIBÉRÉMENT **NON** PROMU (ft-v611), avec sa raison écrite dans le code** : il raccourcissait *« 8 questions gratuites »* en *« 8 questions »*. Ça gagne quelques pixels **sur le dos de ce que la personne comprend de son compte** — *« 8 questions » se lit comme un plafond définitif*. On ne prend pas de la place à la clarté. *Un maintien sous garde s'écrit comme un retrait* (**R30**), sinon le suivant « répare » une décision.
+Tests : **parcours 1182/1182** (+7, bloc XCV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `style.css`, `coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v977. |

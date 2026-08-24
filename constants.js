@@ -1154,12 +1154,19 @@ const EX_UNI={
 
 /** Cet exercice se refait-il de l'autre côté ? `false` pour tout exercice inconnu
  *  (exercice perso, nom inventé) — on ne double JAMAIS un volume au hasard : se tromper
- *  ici fausse une courbe que la personne regarde (R29, le coût de l'erreur décide). */
-function estUnilateral(nom){ const id=exId(nom); return !!(id&&EX_UNI[id]); }
+ *  ici fausse une courbe que la personne regarde (R29, le coût de l'erreur décide).
+ *  ⚠️ LE NOM EST RÉSOLU D'ABORD (24/08/2026, ft-v997) : c'est la JUMELLE du défaut des
+ *  muscles, trouvée en la cherchant (R8 — « un oubli de ce type est rarement isolé »).
+ *  Mesuré : **10 exercices** perdaient leur statut unilatéral une fois abrégés — « Hip
+ *  Thrust Unilatéral », « Montée sur Box », « Arraché Haltère »… Leur volume n'était donc
+ *  PAS doublé, et l'étiquette « par bras / par jambe » ne s'affichait pas.
+ *  ⛔ Résoudre une abréviation n'est PAS « doubler au hasard » : la table est déterministe
+ *  et vérifiée sans collision — un exercice perso, lui, rend toujours `false`. */
+function estUnilateral(nom){ const id=exId(exNomCatalogue(nom)); return !!(id&&EX_UNI[id]); }
 
 /** « par bras » · « par jambe » · « par côté » — ou '' si l'exercice n'est pas unilatéral. */
 function uniLabel(nom){
-  const id=exId(nom), c=id&&EX_UNI[id];
+  const id=exId(exNomCatalogue(nom)), c=id&&EX_UNI[id];
   return c==='bras'?'par bras':c==='jambe'?'par jambe':c==='cote'?'par côté':'';
 }
 

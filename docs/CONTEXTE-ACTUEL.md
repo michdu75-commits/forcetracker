@@ -6,7 +6,28 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v996`.
+- **Version en ligne (live) :** `ft-v997`.
+- 🧬⭐⭐ **UN NOM ABRÉGÉ LIT LA FICHE ÉCRITE, PLUS LA DEVINETTE — LIVRÉ** (ft-v997). Le **2ᵉ effet
+  de la même cause que ft-v996**, laissé ouvert la veille et tranché par Michel **la mesure en
+  main** : *« fais la correction des muscles aussi »*. ⛔⛔ `_mscScores` cherchait la fiche au nom
+  **EXACT** : un nom abrégé la ratait et retombait sur les règles `_MEX`, qui **devinent** —
+  l'inverse exact de ce que le bloc annonce depuis le 02/08. **Mesuré : 55 des 77** abréviations
+  rendaient des muscles différents, *« Inclinaison Lombaire »* **aucun** (figurine grise).
+  ⭐⭐ **L'exemple qui coûte** : *« Rowing Poitrine Appuyée »* abrégé **recréditait le bas du dos**,
+  retiré **exprès** le 02/08 — *une correction anatomique faite à la main, annulée par un nom court*.
+  ⭐⭐ **ET SA JUMELLE, TROUVÉE EN LA CHERCHANT (R8)** : `estUnilateral`/`uniLabel` avaient le même
+  défaut — **10 exercices** perdaient leur statut unilatéral abrégés, donc **volume non doublé** et
+  étiquette « par bras / par jambe » absente. ⛔ **Les calories suivent sans une ligne de plus** (le
+  MET dérive des muscles) : 4 MET faux, jusqu'à **±62 %**, et l'un d'eux **surestimait** — *l'erreur
+  n'allait pas toujours dans le même sens, donc elle était invisible en moyenne*.
+  ⛔⛔ **UN ENDROIT RESTE STRICT, ET C'EST ÉCRIT DANS LE CODE (R30)** : `state.js`, la fusion d'un
+  exercice perso avec le catalogue. Y résoudre l'abréviation la rendrait **destructrice** — un
+  « Hip Thrust Barre » créé à la main, avec sa photo, **disparaîtrait**. *Une lecture qui se trompe
+  coûte une figurine ; une suppression qui se trompe coûte le travail de la personne* (R29).
+  ⚠️ **CE QUI CHANGE POUR L'UTILISATEUR** : figurine, couleur du calendrier, calories et volume de
+  séances **déjà passées** bougent — prix assumé, tranché par Michel après mesure. ⭐ **Rien n'est
+  réécrit en base**, tout est recalculé à l'affichage → **réversible**.
+  ⭐ **Vérifié à l'écran** (captures avant/après), pas seulement en données.
 - 🏷️⭐⭐ **UN NOM D'EXERCICE ABRÉGÉ RETROUVE SA FICHE — LIVRÉ** (ft-v996). Signalé par Michel
   (*« je n'ai plus la figurine sur ce mouvement-là »*, 2 captures), en repartant d'une vieille
   question sur les adducteurs. ⛔⛔ **Les adducteurs n'étaient PAS en cause** — réglés depuis

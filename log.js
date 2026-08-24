@@ -3096,7 +3096,17 @@ function _mscScores(exs){
     // de règle à masquer, plus de fragilité — pas parce qu'on les a corrigés, parce qu'ils
     // n'ont plus lieu d'être. Les règles restent pour ce qu'on ne connaît pas (exercices
     // créés par l'utilisateur, noms arrivés par import).
-    const _ecrit=(typeof exMuscles==='function')?exMuscles(ex.name):null;
+    // ⚠️ LE NOM EST RÉSOLU AVANT DE CHERCHER LA FICHE (24/08/2026, ft-v997). Sans ça, un nom
+    // ABRÉGÉ (« Hip Thrust Barre » au lieu de « Hip Thrust Barre (Poussée de Hanche) ») rate la
+    // DONNÉE ÉCRITE et retombe deux lignes plus bas sur les règles, qui DEVINENT — c'est-à-dire
+    // exactement l'inverse de ce que ce bloc annonce. Mesuré : **55 des 77** abréviations
+    // rendaient des muscles différents, et « Inclinaison Lombaire » n'en rendait AUCUN.
+    // ⭐ L'exemple qui coûte : « Rowing Poitrine Appuyée » abrégé RECRÉDITAIT le bas du dos,
+    // que la fiche du 02/08 avait retiré exprès (poitrine appuyée = colonne non chargée).
+    // ⛔ Les deux lignes suivantes gardent le nom D'ORIGINE, exprès : les règles `_MEX` et les
+    // exercices perso travaillent sur ce que la personne a écrit, pas sur le catalogue.
+    const _ecrit=(typeof exMuscles==='function')
+      ?exMuscles((typeof exNomCatalogue==='function')?exNomCatalogue(ex.name):ex.name):null;
     if(_ecrit){
       (_ecrit.p||[]).forEach(m=>{sc[m]=(sc[m]||0)+2;});
       (_ecrit.s||[]).forEach(m=>{sc[m]=(sc[m]||0)+1;});

@@ -241,6 +241,14 @@ function load(){
           S.customExercises=S.customExercises.filter(function(c){
             if(!c||!c.n) return true;
             const nom=ren(c.n);
+            /* ⛔⛔ CET `exId` RESTE STRICT, ET C'EST VOLONTAIRE (24/08/2026, ft-v997).
+               Ailleurs on résout les noms ABRÉGÉS (`exNomCatalogue`) pour retrouver la fiche
+               du catalogue — ici il ne faut SURTOUT PAS. Cette ligne décide de SUPPRIMER un
+               exercice perso en le fusionnant avec le catalogue : la résolution rendrait
+               l'opération DESTRUCTRICE. Quelqu'un qui a créé son propre « Hip Thrust Barre »
+               (avec sa photo, ses muscles à lui) le verrait disparaître au profit de la fiche
+               du catalogue. Une lecture qui se trompe coûte une figurine ; une SUPPRESSION
+               qui se trompe coûte le travail de la personne (R29). */
             if(!exId(nom)) return true;                 // inconnu du catalogue → vrai exo perso
             if(c.img){                                  // la photo suit, sans écraser la cible
               S.exPhotos=S.exPhotos||{};

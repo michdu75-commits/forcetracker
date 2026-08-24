@@ -12343,6 +12343,81 @@ console.log('\n-- CX. Un nom d\'exercice ABRÉGÉ retrouve sa fiche du catalogue
   await cx.close();
 }
 
+// ════════════════════════════════════════════════════════════════════
+console.log('\n-- CXI. Un nom abrégé lit la FICHE ÉCRITE, plus la devinette (ft-v997) --');
+// ⚠️ LE 2ᵉ EFFET DE LA MÊME CAUSE QUE CX, et le plus large. `_mscScores` cherchait la fiche
+// avec le nom EXACT : un nom abrégé la ratait et retombait sur les règles `_MEX`, qui DEVINENT
+// — l'inverse exact de ce que le bloc annonce (« la donnée écrite passe avant les règles »).
+// ⭐ Et sa JUMELLE, trouvée en la cherchant (R8) : `estUnilateral` avait le même défaut.
+// ⛔ Ces témoins comparent l'abrégé au nom COMPLET : ils tournent des deux côtés, donc le
+//    contrôle négatif imprime l'écart réel au lieu de « la fonction n'existe pas ».
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pf=await cx.newPage();
+  await pf.addInitScript(seedScript({}));
+  await pf.goto('http://localhost:'+PORT+'/index.html');
+  await pf.waitForTimeout(2200);
+  const F=await pf.evaluate(()=>{
+   try{
+    const o={};
+    const court=n=>String(n).replace(/\s*\([^)]*\)\s*$/,'').trim();
+    const bases=Object.keys(_EX_BASE2NOM).map(k=>_EX_BASE2NOM[k]);
+    const E=n=>({name:n,sets:[{kg:50,reps:8,done:true,type:'N'}]});
+    const sc=n=>JSON.stringify((_mscScores([E(n)])||{}).sc||{});
+    // ① l'abrégé rend EXACTEMENT ce que rend le nom complet
+    o.diff=bases.filter(pl=>sc(court(pl))!==sc(pl));
+    // ② plus aucune figurine entièrement grise
+    o.vides=bases.map(court).filter(k=>sc(k)==='{}');
+    // ③ la JUMELLE : unilatéral + étiquette
+    o.uni=bases.filter(pl=>estUnilateral(court(pl))!==estUnilateral(pl));
+    o.uniLbl=bases.filter(pl=>uniLabel(court(pl))!==uniLabel(pl));
+    // ④ les calories suivent (le MET dérive des muscles)
+    o.met=[];
+    if(typeof getExerciseMET==='function')bases.forEach(pl=>{let a,b;
+      try{a=getExerciseMET(court(pl));b=getExerciseMET(pl);}catch(e){return;}
+      if(a!==b)o.met.push(court(pl));});
+    // ⑤ NON-RÉGRESSION : un nom COMPLET rend toujours EXACTEMENT sa fiche écrite
+    o.pleinsCasses=bases.filter(pl=>{
+      const f=exMuscles(pl); if(!f)return false;
+      const att={};(f.p||[]).forEach(m=>att[m]=(att[m]||0)+2);(f.s||[]).forEach(m=>att[m]=(att[m]||0)+1);
+      return sc(pl)!==JSON.stringify(att);});
+    // ⑥ RIEN N'EST INVENTÉ sur un exercice perso
+    o.persoUni=estUnilateral('Ma Machine Bidon À Moi');
+    o.persoLbl=uniLabel('Ma Machine Bidon À Moi');
+    // ⑦ les deux cas nommés dans le journal
+    o.rowing=sc('Rowing Poitrine Appuyée');
+    o.lombaire=sc('Inclinaison Lombaire');
+    o.hipUni=estUnilateral('Hip Thrust Unilatéral')+'|'+uniLabel('Hip Thrust Unilatéral');
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(F.err)t('CXI n\'a pas pu tourner',false,F.err);
+  else{
+    t('⭐⭐ MUSCLES : un nom ABRÉGÉ rend exactement ce que rend le nom complet (55 écarts avant)',
+      Array.isArray(F.diff)&&F.diff.length===0, JSON.stringify((F.diff||[]).slice(0,4)));
+    t('⭐⭐ … et plus AUCUNE figurine entièrement grise (« Inclinaison Lombaire »)',
+      Array.isArray(F.vides)&&F.vides.length===0, JSON.stringify(F.vides));
+    t('⭐⭐ LA JUMELLE (R8) : un unilatéral abrégé reste unilatéral — son volume est bien doublé',
+      Array.isArray(F.uni)&&F.uni.length===0, JSON.stringify((F.uni||[]).slice(0,4)));
+    t('⭐ … et l\'étiquette « par bras / par jambe » s\'affiche aussi sur l\'abrégé',
+      Array.isArray(F.uniLbl)&&F.uniLbl.length===0, JSON.stringify((F.uniLbl||[]).slice(0,4)));
+    t('⭐ LES CALORIES SUIVENT : plus aucun MET différent entre abrégé et nom complet',
+      Array.isArray(F.met)&&F.met.length===0, JSON.stringify((F.met||[]).slice(0,4)));
+    t('⛔⛔ NON-RÉGRESSION : un nom COMPLET rend toujours EXACTEMENT sa fiche écrite',
+      Array.isArray(F.pleinsCasses)&&F.pleinsCasses.length===0,
+      JSON.stringify((F.pleinsCasses||[]).slice(0,4)));
+    t('⛔ un exercice PERSO n\'est jamais déclaré unilatéral et ne reçoit aucune étiquette (R29)',
+      F.persoUni===false&&F.persoLbl==='', JSON.stringify({uni:F.persoUni,lbl:F.persoLbl}));
+    t('⭐⭐ « Rowing Poitrine Appuyée » abrégé ne recrédite PLUS le bas du dos (retiré exprès le 02/08)',
+      typeof F.rowing==='string'&&F.rowing.indexOf('lower-back')<0, 'reçu : '+F.rowing);
+    t('⭐ « Inclinaison Lombaire » abrégé a enfin des muscles',
+      typeof F.lombaire==='string'&&F.lombaire.indexOf('lower-back')>=0, 'reçu : '+F.lombaire);
+    t('⭐ « Hip Thrust Unilatéral » abrégé est bien unilatéral, « par jambe »',
+      F.hipUni==='true|par jambe', 'reçu : '+F.hipUni);
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 

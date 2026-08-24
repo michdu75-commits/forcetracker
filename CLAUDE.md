@@ -422,7 +422,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v996`** (prochaine : `ft-v997`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v997`** (prochaine : `ft-v998`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -432,6 +432,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v997 — 🧬 UN NOM ABRÉGÉ LIT LA FICHE ÉCRITE, PLUS LA DEVINETTE — et la JUMELLE trouvée en la cherchant** — Michel, la mesure de ft-v996 en main : *« fais la correction des muscles aussi »*.
+
+**⛔⛔ C'EST LE 2ᵉ EFFET DE LA MÊME CAUSE, ET LE PLUS LARGE.** `_mscScores` cherchait la fiche avec le nom **EXACT** : un nom abrégé la ratait et retombait deux lignes plus bas sur les règles `_MEX`, qui **devinent** — c'est-à-dire **l'inverse exact de ce que le bloc annonce depuis le 02/08** (*« la donnée écrite passe avant les règles »*). **Mesuré avant de coder : 55 des 77** abréviations rendaient des muscles **différents**, et *« Inclinaison Lombaire »* n'en rendait **aucun** — figurine entièrement grise.
+
+**⭐⭐ L'EXEMPLE QUI COÛTE, parce qu'il annule un travail fait à la main** : *« Rowing Poitrine Appuyée »* abrégé **recréditait le bas du dos**, que la fiche du 02/08 avait retiré **exprès** (poitrine appuyée = colonne non chargée). *Une correction anatomique relue une par une, perdue dès que le nom était abrégé.*
+
+**⭐⭐ ET SA JUMELLE A ÉTÉ TROUVÉE EN LA CHERCHANT — R8 au pied de la lettre** (*« quand on trouve une donnée absente, chercher immédiatement ses jumelles »*). `estUnilateral` / `uniLabel` avaient **le même défaut** : **10 exercices** perdaient leur statut unilatéral une fois abrégés (*Hip Thrust Unilatéral*, *Montée sur Box*, *Arraché Haltère*…). Leur volume n'était donc **pas doublé**, et l'étiquette « par bras / par jambe » **ne s'affichait pas**. ⛔ *Livrer les muscles sans elle aurait été « posé d'un seul côté » — le défaut que les trois versions précédentes documentent.*
+
+**⛔ LES CALORIES SUIVENT SANS UNE LIGNE DE PLUS** : le MET dérive des muscles. **4 exercices** avaient un MET faux, jusqu'à **±62 %** sur la séance — et *« Extension Fessiers Arrière »*, lui, **SURESTIMAIT** (6,5 contre 4). *L'erreur n'allait pas toujours dans le même sens, ce qui la rendait invisible en moyenne.*
+
+**⛔⛔ UN ENDROIT RESTE STRICT, ET LA RAISON EST ÉCRITE DANS LE CODE (R30).** `state.js` fusionne un exercice perso avec le catalogue quand les noms coïncident : y résoudre l'abréviation rendrait l'opération **DESTRUCTRICE** — quelqu'un qui a créé son propre *« Hip Thrust Barre »*, avec sa photo et ses muscles, le verrait **disparaître**. ⭐ *Une **lecture** qui se trompe coûte une figurine ; une **suppression** qui se trompe coûte le travail de la personne* (**R29**). Les règles `_MEX` et les exercices perso gardent aussi le nom **d'origine**, exprès : ils travaillent sur ce que la personne a écrit, pas sur le catalogue.
+
+**⚠️ CE QUI CHANGE POUR L'UTILISATEUR, ET IL FAUT LE LIRE** : la figurine, la couleur du calendrier, les calories et le volume de séances **déjà passées** bougent. C'est le prix de la correction, tranché par Michel **en connaissance de cause** (la mesure lui a été donnée avant). ⭐ **Rien n'est réécrit en base** : tout est recalculé à l'affichage, donc **réversible**.
+Tests : **parcours 1372/1372** (+10, bloc CXI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 8 rouges sur 10, et il est INSTRUCTIF** — les détails imprimés *sont* le bug : `{}` pour *Inclinaison Lombaire*, `lower-back:1` pour *Rowing Poitrine Appuyée*, `false|` pour l'unilatéral. ⭐⭐ **Et pour une fois AUCUN faux vert, autant le dire** : les 2 verts (*« un nom complet rend toujours sa fiche écrite »* et *« un exercice perso n'est jamais unilatéral »*) **tournent des deux côtés** — ce sont les non-régressions, elles ne devaient pas bouger et elles n'ont pas bougé. ⭐ **Vérifié à l'écran, pas seulement en données** : capture avant/après de la figurine (grise → colorée) et de l'écran Séance (« par jambe » revenu). Fichiers : `log.js`, `constants.js`, `state.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v997. |
 
 **ft-v996 — 🏷️ UN NOM D'EXERCICE ABRÉGÉ RETROUVE SA FICHE — « je n'ai plus la figurine sur ce mouvement-là »** — Michel, deux captures à l'appui, en repartant d'une vieille question sur les adducteurs.
 
@@ -758,21 +773,6 @@ Tests : **parcours 1209/1209** (+18, bloc XCVII), calculs 266/266, muscles 241/2
 
 **⭐ ET UNE TROUVAILLE QUE LE DOSSIER N'AVAIT VUE QU'À MOITIÉ** : il signale *« tout ce qui n'est pas F devient un homme »*. **Les deux défauts coexistent** — le BMR Mifflin s'écrit `gender==='H'` (donc un sexe absent est traité en **femme**, −161 kcal), le plancher calorique s'écrit `gender==='F'` (donc en **homme**, 1500). *Un profil abîmé serait calculé comme l'une et plafonné comme l'autre.* Une seule porte n'est pas validée : `setup.js:2390`, à la restauration cloud. **Non corrigé ici** — c'est un P2 et il demande de décider ce que « inconnu » veut dire.
 Tests : **parcours 1192/1192** (+10, bloc XCVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : **6 rouges lus** (mes 2 derniers témoins sont tombés hors de ma fenêtre de lecture ; ils portent sur un drapeau qui n'existe pas dans l'ancien code, donc rouges aussi). ⭐⭐ **Les 3 VERTS DES DEUX CÔTÉS sont ici les plus importants**, et l'un d'eux est la démonstration centrale : *« l'extraction du texte du PDF ne perd rien »* est vert **avant comme après** — c'est exactement ce qui prouve que **le contenu n'a jamais été le problème**, et que les deux hypothèses de l'audit étaient fausses. Les deux autres gardent une absence : aucun seuil chiffré n'était inventé, et les partages de LIEN n'ont pas perdu leur titre au passage.**. Fichiers : `screens.js`, `coach.js`, `tracking.js`, `app.js`, `log.js`, `setup.js`, `tests/parcours/runner.js`, `constants.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v978. |
-
-**ft-v977 — 📐 LE HEADER COMPACTÉ SORT DU PLACARD — et trois de ses quatre règles n'auraient RIEN fait** — Michel, aussitôt après le retrait du clone : *« le header compacté oui, promeus-le »*.
-
-**⭐ C'EST LE PREMIER DES CINQ ESSAIS PARQUÉS À ÊTRE TRANCHÉ.** Il attendait derrière `html.is-clone` depuis **ft-v610**, marqué *« à promouvoir si Michel valide »* — et le retrait du clone (ft-v976) venait de lui enlever son dernier moyen d'être essayé. *Un essai parqué sans porte de sortie finit oublié, pas décidé* (**R30**).
-
-**⚠️⚠️ ET LA PROMOTION AURAIT ÉTÉ UN NO-OP SILENCIEUX.** En retirant `html.is-clone`, les quatre règles **perdent leur spécificité** — or **trois d'entre elles sont redéfinies PLUS BAS** dans `style.css` (`.coach-header` l. 798, `.coach-header-sub` l. 800, `.coach-quota` l. 897). Empilées en haut du fichier, elles auraient été **écrasées**, et « c'est promu » aurait été faux **sans qu'aucun test ne rougisse**. Les quatre valeurs sont donc écrites **dans la règle d'origine** : *deux règles qui se disputent la même propriété, c'est une de trop* (**R2**).
-
-**⭐⭐ D'OÙ LE TÉMOIN : il ne vérifie pas que les règles EXISTENT, il vérifie qu'elles GAGNENT.** Il lit le style **calculé** par le navigateur, pas le fichier — la seule mesure qui distingue « écrit » de « appliqué ».
-
-**🔴 RÈGLE D'OR #9 — MESURÉ, PAS REGARDÉ** : le bouton central « + » est à **792 px avant et 792 px après**, hauteur **44 → 44**, et il ne bouge pas non plus après une navigation. La barre de navigation reste à 770.
-
-**👉 LE GAIN EST RÉEL ET IL VA AU BON ENDROIT** : le header de Milo passe de **83 à 50 px**, ce qui rend **+45 px** au fil de discussion et **+12 px** à l'Accueil. La barre de saisie ne bouge pas. ⛔ **Et l'identité ne bouge pas non plus** : le titre reste à 21 px, son sous-titre à 13,5 px — *le gain vient des ESPACEMENTS seuls*, un témoin l'épingle. ⛔ La marge **haute** n'est pas réductible davantage : au-dessus du logo, c'est la barre d'état de l'iPhone.
-
-**⛔⛔ ET UN SECOND ESSAI EST DÉLIBÉRÉMENT **NON** PROMU (ft-v611), avec sa raison écrite dans le code** : il raccourcissait *« 8 questions gratuites »* en *« 8 questions »*. Ça gagne quelques pixels **sur le dos de ce que la personne comprend de son compte** — *« 8 questions » se lit comme un plafond définitif*. On ne prend pas de la place à la clarté. *Un maintien sous garde s'écrit comme un retrait* (**R30**), sinon le suivant « répare » une décision.
-Tests : **parcours 1182/1182** (+7, bloc XCV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `style.css`, `coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v977. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
