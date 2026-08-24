@@ -12134,6 +12134,107 @@ console.log('\n-- CVIII. La course `_saveCoachMemory` (ft-v993) --');
   await cx.close();
 }
 
+// ════════════════════════════════════════════════════════════════════
+console.log('\n-- CIX. Le cardio de Milo va dans son BLOC, pas dans les exercices (ft-v995) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pc=await cx.newPage();
+  await pc.addInitScript(seedScript({}));
+  await pc.goto('http://localhost:'+PORT+'/index.html');
+  await pc.waitForTimeout(2200);
+  const CC=await pc.evaluate(async()=>{
+   try{
+    const o={};
+    const ex=(name,note,sets)=>({name,note:note||'',_milo:true,sets:sets||[{kg:0,reps:10,type:'N'}]});
+    const muscu=n=>ex(n,'',[{kg:80,reps:5,type:'N'}]);
+    const test=exs=>{ S.wkt=null; _appliqueMiloSession(exs.map(e=>({...e})),{label:'T'},'start',null);
+      return {exs:(S.wkt.exs||[]).map(x=>x.name), av:S.wkt.cardioAvant||null, ap:S.wkt.cardio||null}; };
+
+    // ① LE CAS DE MICHEL, capture du 24/08 : « Elliptique — 8 min léger » + de la muscu
+    o.michel=test([ex('Elliptique','8 min léger'), muscu('Hip Thrust Barre')]);
+    // ② AVANT **ET** APRÈS — sa précision du même soir
+    o.deux=test([ex('Elliptique','8 min léger'), muscu('Squat'), ex('Tapis','20 min modéré')]);
+    // ③ SÉANCE CARDIO SEULE — « on veut qu'elle soit comptabilisée »
+    o.seul=test([ex('Rameur','30 min intense')]);
+    // ④ AU MILIEU → on ne devine pas (R29), il reste un exercice
+    o.milieu=test([muscu('Squat'), ex('Elliptique','10 min'), muscu('Développé Couché')]);
+    // ⑤ SANS DURÉE LISIBLE → aucune durée inventée
+    o.sansDuree=test([ex('Elliptique','tranquille'), muscu('Squat')]);
+    // ⑥ NON-RÉGRESSION : une séance de muscu normale ne bouge pas d'un pouce
+    o.normale=test([muscu('Squat'), muscu('Développé Couché')]);
+    // ⑦ un cardio DÉJÀ noté par la personne n'est jamais écrasé
+    S.wkt=null; _appliqueMiloSession([muscu('Squat')],{label:'x'},'start',null);
+    S.wkt.cardioAvant={type:'velo',intensity:'modere',duration:15};
+    _appliqueMiloSession([ex('Elliptique','8 min léger'), muscu('Squat')],{label:'x'},'replace',null);
+    o.deja=S.wkt.cardioAvant;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  const tc=(n,c,x)=>t(n, !CC.erreur && c, CC.erreur?'bloc en erreur':x);
+  if(CC.erreur){ t('⛔ le bloc « cardio de Milo » s\'exécute', false, CC.erreur); }
+  tc('⭐⭐ LE CAS DE MICHEL : l\'elliptique sort des exercices et remplit l\'ÉCHAUFFEMENT',
+    CC.michel && CC.michel.exs.join()==='Hip Thrust Barre'
+      && CC.michel.av && CC.michel.av.type==='elliptique' && CC.michel.av.duration===8,
+    JSON.stringify(CC.michel));
+  // ⛔ léger ≠ modéré : 4,0 contre 6,0 MET, soit 50 % d'écart sur les calories de ce cardio.
+  //    La note « 8 min léger » porte des ACCENTS — un motif non désaccentué la rate en silence.
+  tc('⛔ … avec la BONNE intensité (« léger », pas le défaut « modéré ») — 50 % d\'écart en kcal',
+    CC.michel && CC.michel.av && CC.michel.av.intensity==='leger', JSON.stringify(CC.michel&&CC.michel.av));
+  tc('⭐⭐ AVANT **ET** APRÈS dans la même séance (précision de Michel) : les deux moments remplis',
+    CC.deux && CC.deux.av && CC.deux.av.type==='elliptique'
+      && CC.deux.ap && CC.deux.ap.type==='tapis' && CC.deux.exs.join()==='Squat',
+    JSON.stringify(CC.deux));
+  tc('⭐⭐ une séance CARDIO SEULE est comptabilisée (« on veut qu\'elle soit comptabilisée »)',
+    CC.seul && CC.seul.av && CC.seul.av.type==='rameur' && CC.seul.av.duration===30
+      && CC.seul.exs.length===0, JSON.stringify(CC.seul));
+  tc('⛔ un cardio AU MILIEU reste un exercice — on ne devine pas ce qu\'elle voulait (R29)',
+    CC.milieu && CC.milieu.exs.indexOf('Elliptique')>=0 && !CC.milieu.av && !CC.milieu.ap,
+    JSON.stringify(CC.milieu));
+  tc('⛔ sans durée lisible, AUCUNE durée n\'est inventée (R29)',
+    CC.sansDuree && CC.sansDuree.exs.indexOf('Elliptique')>=0 && !CC.sansDuree.av,
+    JSON.stringify(CC.sansDuree));
+  tc('⭐ NON-RÉGRESSION : une séance de muscu normale n\'est pas touchée',
+    CC.normale && CC.normale.exs.join()==='Squat,Développé Couché' && !CC.normale.av && !CC.normale.ap,
+    JSON.stringify(CC.normale));
+  tc('⛔⛔ un cardio DÉJÀ noté par la personne n\'est JAMAIS écrasé (son vélo de 15 min reste)',
+    CC.deja && CC.deja.type==='velo' && CC.deja.duration===15, JSON.stringify(CC.deja));
+
+  /* ── 🗣️ ET MILO EST MIS AU COURANT (ft-v995, demande de Michel : « il faut que Milo soit au
+     courant, il y a déjà une fenêtre avec le cardio avant et après, et ensuite il faut donner ce
+     qu'il y a dans cette fenêtre »). Le correctif ci-dessus agit APRÈS coup, donc les données
+     étaient déjà justes — mais sans cette consigne Milo continue d'ÉCRIRE « Elliptique 1×10 »
+     dans sa phrase, et la personne lit une séance qui ne correspond pas à ce qu'elle obtient.
+     ⚠️ ON ÉPINGLE LE VOCABULAIRE, pas la formulation : les 6 types et les 3 intensités DOIVENT
+     être ceux de `CARDIO_MET` (app.js). Si quelqu'un ajoute un type au bloc sans le dire à Milo,
+     ou renomme une intensité, ce témoin rougit — c'est exactement la divergence que R2 interdit. */
+  const CG=await pc.evaluate(()=>{
+    const ctx=buildCoachContext();
+    const iP=ctx.indexOf('PROFIL ATHLÈTE:');
+    const i=ctx.indexOf('LE CARDIO A SA PROPRE FENÊTRE');
+    return { presente:i>=0, dansPersonnel:i>iP, commun:iP,
+      types:/elliptique · tapis · vélo · rameur/.test(ctx),
+      intensites:/légère · modérée · intense/.test(ctx),
+      deuxMoments:/AVANT \(échauffement\)[\s\S]{0,40}APRÈS \(cardio de fin\)/.test(ctx),
+      interdit:/NE LE METS JAMAIS DANS LA LISTE DES EXERCICES/.test(ctx),
+      duree:/Précise TOUJOURS la durée en minutes/.test(ctx),
+      seul:/cardio SEULE est parfaitement valable/.test(ctx) };
+  });
+  t('⭐⭐ MILO EST AU COURANT : la consigne dit que le bloc cardio existe', CG.presente===true);
+  t('⛔ … et lui interdit de mettre le cardio dans la liste des exercices', CG.interdit===true);
+  t('⭐ … avec les DEUX moments nommés (🔥 avant · 🧊 après)', CG.deuxMoments===true);
+  t('⭐⭐ … et le VOCABULAIRE EXACT du bloc : les 6 types de `CARDIO_MET`', CG.types===true);
+  t('⭐⭐ … et les 3 intensités (légère · modérée · intense)', CG.intensites===true);
+  // ⛔ Sans durée, le correctif refuse de placer le cardio (R29) : la consigne doit donc la réclamer,
+  //    sinon Milo produit des cardios que l'app rejette en silence — les deux moitiés vont ensemble.
+  t('⛔ … et elle RÉCLAME la durée en minutes (sans elle, l\'app ne place rien)', CG.duree===true);
+  t('⭐ … et rappelle qu\'une séance de cardio SEULE est valable', CG.seul===true);
+  // ⚠️ La consigne vit dans le bloc PERSONNEL (5 min) : elle ne touche donc PAS le plafond de
+  //    46 500 du bloc commun. Mesuré : commun identique au caractère près, avant/après.
+  t('⭐ … et elle ne pèse PAS sur le plafond du bloc commun (elle est dans le bloc personnel)',
+    CG.dansPersonnel===true && CG.commun===45362, 'commun='+CG.commun);
+  await cx.close();
+}
+
 // ── ⭐⭐ LE BANC D'ESSAI DOIT POUVOIR JUGER CE CHANGEMENT (R34) ────────────────────────────
 // Mesuré le 24/08 AVANT de livrer : sur les 21 scénarios d'alors, **aucun** n'avait plus de
 // 1 séance — l'avant/après R34 aurait donc comparé deux contextes IDENTIQUES et rendu « aucune

@@ -422,7 +422,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v994`** (prochaine : `ft-v995`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v995`** (prochaine : `ft-v996`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -432,6 +432,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v995 — 🏃 LE CARDIO DE MILO VA DANS SON BLOC, PAS DANS LES EXERCICES** — Michel, **en salle**, capture à l'appui : *« il me rajoute le vélo elliptique alors qu'on a un onglet exprès pour le cardio »*.
+
+**⭐⭐ SA RAISON DÉCIDE DE TOUT, et elle n'est pas esthétique** : *« si on fait une séance cardio toute seule, on veut qu'elle soit comptabilisée. Mais je ne veux pas que la course, le vélo elliptique ou peu importe arrive dans un exercice de musculation, **ça n'a strictement rien à voir**. »* Le cardio a sa place dans l'app — **dans SA fenêtre**, celle de ft-v720, qui distingue 🔥 avant et 🧊 après.
+
+**⛔⛔ CE N'ÉTAIT PAS UN DÉFAUT DE JUGEMENT DE MILO — LES DEUX BOUTS DU CHEMIN MANQUAIENT** (vérifié dans le code, **R28**) : le prompt ne lui dit **nulle part** qu'un bloc cardio existe pour ce qu'il **propose** (il ne le **lit** que pour raconter le passé), et `_appliqueMiloSession` **ne regardait jamais** un champ cardio. *Milo n'avait aucun moyen de faire autrement.* Même forme que le pont blessure de **ft-v982**.
+
+**⭐ R13 — RIEN N'EST RÉINVENTÉ** : `_exEquip()` range déjà elliptique, tapis, rameur, corde à sauter, air bike… dans un bac `'cardio'` depuis ft-v712. On lui demande, on ne redevine pas.
+
+**⛔⛔ ET C'EST POSÉ DANS `_appliqueMiloSession`, LE SEUL POINT QUE LES DEUX PORTES TRAVERSENT** (leçon ft-v980). Une séance de Milo arrive soit par le **bloc JSON** (modèles capables), soit par le **repli de lecture du TEXTE** (modèles légers). *Corriger seulement le JSON n'aurait rien changé pour ELINE* — c'est le biais **R9** déjà vécu avec le bouton « Commencer cette séance », que Michel avait et sa fille **jamais**.
+
+**⚠️ AVANT *ET* APRÈS** (précision de Michel le même soir : *« il peut y avoir une séance avec un cardio au tout début ET un cardio à la fin »*) : on tranche par **POSITION** — avant le 1ᵉʳ exercice de muscu → échauffement, après le dernier → cardio de fin. ⛔ **Au milieu, il reste un exercice** : on ne sait pas ce que la personne voulait, et deviner coûterait plus cher que ne rien faire (**R29**). ⛔ **Sans durée lisible, aucune durée n'est inventée.** ⛔ **Un cardio déjà noté par la personne n'est jamais écrasé.**
+
+**⭐⭐ DEUX DÉFAUTS TROUVÉS PAR LA MESURE, invisibles à la relecture :**
+**①** ma première pose écrivait le cardio **AVANT** que `S.wkt` soit reconstruit en mode « start » — l'elliptique sortait donc bien des exercices et **n'arrivait nulle part**. Mesuré : exercices `["Hip Thrust Barre"]` corrects, `cardioAvant` **`null`**. *C'est **R4** dans sa forme la plus bête : l'information était calculée et n'atteignait pas la donnée.*
+**②** l'intensité tombait sur *« modéré »* alors que la note dit *« léger »* : `_naz()` désaccentue le **NOM**, pas la **NOTE**. ⭐ *Même famille que l'apostrophe courbe de ft-v994 — un caractère non normalisé rend un motif aveugle sans que rien ne le signale.* **Coût réel : 4,0 contre 6,0 MET, soit 50 % d'écart** sur les calories de ce cardio.
+Tests : **parcours 1354/1354** (+16, bloc CIX), calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou. ⭐ **Les 3 témoins qui comptent le plus sont des ABSENCES** : le cardio au milieu qui reste un exercice, la durée jamais inventée, et **la séance de muscu normale qui ne bouge pas d'un pouce**. 🗣️ **ET MILO EST MIS AU COURANT — la 2ᵉ moitié, demandée par Michel dans la foulée** : *« il faut que Milo soit au courant, il y a déjà une fenêtre où il y a le cardio avant et après, et ensuite il faut donner ce qu'il y a dans cette fenêtre »*. La consigne lui dit que le bloc existe, lui **interdit** de mettre le cardio dans les exercices, nomme **les deux moments**, et lui donne le **vocabulaire exact**. ⭐⭐ **Et ce vocabulaire n'est pas inventé — ce sont les 6 types et 3 intensités de `CARDIO_MET` (`app.js`)** : un témoin les épingle, donc ajouter un type au bloc sans le dire à Milo fait **rougir la livraison** (**R2**, la divergence interdite). ⭐ **La consigne RÉCLAME la durée**, et ce n'est pas décoratif : le correctif **refuse** de placer un cardio sans durée lisible (**R29**) — sans cette phrase, Milo produirait des cardios que l'app rejetterait **en silence**. *Les deux moitiés ne valent que posées ensemble* (leçon ft-v982). ⚠️ **+938 caractères, dans le bloc PERSONNEL** : mesuré, le **bloc commun ne bouge pas d'un caractère** (45 362 sain · 47 118 blessé) — **aucun effet sur le plafond** de 46 500, et le dépassement du profil blessé reste celui déjà documenté en ft-v988. Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-TEST.md`. sw.js ft-v995. |
 
 **ft-v994 — 🧪 LE BANC D'ESSAI PASSE DE 21 À 50 SCÉNARIOS — et 6 des 23 premiers NE MORDAIENT PAS** — Michel : *« il n'y a pas assez de contrôle, on le monte à 50 »*, puis, aussitôt : *« et que les scénarios soient VIABLES hein, pas mettre tout et n'importe quoi »*.
 
@@ -754,23 +771,6 @@ Tests : **parcours 1182/1182** (+7, bloc XCV), calculs 266/266, muscles 241/241,
 
 **👉 ET SI UN BAC À SABLE REDEVIENT NÉCESSAIRE**, il se refabrique depuis la prod en quelques minutes — c'est exactement comme ça qu'il est né.
 Tests : **parcours 1175/1175** (−1, exactement le témoin de parité du clone retiré), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Un retrait ne se juge pas à un contrôle négatif mais à ce qui n'a PAS bougé** : les 1 176 témoins de la version précédente doivent rester verts sans le clone. Fichiers : `clone/*` (supprimé), `build_clone.py` (supprimé), `app.js`, `tests/parcours/runner.js`, `tests/milo/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v976. |
-
-**ft-v975 — ⚖️ « JE NE PEUX PAS METTRE DE POIDS » — la quantité sur une phrase libre** — Michel, capture à l'appui, devant une huile d'olive estimée par l'IA (135 kcal · 15 g de lipides) : *« Je ne peux pas mettre de poids »*.
-
-**⛔⛔ ET C'EST LE MOTIF DE ft-v973, DEUX JOURS DE SUITE : le mécanisme EXISTAIT, posé d'un seul côté.** ft-v972 a donné le rescale par proportion à la modale « **Modifier** l'aliment » ; le formulaire d'**AJOUT**, lui, n'a de champ « Quantité » que si un **pour-100 g** est connu (scan, CIQUAL, recherche). Une phrase estimée par l'IA n'en a pas — donc **aucun réglage**, et quatre chiffres à recalculer soi-même. *Une correction faite d'un côté et pas de l'autre est un oubli, pas un arbitrage* (**R8**).
-
-**⭐⭐ CE QUI REND LA CHOSE POSSIBLE EST CÔTÉ SERVEUR, ET C'EST UNE LIGNE DE CONSIGNE.** Le modèle **choisissait déjà une portion** — sa consigne dit *« si les quantités ne sont pas précisées, estime une portion normale »* — mais **en silence**. Il l'**annonce** désormais (`g`), et une estimation **aveugle** devient une estimation **ANCRÉE**. *Le repère existait dans la tête du modèle ; il ne sortait simplement pas.* C'est **R4** au mot près : l'information ne descendait pas jusqu'à la donnée.
-
-**👉 TROIS SOURCES POUR LA RÉFÉRENCE, DE LA PLUS SÛRE À LA MOINS SÛRE** : ① le `per100` connu (bloc du scan, inchangé) · ② le **poids supposé par l'IA** · ③ le nombre écrit dans la phrase.
-
-**⚠️⚠️ ET L'ORDRE ENTRE ② ET ③ N'EST PAS UN DÉTAIL.** Sur *« 3 œufs et 200 g de riz »*, le nombre écrit ne désigne **qu'un composant** — le prendre pour référence reviendrait à dire que toute l'assiette pèse 200 g. Le poids de l'IA, lui, porte sur le **total**. ⛔ **Mais il n'appartient qu'à LA PHRASE QUI A ÉTÉ ESTIMÉE** : si la phrase change, il est périmé et on ne s'en sert plus. *Une référence qui survit à son sujet est pire que pas de référence : elle a l'air d'un fait.*
-
-**⛔ SANS AUCUN ANCRAGE, AUCUN POIDS INVENTÉ** (**R29**) : des **portions** (½ · 1½ · ×2 · ×3), vraies quelle que soit la portion de départ — *un « ×2 » est juste, un « 60 g » deviné est faux* — et l'écran dit **pourquoi**. ⚠️ Le poids de l'IA est **présenté comme une estimation**, pas comme une mesure (**R32**).
-
-**⛔ ET IL EST BORNÉ CÔTÉ SERVEUR** : au-delà de 5 kg pour un repas, c'est une hallucination et non une portion — *mieux vaut aucun repère qu'un repère faux*. `g` absent reste absent.
-
-**⚠️⚠️ UN DÉGÂT ÉVITÉ DE JUSTESSE, ET IL VAUT D'ÊTRE ÉCRIT** : en synchronisant le clone j'ai fait un `cp` un peu vite et **effacé 91 lignes de `clone/index.html`** — le shim qui isole ses données des vraies. Repéré et restauré. ⭐ **Or un script de synchro existait** (`build_clone.py`), avec justement un garde-fou *« shim clone introuvable — abandon, rien écrasé »*. *Un outil qu'on contourne ne protège rien.* C'est ce qui a mené à la question de Michel juste après — et à la décision de retirer le clone.
-Tests : **parcours 1176/1176** (+12, bloc XCIV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Le contrôle négatif serait peu instructif** (le bloc vit sous le garde « `_afMajAncre` absente »), **et il est ailleurs** : les témoins qui comptent sont ceux du **non-empilement** (20 → 30 donne ×2, pas ×2 sur ×2) et du **poids périmé** — deux défauts qui ne se voient qu'à la DEUXIÈME action, donc jamais en testant une fois. Fichiers : `app.js`, `index.html`, `Code.js`, `worker.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v975. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

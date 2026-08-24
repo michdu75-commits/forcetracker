@@ -6,7 +6,27 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v994`.
+- **Version en ligne (live) :** `ft-v995`.
+- 🏃⭐⭐ **LE CARDIO DE MILO VA DANS SON BLOC, PAS DANS LES EXERCICES** (ft-v995). Michel, **en
+  salle**, capture à l'appui. ⭐⭐ **Sa raison décide de tout** : *« si on fait une séance cardio
+  toute seule, on veut qu'elle soit comptabilisée. Mais je ne veux pas que la course, le vélo
+  elliptique ou peu importe arrive dans un exercice de musculation, ça n'a strictement rien à
+  voir. »* ⛔⛔ **Ce n'était pas un défaut de jugement de Milo — les DEUX bouts manquaient** : le
+  prompt ne nommait pas le bloc, et `_appliqueMiloSession` ne lisait aucun champ cardio.
+  ⭐ **D'où venait l'elliptique ?** *Pas du catalogue* — il n'y est pas (`tier:'new'`). D'une
+  **consigne** : *« le cardio LÉGER (… vélo/elliptique tranquille …) est BON »*. **Milo obéissait**,
+  sans savoir où le poser. *C'est R8 à l'envers, comme ft-v863.*
+  ⛔ **Posé dans `_appliqueMiloSession`**, le seul point que les **deux portes** traversent (JSON
+  **et** repli texte) — sinon rien n'aurait changé pour **Eline** (biais R9, cf. le bouton
+  « Commencer cette séance »). **Avant ET après** tranchés par position ; au **milieu** ça reste un
+  exercice ; **sans durée**, aucune durée inventée ; un cardio **déjà noté n'est jamais écrasé**.
+  ⭐⭐ **2 défauts trouvés par la MESURE** : ① la pose écrivait le cardio **avant** que `S.wkt` soit
+  reconstruit → il sortait des exercices et **n'arrivait nulle part** (R4) ; ② l'intensité tombait
+  sur « modéré » car `_naz()` désaccentue le **nom**, pas la **note** — *même famille que
+  l'apostrophe courbe de ft-v994* — soit **50 % d'écart en kcal** (4,0 vs 6,0 MET).
+  🗣️ **Et Milo est mis au courant** (2ᵉ moitié) : consigne + **vocabulaire exact de `CARDIO_MET`**
+  (6 types, 3 intensités), avec la **durée réclamée** — sans elle l'app rejette en silence.
+  ⚠️ **+938 car. dans le bloc PERSONNEL** : le bloc commun **ne bouge pas** (45 362 / 47 118).
 - 🧪⭐⭐ **LE BANC D'ESSAI PASSE DE 21 À 50 SCÉNARIOS** (ft-v994). Michel : *« il n'y a pas assez de
   contrôle, on le monte à 50 »*, puis, aussitôt : *« et que les scénarios soient VIABLES hein, pas
   mettre tout et n'importe quoi »*. ⛔⛔ **C'est cette seconde phrase le cahier des charges** — et le

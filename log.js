@@ -5718,7 +5718,92 @@ function _applyMiloSession(mode){
   _appliqueMiloSession(newExs, data, mode, btn);
 }
 /** L'écriture elle-même. `mode` : 'start' (aucune séance) · 'add' · 'replace'. */
+/* 🏃 LE CARDIO DE MILO VA DANS LE BLOC CARDIO, PAS DANS LA LISTE DES EXERCICES (ft-v995).
+   Michel, en salle le 24/08, capture à l'appui : « il me rajoute le vélo elliptique alors qu'on a
+   un onglet exprès pour le cardio ». Sur sa séance : « Elliptique — 0/1 série », type É, note
+   « 8 min léger » — posé comme un exercice de musculation, pendant que le bloc Cardio restait vide.
+   ⭐⭐ SA RAISON, ET ELLE DÉCIDE DE TOUT : « si on fait une séance cardio toute seule, on veut
+   qu'elle soit comptabilisée. Mais je ne veux pas que la course, le vélo elliptique ou peu importe
+   arrive dans un exercice de musculation, ça n'a strictement rien à voir. » Le cardio a donc sa
+   place dans l'app — dans SA fenêtre, celle de ft-v720, qui distingue AVANT et APRÈS.
+   ⛔⛔ CE N'ÉTAIT PAS UN DÉFAUT DE JUGEMENT DE MILO : les deux bouts du chemin manquaient. Le
+   prompt ne lui dit nulle part qu'un bloc cardio existe pour ce qu'il PROPOSE (il ne le lit que
+   pour raconter le passé), et `_appliqueMiloSession` ne regardait jamais un champ cardio. Milo
+   n'avait donc aucun moyen de faire autrement. Même forme que le pont blessure de ft-v982.
+   ⭐ R13 — RIEN N'EST RÉINVENTÉ : `_exEquip()` range déjà elliptique, tapis, rameur, corde à
+   sauter, air bike… dans un bac 'cardio' depuis ft-v712. On lui demande, on ne redevine pas.
+   ⛔⛔ ET C'EST POSÉ ICI, dans `_appliqueMiloSession`, PARCE QUE C'EST LE SEUL POINT QUE LES DEUX
+   PORTES TRAVERSENT — la correction que le témoin avait déjà imposée en ft-v980. Il y a deux
+   chemins par lesquels une séance de Milo arrive : le bloc JSON (modèles capables) et le REPLI DE
+   LECTURE DU TEXTE (modèles légers). *Corriger seulement le JSON n'aurait rien changé pour Eline* —
+   c'est le biais R9 déjà vécu avec le bouton « Commencer cette séance », que Michel avait et sa
+   fille jamais. Ici, on agit APRÈS les deux.
+   ⚠️ AVANT **ET** APRÈS (précision de Michel le même soir) : « il peut y avoir une séance avec un
+   cardio au tout début ET un cardio à la fin ». On tranche par POSITION — avant le 1ᵉʳ exercice de
+   muscu → échauffement ; après le dernier → cardio de fin.
+   ⛔ ET UN CARDIO AU MILIEU RESTE UN EXERCICE (R29) : on ne sait pas ce que la personne voulait, et
+   deviner coûterait plus cher que ne rien faire. Idem sans durée lisible : jamais de durée inventée. */
+const _CARDIO_TYPES=[[/elliptique|crosstrainer/,'elliptique'],[/tapis|course|courir|running|marche/,'tapis'],
+  [/velo|bike|cycl|assault|air ?bike/,'velo'],[/rameur|rowerg|ergometre/,'rameur'],
+  [/corde a sauter|saut a la corde|sauts a la corde/,'corde']];
+function _cardioDepuisEx(o){
+  // Ce qu'on sait lire : le TYPE (nom), la DURÉE et l'INTENSITÉ (note ou nom). Rien d'autre.
+  const nom=(typeof _naz==='function')?_naz(o.name||''):String(o.name||'').toLowerCase();
+  /* ⛔⛔ LA NOTE DOIT ÊTRE DÉSACCENTUÉE COMME LE NOM — mesuré, pas supposé. `_naz()` retire les
+     accents du NOM, mais une note passée seulement en minuscules garde les siens : « 8 min léger »
+     ne matchait donc PAS le motif `leger`, et l'intensité retombait sur « modéré » par défaut.
+     ⚠️ Et ce n'est pas cosmétique : léger = 4,0 MET, modéré = 6,0 → **50 % d'écart sur les
+     calories** de ce cardio. *Même famille que l'apostrophe courbe du banc d'essai : un caractère
+     non normalisé rend un motif aveugle sans que rien ne le signale.* */
+  const _sansAccent=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  const txt=nom+' '+_sansAccent(o.note);
+  const m=txt.match(/(\d{1,3})\s*(?:min|minutes?|')/);
+  if(!m)return null;                                   // ⛔ pas de durée lisible → on ne devine pas
+  const duration=+m[1];
+  if(!(duration>0&&duration<=180))return null;         // hors bornes : ce n'est pas une durée
+  let type='autre';
+  for(const [re,t] of _CARDIO_TYPES){ if(re.test(nom)){ type=t; break; } }
+  const intensity=/intense|fort|rapide|hiit|sprint/.test(txt)?'intense'
+                 :/leger|legere|tranquille|doux|facile|echauffement/.test(txt)?'leger':'modere';
+  return {type,intensity,duration};
+}
+function _extraireCardioMilo(newExs){
+  const exs=Array.isArray(newExs)?newExs.slice():[];
+  const out={exs:exs,avant:null,apres:null,restes:[]};
+  if(!exs.length||typeof _exEquip!=='function')return out;
+  const estCardio=o=>{ try{ return _exEquip(o&&o.name)==='cardio'; }catch(e){ return false; } };
+  // Les BORNES de la partie musculation — c'est elles qui disent « avant » et « après ».
+  let premierMuscu=-1, dernierMuscu=-1;
+  exs.forEach((o,i)=>{ if(!estCardio(o)){ if(premierMuscu<0)premierMuscu=i; dernierMuscu=i; } });
+  const garde=[];
+  exs.forEach((o,i)=>{
+    if(!estCardio(o)){ garde.push(o); return; }
+    // ⚠️ Sans AUCUNE muscu, la séance est un cardio seul : tout part dans l'échauffement, et
+    // c'est exactement le cas que Michel veut voir comptabilisé (« une séance cardio toute seule »).
+    const avant = (premierMuscu<0) || (i<premierMuscu);
+    const apres = (premierMuscu>=0) && (i>dernierMuscu);
+    const c=_cardioDepuisEx(o);
+    if(!c||(!avant&&!apres)){ garde.push(o); out.restes.push(o.name); return; }  // milieu, ou durée illisible
+    if(avant&&!out.avant) out.avant=c;
+    else if(apres&&!out.apres) out.apres=c;
+    else { garde.push(o); out.restes.push(o.name); return; }   // 2ᵉ cardio du même côté : une seule place
+  });
+  out.exs=garde;
+  return out;
+}
 function _appliqueMiloSession(newExs, data, mode, btn){
+  /* 🏃 LE CARDIO SORT DE LA LISTE AVANT TOUT LE RESTE (ft-v995) — avant le contrôle d'intensité
+     et avant la validation, qui n'ont aucun sens sur un elliptique (il n'a ni charge ni 1RM). */
+  {
+    var cd=_extraireCardioMilo(newExs);
+    if(cd.avant||cd.apres) newExs=cd.exs;
+    /* ⚠️ ET CE QU'ON N'A PAS SU PLACER SE VOIT, il ne se perd pas en silence : un cardio au
+       milieu de la séance, sans durée lisible, ou un 2ᵉ du même côté (le bloc n'a qu'UNE place
+       par moment) reste un exercice — et on le dit, plutôt que de le déplacer au hasard (R29). */
+    if(cd.restes.length&&typeof toast==='function')
+      toast('🏃 '+cd.restes[0]+' est resté dans les exercices (place du bloc déjà prise, ou durée non précisée)','info');
+  }
+
   /* ⚡ LE CONTRÔLE D'INTENSITÉ (ft-v980) — il se déclenche À LA PROPOSITION, c'est tout son
      intérêt. Milo sait faire ce calcul (il l'a fait dès que Michel a demandé) ; ce qu'il ne
      fait pas, c'est le faire de lui-même. Le code, lui, le fait à chaque fois.
@@ -5771,6 +5856,23 @@ function _appliqueMiloSession(newExs, data, mode, btn){
     // ⏱️ pas de startTs : le chrono démarrera à la 1ʳᵉ série validée (règle du 14/08).
     S.wkt={date:today(),progLabel:data.label||'Séance de Milo',exs:newExs,startHour:new Date().getHours()};
     _expandedEx=0;
+  }
+  /* 🏃 ⛔⛔ LE CARDIO S'ÉCRIT **ICI**, PAS PLUS HAUT — et c'est la mesure qui l'a dit, pas ma
+     relecture. Posé avant, il était perdu : en mode « start », `S.wkt` est RECONSTRUIT À NEUF
+     quelques lignes au-dessus (`S.wkt={date,progLabel,exs,startHour}`), ce qui écrase tout ce
+     qu'on y avait mis. Le cardio sortait donc bien de la liste des exercices… et n'arrivait
+     nulle part. *C'est R4 dans sa forme la plus bête : l'information était calculée et
+     n'atteignait pas la donnée.* Mesuré sur la capture de Michel : exercices ["Hip Thrust
+     Barre"] (correct) mais cardioAvant `null`. */
+  if(cd&&(cd.avant||cd.apres)){
+    /* ⛔ ON N'ÉCRASE JAMAIS UN CARDIO DÉJÀ NOTÉ par la personne : en mode « replace », le
+       commentaire d'origine le dit — quelqu'un qui échange un exercice au bout de 40 minutes
+       ne perd pas le vélo qu'il a vraiment fait. */
+    if(cd.avant&&!(S.wkt.cardioAvant&&+S.wkt.cardioAvant.duration)) S.wkt.cardioAvant=cd.avant;
+    if(cd.apres&&!(S.wkt.cardio&&+S.wkt.cardio.duration))          S.wkt.cardio=cd.apres;
+    const _n=(cd.avant?1:0)+(cd.apres?1:0);
+    if(typeof toast==='function')
+      toast('🏃 '+(_n>1?'Cardio placé avant et après la séance':'Cardio placé dans son bloc')+' — pas dans les exercices','info');
   }
   persist();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
