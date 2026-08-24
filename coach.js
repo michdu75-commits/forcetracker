@@ -72,14 +72,22 @@ function _cqLabel(quiz,qid,val){
 // avec leur meilleure série. Pas les séries d'échauffement, pas les notes. Le budget du prompt est
 // le grand chantier ouvert (91 % de consignes / 9 % de connaissance) — on n'y ajoute pas 20 000
 // caractères pour le confort.
-// 🔒 Réservé pour l'instant (michdu75 + christophe) : on mesure le coût réel sur deux comptes
-// bien remplis avant d'ouvrir à tout le monde. Gardée en FONCTION comme `_isNutriBeta()` : le jour
-// où on ouvre, c'est une ligne à changer, pas une chasse aux usages.
-const MEMOIRE_LARGE_EMAILS=['michdu75@gmail.com','christophe@famillelanglois.fr'];
-function _memoireLargeOn(){
-  try{ const e=((typeof S!=='undefined'&&S.email)||'').trim().toLowerCase();
-    return !!e && MEMOIRE_LARGE_EMAILS.indexOf(e)>=0; }catch(e){ return false; }
-}
+// ✅ OUVERTE À TOUT LE MONDE le 24/08/2026 (ft-v992, décision de Michel). LA RAISON D'AVANT RESTE
+// ÉCRITE (R30) : c'était réservé à michdu75 + christophe depuis le 03/08 pour « mesurer le coût réel
+// sur deux comptes bien remplis avant d'ouvrir ». ⭐⭐ CE COÛT A ÉTÉ MESURÉ, et c'est ce qui a permis
+// de trancher — il est AUTO-DÉGRESSIF, parce que la fonction ne résume que ce qui a été VÉCU :
+//     3 séances → 0 car. · 5 → 0 · 8 → 665 · 12 → 967 · 20 → 1 551 · 35 → 2 622 (plafond MAX=30)
+// ⛔⛔ ET IL NE TOUCHE PAS LE PLAFOND DU BLOC COMMUN : mesuré, ces caractères tombent intégralement
+// dans le bloc PERSONNEL — bloc commun identique au caractère près (45 362 des deux côtés). La
+// crainte « ça va dépasser 46 500 » ne s'appliquait pas ici, c'est un autre bloc.
+// ⭐ POURQUOI ON OUVRE (R9) : la mémoire longue EST la promesse du produit (« le sportif ne repart
+// jamais de zéro »). La réserver revenait à ce que Michel juge Milo sur une mémoire que PERSONNE
+// d'autre n'a — donc à corriger le mauvais Milo. Un débutant ne paie rien : sous 6 séances, les 5
+// dernières partent déjà en détail et cette fonction rend une chaîne vide.
+// 🔒 GARDÉE EN FONCTION (comme `_isNutriBeta()`) : si un jour il faut refermer ou re-restreindre,
+// c'est une ligne à changer, pas une chasse aux usages.
+const MEMOIRE_LARGE_EMAILS=[];   // vide = plus de restriction (l'historique est gardé par R30)
+function _memoireLargeOn(){ return true; }
 // ─── ⏱️ SON RYTHME RÉEL — le temps qu'une série lui coûte VRAIMENT (ft-v826) ──────────────
 // 3ᵉ retour de la séance du 10/08 : « il ne prend pas en considération la phase de décharge et
 // de charge des poids, qui peut prendre du temps ; quand on demande une séance d'une heure,

@@ -3552,3 +3552,18 @@ Tests : **parcours 1117/1117** (+8, bloc LXXXIX), calculs 266/266, muscles 241/2
 
 **⚠️ Et si le verrou santé refuse, on ne remplit pas des champs invisibles** et on ne prétend pas que le rapport est prêt.
 Tests : **parcours 1122/1122** (+5, bloc XC), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `tracking.js`, `clone/tracking.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v971. |
+
+**ft-v972 — ⚖️ LA QUANTITÉ POUR TOUTES LES ENTRÉES, ET LES CALORIES QUI NE COLLENT PAS** — Michel : *« en fait on ne peut pas modifier le poids, je modifie le nom ça ne change pas la valeur. Il faut rajouter une ligne poids qui va modifier la valeur des calories et des autres lignes »*, puis, découvrant une ligne à **1117 kcal** pour 26 P / 1 G / 1 L : *« putain je ne l'avais même pas vu, j'étais axé sur les calories »*, puis *« et en direct, pas au moment de l'enregistrer »*.
+
+**⭐⭐ LE RESCALE NE DEMANDE AUCUN `per100`.** Ma limite de ft-v962 mordait : le champ n'apparaissait que pour un scan / CIQUAL / recherche. Une ligne tapée à la main — **la sienne** — restait 4 chiffres à recalculer soi-même. On ne rescale donc pas depuis une composition, mais **par PROPORTION** : `X × (nouvelle / référence)`. *Il suffit de connaître la référence, pas la composition pour 100 g.*
+
+**⭐ ET LA RÉFÉRENCE EST DÉJÀ ÉCRITE — DANS LE NOM.** « 30**g** de protéines » porte son ancrage : on lit ce que Michel a mis, au lieu de le lui redemander. Trois sources dans l'ordre : `per100` → `q` enregistré → **le nom**. ⛔ Sans aucun ancrage, **aucun poids inventé** : des **portions** (½ · 1½ · 2 · 3), vraies quelle que soit la portion de départ.
+
+**⛔⛔ ET LES CALORIES DOIVENT COLLER À LEURS PROPRES MACROS.** `4×26 + 4×1 + 9×1 = 117`. Sa ligne en affichait **1117** — un « 1 » de trop, **1 000 kcal** ajoutés à sa journée, et **rien ne le signalait**. ⭐ **Son étiquette réelle l'a confirmé au dixième** : 116,6 kcal et 26,4 g de protéines pour 30 g.
+
+**⛔ ON NE CORRIGE JAMAIS TOUT SEUL** (**R29**) : on montre l'écart, un bouton propose, la personne tranche. *Réécrire un chiffre saisi, c'est décider à sa place.*
+
+**⭐ EN DIRECT À CINQ MOMENTS** — chaque frappe · après un scan · après une estimation IA · en reprenant une entrée du journal · à l'ouverture de la modale. *Attraper à la SAISIE vaut mieux qu'à la relecture : il a vu son 1117 le lendemain, la journée était déjà faussée.* ⭐ **R2** : une **seule** définition de « ces calories sont impossibles », partagée par la saisie et la modification.
+
+**⛔⛔ ET L'ALCOOL NE DÉCLENCHE RIEN.** 7 kcal/g sans champ dédié : une **bière réelle** afficherait **69 %** d'écart, un verre de vin **87 %**. *Un garde-fou qui se trompe sur la bière ne survit pas au premier apéro* (**R19**). Trouvé **en testant les cas limites sur son étiquette**, pas après coup. ⚠️ La liste se **tait** seulement : le même écart sur « blanc de poulet » **crie toujours**, et des calories **manquantes** crient **même sur une bière** — l'alcool ajoute des calories, il n'en retire pas.
+Tests : **parcours 1141/1141** (+19, bloc XCI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `app.js`, `index.html`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v972. |

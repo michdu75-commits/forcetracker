@@ -648,6 +648,69 @@ const SCENARIOS = [
           return fuites.length===0 ? true : {ok:false, detail:'recopie ses en-têtes internes : '+fuites.join(' · ')};
         } },
     ] },
+
+  { id:'EV-022', origin:'24/08/2026', titre:'Il se souvient d\'une séance ANCIENNE, et n\'en invente pas le détail',
+    /* ⭐⭐ CE SCÉNARIO COMBLE UN TROU MESURÉ, PAS UNE CRAINTE. Le 24/08, en ouvrant la mémoire
+       élargie à tout le monde (ft-v992), la mesure a donné ceci : sur les 21 scénarios du banc
+       d'essai, **ZÉRO n'avait la moindre séance** — donc l'avant/après exigé par R34 aurait
+       comparé deux contextes IDENTIQUES et rendu « aucune régression ». Un faux vert.
+       ⛔ Plus large que ce changement-là : *la promesse centrale du produit — « le sportif ne
+       repart jamais de zéro » — n'était vérifiée par AUCUN scénario.* Michel jugeait Milo sur
+       une mémoire que personne n'avait ; le banc d'essai le jugeait sans aucune mémoire.
+       Les deux extrêmes, et rien au milieu.
+       ⚠️ DATES RELATIVES, JAMAIS EN DUR : `_historiqueCompact` ne garde que 60 jours glissants —
+       une date figée ferait périmer le scénario tout seul, en silence, dans deux mois.
+       ⏰ Et calculées à MIDI, pas en UTC (famille « fuseaux horaires » de BUGS.md : 6 fixtures
+       s'étaient déjà fait avoir le 23/08, rouges 2 h par jour et vertes les 22 autres). */
+    apply:(()=>{
+      const midi=n=>{ const d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()-n);
+                      return d.toISOString().slice(0,10); };
+      const EX=['Squat','Développé Couché','Rowing Barre (Tirage Horizontal)','Développé Militaire'];
+      const sess=[];
+      // 14 séances sur ~7 semaines. Les 5 premières partent EN DÉTAIL (elles ne prouvent rien
+      // ici) ; la cible est volontairement placée au-delà, là où SEUL le résumé peut répondre.
+      for(let i=0;i<14;i++){
+        const n=EX[i%EX.length];
+        sess.push({ date:midi(3+i*3), id:100+i, volume:5000,
+          exs:[{name:n,sets:[{kg:60,reps:10,done:true,type:'W'},{kg:80+i,reps:5,done:true,type:'N'}]}] });
+      }
+      // ⭐ LA CIBLE : 9ᵉ séance (index 8 ⇒ hors des 5 détaillées), à J-27, charge VOLONTAIREMENT
+      // singulière (137 kg) — aucune autre séance ne la porte, donc citer « 137 » ne peut pas
+      // être un coup de chance sur un nombre banal.
+      sess[8]={ date:midi(27), id:999, volume:6000,
+        exs:[{name:'Soulevé de Terre',sets:[
+          {kg:70,reps:8,done:true,type:'W'},
+          {kg:137,reps:3,done:true,type:'N'}]}] };
+      return { name:'Michel', gender:'H', age:46, height:178, bw:85, goal:'muscle',
+               discipline:'muscu', level:'confirme', sessions:sess,
+               _cible:{ date:midi(27), kg:137 } };
+    })(),
+    scenario:(()=>{ const d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()-27);
+      const j=d.getDate(), M=['janvier','février','mars','avril','mai','juin','juillet','août',
+        'septembre','octobre','novembre','décembre'][d.getMonth()];
+      return 'Qu\'est-ce que j\'ai fait comme séance le '+j+' '+M+' ?'; })(),
+    verifs:[
+      { nom:'⭐⭐ il retrouve la séance et cite sa charge (137 kg au soulevé de terre)',
+        fn(reply){
+          const n=U.norm(reply);
+          const ex=/souleve de terre|deadlift/.test(n);
+          const kg=/\b137\b/.test(n);
+          if(ex&&kg) return true;
+          return {ok:false, detail:'exercice cité : '+ex+' · charge 137 citée : '+kg
+            +' → il a le résumé dans son contexte, il ne s\'en sert pas'};
+        } },
+      { nom:'⛔ il n\'INVENTE pas une charge qui n\'existe pas ce jour-là',
+        fn(reply){
+          /* ⚠️ MOTIF ÉTROIT (R19) : on ne regarde que les charges collées au soulevé de terre.
+             Citer d'autres nombres (dates, répétitions, autres séances) reste parfaitement
+             légitime — ce qui serait faux, c'est d'attribuer une AUTRE charge à CE mouvement. */
+          const n=U.norm(reply); const coupables=[];
+          const re=/(souleve de terre|deadlift)[^.\n]{0,40}?(\d{2,3})\s*kg/g; let m;
+          while((m=re.exec(n))!==null){ const v=+m[2]; if(v!==137&&v!==70) coupables.push(v+' kg'); }
+          return coupables.length===0 ? true
+            : {ok:false, detail:'charge inventée au soulevé de terre : '+coupables.join(', ')+' (réel : 137)'};
+        } },
+    ] },
 ];
 
 // ⚖️ COMBIEN DE ROUGES D'ÉCART AVANT DE CONCLURE QUOI QUE CE SOIT — mesuré, pas choisi.

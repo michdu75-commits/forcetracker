@@ -2412,8 +2412,16 @@ console.log('\n═══ J. L\'étage du milieu — les séances plus anciennes,
   });
   t('⭐⭐ Milo reçoit une ligne par séance au-delà des 5 détaillées', r.presentPourMichel===true, JSON.stringify(r));
   t('⭐ … et Christophe l\'a aussi', r.presentPourChristophe===true, JSON.stringify(r));
-  t('⭐ TÉMOIN : personne d\'autre ne l\'a (réservé, le temps de mesurer)',
-    r.absentPourLesAutres===true, JSON.stringify(r));
+  /* ⚠️⚠️ CE TÉMOIN EXIGEAIT L'INVERSE JUSQU'À ft-v992, ET SA RAISON RESTE ÉCRITE (R30) :
+     « personne d'autre ne l'a (réservé, le temps de mesurer) ». La restriction n'était pas un
+     oubli, c'était une prudence datée du 03/08 — on voulait le COÛT RÉEL sur deux comptes bien
+     remplis avant d'ouvrir. ⭐ Ce coût a été mesuré le 24/08, il est AUTO-DÉGRESSIF (0 car. sous
+     6 séances, 2 622 au plafond) et il ne touche PAS le bloc commun. La prudence a donc rendu
+     son verdict : on ouvre. *Un témoin qui garde une restriction dont la raison a été levée ne
+     protège plus rien — il fige.* Il garantit maintenant l'ÉGALITÉ, qui est la vraie exigence :
+     Milo ne doit pas être jugé sur une mémoire que les utilisateurs n'ont pas (R9). */
+  t('⭐⭐ TÉMOIN (ft-v992) : TOUT LE MONDE l\'a — Milo ne se juge plus sur une mémoire unique (R9)',
+    r.absentPourLesAutres===false && r.presentPourMichel===true, JSON.stringify(r));
   t('⭐⭐ le surcoût reste sous 8 % du contexte (le budget du prompt est un chantier ouvert)',
     r.surcoutPct!=null && r.surcoutPct<=8, 'surcoût +'+r.surcoutPct+' %');
   t('borné : 30 lignes au plus, même avec 120 séances', r.nbLignes>0 && r.nbLignes<=30, JSON.stringify(r));
@@ -7747,8 +7755,12 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     // Le 21/08, une virgule en trop a justement fabriqué un 17e élément VIDE.
     // 16 → 21 le 23/08/2026 : 5 pièges promus depuis docs/JOURNAL-DE-TEST.md (EV-017→021),
     // tous VÉCUS en salle par Michel. Le nombre reste épinglé pour la raison d'origine.
-    t('⭐⭐ ... et il se télécharge à la demande : 21 scénarios, une seule source (R2)',
-      R.nb===21 && R.aDesVerifs===true, 'nb='+R.nb+' verifs='+R.aDesVerifs+(R.err?' · '+R.err:''));
+    // 21 → 22 le 24/08/2026 (ft-v992) : EV-022, la MÉMOIRE LONGUE. ⭐⭐ Celui-ci ne vient pas
+    // d'un piège vécu mais d'un TROU MESURÉ : aucun scénario n'avait plus d'UNE séance, donc
+    // l'avant/après exigé par R34 comparait deux contextes identiques — et la promesse centrale
+    // du produit (« le sportif ne repart jamais de zéro ») n'était vérifiée par aucun scénario.
+    t('⭐⭐ ... et il se télécharge à la demande : 22 scénarios, une seule source (R2)',
+      R.nb===22 && R.aDesVerifs===true, 'nb='+R.nb+' verifs='+R.aDesVerifs+(R.err?' · '+R.err:''));
     t('⭐ un débrief à qui il manque 2 exercices sur 5 est ROUGE',
       R.rouge006===true, R.det006||JSON.stringify(R.errRun||''));
     t('⭐ « c\'est noté » sans bloc de mémoire est ROUGE', R.rouge004===true, '');
@@ -11977,6 +11989,87 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       V.chargeDeMiloIntacte===true);
   }
   await cx.close();
+}
+
+// ════════════════════════════════════════════════════════════════════
+console.log('\n-- CVII. La mémoire élargie ouverte à tout le monde (ft-v992) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pm=await cx.newPage();
+  await pm.addInitScript(seedScript({}));
+  await pm.goto('http://localhost:'+PORT+'/index.html');
+  await pm.waitForTimeout(2200);
+  const MM=await pm.evaluate(async()=>{
+   try{
+    const o={};
+    const midi=n=>{const d=new Date(today()+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    const fab=k=>{const a=[];for(let i=0;i<k;i++)a.push({date:midi(2+i*3),id:i,vol:5000,
+      exs:[{name:'Squat',sets:[{kg:60,reps:10,done:true,type:'W'},{kg:100+i,reps:5,done:true,type:'N'}]}]});return a;};
+    const bornes=c=>{const i=c.indexOf('PROFIL ATHLÈTE:');return i>=0?i:null;};
+
+    // ① OUVERT À TOUT LE MONDE — un e-mail quelconque, et même AUCUN e-mail
+    S.sessions=fab(20);
+    S.email='quelquun@exemple.fr'; o.inconnu=_historiqueCompact().length;
+    S.email='';                    o.sansEmail=_historiqueCompact().length;
+    S.email='michdu75@gmail.com';  o.michel=_historiqueCompact().length;
+    o.memeTaillePourTous=(o.inconnu===o.sansEmail && o.inconnu===o.michel);
+
+    // ② AUTO-DÉGRESSIVE — on ne paie que ce qu'on a VÉCU (les 5 dernières partent en détail)
+    S.email='quelquun@exemple.fr';
+    o.paliers={};
+    [3,5,8,20].forEach(k=>{ S.sessions=fab(k); o.paliers[k]=_historiqueCompact().length; });
+
+    // ③ LE BLOC COMMUN NE BOUGE PAS — ces caractères tombent dans le bloc PERSONNEL
+    S.sessions=fab(20);
+    const avec=bornes(buildCoachContext());
+    const vrai=window._historiqueCompact; window._historiqueCompact=()=>'';
+    const sans=bornes(buildCoachContext());
+    window._historiqueCompact=vrai;
+    o.communAvec=avec; o.communSans=sans;
+
+    // ④ LA FONCTION EXISTE TOUJOURS (refermer doit rester UNE ligne, pas une chasse aux usages)
+    o.fnGardee=(typeof _memoireLargeOn==='function');
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  const tm=(n,c,x)=>t(n, !MM.erreur && c, MM.erreur?'bloc en erreur':x);
+  if(MM.erreur){ t('⛔ le bloc « mémoire élargie » s\'exécute', false, MM.erreur); }
+  tm('⭐⭐ OUVERTE À TOUT LE MONDE : un compte inconnu reçoit le même résumé que Michel',
+    MM.memeTaillePourTous===true && MM.inconnu>0,
+    JSON.stringify({inconnu:MM.inconnu,sansEmail:MM.sansEmail,michel:MM.michel}));
+  // ⛔ Le vrai garde-fou du coût n'est pas un plafond posé à la main : c'est que la fonction
+  //    ne résume QUE ce qui a été vécu. Un débutant ne paie rien, et personne n'a rien à régler.
+  tm('⭐⭐ AUTO-DÉGRESSIVE : 0 caractère sous 6 séances (les 5 dernières partent déjà en détail)',
+    MM.paliers && MM.paliers[3]===0 && MM.paliers[5]===0 && MM.paliers[8]>0,
+    JSON.stringify(MM.paliers));
+  tm('⭐ … et elle grandit avec l\'historique, sans jamais partir en vrille (borne MAX=30 lignes)',
+    MM.paliers && MM.paliers[20]>MM.paliers[8] && MM.paliers[20]<4000, JSON.stringify(MM.paliers));
+  // ⛔⛔ CE TÉMOIN RÉPOND À LA CRAINTE QUI A MOTIVÉ LA RESTRICTION, et il la réfute par la mesure :
+  //     ces caractères ne touchent PAS le bloc commun, donc pas le plafond de 46 500.
+  tm('⛔⛔ le BLOC COMMUN ne bouge pas d\'un caractère (le résumé vit dans le bloc PERSONNEL)',
+    MM.communAvec===MM.communSans, MM.communAvec+' vs '+MM.communSans);
+  tm('⭐ `_memoireLargeOn()` reste une FONCTION : refermer un jour = une ligne (R30)',
+    MM.fnGardee===true);
+  await cx.close();
+}
+
+// ── ⭐⭐ LE BANC D'ESSAI DOIT POUVOIR JUGER CE CHANGEMENT (R34) ────────────────────────────
+// Mesuré le 24/08 AVANT de livrer : sur les 21 scénarios d'alors, **aucun** n'avait plus de
+// 1 séance — l'avant/après R34 aurait donc comparé deux contextes IDENTIQUES et rendu « aucune
+// régression ». Un faux vert. Pire : la promesse centrale du produit (« le sportif ne repart
+// jamais de zéro ») n'était vérifiée par AUCUN scénario. D'où EV-022.
+// ⚠️ Ce témoin ne teste pas la RÉPONSE de Milo (ça demande un vrai appel API) : il garantit que
+// le banc d'essai garde de quoi MORDRE. Sans lui, vider EV-022 de ses séances passerait inaperçu.
+{
+  const src=fs.readFileSync(path.join(ROOT,'tests/milo/eval-scenarios.js'),'utf8');
+  const ev22=/EV-022/.test(src);
+  const nb=(src.match(/for\s*\(\s*let\s+i\s*=\s*0\s*;\s*i\s*<\s*14\s*;/)||[]).length;
+  t('⭐⭐ le banc d\'essai garde un scénario de MÉMOIRE LONGUE (EV-022), sinon R34 ne mord pas',
+    ev22===true, 'EV-022 absent : l\'avant/après comparerait deux contextes identiques');
+  t('⭐ … et son historique dépasse les 5 séances envoyées en détail (sinon le résumé est vide)',
+    nb===1, 'la boucle qui fabrique les 14 séances a changé — vérifier que le résumé part encore');
+  t('⛔ aucune date en dur dans EV-022 (la fenêtre glisse sur 60 j : une date figée périmerait seule)',
+    !/date:\s*'20\d\d-\d\d-\d\d'/.test(src.slice(src.indexOf('EV-022'))), 'date figée trouvée dans EV-022');
 }
 
 await b.close(); srv.close();

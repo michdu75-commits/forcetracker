@@ -6,7 +6,28 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v991`.
+- **Version en ligne (live) :** `ft-v992`.
+- 🧠⭐⭐ **LA MÉMOIRE ÉLARGIE OUVERTE À TOUT LE MONDE — LIVRÉE** (ft-v992). Priorité ④, tranchée
+  par Michel **après mesure**. ⛔⛔ **La raison d'avant reste écrite (R30)** : réservée à 2 comptes
+  depuis le 03/08 pour *« mesurer le coût réel avant d'ouvrir »* — ce n'était pas un oubli, c'était
+  une prudence. ⭐⭐ **Ce coût est AUTO-DÉGRESSIF** (la fonction ne résume que ce qui a été vécu) :
+  **3 séances → 0 car. · 5 → 0 · 8 → 665 · 12 → 967 · 20 → 1 551 · 35 → 2 622** (borne 30 lignes).
+  ⛔⛔ **Et la crainte du plafond ne tenait pas** : ces caractères tombent dans le bloc **PERSONNEL**,
+  le bloc commun est identique **au caractère près** (45 362 des deux côtés) — *ce n'était pas le
+  bon bloc*. ⭐ **Pourquoi on ouvre (R9)** : la mémoire longue EST la promesse du produit ; la
+  réserver revenait à ce que **Michel juge Milo sur une mémoire que personne d'autre n'a**.
+  ⭐⭐ **LA VRAIE TROUVAILLE, hors commande** : en vérifiant que **R34** pouvait juger le
+  changement, **aucun des 21 scénarios du banc d'essai n'avait plus d'UNE séance** → l'avant/après
+  aurait comparé **deux contextes identiques** (faux vert), et *la promesse centrale du produit
+  n'était vérifiée par aucun scénario*. D'où **EV-022** (22ᵉ) : retrouver une séance d'il y a 27 j
+  **sans en inventer la charge**, dates relatives et calculées à midi.
+  ⚠️⚠️ **CE QUI N'EST PAS PROUVÉ** : le **benchmark n'a PAS été joué** (pas de clé API ici) —
+  *on livre de quoi le jouer, pas son résultat.* **R34 n'est honoré qu'au prochain lancement par
+  Michel**, et personne ne sait encore si la mémoire élargie **améliore** les réponses.
+  ⚠️ **Ma mesure a été fausse 2× avant d'être juste** : `_vcApplyPersona` attend le SCÉNARIO
+  entier (elle fait `p.apply`), je lui passais le sous-objet → tout à zéro, sans erreur.
+  ⏭️ **Reste : ⑤** (caches par lieu) — et la **course `_saveCoachMemory`**, à prouver ou réfuter
+  par un test avant de toucher au code.
 - ⚖️⭐⭐ **LE VOCABULAIRE KATCH DE MILO — LIVRÉ** (ft-v991). Priorité ③, dernier point ouvert du
   contre-audit. ⛔⛔ **Mesuré dans un vrai navigateur avant de coder** : les **trois** provenances
   de la masse maigre — **lue** sur un rapport · **DÉDUITE** par soustraction · calculée depuis un

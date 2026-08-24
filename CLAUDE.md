@@ -422,7 +422,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v991`** (prochaine : `ft-v992`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v992`** (prochaine : `ft-v993`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -432,6 +432,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v992 — 🧠 LA MÉMOIRE ÉLARGIE OUVERTE À TOUT LE MONDE — et le banc d'essai ne pouvait pas juger le changement** — priorité ④, tranchée par Michel après mesure.
+
+**⛔⛔ LA RAISON D'AVANT RESTE ÉCRITE (R30)** : le résumé des séances anciennes était réservé à **michdu75 + christophe** depuis le 03/08, et ce n'était **pas un oubli** — c'était une prudence : *« on mesure le coût réel sur deux comptes bien remplis avant d'ouvrir à tout le monde »*.
+
+**⭐⭐ CE COÛT A ÉTÉ MESURÉ, ET C'EST LUI QUI A PERMIS DE TRANCHER — il est AUTO-DÉGRESSIF**, parce que la fonction ne résume que ce qui a été **vécu** : **3 séances → 0 car. · 5 → 0 · 8 → 665 · 12 → 967 · 20 → 1 551 · 35 → 2 622** (borne MAX = 30 lignes). *Un débutant ne paie rien, et personne n'a de réglage à faire.*
+
+**⛔⛔ ET LA CRAINTE DU PLAFOND NE TENAIT PAS — mesure à l'appui.** Ces caractères tombent **intégralement dans le bloc PERSONNEL** : le bloc commun est identique **au caractère près** (45 362 des deux côtés). *Ce n'était pas le bon bloc.* La note de cadrage disait *« sinon le contexte dépasse le plafond »* — c'est faux, et seul le fait de mesurer les deux frontières séparément le montre.
+
+**⭐ POURQUOI ON OUVRE (R9)** : la mémoire longue **EST** la promesse du produit — *« le sportif ne repart jamais de zéro »*. La réserver revenait à ce que **Michel juge Milo sur une mémoire que personne d'autre n'a**, donc à corriger le mauvais Milo.
+
+**⭐⭐ ET LA VRAIE TROUVAILLE EST AILLEURS, ELLE N'ÉTAIT PAS DANS LA COMMANDE.** En vérifiant que le rite **R34** pouvait juger ce changement : **aucun des 21 scénarios du banc d'essai n'avait plus d'UNE séance**. L'avant/après aurait donc comparé **deux contextes identiques** et rendu *« aucune régression »* — **un faux vert**. ⛔ Plus large que ce chantier : *la promesse centrale du produit n'était vérifiée par AUCUN scénario.* D'où **EV-022** (22ᵉ scénario) : Milo doit retrouver une séance d'il y a 27 jours **et n'en pas inventer la charge** — deux vérificateurs déterministes, dates **relatives** (une date en dur périmerait seule dans la fenêtre glissante de 60 jours) et calculées **à midi** (famille « fuseaux horaires »).
+
+**⚠️⚠️ UN TÉMOIN EXIGEAIT LITTÉRALEMENT L'INVERSE — 2ᵉ fois de la journée après ft-v991.** *« TÉMOIN : personne d'autre ne l'a (réservé, le temps de mesurer) »*. Il est **retourné vers ce qui compte vraiment — l'ÉGALITÉ** — avec sa raison d'avant conservée. *Rien ne distingue de l'extérieur un test qui protège un correctif d'un test qui fige une décision périmée : seule la raison écrite à côté le dit.*
+
+**⚠️⚠️ ET MA MESURE A ÉTÉ FAUSSE DEUX FOIS AVANT D'ÊTRE JUSTE.** `_vcApplyPersona` attend le **scénario entier** (elle fait `p.apply` elle-même) ; je lui passais le sous-objet `sc.apply` → elle remettait tout à zéro **sans erreur**. Mon *« aucun scénario n'a de séance »* était donc **faux** — EV-017 en a une. *La conclusion tenait, le chiffre non.* **3ᵉ fois cette session** qu'un levier qui n'est pas celui du code produit une mesure propre et fausse.
+Tests : **parcours 1331/1331** (+8, bloc CVII, + 2 témoins existants réécrits), calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou. **CONTRÔLE NÉGATIF (liste blanche rétablie) : rouge, et il est INSTRUCTIF** — le détail imprimé *est* l'inégalité : `{"inconnu":0,"michel":801}`. ⚠️⚠️ **CE QUI N'EST PAS PROUVÉ, ET IL FAUT LE LIRE** : **le benchmark n'a PAS été joué** — il demande une vraie clé API, indisponible dans cet environnement. *On livre de quoi le jouer, pas son résultat* : **R34 n'est honoré que le jour où Michel le lance.** Et personne ne sait encore si la mémoire élargie **améliore** les réponses — on sait seulement que l'information **arrive**. Fichiers : `coach.js`, `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`. sw.js ft-v992. |
 
 **ft-v991 — ⚖️ « MESURÉE » DEVIENT « ESTIMÉE » — le vocabulaire Katch de Milo** — priorité ③ tranchée par Michel, dernier point ouvert du contre-audit du 24/08.
 
@@ -763,21 +780,6 @@ Tests : **parcours 1164/1164** (+17, bloc XCIII), calculs 266/266, muscles 241/2
 
 **⚠️ ET MON PREMIER TÉMOIN DE MESURE ACCUSAIT UN BOUTON INVISIBLE** — un accordéon **replié** (`overflow:hidden`) garde des enfants de hauteur non nulle, donc « le dernier élément » désignait un bouton que personne ne voit. *3ᵉ fois cette semaine qu'un témoin désigne le mauvais coupable.* La mesure porte désormais sur **où finit le contenu**, pas sur un dernier élément à deviner.
 Tests : **parcours 1147/1147** (+6, bloc XCII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : **5 rouges lus dans la sortie** (ma fenêtre de lecture a coupé le 6ᵉ témoin ; l'Accueil donne le même `844 > 770` dans la mesure autonome) — et le contrôle est **instructif**, pas un « la fonction n'existe pas » : les 6 témoins **tournent des deux côtés**, ils mesurent une disposition qui existait déjà, mal. Le seul vert des deux côtés est l'écran **Progrès**, et c'est exactement le but : *il portait déjà l'espaceur depuis ft-v670, il ne devait pas bouger***. Fichiers : `style.css`, `index.html`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v973. |
-
-**ft-v972 — ⚖️ LA QUANTITÉ POUR TOUTES LES ENTRÉES, ET LES CALORIES QUI NE COLLENT PAS** — Michel : *« en fait on ne peut pas modifier le poids, je modifie le nom ça ne change pas la valeur. Il faut rajouter une ligne poids qui va modifier la valeur des calories et des autres lignes »*, puis, découvrant une ligne à **1117 kcal** pour 26 P / 1 G / 1 L : *« putain je ne l'avais même pas vu, j'étais axé sur les calories »*, puis *« et en direct, pas au moment de l'enregistrer »*.
-
-**⭐⭐ LE RESCALE NE DEMANDE AUCUN `per100`.** Ma limite de ft-v962 mordait : le champ n'apparaissait que pour un scan / CIQUAL / recherche. Une ligne tapée à la main — **la sienne** — restait 4 chiffres à recalculer soi-même. On ne rescale donc pas depuis une composition, mais **par PROPORTION** : `X × (nouvelle / référence)`. *Il suffit de connaître la référence, pas la composition pour 100 g.*
-
-**⭐ ET LA RÉFÉRENCE EST DÉJÀ ÉCRITE — DANS LE NOM.** « 30**g** de protéines » porte son ancrage : on lit ce que Michel a mis, au lieu de le lui redemander. Trois sources dans l'ordre : `per100` → `q` enregistré → **le nom**. ⛔ Sans aucun ancrage, **aucun poids inventé** : des **portions** (½ · 1½ · 2 · 3), vraies quelle que soit la portion de départ.
-
-**⛔⛔ ET LES CALORIES DOIVENT COLLER À LEURS PROPRES MACROS.** `4×26 + 4×1 + 9×1 = 117`. Sa ligne en affichait **1117** — un « 1 » de trop, **1 000 kcal** ajoutés à sa journée, et **rien ne le signalait**. ⭐ **Son étiquette réelle l'a confirmé au dixième** : 116,6 kcal et 26,4 g de protéines pour 30 g.
-
-**⛔ ON NE CORRIGE JAMAIS TOUT SEUL** (**R29**) : on montre l'écart, un bouton propose, la personne tranche. *Réécrire un chiffre saisi, c'est décider à sa place.*
-
-**⭐ EN DIRECT À CINQ MOMENTS** — chaque frappe · après un scan · après une estimation IA · en reprenant une entrée du journal · à l'ouverture de la modale. *Attraper à la SAISIE vaut mieux qu'à la relecture : il a vu son 1117 le lendemain, la journée était déjà faussée.* ⭐ **R2** : une **seule** définition de « ces calories sont impossibles », partagée par la saisie et la modification.
-
-**⛔⛔ ET L'ALCOOL NE DÉCLENCHE RIEN.** 7 kcal/g sans champ dédié : une **bière réelle** afficherait **69 %** d'écart, un verre de vin **87 %**. *Un garde-fou qui se trompe sur la bière ne survit pas au premier apéro* (**R19**). Trouvé **en testant les cas limites sur son étiquette**, pas après coup. ⚠️ La liste se **tait** seulement : le même écart sur « blanc de poulet » **crie toujours**, et des calories **manquantes** crient **même sur une bière** — l'alcool ajoute des calories, il n'en retire pas.
-Tests : **parcours 1141/1141** (+19, bloc XCI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `app.js`, `index.html`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v972. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
