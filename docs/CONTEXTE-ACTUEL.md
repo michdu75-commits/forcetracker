@@ -7,6 +7,18 @@
 ---
 
 - **Version en ligne (live) :** `ft-v988`.
+- 🔬 **CONTRE-AUDIT ENVOYÉ À GPT (24/08, nuit) — RÉPONSE REÇUE ET INTÉGRÉE.** Rapport PDF
+  (`docs/CONTRE-AUDIT-2026-08-24.pdf`) donné pour relecture extérieure. GPT valide les 3
+  correctifs de la nuit **sans réserve**, propose une 3ᵉ voie pour le plafond du bloc commun
+  (budget « socle critique » / budget « contexte partageable », validé par le **benchmark**
+  plutôt que par la seule taille), et remonte **l'instrumentation du coût réel de Milo** en
+  tête des priorités — avant tout chantier de cache, pour savoir s'il rapporte quelque chose.
+  ⚠️ **Réserve de Claude** : cette instrumentation ne se vérifie pas par une relecture de code,
+  elle demande un vrai appel API facturé — indisponible dans cet environnement de session.
+  Échange complet : `docs/ECHANGE-GPT.md`. Score à jour : `docs/SUIVI-AUDIT.md`.
+  ⏭️ **Prochaine étape : décision de Michel** sur le plafond / le reclassement — tout le reste
+  du « avant ouverture large » (refus unique, `exSwaps`, vocabulaire Katch) peut avancer sans
+  attendre cette décision.
 - 🏋️⭐⭐ **EXPORTER SEULEMENT SES SÉANCES** (ft-v988). Michel : *« oui j'ai vu mes bilans dans
   l'export »*. Le bouton « Exporter » emportait **tout** — bilan sanguin, bilan corporel, TRT,
   profil santé — et la modale n'avertissait que pour les conversations. Or le fichier existe
