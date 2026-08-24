@@ -69,6 +69,38 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟢⭐⭐ MILO MET LE CARDIO EN EXERCICE, ALORS QU'UN BLOC CARDIO EXISTE
+**24/08/2026, EN SALLE — capture de Michel** : *« il me rajoute le vélo elliptique [dans la séance]
+alors qu'on a un onglet exprès pour le cardio »*. Sur sa capture : **« Elliptique — 0/1 série »**,
+type **É**, note *« 8 min léger »* — donc posé comme un **exercice de musculation**… pendant que le
+bloc **« Cardio — optionnel »**, juste au-dessus, reste **vide**.
+
+**⭐⭐ ET CE N'EST PAS UN DÉFAUT DE JUGEMENT DE MILO — LE CHEMIN N'EXISTE PAS.** Vérifié dans le code
+plutôt que supposé (**R28**), et **les deux moitiés manquent** :
+- le **prompt ne nomme jamais le bloc cardio** en prescription. `coach.js` le **lit** (l. 146, 2711)
+  pour raconter à Milo ce qui a été fait — il ne lui dit nulle part qu'un **champ dédié** existe
+  pour ce qu'il propose ;
+- et **`_appliqueMiloSession` ne mentionne pas `cardio`** : même si Milo posait le champ, il serait
+  **ignoré** au chargement de la séance.
+👉 *Milo n'a donc aucun moyen de faire autrement.* C'est la forme exacte du pont blessure de
+**ft-v982** : un chemin dont **les deux bouts** sont absents, pas une erreur du modèle.
+
+**⚠️ CE QUE ÇA COÛTE, ET C'EST PLUS QUE COSMÉTIQUE** : le bloc cardio calcule des **calories** par
+type × intensité × durée (ft-v12) et distingue **avant/après** (ft-v720). Un cardio posé en exercice
+échappe à tout ça — pas de kcal cardio, une « série » qui n'en est pas, et un volume de séance
+faussé. ⚠️ **Et le risque de DOUBLE COMPTE est réel** : `calcSessionCalories` ajoute déjà un forfait
+d'échauffement.
+
+**Attendu** : quand Milo prescrit du cardio (échauffement ou fin de séance), il le pose dans le
+**bloc cardio** (`cardioAvant` / `cardio`), pas dans la liste des exercices.
+**Vérifiable ?** ⭐⭐ **Oui, et des deux côtés** : ① côté texte — une réponse qui prescrit
+« 8 min d'elliptique » ne doit pas produire un exercice avec des séries ; ② côté données — le champ
+`cardioAvant` doit être rempli. ⚠️ **Mais le scénario ne peut pas être promu tout de suite** : tant
+que `_appliqueMiloSession` ignore le champ, le test rougirait sur un chemin **qui n'existe pas
+encore** — il mesurerait un manque de structure, pas un comportement. **À promouvoir APRÈS le
+correctif**, sinon c'est un rouge permanent qu'on apprend à ignorer (**R19**).
+
+
 ### 🟢 ⭐⭐ MILO VÉRIFIE APRÈS, PAS AVANT — *le même défaut trois fois dans une seule séance*
 **23/08/2026, séance de Michel** (*« il m'a reproposé un repos de 1 min 30 sur du lourd »* ·
 *« comment il a pu déduire que je pouvais faire 3 séries de 5 reps à 95, c'est impossible »*).
