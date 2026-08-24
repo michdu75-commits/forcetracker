@@ -16,9 +16,15 @@
   ⚠️ **Réserve de Claude** : cette instrumentation ne se vérifie pas par une relecture de code,
   elle demande un vrai appel API facturé — indisponible dans cet environnement de session.
   Échange complet : `docs/ECHANGE-GPT.md`. Score à jour : `docs/SUIVI-AUDIT.md`.
-  ⏭️ **Prochaine étape : décision de Michel** sur le plafond / le reclassement — tout le reste
-  du « avant ouverture large » (refus unique, `exSwaps`, vocabulaire Katch) peut avancer sans
-  attendre cette décision.
+- ⚖️⭐⭐ **MICHEL A TRANCHÉ (24/08, 08 h 09).** *« Priorité 1, une validation déterministe unique
+  avant l'activation de la séance : blessures, exclusions, doublons. Priorité 2, alléger le
+  bouton « Commencer la séance » pour qu'il appelle uniquement cette validation. En parallèle,
+  instrumentation du coût réel par appel API. »* Le reclassement du bloc générique et les caches
+  par lieu sont **approuvés en principe**, mais soumis à une règle nouvelle : *« chaque
+  changement doit passer par un avant-après benchmark »* → montée en **R34**
+  (`docs/REGLES-ARCHITECTURE.md`). Les records ne bougent pas pour l'instant.
+  ⏭️ **Prochaine étape : construire ① la validation unique**, puis ② alléger le bouton — rien
+  n'attend d'autre décision pour ces deux-là.
 - 🏋️⭐⭐ **EXPORTER SEULEMENT SES SÉANCES** (ft-v988). Michel : *« oui j'ai vu mes bilans dans
   l'export »*. Le bouton « Exporter » emportait **tout** — bilan sanguin, bilan corporel, TRT,
   profil santé — et la modale n'avertissait que pour les conversations. Or le fichier existe

@@ -51,19 +51,53 @@ Rapport complet : artefact *« Milo face au code »*.
 
 ---
 
+## ✅ Décisions tranchées par Michel — 24/08/2026 au matin
+
+> Après lecture du contre-audit et de la réponse de GPT, Michel a rendu son arbitrage. **Ses mots,
+> gardés tels quels** — c'est ce qui doit rester lisible dans six mois, pas un résumé qui les use :
+
+> *« Priorité numéro 1, une validation déterministe unique avant l'activation de la séance :
+> blessures, exclusions, doublons. Priorité 2, alléger le bouton « Commencer la séance » pour
+> qu'il appelle uniquement cette validation. En parallèle, instrumentation fine du coût réel par
+> appel API. Déplacer les 13 000 caractères génériques semble sûr en quantité, mais l'effet sur
+> le modèle doit être testé via le benchmark, pas au feeling. Les caches par lieu oui, mais
+> seulement quand l'usage réel justifie plusieurs entrées partagées. Les records, on ne touche
+> pas pour l'instant ; à terme, sélection côté application avant Milo. Et surtout, chaque
+> changement doit passer par un avant-après benchmark. »*
+
+| Décision | Ce qu'elle tranche |
+|---|---|
+| **① Validation unique, déterministe** — blessures, exclusions, doublons | Devient LA priorité n°1. Remplace le validateur partiel actuel. |
+| **② `_startSessionFromMilo` s'ALLÈGE** — n'appelle QUE la validation | ⭐ Précision d'architecture, pas juste une feature : le bouton devient un simple **appelant** de ①, il ne porte plus sa propre logique de contrôle. Un seul endroit qui décide (**R2**). |
+| **③ Instrumentation du coût réel** — EN PARALLÈLE, pas après | Michel ne suit pas l'ordre strict proposé par GPT (« B avant C ») : ① et ③ avancent ensemble. |
+| **④ Reclassement des 13 452 caractères génériques** — **APPROUVÉ EN PRINCIPE**, gated | *« semble sûr en quantité, mais l'effet sur le modèle doit être testé via le benchmark, pas au feeling »* → **R34** (nouvelle règle, `docs/REGLES-ARCHITECTURE.md`) : état A → benchmark → déplacement → état B → même benchmark → comparaison. Pas de livraison hors de ce rite. |
+| **⑤ Caches par lieu (5 variantes)** — **APPROUVÉ, mais PAS construit d'avance** | *« oui, mais seulement quand l'usage réel justifie plusieurs entrées partagées »* → on ne construit PAS les 5 variantes par anticipation (**R19** — coût payé pour un gain qui n'existe pas encore). On instrumente, on observe, on construit si l'usage le demande. |
+| **⑥ Records non bornés** — **ON N'Y TOUCHE PAS** | *« on ne touche pas pour l'instant ; à terme, sélection côté application avant Milo »* — rejoint la proposition de GPT (séance en cours + programme + mouvements principaux systématiques, le reste à la demande), mais **différé**, pas urgent. |
+| **⑦ RÈGLE DURABLE** — *« chaque changement doit passer par un avant-après benchmark »* | Montée en **R34** dans `docs/REGLES-ARCHITECTURE.md` — s'applique à TOUT changement de contexte, pas seulement à ④. C'est la phrase la plus importante de l'arbitrage : elle ne referme pas une décision, elle en ouvre la méthode pour toutes les suivantes. |
+
+⚠️ **Ce que cet arbitrage ne tranche PAS explicitement** : le plafond dépassé chez un profil
+blessé (47 118 pour 46 500, ft-v988) reste **épinglé, non résolu**. Il est probable qu'il se
+règle en même temps que ④ (les deux touchent le même bloc commun), mais Michel ne l'a pas nommé
+— ne pas le lire comme tranché.
+
+---
+
 ## ⏳ Ce qui RESTE — par palier
 
 ### 🟠 Avant une ouverture large (50-200 → bêta publique)
 
 | Sujet | Pourquoi ça compte | Difficulté |
 |---|---|---|
-| **Un point de refus unique** avant « Commencer cette séance » | Aujourd'hui `_startSessionFromMilo` ne vérifie que *« la séance existe »*. Les contrôles réels sont partiels : montée en charge, superset interdit sur les mouvements lourds, intensité. **Absents** : exercice refusé (`exSwaps`), zone active, doublon, durée, matériel. | Moyenne — ⚠️ *un validateur trop strict rend Milo inutilisable* : il **signale** par défaut, il ne refuse que sur zone active et exercice refusé |
+| **① Validation unique, déterministe** (blessures, exclusions, doublons) | **PRIORITÉ N°1**, tranchée le 24/08. Aujourd'hui `_startSessionFromMilo` ne vérifie que *« la séance existe »*. Les contrôles réels sont partiels : montée en charge, superset interdit sur les mouvements lourds, intensité. **Absents** : exercice refusé (`exSwaps`), zone active, doublon, durée, matériel. | Moyenne — ⚠️ *un validateur trop strict rend Milo inutilisable* : il **signale** par défaut, il ne refuse que sur zone active et exercice refusé |
+| **② Alléger `_startSessionFromMilo`** — n'appeler QUE la validation ① | **PRIORITÉ N°2**, tranchée le 24/08. Suit directement ① — pas un chantier séparé. | Faible, une fois ① posée |
+| **③ Instrumenter le coût réel par appel API** | Tranché : **en parallèle** de ① et ②, pas après. `input_tokens` · `cache_creation_input_tokens` · `cache_read_input_tokens` · `output_tokens` · modèle · coût. Sans toucher au comportement de Milo. | ⚠️ Le CODE est faisable ici ; la **vérification** demande un vrai appel facturé, indisponible dans cette session |
 | **Le vocabulaire Katch de Milo** | *« MASSE MAIGRE MESURÉE … chiffre SOLIDE … sans réserve »* contredit **R32**, et s'applique même à un % de gras **tapé à la main**. | Faible — ⚠️ **corriger le témoin `tests/parcours/runner.js:3273` D'ABORD**, il protège la mauvaise phrase |
 | **La mémoire à deux vitesses** | `MEMOIRE_LARGE_EMAILS` = **2 comptes**. Un utilisateur normal n'a pas les séances 6→35 sur 60 jours. **Michel juge Milo sur une mémoire que personne d'autre n'a.** | Faible — c'est une **décision**, pas du code |
-| **Rejouer le benchmark** | Il existe, il tourne, **il n'a pas encore vu les correctifs de ft-v979→984**. | Faible |
-| **`exSwaps` réellement opposable** | « Ne me remets plus cet exercice » tient tant que le modèle suit sa consigne. Rien ne l'impose. | Faible, une fois le point de refus posé |
-| **⛔ DÉCISION : que fait-on du plafond dépassé chez un profil blessé ?** | ⚠️ **Le témoin est fait** (ft-v988, ligne ci-dessus) : il **mesure et imprime** l'écart à chaque passe, et il empêche la dérive. **Ce qui reste est l'arbitrage, pas le code** : alléger le bloc blessure · le déplacer · ou relever le plafond ? ⛔ Relever est explicitement déconseillé dans le code (*« il mérite une relecture dédiée, pas un relèvement de seuil de plus »*), et le plafond protège de la **dilution**, pas du prix. → `AUDIT-CONTEXTE-MILO.md` §14.6-14.8. | **Aucune — c'est une décision de Michel** |
-| **⛔ DÉCISION : reclasser les 13 452 caractères génériques du bloc personnel ?** | Mesuré 23/08 : **92 %** du bloc « personnel » ne l'est pas. Le reclassement est à **information constante** — Milo recevrait exactement la même chose, rangée autrement. ⚠️ **Mais il dépend de la décision ci-dessus** (il porterait le bloc commun à ~58 800) et **le gain n'est pas mesuré** (aucune clé API : tout est en caractères, pas en tokens). ⭐ **GPT (24/08) propose une 3ᵉ voie** : séparer un budget « socle critique » (sécurité, hiérarchie — contrôle strict) d'un budget « contexte partageable » (surveillé, pas par un seuil unique), et valider tout déplacement par un avant/après sur le **benchmark**, pas seulement sur la taille. → `ECHANGE-GPT.md`. | Moyenne, et **subordonnée** à la décision précédente, **ET** à l'instrumentation du coût réel ci-dessous (le fait-elle rapporter quelque chose ?) |
+| **Rejouer le benchmark** | Il existe, il tourne, **il n'a pas encore vu les correctifs de ft-v979→988**. | Faible — ⚠️ demande un vrai appel API |
+| **`exSwaps` réellement opposable** | « Ne me remets plus cet exercice » tient tant que le modèle suit sa consigne. Rien ne l'impose. | Faible, une fois ① posée |
+| **④ Reclasser les 13 452 caractères génériques** | **Approuvé en principe** (24/08), **gated par R34** : aucun déplacement ne se livre sans un avant/après sur le vrai banc d'essai. → `AUDIT-CONTEXTE-MILO.md` §14.6-14.8, `ECHANGE-GPT.md`. | Moyenne — bloquée tant que ③ (le coût) ET le banc d'essai (un vrai appel API) ne sont pas disponibles |
+| **⑤ Caches par lieu (5 variantes)** | **Approuvé, mais pas construit d'avance** — seulement quand l'usage réel le justifie (R19/R34). | Ne pas commencer sans données d'usage |
+| **⚠️ Le plafond dépassé chez un profil blessé reste épinglé, non tranché** | Le témoin (ft-v988) mesure et empêche la dérive, mais l'arbitrage du 24/08 ne le nomme pas explicitement — probablement lié à ④, à confirmer. | **Décision de Michel, en suspens** |
 
 ### 🔵 Peut attendre après la mise en production
 
@@ -120,13 +154,18 @@ Elles valent plus que les correctifs, parce qu'elles se rappliquent :
 - **Ce fichier n'est pas un journal** : il ne raconte rien, il dit *où on en est*. Le récit est dans
   `CLAUDE.md`.
 
-*Dernière mise à jour : **24/08/2026, 02 h 20** — retour de GPT sur le contre-audit intégré
-(`ECHANGE-GPT.md`) : les 3 correctifs de la nuit validés sans réserve, une 3ᵉ voie proposée
-pour le plafond, et l'instrumentation du coût réel remontée en priorité (avec la réserve de
-Claude : elle demande un vrai appel API facturé pour être vérifiée, pas seulement du code).*
+*Dernière mise à jour : **24/08/2026, 08 h 09** — Michel a tranché les décisions ouvertes par le
+contre-audit. Priorités ①② (validation unique + bouton allégé) posées, ③ (coût réel) en
+parallèle, ④⑤ (reclassement, caches par lieu) approuvés mais soumis à **R34** (nouvelle règle
+d'architecture : tout changement de contexte se valide par un benchmark avant/après), ⑥ (records)
+différé. Le plafond du profil blessé reste épinglé, non explicitement tranché.*
 
-*(historique : *Dernière mise à jour : **24/08/2026, 01 h 45** — `ft-v988` en ligne (runs Pages 547 et 548 verts,
-549 en cours). Rapport de synthèse pour relecture extérieure : `docs/CONTRE-AUDIT-2026-08-24.pdf`.*
+*(historique : 24/08/2026, 02 h 20 — retour de GPT sur le contre-audit intégré (`ECHANGE-GPT.md`) :
+les 3 correctifs de la nuit validés sans réserve, une 3ᵉ voie proposée pour le plafond, et
+l'instrumentation du coût réel remontée en priorité (avec la réserve de Claude : elle demande un
+vrai appel API facturé pour être vérifiée, pas seulement du code).
+24/08/2026, 01 h 45 — `ft-v988` en ligne (runs Pages 547 et 548 verts, 549 en cours). Rapport de
+synthèse pour relecture extérieure : `docs/CONTRE-AUDIT-2026-08-24.pdf`.*
 
 *(historique : 23/08/2026, nuit — `ft-v985` en ligne. Ajout : le bloc personnel de Milo
 mesuré générique à 92 % (`AUDIT-CONTEXTE-MILO.md` §14) et le plafond dépassé chez un profil blessé.*

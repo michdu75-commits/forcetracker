@@ -222,6 +222,19 @@ Le noyau dur (`tests/milo/`) rassemble les scénarios critiques et déterministe
 version et **bloque la livraison** s'il est rouge.
 *Origine : framework de tests, 23/07/2026*
 
+### R34 — Un changement de CONTEXTE se valide par un BENCHMARK avant/après, jamais au feeling
+Toute modification qui touche à ce que Milo reçoit — déplacer un bloc, changer sa position, fusionner
+une coupure de cache — se juge sur le **comportement mesuré**, pas sur l'intuition que « ça devrait
+aller » ni sur la seule taille en caractères. Le rite est fixe : **état A → banc d'essai réel → état
+B → même banc d'essai → comparaison**. Un changement qui ne peut pas passer par ce rite ne se livre
+pas encore — il attend que le banc d'essai puisse le juger.
+*Corollaire (même décision, 24/08) : une variante de cache partagée (par lieu, par profil…) ne se
+crée pas par anticipation. On ne la construit que lorsque l'USAGE RÉEL en justifie plusieurs — sinon
+c'est de la complexité payée pour un gain qui n'existe pas encore (R19).*
+*Origine : Michel, 24/08/2026 au matin, en tranchant les décisions ouvertes par le contre-audit du
+même jour — « chaque changement doit passer par un avant-après benchmark ». Voisine de R17 (chaque
+bug devient un test permanent) : celle-ci en est l'équivalent pour le CONTEXTE au lieu du CODE.*
+
 ### R18 — Vérifier le DÉPLOIEMENT, pas seulement le push
 « J'ai poussé » ne veut pas dire « c'est en ligne ». Un déploiement peut échouer **silencieusement** —
 c'est arrivé deux fois, l'app est restée bloquée plusieurs versions en arrière sans aucune alerte.

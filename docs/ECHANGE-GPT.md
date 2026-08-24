@@ -177,4 +177,27 @@ La décision d'ouvrir ce chantier reste celle de Michel.
 
 ---
 
+### 🏛️ La décision de Michel — 24/08/2026, 08 h 09
+
+Michel a lu les deux analyses et tranché. **Ses mots, gardés tels quels** (détail complet et
+tableau : `docs/SUIVI-AUDIT.md`) :
+
+> *« Priorité numéro 1, une validation déterministe unique avant l'activation de la séance :
+> blessures, exclusions, doublons. Priorité 2, alléger le bouton « Commencer la séance » pour
+> qu'il appelle uniquement cette validation. En parallèle, instrumentation fine du coût réel par
+> appel API. Déplacer les 13 000 caractères génériques semble sûr en quantité, mais l'effet sur
+> le modèle doit être testé via le benchmark, pas au feeling. Les caches par lieu oui, mais
+> seulement quand l'usage réel justifie plusieurs entrées partagées. Les records, on ne touche
+> pas pour l'instant ; à terme, sélection côté application avant Milo. Et surtout, chaque
+> changement doit passer par un avant-après benchmark. »*
+
+**Ce qui tranche par rapport aux deux propositions ci-dessus** : Michel ne suit ni l'ordre strict
+de GPT (token d'abord, cache ensuite) ni un feu vert immédiat sur le reclassement — il fait
+avancer ①②③ **en parallèle**, et **subordonne ④ et ⑤ à un rite unique** : *« chaque changement
+doit passer par un avant-après benchmark »*. Cette dernière phrase est montée en **règle
+d'architecture (R34)** dans `docs/REGLES-ARCHITECTURE.md` — elle ne referme pas seulement cette
+décision, elle fixe la méthode pour toutes les suivantes.
+
+---
+
 *Prochain échange à la suite. Ne rien effacer au-dessus.*
