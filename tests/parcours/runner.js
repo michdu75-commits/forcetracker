@@ -11532,7 +11532,118 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+/* ══ BLOC CIV — LES QUATRE CHEMINS DE CODE-BARRES NE SE CONFONDENT PLUS (23/08/2026) ══
+   Michel : « ce n'était pas un scan, j'ai rentré le code-barre manuellement ». Il avait raison :
+   les quatre chemins s'enregistraient tous en `saisie:'scan'`, alors que le fichier lui-même
+   écrit que « `saisie` dit COMMENT c'est entré ». Mesuré sur ses 23 entrées réelles, ses
+   « 6 scans » comptaient des saisies clavier — la donnée censée trancher les questions produit
+   était donc fausse.
+   ⭐ ET LE CONTRÔLE DE CLÉ EST LE VRAI SUJET : le seul mode d'échec de ce chemin est SILENCIEUX.
+   Un chiffre faux ne donne pas « introuvable », il donne LE PRODUIT DE QUELQU'UN D'AUTRE.     */
+{
+  console.log('\n── CIV. Code-barres : quatre chemins, et la clé de contrôle ──');
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); pg.on('pageerror',e=>console.log('PAGEERROR',e.message));
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const K=await pg.evaluate(async ()=>{
+    const o={};
+    /* ⚠️⚠️ LE GARDE NE COUVRE QUE LA CLÉ DE CONTRÔLE, PAS LES QUATRE CHEMINS — délibérément.
+       Les provenances existaient AVANT cette version (elles valaient toutes « scan ») : ce
+       témoin doit donc tourner DES DEUX CÔTÉS, sinon le contrôle négatif ne dirait qu'une
+       chose, « la fonction n'existe pas », et ne prouverait rien. C'est la leçon de ft-v968. */
+    o.cleAbsente=(typeof _eanValide!=='function');
+    /* ① LA CLÉ DE CONTRÔLE — des codes RÉELS, pas inventés : Nutella et Coca-Cola.
+       Vérifiés à la main avant d'être écrits ici (3+0+1+7+6+2+0+4+2+2+0+0 pondéré = 57 → clé 3). */
+    const _ev=(x)=>o.cleAbsente?'PAS-DE-CLE':_eanValide(x);
+    o.nutella   = _ev('3017620422003');          // vrai EAN-13
+    o.coca      = _ev('5449000000996');          // vrai EAN-13
+    /* ⭐ LE CAS QUI COMPTE : UN SEUL CHIFFRE CHANGÉ. C'est exactement la faute de frappe
+       qu'on veut attraper, et c'est le seul défaut que rien d'autre ne peut voir. */
+    o.nutellaFaute = _ev('3017620423003');       // le 2 est devenu 3
+    o.cocaFaute    = _ev('5449000000986');       // le 9 est devenu 8
+    /* ⛔ « JE NE SAIS PAS » N'EST PAS « C'EST FAUX » (R29) : une longueur non normalisée
+       (code interne de magasin, code court) ne doit RIEN affirmer. */
+    o.longueurBizarre = _ev('123456789');        // 9 chiffres → hors norme
+    o.vide            = _ev('');
+    /* ② LES QUATRE CHEMINS POSENT-ILS DES `saisie` DIFFÉRENTS ?
+       ⚠️⚠️ ON PASSE PAR LE VRAI CHEMIN, PAS PAR LES INTERNES. Mon 1ᵉʳ essai écrivait
+       `window._bcNutr` — or c'est une variable de SCRIPT (`let`), pas une propriété de
+       `window` : les quatre appels plantaient sur `null.name` et le témoin accusait le
+       mauvais coupable. C'est la 3ᵉ fois cette semaine (`_afSuggLoc`, `_miloPendingIdx`).
+       👉 On remplace donc le RÉSEAU (Open Food Facts) et on laisse tourner tout le reste. */
+    const vraiFetch=window.fetch;
+    window.fetch=function(u){
+      if(String(u).indexOf('openfoodfacts')>=0){
+        return Promise.resolve({ok:true, json:()=>Promise.resolve({status:1, product:{
+          product_name_fr:'Produit Témoin', brands:'Test', serving_quantity:'125',
+          nutriments:{'energy-kcal_100g':100,'proteins_100g':10,'carbohydrates_100g':5,'fat_100g':2} }})});
+      }
+      return vraiFetch.apply(this,arguments);
+    };
+    o.saisies=[]; o.douteux=[];
+    const lire=()=>{ const pr=_provFood({kcal:100,prot:10,carbs:5,fat:2})||{};
+                     return {s:pr.saisie, d:('codeDouteux' in pr)?pr.codeDouteux:'(absent)'}; };
+    try{
+      openAddFood();
+      // ⭐ CHEMIN 1 — la caméra : elle appelle _lookupBarcode SANS préciser, donc « scan »
+      await _lookupBarcode('3017620422003');                    let r=lire();
+      o.saisies.push(r.s); o.douteux.push(r.d);
+      // ⭐ CHEMIN 2 — la photo décodée par ZXing (clé vérifiée par le lecteur)
+      await _lookupBarcode('3017620422003','photo-code');        r=lire();
+      o.saisies.push(r.s); o.douteux.push(r.d);
+      // ⭐ CHEMIN 3 — la photo lue par l'IA, avec un code DOUTEUX (un chiffre changé)
+      await _lookupBarcode('3017620423003','photo-code-ia',true); r=lire();
+      o.saisies.push(r.s); o.douteux.push(r.d);
+      // ⭐⭐ CHEMIN 4 — LE CAS DE MICHEL : il TAPE les chiffres, par le vrai bouton
+      const inp=document.getElementById('af-bc-manual');
+      if(inp) inp.value='3017620422003';
+      _manualBarcode();
+      await new Promise(r2=>setTimeout(r2,320));                 r=lire();
+      o.saisies.push(r.s); o.douteux.push(r.d);
+      /* ⛔ ET UN CODE MAL TAPÉ, PAR LE MÊME BOUTON : il doit CHERCHER QUAND MÊME (R24 —
+         on prévient, on ne bloque pas) et laisser une trace dans la provenance. */
+      if(inp) inp.value='3017620423003';
+      _manualBarcode();
+      await new Promise(r2=>setTimeout(r2,320));                 r=lire();
+      o.tapeFauteSaisie=r.s; o.tapeFauteDrapeau=r.d;
+    }catch(e){ o.err=String(e&&e.message||e); }
+    finally{ window.fetch=vraiFetch; try{ closeAddFood(); }catch(e){} }
+    return o;
+  });
+
+  if(K.cleAbsente){ t('⛔ le contrôle de clé de contrôle existe', false, '_eanValide absente'); }
+  else{
+    t('⭐ CLÉ : deux vrais codes-barres du commerce sont acceptés',
+      K.nutella===true && K.coca===true, 'nutella='+K.nutella+' coca='+K.coca);
+    t('⭐⭐ CLÉ : UN SEUL CHIFFRE CHANGÉ est refusé — la faute de frappe qu\'on veut attraper',
+      K.nutellaFaute===false && K.cocaFaute===false, 'nutella*='+K.nutellaFaute+' coca*='+K.cocaFaute);
+    t('⛔ CLÉ : une longueur hors norme rend « je ne sais pas », pas « c\'est faux » (R29)',
+      K.longueurBizarre===null && K.vide===null, 'bizarre='+K.longueurBizarre+' vide='+K.vide);
+  }
+
+  {
+    const s=(K.saisies||[]).join(',');
+    t('⭐⭐ les QUATRE chemins écrivent QUATRE provenances distinctes (elles valaient toutes « scan »)',
+      s==='scan,photo-code,photo-code-ia,code-tape', 'reçu : '+s+(K.err?' · '+K.err:''));
+    t('⭐⭐ LE CAS DE MICHEL : taper les chiffres au clavier n\'est PLUS enregistré comme un « scan »',
+      (K.saisies||[])[3]==='code-tape', 'reçu : '+((K.saisies||[])[3]));
+    t('⭐ le drapeau « code douteux » est posé quand la clé est fausse…',
+      (K.douteux||[])[2]===true, 'reçu : '+((K.douteux||[])[2]));
+    t('⛔ … et ABSENT sur un chemin décodé — on n\'annonce pas une vérification qui n\'a pas eu lieu',
+      (K.douteux||[])[0]==='(absent)' && (K.douteux||[])[1]==='(absent)', 'reçu : '+(K.douteux||[]).join(' · '));
+    t('⛔⛔ un code MAL TAPÉ cherche quand même (on prévient, on ne bloque pas — R24) et laisse sa trace',
+      K.tapeFauteSaisie==='code-tape' && K.tapeFauteDrapeau===true,
+      'saisie='+K.tapeFauteSaisie+' douteux='+K.tapeFauteDrapeau);
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
+
+
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

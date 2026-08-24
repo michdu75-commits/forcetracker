@@ -6,7 +6,20 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v986`.
+- **Version en ligne (live) :** `ft-v987`.
+- 🔢⭐⭐ **« CE N'ÉTAIT PAS UN SCAN, J'AI RENTRÉ LE CODE-BARRE MANUELLEMENT »** (ft-v987).
+  Michel avait raison, et l'app se contredisait elle-même : son propre commentaire dit
+  *« `saisie` dit COMMENT c'est entré »* et les **quatre** chemins de code-barres
+  s'enregistraient tous en `'scan'`. ⭐ **Mesuré sur ses 23 entrées** : ses « 6 scans »
+  comptaient des saisies clavier — *la donnée censée trancher les questions produit était
+  fausse.* Quatre valeurs : `scan` · `photo-code` · `photo-code-ia` · `code-tape`.
+  ⛔⛔ **Le vrai apport est `_eanValide()`** — la clé de contrôle d'un EAN, arithmétique pure,
+  zéro réseau. *Le seul mode d'échec de ce chemin est SILENCIEUX : un chiffre faux ne donne pas
+  « introuvable », il donne le produit de quelqu'un d'autre.* Un chiffre changé sur Nutella et
+  sur Coca-Cola : refusé dans les deux cas. ⛔ **On prévient, on ne bloque pas** (R24).
+  ⚠️⚠️ **Mon témoin a attrapé mon propre défaut** : `_provFood` a une liste blanche, le drapeau
+  `codeDouteux` n'atteignait pas la donnée — **R4 dans la fonction qui documente R4**, 2ᵉ fois
+  au même endroit.
 - ✏️ **« À LA MAIN » EN PREMIER ET EN ROUGE** (ft-v986). Michel : *« intervertis, à la main en
   premier et en rouge »*. ⚠️⚠️ **Remplace une décision qui avait sa raison écrite (R30)** — le
   code-barres était premier depuis le 15/08 parce qu'il est **gratuit et pas caché derrière

@@ -406,7 +406,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v986`** (prochaine : `ft-v987`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v987`** (prochaine : `ft-v988`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -416,6 +416,27 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v987 — 🔢 « CE N'ÉTAIT PAS UN SCAN, J'AI RENTRÉ LE CODE-BARRE MANUELLEMENT »** — Michel, en me corrigeant. **Il avait raison, et l'app se contredisait elle-même.**
+
+**⛔⛔ SON PROPRE COMMENTAIRE DIT *« `saisie` dit COMMENT c'est entré »*** — et les **quatre** chemins de code-barres s'enregistraient tous en `'scan'` : la caméra, la photo décodée par ZXing, la photo lue par l'IA, et **les chiffres tapés au clavier**. *Taper treize chiffres n'est pas scanner.*
+
+**⭐ MESURÉ SUR SES 23 ENTRÉES RÉELLES, PAS SUPPOSÉ** : ses **« 6 scans » comptaient des saisies clavier**. Donc la donnée censée trancher les questions produit — celle que `docs/SUIVI-AUDIT.md` désigne comme *« la donnée pour trancher existe déjà »* — **était fausse**. Quatre valeurs désormais : `scan` · `photo-code` · `photo-code-ia` · `code-tape`.
+
+**⭐⭐ ET CE N'EST PAS COSMÉTIQUE — LES QUATRE N'ONT PAS LA MÊME FIABILITÉ.** `scan` et `photo-code` sont décodés par **ZXing, qui vérifie la clé de contrôle** ; `photo-code-ia` et `code-tape` sont des chiffres **non vérifiés**. *C'est l'échelle des sources de **R33** appliquée à un seul champ.*
+
+**⛔⛔ D'OÙ LE VRAI APPORT : `_eanValide()`** — la clé de contrôle d'un EAN-8/12/13, de l'arithmétique pure, **zéro réseau**. ⭐ **Pourquoi elle compte ici et nulle part ailleurs** : le seul mode d'échec de ce chemin est **SILENCIEUX**. Un chiffre faux ne donne pas *« introuvable »*, il donne **le produit de quelqu'un d'autre**, avec un vrai nom et de vraies calories. *Une erreur qui ressemble à un succès ne se voit jamais.* **Mesuré** : un seul chiffre changé sur Nutella **et** sur Coca-Cola est refusé dans les deux cas.
+
+**⛔ ON NE BLOQUE PAS (R24)** : les codes internes de magasin ne suivent pas la norme — on **prévient** et on cherche quand même, en laissant la trace dans la provenance. Et une longueur hors norme rend `null` : *« je ne sais pas » n'est pas « c'est faux »* (**R29**).
+
+**⚠️ ET LE MESSAGE REMPLACE le « Recherche du produit… », il ne s'empile pas dessus** — sinon il serait écrasé en une demi-seconde et personne ne le lirait. *C'est la leçon de ft-v985 : un avertissement qu'on ne peut pas voir n'existe pas.*
+
+**⚠️⚠️ ET MON PROPRE TÉMOIN A ATTRAPÉ MON PROPRE DÉFAUT.** `_provFood` construit une **liste blanche** : le drapeau `codeDouteux` s'arrêtait à cette fonction et **n'atteignait jamais l'entrée enregistrée** — sans erreur, sans test rouge. ***C'est R4 dans la fonction qui documente R4***, et c'est la **deuxième fois au même endroit** (la première, c'était `etat`, le 19/08).
+
+**⚠️ MON 1ᵉʳ ESSAI DE MESURE N'A RIEN MESURÉ NON PLUS** : j'écrivais `window._bcNutr`, qui est une variable de **script** — les quatre appels plantaient sur `null.name` et le témoin accusait le mauvais coupable. **3ᵉ fois cette semaine** (`_afSuggLoc`, `_miloPendingIdx`). Le témoin passe désormais par le **vrai chemin**, en remplaçant le **réseau** et rien d'autre.
+
+⚠️ **Comportement différé mais nommé (R3)** : personne ne lit encore `codeDouteux`. Il existe pour qu'un audit puisse un jour retrouver les entrées venues d'un code non vérifié — pas pour être affiché aujourd'hui.
+Tests : **parcours 1279/1279** (+8, bloc CIV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 4 rouges, et il est INSTRUCTIF** — le détail imprimé *est* le bug : **`reçu : scan,scan,scan,scan`**, et pour le cas de Michel **`reçu : scan`**. ⭐⭐ **Le témoin des quatre chemins a été sorti du garde EXPRÈS** : il mesure un comportement qui **existait déjà, mal**, donc il tourne des deux côtés — sinon le contrôle négatif n'aurait dit qu'une chose, *« la fonction n'existe pas »*, et n'aurait rien prouvé (leçon de ft-v968). ⚠️ **Et un vert est un FAUX vert, autant l'écrire** : *« le drapeau est ABSENT sur un chemin décodé »* passe tout seul contre l'ancien code, où le drapeau n'existe nulle part. Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v987. |
 
 **ft-v986 — ✏️ « À LA MAIN » EN PREMIER ET EN ROUGE — et deux témoins qui rougissaient à minuit** — Michel : *« intervertis, à la main en premier et en rouge »*.
 
@@ -734,21 +755,6 @@ Tests : **parcours 1109/1109** (+9, bloc LXXXVIII), calculs 266/266, muscles 241
 
 **⭐ LES 5 BOUTONS DE REPAS N'ONT DEMANDÉ AUCUN CODE** : la modale d'ajout et celle de modification se génèrent déjà depuis `FOOD_MEALS`. *Une liste qui est la source de vérité (R1) fait apparaître la nouveauté partout d'un coup.*
 Tests : **parcours 1100/1100** (+9, bloc LXXXVII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge** — le regroupement n'existe pas. ⚠️ **Peu instructif, et autant l'écrire** : 7 témoins vivent sous le garde, donc ils **ne tournent pas** (1093 exécutées au lieu de 1100). ⭐⭐ **MAIS UN TÉMOIN EST SORTI DU GARDE EXPRÈS, et c'est le plus important du bloc** : *un repas inconnu retombe sur DÉJEUNER*. Il mesure un comportement qui **existait déjà**, il est donc **vert des deux côtés** — et c'est exactement ce qu'on veut voir : *un rangement se juge à ce qui n'a PAS bougé.* Derrière le garde, il n'aurait rien mesuré. ⚠️⚠️ **ET J'AI DÛ M'Y REPRENDRE À TROIS FOIS POUR OBTENIR CE CHIFFRE.** ① J'ai lancé le contrôle négatif **pendant qu'une autre passe tournait** : le `git stash` a échangé les fichiers **au milieu** du run, qui a planté — *une trace d'erreur qui n'accusait que ma propre concurrence.* ② Puis le bloc **tuait le runner** contre l'ancien code (`_journalPli` absente, exception hors de `pg.evaluate`) : **aucun verdict imprimé du tout**, pas même un rouge. C'est la leçon de ft-v957 repayée — *un témoin qui tue le harnais ne mesure rien*. Le garde couvre désormais la fonction réellement neuve. Fichiers : `app.js`, `screens.js`, `style.css`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v968. |
-
-**ft-v967 — 🛡️ « JE NOTE » PUIS LA SÉANCE : la note est HONORÉE, pas vide** — Michel envoie **la réponse exacte** qui levait le drapeau : *« Et le Butterfly (Pec Deck) en début de séance — **je note**, c'est ton choix, je le respecte »*.
-
-**⛔ ET LE PEC DECK EST DANS LA SÉANCE QU'IL RECONSTRUIT DIX LIGNES PLUS BAS.** Il note **et applique dans le même message** : *il n'y a rien à différer, donc rien à enregistrer.* Ce n'est pas une promesse vide, c'est un **accusé de réception suivi de son exécution**.
-
-**⭐ LE CRITÈRE EST OBSERVABLE, PAS UNE DEVINETTE** : *une SÉANCE est-elle produite ici* (au moins 3 blocs `N×N`) **et** *aucun mot de report* ? — alors la note est honorée. **⛔⛔ Et le report l'emporte toujours** : *« je note **pour la prochaine fois** »* suivi d'une séance **reste** un drapeau — *sinon il suffirait de joindre un tableau pour désarmer le garde-fou.*
-
-**⭐ MESURÉ DANS LES DEUX SENS AVANT D'ÊTRE ÉCRIT** : sur ses 119 réponses, **3 drapeaux → 2**, et les 2 gardés sont exactement les vrais. Les **3 vraies de ft-v944 restent gardées** — dont *« le Leg Curl avant le Face Pull, c'est noté »*, qui n'a **aucun** mot de report, parce qu'elle **ne produit pas de séance**.
-
-**⚠️⚠️ ET CETTE VERSION CORRIGE UN VERDICT QUE J'AVAIS ÉCRIT UNE HEURE PLUS TÔT.** J'ai titré *« ft-v923 NE TIENT PAS — mesuré »* à partir d'un compteur **dont je n'avais lu aucun des 5 textes**. **C'est exactement `BUGS.md` 12quater** — *conclure d'un nombre sans regarder ce qu'il compte* — **refaite deux heures après avoir écrit la famille qui la décrit.** 👉 Ce qui est réellement établi : **2 vraies promesses non tenues, toutes deux ANTÉRIEURES aux correctifs** (09/08 et 19/08). Les 5 en direct restent **non lus** : *on ne conclut ni « ça tient » ni « ça ne tient pas ».*
-
-**⚠️ 2ᵉ CALIBRATION DE CE MOTIF SUR DE VRAIES CONVERSATIONS — et la 2ᵉ fois qu'elle vient de Michel** (**R19** : un garde-fou juste une fois sur deux ne survit pas à son premier mois).
-
-**⭐⭐ ET LA SOIRÉE A PRODUIT 5 SCÉNARIOS DE PLUS** (journal de test à **36**), dont l'analyse de GPT sur cette même séance : ⛔ **ne pas attribuer à Milo les choix de l'utilisateur** (le superset ET le Pec Deck étaient **imposés par Michel** — Milo y fait bien son travail) · ⭐ la **provenance des décisions**, qui est le motif de `_provFood` transposé aux séances (**R13**) · ⚠️ le **repos qui ne suit pas l'intensité** — et **Michel a tranché lui-même** : *« un 3×5 avec 90 secondes de repos c'est IMPOSSIBLE »*, donc une prescription **inexécutable**, pas discutable. ⭐ **GPT se trompe sur un point, vérifié dans le code** (**R28**) : `exRestPref` est **déjà** transmis à Milo depuis le 12/08.
-Tests : **parcours 1091/1091** (+2, bloc LXXVIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `coach.js`, `clone/coach.js`, `tests/parcours/runner.js`, `docs/JOURNAL-DE-TEST.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v967. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

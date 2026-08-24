@@ -979,10 +979,23 @@ let _bcNutr=null; // {name, kcal100, prot100, carbs100, fat100}
    ⚠️ DEUX AXES, PAS UN (corrigé par le contre-audit du 18/08) : `saisie` dit COMMENT c'est
    entré, `origine` dit D'OÙ VIENT LE CHIFFRE. Les confondre perd l'information dans les deux
    sens — « manuel » finirait par désigner deux choses différentes selon le contexte.
-       code-barres scanné   → saisie:'scan'      origine:'off'
+       code-barres scanné (caméra)  → saisie:'scan'           origine:'off'
+       code-barres photographié     → saisie:'photo-code'     origine:'off'
+       code-barres lu par l'IA      → saisie:'photo-code-ia'  origine:'off'
+       code-barres TAPÉ à la main   → saisie:'code-tape'      origine:'off'
        aliment tapé à la main → saisie:'manuel'  origine:'utilisateur'
        photo d'étiquette    → saisie:'photo-ia'  origine:'etiquette'
        phrase estimée par l'IA → saisie:'ia-texte' origine:'ia'
+
+   ⚠️⚠️ LES QUATRE CHEMINS DE CODE-BARRES ONT ÉTÉ SÉPARÉS LE 23/08/2026 — ils s'enregistraient
+   tous en `'scan'`. Michel : *« ce n'était pas un scan, j'ai rentré le code-barre manuellement »*.
+   **Il avait raison, et ce commentaire-ci se contredisait lui-même** (« `saisie` dit COMMENT
+   c'est entré »). Mesuré : ses « 6 scans » comptaient en réalité des saisies clavier.
+   ⭐ Ce n'est pas cosmétique — les quatre n'ont pas la même fiabilité : `scan` et `photo-code`
+   sont décodés par ZXing, qui VÉRIFIE la clé de contrôle ; `photo-code-ia` et `code-tape` sont
+   des chiffres non vérifiés, d'où `_eanValide()` et le drapeau `codeDouteux`.
+   ⚠️ RÉTROCOMPATIBLE : les entrées existantes gardent `'scan'`. On ne réécrit pas le passé —
+   on saura seulement que, avant cette date, `'scan'` couvrait les quatre.
 
    ⚠️ ON N'INVENTE RIEN : ce qu'on ne sait pas reste `null`. Un `etat` (cru/cuit) ne pourra être
    rempli qu'à partir de la base d'aliments (brique 1) — le champ existe dès maintenant pour que
@@ -1031,6 +1044,15 @@ function _provFood(vals){
        sont « telles que vendues », c'était écrit en commentaire — et ça n'atteignait pas
        l'entrée enregistrée. R4, dans le fichier qui documente R4. */
     if(_afSrc.etat)p.etat=_afSrc.etat;
+    /* ⚠️⚠️ ET LE MÊME OUBLI A FAILLI SE REFAIRE ICI, LE 23/08/2026 — dans la fonction qui
+       porte déjà le commentaire ci-dessus. `_provFood` construit une LISTE BLANCHE : un champ
+       posé par `_afSetSrc` et non recopié ici **n'atteint jamais l'entrée enregistrée**, sans
+       erreur, sans test rouge. Le drapeau « code-barres douteux » était dans la provenance en
+       mémoire et s'arrêtait à cette ligne. *C'est R4 dans le fichier qui documente R4, deux
+       fois au même endroit.*
+       ⛔ Posé SEULEMENT s'il est vrai : un `false` recopié partout annoncerait une
+       vérification qui n'a pas eu lieu sur les chemins décodés par ZXing. */
+    if(_afSrc.codeDouteux===true)p.codeDouteux=true;
     const a=_afSrc.attendu;
     if(a&&vals) p.modifie=['kcal','prot','carbs','fat'].some(k=>(+a[k]||0)!==(+vals[k]||0));
   }
@@ -1142,7 +1164,7 @@ async function onBarcodeFile(input){
     try{reader.reset&&reader.reset();}catch(e){}
     URL.revokeObjectURL(url);
     if(!code){toast('Code-barres illisible — rapproche-toi ou saisis à la main','error');return;}
-    await _lookupBarcode(code);
+    await _lookupBarcode(code, 'photo-code');   // décodé par ZXing : la clé de contrôle est vérifiée
   }catch(e){URL.revokeObjectURL(url);toast('Erreur scan : '+(e.message||e),'error');}
 }
 // Récupère un produit Open Food Facts — essaie l'API v2 (champs) PUIS v0 (repli).
@@ -1166,15 +1188,48 @@ async function _offFetchProduct(ean){
   }
   return null;
 }
+/* 🔢 LA CLÉ DE CONTRÔLE D'UN CODE-BARRES — de l'arithmétique, aucun réseau (23/08/2026).
+   Un EAN-8/12/13 porte un dernier chiffre CALCULÉ à partir des autres. Une faute de frappe sur
+   un seul chiffre casse la clé ~9 fois sur 10.
+   ⭐⭐ POURQUOI ÇA COMPTE ICI, ET SEULEMENT ICI : le seul mode d'échec de ce chemin est
+   SILENCIEUX. Un chiffre faux ne donne pas « introuvable » — il donne **le produit de
+   quelqu'un d'autre**, avec un vrai nom, de vraies calories, et rien qui cloche à l'écran.
+   *Une erreur qui ressemble à un succès ne se voit jamais.*
+   ⛔ ON NE BLOQUE PAS (R24) : les codes internes de magasin et certains courts ne respectent
+   pas la norme. On prévient, on cherche quand même, et on garde la trace dans la provenance.
+   ⚠️ Une longueur non normalisée rend `null` — « je ne sais pas » n'est pas « c'est faux ». */
+function _eanValide(code){
+  const c=String(code||'').replace(/\D/g,'');
+  if(c.length!==8 && c.length!==12 && c.length!==13) return null;
+  let s=0;
+  for(let i=c.length-2;i>=0;i--) s += (+c[i]) * (((c.length-2-i)%2===0)?3:1);
+  return ((10-(s%10))%10) === (+c[c.length-1]);
+}
 // Saisie manuelle du code-barres (repli quand le scan galère + test facile)
 function _manualBarcode(){
   const inp=document.getElementById('af-bc-manual');
   const code=inp?(inp.value||'').replace(/\D/g,''):'';
   if(code.length<8){toast('Tape le code-barres complet (au moins 8 chiffres)','error');return;}
-  _lookupBarcode(code);
+  /* ⚠️ LE MESSAGE REMPLACE LE « Recherche du produit… », il ne s'empile pas dessus — sinon il
+     serait écrasé en une demi-seconde et personne ne le lirait. C'est la leçon de ft-v985 :
+     un avertissement qu'on ne peut pas voir n'existe pas. */
+  const douteux = (_eanValide(code)===false);
+  if(douteux) toast('⚠️ Ce code semble mal tapé — je cherche quand même, vérifie bien le nom du produit','info');
+  _lookupBarcode(code, 'code-tape', douteux);
 }
-async function _lookupBarcode(ean){
-  toast('Recherche du produit…','info');
+/* ⚠️ `saisie` DIT COMMENT C'EST ENTRÉ — et jusqu'au 23/08/2026 les QUATRE chemins de code-barres
+   s'enregistraient tous en `'scan'`. Michel : *« ce n'était pas un scan, j'ai rentré le code-barre
+   manuellement »*. **Il a raison, et c'est le contrat que ce fichier s'était donné lui-même**
+   (voir la table de provenance plus haut). Mesuré sur ses 23 entrées : « scan 6 » comptait en
+   réalité des saisies clavier — donc la donnée censée servir à trancher les questions produit
+   était fausse.
+   ⭐ ET CE N'EST PAS DE LA PÉDANTERIE : les quatre chemins n'ont pas la même FIABILITÉ.
+     · `scan` / `photo-code`  → décodés par ZXing, qui VÉRIFIE la clé de contrôle → sûrs
+     · `photo-code-ia`        → des chiffres lus par un modèle → non vérifiés
+     · `code-tape`            → des chiffres tapés par un humain → non vérifiés
+   C'est l'échelle des sources de **R33**, appliquée à un seul champ. */
+async function _lookupBarcode(ean, saisie, codeDouteux){
+  if(!codeDouteux) toast('Recherche du produit…','info');
   let p=null;
   try{ p=await _offFetchProduct(ean); }
   catch(e){ toast('Réseau indisponible pour la recherche produit','error'); return; }
@@ -1189,7 +1244,7 @@ async function _lookupBarcode(ean){
     fat100:Math.round(n['fat_100g']||0)
   };
   if(!_bcNutr.kcal100&&!_bcNutr.prot100&&!_bcNutr.carbs100&&!_bcNutr.fat100){toast('Produit trouvé mais sans infos nutritionnelles — saisis à la main','error');return;}
-  _offRemplirFormulaire(p, ean, 'scan');
+  _offRemplirFormulaire(p, ean, saisie||'scan', codeDouteux===true);
   toast('Produit trouvé ✅ — ajuste la quantité','success');
 }
 /* 🍽️ REMPLIR LE FORMULAIRE À PARTIR D'UN PRODUIT OPEN FOOD FACTS (22/08/2026).
@@ -1197,7 +1252,7 @@ async function _lookupBarcode(ean){
    chemin : mêmes grammes, même provenance, même avertissement cru/cuit, même score santé.
    Deux chemins séparés finiraient par diverger — et c'est l'avertissement du ×2,7 (le paquet
    de pâtes scanné puis pesé cuit) qui serait perdu d'un côté sans que personne ne le voie (R2). */
-function _offRemplirFormulaire(p, sourceId, saisie){
+function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux){
   // Quantité par défaut : portion si connue, sinon 100 g
   const serv=parseFloat(p.serving_quantity)||0;
   const g=serv>0?serv:100;
@@ -1209,8 +1264,12 @@ function _offRemplirFormulaire(p, sourceId, saisie){
   // ⚠️ Les valeurs d'Open Food Facts sont « TELLES QUE VENDUES » : un paquet de pâtes scanné
   //    donne les valeurs SÈCHES. On enregistre donc `per100` et l'`origine` — c'est ce qui
   //    permettra, quand la base d'aliments existera, de rattraper l'état sans re-demander.
+  /* ⚠️ `codeDouteux` N'EST POSÉ QUE S'IL EST VRAI — on n'écrit pas `false` partout. Un champ
+     absent veut dire « rien à signaler » ; le poser à false sur des millions d'entrées
+     donnerait l'illusion d'une vérification qui n'a pas eu lieu sur les chemins décodés. */
   _afSetSrc({saisie:saisie||'scan',origine:'off',sourceId:sourceId?String(sourceId).slice(0,32):null,
     etat:'tel-que-vendu',
+    ...(codeDouteux?{codeDouteux:true}:{}),
     per100:{kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
     attendu:_afLuFormulaire()});
   _afNoteEtat(_bcNutr.name);
@@ -1544,7 +1603,12 @@ async function onBarcodePhotoIA(input){
     // L'IA a lu le numéro → décompte 1 essai (comme l'étiquette), la recherche produit reste gratuite
     if(!S.premium){S.foodAiUses=(S.foodAiUses||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();if(typeof _renderAfAiNote==='function')_renderAfAiNote();}
     const mi=document.getElementById('af-bc-manual');if(mi)mi.value=d.barcode;
-    await _lookupBarcode(d.barcode);
+    /* ⚠️ CE SONT DES CHIFFRES LUS PAR UN MODÈLE, PAS DÉCODÉS : aucune clé de contrôle n'a été
+       vérifiée par le lecteur. On applique donc le même contrôle qu'à une saisie clavier —
+       un « 8 » pris pour un « 6 » donnerait le produit de quelqu'un d'autre, en silence. */
+    const _dout=(_eanValide(d.barcode)===false);
+    if(_dout) toast('⚠️ Le numéro lu semble incomplet — vérifie bien le nom du produit trouvé','info');
+    await _lookupBarcode(d.barcode, 'photo-code-ia', _dout);
   }catch(e){toast('Erreur : '+(e.message||e),'error');}
 }
 async function estimateFoodAI(){
