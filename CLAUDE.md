@@ -425,7 +425,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v995`** (prochaine : `ft-v996`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v996`** (prochaine : `ft-v997`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -435,6 +435,25 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v996 — 🏷️ UN NOM D'EXERCICE ABRÉGÉ RETROUVE SA FICHE — « je n'ai plus la figurine sur ce mouvement-là »** — Michel, deux captures à l'appui, en repartant d'une vieille question sur les adducteurs.
+
+**⛔⛔ LES ADDUCTEURS N'ÉTAIENT PAS EN CAUSE — ils sont réglés depuis ft-v921** (Michel avait tranché : *« Abducteur/Adducteur ce n'est pas pareil hein »*). Vérifié dans un vrai navigateur avant de toucher au code : `Adduction Cuisses` rend bien `{adductors:2}`. *Le symptôme désignait le mauvais coupable.*
+
+**⭐⭐ LA VRAIE CAUSE EST LE NOM.** Sa séance portait **« Hip Thrust Barre »** et **« Abduction Cuisses »** — les noms **COURTS**. Le catalogue, lui, les connaît sous *« Hip Thrust Barre (Poussée de Hanche) »* et *« Abduction Cuisses (Leg Abduction) »*. **77 exercices portent une parenthèse explicative**, et quand Milo prescrit une séance il **abrège** — ce nom court est alors stocké tel quel.
+
+**⛔⛔ LE DÉFAUT EST SILENCIEUX, ET C'EST CE QUI LE REND COÛTEUX.** Le calcul des muscles s'en sortait (il retombe sur les règles `_MEX`, qui **devinent**) : rien ne plantait, rien ne rougissait. Mais tous les lookups qui exigent le nom **exact** — animation, tutoriel, silhouette du groupe — échouaient sans bruit. Résultat à l'écran : *« Muscle principal deviné »* + *« 📷 Ajouter la photo de ta machine »*, alors que `hip-thrust-barre.webp` et `leg-abduction-machine-v2.webp` étaient **déjà dans le dépôt**. ⭐ ***L'app proposait d'ajouter une photo qu'elle avait sous la main.***
+
+**⭐⭐ ET LE MÉCANISME EXISTAIT DÉJÀ, POSÉ D'UN SEUL CÔTÉ — 3ᵉ fois après ft-v973 et ft-v975 (R8/R13).** `_matchExercise` porte depuis le **09/08** une étape *« exact sans la parenthèse »*, écrite pour **exactement** ce cas (Michel, déjà, sur un vrai programme de Milo). Elle ne servait qu'à l'**import** ; l'affichage ne l'a jamais eue. *Une correction faite d'un côté et pas de l'autre est un oubli, pas un arbitrage.*
+
+**⛔ UN SEUL PROPRIÉTAIRE (R2)** : `exNomCatalogue()` dans `constants.js`, à côté de `exNomActuel` — posé aux **6** lookups exacts de `log.js` (comptés avant de corriger, famille #3 de `BUGS.md`). ⛔ **Les lignes qui lisent ce que la personne a rangé sous SON nom restent exactes**, exprès : photo perso et `exPhotos` ne sont pas du catalogue.
+
+**⛔ DÉTERMINISTE SEULEMENT — aucun rapprochement flou** (**R29**, le coût de l'erreur décide) : montrer l'animation d'un **autre** exercice est pire que n'en montrer aucune — la personne apprendrait un mouvement qu'elle n'a pas prescrit.
+
+**⛔⛔ ET LE ZÉRO-COLLISION EST MESURÉ — c'est même la CONDITION de la table, pas un effet de bord.** Vérifié sur les **324** exercices : 77 parenthèses → **77 bases distinctes, 0 collision**, et aucune base qui soit déjà le nom complet d'un autre. Toute base ambiguë est **RETIRÉE** plutôt qu'arbitrée : si le catalogue grandit et crée une collision, l'abréviation **cesse d'être résolue** (retour à l'ancien comportement) — jamais elle ne pointe vers le mauvais exercice. *Le mode d'échec choisi est « je ne sais pas », jamais « voilà, tiens ».*
+
+**⚠️⚠️ ET LA MÊME CAUSE A UN 2ᵉ EFFET, PLUS LARGE — NON CORRIGÉ ICI, ET LAISSÉ OUVERT EXPRÈS.** `_mscScores` appelle `exMuscles(ex.name)` en nom **exact** : un nom abrégé rate donc la **DONNÉE ÉCRITE** et retombe sur la **DEVINETTE**, alors que le bloc dit lui-même *« la donnée écrite passe avant les règles »*. **Mesuré : 55 des 77** abréviations donnent des muscles **différents**, et *« Inclinaison Lombaire »* n'en donne **aucun** (figurine entièrement grise). ⭐ **L'exemple qui coûte** : *« Rowing Poitrine Appuyée »* abrégé **recrédite le bas du dos**, alors que la fiche du 02/08 l'avait retiré **exprès** (poitrine appuyée = colonne non chargée). 👉 **Non livré parce que ça change la figurine, la couleur du calendrier et les calories de séances PASSÉES** — c'est un arbitrage de Michel (**R29** / règle d'or #10), pas un détail technique. **C'est R31** : la figurine est le vocabulaire, et l'imprécision se propage jusqu'au contexte de Milo.
+Tests : **parcours 1362/1362** (+8, bloc CIX), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 4 rouges, et il est INSTRUCTIF** — le détail imprimé *est* la capture de Michel : **`reçu : null`** trois fois. ⭐ **Et 2 des verts sont de VRAIS verts** : le nom **complet** garde exactement la même image qu'avant (non-régression), et le contrôle de collisions tourne des **deux** côtés (il mesure `EXLIB`, pas le résolveur). ⚠️ **Les 2 autres sont de FAUX verts, autant l'écrire** : *« un exercice perso ne reçoit aucune image inventée »* et *« aucun nom du catalogue modifié »* passent tout seuls contre l'ancien code, où le résolveur n'existe pas. Fichiers : `constants.js`, `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v996. |
 
 **ft-v995 — 🏃 LE CARDIO DE MILO VA DANS SON BLOC, PAS DANS LES EXERCICES** — Michel, **en salle**, capture à l'appui : *« il me rajoute le vélo elliptique alors qu'on a un onglet exprès pour le cardio »*.
 
@@ -757,23 +776,6 @@ Tests : **parcours 1192/1192** (+10, bloc XCVI), calculs 266/266, muscles 241/24
 
 **⛔⛔ ET UN SECOND ESSAI EST DÉLIBÉRÉMENT **NON** PROMU (ft-v611), avec sa raison écrite dans le code** : il raccourcissait *« 8 questions gratuites »* en *« 8 questions »*. Ça gagne quelques pixels **sur le dos de ce que la personne comprend de son compte** — *« 8 questions » se lit comme un plafond définitif*. On ne prend pas de la place à la clarté. *Un maintien sous garde s'écrit comme un retrait* (**R30**), sinon le suivant « répare » une décision.
 Tests : **parcours 1182/1182** (+7, bloc XCV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `style.css`, `coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v977. |
-
-**ft-v976 — 🧪 LE CLONE DE TEST EST RETIRÉ** — Michel : *« ai-je encore besoin du clone ? »*, puis, la mesure en main : *« plus besoin des clones, ça permettra de gagner du temps »*.
-
-**⭐ MESURÉ AVANT DE COUPER (R30 — un retrait se décide, il ne se constate pas), et le chiffre est net** : sur les **60 dernières versions**, le dossier `clone/` a changé **à chaque fois**… et **zéro fois tout seul**. *Il n'a donc jamais servi de bac à sable sur cette période — il recopiait la prod.* Sa raison d'être (04/07/2026) était d'essayer un restylage complet **avant** la prod, parce qu'un dépôt séparé m'était impossible. Cette raison n'a plus de cas actuel.
-
-**⛔ CE QU'IL COÛTAIT ÉTAIT RÉEL** : 8 fichiers à dupliquer par version, un correctif propre au clone à re-poser (les chemins `../data/`), son `sw.js` à synchroniser, 2,8 Mo, et une **deuxième source de vérité** qui peut diverger sans rien casser.
-
-**⚠️⚠️ ET LE PIÈGE S'EST DÉCLENCHÉ LE JOUR MÊME, C'EST CE QUI A DÉCLENCHÉ SA QUESTION** : en synchronisant, un `cp` un peu vite a **effacé 91 lignes de `clone/index.html`** — le shim qui isole ses données des vraies. Repéré et restauré. ⭐ **Or un script de synchro existait** (`build_clone.py`), avec justement un garde-fou *« shim clone introuvable — abandon, rien écrasé »*. *Un outil qu'on contourne ne protège rien.*
-
-**⛔⛔ LES GARDES `window.__FT_CLONE__` SONT CONSERVÉES EXPRÈS, ET LA RAISON EST ÉCRITE DANS LE CODE** : plusieurs **essais** vivent derrière elles, et les débrancher les rendrait soit **universels**, soit **perdus** — deux changements de comportement que personne n'a demandés. *On a supprimé le clone, pas arbitré ses expériences.*
-
-**👉 CE QUI SE RETROUVE DONC PARQUÉ SANS MOYEN DE L'ESSAYER, et c'est à trancher séparément** : ① les **zones de santé lues dans le texte** d'une mémoire acceptée (`coach.js`) · ② le **header compacté** (`style.css`, marqué *« à promouvoir si Michel valide »* depuis ft-v610) · ③ la **« promesse » d'inscription** (`.ob-clone-only`) · ④ la consigne de **mémoire des blessures** (retenir la conséquence durable, pas l'anecdote) · ⑤ les outils de test (questions illimitées, refaire l'inscription). ⚠️ **Le badge du Gardien, lui, ne se perd pas** : il est aussi ouvert à l'admin.
-
-**⛔ DEUX TÉMOINS ONT DÛ ÊTRE TRAITÉS, ET DIFFÉREMMENT** : celui des boutons de rejeu est **reciblé** (la garantie ne change pas, elle ne porte plus que sur un fichier) ; celui qui vérifiait que *« le clone a exactement le même menu »* est **retiré avec sa raison écrite à sa place** — *ce qu'il protégeait, deux copies qui dérivent, a disparu avec la seconde copie.*
-
-**👉 ET SI UN BAC À SABLE REDEVIENT NÉCESSAIRE**, il se refabrique depuis la prod en quelques minutes — c'est exactement comme ça qu'il est né.
-Tests : **parcours 1175/1175** (−1, exactement le témoin de parité du clone retiré), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Un retrait ne se juge pas à un contrôle négatif mais à ce qui n'a PAS bougé** : les 1 176 témoins de la version précédente doivent rester verts sans le clone. Fichiers : `clone/*` (supprimé), `build_clone.py` (supprimé), `app.js`, `tests/parcours/runner.js`, `tests/milo/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v976. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
