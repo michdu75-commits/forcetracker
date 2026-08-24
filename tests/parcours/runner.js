@@ -12053,6 +12053,78 @@ console.log('\n-- CVII. La mémoire élargie ouverte à tout le monde (ft-v992) 
   await cx.close();
 }
 
+// ════════════════════════════════════════════════════════════════════
+console.log('\n-- CVIII. La course `_saveCoachMemory` (ft-v993) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pc=await cx.newPage();
+  await pc.addInitScript(seedScript({}));
+  await pc.goto('http://localhost:'+PORT+'/index.html');
+  await pc.waitForTimeout(2200);
+  const RC=await pc.evaluate(async()=>{
+   try{
+    const o={};
+    /* ⚠️ ON REMPLACE LE RÉSEAU, ET RIEN D'AUTRE : les deux appels passent par la VRAIE
+       fonction. Le faux serveur se comporte comme le vrai — il rend « ce qu'on lui envoie
+       + le fait nouveau », donc perdre un fait se VOIT dans la chaîne finale. */
+    const poser=()=>{ S.url='https://exemple.invalid/exec'; S.email='t@exemple.fr';
+      S.coachMemory='DEPART'; localStorage.setItem('ft4_coach_mem','DEPART'); };
+    const faux=(plan)=>{ let n=0; const recus=[];
+      window.fetch=(url,opt)=>{ const body=JSON.parse(opt.body); const i=n++;
+        recus.push(body.existingMemory);
+        const p=plan[i]||{delai:10,fait:'X'};
+        return new Promise((res,rej)=>setTimeout(()=>{
+          if(p.echec) return rej(new Error('réseau coupé'));
+          res({json:async()=>({summary:(body.existingMemory||'')+'|'+p.fait})});
+        }, p.delai)); };
+      return recus; };
+    const vrai=window.fetch;
+
+    // ① LE CŒUR : le 1ᵉʳ appel est LENT, le 2ᵉ RAPIDE — le cas qui faisait perdre un fait
+    poser();
+    let recus=faux([{delai:300,fait:'A'},{delai:30,fait:'B'}]);
+    _saveCoachMemory(); await new Promise(r=>setTimeout(r,20)); _saveCoachMemory();
+    await new Promise(r=>setTimeout(r,900));
+    o.finale=S.coachMemory; o.stock=localStorage.getItem('ft4_coach_mem');
+    o.aA=/A/.test(o.finale||''); o.aB=/B/.test(o.finale||'');
+    o.secondVoitLePremier=/A/.test(recus[1]||'');   // il a relu la mémoire À JOUR
+
+    // ② LA FILE NE SE CASSE PAS : un échec réseau ne doit pas geler la mémoire ensuite
+    poser();
+    recus=faux([{delai:30,echec:true},{delai:30,fait:'C'}]);
+    _saveCoachMemory(); await new Promise(r=>setTimeout(r,20)); _saveCoachMemory();
+    await new Promise(r=>setTimeout(r,600));
+    o.apresEchec=S.coachMemory; o.survitAEchec=/C/.test(o.apresEchec||'');
+
+    // ③ ON NE BLOQUE JAMAIS L'APPELANT (règle d'or #3 : le réseau n'attend personne)
+    poser(); faux([{delai:400,fait:'D'}]);
+    const t0=performance.now(); _saveCoachMemory(); o.rendLaMainEnMs=performance.now()-t0;
+    await new Promise(r=>setTimeout(r,600));
+
+    // ④ SANS e-mail, rien ne part (invariant d'avant, il ne doit pas bouger)
+    S.email=''; recus=faux([{delai:10,fait:'E'}]);
+    await _saveCoachMemory(); o.rienSansEmail=(recus.length===0);
+
+    window.fetch=vrai;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  const tc=(n,c,x)=>t(n, !RC.erreur && c, RC.erreur?'bloc en erreur':x);
+  if(RC.erreur){ t('⛔ le bloc « course mémoire » s\'exécute', false, RC.erreur); }
+  tc('⛔⛔ DEUX résumés concurrents : AUCUN fait n\'est perdu (règle d\'or #3)',
+    RC.aA===true && RC.aB===true, 'mémoire finale : "'+RC.finale+'"');
+  tc('⭐⭐ … parce que le 2ᵉ appel RELIT la mémoire déjà mise à jour par le 1ᵉʳ',
+    RC.secondVoitLePremier===true, 'le 2e a envoyé une mémoire périmée');
+  tc('⭐ le stockage local dit la même chose que `S` (pas deux vérités — R2)',
+    RC.finale===RC.stock, RC.finale+' vs '+RC.stock);
+  tc('⭐⭐ un ÉCHEC réseau ne gèle pas la file : le résumé suivant passe quand même',
+    RC.survitAEchec===true, 'après échec : "'+RC.apresEchec+'"');
+  tc('⛔ l\'appelant n\'attend JAMAIS le réseau (fire-and-forget conservé, règle d\'or #3)',
+    RC.rendLaMainEnMs!=null && RC.rendLaMainEnMs<50, 'a rendu la main en '+Math.round(RC.rendLaMainEnMs||-1)+' ms');
+  tc('⭐ sans e-mail, aucun appel ne part (invariant d\'avant, inchangé)', RC.rienSansEmail===true);
+  await cx.close();
+}
+
 // ── ⭐⭐ LE BANC D'ESSAI DOIT POUVOIR JUGER CE CHANGEMENT (R34) ────────────────────────────
 // Mesuré le 24/08 AVANT de livrer : sur les 21 scénarios d'alors, **aucun** n'avait plus de
 // 1 séance — l'avant/après R34 aurait donc comparé deux contextes IDENTIQUES et rendu « aucune

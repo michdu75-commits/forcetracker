@@ -6504,8 +6504,29 @@ function _ecrireExport(avecConversations, seancesSeules){
   }catch(e){toast('Erreur export : '+e.message,'error');}
 }
 
+/* ⛔⛔ LA COURSE EST PROUVÉE, PAS SUPPOSÉE (ft-v993, 24/08/2026). Mesurée dans un navigateur,
+   en remplaçant le RÉSEAU et rien d'autre : deux résumés déclenchés à 20 ms d'écart envoient
+   tous les deux `existingMemory:"MÉMOIRE DE DÉPART"`, et le dernier REVENU écrase l'autre.
+   Résultat mesuré : « FAIT-B » perdu, sans erreur, sans trace. *Une mémoire acceptée par la
+   personne disparaissait en silence* — c'est la règle d'or #3 (zéro perte) appliquée à ce que
+   Milo retient d'elle.
+   ⭐ CE QUI REND LA COURSE POSSIBLE : `S.coachMemory` est lu au DÉPART de l'appel, et réécrit
+   au RETOUR. Entre les deux, n'importe quel autre appel peut lire la même valeur périmée.
+   L'appelant (coach.js:4251) ne fait pas `await` — c'est voulu, l'UI ne doit jamais attendre.
+   ⛔ LE CORRECTIF NE REND DONC PAS L'APPEL BLOQUANT : on SÉRIALISE dans une file, exactement
+   comme le débrief de ft-v979 (R13/R2 — on ne réinvente pas un 2ᵉ mécanisme d'attente). Chaque
+   résumé part quand le précédent est fini, et relit `S.coachMemory` À CE MOMENT-LÀ : il travaille
+   donc toujours sur la version à jour, et plus personne n'écrase personne.
+   ⚠️ La file ne se casse jamais : un appel en échec passe la main au suivant (2ᵉ argument de
+   `.then`), sinon une seule panne réseau gèlerait la mémoire pour le reste de la session. */
+let _memFile=Promise.resolve();
 async function _saveCoachMemory(){
   if(!S.url||!S.email)return; // construite pour TOUS (mémoire = acquis) — plus de barrière premium
+  _memFile=_memFile.then(_resumeCoachUn,_resumeCoachUn);
+  return _memFile;
+}
+async function _resumeCoachUn(){
+  if(!S.url||!S.email)return;
   try{
     const resp=await fetch(_aiUrl('summarizeCoach'),{method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},

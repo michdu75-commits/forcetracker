@@ -6,7 +6,24 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v992`.
+- **Version en ligne (live) :** `ft-v993`.
+- 🧠⭐⭐ **LA COURSE `_saveCoachMemory` — PROUVÉE PUIS CORRIGÉE** (ft-v993). ⛔⛔ **Prouvée AVANT de
+  toucher au code**, comme le suivi d'audit l'exigeait : deux résumés à **20 ms d'écart** envoient
+  tous deux `existingMemory:"MÉMOIRE DE DÉPART"`, et **le dernier REVENU écrase l'autre** — « FAIT-B »
+  perdu, sans erreur, sans trace. ⭐ Cause : `S.coachMemory` est **lu au départ** et **réécrit au
+  retour** ; entre les deux, tout autre appel lit la valeur périmée. ⛔ **Le correctif ne bloque
+  rien** (l'UI n'attend jamais le réseau — règle d'or #3) : il **sérialise dans une file**, comme
+  le débrief de ft-v979 (**R13/R2**), et chaque résumé **relit la mémoire au moment de partir**.
+  ⚠️ **La file ne se casse jamais** : un échec passe la main au suivant — sinon une panne réseau
+  gèlerait la mémoire pour toute la session, pire que le bug corrigé.
+- 📏⭐⭐ **⑤ CACHES PAR LIEU : MESURÉ, PUIS *NON* CONSTRUIT** (ft-v993) — et c'est la bonne réponse.
+  Les 5 variantes sont **réellement distinctes** (salle **11 446** · basique **8 544** · maison
+  **6 493** · poids du corps **2 136** · non renseigné **11 475** car.) : elles ne peuvent donc pas
+  rejoindre le bloc commun telles quelles, GPT a raison sur le fond. ⛔ **Mais aucun gain sous
+  ~6 personnes actives dans la même heure ET sur le même lieu** — le projet a une poignée de
+  testeurs, le gain est **zéro aujourd'hui**. **R19/R34** et `SUIVI-AUDIT` disaient déjà *« ne pas
+  commencer sans données d'usage »*. ⏭️ **À rouvrir quand l'usage réel le justifiera** — et c'est
+  ft-v990 (le coût réel par appel) qui donnera le signal.
 - 🧠⭐⭐ **LA MÉMOIRE ÉLARGIE OUVERTE À TOUT LE MONDE — LIVRÉE** (ft-v992). Priorité ④, tranchée
   par Michel **après mesure**. ⛔⛔ **La raison d'avant reste écrite (R30)** : réservée à 2 comptes
   depuis le 03/08 pour *« mesurer le coût réel avant d'ouvrir »* — ce n'était pas un oubli, c'était
