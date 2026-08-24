@@ -94,6 +94,8 @@ bugs « fuseaux horaires » de `BUGS.md`, appliquée à nous-mêmes.
 
 | État | Quand (UTC) | Qui | Sujet | Fichiers | Version |
 |---|---|---|---|---|---|
+| 🟢 | 24/08 ~20:30 → 21:25 | session-B (claude-md-docs) | un nom ABRÉGÉ lit la fiche écrite (muscles) + sa jumelle unilatéral | `log.js`, `constants.js`, `state.js` | ft-v997 |
+| 🟢 | 24/08 ~19:30 → 20:30 | session-B (claude-md-docs) | un nom d'exercice abrégé retrouve sa fiche du catalogue (animation, tutoriel) | `constants.js`, `log.js` | ft-v996 |
 | 🟢 | 24/08 20:05 → 20:35 | session-A (project-status) | protocole de partage : créer ce fichier + le déclarer dans CLAUDE.md | `docs/JOURNAL-DE-PARTAGE.md`, `CLAUDE.md` | — |
 | 🟢 | 24/08 ~17:00 → 19:50 | session-A (project-status) | le cardio de Milo va dans son bloc, pas dans les exercices | `log.js`, `coach.js`, `tests/parcours/runner.js` | ft-v995 |
 | 🟢 | 24/08 ~16:00 → 17:00 | session-A (project-status) | banc d'essai 21 → 50 scénarios | `tests/milo/eval-scenarios.js` | ft-v994 |
