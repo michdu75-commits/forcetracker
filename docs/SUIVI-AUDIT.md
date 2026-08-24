@@ -63,7 +63,7 @@ Rapport complet : artefact *« Milo face au code »*.
 | **Rejouer le benchmark** | Il existe, il tourne, **il n'a pas encore vu les correctifs de ft-v979→984**. | Faible |
 | **`exSwaps` réellement opposable** | « Ne me remets plus cet exercice » tient tant que le modèle suit sa consigne. Rien ne l'impose. | Faible, une fois le point de refus posé |
 | **⛔ DÉCISION : que fait-on du plafond dépassé chez un profil blessé ?** | ⚠️ **Le témoin est fait** (ft-v988, ligne ci-dessus) : il **mesure et imprime** l'écart à chaque passe, et il empêche la dérive. **Ce qui reste est l'arbitrage, pas le code** : alléger le bloc blessure · le déplacer · ou relever le plafond ? ⛔ Relever est explicitement déconseillé dans le code (*« il mérite une relecture dédiée, pas un relèvement de seuil de plus »*), et le plafond protège de la **dilution**, pas du prix. → `AUDIT-CONTEXTE-MILO.md` §14.6-14.8. | **Aucune — c'est une décision de Michel** |
-| **⛔ DÉCISION : reclasser les 13 452 caractères génériques du bloc personnel ?** | Mesuré 23/08 : **92 %** du bloc « personnel » ne l'est pas. Le reclassement est à **information constante** — Milo recevrait exactement la même chose, rangée autrement. ⚠️ **Mais il dépend de la décision ci-dessus** (il porterait le bloc commun à ~58 800) et **le gain n'est pas mesuré** (aucune clé API : tout est en caractères, pas en tokens). | Moyenne, et **subordonnée** à la décision précédente |
+| **⛔ DÉCISION : reclasser les 13 452 caractères génériques du bloc personnel ?** | Mesuré 23/08 : **92 %** du bloc « personnel » ne l'est pas. Le reclassement est à **information constante** — Milo recevrait exactement la même chose, rangée autrement. ⚠️ **Mais il dépend de la décision ci-dessus** (il porterait le bloc commun à ~58 800) et **le gain n'est pas mesuré** (aucune clé API : tout est en caractères, pas en tokens). ⭐ **GPT (24/08) propose une 3ᵉ voie** : séparer un budget « socle critique » (sécurité, hiérarchie — contrôle strict) d'un budget « contexte partageable » (surveillé, pas par un seuil unique), et valider tout déplacement par un avant/après sur le **benchmark**, pas seulement sur la taille. → `ECHANGE-GPT.md`. | Moyenne, et **subordonnée** à la décision précédente, **ET** à l'instrumentation du coût réel ci-dessous (le fait-elle rapporter quelque chose ?) |
 
 ### 🔵 Peut attendre après la mise en production
 
@@ -74,7 +74,7 @@ Rapport complet : artefact *« Milo face au code »*.
 - **Sommeil et pas** — reçus dans `healthDaily`, stockés, synchronisés, **jamais lus**. Seul `rhr` sert.
 - **Deux conventions de sexe opposées** — Mifflin `gender==='H'`, plancher `gender==='F'`. *Un profil abîmé serait calculé comme l'une et plafonné comme l'autre.* Demande de décider ce que « inconnu » veut dire.
 - **La course `_saveCoachMemory`** — ⚠️ **à prouver ou réfuter par un test AVANT de toucher au code.**
-- **⭐⭐ Le bloc « personnel » de Milo est générique à 92 %** — mesuré le 23/08 sur 3 profils opposés (`AUDIT-CONTEXTE-MILO.md` §14) : sur ~21 200 caractères facturés par personne à chaque message, **13 452 sont identiques chez tout le monde**, ~6 000 dépendent du **lieu** (5 variantes, pas N) et **~1 700 seulement sont vraiment personnels**. ⛔ **Ce n'est PAS un appel à supprimer du texte** : le but est de le **reclasser**, à information constante. ⚠️ Gain réel **non mesuré** (il dépend du nombre de personnes qui discutent dans la même fenêtre de cache) et **aucun outil local ne sait vérifier qu'une règle déplacée est toujours suivie** (§13).
+- **⭐⭐ INSTRUMENTER LE COÛT RÉEL DE MILO — priorité proposée par GPT le 24/08, et Claude est d'accord.** Relever `input_tokens` · `cache_creation_input_tokens` · `cache_read_input_tokens` · `output_tokens` · modèle · coût pour chaque appel, **sans toucher au comportement de Milo**. Argument de GPT : c'est la **seule** façon de savoir si un chantier de cache rapporte quoi que ce soit — donc ça doit **précéder** le travail sur le cache, pas le suivre. ⚠️ **Réserve de Claude, écrite dans `ECHANGE-GPT.md`** : cette case ne peut pas être cochée par une simple relecture de code — coder l'instrumentation est simple (le Worker a déjà la réponse API sous la main), **la vérifier demande un vrai appel facturé**, qu'aucune des deux sessions d'analyse n'a pu faire (pas de clé API dans l'environnement).
 
 ### ⚪ Décisions produit / science (pas des bugs)
 
@@ -120,7 +120,12 @@ Elles valent plus que les correctifs, parce qu'elles se rappliquent :
 - **Ce fichier n'est pas un journal** : il ne raconte rien, il dit *où on en est*. Le récit est dans
   `CLAUDE.md`.
 
-*Dernière mise à jour : **24/08/2026, 01 h 45** — `ft-v988` en ligne (runs Pages 547 et 548 verts,
+*Dernière mise à jour : **24/08/2026, 02 h 20** — retour de GPT sur le contre-audit intégré
+(`ECHANGE-GPT.md`) : les 3 correctifs de la nuit validés sans réserve, une 3ᵉ voie proposée
+pour le plafond, et l'instrumentation du coût réel remontée en priorité (avec la réserve de
+Claude : elle demande un vrai appel API facturé pour être vérifiée, pas seulement du code).*
+
+*(historique : *Dernière mise à jour : **24/08/2026, 01 h 45** — `ft-v988` en ligne (runs Pages 547 et 548 verts,
 549 en cours). Rapport de synthèse pour relecture extérieure : `docs/CONTRE-AUDIT-2026-08-24.pdf`.*
 
 *(historique : 23/08/2026, nuit — `ft-v985` en ligne. Ajout : le bloc personnel de Milo
