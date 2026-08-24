@@ -93,6 +93,31 @@ d'échauffement.
 
 **Attendu** : quand Milo prescrit du cardio (échauffement ou fin de séance), il le pose dans le
 **bloc cardio** (`cardioAvant` / `cardio`), pas dans la liste des exercices.
+**⭐⭐ PRÉCISION DE MICHEL, LE MÊME SOIR — « il peut y avoir une séance avec un cardio au tout
+début ET un cardio à la fin ».** C'est exactement ce que **ft-v720** avait construit (`cardioAvant`
+🔥 *avant* · `cardio` 🧊 *après*, calories additionnées) sur sa demande d'alors : *« avant et après
+séance ce n'est pas pareil »*. Le détournement doit donc **trancher lequel est lequel**, pas juste
+« sortir le cardio de la liste ».
+**La règle proposée, par POSITION** : cardio **avant** le 1ᵉʳ exercice de muscu → `cardioAvant` ·
+cardio **après** le dernier → `cardio` · cardio **au milieu** → ⛔ **il reste un exercice**, on ne
+devine pas ce que la personne voulait (**R29** : deviner coûte plus cher que ne rien faire).
+⚠️ **Et une limite STRUCTURELLE à ne pas découvrir en route** : chaque moment n'accepte qu'**UN
+SEUL** objet `{type,intensity,duration}`. Deux cardios différents du même côté (elliptique **puis**
+corde à sauter en échauffement) ne peuvent pas tenir tous les deux — le second restera en exercice,
+et **il faudra que ça se voie**, pas que ça se perde en silence.
+
+**⛔⛔ ET LE PIÈGE QUI DÉCIDE DE TOUT — DEUX CHEMINS, PAS UN.** Une séance de Milo arrive soit par
+le **bloc JSON** `{"seance":…}` (modèles capables), soit par le **repli de lecture du TEXTE**
+(`_seanceDepuisTexte`, modèles légers). *Corriger seulement le JSON ne changerait rien pour ELINE* —
+c'est le biais **R9** déjà vécu avec le bouton « Commencer cette séance » (Michel l'avait, sa fille
+jamais). 👉 **Le correctif doit vivre dans `_appliqueMiloSession`**, le seul point que les DEUX
+portes traversent — la correction que le témoin avait déjà imposée en **ft-v980**.
+**⭐ ET L'APP SAIT DÉJÀ RECONNAÎTRE LE CARDIO** (R13, rien à inventer) : `_exEquip()` range
+elliptique, tapis, rameur, corde à sauter, air bike… dans un bac `'cardio'` depuis ft-v712.
+**⚠️ DERNIER PIÈGE — LE DOUBLE COMPTE** : `calcSessionCalories` ajoute déjà un **forfait
+d'échauffement** (10 min à 3,5 MET, compté 5 min par moment). Remplir `cardioAvant` sans vérifier
+ce forfait remplacerait un bug d'affichage par un bug de calories.
+
 **Vérifiable ?** ⭐⭐ **Oui, et des deux côtés** : ① côté texte — une réponse qui prescrit
 « 8 min d'elliptique » ne doit pas produire un exercice avec des séries ; ② côté données — le champ
 `cardioAvant` doit être rempli. ⚠️ **Mais le scénario ne peut pas être promu tout de suite** : tant
