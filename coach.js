@@ -6365,13 +6365,43 @@ const EXPORT_EXCLU={
 const EXPORT_OPTIONNEL={ coachConversations:true };
 /** Ouvre le choix avant d'écrire le fichier. ⚠️ La question ne se pose que s'il y a
  *  effectivement quelque chose à inclure — sinon c'est du bruit (R24). */
+/* 🏋️ EXPORTER SEULEMENT L'HISTORIQUE DES SÉANCES (24/08/2026) — demande de Michel, puis, en
+   découvrant ce que l'export « normal » emporte : *« oui j'ai vu mes bilans dans l'export »*.
+
+   ⭐⭐ CE N'EST PAS UN CONFORT, C'EST LE SUJET CENTRAL DE CE FICHIER. Le bouton « Exporter »
+   emporte déjà **tout** : séances, records, programmes, **bilan sanguin, bilan corporel, TRT,
+   profil santé**, mémoire de Milo. La modale n'avertissait que pour les conversations. Or le
+   fichier existe POUR ÊTRE DONNÉ (à ChatGPT, à un coach, à moi pour déboguer) — donc le seul
+   geste possible poussait à partager beaucoup plus que nécessaire.
+   👉 *Un export tout-ou-rien n'est pas un problème d'ergonomie, c'en est un de confidentialité.*
+
+   ⛔ LISTE BLANCHE, PAS LISTE NOIRE — et c'est la seule forme acceptable ici. Avec une liste
+   noire, **toute donnée ajoutée demain partirait toute seule** dans un fichier censé être
+   étroit, sans que personne ne le décide. Avec une liste blanche, une donnée nouvelle reste
+   dehors par défaut : le pire cas devient « il manque quelque chose », jamais « on a divulgué
+   quelque chose » (**R29** — le droit de deviner dépend du coût de l'erreur).
+
+   ⛔ ET ON NE DUPLIQUE PAS L'EXPORTEUR (**R2**) : c'est la MÊME fonction, le même format, donc
+   le même fichier réimportable. Deux exporteurs auraient divergé, et le retrait des photos
+   d'exercices perso (ft-v9xx, 31 % du fichier) serait perdu d'un côté sans que rien ne le voie. */
+const EXPORT_SEANCES_SEULES = {
+  sessions:        'tes séances, exercice par exercice',
+  prs:             'tes records — sans eux, une séance ne se lit pas',
+  customExercises: 'les fiches des exercices que tu as créés (sinon leurs noms ne veulent rien dire)'
+};
 function exportData(){
   closeDrawer();
   const n=((S.coachConversations||[]).length)||0;
   const ov=document.getElementById('ov-export-choix');
-  if(n>0 && ov){
+  if(ov){
     const lbl=document.getElementById('exp-conv-lbl');
     if(lbl) lbl.textContent='avec mes '+n+' discussion'+(n>1?'s':'');
+    /* ⚠️ Le bouton « avec mes discussions » disparaît quand il n'y en a aucune : proposer
+       d'inclure zéro chose est du bruit (R24). Les deux autres restent toujours offerts —
+       AVANT, quelqu'un sans conversation n'avait aucun choix du tout et repartait avec ses
+       bilans médicaux dans le fichier sans qu'on lui ait rien demandé. */
+    const bAvec=document.getElementById('exp-avec-btn');
+    if(bAvec) bAvec.style.display = n>0 ? '' : 'none';
     ov.classList.add('open');
     return;
   }
@@ -6383,23 +6413,48 @@ function lancerExport(avecConversations){
   closeExportChoix();
   _ecrireExport(!!avecConversations);
 }
+/** Le 3ᵉ choix : rien que l'entraînement. */
+function lancerExportSeances(){
+  closeExportChoix();
+  _ecrireExport(false, true);
+}
 function closeExportChoix(){
   const ov=document.getElementById('ov-export-choix'); if(ov) ov.classList.remove('open');
 }
-function _ecrireExport(avecConversations){
+function _ecrireExport(avecConversations, seancesSeules){
   try{
     const payload={
       exportDate:new Date().toISOString(),
       app:'Force Tracker',
       version:((document.querySelector('.app-ver')||{}).textContent||'').trim(),
-      _lisezMoi:'Export COMPLET de tes données. Le champ _exclus dit ce qui n\'y est pas, et pourquoi. '
-               +'Ce fichier ne contient ni ton adresse e-mail ni ton code d\'accès.'
-               +(avecConversations
-                 ? ' ⚠️ IL CONTIENT TES CONVERSATIONS AVEC MILO, à ta demande : ce sont des échanges personnels (corps, moral, blessures). Ne le partage qu\'en connaissance de cause.'
-                 : ' Tes conversations avec Milo n\'y sont PAS (tu peux les inclure en cochant la case à l\'export).'),
+      _lisezMoi: seancesSeules
+        ? 'Export RESTREINT : seulement l\'historique d\'entraînement. '
+         +'Il ne contient AUCUNE donnée de santé (bilan sanguin, bilan corporel, traitement, blessures), '
+         +'AUCUNE donnée de nutrition, AUCUNE conversation avec Milo, et ni ton adresse e-mail ni ton code d\'accès. '
+         +'Le champ _exclus liste ce qui a été volontairement laissé de côté. '
+         +'⚠️ Ton poids de corps n\'y est PAS : sans lui, une charge ne peut pas être jugée « relative ». '
+         +'Si c\'est ce que tu cherches à faire analyser, utilise l\'export complet.'
+        : 'Export COMPLET de tes données. Le champ _exclus dit ce qui n\'y est pas, et pourquoi. '
+         +'⚠️ IL CONTIENT TES DONNÉES DE SANTÉ (bilan sanguin, bilan corporel, profil santé) si tu en as saisi. '
+         +'Ce fichier ne contient ni ton adresse e-mail ni ton code d\'accès.'
+         +(avecConversations
+           ? ' ⚠️ IL CONTIENT AUSSI TES CONVERSATIONS AVEC MILO, à ta demande : ce sont des échanges personnels (corps, moral, blessures). Ne le partage qu\'en connaissance de cause.'
+           : ' Tes conversations avec Milo n\'y sont PAS (le bouton « avec mes discussions » les inclut).'),
       donnees:{},
       _exclus:{}
     };
+    if(seancesSeules){
+      /* ⛔ LISTE BLANCHE : on nomme ce qui ENTRE, jamais ce qui sort. Une donnée ajoutée à `S`
+         demain restera dehors toute seule — c'est le mode d'échec qu'on veut (il manque quelque
+         chose) plutôt que l'autre (on a divulgué quelque chose). */
+      Object.keys(EXPORT_SEANCES_SEULES).forEach(function(k){
+        if(S[k]!==undefined && S[k]!==null) payload.donnees[k]=S[k];
+      });
+      payload._exclus.tout_le_reste =
+        'Export volontairement restreint à l\'entraînement : santé, nutrition, poids de corps, '
+       +'programmes, profil, badges, mémoire de Milo et conversations sont tous laissés de côté. '
+       +'Utilise « Exporter » pour le fichier complet.';
+    }else{
     // On prend TOUT ce que l'app a chargé, sauf la liste ci-dessus (voir le commentaire).
     Object.keys(S).sort().forEach(function(k){
       if(k.charAt(0)==='_') return;                       // champs de travail internes
@@ -6409,6 +6464,7 @@ function _ecrireExport(avecConversations){
       }
       payload.donnees[k]=S[k];
     });
+    }
     /* 🖼️ LES IMAGES SORTENT DU FICHIER, LES EXERCICES RESTENT (17/08/2026).
        `exPhotos` était déjà écarté, mais les exercices PERSO embarquent leur photo dans le même
        objet (`img`, encodée en base64). Mesuré sur l'export du 17/08 : `customExercises` pesait
@@ -6428,11 +6484,15 @@ function _ecrireExport(avecConversations){
     const blob=new Blob([json],{type:'application/json'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
-    a.href=url;a.download='forcetracker_'+today()+'.json';
+    /* ⚠️ LE NOM DU FICHIER DIT CE QU'IL CONTIENT — sinon on redonne le mauvais fichier par
+       erreur, et un export restreint ne sert plus à rien s'il ressemble au complet. */
+    a.href=url;a.download=(seancesSeules?'forcetracker-seances_':'forcetracker_')+today()+'.json';
     document.body.appendChild(a);a.click();
     setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},500);
     const nb=Object.keys(payload.donnees).length;
-    toast(nb+' catégories exportées'+(avecConversations?' · conversations comprises':'')+' ✓','success');
+    toast(seancesSeules
+      ? ((S.sessions||[]).length)+' séances exportées · sans tes données de santé ✓'
+      : nb+' catégories exportées'+(avecConversations?' · conversations comprises':'')+' ✓','success');
   }catch(e){toast('Erreur export : '+e.message,'error');}
 }
 

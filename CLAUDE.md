@@ -406,7 +406,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v987`** (prochaine : `ft-v988`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v988`** (prochaine : `ft-v989`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -416,6 +416,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v988 — 🏋️ EXPORTER SEULEMENT SES SÉANCES — et l'export « normal » DIT enfin ce qu'il emporte** — Michel demande l'option, puis, en découvrant le contenu du fichier : *« oui j'ai vu mes bilans dans l'export »*.
+
+**⭐⭐ CE N'EST PAS UN CONFORT, C'EST DE LA CONFIDENTIALITÉ.** Le bouton « Exporter » emportait déjà **tout** — **bilan sanguin, bilan corporel, TRT, profil santé** — et la modale n'avertissait **que pour les conversations**. Or le fichier existe **pour être donné** (à ChatGPT, à un coach, à moi pour déboguer). *Le seul geste possible poussait donc à partager beaucoup plus que nécessaire.* **Un export tout-ou-rien n'est pas un problème d'ergonomie.**
+
+**⛔⛔ LISTE BLANCHE, PAS LISTE NOIRE — et c'est la seule forme acceptable ici.** Avec une liste noire, **toute donnée ajoutée demain partirait toute seule** dans un fichier censé être étroit, sans que personne ne le décide. Avec une liste blanche, le pire cas devient *« il manque quelque chose »* au lieu de *« on a divulgué quelque chose »* (**R29** — le coût de l'erreur décide).
+
+**⛔ ET UN SEUL EXPORTEUR (R2)** : même fonction, même format, donc fichier **réimportable** — et le retrait des photos d'exercices perso (**31 % du fichier** le 17/08) vaut **gratuitement** pour le nouveau mode. *Un 2ᵉ exporteur l'aurait perdu, sans que rien ne le signale* — un témoin l'épingle.
+
+**⭐ LE CHOIX ÉTROIT EST EN PREMIER ET EN ROUGE** : l'option la moins exposante doit être la plus facile à prendre, pas celle qu'on trouve en dernier.
+
+**⚠️⚠️ ET LA QUESTION SE POSE DÉSORMAIS MÊME SANS CONVERSATION — changement volontaire, la raison d'avant reste écrite (R30).** Le témoin exigeait **l'inverse**, au nom de **R24** (*« ne pas poser une question inutile »*) — et l'argument était juste **tant qu'il n'y avait qu'un seul vrai choix**. ⛔ Il ne tient plus à trois : *quelqu'un sans conversation n'avait aucun choix du tout et repartait avec ses bilans dans le fichier sans qu'on lui ait rien demandé.* **Ce qui reste de R24** : le bouton « avec mes discussions » **disparaît** quand il n'y en a aucune — on ne propose jamais d'inclure zéro chose.
+
+**⛔ LE POIDS DE CORPS N'Y EST PAS, ET LE FICHIER LE DIT AVEC LA RAISON** (sans lui, une charge ne peut pas être jugée en relatif — pour ça, l'export complet). *Un export muet sur ses trous laisse croire qu'il est complet.* Et le **nom du fichier** dit ce qu'il contient : sinon on redonne le mauvais par erreur, et un export restreint ne sert plus à rien.
+
+**📐 AU PASSAGE — LE GARDE-FOU DE TAILLE MESURE ENFIN UN PROFIL BLESSÉ** (§14.6 de `docs/AUDIT-CONTEXTE-MILO.md`). Il testait trois profils **en bonne santé**, donc il restait vert pendant que le plafond était franchi en production chez toute personne blessée. **Mesure imprimée à chaque passe** : *sain 45 362 · blessé 47 118 (+1 756) · plafond 46 500 → dépassement de 618*. ⛔ **On ne relève pas le seuil** — c'est exactement ce que le commentaire d'origine interdit. On **épingle** le plafond blessé à 47 500 pour qu'il ne dérive pas pendant que la décision de fond attend.
+Tests : **parcours 1295/1295** (+15, blocs CV + la mesure du profil blessé), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Le contrôle négatif n'est PAS instructif ici, autant l'écrire** : `lancerExportSeances` n'existe pas de l'autre côté, il ne dit donc qu'une chose. ⭐⭐ **Ce qui tient lieu de preuve est ailleurs, et c'est plus fort** : `S` a été **délibérément rempli de vraies données de santé** (ferritine, tendinite, hypertension, `fatPct`), de nutrition, d'une phrase intime de conversation et d'une adresse e-mail — *un test qui n'a rien à fuir ne prouve pas qu'on ne fuit rien*. **Les cinq témoins d'absence cherchent dans le TEXTE BRUT**, pas dans les clés : une donnée peut fuir imbriquée sans que sa clé apparaisse au premier niveau. ⚠️ **Et trois témoins EXISTANTS ont rougi** — deux par ricochet, un **parce que j'ai changé son comportement exprès** ; les trois sont réécrits **avec la raison d'avant conservée**. Fichiers : `coach.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `IDEES-FUTURES.md`. sw.js ft-v988. |
 
 **ft-v987 — 🔢 « CE N'ÉTAIT PAS UN SCAN, J'AI RENTRÉ LE CODE-BARRE MANUELLEMENT »** — Michel, en me corrigeant. **Il avait raison, et l'app se contredisait elle-même.**
 
@@ -738,23 +755,6 @@ Tests : **parcours 1117/1117** (+8, bloc LXXXIX), calculs 266/266, muscles 241/2
 
 **⛔⛔ LE TÉMOIN QUI PROTÈGE LE PLUS EST CELUI D'AVANT** : la saisie manuelle n'est **jamais écrasée** par le Journal (**R29**, même arbitrage que `manualKcal`). *Il est vert des DEUX côtés — c'est le but : une correction d'affichage se juge à ce qui n'a pas bougé.*
 Tests : **parcours 1109/1109** (+9, bloc LXXXVIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 6 rouges**, exactement les 6 comportements neufs — et **3 verts des deux côtés**, qui sont les non-régressions (la barre lit le Journal, la saisie manuelle prime, elle n'est pas écrasée). Fichiers : `app.js`, `index.html`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v969. |
-
-**ft-v968 — 📋 LE JOURNAL RANGÉ PAR REPAS, ET UNE 2ᵉ COLLATION** — Michel, capture à l'appui : *« c'est un peu le foutoir là, il faudrait ranger tout ça. Là c'est une liste, il faut les ranger et créer des lignes déroulantes pour chaque section »*, puis *« pouvoir rajouter une collation aussi, il y en a qui prennent une collation le matin et le soir »*.
-
-**⭐⭐ LE VRAI PROBLÈME N'ÉTAIT PAS L'AFFICHAGE, C'ÉTAIT LE TRI.** Sa capture montre dîner → dîner → collation → déjeuner → petit-déj dans le désordre, parce que la liste était triée par **heure de SAISIE**. *On note son petit-déjeuner à midi et sa collation le soir : l'ordre où l'on tape n'est pas l'ordre où l'on mange.* C'est désormais l'ordre du **repas** qui commande, et `FOOD_MEALS` suit l'ordre de la journée.
-
-**⭐ R13 — MÊME MOTIF QUE LE MÉNAGE DU MENU ADMIN** (ft-v955) : `<details>` natif, donc **zéro JS** — ça tient même si un script tombe, et le clavier comme les lecteurs d'écran le gèrent gratuitement. Chaque section porte son **total kcal et protéines** : on voit d'un coup où partent les calories.
-
-**⛔ UNE SECTION VIDE NE S'AFFICHE PAS.** Annoncer *« Collation 2 — 0 aliment »* tous les jours ferait de l'écran la liste de ce qu'on n'a **pas** mangé — un reproche déguisé (**R24**).
-
-**⭐⭐ ET L'ÉTAT PLIÉ SURVIT AU RE-RENDU.** `renderFoodJournal()` reconstruit tout son HTML : sans mémoire, **ajouter un aliment redéplierait tout ce que la personne vient de replier**. *C'est un défaut qui ne se manifeste qu'à la DEUXIÈME action, donc jamais en testant une fois.* ⛔ En mémoire seulement, jamais dans `localStorage` : c'est un confort d'affichage, pas une donnée — le stockage a déjà saturé une fois (29/07).
-
-**⛔⛔ LE PIÈGE ÉVITÉ, ET IL ÉTAIT SILENCIEUX.** Le repli de `_foodMealInfo` valait `FOOD_MEALS[1]`, qui **désignait le déjeuner**. En passant la liste en ordre de journée, l'index 1 devient la **collation** — et toute entrée au repas inconnu serait devenue une collation **sans que rien ne le signale**. *Un index qui dépend de l'ordre d'un tableau devient faux le jour où on trie ce tableau* (**R14**). Le repli est maintenant **nommé**, et un témoin l'épingle.
-
-**⛔ `collation` GARDE SA CLÉ** : la renommer aurait orphelin toutes les entrées déjà notées, qui seraient tombées dans le repas par défaut en silence. **⚠️ Et les libellés restent NEUTRES** — « Collation 2 », pas « Collation du soir » : Michel dit *matin et soir*, quelqu'un d'autre prendra un goûter à 16 h, et étiqueter l'heure à sa place serait un **faux-précis** (**R29**).
-
-**⭐ LES 5 BOUTONS DE REPAS N'ONT DEMANDÉ AUCUN CODE** : la modale d'ajout et celle de modification se génèrent déjà depuis `FOOD_MEALS`. *Une liste qui est la source de vérité (R1) fait apparaître la nouveauté partout d'un coup.*
-Tests : **parcours 1100/1100** (+9, bloc LXXXVII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge** — le regroupement n'existe pas. ⚠️ **Peu instructif, et autant l'écrire** : 7 témoins vivent sous le garde, donc ils **ne tournent pas** (1093 exécutées au lieu de 1100). ⭐⭐ **MAIS UN TÉMOIN EST SORTI DU GARDE EXPRÈS, et c'est le plus important du bloc** : *un repas inconnu retombe sur DÉJEUNER*. Il mesure un comportement qui **existait déjà**, il est donc **vert des deux côtés** — et c'est exactement ce qu'on veut voir : *un rangement se juge à ce qui n'a PAS bougé.* Derrière le garde, il n'aurait rien mesuré. ⚠️⚠️ **ET J'AI DÛ M'Y REPRENDRE À TROIS FOIS POUR OBTENIR CE CHIFFRE.** ① J'ai lancé le contrôle négatif **pendant qu'une autre passe tournait** : le `git stash` a échangé les fichiers **au milieu** du run, qui a planté — *une trace d'erreur qui n'accusait que ma propre concurrence.* ② Puis le bloc **tuait le runner** contre l'ancien code (`_journalPli` absente, exception hors de `pg.evaluate`) : **aucun verdict imprimé du tout**, pas même un rouge. C'est la leçon de ft-v957 repayée — *un témoin qui tue le harnais ne mesure rien*. Le garde couvre désormais la fonction réellement neuve. Fichiers : `app.js`, `screens.js`, `style.css`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v968. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

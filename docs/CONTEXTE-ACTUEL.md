@@ -6,7 +6,19 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v987`.
+- **Version en ligne (live) :** `ft-v988`.
+- 🏋️⭐⭐ **EXPORTER SEULEMENT SES SÉANCES** (ft-v988). Michel : *« oui j'ai vu mes bilans dans
+  l'export »*. Le bouton « Exporter » emportait **tout** — bilan sanguin, bilan corporel, TRT,
+  profil santé — et la modale n'avertissait que pour les conversations. Or le fichier existe
+  **pour être donné**. ⛔⛔ **Liste blanche, pas liste noire** : une donnée ajoutée demain reste
+  dehors toute seule (**R29**). ⛔ **Un seul exporteur (R2)** → le retrait des photos perso vaut
+  gratuitement pour le nouveau mode. ⚠️ **La question se pose désormais même sans conversation**
+  — changement volontaire, raison d'avant conservée dans le témoin. ⛔ Le **poids de corps** n'y
+  est pas, et le fichier le dit avec la raison.
+- 📐 **LE GARDE-FOU DE TAILLE MESURE UN PROFIL BLESSÉ** (ft-v988, §14.6 de
+  `AUDIT-CONTEXTE-MILO.md`). Il testait des profils **sains** : *sain 45 362 · blessé 47 118 ·
+  plafond 46 500 → dépassement de 618*. ⛔ **On ne relève pas le seuil**, on épingle le plafond
+  blessé à 47 500 pour qu'il ne dérive pas pendant que la décision de fond attend (§14.8).
 - 🔢⭐⭐ **« CE N'ÉTAIT PAS UN SCAN, J'AI RENTRÉ LE CODE-BARRE MANUELLEMENT »** (ft-v987).
   Michel avait raison, et l'app se contredisait elle-même : son propre commentaire dit
   *« `saisie` dit COMMENT c'est entré »* et les **quatre** chemins de code-barres

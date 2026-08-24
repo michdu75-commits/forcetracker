@@ -4,7 +4,18 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
-## 📤 EXPORTER **SEULEMENT L'HISTORIQUE DES SÉANCES** — à faire (noté le 23/08/2026)
+## ✅ EXPORTER **SEULEMENT L'HISTORIQUE DES SÉANCES** — LIVRÉ (ft-v988, 24/08/2026)
+
+> ⭐ **Fait la nuit même.** Les 4 questions ci-dessous ont toutes été tranchées, et la 1ʳᵉ
+> autrement que proposé : **le poids de corps n'est PAS inclus** — c'est de la donnée de corps,
+> pas de l'entraînement, et le fichier le dit avec sa raison. Retenu : `sessions` + `prs` +
+> `customExercises` (fiches sans images).
+> ⭐⭐ **Et une décision s'est ajoutée en route** : la fenêtre de choix s'ouvre **même sans
+> conversation**. Avant, quelqu'un sans discussion n'avait aucun choix et repartait avec ses
+> bilans médicaux dans le fichier. Détail et raison : journal ft-v988.
+> ⏭️ **Ce qui reste ouvert** : rien. Gardé ici pour la trace du raisonnement.
+
+## 📤 (l'idée d'origine, telle qu'elle a été notée le 23/08)
 
 > Michel : *« rajoute à la liste aussi la possibilité d'exporter que l'historique des séances »*.
 

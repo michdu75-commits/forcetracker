@@ -2323,9 +2323,24 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div class="modal-handle"></div>
     <div style="font-weight:800;font-size:17px;text-align:center;">Exporter mes données</div>
     <div style="font-size:13px;color:var(--t2);text-align:center;margin:6px 0 14px;line-height:1.45;">
-      Tout part dans le fichier : séances, records, bilans, programmes, santé, mémoire de Milo.
+      Choisis ce qui part dans le fichier.
     </div>
-    <button class="btn btn-red" style="width:100%;padding:14px;" onclick="lancerExport(false)">📤&nbsp; Exporter</button>
+    <!-- 🏋️ LE CHOIX ÉTROIT EST EN PREMIER, ET C'EST DÉLIBÉRÉ (24/08/2026). Michel, en découvrant
+         ce que l'export « normal » emporte : « oui j'ai vu mes bilans dans l'export ». Le fichier
+         existe POUR ÊTRE DONNÉ — donc l'option la moins exposante doit être la plus facile à
+         prendre, pas celle qu'on trouve en dernier. ⚠️ Aucune option n'est retirée : on change
+         l'ordre et on dit ce que chacune contient (R24 — informer sans bloquer). -->
+    <button class="btn btn-red" style="width:100%;padding:14px;" onclick="lancerExportSeances()">🏋️&nbsp; Exporter <b>mes séances seulement</b></button>
+    <div style="font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:7px;padding:0 2px;">
+      Tes séances, tes records et tes exercices perso. <b>Aucune donnée de santé, aucune donnée de
+      nutrition, aucune discussion.</b> C'est le fichier à donner si tu veux faire analyser ton
+      entraînement.
+    </div>
+    <button class="btn btn-bg2" style="width:100%;padding:14px;margin-top:12px;" onclick="lancerExport(false)">📤&nbsp; Exporter <b>tout</b></button>
+    <div style="font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:7px;padding:0 2px;">
+      ⚠️ Tout y est : séances, records, programmes, profil — <b>et tes bilans sanguins, tes bilans
+      corporels et ton profil santé</b> si tu en as saisi.
+    </div>
     <button class="btn btn-bg2" id="exp-avec-btn" style="width:100%;padding:14px;margin-top:9px;text-align:center;" onclick="lancerExport(true)">🗣️&nbsp; Exporter <b id="exp-conv-lbl">avec mes discussions</b></button>
     <div style="font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:7px;padding:0 2px;">
       ⚠️ Tes discussions avec Milo sont ce que l'app contient de plus personnel — tu y parles de ton

@@ -2853,6 +2853,40 @@ console.log('\n═══ Q. Le bloc commun de Milo reste partagé par tous ═�
     // il mérite une relecture dédiée — pas un relèvement de seuil de plus.
     t('le bloc commun garde une taille raisonnable (< 46 500 caractères)',
       a.commun.length < 46500, a.commun.length+' caractères');
+    /* ⛔⛔ … ET AUSSI POUR QUELQU'UN DE BLESSÉ — le trou trouvé le 23/08/2026 (§14 de
+       docs/AUDIT-CONTEXTE-MILO.md). Les trois profils ci-dessus sont EN BONNE SANTÉ, donc ce
+       garde-fou restait vert pendant que le plafond était franchi en production chez toute
+       personne ayant déclaré une blessure : une blessure injecte des consignes de protection
+       DANS LE BLOC COMMUN (§3 du même document l'annonçait, sans jamais le chiffrer).
+       Mesuré ce soir-là : 45 363 pour un profil sain, **47 119 pour un profil blessé**.
+       ⚠️ On ne relève PAS le seuil pour faire passer le témoin — c'est exactement ce que le
+       commentaire ci-dessus interdit (« pas un relèvement de seuil de plus »). On mesure le
+       cas réel, on le dit, et la décision de fond reste à prendre.
+       ⭐ CE TÉMOIN EST VOLONTAIREMENT INFORMATIF, PAS BLOQUANT tant que la décision n'est pas
+       prise : il imprime l'écart pour qu'il soit VU, au lieu de refuser une livraison sur un
+       arbitrage qui n'appartient pas au code. */
+    const _bl = await empreinte({ft4_name:'Karim',ft4_gender:'H',ft4_age:'61',ft4_bw:'72',ft4_goal:'equilibre',
+      ft4_email:'d@test.z',
+      ft4_health:JSON.stringify({injuries:[{zone:'épaule',note:'tendinite épaule droite'}],conditions:[],notes:'douleur épaule droite'})});
+    if(!_bl.err){
+      const ecart = _bl.commun.length - a.commun.length;
+      /* ⚠️ `t()` n'imprime son détail QU'EN CAS D'ÉCHEC — un chiffre confié à un témoin vert
+         n'est donc jamais lu. On l'imprime nous-mêmes : c'est une MESURE, elle doit se voir
+         à chaque passe, pas seulement le jour où quelque chose casse. */
+      console.log('       ↳ bloc commun : sain '+a.commun.length+'  ·  blessé '+_bl.commun.length
+        +'  (+'+ecart+')  ·  plafond 46 500 → dépassement de '+(_bl.commun.length-46500));
+      /* ⛔⛔ ET ON ÉPINGLE LE PLAFOND DU PROFIL BLESSÉ, PLUS HAUT MAIS RÉEL (23/08/2026).
+         Le seuil de 46 500 ne peut pas s'appliquer ici sans refuser toutes les livraisons pour
+         une décision de fond qui n'est pas prise (faut-il alléger le bloc blessure, le déplacer,
+         ou relever le plafond ? → docs/AUDIT-CONTEXTE-MILO.md §14.6-14.8).
+         👉 On fige donc l'état ACTUEL pour qu'il ne DÉRIVE pas pendant ce temps. C'est le même
+         raisonnement que le seuil d'origine : on n'accepte pas la situation, on l'empêche
+         d'empirer sans qu'on le voie. ⚠️ Si ce témoin rougit, la réponse n'est PAS de monter le
+         chiffre — c'est d'aller lire §14.8. */
+      t('⛔⛔ le bloc commun d\'un profil BLESSÉ ne dérive pas davantage (< 47 500 — il dépasse déjà 46 500)',
+        _bl.commun.length < 47500,
+        _bl.commun.length+' caractères. ⚠️ NE PAS RELEVER CE SEUIL : voir docs/AUDIT-CONTEXTE-MILO.md §14.6.');
+    }
     // Aucun prénom de test ne doit apparaître dans la partie censée être commune.
     t('⭐ aucun prénom ne fuit dans le bloc commun',
       !/Christophe|Tatiana|Paul/.test(a.commun+b2.commun+c3.commun),
@@ -5782,19 +5816,39 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     lancerExport(true); await new Promise(r=>setTimeout(r,120));
     const avec=JSON.parse(cap||'{}');
     o.avecConv=('coachConversations' in (avec.donnees||{})) && cap.indexOf(PHRASE)>=0;
-    o.avecConvAvertit=/IL CONTIENT TES CONVERSATIONS AVEC MILO/.test(avec._lisezMoi||'');
+    /* ⚠️ « AUSSI » ajoute le 24/08 : l'export complet avertit desormais D'ABORD pour les
+       donnees de SANTE, donc les conversations viennent en second. Le temoin tolere le mot
+       mais continue d'exiger la phrase — on assouplit la forme, jamais le fond. */
+    o.avecConvAvertit=/IL CONTIENT (AUSSI )?TES CONVERSATIONS AVEC MILO/.test(avec._lisezMoi||'');
     o.avecConvPasDansExclus=!(avec._exclus||{}).coachConversations;
     // (4) FERMER AU DOIGT N'EXPORTE RIEN
     brancher(); exportData(); await new Promise(r=>setTimeout(r,120));
     closeExportChoix(); await new Promise(r=>setTimeout(r,120));
     o.annuleRienEcrit=(cap===null);
-    // (5) AUCUNE CONVERSATION => on ne pose pas la question (R24)
+    /* (5) ⚠️⚠️ CE TEMOIN A CHANGE DE CAMP LE 24/08/2026, ET LA RAISON D'AVANT RESTE ECRITE (R30).
+       Il exigeait l'inverse : sans conversation, la fenetre ne s'ouvrait PAS et le fichier partait
+       directement — au nom de R24, « ne pas poser une question inutile ». L'argument etait bon
+       TANT QU'IL N'Y AVAIT QU'UN SEUL VRAI CHOIX.
+       ⛔ Il ne tient plus depuis qu'il y en a trois : quelqu'un sans conversation n'avait AUCUN
+       choix du tout, et repartait avec ses bilans sanguins et corporels dans le fichier sans
+       qu'on lui ait rien demande. Michel, en le decouvrant : « oui j'ai vu mes bilans dans
+       l'export ». La question n'est plus inutile — elle est la seule protection.
+       ⭐ CE QUI RESTE DE R24 : le bouton « avec mes discussions » DISPARAIT quand il n'y en a
+       aucune. On ne propose jamais d'inclure zero chose. */
     S.coachConversations=[];
     brancher(); exportData(); await new Promise(r=>setTimeout(r,120));
-    o.pasDeQuestionSiRien=!ouvert() && cap!==null;
+    o.questionMemeSansConv = ouvert() && cap===null;
+    o.boutonConvCache = (function(){ const bt=document.getElementById('exp-avec-btn');
+      return !!bt && getComputedStyle(bt).display==='none'; })();
+    lancerExport(false); await new Promise(r=>setTimeout(r,120));
+    o.exportOkApresChoix = (cap!==null);
     // (6) ANTI-POURRISSEMENT : une donnee inventee a l'instant part toute seule
     S.nouveauChampDeDemain=[{x:1}];
+    /* ⚠️ Depuis le 24/08 la fenetre s'ouvre TOUJOURS : il faut donc choisir avant que le fichier
+       parte. Le temoin porte toujours sur la meme garantie (l'export COMPLET liste ce qu'il
+       LAISSE, pas ce qu'il prend), seul le chemin pour y arriver a change. */
     brancher(); exportData(); await new Promise(r=>setTimeout(r,120));
+    lancerExport(false); await new Promise(r=>setTimeout(r,120));
     o.auto=('nouveauChampDeDemain' in (JSON.parse(cap||'{}').donnees||{}));
     delete S.nouveauChampDeDemain;
     debrancher();
@@ -5828,7 +5882,11 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⭐ LE 2e BOUTON : elles partent, et le fichier AVERTIT que c\'est personnel',
       E.avecConv===true && E.avecConvAvertit===true && E.avecConvPasDansExclus===true);
     t('/!\\ fermer au doigt = annuler : RIEN n\'est ecrit', E.annuleRienEcrit===true);
-    t('/!\\ aucune conversation => on ne pose pas la question (R24)', E.pasDeQuestionSiRien===true);
+    t('⭐⭐ LA QUESTION SE POSE MEME SANS CONVERSATION (elle protege les donnees de SANTE, pas seulement Milo)',
+      E.questionMemeSansConv===true, 'la fenetre ne s\'est pas ouverte, ou un fichier est parti sans choix');
+    t('/!\\ ... mais on ne propose jamais d\'inclure ZERO discussion (ce qui reste de R24)',
+      E.boutonConvCache===true);
+    t('/!\\ ... et l\'export part bien une fois le choix fait', E.exportOkApresChoix===true);
   }
   await c41.close();
 }
@@ -11637,6 +11695,101 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⛔⛔ un code MAL TAPÉ cherche quand même (on prévient, on ne bloque pas — R24) et laisse sa trace',
       K.tapeFauteSaisie==='code-tape' && K.tapeFauteDrapeau===true,
       'saisie='+K.tapeFauteSaisie+' douteux='+K.tapeFauteDrapeau);
+  }
+  await cx.close();
+}
+
+
+/* ══ BLOC CV — EXPORTER SEULEMENT L'HISTORIQUE DES SÉANCES (24/08/2026) ══
+   Michel demande l'option, puis, en découvrant ce que l'export « normal » emporte :
+   « oui j'ai vu mes bilans dans l'export ».
+   ⭐⭐ CE QUI COMPTE ICI N'EST PAS CE QUE LE FICHIER CONTIENT, C'EST CE QU'IL NE CONTIENT PAS.
+   Un export restreint qui laisse passer UNE donnée de santé est pire qu'inutile : il a promis
+   qu'il était sûr. Les témoins d'absence sont donc les plus importants du bloc.               */
+{
+  console.log('\n── CV. Exporter seulement les séances ──');
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); pg.on('pageerror',e=>console.log('PAGEERROR',e.message));
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+
+  const E=await pg.evaluate(async ()=>{
+    const o={};
+    if(typeof lancerExportSeances!=='function'){ o.absente=true; return o; }
+    /* On remplit S avec TOUT ce qui doit rester dehors — des données de santé bien réelles,
+       parce qu'un test qui n'a rien à fuir ne prouve pas qu'on ne fuit rien. */
+    S.sessions=[{date:'2026-08-23',id:1,volume:6852,exs:[{name:'Développé Couché',sets:[{kg:95,reps:3,done:true}]}]}];
+    S.prs={'Développé Couché':{rm1:108,kg:105,reps:2,date:'2026-07-27'}};
+    S.customExercises=[{n:'Mon exercice maison',g:'Dos',img:'data:image/png;base64,AAAA'}];
+    S.bloodTests=[{date:'2026-08-01',markers:{ferritine:180}}];
+    S.bodyScans=[{date:'2026-08-23',weight:85.2,fatPct:18.9}];
+    S.healthProfile={injuries:[{zone:'épaule',note:'tendinite'}],conditions:['hypertension'],notes:'secret'};
+    S.foodLog=[{date:'2026-08-23',name:'Ratatouille',kcal:180}];
+    S.coachConversations=[{ts:1,msgs:[{role:'user',content:'j\'ai le moral à zéro'}]}];
+    S.coachMemory='Michel a mal au dos depuis juin';
+    S.weightLog=[{date:'2026-08-23',kg:85.2}];
+    S.email='secret@exemple.fr';
+
+    /* ① LA MODALE OFFRE-T-ELLE LES TROIS CHOIX, ET LE PLUS ÉTROIT EN PREMIER ? */
+    exportData();
+    const ov=document.getElementById('ov-export-choix');
+    o.ouverte=!!(ov&&ov.classList.contains('open'));
+    const btns=[...(ov?ov.querySelectorAll('button'):[])].filter(x=>getComputedStyle(x).display!=='none')
+      .map(x=>x.textContent.replace(/\s+/g,' ').trim());
+    o.boutons=btns;
+    o.seancesEnPremier=/séances seulement/i.test(btns[0]||'');
+
+    /* ② ON CAPTURE LE FICHIER RÉELLEMENT ÉCRIT — sans le télécharger. */
+    const vraiCreate=URL.createObjectURL, vraiClick=HTMLAnchorElement.prototype.click;
+    let blob=null, nomFichier='';
+    URL.createObjectURL=function(b2){ blob=b2; return 'blob:test'; };
+    HTMLAnchorElement.prototype.click=function(){ nomFichier=this.download||''; };
+    try{
+      lancerExportSeances();
+      o.nom=nomFichier;
+      o.texte = blob ? await blob.text() : '';
+    } finally { URL.createObjectURL=vraiCreate; HTMLAnchorElement.prototype.click=vraiClick; }
+
+    let P=null; try{ P=JSON.parse(o.texte); }catch(e){ o.parseErr=String(e&&e.message||e); }
+    o.cles = P ? Object.keys(P.donnees||{}).sort() : [];
+    /* ⛔⛔ LES ABSENCES — on cherche dans le TEXTE BRUT, pas dans les clés. Une donnée peut
+       fuir imbriquée quelque part sans que sa clé apparaisse au premier niveau. */
+    o.fuiteSante   = /ferritine|tendinite|hypertension|fatPct/.test(o.texte);
+    o.fuiteNutri   = /Ratatouille|foodLog/.test(o.texte);
+    o.fuiteMilo    = /moral à zéro|coachConversations|mal au dos depuis juin/.test(o.texte);
+    o.fuiteEmail   = /secret@exemple\.fr/.test(o.texte);
+    o.fuitePoids   = /weightLog/.test(o.texte);
+    /* ⭐ ET CE QUI DOIT Y ÊTRE, SANS QUOI LE FICHIER NE SERT À RIEN */
+    o.aSeances = /Développé Couché/.test(o.texte);
+    o.aRecords = !!(P&&P.donnees&&P.donnees.prs);
+    o.aPerso   = /Mon exercice maison/.test(o.texte);
+    o.ditLeReste = !!(P&&P._exclus&&P._exclus.tout_le_reste);
+    /* ⭐⭐ LA PREUVE QUE R2 PAIE : le retrait des photos d'exercices perso (31 % du fichier
+       le 17/08) a été écrit UNE fois, pour l'export complet. Comme l'export restreint passe
+       par la MÊME fonction, il en hérite gratuitement. Un 2ᵉ exporteur l'aurait perdu. */
+    o.photoRetiree = !/base64,AAAA/.test(o.texte);
+    return o;
+  });
+
+  if(E.absente){ t('⛔ l\'export des séances seules existe', false, 'lancerExportSeances absente'); }
+  else{
+    t('⭐ la modale d\'export propose les trois choix', (E.boutons||[]).length>=4, (E.boutons||[]).join(' | '));
+    t('⭐ … et le choix le MOINS exposant est le premier', E.seancesEnPremier===true, (E.boutons||[])[0]||'');
+    t('⛔⛔ AUCUNE donnée de SANTÉ dans le fichier (bilan sanguin, bilan corporel, blessures)',
+      E.fuiteSante===false, 'fuite détectée dans le fichier'+(E.parseErr?' · '+E.parseErr:''));
+    t('⛔⛔ AUCUNE donnée de NUTRITION', E.fuiteNutri===false, '');
+    t('⛔⛔ AUCUNE conversation ni mémoire de Milo', E.fuiteMilo===false, '');
+    t('⛔ ni l\'adresse e-mail', E.fuiteEmail===false, '');
+    t('⛔ ni le poids de corps (dit explicitement dans le fichier)', E.fuitePoids===false, '');
+    t('⭐ … et pourtant les SÉANCES y sont', E.aSeances===true, '');
+    t('⭐ … avec les RECORDS (sans eux une séance ne se lit pas)', E.aRecords===true, '');
+    t('⭐ … et les fiches d\'exercices perso', E.aPerso===true, '');
+    t('⭐⭐ le fichier DIT ce qu\'il ne contient pas — un export muet sur ses trous ment (R29)',
+      E.ditLeReste===true, '');
+    t('⭐ le nom du fichier dit ce qu\'il contient', /forcetracker-seances_/.test(E.nom||''), 'reçu : '+E.nom);
+    t('⭐⭐ R2 PAIE : le retrait des photos d\'exercices perso vaut AUSSI ici (un seul exporteur)',
+      E.photoRetiree===true, 'une image base64 est partie dans le fichier restreint');
   }
   await cx.close();
 }
