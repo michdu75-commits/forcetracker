@@ -12270,6 +12270,79 @@ console.log('\n-- CIX. Le cardio de Milo va dans son BLOC, pas dans les exercice
     figees.length===0, figees.join(' | '));
 }
 
+// ════════════════════════════════════════════════════════════════════
+console.log('\n-- CX. Un nom d\'exercice ABRÉGÉ retrouve sa fiche du catalogue (ft-v996) --');
+// ⚠️ LE CAS RÉEL (Michel, 24/08, deux captures) : sa séance portait « Hip Thrust Barre » et
+// « Abduction Cuisses » — les noms COURTS, sans la parenthèse explicative du catalogue. L'écran
+// affichait « Muscle principal deviné » + « 📷 Ajouter la photo de ta machine », alors que les
+// deux animations étaient DÉJÀ dans le dépôt. *L'app proposait d'ajouter une photo qu'elle avait.*
+// ⛔ Ces témoins tournent des DEUX côtés (ils mesurent un affichage qui existait déjà, mal) —
+// c'est ce qui rend le contrôle négatif instructif au lieu de dire « la fonction n'existe pas ».
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pn=await cx.newPage();
+  await pn.addInitScript(seedScript({}));
+  await pn.goto('http://localhost:'+PORT+'/index.html');
+  await pn.waitForTimeout(2200);
+  const N=await pn.evaluate(()=>{
+   try{
+    const o={};
+    const R=n=>(typeof exNomCatalogue==='function')?exNomCatalogue(n):n;
+    // ① LES DEUX CAS DE MICHEL, par le vrai chemin d'affichage
+    o.hipImg=_exImg('Hip Thrust Barre');
+    o.abdImg=_exImg('Abduction Cuisses');
+    // ② … et l'adduction, celle qui a motivé la question de départ
+    o.addImg=_exImg('Adduction Cuisses');
+    // ③ RIEN N'EST INVENTÉ : un exercice perso reste sans image, et son nom ne bouge pas
+    o.persoImg=_exImg('Ma Machine à Moi Bidon');
+    o.persoNom=R('Ma Machine à Moi Bidon');
+    // ④ NON-RÉGRESSION LA PLUS IMPORTANTE : aucun nom du CATALOGUE n'est modifié
+    o.nomsBouges=(EXLIB||[]).map(e=>e.n).filter(n=>R(n)!==n);
+    // ⑤ le nom complet garde exactement la même image qu'avant
+    o.pleinImg=_exImg('Hip Thrust Barre (Poussée de Hanche)');
+    // ⑥ ZÉRO COLLISION — c'est la CONDITION de la table, pas un effet de bord.
+    //    Une base ambiguë doit être RETIRÉE (on retombe sur l'ancien comportement),
+    //    jamais arbitrée vers un exercice au hasard.
+    const naz=s=>(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
+      .replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+    const noms=(EXLIB||[]).map(e=>e.n).filter(Boolean);
+    const pleins={};noms.forEach(n=>{pleins[naz(n)]=true;});
+    const vus={},collisions=[];
+    noms.forEach(n=>{const b=String(n).replace(/\s*\([^)]*\)\s*$/,'').trim();
+      if(!b||b===n)return; const k=naz(b);
+      if(pleins[k])collisions.push('base déjà un autre exercice : '+b);
+      if(vus[k]&&vus[k]!==n)collisions.push('deux exercices, même base : '+b);
+      vus[k]=n;});
+    o.collisions=collisions;
+    o.nbAbrev=(typeof _EX_BASE2NOM!=='undefined')?Object.keys(_EX_BASE2NOM).length:-1;
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(N.err)t('CX n\'a pas pu tourner',false,N.err);
+  else{
+    t('⭐⭐ « Hip Thrust Barre » (nom abrégé) retrouve son animation — le cas de Michel',
+      N.hipImg==='exercises/hip-thrust-barre.webp', 'reçu : '+N.hipImg);
+    t('⭐⭐ « Abduction Cuisses » aussi — l\'app avait déjà le fichier sous la main',
+      N.abdImg==='exercises/leg-abduction-machine-v2.webp', 'reçu : '+N.abdImg);
+    t('⭐ « Adduction Cuisses » — la question de départ (les adducteurs)',
+      N.addImg==='exercises/leg-adduction-machine-v2.webp', 'reçu : '+N.addImg);
+    t('⛔ un exercice PERSO ne reçoit aucune image inventée, et son nom ne bouge pas (R29)',
+      N.persoImg===null && N.persoNom==='Ma Machine à Moi Bidon',
+      JSON.stringify({img:N.persoImg,nom:N.persoNom}));
+    t('⛔⛔ NON-RÉGRESSION : le résolveur ne modifie AUCUN nom du catalogue',
+      Array.isArray(N.nomsBouges) && N.nomsBouges.length===0,
+      JSON.stringify((N.nomsBouges||[]).slice(0,5)));
+    t('⛔ le nom COMPLET garde exactement la même image qu\'avant',
+      N.pleinImg==='exercises/hip-thrust-barre.webp', 'reçu : '+N.pleinImg);
+    t('⛔⛔ ZÉRO COLLISION sur les bases sans parenthèse — la condition de la table',
+      Array.isArray(N.collisions) && N.collisions.length===0,
+      JSON.stringify((N.collisions||[]).slice(0,5)));
+    t('⭐ la table couvre les 77 exercices à parenthèse, pas seulement les 2 signalés',
+      N.nbAbrev===77, 'reçu : '+N.nbAbrev);
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 

@@ -6,7 +6,37 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v995`.
+- **Version en ligne (live) :** `ft-v996`.
+- 🏷️⭐⭐ **UN NOM D'EXERCICE ABRÉGÉ RETROUVE SA FICHE — LIVRÉ** (ft-v996). Signalé par Michel
+  (*« je n'ai plus la figurine sur ce mouvement-là »*, 2 captures), en repartant d'une vieille
+  question sur les adducteurs. ⛔⛔ **Les adducteurs n'étaient PAS en cause** — réglés depuis
+  ft-v921, vérifié dans un vrai navigateur avant de coder (`Adduction Cuisses` → `{adductors:2}`).
+  *Le symptôme désignait le mauvais coupable.* ⭐⭐ **La vraie cause est le NOM** : sa séance
+  portait les noms **COURTS** (« Hip Thrust Barre », « Abduction Cuisses ») quand le catalogue les
+  connaît **avec leur parenthèse** — **77 exercices** en portent une, et Milo **abrège** quand il
+  prescrit. ⛔⛔ **Défaut SILENCIEUX** : le calcul des muscles s'en sortait (il retombe sur les
+  règles `_MEX`, qui devinent), donc rien ne rougissait — seuls les lookups **exacts** (animation,
+  tutoriel, silhouette) échouaient. À l'écran : *« Muscle principal deviné »* + *« Ajouter la photo
+  de ta machine »*, alors que les deux `.webp` **étaient déjà dans le dépôt**. ***L'app proposait
+  d'ajouter une photo qu'elle avait sous la main.*** ⭐⭐ **Le mécanisme existait, posé d'un seul
+  côté — 3ᵉ fois après ft-v973/975 (R8/R13)** : `_matchExercise` a une étape *« exact sans la
+  parenthèse »* depuis le **09/08**, écrite pour ce cas exact… mais réservée à l'**import**.
+  ⛔ **Un seul propriétaire (R2)** : `exNomCatalogue()` (`constants.js`), posé aux **6** lookups de
+  `log.js`. ⛔ **Déterministe seulement** (R29 — montrer l'animation d'un AUTRE exercice est pire
+  que rien). ⛔⛔ **Zéro-collision MESURÉ, et c'est la CONDITION de la table** : 324 exercices,
+  77 parenthèses → 77 bases distinctes, 0 collision ; toute base ambiguë est **retirée** plutôt
+  qu'arbitrée — l'abréviation cesse alors d'être résolue, elle ne pointe jamais vers le mauvais
+  exercice.
+  ⏭️⚠️⚠️ **POINT OUVERT — LE 2ᵉ EFFET DE LA MÊME CAUSE, NON CORRIGÉ EXPRÈS.** `_mscScores`
+  appelle `exMuscles(ex.name)` en nom **exact** : un nom abrégé rate donc la **DONNÉE ÉCRITE** et
+  retombe sur la **DEVINETTE** — alors que le bloc dit lui-même *« la donnée écrite passe avant
+  les règles »*. **Mesuré : 55 des 77** abréviations donnent des muscles **différents**, et
+  *« Inclinaison Lombaire »* n'en donne **aucun** (figurine grise). ⭐ **L'exemple qui coûte** :
+  *« Rowing Poitrine Appuyée »* abrégé **recrédite le bas du dos**, que la fiche du 02/08 avait
+  retiré **exprès**. 👉 **Le correctif tient en une ligne** (`exMuscles(exNomCatalogue(ex.name))`)
+  **mais il change la figurine, la couleur du calendrier et les calories de séances PASSÉES** →
+  **c'est un arbitrage de Michel**, pas un détail technique (R29 / règle d'or #10). **C'est R31** :
+  la figurine est le vocabulaire, l'imprécision se propage jusqu'au contexte de Milo.
 - 🏃⭐⭐ **LE CARDIO DE MILO VA DANS SON BLOC, PAS DANS LES EXERCICES** (ft-v995). Michel, **en
   salle**, capture à l'appui. ⭐⭐ **Sa raison décide de tout** : *« si on fait une séance cardio
   toute seule, on veut qu'elle soit comptabilisée. Mais je ne veux pas que la course, le vélo

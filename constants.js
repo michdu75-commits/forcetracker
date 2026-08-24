@@ -1027,6 +1027,71 @@ function exNom(id){ const l=id&&EX_IDS[id]; return (l&&l[0])||null; }
  *  Rend le nom inchangé si l'exercice est inconnu (exercice perso : on n'y touche pas). */
 function exNomActuel(nom){ const id=exId(nom); return id?exNom(id):nom; }
 
+/* ─── NOM ABRÉGÉ → NOM DU CATALOGUE (24/08/2026) ──────────────────────────────────────
+ *
+ * ⚠️ POURQUOI. 77 exercices du catalogue portent une parenthèse EXPLICATIVE (« Hip Thrust
+ * Barre (Poussée de Hanche) », « Abduction Cuisses (Leg Abduction) »). Elle nomme la
+ * famille, elle ne distingue pas l'exercice — et quand Milo prescrit une séance, il abrège :
+ * il écrit « Hip Thrust Barre ». Ce nom court est alors STOCKÉ tel quel dans la séance.
+ *
+ * ⛔⛔ LE DÉFAUT EST SILENCIEUX, ET C'EST CE QUI LE REND COÛTEUX. Le calcul des muscles s'en
+ * sortait (il retombe sur les règles `_MEX`, qui devinent), donc rien ne plantait, rien ne
+ * rougissait. Mais tous les lookups qui exigent le nom EXACT — l'animation de l'exercice,
+ * le tutoriel, la silhouette du groupe — échouaient en silence. Mesuré sur la séance réelle
+ * de Michel (24/08) : « Hip Thrust Barre » et « Abduction Cuisses » affichaient « Muscle
+ * principal deviné » + « Ajouter la photo de ta machine », alors que `hip-thrust-barre.webp`
+ * et `leg-abduction-machine-v2.webp` étaient DÉJÀ dans le dépôt. *L'app proposait d'ajouter
+ * une photo qu'elle avait sous la main.*
+ *
+ * ⭐⭐ LE MÉCANISME EXISTAIT DÉJÀ, POSÉ D'UN SEUL CÔTÉ (R8/R13) — c'est le motif de ft-v973
+ * et ft-v975, une 3ᵉ fois. `_matchExercise` porte depuis le 09/08 une étape « exact sans la
+ * parenthèse », écrite pour exactement ce cas (Michel, sur un vrai programme de Milo). Elle
+ * ne servait qu'à l'IMPORT ; l'affichage, lui, ne l'a jamais eue.
+ *
+ * ⛔ DÉTERMINISTE SEULEMENT — aucun rapprochement flou ici (R29 : le coût de l'erreur décide).
+ * Montrer l'animation d'un AUTRE exercice est pire que de n'en montrer aucune : la personne
+ * apprend un mouvement qu'elle n'a pas prescrit. On ne résout donc que ce qui est certain.
+ *
+ * ⛔⛔ ET LE ZÉRO-COLLISION EST MESURÉ, PAS SUPPOSÉ — il est même la CONDITION de la table.
+ * Vérifié le 24/08 sur les 324 exercices : 77 parenthèses → 77 bases distinctes, aucune
+ * collision, et aucune base qui soit déjà le nom complet d'un autre exercice. Toute base
+ * ambiguë est RETIRÉE de la table plutôt qu'arbitrée : si le catalogue grandit et crée une
+ * collision, l'abréviation cesse d'être résolue (on retombe sur l'ancien comportement) —
+ * jamais elle ne pointe vers le mauvais exercice. *Le mode d'échec choisi est « je ne sais
+ * pas », jamais « voilà, tiens » (R29).*
+ */
+const _EX_BASE2NOM=(function(){
+  const naz=s=>(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
+    .replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+  const m={},ambigu={};
+  try{
+    const noms=(typeof EXLIB!=='undefined'?EXLIB:[]).map(e=>e&&e.n).filter(Boolean);
+    const pleins={};noms.forEach(n=>{pleins[naz(n)]=true;});
+    noms.forEach(function(n){
+      const b=String(n).replace(/\s*\([^)]*\)\s*$/,'').trim();
+      if(!b||b===n)return;
+      const k=naz(b);
+      if(!k||pleins[k]){ambigu[k]=true;return;}           // la base EST déjà un autre exercice
+      if(m[k]!==undefined&&m[k]!==n){ambigu[k]=true;return;} // deux exercices, même base
+      m[k]=n;
+    });
+    Object.keys(ambigu).forEach(function(k){delete m[k];});
+  }catch(e){}
+  return m;
+})();
+
+/** Nom du CATALOGUE pour un nom éventuellement ANCIEN ou ABRÉGÉ (« Hip Thrust Barre » →
+ *  « Hip Thrust Barre (Poussée de Hanche) »). Rend le nom inchangé s'il est déjà celui du
+ *  catalogue, ou si l'exercice est inconnu (perso, saisi à la main) — on n'invente jamais. */
+function exNomCatalogue(nom){
+  if(!nom)return nom;
+  const actuel=exNomActuel(nom);
+  if(exId(actuel))return actuel;                 // déjà un nom du catalogue → on n'y touche pas
+  const naz=s=>(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
+    .replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+  return _EX_BASE2NOM[naz(actuel)]||actuel;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════════
 // LES EXERCICES UNILATÉRAUX — 48 exercices tranchés UN PAR UN par Michel (10/08/2026)
 // ═══════════════════════════════════════════════════════════════════════════════════
