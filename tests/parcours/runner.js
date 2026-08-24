@@ -7759,8 +7759,17 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     // d'un piège vécu mais d'un TROU MESURÉ : aucun scénario n'avait plus d'UNE séance, donc
     // l'avant/après exigé par R34 comparait deux contextes identiques — et la promesse centrale
     // du produit (« le sportif ne repart jamais de zéro ») n'était vérifiée par aucun scénario.
-    t('⭐⭐ ... et il se télécharge à la demande : 22 scénarios, une seule source (R2)',
-      R.nb===22 && R.aDesVerifs===true, 'nb='+R.nb+' verifs='+R.aDesVerifs+(R.err?' · '+R.err:''));
+    // 22 → 27 le 24/08/2026 : 5 pièges promus depuis docs/JOURNAL-DE-TEST.md (EV-023→027), tous
+    // VÉCUS en salle ou en conversation réelle — le superset qui reste dans le texte, l'exercice
+    // demandé remplacé, l'exercice refusé qui revient, le PRÉVU annoncé comme FAIT, la coupure
+    // de 4 mois invisible. Michel : « il n'y a pas assez de questions pour le bench ».
+    // 27 → 50 le 24/08/2026 (Michel : « on le monte à 50 »). ⚠️ ET LE CHIFFRE N'EST PAS LE
+    // CRITÈRE — sa consigne était « que les scénarios soient viables, pas mettre tout et
+    // n'importe quoi ». Les 23 nouveaux ont donc été éprouvés UN PAR UN contre une bonne ET une
+    // mauvaise réponse : 6 ne mordaient pas au premier jet. C'est ce contrôle qui a révélé que
+    // l'apostrophe COURBE rendait 8 motifs du fichier aveugles — un défaut plus ancien qu'eux.
+    t('⭐⭐ ... et il se télécharge à la demande : 50 scénarios, une seule source (R2)',
+      R.nb===50 && R.aDesVerifs===true, 'nb='+R.nb+' verifs='+R.aDesVerifs+(R.err?' · '+R.err:''));
     t('⭐ un débrief à qui il manque 2 exercices sur 5 est ROUGE',
       R.rouge006===true, R.det006||JSON.stringify(R.errRun||''));
     t('⭐ « c\'est noté » sans bloc de mémoire est ROUGE', R.rouge004===true, '');
@@ -12140,8 +12149,24 @@ console.log('\n-- CVIII. La course `_saveCoachMemory` (ft-v993) --');
     ev22===true, 'EV-022 absent : l\'avant/après comparerait deux contextes identiques');
   t('⭐ … et son historique dépasse les 5 séances envoyées en détail (sinon le résumé est vide)',
     nb===1, 'la boucle qui fabrique les 14 séances a changé — vérifier que le résumé part encore');
+  /* ⚠️⚠️ CE TÉMOIN A ROUGI À TORT LE JOUR OÙ ON EST PASSÉ À 50 SCÉNARIOS, et la raison mérite
+     d'être écrite : il inspectait « tout ce qui SUIT EV-022 » — ce qui revenait au même tant
+     qu'EV-022 était le DERNIER du fichier. En ajoutant 28 scénarios après lui, il s'est mis à
+     surveiller les autres. *Un témoin borné par « la fin du fichier » se déplace tout seul.*
+     Il est désormais borné au bloc d'EV-022, et complété par le contrôle qui compte vraiment. */
+  const bloc22=src.slice(src.indexOf('EV-022'), src.indexOf('EV-023'));
   t('⛔ aucune date en dur dans EV-022 (la fenêtre glisse sur 60 j : une date figée périmerait seule)',
-    !/date:\s*'20\d\d-\d\d-\d\d'/.test(src.slice(src.indexOf('EV-022'))), 'date figée trouvée dans EV-022');
+    !/date:\s*'20\d\d-\d\d-\d\d'/.test(bloc22), 'date figée trouvée dans EV-022');
+  /* ⭐ LE CONTRÔLE GÉNÉRAL : seuls DEUX champs sont réellement soumis au temps qui passe —
+     `sessions` (fenêtre glissante de 60 j) et `nextPlanned` (une date FUTURE, donc périmée à
+     coup sûr). Les autres dates figées (records, bilans, refus d'exercice) vieillissent sans
+     invalider leur scénario : on ne les interdit pas, ce serait de la rigidité gratuite (R19). */
+  const figees=[];
+  (src.match(/(sessions|nextPlanned)\s*:\s*[^\n]{0,80}/g)||[]).forEach(m=>{
+    if(/'20\d\d-\d\d-\d\d'/.test(m)) figees.push(m.slice(0,60));
+  });
+  t('⛔⛔ aucun scénario ne fige une date dans `sessions` ou `nextPlanned` (les 2 champs qui périment)',
+    figees.length===0, figees.join(' | '));
 }
 
 await b.close(); srv.close();

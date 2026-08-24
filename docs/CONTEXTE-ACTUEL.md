@@ -6,7 +6,30 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v993`.
+- **Version en ligne (live) :** `ft-v994`.
+- 🧪⭐⭐ **LE BANC D'ESSAI PASSE DE 21 À 50 SCÉNARIOS** (ft-v994). Michel : *« il n'y a pas assez de
+  contrôle, on le monte à 50 »*, puis, aussitôt : *« et que les scénarios soient VIABLES hein, pas
+  mettre tout et n'importe quoi »*. ⛔⛔ **C'est cette seconde phrase le cahier des charges** — et le
+  journal de test le disait déjà : *« remplir pour atteindre le chiffre → des entrées inventées »*.
+  Les **29 nouveaux viennent tous du vécu** (`docs/JOURNAL-DE-TEST.md`), aucun inventé.
+  ⭐⭐ **Chacun a été éprouvé contre une BONNE et une MAUVAISE réponse avant livraison** — *un
+  scénario qui ne peut pas rougir ne mesure rien*. **6 sur 23 ne mordaient pas au 1ᵉʳ jet.**
+  ⛔⛔ **Le pire défaut était plus ancien que mes scénarios : l'APOSTROPHE COURBE** (`’`, U+2019),
+  celle que Milo écrit naturellement. `normalize('NFD')` ne la convertit pas → un motif écrit
+  `c'est noté` **ne matchait jamais**. **8 motifs du fichier** en portent une : *ils ne rougissaient
+  pas, ils ne voyaient rien.* Corrigé dans `U.norm`, un seul endroit (**R2**).
+  ⭐ **2ᵉ défaut** : 3 vérificateurs comptaient des **lignes**, or Milo écrit souvent la séance
+  **sur une seule ligne** — le témoin des « 30 exercices » voyait alors *un* exercice.
+  ⚠️ **Et 4 des 6 échecs venaient de mes propres essais**, pas du code (apostrophes, noms tronqués).
+  ⚠️⚠️ **Un témoin a rougi à tort, et sa leçon vaut d'être gardée** : il inspectait *« tout ce qui
+  suit EV-022 »* — équivalent à EV-022 tant qu'il était le dernier du fichier. *Un témoin borné par
+  la fin du fichier se déplace tout seul.* En le corrigeant, **2 vraies péremptions** sont apparues :
+  EV-026 posait une date **FUTURE** en dur (périmée en 5 jours) et EV-048 disait *« en ce moment »*
+  avec une nuit figée. Les deux sont désormais relatives.
+  ⚠️ **Deux coûts, écrits plutôt que tus** : ① **50 appels API par passe** (contre 21) ; ② ces
+  vérificateurs mesurent ce qui est mesurable **par du code** — le ton, le naturel, *« est-ce que
+  Milo est agréable »* restent au **juge humain**.
+  ⏭️ **Le benchmark peut être relancé** : R34 attend une passe réelle (une vraie clé API).
 - 🧠⭐⭐ **LA COURSE `_saveCoachMemory` — PROUVÉE PUIS CORRIGÉE** (ft-v993). ⛔⛔ **Prouvée AVANT de
   toucher au code**, comme le suivi d'audit l'exigeait : deux résumés à **20 ms d'écart** envoient
   tous deux `existingMemory:"MÉMOIRE DE DÉPART"`, et **le dernier REVENU écrase l'autre** — « FAIT-B »

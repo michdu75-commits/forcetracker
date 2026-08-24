@@ -90,7 +90,7 @@ déclenchent **à la proposition**, pas à la question.
 le prompt est le dernier levier). L'app connaît `S.prs` : elle peut calculer le % du 1RM d'une
 séance dictée **avant** de l'afficher. Idem pour le couple charge × reps × repos.
 
-### 🟢 LE SUPERSET RESTE DANS LE TEXTE ET N'ATTEINT PAS LA DONNÉE — **R4 au mot près**
+### 🔵 LE SUPERSET RESTE DANS LE TEXTE ET N'ATTEINT PAS LA DONNÉE — **R4 au mot près** → **EV-023**
 **23/08/2026.** Michel : *« et en plus le superset n'a pas fonctionné »*. **Mesuré, il a raison** :
 la séance proposée dit noir sur blanc *« **Rowing Barre** (ancre) **en superset avec Tirage Visage
 (Face Pull)** — repos 90 s après chaque paire »*, et dans la séance enregistrée
@@ -297,7 +297,7 @@ correction (*« t'as raison, j'ai merdé… je note »*), pas des promesses cyni
 serait le 4ᵉ durcissement sur ce symptôme (**R7** : le prompt est le DERNIER levier). *La question
 à traiter d'abord : peut-il POSER le bloc dans ces moments-là, ou n'a-t-il rien à enregistrer ?*
 
-### 🟢 Milo remplace un exercice DEMANDÉ par un autre
+### 🔵 Milo remplace un exercice DEMANDÉ par un autre → **EV-024**
 **22/08/2026, conversation réelle.** Michel : *« Pk tu as mis soulevé de terre ? J'ai dit développé
 couché et Butterfly en début de séance »*. Milo a lu *« tirage »* dans « Développé Couché + Tirage »
 et a mis du **SDT**. Il l'a reconnu : *« j'ai vu "tirage" et j'ai mis du SDT, mauvaise lecture »*.
@@ -305,7 +305,7 @@ et a mis du **SDT**. Il l'a reconnu : *« j'ai vu "tirage" et j'ai mis du SDT, m
 et aucun exercice lourd non demandé ne le remplace.
 **Vérifiable ?** ⭐ **Oui, mécaniquement** : on cherche les noms demandés dans la séance rendue.
 
-### 🟢 Une séance PRÉVUE annoncée comme FAITE
+### 🔵 Une séance PRÉVUE annoncée comme FAITE → **EV-026**
 **22/08/2026, conversation réelle.** Michel : *« Pourquoi as-tu mis en page d'accueil si c'était la
 séance Larsen ? »*. Milo a reconnu : *« j'ai formulé le label de façon ambiguë, comme si la Larsen
 Press c'était la séance que tu venais de faire, alors que c'est celle prévue samedi »*.
@@ -396,7 +396,7 @@ place, et on ne le fera pas.**
 enregistré). Ce qui n'est **pas** vérifiable, c'est *pourquoi* ça se produit encore après le
 correctif de ft-v923 — ça demande de lire le texte réel.
 
-### 🟢⭐ Milo repropose un exercice que la personne a DÉJÀ refusé
+### 🔵⭐ Milo repropose un exercice que la personne a DÉJÀ refusé → **EV-025**
 **16/08/2026, en pleine séance.** Michel : *« **Je lui ai déjà dit** que cet exercice ne me convient
 pas, trop long »*.
 **⭐ POURQUOI C'EST GRAVE** : c'est le pendant de « c'est noté » sans rien noter (`EV-004`), vu de
@@ -407,7 +407,7 @@ descendre jusqu'à la DONNÉE, sinon elle n'existe pas.
 **Vérifiable ?** Oui — un exercice refusé dans l'historique ne doit pas reparaître sans que Milo
 explique pourquoi il y revient.
 
-### 🟢 Milo ne voit que les dernières séances — pas les longues interruptions
+### 🔵 Milo ne voit que les dernières séances — pas les longues interruptions → **EV-027**
 **02/08/2026.** Michel : *« l'historique, on avait fait en sorte que Milo se souvienne que **pendant
 trois mois t'étais pas allé au sport**, et pourquoi il prend que les dernières séances ? Je ne comprends
 pas ça, je pense qu'il y a eu un problème quelque part »*.

@@ -422,7 +422,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v993`** (prochaine : `ft-v994`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v994`** (prochaine : `ft-v995`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -432,6 +432,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v994 — 🧪 LE BANC D'ESSAI PASSE DE 21 À 50 SCÉNARIOS — et 6 des 23 premiers NE MORDAIENT PAS** — Michel : *« il n'y a pas assez de contrôle, on le monte à 50 »*, puis, aussitôt : *« et que les scénarios soient VIABLES hein, pas mettre tout et n'importe quoi »*.
+
+**⛔⛔ CETTE SECONDE PHRASE EST LE VRAI CAHIER DES CHARGES** — et `docs/JOURNAL-DE-TEST.md` le disait déjà de lui-même : *« remplir pour atteindre le chiffre → des entrées inventées, or les bonnes viennent du vécu »*. Les **29 nouveaux scénarios viennent donc TOUS du journal de test**, c'est-à-dire de séances et de conversations réelles — aucun inventé pour faire nombre.
+
+**⭐⭐ ET CHACUN A ÉTÉ ÉPROUVÉ UN PAR UN, contre une BONNE et une MAUVAISE réponse, avant d'être livré.** *Un scénario qui ne peut pas rougir ne mesure rien — il rassure.* **Résultat du premier jet : 6 sur 23 ne mordaient pas.** Le chiffre de 50 ne valait rien tant que ce contrôle n'était pas passé.
+
+**⛔⛔ LE DÉFAUT LE PLUS GRAVE ÉTAIT PLUS ANCIEN QUE MES SCÉNARIOS — l'APOSTROPHE COURBE.** Milo écrit du français naturel, donc `’` (U+2019) ; `normalize('NFD')` ne la convertit pas, si bien qu'un motif écrit `c'est noté` **ne matche jamais**. **8 motifs du fichier** en portent une : *ils ne rougissaient pas, ils ne voyaient rien.* ⭐ Corrigé dans **`U.norm` et nulle part ailleurs** (**R2**) — les reprendre un par un aurait laissé passer le suivant.
+
+**⭐ 2ᵉ DÉFAUT — trois vérificateurs comptaient des LIGNES**, alors que Milo écrit souvent toute la séance **sur une seule ligne**. Le témoin des *« 45 minutes, pas 30 exercices »* voyait alors **un** exercice et restait vert sur dix.
+
+**⚠️ ET 4 DES 6 ÉCHECS VENAIENT DE MES PROPRES ESSAIS, pas du code** : je testais avec *« C est noté »* (une espace au lieu d'une apostrophe) et des noms d'exercices tronqués que le lexique refuse **volontairement** (*« uniquement des noms non ambigus, pour ne jamais rougir à tort »*). *Un banc d'essai se juge aussi sur la qualité de ce qu'on lui donne à juger.*
+
+**👉 CE QUE LES 50 COUVRENT MAINTENANT, par famille** : l'info qui reste dans le texte (**R4** — superset, objectif changé) · ce qu'il ignore de ce que tu as dit (exercice demandé, exercice refusé, structure imposée, matériel) · ce qui déborde (60 min, 45 min, échauffement, déplacement, longueur) · **ce qu'il affirme sans le savoir** (graisse chiffrée, score propriétaire, poids cible, diagnostic, feu vert médical, source inventée, hypothèse donnée pour un fait) · ce qu'il oublie (mémoire longue, coupure de 4 mois, promesse vide, prénom) · ce qu'il juge (l'âge, une donnée isolée) · et la **sécurité** (blessure active respectée).
+Tests : **parcours 1337/1337**, calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou. ⚠️ **DEUX COÛTS À CONNAÎTRE, écrits plutôt que tus** : ① **50 scénarios = 50 appels API par passe** (contre 21) ; ② **la limite ne bouge pas** — ces vérificateurs mesurent ce qui est mesurable **par du code**. Le ton, le naturel, *« est-ce que Milo est agréable »* restent au **juge humain**, et aucun de ces 50 ne le remplace. Fichiers : `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js`, `docs/JOURNAL-DE-TEST.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v994. |
 
 **ft-v993 — 🧠 LA COURSE `_saveCoachMemory` : PROUVÉE, PUIS CORRIGÉE — et le ⑤ de l'audit MESURÉ puis NON construit** — deux points ouverts traités, dont un par la négative.
 
@@ -756,28 +771,6 @@ Tests : **parcours 1175/1175** (−1, exactement le témoin de parité du clone 
 
 **⚠️⚠️ UN DÉGÂT ÉVITÉ DE JUSTESSE, ET IL VAUT D'ÊTRE ÉCRIT** : en synchronisant le clone j'ai fait un `cp` un peu vite et **effacé 91 lignes de `clone/index.html`** — le shim qui isole ses données des vraies. Repéré et restauré. ⭐ **Or un script de synchro existait** (`build_clone.py`), avec justement un garde-fou *« shim clone introuvable — abandon, rien écrasé »*. *Un outil qu'on contourne ne protège rien.* C'est ce qui a mené à la question de Michel juste après — et à la décision de retirer le clone.
 Tests : **parcours 1176/1176** (+12, bloc XCIV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Le contrôle négatif serait peu instructif** (le bloc vit sous le garde « `_afMajAncre` absente »), **et il est ailleurs** : les témoins qui comptent sont ceux du **non-empilement** (20 → 30 donne ×2, pas ×2 sur ×2) et du **poids périmé** — deux défauts qui ne se voient qu'à la DEUXIÈME action, donc jamais en testant une fois. Fichiers : `app.js`, `index.html`, `Code.js`, `worker.js`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v975. |
-
-**ft-v974 — 🔤 LE RAPPORT DE BALANCE LU SUR LE TÉLÉPHONE — gratuit, hors ligne, zéro appel IA** — Michel : *« on construit, parce que je l'utilise souvent — il faut que je te sorte les données de mon ancienne balance »*.
-
-**⭐ L'ÉCHELLE DES SOURCES (R33) MISE EN ŒUVRE POUR LA PREMIÈRE FOIS** : donnée structurée → texte → **OCR** → IA → échec propre. La lecture locale passe **avant** l'appel serveur ; l'appel reste intact derrière, pour tout ce que le lecteur ne sait pas lire.
-
-**⭐⭐ ET LE POINT QUI DÉCIDE DE TOUT N'EST PAS « ÇA LIT », C'EST « ÇA REFUSE DE LIRE QUAND C'EST FAUX ».** Mesuré : en résolution réduite, la protéine de Michel (13,8) sort à **18,8** — faux, et parfaitement **crédible**. Aucune borne physique n'attrape ça. *Ce qui l'attrape, c'est le rapport lui-même* : `gras + eau + protéine + os = poids` tombe à **0,05 kg près** sur ses 5 rapports, et donne ici **90,1 pour 85,2**. Si l'arithmétique ne ferme pas, on ne propose **rien** et on passe la main.
-
-**👉 MESURÉ DANS UN VRAI NAVIGATEUR, PAS ESTIMÉ** : chargement du moteur **0,3 s**, lecture **3,2 à 3,7 s** par rapport, **≈ 2 Mo** téléchargés **une seule fois** et **seulement au premier scan** (règle d'or #4 : rien au démarrage). Sur les 5 rapports : **14 valeurs lues sur 16**, la masse maigre retrouvée par soustraction, **les 4 contrôles verts 5 fois sur 5**.
-
-**⛔⛔ ET LE PLUS IMPORTANT EST CE QU'ON NE LIT PAS.** ① **« Poids cible »** — c'est une valeur **propriétaire** (**R32**), sortie d'un modèle qu'on ne peut pas ouvrir : *le poids cible d'une balance ne devient jamais l'objectif de la personne.* ② **« Graisse sous-cutanée »** est retirée (**R30** — un retrait s'écrit) : mesuré, 13,5 / 14,0 / 14,3 / 14,0 sortent en **135 · 140 · 43 · 140** — la virgule est mangée par le tableau d'impédance voisin, **4 fois sur 5**, et le « 43 » tombe **dans** le domaine plausible. *Aucune équation ne la recoupe : rien ne pourrait la démentir.*
-
-**⛔ UN TIROIR DE CACHE À PART, et c'est ce qui rend la chose viable** : le tiroir normal est **versionné**, donc vidé à chaque livraison — plusieurs par jour en ce moment. Les 2 Mo y seraient re-téléchargés à chaque fois. Ils vivent donc, comme les images, dans un tiroir **jamais vidé par une mise à jour**.
-
-**⚠️⚠️ ET TROIS DÉFAUTS TROUVÉS EN ÉTENDANT MES PROPRES CONTRÔLES, pas en relisant le code :**
-**① Un contrôle CIRCULAIRE.** Quand la masse maigre est **déduite** par soustraction, « maigre = poids − gras » se vérifie lui-même : il ne peut pas échouer, donc **il ne mesure rien**. Il n'est plus compté quand la valeur a été déduite. *C'était un vert qui ne prouvait rien.*
-**② Une valeur écartée par ses bornes emportait l'équation qui l'aurait démasquée** : « Muscle 4.5 » passait pour une lecture **correcte**, parce que la valeur disparaissait et le contrôle avec. Les **8 valeurs du tableau principal sont désormais obligatoires** — un rapport incomplet est refusé.
-**③ `_hideBsScan` attend 1,4 s avant de fermer** : l'écran de scan se serait refermé **en pleine lecture IA**. On ne le ferme plus entre les deux étages, on change son texte.
-
-**⭐ R2 — UN SEUL ENDROIT QUI REMPLIT LE FORMULAIRE**, que la lecture vienne du téléphone ou du serveur. Deux copies auraient divergé, et le correctif d'ordonnancement de **ft-v971** (« `openBodyScanForm` est `async`, il faut l'attendre ») n'aurait plus tenu que d'un côté.
-
-**⚠️ LE RAPPORT D'EXEMPLE DES TESTS EST FABRIQUÉ, ET C'EST VOLONTAIRE** : le lecteur est calibré sur **5 vrais rapports**, mais ceux-ci portent le prénom, l'âge, la taille et la composition corporelle de Michel — **et ce dépôt est public**. Ils restent hors du dépôt ; le témoin reprend la mise en forme exacte avec des chiffres inventés mais cohérents.
-Tests : **parcours 1164/1164** (+17, bloc XCIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : **pas de contrôle négatif séparé, et autant l'écrire** : tout le lecteur est neuf, donc contre l'ancien code le bloc ne dirait qu'une chose — *« la fonction n'existe pas »*. ⭐ **Ce qui tient lieu de contrôle négatif ici est ailleurs, et il est plus instructif** : les **7 erreurs injectées** (protéine, poids, %gras, muscle hors bornes, eau, ligne absente, texte vide) sont **toutes refusées**, et elles ont été jouées AVANT le correctif — deux d'entre elles passaient au vert, c'est ce qui a révélé le contrôle circulaire et le rapport incomplet. ⚠️ **Et un témoin existant a dû être RECIBLÉ** (celui de ft-v971) : le remplissage du formulaire a été sorti de `onBodyScanPhoto`, donc le `await` ne vit plus chez l'appelant. Il épingle désormais les **deux** moitiés — la fonction commune attend l'ouverture, **et** personne d'autre ne rouvre le formulaire dans son coin. *Sinon il aurait suffi de déplacer le code pour le rendre vert.* ⚠️⚠️ Au passage, il **accusait les COMMENTAIRES** : le gros commentaire de ft-v971 vit dans `onBodyScanPhoto` et y nomme `openBodyScanForm` — 4ᵉ fois cette semaine qu'un témoin désigne le mauvais coupable**. Fichiers : `lib/ocr/*` (neuf), `tracking.js`, `constants.js`, `screens.js`, `app.js`, `clone/*`, `sw.js`, `tests/parcours/runner.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v974. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
