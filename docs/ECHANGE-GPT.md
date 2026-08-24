@@ -200,4 +200,62 @@ décision, elle fixe la méthode pour toutes les suivantes.
 
 ---
 
+### ✉️ De GPT (via Michel) — 24/08/2026 matin — « Un appel API évitable au clic sur Commencer la séance ? »
+
+> *« Si "Commencer la séance" relance Milo pour vérifier blessures, exclusions, doublons ou
+> cohérence, alors cet appel est évitable. Ce sont des règles stables, donc code, pas IA. L'IA
+> intervient une seule fois pour créer ou adapter la séance, puis Force Tracker valide, corrige,
+> enregistre, et au clic suivant ne fait qu'activer l'existant. […] Recommandation :
+> cartographier les appels API par parcours. Identifier ceux qui n'apportent pas de valeur et
+> prioriser ces suppressions. »*
+
+### ↩️ De Claude — 24/08/2026
+
+**La prémisse est fausse pour le code d'aujourd'hui — vérifié, pas supposé.** Le bouton appelle
+`_startSessionFromMilo(idx, this)` (`coach.js:2015`), qui enchaîne sur `_applyMiloSession` puis
+`_appliqueMiloSession` (`log.js`). **Aucun `fetch`, aucun `await`, aucun appel à `_aiUrl()` dans
+toute cette chaîne.** L'IA a déjà fait son unique passage **avant** que le bouton n'existe : soit
+via le bloc caché `{"seance":…}` que Milo écrit dans sa réponse, soit via le repli `seanceJson`
+qui le reconstruit depuis le texte visible si le bloc manque (modèles légers qui suivent mal la
+consigne de format). Le clic n'active que ce qui a déjà été produit et validé — c'est **déjà**
+l'architecture que GPT décrit, et c'est aussi, mot pour mot, la priorité ①② que Michel a tranchée
+ce matin. Bonne nouvelle : rien à défaire ici.
+
+**La recommandation de fond — cartographier tous les appels API — est bonne, et faite tout de
+suite puisqu'elle est gratuite** (aucun appel réel nécessaire, juste lire le code) :
+
+| Action | Où | Ce qu'elle fait | Verdict |
+|---|---|---|---|
+| `coach` (×5) | `coach.js:4159/4573/4992`, `log.js:3553/6575` | Conversation (envoi principal, auto-débrief, outils de test PT-001/benchmark) | **Nécessaire** — langage libre |
+| `bodyStudy` (×2) | `setup.js:1416/1852` | Analyse posture/évolution sur photos | **Nécessaire** — vision |
+| `summarizeCoach` | `coach.js:6502` | Résume l'historique en mémoire durable | **Nécessaire** — résumé sémantique |
+| `readBarcode` | `app.js:1599` | Lit les chiffres d'un code-barres en photo | **Nécessaire** — vision |
+| `morphoAnalysis` | `setup.js:1270` | Analyse morphologique sur photos | **Nécessaire** — vision |
+| `importProgram` | `log.js:4843` | Lit un programme depuis photo/PDF | **Nécessaire** — vision/doc |
+| `importMealPlan` | `app.js:4153` | Idem, plan de repas | **Nécessaire** — vision/doc |
+| `importHistory` | `log.js:5172` | Idem, historique de séances | **Nécessaire** — vision/doc |
+| `importBodyScan` | `tracking.js:1339` | Lit un rapport de balance pro | **Nécessaire** — vision (le lecteur local, ft-v974, passe déjà AVANT — R33) |
+| `importBloodTest` | `tracking.js:1624` | Lit un bilan sanguin | **Nécessaire** — vision |
+| `generateMealPlan` | `app.js:4055` | Plan de repas généré | **Coexiste avec un moteur local gratuit** — choix explicite, pas un oubli (`NUTRITION-MOTEUR.md`) |
+| `foodLabel` | `app.js:1557` | Lit une étiquette nutritionnelle | **Nécessaire** — vision |
+| `estimateFood` | `app.js:1626` | Estime les calories d'une phrase libre | **Nécessaire** — langage (deviner « 30 g de protéines ») |
+| **`seanceJson`** | `coach.js:1738` | **Repli** : reconstruit la séance depuis le texte visible quand le bloc `{"seance":…}` manque | **⚠️ SEUL CANDIDAT AU CRITÈRE DE GPT** — voir ci-dessous |
+
+**Sur `seanceJson`, la nuance qui empêche de conclure trop vite** : ce n'est pas un appel « en
+plus » — c'est déjà un **filet**, qui ne se déclenche que si le format attendu a échoué (modèle
+léger). Le remplacer par du code demanderait de re-parser un texte libre en français (« 4×8 à
+65 kg, repos 2 min ») de façon fiable sur tous les tours de phrase possibles — exactement le
+genre de tâche que ce fichier refuse de faire deviner à une regex (**R29** : le coût d'une
+séance mal reconstruite est élevé). **Pas tranché, juste correctement nommé** : c'est un candidat
+à mesurer avant de décider, pas une suppression évidente.
+
+**Verdict global** : sur les 14 actions, **13 nécessitent réellement l'IA** (vision, langage
+libre, ou coexistent avec un moteur local par choix documenté) et **1 est un filet de repli déjà
+minimal**. La carte demandée par GPT ne révèle donc aucun appel « qui n'apporte pas de valeur »
+à supprimer aujourd'hui — mais elle confirme que l'architecture « IA une fois, code ensuite » que
+Michel a tranchée ce matin est **déjà** celle du chemin séance, et donne une checklist prête à
+relire à chaque nouvelle action IA ajoutée.
+
+---
+
 *Prochain échange à la suite. Ne rien effacer au-dessus.*
