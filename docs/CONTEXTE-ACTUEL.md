@@ -6,7 +6,17 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v988`.
+- **Version en ligne (live) :** `ft-v989`.
+- 🛡️⭐⭐ **LA VALIDATION UNIQUE AVANT UNE SÉANCE DE MILO — LIVRÉE** (ft-v989). Priorité n°1 de
+  Michel après le contre-audit. Posée au SEUL point que les deux portes traversent
+  (`_appliqueMiloSession`, même raison que ft-v980). Réutilise `_gardienZones()`,
+  `_GARDIEN_CONSTRAINTS` et `_EX_SWAP_RAISONS` — rien de réinventé (R2/R13). **On signale, on
+  ne bloque pas** (R24) : seul l'ACTIF/AUJOURD'HUI déclenche une blessure, les raisons
+  d'exclusion non durables (« machine prise ») sont ignorées comme dans le contexte de Milo.
+  Vérifié à l'écran (capture) ET en données : les charges de Milo restent intactes.
+  ⏭️ **Priorité n°2 restante** : rien — `_startSessionFromMilo` était déjà léger (0 appel IA
+  au clic, vérifié le 24/08). ⏭️ **Prochaine étape** : instrumenter le coût réel (③, en
+  parallèle), ou reprendre un autre point du palier « avant ouverture large ».
 - 🔬 **CONTRE-AUDIT ENVOYÉ À GPT (24/08, nuit) — RÉPONSE REÇUE ET INTÉGRÉE.** Rapport PDF
   (`docs/CONTRE-AUDIT-2026-08-24.pdf`) donné pour relecture extérieure. GPT valide les 3
   correctifs de la nuit **sans réserve**, propose une 3ᵉ voie pour le plafond du bloc commun

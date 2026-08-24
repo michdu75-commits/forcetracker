@@ -406,7 +406,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v988`** (prochaine : `ft-v989`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v989`** (prochaine : `ft-v990`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -416,6 +416,22 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v989 — 🛡️ LA VALIDATION UNIQUE AVANT UNE SÉANCE DE MILO** — priorité n°1 tranchée par Michel après le contre-audit du 24/08 : *« une validation déterministe unique avant l'activation de la séance : blessures, exclusions, doublons »*.
+
+**⛔⛔ POSÉE AU SEUL POINT QUE LES DEUX PORTES TRAVERSENT** — `_appliqueMiloSession`, exactement la même raison que le contrôle d'intensité (**ft-v980**) : `_startSessionFromMilo` (aucune séance en cours, **le cas normal**) et `_applyMiloSession` (une séance tourne déjà) y convergent tous les deux. La poser ailleurs l'aurait fait manquer dans le cas le plus fréquent — c'est très exactement l'erreur déjà commise et corrigée le 23/08 (**R2**).
+
+**⛔ ELLE NE RÉINVENTE RIEN (R2/R13) — les trois catégories réutilisent chacune un mécanisme qui existait déjà pour un autre usage :**
+- **DOUBLONS** : comparaison directe des noms dans la proposition (+ la séance déjà en cours si mode « ajouter »).
+- **EXCLUSIONS** : `S.exSwaps` + `_EX_SWAP_RAISONS` — la case `durable` **existait déjà**, elle filtre déjà « il me gêne »/« trop long » d'une raison de circonstance comme « machine prise » dans le contexte de Milo. Aucune 2ᵉ liste créée.
+- **BLESSURES** : `_gardienZones()` + `_GARDIEN_CONSTRAINTS` (`coach.js`) — la **même** mécanique qui construit déjà la note *« dans sa séance du jour : … sollicite ton épaule »* envoyée à Milo.
+
+**⚠️ ON SIGNALE, ON NE BLOQUE PAS** (**R24**, Constitution P13 « adapter, jamais interdire »). La séance démarre normalement ; l'avertissement reste attaché à l'exercice — comme `intensiteWarn`, un toast seul aurait disparu avant la 1ʳᵉ série. ⛔ **Seul l'ACTIF ou AUJOURD'HUI déclenche une blessure ici** : une fragilité durable mais calme reste couverte par le Gardien de la conversation — la resignaler à chaque séance serait du bruit qui finit par ne plus être lu (**R19**).
+
+**⛔ LES CHARGES DE MILO NE SONT JAMAIS MODIFIÉES**, vérifié par un témoin dédié (**R29** — on attache, on ne touche pas).
+
+**🎨 L'AFFICHAGE ÉTEND LE BANDEAU EXISTANT, IL N'EN CRÉE PAS UN 2ᵉ** (`_intensiteBandeau`, R2/R13) : même mécanique, même style, trois icônes en plus de ⚡ (🚫 exclusion, 🛡️ blessure, 🔁 doublon). **Vérifié à l'écran, pas seulement en données** : capture sur les 4 cas réunis, les trois bandeaux s'affichent, la charge de Milo (40 kg) part intacte, le bouton central « + » n'a pas bougé (règle d'or #9).
+Tests : **parcours 1305/1305** (+10, bloc CVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **Contrôle négatif** : 1 rouge (« la fonction n'existe pas ») — attendu pour une fonctionnalité neuve, pas instructif en soi ; la preuve tient dans les 9 autres témoins qui exercent chaque catégorie sur des données réelles (blessure active, exclusion durable **vs** non durable, doublon, mode ajout, cas neutre sans faux positif). Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`. sw.js ft-v989. |
 
 **ft-v988 — 🏋️ EXPORTER SEULEMENT SES SÉANCES — et l'export « normal » DIT enfin ce qu'il emporte** — Michel demande l'option, puis, en découvrant le contenu du fichier : *« oui j'ai vu mes bilans dans l'export »*.
 
@@ -740,21 +756,6 @@ Tests : **parcours 1122/1122** (+5, bloc XC), calculs 266/266, muscles 241/241, 
 
 **⚠️ ET L'AVERTISSEMENT EST ÉCRIT DANS SON CONTEXTE** : deux mesures rapprochées diffèrent par l'**hydratation**, pas par la graisse ; ne jamais commenter une variation de quelques jours comme un progrès ou une régression.
 Tests : **parcours 1117/1117** (+8, bloc LXXXIX), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges**, exactement les 4 comportements neufs — et **4 verts des deux côtés** (l'écart au précédent, le cas « un seul bilan », le cas « aucun bilan ») : *ils devaient rester intacts.* Fichiers : `coach.js`, `clone/coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v970. |
-
-**ft-v969 — 🧮 D'OÙ VIENT LE CHIFFRE DE PROTÉINES** — Michel, devant l'onglet Suppléments : *« sur cette image c'est la portion ou juste le nombre de protéine ? »*.
-
-**⭐⭐ LA QUESTION ELLE-MÊME ÉTAIT LE DÉFAUT.** Le champ s'appelle « Protéines mangées (g) » et ne dit **jamais qui le remplit**. Quand le Journal porte des protéines, le champ reste **vide avec un placeholder « 0 »** pendant que la barre affiche le vrai total : *deux nombres qui se contredisent, et rien ne dit lequel commande.*
-
-**⛔ MÊME FAMILLE QUE LE « 88 g » DE ft-v966** — aucun des deux n'est faux, c'est leur **voisinage muet** qui trompe. *Et c'est plus vicieux qu'une erreur : il n'y a rien à corriger, donc rien ne se signale.* Deux fois en deux jours, sur deux écrans différents.
-
-**⭐ R2 — LA LIGNE NE CALCULE RIEN.** Elle **relit** le chiffre que `updateProteinBar()` vient d'utiliser et **nomme sa source**. Deux calculs du même nombre finiraient par diverger, et on ne saurait plus lequel croire.
-
-**👉 TROIS ÉTATS, ET LE PREMIER RÉPOND EXACTEMENT À SA QUESTION** : rien de noté → *« ça se remplit tout seul depuis le Journal, ou tape ton total ici. **En grammes de protéines, pas en poids d'aliment.** »* · le Journal remplit → *« 🍽️ 46 g lus dans ton Journal du jour — tape un nombre ici pour le remplacer »* · saisie manuelle → *« ✍️ chiffre que **tu** as tapé — efface le champ pour reprendre ton Journal »*.
-
-**⛔ ET ON NE DIT PAS « 0 g lus dans ton Journal » QUAND RIEN N'EST NOTÉ** : ça se lirait comme un constat alors que c'est simplement une journée qui commence (**R24**).
-
-**⛔⛔ LE TÉMOIN QUI PROTÈGE LE PLUS EST CELUI D'AVANT** : la saisie manuelle n'est **jamais écrasée** par le Journal (**R29**, même arbitrage que `manualKcal`). *Il est vert des DEUX côtés — c'est le but : une correction d'affichage se juge à ce qui n'a pas bougé.*
-Tests : **parcours 1109/1109** (+9, bloc LXXXVIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 6 rouges**, exactement les 6 comportements neufs — et **3 verts des deux côtés**, qui sont les non-régressions (la barre lit le Journal, la saisie manuelle prime, elle n'est pas écrasée). Fichiers : `app.js`, `index.html`, `clone/*`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v969. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

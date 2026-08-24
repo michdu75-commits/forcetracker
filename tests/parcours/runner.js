@@ -11794,6 +11794,106 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+
+/* ══ BLOC CVI — LA VALIDATION UNIQUE AVANT UNE SÉANCE DE MILO (24/08/2026, ft-v989) ══
+   Priorité 1 tranchée par Michel après le contre-audit du 24/08 : « une validation
+   déterministe unique avant l'activation de la séance : blessures, exclusions, doublons ».
+   Posée au SEUL point que les deux portes (_startSessionFromMilo / _applyMiloSession)
+   traversent : _appliqueMiloSession — même raison que le contrôle d'intensité (ft-v980). */
+{
+  console.log('\n── CVI. La validation unique avant une séance de Milo ──');
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); pg.on('pageerror',e=>console.log('PAGEERROR',e.message));
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+
+  const V=await pg.evaluate(()=>{
+    const o={};
+    if(typeof _validationSeance!=='function'){ o.absente=true; return o; }
+
+    // ── ① CAS RÉUNIS : blessure active + exclusion durable + exclusion NON durable + doublon ──
+    S.exSwaps={'Curl Barre':{r:'gene', to:'Curl Haltère', n:2, date:'2026-08-20'},
+               'Leg Press':{r:'pris', to:'Squat', n:1, date:'2026-08-10'}};  // raison NON durable
+    S.healthProfile={injuries:[{zone:'epaule_d', status:'active'}], conditions:[], notes:''};
+    S.wkt=null;
+    const mix=[
+      {name:'Développé Militaire', sets:[{kg:40,reps:8}]},   // sollicite l'épaule (active)
+      {name:'Curl Barre',          sets:[{kg:30,reps:10}]},  // exclue, raison DURABLE
+      {name:'Leg Press',           sets:[{kg:100,reps:10}]}, // exclue, raison NON durable → rien
+      {name:'Squat',               sets:[{kg:80,reps:5}]},
+      {name:'Squat',               sets:[{kg:80,reps:5}]}    // doublon
+    ];
+    o.mix=_validationSeance(mix,'start');
+
+    // ── ② LE CAS NEUTRE : rien à signaler, aucun faux positif ──
+    S.exSwaps={}; S.healthProfile={injuries:[],conditions:[],notes:''};
+    o.neutre=_validationSeance(
+      [{name:'Développé Couché',sets:[{kg:80,reps:5}]},{name:'Rowing Barre',sets:[{kg:60,reps:8}]}],
+      'start');
+
+    // ── ③ UNE FRAGILITÉ « ANCIENNE » MAIS CALME NE DÉCLENCHE RIEN — seul l'actif compte ici,
+    //     le Gardien de la conversation couvre déjà le durable-mais-calme (R19, pas de bruit) ──
+    S.healthProfile={injuries:[{zone:'genou_d', status:'ancienne'}], conditions:[], notes:''};
+    o.ancienne=_validationSeance([{name:'Squat',sets:[{kg:80,reps:5}]}],'start');
+    S.healthProfile={injuries:[],conditions:[],notes:''};
+
+    // ── ④ LE MODE 'add' COMPARE AUSSI À LA SÉANCE EN COURS ──
+    S.wkt={date:today(),exs:[{name:'Squat',sets:[{kg:80,reps:5,done:false}]}]};
+    o.modeAdd=_validationSeance([{name:'Squat',sets:[{kg:85,reps:5}]}],'add');
+    S.wkt=null;
+
+    // ── ⑤ RIEN N'EST MODIFIÉ DANS LES CHARGES (R29) — on ATTACHE, on ne touche pas ──
+    S.exSwaps={'Curl Barre':{r:'gene', to:'', n:1, date:'2026-08-20'}};
+    const av=[{name:'Curl Barre', sets:[{kg:30,reps:10}]}];
+    const _copie=JSON.stringify(av);
+    _validationSeance(av,'start');
+    o.chargesIntactes=(JSON.stringify(av)===_copie);
+    S.exSwaps={};
+
+    // ── ⑥ LE POINT D'ENTRÉE UNIQUE : posé dans _appliqueMiloSession, il attache `seanceWarn` ──
+    S.healthProfile={injuries:[{zone:'epaule_d', status:'active'}], conditions:[], notes:''};
+    S.exSwaps={};
+    S.wkt=null;
+    o.pendingBefore=(typeof _pendingMiloSessions!=='undefined')?_pendingMiloSessions.length:0;
+    if(typeof _pendingMiloSessions==='undefined') window._pendingMiloSessions=[];
+    _pendingMiloSessions.push({label:'Séance test', exs:[{name:'Développé Militaire', sets:[{kg:40,reps:8}]}]});
+    _startSessionFromMilo(_pendingMiloSessions.length-1, null);
+    const ex0=(S.wkt&&S.wkt.exs&&S.wkt.exs[0])||{};
+    o.seanceWarnPosee=Array.isArray(ex0.seanceWarn)&&ex0.seanceWarn.length>0;
+    o.seanceWarnTexte=(ex0.seanceWarn||[]).join(' | ');
+    o.chargeDeMiloIntacte=(ex0.sets&&ex0.sets[0]&&ex0.sets[0].kg===40);
+    S.wkt=null; S.healthProfile={injuries:[],conditions:[],notes:''};
+
+    return o;
+  });
+
+  if(V.absente){ t('⛔ la validation unique existe', false, '_validationSeance absente'); }
+  else{
+    t('⭐⭐ DOUBLON détecté (Squat cité deux fois)',
+      (V.mix.doublons||[]).indexOf('Squat')>=0, JSON.stringify(V.mix.doublons));
+    t('⭐⭐ EXCLUSION DURABLE détectée (Curl Barre, « il me gêne »)',
+      (V.mix.exclusions||[]).some(x=>x.nom==='Curl Barre'), JSON.stringify(V.mix.exclusions));
+    t('⛔ ... mais PAS une exclusion NON durable (Leg Press, « machine prise »)',
+      !(V.mix.exclusions||[]).some(x=>x.nom==='Leg Press'), JSON.stringify(V.mix.exclusions));
+    t('⭐⭐ BLESSURE ACTIVE détectée (Développé Militaire sollicite l\'épaule)',
+      (V.mix.blessures||[]).some(x=>x.nom==='Développé Militaire'), JSON.stringify(V.mix.blessures));
+    t('⭐⭐ AUCUN FAUX POSITIF sur une séance neutre',
+      V.neutre.doublons.length===0 && V.neutre.exclusions.length===0 && V.neutre.blessures.length===0,
+      JSON.stringify(V.neutre));
+    t('⚠️ une fragilité ANCIENNE et calme ne déclenche RIEN ici (le Gardien de conversation la couvre déjà, R19)',
+      V.ancienne.blessures.length===0, JSON.stringify(V.ancienne));
+    t('⭐ le mode « add » compare aussi à la séance DÉJÀ EN COURS (Squat déjà présent → doublon)',
+      (V.modeAdd.doublons||[]).indexOf('Squat')>=0, JSON.stringify(V.modeAdd));
+    t('⛔⛔ LES CHARGES NE SONT JAMAIS MODIFIÉES par la validation (R29 — on attache, on ne touche pas)',
+      V.chargesIntactes===true);
+    t('⭐⭐ LE POINT UNIQUE : `_startSessionFromMilo` pose bien `seanceWarn` sur l\'exercice concerné',
+      V.seanceWarnPosee===true, V.seanceWarnTexte);
+    t('⛔ ... et la charge que Milo avait prescrite (40 kg) part INTACTE',
+      V.chargeDeMiloIntacte===true);
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 

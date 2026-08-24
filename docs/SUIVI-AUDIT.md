@@ -22,7 +22,8 @@ un bug, et quelqu'un le « répare » six mois plus tard.
 
 ## 📍 Où on en est, en une ligne
 
-**Les 3 bloquants de production sont corrigés** (ft-v981 · ft-v982 · ft-v983). Ce qui reste
+**Les 3 bloquants de production sont corrigés** (ft-v981 · ft-v982 · ft-v983). **La priorité n°1
+post-contre-audit est livrée** (①② validation unique + bouton allégé, `ft-v989`). Ce qui reste
 n'est plus du **danger**, c'est de la **vérification** et du **produit**.
 
 **Niveau recommandé aujourd'hui : 50 à 200 bêta-testeurs.**
@@ -48,6 +49,7 @@ Rapport complet : artefact *« Milo face au code »*.
 | **Le garde-fou de taille ne testait que des profils SAINS** | `ft-v988` | Mesuré : sain **45 362**, blessé **47 118** pour un plafond de 46 500. Le plafond était franchi en production chez toute personne blessée pendant que le témoin restait vert. Seuil **non relevé** ; état épinglé. |
 | **« À la main » en premier et en rouge** | `ft-v986` | Demande de Michel. ⚠️ Remplace une décision qui avait sa raison écrite (R30), et **la donnée mesurée allait dans le sens de l'ancien ordre** — arbitrage d'usage assumé, tracé pour pouvoir revenir en arrière. |
 | **La confirmation s'ouvrait DERRIÈRE la modale** | `ft-v985` | `#ov-confirm` était à z-index **500**, comme `#ov-edit-food` — à égalité, c'est l'ordre du DOM qui tranche. **19 overlays** au-dessus ou à égalité, pas un seul. |
+| **①② Validation unique + bouton allégé** | `ft-v989` | **Priorités n°1 et 2** de Michel, tranchées le 24/08. Posée au seul point que les deux portes traversent (`_appliqueMiloSession`, même raison que ft-v980). Réutilise `_gardienZones`, `_GARDIEN_CONSTRAINTS`, `_EX_SWAP_RAISONS` — rien de réinventé. **② était déjà acquis** : vérifié le même jour, `_startSessionFromMilo` ne fait aucun appel IA au clic. On signale, on ne bloque pas (R24). |
 
 ---
 
@@ -88,8 +90,6 @@ règle en même temps que ④ (les deux touchent le même bloc commun), mais Mic
 
 | Sujet | Pourquoi ça compte | Difficulté |
 |---|---|---|
-| **① Validation unique, déterministe** (blessures, exclusions, doublons) | **PRIORITÉ N°1**, tranchée le 24/08. Aujourd'hui `_startSessionFromMilo` ne vérifie que *« la séance existe »*. Les contrôles réels sont partiels : montée en charge, superset interdit sur les mouvements lourds, intensité. **Absents** : exercice refusé (`exSwaps`), zone active, doublon, durée, matériel. ✅ **Vérifié 24/08 (GPT via Michel, `ECHANGE-GPT.md`)** : le clic ne fait **déjà** aucun appel IA (0 `fetch` dans toute la chaîne `_startSessionFromMilo`→`_applyMiloSession`→`_appliqueMiloSession`) — l'architecture « IA une fois, code ensuite » est déjà en place, ① la complète plutôt que la corrige. **Carte des 14 actions IA du dépôt faite au passage** : 13 nécessaires, 1 candidat à mesurer (`seanceJson`, le repli texte→séance). | Moyenne — ⚠️ *un validateur trop strict rend Milo inutilisable* : il **signale** par défaut, il ne refuse que sur zone active et exercice refusé |
-| **② Alléger `_startSessionFromMilo`** — n'appeler QUE la validation ① | **PRIORITÉ N°2**, tranchée le 24/08. Suit directement ① — pas un chantier séparé. | Faible, une fois ① posée |
 | **③ Instrumenter le coût réel par appel API** | Tranché : **en parallèle** de ① et ②, pas après. `input_tokens` · `cache_creation_input_tokens` · `cache_read_input_tokens` · `output_tokens` · modèle · coût. Sans toucher au comportement de Milo. | ⚠️ Le CODE est faisable ici ; la **vérification** demande un vrai appel facturé, indisponible dans cette session |
 | **Le vocabulaire Katch de Milo** | *« MASSE MAIGRE MESURÉE … chiffre SOLIDE … sans réserve »* contredit **R32**, et s'applique même à un % de gras **tapé à la main**. | Faible — ⚠️ **corriger le témoin `tests/parcours/runner.js:3273` D'ABORD**, il protège la mauvaise phrase |
 | **La mémoire à deux vitesses** | `MEMOIRE_LARGE_EMAILS` = **2 comptes**. Un utilisateur normal n'a pas les séances 6→35 sur 60 jours. **Michel juge Milo sur une mémoire que personne d'autre n'a.** | Faible — c'est une **décision**, pas du code |
@@ -154,13 +154,15 @@ Elles valent plus que les correctifs, parce qu'elles se rappliquent :
 - **Ce fichier n'est pas un journal** : il ne raconte rien, il dit *où on en est*. Le récit est dans
   `CLAUDE.md`.
 
-*Dernière mise à jour : **24/08/2026, 08 h 09** — Michel a tranché les décisions ouvertes par le
-contre-audit. Priorités ①② (validation unique + bouton allégé) posées, ③ (coût réel) en
-parallèle, ④⑤ (reclassement, caches par lieu) approuvés mais soumis à **R34** (nouvelle règle
-d'architecture : tout changement de contexte se valide par un benchmark avant/après), ⑥ (records)
-différé. Le plafond du profil blessé reste épinglé, non explicitement tranché.*
+*Dernière mise à jour : **24/08/2026 — priorités ①② LIVRÉES** (`ft-v989`, validation unique
+avant l'activation d'une séance de Milo, réutilisant `_gardienZones`/`_GARDIEN_CONSTRAINTS`/
+`_EX_SWAP_RAISONS`, sans réinventer). Vérifié en données et à l'écran. ③ (coût réel) reste
+ouvert, ④⑤ (reclassement, caches par lieu) restent approuvés mais soumis à **R34**.*
 
-*(historique : 24/08/2026, 02 h 20 — retour de GPT sur le contre-audit intégré (`ECHANGE-GPT.md`) :
+*(historique : 24/08/2026, 08 h 09 — Michel a tranché les décisions ouvertes par le contre-audit.
+Priorités ①② posées, ③ en parallèle, ④⑤ soumis à R34 (nouvelle règle d'architecture), ⑥ (records)
+différé. Le plafond du profil blessé reste épinglé, non explicitement tranché.
+24/08/2026, 02 h 20 — retour de GPT sur le contre-audit intégré (`ECHANGE-GPT.md`) :
 les 3 correctifs de la nuit validés sans réserve, une 3ᵉ voie proposée pour le plafond, et
 l'instrumentation du coût réel remontée en priorité (avec la réserve de Claude : elle demande un
 vrai appel API facturé pour être vérifiée, pas seulement du code).

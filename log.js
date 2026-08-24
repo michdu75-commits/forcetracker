@@ -617,10 +617,15 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
      c'est trop lourd » ne se vérifie pas et se lit comme un ordre (R29 : informer sans
      décider). La personne a tout ce qu'il faut pour trancher elle-même. */
   const _intensiteBandeau=(ex)=>{
-    const d=(ex&&Array.isArray(ex.intensiteWarn))?ex.intensiteWarn:null;
-    if(!d||!d.length) return '';
+    // 🛡️ ft-v989 : `seanceWarn` (blessures/exclusions/doublons, la validation unique) se lit
+    // ICI AUSSI — même mécanique que `intensiteWarn`, pas un 2ᵉ bandeau (R2/R13). Les lignes
+    // de `seanceWarn` portent déjà leur icône (🚫/🛡️/🔁), pas de préfixe supplémentaire.
+    const d1=(ex&&Array.isArray(ex.intensiteWarn))?ex.intensiteWarn.map(t=>'⚡ '+t):[];
+    const d2=(ex&&Array.isArray(ex.seanceWarn))?ex.seanceWarn:[];
+    const d=d1.concat(d2);
+    if(!d.length) return '';
     const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    return `<div style="font-size:11.5px;color:var(--orange);line-height:1.45;padding:0 10px 7px;word-break:break-word;" onclick="event.stopPropagation()">⚡ ${d.map(esc).join('<br>⚡ ')}</div>`;
+    return `<div style="font-size:11.5px;color:var(--orange);line-height:1.45;padding:0 10px 7px;word-break:break-word;" onclick="event.stopPropagation()">${d.map(esc).join('<br>')}</div>`;
   };
   // Vue réduite
   if(!isExpanded){
@@ -5580,6 +5585,86 @@ function _supersetInterdit(name){
        return p==='squat'||p==='hip-hinge'; }catch(e){ return false; }
 }
 
+/* 🛡️ VALIDATION UNIQUE, DÉTERMINISTE, AVANT L'ACTIVATION D'UNE SÉANCE DE MILO (24/08/2026)
+   PRIORITÉ 1 tranchée par Michel après le contre-audit du 24/08 : « une validation
+   déterministe unique avant l'activation de la séance : blessures, exclusions, doublons ».
+
+   ⛔⛔ POSÉE AU MÊME ENDROIT QUE LE CONTRÔLE D'INTENSITÉ (ft-v980), et pour la MÊME raison
+   écrite juste en dessous, dans `_appliqueMiloSession` : c'est le SEUL point que les deux
+   portes (`_startSessionFromMilo` — aucune séance en cours, le cas normal — et
+   `_applyMiloSession` — une séance tourne déjà) traversent. La poser ailleurs la ferait
+   manquer sur l'une des deux (R2 : un seul propriétaire par comportement — c'est exactement
+   l'erreur que le contrôle d'intensité avait faite une première fois, le 23/08).
+
+   ⚠️ ON SIGNALE, ON NE BLOQUE PAS (R24 — informer sans bloquer ; Constitution P13 — adapter,
+   jamais interdire). La séance démarre normalement ; chaque avertissement reste attaché à
+   l'exercice concerné, comme le fait déjà `intensiteWarn` — un toast seul aurait disparu
+   avant la 1ʳᵉ série.
+
+   ⛔ ET ELLE NE RÉINVENTE RIEN (R2/R13) : les trois catégories réutilisent chacune un
+   mécanisme qui existe déjà ailleurs dans le dépôt pour un autre usage —
+   · DOUBLONS   : comparaison directe des noms, rien d'externe ;
+   · EXCLUSIONS : `S.exSwaps` + `_EX_SWAP_RAISONS` (log.js) — la case `durable` existe déjà,
+     c'est la MÊME liste que `coach.js` filtre localement pour le contexte de Milo (`DUR`) ;
+   · BLESSURES  : `_gardienZones()` + `_GARDIEN_CONSTRAINTS` (coach.js) — la mécanique qui
+     construit déjà « dans sa séance du jour : … sollicite ton épaule » envoyée à Milo.
+   ⚠️ Ces fonctions vivent dans `coach.js`, chargé APRÈS `log.js` dans `index.html` — un appel
+   au chargement du script échouerait. Ici l'appel se fait au CLIC, bien après que tous les
+   scripts sont chargés : `typeof X==='function'` protège seulement contre leur absence
+   éventuelle, pas contre un ordre de chargement (même garde que partout ailleurs, R13). */
+function _validationSeance(newExs, mode){
+  const out={doublons:[], exclusions:[], blessures:[]};
+  try{
+    // ── DOUBLONS : le même exercice cité deux fois dans ce que Milo propose ──
+    // (mode 'add' : on compare AUSSI à ce qui tourne déjà, sinon on rate le cas le plus probable)
+    const vus={};
+    (newExs||[]).forEach(o=>{ const k=(o&&o.name||'').trim().toLowerCase(); if(k) vus[k]=(vus[k]||0)+1; });
+    if(mode==='add' && S.wkt && Array.isArray(S.wkt.exs)){
+      S.wkt.exs.forEach(e=>{ const k=(e&&e.name||'').trim().toLowerCase(); if(k) vus[k]=(vus[k]||0)+1; });
+    }
+    (newExs||[]).forEach(o=>{
+      const k=(o&&o.name||'').trim().toLowerCase();
+      if(k && vus[k]>1 && out.doublons.indexOf(o.name)<0) out.doublons.push(o.name);
+    });
+
+    // ── EXCLUSIONS DURABLES : un exercice déjà refusé pour une raison qui TIENT DANS LE TEMPS ──
+    // ⚠️ Seules les raisons DURABLES comptent (« il me gêne », « trop long ») — pas « machine
+    // prise » ni « envie de varier », sans quoi on avertirait pour un mardi où la salle était
+    // pleine (même exclusion que le contexte de Milo, coach.js).
+    const durables=(typeof _EX_SWAP_RAISONS!=='undefined')
+      ? _EX_SWAP_RAISONS.filter(x=>x.durable).map(x=>x.r) : [];
+    const sw=S.exSwaps||{};
+    (newExs||[]).forEach(o=>{
+      const info=sw[o&&o.name];
+      if(info && durables.indexOf(info.r)>=0) out.exclusions.push({nom:o.name, vers:info.to||''});
+    });
+
+    // ── BLESSURES : un exercice qui sollicite une zone ACTIVE ou douloureuse AUJOURD'HUI ──
+    // ⚠️ Seul l'actif/aujourd'hui compte ici — une fragilité DURABLE mais calme reste couverte
+    // par le Gardien de Milo dans la conversation ; la resignaler à chaque séance serait du
+    // bruit qui finit par ne plus être lu (R19).
+    if(typeof _gardienZones==='function' && typeof _GARDIEN_CONSTRAINTS!=='undefined' && typeof _gzNaz==='function'){
+      const zones=_gardienZones();
+      (newExs||[]).forEach(o=>{
+        const nz=_gzNaz(o&&o.name);
+        const touchees=[];
+        _GARDIEN_CONSTRAINTS.forEach(c=>{
+          if(!c.rx.test(nz)) return;
+          c.zones.forEach(z=>{
+            const info=zones[z];
+            if(info && (info.active||info.today) && touchees.indexOf(z)<0) touchees.push(z);
+          });
+        });
+        if(touchees.length){
+          const lbl=(typeof _GARDIEN_ZLABEL!=='undefined')?_GARDIEN_ZLABEL:{};
+          out.blessures.push({nom:o.name, zones:touchees.map(z=>lbl[z]||z)});
+        }
+      });
+    }
+  }catch(e){ console.warn('[FT validation séance]', e); }
+  return out;
+}
+
 function _applyMiloSession(mode){
   const idx=_miloPendingIdx, btn=_miloPendingBtn;
   const data=(typeof _pendingMiloSessions!=='undefined')?_pendingMiloSessions[idx]:null;
@@ -5658,6 +5743,21 @@ function _appliqueMiloSession(newExs, data, mode, btn){
      faire — un toast seul aurait disparu avant la première série. */
   if(alertes.length&&typeof toast==='function')
     toast('⚡ Charge élevée sur '+alertes[0]+(alertes.length>1?' (+'+(alertes.length-1)+')':'')+' — détail dans la séance','info');
+
+  // 🛡️ LA VALIDATION UNIQUE (ft-v989) — même point, même philosophie que ci-dessus.
+  const verdict=(typeof _validationSeance==='function')?_validationSeance(newExs,mode):{doublons:[],exclusions:[],blessures:[]};
+  (newExs||[]).forEach(o=>{
+    const w=[];
+    const excl=verdict.exclusions.find(x=>x.nom===o.name);
+    if(excl) w.push('🚫 Tu avais écarté cet exercice'+(excl.vers?' — tu lui préfères « '+excl.vers+' »':'')+'.');
+    const bl=verdict.blessures.find(x=>x.nom===o.name);
+    if(bl) w.push('🛡️ Sollicite '+bl.zones.join(', ')+' — une zone que tu protèges en ce moment.');
+    if(verdict.doublons.indexOf(o.name)>=0) w.push('🔁 Déjà présent ailleurs dans cette séance.');
+    if(w.length) o.seanceWarn=w;
+  });
+  const nAlerte=verdict.doublons.length+verdict.exclusions.length+verdict.blessures.length;
+  if(nAlerte&&typeof toast==='function')
+    toast('🛡️ '+nAlerte+' point'+(nAlerte>1?'s':'')+' à vérifier dans ta séance — détail sur l\'exercice concerné','info');
   if(mode==='add'){
     S.wkt.exs=S.wkt.exs.concat(newExs);
   }else if(mode==='replace'){
