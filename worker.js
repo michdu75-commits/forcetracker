@@ -39,6 +39,52 @@ function _plafondAtteint(){ return _capDate === _jourParis(); }
 // ⚠️ REPLI OUVERT, à l'inverse du jeton d'admin (ft-v787) : ici c'est BLOQUER qui est
 // dangereux, pas laisser passer. Si Apps Script ne répond pas, on ne bloque personne —
 // une panne de comptage ne doit jamais couper Milo (règle d'or #3).
+
+// ── 💰 INSTRUMENTATION DU COÛT RÉEL PAR APPEL API (24/08/2026) ──────────────────────────
+// Priorité 3 tranchée par Michel après le contre-audit du 24/08, EN PARALLÈLE de la
+// validation unique (①②, ft-v989) : « instrumentation fine du coût réel par appel API ».
+// Le prompt de Milo n'a jamais été mesuré qu'en CARACTÈRES (`AUDIT-CONTEXTE-MILO.md`) —
+// jamais en tokens réels, faute de clé API dans l'environnement d'analyse. C'est la seule
+// façon de savoir un jour si un chantier de cache (④⑤, R34) rapporte quoi que ce soit.
+//
+// ⚠️ NE CHANGE STRICTEMENT RIEN AU COMPORTEMENT DE MILO : lecture seule de `data.usage`,
+// un champ que l'API Anthropic renvoie déjà à CHAQUE appel et que ce fichier jetait
+// jusqu'ici. Aucun prompt, aucun modèle, aucune réponse n'est modifiée.
+//
+// ⛔ MÊME CHEMIN QUE `_compterIA` JUSTE AU-DESSUS (R2 — pas un 2ᵉ canal de télémétrie) :
+// même URL, même Content-Type, même jeton, même repli OUVERT — une panne de mesure ne doit
+// jamais ralentir ni couper Milo (règle d'or #3), exactement l'argument déjà écrit ici pour
+// le compteur de quota.
+//
+// ⚠️ `meta` (= {action, email, env, ctx}) est un paramètre OPTIONNEL de `callClaude` et
+// `callClaudeDiag` : un appel qui ne le fournit pas garde exactement son ancien comportement
+// (rétrocompatible avec tout appelant qu'on aurait oublié de mettre à jour).
+async function _rapporterUsage(meta, model, usage) {
+  if (!meta || !meta.env) return;
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'aiUsageLog', act: meta.action || '', email: meta.email || '',
+        model: model || '',
+        inTok:  (usage && usage.input_tokens) || 0,
+        outTok: (usage && usage.output_tokens) || 0,
+        cacheW: (usage && usage.cache_creation_input_tokens) || 0,
+        cacheR: (usage && usage.cache_read_input_tokens) || 0,
+        token: meta.env.FT_COUNT_TOKEN || '',
+      }),
+    });
+  } catch (e) { /* repli ouvert : jamais visible pour Milo, jamais bloquant */ }
+}
+// Fire-and-forget cohérent avec `ctx.waitUntil` quand disponible (fiable), sinon un
+// `.catch` muet (best-effort) — jamais un `await` qui ajouterait de la latence à la
+// réponse que la personne attend (règle d'or #4).
+function _envoyerUsage(meta, model, usage) {
+  if (!meta) return;
+  const p = _rapporterUsage(meta, model, usage);
+  if (meta.ctx && meta.ctx.waitUntil) meta.ctx.waitUntil(p); else p.catch(() => {});
+}
 async function _compterIA(action, email, env){
   try{
     const r = await fetch(APPS_SCRIPT_URL, {
@@ -107,22 +153,27 @@ export default {
       else _compterIA(body.action, body.email || '', env);
     }
 
+    // 💰 `meta` : ce que l'instrumentation du coût réel doit savoir sur CET appel — voir le
+    // bloc « INSTRUMENTATION DU COÛT RÉEL » plus haut. Construit UNE fois, transmis à chaque
+    // handler (R2 — un seul point de vérité sur « quel appel est-ce ? »).
+    const meta = { action: body.action, email: body.email || '', env, ctx };
+
     try {
       // ── Actions IA gérées EN DIRECT (sans Google) ─────────────────────────
-      if (body.action === 'importBodyScan') return json(await bodyScan(body, apiKey));
-      if (body.action === 'foodLabel')      return json(await foodLabel(body, apiKey));
-      if (body.action === 'readBarcode')    return json(await readBarcode(body, apiKey));
-      if (body.action === 'coach')          return json(await coach(body, apiKey));
-      if (body.action === 'importProgram')  return json(await importDoc(body, apiKey, 'program'));
-      if (body.action === 'importHistory')  return json(await importDoc(body, apiKey, 'history'));
-      if (body.action === 'morphoAnalysis') return json(await morpho(body, apiKey));
-      if (body.action === 'bodyStudy')      return json(await bodyStudy(body, apiKey));
-      if (body.action === 'importBloodTest') return json(await bloodTest(body, apiKey));
-      if (body.action === 'summarizeCoach')  return json(await summarizeCoach(body, apiKey));
-      if (body.action === 'seanceJson')      return json(await seanceJson(body, apiKey));
-      if (body.action === 'estimateFood')    return json(await estimateFood(body, apiKey));
-      if (body.action === 'importMealPlan')  return json(await importMealPlan(body, apiKey));
-      if (body.action === 'generateMealPlan') return json(await generateMealPlan(body, apiKey));
+      if (body.action === 'importBodyScan') return json(await bodyScan(body, apiKey, meta));
+      if (body.action === 'foodLabel')      return json(await foodLabel(body, apiKey, meta));
+      if (body.action === 'readBarcode')    return json(await readBarcode(body, apiKey, meta));
+      if (body.action === 'coach')          return json(await coach(body, apiKey, meta));
+      if (body.action === 'importProgram')  return json(await importDoc(body, apiKey, 'program', meta));
+      if (body.action === 'importHistory')  return json(await importDoc(body, apiKey, 'history', meta));
+      if (body.action === 'morphoAnalysis') return json(await morpho(body, apiKey, meta));
+      if (body.action === 'bodyStudy')      return json(await bodyStudy(body, apiKey, meta));
+      if (body.action === 'importBloodTest') return json(await bloodTest(body, apiKey, meta));
+      if (body.action === 'summarizeCoach')  return json(await summarizeCoach(body, apiKey, meta));
+      if (body.action === 'seanceJson')      return json(await seanceJson(body, apiKey, meta));
+      if (body.action === 'estimateFood')    return json(await estimateFood(body, apiKey, meta));
+      if (body.action === 'importMealPlan')  return json(await importMealPlan(body, apiKey, meta));
+      if (body.action === 'generateMealPlan') return json(await generateMealPlan(body, apiKey, meta));
 
       // ── Sinon : relais vers Apps Script (fallback) ────────────────────────
       const up = await fetch(APPS_SCRIPT_URL, {
@@ -140,19 +191,23 @@ export default {
 };
 
 // ── Appel générique à Claude ───────────────────────────────────────────────
-async function callClaude(apiKey, payload) {
+// `meta` optionnel ({action, email, env, ctx}) — voir le bloc « INSTRUMENTATION » plus haut.
+async function callClaude(apiKey, payload, meta) {
   const r = await fetch(ANTHROPIC_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
     body: JSON.stringify(payload),
   });
   const data = await r.json();
+  if (meta) _envoyerUsage(meta, (data && data.model) || payload.model, data && data.usage);
   return (data && data.content && data.content[0] && data.content[0].text) || '';
 }
 // Variante instrumentée : renvoie AUSSI le statut HTTP et le type d'erreur de l'API Anthropic.
 // Sert au diagnostic (PT-001 / laboratoire) — distinguer rate limit (429), surcharge (529),
 // erreur API, réponse vide… au lieu de tout masquer en « Désolé, réessaie. ».
-async function callClaudeDiag(apiKey, payload) {
+// ⚠️ C'EST LA FONCTION DE PRODUCTION DE LA CONVERSATION AVEC MILO (`coach()` l'appelle
+// TOUJOURS) — pas seulement un chemin de test, malgré son nom. `meta` optionnel, idem callClaude.
+async function callClaudeDiag(apiKey, payload, meta) {
   try {
     const r = await fetch(ANTHROPIC_URL, {
       method: 'POST',
@@ -162,6 +217,7 @@ async function callClaudeDiag(apiKey, payload) {
     let data = null; try { data = await r.json(); } catch (e) {}
     const text = (data && data.content && data.content[0] && data.content[0].text) || '';
     const apiErr = (data && data.error) ? [data.error.type, data.error.message].filter(Boolean).join(': ') : '';
+    if (meta) _envoyerUsage(meta, (data && data.model) || payload.model, data && data.usage);
     return { text, status: r.status, apiErr: String(apiErr) };
   } catch (e) {
     return { text: '', status: 0, apiErr: 'fetch: ' + ((e && e.message) || '?') };
@@ -180,7 +236,7 @@ function imagesOf(body) {
 }
 
 // ── Bilan corporel (balance) — recopié de handleImportBodyScan_ ─────────────
-async function bodyScan(body, apiKey) {
+async function bodyScan(body, apiKey, meta) {
   if (!apiKey) return { status: 'error', error: 'Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
   const imgs = imagesOf(body);
   if (!imgs.length) return { status: 'error', error: 'Aucune image reçue' };
@@ -219,14 +275,14 @@ async function bodyScan(body, apiKey) {
     + '"bodyScore":null,"leanMass":null,"subFat":null,"smi":null,'
     + '"armMuscleL":null,"armMuscleR":null,"trunkMuscle":null,"legMuscleL":null,"legMuscleR":null,"armFatL":null,"armFatR":null,"trunkFat":null,"legFatL":null,"legFatR":null}. '
     + 'Efforce-toi de remplir un MAXIMUM de champs. N\'invente aucun chiffre.' });
-  const text = await callClaude(apiKey, { model: 'claude-haiku-4-5', max_tokens: 1024, messages: [{ role: 'user', content }] });
+  const text = await callClaude(apiKey, { model: 'claude-haiku-4-5', max_tokens: 1024, messages: [{ role: 'user', content }] }, meta);
   const data = firstJson(text);
   if (!data) return { status: 'error', error: 'Lecture impossible. Réessaie avec une photo plus nette.' };
   return { status: 'ok', data };
 }
 
 // ── Étiquette nutritionnelle — recopié de handleFoodLabel_ ──────────────────
-async function foodLabel(body, apiKey) {
+async function foodLabel(body, apiKey, meta) {
   if (!apiKey) return { status: 'error', error: 'Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
   const imgs = imagesOf(body);
   if (!imgs.length) return { status: 'error', error: 'Image manquante' };
@@ -243,7 +299,7 @@ async function foodLabel(body, apiKey) {
   const text = await callClaude(apiKey, { model: 'claude-haiku-4-5-20251001', max_tokens: 400, messages: [{ role: 'user', content: [
     { type: 'image', source: { type: 'base64', media_type: imgs[0].type || 'image/jpeg', data: imgs[0].data } },
     { type: 'text', text: prompt },
-  ] }] });
+  ] }] }, meta);
   const d = firstJson(text);
   if (!d) return { status: 'error', error: 'Lecture echouee' };
   if (d.error) return { status: 'error', error: String(d.error) };
@@ -257,7 +313,7 @@ async function foodLabel(body, apiKey) {
 }
 
 // ── Code-barres photo — recopié de handleReadBarcode_ ───────────────────────
-async function readBarcode(body, apiKey) {
+async function readBarcode(body, apiKey, meta) {
   if (!apiKey) return { status: 'error', error: 'Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
   const imgs = imagesOf(body);
   if (!imgs.length) return { status: 'error', error: 'Image manquante' };
@@ -273,7 +329,7 @@ async function readBarcode(body, apiKey) {
   const text = await callClaude(apiKey, { model: 'claude-haiku-4-5-20251001', max_tokens: 100, messages: [{ role: 'user', content: [
     { type: 'image', source: { type: 'base64', media_type: imgs[0].type || 'image/jpeg', data: imgs[0].data } },
     { type: 'text', text: prompt },
-  ] }] });
+  ] }] }, meta);
   const d = firstJson(text);
   if (!d) return { status: 'error', error: 'Lecture echouee' };
   if (d.error) return { status: 'error', error: String(d.error) };
@@ -285,7 +341,7 @@ async function readBarcode(body, apiKey) {
 // ── Coach IA (Milo) — recopié de handleCoach_ ───────────────────────────────
 // Le system prompt (personnalité de Milo) est envoyé par l'appli dans body.context → pas de
 // duplication ici. Renvoie {reply:"..."} (comme Apps Script). Modèle par utilisateur.
-async function coach(body, apiKey) {
+async function coach(body, apiKey, meta) {
   if (!apiKey) return { reply: '🔑 Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
   // Sanitize : l'API Anthropic n'accepte QUE {role, content} sur un message. Un champ parasite
   // (ex. _silent du débrief auto) → 400 invalid_request_error. On nettoie défensivement.
@@ -465,7 +521,7 @@ async function coach(body, apiKey) {
   const _em = String(body.evalModel || '').trim();
   if (_em && MODELES_BENCHMARK.indexOf(_em) >= 0) model = _em;
 
-  const d = await callClaudeDiag(apiKey, { model, max_tokens: 1024, system, messages });
+  const d = await callClaudeDiag(apiKey, { model, max_tokens: 1024, system, messages }, meta);
   // _diag = diagnostic technique (ignoré par l'app normale, lu par PT-001 / le laboratoire).
   // On NE change PAS le message utilisateur : Milo dit toujours « Désolé, réessaie. » si vide.
   const _diag = d.text ? 'ok'
@@ -490,7 +546,7 @@ function docContent(images) {
 }
 const PROG_PROMPT = 'Analyse ces images/documents et extrait le programme d\'entraînement complet.\n\nRetourne UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après, sans balises markdown, avec cette structure exacte :\n{"name":"nom du programme","weeks":7,"startDate":"2026-03-23","days":[{"label":"Séance 1 - Dorsaux Triceps","exercises":[{"name":"nom complet de l\'exercice","sets":5,"reps":8,"repsPerSet":[20,15,12,8,8],"specialSets":[3,4],"kg":0,"kgPerSet":[],"supersetGroup":"","setType":"","note":"méthode et instructions"}]}]}\n\nRègles STRICTES :\n\n0. DÉCOUPAGE EN SÉANCES — RÈGLE ABSOLUE :\n- Une NOUVELLE séance commence UNIQUEMENT quand le document contient un titre explicite : "SÉANCE N", "SEANCE N", "Jour N", "Day N", "Workout N".\n- Les titres de GROUPES MUSCULAIRES (DORSAUX, PECTORAUX, BICEPS…) = sous-sections à l\'intérieur d\'une séance. Ils ne créent JAMAIS une nouvelle séance.\n- Ignore les pages SOMMAIRE (liste des séances sans tableau d\'exercices) et toute séance vide.\n\n1. REPS PAR SÉRIE (repsPerSet) :\n- Reps différentes par série (ex: 20/15/12/8/8) → repsPerSet:[20,15,12,8,8] et sets:5. Mêmes reps partout → repsPerSet:[] et sets=nombre de séries.\n- "4x8" → sets:4, reps:8, repsPerSet:[]. Unilatéral (bras/bras, jambe/jambe, alterné) → chaque ligne NxN = 2 séries.\n- "vide"/"barre à vide" → kg:0. Ramping reps ("3+4+5+6+7 par cycle") → repsPerSet:[3,4,5,6,7], jamais 3x7.\n\n2. SÉRIES SPÉCIALES (specialSets) : indices 0-based des séries dont les reps sont en rouge/couleur. Aucune → [].\n\n3. NOTE (OBLIGATOIRE, ne rien omettre) : capture TOUT le texte en couleur = méthodes (Isométrie, Excentrique, Myo-Reps, Rest-pause, Ramping…) + instructions d\'exécution. Sépare par " | ".\n\n4. STRUCTURE et setType : setType = "" (Normal) ou "D" (Dropset) UNIQUEMENT. JAMAIS "E" ni "W". "à l\'échec"/"Maxi"/"échauffement" → NOTE, jamais setType. kg:0 si non indiqué.\n\n5. SUPERSETS / BI-SETS / TRI-SETS : deux exercices (ou plus) enchaînés SANS repos entre eux = même supersetGroup (une lettre commune). Reconnais TOUS ces formats : (a) préfixe lettre+chiffre A1/A2, B1/B2, C1/C2… → supersetGroup = la lettre ("A","B","C"…) ; (b) un mot "Superset", "Supersérie", "SS", "Bi-set", "Bi-série", "Tri-set", "Circuit", "en superset avec", "combiné avec", "enchaîné avec" au-dessus ou à côté d\'un groupe d\'exercices → donne-leur la MÊME lettre de groupe ; (c) exercices reliés par une accolade/crochet/trait, ou par "+" ENTRE deux noms d\'exercices complets. NE PAS confondre avec un "+" dans les reps (15x2+15). Un exercice seul (non enchaîné) → supersetGroup:"".\n\n6. DROPSETS : charges/reps dégressives → setType:"D", repsPerSet + kgPerSet par palier. "max"/"à l\'échec" → 99 dans repsPerSet.\n\n7. CHARGES (%1RM) : si 1RM + pourcentages donnés → kg = arrondi(1RM × %, 0.5). RPE → note.\n\nRéponds UNIQUEMENT avec le JSON, aucun autre texte.';
 const HIST_PROMPT = 'Analyse ce document et extrait TOUTES les séances d\'entraînement réalisées.\n\nRetourne UNIQUEMENT un objet JSON valide, sans texte avant ni après, sans balises markdown :\n{"sessions":[{"date":"YYYY-MM-DD","estimatedDate":false,"label":"Séance 1 (15) 23/04","exercises":[{"name":"Squat à la barre","sets":[{"kg":80,"reps":8,"type":"","note":""}],"note":""}]}]}\n\nRÈGLES STRICTES :\n\n0. EXTRACTION : Extrais TOUTES les séances dans l\'ordre chronologique, sans rater aucun exercice ni série. Chaque bloc "Séance N" ou titre de séance daté = une séance.\n\n1. DATES : "23/04/26"→"2026-04-23" ; "14/05"→"2026-05-14" (année 2026 si manquante). Séance sans date claire → estimatedDate:true. label = titre exact du bloc.\n\n2. SÉRIES ("N rep Xkg" = une série) : kg=X, reps=N, type="". "vide"/"PDC"/"poids du corps"→kg:0. "par bras"/"par jambe"/"unilatéral"→2 séries. "N rep Xkg N rep Ykg" sur une ligne = DROP SET [{kg:X,reps:N,type:"D"},{kg:Y,reps:M,type:"D"}]. Notes libres → champ note.\n\n3. TYPE : UNIQUEMENT "" (Normal) ou "D" (Drop set). JAMAIS "E" ni "W".\n\n4. NOMS : le nom tel qu\'écrit, corrige les fautes évidentes.\n\nRéponds UNIQUEMENT avec le JSON, aucun autre texte.';
-async function importDoc(body, apiKey, kind) {
+async function importDoc(body, apiKey, kind, meta) {
   if (!apiKey) return { status: 'error', error: 'Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
   const images = body.images || [];
   if (!images.length) return { status: 'error', error: 'Aucun fichier reçu' };
@@ -499,7 +555,7 @@ async function importDoc(body, apiKey, kind) {
   const userContent = docContent(images);
   userContent.push({ type: 'text', text: kind === 'history' ? HIST_PROMPT : PROG_PROMPT });
   const model = (kind === 'history' || images.length > 1 || hasText || hasPdf) ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001';
-  const text = await callClaude(apiKey, { model, max_tokens: 8192, messages: [{ role: 'user', content: userContent }] });
+  const text = await callClaude(apiKey, { model, max_tokens: 8192, messages: [{ role: 'user', content: userContent }] }, meta);
   const stripped = String(text || '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
   const m = stripped.match(/\{[\s\S]*\}/);
   if (!m) return { status: 'error', error: 'Extraction échouée. Réponse IA : ' + String(text).slice(0, 200) };
@@ -531,7 +587,7 @@ async function importDoc(body, apiKey, kind) {
 }
 
 // ── Morphologie — recopié de handleMorphoAnalysis_
-async function morpho(body, apiKey) {
+async function morpho(body, apiKey, meta) {
   if (!apiKey) return { status: 'error', error: 'Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
   const images = body.images || [];
   if (!images.length) return { status: 'error', error: 'Aucune image reçue' };
@@ -548,7 +604,7 @@ async function morpho(body, apiKey) {
       ? '- H: Rectangle (épaules/taille/hanches similaires)\n- A: Poire (hanches plus larges)\n- V: Triangle inversé (épaules plus larges)\n- X: Sablier (taille très marquée)\n- O: Ronde (ventre proéminent)'
       : '- H: Rectangle\n- A: Triangle (hanches plus larges)\n- T: Trapèze (épaules légèrement plus larges)\n- V: Triangle inversé (épaules beaucoup plus larges)\n- O: Ovale (ventre proéminent)')
     + '\nMorphotypes : ecto=mince/métabolisme rapide, meso=athlétique, endo=rond/métabolisme lent' });
-  const text = await callClaude(apiKey, { model: 'claude-haiku-4-5-20251001', max_tokens: 1024, messages: [{ role: 'user', content: userContent }] });
+  const text = await callClaude(apiKey, { model: 'claude-haiku-4-5-20251001', max_tokens: 1024, messages: [{ role: 'user', content: userContent }] }, meta);
   const m = String(text || '').match(/\{[\s\S]*\}/);
   if (!m) return { status: 'error', error: 'Analyse impossible. Réessaie avec des photos plus nettes.' };
   let data;
@@ -557,7 +613,7 @@ async function morpho(body, apiKey) {
 }
 
 // ── Étude du corps — recopié de handleBodyStudy_ (mode deep/compare) ──────────
-async function bodyStudy(body, apiKey) {
+async function bodyStudy(body, apiKey, meta) {
   if (!apiKey) return { status: 'error', error: 'Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
   const images = body.images || [];
   if (!images.length) return { status: 'error', error: 'Aucune image reçue' };
@@ -594,7 +650,7 @@ async function bodyStudy(body, apiKey) {
     + '{' + (compare ? '"evolution":"compare la série actuelle à la précédente: ce qui a progressé, ce qui a fondu/pris, les changements de posture/équilibre visibles — en 2-4 phrases concrètes et motivantes",' : '') + '"stature":"posture et stature en 2-3 phrases","insertions":"insertions musculaires notables en 2-3 phrases","balance":"évaluation de l\'équilibre gauche/droite, haut/bas, avant/arrière — dis clairement si le corps est globalement équilibré ou non et pourquoi","strengths":"points forts en 1-2 phrases","weaknesses":"groupes musculaires ou zones en retard en 1-2 phrases","exercises":[{"zone":"groupe/zone ciblée","exercises":"2-3 exercices concrets","why":"pourquoi (court)"}],"healthNotes":"comment la santé a été prise en compte / mouvements à éviter ou adapter en 1-2 phrases","summary":"synthèse motivante en 1-2 phrases"}';
 
   userContent.push({ type: 'text', text: promptText });
-  const text = await callClaude(apiKey, { model: 'claude-sonnet-4-6', max_tokens: (deep || compare) ? 3072 : 2048, messages: [{ role: 'user', content: userContent }] });
+  const text = await callClaude(apiKey, { model: 'claude-sonnet-4-6', max_tokens: (deep || compare) ? 3072 : 2048, messages: [{ role: 'user', content: userContent }] }, meta);
   const m = String(text || '').match(/\{[\s\S]*\}/);
   if (!m) return { status: 'error', error: 'Analyse impossible. Réessaie avec des photos plus nettes et bien cadrées.' };
   let data;
@@ -603,7 +659,7 @@ async function bodyStudy(body, apiKey) {
 }
 
 // ── Prise de sang — recopié de handleImportBloodTest_ ────────────────────────
-async function bloodTest(body, apiKey) {
+async function bloodTest(body, apiKey, meta) {
   if (!apiKey) return { status: 'error', error: 'Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
   const imgs = imagesOf(body);
   if (!imgs.length) return { status: 'error', error: 'Aucune image reçue' };
@@ -622,7 +678,7 @@ async function bloodTest(body, apiKey) {
     + '{"date":"YYYY-MM-DD ou null","markers":[{"name":"Ferritine","group":"Fer & vitamines","value":293,"unit":"µg/L","low":30,"high":400}, ...]}\n'
     + 'Le champ "group" = une catégorie courte que tu déduis (ex. "Hémogramme", "Rein", "Foie", "Fer & vitamines", "Électrolytes", "Glycémie & lipides", "Thyroïde"). '
     + 'value = nombre. low/high = bornes de l\'intervalle (nombres) ou null si absentes/texte du type "< 50" (dans ce cas low=null, high=50) ou "> 10" (low=10, high=null).' });
-  const text = await callClaude(apiKey, { model: 'claude-sonnet-4-6', max_tokens: 4096, messages: [{ role: 'user', content: userContent }] });
+  const text = await callClaude(apiKey, { model: 'claude-sonnet-4-6', max_tokens: 4096, messages: [{ role: 'user', content: userContent }] }, meta);
   const m = String(text || '').match(/\{[\s\S]*\}/);
   if (!m) return { status: 'error', error: 'Lecture impossible. Réessaie avec des photos plus nettes.' };
   let data;
@@ -633,7 +689,7 @@ async function bloodTest(body, apiKey) {
 // ── Mémoire du coach — recopié de handleSummarizeCoach_ (génère le résumé) ────
 // ⚠️ Le worker ne persiste PAS dans le stockage Google : le résumé revient au
 //    front (S.coachMemory local) puis part au cloud via le prochain saveProfile.
-async function summarizeCoach(body, apiKey) {
+async function summarizeCoach(body, apiKey, meta) {
   if (!apiKey) return { summary: '' };
   const history = (body.history || []).slice(-16);
   const existing = body.existingMemory || '';
@@ -645,7 +701,7 @@ async function summarizeCoach(body, apiKey) {
   }).join('\n');
   const prompt = (existing ? 'Mémoire existante : ' + existing + '\n\n' : '')
     + 'Résume cette conversation coach/athlète en 2-3 phrases max (garde : objectifs, conseils clés, décisions, problèmes identifiés). Français uniquement.\n\nConversation :\n' + histText + '\n\nRésumé :';
-  const summary = await callClaude(apiKey, { model: 'claude-haiku-4-5-20251001', max_tokens: 250, messages: [{ role: 'user', content: prompt }] });
+  const summary = await callClaude(apiKey, { model: 'claude-haiku-4-5-20251001', max_tokens: 250, messages: [{ role: 'user', content: prompt }] }, meta);
   return { summary: summary || '' };
 }
 
@@ -664,7 +720,7 @@ async function summarizeCoach(body, apiKey) {
 // ⚠️ ET IL NE PARLE JAMAIS À L'UTILISATEUR (R6 — une seule voix). Sa sortie n'est pas
 // affichée : elle remplit l'écran Séance. Le jour où il parle en son nom, le produit a
 // deux personnalités.
-async function seanceJson(body, apiKey) {
+async function seanceJson(body, apiKey, meta) {
   if (!apiKey) return { status: 'error', error: 'Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
   const texte = String(body.texte || '').trim().slice(0, 8000);
   if (!texte) return { status: 'error', error: 'Texte vide' };
@@ -696,14 +752,14 @@ async function seanceJson(body, apiKey) {
     + '- ⛔ N\'en ajoute AUCUN, n\'en retire AUCUN, ne change ni une charge, ni un nombre de reps, ni un repos.\n'
     + '- ⛔ Tu ne « complètes » pas une séance que tu trouverais incomplète, et tu ne corriges pas un choix que tu trouverais discutable. Ce n\'est pas ton rôle : le coach a ses raisons, et il connaît la personne — pas toi.\n'
     + '- Une seule ligne d\'exercice ne fait pas une séance : s\'il n\'y en a qu\'un, réponds {"seance":null}.';
-  const text = await callClaude(apiKey, { model: 'claude-haiku-4-5-20251001', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] });
+  const text = await callClaude(apiKey, { model: 'claude-haiku-4-5-20251001', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] }, meta);
   const d = firstJson(text);
   if (!d) return { status: 'error', error: 'Conversion échouée' };
   return { status: 'ok', seance: (d && d.seance) || null };
 }
 
 // ── Journal : estimer kcal+macros d'une description texte — handleEstimateFood_
-async function estimateFood(body, apiKey) {
+async function estimateFood(body, apiKey, meta) {
   if (!apiKey) return { status: 'error', error: 'Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
   const desc = String(body.description || '').trim();
   if (!desc) return { status: 'error', error: 'Description vide' };
@@ -714,7 +770,7 @@ async function estimateFood(body, apiKey) {
     + 'Règles :\n- kcal = calories totales (nombre entier).\n- prot, carbs, fat = grammes totaux de protéines, glucides, lipides (nombres entiers).\n'
     + '- Si les quantités ne sont pas précisées, estime une portion normale.\n- g = le POIDS TOTAL en grammes sur lequel portent ces valeurs (nombre entier). C\'est le poids de l\'aliment lui-même, pas celui d\'un de ses composants : pour \"30 g de poudre de protéine\" c\'est 30, pas la quantité de protéines. Si la personne a précisé une quantité, reprends-la exactement. Sinon, donne le poids de la portion que tu as supposée. Omets g SEULEMENT si un poids n\'a aucun sens (une boisson comptée en verres, un plat que tu ne sais pas peser).\n- name = résumé court et propre du repas (max 40 caractères).\n'
     + '- Sois réaliste, ne mets jamais 0 kcal si un aliment est cité.\nRéponds UNIQUEMENT avec le JSON.';
-  const text = await callClaude(apiKey, { model: 'claude-haiku-4-5-20251001', max_tokens: 400, messages: [{ role: 'user', content: prompt }] });
+  const text = await callClaude(apiKey, { model: 'claude-haiku-4-5-20251001', max_tokens: 400, messages: [{ role: 'user', content: prompt }] }, meta);
   const d = firstJson(text);
   if (!d) return { status: 'error', error: 'Estimation échouée' };
   /* ⚖️ LE POIDS SUPPOSÉ EST RENVOYÉ (23/08/2026, ft-v975). Michel, devant une huile d'olive
@@ -738,7 +794,7 @@ async function estimateFood(body, apiKey) {
 }
 
 // ── Import plan diététicien (photo/PDF/texte) — handleImportMealPlan_ ─────────
-async function importMealPlan(body, apiKey) {
+async function importMealPlan(body, apiKey, meta) {
   if (!apiKey) return { status: 'error', error: 'Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
   const images = body.images || [];
   if (!images.length) return { status: 'error', error: 'Aucun fichier reçu' };
@@ -751,7 +807,7 @@ async function importMealPlan(body, apiKey) {
   const hasText = images.some(img => img.isText || img.type === 'text/plain');
   const hasPdf = images.some(img => img.type === 'application/pdf');
   const model = (images.length > 1 || hasText || hasPdf) ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001';
-  const text = await callClaude(apiKey, { model, max_tokens: 8192, messages: [{ role: 'user', content: userContent }] });
+  const text = await callClaude(apiKey, { model, max_tokens: 8192, messages: [{ role: 'user', content: userContent }] }, meta);
   const stripped = String(text || '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
   const mm = stripped.match(/\{[\s\S]*\}/);
   if (!mm) return { status: 'error', error: 'Extraction échouée. Réponse IA : ' + String(text).slice(0, 200) };
@@ -776,7 +832,7 @@ async function importMealPlan(body, apiKey) {
 }
 
 // ── Génération de plan de repas IA — handleGenerateMealPlan_ (erreur = message)
-async function generateMealPlan(body, apiKey) {
+async function generateMealPlan(body, apiKey, meta) {
   if (!apiKey) return { status: 'error', message: 'Clé API manquante' };
   const ctx = String(body.context || '');
   const scope = body.scope || 'day';
@@ -817,6 +873,10 @@ async function generateMealPlan(body, apiKey) {
     body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: maxTokens, system: systemPrompt, messages: [{ role: 'user', content: ctx + '\n\n' + userMsg }] }),
   });
   const result = await r.json();
+  // 💰 Seul appel du fichier qui n'utilise pas callClaude/callClaudeDiag (il a besoin de
+  // `result.error` avant d'extraire le texte) — on capture donc l'usage ICI, à la main,
+  // même mécanique (_envoyerUsage) que partout ailleurs.
+  if (meta) _envoyerUsage(meta, (result && result.model) || 'claude-haiku-4-5-20251001', result && result.usage);
   if (result.error) return { status: 'error', message: result.error.message };
   const rawTxt = ((result.content && result.content[0] && result.content[0].text) || '').trim();
   let parsed;

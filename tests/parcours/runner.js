@@ -2791,15 +2791,59 @@ console.log('\n═══ P. Compteur IA — branché là où passent vraiment le
   // réécrite par un déclencheur fantôme, d'où déjà `PREMIUM_HARDCODED_`. Même motif ici.
   // Ce que le témoin protège n'a PAS changé : le blocage ne doit jamais pouvoir être
   // déclenché par n'importe qui, alors que l'URL Apps Script est publique.
+  /* ⚠️ RENOMMÉ le 24/08/2026 (R30, pas une régression) : `_HASH_COUNT` + la comparaison
+     SHA-256 vivaient EN DUR dans la route `aiCount`. La nouvelle instrumentation du coût
+     réel (③) avait besoin de la MÊME vérification pour sa propre route (`aiUsageLog`) —
+     plutôt qu'une 2ᵉ empreinte identique collée ailleurs (R2), la vérification est
+     factorisée dans `_countTokenArme_()`, et l'empreinte devient `_COUNT_TOKEN_HASH_`.
+     Ce que le témoin protège n'a PAS changé : le blocage ne doit jamais pouvoir être
+     déclenché par n'importe qui, alors que l'URL Apps Script est publique. */
   t('⭐⭐ le plafond reste DÉSARMÉ tant que le bon secret n\'est pas présenté',
-    /_sha256hex_\(_recu\) === _HASH_COUNT/.test(cj) && /blocked: _arme && _q2\.blocked/.test(cj),
+    /_countTokenArme_\(/.test(cj) && /_sha256hex_\(recu\) === _COUNT_TOKEN_HASH_/.test(cj)
+      && /blocked: _arme && _q2\.blocked/.test(cj),
     'le blocage pourrait être déclenché par n\'importe qui — l\'URL Apps Script est publique');
   t('⭐ l\'empreinte est en dur dans le code, hors d\'atteinte d\'un déclencheur fantôme',
-    /_HASH_COUNT = '[0-9a-f]{64}'/.test(cj), 'empreinte absente ou mal formée');
+    /_COUNT_TOKEN_HASH_ = '[0-9a-f]{64}'/.test(cj), 'empreinte absente ou mal formée');
+  t('⭐⭐ ... et la MÊME vérification protège aussi le rapport de coût réel (R2 — un seul jeton)',
+    /if\s*\(_countTokenArme_\(body\.token\)\)\s*\{[\s\S]{0,200}_aiUsageAdd_/.test(cj),
+    '_aiUsageLog n\'utilise pas la même fonction de vérification');
   t('⭐⭐ l\'état du plafond est MÉMORISÉ pour être affichable (sinon on ne peut pas le vérifier)',
     /AI_CAP_SEEN/.test(cj) && /capArmed:/.test(cj), 'l\'état armé/désarmé n\'est exposé nulle part');
   t('le compteur réutilise `ai_quota` (celui que lit déjà le panneau Admin), pas un second compteur',
     /action === 'aiCount'/.test(cj) && /_aiQuotaBlock_\(body\.email\)/.test(cj), 'route aiCount absente');
+
+  /* ══ R. INSTRUMENTATION DU COÛT RÉEL PAR APPEL API (24/08/2026, ft-v990) ══
+     Priorité 3 tranchée par Michel après le contre-audit, EN PARALLÈLE de la validation
+     unique : « instrumentation fine du coût réel par appel API ». Vérifié en DEUX temps :
+     structurellement ici (chaque point de capture existe, aucune action oubliée), et
+     FONCTIONNELLEMENT (accumulation, remise à zéro, jetons) en exécutant le vrai Code.js
+     dans un bac à sable Node — voir le script séparé qui a servi à le vérifier avant
+     livraison. Ce témoin-ci protège la STRUCTURE, pas de la refaire tourner à chaque passe. */
+  t('⭐⭐ `callClaude` capture `data.usage` — le champ que l\'API renvoie et que le fichier jetait',
+    /if\s*\(meta\)\s*_envoyerUsage\(meta,\s*\(data && data\.model\)/.test(w), 'callClaude ne capture pas usage');
+  t('⭐⭐ `callClaudeDiag` AUSSI — c\'est la fonction de PRODUCTION de la conversation (coach() l\'appelle toujours)',
+    (w.match(/_envoyerUsage\(meta,/g)||[]).length>=2, 'un seul point de capture trouvé — callClaudeDiag manque');
+  t('⭐ les QUATORZE actions IA reçoivent `meta` au point d\'entrée (aucune oubliée)',
+    (() => {
+      const dispatch = (w.match(/if \(body\.action === '\w+'\)\s*return json\(await [\s\S]*?\);/g)||[]);
+      const sansMeta = dispatch.filter(l => !/meta\)\);?$/.test(l.trim()));
+      return dispatch.length>=13 && sansMeta.length===0;
+    })(), 'un appelant du dispatcher n\'a pas reçu `meta`');
+  t('⛔⛔ REPLI OUVERT (comme _compterIA) : une panne de mesure ne bloque JAMAIS Milo',
+    /catch \(e\) \{ \/\* repli ouvert : jamais visible pour Milo/.test(w), 'le catch de _rapporterUsage ne dit pas son intention');
+  t('⭐ `meta` est OPTIONNEL — un appelant oublié garde son ANCIEN comportement, rien ne casse',
+    /if \(meta\) _envoyerUsage/.test(w) || /if \(meta\)\s*\{/.test(w), 'la capture n\'est pas conditionnée à la présence de meta');
+  // Côté Apps Script : accumulation BORNÉE (remise à zéro chaque jour, comme ai_quota — R2/R13),
+  // jamais un historique qui grossit (c'est la leçon du réservoir plein à 102 % du 29/07).
+  t('⭐⭐ `ai_usage` se remet à zéro CHAQUE JOUR, même mécanique que `ai_quota` (pas un 2ᵉ motif)',
+    /if \(!u \|\| u\.date !== today\) u = \{ date: today, totals:/.test(cj), 'pas de remise à zéro quotidienne visible');
+  t('⭐ l\'écriture (`_aiUsageAdd_`) est FAIL-OPEN : une erreur ne doit jamais casser la route qui l\'appelle',
+    /function _aiUsageAdd_[\s\S]{0,1200}catch \(e\) \{ \/\* jamais bloquant/.test(cj), 'pas de repli silencieux dans _aiUsageAdd_');
+  t('⭐ le calcul du coût (euros) est SÉPARÉ de l\'écriture — jamais sur le chemin d\'un vrai appel IA (règle d\'or #4)',
+    /function _aiUsageLire_/.test(cj) && !/_aiUsageAdd_[\s\S]{0,400}_aiCoutEuros_/.test(cj),
+    '_aiCoutEuros_ semble appelé depuis le chemin d\'écriture, pas seulement de lecture');
+  t('⛔ un modèle INCONNU ne fabrique jamais un prix inventé (R29 — pas de fausse précision)',
+    /if \(!prix\) return null;/.test(cj), '_aiCoutEuros_ ne rend pas null sans tarif connu');
 }
 
 // ═══ Q. Le bloc COMMUN doit rester partageable entre TOUS les utilisateurs ═══

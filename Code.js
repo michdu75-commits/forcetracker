@@ -548,7 +548,13 @@ function doGet(e) {
       globalMax: parseInt(sp.getProperty('AI_GLOBAL_MAX'), 10) || 1500,
       emailMax: parseInt(sp.getProperty('AI_EMAIL_MAX'), 10) || 100,
       uniqueUsers: Object.keys(byEmail).length,
-      topUsers: top
+      topUsers: top,
+      // 💰 Usage réel (③, 24/08/2026) — tokens ET une estimation en euros. Les tarifs sont
+      // repris TELS QUELS de `tests/milo/eval.js` (MODELES.prod/haiku) : deux runtimes
+      // séparés (Apps Script / Node) ne peuvent pas littéralement partager un module, mais
+      // ils doivent partager le CHIFFRE — si les tarifs Anthropic changent, mettre à jour
+      // les deux (le commentaire de chaque fichier renvoie à l'autre).
+      usage: _aiUsageLire_()
     });
   }
 
@@ -702,6 +708,95 @@ function _aiQuotaBlock_(email) {
   }
 }
 
+// 🔐 LE JETON DU WORKER, EXTRAIT UNE SEULE FOIS (24/08/2026) — R2 : il vivait recopié en
+// dur (`_HASH_COUNT`) dans la route `aiCount` seule. La nouvelle route `aiUsageLog`
+// (instrumentation du coût réel, ③) a besoin exactement de la même vérification — on
+// factorise plutôt que de coller une 2ᵉ empreinte SHA-256 identique quelque part.
+// ⚠️ REPLI OUVERT (comme `aiCount`) : un jeton absent/faux rend `false`, jamais une erreur —
+// une panne de configuration ne doit jamais couper Milo (règle d'or #3).
+var _COUNT_TOKEN_HASH_ = '8876f1898e466e84e3ec872c8234782649430274c040334ec2eccf79a6db112f';
+function _countTokenArme_(token) {
+  var recu = String(token == null ? '' : token).trim();
+  return recu.length >= 12 && _sha256hex_(recu) === _COUNT_TOKEN_HASH_;
+}
+
+// 💰 PRIX PAR MILLION DE TOKENS — MÊMES CHIFFRES QUE `MODELES` DANS `tests/milo/eval.js`.
+// Deux runtimes séparés (Node / Apps Script) ne peuvent pas partager littéralement un
+// module (R2 en esprit, pas en syntaxe) : si les tarifs Anthropic changent, mettre à jour
+// LES DEUX fichiers — chacun renvoie à l'autre dans son commentaire.
+var _AI_PRIX_ = {
+  'claude-sonnet-4-6':          {entree:3.00, sortie:15.00},
+  'claude-haiku-4-5':           {entree:1.00, sortie: 5.00},
+  'claude-haiku-4-5-20251001':  {entree:1.00, sortie: 5.00}
+};
+// ⚠️ APPROXIMATIF, ET C'EST ÉCRIT (R29 — pas de fausse précision) : la lecture de cache
+// coûte ≈ 10 % du tarif d'entrée normal ; l'écriture ≈ 125 % (fenêtre 5 min) — mais le
+// bloc COMMUN utilise parfois une fenêtre 1 h, facturée ≈ 200 % (`worker.js`, coefficients
+// déjà écrits ailleurs dans le dépôt). Le total sous-estime donc légèrement le coût réel les
+// jours où le bloc commun est réécrit. Les TOKENS, eux, sont exacts — c'est l'euro qui est
+// une estimation.
+var _AI_CACHE_LECTURE_  = 0.10;
+var _AI_CACHE_ECRITURE_ = 1.25;
+function _aiCoutEuros_(o, prix) {
+  if (!prix) return null;
+  var euros = ((o.inTok||0)/1e6)*prix.entree
+            + ((o.cacheR||0)/1e6)*prix.entree*_AI_CACHE_LECTURE_
+            + ((o.cacheW||0)/1e6)*prix.entree*_AI_CACHE_ECRITURE_
+            + ((o.outTok||0)/1e6)*prix.sortie;
+  return Math.round(euros*100)/100;
+}
+// Lecture agrégée du jour — appelée par la route `aiUsage` (lecture admin). Séparée de
+// l'écriture (`_aiUsageAdd_`) pour que le calcul de coût ne s'exécute JAMAIS sur le chemin
+// d'un vrai appel IA (règle d'or #4 — rien ne doit ralentir la réponse que la personne attend).
+function _aiUsageLire_() {
+  try {
+    var raw = PropertiesService.getScriptProperties().getProperty('ai_usage');
+    if (!raw) return null;
+    var u = JSON.parse(raw);
+    var parModele = {}, euroTotal = 0, euroConnu = false;
+    Object.keys(u.byModel || {}).forEach(function(m) {
+      var o = u.byModel[m];
+      var euros = _aiCoutEuros_(o, _AI_PRIX_[m]);
+      parModele[m] = {inTok:o.inTok, outTok:o.outTok, cacheW:o.cacheW, cacheR:o.cacheR, calls:o.calls, euros:euros};
+      if (euros != null) { euroTotal += euros; euroConnu = true; }
+    });
+    return { date: u.date, totals: u.totals, byAction: u.byAction, byModel: parModele,
+             euroTotal: euroConnu ? Math.round(euroTotal * 100) / 100 : null };
+  } catch (e) { return null; }
+}
+
+// ── 💰 INSTRUMENTATION DU COÛT RÉEL PAR APPEL API (24/08/2026) ──────────────────────────
+// Priorité 3 tranchée par Michel après le contre-audit, EN PARALLÈLE de la validation
+// unique (①②, ft-v989) : « instrumentation fine du coût réel par appel API ». Le Worker
+// (`_rapporterUsage`, `worker.js`) envoie déjà `data.usage` — un champ que l'API Anthropic
+// renvoie à CHAQUE appel et que le fichier jetait jusqu'ici. Ici, on l'ACCUMULE.
+//
+// ⛔ MÊME FORME QUE `_aiQuotaBlock_` JUSTE AU-DESSUS (R2/R13 — pas une 2ᵉ façon de compter
+// un jour) : UNE propriété JSON, remise à zéro chaque jour, taille BORNÉE par construction
+// (14 actions × quelques modèles, jamais un historique qui grossit — c'est exactement la
+// leçon du réservoir plein à 102 % du 29/07 : ne JAMAIS accumuler sans remise à zéro).
+// Fail-open : une erreur ici ne doit jamais faire échouer la route qui l'appelle.
+function _aiUsageAdd_(action, model, inTok, outTok, cacheW, cacheR) {
+  try {
+    var sp = PropertiesService.getScriptProperties();
+    var tz = Session.getScriptTimeZone() || 'Europe/Paris';
+    var today = Utilities.formatDate(new Date(), tz, 'yyyyMMdd');
+    var raw = sp.getProperty('ai_usage');
+    var u = raw ? JSON.parse(raw) : null;
+    if (!u || u.date !== today) u = { date: today, totals: {inTok:0,outTok:0,cacheW:0,cacheR:0,calls:0}, byAction: {}, byModel: {} };
+    var add = function(o){ o.inTok=(o.inTok||0)+(inTok||0); o.outTok=(o.outTok||0)+(outTok||0);
+      o.cacheW=(o.cacheW||0)+(cacheW||0); o.cacheR=(o.cacheR||0)+(cacheR||0); o.calls=(o.calls||0)+1; };
+    add(u.totals);
+    var a = (action || 'inconnu');
+    u.byAction[a] = u.byAction[a] || {inTok:0,outTok:0,cacheW:0,cacheR:0,calls:0};
+    add(u.byAction[a]);
+    var m = (model || 'inconnu');
+    u.byModel[m] = u.byModel[m] || {inTok:0,outTok:0,cacheW:0,cacheR:0,calls:0};
+    add(u.byModel[m]);
+    sp.setProperty('ai_usage', JSON.stringify(u));
+  } catch (e) { /* jamais bloquant */ }
+}
+
 // Compteur journalier générique (1 propriété JSON, remise à zéro chaque jour).
 // Sert à plafonner des endpoints sensibles sans IA (envoi d'emails, essais de codes).
 // Fail-open : en cas d'erreur, on ne bloque JAMAIS (dispo > strictness).
@@ -799,10 +894,8 @@ function doPost(e) {
     // ⚠️ Une empreinte SHA-256 ne se remonte pas : si la clé Cloudflare est perdue, on ne
     //    la retrouve NULLE PART. La seule issue est d'en régénérer une — procédure écrite
     //    dans `A-FAIRE-SUR-PC.md`, pour ne pas avoir à rouvrir une vieille conversation.
-    var _HASH_COUNT = '8876f1898e466e84e3ec872c8234782649430274c040334ec2eccf79a6db112f';
     var _q2 = _aiQuotaBlock_(body.email);
-    var _recu = String(body.token == null ? '' : body.token).trim();
-    var _arme = _recu.length >= 12 && _sha256hex_(_recu) === _HASH_COUNT;
+    var _arme = _countTokenArme_(body.token);
     // 👁️ ON GARDE UNE TRACE DE CE QU'ON A CONSTATÉ (11/08/2026). Sans ça, l'état du plafond
     // n'est lisible NULLE PART : Michel a posé le secret et n'avait aucun moyen de vérifier
     // qu'il avait pris. *Un garde-fou qu'on ne peut pas voir ne rassure que celui qui l'a
@@ -814,6 +907,19 @@ function doPost(e) {
     }catch(_e){}
     return json_({status:'ok', counted:true, armed:_arme,
                   blocked: _arme && _q2.blocked, scope:_q2.scope || ''});
+  }
+
+  // 💰 Le Worker signale l'USAGE RÉEL d'un appel déjà terminé (tokens, modèle) — voir
+  // `_rapporterUsage` dans worker.js. ⚠️ Contrairement à `aiCount`, il n'y a AUCUNE décision
+  // de blocage ici : un jeton absent/faux fait simplement qu'on n'enregistre rien (repli
+  // ouvert), jamais une erreur qui remonterait jusqu'à la personne qui attend sa réponse.
+  if (body.action === 'aiUsageLog') {
+    if (_countTokenArme_(body.token)) {
+      _aiUsageAdd_(body.act, body.model,
+        parseInt(body.inTok, 10) || 0, parseInt(body.outTok, 10) || 0,
+        parseInt(body.cacheW, 10) || 0, parseInt(body.cacheR, 10) || 0);
+    }
+    return json_({status:'ok'});
   }
 
   if (body.action === 'test')              return json_({status:'online', version:'3.5'});

@@ -22,9 +22,11 @@ un bug, et quelqu'un le « répare » six mois plus tard.
 
 ## 📍 Où on en est, en une ligne
 
-**Les 3 bloquants de production sont corrigés** (ft-v981 · ft-v982 · ft-v983). **La priorité n°1
-post-contre-audit est livrée** (①② validation unique + bouton allégé, `ft-v989`). Ce qui reste
-n'est plus du **danger**, c'est de la **vérification** et du **produit**.
+**Les 3 bloquants de production sont corrigés** (ft-v981 · ft-v982 · ft-v983). **Les trois
+priorités post-contre-audit sont livrées** (①② validation unique + bouton allégé `ft-v989`,
+③ coût réel `ft-v990`). Ce qui reste n'est plus du **danger**, c'est de la **vérification**
+et du **produit** — et deux décisions de fond (④⑤, gated par **R34**) qui attendent un vrai
+coût mesuré avant de trancher si elles rapportent quelque chose.
 
 **Niveau recommandé aujourd'hui : 50 à 200 bêta-testeurs.**
 Rapport complet : artefact *« Milo face au code »*.
@@ -50,6 +52,7 @@ Rapport complet : artefact *« Milo face au code »*.
 | **« À la main » en premier et en rouge** | `ft-v986` | Demande de Michel. ⚠️ Remplace une décision qui avait sa raison écrite (R30), et **la donnée mesurée allait dans le sens de l'ancien ordre** — arbitrage d'usage assumé, tracé pour pouvoir revenir en arrière. |
 | **La confirmation s'ouvrait DERRIÈRE la modale** | `ft-v985` | `#ov-confirm` était à z-index **500**, comme `#ov-edit-food` — à égalité, c'est l'ordre du DOM qui tranche. **19 overlays** au-dessus ou à égalité, pas un seul. |
 | **①② Validation unique + bouton allégé** | `ft-v989` | **Priorités n°1 et 2** de Michel, tranchées le 24/08. Posée au seul point que les deux portes traversent (`_appliqueMiloSession`, même raison que ft-v980). Réutilise `_gardienZones`, `_GARDIEN_CONSTRAINTS`, `_EX_SWAP_RAISONS` — rien de réinventé. **② était déjà acquis** : vérifié le même jour, `_startSessionFromMilo` ne fait aucun appel IA au clic. On signale, on ne bloque pas (R24). |
+| **③ Instrumentation du coût réel par appel API** | `ft-v990` | **Priorité n°3**, en parallèle de ①②. Capture `data.usage` (déjà renvoyé par l'API, jeté jusqu'ici) au seul point commun (`callClaude`/`callClaudeDiag`) — **ne change rien au comportement de Milo**. Même mécanique bornée que `ai_quota` côté Apps Script (R2/R13). Coût en euros = estimation écrite comme telle (R29), tarifs repris de `tests/milo/eval.js`. **Vérifié fonctionnellement** (vrai Code.js dans un bac à sable Node) ; **pas encore par un appel réel facturé**, indisponible dans cet environnement. |
 
 ---
 
@@ -90,7 +93,6 @@ règle en même temps que ④ (les deux touchent le même bloc commun), mais Mic
 
 | Sujet | Pourquoi ça compte | Difficulté |
 |---|---|---|
-| **③ Instrumenter le coût réel par appel API** | Tranché : **en parallèle** de ① et ②, pas après. `input_tokens` · `cache_creation_input_tokens` · `cache_read_input_tokens` · `output_tokens` · modèle · coût. Sans toucher au comportement de Milo. | ⚠️ Le CODE est faisable ici ; la **vérification** demande un vrai appel facturé, indisponible dans cette session |
 | **Le vocabulaire Katch de Milo** | *« MASSE MAIGRE MESURÉE … chiffre SOLIDE … sans réserve »* contredit **R32**, et s'applique même à un % de gras **tapé à la main**. | Faible — ⚠️ **corriger le témoin `tests/parcours/runner.js:3273` D'ABORD**, il protège la mauvaise phrase |
 | **La mémoire à deux vitesses** | `MEMOIRE_LARGE_EMAILS` = **2 comptes**. Un utilisateur normal n'a pas les séances 6→35 sur 60 jours. **Michel juge Milo sur une mémoire que personne d'autre n'a.** | Faible — c'est une **décision**, pas du code |
 | **Rejouer le benchmark** | Il existe, il tourne, **il n'a pas encore vu les correctifs de ft-v979→988**. | Faible — ⚠️ demande un vrai appel API |
@@ -154,10 +156,13 @@ Elles valent plus que les correctifs, parce qu'elles se rappliquent :
 - **Ce fichier n'est pas un journal** : il ne raconte rien, il dit *où on en est*. Le récit est dans
   `CLAUDE.md`.
 
-*Dernière mise à jour : **24/08/2026 — priorités ①② LIVRÉES** (`ft-v989`, validation unique
-avant l'activation d'une séance de Milo, réutilisant `_gardienZones`/`_GARDIEN_CONSTRAINTS`/
-`_EX_SWAP_RAISONS`, sans réinventer). Vérifié en données et à l'écran. ③ (coût réel) reste
-ouvert, ④⑤ (reclassement, caches par lieu) restent approuvés mais soumis à **R34**.*
+*Dernière mise à jour : **24/08/2026 — LES TROIS PRIORITÉS ①②③ LIVRÉES.** ①② (`ft-v989`) :
+validation unique avant l'activation d'une séance de Milo, réutilisant `_gardienZones`/
+`_GARDIEN_CONSTRAINTS`/`_EX_SWAP_RAISONS`. ③ (`ft-v990`) : instrumentation du coût réel par
+appel API, sans toucher au comportement de Milo — vérifiée fonctionnellement (bac à sable
+Node), pas encore par un appel réel facturé. ④⑤ (reclassement, caches par lieu) restent
+approuvés mais soumis à **R34** : ils attendent maintenant que ③ tourne en production assez
+longtemps pour dire s'ils rapportent quelque chose.*
 
 *(historique : 24/08/2026, 08 h 09 — Michel a tranché les décisions ouvertes par le contre-audit.
 Priorités ①② posées, ③ en parallèle, ④⑤ soumis à R34 (nouvelle règle d'architecture), ⑥ (records)

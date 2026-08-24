@@ -5013,6 +5013,25 @@ async function loadHealthAdmin(){
     if(ai&&ai.status==='ok'){
       const u=ai.used!==undefined?ai.used:(ai.count!==undefined?ai.count:null);
       h+=_healthRow('🤖','Consommation IA','ok', u!==null?('<b>'+u+'</b> appels comptés'+(ai.limit?' (plafond '+ai.limit+')':'')):'Compteur lu, rien d\'anormal');
+      // 💰 LE COÛT RÉEL (③, 24/08/2026) — les tokens que le compteur ci-dessus ne dit pas.
+      // `ai.usage` vient de `_aiUsageLire_()` (Code.js), alimenté par le Worker à CHAQUE
+      // appel (`_rapporterUsage`, worker.js) — jamais estimé en caractères, toujours lu sur
+      // le vrai champ `usage` que renvoie l'API Anthropic.
+      if(ai.usage && ai.usage.totals){
+        const t=ai.usage.totals;
+        const parAction=Object.keys(ai.usage.byAction||{})
+          .sort((a,b)=>(ai.usage.byAction[b].calls||0)-(ai.usage.byAction[a].calls||0))
+          .slice(0,6)
+          .map(k=>k+' <span style="color:var(--t3)">('+ai.usage.byAction[k].calls+')</span>')
+          .join(' · ');
+        h+=_healthRow('💰','Coût réel du jour','ok',
+          '<b>'+(t.calls||0)+'</b> appel(s) · '+(t.inTok||0).toLocaleString('fr-FR')+' tokens entrée · '
+          +(t.outTok||0).toLocaleString('fr-FR')+' sortie · '+(t.cacheR||0).toLocaleString('fr-FR')+' lus en cache'
+          +(ai.usage.euroTotal!=null?' · <b>≈ '+ai.usage.euroTotal.toFixed(2).replace('.',',')+' €</b> (estimation)':'')
+          +(parAction?'<br><span style="font-size:11.5px;color:var(--t2);">'+parAction+'</span>':''));
+      } else if(ai.usage===null){
+        h+=_healthRow('💰','Coût réel du jour','warn','Aucun appel enregistré aujourd\'hui pour l\'instant.');
+      }
       // 🛡️ LE PLAFOND EST-IL ARMÉ ? (11/08/2026) — il ne l'est que si le secret partagé est posé
       // côté Cloudflare. Avant cette ligne, l'information n'était affichée NULLE PART : on posait
       // le secret sans aucun moyen de vérifier qu'il avait pris. *Un garde-fou qu'on ne peut pas

@@ -6,7 +6,17 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v989`.
+- **Version en ligne (live) :** `ft-v990`.
+- 💰⭐⭐ **INSTRUMENTATION DU COÛT RÉEL PAR APPEL API — LIVRÉE** (ft-v990). Priorité 3 de
+  Michel, en parallèle de ①②. Capture `data.usage` (déjà renvoyé par l'API, jeté jusqu'ici)
+  au seul point commun (`callClaude`/`callClaudeDiag`). Ne change RIEN au comportement de
+  Milo. Même mécanique que `ai_quota` côté Apps Script (borné, remis à zéro chaque jour).
+  ⚠️ Vérifié FONCTIONNELLEMENT (bac à sable Node) mais **pas encore par un vrai appel
+  facturé** — indisponible dans cet environnement. La première vraie donnée arrivera au
+  prochain appel réel de Michel. Lisible dans Profil → Admin → Santé du système.
+  ⏭️ **Les trois priorités du contre-audit (①②③) sont livrées.** Reste : ④⑤ (reclassement
+  du contexte, caches par lieu) — gated par **R34**, attendent un vrai coût mesuré pour
+  juger s'ils rapportent quelque chose.
 - 🛡️⭐⭐ **LA VALIDATION UNIQUE AVANT UNE SÉANCE DE MILO — LIVRÉE** (ft-v989). Priorité n°1 de
   Michel après le contre-audit. Posée au SEUL point que les deux portes traversent
   (`_appliqueMiloSession`, même raison que ft-v980). Réutilise `_gardienZones()`,

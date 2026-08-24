@@ -406,7 +406,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v989`** (prochaine : `ft-v990`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v990`** (prochaine : `ft-v991`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -416,6 +416,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v990 — 💰 INSTRUMENTATION DU COÛT RÉEL PAR APPEL API** — priorité 3 tranchée par Michel après le contre-audit du 24/08, **en parallèle** de la validation unique (①②, ft-v989) : *« instrumentation fine du coût réel par appel API »*.
+
+**⛔⛔ NE CHANGE STRICTEMENT RIEN AU COMPORTEMENT DE MILO** : lecture seule de `data.usage`, un champ que l'API Anthropic renvoie déjà à **chaque** appel et que `worker.js` jetait jusqu'ici. Capturé au **seul** point commun, `callClaude` **et** `callClaudeDiag` — cette dernière est la fonction de **production** de la conversation (`coach()` l'appelle **toujours**), malgré un nom qui laisse croire à un chemin de test.
+
+**⛔ MÊME CHEMIN QUE `_compterIA` (R2, pas un 2ᵉ canal de télémétrie)** : fire-and-forget vers Apps Script, repli **ouvert** — une panne de mesure ne bloque jamais Milo (règle d'or #3).
+
+**⛔⛔ CÔTÉ `Code.js`, MÊME MÉCANIQUE QUE `ai_quota` (R2/R13)** : une propriété JSON **bornée**, remise à zéro chaque jour — jamais un historique qui grossit, c'est exactement la leçon du réservoir plein à 102 % du 29/07. Le jeton de sécurité est **factorisé** (`_countTokenArme_`) plutôt que dupliqué : la même empreinte protège désormais `aiCount` **et** `aiUsageLog`.
+
+**💶 LE COÛT EN EUROS EST UNE ESTIMATION, ÉCRIT COMME TEL** (R29 — pas de fausse précision) : les tarifs sont repris de `tests/milo/eval.js` (seule source de prix du dépôt), et le coefficient de cache-écriture (1,25×) suppose une fenêtre 5 min — le bloc commun utilise parfois 1 h, donc l'estimation sous-estime légèrement les jours où il est réécrit. **Les tokens, eux, sont exacts.**
+
+**⭐⭐ VÉRIFIÉ FONCTIONNELLEMENT, PAS SEULEMENT EN LECTURE** : le vrai `Code.js` exécuté dans un bac à sable Node (`PropertiesService`/`Utilities`/`Session` stubbés) confirme l'accumulation, la remise à zéro quotidienne, le rejet d'un modèle inconnu (jamais de prix inventé) et le refus d'un mauvais jeton.
+
+**⚠️ CE QUI NE PEUT PAS ÊTRE VÉRIFIÉ ICI, ET C'EST ÉCRIT** : un vrai appel facturé à l'API Anthropic, indisponible dans cet environnement — la première vraie donnée arrivera au premier appel de Michel en production.
+Tests : **parcours 1315/1315** (+10, bloc R), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `worker.js`, `Code.js`, `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`. sw.js ft-v990. |
 
 **ft-v989 — 🛡️ LA VALIDATION UNIQUE AVANT UNE SÉANCE DE MILO** — priorité n°1 tranchée par Michel après le contre-audit du 24/08 : *« une validation déterministe unique avant l'activation de la séance : blessures, exclusions, doublons »*.
 
@@ -743,19 +758,6 @@ Tests : **parcours 1141/1141** (+19, bloc XCI), calculs 266/266, muscles 241/241
 
 **⚠️ Et si le verrou santé refuse, on ne remplit pas des champs invisibles** et on ne prétend pas que le rapport est prêt.
 Tests : **parcours 1122/1122** (+5, bloc XC), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `tracking.js`, `clone/tracking.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v971. |
-
-**ft-v970 — 📈 L'ÉVOLUTION DU BILAN CORPOREL ATTEINT MILO — et mon analyse de ce matin était fausse** — Michel envoie **5 rapports de balance pro** sur 27 jours, puis : *« tu avais fait un calcul approfondi sur mes mesures de balance comme quoi il y avait beaucoup de mytho dedans »*.
-
-**⚠️⚠️ IL AVAIT RAISON, ET C'ÉTAIT ÉCRIT DANS LE DÉPÔT.** Deux fois : **ft-v323** (son propre retour — *« masse grasse qui saute de ~15 % à 20,6 % en changeant de balance »*) et **ft-v833** (*« on n'avale pas le chiffre de la balance : il sort d'une formule propre au fabricant, invérifiable »*). **Je ne l'avais pas relu avant de parler** — R23 dans sa forme la plus nette : *une connaissance qu'on ne consulte pas fait dire des bêtises à celui qui l'ignore.*
-
-**⛔⛔ CE QUE J'AVAIS ANNONCÉ NE TENAIT PAS, ET C'EST MESURABLE SUR SES PROPRES CHIFFRES.** J'avais dit *« −1,4 kg de gras, soit 85 % de ce qu'il a perdu »*. Or sa masse maigre fait `69,0 · 68,3 · 69,1 · 69,2 · 68,7` : **jusqu'à 0,8 kg d'écart entre deux mesures consécutives**, quand ma « tendance » sur 27 jours en valait **0,3**. *Ma tendance était plus petite que le bruit.* Côté gras, 1,4 kg de « tendance » pour **1,3 kg** de bruit — un seul écart de mesure. **Ce qui reste vrai : le POIDS (−1,65 kg). Une balance pèse ; le partage gras/maigre, lui, est une déduction.**
-
-**👉 CE QUI EST LIVRÉ** : Milo reçoit désormais les **3 bilans corporels antérieurs avec leurs dates**, exactement comme le **bilan sanguin** depuis ft-v943 (**R13** — le motif existait, il n'avait été appliqué qu'à un côté ; *une correction faite d'un côté et pas de l'autre est un oubli, pas un arbitrage*, corollaire de **R8**).
-
-**⛔ SANS ÇA, CHEZ MICHEL, MILO AURAIT COMPARÉ LE 23/08 AU 22/08** — un jour d'écart, donc de l'eau et du contenu digestif (1,25 kg en 24 h demanderait ~9 000 kcal). *Il aurait commenté du bruit en croyant lire un progrès.* L'écart au bilan précédent est **gardé** — on ajoute l'historique daté, on ne remplace rien.
-
-**⚠️ ET L'AVERTISSEMENT EST ÉCRIT DANS SON CONTEXTE** : deux mesures rapprochées diffèrent par l'**hydratation**, pas par la graisse ; ne jamais commenter une variation de quelques jours comme un progrès ou une régression.
-Tests : **parcours 1117/1117** (+8, bloc LXXXIX), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges**, exactement les 4 comportements neufs — et **4 verts des deux côtés** (l'écart au précédent, le cas « un seul bilan », le cas « aucun bilan ») : *ils devaient rester intacts.* Fichiers : `coach.js`, `clone/coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v970. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
