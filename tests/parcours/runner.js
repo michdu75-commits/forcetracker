@@ -12488,6 +12488,82 @@ console.log('\n-- CXII. La quantité sur un aliment repris SANS pour-100 g (ft-v
   await cx.close();
 }
 
+// ════════════════════════════════════════════════════════════════════
+console.log('\n-- CXIII. La bande des 7 jours du Journal nutrition (ft-v1004) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pb=await cx.newPage();
+  await pb.addInitScript(seedScript({}));
+  await pb.goto('http://localhost:'+PORT+'/index.html');
+  await pb.waitForTimeout(2200);
+  const BJ=await pb.evaluate(async()=>{
+   try{
+    const o={};
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    document.querySelectorAll('.overlay').forEach(x=>x.classList.remove('open'));
+    /* ⏰ Fixtures ancrées sur le `today()` DE L'APP et calculées à MIDI — la famille « fuseaux
+       horaires » de BUGS.md a déjà fait rougir 6 fixtures le 23/08, à 00h34. */
+    const midi=n=>{const d=new Date(today()+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    const F=(dt,kc)=>({date:dt,meal:'dejeuner',name:'Repas',kcal:kc,prot:80,carbs:40,fat:15,ts:Date.now()});
+    S.foodLog=[F(midi(0),1005), F(midi(1),3050), F(midi(3),3400), F(midi(5),2900)];
+    const nb=document.getElementById('nb-nutrition'); if(nb)nb.click();
+    await new Promise(r=>setTimeout(r,600));
+    const tb=document.getElementById('ntab-journal'); if(tb)tb.click();
+    await new Promise(r=>setTimeout(r,500));
+    const jours=()=>Array.from(document.getElementById('food-journal').querySelectorAll('button'))
+                        .filter(x=>x.querySelector('svg'));
+    const B=jours();
+    o.nb=B.length;
+    o.lettres=B.map(x=>(x.querySelector('span')||{}).textContent).join('');
+    /* ⭐⭐ LE POINT QUI A DÉCIDÉ DU FORMAT : la bande est TOUJOURS pleine. La semaine calendaire
+       (la référence de Michel) affichait 5 jours grisés sur 7 un mardi, et 6 un lundi — mesuré
+       avant de trancher. « Voir d'un seul geste ce qu'on a mangé » ne supporte pas ça. */
+    o.desactives=B.filter(x=>x.disabled).length;
+    o.dernierEstAuj = !!(B[6] && B[6].innerHTML.indexOf('var(--red)')>=0);
+    o.anneauxRemplis=B.filter(x=>x.querySelectorAll('circle').length>1).length;
+    o.orangeSurDepassement = B.some(x=>x.innerHTML.indexOf('var(--orange)')>=0);
+    o.aucunRouge = !B.some(x=>/stroke="var\(--red\)/.test(x.innerHTML));
+    const par=B[0].parentElement.getBoundingClientRect();
+    o.largeurOk = Math.round(B[6].getBoundingClientRect().right) <= Math.round(par.right)+1;
+    const cible=B[3]; cible.click();
+    await new Promise(r=>setTimeout(r,350));
+    const titre=document.querySelector('#food-journal span');
+    o.titreApresClic=(titre&&titre.textContent)||'';
+    o.clicChangeLeJour = o.titreApresClic!=='' && !/Aujourd'hui/i.test(o.titreApresClic);
+    o.pointUnique = (typeof journalAllerA==='function');
+    o.flechesPassentPar = /journalAllerA/.test(String(journalNav));
+    const d=new Date(today()+'T12:00:00'); d.setDate(d.getDate()+1);
+    journalAllerA(d.toISOString().slice(0,10));
+    await new Promise(r=>setTimeout(r,250));
+    const t2=document.querySelector('#food-journal span');
+    o.futurRefuse = (t2&&t2.textContent)===o.titreApresClic;   // rien n'a bougé
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  const tj=(n,c,x)=>t(n, !BJ.erreur && c, BJ.erreur?'bloc en erreur':x);
+  if(BJ.erreur){ t('⛔ le bloc « bande des 7 jours » s\'exécute', false, BJ.erreur); }
+  tj('⭐⭐ la bande affiche 7 jours, et chacun porte sa vraie initiale',
+    BJ.nb===7 && /^[LMJVSD]{7}$/.test(BJ.lettres||''), 'nb='+BJ.nb+' lettres='+BJ.lettres);
+  tj('⭐⭐ AUCUN jour grisé : elle est TOUJOURS pleine (7 jours glissants, pas la semaine calendaire)',
+    BJ.desactives===0, BJ.desactives+' jour(s) désactivé(s)');
+  tj('⭐ aujourd\'hui est le dernier, et porte le point de repère', BJ.dernierEstAuj===true);
+  tj('⭐⭐ « voir d\'un seul geste » : les jours notés portent un anneau rempli',
+    BJ.anneauxRemplis>=3, BJ.anneauxRemplis+' anneaux remplis sur 7');
+  /* ⛔ RÈGLE DU PRODUIT : rien de culpabilisant. Un dépassement se signale en ORANGE ; le rouge
+     d'échec n'a pas sa place sur un journal alimentaire (NUTRITION-PHILOSOPHIE, anti-TCA). */
+  tj('⛔⛔ un dépassement se voit en ORANGE, et AUCUN anneau n\'est rouge (rien de culpabilisant)',
+    BJ.orangeSurDepassement===true && BJ.aucunRouge===true,
+    'orange='+BJ.orangeSurDepassement+' aucunRouge='+BJ.aucunRouge);
+  tj('⭐⭐ un clic sur un jour change vraiment le journal affiché',
+    BJ.clicChangeLeJour===true, 'titre après clic : "'+BJ.titreApresClic+'"');
+  tj('⛔ R2 : un seul point d\'entrée pour changer de jour (les flèches y passent aussi)',
+    BJ.pointUnique===true && BJ.flechesPassentPar===true,
+    'journalAllerA='+BJ.pointUnique+' flèches='+BJ.flechesPassentPar);
+  tj('⛔ on ne peut jamais aller dans le FUTUR', BJ.futurRefuse===true);
+  tj('⭐ les 7 boutons tiennent dans la largeur (430 px max, mobile)', BJ.largeurOk===true);
+  await cx.close();
+}
+
 // ── ⭐⭐ LE BANC D'ESSAI DOIT POUVOIR JUGER CE CHANGEMENT (R34) ────────────────────────────
 // Mesuré le 24/08 AVANT de livrer : sur les 21 scénarios d'alors, **aucun** n'avait plus de
 // 1 séance — l'avant/après R34 aurait donc comparé deux contextes IDENTIQUES et rendu « aucune
