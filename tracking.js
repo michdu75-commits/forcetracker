@@ -2100,7 +2100,8 @@ function _pendingStyleContext(){
 }
 function applyStyleContext(newGoal,observed){
   try{
-    S.goal=newGoal;                                            // ⚠️ seulement sur action explicite de l'utilisateur
+    _goalSet(newGoal,'observation');   // ⚠️ seulement sur action explicite de l'utilisateur — et
+                                       //    journalisé par le propriétaire unique (R2, ft-v1010)
     if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};
     S.registre.ctxStyle={observed,at:today(),result:'updated'};
     S.registre.lastObsAt=today();
