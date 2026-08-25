@@ -6958,9 +6958,15 @@ const EX_YT={
   'Développé Incliné':             {img:'exercises/developpe-incline-barre.webp'},
   'Développé Incliné Haltères':    {img:'exercises/developpe-incline-halteres-exercice-musculation.webp'},
   'Écarté Poulie':                 {img:'exercises/ecarte-poulie-vis-a-vis-exercice-musculation-pectoraux.webp'},
-  // ⚠️ 02/08 : « Écarté Haltères » affichait l'animation de l'écarté DÉCLINÉ — les deux fiches
-  // pointaient le même fichier (trouvé en croisant les animations). Aucune animation vaut
-  // mieux qu'une fausse ; à rebrancher le jour où on a une vraie démo d'écarté à plat.
+  // ✅ REBRANCHÉ le 25/08 — et c'est le commentaire du 02/08 qui a dit quand le faire.
+  // Il disait : « "Écarté Haltères" affichait l'animation de l'écarté DÉCLINÉ (les deux fiches
+  // pointaient le même fichier). Aucune animation vaut mieux qu'une fausse ; à rebrancher le
+  // jour où on a une vraie démo d'écarté à plat. » ⭐ Ce jour est arrivé : Michel a envoyé la
+  // démo du couché à PLAT (25/08), vérifiée image par image avant de la rattacher — banc
+  // horizontal, pas décliné. *Un retrait dont la condition de retour est ÉCRITE se referme
+  // tout seul le jour venu ; sans cette phrase, on aurait cru à un oubli et remis n'importe
+  // quoi* (R30).
+  'Écarté Haltères':               {img:'exercises/ecarte-couche-halteres.webp'},
   'Croisé Poulie (Cable Crossover)':{img:'exercises/ecartes-poulie-vis-a-vis.webp'},
   'Pec Deck':                      {img:'exercises/pec-deck-butterfly-exercice-musculation.webp'},
   'Chest Press Machine Horizontale':{img:'exercises/developpe-machine-assis-pectoraux.webp'},
@@ -7032,6 +7038,11 @@ const EX_YT={
   'Tirage Poulie Haute (Lat Pulldown)':           {img:'exercises/tirage-vertical-poitrine.webp'},
   'Tirage Poulie Haute Prise Serrée':{img:'exercises/tirage-vertical-prise-serree.webp'},
   'Tirage Poulie Basse Prise Large':{img:'exercises/tirage-horizontal-prise-large.webp'},
+  // ⚠️ NE PAS CONFONDRE AVEC `tirage-vertical-prise-serree.webp` (ligne au-dessus) : celui-là est
+  // la poulie HAUTE. Ici c'est la poulie BASSE, assis, poignée en V — envoi Michel 25/08, il
+  // l'appelle « tirage horizontal prise serrée ». Vérifié image par image avant de la rattacher :
+  // montrer l'animation d'un AUTRE exercice est pire que n'en montrer aucune (R29).
+  'Tirage Poulie Basse Prise Serrée':{img:'exercises/tirage-horizontal-poulie-prise-serree.webp'},
   // ⚠️ CORRIGÉ le 01/08 : cette ligne portait `traction-musculation-dos.webp`, qui montre une
   // traction CLASSIQUE sans lest. La cause : « Tractions (Pull-up) » n'existait pas au catalogue,
   // la démo de la traction de base s'était donc posée sur la variante lestée, faute de place.

@@ -431,6 +431,37 @@ t('⭐ démos abduction/adduction remises à l\'endroit : fichiers -v2 mappés, 
             && !fs.existsSync(path.join(ROOT,'exercises/leg-abduction-machine.webp'))
             && lg.indexOf("'exercises/leg-abduction-machine.webp'")<0
             && sw.indexOf('leg-abduction-machine.webp')<0;})());
+/* ⚠️ LES 2 ANIMATIONS AJOUTÉES LE 25/08 (envoi Michel : « j'ai encore des figurines qui
+   n'apparaissent pas »). Ce témoin vérifie les QUATRE endroits qu'il faut tenir alignés —
+   le fichier sur le disque · la ligne dans EX_YT · la ligne dans le cache du service worker
+   (sinon l'image manque HORS LIGNE, règle d'or #4) · et l'absence de confusion de fichier.
+   ⛔⛔ LE PIÈGE EST NOMMÉ, parce qu'il a déjà eu lieu : le 02/08, « Écarté Haltères » et
+   « Écarté Décliné » pointaient le MÊME fichier — l'app montrait un décliné pour un couché
+   à plat. Le correctif d'alors avait RETIRÉ l'animation en écrivant sa condition de retour
+   (« à rebrancher le jour où on a une vraie démo d'écarté à plat ») ; c'est cette phrase, et
+   elle seule, qui a permis de rebrancher aujourd'hui sans se demander si c'était un oubli
+   (R30). Le témoin épingle donc que les deux écartés gardent des fichiers DIFFÉRENTS.
+   ⚠️ Même piège côté tirage : `tirage-vertical-prise-serree` est la poulie HAUTE — la
+   nouvelle est la poulie BASSE. Deux exercices, deux fichiers, jamais le même. */
+t('⭐⭐ les 2 animations du 25/08 : fichier présent · câblée dans EX_YT · dans le cache SW',
+  (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        const sw=fs.readFileSync(path.join(ROOT,'sw.js'),'utf8');
+        const f=['ecarte-couche-halteres','tirage-horizontal-poulie-prise-serree'];
+        return f.every(x=>fs.existsSync(path.join(ROOT,'exercises/'+x+'.webp'))
+                       && lg.indexOf("exercises/"+x+".webp")>=0
+                       && sw.indexOf(x+'.webp')>=0)
+            && /'Écarté Haltères':\s*\{img:'exercises\/ecarte-couche-halteres\.webp'\}/.test(lg)
+            && /'Tirage Poulie Basse Prise Serrée':\{img:'exercises\/tirage-horizontal-poulie-prise-serree\.webp'\}/.test(lg);})());
+t('⛔⛔ … et les DEUX écartés gardent des fichiers différents (le mélange du 02/08 ne revient pas)',
+  (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        const m=n=>{const r=new RegExp("'"+n+"':\\s*\\{img:'(exercises/[^']+)'");const x=lg.match(r);return x&&x[1];};
+        const plat=m('Écarté Haltères'), dec=m('Écarté Décliné Haltères');
+        return !!plat && (!dec || plat!==dec);})());
+t('⛔ … et la prise serrée BASSE ne prend pas le fichier de la prise serrée HAUTE',
+  (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        const m=n=>{const r=new RegExp("'"+n+"':\\{img:'(exercises/[^']+)'");const x=lg.match(r);return x&&x[1];};
+        const bas=m('Tirage Poulie Basse Prise Serrée'), haut=m('Tirage Poulie Haute Prise Serrée');
+        return !!bas && !!haut && bas!==haut;})());
 t('⭐ le splash iOS est SAUTÉ au redémarrage de mise à jour (flag ft4_just_updated lu en tête)',
   (()=>{const s=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
         const m=s.match(/navigator\.standalone===true&&localStorage\.getItem\('ft4_just_updated'\)!=='1'\)document\.documentElement\.classList\.add\('ios-boot'\)/);

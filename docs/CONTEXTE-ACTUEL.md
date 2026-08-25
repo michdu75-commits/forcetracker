@@ -6,7 +6,27 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v997`.
+- **Version en ligne (live) :** `ft-v999`.
+- 🏋️⭐ **DEUX ANIMATIONS QUI MANQUAIENT — LIVRÉ** (ft-v999). Michel : *« j'ai encore des figurines
+  qui n'apparaissent pas »*. ⛔⛔ **Ce n'est PAS le bug de ft-v996/997**, et la différence compte :
+  là le fichier existait et l'app ne le trouvait pas ; **ici le fichier n'existe pas**. Mesuré :
+  306 images sur disque, 302 rattachées, **4 orphelines** — aucune ne correspondait. **21 exercices
+  sur 324** n'ont jamais eu d'animation, et le repli (image du muscle + « Ajouter la photo ») est le
+  comportement **prévu**. *Deux symptômes identiques à l'écran, deux causes opposées.*
+  ⭐⭐ **Le plus important est un commentaire du 02/08 qui a dit lui-même quand le rebrancher** :
+  *« à rebrancher le jour où on a une vraie démo d'écarté à plat »* — un retrait dont la **condition
+  de retour** est écrite se referme tout seul le jour venu (**R30**).
+  ⛔ Vérifié **image par image** avant de rattacher (R29), et les **4 endroits** tenus alignés
+  (fichier · `EX_YT` · cache SW · pas de collision de fichier), avec un témoin qui les épingle.
+  ⏭️ **RESTE À TRANCHER — le PULL-OVER** : ce n'est pas une animation manquante mais un **DOUBLON
+  DE CATALOGUE**. 5 entrées, dont une générique *« Pull-over »* rangée dans le bac **BARRE** juste
+  au-dessus de *« Pull-over Barre »*. Le GIF envoyé est **l'image déjà en place** sur *Pull-over
+  Haltère*. Fusionner ou retirer le générique touche l'**historique** → arbitrage de Michel.
+  ⏭️ **Et il reste 19 exercices sans animation** (liste dans le journal) : il faut les **fichiers**,
+  pas du code.
+- ⚠️ **`ft-v998` (banc d'essai sans taille cible, R35) n'a PAS d'entrée ici** — livrée par l'autre
+  session, journalisée dans `CLAUDE.md` mais pas reportée dans ce fichier (règle d'or #12). Je ne
+  l'écris pas à sa place : je n'en connais pas le détail. **À compléter par session-A.**
 - 🧬⭐⭐ **UN NOM ABRÉGÉ LIT LA FICHE ÉCRITE, PLUS LA DEVINETTE — LIVRÉ** (ft-v997). Le **2ᵉ effet
   de la même cause que ft-v996**, laissé ouvert la veille et tranché par Michel **la mesure en
   main** : *« fais la correction des muscles aussi »*. ⛔⛔ `_mscScores` cherchait la fiche au nom
