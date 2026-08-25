@@ -17,8 +17,12 @@
   importer des pesées, fusionner, vider le cache, vider la séance, abandonner la séance,
   refaire l'inscription).
   ⚠️ **Correction de Michel le jour même** : le 10ᵉ (*« Refaire l'inscription »*) est **inatteignable
-  en production** — `resetOnboardingTest()` est gardée par `window.__FT_CLONE__`, et le clone est
-  parti le 23/08 (ft-v976). **9 fenêtres réellement visibles + 1 derrière la garde.** ⛔ Le code
+  en production** — `resetOnboardingTest()` est gardée par `window.__FT_CLONE__`, et **plus personne
+  ne pose ce drapeau** depuis le 23/08 (ft-v976). **9 fenêtres réellement visibles + 1 derrière la garde.**
+  ⭐ **Et le clone n'est pas SUPPRIMÉ, il est DÉBRANCHÉ** (correction de Michel, mesurée) : `clone/` est
+  absent du disque mais **récupérable en une ligne** (`git checkout 2dd5b85^ -- clone/`), les **14 gardes
+  sont toutes en place**, et ce qui manque est le **poseur** du drapeau — il vivait dans le shim du clone.
+  *La condition de retour est donc écrite* (R30). ⛔ Le code
   reste (**R30** : une garde de clone est une *question non résolue*, pas un interrupteur) et son
   libellé est corrigé avec les autres, pour qu'un essai promu ne reparte pas avec le défaut.
   ⛔⛔ **La jumelle, trouvée en la cherchant (R8)** : *« Fusionner les exercices »* existe à
