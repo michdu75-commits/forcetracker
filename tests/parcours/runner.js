@@ -8799,6 +8799,19 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   const _C = fs.readFileSync(path.join(__dirname,'..','..','coach.js'),'utf8');
   const prixCalcule = /const prix = _evPrix\(n\)/.test(_C) && /_EV_PRIX\s*=\s*\{/.test(_C)
                    && !/'0,25 € à 0,95 €'/.test(_C);
+  /* ⚠️⚠️ 25/08/2026 — LE LIBELLE DE L'ECRAN, LUI, A DERIVE PENDANT DES SEMAINES.
+     Le prix se calculait deja (ci-dessus), mais l'admin annoncait « 16 scenarios », « 16
+     pieges », « 2 x 16 » alors que le benchmark en portait 53 : il a grandi a chaque bug
+     (R35), et les quatre libelles ecrits en dur sont restes en arriere. Personne ne
+     rougissait — un texte faux ne plante pas.
+     ⛔ ON NE MET PAS « 53 » A LA PLACE : ce serait exactement la meme dette, six semaines
+     plus tard. On interdit le nombre en dur, point. Le compte reel est annonce par
+     `startEvalBench` dans la confirmation, avant tout appel paye. */
+  const _H = fs.readFileSync(path.join(__dirname,'..','..','index.html'),'utf8');
+  const _blocBench = (_H.match(/BENCHMARK \(est-ce qu'il SUIT ses règles \?\)[\s\S]{0,2500}?startEvalBench\(true\)[^\n]*\n/)||[''])[0];
+  const _nbEnDur = _blocBench.match(/\b\d{2,3}\s*(scénarios|pièges|messages)\b/g)
+                || _blocBench.match(/×\s*\d{2,3}\b/g);
+  const libelleSansNombre = _blocBench.length>200 && !_nbEnDur;
 
   console.log('\n-- LXXVII. L\'evolution du bilan sanguin atteint Milo --');
   if(R.absente){ t('⛔ le contexte de Milo se construit', false, 'buildCoachContext absente'); }
@@ -8823,8 +8836,11 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     /* ⚠️ Une consigne qu'on ne mesure pas n'est qu'un espoir. */
     t('⭐⭐ la règle est MESURABLE : le scénario EV-016 existe et vérifie le silence',
       !!ev16 && ev16.verifs.length===2, ev16?('verifs='+ev16.verifs.length):'EV-016 absent');
-    t('⭐ le prix annoncé se CALCULE (16 scénarios) au lieu d\'être écrit en dur (R2)',
+    t('⭐ le prix annoncé se CALCULE au lieu d\'être écrit en dur (R2)',
       prixCalcule===true, '');
+    t('⭐⭐ AUCUN nombre de scénarios en dur dans le libellé admin (il grandit — R35)',
+      libelleSansNombre===true,
+      'bloc='+_blocBench.length+' en dur='+JSON.stringify(_nbEnDur||[]));
   }
   await cx.close();
 }

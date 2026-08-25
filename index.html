@@ -860,7 +860,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     </details>
     <details class="adm-grp">
       <summary>🛡️ Milo — le mesurer <span class="adm-n">2</span></summary>
-      <div class="adm-intro">Le benchmark mesure 16 messages ISOLÉS. PT-001 mesure sa MÉMOIRE sur tout un historique. Ce ne sont pas les mêmes questions.</div>
+      <div class="adm-intro">Le benchmark mesure des messages ISOLÉS. PT-001 mesure sa MÉMOIRE sur tout un historique. Ce ne sont pas les mêmes questions.</div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
       <div style="font-weight:700;color:var(--t1);font-size:15px;">🎭 Laboratoire Milo · VC (comportement)</div>
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Vérifie le <strong>comportement</strong> de Milo : on injecte un <strong>persona</strong> (sportif fictif) <strong>temporairement, à la place de tes données</strong> (rien n'est écrit — tes vraies données reviennent après), on lui envoie un message et on regarde s'il respecte les <strong>attendus</strong>. Juge humain (toi + moi), rapport exportable.</div>
@@ -868,9 +868,14 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="btn btn-bg2" onclick="startVcTest('VC-002')" style="padding:11px;font-size:14px;">🎭 Lancer VC-002 (profil B · a déjà un coach)</button>
       <button class="btn btn-bg2" onclick="startVcTest('VC-003')" style="padding:11px;font-size:14px;">🎭 Lancer VC-003 (profil C · cycle)</button>
       <div style="font-weight:700;color:var(--t1);font-size:14px;margin-top:6px;">🧪 Laboratoire Milo · BENCHMARK (est-ce qu'il SUIT ses règles ?)</div>
-      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Joue <strong>16 pièges</strong> d'un coup — dont <strong>6 tirés de vrais bugs vécus en salle</strong> (charge de 82,5 kg, ordre des accessoires, « c'est noté » qui ne note rien, exercices sautés au débrief…). Ici le juge n'est pas un humain : ce sont des <strong>vérifications automatiques</strong>. <strong>Le coût est annoncé avant</strong> de lancer, et tes données ne sont pas touchées.<br><br>⚠️ <strong>Un rouge est une preuve</strong> qu'une règle n'a pas été suivie. <strong>Un vert ne prouve presque rien</strong> — il dit seulement « aucune violation détectable ».</div>
-      <button class="btn btn-bg2" onclick="startEvalBench(false)" style="padding:11px;font-size:14px;">🧪 Lancer le benchmark (16 scénarios)</button>
-      <button class="btn btn-bg2" onclick="startEvalBench(true)" style="padding:11px;font-size:14px;">⚖️ Comparer Sonnet et Haiku (2 × 16)</button>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Joue <strong>tous les pièges</strong> d'un coup — <strong>la plupart tirés de vrais bugs vécus en salle</strong> (charge de 82,5 kg, ordre des accessoires, « c'est noté » qui ne note rien, exercices sautés au débrief…). Le nombre exact et le prix sont annoncés dans la confirmation, avant tout appel. Ici le juge n'est pas un humain : ce sont des <strong>vérifications automatiques</strong>. <strong>Le coût est annoncé avant</strong> de lancer, et tes données ne sont pas touchées.<br><br>⚠️ <strong>Un rouge est une preuve</strong> qu'une règle n'a pas été suivie. <strong>Un vert ne prouve presque rien</strong> — il dit seulement « aucune violation détectable ».</div>
+      <!-- ⚠️ AUCUN NOMBRE DE SCENARIOS EN DUR ICI. Le benchmark GRANDIT a chaque bug (R35) :
+           il est passe de 16 a 21 puis a 53 en trois semaines, et ces libelles sont restes a
+           16 — donc ils MENTAIENT. Le compte exact et le prix sont calcules par
+           startEvalBench() (coach.js) et annonces dans la confirmation, AVANT tout appel
+           paye. Une seule source de verite : SC.length (R2). -->
+      <button class="btn btn-bg2" onclick="startEvalBench(false)" style="padding:11px;font-size:14px;">🧪 Lancer le benchmark</button>
+      <button class="btn btn-bg2" onclick="startEvalBench(true)" style="padding:11px;font-size:14px;">⚖️ Comparer Sonnet et Haiku (× 2)</button>
       <!-- ⚠️ CES DEUX BOUTONS SONT ICI, ET PAS SEULEMENT SUR LA CARTE DE RESULTAT (bug du
            21/08, signale par Michel : « je ne peux pas rejouer j'ai plus les cases »). La
            carte vit dans le chat, donc elle MEURT au rechargement de l'app — alors que les
