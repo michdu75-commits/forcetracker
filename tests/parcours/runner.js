@@ -12847,6 +12847,45 @@ console.log('\n-- CXIV. Le bouton rouge de showConfirm dit ce qu\'il FAIT (ft-v1
     && (fs.readFileSync(path.join(__dirname,'..','..','log.js'),'utf8').indexOf("'Fusionner'")>=0), '');
 }
 
+/* == BLOC CXV - UNE FIXTURE POSEE AU MAUVAIS NIVEAU EST MUETTE (ft-v1007) ==
+   Trouve en depouillant le benchmark du 25/08. EV-009 rougissait (« il redemande le materiel
+   alors que le questionnaire dit salle complete ») — et c'etait FAUX : son `coachQuiz` etait
+   pose A COTE de `apply`, pas DEDANS. `_vcApplyPersona` lit `p.apply.coachQuiz`, donc
+   `S.coachQuiz` valait **null** : Milo ne recevait AUCUN questionnaire, et demander ou la
+   personne s'entraine etait le BON comportement — celui que EV-045 recompense.
+   ⭐ Ca expliquait aussi le « intermittent (1/2) » : la reponse variait parce qu'il DEVINAIT.
+   ⛔⛔ LE DEFAUT EST SILENCIEUX, c'est ce qui le rend couteux : la cle existe, elle est lisible
+   dans le fichier, elle a l'air juste — et elle n'atteint jamais `S`. C'est R4 applique au banc
+   d'essai lui-meme : *l'information reste dans le TEXTE et n'atteint pas la DONNEE*.
+   ⚠️ ET J'AI FAILLI EN « REPARER » TROIS QUI MARCHENT : `history` et `coachEmail` sont lus au
+   niveau du scenario par `_vcAsk` (pas par `_vcApplyPersona`), et `specAbsente` est documentaire.
+   La liste blanche porte donc QUI lit quoi — sans ca, le prochain corrigerait du code sain (R28). */
+console.log('\n-- CXV. Aucune fixture de scénario n\'est muette (ft-v1007) --');
+{
+  /* Cles autorisees AU NIVEAU DU SCENARIO, avec leur lecteur. Toute autre cle est une donnee
+     de profil qui aurait du aller dans `apply` — elle n'atteindrait jamais S. */
+  const AUTORISEES={ id:'structure', origin:'structure', titre:'structure', apply:'_vcApplyPersona',
+    scenario:'_vcAsk', verifs:'le juge', history:'_vcAsk (tours précédents)',
+    coachEmail:'_vcAsk (choisit le modèle)', specAbsente:'documentaire (règle absente du prompt)' };
+  const SC=require(path.join(__dirname,'..','milo','eval-scenarios.js'));
+  const muettes=[];
+  SC.forEach(sc=>Object.keys(sc).forEach(k=>{ if(!AUTORISEES[k]) muettes.push(sc.id+'.'+k); }));
+  t('⭐⭐ aucune clé de PROFIL posée à côté de `apply` (elle n\'atteindrait jamais S — R4)',
+    muettes.length===0, muettes.length+' muette(s) : '+JSON.stringify(muettes.slice(0,6)));
+  t('⛔ le témoin a bien LU les scénarios (sinon il serait vert en ne mesurant rien)',
+    SC.length>=50, 'scénarios lus = '+SC.length);
+  /* Et le cas précis qui a coûté un faux rouge : le questionnaire d'EV-009 doit ARRIVER. */
+  const ev9=SC.find(x=>x.id==='EV-009');
+  const q=ev9&&ev9.apply&&ev9.apply.coachQuiz;
+  t('⭐ EV-009 : le questionnaire est DANS `apply`, et il porte le matériel',
+    !!(q&&q.answers&&q.answers.place&&q.answers.matos),
+    JSON.stringify(q&&q.answers||null));
+  /* ⛔ Le lecteur n'a pas changé de nom : si `_vcApplyPersona` cessait de lire `a.coachQuiz`,
+     la règle ci-dessus deviendrait vraie pour rien. */
+  t('⛔ `_vcApplyPersona` lit toujours le questionnaire DANS apply',
+    /S\.coachQuiz\s*=\s*a\.coachQuiz/.test(fs.readFileSync(path.join(__dirname,'..','..','coach.js'),'utf8')), '');
+}
+
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
 })().catch(e=>{console.error(e);process.exit(2);});

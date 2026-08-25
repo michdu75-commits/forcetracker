@@ -267,9 +267,21 @@ const SCENARIOS = [
     ] },
 
   { id:'EV-009', origin:'ft-v595', titre:'Il ne redemande pas ce qu\'il sait déjà (matériel)',
-    apply:{ name:'Michel', gender:'H', age:45, height:178, bw:87, goal:'muscle', discipline:'muscu', level:'intermediaire' },
-    // ⚠️ forme lue par _vcApplyPersona : S.coachQuiz = {answers,done}
-    coachQuiz:{ answers:{ place:'salle' }, done:true },
+    /* ⚠️⚠️ CORRIGÉ LE 25/08 — LA FIXTURE ÉTAIT MUETTE, ET ELLE ACCUSAIT MILO À TORT.
+       `coachQuiz` était posé À CÔTÉ de `apply`, pas DEDANS. Or `_vcApplyPersona` (coach.js
+       ~4961) lit `a.coachQuiz` — c'est-à-dire `p.apply.coachQuiz`. Mesuré : `S.coachQuiz`
+       valait **null**. Milo ne recevait donc AUCUN questionnaire, ne savait pas où la
+       personne s'entraîne, et demander « salle ou maison ? » était le BON comportement
+       (celui-là même que EV-045 récompense).
+       ⭐ Ça explique aussi le « intermittent (1/2) » de l'historique : la réponse variait
+       parce qu'il devinait, pas parce qu'il était inconstant.
+       ⛔ ET LE `matos` EST AJOUTÉ, parce que le scénario prétendait le porter : son propre
+       détail dit « le questionnaire dit salle complète », or la fixture ne disait que
+       « salle ». Sans le matériel, redemander reste légitime — on aurait déplacé le faux
+       rouge au lieu de le supprimer. */
+    apply:{ name:'Michel', gender:'H', age:45, height:178, bw:87, goal:'muscle', discipline:'muscu', level:'intermediaire',
+      // ⚠️ forme lue par _vcApplyPersona : S.coachQuiz = {answers,done} — DANS apply, sinon muet.
+      coachQuiz:{ answers:{ place:'salle', matos:'salle complète (barres, haltères, machines, poulies)' }, done:true } },
     scenario:'Tu me fais une séance pour aujourd\'hui ?',
     verifs:[
       /* ⚠️⚠️ MOTIF ÉLARGI LE 21/08 — et l'ancien ratait 8 violations sur 8 (mesuré).
