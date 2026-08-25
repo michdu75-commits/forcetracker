@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1007`** (prochaine : `ft-v1008`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1008`** (prochaine : `ft-v1009`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -436,6 +436,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1008 — 🎯 L'OBJECTIF GARDE SON HISTOIRE, ET LES MESSAGES LEUR DATE** — Michel, le 19/08, à Milo : *« As-tu vu que j'avais changé d'objectif ? »* → *« Non, je ne vois pas de changement d'objectif dans ce que j'ai sous la main. »* Il a fallu qu'il écrive *« j'étais en force max avant »* pour que Milo réagisse.
+
+**⭐⭐ ET MILO DISAIT VRAI — mesuré dans son export du 25/08, pas supposé** : `goal` valait `recomp`, et la chaîne *« force max »* n'apparaissait **NULLE PART ailleurs que dans la conversation elle-même**. Aucun journal, rien dans le registre. **L'app gardait la valeur du JOUR, jamais son histoire.** C'est **R8** dans sa forme la plus pure — *un prompt ne compense jamais une donnée absente* —, donc le correctif est dans la **DONNÉE**, pas dans le prompt (**R7**). *Durcir la consigne n'aurait rien changé : il n'y avait rien à lire.*
+
+**⛔ UN SEUL PROPRIÉTAIRE (R2)** : `_goalSet(g, src)` dans `state.js` écrit `S.goal` **et** journalise ; les 4 appelants réels y passent (profil · observation · les 2 de l'inscription). *Deux écritures parallèles divergeraient — et c'est l'HISTORIQUE qui mentirait, ce qui est pire que pas d'historique.*
+
+**⛔⛔ DEUX ABSENCES SONT AUSSI IMPORTANTES QUE LA PRÉSENCE.** ① **L'inscription n'est pas un changement** : la journaliser fabriquerait un faux *« passé de muscle à force »* le jour de la création du compte, simplement parce que `load()` pose « muscle » par défaut. ② **Restaurer non plus** : `setup.js` écrit `S.goal` directement, **exprès**, et restaure le journal avec — sinon une restauration effacerait l'histoire en silence.
+
+**⛔ ON N'INVENTE AUCUN PASSÉ (R29)** : un compte existant démarre avec un journal **vide**, et sans changement enregistré **le bloc n'existe pas** dans le contexte — pas d'en-tête vide, pas de *« objectif stable depuis toujours »* qu'on ne peut pas savoir. ⭐ **Et la consigne d'agir n'apparaît que sur un changement de moins de 30 jours** : rappeler un virage vieux de six mois serait du bruit qu'on finit par ne plus lire (**R19**).
+
+**⏱️ L'HORODATAGE DES CONVERSATIONS** — demandé par Michel dans la foulée, et le besoin est réel : les messages naissaient **sans date**, donc **aucune phrase de Milo n'était datable**. *C'est exactement ce qui m'a empêché de situer sa conversation dans le temps en la relisant.*
+
+**⛔⛔ ET LE DÉFAUT ÉTAIT À DEUX ENDROITS, PAS UN.** `_convLightMsgs` reconstruisait `{role, content}` **à la main** et jetait la date (et `_silent` avec) — or c'est **elle** qui alimente `S.coachConversations` **et** l'export ; et `loadCoachConv` la jetait aussi, si bien que **rouvrir une vieille conversation effaçait ses dates définitivement**.
+
+**⚠️⚠️ ET MON PREMIER TÉMOIN ÉTAIT VERT PENDANT CE TEMPS.** Il appelait `_lightMsg` **directement** au lieu d'archiver puis de relire. *Un test qui n'emprunte pas le chemin de la production ne teste rien, il rassure* — leçon n°1 de `docs/SUIVI-AUDIT.md`, payée une fois de plus. Le témoin **archive, rouvre et relit le stockage**.
+Tests : **parcours 1423/1423** (+13, bloc CXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données **103 classées 0 trou** (le garde-fou **R4a a refusé la livraison** tant que `goalLog` n'était pas classée — il a fait exactement son travail). ⭐⭐ **Le contrôle négatif de cette version est l'export RÉEL de Michel** : le défaut y est mesuré sur ses vraies données (`goal:'recomp'`, zéro trace de « force max »), ce qui vaut mieux qu'un contrôle synthétique — côté code il ne dirait que *« la fonction n'existe pas »*. ⭐ **Et la chaîne d'horodatage est mesurée par le vrai chemin** : archive `[0,1500,null]` · après réouverture `[0,1500,null]` · stockage `[0,1500,null]` — les dates exactes survivent, et le vieux message **reste sans date**. Fichiers : `state.js`, `setup.js`, `tracking.js`, `app.js`, `coach.js`, `Code.js`, `tests/donnees/donnees-milo.json`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1008. |
 
 **ft-v1007 — 🧪 DÉPOUILLEMENT DU BENCHMARK : 9 ROUGES, DONT 6 QUI ROUGISSAIENT À TORT** — première vraie passe lancée par Michel depuis l'app : **44 verts · 9 rouges**, 53 appels, ~1,7 €.
 
@@ -732,23 +749,6 @@ Tests : **parcours 1315/1315** (+10, bloc R), calculs 266/266, muscles 241/241, 
 
 **🎨 L'AFFICHAGE ÉTEND LE BANDEAU EXISTANT, IL N'EN CRÉE PAS UN 2ᵉ** (`_intensiteBandeau`, R2/R13) : même mécanique, même style, trois icônes en plus de ⚡ (🚫 exclusion, 🛡️ blessure, 🔁 doublon). **Vérifié à l'écran, pas seulement en données** : capture sur les 4 cas réunis, les trois bandeaux s'affichent, la charge de Milo (40 kg) part intacte, le bouton central « + » n'a pas bougé (règle d'or #9).
 Tests : **parcours 1305/1305** (+10, bloc CVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **Contrôle négatif** : 1 rouge (« la fonction n'existe pas ») — attendu pour une fonctionnalité neuve, pas instructif en soi ; la preuve tient dans les 9 autres témoins qui exercent chaque catégorie sur des données réelles (blessure active, exclusion durable **vs** non durable, doublon, mode ajout, cas neutre sans faux positif). Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`. sw.js ft-v989. |
-
-**ft-v988 — 🏋️ EXPORTER SEULEMENT SES SÉANCES — et l'export « normal » DIT enfin ce qu'il emporte** — Michel demande l'option, puis, en découvrant le contenu du fichier : *« oui j'ai vu mes bilans dans l'export »*.
-
-**⭐⭐ CE N'EST PAS UN CONFORT, C'EST DE LA CONFIDENTIALITÉ.** Le bouton « Exporter » emportait déjà **tout** — **bilan sanguin, bilan corporel, TRT, profil santé** — et la modale n'avertissait **que pour les conversations**. Or le fichier existe **pour être donné** (à ChatGPT, à un coach, à moi pour déboguer). *Le seul geste possible poussait donc à partager beaucoup plus que nécessaire.* **Un export tout-ou-rien n'est pas un problème d'ergonomie.**
-
-**⛔⛔ LISTE BLANCHE, PAS LISTE NOIRE — et c'est la seule forme acceptable ici.** Avec une liste noire, **toute donnée ajoutée demain partirait toute seule** dans un fichier censé être étroit, sans que personne ne le décide. Avec une liste blanche, le pire cas devient *« il manque quelque chose »* au lieu de *« on a divulgué quelque chose »* (**R29** — le coût de l'erreur décide).
-
-**⛔ ET UN SEUL EXPORTEUR (R2)** : même fonction, même format, donc fichier **réimportable** — et le retrait des photos d'exercices perso (**31 % du fichier** le 17/08) vaut **gratuitement** pour le nouveau mode. *Un 2ᵉ exporteur l'aurait perdu, sans que rien ne le signale* — un témoin l'épingle.
-
-**⭐ LE CHOIX ÉTROIT EST EN PREMIER ET EN ROUGE** : l'option la moins exposante doit être la plus facile à prendre, pas celle qu'on trouve en dernier.
-
-**⚠️⚠️ ET LA QUESTION SE POSE DÉSORMAIS MÊME SANS CONVERSATION — changement volontaire, la raison d'avant reste écrite (R30).** Le témoin exigeait **l'inverse**, au nom de **R24** (*« ne pas poser une question inutile »*) — et l'argument était juste **tant qu'il n'y avait qu'un seul vrai choix**. ⛔ Il ne tient plus à trois : *quelqu'un sans conversation n'avait aucun choix du tout et repartait avec ses bilans dans le fichier sans qu'on lui ait rien demandé.* **Ce qui reste de R24** : le bouton « avec mes discussions » **disparaît** quand il n'y en a aucune — on ne propose jamais d'inclure zéro chose.
-
-**⛔ LE POIDS DE CORPS N'Y EST PAS, ET LE FICHIER LE DIT AVEC LA RAISON** (sans lui, une charge ne peut pas être jugée en relatif — pour ça, l'export complet). *Un export muet sur ses trous laisse croire qu'il est complet.* Et le **nom du fichier** dit ce qu'il contient : sinon on redonne le mauvais par erreur, et un export restreint ne sert plus à rien.
-
-**📐 AU PASSAGE — LE GARDE-FOU DE TAILLE MESURE ENFIN UN PROFIL BLESSÉ** (§14.6 de `docs/AUDIT-CONTEXTE-MILO.md`). Il testait trois profils **en bonne santé**, donc il restait vert pendant que le plafond était franchi en production chez toute personne blessée. **Mesure imprimée à chaque passe** : *sain 45 362 · blessé 47 118 (+1 756) · plafond 46 500 → dépassement de 618*. ⛔ **On ne relève pas le seuil** — c'est exactement ce que le commentaire d'origine interdit. On **épingle** le plafond blessé à 47 500 pour qu'il ne dérive pas pendant que la décision de fond attend.
-Tests : **parcours 1295/1295** (+15, blocs CV + la mesure du profil blessé), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Le contrôle négatif n'est PAS instructif ici, autant l'écrire** : `lancerExportSeances` n'existe pas de l'autre côté, il ne dit donc qu'une chose. ⭐⭐ **Ce qui tient lieu de preuve est ailleurs, et c'est plus fort** : `S` a été **délibérément rempli de vraies données de santé** (ferritine, tendinite, hypertension, `fatPct`), de nutrition, d'une phrase intime de conversation et d'une adresse e-mail — *un test qui n'a rien à fuir ne prouve pas qu'on ne fuit rien*. **Les cinq témoins d'absence cherchent dans le TEXTE BRUT**, pas dans les clés : une donnée peut fuir imbriquée sans que sa clé apparaisse au premier niveau. ⚠️ **Et trois témoins EXISTANTS ont rougi** — deux par ricochet, un **parce que j'ai changé son comportement exprès** ; les trois sont réécrits **avec la raison d'avant conservée**. Fichiers : `coach.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `IDEES-FUTURES.md`. sw.js ft-v988. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
