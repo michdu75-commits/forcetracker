@@ -7,6 +7,22 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1000`.
+- 🧹⭐⭐ **LE « PULL-OVER » GÉNÉRIQUE RETIRÉ DU CHOIX — LIVRÉ** (ft-v1001). Décision de Michel :
+  *« à l'haltère je fais beaucoup mais il y a aussi à la barre, mais le pull over tout seul on
+  peut le retirer »*. ⭐⭐ **Ce qui décide de tout est la FORME du retrait** : le projet distingue
+  **RETRAIT** et **FUSION** — *« on retire du CHOIX, jamais de la MÉMOIRE »*. Une fusion aurait
+  fait migrer l'historique (`state.js:210` **réécrit en dur** les noms stockés) ; or Michel le
+  fait **aux deux**, donc renommer aurait écrit un fait faux **et mélangé ses records** (R29).
+  👉 **Retrait** : sorti de `EXLIB`, identifiant gardé dans `EX_IDS` + `RETIRES_VOLONTAIREMENT`
+  avec sa raison (R30). ⭐ Vérifié en navigateur : séance et record **non renommés**, muscles et
+  MET intacts ; bac Barre 2 → 1, les 4 variantes gardent leur vignette.
+  ⭐⭐ **Jumelle trouvée en la cherchant (R8)** : 4 équivalences d'import visaient encore
+  « Pull-over » — et **c'était déjà faux avant** (elles décrivent la poulie). *Le retrait n'a pas
+  créé le défaut, il l'a rendu visible.* 👉 **Une règle générale** interdit désormais toute cible
+  d'équivalence introuvable. ⚠️ Calibrée au passage : `leg curl` vise un nom absent du catalogue
+  et c'est **valide** (ancien nom déclaré) — j'ai failli réparer ce qui marchait (R28).
+  ⚠️ **Un témoin d'hier exigeait l'inverse** (« les 5 entrées restent 5 ») : retourné vers ce
+  qu'il protégeait vraiment, raison d'avant conservée.
 - 🔁⭐⭐ **LE « PULL-OVER » GÉNÉRIQUE — et un TEST DU PROJET qui m'a repris** (ft-v1000).
   ⛔⛔ **Ma première solution a été REFUSÉE par un test, et il avait raison.** J'avais fait
   **partager** `pullover-haltere.webp` entre le générique et *Pull-over Haltère* — le contrôle

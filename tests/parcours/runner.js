@@ -470,9 +470,57 @@ t('⛔ … et la prise serrée BASSE ne prend pas le fichier de la prise serrée
    générique renommerait les séances et records passés, et on ne sait pas si Michel les a
    faits à la barre ou à l'haltère — deviner écrirait un fait faux dans son historique (R29).
    Si quelqu'un fusionne un jour, que ce soit une DÉCISION, pas un effet de bord. */
-t('⭐ le « Pull-over » générique est rangé en poids libre (le bac « barre » était arbitraire)',
+/* ⛔⛔ « PULL-OVER » TOUT COURT — RETIRÉ DU CHOIX le 25/08 (décision Michel : « le pull over
+   tout seul on peut le retirer »). Il faisait doublon avec les 4 variantes et, sans matériel,
+   ne pouvait ni être rangé ni illustré sans devenir le jumeau de l'une d'elles.
+   ⭐⭐ CE QUE CES TÉMOINS PROTÈGENT N'EST PAS LE RETRAIT, C'EST LA MÉMOIRE. C'est un RETRAIT
+   et non une FUSION : une fusion aurait RENOMMÉ les séances et records stockés (state.js
+   réécrit les noms au chargement). Or Michel le fait « beaucoup à l'haltère mais aussi à la
+   barre » — renommer aurait mélangé ses records sur une devinette (R29).
+   👉 Si quelqu'un « répare » ça un jour en ajoutant `Pull-over` aux anciens noms d'une variante,
+   le 2ᵉ témoin rougit : c'est exactement le geste qui détruirait l'historique. */
+t('⛔⛔ « Pull-over » est sorti du CHOIX, mais son identifiant SURVIT (l\'historique reste lisible)',
+  (()=>{const c=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+        return c.indexOf("{n:'Pull-over',g:'Dos'}")<0        // plus dans le catalogue
+            && /'pull-over':\["Pull-over"\]/.test(c);})());   // mais l'identifiant reste
+t('⛔⛔ … et il n\'est ANCIEN NOM de personne : une fusion renommerait ses séances passées',
+  (()=>{const c=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+        // « Pull-over » ne doit apparaître dans AUCUNE liste d'anciens noms d'un autre id
+        const m=c.match(/'[a-z0-9-]+':\[[^\]]*"Pull-over"[^\]]*\]/g)||[];
+        return m.length===1 && m[0].indexOf("'pull-over':")===0;})());
+/* ⭐⭐ LE TÉMOIN QUI VAUT PLUS QUE LE CORRECTIF (25/08) — trouvé en cherchant les jumelles du
+   retrait (R8). En sortant « Pull-over » du catalogue, 4 équivalences d'import continuaient de
+   le viser (`cable pullover`, `straight arm pulldown`…) : un import s'y serait rattaché à un
+   exercice qui n'existe plus. ⭐ Et c'était DÉJÀ faux avant le retrait — les quatre décrivent
+   la version POULIE. Le retrait n'a pas créé le défaut, il l'a rendu visible.
+   ⚠️ CE QUE CE TÉMOIN NE DOIT PAS FAIRE : crier sur un ANCIEN NOM. Vérifié en l'écrivant —
+   `'leg curl' → « Curl Ischio-jambiers (Leg Curl) »` vise un nom absent du catalogue, et c'est
+   PARFAITEMENT VALIDE : c'est l'ancien nom de « Leg Curl Couché Machine », déclaré dans EX_IDS,
+   et le code le dit en toutes lettres. J'ai failli « réparer » ce qui marchait (R28/R30).
+   👉 La règle exacte est donc : une cible d'équivalence doit être au catalogue, OU s'y ramener
+   par `exNomActuel`. C'est cette règle qu'on fige, pas le cas du jour. */
+t('⭐⭐ RÈGLE : aucune équivalence d\'import ne vise un exercice introuvable (anciens noms compris)',
   (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
-        return /'Pull-over':'libre'/.test(lg);})());
+        const c=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+        const noms=new Set([...c.matchAll(/\{n:'([^']+)'/g)].map(m=>m[1]));
+        const alias={};
+        for(const m of c.matchAll(/'([a-z0-9-]+)':\[([^\]]+)\]/g)){
+          const l=[...m[2].matchAll(/"([^"]+)"/g)].map(x=>x[1]);
+          if(l.length)l.forEach(n=>alias[n]=l[0]);
+        }
+        // on ne lit QUE les blocs _EX_EQUIV
+        const blocs=[]; const re=/(const _EX_EQUIV=\{|Object\.assign\(_EX_EQUIV,\s*\{)/g; let m;
+        while((m=re.exec(lg))){let i=m.index+m[0].length,p=1,d=i;
+          while(i<lg.length&&p>0){if(lg[i]==='{')p++;else if(lg[i]==='}')p--;i++;}
+          blocs.push(lg.slice(d,i));}
+        const morts=[];
+        blocs.forEach(b=>{for(const x of b.matchAll(/'([^']+)'\s*:\s*'([^']+)'/g)){
+          const cible=x[2]; if(!noms.has(alias[cible]||cible))morts.push(x[1]+' → '+cible);}});
+        return morts.length===0 ? true : (console.log('       cibles mortes : '+morts.slice(0,4).join(' · ')),false);})());
+t('⛔ … et les 4 variantes restent au catalogue (on retire le doublon, pas la famille)',
+  (()=>{const c=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+        return ['Pull-over Barre','Pull-over Haltère','Pull-over Poulie','Pullover Machine']
+          .every(n=>c.indexOf("{n:'"+n+"'")>=0);})());
 /* ⛔⛔ LE TÉMOIN QUI COMPTE LE PLUS ICI GARDE MON PROPRE ÉCHEC (25/08).
    J'avais fait PARTAGER `pullover-haltere.webp` entre « Pull-over » et « Pull-over Haltère »
    pour donner une vignette au générique. Le contrôle croisé ② — « deux exercices ne partagent
@@ -485,13 +533,20 @@ t('⭐ le « Pull-over » générique est rangé en poids libre (le bac « barre
 t('⛔⛔ … et il n\'emprunte l\'animation de PERSONNE (le contrôle ② l\'a refusé, il avait raison)',
   (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
         return !/'Pull-over':\s*\{img:/.test(lg);})());
-t('⛔⛔ … et les 5 entrées pull-over restent 5 : la fusion est une décision, pas un effet de bord',
-  (()=>{const c=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
-        const n=['Pull-over','Pull-over Barre','Pull-over Haltère','Pull-over Poulie','Pullover Machine'];
-        return n.every(x=>c.indexOf("{n:'"+x+"'")>=0);})());
-t('⛔ … et aucune image en double sur le disque pour ça (le générique PARTAGE le fichier haltère)',
+/* ⚠️⚠️ CE TÉMOIN EXIGEAIT L'INVERSE HIER, ET LA RAISON D'AVANT EST GARDÉE (R30).
+   En ft-v1000 il disait : « les 5 entrées pull-over restent 5 — la fusion est une décision,
+   pas un effet de bord ». C'était juste TANT QUE LA DÉCISION N'ÉTAIT PAS PRISE : il protégeait
+   l'historique de Michel contre un renommage fait à l'aveugle.
+   ⭐ Michel a tranché le 25/08 (« le pull over tout seul on peut le retirer »), et il a choisi
+   la forme qui ne renomme RIEN : un RETRAIT du choix, pas une fusion. Le témoin est donc
+   retourné vers ce qu'il protégeait vraiment — non pas le nombre d'entrées, mais le fait que
+   l'historique ne soit jamais réécrit. Les deux témoins ci-dessus le vérifient désormais.
+   *Un témoin qui fige un ÉTAT rougit dès qu'une décision est prise ; ce qu'on fige, c'est une
+   RÈGLE.* (Même leçon qu'en ft-v991 et ft-v992.) */
+t('⛔ aucune image dupliquée sur le disque pour le pull-over (le générique n\'en a aucune)',
   !fs.existsSync(path.join(ROOT,'exercises/pull-over-haltere-2.webp'))
-  && !fs.existsSync(path.join(ROOT,'exercises/pullover-haltere-v2.webp')));
+  && !fs.existsSync(path.join(ROOT,'exercises/pullover-haltere-v2.webp'))
+  && !fs.existsSync(path.join(ROOT,'exercises/pull-over.webp')));
 t('⭐ le splash iOS est SAUTÉ au redémarrage de mise à jour (flag ft4_just_updated lu en tête)',
   (()=>{const s=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
         const m=s.match(/navigator\.standalone===true&&localStorage\.getItem\('ft4_just_updated'\)!=='1'\)document\.documentElement\.classList\.add\('ios-boot'\)/);

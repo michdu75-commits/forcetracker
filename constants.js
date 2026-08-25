@@ -51,7 +51,19 @@ const EXLIB=[
   {n:'Tirage Poulie Haute (Lat Pulldown)',g:'Dos'},{n:'Tirage Poulie Haute Prise Serrée',g:'Dos'},{n:'Tirage Nuque',g:'Dos'},
   {n:'Tirage Poulie Basse Prise Large',g:'Dos'},{n:'Tirage Poulie Basse Prise Serrée',g:'Dos'},
   {n:'Traction Lestée',g:'Dos'},{n:'Traction Assistée',g:'Dos'},{n:'Traction Prise Neutre',g:'Dos'},
-  {n:'Pull-over',g:'Dos'},{n:'Pull-over Haltère',g:'Dos'},{n:'Pullover Machine',g:'Dos'},
+  // ⛔ « Pull-over » TOUT COURT RETIRÉ DU CHOIX le 25/08/2026 — décision de Michel, après deux
+  //    versions passées à essayer de l'illustrer : *« le pull over tout seul on peut le retirer »*.
+  //    Il faisait DOUBLON avec les 4 variantes (Barre · Haltère · Poulie · Machine) et, n'ayant
+  //    pas de matériel, il ne pouvait ni être rangé ni illustré sans devenir le jumeau de l'une
+  //    d'elles — le contrôle croisé ② a d'ailleurs refusé de lui prêter l'animation haltère.
+  // ⭐⭐ C'EST UN RETRAIT, PAS UNE FUSION, et la nuance protège son historique : son identifiant
+  //    `pull-over` reste dans EX_IDS (voir RETIRES_VOLONTAIREMENT), donc les séances et records
+  //    déjà faits sous ce nom gardent leur nom, leurs muscles, leur figurine et leurs calories.
+  //    ⛔ Une FUSION les aurait RENOMMÉS (state.js réécrit les noms stockés) — or Michel fait le
+  //    pull-over « beaucoup à l'haltère mais aussi à la barre » : on ne sait pas lesquels étaient
+  //    lesquels, et deviner aurait mélangé ses records (R29). *On retire du CHOIX, jamais de la
+  //    MÉMOIRE.*
+  {n:'Pull-over Haltère',g:'Dos'},{n:'Pullover Machine',g:'Dos'},
   {n:'Pull-over Barre',g:'Dos'},{n:'Pull-over Poulie',g:'Dos'},
   {n:'Rowing Smith Machine',g:'Dos'},{n:'Rowing T-Bar Machine',g:'Dos'},{n:'Rowing Landmine (T-Bar)',g:'Dos'},
   {n:'Rowing Haltères Buste Penché',g:'Dos'},{n:'Meadows Row',g:'Dos'},{n:'Seal Row',g:'Dos'},{n:'Renegade Row',g:'Dos'},

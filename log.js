@@ -2178,7 +2178,12 @@ Object.assign(_EX_EQUIV,{
   'bridge':'Pont Fessier (Glute Bridge)','floor bridge':'Pont Fessier (Glute Bridge)','glute bridge':'Pont Fessier (Glute Bridge)',
   'barbell hip thrust':'Hip Thrust Barre (Poussée de Hanche)','db hip thrust':'Hip Thrust Barre (Poussée de Hanche)','dumbbell hip thrust':'Hip Thrust Barre (Poussée de Hanche)','glute thrust':'Hip Thrust Barre (Poussée de Hanche)','hip thrust':'Hip Thrust Barre (Poussée de Hanche)','hip thrust barbell':'Hip Thrust Barre (Poussée de Hanche)','hip thrust halteres':'Hip Thrust Barre (Poussée de Hanche)',
   'hip thrust machine':'Hip Thrust Machine (Poussée de Hanche)','machine hip thrust':'Hip Thrust Machine (Poussée de Hanche)',
-  'cable pullover':'Pull-over','pullover poulie':'Pull-over','straight arm lat pulldown':'Pull-over','straight arm pulldown':'Pull-over',
+  // ⚠️ CORRIGÉ le 25/08 — ces 4 équivalences pointaient vers « Pull-over » tout court, retiré du
+  //    catalogue ce jour-là : un import les aurait rattachées à un exercice qui n'existe plus.
+  //    ⭐ Et c'était DÉJÀ faux avant le retrait : les quatre décrivent la version POULIE (câble,
+  //    bras tendus à la poulie haute). Le retrait n'a pas créé le défaut, il l'a rendu visible.
+  //    Trouvé en cherchant les jumelles du retrait (R8), pas après coup.
+  'cable pullover':'Pull-over Poulie','pullover poulie':'Pull-over Poulie','straight arm lat pulldown':'Pull-over Poulie','straight arm pulldown':'Pull-over Poulie',
   'machine pullover':'Pullover Machine','nautilus pullover':'Pullover Machine',
   'barbell bent over row':'Rowing Barre (Tirage Horizontal)','barbell row':'Rowing Barre (Tirage Horizontal)','bb row':'Rowing Barre (Tirage Horizontal)','bent over dumbbell row':'Rowing Barre (Tirage Horizontal)','bent over row':'Rowing Barre (Tirage Horizontal)','bent row':'Rowing Barre (Tirage Horizontal)','db row':'Rowing Barre (Tirage Horizontal)','dumbbell row':'Rowing Barre (Tirage Horizontal)','rowing barre pronation':'Rowing Barre (Tirage Horizontal)','rowing deux halteres':'Rowing Barre (Tirage Horizontal)','rowing halteres':'Rowing Barre (Tirage Horizontal)',
   'chest supported row machine':'Rowing Machine (Tirage Horizontal)','machine row':'Rowing Machine (Tirage Horizontal)','row machine':'Rowing Machine (Tirage Horizontal)','seated row machine':'Rowing Machine (Tirage Horizontal)',
@@ -4079,32 +4084,9 @@ const _EQ_ECRIT={
   // curlée depuis cette position (les cuisses et le banc sont dans le chemin). C'est le
   // même critère que les trois du dessus — le mouvement n'existe qu'aux haltères.
   'Curl Incliné':'libre',
-  // ⚠️⚠️ « PULL-OVER » TOUT COURT — le rangement seul, et l'histoire vaut d'être lue (25/08/2026).
-  // Signalé par Michel, capture du sélecteur à l'appui : seule ligne sans vignette, rangée en
-  // 🏋️ BARRE **juste au-dessus de « Pull-over Barre »** — deux lignes pour la même chose.
-  //
-  // ⛔⛔ MA PREMIÈRE SOLUTION A ÉTÉ REFUSÉE PAR UN TEST DU PROJET, ET IL AVAIT RAISON.
-  //    J'avais fait partager `pullover-haltere.webp` entre le générique et « Pull-over Haltère ».
-  //    Le contrôle croisé ② — *« deux exercices ne partagent jamais la même ANIMATION »* — est
-  //    passé au ROUGE. Cette règle est née du bug du 02/08 (« Écarté Haltères » et « Écarté
-  //    Décliné » pointaient le même fichier, l'app montrait le mauvais mouvement). J'avais même
-  //    écrit un témoin le matin même disant « les deux écartés gardent des fichiers différents ».
-  //    *Un test permanent m'a empêché de refaire, deux heures plus tard, le bug que je venais
-  //    de documenter.* Le générique reste donc SANS vignette : aucune animation vaut mieux
-  //    qu'une animation qui affirme « Pull-over = Pull-over Haltère » sans que ce soit décidé.
-  //
-  // 👉 CE QUI RESTE ICI est le seul geste défendable : le bac. Le générique n'a PAS de matériel,
-  //    donc « barre » était un choix arbitraire de la règle de classement (`pull-?over` figure
-  //    dans la liste barre). « Pull-over » sans précision désigne classiquement la version
-  //    HALTÈRE — c'est d'ailleurs la démo que Michel a envoyée en croyant qu'elle manquait.
-  //
-  // ⛔⛔ ET LE VRAI DÉFAUT RESTE ENTIER, ÉCRIT POUR NE PAS ÊTRE REDÉCOUVERT : c'est un DOUBLON
-  //    DE CATALOGUE (5 entrées pull-over : générique · Barre · Haltère · Poulie · Machine).
-  //    Fusionner le générique RENOMMERAIT les séances et records passés de Michel, et on ne
-  //    sait pas s'il les a faits à la barre ou à l'haltère — deviner écrirait un fait faux
-  //    dans son historique (R29). *Une vignette qui manque coûte un coup d'œil ; un historique
-  //    renommé à tort coûte une donnée qu'il croyait juste.* La fusion attend SA réponse.
-  'Pull-over':'libre'
+  // ⛔ « Pull-over » tout court n'a plus de ligne ici : il a été RETIRÉ DU CHOIX le 25/08
+  //    (décision Michel — voir constants.js et RETIRES_VOLONTAIREMENT). Le ranger n'a plus de
+  //    sens puisqu'il n'apparaît plus au sélecteur ; son identifiant survit pour l'historique.
 };
 function _exEquip(name){
   const s=_naz(name);

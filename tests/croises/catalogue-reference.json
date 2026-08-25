@@ -1,6 +1,6 @@
 {
  "genere": "2026-08-25",
- "total": 324,
+ "total": 323,
  "nbRegles": 71,
  "fragiles": 0,
  "ex": {
@@ -1418,14 +1418,6 @@
    "pat": "poignet",
    "eq": "libre",
    "met": 4,
-   "frag": 0
-  },
-  "Pull-over": {
-   "p": "lats",
-   "s": "pec,serratus,triceps",
-   "pat": "tirage-horizontal",
-   "eq": "libre",
-   "met": 5.5,
    "frag": 0
   },
   "Pull-over Barre": {
