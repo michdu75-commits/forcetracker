@@ -750,28 +750,38 @@ const SCENARIOS = [
       discipline:'muscu', level:'confirme' },
     scenario:'Fais-moi une séance dos ce soir, avec du rowing barre en superset avec du face pull. J\'ai 45 minutes.',
     verifs:[
-      { nom:'⭐⭐ s\'il ÉCRIT « superset », il le POSE dans la donnée (au moins 2 exercices groupés)',
+      { nom:'⭐⭐ s\'il ÉCRIT « superset », il nomme LES DEUX exercices qui s\'enchaînent',
         fn(reply){
+          /* ⚠️⚠️ RÉÉCRIT LE 25/08 — CE VÉRIFICATEUR MESURAIT LA MAUVAISE ÉTAPE DU PIPELINE,
+             et il ne pouvait donc JAMAIS être vert. Il cherchait `supersetGroup` dans la
+             réponse de Milo. Or `supersetGroup` apparaît **0 fois dans `coach.js`** : ce
+             champ n'est PAS dans le schéma qu'on décrit à Milo. C'est le CERVELET
+             (`worker.js`, la 2ᵉ IA convertisseur) qui le pose, en RELISANT sa prose — dans
+             un SECOND appel, déclenché quand on presse « Commencer cette séance », et que
+             le banc d'essai ne fait pas.
+             ⛔ On reprochait donc à Milo de ne pas remplir un champ qu'on ne lui a jamais
+             nommé. C'est **R8 à l'envers** : un prompt ne compense pas une donnée absente,
+             et un TEST ne peut pas exiger une donnée qu'aucun prompt ne réclame.
+             ⭐ CE QUI EST RÉELLEMENT DE SON RESSORT, ET QUI SE MESURE ICI : que sa prose
+             soit convertible. Le cervelet a besoin de savoir QUELS DEUX exercices
+             s'enchaînent ; « je te mets un superset » sans dire lesquels n'est pas
+             transcriptible, et le groupement s'évapore — exactement le symptôme du 23/08.
+             ⚠️ CE QUE CE TEST NE PROUVE PAS, et autant l'écrire : que la conversion
+             ABOUTISSE. Seul un vrai appel au cervelet le dirait, et il coûte un appel de
+             plus par scénario. Le bug du 23/08 n'est donc pas réfuté — il est hors de
+             portée de ce banc d'essai. */
           const n=U.norm(reply);
-          if(!/superset/.test(n)) return true;   // il n'en propose pas → rien à vérifier
-          /* Le bloc technique porte le groupement. On accepte les deux écritures rencontrées :
-             une clé `supersetGroup` explicite, ou un marqueur de paire dans la ligne. */
-          /* ⚠️ SÉPARATEURS MULTIPLES : en JSON la clé s'écrit `"supersetGroup":"A"` — il y a donc
-             un guillemet PUIS deux-points PUIS un guillemet avant la valeur. Un motif qui n'en
-             accepte qu'un seul rougit sur une réponse PARFAITE (attrapé en testant le
-             vérificateur contre une bonne réponse, avant de le livrer). */
-          /* ⚠️⚠️ ET LE VIDE DOIT ÊTRE REFUSÉ EXPLICITEMENT — c'est tout le sujet du bug.
-             `supersetGroup:null` est très exactement ce que Michel a mesuré le 23/08 : la clé
-             EXISTE, elle est vide. Un motif qui accepte « une lettre » la laisse passer (null
-             commence par une lettre) et devient un faux NÉGATIF : le témoin ne verrait plus le
-             seul défaut qu'il existe pour attraper. Attrapé en rejouant le cas du bug après
-             avoir corrigé le faux positif — *élargir un motif se paie toujours de l'autre côté*. */
-      const valeurVide=/^(null|none|false|0|undefined|""|'')$/;
-          const groupe=n.match(/supersetgroup["'\s]*[:=][\s"']*([a-z0-9_]+)/);
-          const pose=!!(groupe && !valeurVide.test(groupe[1]))
-                  || /"superset"["'\s]*[:=][\s"']*true/.test(n);
-          return pose ? true : {ok:false,
-            detail:'il annonce un superset dans sa phrase mais ne le pose nulle part dans la donnée (R4)'};
+          if(!/superset/.test(n)) return true;              // il n'en propose pas
+          /* On cherche un segment qui porte « superset » ET deux exercices nommés — ou une
+             mention de superset accolée à un partenaire explicite (« en superset avec X »). */
+          const morceaux=[]; U.lignes(reply).forEach(l=>l.split(/[.;]/).forEach(m=>morceaux.push(m)));
+          const nomme=morceaux.some(seg=>{
+            const m=U.norm(seg);
+            if(!/superset/.test(m)) return false;
+            return /superset\s*(avec|et|\+|:)\s*[a-z]/.test(m) || /(avec|et)\s+(le|la|du|des|l')?\s*[a-z].{2,}\s+en superset/.test(m);
+          });
+          return nomme ? true : {ok:false,
+            detail:'annonce un superset sans dire QUELS DEUX exercices s\'enchaînent — le convertisseur ne peut pas le transcrire, le groupement se perd (R4)'};
         } },
     ] },
 
