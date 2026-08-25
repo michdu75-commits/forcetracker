@@ -99,6 +99,7 @@ bugs « fuseaux horaires » de `BUGS.md`, appliquée à nous-mêmes.
 
 | État | Quand (UTC) | Qui | Sujet | Fichiers | Version |
 |---|---|---|---|---|---|
+| 🟢 | 25/08 18:50 → 19:10 | session-A (project-status) | le bouton rouge de `showConfirm` disait « Supprimer » pour LANCER le benchmark — 10 appels non destructeurs récupèrent leur libellé + la jumelle « Fusionner » de `setup.js` | `app.js`, `coach.js`, `log.js`, `setup.js`, `tracking.js`, `tests/parcours/runner.js` | ft-v1006 |
 | 🟢 | 25/08 18:20 → 18:40 | session-A (project-status) | les libellés du benchmark annonçaient « 16 scénarios » alors qu'il en porte 53 — nombre RETIRÉ (il grandit, R35), + témoin qui l'interdit | `index.html`, `tests/parcours/runner.js`, `sw.js` | ft-v1005 |
 | 🟢 | 25/08 16:22 → 16:40 | session-B (claude-md-docs) | plafond IA à 150 pour les comptes de développement (le banc d'essai fait 53 appels, il se faisait couper à 50) + l'email posé dans `eval.js`, sinon le relèvement ne l'atteignait pas | `Code.js`, `tests/milo/eval.js` | — (backend) |
 | 🟢 | 25/08 15:50 → 16:10 | session-B (claude-md-docs) | DOC de cadrage : la séance d'essai (parcours découverte → Milo premium). **Aucun code**, aucun fichier de la nutrition — rien à construire encore, le doc fixe les décisions avant de coder | `docs/SEANCE-DESSAI.md`, `CLAUDE.md` | — (doc) |

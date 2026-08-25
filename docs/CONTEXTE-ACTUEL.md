@@ -6,7 +6,25 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1005`.
+- **Version en ligne (live) :** `ft-v1006`.
+- 🔴⭐⭐ **LE BOUTON ROUGE DE `showConfirm` DIT ENFIN CE QU'IL FAIT — LIVRÉ** (ft-v1006).
+  Michel, capture à l'appui en lançant le benchmark : *« ya marqué annuler ou supprimer lol »*.
+  La fenêtre annonçait **« 53 appels au Coach, environ 0,79 € à 3,45 € »** et proposait
+  **[Annuler] [SUPPRIMER]**. *On ne supprime rien : on lance, et ça coûte de l'argent.*
+  ⭐ **Le mécanisme existait déjà, posé d'un seul côté** (5ᵉ fois de la semaine) : le 4ᵉ argument
+  `okLabel` existe depuis toujours, et **10 appels sur 24** ne le passaient pas pour une action
+  qui n'était **pas** une suppression (lancer PT-001/VC/le benchmark, rejouer les rouges,
+  importer des pesées, fusionner, vider le cache, vider la séance, abandonner la séance,
+  refaire l'inscription).
+  ⛔⛔ **La jumelle, trouvée en la cherchant (R8)** : *« Fusionner les exercices »* existe à
+  **deux endroits** — `log.js` disait « Fusionner », `setup.js` disait **« Supprimer » pour un
+  RENOMMAGE** (**R2**).
+  ⭐⭐ **Le témoin fige une RÈGLE, pas une liste** : énumérer les 24 appels rougirait au 25ᵉ.
+  La règle ne périme pas — *le défaut est « Supprimer », donc un appel sans libellé doit avoir un
+  titre qui commence par « Supprimer »*.
+  ⚠️ **Mon découpage d'arguments a menti d'abord** : il sautait les chaînes mais pas les
+  **commentaires**, et une apostrophe française y ouvrait une fausse chaîne → il accusait 5
+  appels déjà corrigés. *Même famille que l'apostrophe courbe de ft-v994.*
 - 🔢⭐ **LE BENCHMARK N'ANNONCE PLUS « 16 SCÉNARIOS » ALORS QU'IL EN PORTE 53 — LIVRÉ**
   (ft-v1005). Michel, avant de le lancer depuis l'app : *« oui corrige les libellés avant »*.
   **Quatre libellés écrits en dur** dans le groupe admin « 🛡️ Milo — le mesurer » (*16 messages*,
