@@ -425,7 +425,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1002`** (prochaine : `ft-v1003`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1003`** (prochaine : `ft-v1004`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -435,6 +435,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1003 — ⚖️ LA QUANTITÉ SUR UN ALIMENT REPRIS QUI N'A PAS DE POUR-100 G** — Michel, deux captures : *« il y a toujours le bug sur des aliments que j'ai rentrés moi-même et que je veux réutiliser — comme je l'ai rentré avec le code-barre on ne peut plus remettre la quantité voulue. Ça fait pareil pour la ratatouille. »*
+
+**⛔⛔ REPRODUIT AVANT DE TOUCHER AU CODE, et ce n'était PAS le cas que je croyais.** **ft-v984 marche parfaitement** quand le scan a rapporté un pour-100 g — mesuré : bloc affiché, libellé *« 129 kcal/100g (ta dernière saisie) »*. *Le correctif d'hier n'est pas en cause.*
+
+**⭐⭐ LE VRAI TROU EST PLUS ÉTROIT ET PLUS FRÉQUENT** : quand **Open Food Facts n'a pas les valeurs /100 g** — fiche incomplète, très courant sur les produits de marque, et c'est exactement ce que montrent ses captures (*« Steak haché, 5% MG, France, VBF **(U)** »*, *« Iso zero protein **(ASL)** »*). La personne tape alors ses macros à la main, et l'entrée part avec **`per100:null` ET `q:null`**. À la reprise, la condition de ft-v984 ne **peut pas** être remplie. *Le mécanisme n'était pas cassé : il ne couvrait pas ce cas.*
+
+**⭐ R13/R2 — RIEN N'EST RÉINVENTÉ, LE MÉCANISME EXISTAIT DÉJÀ.** `_afMajAncre()` sait faire exactement ça depuis **ft-v975** : rescale par **PROPORTION**, et à défaut d'ancre des **portions** (½ · 1 · 1½ · ×2 · ×3). Il était branché sur l'estimation IA et sur la saisie libre — **pas sur la reprise depuis le journal**. *Le mécanisme existait, posé d'un seul côté* : **c'est le même oubli que ft-v973, ft-v975 et ft-v984 — la 4ᵉ fois.**
+
+**⛔ AUCUN POIDS N'EST INVENTÉ (R29)** : sans ancre, on n'offre que des **multiplicateurs**, vrais quelle que soit la portion de départ — un « ×2 » est juste, un « 60 g » deviné est faux. Mesuré : 323→646 kcal, 53→106 g, 13→26 g. Et l'écran **dit pourquoi** (*« aucune quantité connue — on ne peut pas inventer un poids »*).
+
+**⛔ LES DEUX MÉCANISMES NE COEXISTENT JAMAIS (R2)** : `_afMajAncre` se tait tout seul quand un pour-100 g existe. Deux façons de régler la même quantité, ce serait une de trop — un témoin l'épingle dans les deux sens.
+
+**⚠️⚠️ ET J'AI REFAIT EXACTEMENT L'ERREUR QUE ft-v984 DOCUMENTE.** `_afSuggLoc` est une variable de **script** : mon `window._afSuggLoc=[…]` ne posait rien, et le test mesurait du vide en annonçant un faux résultat. *C'est écrit noir sur blanc dans le journal de la version que je corrigeais.* Le témoin passe donc par le **vrai chemin** — on tape dans le champ, le code remplit ses suggestions — et le commentaire le dit, pour la prochaine fois. ⚠️ **6ᵉ fois de la journée** qu'un levier à côté du code produit une mesure propre et fausse (`af-name` au lieu de `af-desc`, `openAddFood` appelé trop tard, `#nu-tabs` pris pour un id, `gluc`/`lip` au lieu de `carbs`/`fat`…).
+Tests : **parcours 1389/1389** (+5, bloc CXII), calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou, check_regles vert (13 règles, archive 518 entrées, 0 perdue). **Les deux cas sont mesurés dans le même test** — avec pour-100 g (bloc grammes, portions cachées) et sans (portions, bloc grammes caché). Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1003. |
 
 **ft-v1002 — 🧹 « SQUAT SUMO » RETIRÉ DU CHOIX — et son histoire était déjà écrite** — Michel : *« squat sumo on supprime, ça me soûle »*. 2ᵉ retrait de la journée.
 
@@ -743,19 +758,6 @@ Tests : **parcours 1269/1269** (+6, bloc CIII), calculs 266/266, muscles 241/241
 
 **⚠️ ET CE QUI N'EST PAS EXPLIQUÉ EST ÉCRIT AUSSI** : sa 3ᵉ capture montre une **ratatouille sans pour-100 g** (*« cette ligne n'a pas de quantité connue »*). **Ce correctif ne la répare pas rétroactivement** — une entrée ancienne, ou entrée par un chemin qui n'enregistrait pas encore `per100`, reste sans quantité. *On ne prétend pas avoir tout couvert.*
 Tests : **parcours 1263/1263** (+7, bloc CII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 3 rouges**, et il est **instructif** — les détails **sont la capture de Michel** : `{"bloc":false}`, et après avoir mis 50 g, `{"kcal":"29","prot":"7"}`, c'est-à-dire *rien ne bouge*. ⭐ **Et 3 des 4 verts sont de VRAIS verts** : le chemin CIQUAL, le `per100` enregistré et surtout **les macros corrigées non écrasées** ne devaient pas bouger — ils n'ont pas bougé. ⚠️ Le 4ᵉ (« pas de bloc sans `per100` ») est un demi-faux vert : avant, il n'y avait jamais de bloc. ⚠️ **Et mon 1ᵉʳ essai de mesure n'a rien mesuré** : j'écrivais `window._afSuggLoc`, qui est une variable de **script** et non `window` — le test lisait un libellé **resté de l'étape d'avant**. *Même famille que `_miloPendingIdx` deux heures plus tôt.* Le bloc passe désormais par le **vrai chemin** : on tape, le code remplit ses suggestions, on clique. Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v984. |
-
-**ft-v983 — 🩺 LE DIAGNOSTIC MÉDICAL NE PASSE PLUS SEUL — « détecté » n'était pas « empêché »** — 3ᵉ et dernier bloquant de la contre-analyse.
-
-**⛔⛔ CE QUE L'AUDIT DU GARDIEN DE SORTIE A DONNÉ, MESURÉ** : sur ses **5 contrôles, un seul retire vraiment** quelque chose — le bloc technique, via `_stripCoachTech`. Les quatre autres (**interrogatoire · diagnostic médical · promesse vide · source douteuse**) sont **comptés puis affichés tels quels**. *Détecté n'est pas empêché.*
-
-**👉 POUR TROIS D'ENTRE EUX, UN COMPTEUR SUFFIT : ils nous regardent, nous. Pas pour le diagnostic.** La Constitution (**P13/P22**) dit que Milo ne diagnostique jamais et renvoie au médecin — *si la phrase sort quand même, c'est à l'app de poser le renvoi.*
-
-**⛔⛔ ON N'A PAS RÉÉCRIT LA RÉPONSE, ET C'EST DÉLIBÉRÉ.** Le code disait déjà, à propos de ce contrôle précis : *« il attrape la FORMULE, pas l'intention — donc il SIGNALE, il ne réécrit pas (on ne charcute pas une phrase) »*. Charcuter produirait des phrases incompréhensibles sur les faux positifs, **et un faux positif est ici certain à terme**. On **ajoute** donc une ligne sous la réponse, sans en modifier un caractère — *additif, visible, réversible*. **Si le motif se trompe, le pire est un rappel de bon sens en trop, pas une phrase mutilée** (**R29** : le coût de l'erreur décide).
-
-**⚠️ ET LE MOTIF EST DÉJÀ CALIBRÉ, c'est ce qui rend l'affichage supportable** : resserré le 21/08 après **3 faux positifs sur 3** sur de vraies réponses (*« tu es en Jour 2 »*, *« tu es en phase de charge »*). Il exige désormais une **pathologie nommée** et ne tirait sur **aucune** des 129 réponses mesurées. *Il est rare — donc il sera lu.*
-
-**⛔ LE TON EST CELUI D'UN RAPPEL, PAS D'UNE ALARME** : *« Milo est un coach sportif, pas un médecin — il peut se tromper sur ce genre de sujet. Pour tout ce qui touche à ta santé, c'est ton médecin qui tranche. »* Trait plein et sobre, pour le distinguer du badge Gardien (pointillé rouge vif) qui, lui, est un outil interne réservé à l'admin.
-Tests : **parcours 1256/1256** (+7, bloc CI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 2 rouges**, exactement les 2 comportements neufs. ⭐⭐ **ET LES DEUX TÉMOINS QUI COMPTENT LE PLUS SONT VERTS DES DEUX CÔTÉS** : le texte de Milo **et** son `dataset.raw` (partage / PDF) sont **intacts avant comme après** — *c'est précisément ce qui prouve qu'on a AJOUTÉ et non charcuté*. ⚠️ Les 3 autres verts, eux, sont de **faux verts** : sans la fonction, « pas de rappel sur une réponse normale » passe tout seul. Fichiers : `coach.js`, `style.css`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v983. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

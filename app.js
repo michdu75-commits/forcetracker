@@ -2086,6 +2086,24 @@ function _afSuggPrendreLocale(i){
   _afSetSrc({saisie:'historique', origine:e.origine||'utilisateur',
              sourceId:e.sourceId||null, etat:e.etat||null, per100:e.per100||null,
              attendu:_afLuFormulaire()});
+  /* ⚖️ SANS POUR-100 G, ON PROPOSE QUAND MÊME DE CHANGER LA QUANTITÉ (ft-v999+)
+     Michel, deux captures à l'appui : « il y a toujours le bug sur des aliments que j'ai rentrés
+     moi-même et que je veux réutiliser — comme je l'ai rentré avec le code-barre on ne peut plus
+     remettre la quantité voulue. Ça fait pareil pour la ratatouille. »
+     ⛔⛔ REPRODUIT AVANT DE CODER, et le cas est plus étroit qu'il n'y paraît : ft-v984 marche
+     parfaitement quand le scan a rapporté un pour-100 g (mesuré : bloc affiché, « 129 kcal/100g
+     (ta dernière saisie) »). Le trou est le cas où **Open Food Facts n'a PAS les valeurs /100 g**
+     — fiche incomplète, très fréquent sur les produits de marque (« Steak haché … (U) », « Iso
+     zero protein (ASL) »). La personne tape alors ses macros à la main, et l'entrée part avec
+     `per100:null` ET `q:null`. À la reprise, la condition de ft-v984 ne peut pas être remplie.
+     ⭐ R13/R2 — RIEN N'EST RÉINVENTÉ : `_afMajAncre()` sait DÉJÀ faire exactement ça depuis
+     ft-v975 (rescale par PROPORTION, et à défaut d'ancre des portions ½ · 1 · 1½ · 2 · 3). Il
+     était branché sur l'estimation IA et sur la saisie libre — pas ici. *Le mécanisme existait,
+     posé d'un seul côté* : c'est le même oubli que ft-v973, ft-v975 et ft-v984, la 4ᵉ fois.
+     ⛔ IL SE TAIT TOUT SEUL quand un pour-100 g existe (`if(_bcNutr) → cacher`), donc les deux
+     mécanismes ne peuvent pas s'afficher ensemble (R2). Et il n'invente aucun poids (R29) :
+     sans ancre il n'offre que des multiplicateurs, vrais quelle que soit la portion de départ. */
+  if(typeof _afMajAncre==='function') _afMajAncre();
   _afNoteEtat(e.name||'');
   _afSuggVider();
   toast('Repris de ton journal 👍','success');

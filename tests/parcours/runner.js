@@ -12390,6 +12390,84 @@ console.log('\n-- CIX. Le cardio de Milo va dans son BLOC, pas dans les exercice
   await cx.close();
 }
 
+// ════════════════════════════════════════════════════════════════════
+console.log('\n-- CXII. La quantité sur un aliment repris SANS pour-100 g (ft-v999+) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pq=await cx.newPage();
+  await pq.addInitScript(seedScript({}));
+  await pq.goto('http://localhost:'+PORT+'/index.html');
+  await pq.waitForTimeout(2200);
+  const Q=await pq.evaluate(async()=>{
+   try{
+    const o={};
+    const net=()=>document.querySelectorAll('.overlay').forEach(x=>{ if(x.id!=='ov-add-food') x.classList.remove('open'); });
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    /* ⚠️ ON PASSE PAR LE VRAI CHEMIN, et c'est la leçon de ft-v984 répétée : `_afSuggLoc` est une
+       variable de SCRIPT — l'écrire depuis `window` ne pose RIEN et le test mesure du vide. On
+       TAPE donc dans le champ, le code remplit ses suggestions, puis on prend l'index 0. */
+    const reprendre=async(txt)=>{
+      openAddFood(); await new Promise(r=>setTimeout(r,260)); net();
+      const d=document.getElementById('af-desc');
+      d.value=txt; d.dispatchEvent(new Event('input',{bubbles:true}));
+      await new Promise(r=>setTimeout(r,650));
+      _afSuggPrendreLocale(0);
+      await new Promise(r=>setTimeout(r,150));
+      const bc=document.getElementById('af-bc-row'), pr=document.getElementById('af-prop-row');
+      return { grammes: !!(bc && bc.style.display!=='none'),
+               portions: !!(pr && pr.style.display==='block'),
+               texte:(pr&&pr.textContent||'').replace(/\s+/g,' ').slice(0,60) };
+    };
+    const poser=(per100)=>{
+      S.foodLog=[]; try{_afSuggVider();}catch(e){}
+      openAddFood();
+      _bcNutr = per100 ? {name:'Steak haché 5% MG',kcal100:129,prot100:21,carbs100:0,fat100:5} : null;
+      _afSetSrc({saisie:'scan',origine:'off',sourceId:'376',per100:per100||null,etat:per100?'cru':null});
+      const set=(id,v)=>{const e=document.getElementById(id); if(e)e.value=v;};
+      set('af-desc','Steak haché 5% MG'); set('af-kcal',323); set('af-prot',53); set('af-carbs',0); set('af-fat',13);
+      addFoodEntry();
+      return S.foodLog[S.foodLog.length-1]||{};
+    };
+
+    // ① LE CAS DE MICHEL : produit SCANNÉ dont Open Food Facts n'a pas les valeurs /100 g
+    const e1=poser(null);
+    o.sansPer100={per100:e1.per100, q:e1.q};
+    o.sans=await reprendre('Steak');
+    if(o.sans.portions && typeof _afApplyPortion==='function'){
+      _afApplyPortion(2);
+      o.x2={kcal:+document.getElementById('af-kcal').value, prot:+document.getElementById('af-prot').value,
+            fat:+document.getElementById('af-fat').value};
+    }
+    // ② NON-RÉGRESSION : avec un pour-100 g, c'est le bloc en GRAMMES qui sert (ft-v984)
+    poser({kcal:129,prot:21,carbs:0,fat:5});
+    o.avec=await reprendre('Steak');
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  const tq=(n,c,x)=>t(n, !Q.erreur && c, Q.erreur?'bloc en erreur':x);
+  if(Q.erreur){ t('⛔ le bloc « quantité reprise » s\'exécute', false, Q.erreur); }
+  /* ⛔⛔ LE CAS EXACT DE MICHEL, deux captures du 25/08 : « Steak haché … (U) » et « Iso zero
+     protein (ASL) » — des fiches Open Food Facts INCOMPLÈTES (pas de valeurs /100 g), donc des
+     macros tapées à la main, donc `per100:null` ET `q:null` en base. ft-v984 ne pouvait pas
+     s'appliquer : sa condition exige un pour-100 g. */
+  tq('⭐⭐ LE CAS DE MICHEL : un aliment repris SANS pour-100 g propose quand même des PORTIONS',
+    Q.sans && Q.sans.portions===true, JSON.stringify(Q.sans));
+  tq('⭐ … et le ×2 double bien les 4 valeurs (323→646, 53→106, 13→26)',
+    Q.x2 && Q.x2.kcal===646 && Q.x2.prot===106 && Q.x2.fat===26, JSON.stringify(Q.x2));
+  // ⛔ R29 : sans ancre, on n'invente AUCUN poids — on n'offre que des multiplicateurs, vrais
+  //    quelle que soit la portion de départ. Le texte doit le dire, pas l'inventer.
+  tq('⛔ … et AUCUN poids n\'est inventé (des multiplicateurs, pas des grammes) — R29',
+    Q.sans && /Portion/.test(Q.sans.texte) && !/\d+\s*g\b/.test(Q.sans.texte), Q.sans&&Q.sans.texte);
+  tq('⭐⭐ NON-RÉGRESSION : AVEC un pour-100 g, c\'est toujours le bloc en GRAMMES (ft-v984)',
+    Q.avec && Q.avec.grammes===true, JSON.stringify(Q.avec));
+  /* ⛔ LES DEUX MÉCANISMES NE S'AFFICHENT JAMAIS ENSEMBLE (R2) : `_afMajAncre` se tait tout seul
+     quand `_bcNutr` existe. Deux façons de régler la même quantité, ce serait une de trop. */
+  tq('⛔⛔ les DEUX blocs ne coexistent jamais (R2 : une seule façon de régler la quantité)',
+    Q.avec && Q.sans && Q.avec.portions===false && Q.sans.grammes===false,
+    'avec='+JSON.stringify(Q.avec)+' sans='+JSON.stringify(Q.sans));
+  await cx.close();
+}
+
 // ── ⭐⭐ LE BANC D'ESSAI DOIT POUVOIR JUGER CE CHANGEMENT (R34) ────────────────────────────
 // Mesuré le 24/08 AVANT de livrer : sur les 21 scénarios d'alors, **aucun** n'avait plus de
 // 1 séance — l'avant/après R34 aurait donc comparé deux contextes IDENTIQUES et rendu « aucune
