@@ -22,9 +22,14 @@ git fetch origin --all -q          # ⚠️ SANS ÇA, TU NE VOIS RIEN (voir §«
 **Format d'une ligne — rien de plus :**
 
 ```
-| 🟡 | 24/08 21:15 | session-A | le cardio de Milo va dans son bloc | log.js, coach.js | — |
-| 🟢 | 24/08 21:15 → 22:40 | session-A | le cardio de Milo va dans son bloc | log.js, coach.js | ft-v995 |
+| 🟡 | JJ/MM HH:MM       | session-X | <sujet en quelques mots> | <fichiers> | — |
+| 🟢 | JJ/MM HH:MM → HH:MM | session-X | <sujet en quelques mots> | <fichiers> | ft-vNNN |
 ```
+
+⚠️ **L'exemple ci-dessus est volontairement en `JJ/MM`, pas avec de vraies dates** — trouvé en me
+servant du fichier pour la première fois : un exemple qui *ressemble* à une vraie ligne 🟡 se lit
+comme une **tâche en cours**, et bloque un sujet que personne ne traite. *Un exemple ne doit jamais
+pouvoir passer pour une donnée.*
 
 ⚠️ **Une ligne suffit.** C'est la leçon de `docs/JOURNAL-DE-TEST.md` : *un fichier qu'on ne remplit
 pas cesse d'être rempli* — les quatre fichiers vivants du projet tiennent parce qu'ils sont **bon
@@ -94,6 +99,7 @@ bugs « fuseaux horaires » de `BUGS.md`, appliquée à nous-mêmes.
 
 | État | Quand (UTC) | Qui | Sujet | Fichiers | Version |
 |---|---|---|---|---|---|
+| 🟡 | 25/08 07:05 | session-A (project-status) | banc d'essai : nouvelle doctrine (il grandit à chaque bug, sans cible) + promotion des scénarios en attente | `tests/milo/eval-scenarios.js`, `docs/REGLES-ARCHITECTURE.md`, `docs/JOURNAL-DE-TEST.md` | — |
 | 🟢 | 24/08 ~20:30 → 21:25 | session-B (claude-md-docs) | un nom ABRÉGÉ lit la fiche écrite (muscles) + sa jumelle unilatéral | `log.js`, `constants.js`, `state.js` | ft-v997 |
 | 🟢 | 24/08 ~19:30 → 20:30 | session-B (claude-md-docs) | un nom d'exercice abrégé retrouve sa fiche du catalogue (animation, tutoriel) | `constants.js`, `log.js` | ft-v996 |
 | 🟢 | 24/08 20:05 → 20:35 | session-A (project-status) | protocole de partage : créer ce fichier + le déclarer dans CLAUDE.md | `docs/JOURNAL-DE-PARTAGE.md`, `CLAUDE.md` | — |
