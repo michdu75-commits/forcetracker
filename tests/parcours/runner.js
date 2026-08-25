@@ -12766,7 +12766,7 @@ console.log('\n-- CXI. Un nom abrégé lit la FICHE ÉCRITE, plus la devinette (
   await cx.close();
 }
 
-/* == BLOC CXVI - L'HISTORIQUE DE L'OBJECTIF + L'HORODATAGE DES MESSAGES (ft-v1008) ==
+/* == BLOC CXVI - L'HISTORIQUE DE L'OBJECTIF + L'HORODATAGE DES MESSAGES (ft-v1010) ==
    Michel, le 19/08, a Milo : « As-tu vu que j'avais change d'objectif ? » → « Non, je ne vois pas
    de changement d'objectif dans ce que j'ai sous la main. » ⭐ IL DISAIT VRAI : mesure dans son
    export du 25/08, `goal` valait `recomp` et « force max » n'apparaissait NULLE PART ailleurs que
@@ -12775,7 +12775,7 @@ console.log('\n-- CXI. Un nom abrégé lit la FICHE ÉCRITE, plus la devinette (
    un rechargement, et ARRIVE-t-il jusqu'au contexte de Milo ? Un maillon suffit a tout perdre.
    ⛔ ET LES ABSENCES COMPTENT AUTANT : l'inscription ne fabrique pas un faux changement, un
    compte sans historique n'a AUCUN bloc (pas d'en-tete vide), et rien n'est invente (R29). */
-console.log('\n-- CXVI. L\'objectif garde son histoire, les messages leur date (ft-v1008) --');
+console.log('\n-- CXVI. L\'objectif garde son histoire, les messages leur date (ft-v1010) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
@@ -12865,6 +12865,76 @@ console.log('\n-- CXVI. L\'objectif garde son histoire, les messages leur date (
       F.tsStockage==='[0,1500,null]', 'reçu : '+F.tsStockage);
     t('⛔ le 3ᵉ message n\'a JAMAIS de date inventée (le `null` final est la preuve — R29)',
       typeof F.tsArchive==='string' && /,null\]$/.test(F.tsArchive), 'reçu : '+F.tsArchive);
+  }
+  await cx.close();
+}
+
+// ════════════════════════════════════════════════════════════════════
+console.log('\n-- CXVII. Le sélecteur d\'exercices reste OUVERT (écran Séance ①/5) --');
+/* ⚠️ LE GOULOT SENTI PAR MICHEL en préparant la création de programmes : « il va falloir
+   améliorer aussi l'accès aux exercices… et que ce soit rapide ». Avant, `addExercise()`
+   appelait `closeExPicker()` à chaque ajout : 6 exercices = 6 allers-retours.
+   ⛔⛔ LES DEUX TÉMOINS QUI COMPTENT LE PLUS SONT DES GARDE-FOUS, pas la fonctionnalité :
+   ② le mode « remplacer » doit TOUJOURS fermer (il désigne UNE place précise — le laisser
+      ouvert ferait ajouter au lieu de remplacer, en silence) ;
+   ③ le bouton central « + » ne bouge pas d'un pixel (règle d'or #9), mesuré et non regardé. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const px=await cx.newPage();
+  await px.addInitScript(seedScript({}));
+  await px.goto('http://localhost:'+PORT+'/index.html');
+  await px.waitForTimeout(2300);
+  const X=await px.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={}; const ouvert=()=>document.getElementById('mod-ex').classList.contains('open');
+    const titre=()=>document.querySelector('#mod-ex .modal h2').textContent;
+    const fab=()=>{const e=document.querySelector('#nb-log,.nav-fab,.fab');
+      if(!e)return null;const r=e.getBoundingClientRect();
+      return [Math.round(r.x),Math.round(r.y),Math.round(r.width),Math.round(r.height)].join(',');};
+    S.wkt={date:today(),exs:[]}; persist();
+    document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+    document.getElementById('s-log').classList.add('active');
+    o.fabAvant=fab();
+    // ① six ajouts d'affilée, sans jamais rouvrir
+    openExPicker();
+    o.tousOuverts=true;
+    ['Squat à la Barre','Développé Couché','Tractions (Pull-up)',
+     'Press Jambes 45°','Curl Biceps Haltères','Pec Deck'].forEach(n=>{
+       addExercise(n); if(!ouvert())o.tousOuverts=false; });
+    o.nb=S.wkt.exs.length;
+    o.titre=titre();
+    o.rechercheVidee=document.getElementById('ex-search').value==='';
+    // la sortie reste possible
+    closeExPicker(); o.ferme=!ouvert(); o.titreRemisAZero=titre();
+    openExPicker(); o.compteurRepart=titre(); closeExPicker();
+    // ② le mode REMPLACER ferme toujours, et remplace vraiment
+    openExPickerForReplace(0);
+    addExercise('Soulevé de Terre');
+    o.replaceFerme=!ouvert();
+    o.aRemplace=S.wkt.exs[0].name==='Soulevé de Terre';
+    o.pasDAjout=S.wkt.exs.length===6;
+    o.fabApres=fab();
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(X.err)t('CXIV n\'a pas pu tourner',false,X.err);
+  else{
+    t('⭐⭐ SIX ajouts d\'affilée sans que le sélecteur se referme (6 allers-retours avant)',
+      X.tousOuverts===true && X.nb===6, JSON.stringify({ouvertPartout:X.tousOuverts,nb:X.nb}));
+    t('⭐ … la recherche est vidée et prête pour le suivant',  X.rechercheVidee===true);
+    t('⭐ … et le titre dit combien on a ajouté',              /6 ajoutés/.test(X.titre||''), 'reçu : '+X.titre);
+    t('⛔ … la sortie marche toujours (R24 : informer sans bloquer)', X.ferme===true);
+    t('⛔ … et le compteur repart à zéro à la réouverture',
+      X.titreRemisAZero==='Choisir un exercice' && X.compteurRepart==='Choisir un exercice',
+      JSON.stringify([X.titreRemisAZero,X.compteurRepart]));
+    t('⛔⛔ LE MODE « REMPLACER » FERME TOUJOURS — il désigne UNE place, le laisser ouvert ferait AJOUTER',
+      X.replaceFerme===true);
+    t('⛔⛔ … et il a bien REMPLACÉ, sans rien ajouter',
+      X.aRemplace===true && X.pasDAjout===true, JSON.stringify({remplace:X.aRemplace,six:X.pasDAjout}));
+    t('⛔⛔ LE BOUTON CENTRAL « + » N\'A PAS BOUGÉ (règle d\'or #9 — mesuré, pas regardé)',
+      !!X.fabAvant && X.fabAvant===X.fabApres, X.fabAvant+' → '+X.fabApres);
   }
   await cx.close();
 }

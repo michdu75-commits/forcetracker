@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1008`** (prochaine : `ft-v1009`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1010`** (prochaine : `ft-v1011`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -437,7 +437,20 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
 
-**ft-v1008 — 🎯 L'OBJECTIF GARDE SON HISTOIRE, ET LES MESSAGES LEUR DATE** — Michel, le 19/08, à Milo : *« As-tu vu que j'avais changé d'objectif ? »* → *« Non, je ne vois pas de changement d'objectif dans ce que j'ai sous la main. »* Il a fallu qu'il écrive *« j'étais en force max avant »* pour que Milo réagisse.
+**ft-v1009 — 🔁 LE SÉLECTEUR D'EXERCICES RESTE OUVERT — 6 exercices, 1 seul aller-retour** — première brique du chantier écran Séance (`docs/SEANCE-DESSAI.md` §8), et le goulot que Michel a senti en premier en préparant la création de programmes : *« il va falloir améliorer aussi l'accès aux exercices… et il va falloir que ce soit rapide »*.
+
+**⛔ LE DÉFAUT ÉTAIT UNE SEULE LIGNE, ET IL COÛTAIT CHER À CHAQUE SÉANCE.** `addExercise()` appelait `closeExPicker()` **à chaque ajout** : monter une séance de 6 exercices demandait **6 allers-retours** — rouvrir le sélecteur, retaper une recherche, six fois. *Ce n'était pas un bug, c'était un choix jamais rediscuté depuis que l'app n'ajoutait qu'un exercice à la fois.*
+
+**⛔⛔ SEUL LE MODE « WORKOUT » RESTE OUVERT, et c'est toute la nuance.** `replace`, `replaceSess`, `addSess`, `prog` et `addToGroup` désignent **UNE place précise** et se ferment tout seuls — ils rendent plus haut dans la fonction et ne passent jamais par ce chemin. ⭐ **Un mode « remplacer » resté ouvert AJOUTERAIT au lieu de remplacer, en silence** : c'est le témoin le plus important du bloc, et il vérifie les deux moitiés (il a fermé **et** il a bien remplacé sans rien ajouter).
+
+**⚠️ ET LE SCROLL A DÛ DÉMÉNAGER AVEC — trouvé en le faisant, pas en le relisant.** `scrollIntoView` faisait défiler l'écran **derrière la modale** : un mouvement qu'on ne voit pas, sur une page qu'on ne regarde pas, et à la fermeture on se retrouvait n'importe où. Il est reporté à `closeExPicker`, **au moment où l'écran redevient visible**, et seulement si on a réellement ajouté quelque chose.
+
+**⛔ LA SORTIE RESTE ÉVIDENTE (R24 — informer sans bloquer)** : bouton « Fermer », poignée et tap à l'extérieur marchent tous, et le titre dit où on en est (*« Choisir un exercice · 3 ajoutés »*). ⚠️ **Le focus n'est PAS remis dans la recherche sur mobile** : le clavier masquerait la liste qu'on vient d'ouvrir.
+
+**⛔⛔ LE BOUTON CENTRAL « + » N'A PAS BOUGÉ D'UN PIXEL** (règle d'or #9) — **mesuré avant/après** (152, 880, 63 des deux côtés), pas regardé.
+Tests : **parcours 1410/1410** (+8, bloc CXIV), croisés 50/50, calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 2 rouges, et il est INSTRUCTIF** — le détail imprimé *est* le défaut : `{"ouvertPartout":false}`. ⭐⭐ **Et AUCUN faux vert** : les 6 autres témoins tournent **des deux côtés** (la sortie marchait déjà, le mode remplacer fermait déjà, le bouton central ne bougeait déjà pas) — ce sont les non-régressions, et c'est exactement ce qu'elles doivent faire. ⭐ **Vérifié à l'écran** : capture du sélecteur après 3 ajouts, titre à jour, recherche prête. 🤝 Protocole de partage appliqué (ligne 🟡 poussée avant de coder). Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1009. |
+
+**ft-v1010 — 🎯 L'OBJECTIF GARDE SON HISTOIRE, ET LES MESSAGES LEUR DATE** — Michel, le 19/08, à Milo : *« As-tu vu que j'avais changé d'objectif ? »* → *« Non, je ne vois pas de changement d'objectif dans ce que j'ai sous la main. »* Il a fallu qu'il écrive *« j'étais en force max avant »* pour que Milo réagisse.
 
 **⭐⭐ ET MILO DISAIT VRAI — mesuré dans son export du 25/08, pas supposé** : `goal` valait `recomp`, et la chaîne *« force max »* n'apparaissait **NULLE PART ailleurs que dans la conversation elle-même**. Aucun journal, rien dans le registre. **L'app gardait la valeur du JOUR, jamais son histoire.** C'est **R8** dans sa forme la plus pure — *un prompt ne compense jamais une donnée absente* —, donc le correctif est dans la **DONNÉE**, pas dans le prompt (**R7**). *Durcir la consigne n'aurait rien changé : il n'y avait rien à lire.*
 
@@ -452,7 +465,9 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 **⛔⛔ ET LE DÉFAUT ÉTAIT À DEUX ENDROITS, PAS UN.** `_convLightMsgs` reconstruisait `{role, content}` **à la main** et jetait la date (et `_silent` avec) — or c'est **elle** qui alimente `S.coachConversations` **et** l'export ; et `loadCoachConv` la jetait aussi, si bien que **rouvrir une vieille conversation effaçait ses dates définitivement**.
 
 **⚠️⚠️ ET MON PREMIER TÉMOIN ÉTAIT VERT PENDANT CE TEMPS.** Il appelait `_lightMsg` **directement** au lieu d'archiver puis de relire. *Un test qui n'emprunte pas le chemin de la production ne teste rien, il rassure* — leçon n°1 de `docs/SUIVI-AUDIT.md`, payée une fois de plus. Le témoin **archive, rouvre et relit le stockage**.
-Tests : **parcours 1423/1423** (+13, bloc CXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données **103 classées 0 trou** (le garde-fou **R4a a refusé la livraison** tant que `goalLog` n'était pas classée — il a fait exactement son travail). ⭐⭐ **Le contrôle négatif de cette version est l'export RÉEL de Michel** : le défaut y est mesuré sur ses vraies données (`goal:'recomp'`, zéro trace de « force max »), ce qui vaut mieux qu'un contrôle synthétique — côté code il ne dirait que *« la fonction n'existe pas »*. ⭐ **Et la chaîne d'horodatage est mesurée par le vrai chemin** : archive `[0,1500,null]` · après réouverture `[0,1500,null]` · stockage `[0,1500,null]` — les dates exactes survivent, et le vieux message **reste sans date**. Fichiers : `state.js`, `setup.js`, `tracking.js`, `app.js`, `coach.js`, `Code.js`, `tests/donnees/donnees-milo.json`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1008. |
+Tests : **parcours 1423/1423** (+13, bloc CXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données **103 classées 0 trou** (le garde-fou **R4a a refusé la livraison** tant que `goalLog` n'était pas classée — il a fait exactement son travail). ⭐⭐ **Le contrôle négatif de cette version est l'export RÉEL de Michel** : le défaut y est mesuré sur ses vraies données (`goal:'recomp'`, zéro trace de « force max »), ce qui vaut mieux qu'un contrôle synthétique — côté code il ne dirait que *« la fonction n'existe pas »*. ⭐ **Et la chaîne d'horodatage est mesurée par le vrai chemin** : archive `[0,1500,null]` · après réouverture `[0,1500,null]` · stockage `[0,1500,null]` — les dates exactes survivent, et le vieux message **reste sans date**. Fichiers : `state.js`, `setup.js`, `tracking.js`, `app.js`, `coach.js`, `Code.js`, `tests/donnees/donnees-milo.json`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1010. |
+
+> ⚠️ **Développée comme `ft-v1008`, renumérotée en `ft-v1010` à la fusion.** session-B a livré **ft-v1009** pendant ce travail et a **poussé la première** — mon push a été **refusé** (non-fast-forward). *C'est git qui a joué son rôle, exactement comme le 24/08 : le journal de partage évite le doublon de TRAVAIL, git évite l'écrasement de CODE.* Livrer 1008 après 1009 ferait **reculer le numéro de cache** chez les gens déjà passés en 1009 : **on ne recule jamais, on saute.** Le trou dans la série est le prix, et il est écrit ici pour qu'on ne le prenne pas pour une version perdue.
 
 **ft-v1007 — 🧪 DÉPOUILLEMENT DU BENCHMARK : 9 ROUGES, DONT 6 QUI ROUGISSAIENT À TORT** — première vraie passe lancée par Michel depuis l'app : **44 verts · 9 rouges**, 53 appels, ~1,7 €.
 
@@ -733,22 +748,6 @@ Tests : **parcours 1315+8/1315+8** (bloc BMR étendu), et les témoins voisins (
 
 **⚠️ CE QUI NE PEUT PAS ÊTRE VÉRIFIÉ ICI, ET C'EST ÉCRIT** : un vrai appel facturé à l'API Anthropic, indisponible dans cet environnement — la première vraie donnée arrivera au premier appel de Michel en production.
 Tests : **parcours 1315/1315** (+10, bloc R), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `worker.js`, `Code.js`, `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`. sw.js ft-v990. |
-
-**ft-v989 — 🛡️ LA VALIDATION UNIQUE AVANT UNE SÉANCE DE MILO** — priorité n°1 tranchée par Michel après le contre-audit du 24/08 : *« une validation déterministe unique avant l'activation de la séance : blessures, exclusions, doublons »*.
-
-**⛔⛔ POSÉE AU SEUL POINT QUE LES DEUX PORTES TRAVERSENT** — `_appliqueMiloSession`, exactement la même raison que le contrôle d'intensité (**ft-v980**) : `_startSessionFromMilo` (aucune séance en cours, **le cas normal**) et `_applyMiloSession` (une séance tourne déjà) y convergent tous les deux. La poser ailleurs l'aurait fait manquer dans le cas le plus fréquent — c'est très exactement l'erreur déjà commise et corrigée le 23/08 (**R2**).
-
-**⛔ ELLE NE RÉINVENTE RIEN (R2/R13) — les trois catégories réutilisent chacune un mécanisme qui existait déjà pour un autre usage :**
-- **DOUBLONS** : comparaison directe des noms dans la proposition (+ la séance déjà en cours si mode « ajouter »).
-- **EXCLUSIONS** : `S.exSwaps` + `_EX_SWAP_RAISONS` — la case `durable` **existait déjà**, elle filtre déjà « il me gêne »/« trop long » d'une raison de circonstance comme « machine prise » dans le contexte de Milo. Aucune 2ᵉ liste créée.
-- **BLESSURES** : `_gardienZones()` + `_GARDIEN_CONSTRAINTS` (`coach.js`) — la **même** mécanique qui construit déjà la note *« dans sa séance du jour : … sollicite ton épaule »* envoyée à Milo.
-
-**⚠️ ON SIGNALE, ON NE BLOQUE PAS** (**R24**, Constitution P13 « adapter, jamais interdire »). La séance démarre normalement ; l'avertissement reste attaché à l'exercice — comme `intensiteWarn`, un toast seul aurait disparu avant la 1ʳᵉ série. ⛔ **Seul l'ACTIF ou AUJOURD'HUI déclenche une blessure ici** : une fragilité durable mais calme reste couverte par le Gardien de la conversation — la resignaler à chaque séance serait du bruit qui finit par ne plus être lu (**R19**).
-
-**⛔ LES CHARGES DE MILO NE SONT JAMAIS MODIFIÉES**, vérifié par un témoin dédié (**R29** — on attache, on ne touche pas).
-
-**🎨 L'AFFICHAGE ÉTEND LE BANDEAU EXISTANT, IL N'EN CRÉE PAS UN 2ᵉ** (`_intensiteBandeau`, R2/R13) : même mécanique, même style, trois icônes en plus de ⚡ (🚫 exclusion, 🛡️ blessure, 🔁 doublon). **Vérifié à l'écran, pas seulement en données** : capture sur les 4 cas réunis, les trois bandeaux s'affichent, la charge de Milo (40 kg) part intacte, le bouton central « + » n'a pas bougé (règle d'or #9).
-Tests : **parcours 1305/1305** (+10, bloc CVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **Contrôle négatif** : 1 rouge (« la fonction n'existe pas ») — attendu pour une fonctionnalité neuve, pas instructif en soi ; la preuve tient dans les 9 autres témoins qui exercent chaque catégorie sur des données réelles (blessure active, exclusion durable **vs** non durable, doublon, mode ajout, cas neutre sans faux positif). Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`. sw.js ft-v989. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

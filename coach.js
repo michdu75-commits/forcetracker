@@ -1151,7 +1151,7 @@ function _lightMsg(m){
     role: m.role,
     content: (typeof m.content === 'string') ? m.content
            : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text ? '[photo] ' + (m.content.find(p=>p&&p.type==='text').text) : '[photo]') : ''),
-    /* ⛔ L'HORODATAGE DOIT PASSER PAR ICI, sinon il meurt au premier enregistrement (ft-v1008).
+    /* ⛔ L'HORODATAGE DOIT PASSER PAR ICI, sinon il meurt au premier enregistrement (ft-v1010).
        C'est le point de passage OBLIGÉ vers `localStorage` ET vers `S.coachConversations` :
        un `ts` posé à la création mais absent d'ici serait perdu à la seconde suivante — R4,
        l'information reste dans l'objet en mémoire et n'atteint jamais la donnée gardée.
@@ -1332,7 +1332,7 @@ function _persistCoachConvs(){
 function _convLightMsgs(){
   // tout le fil (borné par la place), plus seulement les 40 derniers : ce qu'on range
   // doit être ce qu'on avait, sinon « ranger » redevient « perdre une partie ».
-  /* ⛔⛔ ON REND `_lightMsg(m)` EN ENTIER, PAS SEULEMENT SON `.content` (ft-v1008).
+  /* ⛔⛔ ON REND `_lightMsg(m)` EN ENTIER, PAS SEULEMENT SON `.content` (ft-v1010).
      Cette ligne reconstruisait `{role, content}` à la main et JETAIT donc tout le reste —
      l'horodatage et le drapeau `_silent`. Or c'est ELLE qui alimente `S.coachConversations`
      ET l'export : les dates mouraient à l'archivage, en silence.
@@ -1409,7 +1409,7 @@ function loadCoachConv(id){
   if(idx<0){ closeCoachConvs(); return; }
   const conv=S.coachConversations.splice(idx,1)[0]; // devient le fil actif → retiré de la liste
   _persistCoachConvs();
-  /* ⛔ CETTE RECOPIE PERDAIT L'HORODATAGE (ft-v1008) : rouvrir une vieille conversation la
+  /* ⛔ CETTE RECOPIE PERDAIT L'HORODATAGE (ft-v1010) : rouvrir une vieille conversation la
      réenregistrait sans dates, et les effaçait donc DÉFINITIVEMENT. Le `_silent` était
      déjà perdu ici de la même façon — les deux sont rétablis. */
   coachHistory=(conv.messages||[]).map(m=>({role:m.role,content:m.content,...(m.ts?{ts:m.ts}:{}),...(m._silent?{_silent:true}:{})}));
@@ -2951,7 +2951,7 @@ ${S.name ? '- Prénom: '+S.name+' (utilise-le naturellement, sans le répéter �
 - Tabac: ${S.smoker?'Fumeur (BMR +7%, impact cardiovasculaire — adapter l\'intensité et conseiller l\'arrêt)':'Non-fumeur'}
 - Objectif principal: ${S.goal?GOAL_LABELS[S.goal]:'NON RENSEIGNÉ — ne présume pas son objectif, observe ses séances et DEMANDE-lui ce qu\'elle vise'}
 ${(()=>{
-  /* ⭐⭐ L'HISTORIQUE DE L'OBJECTIF (ft-v1008) — la moitié qui manquait. Michel, le 19/08 :
+  /* ⭐⭐ L'HISTORIQUE DE L'OBJECTIF (ft-v1010) — la moitié qui manquait. Michel, le 19/08 :
      « As-tu vu que j'avais changé d'objectif ? » → « Non ». Il disait vrai : l'app ne gardait
      que la valeur du JOUR. Depuis, `_goalSet` journalise les CHANGEMENTS, et ils arrivent ici.
      ⛔ RIEN N'EST INVENTÉ (R29) : sans changement enregistré, ce bloc N'EXISTE PAS — pas
@@ -4981,7 +4981,7 @@ function _vcApplyPersona(p){
   // — Identité / profil —
   S.name=a.name||'Testeur'; S.gender=a.gender||'H'; S.email=''; // 'H'=Homme / 'F'=Femme (convention app)
   S.age=a.age||30; S.height=a.height||170; S.bw=a.bw||70;
-  S.goal=a.goal||''; S.goalLog=a.goalLog||[]; S.goal2=a.goal2||'';   // ⛔ anti-fuite : l'historique d'objectif AUSSI (ft-v1008) S.priorities=a.priorities||[]; S.discipline=a.discipline||''; S.level=a.level||'';
+  S.goal=a.goal||''; S.goalLog=a.goalLog||[]; S.goal2=a.goal2||'';   // ⛔ anti-fuite : l'historique d'objectif AUSSI (ft-v1010) S.priorities=a.priorities||[]; S.discipline=a.discipline||''; S.level=a.level||'';
   S.activityLevel=a.activityLevel||'modéré'; S.workType=''; S.smoker=false;
   S.coachTone=a.coachTone||'';
   // — Morphologie / composition / mensurations —

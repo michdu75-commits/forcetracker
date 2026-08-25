@@ -333,7 +333,7 @@ function _cloudSync(){
       // donc le champ : le serveur laisse alors les séances existantes intactes (02/08).
       sessions:S.histTronque?undefined:(S.sessions||[]).slice(0,2000), // ~8-10 ans de séances
       prs:S.prs||{},
-      goalLog:(S.goalLog||[]).slice(-20),      // ⛔ borné à 20 (ft-v1008) — sans ça, changer de
+      goalLog:(S.goalLog||[]).slice(-20),      // ⛔ borné à 20 (ft-v1010) — sans ça, changer de
                                                //    téléphone perdrait l'histoire de l'objectif (R4)
       weightLog:(S.weightLog||[]).slice(-4000), // historique complet (~11 ans de pesées quotidiennes) — entrées minuscules, pas seulement 1 an
       sleepLog:(S.sleepLog||[]).slice(-4000),
@@ -2392,7 +2392,7 @@ function _applyRestoreData(raw){
   // NOTE : _obGender/_obGoal sont des vars onboarding (app.js) — on n'y touche pas depuis setup.js
   // _obDataRestored=true est déjà positionné avant l'appel, donc finishOnboarding() les ignore
   try{if(d.gender)S.gender=d.gender;}catch(e){console.warn('[FT restore] gender',e);}
-  /* ⛔ RESTAURER N'EST PAS CHANGER (ft-v1008) : on écrit `S.goal` DIRECTEMENT ici, exprès —
+  /* ⛔ RESTAURER N'EST PAS CHANGER (ft-v1010) : on écrit `S.goal` DIRECTEMENT ici, exprès —
      passer par `_goalSet` fabriquerait un faux changement daté du jour de la restauration.
      ⭐ Et l'HISTORIQUE se restaure avec, sinon une restauration effacerait l'histoire en
      silence : on ne garde le journal sauvegardé que s'il est au moins aussi riche que celui

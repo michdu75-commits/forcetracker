@@ -2804,7 +2804,7 @@ function obNext(step){
     // étape Niveau (son propre écran) — le niveau est déjà posé par obSetLevel
     if(_obLevel)S.level=_obLevel;
   }else if(_obStep===4){
-    _goalSet(_obGoal,'inscription');   // ⛔ 'inscription' = pas un changement, rien n'est journalisé (ft-v1008)
+    _goalSet(_obGoal,'inscription');   // ⛔ 'inscription' = pas un changement, rien n'est journalisé (ft-v1010)
   }else if(_obStep===6){
     // étape Blessure/zone fragile → Profil Santé (le Gardien la lira)
     _obApplyInjuries();

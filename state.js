@@ -539,7 +539,7 @@ const bz=(kg,r)=>(!kg||!r||r<1)?0:(r===1?kg:fmt(kg/(1.0278-0.0278*Math.min(r,20)
 // 🚫 Ne JAMAIS revenir à `new Date().toISOString()` pour obtenir un jour calendaire.
 const today=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
 
-/* ═══ L'HISTORIQUE DE L'OBJECTIF — UN SEUL PROPRIÉTAIRE (25/08/2026, ft-v1008) ═══════════
+/* ═══ L'HISTORIQUE DE L'OBJECTIF — UN SEUL PROPRIÉTAIRE (25/08/2026, ft-v1010) ═══════════
    ⛔⛔ LE TROU QU'ON BOUCHE, ET IL ÉTAIT ÉCRIT DEPUIS 6 JOURS. Michel, le 19/08, à Milo :
    « As-tu vu que j'avais changé d'objectif ? » → « Non, je ne vois pas de changement d'objectif
    dans ce que j'ai sous la main. » Il a fallu qu'il écrive « j'étais en force max avant » pour
