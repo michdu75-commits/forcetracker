@@ -120,7 +120,15 @@ const EXLIB=[
   {n:'Extension Triceps TRX (Sangles)',g:'Triceps'},{n:'Extension Triceps Allongée TRX (Sangles)',g:'Triceps'},
   // ── Jambes ─────────────────────────────────────────────────
   {n:'Squat à la Barre',g:'Jambes'},{n:'Squat Avant',g:'Jambes'},{n:'Squat Bulgare',g:'Jambes'},
-  {n:'Squat Gobelet (Goblet Squat)',g:'Jambes'},{n:'Squat Sumo',g:'Jambes'},
+  // ⛔ « Squat Sumo » RETIRÉ DU CHOIX le 25/08/2026 — décision de Michel (« squat sumo on
+  //    supprime »), 12 jours après avoir retiré son illustration. Le 13/08 son image avait
+  //    déjà sauté (elle montrait un HALTÈRE entre les jambes, c'est-à-dire le geste du Squat
+  //    Gobelet), et on gardait le fichier « le jour où Michel trouve une figurine de sumo À LA
+  //    BARRE ». Ce jour n'est pas venu. ⭐ RETRAIT et non FUSION : l'identifiant `squat-sumo`
+  //    reste dans EX_IDS (voir RETIRES_VOLONTAIREMENT), donc les séances et records déjà faits
+  //    gardent leur nom, leurs muscles et leurs calories. *On retire du CHOIX, jamais de la
+  //    MÉMOIRE.*
+  {n:'Squat Gobelet (Goblet Squat)',g:'Jambes'},
   {n:'Smith Machine Squat',g:'Jambes'},{n:'Squat Hack (Hack Squat)',g:'Jambes'},
   {n:'Press Jambes 45°',g:'Jambes'},{n:'Press Jambes Horizontale',g:'Jambes'},
   {n:'Press Jambes Verticale',g:'Jambes'},{n:'Press Jambes Inclinée',g:'Jambes'},
@@ -169,7 +177,7 @@ const EXLIB=[
   {n:'Glute Ham Raise (GHD)',g:'Fessiers'},{n:'Kettlebell Swing',g:'Fessiers'},
   // ── Squats / fentes / presses / montées : AUSSI en Fessiers (cuisses + fessiers = 2 muscles principaux, retour Michel 2026-07-16) ──
   {n:'Squat à la Barre',g:'Fessiers'},{n:'Squat Avant',g:'Fessiers'},{n:'Squat Bulgare',g:'Fessiers'},
-  {n:'Squat Gobelet (Goblet Squat)',g:'Fessiers'},{n:'Squat Sumo',g:'Fessiers'},{n:'Smith Machine Squat',g:'Fessiers'},
+  {n:'Squat Gobelet (Goblet Squat)',g:'Fessiers'},{n:'Smith Machine Squat',g:'Fessiers'},
   {n:'Squat Hack (Hack Squat)',g:'Fessiers'},{n:'Squat Pistol',g:'Fessiers'},{n:'Squat Kettlebell',g:'Fessiers'},
   {n:'Belt Squat',g:'Fessiers'},{n:'Safety Bar Squat',g:'Fessiers'},{n:'Overhead Squat',g:'Fessiers'},
   {n:'Pin Squat',g:'Fessiers'},{n:'Cossack Squat',g:'Fessiers'},{n:'Squat Bande Élastique',g:'Fessiers'},

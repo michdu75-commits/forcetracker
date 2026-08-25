@@ -1,6 +1,6 @@
 {
  "genere": "2026-08-25",
- "total": 323,
+ "total": 322,
  "nbRegles": 71,
  "fragiles": 0,
  "ex": {
@@ -2025,14 +2025,6 @@
    "s": "abs,calves,hamstrings",
    "pat": "squat",
    "eq": "corps",
-   "met": 6.5,
-   "frag": 0
-  },
-  "Squat Sumo": {
-   "p": "glutes,quads",
-   "s": "adductors,calves,hamstrings,lower-back",
-   "pat": "squat",
-   "eq": "barre",
    "met": 6.5,
    "frag": 0
   },

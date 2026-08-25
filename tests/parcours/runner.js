@@ -517,6 +517,31 @@ t('⭐⭐ RÈGLE : aucune équivalence d\'import ne vise un exercice introuvable
         blocs.forEach(b=>{for(const x of b.matchAll(/'([^']+)'\s*:\s*'([^']+)'/g)){
           const cible=x[2]; if(!noms.has(alias[cible]||cible))morts.push(x[1]+' → '+cible);}});
         return morts.length===0 ? true : (console.log('       cibles mortes : '+morts.slice(0,4).join(' · ')),false);})());
+/* ⛔⛔ « SQUAT SUMO » — RETIRÉ DU CHOIX le 25/08 (Michel : « squat sumo on supprime »).
+   2ᵉ retrait de la journée, MÊME FORME que le pull-over : retrait, jamais fusion.
+   HISTORIQUE, pour ne pas le redécouvrir : le 13/08 son illustration avait déjà sauté (elle
+   montrait un HALTÈRE entre les jambes = le geste du Squat Gobelet, qui a sa propre photo).
+   On gardait le fichier « le jour où Michel trouve une figurine à la BARRE » — elle n'est
+   jamais venue, et au bout de 12 jours il a préféré retirer l'exercice.
+   ⭐ Le fichier orphelin dormait AUSSI dans le cache du service worker : il était téléchargé
+   par tout le monde pour rien depuis le 13/08. Le 3ᵉ témoin épingle son absence des deux. */
+t('⛔⛔ « Squat Sumo » est sorti du CHOIX, mais son identifiant SURVIT (l\'historique reste lisible)',
+  (()=>{const c=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+        return c.indexOf("{n:'Squat Sumo'")<0
+            && /'squat-sumo':\["Squat Sumo"\]/.test(c);})());
+t('⛔⛔ … et il n\'est ANCIEN NOM de personne : une fusion renommerait ses séances passées',
+  (()=>{const c=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+        const m=c.match(/'[a-z0-9-]+':\[[^\]]*"Squat Sumo"[^\]]*\]/g)||[];
+        return m.length===1 && m[0].indexOf("'squat-sumo':")===0;})());
+/* ⚠️ CE TÉMOIN A ROUGI À TORT AU PREMIER JET, et la leçon se répète : il cherchait la chaîne
+   dans TOUT sw.js — et la trouvait dans le COMMENTAIRE de version, qui nomme le fichier pour
+   expliquer son retrait. Il accusait donc la trace écrite du retrait au lieu du cache.
+   (Même piège qu'en ft-v974 : « il accusait les COMMENTAIRES ».) On mesure désormais la LISTE
+   du cache — le motif `'./exercises/…'` — et rien d'autre. */
+t('⭐ … et son image orpheline a quitté le dépôt ET la LISTE du cache (elle y dormait depuis le 13/08)',
+  !fs.existsSync(path.join(ROOT,'exercises/squat-sumo-avec-haltere.webp'))
+  && fs.readFileSync(path.join(ROOT,'sw.js'),'utf8')
+       .indexOf("'./exercises/squat-sumo-avec-haltere.webp'")<0);
 t('⛔ … et les 4 variantes restent au catalogue (on retire le doublon, pas la famille)',
   (()=>{const c=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
         return ['Pull-over Barre','Pull-over Haltère','Pull-over Poulie','Pullover Machine']

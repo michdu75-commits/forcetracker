@@ -425,7 +425,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1001`** (prochaine : `ft-v1002`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1002`** (prochaine : `ft-v1003`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -435,6 +435,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1002 — 🧹 « SQUAT SUMO » RETIRÉ DU CHOIX — et son histoire était déjà écrite** — Michel : *« squat sumo on supprime, ça me soûle »*. 2ᵉ retrait de la journée.
+
+**⭐ MÊME FORME QUE LE PULL-OVER, ET C'EST DEVENU UN RÉFLEXE** : **RETRAIT**, jamais fusion. L'identifiant `squat-sumo` reste dans `EX_IDS` + `RETIRES_VOLONTAIREMENT`, donc les séances et records déjà faits gardent leur nom, leurs muscles (fessiers/quadriceps + adducteurs, ischios, mollets, bas du dos) et leur **MET de 6,5**. Vérifié dans un vrai navigateur. *On retire du CHOIX, jamais de la MÉMOIRE.*
+
+**⭐⭐ ET SON HISTOIRE ÉTAIT DÉJÀ ÉCRITE, ce qui a évité de la redécouvrir (R30).** Le **13/08**, son illustration avait déjà été retirée — elle montrait un **haltère** tenu entre les jambes, c'est-à-dire le geste du *« Squat Gobelet »*, qui a sa propre photo au catalogue. **On affichait la photo d'un autre exercice.** Le commentaire d'alors disait qu'on gardait le fichier *« le jour où Michel trouve une figurine À LA BARRE »*. 👉 ***Elle n'est jamais venue, et au bout de 12 jours il a préféré retirer l'exercice.*** *Un retrait dont la condition de retour est écrite se referme proprement — y compris quand la réponse finit par être « non ».*
+
+**⭐ LE FICHIER ORPHELIN DORMAIT DANS LE CACHE DU SERVICE WORKER.** `squat-sumo-avec-haltere.webp` était **téléchargé par tout le monde pour rien depuis le 13/08** — 77 Ko de poids mort chez chaque utilisateur. Retiré du dépôt **et** du cache (récupérable dans git si une variante haltère naît un jour).
+
+**⛔ 7 ENDROITS TENUS ALIGNÉS** (comptés avant de toucher, famille #3 de `BUGS.md`) : les **2** entrées `EXLIB` (il était listé dans *Jambes* **et** *Fessiers*) · `EX_IDS` · `RETIRES_VOLONTAIREMENT` · les 2 équivalences d'import · `EX_EN` · le cache SW · et `A-FAIRE-SUR-PC.md`, dont la tâche « trouver une figurine à la barre » **n'avait plus d'objet** et a été close avec son histoire.
+
+**⛔ LES 2 ÉQUIVALENCES NE SONT PAS REDIRIGÉES, EXPRÈS.** `sumo squat` et `wide stance squat` ne visent plus rien, parce qu'**aucune autre fiche ne décrit ce geste**. Un import « sumo squat » sera donc proposé comme exercice **NOUVEAU** — ce qui est honnête — plutôt que rattaché de force au mauvais squat (**R29**).
+
+**⭐⭐ ET LE TÉMOIN ÉCRIT LE MATIN MÊME A SERVI DÈS LE CAS SUIVANT.** La règle générale posée en ft-v1001 — *« aucune équivalence d'import ne vise un exercice introuvable »* — est restée **VERTE**, ce qui prouve que les 2 alias ont bien été retirés. *Sans elle, ils seraient restés à viser un fantôme, exactement comme les 4 du pull-over qui traînaient depuis des semaines.* **R17 paie deux fois dans la même matinée.**
+Tests : **parcours 1384/1384** (+3), croisés 50/50 (empreinte régénérée : **une seule entrée disparaît**), calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou. ⭐ **La preuve est fonctionnelle** : séance et record rejoués dans un navigateur après retrait — nom **non renommé**, muscles et MET intacts. ⚠️ **Et un de mes témoins a rougi À TORT au premier jet** : il cherchait le nom du fichier dans **tout** `sw.js` et le trouvait dans le **commentaire de version**, qui le nomme justement pour expliquer le retrait. *Il accusait la trace écrite du retrait au lieu du cache* — même piège qu'en ft-v974. Il mesure désormais la **liste** du cache (`'./exercises/…'`) et rien d'autre. 🤝 Protocole de partage appliqué. Fichiers : `constants.js`, `log.js`, `sw.js`, `exercises/squat-sumo-avec-haltere.webp` (supprimé), `tests/croises/runner.js`, `tests/croises/catalogue-reference.json`, `tests/parcours/runner.js`, `A-FAIRE-SUR-PC.md`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1002. |
 
 **ft-v1001 — 🧹 LE « PULL-OVER » GÉNÉRIQUE RETIRÉ DU CHOIX — et la FORME du retrait est tout le sujet** — Michel tranche : *« à l'haltère je fais beaucoup mais il y a aussi à la barre, mais le pull over tout seul on peut le retirer »*. Fin d'un doublon qui aura occupé deux versions.
 
@@ -741,27 +756,6 @@ Tests : **parcours 1263/1263** (+7, bloc CII), calculs 266/266, muscles 241/241,
 
 **⛔ LE TON EST CELUI D'UN RAPPEL, PAS D'UNE ALARME** : *« Milo est un coach sportif, pas un médecin — il peut se tromper sur ce genre de sujet. Pour tout ce qui touche à ta santé, c'est ton médecin qui tranche. »* Trait plein et sobre, pour le distinguer du badge Gardien (pointillé rouge vif) qui, lui, est un outil interne réservé à l'admin.
 Tests : **parcours 1256/1256** (+7, bloc CI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 2 rouges**, exactement les 2 comportements neufs. ⭐⭐ **ET LES DEUX TÉMOINS QUI COMPTENT LE PLUS SONT VERTS DES DEUX CÔTÉS** : le texte de Milo **et** son `dataset.raw` (partage / PDF) sont **intacts avant comme après** — *c'est précisément ce qui prouve qu'on a AJOUTÉ et non charcuté*. ⚠️ Les 3 autres verts, eux, sont de **faux verts** : sans la fonction, « pas de rappel sur une réponse normale » passe tout seul. Fichiers : `coach.js`, `style.css`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v983. |
-
-**ft-v982 — 🩹 UNE BLESSURE DITE À MILO ATTEINT ENFIN LE GARDIEN — et l'essai était parqué pour une bonne raison** — Michel : *« fais tout ce que tu peux, je veux que Milo soit fiable »*. C'était le point n°1 de la contre-analyse.
-
-**⛔⛔ LE CHEMIN ÉTAIT ÉTEINT EN PRODUCTION**, derrière `window.__FT_CLONE__`. Une personne pouvait dire sa blessure à Milo, l'accepter en mémoire, **et le Gardien déterministe n'en savait rien**. ⭐ **Mesuré contre l'ancien code** : Profil Santé `""`, Gardien `[]`, consigne absente du contexte. *C'est exactement la question que Michel avait posée — la réponse était oui.*
-
-**⚠️ L'AUDIT EXTÉRIEUR Y VOYAIT UNE RÉGRESSION du retrait du clone. C'est faux, et la nuance compte** : essai **jamais promu**, listé comme tel le jour même en ft-v976. *Personne n'avait rien cassé — une décision n'avait jamais été prise.*
-
-**⭐⭐ ET EN LA PRENANT, ON A TROUVÉ POURQUOI L'ESSAI ÉTAIT PARQUÉ.** `_gardienZonesFromText` détecte des **NOMS DE MUSCLES**, pas des blessures. Mesuré sur 9 formes de mémoire parfaitement anodines : **7 faux positifs**. *« Michel veut prioriser le dos et les épaules »* produisait **deux zones fragiles** ; *« Travaille les biceps le jeudi »* en produisait une. **Le promouvoir tel quel aurait été PIRE que de ne rien faire** — Milo se serait mis à protéger des zones parfaitement saines, et à appauvrir les séances de gens qui n'ont rien.
-
-**⛔ L'ESSAI N'ÉTAIT PAS OUBLIÉ, IL ÉTAIT INCOMPLET** — il lui manquait la moitié qui distingue *« parler de son dos »* de *« avoir mal au dos »*. 👉 D'où `_texteDitUneLimitation()` : **il faut DEUX choses**, une zone **et** un mot de limitation. Après : **0 faux positif et 0 raté sur 17 phrases**. *(C'est la forme du `_noteHonoree` de ft-v967 — un critère observable à deux conditions vaut mieux qu'une devinette.)*
-
-**⭐ AU PASSAGE, « TALON » EST AJOUTÉ à la zone cheville** : c'est le mot que Michel emploie pour sa propre gêne (*« un point douloureux au talon qui réapparaît »*), et **rien ne l'attrapait**.
-
-**⭐⭐ ET LA SECONDE MOITIÉ ÉTAIT ÉTEINTE AUSSI** : la consigne du prompt *« nomme toujours la ZONE »* vivait derrière le **même** garde. Sans elle, Milo ne nomme pas la zone — et le pont ne peut lire que ce qui est écrit. *Un garde-fou dont la moitié amont est débranchée n'est pas à moitié utile : il est inutile.*
-
-**⛔ R2 — LE FILTRE VIT DANS LE PONT, PAS DANS `_gardienZonesFromText`** : l'autre lecteur de cette fonction, les **notes du Profil Santé**, ne contient QUE des blessures par construction. Y mettre le filtre ferait **rater de vraies limitations déjà déclarées à la main**. ⚠️ Et le mode d'échec choisi est la **sur-protection**, jamais la sous-protection : *une adaptation inutile coûte une séance prudente, une protection manquante coûte une blessure* (**R29**).
-
-**⭐ UN TÉMOIN EXISTANT A ROUGI, ET IL AVAIT RAISON** : en activant la consigne, la règle *« accident de moto »* se retrouvait écrite **deux fois** dans le prompt. **Exemple dédoublonné plutôt que témoin désarmé** — le prompt y gagne (**R20**).
-
-**👉 ET LA LEÇON MONTE EN R30, dans le sens inverse** : *avant de PROMOUVOIR un essai parqué, chercher pourquoi il était parqué.* Un garde d'essai est une **question non résolue**, pas un interrupteur — le retirer sans retrouver la question, c'est répondre au hasard.
-Tests : **parcours 1249/1249** (+12, bloc C), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 8 rouges**, et il est **instructif** — les détails imprimés *sont* le trou : Profil Santé `""`, Gardien `[]`, `{"consigne":false,"zone":false}`. ⚠️ **Et 2 des 4 verts sont de FAUX VERTS, autant l'écrire** : *« une préférence n'ajoute rien à la santé »* et *« un Non n'alimente jamais la santé »* étaient verts avant **parce que rien n'ajoutait jamais rien**. Les 2 vrais verts sont ceux du registre, qui ne devait pas bouger. Fichiers : `coach.js`, `tests/parcours/runner.js`, `docs/REGLES-ARCHITECTURE.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v982. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

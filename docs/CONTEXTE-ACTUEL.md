@@ -7,6 +7,20 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1000`.
+- 🧹⭐ **« SQUAT SUMO » RETIRÉ DU CHOIX — LIVRÉ** (ft-v1002). Michel : *« squat sumo on supprime,
+  ça me soûle »*. **Même forme que le pull-over** : RETRAIT, jamais fusion — identifiant gardé,
+  séances et records **non renommés** (muscles + MET 6,5 intacts), vérifié en navigateur.
+  ⭐⭐ **Son histoire était déjà écrite (R30)** : le 13/08 son illustration avait été retirée
+  (elle montrait un **haltère** = geste du Squat Gobelet) et on gardait le fichier *« le jour où
+  Michel trouve une figurine À LA BARRE »*. Elle n'est jamais venue → il a préféré retirer
+  l'exercice. *Un retrait dont la condition de retour est écrite se referme proprement, même
+  quand la réponse finit par être « non ».*
+  ⭐ **Le fichier orphelin dormait dans le CACHE du service worker** : téléchargé par tout le
+  monde pour rien depuis le 13/08. Retiré du dépôt et du cache.
+  ⛔ **7 endroits alignés** (2 entrées EXLIB — Jambes *et* Fessiers — · EX_IDS ·
+  RETIRES_VOLONTAIREMENT · 2 équivalences · EX_EN · cache SW · `A-FAIRE-SUR-PC` close).
+  ⭐⭐ **Le témoin de ft-v1001 a servi dès le cas suivant** : la règle « aucune équivalence
+  d'import ne vise un exercice introuvable » est restée verte — R17 paie deux fois en une matinée.
 - 🧹⭐⭐ **LE « PULL-OVER » GÉNÉRIQUE RETIRÉ DU CHOIX — LIVRÉ** (ft-v1001). Décision de Michel :
   *« à l'haltère je fais beaucoup mais il y a aussi à la barre, mais le pull over tout seul on
   peut le retirer »*. ⭐⭐ **Ce qui décide de tout est la FORME du retrait** : le projet distingue

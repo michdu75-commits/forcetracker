@@ -2204,7 +2204,10 @@ Object.assign(_EX_EQUIV,{
   'dumbbell goblet squat':'Squat Gobelet (Goblet Squat)','goblet squat':'Squat Gobelet (Goblet Squat)','kettlebell goblet squat':'Squat Gobelet (Goblet Squat)',
   'hack squat':'Squat Hack (Hack Squat)','machine hack squat':'Squat Hack (Hack Squat)','plate loaded hack squat':'Squat Hack (Hack Squat)',
   'one leg squat':'Squat Pistol','pistol':'Squat Pistol','pistol squat':'Squat Pistol','single leg squat':'Squat Pistol',
-  'sumo squat':'Squat Sumo','wide stance squat':'Squat Sumo',
+  // ⛔ 'sumo squat' / 'wide stance squat' RETIRÉS le 25/08 : ils visaient « Squat Sumo »,
+  //    sorti du catalogue ce jour-là. Aucune autre fiche ne décrit ce geste, donc on ne les
+  //    redirige pas — un import « sumo squat » sera proposé comme exercice NOUVEAU, ce qui
+  //    est honnête, plutôt que rattaché de force à un squat qui n'est pas le bon.
   'back squat':'Squat à la Barre','barbell back squat':'Squat à la Barre','bb squat':'Squat à la Barre','high bar squat':'Squat à la Barre','low bar squat':'Squat à la Barre',
   'behind neck lat pulldown':'Tirage Nuque','behind neck pulldown':'Tirage Nuque',
   'front lat pulldown':'Tirage Poulie Haute (Lat Pulldown)','front pulldown':'Tirage Poulie Haute (Lat Pulldown)','lat pull front':'Tirage Poulie Haute (Lat Pulldown)',
@@ -6996,17 +6999,15 @@ const EX_YT={
   'Squat à la Barre':              {img:'exercises/homme-faisant-un-squat-avec-barre.webp'},
   'Squat Avant':                   {img:'exercises/squat-barre-devant-front.webp'}, // la vraie version BARRE (zip Michel 01/08 — avant : version haltères)
   'Squat Gobelet (Goblet Squat)':  {img:'exercises/squat-goblet-kettlebell.webp'},
-  /* ⚠️ RETRAIT VOLONTAIRE — « Squat Sumo » n'a PLUS d'illustration (13/08/2026, Michel :
-     *« je pense que je ne l'ai pas mis, retire-le stp »*). Ce n'est pas un oubli, ne pas
-     la « réparer » (R30).
-     POURQUOI : le squat sumo est un mouvement de BARRE (arbitrage Michel), or l'image
-     montrait un HALTÈRE tenu entre les jambes — c'est-à-dire le geste du « Squat Gobelet
-     (Goblet Squat) », qui existe déjà au catalogue avec sa propre photo. On affichait donc
-     la photo d'un autre exercice. *Mieux vaut aucune image qu'une image fausse* : sans
-     elle, `_exVideoHtml` retombe proprement sur le bouton « Voir le tutoriel ».
-     LE FICHIER `exercises/squat-sumo-avec-haltere.webp` EST GARDÉ dans le dépôt, mis de
-     côté : le jour où Michel trouve une figurine de squat sumo À LA BARRE, on rebranche
-     ici. (Suivi dans `A-FAIRE-SUR-PC.md`.) */
+  /* ⛔⛔ « Squat Sumo » N'EST PLUS AU CATALOGUE (25/08/2026, décision Michel : « squat sumo
+     on supprime »). L'entrée d'image a donc disparu avec lui, et le fichier
+     `exercises/squat-sumo-avec-haltere.webp` a été retiré du dépôt ET du cache du service
+     worker — il y dormait depuis le 13/08 et était téléchargé par tout le monde pour rien.
+     HISTORIQUE, pour ne pas le redécouvrir : le 13/08 l'image avait déjà été retirée parce
+     qu'elle montrait un HALTÈRE entre les jambes, c'est-à-dire le geste du « Squat Gobelet »
+     qui existe déjà. On attendait une figurine À LA BARRE ; elle n'est jamais venue, et au
+     bout de 12 jours Michel a préféré retirer l'exercice. ⭐ Son identifiant `squat-sumo`
+     survit dans EX_IDS : les séances déjà faites gardent tout. */
   'Fentes':                        {img:'exercises/fente-avant-barre-femme.webp'},
   'Leg Curl Couché Machine':       {img:'exercises/leg-curl-allonge.webp'},
   'Curl Ischio-jambiers (Leg Curl)':{img:'exercises/leg-curl-allonge.webp'},
@@ -7472,7 +7473,7 @@ const EX_EN={
   'Squat Barre avec Bandes Élastiques':'banded barbell squat',
   'Squat TRX (Sangles)':'trx squat','Split Squat TRX (Sangles)':'trx split squat','Squat Pistol TRX (Sangles)':'trx pistol squat',
   'Squat à la Barre':'squat barbell','Squat Avant':'front squat','Squat Bulgare':'bulgarian split squat',
-  'Squat Gobelet (Goblet Squat)':'goblet squat','Squat Sumo':'sumo squat',
+  'Squat Gobelet (Goblet Squat)':'goblet squat',
   'Smith Machine Squat':'smith machine squat','Squat Hack (Hack Squat)':'hack squat',
   'Leg Press':'leg press machine',
   'Extension Quadriceps (Leg Extension)':'leg extension machine',
