@@ -8808,7 +8808,10 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
      plus tard. On interdit le nombre en dur, point. Le compte reel est annonce par
      `startEvalBench` dans la confirmation, avant tout appel paye. */
   const _H = fs.readFileSync(path.join(__dirname,'..','..','index.html'),'utf8');
-  const _blocBench = (_H.match(/BENCHMARK \(est-ce qu'il SUIT ses règles \?\)[\s\S]{0,2500}?startEvalBench\(true\)[^\n]*\n/)||[''])[0];
+  /* ⚠️ La fenêtre part du TITRE du groupe admin, pas du sous-titre « BENCHMARK » : le
+     4ᵉ libellé faux (« 16 messages ISOLÉS ») vivait dans l'intro du groupe, AU-DESSUS.
+     Une fenêtre qui commence après le mensonge ne le voit pas. */
+  const _blocBench = (_H.match(/🛡️ Milo — le mesurer[\s\S]{0,4000}?startEvalBench\(true\)[^\n]*\n/)||[''])[0];
   const _nbEnDur = _blocBench.match(/\b\d{2,3}\s*(scénarios|pièges|messages)\b/g)
                 || _blocBench.match(/×\s*\d{2,3}\b/g);
   const libelleSansNombre = _blocBench.length>200 && !_nbEnDur;
