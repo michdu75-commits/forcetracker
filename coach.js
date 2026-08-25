@@ -1332,7 +1332,15 @@ function _persistCoachConvs(){
 function _convLightMsgs(){
   // tout le fil (borné par la place), plus seulement les 40 derniers : ce qu'on range
   // doit être ce qu'on avait, sinon « ranger » redevient « perdre une partie ».
-  return _fitBudget(coachHistory.map(m=>({role:m.role, content:_lightMsg(m).content})), _HIST_BUDGET);
+  /* ⛔⛔ ON REND `_lightMsg(m)` EN ENTIER, PAS SEULEMENT SON `.content` (ft-v1008).
+     Cette ligne reconstruisait `{role, content}` à la main et JETAIT donc tout le reste —
+     l'horodatage et le drapeau `_silent`. Or c'est ELLE qui alimente `S.coachConversations`
+     ET l'export : les dates mouraient à l'archivage, en silence.
+     ⚠️ Trouvé en mesurant le VRAI chemin (archiver puis relire), pas la fonction : mon
+     premier témoin appelait `_lightMsg` directement et était VERT pendant que la chaîne
+     réelle perdait tout. *Un test qui n'emprunte pas le chemin de la production ne teste
+     rien, il rassure* — c'est la leçon n°1 de `docs/SUIVI-AUDIT.md`. */
+  return _fitBudget(coachHistory.map(_lightMsg), _HIST_BUDGET);
 }
 function _convTitle(msgs){
   const fu=(msgs||[]).find(m=>m.role==='user'&&typeof m.content==='string'&&m.content.trim());

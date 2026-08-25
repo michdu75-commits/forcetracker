@@ -12814,13 +12814,25 @@ console.log('\n-- CXVI. L\'objectif garde son histoire, les messages leur date (
     const vieux=buildCoachContext('Fais-moi une seance');
     o.vieuxListe = /SON OBJECTIF A CHANG/.test(vieux);
     o.vieuxSansConsigne = !/TIENS-EN COMPTE/.test(vieux);
-    // ⑧ HORODATAGE : un message garde sa date a travers le stockage.
+    /* ⑧ HORODATAGE — PAR LE VRAI CHEMIN, ET C'EST TOUT LE SUJET.
+       ⚠️⚠️ Mon 1er témoin appelait `_lightMsg` DIRECTEMENT et était VERT pendant que la chaîne
+       réelle perdait tout : `_convLightMsgs` reconstruisait `{role, content}` à la main et
+       jetait la date. C'est ELLE qui alimente `S.coachConversations` et l'export.
+       *Un test qui n'emprunte pas le chemin de la production ne teste rien, il rassure.*
+       On archive donc pour de vrai, puis on ROUVRE, puis on relit le stockage. */
     const av=Date.now();
-    coachHistory=[]; coachHistory.push({role:'user',content:'test',ts:av});
-    const light=_lightMsg(coachHistory[0]);
-    o.tsGarde = light.ts===av;
-    // ⑨ ⛔ ON N'INVENTE PAS de date pour un ancien message (R29).
-    o.tsPasInvente = _lightMsg({role:'user',content:'vieux message'}).ts===undefined;
+    coachHistory=[];
+    coachHistory.push({role:'user',content:'message daté',ts:av});
+    coachHistory.push({role:'assistant',content:'réponse datée',ts:av+1500});
+    coachHistory.push({role:'user',content:'vieux message sans date'});   // ⛔ rien à inventer
+    S.coachConversations=[];
+    _archiveCurrentConv();
+    const conv=(S.coachConversations||[])[0]||{};
+    o.tsArchive = JSON.stringify((conv.messages||[]).map(m=>m.ts?(m.ts-av):null));
+    loadCoachConv(conv.id);                                   // rouvrir ne doit rien effacer
+    o.tsApresReouverture = JSON.stringify(coachHistory.map(m=>m.ts?(m.ts-av):null));
+    try{ o.tsStockage = JSON.stringify(JSON.parse(localStorage.getItem('ft4_coach_hist')||'[]').map(m=>m.ts?(m.ts-av):null)); }
+    catch(e){ o.tsStockage='err'; }
     return o;
    }catch(e){return {err:String(e)};}
   });
@@ -12845,10 +12857,14 @@ console.log('\n-- CXVI. L\'objectif garde son histoire, les messages leur date (
     t('⛔ un changement ANCIEN est listé mais SANS la consigne d\'agir (sinon c\'est du bruit, R19)',
       F.vieuxListe===true && F.vieuxSansConsigne===true,
       'listé='+F.vieuxListe+' sans consigne='+F.vieuxSansConsigne);
-    t('⭐⭐ HORODATAGE : la date d\'un message SURVIT au stockage (`_lightMsg`)',
-      F.tsGarde===true, '');
-    t('⛔ … et aucune date n\'est INVENTÉE pour un ancien message (R29)',
-      F.tsPasInvente===true, '');
+    t('⭐⭐ HORODATAGE : les dates survivent à l\'ARCHIVAGE (le vrai chemin, pas `_lightMsg` seul)',
+      F.tsArchive==='[0,1500,null]', 'reçu : '+F.tsArchive);
+    t('⭐⭐ … et ROUVRIR une conversation ne les efface pas (c\'était le 2ᵉ trou)',
+      F.tsApresReouverture==='[0,1500,null]', 'reçu : '+F.tsApresReouverture);
+    t('⭐ … ni le passage par le stockage du téléphone',
+      F.tsStockage==='[0,1500,null]', 'reçu : '+F.tsStockage);
+    t('⛔ le 3ᵉ message n\'a JAMAIS de date inventée (le `null` final est la preuve — R29)',
+      typeof F.tsArchive==='string' && /,null\]$/.test(F.tsArchive), 'reçu : '+F.tsArchive);
   }
   await cx.close();
 }
