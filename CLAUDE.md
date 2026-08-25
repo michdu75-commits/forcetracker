@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1005`** (prochaine : `ft-v1006`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1006`** (prochaine : `ft-v1007`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -436,6 +436,19 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1006 — 🔁 LE SÉLECTEUR D'EXERCICES RESTE OUVERT — 6 exercices, 1 seul aller-retour** — première brique du chantier écran Séance (`docs/SEANCE-DESSAI.md` §8), et le goulot que Michel a senti en premier en préparant la création de programmes : *« il va falloir améliorer aussi l'accès aux exercices… et il va falloir que ce soit rapide »*.
+
+**⛔ LE DÉFAUT ÉTAIT UNE SEULE LIGNE, ET IL COÛTAIT CHER À CHAQUE SÉANCE.** `addExercise()` appelait `closeExPicker()` **à chaque ajout** : monter une séance de 6 exercices demandait **6 allers-retours** — rouvrir le sélecteur, retaper une recherche, six fois. *Ce n'était pas un bug, c'était un choix jamais rediscuté depuis que l'app n'ajoutait qu'un exercice à la fois.*
+
+**⛔⛔ SEUL LE MODE « WORKOUT » RESTE OUVERT, et c'est toute la nuance.** `replace`, `replaceSess`, `addSess`, `prog` et `addToGroup` désignent **UNE place précise** et se ferment tout seuls — ils rendent plus haut dans la fonction et ne passent jamais par ce chemin. ⭐ **Un mode « remplacer » resté ouvert AJOUTERAIT au lieu de remplacer, en silence** : c'est le témoin le plus important du bloc, et il vérifie les deux moitiés (il a fermé **et** il a bien remplacé sans rien ajouter).
+
+**⚠️ ET LE SCROLL A DÛ DÉMÉNAGER AVEC — trouvé en le faisant, pas en le relisant.** `scrollIntoView` faisait défiler l'écran **derrière la modale** : un mouvement qu'on ne voit pas, sur une page qu'on ne regarde pas, et à la fermeture on se retrouvait n'importe où. Il est reporté à `closeExPicker`, **au moment où l'écran redevient visible**, et seulement si on a réellement ajouté quelque chose.
+
+**⛔ LA SORTIE RESTE ÉVIDENTE (R24 — informer sans bloquer)** : bouton « Fermer », poignée et tap à l'extérieur marchent tous, et le titre dit où on en est (*« Choisir un exercice · 3 ajoutés »*). ⚠️ **Le focus n'est PAS remis dans la recherche sur mobile** : le clavier masquerait la liste qu'on vient d'ouvrir.
+
+**⛔⛔ LE BOUTON CENTRAL « + » N'A PAS BOUGÉ D'UN PIXEL** (règle d'or #9) — **mesuré avant/après** (152, 880, 63 des deux côtés), pas regardé.
+Tests : **parcours 1410/1410** (+8, bloc CXIV), croisés 50/50, calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 2 rouges, et il est INSTRUCTIF** — le détail imprimé *est* le défaut : `{"ouvertPartout":false}`. ⭐⭐ **Et AUCUN faux vert** : les 6 autres témoins tournent **des deux côtés** (la sortie marchait déjà, le mode remplacer fermait déjà, le bouton central ne bougeait déjà pas) — ce sont les non-régressions, et c'est exactement ce qu'elles doivent faire. ⭐ **Vérifié à l'écran** : capture du sélecteur après 3 ajouts, titre à jour, recherche prête. 🤝 Protocole de partage appliqué (ligne 🟡 poussée avant de coder). Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1006. |
 
 **ft-v1005 — 🔢 LE BENCHMARK ANNONÇAIT « 16 SCÉNARIOS » ALORS QU'IL EN PORTE 53** — Michel, juste avant de le lancer depuis l'app : *« oui corrige les libellés avant »*.
 
@@ -736,23 +749,6 @@ Tests : **parcours 1295/1295** (+15, blocs CV + la mesure du profil blessé), ca
 
 ⚠️ **Comportement différé mais nommé (R3)** : personne ne lit encore `codeDouteux`. Il existe pour qu'un audit puisse un jour retrouver les entrées venues d'un code non vérifié — pas pour être affiché aujourd'hui.
 Tests : **parcours 1279/1279** (+8, bloc CIV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 4 rouges, et il est INSTRUCTIF** — le détail imprimé *est* le bug : **`reçu : scan,scan,scan,scan`**, et pour le cas de Michel **`reçu : scan`**. ⭐⭐ **Le témoin des quatre chemins a été sorti du garde EXPRÈS** : il mesure un comportement qui **existait déjà, mal**, donc il tourne des deux côtés — sinon le contrôle négatif n'aurait dit qu'une chose, *« la fonction n'existe pas »*, et n'aurait rien prouvé (leçon de ft-v968). ⚠️ **Et un vert est un FAUX vert, autant l'écrire** : *« le drapeau est ABSENT sur un chemin décodé »* passe tout seul contre l'ancien code, où le drapeau n'existe nulle part. Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v987. |
-
-**ft-v986 — ✏️ « À LA MAIN » EN PREMIER ET EN ROUGE — et deux témoins qui rougissaient à minuit** — Michel : *« intervertis, à la main en premier et en rouge »*.
-
-**⚠️⚠️ CE CHANGEMENT REMPLACE UNE DÉCISION QUI AVAIT SA RAISON ÉCRITE (R30), et la raison d'avant reste lisible** : le code-barres était premier depuis le 15/08 parce qu'il est **gratuit, illimité et pas caché derrière l'IA**. Elle est conservée **dans le code ET dans le témoin** — *sinon quelqu'un « répare » ça dans six mois en croyant retrouver un oubli.*
-
-**⛔ ET LA DONNÉE MESURÉE VA DANS LE SENS DE L'ANCIEN ORDRE, autant l'écrire.** Sur les **23 entrées réelles** de son journal : **scan 6 · ciqual 4 · historique 4 · ia-texte 3 · recherche 1 · manuel 1**. *Le chemin le plus emprunté passe en 3ᵉ position, le moins emprunté passe en rouge.* 👉 **On applique quand même** : c'est un arbitrage d'**usage**, pas un fait technique, et c'est Michel qui décide. **La mesure est là pour pouvoir revenir en arrière en connaissance de cause, pas pour contredire la consigne.**
-
-**⚠️ ET LE VRAI COÛT EST AILLEURS** : *« à la main » n'est **pas** gratuit* — le champ libre part en **estimation IA** (c'est le chemin de son huile d'olive à 135 kcal). On met donc en rouge le bouton qui **consomme du quota**, à la place de celui qui n'en consomme pas. À surveiller dans `origine` : si `ia` grimpe, c'est ce bouton.
-
-**⭐⭐ MAIS LE PLUS IMPORTANT DE CETTE VERSION N'EST PAS LE BOUTON : DEUX TÉMOINS SONT PASSÉS AU ROUGE TOUT SEULS, À 00 H 34, SANS QU'AUCUN CODE APPLICATIF N'AIT BOUGÉ.** ⭐ **Cause** : `today()` calcule le jour en heure **LOCALE** (`state.js:529` — *« l'heure du téléphone, pas Greenwich »*), et **six fixtures de test** le calculaient en **UTC**. Entre 22 h UTC et minuit, les deux ne désignent plus le même jour — et *« demain » en UTC vaut « aujourd'hui » à Paris*.
-
-**⭐⭐ L'APP EST JUSTE ; CE SONT LES TÉMOINS QUI MENTAIENT.** Ils étaient **verts 22 heures par jour et rouges 2 heures**. *Un témoin qui dépend de l'heure à laquelle on le lance ne protège rien — il rassure.* C'est la famille **fuseaux horaires** de `BUGS.md`, cette fois **dans l'outil de mesure lui-même**.
-
-**⛔ COMPTER LES ENDROITS — 6ᵉ fois cette semaine, et c'est ce qui a payé** : **5 fixtures dans `parcours` + 1 dans `calculs`**, dont **une seule rougissait ce soir**. *Les cinq autres étaient latentes* — elles auraient rougi un autre soir, sur un autre témoin, et on aurait cherché dans le code applicatif. Toutes repartent désormais du **`today()` de l'app** et marchent **à MIDI**, comme `journalNav` : **une seule définition du jour** (**R2**).
-
-**🧪 ET LE BENCHMARK PASSE DE 16 À 21 SCÉNARIOS** — 5 pièges promus depuis `docs/JOURNAL-DE-TEST.md`, **tous vécus en salle, aucun inventé** : represcrire demain ce qui a été fait aujourd'hui (**EV-017**) · un repos inexécutable sur du lourd (**EV-018**) · une charge au-dessus du tenable (**EV-019**) · une variation de balance à 24 h lue comme du tissu (**EV-020**) · la récitation du contexte système (**EV-021**). ⚠️ **Motifs volontairement étroits** (**R19**) — et EV-017 ne rougit que si l'exercice est **prescrit** (ligne portant des séries), jamais s'il est **nommé pour dire qu'on l'évite : c'est le bon comportement, il devait rester vert.**
-Tests : **parcours 1271/1271** (+2), calculs **266/266** (le rouge de minuit corrigé), muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Pas de contrôle négatif ici, et autant le dire** : un changement d'**ordre** ne se juge pas contre l'ancien code (le témoin d'avant exigeait l'inverse, il rougirait par construction) — il se juge à **ce qui n'a pas bougé**, et les 1 269 autres témoins sont restés verts sans le clone ni le catalogue. ⭐ **Le vrai contrôle de cette version est temporel** : les 6 fixtures corrigées ont été vérifiées **à l'heure exacte qui les faisait échouer**. Fichiers : `screens.js`, `tests/parcours/runner.js`, `tests/calculs/runner.js`, `tests/milo/eval-scenarios.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v986. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

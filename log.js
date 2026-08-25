@@ -2427,9 +2427,36 @@ function addExercise(name){
   const sets=_mod.map((m,i)=>{const pp=_pa[i];return{kg:pp?pp.kg:0,reps:pp?pp.reps:5,type:m.type,done:false,rm1:0};});
   S.wkt.exs.push({name,sets});
   _expandedEx=S.wkt.exs.length-1;
-  persist();closeExPicker();renderExBlocks();
-  setTimeout(()=>{const el=document.getElementById('ex-block-'+_expandedEx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);
+  persist();renderExBlocks();
+  /* ⭐⭐ LE SÉLECTEUR RESTE OUVERT (25/08/2026) — c'est le goulot que Michel a senti en premier
+     en préparant la création de programmes : *« il va falloir améliorer aussi l'accès aux
+     exercices… et il va falloir que ce soit rapide »*.
+     AVANT : `closeExPicker()` était appelé ici, à chaque ajout. Monter une séance de 6 exercices
+     demandait donc **6 allers-retours** — rouvrir le sélecteur, retaper une recherche, six fois.
+     ⛔ SEUL LE MODE « WORKOUT » RESTE OUVERT, et c'est la nuance qui compte : `replace`,
+     `replaceSess`, `addSess`, `prog` et `addToGroup` désignent UNE place précise et se ferment
+     donc tout seuls, plus haut dans cette fonction. Ils ne passent jamais ici (chacun rend avant).
+     ⚠️ ET LE SCROLL A DÛ PARTIR AVEC : `scrollIntoView` faisait défiler l'écran DERRIÈRE la
+     modale — un mouvement qu'on ne voit pas, sur une page qu'on ne regarde pas. Il est reporté
+     à la fermeture (`closeExPicker`), au moment où l'écran redevient visible.
+     ⛔ La sortie reste ÉVIDENTE (R24 : informer sans bloquer) : le bouton « Fermer », la poignée
+     et le tap à l'extérieur marchent tous, et le titre dit combien on a ajouté. */
+  const s=document.getElementById('ex-search'); if(s){s.value='';}
+  filterEx();
+  _exAjoutes++;
+  _majTitreExPicker();
+  if(s&&!('ontouchstart' in window))s.focus();   // ⚠️ pas sur mobile : le clavier masquerait la liste
   toast(name+' ajouté !','info');
+}
+/* Compteur de ce qui vient d'être ajouté SANS fermer — remis à zéro à chaque ouverture.
+   Il sert à deux choses : voir sa progression, et se rappeler qu'on peut continuer. */
+let _exAjoutes=0;
+function _majTitreExPicker(){
+  const h=document.querySelector('#mod-ex .modal h2');
+  if(!h)return;
+  h.textContent = _exAjoutes>0
+    ? 'Choisir un exercice · '+_exAjoutes+' ajouté'+(_exAjoutes>1?'s':'')
+    : 'Choisir un exercice';
 }
 // Remplacer un exercice mal choisi (ex. Développé Décliné → Développé Couché) SANS perdre les séries.
 function openExPickerForReplace(ei){
@@ -4191,9 +4218,19 @@ function openExPicker(){
   _exGrp=null;
   const s=document.getElementById('ex-search');if(s)s.value='';
   filterEx();
+  _exAjoutes=0; _majTitreExPicker();   // le compteur repart à chaque ouverture
   document.getElementById('mod-ex').classList.add('open');
 }
-function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;if(_exPickerMode==='replace'||_exPickerMode==='replaceSess'||_exPickerMode==='addSess'){_exPickerMode='workout';_replaceEi=null;}}
+function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;if(_exPickerMode==='replace'||_exPickerMode==='replaceSess'||_exPickerMode==='addSess'){_exPickerMode='workout';_replaceEi=null;}
+  /* ⚠️ LE SCROLL SE FAIT ICI, PAS À L'AJOUT (25/08). Tant que le sélecteur reste ouvert, faire
+     défiler l'écran du dessous est un mouvement invisible — et à la fermeture on se retrouvait
+     n'importe où. On amène donc la vue sur le dernier exercice ajouté au moment où l'écran
+     redevient visible, et seulement si on a réellement ajouté quelque chose. */
+  if(_exAjoutes>0){
+    _exAjoutes=0; _majTitreExPicker();
+    setTimeout(()=>{const el=document.getElementById('ex-block-'+_expandedEx);
+      if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);
+  }}
 // Favoris = exercices les plus utilisés (depuis l'historique) → remontés en tête de recherche + ★ (ft-v562)
 let _exFavSet=new Set();
 function _exUsageMap(){

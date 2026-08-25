@@ -6,7 +6,22 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1005`.
+- **Version en ligne (live) :** `ft-v1006`.
+- 🔁⭐ **LE SÉLECTEUR D'EXERCICES RESTE OUVERT — LIVRÉ** (ft-v1006). **Première brique du chantier
+  écran Séance** (`docs/SEANCE-DESSAI.md` §8, point 1), et le goulot que Michel a senti en premier :
+  *« il va falloir améliorer aussi l'accès aux exercices… et que ce soit rapide »*.
+  ⛔ **Une seule ligne coûtait cher** : `addExercise()` appelait `closeExPicker()` à chaque ajout →
+  6 exercices = **6 allers-retours**. Désormais les ajouts s'enchaînent, la recherche est vidée et
+  prête, et le titre dit combien on a ajouté.
+  ⛔⛔ **Seul le mode « workout » reste ouvert** : `replace`/`replaceSess`/`addSess`/`prog`/
+  `addToGroup` désignent UNE place et ferment. *Un « remplacer » resté ouvert AJOUTERAIT au lieu de
+  remplacer, en silence* — c'est le témoin le plus important du bloc.
+  ⚠️ **Le scroll a dû déménager** : `scrollIntoView` défilait DERRIÈRE la modale. Reporté à la
+  fermeture, quand l'écran redevient visible.
+  ⛔⛔ **Bouton central « + » inchangé au pixel** (règle d'or #9), mesuré et non regardé.
+  ⏭️ **Reste du chantier** : ② porte « Créer un programme » + renommer « + Ajouter » en « Créer ma
+  séance » · ③ le débrief chiffré en local · ④ sortir le générateur du cadre « débutant » ·
+  ⑤ ranger Scanner/Importer.
 - 🔢⭐ **LE BENCHMARK N'ANNONCE PLUS « 16 SCÉNARIOS » ALORS QU'IL EN PORTE 53 — LIVRÉ**
   (ft-v1005). Michel, avant de le lancer depuis l'app : *« oui corrige les libellés avant »*.
   **Quatre libellés écrits en dur** dans le groupe admin « 🛡️ Milo — le mesurer » (*16 messages*,
