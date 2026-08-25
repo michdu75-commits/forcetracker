@@ -42,8 +42,6 @@ fichiers, la version.
 
 | État | Ce que ça veut dire |
 |---|---|
-| 🟢 | 25/08 16:22 → 16:40 | session-B (claude-md-docs) | plafond IA à 150 pour les comptes de développement (le banc d'essai fait 53 appels, il se faisait couper à 50) + l'email posé dans `eval.js`, sinon le relèvement ne l'atteignait pas | `Code.js`, `tests/milo/eval.js` | — (backend) |
-| 🟢 | 25/08 15:50 → 16:10 | session-B (claude-md-docs) | DOC de cadrage : la séance d'essai (parcours découverte → Milo premium). **Aucun code**, aucun fichier de la nutrition — rien à construire encore, le doc fixe les décisions avant de coder | `docs/SEANCE-DESSAI.md`, `CLAUDE.md` | — (doc) |
 | 🟡 **en cours** | quelqu'un travaille dessus **maintenant** — ne pas prendre ce sujet |
 | 🟢 **livré** | terminé, la version est indiquée |
 | 🔴 **abandonné** | arrêté en route, avec la raison (une session qui meurt, un changement de cap) |
@@ -102,6 +100,8 @@ bugs « fuseaux horaires » de `BUGS.md`, appliquée à nous-mêmes.
 | État | Quand (UTC) | Qui | Sujet | Fichiers | Version |
 |---|---|---|---|---|---|
 | 🟢 | 25/08 18:20 → 18:40 | session-A (project-status) | les libellés du benchmark annonçaient « 16 scénarios » alors qu'il en porte 53 — nombre RETIRÉ (il grandit, R35), + témoin qui l'interdit | `index.html`, `tests/parcours/runner.js`, `sw.js` | ft-v1005 |
+| 🟢 | 25/08 16:22 → 16:40 | session-B (claude-md-docs) | plafond IA à 150 pour les comptes de développement (le banc d'essai fait 53 appels, il se faisait couper à 50) + l'email posé dans `eval.js`, sinon le relèvement ne l'atteignait pas | `Code.js`, `tests/milo/eval.js` | — (backend) |
+| 🟢 | 25/08 15:50 → 16:10 | session-B (claude-md-docs) | DOC de cadrage : la séance d'essai (parcours découverte → Milo premium). **Aucun code**, aucun fichier de la nutrition — rien à construire encore, le doc fixe les décisions avant de coder | `docs/SEANCE-DESSAI.md`, `CLAUDE.md` | — (doc) |
 | 🟢 | 25/08 15:55 → 17:40 | session-A (project-status) | Journal nutrition : bande des 7 jours glissants, cliquable, un anneau par jour | `app.js`, `screens.js`, `tests/parcours/runner.js` | ft-v1004 |
 | 🟢 | 25/08 14:31 → 15:20 | session-A (project-status) | la quantité sur un aliment repris SANS pour-100 g (fiche OFF incomplète) → portions | `app.js`, `tests/parcours/runner.js` | ft-v1003 |
 | 🟢 | 25/08 11:51 → 12:35 | session-A (project-status) | dossier UX Nutrition pour Claude Design (écran mesuré : Macros 2 800 px = 3,3 écrans, 5 constats) | `docs/UX-NUTRITION-A-COLLER.md` | — (doc) |
