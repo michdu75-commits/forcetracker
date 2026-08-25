@@ -16,6 +16,11 @@
   qui n'était **pas** une suppression (lancer PT-001/VC/le benchmark, rejouer les rouges,
   importer des pesées, fusionner, vider le cache, vider la séance, abandonner la séance,
   refaire l'inscription).
+  ⚠️ **Correction de Michel le jour même** : le 10ᵉ (*« Refaire l'inscription »*) est **inatteignable
+  en production** — `resetOnboardingTest()` est gardée par `window.__FT_CLONE__`, et le clone est
+  parti le 23/08 (ft-v976). **9 fenêtres réellement visibles + 1 derrière la garde.** ⛔ Le code
+  reste (**R30** : une garde de clone est une *question non résolue*, pas un interrupteur) et son
+  libellé est corrigé avec les autres, pour qu'un essai promu ne reparte pas avec le défaut.
   ⛔⛔ **La jumelle, trouvée en la cherchant (R8)** : *« Fusionner les exercices »* existe à
   **deux endroits** — `log.js` disait « Fusionner », `setup.js` disait **« Supprimer » pour un
   RENOMMAGE** (**R2**).
