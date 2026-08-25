@@ -6,7 +6,25 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1000`.
+- **Version en ligne (live) :** `ft-v1005`.
+- 🔢⭐ **LE BENCHMARK N'ANNONCE PLUS « 16 SCÉNARIOS » ALORS QU'IL EN PORTE 53 — LIVRÉ**
+  (ft-v1005). Michel, avant de le lancer depuis l'app : *« oui corrige les libellés avant »*.
+  **Quatre libellés écrits en dur** dans le groupe admin « 🛡️ Milo — le mesurer » (*16 messages*,
+  *16 pièges*, *16 scénarios*, *2 × 16*) étaient restés à 16 pendant que le banc d'essai passait
+  **16 → 21 → 53 en trois semaines** — c'est **R35** au pied de la lettre : *il grandit à chaque
+  bug, il n'a pas de taille cible*.
+  ⛔⛔ **On n'a pas mis « 53 » à la place** : ce serait la même dette six semaines plus tard, sur
+  l'écran même qui sert à décider d'une dépense. **Le nombre est retiré.**
+  ⭐ **Le compte et le prix existaient déjà, justes, à deux mètres** : `startEvalBench` calcule
+  `SC.length` et `_evPrix(n)` et les annonce dans la **confirmation, avant** le premier appel payé
+  — le libellé statique portait une **seconde source de vérité** pour rien (**R2**), et c'est
+  elle qui mentait.
+  ⭐⭐ **Le témoin INTERDIT le nombre au lieu de l'épingler** : vérifier « 53 » rougirait à la 54ᵉ
+  promotion et on l'ajusterait sans réfléchir. Il refuse **tout** nombre à 2-3 chiffres dans ce
+  bloc → la prochaine dérive fait **rougir la livraison**.
+  ⚠️ **Ma 1ʳᵉ fenêtre de mesure ratait un des quatre** (elle partait du sous-titre, or *« 16
+  messages »* vit dans l'intro **au-dessus**) — *une fenêtre qui commence après le mensonge ne le
+  voit pas*. Élargie, le contrôle négatif rend `["16 messages","16 pièges","16 scénarios"]`.
 - 🧹⭐ **« SQUAT SUMO » RETIRÉ DU CHOIX — LIVRÉ** (ft-v1002). Michel : *« squat sumo on supprime,
   ça me soûle »*. **Même forme que le pull-over** : RETRAIT, jamais fusion — identifiant gardé,
   séances et records **non renommés** (muscles + MET 6,5 intacts), vérifié en navigateur.

@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1004`** (prochaine : `ft-v1005`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1005`** (prochaine : `ft-v1006`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -436,6 +436,19 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1005 — 🔢 LE BENCHMARK ANNONÇAIT « 16 SCÉNARIOS » ALORS QU'IL EN PORTE 53** — Michel, juste avant de le lancer depuis l'app : *« oui corrige les libellés avant »*.
+
+**⛔⛔ QUATRE LIBELLÉS ÉCRITS EN DUR AVAIENT DÉRIVÉ**, tous dans le groupe admin « 🛡️ Milo — le mesurer » : *« 16 messages ISOLÉS »*, *« 16 pièges »*, *« Lancer le benchmark (16 scénarios) »*, *« 2 × 16 »*. Le benchmark est passé de **16 → 21 → 53 en trois semaines** — c'est-à-dire exactement ce que **R35** dit qu'il fait : *il grandit à chaque bug, il n'a pas de taille cible*. **Les libellés, eux, ne bougent pas tout seuls.**
+
+**⛔⛔ ET ON N'A PAS MIS « 53 » À LA PLACE — c'est tout le point.** Ce serait la **même dette six semaines plus tard**, sur l'écran même qui sert à décider d'une dépense. *Un nombre qu'il faut penser à mettre à jour finira par ne pas l'être : c'est déjà arrivé, ici, deux fois de suite.* Le nombre est **retiré**.
+
+**⭐ LE COMPTE EXACT ET LE PRIX EXISTAIENT DÉJÀ, JUSTES, À DEUX MÈTRES DE LÀ** : `startEvalBench` (`coach.js`) calcule `SC.length` **et** `_evPrix(n)`, et les annonce dans la **confirmation**, *avant* le premier appel payé. **Le libellé statique portait donc une seconde source de vérité pour rien** (**R2**) — et c'est la seconde qui mentait, jamais celle qui compte au moment de payer.
+
+**⭐⭐ LE TÉMOIN INTERDIT LE NOMBRE, IL NE L'ÉPINGLE PAS.** Un témoin qui vérifierait *« 53 »* rougirait à la **54ᵉ promotion** et on l'ajusterait sans réfléchir — *un témoin qu'on remet au vert par réflexe ne protège plus rien*. Celui-ci refuse **tout** nombre à deux ou trois chiffres suivi de « scénarios / pièges / messages » dans ce bloc : la prochaine dérive **fait rougir la livraison** au lieu de mentir en silence.
+
+**⚠️ ET MA PREMIÈRE FENÊTRE DE MESURE RATAIT UN DES QUATRE.** Elle partait du sous-titre *« BENCHMARK »* — or *« 16 messages ISOLÉS »* vit dans l'**intro du groupe, au-dessus**. Le contrôle négatif ne sortait que 2 libellés sur 3. Élargie au **titre du groupe**, elle en sort **trois**. *Une fenêtre qui commence après le mensonge ne le voit pas.*
+Tests : **parcours 1402/1402** (+1), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : instructif, et le détail imprimé EST le bug** — contre `ff1d079` le témoin rend `en dur = ["16 messages","16 pièges","16 scénarios"]`, contre le nouveau code `[]`. ⭐ **Et le témoin voisin est vert des deux côtés** : le **prix**, lui, se calculait déjà correctement — *c'est exactement ce qui montre que le défaut était dans le libellé décoratif, pas dans le chiffre qui engage la dépense*. Fichiers : `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1005. |
 
 **ft-v1004 — 📅 LA SEMAINE EN UN COUP D'ŒIL DANS LE JOURNAL** — Michel, capture d'une autre app à l'appui : *« j'aimerais comme sur cette photo les jours de la semaine en haut, qu'ils soient cliquables, et voir d'un seul geste ce que l'on a mangé ce jour-là »*.
 
@@ -740,21 +753,6 @@ Tests : **parcours 1279/1279** (+8, bloc CIV), calculs 266/266, muscles 241/241,
 
 **🧪 ET LE BENCHMARK PASSE DE 16 À 21 SCÉNARIOS** — 5 pièges promus depuis `docs/JOURNAL-DE-TEST.md`, **tous vécus en salle, aucun inventé** : represcrire demain ce qui a été fait aujourd'hui (**EV-017**) · un repos inexécutable sur du lourd (**EV-018**) · une charge au-dessus du tenable (**EV-019**) · une variation de balance à 24 h lue comme du tissu (**EV-020**) · la récitation du contexte système (**EV-021**). ⚠️ **Motifs volontairement étroits** (**R19**) — et EV-017 ne rougit que si l'exercice est **prescrit** (ligne portant des séries), jamais s'il est **nommé pour dire qu'on l'évite : c'est le bon comportement, il devait rester vert.**
 Tests : **parcours 1271/1271** (+2), calculs **266/266** (le rouge de minuit corrigé), muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⚠️ **Pas de contrôle négatif ici, et autant le dire** : un changement d'**ordre** ne se juge pas contre l'ancien code (le témoin d'avant exigeait l'inverse, il rougirait par construction) — il se juge à **ce qui n'a pas bougé**, et les 1 269 autres témoins sont restés verts sans le clone ni le catalogue. ⭐ **Le vrai contrôle de cette version est temporel** : les 6 fixtures corrigées ont été vérifiées **à l'heure exacte qui les faisait échouer**. Fichiers : `screens.js`, `tests/parcours/runner.js`, `tests/calculs/runner.js`, `tests/milo/eval-scenarios.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v986. |
-
-**ft-v985 — 🗑️ LA CONFIRMATION PASSAIT DERRIÈRE — « le bouton supprimer ne fonctionne pas »** — Michel, capture à l'appui.
-
-**⛔⛔ IL FONCTIONNAIT PARFAITEMENT.** Mesuré dans un navigateur : la question *« Supprimer l'aliment ? »* s'ouvrait bel et bien — **mais derrière la fenêtre de modification**. `document.elementsFromPoint` au centre de la confirmation rendait **`["EDIT", "CONFIRM"]`**. *La question existait, personne ne pouvait la voir — donc rien ne semblait se passer.*
-
-**⭐⭐ ET MICHEL L'A CONFIRMÉ LUI-MÊME SANS LE SAVOIR** : *« ça a fonctionné après »*. En fermant la modale d'édition, la confirmation restée dessous devient visible et il a pu répondre. **La preuve terrain et la mesure disent exactement la même chose** — c'est le meilleur cas de figure qu'on puisse avoir.
-
-**⭐ LA CAUSE EXACTE** : `#ov-confirm` valait **500**… et `#ov-edit-food` vaut **500 aussi**. **À z-index égal, c'est l'ordre du DOM qui tranche** — et `ov-edit-food` est créé dynamiquement puis **ajouté à la fin du body**, donc après le `ov-confirm` statique. *Deux règles à égalité, c'est le hasard du DOM qui décide.*
-
-**⛔⛔ ET LE DÉFAUT ÉTAIT SYSTÉMIQUE, PAS PROPRE À CET ÉCRAN.** Compté : **25 appels** à `showConfirm` dans 5 fichiers, et **19 overlays** au-dessus ou à égalité — dont **13 à 9999**, plus le **toast** à 600. *Corriger le seul `ov-edit-food` aurait laissé les dix-huit autres* — c'est la 6ᵉ fois cette semaine que « compter les endroits » évite un correctif d'un seul côté.
-
-**⭐ R2 — UN SEUL ENDROIT.** La confirmation est l'écran le plus prioritaire de l'app **par nature** : elle interrompt pour poser une question dont dépend une suppression. Elle passe donc au-dessus de tout le monde, toast compris. ⚠️ *Si un jour un overlay doit passer devant elle, c'est presque sûrement une erreur : ce qui se met devant une question bloquante empêche d'y répondre.*
-
-**⭐⭐ ET LE TÉMOIN NE VÉRIFIE PAS LE CAS, IL VÉRIFIE LA RÈGLE** : *aucun overlay ne doit ATTEINDRE son niveau* — un `>=` et non un `>`, **parce que l'égalité est déjà le défaut**. Un futur overlay à 10000 fera rougir la livraison.
-Tests : **parcours 1269/1269** (+6, bloc CIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 3 rouges**, dont la liste complète des **19 overlays** fautifs et la pile `["EDIT","CONFIRM"]` — *le bug imprimé noir sur blanc*. ⭐⭐ **Et les 3 VERTS DES DEUX CÔTÉS sont ici la démonstration centrale** : le bouton ouvre bien la question, répondre « Supprimer » retire vraiment l'aliment, les deux fenêtres se referment. **C'est exactement ce qui prouve que le mécanisme n'a jamais été cassé — seule la visibilité l'était.** Fichiers : `style.css`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v985. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
