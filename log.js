@@ -938,7 +938,12 @@ function deleteSetNote(){
 function renderExBlocks(){
   const c=document.getElementById('wkt-exs');
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){
-    c.innerHTML=`<div class="empty">Appuie sur "+ Ajouter un exercice"<br>pour démarrer ta séance 💪</div>`;
+    /* ⚠️ CE MESSAGE DÉSIGNAIT UN BOUTON QUI NE S'APPELAIT PAS COMME ÇA (corrigé le 25/08) :
+       il disait « + Ajouter un exercice » alors que le bouton portait « + Ajouter ». Michel :
+       *« même le bouton ajouter n'est pas top, plutôt créer sa séance »*. Les deux disent
+       désormais la même chose — et ils la disent en termes de ce qu'on VIENT FAIRE (créer une
+       séance), pas de la mécanique (ajouter une ligne). */
+    c.innerHTML=`<div class="empty">Appuie sur "+ Créer ma séance"<br>pour démarrer 💪</div>`;
     if(typeof renderLogFinish==='function')renderLogFinish(); // vide le bloc "Terminer la séance" (sinon fantôme après suppression/vidage)
     _syncLogHdrBtns();return;
   }
@@ -2389,10 +2394,19 @@ let _exPickerMode='workout';
 let _replaceEi=null; // index de l'exo à remplacer (menu ⋯ → Remplacer l'exercice)
 let _editProgIdx=-1,_editProgData=null,_editDayIdx=0;
 function addExercise(name){
+  /* ⭐⭐ LE MODE « PROG » RESTE OUVERT LUI AUSSI (25/08) — et c'est ici que ça compte le plus.
+     Le sélecteur avait été rendu persistant côté SÉANCE la version d'avant… mais l'éditeur de
+     programme, lui, refermait encore à chaque exercice. Or c'est exactement là que Michel monte
+     ses listes : *« je vais vouloir créer mon programme et il va falloir que ce soit rapide »*.
+     Laisser ce chemin fermer aurait été corriger le symptôme du côté où il gênait le MOINS.
+     ⛔ Le mode et le jour cible (`_editDayIdx`) sont CONSERVÉS tant qu'on n'a pas fermé — c'est
+     `closeExPicker` qui repasse en 'workout', pas l'ajout. Sinon le 2ᵉ exercice partirait dans
+     la séance au lieu du programme, en silence. */
   if(_exPickerMode==='prog'){
-    closeExPicker();
     _addExToProgEdit(name);
-    _exPickerMode='workout';
+    const s=document.getElementById('ex-search'); if(s)s.value='';
+    filterEx();
+    _exAjoutes++; _majTitreExPicker();
     return;
   }
   if(_exPickerMode==='addToGroup'){
@@ -4221,7 +4235,7 @@ function openExPicker(){
   _exAjoutes=0; _majTitreExPicker();   // le compteur repart à chaque ouverture
   document.getElementById('mod-ex').classList.add('open');
 }
-function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;if(_exPickerMode==='replace'||_exPickerMode==='replaceSess'||_exPickerMode==='addSess'){_exPickerMode='workout';_replaceEi=null;}
+function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;if(_exPickerMode==='replace'||_exPickerMode==='replaceSess'||_exPickerMode==='addSess'||_exPickerMode==='prog'){_exPickerMode='workout';_replaceEi=null;}
   /* ⚠️ LE SCROLL SE FAIT ICI, PAS À L'AJOUT (25/08). Tant que le sélecteur reste ouvert, faire
      défiler l'écran du dessous est un mouvement invisible — et à la fermeture on se retrouvait
      n'importe où. On amène donc la vue sur le dernier exercice ajouté au moment où l'écran
@@ -6086,7 +6100,11 @@ function renderProgModal(){
   if(begGoal){const g=_beginnerGoalText();begGoal.style.display=g?'block':'none';begGoal.textContent=g;}
   const list=document.getElementById('prog-list-modal');
   if(!progs.length){
-    list.innerHTML='<div style="text-align:center;color:var(--t3);padding:14px 0;font-size:14px;">Aucun programme sauvegardé.<br>Crée une séance et utilise "Sauvegarder" !</div>';
+    /* ⚠️ CE MESSAGE EST DEVENU FAUX LE JOUR OÙ LE BOUTON EST ARRIVÉ (25/08) : il disait
+       « Crée une séance et utilise "Sauvegarder" » — c'était le SEUL chemin, il ne l'est plus.
+       Le laisser aurait envoyé les gens faire le détour juste au-dessous du raccourci.
+       *Quand on ouvre une porte, on relit ce que disent les panneaux.* */
+    list.innerHTML='<div style="text-align:center;color:var(--t3);padding:14px 0;font-size:14px;">Aucun programme pour l\'instant.<br>Crée-en un ci-dessus, ou sauvegarde une séance en cours.</div>';
   }else{
     list.innerHTML=progs.map((p,i)=>{
       const isMulti=p.days&&p.days.length;
@@ -6470,6 +6488,31 @@ function editProg(idx){
   _renderProgEdit();
   document.getElementById('ov-prog-edit').classList.add('open');
 }
+/* ⭐⭐ CRÉER UN PROGRAMME DEPUIS ZÉRO (25/08/2026) — la porte qui manquait.
+   AVANT, il n'existait AUCUN chemin pour créer un programme : la modale « Mes Programmes »
+   ne proposait que « 💾 Sauvegarder comme programme », c'est-à-dire qu'il fallait d'abord
+   monter une SÉANCE complète à la main pour obtenir un PROGRAMME. L'éditeur, lui, existait
+   déjà en entier (`_renderProgEdit`) — mais il n'était atteignable que par le ✏️ d'un
+   programme DÉJÀ créé. *Une porte manquait, pas une fonctionnalité* (R13 : on n'écrit pas
+   un 2ᵉ éditeur, on ouvre celui qui est là).
+
+   ⛔⛔ RIEN N'EST ÉCRIT TANT QU'ON N'A PAS SAUVEGARDÉ, et c'est ce qui rend l'annulation
+   propre : on pointe `_editProgIdx` sur un index qui N'EXISTE PAS ENCORE (la longueur du
+   tableau). `saveProgEdit` fait `S.programmes[_editProgIdx]=…` — sur cet index-là, ça AJOUTE.
+   Si la personne ferme sans sauvegarder, `closeProgEdit` remet l'index à -1 et il ne reste
+   RIEN : pas de programme fantôme à moitié rempli dans sa liste. */
+function creerProgramme(){
+  if(!S.programmes)S.programmes=[];
+  closeProgModal();
+  _editProgIdx=S.programmes.length;          // index encore libre → « sauvegarder » ajoutera
+  _editProgData={id:'p'+Date.now(), name:'', exs:[]};
+  _renderProgEdit();
+  document.getElementById('ov-prog-edit').classList.add('open');
+  // Le nom est le seul champ obligatoire : on y met le curseur, sauf sur mobile où le
+  // clavier masquerait l'éditeur qu'on vient d'ouvrir (même raison qu'au sélecteur).
+  const n=document.getElementById('prog-edit-name');
+  if(n&&!('ontouchstart' in window))setTimeout(()=>n.focus(),120);
+}
 function _renderProgEdit(){
   const d=_editProgData;if(!d)return;
   const nameInp=document.getElementById('prog-edit-name');
@@ -6740,6 +6783,16 @@ function saveProgEdit(){
   if(!_editProgData||_editProgIdx<0)return;
   const nameInp=document.getElementById('prog-edit-name');
   if(nameInp&&nameInp.value.trim())_editProgData.name=nameInp.value.trim();
+  /* ⚠️ LE NOM DEVIENT OBLIGATOIRE (25/08) — il ne l'était pas, et ça ne se voyait pas tant
+     qu'on ne pouvait éditer QUE des programmes déjà nommés. Depuis qu'on peut en créer un de
+     zéro (`creerProgramme`), un nom vide produirait une ligne SANS TITRE dans « Mes
+     Programmes » — impossible à reconnaître, et impossible à distinguer d'un bug.
+     ⛔ On prévient et on rend la main sur le champ, on ne détruit rien (R24). */
+  if(!String(_editProgData.name||'').trim()){
+    toast('Donne un nom à ton programme','error');
+    if(nameInp)nameInp.focus();
+    return;
+  }
   const weeksInp=document.getElementById('prog-edit-weeks');
   const startInp=document.getElementById('prog-edit-start');
   if(weeksInp)_editProgData.weeks=parseInt(weeksInp.value)||0;
