@@ -6,7 +6,27 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1009`.
+- **Version en ligne (live) :** `ft-v1011`.
+- 📋⭐⭐ **CRÉER UN PROGRAMME DEPUIS ZÉRO — LIVRÉ** (ft-v1011). 2ᵉ brique du chantier écran
+  Séance (`docs/SEANCE-DESSAI.md` §8) et le vrai besoin de Michel : *« je vais vouloir créer mon
+  programme et il va falloir que ce soit rapide »*.
+  ⛔⛔ **Aucun chemin ne menait à la création d'un programme** : il fallait monter une SÉANCE
+  entière pour en obtenir un. ⭐⭐ **L'éditeur existait pourtant en entier** (`_renderProgEdit`),
+  atteignable seulement par le ✏️ d'un programme déjà créé. *Une porte manquait, pas une
+  fonctionnalité* (R13).
+  ⛔⛔ **Rien n'est écrit tant qu'on n'a pas sauvegardé** : l'index pointe au-delà du tableau,
+  donc `saveProgEdit` AJOUTE. Fermer sans sauvegarder ne laisse **rien**.
+  ⚠️ **Le nom devient obligatoire** — invisible avant, puisqu'on n'éditait que des programmes
+  déjà nommés.
+  ⭐⭐ **La capture a révélé une incohérence que je venais de créer** : le sélecteur restait
+  ouvert côté séance (ft-v1009) mais refermait encore dans l'ÉDITEUR DE PROGRAMME — *le côté où
+  ça gênait le plus*. Corrigé. ⛔ **Le témoin qui compte vérifie que RIEN NE FUIT** : si le mode
+  retombait en `workout`, les exercices suivants partiraient silencieusement dans la séance du
+  jour.
+  ⛔ **Vocabulaire** : « + Ajouter » → « + Créer ma séance », et les messages qui désignaient
+  l'ancien nom sont corrigés. *Quand on ouvre une porte, on relit ce que disent les panneaux.*
+  ⏭️ **Reste du chantier** : ③ le débrief chiffré en local · ④ sortir le générateur de séances
+  du cadre « débutant » · ⑤ ranger Scanner/Importer.
 - 🔁⭐ **LE SÉLECTEUR D'EXERCICES RESTE OUVERT — LIVRÉ** (ft-v1009). **Première brique du chantier
   écran Séance** (`docs/SEANCE-DESSAI.md` §8, point 1), et le goulot que Michel a senti en premier :
   *« il va falloir améliorer aussi l'accès aux exercices… et que ce soit rapide »*.
