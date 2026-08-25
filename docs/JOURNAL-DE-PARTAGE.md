@@ -99,6 +99,7 @@ bugs « fuseaux horaires » de `BUGS.md`, appliquée à nous-mêmes.
 
 | État | Quand (UTC) | Qui | Sujet | Fichiers | Version |
 |---|---|---|---|---|---|
+| 🟢 | 25/08 11:51 → 12:35 | session-A (project-status) | dossier UX Nutrition pour Claude Design (écran mesuré : Macros 2 800 px = 3,3 écrans, 5 constats) | `docs/UX-NUTRITION-A-COLLER.md` | — (doc) |
 | 🟢 | 25/08 10:20 → 10:50 | session-B (claude-md-docs) | « Squat Sumo » retiré du CHOIX (retrait ≠ fusion) + son image orpheline sortie du cache SW | `constants.js`, `log.js`, `sw.js`, `A-FAIRE-SUR-PC.md` | ft-v1002 |
 | 🟢 | 25/08 09:20 → 09:55 | session-B (claude-md-docs) | « Pull-over » générique retiré du CHOIX (retrait ≠ fusion : l'historique n'est PAS renommé) + 4 équivalences d'import qui le visaient encore | `constants.js`, `log.js`, `tests/croises/runner.js` | ft-v1001 |
 | 🟢 | 25/08 08:45 → 09:05 | session-B (claude-md-docs) | le « Pull-over » générique : RANGEMENT seul (le partage d'animation a été refusé par le contrôle croisé ②) — la fusion du doublon attend l'arbitrage de Michel | `log.js` | ft-v1000 |
