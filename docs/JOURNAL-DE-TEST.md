@@ -69,7 +69,19 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
-### 🟢⭐⭐ MILO MET LE CARDIO EN EXERCICE, ALORS QU'UN BLOC CARDIO EXISTE
+### 🔵 Milo emploie un nom d'exercice ABRÉGÉ → **EV-052**
+**24/08/2026** (bug de session-B, ft-v996/997). Sa séance portait « Hip Thrust Barre » et
+« Abduction Cuisses » — les noms COURTS, sans la parenthèse du catalogue. Mesuré : **55 des 77
+abréviations** rendaient des muscles différents, et l'écran proposait d'ajouter une photo qu'il
+avait déjà. **Le code sait désormais résoudre l'abréviation** — ce scénario mesure la SOURCE (ce
+que Milo écrit), pas le rattrapage. **Promue le 25/08**, R35.
+
+### 🔵 Milo lance une séance sans qu'on le lui demande → **EV-053**
+**23/08/2026.** Une question théorique ne doit pas armer le bouton « Commencer cette séance » :
+Milo propose, il ne pilote pas (Constitution P13, R24). **Promue le 25/08**, R35.
+
+
+### 🔵 MILO MET LE CARDIO EN EXERCICE, ALORS QU'UN BLOC CARDIO EXISTE → **EV-051**
 **24/08/2026, EN SALLE — capture de Michel** : *« il me rajoute le vélo elliptique [dans la séance]
 alors qu'on a un onglet exprès pour le cardio »*. Sur sa capture : **« Elliptique — 0/1 série »**,
 type **É**, note *« 8 min léger »* — donc posé comme un **exercice de musculation**… pendant que le

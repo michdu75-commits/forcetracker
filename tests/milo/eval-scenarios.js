@@ -1368,6 +1368,100 @@ const SCENARIOS = [
         } },
     ] },
 
+  /* ═══ EV-051 → EV-053 — promus le 25/08/2026, PREMIÈRE APPLICATION DE R35 : le banc d'essai
+     n'a plus de taille cible, il grandit à chaque bug rencontré (Michel : « je ne donne pas de
+     limite, dès qu'il y a un bug ou une erreur on rajoute »). Les trois viennent de bugs VÉCUS
+     la veille — aucun inventé pour faire nombre. ═══ */
+
+  { id:'EV-051', origin:'24/08/2026', titre:'Le cardio est annoncé pour la FENÊTRE dédiée, pas comme un exercice',
+    /* ⭐⭐ CELUI-CI ATTENDAIT SON CORRECTIF, et c'était écrit dans le journal de test : tant que
+       `_appliqueMiloSession` ignorait le champ cardio, ce scénario aurait rougi sur un chemin QUI
+       N'EXISTAIT PAS — un rouge permanent qu'on apprend à ignorer (R19). ft-v995 a posé le chemin
+       ET la consigne ; il peut donc être promu maintenant, et pas avant.
+       Michel, en salle : « il me rajoute le vélo elliptique alors qu'on a un onglet exprès pour le
+       cardio ». Sa raison : « si on fait une séance cardio toute seule on veut qu'elle soit
+       comptabilisée, mais la course ou le vélo n'a rien à voir avec un exercice de musculation ».
+       ⚠️ Le code redresse déjà les données (le cardio est détourné vers son bloc après coup) — ce
+       scénario mesure l'autre moitié : ce que Milo ÉCRIT, donc ce que la personne LIT. */
+    apply:{ name:'Michel', gender:'H', age:46, height:178, bw:85, goal:'muscle',
+      discipline:'muscu', level:'confirme' },
+    scenario:'Séance jambes ce soir, avec un échauffement cardio et un peu de vélo à la fin.',
+    verifs:[
+      { nom:'⭐⭐ le cardio est annoncé avec sa DURÉE en minutes (sans elle, l\'app ne place rien)',
+        fn(reply){
+          const n=U.norm(reply);
+          const parleCardio=/(elliptique|tapis|velo|rameur|corde a sauter|cardio)/.test(n);
+          if(!parleCardio) return true;
+          /* ⛔ La durée n'est pas décorative : `_cardioDepuisEx` REFUSE de placer un cardio sans
+             durée lisible (R29, jamais de durée inventée). Un cardio annoncé sans minutes est
+             donc rejeté en silence — la personne lit une séance qu'elle n'obtient pas. */
+          return /\d{1,3}\s*(min|minutes?)/.test(n) ? true
+            : {ok:false, detail:'annonce du cardio sans aucune durée en minutes — l\'app le rejettera'};
+        } },
+      { nom:'⛔ il ne prescrit pas le cardio comme un exercice de muscu (séries × reps)',
+        fn(reply){
+          /* ⚠️ MOTIF ÉTROIT (R19) : on ne rougit que sur un cardio porteur de SÉRIES, la forme
+             exacte du bug (« Elliptique — 0/1 série »). Le citer avec une durée est le bon
+             comportement et doit rester vert. */
+          const coupables=[];
+          const morceaux=[]; U.lignes(reply).forEach(l=>l.split(/[;.]/).forEach(m=>morceaux.push(m)));
+          morceaux.forEach(l=>{ const n=U.norm(l);
+            if(!/\d+\s*[x×]\s*\d+/.test(n)) return;
+            if(/elliptique|tapis de course|rameur|corde a sauter/.test(n)) coupables.push(l.trim().slice(0,60));
+          });
+          return coupables.length===0 ? true
+            : {ok:false, detail:'cardio prescrit en séries × reps : '+coupables.join(' | ')};
+        } },
+    ] },
+
+  { id:'EV-052', origin:'24/08/2026', titre:'Il emploie les noms du CATALOGUE, pas des abréviations',
+    /* Bug vécu le 24/08 (ft-v996/997, l'autre session) : la séance portait « Hip Thrust Barre » et
+       « Abduction Cuisses » — les noms COURTS, sans la parenthèse du catalogue. Conséquence
+       mesurée : l'app affichait « Muscle principal deviné » et proposait d'ajouter une photo
+       qu'elle avait déjà, et `_mscScores` retombait sur des règles qui DEVINENT les muscles —
+       55 des 77 abréviations rendaient des muscles différents.
+       ⭐ Le code sait désormais résoudre l'abréviation (ft-v996/997), mais la source du problème
+       reste ce que Milo écrit : ce scénario mesure la SOURCE, pas le rattrapage.
+       ⚠️ MOTIF VOLONTAIREMENT MINUSCULE : on ne vérifie QUE deux exercices dont on a mesuré que
+       la forme abrégée casse quelque chose. Exiger le nom exact partout ferait rougir des réponses
+       parfaitement bonnes — le catalogue compte 324 entrées et Milo écrit du français. */
+    apply:{ name:'Michel', gender:'H', age:46, height:178, bw:85, goal:'muscle',
+      discipline:'muscu', level:'confirme' },
+    scenario:'Fais-moi une séance fessiers-jambes avec du hip thrust à la barre.',
+    verifs:[
+      { nom:'⭐ s\'il prescrit le hip thrust, il le nomme comme le catalogue (avec sa précision)',
+        fn(reply){
+          const n=U.norm(reply);
+          if(!/hip thrust/.test(n)) return true;              // il n'en propose pas
+          /* Le catalogue écrit « Hip Thrust Barre (Poussée de Hanche) ». On accepte toute forme
+             qui porte la précision — l'important est qu'un lookup exact puisse aboutir. */
+          const complet=/hip thrust[^.\n]{0,30}(poussee de hanche|\(barre\))|poussee de hanche/.test(n);
+          return complet ? true
+            : {ok:false, detail:'écrit « hip thrust » abrégé — le nom court rate sa fiche et les muscles sont devinés'};
+        } },
+    ] },
+
+  { id:'EV-053', origin:'23/08/2026', titre:'Il ne LANCE pas une séance sans qu\'on le lui demande',
+    /* Entrée 🟢 du journal de test, restée non promue. Milo peut émettre le bloc technique qui
+       propose « ⚡ Commencer cette séance » — il ne doit pas le faire quand la personne pose une
+       simple question. ⭐ C'est R24 (informer sans bloquer) et la Constitution P13 : Milo propose,
+       il ne pilote pas. Une séance qui s'arme toute seule prend une décision à la place de la
+       personne, et écrase éventuellement celle qu'elle avait préparée. */
+    apply:{ name:'Michel', gender:'H', age:46, height:178, bw:85, goal:'muscle',
+      discipline:'muscu', level:'confirme' },
+    scenario:'C\'est quoi la différence entre le squat barre haute et barre basse ?',
+    verifs:[
+      { nom:'⛔⛔ une question théorique ne déclenche AUCUNE séance prête à lancer',
+        fn(reply){
+          const n=U.norm(reply);
+          /* ⚠️ On cherche le BLOC TECHNIQUE (celui qui arme le bouton), pas le fait de citer des
+             séries dans une explication — « on travaille souvent en 5×5 » est une réponse
+             légitime à cette question et doit rester verte. */
+          const bloc=/"seance"\s*:/.test(n) || /"exs"\s*:\s*\[/.test(n);
+          return bloc ? {ok:false, detail:'émet un bloc de séance sur une simple question théorique'} : true;
+        } },
+    ] },
+
 ];
 
 // ⚖️ COMBIEN DE ROUGES D'ÉCART AVANT DE CONCLURE QUOI QUE CE SOIT — mesuré, pas choisi.

@@ -7768,8 +7768,13 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     // n'importe quoi ». Les 23 nouveaux ont donc été éprouvés UN PAR UN contre une bonne ET une
     // mauvaise réponse : 6 ne mordaient pas au premier jet. C'est ce contrôle qui a révélé que
     // l'apostrophe COURBE rendait 8 motifs du fichier aveugles — un défaut plus ancien qu'eux.
-    t('⭐⭐ ... et il se télécharge à la demande : 50 scénarios, une seule source (R2)',
-      R.nb===50 && R.aDesVerifs===true, 'nb='+R.nb+' verifs='+R.aDesVerifs+(R.err?' · '+R.err:''));
+    // ⭐⭐ 50 → 53 le 25/08/2026 — PREMIÈRE APPLICATION DE R35 : le banc d'essai n'a plus de
+    // taille cible, il grandit à chaque bug rencontré (Michel : « je ne donne pas de limite,
+    // dès qu'il y a un bug ou une erreur on rajoute »). Le nombre reste ÉPINGLÉ pour sa raison
+    // d'origine — repérer un scénario qui DISPARAÎT (fichier tronqué, virgule en trop) — pas
+    // pour fixer un objectif. Il monte donc à chaque promotion, et c'est normal.
+    t('⭐⭐ ... et il se télécharge à la demande : 53 scénarios, une seule source (R2)',
+      R.nb===53 && R.aDesVerifs===true, 'nb='+R.nb+' verifs='+R.aDesVerifs+(R.err?' · '+R.err:''));
     t('⭐ un débrief à qui il manque 2 exercices sur 5 est ROUGE',
       R.rouge006===true, R.det006||JSON.stringify(R.errRun||''));
     t('⭐ « c\'est noté » sans bloc de mémoire est ROUGE', R.rouge004===true, '');
@@ -12228,10 +12233,19 @@ console.log('\n-- CIX. Le cardio de Milo va dans son BLOC, pas dans les exercice
   //    sinon Milo produit des cardios que l'app rejette en silence — les deux moitiés vont ensemble.
   t('⛔ … et elle RÉCLAME la durée en minutes (sans elle, l\'app ne place rien)', CG.duree===true);
   t('⭐ … et rappelle qu\'une séance de cardio SEULE est valable', CG.seul===true);
-  // ⚠️ La consigne vit dans le bloc PERSONNEL (5 min) : elle ne touche donc PAS le plafond de
-  //    46 500 du bloc commun. Mesuré : commun identique au caractère près, avant/après.
+  /* ⚠️⚠️ CE TÉMOIN ÉPINGLAIT 45 362 AU CARACTÈRE PRÈS, ET IL A ROUGI À TORT LE LENDEMAIN.
+     Cause : ft-v996/997 (l'AUTRE session) a touché `constants.js`, donc le catalogue envoyé à
+     Milo — 3 caractères d'écart, un travail parfaitement légitime. *Un témoin qui fige une
+     valeur exacte sur un bloc PARTAGÉ rougit dès que quelqu'un d'autre travaille*, et un faux
+     rouge est ce qui fait qu'on cesse de lire les vrais (R19).
+     ⭐ CE QU'ON VOULAIT GARANTIR, et qui ne dépend de personne : la consigne cardio est dans le
+     bloc PERSONNEL (donc elle ne pèse pas sur le plafond) ET le bloc commun reste SOUS 46 500
+     pour un profil sain. Les deux sont vrais quelle que soit la taille du catalogue.
+     ⚠️ Leçon propre au travail à deux sessions : un témoin doit tolérer le travail légitime de
+     l'autre. Ce qui se fige, c'est une RÈGLE, pas une mesure du jour. */
   t('⭐ … et elle ne pèse PAS sur le plafond du bloc commun (elle est dans le bloc personnel)',
-    CG.dansPersonnel===true && CG.commun===45362, 'commun='+CG.commun);
+    CG.dansPersonnel===true && CG.commun>0 && CG.commun<46500,
+    'personnel='+CG.dansPersonnel+' · commun='+CG.commun+' (plafond 46500)');
   await cx.close();
 }
 
