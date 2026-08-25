@@ -538,8 +538,18 @@ const SCENARIOS = [
              cité sur une ligne qui porte aussi des séries (N×N). Le NOMMER pour dire « on
              l'évite, tu l'as fait aujourd'hui » est au contraire le bon comportement, et
              doit rester vert. Sans cette nuance, la bonne réponse serait rouge. */
+          /* ⚠️⚠️ CORRIGÉ LE 25/08 — LA RÈGLE CONTREDISAIT LA DOCTRINE DU PRODUIT.
+             Milo proposait bien des JAMBES pour demain (le bon réflexe : le haut a été fait
+             aujourd'hui), et rougissait pour un seul mouvement — le FACE PULL.
+             ⛔ Or le face pull n'est pas un exercice de séance, c'est un ACCESSOIRE DE SANTÉ
+             d'épaule : charge légère, coiffe des rotateurs, aucune fatigue à récupérer. Le
+             profil de Michel porte une épaule droite fragile, et Milo dit lui-même ailleurs
+             « le Face Pull en fin de séance, lui, ne saute jamais » — c'est le comportement
+             VOULU. Le faire rougir revenait à lui reprocher de protéger une épaule.
+             ⭐ Le bug d'origine (23/08) portait sur du LOURD represcrit le lendemain — c'est
+             ça qu'on mesure. Le face pull sort de la liste, avec sa raison écrite (R30). */
           const faits=[['developpe couche',/developpe couche|bench press/],['pec deck',/pec deck|butterfly/],
-            ['rowing barre',/rowing barre|tirage horizontal/],['face pull',/face pull|tirage visage/]];
+            ['rowing barre',/rowing barre|tirage horizontal/]];
           const coupables=[];
           U.lignes(reply).forEach(l=>{
             const n=U.norm(l);
@@ -778,6 +788,16 @@ const SCENARIOS = [
     verifs:[
       { nom:'⭐⭐ les DEUX exercices nommés sont dans la séance rendue',
         fn(reply){
+          /* ⚠️⚠️ CORRIGÉ LE 25/08 — DEUX RÈGLES DU BANC D'ESSAI SE CONTREDISAIENT.
+             Milo a répondu « Voilà une séance pec qui s'annonce bien 💪 — avant de la détailler,
+             t'as combien de temps ce soir ? » et n'a RIEN rendu. Il n'a rien oublié : il a
+             posé UNE question avant de construire, ce que EV-045 récompense explicitement
+             (« demande plutôt que d'inventer ») et que la Constitution demande.
+             ⭐ On ne rougit donc QUE si une séance a réellement été RENDUE — c'est-à-dire s'il
+             existe au moins une prescription (une ligne portant des séries N×N). Sans ce garde,
+             la bonne réponse est rouge, et un rouge sur la bonne réponse tue le test (R19). */
+          const prescrit=U.lignes(reply).some(l=>/\d+\s*[x×]\s*\d+/.test(U.norm(l)));
+          if(!prescrit) return true;                     // il a demandé au lieu d'inventer
           const n=U.norm(reply);
           const manque=[];
           if(!/developpe couche|bench press/.test(n)) manque.push('développé couché');
@@ -1121,7 +1141,13 @@ const SCENARIOS = [
       { nom:'⭐ il tient compte du temps perdu (déplacement, attente, machine occupée)',
         fn(reply){
           const n=U.norm(reply);
-          return /(deplacement|trajet|attente|attendre|machine (prise|occupee)|poste (pris|occupe)|monde|bondee|change de|sur place|meme zone)/.test(n)
+          /* ⚠️ CORRIGÉ LE 25/08 — ROUGE À TORT SUR UN SYNONYME. Milo avait répondu « 40 min,
+             salle BLINDÉE — on va faire propre et dense » puis avait retiré deux exercices
+             (« 40 min c'est trop juste pour ne pas les bâcler ») : il en tenait parfaitement
+             compte. Le motif connaissait « bondée » et pas « blindée ».
+             ⭐ Même famille que l'apostrophe courbe de ft-v994 : un mot non couvert rend un
+             motif aveugle sans que rien ne le signale. */
+          return /(deplacement|trajet|attente|attendre|machine (prise|occupee)|poste (pris|occupe)|monde|bondee|blindee|bourree|pleine|affluence|queue|file|heure de pointe|change de|sur place|meme zone|dense)/.test(n)
             ? true : {ok:false, detail:'ne dit rien du temps perdu alors que la salle est annoncée bondée'};
         } },
     ] },
@@ -1213,9 +1239,24 @@ const SCENARIOS = [
     verifs:[
       { nom:'⛔⛔ il ne reprend pas le poids cible du fabricant comme objectif',
         fn(reply){
-          const n=U.norm(reply);
-          const m=n.match(/(vise|objectif|il faut viser|tu dois (viser|atteindre)|cap sur)[^.\n]{0,25}78\s*kg/);
-          if(m) return {ok:false, detail:'adopte le poids cible du fabricant : "'+m[0]+'"'};
+          /* ⚠️⚠️ CORRIGÉ LE 25/08 — CE VÉRIFICATEUR ROUGISSAIT SUR LA BONNE RÉPONSE.
+             Mesuré au banc d'essai : Milo répondait « Viser 78 kg en phase de prise de muscle,
+             CE SERAIT ALLER DANS LE SENS INVERSE (…) Ignore ce chiffre de la balance » —
+             c'est-à-dire exactement ce qu'on lui demande — et le motif attrapait « viser 78 kg »
+             SANS VOIR LA NÉGATION qui suit. Un rouge sur la bonne réponse est pire qu'une
+             absence de test : on cesse de lire les rouges (R19).
+             ⭐ On découpe donc en SEGMENTS (Milo écrit souvent tout sur une ligne) et on
+             innocente un segment qui porte une marque de refus. */
+          const REFUS=/\b(pas|ne |n'|ignore|oublie|inverse|contraire|au lieu|plutot|surtout pas|evite|faux|erreur|ce serait|aucun|non )/;
+          const CIBLE=/(vise|objectif|il faut viser|tu dois (viser|atteindre)|cap sur)[^.\n]{0,25}78\s*kg/;
+          const morceaux=[]; U.lignes(reply).forEach(l=>l.split(/[.;!?]/).forEach(m=>morceaux.push(m)));
+          for(const seg of morceaux){
+            const n=U.norm(seg);
+            const m=n.match(CIBLE);
+            if(!m) continue;
+            if(REFUS.test(n)) continue;                       // « ce serait aller dans le sens inverse »
+            return {ok:false, detail:'adopte le poids cible du fabricant : "'+m[0]+'"'};
+          }
           return true;
         } },
       { nom:'⭐ … et il dit d\'où vient ce chiffre (un modèle du fabricant)',
@@ -1433,11 +1474,30 @@ const SCENARIOS = [
         fn(reply){
           const n=U.norm(reply);
           if(!/hip thrust/.test(n)) return true;              // il n'en propose pas
-          /* Le catalogue écrit « Hip Thrust Barre (Poussée de Hanche) ». On accepte toute forme
-             qui porte la précision — l'important est qu'un lookup exact puisse aboutir. */
-          const complet=/hip thrust[^.\n]{0,30}(poussee de hanche|\(barre\))|poussee de hanche/.test(n);
+          /* ⚠️⚠️ RÈGLE CORRIGÉE LE 25/08 — ELLE MESURAIT UN DÉFAUT DÉJÀ RÉPARÉ.
+             Elle exigeait la parenthèse « (Poussée de Hanche) ». Or ft-v996/997 a POSÉ le
+             résolveur `exNomCatalogue()` : « Hip Thrust Barre » retrouve désormais sa fiche,
+             ses muscles et son animation. Milo a écrit « Hip Thrust Barre » et a rougi —
+             pour un nom que l'app traite parfaitement. Le détail affiché (« rate sa fiche »)
+             était devenu FAUX. ⭐ Et exiger « (Poussée de Hanche) » dans un message de chat,
+             c'est demander à Milo d'écrire du français qui n'en est pas.
+             ⛔⛔ CE QUI CASSE ENCORE, ET C'EST TOUT AUTRE CHOSE : le nom AMBIGU. Le catalogue
+             porte QUATRE hip thrusts (Barre · Haltère · Machine · Unilatéral) — « hip thrust »
+             tout court ne peut donc être résolu par personne, et c'est justement le mode
+             d'échec que ft-v996 a choisi (« je ne sais pas » plutôt que « voilà, tiens »).
+             ⭐ ON DEMANDE AU CODE, PAS À UN MOTIF : le résolveur est la source de vérité (R2),
+             donc la règle ne peut plus se périmer quand le catalogue bouge. Repli sur le motif
+             si le corpus tourne hors de l'app. */
+          let complet;
+          if(typeof exNomCatalogue==='function' && typeof exId==='function'){
+            const ecrit=(reply.match(/[Hh]ip [Tt]hrust[^\n,.;()]{0,18}/)||[''])[0].trim()
+              .replace(/\s*(barre|haltere|halt\u00e8re|machine|unilateral|unilat\u00e9ral)\b.*/i,' $1').trim();
+            complet=!!exId(exNomCatalogue(ecrit));
+          } else {
+            complet=/hip thrust\s+(barre|haltere|machine|unilateral)|poussee de hanche/.test(n);
+          }
           return complet ? true
-            : {ok:false, detail:'écrit « hip thrust » abrégé — le nom court rate sa fiche et les muscles sont devinés'};
+            : {ok:false, detail:'écrit « hip thrust » sans dire LEQUEL — le catalogue en porte 4 (barre/haltère/machine/unilatéral), aucun résolveur ne peut trancher'};
         } },
     ] },
 
