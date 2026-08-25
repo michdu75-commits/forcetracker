@@ -12766,6 +12766,93 @@ console.log('\n-- CXI. Un nom abrégé lit la FICHE ÉCRITE, plus la devinette (
   await cx.close();
 }
 
+/* == BLOC CXVI - L'HISTORIQUE DE L'OBJECTIF + L'HORODATAGE DES MESSAGES (ft-v1008) ==
+   Michel, le 19/08, a Milo : « As-tu vu que j'avais change d'objectif ? » → « Non, je ne vois pas
+   de changement d'objectif dans ce que j'ai sous la main. » ⭐ IL DISAIT VRAI : mesure dans son
+   export du 25/08, `goal` valait `recomp` et « force max » n'apparaissait NULLE PART ailleurs que
+   dans la conversation. L'app gardait la valeur du JOUR, jamais son histoire (R8).
+   ⛔ CE QUI EST MESURE ICI EST LA CHAINE ENTIERE (R4) : le changement est-il ECRIT, SURVIT-il a
+   un rechargement, et ARRIVE-t-il jusqu'au contexte de Milo ? Un maillon suffit a tout perdre.
+   ⛔ ET LES ABSENCES COMPTENT AUTANT : l'inscription ne fabrique pas un faux changement, un
+   compte sans historique n'a AUCUN bloc (pas d'en-tete vide), et rien n'est invente (R29). */
+console.log('\n-- CXVI. L\'objectif garde son histoire, les messages leur date (ft-v1008) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2200);
+  const F=await pg.evaluate(()=>{
+   try{
+    const o={};
+    // ① L'INSCRIPTION ne fabrique pas un changement (S.goal vaut « muscle » par defaut).
+    S.goalLog=[]; S.goal='muscle';
+    _goalSet('force','inscription');
+    o.inscriptionVide = (S.goalLog||[]).length===0 && S.goal==='force';
+    // ② Un vrai changement est ECRIT, avec son avant et son apres.
+    S.goalLog=[]; S.goal='force';
+    _goalSet('recomp','profil');
+    o.ecrit = JSON.stringify((S.goalLog||[]).map(g=>g.de+'>'+g.vers));
+    // ③ Reposer LA MEME valeur n'ecrit rien (sinon le journal se remplirait de bruit).
+    _goalSet('recomp','profil');
+    o.pasDeDoublon = (S.goalLog||[]).length===1;
+    // ④ Il SURVIT au rechargement (localStorage) — le maillon ou tout se perd d'habitude.
+    persist();
+    const brut=localStorage.getItem('ft4_goallog');
+    S.goalLog=[]; load();
+    o.survit = (S.goalLog||[]).length===1 && S.goalLog[0].vers==='recomp' && !!brut;
+    // ⑤ IL ARRIVE JUSQU'A MILO, et la consigne d'agir est la (changement du jour).
+    const ctx=buildCoachContext('Fais-moi une seance');
+    o.dansContexte = /SON OBJECTIF A CHANG/.test(ctx);
+    o.nommeLesDeux = /Force max/i.test(ctx) && /Perte de gras/i.test(ctx);
+    o.consigneRecente = /TIENS-EN COMPTE de toi-meme|TIENS-EN COMPTE de toi-même/.test(ctx);
+    // ⑥ ⛔ AUCUN historique → AUCUN bloc (pas d'en-tete vide, rien d'invente).
+    S.goalLog=[];
+    o.sansHistoriqueRien = !/SON OBJECTIF A CHANG/.test(buildCoachContext('Fais-moi une seance'));
+    // ⑦ Un changement ANCIEN est rappele, mais SANS la consigne d'agir (sinon c'est du bruit).
+    S.goalLog=[{date:'2026-01-15',de:'force',vers:'recomp',src:'profil'}];
+    const vieux=buildCoachContext('Fais-moi une seance');
+    o.vieuxListe = /SON OBJECTIF A CHANG/.test(vieux);
+    o.vieuxSansConsigne = !/TIENS-EN COMPTE/.test(vieux);
+    // ⑧ HORODATAGE : un message garde sa date a travers le stockage.
+    const av=Date.now();
+    coachHistory=[]; coachHistory.push({role:'user',content:'test',ts:av});
+    const light=_lightMsg(coachHistory[0]);
+    o.tsGarde = light.ts===av;
+    // ⑨ ⛔ ON N'INVENTE PAS de date pour un ancien message (R29).
+    o.tsPasInvente = _lightMsg({role:'user',content:'vieux message'}).ts===undefined;
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(F.err) t('CXVI n\'a pas pu tourner', false, F.err);
+  else{
+    t('⛔ l\'INSCRIPTION ne fabrique pas un faux changement (« muscle » est le défaut de load)',
+      F.inscriptionVide===true, '');
+    t('⭐⭐ un vrai changement est ÉCRIT, avec son AVANT et son APRÈS',
+      F.ecrit==='["force>recomp"]', 'reçu : '+F.ecrit);
+    t('⛔ reposer la MÊME valeur n\'écrit rien (pas de bruit dans le journal)',
+      F.pasDeDoublon===true, '');
+    t('⭐⭐ il SURVIT au rechargement — le maillon où l\'information se perd d\'habitude (R4)',
+      F.survit===true, '');
+    t('⭐⭐ IL ARRIVE JUSQU\'À MILO : le contexte porte le changement',
+      F.dansContexte===true, '');
+    t('⭐ … et il NOMME les deux objectifs, pas seulement « ça a changé »',
+      F.nommeLesDeux===true, '');
+    t('⭐ un changement RÉCENT porte la consigne d\'en tenir compte sans qu\'on le lui redise',
+      F.consigneRecente===true, '');
+    t('⛔⛔ AUCUN historique → AUCUN bloc : pas d\'en-tête vide, rien d\'inventé (R29)',
+      F.sansHistoriqueRien===true, '');
+    t('⛔ un changement ANCIEN est listé mais SANS la consigne d\'agir (sinon c\'est du bruit, R19)',
+      F.vieuxListe===true && F.vieuxSansConsigne===true,
+      'listé='+F.vieuxListe+' sans consigne='+F.vieuxSansConsigne);
+    t('⭐⭐ HORODATAGE : la date d\'un message SURVIT au stockage (`_lightMsg`)',
+      F.tsGarde===true, '');
+    t('⛔ … et aucune date n\'est INVENTÉE pour un ancien message (R29)',
+      F.tsPasInvente===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
