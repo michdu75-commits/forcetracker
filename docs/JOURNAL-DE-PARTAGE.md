@@ -101,7 +101,7 @@ bugs « fuseaux horaires » de `BUGS.md`, appliquée à nous-mêmes.
 
 | État | Quand (UTC) | Qui | Sujet | Fichiers | Version |
 |---|---|---|---|---|---|
-| 🟡 | 25/08 15:55 | session-A (project-status) | Journal nutrition : bande des 7 jours cliquable en haut (demande Michel, capture MFP) | `app.js`, `style.css` | — (prend ft-v1004) |
+| 🟢 | 25/08 15:55 → 17:40 | session-A (project-status) | Journal nutrition : bande des 7 jours glissants, cliquable, un anneau par jour | `app.js`, `screens.js`, `tests/parcours/runner.js` | ft-v1004 |
 | 🟢 | 25/08 14:31 → 15:20 | session-A (project-status) | la quantité sur un aliment repris SANS pour-100 g (fiche OFF incomplète) → portions | `app.js`, `tests/parcours/runner.js` | ft-v1003 |
 | 🟢 | 25/08 11:51 → 12:35 | session-A (project-status) | dossier UX Nutrition pour Claude Design (écran mesuré : Macros 2 800 px = 3,3 écrans, 5 constats) | `docs/UX-NUTRITION-A-COLLER.md` | — (doc) |
 | 🟢 | 25/08 10:20 → 10:50 | session-B (claude-md-docs) | « Squat Sumo » retiré du CHOIX (retrait ≠ fusion) + son image orpheline sortie du cache SW | `constants.js`, `log.js`, `sw.js`, `A-FAIRE-SUR-PC.md` | ft-v1002 |

@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1003`** (prochaine : `ft-v1004`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1004`** (prochaine : `ft-v1005`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -436,6 +436,19 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1004 — 📅 LA SEMAINE EN UN COUP D'ŒIL DANS LE JOURNAL** — Michel, capture d'une autre app à l'appui : *« j'aimerais comme sur cette photo les jours de la semaine en haut, qu'ils soient cliquables, et voir d'un seul geste ce que l'on a mangé ce jour-là »*.
+
+**⭐⭐ SA RÉFÉRENCE MONTRAIT UNE SEMAINE CALENDAIRE — ET L'ESSAYER L'A DISQUALIFIÉE.** Construite d'abord telle quelle (L M M J V S D fixe), puis **mesurée** : un **mardi**, elle affiche **5 jours grisés sur 7** ; un lundi, **six**. *Or la demande était « voir d'un seul geste ce qu'on a mangé »* — une bande vide aux trois quarts ne la remplit pas. Michel a tranché sur cette mesure : **7 jours glissants**, aujourd'hui à droite, la bande est **toujours pleine** (mesuré : **0 jour désactivé**, 5 anneaux remplis sur 7 avec ses données). Les initiales suivent les vraies dates (un mardi donne *« M J V S D L M »*) — elles **nomment** le jour, elles ne décorent pas.
+
+**⭐ « VOIR D'UN SEUL GESTE » EST TRAITÉ PAR UN ANNEAU**, pas par un chiffre : vert complet quand la journée est bouclée, partiel quand elle est en cours, **ORANGE** en cas de dépassement, vide et discret quand rien n'est noté.
+
+**⛔⛔ ET AUCUN ANNEAU NE PEUT DEVENIR ROUGE — un témoin le fige.** C'est la règle anti-culpabilisation du produit (`NUTRITION-PHILOSOPHIE`, volet anti-TCA) : *l'anneau se remplit, il ne juge pas*. Un jour sans rien noté est un cercle discret, jamais une alerte — **on ne reproche pas un oubli**.
+
+**⛔ R2 — UN SEUL POINT D'ENTRÉE POUR CHANGER DE JOUR** (`journalAllerA`) : la bande **et** les flèches ‹ › y passent toutes les deux. Deux façons de poser `_journalJour` auraient fini par diverger — l'une aurait oublié la borne du futur, ou le re-rendu. Un témoin vérifie que les flèches passent bien par là. ⛔ **Et les flèches RESTENT** : la bande ne couvre que 7 jours, elles seules permettent de remonter plus loin.
+
+**⚠️⚠️ ET CETTE VERSION A ÉTÉ ÉCRITE DEUX FOIS — la leçon vaut plus que la fonctionnalité.** Le conteneur de session a été **recréé** pendant une attente, et le travail, **non commité**, a été **intégralement perdu** : rien dans le reflog, aucun objet orphelin. J'avais identifié le risque et proposé de le sécuriser sur ma branche ; la consigne d'attendre portait sur la **production**, et je l'ai appliquée à la **sauvegarde** — un push sur une branche personnelle ne déploie rien et ne gêne aucun benchmark. 👉 **On commite d'abord, on teste ensuite** : la 2ᵉ écriture a été poussée sur la branche **avant** même de lancer la suite. ⭐ *Ce qui a survécu, c'est ce qui était poussé* — la ligne 🟡 du journal de partage était toujours sur `master`, et l'autre session a livré trois versions pendant ce temps sans qu'on se marche dessus.
+Tests : **parcours 1401/1401** (+9, bloc CXIII), calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou, check_regles vert (13 règles, archive 519 entrées, 0 perdue). **Vérifié à l'écran** (captures avant/après clic) : la bande s'affiche, le clic change bien le jour (« Jeudi 20 Août »), les 7 boutons tiennent dans 362 px. Fichiers : `app.js`, `screens.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1004. |
 
 **ft-v1003 — ⚖️ LA QUANTITÉ SUR UN ALIMENT REPRIS QUI N'A PAS DE POUR-100 G** — Michel, deux captures : *« il y a toujours le bug sur des aliments que j'ai rentrés moi-même et que je veux réutiliser — comme je l'ai rentré avec le code-barre on ne peut plus remettre la quantité voulue. Ça fait pareil pour la ratatouille. »*
 
@@ -742,23 +755,6 @@ Tests : **parcours 1271/1271** (+2), calculs **266/266** (le rouge de minuit cor
 
 **⭐⭐ ET LE TÉMOIN NE VÉRIFIE PAS LE CAS, IL VÉRIFIE LA RÈGLE** : *aucun overlay ne doit ATTEINDRE son niveau* — un `>=` et non un `>`, **parce que l'égalité est déjà le défaut**. Un futur overlay à 10000 fera rougir la livraison.
 Tests : **parcours 1269/1269** (+6, bloc CIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 3 rouges**, dont la liste complète des **19 overlays** fautifs et la pile `["EDIT","CONFIRM"]` — *le bug imprimé noir sur blanc*. ⭐⭐ **Et les 3 VERTS DES DEUX CÔTÉS sont ici la démonstration centrale** : le bouton ouvre bien la question, répondre « Supprimer » retire vraiment l'aliment, les deux fenêtres se referment. **C'est exactement ce qui prouve que le mécanisme n'a jamais été cassé — seule la visibilité l'était.** Fichiers : `style.css`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v985. |
-
-**ft-v984 — ⚖️ LA QUANTITÉ SUIT L'ALIMENT QUAND ON LE REPREND — « sérieux c'est relou »** — Michel, trois captures à l'appui : *« Bah non beug, comment ça se fait que je ne peux pas mettre la quantité »*.
-
-**⛔⛔ REPRODUIT DANS UN NAVIGATEUR AVANT DE TOUCHER AU CODE** — la leçon `BUGS.md` **12quater**, appliquée cette fois. Par le chemin **CIQUAL** : `blocQuantite: true`. Par le chemin de **son propre journal** — celui qu'on emprunte dès la 2ᵉ fois — `blocQuantite: false`, **alors que `per100` est bien présent dans la source**.
-
-**⛔ `_afSuggPrendreLocale` CACHAIT LE BLOC SANS CONDITION… et transmettait `per100` deux lignes plus bas.** *C'est **R4** à deux lignes d'écart : l'information existait, et n'atteignait pas l'écran.*
-
-**⚠️ LA CONSÉQUENCE VÉCUE EST CE QUI REND LE DÉFAUT VICIEUX** : le mécanisme de ft-v962/965 marchait **la première fois** qu'on note un aliment, et disparaissait **toutes les suivantes**. *Un défaut qui ne se manifeste qu'à la DEUXIÈME saisie ne se voit jamais en testant une fois.*
-
-**⭐ R13/R2 — ON NE RÉINVENTE RIEN** : on reconstruit `_bcNutr` depuis le `per100` déjà enregistré, et le bloc existant fait le reste, exactement comme après un scan. Le libellé dit **d'où vient la référence** (*« ta dernière saisie »*), et la quantité reprend **celle de la fois d'avant**.
-
-**⛔⛔ ET ON NE RECALCULE PAS LES MACROS EN ARRIVANT.** Elles sont déjà justes, et la personne a pu les **corriger à la main**. ⭐ **Mesuré** : son *29 kcal* corrigé reste **29**, pas 48. *Les réécrire aurait effacé sa correction sans le dire* (**R29**). Le recalcul part au **premier changement de quantité**, quand elle le demande : 50 g → 24 kcal · 6 g.
-
-**⛔ Une entrée tapée À LA MAIN n'a pas de pour-100 g, donc pas de bloc** — aucun poids inventé.
-
-**⚠️ ET CE QUI N'EST PAS EXPLIQUÉ EST ÉCRIT AUSSI** : sa 3ᵉ capture montre une **ratatouille sans pour-100 g** (*« cette ligne n'a pas de quantité connue »*). **Ce correctif ne la répare pas rétroactivement** — une entrée ancienne, ou entrée par un chemin qui n'enregistrait pas encore `per100`, reste sans quantité. *On ne prétend pas avoir tout couvert.*
-Tests : **parcours 1263/1263** (+7, bloc CII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 3 rouges**, et il est **instructif** — les détails **sont la capture de Michel** : `{"bloc":false}`, et après avoir mis 50 g, `{"kcal":"29","prot":"7"}`, c'est-à-dire *rien ne bouge*. ⭐ **Et 3 des 4 verts sont de VRAIS verts** : le chemin CIQUAL, le `per100` enregistré et surtout **les macros corrigées non écrasées** ne devaient pas bouger — ils n'ont pas bougé. ⚠️ Le 4ᵉ (« pas de bloc sans `per100` ») est un demi-faux vert : avant, il n'y avait jamais de bloc. ⚠️ **Et mon 1ᵉʳ essai de mesure n'a rien mesuré** : j'écrivais `window._afSuggLoc`, qui est une variable de **script** et non `window` — le test lisait un libellé **resté de l'étape d'avant**. *Même famille que `_miloPendingIdx` deux heures plus tôt.* Le bloc passe désormais par le **vrai chemin** : on tape, le code remplit ses suggestions, on clique. Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v984. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
