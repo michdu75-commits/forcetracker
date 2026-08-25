@@ -69,6 +69,46 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟠 « AS-TU VU QUE J'AVAIS CHANGÉ D'OBJECTIF ? » — NON, ET IL A RAISON (trou de donnée)
+**19/08/2026, conversation réelle de Michel — relue le 25/08 dans son export.** Il demande
+*« As-tu vu que j'avais changé d'objectif ? »*, Milo répond *« Non, je ne vois pas de changement
+d'objectif dans ce que j'ai sous la main »*. Michel précise *« j'ai mis perte de gras + muscle »*,
+Milo répond *« c'est déjà ce que j'ai dans ton profil, rien de nouveau »* — et il faut que Michel
+écrive **« j'étais en force max avant »** pour qu'il réagisse enfin (*« ah ok, effectivement c'est
+un vrai changement »*).
+⭐⭐ **MESURÉ DANS SON EXPORT DU 25/08, ET MILO EST HONNÊTE** : `goal` vaut `recomp`, et la chaîne
+« force max » n'apparaît **nulle part ailleurs que dans la conversation elle-même**. Pas de
+`goalLog`, pas de `goalHistory`, rien dans `registre.facts`. **L'app ne garde AUCUNE trace de
+l'objectif précédent.** Il ne pouvait donc pas voir le changement : c'est **R8** dans sa forme la
+plus pure — *un prompt ne compense jamais une donnée absente*, et le fix est dans la DONNÉE.
+⚠️⚠️ **ET EV-028 EST VERT SUR CE SUJET — sans mentir, mais en ne mesurant que la moitié.** Son
+scénario dit *« J'étais en force max avant, je suis passé en prise de muscle »* : il vérifie que
+Milo **réagit quand on le lui dit**, pas qu'il **le voit tout seul**. La vraie question de Michel
+restera sans réponse tant que l'historique n'existe pas. *Son propre commentaire le disait déjà le
+19/08 — « S.goal est transmis, son HISTORIQUE non » — et le trou n'a jamais été bouché.*
+**État : à trier** — ce n'est pas un scénario à promouvoir, c'est une DONNÉE à construire
+(un `goalLog` sur le modèle de `weightLog`). Décision de Michel.
+
+### 🟢 IL SE REPROCHAIT SES PROPRES PALIERS — et ses données montrent que c'est RÉGLÉ
+**19/08/2026, même conversation.** Milo débriefe : *« la montée en charge sur le Développé Incliné
+était trop courte — tu as démarré à 48 kg »*. Michel : *« c'est toi qui m'a dit de prendre ces
+charges là »*. Milo l'admet : *« oui, c'est moi qui t'avais donné ce palier, la remarque ne tient
+pas »*.
+⭐⭐ **LA PREUVE EST DANS SON EXPORT, ET ELLE EST NETTE** : la séance du **18/08** porte
+`_milo:true` sur **0 exercice sur 6** — Milo ne pouvait pas savoir qu'il en était l'auteur. Les
+séances du **23/08 et du 24/08**, elles, le portent sur **5/5**. **ft-v989 a bouché ce trou**, et
+c'est vérifié sur des données réelles, pas sur une fixture.
+**État : écartée — corrigée** (EV-005 la couvre déjà, et il est vert). Gardée avec sa raison (R30).
+
+### 🔵 Il attribue une note à la MAUVAISE série
+**19/08/2026.** La note *« barre raque à la 4ème »* était sur la **2ᵉ** série ; Milo l'a placée
+sur la 3ᵉ, et n'a corrigé qu'après que Michel l'ait repris (*« c'est moi qui ai mal lu, sorry »*).
+⚠️ **Pas encore promue, et pour une raison précise** : l'attendu est vérifiable par du code (la
+note est attachée à un index de série), mais il faut d'abord **mesurer si les notes partent avec
+leur numéro de série** dans le contexte — sinon c'est encore R8, et le scénario rougirait sur un
+chemin qui n'existe pas (leçon d'EV-051, qu'on n'avait pas pu promouvoir avant son correctif).
+**État : à trier.**
+
 ### 🔵 Milo emploie un nom d'exercice ABRÉGÉ → **EV-052**
 **24/08/2026** (bug de session-B, ft-v996/997). Sa séance portait « Hip Thrust Barre » et
 « Abduction Cuisses » — les noms COURTS, sans la parenthèse du catalogue. Mesuré : **55 des 77
