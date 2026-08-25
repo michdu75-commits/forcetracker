@@ -2267,6 +2267,59 @@ function renderFoodJournal(){
     +'<span style="font-weight:800;font-size:14px;color:var(--t1);text-transform:capitalize;">'+jourLabel+'</span>'
     +_navBtn(1,'›',!estAuj)
     +'</div>';
+
+  /* 📅 LA SEMAINE EN UN COUP D'ŒIL (ft-v1004) — Michel, capture d'une autre app à l'appui :
+     « j'aimerais les jours de la semaine en haut, qu'ils soient cliquables, et voir d'un seul
+     geste ce que l'on a mangé ce jour-là ».
+     ⭐⭐ 7 JOURS GLISSANTS, PAS LA SEMAINE CALENDAIRE — tranché par Michel sur MESURE. Sa
+     référence montrait un L M M J V S D fixe, mais l'essayer l'a montré : un MARDI la semaine
+     calendaire n'affiche que **2 jours sur 7**, un lundi un seul — le reste est grisé en
+     attendant. *Or la demande était « voir d'un seul geste ce qu'on a mangé ».* Ici aujourd'hui
+     est à DROITE, les 6 jours précédents à gauche : la bande est TOUJOURS pleine.
+     ⛔ LES FLÈCHES RESTENT : la bande ne couvre que 7 jours, elles seules permettent de remonter
+     plus loin.
+     ⛔ RIEN DE CULPABILISANT (règle du produit, cf. NUTRITION-PHILOSOPHIE / anti-TCA) : l'anneau
+     se REMPLIT, il ne juge pas. Un jour sans rien noté est un cercle vide et discret, pas une
+     alerte — on ne reproche pas un oubli. Un dépassement se signale en ORANGE, jamais en rouge.
+     ⏰ Toutes les dates sont calculées à MIDI (famille « fuseaux horaires » de BUGS.md). */
+  {
+    const _auj=today();
+    /* ⛔ La fenêtre s'ancre sur AUJOURD'HUI, pas sur le jour affiché : sinon reculer d'un jour
+       ferait glisser toute la bande, et on perdrait le repère (on ne saurait plus où on est). */
+    const _ancre=new Date(_auj+'T12:00:00');
+    const L=['D','L','M','M','J','V','S'];        // index = getDay() (0 = dimanche)
+    let bande='';
+    for(let k=6;k>=0;k--){
+      const jd=new Date(_ancre); jd.setDate(_ancre.getDate()-k);
+      const ymd=jd.toISOString().slice(0,10);
+      const futur=ymd>_auj, actif=(ymd===td), cejour=(ymd===_auj);
+      const lettre=L[jd.getDay()];
+      const tj=(typeof _foodTotals==='function')?_foodTotals(ymd):{kcal:0};
+      const cible=target?target.calories:0;
+      const pct=(cible>0)?Math.min(100,Math.round(tj.kcal/cible*100)):(tj.kcal>0?100:0);
+      /* ⭕ Anneau SVG (l'app n'utilise pas canvas — 104 <svg>) : circonférence 2πr avec r=11,
+         soit ≈ 69,1. Le trait de progression part du haut (rotation -90°). */
+      const C=69.1, off=C*(1-pct/100);
+      const coul = pct===0 ? 'var(--sep)' : (tj.kcal>cible&&cible>0 ? 'var(--orange)' : 'var(--green)');
+      const anneau='<svg width="26" height="26" viewBox="0 0 26 26" style="display:block;">'
+        +'<circle cx="13" cy="13" r="11" fill="none" stroke="var(--bg3)" stroke-width="2.5"/>'
+        +(pct>0?'<circle cx="13" cy="13" r="11" fill="none" stroke="'+coul+'" stroke-width="2.5"'
+          +' stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'" stroke-linecap="round"'
+          +' transform="rotate(-90 13 13)"/>':'')
+        +(cejour?'<circle cx="13" cy="13" r="2.5" fill="var(--red)"/>':'')
+        +'</svg>';
+      bande+='<button '+(futur?'disabled':'onclick="journalAllerA(\''+ymd+'\')"')
+        +' aria-label="'+jd.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+'"'
+        +' style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;'
+        +'border:none;border-radius:12px;cursor:'+(futur?'default':'pointer')+';'
+        +'background:'+(actif?'var(--bg3)':'transparent')+';opacity:'+(futur?'.32':'1')+';">'
+        +'<span style="font-size:11px;font-weight:'+(actif?'900':'700')+';color:'
+          +(actif?'var(--t1)':'var(--t3)')+';">'+lettre+'</span>'
+        +anneau
+        +'</button>';
+    }
+    html+='<div style="display:flex;gap:2px;margin-bottom:12px;">'+bande+'</div>';
+  }
   // Résumé du jour
   if(target){
     const rem=target.calories-tot.kcal;

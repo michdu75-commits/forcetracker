@@ -2173,13 +2173,20 @@ let _journalJour=null;
 let _journalReplie={};
 function _journalPli(lbl,ouvert){ _journalReplie[lbl]=!ouvert; }
 function _journalJourActif(){ return _journalJour || today(); }
-function journalNav(dir){
-  const d=new Date(_journalJourActif()+'T12:00:00');
-  d.setDate(d.getDate()+dir);
-  const ymd=d.toISOString().slice(0,10);
-  if(ymd>today()) return;                          // ⛔ jamais dans le futur
+/* 📅 UN SEUL POINT D'ENTRÉE POUR CHANGER DE JOUR (ft-v1004, R2). La bande des 7 jours et les
+   flèches ‹ › mènent toutes les deux ici : deux façons de poser `_journalJour` finiraient par
+   diverger (l'une oublierait la borne du futur, ou le re-rendu). */
+function journalAllerA(ymd){
+  if(!ymd || ymd>today()) return;                  // ⛔ jamais dans le futur
   _journalJour=(ymd===today())?null:ymd;
   renderFoodJournal();
+}
+function journalNav(dir){
+  /* ⏰ MIDI, jamais minuit : une date lue à minuit bascule d'un jour selon le fuseau — famille
+     « fuseaux horaires » de BUGS.md, qui a déjà fait rougir 6 fixtures le 23/08. */
+  const d=new Date(_journalJourActif()+'T12:00:00');
+  d.setDate(d.getDate()+dir);
+  journalAllerA(d.toISOString().slice(0,10));
 }
 let _editFoodTs=null, _editFoodMeal='dejeuner';
 /* ⚖️ MODIFIER LE POIDS D'UNE ENTRÉE (22/08/2026) — Michel, sur un « Oeuf cru » : « on ne peut
