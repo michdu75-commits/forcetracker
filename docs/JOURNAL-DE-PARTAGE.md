@@ -42,7 +42,7 @@ fichiers, la version.
 
 | État | Ce que ça veut dire |
 |---|---|
-| 🟢 | 25/08 17:05 → 17:35 | session-B (claude-md-docs) | écran Séance ①/5 : le sélecteur d'exercices reste OUVERT après un ajout (6 allers-retours → 1) | `log.js` | ft-v1006 |
+| 🟢 | 25/08 17:05 → 17:35 | session-B (claude-md-docs) | écran Séance ①/5 : le sélecteur d'exercices reste OUVERT après un ajout (6 allers-retours → 1) ⚠️ renuméroté ft-v1006 → **ft-v1009** : session-A avait pris 1006/1007 pendant ce temps, et réservé 1008 | `log.js` | ft-v1009 |
 | 🟡 **en cours** | quelqu'un travaille dessus **maintenant** — ne pas prendre ce sujet |
 | 🟢 **livré** | terminé, la version est indiquée |
 | 🔴 **abandonné** | arrêté en route, avec la raison (une session qui meurt, un changement de cap) |
