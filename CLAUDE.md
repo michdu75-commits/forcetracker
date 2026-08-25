@@ -425,7 +425,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v999`** (prochaine : `ft-v1000`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1000`** (prochaine : `ft-v1001`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -435,6 +435,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1000 — 🔁 LE « PULL-OVER » GÉNÉRIQUE — et un TEST DU PROJET qui m'a repris** — Michel renvoie la même capture du sélecteur, sans un mot. *La capture EST la demande.*
+
+**⛔⛔ MA PREMIÈRE SOLUTION A ÉTÉ REFUSÉE PAR UN TEST, ET IL AVAIT RAISON — c'est le vrai sujet de cette version.** J'avais fait **partager** `pullover-haltere.webp` entre le générique et *« Pull-over Haltère »* : 0 octet, vignette immédiate, ça semblait malin. Le contrôle croisé ② — ***« deux exercices ne partagent jamais la même ANIMATION »*** — est passé au **ROUGE**.
+
+**⭐⭐ ET CETTE RÈGLE EST NÉE D'UN BUG QUE JE VENAIS DE DOCUMENTER LE MATIN MÊME.** Le 02/08, *« Écarté Haltères »* et *« Écarté Décliné »* pointaient le même fichier — l'app montrait le **mauvais mouvement**. En livrant ft-v999 deux heures plus tôt, j'avais écrit un témoin disant *« les deux écartés gardent des fichiers différents »*. 👉 ***Un test permanent m'a empêché de refaire, dans la même matinée, le bug dont je venais d'écrire la leçon.*** C'est **R17** qui paie — *un scénario permanent protège aussi contre celui qui l'a écrit.*
+
+**👉 CE QUI EST LIVRÉ EST DONC LE SEUL GESTE DÉFENDABLE : LE BAC.** Le générique n'a **pas** de matériel ; « barre » venait mécaniquement de la règle de classement (`pull-?over` figure dans la liste barre). Il passe en 💪 **POIDS LIBRE** — la version classique du pull-over sans précision, celle que Michel a d'ailleurs envoyée en démo. **Une ligne, 0 octet, aucune donnée touchée.**
+
+**⛔ ET IL RESTE SANS VIGNETTE, EXPRÈS.** *Aucune animation vaut mieux qu'une animation qui affirme « Pull-over = Pull-over Haltère » sans que ce soit décidé.* C'est mot pour mot la phrase du 02/08, appliquée à moi-même.
+
+**⛔⛔ LE VRAI DÉFAUT RESTE ENTIER, ET IL EST ÉCRIT POUR NE PAS ÊTRE REDÉCOUVERT** : c'est un **DOUBLON DE CATALOGUE** — 5 entrées pull-over pour un exercice qui, sans précision, n'a pas de matériel, *donc tout bac lui est arbitraire et toute vignette le rend jumeau de l'une des quatre*. Fusionner **renommerait les séances et records passés**, et **on ne sait pas s'ils ont été faits à la barre ou à l'haltère** — deviner écrirait un fait faux dans son historique (**R29**). ⭐ *Une vignette qui manque coûte un coup d'œil ; un historique renommé à tort coûte une donnée qu'on croyait juste.* **La fusion attend SA réponse, à une seule question : « tes Pull-over, c'était barre ou haltère ? »**
+
+**⭐⭐ LE TÉMOIN LE PLUS IMPORTANT GARDE DONC UNE ABSENCE** : *« le générique n'emprunte l'animation de personne »*. Lui en donner une exigera de **trancher le doublon**, jamais de contourner la règle.
+Tests : **croisés 50/50** (2 rouges d'abord — ② l'animation partagée, ⑦ l'empreinte du catalogue —, le 1ᵉʳ corrigé en revenant en arrière, le 2ᵉ régénéré car le changement de bac est voulu : `gen_reference_catalogue.js`, **une seule ligne bouge**), parcours 1379/1379, calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou. ⭐ **Le contrôle décisif n'est pas un contrôle négatif ici, c'est le rouge lui-même** : sans lui je livrais le bug du 02/08 une deuxième fois. 🤝 Protocole de partage appliqué (ligne 🟡 poussée avant de coder, close en 🟢). Fichiers : `log.js`, `tests/parcours/runner.js`, `tests/croises/catalogue-reference.json`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1000. |
 
 **ft-v999 — 🏋️ DEUX ANIMATIONS QUI MANQUAIENT — et un RETRAIT qui s'est refermé tout seul** — Michel, capture du sélecteur à l'appui : *« j'ai encore des figurines qui n'apparaissent pas… le tirage horizontal prise serrée, il y a le pull-over aussi »*.
 
@@ -747,25 +762,6 @@ Tests : **parcours 1249/1249** (+12, bloc C), calculs 266/266, muscles 241/241, 
 
 **⛔ ET LE REPLI `bw` RESTE LU** : une sauvegarde cloud ancienne peut en porter, et *perdre une mesure en corrigeant un bug serait un mauvais échange*.
 Tests : **parcours 1237/1237** (+10, bloc XCIX), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 8 rouges**, exactement les 8 comportements corrigés — et **il est INSTRUCTIF, pas un « la fonction n'existe pas »** : les détails imprimés *montrent le bug lui-même* (`equilibre: 3190` à côté de `muscle: 3190`, `{"lm":null,"methode":"mifflin"}`, un bilan mensuel `{}`). ⭐ **Et les 3 verts des deux côtés sont les non-régressions** : le repli à 350 pour un objectif inconnu, le repli `bw` pour une vieille sauvegarde, et *aucune masse maigre inventée* sans % de gras — **ils ne devaient pas bouger, ils n'ont pas bougé**. Fichiers : `state.js`, `screens.js`, `app.js`, `tests/calculs/runner.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v981. |
-
-**ft-v980 — ⚡ LE CONTRÔLE D'INTENSITÉ EN CODE — « 3 séries de 5 à 95, c'est impossible »** — Michel : *« comment il a pu déduire que je pouvais faire 3 séries de 5 reps à 95 ? je ne suis pas encore assez fort »*.
-
-**⭐⭐ ET MILO NE L'AVAIT PAS DÉDUIT — IL L'AVAIT LUI-MÊME DÉMENTI.** Questionné (*« tu es sûr de toi ? »*), il répond : *« 105×2 → 1RM ~108 · 95×5 ≈ **88 %**, très lourd pour 3 séries de 5, on vise 80-85 %, soit 85-90 kg. **Je corrige : 3×5 à 90 kg.** »* Michel a dit *« ne corrige pas »* — Milo a obéi, **et c'est le bon comportement**. 👉 *Le défaut n'est donc pas son jugement : c'est que son contrôle ne se déclenche QUE SI ON LE QUESTIONNE.* **Il vérifie APRÈS, jamais AVANT.**
-
-**⭐ LA RÉALITÉ A TRANCHÉ, ET ELLE EST DANS LES DONNÉES** : ce jour-là, **95×3 avec « pose de la barre à la rép. 2 », deux fois**, puis **90×3**. *Michel avait raison (infaisable), et le 90 corrigé de Milo est exactement là où il a fini.*
-
-**⛔⛔ POURQUOI EN CODE ET PAS DANS LE PROMPT — R7 au pied de la lettre.** *« 88 % du 1RM sur 3×5, est-ce tenable ? »* est une question **arithmétique**. La confier à un modèle, c'est la faire dépendre d'un jour de fatigue — et **R9** rappelle qu'on évalue sur le modèle des **vrais** utilisateurs, pas sur celui du fondateur.
-
-**⭐⭐ ET LA FORMULE REPRODUIT LA CORRECTION DE MILO, INDÉPENDAMMENT — c'est ce qui la valide.** On **inverse `bz()`** (Brzycki — **R2**, jamais une 2ᵉ formule de 1RM) pour obtenir la charge d'une série **maximale** à R répétitions, puis on applique un coefficient de tenue de **0,93**, parce que trois séries ne sont pas une série. Résultat : **89,5 kg conseillés** là où Milo disait **90**. ⚠️ Le coefficient est un **jugement**, vérifié sur toute la plage contre les barèmes : 3 reps → 88 % (barème 85-90) · 5 reps → **83 %** (*le chiffre que Milo a cité lui-même*) · 8 reps → 75 %.
-
-**⛔⛔ ON SIGNALE, ON NE CORRIGE JAMAIS TOUT SEUL (R29).** Michel **voulait** ses 95 kg pour tester son max, et il en avait le droit : les charges partent **intactes**, l'avertissement est attaché à l'exercice et reste **lisible pendant la séance** — un toast aurait disparu avant la 1ʳᵉ série. ⛔ **Et sans record connu, la fonction SE TAIT** : jamais un 1RM inventé. Une **seule** série à 95 ne déclenche rien non plus.
-
-**⛔ LE REPOS SUIT LA MÊME RÈGLE, ET C'EST MICHEL QUI L'A TRANCHÉE** : *« un 3×5 avec 90 secondes de repos c'est IMPOSSIBLE »* — donc une prescription **inexécutable**, pas discutable.
-
-**⭐ R4 : LE CALCUL ATTEINT LE CONTEXTE DE MILO**, jumeau de `_verdictMontee` et posé **le même jour** que lui pour ne pas répéter le « correctif d'un seul côté » de la semaine (**R8**). Avec l'**auteur nommé**, et un **4ᵉ cas de figure** écrit noir sur blanc : *une charge assumée en connaissance de cause ne se juge pas.*
-
-**⚠️⚠️ ET UN TÉMOIN M'A FAIT CORRIGER MA PROPRE POSE — la 4ᵉ fois de la semaine.** J'avais branché le contrôle sur `_applyMiloSession` seul, **la porte « une séance tourne déjà »** : il n'aurait **jamais** tourné dans le cas normal, celui de Michel. Il vit désormais dans `_appliqueMiloSession`, **le seul point que les DEUX portes traversent** (**R2**). ⛔ **Et ça a révélé un 2ᵉ défaut** : `_milo:true` **manquait** sur cette porte — une séance chargée en mode « remplacer » perdait son **auteur**, donc Milo pouvait reprocher à la personne des charges qu'il avait prescrits. *C'est l'incident du 18/08, par une porte qu'on n'avait pas regardée.*
-Tests : **parcours 1227/1227** (+18, bloc XCVIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 13 rouges sur 18 — ⚠️ ET LES 5 « VERTS » SONT DE FAUX VERTS, autant l'écrire** : sans la fonction, les témoins de *silence* (« ne déclenche rien », « se tait ») testent `undefined` et passent tout seuls. *Un témoin qui ne tourne pas n'est pas un témoin vert* — **4ᵉ fois que ça se paie** (ft-v949, ft-v953, ft-v963). Ce qui est réellement démontré, ce sont les 13 comportements neufs ; les silences ne sont prouvés que par la passe **normale**. Fichiers : `log.js`, `coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v980. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

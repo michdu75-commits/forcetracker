@@ -462,6 +462,36 @@ t('⛔ … et la prise serrée BASSE ne prend pas le fichier de la prise serrée
         const m=n=>{const r=new RegExp("'"+n+"':\\{img:'(exercises/[^']+)'");const x=lg.match(r);return x&&x[1];};
         const bas=m('Tirage Poulie Basse Prise Serrée'), haut=m('Tirage Poulie Haute Prise Serrée');
         return !!bas && !!haut && bas!==haut;})());
+/* ⚠️ LE « PULL-OVER » GÉNÉRIQUE (25/08) — le témoin garde surtout ce qu'on NE fait PAS.
+   Le générique n'avait pas de vignette et vivait dans le bac BARRE juste au-dessus de
+   « Pull-over Barre ». On lui a donné l'image haltère et le bac poids libre — un PANSEMENT
+   assumé sur un doublon de catalogue (5 entrées pull-over pour un exercice sans matériel).
+   ⛔⛔ Le 2ᵉ témoin est le plus important : les 5 entrées doivent RESTER 5. Fusionner le
+   générique renommerait les séances et records passés, et on ne sait pas si Michel les a
+   faits à la barre ou à l'haltère — deviner écrirait un fait faux dans son historique (R29).
+   Si quelqu'un fusionne un jour, que ce soit une DÉCISION, pas un effet de bord. */
+t('⭐ le « Pull-over » générique est rangé en poids libre (le bac « barre » était arbitraire)',
+  (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        return /'Pull-over':'libre'/.test(lg);})());
+/* ⛔⛔ LE TÉMOIN QUI COMPTE LE PLUS ICI GARDE MON PROPRE ÉCHEC (25/08).
+   J'avais fait PARTAGER `pullover-haltere.webp` entre « Pull-over » et « Pull-over Haltère »
+   pour donner une vignette au générique. Le contrôle croisé ② — « deux exercices ne partagent
+   jamais la même ANIMATION » — est passé au ROUGE, et il avait raison : cette règle est née du
+   bug du 02/08 (les deux écartés pointaient le même fichier, l'app montrait le mauvais
+   mouvement). J'avais écrit un témoin le matin même disant l'inverse. *Un test permanent m'a
+   empêché de refaire, deux heures plus tard, le bug que je venais de documenter.*
+   👉 Le générique reste donc SANS vignette, et ce témoin épingle cette absence : lui en donner
+   une exigera de trancher le doublon, pas de contourner la règle. */
+t('⛔⛔ … et il n\'emprunte l\'animation de PERSONNE (le contrôle ② l\'a refusé, il avait raison)',
+  (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        return !/'Pull-over':\s*\{img:/.test(lg);})());
+t('⛔⛔ … et les 5 entrées pull-over restent 5 : la fusion est une décision, pas un effet de bord',
+  (()=>{const c=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+        const n=['Pull-over','Pull-over Barre','Pull-over Haltère','Pull-over Poulie','Pullover Machine'];
+        return n.every(x=>c.indexOf("{n:'"+x+"'")>=0);})());
+t('⛔ … et aucune image en double sur le disque pour ça (le générique PARTAGE le fichier haltère)',
+  !fs.existsSync(path.join(ROOT,'exercises/pull-over-haltere-2.webp'))
+  && !fs.existsSync(path.join(ROOT,'exercises/pullover-haltere-v2.webp')));
 t('⭐ le splash iOS est SAUTÉ au redémarrage de mise à jour (flag ft4_just_updated lu en tête)',
   (()=>{const s=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
         const m=s.match(/navigator\.standalone===true&&localStorage\.getItem\('ft4_just_updated'\)!=='1'\)document\.documentElement\.classList\.add\('ios-boot'\)/);

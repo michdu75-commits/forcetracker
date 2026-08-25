@@ -1,5 +1,5 @@
 {
- "genere": "2026-08-20",
+ "genere": "2026-08-25",
  "total": 324,
  "nbRegles": 71,
  "fragiles": 0,
@@ -1424,7 +1424,7 @@
    "p": "lats",
    "s": "pec,serratus,triceps",
    "pat": "tirage-horizontal",
-   "eq": "barre",
+   "eq": "libre",
    "met": 5.5,
    "frag": 0
   },

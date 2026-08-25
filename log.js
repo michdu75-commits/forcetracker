@@ -4078,7 +4078,33 @@ const _EQ_ECRIT={
   // Sur un banc incliné, les bras pendent le long du corps : une barre ne peut pas être
   // curlée depuis cette position (les cuisses et le banc sont dans le chemin). C'est le
   // même critère que les trois du dessus — le mouvement n'existe qu'aux haltères.
-  'Curl Incliné':'libre'
+  'Curl Incliné':'libre',
+  // ⚠️⚠️ « PULL-OVER » TOUT COURT — le rangement seul, et l'histoire vaut d'être lue (25/08/2026).
+  // Signalé par Michel, capture du sélecteur à l'appui : seule ligne sans vignette, rangée en
+  // 🏋️ BARRE **juste au-dessus de « Pull-over Barre »** — deux lignes pour la même chose.
+  //
+  // ⛔⛔ MA PREMIÈRE SOLUTION A ÉTÉ REFUSÉE PAR UN TEST DU PROJET, ET IL AVAIT RAISON.
+  //    J'avais fait partager `pullover-haltere.webp` entre le générique et « Pull-over Haltère ».
+  //    Le contrôle croisé ② — *« deux exercices ne partagent jamais la même ANIMATION »* — est
+  //    passé au ROUGE. Cette règle est née du bug du 02/08 (« Écarté Haltères » et « Écarté
+  //    Décliné » pointaient le même fichier, l'app montrait le mauvais mouvement). J'avais même
+  //    écrit un témoin le matin même disant « les deux écartés gardent des fichiers différents ».
+  //    *Un test permanent m'a empêché de refaire, deux heures plus tard, le bug que je venais
+  //    de documenter.* Le générique reste donc SANS vignette : aucune animation vaut mieux
+  //    qu'une animation qui affirme « Pull-over = Pull-over Haltère » sans que ce soit décidé.
+  //
+  // 👉 CE QUI RESTE ICI est le seul geste défendable : le bac. Le générique n'a PAS de matériel,
+  //    donc « barre » était un choix arbitraire de la règle de classement (`pull-?over` figure
+  //    dans la liste barre). « Pull-over » sans précision désigne classiquement la version
+  //    HALTÈRE — c'est d'ailleurs la démo que Michel a envoyée en croyant qu'elle manquait.
+  //
+  // ⛔⛔ ET LE VRAI DÉFAUT RESTE ENTIER, ÉCRIT POUR NE PAS ÊTRE REDÉCOUVERT : c'est un DOUBLON
+  //    DE CATALOGUE (5 entrées pull-over : générique · Barre · Haltère · Poulie · Machine).
+  //    Fusionner le générique RENOMMERAIT les séances et records passés de Michel, et on ne
+  //    sait pas s'il les a faits à la barre ou à l'haltère — deviner écrirait un fait faux
+  //    dans son historique (R29). *Une vignette qui manque coûte un coup d'œil ; un historique
+  //    renommé à tort coûte une donnée qu'il croyait juste.* La fusion attend SA réponse.
+  'Pull-over':'libre'
 };
 function _exEquip(name){
   const s=_naz(name);

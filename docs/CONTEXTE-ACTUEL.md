@@ -6,7 +6,24 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v999`.
+- **Version en ligne (live) :** `ft-v1000`.
+- 🔁⭐⭐ **LE « PULL-OVER » GÉNÉRIQUE — et un TEST DU PROJET qui m'a repris** (ft-v1000).
+  ⛔⛔ **Ma première solution a été REFUSÉE par un test, et il avait raison.** J'avais fait
+  **partager** `pullover-haltere.webp` entre le générique et *Pull-over Haltère* — le contrôle
+  croisé ② *« deux exercices ne partagent jamais la même ANIMATION »* est passé au **rouge**.
+  ⭐⭐ **Cette règle est née du bug du 02/08** (les deux écartés pointaient le même fichier,
+  l'app montrait le mauvais mouvement) — et j'avais écrit un témoin **le matin même**, en
+  ft-v999, disant *« les deux écartés gardent des fichiers différents »*. *Un test permanent m'a
+  empêché de refaire, dans la même matinée, le bug dont je venais d'écrire la leçon* (**R17**).
+  👉 **Livré : le BAC seulement.** Le générique n'a pas de matériel ; « barre » venait
+  mécaniquement de la règle de classement. Il passe en **poids libre**. Une ligne, 0 octet.
+  ⛔ **Il reste SANS vignette, exprès** : *aucune animation vaut mieux qu'une animation qui
+  affirme « Pull-over = Pull-over Haltère » sans que ce soit décidé* — la phrase du 02/08,
+  appliquée à moi-même. Un témoin garde cette **absence**.
+  ⏭️ **LE VRAI DÉFAUT RESTE ENTIER : doublon de catalogue** (5 entrées). Fusionner renommerait
+  les séances et records passés, et on ne sait pas s'ils ont été faits à la barre ou à
+  l'haltère (**R29**). 👉 **Une seule question débloque tout : « tes Pull-over, c'était barre ou
+  haltère ? »**
 - 🏋️⭐ **DEUX ANIMATIONS QUI MANQUAIENT — LIVRÉ** (ft-v999). Michel : *« j'ai encore des figurines
   qui n'apparaissent pas »*. ⛔⛔ **Ce n'est PAS le bug de ft-v996/997**, et la différence compte :
   là le fichier existait et l'app ne le trouvait pas ; **ici le fichier n'existe pas**. Mesuré :
