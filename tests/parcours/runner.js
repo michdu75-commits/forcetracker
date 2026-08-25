@@ -12768,7 +12768,84 @@ console.log('\n-- CXI. Un nom abrégé lit la FICHE ÉCRITE, plus la devinette (
 
 await b.close(); srv.close();
 
-
+/* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
+   Michel, capture a l'appui, en lancant le benchmark : « Ya marque annuler ou supprimer lol ».
+   La fenetre disait « Benchmark Milo — 53 scenarios / 53 appels au Coach, environ 0,79 € a
+   3,45 € » et proposait [Annuler] [SUPPRIMER]. On ne supprime rien : on LANCE, et ca coute de
+   l'argent.
+   ⭐ LE MECANISME EXISTAIT DEJA, POSE D'UN SEUL COTE : `showConfirm(title,msg,cb,okLabel)`
+   accepte un libelle depuis toujours — 10 appels sur 24 ne le passaient pas alors que leur
+   action n'etait PAS une suppression (lancer un test, importer des pesees, fusionner, vider un
+   cache, recommencer une inscription). C'est la 5e fois : ft-v973, v975, v984, v996, et ici.
+   ⛔⛔ LA JUMELLE, trouvee en la cherchant (R8) : l'ecran « Fusionner les exercices » existe a
+   DEUX endroits — `log.js` passait bien 'Fusionner', `setup.js` ne passait rien et affichait
+   donc « Supprimer » pour un RENOMMAGE. Deux copies du meme ecran, une juste, une fausse (R2).
+   ⭐⭐ ET LE TEMOIN FIGE UNE REGLE, PAS UNE LISTE. Enumerer les 24 appels rougirait au 25e et on
+   l'allongerait par reflexe. La regle est verifiable et ne perime pas : le libelle par defaut
+   est « Supprimer », DONC un appel qui ne passe pas de libelle doit avoir un titre qui commence
+   par « Supprimer ». Sinon le bouton rouge annonce autre chose que ce qu'il fait. */
+console.log('\n-- CXIV. Le bouton rouge de showConfirm dit ce qu\'il FAIT (ft-v1006) --');
+{
+  const _FIC=['app.js','coach.js','log.js','screens.js','setup.js','tracking.js','state.js'];
+  const _menteurs=[];
+  let _total=0, _avecLabel=0;
+  for(const f of _FIC){
+    let src; try{ src=fs.readFileSync(path.join(__dirname,'..','..',f),'utf8'); }catch(e){ continue; }
+    let k=-1;
+    while((k=src.indexOf('showConfirm(',k+1))>=0){
+      if(/function\s+$/.test(src.slice(Math.max(0,k-12),k))) continue;   // la definition elle-meme
+      // Borne l'appel en ignorant chaines et commentaires (sinon une parenthese dans un
+      // message francais fausse tout — mesure, pas suppose).
+      let i=src.indexOf('(',k), prof=0, q=null, fin=-1;
+      while(i<src.length){
+        const ch=src[i];
+        if(q){ if(ch==='\\'){i+=2;continue;} if(ch===q)q=null; i++; continue; }
+        if(ch==='\''||ch==='"'||ch==='`'){ q=ch; i++; continue; }
+        if(ch==='/'&&src[i+1]==='/'){ i=src.indexOf('\n',i); continue; }
+        if(ch==='/'&&src[i+1]==='*'){ i=src.indexOf('*/',i)+2; continue; }
+        if(ch==='(')prof++;
+        else if(ch===')'){ prof--; if(!prof){ fin=i; break; } }
+        i++;
+      }
+      if(fin<0) continue;
+      /* ⚠️⚠️ LE DECOUPAGE DES ARGUMENTS DOIT IGNORER LES COMMENTAIRES, PAS SEULEMENT LES
+         CHAINES. Mon 1er jet ne sautait que les chaines : une APOSTROPHE FRANCAISE dans un
+         commentaire (`// dans le clone : n'efface que les cles cl_`) ouvrait une fausse
+         chaine et avalait le reste de l'appel — le temoin accusait alors 5 appels DEJA
+         corriges et rendait 11 menteurs la ou il y en avait 10. Un lecteur, un seul, pour
+         les bornes ET pour les virgules. */
+      const d0=src.indexOf('(',k)+1;
+      const coupes=[d0]; { let j=d0, p2=0, qq=null;
+        while(j<fin){ const ch=src[j];
+          if(qq){ if(ch==='\\'){j+=2;continue;} if(ch===qq)qq=null; j++; continue; }
+          if(ch==='\''||ch==='"'||ch==='`'){ qq=ch; j++; continue; }
+          if(ch==='/'&&src[j+1]==='/'){ j=src.indexOf('\n',j); continue; }
+          if(ch==='/'&&src[j+1]==='*'){ j=src.indexOf('*/',j)+2; continue; }
+          if('([{'.indexOf(ch)>=0)p2++; else if(')]}'.indexOf(ch)>=0)p2--;
+          else if(ch===','&&!p2) coupes.push(j+1);
+          j++; }
+      }
+      coupes.push(fin+1);
+      const args=[]; for(let a=0;a<coupes.length-1;a++) args.push(src.slice(coupes[a], coupes[a+1]-1));
+      _total++;
+      const titre=args[0].trim();
+      if(args.length>=4 && args[3].trim()){ _avecLabel++; continue; }
+      // Pas de libelle → le bouton rouge dira « Supprimer ». Le titre doit le dire aussi.
+      if(!/^'Supprimer/.test(titre)){
+        _menteurs.push(f+':'+(src.slice(0,k).split('\n').length)+' '+titre.replace(/\s+/g,' ').slice(0,40));
+      }
+    }
+  }
+  t('⭐⭐ AUCUN `showConfirm` non-destructeur ne garde le bouton rouge « Supprimer »',
+    _menteurs.length===0, _menteurs.length+' menteur(s) : '+JSON.stringify(_menteurs.slice(0,6)));
+  t('⛔ le témoin a bien VU les appels (sinon il serait vert en ne mesurant rien)',
+    _total>=20, 'appels analysés = '+_total+' · dont avec libellé = '+_avecLabel);
+  t('⭐ le libellé par défaut de `showConfirm` reste « Supprimer » (c\'est ce qui rend la règle vraie)',
+    /okLabel\|\|'Supprimer'/.test(fs.readFileSync(path.join(__dirname,'..','..','log.js'),'utf8')), '');
+  t('⛔⛔ LA JUMELLE (R8) : les DEUX écrans « Fusionner les exercices » disent « Fusionner »',
+    (fs.readFileSync(path.join(__dirname,'..','..','setup.js'),'utf8').indexOf("'Fusionner'")>=0)
+    && (fs.readFileSync(path.join(__dirname,'..','..','log.js'),'utf8').indexOf("'Fusionner'")>=0), '');
+}
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

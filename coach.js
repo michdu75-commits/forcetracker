@@ -4606,7 +4606,7 @@ function startPt001Test(){
   const n=sessions.length;
   const estMin=Math.max(1,Math.round(n*6/60)); // ~6 s / débrief (génération Opus + petit throttle)
   const msg='Ça va rejouer TES '+n+' séances dans l\'ordre : Milo débriefe chacune et vérifie l\'objectif de la fois d\'avant.\n\n• ~'+estMin+' min\n• Coût : '+(n+1)+' appels au modèle du Coach (quelques €)\n• '+n+' débriefs empilés dans le Coach\n\nÀ la fin : la question « Qui suis-je en tant que sportif ? » + un rapport exportable.\n\nLancer ?';
-  showConfirm('🧪 PT-001 · Test continuité', msg, ()=>_pt001Run(sessions));
+  showConfirm('🧪 PT-001 · Test continuité', msg, ()=>_pt001Run(sessions),'Lancer');
 }
 async function _pt001Run(allSessions){
   _pt001Running=true;
@@ -5017,7 +5017,7 @@ function startVcTest(id){
   if(!S.url){ toast('URL du Coach IA absente','error'); return; }
   const p=VC_PERSONAS[id]; if(!p){ toast('Persona inconnu','error'); return; }
   const msg='Persona « '+p.nom+' » ('+p.resume+').\n\nOn injecte ce persona À LA PLACE de tes données (temporairement, RIEN n\'est écrit — tes vraies données reviennent après), on envoie son message à Milo, et on regarde s\'il respecte les ATTENDUS.\n\n1 appel au Coach. Lancer ?';
-  showConfirm('🎭 '+p.id+' · Test comportemental', msg, ()=>_vcRun(p));
+  showConfirm('🎭 '+p.id+' · Test comportemental', msg, ()=>_vcRun(p),'Lancer');
 }
 async function _vcRun(persona){
   _vcRunning=true;
@@ -5220,7 +5220,7 @@ function startEvalBench(compare){
       + '\n\n'+n+' appels au Coach, soit environ '+prix+'.'
       + '\n\n🛡️ Tes données ne sont PAS touchées : chaque scénario remplace ton profil le temps de la question, puis tout revient.'
       + '\n\nLancer ?';
-    showConfirm('🧪 Benchmark Milo — '+SC.length+' scénarios', msg, ()=>_evRun(SC, !!compare));
+    showConfirm('🧪 Benchmark Milo — '+SC.length+' scénarios', msg, ()=>_evRun(SC, !!compare),'Lancer');
   }).catch(e => toast('Corpus introuvable : '+e.message,'error'));
 }
 
@@ -5630,7 +5630,7 @@ function rejouerRouges(){
       +'corrige pas pareil.\n\n'
       +n+' appels au Coach, soit environ '+bas+' € à '+haut+' €.\n\n'
       +'🛡️ Tes données ne sont pas touchées.\n\nLancer ?',
-      ()=>_evRun(sous, false, rep));
+      ()=>_evRun(sous, false, rep),'Rejouer');
   }).catch(e=>toast('Corpus introuvable : '+e.message,'error'));
 }
 
