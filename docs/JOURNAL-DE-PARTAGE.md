@@ -99,6 +99,7 @@ bugs « fuseaux horaires » de `BUGS.md`, appliquée à nous-mêmes.
 
 | État | Quand (UTC) | Qui | Sujet | Fichiers | Version |
 |---|---|---|---|---|---|
+| 🟡 | 25/08 08:45 | session-B (claude-md-docs) | le « Pull-over » générique : vignette + rangement (doublon de catalogue, fusion NON faite) | `log.js` | — |
 | 🟢 | 25/08 08:00 → 08:35 | session-B (claude-md-docs) | 2 animations manquantes ajoutées (écarté haltères · tirage poulie basse prise serrée) — le pull-over est un doublon de catalogue, laissé à l'arbitrage de Michel | `exercises/*`, `log.js`, `sw.js` | ft-v999 |
 | 🟢 | 25/08 07:05 → 07:45 | session-A (project-status) | banc d'essai : doctrine R35 (il grandit à chaque bug, sans cible) + 3 scénarios promus (EV-051/052/053) | `tests/milo/eval-scenarios.js`, `docs/REGLES-ARCHITECTURE.md`, `docs/JOURNAL-DE-TEST.md`, `tests/parcours/runner.js` | ft-v998 |
 | 🟢 | 24/08 ~20:30 → 21:25 | session-B (claude-md-docs) | un nom ABRÉGÉ lit la fiche écrite (muscles) + sa jumelle unilatéral | `log.js`, `constants.js`, `state.js` | ft-v997 |
