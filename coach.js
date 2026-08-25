@@ -2931,7 +2931,28 @@ ${S.name ? '- Prénom: '+S.name+' (utilise-le naturellement, sans le répéter �
 - BMR: ${bmr} kcal | TDEE: ${tdee} kcal${_bd&&_bd.methode==='katch'?` → ⚖️ CALCULÉ SUR SA MASSE MAIGRE (${_bd.lm.lm} kg, ${_bd.lm.src} du ${_bd.lm.date}), formule Katch-McArdle — un MEILLEUR point de départ que la formule habituelle (poids/taille/âge), qui donnerait ${_bd.mifflin} kcal, soit ${_bd.kcal-_bd.mifflin>0?'+':''}${_bd.kcal-_bd.mifflin} kcal/jour d'écart. ⚠️ Mais cette masse maigre est une ESTIMATION, pas une mesure : ${_bd.lm.nature==='saisie'?"elle est calculée à partir d'un % de masse grasse qu'il/elle a SAISI lui/elle-même":_bd.lm.nature==='deduite'?"elle n'était pas lisible sur le rapport, elle a été retrouvée par SOUSTRACTION (poids − masse grasse)":"une balance mesure un poids et une impédance, puis ESTIME le reste avec la formule de son fabricant"}. Appuie-toi sur le CHIFFRE et sur la TENDANCE de plusieurs mesures ; ne présente jamais une variation de quelques centaines de grammes comme un gain ou une perte de tissu, et ne qualifie pas ce chiffre de « mesuré ».`:(_bd?` → ⚠️ ESTIMÉ sur poids/taille/âge (Mifflin-St Jeor)${_bd.raison?', '+_bd.raison:''} — cette formule ignore la composition corporelle et SOUS-ESTIME les personnes musclées (souvent de 100 à 200 kcal). Traite ce chiffre comme un ordre de grandeur, pas comme une mesure. Si la question porte sur ses calories, tu peux lui dire qu'un bilan corporel (Progrès → Poids) rendrait le calcul nettement plus juste — une fois, sans insister.`:'')}
 - Niveau activité sportive: ${S.activityLevel} | Type travail: ${{bureau:'Bureau/Sédentaire',debout:'Debout/Statique',actif:'Actif/En mouvement (serveur, infirmier…)',physique:'Travail Physique'}[S.workType]||'Bureau'} (+${calcWorkExtra()} kcal NEAT)
 - Tabac: ${S.smoker?'Fumeur (BMR +7%, impact cardiovasculaire — adapter l\'intensité et conseiller l\'arrêt)':'Non-fumeur'}
-- Objectif principal: ${S.goal?GOAL_LABELS[S.goal]:'NON RENSEIGNÉ — ne présume pas son objectif, observe ses séances et DEMANDE-lui ce qu\'elle vise'}${S.goal2&&GOAL_LABELS[S.goal2]?' | Priorité complémentaire (pour l\'ENTRAÎNEMENT, pas la nutrition): '+GOAL_LABELS[S.goal2]+' → équilibre tes conseils d\'entraînement entre les deux, mais la nutrition suit le principal':''} | Phase: ${S.nutritionPhase === 'charge' ? 'Charge (+100 kcal)' : 'Décharge (−100 kcal)'}
+- Objectif principal: ${S.goal?GOAL_LABELS[S.goal]:'NON RENSEIGNÉ — ne présume pas son objectif, observe ses séances et DEMANDE-lui ce qu\'elle vise'}
+${(()=>{
+  /* ⭐⭐ L'HISTORIQUE DE L'OBJECTIF (ft-v1008) — la moitié qui manquait. Michel, le 19/08 :
+     « As-tu vu que j'avais changé d'objectif ? » → « Non ». Il disait vrai : l'app ne gardait
+     que la valeur du JOUR. Depuis, `_goalSet` journalise les CHANGEMENTS, et ils arrivent ici.
+     ⛔ RIEN N'EST INVENTÉ (R29) : sans changement enregistré, ce bloc N'EXISTE PAS — pas
+     d'en-tête vide, pas de « objectif stable depuis toujours » qu'on ne peut pas savoir. Un
+     compte créé avant aujourd'hui a un journal vide, et c'est la vérité.
+     ⛔ ET ON NE LUI DIT PAS QUOI EN FAIRE À CHAQUE FOIS : la consigne n'apparaît que sur un
+     changement RÉCENT (30 jours). Une note permanente serait du bruit qu'on finit par ne plus
+     lire (R19), et rappeler un virage vieux de six mois ferait dire une banalité. */
+  const gl=(S.goalLog||[]).slice(-4);
+  if(!gl.length) return '';
+  const j=(d)=>{ try{ return Math.round((new Date(today())-new Date(d))/86400000); }catch(e){ return 999; } };
+  const L=gl.map(g=>`  · ${g.date} : ${GOAL_LABELS[g.de]||g.de} → ${GOAL_LABELS[g.vers]||g.vers}${g.src==='observation'?' (suite à une observation de tes séances)':''}`);
+  const recent=gl[gl.length-1], nb=j(recent.date);
+  return `- ⚠️ SON OBJECTIF A CHANGÉ — ce n'est pas une valeur figée, c'est une DÉCISION qu'il/elle a prise :
+${L.join('\n')}`
+    + (nb<=30
+      ? `\n  → Le dernier changement date de ${nb===0?"AUJOURD'HUI":nb===1?'HIER':'il y a '+nb+' jours'}. Il/elle vient de passer de « ${GOAL_LABELS[recent.de]||recent.de} » à « ${GOAL_LABELS[recent.vers]||recent.vers} » : TIENS-EN COMPTE de toi-même (charges, reps, repos, calories) sans attendre qu'il/elle te le rappelle, et sans le lui faire répéter.`
+      : '');
+})()}${S.goal2&&GOAL_LABELS[S.goal2]?' | Priorité complémentaire (pour l\'ENTRAÎNEMENT, pas la nutrition): '+GOAL_LABELS[S.goal2]+' → équilibre tes conseils d\'entraînement entre les deux, mais la nutrition suit le principal':''} | Phase: ${S.nutritionPhase === 'charge' ? 'Charge (+100 kcal)' : 'Décharge (−100 kcal)'}
 ${(S.priorities&&S.priorities.length&&typeof _priorityLbl==='function')?`- 💪 MUSCLES PRIORITAIRES (là où il/elle veut progresser EN PRIORITÉ): ${S.priorities.map(_priorityLbl).join(', ')}. → Quand tu conseilles ou construis un programme, donne PLUS de fréquence, de volume et de variantes à ces muscles, tout en MAINTENANT le reste du corps. C'est comme un vrai coach qui programme autour des priorités de l'athlète. ⚠️ Ça ne change PAS l'objectif (qui reste le pilote) ni la nutrition — c'est juste l'emphase d'entraînement.`:''}
 - Discipline pratiquée: ${(S.discipline&&typeof DISC_LABELS!=='undefined'&&DISC_LABELS[S.discipline])||'non renseignée (ne présume pas — demande au besoin)'}${(S.discipline&&typeof DISC_CADRE!=='undefined'&&DISC_CADRE[S.discipline])?' — son cadre de travail CHIFFRÉ est plus bas (🎽), applique-le':''}
 ${S.level?`- Niveau: ${{debutant:'Débutant (encore récent en muscu — sois pédagogue, explique la technique, ne suppose pas les termes acquis, propose des charges prudentes)',intermediaire:'Intermédiaire (bases acquises — tu peux être plus technique et pousser la progression)',confirme:'Confirmé (expérimenté — parle-lui d\'égal à égal, techniques avancées bienvenues)'}[S.level]}`:''}
@@ -4942,7 +4963,7 @@ function _vcApplyPersona(p){
   // — Identité / profil —
   S.name=a.name||'Testeur'; S.gender=a.gender||'H'; S.email=''; // 'H'=Homme / 'F'=Femme (convention app)
   S.age=a.age||30; S.height=a.height||170; S.bw=a.bw||70;
-  S.goal=a.goal||''; S.goal2=a.goal2||''; S.priorities=a.priorities||[]; S.discipline=a.discipline||''; S.level=a.level||'';
+  S.goal=a.goal||''; S.goalLog=a.goalLog||[]; S.goal2=a.goal2||'';   // ⛔ anti-fuite : l'historique d'objectif AUSSI (ft-v1008) S.priorities=a.priorities||[]; S.discipline=a.discipline||''; S.level=a.level||'';
   S.activityLevel=a.activityLevel||'modéré'; S.workType=''; S.smoker=false;
   S.coachTone=a.coachTone||'';
   // — Morphologie / composition / mensurations —

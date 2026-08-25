@@ -626,6 +626,7 @@ function doGet(e) {
       prs:            data.prs            || {},
       sessions:       data.sessions       || [],
       weightLog:      data.weightLog      || [],
+      goalLog:        data.goalLog        || [],   // historique des changements d'objectif (ft-v1008)
       sleepLog:       data.sleepLog       || [],
       dayStateLog:    data.dayStateLog    || [],
       cycle:          data.cycle          || null,
@@ -655,6 +656,7 @@ function handleLoadProfilePost_(body) {
     prs:            data.prs            || {},
     sessions:       data.sessions       || [],
     weightLog:      data.weightLog      || [],
+    goalLog:        data.goalLog        || [],   // historique des changements d'objectif (ft-v1008)
     sleepLog:       data.sleepLog       || [],
     dayStateLog:    data.dayStateLog    || [],
     cycle:          data.cycle          || null,

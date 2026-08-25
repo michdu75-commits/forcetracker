@@ -2804,7 +2804,7 @@ function obNext(step){
     // étape Niveau (son propre écran) — le niveau est déjà posé par obSetLevel
     if(_obLevel)S.level=_obLevel;
   }else if(_obStep===4){
-    S.goal=_obGoal;
+    _goalSet(_obGoal,'inscription');   // ⛔ 'inscription' = pas un changement, rien n'est journalisé (ft-v1008)
   }else if(_obStep===6){
     // étape Blessure/zone fragile → Profil Santé (le Gardien la lira)
     _obApplyInjuries();
@@ -2971,7 +2971,7 @@ async function obCheckEmailAndFinish(){
 function finishOnboarding(){
   const btn=document.getElementById('ob-start-btn');
   if(btn){btn.style.display='';btn.disabled=false;btn.textContent='⚡ COMMENCER';}
-  if(!_obDataRestored){S.goal=_obGoal;S.gender=_obGender;}
+  if(!_obDataRestored){_goalSet(_obGoal,'inscription');S.gender=_obGender;}
   const emailFinal=(document.getElementById('ob-email-final')||{}).value||'';
   if(emailFinal&&!S.email){S.email=emailFinal.trim();}
   else if(emailFinal){S.email=emailFinal.trim();}
