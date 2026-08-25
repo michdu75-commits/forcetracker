@@ -42,6 +42,7 @@ fichiers, la version.
 
 | État | Ce que ça veut dire |
 |---|---|
+| 🟡 | 25/08 16:22 | session-B (claude-md-docs) | plafond IA relevé à 150 pour les comptes de développement (permet de lancer le banc d'essai, 53 appels) | `Code.js` | — |
 | 🟢 | 25/08 15:50 → 16:10 | session-B (claude-md-docs) | DOC de cadrage : la séance d'essai (parcours découverte → Milo premium). **Aucun code**, aucun fichier de la nutrition — rien à construire encore, le doc fixe les décisions avant de coder | `docs/SEANCE-DESSAI.md`, `CLAUDE.md` | — (doc) |
 | 🟡 **en cours** | quelqu'un travaille dessus **maintenant** — ne pas prendre ce sujet |
 | 🟢 **livré** | terminé, la version est indiquée |
