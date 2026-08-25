@@ -1151,6 +1151,13 @@ function _lightMsg(m){
     role: m.role,
     content: (typeof m.content === 'string') ? m.content
            : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text ? '[photo] ' + (m.content.find(p=>p&&p.type==='text').text) : '[photo]') : ''),
+    /* ⛔ L'HORODATAGE DOIT PASSER PAR ICI, sinon il meurt au premier enregistrement (ft-v1008).
+       C'est le point de passage OBLIGÉ vers `localStorage` ET vers `S.coachConversations` :
+       un `ts` posé à la création mais absent d'ici serait perdu à la seconde suivante — R4,
+       l'information reste dans l'objet en mémoire et n'atteint jamais la donnée gardée.
+       ⛔ ET ON N'EN INVENTE PAS pour les anciens messages (R29) : `ts` absent reste absent.
+       Un horodatage fabriqué serait pire que pas d'horodatage — il aurait l'air vrai. */
+    ...(m.ts?{ts:m.ts}:{}),
     ...(m._silent?{_silent:true}:{}) // consigne interne (débrief auto) : gardée pour le contexte, jamais affichée
   };
 }
@@ -1394,7 +1401,10 @@ function loadCoachConv(id){
   if(idx<0){ closeCoachConvs(); return; }
   const conv=S.coachConversations.splice(idx,1)[0]; // devient le fil actif → retiré de la liste
   _persistCoachConvs();
-  coachHistory=(conv.messages||[]).map(m=>({role:m.role,content:m.content}));
+  /* ⛔ CETTE RECOPIE PERDAIT L'HORODATAGE (ft-v1008) : rouvrir une vieille conversation la
+     réenregistrait sans dates, et les effaçait donc DÉFINITIVEMENT. Le `_silent` était
+     déjà perdu ici de la même façon — les deux sont rétablis. */
+  coachHistory=(conv.messages||[]).map(m=>({role:m.role,content:m.content,...(m.ts?{ts:m.ts}:{}),...(m._silent?{_silent:true}:{})}));
   _saveCoachHist();
   closeCoachConvs();
   _showCoachChat();
@@ -4164,7 +4174,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     ? [{ type: 'image', source: { type: 'base64', media_type: imgType, data: imgData } },
        { type: 'text', text: msg || 'Analyse cette photo.' }]
     : msg;
-  coachHistory.push({ role: 'user', content: userHistContent, ...(opts.silent?{_silent:true}:{}) });
+  coachHistory.push({ role: 'user', content: userHistContent, ts: Date.now(), ...(opts.silent?{_silent:true}:{}) });
   showTyping();
 
   try {
@@ -4260,7 +4270,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     if (_qr) _appendQuickReplies(_qr);
     // Étape 2 — débrief auto : on enregistre la mémoire durable (objectif/décision/tendances)
     if (opts.debriefSess) { try { _recordDebriefMemory(reply, { id: opts.debriefSess }); } catch(e){} }
-    coachHistory.push({ role: 'assistant', content: reply });
+    coachHistory.push({ role: 'assistant', content: reply, ts: Date.now() });
     _trimCoachHistory();   // ⚠️ borne de sécurité (400), plus la coupe à 20 qui perdait le début
     _saveCoachHist(); // fil persisté (survit à la fermeture de l'appli)
     try { localStorage.setItem('ft4_coach_lastts', String(Date.now())); } catch(e) {} // horodatage du dernier échange (pour la notion de délai)
@@ -4662,8 +4672,8 @@ async function _pt001Run(allSessions){
       let mem=null; try{ mem=_parseDebriefMemory(res.reply); }catch(e){}
       try{ _recordDebriefMemory(res.reply, s); }catch(e){}
       // Continuité dans le fil (le prochain débrief voit l'objectif précédent)
-      coachHistory.push({role:'user',content:instr,_silent:true});
-      coachHistory.push({role:'assistant',content:res.reply});
+      coachHistory.push({role:'user',content:instr,ts:Date.now(),_silent:true});
+      coachHistory.push({role:'assistant',content:res.reply,ts:Date.now()});
       _trimCoachHistory();
       rows.push({ i:i+1, date:s.date||'?', ok:true, kind:'valid', ms:res.ms, status:res.status, err:'',
         len:res.reply.length, parsed:!!mem,
