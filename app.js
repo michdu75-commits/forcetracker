@@ -3605,7 +3605,7 @@ function resetOnboardingTest(){
     try{localStorage.clear();}catch(e){}   // dans le clone : n'efface que les clés cl_ (stockage isolé)
     try{document.documentElement.classList.remove('ob-done');}catch(e){}
     location.reload();
-  });
+  },'Recommencer');
 }
 // Demande le code de secours (appareil sans email admin) — overlay simple
 function _promptAdminCode(){
@@ -5576,7 +5576,7 @@ function clearAppCache(){
     setTimeout(_fillStorageInfo,1500);
   };
   if(typeof showConfirm==='function'){
-    showConfirm('Vider le cache ?','Ça libère de la place et réinstalle les figurines. Tes séances, records et réglages ne sont PAS touchés.',go);
+    showConfirm('Vider le cache ?','Ça libère de la place et réinstalle les figurines. Tes séances, records et réglages ne sont PAS touchés.',go,'Vider');
   } else go();
 }
 // Barre d'installation : se remplit pendant que le Service Worker met les fichiers en cache (1re visite / mise à jour)

@@ -2767,7 +2767,7 @@ function mergeExercises(keep,remove){
       toast('"'+remove+'" fusionné dans "'+keep+'" ✅','success');
       detectDuplicates();
     }
-  );
+  ,'Fusionner');
 }
 
 /* ⏱️ RECALER LES CALORIES DES ANCIENNES SÉANCES — UN BOUTON, AUCUN FICHIER

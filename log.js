@@ -2332,7 +2332,7 @@ function clearWkt(){
     _syncWakeLock();          // plus de séance → on rend l'écran (R15 : tout chemin de fermeture)
     renderLog();
     toast('Séance annulée','info');
-  });
+  },'Abandonner');
 }
 // Tout effacer : vide les exercices mais GARDE la séance ouverte (ex. mauvais programme chargé).
 // Ne touche PAS l'historique ni les records. Distinct de « ✕ Annuler la séance » (qui quitte).
@@ -2345,7 +2345,7 @@ function clearAllEx(){
     persist();
     renderLog();
     toast('Séance vidée','info');
-  });
+  },'Vider');
 }
 // Sync boutons ✕/Changer dans l'en-tête + repositionne le FAB
 // Appellé à chaque renderExBlocks() pour rester cohérent sans passer par renderLog() entier
