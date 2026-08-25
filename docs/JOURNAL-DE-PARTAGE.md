@@ -42,6 +42,7 @@ fichiers, la version.
 
 | État | Ce que ça veut dire |
 |---|---|
+| 🟡 | 25/08 15:50 | session-B (claude-md-docs) | DOC de cadrage : la séance d'essai (parcours découverte → Milo premium). Aucun code, aucun fichier de la nutrition | `docs/SEANCE-DESSAI.md`, `CLAUDE.md` | — |
 | 🟡 **en cours** | quelqu'un travaille dessus **maintenant** — ne pas prendre ce sujet |
 | 🟢 **livré** | terminé, la version est indiquée |
 | 🔴 **abandonné** | arrêté en route, avec la raison (une session qui meurt, un changement de cap) |
