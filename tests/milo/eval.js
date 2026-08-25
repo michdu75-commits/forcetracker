@@ -250,8 +250,17 @@ function verifier(sc, reply) {
     const ctx = await nav.newContext({ serviceWorkers:'block', viewport:{width:390,height:844} });
     await ctx.addInitScript(() => {
       // Compte minimal « déjà connecté » : le laboratoire écrase de toute façon tout le profil.
+      /* ⚠️ L'EMAIL N'EST PLUS VIDE (25/08/2026) — et sans lui le plafond coupe la passe.
+         Le serveur compte par email (`Code.js` → `_aiQuotaBlock_`) et un email vide devient
+         « anon », plafonné à 50/jour. Or une passe fait 53 scénarios : elle se faisait couper
+         au 50ᵉ, et une mesure avant/après (R34) en demande deux. Le compte de développement
+         est relevé à 150 côté serveur — mais ce plafond ne sert à rien si l'appel part sans
+         l'email. *L'information doit atteindre la DONNÉE, pas rester dans le réglage (R4).*
+         ⛔ Aucun effet de bord sur ce qui est mesuré : `worker.js` sert le MÊME modèle à cet
+         email qu'à tout le monde (`MODELE_MICHEL === 'claude-sonnet-4-6'`, vérifié). */
       const b = { ft4_name:'Test', ft4_bw:'80', ft4_age:'35', ft4_height:'175',
-                  ft4_gender:'h', ft4_ok:'1', ft4_premium:'1', ft4_email:'' };
+                  ft4_gender:'h', ft4_ok:'1', ft4_premium:'1',
+                  ft4_email:'michdu75@gmail.com' };
       for (const k in b) localStorage.setItem(k, b[k]);
     });
     const page = await ctx.newPage();

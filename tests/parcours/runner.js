@@ -572,6 +572,26 @@ t('⛔ aucune image dupliquée sur le disque pour le pull-over (le générique n
   !fs.existsSync(path.join(ROOT,'exercises/pull-over-haltere-2.webp'))
   && !fs.existsSync(path.join(ROOT,'exercises/pullover-haltere-v2.webp'))
   && !fs.existsSync(path.join(ROOT,'exercises/pull-over.webp')));
+/* ⛔⛔ LE PLAFOND IA DES COMPTES DE DÉVELOPPEMENT (25/08) — ce témoin garde surtout un CHIFFRE
+   BAS, et la raison est écrite dans Code.js : « l'email est usurpable ». L'URL Apps Script est
+   publique, donc n'importe qui peut se prétendre être cet email. Relever ce plafond ouvre une
+   porte que quelqu'un d'autre peut emprunter. 150 laisse de quoi jouer DEUX passes du banc
+   d'essai (53 scénarios) et rien de plus.
+   ⭐ Le 2ᵉ témoin est le plus important : sans l'email dans `eval.js`, l'appel part en « anon »
+   et retombe à 50 — le plafond relevé ne servirait à rien. *L'information doit atteindre la
+   DONNÉE* (R4). Les deux moitiés ne valent que posées ensemble. */
+t('⛔⛔ le plafond IA de développement reste MODESTE (l\'email est usurpable — raison écrite)',
+  (()=>{const c=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+        const m=c.match(/var AI_MAX_DEV_\s*=\s*(\d+)/);
+        return !!m && parseInt(m[1],10)<=200 && /usurpable/.test(c);})());
+t('⭐⭐ … et le banc d\'essai part AVEC cet email (sinon il compte en « anon », plafond 50)',
+  (()=>{const e=fs.readFileSync(path.join(ROOT,'tests/milo/eval.js'),'utf8');
+        const c=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+        const m=e.match(/ft4_email:\s*'([^']*)'/);
+        return !!m && !!m[1] && c.indexOf("'"+m[1].toLowerCase()+"'")>=0;})());
+t('⛔ … et le plafond GLOBAL n\'a pas bougé (c\'est lui qui borne vraiment le risque)',
+  (()=>{const c=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+        return /AI_GLOBAL_MAX'\), 10\) \|\| 600/.test(c);})());
 t('⭐ le splash iOS est SAUTÉ au redémarrage de mise à jour (flag ft4_just_updated lu en tête)',
   (()=>{const s=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
         const m=s.match(/navigator\.standalone===true&&localStorage\.getItem\('ft4_just_updated'\)!=='1'\)document\.documentElement\.classList\.add\('ios-boot'\)/);
