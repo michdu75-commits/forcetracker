@@ -79,6 +79,15 @@ progression en **SVG** · barres de progression fines.
 
 ## 4. 📐 L'ÉCRAN AUJOURD'HUI — mesuré, pas décrit
 
+> ⚠️⚠️ **MISE À JOUR DU 26/08/2026 — LE JOURNAL A GAGNÉ DEUX BLOCS DEPUIS LA MESURE.**
+> Les chiffres ci-dessous datent du **25/08**. L'onglet **Macros n'a pas bougé** : ses 2 800 px
+> et ses 3,3 écrans restent exacts, et **c'est lui le sujet du travail**. En revanche l'onglet
+> **Journal** a reçu deux cartes neuves (voir **§4.3**), donc **il ne tient plus en un écran**.
+> ⛔ **Je ne remplace pas son chiffre par une estimation** : je n'ai pas pu le remesurer
+> proprement, et un nombre inventé serait pire qu'un nombre daté. *Le contraste Macros/Journal
+> reste vrai — il est simplement moins spectaculaire qu'au 25/08.*
+
+
 L'écran Nutrition a **trois onglets** : **Macros** · **Journal** · **Suppléments**.
 
 ### 4.1 Le contraste qui résume tout
@@ -113,6 +122,48 @@ par zone, une action évidente. **C'est le modèle à suivre, pas à corriger.**
 
 ---
 
+### 4.3 ⭐ LES DEUX BLOCS AJOUTÉS LE 26/08 — à intégrer, pas à réinventer
+
+Ils sont **neufs, voulus, et déjà validés par l'auteur**. Le travail de design consiste à leur
+donner leur place, **pas à décider s'ils doivent exister**.
+
+**① « Ce qu'il te reste, en vrai »** — dans la carte du résumé du jour, sous les trois lignes de
+macros. Il traduit un manque en **aliments que la personne mange déjà** :
+
+```
+CE QU'IL TE RESTE, EN VRAI
+289 g  de glucides —  250 g de Riz basmati
+167 g  de protéines — 2 × Shake protéiné + 250 g de Blanc de poulet   (≈ 108 g)
+ 53 g  de lipides —   100 g d'Amandes
+
+À peu près — calculé sur tes aliments, pas sur une table générique. Une idée, pas une consigne.
+```
+- **1 à 3 lignes**, jamais plus. Une par macro qui manque vraiment.
+- Le `(≈ 108 g)` n'apparaît **que** si la suggestion ne couvre pas le manque — c'est une
+  honnêteté, pas une décoration.
+- Codes couleur imposés : protéines `--green`, glucides `--orange`, lipides `--gold`.
+- ⛔ **Il DISPARAÎT** sur un jour passé, quand la cible est dépassée, et quand la personne n'a
+  aucun aliment enregistré. **Ton maquettage doit tenir dans les deux états** — avec et sans.
+
+**② « Ce que l'app a appris de ton alimentation »** — carte autonome, après le résumé du jour :
+
+```
+🧠 CE QUE L'APP A APPRIS DE TON ALIMENTATION
+Petit-déj ~7h    Fromage blanc 0%
+Déjeuner  ~13h   Riz basmati · Blanc de poulet
+Dîner     ~20h   Œufs
+
+Observé sur 6 jours · en moyenne 865 kcal et 87 g de protéines par jour noté.
+C'est encore court — l'app décrit ces jours-là, pas tes habitudes.
+Calculé sur ton téléphone, sans aucun appel à l'IA.
+```
+- **Trois états à dessiner**, pas un : *moins de 3 jours notés* (la carte le dit, elle ne se cache
+  pas) · *partiel* (elle prévient que c'est court) · *solide* (à partir de 14 jours).
+- ⚠️ **La dernière ligne n'est pas un détail technique** : c'est une promesse produit — *ça ne
+  coûte rien et ça marche hors ligne*. Elle doit rester lisible.
+
+---
+
 ## 5. ⛔ CE QUI NE VA PAS — cinq constats, tous mesurés
 
 ### 5.1 Le même chiffre est affiché deux fois, à 200 px d'écart
@@ -144,6 +195,23 @@ Sur le même écran, et au même niveau visuel : le **réel du jour** (1005 kcal
 (3 144), les **paramètres du calcul** (BMR 1738, TDEE 2694), les **réglages** (charge/décharge,
 mode, restrictions) et deux **propositions de plan**. *Tout est présenté comme également important,
 donc rien ne l'est.*
+
+---
+
+### 5.6 ⭐⭐ L'app connaît l'athlète SPORTIVEMENT, pas du tout ALIMENTAIREMENT *(26/08)*
+
+Mesuré : le questionnaire pose **6 questions** sur l'entraînement (ancienneté, séances/semaine,
+lieu, quotidien, stress, sommeil) et **ZÉRO** sur la nourriture. Résultat visible à l'écran : le
+**Plan alimentaire journalier** est une **table écrite en dur** — *« Yaourt grec entier + noix de
+macadamia »* s'affiche parce que c'est dans le code, pas parce que ça concerne quelqu'un.
+
+> L'auteur, devant son propre plan : *« les noix de macadamia j'en mange pas, et en plus c'est
+> dégueulasse »*.
+
+⛔ **Ce n'est PAS ton chantier** — le corriger demande de décider quoi demander et quoi observer,
+c'est en cours ailleurs. **Mais ça doit peser sur ta maquette** : le plan de repas est aujourd'hui
+le bloc le plus long de l'écran **et le moins pertinent**. Ne lui donne pas la place d'un contenu
+sur mesure tant qu'il n'en est pas un.
 
 ---
 
