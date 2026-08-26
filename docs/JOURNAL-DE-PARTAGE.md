@@ -101,6 +101,7 @@ bugs « fuseaux horaires » de `BUGS.md`, appliquée à nous-mêmes.
 
 | État | Quand (UTC) | Qui | Sujet | Fichiers | Version |
 |---|---|---|---|---|---|
+| 🟡 | 26/08 09:02 | session-A (project-status) | NUTRITION : Milo travaille « à l'aveugle » — `foodLog` n'est pas transmis (exclusion « DÉCISION À CONFIRMER », jamais confirmée). Résumé par jour, pas le détail plat | `coach.js`, `tests/donnees/donnees-milo.json` | ft-v1014 (réservée) |
 | 🟢 | 26/08 08:32 → 08:45 | session-A (project-status) | ① l'export « avec mes discussions » PERDAIT le fil en cours et emportait les consignes internes `_silent` · ② le fichier lisible sort de l'Admin (les deux exports NE font PAS doublon — mesuré) | `coach.js`, `index.html`, `tests/parcours/runner.js` | ft-v1013 |
 | 🟢 | 26/08 05:55 → 06:10 | session-A (project-status) | l'export des conversations n'affichait AUCUNE date par message (les `ts` étaient stockés depuis ft-v1010, personne ne les lisait) + le titre affichait la date de CRÉATION au lieu de la plage réelle | `coach.js`, `tests/parcours/runner.js` | ft-v1011 |
 | 🟢 | 25/08 20:50 → 21:30 | session-A (project-status) | historique de l'OBJECTIF (`goalLog`, propriétaire unique `_goalSet`) — Milo ne voyait que la valeur du jour (R8) — + horodatage des messages, qui mouraient dans `_convLightMsgs` | `state.js`, `setup.js`, `tracking.js`, `app.js`, `coach.js`, `Code.js` | ft-v1010 (développée en 1008, renumérotée : session-B a livré 1009 la première — on ne fait jamais reculer le n° de cache) |
