@@ -40,6 +40,16 @@ fichiers, la version.
 
 ## 🚦 Les états
 
+> ⛔⛔ **CE TABLEAU EST UNE LÉGENDE — ce n'est PAS celui des tâches.** Le tableau des tâches
+> est **plus bas**, sous « 📋 Les tâches ». ⚠️ **Deux lignes de tâche y sont déjà tombées**
+> (25/08 et 26/08) : les deux tableaux commencent par le même jeton `| 🟢`, et **celui-ci vient
+> en premier**, donc une insertion qui vise « la première ligne `| 🟢` » atterrit ici.
+> **Et ça ne se voit pas** : markdown jette les colonnes en trop, la ligne existe dans le
+> fichier et devient invisible à l'écran — *personne ne peut voir manquer une ligne dont on
+> ignore l'existence.*
+> 👉 **Pour insérer une tâche, s'ancrer sur l'EN-TÊTE du tableau des tâches**, jamais sur un
+> jeton d'état. Le contrôle 6 de `tools/check_regles.py` refuse désormais toute ligne datée ici.
+
 | État | Ce que ça veut dire |
 |---|---|
 | 🟡 **en cours** | quelqu'un travaille dessus **maintenant** — ne pas prendre ce sujet |
@@ -119,7 +129,7 @@ bugs « fuseaux horaires » de `BUGS.md`, appliquée à nous-mêmes.
 
 | État | Quand (UTC) | Qui | Sujet | Fichiers | Version |
 |---|---|---|---|---|---|
-| 🟡 | 26/08 13:05 | session-B (claude-md-docs) | LE BUG DU FICHIER LUI-MÊME : une ligne de tâche peut atterrir dans le tableau des ÉTATS (2ᵉ fois) — les deux tableaux commencent par le même jeton `| 🟢` et le leurre vient EN PREMIER. Contrôle permanent dans `check_regles.py` + entrée `BUGS.md` | `tools/check_regles.py`, `BUGS.md`, `docs/JOURNAL-DE-PARTAGE.md` | — (outillage) |
+| 🟢 | 26/08 13:05 → 14:20 | session-B (claude-md-docs) | **LE BUG DU FICHIER LUI-MÊME, corrigé au bon niveau** — une ligne de tâche pouvait atterrir dans le tableau des ÉTATS (2ᵉ fois en 2 jours) : les deux tableaux commencent par le même jeton `| 🟢` et **le leurre vient EN PREMIER**, et le dégât est **silencieux** (markdown jette les colonnes en trop → la ligne existe mais devient invisible). 👉 **contrôle 6 de `check_regles.py`** (refuse toute ligne datée dans la légende, sortie 1, éprouvé dans les deux sens) + avertissement dans le fichier + famille dans `BUGS.md`. | `tools/check_regles.py`, `BUGS.md`, `docs/JOURNAL-DE-PARTAGE.md` | — (outillage) |
 | ℹ️ | 26/08 12:40 | session-B (claude-md-docs) | **⚠️ SIGNALEMENT, PAS UNE CLÔTURE** — la ligne 🟡 de session-A du 26/08 10:05 (EV-052) porte sur un sujet **livré en ft-v1016**, comme le dit sa propre ligne 🟢 juste en dessous : le marqueur est **périmé** et annonce à tort *« quelqu'un travaille dessus »*. ⛔ **Je ne la ferme pas** : je ne peux pas savoir s'il leur reste une suite, et clore la ligne de quelqu'un d'autre écrirait un fait que je ne connais pas (**R29** — le coût de l'erreur décide). ⚠️ **Et je n'ai pas pu les prévenir** : les deux sessions tournent dans des **conteneurs séparés**, aucune n'est joignable par message — *c'est exactement la faille que ce fichier nomme lui-même*. ⏰ La **péremption à 3 h** s'applique donc : à 13:05 UTC, cette ligne est à considérer comme abandonnée. | `docs/JOURNAL-DE-PARTAGE.md` | — (signalement) |
 | 🟢 | 26/08 11:40 → 12:10 | session-B (claude-md-docs) | ② l'EMAIL dans la ligne du classeur Google Sheets (onglet `Sessions`) — colonne ajoutée À LA FIN, les anciennes lignes ne bougent pas ⚠️ **`Code.js` touché → déploiement Apps Script auto** | `Code.js`, `tracking.js`, `tests/parcours/runner.js` | ft-v1018 |
 | 🟢 | 26/08 10:55 → 12:10 | session-B (claude-md-docs) | ③ HISTORIQUE DU SCORE DE RÉCUP — il n'avait jamais été écrit ; on ne le STOCKE pas, on le REJOUE (`calcRecoveryDetail(refTs)`), tous les points à la MÊME HEURE (mesuré 44 → 56 dans la journée). ⛔ L'historique du SOMMEIL reste caché : décision de ft-v547, pas un bug (R30) | `tracking.js`, `state.js`, `screens.js`, `tests/parcours/runner.js` | ft-v1017 |

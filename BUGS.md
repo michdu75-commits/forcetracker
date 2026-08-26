@@ -954,3 +954,60 @@ comportements sont épinglés par des témoins qui injectent l'erreur au lieu de
 
 **Le réflexe à garder** : devant un contrôle vert, se demander *« qu'est-ce qui le ferait
 rougir ? »*. Si la réponse ne vient pas en une phrase, il ne mesure probablement rien.
+
+
+---
+
+## 🫥 LA DONNÉE ÉCRITE AU MAUVAIS ENDROIT, QUE PERSONNE NE PEUT VOIR MANQUER **(26/08/2026)**
+
+**Michel, devant le constat : *« j'appelle ça un bug moi »*.** Il a raison, et c'est la
+2ᵉ occurrence en deux jours (25/08 puis 26/08) — *deux fois le même défaut, ce n'est plus
+un accident, c'est une famille.*
+
+**Ce qui s'est passé** : dans `docs/JOURNAL-DE-PARTAGE.md`, des lignes de **tâche** se sont
+retrouvées dans le tableau des **ÉTATS** (la légende) au lieu de celui des **TÂCHES**. Le
+25/08 c'était deux lignes de session-B, remises à la main par session-A ; le 26/08, deux
+autres lignes de session-B (ft-v1009 et ft-v1012), trouvées par hasard en ouvrant le fichier
+pour autre chose.
+
+**⛔⛔ LA CAUSE N'EST PAS DE LA NÉGLIGENCE, ELLE EST DANS LA FORME DU FICHIER.** Deux tableaux
+y portent des lignes qui **commencent par le même jeton** :
+
+| Tableau | Ligne | Colonnes |
+|---|---|---|
+| **Les états** (~ligne 41) | `\| 🟢 **livré** \| terminé… \|` | 2 |
+| **Les tâches** (~ligne 118) | `\| 🟢 \| 26/08 09:08 → 09:55 \| session-B \| … \|` | 6 |
+
+👉 **Et le leurre vient EN PREMIER dans le fichier.** Toute insertion qui vise *« la première
+ligne `| 🟢` »* atterrit mécaniquement dans la légende. Ce n'est pas une faute d'inattention,
+c'est une **ambiguïté structurelle** : le fichier offre deux cibles identiques, et présente la
+mauvaise d'abord.
+
+**⛔⛔ CE QUI LE REND COÛTEUX EST LE SILENCE.** Markdown affiche une ligne de 6 colonnes dans
+un tableau de 2 en **jetant les cellules en trop**. La ligne **existe** dans le fichier, elle
+est **invisible** à l'écran. Le fichier reste valide, git ne dit rien, aucun rendu ne casse.
+
+👉 ***Personne ne peut voir manquer une ligne dont on ignore l'existence.*** Or ce fichier
+existe pour une seule chose : dire qui travaille sur quoi. Une tâche invisible, c'est
+exactement le doublon de travail que le protocole est censé empêcher — **le garde-fou tombe
+en panne dans la panne qu'il surveille**.
+
+### 🔎 Comment le reconnaître
+- Deux zones d'un même fichier acceptent une **forme voisine**, et l'une n'est pas la bonne ;
+- l'écriture au mauvais endroit **ne produit aucune erreur** — ni au rendu, ni à la relecture ;
+- ce qu'on cherche à protéger est **une absence**, et une absence ne se remarque pas.
+
+### 🛡️ Ce qui protège aujourd'hui *(contrôle 6 de `tools/check_regles.py`)*
+Une ligne de la **légende** n'a jamais de date. Le contrôle refuse donc toute ligne **datée**
+(`JJ/MM`) dans le tableau des états, **fait échouer la livraison** (sortie 1) et **imprime la
+ligne fautive** avec le geste correct. ⭐ **La règle est figée, pas la mesure du jour** : elle
+ne périme pas si le tableau grandit. ⭐ Il porte aussi un garde-fou contre lui-même — si plus
+aucune ligne datée n'est trouvée dans le tableau des tâches, il prévient qu'il ne mesure
+peut-être plus rien. Éprouvé **dans les deux sens** : rouge (sortie 1) sur une ligne égarée
+posée exprès, vert après remise en état.
+
+### ⭐ Le réflexe
+Quand on insère dans un document structuré, **s'ancrer sur l'EN-TÊTE de la section visée**,
+jamais sur le premier motif qui ressemble — surtout si le même motif vit ailleurs dans le
+fichier. *Et vérifier ce qu'on vient d'écrire à l'endroit où il est censé se lire, pas dans
+le diff* : le diff montre la ligne ajoutée, il ne dit pas dans quel tableau elle est tombée.

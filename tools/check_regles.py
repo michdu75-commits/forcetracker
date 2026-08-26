@@ -10,6 +10,8 @@ surveille — d'où ce script. Trois contrôles :
   3. le journal récent de CLAUDE.md ne dépasse pas le seuil (sinon : archiver).
   4. AUCUNE entrée de docs/JOURNAL-ARCHIVE.md n'a disparu.
   5. AUCUN document .md ne s'est fait écraser (contrôle 4 généralisé aux 54 autres).
+  6. AUCUNE ligne de TÂCHE n'est tombée dans le tableau des ÉTATS du journal de partage
+     (bug arrivé DEUX fois — elle y est invisible, donc personne ne peut la voir manquer).
 
 ⚠️ PORTÉE HONNÊTE DU CONTRÔLE 5 : il compare l'état du dossier au DERNIER COMMIT,
 donc il attrape l'écrasement AVANT qu'il parte — ce qui est le bon moment, puisque
@@ -243,6 +245,61 @@ except FileNotFoundError:
     print("⚠️ docs/JOURNAL-DE-TEST.md introuvable — le réflexe de la règle #12 n'a plus de fichier.")
 except Exception:
     pass                                       # jamais bloquer sur un pépin d'outillage
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CONTRÔLE 6 — UNE LIGNE DE TÂCHE NE TOMBE PLUS DANS LE TABLEAU DES ÉTATS
+#
+# ⚠️ C'EST UN VRAI BUG, ET IL S'EST PRODUIT DEUX FOIS (25/08 puis 26/08/2026).
+# Michel, en le voyant : « j'appelle ça un bug moi ». Il a raison — deux fois le même
+# défaut, ce n'est plus un accident, c'est une famille (R17 : chaque bug devient un test).
+#
+# LA CAUSE N'EST PAS DE LA NÉGLIGENCE, ELLE EST DANS LA FORME DU FICHIER :
+# `docs/JOURNAL-DE-PARTAGE.md` porte DEUX tableaux dont les lignes commencent par le
+# MÊME jeton — la légende (« | 🟢 **livré** | … », 2 colonnes) et les tâches
+# (« | 🟢 | 26/08 … | », 6 colonnes) — et **le leurre vient EN PREMIER** dans le
+# fichier. Toute insertion qui vise « la première ligne `| 🟢` » atterrit donc dans la
+# légende.
+#
+# ⛔⛔ ET LE DÉGÂT EST SILENCIEUX, c'est ce qui le rend coûteux : markdown affiche une
+# ligne de 6 colonnes dans un tableau de 2 en **jetant les cellules en trop**. La ligne
+# EXISTE dans le fichier, elle est INVISIBLE à l'écran. Personne ne peut la voir
+# manquer — donc deux sessions peuvent prendre le même sujet en croyant le tableau à
+# jour. C'est très exactement ce que ce protocole existe pour empêcher.
+#
+# LA RÈGLE, PAS LA MESURE DU JOUR : une ligne de la légende n'a JAMAIS de date. On
+# refuse donc toute ligne DATÉE (JJ/MM) dans le tableau des états — la prochaine
+# insertion ratée fait rougir la livraison au lieu de disparaître en silence.
+try:
+    _jp = (racine / "docs" / "JOURNAL-DE-PARTAGE.md").read_text(encoding="utf-8")
+    _lignes = _jp.split("\n")
+    _iEtats  = next(i for i, l in enumerate(_lignes) if l.startswith("## ") and "Les états" in l)
+    _iTaches = next(i for i, l in enumerate(_lignes) if l.startswith("## ") and "Les tâches" in l)
+    # La légende s'arrête au séparateur `---` qui suit son titre.
+    _fin = next((i for i in range(_iEtats + 1, len(_lignes)) if _lignes[i].strip() == "---"), _iTaches)
+    _egarees = [l for l in _lignes[_iEtats:_fin]
+                if l.startswith("|") and re.search(r"\|\s*\d{2}/\d{2}\s", l)]
+    if _egarees:
+        print("❌ docs/JOURNAL-DE-PARTAGE.md : "
+              f"{len(_egarees)} ligne(s) de TÂCHE dans le tableau des ÉTATS "
+              "(elles y sont INVISIBLES — markdown jette les colonnes en trop) :")
+        for l in _egarees:
+            print("   - " + l[:110])
+        print("   → les déplacer sous « ## 📋 Les tâches ». ⚠️ Et pour insérer, s'ancrer sur "
+              "l'EN-TÊTE de ce tableau, jamais sur « | 🟢 » : la légende porte le même jeton "
+              "et vient AVANT dans le fichier.")
+        sys.exit(1)
+    # ⛔ Et le témoin doit avoir VU quelque chose, sinon il serait vert en ne mesurant rien.
+    _nTaches = sum(1 for l in _lignes[_iTaches:] if l.startswith("|")
+                   and re.search(r"\|\s*\d{2}/\d{2}\s", l))
+    if _nTaches == 0:
+        print("⚠️ docs/JOURNAL-DE-PARTAGE.md : aucune ligne datée trouvée dans le tableau des "
+              "tâches — le contrôle 6 ne mesure peut-être plus rien (structure changée ?).")
+except FileNotFoundError:
+    print("⚠️ docs/JOURNAL-DE-PARTAGE.md introuvable — le protocole de la règle #13 n'a plus de fichier.")
+except StopIteration:
+    print("⚠️ docs/JOURNAL-DE-PARTAGE.md : titres « Les états » / « Les tâches » introuvables — "
+          "contrôle 6 non effectué (le fichier a changé de structure).")
 
 print(f"✅ documents : aucun écrasement"
       + (f" ({len(suivis)} fichiers .md surveillés)" if git_ok and 'suivis' in dir() else
