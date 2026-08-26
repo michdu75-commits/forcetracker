@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1012`** (prochaine : `ft-v1013`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1013`** (prochaine : `ft-v1014`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -436,6 +436,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1013 — 📤 L'EXPORT « AVEC MES DISCUSSIONS » PERDAIT LA DISCUSSION DU MOMENT** — Michel : *« compare la différence des exportations pour tout le monde et celle que je fais en admin. C'est quoi la différence, **parce que s'il n'y en a pas autant supprimer** »*.
+
+**⭐ IL Y EN AVAIT — et les deux étaient au désavantage de l'export GÉNÉRAL.** *La question posée pour ranger a trouvé un bug.*
+
+**⛔⛔ ① LE FIL EN COURS ÉTAIT ABSENT.** La boucle recopie `S.coachConversations`, qui ne contient **que** les discussions **RANGÉES** (celles fermées par le « + »). Le fil qu'on est en train d'écrire vit dans `ft4_coach_hist` — donc dans **aucune clé de `S`**. 👉 *Quelqu'un qui exporte « avec mes discussions » repartait **sans la discussion du moment*** — souvent celle qui l'intéresse le plus. **Et le fichier avait l'air complet** : mesuré, **3 messages au lieu de 4**.
+
+**⛔ ② LES CONSIGNES INTERNES PARTAIENT AVEC.** Le débrief automatique injecte des messages `_silent` que la personne **n'a jamais vus ni écrits**. L'export texte les filtre depuis toujours (`propre()`) ; celui-ci les livrait dans le fichier.
+
+**⭐ R2 — ON NE RÉINVENTE RIEN** : les deux correctifs empruntent les mécanismes **déjà éprouvés** de `exporterConversationsMilo` — la lecture du fil courant et le filtre `_silent`. Le fil en cours part **en tête**, marqué `enCours:true` pour qu'une réimportation le distingue d'une discussion close (**R3** — différé mais nommable).
+
+**⛔⛔ RÉPONSE À LA QUESTION POSÉE : ON NE SUPPRIME NI L'UN NI L'AUTRE.** Mesuré sur les **mêmes** données : l'un est un fichier **LISIBLE** (678 car., texte daté, 6 messages, **zéro** donnée de santé), l'autre une **SAUVEGARDE** JSON à réimporter (5 019 car., 96 clés, **bilans compris**). *Ils ne font pas doublon — supprimer l'un perdrait quelque chose.*
+
+**⭐ CE QUI ÉTAIT MAL RANGÉ, EN REVANCHE** : le **seul fichier lisible par un humain** était réservé à l'**Admin** depuis le 05/08 — alors que son propre commentaire dit pourquoi il existe : *« le fil vit UNIQUEMENT sur le téléphone, un changement d'appareil l'efface, on donne donc un FICHIER que la personne emporte »*. **La fonctionnalité pensée pour tout le monde n'était atteignable que par Michel.** Elle est désormais dans la modale d'export. ⛔ **Et l'entrée Admin n'est pas retirée** (**R30**) : même fonction, deux portes — *un retrait silencieux ressemble à un oubli*.
+Tests : **parcours 1453/1453** (+7, bloc CXX), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 103 classées 0 trou. **CONTRÔLE NÉGATIF : les 3 défauts apparaissent contre l'ancien code et aucun après** — *fil en cours **ABSENT** · consigne interne **EXPORTÉE** · bouton lisible **ADMIN SEUL***, puis présent / filtrée / public. ⭐ **Et le témoin de non-régression est le plus important** : *sans* l'option, **aucune** conversation ne part — on a ajouté du contenu à un export qui en emportait déjà trop, il fallait prouver que le choix étroit n'a pas bougé. ⚠️ **Collision de numéro de bloc au passage** : session-B avait déjà un CXIX (création de programme) ; le mien devient **CXX** — *deux blocs du même numéro rendraient le rapport illisible*. Fichiers : `coach.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1013. |
 
 **ft-v1012 — 📋 CRÉER UN PROGRAMME DEPUIS ZÉRO — la porte qui manquait** — 2ᵉ brique du chantier écran Séance (`docs/SEANCE-DESSAI.md` §8), et le vrai besoin de Michel : *« je vais vouloir créer mon programme et il va falloir que ce soit rapide »*.
 
@@ -727,23 +742,6 @@ Tests : **parcours 1337/1337**, calculs 266/266, muscles 241/241, dates 7/7, don
 
 **⭐⭐ ET LE ⑤ DE L'AUDIT (caches par lieu) EST MESURÉ PUIS *NON* CONSTRUIT — c'est la bonne réponse, pas un renoncement.** Les 5 variantes sont bien **réellement distinctes** (salle **11 446** · basique **8 544** · maison **6 493** · poids du corps **2 136** · non renseigné **11 475** car.), donc GPT a raison sur le fond : elles ne peuvent pas rejoindre le bloc commun telles quelles. ⛔ **Mais l'arithmétique du cache ne donne AUCUN gain sous ~6 personnes actives dans la même heure ET sur le même lieu** — le projet a une poignée de testeurs, donc le gain est aujourd'hui **zéro**. `SUIVI-AUDIT` et **R19/R34** disaient déjà *« approuvé, mais pas construit d'avance »*, *« ne pas commencer sans données d'usage »* : la mesure le confirme. *Construire maintenant, ce serait payer de la complexité pour un gain qui n'existe pas encore.* ⚠️ **Le modèle est grossier et c'est écrit** : il compte les écritures évitées, pas le prix exact — mais l'ordre de grandeur n'en dépend pas.
 Tests : **parcours 1337/1337** (+6, bloc CVIII), calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou. ⭐⭐ **Le contrôle décisif est la PREUVE elle-même** : le même témoin, joué contre le code d'avant, imprime la perte (`"DEPART|A"`, FAIT-B absent) et, après correctif, `"DEPART|A|B"`. *Un correctif de course qu'on ne voit pas échouer d'abord ne prouve rien.* Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`. sw.js ft-v993. |
-
-**ft-v992 — 🧠 LA MÉMOIRE ÉLARGIE OUVERTE À TOUT LE MONDE — et le banc d'essai ne pouvait pas juger le changement** — priorité ④, tranchée par Michel après mesure.
-
-**⛔⛔ LA RAISON D'AVANT RESTE ÉCRITE (R30)** : le résumé des séances anciennes était réservé à **michdu75 + christophe** depuis le 03/08, et ce n'était **pas un oubli** — c'était une prudence : *« on mesure le coût réel sur deux comptes bien remplis avant d'ouvrir à tout le monde »*.
-
-**⭐⭐ CE COÛT A ÉTÉ MESURÉ, ET C'EST LUI QUI A PERMIS DE TRANCHER — il est AUTO-DÉGRESSIF**, parce que la fonction ne résume que ce qui a été **vécu** : **3 séances → 0 car. · 5 → 0 · 8 → 665 · 12 → 967 · 20 → 1 551 · 35 → 2 622** (borne MAX = 30 lignes). *Un débutant ne paie rien, et personne n'a de réglage à faire.*
-
-**⛔⛔ ET LA CRAINTE DU PLAFOND NE TENAIT PAS — mesure à l'appui.** Ces caractères tombent **intégralement dans le bloc PERSONNEL** : le bloc commun est identique **au caractère près** (45 362 des deux côtés). *Ce n'était pas le bon bloc.* La note de cadrage disait *« sinon le contexte dépasse le plafond »* — c'est faux, et seul le fait de mesurer les deux frontières séparément le montre.
-
-**⭐ POURQUOI ON OUVRE (R9)** : la mémoire longue **EST** la promesse du produit — *« le sportif ne repart jamais de zéro »*. La réserver revenait à ce que **Michel juge Milo sur une mémoire que personne d'autre n'a**, donc à corriger le mauvais Milo.
-
-**⭐⭐ ET LA VRAIE TROUVAILLE EST AILLEURS, ELLE N'ÉTAIT PAS DANS LA COMMANDE.** En vérifiant que le rite **R34** pouvait juger ce changement : **aucun des 21 scénarios du banc d'essai n'avait plus d'UNE séance**. L'avant/après aurait donc comparé **deux contextes identiques** et rendu *« aucune régression »* — **un faux vert**. ⛔ Plus large que ce chantier : *la promesse centrale du produit n'était vérifiée par AUCUN scénario.* D'où **EV-022** (22ᵉ scénario) : Milo doit retrouver une séance d'il y a 27 jours **et n'en pas inventer la charge** — deux vérificateurs déterministes, dates **relatives** (une date en dur périmerait seule dans la fenêtre glissante de 60 jours) et calculées **à midi** (famille « fuseaux horaires »).
-
-**⚠️⚠️ UN TÉMOIN EXIGEAIT LITTÉRALEMENT L'INVERSE — 2ᵉ fois de la journée après ft-v991.** *« TÉMOIN : personne d'autre ne l'a (réservé, le temps de mesurer) »*. Il est **retourné vers ce qui compte vraiment — l'ÉGALITÉ** — avec sa raison d'avant conservée. *Rien ne distingue de l'extérieur un test qui protège un correctif d'un test qui fige une décision périmée : seule la raison écrite à côté le dit.*
-
-**⚠️⚠️ ET MA MESURE A ÉTÉ FAUSSE DEUX FOIS AVANT D'ÊTRE JUSTE.** `_vcApplyPersona` attend le **scénario entier** (elle fait `p.apply` elle-même) ; je lui passais le sous-objet `sc.apply` → elle remettait tout à zéro **sans erreur**. Mon *« aucun scénario n'a de séance »* était donc **faux** — EV-017 en a une. *La conclusion tenait, le chiffre non.* **3ᵉ fois cette session** qu'un levier qui n'est pas celui du code produit une mesure propre et fausse.
-Tests : **parcours 1331/1331** (+8, bloc CVII, + 2 témoins existants réécrits), calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou. **CONTRÔLE NÉGATIF (liste blanche rétablie) : rouge, et il est INSTRUCTIF** — le détail imprimé *est* l'inégalité : `{"inconnu":0,"michel":801}`. ⚠️⚠️ **CE QUI N'EST PAS PROUVÉ, ET IL FAUT LE LIRE** : **le benchmark n'a PAS été joué** — il demande une vraie clé API, indisponible dans cet environnement. *On livre de quoi le jouer, pas son résultat* : **R34 n'est honoré que le jour où Michel le lance.** Et personne ne sait encore si la mémoire élargie **améliore** les réponses — on sait seulement que l'information **arrive**. Fichiers : `coach.js`, `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`. sw.js ft-v992. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

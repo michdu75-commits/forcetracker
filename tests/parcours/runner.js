@@ -13105,7 +13105,7 @@ t('⭐ le bouton et le message de l\'écran vide disent tous deux « Créer ma s
             && /Appuie sur "\+ Créer ma séance"/.test(l)
             && h.indexOf('>+ Ajouter</button>')<0;})());
 
-/* == BLOC CXIX - L'EXPORT « AVEC MES DISCUSSIONS » PERDAIT LA DISCUSSION DU MOMENT (ft-v1013) ==
+/* == BLOC CXX - L'EXPORT « AVEC MES DISCUSSIONS » PERDAIT LA DISCUSSION DU MOMENT (ft-v1013) ==
    Michel : « compare la difference des exportations pour tout le monde et celle que je fais en
    admin. C'est quoi la difference, parce que s'il n'y en a pas autant supprimer. »
    ⭐ IL Y EN AVAIT — et les deux etaient au desavantage de l'export GENERAL :
@@ -13120,7 +13120,7 @@ t('⭐ le bouton et le message de l\'écran vide disent tous deux « Créer ma s
    ⛔ CONCLUSION SUR LA QUESTION POSEE : on ne supprime NI l'un NI l'autre — l'un est un fichier
    LISIBLE (texte date), l'autre une sauvegarde JSON a reimporter. Ce qui etait mal range, c'est
    que le seul lisible par un humain etait reserve a l'admin. */
-console.log('\n-- CXIX. L\'export « avec mes discussions » n\'oublie plus rien (ft-v1013) --');
+console.log('\n-- CXX. L\'export « avec mes discussions » n\'oublie plus rien (ft-v1013) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
@@ -13161,7 +13161,7 @@ console.log('\n-- CXIX. L\'export « avec mes discussions » n\'oublie plus rien
     return o;
    }catch(e){return {err:String(e)};}
   });
-  if(F.err) t('CXIX n\'a pas pu tourner', false, F.err);
+  if(F.err) t('CXX n\'a pas pu tourner', false, F.err);
   else{
     t('⭐⭐ LE FIL EN COURS est dans le fichier (il en était absent — le défaut principal)',
       F.filEnCours===true, '');
