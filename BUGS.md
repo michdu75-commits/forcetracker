@@ -360,6 +360,29 @@ un truc qui nous a échappé. »* La lecture linéaire (les 69 règles, une par 
 | matériel ⟷ nom | « Leg Curl **Haltère** » rangé en machine ; « Montée sur Box **Haltères** » en poids du corps | |
 | règle morte | oiseaux et face pull recevaient le deltoïde **moyen** en muscle principal | |
 
+### 🧾 Le cas où **les deux chiffres sont JUSTES** *(26/08/2026, ft-v1026)*
+
+**La forme la plus vicieuse de cette famille n'est pas deux chiffres dont l'un est faux — c'est
+deux chiffres tous les deux exacts, qui ne parlent pas de la même chose.**
+
+Sur une capture d'écran de Michel : la carte *« ce que l'app a appris »* annonce *« en moyenne
+**1920 kcal** »*, et **40 px plus bas** *« Ta semaine · **2 495 kcal/j** »*. Aucun des deux n'est
+faux : le premier porte sur **tout le journal** (7 jours notés étalés sur 50), le second sur les
+**7 derniers jours**. *Rien à l'écran ne le disait, et personne ne peut le deviner.*
+
+**⭐ Ce qui rend ce cas différent des autres de cette famille** : il n'y a **rien à corriger dans
+le calcul**. Chercher « lequel est faux » ne mène nulle part — on peut y passer une heure. Le
+défaut est dans ce que l'écran **dit** de ses chiffres, pas dans les chiffres.
+
+**🔎 Comment le reconnaître** : deux nombres de même nature (une moyenne, un total, un
+pourcentage) visibles **en même temps**, et aucun des deux ne nomme sa **fenêtre** ni son
+**périmètre**. Le doute que ça installe ne porte pas sur le chiffre : il porte sur l'app.
+
+**🛡️ Ce qui protège** : tout agrégat affiché **dit sur quoi il porte**, à côté du nombre et pas
+dans une aide. *« Observé sur tout ton journal »*, *« 4 jours notés sur 7 »*. ⚠️ Et le témoin qui
+le garde doit poser une fixture où les deux valeurs **diffèrent vraiment** — sinon il est vert en
+ne mesurant rien.
+
 ### 🛡️ Ce qui protège
 La 12ᵉ famille de tests, **`tests/croises/`**, rejoue les 6 diagonales à chaque version. Elle a
 attrapé un 14ᵉ bug **dès son premier lancement**.

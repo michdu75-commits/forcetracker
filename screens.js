@@ -2042,11 +2042,22 @@ function _blocApprisHTML(){
         +'<span style="color:var(--t3);min-width:78px;font-weight:700;">'+LBL[m]+((h!==undefined)?' <span style="font-weight:400;">~'+h+'h</span>':'')+'</span>'
         +'<span style="color:var(--t1);flex:1;min-width:0;">'+noms+'</span></div>';
     }).join('');
+    /* ⭐⭐ « SUR TOUT TON JOURNAL » N'EST PAS UNE FORMULE DE POLITESSE (26/08/2026, ft-v1026) —
+       c'est ce qui empêche deux chiffres justes de se contredire à l'écran. Vu sur une vraie
+       capture de Michel : cette carte annonçait « en moyenne 1920 kcal » et, 40 px plus bas,
+       « Ta semaine · 2 495 kcal/j ». Les DEUX sont exacts — celle-ci porte sur l'HISTORIQUE
+       ENTIER (7 jours notés étalés sur 50), celle du dessous sur les 7 DERNIERS jours — mais
+       rien ne le disait, et personne ne peut le deviner. *Deux sources qui se contredisent sans
+       rien pour dire laquelle parle de quoi, c'est la famille la plus vicieuse du projet, et
+       elle est pire que l'absence : la personne VOIT les deux.*
+       ⚠️ Et « répartis sur 50 » était un nombre NU : 50 quoi ? L'unité était dans ma tête.
+       ⚠️ Le millier est séparé comme partout ailleurs — « 1920 » à côté de « 2 495 » se lit
+       comme une coquille, pas comme une mesure. */
     corps=lignes
       +'<div style="font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:8px;">'
-      +'Observé sur <b>'+pa.nbJours+' jour'+(pa.nbJours>1?'s':'')+'</b>'
-      +(pa.etendue>pa.nbJours?' répartis sur '+pa.etendue:'')
-      +' · en moyenne <b>'+pa.moyennes.kcal+' kcal</b> et <b>'+pa.moyennes.prot+' g</b> de protéines par jour noté.'
+      +'Observé sur <b>tout ton journal</b> : '+pa.nbJours+' jour'+(pa.nbJours>1?'s':'')+' noté'+(pa.nbJours>1?'s':'')
+      +(pa.etendue>pa.nbJours?', étalés sur '+pa.etendue+' jours':'')
+      +' · en moyenne <b>'+(+pa.moyennes.kcal).toLocaleString('fr-FR')+' kcal</b> et <b>'+pa.moyennes.prot+' g</b> de protéines par jour noté.'
       /* ⚠️ On DIT que c'est partiel plutôt que de laisser croire à une habitude établie (R32). */
       +(pa.etat==='partiel'?' <b>C\'est encore court</b> — l\'app décrit ces jours-là, pas tes habitudes.':'')
       +'</div>';

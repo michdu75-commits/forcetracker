@@ -14355,6 +14355,70 @@ console.log('\n-- CXXIX. « Scanner » et « Importer » sont rangés, pas retir
   }
 }
 
+
+/* == BLOC CXXXI - DEUX MOYENNES JUSTES QUI SE CONTREDISENT A L'ECRAN (ft-v1026) ==
+   Trouve sur une VRAIE capture d'ecran de Michel, pas en relisant le code.
+   La carte « ce que l'app a appris » annoncait « en moyenne 1920 kcal » et, 40 px plus bas,
+   « Ta semaine · 2 495 kcal/j ». LES DEUX SONT EXACTS : la premiere porte sur l'HISTORIQUE
+   ENTIER (7 jours notes etales sur 50), la seconde sur les 7 DERNIERS jours. Rien ne le disait.
+   /!\ C'est la famille « deux sources qui se contredisent » de BUGS.md, et elle est pire que
+   l'absence : la personne VOIT les deux chiffres et ne peut pas savoir lequel parle de quoi.
+   Deux autres defauts de la meme carte, vus sur la meme capture :
+   - « repartis sur 50 » : un nombre NU, sans unite ;
+   - « 1920 kcal » sans separateur de milliers, a cote d'un « 2 495 » qui en a un. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    const j=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
+    const e=(d,m,n,k,pr,h)=>({date:d,meal:m,name:n,kcal:k,prot:pr,carbs:0,fat:0,
+      ts:new Date(d+'T'+h+':00').getTime()});
+    /* ⭐ LA FIXTURE REPRODUIT LE CAS DE MICHEL : des jours notes ETALES, donc une moyenne
+       d'historique tres differente de celle des 7 derniers jours. */
+    S.foodLog=[];
+    [40,38,30,25].forEach(d=>S.foodLog.push(e(j(d),'dejeuner','Vieux repas',1200,90,'12:30')));
+    [3,2,1].forEach(d=>S.foodLog.push(e(j(d),'dejeuner','Repas recent',3000,200,'12:30')));
+    persist(); goScreen('nutrition',null); await new Promise(r=>setTimeout(r,400));
+    o.appris=(document.getElementById('nu-appris').innerText||'').replace(/\s+/g,' ').trim();
+    o.semaine=(document.getElementById('nu-ou-en-es').innerText||'').replace(/\s+/g,' ').trim();
+    /* ⛔ Un seul jour note : pas d'etendue, la phrase doit rester correcte. */
+    S.foodLog=[e(j(0),'dejeuner','Un seul',900,60,'12:30')]; renderNutrition();
+    await new Promise(r=>setTimeout(r,120));
+    o.unJour=(document.getElementById('nu-appris').innerText||'').replace(/\s+/g,' ').trim();
+    S.foodLog=[]; persist();
+    return o;
+  });
+  await cx.close();
+
+  console.log('\n-- CXXXI. Deux moyennes justes qui se contredisent a l\'ecran --');
+  /* ⭐⭐ LE TEMOIN CENTRAL : la carte doit NOMMER sa fenetre, sinon son chiffre entre en
+     concurrence avec celui de « Ta semaine » sans que rien ne les departage. */
+  t('⭐⭐ LA CARTE DIT SUR QUOI ELLE PORTE (« tout ton journal »)',
+    /tout ton journal/i.test(R.appris), R.appris.slice(0,120));
+  t('⭐ ... et « Ta semaine » dit la sienne (N jours notes SUR 7)',
+    /jours? notés? sur 7/i.test(R.semaine), R.semaine.slice(0,80));
+  /* ⛔ Et les deux chiffres DOIVENT differer sur cette fixture : sans ca le temoin serait vert
+     en ne mesurant rien — c'est precisement quand ils different que la mention devient vitale. */
+  const nb = txt => (txt.match(/(\d[\d   ]*) kcal/)||[])[1];
+  t('⛔ le temoin MORD vraiment : les deux moyennes sont bien differentes ici',
+    nb(R.appris)!==undefined && nb(R.semaine)!==undefined
+    && nb(R.appris).replace(/\D/g,'')!==nb(R.semaine).replace(/\D/g,''),
+    'journal='+nb(R.appris)+' · semaine='+nb(R.semaine));
+  t('⭐ « étalés sur N JOURS » — le nombre n\'est plus nu',
+    /étalés sur \d+ jours/i.test(R.appris), (R.appris.match(/étalés sur[^·]*/)||[''])[0]);
+  /* ⛔ Le millier est separe comme partout ailleurs : « 1920 » a cote d'un « 2 495 » se lit
+     comme une coquille, pas comme une mesure. */
+  t('⭐ la moyenne porte son séparateur de milliers',
+    /\d[   ]\d{3} kcal/.test(R.appris), (R.appris.match(/moyenne[^·]*/)||[''])[0].slice(0,60));
+  t('⛔ un seul jour noté : aucune étendue inventée, et la phrase tient',
+    /tout ton journal/i.test(R.unJour) && !/étalés sur/i.test(R.unJour), R.unJour.slice(0,110));
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

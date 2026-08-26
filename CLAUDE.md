@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1025`** (prochaine : `ft-v1026`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1026`** (prochaine : `ft-v1027`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -436,6 +436,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1026 — 🧾 DEUX MOYENNES JUSTES QUI SE CONTREDISAIENT À L'ÉCRAN** — trouvé sur une **vraie capture** de Michel (une vidéo de son iPhone, 17 s, en production), pas en relisant le code.
+
+**⭐⭐ LE DÉFAUT EN UNE PHRASE** : la carte *« ce que l'app a appris »* annonçait *« en moyenne **1920 kcal** »* et, **40 px plus bas**, *« Ta semaine · **2 495 kcal/j** »*. **Les deux chiffres sont exacts** — celui du haut porte sur l'**historique entier** (7 jours notés étalés sur 50), celui du bas sur les **7 derniers jours** — mais **rien ne le disait**, et personne ne peut le deviner.
+
+**⛔ C'est la famille « deux sources qui se contredisent » de `BUGS.md`, et elle est pire que l'absence** : la personne **VOIT** les deux, et n'a aucun moyen de savoir lequel parle de quoi. *Un écran qui se contredit ne fait pas douter du chiffre, il fait douter de l'app.*
+
+**👉 LE CORRECTIF NE TOUCHE AUCUN CALCUL** : la carte **nomme sa fenêtre** — *« Observé sur **tout ton journal** : 7 jours notés, étalés sur 50 jours »*. Et « Ta semaine » disait déjà la sienne (*« 4 jours notés **sur 7** »*). ⛔ **Aucun chiffre n'a changé** : on ne corrige que ce que l'écran **dit** de ses chiffres.
+
+**⚠️ DEUX AUTRES DÉFAUTS DE LA MÊME CARTE, SUR LA MÊME CAPTURE :**
+- *« répartis sur **50** »* était un **nombre nu** — 50 quoi ? *L'unité était dans ma tête, pas à l'écran.* → *« étalés sur 50 **jours** »* ;
+- *« **1920** kcal »* n'avait **pas son séparateur de milliers**, à côté d'un *« 2 495 »* qui en a un. Deux formats du même genre de nombre dans la même carte : *ça se lit comme une coquille, pas comme une mesure.*
+
+**⭐⭐ ET CE QUE J'AI CRU VOIR ÉTAIT FAUX — vérifié avant de le dire.** Sur la planche contact en basse résolution, j'ai lu *« anneau : / 220 g »* contre *« ligne : 222 g/jour »* et j'ai cru tenir un troisième défaut. **Mesuré dans un navigateur : les deux disent 242 / 242** — c'était ma lecture d'un JPEG réduit, pas l'app. *Le réflexe qui a payé : ne pas annoncer un écart lu à l'œil sur une image compressée.* Même chose pour le *« 1135 kcal restantes »* de la carte du jour : il **porte** bien sa fine insécable (U+202F vérifié caractère par caractère) — elle est simplement invisible à 12,5 px sur un iPhone.
+
+**⛔ CE QUI N'EST *PAS* CORRIGÉ, ET C'EST UNE DÉCISION QUI REVIENT À MICHEL** : *« ce qu'il te reste »* proposait **250 g de ratatouille + 250 g de banane** pour un manque de **245 g de glucides**, en annonçant honnêtement *« (≈ 65 g) »* — soit un demi-kilo d'aliments pour **27 %** du besoin. **Ce n'est pas un bug** : les bornes (2 portions, 250 g) ont été posées exprès en ft-v1020 pour ne jamais proposer *« 5,5 × blanc de poulet »*, et le *« ≈ 65 g »* existe précisément pour ne pas faire croire que ça tombe juste. **Mais quand la couverture descend sous ~40 %, la ligne cesse d'aider.** C'est un arbitrage de produit, pas une erreur technique — il est écrit dans `IDEES-FUTURES.md` plutôt que tranché tout seul (**R29**).
+Tests : **parcours — passe complète EN COURS au moment du commit** (0 rouge à mi-parcours ; le compte définitif est écrit dès qu'il tombe). Bloc **CXXXI**, +6 témoins. calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. ⭐ **Le témoin central refuserait d'être vert en ne mesurant rien** : sa fixture pose exprès des jours notés **étalés** (4 vieux à 1 200 kcal, 3 récents à 3 000), et un témoin dédié **vérifie que les deux moyennes diffèrent bien** — *c'est seulement quand elles diffèrent que nommer la fenêtre devient vital*. Fichiers : `screens.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `BUGS.md`, `IDEES-FUTURES.md`. sw.js ft-v1026. |
 
 **ft-v1025 — 🍽️ L'ONGLET MACROS RÉORGANISÉ — « savoir où j'en suis sans faire défiler »** — chantier `docs/MACROS-A.md` (variante A), maquette relue puis **confrontée au code avant d'écrire une ligne**, sur la consigne de Michel : *« avant de coder, dis-moi ce que tu comptes changer fichier par fichier »*.
 
@@ -760,19 +777,6 @@ Tests : **parcours 1410/1410** (+4, bloc CXV), calculs 266/266, muscles 241/241,
 
 **⚠️⚠️ ET MON DÉCOUPAGE D'ARGUMENTS A MENTI AVANT DE MESURER JUSTE.** Il sautait les **chaînes** mais pas les **COMMENTAIRES** : une apostrophe française dans un commentaire (*« n'efface que les clés `cl_` »*) ouvrait une fausse chaîne et **avalait la fin de l'appel**. Le témoin accusait alors **5 appels déjà corrigés** et comptait 11 menteurs là où il y en avait 10. *Un seul lecteur pour les bornes ET pour les virgules.* ⭐ **Même famille que l'apostrophe courbe de ft-v994** — un caractère non traité rend une mesure propre et fausse.
 Tests : **parcours 1406/1406** (+4, bloc CXIV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : rouge, et le détail imprimé EST le bug** — contre `ebad642` le témoin sort **10 menteurs** nommés un par un, dont `coach.js:5223 '🧪 Benchmark Milo'` ; contre le nouveau code, **0**. ⭐ **Vérifié à l'écran par le VRAI chemin** (admin armé dans `localStorage`, corpus réellement téléchargé, `startEvalBench` appelée) : titre *« 🧪 Benchmark Milo — 53 scénarios »*, bouton gris **« Annuler »**, bouton rouge **« Lancer »**. Fichiers : `app.js`, `coach.js`, `log.js`, `setup.js`, `tracking.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1006. |
-
-**ft-v1005 — 🔢 LE BENCHMARK ANNONÇAIT « 16 SCÉNARIOS » ALORS QU'IL EN PORTE 53** — Michel, juste avant de le lancer depuis l'app : *« oui corrige les libellés avant »*.
-
-**⛔⛔ QUATRE LIBELLÉS ÉCRITS EN DUR AVAIENT DÉRIVÉ**, tous dans le groupe admin « 🛡️ Milo — le mesurer » : *« 16 messages ISOLÉS »*, *« 16 pièges »*, *« Lancer le benchmark (16 scénarios) »*, *« 2 × 16 »*. Le benchmark est passé de **16 → 21 → 53 en trois semaines** — c'est-à-dire exactement ce que **R35** dit qu'il fait : *il grandit à chaque bug, il n'a pas de taille cible*. **Les libellés, eux, ne bougent pas tout seuls.**
-
-**⛔⛔ ET ON N'A PAS MIS « 53 » À LA PLACE — c'est tout le point.** Ce serait la **même dette six semaines plus tard**, sur l'écran même qui sert à décider d'une dépense. *Un nombre qu'il faut penser à mettre à jour finira par ne pas l'être : c'est déjà arrivé, ici, deux fois de suite.* Le nombre est **retiré**.
-
-**⭐ LE COMPTE EXACT ET LE PRIX EXISTAIENT DÉJÀ, JUSTES, À DEUX MÈTRES DE LÀ** : `startEvalBench` (`coach.js`) calcule `SC.length` **et** `_evPrix(n)`, et les annonce dans la **confirmation**, *avant* le premier appel payé. **Le libellé statique portait donc une seconde source de vérité pour rien** (**R2**) — et c'est la seconde qui mentait, jamais celle qui compte au moment de payer.
-
-**⭐⭐ LE TÉMOIN INTERDIT LE NOMBRE, IL NE L'ÉPINGLE PAS.** Un témoin qui vérifierait *« 53 »* rougirait à la **54ᵉ promotion** et on l'ajusterait sans réfléchir — *un témoin qu'on remet au vert par réflexe ne protège plus rien*. Celui-ci refuse **tout** nombre à deux ou trois chiffres suivi de « scénarios / pièges / messages » dans ce bloc : la prochaine dérive **fait rougir la livraison** au lieu de mentir en silence.
-
-**⚠️ ET MA PREMIÈRE FENÊTRE DE MESURE RATAIT UN DES QUATRE.** Elle partait du sous-titre *« BENCHMARK »* — or *« 16 messages ISOLÉS »* vit dans l'**intro du groupe, au-dessus**. Le contrôle négatif ne sortait que 2 libellés sur 3. Élargie au **titre du groupe**, elle en sort **trois**. *Une fenêtre qui commence après le mensonge ne le voit pas.*
-Tests : **parcours 1402/1402** (+1), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : instructif, et le détail imprimé EST le bug** — contre `ff1d079` le témoin rend `en dur = ["16 messages","16 pièges","16 scénarios"]`, contre le nouveau code `[]`. ⭐ **Et le témoin voisin est vert des deux côtés** : le **prix**, lui, se calculait déjà correctement — *c'est exactement ce qui montre que le défaut était dans le libellé décoratif, pas dans le chiffre qui engage la dépense*. Fichiers : `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1005. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

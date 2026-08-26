@@ -2681,3 +2681,33 @@ Aucun relevé, aucune ligne dans le dossier UX. On ne sait pas s'il a un problè
 La maquette ne traitait que le sombre. Le code n'emploie **que des variables** (`--bg2`, `--t1`…),
 donc le mode clair suit mécaniquement — mais *« ça suit »* n'est pas *« c'est lisible »*, et
 personne ne l'a regardé.
+
+
+---
+
+## 🥗 « CE QU'IL TE RESTE » QUAND LE MANQUE EST TROP GROS — à trancher par Michel *(26/08/2026)*
+
+**Vu sur sa capture du 26/08, à 22 h** : il lui restait **245 g de glucides**, et l'app proposait
+*« 250 g de Ratatouille Cuisinée + 250 g de Banane »* avec la mention honnête *« (≈ 65 g) »* —
+soit **un demi-kilo d'aliments pour 27 % du besoin**.
+
+**⛔ Ce n'est PAS un bug, et il ne faut pas le « réparer » sans décider** (R30) :
+- les **bornes** (2 portions, 250 g par aliment) ont été posées **exprès** en ft-v1020, après une
+  première version qui proposait *« 5,5 × blanc de poulet »* ;
+- le *« ≈ 65 g »* existe **précisément** pour ne pas faire croire que la combinaison tombe juste
+  (**R29** — une fausse précision est pire qu'un aveu d'imprécision).
+
+**⚠️ Mais sous ~40 % de couverture, la ligne cesse d'aider** : elle a la **forme** d'une
+proposition et le **fond** d'un constat.
+
+**Trois pistes, par coût croissant :**
+1. **Changer la formulation** sous un seuil de couverture : *« il t'en reste beaucoup — 250 g de
+   ratatouille + 250 g de banane t'en apportent environ 65 g »*. Zéro calcul nouveau.
+2. **Relever la borne quand le manque est énorme** — mais c'est exactement ce que ft-v1020 a
+   refusé, et un « 4 × riz 200 g » n'aide pas davantage.
+3. **Se taire au-delà d'un certain écart** et dire pourquoi (*« l'écart est trop grand pour une
+   idée de repas »*). ⚠️ Risque anti-TCA (**P21**) : ça peut se lire comme un reproche sur la
+   journée. À manier avec précaution.
+
+👉 **Ma recommandation : la piste 1.** Elle ne change aucun chiffre, aucune borne, aucun
+garde-fou — seulement la façon dont la ligne se présente quand elle ne peut pas tenir sa promesse.

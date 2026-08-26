@@ -6,7 +6,16 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1025`.
+- **Version en ligne (live) :** `ft-v1026`.
+- 🧾⭐⭐ **DEUX MOYENNES JUSTES QUI SE CONTREDISAIENT À L'ÉCRAN — CORRIGÉ** (ft-v1026), trouvé sur
+  une **vraie capture** de Michel. La carte « ce que l'app a appris » disait *« en moyenne
+  1920 kcal »* et, **40 px plus bas**, *« Ta semaine · 2 495 kcal/j »*. **Les deux sont exacts** —
+  l'un porte sur **tout le journal**, l'autre sur les **7 derniers jours** — mais rien ne le
+  disait. ⛔ **Aucun calcul n'a changé** : la carte **nomme sa fenêtre**, c'est tout.
+  ⚠️ + « répartis sur 50 » (nombre nu) → « étalés sur 50 **jours** » · « 1920 » → « **1 920** ».
+  ⏭️ **Non tranché, et c'est à Michel** : « ce qu'il te reste » propose 500 g d'aliments pour
+  couvrir **27 %** d'un gros manque de glucides. Ce n'est pas un bug (les bornes sont voulues,
+  et l'écart est annoncé) — mais sous ~40 % de couverture la ligne cesse d'aider.
 - ⏳ **CE QUI RESTE À FAIRE SUR LE PC DE MICHEL : UNE SEULE CHOSE** — coller `FT_COUNT_TOKEN`
   dans Cloudflare (sans elle, les appels à Milo sont **comptés mais jamais bloqués**).
   ⛔ **Le Squat Sumo n'en fait plus partie** : l'exercice a été **supprimé le 25/08** sur
