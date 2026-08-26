@@ -1377,6 +1377,90 @@ function _foodTotals(date){
   (S.foodLog||[]).forEach(e=>{if(e.date===date){t.kcal+=e.kcal||0;t.prot+=e.prot||0;t.carbs+=e.carbs||0;t.fat+=e.fat||0;}});
   return t;
 }
+/* ═══ L'APP APPREND L'ALIMENTATION — 100 % LOCAL, ZÉRO APPEL API (26/08/2026, ft-v1021) ═══
+   Michel : *« il faut que l'application (pas Milo) apprenne du sportif côté nutrition sans que
+   ça me coûte un seul appel API »*. Et la veille, le constat qui l'a amené là : *« on connaît
+   l'athlète sportivement en lui posant des questions, mais pas du tout en alimentation — alors
+   que c'est 80 % au moins de l'évolution physique »*. Mesuré : **6 questions** sur
+   l'entraînement, **ZÉRO** sur la nourriture.
+
+   ⭐⭐ TOUT CE QUI SUIT EST DE L'ARITHMÉTIQUE SUR `S.foodLog`. Pas un octet de réseau, pas un
+   modèle, pas de cervelet — donc **rien à payer, et ça marche hors ligne** (règle d'or #4).
+   *La donnée était déjà là : ce qui manquait, c'est que quelqu'un la regarde.*
+
+   ⛔⛔ CE QUE L'OBSERVATION NE PEUT PAS DONNER, ET QU'ON N'INVENTE PAS (R29). Une absence ne
+   prouve RIEN : Michel n'a jamais noté de macadamia — *« j'en mange pas, et en plus c'est
+   dégueulasse »* — mais quelqu'un d'autre peut simplement ne pas y avoir pensé. **On mesure ce
+   qui EST là, jamais ce qui n'y est pas.** Les dégoûts, le budget, le temps de préparation
+   devront être DEMANDÉS ; c'est écrit dans `IDEES-FUTURES.md`, ce n'est pas ce fichier-ci.
+
+   ⛔ ET AUCUN SCORE DE FIABILITÉ INVENTÉ (R32) : des ÉTATS NOMMÉS. « 4 jours notés » n'autorise
+   pas la même phrase que « 40 jours », et un « fiabilité 78 % » serait une fausse précision. */
+
+const _PA_MIN_JOURS = 3;          // en dessous, on ne prétend rien observer
+const _PA_SOLIDE    = 14;         // à partir de là, on parle d'habitudes
+function _profilAlimentaire(){
+  const fl = Array.isArray(S.foodLog) ? S.foodLog : [];
+  if(!fl.length) return null;
+  const cleN = n => (n||'').trim().toLowerCase();
+
+  /* ① Combien de jours sont RÉELLEMENT notés, et sur quelle fenêtre. C'est ce chiffre qui
+     décide de ce qu'on a le droit de dire ensuite — il vient donc en premier. */
+  const parJour = {};
+  fl.forEach(e=>{ if(e && e.date) (parJour[e.date] = parJour[e.date] || []).push(e); });
+  const jours = Object.keys(parJour).sort();
+  const nbJours = jours.length;
+  const etat = nbJours >= _PA_SOLIDE ? 'solide'
+             : nbJours >= _PA_MIN_JOURS ? 'partiel'
+             : 'insuffisant';
+  /* ⚠️ La FENÊTRE compte autant que le nombre : 6 jours étalés sur 2 mois ne disent pas la
+     même chose que 6 jours d'affilée. On donne les deux, on ne les mélange pas. */
+  let etendue = 0;
+  if(nbJours >= 2){
+    const a = new Date(jours[0]+'T12:00:00'), b = new Date(jours[nbJours-1]+'T12:00:00');
+    etendue = Math.round((b-a)/864e5) + 1;
+  }
+
+  /* ② Ses aliments, par MOMENT de la journée. C'est là qu'est l'information utile : « du riz »
+     ne dit pas grand-chose, « du riz au déjeuner » se transpose directement dans un plan. */
+  const parRepas = {}, global = {};
+  fl.forEach(e=>{
+    const n = (e && e.name || '').trim(); if(!n) return;
+    const k = cleN(n), m = e.meal || 'autre';
+    (parRepas[m] = parRepas[m] || {});
+    parRepas[m][k] = parRepas[m][k] || {nom:n, n:0};
+    parRepas[m][k].n++;
+    global[k] = global[k] || {nom:n, n:0, kcal:+e.kcal||0, prot:+e.prot||0, carbs:+e.carbs||0, fat:+e.fat||0};
+    global[k].n++;
+  });
+  const top = (o, max) => Object.keys(o).map(k=>o[k]).sort((a,b)=>b.n-a.n).slice(0, max||3);
+  const habitudes = {};
+  Object.keys(parRepas).forEach(m=>{ habitudes[m] = top(parRepas[m], 3); });
+
+  /* ③ Ses HORAIRES réels, par repas — la médiane, pas la moyenne : un seul dîner à 2 h du
+     matin ne doit pas déplacer l'heure habituelle de tous les autres. */
+  const heures = {};
+  Object.keys(parRepas).forEach(m=>{
+    const hs = fl.filter(e=>e && (e.meal||'autre')===m && e.ts)
+                 .map(e=>new Date(e.ts).getHours()).sort((a,b)=>a-b);
+    if(hs.length >= 3) heures[m] = hs[Math.floor(hs.length/2)];   // ⛔ 3 points minimum
+  });
+
+  /* ④ Ce qu'il mange VRAIMENT en moyenne, sur les jours notés — à comparer à sa cible.
+     ⛔ On divise par les jours NOTÉS, pas par les jours écoulés : sinon un oubli de saisie
+     ressemblerait à un jour de jeûne, et la moyenne mentirait vers le bas. */
+  const somme = {kcal:0, prot:0, carbs:0, fat:0};
+  fl.forEach(e=>{ somme.kcal+=+e.kcal||0; somme.prot+=+e.prot||0; somme.carbs+=+e.carbs||0; somme.fat+=+e.fat||0; });
+  const moy = {};
+  ['kcal','prot','carbs','fat'].forEach(k=> moy[k] = nbJours ? Math.round(somme[k]/nbJours) : 0);
+
+  return { nbJours:nbJours, etendue:etendue, etat:etat,
+           habitudes:habitudes, favoris:top(global, 5), heures:heures, moyennes:moy,
+           /* ⚠️ Le nombre de repas notés par jour dit s'il note TOUT ou seulement une partie —
+              une moyenne de 1,2 entrée par jour ne décrit pas une journée. */
+           entreesParJour: nbJours ? Math.round(fl.length/nbJours*10)/10 : 0 };
+}
+
 /* ═══ CE QU'IL TE RESTE À MANGER — ET CE QUE ÇA REPRÉSENTE (26/08/2026, ft-v1019) ═══════
    Michel : *« il faut montrer une estimation de ce qu'il nous reste à manger dans la journée
    (à 14h par exemple, il te reste 150 g de prot à manger, tu peux faire 1 shake de prot et

@@ -2434,6 +2434,53 @@ function renderFoodJournal(){
     html+=`<div style="background:var(--bg2);border-radius:14px;padding:16px;text-align:center;color:var(--t3);font-size:13px;box-shadow:inset 0 0 0 1px var(--sep);">Remplis ton profil (âge, taille, poids) pour comparer à tes objectifs.</div>`;
   }
 
+  /* 🧠 CE QUE L'APP A APPRIS DE TON ALIMENTATION (26/08/2026, ft-v1021) — 100 % local.
+     Michel : *« il faut que l'application (pas Milo) apprenne du sportif côté nutrition sans
+     que ça me coûte un seul appel API »*.
+     ⭐⭐ POURQUOI ON LE MONTRE, ET PAS SEULEMENT EN INTERNE : un profil qu'on ne voit pas ne
+     peut pas être corrigé. C'est la doctrine du profil vivant — *observer → expliquer →
+     proposer → décider* : la personne doit pouvoir lire ce que l'app croit savoir d'elle.
+     ⛔ ET ON DIT CE QU'ON NE SAIT PAS. En dessous de 3 jours notés, la carte annonce qu'elle
+     n'a pas de quoi observer — elle ne se tait PAS, parce qu'un silence laisserait croire
+     qu'il n'y a rien à apprendre (R29). */
+  html += (()=>{
+    const pa = (typeof _profilAlimentaire==='function') ? _profilAlimentaire() : null;
+    if(!pa) return '';
+    const LBL = {petitdej:'Petit-déj', collation:'Collation', dejeuner:'Déjeuner',
+                 collation2:'Collation 2', diner:'Dîner', autre:'Autre'};
+    const esc = t => (typeof _escNote==='function') ? _escNote(t) : t;
+    let corps;
+    if(pa.etat === 'insuffisant'){
+      /* ⛔ Le ton est FACTUEL, jamais une relance : « note ce que tu manges » serait une
+         injonction, et la nutrition ne doit jamais devenir une source de pression (P21). */
+      corps = `<div style="font-size:12.5px;color:var(--t3);line-height:1.5;">`
+        +`${pa.nbJours} jour${pa.nbJours>1?'s':''} noté${pa.nbJours>1?'s':''} — pas encore de quoi dégager une habitude. `
+        +`À partir de 3 jours, l'app commence à reconnaître ce que tu manges vraiment.</div>`;
+    } else {
+      const lignes = Object.keys(pa.habitudes).filter(m=>LBL[m]).map(m=>{
+        const noms = pa.habitudes[m].map(x=>esc(x.nom)).join(' · ');
+        const h = pa.heures[m];
+        return `<div style="display:flex;gap:8px;margin-bottom:5px;font-size:12.5px;line-height:1.45;">`
+          +`<span style="color:var(--t3);min-width:78px;font-weight:700;">${LBL[m]}${(h!==undefined)?` <span style="font-weight:400;">~${h}h</span>`:''}</span>`
+          +`<span style="color:var(--t1);">${noms}</span></div>`;
+      }).join('');
+      corps = lignes
+        + `<div style="font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:8px;">`
+        + `Observé sur <b>${pa.nbJours} jour${pa.nbJours>1?'s':''}</b>`
+        + (pa.etendue>pa.nbJours?` répartis sur ${pa.etendue}`:'')
+        + ` · en moyenne <b>${pa.moyennes.kcal} kcal</b> et <b>${pa.moyennes.prot} g</b> de protéines par jour noté.`
+        /* ⚠️ On DIT que c'est partiel plutôt que de laisser croire à une habitude établie (R32). */
+        + (pa.etat==='partiel'?` <b>C'est encore court</b> — l'app décrit ces jours-là, pas tes habitudes.`:'')
+        + `</div>`;
+    }
+    return `<div style="background:var(--bg2);border-radius:16px;padding:16px;margin-top:12px;box-shadow:inset 0 0 0 1px var(--sep);">`
+      +`<div style="font-size:12px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">🧠 Ce que l'app a appris de ton alimentation</div>`
+      +corps
+      /* ⛔ Le rappel qui compte pour Michel : ça ne coûte rien. */
+      +`<div style="font-size:11px;color:var(--t3);margin-top:8px;opacity:.85;">Calculé sur ton téléphone, sans aucun appel à l'IA.</div>`
+      +`</div>`;
+  })();
+
   /* 🔍 LES TROIS FAÇONS D'AJOUTER UN ALIMENT SE VOIENT DEPUIS LE JOURNAL (15/08/2026)
      Michel : *« il faut faire "ajouter un aliment" et je pense que cette étape est en trop,
      personne ne verra ce qui se trouve derrière sauf s'il clique sur le bouton »*.
