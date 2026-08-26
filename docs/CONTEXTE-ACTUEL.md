@@ -7,6 +7,20 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1016`.
+- ⏸️ **LA PASSE PAYANTE DU BANC D'ESSAI ATTEND — décision de Michel, 26/08 : *« j'attends plus de
+  nutrition »*.** ⭐ **Le rejeu GRATUIT a déjà fait la moitié du travail** (9 rouges → 4, 0 €) : les
+  5 vérificateurs de ft-v1007 sont prouvés, et il a démasqué un 6ᵉ faux rouge (EV-052, ft-v1016).
+  ⛔ **Ce qui reste ne peut PAS se juger sans une nouvelle réponse de Milo** : **EV-054** (le journal
+  alimentaire n'existait pas au 25/08) et **EV-009** (sa fixture était muette quand la réponse
+  gardée a été produite). *Deux scénarios pour une passe : autant attendre que le journal porte
+  2-3 jours de plus, et payer une seule fois pour mesurer les deux.*
+  ⚠️ **Et ce ne sera pas un avant/après propre au sens de R34** : quatre choses ont bougé depuis le
+  25/08 (les 6 vérificateurs · la fixture EV-009 · l'historique d'objectif · le journal
+  alimentaire) — un écart de score ne dira pas laquelle. **Rappel du seuil que le banc s'impose à
+  lui-même : moins de 3 rouges d'écart = du bruit** (mesuré le 20/08, deux passes identiques → 3
+  puis 4 rouges).
+  ⛔ **Les 2 arbitrages de Michel restent ouverts** : EV-032 (exercice hors catalogue quand on
+  demande de l'originalité) · EV-044 (aucun renvoi à un professionnel sur une prépa d'examen).
 - ☁️⭐⭐ **UN ÉCHEC DE SYNC GOOGLE SHEETS ÉTAIT COMPTÉ COMME UN SUCCÈS — CORRIGÉ** (ft-v1015).
   Trouvé en creusant la question de Michel : *« j'ai l'impression qu'il n'y a pas d'historique ou
   c'est moi ? »*.

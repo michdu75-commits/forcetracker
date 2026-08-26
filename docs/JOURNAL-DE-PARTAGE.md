@@ -89,6 +89,26 @@ pas de protocole du tout.
 3. **Ça repose sur la discipline.** Si une session oublie d'écrire sa ligne, rien ne le signale.
    Le protocole réduit le risque, il ne l'annule pas.
 
+### ⚠️ APRÈS UN CONTENEUR RECRÉÉ : `git fetch --all` PEUT MENTIR (constaté le 26/08/2026)
+
+Le conteneur de session est **éphémère**. Quand il est recréé, le dépôt est recloné — et le clone
+peut être **périmé de plusieurs jours**. Vécu ce jour-là : `origin/master` affichait **ft-v939 du
+21/08**, cinq jours en arrière, et un commit poussé une heure plus tôt n'existait **même pas** dans
+le clone (`fatal: Not a valid object name`).
+
+⛔⛔ **Et `git fetch --all` n'avait rien corrigé.** Seul un fetch **explicite** a ramené la réalité :
+
+```bash
+git fetch origin master     # ← celui-ci atteint vraiment GitHub
+```
+```
++ 84cdf26...91c5d92 master -> origin/master  (forced update)
+```
+
+👉 **Le danger n'est pas la perte — rien n'était perdu.** C'est la CONCLUSION qu'on en tire : croire
+son travail disparu, ou pire, *« réparer »* master en poussant par-dessus. **Devant un master qui a
+reculé, on ne pousse rien : on refait un fetch explicite et on regarde les dates.**
+
 ### 🕐 Les heures
 
 Écrire l'heure **UTC** ou préciser le fuseau. Deux sessions peuvent tourner dans des conteneurs
