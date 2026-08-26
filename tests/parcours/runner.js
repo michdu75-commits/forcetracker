@@ -13648,6 +13648,22 @@ console.log('\n-- CXXIV. Ce qu\'il te reste à manger, traduit en TES aliments (
     const siens=['Shake protéiné','Blanc de poulet','Amandes','Flocons avoine','Riz basmati'];
     o.queLesSiens = id.every(x=>x.idee.split(' + ').every(p=>siens.some(n=>p.indexOf(n)>=0)));
     o.elision = _deNom('Amandes')==="d'Amandes" && _deNom('Yaourt')==='de Yaourt';
+    /* ⭐⭐ ft-v1020 — Michel : « il faut rester simple, tout le monde ne bouffe pas de flocons
+       d'avoine, moi le premier ». DEUX règles en sont sorties, et la seconde a été trouvée en
+       mesurant la première : ① on classe par ce qu'il MANGE (favori, puis fréquence), pas par
+       ce qui est le plus dense ; ② mais la PERTINENCE passe avant — mon 1ᵉʳ jet a sorti
+       « 2 × Shake protéiné » sur la ligne GLUCIDES, ce qui ne veut rien dire. */
+    S.savedFoods=[{name:'Shake protéiné',kcal:120,prot:25,carbs:3,fat:1}];   // favori, 10 % de glucides
+    const _e=(d,n,k,p,c,f,per)=>({date:d,meal:'midi',name:n,kcal:k,prot:p,carbs:c,fat:f,ts:Date.now()-Math.random()*1e6,per100:per||null});
+    const _h=n=>{const d=new Date(t+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    S.foodLog=[ _e(t,'Riz basmati',350,7,77,1,{kcal:350,prot:7,carbs:77,fat:1}),
+                _e(_h(1),'Riz basmati',350,7,77,1,{kcal:350,prot:7,carbs:77,fat:1}),
+                _e(_h(2),'Riz basmati',350,7,77,1,{kcal:350,prot:7,carbs:77,fat:1}),
+                _e(_h(3),'Pain complet',420,9,85,2,{kcal:250,prot:9,carbs:48,fat:2}) ];  // 1 fois, PLUS dense
+    const id2=_ideesPourLeReste(_resteDuJour(t));
+    const ligneG=(id2.find(x=>x.macro==='carbs')||{}).idee||'';
+    o.pasDeShakePourGlucides = ligneG.indexOf('Shake')<0;
+    o.frequentDAbord = ligneG.indexOf('Riz basmati')>=0;      // mangé 3 fois, passe devant le pain
     // ── à l'écran, par le vrai rendu
     goScreen('s-nutrition'); renderFoodJournal();
     const lire=()=>document.getElementById('food-journal').innerText;
@@ -13686,6 +13702,10 @@ console.log('\n-- CXXIV. Ce qu\'il te reste à manger, traduit en TES aliments (
     t('⛔ sans profil, aucune cible donc aucun reste (on ne compare pas à un objectif absent)',
       F.sansProfil===true, '');
     t('⭐ l\'élision est juste : « d\'Amandes » mais « de Yaourt »', F.elision===true, '');
+    t('⛔⛔ un aliment NON PERTINENT ne sort pas sur cette macro (pas de shake pour des glucides)',
+      F.pasDeShakePourGlucides===true, '');
+    t('⭐⭐ on propose ce qu\'il MANGE SOUVENT, pas ce qui est le plus dense (ft-v1020)',
+      F.frequentDAbord===true, '');
   }
   await cx.close();
 }

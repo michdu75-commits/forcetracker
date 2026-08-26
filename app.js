@@ -1424,14 +1424,26 @@ function _resteDuJour(date){
 /* Ses aliments à LUI : les favoris d'abord (il les a choisis), puis les plus récents du
    journal. Dédupliqués par nom, et on ne garde que ce qui porte de vraies macros. */
 function _mesAliments(max){
+  /* ⚠️⚠️ REMANIÉ LE 26/08 (ft-v1020) — Michel, devant la 1ʳᵉ version : *« il faut rester
+     simple, tout le monde ne bouffe pas de flocons d'avoine, moi le premier »*.
+     ⭐ Le classement d'origine prenait l'aliment le plus DENSE dans la macro manquante. Sur le
+     papier c'est optimal ; en vrai ça sort l'aliment le plus riche, pas celui qu'on mange.
+     👉 On classe désormais par **ce qu'il mange VRAIMENT** : un favori (il l'a choisi) passe
+     devant, puis la FRÉQUENCE dans son journal. *Un aliment parfait qu'on ne mange jamais est
+     un mauvais conseil.* La densité ne sert plus qu'à départager à fréquence égale. */
   const vus = {}, out = [];
+  const cle = n => (n||'').trim().toLowerCase();
+  /* On compte d'abord combien de fois chaque aliment revient dans le journal. */
+  const freq = {};
+  (S.foodLog||[]).forEach(e=>{ const k=cle(e&&e.name); if(k) freq[k]=(freq[k]||0)+1; });
   const prendre = (e, fav) => {
     const n = (e && e.name || '').trim(); if(!n) return;
-    const k = n.toLowerCase(); if(vus[k]) return;
+    const k = cle(n); if(vus[k]) return;
     const kcal=+e.kcal||0, prot=+e.prot||0, carbs=+e.carbs||0, fat=+e.fat||0;
     if(!(kcal>0 || prot>0 || carbs>0 || fat>0)) return;    // ⛔ rien à proposer sans macros
     vus[k]=1;
-    out.push({name:n, kcal:kcal, prot:prot, carbs:carbs, fat:fat, per100:e.per100||null, fav:!!fav});
+    out.push({name:n, kcal:kcal, prot:prot, carbs:carbs, fat:fat,
+              per100:e.per100||null, fav:!!fav, freq:(freq[k]||0)});
   };
   (S.savedFoods||[]).forEach(e=>prendre(e,true));
   (S.foodLog||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(e=>prendre(e,false));
@@ -1454,6 +1466,7 @@ function _mesAliments(max){
 /* Une quantité RAISONNABLE d'un aliment, pour couvrir au plus `manque` de cette macro.
    Rend {texte, apport} ou null. Ne dépasse jamais les bornes ci-dessus. */
 const _RESTE_MAX_PORTIONS = 2, _RESTE_MAX_G = 250;
+const cle = n => (n||'').trim().toLowerCase();
 /* « 100 g de Amandes » — l'élision manquait. Ce n'est pas de la coquetterie : c'est du texte
    affiché à quelqu'un, et Michel l'a écrit lui-même (R31) — *plus on se rapproche d'une
    réalité, plus les gens ont confiance dans ce qu'on a fait.* */
@@ -1484,15 +1497,37 @@ function _portionRaisonnable(al, macro, manque){
    ⛔ Les aliments déjà employés pour une autre macro sont écartés — sinon la même ligne
    revient trois fois et l'idée n'en est plus une. */
 function _ideePourMacro(al, macro, manque, pris){
-  const cand = al.filter(a => !pris[a.name.toLowerCase()] && (+a[macro]||0) > 0)
-                 .sort((a,b) => (+b[macro]||0) - (+a[macro]||0));
+  /* ⭐ CLASSEMENT : ce qu'il mange, avant ce qui est optimal. Favori d'abord, puis fréquence,
+     puis densité pour départager. (Michel, ft-v1020 : « rester simple ».) */
+  /* ⛔⛔ D'ABORD LA PERTINENCE, ENSUITE SEULEMENT LES GOÛTS — mesuré, pas supposé.
+     Mon 1ᵉʳ jet de ft-v1020 classait le FAVORI en tête, quelle que soit la macro : il a sorti
+     « 2 × Shake protéiné » sur la ligne **GLUCIDES**. *Un shake protéiné pour des glucides, ça
+     ne veut rien dire.* Le classement par ce qu'on mange était juste ; il manquait la condition
+     d'entrée.
+     ⭐ LE CRITÈRE EST PHYSIQUE, PAS ARBITRAIRE : la macro doit peser au moins 30 % des calories
+     de l'aliment. Le riz est à 88 % de glucides, l'huile à 100 % de lipides, le shake à 83 % de
+     protéines — et à 10 % de glucides, donc il ne sort JAMAIS sur cette ligne-là. */
+  const KCAL = {prot:4, carbs:4, fat:9};
+  const pertinent = a => {
+    const k = +a.kcal || 0;
+    const part = (+a[macro]||0) * KCAL[macro];
+    return k > 0 ? (part / k) >= 0.30 : (+a[macro]||0) > 0;
+  };
+  const cand = al.filter(a => !pris[cle(a.name)] && (+a[macro]||0) > 0 && pertinent(a))
+                 .sort((a,b) => (b.fav?1:0)-(a.fav?1:0)
+                             || (b.freq||0)-(a.freq||0)
+                             || (+b[macro]||0)-(+a[macro]||0));
   const parts = [];
   let reste = manque, couvert = 0;
   for(const a of cand){
-    if(parts.length >= 2 || reste <= 0) break;
+    /* ⛔ UN SEUL ALIMENT PAR DÉFAUT. Un deuxième n'est ajouté QUE si le premier couvre moins
+       de la moitié du manque — sinon la ligne devient une recette, et Michel a raison :
+       « 250 g de riz + 160 g de flocons » ne se lit pas, ça se subit (R19). */
+    if(parts.length >= 1 && couvert >= manque*0.5) break;
+    if(parts.length >= 2) break;
     const q = _portionRaisonnable(a, macro, reste);
     if(!q) continue;
-    parts.push(q.texte); pris[a.name.toLowerCase()] = 1;
+    parts.push(q.texte); pris[cle(a.name)] = 1;
     couvert += q.apport; reste -= q.apport;
   }
   if(!parts.length) return null;
