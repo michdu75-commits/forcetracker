@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1009`.
+- **Version en ligne (live) :** `ft-v1010`.
 - 🔁⭐ **LE SÉLECTEUR D'EXERCICES RESTE OUVERT — LIVRÉ** (ft-v1009). **Première brique du chantier
   écran Séance** (`docs/SEANCE-DESSAI.md` §8, point 1), et le goulot que Michel a senti en premier :
   *« il va falloir améliorer aussi l'accès aux exercices… et que ce soit rapide »*.
