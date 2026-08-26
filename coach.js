@@ -3363,6 +3363,65 @@ CONDITIONNEL — un bloc qui apparaît puis disparaît casse le cache exactement
 qui change. C'est pour ça que le catalogue d'exercices et les blocs de séance sont ICI, en bas :
 ils ne partent que quand ils servent, sans jamais toucher à la partie mise en cache.)
 
+${(()=>{
+  /* ═══ CE QU'ELLE A RÉELLEMENT MANGÉ (26/08/2026, ft-v1014) ═══════════════════════════
+     Michel à Milo : « As-tu assez de recul pour mon alimentation ? » → « Mon alimentation est
+     DÉJÀ dans l'application. » Milo, honnête : « Je n'ai pas accès au journal alimentaire (…)
+     EN L'ÉTAT JE TRAVAILLE À L'AVEUGLE SUR LA NUTRITION. »
+     ⭐ IL DISAIT VRAI, et l'exclusion était écrite — avec la mention « DÉCISION À CONFIRMER »
+     dans `tests/donnees/donnees-milo.json`. Elle ne l'a jamais été. Un « à confirmer » qui
+     traîne devient une limite permanente que personne n'a choisie (R30).
+     ⭐⭐ ET L'ARGUMENT D'ORIGINE (« volumineux ») ÉTAIT JUSTE, mesuré sur son vrai journal :
+     13 126 caractères BRUTS. Mais un résumé par jour en fait **221** — 59 fois moins — et il
+     répond aux QUATRE questions que Milo avait listées lui-même (protéines tenues sur la
+     semaine · jours en déficit marqué · glucides face aux grosses séances · cohérence avec la
+     phase). *Ce n'était pas « transmettre ou pas », c'était « transmettre QUOI ».*
+     ⛔⛔ CE BLOC EST SOUS LE MARQUEUR DE L'INSTANT, ET C'EST OBLIGATOIRE : il change à chaque
+     repas. Plus haut, il réécrirait le bloc mis en cache plusieurs fois par jour — le
+     commentaire du marqueur le dit noir sur blanc, on ne l'apprend pas à ses dépens.
+     ⛔ LE DÉTAIL PLAT RESTE DEHORS : jamais la liste aliment par aliment, c'est elle qui
+     pesait 13 000 caractères. Des totaux, rien d'autre.
+     ⛔⛔ ANTI-TCA (Constitution P21, docs/NUTRITION-PHILOSOPHIE.md) : ces chiffres servent à
+     AIDER quand on lui demande, JAMAIS à commenter spontanément ce qu'elle a mangé. « La
+     nutrition ne doit jamais devenir une source de stress supérieure au bénéfice qu'elle
+     apporte » — un coach qui épluche les assiettes sans qu'on lui demande fabrique ce stress. */
+  const fl = Array.isArray(S.foodLog) ? S.foodLog : [];
+  if(!fl.length) return '';
+  const jours = {};
+  fl.forEach(e=>{
+    const d = e && e.date; if(!d) return;
+    const j = jours[d] || (jours[d] = {kcal:0,prot:0,carbs:0,fat:0,n:0});
+    j.kcal += (+e.kcal||0); j.prot += (+e.prot||0); j.carbs += (+e.carbs||0); j.fat += (+e.fat||0); j.n++;
+  });
+  const dates = Object.keys(jours).sort();
+  if(!dates.length) return '';
+  const auj = (typeof today==='function') ? today() : '';
+  /* ⛔ SEPT JOURS, pas plus : au-delà on paie des caractères pour une information que
+     personne ne lui demande. La tendance de la semaine se lit sur sept lignes. */
+  const recents = dates.slice(-7);
+  const r = Math.round;
+  const lignes = recents.map(d=>{
+    const j = jours[d];
+    const quand = (d===auj) ? "AUJOURD'HUI" : _dateLisible(d).split(' ')[0];
+    return '- '+d+' ('+quand+') : '+r(j.kcal)+' kcal · '+r(j.prot)+'g prot · '+r(j.carbs)+'g gluc · '+r(j.fat)+'g lip';
+  });
+  const cible = (macros && macros.calories)
+    ? ('Sa cible : '+macros.calories+' kcal · '+(macros.prot_g||'—')+'g de protéines par jour.')
+    : '';
+  /* ⚠️ ON DIT COMBIEN DE JOURS SONT RÉELLEMENT NOTÉS, et ce n'est pas de la décoration :
+     Michel n'en a que 6 en tout. Sans ce chiffre, Milo conclurait « sur le mois » à partir de
+     quatre lignes — une fausse tendance affirmée avec aplomb (R29, R12). */
+  const total = dates.length;
+  const aujNote = !!jours[auj];
+  return `
+CE QU'ELLE A RÉELLEMENT MANGÉ (résumé de son journal — totaux du jour, pas le détail) :
+${lignes.join('\n')}
+${cible}
+→ ⚠️ ${total} jour${total>1?'s':''} not${total>1?'és':'é'} en tout dans son journal${total<10?" — C'EST PEU. Tu peux commenter une JOURNÉE ou une tendance de quelques jours, mais tu ne peux RIEN conclure sur le mois, et tu le dis si on te le demande.":'.'}
+${aujNote?'':"→ Rien n'est noté pour aujourd'hui : ne suppose pas qu'elle n'a pas mangé, suppose qu'elle n'a pas noté."}
+→ ⛔ CES CHIFFRES SERVENT QUAND ON TE LES DEMANDE. Ne commente JAMAIS spontanément ce qu'elle a mangé, ne fais aucune remarque sur un écart, ne compte pas à sa place. La nutrition est un levier, jamais une surveillance.
+`;
+})()}
 MOMENT PRÉSENT (heure locale de la personne) :
 - On est ${_dateStr}, il est ${_timeStr} — c'est ${_period === 'nuit' && _h >= 22 ? 'le soir/la nuit (tard)' : _period}. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). ${_period === 'soirée' || _period === 'nuit' ? 'En soirée/la nuit : pense au sommeil et à la récupération ; une séance ou des stimulants (café, pré-workout) trop tard peuvent gêner l\'endormissement — mentionne-le avec tact si pertinent.' : _period === 'matin' ? 'Le matin : tu peux évoquer l\'énergie du réveil, un petit-déjeuner adapté avant/après séance.' : ''}${_coachGapText()}
 
