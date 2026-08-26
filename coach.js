@@ -1220,15 +1220,34 @@ function exporterConversationsMilo(){
     L.push('');
     L.push('══════════════════════════════════════════════════════');
     L.push('');
+    /* ⏱️ CHAQUE MESSAGE PORTE SA DATE (26/08/2026, ft-v1011) — la moitié qui manquait.
+       ft-v1010 a posé le `ts` À LA CRÉATION et l'a fait survivre au stockage ; mais PERSONNE
+       ne le lisait. Michel, en relisant son propre export : « il va falloir horodater les
+       conversations ». Il avait raison : sans date, on ne peut situer AUCUNE phrase de Milo
+       dans le temps — c'est très exactement ce qui m'a empêché de dater sa conversation du
+       19/08 quand il me l'a envoyée. *Une donnée écrite que rien ne relit n'existe pas* (R5).
+       ⛔ LE JOUR NE SE RÉPÈTE PAS À CHAQUE LIGNE : il s'écrit quand il CHANGE, et l'heure
+       seule ensuite. Une date sur les 287 messages noierait la conversation sous l'horodatage
+       — ce qu'on veut, c'est retrouver un moment, pas remplir des colonnes (R19).
+       ⛔ ET RIEN N'EST INVENTÉ POUR LES ANCIENS (R29) : un message sans `ts` n'affiche pas
+       d'heure du tout. Tous ceux d'avant ft-v1010 sont dans ce cas — mieux vaut un trou
+       visible qu'une heure fausse qui aurait l'air vraie. */
+    const _jourFR = ts => new Date(ts).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    const _heureFR = ts => new Date(ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     const ecrire=(titre,msgs)=>{
       if(!msgs.length)return;
       L.push('╔═══ '+titre+' ═══');
       L.push('');
+      let jourCourant='';
       msgs.forEach(m=>{
+        if(m.ts){
+          const j=_jourFR(m.ts);
+          if(j!==jourCourant){ jourCourant=j; L.push('· · · '+j+' · · ·'); L.push(''); }
+        }
         const qui = m.role==='user' ? 'MOI' : 'MILO';
         const txt = (typeof m.content==='string') ? m.content
                   : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text || '[photo]') : '');
-        L.push('── '+qui+' ──');
+        L.push('── '+qui+' ──'+(m.ts?('  ('+_heureFR(m.ts)+')'):''));
         L.push(String(txt).trim());
         L.push('');
       });
@@ -1238,8 +1257,22 @@ function exporterConversationsMilo(){
     // Les rangées sont stockées de la plus récente à la plus ancienne : on les remet dans
     // l'ordre du temps, c'est ainsi qu'on relit une histoire.
     rangees.slice().reverse().forEach(c=>{
-      const d=c&&c.ts?new Date(c.ts).toLocaleDateString('fr-FR'):'?';
-      ecrire((c&&c.title?String(c.title):'Discussion')+' — '+d, propre(c&&c.messages));
+      /* ⚠️ LA DATE DU TITRE ÉTAIT CELLE DE LA CRÉATION, ET ELLE MENTAIT (26/08, ft-v1011).
+         Une discussion ne meurt pas le jour où elle naît : celle de Michel ouverte le 19/08
+         s'est poursuivie jusqu'au 25 — six jours d'écart. Le titre annonçait « 19/08 »,
+         donc en la relisant on datait tout son contenu du 19. *Un repère faux est pire
+         qu'un repère absent : on s'y fie.*
+         ⭐ Maintenant que les messages portent leur date, on affiche la PLAGE réelle —
+         et un seul jour reste un seul jour, on ne fabrique pas « du 19 au 19 ». */
+      const msgs=propre(c&&c.messages);
+      const ds=msgs.map(m=>m.ts).filter(Boolean);
+      const fmt=t=>new Date(t).toLocaleDateString('fr-FR');
+      let d;
+      if(ds.length){
+        const a=fmt(Math.min.apply(null,ds)), b=fmt(Math.max.apply(null,ds));
+        d = (a===b) ? a : (a+' → '+b);
+      } else d = (c&&c.ts) ? fmt(c.ts)+' (ouverte le)' : '?';   // ⛔ dit CE QU'ELLE EST, faute de mieux
+      ecrire((c&&c.title?String(c.title):'Discussion')+' — '+d, msgs);
     });
     const nom='mes-conversations-milo-'+((typeof today==='function')?today():new Date().toISOString().slice(0,10))+'.txt';
     const blob=new Blob([L.join('\n')],{type:'text/plain;charset=utf-8'});
