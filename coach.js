@@ -5087,6 +5087,15 @@ function _vcApplyPersona(p){
   S.weightLog=a.weightLog||[]; S.sleepLog=a.sleepLog||[];
   S.bodyStudy=a.bodyStudy||null; S.bodyScans=a.bodyScans||[]; S.bodySeries=a.bodySeries||[];
   S.bloodTests=a.bloodTests||[];
+  /* ⛔⛔ AJOUTÉ LE 26/08 (ft-v1014) EN MÊME TEMPS QUE LA LECTURE DU JOURNAL, et ce n'est pas
+     un détail de test : sans cette ligne, le VRAI journal alimentaire de la personne partait
+     dans le contexte de CHAQUE persona pendant un benchmark. L'en-tête de ce bloc dit
+     « anti-fuite : TOUT ce que lit le contexte » — dès qu'une donnée entre dans
+     `buildCoachContext`, elle DOIT être remise à zéro ici. C'est l'obligation jumelle de
+     toute nouvelle source (R8 : quand on trouve un oubli, chercher ses jumelles).
+     ⚠️ Et c'était aussi un piège de fixture : sans ça, le `foodLog` d'un scénario n'aurait
+     JAMAIS atteint S — la fixture muette d'EV-009, refaite le lendemain de sa correction. */
+  S.foodLog=a.foodLog||[];
   S.registre=a.registre||{facts:{},observations:[],sessionLog:[],updatedAt:''};
   S.coachMemory=a.coachMemory||''; S.dayState=null;
   S.coachQuiz=a.coachQuiz||null; S.coachQuizPro=a.coachQuizPro||null; // questionnaire « ce que la personne a dit sur elle »

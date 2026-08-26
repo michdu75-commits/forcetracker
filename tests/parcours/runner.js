@@ -13264,6 +13264,54 @@ console.log('\n-- CXXI. Le journal alimentaire atteint Milo, sans toucher au cac
   await cx.close();
 }
 
+/* == BLOC CXXII - ANTI-FUITE : CE QUE LE CONTEXTE LIT DOIT ETRE REMIS A ZERO (ft-v1014) ==
+   Trouve en ajoutant le journal alimentaire au contexte. `_vcApplyPersona` porte cet en-tete :
+   « anti-fuite : TOUT ce que lit le contexte » — c'est lui qui remplace les donnees de la
+   personne par celles d'un persona pendant un test.
+   ⛔⛔ OUBLIER UNE CLE N'EST PAS UN DEFAUT DE TEST, C'EST UNE FUITE : la donnee REELLE de la
+   personne part alors dans le contexte de CHAQUE persona joue. Mesure du jour : `foodLog` etait
+   dans ce cas la minute ou il est entre dans le contexte — le VRAI journal alimentaire de Michel
+   serait parti dans les 54 scenarios du banc d'essai. Corrige le meme jour.
+   ⚠️ ET C'EST AUSSI UN PIEGE DE FIXTURE : sans la remise a zero, le `foodLog` d'un scenario
+   n'atteint JAMAIS `S` — la fixture muette d'EV-009, refaite le lendemain de sa correction.
+   ⛔ LES 8 RESTANTES SONT EPINGLEES, PAS CORRIGEES : les corriger changerait ce que Milo recoit,
+   donc ca demande son propre avant/apres (R34). On fige l'etat connu pour qu'une NEUVIEME fasse
+   rougir la livraison — un trou qu'on mesure vaut mieux qu'un trou qu'on decouvre. */
+console.log('\n-- CXXII. Anti-fuite du banc d\'essai : rien de réel ne part dans un persona (ft-v1014) --');
+{
+  const src=fs.readFileSync(path.join(__dirname,'..','..','coach.js'),'utf8');
+  const iC=src.indexOf('function buildCoachContext');
+  const iA=src.indexOf('function _vcApplyPersona');
+  const ctx=src.slice(iC, iA>iC?iA:iC+180000);
+  const app=src.slice(iA, src.indexOf('\n}', src.indexOf('S.premium=true', iA)));
+  const lus=Array.from(new Set((ctx.match(/\bS\.[a-zA-Z][A-Za-z0-9_]{2,}\b/g)||[]).map(x=>x.slice(2))));
+  const poses=new Set((app.match(/\bS\.[a-zA-Z][A-Za-z0-9_]{2,}\s*=/g)||[]).map(x=>x.slice(2).replace(/\s*=$/,'')));
+  /* Trous CONNUS, chacun avec sa raison — la liste est la décision, pas un constat. */
+  const CONNUS={
+    url:'⛔ NE DOIT PAS être réinitialisée : c\'est l\'adresse du serveur, le persona en a besoin pour appeler',
+    coachConversations:'fuite possible — non corrigée ici (changerait le contexte, R34)',
+    exSwaps:'fuite possible — exercices écartés par la personne',
+    fasting:'fuite possible — jeûne en cours',
+    foodMode:'fuite possible — mode de saisie nutrition',
+    gardienStats:'compteur interne du Gardien',
+    nextPlanned:'fuite possible — séance annoncée',
+    programmes:'fuite possible — ses programmes'
+  };
+  const manque=lus.filter(k=>!poses.has(k));
+  const nouveaux=manque.filter(k=>!CONNUS[k]);
+  const disparus=Object.keys(CONNUS).filter(k=>manque.indexOf(k)<0 && k!=='url');
+  t('⭐⭐ le JOURNAL ALIMENTAIRE est remis à zéro (il vient d\'entrer dans le contexte)',
+    poses.has('foodLog'), '');
+  t('⭐ … et l\'historique d\'OBJECTIF aussi (ft-v1010, même obligation)',
+    poses.has('goalLog'), '');
+  t('⛔⛔ AUCUNE NOUVELLE donnée du contexte n\'échappe à la remise à zéro',
+    nouveaux.length===0, nouveaux.length+' nouvelle(s) : '+JSON.stringify(nouveaux));
+  t('⭐ le témoin a bien LU les deux fonctions (sinon il serait vert en ne mesurant rien)',
+    lus.length>30 && poses.size>30, 'lues='+lus.length+' posées='+poses.size);
+  /* ⭐ Et si un trou connu se referme, on veut le savoir : la liste doit MAIGRIR, pas dormir. */
+  if(disparus.length) console.log('   ℹ️ trous refermés depuis (à retirer de la liste) : '+disparus.join(', '));
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
