@@ -1,5 +1,9 @@
 # 🎨 Kit de design Force Tracker — à coller dans un outil de maquettage
 
+> ✅ **Vérifié le 26/08/2026 contre le code servi** : les **13 couleurs** et les **3 polices**
+> ci-dessous correspondent **exactement** à `style.css`. Seul le compte de `<svg>` avait vieilli
+> (104 → **194**), il est corrigé. *Un kit dont on ignore s'il est à jour ne sert plus à rien.*
+
 > **Pourquoi ce fichier existe (27/07/2026).** Michel travaille ses maquettes avec un outil externe,
 > dans un canevas d'aperçu qui **ne connaît pas** Force Tracker : ni ses couleurs, ni ses polices, ni ses
 > composants. Résultat, l'outil **invente** une esthétique — belle chez lui, **intransposable** ici.
@@ -24,6 +28,9 @@ CONTRAINTES TECHNIQUES (à respecter strictement)
 - Application MOBILE : largeur maximale 430 px, une seule colonne.
 - Mode SOMBRE uniquement. Ne propose pas de version claire : elle est en pause sur le projet.
 - Pas de <canvas> pour l'interface : les anneaux, jauges et graphiques sont en SVG ou en CSS.
+  Mesuré le 26/08/2026 : **194 balises `<svg>`** dans les fichiers servis ; les usages de
+  canvas ne servent QU'A traiter des images (redimensionner, masquer un bilan, camera).
+  ⭐ Donc AUCUNE limite graphique : degrades, ombres, profondeur, animations sont faisables.
 - Les polices sont hébergées dans le projet : Manrope (texte), Space Grotesk (chiffres),
   Pacifico (logo uniquement). N'en charge aucune depuis internet.
 - L'app doit fonctionner HORS LIGNE : aucune ressource externe, ni police, ni image, ni script.
