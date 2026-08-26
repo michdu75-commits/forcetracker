@@ -97,11 +97,47 @@ mesure au lieu de supposer* (**R28**).
 **👉 La conséquence pratique est réelle et chiffrée** : au même poste, prendre la patate douce
 plutôt que le riz, c'est **environ 200 kcal de moins**. Sur deux postes par jour, **~400 kcal**.
 
-⚠️⚠️ **ET ON NE SAIT PAS SI C'EST VOULU — donc on ne le dit pas.** Une raison parfaitement
-légitime peut l'expliquer (satiété : 260 g de pomme de terre font une grosse assiette pour
-211 kcal · index glycémique · digestion avant séance), et **rien dans les documents ne
-l'explique**. *Écrire « c'est une erreur » serait une hypothèse présentée comme un fait* —
-exactement ce que la Constitution interdit à Milo (**P4**), et qu'on s'applique à soi-même.
+### ⭐⭐⭐ LA RAISON, DONNÉE PAR MICHEL — c'est l'INDEX GLYCÉMIQUE
+
+Je m'étais arrêté à *« on ne sait pas si c'est voulu, donc on ne le dit pas »*. **Michel a la
+réponse** :
+
+> *« Il y a l'**index glycémique** qui rentre en compte. On parle souvent de calorie mais c'est
+> faux — il faut faire attention à sa **santé** et faire attention au **sucre**. »*
+
+**👉 L'écart tubercule / céréale n'est donc pas un défaut de calibrage : c'est un AXE que mon
+calcul ne voyait pas.** Je comparais des calories ; elle arbitrait autre chose. *Deux aliments
+« équivalents » en kcal ne le sont pas dans le sang* — et une praticienne qui prescrit pour la
+santé ne raisonne pas qu'en arithmétique.
+
+⭐ **C'est la démonstration la plus nette de pourquoi on ne conclut pas à la place des gens.**
+Mon tableau était **juste** ; ma lecture aurait été **fausse**. La mesure ne dit jamais toute
+seule ce qu'elle veut dire.
+
+### ⚠️⚠️ ET ÇA DÉSIGNE UN TROU DE L'APP, PLUS GROS QUE CELUI DU PLAN DE REPAS
+
+**L'app raisonne en calories et en macros, du début à la fin** : le TDEE, l'anneau, les trois
+anneaux, la répartition en %, « ce qu'il te reste ». **Aucune notion de qualité, nulle part dans
+la chaîne de décision.** Or `docs/NUTRITION-PHILOSOPHIE.md` dit exactement le contraire depuis le
+22/07 — phrase-boussole, **Constitution P21** : *« la nutrition est un moyen d'améliorer la
+**santé**, la récupération et la performance »*.
+
+⭐ **Et la moitié de la réponse est DÉJÀ dans le dépôt, débranchée** : `food-health.js` sait
+récupérer le **Nutri-Score**, le groupe **NOVA** et les additifs depuis Open Food Facts, et en
+faire un score santé — **gratuitement**. Il sert à afficher une fiche produit au scan. **Il
+n'entre dans aucun calcul, dans aucune suggestion, et Milo ne le voit pas.** *C'est **R4** : la
+connaissance existe et n'atteint pas la donnée.*
+
+⛔ **Ce qui manque vraiment, c'est l'index glycémique lui-même** : ni CIQUAL ni Open Food Facts ne
+le portent. Il faudrait une table à part, et **il faut décider si on l'ajoute** — pas le supposer.
+⚠️ Et prudence : l'IG d'un aliment isolé ne dit pas grand-chose de l'IG d'un **repas** (les
+lipides, les fibres et les protéines le modifient). *Afficher un IG par aliment donnerait une
+fausse précision* (**R29**) — c'est le même piège que le « score de fiabilité » refusé en **R32**.
+
+⚠️ *(Écrit avant la réponse de Michel, et gardé tel quel : à ce moment-là, les raisons possibles
+étaient la satiété, l'index glycémique ou la digestion avant séance, et **rien dans les documents
+ne tranchait**. Conclure « c'est une erreur » aurait été une hypothèse présentée comme un fait —
+**P4**. **La retenue a payé : la vraie raison était la deuxième.**)*
 
 ⭐⭐⭐ **LA LEÇON POUR L'APP EST L'INVERSE DE CE QUE J'AVAIS ÉCRIT UNE HEURE PLUS TÔT.** J'allais
 proposer de **recopier** ces listes comme table de substitutions. **Il ne faut surtout pas** :
