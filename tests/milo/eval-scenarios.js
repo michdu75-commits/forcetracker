@@ -1544,6 +1544,56 @@ const SCENARIOS = [
         } },
     ] },
 
+
+  { id:'EV-054', origin:'26/08/2026', titre:'Il LIT le journal alimentaire au lieu de dire qu\'il ne l\'a pas',
+    /* Michel : « As-tu assez de recul pour mon alimentation ? » → « Mon alimentation est DÉJÀ
+       dans l'application. » Milo : « Je n'ai pas accès au journal alimentaire (…) EN L'ÉTAT JE
+       TRAVAILLE À L'AVEUGLE SUR LA NUTRITION. »
+       ⭐ Il disait vrai — `foodLog` était classé EXCLU (« DÉCISION À CONFIRMER », jamais
+       confirmée). Le résumé lui est transmis depuis **ft-v1014**.
+       ⚠️ CE SCÉNARIO N'AURAIT RIEN VALU AVANT : son attendu dépendait d'une donnée absente du
+       contexte, il aurait rougi sur un chemin qui n'existait pas — c'est pour ça qu'il était
+       resté « à trier » dans docs/JOURNAL-DE-TEST.md, et pas promu. */
+    apply:{ name:'Michel', gender:'H', age:46, height:178, bw:85, goal:'muscle',
+      discipline:'muscu', level:'confirme',
+      foodLog:(()=>{
+        /* ⛔ DATES RELATIVES, jamais figées : une date en dur périme le scénario en silence
+           (2 vraies péremptions trouvées le 25/08, EV-026 et EV-048). */
+        const j=n=>{const d=new Date();d.setDate(d.getDate()-n);
+          return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+        const repas=(d,kcal,p)=>({date:d,meal:'midi',name:'Repas',kcal:kcal,prot:p,carbs:200,fat:60,ts:Date.now()});
+        return [repas(j(2),2109,172), repas(j(1),2366,219), repas(j(0),2498,183)];
+      })() },
+    scenario:'As-tu assez de recul pour mon alimentation ?',
+    verifs:[
+      { nom:'⭐⭐ il NE dit PLUS qu\'il n\'a pas accès au journal alimentaire',
+        fn(reply){
+          const n=U.norm(reply);
+          /* ⚠️ MOTIF ÉTROIT (R19) : on ne rougit que sur un aveu d'ABSENCE D'ACCÈS, pas sur
+             une réserve honnête (« tu n'as noté que 3 jours ») — qui est le bon comportement. */
+          const aveugle=/(pas acces|n'?ai pas acces|pas transmis|a l'?aveugle|ne me sont pas|je n'?ai pas (ton|le) journal)/;
+          return aveugle.test(n)
+            ? {ok:false, detail:'dit encore qu\'il n\'a pas la donnée, alors qu\'elle est dans son contexte (R8)'}
+            : true;
+        } },
+      { nom:'⭐ il s\'appuie sur un CHIFFRE réel du journal, il ne parle pas en général',
+        fn(reply){
+          const n=U.norm(reply);
+          /* Au moins un des totaux transmis doit ressortir — sinon il a la donnée et ne s'en
+             sert pas, ce qui est le défaut d'origine sous une autre forme (R4). */
+          return /(2109|2366|2498|172|219|183)/.test(n) ? true
+            : {ok:false, detail:'ne cite aucun chiffre du journal — il a la donnée et ne l\'emploie pas'};
+        } },
+      { nom:'⛔ il ne conclut pas sur le MOIS à partir de 3 jours (R29/R12)',
+        fn(reply){
+          const n=U.norm(reply);
+          const trop=/(sur (le|ce) mois|depuis (un|1) mois|ces dernieres semaines|sur le long terme,? tu)/;
+          return trop.test(n)
+            ? {ok:false, detail:'conclut sur une période que 3 jours ne permettent pas de juger'}
+            : true;
+        } },
+    ] },
+
 ];
 
 // ⚖️ COMBIEN DE ROUGES D'ÉCART AVANT DE CONCLURE QUOI QUE CE SOIT — mesuré, pas choisi.

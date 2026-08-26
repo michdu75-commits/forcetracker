@@ -7929,13 +7929,18 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     // n'importe quoi ». Les 23 nouveaux ont donc été éprouvés UN PAR UN contre une bonne ET une
     // mauvaise réponse : 6 ne mordaient pas au premier jet. C'est ce contrôle qui a révélé que
     // l'apostrophe COURBE rendait 8 motifs du fichier aveugles — un défaut plus ancien qu'eux.
-    // ⭐⭐ 50 → 53 le 25/08/2026 — PREMIÈRE APPLICATION DE R35 : le banc d'essai n'a plus de
-    // taille cible, il grandit à chaque bug rencontré (Michel : « je ne donne pas de limite,
-    // dès qu'il y a un bug ou une erreur on rajoute »). Le nombre reste ÉPINGLÉ pour sa raison
-    // d'origine — repérer un scénario qui DISPARAÎT (fichier tronqué, virgule en trop) — pas
-    // pour fixer un objectif. Il monte donc à chaque promotion, et c'est normal.
-    t('⭐⭐ ... et il se télécharge à la demande : 53 scénarios, une seule source (R2)',
-      R.nb===53 && R.aDesVerifs===true, 'nb='+R.nb+' verifs='+R.aDesVerifs+(R.err?' · '+R.err:''));
+    const _SC_FICHIER=require(path.join(__dirname,'..','milo','eval-scenarios.js')).length;
+    /* ⭐⭐ LE NOMBRE N'EST PLUS ÉCRIT EN DUR (26/08/2026, ft-v1014) — il a rougi à la
+       promotion d'EV-054, le LENDEMAIN de ft-v1005 qui retirait exactement cette dette de
+       l'écran admin. *La leçon n'avait été appliquée que d'un côté* (R8 : quand on corrige
+       quelque chose, chercher ses jumelles). Le banc d'essai GRANDIT à chaque bug (R35) :
+       tout nombre figé ici finira par mentir, et on l'ajustera par réflexe sans réfléchir.
+       ⛔ CE QUE CE TÉMOIN PROTÈGE VRAIMENT, et c'est sa raison d'origine : qu'un scénario ne
+       DISPARAISSE pas en silence (fichier tronqué, virgule en trop). On compare donc le corpus
+       CHARGÉ PAR L'APP à celui du fichier — une seule source (R2), sans cible chiffrée. */
+    t('⭐⭐ ... et il se télécharge à la demande, au COMPLET, une seule source (R2)',
+      R.nb>0 && R.nb===_SC_FICHIER && R.aDesVerifs===true,
+      'chargés='+R.nb+' · dans le fichier='+_SC_FICHIER+' · verifs='+R.aDesVerifs+(R.err?' · '+R.err:''));
     t('⭐ un débrief à qui il manque 2 exercices sur 5 est ROUGE',
       R.rouge006===true, R.det006||JSON.stringify(R.errRun||''));
     t('⭐ « c\'est noté » sans bloc de mémoire est ROUGE', R.rouge004===true, '');
@@ -13182,7 +13187,7 @@ console.log('\n-- CXX. L\'export « avec mes discussions » n\'oublie plus rien 
   await cx.close();
 }
 
-/* == BLOC CXXI - UN ECHEC DE SYNC SHEETS ETAIT COMPTE COMME UN SUCCES (ft-v1015) ==
+/* == BLOC CXXIII - UN ECHEC DE SYNC SHEETS ETAIT COMPTE COMME UN SUCCES (ft-v1015) ==
    Trouve en creusant la question de Michel : « j'ai l'impression qu'il n'y a pas d'historique ».
    ⛔⛔ `syncSheets` REND UN OBJET, PAS UN BOOLEEN — et un objet est TOUJOURS vrai. Le
    `const ok=await syncSheets(sess); if(ok)` de `finishWorkout` prenait donc
@@ -13200,7 +13205,7 @@ console.log('\n-- CXX. L\'export « avec mes discussions » n\'oublie plus rien 
    ⚠️ ET IL FAUT COUPER `_demoMode` : `seedScript` le pose a `true`, et `syncSheets` rend alors
    `{ok:true}` SANS toucher au reseau. Sans cette ligne, le temoin serait vert en ne mesurant
    rien — le meme piege que le levier pose a cote du code (ft-v1003, ft-v995). */
-console.log('\n-- CXXI. Un échec de sync Sheets n\'est plus compté comme un succès (ft-v1015) --');
+console.log('\n-- CXXIII. Un échec de sync Sheets n\'est plus compté comme un succès (ft-v1015) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
@@ -13238,7 +13243,7 @@ console.log('\n-- CXXI. Un échec de sync Sheets n\'est plus compté comme un su
     return {echec,succes};
    }catch(e){return {err:String(e)};}
   });
-  if(G.err)t('CXXI n\'a pas pu tourner',false,G.err);
+  if(G.err)t('CXXIII n\'a pas pu tourner',false,G.err);
   else{
     t('⛔⛔ RÉSEAU EN ÉCHEC : la séance reste `synced:false` (sinon la file ne la reprend JAMAIS)',
       G.echec.synced===false, 'reçu : synced='+JSON.stringify(G.echec.synced));
@@ -13259,6 +13264,135 @@ console.log('\n-- CXXI. Un échec de sync Sheets n\'est plus compté comme un su
   await cx.close();
 }
 
+/* == BLOC CXXI - MILO VOIT ENFIN CE QU'ELLE A MANGE (ft-v1014) ==
+   Michel a Milo : « As-tu assez de recul pour mon alimentation ? » → « Mon alimentation est DEJA
+   dans l'application. » Milo, honnete : « Je n'ai pas acces au journal alimentaire (…) EN L'ETAT
+   JE TRAVAILLE A L'AVEUGLE SUR LA NUTRITION. »
+   ⭐ IL DISAIT VRAI : `foodLog` etait classe EXCLU avec la mention « DECISION A CONFIRMER »,
+   jamais confirmee. Un « a confirmer » qui traine devient une limite que personne n'a choisie.
+   ⭐⭐ ET L'ARGUMENT D'ORIGINE ETAIT JUSTE — 13 126 caracteres bruts sur son vrai journal. Le
+   correctif n'est donc pas « transmettre », c'est « transmettre QUOI » : des TOTAUX par jour.
+   ⛔⛔ CE QUI EST MESURE ICI N'EST PAS LA PRESENCE DU BLOC, C'EST LE CACHE. Le journal change a
+   chaque repas : pose au-dessus du marqueur de l'instant, il reecrirait plusieurs fois par jour
+   un bloc facture ~10x moins cher. Le temoin compare donc le bloc commun AVANT/APRES, octet par
+   octet, ET apres un repas ajoute. C'est le seul chiffre qui autorise ce changement. */
+console.log('\n-- CXXI. Le journal alimentaire atteint Milo, sans toucher au cache (ft-v1014) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2200);
+  const F=await pg.evaluate(()=>{
+   try{
+    const MK="═══ SITUATION DE L'INSTANT ═══", o={};
+    const jour=(d,n)=>{const a=[];for(let i=0;i<n;i++)a.push({date:d,meal:'midi',name:'Aliment '+i,
+      kcal:300+i,prot:25+i,carbs:40+i,fat:10+i,ts:Date.now()});return a;};
+    const t=today(); const d=n=>{const x=new Date(t+'T12:00:00');x.setDate(x.getDate()-n);return x.toISOString().slice(0,10);};
+    // ── ÉTAT A : journal vide (l'état d'avant : foodLog n'était pas transmis)
+    S.foodLog=[];
+    const A=buildCoachContext('Que penses-tu de ma nutrition ?');
+    o.sansJournalRien = !/RÉELLEMENT MANGÉ/.test(A);      // ⛔ pas d'en-tête vide
+    const commA=A.slice(0,A.indexOf(MK));
+    // ── ÉTAT B : 4 jours notés
+    S.foodLog=[].concat(jour(d(3),7),jour(d(2),6),jour(d(1),8),jour(t,5));
+    const B=buildCoachContext('Que penses-tu de ma nutrition ?');
+    const commB=B.slice(0,B.indexOf(MK));
+    o.present   = /RÉELLEMENT MANGÉ/.test(B);
+    o.lignes    = (B.match(/^- \d{4}-\d{2}-\d{2} \(/gm)||[]).length;
+    o.cout      = B.length-A.length;
+    o.detailPlat= /Aliment 0/.test(B);                    // ⛔ doit rester FAUX
+    o.antiTCA   = /Ne commente JAMAIS spontanément/.test(B);
+    o.peu       = /C'EST PEU/.test(B);
+    o.aujMarque = /AUJOURD'HUI/.test(B);
+    o.sousMarqueur = B.indexOf('RÉELLEMENT MANGÉ') > B.indexOf(MK);
+    // ⛔⛔ LE CHIFFRE QUI DÉCIDE : le bloc mis en CACHE n'a pas bougé d'un octet.
+    o.cacheIntact = (commA===commB);
+    // ── … et il tient encore après un repas ajouté À L'INSTANT.
+    S.foodLog.push({date:t,meal:'soir',name:'Poulet',kcal:400,prot:45,carbs:0,fat:12,ts:Date.now()});
+    const C=buildCoachContext('Que penses-tu de ma nutrition ?');
+    o.cacheApresRepas = (commB===C.slice(0,C.indexOf(MK)));
+    // ── 12 jours notés → on n'en envoie que 7.
+    S.foodLog=[]; for(let i=0;i<12;i++) S.foodLog=S.foodLog.concat(jour(d(i),3));
+    o.plafond7 = (buildCoachContext('x').match(/^- \d{4}-\d{2}-\d{2} \(/gm)||[]).length;
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(F.err) t('CXXI n\'a pas pu tourner', false, F.err);
+  else{
+    t('⛔⛔ LE CACHE N\'A PAS BOUGÉ D\'UN OCTET — le chiffre qui autorise ce changement (R34)',
+      F.cacheIntact===true, '');
+    t('⛔⛔ … et il tient ENCORE après un repas ajouté à l\'instant',
+      F.cacheApresRepas===true, '');
+    t('⭐⭐ le journal ATTEINT Milo (il travaillait « à l\'aveugle » — R8)',
+      F.present===true && F.lignes===4, 'lignes='+F.lignes);
+    t('⛔ le DÉTAIL PLAT reste dehors — c\'est lui qui pesait 13 000 caractères',
+      F.detailPlat===false, '');
+    t('⭐ le coût réel est mesuré, pas estimé',
+      typeof F.cout==='number' && F.cout>0 && F.cout<1500, '+'+F.cout+' caractères');
+    t('⛔⛔ ANTI-TCA : la consigne « ne commente jamais spontanément » est là (P21)',
+      F.antiTCA===true, '');
+    t('⭐ il SAIT que 4 jours ne font pas un mois, et on le lui dit (R29/R12)',
+      F.peu===true, '');
+    t('⭐ le jour du jour est nommé « AUJOURD\'HUI », pas une date à déduire (R8)',
+      F.aujMarque===true, '');
+    t('⛔ AUCUN journal → AUCUN bloc (pas d\'en-tête vide, rien d\'inventé — R29)',
+      F.sansJournalRien===true, '');
+    t('⛔ le bloc est SOUS le marqueur de l\'instant, jamais au-dessus',
+      F.sousMarqueur===true, '');
+    t('⛔ 12 jours notés n\'en envoient que 7 (on ne paie pas pour ce qu\'on ne demande pas)',
+      F.plafond7===7, 'reçu : '+F.plafond7);
+  }
+  await cx.close();
+}
+
+/* == BLOC CXXII - ANTI-FUITE : CE QUE LE CONTEXTE LIT DOIT ETRE REMIS A ZERO (ft-v1014) ==
+   Trouve en ajoutant le journal alimentaire au contexte. `_vcApplyPersona` porte cet en-tete :
+   « anti-fuite : TOUT ce que lit le contexte » — c'est lui qui remplace les donnees de la
+   personne par celles d'un persona pendant un test.
+   ⛔⛔ OUBLIER UNE CLE N'EST PAS UN DEFAUT DE TEST, C'EST UNE FUITE : la donnee REELLE de la
+   personne part alors dans le contexte de CHAQUE persona joue. Mesure du jour : `foodLog` etait
+   dans ce cas la minute ou il est entre dans le contexte — le VRAI journal alimentaire de Michel
+   serait parti dans les 54 scenarios du banc d'essai. Corrige le meme jour.
+   ⚠️ ET C'EST AUSSI UN PIEGE DE FIXTURE : sans la remise a zero, le `foodLog` d'un scenario
+   n'atteint JAMAIS `S` — la fixture muette d'EV-009, refaite le lendemain de sa correction.
+   ⛔ LES 8 RESTANTES SONT EPINGLEES, PAS CORRIGEES : les corriger changerait ce que Milo recoit,
+   donc ca demande son propre avant/apres (R34). On fige l'etat connu pour qu'une NEUVIEME fasse
+   rougir la livraison — un trou qu'on mesure vaut mieux qu'un trou qu'on decouvre. */
+console.log('\n-- CXXII. Anti-fuite du banc d\'essai : rien de réel ne part dans un persona (ft-v1014) --');
+{
+  const src=fs.readFileSync(path.join(__dirname,'..','..','coach.js'),'utf8');
+  const iC=src.indexOf('function buildCoachContext');
+  const iA=src.indexOf('function _vcApplyPersona');
+  const ctx=src.slice(iC, iA>iC?iA:iC+180000);
+  const app=src.slice(iA, src.indexOf('\n}', src.indexOf('S.premium=true', iA)));
+  const lus=Array.from(new Set((ctx.match(/\bS\.[a-zA-Z][A-Za-z0-9_]{2,}\b/g)||[]).map(x=>x.slice(2))));
+  const poses=new Set((app.match(/\bS\.[a-zA-Z][A-Za-z0-9_]{2,}\s*=/g)||[]).map(x=>x.slice(2).replace(/\s*=$/,'')));
+  /* Trous CONNUS, chacun avec sa raison — la liste est la décision, pas un constat. */
+  const CONNUS={
+    url:'⛔ NE DOIT PAS être réinitialisée : c\'est l\'adresse du serveur, le persona en a besoin pour appeler',
+    coachConversations:'fuite possible — non corrigée ici (changerait le contexte, R34)',
+    exSwaps:'fuite possible — exercices écartés par la personne',
+    fasting:'fuite possible — jeûne en cours',
+    foodMode:'fuite possible — mode de saisie nutrition',
+    gardienStats:'compteur interne du Gardien',
+    nextPlanned:'fuite possible — séance annoncée',
+    programmes:'fuite possible — ses programmes'
+  };
+  const manque=lus.filter(k=>!poses.has(k));
+  const nouveaux=manque.filter(k=>!CONNUS[k]);
+  const disparus=Object.keys(CONNUS).filter(k=>manque.indexOf(k)<0 && k!=='url');
+  t('⭐⭐ le JOURNAL ALIMENTAIRE est remis à zéro (il vient d\'entrer dans le contexte)',
+    poses.has('foodLog'), '');
+  t('⭐ … et l\'historique d\'OBJECTIF aussi (ft-v1010, même obligation)',
+    poses.has('goalLog'), '');
+  t('⛔⛔ AUCUNE NOUVELLE donnée du contexte n\'échappe à la remise à zéro',
+    nouveaux.length===0, nouveaux.length+' nouvelle(s) : '+JSON.stringify(nouveaux));
+  t('⭐ le témoin a bien LU les deux fonctions (sinon il serait vert en ne mesurant rien)',
+    lus.length>30 && poses.size>30, 'lues='+lus.length+' posées='+poses.size);
+  /* ⭐ Et si un trou connu se referme, on veut le savoir : la liste doit MAIGRIR, pas dormir. */
+  if(disparus.length) console.log('   ℹ️ trous refermés depuis (à retirer de la liste) : '+disparus.join(', '));
+}
 
 await b.close(); srv.close();
 
