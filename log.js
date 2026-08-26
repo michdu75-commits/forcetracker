@@ -238,6 +238,102 @@ function _renderImportRow(){
   if(lb)lb.textContent=_impOuvert?'📷 Importer un programme ou un historique':'📷 J\'ai déjà un programme ou un historique';
 }
 function _toggleImport(){_impOuvert=!_impOuvert;_renderImportRow();}
+/* ══ 🏋️ LES TYPES DE SÉANCES SUR L'ÉCRAN VIDE (ft-v1026) ══════════════════════════════
+   §2.1 du parcours de découverte. Michel, en voyant l'écran : *« quand on arrive c'est vide »* —
+   et ranger les imports (ft-v1024) l'a mécaniquement agrandi. On le remplit enfin.
+
+   ⛔ AUCUNE NOUVELLE LISTE DE TYPES (R2) : les 5 viennent de `DISC_LABELS`, leur cadre de
+   `DISC_CADRE`, leurs exercices de `DISC_SEANCE`. Une 2ᵉ liste divergerait, et Milo lirait
+   l'une pendant que l'écran afficherait l'autre — le doc de cadrage l'interdit nommément.
+
+   ⭐⭐ MICHEL A TRANCHÉ « LES 2 CARRÉMENT » entre deux options : (a) un tap → la séance, et
+   (c) un écran qui explique le cadre avant. La carte porte donc **la ligne courte du cadre**
+   (reps · charge · repos) — l'information de (c) — et le tap crée la séance — le geste de (a).
+   Le cadre COMPLET reste à un tap du « ⓘ » : *la pop-up annonce, l'aide explique* (R25).
+
+   ⛔ ET ON N'ÉCRASE JAMAIS UNE SÉANCE EN COURS. Quelqu'un qui a déjà 3 exercices posés et qui
+   tape un type par curiosité perdrait son travail — c'est la règle d'or #3 (zéro perte). Les
+   cartes ne s'affichent donc QUE sur un écran vide, et c'est aussi ce qui les empêche de
+   gêner : elles disparaissent dès qu'on commence (R24, jamais en travers). */
+function _typeSeanceHtml(){
+  try{
+    if(typeof DISC_SEANCE==='undefined'||typeof DISC_CADRE==='undefined') return '';
+    const ordre=['muscu','bodybuilding','powerbuilding','powerlifting','haltero'];
+    const ICO={muscu:'🏋️',bodybuilding:'💪',powerbuilding:'⚡',powerlifting:'🥇',haltero:'🤸'};
+    const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+    /* ⭐ LA LIGNE COURTE SE DÉDUIT DU CADRE, elle ne se réécrit pas : `DISC_CADRE` est la
+       source. Réécrire « 1-5 reps » à la main créerait une 2ᵉ vérité qui se périmerait (R2).
+       ⚠️⚠️ MAIS ON N'EN TRONQUE PLUS LA PROSE — mon 1ᵉʳ jet coupait à 42 caractères et la
+       capture a montré le résultat : « jusqu'à 15- » et « repos 3 à 5 min après un mouvement
+       lourd, 90 à 1 ». *Une phrase coupée en plein milieu n'est pas une information courte,
+       c'est une information FAUSSE* — « jusqu'à 15- » ne veut rien dire.
+       👉 On extrait donc le MOTIF CHIFFRÉ (« 8-12 », « 90 à 150 s »), qui est exact quelle que
+       soit la longueur de la phrase autour. Et si aucun chiffre n'est trouvable, on se tait
+       plutôt que d'afficher un moignon de phrase (R29). */
+    const nb=t=>{ const m=String(t||'').match(/\d+\s*(?:[-–]|\s+à\s+)\s*\d+/); return m?m[0].replace(/\s+à\s+/,'-').replace(/\s+/g,''):''; };
+    const unite=t=>/min/.test(String(t||''))?' min':(/\bs\b/.test(String(t||''))?' s':'');
+    const cartes=ordre.filter(d=>DISC_SEANCE[d]&&DISC_CADRE[d]).map(d=>{
+      const c=DISC_CADRE[d], lbl=(typeof DISC_LABELS!=='undefined'&&DISC_LABELS[d])||d;
+      const nEx=(DISC_SEANCE[d]||[]).length;
+      const actif=(S.discipline||'muscu')===d;
+      return '<button class="ts-carte'+(actif?' ts-actif':'')+'" onclick="lancerTypeSeance(\''+d+'\')">'
+        +'<div class="ts-h"><span class="ts-ico">'+ICO[d]+'</span>'
+        +'<span class="ts-nom">'+esc(lbl)+'</span>'
+        +(actif?'<span class="ts-tag">la tienne</span>':'')
+        +'<span class="ts-info" onclick="event.stopPropagation();ouvrirCadreType(\''+d+'\')" '
+        +'role="button" aria-label="Voir le cadre complet">ⓘ</span></div>'
+        +(function(){ const r=nb(c.reps), q=nb(c.repos);
+            if(!r&&!q) return '';                       // rien de chiffrable → on se tait
+            return '<div class="ts-cadre">'
+              + (r?('<b>'+esc(r)+'</b> reps'):'')
+              + (r&&q?' · ':'')
+              + (q?('repos <b>'+esc(q)+esc(unite(c.repos))+'</b>'):'')
+              + '</div>'; })()
+        +'<div class="ts-exs">'+nEx+' exercices · '
+        +esc((DISC_SEANCE[d]||[]).slice(0,2).map(x=>x.n).join(' · '))+'…</div>'
+        +'</button>';
+    }).join('');
+    return '<div class="ts-bloc"><div class="ts-titre">Ou pars d\'un type de séance</div>'
+      +'<div class="ts-liste">'+cartes+'</div></div>';
+  }catch(e){ return ''; }
+}
+/* Monte la séance du type demandé. ⛔ Rien n'est écrasé : la fonction n'est atteignable que
+   depuis l'écran VIDE, et elle le revérifie — un garde-fou qui ne coûte rien contre un appel
+   depuis la console ou un futur appelant qui oublierait la condition. */
+function lancerTypeSeance(d){
+  try{
+    const modele=(typeof DISC_SEANCE!=='undefined')?DISC_SEANCE[d]:null;
+    if(!modele||!modele.length) return;
+    if(S.wkt&&S.wkt.exs&&S.wkt.exs.length){ if(typeof toast==='function')toast('Une séance est déjà commencée','info'); return; }
+    if(!S.wkt) S.wkt={date:today(),exs:[]};
+    S.wkt.exs=modele.map(function(x){
+      const sets=[];
+      for(let i=0;i<(x.sets||3);i++) sets.push({kg:0,reps:x.reps||10,type:'N',rest:x.rest||120});
+      /* ⚠️ Le nom passe par le résolveur (ft-v996) : si un exercice est renommé au catalogue,
+         la séance générée suit au lieu de porter un nom périmé (la dette de ft-v1023). */
+      return {name:(typeof exNomCatalogue==='function')?exNomCatalogue(x.n):x.n, sets:sets};
+    });
+    S.wkt.progLabel=(typeof DISC_LABELS!=='undefined'&&DISC_LABELS[d])||d;
+    persist();
+    if(typeof renderLog==='function')renderLog();
+    if(typeof toast==='function')toast(S.wkt.progLabel+' — '+S.wkt.exs.length+' exercices prêts 💪','success');
+  }catch(e){}
+}
+/* Le cadre COMPLET — option (c). ⭐ Il emprunte le MÊME rendu que l'écran Profil (R2) :
+   deux mises en forme du même cadre finiraient par se contredire. */
+function ouvrirCadreType(d){
+  try{
+    const ov=document.getElementById('ov-cadre-type'), b=document.getElementById('cadre-type-body');
+    const t=document.getElementById('cadre-type-titre');
+    if(!ov||!b) return;
+    if(t)t.textContent=((typeof DISC_LABELS!=='undefined'&&DISC_LABELS[d])||d);
+    b.innerHTML=(typeof _cadreHtml==='function')?_cadreHtml(d):'';
+    b.innerHTML+='<button class="btn btn-red ft-press" style="width:100%;margin-top:14px;padding:14px;font-size:15px;" '
+      +'onclick="fermerCadreType();lancerTypeSeance(\''+d+'\')">Créer cette séance 💪</button>';
+    ov.classList.add('open');
+  }catch(e){}
+}
+function fermerCadreType(){const o=document.getElementById('ov-cadre-type');if(o)o.classList.remove('open');}
 function renderLog(){
   if(!S.wkt) S.wkt={date:today(),exs:[]};
   const d=S.wkt.date||today();
@@ -246,6 +342,13 @@ function renderLog(){
   if(inp){inp.value=d;inp.onchange=()=>{if(inp.value)_setLogDate(inp.value);};}
   /* ⑤ la ligne « Scanner / Importer » suit l'usage (ft-v1024) — voir `_renderImportRow`. */
   try{_renderImportRow();}catch(e){}
+  /* 🏋️ Les types de séances : SEULEMENT sur un écran vide (ft-v1026). Dès qu'un exercice
+     est posé, ils disparaissent — ils proposent un départ, ils ne commentent pas un travail
+     en cours (R24 : jamais en travers). */
+  try{
+    const _tz=document.getElementById('log-types');
+    if(_tz) _tz.innerHTML=(S.wkt&&S.wkt.exs&&S.wkt.exs.length)?'':( (typeof _typeSeanceHtml==='function')?_typeSeanceHtml():'' );
+  }catch(e){}
   const hdr=document.getElementById('log-hdr');
   const hasExs=S.wkt&&S.wkt.exs&&S.wkt.exs.length>0;
   if(hdr)hdr.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding-bottom:10px;">'
@@ -978,7 +1081,13 @@ function renderExBlocks(){
        *« même le bouton ajouter n'est pas top, plutôt créer sa séance »*. Les deux disent
        désormais la même chose — et ils la disent en termes de ce qu'on VIENT FAIRE (créer une
        séance), pas de la mécanique (ajouter une ligne). */
-    c.innerHTML=`<div class="empty">Appuie sur "+ Créer ma séance"<br>pour démarrer 💪</div>`;
+    /* ⚠️ CE MESSAGE A DÛ ÊTRE RELU (ft-v1026) — il désignait « + Créer ma séance » comme LE
+       chemin, alors qu'il y en a maintenant sept : le programme, les 5 types de séance, et
+       lui. *Quand on ouvre une porte, on relit ce que disent les panneaux* — la même leçon
+       qu'en ft-v1012, où le message envoyait faire un détour juste au-dessus du raccourci.
+       ⛔ Et il RÉTRÉCIT : avec les cartes en dessous, l'écran n'est plus vide — un gros bloc
+       de texte au milieu du rien était la réponse à un problème qui n'existe plus. */
+    c.innerHTML=`<div class="empty">Choisis par quoi tu commences 👇</div>`;
     if(typeof renderLogFinish==='function')renderLogFinish(); // vide le bloc "Terminer la séance" (sinon fantôme après suppression/vidage)
     _syncLogHdrBtns();return;
   }

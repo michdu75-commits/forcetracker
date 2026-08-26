@@ -13148,14 +13148,25 @@ console.log('\n-- CXIX. Créer un programme depuis zéro (écran Séance ②/5) 
   }
   await cx.close();
 }
-// ⛔ Le vocabulaire des deux bouts doit dire la MÊME chose : le message de l'écran vide
-//    désignait « + Ajouter un exercice » alors que le bouton s'appelait « + Ajouter ».
-t('⭐ le bouton et le message de l\'écran vide disent tous deux « Créer ma séance »',
+/* ⛔ LA RÈGLE : le message de l'écran vide ne DÉSIGNE jamais un bouton qui n'existe pas.
+   Née en ft-v1012 : il disait « Appuie sur + Ajouter un exercice » quand le bouton
+   s'appelait « + Ajouter ».
+   ⚠️⚠️ TÉMOIN RE-VISÉ EN ft-v1026 — 4ᵉ fois cette semaine qu'un témoin fige une
+   FORMULATION au lieu d'une RÈGLE. Il exigeait la phrase exacte « Appuie sur "+ Créer ma
+   séance" ». Or l'écran offre maintenant SEPT départs (le programme, les 5 types de
+   séance, et lui) : nommer un seul bouton est devenu faux, et le message a été relu.
+   👉 Ce qu'on fige désormais : s'il NOMME un bouton, ce bouton doit exister. S'il n'en
+   nomme aucun — le cas depuis ft-v1026 — il ne peut pas se contredire, et c'est valide. */
+t('⭐ le message de l\'écran vide ne désigne jamais un bouton qui n\'existe pas',
   (()=>{const h=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
         const l=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        const m=l.match(/<div class="empty">([^<]*)</);
+        const txt=m?m[1]:'';
+        const cite=txt.match(/[«"]\s*(\+[^»"]+?)\s*[»"]/);
+        const okCite=!cite || h.indexOf('>'+cite[1]+'</button>')>=0;
         return h.indexOf('>+ Créer ma séance</button>')>=0
-            && /Appuie sur "\+ Créer ma séance"/.test(l)
-            && h.indexOf('>+ Ajouter</button>')<0;})());
+            && h.indexOf('>+ Ajouter</button>')<0
+            && !!txt && okCite;})());
 
 /* == BLOC CXX - L'EXPORT « AVEC MES DISCUSSIONS » PERDAIT LA DISCUSSION DU MOMENT (ft-v1013) ==
    Michel : « compare la difference des exportations pour tout le monde et celle que je fais en
@@ -14356,7 +14367,108 @@ console.log('\n-- CXXIX. « Scanner » et « Importer » sont rangés, pas retir
 }
 
 
-/* == BLOC CXXXI - DEUX MOYENNES JUSTES QUI SE CONTREDISENT A L'ECRAN (ft-v1026) ==
+/* == BLOC CXXXI - LES TYPES DE SEANCES REMPLISSENT L'ECRAN VIDE (ft-v1026) ==
+   §2.1 du parcours de decouverte. Michel : « quand on arrive c'est vide » — et ranger les
+   imports (ft-v1024) l'avait mecaniquement agrandi.
+   ⛔⛔ LE VRAI TRAVAIL EST R4 : `DISC_CADRE.coeur` dit « SQUAT · DEVELOPPE COUCHE · SOULEVE DE
+   TERRE » en PROSE — exact, utile, et totalement inexploitable par du code. `DISC_SEANCE` est
+   la descente manquante de l'information vers la DONNEE.
+   ⛔ AUCUNE 2e LISTE DE TYPES (R2) : les 5 viennent de DISC_LABELS, le cadre de DISC_CADRE.
+   ⭐ Michel a tranche « les 2 carrement » : la carte porte l'INFO du cadre (option c) et le
+   tap CREE la seance (option a).
+   ⚠️ ET LA CAPTURE A MONTRE UN DEFAUT QUE LE TEXTE NE VOYAIT PAS : ma 1re ligne courte
+   tronquait la prose a 42 caracteres et sortait « jusqu'a 15- » et « 90 a 1 ». *Une phrase
+   coupee en plein milieu n'est pas une information courte, c'est une information FAUSSE.* */
+console.log('\n-- CXXXI. Les types de séances remplissent l\'écran vide (ft-v1026) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_level:'confirme',ft4_discipline:'powerlifting'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const G=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const aller=()=>{goScreen('s-log');document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+      document.getElementById('s-log').classList.add('active');renderLog();};
+    const fab=()=>{const f=document.querySelector('.nav-fab,#nb-log,.fab');const r=f.getBoundingClientRect();
+      return [Math.round(r.x),Math.round(r.y),Math.round(r.width)];};
+    const o={};
+    S.wkt=null; S.sessions=[{date:'2026-08-20',exs:[],volume:1}]; S.programmes=[{name:'X',exs:[]}]; persist(); aller();
+    o.fabAvant=fab();
+    const z=document.getElementById('log-types');
+    o.n=z.querySelectorAll('.ts-carte').length;
+    o.h=Math.round(z.getBoundingClientRect().height);
+    o.actif=(z.querySelector('.ts-actif .ts-nom')||{}).textContent||'';
+    /* ⛔ AUCUNE ligne de cadre ne doit être une phrase TRONQUÉE. On exige le motif chiffré. */
+    o.cadres=[...z.querySelectorAll('.ts-cadre')].map(e=>e.textContent.trim());
+    o.tousChiffres=o.cadres.every(t=>/^\d+-\d+ reps · repos \d+-\d+ (s|min)$/.test(t));
+    /* ⭐ (a) : un tap monte la séance, avec les reps ET le repos de la discipline. */
+    lancerTypeSeance('powerlifting');
+    o.exs=(S.wkt.exs||[]).map(e=>e.name);
+    o.set0=((S.wkt.exs[0]||{}).sets||[])[0];
+    o.label=S.wkt.progLabel;
+    aller(); o.apres=document.getElementById('log-types').querySelectorAll('.ts-carte').length;
+    o.fabApres=fab();
+    /* ⛔ on n'écrase JAMAIS une séance en cours (règle d'or #3). */
+    const av=S.wkt.exs.length; lancerTypeSeance('haltero');
+    o.pasEcrase=(S.wkt.exs.length===av && S.wkt.exs[0].name===o.exs[0]);
+    /* ⭐ (c) : le « ⓘ » ouvre le cadre COMPLET, et il vient du MÊME rendu que le Profil. */
+    S.wkt=null; persist(); aller();
+    ouvrirCadreType('powerlifting');
+    const bd=document.getElementById('cadre-type-body');
+    o.cadreOuvert=document.getElementById('ov-cadre-type').classList.contains('open');
+    o.cadreTxt=(bd.innerText||'').replace(/\s+/g,' ').trim();
+    fermerCadreType();
+    /* ⛔ Tous les exercices des 5 types existent au catalogue. */
+    const tous=[]; Object.keys(DISC_SEANCE).forEach(d=>DISC_SEANCE[d].forEach(x=>tous.push(x.n)));
+    o.inconnus=[...new Set(tous)].filter(n=>!exId(exNomActuel(n)));
+    o.nTypes=Object.keys(DISC_SEANCE).length;
+    /* ⛔ Chaque type de DISC_SEANCE a son cadre ET son libellé (pas de 2e liste qui dérive). */
+    o.orphelins=Object.keys(DISC_SEANCE).filter(d=>!DISC_CADRE[d]||!DISC_LABELS[d]);
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(G.err)t('CXXXI n\'a pas pu tourner',false,G.err);
+  else{
+    t('⭐⭐ les 5 types remplissent l\'écran vide (le vide était la plainte d\'origine)',
+      G.n===5 && G.h>300, JSON.stringify({cartes:G.n,hauteur:G.h}));
+    t('⛔⛔ AUCUNE ligne de cadre n\'est une phrase TRONQUÉE — que du motif chiffré',
+      G.tousChiffres===true, JSON.stringify(G.cadres));
+    t('⭐ (a) un tap monte la séance du type — et elle porte les REPS de la discipline',
+      /Squat à la Barre/.test(G.exs.join('|')) && /Soulevé de Terre/.test(G.exs.join('|'))
+      && G.set0 && G.set0.reps===3 && G.set0.rest===300,
+      JSON.stringify({exs:G.exs.slice(0,3),set:G.set0}));
+    t('⭐ … et la séance porte le nom du type',
+      /Powerlifting/.test(G.label||''), G.label);
+    t('⛔ les cartes DISPARAISSENT dès qu\'une séance est commencée (jamais en travers)',
+      G.apres===0, 'cartes après = '+G.apres);
+    t('⛔⛔ on n\'ÉCRASE JAMAIS une séance en cours (règle d\'or #3)',
+      G.pasEcrase===true);
+    t('⭐ (c) le « ⓘ » ouvre le cadre COMPLET — reps, charge, repos, cœur, à éviter',
+      G.cadreOuvert===true && /Répétitions/.test(G.cadreTxt) && /Charge/.test(G.cadreTxt)
+      && /Le cœur/.test(G.cadreTxt) && /Pas sa place ici/.test(G.cadreTxt),
+      (G.cadreTxt||'').slice(0,90));
+    t('⛔⛔ AUCUN exercice des 5 types n\'est inconnu du catalogue (R29)',
+      G.inconnus.length===0, JSON.stringify(G.inconnus));
+    t('⛔⛔ AUCUNE 2ᵉ LISTE : chaque type de `DISC_SEANCE` a son cadre ET son libellé (R2)',
+      G.orphelins.length===0 && G.nTypes===5, JSON.stringify({types:G.nTypes,orphelins:G.orphelins}));
+    t('⭐ la discipline déjà choisie est SIGNALÉE, pas imposée',
+      /Powerlifting/.test(G.actif), G.actif);
+    t('⛔⛔ LE BOUTON CENTRAL « + » N\'A PAS BOUGÉ D\'UN PIXEL (règle d\'or #9)',
+      JSON.stringify(G.fabAvant)===JSON.stringify(G.fabApres),
+      JSON.stringify({avant:G.fabAvant,apres:G.fabApres}));
+  }
+  /* ⛔ Un seul rendu du cadre pour les DEUX écrans (R2) : si le Profil se remettait à
+     fabriquer son propre HTML, les deux finiraient par se contredire. */
+  t('⛔ `_cadreHtml` est la SEULE fabrique du cadre — le Profil l\'appelle, il ne le refait pas',
+    (()=>{const st=fs.readFileSync(path.join(ROOT,'setup.js'),'utf8');
+          return /el\.innerHTML=_cadreHtml\(d\)/.test(st)
+              && (st.match(/function _cadreHtml\(/g)||[]).length===1;})(), '');
+  await cx.close();
+}
+/* == BLOC CXXXII - DEUX MOYENNES JUSTES QUI SE CONTREDISENT A L'ECRAN (ft-v1027) ==
    Trouve sur une VRAIE capture d'ecran de Michel, pas en relisant le code.
    La carte « ce que l'app a appris » annoncait « en moyenne 1920 kcal » et, 40 px plus bas,
    « Ta semaine · 2 495 kcal/j ». LES DEUX SONT EXACTS : la premiere porte sur l'HISTORIQUE
@@ -14404,7 +14516,7 @@ console.log('\n-- CXXIX. « Scanner » et « Importer » sont rangés, pas retir
   });
   await cx.close();
 
-  console.log('\n-- CXXXI. Deux moyennes justes qui se contredisent a l\'ecran --');
+  console.log('\n-- CXXXII. Deux moyennes justes qui se contredisent a l\'ecran --');
   /* ⭐⭐ LE TEMOIN CENTRAL : la carte doit NOMMER sa fenetre, sinon son chiffre entre en
      concurrence avec celui de « Ta semaine » sans que rien ne les departage. */
   t('⭐⭐ LA CARTE DIT SUR QUOI ELLE PORTE (« tout ton journal »)',

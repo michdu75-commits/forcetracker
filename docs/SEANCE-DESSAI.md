@@ -36,7 +36,10 @@ zéro »*) retournée en argument de vente : **la 2ᵉ séance vend mieux que la
 
 Décrit par Michel, dans cet ordre :
 
-1. **Des types de séances** — full body, force, bodybuilding, powerbuilding…
+1. ~~**Des types de séances**~~ — ✅ **LIVRÉ en ft-v1026.** Les 5 de `DISC_LABELS` remplissent
+   l'écran Séance vide ; la carte porte la ligne chiffrée du cadre, le tap crée la séance, le
+   « ⓘ » ouvre le cadre complet. ⛔ Le vrai travail était **R4** : `coeur` était de la prose que
+   nul code ne pouvait lire — `DISC_SEANCE` est la descente manquante.
 2. **De bons conseils d'échauffement.**
 3. **Un questionnaire de 2-3 questions ciblées, SANS IA** — p. ex. *« tu préfères les pecs, les
    jambes, le dos ? »*.

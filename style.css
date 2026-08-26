@@ -1621,3 +1621,26 @@ html.ob-done #onboarding{display:none;}
 .adm-intro{font-size:12px;color:var(--t3);line-height:1.5;padding:0 15px 10px;}
 .adm-grp>.card{margin:0 10px 10px;}
 .adm-grp>.card:first-of-type{margin-top:2px;}
+
+/* ══ 🏋️ LES TYPES DE SÉANCES sur l'écran Séance vide (ft-v1026) ═══════════════════════
+   ⭐ Michel a demandé « les 2 carrément » : la carte porte l'INFO du cadre (option c) et le
+   tap CRÉE la séance (option a). D'où une carte plus haute qu'un bouton nu — c'est voulu,
+   on remplit ~700 px de vide avec quelque chose d'utile, pas avec du décor. */
+.ts-bloc{margin-top:14px;}
+.ts-titre{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:9px;padding-left:2px;}
+.ts-liste{display:flex;flex-direction:column;gap:8px;}
+.ts-carte{width:100%;text-align:left;background:var(--bg2);border:none;box-shadow:inset 0 0 0 1px var(--sep);
+  border-radius:14px;padding:12px 14px;font-family:var(--font);cursor:pointer;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:box-shadow .15s;}
+.ts-carte:active{box-shadow:inset 0 0 0 1px var(--red2);}
+/* La discipline DÉJÀ choisie est signalée — pas mise en avant : c'est un repère, pas une
+   recommandation. L'app ne décide pas à la place de la personne (R29). */
+.ts-carte.ts-actif{box-shadow:inset 0 0 0 1.5px var(--red2);}
+.ts-h{display:flex;align-items:center;gap:8px;}
+.ts-ico{font-size:17px;flex:none;}
+.ts-nom{font-size:14.5px;font-weight:700;color:var(--t1);min-width:0;}
+.ts-tag{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--red);
+  background:rgba(255,45,85,.12);border-radius:6px;padding:2px 6px;flex:none;}
+.ts-info{margin-left:auto;flex:none;font-size:15px;color:var(--t3);padding:2px 4px;line-height:1;}
+.ts-cadre{margin-top:5px;font-size:11.5px;color:var(--t2);line-height:1.4;}
+.ts-exs{margin-top:3px;font-size:11px;color:var(--t3);line-height:1.4;}

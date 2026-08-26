@@ -6,8 +6,23 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1026`.
-- 🧾⭐⭐ **DEUX MOYENNES JUSTES QUI SE CONTREDISAIENT À L'ÉCRAN — CORRIGÉ** (ft-v1026), trouvé sur
+- **Version en ligne (live) :** `ft-v1027`.
+- 🏋️⭐⭐ **LES TYPES DE SÉANCES REMPLISSENT L'ÉCRAN VIDE — LIVRÉ** (ft-v1026). §2.1 du parcours
+  de découverte, et **la plainte d'origine de Michel** : *« quand on arrive c'est vide »*.
+  ⛔⛔ **Le vrai travail était R4** : `DISC_CADRE.coeur` dit « SQUAT · DC · SDT » en **prose** —
+  exact et **totalement inexploitable**. `DISC_SEANCE` est la descente manquante vers la DONNÉE.
+  ⛔ **Aucune 2ᵉ liste de types** (R2) : les 5 viennent de `DISC_LABELS`/`DISC_CADRE`.
+  ⭐⭐ Michel a tranché **« les 2 carrément »** : la carte porte la ligne **chiffrée** du cadre
+  (option c) et le tap **crée la séance** (option a) ; le cadre complet est au « ⓘ ».
+  ⭐ **Les reps et le repos suivent la discipline** — mesuré : powerlifting → 3 reps / 300 s.
+  ⚠️ **Réserve écrite** : pas d'arraché complet au catalogue → la séance haltéro est une séance
+  de **travail**, pas de compétition.
+  ⚠️⚠️ **La capture a montré un défaut invisible au texte** : ma 1ʳᵉ ligne courte tronquait la
+  prose et sortait « jusqu'à 15- ». *Une phrase coupée n'est pas une info courte, c'est une info
+  FAUSSE.* → extraction du motif chiffré.
+  ⏭️ **Le chantier écran Séance est terminé** (5 briques + celle-ci). La suite du parcours de
+  découverte : §2.2 les conseils d'échauffement (**le seul vrai trou** selon le cadrage).
+- 🧾⭐⭐ **DEUX MOYENNES JUSTES QUI SE CONTREDISAIENT À L'ÉCRAN — CORRIGÉ** (ft-v1027), trouvé sur
   une **vraie capture** de Michel. La carte « ce que l'app a appris » disait *« en moyenne
   1920 kcal »* et, **40 px plus bas**, *« Ta semaine · 2 495 kcal/j »*. **Les deux sont exacts** —
   l'un porte sur **tout le journal**, l'autre sur les **7 derniers jours** — mais rien ne le

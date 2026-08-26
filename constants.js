@@ -317,6 +317,74 @@ const PREMIUM_PERKS=[
    plus de paliers sur une barre lourde ; et depuis ft-v876 le temps d'une série suit ses reps.
    Un powerlifter était donc déjà traité comme tel PAR SES SÉANCES. Ce qui ne s'adaptait pas,
    c'est la séance que Milo ÉCRIT — et c'est exactement là qu'on injecte. */
+/* ══ 🏋️ CE QUE CHAQUE DISCIPLINE DONNE COMME SÉANCE (ft-v1026) ═══════════════════════════
+   Brique §2.1 du parcours de découverte (`docs/SEANCE-DESSAI.md`) : remplir l'écran Séance
+   vide avec les types de séances, au lieu des ~700 px de rien.
+
+   ⛔⛔ POURQUOI CETTE TABLE EXISTE — C'EST R4, DANS SA FORME LA PLUS PURE. `DISC_CADRE.coeur`
+   dit « SQUAT · DÉVELOPPÉ COUCHÉ · SOULEVÉ DE TERRE — les 3 mouvements passent avant tout le
+   reste ». C'est **exact, utile, et totalement inexploitable** : c'est de la PROSE, aucun code
+   ne peut en tirer une séance. *L'information restait dans le TEXTE et n'atteignait jamais la
+   DONNÉE.* Cette table est la descente manquante.
+
+   ⛔ ELLE NE REMPLACE PAS `DISC_CADRE`, ELLE LE PROLONGE (R2) : les libellés restent dans
+   `DISC_LABELS`, le cadre chiffré dans `DISC_CADRE`. On n'écrit PAS une 2ᵉ liste de types —
+   le doc de cadrage l'interdit explicitement, et il a raison : elles divergeraient, et Milo
+   lirait l'une pendant que l'écran afficherait l'autre.
+
+   ⛔ CHAQUE NOM EST VÉRIFIÉ CONTRE LE CATALOGUE (324 exercices), pas écrit de mémoire — la
+   leçon de ft-v1023, où 7 de mes 16 cibles n'existaient pas sous le nom que je croyais. Un nom
+   inventé produirait un exercice sans animation, sans muscles et sans MET, que personne ne
+   verrait avant la salle (R29).
+
+   ⚠️ UNE RÉSERVE HONNÊTE SUR L'HALTÉROPHILIE : le catalogue ne porte PAS l'arraché complet,
+   seulement `Arraché Debout (Muscle Snatch)` — une décomposition. La séance proposée est donc
+   une séance de TRAVAIL, pas une séance de compétition. On ne fait pas semblant d'avoir un
+   mouvement qu'on n'a pas ; si l'arraché entre au catalogue un jour, cette ligne le prend.
+
+   ⚠️ Les `reps` et le `rest` de chaque ligne SUIVENT le cadre de la discipline — c'est là toute
+   la différence entre les types. Une séance de force et une séance de bodybuilding peuvent
+   partager un exercice ; elles ne partagent jamais le nombre de répétitions ni le repos. */
+const DISC_SEANCE = {
+  // « un équilibre poussée / tirage / jambes, des mouvements polyarticulaires en tête »
+  muscu:[
+    {n:'Squat à la Barre',                 sets:4, reps:10, rest:120},
+    {n:'Développé Couché',                 sets:4, reps:10, rest:120},
+    {n:'Rowing Barre (Tirage Horizontal)', sets:4, reps:10, rest:120},
+    {n:'Développé Militaire',              sets:3, reps:10, rest:120},
+    {n:'Gainage',                          sets:3, reps:30, rest:60}
+  ],
+  // « du volume par MUSCLE et non par mouvement, de l'isolation, de la variété d'angles »
+  bodybuilding:[
+    {n:'Développé Couché',                    sets:4, reps:10, rest:90},
+    {n:'Développé Incliné Haltères',          sets:4, reps:12, rest:90},
+    {n:'Écarté Haltères',                     sets:3, reps:15, rest:75},
+    {n:'Élévations Latérales (Lateral Raise)',sets:4, reps:15, rest:60},
+    {n:'Extension Triceps',                   sets:3, reps:15, rest:60}
+  ],
+  // « un mouvement de compétition en OUVERTURE, puis du volume esthétique derrière »
+  powerbuilding:[
+    {n:'Squat à la Barre',                sets:4, reps:5,  rest:240},
+    {n:'Développé Couché',                sets:4, reps:5,  rest:240},
+    {n:'Press Jambes 45°',                sets:3, reps:12, rest:105},
+    {n:'Tirage Poulie Haute (Lat Pulldown)',sets:3, reps:12, rest:105},
+    {n:'Élévations Latérales (Lateral Raise)',sets:3, reps:15, rest:90}
+  ],
+  // « SQUAT · DÉVELOPPÉ COUCHÉ · SOULEVÉ DE TERRE passent avant tout le reste »
+  powerlifting:[
+    {n:'Squat à la Barre',                sets:5, reps:3, rest:300},
+    {n:'Développé Couché',                sets:5, reps:3, rest:300},
+    {n:'Soulevé de Terre',                sets:3, reps:3, rest:300},
+    {n:'Rowing Barre (Tirage Horizontal)',sets:3, reps:8, rest:120}
+  ],
+  // « ARRACHÉ · ÉPAULÉ-JETÉ et leurs décompositions (tirages, réceptions, squats avant) »
+  haltero:[
+    {n:'Arraché Debout (Muscle Snatch)', sets:5, reps:3, rest:180},
+    {n:'Clean & Jerk',                   sets:5, reps:2, rest:240},
+    {n:'Squat Avant',                    sets:4, reps:5, rest:180},
+    {n:'Gainage',                        sets:3, reps:30,rest:60}
+  ]
+};
 const DISC_CADRE={
   muscu:{
     reps:'8-12 répétitions sur les séries de travail (5-8 possible sur un gros mouvement)',
