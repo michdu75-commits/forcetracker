@@ -497,3 +497,84 @@ contexte, pas une note morale donnée à l'aliment.** C'est **R29** et la **Cons
 **substitution recalculée**, la **charge glycémique du repas**. ⛔ Dans cet ordre : les deux
 premiers se calculent avec ce que le dépôt contient déjà (CIQUAL, `S.wkt`) ; le troisième demande
 une table d'IG que **ni CIQUAL ni Open Food Facts ne portent**, donc une décision.
+
+
+---
+
+## 11. 🏋️ L'EXTENSION « FORCE ATHLÉTIQUE » — et ce qu'elle valide *(26/08/2026)*
+
+Le comparatif a reçu une 3ᵉ extension (§39-68), dédiée au **powerlifting**. Vérifiée dans le code,
+comme les précédentes.
+
+### ⭐⭐⭐ Son §65 décrit ce que l'app a construit IL Y A TROIS JOURS
+
+Il propose qu'avant *« Commencer la séance »*, un validateur déterministe vérifie :
+`exercice refusé · blessure · doublon · matériel · mouvement déjà lourdement travaillé · charge
+incohérente avec l'e1RM · volume excessif · repos irréaliste`.
+
+**Mesuré : 5 des 8 existent déjà.**
+
+| Ce qu'il demande | État réel |
+|---|---|
+| exercice refusé · blessure · doublon | ✅ `_validationSeance` — **ft-v989**, 24/08 |
+| charge incohérente avec le record | ✅ `intensiteWarn` — **ft-v980**, 23/08 |
+| repos irréaliste | ✅ **ft-v980** (*« un 3×5 avec 90 s de repos, c'est impossible »*, Michel) |
+| matériel disponible | ❌ |
+| mouvement déjà lourdement travaillé récemment | ❌ |
+| volume excessif | ❌ |
+
+⭐⭐ **Et sa conclusion est, mot pour mot, la doctrine du projet** :
+> *« Milo peut proposer. Force Tracker doit trancher ce qui est objectivement vérifiable. »*
+
+C'est **R7** (*« est-ce STRUCTUREL ? → seulement alors, le prompt »*) et
+`ARCHITECTURE-CERVEAU-CERVELET` (*le jugement à Milo, le vérifiable au code*).
+**Une analyse extérieure, sans accès au dépôt, converge sur l'architecture déjà bâtie** — et elle
+nomme les **trois contrôles qui manquent**. *C'est la meilleure validation de la soirée.*
+
+### ⭐⭐ Son §49 réclame la force RELATIVE — l'app la calcule déjà, et le code est DORMANT
+
+> *« Force Tracker pourrait afficher deux trajectoires : force absolue et force relative au poids.
+> Cela évite de conclure « le pratiquant régresse » parce qu'un squat baisse pendant une descente
+> de poids. »*
+
+**`getLevel(exercice, rm1, bw, gender, age)` existe** (`constants.js:727`) : elle situe une
+performance **rapportée au poids de corps**, de Débutant à Élite. **Mesuré : elle est appelée
+0 fois** dans le code servi — débranchée le **11/07** (ft-v385), quand le « niveau de force » est
+sorti de l'Accueil au profit du calendrier.
+
+👉 **Ce n'est pas une fonctionnalité à construire, c'est une fonctionnalité à rebrancher** — et
+`CLAUDE.md` le dit déjà : *« n'est plus affiché nulle part »*. ⚠️ Avant de la remettre, relire
+pourquoi elle est partie (**R30** — 3ᵉ cas, celui du 23/08 : *avant de promouvoir un essai parqué,
+chercher pourquoi il l'était*).
+
+### ⛔⛔ SON §48 EST LE POINT LE PLUS IMPORTANT DE TOUTE LA SECTION, ET IL EST DE SÉCURITÉ
+
+> *« Force Tracker ne devrait jamais recommander automatiquement : déshydratation agressive ·
+> manipulation extrême du sodium · restriction hydrique · coupe rapide de plusieurs kilos ·
+> laxatifs · protocoles de sudation. »*
+
+**Ce n'est pas théorique** : la descente de catégorie est une pratique **courante et risquée** en
+force athlétique, et l'app parle déjà à des gens qui en font. ⭐ **Ça relève du Gardien**, au même
+titre que les blessures — et c'est **Constitution P13/P21/P22** : *adapter jamais interdire, mais
+la santé passe avant la performance, et Milo n'est pas médecin.*
+⏭️ **À vérifier** : le Gardien couvre-t-il ces demandes aujourd'hui ? *Non mesuré — donc non
+affirmé.*
+
+### ⚠️ Deux propositions que je ne suivrais PAS en l'état
+
+- **§63, trois « scores de préparation » distincts** (squat / bench / deadlift). Séduisant, mais
+  ce serait **trois chiffres de plus sans méthode validée pour les calculer** — exactement la
+  fausse précision refusée en **R32** (le « score de fiabilité 92 % ») et en **R29**. Le projet a
+  déjà **un** score de récup, et sa fiabilité se discute encore.
+- **§60, préparer les tentatives en compétition.** Hors périmètre — *il le dit lui-même* (*« ce
+  module doit rester séparé »*).
+
+### 🧭 Et une remarque de méthode, parce qu'elle compte plus que le contenu
+
+**C'est le quatrième document d'analyse de la soirée**, tous du même auteur, tous convergents, et
+la valeur **par document décroît** : le §65 redécouvre ft-v989, le §52 redécouvre EV-020, le §34
+redécouvre `PROFIL-VIVANT.md`. *La convergence est rassurante — elle n'est plus informative.*
+
+⛔ **Ce qui manque au projet à ce stade n'est plus de l'analyse, ce sont des DÉCISIONS** (**R19** :
+la gouvernance sert le produit, jamais l'inverse). Trois questions et deux propositions attendent
+Michel, et aucune ne demande un document de plus.
