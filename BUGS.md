@@ -158,6 +158,10 @@ ni la collecte ni le raisonnement : c'est la **restitution**.
 | Les exercices demandés par les utilisateurs | dans un onglet Google Sheet que personne n'ouvre | ft-v715 |
 | Le **cardio** d'une séance | pas transmis à Milo | ft-v720 |
 | Le vocabulaire « tirage horizontal » | connu de l'app, absent de la **recherche** | ft-v728 |
+| L'**historique de l'objectif** | Michel : *« as-tu vu que j'ai changé d'objectif ? »* → « Non ». Il disait vrai : l'app gardait la valeur du JOUR, jamais son histoire | ft-v1010 |
+| L'**horodatage** d'un message | posé à la création, mais **personne ne le lisait** — l'export n'affichait aucune date | ft-v1011 |
+| Le **fil de discussion EN COURS** | l'export « avec mes discussions » ne prenait que les discussions RANGÉES : *on repartait sans celle du moment* | ft-v1013 |
+| Le **journal alimentaire** | Milo : *« en l'état je travaille à l'aveugle sur la nutrition »* — exclusion marquée « DÉCISION À CONFIRMER », jamais confirmée | ft-v1014 |
 
 ### 🔎 Comment le reconnaître
 **Le signe qui doit alerter** : une consigne qui **nomme une source** (« la bibliothèque », « ton
@@ -808,6 +812,86 @@ code fait exactement ce qui est écrit.
 - ⚠️ **Et le réflexe qui vaut pour toute la famille** : quand on corrige un auteur, une source ou
   un chemin, **chercher sa jumelle immédiatement** (réflexe 5, R8). Le 15/08 on a couvert « écrite
   par l'app » et pas « prescrite par Milo » — trois jours et un incident identique plus tard.
+
+---
+
+## 🧪 LE VÉRIFICATEUR ÉPROUVÉ SUR SES PROPRES EXEMPLES *(26/08/2026, ft-v1016)*
+
+**Le mécanisme.** On écrit un motif qui doit attraper un défaut. On l'éprouve **dans les deux
+sens** — vert sur une bonne réponse, rouge sur une mauvaise — et il passe. Sauf que les deux
+réponses, c'est **soi** qui vient de les écrire. *Le motif ne mesure alors pas le monde : il
+mesure l'imagination de celui qui l'a écrit.*
+
+**Le cas.** EV-052 devait vérifier que Milo nomme précisément le hip thrust. Corrigé une première
+fois (ft-v1007), éprouvé sur 4 cas dans les deux sens, livré vert. ⛔ **Il rougissait toujours sur
+la vraie réponse de Milo** : le motif prenait la **PREMIÈRE** occurrence, or Milo écrivait d'abord
+*« une séance jambes/fessiers solide avec le **hip thrust** en tête de file »* — de la **prose** —
+puis, deux lignes plus bas, la prescription *« **Hip Thrust Barre** »*. Aucun de mes exemples
+n'avait cette forme-là, parce que je n'y avais pas pensé.
+
+**⚠️ Pourquoi c'est vicieux** : le témoin était **vert**, la correction **documentée**, l'épreuve
+**faite**. Rien ne signalait le trou. Il n'est tombé qu'au moment où on l'a confronté à une
+réponse **réelle**.
+
+### 🔎 Comment le reconnaître
+- Les cas de test d'un motif sortent tous de la **même tête** que le motif.
+- Le motif emploie `match()` (première occurrence) là où le texte réel peut en contenir plusieurs :
+  une mention **en passant** et une **prescription** ne sont pas la même chose.
+- Le vérificateur passe, mais on n'a jamais vu ce qu'il donne sur une **vraie** sortie du modèle.
+
+### 🛡️ Ce qui protège
+- ⭐ **Le rejeu gratuit** (« 🔬 Rejouer les vérificateurs sur la dernière passe », 0 appel, 0 €) :
+  il repasse les motifs **d'aujourd'hui** sur les réponses **déjà payées**. C'est lui qui a trouvé
+  celui-ci — et au passage prouvé les 5 autres corrections (**9 rouges → 4**).
+- **À employer AVANT toute passe payante** : ce qui touche au *motif* se vérifie pour zéro euro ;
+  seul ce qui touche à *Milo* se paie.
+- Et dans le motif lui-même : préférer « **une** occurrence suffit » (`match(/…/g)` + `some`) à
+  « la première décide », dès qu'un mot peut apparaître deux fois avec deux statuts.
+
+---
+
+## 🔐 LA DONNÉE QUI ENTRE DANS LE CONTEXTE ET OUBLIE SON ANTI-FUITE *(26/08/2026, ft-v1014)*
+
+**Le mécanisme.** Le banc d'essai remplace les données réelles de la personne par celles d'un
+persona (`_vcApplyPersona`). Son en-tête dit, mot pour mot : *« anti-fuite : TOUT ce que lit le
+contexte »*. **Ajouter une source au contexte crée donc une obligation jumelle** — la remettre à
+zéro là-bas. L'oublier n'est pas un défaut de test : c'est une **fuite**, la vraie donnée de la
+personne part dans le contexte de **chaque** persona joué.
+
+**Le cas.** `foodLog` est entré dans le contexte à 09h30 ; sans la ligne correspondante, **le vrai
+journal alimentaire de Michel serait parti dans les 54 scénarios** de la passe suivante.
+⚠️ **Et c'était aussi un piège de fixture** : sans la remise à zéro, le `foodLog` d'un scénario
+n'atteint jamais `S` — donc le scénario ne teste rien. *C'est la fixture muette d'EV-009, refaite
+le lendemain de sa correction.*
+
+### 🛡️ Ce qui protège
+- Un témoin qui **généralise** : il compare ce que `buildCoachContext` **lit** à ce que
+  `_vcApplyPersona` **remet à zéro**. Il a trouvé **8 autres trous** (`programmes`, `nextPlanned`,
+  `exSwaps`…), **épinglés avec leur raison** plutôt que corrigés à la volée — les corriger
+  changerait ce que Milo reçoit, donc ça demande sa propre mesure (**R34**).
+- Une **neuvième** fera rougir la livraison. *Un trou qu'on mesure vaut mieux qu'un trou qu'on
+  découvre.*
+
+---
+
+## 🌀 LE CLONE PÉRIMÉ QUI FAIT CROIRE À UNE PERTE *(26/08/2026)*
+
+**Le mécanisme.** Le conteneur de session est éphémère. Recréé, il reclone le dépôt — et le clone
+peut dater de **plusieurs jours**. `git fetch --all` peut alors **ne rien corriger** : on lit un
+`master` qui a reculé.
+
+**Le cas.** `origin/master` affichait **ft-v939 du 21/08**, cinq jours en arrière, et un commit
+poussé une heure plus tôt n'existait **même pas** (`fatal: Not a valid object name`). Un fetch
+**explicite** a ramené la réalité en une ligne : `+ 84cdf26...91c5d92 master (forced update)`.
+
+**⛔ Le danger n'est pas la perte — rien n'était perdu.** C'est la **conclusion** : croire son
+travail disparu, ou pire, *« réparer »* master en poussant par-dessus — ce qui écraserait le
+travail de l'autre session.
+
+### 🛡️ Ce qui protège
+- `git fetch origin <branche>` **explicite**, jamais `--all` seul, après une reprise de session.
+- **Devant un master qui a reculé : on ne pousse rien.** On refait un fetch explicite et on regarde
+  les dates. (Écrit aussi dans `docs/JOURNAL-DE-PARTAGE.md`.)
 
 ---
 
