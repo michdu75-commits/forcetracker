@@ -363,3 +363,68 @@ quantités ne sont ni transposables dans le temps, ni équivalentes entre elles.
 
 *Ces quatre questions valent plus que dix programmes de plus : elles portent sur la **méthode**,
 et c'est la méthode qu'on cherche à comprendre.*
+
+
+---
+
+## 9. 🤖 UN PLAN GÉNÉRÉ PAR UNE IA, CONFRONTÉ À L'APP *(26/08/2026)*
+
+Michel a aussi confié un **« Guide de powerbuilding et nutrition optimisée »** pour son profil
+d'aujourd'hui : **48 ans · 1 m 80 · 86 kg · 4 entraînements/semaine · recomposition**.
+
+⚠️ **CE DOCUMENT N'A PAS LE MÊME STATUT QUE CEUX DE LA COACH, et il le dit lui-même** : son pied
+de page porte *« AI responses may include mistakes »*. **Ce n'est pas une source d'autorité, c'est
+une liste de contrôle** — utile pour voir ce qu'on ne fait pas, jamais pour trancher.
+
+### Le même profil, calculé par l'app
+
+| | Le plan | **L'app** (profil identique) |
+|---|---|---|
+| BMR | *(non donné)* | **1 750** (Mifflin) |
+| Maintenance | ~2 800 | **2 913** (activité 1,55) · **3 219** (1,725) |
+| Cible | **2 400** | **2 763** en charge · **2 563** en décharge |
+| Protéines | 205 g (**2,4** g/kg) | **224 g** (**2,6** g/kg) |
+| Lipides | 86 g (**1,0** g/kg) | **73 g** (**0,85** g/kg) |
+| Glucides | 205 g | **303 g** |
+
+⭐ **Les deux se tiennent, et l'écart vient surtout du NIVEAU D'ACTIVITÉ** — 2 913 contre 3 219
+selon qu'on déclare « modéré » ou « soutenu » pour 4 séances. *C'est exactement ce que la carte
+« dérive d'activité » de l'app surveille déjà* (elle compare le niveau **déclaré** aux séances
+**réelles**). Le plan, lui, pose une maintenance sans dire d'où elle vient.
+
+### ⭐⭐⭐ Ce qu'il dit et que l'app ne fait pas — dont la TROISIÈME confirmation du défaut n°1
+
+> *« Concentrez **60 % de vos glucides autour de la séance** — 1 h 30 avant et dans les 2 h
+> après — pour saturer le glycogène au moment de pousser. »*
+
+**Troisième source indépendante** à dire la même chose, après les diètes de la coach et ses
+programmes d'entraînement : **le placement des glucides par rapport à la séance**. L'app connaît
+l'heure de la séance et n'en fait rien côté repas.
+
+Deux autres manques :
+- **Le RPE** (*« reste au maximum à RPE 8 / 8,5 sur les polyarticulaires »*). L'app **connaît le
+  mot** — il est dans le prompt de Milo et dans l'import de programmes — mais **une série n'a pas
+  de champ RPE**. Elle a le tag `X` (échec) et, depuis ft-v980, un contrôle de % du 1RM.
+- **Le timing des compléments** (*« collagène 30-60 min AVANT la séance pour cibler les
+  tendons »*). L'app dose la créatine et la whey ; elle ne dit jamais **quand**.
+
+### ⚠️ Un point où l'app a une PHILOSOPHIE DIFFÉRENTE — pas un retard
+
+Le plan propose **deux cibles caloriques** : 2 400 les jours d'entraînement, **2 200** les jours de
+repos. L'app, elle, **cycle les glucides** (`cycleGlucides`, `state.js`) mais **garde les calories
+neutres sur la semaine** — et son cyclage tient compte de la **région travaillée**, pas seulement
+de « jour on / jour off ».
+
+👉 **Ce sont deux écoles, et celle de l'app est écrite et défendable.** ⛔ Ne pas « corriger »
+l'une vers l'autre sans décision explicite (**R30**).
+
+### 🔎 Et il a révélé un vrai petit défaut de l'app
+
+`tracking.js` annonce l'évolution de poids attendue selon l'objectif : *muscle* → « +0,1 à
+0,3 kg/sem », *perte* → « −0,3 à 0,7 kg/sem »… mais **`recomp` n'est pas dans la table**. Un
+utilisateur en recomposition lit donc : *« l'évolution attendue est **variable** »*.
+
+⚠️ **C'est l'objectif de Michel**, et c'est celui qui aurait le plus besoin d'un repère. Le plan,
+lui, en donne un net : *« 300 à 500 g maximum par semaine, pour garantir que la perte vient du
+gras et non du muscle »* — cohérent avec la fourchette « perte » déjà présente dans l'app.
+⛔ **Non corrigé : c'est un chiffre de santé sur SON écran, la décision lui revient** (**R29**).
