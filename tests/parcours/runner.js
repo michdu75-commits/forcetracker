@@ -13600,7 +13600,7 @@ console.log('\n-- CXXV. La ligne du classeur porte son email (ft-v1018) --');
     /action:'logSession'[^)]*email:S\.email/.test(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8')), '');
 }
 
-/* == BLOC CXXIV - « CE QU'IL TE RESTE, EN VRAI » (ft-v1019) ==
+/* == BLOC CXXV - « CE QU'IL TE RESTE, EN VRAI » (ft-v1019/1020) ==
    Michel : « il faut montrer une estimation de ce qu'il nous reste a manger dans la journee (a 14h
    par exemple, il te reste 150 g de prot a manger, tu peux faire 1 shake de prot et 150 g de
    poulet, pareil pour les glucides et pareil pour les lipides) ».
@@ -13618,7 +13618,7 @@ console.log('\n-- CXXV. La ligne du classeur porte son email (ft-v1018) --');
    ⛔⛔ LES TROIS GARDE-FOUS ANTI-TCA (P21) SONT LA MOITIE DU TRAVAIL, et ils se testent : rien
    sur un jour PASSE (un reproche sur une journee qu'on ne peut plus changer), rien quand la cible
    est DEPASSEE (aucun reproche), rien sans aliments a soi (on n'invente pas). */
-console.log('\n-- CXXIV. Ce qu\'il te reste à manger, traduit en TES aliments (ft-v1019) --');
+console.log('\n-- CXXV. Ce qu\'il te reste à manger, traduit en TES aliments (ft-v1019) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
@@ -13685,7 +13685,7 @@ console.log('\n-- CXXIV. Ce qu\'il te reste à manger, traduit en TES aliments (
     return o;
    }catch(e){return {err:String(e)};}
   });
-  if(F.err) t('CXXIV n\'a pas pu tourner', false, F.err);
+  if(F.err) t('CXXV n\'a pas pu tourner', false, F.err);
   else{
     t('⭐⭐ le reste est TRADUIT en aliments, pas seulement chiffré',
       F.nb>=2 && F.ecran===true, 'idées='+F.nb+' à l\'écran='+F.ecran);
