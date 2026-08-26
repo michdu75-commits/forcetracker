@@ -9945,7 +9945,14 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
        le nom d'un aliment d'hier dans une IDÉE est le comportement voulu, pas une fuite.
        ⛔ On retire donc ce bloc AVANT de chercher — on ne relâche pas la règle, on la vise :
        le test porte sur la LISTE DES ENTRÉES, là où un mélange serait un vrai défaut. */
-    const _sansIdees = h => h.replace(/Ce qu'il te reste, en vrai[\s\S]*?<\/div>\s*<\/div>/,'');
+    /* ⚠️ DEUX blocs nomment désormais des aliments d'autres jours, et c'est VOULU dans les deux
+       cas : « Ce qu'il te reste » pioche dans ses habitudes (ft-v1019), et « Ce que l'app a
+       appris » DÉCRIT ses habitudes (ft-v1021). Ni l'un ni l'autre n'est une entrée du jour.
+       ⛔ On les retire donc avant de chercher — la promesse du témoin porte sur la LISTE DES
+       ENTRÉES, là où un mélange de jours serait un vrai défaut. */
+    const _sansIdees = h => h
+      .replace(/Ce qu'il te reste, en vrai[\s\S]*?<\/div>\s*<\/div>/,'')
+      .replace(/Ce que l'app a appris de ton alimentation[\s\S]*?sans aucun appel à l'IA[\s\S]*?<\/div>\s*<\/div>/,'');
     o.aujCorrect=_sansIdees(o.aujHtml).indexOf('Hier midi')<0;   // ne montre QUE les entrées du jour actif
     // La flèche « jour suivant » est désactivée sur aujourd'hui (pas de futur à montrer).
     o.flecheSuivDesactivee=/journalNav\(1\)"[^>]*disabled|disabled[^>]*onclick="journalNav\(1\)"/.test(o.aujHtml)

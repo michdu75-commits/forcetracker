@@ -1413,7 +1413,7 @@ function _profilAlimentaire(){
   const etat = nbJours >= _PA_SOLIDE ? 'solide'
              : nbJours >= _PA_MIN_JOURS ? 'partiel'
              : 'insuffisant';
-  /* ⚠️ La FENÊTRE compte autant que le nombre : 6 jours étalés sur 2 mois ne disent pas la
+  /* ⚠️ La FENÊTRE compte autant que le nombre : 6 jours étalés sur huit semaines ne disent pas la
      même chose que 6 jours d'affilée. On donne les deux, on ne les mélange pas. */
   let etendue = 0;
   if(nbJours >= 2){
