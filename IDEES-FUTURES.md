@@ -2745,12 +2745,29 @@ la force, mais ça remonte »*). ⛔ **Aucune quantité n'est transposable** —
 autre poids. Ce qui traverse le temps : la grammaire, le principe de substitution, l'ancrage sur
 la séance, la façon de prescrire.
 
+**🏋️ ET LES SIX PROGRAMMES D'ENTRAÎNEMENT SONT ARRIVÉS AUSSI** (3 janv · 4 fév · 10 mars ×3 ·
+11 sept 2023). Trois convergences avec ce que l'app fait **déjà** — l'échauffement *« qui ne
+compte pas »* (le tag `É`), la *« charge montante »*, et *« si douleur au genou, reste en bas »*
+(**le Gardien, écrit par une humaine**). Et deux manques :
+- ⭐⭐ **le TEMPO** (*« 3 sec descente, 2 sec contraction »*) est une **colonne** chez elle, et
+  n'existe **pas** dans l'app — or c'est ce qui distingue deux séries identiques sur le papier ;
+- ⭐ **l'objectif par SÉANCE**, écrit avec sa justification (*« passer progressivement en power,
+  par étapes, pour pas te blesser »*). L'app n'a qu'un objectif global, dans le profil.
+- ⭐ Et le **repos est un MAXIMUM** chez elle (colonne « Repos maximum », valeurs en plages),
+  alors que l'app en fait un compte à rebours **à respecter**. *L'un borne, l'autre impose.*
+
+⚠️⚠️ **ET LE POINT QUI INTERROGE MILO** : sur six programmes, **zéro kilo**. Elle écrit
+« lourd » (18×), « max » (11×), « léger », « dégressif ». Milo, lui, prescrit *« 3 × 5 à 95 kg »*
+— ce qui a produit le défaut de **ft-v980**. *« Lourd » ne peut pas être trop lourd.* Ça ne dit
+pas que Milo a tort de chiffrer (c'est le cœur du produit : la charge pré-remplie en salle), mais
+qu'un autre registre existe, **plus sûr par construction**. À garder en tête pour le générateur.
+
 **⚠️ TROIS QUESTIONS RESTENT OUVERTES AVANT DE CODER QUOI QUE CE SOIT** — elles valent plus que dix
 programmes de plus, parce qu'elles portent sur la **méthode** :
 1. les aliments sont-ils pesés **crus ou cuits** ? *Sans la réponse, aucune équivalence n'est
    calculable* — le rapport va du simple au triple sur le riz ;
 2. sur quel **signal** un plan évolue-t-il (poids, photos, ressenti, échéance) ?
-2. y a-t-il des **jours différents** entraînement / repos ? (les trois docs ne décrivent qu'une
-   seule journée type) — Michel cherche les **programmes d'entraînement** de la même période, ce
-   qui répondrait en partie ;
+2. y a-t-il des **jours différents** entraînement / repos ? ⚠️ **Les programmes d'entraînement
+   ne l'ont PAS résolu** : ils donnent les séances, jamais un calendrier hebdomadaire ni un plan
+   « jour off ». La question reste entière ;
 3. que fait-on en cas d'**écart** (restaurant, aliment absent) ?

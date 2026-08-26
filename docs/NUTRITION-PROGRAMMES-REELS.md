@@ -1,7 +1,8 @@
-# 🍱 Ce qu'un VRAI programme de nutrition nous apprend
+# 🍱🏋️ Ce que de VRAIS programmes de coach nous apprennent
 
-> **Créé le 26/08/2026.** Michel a confié **trois plans alimentaires** rédigés par sa coach en
-> nutrition, espacés dans le temps (**14 décembre · 29 janvier · 20 avril**). C'est la première
+> **Créé le 26/08/2026.** Michel a confié **trois plans alimentaires** (14 décembre · 29 janvier ·
+> 20 avril) **et six programmes d'entraînement** (3 janvier · 4 février · 10 mars ×3 · 11 septembre
+> 2023) rédigés par la même coach. C'est la première
 > fois que le projet dispose de programmes **écrits par une professionnelle pour un vrai
 > sportif**, et de plusieurs versions du **même** athlète — donc de son **évolution**.
 >
@@ -135,6 +136,94 @@ collation qui suit l'entraînement est un **poste à part entière** du plan.
 ⭐ **L'app a déjà tout ce qu'il faut pour ça** : `S.wkt`, l'heure de début, la région travaillée,
 la discipline. Elle n'en fait **rien** côté repas. *Le trou n'est pas dans la donnée, il est dans
 le lien* — c'est **R4** appliqué à la nutrition.
+
+
+---
+
+## 3bis. 🏋️ LES PROGRAMMES D'ENTRAÎNEMENT DE LA MÊME COACH — six documents, 2023
+
+Michel a retrouvé **six programmes d'entraînement** de la même praticienne : **3 janvier**,
+**4 février**, **10 mars** (trois fichiers = trois séances du même programme) et **11 septembre
+2023**. ⚠️ Mêmes règles que pour les diètes : **les documents restent hors du dépôt**, on garde
+la méthode.
+
+### La structure
+
+Un tableau, toujours les mêmes colonnes :
+`Exercices | Exécution / Accessoires | Répétitions | Repos (maximum) | Tips`
+
+Des séances **numérotées et nommées par groupe** (*Dos et Biceps*…), plus un bloc **ABDOMINAUX**
+à part, avec sa propre consigne de placement : *« à faire **4 fois par semaine**, **avant**
+l'entraînement, **après** l'échauffement »*.
+
+### ⭐⭐⭐ Elle ne donne JAMAIS de charge en kilos
+
+Compté sur les six documents : **« lourd » 18 fois · « max » 11 · « léger » 2 · « dégressif » 3 ·
+« progressif » · « charge montante »**. **Zéro kilo.** Jamais.
+
+Les répétitions ne sont pas un nombre non plus, mais une **consigne** : `6-8 lourd` · `4 × 10/12` ·
+`10-10-10-10 dégressif 4 charges` · `3 × 12 puis 10, 8, 6 rapides` · `4 × 10 + 10`.
+
+👉 **C'est le pendant EXACT du « zéro calorie » côté nutrition** (§4) : *une praticienne donne des
+repères qualitatifs et laisse la personne calibrer.* Elle prescrit un **effort**, pas un **nombre**.
+
+⚠️⚠️ **ET C'EST UN CONTRE-POINT DIRECT À MILO.** Milo, lui, prescrit des kilos précis — *« 3 × 5
+à 95 kg »*, ce qui a produit le défaut corrigé en **ft-v980** (une charge au-dessus du tenable,
+qu'il a lui-même démentie quand on l'a questionné). *Une coach humaine, dans la même situation,
+aurait écrit « 5 × 5 lourd ».* **Ça ne veut pas dire que Milo a tort de chiffrer** — un chiffre
+pré-rempli dans l'app fait gagner du temps en salle, et c'est le cœur du produit. Mais ça montre
+qu'il existe un autre registre, et qu'il est **plus sûr par construction** : *« lourd » ne peut
+pas être trop lourd.*
+
+### ⭐⭐ Le TEMPO est une colonne à part entière
+
+*« 3 sec descente, 2 sec contraction »* · *« monte 3 sec, bloque 3 sec, descends 3 sec »* ·
+*« montée lente, descente rapide »* · *« bloque 2 sec + 10 rapides »* · *« 1 + 1 = 1 rep »*.
+
+**L'app n'a rien de tel.** Elle connaît la charge, les répétitions et le repos — pas la manière.
+*Or c'est la manière qui distingue deux séries identiques sur le papier.*
+
+### ⭐⭐ Trois convergences fortes avec ce que l'app fait DÉJÀ
+
+Elles valent d'être écrites, parce qu'elles **valident des choix pris sans cette référence** :
+
+1. **L'échauffement est nommé et EXCLU** : *« 1 série de chauffe légère **qui ne compte pas** »*.
+   C'est **exactement** le tag `É` de l'app (exclu du volume et des records).
+2. **La montée en charge** : *« charge montante »*, *« chauffes avant »*. L'app la fabrique toute
+   seule depuis ft-v… — et ft-v972 a corrigé son dosage.
+3. **⭐ On ADAPTE, on n'interdit pas** : *« si douleur au genou, reste que dans le bas de la
+   position »*. **C'est le Gardien de Milo, écrit par une humaine** — Constitution **P13**,
+   *« adapter, jamais interdire »*, mot pour mot.
+
+### ⭐ Deux nuances que l'app ignore
+
+- **Le repos est un MAXIMUM**, pas une consigne : la colonne s'intitule *« Repos maximum »*, et
+  les valeurs sont des **plages** (`1 à 2 min`, `2 à 4 mins`, `45 sec max`). L'app, elle, traite
+  le repos comme un **compte à rebours à respecter**. *Ce n'est pas la même chose : l'un borne,
+  l'autre impose.*
+- **Chaque séance porte son OBJECTIF, écrit en langage parlé** et orienté résultat — par exemple
+  *« gagner en force pour passer progressivement en power, **par étapes**, pour pas te blesser ni
+  choquer ton corps »*. 👉 **L'objectif ET sa justification, attachés à la séance.** L'app a un
+  objectif *global* (dans le profil) ; elle n'a rien au niveau de la séance.
+
+### 📈 La transition hypertrophie → force est MESURABLE
+
+| Programme | Répétitions (médiane) | Repos |
+|---|---|---|
+| **4 février** | **10** | 1 min 30 → 2 min 30 |
+| **10 mars** | **6 à 8** | **2 à 4 min** |
+| **11 septembre** | **12** | 1 min → 1 min 15 |
+
+Et c'est **écrit dans le document du 10 mars** : *« gagner en force pour passer progressivement en
+power »*. Les schémas suivent — `5 × 5`, `6 × 4`, `2 × 8 + 2 × 6`.
+
+⭐⭐ **ET ÇA S'ACCORDE AVEC LES DIÈTES.** Le plan alimentaire le plus **restrictif** est celui du
+**29 janvier** ; le programme du **4 février** est en hypertrophie classique. Le passage en force
+du **10 mars** est suivi du plan le plus **généreux**, le **20 avril**. *Plus de force demandée,
+plus de glucides donnés.*
+⚠️ **Attention quand même** : les diètes ne portent **pas l'année**. Le rapprochement est
+cohérent et les écarts de dates collent, mais il **repose sur une hypothèse de millésime** — je
+l'écris comme une correspondance plausible, pas comme un fait établi (**P4**).
 
 ---
 
