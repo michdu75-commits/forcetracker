@@ -537,7 +537,14 @@ const bz=(kg,r)=>(!kg||!r||r<1)?0:(r===1?kg:fmt(kg/(1.0278-0.0278*Math.min(r,20)
 // et le check-in / le sommeil / les badges tombaient dans le mauvais jour. Bug SILENCIEUX :
 // rien ne plante, la date est juste fausse. On décale de l'écart horaire local avant de couper.
 // 🚫 Ne JAMAIS revenir à `new Date().toISOString()` pour obtenir un jour calendaire.
-const today=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
+/* ⭐ `today(ts)` accepte un INSTANT optionnel (ft-v1017) — sans lui, `calcRecoveryDetail` ne
+   pourrait pas se rejouer à une date passée, et l'historique du score de récup devrait
+   recopier la règle « quel jour sommes-nous ? » ailleurs. Un seul propriétaire (R2), et
+   l'argument est optionnel : tous les appels existants ne bougent pas d'un caractère.
+   ⚠️ Le décalage se prend sur la date DEMANDÉE, pas sur aujourd'hui : l'heure d'été change
+   dans l'année, et un `getTimezoneOffset()` pris maintenant décalerait les jours d'hiver
+   d'une heure (famille « fuseaux horaires » de BUGS.md). */
+const today=(ts)=>{const d=(ts==null)?new Date():new Date(ts);return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
 
 /* ═══ L'HISTORIQUE DE L'OBJECTIF — UN SEUL PROPRIÉTAIRE (25/08/2026, ft-v1010) ═══════════
    ⛔⛔ LE TROU QU'ON BOUCHE, ET IL ÉTAIT ÉCRIT DEPUIS 6 JOURS. Michel, le 19/08, à Milo :
@@ -793,7 +800,9 @@ function dietSummary(){
   return parts.join(' · ');
 }
 
-function getMensCyclePhase(){
+/* ⭐ `ts` optionnel (ft-v1017) : permet de rejouer la phase de cycle à une date passée, pour
+   l'historique du score de récup. Aucun appel existant ne change. */
+function getMensCyclePhase(ts){
   if(S.gender!=='F')return null;
   const hormonalContra=['pill-combo','pill-prog','implant','iud-hormonal'];
   if(hormonalContra.includes(S.contraception||'')){
@@ -802,7 +811,7 @@ function getMensCyclePhase(){
       training:'Les fluctuations hormonales liées au cycle naturel sont atténuées. Entraîne-toi selon ta forme du jour.'};
   }
   if(!S.mensCycleStart)return null;
-  const elapsed=Math.floor((new Date()-new Date(S.mensCycleStart+'T12:00:00'))/864e5);
+  const elapsed=Math.floor(((ts==null?new Date():new Date(ts))-new Date(S.mensCycleStart+'T12:00:00'))/864e5);
   if(elapsed<0)return null;
   const dur=S.mensCycleDur||28;
   const day=(elapsed%dur)+1;

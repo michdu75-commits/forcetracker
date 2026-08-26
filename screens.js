@@ -607,8 +607,25 @@ function _renderHomeHero(){
       return '<span style="white-space:nowrap;">'+f.ic+' '+f.label+' <b style="color:'+col+';">'+sign+f.val+'</b></span>';
     }).join('<span style="color:var(--sep);margin:0 1px;">·</span>');
     const tipsHtml=(detail.tips||[]).map(t=>'<div style="display:flex;gap:6px;"><span>💡</span><span>'+t+'</span></div>').join('');
+    /* 📉 LES 7 DERNIERS JOURS, SUR LA LIGNE QUI EXISTE DÉJÀ (ft-v1017). Michel : « j'ai
+       l'impression qu'il n'y a pas d'historique ». Il y en a un maintenant — mais on ne
+       rajoute PAS une carte : ft-v547 avait replié le check-in parce que « ça prend trop
+       de place », et ce serait défaire cette décision (R30). La courbe se glisse À DROITE
+       du bouton « Pourquoi ce score ? », dans une rangée déjà là : ~26 px, zéro carte.
+       ⛔ Et elle est MUETTE quand elle n'a rien à dire : moins de 2 jours mesurables, on
+       n'affiche rien du tout plutôt qu'une barre solitaire qui ressemble à un bug. */
+    let sparkHtml='';
+    try{
+      const pts=(typeof recupHistorique==='function')?recupHistorique(7):[];
+      if(pts.filter(x=>x.score!=null).length>=2)
+        sparkHtml='<div style="margin-left:auto;display:flex;align-items:center;gap:7px;">'
+          +'<span style="font-size:10px;color:var(--t3);font-weight:700;letter-spacing:.06em;">7 J</span>'
+          +_recupSparkline(22)+'</div>';
+    }catch(e){}
     detailHtml='<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:5px 7px;font-size:11px;color:var(--t3);align-items:center;">'+fx+'</div>'
-      +'<button onclick="openRecoWhy()" style="margin-top:9px;background:none;border:none;padding:0;color:var(--blue);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;display:flex;align-items:center;gap:3px;-webkit-tap-highlight-color:transparent;">Pourquoi ce score ?<span style="font-size:12px;">›</span></button>'
+      +'<div style="margin-top:9px;display:flex;align-items:center;gap:10px;">'
+      +'<button onclick="openRecoWhy()" style="background:none;border:none;padding:0;color:var(--blue);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;display:flex;align-items:center;gap:3px;-webkit-tap-highlight-color:transparent;">Pourquoi ce score ?<span style="font-size:12px;">›</span></button>'
+      +sparkHtml+'</div>'
       +(tipsHtml?'<div style="margin-top:9px;background:var(--bg3);border-radius:10px;padding:9px 11px;font-size:12px;color:var(--t2);line-height:1.5;display:flex;flex-direction:column;gap:5px;">'+tipsHtml+'</div>':'');
   }
   // Bandeau contextuel « gêne du jour » (brique 3B) : une douleur ne fait PAS baisser
@@ -776,10 +793,52 @@ function openRecoWhy(){
     +'<div style="font-size:14px;font-weight:700;color:'+info.color+';margin-top:2px;">'+info.label+'</div></div>'
     +'<div style="font-size:13px;color:var(--t2);line-height:1.5;margin:12px 0 8px;">Ce score estime à quel point ton corps est <b>prêt à s\'entraîner</b> aujourd\'hui (100 = parfaitement frais). Voici ce qui l\'a fait bouger :</div>'
     +factorsHtml
+    +_recoHistoHtml()
     +_recoManqueHtml(d)
     +'<div style="margin-top:14px;background:var(--bg3);border-radius:12px;padding:11px 13px;font-size:13px;color:var(--t2);line-height:1.5;">'+info.rec+'</div>'
     +'<div style="margin-top:10px;font-size:11.5px;color:var(--t3);line-height:1.5;text-align:center;">Il se recalcule chaque jour et remonte au fil de la journée. Ce n\'est qu\'un repère — <b>ton ressenti prime toujours</b>.</div>';
   document.getElementById('ov-reco-why').classList.add('open');
+}
+/* 📉 « CE QUE ÇA DONNAIT LES JOURS D'AVANT » (ft-v1017) — le détail va ICI, pas sur
+   l'Accueil : la pop-up ANNONCE, l'aide EXPLIQUE (R25), et cette modale est déjà la
+   surface qui explique le score.
+   ⭐⭐ LA PHRASE QUI COMPTE EST CELLE DE L'HEURE. Sans elle, quelqu'un comparerait un 44
+   relevé le matin à un 56 relevé le soir et croirait avoir progressé — alors que c'est la
+   même journée. On DIT donc que tous les points sont pris à la même heure, et laquelle.
+   ⛔ Aucun jugement sur la tendance (« tu récupères mieux ! ») : 7 points ne font pas une
+   tendance, et l'app ne connaît ni le stress, ni la maladie, ni la vie de la personne
+   (R12, R29). On montre les chiffres, elle conclut. */
+function _recoHistoHtml(){
+  try{
+    if(typeof recupHistorique!=='function') return '';
+    const pts=recupHistorique(7);
+    const connus=pts.filter(p=>p.score!=null);
+    if(connus.length<2) return '';                 // rien à comparer → on se tait
+    const hh=String(new Date().getHours()).padStart(2,'0');
+    const J=['dim','lun','mar','mer','jeu','ven','sam'];
+    const lignes=pts.map(p=>{
+      const dt=new Date(p.date+'T12:00:00');
+      const lbl=(p.date===today())?'auj.':J[dt.getDay()];
+      if(p.score==null)
+        return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">'
+          +'<div style="height:54px;display:flex;align-items:flex-end;"><div style="width:9px;height:4px;border-radius:2px;background:var(--sep);"></div></div>'
+          +'<span style="font-size:10px;color:var(--t3);">'+lbl+'</span>'
+          +'<span style="font-size:10px;color:var(--t3);">—</span></div>';
+      const h=Math.max(6,Math.round((p.score/100)*54));
+      const c=(typeof _ringScale==='function')?_ringScale(p.score):'var(--t2)';
+      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">'
+        +'<div style="height:54px;display:flex;align-items:flex-end;"><div style="width:9px;height:'+h+'px;border-radius:3px;background:'+c+';"></div></div>'
+        +'<span style="font-size:10px;color:var(--t3);">'+lbl+'</span>'
+        +'<span style="font-size:10.5px;color:'+c+';font-weight:700;">'+p.score+'</span></div>';
+    }).join('');
+    return '<div style="margin-top:16px;background:var(--bg3);border-radius:12px;padding:12px 13px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--t1);margin-bottom:10px;">📉 Tes 7 derniers jours</div>'
+      +'<div style="display:flex;align-items:flex-end;gap:4px;">'+lignes+'</div>'
+      +'<div style="font-size:11px;color:var(--t3);line-height:1.5;margin-top:10px;">'
+      +'Chaque jour est mesuré à <b>'+hh+' h</b>, comme maintenant — ton score monte au fil de la journée, '
+      +'donc comparer le matin au soir ne voudrait rien dire. Les jours sans barre sont ceux où l\'app '
+      +'n\'avait pas encore de quoi calculer.</div></div>';
+  }catch(e){ return ''; }
 }
 function closeRecoWhy(){const o=document.getElementById('ov-reco-why');if(o)o.classList.remove('open');}
 

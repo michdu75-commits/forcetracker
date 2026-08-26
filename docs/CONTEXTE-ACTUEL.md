@@ -6,7 +6,37 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1015`.
+- **Version en ligne (live) :** `ft-v1018`.
+- 📉⭐⭐ **L'HISTORIQUE DU SCORE DE RÉCUP — LIVRÉ** (ft-v1017). Michel : *« j'ai l'impression
+  qu'il n'y a pas d'historique ou c'est moi ? »*.
+  ⭐⭐ **Sa consigne « vérifie, on l'avait beaucoup travaillé ça » a changé le correctif** :
+  l'historique du **sommeil** existe (ft-v449) et il est caché par une **DÉCISION** — celle de
+  **ft-v547**, prise sur son propre retour *« ça prend trop de place »*. **Il RESTE caché**
+  (confirmé par Michel le 26/08). *J'allais réparer une décision* (**R30**).
+  ⛔ Ce qui manquait vraiment : le **score de récup n'a jamais été écrit** (aucune clé
+  `ft4_recup*` ; `dayStateLog` ne garde que énergie/moral/douleurs). Cinq modules le lisaient
+  en direct, aucun ne le gardait — *il n'était pas inutilisé, il était sans mémoire*.
+  ⛔⛔ **On ne stocke rien, on REJOUE** : `calcRecoveryDetail(refTs)` se replace à un instant.
+  Un `recupLog` serait une 2ᵉ source de vérité pour un chiffre calculable (**R2**) et ne
+  commencerait qu'aujourd'hui ; en rejouant, la courbe est **rétroactive**.
+  ⭐⭐ **Tous les points sont pris à la MÊME HEURE** — mesuré **44 à 6 h → 56 à 22 h** le même
+  jour (12 points, rien du corps n'a changé). Comparer un matin à un soir montrerait *l'heure
+  de la journée*, pas la récupération. L'écran le dit.
+  ⛔ Avant la 1ʳᵉ donnée : `null`, jamais la base neutre de 70 (**R29**).
+  ⏭️ **Deux limites écrites** : une nuit notée après coup change le score rejoué de ce jour-là ;
+  `age`/`level`/`smoker` n'ont pas d'historique (décale toute la courbe pareil, donc ne déforme
+  pas une tendance).
+- 📇⭐ **L'EMAIL DANS LA LIGNE DU CLASSEUR — LIVRÉ** (ft-v1018). Le « suivi Excel » du tout début
+  du projet **existe depuis toujours** (`syncSheets` → onglet `Sessions`, une ligne par série) —
+  j'allais proposer de le construire (**R23**). Mais la ligne **ne portait aucun identifiant** :
+  les séances de tous les testeurs s'empilaient sans qu'on puisse savoir qui est qui.
+  ⛔⛔ **La colonne va à la FIN, jamais au début** : insérer en tête décalerait des milliers de
+  lignes d'un cran, et *un tableur ne le signale pas*. Les anciennes lignes gardent une cellule
+  **vide** — on ne sait pas de qui elles viennent, on ne l'invente pas (**R29**).
+  ⛔ L'email est posé sur l'**enveloppe**, pas sur chaque série (**R2**).
+  ⏭️ **Ce que ça ne répare pas** : les lignes déjà écrites restent anonymes.
+  ⚠️ **Backend touché** → le déploiement Apps Script part tout seul (`deploy-appsscript.yml`),
+  à vérifier (`?test=1` → `online`).
 - ☁️⭐⭐ **UN ÉCHEC DE SYNC GOOGLE SHEETS ÉTAIT COMPTÉ COMME UN SUCCÈS — CORRIGÉ** (ft-v1015).
   Trouvé en creusant la question de Michel : *« j'ai l'impression qu'il n'y a pas d'historique ou
   c'est moi ? »*.

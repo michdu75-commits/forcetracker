@@ -1292,21 +1292,50 @@ function handleSaveProfile_(body) {
 }
 
 // ───────────────────────────────────────────────────────────
+/* 📇 LA LIGNE PORTE ENFIN SON EMAIL (ft-v1018) — Michel, en cherchant à se servir du
+   classeur : les séances de TOUS les testeurs s'empilaient dans le même onglet `Sessions`
+   sans le moindre identifiant. Le classeur existe pour être lu (c'est le « suivi Excel » du
+   tout début du projet) et il ne pouvait pas l'être : impossible de savoir qui est qui,
+   donc impossible de filtrer, de trier ou de comparer quoi que ce soit.
+
+   ⛔⛔ LA COLONNE EST AJOUTÉE À LA FIN, JAMAIS AU DÉBUT. L'onglet contient déjà des milliers
+   de lignes sur 11 colonnes : insérer une colonne en tête décalerait TOUT l'historique d'un
+   cran, et un tableur ne le signale pas — il affiche juste des chiffres dans la mauvaise
+   colonne. Les anciennes lignes gardent donc une 12ᵉ cellule vide, ce qui est la vérité :
+   on ne sait pas de qui elles viennent, et on ne l'invente pas (R29).
+
+   ⛔ L'EN-TÊTE EST RÉPARÉ SI BESOIN, PAS SUPPOSÉ. L'onglet existant a été créé avec 11
+   colonnes : si on se contentait d'écrire 12 valeurs, la colonne L n'aurait pas de titre et
+   personne ne saurait ce qu'elle contient. On le lit, et on ne l'écrit que s'il manque. */
 function handleLogSession_(body) {
   try {
     const rows = body.rows || [];
     if (!rows.length) return json_({status:'ok', count:0});
 
+    const EN_TETE = ['date','exercise','set_num','type','kg','reps','volume','rm1','bw','gender','age','email'];
     const ss = _getSheet_();
     let sheet = ss.getSheetByName('Sessions');
     if (!sheet) {
       sheet = ss.insertSheet('Sessions');
-      sheet.appendRow(['date','exercise','set_num','type','kg','reps','volume','rm1','bw','gender','age']);
+      sheet.appendRow(EN_TETE);
+    } else {
+      // Onglet déjà là : on ajoute le titre de la colonne `email` s'il n'y est pas encore.
+      const nCol = sheet.getLastColumn();
+      const head = nCol > 0 ? sheet.getRange(1, 1, 1, nCol).getValues()[0] : [];
+      /* Onglet présent mais VIDE (créé à la main, ou vidé) : on pose l'en-tête complet.
+         Sinon on écrirait « email » en colonne 12 avec onze colonnes sans titre. */
+      if (!nCol) sheet.appendRow(EN_TETE);
+      else if (head.indexOf('email') < 0) sheet.getRange(1, nCol + 1).setValue('email');
     }
+
+    /* L'email vient de l'ENVELOPPE : l'app ne le répète pas sur chaque série (R2), c'est ici
+       qu'il s'étale sur les lignes, parce qu'un tableur en a besoin colonne par colonne.
+       ⛔ Vide s'il est absent — une ligne anonyme reste anonyme, on ne devine pas. */
+    const email = String(body.email || '').toLowerCase().trim().substring(0, 120);
     rows.forEach(r => sheet.appendRow(_safeRow_([
       r.date, r.exercise, r.set_num, r.type,
       r.kg, r.reps, r.volume, r.rm1,
-      r.bw, r.gender, r.age
+      r.bw, r.gender, r.age, email
     ])));
 
     return json_({status:'ok', count: rows.length});
