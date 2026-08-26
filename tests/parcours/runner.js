@@ -13710,6 +13710,109 @@ console.log('\n-- CXXV. Ce qu\'il te reste à manger, traduit en TES aliments (f
   await cx.close();
 }
 
+/* == BLOC CXXVI - L'APP APPREND L'ALIMENTATION, SANS UN SEUL APPEL (ft-v1021) ==
+   Michel : « il faut que l'application (pas Milo) apprenne du sportif cote nutrition sans que ca
+   me coute un seul appel api ». La veille : « on connait l'athlete sportivement en lui posant des
+   questions, mais pas du tout en alimentation — alors que c'est 80 % au moins de l'evolution
+   physique ». Mesure : 6 questions sur l'entrainement, ZERO sur la nourriture.
+   ⭐⭐ TOUT EST DE L'ARITHMETIQUE SUR `S.foodLog` : pas un octet de reseau, pas de modele, pas de
+   cervelet. *La donnee etait deja la ; ce qui manquait, c'est que quelqu'un la regarde.*
+   ⛔⛔ LE TEMOIN QUI PORTE LA DEMANDE EST CELUI DU COUT : on compte les appels sortants pendant
+   20 passages de l'observateur. Mesure : 0 de plus (les 2 du demarrage — QR du partage + ping
+   Apps Script — existent depuis toujours et ne dependent pas de ceci).
+   ⛔ ET CE QU'ON N'INVENTE PAS : une ABSENCE ne prouve rien. Michel n'a jamais note de macadamia
+   (« j'en mange pas, et en plus c'est degueulasse ») mais un autre peut simplement ne pas y avoir
+   pense. Milo recoit donc la liste AVEC l'interdiction d'en conclure un degout (R29, P4). */
+console.log('\n-- CXXVI. L\'app apprend ton alimentation, sans un seul appel (ft-v1021) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  const dehors=[];
+  pg.on('request',rq=>{ if(rq.url().indexOf('http://localhost:'+PORT)!==0) dehors.push(rq.url()); });
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2200);
+  const nDepart = dehors.length;                       // ⚠️ ce qui existait AVANT ce qu'on teste
+  const F=await pg.evaluate(()=>{
+   try{
+    const MK="═══ SITUATION DE L'INSTANT ═══", o={};
+    const t=today(), h=n=>{const d=new Date(t+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    const H=hh=>{const d=new Date();d.setHours(hh,0,0,0);return d.getTime();};
+    const e=(d,m,n,k,p,c,f,hh)=>({date:d,meal:m,name:n,kcal:k,prot:p,carbs:c,fat:f,ts:H(hh)});
+    S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';S.nutritionPhase='charge';
+    S.foodLog=[];
+    for(let i=0;i<6;i++){
+      S.foodLog.push(e(h(i),'petitdej','Fromage blanc 0%',250,40,12,2,7));
+      S.foodLog.push(e(h(i),'dejeuner','Riz basmati',350,7,77,1,13));
+      S.foodLog.push(e(h(i),'dejeuner','Blanc de poulet',165,31,0,4,13));
+    }
+    const avant=buildCoachContext('x'); const commAvant=avant.slice(0,avant.indexOf(MK));
+    const pa=_profilAlimentaire();
+    o.etat=pa.etat; o.nbJours=pa.nbJours;
+    o.heurePetitDej=pa.heures.petitdej; o.heureDejeuner=pa.heures.dejeuner;
+    o.habDej=(pa.habitudes.dejeuner||[]).map(x=>x.nom).join(',');
+    o.moyKcal=pa.moyennes.kcal;
+    /* ⛔ La moyenne divise par les jours NOTÉS, pas par les jours écoulés. */
+    o.moyJuste = pa.moyennes.kcal === Math.round((250+350+165)*6/6);
+    // ── Milo
+    o.dansMilo=/CE QU'ELLE MANGE D'HABITUDE/.test(avant);
+    o.garde=/n'est PAS un aliment qu'elle n'aime pas/.test(avant);
+    o.sousMarqueur=avant.indexOf("CE QU'ELLE MANGE D'HABITUDE")>avant.indexOf(MK);
+    o.ditPartiel=/jours notés seulement/.test(avant);
+    // ⛔ le cache ne bouge pas quand on mange
+    S.foodLog.push(e(t,'collation','Amandes',180,6,4,16,16));
+    const apres=buildCoachContext('x');
+    o.cacheIntact = commAvant===apres.slice(0,apres.indexOf(MK));
+    // ── la carte
+    goScreen('s-nutrition'); renderFoodJournal();
+    const txt=()=>document.getElementById('food-journal').innerText;
+    o.carte=/Ce que l'app a appris de ton alimentation/.test(txt());
+    o.mentionGratuit=/sans aucun appel à l'IA/.test(txt());
+    // ⛔ moins de 3 jours : la carte le DIT, elle ne se tait pas — et Milo, lui, se tait
+    S.foodLog=S.foodLog.filter(x=>x.date===t); renderFoodJournal();
+    o.peuDeDonnees=/pas encore de quoi dégager une habitude/.test(txt());
+    o.miloSeTait=!/CE QU'ELLE MANGE D'HABITUDE/.test(buildCoachContext('x'));
+    // ⛔ aucun journal → aucun profil du tout
+    S.foodLog=[]; o.sansJournal=_profilAlimentaire()===null;
+    /* ⛔⛔ LE COÛT : 20 passages de l'observateur + 2 rendus + 1 contexte. */
+    S.foodLog=[]; for(let i=0;i<6;i++) S.foodLog.push(e(h(i),'dejeuner','Riz',350,7,77,1,13));
+    for(let k=0;k<20;k++) _profilAlimentaire();
+    renderFoodJournal(); renderFoodJournal(); buildCoachContext('x');
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  await pg.waitForTimeout(800);
+  const nApres = dehors.length;
+  if(F.err) t('CXXVI n\'a pas pu tourner', false, F.err);
+  else{
+    t('⛔⛔ ZÉRO APPEL SORTANT ajouté — la demande de Michel, mesurée',
+      nApres===nDepart, 'avant='+nDepart+' après='+nApres+' · '+JSON.stringify(dehors.slice(nDepart).map(u=>u.slice(0,50))));
+    t('⭐⭐ l\'app RECONNAÎT ses repas et leurs HORAIRES (déjeuner ~13h)',
+      F.heurePetitDej===7 && F.heureDejeuner===13, 'petitdej='+F.heurePetitDej+' déj='+F.heureDejeuner);
+    t('⭐⭐ … et les aliments de chaque repas, dans l\'ordre de fréquence',
+      typeof F.habDej==='string' && F.habDej.indexOf('Riz basmati')>=0 && F.habDej.indexOf('Blanc de poulet')>=0,
+      'reçu : '+F.habDej);
+    t('⛔ la moyenne divise par les jours NOTÉS, pas par les jours écoulés (sinon elle ment vers le bas)',
+      F.moyJuste===true, 'moyenne='+F.moyKcal);
+    t('⭐⭐ Milo reçoit ses HABITUDES (local, sans un appel de plus)',
+      F.dansMilo===true, '');
+    t('⛔⛔ … AVEC l\'interdiction de conclure un dégoût d\'une ABSENCE (R29/P4)',
+      F.garde===true, '');
+    t('⛔ … et le bloc reste SOUS le marqueur : le cache ne bouge pas quand elle mange',
+      F.sousMarqueur===true && F.cacheIntact===true,
+      'sous marqueur='+F.sousMarqueur+' cache intact='+F.cacheIntact);
+    t('⭐ 6 jours = « partiel », et il le DIT au lieu de parler d\'habitude établie (R32)',
+      F.etat==='partiel' && F.ditPartiel===true, 'état='+F.etat);
+    t('⭐ la carte existe et rappelle que ça ne coûte rien',
+      F.carte===true && F.mentionGratuit===true, '');
+    t('⛔ sous 3 jours, la carte le DIT (elle ne se tait pas) et Milo, lui, se TAIT',
+      F.peuDeDonnees===true && F.miloSeTait===true,
+      'carte='+F.peuDeDonnees+' milo muet='+F.miloSeTait);
+    t('⛔ aucun journal → aucun profil (rien d\'inventé)', F.sansJournal===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
