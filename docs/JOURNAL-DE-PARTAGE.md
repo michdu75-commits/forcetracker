@@ -100,6 +100,7 @@ bugs « fuseaux horaires » de `BUGS.md`, appliquée à nous-mêmes.
 
 | État | Quand (UTC) | Qui | Sujet | Fichiers | Version |
 |---|---|---|---|---|---|
+| 🟡 | 26/08 05:55 | session-A (project-status) | l'export des conversations n'affiche AUCUNE date par message (les `ts` sont stockés depuis ft-v1010, personne ne les lit) + le jour change au fil de la lecture | `coach.js` | ft-v1011 (réservée) |
 | 🟢 | 25/08 20:50 → 21:30 | session-A (project-status) | historique de l'OBJECTIF (`goalLog`, propriétaire unique `_goalSet`) — Milo ne voyait que la valeur du jour (R8) — + horodatage des messages, qui mouraient dans `_convLightMsgs` | `state.js`, `setup.js`, `tracking.js`, `app.js`, `coach.js`, `Code.js` | ft-v1010 (développée en 1008, renumérotée : session-B a livré 1009 la première — on ne fait jamais reculer le n° de cache) |
 | 🟢 | 25/08 19:25 → 19:45 | session-A (project-status) | dépouillement du benchmark : **6 vérificateurs sur 9 rougissaient à tort** (négation · synonyme · abréviation devenue valide · question légitime · accessoire de santé · **mauvaise étape du pipeline**) + 1 fixture muette (EV-009) | `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js` | ft-v1007 |
 | 🟢 | 25/08 18:50 → 19:10 | session-A (project-status) | le bouton rouge de `showConfirm` disait « Supprimer » pour LANCER le benchmark — 10 appels non destructeurs récupèrent leur libellé + la jumelle « Fusionner » de `setup.js` | `app.js`, `coach.js`, `log.js`, `setup.js`, `tracking.js`, `tests/parcours/runner.js` | ft-v1006 |
