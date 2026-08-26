@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1015`.
+- **Version en ligne (live) :** `ft-v1016`.
 - ☁️⭐⭐ **UN ÉCHEC DE SYNC GOOGLE SHEETS ÉTAIT COMPTÉ COMME UN SUCCÈS — CORRIGÉ** (ft-v1015).
   Trouvé en creusant la question de Michel : *« j'ai l'impression qu'il n'y a pas d'historique ou
   c'est moi ? »*.
