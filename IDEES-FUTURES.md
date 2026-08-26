@@ -4,6 +4,92 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 📸 COMPARER SON CORPS EN PHOTO — dans les MÊMES conditions (Michel, 26/08/2026)
+
+> Michel, à Milo : *« Y a-t-il une évolution avec les 2 anciens bilans ? »* → *« Mais par rapport
+> à mon **physique** ? »* → *« Ça doit être une évolution de l'application : le but est aussi que
+> tu puisses comparer **visuellement** le corps, mais **dans les mêmes circonstances de
+> photographie**. »*
+> **Noté ici, pas construit** — décision de Michel le 26/08 : *« tu le marques dans idées
+> futures »*.
+
+### ⭐⭐ Le constat qui l'a déclenché, mesuré dans son export du 25/08
+
+Il a **trois** études du corps : **11/07 · 28/07 · 25/08**. Un mois et demi entre la première et
+la dernière — exactement la fenêtre où une évolution devient lisible.
+**Et aucune des trois ne se compare à la précédente.** Aucune ne porte de clé `evolution`.
+
+⛔ **Ce n'est PAS un bug — il a utilisé le mauvais des deux outils, et rien ne le lui disait :**
+
+| Outil | Ce qu'il fait | Ce qu'il garde |
+|---|---|---|
+| **Étude du corps** (celui qu'il a utilisé 3×) | `analyzeBodyStudy` n'envoie **jamais** `compare` ni les photos d'avant → analyse du jour, isolée | Le rapport écrit, **sauvegardé cloud** (`bodyStudies`). Les photos, jamais |
+| **📸 Mon suivi photos** (Espace Testeur) | Envoie **aussi les photos de la série précédente** (`payload.compare`, `prevImages`) → le serveur renvoie une vraie **évolution** | Les photos des **2 dernières séries**, **téléphone uniquement** (`bodySeries`) |
+
+Il **a** accès au second (son e-mail est dans `SUPER_TESTER_EMAILS`), et son export dit
+`bodySeries` **vide** : *il ne l'a jamais utilisé.* **Celui qui est en évidence ne compare jamais ;
+celui qui compare est caché dans l'Espace Testeur.**
+
+### 📐 La spécification vient de Milo lui-même (et elle est bonne)
+
+Michel : *« Pour un comparatif viable, il faut quoi d'après toi ? »*
+
+**La photo** — même **distance** (repère au sol) · même **angle** : face, dos, profil G, profil D,
+*les 4 systématiquement* · même **heure** : le matin à jeun, avant l'entraînement (le corps est le
+moins gonflé et le plus reproductible) · même **éclairage** : lumière naturelle indirecte ou flash
+fixe, *jamais un soleil rasant qui creuse artificiellement les muscles* · mêmes **vêtements**
+(*« un t-shirt large efface tout »*) · **posture neutre**, pas de contraction, pas de pompe
+post-séance.
+**La fréquence** — **4 à 6 semaines minimum** (en dessous, les changements sont trop faibles pour
+être visibles), calée sur le même jour de la semaine.
+**Ce qu'on croise** — le bilan de composition du même jour · les charges progressées depuis · l'état
+nutritionnel de la veille (*un repas riche en glucides gonfle temporairement*).
+
+⭐⭐ **Et sa dernière phrase est la clé produit, pas un détail** :
+> *« Le plus dur à standardiser ? **L'éclairage et la distance.** Ce sont les deux variables qui
+> faussent le plus la comparaison. **Si l'app peut guider ça avec un cadre visuel à respecter sur
+> l'écran**, tu tiens quelque chose de sérieux. »*
+
+👉 C'est-à-dire : **le travail n'est pas l'analyse, c'est la PRISE DE VUE.** Une IA qui compare deux
+photos mal cadrées produira une évolution **crédible et fausse** — le mode d'échec est **silencieux**,
+exactement comme la lecture OCR d'un rapport de balance (**R33**, ft-v974). *Avant de descendre d'un
+cran dans la fiabilité, chercher ce qui permet de vérifier.* Ici, le seul contrôle possible est
+**en amont** : imposer les conditions.
+
+### ⛔ Les points à trancher AVANT de coder (ne pas les découvrir en route)
+
+1. **Où vivent les photos ?** Aujourd'hui : **téléphone uniquement**, 2 séries gardées
+   (`_BS_KEEP=4` pour les bilans), jamais dans le cloud, jamais dans l'export, jamais chez Milo
+   (`bodySeries` est classée *exclue* avec la raison *« elles ne quittent jamais le téléphone »*).
+   ⚠️ **Conséquence** : un changement de téléphone, et **tout est perdu**. Or une comparaison à
+   4-6 semaines suppose de les **garder longtemps** — les deux exigences se contredisent.
+   👉 La piste existe déjà dans ce fichier : **photos chiffrées sur le Drive**, clé dérivée du
+   **code perso** (même l'admin ne verrait que du charabia). *C'est le seul moyen de ne plus les
+   perdre sans les exposer.*
+2. **Un seul outil ou deux ?** Deux écrans qui font presque la même chose, dont un seul compare,
+   c'est **une source de vérité de trop** (**R2**) — et Michel vient d'en payer le prix : trois
+   analyses sans aucune comparaison.
+3. **Le cadre visuel à l'écran** : silhouette-guide semi-transparente ? réutilisation de la photo
+   précédente en calque ? ⭐ **R13** — regarder d'abord ce qui existe (`showMorphoLoading`,
+   `_BODY_SLOTS`, l'overlay caméra du code-barres) avant d'inventer.
+4. **Que fait-on d'une photo hors conditions ?** ⛔ **On prévient, on ne bloque pas** (**R24**) —
+   mais la comparaison doit **dire** que les conditions ont changé, sinon elle affirme une évolution
+   qui n'en est pas une (**R29** : le coût de l'erreur décide, et ici il est élevé — *une personne
+   qui croit avoir perdu du muscle change son entraînement*).
+5. **Le rappel à 4-6 semaines** — le mécanisme existe déjà (`NEW_FEATURES`, point rouge). ⛔ Il ne
+   doit **jamais** devenir une injonction à se photographier : **Constitution P17/P23**, et une app
+   qui réclame des photos du corps est exactement ce qu'on ne veut pas être.
+
+### 👉 Les 3 questions de R3 (avant d'ajouter quoi que ce soit)
+
+**Qui produit ?** La personne, toutes les 4-6 semaines. **Qui exploite ?** La comparaison visuelle
++ Milo (qui reçoit déjà `bodyStudy`, dont `evolution` s'il existe — `coach.js` le lit **déjà** :
+*« Évolution vs bilan précédent »*). **Quel comportement change ?** Milo pourra répondre à la
+question exacte de Michel — *« par rapport à mon physique, y a-t-il une évolution ? »* — au lieu de
+ne parler que des chiffres de la balance.
+
+---
+
 ## ✅ EXPORTER **SEULEMENT L'HISTORIQUE DES SÉANCES** — LIVRÉ (ft-v988, 24/08/2026)
 
 > ⭐ **Fait la nuit même.** Les 4 questions ci-dessous ont toutes été tranchées, et la 1ʳᵉ
