@@ -2420,6 +2420,9 @@ function renderFoodJournal(){
               +`<span style="color:${cols[i.macro]};font-weight:800;white-space:nowrap;">${i.manque} g</span>`
               +`<span style="color:var(--t3);">de ${i.label} —</span>`
               +`<span style="color:var(--t1);font-weight:700;">${_escNote?_escNote(i.idee):i.idee}</span>`
+              /* ⛔ ON DIT CE QUE ÇA COUVRE VRAIMENT quand la combinaison ne suffit pas : faire
+                 croire qu'elle tombe juste serait une fausse précision (R29). */
+              +((i.couvert && i.couvert < i.manque-5)?`<span style="color:var(--t3);white-space:nowrap;">(≈ ${i.couvert} g)</span>`:'')
             +`</div>`).join('')
           /* ⛔ « à peu près » n'est pas de la modestie de façade : la portion enregistrée est
              une estimation, et le dire évite qu'on prenne ça pour une prescription au gramme. */

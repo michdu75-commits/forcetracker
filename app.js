@@ -1438,23 +1438,58 @@ function _mesAliments(max){
   return out.slice(0, max||40);
 }
 
-/* Traduit un manque en QUANTITÉ D'UN ALIMENT RÉEL.
-   ⭐ Deux écritures, et le choix n'est pas cosmétique : avec un pour-100 g connu on peut dire
-   « 150 g de poulet » — un repère qu'on peut peser. Sans lui, on ne sait rien du poids : on
-   parle alors en PORTIONS (« 2 × ton shake »), ce qui est vrai quelle que soit la portion.
-   ⛔ On n'invente JAMAIS un poids (R29) — c'est la même règle qu'en ft-v975. */
-function _quantitePour(al, macro, manque){
+/* ⚠️⚠️ PREMIÈRE VERSION JETÉE, ET LA MESURE L'A DIT TOUT DE SUITE : elle proposait UN seul
+   aliment par macro, et rendait « 5,5 × Blanc de poulet » ou « 3,5 × Huile d'olive ».
+   *Ce ne sont pas des idées, ce sont des absurdités* — personne ne mange 3 portions et demie
+   d'huile d'olive. ⭐ ET L'EXEMPLE DE MICHEL DISAIT DÉJÀ POURQUOI : *« tu peux faire 1 shake de
+   prot ET 150 g de poulet »* — une COMBINAISON, précisément parce qu'un seul aliment ne couvre
+   pas un gros manque à dose raisonnable. Le défaut n'était pas dans le calcul, il était dans
+   l'idée qu'un aliment suffit.
+
+   ⛔ CE QUI BORNE UNE PORTION RAISONNABLE, et c'est ce qui rend la suggestion crédible :
+   au plus 2 portions du même aliment, et au plus 250 g quand on connaît son pour-100 g.
+   ⭐ ON DIT CE QUE LA COMBINAISON COUVRE VRAIMENT (« ≈ 160 g sur 167 ») plutôt que de faire
+   croire qu'elle tombe juste — une fausse précision serait pire que l'approximation (R29). */
+
+/* Une quantité RAISONNABLE d'un aliment, pour couvrir au plus `manque` de cette macro.
+   Rend {texte, apport} ou null. Ne dépasse jamais les bornes ci-dessus. */
+const _RESTE_MAX_PORTIONS = 2, _RESTE_MAX_G = 250;
+function _portionRaisonnable(al, macro, manque){
   const parPortion = +al[macro] || 0;
-  if(parPortion <= 0) return null;
-  const n = manque / parPortion;
-  if(n < 0.25) return null;                                  // trop peu : ça n'aide pas
+  if(parPortion <= 0 || manque <= 0) return null;
   const p100 = al.per100 && +al.per100[macro];
   if(p100 > 0){
-    const g = Math.round(manque / p100 * 100 / 5) * 5;        // arrondi à 5 g, pas de fausse précision
-    if(g >= 10 && g <= 600) return g + ' g de ' + al.name;
+    let g = manque / p100 * 100;
+    g = Math.min(g, _RESTE_MAX_G);
+    g = Math.round(g/5)*5;                                   // pas de fausse précision
+    if(g < 10) return null;
+    return { texte: g + ' g de ' + al.name, apport: g * p100 / 100 };
   }
-  const arr = n < 0.75 ? '½' : (Math.round(n*2)/2);
-  return arr + ' × ' + al.name;
+  let n = manque / parPortion;
+  n = Math.min(n, _RESTE_MAX_PORTIONS);
+  n = Math.round(n*2)/2;                                     // au demi près
+  if(n < 0.5) return null;
+  const lbl = (n===1) ? ('1 × ' + al.name) : ((n===0.5?'½':n) + ' × ' + al.name);
+  return { texte: lbl, apport: n * parPortion };
+}
+
+/* Compose une idée pour UNE macro : jusqu'à 2 aliments à lui, à doses raisonnables.
+   ⛔ Les aliments déjà employés pour une autre macro sont écartés — sinon la même ligne
+   revient trois fois et l'idée n'en est plus une. */
+function _ideePourMacro(al, macro, manque, pris){
+  const cand = al.filter(a => !pris[a.name.toLowerCase()] && (+a[macro]||0) > 0)
+                 .sort((a,b) => (+b[macro]||0) - (+a[macro]||0));
+  const parts = [];
+  let reste = manque, couvert = 0;
+  for(const a of cand){
+    if(parts.length >= 2 || reste <= 0) break;
+    const q = _portionRaisonnable(a, macro, reste);
+    if(!q) continue;
+    parts.push(q.texte); pris[a.name.toLowerCase()] = 1;
+    couvert += q.apport; reste -= q.apport;
+  }
+  if(!parts.length) return null;
+  return { texte: parts.join(' + '), couvert: Math.round(couvert) };
 }
 
 /* Les idées : une par macro qui manque VRAIMENT, en commençant par celle qui manque le plus.
@@ -1470,15 +1505,9 @@ function _ideesPourLeReste(reste){
     .sort((a,b) => (reste[b]/_RESTE_SEUILS[b]) - (reste[a]/_RESTE_SEUILS[a]));
   const out = [], pris = {};
   manques.forEach(m=>{
-    if(out.length>=3) return;
-    /* Le meilleur aliment POUR CETTE MACRO : celui qui en apporte le plus par portion, et
-       qui n'a pas déjà servi pour une autre macro (sinon on répète le même nom trois fois). */
-    const cand = al.filter(a=>!pris[a.name.toLowerCase()] && (+a[m]||0)>0)
-                   .sort((a,b)=>(+b[m]||0)-(+a[m]||0));
-    for(const a of cand){
-      const q = _quantitePour(a, m, reste[m]);
-      if(q){ pris[a.name.toLowerCase()]=1; out.push({macro:m, label:noms[m], manque:reste[m], idee:q}); break; }
-    }
+    if(out.length >= 3) return;
+    const idee = _ideePourMacro(al, m, reste[m], pris);
+    if(idee) out.push({ macro:m, label:noms[m], manque:reste[m], idee:idee.texte, couvert:idee.couvert });
   });
   return out;
 }
