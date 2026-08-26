@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1022`** (prochaine : `ft-v1023`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1023`** (prochaine : `ft-v1024`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -436,6 +436,25 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1023 — 🏗️ LE GÉNÉRATEUR DE PROGRAMMES SORT DU CADRE « DÉBUTANT »** — 4ᵉ brique du chantier écran Séance (`docs/SEANCE-DESSAI.md` §5).
+
+**⚠️⚠️ EN MESURANT, LE VERROU N'ÉTAIT PAS LA PORTE.** Le doc disait *« enfermé derrière le bouton Créer mon parcours débutant »* — or **le bouton était déjà visible pour tout le monde**. Ce qui enfermait vraiment le générateur, c'était **quatre choses invisibles depuis la description** : le **vocabulaire** (*« parcours débutant »*, *« Premiers pas »*), le **contenu** (100 % machines guidées), le **blocage one-shot**, et un `beginnerJourney` posé **même pour un confirmé**. *Ouvrir une porte déjà ouverte n'aurait rien changé.*
+
+**⛔⛔ ET OUVRIR SANS TOUCHER AU CONTENU AURAIT ÉTÉ PIRE QUE DE NE RIEN FAIRE** — c'est le **3ᵉ cas de R30**, appliqué à l'endroit : on aurait livré un programme **tout-machines** à quelqu'un qui squatte à la barre. 👉 **D'où la 3ᵉ question — *« avec quoi tu t'entraînes ? »*** (machines / barres et haltères), **déterministe, aucune IA** — c'est-à-dire exactement ce que §2.3 du cadrage réclamait depuis le début.
+
+**⭐ UNE SEULE LISTE, TRADUITE À LA SORTIE (R2).** Écrire deux catalogues parallèles — un « machines » et un « libre » — les ferait **diverger** : on corrigerait un déséquilibre d'un côté et pas de l'autre. La structure de la séance est la même, **seul l'outil change**.
+
+**⛔⛔ LES 16 ÉQUIVALENCES SONT VÉRIFIÉES CONTRE LE CATALOGUE, PAS ÉCRITES DE MÉMOIRE** — et ça a servi : **7 de mes cibles n'existaient pas** sous le nom que je croyais (*« Élévations Latérales »* est *« Élévations Latérales (Lateral Raise) »*, *« Tractions Assistées »* est *« Traction Assistée »*, *« Soulevé de Terre Roumain »* est *« … Haltères »*…). *Un nom inventé produirait un exercice sans animation, sans muscles et sans MET — que personne ne verrait avant la salle* (**R29**).
+
+**⭐ ET J'AI FAILLI « RÉPARER » CE QUI MARCHE, une 2ᵉ fois après le `leg curl` de ft-v1001** : `Curl Machine` n'est pas au catalogue… parce que c'est un **ancien nom déclaré** (fusion du 09/08 → `Curl Pupitre Machine`), qui se résout très bien. ⚠️ **Mais le générateur écrivait ce nom PÉRIMÉ dans des programmes NEUFS** — une dette gratuite, corrigée au passage.
+
+**⛔⛔ ET LE PLUS IMPORTANT EST UNE ABSENCE : `beginnerJourney` ne se pose plus que s'il est demandé.** Avant, la ligne s'exécutait **pour tout le monde** : un confirmé qui générait un programme se retrouvait inscrit en *« phase 1 débutant »*, avec l'objectif d'étape affiché dans la modale — **et aucun moyen d'en sortir**. *C'est écrire un fait faux sur quelqu'un.* ⭐ Un **seul propriétaire** pour la condition (`_bgEstParcoursDebutant`) : trois endroits en dépendent (le nom, le drapeau, le parcours), et trois copies auraient fini par diverger.
+
+**⛔ LE BLOCAGE ONE-SHOT A SAUTÉ.** Il rendait la main avec *« Tu as déjà ton programme débutant »* — vrai pour un parcours en 12 semaines, **absurde pour un générateur** : on change de salle, on passe des machines à la barre, on veut un 2ᵉ format. *Un outil qu'on ne peut utiliser qu'une fois n'est pas un outil, c'est une étape.*
+
+**⚠️ ET LA CAPTURE A MONTRÉ UNE COCHE QUI MENT** : *« 3 séances ✅ »* était écrit **en dur**. Mesuré — on choisit **2**, la surbrillance passe bien sur « 2 séances »… et le **✅ reste sur « 3 »**. L'écran affichait donc la sélection **et** une coche qui la contredisait. *C'est la surbrillance qui dit ce qui est choisi, pas un emoji figé.*
+Tests : **parcours 1537/1537** (+10, bloc CXXVIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 102 classées 0 trou. ⭐⭐ **Le témoin le plus important du lot est l'ABSENCE** — un confirmé n'est pas inscrit d'office dans le parcours 12 semaines. ⭐ **La non-régression du débutant est mesurée entière** : même nom, mêmes machines, même `beginnerJourney`. ⭐ **Vérifié à l'écran** (modale 696 px sur 932, aucun défilement), 0 erreur JS. Fichiers : `log.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SEANCE-DESSAI.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1023. |
 
 **ft-v1022 — 📊 LE DÉBRIEF CHIFFRÉ EST CALCULÉ EN LOCAL, TOUJOURS** — 3ᵉ brique du chantier écran Séance (`docs/SEANCE-DESSAI.md` §4), et la décision qui la porte est de Michel : *« pas de réseau, il faut absolument que la personne puisse avoir un débrief »* **et** *« plus on code, moins on consomme d'API »*.
 
@@ -732,21 +751,6 @@ Tests : **parcours 1401/1401** (+9, bloc CXIII), calculs 266/266, muscles 241/24
 
 **⚠️⚠️ ET J'AI REFAIT EXACTEMENT L'ERREUR QUE ft-v984 DOCUMENTE.** `_afSuggLoc` est une variable de **script** : mon `window._afSuggLoc=[…]` ne posait rien, et le test mesurait du vide en annonçant un faux résultat. *C'est écrit noir sur blanc dans le journal de la version que je corrigeais.* Le témoin passe donc par le **vrai chemin** — on tape dans le champ, le code remplit ses suggestions — et le commentaire le dit, pour la prochaine fois. ⚠️ **6ᵉ fois de la journée** qu'un levier à côté du code produit une mesure propre et fausse (`af-name` au lieu de `af-desc`, `openAddFood` appelé trop tard, `#nu-tabs` pris pour un id, `gluc`/`lip` au lieu de `carbs`/`fat`…).
 Tests : **parcours 1389/1389** (+5, bloc CXII), calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou, check_regles vert (13 règles, archive 518 entrées, 0 perdue). **Les deux cas sont mesurés dans le même test** — avec pour-100 g (bloc grammes, portions cachées) et sans (portions, bloc grammes caché). Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1003. |
-
-**ft-v1002 — 🧹 « SQUAT SUMO » RETIRÉ DU CHOIX — et son histoire était déjà écrite** — Michel : *« squat sumo on supprime, ça me soûle »*. 2ᵉ retrait de la journée.
-
-**⭐ MÊME FORME QUE LE PULL-OVER, ET C'EST DEVENU UN RÉFLEXE** : **RETRAIT**, jamais fusion. L'identifiant `squat-sumo` reste dans `EX_IDS` + `RETIRES_VOLONTAIREMENT`, donc les séances et records déjà faits gardent leur nom, leurs muscles (fessiers/quadriceps + adducteurs, ischios, mollets, bas du dos) et leur **MET de 6,5**. Vérifié dans un vrai navigateur. *On retire du CHOIX, jamais de la MÉMOIRE.*
-
-**⭐⭐ ET SON HISTOIRE ÉTAIT DÉJÀ ÉCRITE, ce qui a évité de la redécouvrir (R30).** Le **13/08**, son illustration avait déjà été retirée — elle montrait un **haltère** tenu entre les jambes, c'est-à-dire le geste du *« Squat Gobelet »*, qui a sa propre photo au catalogue. **On affichait la photo d'un autre exercice.** Le commentaire d'alors disait qu'on gardait le fichier *« le jour où Michel trouve une figurine À LA BARRE »*. 👉 ***Elle n'est jamais venue, et au bout de 12 jours il a préféré retirer l'exercice.*** *Un retrait dont la condition de retour est écrite se referme proprement — y compris quand la réponse finit par être « non ».*
-
-**⭐ LE FICHIER ORPHELIN DORMAIT DANS LE CACHE DU SERVICE WORKER.** `squat-sumo-avec-haltere.webp` était **téléchargé par tout le monde pour rien depuis le 13/08** — 77 Ko de poids mort chez chaque utilisateur. Retiré du dépôt **et** du cache (récupérable dans git si une variante haltère naît un jour).
-
-**⛔ 7 ENDROITS TENUS ALIGNÉS** (comptés avant de toucher, famille #3 de `BUGS.md`) : les **2** entrées `EXLIB` (il était listé dans *Jambes* **et** *Fessiers*) · `EX_IDS` · `RETIRES_VOLONTAIREMENT` · les 2 équivalences d'import · `EX_EN` · le cache SW · et `A-FAIRE-SUR-PC.md`, dont la tâche « trouver une figurine à la barre » **n'avait plus d'objet** et a été close avec son histoire.
-
-**⛔ LES 2 ÉQUIVALENCES NE SONT PAS REDIRIGÉES, EXPRÈS.** `sumo squat` et `wide stance squat` ne visent plus rien, parce qu'**aucune autre fiche ne décrit ce geste**. Un import « sumo squat » sera donc proposé comme exercice **NOUVEAU** — ce qui est honnête — plutôt que rattaché de force au mauvais squat (**R29**).
-
-**⭐⭐ ET LE TÉMOIN ÉCRIT LE MATIN MÊME A SERVI DÈS LE CAS SUIVANT.** La règle générale posée en ft-v1001 — *« aucune équivalence d'import ne vise un exercice introuvable »* — est restée **VERTE**, ce qui prouve que les 2 alias ont bien été retirés. *Sans elle, ils seraient restés à viser un fantôme, exactement comme les 4 du pull-over qui traînaient depuis des semaines.* **R17 paie deux fois dans la même matinée.**
-Tests : **parcours 1384/1384** (+3), croisés 50/50 (empreinte régénérée : **une seule entrée disparaît**), calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou. ⭐ **La preuve est fonctionnelle** : séance et record rejoués dans un navigateur après retrait — nom **non renommé**, muscles et MET intacts. ⚠️ **Et un de mes témoins a rougi À TORT au premier jet** : il cherchait le nom du fichier dans **tout** `sw.js` et le trouvait dans le **commentaire de version**, qui le nomme justement pour expliquer le retrait. *Il accusait la trace écrite du retrait au lieu du cache* — même piège qu'en ft-v974. Il mesure désormais la **liste** du cache (`'./exercises/…'`) et rien d'autre. 🤝 Protocole de partage appliqué. Fichiers : `constants.js`, `log.js`, `sw.js`, `exercises/squat-sumo-avec-haltere.webp` (supprimé), `tests/croises/runner.js`, `tests/croises/catalogue-reference.json`, `tests/parcours/runner.js`, `A-FAIRE-SUR-PC.md`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1002. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

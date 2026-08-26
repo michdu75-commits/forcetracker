@@ -6,7 +6,19 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1022`.
+- **Version en ligne (live) :** `ft-v1023`.
+- 🏗️⭐⭐ **LE GÉNÉRATEUR DE PROGRAMMES SORT DU CADRE « DÉBUTANT » — LIVRÉ** (ft-v1023).
+  4ᵉ brique du chantier écran Séance (`docs/SEANCE-DESSAI.md` §5).
+  ⚠️⚠️ **Le verrou n'était PAS la porte** : le bouton était déjà visible pour tout le monde.
+  Ce qui enfermait le générateur : le **vocabulaire**, le **contenu** (100 % machines), le
+  blocage **one-shot**, et `beginnerJourney` posé **même pour un confirmé**.
+  ⛔⛔ **Ouvrir sans toucher au contenu aurait été pire que de ne rien faire** (3ᵉ cas de R30) →
+  d'où la **3ᵉ question** *« avec quoi tu t'entraînes ? »*, déterministe, aucune IA.
+  ⭐ **Une seule liste, traduite à la sortie** (R2) ; les **16 équivalences vérifiées contre le
+  catalogue** — 7 de mes cibles n'existaient pas sous le nom que je croyais.
+  ⛔⛔ **Un confirmé n'est plus inscrit d'office** en « phase 1 débutant » — c'était un fait faux
+  écrit sur lui, sans moyen d'en sortir.
+  ⏭️ **Reste du chantier Séance** : ⑤ ranger « Scanner ton programme » et « Importer un journal ».
 - 📊⭐⭐ **LE DÉBRIEF CHIFFRÉ EST CALCULÉ EN LOCAL, TOUJOURS — LIVRÉ** (ft-v1022). 3ᵉ brique du
   chantier écran Séance (`docs/SEANCE-DESSAI.md` §4). Michel : *« pas de réseau, il faut
   absolument que la personne puisse avoir un débrief »* **et** *« plus on code, moins on

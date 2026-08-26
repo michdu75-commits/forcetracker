@@ -13931,6 +13931,102 @@ console.log('\n-- CXXVII. Le débrief chiffré est calculé en LOCAL, toujours (
   await cx.close();
 }
 
+
+/* == BLOC CXXVIII - LE GENERATEUR SORT DU CADRE « DEBUTANT » (ft-v1023) ==
+   Brique ④ du chantier ecran Seance (`docs/SEANCE-DESSAI.md` §5).
+   ⚠️⚠️ EN MESURANT, LE VERROU N'ETAIT PAS LA PORTE : le bouton etait deja visible pour tout le
+   monde. Ce qui enfermait le generateur, c'etait le VOCABULAIRE (« parcours debutant »,
+   « Premiers pas »), le CONTENU (100 % machines guidees), le blocage ONE-SHOT, et un
+   `beginnerJourney` pose meme pour un confirme.
+   ⛔⛔ ET LE TEMOIN LE PLUS IMPORTANT DU LOT EST UNE ABSENCE : un confirme qui genere un
+   programme ne doit PAS se retrouver inscrit en « phase 1 debutant ». Avant, cette ligne
+   s'executait pour tout le monde — un fait faux ecrit sur quelqu'un, sans moyen d'en sortir.
+   ⛔ OUVRIR LA PORTE SANS TOUCHER AU CONTENU AURAIT ETE PIRE QUE DE NE RIEN FAIRE (3e cas de
+   R30) : on aurait livre un programme tout-machines a quelqu'un qui squatte a la barre.
+   ⛔ Et les 16 cibles de `_EX_LIBRE` sont verifiees CONTRE LE CATALOGUE, pas ecrites de
+   memoire : un nom inconnu produirait un exercice sans animation, sans muscles et sans MET,
+   que personne ne verrait avant la salle (R29). */
+console.log('\n-- CXXVIII. Le générateur de programmes sort du cadre « débutant » (ft-v1023) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_level:'confirme',ft4_gender:'H'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const G=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    const gen=(lvl,matos,style,freq)=>{
+      S.level=lvl; S.programmes=[]; S.beginnerJourney=null; persist();
+      openBeginnerSetup(); _bgSetMatos(matos); _bgSetStyle(style||'fullbody'); _bgSetFreq(freq||3);
+      createBeginnerProg();
+      const p=S.programmes[0];
+      return {nom:p.name, beginner:!!p.beginner, parcours:!!S.beginnerJourney,
+              exs:[].concat.apply([],(p.days||[]).map(d=>(d.exs||[]).map(e=>e.name)))};
+    };
+    // ① un CONFIRMÉ en poids libres
+    o.confirme=gen('confirme','libre');
+    // ② un DÉBUTANT sur machines — la non-régression
+    o.debutant=gen('debutant','machines');
+    // ③ le one-shot ne bloque plus : on en génère un 2ᵉ
+    S.level='debutant'; S.programmes=[]; S.beginnerJourney=null; persist();
+    openBeginnerSetup(); createBeginnerProg();
+    openBeginnerSetup(); _bgSetMatos('libre'); createBeginnerProg();
+    o.deux=S.programmes.length;
+    o.noms=S.programmes.map(p=>p.name);
+    // ④ le bouton ne disparaît plus
+    openProgModal();
+    const bb=document.getElementById('prog-beginner-btn');
+    o.boutonVisible=bb.style.display!=='none';
+    o.boutonTxt=bb.textContent.trim();
+    // ⑤ AUCUN exercice généré n'est inconnu du catalogue
+    const tous=[].concat.apply([],S.programmes.map(p=>[].concat.apply([],(p.days||[]).map(d=>(d.exs||[]).map(e=>e.name)))));
+    o.inconnus=[...new Set(tous)].filter(n=>!exId(exNomActuel(n)));
+    // ⑥ les 16 cibles de la table, une par une
+    o.ciblesKO=Object.keys(_EX_LIBRE).filter(k=>!exId(exNomActuel(k))||!exId(exNomActuel(_EX_LIBRE[k])));
+    o.nCibles=Object.keys(_EX_LIBRE).length;
+    // ⑦ machines et libre ne rendent JAMAIS le même exercice au même poste
+    const m=gen('confirme','machines').exs, l=gen('confirme','libre').exs;
+    o.memePoste=m.map((x,i)=>[x,l[i]]).filter(pr=>pr[0]===pr[1] && !/Gainage|Curl Incliné/.test(pr[0]));
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(G.err)t('CXXVIII n\'a pas pu tourner',false,G.err);
+  else{
+    t('⛔⛔ UN CONFIRMÉ N\'EST PAS INSCRIT D\'OFFICE dans le parcours 12 semaines (fait faux)',
+      G.confirme.parcours===false && G.confirme.beginner===false,
+      JSON.stringify({parcours:G.confirme.parcours,beginner:G.confirme.beginner}));
+    t('⭐⭐ … et il reçoit un programme en POIDS LIBRES, pas 100 % machines',
+      /Squat à la Barre/.test(G.confirme.exs.join('|')) && !/Press Jambes 45/.test(G.confirme.exs.join('|')),
+      JSON.stringify(G.confirme.exs.slice(0,4)));
+    t('⭐ … et le nom ne dit plus « Premiers pas »',
+      !/Premiers pas/.test(G.confirme.nom) && /barres et haltères/.test(G.confirme.nom), G.confirme.nom);
+    t('⛔⛔ NON-RÉGRESSION : un DÉBUTANT garde son parcours à l\'identique',
+      G.debutant.parcours===true && G.debutant.beginner===true && /^Premiers pas/.test(G.debutant.nom)
+      && /Press Jambes 45/.test(G.debutant.exs.join('|')),
+      JSON.stringify({nom:G.debutant.nom,parcours:G.debutant.parcours}));
+    t('⛔ le blocage ONE-SHOT a sauté : on peut générer un 2ᵉ programme',
+      G.deux===2 && G.noms[0]!==G.noms[1], JSON.stringify(G.noms));
+    t('⛔ … et le bouton ne disparaît plus (il change de libellé)',
+      G.boutonVisible===true && /Générer un programme complet/.test(G.boutonTxt), G.boutonTxt);
+    t('⛔⛔ AUCUN exercice généré n\'est inconnu du catalogue (R29)',
+      G.inconnus.length===0, JSON.stringify(G.inconnus));
+    t('⛔⛔ … et les DEUX bouts de chaque équivalence existent, une par une',
+      G.ciblesKO.length===0 && G.nCibles>=15,
+      JSON.stringify({cibles:G.nCibles,ko:G.ciblesKO}));
+    t('⭐ machines et poids libres ne rendent jamais le MÊME exercice au même poste',
+      G.memePoste.length===0, JSON.stringify(G.memePoste.slice(0,3)));
+  }
+  await cx.close();
+}
+/* ⛔ Et la coche qui MENTAIT : « 3 séances ✅ » était écrite en dur, donc elle restait sur 3
+   même après avoir choisi 2 — l'écran affichait la sélection en rouge ET une coche qui la
+   contredisait. C'est la surbrillance qui dit ce qui est choisi. */
+t('⛔ aucun ✅ figé sur un des deux choix de fréquence (la surbrillance suffit)',
+  fs.readFileSync(path.join(ROOT,'index.html'),'utf8').indexOf('3 séances ✅')<0, '');
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

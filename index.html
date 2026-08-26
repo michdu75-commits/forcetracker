@@ -2731,16 +2731,19 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   </div>
 </div>
 
-<!-- OVERLAY: Setup parcours débutant (Étape 1 gratuite) -->
+<!-- OVERLAY: Générateur de programme — 3 questions, sans IA (ex-« parcours débutant », ouvert à tous en ft-v1023) -->
 <div class="overlay" id="ov-beginner-setup">
   <div class="modal">
     <div class="modal-handle"></div>
-    <h2>🌱 Ton parcours débutant</h2>
-    <p style="font-size:14px;color:var(--t2);margin:-4px 0 14px;">On te crée un programme sur mesure, sur machines (en sécurité). 2 petites questions 👇</p>
+    <h2 id="bg-titre">🌱 Ton parcours débutant</h2>
+    <p id="bg-sous" style="font-size:14px;color:var(--t2);margin:-4px 0 14px;">On te crée un programme sur mesure, sur machines (en sécurité). 3 petites questions 👇</p>
+    <!-- ⛔ PAS DE ✅ EN DUR sur un des deux choix (retiré ft-v1023) : il restait sur « 3 séances »
+         même après avoir choisi 2, donc l'écran affichait la sélection en rouge ET une coche
+         qui la contredisait. C'est la surbrillance qui dit ce qui est choisi, pas un emoji figé. -->
     <div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:8px;">Combien de séances par semaine ?</div>
     <div style="display:flex;gap:8px;margin-bottom:16px;">
       <button class="goal-btn" id="bg-freq-2" onclick="_bgSetFreq(2)" style="flex:1;padding:14px 4px;font-size:14px;"><span>2 séances</span></button>
-      <button class="goal-btn" id="bg-freq-3" onclick="_bgSetFreq(3)" style="flex:1;padding:14px 4px;font-size:14px;"><span>3 séances ✅</span></button>
+      <button class="goal-btn" id="bg-freq-3" onclick="_bgSetFreq(3)" style="flex:1;padding:14px 4px;font-size:14px;"><span>3 séances</span></button>
     </div>
     <div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:8px;">Quel style ?</div>
     <div style="display:flex;gap:8px;margin-bottom:8px;">
@@ -2748,6 +2751,15 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="goal-btn" id="bg-style-split" onclick="_bgSetStyle('split')" style="flex:1;padding:14px 4px;font-size:14px;"><span id="bg-style-split-lbl">Push / Pull / Legs</span></button>
     </div>
     <div id="bg-style-desc" style="font-size:13px;color:var(--t3);background:var(--bg3);border-radius:8px;padding:9px 12px;line-height:1.45;margin-bottom:16px;"></div>
+    <!-- ⭐ 3ᵉ QUESTION (ft-v1023) : AVEC QUOI TU T'ENTRAÎNES. Sans elle, ouvrir le générateur à
+         tout le monde livrait un programme 100 % machines à quelqu'un qui squatte à la barre —
+         donc l'ouvrir aurait été PIRE que de le laisser fermé. Déterministe, aucune IA. -->
+    <div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:8px;">Avec quoi tu t'entraînes ?</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <button class="goal-btn" id="bg-matos-machines" onclick="_bgSetMatos('machines')" style="flex:1;padding:14px 4px;font-size:14px;"><span>Machines</span></button>
+      <button class="goal-btn" id="bg-matos-libre" onclick="_bgSetMatos('libre')" style="flex:1;padding:14px 4px;font-size:14px;"><span>Barres &amp; haltères</span></button>
+    </div>
+    <div id="bg-matos-desc" style="font-size:13px;color:var(--t3);background:var(--bg3);border-radius:8px;padding:9px 12px;line-height:1.45;margin-bottom:16px;"></div>
     <button class="btn btn-red" onclick="createBeginnerProg()" style="width:100%;padding:15px;font-size:16px;">Créer mon programme 💪</button>
     <div class="modal-btns" style="margin-top:8px;"><button class="btn btn-bg2" onclick="closeBeginnerSetup()">Annuler</button></div>
   </div>

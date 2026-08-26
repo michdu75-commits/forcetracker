@@ -6133,58 +6133,123 @@ function loadProgDay(progIdx,dayIdx){
 // Objectif = 3 semaines. Les mouvements techniques (squat/couché/soulevé) et les
 // étapes suivantes (volume ↑, passage Intermédiaire) arrivent plus tard.
 const BEGINNER_PHASE1_WEEKS=3;
-function _beginnerProg(gender, style, freq){
+/* ══ 🔀 MACHINES ↔ POIDS LIBRES — la 3ᵉ question du générateur (ft-v1023) ═══════════════
+   Brique ④ du chantier écran Séance (`docs/SEANCE-DESSAI.md` §5) : *sortir le générateur du
+   cadre « débutant »*.
+   ⚠️ EN MESURANT, LE VERROU N'ÉTAIT PAS LA PORTE. Le bouton était déjà visible pour tout le
+   monde ; ce qui enfermait le générateur, c'était **le vocabulaire** (« parcours débutant »,
+   « Premiers pas »), **le contenu** — 100 % machines guidées — le **blocage one-shot**, et un
+   `beginnerJourney` posé même pour un confirmé.
+   ⛔⛔ OUVRIR LA PORTE SANS TOUCHER AU CONTENU AURAIT ÉTÉ PIRE QUE DE NE RIEN FAIRE : on aurait
+   livré un programme tout-machines à quelqu'un qui squatte à la barre. *C'est la leçon du 3ᵉ cas
+   de R30 — promouvoir un essai incomplet coûte plus cher que de le laisser fermé.*
+   ⛔ TOUTES LES CIBLES SONT VÉRIFIÉES AU CATALOGUE (les 324 noms, depuis `export/`), pas écrites
+   de mémoire : un nom inventé produirait un programme dont les exercices n'ont ni animation, ni
+   muscles, ni MET — et personne ne le verrait avant la salle (R29).
+   ⭐ Et `Curl Machine` est devenu `Curl Pupitre Machine` : l'ancien nom se résout encore
+   (fusion du 09/08), mais écrire un nom PÉRIMÉ dans un programme NEUF est une dette gratuite. */
+/* ⭐ UN SEUL PROPRIÉTAIRE POUR « EST-CE UN PARCOURS DÉBUTANT ? » (R2). Trois endroits en
+   dépendent — le nom du programme, le drapeau `beginner`, et `S.beginnerJourney`. Trois
+   copies de la même condition finiraient par diverger, et c'est la DONNÉE qui mentirait. */
+function _bgEstParcoursDebutant(matos){
+  return (S.level==='debutant' || !S.level) && (matos||'machines')==='machines';
+}
+/* Le nom SUIT le choix : « Premiers pas » est une promesse d'accompagnement, pas une étiquette
+   décorative. Un confirmé qui génère un Push/Pull/Legs à la barre lit le nom de ce qu'il a
+   demandé. */
+function _bgNom(matos, structure){
+  if(_bgEstParcoursDebutant(matos)) return 'Premiers pas — '+structure;
+  return structure + ((matos||'machines')==='libre' ? ' — barres et haltères' : ' — machines');
+}
+const _EX_LIBRE={
+  'Chest Press Machine Horizontale':'Développé Couché',
+  'Chest Press Machine Inclinée':'Développé Incliné Haltères',
+  'Pec Deck':'Écarté Haltères',
+  'Développé Épaules Machine':'Développé Militaire Haltères',
+  'Élévations Latérales Machine':'Élévations Latérales (Lateral Raise)',
+  'Tirage Poulie Haute (Lat Pulldown)':'Traction Assistée',
+  'Tirage Poulie Haute Prise Serrée':'Tirage Poulie Basse Prise Serrée',
+  'Rowing Machine (Tirage Horizontal)':'Rowing Haltère (Tirage Horizontal)',
+  'Curl Pupitre Machine':'Curl Haltères',
+  'Triceps Machine':'Extension Triceps',
+  'Press Jambes 45°':'Squat à la Barre',
+  'Extension Quadriceps (Leg Extension)':'Fentes',
+  'Leg Curl Assis Machine':'Soulevé de Terre Roumain Haltères',
+  'Hip Thrust Machine (Poussée de Hanche)':'Hip Thrust Barre (Poussée de Hanche)',
+  'Abduction Cuisses (Leg Abduction)':'Fentes Latérales',
+  'Crunch Machine':'Crunch'
+  /* ⛔ « Curl Incliné » et « Gainage » n'ont PAS d'entrée : ils sont déjà en poids libre / au
+     poids du corps. Une équivalence vers eux-mêmes serait du bruit qu'il faudrait maintenir. */
+};
+function _beginnerProg(gender, style, freq, matos){
   const F = gender==='F';
   freq = (freq===2)?2:3;
+  /* ⭐ UNE SEULE LISTE, TRADUITE À LA SORTIE (R2). Écrire deux catalogues parallèles — un
+     « machines » et un « libre » — les ferait diverger : on corrigerait un déséquilibre d'un
+     côté et pas de l'autre. La structure de la séance est la même, seul l'outil change. */
+  const _tr = n => (matos==='libre' && _EX_LIBRE[n]) ? _EX_LIBRE[n] : n;
   const _s3=(reps)=>[{kg:0,reps,type:'N',rest:0},{kg:0,reps,type:'N',rest:0},{kg:0,reps,type:'N',rest:0}];
-  const ex=(name,reps)=>({name,sets:_s3(reps||12)}); // objet frais à chaque appel (pas de référence partagée)
+  const ex=(name,reps)=>({name:_tr(name),sets:_s3(reps||12)}); // objet frais à chaque appel (pas de référence partagée)
   let days, name;
   if(style==='split'){
     if(freq===3){
       // Push / Pull / Legs
-      name='Premiers pas — Push/Pull/Legs';
+      name=_bgNom(matos,'Push/Pull/Legs');
       const legs=[ex('Press Jambes 45°'),ex('Leg Curl Assis Machine'),ex('Extension Quadriceps (Leg Extension)'),ex('Hip Thrust Machine (Poussée de Hanche)')];
       if(F)legs.push(ex('Abduction Cuisses (Leg Abduction)'));
       legs.push(ex('Gainage',30));
       days=[
         {label:'Poussée',exs:[ex('Chest Press Machine Horizontale'),ex('Pec Deck'),ex('Développé Épaules Machine'),ex('Élévations Latérales Machine'),ex('Triceps Machine')]},
-        {label:'Tirage',exs:[ex('Tirage Poulie Haute (Lat Pulldown)'),ex('Rowing Machine (Tirage Horizontal)'),ex('Tirage Poulie Haute Prise Serrée'),ex('Curl Machine'),ex('Curl Incliné')]},
+        {label:'Tirage',exs:[ex('Tirage Poulie Haute (Lat Pulldown)'),ex('Rowing Machine (Tirage Horizontal)'),ex('Tirage Poulie Haute Prise Serrée'),ex('Curl Pupitre Machine'),ex('Curl Incliné')]},
         {label:'Jambes',exs:legs},
       ];
     }else{
       // Haut / Bas (2 jours)
-      name='Premiers pas — Haut/Bas';
+      name=_bgNom(matos,'Haut/Bas');
       const bas=[ex('Press Jambes 45°'),ex('Leg Curl Assis Machine'),ex('Extension Quadriceps (Leg Extension)'),ex('Hip Thrust Machine (Poussée de Hanche)')];
       if(F)bas.push(ex('Abduction Cuisses (Leg Abduction)'));
       bas.push(ex('Gainage',30));
       days=[
-        {label:'Haut du corps',exs:[ex('Chest Press Machine Horizontale'),ex('Tirage Poulie Haute (Lat Pulldown)'),ex('Développé Épaules Machine'),ex('Curl Machine'),ex('Triceps Machine')]},
+        {label:'Haut du corps',exs:[ex('Chest Press Machine Horizontale'),ex('Tirage Poulie Haute (Lat Pulldown)'),ex('Développé Épaules Machine'),ex('Curl Pupitre Machine'),ex('Triceps Machine')]},
         {label:'Bas du corps',exs:bas},
       ];
     }
   }else{
     // Full Body (tout le corps à chaque séance)
-    name='Premiers pas — Full Body';
+    name=_bgNom(matos,'Full Body');
     const fb1=[ex('Press Jambes 45°'),ex('Chest Press Machine Horizontale'),ex('Tirage Poulie Haute (Lat Pulldown)'),ex('Développé Épaules Machine')];
     if(F)fb1.push(ex('Hip Thrust Machine (Poussée de Hanche)'));
     fb1.push(ex('Gainage',30));
-    const fb2=[ex('Leg Curl Assis Machine'),ex('Pec Deck'),ex('Rowing Machine (Tirage Horizontal)'),ex('Curl Machine'),ex('Crunch Machine',15)];
+    const fb2=[ex('Leg Curl Assis Machine'),ex('Pec Deck'),ex('Rowing Machine (Tirage Horizontal)'),ex('Curl Pupitre Machine'),ex('Crunch Machine',15)];
     const fb3=[ex('Extension Quadriceps (Leg Extension)'),ex('Chest Press Machine Inclinée'),ex('Tirage Poulie Haute Prise Serrée'),ex('Triceps Machine'),ex('Gainage',30)];
     days=(freq===2)?[{label:'Séance A',exs:fb1},{label:'Séance B',exs:fb2}]
                    :[{label:'Séance A',exs:fb1},{label:'Séance B',exs:fb2},{label:'Séance C',exs:fb3}];
   }
-  return {id:'p_beginner_'+Date.now(),name,beginner:true,bgStyle:style,bgFreq:freq,days};
+  /* ⛔ `beginner:true` NE SE POSE PLUS D'OFFICE (ft-v1023). Ce drapeau sert au parcours en
+     12 semaines et à `_hasBeginnerProg` : le coller sur le programme d'un confirmé, c'est
+     écrire un fait faux dans ses données — et il verrait apparaître un objectif d'étape 1
+     qu'il n'a jamais demandé. */
+  const prog={id:'p_beginner_'+Date.now(),name,bgStyle:style,bgFreq:freq,bgMatos:matos||'machines',days};
+  if(_bgEstParcoursDebutant(matos)) prog.beginner=true;
+  return prog;
 }
 function _hasBeginnerProg(){return (S.programmes||[]).some(p=>p&&(p.beginner||(p.name||'').indexOf('Premiers pas')===0));}
 
 // ── Setup du parcours débutant (les 2 questions) ──
-let _bgFreq=3,_bgStyle='fullbody';
+let _bgFreq=3,_bgStyle='fullbody',_bgMatos='machines';
 function openBeginnerSetup(){
-  if(_hasBeginnerProg()){renderProgModal();toast('Tu as déjà ton programme débutant','info');return;}
-  _bgFreq=3;_bgStyle='fullbody';
+  /* ⛔ LE BLOCAGE ONE-SHOT A SAUTÉ (ft-v1023). Il rendait la main avec « Tu as déjà ton
+     programme débutant » — vrai pour un parcours en 12 semaines, absurde pour un générateur :
+     on change de salle, on passe des machines à la barre, on veut un 2ᵉ format. *Un outil
+     qu'on ne peut utiliser qu'une fois n'est pas un outil, c'est une étape.* */
+  _bgFreq=3; _bgStyle='fullbody';
+  /* Le défaut de la 3ᵉ question suit le niveau DÉCLARÉ — on ne devine pas, on propose le plus
+     sûr à qui débute et le plus probable aux autres. Elle reste modifiable en un tap. */
+  _bgMatos=(S.level==='debutant'||!S.level)?'machines':'libre';
   _renderBeginnerSetup();
   document.getElementById('ov-beginner-setup').classList.add('open');
 }
+function _bgSetMatos(m){_bgMatos=(m==='libre')?'libre':'machines';_renderBeginnerSetup();}
 function closeBeginnerSetup(){document.getElementById('ov-beginner-setup').classList.remove('open');}
 function _bgSetFreq(n){_bgFreq=(n===2)?2:3;_renderBeginnerSetup();}
 function _bgSetStyle(s){_bgStyle=(s==='split')?'split':'fullbody';_renderBeginnerSetup();}
@@ -6192,6 +6257,19 @@ function _renderBeginnerSetup(){
   const tg=(id,on)=>{const e=document.getElementById(id);if(e)e.classList.toggle('active',on);};
   tg('bg-freq-2',_bgFreq===2);tg('bg-freq-3',_bgFreq===3);
   tg('bg-style-fullbody',_bgStyle==='fullbody');tg('bg-style-split',_bgStyle==='split');
+  tg('bg-matos-machines',_bgMatos==='machines');tg('bg-matos-libre',_bgMatos==='libre');
+  /* Le titre DIT ce qui va être créé — sinon quelqu'un qui n'est pas débutant lit
+     « Ton parcours débutant » et referme (R23 : un libellé qui ment fait fuir). */
+  const ti=document.getElementById('bg-titre');
+  if(ti)ti.textContent=_bgEstParcoursDebutant(_bgMatos)?'🌱 Ton parcours débutant':'🏗️ Créer un programme';
+  const so=document.getElementById('bg-sous');
+  if(so)so.textContent=_bgEstParcoursDebutant(_bgMatos)
+    ? 'On te crée un programme sur mesure, sur machines (en sécurité). 3 petites questions 👇'
+    : 'On te monte un programme complet et équilibré. 3 questions, aucune IA — c\'est instantané et ça marche hors ligne 👇';
+  const md=document.getElementById('bg-matos-desc');
+  if(md)md.textContent=_bgMatos==='machines'
+    ? 'Machines guidées : le mouvement est tenu pour toi. Le plus sûr pour apprendre, et pour reprendre.'
+    : 'Barres et haltères : plus de muscles stabilisateurs, plus de transfert — il faut maîtriser la technique.';
   const sl=document.getElementById('bg-style-split-lbl');if(sl)sl.textContent=_bgFreq===3?'Push / Pull / Legs':'Haut / Bas';
   const d=document.getElementById('bg-style-desc');
   if(d){
@@ -6204,13 +6282,19 @@ function _renderBeginnerSetup(){
 }
 function createBeginnerProg(){
   if(!S.programmes)S.programmes=[];
-  if(_hasBeginnerProg()){closeBeginnerSetup();renderProgModal();return;}
-  S.programmes.push(_beginnerProg(S.gender,_bgStyle,_bgFreq));
-  S.beginnerJourney={style:_bgStyle,freq:_bgFreq,startDate:today(),phase:1};
+  const prog=_beginnerProg(S.gender,_bgStyle,_bgFreq,_bgMatos);
+  S.programmes.push(prog);
+  /* ⛔⛔ LE PARCOURS EN 12 SEMAINES NE SE POSE QUE S'IL EST DEMANDÉ (ft-v1023). Avant, cette
+     ligne s'exécutait pour TOUT LE MONDE : un confirmé qui générait un programme se retrouvait
+     inscrit en « phase 1 débutant », avec l'objectif d'étape affiché dans la modale. *C'est
+     écrire un fait faux sur quelqu'un* (R29) — et il n'avait aucun moyen d'en sortir.
+     ⛔ Et on n'écrase pas un parcours déjà commencé : il porte une date de départ. */
+  if(_bgEstParcoursDebutant(_bgMatos) && !S.beginnerJourney)
+    S.beginnerJourney={style:_bgStyle,freq:_bgFreq,startDate:today(),phase:1};
   persist();
   closeBeginnerSetup();
   openProgModal();
-  toast('Ton programme est prêt ! 🌱 '+_bgFreq+' séances/semaine','success');
+  toast('Ton programme est prêt ! '+(prog.beginner?'🌱 ':'')+_bgFreq+' séances/semaine','success');
 }
 // Ancien point d'entrée conservé (bouton) → ouvre désormais le setup
 function addBeginnerProg(){openBeginnerSetup();}
@@ -6235,7 +6319,14 @@ function renderProgModal(){
   if(!S.programmes)S.programmes=[];
   const progs=S.programmes;
   const begBtn=document.getElementById('prog-beginner-btn');
-  if(begBtn)begBtn.style.display=_hasBeginnerProg()?'none':'block';
+  /* ⛔ LE BOUTON NE DISPARAÎT PLUS (ft-v1023) : il s'effaçait dès qu'un programme « débutant »
+     existait, ce qui fermait le générateur à vie. Son LIBELLÉ suit le contexte. */
+  if(begBtn){
+    begBtn.style.display='block';
+    begBtn.textContent=_hasBeginnerProg()||!(S.level==='debutant'||!S.level)
+      ? '🏗️ Générer un programme complet'
+      : '🌱 Créer mon parcours débutant';
+  }
   const begGoal=document.getElementById('prog-beginner-goal');
   if(begGoal){const g=_beginnerGoalText();begGoal.style.display=g?'block':'none';begGoal.textContent=g;}
   const list=document.getElementById('prog-list-modal');

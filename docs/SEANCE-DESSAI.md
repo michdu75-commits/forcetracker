@@ -205,7 +205,12 @@ le plus sensible de l'app (**règle d'or #9** : le bouton central ne bouge pas).
    lieu de le remplacer. ⚠️ **Une correction au cadrage de ce doc** : `_validationSeance` y était
    listée comme utilisable — elle ne l'est pas, elle est écrite pour ce que Milo **propose**
    (**R14**). Détail : journal ft-v1022.
-4. **Sortir le générateur de séances du cadre « débutant »** (§5).
+4. ~~**Sortir le générateur de séances du cadre « débutant »** (§5)~~ — ✅ **LIVRÉ en ft-v1023.**
+   ⚠️ **Correction au cadrage de ce doc** : il disait le générateur *« enfermé derrière le bouton
+   Créer mon parcours débutant »* — **le bouton était déjà visible pour tout le monde**. Le vrai
+   verrou était ailleurs (vocabulaire · contenu 100 % machines · blocage one-shot ·
+   `beginnerJourney` posé même pour un confirmé). La **3ᵉ question** demandée au §2.3 existe
+   désormais : *« avec quoi tu t'entraînes ? »*, déterministe, sans IA.
 5. **Ranger** « Scanner ton programme » et « Importer un journal » : ils servent une fois, pas à
    chaque séance, et occupent autant de place visuelle que l'action principale.
 
