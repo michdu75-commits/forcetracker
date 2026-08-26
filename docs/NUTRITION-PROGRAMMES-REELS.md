@@ -428,3 +428,72 @@ utilisateur en recomposition lit donc : *« l'évolution attendue est **variable
 lui, en donne un net : *« 300 à 500 g maximum par semaine, pour garantir que la perte vient du
 gras et non du muscle »* — cohérent avec la fourchette « perte » déjà présente dans l'app.
 ⛔ **Non corrigé : c'est un chiffre de santé sur SON écran, la décision lui revient** (**R29**).
+
+
+---
+
+## 10. 🔬 UN COMPARATIF EXTÉRIEUR, CONFRONTÉ À SON TOUR *(26/08/2026)*
+
+Michel a confié un **comparatif** (rédigé par une autre IA) entre le plan powerbuilding et les
+diètes de la coach, centré sur le **rapport glycémique**. Il est bon, et il est **honnête sur sa
+méthode** (il écrit lui-même que la partie glycémique est *« une analyse externe, pas une donnée
+présente dans les documents »*). Vérifié point par point, comme n'importe quelle spécification
+venue de l'extérieur (**famille 18 de `BUGS.md`, écrite le matin même**).
+
+### ⭐⭐ Il a vu des documents que je n'ai PAS
+
+Il parle de **quatre** plans alimentaires et cite une version de **juin** ; je n'en ai lu que
+**trois** (14 déc · 29 janv · 20 avril). **Mesuré** : *boulgour · semoule · miel · sirop d'agave ·
+Vitargo · spiruline · tofu · pois chiches · haricots rouges* — **aucun n'apparaît dans mes trois
+fichiers**. 👉 **Il existe donc au moins un plan que je n'ai pas vu**, et il est plus varié.
+*Écrit ici pour que personne ne prenne mon §2 pour un inventaire complet.*
+
+### ⭐⭐⭐ Convergence indépendante sur le point qui décide de tout
+
+Il écrit : `230 g pommes de terre ≠ 250 g riz cuit`, et *« Force Tracker pourrait **recalculer
+automatiquement** les portions après chaque substitution »*.
+
+**C'est exactement ce que j'ai mesuré (×1,8 à ×2,9) et exactement la conclusion que j'en ai
+tirée** — garder la forme, calculer les nombres. **Deux analyses séparées, sans se connaître,
+même verdict.** *C'est la meilleure validation qu'on puisse avoir sur ce point.*
+
+### ✅ Son arithmétique est juste — et l'app a déjà le contrôle qu'il réclame
+
+Il relève que `205 P + 86 L + 205 G` = **2 414 kcal**, pas les 2 400 annoncés (et **2 254** au
+repos, pas 2 200). **Vérifié : exact.**
+
+⚠️ **Mais sa conclusion mérite une précision.** Il écrit qu'*« une application devrait éliminer ce
+genre d'incohérence automatiquement »* : **l'app a déjà ce contrôle** — `_coherenceKcal` (`app.js`,
+ft-v972), né du *« 1117 kcal pour 26 P / 1 G / 1 L »* que Michel avait laissé passer. Deux
+nuances :
+- il ne s'applique qu'aux **aliments saisis**, jamais à une **cible** — *le mécanisme existe, il
+  ne vise qu'un côté* (**R13**) ;
+- et son seuil est **large exprès** (25 % **et** 60 kcal). Sur 14 kcal d'écart, **il se tairait —
+  et il aurait raison** : c'est un arrondi. *Un contrôle qui crie pour un arrondi finit ignoré*
+  (**R19**).
+
+### ⭐⭐ Son §11 dit ce que j'avais écrit, et c'est le point le plus important du sujet
+
+> *« Le repas compte plus que l'IG isolé. Force Tracker ne devrait pas afficher `IG du riz = X`,
+> mais la charge glucidique de la portion + la composition du repas + le timing. »*
+
+**Même conclusion que la mienne**, et son §14 ajoute le garde-fou qu'il fallait : ⛔ *« ne pas
+créer une règle simpliste IG élevé = mauvais »* — **la charge glycémique est une information de
+contexte, pas une note morale donnée à l'aliment.** C'est **R29** et la **Constitution P21**
+(anti-TCA) formulées de l'extérieur.
+
+### 🗺️ Son §17 est une feuille de route — et l'app en tient DÉJÀ 4 étapes sur 6
+
+| Étape proposée | État réel de l'app |
+|---|---|
+| ① Cible (kcal + macros) | ✅ `calcMacros` |
+| ② Contexte (entraînement/repos, **heure de séance**, objectif, poids) | ⚠️ **à moitié** — le cyclage des glucides existe et tient compte de la **région travaillée**, mais **l'heure de la séance n'est jamais utilisée** |
+| ③ Repas réellement choisis | ✅ le Journal |
+| ④ Recalcul automatique | ✅ `_foodTotals` + le rescale de ft-v972 |
+| ⑤ Profil glycémique | ❌ **absent** |
+| ⑥ Substitution recalculée (riz → p. de terre) | ❌ **absent** |
+
+👉 **Le chantier tient donc en trois points, et ils sont nommés** : l'**heure de la séance**, la
+**substitution recalculée**, la **charge glycémique du repas**. ⛔ Dans cet ordre : les deux
+premiers se calculent avec ce que le dépôt contient déjà (CIQUAL, `S.wkt`) ; le troisième demande
+une table d'IG que **ni CIQUAL ni Open Food Facts ne portent**, donc une décision.
