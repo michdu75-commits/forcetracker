@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1019`** (prochaine : `ft-v1020`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1020`** (prochaine : `ft-v1021`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -436,6 +436,19 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1020 — 🥗 « CE QU'IL TE RESTE » PROPOSE CE QU'IL MANGE, PAS CE QUI EST OPTIMAL** — Michel, devant la première version : *« je pense qu'il faut rester simple, **tout le monde ne bouffe pas de flocons d'avoine, moi le premier** »*.
+
+**⚠️ D'ABORD UNE CLARIFICATION, parce qu'elle change ce qu'il faut corriger** : les flocons d'avoine venaient de **mon jeu de test**, pas de son journal — l'app n'a jamais proposé que **ses** aliments. *Mais le fond était juste* : trois lignes de combinaisons, ça ne se lit pas.
+
+**⭐ RÈGLE 1 — ON CLASSE PAR CE QU'IL MANGE.** Un **favori** d'abord (il l'a choisi), puis la **fréquence réelle** dans son journal ; la densité ne sert plus qu'à départager. *Un aliment parfait qu'on ne mange jamais est un mauvais conseil.*
+
+**⭐ RÈGLE 2 — UN SEUL ALIMENT PAR DÉFAUT.** Un deuxième n'est ajouté **que** si le premier couvre moins de la moitié du manque. *« 250 g de riz + 160 g de flocons » ne se lit pas, ça se subit* (**R19**).
+
+**⛔⛔ ET LA RÈGLE 3 A ÉTÉ TROUVÉE EN MESURANT LA RÈGLE 1.** Mon premier jet classait le favori en tête **quelle que soit la macro** — et il a sorti **« 2 × Shake protéiné » sur la ligne GLUCIDES**. *Un shake protéiné pour des glucides, ça ne veut rien dire.* 👉 **La pertinence passe donc avant les goûts**, avec un critère **physique** et non arbitraire : *la macro doit peser au moins **30 % des calories** de l'aliment*. Le riz est à 88 % de glucides, l'huile à 100 % de lipides, le shake à 83 % de protéines **mais 10 % de glucides** — il ne sort donc jamais sur cette ligne-là.
+
+**⭐⭐ ET LE RÉSULTAT MESURÉ EST LITTÉRALEMENT SA PHRASE** : *« 180 g de protéines — **2 × Shake protéiné + 250 g de Blanc de poulet** »*. Les flocons d'avoine, mangés **une** fois et peu protéinés, ne sortent plus nulle part.
+Tests : **parcours 1506/1506** (+2, bloc CXXV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 103 classées 0 trou. ⭐ **Les deux témoins ajoutés portent les deux règles trouvées** : *un aliment non pertinent ne sort pas sur cette macro* (le shake sur les glucides) et *le plus FRÉQUENT passe devant le plus DENSE* (riz mangé 3 fois, devant un pain complet plus riche mangé une fois). ⚠️ 3ᵉ collision de numéro de bloc de la journée — session-B avait CXXIV (ft-v1017), le mien devient **CXXV**. Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1020. |
 
 **ft-v1019 — 🍽️ CE QU'IL TE RESTE À MANGER, TRADUIT EN *TES* ALIMENTS** — Michel : *« il faut montrer une estimation de ce qu'il nous reste à manger dans la journée — à 14 h par exemple, il te reste 150 g de prot à manger, **tu peux faire 1 shake de prot et 150 g de poulet** — pareil pour les glucides et pareil pour les lipides »*.
 
@@ -734,22 +747,6 @@ Tests : **parcours 1381/1381** (+3 nets), croisés 50/50 (empreinte régénéré
 
 **⭐⭐ LE TÉMOIN LE PLUS IMPORTANT GARDE DONC UNE ABSENCE** : *« le générique n'emprunte l'animation de personne »*. Lui en donner une exigera de **trancher le doublon**, jamais de contourner la règle.
 Tests : **croisés 50/50** (2 rouges d'abord — ② l'animation partagée, ⑦ l'empreinte du catalogue —, le 1ᵉʳ corrigé en revenant en arrière, le 2ᵉ régénéré car le changement de bac est voulu : `gen_reference_catalogue.js`, **une seule ligne bouge**), parcours 1379/1379, calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou. ⭐ **Le contrôle décisif n'est pas un contrôle négatif ici, c'est le rouge lui-même** : sans lui je livrais le bug du 02/08 une deuxième fois. 🤝 Protocole de partage appliqué (ligne 🟡 poussée avant de coder, close en 🟢). Fichiers : `log.js`, `tests/parcours/runner.js`, `tests/croises/catalogue-reference.json`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1000. |
-
-**ft-v999 — 🏋️ DEUX ANIMATIONS QUI MANQUAIENT — et un RETRAIT qui s'est refermé tout seul** — Michel, capture du sélecteur à l'appui : *« j'ai encore des figurines qui n'apparaissent pas… le tirage horizontal prise serrée, il y a le pull-over aussi »*.
-
-**⛔⛔ CE N'EST PAS LE BUG DE ft-v996/997, ET LA DIFFÉRENCE COMPTE.** Là, le fichier existait et l'app ne le trouvait pas. **Ici le fichier n'existe pas.** Mesuré avant de conclure : **306 images sur disque, 302 rattachées, 4 orphelines** — et aucune des 4 ne correspondait. **21 exercices sur 324** n'ont jamais eu d'animation ; le repli (image du muscle + *« Ajouter la photo de ta machine »*) est le comportement **prévu**, pas une panne. *Deux symptômes identiques à l'écran, deux causes opposées — seule la mesure les sépare.*
-
-**⭐⭐ LE PLUS IMPORTANT DE CETTE VERSION EST UN COMMENTAIRE DU 02/08 QUI A DIT LUI-MÊME QUAND LE REBRANCHER.** Il disait : *« "Écarté Haltères" affichait l'animation de l'écarté DÉCLINÉ — les deux fiches pointaient le même fichier. Aucune animation vaut mieux qu'une fausse ; **à rebrancher le jour où on a une vraie démo d'écarté à plat**. »* Ce jour est arrivé. 👉 ***Un retrait dont la CONDITION DE RETOUR est écrite se referme tout seul le jour venu*** ; sans cette phrase, on aurait cru à un oubli et remis n'importe quoi (**R30**). *C'est le miroir positif du calculateur de plaques : là on avait perdu la raison, ici on l'avait gardée.*
-
-**⛔ VÉRIFIÉ IMAGE PAR IMAGE AVANT DE RATTACHER** (**R29** — montrer l'animation d'un **autre** exercice est pire que n'en montrer aucune) : une planche de 3 poses extraite de chaque GIF, et regardée. Le tirage est bien la poulie **BASSE**, assis, poignée en V — pas la poulie **HAUTE** (`tirage-vertical-prise-serree.webp`, qui existe déjà et est un **autre exercice**). L'écarté est bien un banc **plat**, pas décliné.
-
-**⛔ LES 4 ENDROITS TENUS ALIGNÉS, et un témoin les épingle** : le fichier sur le disque · la ligne dans `EX_YT` · la ligne dans le **cache du service worker** (sinon l'image manque **hors ligne**, règle d'or #4) · et l'absence de collision de fichier entre les deux écartés et entre les deux prises serrées.
-
-**⛔ CONVERTIS À LA CONVENTION DU DÉPÔT, pas collés tels quels** : 700×700 GIF ~800 Ko → **480×480 webp animé 12 images** (126 et 165 Ko), pour une médiane de dossier à 96 Ko.
-
-**⚠️ LE PULL-OVER N'EST PAS CORRIGÉ ICI, ET CE N'EST PAS UN OUBLI.** Ce n'est pas une animation manquante mais un **DOUBLON DE CATALOGUE** : 5 entrées pull-over, dont une générique *« Pull-over »* rangée dans le bac **BARRE** juste au-dessus de *« Pull-over Barre »* — deux lignes pour la même chose, dont une sans vignette. ⭐ **Et le GIF envoyé est l'image DÉJÀ en place** sur *Pull-over Haltère* (même mouvement, même rendu, 12 images) : l'ajouter serait 780 Ko de doublon. Fusionner ou retirer l'entrée générique touche l'**historique** (records, séances passées) → **arbitrage de Michel**, pas un correctif technique.
-Tests : **parcours 1375/1375** (+3), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 102 classées 0 trou. ⚠️ **Pas de contrôle négatif, et autant l'écrire** : ajouter un fichier absent ne se juge pas contre l'ancien code — il n'y dirait qu'une chose. ⭐ **Ce qui tient lieu de preuve est ailleurs** : les deux animations ont été **regardées** avant d'être rattachées, et **vérifiées à l'écran** après (capture de l'écran Séance, l'écarté à plat s'affiche, le tirage a sa vignette, le pull-over montre bien son repli muscle). 🤝 **Protocole de partage appliqué** : `git fetch`, lecture du tableau (aucune tâche 🟡), ligne posée **et poussée avant de coder** (règle d'or #13). Fichiers : `exercises/ecarte-couche-halteres.webp` (neuf), `exercises/tirage-horizontal-poulie-prise-serree.webp` (neuf), `log.js`, `sw.js`, `tests/parcours/runner.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v999. |
-
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
