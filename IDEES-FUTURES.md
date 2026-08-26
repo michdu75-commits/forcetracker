@@ -2711,3 +2711,32 @@ proposition et le **fond** d'un constat.
 
 👉 **Ma recommandation : la piste 1.** Elle ne change aucun chiffre, aucune borne, aucun
 garde-fou — seulement la façon dont la ligne se présente quand elle ne peut pas tenir sa promesse.
+
+
+---
+
+## 🍱 LA MATIÈRE EST ARRIVÉE : trois vrais programmes d'une coach en nutrition *(26/08/2026)*
+
+Michel a confié **trois plans alimentaires** rédigés par sa coach, espacés dans le temps
+(14 déc · 29 janv · 20 avril). **Analyse complète : `docs/NUTRITION-PROGRAMMES-REELS.md`.**
+⚠️ Les PDF **restent hors du dépôt** (public) — on garde ce qu'on apprend, pas le document.
+
+**Ce que ça débloque, et c'est le sujet n°1 de ce fichier depuis le 26/08** : le plan de repas de
+l'app est une table figée, la même pour tout le monde. On a maintenant la **grammaire** d'un vrai
+plan :
+- un **gabarit à quatre trous** (Protéines + Glucides + Fibres + Lipides), **2 à 4 options
+  chiffrées par trou**, et la consigne *« choisis 1 aliment par catégorie »* ;
+- des **équivalences au même poste** (180 g pomme de terre · 220 g riz · 240 g quinoa) — la table
+  de substitutions que `NUTRITION-MOTEUR.md` §4.0 réclame ;
+- les repas **ancrés sur la séance** (à jeun · avant · après · le soir) — le **défaut n°1** de
+  l'app, confirmé par une source extérieure ;
+- **aucune calorie, aucune macro** dans tout le document.
+
+**⚠️ QUATRE QUESTIONS À POSER AVANT DE CODER QUOI QUE CE SOIT** — elles valent plus que dix
+programmes de plus, parce qu'elles portent sur la **méthode** :
+1. les aliments sont-ils pesés **crus ou cuits** ? *Sans la réponse, aucune équivalence n'est
+   calculable* — le rapport va du simple au triple sur le riz ;
+2. sur quel **signal** un plan évolue-t-il (poids, photos, ressenti, échéance) ?
+3. y a-t-il des **jours différents** entraînement / repos ? (les trois docs ne décrivent qu'une
+   seule journée type) ;
+4. que fait-on en cas d'**écart** (restaurant, aliment absent) ?
