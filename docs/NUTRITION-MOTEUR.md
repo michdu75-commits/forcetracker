@@ -245,7 +245,18 @@ portions. Conséquences :
   **« Thon » seul n'était couvert par aucune substitution, depuis toujours** ;
 - **pas de fibres, pas de micronutriments** — donc rien à dire sur le fer, la B12, le calcium.
 
-### ⭐⭐ 3.3 Le Journal et le Plan ne se parlent pas
+### ✅ 3.3 Le Journal et le Plan ne se parlent pas — **BOUCHÉ le 26/08/2026 (ft-v1019)**
+
+> ⭐ **« Ce qu'il te reste, en vrai »** : le manque de chaque macro est traduit en **aliments à
+> soi** (favoris + journal réel), en combinaisons de 2 au plus, à doses bornées. ⛔ **Sans base
+> d'aliments** : ça contourne entièrement le trou 3.2 ci-dessus — les macros viennent de ce que
+> la personne a elle-même enregistré, donc rien n'est inventé (R29).
+> ⛔ **Trois garde-fous anti-TCA** (P21) : aujourd'hui seulement · rien quand la cible est
+> dépassée · « une idée, pas une consigne ». Détail : journal ft-v1019.
+> ⏭️ **Ce qui reste ouvert de ce trou** : *« tu as suivi ton plan à 80 % cette semaine »* — la
+> comparaison au **plan** sur la durée, pas seulement le reste du jour.
+
+### (l'état d'origine, tel qu'il était noté)
 
 On peut noter ce qu'on mange (`S.foodLog`) et on a un plan suggéré — **les deux s'ignorent**. On ne
 sait pas « il te reste 40 g de protéines », ni « tu as suivi ton plan à 80 % cette semaine ».
