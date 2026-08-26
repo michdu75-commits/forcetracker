@@ -12919,7 +12919,7 @@ console.log('\n-- CXVII. Le sélecteur d\'exercices reste OUVERT (écran Séance
     return o;
    }catch(e){return {err:String(e)};}
   });
-  if(X.err)t('CXIV n\'a pas pu tourner',false,X.err);
+  if(X.err)t('CXVI n\'a pas pu tourner',false,X.err);
   else{
     t('⭐⭐ SIX ajouts d\'affilée sans que le sélecteur se referme (6 allers-retours avant)',
       X.tousOuverts===true && X.nb===6, JSON.stringify({ouvertPartout:X.tousOuverts,nb:X.nb}));
@@ -12938,6 +12938,104 @@ console.log('\n-- CXVII. Le sélecteur d\'exercices reste OUVERT (écran Séance
   }
   await cx.close();
 }
+
+// ════════════════════════════════════════════════════════════════════
+console.log('\n-- CXVIII. Créer un programme depuis zéro (écran Séance ②/5) --');
+/* ⚠️ LA PORTE QUI MANQUAIT. Avant, aucun chemin ne menait à la CRÉATION d'un programme : la
+   modale « Mes Programmes » ne proposait que « Sauvegarder la séance actuelle », donc il
+   fallait monter une SÉANCE entière à la main pour obtenir un PROGRAMME. L'éditeur existait
+   pourtant en entier (`_renderProgEdit`), atteignable seulement par le ✏️ d'un programme
+   DÉJÀ créé. On a ouvert la porte, pas écrit un 2e éditeur (R13).
+   ⛔⛔ LES DEUX TÉMOINS QUI COMPTENT LE PLUS SONT DES ABSENCES :
+   ① fermer sans sauvegarder ne doit RIEN laisser (pas de programme fantôme sans titre) ;
+   ⑤ éditer un programme existant doit toujours REMPLACER, jamais ajouter — c'est le même
+      `saveProgEdit` qui sert aux deux, et l'index est ce qui les distingue. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const G=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={}; const ouvert=()=>document.getElementById('ov-prog-edit').classList.contains('open');
+    S.programmes=[]; S.wkt=null; persist();
+    // ① annuler ne crée rien
+    creerProgramme(); o.ouvre=ouvert(); o.nomVide=document.getElementById('prog-edit-name').value==='';
+    _addExToProgEdit('Squat à la Barre'); closeProgEdit();
+    o.rienApresAnnulation=(S.programmes.length===0);
+    // ② un nom vide est refusé, l'éditeur reste ouvert
+    creerProgramme(); _addExToProgEdit('Développé Couché');
+    document.getElementById('prog-edit-name').value=''; saveProgEdit();
+    o.refuseSansNom=(S.programmes.length===0 && ouvert());
+    // ③ avec un nom, le programme est créé
+    document.getElementById('prog-edit-name').value='Push A'; saveProgEdit();
+    o.cree=(S.programmes.length===1); o.nom=(S.programmes[0]||{}).name;
+    o.exGarde=(((S.programmes[0]||{}).exs||[])[0]||{}).name;
+    // ④ un 2e s'AJOUTE, il n'écrase pas
+    closeProgModal(); creerProgramme(); _addExToProgEdit('Press Jambes 45°');
+    document.getElementById('prog-edit-name').value='Legs'; saveProgEdit();
+    o.deux=(S.programmes.length===2); o.noms=S.programmes.map(x=>x.name).join('|');
+    // ⑤ NON-RÉGRESSION : éditer un existant REMPLACE, n'ajoute pas
+    closeProgModal(); editProg(0);
+    document.getElementById('prog-edit-name').value='Push A modifié'; saveProgEdit();
+    o.toujoursDeux=(S.programmes.length===2);
+    o.nomsFinaux=S.programmes.map(x=>x.name).join('|');
+    /* ⑥ LE SÉLECTEUR RESTE OUVERT DANS L'ÉDITEUR AUSSI — c'est là que Michel monte ses
+       listes. Le témoin le plus important du lot est le SUIVANT : que rien ne parte dans la
+       séance. Si le mode retombait en 'workout' après le 1er ajout, les 5 suivants iraient
+       silencieusement dans la séance du jour au lieu du programme. */
+    closeProgEdit(); S.programmes=[]; S.wkt=null; persist();
+    creerProgramme(); _openExPickerForProg(0);
+    const ouvertEx=()=>document.getElementById('mod-ex').classList.contains('open');
+    o.progResteOuvert=true;
+    ['Développé Couché','Développé Militaire','Dips',
+     'Extension Triceps Poulie','Écarté Poulie','Pompes (Push-up)'].forEach(n=>{
+       addExercise(n); if(!ouvertEx())o.progResteOuvert=false; });
+    o.progNb=(_editProgData.exs||[]).length;
+    o.progModeTenu=(_exPickerMode==='prog');
+    o.progSeanceVide=(!S.wkt||!(S.wkt.exs||[]).length);
+    closeExPicker();
+    o.progModeRendu=_exPickerMode;
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(G.err)t('CXVIII n\'a pas pu tourner',false,G.err);
+  else{
+    t('⭐⭐ « Créer un programme » ouvre l\'éditeur, vierge (la porte qui manquait)',
+      G.ouvre===true && G.nomVide===true, JSON.stringify({ouvre:G.ouvre,nomVide:G.nomVide}));
+    t('⛔⛔ FERMER SANS SAUVEGARDER NE LAISSE RIEN (pas de programme fantôme sans titre)',
+      G.rienApresAnnulation===true);
+    t('⛔ un nom vide est REFUSÉ, et l\'éditeur reste ouvert (R24 : on prévient, on ne détruit pas)',
+      G.refuseSansNom===true);
+    t('⭐ avec un nom, le programme est créé — et il garde son exercice',
+      G.cree===true && G.nom==='Push A' && G.exGarde==='Développé Couché',
+      JSON.stringify({nom:G.nom,ex:G.exGarde}));
+    t('⭐ un 2ᵉ programme s\'AJOUTE, il n\'écrase pas le 1ᵉʳ',
+      G.deux===true && G.noms==='Push A|Legs', 'reçu : '+G.noms);
+    t('⛔⛔ NON-RÉGRESSION : éditer un programme EXISTANT remplace, il n\'en crée pas un 2ᵉ',
+      G.toujoursDeux===true && G.nomsFinaux==='Push A modifié|Legs', 'reçu : '+G.nomsFinaux);
+    t('⭐⭐ DANS L\'ÉDITEUR AUSSI le sélecteur reste ouvert — 6 exercices d\'affilée',
+      G.progResteOuvert===true && G.progNb===6,
+      JSON.stringify({ouvertPartout:G.progResteOuvert,nb:G.progNb}));
+    t('⛔⛔ … et RIEN NE FUIT DANS LA SÉANCE (le mode « prog » tient pendant les 6 ajouts)',
+      G.progModeTenu===true && G.progSeanceVide===true,
+      JSON.stringify({mode:G.progModeTenu,seanceVide:G.progSeanceVide}));
+    t('⛔ … puis la fermeture rend la main au mode « workout »',
+      G.progModeRendu==='workout', 'reçu : '+G.progModeRendu);
+  }
+  await cx.close();
+}
+// ⛔ Le vocabulaire des deux bouts doit dire la MÊME chose : le message de l'écran vide
+//    désignait « + Ajouter un exercice » alors que le bouton s'appelait « + Ajouter ».
+t('⭐ le bouton et le message de l\'écran vide disent tous deux « Créer ma séance »',
+  (()=>{const h=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+        const l=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        return h.indexOf('>+ Créer ma séance</button>')>=0
+            && /Appuie sur "\+ Créer ma séance"/.test(l)
+            && h.indexOf('>+ Ajouter</button>')<0;})());
 
 await b.close(); srv.close();
 

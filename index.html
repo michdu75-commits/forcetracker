@@ -553,7 +553,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   <div style="display:flex;flex-direction:column;gap:8px;">
     <div style="display:flex;gap:8px;">
       <button class="btn btn-bg2 ft-press" style="flex:1;" onclick="openProgModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:5px;margin-bottom:1px;"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>Programme</button>
-      <button class="btn ft-press" style="flex:1;border:1.5px solid var(--red2);background:transparent;color:var(--red);" onclick="openExPicker()">+ Ajouter</button>
+      <button class="btn ft-press" style="flex:1;border:1.5px solid var(--red2);background:transparent;color:var(--red);" onclick="openExPicker()">+ Créer ma séance</button>
     </div>
     <button class="btn btn-bg2 ft-press" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px;" onclick="openImportProg()">
       <span style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Scanner ton programme</span>
@@ -2698,6 +2698,11 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <h2>📋 Mes Programmes</h2>
     <button id="prog-beginner-btn" onclick="openBeginnerSetup()" style="display:none;width:100%;padding:12px;margin-bottom:10px;font-size:14px;font-weight:700;font-family:var(--font);border-radius:12px;border:1.5px solid rgba(52,199,89,.45);color:#34c759;background:rgba(52,199,89,.10);cursor:pointer;">🌱 Créer mon parcours débutant</button>
     <div id="prog-beginner-goal" style="display:none;font-size:12.5px;line-height:1.45;color:var(--t2);background:rgba(52,199,89,.08);border:1px solid rgba(52,199,89,.28);border-radius:10px;padding:10px 12px;margin-bottom:10px;"></div>
+    <!-- ⭐ LA PORTE QUI MANQUAIT (25/08) : avant, le seul chemin vers un programme était
+         « Sauvegarder la séance actuelle » — il fallait monter une séance entière à la main
+         pour obtenir un programme. L'éditeur existait pourtant déjà (`_renderProgEdit`),
+         atteignable seulement par le ✏️ d'un programme DÉJÀ créé. -->
+    <button class="btn btn-red ft-press" onclick="creerProgramme()" style="width:100%;padding:13px;margin-bottom:10px;font-size:14px;">+ Créer un programme</button>
     <div id="prog-list-modal" style="margin-bottom:4px;"></div>
     <div id="prog-save-section" style="border-top:1px solid var(--sep);padding-top:14px;margin-top:6px;display:flex;flex-direction:column;gap:8px;">
       <div style="font-size:13px;color:var(--t2);font-weight:700;">Sauvegarder la séance actuelle :</div>

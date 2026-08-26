@@ -3865,3 +3865,18 @@ Tests : **parcours 1295/1295** (+15, blocs CV + la mesure du profil blessé), ca
 **🎨 L'AFFICHAGE ÉTEND LE BANDEAU EXISTANT, IL N'EN CRÉE PAS UN 2ᵉ** (`_intensiteBandeau`, R2/R13) : même mécanique, même style, trois icônes en plus de ⚡ (🚫 exclusion, 🛡️ blessure, 🔁 doublon). **Vérifié à l'écran, pas seulement en données** : capture sur les 4 cas réunis, les trois bandeaux s'affichent, la charge de Milo (40 kg) part intacte, le bouton central « + » n'a pas bougé (règle d'or #9).
 Tests : **parcours 1305/1305** (+10, bloc CVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. **Contrôle négatif** : 1 rouge (« la fonction n'existe pas ») — attendu pour une fonctionnalité neuve, pas instructif en soi ; la preuve tient dans les 9 autres témoins qui exercent chaque catégorie sur des données réelles (blessure active, exclusion durable **vs** non durable, doublon, mode ajout, cas neutre sans faux positif). Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`. sw.js ft-v989. |
 
+
+**ft-v990 — 💰 INSTRUMENTATION DU COÛT RÉEL PAR APPEL API** — priorité 3 tranchée par Michel après le contre-audit du 24/08, **en parallèle** de la validation unique (①②, ft-v989) : *« instrumentation fine du coût réel par appel API »*.
+
+**⛔⛔ NE CHANGE STRICTEMENT RIEN AU COMPORTEMENT DE MILO** : lecture seule de `data.usage`, un champ que l'API Anthropic renvoie déjà à **chaque** appel et que `worker.js` jetait jusqu'ici. Capturé au **seul** point commun, `callClaude` **et** `callClaudeDiag` — cette dernière est la fonction de **production** de la conversation (`coach()` l'appelle **toujours**), malgré un nom qui laisse croire à un chemin de test.
+
+**⛔ MÊME CHEMIN QUE `_compterIA` (R2, pas un 2ᵉ canal de télémétrie)** : fire-and-forget vers Apps Script, repli **ouvert** — une panne de mesure ne bloque jamais Milo (règle d'or #3).
+
+**⛔⛔ CÔTÉ `Code.js`, MÊME MÉCANIQUE QUE `ai_quota` (R2/R13)** : une propriété JSON **bornée**, remise à zéro chaque jour — jamais un historique qui grossit, c'est exactement la leçon du réservoir plein à 102 % du 29/07. Le jeton de sécurité est **factorisé** (`_countTokenArme_`) plutôt que dupliqué : la même empreinte protège désormais `aiCount` **et** `aiUsageLog`.
+
+**💶 LE COÛT EN EUROS EST UNE ESTIMATION, ÉCRIT COMME TEL** (R29 — pas de fausse précision) : les tarifs sont repris de `tests/milo/eval.js` (seule source de prix du dépôt), et le coefficient de cache-écriture (1,25×) suppose une fenêtre 5 min — le bloc commun utilise parfois 1 h, donc l'estimation sous-estime légèrement les jours où il est réécrit. **Les tokens, eux, sont exacts.**
+
+**⭐⭐ VÉRIFIÉ FONCTIONNELLEMENT, PAS SEULEMENT EN LECTURE** : le vrai `Code.js` exécuté dans un bac à sable Node (`PropertiesService`/`Utilities`/`Session` stubbés) confirme l'accumulation, la remise à zéro quotidienne, le rejet d'un modèle inconnu (jamais de prix inventé) et le refus d'un mauvais jeton.
+
+**⚠️ CE QUI NE PEUT PAS ÊTRE VÉRIFIÉ ICI, ET C'EST ÉCRIT** : un vrai appel facturé à l'API Anthropic, indisponible dans cet environnement — la première vraie donnée arrivera au premier appel de Michel en production.
+Tests : **parcours 1315/1315** (+10, bloc R), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `worker.js`, `Code.js`, `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`. sw.js ft-v990. |
