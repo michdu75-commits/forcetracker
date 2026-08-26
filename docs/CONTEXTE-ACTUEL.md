@@ -6,7 +6,21 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1023`.
+- **Version en ligne (live) :** `ft-v1024`.
+- 🧹⭐ **« SCANNER » ET « IMPORTER UN JOURNAL » RANGÉS — LIVRÉ** (ft-v1024). **5ᵉ et dernière
+  brique** du chantier écran Séance : *le chantier en 5 points est TERMINÉ.*
+  ⛔⛔ **Mesuré** : 200 px pleine largeur pour deux actions qui servent **une fois dans une
+  vie**, contre ~110 px sur une demi-rangée pour « + Créer ma séance ». *La place visuelle
+  disait l'inverse de la fréquence d'usage.* → **200 px → 35 px**.
+  ⛔ **Rangées, pas supprimées** (R30) — un témoin vérifie qu'elles sont toujours dans le DOM.
+  ⭐⭐ **Le rangement suit l'usage** : quelqu'un de vraiment nouveau (0 programme ET 0 séance)
+  les voit **dépliées** — c'est sa porte d'entrée (R29).
+  ⛔⛔ Le **bouton central « + » n'a pas bougé d'un pixel** : `[152,880,63]` avant et après.
+  ⏭️⏭️ **CE QUI RESTE, ET C'EST LA PLAINTE D'ORIGINE DE MICHEL** : le **grand vide** de l'écran
+  (~700 px sous les actions) — *« quand on arrive c'est vide »*. Ranger l'a **agrandi**. Ce qui
+  doit le remplir est le **§2.1 du cadrage** : proposer des **types de séances** (full body,
+  force, bodybuilding, powerbuilding). *Le chantier en 5 briques est fini ; le parcours de
+  découverte, lui, commence.*
 - 🏗️⭐⭐ **LE GÉNÉRATEUR DE PROGRAMMES SORT DU CADRE « DÉBUTANT » — LIVRÉ** (ft-v1023).
   4ᵉ brique du chantier écran Séance (`docs/SEANCE-DESSAI.md` §5).
   ⚠️⚠️ **Le verrou n'était PAS la porte** : le bouton était déjà visible pour tout le monde.

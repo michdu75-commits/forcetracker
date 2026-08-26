@@ -555,6 +555,19 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="btn btn-bg2 ft-press" style="flex:1;" onclick="openProgModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:5px;margin-bottom:1px;"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>Programme</button>
       <button class="btn ft-press" style="flex:1;border:1.5px solid var(--red2);background:transparent;color:var(--red);" onclick="openExPicker()">+ Créer ma séance</button>
     </div>
+    <!-- ⑤ RANGÉS, PAS RETIRÉS (ft-v1024) — `docs/SEANCE-DESSAI.md` §8.
+         MESURÉ : ces deux actions servent UNE FOIS dans une vie, et elles prenaient 200 px
+         PLEINE LARGEUR — contre ~110 px sur une demi-rangée pour « + Créer ma séance », qu'on
+         fait à chaque séance. *La place visuelle disait l'inverse de la fréquence d'usage.*
+         ⛔ ELLES NE SONT PAS SUPPRIMÉES (R30) : un retrait silencieux ressemble à un oubli, et
+         elles restent le chemin le plus rapide pour qui arrive d'une autre app.
+         ⭐ LE RANGEMENT SUIT L'USAGE : quelqu'un de VRAIMENT nouveau (aucun programme ET aucune
+         séance) les voit dépliées — c'est sa meilleure porte d'entrée ; tous les autres ont une
+         ligne discrète qui les déplie en un tap. -->
+    <button id="log-import-toggle" onclick="_toggleImport()" class="ft-press" style="display:none;width:100%;background:none;border:none;padding:9px 4px;font-family:var(--font);font-size:12.5px;font-weight:700;color:var(--t3);cursor:pointer;align-items:center;justify-content:center;gap:6px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">
+      <span id="log-import-lbl">📷 J'ai déjà un programme ou un historique</span><span id="log-import-chev" style="display:inline-block;transition:transform .2s;">›</span>
+    </button>
+    <div id="log-import" style="display:flex;flex-direction:column;gap:8px;">
     <button class="btn btn-bg2 ft-press" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px;" onclick="openImportProg()">
       <span style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Scanner ton programme</span>
       <span style="font-size:11px;color:var(--t3);font-weight:400;">Prends en photo ton programme — il s'ajoute automatiquement</span>
@@ -563,6 +576,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <span style="display:flex;align-items:center;gap:7px;font-size:14px;font-weight:700;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>Importer un journal de séances</span>
       <span style="font-size:11px;color:var(--t3);font-weight:400;">Séances déjà réalisées → historique + stats + PRs aux bonnes dates</span>
     </button>
+    </div>
   </div>
   <div id="log-finish"></div>
   <div class="scroll-spacer" aria-hidden="true"></div>

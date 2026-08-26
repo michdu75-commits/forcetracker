@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1023`** (prochaine : `ft-v1024`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1024`** (prochaine : `ft-v1025`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -436,6 +436,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1024 — 🧹 « SCANNER » ET « IMPORTER UN JOURNAL » : RANGÉS, PAS RETIRÉS** — 5ᵉ et **dernière** brique du chantier écran Séance (`docs/SEANCE-DESSAI.md` §8).
+
+**⛔⛔ MESURÉ AVANT DE TOUCHER AU CODE, et le chiffre dit tout** : ces deux actions prenaient **200 px pleine largeur**, contre **~110 px sur une demi-rangée** pour *« + Créer ma séance »*. 👉 *La place visuelle disait exactement l'inverse de la fréquence d'usage* — l'une sert **une fois dans une vie**, l'autre **à chaque séance**.
+
+**⛔ ELLES NE SONT PAS SUPPRIMÉES (R30)** : un retrait silencieux ressemble à un oubli, et elles restent **le chemin le plus rapide** pour qui arrive d'une autre app ou d'un carnet papier. Un témoin vérifie qu'elles sont toujours dans le DOM.
+
+**⭐⭐ ET LE RANGEMENT SUIT L'USAGE — il n'est pas uniforme, c'est tout le point.** Quelqu'un de **vraiment nouveau** (0 programme **ET** 0 séance) les voit **dépliées** : les replier lui cacherait précisément ce dont il a besoin. Tous les autres ont une ligne discrète de ~35 px qui les déplie en un tap. *On adapte à ce qu'on SAIT, on ne décide pas pareil pour tout le monde* (**R29**). **Mesuré : 200 px → 35 px.**
+
+**⚠️ L'ÉTAT N'EST PAS PERSISTÉ**, comme `_checkinOpen` : c'est un **confort de session**, pas une préférence — *une préférence qu'on n'a jamais demandée est une préférence inventée*. Un témoin l'épingle.
+
+**⛔⛔ LE BOUTON CENTRAL « + » N'A PAS BOUGÉ D'UN PIXEL** (règle d'or #9) : `[152, 880, 63]` **avant et après**, mesuré — pas regardé.
+
+**⚠️⚠️ ET MON APPEL EST D'ABORD ATTERRI DANS LE MAUVAIS BLOC.** Je m'étais ancré sur la **1ʳᵉ occurrence** de `_startWktChrono()` — qui vit **aussi** dans le gestionnaire de pause. Le repli ne se recalculait donc jamais au rendu de l'écran, et la mesure sortait le même résultat pour les deux profils. *C'est la 3ᵉ fois aujourd'hui* : la famille **« le premier match gagnant »** de `BUGS.md`, celle-là même que j'ai documentée ce matin pour le journal de partage. **On s'ancre sur du texte UNIQUE, jamais sur le premier motif qui ressemble.**
+
+**⏭️ ET CE QUE ÇA NE RÉPARE PAS, il faut le lire** : le **grand vide** de l'écran (~700 px sous les actions) — *la plainte d'origine de Michel*, **« quand on arrive c'est vide »**. Ranger les imports l'a **mécaniquement agrandi**. Ce qui doit le remplir est le **§2.1 du cadrage** (proposer des **types de séances** : full body, force, bodybuilding, powerbuilding), et ce n'est pas encore construit. *Le chantier en 5 briques est fini ; le parcours de découverte, lui, commence.*
+Tests : **parcours 1544/1544** (+7, bloc CXXIX), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 102 classées 0 trou. Fichiers : `index.html`, `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SEANCE-DESSAI.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1024. |
 
 **ft-v1023 — 🏗️ LE GÉNÉRATEUR DE PROGRAMMES SORT DU CADRE « DÉBUTANT »** — 4ᵉ brique du chantier écran Séance (`docs/SEANCE-DESSAI.md` §5).
 
@@ -736,21 +753,6 @@ Tests : **parcours 1402/1402** (+1), calculs 266/266, muscles 241/241, croisés 
 
 **⚠️⚠️ ET CETTE VERSION A ÉTÉ ÉCRITE DEUX FOIS — la leçon vaut plus que la fonctionnalité.** Le conteneur de session a été **recréé** pendant une attente, et le travail, **non commité**, a été **intégralement perdu** : rien dans le reflog, aucun objet orphelin. J'avais identifié le risque et proposé de le sécuriser sur ma branche ; la consigne d'attendre portait sur la **production**, et je l'ai appliquée à la **sauvegarde** — un push sur une branche personnelle ne déploie rien et ne gêne aucun benchmark. 👉 **On commite d'abord, on teste ensuite** : la 2ᵉ écriture a été poussée sur la branche **avant** même de lancer la suite. ⭐ *Ce qui a survécu, c'est ce qui était poussé* — la ligne 🟡 du journal de partage était toujours sur `master`, et l'autre session a livré trois versions pendant ce temps sans qu'on se marche dessus.
 Tests : **parcours 1401/1401** (+9, bloc CXIII), calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou, check_regles vert (13 règles, archive 519 entrées, 0 perdue). **Vérifié à l'écran** (captures avant/après clic) : la bande s'affiche, le clic change bien le jour (« Jeudi 20 Août »), les 7 boutons tiennent dans 362 px. Fichiers : `app.js`, `screens.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1004. |
-
-**ft-v1003 — ⚖️ LA QUANTITÉ SUR UN ALIMENT REPRIS QUI N'A PAS DE POUR-100 G** — Michel, deux captures : *« il y a toujours le bug sur des aliments que j'ai rentrés moi-même et que je veux réutiliser — comme je l'ai rentré avec le code-barre on ne peut plus remettre la quantité voulue. Ça fait pareil pour la ratatouille. »*
-
-**⛔⛔ REPRODUIT AVANT DE TOUCHER AU CODE, et ce n'était PAS le cas que je croyais.** **ft-v984 marche parfaitement** quand le scan a rapporté un pour-100 g — mesuré : bloc affiché, libellé *« 129 kcal/100g (ta dernière saisie) »*. *Le correctif d'hier n'est pas en cause.*
-
-**⭐⭐ LE VRAI TROU EST PLUS ÉTROIT ET PLUS FRÉQUENT** : quand **Open Food Facts n'a pas les valeurs /100 g** — fiche incomplète, très courant sur les produits de marque, et c'est exactement ce que montrent ses captures (*« Steak haché, 5% MG, France, VBF **(U)** »*, *« Iso zero protein **(ASL)** »*). La personne tape alors ses macros à la main, et l'entrée part avec **`per100:null` ET `q:null`**. À la reprise, la condition de ft-v984 ne **peut pas** être remplie. *Le mécanisme n'était pas cassé : il ne couvrait pas ce cas.*
-
-**⭐ R13/R2 — RIEN N'EST RÉINVENTÉ, LE MÉCANISME EXISTAIT DÉJÀ.** `_afMajAncre()` sait faire exactement ça depuis **ft-v975** : rescale par **PROPORTION**, et à défaut d'ancre des **portions** (½ · 1 · 1½ · ×2 · ×3). Il était branché sur l'estimation IA et sur la saisie libre — **pas sur la reprise depuis le journal**. *Le mécanisme existait, posé d'un seul côté* : **c'est le même oubli que ft-v973, ft-v975 et ft-v984 — la 4ᵉ fois.**
-
-**⛔ AUCUN POIDS N'EST INVENTÉ (R29)** : sans ancre, on n'offre que des **multiplicateurs**, vrais quelle que soit la portion de départ — un « ×2 » est juste, un « 60 g » deviné est faux. Mesuré : 323→646 kcal, 53→106 g, 13→26 g. Et l'écran **dit pourquoi** (*« aucune quantité connue — on ne peut pas inventer un poids »*).
-
-**⛔ LES DEUX MÉCANISMES NE COEXISTENT JAMAIS (R2)** : `_afMajAncre` se tait tout seul quand un pour-100 g existe. Deux façons de régler la même quantité, ce serait une de trop — un témoin l'épingle dans les deux sens.
-
-**⚠️⚠️ ET J'AI REFAIT EXACTEMENT L'ERREUR QUE ft-v984 DOCUMENTE.** `_afSuggLoc` est une variable de **script** : mon `window._afSuggLoc=[…]` ne posait rien, et le test mesurait du vide en annonçant un faux résultat. *C'est écrit noir sur blanc dans le journal de la version que je corrigeais.* Le témoin passe donc par le **vrai chemin** — on tape dans le champ, le code remplit ses suggestions — et le commentaire le dit, pour la prochaine fois. ⚠️ **6ᵉ fois de la journée** qu'un levier à côté du code produit une mesure propre et fausse (`af-name` au lieu de `af-desc`, `openAddFood` appelé trop tard, `#nu-tabs` pris pour un id, `gluc`/`lip` au lieu de `carbs`/`fat`…).
-Tests : **parcours 1389/1389** (+5, bloc CXII), calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou, check_regles vert (13 règles, archive 518 entrées, 0 perdue). **Les deux cas sont mesurés dans le même test** — avec pour-100 g (bloc grammes, portions cachées) et sans (portions, bloc grammes caché). Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1003. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

@@ -211,8 +211,16 @@ le plus sensible de l'app (**règle d'or #9** : le bouton central ne bouge pas).
    verrou était ailleurs (vocabulaire · contenu 100 % machines · blocage one-shot ·
    `beginnerJourney` posé même pour un confirmé). La **3ᵉ question** demandée au §2.3 existe
    désormais : *« avec quoi tu t'entraînes ? »*, déterministe, sans IA.
-5. **Ranger** « Scanner ton programme » et « Importer un journal » : ils servent une fois, pas à
-   chaque séance, et occupent autant de place visuelle que l'action principale.
+5. ~~**Ranger** « Scanner ton programme » et « Importer un journal »~~ — ✅ **LIVRÉ en ft-v1024.**
+   Mesuré : **200 px pleine largeur** contre ~110 px sur une demi-rangée pour l'action
+   principale → **200 px → 35 px**. ⛔ Rangés, **pas supprimés** (R30), et le rangement **suit
+   l'usage** : un vrai nouveau (0 programme ET 0 séance) les voit dépliés.
+
+**✅ LES 5 BRIQUES SONT LIVRÉES** (ft-v1009 · 1012 · 1022 · 1023 · 1024).
+⏭️ **Et ce qui reste est la plainte d'origine de Michel** : *« quand on arrive c'est vide »*.
+L'écran Séance porte encore **~700 px de vide** sous les actions — ranger les imports l'a
+mécaniquement agrandi. Ce qui doit le remplir est le **§2.1** : proposer des **types de
+séances**. *Le chantier de rangement est fini ; le parcours de découverte commence.*
 
 ---
 

@@ -140,7 +140,7 @@ function toggleWktPause(){
     S.wkt.pausedTotal=(S.wkt.pausedTotal||0)+(Date.now()-S.wkt.pausedAt);
     S.wkt.pausedAt=null;
     persist();
-    _startWktChrono();
+  _startWktChrono();
     _syncWktPauseUI();
     _syncWakeLock();                 // on reprend l'entraînement → on retient l'écran
     toast('Séance reprise','info');
@@ -205,12 +205,47 @@ function resetToday(){_setLogDate(today());}
 // entre minuit et 2 h, l'ancien calcul datait la séance d'AVANT-HIER — pile le cas d'usage du
 // bouton (on rentre de la salle après minuit et on date la séance de la veille). Audit 30/07.
 function setLogYesterday(){const d=new Date(today()+'T12:00:00');d.setDate(d.getDate()-1);_setLogDate(d.toISOString().split('T')[0]);}
+/* ══ ⑤ « SCANNER » ET « IMPORTER UN JOURNAL » : RANGÉS, PAS RETIRÉS (ft-v1024) ═══════════
+   5ᵉ et dernière brique du chantier écran Séance (`docs/SEANCE-DESSAI.md` §8).
+   ⛔⛔ MESURÉ AVANT DE TOUCHER AU CODE : ces deux boutons prenaient **200 px pleine largeur**,
+   contre ~110 px sur une DEMI-rangée pour « + Créer ma séance ». *La place visuelle disait
+   exactement l'inverse de la fréquence d'usage* — l'un sert une fois dans une vie, l'autre à
+   chaque séance.
+   ⛔ ILS NE SONT PAS SUPPRIMÉS (R30) : un retrait silencieux ressemble à un oubli, et ils
+   restent le chemin le plus rapide pour qui arrive d'une autre app ou d'un carnet papier.
+   ⭐⭐ ET LE RANGEMENT SUIT L'USAGE, il n'est pas uniforme : quelqu'un de VRAIMENT nouveau
+   (aucun programme ET aucune séance) les voit dépliés — c'est sa meilleure porte d'entrée, et
+   les replier lui cacherait précisément ce dont il a besoin. Tous les autres ont une ligne
+   discrète. *On adapte à ce qu'on SAIT, on ne décide pas pareil pour tout le monde* (R29).
+   ⚠️ L'état n'est PAS persisté, comme `_checkinOpen` : c'est un confort de session, pas une
+   préférence. Une préférence qu'on n'a jamais demandée est une préférence inventée. */
+let _impOuvert=false;
+function _renderImportRow(){
+  const box=document.getElementById('log-import');
+  const tog=document.getElementById('log-import-toggle');
+  if(!box||!tog)return;
+  const vierge = !((S.programmes||[]).length) && !((S.sessions||[]).length);
+  if(vierge){                       // rien à lui montrer d'autre : on laisse ouvert, sans ligne
+    tog.style.display='none';
+    box.style.display='flex';
+    return;
+  }
+  tog.style.display='flex';
+  box.style.display=_impOuvert?'flex':'none';
+  const ch=document.getElementById('log-import-chev');
+  if(ch)ch.style.transform='rotate('+(_impOuvert?90:0)+'deg)';
+  const lb=document.getElementById('log-import-lbl');
+  if(lb)lb.textContent=_impOuvert?'📷 Importer un programme ou un historique':'📷 J\'ai déjà un programme ou un historique';
+}
+function _toggleImport(){_impOuvert=!_impOuvert;_renderImportRow();}
 function renderLog(){
   if(!S.wkt) S.wkt={date:today(),exs:[]};
   const d=S.wkt.date||today();
   const txt=document.getElementById('s-date-txt');if(txt)txt.textContent=_fmtWktDate(d);
   const inp=document.getElementById('s-date');
   if(inp){inp.value=d;inp.onchange=()=>{if(inp.value)_setLogDate(inp.value);};}
+  /* ⑤ la ligne « Scanner / Importer » suit l'usage (ft-v1024) — voir `_renderImportRow`. */
+  try{_renderImportRow();}catch(e){}
   const hdr=document.getElementById('log-hdr');
   const hasExs=S.wkt&&S.wkt.exs&&S.wkt.exs.length>0;
   if(hdr)hdr.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding-bottom:10px;">'

@@ -14027,6 +14027,79 @@ console.log('\n-- CXXVIII. Le générateur de programmes sort du cadre « début
 t('⛔ aucun ✅ figé sur un des deux choix de fréquence (la surbrillance suffit)',
   fs.readFileSync(path.join(ROOT,'index.html'),'utf8').indexOf('3 séances ✅')<0, '');
 
+
+/* == BLOC CXXIX - « SCANNER » ET « IMPORTER » : RANGES, PAS RETIRES (ft-v1024) ==
+   5e et derniere brique du chantier ecran Seance (`docs/SEANCE-DESSAI.md` §8).
+   ⛔⛔ MESURE AVANT DE TOUCHER AU CODE : ces deux boutons prenaient 200 px PLEINE LARGEUR,
+   contre ~110 px sur une DEMI-rangee pour « + Creer ma seance ». *La place visuelle disait
+   exactement l'inverse de la frequence d'usage* — l'un sert une fois dans une vie, l'autre a
+   chaque seance.
+   ⛔ ILS NE SONT PAS SUPPRIMES (R30) : un retrait silencieux ressemble a un oubli.
+   ⭐⭐ ET LE RANGEMENT SUIT L'USAGE, il n'est pas uniforme : quelqu'un de VRAIMENT nouveau
+   (0 programme ET 0 seance) les voit deplies — les replier lui cacherait precisement ce dont
+   il a besoin (R29). C'est le temoin le plus important du bloc.
+   ⚠️ ET MON APPEL A `_renderImportRow` A Dd'ABORD ATTERRI DANS LE MAUVAIS BLOC : je m'etais
+   ancre sur la 1re occurrence de `_startWktChrono()`, qui vit AUSSI dans le gestionnaire de
+   pause. 3e fois aujourd'hui — c'est la famille « premier match gagnant » de BUGS.md. */
+console.log('\n-- CXXIX. « Scanner » et « Importer » sont rangés, pas retirés (ft-v1024) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_level:'confirme'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const G=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const aller=()=>{goScreen('s-log');document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+      document.getElementById('s-log').classList.add('active');renderLog();};
+    const fab=()=>{const f=document.querySelector('.nav-fab,#nb-log,.fab');const r=f.getBoundingClientRect();
+      return [Math.round(r.x),Math.round(r.y),Math.round(r.width)];};
+    const m=()=>{const bx=document.getElementById('log-import'),tg=document.getElementById('log-import-toggle');
+      return {imp:Math.round(bx.getBoundingClientRect().height),
+              lig:Math.round(tg.getBoundingClientRect().height)};};
+    const o={};
+    S.programmes=[];S.sessions=[];S.wkt=null;persist(); aller();
+    o.vierge=m(); o.fabAvant=fab();
+    S.sessions=[{date:'2026-08-20',exs:[],volume:100}];persist(); aller();
+    o.habitue=m();
+    _toggleImport(); o.deplie=m();
+    _toggleImport(); o.replie=m();
+    o.fabApres=fab();
+    /* ⛔ Les deux boutons doivent RESTER dans le DOM : rangés ≠ retirés. */
+    const txt=document.getElementById('log-import').innerText||'';
+    o.deuxPresents=/Scanner ton programme/.test(txt) && /Importer un journal/.test(txt);
+    /* ⛔ Un programme SEUL suffit à replier (la condition est ET, pas OU). */
+    S.sessions=[];S.programmes=[{name:'X',exs:[]}];persist(); aller();
+    o.avecProgSeul=m();
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(G.err)t('CXXIX n\'a pas pu tourner',false,G.err);
+  else{
+    t('⛔⛔ QUELQU\'UN DE VRAIMENT NOUVEAU les voit DÉPLIÉS (c\'est sa porte d\'entrée — R29)',
+      G.vierge.imp>100 && G.vierge.lig===0, JSON.stringify(G.vierge));
+    t('⭐⭐ … et tous les autres ont une LIGNE DISCRÈTE à la place (200 px → ~35 px)',
+      G.habitue.imp===0 && G.habitue.lig>20 && G.habitue.lig<50, JSON.stringify(G.habitue));
+    t('⭐ un tap déplie, un autre replie',
+      G.deplie.imp>100 && G.replie.imp===0, JSON.stringify({deplie:G.deplie.imp,replie:G.replie.imp}));
+    t('⛔⛔ RANGÉS ≠ RETIRÉS : les deux boutons sont toujours dans le DOM (R30)',
+      G.deuxPresents===true);
+    t('⛔ un PROGRAMME seul suffit à replier (la condition est ET, pas OU)',
+      G.avecProgSeul.imp===0 && G.avecProgSeul.lig>20, JSON.stringify(G.avecProgSeul));
+    t('⛔⛔ LE BOUTON CENTRAL « + » N\'A PAS BOUGÉ D\'UN PIXEL (règle d\'or #9, mesuré)',
+      JSON.stringify(G.fabAvant)===JSON.stringify(G.fabApres),
+      JSON.stringify({avant:G.fabAvant,apres:G.fabApres}));
+  }
+  /* ⛔ La règle, pas la mesure du jour : l'état ne se persiste pas (c'est un confort de
+     session, pas une préférence — une préférence qu'on n'a jamais demandée est inventée). */
+  t('⛔ l\'état du repli n\'est PAS persisté (aucune clé de stockage)',
+    (()=>{const l=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+          const i=l.indexOf('let _impOuvert');
+          return i>0 && !/localStorage|persist\(\)/.test(l.slice(i,i+1400));})(), '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
