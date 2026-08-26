@@ -199,7 +199,12 @@ le plus sensible de l'app (**règle d'or #9** : le bouton central ne bouge pas).
 2. **Une porte « Créer un programme »** (l'éditeur existe déjà) + renommer **« + Ajouter »** en
    **« Créer ma séance »**. ⚠️ L'incohérence est déjà là : l'écran vide dit *« Appuie sur
    + Ajouter un exercice »* alors que le bouton s'appelle « + Ajouter ».
-3. **Le débrief chiffré en local** (§4) — il conditionne tout le reste du parcours.
+3. ~~**Le débrief chiffré en local** (§4)~~ — ✅ **LIVRÉ en ft-v1022.** Les faits sont calculés
+   en local **toujours** (muscles, région et %, durée cardio comprise, calories, défauts
+   d'échauffement et de charge, cadre de la discipline) ; Milo **ajoute** son avis par-dessus au
+   lieu de le remplacer. ⚠️ **Une correction au cadrage de ce doc** : `_validationSeance` y était
+   listée comme utilisable — elle ne l'est pas, elle est écrite pour ce que Milo **propose**
+   (**R14**). Détail : journal ft-v1022.
 4. **Sortir le générateur de séances du cadre « débutant »** (§5).
 5. **Ranger** « Scanner ton programme » et « Importer un journal » : ils servent une fois, pas à
    chaque séance, et occupent autant de place visuelle que l'action principale.

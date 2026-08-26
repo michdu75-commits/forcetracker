@@ -293,6 +293,15 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
    silence sur le résumé chiffré et rien ne distinguait « réponse courte » de « aucune
    réponse ». Discret (c'est une info, pas une alarme) mais présent. */
 .se-debrief .se-dbf-off{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:10px 0 0;padding-top:9px;border-top:1px solid var(--sep);font-size:12.5px;color:var(--t3);line-height:1.5;}
+.se-debrief .se-dbf-pts{margin:6px 0 0;padding-left:18px;font-size:12.5px;color:var(--t2);line-height:1.55;}
+.se-debrief .se-dbf-pts li{margin-bottom:4px;}
+.se-debrief .se-dbf-pts b{color:var(--t1);font-weight:700;}
+/* Le repère de la discipline : un rappel, pas une note — d'où le ton discret. */
+.se-debrief .se-dbf-cadre{margin:10px 0 0;font-size:11.5px;color:var(--t3);line-height:1.5;}
+/* ⭐ L'avis de Milo est SÉPARÉ des chiffres par un trait : on doit voir d'un coup d'œil ce qui
+   est MESURÉ (au-dessus) et ce qui est un JUGEMENT (en dessous). C'est la frontière du
+   cerveau/cervelet rendue visible à l'écran. */
+.se-debrief .se-dbf-milo{margin-top:11px;padding-top:10px;border-top:1px solid var(--sep);}
 .se-debrief .se-dbf-retry{background:var(--bg3);color:var(--t1);border:none;box-shadow:inset 0 0 0 1px var(--sep);border-radius:8px;padding:6px 13px;font-family:var(--font);font-size:12.5px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 .se-mood{background:var(--bg2);border-radius:16px;padding:13px 14px;box-shadow:inset 0 0 0 1px var(--sep);}
 .se-mood-q{font-size:13.5px;font-weight:700;color:var(--t1);margin-bottom:10px;}

@@ -4009,7 +4009,16 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   tz('… et le jeton est consommé (pas de 2ᵉ débrief de la même séance)', OK.r1.jeton===false);
   tz('⭐⭐ quand l\'appel ÉCHOUE, l\'écran le DIT (ne fait plus semblant)',
      /n'a pas pu analyser/.test(KO.r1.txt), KO.r1.txt);
-  tz('… les chiffres de la séance restent quand même affichés', /kg de volume/.test(KO.r1.txt));
+  /* ⚠️⚠️ CE TÉMOIN FIGEAIT UNE FORMULATION, PAS UNE RÈGLE (corrigé ft-v1022). Il exigeait la
+     chaîne « kg de volume » — le résumé maigre d'alors. Depuis ft-v1022 l'écran rend le débrief
+     CHIFFRÉ complet (muscles, région, points à regarder, cadre) et les tuiles portent les
+     nombres, donc cette chaîne a disparu : le témoin accusait un écran DEVENU MEILLEUR.
+     ⭐ Sa raison d'avant est gardée : ce qu'il protège, c'est qu'un échec ne laisse JAMAIS la
+     personne devant une simple ligne d'erreur. C'est cette règle-là qui est figée maintenant.
+     *Un témoin qui fige un ÉTAT rougit dès qu'une décision est prise ; ce qu'on fige, c'est
+     une RÈGLE.* (3ᵉ fois cette semaine — ft-v992, ft-v1001, ici.) */
+  tz('… et le débrief MESURÉ reste affiché malgré l\'échec (jamais une simple ligne d\'erreur)',
+     /Ce que tu as travaillé|kg de volume/.test(KO.r1.txt), KO.r1.txt.slice(0,120));
   tz('… le jeton est RENDU : Milo débriefera à l\'ouverture du Coach', KO.r1.jeton===true);
   tz('… et un bouton « Réessayer » est proposé', KO.r1.retry===true);
   tz('⭐ hors ligne : on l\'annonce, sans bouton (ça ne servirait à rien)',
@@ -13790,7 +13799,7 @@ console.log('\n-- CXXVI. L\'app apprend ton alimentation, sans un seul appel (ft
   });
   await pg.waitForTimeout(800);
   const nApres = dehors.length;
-  if(F.err) t('CXXVI n\'a pas pu tourner', false, F.err);
+  if(F.err) t('CXXVII n\'a pas pu tourner', false, F.err);
   else{
     t('⛔⛔ ZÉRO APPEL SORTANT ajouté — la demande de Michel, mesurée',
       nApres===nDepart, 'avant='+nDepart+' après='+nApres+' · '+JSON.stringify(dehors.slice(nDepart).map(u=>u.slice(0,50))));
@@ -13816,6 +13825,104 @@ console.log('\n-- CXXVI. L\'app apprend ton alimentation, sans un seul appel (ft
       F.peuDeDonnees===true && F.miloSeTait===true,
       'carte='+F.peuDeDonnees+' milo muet='+F.miloSeTait);
     t('⛔ aucun journal → aucun profil (rien d\'inventé)', F.sansJournal===true, '');
+  }
+  await cx.close();
+}
+
+
+/* == BLOC CXXVII - LE DEBRIEF CHIFFRE EST CALCULE EN LOCAL, TOUJOURS (ft-v1022) ==
+   Brique ③ du chantier ecran Seance (`docs/SEANCE-DESSAI.md` §4). Decision de Michel :
+   « pas de reseau, il faut absolument que la personne puisse avoir un debrief » ET « plus on
+   code, moins on consomme d'API » — les deux faces d'une seule ligne de code.
+   ⛔⛔ LE DEFAUT ETAIT SYMETRIQUE ET FAUX DES DEUX COTES : hors ligne on ne rendait que
+   « N exercices · N series · N kg » (mode degrade MUTILE), et EN LIGNE `slot.innerHTML=`
+   REMPLACAIT ces chiffres par le texte de Milo — donc le jugement SANS les faits.
+   ⭐ RIEN N'EST CALCULE DE NEUF : `_mscScores`/`_mscFocus`, `_calSessMix`, `_dureeTotaleMin`,
+   `_monteeDefauts`, `_intensiteDefauts`, `DISC_CADRE` sont tous REBRANCHES (R13/R2).
+   ⛔ ET `_validationSeance` N'EST PAS UTILISEE, expres : elle est ecrite pour ce que Milo
+   PROPOSE (mode `add` compare a la seance EN COURS). Sur une seance FINIE ce serait R14 —
+   un doublon peut etre voulu, un exercice « exclu » qu'on a fait est un CHOIX, et signaler
+   apres coup une zone sensible est un reproche sans action possible (R29).
+   ⛔⛔ LE TEMOIN PASSE PAR LE VRAI CHEMIN : `finishWorkout` appelee pour de bon, seul `fetch`
+   remplace — le defaut vit chez l'APPELANT (`slot.innerHTML=`), pas dans `_debriefLocal`. */
+console.log('\n-- CXXVII. Le débrief chiffré est calculé en LOCAL, toujours (ft-v1022) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_age:'43',ft4_bw:'84',ft4_discipline:'muscu',
+    ft4_prs:JSON.stringify({'Développé Couché':{kg:90,reps:5,rm1:101,date:'2026-08-20'}})}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const G=await pg.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const vraiFetch=window.fetch; let reseauOk=false;
+    window.fetch=function(u,o){
+      if(o&&typeof o.body==='string'&&o.body.indexOf('"coach"')>=0){
+        return reseauOk
+          ? Promise.resolve(new Response(JSON.stringify({reply:"AVIS-DE-MILO"}),{status:200}))
+          : Promise.reject(new Error('Failed to fetch'));
+      }
+      return vraiFetch.apply(this,arguments);
+    };
+    /* ⛔ `_demoMode` coupé : sinon les appels ne partent pas et le témoin serait vert sans rien mesurer. */
+    window._demoMode=false; S.connected=true; S.url='https://exemple.invalid/exec';
+    const uneSeance=async()=>{
+      S.wkt=null; S.sessions=[]; persist(); startWorkout();
+      S.wkt.exs=[
+        {name:'Développé Couché',sets:[{kg:60,reps:5,done:true,type:'É'},
+          {kg:95,reps:5,done:true,type:''},{kg:95,reps:5,done:true,type:''}]},
+        {name:'Squat à la Barre',sets:[{kg:100,reps:8,done:true,type:''},{kg:100,reps:8,done:true,type:''}]}];
+      persist();
+      await finishWorkout();
+      await new Promise(r=>setTimeout(r,4000));       // 2 tentatives + 1,2 s d'attente
+      const slot=document.getElementById('se-debrief');
+      return {txt:(slot.innerText||'').replace(/\s+/g,' ').trim(),
+              milo:!!slot.querySelector('.se-dbf-milo'),
+              nPts:slot.querySelectorAll('.se-dbf-pts li').length,
+              cadre:!!slot.querySelector('.se-dbf-cadre')};
+    };
+    const hs=await uneSeance();
+    reseauOk=true;
+    const en=await uneSeance();
+    window.fetch=vraiFetch; window._demoMode=true;
+    /* Et le contrôle de non-duplication : les tuiles portent déjà les chiffres. */
+    const tuiles=(document.getElementById('se-stats')||{}).innerText||'';
+    return {hs,en,tuiles:tuiles.replace(/\s+/g,' ').trim()};
+   }catch(e){return {err:String(e)};}
+  });
+  if(G.err)t('CXXVI n\'a pas pu tourner',false,G.err);
+  else{
+    const aTravaille = x => /Ce que tu as travaillé/.test(x.txt);
+    t('⛔⛔ HORS LIGNE : le débrief chiffré est LÀ (muscles, points, cadre) — plus le résumé mutilé',
+      aTravaille(G.hs) && G.hs.nPts>=1 && G.hs.cadre===true,
+      JSON.stringify({pts:G.hs.nPts,cadre:G.hs.cadre,txt:G.hs.txt.slice(0,70)}));
+    t('⛔ … et l\'échec est DIT, avec de quoi réessayer (rien n\'est perdu)',
+      /n'a pas pu analyser|Hors ligne/.test(G.hs.txt) && !G.hs.milo, G.hs.txt.slice(-90));
+    t('⛔⛔ EN LIGNE : Milo s\'AJOUTE, il ne REMPLACE plus les faits',
+      G.en.milo===true && aTravaille(G.en) && /AVIS-DE-MILO/.test(G.en.txt),
+      JSON.stringify({milo:G.en.milo,faits:aTravaille(G.en)}));
+    t('⭐⭐ les DEUX chemins rendent le même socle mesuré (c\'est le point de la brique)',
+      G.hs.nPts===G.en.nPts && G.hs.cadre===G.en.cadre,
+      JSON.stringify({horsLigne:G.hs.nPts,enLigne:G.en.nPts}));
+    t('⭐ les défauts d\'ÉCHAUFFEMENT et de CHARGE sont tous deux détectés (2 sources)',
+      /démarrage à/.test(G.en.txt) && /1RM estimé/.test(G.en.txt), G.en.txt.slice(0,150));
+    t('⛔ … et ils sont PLAFONNÉS à 3 (un débrief n\'est pas un procès-verbal — R19)',
+      G.en.nPts<=3, 'points affichés = '+G.en.nPts);
+    t('⛔⛔ AUCUN DOUBLON : les chiffres des tuiles ne sont PAS réécrits dans le débrief',
+      /kg/.test(G.tuiles) && !/kg de volume/.test(G.en.txt),
+      JSON.stringify({tuiles:G.tuiles.slice(0,50)}));
+  }
+  /* ⛔ La règle, pas la mesure du jour. */
+  {
+    const l=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+    t('⛔⛔ `_runSeDebrief` n\'écrase plus le socle : Milo est CONCATÉNÉ',
+      /slot\.innerHTML=chiffres\+'<div class="se-dbf-milo">'/.test(l), '');
+    t('⛔ `_debriefLocal` ne rappelle JAMAIS `_validationSeance` (R14 — écrite pour l\'avant-séance)',
+      !/_debriefLocal[\s\S]{0,4200}_validationSeance/.test(l), '');
+    t('⭐ … et la fonction garde ses chiffres par défaut (complète pour la séance d\'essai)',
+      /if\(!\(opts && opts\.chiffres===false\)\)/.test(l), '');
   }
   await cx.close();
 }

@@ -3503,8 +3503,8 @@ function _showSessionEnd(sess,bestPr,prCount){
   _renderSeExs(sess);
   _renderSeMood();
   ov.classList.add('open');
-  const dbf=document.getElementById('se-debrief');
-  if(dbf){dbf.innerHTML='<span class="se-load">Milo analyse ta séance…</span>';}
+  /* Le texte d'attente NU a disparu (ft-v1022) : `_runSeDebrief` pose d'abord le socle
+     chiffré — qui ne dépend d'aucun réseau — puis l'attente de l'avis de Milo en dessous. */
   _runSeDebrief(sess,prCount||0);
 }
 function _renderSeStats(sess,prCount){
@@ -3562,6 +3562,122 @@ function _seCardioTxt(sess){
     return [av?'échauffement '+av:'', ap?'après séance '+ap:''].filter(Boolean).join(' + ');
   }catch(e){ return ''; }
 }
+/* ══ 📊 LE DÉBRIEF CHIFFRÉ, CALCULÉ EN LOCAL — TOUJOURS (ft-v1022) ═══════════════════════
+   Brique ③ du chantier écran Séance (`docs/SEANCE-DESSAI.md` §4), et la décision qui la porte
+   est de Michel : *« pas de réseau, il faut absolument que la personne puisse avoir un débrief »*
+   et *« plus on code, moins on consomme d'API »*. ⭐ **Ce sont les deux faces d'une seule ligne
+   de code** — c'est `ARCHITECTURE-CERVEAU-CERVELET` appliquée ici : *« est-ce que ça a besoin de
+   savoir QUI est la personne ? »* Non → le code. Oui → Milo.
+
+   ⛔⛔ LE DÉFAUT ÉTAIT SYMÉTRIQUE, ET FAUX DES DEUX CÔTÉS :
+   · **hors ligne**, on ne rendait que « N exercices · N séries · N kg » — un mode dégradé
+     *mutilé*, alors que le code sait calculer bien plus, gratuitement ;
+   · **en ligne**, `slot.innerHTML=` **REMPLAÇAIT** ces chiffres par le texte de Milo — donc on
+     recevait le jugement **sans les faits**.
+   👉 Désormais : les faits en local **toujours**, Milo **ajoute** par-dessus. Personne n'est
+   bloqué (règle d'or #3), personne n'est trompé.
+
+   ⛔ RIEN N'EST CALCULÉ DE NEUF — tout est REBRANCHÉ (R13/R2). `_mscScores`/`_mscFocus` pour les
+   muscles, `_calSessMix` pour la région et sa répartition, `_dureeTotaleMin` pour la durée
+   cardio comprise, `_monteeDefauts` pour l'échauffement, `_intensiteDefauts` pour la charge,
+   `DISC_CADRE` pour le repère de la discipline. Une 2ᵉ façon de calculer l'un d'eux
+   divergerait, et c'est l'écran de fin qui mentirait.
+
+   ⛔⛔ CE QU'ON N'UTILISE PAS, ET POURQUOI C'EST ÉCRIT : `_validationSeance` (doublons,
+   exclusions, blessures) est listée dans le doc de cadrage — mais elle est écrite pour ce que
+   Milo **PROPOSE** (son mode `add` compare à la séance EN COURS). L'employer sur une séance
+   **FINIE**, ce serait **R14** : un comportement copié dans un contexte où il devient faux.
+   *Un doublon peut être voulu ; un exercice « exclu » qu'on a quand même fait est un CHOIX ;
+   et signaler après coup qu'on a travaillé une zone sensible est un reproche sans action
+   possible.* Rien à en tirer d'actionnable → on se tait (R29).
+
+   ⛔ LE TON NE JUGE PAS. Ce sont des OBSERVATIONS, jamais des reproches : « à regarder la
+   prochaine fois », pas « tu as mal fait ». Le débrief d'une séance qu'on vient de finir est
+   le pire moment pour culpabiliser quelqu'un (Constitution P13). */
+/* ⚠️ `opts.chiffres:false` — LE BLOC ② SE TAIT QUAND L'ÉCRAN LES AFFICHE DÉJÀ. Trouvé en
+   regardant la CAPTURE, pas le texte : sur l'écran de fin, les tuiles portent déjà volume,
+   séries, durée, kcal et records — les réécrire 15 cm plus bas est un doublon (R25 : gagner
+   de la place n'autorise pas à écrire plus long). ⛔ Mais la fonction les GARDE par défaut :
+   elle doit rester complète pour les endroits qui n'ont pas de tuiles (la séance d'essai du
+   §4). *On adapte l'AFFICHAGE, jamais le calcul.* */
+function _debriefLocal(sess, prCount, opts){
+  const H=[];
+  try{
+    const esc = t => String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    // ── ① CE QUE TU AS TRAVAILLÉ ──────────────────────────────────────────────────────
+    let muscles='', region='';
+    try{
+      const o=(typeof _mscScores==='function')?_mscScores(sess.exs):null;
+      if(o && typeof _mscFocus==='function') muscles=_mscFocus(o,3)||'';
+    }catch(e){}
+    try{
+      const m=(typeof _calSessMix==='function')?_calSessMix(sess):null;
+      if(m && m.reg){
+        const L={haut:'haut du corps',bas:'bas du corps',dos:'dos',tronc:'tronc',full:'full body'};
+        const pc=(m.pc&&m.pc[m.reg]!=null&&m.reg!=='full')?' ('+m.pc[m.reg]+' %)':'';
+        region=(L[m.reg]||m.reg)+pc;
+      }
+    }catch(e){}
+    if(muscles||region){
+      H.push('<p><b>Ce que tu as travaillé</b> — '
+        + [region, muscles].filter(Boolean).join(' · ') + '.</p>');
+    }
+    // ── ② LES CHIFFRES ────────────────────────────────────────────────────────────────
+    const nExs=(sess.exs||[]).length;
+    let nSets=0;(sess.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{if(x.done&&x.type!=='É'&&x.type!=='W')nSets++;}));
+    const bouts=[nExs+' exercice'+(nExs>1?'s':''), nSets+' série'+(nSets>1?'s':''),
+                 (sess.volume||0)+' kg de volume'];
+    try{
+      const t=(typeof _dureeTotaleMin==='function')?_dureeTotaleMin(sess,nSets,0):null;
+      if(t && t.min>0) bouts.push(Math.max(1,Math.round(t.min))+' min'
+        + (t.cardioMin>0?' (dont '+t.cardioMin+' de cardio)':''));
+    }catch(e){}
+    if(sess.calories) bouts.push(sess.calories+' kcal');
+    if(!(opts && opts.chiffres===false)){
+      H.push('<p>'+bouts.join(' · ')+'.'
+        + (prCount>0 ? ' <b>'+prCount+' record'+(prCount>1?'s':'')+' battu'+(prCount>1?'s':'')+' 🏆</b>' : '')
+        + '</p>');
+    }
+    // ── ③ CE QUI MÉRITE UN COUP D'ŒIL — mesuré, jamais deviné ─────────────────────────
+    /* ⛔ Les deux détecteurs se taisent tout seuls quand ils ne savent pas : `_intensiteDefauts`
+       rend [] sans record (R29), `_monteeDefauts` rend [] sans charge de travail. On ne les
+       force jamais à parler. */
+    const points=[];
+    (sess.exs||[]).forEach(ex=>{
+      const sets=ex.sets||[];
+      const trav=sets.filter(x=>x&&x.done&&x.type!=='É'&&x.type!=='W'&&+x.kg>0);
+      if(!trav.length) return;
+      const kgMax=Math.max.apply(null,trav.map(x=>+x.kg));
+      try{
+        const ech=sets.filter(x=>x&&x.type==='É');
+        (( typeof _monteeDefauts==='function')?_monteeDefauts(ech,kgMax):[])
+          .forEach(d=>points.push({ex:ex.name, txt:d, quoi:'échauffement'}));
+      }catch(e){}
+      try{
+        (( typeof _intensiteDefauts==='function')?_intensiteDefauts(ex.name,sets):[])
+          .forEach(d=>points.push({ex:ex.name, txt:(typeof d==='string'?d:(d&&d.txt)||''), quoi:'charge'}));
+      }catch(e){}
+    });
+    if(points.length){
+      /* ⚠️ PLAFONNÉ À 3. Une liste de huit remarques après une séance n'est pas un débrief,
+         c'est un procès-verbal — et on cesse de la lire (R19). */
+      const l=points.filter(p=>p.txt).slice(0,3)
+        .map(p=>'<li><b>'+esc(p.ex)+'</b> — '+esc(p.txt)+'</li>').join('');
+      if(l) H.push('<p><b>À regarder la prochaine fois</b></p><ul class="se-dbf-pts">'+l+'</ul>');
+    }
+    // ── ④ LE REPÈRE DE TA DISCIPLINE — on informe, on ne note pas (R29) ───────────────
+    /* ⛔ On AFFICHE le cadre, on ne dit PAS « tu l'as respecté » : `DISC_CADRE` est de la prose
+       (« 8-12 répétitions », « 90 à 150 s »), pas des bornes calculables. Prétendre vérifier ce
+       qu'on ne peut pas mesurer serait une fausse précision. */
+    try{
+      const d=(typeof DISC_CADRE!=='undefined')?DISC_CADRE[S.discipline||'muscu']:null;
+      if(d && d.reps) H.push('<p class="se-dbf-cadre">Ton cadre <b>'
+        + esc(((typeof DISC_LABELS!=='undefined')&&DISC_LABELS[S.discipline||'muscu'])||'musculation')
+        + '</b> : ' + esc(d.reps) + ' · repos ' + esc(d.repos||'—') + '.</p>');
+    }catch(e){}
+  }catch(e){}
+  return H.join('');
+}
 async function _runSeDebrief(sess,prCount){
   const slot=document.getElementById('se-debrief');if(!slot)return;
   const nExs=(sess.exs||[]).length;
@@ -3578,9 +3694,18 @@ async function _runSeDebrief(sess,prCount){
      Le résumé chiffré RESTE — il est utile — mais il est désormais suivi d'une ligne qui
      dit ce qui s'est passé, et le jeton est toujours rendu : Milo débriefera à l'ouverture
      du Coach. On ne perd rien, on le DIT. */
-  const chiffres='<p>'+nExs+' exercice'+(nExs>1?'s':'')+' · '+nSets+' série'+(nSets>1?'s':'')+' · '+(sess.volume||0)+' kg de volume.'+(prCount>0?' Nouveau record 💪 bien joué !':' Séance bouclée, continue comme ça 👊')+'</p>';
+  /* ⭐⭐ LE SOCLE CHIFFRÉ EST LE MÊME DANS TOUS LES CAS (ft-v1022) — hors ligne, en ligne,
+     en échec ou déjà débriefé. Avant, ces trois lignes étaient tout ce qu'on rendait sans
+     réseau ; maintenant elles ne sont plus qu'un repli si `_debriefLocal` ne rend rien. */
+  const chiffres=(typeof _debriefLocal==='function')
+    ? _debriefLocal(sess, prCount||0, {chiffres:false})   // les tuiles de l'écran les portent déjà
+    : ('<p>'+nExs+' exercice'+(nExs>1?'s':'')+' · '+nSets+' série'+(nSets>1?'s':'')+' · '+(sess.volume||0)+' kg de volume.'+(prCount>0?' Nouveau record 💪 bien joué !':' Séance bouclée, continue comme ça 👊')+'</p>');
   const avec=(msg,retry)=>chiffres+'<p class="se-dbf-off">'+msg
     +(retry?' <button class="se-dbf-retry" onclick="_retrySeDebrief()">Réessayer</button>':'')+'</p>';
+  /* ⛔⛔ ON AFFICHE LES CHIFFRES AVANT MÊME D'APPELER MILO. Ils ne dépendent d'aucun réseau :
+     les faire attendre la réponse, c'est retenir en otage une information déjà calculée
+     (règle d'or #3). L'attente devient alors une ATTENTE D'AVIS, pas une page vide. */
+  slot.innerHTML=chiffres+'<p class="se-dbf-off"><span class="se-load">Milo analyse ta séance…</span></p>';
   _seDbfLast={sess:sess,prCount:prCount||0};   // pour le bouton « Réessayer »
   // Pas de réseau → on le dit, et le jeton reste posé : le Coach débriefera à son ouverture.
   if(!S.url || (typeof navigator!=='undefined' && navigator.onLine===false)){
@@ -3634,7 +3759,11 @@ async function _runSeDebrief(sess,prCount){
     let reply=data.reply||'';
     if(!reply)throw new Error('vide');
     const clean=(typeof _stripCoachTech==='function')?_stripCoachTech(reply):reply;
-    slot.innerHTML=(typeof _coachFmtHtml==='function')?_coachFmtHtml(clean):('<p>'+clean.replace(/</g,'&lt;')+'</p>');
+    /* ⛔⛔ MILO S'AJOUTE, IL NE REMPLACE PLUS (ft-v1022). Cette ligne écrasait le socle chiffré :
+       en ligne on recevait donc le JUGEMENT SANS LES FAITS, alors que hors ligne on avait les
+       faits sans jugement. *Les deux moitiés ne valent que posées ensemble.* */
+    const _milo=(typeof _coachFmtHtml==='function')?_coachFmtHtml(clean):('<p>'+clean.replace(/</g,'&lt;')+'</p>');
+    slot.innerHTML=chiffres+'<div class="se-dbf-milo">'+_milo+'</div>';
     // Étape 2 — mémoire DURABLE : enregistre {objectif, décision, tendances, ressenti} dans le Registre
     try{ if(typeof _recordDebriefMemory==='function') _recordDebriefMemory(reply, sess); }catch(e){}
     // Mémoire : pousse le débrief dans le fil du Coach (consigne cachée + réponse de Milo)

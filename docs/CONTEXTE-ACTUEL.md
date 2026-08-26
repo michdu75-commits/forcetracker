@@ -6,7 +6,27 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1021`.
+- **Version en ligne (live) :** `ft-v1022`.
+- 📊⭐⭐ **LE DÉBRIEF CHIFFRÉ EST CALCULÉ EN LOCAL, TOUJOURS — LIVRÉ** (ft-v1022). 3ᵉ brique du
+  chantier écran Séance (`docs/SEANCE-DESSAI.md` §4). Michel : *« pas de réseau, il faut
+  absolument que la personne puisse avoir un débrief »* **et** *« plus on code, moins on
+  consomme d'API »*.
+  ⭐⭐ **Les deux faces d'une seule ligne de code** — `ARCHITECTURE-CERVEAU-CERVELET` appliquée
+  ici : *« est-ce que ça a besoin de savoir QUI est la personne ? »* Non → le code. Oui → Milo.
+  ⛔⛔ **Le défaut était symétrique** : hors ligne on ne rendait que « N exercices · N séries ·
+  N kg » (mode dégradé **mutilé**) ; **en ligne `slot.innerHTML=` REMPLAÇAIT** ces chiffres par
+  le texte de Milo — donc **le jugement sans les faits**. Désormais les faits **toujours**, Milo
+  **ajoute** par-dessus, séparé par un trait.
+  ⛔ **Rien de neuf n'est calculé** : `_mscScores`/`_mscFocus`, `_calSessMix`, `_dureeTotaleMin`,
+  `_monteeDefauts`, `_intensiteDefauts`, `DISC_CADRE` — tous **rebranchés** (R13/R2).
+  ⛔⛔ **`_validationSeance` n'est PAS utilisée**, alors que le doc la listait : elle est écrite
+  pour ce que Milo **propose** (mode `add`, séance en cours). Sur une séance **finie** ce serait
+  **R14** — un doublon peut être voulu, un exercice « exclu » qu'on a fait est un CHOIX, et
+  signaler après coup une zone sensible est un reproche sans action possible (**R29**).
+  ⛔ Le cadre de la discipline est **affiché, pas noté** (`DISC_CADRE` est de la prose, pas des
+  bornes calculables — prétendre vérifier l'invérifiable serait une fausse précision).
+  ⏭️ **Reste du chantier Séance** : ④ sortir le générateur de séances du cadre « débutant » ·
+  ⑤ ranger « Scanner ton programme » et « Importer un journal ».
 - 📉⭐⭐ **L'HISTORIQUE DU SCORE DE RÉCUP — LIVRÉ** (ft-v1017). Michel : *« j'ai l'impression
   qu'il n'y a pas d'historique ou c'est moi ? »*.
   ⭐⭐ **Sa consigne « vérifie, on l'avait beaucoup travaillé ça » a changé le correctif** :
