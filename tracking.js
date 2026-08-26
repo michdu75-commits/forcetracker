@@ -78,7 +78,14 @@ function _buildSyncRows(sess){
   return rows;
 }
 
-// ─── GOOGLE SHEETS SYNC ──────────────────────────────────────
+/* ─── GOOGLE SHEETS SYNC ──────────────────────────────────────
+   ⭐ L'EMAIL PART DEPUIS ft-v1018, ET IL PART UNE SEULE FOIS. Avant, la ligne écrite dans le
+   classeur ne portait AUCUN identifiant : les séances de tous les testeurs s'empilaient dans
+   le même onglet `Sessions` sans qu'on puisse savoir qui est qui — le classeur existe pour
+   être lu, et il ne pouvait pas l'être.
+   ⛔ Il est posé sur l'ENVELOPPE, pas sur chaque ligne (R2) : une séance de 20 séries n'a pas
+   à répéter 20 fois la même information. C'est le serveur qui l'étale sur les lignes, parce
+   qu'un tableur en a besoin colonne par colonne — et il le fait à UN seul endroit. */
 async function syncSheets(sess){
   if(window._demoMode)return{ok:true}; // mode démo : rien n'est envoyé aux Sheets
   if(!S.url)return{ok:false,error:'URL manquante'};
@@ -86,7 +93,7 @@ async function syncSheets(sess){
     const rows=_buildSyncRows(sess);
     const ctrl=new AbortController();
     const tId=setTimeout(()=>ctrl.abort(),8000);
-    const resp=await fetch(S.url,{method:'POST',redirect:'follow',signal:ctrl.signal,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'logSession',rows,bw:S.bw,date:sess.date,gender:S.gender,age:S.age})});
+    const resp=await fetch(S.url,{method:'POST',redirect:'follow',signal:ctrl.signal,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'logSession',rows,bw:S.bw,date:sess.date,gender:S.gender,age:S.age,email:S.email||''})});
     clearTimeout(tId);
     let rawText='';
     try{rawText=await resp.text();}catch(_){rawText='(body illisible)';}
@@ -2589,13 +2596,17 @@ function _sleepCurve(h){
 const RHR_JOURS_BASE = 30;   // fenêtre de référence
 const RHR_MIN_JOURS  = 7;    // en dessous, on ne se prononce pas
 const RHR_MAX_ADJ    = 8;    // borne de l'ajustement, dans les deux sens
-function _rhrEcart(){
+/* ⭐ `refTs` optionnel (ft-v1017) : rejoue l'écart de FC tel qu'il était à une date passée,
+   pour l'historique du score de récup. ⛔ Et il ne regarde QUE les jours <= à cette date —
+   sinon une mesure prise depuis influencerait un score d'il y a une semaine, ce qui serait
+   un fait faux présenté comme un calcul (R29). */
+function _rhrEcart(refTs){
   try{
     const j=(typeof S!=='undefined'&&S.healthDaily)||[];
     if(j.length<RHR_MIN_JOURS+1) return null;
-    const auj=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
+    const auj=(typeof today==='function')?today(refTs):new Date(refTs==null?Date.now():refTs).toISOString().slice(0,10);
     // la valeur du jour, ou celle d'hier si la nuit n'est pas encore remontée
-    const rec=j.filter(x=>x&&x.date&&x.rhr>0).sort((a,b)=>b.date.localeCompare(a.date));
+    const rec=j.filter(x=>x&&x.date&&x.rhr>0&&x.date<=auj).sort((a,b)=>b.date.localeCompare(a.date));
     if(!rec.length) return null;
     const jour=rec[0];
     const age=(Date.parse(auj+'T12:00:00')-Date.parse(jour.date+'T12:00:00'))/86400000;
@@ -2625,6 +2636,24 @@ function _rhrAjust(e){
 /* Le COÛT en fatigue d'une séance, en points. Sortie de `calcRecoveryDetail` le 21/08 pour
    que la PROJECTION (« quand serai-je au max ? ») lise exactement le même chiffre : deux
    formules de fatigue finiraient par annoncer une date qui ne correspond pas au score (R2). */
+/* ⭐ « LA DERNIÈRE SÉANCE » VUE DEPUIS UN INSTANT DONNÉ (ft-v1017). Sortie en fonction pour
+   que le SCORE et la PROJECTION lisent la même règle (R2) — c'est déjà ce qu'on avait fait
+   pour `_penaliteSeance` le 21/08, pour la même raison.
+   ⚠️ `S.sessions` est rangé du plus RÉCENT au plus ancien : on rend donc la première qui
+   passe le filtre, pas la dernière.
+   ⚠️ Deux critères, et pas un seul : une séance qui porte son heure (`ts`) se compare à la
+   MINUTE — c'est ce qui permet de rejouer une matinée avant la séance du soir. Une vieille
+   séance sans heure n'a que sa DATE, on la compare donc au jour. */
+function _derniereSeanceAvant(refTs, auj){
+  const L=(typeof S!=='undefined'&&S.sessions)||[];
+  if(refTs==null) return L[0];
+  for(let i=0;i<L.length;i++){
+    const x=L[i]; if(!x||!x.date) continue;
+    const ts=x.ts||x.id;
+    if(ts ? (ts<=refTs) : (x.date<=auj)) return x;
+  }
+  return null;
+}
 function _penaliteSeance(sess){
   let load=0;
   ((sess&&(sess.exs||sess.exercises))||[]).forEach(ex=>(ex.sets||[]).forEach(s=>{
@@ -2635,14 +2664,37 @@ function _penaliteSeance(sess){
   // ne coûtait que 10 points — l'app affichait « Bonne récup » le lendemain d'un gros leg day.
   return Math.max(6,Math.min(38,Math.round(load*1.7))); // ~ -10 (abdos) à -38 (grosse séance), min -6
 }
-function calcRecoveryDetail(){
+/* ⭐⭐ `refTs` = L'INSTANT AUQUEL ON SE PLACE (ft-v1017), optionnel. Sans argument, la
+   fonction se comporte EXACTEMENT comme avant — c'est ce qui rend le changement sûr : les
+   10 appels existants ne bougent pas.
+   ⛔⛔ POURQUOI CE PARAMÈTRE PLUTÔT QU'UN JOURNAL DE SCORES : le score est une FONCTION
+   DÉTERMINISTE de données déjà stockées (sommeil, séances, état du jour, FC, âge…). Écrire
+   un `recupLog` en plus, ce serait une SECONDE source de vérité pour un chiffre qu'on sait
+   recalculer — elle divergerait le jour où un barème change (R2). En le rejouant, on gagne
+   aussi l'historique RÉTROACTIF : la courbe existe dès la 1ʳᵉ ouverture, pas à partir
+   d'aujourd'hui.
+   ⚠️⚠️ ET DEUX LIMITES HONNÊTES, ÉCRITES PLUTÔT QUE TUES :
+   ① si une nuit est notée APRÈS COUP, le score rejoué pour ce jour-là n'est pas celui que
+      l'app avait affiché sur le moment — il est plus juste, mais il a changé ;
+   ② `age`, `level` et `smoker` n'ont PAS d'historique : un score rejoué les prend dans leur
+      valeur d'aujourd'hui. L'écart est borné (±3 pts par palier d'âge, −4 pour le tabac) et
+      il ne peut pas déformer une TENDANCE, puisqu'il décale toute la courbe pareil. */
+function calcRecoveryDetail(refTs){
+  /* Les DEUX seuls repères de temps de la fonction. Tout ce qui suit les lit, plus jamais
+     `Date.now()` ni `today()` directement — sinon une moitié du calcul se placerait
+     aujourd'hui et l'autre à la date demandée, et personne ne le verrait. */
+  const _now = (refTs==null) ? Date.now() : refTs;
+  const _auj = today(_now);
   // Sommeil non renseigné → base neutre « invisible » (70) : le score reste
   // fonctionnel pour tout le monde, les autres facteurs (séance, âge, cycle…)
   // s'appliquent quand même, et un conseil discret invite à renseigner le sommeil.
-  const hasSleep = !!(S.sleepLog && S.sleepLog.length);
+  /* ⛔ Les nuits POSTÉRIEURES à la date demandée sont exclues : sans ce filtre, un score
+     d'il y a une semaine se calculerait avec les nuits d'après (R29). */
+  const _nuits=(S.sleepLog||[]).filter(e=>e&&e.date&&e.date<=_auj);
+  const hasSleep = !!_nuits.length;
   let wScore;
   if(hasSleep){
-    const sorted=S.sleepLog.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+    const sorted=_nuits.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
     const scores=sorted.map(e=>{
       const h=e.hours||0;
       // ⚠️ COURBE CONTINUE (02/08, retour Michel : « le prêt à performer est trop optimiste »).
@@ -2674,16 +2726,20 @@ function calcRecoveryDetail(){
   //    ni à midi ni à minuit ;
   //  · les jours de REPOS se comptent en jours CALENDAIRES (today()), crédités dès le matin ;
   //  · une vieille séance SANS heure garde l'ancien barème par jour (rien ne change pour elle).
-  const lastSess=S.sessions&&S.sessions[0];
+  /* ⛔⛔ « LA DERNIÈRE SÉANCE » DÉPEND DE QUAND ON REGARDE. `S.sessions[0]` est la dernière
+     tout court : rejouer un jeudi avec la séance du samedi suivant pénaliserait le jeudi
+     pour un effort pas encore fourni. On prend donc la dernière séance ANTÉRIEURE à
+     l'instant demandé. Sans `refTs`, c'est bien `S.sessions[0]` — comportement inchangé. */
+  const lastSess=_derniereSeanceAvant(_now,_auj);
   let sessAdj=0;
   if(lastSess&&lastSess.date){
-    const dCal=Math.round((new Date(today()+'T12:00:00')-new Date(lastSess.date+'T12:00:00'))/864e5);
+    const dCal=Math.round((new Date(_auj+'T12:00:00')-new Date(lastSess.date+'T12:00:00'))/864e5);
     const tsSess=lastSess.ts||lastSess.id;
     const calcPen0=()=>_penaliteSeance(lastSess);
     if(tsSess){
       // Effacement sur 48 h et non 36 h (02/08) : à 36 h, une grosse séance de jambes pesait
       // déjà zéro. 48 h correspond mieux à ce qu'on ressent réellement après du lourd.
-      const hrs=Math.max(0,(Date.now()-tsSess)/36e5);
+      const hrs=Math.max(0,(_now-tsSess)/36e5);
       if(hrs<48){ sessAdj=-Math.max(0,Math.round(calcPen0()*(48-hrs)/48)); }
       else if(dCal>=2){ sessAdj=Math.min(dCal,4)*3; }        // 2j +6 · 3j +9 · 4j+ +12 (inchangé)
     } else {
@@ -2701,19 +2757,19 @@ function calcRecoveryDetail(){
   // Cycle menstruel (femmes) : la phase influence la readiness (règles/lutéale ↓, ovulation ↑)
   let cycleAdj=0,cpPhase='';
   try{
-    const cp=(typeof getMensCyclePhase==='function')?getMensCyclePhase():null;
+    const cp=(typeof getMensCyclePhase==='function')?getMensCyclePhase(_now):null;
     if(cp&&cp.perf){ cycleAdj = cp.perf==='low'?-10 : cp.perf==='declining'?-5 : cp.perf==='peak'?4 : cp.perf==='rising'?2 : 0; cpPhase=cp.phase||''; }
   }catch(e){}
   // Fatigue accumulée : plusieurs séances sur les 3 derniers jours (enchaîner sans repos)
-  const recentDays=new Set((S.sessions||[]).filter(s=>s&&s.date&&(()=>{const dd=Math.round((new Date(today()+'T12:00:00')-new Date(s.date+'T12:00:00'))/864e5);return dd>=0&&dd<=2;})()).map(s=>s.date)).size; // jours CALENDAIRES (fin de la marche de midi)
+  const recentDays=new Set((S.sessions||[]).filter(s=>s&&s.date&&(()=>{const dd=Math.round((new Date(_auj+'T12:00:00')-new Date(s.date+'T12:00:00'))/864e5);return dd>=0&&dd<=2;})()).map(s=>s.date)).size; // jours CALENDAIRES (fin de la marche de midi)
   const accumAdj = recentDays>=3?-8 : recentDays>=2?-4 : 0;
   // Tabac : la récupération est altérée
   const smokerAdj = S.smoker?-4:0;
   // Énergie ressentie (check-in de la dernière séance, si récente) : signal direct de la forme
   let energyAdj=0;
-  const ls0=S.sessions&&S.sessions[0];
+  const ls0=lastSess;
   if(ls0&&ls0.date&&ls0.checkin&&ls0.checkin.energy){
-    const dd=Math.round((new Date(today()+'T12:00:00')-new Date(ls0.date+'T12:00:00'))/864e5); // jours calendaires
+    const dd=Math.round((new Date(_auj+'T12:00:00')-new Date(ls0.date+'T12:00:00'))/864e5); // jours calendaires
     if(dd<=1) energyAdj = ls0.checkin.energy<=1?-6 : ls0.checkin.energy===2?-3 : ls0.checkin.energy>=4?4 : 0;
   }
   // État du jour ressenti (brique 3B). On SÉPARE deux natures (retour ChatGPT + Michel) :
@@ -2723,7 +2779,13 @@ function calcRecoveryDetail(){
   //    Elle devient un AVERTISSEMENT contextuel (bandeau ⚠️) : « adapter, pas interdire ».
   let dayEnergyAdj=0, dayPains=[];
   try{
-    const ds=S.dayState, tday=(typeof today==='function')?today():null;
+    /* L'état du jour vit dans `S.dayState` pour AUJOURD'HUI et dans `S.dayStateLog` pour les
+       jours passés (ft-v549). Rejouer une date ancienne doit lire le journal, sinon le
+       ressenti d'aujourd'hui teinterait toute la courbe. */
+    const ds=(refTs==null||_auj===today())
+      ? S.dayState
+      : (S.dayStateLog||[]).find(e=>e&&e.date===_auj);
+    const tday=_auj;
     if(ds&&(!tday||ds.date===tday)){
       if(ds.energy!=null) dayEnergyAdj = ds.energy===0?-10 : ds.energy===1?-4 : ds.energy===3?4 : 0; // 😴 −10 · 😐 −4 · 🙂 0 · ⚡ +4
       const _ZL={epaule:'épaule',trapeze:'trapèze',cervicales:'nuque',pectoraux:'pectoraux',dorsaux:'dorsaux',biceps:'biceps',triceps:'triceps',avantbras:'avant-bras',coude:'coude',poignet:'poignet',lombaires:'bas du dos',abdos:'abdos',hanche:'hanche',fessier:'fessier',cuisse:'cuisse',ischio:'ischio',adducteur:'adducteur',genou:'genou',mollet:'mollet',cheville:'cheville'};
@@ -2732,7 +2794,7 @@ function calcRecoveryDetail(){
     }
   }catch(e){}
   const base=Math.round(wScore);
-  const rhrE=(typeof _rhrEcart==='function')?_rhrEcart():null, rhrAdj=_rhrAjust(rhrE);
+  const rhrE=(typeof _rhrEcart==='function')?_rhrEcart(_now):null, rhrAdj=_rhrAjust(rhrE);
   const score=Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj+accumAdj+smokerAdj+energyAdj+dayEnergyAdj+rhrAdj)));
   // Détail des facteurs (pour afficher le « pourquoi » sous le score)
   // `why` = raison en clair (français simple), utilisée par l'explication « Pourquoi ce score ? ».
@@ -2873,6 +2935,60 @@ function projectionRecup(d){
   }catch(e){ return {quand:null, dejaAuMax:true, source:null, restant:[]}; }
 }
 
+/* ══ 📉 L'HISTORIQUE DU SCORE DE RÉCUP (ft-v1017) ═══════════════════════════════════════
+   Michel : « sur accueil et récupération… j'ai l'impression qu'il n'y a pas d'historique ou
+   c'est moi ? » — il avait raison : le score était calculé, affiché, puis JETÉ. Cinq
+   modules le lisaient en direct, aucun ne le gardait.
+
+   ⛔⛔ ON NE STOCKE RIEN, ON REJOUE. Le score est une fonction déterministe de données déjà
+   là ; un journal de scores serait une 2ᵉ source de vérité pour un chiffre calculable (R2),
+   et il ne commencerait qu'aujourd'hui. En rejouant, la courbe existe RÉTROACTIVEMENT.
+
+   ⭐⭐ ET TOUS LES POINTS SONT PRIS À LA MÊME HEURE — c'est la décision qui rend la courbe
+   honnête. Mesuré : la même journée, mêmes nuits, une séance la veille à 18 h, le score va
+   de 44 à 6 h à 56 à 22 h. **12 points d'écart sans que rien du corps n'ait changé** : la
+   fatigue s'efface en continu (ft-v718). Comparer un relevé du matin à un relevé du soir
+   montrerait donc L'HEURE DE LA JOURNÉE, pas la récupération.
+   👉 On prend l'heure QU'IL EST MAINTENANT, sur chacun des jours. La courbe répond alors à
+   une question qui a un sens : « à cette heure-ci, où j'en étais ? »
+
+   ⛔ ET AVANT LA PREMIÈRE DONNÉE, ON NE REND RIEN (`null`, pas un chiffre). Sans nuit ni
+   séance, le calcul retombe sur sa base neutre de 70 et sortirait un score d'apparence
+   normale pour des jours où la personne n'utilisait pas encore l'app — *une invention
+   présentée comme une mesure* (R29, et Principe 18 : ne jamais faire semblant de savoir). */
+function recupHistorique(nbJours){
+  const n=Math.max(1,Math.min(120,nbJours||7));
+  const out=[];
+  try{
+    const now=Date.now();
+    /* Le 1ᵉʳ jour où l'app a quelque chose à dire = la plus ancienne nuit ou séance notée. */
+    const dates=[]
+      .concat(((S&&S.sleepLog)||[]).map(e=>e&&e.date))
+      .concat(((S&&S.sessions)||[]).map(e=>e&&e.date))
+      .filter(Boolean).sort();
+    const debut=dates[0]||null;
+    for(let i=n-1;i>=0;i--){
+      const ts=now-i*864e5;               // même heure locale, i jours plus tôt
+      const d=today(ts);
+      out.push({date:d, score:(debut&&d>=debut)?calcRecoveryDetail(ts).score:null});
+    }
+  }catch(e){}
+  return out;
+}
+/* La mini-courbe des N derniers jours — même grammaire que `_sleepSparkline` (R13) : des
+   barres, la couleur du score, un trait fin quand on ne sait pas. Aucun chiffre, aucun
+   jugement : elle se lit d'un coup d'œil ou pas du tout. */
+function _recupSparkline(h){
+  const pts=recupHistorique(7);
+  const H=h||26;
+  const bars=pts.map(p=>{
+    if(p.score==null) return '<div style="width:6px;height:4px;border-radius:2px;background:var(--sep);"></div>';
+    const ht=Math.max(5,Math.round((p.score/100)*H));
+    const c=(typeof _ringScale==='function')?_ringScale(p.score):'var(--t2)';
+    return '<div title="'+p.date+' · '+p.score+'/100" style="width:6px;height:'+ht+'px;border-radius:2px;background:'+c+';"></div>';
+  }).join('');
+  return '<div style="display:flex;align-items:flex-end;gap:4px;height:'+H+'px;">'+bars+'</div>';
+}
 function calcRecoveryScore(){return calcRecoveryDetail().score;}
 function getRecoveryInfo(score){
   if(score===null)return{label:'—',color:'var(--t3)',icon:'❓',rec:'Enregistre ton sommeil pour obtenir ton score de récupération.'};

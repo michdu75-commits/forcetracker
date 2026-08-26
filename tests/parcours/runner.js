@@ -13394,6 +13394,205 @@ console.log('\n-- CXXII. Anti-fuite du banc d\'essai : rien de réel ne part dan
   if(disparus.length) console.log('   ℹ️ trous refermés depuis (à retirer de la liste) : '+disparus.join(', '));
 }
 
+
+/* == BLOC CXXIV - L'HISTORIQUE DU SCORE DE RECUP (ft-v1017) ==
+   Michel : « sur accueil et recuperation… j'ai l'impression qu'il n'y a pas d'historique ou
+   c'est moi ? » — il avait raison : le score etait calcule, affiche, puis JETE (aucune cle
+   ft4_recup*, et `dayStateLog` ne garde que energie/moral/douleurs).
+   ⛔⛔ ON NE STOCKE RIEN, ON REJOUE : `calcRecoveryDetail(refTs)` se replace a un instant.
+   Un journal de scores serait une 2e source de verite pour un chiffre calculable (R2), et
+   il ne commencerait qu'aujourd'hui ; en rejouant, la courbe est RETROACTIVE.
+   ⛔⛔ LE TEMOIN LE PLUS IMPORTANT DU LOT EST LA NON-REGRESSION : sans argument, la fonction
+   doit rendre EXACTEMENT ce qu'elle rendait avant. 10 appels existants en dependent.
+   ⛔⛔ LE SECOND EST « LA DERNIERE SEANCE DEPEND DE QUAND ON REGARDE » : `S.sessions[0]` est
+   la derniere TOUT COURT — rejouer un jeudi avec la seance du samedi suivant penaliserait
+   le jeudi pour un effort pas encore fourni. Meme chose pour les NUITS notees apres coup.
+   ⛔ Et avant la 1re donnee on rend `null`, jamais la base neutre de 70 : ce serait un score
+   d'apparence normale pour des jours ou la personne n'utilisait pas encore l'app (R29). */
+console.log('\n-- CXXIV. L\'historique du score de récup se REJOUE, il ne se stocke pas (ft-v1017) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  const jr=n=>{const d=new Date(Date.now()-n*864e5);return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+  const seance=(n,h,k)=>{const d=new Date(Date.now()-n*864e5); d.setHours(h,0,0,0);
+    return {date:jr(n), ts:d.getTime(), id:d.getTime(), name:'Séance',
+      exs:[{name:'Squat Barre',sets:Array.from({length:k},()=>({kg:100,reps:6,done:1}))}]};};
+  const sess=[seance(1,18,14), seance(4,18,8)];
+  const sleep=[]; for(let d=0;d<6;d++) sleep.push({date:jr(d), hours:7.5, quality:3});
+  await pg.addInitScript(seedScript({ft4_age:'43',
+    ft4_sessions:JSON.stringify(sess), ft4_sleep:JSON.stringify(sleep)}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const G=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    // ① NON-REGRESSION : sans argument == a l'instant present
+    o.sansArg=calcRecoveryDetail().score;
+    o.avecNow=calcRecoveryDetail(Date.now()).score;
+    // ② la derniere seance depend de QUAND on regarde
+    const avantHier=new Date(); avantHier.setDate(avantHier.getDate()-2); avantHier.setHours(10,0,0,0);
+    o.seanceDerniere=(S.sessions[0]||{}).date;                       // la plus recente tout court
+    o.seanceVueAvantHier=(_derniereSeanceAvant(avantHier.getTime(),today(avantHier.getTime()))||{}).date;
+    // ③ une nuit POSTERIEURE a la date rejouee ne compte pas
+    const ilYA5j=new Date(); ilYA5j.setDate(ilYA5j.getDate()-5); ilYA5j.setHours(10,0,0,0);
+    const avant=calcRecoveryDetail(ilYA5j.getTime()).score;
+    S.sleepLog=S.sleepLog.concat([{date:(function(){const d=new Date();d.setDate(d.getDate()-1);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);})(), hours:3, quality:0}]);
+    o.nuitPosterieureIgnoree=(calcRecoveryDetail(ilYA5j.getTime()).score===avant);
+    o.nuitCompteAujourdhui=(calcRecoveryDetail().score!==o.sansArg);
+    // ④ avant la 1re donnee : rien d'invente
+    o.avantHistorique=recupHistorique(60).slice(0,20).every(x=>x.score===null);
+    o.aujHistorique=(function(){const h=recupHistorique(7); return h[h.length-1].score!==null;})();
+    // ⑤ le dernier point de la courbe EST le score du jour (meme instant, pas un doublon)
+    const h=recupHistorique(7);
+    o.dernierPointEgalScore=(h[h.length-1].score===calcRecoveryScore());
+    o.dernierPointEstAuj=(h[h.length-1].date===today());
+    o.nbPoints=h.length;
+    // ⑥ le sparkline se TAIT quand il n'a pas de quoi comparer
+    const memo=S.sleepLog, memoS=S.sessions;
+    S.sleepLog=[]; S.sessions=[];
+    o.sparkMuet=(recupHistorique(7).filter(x=>x.score!=null).length<2);
+    S.sleepLog=memo; S.sessions=memoS;
+    // ⑦ AUCUNE nouvelle cle de stockage : on rejoue, on ne stocke pas
+    o.aucuneCleRecup=!Object.keys(localStorage).some(k=>/^ft4_recup/i.test(k));
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(G.err)t('CXXIV n\'a pas pu tourner',false,G.err);
+  else{
+    t('⛔⛔ NON-RÉGRESSION : `calcRecoveryDetail()` sans argument rend le score du moment',
+      G.sansArg===G.avecNow && typeof G.sansArg==='number',
+      JSON.stringify({sansArg:G.sansArg,avecNow:G.avecNow}));
+    t('⛔⛔ « la dernière séance » DÉPEND DE QUAND ON REGARDE (pas `S.sessions[0]` en dur)',
+      G.seanceVueAvantHier!==G.seanceDerniere && !!G.seanceVueAvantHier,
+      JSON.stringify({derniere:G.seanceDerniere,vueAvantHier:G.seanceVueAvantHier}));
+    t('⛔⛔ une nuit notée APRÈS COUP ne change pas un score d\'il y a 5 jours',
+      G.nuitPosterieureIgnoree===true);
+    t('⭐ … mais elle compte bien pour AUJOURD\'HUI (le filtre ne coupe pas tout)',
+      G.nuitCompteAujourdhui===true);
+    t('⛔⛔ avant la 1ʳᵉ donnée, le score est `null` — jamais la base neutre de 70 (R29)',
+      G.avantHistorique===true);
+    t('⭐ … et aujourd\'hui, lui, a bien un score',
+      G.aujHistorique===true);
+    t('⭐⭐ le dernier point de la courbe EST le score affiché (même instant, pas un 2ᵉ calcul)',
+      G.dernierPointEgalScore===true && G.dernierPointEstAuj===true && G.nbPoints===7,
+      JSON.stringify({egal:G.dernierPointEgalScore,auj:G.dernierPointEstAuj,n:G.nbPoints}));
+    t('⛔ la courbe se TAIT quand elle n\'a pas de quoi comparer (moins de 2 jours)',
+      G.sparkMuet===true);
+    t('⛔⛔ AUCUNE clé `ft4_recup*` : on REJOUE, on ne stocke pas (R2 — pas de 2ᵉ source)',
+      G.aucuneCleRecup===true);
+  }
+  /* ⛔ La regle, pas la mesure du jour : les trois fonctions doivent RESTER parametrables,
+     sinon le rejeu se placerait a moitie aujourd'hui et a moitie a la date demandee — et
+     personne ne le verrait (l'erreur serait un chiffre plausible). */
+  {
+    const tr=fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8');
+    const st=fs.readFileSync(path.join(ROOT,'state.js'),'utf8');
+    t('⛔ `today(ts)`, `getMensCyclePhase(ts)` et `_rhrEcart(refTs)` acceptent l\'instant',
+      /const today=\(ts\)=>/.test(st) && /function getMensCyclePhase\(ts\)/.test(st)
+      && /function _rhrEcart\(refTs\)/.test(tr), '');
+    /* Le corps de `calcRecoveryDetail` ne doit plus lire l'horloge en direct. */
+    /* ⚠️ LA FENÊTRE S'ARRÊTE À `calcRecoveryDetail`, PAS PLUS LOIN. Mon 1ᵉʳ jet allait
+       jusqu'au bloc de l'historique et embarquait `projectionRecup` au passage — laquelle
+       lit l'horloge LÉGITIMEMENT (elle projette depuis MAINTENANT). Le témoin accusait donc
+       du code sain. *Une fenêtre de mesure qui déborde mesure autre chose.* */
+    let corps=tr.slice(tr.indexOf('function calcRecoveryDetail(refTs)'),
+                       tr.indexOf('/* ⏳ QUAND SERAI-JE REVENU AU MAX ?'));
+    /* ⚠️ ON RETIRE LES COMMENTAIRES AVANT DE COMPTER — sinon le témoin accuse les phrases
+       qui EXPLIQUENT la règle (« ne lis plus `Date.now()` ») et rougit sur sa propre
+       documentation. C'est exactement le défaut de ft-v1006, attrapé une 2ᵉ fois. */
+    corps=corps.replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:'"])\/\/[^\n]*/g,'$1');
+    const fuites=corps.match(/Date\.now\(\)|today\(\)/g)||[];
+    /* Il en reste exactement DEUX, et elles sont volontaires : la définition de `_now`, et le
+       test « la date rejouée est-elle aujourd'hui ? » qui choisit entre `S.dayState` (le jour
+       même) et `S.dayStateLog` (les jours passés). */
+    t('⛔⛔ le corps de `calcRecoveryDetail` ne lit plus l\'horloge en direct (2 repères, pas 12)',
+      fuites.length===2, 'lectures directes restantes = '+fuites.length+' '+JSON.stringify(fuites));
+  }
+  await cx.close();
+}
+
+
+/* == BLOC CXXV - LA LIGNE DU CLASSEUR PORTE SON EMAIL (ft-v1018) ==
+   Michel, en cherchant a se servir du classeur Google Sheets — le « suivi Excel » du tout
+   debut du projet : les seances de TOUS les testeurs s'empilaient dans le meme onglet
+   `Sessions` sans le moindre identifiant. Il existait pour etre lu, il ne pouvait pas l'etre.
+   ⛔⛔ LA COLONNE VA A LA FIN, JAMAIS AU DEBUT : l'onglet porte deja des milliers de lignes
+   sur 11 colonnes, et inserer en tete decalerait TOUT l'historique d'un cran — un tableur ne
+   le signale pas, il affiche des chiffres dans la mauvaise colonne.
+   ⛔ L'email est pose sur l'ENVELOPPE, pas sur chaque serie (R2) : c'est le serveur qui
+   l'etale sur les lignes, a UN seul endroit.
+   ⚠️ CE BLOC MESURE LE VRAI `Code.js` DANS UN BAC A SABLE — Apps Script n'existe pas ici, on
+   lui donne un faux classeur et on regarde ce qu'il ecrit. ⚠️ Et mon 1er faux classeur A
+   MENTI : son `getSheetByName` rendait l'onglet meme quand il ne devait pas exister, donc le
+   cas « onglet neuf » prenait la mauvaise branche et sortait un en-tete de 11 cases vides.
+   *Le code etait juste, le levier etait faux* — 8e fois cette semaine. */
+console.log('\n-- CXXV. La ligne du classeur porte son email (ft-v1018) --');
+{
+  const src=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  const vm=require('vm');
+  const EN=['date','exercise','set_num','type','kg','reps','volume','rm1','bw','gender','age'];
+  const faireOnglet=(entete,lignes)=>{
+    const g={entete:(entete||[]).slice(), lignes:(lignes||[]).map(r=>r.slice())};
+    return {_g:g,
+      getLastColumn:()=>g.entete.length,
+      getRange:(r,c,nr,nc)=>({getValues:()=>[g.entete.slice(c-1,(c-1)+(nc||1))],
+        setValue:(v)=>{ while(g.entete.length<c-1)g.entete.push(''); g.entete[c-1]=v; }}),
+      appendRow:(row)=>{ if(!g.entete.length && row[0]==='date') g.entete=row.slice(); else g.lignes.push(row.slice()); }};
+  };
+  const lancer=(onglet,body,existe)=>{
+    const ctx={console,JSON,String,Number,Math,Date,Array,Object,
+      SpreadsheetApp:{openById:()=>({getSheetByName:()=>(existe===false?null:onglet), insertSheet:()=>onglet})},
+      PropertiesService:{getScriptProperties:()=>({getProperty:()=>'',setProperty:()=>{}})},
+      Utilities:{},Logger:{log:()=>{}},GmailApp:{},DriveApp:{},UrlFetchApp:{},CacheService:{},
+      LockService:{},Session:{},
+      ContentService:{createTextOutput:(t)=>({setMimeType:()=>({_t:t}),_t:t}),MimeType:{JSON:'json'}}};
+    ctx.global=ctx; vm.createContext(ctx); vm.runInContext(src,ctx,{filename:'Code.js'});
+    return vm.runInContext('handleLogSession_',ctx)(body);
+  };
+  const rows=[{date:'2026-08-26',exercise:'Squat Barre',set_num:1,type:'N',kg:100,reps:6,volume:600,rm1:'116',bw:84,gender:'H',age:43}];
+
+  // ① onglet EXISTANT a 11 colonnes, avec une vieille ligne : c'est LE cas de production
+  let o=faireOnglet(EN,[['2026-08-01','Développé Couché',1,'N',80,8,640,'99',84,'H',43]]);
+  lancer(o,{rows,email:'christophe@famillelanglois.fr'});
+  t('⛔⛔ la colonne `email` est ajoutée À LA FIN de l\'en-tête existant (rien n\'est décalé)',
+    JSON.stringify(o._g.entete)===JSON.stringify(EN.concat(['email'])), JSON.stringify(o._g.entete));
+  t('⛔⛔ … et les VIEILLES lignes ne bougent pas d\'une cellule (11 colonnes, intactes)',
+    o._g.lignes[0].length===11 && o._g.lignes[0][1]==='Développé Couché',
+    JSON.stringify(o._g.lignes[0]));
+  t('⭐ la nouvelle ligne porte bien l\'email en 12ᵉ position',
+    o._g.lignes[1].length===12 && o._g.lignes[1][11]==='christophe@famillelanglois.fr',
+    JSON.stringify(o._g.lignes[1]));
+  // ② un 2e passage ne re-ecrit pas l'en-tete
+  const avant=JSON.stringify(o._g.entete);
+  lancer(o,{rows,email:'eline@x.fr'});
+  t('⛔ un 2ᵉ envoi ne touche PAS à l\'en-tête (il est lu, pas supposé)',
+    JSON.stringify(o._g.entete)===avant && o._g.lignes.length===3, JSON.stringify(o._g.entete));
+  // ③ onglet NEUF (il n'existe pas encore)
+  o=faireOnglet([],[]);
+  lancer(o,{rows,email:'Michdu75@Gmail.com '},false);
+  t('⭐ un onglet NEUF naît directement avec les 12 colonnes',
+    JSON.stringify(o._g.entete)===JSON.stringify(EN.concat(['email'])), JSON.stringify(o._g.entete));
+  t('⭐ l\'email est normalisé (minuscules, sans espaces) — sinon on aurait 2 « personnes »',
+    o._g.lignes[0][11]==='michdu75@gmail.com', JSON.stringify(o._g.lignes[0][11]));
+  // ④ onglet PRESENT mais VIDE : on pose l'en-tete complet, pas « email » en colonne 12
+  o=faireOnglet([],[]);
+  lancer(o,{rows,email:'a@b.fr'});
+  t('⛔ onglet présent mais VIDE : l\'en-tête complet est posé (pas 11 colonnes sans titre)',
+    JSON.stringify(o._g.entete)===JSON.stringify(EN.concat(['email'])), JSON.stringify(o._g.entete));
+  // ⑤ SANS email : ligne anonyme, rien d'invente (R29)
+  o=faireOnglet(EN.concat(['email']),[]);
+  lancer(o,{rows});
+  t('⛔⛔ sans email, la cellule reste VIDE — une ligne anonyme reste anonyme (R29)',
+    o._g.lignes[0][11]==='', JSON.stringify(o._g.lignes[0]));
+  /* ⛔ Et la moitie FRONTEND : sans elle le serveur ecrirait une colonne toujours vide.
+     Les deux moities ne valent que posees ensemble (lecon ft-v982 / ft-v995). */
+  t('⛔⛔ … et l\'app ENVOIE bien l\'email dans le paquet `logSession` (R4 : sinon rien n\'arrive)',
+    /action:'logSession'[^)]*email:S\.email/.test(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8')), '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
