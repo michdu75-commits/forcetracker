@@ -13593,6 +13593,96 @@ console.log('\n-- CXXV. La ligne du classeur porte son email (ft-v1018) --');
     /action:'logSession'[^)]*email:S\.email/.test(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8')), '');
 }
 
+/* == BLOC CXXIII - « CE QU'IL TE RESTE, EN VRAI » (ft-v1019) ==
+   Michel : « il faut montrer une estimation de ce qu'il nous reste a manger dans la journee (a 14h
+   par exemple, il te reste 150 g de prot a manger, tu peux faire 1 shake de prot et 150 g de
+   poulet, pareil pour les glucides et pareil pour les lipides) ».
+   ⭐⭐ SA PRECISION EST TOUT LE SUJET : le chiffre « il te reste 150 g » etait DEJA a l'ecran, et
+   il ne servait a rien — *personne ne sait a quoi ressemblent 150 g de proteines dans une
+   assiette.* Ce qui manquait n'etait pas la donnee, c'etait sa TRADUCTION (trou 3.3 de
+   docs/NUTRITION-MOTEUR.md : « le Journal et le Plan ne se parlent pas »).
+   ⛔ LES ALIMENTS SONT LES SIENS, JAMAIS UNE BASE INVENTEE (R29) : favoris + journal reel. Ca
+   evite entierement le trou 3.2 (« aucune base d'aliments ») — on n'a pas besoin des 300 aliments
+   `composable` pour ca.
+   ⚠️⚠️ MA 1re VERSION PROPOSAIT UN SEUL ALIMENT et rendait « 5,5 x Blanc de poulet » / « 3,5 x
+   Huile d'olive ». *Ce ne sont pas des idees, ce sont des absurdites.* Et l'exemple de Michel
+   disait deja pourquoi : « 1 shake ET 150 g de poulet » — une COMBINAISON, parce qu'un aliment
+   ne couvre pas un gros manque a dose raisonnable. C'est la mesure qui l'a dit, pas une relecture.
+   ⛔⛔ LES TROIS GARDE-FOUS ANTI-TCA (P21) SONT LA MOITIE DU TRAVAIL, et ils se testent : rien
+   sur un jour PASSE (un reproche sur une journee qu'on ne peut plus changer), rien quand la cible
+   est DEPASSEE (aucun reproche), rien sans aliments a soi (on n'invente pas). */
+console.log('\n-- CXXIII. Ce qu\'il te reste à manger, traduit en TES aliments (ft-v1019) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2200);
+  const F=await pg.evaluate(()=>{
+   try{
+    const o={}, t=today();
+    S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';S.nutritionPhase='charge';
+    S.savedFoods=[
+      {name:'Shake protéiné',kcal:120,prot:25,carbs:3,fat:1},
+      {name:'Blanc de poulet',kcal:165,prot:31,carbs:0,fat:3.6,per100:{kcal:110,prot:23,carbs:0,fat:2.4}},
+      {name:'Amandes',kcal:180,prot:6,carbs:4,fat:16,per100:{kcal:600,prot:21,carbs:13,fat:53}}];
+    S.foodLog=[
+      {date:t,meal:'matin',name:'Flocons avoine',kcal:380,prot:13,carbs:60,fat:8,ts:Date.now()-3e6,per100:{kcal:380,prot:13,carbs:60,fat:8}},
+      {date:t,meal:'midi',name:'Riz basmati',kcal:350,prot:7,carbs:77,fat:1,ts:Date.now()-1e6,per100:{kcal:350,prot:7,carbs:77,fat:1}}];
+    const r=_resteDuJour(t);
+    o.reste = r ? (r.prot+'|'+r.carbs+'|'+r.fat) : null;
+    const id=_ideesPourLeReste(r);
+    o.nb=id.length;
+    o.textes=id.map(x=>x.idee);
+    /* ⛔ AUCUNE ABSURDITÉ : ni « 5,5 × », ni un poids au-delà de la borne. */
+    o.absurde = id.some(x=>/([3-9]|\d{2,})(,|\.)?\d*\s*×/.test(x.idee) || /(\d{3,})\s*g/.test(x.idee.replace(/\b(1[0-9]\d|2[0-4]\d|250)\s*g/g,'')));
+    o.combine = id.some(x=>x.idee.indexOf(' + ')>0);          // au moins une combinaison
+    /* ⛔ Seuls SES aliments sont cités. */
+    const siens=['Shake protéiné','Blanc de poulet','Amandes','Flocons avoine','Riz basmati'];
+    o.queLesSiens = id.every(x=>x.idee.split(' + ').every(p=>siens.some(n=>p.indexOf(n)>=0)));
+    o.elision = _deNom('Amandes')==="d'Amandes" && _deNom('Yaourt')==='de Yaourt';
+    // ── à l'écran, par le vrai rendu
+    goScreen('s-nutrition'); renderFoodJournal();
+    const lire=()=>document.getElementById('food-journal').innerText;
+    o.ecran = /Ce qu'il te reste, en vrai/.test(lire());
+    o.mention = /Une idée, pas une consigne/.test(lire());
+    // ⛔ ① jour PASSÉ → rien
+    _journalJour=new Date(Date.now()-864e5).toISOString().slice(0,10); renderFoodJournal();
+    o.jourPasse = /Ce qu'il te reste/.test(lire());
+    // ⛔ ② cible DÉPASSÉE → rien, aucun reproche
+    _journalJour=null;
+    S.foodLog.push({date:t,meal:'soir',name:'Gros repas',kcal:4000,prot:300,carbs:400,fat:150,ts:Date.now()});
+    renderFoodJournal();
+    o.depasse = /Ce qu'il te reste/.test(lire());
+    // ⛔ ③ AUCUN aliment à soi → rien d'inventé
+    S.foodLog=[]; S.savedFoods=[]; renderFoodJournal();
+    o.sansAliments = /Ce qu'il te reste/.test(lire());
+    // ⛔ ④ pas de profil → pas de cible, donc pas de reste
+    S.bw=0; o.sansProfil = _resteDuJour(t)===null;
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(F.err) t('CXXIII n\'a pas pu tourner', false, F.err);
+  else{
+    t('⭐⭐ le reste est TRADUIT en aliments, pas seulement chiffré',
+      F.nb>=2 && F.ecran===true, 'idées='+F.nb+' à l\'écran='+F.ecran);
+    t('⭐⭐ … et au moins une idée COMBINE deux aliments (« 1 shake ET 150 g de poulet »)',
+      F.combine===true, JSON.stringify(F.textes));
+    t('⛔⛔ AUCUNE absurdité : ni « 5,5 × », ni une portion hors borne (le défaut de ma 1ʳᵉ version)',
+      F.absurde===false, JSON.stringify(F.textes));
+    t('⛔ SEULS SES aliments sont cités — aucune base inventée (R29)',
+      F.queLesSiens===true, JSON.stringify(F.textes));
+    t('⛔⛔ ANTI-TCA ① rien sur un jour PASSÉ (P21)', F.jourPasse===false, '');
+    t('⛔⛔ ANTI-TCA ② rien quand la cible est DÉPASSÉE — aucun reproche', F.depasse===false, '');
+    t('⛔ ANTI-TCA ③ le texte dit « une idée, pas une consigne »', F.mention===true, '');
+    t('⛔ sans aliments à soi, on n\'invente rien', F.sansAliments===false, '');
+    t('⛔ sans profil, aucune cible donc aucun reste (on ne compare pas à un objectif absent)',
+      F.sansProfil===true, '');
+    t('⭐ l\'élision est juste : « d\'Amandes » mais « de Yaourt »', F.elision===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
