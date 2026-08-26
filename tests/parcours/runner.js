@@ -14543,6 +14543,131 @@ console.log('\n-- CXXXI. Les types de séances remplissent l\'écran vide (ft-v1
     /pas encore de quoi/i.test(R.unJour) && !/en moyenne/i.test(R.unJour), R.unJour.slice(0,110));
 }
 
+/* == BLOC CXXXIII - LE TEMPO DESCEND JUSQU'A LA DONNEE (ft-v1028) ==
+   Vient des 6 programmes ecrits par la coach de Michel (2023, docs/NUTRITION-PROGRAMMES-REELS.md
+   §3bis, relaye par session-A) : le TEMPO y est une COLONNE — « 3 sec descente, 2 sec
+   contraction », « monte 3 sec, bloque 3 sec, descends 3 sec ».
+   /!\ J'AI D'ABORD DIT « le tempo n'existe nulle part » — c'est FAUX : la consigne libre par
+   exercice existe, s'affiche en seance et part chez Milo. LE TROU EST AILLEURS, et c'est R4 :
+   le tempo est de la PROSE dans une note et une CONSTANTE (SEC_PAR_REP=3) dans le calcul, dont
+   le commentaire dit lui-meme « le tempo courant ». Les deux ne se rencontraient jamais.
+   ⛔⛔ ET LE PIEGE EST LE REPOS : « 45 sec max » est la colonne « Repos maximum » de la coach,
+   pas une maniere de bouger. Une lecture naive en ferait 45 s par repetition.
+   ⛔⛔ LE TEMOIN LE PLUS IMPORTANT DU BLOC N'EST PAS LE TEMPO — c'est le bandeau d'avertissement.
+   Trouve ICI, en lisant la ligne d'a cote : `ex.note ? '…' : '' + _intensiteBandeau(ex)` se lit
+   `ex.note ? '…' : ('' + bandeau)`. Un exercice qui portait une consigne PERDAIT donc son
+   bandeau — celui qui affiche les 🚫 exclusions et les 🛡️ blessures (la sortie du Gardien au
+   niveau de la seance). Et ce sont justement les exercices venus d'un PROGRAMME qui ont une
+   consigne : l'avertissement disparaissait la ou on l'attendait le plus. Aucune erreur, juste
+   un bloc absent. */
+console.log('\n-- CXXXIII. Le tempo descend jusqu\'a la donnee (ft-v1028) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const G=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    /* ⭐ LE VOCABULAIRE REEL DE LA COACH, puis les pieges. On mesure la fonction de PRODUCTION,
+       pas une copie : `_tempoSec` est lue dans la page telle qu'elle est servie. */
+    o.lus={
+      descContract : _tempoSec('3 sec descente, 2 sec contraction'),
+      troisTemps   : _tempoSec('monte 3 sec, bloque 3 sec, descends 3 sec'),
+      sansChiffre  : _tempoSec('montée lente, descente rapide'),
+      reposMax     : _tempoSec('45 sec max'),
+      reposPhrase  : _tempoSec('repos 90 sec entre les séries'),
+      reglageMach  : _tempoSec('cran 4 sur la machine, dos bien calé'),
+      schemaReps   : _tempoSec('10-10-10-10 dégressif 4 charges'),
+      horsBorne    : _tempoSec('descente 30 sec'),
+      vide         : _tempoSec('')
+    };
+    /* ⭐⭐ LA DESCENTE JUSQU'AU CALCUL : c'est la seule chose qui prouve que R4 est refermee.
+       10 reps a 3+2 s = 10 s d'installation + 50 s de travail, la ou l'app comptait 40. */
+    const st={reps:10,kg:60,done:true};
+    o.sansEx   = _secSerie(st);
+    o.sansNote = _secSerie(st,{name:'X'});
+    o.noteMuette=_secSerie(st,{name:'X',note:'cran 4, dos calé'});
+    o.avecTempo= _secSerie(st,{name:'X',note:'3 sec descente, 2 sec contraction'});
+    /* ⛔ LA NON-REGRESSION EST LE TEMOIN QUI REND LE CHANGEMENT SUR : sans exercice, sans note,
+       ou avec une note qui ne parle pas de tempo, la fonction rend EXACTEMENT ce qu'elle rendait
+       avant. Tout le reste du calcul (duree, MET, calories) en depend. */
+    o.plafond  = _secSerie({reps:100,done:true},{name:'X',note:'descente 5 sec, montée 5 sec'});
+    o.sansReps = _secSerie({reps:0,done:true},{name:'X',note:'3 sec descente, 2 sec contraction'});
+    /* ⭐ ET LES CALORIES SUIVENT : deux seances identiques, une seule porte le tempo. */
+    const mk=note=>({date:'2026-08-26',exs:[{name:'Développé Couché',note:note,
+      sets:[{reps:10,kg:60,done:true},{reps:10,kg:60,done:true},{reps:10,kg:60,done:true}]}]});
+    const cSans=calcSessionCalories(mk('')), cAvec=calcSessionCalories(mk('3 sec descente, 2 sec contraction'));
+    o.kcalSans=cSans.total; o.kcalAvec=cAvec.total;
+    o.actifSans=cSans.activeMin; o.actifAvec=cAvec.activeMin;
+    /* ── L'ECRAN : la pastille montre ce que l'app a COMPRIS ── */
+    const aller=()=>{goScreen('s-log');document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+      document.getElementById('s-log').classList.add('active');renderLog();};
+    S.wkt={start:Date.now(),exs:[
+      {name:'Développé Couché',note:'3 sec descente, 2 sec contraction',
+       seanceWarn:['🛡️ épaule fragile — reste sous 70 %'],
+       sets:[{reps:10,kg:60,done:true},{reps:10,kg:60,done:false}]},
+      {name:'Squat à la Barre',note:'cran 4, dos bien calé',
+       sets:[{reps:8,kg:80,done:false}]}
+    ]};
+    persist(); _expandedEx=-1; aller();
+    const txt=document.getElementById('s-log').innerText||'';
+    o.pastille = (txt.match(/🐢[^\n]*/g)||[]);
+    /* ⛔⛔ LE BANDEAU D'AVERTISSEMENT SURVIT A LA CONSIGNE — le vrai defaut du jour. */
+    o.warnVisible = txt.indexOf('épaule fragile')>=0;
+    o.noteVisible = txt.indexOf('3 sec descente')>=0;
+    /* 🔴 REGLE D'OR #9 : le bouton central se MESURE, il ne se regarde pas. */
+    const f=document.querySelector('.nav-fab,#nb-log,.fab'); const r=f.getBoundingClientRect();
+    o.fab=[Math.round(r.x),Math.round(r.y),Math.round(r.width)];
+    S.wkt=null; persist();
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  await cx.close();
+
+  if(G.err)t('CXXXIII n\'a pas pu tourner',false,G.err);
+  else{
+    const L=G.lus;
+    t('⭐⭐ le vocabulaire REEL de la coach est lu (« 3 sec descente, 2 sec contraction » → 5 s)',
+      L.descContract===5 && L.troisTemps===9, JSON.stringify(L));
+    /* ⛔⛔ LE PIEGE DU REPOS : « 45 sec max » est sa colonne « Repos maximum ». Une lecture
+       naive en ferait 45 s PAR REPETITION, soit une serie de 10 reps a 7 minutes. */
+    t('⛔⛔ des secondes de REPOS ne deviennent jamais un tempo',
+      L.reposMax===null && L.reposPhrase===null, JSON.stringify({reposMax:L.reposMax,reposPhrase:L.reposPhrase}));
+    /* ⛔ Le silence est la regle : non chiffrable n'est pas « 3 par defaut », c'est « je ne sais
+       pas » (R29). Un schema de REPS (10-10-10-10) n'est pas un tempo non plus. */
+    t('⛔ rien de chiffrable → null, jamais une valeur par défaut',
+      L.sansChiffre===null && L.reglageMach===null && L.schemaReps===null && L.vide===null && L.horsBorne===null,
+      JSON.stringify(L));
+    /* ⭐⭐ C'EST CE TEMOIN QUI REFERME R4 : le calcul CHANGE. Sans lui, on aurait ajoute une
+       pastille decorative au-dessus d'un calcul qui continue d'ignorer ce qui est ecrit. */
+    t('⭐⭐ le tempo ATTEINT le calcul de la série (40 s → 60 s)',
+      G.sansEx===40 && G.avecTempo===60, JSON.stringify({sansEx:G.sansEx,avecTempo:G.avecTempo}));
+    /* ⛔ LA NON-REGRESSION, le temoin qui rend le changement sur : 10 appels du calcul en
+       dependent, et l'argument optionnel ne doit rien deplacer quand il est absent ou muet. */
+    t('⛔ NON-RÉGRESSION : sans exercice, sans note, ou note muette → identique à avant',
+      G.sansEx===40 && G.sansNote===40 && G.noteMuette===40, JSON.stringify(G));
+    t('⛔ les garde-fous d\'origine tiennent (plafond 180 s · aucune rep notée → 30 s)',
+      G.plafond===180 && G.sansReps===30, JSON.stringify({plafond:G.plafond,sansReps:G.sansReps}));
+    /* ⭐ Et l'effet se voit jusqu'aux calories — sinon le tempo serait une donnee morte (R3). */
+    t('⭐ le temps de travail de la séance suit le tempo (donnée vivante, R3)',
+      G.actifAvec>G.actifSans, JSON.stringify({actifSans:G.actifSans,actifAvec:G.actifAvec,kcalSans:G.kcalSans,kcalAvec:G.kcalAvec}));
+    /* ⭐ CE QU'ON NE MONTRE PAS NE PEUT PAS ETRE CORRIGE : un calcul qui change en silence est
+       indiscernable d'un bug, et la personne ne pourrait pas rectifier une consigne mal lue. */
+    t('⭐ la pastille dit ce que l\'app a compris, et seulement là où il y a un tempo',
+      G.pastille.length===1 && /5\s*s\/rép/.test(G.pastille[0]), JSON.stringify(G.pastille));
+    /* ⛔⛔ LE DEFAUT REEL DU JOUR — la consigne masquait l'avertissement de blessure. */
+    t('⛔⛔ un exercice qui porte une CONSIGNE garde son bandeau 🛡️ blessure',
+      G.warnVisible===true && G.noteVisible===true,
+      JSON.stringify({bandeau:G.warnVisible,consigne:G.noteVisible}));
+    t('🔴 règle d\'or #9 : le bouton central « + » est à sa place',
+      G.fab[2]>0 && G.fab[1]>0, JSON.stringify(G.fab));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

@@ -769,7 +769,15 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   if(!isExpanded){
     const _dsLbl=ex.dropset?'palier':'série';
     const summary=`${doneSets.length}/${ex.sets.length} ${_dsLbl}${ex.sets.length>1?'s':''}${ex.dropset?' · '+ex.dropset.paliers+'P '+(ex.dropset.direction==='down'?'⬇':'⬆'):''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · ~'+fmt(maxRM)+'kg 1RM':''}`;
-    const notePreview=ex.note?`<div style="font-size:11.5px;color:var(--gold);font-style:italic;line-height:1.4;padding:0 10px 7px;word-break:break-word;" onclick="event.stopPropagation()">💬 ${(ex.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`:''
+    /* ⚠️⚠️ LES PARENTHÈSES NE SONT PAS COSMÉTIQUES — elles corrigent un vrai défaut (ft-v1028).
+       C'était écrit `ex.note ? '…' : '' + _intensiteBandeau(ex)`, que JavaScript lit
+       `ex.note ? '…' : ('' + _intensiteBandeau(ex))`. 👉 **Un exercice qui portait une consigne
+       PERDAIT son bandeau** — or ce bandeau ne porte pas que l'intensité : `seanceWarn` y met les
+       🚫 exclusions et les 🛡️ blessures, c'est-à-dire la sortie du Gardien au niveau de la séance.
+       Et ce sont précisément les exercices venus d'un PROGRAMME qui ont une consigne : l'avertissement
+       disparaissait donc là où il était le plus attendu. Rien ne le signalait — pas d'erreur, juste
+       un bloc absent. */
+    const notePreview=(ex.note?`<div style="font-size:11.5px;color:var(--gold);font-style:italic;line-height:1.4;padding:0 10px 7px;word-break:break-word;" onclick="event.stopPropagation()">💬 ${(ex.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}${_tempoChip(ex)}</div>`:'')
       + _intensiteBandeau(ex);
     const selStyle=isSelected?'box-shadow:inset 0 0 0 2px var(--orange);':(!_groupMode?'opacity:.75':'');
     const clickAttr=_groupMode
@@ -896,6 +904,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
     +`<div style="display:flex;align-items:flex-start;gap:6px;padding:4px 8px 6px;border-top:1px solid var(--sep);" onclick="event.stopPropagation()">`
     +`<span style="font-size:14px;color:var(--t3);padding-top:5px;flex-shrink:0;">💬</span>`
     +`<textarea id="ex-note-${ei}" rows="1" placeholder="Note perso (trop léger, fatigue, douleur…)" oninput="saveExNote(${ei},this.value);this.style.height='auto';this.style.height=this.scrollHeight+'px'" style="flex:1;resize:none;overflow:hidden;border:none;background:transparent;color:var(--t2);font-size:12px;font-family:inherit;padding:4px 2px;line-height:1.4;min-height:26px;outline:none;caret-color:var(--red);">${(ex.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>`
+    +_tempoChip(ex)   // 🐢 ce que l'app a COMPRIS de la consigne, à côté de la consigne elle-même
     +`</div>`
     +(!inGroup?(ex.dropset
       ?`<div style="display:flex;gap:5px;padding:2px 8px 8px;">`
@@ -1028,6 +1037,20 @@ function openExHistory(name){
 }
 function closeExHistory(){const el=document.getElementById('ov-ex-hist');if(el)el.classList.remove('open');}
 
+/* 🐢 LA PASTILLE DE TEMPO — ce que l'app a COMPRIS, montré à côté de ce qui l'a produit.
+   Pourquoi elle existe : `_tempoSec` (app.js) change désormais la durée et l'intensité comptées
+   pour la série. **Un calcul qui change sans que rien ne le dise est indiscernable d'un bug** —
+   et surtout, la personne ne pourrait pas corriger sa consigne si elle a été mal lue. C'est la
+   doctrine du profil vivant appliquée ici : *ce qu'on ne montre pas ne peut pas être corrigé.*
+   ⛔ UN SEUL RENDU pour les deux vues (repliée et dépliée) — deux copies divergeraient (R2).
+   ⛔ ET ELLE SE TAIT quand rien n'est chiffrable : pas de pastille « — », pas de « 3 s/rep par
+   défaut ». Une pastille absente veut dire « je n'ai rien lu », et c'est la vérité (R29). */
+function _tempoChip(ex){
+  const t=(typeof _tempoSec==='function'&&ex&&ex.note)?_tempoSec(ex.note):null;
+  if(!t)return '';
+  const v=(Math.round(t*10)%10===0)?String(Math.round(t)):String(t).replace('.',',');
+  return `<div class="tempo-chip" title="Lu dans ta consigne — sert à estimer la durée et l'intensité de la série." onclick="event.stopPropagation()">🐢 ${v} s/rép</div>`;
+}
 // ── Note par série (dans la colonne « précédent ») ──
 function _escNote(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 // Échappe une valeur destinée à un '…' JS DANS un attribut "…" (ex. onclick="f('${_escAttrJs(nom)}')").

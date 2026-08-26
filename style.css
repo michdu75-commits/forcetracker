@@ -1644,3 +1644,7 @@ html.ob-done #onboarding{display:none;}
 .ts-info{margin-left:auto;flex:none;font-size:15px;color:var(--t3);padding:2px 4px;line-height:1;}
 .ts-cadre{margin-top:5px;font-size:11.5px;color:var(--t2);line-height:1.4;}
 .ts-exs{margin-top:3px;font-size:11px;color:var(--t3);line-height:1.4;}
+/* 🐢 Pastille de tempo (ft-v1028) — discrète, elle informe et ne réclame rien. */
+.tempo-chip{display:inline-block;margin-top:4px;padding:2px 7px;border-radius:999px;background:var(--bg3);
+  box-shadow:inset 0 0 0 1px var(--sep);color:var(--t2);font-size:10.5px;font-weight:700;font-style:normal;
+  line-height:1.5;white-space:nowrap;flex-shrink:0;align-self:center;}

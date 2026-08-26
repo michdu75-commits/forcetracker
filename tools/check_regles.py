@@ -227,8 +227,28 @@ try:
     jt = (racine / "docs" / "JOURNAL-DE-TEST.md").read_text(encoding="utf-8")
     # Une entrée = un titre de niveau 3 portant un état. Les états sont dans le fichier.
     _ETATS = "🟡🟢🔵🟣⚪"
-    _ent = [l for l in jt.split("\n")
-            if l.startswith("### ") and any(e in l[:8] for e in _ETATS)]
+    _titres = [l for l in jt.split("\n") if l.startswith("### ")]
+    _ent = [l for l in _titres if any(e in l[:8] for e in _ETATS)]
+    # ⚠️⚠️ UN TITRE SANS ÉTAT CONNU N'EST PAS IGNORÉ, IL EST DÉNONCÉ (26/08/2026).
+    #    Mesuré ce jour-là : CINQ entrées portaient un 🟠 qui n'est dans aucune légende. Elles
+    #    étaient donc SAUTÉES en silence — le compteur annonçait 54 entrées pour 59 réelles, et
+    #    il aurait continué à mentir vers le bas indéfiniment.
+    #    ⛔ C'est la famille « un vert qui ne peut pas rougir » de BUGS.md : un filtre qui ne
+    #    garde que ce qu'il reconnaît ne peut jamais signaler ce qu'il ne reconnaît pas.
+    #    ⚠️ ET IL S'IMPRIME ICI, PAS DANS `erreurs` : cette liste est consommée bien plus haut
+    #    (ligne ~200), donc y ajouter quelque chose à cet endroit ne produirait AUCUN affichage.
+    #    Mon 1er jet faisait exactement ça — un garde-fou parfaitement muet, c'est-à-dire pire
+    #    que pas de garde-fou. Trouvé en essayant de le faire ROUGIR, pas en le relisant.
+    _inconnus = [l for l in _titres if l not in _ent]
+    if _inconnus:
+        print("❌ docs/JOURNAL-DE-TEST.md : %d entrée(s) portent un état absent de la légende —"
+              " elles ne sont comptées nulle part." % len(_inconnus))
+        for _t in _inconnus[:5]:
+            print("   → " + _t[:100])
+        print("   États valides : %s (voir la légende du fichier)" % _ETATS)
+        _JT_KO = True
+    else:
+        _JT_KO = False
     _ouvertes = [l for l in _ent if ("🟡" in l[:8] or "🟢" in l[:8])]
     _promues  = [l for l in _ent if "🔵" in l[:8]]
     if len(_ent) >= SEUIL_PIEGES:
@@ -243,8 +263,12 @@ try:
         print(f"🧾 journal de test : {len(_ent)} entrées "
               f"({len(_ouvertes)} à promouvoir · {len(_promues)} promues) — "
               f"benchmark en pause, encore {SEUIL_PIEGES - len(_ent)} avant le plancher de {SEUIL_PIEGES}.")
+    if _JT_KO:
+        sys.exit(1)
 except FileNotFoundError:
     print("⚠️ docs/JOURNAL-DE-TEST.md introuvable — le réflexe de la règle #12 n'a plus de fichier.")
+except SystemExit:
+    raise                                      # ⛔ ne pas avaler notre propre refus (ci-dessus)
 except Exception:
     pass                                       # jamais bloquer sur un pépin d'outillage
 

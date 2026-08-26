@@ -6,7 +6,27 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1027`.
+- **Version en ligne (live) :** `ft-v1028`.
+- 🐢⭐⭐ **LE TEMPO DESCEND JUSQU'À LA DONNÉE — LIVRÉ** (ft-v1028). Première suite du relais de
+  session-A sur les **6 programmes de la coach de Michel** (2023, `docs/NUTRITION-PROGRAMMES-REELS.md`
+  §3bis) : chez elle le **tempo est une COLONNE**.
+  ⚠️⚠️ **J'avais dit « le tempo n'existe nulle part » — c'est FAUX** : la consigne libre par
+  exercice existe, s'affiche en séance et part chez Milo.
+  ⛔⛔ **Le trou est ailleurs, et c'est R4** : le tempo est de la **prose** dans une note et une
+  **constante** (`SEC_PAR_REP = 3`) dans le calcul. Mesuré : 10 reps à « 3 s + 2 s » = **60 s**
+  de travail, l'app en comptait **40**.
+  ⛔ **Le piège est le REPOS** (« 45 sec max » = sa colonne *Repos maximum*) → deux garde-fous +
+  borne 1-15 s/rép. **Rien de chiffrable → on se tait**, jamais « 3 par défaut » (R29).
+  ⛔⛔ **Et le vrai défaut du jour est un `? :` sans parenthèses** : un exercice qui portait une
+  **consigne perdait son bandeau 🛡️ blessure / 🚫 exclusion** — la sortie du Gardien — et ce sont
+  justement les exercices venus d'un **programme** qui ont une consigne.
+  🧾 **Au passage, une mesure de gouvernance** : `docs/JOURNAL-DE-TEST.md` annonçait **54** entrées
+  pour **59** — cinq portaient un `🟠` hors légende, **sauté en silence**. Ramenées à `🟡`, et
+  `check_regles.py` **refuse** désormais un état inconnu au lieu de l'ignorer.
+  ⏭️ **Deux constats du relais restent OUVERTS, et ils sont pour Michel** : ① le **repos comme
+  MAXIMUM** plutôt qu'un compte à rebours (⚠️ écart plus étroit qu'annoncé — le chrono continue
+  **en négatif** depuis le 14/08) ; ② **Milo prescrit des kilos** quand une coach écrit *« lourd »*
+  — le doc lui-même pose ça en **question ouverte**, pas en défaut.
 - 🏋️⭐⭐ **LES TYPES DE SÉANCES REMPLISSENT L'ÉCRAN VIDE — LIVRÉ** (ft-v1026). §2.1 du parcours
   de découverte, et **la plainte d'origine de Michel** : *« quand on arrive c'est vide »*.
   ⛔⛔ **Le vrai travail était R4** : `DISC_CADRE.coeur` dit « SQUAT · DC · SDT » en **prose** —

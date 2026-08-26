@@ -69,7 +69,7 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
-### 🟠 « LES NOIX DE MACADAMIA J'EN MANGE PAS, ET EN PLUS C'EST DÉGUEULASSE »
+### 🟡 « LES NOIX DE MACADAMIA J'EN MANGE PAS, ET EN PLUS C'EST DÉGUEULASSE »
 **26/08/2026, Michel, devant le Plan alimentaire journalier.** Dit en riant — et c'est le
 meilleur résumé du problème en une phrase. Le plan lui propose *« Yaourt grec entier + noix de
 macadamia »* parce que c'est **écrit en dur** dans `KETO_MEALS` (`state.js` ~1052), pas parce que
@@ -81,7 +81,7 @@ qu'il **mange vraiment** — que le journal donne déjà gratuitement depuis ft-
 table du code. Le dossier est dans `IDEES-FUTURES.md` (« on connaît l'athlète sportivement, pas
 du tout alimentairement »). **État : à trier.**
 
-### 🟠 « MON ALIMENTATION EST DÉJÀ DANS L'APPLICATION » — et Milo ne la reçoit pas
+### 🟡 « MON ALIMENTATION EST DÉJÀ DANS L'APPLICATION » — et Milo ne la reçoit pas
 **26/08/2026, conversation réelle.** Michel : *« As-tu assez de recul pour mon alimentation ? »*
 → *« Mon alimentation est déjà dans l'application. »* Milo : *« Je n'ai pas accès au journal
 alimentaire (…) **en l'état je travaille à l'aveugle sur la nutrition.** »*
@@ -95,14 +95,31 @@ n'avait pas pu promouvoir avant son correctif). **À promouvoir le jour où le r
 l'attendu sera alors vérifiable — *cite-t-il un jour réel du journal ?*
 **État : à trier.**
 
-### 🟠 « Y A-T-IL UNE ÉVOLUTION PAR RAPPORT À MON PHYSIQUE ? » — il ne peut pas répondre
+### 🟡 MILO CHIFFRE LA CHARGE ; UNE COACH HUMAINE ÉCRIT « LOURD »
+**26/08/2026, relais de session-A sur les 6 programmes écrits par la coach de Michel**
+(`docs/NUTRITION-PROGRAMMES-REELS.md` §3bis). **Compté sur les six documents : « lourd » 18 fois ·
+« max » 11 · « léger » 2 · « dégressif » 3 · « charge montante ». ZÉRO KILO. Jamais.** Elle
+prescrit un **effort**, pas un **nombre** — et les répétitions sont des consignes elles aussi
+(`6-8 lourd`, `10-10-10-10 dégressif 4 charges`).
+⚠️ **À rapprocher de ft-v980**, où Milo a prescrit *« 3 × 5 à 95 kg »*, au-dessus du tenable, et
+l'a lui-même démenti quand on l'a questionné. ***« Lourd » ne peut pas être trop lourd*** — l'autre
+registre est **plus sûr par construction**.
+⛔ **Ce n'est PAS un défaut, et il ne faut pas le traiter comme tel** : un chiffre pré-rempli fait
+gagner du temps en salle, c'est le cœur du produit. Le doc lui-même le pose en **question ouverte**.
+⛔ **Et ce n'est pas promouvable en scénario** : *« Milo devrait-il écrire "lourd" ? »* n'a pas
+d'attendu vérifiable par du code — c'est un **arbitrage produit**, il revient à Michel. Le seul
+morceau qui serait mesurable, si on tranchait un jour : *une charge prescrite dépasse-t-elle le
+1RM connu ?* — mais ça, c'est déjà le sujet de ft-v980.
+**État : à trier** — et l'arbitrage est celui de Michel, pas une mesure.
+
+### 🟡 « Y A-T-IL UNE ÉVOLUTION PAR RAPPORT À MON PHYSIQUE ? » — il ne peut pas répondre
 **26/08/2026.** Michel a **3 études du corps** (11/07 · 28/07 · 25/08) et **aucune ne se compare à
 la précédente** : `analyzeBodyStudy` n'envoie jamais `compare` ni les photos d'avant. L'outil qui
 compare vraiment (`openBodySeries`, Espace Testeur) n'a jamais été utilisé — `bodySeries` est vide.
 ⛔ **Pas un scénario non plus** : la comparaison visuelle n'existe pas encore. Dossier complet
 (spec de Milo + 5 points à trancher) : `IDEES-FUTURES.md`. **État : à trier.**
 
-### 🟠 « AS-TU VU QUE J'AVAIS CHANGÉ D'OBJECTIF ? » — NON, ET IL A RAISON (trou de donnée)
+### 🟡 « AS-TU VU QUE J'AVAIS CHANGÉ D'OBJECTIF ? » — NON, ET IL A RAISON (trou de donnée)
 **19/08/2026, conversation réelle de Michel — relue le 25/08 dans son export.** Il demande
 *« As-tu vu que j'avais changé d'objectif ? »*, Milo répond *« Non, je ne vois pas de changement
 d'objectif dans ce que j'ai sous la main »*. Michel précise *« j'ai mis perte de gras + muscle »*,

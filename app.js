@@ -613,10 +613,59 @@ const SEC_INSTALLATION = 10;   // dégager/reposer la barre, se placer
 const SEC_PAR_REP      = 3;    // tempo courant ~1 s concentrique + ~2 s excentrique
 const SEC_SERIE_MAX    = 180;  // garde-fou : une série ne dure pas 10 min
 const SEC_SERIE_DEFAUT = 30;   // aucune répétition notée → l'ancien forfait, inchangé
-function _secSerie(set){
+
+/* 🐢 LE TEMPO DESCEND JUSQU'À LA DONNÉE (26/08/2026, ft-v1028)
+   Vient des 6 programmes écrits par la coach de Michel (2023, `docs/NUTRITION-PROGRAMMES-REELS.md`
+   §3bis) : le **tempo y est une COLONNE** — *« 3 sec descente, 2 sec contraction »*, *« monte 3 sec,
+   bloque 3 sec, descends 3 sec »*.
+
+   ⚠️ J'AI D'ABORD DIT « le tempo n'existe nulle part » — c'est FAUX, et la mesure le dit : la
+   consigne libre par exercice (`ex.note`) existe, s'affiche pendant la séance (`log.js`) et part
+   dans le contexte de Milo (`[note: …]`). **On PEUT écrire un tempo depuis longtemps.**
+   ⛔⛔ LE TROU EST AILLEURS, ET C'EST R4 DANS SA FORME LA PLUS PURE : le tempo est de la PROSE
+   dans une note, et une CONSTANTE (`SEC_PAR_REP = 3`) dans le calcul — dont le commentaire dit
+   lui-même *« le tempo courant »*. **Les deux ne se rencontrent jamais.** Une série de 10 reps à
+   « 3 s descente + 2 s contraction » dure 50 s de travail, pas 30 : l'app le lisait à l'écran et
+   comptait autre chose.
+
+   ⛔ ON N'INVENTE RIEN, ET LE SILENCE EST LA RÈGLE (R29) : sans motif chiffrable → `null`, et
+   `_secSerie` retombe **exactement** sur son ancien comportement. *Non-chiffrable n'est pas
+   « 3 par défaut », c'est « je ne sais pas »* — même règle que l'extraction du cadre en ft-v1026.
+
+   ⚠️ LE PIÈGE EST LE REPOS, PAS LE TEMPO. `45 sec max` et `repos 90 sec` sont des secondes qui
+   n'ont RIEN à voir avec la manière de bouger — et la coach écrit littéralement « 45 sec max »
+   dans sa colonne *Repos maximum*. D'où DEUX garde-fous : ① le texte doit parler du MOUVEMENT
+   (descente, montée, blocage, contraction, excentrique…), sinon on ne lit rien ; ② les secondes
+   annoncées comme du repos sont retirées avant de compter.
+   ⚠️ ET LA BORNE RATTRAPE LE RESTE : hors de 1 à 15 s par répétition, on rend `null` plutôt qu'un
+   chiffre douteux. Conséquence assumée et écrite : « descente 3 sec, repos 90 sec » (si « repos »
+   est écrit autrement) sort de la borne et **on se tait**, ce qui vaut mieux qu'une série comptée
+   à 15 minutes.
+
+   ⛔ ET MILO NE REÇOIT RIEN DE PLUS (R2) : il a déjà la note en toutes lettres. Lui envoyer en
+   plus « 5 s/rep » serait la même information deux fois, avec deux propriétaires. */
+const TEMPO_MIN = 1, TEMPO_MAX = 15;   // secondes par répétition — hors bornes = on ne sait pas
+const _TEMPO_MOUVEMENT = /tempo|descen|montée|montee|monte\b|remont|excentri|concentri|bloqu|contract|isom|négati|negati|lente|lentement/i;
+const _TEMPO_REPOS     = /(?:repos|récup|recup)[^.;,\n]{0,14}?\d+(?:[.,]\d+)?\s*(?:s|sec|secs|secondes?)\b/gi;
+const _TEMPO_SECONDES  = /(\d+(?:[.,]\d+)?)\s*(?:s|sec|secs|secondes?)\b/gi;
+function _tempoSec(txt){
+  const t = String(txt == null ? '' : txt);
+  if(!t || !_TEMPO_MOUVEMENT.test(t)) return null;
+  const propre = t.replace(_TEMPO_REPOS, ' ');
+  let somme = 0, m;
+  _TEMPO_SECONDES.lastIndex = 0;
+  while((m = _TEMPO_SECONDES.exec(propre)) !== null) somme += parseFloat(m[1].replace(',', '.')) || 0;
+  if(!(somme >= TEMPO_MIN && somme <= TEMPO_MAX)) return null;
+  return Math.round(somme * 10) / 10;
+}
+
+/* ⚠️ `ex` est OPTIONNEL, exprès : appelée sans lui, la fonction rend ce qu'elle rendait avant.
+   C'est ce qui rend le changement sûr — même discipline que `calcRecoveryDetail(refTs)`. */
+function _secSerie(set, ex){
   const r = +(set && set.reps) || 0;
   if(!(r > 0)) return SEC_SERIE_DEFAUT;
-  return Math.min(SEC_INSTALLATION + r*SEC_PAR_REP, SEC_SERIE_MAX);
+  const tempo = (ex && ex.note) ? _tempoSec(ex.note) : null;
+  return Math.min(SEC_INSTALLATION + r*(tempo || SEC_PAR_REP), SEC_SERIE_MAX);
 }
 /* 🏋️ LA CHARGE RELATIVE MODULE L'INTENSITÉ (16/08/2026, ft-v879)
    Michel : *« fais le MET qui tient compte du % de la charge max »* — et il ajoute, sur ce que
@@ -671,7 +720,8 @@ function calcSessionCalories(session) {
     const n = doneSets.length;
     totalSets += n;
 
-    const activeSec = doneSets.reduce((a,st)=>a+_secSerie(st), 0);   // ⏱️ voir `_secSerie`
+    // ⏱️ voir `_secSerie` — l'exercice est passé pour que son TEMPO écrit soit lu (ft-v1028)
+    const activeSec = doneSets.reduce((a,st)=>a+_secSerie(st, ex), 0);
     const activeHours = activeSec / 3600;
     const restHours = Math.max(0,n-1) * restSec / 3600;
 
@@ -681,7 +731,7 @@ function calcSessionCalories(session) {
        masquait. Le repère est le meilleur maximum connu SUR CET EXERCICE. */
     const _rm1 = (S.prs && S.prs[ex.name] && +S.prs[ex.name].rm1) || 0;
     const calsActive = doneSets.reduce((a,st)=>
-      a + met * _facteurCharge(st.kg, _rm1) * bw * (_secSerie(st)/3600), 0);
+      a + met * _facteurCharge(st.kg, _rm1) * bw * (_secSerie(st, ex)/3600), 0);
     const calsRest   = MET_REST * bw * restHours;
     const exCals = calsActive + calsRest;
 
