@@ -14386,7 +14386,16 @@ console.log('\n-- CXXIX. « Scanner » et « Importer » sont rangés, pas retir
     persist(); goScreen('nutrition',null); await new Promise(r=>setTimeout(r,400));
     o.appris=(document.getElementById('nu-appris').innerText||'').replace(/\s+/g,' ').trim();
     o.semaine=(document.getElementById('nu-ou-en-es').innerText||'').replace(/\s+/g,' ').trim();
-    /* ⛔ Un seul jour note : pas d'etendue, la phrase doit rester correcte. */
+    /* ⛔ TROIS JOURS D'AFFILEE : la fenetre est nommee, mais AUCUNE etendue n'est inventee
+       (3 jours notes sur 3 jours = rien a preciser).
+       ⚠️ MA 1re FIXTURE POSAIT UN SEUL JOUR ET LE TEMOIN A ROUGI — a raison : sous 3 jours la
+       carte bascule dans son etat « pas encore de quoi degager une habitude » et n'atteint
+       JAMAIS cette phrase. *Le temoin testait une phrase dans l'etat ou elle n'existe pas.* */
+    S.foodLog=[e(j(2),'dejeuner','A',900,60,'12:30'),e(j(1),'dejeuner','B',900,60,'12:30'),
+               e(j(0),'dejeuner','C',900,60,'12:30')];
+    renderNutrition(); await new Promise(r=>setTimeout(r,120));
+    o.troisJours=(document.getElementById('nu-appris').innerText||'').replace(/\s+/g,' ').trim();
+    /* ⛔ Et sous 3 jours, la carte DIT qu'elle ne sait pas — elle ne se tait pas (R29). */
     S.foodLog=[e(j(0),'dejeuner','Un seul',900,60,'12:30')]; renderNutrition();
     await new Promise(r=>setTimeout(r,120));
     o.unJour=(document.getElementById('nu-appris').innerText||'').replace(/\s+/g,' ').trim();
@@ -14415,8 +14424,11 @@ console.log('\n-- CXXIX. « Scanner » et « Importer » sont rangés, pas retir
      comme une coquille, pas comme une mesure. */
   t('⭐ la moyenne porte son séparateur de milliers',
     /\d[   ]\d{3} kcal/.test(R.appris), (R.appris.match(/moyenne[^·]*/)||[''])[0].slice(0,60));
-  t('⛔ un seul jour noté : aucune étendue inventée, et la phrase tient',
-    /tout ton journal/i.test(R.unJour) && !/étalés sur/i.test(R.unJour), R.unJour.slice(0,110));
+  t('⛔ 3 jours d\'affilée : la fenêtre est nommée, et AUCUNE étendue n\'est inventée',
+    /tout ton journal/i.test(R.troisJours) && !/étalés sur/i.test(R.troisJours), R.troisJours.slice(0,120));
+  /* ⛔ Sous 3 jours, la carte ne prétend rien — et elle ne se tait pas pour autant (R29). */
+  t('⛔ un seul jour noté : la carte DIT qu\'elle n\'a pas de quoi observer',
+    /pas encore de quoi/i.test(R.unJour) && !/en moyenne/i.test(R.unJour), R.unJour.slice(0,110));
 }
 
 await b.close(); srv.close();
