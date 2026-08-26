@@ -463,6 +463,20 @@ conclure faux avec assurance.
   côte avant tout verdict sur un mouvement. Appliqué immédiatement **aux deux verdicts opposés**
   (« bilatéral ») que j'avais rendus par la même méthode — ils tiennent, mais *une erreur de
   méthode ne se répare pas à moitié : elle invalide tout ce qui a été produit avec elle.*
+- **🗓️ LIRE UN ÉTAT DU PROJET SANS REGARDER SA DATE** *(26/08/2026)* : j'annonce à Michel qu'il
+  lui reste à trouver une figurine de Squat Sumo. **Il l'avait supprimé la veille** — *« squat
+  sumo on supprime »*, 25/08, et la décision était écrite **à quatre endroits** (deux commentaires
+  de code, `constants.js`, et `A-FAIRE-SUR-PC.md` où la tâche était déjà marquée CLOSE). Je lisais
+  un point d'étape daté du **24/08**. ⭐ **Le signe qui aurait dû alerter** : un document d'état
+  porte toujours une date, et *une date d'hier sur un projet qui livre six versions par jour n'est
+  pas un état, c'est un souvenir*. 🛡️ **Le réflexe** : avant d'annoncer qu'une chose reste à faire,
+  **la chercher dans le code**, pas dans un résumé — c'est R23, et c'est la 3ᵉ fois dans la même
+  journée (les deux autres : un brief qui décrivait un composant qui n'est pas ce qu'il croit, et
+  une aide qui envoyait « sous l'anneau », un repère disparu).
+  ⚠️ **Et le fichier lui-même entretenait le piège** : le bloc « ✅ CLOS » était resté **dans la
+  section « ⏳ En attente »**. *Un item clos posé au milieu des tâches en attente se lit comme une
+  tâche* — la famille n°1 de ce fichier, appliquée à une liste de courses. Il est descendu dans
+  « ✅ Fait », avec sa raison et son historique.
 - **💬 UN TÉMOIN QUI COMPTE LES COMMENTAIRES MESURE LA DOCUMENTATION, PAS LE CODE**
   *(26/08/2026, ft-v1025)* : pour garantir qu'un bloc n'existe qu'à **un seul endroit** (R2), je
   compte les occurrences de son titre dans `screens.js`. Le témoin rend **2** et rougit — alors
