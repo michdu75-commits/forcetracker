@@ -11,6 +11,8 @@ surveille — d'où ce script. Trois contrôles :
   4. AUCUNE entrée de docs/JOURNAL-ARCHIVE.md n'a disparu.
   5. AUCUN document .md ne s'est fait écraser (contrôle 4 généralisé aux 54 autres).
   6. AUCUNE ligne de TÂCHE n'est tombée dans le tableau des ÉTATS du journal de partage
+  7. AUCUNE ligne 🟡 ne survit à sa propre clôture 🟢 (une fusion par UNION la ressuscite).
+  8. Le tableau des 8 BRIQUES de DOSSIER-ATHLETE-SUIVI.md est à jour (généré depuis le code).
      (bug arrivé DEUX fois — elle y est invisible, donc personne ne peut la voir manquer).
 
 ⚠️ PORTÉE HONNÊTE DU CONTRÔLE 5 : il compare l'état du dossier au DERNIER COMMIT,
@@ -301,6 +303,66 @@ except FileNotFoundError:
 except StopIteration:
     print("⚠️ docs/JOURNAL-DE-PARTAGE.md : titres « Les états » / « Les tâches » introuvables — "
           "contrôle 6 non effectué (le fichier a changé de structure).")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CONTRÔLE 7 — UNE LIGNE 🟡 NE SURVIT PAS À SA PROPRE CLÔTURE 🟢
+#
+# ⚠️ CE DÉFAUT EST DE MOI, ET IL EST L'EXACT MIROIR DU CONTRÔLE 6 (26/08/2026).
+# En fusionnant deux versions du journal, j'ai pris l'UNION des lignes de tâche pour
+# n'en PERDRE aucune. Mais **une union ne supprime jamais** : session-A avait retiré sa
+# ligne 🟡 en la remplaçant par une 🟢, et mon union l'a **ressuscitée**. Le tableau
+# annonçait donc « quelqu'un travaille dessus » sur un sujet livré depuis des heures.
+#
+# 👉 *Un choix qui ne peut que gagner ne peut pas non plus oublier.* Le contrôle 6 protège
+# contre la PERTE d'une ligne ; celui-ci protège contre sa RÉSURRECTION.
+#
+# LA RÈGLE : une ligne 🟡 et une ligne 🟢 qui portent la MÊME session et la MÊME heure de
+# départ sont la même tâche, avant et après clôture. La 🟢 fait foi ; la 🟡 est un reste.
+try:
+    _lg = (racine / "docs" / "JOURNAL-DE-PARTAGE.md").read_text(encoding="utf-8").split("\n")
+    def _cle(l):
+        m = re.match(r"\|\s*[🟡🟢]\s*\|\s*(\d{2}/\d{2}\s+\d{2}:\d{2})[^|]*\|\s*([^|]+?)\s*\|", l)
+        return (m.group(1).strip(), m.group(2).strip()) if m else None
+    _jaunes = {_cle(l): l for l in _lg if l.startswith("| 🟡 |") and _cle(l)}
+    _verts  = {_cle(l) for l in _lg if l.startswith("| 🟢 |") and _cle(l)}
+    _zombies = [_jaunes[k] for k in _jaunes if k in _verts]
+    if _zombies:
+        print("❌ docs/JOURNAL-DE-PARTAGE.md : "
+              f"{len(_zombies)} ligne(s) 🟡 qui ont DÉJÀ leur clôture 🟢 (même session, même heure) :")
+        for l in _zombies:
+            print("   - " + l[:110])
+        print("   → retirer la 🟡 : la 🟢 fait foi. ⚠️ Cause connue : une fusion par UNION ne "
+              "supprime jamais, donc elle RESSUSCITE une ligne que l'autre session avait close.")
+        sys.exit(1)
+except FileNotFoundError:
+    pass                                        # déjà signalé par le contrôle 6
+except Exception:
+    pass                                        # jamais bloquer sur un pépin d'outillage
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CONTRÔLE 8 — LE TABLEAU DES 8 BRIQUES EST À JOUR
+#
+# Le socle du produit (DOSSIER-ATHLETE-SUIVI.md) n'avait pas bougé pendant 28 jours et
+# ~350 versions, et il DISAIT FAUX : deux briques construites y étaient marquées
+# « ⏳ EN ATTENTE ». C'est R23 — *un document d'état qu'on ne met pas à jour fait dire
+# des bêtises à celui qui le lit*, ce qui est arrivé deux fois le seul 26/08.
+#
+# ⭐ Le tableau est donc GÉNÉRÉ depuis le code (tools/briques.py), comme INVENTAIRE.md, et
+# ce contrôle refuse la livraison s'il a dérivé. *Un état qu'on doit penser à mettre à jour
+# finit par ne pas l'être ; un état qui fait rougir la livraison, si.*
+try:
+    _r = subprocess.run([sys.executable, str(racine / "tools" / "briques.py"), "--check"],
+                        capture_output=True, text=True, timeout=30)
+    if _r.returncode != 0:
+        print((_r.stdout or "").strip() or "❌ tools/briques.py --check a échoué")
+        sys.exit(1)
+    print((_r.stdout or "").strip())
+except FileNotFoundError:
+    print("⚠️ tools/briques.py introuvable — le tableau des 8 briques n'est plus surveillé.")
+except Exception:
+    pass                                        # jamais bloquer sur un pépin d'outillage
 
 print(f"✅ documents : aucun écrasement"
       + (f" ({len(suivis)} fichiers .md surveillés)" if git_ok and 'suivis' in dir() else
