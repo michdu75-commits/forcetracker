@@ -12,6 +12,16 @@
 > ni marque, ni nom, ni code promo — et les quantités n'y figurent que comme **exemples du
 > mécanisme**, jamais comme « le plan de Michel ».
 >
+> ⏳⚠️ **CES PLANS ONT PLUS DE TROIS ANS, ET L'OBJECTIF EST CONNU** — Michel : *« c'était pour
+> perdre du poids et prendre de la force, mais ça remonte, y a plus de 3 ans »*.
+> **Conséquence directe, à ne jamais perdre de vue : AUCUNE QUANTITÉ N'EST TRANSPOSABLE
+> AUJOURD'HUI.** Ce sont les portions d'un autre corps, à un autre poids, à un autre niveau
+> d'activité. *Un document d'état qu'on ne date pas fait dire des bêtises à celui qui le lit*
+> (**R23** — la famille qui m'a déjà piégé deux fois dans la seule journée du 26/08).
+> 👉 **Ce qui traverse le temps, c'est la GRAMMAIRE** (§1), le principe des **substitutions**
+> (§2), l'**ancrage sur la séance** (§3), la **façon de prescrire** (§4). Ça, ça ne périme pas.
+> ⛔ **Ce qui ne traverse PAS** : les grammes, les listes d'aliments, la supplémentation.
+>
 > ⭐ **Pourquoi ça compte** : `docs/MODELE-METIER.md` pose que les objets métier **se distillent
 > de vrais programmes**, ils ne s'inventent pas. C'est exactement ce que ce fichier fait, côté
 > nutrition — et ce que `docs/NUTRITION-MOTEUR.md` réclamait sans avoir la matière.
@@ -60,11 +70,45 @@ densité de l'aliment**. Trois exemples relevés tels quels :
 coach ne dit jamais « 40 g de protéines » : elle dit **quel aliment, à quel poids**, et le
 calibrage est déjà fait.
 
-⚠️ **CE QUE JE N'AFFIRME PAS** : que ces équivalences soient **isocaloriques au gramme près**. Je
-n'ai pas recalculé chaque ligne contre CIQUAL, et rien dans les documents ne le revendique. Ce
-qui est **observable**, c'est que ce sont des alternatives offertes **au même poste**, chacune
-avec son poids propre, et que ces poids varient dans le sens de la densité. *Une équivalence de
-praticienne, pas une équation.*
+### ⚠️⚠️ RECALCULÉ CONTRE CIQUAL — et le résultat corrige ce qui précède
+
+**Michel a donné la convention qui manquait : *« pour la viande c'est cru, les glucides c'est
+cuits »*.** Sans elle, aucun de ces poids n'était calculable. Avec elle, tout l'est — et l'app
+embarque déjà la table **CIQUAL 2025 de l'ANSES** (`data/ciqual.json`, 3 484 aliments). *On
+mesure au lieu de supposer* (**R28**).
+
+| Poste | Les options, recalculées | Écart |
+|---|---|---|
+| déc · collation 2 | 180 g p. de terre = **146 kcal** · 220 g riz = **326** · 240 g quinoa = **358** | **× 2,5** |
+| déc · midi | 180 g pâtes = **301 kcal** · 200 g riz = **296** | **× 1,0** |
+| janv · collation 2 | 200 g p. de terre = **162 kcal** · 200 g lentilles = **250** | × 1,5 |
+| janv · midi | 180 g riz complet = **337 kcal** · 150 g patate douce = **118** | **× 2,9** |
+| avril · collation 2 | 260 g p. de terre = **211 kcal** · 230 g pâtes = **384** | × 1,8 |
+| avril · midi | 260 g riz = **385 kcal** · 220 g patate douce = **174** | **× 2,2** |
+
+**⭐⭐ LE MOTIF EST NET, ET IL EST DOUBLE :**
+- **entre céréales, le calibrage est parfait** : 180 g de pâtes ≡ 200 g de riz, **301 contre
+  296 kcal**. *Ce n'est pas de la chance — c'est un calibrage fait exprès et il tombe juste.*
+- **entre tubercule et céréale, l'écart va de ×1,8 à ×2,9**, toujours dans le même sens : la
+  pomme de terre et la patate douce apportent **environ la moitié** de l'option céréale du même
+  poste.
+
+**👉 La conséquence pratique est réelle et chiffrée** : au même poste, prendre la patate douce
+plutôt que le riz, c'est **environ 200 kcal de moins**. Sur deux postes par jour, **~400 kcal**.
+
+⚠️⚠️ **ET ON NE SAIT PAS SI C'EST VOULU — donc on ne le dit pas.** Une raison parfaitement
+légitime peut l'expliquer (satiété : 260 g de pomme de terre font une grosse assiette pour
+211 kcal · index glycémique · digestion avant séance), et **rien dans les documents ne
+l'explique**. *Écrire « c'est une erreur » serait une hypothèse présentée comme un fait* —
+exactement ce que la Constitution interdit à Milo (**P4**), et qu'on s'applique à soi-même.
+
+⭐⭐⭐ **LA LEÇON POUR L'APP EST L'INVERSE DE CE QUE J'AVAIS ÉCRIT UNE HEURE PLUS TÔT.** J'allais
+proposer de **recopier** ces listes comme table de substitutions. **Il ne faut surtout pas** :
+recopiées telles quelles, l'app annoncerait comme « équivalents » des choix qui vont du simple au
+triple. 👉 **On garde la FORME (un poste, plusieurs options chiffrées) et on CALCULE les
+quantités depuis CIQUAL.** C'est très exactement ce que `NUTRITION-MOTEUR.md` §4.0 demandait, et
+c'est ce qu'une feuille de papier ne peut pas faire : *l'app, elle, peut proposer une
+substitution qui tombe vraiment juste.*
 
 ⭐ **C'est exactement la table que l'app n'a pas.** `docs/NUTRITION-MOTEUR.md` §4.0 dit qu'il
 faudrait une base « composable » d'environ 300 aliments avec leurs substitutions, relue à la
@@ -144,10 +188,17 @@ les trois leviers bougent ensemble et dans le même sens.*
 ajoute maca et oméga 3 ; avril ajoute **créatine (deux prises, dont une post-séance)**,
 **électrolytes pendant l'effort**, **magnésium** et **zinc**.
 
-⚠️ **CE QUE JE NE CONCLUS PAS** : *pourquoi* ça bouge. Sèche puis reprise ? Préparation puis
-hors-préparation ? Changement d'objectif ? **Les documents ne le disent pas, et Michel ne l'a pas
-dit.** Écrire « c'était une sèche » serait une hypothèse présentée comme un fait — exactement ce
-que la Constitution interdit à Milo (**P4**), et ce qu'on s'applique à nous-mêmes.
+**⭐ L'OBJECTIF, LUI, EST SU — et il vient de Michel, pas d'une déduction** : *« c'était pour
+**perdre du poids et prendre de la force** »*. C'est, mot pour mot, l'objectif « **Perte de gras +
+muscle** » que l'app propose aujourd'hui — la recomposition.
+
+⚠️ **CE QUE JE NE CONCLUS TOUJOURS PAS** : *pourquoi* chaque curseur bouge à chaque date. Que
+janvier soit le point bas et avril le point haut est **mesuré** ; qu'il s'agisse d'une sèche
+suivie d'une reprise reste une **hypothèse**, et les documents n'en disent rien. *Une hypothèse
+présentée comme un fait est ce que la Constitution interdit à Milo* (**P4**) — on se l'applique.
+
+⏳ **Et tout ceci a plus de trois ans.** Reconstituer le récit exact n'a donc qu'un intérêt
+limité : ce qu'on veut de ces documents, c'est la **méthode**, pas l'histoire.
 
 ---
 
@@ -157,9 +208,10 @@ que la Constitution interdit à Milo (**P4**), et ce qu'on s'applique à nous-m�
    c'est **un poste par catégorie, avec 2-4 options chiffrées**. C'est directement applicable au
    plan de repas actuel, qui est une table figée identique pour tout le monde
    (`KETO_MEALS` & co., `state.js`) — le sujet n°1 d'`IDEES-FUTURES.md`.
-2. **⭐⭐ Les substitutions au même poste.** C'est la brique manquante identifiée par
-   `NUTRITION-MOTEUR.md` §4.0. La forme est là ; il reste à décider **d'où viennent les
-   équivalences** (calculées depuis CIQUAL, ou relues à la main — la 2ᵉ voie est celle du doc).
+2. **⭐⭐ Les substitutions au même poste — MAIS CALCULÉES.** La question « d'où viennent les
+   équivalences » est **tranchée par la mesure du §2** : pas d'un document, même professionnel.
+   Recopiées, elles présenteraient comme équivalents des choix qui vont du simple au triple.
+   **On prend la forme, on calcule les nombres** (CIQUAL est déjà dans le dépôt).
 3. **⭐⭐ Ancrer les repas sur la SÉANCE.** À jeun · avant · après · le soir. L'app a la donnée et
    ne s'en sert pas (**R4**). C'est le défaut n°1 documenté, confirmé ici par une source
    indépendante.
@@ -168,7 +220,9 @@ que la Constitution interdit à Milo (**P4**), et ce qu'on s'applique à nous-m�
 5. **⭐ Des listes courtes.** Trois bons choix par poste.
 
 ⛔ **Ce qu'on ne fera PAS** : recopier ces plans dans l'app. Ce sont **les plans d'une personne**,
-écrits par **une praticienne** qui la connaît. *On en tire une grammaire, pas un contenu.*
+écrits par **une praticienne** qui la connaît — et ils ont **plus de trois ans**. *On en tire une
+grammaire, pas un contenu.* Les deux mesures du §2 le disent chacune à leur manière : les
+quantités ne sont ni transposables dans le temps, ni équivalentes entre elles.
 
 ---
 

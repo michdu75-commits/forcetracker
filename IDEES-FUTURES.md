@@ -2732,11 +2732,25 @@ plan :
   l'app, confirmé par une source extérieure ;
 - **aucune calorie, aucune macro** dans tout le document.
 
-**⚠️ QUATRE QUESTIONS À POSER AVANT DE CODER QUOI QUE CE SOIT** — elles valent plus que dix
+**✅ LA QUESTION BLOQUANTE EST RÉPONDUE** — Michel : *« pour la viande c'est **cru**, les glucides
+c'est **cuits** »*. Recalculé aussitôt contre CIQUAL (déjà dans le dépôt), et **le résultat
+retourne la conclusion** : entre céréales le calibrage de la coach est **parfait** (180 g de pâtes
+≡ 200 g de riz, 301 contre 296 kcal), mais **entre tubercule et céréale l'écart va de ×1,8 à
+×2,9**. 👉 **Donc on ne recopie PAS ces listes comme table de substitutions** : recopiées, l'app
+présenterait comme équivalents des choix qui vont du simple au triple. **On garde la forme, on
+calcule les nombres.**
+
+**⏳ ET CES PLANS ONT PLUS DE TROIS ANS** (Michel : *« c'était pour perdre du poids et prendre de
+la force, mais ça remonte »*). ⛔ **Aucune quantité n'est transposable** — c'est un autre corps, un
+autre poids. Ce qui traverse le temps : la grammaire, le principe de substitution, l'ancrage sur
+la séance, la façon de prescrire.
+
+**⚠️ TROIS QUESTIONS RESTENT OUVERTES AVANT DE CODER QUOI QUE CE SOIT** — elles valent plus que dix
 programmes de plus, parce qu'elles portent sur la **méthode** :
 1. les aliments sont-ils pesés **crus ou cuits** ? *Sans la réponse, aucune équivalence n'est
    calculable* — le rapport va du simple au triple sur le riz ;
 2. sur quel **signal** un plan évolue-t-il (poids, photos, ressenti, échéance) ?
-3. y a-t-il des **jours différents** entraînement / repos ? (les trois docs ne décrivent qu'une
-   seule journée type) ;
-4. que fait-on en cas d'**écart** (restaurant, aliment absent) ?
+2. y a-t-il des **jours différents** entraînement / repos ? (les trois docs ne décrivent qu'une
+   seule journée type) — Michel cherche les **programmes d'entraînement** de la même période, ce
+   qui répondrait en partie ;
+3. que fait-on en cas d'**écart** (restaurant, aliment absent) ?
