@@ -1225,3 +1225,46 @@ deviner.
 Devant une spécification écrite hors du code : **relever les numéros de ligne et les noms de
 composants D'ABORD**, en bloc, avant de planifier quoi que ce soit. Ça coûte dix minutes et ça a
 déjà changé deux fois la nature du travail à faire.
+
+---
+
+## 19. 🎭 LA PRÉCÉDENCE D'OPÉRATEUR QUI FAIT DISPARAÎTRE UN BLOC ENTIER *(26/08/2026, ft-v1028)*
+
+**Le mécanisme.** Deux morceaux d'affichage sont assemblés autour d'un ternaire :
+
+```js
+const bloc = ex.note ? '<div>la consigne</div>' : '' + _intensiteBandeau(ex);
+```
+
+L'intention est *« la consigne s'il y en a une, PLUS le bandeau, toujours »*. JavaScript lit
+`ex.note ? '…' : ('' + bandeau)` — le `+` se lie plus fort que le `? :`. 👉 **Le bandeau ne
+s'affiche QUE si la consigne est absente.**
+
+**Ce qui rend cette famille coûteuse, c'est qu'elle est parfaitement silencieuse.** Aucune erreur,
+aucun test rouge, aucune trace en console : la page se rend, elle est simplement **incomplète**.
+Et personne ne peut voir manquer un bloc dont il ignore qu'il devait être là.
+
+**Le cas réel.** Le bandeau en question ne portait pas qu'un chiffre d'intensité : `seanceWarn` y
+met les **🚫 exclusions** et les **🛡️ blessures**, c'est-à-dire la sortie du **Gardien** au niveau
+de la séance. ⛔⛔ **Et la condition qui l'effaçait sélectionnait exactement la mauvaise
+population** : ce sont les exercices venus d'un **programme** qui portent une consigne. *L'avertis-
+sement de sécurité disparaissait précisément là où il était le plus attendu.*
+
+### 🔎 Comment la reconnaître
+- Un ternaire **suivi d'un `+`**, ou précédé d'un `+`, sans parenthèses autour de la condition.
+- Le symptôme se raconte toujours pareil : *« ça marche, sauf quand il y a … »* — et le « quand il
+  y a » est la branche du ternaire.
+- ⚠️ **Elle se lit mal parce qu'on lit l'INTENTION** : la ligne dit ce qu'on voulait écrire. C'est
+  la même illusion que la famille **« le premier match gagnant »** (§1).
+
+### 🛡️ Ce qui protège
+- Ne jamais laisser un ternaire nu dans une concaténation : **parenthéser la branche**, toujours,
+  même quand ça paraît inutile — le coût est de deux caractères.
+- Et un témoin qui vérifie **la présence simultanée** des deux morceaux (ici : la consigne ET le
+  bandeau, dans le même rendu). Un témoin qui teste chaque moitié séparément reste vert : chacune
+  s'affiche bien… dans le cas où l'autre est absente.
+
+### ⭐ Le réflexe
+Quand un bloc d'affichage **conditionnel** en côtoie un autre qui doit être **inconditionnel**,
+les écrire sur deux lignes séparées plutôt que dans une seule expression. *Une expression qui
+mélange « parfois » et « toujours » finit par tout rendre « parfois ».*
