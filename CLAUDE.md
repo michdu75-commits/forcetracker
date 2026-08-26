@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1013`** (prochaine : `ft-v1014`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1014`** (prochaine : `ft-v1015`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -436,6 +436,27 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1014 — 🍽️ MILO VOIT ENFIN CE QU'ELLE A MANGÉ — et ça a ouvert une fuite** — Michel à Milo : *« As-tu assez de recul pour mon alimentation ? »* → *« Mon alimentation est **déjà** dans l'application. »* Milo, honnête : *« Je n'ai pas accès au journal alimentaire (…) **en l'état je travaille à l'aveugle sur la nutrition.** »*
+
+**⭐ IL DISAIT VRAI, ET L'EXCLUSION ÉTAIT ÉCRITE** — avec la mention **« DÉCISION À CONFIRMER »**. *Elle ne l'a jamais été.* Un « à confirmer » qui traîne devient une limite permanente que personne n'a choisie (**R30**).
+
+**⭐⭐ ET L'ARGUMENT D'ORIGINE (« volumineux ») ÉTAIT JUSTE**, mesuré sur son vrai journal : **13 126 caractères bruts**. Mais un **résumé par jour** en fait **221** — 59 fois moins — et il répond aux **quatre** questions que Milo avait listées lui-même. 👉 *Le sujet n'était pas « transmettre ou pas », c'était « transmettre QUOI ».*
+
+**⛔⛔ LE CHIFFRE QUI AUTORISE LE CHANGEMENT (R34) N'EST PAS LA TAILLE, C'EST LE CACHE.** Le bloc commun est **identique octet pour octet** avant/après — **et il le reste après un repas ajouté à l'instant**. Parce que le bloc est posé **SOUS le marqueur de l'instant**, là où le code dit lui-même de mettre ce qui change : *« ne jamais insérer plus haut une valeur qui CHANGE »*. ⭐ **Le garde-fou de taille le confirme indépendamment** : *sain 45 362 · blessé 47 118*, **inchangés**. Coût réel : **+835 caractères**, sous le marqueur.
+
+**⛔ CE QUI RESTE DEHORS, ET POURQUOI** : le **détail plat** aliment par aliment (c'est lui qui pesait 13 000 caractères) · au-delà de **7 jours** (on ne paie pas pour ce qu'on ne demande pas) · et **aucun journal → aucun bloc**, pas d'en-tête vide.
+
+**⛔⛔ ANTI-TCA — Constitution P21.** Ces chiffres servent **quand on les demande** : la consigne interdit explicitement de commenter spontanément ce qu'elle a mangé, de relever un écart, de compter à sa place. *Un coach qui épluche les assiettes sans qu'on lui demande fabrique très exactement le stress qu'on veut éviter.* ⭐ Et Milo reçoit **combien de jours sont réellement notés** — Michel n'en a que 6 : *sans ce chiffre, il conclurait « sur le mois » à partir de quatre lignes* (**R29/R12**).
+
+**⚠️⚠️ ET LE PLUS IMPORTANT DE CETTE VERSION N'EST PAS LA FONCTIONNALITÉ : EN ENTRANT DANS LE CONTEXTE, `foodLog` A CRÉÉ UNE FUITE.** `_vcApplyPersona` ne le remettait pas à zéro — donc **le vrai journal alimentaire de Michel serait parti dans le contexte des 54 scénarios du banc d'essai**. Son en-tête dit pourtant, mot pour mot : *« anti-fuite : TOUT ce que lit le contexte »*. ⭐ **C'était aussi un piège de fixture** : sans la remise à zéro, le `foodLog` d'un scénario n'atteint jamais `S` — *la fixture muette d'EV-009, refaite le lendemain de sa correction.*
+
+**⭐⭐ LE TÉMOIN GÉNÉRALISE LA RÈGLE AU LIEU D'ÉPINGLER LE CAS** : il compare **ce que `buildCoachContext` lit** à **ce que `_vcApplyPersona` remet à zéro**. Résultat : **8 autres trous**, dont `programmes`, `nextPlanned`, `exSwaps`. ⛔ **Non corrigés ici, exprès** — les corriger changerait ce que Milo reçoit, donc ça demande **son propre avant/après** (**R34**). Ils sont **épinglés avec leur raison** ; une **neuvième** fera rougir la livraison. *Un trou qu'on mesure vaut mieux qu'un trou qu'on découvre.*
+
+**⭐ EV-054 EST PROMU** — et il ne valait rien avant : son attendu dépendait d'une donnée absente du contexte, il aurait rougi sur un chemin inexistant. *C'est pour ça qu'il était resté « à trier » et non promu.*
+
+**⚠️ ET UN TÉMOIN ÉPINGLAIT « 53 SCÉNARIOS » EN DUR** — la dette même que **ft-v1005 avait retirée de l'écran la veille**, appliquée d'un seul côté (**R8** : quand on corrige quelque chose, chercher ses jumelles). Il compare désormais le corpus **chargé par l'app** à celui du **fichier** : il protège ce qu'il devait protéger — qu'un scénario ne **disparaisse** pas — sans cible chiffrée.
+Tests : **parcours 1468/1468** (+15, blocs CXXI et CXXII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données **103 classées 0 trou** (`foodLog` passe *exclu* → **transmis**). ⚠️ **CE QUI N'EST PAS PROUVÉ ICI, ET C'EST ÉCRIT** : que Milo **se serve bien** de ces chiffres. **R34 impose un avant/après**, et il coûte un vrai passage du banc d'essai — **c'est à Michel de le lancer**. Ce que la mesure locale prouve, c'est que la donnée **arrive**, qu'elle **ne coûte rien au cache**, et qu'elle **ne fuit pas**. Fichiers : `coach.js`, `tests/milo/eval-scenarios.js`, `tests/donnees/donnees-milo.json`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1014. |
 
 **ft-v1013 — 📤 L'EXPORT « AVEC MES DISCUSSIONS » PERDAIT LA DISCUSSION DU MOMENT** — Michel : *« compare la différence des exportations pour tout le monde et celle que je fais en admin. C'est quoi la différence, **parce que s'il n'y en a pas autant supprimer** »*.
 
@@ -729,19 +750,6 @@ Tests : **parcours 1354/1354** (+16, bloc CIX), calculs 266/266, muscles 241/241
 
 **👉 CE QUE LES 50 COUVRENT MAINTENANT, par famille** : l'info qui reste dans le texte (**R4** — superset, objectif changé) · ce qu'il ignore de ce que tu as dit (exercice demandé, exercice refusé, structure imposée, matériel) · ce qui déborde (60 min, 45 min, échauffement, déplacement, longueur) · **ce qu'il affirme sans le savoir** (graisse chiffrée, score propriétaire, poids cible, diagnostic, feu vert médical, source inventée, hypothèse donnée pour un fait) · ce qu'il oublie (mémoire longue, coupure de 4 mois, promesse vide, prénom) · ce qu'il juge (l'âge, une donnée isolée) · et la **sécurité** (blessure active respectée).
 Tests : **parcours 1337/1337**, calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou. ⚠️ **DEUX COÛTS À CONNAÎTRE, écrits plutôt que tus** : ① **50 scénarios = 50 appels API par passe** (contre 21) ; ② **la limite ne bouge pas** — ces vérificateurs mesurent ce qui est mesurable **par du code**. Le ton, le naturel, *« est-ce que Milo est agréable »* restent au **juge humain**, et aucun de ces 50 ne le remplace. Fichiers : `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js`, `docs/JOURNAL-DE-TEST.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`. sw.js ft-v994. |
-
-**ft-v993 — 🧠 LA COURSE `_saveCoachMemory` : PROUVÉE, PUIS CORRIGÉE — et le ⑤ de l'audit MESURÉ puis NON construit** — deux points ouverts traités, dont un par la négative.
-
-**⛔⛔ PROUVÉE AVANT DE TOUCHER AU CODE** — c'était la consigne explicite de `docs/SUIVI-AUDIT.md` (*« à prouver ou réfuter par un test avant de toucher au code »*), et la leçon de ft-v979. Mesurée dans un navigateur en remplaçant **le réseau et rien d'autre** : deux résumés déclenchés à **20 ms d'écart** envoient tous les deux `existingMemory:"MÉMOIRE DE DÉPART"`, et **le dernier REVENU écrase l'autre**. Résultat mesuré : *« FAIT-B » perdu, sans erreur, sans trace.*
-
-**⭐ CE QUI REND LA COURSE POSSIBLE** : `S.coachMemory` est **lu au départ** de l'appel et **réécrit au retour** — entre les deux, n'importe quel autre appel lit la même valeur périmée. L'appelant (`coach.js:4251`) ne fait pas `await`, et **c'est voulu** : l'interface ne doit jamais attendre le réseau (règle d'or #3).
-
-**⛔ LE CORRECTIF NE REND DONC PAS L'APPEL BLOQUANT** — il **sérialise dans une file**, exactement comme le débrief de ft-v979 (**R13/R2** : on ne réinvente pas un 2ᵉ mécanisme d'attente). Chaque résumé part quand le précédent est fini et **relit `S.coachMemory` à ce moment-là**. ⭐ Mesuré après correctif : l'appel 2 reçoit *« DÉPART | FAIT-A »* et **les deux faits survivent**.
-
-**⚠️ LA FILE NE SE CASSE JAMAIS** : un appel en échec passe la main au suivant (2ᵉ argument de `.then`) — sinon **une seule panne réseau gèlerait la mémoire pour tout le reste de la session**, ce qui serait pire que le bug corrigé. Un témoin l'épingle.
-
-**⭐⭐ ET LE ⑤ DE L'AUDIT (caches par lieu) EST MESURÉ PUIS *NON* CONSTRUIT — c'est la bonne réponse, pas un renoncement.** Les 5 variantes sont bien **réellement distinctes** (salle **11 446** · basique **8 544** · maison **6 493** · poids du corps **2 136** · non renseigné **11 475** car.), donc GPT a raison sur le fond : elles ne peuvent pas rejoindre le bloc commun telles quelles. ⛔ **Mais l'arithmétique du cache ne donne AUCUN gain sous ~6 personnes actives dans la même heure ET sur le même lieu** — le projet a une poignée de testeurs, donc le gain est aujourd'hui **zéro**. `SUIVI-AUDIT` et **R19/R34** disaient déjà *« approuvé, mais pas construit d'avance »*, *« ne pas commencer sans données d'usage »* : la mesure le confirme. *Construire maintenant, ce serait payer de la complexité pour un gain qui n'existe pas encore.* ⚠️ **Le modèle est grossier et c'est écrit** : il compte les écritures évitées, pas le prix exact — mais l'ordre de grandeur n'en dépend pas.
-Tests : **parcours 1337/1337** (+6, bloc CVIII), calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou. ⭐⭐ **Le contrôle décisif est la PREUVE elle-même** : le même témoin, joué contre le code d'avant, imprime la perte (`"DEPART|A"`, FAIT-B absent) et, après correctif, `"DEPART|A|B"`. *Un correctif de course qu'on ne voit pas échouer d'abord ne prouve rien.* Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`. sw.js ft-v993. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
