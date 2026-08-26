@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1025`** (prochaine : `ft-v1026`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1026`** (prochaine : `ft-v1027`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -436,6 +436,25 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1026 — 🏋️ LES TYPES DE SÉANCES REMPLISSENT L'ÉCRAN VIDE** — §2.1 du parcours de découverte (`docs/SEANCE-DESSAI.md`), et **la plainte d'origine de Michel** : *« quand on arrive c'est vide, il faudra améliorer le visuel et l'UX »* — que ranger les imports (ft-v1024) avait **mécaniquement agrandie**.
+
+**⛔⛔ LE VRAI TRAVAIL N'ÉTAIT PAS L'ÉCRAN, C'ÉTAIT R4 DANS SA FORME LA PLUS PURE.** `DISC_CADRE.coeur` dit *« SQUAT · DÉVELOPPÉ COUCHÉ · SOULEVÉ DE TERRE — les 3 mouvements passent avant tout le reste »*. C'est **exact, utile, et totalement inexploitable** : de la **prose**, dont aucun code ne peut tirer une séance. *L'information restait dans le TEXTE et n'atteignait jamais la DONNÉE.* `DISC_SEANCE` est la descente manquante.
+
+**⛔ AUCUNE 2ᵉ LISTE DE TYPES (R2)** : les 5 viennent de `DISC_LABELS`, le cadre chiffré de `DISC_CADRE`. Le doc de cadrage l'interdit nommément — *elles divergeraient, et Milo lirait l'une pendant que l'écran afficherait l'autre*.
+
+**⭐⭐ MICHEL A TRANCHÉ « LES 2 CARRÉMENT »** entre **(a)** *un tap → la séance* et **(c)** *un écran qui explique le cadre d'abord*. 👉 La carte porte donc **la ligne chiffrée du cadre** — l'information de (c) — et le tap **crée la séance** — le geste de (a). Le cadre **complet** reste à un tap du « ⓘ » : *la pop-up annonce, l'aide explique* (**R25**).
+
+**⭐ ET LES REPS COMME LE REPOS SUIVENT LA DISCIPLINE — c'est toute la différence entre les types.** Deux séances peuvent partager un exercice ; elles ne partagent jamais le nombre de répétitions. Mesuré : *« Force athlétique »* rend Squat/DC/SDT à **3 reps, 300 s de repos**, quand *« Bodybuilding »* rend 10-15 reps à 60-90 s.
+
+**⛔ LES 23 EXERCICES SONT VÉRIFIÉS CONTRE LE CATALOGUE**, pas écrits de mémoire — la leçon de ft-v1023, où **7 cibles sur 16** étaient fausses. ⚠️ **Et une réserve est écrite plutôt que tue** : le catalogue n'a **pas l'arraché complet**, seulement `Arraché Debout (Muscle Snatch)`. La séance d'haltérophilie est donc une séance de **travail**, pas de compétition. *On ne fait pas semblant d'avoir un mouvement qu'on n'a pas.*
+
+**⛔ ON N'ÉCRASE JAMAIS UNE SÉANCE EN COURS** (règle d'or #3) — et les cartes **disparaissent** dès qu'un exercice est posé : elles proposent un départ, elles ne commentent pas un travail en cours (**R24**).
+
+**⚠️⚠️ ET LA CAPTURE A MONTRÉ UN DÉFAUT QUE LA MESURE TEXTE NE POUVAIT PAS VOIR.** Ma première ligne courte **tronquait la prose à 42 caractères** et sortait *« 6-12 sur les polyarticulaires, jusqu'à 15- »* et *« repos 3 à 5 min après un mouvement lourd, 90 à 1 »*. 👉 ***Une phrase coupée en plein milieu n'est pas une information courte, c'est une information FAUSSE*** — *« jusqu'à 15- »* ne veut rien dire. On extrait désormais le **motif chiffré**, exact quelle que soit la phrase autour, et **on se tait** si rien n'est chiffrable.
+
+**⚠️ ET J'AI DÛ RELIRE UN PANNEAU** : le message de l'écran vide désignait *« + Créer ma séance »* comme LE chemin — il y en a maintenant **sept**. *Quand on ouvre une porte, on relit ce que disent les panneaux* (la leçon de ft-v1012). Le témoin qui l'épinglait figeait une **formulation** : **4ᵉ fois cette semaine**, il est re-visé sur sa règle — *s'il nomme un bouton, ce bouton doit exister*.
+Tests : **parcours 1579/1579** (+13, bloc CXXXI — CXXX était déjà pris par session-A), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 102 classées 0 trou. ⭐ **Vérifié à l'écran**, 0 erreur JS, **bouton central mesuré des deux côtés**. ⛔ **Un seul rendu du cadre pour les deux écrans** : `_cadreHtml` est sortie de `setup.js` et le Profil l'appelle au lieu de refaire son HTML (**R2**). Fichiers : `constants.js`, `log.js`, `setup.js`, `index.html`, `style.css`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SEANCE-DESSAI.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1026. |
 
 **ft-v1025 — 🍽️ L'ONGLET MACROS RÉORGANISÉ — « savoir où j'en suis sans faire défiler »** — chantier `docs/MACROS-A.md` (variante A), maquette relue puis **confrontée au code avant d'écrire une ligne**, sur la consigne de Michel : *« avant de coder, dis-moi ce que tu comptes changer fichier par fichier »*.
 
@@ -760,19 +779,6 @@ Tests : **parcours 1410/1410** (+4, bloc CXV), calculs 266/266, muscles 241/241,
 
 **⚠️⚠️ ET MON DÉCOUPAGE D'ARGUMENTS A MENTI AVANT DE MESURER JUSTE.** Il sautait les **chaînes** mais pas les **COMMENTAIRES** : une apostrophe française dans un commentaire (*« n'efface que les clés `cl_` »*) ouvrait une fausse chaîne et **avalait la fin de l'appel**. Le témoin accusait alors **5 appels déjà corrigés** et comptait 11 menteurs là où il y en avait 10. *Un seul lecteur pour les bornes ET pour les virgules.* ⭐ **Même famille que l'apostrophe courbe de ft-v994** — un caractère non traité rend une mesure propre et fausse.
 Tests : **parcours 1406/1406** (+4, bloc CXIV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : rouge, et le détail imprimé EST le bug** — contre `ebad642` le témoin sort **10 menteurs** nommés un par un, dont `coach.js:5223 '🧪 Benchmark Milo'` ; contre le nouveau code, **0**. ⭐ **Vérifié à l'écran par le VRAI chemin** (admin armé dans `localStorage`, corpus réellement téléchargé, `startEvalBench` appelée) : titre *« 🧪 Benchmark Milo — 53 scénarios »*, bouton gris **« Annuler »**, bouton rouge **« Lancer »**. Fichiers : `app.js`, `coach.js`, `log.js`, `setup.js`, `tracking.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1006. |
-
-**ft-v1005 — 🔢 LE BENCHMARK ANNONÇAIT « 16 SCÉNARIOS » ALORS QU'IL EN PORTE 53** — Michel, juste avant de le lancer depuis l'app : *« oui corrige les libellés avant »*.
-
-**⛔⛔ QUATRE LIBELLÉS ÉCRITS EN DUR AVAIENT DÉRIVÉ**, tous dans le groupe admin « 🛡️ Milo — le mesurer » : *« 16 messages ISOLÉS »*, *« 16 pièges »*, *« Lancer le benchmark (16 scénarios) »*, *« 2 × 16 »*. Le benchmark est passé de **16 → 21 → 53 en trois semaines** — c'est-à-dire exactement ce que **R35** dit qu'il fait : *il grandit à chaque bug, il n'a pas de taille cible*. **Les libellés, eux, ne bougent pas tout seuls.**
-
-**⛔⛔ ET ON N'A PAS MIS « 53 » À LA PLACE — c'est tout le point.** Ce serait la **même dette six semaines plus tard**, sur l'écran même qui sert à décider d'une dépense. *Un nombre qu'il faut penser à mettre à jour finira par ne pas l'être : c'est déjà arrivé, ici, deux fois de suite.* Le nombre est **retiré**.
-
-**⭐ LE COMPTE EXACT ET LE PRIX EXISTAIENT DÉJÀ, JUSTES, À DEUX MÈTRES DE LÀ** : `startEvalBench` (`coach.js`) calcule `SC.length` **et** `_evPrix(n)`, et les annonce dans la **confirmation**, *avant* le premier appel payé. **Le libellé statique portait donc une seconde source de vérité pour rien** (**R2**) — et c'est la seconde qui mentait, jamais celle qui compte au moment de payer.
-
-**⭐⭐ LE TÉMOIN INTERDIT LE NOMBRE, IL NE L'ÉPINGLE PAS.** Un témoin qui vérifierait *« 53 »* rougirait à la **54ᵉ promotion** et on l'ajusterait sans réfléchir — *un témoin qu'on remet au vert par réflexe ne protège plus rien*. Celui-ci refuse **tout** nombre à deux ou trois chiffres suivi de « scénarios / pièges / messages » dans ce bloc : la prochaine dérive **fait rougir la livraison** au lieu de mentir en silence.
-
-**⚠️ ET MA PREMIÈRE FENÊTRE DE MESURE RATAIT UN DES QUATRE.** Elle partait du sous-titre *« BENCHMARK »* — or *« 16 messages ISOLÉS »* vit dans l'**intro du groupe, au-dessus**. Le contrôle négatif ne sortait que 2 libellés sur 3. Élargie au **titre du groupe**, elle en sort **trois**. *Une fenêtre qui commence après le mensonge ne le voit pas.*
-Tests : **parcours 1402/1402** (+1), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : instructif, et le détail imprimé EST le bug** — contre `ff1d079` le témoin rend `en dur = ["16 messages","16 pièges","16 scénarios"]`, contre le nouveau code `[]`. ⭐ **Et le témoin voisin est vert des deux côtés** : le **prix**, lui, se calculait déjà correctement — *c'est exactement ce qui montre que le défaut était dans le libellé décoratif, pas dans le chiffre qui engage la dépense*. Fichiers : `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1005. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

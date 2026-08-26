@@ -2022,13 +2022,21 @@ function setDiscipline(d){
      C'est le comportement observable qu'une donnée doit produire (R3). */
   const el=document.getElementById('disc-desc');
   if(!el) return;
+  el.innerHTML=_cadreHtml(d);
+}
+/* ⭐ SORTI EN FONCTION (ft-v1026) — l'écran Séance montre désormais le MÊME cadre depuis le
+   « ⓘ » d'un type de séance. Deux mises en forme du même `DISC_CADRE` finiraient par se
+   contredire : une seule source, un seul rendu, deux lecteurs (R2).
+   ⚠️ La sortie est volontairement identique à ce qu'affichait le Profil depuis ft-v877 — on
+   déplace, on ne redessine pas : un changement d'apparence ici passerait pour un bug là-bas. */
+function _cadreHtml(d){
   const c=(typeof DISC_CADRE!=='undefined')?DISC_CADRE[d]:null;
-  if(!c){ el.textContent=DISC_DESCS[d]||''; return; }
+  if(!c) return (typeof DISC_DESCS!=='undefined'&&DISC_DESCS[d])||'';
   const li=(k,v)=>'<div style="margin-top:5px"><b style="color:var(--t2)">'+k+'</b> : '+v+'</div>';
-  el.innerHTML='<div>'+(DISC_DESCS[d]||'')+'</div>'
+  return '<div>'+((typeof DISC_DESCS!=='undefined'&&DISC_DESCS[d])||'')+'</div>'
     +'<div style="margin-top:9px;padding-top:8px;border-top:1px solid var(--bg4);font-size:13px">'
     +'<div style="color:var(--t2);font-weight:600">Ce que Milo applique pour toi</div>'
-    +li('Répétitions',c.reps)+li('Repos',c.repos)+li('Le cœur',c.coeur)
+    +li('Répétitions',c.reps)+li('Charge',c.charge)+li('Repos',c.repos)+li('Le cœur',c.coeur)
     +'<div style="margin-top:5px;color:var(--t3)"><b>⛔ Pas sa place ici</b> : '+c.evite+'</div>'
     +'</div>';
 }

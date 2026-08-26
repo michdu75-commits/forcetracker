@@ -578,6 +578,10 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     </button>
     </div>
   </div>
+  <!-- 🏋️ LES TYPES DE SÉANCES (ft-v1026) — remplit l'écran vide (§2.1 du parcours).
+       Rendu par `_typeSeanceHtml()`, et VIDÉ dès qu'une séance commence : ces cartes ne se
+       mettent jamais en travers de quelqu'un qui s'entraîne (règle d'or #4). -->
+  <div id="log-types" style="padding-top:6px;"></div>
   <div id="log-finish"></div>
   <div class="scroll-spacer" aria-hidden="true"></div>
 </div>
@@ -2882,6 +2886,17 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div id="bg-matos-desc" style="font-size:13px;color:var(--t3);background:var(--bg3);border-radius:8px;padding:9px 12px;line-height:1.45;margin-bottom:16px;"></div>
     <button class="btn btn-red" onclick="createBeginnerProg()" style="width:100%;padding:15px;font-size:16px;">Créer mon programme 💪</button>
     <div class="modal-btns" style="margin-top:8px;"><button class="btn btn-bg2" onclick="closeBeginnerSetup()">Annuler</button></div>
+  </div>
+</div>
+
+<!-- OVERLAY: le cadre COMPLET d'un type de séance (ft-v1026) — l'option (c) de Michel.
+     Le corps est rendu par `_cadreHtml()` (setup.js), le MÊME que l'écran Profil (R2). -->
+<div class="overlay" id="ov-cadre-type">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="cadre-type-titre"></h2>
+    <div id="cadre-type-body" style="font-size:13.5px;color:var(--t2);line-height:1.5;"></div>
+    <div class="modal-btns" style="margin-top:8px;"><button class="btn btn-bg2" onclick="fermerCadreType()">Fermer</button></div>
   </div>
 </div>
 

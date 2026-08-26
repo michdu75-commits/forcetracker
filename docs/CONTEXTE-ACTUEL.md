@@ -6,7 +6,22 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1025`.
+- **Version en ligne (live) :** `ft-v1026`.
+- 🏋️⭐⭐ **LES TYPES DE SÉANCES REMPLISSENT L'ÉCRAN VIDE — LIVRÉ** (ft-v1026). §2.1 du parcours
+  de découverte, et **la plainte d'origine de Michel** : *« quand on arrive c'est vide »*.
+  ⛔⛔ **Le vrai travail était R4** : `DISC_CADRE.coeur` dit « SQUAT · DC · SDT » en **prose** —
+  exact et **totalement inexploitable**. `DISC_SEANCE` est la descente manquante vers la DONNÉE.
+  ⛔ **Aucune 2ᵉ liste de types** (R2) : les 5 viennent de `DISC_LABELS`/`DISC_CADRE`.
+  ⭐⭐ Michel a tranché **« les 2 carrément »** : la carte porte la ligne **chiffrée** du cadre
+  (option c) et le tap **crée la séance** (option a) ; le cadre complet est au « ⓘ ».
+  ⭐ **Les reps et le repos suivent la discipline** — mesuré : powerlifting → 3 reps / 300 s.
+  ⚠️ **Réserve écrite** : pas d'arraché complet au catalogue → la séance haltéro est une séance
+  de **travail**, pas de compétition.
+  ⚠️⚠️ **La capture a montré un défaut invisible au texte** : ma 1ʳᵉ ligne courte tronquait la
+  prose et sortait « jusqu'à 15- ». *Une phrase coupée n'est pas une info courte, c'est une info
+  FAUSSE.* → extraction du motif chiffré.
+  ⏭️ **Le chantier écran Séance est terminé** (5 briques + celle-ci). La suite du parcours de
+  découverte : §2.2 les conseils d'échauffement (**le seul vrai trou** selon le cadrage).
 - 🍽️⭐⭐ **L'ONGLET MACROS RÉORGANISÉ — LIVRÉ** (ft-v1025). Chantier `docs/MACROS-A.md`
   (variante A), maquette **confrontée au code avant d'écrire une ligne**.
   ⭐⭐ **Le défaut était MESURÉ** : **2 649 px (3,1 écrans)** avant de savoir où on en est, la
