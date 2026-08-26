@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1018`.
+- **Version en ligne (live) :** `ft-v1021`.
 - 📉⭐⭐ **L'HISTORIQUE DU SCORE DE RÉCUP — LIVRÉ** (ft-v1017). Michel : *« j'ai l'impression
   qu'il n'y a pas d'historique ou c'est moi ? »*.
   ⭐⭐ **Sa consigne « vérifie, on l'avait beaucoup travaillé ça » a changé le correctif** :

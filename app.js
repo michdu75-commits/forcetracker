@@ -1377,6 +1377,267 @@ function _foodTotals(date){
   (S.foodLog||[]).forEach(e=>{if(e.date===date){t.kcal+=e.kcal||0;t.prot+=e.prot||0;t.carbs+=e.carbs||0;t.fat+=e.fat||0;}});
   return t;
 }
+/* ═══ L'APP APPREND L'ALIMENTATION — 100 % LOCAL, ZÉRO APPEL API (26/08/2026, ft-v1021) ═══
+   Michel : *« il faut que l'application (pas Milo) apprenne du sportif côté nutrition sans que
+   ça me coûte un seul appel API »*. Et la veille, le constat qui l'a amené là : *« on connaît
+   l'athlète sportivement en lui posant des questions, mais pas du tout en alimentation — alors
+   que c'est 80 % au moins de l'évolution physique »*. Mesuré : **6 questions** sur
+   l'entraînement, **ZÉRO** sur la nourriture.
+
+   ⭐⭐ TOUT CE QUI SUIT EST DE L'ARITHMÉTIQUE SUR `S.foodLog`. Pas un octet de réseau, pas un
+   modèle, pas de cervelet — donc **rien à payer, et ça marche hors ligne** (règle d'or #4).
+   *La donnée était déjà là : ce qui manquait, c'est que quelqu'un la regarde.*
+
+   ⛔⛔ CE QUE L'OBSERVATION NE PEUT PAS DONNER, ET QU'ON N'INVENTE PAS (R29). Une absence ne
+   prouve RIEN : Michel n'a jamais noté de macadamia — *« j'en mange pas, et en plus c'est
+   dégueulasse »* — mais quelqu'un d'autre peut simplement ne pas y avoir pensé. **On mesure ce
+   qui EST là, jamais ce qui n'y est pas.** Les dégoûts, le budget, le temps de préparation
+   devront être DEMANDÉS ; c'est écrit dans `IDEES-FUTURES.md`, ce n'est pas ce fichier-ci.
+
+   ⛔ ET AUCUN SCORE DE FIABILITÉ INVENTÉ (R32) : des ÉTATS NOMMÉS. « 4 jours notés » n'autorise
+   pas la même phrase que « 40 jours », et un « fiabilité 78 % » serait une fausse précision. */
+
+const _PA_MIN_JOURS = 3;          // en dessous, on ne prétend rien observer
+const _PA_SOLIDE    = 14;         // à partir de là, on parle d'habitudes
+function _profilAlimentaire(){
+  const fl = Array.isArray(S.foodLog) ? S.foodLog : [];
+  if(!fl.length) return null;
+  const cleN = n => (n||'').trim().toLowerCase();
+
+  /* ① Combien de jours sont RÉELLEMENT notés, et sur quelle fenêtre. C'est ce chiffre qui
+     décide de ce qu'on a le droit de dire ensuite — il vient donc en premier. */
+  const parJour = {};
+  fl.forEach(e=>{ if(e && e.date) (parJour[e.date] = parJour[e.date] || []).push(e); });
+  const jours = Object.keys(parJour).sort();
+  const nbJours = jours.length;
+  const etat = nbJours >= _PA_SOLIDE ? 'solide'
+             : nbJours >= _PA_MIN_JOURS ? 'partiel'
+             : 'insuffisant';
+  /* ⚠️ La FENÊTRE compte autant que le nombre : 6 jours étalés sur huit semaines ne disent pas la
+     même chose que 6 jours d'affilée. On donne les deux, on ne les mélange pas. */
+  let etendue = 0;
+  if(nbJours >= 2){
+    const a = new Date(jours[0]+'T12:00:00'), b = new Date(jours[nbJours-1]+'T12:00:00');
+    etendue = Math.round((b-a)/864e5) + 1;
+  }
+
+  /* ② Ses aliments, par MOMENT de la journée. C'est là qu'est l'information utile : « du riz »
+     ne dit pas grand-chose, « du riz au déjeuner » se transpose directement dans un plan. */
+  const parRepas = {}, global = {};
+  fl.forEach(e=>{
+    const n = (e && e.name || '').trim(); if(!n) return;
+    const k = cleN(n), m = e.meal || 'autre';
+    (parRepas[m] = parRepas[m] || {});
+    parRepas[m][k] = parRepas[m][k] || {nom:n, n:0};
+    parRepas[m][k].n++;
+    global[k] = global[k] || {nom:n, n:0, kcal:+e.kcal||0, prot:+e.prot||0, carbs:+e.carbs||0, fat:+e.fat||0};
+    global[k].n++;
+  });
+  const top = (o, max) => Object.keys(o).map(k=>o[k]).sort((a,b)=>b.n-a.n).slice(0, max||3);
+  const habitudes = {};
+  Object.keys(parRepas).forEach(m=>{ habitudes[m] = top(parRepas[m], 3); });
+
+  /* ③ Ses HORAIRES réels, par repas — la médiane, pas la moyenne : un seul dîner à 2 h du
+     matin ne doit pas déplacer l'heure habituelle de tous les autres. */
+  const heures = {};
+  Object.keys(parRepas).forEach(m=>{
+    const hs = fl.filter(e=>e && (e.meal||'autre')===m && e.ts)
+                 .map(e=>new Date(e.ts).getHours()).sort((a,b)=>a-b);
+    if(hs.length >= 3) heures[m] = hs[Math.floor(hs.length/2)];   // ⛔ 3 points minimum
+  });
+
+  /* ④ Ce qu'il mange VRAIMENT en moyenne, sur les jours notés — à comparer à sa cible.
+     ⛔ On divise par les jours NOTÉS, pas par les jours écoulés : sinon un oubli de saisie
+     ressemblerait à un jour de jeûne, et la moyenne mentirait vers le bas. */
+  const somme = {kcal:0, prot:0, carbs:0, fat:0};
+  fl.forEach(e=>{ somme.kcal+=+e.kcal||0; somme.prot+=+e.prot||0; somme.carbs+=+e.carbs||0; somme.fat+=+e.fat||0; });
+  const moy = {};
+  ['kcal','prot','carbs','fat'].forEach(k=> moy[k] = nbJours ? Math.round(somme[k]/nbJours) : 0);
+
+  return { nbJours:nbJours, etendue:etendue, etat:etat,
+           habitudes:habitudes, favoris:top(global, 5), heures:heures, moyennes:moy,
+           /* ⚠️ Le nombre de repas notés par jour dit s'il note TOUT ou seulement une partie —
+              une moyenne de 1,2 entrée par jour ne décrit pas une journée. */
+           entreesParJour: nbJours ? Math.round(fl.length/nbJours*10)/10 : 0 };
+}
+
+/* ═══ CE QU'IL TE RESTE À MANGER — ET CE QUE ÇA REPRÉSENTE (26/08/2026, ft-v1019) ═══════
+   Michel : *« il faut montrer une estimation de ce qu'il nous reste à manger dans la journée
+   (à 14h par exemple, il te reste 150 g de prot à manger, tu peux faire 1 shake de prot et
+   150 g de poulet, pareil pour les glucides et pareil pour les lipides) »*.
+   ⭐⭐ SA PRÉCISION EST TOUT LE SUJET, et elle change la nature de la chose : le chiffre
+   « il te reste 150 g de protéines » EXISTE DÉJÀ à l'écran depuis longtemps — et il ne sert
+   à rien, parce que personne ne sait à quoi ressemblent 150 g de protéines dans une assiette.
+   *Ce qui manquait n'est pas la donnée, c'est sa TRADUCTION.* C'est le trou 3.3 de
+   `docs/NUTRITION-MOTEUR.md` (« le Journal et le Plan ne se parlent pas »).
+
+   ⛔⛔ LES ALIMENTS PROPOSÉS SONT LES SIENS, JAMAIS UNE BASE INVENTÉE (R29). On pioche dans ses
+   FAVORIS et dans ce qu'il a réellement mangé — donc : des aliments qu'il aime, qu'il a sous la
+   main, avec des macros QU'IL A LUI-MÊME enregistrées. ⭐ Et ça évite entièrement le trou 3.2
+   (« aucune base d'aliments ») : on n'a pas besoin des 300 aliments `composable` pour ça.
+
+   ⛔ ANTI-TCA — Constitution P21, `docs/NUTRITION-PHILOSOPHIE.md`. Trois garde-fous :
+   ① AUJOURD'HUI SEULEMENT — jamais sur un jour passé : un « il te manquait 40 g » d'hier est un
+      reproche sur une journée qu'on ne peut plus changer, et ça ne sert à rien.
+   ② AUCUN REPROCHE quand la cible est dépassée : on n'affiche pas d'idée, et on ne commente pas.
+   ③ C'EST UNE ILLUSTRATION, PAS UNE PRESCRIPTION — le texte dit « ça ressemble à », jamais
+      « tu dois ». *La nutrition ne doit jamais devenir une source de stress supérieure au
+      bénéfice qu'elle apporte.* */
+
+/* Un seul propriétaire du « reste » (R2) : il lit `_foodTotals` et `calcMacros`, il ne
+   recalcule NI l'un NI l'autre. Rend `null` si le profil ne permet pas de cible — on ne
+   compare pas à un objectif qu'on n'a pas. */
+function _resteDuJour(date){
+  const d = date || ((typeof today==='function')?today():'');
+  if(!(S.bw && S.age && S.height)) return null;
+  const cible = (typeof calcMacros==='function') ? calcMacros(S.nutritionPhase) : null;
+  if(!cible || !cible.calories) return null;
+  const tot = (typeof _foodTotals==='function') ? _foodTotals(d) : {kcal:0,prot:0,carbs:0,fat:0};
+  const r = k => Math.round(k);
+  return {
+    date:d,
+    rien: !(S.foodLog||[]).some(e=>e.date===d),      // ⚠️ « rien noté » ≠ « rien mangé »
+    kcal:  r(cible.calories - tot.kcal),
+    prot:  r((cible.prot_g||0)  - tot.prot),
+    carbs: r((cible.carbs_g||0) - tot.carbs),
+    fat:   r((cible.fat_g||0)   - tot.fat),
+    cible:cible, tot:tot
+  };
+}
+
+/* Ses aliments à LUI : les favoris d'abord (il les a choisis), puis les plus récents du
+   journal. Dédupliqués par nom, et on ne garde que ce qui porte de vraies macros. */
+function _mesAliments(max){
+  /* ⚠️⚠️ REMANIÉ LE 26/08 (ft-v1020) — Michel, devant la 1ʳᵉ version : *« il faut rester
+     simple, tout le monde ne bouffe pas de flocons d'avoine, moi le premier »*.
+     ⭐ Le classement d'origine prenait l'aliment le plus DENSE dans la macro manquante. Sur le
+     papier c'est optimal ; en vrai ça sort l'aliment le plus riche, pas celui qu'on mange.
+     👉 On classe désormais par **ce qu'il mange VRAIMENT** : un favori (il l'a choisi) passe
+     devant, puis la FRÉQUENCE dans son journal. *Un aliment parfait qu'on ne mange jamais est
+     un mauvais conseil.* La densité ne sert plus qu'à départager à fréquence égale. */
+  const vus = {}, out = [];
+  const cle = n => (n||'').trim().toLowerCase();
+  /* On compte d'abord combien de fois chaque aliment revient dans le journal. */
+  const freq = {};
+  (S.foodLog||[]).forEach(e=>{ const k=cle(e&&e.name); if(k) freq[k]=(freq[k]||0)+1; });
+  const prendre = (e, fav) => {
+    const n = (e && e.name || '').trim(); if(!n) return;
+    const k = cle(n); if(vus[k]) return;
+    const kcal=+e.kcal||0, prot=+e.prot||0, carbs=+e.carbs||0, fat=+e.fat||0;
+    if(!(kcal>0 || prot>0 || carbs>0 || fat>0)) return;    // ⛔ rien à proposer sans macros
+    vus[k]=1;
+    out.push({name:n, kcal:kcal, prot:prot, carbs:carbs, fat:fat,
+              per100:e.per100||null, fav:!!fav, freq:(freq[k]||0)});
+  };
+  (S.savedFoods||[]).forEach(e=>prendre(e,true));
+  (S.foodLog||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(e=>prendre(e,false));
+  return out.slice(0, max||40);
+}
+
+/* ⚠️⚠️ PREMIÈRE VERSION JETÉE, ET LA MESURE L'A DIT TOUT DE SUITE : elle proposait UN seul
+   aliment par macro, et rendait « 5,5 × Blanc de poulet » ou « 3,5 × Huile d'olive ».
+   *Ce ne sont pas des idées, ce sont des absurdités* — personne ne mange 3 portions et demie
+   d'huile d'olive. ⭐ ET L'EXEMPLE DE MICHEL DISAIT DÉJÀ POURQUOI : *« tu peux faire 1 shake de
+   prot ET 150 g de poulet »* — une COMBINAISON, précisément parce qu'un seul aliment ne couvre
+   pas un gros manque à dose raisonnable. Le défaut n'était pas dans le calcul, il était dans
+   l'idée qu'un aliment suffit.
+
+   ⛔ CE QUI BORNE UNE PORTION RAISONNABLE, et c'est ce qui rend la suggestion crédible :
+   au plus 2 portions du même aliment, et au plus 250 g quand on connaît son pour-100 g.
+   ⭐ ON DIT CE QUE LA COMBINAISON COUVRE VRAIMENT (« ≈ 160 g sur 167 ») plutôt que de faire
+   croire qu'elle tombe juste — une fausse précision serait pire que l'approximation (R29). */
+
+/* Une quantité RAISONNABLE d'un aliment, pour couvrir au plus `manque` de cette macro.
+   Rend {texte, apport} ou null. Ne dépasse jamais les bornes ci-dessus. */
+const _RESTE_MAX_PORTIONS = 2, _RESTE_MAX_G = 250;
+const cle = n => (n||'').trim().toLowerCase();
+/* « 100 g de Amandes » — l'élision manquait. Ce n'est pas de la coquetterie : c'est du texte
+   affiché à quelqu'un, et Michel l'a écrit lui-même (R31) — *plus on se rapproche d'une
+   réalité, plus les gens ont confiance dans ce qu'on a fait.* */
+/* ⚠️ Le « y » est EXCLU volontairement : on dit « de yaourt », pas « d'yaourt » — et le
+   yaourt est bien plus fréquent dans un journal alimentaire que les yeux. Le « h » est
+   GARDÉ pour la même raison inverse : « d'huile » est courant, « de homard » est rare. */
+const _deNom = n => /^[aeiouàâäéèêëîïôöùûüœæh]/i.test((n||'').trim()) ? ("d'" + n) : ('de ' + n);
+function _portionRaisonnable(al, macro, manque){
+  const parPortion = +al[macro] || 0;
+  if(parPortion <= 0 || manque <= 0) return null;
+  const p100 = al.per100 && +al.per100[macro];
+  if(p100 > 0){
+    let g = manque / p100 * 100;
+    g = Math.min(g, _RESTE_MAX_G);
+    g = Math.round(g/5)*5;                                   // pas de fausse précision
+    if(g < 10) return null;
+    return { texte: g + ' g ' + _deNom(al.name), apport: g * p100 / 100 };
+  }
+  let n = manque / parPortion;
+  n = Math.min(n, _RESTE_MAX_PORTIONS);
+  n = Math.round(n*2)/2;                                     // au demi près
+  if(n < 0.5) return null;
+  const lbl = (n===1) ? ('1 × ' + al.name) : ((n===0.5?'½':n) + ' × ' + al.name);
+  return { texte: lbl, apport: n * parPortion };
+}
+
+/* Compose une idée pour UNE macro : jusqu'à 2 aliments à lui, à doses raisonnables.
+   ⛔ Les aliments déjà employés pour une autre macro sont écartés — sinon la même ligne
+   revient trois fois et l'idée n'en est plus une. */
+function _ideePourMacro(al, macro, manque, pris){
+  /* ⭐ CLASSEMENT : ce qu'il mange, avant ce qui est optimal. Favori d'abord, puis fréquence,
+     puis densité pour départager. (Michel, ft-v1020 : « rester simple ».) */
+  /* ⛔⛔ D'ABORD LA PERTINENCE, ENSUITE SEULEMENT LES GOÛTS — mesuré, pas supposé.
+     Mon 1ᵉʳ jet de ft-v1020 classait le FAVORI en tête, quelle que soit la macro : il a sorti
+     « 2 × Shake protéiné » sur la ligne **GLUCIDES**. *Un shake protéiné pour des glucides, ça
+     ne veut rien dire.* Le classement par ce qu'on mange était juste ; il manquait la condition
+     d'entrée.
+     ⭐ LE CRITÈRE EST PHYSIQUE, PAS ARBITRAIRE : la macro doit peser au moins 30 % des calories
+     de l'aliment. Le riz est à 88 % de glucides, l'huile à 100 % de lipides, le shake à 83 % de
+     protéines — et à 10 % de glucides, donc il ne sort JAMAIS sur cette ligne-là. */
+  const KCAL = {prot:4, carbs:4, fat:9};
+  const pertinent = a => {
+    const k = +a.kcal || 0;
+    const part = (+a[macro]||0) * KCAL[macro];
+    return k > 0 ? (part / k) >= 0.30 : (+a[macro]||0) > 0;
+  };
+  const cand = al.filter(a => !pris[cle(a.name)] && (+a[macro]||0) > 0 && pertinent(a))
+                 .sort((a,b) => (b.fav?1:0)-(a.fav?1:0)
+                             || (b.freq||0)-(a.freq||0)
+                             || (+b[macro]||0)-(+a[macro]||0));
+  const parts = [];
+  let reste = manque, couvert = 0;
+  for(const a of cand){
+    /* ⛔ UN SEUL ALIMENT PAR DÉFAUT. Un deuxième n'est ajouté QUE si le premier couvre moins
+       de la moitié du manque — sinon la ligne devient une recette, et Michel a raison :
+       « 250 g de riz + 160 g de flocons » ne se lit pas, ça se subit (R19). */
+    if(parts.length >= 1 && couvert >= manque*0.5) break;
+    if(parts.length >= 2) break;
+    const q = _portionRaisonnable(a, macro, reste);
+    if(!q) continue;
+    parts.push(q.texte); pris[cle(a.name)] = 1;
+    couvert += q.apport; reste -= q.apport;
+  }
+  if(!parts.length) return null;
+  return { texte: parts.join(' + '), couvert: Math.round(couvert) };
+}
+
+/* Les idées : une par macro qui manque VRAIMENT, en commençant par celle qui manque le plus.
+   ⛔ Au plus 3 — au-delà ce n'est plus une idée, c'est une liste de courses (R19). */
+const _RESTE_SEUILS = { prot:15, carbs:25, fat:8 };           // en dessous, ça ne vaut pas un conseil
+function _ideesPourLeReste(reste){
+  if(!reste) return [];
+  const al = _mesAliments(40);
+  if(!al.length) return [];
+  const noms = { prot:'protéines', carbs:'glucides', fat:'lipides' };
+  const manques = ['prot','carbs','fat']
+    .filter(m => reste[m] >= _RESTE_SEUILS[m])
+    .sort((a,b) => (reste[b]/_RESTE_SEUILS[b]) - (reste[a]/_RESTE_SEUILS[a]));
+  const out = [], pris = {};
+  manques.forEach(m=>{
+    if(out.length >= 3) return;
+    const idee = _ideePourMacro(al, m, reste[m], pris);
+    if(idee) out.push({ macro:m, label:noms[m], manque:reste[m], idee:idee.texte, couvert:idee.couvert });
+  });
+  return out;
+}
+
 /* 🔍 Les raccourcis du Journal (ft-v871) — ils ouvrent la MÊME modale, au bon endroit.
    ⚠️ `readFoodLabel` déclenche un `input.click()` : il doit rester dans la MÊME tâche que le
    geste de l'utilisateur, sinon iOS refuse d'ouvrir la caméra. On l'appelle donc en direct,

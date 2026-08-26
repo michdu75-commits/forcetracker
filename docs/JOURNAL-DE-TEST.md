@@ -69,6 +69,18 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟠 « LES NOIX DE MACADAMIA J'EN MANGE PAS, ET EN PLUS C'EST DÉGUEULASSE »
+**26/08/2026, Michel, devant le Plan alimentaire journalier.** Dit en riant — et c'est le
+meilleur résumé du problème en une phrase. Le plan lui propose *« Yaourt grec entier + noix de
+macadamia »* parce que c'est **écrit en dur** dans `KETO_MEALS` (`state.js` ~1052), pas parce que
+ça le concerne. **Personne ne lui a jamais demandé.**
+⭐ Deux choses manquent, et elles ne sont pas de même nature : ① ce qu'il **n'aime pas** — que
+l'observation ne peut PAS donner (une absence dans le journal ne prouve pas un dégoût) ; ② ce
+qu'il **mange vraiment** — que le journal donne déjà gratuitement depuis ft-v1020.
+⛔ **Pas un scénario de banc d'essai** : le plan de repas n'est pas produit par Milo, c'est une
+table du code. Le dossier est dans `IDEES-FUTURES.md` (« on connaît l'athlète sportivement, pas
+du tout alimentairement »). **État : à trier.**
+
 ### 🟠 « MON ALIMENTATION EST DÉJÀ DANS L'APPLICATION » — et Milo ne la reçoit pas
 **26/08/2026, conversation réelle.** Michel : *« As-tu assez de recul pour mon alimentation ? »*
 → *« Mon alimentation est déjà dans l'application. »* Milo : *« Je n'ai pas accès au journal

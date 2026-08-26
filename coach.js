@@ -3419,6 +3419,33 @@ ${lignes.join('\n')}
 ${cible}
 → ⚠️ ${total} jour${total>1?'s':''} not${total>1?'és':'é'} en tout dans son journal${total<10?" — C'EST PEU. Tu peux commenter une JOURNÉE ou une tendance de quelques jours, mais tu ne peux RIEN conclure sur le mois, et tu le dis si on te le demande.":'.'}
 ${aujNote?'':"→ Rien n'est noté pour aujourd'hui : ne suppose pas qu'elle n'a pas mangé, suppose qu'elle n'a pas noté."}
+${(()=>{
+  /* 🧠 SES HABITUDES, pas seulement ses totaux (26/08/2026, ft-v1021). ft-v1014 lui a donné ce
+     qu'elle a mangé JOUR PAR JOUR ; ceci lui donne ce qu'elle mange D'HABITUDE — calculé
+     localement, **sans un seul appel de plus** (c'est la demande de Michel).
+     ⭐ Pourquoi ça change quelque chose pour lui : proposer « du fromage blanc » à quelqu'un qui
+     n'en note jamais est un conseil mort. Avec ça, il propose dans ce qu'elle mange déjà.
+     ⛔ ET ON LUI DIT CE QUE ÇA NE PROUVE PAS : une absence n'est pas un dégoût (R29). Sans cette
+     phrase il conclurait « tu n'aimes pas X » d'un simple silence — exactement le genre
+     d'hypothèse présentée comme un fait que la Constitution interdit (P4). */
+  const pa = (typeof _profilAlimentaire==='function') ? _profilAlimentaire() : null;
+  if(!pa || pa.etat === 'insuffisant') return '';
+  const LBL = {petitdej:'au petit-déjeuner', collation:'en collation', dejeuner:'au déjeuner',
+               collation2:'en 2ᵉ collation', diner:'au dîner'};
+  const l = Object.keys(pa.habitudes).filter(m=>LBL[m]).map(m=>{
+    const h = pa.heures[m];
+    return '  · ' + LBL[m] + (h!==undefined?(' (vers '+h+'h)'):'') + ' : '
+         + pa.habitudes[m].map(x=>x.nom).join(', ');
+  });
+  if(!l.length) return '';
+  return `
+CE QU'ELLE MANGE D'HABITUDE (observé dans son journal, pas déclaré) :
+${l.join('\n')}
+→ Quand tu proposes un aliment, PIOCHE LÀ-DEDANS en priorité : un conseil bâti sur ce qu'elle mange déjà se suit, un conseil bâti sur un aliment qu'elle n'a jamais acheté ne se suit pas.
+→ ⛔ CE QUI N'Y EST PAS NE PROUVE RIEN. Un aliment absent de cette liste n'est PAS un aliment qu'elle n'aime pas : elle peut ne jamais l'avoir noté. Ne conclus JAMAIS « tu n'aimes pas X » d'une absence — si tu as besoin de le savoir, demande.
+${pa.etat==='partiel'?'→ ⚠️ '+pa.nbJours+' jours notés seulement : ce sont ces jours-là, pas encore une habitude établie. Dis-le si tu t\'appuies dessus.':''}
+`;
+})()}
 → ⛔ CES CHIFFRES SERVENT QUAND ON TE LES DEMANDE. Ne commente JAMAIS spontanément ce qu'elle a mangé, ne fais aucune remarque sur un écart, ne compte pas à sa place. La nutrition est un levier, jamais une surveillance.
 `;
 })()}

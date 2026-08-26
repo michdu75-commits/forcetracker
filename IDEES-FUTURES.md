@@ -4,6 +4,72 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🥘 ON CONNAÎT L'ATHLÈTE SPORTIVEMENT, PAS DU TOUT ALIMENTAIREMENT (Michel, 26/08/2026)
+
+> Michel, capture du **Plan alimentaire journalier** à l'appui : *« Si l'application propose des
+> aliments… je pense que dans le futur il faudra alimenter ce paramètre. **On connaît l'athlète
+> sportivement en lui posant des questions, mais pas du tout en alimentation** — alors que c'est
+> **80 % au moins de l'évolution physique**, que ce soit pour prendre du muscle ou perdre du
+> poids. »*
+
+### ⭐⭐ Le déséquilibre est mesuré, pas ressenti
+
+| | Ce que l'app demande | Ce qu'elle en fait |
+|---|---|---|
+| **Entraînement** | **6 questions** (ancienneté · séances/semaine · lieu · quotidien hors sport · stress · sommeil) | tout le moteur de séance |
+| **Alimentation** | **ZÉRO question** | un plan **identique pour tout le monde** |
+
+⛔ **Et le plan est une table FIGÉE dans le code** (`KETO_MEALS`, `LOWCARB_MEALS`… dans
+`state.js`) : *« Yaourt grec entier + noix de macadamia »* est écrit en dur. La personne n'a
+jamais dit qu'elle aimait ça, qu'elle en avait, ni qu'elle savait le cuisiner.
+
+**⚠️ Ce qui existe déjà, et qu'il ne faut pas reconstruire (R28 — vérifier avant d'affirmer)** :
+`S.diet` (omnivore/végé/végan/pescétarien) · `S.dietRestrictions` (halal, casher, sans porc, sans
+lactose…) · `S.dietNotes` (« à éviter : … ») · `S.foodMode` (keto/low carb/paléo/méditerranéen) ·
+`S.fasting` · `S.hiddenFoods` · `S.savedFoods`. 👉 **Le socle des INTERDITS est là.** Ce qui manque
+n'est pas ce qu'elle ne peut pas manger — c'est **ce qu'elle mange vraiment**.
+
+### ⭐⭐ Et la moitié de la réponse existe déjà : SON JOURNAL
+
+**ft-v1019/1020 vient de le prouver.** « Ce qu'il te reste, en vrai » classe les aliments par
+**favoris + fréquence réelle dans le journal** — donc l'app sait **déjà** dire *« il mange du riz
+3 fois par semaine et de l'avoine une fois par mois »*, sans avoir posé une seule question.
+👉 **Ce paramètre peut donc être nourri de DEUX façons, et l'ordre compte** (`docs/PROFIL-VIVANT.md`,
+Constitution) :
+1. **OBSERVER d'abord** — le journal dit ce qu'elle mange, gratuitement et sans l'interroger.
+2. **DEMANDER ensuite**, et seulement ce que l'observation ne peut pas donner.
+*C'est la doctrine du profil vivant : observer → expliquer → proposer → décider. Un questionnaire
+de 15 questions sur l'alimentation ferait fuir, et R8 dit l'inverse de ce qu'on croit — le fix
+n'est pas toujours d'ajouter des questions.*
+
+### ⛔ Les points à trancher AVANT de coder
+
+1. **Que demande-t-on qu'on ne peut PAS observer ?** Le budget, le temps de préparation, ce qu'on
+   sait cuisiner, ce qu'on n'aime pas (une absence dans le journal ne prouve pas un dégoût — elle
+   peut juste dire « je n'y ai pas pensé »). ⭐ *C'est le vrai critère d'entrée d'une question.*
+2. **Combien de questions ?** ⛔ Pas 15. Le questionnaire d'entraînement en pose **6** et couvre
+   tout un moteur. **R19** : chaque question doit réduire un risque ou une charge, sinon on la coupe.
+3. **Le plan figé doit-il devenir composé ?** C'est le **trou 3.2** (`docs/NUTRITION-MOTEUR.md`) :
+   ~300 aliments `composable` avec régimes et allergènes en **liste blanche relue à la main**.
+   ⚠️ Le mode d'échec est grave — proposer du thon à quelqu'un qui y est allergique — donc
+   *« couverture maximale » ne convient pas ici, il faut « sûreté maximale »*.
+4. **⛔ ANTI-TCA (P21).** Interroger quelqu'un sur ce qu'il mange n'est pas neutre. Les questions
+   doivent porter sur les **contraintes** (allergies, régime, temps, budget) et jamais sur le
+   **jugement** de ce qu'il mange. *La nutrition ne doit jamais devenir une source de stress
+   supérieure au bénéfice qu'elle apporte.*
+5. **Le déséquilibre est-il vraiment 80/20 ?** ⚠️ Le chiffre de Michel est une conviction, pas une
+   mesure — et il n'a pas besoin d'être exact pour que le constat tienne : **6 questions contre 0**
+   est un déséquilibre en soi. *On écrit sa phrase, on ne la transforme pas en fait chiffré* (**R32**).
+
+### 👉 Les 3 questions de R3 (avant d'ajouter quoi que ce soit)
+
+**Qui produit ?** L'observation du journal (gratuite) + quelques questions ciblées. **Qui
+exploite ?** Le plan de repas (aujourd'hui figé), le générateur, et Milo — qui reçoit déjà le
+résumé du journal depuis ft-v1014. **Quel comportement change ?** Le plan cesse d'être le même
+pour tout le monde : *il propose ce qu'elle mange, dans ce qu'elle peut manger.*
+
+---
+
 ## 🍽️ MILO NE VOIT PAS CE QUE TU MANGES — et l'argument du volume ne tient plus (26/08/2026)
 
 > Michel à Milo : *« As-tu assez de recul pour mon alimentation ? »* → *« Mon alimentation est

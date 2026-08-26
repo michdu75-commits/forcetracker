@@ -9939,7 +9939,21 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     /* ⭐① AUJOURD'HUI : le comportement d'origine ne change pas. */
     o.aujHtml=(document.getElementById('food-journal')||{}).innerHTML||'';
     o.aujVu=/Aujourd'hui/.test(o.aujHtml) && /Aujourd\'hui/.test(o.aujHtml);
-    o.aujCorrect=o.aujHtml.indexOf('Hier midi')<0;      // ne montre QUE le jour actif
+    /* ⚠️⚠️ RESSERRÉ LE 26/08 (ft-v1019), ET LA RAISON COMPTE (R30). Ce témoin garantit que la
+       vue d'un jour n'affiche pas les ENTRÉES d'un autre jour — c'est ça, sa promesse. Or
+       « Ce qu'il te reste, en vrai » propose des aliments tirés de TOUT son historique : voir
+       le nom d'un aliment d'hier dans une IDÉE est le comportement voulu, pas une fuite.
+       ⛔ On retire donc ce bloc AVANT de chercher — on ne relâche pas la règle, on la vise :
+       le test porte sur la LISTE DES ENTRÉES, là où un mélange serait un vrai défaut. */
+    /* ⚠️ DEUX blocs nomment désormais des aliments d'autres jours, et c'est VOULU dans les deux
+       cas : « Ce qu'il te reste » pioche dans ses habitudes (ft-v1019), et « Ce que l'app a
+       appris » DÉCRIT ses habitudes (ft-v1021). Ni l'un ni l'autre n'est une entrée du jour.
+       ⛔ On les retire donc avant de chercher — la promesse du témoin porte sur la LISTE DES
+       ENTRÉES, là où un mélange de jours serait un vrai défaut. */
+    const _sansIdees = h => h
+      .replace(/Ce qu'il te reste, en vrai[\s\S]*?<\/div>\s*<\/div>/,'')
+      .replace(/Ce que l'app a appris de ton alimentation[\s\S]*?sans aucun appel à l'IA[\s\S]*?<\/div>\s*<\/div>/,'');
+    o.aujCorrect=_sansIdees(o.aujHtml).indexOf('Hier midi')<0;   // ne montre QUE les entrées du jour actif
     // La flèche « jour suivant » est désactivée sur aujourd'hui (pas de futur à montrer).
     o.flecheSuivDesactivee=/journalNav\(1\)"[^>]*disabled|disabled[^>]*onclick="journalNav\(1\)"/.test(o.aujHtml)
       || /<button disabled[^>]*>›/.test(o.aujHtml);
@@ -13591,6 +13605,219 @@ console.log('\n-- CXXV. La ligne du classeur porte son email (ft-v1018) --');
      Les deux moities ne valent que posees ensemble (lecon ft-v982 / ft-v995). */
   t('⛔⛔ … et l\'app ENVOIE bien l\'email dans le paquet `logSession` (R4 : sinon rien n\'arrive)',
     /action:'logSession'[^)]*email:S\.email/.test(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8')), '');
+}
+
+/* == BLOC CXXV - « CE QU'IL TE RESTE, EN VRAI » (ft-v1019/1020) ==
+   Michel : « il faut montrer une estimation de ce qu'il nous reste a manger dans la journee (a 14h
+   par exemple, il te reste 150 g de prot a manger, tu peux faire 1 shake de prot et 150 g de
+   poulet, pareil pour les glucides et pareil pour les lipides) ».
+   ⭐⭐ SA PRECISION EST TOUT LE SUJET : le chiffre « il te reste 150 g » etait DEJA a l'ecran, et
+   il ne servait a rien — *personne ne sait a quoi ressemblent 150 g de proteines dans une
+   assiette.* Ce qui manquait n'etait pas la donnee, c'etait sa TRADUCTION (trou 3.3 de
+   docs/NUTRITION-MOTEUR.md : « le Journal et le Plan ne se parlent pas »).
+   ⛔ LES ALIMENTS SONT LES SIENS, JAMAIS UNE BASE INVENTEE (R29) : favoris + journal reel. Ca
+   evite entierement le trou 3.2 (« aucune base d'aliments ») — on n'a pas besoin des 300 aliments
+   `composable` pour ca.
+   ⚠️⚠️ MA 1re VERSION PROPOSAIT UN SEUL ALIMENT et rendait « 5,5 x Blanc de poulet » / « 3,5 x
+   Huile d'olive ». *Ce ne sont pas des idees, ce sont des absurdites.* Et l'exemple de Michel
+   disait deja pourquoi : « 1 shake ET 150 g de poulet » — une COMBINAISON, parce qu'un aliment
+   ne couvre pas un gros manque a dose raisonnable. C'est la mesure qui l'a dit, pas une relecture.
+   ⛔⛔ LES TROIS GARDE-FOUS ANTI-TCA (P21) SONT LA MOITIE DU TRAVAIL, et ils se testent : rien
+   sur un jour PASSE (un reproche sur une journee qu'on ne peut plus changer), rien quand la cible
+   est DEPASSEE (aucun reproche), rien sans aliments a soi (on n'invente pas). */
+console.log('\n-- CXXV. Ce qu\'il te reste à manger, traduit en TES aliments (ft-v1019) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2200);
+  const F=await pg.evaluate(()=>{
+   try{
+    const o={}, t=today();
+    S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';S.nutritionPhase='charge';
+    S.savedFoods=[
+      {name:'Shake protéiné',kcal:120,prot:25,carbs:3,fat:1},
+      {name:'Blanc de poulet',kcal:165,prot:31,carbs:0,fat:3.6,per100:{kcal:110,prot:23,carbs:0,fat:2.4}},
+      {name:'Amandes',kcal:180,prot:6,carbs:4,fat:16,per100:{kcal:600,prot:21,carbs:13,fat:53}}];
+    S.foodLog=[
+      {date:t,meal:'matin',name:'Flocons avoine',kcal:380,prot:13,carbs:60,fat:8,ts:Date.now()-3e6,per100:{kcal:380,prot:13,carbs:60,fat:8}},
+      {date:t,meal:'midi',name:'Riz basmati',kcal:350,prot:7,carbs:77,fat:1,ts:Date.now()-1e6,per100:{kcal:350,prot:7,carbs:77,fat:1}}];
+    const r=_resteDuJour(t);
+    o.reste = r ? (r.prot+'|'+r.carbs+'|'+r.fat) : null;
+    const id=_ideesPourLeReste(r);
+    o.nb=id.length;
+    o.textes=id.map(x=>x.idee);
+    /* ⛔ AUCUNE ABSURDITÉ : ni « 5,5 × », ni un poids au-delà de la borne. */
+    o.absurde = id.some(x=>/([3-9]|\d{2,})(,|\.)?\d*\s*×/.test(x.idee) || /(\d{3,})\s*g/.test(x.idee.replace(/\b(1[0-9]\d|2[0-4]\d|250)\s*g/g,'')));
+    o.combine = id.some(x=>x.idee.indexOf(' + ')>0);          // au moins une combinaison
+    /* ⛔ Seuls SES aliments sont cités. */
+    const siens=['Shake protéiné','Blanc de poulet','Amandes','Flocons avoine','Riz basmati'];
+    o.queLesSiens = id.every(x=>x.idee.split(' + ').every(p=>siens.some(n=>p.indexOf(n)>=0)));
+    o.elision = _deNom('Amandes')==="d'Amandes" && _deNom('Yaourt')==='de Yaourt';
+    /* ⭐⭐ ft-v1020 — Michel : « il faut rester simple, tout le monde ne bouffe pas de flocons
+       d'avoine, moi le premier ». DEUX règles en sont sorties, et la seconde a été trouvée en
+       mesurant la première : ① on classe par ce qu'il MANGE (favori, puis fréquence), pas par
+       ce qui est le plus dense ; ② mais la PERTINENCE passe avant — mon 1ᵉʳ jet a sorti
+       « 2 × Shake protéiné » sur la ligne GLUCIDES, ce qui ne veut rien dire. */
+    S.savedFoods=[{name:'Shake protéiné',kcal:120,prot:25,carbs:3,fat:1}];   // favori, 10 % de glucides
+    const _e=(d,n,k,p,c,f,per)=>({date:d,meal:'midi',name:n,kcal:k,prot:p,carbs:c,fat:f,ts:Date.now()-Math.random()*1e6,per100:per||null});
+    const _h=n=>{const d=new Date(t+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    S.foodLog=[ _e(t,'Riz basmati',350,7,77,1,{kcal:350,prot:7,carbs:77,fat:1}),
+                _e(_h(1),'Riz basmati',350,7,77,1,{kcal:350,prot:7,carbs:77,fat:1}),
+                _e(_h(2),'Riz basmati',350,7,77,1,{kcal:350,prot:7,carbs:77,fat:1}),
+                _e(_h(3),'Pain complet',420,9,85,2,{kcal:250,prot:9,carbs:48,fat:2}) ];  // 1 fois, PLUS dense
+    const id2=_ideesPourLeReste(_resteDuJour(t));
+    const ligneG=(id2.find(x=>x.macro==='carbs')||{}).idee||'';
+    o.pasDeShakePourGlucides = ligneG.indexOf('Shake')<0;
+    o.frequentDAbord = ligneG.indexOf('Riz basmati')>=0;      // mangé 3 fois, passe devant le pain
+    // ── à l'écran, par le vrai rendu
+    goScreen('s-nutrition'); renderFoodJournal();
+    const lire=()=>document.getElementById('food-journal').innerText;
+    o.ecran = /Ce qu'il te reste, en vrai/.test(lire());
+    o.mention = /Une idée, pas une consigne/.test(lire());
+    // ⛔ ① jour PASSÉ → rien
+    _journalJour=new Date(Date.now()-864e5).toISOString().slice(0,10); renderFoodJournal();
+    o.jourPasse = /Ce qu'il te reste/.test(lire());
+    // ⛔ ② cible DÉPASSÉE → rien, aucun reproche
+    _journalJour=null;
+    S.foodLog.push({date:t,meal:'soir',name:'Gros repas',kcal:4000,prot:300,carbs:400,fat:150,ts:Date.now()});
+    renderFoodJournal();
+    o.depasse = /Ce qu'il te reste/.test(lire());
+    // ⛔ ③ AUCUN aliment à soi → rien d'inventé
+    S.foodLog=[]; S.savedFoods=[]; renderFoodJournal();
+    o.sansAliments = /Ce qu'il te reste/.test(lire());
+    // ⛔ ④ pas de profil → pas de cible, donc pas de reste
+    S.bw=0; o.sansProfil = _resteDuJour(t)===null;
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(F.err) t('CXXV n\'a pas pu tourner', false, F.err);
+  else{
+    t('⭐⭐ le reste est TRADUIT en aliments, pas seulement chiffré',
+      F.nb>=2 && F.ecran===true, 'idées='+F.nb+' à l\'écran='+F.ecran);
+    t('⭐⭐ … et au moins une idée COMBINE deux aliments (« 1 shake ET 150 g de poulet »)',
+      F.combine===true, JSON.stringify(F.textes));
+    t('⛔⛔ AUCUNE absurdité : ni « 5,5 × », ni une portion hors borne (le défaut de ma 1ʳᵉ version)',
+      F.absurde===false, JSON.stringify(F.textes));
+    t('⛔ SEULS SES aliments sont cités — aucune base inventée (R29)',
+      F.queLesSiens===true, JSON.stringify(F.textes));
+    t('⛔⛔ ANTI-TCA ① rien sur un jour PASSÉ (P21)', F.jourPasse===false, '');
+    t('⛔⛔ ANTI-TCA ② rien quand la cible est DÉPASSÉE — aucun reproche', F.depasse===false, '');
+    t('⛔ ANTI-TCA ③ le texte dit « une idée, pas une consigne »', F.mention===true, '');
+    t('⛔ sans aliments à soi, on n\'invente rien', F.sansAliments===false, '');
+    t('⛔ sans profil, aucune cible donc aucun reste (on ne compare pas à un objectif absent)',
+      F.sansProfil===true, '');
+    t('⭐ l\'élision est juste : « d\'Amandes » mais « de Yaourt »', F.elision===true, '');
+    t('⛔⛔ un aliment NON PERTINENT ne sort pas sur cette macro (pas de shake pour des glucides)',
+      F.pasDeShakePourGlucides===true, '');
+    t('⭐⭐ on propose ce qu\'il MANGE SOUVENT, pas ce qui est le plus dense (ft-v1020)',
+      F.frequentDAbord===true, '');
+  }
+  await cx.close();
+}
+
+/* == BLOC CXXVI - L'APP APPREND L'ALIMENTATION, SANS UN SEUL APPEL (ft-v1021) ==
+   Michel : « il faut que l'application (pas Milo) apprenne du sportif cote nutrition sans que ca
+   me coute un seul appel api ». La veille : « on connait l'athlete sportivement en lui posant des
+   questions, mais pas du tout en alimentation — alors que c'est 80 % au moins de l'evolution
+   physique ». Mesure : 6 questions sur l'entrainement, ZERO sur la nourriture.
+   ⭐⭐ TOUT EST DE L'ARITHMETIQUE SUR `S.foodLog` : pas un octet de reseau, pas de modele, pas de
+   cervelet. *La donnee etait deja la ; ce qui manquait, c'est que quelqu'un la regarde.*
+   ⛔⛔ LE TEMOIN QUI PORTE LA DEMANDE EST CELUI DU COUT : on compte les appels sortants pendant
+   20 passages de l'observateur. Mesure : 0 de plus (les 2 du demarrage — QR du partage + ping
+   Apps Script — existent depuis toujours et ne dependent pas de ceci).
+   ⛔ ET CE QU'ON N'INVENTE PAS : une ABSENCE ne prouve rien. Michel n'a jamais note de macadamia
+   (« j'en mange pas, et en plus c'est degueulasse ») mais un autre peut simplement ne pas y avoir
+   pense. Milo recoit donc la liste AVEC l'interdiction d'en conclure un degout (R29, P4). */
+console.log('\n-- CXXVI. L\'app apprend ton alimentation, sans un seul appel (ft-v1021) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  const dehors=[];
+  pg.on('request',rq=>{ if(rq.url().indexOf('http://localhost:'+PORT)!==0) dehors.push(rq.url()); });
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2200);
+  const nDepart = dehors.length;                       // ⚠️ ce qui existait AVANT ce qu'on teste
+  const F=await pg.evaluate(()=>{
+   try{
+    const MK="═══ SITUATION DE L'INSTANT ═══", o={};
+    const t=today(), h=n=>{const d=new Date(t+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    const H=hh=>{const d=new Date();d.setHours(hh,0,0,0);return d.getTime();};
+    const e=(d,m,n,k,p,c,f,hh)=>({date:d,meal:m,name:n,kcal:k,prot:p,carbs:c,fat:f,ts:H(hh)});
+    S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';S.nutritionPhase='charge';
+    S.foodLog=[];
+    for(let i=0;i<6;i++){
+      S.foodLog.push(e(h(i),'petitdej','Fromage blanc 0%',250,40,12,2,7));
+      S.foodLog.push(e(h(i),'dejeuner','Riz basmati',350,7,77,1,13));
+      S.foodLog.push(e(h(i),'dejeuner','Blanc de poulet',165,31,0,4,13));
+    }
+    const avant=buildCoachContext('x'); const commAvant=avant.slice(0,avant.indexOf(MK));
+    const pa=_profilAlimentaire();
+    o.etat=pa.etat; o.nbJours=pa.nbJours;
+    o.heurePetitDej=pa.heures.petitdej; o.heureDejeuner=pa.heures.dejeuner;
+    o.habDej=(pa.habitudes.dejeuner||[]).map(x=>x.nom).join(',');
+    o.moyKcal=pa.moyennes.kcal;
+    /* ⛔ La moyenne divise par les jours NOTÉS, pas par les jours écoulés. */
+    o.moyJuste = pa.moyennes.kcal === Math.round((250+350+165)*6/6);
+    // ── Milo
+    o.dansMilo=/CE QU'ELLE MANGE D'HABITUDE/.test(avant);
+    o.garde=/n'est PAS un aliment qu'elle n'aime pas/.test(avant);
+    o.sousMarqueur=avant.indexOf("CE QU'ELLE MANGE D'HABITUDE")>avant.indexOf(MK);
+    o.ditPartiel=/jours notés seulement/.test(avant);
+    // ⛔ le cache ne bouge pas quand on mange
+    S.foodLog.push(e(t,'collation','Amandes',180,6,4,16,16));
+    const apres=buildCoachContext('x');
+    o.cacheIntact = commAvant===apres.slice(0,apres.indexOf(MK));
+    // ── la carte
+    goScreen('s-nutrition'); renderFoodJournal();
+    const txt=()=>document.getElementById('food-journal').innerText;
+    o.carte=/Ce que l'app a appris de ton alimentation/.test(txt());
+    o.mentionGratuit=/sans aucun appel à l'IA/.test(txt());
+    // ⛔ moins de 3 jours : la carte le DIT, elle ne se tait pas — et Milo, lui, se tait
+    S.foodLog=S.foodLog.filter(x=>x.date===t); renderFoodJournal();
+    o.peuDeDonnees=/pas encore de quoi dégager une habitude/.test(txt());
+    o.miloSeTait=!/CE QU'ELLE MANGE D'HABITUDE/.test(buildCoachContext('x'));
+    // ⛔ aucun journal → aucun profil du tout
+    S.foodLog=[]; o.sansJournal=_profilAlimentaire()===null;
+    /* ⛔⛔ LE COÛT : 20 passages de l'observateur + 2 rendus + 1 contexte. */
+    S.foodLog=[]; for(let i=0;i<6;i++) S.foodLog.push(e(h(i),'dejeuner','Riz',350,7,77,1,13));
+    for(let k=0;k<20;k++) _profilAlimentaire();
+    renderFoodJournal(); renderFoodJournal(); buildCoachContext('x');
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  await pg.waitForTimeout(800);
+  const nApres = dehors.length;
+  if(F.err) t('CXXVI n\'a pas pu tourner', false, F.err);
+  else{
+    t('⛔⛔ ZÉRO APPEL SORTANT ajouté — la demande de Michel, mesurée',
+      nApres===nDepart, 'avant='+nDepart+' après='+nApres+' · '+JSON.stringify(dehors.slice(nDepart).map(u=>u.slice(0,50))));
+    t('⭐⭐ l\'app RECONNAÎT ses repas et leurs HORAIRES (déjeuner ~13h)',
+      F.heurePetitDej===7 && F.heureDejeuner===13, 'petitdej='+F.heurePetitDej+' déj='+F.heureDejeuner);
+    t('⭐⭐ … et les aliments de chaque repas, dans l\'ordre de fréquence',
+      typeof F.habDej==='string' && F.habDej.indexOf('Riz basmati')>=0 && F.habDej.indexOf('Blanc de poulet')>=0,
+      'reçu : '+F.habDej);
+    t('⛔ la moyenne divise par les jours NOTÉS, pas par les jours écoulés (sinon elle ment vers le bas)',
+      F.moyJuste===true, 'moyenne='+F.moyKcal);
+    t('⭐⭐ Milo reçoit ses HABITUDES (local, sans un appel de plus)',
+      F.dansMilo===true, '');
+    t('⛔⛔ … AVEC l\'interdiction de conclure un dégoût d\'une ABSENCE (R29/P4)',
+      F.garde===true, '');
+    t('⛔ … et le bloc reste SOUS le marqueur : le cache ne bouge pas quand elle mange',
+      F.sousMarqueur===true && F.cacheIntact===true,
+      'sous marqueur='+F.sousMarqueur+' cache intact='+F.cacheIntact);
+    t('⭐ 6 jours = « partiel », et il le DIT au lieu de parler d\'habitude établie (R32)',
+      F.etat==='partiel' && F.ditPartiel===true, 'état='+F.etat);
+    t('⭐ la carte existe et rappelle que ça ne coûte rien',
+      F.carte===true && F.mentionGratuit===true, '');
+    t('⛔ sous 3 jours, la carte le DIT (elle ne se tait pas) et Milo, lui, se TAIT',
+      F.peuDeDonnees===true && F.miloSeTait===true,
+      'carte='+F.peuDeDonnees+' milo muet='+F.miloSeTait);
+    t('⛔ aucun journal → aucun profil (rien d\'inventé)', F.sansJournal===true, '');
+  }
+  await cx.close();
 }
 
 await b.close(); srv.close();
