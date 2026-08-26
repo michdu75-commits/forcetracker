@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1010`** (prochaine : `ft-v1011`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1011`** (prochaine : `ft-v1012`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -449,6 +449,19 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 **⛔⛔ LE BOUTON CENTRAL « + » N'A PAS BOUGÉ D'UN PIXEL** (règle d'or #9) — **mesuré avant/après** (152, 880, 63 des deux côtés), pas regardé.
 Tests : **parcours 1410/1410** (+8, bloc CXIV), croisés 50/50, calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : 2 rouges, et il est INSTRUCTIF** — le détail imprimé *est* le défaut : `{"ouvertPartout":false}`. ⭐⭐ **Et AUCUN faux vert** : les 6 autres témoins tournent **des deux côtés** (la sortie marchait déjà, le mode remplacer fermait déjà, le bouton central ne bougeait déjà pas) — ce sont les non-régressions, et c'est exactement ce qu'elles doivent faire. ⭐ **Vérifié à l'écran** : capture du sélecteur après 3 ajouts, titre à jour, recherche prête. 🤝 Protocole de partage appliqué (ligne 🟡 poussée avant de coder). Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1009. |
+
+**ft-v1011 — ⏱️ L'EXPORT DES CONVERSATIONS PORTE ENFIN SES DATES** — Michel, en relisant son propre export : *« il va falloir horodater les conversations »*.
+
+**⭐ ft-v1010 AVAIT FAIT LA MOITIÉ DU CHEMIN** : le `ts` était posé à la création et survivait au stockage. **Mais personne ne le lisait.** *Une donnée écrite que rien ne relit n'existe pas* (**R5**, la règle prise à l'envers). ⭐⭐ **Et le coût était concret, pas théorique** : c'est très exactement ce qui m'a empêché de **dater sa conversation du 19/08** quand il me l'a envoyée — j'ai dû retrouver la date en croisant le contenu du débrief avec ses séances.
+
+**⛔⛔ ET LE TITRE MENTAIT — le second défaut, trouvé en corrigeant le premier.** Il affichait la date de **CRÉATION** de la discussion. Celle de Michel, ouverte le **19/08**, s'est poursuivie jusqu'au **25** : *six jours d'écart*. En la relisant, on datait donc **tout son contenu du 19**. *Un repère faux est pire qu'un repère absent : on s'y fie.* Le titre porte désormais la **plage réelle** — et ⛔ un seul jour reste un seul jour, jamais *« du X au X »*.
+
+**⛔ LE JOUR NE SE RÉPÈTE PAS À CHAQUE LIGNE** : il s'écrit quand il **change**, l'heure seule ensuite. Dater les 287 messages noierait la conversation sous l'horodatage — *ce qu'on veut, c'est retrouver un moment, pas remplir des colonnes* (**R19**).
+
+**⛔ RIEN N'EST INVENTÉ POUR LES ANCIENS (R29)** : un message sans `ts` n'affiche **aucune** heure — et **tous ceux d'avant ft-v1010 sont dans ce cas**. *Mieux vaut un trou visible qu'une heure fausse qui aurait l'air vraie.*
+
+**⭐ UN SEUL CONSTRUCTEUR, VÉRIFIÉ AVANT DE CODER.** Michel a signalé en cours de route que le fichier venait du **côté ADMIN** — donc on a **compté les endroits** (la leçon de ft-v973, v975, v984, v996, v1006) : **une seule** fonction fabrique ce fichier, le correctif ne pouvait pas être posé du mauvais côté. ⚠️ **Au passage, un constat qui mérite une décision** : le bouton vit dans l'onglet **Admin**, alors que la carte du 05/08 disait *« on donne un FICHIER que la personne emporte »* — **la fonctionnalité pensée pour tout le monde n'est atteignable que par Michel.**
+Tests : **parcours 1436/1436** (+5, bloc CXVIII), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 103 classées 0 trou. ⭐ **Mesuré par le vrai chemin** (`exporterConversationsMilo` appelée pour de bon, seul `Blob` remplacé pour capturer le fichier) : titre *« Séance pec — 23/08/2026 → 25/08/2026 »*, **2 séparateurs de jour pour 2 jours** (pas 5), **4 heures sur 5 messages**, et le 5ᵉ — celui sans `ts` — **sans aucune heure**. Fichiers : `coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1011. |
 
 **ft-v1010 — 🎯 L'OBJECTIF GARDE SON HISTOIRE, ET LES MESSAGES LEUR DATE** — Michel, le 19/08, à Milo : *« As-tu vu que j'avais changé d'objectif ? »* → *« Non, je ne vois pas de changement d'objectif dans ce que j'ai sous la main. »* Il a fallu qu'il écrive *« j'étais en force max avant »* pour que Milo réagisse.
 
@@ -733,21 +746,6 @@ Tests : **parcours 1331/1331** (+8, bloc CVII, + 2 témoins existants réécrits
 
 **⭐ ET L'ÉCRAN ÉTAIT DÉJÀ PLUS HONNÊTE QUE LE PROMPT**, ce qui est le motif exact de ft-v978 : l'aide du BMR dit depuis toujours *« chaque marque a sa formule secrète, invérifiable »* pendant que Milo, lui, disait *« sans réserve »*. **Dans presque chaque cas, le bon comportement existe déjà à quelques lignes de là.**
 Tests : **parcours 1315+8/1315+8** (bloc BMR étendu), et les témoins voisins (Katch par pesée, marqueur déduit, affichage écran) **verts sans modification**. ⚠️ **Ce qui n'est PAS prouvé ici, et autant l'écrire** : que Milo *obéisse* à la nuance. `tests/milo` prouve la **PRÉSENCE** d'une règle dans le contexte, jamais son **OBÉISSANCE** — seul un A/B sur le vrai modèle le dirait, et il coûte des appels. Fichiers : `state.js`, `coach.js`, `tracking.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`. sw.js ft-v991. |
-
-**ft-v990 — 💰 INSTRUMENTATION DU COÛT RÉEL PAR APPEL API** — priorité 3 tranchée par Michel après le contre-audit du 24/08, **en parallèle** de la validation unique (①②, ft-v989) : *« instrumentation fine du coût réel par appel API »*.
-
-**⛔⛔ NE CHANGE STRICTEMENT RIEN AU COMPORTEMENT DE MILO** : lecture seule de `data.usage`, un champ que l'API Anthropic renvoie déjà à **chaque** appel et que `worker.js` jetait jusqu'ici. Capturé au **seul** point commun, `callClaude` **et** `callClaudeDiag` — cette dernière est la fonction de **production** de la conversation (`coach()` l'appelle **toujours**), malgré un nom qui laisse croire à un chemin de test.
-
-**⛔ MÊME CHEMIN QUE `_compterIA` (R2, pas un 2ᵉ canal de télémétrie)** : fire-and-forget vers Apps Script, repli **ouvert** — une panne de mesure ne bloque jamais Milo (règle d'or #3).
-
-**⛔⛔ CÔTÉ `Code.js`, MÊME MÉCANIQUE QUE `ai_quota` (R2/R13)** : une propriété JSON **bornée**, remise à zéro chaque jour — jamais un historique qui grossit, c'est exactement la leçon du réservoir plein à 102 % du 29/07. Le jeton de sécurité est **factorisé** (`_countTokenArme_`) plutôt que dupliqué : la même empreinte protège désormais `aiCount` **et** `aiUsageLog`.
-
-**💶 LE COÛT EN EUROS EST UNE ESTIMATION, ÉCRIT COMME TEL** (R29 — pas de fausse précision) : les tarifs sont repris de `tests/milo/eval.js` (seule source de prix du dépôt), et le coefficient de cache-écriture (1,25×) suppose une fenêtre 5 min — le bloc commun utilise parfois 1 h, donc l'estimation sous-estime légèrement les jours où il est réécrit. **Les tokens, eux, sont exacts.**
-
-**⭐⭐ VÉRIFIÉ FONCTIONNELLEMENT, PAS SEULEMENT EN LECTURE** : le vrai `Code.js` exécuté dans un bac à sable Node (`PropertiesService`/`Utilities`/`Session` stubbés) confirme l'accumulation, la remise à zéro quotidienne, le rejet d'un modèle inconnu (jamais de prix inventé) et le refus d'un mauvais jeton.
-
-**⚠️ CE QUI NE PEUT PAS ÊTRE VÉRIFIÉ ICI, ET C'EST ÉCRIT** : un vrai appel facturé à l'API Anthropic, indisponible dans cet environnement — la première vraie donnée arrivera au premier appel de Michel en production.
-Tests : **parcours 1315/1315** (+10, bloc R), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `worker.js`, `Code.js`, `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`. sw.js ft-v990. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
