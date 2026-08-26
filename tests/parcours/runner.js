@@ -7929,13 +7929,18 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     // n'importe quoi ». Les 23 nouveaux ont donc été éprouvés UN PAR UN contre une bonne ET une
     // mauvaise réponse : 6 ne mordaient pas au premier jet. C'est ce contrôle qui a révélé que
     // l'apostrophe COURBE rendait 8 motifs du fichier aveugles — un défaut plus ancien qu'eux.
-    // ⭐⭐ 50 → 53 le 25/08/2026 — PREMIÈRE APPLICATION DE R35 : le banc d'essai n'a plus de
-    // taille cible, il grandit à chaque bug rencontré (Michel : « je ne donne pas de limite,
-    // dès qu'il y a un bug ou une erreur on rajoute »). Le nombre reste ÉPINGLÉ pour sa raison
-    // d'origine — repérer un scénario qui DISPARAÎT (fichier tronqué, virgule en trop) — pas
-    // pour fixer un objectif. Il monte donc à chaque promotion, et c'est normal.
-    t('⭐⭐ ... et il se télécharge à la demande : 53 scénarios, une seule source (R2)',
-      R.nb===53 && R.aDesVerifs===true, 'nb='+R.nb+' verifs='+R.aDesVerifs+(R.err?' · '+R.err:''));
+    const _SC_FICHIER=require(path.join(__dirname,'..','milo','eval-scenarios.js')).length;
+    /* ⭐⭐ LE NOMBRE N'EST PLUS ÉCRIT EN DUR (26/08/2026, ft-v1014) — il a rougi à la
+       promotion d'EV-054, le LENDEMAIN de ft-v1005 qui retirait exactement cette dette de
+       l'écran admin. *La leçon n'avait été appliquée que d'un côté* (R8 : quand on corrige
+       quelque chose, chercher ses jumelles). Le banc d'essai GRANDIT à chaque bug (R35) :
+       tout nombre figé ici finira par mentir, et on l'ajustera par réflexe sans réfléchir.
+       ⛔ CE QUE CE TÉMOIN PROTÈGE VRAIMENT, et c'est sa raison d'origine : qu'un scénario ne
+       DISPARAISSE pas en silence (fichier tronqué, virgule en trop). On compare donc le corpus
+       CHARGÉ PAR L'APP à celui du fichier — une seule source (R2), sans cible chiffrée. */
+    t('⭐⭐ ... et il se télécharge à la demande, au COMPLET, une seule source (R2)',
+      R.nb>0 && R.nb===_SC_FICHIER && R.aDesVerifs===true,
+      'chargés='+R.nb+' · dans le fichier='+_SC_FICHIER+' · verifs='+R.aDesVerifs+(R.err?' · '+R.err:''));
     t('⭐ un débrief à qui il manque 2 exercices sur 5 est ROUGE',
       R.rouge006===true, R.det006||JSON.stringify(R.errRun||''));
     t('⭐ « c\'est noté » sans bloc de mémoire est ROUGE', R.rouge004===true, '');
