@@ -13903,9 +13903,13 @@ console.log('\n-- CXXVII. Le débrief chiffré est calculé en LOCAL, toujours (
     t('⛔⛔ EN LIGNE : Milo s\'AJOUTE, il ne REMPLACE plus les faits',
       G.en.milo===true && aTravaille(G.en) && /AVIS-DE-MILO/.test(G.en.txt),
       JSON.stringify({milo:G.en.milo,faits:aTravaille(G.en)}));
-    t('⭐⭐ les DEUX chemins rendent le même socle mesuré (c\'est le point de la brique)',
-      G.hs.nPts===G.en.nPts && G.hs.cadre===G.en.cadre,
-      JSON.stringify({horsLigne:G.hs.nPts,enLigne:G.en.nPts}));
+    /* ⚠️ `nPts===nPts` SEUL EST UN FAUX VERT — vu au contrôle négatif : sur l'ancien code les
+       deux chemins rendaient 0 point, et `0===0` passait. On exige donc qu'il y ait
+       RÉELLEMENT quelque chose à comparer. *Une égalité entre deux vides n'est pas une
+       égalité, c'est une absence.* */
+    t('⭐⭐ les DEUX chemins rendent le même socle mesuré, ET IL N\'EST PAS VIDE',
+      G.hs.nPts===G.en.nPts && G.hs.cadre===G.en.cadre && G.hs.nPts>=1 && G.hs.cadre===true,
+      JSON.stringify({horsLigne:G.hs.nPts,enLigne:G.en.nPts,cadre:G.hs.cadre}));
     t('⭐ les défauts d\'ÉCHAUFFEMENT et de CHARGE sont tous deux détectés (2 sources)',
       /démarrage à/.test(G.en.txt) && /1RM estimé/.test(G.en.txt), G.en.txt.slice(0,150));
     t('⛔ … et ils sont PLAFONNÉS à 3 (un débrief n\'est pas un procès-verbal — R19)',
