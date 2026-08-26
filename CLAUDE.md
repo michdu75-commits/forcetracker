@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1020`** (prochaine : `ft-v1021`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1021`** (prochaine : `ft-v1022`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -436,6 +436,19 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1021 — 🧠 L'APP APPREND TON ALIMENTATION, SANS UN SEUL APPEL** — Michel : *« il faut que l'application (**pas Milo**) apprenne du sportif côté nutrition **sans que ça me coûte un seul appel API** »*. La veille, le constat qui l'a amené là : *« on connaît l'athlète sportivement en lui posant des questions, mais pas du tout en alimentation — alors que c'est 80 % au moins de l'évolution physique »*. **Mesuré : 6 questions sur l'entraînement, ZÉRO sur la nourriture.**
+
+**⭐⭐ TOUT EST DE L'ARITHMÉTIQUE SUR `S.foodLog`** — pas un octet de réseau, pas de modèle, pas de cervelet, et **ça marche hors ligne**. *La donnée était déjà là ; ce qui manquait, c'est que quelqu'un la regarde.* ⭐ **Le coût est MESURÉ, pas affirmé** : 20 passages de l'observateur + 2 rendus + 1 construction de contexte = **0 appel sortant de plus** (les 2 du démarrage — QR de partage, ping Apps Script — existent depuis toujours).
+
+**⭐ CE QU'IL APPREND** : ses aliments **par repas** avec leur fréquence · ses **horaires réels** — la **médiane**, pas la moyenne, *un dîner à 2 h du matin ne doit pas déplacer l'heure habituelle de tous les autres* · ses moyennes réelles · et le nombre de jours notés. ⛔ **La moyenne divise par les jours NOTÉS**, pas par les jours écoulés : sinon un oubli de saisie ressemblerait à un jour de jeûne, *et la moyenne mentirait vers le bas*.
+
+**⛔⛔ ET CE QU'ON N'INVENTE PAS : UNE ABSENCE NE PROUVE RIEN.** Michel n'a jamais noté de macadamia — *« j'en mange pas, et en plus c'est dégueulasse »* — mais quelqu'un d'autre peut simplement **ne pas y avoir pensé**. Milo reçoit donc la liste **avec l'interdiction d'en conclure un dégoût** (**R29**, Constitution **P4**). *Les dégoûts, le budget et le temps de préparation devront être DEMANDÉS* — c'est écrit dans `IDEES-FUTURES.md`, ce n'est pas cette brique.
+
+**⛔ AUCUN SCORE DE FIABILITÉ INVENTÉ (R32), DES ÉTATS NOMMÉS** — *insuffisant · partiel · solide* : « 4 jours notés » n'autorise pas la même phrase que « 40 jours ». ⭐ **Sous 3 jours, la carte le DIT** au lieu de se taire — *un silence laisserait croire qu'il n'y a rien à apprendre* — **et Milo, lui, se tait**.
+
+**⭐ DEUX CONSOMMATEURS, donc pas de donnée morte (R3)** : une **carte visible** — *un profil qu'on ne voit pas ne peut pas être corrigé*, c'est la doctrine du profil vivant — et le **contexte de Milo**, sous le marqueur de l'instant, **cache intact**.
+Tests : **parcours 1517/1517** (+11, bloc CXXVI), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 103 classées 0 trou. ⭐⭐ **Le témoin qui porte la demande est celui du COÛT** : il compte les appels sortants pendant 20 passages de l'observateur. ⚠️ **DEUX TÉMOINS EXISTANTS ONT ROUGI, ET LES DEUX AVAIENT RAISON** : celui des anciens prix a attrapé **« 2 mois » dans un de mes commentaires** (*« 6 jours étalés sur 2 mois »*) — **reformulé plutôt qu'affaibli**, un prix ne doit traîner nulle part ; et celui du journal a vu la nouvelle carte nommer des aliments d'autres jours — **étendu à la LISTE DES ENTRÉES**, sa vraie promesse. *On ne désarme pas un témoin, on le vise.* Fichiers : `app.js`, `screens.js`, `coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1021. |
 
 **ft-v1020 — 🥗 « CE QU'IL TE RESTE » PROPOSE CE QU'IL MANGE, PAS CE QUI EST OPTIMAL** — Michel, devant la première version : *« je pense qu'il faut rester simple, **tout le monde ne bouffe pas de flocons d'avoine, moi le premier** »*.
 
@@ -732,21 +745,6 @@ Tests : **parcours 1384/1384** (+3), croisés 50/50 (empreinte régénérée : *
 
 **⚠️⚠️ ET UN TÉMOIN D'HIER EXIGEAIT L'INVERSE — 3ᵉ fois cette semaine.** Il disait *« les 5 entrées pull-over restent 5 »*. Il était **juste tant que la décision n'était pas prise** : il protégeait l'historique contre un renommage à l'aveugle. Il est **retourné vers ce qu'il protégeait vraiment** — que l'historique ne soit jamais réécrit — **avec sa raison d'avant conservée**. *Un témoin qui fige un ÉTAT rougit dès qu'une décision est prise ; ce qu'on fige, c'est une RÈGLE.*
 Tests : **parcours 1381/1381** (+3 nets), croisés 50/50 (empreinte régénérée : **une seule entrée disparaît**, le reste intact), calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou. ⭐ **La preuve est fonctionnelle, pas déclarative** : séance + record rejoués dans un navigateur après retrait, et **capture du sélecteur** (bac Barre 2 → 1, les 4 variantes avec leur vignette). ⚠️ **Ma capture a d'abord été fausse** — j'appelais `addExercise()` sans argument, qui *ajoute* au lieu d'ouvrir le sélecteur ; l'app n'y était pour rien, mon script si. 🤝 Protocole de partage appliqué. Fichiers : `constants.js`, `log.js`, `tests/croises/runner.js`, `tests/croises/catalogue-reference.json`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1001. |
-
-**ft-v1000 — 🔁 LE « PULL-OVER » GÉNÉRIQUE — et un TEST DU PROJET qui m'a repris** — Michel renvoie la même capture du sélecteur, sans un mot. *La capture EST la demande.*
-
-**⛔⛔ MA PREMIÈRE SOLUTION A ÉTÉ REFUSÉE PAR UN TEST, ET IL AVAIT RAISON — c'est le vrai sujet de cette version.** J'avais fait **partager** `pullover-haltere.webp` entre le générique et *« Pull-over Haltère »* : 0 octet, vignette immédiate, ça semblait malin. Le contrôle croisé ② — ***« deux exercices ne partagent jamais la même ANIMATION »*** — est passé au **ROUGE**.
-
-**⭐⭐ ET CETTE RÈGLE EST NÉE D'UN BUG QUE JE VENAIS DE DOCUMENTER LE MATIN MÊME.** Le 02/08, *« Écarté Haltères »* et *« Écarté Décliné »* pointaient le même fichier — l'app montrait le **mauvais mouvement**. En livrant ft-v999 deux heures plus tôt, j'avais écrit un témoin disant *« les deux écartés gardent des fichiers différents »*. 👉 ***Un test permanent m'a empêché de refaire, dans la même matinée, le bug dont je venais d'écrire la leçon.*** C'est **R17** qui paie — *un scénario permanent protège aussi contre celui qui l'a écrit.*
-
-**👉 CE QUI EST LIVRÉ EST DONC LE SEUL GESTE DÉFENDABLE : LE BAC.** Le générique n'a **pas** de matériel ; « barre » venait mécaniquement de la règle de classement (`pull-?over` figure dans la liste barre). Il passe en 💪 **POIDS LIBRE** — la version classique du pull-over sans précision, celle que Michel a d'ailleurs envoyée en démo. **Une ligne, 0 octet, aucune donnée touchée.**
-
-**⛔ ET IL RESTE SANS VIGNETTE, EXPRÈS.** *Aucune animation vaut mieux qu'une animation qui affirme « Pull-over = Pull-over Haltère » sans que ce soit décidé.* C'est mot pour mot la phrase du 02/08, appliquée à moi-même.
-
-**⛔⛔ LE VRAI DÉFAUT RESTE ENTIER, ET IL EST ÉCRIT POUR NE PAS ÊTRE REDÉCOUVERT** : c'est un **DOUBLON DE CATALOGUE** — 5 entrées pull-over pour un exercice qui, sans précision, n'a pas de matériel, *donc tout bac lui est arbitraire et toute vignette le rend jumeau de l'une des quatre*. Fusionner **renommerait les séances et records passés**, et **on ne sait pas s'ils ont été faits à la barre ou à l'haltère** — deviner écrirait un fait faux dans son historique (**R29**). ⭐ *Une vignette qui manque coûte un coup d'œil ; un historique renommé à tort coûte une donnée qu'on croyait juste.* **La fusion attend SA réponse, à une seule question : « tes Pull-over, c'était barre ou haltère ? »**
-
-**⭐⭐ LE TÉMOIN LE PLUS IMPORTANT GARDE DONC UNE ABSENCE** : *« le générique n'emprunte l'animation de personne »*. Lui en donner une exigera de **trancher le doublon**, jamais de contourner la règle.
-Tests : **croisés 50/50** (2 rouges d'abord — ② l'animation partagée, ⑦ l'empreinte du catalogue —, le 1ᵉʳ corrigé en revenant en arrière, le 2ᵉ régénéré car le changement de bac est voulu : `gen_reference_catalogue.js`, **une seule ligne bouge**), parcours 1379/1379, calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou. ⭐ **Le contrôle décisif n'est pas un contrôle négatif ici, c'est le rouge lui-même** : sans lui je livrais le bug du 02/08 une deuxième fois. 🤝 Protocole de partage appliqué (ligne 🟡 poussée avant de coder, close en 🟢). Fichiers : `log.js`, `tests/parcours/runner.js`, `tests/croises/catalogue-reference.json`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1000. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
