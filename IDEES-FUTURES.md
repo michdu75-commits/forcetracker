@@ -4,6 +4,105 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🍽️ MILO NE VOIT PAS CE QUE TU MANGES — et l'argument du volume ne tient plus (26/08/2026)
+
+> Michel à Milo : *« As-tu assez de recul pour mon alimentation ? »* → *« Mon alimentation est
+> déjà dans l'application. »*
+> Milo, honnêtement : *« Je n'ai pas accès au journal alimentaire de l'app dans ce contexte. Les
+> données ne me sont pas transmises. (…) **En l'état je travaille à l'aveugle sur la nutrition.** »*
+
+### ⭐⭐ Il dit vrai, et l'exclusion est écrite — mais elle n'a jamais été confirmée
+
+`tests/donnees/donnees-milo.json` classe `foodLog` en **exclu**, avec cette raison mot pour mot :
+
+> *journal alimentaire — **DÉCISION À CONFIRMER** : volumineux à chaque message. Les macros
+> cibles sont déjà transmises.*
+
+**Ce « à confirmer » date de plusieurs semaines et personne ne l'a jamais confirmé.** C'est
+exactement le genre de décision en suspens qui devient une limite permanente sans que quiconque
+l'ait choisie (**R30**).
+
+### ⭐⭐ ET L'ARGUMENT DU VOLUME NE TIENT PLUS — mesuré sur son vrai journal (25/08)
+
+| | Caractères |
+|---|---|
+| Le journal **brut**, tel quel | **13 126** — l'argument d'origine, et il était **juste** |
+| Un **résumé par jour** (kcal + P/G/L) | **221** |
+
+**59 fois moins.** Et ces 221 caractères répondent aux **quatre** questions que Milo a listées
+lui-même : atteint-il ses protéines **sur la semaine** (pas juste les bons jours) · quels jours
+sont en déficit trop marqué (astreintes, nuits) · ses glucides suivent-ils ses **séances les plus
+lourdes** · sa répartition colle-t-elle à sa **phase** (+100 kcal).
+
+Ce que ça donne, sur ses vraies données :
+```
+2026-08-22: 3007 kcal · 159P 194G  64L
+2026-08-23: 2109 kcal · 172P 219G  57L
+2026-08-24: 2366 kcal · 219P 264G  46L
+2026-08-25: 2498 kcal · 183P 280G  70L
+```
+👉 Déjà lisible : **ses protéines varient de 159 à 219 g** pour une cible autour de 222. Milo ne
+peut rien en dire aujourd'hui.
+
+### ⛔ Les points à trancher AVANT de coder
+
+1. **Le résumé, jamais le détail plat.** Le jour + les 7 derniers, totaux seulement. La liste
+   aliment par aliment reste dehors — c'est elle qui pesait 13 000 caractères.
+2. **⚠️ Deux honnêtetés sur la donnée elle-même** : le journal n'a que **6 jours renseignés** au
+   total (2 en juillet, 4 en août). Quatre jours suffisent pour une tendance de semaine, **pas**
+   pour un constat sur le mois — et Milo devra le dire au lieu de conclure (**R29**).
+3. **⛔ R34 — ça touche au CONTEXTE de Milo, donc benchmark AVANT/APRÈS obligatoire.** Pas de
+   « ça devrait aller ». C'est la règle posée par Michel le 24/08.
+4. **Le cache.** `foodLog` est aujourd'hui **hors** du contexte, donc une saisie alimentaire
+   n'invalide rien. Un résumé qui change **à chaque repas** réécrirait le bloc personnel plusieurs
+   fois par jour : à mesurer avant, pas après.
+5. **Anti-TCA** (`docs/NUTRITION-PHILOSOPHIE.md`, Constitution **P21**) : Milo reçoit les chiffres
+   pour **aider**, jamais pour commenter spontanément ce qu'elle a mangé. *La nutrition ne doit
+   jamais devenir une source de stress supérieure au bénéfice qu'elle apporte.*
+
+---
+
+## ⚖️ DEUX ROUGES DU BANC D'ESSAI QUI ATTENDENT UN ARBITRAGE (25/08/2026)
+
+> Sur les 9 rouges de la passe du 25/08, **6 étaient de faux rouges** (corrigés en ft-v1007) et
+> **1 était une fixture muette**. Les deux qui restent sont de **vrais** défauts — mais ils
+> touchent le **PROMPT**, et **R7** dit que le prompt est le *dernier* levier. Ils ne se corrigent
+> donc pas sans décision de Michel.
+
+**⛔ EV-032 — il prescrit un exercice que l'app ne sait pas MESURER.**
+Michel demande une séance **originale** ; Milo sort un *« Tate Press »* et un *« Curl Zottman »*,
+hors catalogue. Conséquence : pas de fiche, pas de muscles, pas de MET, pas d'animation.
+👉 **Ce n'est pas un bug technique : deux demandes du produit se contredisent.** Ou l'originalité
+est **bornée au catalogue** (et Milo devient répétitif), ou elle reste libre (et l'app mesure moins
+bien). ⭐ Une troisième voie existe et n'a pas été explorée : *proposer l'exercice hors catalogue
+**en le disant**, et proposer de le créer* — le mécanisme d'exercice perso existe déjà (**R13**).
+
+**⛔ EV-044 — pas de feu vert médical, mais aucun renvoi non plus.**
+Michel a une **écho cardiaque** le lendemain. Milo lui déconseille la séance lourde — *le bon
+réflexe* — mais raisonne sur la préparation d'un examen médical **sans jamais dire « demande à ton
+médecin »**. La Constitution (**P13/P22**) impose le renvoi ; le Gardien de sortie ne l'attrape pas
+ici parce que le motif exige une **pathologie nommée** (resserré le 21/08 après 3 faux positifs).
+👉 À trancher : élargir le motif au **contexte d'examen médical**, ou l'accepter tel quel.
+
+---
+
+## 💬 L'EXPORT DES CONVERSATIONS EST RÉSERVÉ À L'ADMIN (constaté le 26/08/2026)
+
+Le bouton *« 💬 Exporter mes conversations »* vit dans le groupe **« 📸 Mes données à moi »** de
+l'onglet **Admin** (`index.html`), donc derrière `_isAdminUnlocked()` — les 5 taps sur le logo.
+
+⚠️ **Or la carte, elle, s'adresse à tout le monde**, et son commentaire du 05/08 dit pourquoi elle
+existe : *« Le fil des échanges vit UNIQUEMENT sur le téléphone : un changement d'appareil
+l'efface. On donne donc un FICHIER que la personne emporte, plutôt que d'envoyer ses conversations
+sur un serveur. »*
+
+👉 **La fonctionnalité pensée pour protéger les conversations de tout le monde n'est atteignable
+que par Michel.** C'est probablement un rangement, pas une décision — mais **R30** dit qu'on ne
+« répare » pas sans avoir cherché la raison. À trancher : la sortir de l'Admin, ou écrire pourquoi
+elle y reste.
+
+---
+
 ## 📸 COMPARER SON CORPS EN PHOTO — dans les MÊMES conditions (Michel, 26/08/2026)
 
 > Michel, à Milo : *« Y a-t-il une évolution avec les 2 anciens bilans ? »* → *« Mais par rapport

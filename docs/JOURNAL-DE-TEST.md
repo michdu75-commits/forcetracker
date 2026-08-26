@@ -69,6 +69,27 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟠 « MON ALIMENTATION EST DÉJÀ DANS L'APPLICATION » — et Milo ne la reçoit pas
+**26/08/2026, conversation réelle.** Michel : *« As-tu assez de recul pour mon alimentation ? »*
+→ *« Mon alimentation est déjà dans l'application. »* Milo : *« Je n'ai pas accès au journal
+alimentaire (…) **en l'état je travaille à l'aveugle sur la nutrition.** »*
+⭐ **Il est honnête, et l'exclusion est écrite** : `foodLog` est classé *exclu* avec la mention
+**« DÉCISION À CONFIRMER »** — jamais confirmée. Mesuré : le journal brut fait **13 126
+caractères**, un résumé par jour **221** (×59 moins). Détail, chiffres et 5 points à trancher :
+`IDEES-FUTURES.md`.
+⛔ **Ce n'est PAS un scénario à promouvoir** — l'attendu dépend d'une donnée qui n'existe pas
+encore dans le contexte : un vérificateur rougirait sur un chemin absent (la leçon d'EV-051, qu'on
+n'avait pas pu promouvoir avant son correctif). **À promouvoir le jour où le résumé est transmis** :
+l'attendu sera alors vérifiable — *cite-t-il un jour réel du journal ?*
+**État : à trier.**
+
+### 🟠 « Y A-T-IL UNE ÉVOLUTION PAR RAPPORT À MON PHYSIQUE ? » — il ne peut pas répondre
+**26/08/2026.** Michel a **3 études du corps** (11/07 · 28/07 · 25/08) et **aucune ne se compare à
+la précédente** : `analyzeBodyStudy` n'envoie jamais `compare` ni les photos d'avant. L'outil qui
+compare vraiment (`openBodySeries`, Espace Testeur) n'a jamais été utilisé — `bodySeries` est vide.
+⛔ **Pas un scénario non plus** : la comparaison visuelle n'existe pas encore. Dossier complet
+(spec de Milo + 5 points à trancher) : `IDEES-FUTURES.md`. **État : à trier.**
+
 ### 🟠 « AS-TU VU QUE J'AVAIS CHANGÉ D'OBJECTIF ? » — NON, ET IL A RAISON (trou de donnée)
 **19/08/2026, conversation réelle de Michel — relue le 25/08 dans son export.** Il demande
 *« As-tu vu que j'avais changé d'objectif ? »*, Milo répond *« Non, je ne vois pas de changement
