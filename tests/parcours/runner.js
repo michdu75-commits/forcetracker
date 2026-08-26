@@ -13182,6 +13182,88 @@ console.log('\n-- CXX. L\'export « avec mes discussions » n\'oublie plus rien 
   await cx.close();
 }
 
+/* == BLOC CXXI - MILO VOIT ENFIN CE QU'ELLE A MANGE (ft-v1014) ==
+   Michel a Milo : « As-tu assez de recul pour mon alimentation ? » → « Mon alimentation est DEJA
+   dans l'application. » Milo, honnete : « Je n'ai pas acces au journal alimentaire (…) EN L'ETAT
+   JE TRAVAILLE A L'AVEUGLE SUR LA NUTRITION. »
+   ⭐ IL DISAIT VRAI : `foodLog` etait classe EXCLU avec la mention « DECISION A CONFIRMER »,
+   jamais confirmee. Un « a confirmer » qui traine devient une limite que personne n'a choisie.
+   ⭐⭐ ET L'ARGUMENT D'ORIGINE ETAIT JUSTE — 13 126 caracteres bruts sur son vrai journal. Le
+   correctif n'est donc pas « transmettre », c'est « transmettre QUOI » : des TOTAUX par jour.
+   ⛔⛔ CE QUI EST MESURE ICI N'EST PAS LA PRESENCE DU BLOC, C'EST LE CACHE. Le journal change a
+   chaque repas : pose au-dessus du marqueur de l'instant, il reecrirait plusieurs fois par jour
+   un bloc facture ~10x moins cher. Le temoin compare donc le bloc commun AVANT/APRES, octet par
+   octet, ET apres un repas ajoute. C'est le seul chiffre qui autorise ce changement. */
+console.log('\n-- CXXI. Le journal alimentaire atteint Milo, sans toucher au cache (ft-v1014) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2200);
+  const F=await pg.evaluate(()=>{
+   try{
+    const MK="═══ SITUATION DE L'INSTANT ═══", o={};
+    const jour=(d,n)=>{const a=[];for(let i=0;i<n;i++)a.push({date:d,meal:'midi',name:'Aliment '+i,
+      kcal:300+i,prot:25+i,carbs:40+i,fat:10+i,ts:Date.now()});return a;};
+    const t=today(); const d=n=>{const x=new Date(t+'T12:00:00');x.setDate(x.getDate()-n);return x.toISOString().slice(0,10);};
+    // ── ÉTAT A : journal vide (l'état d'avant : foodLog n'était pas transmis)
+    S.foodLog=[];
+    const A=buildCoachContext('Que penses-tu de ma nutrition ?');
+    o.sansJournalRien = !/RÉELLEMENT MANGÉ/.test(A);      // ⛔ pas d'en-tête vide
+    const commA=A.slice(0,A.indexOf(MK));
+    // ── ÉTAT B : 4 jours notés
+    S.foodLog=[].concat(jour(d(3),7),jour(d(2),6),jour(d(1),8),jour(t,5));
+    const B=buildCoachContext('Que penses-tu de ma nutrition ?');
+    const commB=B.slice(0,B.indexOf(MK));
+    o.present   = /RÉELLEMENT MANGÉ/.test(B);
+    o.lignes    = (B.match(/^- \d{4}-\d{2}-\d{2} \(/gm)||[]).length;
+    o.cout      = B.length-A.length;
+    o.detailPlat= /Aliment 0/.test(B);                    // ⛔ doit rester FAUX
+    o.antiTCA   = /Ne commente JAMAIS spontanément/.test(B);
+    o.peu       = /C'EST PEU/.test(B);
+    o.aujMarque = /AUJOURD'HUI/.test(B);
+    o.sousMarqueur = B.indexOf('RÉELLEMENT MANGÉ') > B.indexOf(MK);
+    // ⛔⛔ LE CHIFFRE QUI DÉCIDE : le bloc mis en CACHE n'a pas bougé d'un octet.
+    o.cacheIntact = (commA===commB);
+    // ── … et il tient encore après un repas ajouté À L'INSTANT.
+    S.foodLog.push({date:t,meal:'soir',name:'Poulet',kcal:400,prot:45,carbs:0,fat:12,ts:Date.now()});
+    const C=buildCoachContext('Que penses-tu de ma nutrition ?');
+    o.cacheApresRepas = (commB===C.slice(0,C.indexOf(MK)));
+    // ── 12 jours notés → on n'en envoie que 7.
+    S.foodLog=[]; for(let i=0;i<12;i++) S.foodLog=S.foodLog.concat(jour(d(i),3));
+    o.plafond7 = (buildCoachContext('x').match(/^- \d{4}-\d{2}-\d{2} \(/gm)||[]).length;
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(F.err) t('CXXI n\'a pas pu tourner', false, F.err);
+  else{
+    t('⛔⛔ LE CACHE N\'A PAS BOUGÉ D\'UN OCTET — le chiffre qui autorise ce changement (R34)',
+      F.cacheIntact===true, '');
+    t('⛔⛔ … et il tient ENCORE après un repas ajouté à l\'instant',
+      F.cacheApresRepas===true, '');
+    t('⭐⭐ le journal ATTEINT Milo (il travaillait « à l\'aveugle » — R8)',
+      F.present===true && F.lignes===4, 'lignes='+F.lignes);
+    t('⛔ le DÉTAIL PLAT reste dehors — c\'est lui qui pesait 13 000 caractères',
+      F.detailPlat===false, '');
+    t('⭐ le coût réel est mesuré, pas estimé',
+      typeof F.cout==='number' && F.cout>0 && F.cout<1500, '+'+F.cout+' caractères');
+    t('⛔⛔ ANTI-TCA : la consigne « ne commente jamais spontanément » est là (P21)',
+      F.antiTCA===true, '');
+    t('⭐ il SAIT que 4 jours ne font pas un mois, et on le lui dit (R29/R12)',
+      F.peu===true, '');
+    t('⭐ le jour du jour est nommé « AUJOURD\'HUI », pas une date à déduire (R8)',
+      F.aujMarque===true, '');
+    t('⛔ AUCUN journal → AUCUN bloc (pas d\'en-tête vide, rien d\'inventé — R29)',
+      F.sansJournalRien===true, '');
+    t('⛔ le bloc est SOUS le marqueur de l\'instant, jamais au-dessus',
+      F.sousMarqueur===true, '');
+    t('⛔ 12 jours notés n\'en envoient que 7 (on ne paie pas pour ce qu\'on ne demande pas)',
+      F.plafond7===7, 'reçu : '+F.plafond7);
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
