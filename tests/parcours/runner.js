@@ -9939,7 +9939,14 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     /* ⭐① AUJOURD'HUI : le comportement d'origine ne change pas. */
     o.aujHtml=(document.getElementById('food-journal')||{}).innerHTML||'';
     o.aujVu=/Aujourd'hui/.test(o.aujHtml) && /Aujourd\'hui/.test(o.aujHtml);
-    o.aujCorrect=o.aujHtml.indexOf('Hier midi')<0;      // ne montre QUE le jour actif
+    /* ⚠️⚠️ RESSERRÉ LE 26/08 (ft-v1019), ET LA RAISON COMPTE (R30). Ce témoin garantit que la
+       vue d'un jour n'affiche pas les ENTRÉES d'un autre jour — c'est ça, sa promesse. Or
+       « Ce qu'il te reste, en vrai » propose des aliments tirés de TOUT son historique : voir
+       le nom d'un aliment d'hier dans une IDÉE est le comportement voulu, pas une fuite.
+       ⛔ On retire donc ce bloc AVANT de chercher — on ne relâche pas la règle, on la vise :
+       le test porte sur la LISTE DES ENTRÉES, là où un mélange serait un vrai défaut. */
+    const _sansIdees = h => h.replace(/Ce qu'il te reste, en vrai[\s\S]*?<\/div>\s*<\/div>/,'');
+    o.aujCorrect=_sansIdees(o.aujHtml).indexOf('Hier midi')<0;   // ne montre QUE les entrées du jour actif
     // La flèche « jour suivant » est désactivée sur aujourd'hui (pas de futur à montrer).
     o.flecheSuivDesactivee=/journalNav\(1\)"[^>]*disabled|disabled[^>]*onclick="journalNav\(1\)"/.test(o.aujHtml)
       || /<button disabled[^>]*>›/.test(o.aujHtml);
@@ -13593,7 +13600,7 @@ console.log('\n-- CXXV. La ligne du classeur porte son email (ft-v1018) --');
     /action:'logSession'[^)]*email:S\.email/.test(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8')), '');
 }
 
-/* == BLOC CXXIII - « CE QU'IL TE RESTE, EN VRAI » (ft-v1019) ==
+/* == BLOC CXXIV - « CE QU'IL TE RESTE, EN VRAI » (ft-v1019) ==
    Michel : « il faut montrer une estimation de ce qu'il nous reste a manger dans la journee (a 14h
    par exemple, il te reste 150 g de prot a manger, tu peux faire 1 shake de prot et 150 g de
    poulet, pareil pour les glucides et pareil pour les lipides) ».
@@ -13611,7 +13618,7 @@ console.log('\n-- CXXV. La ligne du classeur porte son email (ft-v1018) --');
    ⛔⛔ LES TROIS GARDE-FOUS ANTI-TCA (P21) SONT LA MOITIE DU TRAVAIL, et ils se testent : rien
    sur un jour PASSE (un reproche sur une journee qu'on ne peut plus changer), rien quand la cible
    est DEPASSEE (aucun reproche), rien sans aliments a soi (on n'invente pas). */
-console.log('\n-- CXXIII. Ce qu\'il te reste à manger, traduit en TES aliments (ft-v1019) --');
+console.log('\n-- CXXIV. Ce qu\'il te reste à manger, traduit en TES aliments (ft-v1019) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
@@ -13662,7 +13669,7 @@ console.log('\n-- CXXIII. Ce qu\'il te reste à manger, traduit en TES aliments 
     return o;
    }catch(e){return {err:String(e)};}
   });
-  if(F.err) t('CXXIII n\'a pas pu tourner', false, F.err);
+  if(F.err) t('CXXIV n\'a pas pu tourner', false, F.err);
   else{
     t('⭐⭐ le reste est TRADUIT en aliments, pas seulement chiffré',
       F.nb>=2 && F.ecran===true, 'idées='+F.nb+' à l\'écran='+F.ecran);
