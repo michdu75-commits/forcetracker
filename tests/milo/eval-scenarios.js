@@ -1510,11 +1510,21 @@ const SCENARIOS = [
              ⭐ ON DEMANDE AU CODE, PAS À UN MOTIF : le résolveur est la source de vérité (R2),
              donc la règle ne peut plus se périmer quand le catalogue bouge. Repli sur le motif
              si le corpus tourne hors de l'app. */
+          /* ⚠️⚠️ CORRIGÉ LE 26/08 — IL PRENAIT LA PREMIÈRE OCCURRENCE, ET C'ÉTAIT DE LA PROSE.
+             Trouvé par le REJEU GRATUIT sur les vraies réponses du 25/08 : Milo écrivait
+             « une séance jambes/fessiers solide avec le **hip thrust** en tête de file » —
+             une phrase — puis, deux lignes plus bas, la prescription « **Hip Thrust Barre** ».
+             Le motif attrapait la première et rendait « hip thrust en tête de file », que
+             personne ne peut résoudre. *Encore un faux rouge, et il était de moi.*
+             ⭐ ON REGARDE DONC TOUTES LES OCCURRENCES : il suffit qu'UNE seule soit résolvable.
+             La règle voulue n'a jamais été « ne parle jamais de hip thrust en passant », c'est
+             « quand tu le PRESCRIS, dis LEQUEL » — et une mention en prose n'est pas une
+             prescription. ⛔ Le rouge ne tombe que si AUCUNE forme écrite n'est résolvable. */
+          const formes=(reply.match(/[Hh]ip [Tt]hrust[^\n,.;()]{0,18}/g)||[]).map(x=>x.trim()
+            .replace(/\s*(barre|haltere|halt\u00e8re|machine|unilateral|unilat\u00e9ral)\b.*/i,' $1').trim());
           let complet;
           if(typeof exNomCatalogue==='function' && typeof exId==='function'){
-            const ecrit=(reply.match(/[Hh]ip [Tt]hrust[^\n,.;()]{0,18}/)||[''])[0].trim()
-              .replace(/\s*(barre|haltere|halt\u00e8re|machine|unilateral|unilat\u00e9ral)\b.*/i,' $1').trim();
-            complet=!!exId(exNomCatalogue(ecrit));
+            complet=formes.some(f=>!!exId(exNomCatalogue(f)));
           } else {
             complet=/hip thrust\s+(barre|haltere|machine|unilateral)|poussee de hanche/.test(n);
           }
