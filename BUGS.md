@@ -1095,3 +1095,33 @@ Quand on insère dans un document structuré, **s'ancrer sur l'EN-TÊTE de la se
 jamais sur le premier motif qui ressemble — surtout si le même motif vit ailleurs dans le
 fichier. *Et vérifier ce qu'on vient d'écrire à l'endroit où il est censé se lire, pas dans
 le diff* : le diff montre la ligne ajoutée, il ne dit pas dans quel tableau elle est tombée.
+
+
+### 🧟 Le miroir : **la ligne RESSUSCITÉE par une fusion qui ne supprime jamais** *(26/08/2026, le même jour)*
+
+**Le correctif de la famille ci-dessus a créé sa jumelle.** En fusionnant deux versions du
+journal de partage, j'ai pris **l'UNION** des lignes de tâche — précisément pour n'en *perdre*
+aucune, puisque c'est ce que la famille précédente punit.
+
+**⛔⛔ Mais une union ne supprime jamais.** L'autre session avait **retiré** sa ligne 🟡 en la
+remplaçant par une 🟢 ; l'union l'a **ramenée**. Le tableau annonçait donc *« quelqu'un
+travaille dessus »* sur un sujet **livré depuis des heures** — exactement le mensonge que ce
+fichier existe pour empêcher, obtenu en réparant l'autre.
+
+👉 ***Un choix qui ne peut que gagner ne peut pas non plus oublier.*** Une stratégie de fusion
+qui ne fait qu'ajouter est sûre contre la perte et **aveugle au retrait volontaire** : elle ne
+distingue pas *« l'autre n'avait pas cette ligne »* de *« l'autre l'a délibérément enlevée »*.
+
+**⚠️ Et ça s'est vu par hasard**, en préparant autre chose — pas par un test. La ligne
+ressuscitée est **syntaxiquement parfaite** : rien ne la distingue d'une vraie tâche en cours.
+
+### 🛡️ Ce qui protège aujourd'hui *(contrôle 7 de `tools/check_regles.py`)*
+Une 🟡 et une 🟢 qui portent la **même session** et la **même heure de départ** sont la même
+tâche, avant et après clôture : **la 🟢 fait foi, la 🟡 est un reste**. Le contrôle les
+rapproche, **fait échouer la livraison** et nomme la cause. Éprouvé dans les deux sens : rouge
+(sortie 1) sur un zombie remis exprès, vert après retrait.
+
+### ⭐ Le réflexe
+Devant une fusion « je garde tout », se demander **ce que l'autre côté a délibérément retiré**.
+*L'union protège de l'oubli, jamais de la résurrection* — et les deux produisent un fichier qui
+ment, dans des directions opposées.
