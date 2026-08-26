@@ -2399,6 +2399,33 @@ function renderFoodJournal(){
       +_macroLine('Protéines',tot.prot,target.prot_g,'var(--green)')
       +_macroLine('Glucides',tot.carbs,target.carbs_g,'var(--orange)')
       +_macroLine('Lipides',tot.fat,target.fat_g,'var(--gold)')
+      /* 🍽️ CE QUE LE RESTE REPRÉSENTE VRAIMENT (26/08/2026, ft-v1019) — demande de Michel :
+         *« à 14h, il te reste 150 g de prot à manger, tu peux faire 1 shake de prot et 150 g de
+         poulet »*. ⭐⭐ Les chiffres du reste étaient DÉJÀ affichés juste au-dessus, ligne par
+         ligne — et ils ne servaient à rien : *personne ne sait à quoi ressemblent 150 g de
+         protéines dans une assiette.* Ce qui manquait n'était pas la donnée, c'était sa
+         TRADUCTION.
+         ⛔ R13 : on ENRICHIT cette carte, on n'en fabrique pas une deuxième — le reste doit
+         rester sous les yeux, à côté des chiffres qu'il explique.
+         ⛔ AUJOURD'HUI SEULEMENT (anti-TCA, P21) : sur un jour passé, « il te manquait 40 g »
+         est un reproche sur une journée qu'on ne peut plus changer. */
+      +(estAuj?(()=>{
+        const reste=(typeof _resteDuJour==='function')?_resteDuJour(td):null;
+        const idees=(typeof _ideesPourLeReste==='function')?_ideesPourLeReste(reste):[];
+        if(!idees.length) return '';
+        const cols={prot:'var(--green)',carbs:'var(--orange)',fat:'var(--gold)'};
+        return `<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--sep);">`
+          +`<div style="font-size:11.5px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Ce qu'il te reste, en vrai</div>`
+          +idees.map(i=>`<div style="display:flex;align-items:baseline;gap:7px;margin-bottom:6px;font-size:13px;line-height:1.45;">`
+              +`<span style="color:${cols[i.macro]};font-weight:800;white-space:nowrap;">${i.manque} g</span>`
+              +`<span style="color:var(--t3);">de ${i.label} —</span>`
+              +`<span style="color:var(--t1);font-weight:700;">${_escNote?_escNote(i.idee):i.idee}</span>`
+            +`</div>`).join('')
+          /* ⛔ « à peu près » n'est pas de la modestie de façade : la portion enregistrée est
+             une estimation, et le dire évite qu'on prenne ça pour une prescription au gramme. */
+          +`<div style="font-size:11px;color:var(--t3);line-height:1.4;margin-top:8px;">À peu près — calculé sur <b>tes</b> aliments, pas sur une table générique. Une idée, pas une consigne.</div>`
+          +`</div>`;
+      })():'')
       +`</div>`;
   }else{
     html+=`<div style="background:var(--bg2);border-radius:14px;padding:16px;text-align:center;color:var(--t3);font-size:13px;box-shadow:inset 0 0 0 1px var(--sep);">Remplis ton profil (âge, taille, poids) pour comparer à tes objectifs.</div>`;

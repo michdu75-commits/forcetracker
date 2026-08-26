@@ -1377,6 +1377,112 @@ function _foodTotals(date){
   (S.foodLog||[]).forEach(e=>{if(e.date===date){t.kcal+=e.kcal||0;t.prot+=e.prot||0;t.carbs+=e.carbs||0;t.fat+=e.fat||0;}});
   return t;
 }
+/* ═══ CE QU'IL TE RESTE À MANGER — ET CE QUE ÇA REPRÉSENTE (26/08/2026, ft-v1019) ═══════
+   Michel : *« il faut montrer une estimation de ce qu'il nous reste à manger dans la journée
+   (à 14h par exemple, il te reste 150 g de prot à manger, tu peux faire 1 shake de prot et
+   150 g de poulet, pareil pour les glucides et pareil pour les lipides) »*.
+   ⭐⭐ SA PRÉCISION EST TOUT LE SUJET, et elle change la nature de la chose : le chiffre
+   « il te reste 150 g de protéines » EXISTE DÉJÀ à l'écran depuis longtemps — et il ne sert
+   à rien, parce que personne ne sait à quoi ressemblent 150 g de protéines dans une assiette.
+   *Ce qui manquait n'est pas la donnée, c'est sa TRADUCTION.* C'est le trou 3.3 de
+   `docs/NUTRITION-MOTEUR.md` (« le Journal et le Plan ne se parlent pas »).
+
+   ⛔⛔ LES ALIMENTS PROPOSÉS SONT LES SIENS, JAMAIS UNE BASE INVENTÉE (R29). On pioche dans ses
+   FAVORIS et dans ce qu'il a réellement mangé — donc : des aliments qu'il aime, qu'il a sous la
+   main, avec des macros QU'IL A LUI-MÊME enregistrées. ⭐ Et ça évite entièrement le trou 3.2
+   (« aucune base d'aliments ») : on n'a pas besoin des 300 aliments `composable` pour ça.
+
+   ⛔ ANTI-TCA — Constitution P21, `docs/NUTRITION-PHILOSOPHIE.md`. Trois garde-fous :
+   ① AUJOURD'HUI SEULEMENT — jamais sur un jour passé : un « il te manquait 40 g » d'hier est un
+      reproche sur une journée qu'on ne peut plus changer, et ça ne sert à rien.
+   ② AUCUN REPROCHE quand la cible est dépassée : on n'affiche pas d'idée, et on ne commente pas.
+   ③ C'EST UNE ILLUSTRATION, PAS UNE PRESCRIPTION — le texte dit « ça ressemble à », jamais
+      « tu dois ». *La nutrition ne doit jamais devenir une source de stress supérieure au
+      bénéfice qu'elle apporte.* */
+
+/* Un seul propriétaire du « reste » (R2) : il lit `_foodTotals` et `calcMacros`, il ne
+   recalcule NI l'un NI l'autre. Rend `null` si le profil ne permet pas de cible — on ne
+   compare pas à un objectif qu'on n'a pas. */
+function _resteDuJour(date){
+  const d = date || ((typeof today==='function')?today():'');
+  if(!(S.bw && S.age && S.height)) return null;
+  const cible = (typeof calcMacros==='function') ? calcMacros(S.nutritionPhase) : null;
+  if(!cible || !cible.calories) return null;
+  const tot = (typeof _foodTotals==='function') ? _foodTotals(d) : {kcal:0,prot:0,carbs:0,fat:0};
+  const r = k => Math.round(k);
+  return {
+    date:d,
+    rien: !(S.foodLog||[]).some(e=>e.date===d),      // ⚠️ « rien noté » ≠ « rien mangé »
+    kcal:  r(cible.calories - tot.kcal),
+    prot:  r((cible.prot_g||0)  - tot.prot),
+    carbs: r((cible.carbs_g||0) - tot.carbs),
+    fat:   r((cible.fat_g||0)   - tot.fat),
+    cible:cible, tot:tot
+  };
+}
+
+/* Ses aliments à LUI : les favoris d'abord (il les a choisis), puis les plus récents du
+   journal. Dédupliqués par nom, et on ne garde que ce qui porte de vraies macros. */
+function _mesAliments(max){
+  const vus = {}, out = [];
+  const prendre = (e, fav) => {
+    const n = (e && e.name || '').trim(); if(!n) return;
+    const k = n.toLowerCase(); if(vus[k]) return;
+    const kcal=+e.kcal||0, prot=+e.prot||0, carbs=+e.carbs||0, fat=+e.fat||0;
+    if(!(kcal>0 || prot>0 || carbs>0 || fat>0)) return;    // ⛔ rien à proposer sans macros
+    vus[k]=1;
+    out.push({name:n, kcal:kcal, prot:prot, carbs:carbs, fat:fat, per100:e.per100||null, fav:!!fav});
+  };
+  (S.savedFoods||[]).forEach(e=>prendre(e,true));
+  (S.foodLog||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(e=>prendre(e,false));
+  return out.slice(0, max||40);
+}
+
+/* Traduit un manque en QUANTITÉ D'UN ALIMENT RÉEL.
+   ⭐ Deux écritures, et le choix n'est pas cosmétique : avec un pour-100 g connu on peut dire
+   « 150 g de poulet » — un repère qu'on peut peser. Sans lui, on ne sait rien du poids : on
+   parle alors en PORTIONS (« 2 × ton shake »), ce qui est vrai quelle que soit la portion.
+   ⛔ On n'invente JAMAIS un poids (R29) — c'est la même règle qu'en ft-v975. */
+function _quantitePour(al, macro, manque){
+  const parPortion = +al[macro] || 0;
+  if(parPortion <= 0) return null;
+  const n = manque / parPortion;
+  if(n < 0.25) return null;                                  // trop peu : ça n'aide pas
+  const p100 = al.per100 && +al.per100[macro];
+  if(p100 > 0){
+    const g = Math.round(manque / p100 * 100 / 5) * 5;        // arrondi à 5 g, pas de fausse précision
+    if(g >= 10 && g <= 600) return g + ' g de ' + al.name;
+  }
+  const arr = n < 0.75 ? '½' : (Math.round(n*2)/2);
+  return arr + ' × ' + al.name;
+}
+
+/* Les idées : une par macro qui manque VRAIMENT, en commençant par celle qui manque le plus.
+   ⛔ Au plus 3 — au-delà ce n'est plus une idée, c'est une liste de courses (R19). */
+const _RESTE_SEUILS = { prot:15, carbs:25, fat:8 };           // en dessous, ça ne vaut pas un conseil
+function _ideesPourLeReste(reste){
+  if(!reste) return [];
+  const al = _mesAliments(40);
+  if(!al.length) return [];
+  const noms = { prot:'protéines', carbs:'glucides', fat:'lipides' };
+  const manques = ['prot','carbs','fat']
+    .filter(m => reste[m] >= _RESTE_SEUILS[m])
+    .sort((a,b) => (reste[b]/_RESTE_SEUILS[b]) - (reste[a]/_RESTE_SEUILS[a]));
+  const out = [], pris = {};
+  manques.forEach(m=>{
+    if(out.length>=3) return;
+    /* Le meilleur aliment POUR CETTE MACRO : celui qui en apporte le plus par portion, et
+       qui n'a pas déjà servi pour une autre macro (sinon on répète le même nom trois fois). */
+    const cand = al.filter(a=>!pris[a.name.toLowerCase()] && (+a[m]||0)>0)
+                   .sort((a,b)=>(+b[m]||0)-(+a[m]||0));
+    for(const a of cand){
+      const q = _quantitePour(a, m, reste[m]);
+      if(q){ pris[a.name.toLowerCase()]=1; out.push({macro:m, label:noms[m], manque:reste[m], idee:q}); break; }
+    }
+  });
+  return out;
+}
+
 /* 🔍 Les raccourcis du Journal (ft-v871) — ils ouvrent la MÊME modale, au bon endroit.
    ⚠️ `readFoodLabel` déclenche un `input.click()` : il doit rester dans la MÊME tâche que le
    geste de l'utilisateur, sinon iOS refuse d'ouvrir la caméra. On l'appelle donc en direct,
