@@ -12939,8 +12939,76 @@ console.log('\n-- CXVII. Le sélecteur d\'exercices reste OUVERT (écran Séance
   await cx.close();
 }
 
+/* == BLOC CXVIII - L'EXPORT DES CONVERSATIONS PORTE ENFIN SES DATES (ft-v1011) ==
+   Michel, en relisant son propre export : « il va falloir horodater les conversations ».
+   ⭐ ft-v1010 avait pose le `ts` a la creation et l'avait fait survivre au stockage — mais
+   PERSONNE ne le lisait. *Une donnee ecrite que rien ne relit n'existe pas* (R5). C'est tres
+   exactement ce qui m'a empeche de dater sa conversation du 19/08 quand il me l'a envoyee.
+   ⛔⛔ ET LE TITRE MENTAIT : il affichait la date de CREATION de la discussion. Celle de
+   Michel, ouverte le 19/08, s'est poursuivie jusqu'au 25 — six jours d'ecart. En la relisant,
+   on datait donc tout son contenu du 19. *Un repere faux est pire qu'un repere absent : on
+   s'y fie.* Il affiche desormais la PLAGE reelle, et un seul jour reste un seul jour.
+   ⛔ UN SEUL CONSTRUCTEUR, VERIFIE (le bouton vit cote ADMIN, Michel l'a signale) : une seule
+   fonction fabrique ce fichier, donc le correctif ne pouvait pas etre pose du mauvais cote. */
+console.log('\n-- CXVIII. L\'export des conversations porte ses dates (ft-v1011) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2200);
+  const F=await pg.evaluate(()=>{
+   try{
+    // ⛔ On capture le fichier au lieu de le telecharger : on remplace Blob, RIEN d'autre —
+    //    tout le reste emprunte le vrai chemin (lecon de ft-v1010).
+    let capture=null; const VraiBlob=window.Blob;
+    window.Blob=function(parts,opts){ capture=parts.join(''); return new VraiBlob(parts,opts); };
+    const J=24*3600*1000, base=Date.now();
+    S.coachConversations=[{ id:'c1', title:'Séance pec', ts:base-3*J, messages:[
+      {role:'user',content:'Séance pec ce soir ?',ts:base-2*J},
+      {role:'assistant',content:'Voilà ta séance.',ts:base-2*J+90000},
+      {role:'user',content:'Et pour demain ?',ts:base},          // le jour CHANGE
+      {role:'assistant',content:'Jambes.',ts:base+60000},
+      {role:'user',content:'vieux message sans date'}            // ⛔ rien a inventer
+    ]}];
+    exporterConversationsMilo();
+    window.Blob=VraiBlob;
+    const o={};
+    o.produit = !!capture;
+    const txt=capture||'';
+    o.heures = (txt.match(/── (MOI|MILO) ──  \(\d{2}:\d{2}\)/g)||[]).length;   // 4 attendues
+    o.sansHeure = (txt.match(/── MOI ──\n/g)||[]).length;                        // 1 attendue
+    o.separateurs = (txt.match(/· · · [^\n]+ · · ·/g)||[]).length;                // 2 jours
+    o.plage = /Séance pec — \d{2}\/\d{2}\/\d{4} → \d{2}\/\d{2}\/\d{4}/.test(txt);
+    o.pasDeDateCreation = txt.indexOf('(ouverte le)')<0;
+    // ⛔ Un seul jour ne doit PAS produire « du X au X ».
+    S.coachConversations=[{ id:'c2', title:'Un seul jour', ts:base, messages:[
+      {role:'user',content:'a',ts:base},{role:'assistant',content:'b',ts:base+1000}]}];
+    capture=null; window.Blob=function(parts,opts){ capture=parts.join(''); return new VraiBlob(parts,opts); };
+    exporterConversationsMilo(); window.Blob=VraiBlob;
+    o.unSeulJour = /Un seul jour — \d{2}\/\d{2}\/\d{4} ═/.test(capture||'');
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(F.err) t('CXVIII n\'a pas pu tourner', false, F.err);
+  else{
+    t('⭐⭐ chaque message DATÉ porte son heure, et eux seuls (4 sur 5)',
+      F.heures===4, 'heures='+F.heures);
+    t('⛔ le message SANS date n\'en reçoit aucune — rien n\'est inventé (R29)',
+      F.sansHeure===1, 'sans heure='+F.sansHeure);
+    t('⭐ le jour ne s\'écrit QUE quand il change (2 séparateurs pour 2 jours, pas 5)',
+      F.separateurs===2, 'séparateurs='+F.separateurs);
+    t('⭐⭐ le titre porte la PLAGE réelle, plus la date de création (le cas du 19→25/08)',
+      F.plage===true && F.pasDeDateCreation===true,
+      'plage='+F.plage+' sans date de création='+F.pasDeDateCreation);
+    t('⛔ … et une discussion d\'UN SEUL jour ne devient pas « du X au X »',
+      F.unSeulJour===true, '');
+  }
+  await cx.close();
+}
+
 // ════════════════════════════════════════════════════════════════════
-console.log('\n-- CXVIII. Créer un programme depuis zéro (écran Séance ②/5) --');
+console.log('\n-- CXIX. Créer un programme depuis zéro (écran Séance ②/5) --');
 /* ⚠️ LA PORTE QUI MANQUAIT. Avant, aucun chemin ne menait à la CRÉATION d'un programme : la
    modale « Mes Programmes » ne proposait que « Sauvegarder la séance actuelle », donc il
    fallait monter une SÉANCE entière à la main pour obtenir un PROGRAMME. L'éditeur existait
@@ -13002,7 +13070,7 @@ console.log('\n-- CXVIII. Créer un programme depuis zéro (écran Séance ②/5
     return o;
    }catch(e){return {err:String(e)};}
   });
-  if(G.err)t('CXVIII n\'a pas pu tourner',false,G.err);
+  if(G.err)t('CXIX n\'a pas pu tourner',false,G.err);
   else{
     t('⭐⭐ « Créer un programme » ouvre l\'éditeur, vierge (la porte qui manquait)',
       G.ouvre===true && G.nomVide===true, JSON.stringify({ouvre:G.ouvre,nomVide:G.nomVide}));
