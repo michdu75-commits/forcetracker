@@ -1457,7 +1457,10 @@ const _RESTE_MAX_PORTIONS = 2, _RESTE_MAX_G = 250;
 /* « 100 g de Amandes » — l'élision manquait. Ce n'est pas de la coquetterie : c'est du texte
    affiché à quelqu'un, et Michel l'a écrit lui-même (R31) — *plus on se rapproche d'une
    réalité, plus les gens ont confiance dans ce qu'on a fait.* */
-const _deNom = n => /^[aeiouyàâäéèêëîïôöùûüœæh]/i.test((n||'').trim()) ? ("d'" + n) : ('de ' + n);
+/* ⚠️ Le « y » est EXCLU volontairement : on dit « de yaourt », pas « d'yaourt » — et le
+   yaourt est bien plus fréquent dans un journal alimentaire que les yeux. Le « h » est
+   GARDÉ pour la même raison inverse : « d'huile » est courant, « de homard » est rare. */
+const _deNom = n => /^[aeiouàâäéèêëîïôöùûüœæh]/i.test((n||'').trim()) ? ("d'" + n) : ('de ' + n);
 function _portionRaisonnable(al, macro, manque){
   const parPortion = +al[macro] || 0;
   if(parPortion <= 0 || manque <= 0) return null;
