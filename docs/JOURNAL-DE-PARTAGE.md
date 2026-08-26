@@ -8,13 +8,68 @@
 
 ---
 
+## 📋 Les tâches
+
+> ⭐ **CE TABLEAU EST EN TÊTE DU FICHIER, ET C'EST VOLONTAIRE (26/08/2026).** Il était à **73 %**
+> du document, sous 117 lignes d'explication — alors que *tout le reste du fichier n'existe que
+> pour lui*, et que le mode d'emploi disait « le tableau **ci-dessous** » 111 lignes trop tôt.
+> Deux raisons, et la seconde est un correctif de bug :
+> ① on lit et on écrit ici **avant** de coder, donc c'est ce qu'on doit voir en premier ;
+> ② **il devient le PREMIER tableau du fichier**, donc une insertion qui vise « la première ligne
+> `| 🟢` » tombe au bon endroit. *Deux lignes de tâche s'étaient perdues dans la légende (25/08,
+> 26/08), où markdown les rendait invisibles* — c'est la famille **« le premier match gagnant »**
+> de `BUGS.md`, retournée à notre avantage.
+> ⛔ **Le contrôle 6 de `tools/check_regles.py` reste**, exprès : la légende est toujours une cible
+> possible, et *un détecteur qu'on retire parce qu'on a corrigé la cause laisse la rechute muette*.
+
+| État | Quand (UTC) | Qui | Sujet | Fichiers | Version |
+|---|---|---|---|---|---|
+| 🟡 | 26/08 14:25 | session-B (claude-md-docs) | STRUCTURE du fichier : le tableau des TÂCHES monte EN TÊTE (il est à 73 % du fichier, et « le tableau ci-dessous » est 111 lignes plus bas) — c'est le correctif de la CAUSE, le contrôle 6 n'était qu'un détecteur | `docs/JOURNAL-DE-PARTAGE.md`, `tools/check_regles.py` | — (outillage) |
+| 🟢 | 26/08 13:05 → 14:20 | session-B (claude-md-docs) | **LE BUG DU FICHIER LUI-MÊME, corrigé au bon niveau** — une ligne de tâche pouvait atterrir dans le tableau des ÉTATS (2ᵉ fois en 2 jours) : les deux tableaux commencent par le même jeton `| 🟢` et **le leurre vient EN PREMIER**, et le dégât est **silencieux** (markdown jette les colonnes en trop → la ligne existe mais devient invisible). 👉 **contrôle 6 de `check_regles.py`** (refuse toute ligne datée dans la légende, sortie 1, éprouvé dans les deux sens) + avertissement dans le fichier + famille dans `BUGS.md`. | `tools/check_regles.py`, `BUGS.md`, `docs/JOURNAL-DE-PARTAGE.md` | — (outillage) |
+| ℹ️ | 26/08 12:40 | session-B (claude-md-docs) | **⚠️ SIGNALEMENT, PAS UNE CLÔTURE** — la ligne 🟡 de session-A du 26/08 10:05 (EV-052) porte sur un sujet **livré en ft-v1016**, comme le dit sa propre ligne 🟢 juste en dessous : le marqueur est **périmé** et annonce à tort *« quelqu'un travaille dessus »*. ⛔ **Je ne la ferme pas** : je ne peux pas savoir s'il leur reste une suite, et clore la ligne de quelqu'un d'autre écrirait un fait que je ne connais pas (**R29** — le coût de l'erreur décide). ⚠️ **Et je n'ai pas pu les prévenir** : les deux sessions tournent dans des **conteneurs séparés**, aucune n'est joignable par message — *c'est exactement la faille que ce fichier nomme lui-même*. ⏰ La **péremption à 3 h** s'applique donc : à 13:05 UTC, cette ligne est à considérer comme abandonnée. | `docs/JOURNAL-DE-PARTAGE.md` | — (signalement) |
+| 🟢 | 26/08 11:40 → 12:10 | session-B (claude-md-docs) | ② l'EMAIL dans la ligne du classeur Google Sheets (onglet `Sessions`) — colonne ajoutée À LA FIN, les anciennes lignes ne bougent pas ⚠️ **`Code.js` touché → déploiement Apps Script auto** | `Code.js`, `tracking.js`, `tests/parcours/runner.js` | ft-v1018 |
+| 🟢 | 26/08 10:55 → 12:10 | session-B (claude-md-docs) | ③ HISTORIQUE DU SCORE DE RÉCUP — il n'avait jamais été écrit ; on ne le STOCKE pas, on le REJOUE (`calcRecoveryDetail(refTs)`), tous les points à la MÊME HEURE (mesuré 44 → 56 dans la journée). ⛔ L'historique du SOMMEIL reste caché : décision de ft-v547, pas un bug (R30) | `tracking.js`, `state.js`, `screens.js`, `tests/parcours/runner.js` | ft-v1017 |
+| 🟡 | 26/08 10:05 | session-A (project-status) | EV-052 rougit encore À TORT : mon motif prend la PREMIÈRE occurrence (une phrase de prose) au lieu de la prescription — trouvé par le rejeu gratuit | `tests/milo/eval-scenarios.js` | ft-v1015 (réservée) |
+| 🟢 | 26/08 10:05 → 11:05 | session-A (project-status) | le REJEU GRATUIT (0 €) prouve les 5 vérificateurs corrigés (9 rouges → 4) et démasque un 6ᵉ faux rouge de moi : EV-052 lisait la PREMIÈRE occurrence, une phrase de prose | `tests/milo/eval-scenarios.js` | ft-v1016 (session-B avait pris 1015) |
+| 🟢 | 26/08 09:08 → 09:55 | session-B (claude-md-docs) | un ÉCHEC de sync Google Sheets était compté comme un SUCCÈS : `finishWorkout` fait `if(ok)` sur l'OBJET `{ok:false,…}` (toujours vrai) → toast menteur + `synced=true` posé, donc la file de rattrapage ne la reprend jamais | `log.js`, `tests/parcours/runner.js`, `sw.js` | ft-v1015 |
+| 🟢 | 26/08 09:02 → 09:40 | session-A (project-status) | NUTRITION : le résumé du journal atteint Milo (il travaillait « à l'aveugle ») — cache identique octet pour octet — **+ une FUITE trouvée au passage** : `foodLog` n'était pas remis à zéro dans `_vcApplyPersona` | `coach.js`, `tests/milo/eval-scenarios.js`, `tests/donnees/*`, `tests/parcours/runner.js` | ft-v1014 |
+| 🟢 | 26/08 08:32 → 08:45 | session-A (project-status) | ① l'export « avec mes discussions » PERDAIT le fil en cours et emportait les consignes internes `_silent` · ② le fichier lisible sort de l'Admin (les deux exports NE font PAS doublon — mesuré) | `coach.js`, `index.html`, `tests/parcours/runner.js` | ft-v1013 |
+| 🟢 | 26/08 05:55 → 06:10 | session-A (project-status) | l'export des conversations n'affichait AUCUNE date par message (les `ts` étaient stockés depuis ft-v1010, personne ne les lisait) + le titre affichait la date de CRÉATION au lieu de la plage réelle | `coach.js`, `tests/parcours/runner.js` | ft-v1011 |
+| 🟢 | 25/08 21:35 → 22:30 | session-B (claude-md-docs) | écran Séance ②/5 : porte « Créer un programme » + « + Ajouter » → « Créer ma séance » + le sélecteur reste ouvert DANS L'ÉDITEUR aussi | `index.html`, `log.js` | ft-v1012 |
+| 🟢 | 25/08 20:50 → 21:30 | session-A (project-status) | historique de l'OBJECTIF (`goalLog`, propriétaire unique `_goalSet`) — Milo ne voyait que la valeur du jour (R8) — + horodatage des messages, qui mouraient dans `_convLightMsgs` | `state.js`, `setup.js`, `tracking.js`, `app.js`, `coach.js`, `Code.js` | ft-v1010 (développée en 1008, renumérotée : session-B a livré 1009 la première — on ne fait jamais reculer le n° de cache) |
+| 🟢 | 25/08 19:25 → 19:45 | session-A (project-status) | dépouillement du benchmark : **6 vérificateurs sur 9 rougissaient à tort** (négation · synonyme · abréviation devenue valide · question légitime · accessoire de santé · **mauvaise étape du pipeline**) + 1 fixture muette (EV-009) | `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js` | ft-v1007 |
+| 🟢 | 25/08 18:50 → 19:10 | session-A (project-status) | le bouton rouge de `showConfirm` disait « Supprimer » pour LANCER le benchmark — 10 appels non destructeurs récupèrent leur libellé + la jumelle « Fusionner » de `setup.js` | `app.js`, `coach.js`, `log.js`, `setup.js`, `tracking.js`, `tests/parcours/runner.js` | ft-v1006 |
+| 🟢 | 25/08 18:20 → 18:40 | session-A (project-status) | les libellés du benchmark annonçaient « 16 scénarios » alors qu'il en porte 53 — nombre RETIRÉ (il grandit, R35), + témoin qui l'interdit | `index.html`, `tests/parcours/runner.js`, `sw.js` | ft-v1005 |
+| 🟢 | 25/08 17:05 → 17:35 | session-B (claude-md-docs) | écran Séance ①/5 : le sélecteur d'exercices reste OUVERT après un ajout (6 allers-retours → 1) ⚠️ renuméroté ft-v1006 → **ft-v1009** : session-A avait pris 1006/1007 pendant ce temps, et réservé 1008 | `log.js` | ft-v1009 |
+| 🟢 | 25/08 16:22 → 16:40 | session-B (claude-md-docs) | plafond IA à 150 pour les comptes de développement (le banc d'essai fait 53 appels, il se faisait couper à 50) + l'email posé dans `eval.js`, sinon le relèvement ne l'atteignait pas | `Code.js`, `tests/milo/eval.js` | — (backend) |
+| 🟢 | 25/08 15:55 → 17:40 | session-A (project-status) | Journal nutrition : bande des 7 jours glissants, cliquable, un anneau par jour | `app.js`, `screens.js`, `tests/parcours/runner.js` | ft-v1004 |
+| 🟢 | 25/08 15:50 → 16:10 | session-B (claude-md-docs) | DOC de cadrage : la séance d'essai (parcours découverte → Milo premium). **Aucun code**, aucun fichier de la nutrition — rien à construire encore, le doc fixe les décisions avant de coder | `docs/SEANCE-DESSAI.md`, `CLAUDE.md` | — (doc) |
+| 🟢 | 25/08 14:31 → 15:20 | session-A (project-status) | la quantité sur un aliment repris SANS pour-100 g (fiche OFF incomplète) → portions | `app.js`, `tests/parcours/runner.js` | ft-v1003 |
+| 🟢 | 25/08 11:51 → 12:35 | session-A (project-status) | dossier UX Nutrition pour Claude Design (écran mesuré : Macros 2 800 px = 3,3 écrans, 5 constats) | `docs/UX-NUTRITION-A-COLLER.md` | — (doc) |
+| 🟢 | 25/08 10:20 → 10:50 | session-B (claude-md-docs) | « Squat Sumo » retiré du CHOIX (retrait ≠ fusion) + son image orpheline sortie du cache SW | `constants.js`, `log.js`, `sw.js`, `A-FAIRE-SUR-PC.md` | ft-v1002 |
+| 🟢 | 25/08 09:20 → 09:55 | session-B (claude-md-docs) | « Pull-over » générique retiré du CHOIX (retrait ≠ fusion : l'historique n'est PAS renommé) + 4 équivalences d'import qui le visaient encore | `constants.js`, `log.js`, `tests/croises/runner.js` | ft-v1001 |
+| 🟢 | 25/08 08:45 → 09:05 | session-B (claude-md-docs) | le « Pull-over » générique : RANGEMENT seul (le partage d'animation a été refusé par le contrôle croisé ②) — la fusion du doublon attend l'arbitrage de Michel | `log.js` | ft-v1000 |
+| 🟢 | 25/08 08:00 → 08:35 | session-B (claude-md-docs) | 2 animations manquantes ajoutées (écarté haltères · tirage poulie basse prise serrée) — le pull-over est un doublon de catalogue, laissé à l'arbitrage de Michel | `exercises/*`, `log.js`, `sw.js` | ft-v999 |
+| 🟢 | 25/08 07:05 → 07:45 | session-A (project-status) | banc d'essai : doctrine R35 (il grandit à chaque bug, sans cible) + 3 scénarios promus (EV-051/052/053) | `tests/milo/eval-scenarios.js`, `docs/REGLES-ARCHITECTURE.md`, `docs/JOURNAL-DE-TEST.md`, `tests/parcours/runner.js` | ft-v998 |
+| 🟢 | 24/08 ~20:30 → 21:25 | session-B (claude-md-docs) | un nom ABRÉGÉ lit la fiche écrite (muscles) + sa jumelle unilatéral | `log.js`, `constants.js`, `state.js` | ft-v997 |
+| 🟢 | 24/08 ~19:30 → 20:30 | session-B (claude-md-docs) | un nom d'exercice abrégé retrouve sa fiche du catalogue (animation, tutoriel) | `constants.js`, `log.js` | ft-v996 |
+| 🟢 | 24/08 ~17:00 → 19:50 | session-A (project-status) | le cardio de Milo va dans son bloc, pas dans les exercices | `log.js`, `coach.js`, `tests/parcours/runner.js` | ft-v995 |
+| 🟢 | 24/08 ~16:00 → 17:00 | session-A (project-status) | banc d'essai 21 → 50 scénarios | `tests/milo/eval-scenarios.js` | ft-v994 |
+| 🟢 | 24/08 ~14:00 → 15:00 | session-A (project-status) | course `_saveCoachMemory` + caches par lieu (mesurés, non construits) | `coach.js` | ft-v993 |
+| 🟠 | 24/08 matin | **DEUX sessions en parallèle** | ⚠️ **LA COLLISION QUI A MOTIVÉ CE FICHIER** — ft-v991 et ft-v992 écrits **deux fois**, contenus équivalents, textes différents. Fusionnés à la main : la branche de l'autre a servi de base, seul ft-v993 y a été greffé. | `state.js`, `coach.js`, `tracking.js` | ft-v991 · ft-v992 |
+| 🟢 | 24/08 20:05 → 20:35 | session-A (project-status) | protocole de partage : créer ce fichier + le déclarer dans CLAUDE.md | `docs/JOURNAL-DE-PARTAGE.md`, `CLAUDE.md` | — |
+
+---
+
+---
+
 ## ⚡ EN 20 SECONDES — ce que tu fais avant de commencer
 
 ```bash
 git fetch origin --all -q          # ⚠️ SANS ÇA, TU NE VOIS RIEN (voir §« La faille »)
 ```
 
-1. **Tu LIS** le tableau ci-dessous. Une tâche marquée 🟡 **en cours** ? → tu ne prends pas ce sujet.
+1. **Tu LIS** le tableau **en haut de ce fichier**. Une tâche marquée 🟡 **en cours** ? → tu ne prends pas ce sujet.
 2. **Tu ÉCRIS** ta ligne (une seule), **tu pousses tout de suite** — avant d'écrire une ligne de code.
 3. **Tu travailles.**
 4. **Tu CLÔTURES** ta ligne avec la version livrée (`ft-vNNN`) et tu pousses.
@@ -41,9 +96,10 @@ fichiers, la version.
 ## 🚦 Les états
 
 > ⛔⛔ **CE TABLEAU EST UNE LÉGENDE — ce n'est PAS celui des tâches.** Le tableau des tâches
-> est **plus bas**, sous « 📋 Les tâches ». ⚠️ **Deux lignes de tâche y sont déjà tombées**
-> (25/08 et 26/08) : les deux tableaux commencent par le même jeton `| 🟢`, et **celui-ci vient
-> en premier**, donc une insertion qui vise « la première ligne `| 🟢` » atterrit ici.
+> est **PLUS HAUT**, tout en tête du fichier, sous « 📋 Les tâches ». ⚠️ **Deux lignes de tâche y sont déjà tombées**
+> (25/08 et 26/08) : les deux tableaux commencent par le même jeton `| 🟢`. ⭐ **Le vrai tableau
+> est désormais le PREMIER du fichier** (26/08), donc une insertion qui vise « la première ligne
+> `| 🟢` » tombe maintenant au bon endroit — mais la légende reste une cible possible.
 > **Et ça ne se voit pas** : markdown jette les colonnes en trop, la ligne existe dans le
 > fichier et devient invisible à l'écran — *personne ne peut voir manquer une ligne dont on
 > ignore l'existence.*
@@ -122,49 +178,6 @@ reculé, on ne pousse rien : on refait un fetch explicite et on regarde les date
 Écrire l'heure **UTC** ou préciser le fuseau. Deux sessions peuvent tourner dans des conteneurs
 réglés différemment — et *« 21:15 » chez l'une n'est pas « 21:15 » chez l'autre*. C'est la famille de
 bugs « fuseaux horaires » de `BUGS.md`, appliquée à nous-mêmes.
-
----
-
-## 📋 Les tâches
-
-| État | Quand (UTC) | Qui | Sujet | Fichiers | Version |
-|---|---|---|---|---|---|
-| 🟡 | 26/08 14:25 | session-B (claude-md-docs) | STRUCTURE du fichier : le tableau des TÂCHES monte EN TÊTE (il est à 73 % du fichier, et « le tableau ci-dessous » est 111 lignes plus bas) — c'est le correctif de la CAUSE, le contrôle 6 n'était qu'un détecteur | `docs/JOURNAL-DE-PARTAGE.md`, `tools/check_regles.py` | — (outillage) |
-| 🟢 | 26/08 13:05 → 14:20 | session-B (claude-md-docs) | **LE BUG DU FICHIER LUI-MÊME, corrigé au bon niveau** — une ligne de tâche pouvait atterrir dans le tableau des ÉTATS (2ᵉ fois en 2 jours) : les deux tableaux commencent par le même jeton `| 🟢` et **le leurre vient EN PREMIER**, et le dégât est **silencieux** (markdown jette les colonnes en trop → la ligne existe mais devient invisible). 👉 **contrôle 6 de `check_regles.py`** (refuse toute ligne datée dans la légende, sortie 1, éprouvé dans les deux sens) + avertissement dans le fichier + famille dans `BUGS.md`. | `tools/check_regles.py`, `BUGS.md`, `docs/JOURNAL-DE-PARTAGE.md` | — (outillage) |
-| ℹ️ | 26/08 12:40 | session-B (claude-md-docs) | **⚠️ SIGNALEMENT, PAS UNE CLÔTURE** — la ligne 🟡 de session-A du 26/08 10:05 (EV-052) porte sur un sujet **livré en ft-v1016**, comme le dit sa propre ligne 🟢 juste en dessous : le marqueur est **périmé** et annonce à tort *« quelqu'un travaille dessus »*. ⛔ **Je ne la ferme pas** : je ne peux pas savoir s'il leur reste une suite, et clore la ligne de quelqu'un d'autre écrirait un fait que je ne connais pas (**R29** — le coût de l'erreur décide). ⚠️ **Et je n'ai pas pu les prévenir** : les deux sessions tournent dans des **conteneurs séparés**, aucune n'est joignable par message — *c'est exactement la faille que ce fichier nomme lui-même*. ⏰ La **péremption à 3 h** s'applique donc : à 13:05 UTC, cette ligne est à considérer comme abandonnée. | `docs/JOURNAL-DE-PARTAGE.md` | — (signalement) |
-| 🟢 | 26/08 11:40 → 12:10 | session-B (claude-md-docs) | ② l'EMAIL dans la ligne du classeur Google Sheets (onglet `Sessions`) — colonne ajoutée À LA FIN, les anciennes lignes ne bougent pas ⚠️ **`Code.js` touché → déploiement Apps Script auto** | `Code.js`, `tracking.js`, `tests/parcours/runner.js` | ft-v1018 |
-| 🟢 | 26/08 10:55 → 12:10 | session-B (claude-md-docs) | ③ HISTORIQUE DU SCORE DE RÉCUP — il n'avait jamais été écrit ; on ne le STOCKE pas, on le REJOUE (`calcRecoveryDetail(refTs)`), tous les points à la MÊME HEURE (mesuré 44 → 56 dans la journée). ⛔ L'historique du SOMMEIL reste caché : décision de ft-v547, pas un bug (R30) | `tracking.js`, `state.js`, `screens.js`, `tests/parcours/runner.js` | ft-v1017 |
-| 🟡 | 26/08 10:05 | session-A (project-status) | EV-052 rougit encore À TORT : mon motif prend la PREMIÈRE occurrence (une phrase de prose) au lieu de la prescription — trouvé par le rejeu gratuit | `tests/milo/eval-scenarios.js` | ft-v1015 (réservée) |
-| 🟢 | 26/08 10:05 → 11:05 | session-A (project-status) | le REJEU GRATUIT (0 €) prouve les 5 vérificateurs corrigés (9 rouges → 4) et démasque un 6ᵉ faux rouge de moi : EV-052 lisait la PREMIÈRE occurrence, une phrase de prose | `tests/milo/eval-scenarios.js` | ft-v1016 (session-B avait pris 1015) |
-| 🟢 | 26/08 09:08 → 09:55 | session-B (claude-md-docs) | un ÉCHEC de sync Google Sheets était compté comme un SUCCÈS : `finishWorkout` fait `if(ok)` sur l'OBJET `{ok:false,…}` (toujours vrai) → toast menteur + `synced=true` posé, donc la file de rattrapage ne la reprend jamais | `log.js`, `tests/parcours/runner.js`, `sw.js` | ft-v1015 |
-| 🟢 | 26/08 09:02 → 09:40 | session-A (project-status) | NUTRITION : le résumé du journal atteint Milo (il travaillait « à l'aveugle ») — cache identique octet pour octet — **+ une FUITE trouvée au passage** : `foodLog` n'était pas remis à zéro dans `_vcApplyPersona` | `coach.js`, `tests/milo/eval-scenarios.js`, `tests/donnees/*`, `tests/parcours/runner.js` | ft-v1014 |
-| 🟢 | 26/08 08:32 → 08:45 | session-A (project-status) | ① l'export « avec mes discussions » PERDAIT le fil en cours et emportait les consignes internes `_silent` · ② le fichier lisible sort de l'Admin (les deux exports NE font PAS doublon — mesuré) | `coach.js`, `index.html`, `tests/parcours/runner.js` | ft-v1013 |
-| 🟢 | 26/08 05:55 → 06:10 | session-A (project-status) | l'export des conversations n'affichait AUCUNE date par message (les `ts` étaient stockés depuis ft-v1010, personne ne les lisait) + le titre affichait la date de CRÉATION au lieu de la plage réelle | `coach.js`, `tests/parcours/runner.js` | ft-v1011 |
-| 🟢 | 25/08 21:35 → 22:30 | session-B (claude-md-docs) | écran Séance ②/5 : porte « Créer un programme » + « + Ajouter » → « Créer ma séance » + le sélecteur reste ouvert DANS L'ÉDITEUR aussi | `index.html`, `log.js` | ft-v1012 |
-| 🟢 | 25/08 20:50 → 21:30 | session-A (project-status) | historique de l'OBJECTIF (`goalLog`, propriétaire unique `_goalSet`) — Milo ne voyait que la valeur du jour (R8) — + horodatage des messages, qui mouraient dans `_convLightMsgs` | `state.js`, `setup.js`, `tracking.js`, `app.js`, `coach.js`, `Code.js` | ft-v1010 (développée en 1008, renumérotée : session-B a livré 1009 la première — on ne fait jamais reculer le n° de cache) |
-| 🟢 | 25/08 19:25 → 19:45 | session-A (project-status) | dépouillement du benchmark : **6 vérificateurs sur 9 rougissaient à tort** (négation · synonyme · abréviation devenue valide · question légitime · accessoire de santé · **mauvaise étape du pipeline**) + 1 fixture muette (EV-009) | `tests/milo/eval-scenarios.js`, `tests/parcours/runner.js` | ft-v1007 |
-| 🟢 | 25/08 18:50 → 19:10 | session-A (project-status) | le bouton rouge de `showConfirm` disait « Supprimer » pour LANCER le benchmark — 10 appels non destructeurs récupèrent leur libellé + la jumelle « Fusionner » de `setup.js` | `app.js`, `coach.js`, `log.js`, `setup.js`, `tracking.js`, `tests/parcours/runner.js` | ft-v1006 |
-| 🟢 | 25/08 18:20 → 18:40 | session-A (project-status) | les libellés du benchmark annonçaient « 16 scénarios » alors qu'il en porte 53 — nombre RETIRÉ (il grandit, R35), + témoin qui l'interdit | `index.html`, `tests/parcours/runner.js`, `sw.js` | ft-v1005 |
-| 🟢 | 25/08 17:05 → 17:35 | session-B (claude-md-docs) | écran Séance ①/5 : le sélecteur d'exercices reste OUVERT après un ajout (6 allers-retours → 1) ⚠️ renuméroté ft-v1006 → **ft-v1009** : session-A avait pris 1006/1007 pendant ce temps, et réservé 1008 | `log.js` | ft-v1009 |
-| 🟢 | 25/08 16:22 → 16:40 | session-B (claude-md-docs) | plafond IA à 150 pour les comptes de développement (le banc d'essai fait 53 appels, il se faisait couper à 50) + l'email posé dans `eval.js`, sinon le relèvement ne l'atteignait pas | `Code.js`, `tests/milo/eval.js` | — (backend) |
-| 🟢 | 25/08 15:55 → 17:40 | session-A (project-status) | Journal nutrition : bande des 7 jours glissants, cliquable, un anneau par jour | `app.js`, `screens.js`, `tests/parcours/runner.js` | ft-v1004 |
-| 🟢 | 25/08 15:50 → 16:10 | session-B (claude-md-docs) | DOC de cadrage : la séance d'essai (parcours découverte → Milo premium). **Aucun code**, aucun fichier de la nutrition — rien à construire encore, le doc fixe les décisions avant de coder | `docs/SEANCE-DESSAI.md`, `CLAUDE.md` | — (doc) |
-| 🟢 | 25/08 14:31 → 15:20 | session-A (project-status) | la quantité sur un aliment repris SANS pour-100 g (fiche OFF incomplète) → portions | `app.js`, `tests/parcours/runner.js` | ft-v1003 |
-| 🟢 | 25/08 11:51 → 12:35 | session-A (project-status) | dossier UX Nutrition pour Claude Design (écran mesuré : Macros 2 800 px = 3,3 écrans, 5 constats) | `docs/UX-NUTRITION-A-COLLER.md` | — (doc) |
-| 🟢 | 25/08 10:20 → 10:50 | session-B (claude-md-docs) | « Squat Sumo » retiré du CHOIX (retrait ≠ fusion) + son image orpheline sortie du cache SW | `constants.js`, `log.js`, `sw.js`, `A-FAIRE-SUR-PC.md` | ft-v1002 |
-| 🟢 | 25/08 09:20 → 09:55 | session-B (claude-md-docs) | « Pull-over » générique retiré du CHOIX (retrait ≠ fusion : l'historique n'est PAS renommé) + 4 équivalences d'import qui le visaient encore | `constants.js`, `log.js`, `tests/croises/runner.js` | ft-v1001 |
-| 🟢 | 25/08 08:45 → 09:05 | session-B (claude-md-docs) | le « Pull-over » générique : RANGEMENT seul (le partage d'animation a été refusé par le contrôle croisé ②) — la fusion du doublon attend l'arbitrage de Michel | `log.js` | ft-v1000 |
-| 🟢 | 25/08 08:00 → 08:35 | session-B (claude-md-docs) | 2 animations manquantes ajoutées (écarté haltères · tirage poulie basse prise serrée) — le pull-over est un doublon de catalogue, laissé à l'arbitrage de Michel | `exercises/*`, `log.js`, `sw.js` | ft-v999 |
-| 🟢 | 25/08 07:05 → 07:45 | session-A (project-status) | banc d'essai : doctrine R35 (il grandit à chaque bug, sans cible) + 3 scénarios promus (EV-051/052/053) | `tests/milo/eval-scenarios.js`, `docs/REGLES-ARCHITECTURE.md`, `docs/JOURNAL-DE-TEST.md`, `tests/parcours/runner.js` | ft-v998 |
-| 🟢 | 24/08 ~20:30 → 21:25 | session-B (claude-md-docs) | un nom ABRÉGÉ lit la fiche écrite (muscles) + sa jumelle unilatéral | `log.js`, `constants.js`, `state.js` | ft-v997 |
-| 🟢 | 24/08 ~19:30 → 20:30 | session-B (claude-md-docs) | un nom d'exercice abrégé retrouve sa fiche du catalogue (animation, tutoriel) | `constants.js`, `log.js` | ft-v996 |
-| 🟢 | 24/08 ~17:00 → 19:50 | session-A (project-status) | le cardio de Milo va dans son bloc, pas dans les exercices | `log.js`, `coach.js`, `tests/parcours/runner.js` | ft-v995 |
-| 🟢 | 24/08 ~16:00 → 17:00 | session-A (project-status) | banc d'essai 21 → 50 scénarios | `tests/milo/eval-scenarios.js` | ft-v994 |
-| 🟢 | 24/08 ~14:00 → 15:00 | session-A (project-status) | course `_saveCoachMemory` + caches par lieu (mesurés, non construits) | `coach.js` | ft-v993 |
-| 🟠 | 24/08 matin | **DEUX sessions en parallèle** | ⚠️ **LA COLLISION QUI A MOTIVÉ CE FICHIER** — ft-v991 et ft-v992 écrits **deux fois**, contenus équivalents, textes différents. Fusionnés à la main : la branche de l'autre a servi de base, seul ft-v993 y a été greffé. | `state.js`, `coach.js`, `tracking.js` | ft-v991 · ft-v992 |
-| 🟢 | 24/08 20:05 → 20:35 | session-A (project-status) | protocole de partage : créer ce fichier + le déclarer dans CLAUDE.md | `docs/JOURNAL-DE-PARTAGE.md`, `CLAUDE.md` | — |
-
----
 
 ## 🧭 Comment se nommer
 

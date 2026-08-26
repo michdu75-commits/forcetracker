@@ -285,9 +285,10 @@ try:
               "(elles y sont INVISIBLES — markdown jette les colonnes en trop) :")
         for l in _egarees:
             print("   - " + l[:110])
-        print("   → les déplacer sous « ## 📋 Les tâches ». ⚠️ Et pour insérer, s'ancrer sur "
-              "l'EN-TÊTE de ce tableau, jamais sur « | 🟢 » : la légende porte le même jeton "
-              "et vient AVANT dans le fichier.")
+        print("   → les déplacer sous « ## 📋 Les tâches », EN TÊTE du fichier. ⚠️ Et pour "
+              "insérer, s'ancrer sur l'EN-TÊTE de ce tableau : la légende porte le même jeton "
+              "`| 🟢`, donc elle reste une cible possible même depuis qu'elle ne vient plus en "
+              "premier (restructuration du 26/08).")
         sys.exit(1)
     # ⛔ Et le témoin doit avoir VU quelque chose, sinon il serait vert en ne mesurant rien.
     _nTaches = sum(1 for l in _lignes[_iTaches:] if l.startswith("|")
