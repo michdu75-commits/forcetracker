@@ -6,7 +6,28 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1024`.
+- **Version en ligne (live) :** `ft-v1025`.
+- 🍽️⭐⭐ **L'ONGLET MACROS RÉORGANISÉ — LIVRÉ** (ft-v1025). Chantier `docs/MACROS-A.md`
+  (variante A), maquette **confrontée au code avant d'écrire une ligne**.
+  ⭐⭐ **Le défaut était MESURÉ** : **2 649 px (3,1 écrans)** avant de savoir où on en est, la
+  **cible écrite deux fois** à 200 px d'écart, *« noter ce que je mange »* **à 1 783 px** du
+  haut, et **647 px de réglages** au milieu du contenu quotidien.
+  👉 **Mesure finale : 793 px** pour les 5 premiers blocs (objectif 844), **total 1 439 px
+  (−46 %)**, *« noter »* **à 415 px**.
+  ⛔ **Rien n'est supprimé** (R30) ; ⛔⛔ **aucun `id` renommé** — un `id` renommé casserait le
+  remplissage **en silence** (l'écran resterait sur « — »), d'où le témoin des **11 trous**.
+  ⭐ **R13** : l'accordéon `details.acc` existait déjà (Profil, menu admin) → **zéro CSS ajouté**.
+  ⚠️⚠️ **Deux erreurs du brief corrigées à la mesure** : l'« anneau de récup » qu'il donnait en
+  modèle SVG est en **`conic-gradient`** (le vrai anneau SVG est celui de la bande des 7 jours),
+  et `#nu-cycle` n'est **pas** charge/décharge (c'est `.phase-row`).
+  ⚠️ **Sa fusion carte-du-jour + semaine a été REFUSÉE par la mesure** : 958 px pour les 5
+  premiers blocs, contre 844 annoncés. La semaine reste à part, avec le **rétrospectif**.
+  🧠 **« Ce que l'app a appris » déplacée du Journal vers Macros** (décision Michel) —
+  **déplacée, pas dupliquée** (R2).
+  🔴 **Bouton central « + » : 44×44, cx 166,8, top 792 — identique**, mesuré à trois moments.
+  ⏭️ **Hors périmètre, écrit comme tel** : l'onglet **Journal** (qui ne tient plus en un écran),
+  l'onglet **Suppléments** (jamais relevé bloc par bloc), le **mode clair**, et surtout **rendre
+  le plan de repas réellement personnalisé** — c'est la raison pour laquelle il est replié.
 - 🧹⭐ **« SCANNER » ET « IMPORTER UN JOURNAL » RANGÉS — LIVRÉ** (ft-v1024). **5ᵉ et dernière
   brique** du chantier écran Séance : *le chantier en 5 points est TERMINÉ.*
   ⛔⛔ **Mesuré** : 200 px pleine largeur pour deux actions qui servent **une fois dans une

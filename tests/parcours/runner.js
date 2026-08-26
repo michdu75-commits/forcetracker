@@ -6863,11 +6863,19 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
   const R=await pg.evaluate(async()=>{
     const o={};
+    /* ⚠️ RE-CIBLÉ LE 26/08/2026 (ft-v1025) — LA REGLE PROTEGEE N'A PAS CHANGE D'UN MOT.
+       L'onglet Macros a ete reorganise : « aujourd'hui » vit desormais dans sa propre carte
+       (#nu-today) et « ta semaine » dans #nu-ou-en-es. Ce sont les DEUX qui repondent a
+       « ou j'en suis » — le temoin lit donc les deux, et pas une seule des deux moities.
+       ⛔ ON NE LIT PAS TOUT #nu-macros : l'accordeon « comment c'est calcule » contient des
+       chiffres de CIBLE qui feraient passer des assertions par accident. */
+    const _ouEnEs=()=>((document.getElementById('nu-today')||{}).textContent||'')+' '
+      +((document.getElementById('nu-ou-en-es')||{}).textContent||'');
     const el=()=>document.getElementById('nu-ou-en-es');
     if(!el()) return {err:'carte absente de index.html'};
     const j=n=>{const d=new Date(Date.now()-n*864e5);
       return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
-    const T=()=>el().textContent.replace(/\s+/g,' ').trim();
+    const T=()=>_ouEnEs().replace(/\s+/g,' ').trim();
     // ── ① rien de note : une invitation, PAS un « 0 / 2600 » ──────────────────
     S.foodLog=[]; persist(); renderNutrition();
     o.vide=T();
@@ -7006,7 +7014,15 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await pg.waitForTimeout(300);
   const R=await pg.evaluate(async()=>{
     const o={};
-    const carte=()=>document.getElementById('nu-ou-en-es').textContent.replace(/\s+/g,' ').trim();
+    /* ⚠️ RE-CIBLÉ LE 26/08/2026 (ft-v1025) — LA REGLE PROTEGEE N'A PAS CHANGE D'UN MOT.
+       L'onglet Macros a ete reorganise : « aujourd'hui » vit desormais dans sa propre carte
+       (#nu-today) et « ta semaine » dans #nu-ou-en-es. Ce sont les DEUX qui repondent a
+       « ou j'en suis » — le temoin lit donc les deux, et pas une seule des deux moities.
+       ⛔ ON NE LIT PAS TOUT #nu-macros : l'accordeon « comment c'est calcule » contient des
+       chiffres de CIBLE qui feraient passer des assertions par accident. */
+    const _ouEnEs=()=>((document.getElementById('nu-today')||{}).textContent||'')+' '
+      +((document.getElementById('nu-ou-en-es')||{}).textContent||'');
+    const carte=()=>_ouEnEs().replace(/\s+/g,' ').trim();
     o.depart=carte();
     // on APPUIE vraiment sur le bouton, comme un doigt
     const btn=document.querySelector('#nu-ou-en-es button');
@@ -7067,7 +7083,15 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     const j=n=>{const d=new Date(Date.now()-n*864e5);
       return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
     const e=(d,m,n,k,pr)=>({date:d,meal:m,name:n,kcal:k,prot:pr,carbs:0,fat:0,ts:Date.now()+Math.random()*1e3});
-    const T=()=>document.getElementById('nu-ou-en-es').textContent.replace(/\s+/g,' ').trim();
+    /* ⚠️ RE-CIBLÉ LE 26/08/2026 (ft-v1025) — LA REGLE PROTEGEE N'A PAS CHANGE D'UN MOT.
+       L'onglet Macros a ete reorganise : « aujourd'hui » vit desormais dans sa propre carte
+       (#nu-today) et « ta semaine » dans #nu-ou-en-es. Ce sont les DEUX qui repondent a
+       « ou j'en suis » — le temoin lit donc les deux, et pas une seule des deux moities.
+       ⛔ ON NE LIT PAS TOUT #nu-macros : l'accordeon « comment c'est calcule » contient des
+       chiffres de CIBLE qui feraient passer des assertions par accident. */
+    const _ouEnEs=()=>((document.getElementById('nu-today')||{}).textContent||'')+' '
+      +((document.getElementById('nu-ou-en-es')||{}).textContent||'');
+    const T=()=>_ouEnEs().replace(/\s+/g,' ').trim();
     // ── ① un seul repas, aujourd'hui : AUCUN jugement ────────────────────────
     S.foodLog=[e(j(0),'petitdej','Shaker',180,35)]; persist(); goScreen('nutrition',null);
     await new Promise(r=>setTimeout(r,300));
@@ -13779,13 +13803,22 @@ console.log('\n-- CXXVI. L\'app apprend ton alimentation, sans un seul appel (ft
     S.foodLog.push(e(t,'collation','Amandes',180,6,4,16,16));
     const apres=buildCoachContext('x');
     o.cacheIntact = commAvant===apres.slice(0,apres.indexOf(MK));
-    // ── la carte
-    goScreen('s-nutrition'); renderFoodJournal();
-    const txt=()=>document.getElementById('food-journal').innerText;
+    /* ── la carte
+       ⚠️ RE-CIBLÉE LE 26/08/2026 (ft-v1025) — LA RÈGLE PROTÉGÉE N'A PAS CHANGÉ D'UN MOT.
+       La carte a été DÉPLACÉE du Journal vers l'onglet Macros (décision de Michel) : elle se
+       lit de temps en temps, pas d'un coup d'œil, et le Journal ne tenait déjà plus dans un
+       écran. Elle n'a pas été dupliquée — un témoin du bloc CXXX compte les occurrences dans
+       `screens.js` et rougirait si une 2ᵉ copie apparaissait (R2).
+       ⛔ On lit donc `#nu-appris`, et le rendu passe par `renderNutrition()`. */
+    goScreen('s-nutrition'); renderNutrition();
+    const txt=()=>document.getElementById('nu-appris').innerText;
     o.carte=/Ce que l'app a appris de ton alimentation/.test(txt());
     o.mentionGratuit=/sans aucun appel à l'IA/.test(txt());
+    /* ⛔⛔ ET ELLE N'EST PLUS DANS LE JOURNAL : déplacée, pas dupliquée. */
+    renderFoodJournal();
+    o.plusDansJournal=!/a appris de ton alimentation/.test(document.getElementById('food-journal').innerText);
     // ⛔ moins de 3 jours : la carte le DIT, elle ne se tait pas — et Milo, lui, se tait
-    S.foodLog=S.foodLog.filter(x=>x.date===t); renderFoodJournal();
+    S.foodLog=S.foodLog.filter(x=>x.date===t); renderNutrition();
     o.peuDeDonnees=/pas encore de quoi dégager une habitude/.test(txt());
     o.miloSeTait=!/CE QU'ELLE MANGE D'HABITUDE/.test(buildCoachContext('x'));
     // ⛔ aucun journal → aucun profil du tout
@@ -13793,7 +13826,7 @@ console.log('\n-- CXXVI. L\'app apprend ton alimentation, sans un seul appel (ft
     /* ⛔⛔ LE COÛT : 20 passages de l'observateur + 2 rendus + 1 contexte. */
     S.foodLog=[]; for(let i=0;i<6;i++) S.foodLog.push(e(h(i),'dejeuner','Riz',350,7,77,1,13));
     for(let k=0;k<20;k++) _profilAlimentaire();
-    renderFoodJournal(); renderFoodJournal(); buildCoachContext('x');
+    renderFoodJournal(); renderNutrition(); buildCoachContext('x');
     return o;
    }catch(e){return {err:String(e)};}
   });
@@ -13819,6 +13852,8 @@ console.log('\n-- CXXVI. L\'app apprend ton alimentation, sans un seul appel (ft
       'sous marqueur='+F.sousMarqueur+' cache intact='+F.cacheIntact);
     t('⭐ 6 jours = « partiel », et il le DIT au lieu de parler d\'habitude établie (R32)',
       F.etat==='partiel' && F.ditPartiel===true, 'état='+F.etat);
+    t('⛔⛔ … et elle a été DÉPLACÉE, pas dupliquée (absente du Journal — R2)',
+      F.plusDansJournal===true, 'encore dans le Journal = '+(!F.plusDansJournal));
     t('⭐ la carte existe et rappelle que ça ne coûte rien',
       F.carte===true && F.mentionGratuit===true, '');
     t('⛔ sous 3 jours, la carte le DIT (elle ne se tait pas) et Milo, lui, se TAIT',
@@ -14098,6 +14133,226 @@ console.log('\n-- CXXIX. « Scanner » et « Importer » sont rangés, pas retir
     (()=>{const l=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
           const i=l.indexOf('let _impOuvert');
           return i>0 && !/localStorage|persist\(\)/.test(l.slice(i,i+1400));})(), '');
+}
+
+
+/* == BLOC CXXX - L'ONGLET MACROS REORGANISE (ft-v1025) ==
+   Chantier `docs/MACROS-A.md`, variante A. Le defaut etait MESURE, pas ressenti : 2 649 px
+   (3,1 ecrans) avant de savoir ou on en est, la CIBLE ecrite deux fois a 200 px d'ecart,
+   l'action la plus frequente (« noter ce que je mange ») a 1 783 px du haut, et 647 px de
+   formulaire de reglages poses au milieu du contenu quotidien.
+
+   /!\ CE QUE CE BLOC PROTEGE, ET C'EST PLUS QU'UNE MISE EN PAGE :
+   ① le BOUTON CENTRAL « + » ne bouge pas — mesure, jamais regarde (regle d'or #9) ;
+   ② les cinq premiers blocs tiennent sous 844 px (le critere de reussite du brief) ;
+   ③ TOUS les `id` que renderNutrition() remplit existent encore et sont remplis. Un `id`
+      renomme en deplacant un bloc casse le remplissage EN SILENCE : l'ecran reste sur « — »
+      et aucune erreur ne le dit ;
+   ④ aucun ROUGE d'echec sur un depassement de cible (Constitution P21, anti-TCA) ;
+   ⑤ aucun chiffre tant que rien n'est note — un « 0 / 3 144 » a 9 h du matin est un constat
+      d'echec adresse a quelqu'un qui n'a pas encore dejeune ;
+   ⑥ les accordeons sont REPLIES au depart, sinon le rangement ne range rien ;
+   ⑦ « ce qu'il te reste » et « ce que l'app a appris » n'existent QU'UNE FOIS dans le code
+      (R2) — deux copies auraient divergé, et l'une porte trois garde-fous anti-TCA. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    const j=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
+    const e=(d,m,n,k,pr,ca,fa,h)=>({date:d,meal:m,name:n,kcal:k,prot:pr,carbs:ca||0,fat:fa||0,
+      ts:new Date(d+'T'+h+':00').getTime()});
+    const rc=el=>el.getBoundingClientRect();
+    const macros=()=>document.getElementById('nu-macros');
+    if(!macros()) return {err:'#nu-macros absent'};
+
+    // ── ① le bouton central « + » AVANT d'aller sur Nutrition ────────────────
+    const plus=()=>document.querySelector('#nb-log .nb-plus');
+    if(!plus()) return {err:'bouton central introuvable'};
+    const mesurePlus=()=>{const r=rc(plus());
+      return {w:Math.round(r.width),h:Math.round(r.height),cx:+(r.left+r.width/2).toFixed(1),top:Math.round(r.top)};};
+    o.plusAccueil=mesurePlus();
+
+    // ── un vrai journal : 4 jours, 3 repas par jour, a des heures reelles ─────
+    S.foodLog=[];
+    for(let d=0;d<4;d++){
+      S.foodLog.push(e(j(d),'petitdej','Flocons + shaker',420,38,50,8,'08:10'));
+      S.foodLog.push(e(j(d),'dejeuner','Poulet riz',700,60,80,12,'12:40'));
+      S.foodLog.push(e(j(d),'diner','Steak patates',650,55,60,20,'19:30'));
+    }
+    persist(); goScreen('nutrition',null);
+    await new Promise(r=>setTimeout(r,400));
+    o.plusNutrition=mesurePlus();
+
+    // ── ② le budget des cinq premiers blocs ──────────────────────────────────
+    const haut=rc(macros()).top;
+    o.budget5=Math.round(rc(document.getElementById('nu-appris')).bottom-haut);
+    o.total=Math.round(macros().scrollHeight);
+    o.noterA=Math.round(rc(document.getElementById('nu-journal-ptr')).top-haut);
+    o.debordeH=document.documentElement.scrollWidth>document.documentElement.clientWidth;
+
+    // ── ③ tous les trous sont remplis ────────────────────────────────────────
+    const T=id=>{const x=document.getElementById(id); return x?(x.textContent||'').trim():'ABSENT';};
+    o.remplis={};
+    ['m-kcal','nu-bmr','nu-tdee','nu-hydra','m-prot','m-carbs','m-fat','nu-calc-kcal',
+     'nu-acc-calc-sub','nu-acc-diet-sub','nu-today-day'].forEach(id=>{o.remplis[id]=T(id);});
+    o.videsAttendus={};
+    ['nu-keto','diet-card','meal-plan','nu-ou-en-es','nu-appris'].forEach(id=>{
+      const x=document.getElementById(id); o.videsAttendus[id]=x?(x.textContent||'').trim().length:-1;});
+    /* L'anneau de repartition est toujours pilote (les arcs ont une longueur).
+       ⚠️ ON LIT LE STYLE EN LIGNE, PAS L'ATTRIBUT : `arc()` ecrit `el.style.strokeDasharray`,
+       et l'attribut HTML reste sur sa valeur de depart « 0 327 ». Lire l'attribut aurait fait
+       rougir un temoin sur un anneau parfaitement pilote — le temoin aurait mesure le HTML
+       de depart au lieu de ce que la fonction fait. */
+    o.arcs=['ring-prot','ring-carb','ring-fat'].map(id=>{
+      const c=document.getElementById(id); return c?(c.style.strokeDasharray||'VIDE'):'ABSENT';});
+
+    // ── ⑥ les accordeons sont replies ────────────────────────────────────────
+    o.accOuverts=[...macros().querySelectorAll('details')].map(d=>d.open);
+    o.nbAcc=o.accOuverts.length;
+
+    // ── les 3 anneaux de macros ──────────────────────────────────────────────
+    const svgs=()=>[...document.querySelectorAll('#nu-today-body svg')];
+    o.nbAnneaux=svgs().length;
+    o.tailleAnneau=svgs().length?Math.round(rc(svgs()[0]).width):0;
+    o.couleurs=svgs().map(s=>{const c=s.querySelectorAll('circle');return c.length>1?c[1].getAttribute('stroke'):null;});
+    o.carteJour=(document.getElementById('nu-today').textContent||'').replace(/\s+/g,' ').trim();
+
+    // ── ⑤ rien de note : aucun chiffre ───────────────────────────────────────
+    S.foodLog=[]; persist(); renderNutrition();
+    await new Promise(r=>setTimeout(r,120));
+    o.vide=(document.getElementById('nu-today-body').textContent||'').replace(/\s+/g,' ').trim();
+
+    // ── ④ depassement de cible : pas de rouge, anneaux pleins ────────────────
+    S.foodLog=[e(j(0),'dejeuner','Enorme',6000,400,600,200,'12:00')]; persist(); renderNutrition();
+    await new Promise(r=>setTimeout(r,120));
+    o.depasse=(document.getElementById('nu-today-body').textContent||'').replace(/\s+/g,' ').trim();
+    o.offsetsDepasse=svgs().map(s=>s.querySelectorAll('circle')[1]?.getAttribute('stroke-dashoffset'));
+    o.rougeAnneaux=svgs().some(s=>[...s.querySelectorAll('circle')].some(c=>/--red/.test(c.getAttribute('stroke')||'')));
+
+    // ── debordement : un libelle d'aliment a rallonge ────────────────────────
+    S.foodLog=[e(j(0),'dejeuner','Rowing Poitrine Appuyee (Chest Supported) sauce bearnaise maison',900,70,90,25,'12:00')];
+    persist(); renderNutrition(); await new Promise(r=>setTimeout(r,120));
+    o.debordeApresLong=document.documentElement.scrollWidth>document.documentElement.clientWidth;
+
+    // ── les 3 onglets marchent toujours ──────────────────────────────────────
+    /* ⛔ ON RESEME LE VRAI JOURNAL AVANT : les deux temoins ci-dessous portent sur du CONTENU,
+       pas sur l'onglet. Les laisser dependre de la fixture du test precedent (un seul aliment)
+       les rendrait verts ou rouges selon ce qui reste — ils ne mesureraient plus rien. */
+    S.foodLog=[];
+    for(let d=0;d<4;d++){
+      S.foodLog.push(e(j(d),'petitdej','Flocons + shaker',420,38,50,8,'08:10'));
+      S.foodLog.push(e(j(d),'dejeuner','Poulet riz',700,60,80,12,'12:40'));
+      S.foodLog.push(e(j(d),'diner','Steak patates',650,55,60,20,'19:30'));
+    }
+    persist();
+    switchNuTab('journal',document.getElementById('ntab-journal'));
+    await new Promise(r=>setTimeout(r,150));
+    o.ongletJournal=document.getElementById('nu-journal').style.display!=='none'
+                 && document.getElementById('nu-macros').style.display==='none';
+    /* ⛔ « ce qu'il te reste » doit AUSSI etre la dans le Journal : c'est le meme code. */
+    o.resteDansJournal=/Ce qu'il te reste/i.test(document.getElementById('food-journal').textContent||'');
+    /* ⛔ ET « ce que l'app a appris » ne doit PLUS y etre (deplace, pas duplique). */
+    o.apprisDansJournal=/a appris de ton alimentation/i.test(document.getElementById('food-journal').textContent||'');
+    switchNuTab('suppl',document.getElementById('ntab-suppl'));
+    await new Promise(r=>setTimeout(r,150));
+    o.ongletSuppl=document.getElementById('nu-suppl').style.display!=='none';
+    switchNuTab('macros',document.getElementById('ntab-macros'));
+    await new Promise(r=>setTimeout(r,150));
+    o.ongletMacros=document.getElementById('nu-macros').style.display!=='none';
+    o.plusFin=mesurePlus();
+    S.foodLog=[]; persist();
+    return o;
+  });
+  await cx.close();
+
+  console.log('\n-- CXXX. L\'onglet Macros reorganise : ce qui compte se lit sans defiler --');
+  if(R.err){ t('X le bloc tourne', false, R.err); }
+  else{
+    /* 🔴 REGLE D'OR #9 — mesure, pas regarde, et a trois moments : avant d'entrer dans
+       l'onglet, dedans, et apres etre passe par les trois sous-onglets. */
+    const memePlus=(a,b)=>a&&b&&a.w===b.w&&a.h===b.h&&a.top===b.top&&Math.abs(a.cx-b.cx)<0.5;
+    t('🔴 LE BOUTON CENTRAL « + » NE BOUGE PAS (accueil → nutrition)',
+      memePlus(R.plusAccueil,R.plusNutrition),
+      JSON.stringify(R.plusAccueil)+' vs '+JSON.stringify(R.plusNutrition));
+    t('🔴 ... ni apres etre passe par Journal et Supplements',
+      memePlus(R.plusAccueil,R.plusFin), JSON.stringify(R.plusFin));
+    t('🔴 ... et il fait toujours 44 px (la valeur mesuree depuis ft-v977)',
+      R.plusNutrition.w===44&&R.plusNutrition.h===44, JSON.stringify(R.plusNutrition));
+
+    t('⭐⭐ LES CINQ PREMIERS BLOCS TIENNENT SOUS 844 px (critere du brief)',
+      R.budget5>0&&R.budget5<=844, 'mesure = '+R.budget5+' px');
+    t('⭐⭐ « NOTER CE QUE JE MANGE » EST DANS LE PREMIER ECRAN (il etait a 1 783 px)',
+      R.noterA<844, 'a '+R.noterA+' px du haut');
+    t('⭐ l\'onglet entier a maigri (il faisait 2 649 px)',
+      R.total<1800, 'total = '+R.total+' px');
+    t('⛔ aucun debordement horizontal', R.debordeH===false&&R.debordeApresLong===false,
+      'normal='+R.debordeH+' · libelle long='+R.debordeApresLong);
+
+    /* ⛔⛔ LE TEMOIN LE PLUS IMPORTANT DU BLOC. Deplacer un bloc en renommant son `id` ne
+       leve aucune erreur : renderNutrition() ecrit dans le vide et l'ecran reste sur « — ». */
+    const nonRemplis=Object.entries(R.remplis).filter(([k,v])=>v==='ABSENT'||v===''||v==='—');
+    t('⭐⭐ TOUS LES TROUS DE renderNutrition() SONT ENCORE LA ET REMPLIS',
+      nonRemplis.length===0, JSON.stringify(nonRemplis));
+    const vides=Object.entries(R.videsAttendus).filter(([k,v])=>v<=0);
+    t('⭐ ... y compris ceux qui sont remplis par d\'autres fonctions (keto, regime, plan, semaine, appris)',
+      vides.length===0, JSON.stringify(vides));
+    t('⛔ l\'anneau de repartition est toujours pilote (arcs non nuls)',
+      R.arcs.every(a=>a&&a!=='ABSENT'&&!/^0\s/.test(a)), JSON.stringify(R.arcs));
+
+    t('⭐ les deux accordeons sont REPLIES au depart (sinon le rangement ne range rien)',
+      R.nbAcc>=4&&R.accOuverts.every(x=>x===false), R.nbAcc+' accordeons, ouverts='+JSON.stringify(R.accOuverts));
+    t('⭐ les sous-titres disent l\'etat courant sans avoir a deplier',
+      /TDEE/.test(R.remplis['nu-acc-calc-sub'])&&R.remplis['nu-acc-diet-sub'].length>3,
+      R.remplis['nu-acc-calc-sub']+' | '+R.remplis['nu-acc-diet-sub']);
+
+    t('⭐ trois anneaux de macros, 92 px, une couleur par macro et AUCUN rouge',
+      R.nbAnneaux===3&&R.tailleAnneau===92
+      &&JSON.stringify(R.couleurs)===JSON.stringify(['var(--green)','var(--orange)','var(--gold)']),
+      R.nbAnneaux+' anneaux de '+R.tailleAnneau+' px · '+JSON.stringify(R.couleurs));
+    t('⭐ la carte du jour dit le REEL en gros et la cible en petit, une seule fois',
+      /kcal mangees|kcal mangées/i.test(R.carteJour)
+      && (R.carteJour.match(/[Cc]ible/g)||[]).length===1, R.carteJour.slice(0,110));
+
+    /* ⛔ ANTI-TCA (P21) — mesure sur un depassement de 3 000 kcal. */
+    t('⭐⭐ DEPASSEMENT : aucun rouge d\'echec, et la phrase relativise',
+      R.rougeAnneaux===false && /pas une tendance/i.test(R.depasse), R.depasse.slice(0,120));
+    t('⭐ ... et les anneaux s\'arretent a 100 %, ils ne debordent pas',
+      R.offsetsDepasse.every(x=>x==='0.0'), JSON.stringify(R.offsetsDepasse));
+
+    t('⭐⭐ RIEN DE NOTE : aucun chiffre, mais pas une boite vide non plus',
+      /Rien de not/i.test(R.vide) && !/\d/.test(R.vide), JSON.stringify(R.vide));
+
+    t('⛔ les trois sous-onglets fonctionnent toujours',
+      R.ongletJournal===true&&R.ongletSuppl===true&&R.ongletMacros===true,
+      'journal='+R.ongletJournal+' suppl='+R.ongletSuppl+' macros='+R.ongletMacros);
+    /* ⛔⛔ R2 : un seul code pour « ce qu'il te reste », donc il est VISIBLE aux deux endroits ;
+       « ce que l'app a appris » a ete DEPLACEE, donc elle n'est plus QUE dans Macros. */
+    t('⭐⭐ « ce qu\'il te reste » est le MEME code des deux cotes (present dans le Journal aussi)',
+      R.resteDansJournal===true, 'trouve dans le Journal = '+R.resteDansJournal);
+    t('⭐⭐ « ce que l\'app a appris » a ete DEPLACEE, pas dupliquee (absente du Journal)',
+      R.apprisDansJournal===false && R.videsAttendus['nu-appris']>0,
+      'journal='+R.apprisDansJournal+' · macros='+R.videsAttendus['nu-appris']+' caracteres');
+  }
+  /* ⛔ ET LE CODE LUI-MEME NE DOIT CONTENIR QU'UN SEUL RENDU DE CHAQUE (R2) : un temoin
+     d'ecran ne verrait pas une deuxieme copie posee dans un onglet qu'il ne regarde pas. */
+  {
+    const sc=fs.readFileSync(path.join(__dirname,'..','..','screens.js'),'utf8');
+    /* ⚠️ ON CHERCHE LA BALISE FERMANTE, PAS LA PHRASE. Mon 1er motif comptait
+       « Ce qu'il te reste, en vrai » et rendait 2 — les DEUX etaient des COMMENTAIRES : dans le
+       code, l'apostrophe est echappee (`Ce qu\\'il`), donc le motif ne touchait jamais le vrai
+       rendu. *Un temoin qui compte les commentaires mesure la documentation, pas le code.* */
+    const _pat=/te reste, en vrai<\/div>/g;
+    t('⛔ un seul constructeur pour « ce qu\'il te reste » dans screens.js',
+      (sc.match(_pat)||[]).length===1, 'occurrences = '+(sc.match(_pat)||[]).length);
+    t('⛔ un seul constructeur pour « ce que l\'app a appris » dans screens.js',
+      (sc.match(/a appris de ton alimentation<\/div>/g)||[]).length===1,
+      'occurrences = '+(sc.match(/a appris de ton alimentation<\/div>/g)||[]).length);
+  }
 }
 
 await b.close(); srv.close();

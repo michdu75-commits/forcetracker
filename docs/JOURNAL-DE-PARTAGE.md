@@ -180,6 +180,37 @@ git fetch origin master     # ← celui-ci atteint vraiment GitHub
 son travail disparu, ou pire, *« réparer »* master en poussant par-dessus. **Devant un master qui a
 reculé, on ne pousse rien : on refait un fetch explicite et on regarde les dates.**
 
+### ⛔⛔ `git rebase` PEUT SUPPRIMER UN COMMIT SANS RIEN DIRE (constaté le 26/08/2026)
+
+**Ce qui s'est passé.** J'avais un seul commit à moi sur ma branche (`docs/MACROS-A.md`, poussé).
+`git fetch origin master` ramène la branche de l'autre session — avec un **`(forced update)`** :
+
+```
++ 84cdf26...ce25bbf master -> origin/master  (forced update)
+```
+
+Puis `git rebase origin/master` répond **« Successfully rebased »**… et **mon commit n'existe
+plus**. Aucun conflit, aucun avertissement, aucune ligne rouge. Le fichier avait simplement disparu
+de l'arbre de travail, et je ne l'ai vu que **deux heures plus tard**, en essayant de l'éditer.
+
+**⚠️ La cause.** `git rebase <branche-de-suivi>` utilise par défaut le **`--fork-point`**, qui
+devine la base commune à partir du *reflog* de la branche amont. Quand cette branche a été
+**réécrite** (force-push — ce que fait l'autre session en rebasant la sienne), cette devinette peut
+désigner une base **trop récente**, et git en conclut que nos commits sont « déjà appliqués ».
+
+**🛡️ Ce qui protège.**
+1. **Compter avant et après.** `git rev-list --count origin/master..HEAD` avant le rebase, et
+   après : le nombre ne doit pas baisser.
+2. Ou désactiver la devinette : **`git rebase --no-fork-point origin/master`**.
+3. **Rien n'est perdu tant qu'on n'a pas nettoyé** : le commit reste dans l'objet local. On le
+   retrouve avec `git reflog` et on récupère le fichier avec
+   `git show <sha>:<chemin> > <chemin>`. *C'est comme ça que celui-ci est revenu.*
+
+👉 **La leçon de fond est la même que celle du fetch juste au-dessus** : dans un dépôt partagé par
+deux sessions, **la commande a réussi ≠ le résultat est celui qu'on croit**. Ici git a dit
+« Successfully ». *Un outil qui annonce un succès en ayant supprimé du travail est plus dangereux
+qu'un outil qui échoue.*
+
 ### 🕐 Les heures
 
 Écrire l'heure **UTC** ou préciser le fuseau. Deux sessions peuvent tourner dans des conteneurs

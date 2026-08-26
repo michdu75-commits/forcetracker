@@ -463,6 +463,27 @@ conclure faux avec assurance.
   côte avant tout verdict sur un mouvement. Appliqué immédiatement **aux deux verdicts opposés**
   (« bilatéral ») que j'avais rendus par la même méthode — ils tiennent, mais *une erreur de
   méthode ne se répare pas à moitié : elle invalide tout ce qui a été produit avec elle.*
+- **💬 UN TÉMOIN QUI COMPTE LES COMMENTAIRES MESURE LA DOCUMENTATION, PAS LE CODE**
+  *(26/08/2026, ft-v1025)* : pour garantir qu'un bloc n'existe qu'à **un seul endroit** (R2), je
+  compte les occurrences de son titre dans `screens.js`. Le témoin rend **2** et rougit — alors
+  qu'il n'y a bien qu'un seul rendu. **Les deux occurrences trouvées étaient des COMMENTAIRES** :
+  dans le vrai code, l'apostrophe est **échappée** (`Ce qu\'il te reste`), donc le motif ne
+  touchait **jamais** le rendu qu'il prétendait compter. *Il aurait été tout aussi vert si le
+  rendu avait disparu.* 🛡️ **Le réflexe** : chercher un motif que seul le **code** peut produire
+  — ici la balise fermante `te reste, en vrai</div>` — jamais une phrase que la doc répète aussi.
+  ⚠️ Et se méfier des **échappements** : `'` en JavaScript devient `\'` dans la source, donc un
+  motif écrit « comme à l'écran » rate systématiquement le code.
+- **🚰 `| tail` AVALE LE CODE DE SORTIE** *(26/08/2026, ft-v1025)* : je lance la suite parcours
+  avec `node tests/parcours/runner.js 2>&1 | tail -60`. Le harnais annonce **« exit code 0 »** —
+  or le nouveau bloc **n'avait pas tourné du tout** : il était posé **après** `await b.close()`,
+  et la suite s'est arrêtée sur `browser has been closed` **sans jamais imprimer sa ligne
+  TOTAL**. En shell, le code de sortie d'un tuyau est celui du **DERNIER** maillon — `tail` réussit
+  toujours. *La suite avait échoué, l'outil disait vert.* ⭐ **Ce qui l'a rattrapé n'est pas le
+  code de sortie, c'est d'avoir cherché la ligne TOTAL et de ne pas l'avoir trouvée.**
+  🛡️ **Le réflexe** : rediriger vers un fichier (`> sortie.txt 2>&1`) et lire le code de sortie
+  **de la commande elle-même**, jamais à travers un tuyau. Et devant une suite « verte »,
+  vérifier que sa ligne de TOTAL est là — *une suite qui s'arrête en route n'imprime pas de
+  total, et une absence ne se remarque pas.*
 - **Un contrôle négatif à 0 rouge** (ft-v714) : je vérifiais qu'un test échoue bien sans le
   correctif — il affichait **0 échec**. Le runner **plantait** au lieu d'échouer, et le crash
   masquait tout. *Un test qui plante n'est pas un test qui passe.*
@@ -1095,3 +1116,46 @@ Quand on insère dans un document structuré, **s'ancrer sur l'EN-TÊTE de la se
 jamais sur le premier motif qui ressemble — surtout si le même motif vit ailleurs dans le
 fichier. *Et vérifier ce qu'on vient d'écrire à l'endroit où il est censé se lire, pas dans
 le diff* : le diff montre la ligne ajoutée, il ne dit pas dans quel tableau elle est tombée.
+
+---
+
+## 18. 📐 LA SPÉCIFICATION QUI NOMME UN COMPOSANT QUI N'EST PAS CE QU'ELLE CROIT *(26/08/2026)*
+
+**Le mécanisme.** Un document de conception écrit **depuis l'extérieur du code** — brief de
+maquettage, note d'architecture, rapport d'audit — désigne un composant existant en modèle
+(*« reprends l'anneau de récup »*, *« comme le bloc X »*). Le nom est juste, **la chose ne l'est
+pas** : le composant fait autre chose, ou s'appelle autrement dans le code. Suivi au mot, le
+document fait travailler au mauvais endroit — et **le résultat compile, s'affiche, et paraît
+correct**.
+
+### Les cas connus
+
+| Ce que la spécification affirmait | Ce que le code disait | Version |
+|---|---|---|
+| *« le PDF de Milo ne contient que le titre »* (audit de 200 pages, classé P0) | l'extraction rendait **81 caractères sur 81, 9 769 sur 9 769** — c'était la **livraison** qui échouait, pas le contenu | ft-v978 |
+| *« Milo est dans la chaîne de saisie alimentaire »* · *« une saisie invalide le cache »* · *« seuil de rentabilité 1,39 »* | trois affirmations **fausses**, vérifiées dans le code | ft-v978 |
+| *« reprends le composant SVG existant — celui de l'anneau de récup »* | cet anneau est en **`conic-gradient` + masques**, avec un commentaire disant que c'est *la seule façon d'avoir une couleur qui suit le cercle*. Le vrai anneau SVG est celui de la **bande des 7 jours** | ft-v1025 |
+| *« charge/décharge `#nu-cycle` »* | `#nu-cycle` est l'**explication du cycle des glucides** ; les boutons sont `.phase-row`. Le suivre aurait rangé le mauvais bloc **et laissé les vrais boutons** au milieu de l'écran | ft-v1025 |
+| *« ce bloc n'existe pas — le créer »* | il existait depuis **le matin même**, dans un autre onglet. Le créer aurait produit **deux exemplaires** qui divergent (R2) | ft-v1025 |
+
+### 🔎 Comment la reconnaître
+- La spécification **nomme** un composant, un fichier ou une ligne **sans citer son code** ;
+- elle a été écrite **sans accès au dépôt**, ou à une révision antérieure — et le dit rarement ;
+- l'erreur est **plausible** : le composant existe vraiment, il ne fait simplement pas ça.
+
+⚠️ **Le mode d'échec n'est jamais une erreur** : on obtient un écran qui marche, construit sur la
+mauvaise brique. C'est **R28** (*une limite non vérifiée devient une règle de conception
+silencieuse*) vue de l'autre côté — ici ce n'est pas une limite qu'on croit, c'est une **capacité**.
+
+### 🛡️ Ce qui protège
+Rien d'automatique, et c'est le point : **le seul garde-fou est de vérifier chaque affirmation
+avant d'écrire une ligne**, et d'écrire l'écart trouvé plutôt que de corriger en silence — sinon
+le document repart tel quel vers la personne suivante. Les trois kits du projet
+(`DESIGN-KIT.md`, `CONTRAINTES-PDF.md`, `MOTEUR-MET-A-COLLER.md`) existent pour **réduire** cette
+famille à la source : ils donnent à l'outil extérieur les vraies valeurs, au lieu de le laisser
+deviner.
+
+### ⭐ Le réflexe
+Devant une spécification écrite hors du code : **relever les numéros de ligne et les noms de
+composants D'ABORD**, en bloc, avant de planifier quoi que ce soit. Ça coûte dix minutes et ça a
+déjà changé deux fois la nature du travail à faire.

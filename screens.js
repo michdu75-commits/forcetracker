@@ -205,6 +205,11 @@ const _HELP_DATA={
   nutrition:{
     title:'🍽️ Nutrition',
     tips:[
+      /* 🍽️ ORDRE DE L'ONGLET MACROS (ft-v1025) — en PREMIER dans l'aide, parce que c'est la
+         première question qu'on se pose en arrivant : « où est passé mon TDEE ? ». R25 : la
+         pop-up ANNONCE (une fois), l'aide EXPLIQUE (à chaque fois qu'on la rouvre). */
+      {i:'🍽️',t:'<b>L\'onglet Macros se lit de haut en bas, du jour vers le durable.</b> En haut, <b>ta journée</b> : ce que tu as mangé en gros, ta cible en petit, trois anneaux (protéines · glucides · lipides) et « ce qu\'il te reste, en vrai » — traduit en <b>tes</b> aliments, pas en grammes abstraits. Puis le bouton pour noter, ta séance du jour, ce que l\'app a appris de ton alimentation, ta semaine. <b>Tout en bas, deux lignes repliées</b> : « Comment c\'est calculé » (BMR, TDEE, répartition en %, charge/décharge, ajuster à la main) et « Mes réglages alimentaires » (mode cétogène/low carb/paléo/méditerranéen, jeûne, régime, restrictions, allergies). ⚠️ <b>Rien n\'a été retiré</b> : ces réglages se touchent deux ou trois fois par an, ils ne sont plus au milieu de ce que tu regardes tous les jours. Le titre de chaque ligne repliée te dit déjà l\'essentiel (ton objectif et ton TDEE, ton régime en cours) — tu n\'as à l\'ouvrir que pour changer quelque chose.'},
+      {i:'🍱',t:'Le <b>plan de repas</b> est replié par défaut, et c\'est volontaire : c\'est une liste écrite à l\'avance, <b>la même pour tout le monde</b>, qui ne connaît ni ce que tu manges ni ce que tu détestes. Il te donne un ordre de grandeur, pas un menu à suivre. Le jour où il saura se baser sur tes vrais aliments, il se dépliera tout seul. En attendant, « ce qu\'il te reste, en vrai » (en haut) est bien plus proche de toi : il ne propose que des aliments que <b>tu as déjà notés</b>.'},
       {i:'⚠️',t:'Les macros s\'affichent correctement uniquement si le Profil est complet (âge, poids, taille, activité, objectif).'},
       {i:'🔥',t:'<b>D\'où vient ton BMR</b> (métabolisme de base, ce que ton corps brûle au repos) : si tu as renseigné un <b>bilan corporel</b> ou ton <b>% de masse grasse</b>, l\'app le calcule sur ta <b>masse maigre</b> (formule de Katch-McArdle) au lieu de ton seul poids — chez quelqu\'un de musclé ça change souvent de <b>100 à 200 kcal par jour</b>, parce que le muscle consomme au repos et le gras beaucoup moins. Sinon, elle utilise la formule générique (Mifflin-St Jeor). <b>La ligne sous le chiffre dit toujours laquelle</b> : tape-la, le calcul est posé avec tes nombres. ⚠️ Un bilan de plus de 3 mois, ou un poids qui a bougé de plus de 5 % depuis, n\'est pas utilisé : on ne sait pas si les kilos sont du muscle ou du gras. Le métabolisme affiché par ta balance, lui, est enregistré mais pas utilisé dans le calcul — chaque marque a sa formule secrète, invérifiable.'},
       {i:'📈',t:'Phase Charge = surplus calorique pour prendre du muscle. Phase Décharge = déficit pour perdre du gras. Alterne selon tes cycles.'},
@@ -1885,18 +1890,185 @@ function _nutriJoursNotes(n, sansAujourdhui){
   }
   return jours;
 }
+/* 🍽️ LA CARTE DU JOUR (26/08/2026, ft-v1025) — chantier `docs/MACROS-A.md`.
+   ⭐ CE QU'ELLE RÈGLE, MESURÉ : il fallait 3,3 écrans pour savoir où on en est, et la cible du
+   jour était écrite DEUX FOIS à 200 px d'écart. Elle est maintenant écrite une seule fois, en
+   petit, et le gros chiffre est le RÉEL : ce qui a été mangé.
+   ⛔⛔ TANT QUE RIEN N'EST NOTÉ, ELLE N'AFFICHE AUCUN CHIFFRE. Un « 0 / 3 144 » à 9 h du matin
+   n'est pas une information, c'est un constat d'échec adressé à quelqu'un qui n'a pas encore
+   déjeuné — c'est le défaut corrigé le 19/08 sur la carte de la semaine, et un témoin le tient
+   depuis (LIII). *Un faux zéro se lit comme un vrai.*
+   ⛔ AUCUN ROUGE D'ÉCHEC SUR UN DÉPASSEMENT (Constitution P21, anti-TCA) : les anneaux se
+   remplissent jusqu'à 100 % et s'arrêtent, la ligne dit « un jour, pas une tendance ». Le rouge
+   est réservé à ce qui est dangereux, jamais à ce qui est simplement au-dessus.
+   ⛔ ET L'ÉCHELLE ROUGE→VERT DE L'ANNEAU DE RÉCUP N'EST PAS REPRISE : un anneau de protéines à
+   47 % en début d'après-midi s'afficherait rouge alors que la journée n'est pas finie.
+   ⚠️ LA TECHNIQUE EST CELLE DE LA BANDE DES 7 JOURS DU JOURNAL (SVG, ft-v1004), pas celle de
+   l'anneau de récup — celui-là est en `conic-gradient` + masques (style.css), parce qu'il lui
+   faut une couleur qui CHANGE le long de l'arc. Ici la couleur est fixe : le SVG suffit, et il
+   se redimensionne sans recette. */
+function _renderAujourdhui(macros){
+  const el=document.getElementById('nu-today-body'); if(!el) return;
+  const jour=document.getElementById('nu-today-day');
+  if(jour){
+    /* ⏰ À MIDI — la famille « fuseaux horaires » de BUGS.md : `new Date('2026-08-26')` est
+       interprété en UTC et peut afficher la veille à Paris. */
+    const d=new Date(today()+'T12:00:00');
+    jour.textContent='Aujourd\'hui · '+d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric'});
+  }
+  const auj=(typeof _foodTotals==='function')?_foodTotals(today()):{kcal:0,prot:0,carbs:0,fat:0};
+  const noteAuj=(S.foodLog||[]).some(e=>e&&e.date===today());
+  /* ⛔ AUCUN CHIFFRE TANT QUE RIEN N'EST NOTÉ — mais pas une boîte vide non plus : un cadre sans
+     rien dedans se lit comme un chargement qui n'a pas abouti. Une phrase, zéro nombre. */
+  if(!noteAuj){
+    el.innerHTML='<div style="font-size:12.5px;color:var(--t3);line-height:1.4;margin-top:8px;">Rien de noté pour l\'instant.</div>';
+    return;
+  }
+  const cible=macros.calories||0;
+  const mange=Math.round(auj.kcal);
+  const reste=cible-mange;
+  const pct=cible?Math.min(100,Math.round(mange/cible*100)):0;
+
+  /* ⭕ Un anneau par macro. Circonférence = 2πr avec r=40, soit ≈ 251,3. Le trait part du haut
+     (rotation -90°). Le tour de piste est PLUS LARGE que l'arc coloré : c'est ce qui donne la
+     profondeur — pas une teinte inventée (leçon de l'anneau de récup, trois retours de Michel
+     sur un gris qui ne se voyait pas sur un iPhone). */
+  const anneau=(val,cib,lbl,coul)=>{
+    const v=Math.round(val||0), c=Math.round(cib||0);
+    const p=c?Math.min(100,v/c*100):0;
+    const C=251.3, off=(C*(1-p/100)).toFixed(1);
+    return '<div style="display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0;">'
+      +'<div style="position:relative;width:92px;height:92px;">'
+        +'<svg width="92" height="92" viewBox="0 0 92 92" style="display:block;transform:rotate(-90deg);">'
+          +'<circle cx="46" cy="46" r="40" fill="none" stroke="var(--bg3)" stroke-width="8"/>'
+          +(p>0?'<circle cx="46" cy="46" r="40" fill="none" stroke="'+coul+'" stroke-width="6"'
+            +' stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'"/>':'')
+        +'</svg>'
+        +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">'
+          +'<span style="font-family:var(--font-cond);font-size:22px;font-weight:900;color:var(--t1);line-height:1;">'+v+'</span>'
+          +'<span style="font-size:9.5px;color:var(--t3);font-weight:700;margin-top:1px;">/ '+c+' g</span>'
+        +'</div>'
+      +'</div>'
+      +'<span style="font-size:9.5px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;">'+lbl+'</span>'
+      +'</div>';
+  };
+
+  el.innerHTML=
+     '<div style="display:flex;align-items:baseline;gap:7px;margin-top:8px;">'
+      +'<span style="font-family:var(--font-cond);font-size:40px;font-weight:900;color:var(--t1);line-height:1;">'+mange.toLocaleString('fr-FR')+'</span>'
+      +'<span style="font-size:12.5px;color:var(--t3);font-weight:700;">kcal mangées</span>'
+    +'</div>'
+    +'<div style="height:4px;border-radius:3px;background:var(--bg3);overflow:hidden;margin:10px 0 7px;">'
+      +'<div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--red2),var(--red));border-radius:3px;"></div></div>'
+    /* ⛔ « Un jour, pas une tendance » n'est pas une politesse : c'est ce qui empêche de lire un
+       dépassement comme un échec. La cohérence prime sur la réactivité (R12). */
+    +'<div style="font-size:12.5px;color:var(--t2);">'
+      +(reste>=0 ? reste.toLocaleString('fr-FR')+' kcal restantes'
+                 : 'Cible dépassée de '+Math.abs(reste).toLocaleString('fr-FR')+' kcal. <span style="color:var(--t3);">Un jour, pas une tendance.</span>')
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);justify-items:center;gap:6px;margin-top:14px;padding-top:14px;border-top:1px solid var(--sep);">'
+      +anneau(auj.prot ,macros.prot_g ,'Protéines','var(--green)')
+      +anneau(auj.carbs,macros.carbs_g,'Glucides' ,'var(--orange)')
+      +anneau(auj.fat  ,macros.fat_g  ,'Lipides'  ,'var(--gold)')
+    +'</div>'
+    /* 🍽️ « Ce qu'il te reste, en vrai » : le MÊME bloc que dans le Journal, un seul code (R2). */
+    +(typeof _blocResteHTML==='function'?_blocResteHTML(today()):'');
+}
+
+/* 🍽️ CE QUE LE RESTE REPRÉSENTE VRAIMENT (26/08/2026, ft-v1019) — demande de Michel :
+   *« à 14h, il te reste 150 g de prot à manger, tu peux faire 1 shake de prot et 150 g de
+   poulet »*. ⭐⭐ Les chiffres du reste étaient DÉJÀ affichés, ligne par ligne — et ils ne
+   servaient à rien : *personne ne sait à quoi ressemblent 150 g de protéines dans une
+   assiette.* Ce qui manquait n'était pas la donnée, c'était sa TRADUCTION.
+   ⛔ UN SEUL CODE POUR LES DEUX ONGLETS (ft-v1025, R2) : le Journal et la carte du jour
+   l'affichent tous les deux, ils ne sont jamais visibles en même temps. Deux copies auraient
+   divergé — on aurait corrigé un garde-fou anti-TCA d'un côté seulement.
+   ⛔ AUJOURD'HUI SEULEMENT (anti-TCA, P21) : sur un jour passé, « il te manquait 40 g » est un
+   reproche sur une journée qu'on ne peut plus changer. */
+function _blocResteHTML(td){
+  if(td!==today()) return '';
+  const reste=(typeof _resteDuJour==='function')?_resteDuJour(td):null;
+  const idees=(typeof _ideesPourLeReste==='function')?_ideesPourLeReste(reste):[];
+  if(!idees.length) return '';
+  const cols={prot:'var(--green)',carbs:'var(--orange)',fat:'var(--gold)'};
+  return '<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--sep);">'
+    +'<div style="font-size:11.5px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Ce qu\'il te reste, en vrai</div>'
+    +idees.map(i=>'<div style="display:flex;align-items:baseline;gap:7px;margin-bottom:6px;font-size:13px;line-height:1.45;">'
+        +'<span style="color:'+cols[i.macro]+';font-weight:800;white-space:nowrap;">'+i.manque+' g</span>'
+        /* ⚠️ `nowrap` : sans lui, « de glucides — » se coupe et le tiret se retrouve seul sur la
+           ligne suivante (vu à la capture, 390 px). */
+        +'<span style="color:var(--t3);white-space:nowrap;">de '+i.label+' —</span>'
+        +'<span style="color:var(--t1);font-weight:700;">'+(typeof _escNote==='function'?_escNote(i.idee):i.idee)+'</span>'
+        /* ⛔ ON DIT CE QUE ÇA COUVRE VRAIMENT quand la combinaison ne suffit pas : faire croire
+           qu'elle tombe juste serait une fausse précision (R29). */
+        +((i.couvert && i.couvert < i.manque-5)?'<span style="color:var(--t3);white-space:nowrap;">(≈ '+i.couvert+' g)</span>':'')
+      +'</div>').join('')
+    /* ⛔ « à peu près » n'est pas de la modestie de façade : la portion enregistrée est une
+       estimation, et le dire évite qu'on prenne ça pour une prescription au gramme. */
+    +'<div style="font-size:11px;color:var(--t3);line-height:1.4;margin-top:8px;">À peu près — calculé sur <b>tes</b> aliments, pas sur une table générique. Une idée, pas une consigne.</div>'
+    +'</div>';
+}
+
+/* 🧠 CE QUE L'APP A APPRIS DE TON ALIMENTATION (26/08/2026, ft-v1021) — 100 % local.
+   Michel : *« il faut que l'application (pas Milo) apprenne du sportif côté nutrition sans que
+   ça me coûte un seul appel API »*.
+   ⭐⭐ POURQUOI ON LE MONTRE, ET PAS SEULEMENT EN INTERNE : un profil qu'on ne voit pas ne peut
+   pas être corrigé. C'est la doctrine du profil vivant — *observer → expliquer → proposer →
+   décider* : la personne doit pouvoir lire ce que l'app croit savoir d'elle.
+   ⛔ ET ON DIT CE QU'ON NE SAIT PAS. En dessous de 3 jours notés, la carte annonce qu'elle n'a
+   pas de quoi observer — elle ne se tait PAS, parce qu'un silence laisserait croire qu'il n'y a
+   rien à apprendre (R29).
+   ⚠️ DÉPLACÉE DU JOURNAL VERS MACROS le 26/08 (ft-v1025), sur décision de Michel — pas
+   dupliquée : deux exemplaires auraient divergé (R2), et le Journal ne tenait déjà plus dans un
+   écran depuis qu'il avait gagné deux cartes le matin même. */
+function _blocApprisHTML(){
+  const pa=(typeof _profilAlimentaire==='function')?_profilAlimentaire():null;
+  if(!pa) return '';
+  const LBL={petitdej:'Petit-déj', collation:'Collation', dejeuner:'Déjeuner',
+             collation2:'Collation 2', diner:'Dîner', autre:'Autre'};
+  const esc=t=>(typeof _escNote==='function')?_escNote(t):t;
+  let corps;
+  if(pa.etat==='insuffisant'){
+    /* ⛔ Le ton est FACTUEL, jamais une relance : « note ce que tu manges » serait une
+       injonction, et la nutrition ne doit jamais devenir une source de pression (P21). */
+    corps='<div style="font-size:12.5px;color:var(--t3);line-height:1.5;">'
+      +pa.nbJours+' jour'+(pa.nbJours>1?'s':'')+' noté'+(pa.nbJours>1?'s':'')+' — pas encore de quoi dégager une habitude. '
+      +'À partir de 3 jours, l\'app commence à reconnaître ce que tu manges vraiment.</div>';
+  } else {
+    const lignes=Object.keys(pa.habitudes).filter(m=>LBL[m]).map(m=>{
+      const noms=pa.habitudes[m].map(x=>esc(x.nom)).join(' · ');
+      const h=pa.heures[m];
+      return '<div style="display:flex;gap:8px;margin-bottom:5px;font-size:12.5px;line-height:1.45;">'
+        +'<span style="color:var(--t3);min-width:78px;font-weight:700;">'+LBL[m]+((h!==undefined)?' <span style="font-weight:400;">~'+h+'h</span>':'')+'</span>'
+        +'<span style="color:var(--t1);flex:1;min-width:0;">'+noms+'</span></div>';
+    }).join('');
+    corps=lignes
+      +'<div style="font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:8px;">'
+      +'Observé sur <b>'+pa.nbJours+' jour'+(pa.nbJours>1?'s':'')+'</b>'
+      +(pa.etendue>pa.nbJours?' répartis sur '+pa.etendue:'')
+      +' · en moyenne <b>'+pa.moyennes.kcal+' kcal</b> et <b>'+pa.moyennes.prot+' g</b> de protéines par jour noté.'
+      /* ⚠️ On DIT que c'est partiel plutôt que de laisser croire à une habitude établie (R32). */
+      +(pa.etat==='partiel'?' <b>C\'est encore court</b> — l\'app décrit ces jours-là, pas tes habitudes.':'')
+      +'</div>';
+  }
+  return '<div style="background:var(--bg2);border-radius:16px;padding:16px;box-shadow:inset 0 0 0 1px var(--sep);">'
+    +'<div style="font-size:12px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">🧠 Ce que l\'app a appris de ton alimentation</div>'
+    +corps
+    /* ⛔ Le rappel qui compte pour Michel : ça ne coûte rien. */
+    +'<div style="font-size:11px;color:var(--t3);margin-top:8px;opacity:.85;">Calculé sur ton téléphone, sans aucun appel à l\'IA.</div>'
+    +'</div>';
+}
+
 function _renderOuTuEnEs(macros){
   const el=document.getElementById('nu-ou-en-es'); if(!el) return;
   const cible=macros.calories||0, cibleP=macros.prot_g||0;
-  const auj=(typeof _foodTotals==='function')?_foodTotals(today()):{kcal:0,prot:0};
   const joursTous=_nutriJoursNotes(7);          // pour savoir s'il y a quoi que ce soit
   const jours=_nutriJoursNotes(7,true);         // pour la MOYENNE : jours terminés seulement
-  const notesAuj=(S.foodLog||[]).some(e=>e&&e.date===today());
 
   // ── Personne n'a rien noté : on invite, on ne juge pas ──────────────────────────────
   if(!joursTous.length){
     el.innerHTML='<div style="background:var(--bg2);border:1px solid var(--sep);border-radius:16px;padding:16px;">'
-      +'<div style="font-family:var(--font-cond);font-size:17px;font-weight:800;color:var(--t1);">Où tu en es</div>'
+      +'<div style="font-family:var(--font-cond);font-size:17px;font-weight:800;color:var(--t1);">Ta semaine</div>'
       +'<div style="font-size:13px;color:var(--t2);line-height:1.45;margin-top:6px;">Note un repas et cette carte te dira où tu en es — aujourd\'hui et sur la semaine. Pas besoin de tout peser : ce qui compte, c\'est la tendance.</div>'
       +'<button class="btn btn-red" style="width:100%;margin-top:12px;padding:11px;font-size:14px;border-radius:12px;" onclick="switchNuTab(\'journal\',document.getElementById(\'ntab-journal\'));setTimeout(()=>{if(typeof openAddFood===\'function\')openAddFood();},120)">➕ Noter mon premier repas</button>'
       +'</div>';
@@ -1917,15 +2089,17 @@ function _renderOuTuEnEs(macros){
   const barre=(pct,col)=>'<div style="height:7px;border-radius:4px;background:var(--bg3);overflow:hidden;margin-top:5px;">'
     +'<div style="height:100%;width:'+Math.min(100,pct)+'%;background:'+col+';border-radius:4px;"></div></div>';
 
-  // Aujourd'hui — seulement si la journée a commencé à être notée (sinon c'est un faux zéro)
-  const bloc1=notesAuj
-    ? '<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);">Aujourd\'hui</div>'
-      +'<div style="font-family:var(--font-cond);font-size:22px;font-weight:900;color:var(--t1);margin-top:2px;">'+Math.round(auj.kcal).toLocaleString('fr-FR')+' <span style="font-size:12px;font-weight:700;color:var(--t3);">/ '+cible.toLocaleString('fr-FR')+' kcal</span></div>'
-      +barre(cible?auj.kcal/cible*100:0,'var(--orange)')
-      +'<div style="font-size:11.5px;color:var(--t2);margin-top:6px;">Protéines '+Math.round(auj.prot)+' / '+cibleP+' g</div>'
-      +barre(cibleP?auj.prot/cibleP*100:0,'var(--blue)')+'</div>'
-    : '<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);">Aujourd\'hui</div>'
-      +'<div style="font-size:13px;color:var(--t2);line-height:1.4;margin-top:4px;">Rien de noté pour l\'instant.</div></div>';
+  /* ⭐⭐ LA MOITIÉ « AUJOURD'HUI » A ÉTÉ RETIRÉE D'ICI (26/08/2026, ft-v1025) — elle n'est pas
+     perdue, elle est REMONTÉE dans la carte du jour (`_renderAujourdhui`), 40 px plus haut.
+     C'était le doublon d'origine : la cible du jour s'affichait DEUX FOIS dans le même onglet,
+     à 200 px d'écart, avec deux mises en forme différentes. *Deux endroits qui disent la même
+     chose finissent par ne plus la dire pareil* (R2).
+     ⛔ CE QUI RESTE ICI EST LA SEMAINE, et c'est le vrai sujet de la carte : la moyenne des
+     jours notés, l'écart, les protéines. Rien d'autre ne le dit.
+     ⛔ Y COMPRIS « Rien de noté » : cette mention protège une règle (ne jamais inventer un zéro
+     pour la journée en cours) et elle est tenue par un témoin depuis le 19/08 — elle vit
+     désormais dans la carte du jour, avec le reste d'aujourd'hui. L'écrire aux deux endroits
+     l'aurait dupliquée, et c'est justement ce qu'on corrige ici (R2). */
 
   /* ⚠️ LE TEXTE DE LA SEMAINE DIT SUR COMBIEN DE JOURS IL PORTE. « Moyenne sur 3 jours notés »
      est une information ; « moyenne de la semaine » calculée sur 3 jours est un mensonge. */
@@ -1942,11 +2116,14 @@ function _renderOuTuEnEs(macros){
     : (ecart<0 ? '<span style="color:var(--t2);font-weight:700;">'+Math.abs(ecart)+' kcal sous ta cible</span>'
                : '<span style="color:var(--t2);font-weight:700;">'+ecart+' kcal au-dessus</span>'));
 
+  /* ⭐ « TA SEMAINE », et plus « Où tu en es » (ft-v1025) : le jour est désormais dit en haut de
+     l'onglet, dans sa propre carte. Garder le même titre pour les deux aurait laissé croire
+     qu'on lit deux fois la même chose. */
   el.innerHTML='<div style="background:var(--bg2);border:1px solid var(--sep);border-radius:16px;padding:16px;">'
     +'<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:12px;">'
-      +'<div style="font-family:var(--font-cond);font-size:17px;font-weight:800;color:var(--t1);">Où tu en es</div>'
+      +'<div style="font-family:var(--font-cond);font-size:17px;font-weight:800;color:var(--t1);">Ta semaine</div>'
       +'<div style="font-size:11px;color:var(--t3);">'+(jours.length?sJours+' sur 7':'journée en cours')+'</div></div>'
-    +'<div style="display:flex;gap:16px;align-items:flex-start;">'+bloc1
+    +'<div style="display:flex;gap:16px;align-items:flex-start;">'
       +(jours.length
         ? '<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);">Moyenne des '+sJours+'</div>'
           +'<div style="font-family:var(--font-cond);font-size:22px;font-weight:900;color:var(--t1);margin-top:2px;">'+moyK.toLocaleString('fr-FR')+' <span style="font-size:12px;font-weight:700;color:var(--t3);">kcal/j</span></div>'
@@ -2058,7 +2235,11 @@ function renderNutrition(){try{
   const todayStr=today();
   const todaySess=S.sessions.find(s=>s.date===todayStr);
   const sessCals=todaySess&&todaySess.calories?todaySess.calories:0;
-  document.getElementById('nu-session-cal').textContent=sessCals>0?sessCals.toLocaleString('fr-FR')+' kcal':'— (pas de séance)';
+  /* ⚠️ « aucune » et plus « — (pas de séance) » (ft-v1025) : le libellé long ne tenait pas dans
+     la tuile à 390 px et se coupait EN TRAVERS de son propre titre (« — (pas de / Séance
+     séance) », vu à la capture). Le défaut existait avant ce chantier ; il devient visible
+     maintenant que la tuile remonte dans le premier écran. Même information, deux mots. */
+  document.getElementById('nu-session-cal').textContent=sessCals>0?sessCals.toLocaleString('fr-FR')+' kcal':'aucune';
   /* 🏋️ ON N'ADDITIONNE PLUS « dépense + séance » (21/08/2026) — c'était un DOUBLE COMPTE.
      Le niveau d'activité s'appelle « Modéré (3-4j) » : les séances sont déjà dedans, lissées
      sur la semaine. La tuile affichait donc un total plus gros que la réalité, et — pire — il
@@ -2102,7 +2283,36 @@ function renderNutrition(){try{
 
   const macros=calcMacros(S.nutritionPhase);
   try{ _renderOuTuEnEs(macros); }catch(e){ /* jamais bloquant : la carte est un ajout, pas un pré-requis */ }
+  /* 🍽️ ft-v1025 — la carte du jour, et la carte « ce que l'app a appris » remontée du Journal.
+     ⛔ Chacune dans son `try` : une carte qui plante ne doit pas emporter tout l'onglet. */
+  try{ _renderAujourdhui(macros); }catch(e){ /* jamais bloquant */ }
+  try{ const _ap=document.getElementById('nu-appris'); if(_ap)_ap.innerHTML=_blocApprisHTML(); }catch(e){}
   document.getElementById('m-kcal').textContent=macros.calories.toLocaleString('fr-FR');
+  /* Le même chiffre au centre de l'anneau de répartition, dans l'accordéon « comment c'est
+     calculé ». ⚠️ `id` DIFFÉRENT exprès : `m-kcal` a déménagé en tête de l'onglet, et réutiliser
+     son `id` ici aurait fait écrire deux éléments par la même ligne — le second aurait gagné en
+     silence, sans qu'aucune erreur ne le dise. */
+  {const _ck=document.getElementById('nu-calc-kcal'); if(_ck)_ck.textContent=macros.calories.toLocaleString('fr-FR');}
+  /* 📋 LES SOUS-TITRES DES DEUX ACCORDÉONS — c'est la seule chose visible sans déplier, donc
+     ils disent l'ÉTAT COURANT et évitent d'ouvrir juste pour vérifier (R24). */
+  {
+    const _sc=document.getElementById('nu-acc-calc-sub');
+    if(_sc)_sc.textContent=[(nuGoal&&nuGoal.textContent||'').replace(/^[^\s]+\s/,''),
+      (currentDelta>=0?'+':'')+currentDelta+' kcal', 'TDEE '+tdee.toLocaleString('fr-FR')]
+      .filter(Boolean).join(' · ');
+    const _sd=document.getElementById('nu-acc-diet-sub');
+    if(_sd){
+      const MODE={keto:'Cétogène',lowcarb:'Low carb',paleo:'Paléo',mediterraneen:'Méditerranéen'};
+      const bouts=[];
+      if(MODE[S.foodMode||''])bouts.push(MODE[S.foodMode]);
+      if(S.fasting)bouts.push('jeûne '+String(S.fasting).replace('-','/'));
+      const ds=(typeof dietSummary==='function')?dietSummary():'';
+      if(ds)bouts.push(ds);
+      /* ⛔ « Rien de particulier » plutôt qu'un sous-titre vide : un blanc se lit comme un
+         chargement qui n'a pas abouti, alors que l'absence de réglage est une réponse. */
+      _sd.textContent=bouts.length?bouts.join(' · '):'Rien de particulier pour l\'instant';
+    }
+  }
   // Bloc réglage manuel (sous l'anneau) : état auto vs manuel + bouton d'ajustement — RÉSERVÉ AUX TESTEURS
   const _nutriBeta=(typeof _isNutriBeta==='function')&&_isNutriBeta();
   const _jptr=document.getElementById('nu-journal-ptr'); if(_jptr)_jptr.style.display=_nutriBeta?'':'none';
@@ -2399,87 +2609,25 @@ function renderFoodJournal(){
       +_macroLine('Protéines',tot.prot,target.prot_g,'var(--green)')
       +_macroLine('Glucides',tot.carbs,target.carbs_g,'var(--orange)')
       +_macroLine('Lipides',tot.fat,target.fat_g,'var(--gold)')
-      /* 🍽️ CE QUE LE RESTE REPRÉSENTE VRAIMENT (26/08/2026, ft-v1019) — demande de Michel :
-         *« à 14h, il te reste 150 g de prot à manger, tu peux faire 1 shake de prot et 150 g de
-         poulet »*. ⭐⭐ Les chiffres du reste étaient DÉJÀ affichés juste au-dessus, ligne par
-         ligne — et ils ne servaient à rien : *personne ne sait à quoi ressemblent 150 g de
-         protéines dans une assiette.* Ce qui manquait n'était pas la donnée, c'était sa
-         TRADUCTION.
-         ⛔ R13 : on ENRICHIT cette carte, on n'en fabrique pas une deuxième — le reste doit
-         rester sous les yeux, à côté des chiffres qu'il explique.
-         ⛔ AUJOURD'HUI SEULEMENT (anti-TCA, P21) : sur un jour passé, « il te manquait 40 g »
-         est un reproche sur une journée qu'on ne peut plus changer. */
-      +(estAuj?(()=>{
-        const reste=(typeof _resteDuJour==='function')?_resteDuJour(td):null;
-        const idees=(typeof _ideesPourLeReste==='function')?_ideesPourLeReste(reste):[];
-        if(!idees.length) return '';
-        const cols={prot:'var(--green)',carbs:'var(--orange)',fat:'var(--gold)'};
-        return `<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--sep);">`
-          +`<div style="font-size:11.5px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Ce qu'il te reste, en vrai</div>`
-          +idees.map(i=>`<div style="display:flex;align-items:baseline;gap:7px;margin-bottom:6px;font-size:13px;line-height:1.45;">`
-              +`<span style="color:${cols[i.macro]};font-weight:800;white-space:nowrap;">${i.manque} g</span>`
-              +`<span style="color:var(--t3);">de ${i.label} —</span>`
-              +`<span style="color:var(--t1);font-weight:700;">${_escNote?_escNote(i.idee):i.idee}</span>`
-              /* ⛔ ON DIT CE QUE ÇA COUVRE VRAIMENT quand la combinaison ne suffit pas : faire
-                 croire qu'elle tombe juste serait une fausse précision (R29). */
-              +((i.couvert && i.couvert < i.manque-5)?`<span style="color:var(--t3);white-space:nowrap;">(≈ ${i.couvert} g)</span>`:'')
-            +`</div>`).join('')
-          /* ⛔ « à peu près » n'est pas de la modestie de façade : la portion enregistrée est
-             une estimation, et le dire évite qu'on prenne ça pour une prescription au gramme. */
-          +`<div style="font-size:11px;color:var(--t3);line-height:1.4;margin-top:8px;">À peu près — calculé sur <b>tes</b> aliments, pas sur une table générique. Une idée, pas une consigne.</div>`
-          +`</div>`;
-      })():'')
+      /* 🍽️ « Ce qu'il te reste, en vrai » — le rendu vit dans `_blocResteHTML` (screens.js),
+         partagé avec la carte du jour de l'onglet Macros. UN SEUL propriétaire (R2, ft-v1025) :
+         deux copies auraient divergé, et l'une porte trois garde-fous anti-TCA. */
+      +_blocResteHTML(td)
       +`</div>`;
   }else{
     html+=`<div style="background:var(--bg2);border-radius:14px;padding:16px;text-align:center;color:var(--t3);font-size:13px;box-shadow:inset 0 0 0 1px var(--sep);">Remplis ton profil (âge, taille, poids) pour comparer à tes objectifs.</div>`;
   }
 
-  /* 🧠 CE QUE L'APP A APPRIS DE TON ALIMENTATION (26/08/2026, ft-v1021) — 100 % local.
-     Michel : *« il faut que l'application (pas Milo) apprenne du sportif côté nutrition sans
-     que ça me coûte un seul appel API »*.
-     ⭐⭐ POURQUOI ON LE MONTRE, ET PAS SEULEMENT EN INTERNE : un profil qu'on ne voit pas ne
-     peut pas être corrigé. C'est la doctrine du profil vivant — *observer → expliquer →
-     proposer → décider* : la personne doit pouvoir lire ce que l'app croit savoir d'elle.
-     ⛔ ET ON DIT CE QU'ON NE SAIT PAS. En dessous de 3 jours notés, la carte annonce qu'elle
-     n'a pas de quoi observer — elle ne se tait PAS, parce qu'un silence laisserait croire
-     qu'il n'y a rien à apprendre (R29). */
-  html += (()=>{
-    const pa = (typeof _profilAlimentaire==='function') ? _profilAlimentaire() : null;
-    if(!pa) return '';
-    const LBL = {petitdej:'Petit-déj', collation:'Collation', dejeuner:'Déjeuner',
-                 collation2:'Collation 2', diner:'Dîner', autre:'Autre'};
-    const esc = t => (typeof _escNote==='function') ? _escNote(t) : t;
-    let corps;
-    if(pa.etat === 'insuffisant'){
-      /* ⛔ Le ton est FACTUEL, jamais une relance : « note ce que tu manges » serait une
-         injonction, et la nutrition ne doit jamais devenir une source de pression (P21). */
-      corps = `<div style="font-size:12.5px;color:var(--t3);line-height:1.5;">`
-        +`${pa.nbJours} jour${pa.nbJours>1?'s':''} noté${pa.nbJours>1?'s':''} — pas encore de quoi dégager une habitude. `
-        +`À partir de 3 jours, l'app commence à reconnaître ce que tu manges vraiment.</div>`;
-    } else {
-      const lignes = Object.keys(pa.habitudes).filter(m=>LBL[m]).map(m=>{
-        const noms = pa.habitudes[m].map(x=>esc(x.nom)).join(' · ');
-        const h = pa.heures[m];
-        return `<div style="display:flex;gap:8px;margin-bottom:5px;font-size:12.5px;line-height:1.45;">`
-          +`<span style="color:var(--t3);min-width:78px;font-weight:700;">${LBL[m]}${(h!==undefined)?` <span style="font-weight:400;">~${h}h</span>`:''}</span>`
-          +`<span style="color:var(--t1);">${noms}</span></div>`;
-      }).join('');
-      corps = lignes
-        + `<div style="font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:8px;">`
-        + `Observé sur <b>${pa.nbJours} jour${pa.nbJours>1?'s':''}</b>`
-        + (pa.etendue>pa.nbJours?` répartis sur ${pa.etendue}`:'')
-        + ` · en moyenne <b>${pa.moyennes.kcal} kcal</b> et <b>${pa.moyennes.prot} g</b> de protéines par jour noté.`
-        /* ⚠️ On DIT que c'est partiel plutôt que de laisser croire à une habitude établie (R32). */
-        + (pa.etat==='partiel'?` <b>C'est encore court</b> — l'app décrit ces jours-là, pas tes habitudes.`:'')
-        + `</div>`;
-    }
-    return `<div style="background:var(--bg2);border-radius:16px;padding:16px;margin-top:12px;box-shadow:inset 0 0 0 1px var(--sep);">`
-      +`<div style="font-size:12px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">🧠 Ce que l'app a appris de ton alimentation</div>`
-      +corps
-      /* ⛔ Le rappel qui compte pour Michel : ça ne coûte rien. */
-      +`<div style="font-size:11px;color:var(--t3);margin-top:8px;opacity:.85;">Calculé sur ton téléphone, sans aucun appel à l'IA.</div>`
-      +`</div>`;
-  })();
+  /* 🧠 LA CARTE « CE QUE L'APP A APPRIS DE TON ALIMENTATION » N'EST PLUS ICI (26/08/2026,
+     ft-v1025) — elle est passée dans l'onglet MACROS, sur décision de Michel. La raison est
+     écrite pour que personne ne la « remette » en croyant réparer un oubli (R30) :
+     ⛔ elle n'est pas DUPLIQUÉE, elle est DÉPLACÉE — deux exemplaires du même bloc auraient
+        fini par diverger (R2), et celui-ci porte les états nommés qui disent ce qu'on ne sait
+        pas encore ;
+     ⛔ et le Journal ne tenait déjà plus dans un écran depuis qu'il avait gagné deux cartes le
+        matin même. C'est une carte qu'on lit de temps en temps, pas d'un coup d'œil : sa place
+        est dans l'onglet où l'on regarde ses habitudes, pas dans celui où l'on saisit.
+     👉 Le rendu vit dans `_blocApprisHTML()`, plus haut dans ce fichier. */
 
   /* 🔍 LES TROIS FAÇONS D'AJOUTER UN ALIMENT SE VOIENT DEPUIS LE JOURNAL (15/08/2026)
      Michel : *« il faut faire "ajouter un aliment" et je pense que cette étape est en trop,

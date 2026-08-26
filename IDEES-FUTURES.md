@@ -2644,3 +2644,40 @@ navigateur, sur ses 5 rapports MyBodyCheck :
 moteur est là, il ne coûte plus rien ; ce qui manque, ce sont les **règles de lecture** et,
 surtout, un contrôle équivalent à l'arithmétique du rapport de balance — *sans lui, on ne saurait
 pas si la lecture est juste*, et sur un bilan sanguin l'erreur coûte beaucoup plus cher.
+
+---
+
+## 🍽️ CE QUE LA RÉORGANISATION DE L'ONGLET MACROS N'A PAS TRAITÉ *(26/08/2026, après ft-v1025)*
+
+`ft-v1025` a rangé l'onglet **Macros** (2 649 → 1 439 px, *« noter »* de 1 783 à 415 px). **Quatre
+sujets restent ouverts, et ils étaient hors périmètre EXPRÈS** — c'est écrit ici pour qu'on ne les
+redécouvre pas comme des oublis (**R30**).
+
+### ⭐⭐ 1. Le plan de repas est une TABLE ÉCRITE EN DUR — c'est le vrai sujet
+`KETO_MEALS`, `LOWCARB_MEALS`, `PALEO_MEALS`, `MEDITERRANEEN_MEALS` (`state.js`) : des menus fixes,
+identiques pour tout le monde. Michel, devant une suggestion de noix de macadamia : *« c'est sûr
+que les noix de macadamia j'en mange pas, et en plus c'est dégueulasse »*.
+**⛔ C'est pour ça qu'il est désormais REPLIÉ**, avec un sous-titre qui le dit à l'écran :
+*« Calculé sur ton téléphone · pas encore adapté à ce que tu manges »*. Le jour où il devient
+personnalisé, il se déplie par défaut et le sous-titre change.
+👉 **Ce qu'il faudrait pour le faire** : la base « composable » (~300 aliments avec `regimes` /
+`allergenes` en liste blanche relue à la main — voir `docs/NUTRITION-MOTEUR.md` §4.0) **et** savoir
+ce que la personne n'aime pas. Le second manque totalement : le questionnaire pose **6 questions
+sur l'entraînement et zéro sur la nourriture**.
+⚠️ **Et le matériau existe déjà en partie** : `_profilAlimentaire()` (ft-v1021) observe **ce qu'elle
+mange vraiment**, par repas et par heure, sans un seul appel réseau. *Un plan bâti sur ses propres
+aliments serait plus juste que n'importe quelle table — et gratuit.*
+
+### 2. L'onglet **Journal** ne tient plus en un écran
+Il a gagné la bande des 7 jours (ft-v1004) et *« ce qu'il te reste »* (ft-v1019) le même jour. Il a
+depuis rendu la carte « ce que l'app a appris » à Macros (ft-v1025), mais il n'a **jamais été relevé
+bloc par bloc** comme Macros l'a été. Michel, au moment du chantier : *« le Journal fonctionne bien,
+on ne le refond pas »* — c'est donc une **décision**, pas un trou.
+
+### 3. L'onglet **Suppléments** n'a jamais été mesuré
+Aucun relevé, aucune ligne dans le dossier UX. On ne sait pas s'il a un problème.
+
+### 4. Le **mode clair** de l'onglet Macros
+La maquette ne traitait que le sombre. Le code n'emploie **que des variables** (`--bg2`, `--t1`…),
+donc le mode clair suit mécaniquement — mais *« ça suit »* n'est pas *« c'est lisible »*, et
+personne ne l'a regardé.

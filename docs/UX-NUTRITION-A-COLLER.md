@@ -14,6 +14,30 @@
 
 ---
 
+## ⚠️ 0. CE DOSSIER A ÉTÉ EN PARTIE APPLIQUÉ — lire ceci avant de s'y fier (26/08/2026)
+
+**L'onglet Macros a été réorganisé en `ft-v1025`** (chantier `docs/MACROS-A.md`, variante A). **Les
+mesures de l'onglet Macros ci-dessous décrivent donc l'état d'AVANT.** Elles restent utiles — c'est
+le diagnostic qui a motivé le chantier — mais elles ne décrivent plus l'écran.
+
+*Un document d'état qu'on ne date pas fait dire des bêtises à celui qui le lit* (**R23**).
+
+| Ce que disait ce dossier | Mesuré après ft-v1025 |
+|---|---|
+| Onglet Macros : **2 800 px** (3,3 écrans) | **1 439 px** — et **2 649 px** re-mesurés avant, avec la fixture du témoin |
+| *« noter ce que je mange »* à **1 957 px** | **415 px** |
+| La cible affichée **deux fois** à 200 px d'écart | **une seule fois**, en petit, en tête de carte |
+| **647 px** de réglages au milieu du contenu | dans **deux accordéons repliés**, en pied d'onglet |
+
+**⛔ CE QUI N'A PAS ÉTÉ TRAITÉ, et qui reste vrai dans ce dossier** : l'onglet **Journal** (§4.2 —
+il ne tient plus en un écran, et il a **perdu** la carte « ce que l'app a appris », passée dans
+Macros), l'onglet **Suppléments** (jamais relevé bloc par bloc), le **mode clair** (§6.6), et
+surtout **§5.6 — le plan de repas est une table écrite en dur** : il ne connaît ni ce que la
+personne mange ni ce qu'elle déteste. *C'est la raison pour laquelle il est désormais replié, et
+le sous-titre le dit à l'écran.*
+
+---
+
 ## 1. Le produit, en trois phrases
 
 **Force Tracker** est une application de suivi de musculation. Sa promesse n'est pas l'intelligence
