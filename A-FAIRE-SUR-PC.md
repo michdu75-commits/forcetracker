@@ -17,6 +17,12 @@
 
 ## ⏳ En attente
 
+> ⭐ **UNE SEULE TÂCHE ICI, ET C'EST VOULU.** Ce qui est **clos** descend dans « ✅ Fait »,
+> même quand la décision est récente. *Un « ✅ CLOS » posé au milieu de « ⏳ En attente » se lit
+> comme une deuxième tâche* — c'est la famille « premier match gagnant » de `BUGS.md`, et elle
+> vient de me faire reproposer à Michel une figurine qu'il avait supprimée la veille (26/08).
+> ⛔ **Rien n'est supprimé en descendant** : la raison et l'historique partent avec le bloc.
+
 ### 🔐 Régénérer la clé du plafond de dépense (`FT_COUNT_TOKEN`) — procédure
 
 **À quoi ça sert** : sans cette clé, les appels à Milo sont **comptés mais jamais bloqués** — rien ne
@@ -42,6 +48,12 @@ La ligne doit passer au **vert : ARMÉ**. Si elle reste rouge alors que la clé 
 le problème n'est pas la valeur mais **le nom de la variable ou le Worker sur lequel elle est posée**.
 
 
+_Dernier déploiement backend : **historique études corporelles** (`bodyStudies`), déployé **automatiquement via la CI GitHub** le 2026-07-11 (run #22, succès, `?test=1` OK)._
+
+---
+
+## ✅ Fait
+
 ### ✅ CLOS — « Squat Sumo » : l'exercice a été RETIRÉ (25/08/2026)
 
 ⛔ **Cette tâche n'a plus d'objet.** Elle demandait une figurine de squat sumo **à la barre**,
@@ -61,12 +73,6 @@ exercice.
 - Les 2 équivalences d'import qui le visaient (`sumo squat`, `wide stance squat`) ont été
   retirées : aucune autre fiche ne décrit ce geste, donc un import « sumo squat » sera proposé
   comme exercice **nouveau** plutôt que rattaché de force au mauvais squat.
-
-_Dernier déploiement backend : **historique études corporelles** (`bodyStudies`), déployé **automatiquement via la CI GitHub** le 2026-07-11 (run #22, succès, `?test=1` OK)._
-
----
-
-## ✅ Fait
 
 ### 9 + 7. Boîte à idées cloud + persistance « niveau » — ✅ déployé @65 (2026-07-06)
 Déployés ensemble depuis le PC de Michel (`clasp push` → « already up to date » puis `clasp deploy -i …` → **@65**). Désormais :

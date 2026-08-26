@@ -7,6 +7,15 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1025`.
+- ⏳ **CE QUI RESTE À FAIRE SUR LE PC DE MICHEL : UNE SEULE CHOSE** — coller `FT_COUNT_TOKEN`
+  dans Cloudflare (sans elle, les appels à Milo sont **comptés mais jamais bloqués**).
+  ⛔ **Le Squat Sumo n'en fait plus partie** : l'exercice a été **supprimé le 25/08** sur
+  décision de Michel (*« squat sumo on supprime »*), après 12 jours d'attente d'une figurine
+  **à la barre** qui n'est jamais venue. ⚠️ **Je l'ai pourtant reproposé le 26/08** — je lisais
+  un état du projet daté du **24/08**, la veille de sa décision. *C'est **R23** : un document
+  d'état qu'on ne met pas à jour fait dire des bêtises à celui qui le lit*, et c'est la 3ᵉ fois
+  de la journée. ⭐ Son identifiant `squat-sumo` survit dans `EX_IDS` : **les séances déjà faites
+  gardent tout** — on a retiré le choix, jamais la mémoire.
 - 🍽️⭐⭐ **L'ONGLET MACROS RÉORGANISÉ — LIVRÉ** (ft-v1025). Chantier `docs/MACROS-A.md`
   (variante A), maquette **confrontée au code avant d'écrire une ligne**.
   ⭐⭐ **Le défaut était MESURÉ** : **2 649 px (3,1 écrans)** avant de savoir où on en est, la
