@@ -13105,6 +13105,83 @@ t('⭐ le bouton et le message de l\'écran vide disent tous deux « Créer ma s
             && /Appuie sur "\+ Créer ma séance"/.test(l)
             && h.indexOf('>+ Ajouter</button>')<0;})());
 
+/* == BLOC CXIX - L'EXPORT « AVEC MES DISCUSSIONS » PERDAIT LA DISCUSSION DU MOMENT (ft-v1013) ==
+   Michel : « compare la difference des exportations pour tout le monde et celle que je fais en
+   admin. C'est quoi la difference, parce que s'il n'y en a pas autant supprimer. »
+   ⭐ IL Y EN AVAIT — et les deux etaient au desavantage de l'export GENERAL :
+   ① LE FIL EN COURS ETAIT ABSENT. La boucle recopie `S.coachConversations`, qui ne contient QUE
+      les discussions RANGEES (fermees par le « + »). Le fil qu'on ecrit vit dans
+      `ft4_coach_hist`, donc dans aucune cle de `S`. *Quelqu'un qui exporte « avec mes
+      discussions » repartait SANS la discussion du moment* — souvent celle qui l'interesse le
+      plus, et le fichier avait l'air complet.
+   ② LES CONSIGNES INTERNES PARTAIENT AVEC : le debrief automatique injecte des messages
+      `_silent` que la personne n'a JAMAIS vus ni ecrits. L'export texte les filtre depuis
+      toujours ; celui-ci les livrait.
+   ⛔ CONCLUSION SUR LA QUESTION POSEE : on ne supprime NI l'un NI l'autre — l'un est un fichier
+   LISIBLE (texte date), l'autre une sauvegarde JSON a reimporter. Ce qui etait mal range, c'est
+   que le seul lisible par un humain etait reserve a l'admin. */
+console.log('\n-- CXIX. L\'export « avec mes discussions » n\'oublie plus rien (ft-v1013) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2200);
+  const F=await pg.evaluate(()=>{
+   try{
+    const o={};
+    let cap=null; const VB=window.Blob;
+    window.Blob=function(p,opt){cap=p.join(''); return new VB(p,opt);};
+    const base=Date.now(), J=864e5;
+    S.coachConversations=[{id:'c1',title:'Séance pec',ts:base-2*J,messages:[
+      {role:'user',content:'Séance pec ce soir ?',ts:base-2*J},
+      {role:'assistant',content:'Voilà ta séance.',ts:base-2*J+9e4},
+      {role:'user',content:'CONSIGNE INTERNE débrief',_silent:true,ts:base-2*J+1e5}]}];
+    const fil=[{role:'user',content:'FIL EN COURS question',ts:base},
+               {role:'assistant',content:'FIL EN COURS réponse',ts:base+1e3}];
+    coachHistory=fil.slice();
+    try{ localStorage.setItem('ft4_coach_hist',JSON.stringify(fil)); }catch(e){}
+    S.bloodTests=[{date:'2026-08-20',markers:[{name:'Ferritine',value:310}]}];
+    _ecrireExport(true);
+    const avec=cap||'';
+    cap=null; _ecrireExport(false);            // ⛔ SANS discussions : rien ne doit fuir
+    const sans=cap||'';
+    window.Blob=VB;
+    const g=JSON.parse(avec||'{}'); const cc=(g.donnees||{}).coachConversations||[];
+    o.filEnCours      = /FIL EN COURS/.test(avec);
+    o.consigneFiltree = !/CONSIGNE INTERNE/.test(avec);
+    o.messages        = cc.reduce((n,c)=>n+(c.messages||[]).length,0);   // 2 + 2 = 4
+    o.marqueEnCours   = cc.some(c=>c && c.enCours===true);
+    o.enCoursEnTete   = !!(cc[0] && cc[0].enCours===true);
+    // ⛔ NON-RÉGRESSION : sans l'option, AUCUNE conversation ne part.
+    o.sansOption      = !/FIL EN COURS/.test(sans) && !/Séance pec/.test(sans);
+    // ⭐ ② le fichier LISIBLE est atteignable hors Admin.
+    o.boutonPublic    = !!document.querySelector('#ov-export-choix [onclick*="exporterConversationsMilo"]');
+    o.toujoursAdmin   = !!document.querySelector('.adm-grp [onclick*="exporterConversationsMilo"]');
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(F.err) t('CXIX n\'a pas pu tourner', false, F.err);
+  else{
+    t('⭐⭐ LE FIL EN COURS est dans le fichier (il en était absent — le défaut principal)',
+      F.filEnCours===true, '');
+    t('⭐⭐ … et il est EN TÊTE, marqué comme « en cours »',
+      F.enCoursEnTete===true && F.marqueEnCours===true,
+      'en tête='+F.enCoursEnTete+' marqué='+F.marqueEnCours);
+    t('⛔ les consignes internes (`_silent`) ne partent PLUS — elle ne les a jamais écrites',
+      F.consigneFiltree===true, '');
+    t('⭐ le compte est juste : 2 messages rangés + 2 du fil = 4 (3 avant, dont 1 fantôme)',
+      F.messages===4, 'reçu : '+F.messages);
+    t('⛔⛔ NON-RÉGRESSION : sans l\'option, AUCUNE conversation ne part',
+      F.sansOption===true, '');
+    t('⭐ ② le fichier LISIBLE est atteignable hors Admin (il y était depuis le 05/08)',
+      F.boutonPublic===true, '');
+    t('⛔ … et l\'entrée Admin n\'a pas été RETIRÉE en silence (R30) — même fonction, 2 portes',
+      F.toujoursAdmin===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
