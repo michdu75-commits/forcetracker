@@ -61,6 +61,61 @@
 
 ---
 
+## 📊 ÉTAT DES 8 BRIQUES — mesuré depuis le code
+
+> ⚠️⚠️ **CE TABLEAU EST GÉNÉRÉ, ET C'EST TOUT SON INTÉRÊT.** Le 26/08/2026, Michel demande
+> *« il faudrait peut-être penser à la remettre à jour, c'est un peu le socle de l'application
+> non ? »*. Mesuré ce jour-là : **ce fichier n'avait pas bougé depuis le 29/07** — 28 jours,
+> ~350 versions — et il **DISAIT FAUX** : les briques **5A et 6A** y étaient marquées
+> *« ⏳ EN ATTENTE »* alors que le code en comptait **39 et 41 usages**. Elles étaient
+> construites depuis longtemps.
+>
+> 👉 C'est **R23** : *un document d'état qu'on ne met pas à jour fait dire des bêtises à celui
+> qui le lit.* C'est arrivé **deux fois dans la seule journée du 26/08** — le clone annoncé
+> « supprimé » alors qu'il est débranché, et une faille de sécurité annoncée ouverte alors
+> qu'elle était réparée depuis dix jours.
+>
+> ⭐ **D'où le choix de le GÉNÉRER plutôt que de le réécrire** (`python3 tools/briques.py`),
+> exactement comme `docs/INVENTAIRE.md` : *un état écrit à la main redevient faux en trois
+> semaines.* `check_regles.py` refuse la livraison s'il est périmé.
+>
+> ⛔⛔ **ET LA LIMITE EST ÉCRITE PLUTÔT QUE MASQUÉE** : une brique est une **intention**, pas
+> une fonction. Le script compte des symboles — il mesure qu'une brique est **là**, jamais
+> qu'elle **tient sa promesse**. Ce jugement-là reste humain (**R29**).
+
+<!-- BRIQUES:DEBUT -->
+
+<!-- ⚙️ SECTION GÉNÉRÉE PAR tools/briques.py — NE PAS ÉDITER À LA MAIN.
+     Toute retouche manuelle sera écrasée à la prochaine génération, et
+     `check_regles.py` refuse la livraison si elle est périmée. -->
+
+| # | Brique | Ce qu'elle fait | État | Signal | Porte |
+|---|---|---|---|---|---|
+| **1** | **Registre Athlète** | la mémoire durable | ✅ branchée | `149` | `107` |
+| **2** | **Cerveau (faits mesurés)** | les faits injectés dans Milo | ✅ branchée | `8` | `6` |
+| **3** | **État du jour** | énergie / douleur ponctuelle | ✅ branchée | `15` | `8` |
+| **4** | **ADN sportif** | le portrait durable déclaré | ✅ branchée | `21` | `2` |
+| **5** | **Observations intelligentes** | Milo propose → la personne valide | ✅ branchée | `15` | `34` |
+| **6** | **Le Gardien** | adapter, pas interdire | ✅ branchée | `34` | `11` |
+| **7** | **Mémoire vivante** | relier les événements dans le temps | 🟠 socle seul | `23` | `0` |
+| **8** | **Synthèse** | prendre du recul sur son histoire | 🟠 socle seul | `1` | `0` |
+
+**Comment lire ce tableau — et surtout ce qu'il NE dit PAS :**
+
+- **Signal** = occurrences, dans le CODE (commentaires retirés), du symbole qui prouve
+  que le socle de la brique est **branché**.
+- **Porte** = ce que la personne peut **atteindre**. Signal sans porte = la donnée
+  existe, personne ne la voit — c'est le trou le plus fréquent du projet (**R3**).
+- ⛔⛔ **AUCUNE de ces colonnes ne dit que la brique est BONNE.** Une brique est une
+  *intention* ; un script compte des symboles. Il mesure qu'elle est **là**, jamais
+  qu'elle **tient sa promesse** — ça, seul un humain le juge (**R29**).
+- ⚠️ Les commentaires sont retirés avant de compter : sans ça, une brique dont on a
+  beaucoup *parlé* paraîtrait construite (le défaut de ft-v1006, revu 3 fois depuis).
+
+<!-- BRIQUES:FIN -->
+
+---
+
 ## 🎯 La vision (rappel)
 
 On sépare le cerveau de Milo en **couches** qui ont chacune un rôle :
@@ -661,7 +716,11 @@ si vide, `_adnFilled` OK, 0 erreur JS ; visuel jour + nuit OK.
 
 ---
 
-## 🧠 Brique 5A — « Observations à valider » · `ft-v465` · 19/07/2026 · ⏳ EN ATTENTE VALIDATION MICHEL
+## 🧠 Brique 5A — « Observations à valider » · `ft-v465` · 19/07/2026 · ✅ CONSTRUITE
+
+> ⚠️ **Statut corrigé le 26/08/2026.** Ce titre disait « ⏳ EN ATTENTE » pendant **28 jours**
+> alors que `registre.observations` compte **15 usages** et `_renderObsCard` **34**. Le document
+> disait le contraire du code (**R23**). VALIDATION MICHEL
 
 > Direction choisie par Michel (Option B). Cadrage validé par ChatGPT + Claude,
 > **codé en `ft-v465`**. *« Le cœur, ce n'est pas la mémoire, c'est la confiance. »*
@@ -754,7 +813,7 @@ harcèlement ; supprimable ; rien sans validation ; rétrocompatible ; 4 axes OK
 
 ---
 
-## 🛡️ Brique 6A — LE GARDIEN (à partir de l'existant) · `ft-v468` · 19/07/2026 · ⏳ EN ATTENTE VALIDATION MICHEL
+## 🛡️ Brique 6A — LE GARDIEN (à partir de l'existant) · `ft-v468` · 19/07/2026 · ✅ CONSTRUITE · ⏳ EN ATTENTE VALIDATION MICHEL
 
 > Cadrage validé (ChatGPT + Claude). Michel : « on y va, tkt pour le réel » → codé
 > sans attendre la validation réelle de la 5A. *« buildCoachContext rassemble les

@@ -12,6 +12,7 @@ surveille — d'où ce script. Trois contrôles :
   5. AUCUN document .md ne s'est fait écraser (contrôle 4 généralisé aux 54 autres).
   6. AUCUNE ligne de TÂCHE n'est tombée dans le tableau des ÉTATS du journal de partage
   7. AUCUNE ligne 🟡 ne survit à sa propre clôture 🟢 (une fusion par UNION la ressuscite).
+  8. Le tableau des 8 BRIQUES de DOSSIER-ATHLETE-SUIVI.md est à jour (généré depuis le code).
      (bug arrivé DEUX fois — elle y est invisible, donc personne ne peut la voir manquer).
 
 ⚠️ PORTÉE HONNÊTE DU CONTRÔLE 5 : il compare l'état du dossier au DERNIER COMMIT,
@@ -336,6 +337,30 @@ try:
         sys.exit(1)
 except FileNotFoundError:
     pass                                        # déjà signalé par le contrôle 6
+except Exception:
+    pass                                        # jamais bloquer sur un pépin d'outillage
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CONTRÔLE 8 — LE TABLEAU DES 8 BRIQUES EST À JOUR
+#
+# Le socle du produit (DOSSIER-ATHLETE-SUIVI.md) n'avait pas bougé pendant 28 jours et
+# ~350 versions, et il DISAIT FAUX : deux briques construites y étaient marquées
+# « ⏳ EN ATTENTE ». C'est R23 — *un document d'état qu'on ne met pas à jour fait dire
+# des bêtises à celui qui le lit*, ce qui est arrivé deux fois le seul 26/08.
+#
+# ⭐ Le tableau est donc GÉNÉRÉ depuis le code (tools/briques.py), comme INVENTAIRE.md, et
+# ce contrôle refuse la livraison s'il a dérivé. *Un état qu'on doit penser à mettre à jour
+# finit par ne pas l'être ; un état qui fait rougir la livraison, si.*
+try:
+    _r = subprocess.run([sys.executable, str(racine / "tools" / "briques.py"), "--check"],
+                        capture_output=True, text=True, timeout=30)
+    if _r.returncode != 0:
+        print((_r.stdout or "").strip() or "❌ tools/briques.py --check a échoué")
+        sys.exit(1)
+    print((_r.stdout or "").strip())
+except FileNotFoundError:
+    print("⚠️ tools/briques.py introuvable — le tableau des 8 briques n'est plus surveillé.")
 except Exception:
     pass                                        # jamais bloquer sur un pépin d'outillage
 
