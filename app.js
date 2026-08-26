@@ -1454,6 +1454,10 @@ function _mesAliments(max){
 /* Une quantité RAISONNABLE d'un aliment, pour couvrir au plus `manque` de cette macro.
    Rend {texte, apport} ou null. Ne dépasse jamais les bornes ci-dessus. */
 const _RESTE_MAX_PORTIONS = 2, _RESTE_MAX_G = 250;
+/* « 100 g de Amandes » — l'élision manquait. Ce n'est pas de la coquetterie : c'est du texte
+   affiché à quelqu'un, et Michel l'a écrit lui-même (R31) — *plus on se rapproche d'une
+   réalité, plus les gens ont confiance dans ce qu'on a fait.* */
+const _deNom = n => /^[aeiouyàâäéèêëîïôöùûüœæh]/i.test((n||'').trim()) ? ("d'" + n) : ('de ' + n);
 function _portionRaisonnable(al, macro, manque){
   const parPortion = +al[macro] || 0;
   if(parPortion <= 0 || manque <= 0) return null;
@@ -1463,7 +1467,7 @@ function _portionRaisonnable(al, macro, manque){
     g = Math.min(g, _RESTE_MAX_G);
     g = Math.round(g/5)*5;                                   // pas de fausse précision
     if(g < 10) return null;
-    return { texte: g + ' g de ' + al.name, apport: g * p100 / 100 };
+    return { texte: g + ' g ' + _deNom(al.name), apport: g * p100 / 100 };
   }
   let n = manque / parPortion;
   n = Math.min(n, _RESTE_MAX_PORTIONS);
