@@ -6545,6 +6545,39 @@ function _ecrireExport(avecConversations, seancesSeules){
       }
       payload.donnees[k]=S[k];
     });
+    /* ⛔⛔ DEUX DÉFAUTS CORRIGÉS ICI (26/08/2026, ft-v1013), trouvés en COMPARANT ce fichier
+       avec celui du bouton « 💬 Exporter mes conversations ». Michel : *« c'est quoi la
+       différence, parce que s'il n'y en a pas autant supprimer »*. Il y en avait — et elles
+       étaient toutes les deux au désavantage de CET export-ci.
+
+       ① LE FIL EN COURS ÉTAIT ABSENT. La boucle ci-dessus recopie `S.coachConversations`,
+          qui ne contient QUE les discussions RANGÉES (celles fermées par le « + »). Le fil
+          qu'on est en train d'écrire vit ailleurs, dans `ft4_coach_hist` — il n'est donc dans
+          aucune clé de `S`. Mesuré : 5 messages exportés au lieu de 6.
+          👉 *Quelqu'un qui exporte « avec mes discussions » repartait SANS la discussion du
+          moment* — souvent celle qui l'intéresse le plus. Silencieux, évidemment : le fichier
+          a l'air complet.
+       ② LES CONSIGNES INTERNES PARTAIENT AVEC. Le débrief automatique injecte des messages
+          `_silent` que la personne n'a jamais vus ni écrits. L'export texte les filtre depuis
+          toujours (`propre()`), celui-ci les livrait.
+       ⭐ R2 — on ne réinvente rien : on emprunte les DEUX mécanismes déjà éprouvés de
+       `exporterConversationsMilo`, la lecture du fil courant et le filtre `_silent`. */
+    if(avecConversations){
+      const _sansSilent=a=>(a||[]).filter(m=>m&&!m._silent&&m.content);
+      let fil=[];
+      try{ fil=JSON.parse(localStorage.getItem('ft4_coach_hist')||'[]'); }catch(e){ fil=[]; }
+      if(!Array.isArray(fil)) fil=[];
+      const rangees=Array.isArray(payload.donnees.coachConversations)?payload.donnees.coachConversations:[];
+      const propres=rangees.map(c=>Object.assign({},c,{messages:_sansSilent(c&&c.messages)}))
+                           .filter(c=>c.messages.length);
+      const enCours=_sansSilent(fil);
+      /* ⛔ Le fil courant est marqué comme TEL, et il n'invente pas de date : il n'en a pas
+         (il n'a pas encore été rangé). `enCours:true` permet à une réimportation de le
+         distinguer d'une discussion close — R3, comportement différé mais nommable. */
+      payload.donnees.coachConversations = enCours.length
+        ? [{ id:'_encours', title:'Discussion en cours', enCours:true, messages:enCours }].concat(propres)
+        : propres;
+    }
     }
     /* 🖼️ LES IMAGES SORTENT DU FICHIER, LES EXERCICES RESTENT (17/08/2026).
        `exPhotos` était déjà écarté, mais les exercices PERSO embarquent leur photo dans le même

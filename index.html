@@ -983,6 +983,10 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
       <div style="font-weight:700;color:var(--t1);font-size:15px;">💬 Mes conversations avec Milo</div>
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Tes échanges avec Milo vivent <strong>uniquement sur ce téléphone</strong> — ils ne partent sur aucun serveur, et c'est voulu. Mais du coup, <strong>un changement d'appareil les efface</strong>. Ce bouton te les donne dans un fichier texte que tu gardes où tu veux.<br><br>ℹ️ Seule exception, et elle ne contient <strong>aucun texte</strong> : un petit <strong>compteur de bon fonctionnement</strong> part avec ta sauvegarde — des <strong>nombres</strong> («&nbsp;3 réponses signalées ce mois-ci&nbsp;»), jamais une phrase de Milo ni un mot de toi. Il sert à repérer quand Milo dérape, chez de vrais utilisateurs et pas seulement chez Michel.</div>
+      <!-- ⚠️ CE BOUTON EST DÉSORMAIS AUSSI DANS LA MODALE D'EXPORT, ouverte à tout le monde
+           (ft-v1013). On le GARDE ici plutôt que de le retirer : l'admin y accède sans passer
+           par la modale, et un retrait silencieux ressemble à un oubli (R30). Même fonction,
+           deux points d'entrée — pas deux copies. -->
       <button class="btn btn-bg2" onclick="exporterConversationsMilo()" style="padding:11px;font-size:14px;">💬 Exporter mes conversations</button>
     </div>
     </details>
@@ -2351,7 +2355,21 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       ⚠️ Tes discussions avec Milo sont ce que l'app contient de plus personnel — tu y parles de ton
       corps, de ton moral, de tes blessures. Ne les inclus que si tu sais à qui tu donnes le fichier.
     </div>
-    <button class="btn btn-bg2" style="margin-top:12px;width:100%;" onclick="closeExportChoix()">Annuler</button>
+    <!-- 💬 LE FICHIER LISIBLE SORT DE L'ADMIN (26/08/2026, ft-v1013). Il y vivait depuis le
+         05/08 — or son propre commentaire disait pourquoi il existe : « le fil des échanges vit
+         UNIQUEMENT sur le téléphone : un changement d'appareil l'efface, on donne donc un FICHIER
+         que la personne emporte ». ⛔ La fonctionnalité pensée pour TOUT LE MONDE n'était
+         atteignable que par l'admin (5 taps sur le logo). Mesuré en comparant les deux fichiers :
+         celui-ci est le seul LISIBLE par un humain (texte daté), l'autre est une sauvegarde JSON
+         à réimporter — ils ne font pas doublon, c'était un rangement, pas une décision (R30).
+         ⛔ ET IL N'EST PAS DUPLIQUÉ : c'est la MÊME fonction, appelée d'un 2ᵉ endroit (R2). -->
+    <div style="height:1px;background:var(--bd);margin:16px 0 14px;"></div>
+    <button class="btn btn-bg2" style="width:100%;padding:14px;" onclick="closeExportChoix();exporterConversationsMilo();">💬&nbsp; Exporter <b>mes discussions à lire</b></button>
+    <div style="font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:7px;padding:0 2px;">
+      Un fichier <b>texte</b>, daté, qui se lit tel quel — pas une sauvegarde. Rien d'autre que tes
+      échanges avec Milo : ni séances, ni bilans, ni santé.
+    </div>
+    <button class="btn btn-bg2" style="margin-top:16px;width:100%;" onclick="closeExportChoix()">Annuler</button>
   </div>
 </div>
 
