@@ -6,7 +6,303 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v990`.
+- **Version en ligne (live) :** `ft-v1012`.
+- 📋⭐⭐ **CRÉER UN PROGRAMME DEPUIS ZÉRO — LIVRÉ** (ft-v1012). 2ᵉ brique du chantier écran
+  Séance (`docs/SEANCE-DESSAI.md` §8) et le vrai besoin de Michel : *« je vais vouloir créer mon
+  programme et il va falloir que ce soit rapide »*.
+  ⛔⛔ **Aucun chemin ne menait à la création d'un programme** : il fallait monter une SÉANCE
+  entière pour en obtenir un. ⭐⭐ **L'éditeur existait pourtant en entier** (`_renderProgEdit`),
+  atteignable seulement par le ✏️ d'un programme déjà créé. *Une porte manquait, pas une
+  fonctionnalité* (R13).
+  ⛔⛔ **Rien n'est écrit tant qu'on n'a pas sauvegardé** : l'index pointe au-delà du tableau,
+  donc `saveProgEdit` AJOUTE. Fermer sans sauvegarder ne laisse **rien**.
+  ⚠️ **Le nom devient obligatoire** — invisible avant, puisqu'on n'éditait que des programmes
+  déjà nommés.
+  ⭐⭐ **La capture a révélé une incohérence que je venais de créer** : le sélecteur restait
+  ouvert côté séance (ft-v1009) mais refermait encore dans l'ÉDITEUR DE PROGRAMME — *le côté où
+  ça gênait le plus*. Corrigé. ⛔ **Le témoin qui compte vérifie que RIEN NE FUIT** : si le mode
+  retombait en `workout`, les exercices suivants partiraient silencieusement dans la séance du
+  jour.
+  ⛔ **Vocabulaire** : « + Ajouter » → « + Créer ma séance », et les messages qui désignaient
+  l'ancien nom sont corrigés. *Quand on ouvre une porte, on relit ce que disent les panneaux.*
+  ⏭️ **Reste du chantier** : ③ le débrief chiffré en local · ④ sortir le générateur de séances
+  du cadre « débutant » · ⑤ ranger Scanner/Importer.
+- 🔁⭐ **LE SÉLECTEUR D'EXERCICES RESTE OUVERT — LIVRÉ** (ft-v1009). **Première brique du chantier
+  écran Séance** (`docs/SEANCE-DESSAI.md` §8, point 1), et le goulot que Michel a senti en premier :
+  *« il va falloir améliorer aussi l'accès aux exercices… et que ce soit rapide »*.
+  ⛔ **Une seule ligne coûtait cher** : `addExercise()` appelait `closeExPicker()` à chaque ajout →
+  6 exercices = **6 allers-retours**. Désormais les ajouts s'enchaînent, la recherche est vidée et
+  prête, et le titre dit combien on a ajouté.
+  ⛔⛔ **Seul le mode « workout » reste ouvert** : `replace`/`replaceSess`/`addSess`/`prog`/
+  `addToGroup` désignent UNE place et ferment. *Un « remplacer » resté ouvert AJOUTERAIT au lieu de
+  remplacer, en silence* — c'est le témoin le plus important du bloc.
+  ⚠️ **Le scroll a dû déménager** : `scrollIntoView` défilait DERRIÈRE la modale. Reporté à la
+  fermeture, quand l'écran redevient visible.
+  ⛔⛔ **Bouton central « + » inchangé au pixel** (règle d'or #9), mesuré et non regardé.
+  ⏭️ **Reste du chantier** : ② porte « Créer un programme » + renommer « + Ajouter » en « Créer ma
+  séance » · ③ le débrief chiffré en local · ④ sortir le générateur du cadre « débutant » ·
+  ⑤ ranger Scanner/Importer.
+- 🔴⭐⭐ **LE BOUTON ROUGE DE `showConfirm` DIT ENFIN CE QU'IL FAIT — LIVRÉ** (ft-v1006).
+  Michel, capture à l'appui en lançant le benchmark : *« ya marqué annuler ou supprimer lol »*.
+  La fenêtre annonçait **« 53 appels au Coach, environ 0,79 € à 3,45 € »** et proposait
+  **[Annuler] [SUPPRIMER]**. *On ne supprime rien : on lance, et ça coûte de l'argent.*
+  ⭐ **Le mécanisme existait déjà, posé d'un seul côté** (5ᵉ fois de la semaine) : le 4ᵉ argument
+  `okLabel` existe depuis toujours, et **10 appels sur 24** ne le passaient pas pour une action
+  qui n'était **pas** une suppression (lancer PT-001/VC/le benchmark, rejouer les rouges,
+  importer des pesées, fusionner, vider le cache, vider la séance, abandonner la séance,
+  refaire l'inscription).
+  ⚠️ **Correction de Michel le jour même** : le 10ᵉ (*« Refaire l'inscription »*) est **inatteignable
+  en production** — `resetOnboardingTest()` est gardée par `window.__FT_CLONE__`, et **plus personne
+  ne pose ce drapeau** depuis le 23/08 (ft-v976). **9 fenêtres réellement visibles + 1 derrière la garde.**
+  ⭐ **Et le clone n'est pas SUPPRIMÉ, il est DÉBRANCHÉ** (correction de Michel, mesurée) : `clone/` est
+  absent du disque mais **récupérable en une ligne** (`git checkout 2dd5b85^ -- clone/`), les **14 gardes
+  sont toutes en place**, et ce qui manque est le **poseur** du drapeau — il vivait dans le shim du clone.
+  *La condition de retour est donc écrite* (R30). ⛔ Le code
+  reste (**R30** : une garde de clone est une *question non résolue*, pas un interrupteur) et son
+  libellé est corrigé avec les autres, pour qu'un essai promu ne reparte pas avec le défaut.
+  ⛔⛔ **La jumelle, trouvée en la cherchant (R8)** : *« Fusionner les exercices »* existe à
+  **deux endroits** — `log.js` disait « Fusionner », `setup.js` disait **« Supprimer » pour un
+  RENOMMAGE** (**R2**).
+  ⭐⭐ **Le témoin fige une RÈGLE, pas une liste** : énumérer les 24 appels rougirait au 25ᵉ.
+  La règle ne périme pas — *le défaut est « Supprimer », donc un appel sans libellé doit avoir un
+  titre qui commence par « Supprimer »*.
+  ⚠️ **Mon découpage d'arguments a menti d'abord** : il sautait les chaînes mais pas les
+  **commentaires**, et une apostrophe française y ouvrait une fausse chaîne → il accusait 5
+  appels déjà corrigés. *Même famille que l'apostrophe courbe de ft-v994.*
+- 🔢⭐ **LE BENCHMARK N'ANNONCE PLUS « 16 SCÉNARIOS » ALORS QU'IL EN PORTE 53 — LIVRÉ**
+  (ft-v1005). Michel, avant de le lancer depuis l'app : *« oui corrige les libellés avant »*.
+  **Quatre libellés écrits en dur** dans le groupe admin « 🛡️ Milo — le mesurer » (*16 messages*,
+  *16 pièges*, *16 scénarios*, *2 × 16*) étaient restés à 16 pendant que le banc d'essai passait
+  **16 → 21 → 53 en trois semaines** — c'est **R35** au pied de la lettre : *il grandit à chaque
+  bug, il n'a pas de taille cible*.
+  ⛔⛔ **On n'a pas mis « 53 » à la place** : ce serait la même dette six semaines plus tard, sur
+  l'écran même qui sert à décider d'une dépense. **Le nombre est retiré.**
+  ⭐ **Le compte et le prix existaient déjà, justes, à deux mètres** : `startEvalBench` calcule
+  `SC.length` et `_evPrix(n)` et les annonce dans la **confirmation, avant** le premier appel payé
+  — le libellé statique portait une **seconde source de vérité** pour rien (**R2**), et c'est
+  elle qui mentait.
+  ⭐⭐ **Le témoin INTERDIT le nombre au lieu de l'épingler** : vérifier « 53 » rougirait à la 54ᵉ
+  promotion et on l'ajusterait sans réfléchir. Il refuse **tout** nombre à 2-3 chiffres dans ce
+  bloc → la prochaine dérive fait **rougir la livraison**.
+  ⚠️ **Ma 1ʳᵉ fenêtre de mesure ratait un des quatre** (elle partait du sous-titre, or *« 16
+  messages »* vit dans l'intro **au-dessus**) — *une fenêtre qui commence après le mensonge ne le
+  voit pas*. Élargie, le contrôle négatif rend `["16 messages","16 pièges","16 scénarios"]`.
+- 🧹⭐ **« SQUAT SUMO » RETIRÉ DU CHOIX — LIVRÉ** (ft-v1002). Michel : *« squat sumo on supprime,
+  ça me soûle »*. **Même forme que le pull-over** : RETRAIT, jamais fusion — identifiant gardé,
+  séances et records **non renommés** (muscles + MET 6,5 intacts), vérifié en navigateur.
+  ⭐⭐ **Son histoire était déjà écrite (R30)** : le 13/08 son illustration avait été retirée
+  (elle montrait un **haltère** = geste du Squat Gobelet) et on gardait le fichier *« le jour où
+  Michel trouve une figurine À LA BARRE »*. Elle n'est jamais venue → il a préféré retirer
+  l'exercice. *Un retrait dont la condition de retour est écrite se referme proprement, même
+  quand la réponse finit par être « non ».*
+  ⭐ **Le fichier orphelin dormait dans le CACHE du service worker** : téléchargé par tout le
+  monde pour rien depuis le 13/08. Retiré du dépôt et du cache.
+  ⛔ **7 endroits alignés** (2 entrées EXLIB — Jambes *et* Fessiers — · EX_IDS ·
+  RETIRES_VOLONTAIREMENT · 2 équivalences · EX_EN · cache SW · `A-FAIRE-SUR-PC` close).
+  ⭐⭐ **Le témoin de ft-v1001 a servi dès le cas suivant** : la règle « aucune équivalence
+  d'import ne vise un exercice introuvable » est restée verte — R17 paie deux fois en une matinée.
+- 🧹⭐⭐ **LE « PULL-OVER » GÉNÉRIQUE RETIRÉ DU CHOIX — LIVRÉ** (ft-v1001). Décision de Michel :
+  *« à l'haltère je fais beaucoup mais il y a aussi à la barre, mais le pull over tout seul on
+  peut le retirer »*. ⭐⭐ **Ce qui décide de tout est la FORME du retrait** : le projet distingue
+  **RETRAIT** et **FUSION** — *« on retire du CHOIX, jamais de la MÉMOIRE »*. Une fusion aurait
+  fait migrer l'historique (`state.js:210` **réécrit en dur** les noms stockés) ; or Michel le
+  fait **aux deux**, donc renommer aurait écrit un fait faux **et mélangé ses records** (R29).
+  👉 **Retrait** : sorti de `EXLIB`, identifiant gardé dans `EX_IDS` + `RETIRES_VOLONTAIREMENT`
+  avec sa raison (R30). ⭐ Vérifié en navigateur : séance et record **non renommés**, muscles et
+  MET intacts ; bac Barre 2 → 1, les 4 variantes gardent leur vignette.
+  ⭐⭐ **Jumelle trouvée en la cherchant (R8)** : 4 équivalences d'import visaient encore
+  « Pull-over » — et **c'était déjà faux avant** (elles décrivent la poulie). *Le retrait n'a pas
+  créé le défaut, il l'a rendu visible.* 👉 **Une règle générale** interdit désormais toute cible
+  d'équivalence introuvable. ⚠️ Calibrée au passage : `leg curl` vise un nom absent du catalogue
+  et c'est **valide** (ancien nom déclaré) — j'ai failli réparer ce qui marchait (R28).
+  ⚠️ **Un témoin d'hier exigeait l'inverse** (« les 5 entrées restent 5 ») : retourné vers ce
+  qu'il protégeait vraiment, raison d'avant conservée.
+- 🔁⭐⭐ **LE « PULL-OVER » GÉNÉRIQUE — et un TEST DU PROJET qui m'a repris** (ft-v1000).
+  ⛔⛔ **Ma première solution a été REFUSÉE par un test, et il avait raison.** J'avais fait
+  **partager** `pullover-haltere.webp` entre le générique et *Pull-over Haltère* — le contrôle
+  croisé ② *« deux exercices ne partagent jamais la même ANIMATION »* est passé au **rouge**.
+  ⭐⭐ **Cette règle est née du bug du 02/08** (les deux écartés pointaient le même fichier,
+  l'app montrait le mauvais mouvement) — et j'avais écrit un témoin **le matin même**, en
+  ft-v999, disant *« les deux écartés gardent des fichiers différents »*. *Un test permanent m'a
+  empêché de refaire, dans la même matinée, le bug dont je venais d'écrire la leçon* (**R17**).
+  👉 **Livré : le BAC seulement.** Le générique n'a pas de matériel ; « barre » venait
+  mécaniquement de la règle de classement. Il passe en **poids libre**. Une ligne, 0 octet.
+  ⛔ **Il reste SANS vignette, exprès** : *aucune animation vaut mieux qu'une animation qui
+  affirme « Pull-over = Pull-over Haltère » sans que ce soit décidé* — la phrase du 02/08,
+  appliquée à moi-même. Un témoin garde cette **absence**.
+  ⏭️ **LE VRAI DÉFAUT RESTE ENTIER : doublon de catalogue** (5 entrées). Fusionner renommerait
+  les séances et records passés, et on ne sait pas s'ils ont été faits à la barre ou à
+  l'haltère (**R29**). 👉 **Une seule question débloque tout : « tes Pull-over, c'était barre ou
+  haltère ? »**
+- 🏋️⭐ **DEUX ANIMATIONS QUI MANQUAIENT — LIVRÉ** (ft-v999). Michel : *« j'ai encore des figurines
+  qui n'apparaissent pas »*. ⛔⛔ **Ce n'est PAS le bug de ft-v996/997**, et la différence compte :
+  là le fichier existait et l'app ne le trouvait pas ; **ici le fichier n'existe pas**. Mesuré :
+  306 images sur disque, 302 rattachées, **4 orphelines** — aucune ne correspondait. **21 exercices
+  sur 324** n'ont jamais eu d'animation, et le repli (image du muscle + « Ajouter la photo ») est le
+  comportement **prévu**. *Deux symptômes identiques à l'écran, deux causes opposées.*
+  ⭐⭐ **Le plus important est un commentaire du 02/08 qui a dit lui-même quand le rebrancher** :
+  *« à rebrancher le jour où on a une vraie démo d'écarté à plat »* — un retrait dont la **condition
+  de retour** est écrite se referme tout seul le jour venu (**R30**).
+  ⛔ Vérifié **image par image** avant de rattacher (R29), et les **4 endroits** tenus alignés
+  (fichier · `EX_YT` · cache SW · pas de collision de fichier), avec un témoin qui les épingle.
+  ⏭️ **RESTE À TRANCHER — le PULL-OVER** : ce n'est pas une animation manquante mais un **DOUBLON
+  DE CATALOGUE**. 5 entrées, dont une générique *« Pull-over »* rangée dans le bac **BARRE** juste
+  au-dessus de *« Pull-over Barre »*. Le GIF envoyé est **l'image déjà en place** sur *Pull-over
+  Haltère*. Fusionner ou retirer le générique touche l'**historique** → arbitrage de Michel.
+  ⏭️ **Et il reste 19 exercices sans animation** (liste dans le journal) : il faut les **fichiers**,
+  pas du code.
+- ⚠️ **`ft-v998` (banc d'essai sans taille cible, R35) n'a PAS d'entrée ici** — livrée par l'autre
+  session, journalisée dans `CLAUDE.md` mais pas reportée dans ce fichier (règle d'or #12). Je ne
+  l'écris pas à sa place : je n'en connais pas le détail. **À compléter par session-A.**
+- 🧬⭐⭐ **UN NOM ABRÉGÉ LIT LA FICHE ÉCRITE, PLUS LA DEVINETTE — LIVRÉ** (ft-v997). Le **2ᵉ effet
+  de la même cause que ft-v996**, laissé ouvert la veille et tranché par Michel **la mesure en
+  main** : *« fais la correction des muscles aussi »*. ⛔⛔ `_mscScores` cherchait la fiche au nom
+  **EXACT** : un nom abrégé la ratait et retombait sur les règles `_MEX`, qui **devinent** —
+  l'inverse exact de ce que le bloc annonce depuis le 02/08. **Mesuré : 55 des 77** abréviations
+  rendaient des muscles différents, *« Inclinaison Lombaire »* **aucun** (figurine grise).
+  ⭐⭐ **L'exemple qui coûte** : *« Rowing Poitrine Appuyée »* abrégé **recréditait le bas du dos**,
+  retiré **exprès** le 02/08 — *une correction anatomique faite à la main, annulée par un nom court*.
+  ⭐⭐ **ET SA JUMELLE, TROUVÉE EN LA CHERCHANT (R8)** : `estUnilateral`/`uniLabel` avaient le même
+  défaut — **10 exercices** perdaient leur statut unilatéral abrégés, donc **volume non doublé** et
+  étiquette « par bras / par jambe » absente. ⛔ **Les calories suivent sans une ligne de plus** (le
+  MET dérive des muscles) : 4 MET faux, jusqu'à **±62 %**, et l'un d'eux **surestimait** — *l'erreur
+  n'allait pas toujours dans le même sens, donc elle était invisible en moyenne*.
+  ⛔⛔ **UN ENDROIT RESTE STRICT, ET C'EST ÉCRIT DANS LE CODE (R30)** : `state.js`, la fusion d'un
+  exercice perso avec le catalogue. Y résoudre l'abréviation la rendrait **destructrice** — un
+  « Hip Thrust Barre » créé à la main, avec sa photo, **disparaîtrait**. *Une lecture qui se trompe
+  coûte une figurine ; une suppression qui se trompe coûte le travail de la personne* (R29).
+  ⚠️ **CE QUI CHANGE POUR L'UTILISATEUR** : figurine, couleur du calendrier, calories et volume de
+  séances **déjà passées** bougent — prix assumé, tranché par Michel après mesure. ⭐ **Rien n'est
+  réécrit en base**, tout est recalculé à l'affichage → **réversible**.
+  ⭐ **Vérifié à l'écran** (captures avant/après), pas seulement en données.
+- 🏷️⭐⭐ **UN NOM D'EXERCICE ABRÉGÉ RETROUVE SA FICHE — LIVRÉ** (ft-v996). Signalé par Michel
+  (*« je n'ai plus la figurine sur ce mouvement-là »*, 2 captures), en repartant d'une vieille
+  question sur les adducteurs. ⛔⛔ **Les adducteurs n'étaient PAS en cause** — réglés depuis
+  ft-v921, vérifié dans un vrai navigateur avant de coder (`Adduction Cuisses` → `{adductors:2}`).
+  *Le symptôme désignait le mauvais coupable.* ⭐⭐ **La vraie cause est le NOM** : sa séance
+  portait les noms **COURTS** (« Hip Thrust Barre », « Abduction Cuisses ») quand le catalogue les
+  connaît **avec leur parenthèse** — **77 exercices** en portent une, et Milo **abrège** quand il
+  prescrit. ⛔⛔ **Défaut SILENCIEUX** : le calcul des muscles s'en sortait (il retombe sur les
+  règles `_MEX`, qui devinent), donc rien ne rougissait — seuls les lookups **exacts** (animation,
+  tutoriel, silhouette) échouaient. À l'écran : *« Muscle principal deviné »* + *« Ajouter la photo
+  de ta machine »*, alors que les deux `.webp` **étaient déjà dans le dépôt**. ***L'app proposait
+  d'ajouter une photo qu'elle avait sous la main.*** ⭐⭐ **Le mécanisme existait, posé d'un seul
+  côté — 3ᵉ fois après ft-v973/975 (R8/R13)** : `_matchExercise` a une étape *« exact sans la
+  parenthèse »* depuis le **09/08**, écrite pour ce cas exact… mais réservée à l'**import**.
+  ⛔ **Un seul propriétaire (R2)** : `exNomCatalogue()` (`constants.js`), posé aux **6** lookups de
+  `log.js`. ⛔ **Déterministe seulement** (R29 — montrer l'animation d'un AUTRE exercice est pire
+  que rien). ⛔⛔ **Zéro-collision MESURÉ, et c'est la CONDITION de la table** : 324 exercices,
+  77 parenthèses → 77 bases distinctes, 0 collision ; toute base ambiguë est **retirée** plutôt
+  qu'arbitrée — l'abréviation cesse alors d'être résolue, elle ne pointe jamais vers le mauvais
+  exercice.
+  ⏭️⚠️⚠️ **POINT OUVERT — LE 2ᵉ EFFET DE LA MÊME CAUSE, NON CORRIGÉ EXPRÈS.** `_mscScores`
+  appelle `exMuscles(ex.name)` en nom **exact** : un nom abrégé rate donc la **DONNÉE ÉCRITE** et
+  retombe sur la **DEVINETTE** — alors que le bloc dit lui-même *« la donnée écrite passe avant
+  les règles »*. **Mesuré : 55 des 77** abréviations donnent des muscles **différents**, et
+  *« Inclinaison Lombaire »* n'en donne **aucun** (figurine grise). ⭐ **L'exemple qui coûte** :
+  *« Rowing Poitrine Appuyée »* abrégé **recrédite le bas du dos**, que la fiche du 02/08 avait
+  retiré **exprès**. 👉 **Le correctif tient en une ligne** (`exMuscles(exNomCatalogue(ex.name))`)
+  **mais il change la figurine, la couleur du calendrier et les calories de séances PASSÉES** →
+  **c'est un arbitrage de Michel**, pas un détail technique (R29 / règle d'or #10). **C'est R31** :
+  la figurine est le vocabulaire, l'imprécision se propage jusqu'au contexte de Milo.
+- 🏃⭐⭐ **LE CARDIO DE MILO VA DANS SON BLOC, PAS DANS LES EXERCICES** (ft-v995). Michel, **en
+  salle**, capture à l'appui. ⭐⭐ **Sa raison décide de tout** : *« si on fait une séance cardio
+  toute seule, on veut qu'elle soit comptabilisée. Mais je ne veux pas que la course, le vélo
+  elliptique ou peu importe arrive dans un exercice de musculation, ça n'a strictement rien à
+  voir. »* ⛔⛔ **Ce n'était pas un défaut de jugement de Milo — les DEUX bouts manquaient** : le
+  prompt ne nommait pas le bloc, et `_appliqueMiloSession` ne lisait aucun champ cardio.
+  ⭐ **D'où venait l'elliptique ?** *Pas du catalogue* — il n'y est pas (`tier:'new'`). D'une
+  **consigne** : *« le cardio LÉGER (… vélo/elliptique tranquille …) est BON »*. **Milo obéissait**,
+  sans savoir où le poser. *C'est R8 à l'envers, comme ft-v863.*
+  ⛔ **Posé dans `_appliqueMiloSession`**, le seul point que les **deux portes** traversent (JSON
+  **et** repli texte) — sinon rien n'aurait changé pour **Eline** (biais R9, cf. le bouton
+  « Commencer cette séance »). **Avant ET après** tranchés par position ; au **milieu** ça reste un
+  exercice ; **sans durée**, aucune durée inventée ; un cardio **déjà noté n'est jamais écrasé**.
+  ⭐⭐ **2 défauts trouvés par la MESURE** : ① la pose écrivait le cardio **avant** que `S.wkt` soit
+  reconstruit → il sortait des exercices et **n'arrivait nulle part** (R4) ; ② l'intensité tombait
+  sur « modéré » car `_naz()` désaccentue le **nom**, pas la **note** — *même famille que
+  l'apostrophe courbe de ft-v994* — soit **50 % d'écart en kcal** (4,0 vs 6,0 MET).
+  🗣️ **Et Milo est mis au courant** (2ᵉ moitié) : consigne + **vocabulaire exact de `CARDIO_MET`**
+  (6 types, 3 intensités), avec la **durée réclamée** — sans elle l'app rejette en silence.
+  ⚠️ **+938 car. dans le bloc PERSONNEL** : le bloc commun **ne bouge pas** (45 362 / 47 118).
+- 🧪⭐⭐ **LE BANC D'ESSAI PASSE DE 21 À 50 SCÉNARIOS** (ft-v994). Michel : *« il n'y a pas assez de
+  contrôle, on le monte à 50 »*, puis, aussitôt : *« et que les scénarios soient VIABLES hein, pas
+  mettre tout et n'importe quoi »*. ⛔⛔ **C'est cette seconde phrase le cahier des charges** — et le
+  journal de test le disait déjà : *« remplir pour atteindre le chiffre → des entrées inventées »*.
+  Les **29 nouveaux viennent tous du vécu** (`docs/JOURNAL-DE-TEST.md`), aucun inventé.
+  ⭐⭐ **Chacun a été éprouvé contre une BONNE et une MAUVAISE réponse avant livraison** — *un
+  scénario qui ne peut pas rougir ne mesure rien*. **6 sur 23 ne mordaient pas au 1ᵉʳ jet.**
+  ⛔⛔ **Le pire défaut était plus ancien que mes scénarios : l'APOSTROPHE COURBE** (`’`, U+2019),
+  celle que Milo écrit naturellement. `normalize('NFD')` ne la convertit pas → un motif écrit
+  `c'est noté` **ne matchait jamais**. **8 motifs du fichier** en portent une : *ils ne rougissaient
+  pas, ils ne voyaient rien.* Corrigé dans `U.norm`, un seul endroit (**R2**).
+  ⭐ **2ᵉ défaut** : 3 vérificateurs comptaient des **lignes**, or Milo écrit souvent la séance
+  **sur une seule ligne** — le témoin des « 30 exercices » voyait alors *un* exercice.
+  ⚠️ **Et 4 des 6 échecs venaient de mes propres essais**, pas du code (apostrophes, noms tronqués).
+  ⚠️⚠️ **Un témoin a rougi à tort, et sa leçon vaut d'être gardée** : il inspectait *« tout ce qui
+  suit EV-022 »* — équivalent à EV-022 tant qu'il était le dernier du fichier. *Un témoin borné par
+  la fin du fichier se déplace tout seul.* En le corrigeant, **2 vraies péremptions** sont apparues :
+  EV-026 posait une date **FUTURE** en dur (périmée en 5 jours) et EV-048 disait *« en ce moment »*
+  avec une nuit figée. Les deux sont désormais relatives.
+  ⚠️ **Deux coûts, écrits plutôt que tus** : ① **50 appels API par passe** (contre 21) ; ② ces
+  vérificateurs mesurent ce qui est mesurable **par du code** — le ton, le naturel, *« est-ce que
+  Milo est agréable »* restent au **juge humain**.
+  ⏭️ **Le benchmark peut être relancé** : R34 attend une passe réelle (une vraie clé API).
+- 🧠⭐⭐ **LA COURSE `_saveCoachMemory` — PROUVÉE PUIS CORRIGÉE** (ft-v993). ⛔⛔ **Prouvée AVANT de
+  toucher au code**, comme le suivi d'audit l'exigeait : deux résumés à **20 ms d'écart** envoient
+  tous deux `existingMemory:"MÉMOIRE DE DÉPART"`, et **le dernier REVENU écrase l'autre** — « FAIT-B »
+  perdu, sans erreur, sans trace. ⭐ Cause : `S.coachMemory` est **lu au départ** et **réécrit au
+  retour** ; entre les deux, tout autre appel lit la valeur périmée. ⛔ **Le correctif ne bloque
+  rien** (l'UI n'attend jamais le réseau — règle d'or #3) : il **sérialise dans une file**, comme
+  le débrief de ft-v979 (**R13/R2**), et chaque résumé **relit la mémoire au moment de partir**.
+  ⚠️ **La file ne se casse jamais** : un échec passe la main au suivant — sinon une panne réseau
+  gèlerait la mémoire pour toute la session, pire que le bug corrigé.
+- 📏⭐⭐ **⑤ CACHES PAR LIEU : MESURÉ, PUIS *NON* CONSTRUIT** (ft-v993) — et c'est la bonne réponse.
+  Les 5 variantes sont **réellement distinctes** (salle **11 446** · basique **8 544** · maison
+  **6 493** · poids du corps **2 136** · non renseigné **11 475** car.) : elles ne peuvent donc pas
+  rejoindre le bloc commun telles quelles, GPT a raison sur le fond. ⛔ **Mais aucun gain sous
+  ~6 personnes actives dans la même heure ET sur le même lieu** — le projet a une poignée de
+  testeurs, le gain est **zéro aujourd'hui**. **R19/R34** et `SUIVI-AUDIT` disaient déjà *« ne pas
+  commencer sans données d'usage »*. ⏭️ **À rouvrir quand l'usage réel le justifiera** — et c'est
+  ft-v990 (le coût réel par appel) qui donnera le signal.
+- 🧠⭐⭐ **LA MÉMOIRE ÉLARGIE OUVERTE À TOUT LE MONDE — LIVRÉE** (ft-v992). Priorité ④, tranchée
+  par Michel **après mesure**. ⛔⛔ **La raison d'avant reste écrite (R30)** : réservée à 2 comptes
+  depuis le 03/08 pour *« mesurer le coût réel avant d'ouvrir »* — ce n'était pas un oubli, c'était
+  une prudence. ⭐⭐ **Ce coût est AUTO-DÉGRESSIF** (la fonction ne résume que ce qui a été vécu) :
+  **3 séances → 0 car. · 5 → 0 · 8 → 665 · 12 → 967 · 20 → 1 551 · 35 → 2 622** (borne 30 lignes).
+  ⛔⛔ **Et la crainte du plafond ne tenait pas** : ces caractères tombent dans le bloc **PERSONNEL**,
+  le bloc commun est identique **au caractère près** (45 362 des deux côtés) — *ce n'était pas le
+  bon bloc*. ⭐ **Pourquoi on ouvre (R9)** : la mémoire longue EST la promesse du produit ; la
+  réserver revenait à ce que **Michel juge Milo sur une mémoire que personne d'autre n'a**.
+  ⭐⭐ **LA VRAIE TROUVAILLE, hors commande** : en vérifiant que **R34** pouvait juger le
+  changement, **aucun des 21 scénarios du banc d'essai n'avait plus d'UNE séance** → l'avant/après
+  aurait comparé **deux contextes identiques** (faux vert), et *la promesse centrale du produit
+  n'était vérifiée par aucun scénario*. D'où **EV-022** (22ᵉ) : retrouver une séance d'il y a 27 j
+  **sans en inventer la charge**, dates relatives et calculées à midi.
+  ⚠️⚠️ **CE QUI N'EST PAS PROUVÉ** : le **benchmark n'a PAS été joué** (pas de clé API ici) —
+  *on livre de quoi le jouer, pas son résultat.* **R34 n'est honoré qu'au prochain lancement par
+  Michel**, et personne ne sait encore si la mémoire élargie **améliore** les réponses.
+  ⚠️ **Ma mesure a été fausse 2× avant d'être juste** : `_vcApplyPersona` attend le SCÉNARIO
+  entier (elle fait `p.apply`), je lui passais le sous-objet → tout à zéro, sans erreur.
+  ⏭️ **Reste : ⑤** (caches par lieu) — et la **course `_saveCoachMemory`**, à prouver ou réfuter
+  par un test avant de toucher au code.
+- ⚖️⭐⭐ **LE VOCABULAIRE KATCH DE MILO — LIVRÉ** (ft-v991). Priorité ③, dernier point ouvert du
+  contre-audit. ⛔⛔ **Mesuré dans un vrai navigateur avant de coder** : les **trois** provenances
+  de la masse maigre — **lue** sur un rapport · **DÉDUITE** par soustraction · calculée depuis un
+  **% de gras TAPÉ AU CLAVIER** — donnaient une phrase **identique mot pour mot** :
+  *« MASSE MAIGRE MESURÉE … chiffre SOLIDE … sans réserve »*.
+  ⚠️⚠️ **Le brief annonçait un « motif regex qui capture trop tôt » — c'est faux**, et c'est la
+  mesure qui l'a dit : aucun motif ne capture trop tôt, la provenance **n'atteint jamais la
+  sortie** (**R4**). Le drapeau `lmDeduite` était écrit par `tracking.js` et `leanMassRecente()`
+  ne le transportait pas. ⛔ **R32** : une balance MESURE un poids et une impédance, elle ESTIME
+  tout le reste — dire « mesurée » d'un % tapé au clavier est **un fait faux sur la santé de
+  quelqu'un**. ⭐⭐ **Et le témoin protégeait la mauvaise phrase** (il épinglait le mot
+  « MESURÉE ») : toute correction de R32 le faisait rougir et ressemblait à une régression — d'où
+  la consigne de `SUIVI-AUDIT.md` de le corriger **d'abord**. ⭐ **Katch n'est pas dévalué** : le
+  prompt garde « un MEILLEUR point de départ » et l'écart chiffré (+180 kcal/j mesurés, ft-v833).
+  ⚠️ **Non prouvé, et écrit comme tel** : que Milo *obéisse* à la nuance — `tests/milo` prouve la
+  PRÉSENCE d'une règle, jamais son OBÉISSANCE ; seul un A/B sur le vrai modèle le dirait.
+  ⏭️ **Reste : ④⑤** (reclassement du contexte, caches par lieu) — gated par **R34**.
 - 💰⭐⭐ **INSTRUMENTATION DU COÛT RÉEL PAR APPEL API — LIVRÉE** (ft-v990). Priorité 3 de
   Michel, en parallèle de ①②. Capture `data.usage` (déjà renvoyé par l'API, jeté jusqu'ici)
   au seul point commun (`callClaude`/`callClaudeDiag`). Ne change RIEN au comportement de

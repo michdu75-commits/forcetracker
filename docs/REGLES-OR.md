@@ -100,3 +100,29 @@ Documenter n'est PAS une étape séparée « pour plus tard » : ça fait partie
 - 🧾 **`docs/JOURNAL-DE-TEST.md` — LE RÉFLEXE, et il ne dépend d'aucune livraison.** Toute **question** ou tout **doute** sur le comportement de Milo s'y note **TOUT DE SUITE**, même sans réponse, même en pleine autre tâche, même si ça paraît mineur. *Une ligne, dix secondes.* Sans ça, la question **disparaît avec la session** (R27) — et c'est mesuré : les transcriptions de juillet 2026, qui ont servi à écrire `ORIGINE-DES-REGLES.md`, **n'existent plus**. ⚠️ **Ne pas attendre d'avoir la réponse** : *« je ne sais pas si Milo fait ça bien »* est l'entrée la plus utile du fichier.
   ⏳ **Le benchmark (`tests/milo/eval*`) est EN PAUSE jusqu'à AU MOINS 25 entrées** — décision de Michel le 21/08/2026 : *« on met de côté le benchmark, on n'a pas assez de pièges pour Milo »*, puis *« dès que tu auras marqué 25 questions ou pièges on le relance »*, et enfin la précision qui change tout : *« quand je dis 25 **c'est au moins** »*. ⚠️⚠️ **25 est un PLANCHER, pas une cible.** Un seuil lu comme un objectif produit deux dérives opposées : on **remplit pour atteindre le chiffre** (des entrées inventées, qui ne valent rien — les bonnes viennent du vécu), et on **s'arrête une fois atteint** (alors que le fichier ne se ferme jamais). Le seuil dit seulement *« à partir d'ici, il y a assez de matière pour que relancer le benchmark ait un sens »*. **Le compte est affiché par `python3 tools/check_regles.py`** à chaque livraison, précisément pour qu'on ne puisse pas l'oublier — *une intention qu'aucun outil ne rappelle finit par s'éteindre.*
 - **Règle stricte** : aucune version livrée (commit/push) sans que TOUS les fichiers de suivi concernés soient à jour **dans le même commit** (ou juste avant). Si un retard est constaté → **rattrapage immédiat** (1 ligne par version manquante) avant toute autre chose.
+
+---
+
+**13. 🤝 DEUX SESSIONS À LA FOIS = DEUX FOIS LE MÊME TRAVAIL — le journal de partage se lit AVANT de coder.**
+
+**Le cas vécu, et il est daté.** Le 24/08/2026, **deux sessions Claude ont écrit ft-v991 et ft-v992 chacune de son côté**, sans le savoir : mêmes correctifs, même scénario de banc d'essai, mêmes témoins — textes différents, travail fait deux fois. Découvert **seulement au moment de pousser**, quand git a refusé le push. Il a fallu fusionner à la main : la branche de l'autre session a servi de base, et seul ce qu'elle n'avait pas y a été greffé. *Rien n'a été perdu, mais une demi-journée de calcul l'a été.*
+
+**Le protocole, établi par Michel le soir même** (*« il faut que vous puissiez travailler en symbiose et pas en conflit ou adverse »*) :
+
+1. `git fetch origin --all` — **d'abord**, toujours ;
+2. **lire** `docs/JOURNAL-DE-PARTAGE.md` : une tâche 🟡 *en cours* sur le sujet → on ne le prend pas ;
+3. **écrire sa ligne** (date · heure **UTC** · sujet · fichiers) et **la POUSSER AVANT de coder** ;
+4. **la clore** à la fin, avec la version livrée (`ft-vNNN`).
+
+**⛔⛔ LA FAILLE EST CONNUE ET ÉCRITE — c'est ce qui rend la règle utilisable.** Les sessions travaillent sur des **clones séparés** : *un fichier ne prévient pas, il faut aller le lire*. Le 24/08 au matin, j'avais le dépôt sous la main et je n'ai **pas vu** le travail de l'autre avant de pousser. **Sans le `git fetch`, ce protocole donne une FAUSSE SÉCURITÉ — ce qui est pire que pas de protocole du tout.**
+
+**⭐⭐ ET LE VRAI VERROU N'EST PAS LE FICHIER, C'EST GIT.** Un `git push` qui n'est pas en avance rapide **échoue** : c'est ce refus, et rien d'autre, qui a sauvé le travail de l'autre session. Le journal évite le doublon de **TRAVAIL** ; git évite l'écrasement de **CODE**. *Un panneau d'affichage, pas une serrure.* ⛔ Ne jamais forcer un push (`-f`) sur une branche partagée pour « passer outre ».
+
+**⚠️ Trois limites, écrites plutôt que découvertes :**
+- **la fenêtre de course** entre lire et écrire — exactement la course `_saveCoachMemory` corrigée en ft-v993 ; on la referme en poussant sa ligne **immédiatement**, et un push refusé veut dire « relis » ;
+- **une session peut mourir** sans clore sa ligne (un conteneur redémarre) → une ligne 🟡 de plus de **3 h** est réputée périmée, on la passe en ⏰ avec la raison ;
+- **tout repose sur la discipline** : si une session oublie d'écrire, rien ne le signale. La règle réduit le risque, elle ne l'annule pas.
+
+**🕐 Heures en UTC**, ou le fuseau écrit à côté : deux conteneurs peuvent être réglés différemment — c'est la famille de bugs « fuseaux horaires » de `BUGS.md`, appliquée à nous-mêmes.
+
+**⚠️ Et une ligne suffit.** C'est la leçon de `docs/JOURNAL-DE-TEST.md` : *un fichier qu'on ne remplit pas cesse d'être rempli*. Les fichiers vivants de ce projet tiennent parce qu'ils sont **bon marché**. Pas de gabarit, pas de compte rendu — la date, l'heure, le sujet, les fichiers, la version.

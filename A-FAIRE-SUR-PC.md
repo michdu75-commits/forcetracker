@@ -42,20 +42,25 @@ La ligne doit passer au **vert : ARMÉ**. Si elle reste rouge alors que la clé 
 le problème n'est pas la valeur mais **le nom de la variable ou le Worker sur lequel elle est posée**.
 
 
-### 🖼️ Trouver une figurine de « Squat Sumo » **à la barre** (13/08/2026)
+### ✅ CLOS — « Squat Sumo » : l'exercice a été RETIRÉ (25/08/2026)
 
-L'illustration du Squat Sumo a été **retirée** ce jour-là : elle montrait un **haltère** tenu
-entre les jambes, c'est-à-dire le geste du **Squat Gobelet**, qui a déjà sa propre photo au
-catalogue. On affichait donc la photo d'un autre exercice, et le squat sumo est un mouvement
-**de barre** (arbitrage Michel).
+⛔ **Cette tâche n'a plus d'objet.** Elle demandait une figurine de squat sumo **à la barre**,
+depuis le 13/08 — l'illustration d'alors montrait un **haltère** entre les jambes, c'est-à-dire
+le geste du **Squat Gobelet** qui a déjà sa photo. On affichait donc la photo d'un autre
+exercice.
 
-- **Ce qu'il faut** : une figurine de squat sumo **avec une barre sur les épaules**, dans le
-  même style que les autres (fond blanc, muscles sollicités en rouge).
-- **Où la brancher** : `log.js`, table `EX_YT`, entrée `'Squat Sumo'` — le commentaire de
-  retrait est juste au-dessus et explique tout.
-- **Le fichier écarté est gardé** : `exercises/squat-sumo-avec-haltere.webp` (ne pas le
-  supprimer, il pourra servir si un jour on ajoute une variante haltère).
-- En attendant, l'app affiche simplement le bouton « Voir le tutoriel » — rien n'est cassé.
+**Ce qui s'est passé** : la figurine n'est jamais venue, et au bout de 12 jours Michel a tranché
+— *« squat sumo on supprime, ça me soûle »*. L'exercice est **sorti du catalogue** en ft-v1001.
+
+- Le fichier `exercises/squat-sumo-avec-haltere.webp` a été **supprimé** du dépôt **et du cache
+  du service worker** : il y dormait depuis le 13/08 et était téléchargé par tout le monde pour
+  rien. *(Récupérable dans l'historique git si un jour une variante haltère est créée.)*
+- ⭐ **L'identifiant `squat-sumo` est GARDÉ** (`EX_IDS` + `RETIRES_VOLONTAIREMENT`) : les séances
+  et records déjà faits gardent leur nom, leurs muscles et leurs calories. *On retire du CHOIX,
+  jamais de la MÉMOIRE.*
+- Les 2 équivalences d'import qui le visaient (`sumo squat`, `wide stance squat`) ont été
+  retirées : aucune autre fiche ne décrit ce geste, donc un import « sumo squat » sera proposé
+  comme exercice **nouveau** plutôt que rattaché de force au mauvais squat.
 
 _Dernier déploiement backend : **historique études corporelles** (`bodyStudies`), déployé **automatiquement via la CI GitHub** le 2026-07-11 (run #22, succès, `?test=1` OK)._
 

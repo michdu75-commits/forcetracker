@@ -385,7 +385,19 @@ const RETIRES_VOLONTAIREMENT = [
   'dips-lestes','glissement-au-mur-wall-slide','turkish-get-up',
   // 09/08 soir — même raison, après relecture de la page FIGURINES par Michel
   'abducteurs-machine-debout','curl-cable-en-croix-bayesian-curl','curl-barre-ez-prise-large',
-  'windshield-wiper','releve-de-buste-sit-up','l-sit','crunch-oblique'];
+  'windshield-wiper','releve-de-buste-sit-up','l-sit','crunch-oblique',
+  // 25/08 — « Pull-over » tout court, décision Michel : *« le pull over tout seul on peut le
+  // retirer »*. Doublon des 4 variantes (Barre · Haltère · Poulie · Machine) : sans matériel,
+  // il ne pouvait ni être rangé ni illustré sans devenir le jumeau de l'une d'elles (le
+  // contrôle ② a refusé de lui prêter l'animation haltère). ⭐ RETRAIT et non FUSION, exprès :
+  // Michel le fait « beaucoup à l'haltère mais aussi à la barre », donc renommer son historique
+  // vers une variante aurait mélangé ses records (R29). L'identifiant reste, la mémoire aussi.
+  'pull-over',
+  // 25/08 — « Squat Sumo », décision Michel (« squat sumo on supprime »). Son illustration
+  // avait déjà été retirée le 13/08 (elle montrait un haltère = geste du Squat Gobelet) et on
+  // attendait une figurine À LA BARRE qui n'est jamais venue. RETRAIT, pas fusion : l'id reste,
+  // donc les séances et records déjà faits gardent nom, muscles et calories.
+  'squat-sumo'];
 const orphelinsInattendus = idt.idsOrphelins.filter(i=>RETIRES_VOLONTAIREMENT.indexOf(i)<0);
 t('⭐ ⑨ chaque exercice du catalogue a un identifiant STABLE',
   idt.sansId.length===0 && idt.nbIds===idt.nbExercices+RETIRES_VOLONTAIREMENT.length,

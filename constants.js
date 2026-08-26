@@ -51,7 +51,19 @@ const EXLIB=[
   {n:'Tirage Poulie Haute (Lat Pulldown)',g:'Dos'},{n:'Tirage Poulie Haute Prise Serrée',g:'Dos'},{n:'Tirage Nuque',g:'Dos'},
   {n:'Tirage Poulie Basse Prise Large',g:'Dos'},{n:'Tirage Poulie Basse Prise Serrée',g:'Dos'},
   {n:'Traction Lestée',g:'Dos'},{n:'Traction Assistée',g:'Dos'},{n:'Traction Prise Neutre',g:'Dos'},
-  {n:'Pull-over',g:'Dos'},{n:'Pull-over Haltère',g:'Dos'},{n:'Pullover Machine',g:'Dos'},
+  // ⛔ « Pull-over » TOUT COURT RETIRÉ DU CHOIX le 25/08/2026 — décision de Michel, après deux
+  //    versions passées à essayer de l'illustrer : *« le pull over tout seul on peut le retirer »*.
+  //    Il faisait DOUBLON avec les 4 variantes (Barre · Haltère · Poulie · Machine) et, n'ayant
+  //    pas de matériel, il ne pouvait ni être rangé ni illustré sans devenir le jumeau de l'une
+  //    d'elles — le contrôle croisé ② a d'ailleurs refusé de lui prêter l'animation haltère.
+  // ⭐⭐ C'EST UN RETRAIT, PAS UNE FUSION, et la nuance protège son historique : son identifiant
+  //    `pull-over` reste dans EX_IDS (voir RETIRES_VOLONTAIREMENT), donc les séances et records
+  //    déjà faits sous ce nom gardent leur nom, leurs muscles, leur figurine et leurs calories.
+  //    ⛔ Une FUSION les aurait RENOMMÉS (state.js réécrit les noms stockés) — or Michel fait le
+  //    pull-over « beaucoup à l'haltère mais aussi à la barre » : on ne sait pas lesquels étaient
+  //    lesquels, et deviner aurait mélangé ses records (R29). *On retire du CHOIX, jamais de la
+  //    MÉMOIRE.*
+  {n:'Pull-over Haltère',g:'Dos'},{n:'Pullover Machine',g:'Dos'},
   {n:'Pull-over Barre',g:'Dos'},{n:'Pull-over Poulie',g:'Dos'},
   {n:'Rowing Smith Machine',g:'Dos'},{n:'Rowing T-Bar Machine',g:'Dos'},{n:'Rowing Landmine (T-Bar)',g:'Dos'},
   {n:'Rowing Haltères Buste Penché',g:'Dos'},{n:'Meadows Row',g:'Dos'},{n:'Seal Row',g:'Dos'},{n:'Renegade Row',g:'Dos'},
@@ -108,7 +120,15 @@ const EXLIB=[
   {n:'Extension Triceps TRX (Sangles)',g:'Triceps'},{n:'Extension Triceps Allongée TRX (Sangles)',g:'Triceps'},
   // ── Jambes ─────────────────────────────────────────────────
   {n:'Squat à la Barre',g:'Jambes'},{n:'Squat Avant',g:'Jambes'},{n:'Squat Bulgare',g:'Jambes'},
-  {n:'Squat Gobelet (Goblet Squat)',g:'Jambes'},{n:'Squat Sumo',g:'Jambes'},
+  // ⛔ « Squat Sumo » RETIRÉ DU CHOIX le 25/08/2026 — décision de Michel (« squat sumo on
+  //    supprime »), 12 jours après avoir retiré son illustration. Le 13/08 son image avait
+  //    déjà sauté (elle montrait un HALTÈRE entre les jambes, c'est-à-dire le geste du Squat
+  //    Gobelet), et on gardait le fichier « le jour où Michel trouve une figurine de sumo À LA
+  //    BARRE ». Ce jour n'est pas venu. ⭐ RETRAIT et non FUSION : l'identifiant `squat-sumo`
+  //    reste dans EX_IDS (voir RETIRES_VOLONTAIREMENT), donc les séances et records déjà faits
+  //    gardent leur nom, leurs muscles et leurs calories. *On retire du CHOIX, jamais de la
+  //    MÉMOIRE.*
+  {n:'Squat Gobelet (Goblet Squat)',g:'Jambes'},
   {n:'Smith Machine Squat',g:'Jambes'},{n:'Squat Hack (Hack Squat)',g:'Jambes'},
   {n:'Press Jambes 45°',g:'Jambes'},{n:'Press Jambes Horizontale',g:'Jambes'},
   {n:'Press Jambes Verticale',g:'Jambes'},{n:'Press Jambes Inclinée',g:'Jambes'},
@@ -157,7 +177,7 @@ const EXLIB=[
   {n:'Glute Ham Raise (GHD)',g:'Fessiers'},{n:'Kettlebell Swing',g:'Fessiers'},
   // ── Squats / fentes / presses / montées : AUSSI en Fessiers (cuisses + fessiers = 2 muscles principaux, retour Michel 2026-07-16) ──
   {n:'Squat à la Barre',g:'Fessiers'},{n:'Squat Avant',g:'Fessiers'},{n:'Squat Bulgare',g:'Fessiers'},
-  {n:'Squat Gobelet (Goblet Squat)',g:'Fessiers'},{n:'Squat Sumo',g:'Fessiers'},{n:'Smith Machine Squat',g:'Fessiers'},
+  {n:'Squat Gobelet (Goblet Squat)',g:'Fessiers'},{n:'Smith Machine Squat',g:'Fessiers'},
   {n:'Squat Hack (Hack Squat)',g:'Fessiers'},{n:'Squat Pistol',g:'Fessiers'},{n:'Squat Kettlebell',g:'Fessiers'},
   {n:'Belt Squat',g:'Fessiers'},{n:'Safety Bar Squat',g:'Fessiers'},{n:'Overhead Squat',g:'Fessiers'},
   {n:'Pin Squat',g:'Fessiers'},{n:'Cossack Squat',g:'Fessiers'},{n:'Squat Bande Élastique',g:'Fessiers'},
@@ -1027,6 +1047,71 @@ function exNom(id){ const l=id&&EX_IDS[id]; return (l&&l[0])||null; }
  *  Rend le nom inchangé si l'exercice est inconnu (exercice perso : on n'y touche pas). */
 function exNomActuel(nom){ const id=exId(nom); return id?exNom(id):nom; }
 
+/* ─── NOM ABRÉGÉ → NOM DU CATALOGUE (24/08/2026) ──────────────────────────────────────
+ *
+ * ⚠️ POURQUOI. 77 exercices du catalogue portent une parenthèse EXPLICATIVE (« Hip Thrust
+ * Barre (Poussée de Hanche) », « Abduction Cuisses (Leg Abduction) »). Elle nomme la
+ * famille, elle ne distingue pas l'exercice — et quand Milo prescrit une séance, il abrège :
+ * il écrit « Hip Thrust Barre ». Ce nom court est alors STOCKÉ tel quel dans la séance.
+ *
+ * ⛔⛔ LE DÉFAUT EST SILENCIEUX, ET C'EST CE QUI LE REND COÛTEUX. Le calcul des muscles s'en
+ * sortait (il retombe sur les règles `_MEX`, qui devinent), donc rien ne plantait, rien ne
+ * rougissait. Mais tous les lookups qui exigent le nom EXACT — l'animation de l'exercice,
+ * le tutoriel, la silhouette du groupe — échouaient en silence. Mesuré sur la séance réelle
+ * de Michel (24/08) : « Hip Thrust Barre » et « Abduction Cuisses » affichaient « Muscle
+ * principal deviné » + « Ajouter la photo de ta machine », alors que `hip-thrust-barre.webp`
+ * et `leg-abduction-machine-v2.webp` étaient DÉJÀ dans le dépôt. *L'app proposait d'ajouter
+ * une photo qu'elle avait sous la main.*
+ *
+ * ⭐⭐ LE MÉCANISME EXISTAIT DÉJÀ, POSÉ D'UN SEUL CÔTÉ (R8/R13) — c'est le motif de ft-v973
+ * et ft-v975, une 3ᵉ fois. `_matchExercise` porte depuis le 09/08 une étape « exact sans la
+ * parenthèse », écrite pour exactement ce cas (Michel, sur un vrai programme de Milo). Elle
+ * ne servait qu'à l'IMPORT ; l'affichage, lui, ne l'a jamais eue.
+ *
+ * ⛔ DÉTERMINISTE SEULEMENT — aucun rapprochement flou ici (R29 : le coût de l'erreur décide).
+ * Montrer l'animation d'un AUTRE exercice est pire que de n'en montrer aucune : la personne
+ * apprend un mouvement qu'elle n'a pas prescrit. On ne résout donc que ce qui est certain.
+ *
+ * ⛔⛔ ET LE ZÉRO-COLLISION EST MESURÉ, PAS SUPPOSÉ — il est même la CONDITION de la table.
+ * Vérifié le 24/08 sur les 324 exercices : 77 parenthèses → 77 bases distinctes, aucune
+ * collision, et aucune base qui soit déjà le nom complet d'un autre exercice. Toute base
+ * ambiguë est RETIRÉE de la table plutôt qu'arbitrée : si le catalogue grandit et crée une
+ * collision, l'abréviation cesse d'être résolue (on retombe sur l'ancien comportement) —
+ * jamais elle ne pointe vers le mauvais exercice. *Le mode d'échec choisi est « je ne sais
+ * pas », jamais « voilà, tiens » (R29).*
+ */
+const _EX_BASE2NOM=(function(){
+  const naz=s=>(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
+    .replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+  const m={},ambigu={};
+  try{
+    const noms=(typeof EXLIB!=='undefined'?EXLIB:[]).map(e=>e&&e.n).filter(Boolean);
+    const pleins={};noms.forEach(n=>{pleins[naz(n)]=true;});
+    noms.forEach(function(n){
+      const b=String(n).replace(/\s*\([^)]*\)\s*$/,'').trim();
+      if(!b||b===n)return;
+      const k=naz(b);
+      if(!k||pleins[k]){ambigu[k]=true;return;}           // la base EST déjà un autre exercice
+      if(m[k]!==undefined&&m[k]!==n){ambigu[k]=true;return;} // deux exercices, même base
+      m[k]=n;
+    });
+    Object.keys(ambigu).forEach(function(k){delete m[k];});
+  }catch(e){}
+  return m;
+})();
+
+/** Nom du CATALOGUE pour un nom éventuellement ANCIEN ou ABRÉGÉ (« Hip Thrust Barre » →
+ *  « Hip Thrust Barre (Poussée de Hanche) »). Rend le nom inchangé s'il est déjà celui du
+ *  catalogue, ou si l'exercice est inconnu (perso, saisi à la main) — on n'invente jamais. */
+function exNomCatalogue(nom){
+  if(!nom)return nom;
+  const actuel=exNomActuel(nom);
+  if(exId(actuel))return actuel;                 // déjà un nom du catalogue → on n'y touche pas
+  const naz=s=>(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
+    .replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+  return _EX_BASE2NOM[naz(actuel)]||actuel;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════════
 // LES EXERCICES UNILATÉRAUX — 48 exercices tranchés UN PAR UN par Michel (10/08/2026)
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -1089,12 +1174,19 @@ const EX_UNI={
 
 /** Cet exercice se refait-il de l'autre côté ? `false` pour tout exercice inconnu
  *  (exercice perso, nom inventé) — on ne double JAMAIS un volume au hasard : se tromper
- *  ici fausse une courbe que la personne regarde (R29, le coût de l'erreur décide). */
-function estUnilateral(nom){ const id=exId(nom); return !!(id&&EX_UNI[id]); }
+ *  ici fausse une courbe que la personne regarde (R29, le coût de l'erreur décide).
+ *  ⚠️ LE NOM EST RÉSOLU D'ABORD (24/08/2026, ft-v997) : c'est la JUMELLE du défaut des
+ *  muscles, trouvée en la cherchant (R8 — « un oubli de ce type est rarement isolé »).
+ *  Mesuré : **10 exercices** perdaient leur statut unilatéral une fois abrégés — « Hip
+ *  Thrust Unilatéral », « Montée sur Box », « Arraché Haltère »… Leur volume n'était donc
+ *  PAS doublé, et l'étiquette « par bras / par jambe » ne s'affichait pas.
+ *  ⛔ Résoudre une abréviation n'est PAS « doubler au hasard » : la table est déterministe
+ *  et vérifiée sans collision — un exercice perso, lui, rend toujours `false`. */
+function estUnilateral(nom){ const id=exId(exNomCatalogue(nom)); return !!(id&&EX_UNI[id]); }
 
 /** « par bras » · « par jambe » · « par côté » — ou '' si l'exercice n'est pas unilatéral. */
 function uniLabel(nom){
-  const id=exId(nom), c=id&&EX_UNI[id];
+  const id=exId(exNomCatalogue(nom)), c=id&&EX_UNI[id];
   return c==='bras'?'par bras':c==='jambe'?'par jambe':c==='cote'?'par côté':'';
 }
 

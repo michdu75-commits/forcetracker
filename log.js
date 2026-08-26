@@ -938,7 +938,12 @@ function deleteSetNote(){
 function renderExBlocks(){
   const c=document.getElementById('wkt-exs');
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){
-    c.innerHTML=`<div class="empty">Appuie sur "+ Ajouter un exercice"<br>pour démarrer ta séance 💪</div>`;
+    /* ⚠️ CE MESSAGE DÉSIGNAIT UN BOUTON QUI NE S'APPELAIT PAS COMME ÇA (corrigé le 25/08) :
+       il disait « + Ajouter un exercice » alors que le bouton portait « + Ajouter ». Michel :
+       *« même le bouton ajouter n'est pas top, plutôt créer sa séance »*. Les deux disent
+       désormais la même chose — et ils la disent en termes de ce qu'on VIENT FAIRE (créer une
+       séance), pas de la mécanique (ajouter une ligne). */
+    c.innerHTML=`<div class="empty">Appuie sur "+ Créer ma séance"<br>pour démarrer 💪</div>`;
     if(typeof renderLogFinish==='function')renderLogFinish(); // vide le bloc "Terminer la séance" (sinon fantôme après suppression/vidage)
     _syncLogHdrBtns();return;
   }
@@ -2178,7 +2183,12 @@ Object.assign(_EX_EQUIV,{
   'bridge':'Pont Fessier (Glute Bridge)','floor bridge':'Pont Fessier (Glute Bridge)','glute bridge':'Pont Fessier (Glute Bridge)',
   'barbell hip thrust':'Hip Thrust Barre (Poussée de Hanche)','db hip thrust':'Hip Thrust Barre (Poussée de Hanche)','dumbbell hip thrust':'Hip Thrust Barre (Poussée de Hanche)','glute thrust':'Hip Thrust Barre (Poussée de Hanche)','hip thrust':'Hip Thrust Barre (Poussée de Hanche)','hip thrust barbell':'Hip Thrust Barre (Poussée de Hanche)','hip thrust halteres':'Hip Thrust Barre (Poussée de Hanche)',
   'hip thrust machine':'Hip Thrust Machine (Poussée de Hanche)','machine hip thrust':'Hip Thrust Machine (Poussée de Hanche)',
-  'cable pullover':'Pull-over','pullover poulie':'Pull-over','straight arm lat pulldown':'Pull-over','straight arm pulldown':'Pull-over',
+  // ⚠️ CORRIGÉ le 25/08 — ces 4 équivalences pointaient vers « Pull-over » tout court, retiré du
+  //    catalogue ce jour-là : un import les aurait rattachées à un exercice qui n'existe plus.
+  //    ⭐ Et c'était DÉJÀ faux avant le retrait : les quatre décrivent la version POULIE (câble,
+  //    bras tendus à la poulie haute). Le retrait n'a pas créé le défaut, il l'a rendu visible.
+  //    Trouvé en cherchant les jumelles du retrait (R8), pas après coup.
+  'cable pullover':'Pull-over Poulie','pullover poulie':'Pull-over Poulie','straight arm lat pulldown':'Pull-over Poulie','straight arm pulldown':'Pull-over Poulie',
   'machine pullover':'Pullover Machine','nautilus pullover':'Pullover Machine',
   'barbell bent over row':'Rowing Barre (Tirage Horizontal)','barbell row':'Rowing Barre (Tirage Horizontal)','bb row':'Rowing Barre (Tirage Horizontal)','bent over dumbbell row':'Rowing Barre (Tirage Horizontal)','bent over row':'Rowing Barre (Tirage Horizontal)','bent row':'Rowing Barre (Tirage Horizontal)','db row':'Rowing Barre (Tirage Horizontal)','dumbbell row':'Rowing Barre (Tirage Horizontal)','rowing barre pronation':'Rowing Barre (Tirage Horizontal)','rowing deux halteres':'Rowing Barre (Tirage Horizontal)','rowing halteres':'Rowing Barre (Tirage Horizontal)',
   'chest supported row machine':'Rowing Machine (Tirage Horizontal)','machine row':'Rowing Machine (Tirage Horizontal)','row machine':'Rowing Machine (Tirage Horizontal)','seated row machine':'Rowing Machine (Tirage Horizontal)',
@@ -2199,7 +2209,10 @@ Object.assign(_EX_EQUIV,{
   'dumbbell goblet squat':'Squat Gobelet (Goblet Squat)','goblet squat':'Squat Gobelet (Goblet Squat)','kettlebell goblet squat':'Squat Gobelet (Goblet Squat)',
   'hack squat':'Squat Hack (Hack Squat)','machine hack squat':'Squat Hack (Hack Squat)','plate loaded hack squat':'Squat Hack (Hack Squat)',
   'one leg squat':'Squat Pistol','pistol':'Squat Pistol','pistol squat':'Squat Pistol','single leg squat':'Squat Pistol',
-  'sumo squat':'Squat Sumo','wide stance squat':'Squat Sumo',
+  // ⛔ 'sumo squat' / 'wide stance squat' RETIRÉS le 25/08 : ils visaient « Squat Sumo »,
+  //    sorti du catalogue ce jour-là. Aucune autre fiche ne décrit ce geste, donc on ne les
+  //    redirige pas — un import « sumo squat » sera proposé comme exercice NOUVEAU, ce qui
+  //    est honnête, plutôt que rattaché de force à un squat qui n'est pas le bon.
   'back squat':'Squat à la Barre','barbell back squat':'Squat à la Barre','bb squat':'Squat à la Barre','high bar squat':'Squat à la Barre','low bar squat':'Squat à la Barre',
   'behind neck lat pulldown':'Tirage Nuque','behind neck pulldown':'Tirage Nuque',
   'front lat pulldown':'Tirage Poulie Haute (Lat Pulldown)','front pulldown':'Tirage Poulie Haute (Lat Pulldown)','lat pull front':'Tirage Poulie Haute (Lat Pulldown)',
@@ -2324,7 +2337,7 @@ function clearWkt(){
     _syncWakeLock();          // plus de séance → on rend l'écran (R15 : tout chemin de fermeture)
     renderLog();
     toast('Séance annulée','info');
-  });
+  },'Abandonner');
 }
 // Tout effacer : vide les exercices mais GARDE la séance ouverte (ex. mauvais programme chargé).
 // Ne touche PAS l'historique ni les records. Distinct de « ✕ Annuler la séance » (qui quitte).
@@ -2337,7 +2350,7 @@ function clearAllEx(){
     persist();
     renderLog();
     toast('Séance vidée','info');
-  });
+  },'Vider');
 }
 // Sync boutons ✕/Changer dans l'en-tête + repositionne le FAB
 // Appellé à chaque renderExBlocks() pour rester cohérent sans passer par renderLog() entier
@@ -2381,10 +2394,19 @@ let _exPickerMode='workout';
 let _replaceEi=null; // index de l'exo à remplacer (menu ⋯ → Remplacer l'exercice)
 let _editProgIdx=-1,_editProgData=null,_editDayIdx=0;
 function addExercise(name){
+  /* ⭐⭐ LE MODE « PROG » RESTE OUVERT LUI AUSSI (25/08) — et c'est ici que ça compte le plus.
+     Le sélecteur avait été rendu persistant côté SÉANCE la version d'avant… mais l'éditeur de
+     programme, lui, refermait encore à chaque exercice. Or c'est exactement là que Michel monte
+     ses listes : *« je vais vouloir créer mon programme et il va falloir que ce soit rapide »*.
+     Laisser ce chemin fermer aurait été corriger le symptôme du côté où il gênait le MOINS.
+     ⛔ Le mode et le jour cible (`_editDayIdx`) sont CONSERVÉS tant qu'on n'a pas fermé — c'est
+     `closeExPicker` qui repasse en 'workout', pas l'ajout. Sinon le 2ᵉ exercice partirait dans
+     la séance au lieu du programme, en silence. */
   if(_exPickerMode==='prog'){
-    closeExPicker();
     _addExToProgEdit(name);
-    _exPickerMode='workout';
+    const s=document.getElementById('ex-search'); if(s)s.value='';
+    filterEx();
+    _exAjoutes++; _majTitreExPicker();
     return;
   }
   if(_exPickerMode==='addToGroup'){
@@ -2419,9 +2441,36 @@ function addExercise(name){
   const sets=_mod.map((m,i)=>{const pp=_pa[i];return{kg:pp?pp.kg:0,reps:pp?pp.reps:5,type:m.type,done:false,rm1:0};});
   S.wkt.exs.push({name,sets});
   _expandedEx=S.wkt.exs.length-1;
-  persist();closeExPicker();renderExBlocks();
-  setTimeout(()=>{const el=document.getElementById('ex-block-'+_expandedEx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);
+  persist();renderExBlocks();
+  /* ⭐⭐ LE SÉLECTEUR RESTE OUVERT (25/08/2026) — c'est le goulot que Michel a senti en premier
+     en préparant la création de programmes : *« il va falloir améliorer aussi l'accès aux
+     exercices… et il va falloir que ce soit rapide »*.
+     AVANT : `closeExPicker()` était appelé ici, à chaque ajout. Monter une séance de 6 exercices
+     demandait donc **6 allers-retours** — rouvrir le sélecteur, retaper une recherche, six fois.
+     ⛔ SEUL LE MODE « WORKOUT » RESTE OUVERT, et c'est la nuance qui compte : `replace`,
+     `replaceSess`, `addSess`, `prog` et `addToGroup` désignent UNE place précise et se ferment
+     donc tout seuls, plus haut dans cette fonction. Ils ne passent jamais ici (chacun rend avant).
+     ⚠️ ET LE SCROLL A DÛ PARTIR AVEC : `scrollIntoView` faisait défiler l'écran DERRIÈRE la
+     modale — un mouvement qu'on ne voit pas, sur une page qu'on ne regarde pas. Il est reporté
+     à la fermeture (`closeExPicker`), au moment où l'écran redevient visible.
+     ⛔ La sortie reste ÉVIDENTE (R24 : informer sans bloquer) : le bouton « Fermer », la poignée
+     et le tap à l'extérieur marchent tous, et le titre dit combien on a ajouté. */
+  const s=document.getElementById('ex-search'); if(s){s.value='';}
+  filterEx();
+  _exAjoutes++;
+  _majTitreExPicker();
+  if(s&&!('ontouchstart' in window))s.focus();   // ⚠️ pas sur mobile : le clavier masquerait la liste
   toast(name+' ajouté !','info');
+}
+/* Compteur de ce qui vient d'être ajouté SANS fermer — remis à zéro à chaque ouverture.
+   Il sert à deux choses : voir sa progression, et se rappeler qu'on peut continuer. */
+let _exAjoutes=0;
+function _majTitreExPicker(){
+  const h=document.querySelector('#mod-ex .modal h2');
+  if(!h)return;
+  h.textContent = _exAjoutes>0
+    ? 'Choisir un exercice · '+_exAjoutes+' ajouté'+(_exAjoutes>1?'s':'')
+    : 'Choisir un exercice';
 }
 // Remplacer un exercice mal choisi (ex. Développé Décliné → Développé Couché) SANS perdre les séries.
 function openExPickerForReplace(ei){
@@ -3096,7 +3145,17 @@ function _mscScores(exs){
     // de règle à masquer, plus de fragilité — pas parce qu'on les a corrigés, parce qu'ils
     // n'ont plus lieu d'être. Les règles restent pour ce qu'on ne connaît pas (exercices
     // créés par l'utilisateur, noms arrivés par import).
-    const _ecrit=(typeof exMuscles==='function')?exMuscles(ex.name):null;
+    // ⚠️ LE NOM EST RÉSOLU AVANT DE CHERCHER LA FICHE (24/08/2026, ft-v997). Sans ça, un nom
+    // ABRÉGÉ (« Hip Thrust Barre » au lieu de « Hip Thrust Barre (Poussée de Hanche) ») rate la
+    // DONNÉE ÉCRITE et retombe deux lignes plus bas sur les règles, qui DEVINENT — c'est-à-dire
+    // exactement l'inverse de ce que ce bloc annonce. Mesuré : **55 des 77** abréviations
+    // rendaient des muscles différents, et « Inclinaison Lombaire » n'en rendait AUCUN.
+    // ⭐ L'exemple qui coûte : « Rowing Poitrine Appuyée » abrégé RECRÉDITAIT le bas du dos,
+    // que la fiche du 02/08 avait retiré exprès (poitrine appuyée = colonne non chargée).
+    // ⛔ Les deux lignes suivantes gardent le nom D'ORIGINE, exprès : les règles `_MEX` et les
+    // exercices perso travaillent sur ce que la personne a écrit, pas sur le catalogue.
+    const _ecrit=(typeof exMuscles==='function')
+      ?exMuscles((typeof exNomCatalogue==='function')?exNomCatalogue(ex.name):ex.name):null;
     if(_ecrit){
       (_ecrit.p||[]).forEach(m=>{sc[m]=(sc[m]||0)+2;});
       (_ecrit.s||[]).forEach(m=>{sc[m]=(sc[m]||0)+1;});
@@ -4068,7 +4127,10 @@ const _EQ_ECRIT={
   // Sur un banc incliné, les bras pendent le long du corps : une barre ne peut pas être
   // curlée depuis cette position (les cuisses et le banc sont dans le chemin). C'est le
   // même critère que les trois du dessus — le mouvement n'existe qu'aux haltères.
-  'Curl Incliné':'libre'
+  'Curl Incliné':'libre',
+  // ⛔ « Pull-over » tout court n'a plus de ligne ici : il a été RETIRÉ DU CHOIX le 25/08
+  //    (décision Michel — voir constants.js et RETIRES_VOLONTAIREMENT). Le ranger n'a plus de
+  //    sens puisqu'il n'apparaît plus au sélecteur ; son identifiant survit pour l'historique.
 };
 function _exEquip(name){
   const s=_naz(name);
@@ -4170,9 +4232,19 @@ function openExPicker(){
   _exGrp=null;
   const s=document.getElementById('ex-search');if(s)s.value='';
   filterEx();
+  _exAjoutes=0; _majTitreExPicker();   // le compteur repart à chaque ouverture
   document.getElementById('mod-ex').classList.add('open');
 }
-function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;if(_exPickerMode==='replace'||_exPickerMode==='replaceSess'||_exPickerMode==='addSess'){_exPickerMode='workout';_replaceEi=null;}}
+function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;if(_exPickerMode==='replace'||_exPickerMode==='replaceSess'||_exPickerMode==='addSess'||_exPickerMode==='prog'){_exPickerMode='workout';_replaceEi=null;}
+  /* ⚠️ LE SCROLL SE FAIT ICI, PAS À L'AJOUT (25/08). Tant que le sélecteur reste ouvert, faire
+     défiler l'écran du dessous est un mouvement invisible — et à la fermeture on se retrouvait
+     n'importe où. On amène donc la vue sur le dernier exercice ajouté au moment où l'écran
+     redevient visible, et seulement si on a réellement ajouté quelque chose. */
+  if(_exAjoutes>0){
+    _exAjoutes=0; _majTitreExPicker();
+    setTimeout(()=>{const el=document.getElementById('ex-block-'+_expandedEx);
+      if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);
+  }}
 // Favoris = exercices les plus utilisés (depuis l'historique) → remontés en tête de recherche + ★ (ft-v562)
 let _exFavSet=new Set();
 function _exUsageMap(){
@@ -4551,7 +4623,9 @@ function _exImg(name){
   const c=(S.customExercises||[]).find(e=>e.n===name);
   if(c&&c.img)return c.img;
   if(S.exPhotos&&S.exPhotos[name])return S.exPhotos[name];
-  const y=EX_YT[name];if(y&&y.img)return y.img;
+  // ⚠️ Les deux lignes ci-dessus restent EXACTES, exprès : elles lisent ce que la personne a
+  // rangé sous SON nom. Seul le catalogue est résolu (nom ancien ou abrégé → nom du catalogue).
+  const y=EX_YT[exNomCatalogue(name)];if(y&&y.img)return y.img;
   return null;
 }
 // A-t-il une photo PERSO (pas juste le gif par défaut) ?
@@ -4940,7 +5014,7 @@ function _impThumb(name){
   let musc=''; try{ const {sc}=_mscScores([{name,sets:[{done:true}]}]); const top=Object.entries(sc||{}).sort((a,b)=>b[1]-a[1])[0]; if(top&&_MG_IMG[top[0]]) musc=_MG_IMG[top[0]]; }catch(e){}
   if(musc) return `<img src="${musc}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:3px;">`;
   // exo RÉEL de la biblio (sans gif ni muscle deviné) → silhouette de son GROUPE (figurine pertinente, jamais le défaut chest global)
-  let grp=''; try{ const ex=EXLIB.find(e=>e.n===name); if(ex&&_MUSCLE_FILE[ex.g]) grp=_MUSCLE_FILE[ex.g]; }catch(e){}
+  let grp=''; try{ const cn=exNomCatalogue(name); const ex=EXLIB.find(e=>e.n===cn); if(ex&&_MUSCLE_FILE[ex.g]) grp=_MUSCLE_FILE[ex.g]; }catch(e){}
   if(grp) return `<img src="${grp}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:4px;">`;
   // vraiment inconnu (hors biblio) → icône haltère neutre
   return `<div style="${box}display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round"><path d="M6 9v6M9 7v10M15 7v10M18 9v6M9 12h6"/></svg></div>`;
@@ -5718,7 +5792,92 @@ function _applyMiloSession(mode){
   _appliqueMiloSession(newExs, data, mode, btn);
 }
 /** L'écriture elle-même. `mode` : 'start' (aucune séance) · 'add' · 'replace'. */
+/* 🏃 LE CARDIO DE MILO VA DANS LE BLOC CARDIO, PAS DANS LA LISTE DES EXERCICES (ft-v995).
+   Michel, en salle le 24/08, capture à l'appui : « il me rajoute le vélo elliptique alors qu'on a
+   un onglet exprès pour le cardio ». Sur sa séance : « Elliptique — 0/1 série », type É, note
+   « 8 min léger » — posé comme un exercice de musculation, pendant que le bloc Cardio restait vide.
+   ⭐⭐ SA RAISON, ET ELLE DÉCIDE DE TOUT : « si on fait une séance cardio toute seule, on veut
+   qu'elle soit comptabilisée. Mais je ne veux pas que la course, le vélo elliptique ou peu importe
+   arrive dans un exercice de musculation, ça n'a strictement rien à voir. » Le cardio a donc sa
+   place dans l'app — dans SA fenêtre, celle de ft-v720, qui distingue AVANT et APRÈS.
+   ⛔⛔ CE N'ÉTAIT PAS UN DÉFAUT DE JUGEMENT DE MILO : les deux bouts du chemin manquaient. Le
+   prompt ne lui dit nulle part qu'un bloc cardio existe pour ce qu'il PROPOSE (il ne le lit que
+   pour raconter le passé), et `_appliqueMiloSession` ne regardait jamais un champ cardio. Milo
+   n'avait donc aucun moyen de faire autrement. Même forme que le pont blessure de ft-v982.
+   ⭐ R13 — RIEN N'EST RÉINVENTÉ : `_exEquip()` range déjà elliptique, tapis, rameur, corde à
+   sauter, air bike… dans un bac 'cardio' depuis ft-v712. On lui demande, on ne redevine pas.
+   ⛔⛔ ET C'EST POSÉ ICI, dans `_appliqueMiloSession`, PARCE QUE C'EST LE SEUL POINT QUE LES DEUX
+   PORTES TRAVERSENT — la correction que le témoin avait déjà imposée en ft-v980. Il y a deux
+   chemins par lesquels une séance de Milo arrive : le bloc JSON (modèles capables) et le REPLI DE
+   LECTURE DU TEXTE (modèles légers). *Corriger seulement le JSON n'aurait rien changé pour Eline* —
+   c'est le biais R9 déjà vécu avec le bouton « Commencer cette séance », que Michel avait et sa
+   fille jamais. Ici, on agit APRÈS les deux.
+   ⚠️ AVANT **ET** APRÈS (précision de Michel le même soir) : « il peut y avoir une séance avec un
+   cardio au tout début ET un cardio à la fin ». On tranche par POSITION — avant le 1ᵉʳ exercice de
+   muscu → échauffement ; après le dernier → cardio de fin.
+   ⛔ ET UN CARDIO AU MILIEU RESTE UN EXERCICE (R29) : on ne sait pas ce que la personne voulait, et
+   deviner coûterait plus cher que ne rien faire. Idem sans durée lisible : jamais de durée inventée. */
+const _CARDIO_TYPES=[[/elliptique|crosstrainer/,'elliptique'],[/tapis|course|courir|running|marche/,'tapis'],
+  [/velo|bike|cycl|assault|air ?bike/,'velo'],[/rameur|rowerg|ergometre/,'rameur'],
+  [/corde a sauter|saut a la corde|sauts a la corde/,'corde']];
+function _cardioDepuisEx(o){
+  // Ce qu'on sait lire : le TYPE (nom), la DURÉE et l'INTENSITÉ (note ou nom). Rien d'autre.
+  const nom=(typeof _naz==='function')?_naz(o.name||''):String(o.name||'').toLowerCase();
+  /* ⛔⛔ LA NOTE DOIT ÊTRE DÉSACCENTUÉE COMME LE NOM — mesuré, pas supposé. `_naz()` retire les
+     accents du NOM, mais une note passée seulement en minuscules garde les siens : « 8 min léger »
+     ne matchait donc PAS le motif `leger`, et l'intensité retombait sur « modéré » par défaut.
+     ⚠️ Et ce n'est pas cosmétique : léger = 4,0 MET, modéré = 6,0 → **50 % d'écart sur les
+     calories** de ce cardio. *Même famille que l'apostrophe courbe du banc d'essai : un caractère
+     non normalisé rend un motif aveugle sans que rien ne le signale.* */
+  const _sansAccent=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  const txt=nom+' '+_sansAccent(o.note);
+  const m=txt.match(/(\d{1,3})\s*(?:min|minutes?|')/);
+  if(!m)return null;                                   // ⛔ pas de durée lisible → on ne devine pas
+  const duration=+m[1];
+  if(!(duration>0&&duration<=180))return null;         // hors bornes : ce n'est pas une durée
+  let type='autre';
+  for(const [re,t] of _CARDIO_TYPES){ if(re.test(nom)){ type=t; break; } }
+  const intensity=/intense|fort|rapide|hiit|sprint/.test(txt)?'intense'
+                 :/leger|legere|tranquille|doux|facile|echauffement/.test(txt)?'leger':'modere';
+  return {type,intensity,duration};
+}
+function _extraireCardioMilo(newExs){
+  const exs=Array.isArray(newExs)?newExs.slice():[];
+  const out={exs:exs,avant:null,apres:null,restes:[]};
+  if(!exs.length||typeof _exEquip!=='function')return out;
+  const estCardio=o=>{ try{ return _exEquip(o&&o.name)==='cardio'; }catch(e){ return false; } };
+  // Les BORNES de la partie musculation — c'est elles qui disent « avant » et « après ».
+  let premierMuscu=-1, dernierMuscu=-1;
+  exs.forEach((o,i)=>{ if(!estCardio(o)){ if(premierMuscu<0)premierMuscu=i; dernierMuscu=i; } });
+  const garde=[];
+  exs.forEach((o,i)=>{
+    if(!estCardio(o)){ garde.push(o); return; }
+    // ⚠️ Sans AUCUNE muscu, la séance est un cardio seul : tout part dans l'échauffement, et
+    // c'est exactement le cas que Michel veut voir comptabilisé (« une séance cardio toute seule »).
+    const avant = (premierMuscu<0) || (i<premierMuscu);
+    const apres = (premierMuscu>=0) && (i>dernierMuscu);
+    const c=_cardioDepuisEx(o);
+    if(!c||(!avant&&!apres)){ garde.push(o); out.restes.push(o.name); return; }  // milieu, ou durée illisible
+    if(avant&&!out.avant) out.avant=c;
+    else if(apres&&!out.apres) out.apres=c;
+    else { garde.push(o); out.restes.push(o.name); return; }   // 2ᵉ cardio du même côté : une seule place
+  });
+  out.exs=garde;
+  return out;
+}
 function _appliqueMiloSession(newExs, data, mode, btn){
+  /* 🏃 LE CARDIO SORT DE LA LISTE AVANT TOUT LE RESTE (ft-v995) — avant le contrôle d'intensité
+     et avant la validation, qui n'ont aucun sens sur un elliptique (il n'a ni charge ni 1RM). */
+  {
+    var cd=_extraireCardioMilo(newExs);
+    if(cd.avant||cd.apres) newExs=cd.exs;
+    /* ⚠️ ET CE QU'ON N'A PAS SU PLACER SE VOIT, il ne se perd pas en silence : un cardio au
+       milieu de la séance, sans durée lisible, ou un 2ᵉ du même côté (le bloc n'a qu'UNE place
+       par moment) reste un exercice — et on le dit, plutôt que de le déplacer au hasard (R29). */
+    if(cd.restes.length&&typeof toast==='function')
+      toast('🏃 '+cd.restes[0]+' est resté dans les exercices (place du bloc déjà prise, ou durée non précisée)','info');
+  }
+
   /* ⚡ LE CONTRÔLE D'INTENSITÉ (ft-v980) — il se déclenche À LA PROPOSITION, c'est tout son
      intérêt. Milo sait faire ce calcul (il l'a fait dès que Michel a demandé) ; ce qu'il ne
      fait pas, c'est le faire de lui-même. Le code, lui, le fait à chaque fois.
@@ -5771,6 +5930,23 @@ function _appliqueMiloSession(newExs, data, mode, btn){
     // ⏱️ pas de startTs : le chrono démarrera à la 1ʳᵉ série validée (règle du 14/08).
     S.wkt={date:today(),progLabel:data.label||'Séance de Milo',exs:newExs,startHour:new Date().getHours()};
     _expandedEx=0;
+  }
+  /* 🏃 ⛔⛔ LE CARDIO S'ÉCRIT **ICI**, PAS PLUS HAUT — et c'est la mesure qui l'a dit, pas ma
+     relecture. Posé avant, il était perdu : en mode « start », `S.wkt` est RECONSTRUIT À NEUF
+     quelques lignes au-dessus (`S.wkt={date,progLabel,exs,startHour}`), ce qui écrase tout ce
+     qu'on y avait mis. Le cardio sortait donc bien de la liste des exercices… et n'arrivait
+     nulle part. *C'est R4 dans sa forme la plus bête : l'information était calculée et
+     n'atteignait pas la donnée.* Mesuré sur la capture de Michel : exercices ["Hip Thrust
+     Barre"] (correct) mais cardioAvant `null`. */
+  if(cd&&(cd.avant||cd.apres)){
+    /* ⛔ ON N'ÉCRASE JAMAIS UN CARDIO DÉJÀ NOTÉ par la personne : en mode « replace », le
+       commentaire d'origine le dit — quelqu'un qui échange un exercice au bout de 40 minutes
+       ne perd pas le vélo qu'il a vraiment fait. */
+    if(cd.avant&&!(S.wkt.cardioAvant&&+S.wkt.cardioAvant.duration)) S.wkt.cardioAvant=cd.avant;
+    if(cd.apres&&!(S.wkt.cardio&&+S.wkt.cardio.duration))          S.wkt.cardio=cd.apres;
+    const _n=(cd.avant?1:0)+(cd.apres?1:0);
+    if(typeof toast==='function')
+      toast('🏃 '+(_n>1?'Cardio placé avant et après la séance':'Cardio placé dans son bloc')+' — pas dans les exercices','info');
   }
   persist();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
@@ -5924,7 +6100,11 @@ function renderProgModal(){
   if(begGoal){const g=_beginnerGoalText();begGoal.style.display=g?'block':'none';begGoal.textContent=g;}
   const list=document.getElementById('prog-list-modal');
   if(!progs.length){
-    list.innerHTML='<div style="text-align:center;color:var(--t3);padding:14px 0;font-size:14px;">Aucun programme sauvegardé.<br>Crée une séance et utilise "Sauvegarder" !</div>';
+    /* ⚠️ CE MESSAGE EST DEVENU FAUX LE JOUR OÙ LE BOUTON EST ARRIVÉ (25/08) : il disait
+       « Crée une séance et utilise "Sauvegarder" » — c'était le SEUL chemin, il ne l'est plus.
+       Le laisser aurait envoyé les gens faire le détour juste au-dessous du raccourci.
+       *Quand on ouvre une porte, on relit ce que disent les panneaux.* */
+    list.innerHTML='<div style="text-align:center;color:var(--t3);padding:14px 0;font-size:14px;">Aucun programme pour l\'instant.<br>Crée-en un ci-dessus, ou sauvegarde une séance en cours.</div>';
   }else{
     list.innerHTML=progs.map((p,i)=>{
       const isMulti=p.days&&p.days.length;
@@ -6308,6 +6488,31 @@ function editProg(idx){
   _renderProgEdit();
   document.getElementById('ov-prog-edit').classList.add('open');
 }
+/* ⭐⭐ CRÉER UN PROGRAMME DEPUIS ZÉRO (25/08/2026) — la porte qui manquait.
+   AVANT, il n'existait AUCUN chemin pour créer un programme : la modale « Mes Programmes »
+   ne proposait que « 💾 Sauvegarder comme programme », c'est-à-dire qu'il fallait d'abord
+   monter une SÉANCE complète à la main pour obtenir un PROGRAMME. L'éditeur, lui, existait
+   déjà en entier (`_renderProgEdit`) — mais il n'était atteignable que par le ✏️ d'un
+   programme DÉJÀ créé. *Une porte manquait, pas une fonctionnalité* (R13 : on n'écrit pas
+   un 2ᵉ éditeur, on ouvre celui qui est là).
+
+   ⛔⛔ RIEN N'EST ÉCRIT TANT QU'ON N'A PAS SAUVEGARDÉ, et c'est ce qui rend l'annulation
+   propre : on pointe `_editProgIdx` sur un index qui N'EXISTE PAS ENCORE (la longueur du
+   tableau). `saveProgEdit` fait `S.programmes[_editProgIdx]=…` — sur cet index-là, ça AJOUTE.
+   Si la personne ferme sans sauvegarder, `closeProgEdit` remet l'index à -1 et il ne reste
+   RIEN : pas de programme fantôme à moitié rempli dans sa liste. */
+function creerProgramme(){
+  if(!S.programmes)S.programmes=[];
+  closeProgModal();
+  _editProgIdx=S.programmes.length;          // index encore libre → « sauvegarder » ajoutera
+  _editProgData={id:'p'+Date.now(), name:'', exs:[]};
+  _renderProgEdit();
+  document.getElementById('ov-prog-edit').classList.add('open');
+  // Le nom est le seul champ obligatoire : on y met le curseur, sauf sur mobile où le
+  // clavier masquerait l'éditeur qu'on vient d'ouvrir (même raison qu'au sélecteur).
+  const n=document.getElementById('prog-edit-name');
+  if(n&&!('ontouchstart' in window))setTimeout(()=>n.focus(),120);
+}
 function _renderProgEdit(){
   const d=_editProgData;if(!d)return;
   const nameInp=document.getElementById('prog-edit-name');
@@ -6578,6 +6783,16 @@ function saveProgEdit(){
   if(!_editProgData||_editProgIdx<0)return;
   const nameInp=document.getElementById('prog-edit-name');
   if(nameInp&&nameInp.value.trim())_editProgData.name=nameInp.value.trim();
+  /* ⚠️ LE NOM DEVIENT OBLIGATOIRE (25/08) — il ne l'était pas, et ça ne se voyait pas tant
+     qu'on ne pouvait éditer QUE des programmes déjà nommés. Depuis qu'on peut en créer un de
+     zéro (`creerProgramme`), un nom vide produirait une ligne SANS TITRE dans « Mes
+     Programmes » — impossible à reconnaître, et impossible à distinguer d'un bug.
+     ⛔ On prévient et on rend la main sur le champ, on ne détruit rien (R24). */
+  if(!String(_editProgData.name||'').trim()){
+    toast('Donne un nom à ton programme','error');
+    if(nameInp)nameInp.focus();
+    return;
+  }
   const weeksInp=document.getElementById('prog-edit-weeks');
   const startInp=document.getElementById('prog-edit-start');
   if(weeksInp)_editProgData.weeks=parseInt(weeksInp.value)||0;
@@ -6774,7 +6989,7 @@ const _MUSCLE_SVG_F=(function(){
   };
 })();
 function _groupTemplateSvg(name){
-  const ex=EXLIB.find(e=>e.n===name);
+  const ex=EXLIB.find(e=>e.n===exNomCatalogue(name));
   const file=_MUSCLE_FILE[ex?.g]||'muscles/chest.svg';
   return `<div style="text-align:center;padding:6px 0;"><img src="${file}" style="width:140px;height:auto;display:block;margin:0 auto;"></div>`;
 }
@@ -6798,7 +7013,7 @@ function _exMuscleImg(name){
     const top=Object.entries(sc||{}).sort((a,b)=>b[1]-a[1])[0];
     if(top&&_MG_IMG[top[0]])return _MG_IMG[top[0]];
   }catch(e){}
-  const ex=EXLIB.find(e=>e.n===name);
+  const ex=EXLIB.find(e=>e.n===exNomCatalogue(name));
   return _MUSCLE_FILE[ex&&ex.g]||'muscles/chest.svg';
 }
 // Vignette d'exercice : photo locale > image muscle réaliste (muscle deviné du nom) > figurine — 100% hors-ligne
@@ -6844,9 +7059,15 @@ const EX_YT={
   'Développé Incliné':             {img:'exercises/developpe-incline-barre.webp'},
   'Développé Incliné Haltères':    {img:'exercises/developpe-incline-halteres-exercice-musculation.webp'},
   'Écarté Poulie':                 {img:'exercises/ecarte-poulie-vis-a-vis-exercice-musculation-pectoraux.webp'},
-  // ⚠️ 02/08 : « Écarté Haltères » affichait l'animation de l'écarté DÉCLINÉ — les deux fiches
-  // pointaient le même fichier (trouvé en croisant les animations). Aucune animation vaut
-  // mieux qu'une fausse ; à rebrancher le jour où on a une vraie démo d'écarté à plat.
+  // ✅ REBRANCHÉ le 25/08 — et c'est le commentaire du 02/08 qui a dit quand le faire.
+  // Il disait : « "Écarté Haltères" affichait l'animation de l'écarté DÉCLINÉ (les deux fiches
+  // pointaient le même fichier). Aucune animation vaut mieux qu'une fausse ; à rebrancher le
+  // jour où on a une vraie démo d'écarté à plat. » ⭐ Ce jour est arrivé : Michel a envoyé la
+  // démo du couché à PLAT (25/08), vérifiée image par image avant de la rattacher — banc
+  // horizontal, pas décliné. *Un retrait dont la condition de retour est ÉCRITE se referme
+  // tout seul le jour venu ; sans cette phrase, on aurait cru à un oubli et remis n'importe
+  // quoi* (R30).
+  'Écarté Haltères':               {img:'exercises/ecarte-couche-halteres.webp'},
   'Croisé Poulie (Cable Crossover)':{img:'exercises/ecartes-poulie-vis-a-vis.webp'},
   'Pec Deck':                      {img:'exercises/pec-deck-butterfly-exercice-musculation.webp'},
   'Chest Press Machine Horizontale':{img:'exercises/developpe-machine-assis-pectoraux.webp'},
@@ -6868,17 +7089,15 @@ const EX_YT={
   'Squat à la Barre':              {img:'exercises/homme-faisant-un-squat-avec-barre.webp'},
   'Squat Avant':                   {img:'exercises/squat-barre-devant-front.webp'}, // la vraie version BARRE (zip Michel 01/08 — avant : version haltères)
   'Squat Gobelet (Goblet Squat)':  {img:'exercises/squat-goblet-kettlebell.webp'},
-  /* ⚠️ RETRAIT VOLONTAIRE — « Squat Sumo » n'a PLUS d'illustration (13/08/2026, Michel :
-     *« je pense que je ne l'ai pas mis, retire-le stp »*). Ce n'est pas un oubli, ne pas
-     la « réparer » (R30).
-     POURQUOI : le squat sumo est un mouvement de BARRE (arbitrage Michel), or l'image
-     montrait un HALTÈRE tenu entre les jambes — c'est-à-dire le geste du « Squat Gobelet
-     (Goblet Squat) », qui existe déjà au catalogue avec sa propre photo. On affichait donc
-     la photo d'un autre exercice. *Mieux vaut aucune image qu'une image fausse* : sans
-     elle, `_exVideoHtml` retombe proprement sur le bouton « Voir le tutoriel ».
-     LE FICHIER `exercises/squat-sumo-avec-haltere.webp` EST GARDÉ dans le dépôt, mis de
-     côté : le jour où Michel trouve une figurine de squat sumo À LA BARRE, on rebranche
-     ici. (Suivi dans `A-FAIRE-SUR-PC.md`.) */
+  /* ⛔⛔ « Squat Sumo » N'EST PLUS AU CATALOGUE (25/08/2026, décision Michel : « squat sumo
+     on supprime »). L'entrée d'image a donc disparu avec lui, et le fichier
+     `exercises/squat-sumo-avec-haltere.webp` a été retiré du dépôt ET du cache du service
+     worker — il y dormait depuis le 13/08 et était téléchargé par tout le monde pour rien.
+     HISTORIQUE, pour ne pas le redécouvrir : le 13/08 l'image avait déjà été retirée parce
+     qu'elle montrait un HALTÈRE entre les jambes, c'est-à-dire le geste du « Squat Gobelet »
+     qui existe déjà. On attendait une figurine À LA BARRE ; elle n'est jamais venue, et au
+     bout de 12 jours Michel a préféré retirer l'exercice. ⭐ Son identifiant `squat-sumo`
+     survit dans EX_IDS : les séances déjà faites gardent tout. */
   'Fentes':                        {img:'exercises/fente-avant-barre-femme.webp'},
   'Leg Curl Couché Machine':       {img:'exercises/leg-curl-allonge.webp'},
   'Curl Ischio-jambiers (Leg Curl)':{img:'exercises/leg-curl-allonge.webp'},
@@ -6918,6 +7137,11 @@ const EX_YT={
   'Tirage Poulie Haute (Lat Pulldown)':           {img:'exercises/tirage-vertical-poitrine.webp'},
   'Tirage Poulie Haute Prise Serrée':{img:'exercises/tirage-vertical-prise-serree.webp'},
   'Tirage Poulie Basse Prise Large':{img:'exercises/tirage-horizontal-prise-large.webp'},
+  // ⚠️ NE PAS CONFONDRE AVEC `tirage-vertical-prise-serree.webp` (ligne au-dessus) : celui-là est
+  // la poulie HAUTE. Ici c'est la poulie BASSE, assis, poignée en V — envoi Michel 25/08, il
+  // l'appelle « tirage horizontal prise serrée ». Vérifié image par image avant de la rattacher :
+  // montrer l'animation d'un AUTRE exercice est pire que n'en montrer aucune (R29).
+  'Tirage Poulie Basse Prise Serrée':{img:'exercises/tirage-horizontal-poulie-prise-serree.webp'},
   // ⚠️ CORRIGÉ le 01/08 : cette ligne portait `traction-musculation-dos.webp`, qui montre une
   // traction CLASSIQUE sans lest. La cause : « Tractions (Pull-up) » n'existait pas au catalogue,
   // la démo de la traction de base s'était donc posée sur la variante lestée, faute de place.
@@ -7339,7 +7563,7 @@ const EX_EN={
   'Squat Barre avec Bandes Élastiques':'banded barbell squat',
   'Squat TRX (Sangles)':'trx squat','Split Squat TRX (Sangles)':'trx split squat','Squat Pistol TRX (Sangles)':'trx pistol squat',
   'Squat à la Barre':'squat barbell','Squat Avant':'front squat','Squat Bulgare':'bulgarian split squat',
-  'Squat Gobelet (Goblet Squat)':'goblet squat','Squat Sumo':'sumo squat',
+  'Squat Gobelet (Goblet Squat)':'goblet squat',
   'Smith Machine Squat':'smith machine squat','Squat Hack (Hack Squat)':'hack squat',
   'Leg Press':'leg press machine',
   'Extension Quadriceps (Leg Extension)':'leg extension machine',
@@ -7415,12 +7639,12 @@ async function fetchExImage(name){
 }
 
 function _ytSearchUrl(name){
-  const term='Demic '+(EX_EN[name]||name);
+  const term='Demic '+(EX_EN[exNomCatalogue(name)]||name);
   return 'https://www.youtube.com/results?search_query='+encodeURIComponent(term);
 }
 
 function _exVideoHtml(name){
-  const v=EX_YT[name];
+  const v=EX_YT[exNomCatalogue(name)];
   if(v&&v.img){
     // Image locale
     return `<div>
@@ -7468,7 +7692,7 @@ function toggleExGif(ei,name){
   } else {
     // Pas de photo/gif dédié → figurine du muscle deviné du nom (taxonomie) — jamais vide
     const file=_exMuscleImg(name);
-    const ex=EXLIB.find(e=>e.n===name);
+    const ex=EXLIB.find(e=>e.n===exNomCatalogue(name));
     html+=`<div style="text-align:center;padding:8px 0;"><img src="${file}" style="width:160px;height:auto;display:block;margin:0 auto;"></div>`;
     html+=`<div style="text-align:center;font-size:12px;color:var(--t3);margin-top:2px;">${ex?ex.g:'Muscle principal deviné'}</div>`;
     // Machine importée sans image dédiée → proposer d'ajouter la vraie photo (deviendra la vignette + le grand format)

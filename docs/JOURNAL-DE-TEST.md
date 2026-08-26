@@ -69,6 +69,115 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟠 « AS-TU VU QUE J'AVAIS CHANGÉ D'OBJECTIF ? » — NON, ET IL A RAISON (trou de donnée)
+**19/08/2026, conversation réelle de Michel — relue le 25/08 dans son export.** Il demande
+*« As-tu vu que j'avais changé d'objectif ? »*, Milo répond *« Non, je ne vois pas de changement
+d'objectif dans ce que j'ai sous la main »*. Michel précise *« j'ai mis perte de gras + muscle »*,
+Milo répond *« c'est déjà ce que j'ai dans ton profil, rien de nouveau »* — et il faut que Michel
+écrive **« j'étais en force max avant »** pour qu'il réagisse enfin (*« ah ok, effectivement c'est
+un vrai changement »*).
+⭐⭐ **MESURÉ DANS SON EXPORT DU 25/08, ET MILO EST HONNÊTE** : `goal` vaut `recomp`, et la chaîne
+« force max » n'apparaît **nulle part ailleurs que dans la conversation elle-même**. Pas de
+`goalLog`, pas de `goalHistory`, rien dans `registre.facts`. **L'app ne garde AUCUNE trace de
+l'objectif précédent.** Il ne pouvait donc pas voir le changement : c'est **R8** dans sa forme la
+plus pure — *un prompt ne compense jamais une donnée absente*, et le fix est dans la DONNÉE.
+⚠️⚠️ **ET EV-028 EST VERT SUR CE SUJET — sans mentir, mais en ne mesurant que la moitié.** Son
+scénario dit *« J'étais en force max avant, je suis passé en prise de muscle »* : il vérifie que
+Milo **réagit quand on le lui dit**, pas qu'il **le voit tout seul**. La vraie question de Michel
+restera sans réponse tant que l'historique n'existe pas. *Son propre commentaire le disait déjà le
+19/08 — « S.goal est transmis, son HISTORIQUE non » — et le trou n'a jamais été bouché.*
+**État : à trier** — ce n'est pas un scénario à promouvoir, c'est une DONNÉE à construire
+(un `goalLog` sur le modèle de `weightLog`). Décision de Michel.
+
+### 🟢 IL SE REPROCHAIT SES PROPRES PALIERS — et ses données montrent que c'est RÉGLÉ
+**19/08/2026, même conversation.** Milo débriefe : *« la montée en charge sur le Développé Incliné
+était trop courte — tu as démarré à 48 kg »*. Michel : *« c'est toi qui m'a dit de prendre ces
+charges là »*. Milo l'admet : *« oui, c'est moi qui t'avais donné ce palier, la remarque ne tient
+pas »*.
+⭐⭐ **LA PREUVE EST DANS SON EXPORT, ET ELLE EST NETTE** : la séance du **18/08** porte
+`_milo:true` sur **0 exercice sur 6** — Milo ne pouvait pas savoir qu'il en était l'auteur. Les
+séances du **23/08 et du 24/08**, elles, le portent sur **5/5**. **ft-v989 a bouché ce trou**, et
+c'est vérifié sur des données réelles, pas sur une fixture.
+**État : écartée — corrigée** (EV-005 la couvre déjà, et il est vert). Gardée avec sa raison (R30).
+
+### 🔵 Il attribue une note à la MAUVAISE série
+**19/08/2026.** La note *« barre raque à la 4ème »* était sur la **2ᵉ** série ; Milo l'a placée
+sur la 3ᵉ, et n'a corrigé qu'après que Michel l'ait repris (*« c'est moi qui ai mal lu, sorry »*).
+⚠️ **Pas encore promue, et pour une raison précise** : l'attendu est vérifiable par du code (la
+note est attachée à un index de série), mais il faut d'abord **mesurer si les notes partent avec
+leur numéro de série** dans le contexte — sinon c'est encore R8, et le scénario rougirait sur un
+chemin qui n'existe pas (leçon d'EV-051, qu'on n'avait pas pu promouvoir avant son correctif).
+**État : à trier.**
+
+### 🔵 Milo emploie un nom d'exercice ABRÉGÉ → **EV-052**
+**24/08/2026** (bug de session-B, ft-v996/997). Sa séance portait « Hip Thrust Barre » et
+« Abduction Cuisses » — les noms COURTS, sans la parenthèse du catalogue. Mesuré : **55 des 77
+abréviations** rendaient des muscles différents, et l'écran proposait d'ajouter une photo qu'il
+avait déjà. **Le code sait désormais résoudre l'abréviation** — ce scénario mesure la SOURCE (ce
+que Milo écrit), pas le rattrapage. **Promue le 25/08**, R35.
+
+### 🔵 Milo lance une séance sans qu'on le lui demande → **EV-053**
+**23/08/2026.** Une question théorique ne doit pas armer le bouton « Commencer cette séance » :
+Milo propose, il ne pilote pas (Constitution P13, R24). **Promue le 25/08**, R35.
+
+
+### 🔵 MILO MET LE CARDIO EN EXERCICE, ALORS QU'UN BLOC CARDIO EXISTE → **EV-051**
+**24/08/2026, EN SALLE — capture de Michel** : *« il me rajoute le vélo elliptique [dans la séance]
+alors qu'on a un onglet exprès pour le cardio »*. Sur sa capture : **« Elliptique — 0/1 série »**,
+type **É**, note *« 8 min léger »* — donc posé comme un **exercice de musculation**… pendant que le
+bloc **« Cardio — optionnel »**, juste au-dessus, reste **vide**.
+
+**⭐⭐ ET CE N'EST PAS UN DÉFAUT DE JUGEMENT DE MILO — LE CHEMIN N'EXISTE PAS.** Vérifié dans le code
+plutôt que supposé (**R28**), et **les deux moitiés manquent** :
+- le **prompt ne nomme jamais le bloc cardio** en prescription. `coach.js` le **lit** (l. 146, 2711)
+  pour raconter à Milo ce qui a été fait — il ne lui dit nulle part qu'un **champ dédié** existe
+  pour ce qu'il propose ;
+- et **`_appliqueMiloSession` ne mentionne pas `cardio`** : même si Milo posait le champ, il serait
+  **ignoré** au chargement de la séance.
+👉 *Milo n'a donc aucun moyen de faire autrement.* C'est la forme exacte du pont blessure de
+**ft-v982** : un chemin dont **les deux bouts** sont absents, pas une erreur du modèle.
+
+**⚠️ CE QUE ÇA COÛTE, ET C'EST PLUS QUE COSMÉTIQUE** : le bloc cardio calcule des **calories** par
+type × intensité × durée (ft-v12) et distingue **avant/après** (ft-v720). Un cardio posé en exercice
+échappe à tout ça — pas de kcal cardio, une « série » qui n'en est pas, et un volume de séance
+faussé. ⚠️ **Et le risque de DOUBLE COMPTE est réel** : `calcSessionCalories` ajoute déjà un forfait
+d'échauffement.
+
+**Attendu** : quand Milo prescrit du cardio (échauffement ou fin de séance), il le pose dans le
+**bloc cardio** (`cardioAvant` / `cardio`), pas dans la liste des exercices.
+**⭐⭐ PRÉCISION DE MICHEL, LE MÊME SOIR — « il peut y avoir une séance avec un cardio au tout
+début ET un cardio à la fin ».** C'est exactement ce que **ft-v720** avait construit (`cardioAvant`
+🔥 *avant* · `cardio` 🧊 *après*, calories additionnées) sur sa demande d'alors : *« avant et après
+séance ce n'est pas pareil »*. Le détournement doit donc **trancher lequel est lequel**, pas juste
+« sortir le cardio de la liste ».
+**La règle proposée, par POSITION** : cardio **avant** le 1ᵉʳ exercice de muscu → `cardioAvant` ·
+cardio **après** le dernier → `cardio` · cardio **au milieu** → ⛔ **il reste un exercice**, on ne
+devine pas ce que la personne voulait (**R29** : deviner coûte plus cher que ne rien faire).
+⚠️ **Et une limite STRUCTURELLE à ne pas découvrir en route** : chaque moment n'accepte qu'**UN
+SEUL** objet `{type,intensity,duration}`. Deux cardios différents du même côté (elliptique **puis**
+corde à sauter en échauffement) ne peuvent pas tenir tous les deux — le second restera en exercice,
+et **il faudra que ça se voie**, pas que ça se perde en silence.
+
+**⛔⛔ ET LE PIÈGE QUI DÉCIDE DE TOUT — DEUX CHEMINS, PAS UN.** Une séance de Milo arrive soit par
+le **bloc JSON** `{"seance":…}` (modèles capables), soit par le **repli de lecture du TEXTE**
+(`_seanceDepuisTexte`, modèles légers). *Corriger seulement le JSON ne changerait rien pour ELINE* —
+c'est le biais **R9** déjà vécu avec le bouton « Commencer cette séance » (Michel l'avait, sa fille
+jamais). 👉 **Le correctif doit vivre dans `_appliqueMiloSession`**, le seul point que les DEUX
+portes traversent — la correction que le témoin avait déjà imposée en **ft-v980**.
+**⭐ ET L'APP SAIT DÉJÀ RECONNAÎTRE LE CARDIO** (R13, rien à inventer) : `_exEquip()` range
+elliptique, tapis, rameur, corde à sauter, air bike… dans un bac `'cardio'` depuis ft-v712.
+**⚠️ DERNIER PIÈGE — LE DOUBLE COMPTE** : `calcSessionCalories` ajoute déjà un **forfait
+d'échauffement** (10 min à 3,5 MET, compté 5 min par moment). Remplir `cardioAvant` sans vérifier
+ce forfait remplacerait un bug d'affichage par un bug de calories.
+
+**Vérifiable ?** ⭐⭐ **Oui, et des deux côtés** : ① côté texte — une réponse qui prescrit
+« 8 min d'elliptique » ne doit pas produire un exercice avec des séries ; ② côté données — le champ
+`cardioAvant` doit être rempli. ⚠️ **Mais le scénario ne peut pas être promu tout de suite** : tant
+que `_appliqueMiloSession` ignore le champ, le test rougirait sur un chemin **qui n'existe pas
+encore** — il mesurerait un manque de structure, pas un comportement. **À promouvoir APRÈS le
+correctif**, sinon c'est un rouge permanent qu'on apprend à ignorer (**R19**).
+
+
 ### 🟢 ⭐⭐ MILO VÉRIFIE APRÈS, PAS AVANT — *le même défaut trois fois dans une seule séance*
 **23/08/2026, séance de Michel** (*« il m'a reproposé un repos de 1 min 30 sur du lourd »* ·
 *« comment il a pu déduire que je pouvais faire 3 séries de 5 reps à 95, c'est impossible »*).
@@ -90,7 +199,7 @@ déclenchent **à la proposition**, pas à la question.
 le prompt est le dernier levier). L'app connaît `S.prs` : elle peut calculer le % du 1RM d'une
 séance dictée **avant** de l'afficher. Idem pour le couple charge × reps × repos.
 
-### 🟢 LE SUPERSET RESTE DANS LE TEXTE ET N'ATTEINT PAS LA DONNÉE — **R4 au mot près**
+### 🔵 LE SUPERSET RESTE DANS LE TEXTE ET N'ATTEINT PAS LA DONNÉE — **R4 au mot près** → **EV-023**
 **23/08/2026.** Michel : *« et en plus le superset n'a pas fonctionné »*. **Mesuré, il a raison** :
 la séance proposée dit noir sur blanc *« **Rowing Barre** (ancre) **en superset avec Tirage Visage
 (Face Pull)** — repos 90 s après chaque paire »*, et dans la séance enregistrée
@@ -297,7 +406,7 @@ correction (*« t'as raison, j'ai merdé… je note »*), pas des promesses cyni
 serait le 4ᵉ durcissement sur ce symptôme (**R7** : le prompt est le DERNIER levier). *La question
 à traiter d'abord : peut-il POSER le bloc dans ces moments-là, ou n'a-t-il rien à enregistrer ?*
 
-### 🟢 Milo remplace un exercice DEMANDÉ par un autre
+### 🔵 Milo remplace un exercice DEMANDÉ par un autre → **EV-024**
 **22/08/2026, conversation réelle.** Michel : *« Pk tu as mis soulevé de terre ? J'ai dit développé
 couché et Butterfly en début de séance »*. Milo a lu *« tirage »* dans « Développé Couché + Tirage »
 et a mis du **SDT**. Il l'a reconnu : *« j'ai vu "tirage" et j'ai mis du SDT, mauvaise lecture »*.
@@ -305,7 +414,7 @@ et a mis du **SDT**. Il l'a reconnu : *« j'ai vu "tirage" et j'ai mis du SDT, m
 et aucun exercice lourd non demandé ne le remplace.
 **Vérifiable ?** ⭐ **Oui, mécaniquement** : on cherche les noms demandés dans la séance rendue.
 
-### 🟢 Une séance PRÉVUE annoncée comme FAITE
+### 🔵 Une séance PRÉVUE annoncée comme FAITE → **EV-026**
 **22/08/2026, conversation réelle.** Michel : *« Pourquoi as-tu mis en page d'accueil si c'était la
 séance Larsen ? »*. Milo a reconnu : *« j'ai formulé le label de façon ambiguë, comme si la Larsen
 Press c'était la séance que tu venais de faire, alors que c'est celle prévue samedi »*.
@@ -396,7 +505,7 @@ place, et on ne le fera pas.**
 enregistré). Ce qui n'est **pas** vérifiable, c'est *pourquoi* ça se produit encore après le
 correctif de ft-v923 — ça demande de lire le texte réel.
 
-### 🟢⭐ Milo repropose un exercice que la personne a DÉJÀ refusé
+### 🔵⭐ Milo repropose un exercice que la personne a DÉJÀ refusé → **EV-025**
 **16/08/2026, en pleine séance.** Michel : *« **Je lui ai déjà dit** que cet exercice ne me convient
 pas, trop long »*.
 **⭐ POURQUOI C'EST GRAVE** : c'est le pendant de « c'est noté » sans rien noter (`EV-004`), vu de
@@ -407,7 +516,7 @@ descendre jusqu'à la DONNÉE, sinon elle n'existe pas.
 **Vérifiable ?** Oui — un exercice refusé dans l'historique ne doit pas reparaître sans que Milo
 explique pourquoi il y revient.
 
-### 🟢 Milo ne voit que les dernières séances — pas les longues interruptions
+### 🔵 Milo ne voit que les dernières séances — pas les longues interruptions → **EV-027**
 **02/08/2026.** Michel : *« l'historique, on avait fait en sorte que Milo se souvienne que **pendant
 trois mois t'étais pas allé au sport**, et pourquoi il prend que les dernières séances ? Je ne comprends
 pas ça, je pense qu'il y a eu un problème quelque part »*.

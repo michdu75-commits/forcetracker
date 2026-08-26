@@ -26,6 +26,7 @@ let S={
   priorities:[],
   sleepLog:[],
   weightLog:[],
+  goalLog:[],        // historique des CHANGEMENTS d'objectif — voir _goalSet()
   dayStateLog:[],
   healthInbox:[],   // ⌚ activités reçues du téléphone (raccourci iOS → Santé) — voir app.js `_majHealthInbox`
   healthDaily:[],   // ❤️😴🚶 une entrée par jour venue de Santé ({date, rhr, sleep, steps}) — FC au
@@ -162,6 +163,7 @@ function load(){
     S.beginnerJourney=_lsJson('ft4_bjourney',null); // parcours débutant : {style,freq,startDate,phase}
     S.sleepLog=_lsJson('ft4_sleep',[]);
     S.weightLog=_lsJson('ft4_wlog',[]);
+    S.goalLog=_lsJson('ft4_goallog',[]);
     S.strengthGoals=_lsJson('ft4_strgoals',{}); // objectif de 1RM par exercice {nom:kg}
     S.name=localStorage.getItem('ft4_name')||'';
     S.programmes=_lsJson('ft4_progs',[]);
@@ -241,6 +243,14 @@ function load(){
           S.customExercises=S.customExercises.filter(function(c){
             if(!c||!c.n) return true;
             const nom=ren(c.n);
+            /* ⛔⛔ CET `exId` RESTE STRICT, ET C'EST VOLONTAIRE (24/08/2026, ft-v997).
+               Ailleurs on résout les noms ABRÉGÉS (`exNomCatalogue`) pour retrouver la fiche
+               du catalogue — ici il ne faut SURTOUT PAS. Cette ligne décide de SUPPRIMER un
+               exercice perso en le fusionnant avec le catalogue : la résolution rendrait
+               l'opération DESTRUCTRICE. Quelqu'un qui a créé son propre « Hip Thrust Barre »
+               (avec sa photo, ses muscles à lui) le verrait disparaître au profit de la fiche
+               du catalogue. Une lecture qui se trompe coûte une figurine ; une SUPPRESSION
+               qui se trompe coûte le travail de la personne (R29). */
             if(!exId(nom)) return true;                 // inconnu du catalogue → vrai exo perso
             if(c.img){                                  // la photo suit, sans écraser la cible
               S.exPhotos=S.exPhotos||{};
@@ -453,6 +463,7 @@ function persist(){
     localStorage.setItem('ft4_bjourney',JSON.stringify(S.beginnerJourney||null));
     localStorage.setItem('ft4_sleep',JSON.stringify(S.sleepLog||[]));
     localStorage.setItem('ft4_wlog',JSON.stringify(S.weightLog||[]));
+    localStorage.setItem('ft4_goallog',JSON.stringify(S.goalLog||[]));
     localStorage.setItem('ft4_strgoals',JSON.stringify(S.strengthGoals||{}));
     localStorage.setItem('ft4_name',S.name||'');
     localStorage.setItem('ft4_progs',JSON.stringify(S.programmes||[]));
@@ -527,6 +538,36 @@ const bz=(kg,r)=>(!kg||!r||r<1)?0:(r===1?kg:fmt(kg/(1.0278-0.0278*Math.min(r,20)
 // rien ne plante, la date est juste fausse. On décale de l'écart horaire local avant de couper.
 // 🚫 Ne JAMAIS revenir à `new Date().toISOString()` pour obtenir un jour calendaire.
 const today=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
+
+/* ═══ L'HISTORIQUE DE L'OBJECTIF — UN SEUL PROPRIÉTAIRE (25/08/2026, ft-v1010) ═══════════
+   ⛔⛔ LE TROU QU'ON BOUCHE, ET IL ÉTAIT ÉCRIT DEPUIS 6 JOURS. Michel, le 19/08, à Milo :
+   « As-tu vu que j'avais changé d'objectif ? » → « Non, je ne vois pas de changement d'objectif
+   dans ce que j'ai sous la main. » Il a fallu qu'il écrive « j'étais en force max avant » pour
+   que Milo réagisse.
+   ⭐ MILO ÉTAIT HONNÊTE : mesuré dans son export du 25/08, `goal` valait `recomp` et la chaîne
+   « force max » n'apparaissait NULLE PART ailleurs que dans la conversation elle-même. Aucun
+   journal, rien dans le registre. L'app gardait la valeur du JOUR, jamais son histoire.
+   C'est R8 dans sa forme la plus pure — un prompt ne compense jamais une donnée absente — donc
+   le correctif est dans la DONNÉE, pas dans le prompt (R7 : le prompt est le dernier levier).
+   ⛔ UN SEUL PROPRIÉTAIRE (R2) : plus personne n'écrit `S.goal` à la main pour un changement
+   voulu par la personne. Deux écritures parallèles divergeraient — et c'est l'HISTORIQUE qui
+   mentirait, ce qui est pire que pas d'historique du tout.
+   ⛔ ON N'INVENTE AUCUN PASSÉ (R29) : les comptes existants démarrent avec un journal VIDE.
+   Un objectif antérieur deviné ferait dire à Milo un fait FAUX sur la personne. */
+const _GOAL_LOG_MAX = 20;   // borné : une mémoire, pas une archive (leçon du réservoir plein du 29/07)
+function _goalSet(g, src){
+  const avant = S.goal || '';
+  if(!g) return false;
+  S.goal = g;
+  /* ⛔ L'INSCRIPTION N'EST PAS UN CHANGEMENT, c'est la PREMIÈRE déclaration. La journaliser
+     fabriquerait un faux « passé de muscle à force » le jour de la création du compte, juste
+     parce que `load()` pose « muscle » par défaut. */
+  if(src === 'inscription' || !avant || avant === g) return false;
+  S.goalLog = Array.isArray(S.goalLog) ? S.goalLog : [];
+  S.goalLog.push({ date: today(), de: avant, vers: g, src: src || '' });
+  if(S.goalLog.length > _GOAL_LOG_MAX) S.goalLog = S.goalLog.slice(-_GOAL_LOG_MAX);
+  return true;
+}
 // Jour calendaire LOCAL d'un timestamp (même règle que today() : l'heure du téléphone, pas Greenwich).
 // Sert aux replis « séance sans date » — un ts de 00 h 30 doit donner le jour d'aujourd'hui, pas la veille.
 const dayOfTs=ts=>{const d=new Date(ts);return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
@@ -602,7 +643,12 @@ function leanMassRecente(){
   (S.bodyScans||[]).forEach(sc=>{
     if(!sc||!sc.date)return;
     const lm=Number(sc.leanMass);
-    if(isFinite(lm)&&lm>0)cand.push({date:sc.date,lm:lm,poids:Number(sc.weight)||null,src:'bilan corporel'});
+    /* 🏷️ `nature` DIT COMMENT CE CHIFFRE EXISTE — il ne suffit pas de transporter la valeur.
+       `lmDeduite` est posé par tracking.js quand la masse maigre n'était PAS lisible sur le
+       rapport et a été retrouvée par soustraction (poids − masse grasse, ft-v978). Sans ce
+       transport, la nuance reste dans la donnée et n'atteint jamais Milo — R4 exactement. */
+    if(isFinite(lm)&&lm>0)cand.push({date:sc.date,lm:lm,poids:Number(sc.weight)||null,
+      src:'bilan corporel',nature:sc.lmDeduite?'deduite':'lue'});
   });
   (S.weightLog||[]).forEach(w=>{
     if(!w||!w.date)return;
@@ -619,7 +665,10 @@ function leanMassRecente(){
        mesure en corrigeant un bug serait un mauvais échange. */
     const bf=Number(w.bf), bw=Number(w.kg!=null?w.kg:w.bw);
     if(!(isFinite(bf)&&bf>0&&bf<70&&isFinite(bw)&&bw>0))return;
-    cand.push({date:w.date,lm:Math.round(bw*(1-bf/100)*10)/10,poids:bw,src:'pesée'});
+    /* 🏷️ `nature:'saisie'` — sur ce chemin le % de gras a été TAPÉ AU CLAVIER par la personne.
+       C'est le maillon le plus faible des trois, et c'est justement celui qui ressemblait le
+       plus à une mesure d'appareil dans le prompt (« MASSE MAIGRE MESURÉE … pesée du … »). */
+    cand.push({date:w.date,lm:Math.round(bw*(1-bf/100)*10)/10,poids:bw,src:'pesée',nature:'saisie'});
   });
   if(!cand.length)return null;
   cand.sort((a,b)=>b.date.localeCompare(a.date));

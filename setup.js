@@ -333,6 +333,8 @@ function _cloudSync(){
       // donc le champ : le serveur laisse alors les séances existantes intactes (02/08).
       sessions:S.histTronque?undefined:(S.sessions||[]).slice(0,2000), // ~8-10 ans de séances
       prs:S.prs||{},
+      goalLog:(S.goalLog||[]).slice(-20),      // ⛔ borné à 20 (ft-v1010) — sans ça, changer de
+                                               //    téléphone perdrait l'histoire de l'objectif (R4)
       weightLog:(S.weightLog||[]).slice(-4000), // historique complet (~11 ans de pesées quotidiennes) — entrées minuscules, pas seulement 1 an
       sleepLog:(S.sleepLog||[]).slice(-4000),
       dayStateLog:(S.dayStateLog||[]).slice(-800), // historique du check-in du jour (brique 7) — 1 entrée/jour, ~2 ans
@@ -1936,7 +1938,9 @@ const GOAL_DESCS={
   endurance:'Surplus modéré +100 kcal · Protéines 1.7 g/kg · Glucides élevés pour le glycogène musculaire.',
 };
 function setGoal(g){
-  S.goal=g;persist();
+  // ⛔ Passe par le propriétaire unique (state.js) : c'est LUI qui journalise le changement
+  //    dans `S.goalLog`. Écrire `S.goal` ici laisserait Milo aveugle au changement (R2/R8).
+  _goalSet(g,'profil');persist();
   ['muscle','perte','recomp','force','equilibre','endurance'].forEach(x=>{
     const el=document.getElementById('g-'+x);if(el)el.classList.toggle('active',x===g);
   });
@@ -2388,7 +2392,13 @@ function _applyRestoreData(raw){
   // NOTE : _obGender/_obGoal sont des vars onboarding (app.js) — on n'y touche pas depuis setup.js
   // _obDataRestored=true est déjà positionné avant l'appel, donc finishOnboarding() les ignore
   try{if(d.gender)S.gender=d.gender;}catch(e){console.warn('[FT restore] gender',e);}
+  /* ⛔ RESTAURER N'EST PAS CHANGER (ft-v1010) : on écrit `S.goal` DIRECTEMENT ici, exprès —
+     passer par `_goalSet` fabriquerait un faux changement daté du jour de la restauration.
+     ⭐ Et l'HISTORIQUE se restaure avec, sinon une restauration effacerait l'histoire en
+     silence : on ne garde le journal sauvegardé que s'il est au moins aussi riche que celui
+     du téléphone — même règle prudente que `weightLog` juste en dessous. */
   try{if(d.goal)S.goal=d.goal;}catch(e){console.warn('[FT restore] goal',e);}
+  try{const gl=d.goalLog||[];if(Array.isArray(gl)&&gl.length>=(S.goalLog||[]).length)S.goalLog=gl;}catch(e){console.warn('[FT restore] goalLog',e);}
   try{if(d.goal2!==undefined)S.goal2=d.goal2;}catch(e){console.warn('[FT restore] goal2',e);}
   try{if(Array.isArray(d.priorities))S.priorities=d.priorities;}catch(e){console.warn('[FT restore] priorities',e);}
   try{if(d.discipline)S.discipline=d.discipline;}catch(e){console.warn('[FT restore] discipline',e);}
@@ -2767,7 +2777,7 @@ function mergeExercises(keep,remove){
       toast('"'+remove+'" fusionné dans "'+keep+'" ✅','success');
       detectDuplicates();
     }
-  );
+  ,'Fusionner');
 }
 
 /* ⏱️ RECALER LES CALORIES DES ANCIENNES SÉANCES — UN BOUTON, AUCUN FICHIER

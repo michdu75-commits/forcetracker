@@ -431,6 +431,167 @@ t('⭐ démos abduction/adduction remises à l\'endroit : fichiers -v2 mappés, 
             && !fs.existsSync(path.join(ROOT,'exercises/leg-abduction-machine.webp'))
             && lg.indexOf("'exercises/leg-abduction-machine.webp'")<0
             && sw.indexOf('leg-abduction-machine.webp')<0;})());
+/* ⚠️ LES 2 ANIMATIONS AJOUTÉES LE 25/08 (envoi Michel : « j'ai encore des figurines qui
+   n'apparaissent pas »). Ce témoin vérifie les QUATRE endroits qu'il faut tenir alignés —
+   le fichier sur le disque · la ligne dans EX_YT · la ligne dans le cache du service worker
+   (sinon l'image manque HORS LIGNE, règle d'or #4) · et l'absence de confusion de fichier.
+   ⛔⛔ LE PIÈGE EST NOMMÉ, parce qu'il a déjà eu lieu : le 02/08, « Écarté Haltères » et
+   « Écarté Décliné » pointaient le MÊME fichier — l'app montrait un décliné pour un couché
+   à plat. Le correctif d'alors avait RETIRÉ l'animation en écrivant sa condition de retour
+   (« à rebrancher le jour où on a une vraie démo d'écarté à plat ») ; c'est cette phrase, et
+   elle seule, qui a permis de rebrancher aujourd'hui sans se demander si c'était un oubli
+   (R30). Le témoin épingle donc que les deux écartés gardent des fichiers DIFFÉRENTS.
+   ⚠️ Même piège côté tirage : `tirage-vertical-prise-serree` est la poulie HAUTE — la
+   nouvelle est la poulie BASSE. Deux exercices, deux fichiers, jamais le même. */
+t('⭐⭐ les 2 animations du 25/08 : fichier présent · câblée dans EX_YT · dans le cache SW',
+  (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        const sw=fs.readFileSync(path.join(ROOT,'sw.js'),'utf8');
+        const f=['ecarte-couche-halteres','tirage-horizontal-poulie-prise-serree'];
+        return f.every(x=>fs.existsSync(path.join(ROOT,'exercises/'+x+'.webp'))
+                       && lg.indexOf("exercises/"+x+".webp")>=0
+                       && sw.indexOf(x+'.webp')>=0)
+            && /'Écarté Haltères':\s*\{img:'exercises\/ecarte-couche-halteres\.webp'\}/.test(lg)
+            && /'Tirage Poulie Basse Prise Serrée':\{img:'exercises\/tirage-horizontal-poulie-prise-serree\.webp'\}/.test(lg);})());
+t('⛔⛔ … et les DEUX écartés gardent des fichiers différents (le mélange du 02/08 ne revient pas)',
+  (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        const m=n=>{const r=new RegExp("'"+n+"':\\s*\\{img:'(exercises/[^']+)'");const x=lg.match(r);return x&&x[1];};
+        const plat=m('Écarté Haltères'), dec=m('Écarté Décliné Haltères');
+        return !!plat && (!dec || plat!==dec);})());
+t('⛔ … et la prise serrée BASSE ne prend pas le fichier de la prise serrée HAUTE',
+  (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        const m=n=>{const r=new RegExp("'"+n+"':\\{img:'(exercises/[^']+)'");const x=lg.match(r);return x&&x[1];};
+        const bas=m('Tirage Poulie Basse Prise Serrée'), haut=m('Tirage Poulie Haute Prise Serrée');
+        return !!bas && !!haut && bas!==haut;})());
+/* ⚠️ LE « PULL-OVER » GÉNÉRIQUE (25/08) — le témoin garde surtout ce qu'on NE fait PAS.
+   Le générique n'avait pas de vignette et vivait dans le bac BARRE juste au-dessus de
+   « Pull-over Barre ». On lui a donné l'image haltère et le bac poids libre — un PANSEMENT
+   assumé sur un doublon de catalogue (5 entrées pull-over pour un exercice sans matériel).
+   ⛔⛔ Le 2ᵉ témoin est le plus important : les 5 entrées doivent RESTER 5. Fusionner le
+   générique renommerait les séances et records passés, et on ne sait pas si Michel les a
+   faits à la barre ou à l'haltère — deviner écrirait un fait faux dans son historique (R29).
+   Si quelqu'un fusionne un jour, que ce soit une DÉCISION, pas un effet de bord. */
+/* ⛔⛔ « PULL-OVER » TOUT COURT — RETIRÉ DU CHOIX le 25/08 (décision Michel : « le pull over
+   tout seul on peut le retirer »). Il faisait doublon avec les 4 variantes et, sans matériel,
+   ne pouvait ni être rangé ni illustré sans devenir le jumeau de l'une d'elles.
+   ⭐⭐ CE QUE CES TÉMOINS PROTÈGENT N'EST PAS LE RETRAIT, C'EST LA MÉMOIRE. C'est un RETRAIT
+   et non une FUSION : une fusion aurait RENOMMÉ les séances et records stockés (state.js
+   réécrit les noms au chargement). Or Michel le fait « beaucoup à l'haltère mais aussi à la
+   barre » — renommer aurait mélangé ses records sur une devinette (R29).
+   👉 Si quelqu'un « répare » ça un jour en ajoutant `Pull-over` aux anciens noms d'une variante,
+   le 2ᵉ témoin rougit : c'est exactement le geste qui détruirait l'historique. */
+t('⛔⛔ « Pull-over » est sorti du CHOIX, mais son identifiant SURVIT (l\'historique reste lisible)',
+  (()=>{const c=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+        return c.indexOf("{n:'Pull-over',g:'Dos'}")<0        // plus dans le catalogue
+            && /'pull-over':\["Pull-over"\]/.test(c);})());   // mais l'identifiant reste
+t('⛔⛔ … et il n\'est ANCIEN NOM de personne : une fusion renommerait ses séances passées',
+  (()=>{const c=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+        // « Pull-over » ne doit apparaître dans AUCUNE liste d'anciens noms d'un autre id
+        const m=c.match(/'[a-z0-9-]+':\[[^\]]*"Pull-over"[^\]]*\]/g)||[];
+        return m.length===1 && m[0].indexOf("'pull-over':")===0;})());
+/* ⭐⭐ LE TÉMOIN QUI VAUT PLUS QUE LE CORRECTIF (25/08) — trouvé en cherchant les jumelles du
+   retrait (R8). En sortant « Pull-over » du catalogue, 4 équivalences d'import continuaient de
+   le viser (`cable pullover`, `straight arm pulldown`…) : un import s'y serait rattaché à un
+   exercice qui n'existe plus. ⭐ Et c'était DÉJÀ faux avant le retrait — les quatre décrivent
+   la version POULIE. Le retrait n'a pas créé le défaut, il l'a rendu visible.
+   ⚠️ CE QUE CE TÉMOIN NE DOIT PAS FAIRE : crier sur un ANCIEN NOM. Vérifié en l'écrivant —
+   `'leg curl' → « Curl Ischio-jambiers (Leg Curl) »` vise un nom absent du catalogue, et c'est
+   PARFAITEMENT VALIDE : c'est l'ancien nom de « Leg Curl Couché Machine », déclaré dans EX_IDS,
+   et le code le dit en toutes lettres. J'ai failli « réparer » ce qui marchait (R28/R30).
+   👉 La règle exacte est donc : une cible d'équivalence doit être au catalogue, OU s'y ramener
+   par `exNomActuel`. C'est cette règle qu'on fige, pas le cas du jour. */
+t('⭐⭐ RÈGLE : aucune équivalence d\'import ne vise un exercice introuvable (anciens noms compris)',
+  (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        const c=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+        const noms=new Set([...c.matchAll(/\{n:'([^']+)'/g)].map(m=>m[1]));
+        const alias={};
+        for(const m of c.matchAll(/'([a-z0-9-]+)':\[([^\]]+)\]/g)){
+          const l=[...m[2].matchAll(/"([^"]+)"/g)].map(x=>x[1]);
+          if(l.length)l.forEach(n=>alias[n]=l[0]);
+        }
+        // on ne lit QUE les blocs _EX_EQUIV
+        const blocs=[]; const re=/(const _EX_EQUIV=\{|Object\.assign\(_EX_EQUIV,\s*\{)/g; let m;
+        while((m=re.exec(lg))){let i=m.index+m[0].length,p=1,d=i;
+          while(i<lg.length&&p>0){if(lg[i]==='{')p++;else if(lg[i]==='}')p--;i++;}
+          blocs.push(lg.slice(d,i));}
+        const morts=[];
+        blocs.forEach(b=>{for(const x of b.matchAll(/'([^']+)'\s*:\s*'([^']+)'/g)){
+          const cible=x[2]; if(!noms.has(alias[cible]||cible))morts.push(x[1]+' → '+cible);}});
+        return morts.length===0 ? true : (console.log('       cibles mortes : '+morts.slice(0,4).join(' · ')),false);})());
+/* ⛔⛔ « SQUAT SUMO » — RETIRÉ DU CHOIX le 25/08 (Michel : « squat sumo on supprime »).
+   2ᵉ retrait de la journée, MÊME FORME que le pull-over : retrait, jamais fusion.
+   HISTORIQUE, pour ne pas le redécouvrir : le 13/08 son illustration avait déjà sauté (elle
+   montrait un HALTÈRE entre les jambes = le geste du Squat Gobelet, qui a sa propre photo).
+   On gardait le fichier « le jour où Michel trouve une figurine à la BARRE » — elle n'est
+   jamais venue, et au bout de 12 jours il a préféré retirer l'exercice.
+   ⭐ Le fichier orphelin dormait AUSSI dans le cache du service worker : il était téléchargé
+   par tout le monde pour rien depuis le 13/08. Le 3ᵉ témoin épingle son absence des deux. */
+t('⛔⛔ « Squat Sumo » est sorti du CHOIX, mais son identifiant SURVIT (l\'historique reste lisible)',
+  (()=>{const c=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+        return c.indexOf("{n:'Squat Sumo'")<0
+            && /'squat-sumo':\["Squat Sumo"\]/.test(c);})());
+t('⛔⛔ … et il n\'est ANCIEN NOM de personne : une fusion renommerait ses séances passées',
+  (()=>{const c=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+        const m=c.match(/'[a-z0-9-]+':\[[^\]]*"Squat Sumo"[^\]]*\]/g)||[];
+        return m.length===1 && m[0].indexOf("'squat-sumo':")===0;})());
+/* ⚠️ CE TÉMOIN A ROUGI À TORT AU PREMIER JET, et la leçon se répète : il cherchait la chaîne
+   dans TOUT sw.js — et la trouvait dans le COMMENTAIRE de version, qui nomme le fichier pour
+   expliquer son retrait. Il accusait donc la trace écrite du retrait au lieu du cache.
+   (Même piège qu'en ft-v974 : « il accusait les COMMENTAIRES ».) On mesure désormais la LISTE
+   du cache — le motif `'./exercises/…'` — et rien d'autre. */
+t('⭐ … et son image orpheline a quitté le dépôt ET la LISTE du cache (elle y dormait depuis le 13/08)',
+  !fs.existsSync(path.join(ROOT,'exercises/squat-sumo-avec-haltere.webp'))
+  && fs.readFileSync(path.join(ROOT,'sw.js'),'utf8')
+       .indexOf("'./exercises/squat-sumo-avec-haltere.webp'")<0);
+t('⛔ … et les 4 variantes restent au catalogue (on retire le doublon, pas la famille)',
+  (()=>{const c=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+        return ['Pull-over Barre','Pull-over Haltère','Pull-over Poulie','Pullover Machine']
+          .every(n=>c.indexOf("{n:'"+n+"'")>=0);})());
+/* ⛔⛔ LE TÉMOIN QUI COMPTE LE PLUS ICI GARDE MON PROPRE ÉCHEC (25/08).
+   J'avais fait PARTAGER `pullover-haltere.webp` entre « Pull-over » et « Pull-over Haltère »
+   pour donner une vignette au générique. Le contrôle croisé ② — « deux exercices ne partagent
+   jamais la même ANIMATION » — est passé au ROUGE, et il avait raison : cette règle est née du
+   bug du 02/08 (les deux écartés pointaient le même fichier, l'app montrait le mauvais
+   mouvement). J'avais écrit un témoin le matin même disant l'inverse. *Un test permanent m'a
+   empêché de refaire, deux heures plus tard, le bug que je venais de documenter.*
+   👉 Le générique reste donc SANS vignette, et ce témoin épingle cette absence : lui en donner
+   une exigera de trancher le doublon, pas de contourner la règle. */
+t('⛔⛔ … et il n\'emprunte l\'animation de PERSONNE (le contrôle ② l\'a refusé, il avait raison)',
+  (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        return !/'Pull-over':\s*\{img:/.test(lg);})());
+/* ⚠️⚠️ CE TÉMOIN EXIGEAIT L'INVERSE HIER, ET LA RAISON D'AVANT EST GARDÉE (R30).
+   En ft-v1000 il disait : « les 5 entrées pull-over restent 5 — la fusion est une décision,
+   pas un effet de bord ». C'était juste TANT QUE LA DÉCISION N'ÉTAIT PAS PRISE : il protégeait
+   l'historique de Michel contre un renommage fait à l'aveugle.
+   ⭐ Michel a tranché le 25/08 (« le pull over tout seul on peut le retirer »), et il a choisi
+   la forme qui ne renomme RIEN : un RETRAIT du choix, pas une fusion. Le témoin est donc
+   retourné vers ce qu'il protégeait vraiment — non pas le nombre d'entrées, mais le fait que
+   l'historique ne soit jamais réécrit. Les deux témoins ci-dessus le vérifient désormais.
+   *Un témoin qui fige un ÉTAT rougit dès qu'une décision est prise ; ce qu'on fige, c'est une
+   RÈGLE.* (Même leçon qu'en ft-v991 et ft-v992.) */
+t('⛔ aucune image dupliquée sur le disque pour le pull-over (le générique n\'en a aucune)',
+  !fs.existsSync(path.join(ROOT,'exercises/pull-over-haltere-2.webp'))
+  && !fs.existsSync(path.join(ROOT,'exercises/pullover-haltere-v2.webp'))
+  && !fs.existsSync(path.join(ROOT,'exercises/pull-over.webp')));
+/* ⛔⛔ LE PLAFOND IA DES COMPTES DE DÉVELOPPEMENT (25/08) — ce témoin garde surtout un CHIFFRE
+   BAS, et la raison est écrite dans Code.js : « l'email est usurpable ». L'URL Apps Script est
+   publique, donc n'importe qui peut se prétendre être cet email. Relever ce plafond ouvre une
+   porte que quelqu'un d'autre peut emprunter. 150 laisse de quoi jouer DEUX passes du banc
+   d'essai (53 scénarios) et rien de plus.
+   ⭐ Le 2ᵉ témoin est le plus important : sans l'email dans `eval.js`, l'appel part en « anon »
+   et retombe à 50 — le plafond relevé ne servirait à rien. *L'information doit atteindre la
+   DONNÉE* (R4). Les deux moitiés ne valent que posées ensemble. */
+t('⛔⛔ le plafond IA de développement reste MODESTE (l\'email est usurpable — raison écrite)',
+  (()=>{const c=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+        const m=c.match(/var AI_MAX_DEV_\s*=\s*(\d+)/);
+        return !!m && parseInt(m[1],10)<=200 && /usurpable/.test(c);})());
+t('⭐⭐ … et le banc d\'essai part AVEC cet email (sinon il compte en « anon », plafond 50)',
+  (()=>{const e=fs.readFileSync(path.join(ROOT,'tests/milo/eval.js'),'utf8');
+        const c=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+        const m=e.match(/ft4_email:\s*'([^']*)'/);
+        return !!m && !!m[1] && c.indexOf("'"+m[1].toLowerCase()+"'")>=0;})());
+t('⛔ … et le plafond GLOBAL n\'a pas bougé (c\'est lui qui borne vraiment le risque)',
+  (()=>{const c=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+        return /AI_GLOBAL_MAX'\), 10\) \|\| 600/.test(c);})());
 t('⭐ le splash iOS est SAUTÉ au redémarrage de mise à jour (flag ft4_just_updated lu en tête)',
   (()=>{const s=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
         const m=s.match(/navigator\.standalone===true&&localStorage\.getItem\('ft4_just_updated'\)!=='1'\)document\.documentElement\.classList\.add\('ios-boot'\)/);
@@ -2412,8 +2573,16 @@ console.log('\n═══ J. L\'étage du milieu — les séances plus anciennes,
   });
   t('⭐⭐ Milo reçoit une ligne par séance au-delà des 5 détaillées', r.presentPourMichel===true, JSON.stringify(r));
   t('⭐ … et Christophe l\'a aussi', r.presentPourChristophe===true, JSON.stringify(r));
-  t('⭐ TÉMOIN : personne d\'autre ne l\'a (réservé, le temps de mesurer)',
-    r.absentPourLesAutres===true, JSON.stringify(r));
+  /* ⚠️⚠️ CE TÉMOIN EXIGEAIT L'INVERSE JUSQU'À ft-v992, ET SA RAISON RESTE ÉCRITE (R30) :
+     « personne d'autre ne l'a (réservé, le temps de mesurer) ». La restriction n'était pas un
+     oubli, c'était une prudence datée du 03/08 — on voulait le COÛT RÉEL sur deux comptes bien
+     remplis avant d'ouvrir. ⭐ Ce coût a été mesuré le 24/08, il est AUTO-DÉGRESSIF (0 car. sous
+     6 séances, 2 622 au plafond) et il ne touche PAS le bloc commun. La prudence a donc rendu
+     son verdict : on ouvre. *Un témoin qui garde une restriction dont la raison a été levée ne
+     protège plus rien — il fige.* Il garantit maintenant l'ÉGALITÉ, qui est la vraie exigence :
+     Milo ne doit pas être jugé sur une mémoire que les utilisateurs n'ont pas (R9). */
+  t('⭐⭐ TÉMOIN (ft-v992) : TOUT LE MONDE l\'a — Milo ne se juge plus sur une mémoire unique (R9)',
+    r.absentPourLesAutres===false && r.presentPourMichel===true, JSON.stringify(r));
   t('⭐⭐ le surcoût reste sous 8 % du contexte (le budget du prompt est un chantier ouvert)',
     r.surcoutPct!=null && r.surcoutPct<=8, 'surcoût +'+r.surcoutPct+' %');
   t('borné : 30 lignes au plus, même avec 120 séances', r.nbLignes>0 && r.nbLignes<=30, JSON.stringify(r));
@@ -3349,10 +3518,34 @@ console.log('\n═══ V. Métabolisme de base — d\'où vient le chiffre ═
     o.affiche=document.getElementById('nu-bmr').textContent;
     o.attendu=Math.round(370+21.6*65).toLocaleString('fr-FR');
     const ctx=buildCoachContext();
-    o.ctxKatch=/CALCULÉ SUR SA MASSE MAIGRE MESURÉE/.test(ctx);
+    /* ⚠️⚠️ CE TÉMOIN ÉPINGLAIT LE MOT « MESURÉE », donc il PROTÉGEAIT LA MAUVAISE PHRASE.
+       C'est pour ça que `docs/SUIVI-AUDIT.md` disait de le corriger AVANT le code : tant qu'il
+       exigeait ce mot, toute correction de R32 le faisait rougir et passait pour une régression.
+       Il n'exige plus que la partie VRAIE (le calcul est bien fait sur la masse maigre). */
+    o.ctxKatch=/CALCULÉ SUR SA MASSE MAIGRE/.test(ctx);
     o.ctxFormule=/Katch-McArdle/.test(ctx);
     o.ctxEcart=/kcal\/jour/.test(ctx);
     o.ctxPasDeuxFois=!/ESTIMÉ sur poids\/taille\/âge/.test(ctx);   // jamais les deux à la fois
+    // ⛔ R32 : une BIA MESURE un poids et une impédance, elle ESTIME tout le reste.
+    o.ctxPasMesuree=!/MASSE MAIGRE MESURÉE/.test(ctx);
+    o.ctxPasSolide=!/chiffre SOLIDE|sans réserve/.test(ctx);
+    o.ctxDitEstimation=/est une ESTIMATION, pas une mesure/.test(ctx);
+    o.ctxAntiMicro=/variation de quelques centaines de grammes/.test(ctx);
+    o.natLue=(bmrDetail().lm||{}).nature;
+
+    // ── ②bis LES TROIS PROVENANCES ne se ressemblent plus (avant : identiques mot pour mot)
+    const phrase=()=>{const c=buildCoachContext(),i=c.indexOf('- BMR:');return c.slice(i,c.indexOf('\n',i));};
+    o.phLue=phrase();
+    // masse maigre DÉDUITE par soustraction (drapeau posé par tracking.js, ft-v978)
+    S.bodyScans=[{date:jour(10),weight:80,leanMass:65,lmDeduite:true}];
+    o.natDeduite=(bmrDetail().lm||{}).nature; o.phDeduite=phrase();
+    o.ditSoustraction=/retrouvée par SOUSTRACTION/.test(o.phDeduite);
+    // % de gras TAPÉ AU CLAVIER dans une pesée — le maillon le plus faible des trois
+    S.bodyScans=[]; S.weightLog=[{date:jour(10),kg:80,bf:20}];
+    o.natSaisie=(bmrDetail().lm||{}).nature; o.phSaisie=phrase();
+    o.ditSaisi=/SAISI lui\/elle-même/.test(o.phSaisie);
+    o.troisDistinctes=(new Set([o.phLue,o.phDeduite,o.phSaisie])).size===3;
+    S.weightLog=[]; S.bodyScans=[{date:jour(10),weight:80,leanMass:65}];
 
     // ── ③ BILAN TROP VIEUX : l'écran signale que le bilan n'a PAS servi (il y a une action)
     S.bodyScans=[{date:jour(200),weight:80,leanMass:65}]; renderNutrition();
@@ -3381,6 +3574,23 @@ console.log('\n═══ V. Métabolisme de base — d\'où vient le chiffre ═
   tv('⭐⭐ bilan récent : l\'écran affiche « selon ta masse maigre »', V.ditMasseMaigre===true);
   tv('… et c\'est bien le chiffre de Katch qui s\'affiche', V.affiche===V.attendu, V.affiche+' vs '+V.attendu);
   tv('⭐⭐ Milo reçoit la méthode ET la formule nommée', V.ctxKatch===true&&V.ctxFormule===true);
+  // ── R32 : MESURÉ ≠ ESTIMÉ. Une balance mesure un poids et une impédance ; le reste, elle
+  //    l'estime avec la formule de son fabricant. Milo ne doit donc jamais dire « mesurée »,
+  //    ni « sans réserve » — surtout quand le % de gras a été tapé au clavier.
+  tv('⛔⛔ Milo ne dit JAMAIS « MASSE MAIGRE MESURÉE » (R32 : la BIA estime, elle ne mesure pas)',
+    V.ctxPasMesuree===true, V.phLue);
+  tv('⛔ … ni « chiffre SOLIDE » / « sans réserve » sur une estimation', V.ctxPasSolide===true, V.phLue);
+  tv('⭐⭐ … il reçoit à la place le mot ESTIMATION et la raison', V.ctxDitEstimation===true, V.phLue);
+  tv('⭐ … et l\'interdiction de lire une variation de quelques centaines de grammes comme du tissu',
+    V.ctxAntiMicro===true);
+  tv('⭐⭐ LA PROVENANCE DESCEND JUSQU\'À LA DONNÉE (R4) : lue · déduite · saisie',
+    V.natLue==='lue'&&V.natDeduite==='deduite'&&V.natSaisie==='saisie',
+    JSON.stringify([V.natLue,V.natDeduite,V.natSaisie]));
+  tv('⭐⭐ … et les TROIS phrases sont DIFFÉRENTES (avant le correctif : identiques mot pour mot)',
+    V.troisDistinctes===true, 'lue/déduite/saisie confondues');
+  tv('⭐ masse maigre DÉDUITE (poids − gras) : Milo l\'apprend', V.ditSoustraction===true, V.phDeduite);
+  tv('⭐⭐ % de gras TAPÉ À LA MAIN : Milo sait que c\'est une saisie, pas un appareil',
+    V.ditSaisi===true, V.phSaisie);
   tv('⭐ … et l\'ÉCART avec l\'autre formule (sinon il ne peut pas nuancer)', V.ctxEcart===true);
   tv('⭐ jamais les deux versions dans le même contexte (deux sources = il croit la pire)',
     V.ctxPasDeuxFois===true);
@@ -7706,8 +7916,26 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     // Le 21/08, une virgule en trop a justement fabriqué un 17e élément VIDE.
     // 16 → 21 le 23/08/2026 : 5 pièges promus depuis docs/JOURNAL-DE-TEST.md (EV-017→021),
     // tous VÉCUS en salle par Michel. Le nombre reste épinglé pour la raison d'origine.
-    t('⭐⭐ ... et il se télécharge à la demande : 21 scénarios, une seule source (R2)',
-      R.nb===21 && R.aDesVerifs===true, 'nb='+R.nb+' verifs='+R.aDesVerifs+(R.err?' · '+R.err:''));
+    // 21 → 22 le 24/08/2026 (ft-v992) : EV-022, la MÉMOIRE LONGUE. ⭐⭐ Celui-ci ne vient pas
+    // d'un piège vécu mais d'un TROU MESURÉ : aucun scénario n'avait plus d'UNE séance, donc
+    // l'avant/après exigé par R34 comparait deux contextes identiques — et la promesse centrale
+    // du produit (« le sportif ne repart jamais de zéro ») n'était vérifiée par aucun scénario.
+    // 22 → 27 le 24/08/2026 : 5 pièges promus depuis docs/JOURNAL-DE-TEST.md (EV-023→027), tous
+    // VÉCUS en salle ou en conversation réelle — le superset qui reste dans le texte, l'exercice
+    // demandé remplacé, l'exercice refusé qui revient, le PRÉVU annoncé comme FAIT, la coupure
+    // de 4 mois invisible. Michel : « il n'y a pas assez de questions pour le bench ».
+    // 27 → 50 le 24/08/2026 (Michel : « on le monte à 50 »). ⚠️ ET LE CHIFFRE N'EST PAS LE
+    // CRITÈRE — sa consigne était « que les scénarios soient viables, pas mettre tout et
+    // n'importe quoi ». Les 23 nouveaux ont donc été éprouvés UN PAR UN contre une bonne ET une
+    // mauvaise réponse : 6 ne mordaient pas au premier jet. C'est ce contrôle qui a révélé que
+    // l'apostrophe COURBE rendait 8 motifs du fichier aveugles — un défaut plus ancien qu'eux.
+    // ⭐⭐ 50 → 53 le 25/08/2026 — PREMIÈRE APPLICATION DE R35 : le banc d'essai n'a plus de
+    // taille cible, il grandit à chaque bug rencontré (Michel : « je ne donne pas de limite,
+    // dès qu'il y a un bug ou une erreur on rajoute »). Le nombre reste ÉPINGLÉ pour sa raison
+    // d'origine — repérer un scénario qui DISPARAÎT (fichier tronqué, virgule en trop) — pas
+    // pour fixer un objectif. Il monte donc à chaque promotion, et c'est normal.
+    t('⭐⭐ ... et il se télécharge à la demande : 53 scénarios, une seule source (R2)',
+      R.nb===53 && R.aDesVerifs===true, 'nb='+R.nb+' verifs='+R.aDesVerifs+(R.err?' · '+R.err:''));
     t('⭐ un débrief à qui il manque 2 exercices sur 5 est ROUGE',
       R.rouge006===true, R.det006||JSON.stringify(R.errRun||''));
     t('⭐ « c\'est noté » sans bloc de mémoire est ROUGE', R.rouge004===true, '');
@@ -8571,6 +8799,22 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   const _C = fs.readFileSync(path.join(__dirname,'..','..','coach.js'),'utf8');
   const prixCalcule = /const prix = _evPrix\(n\)/.test(_C) && /_EV_PRIX\s*=\s*\{/.test(_C)
                    && !/'0,25 € à 0,95 €'/.test(_C);
+  /* ⚠️⚠️ 25/08/2026 — LE LIBELLE DE L'ECRAN, LUI, A DERIVE PENDANT DES SEMAINES.
+     Le prix se calculait deja (ci-dessus), mais l'admin annoncait « 16 scenarios », « 16
+     pieges », « 2 x 16 » alors que le benchmark en portait 53 : il a grandi a chaque bug
+     (R35), et les quatre libelles ecrits en dur sont restes en arriere. Personne ne
+     rougissait — un texte faux ne plante pas.
+     ⛔ ON NE MET PAS « 53 » A LA PLACE : ce serait exactement la meme dette, six semaines
+     plus tard. On interdit le nombre en dur, point. Le compte reel est annonce par
+     `startEvalBench` dans la confirmation, avant tout appel paye. */
+  const _H = fs.readFileSync(path.join(__dirname,'..','..','index.html'),'utf8');
+  /* ⚠️ La fenêtre part du TITRE du groupe admin, pas du sous-titre « BENCHMARK » : le
+     4ᵉ libellé faux (« 16 messages ISOLÉS ») vivait dans l'intro du groupe, AU-DESSUS.
+     Une fenêtre qui commence après le mensonge ne le voit pas. */
+  const _blocBench = (_H.match(/🛡️ Milo — le mesurer[\s\S]{0,4000}?startEvalBench\(true\)[^\n]*\n/)||[''])[0];
+  const _nbEnDur = _blocBench.match(/\b\d{2,3}\s*(scénarios|pièges|messages)\b/g)
+                || _blocBench.match(/×\s*\d{2,3}\b/g);
+  const libelleSansNombre = _blocBench.length>200 && !_nbEnDur;
 
   console.log('\n-- LXXVII. L\'evolution du bilan sanguin atteint Milo --');
   if(R.absente){ t('⛔ le contexte de Milo se construit', false, 'buildCoachContext absente'); }
@@ -8595,8 +8839,11 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     /* ⚠️ Une consigne qu'on ne mesure pas n'est qu'un espoir. */
     t('⭐⭐ la règle est MESURABLE : le scénario EV-016 existe et vérifie le silence',
       !!ev16 && ev16.verifs.length===2, ev16?('verifs='+ev16.verifs.length):'EV-016 absent');
-    t('⭐ le prix annoncé se CALCULE (16 scénarios) au lieu d\'être écrit en dur (R2)',
+    t('⭐ le prix annoncé se CALCULE au lieu d\'être écrit en dur (R2)',
       prixCalcule===true, '');
+    t('⭐⭐ AUCUN nombre de scénarios en dur dans le libellé admin (il grandit — R35)',
+      libelleSansNombre===true,
+      'bloc='+_blocBench.length+' en dur='+JSON.stringify(_nbEnDur||[]));
   }
   await cx.close();
 }
@@ -11938,9 +12185,1045 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
+// ════════════════════════════════════════════════════════════════════
+console.log('\n-- CVII. La mémoire élargie ouverte à tout le monde (ft-v992) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pm=await cx.newPage();
+  await pm.addInitScript(seedScript({}));
+  await pm.goto('http://localhost:'+PORT+'/index.html');
+  await pm.waitForTimeout(2200);
+  const MM=await pm.evaluate(async()=>{
+   try{
+    const o={};
+    const midi=n=>{const d=new Date(today()+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    const fab=k=>{const a=[];for(let i=0;i<k;i++)a.push({date:midi(2+i*3),id:i,vol:5000,
+      exs:[{name:'Squat',sets:[{kg:60,reps:10,done:true,type:'W'},{kg:100+i,reps:5,done:true,type:'N'}]}]});return a;};
+    const bornes=c=>{const i=c.indexOf('PROFIL ATHLÈTE:');return i>=0?i:null;};
+
+    // ① OUVERT À TOUT LE MONDE — un e-mail quelconque, et même AUCUN e-mail
+    S.sessions=fab(20);
+    S.email='quelquun@exemple.fr'; o.inconnu=_historiqueCompact().length;
+    S.email='';                    o.sansEmail=_historiqueCompact().length;
+    S.email='michdu75@gmail.com';  o.michel=_historiqueCompact().length;
+    o.memeTaillePourTous=(o.inconnu===o.sansEmail && o.inconnu===o.michel);
+
+    // ② AUTO-DÉGRESSIVE — on ne paie que ce qu'on a VÉCU (les 5 dernières partent en détail)
+    S.email='quelquun@exemple.fr';
+    o.paliers={};
+    [3,5,8,20].forEach(k=>{ S.sessions=fab(k); o.paliers[k]=_historiqueCompact().length; });
+
+    // ③ LE BLOC COMMUN NE BOUGE PAS — ces caractères tombent dans le bloc PERSONNEL
+    S.sessions=fab(20);
+    const avec=bornes(buildCoachContext());
+    const vrai=window._historiqueCompact; window._historiqueCompact=()=>'';
+    const sans=bornes(buildCoachContext());
+    window._historiqueCompact=vrai;
+    o.communAvec=avec; o.communSans=sans;
+
+    // ④ LA FONCTION EXISTE TOUJOURS (refermer doit rester UNE ligne, pas une chasse aux usages)
+    o.fnGardee=(typeof _memoireLargeOn==='function');
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  const tm=(n,c,x)=>t(n, !MM.erreur && c, MM.erreur?'bloc en erreur':x);
+  if(MM.erreur){ t('⛔ le bloc « mémoire élargie » s\'exécute', false, MM.erreur); }
+  tm('⭐⭐ OUVERTE À TOUT LE MONDE : un compte inconnu reçoit le même résumé que Michel',
+    MM.memeTaillePourTous===true && MM.inconnu>0,
+    JSON.stringify({inconnu:MM.inconnu,sansEmail:MM.sansEmail,michel:MM.michel}));
+  // ⛔ Le vrai garde-fou du coût n'est pas un plafond posé à la main : c'est que la fonction
+  //    ne résume QUE ce qui a été vécu. Un débutant ne paie rien, et personne n'a rien à régler.
+  tm('⭐⭐ AUTO-DÉGRESSIVE : 0 caractère sous 6 séances (les 5 dernières partent déjà en détail)',
+    MM.paliers && MM.paliers[3]===0 && MM.paliers[5]===0 && MM.paliers[8]>0,
+    JSON.stringify(MM.paliers));
+  tm('⭐ … et elle grandit avec l\'historique, sans jamais partir en vrille (borne MAX=30 lignes)',
+    MM.paliers && MM.paliers[20]>MM.paliers[8] && MM.paliers[20]<4000, JSON.stringify(MM.paliers));
+  // ⛔⛔ CE TÉMOIN RÉPOND À LA CRAINTE QUI A MOTIVÉ LA RESTRICTION, et il la réfute par la mesure :
+  //     ces caractères ne touchent PAS le bloc commun, donc pas le plafond de 46 500.
+  tm('⛔⛔ le BLOC COMMUN ne bouge pas d\'un caractère (le résumé vit dans le bloc PERSONNEL)',
+    MM.communAvec===MM.communSans, MM.communAvec+' vs '+MM.communSans);
+  tm('⭐ `_memoireLargeOn()` reste une FONCTION : refermer un jour = une ligne (R30)',
+    MM.fnGardee===true);
+  await cx.close();
+}
+
+// ════════════════════════════════════════════════════════════════════
+console.log('\n-- CVIII. La course `_saveCoachMemory` (ft-v993) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pc=await cx.newPage();
+  await pc.addInitScript(seedScript({}));
+  await pc.goto('http://localhost:'+PORT+'/index.html');
+  await pc.waitForTimeout(2200);
+  const RC=await pc.evaluate(async()=>{
+   try{
+    const o={};
+    /* ⚠️ ON REMPLACE LE RÉSEAU, ET RIEN D'AUTRE : les deux appels passent par la VRAIE
+       fonction. Le faux serveur se comporte comme le vrai — il rend « ce qu'on lui envoie
+       + le fait nouveau », donc perdre un fait se VOIT dans la chaîne finale. */
+    const poser=()=>{ S.url='https://exemple.invalid/exec'; S.email='t@exemple.fr';
+      S.coachMemory='DEPART'; localStorage.setItem('ft4_coach_mem','DEPART'); };
+    const faux=(plan)=>{ let n=0; const recus=[];
+      window.fetch=(url,opt)=>{ const body=JSON.parse(opt.body); const i=n++;
+        recus.push(body.existingMemory);
+        const p=plan[i]||{delai:10,fait:'X'};
+        return new Promise((res,rej)=>setTimeout(()=>{
+          if(p.echec) return rej(new Error('réseau coupé'));
+          res({json:async()=>({summary:(body.existingMemory||'')+'|'+p.fait})});
+        }, p.delai)); };
+      return recus; };
+    const vrai=window.fetch;
+
+    // ① LE CŒUR : le 1ᵉʳ appel est LENT, le 2ᵉ RAPIDE — le cas qui faisait perdre un fait
+    poser();
+    let recus=faux([{delai:300,fait:'A'},{delai:30,fait:'B'}]);
+    _saveCoachMemory(); await new Promise(r=>setTimeout(r,20)); _saveCoachMemory();
+    await new Promise(r=>setTimeout(r,900));
+    o.finale=S.coachMemory; o.stock=localStorage.getItem('ft4_coach_mem');
+    o.aA=/A/.test(o.finale||''); o.aB=/B/.test(o.finale||'');
+    o.secondVoitLePremier=/A/.test(recus[1]||'');   // il a relu la mémoire À JOUR
+
+    // ② LA FILE NE SE CASSE PAS : un échec réseau ne doit pas geler la mémoire ensuite
+    poser();
+    recus=faux([{delai:30,echec:true},{delai:30,fait:'C'}]);
+    _saveCoachMemory(); await new Promise(r=>setTimeout(r,20)); _saveCoachMemory();
+    await new Promise(r=>setTimeout(r,600));
+    o.apresEchec=S.coachMemory; o.survitAEchec=/C/.test(o.apresEchec||'');
+
+    // ③ ON NE BLOQUE JAMAIS L'APPELANT (règle d'or #3 : le réseau n'attend personne)
+    poser(); faux([{delai:400,fait:'D'}]);
+    const t0=performance.now(); _saveCoachMemory(); o.rendLaMainEnMs=performance.now()-t0;
+    await new Promise(r=>setTimeout(r,600));
+
+    // ④ SANS e-mail, rien ne part (invariant d'avant, il ne doit pas bouger)
+    S.email=''; recus=faux([{delai:10,fait:'E'}]);
+    await _saveCoachMemory(); o.rienSansEmail=(recus.length===0);
+
+    window.fetch=vrai;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  const tc=(n,c,x)=>t(n, !RC.erreur && c, RC.erreur?'bloc en erreur':x);
+  if(RC.erreur){ t('⛔ le bloc « course mémoire » s\'exécute', false, RC.erreur); }
+  tc('⛔⛔ DEUX résumés concurrents : AUCUN fait n\'est perdu (règle d\'or #3)',
+    RC.aA===true && RC.aB===true, 'mémoire finale : "'+RC.finale+'"');
+  tc('⭐⭐ … parce que le 2ᵉ appel RELIT la mémoire déjà mise à jour par le 1ᵉʳ',
+    RC.secondVoitLePremier===true, 'le 2e a envoyé une mémoire périmée');
+  tc('⭐ le stockage local dit la même chose que `S` (pas deux vérités — R2)',
+    RC.finale===RC.stock, RC.finale+' vs '+RC.stock);
+  tc('⭐⭐ un ÉCHEC réseau ne gèle pas la file : le résumé suivant passe quand même',
+    RC.survitAEchec===true, 'après échec : "'+RC.apresEchec+'"');
+  tc('⛔ l\'appelant n\'attend JAMAIS le réseau (fire-and-forget conservé, règle d\'or #3)',
+    RC.rendLaMainEnMs!=null && RC.rendLaMainEnMs<50, 'a rendu la main en '+Math.round(RC.rendLaMainEnMs||-1)+' ms');
+  tc('⭐ sans e-mail, aucun appel ne part (invariant d\'avant, inchangé)', RC.rienSansEmail===true);
+  await cx.close();
+}
+
+// ════════════════════════════════════════════════════════════════════
+console.log('\n-- CIX. Le cardio de Milo va dans son BLOC, pas dans les exercices (ft-v995) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pc=await cx.newPage();
+  await pc.addInitScript(seedScript({}));
+  await pc.goto('http://localhost:'+PORT+'/index.html');
+  await pc.waitForTimeout(2200);
+  const CC=await pc.evaluate(async()=>{
+   try{
+    const o={};
+    const ex=(name,note,sets)=>({name,note:note||'',_milo:true,sets:sets||[{kg:0,reps:10,type:'N'}]});
+    const muscu=n=>ex(n,'',[{kg:80,reps:5,type:'N'}]);
+    const test=exs=>{ S.wkt=null; _appliqueMiloSession(exs.map(e=>({...e})),{label:'T'},'start',null);
+      return {exs:(S.wkt.exs||[]).map(x=>x.name), av:S.wkt.cardioAvant||null, ap:S.wkt.cardio||null}; };
+
+    // ① LE CAS DE MICHEL, capture du 24/08 : « Elliptique — 8 min léger » + de la muscu
+    o.michel=test([ex('Elliptique','8 min léger'), muscu('Hip Thrust Barre')]);
+    // ② AVANT **ET** APRÈS — sa précision du même soir
+    o.deux=test([ex('Elliptique','8 min léger'), muscu('Squat'), ex('Tapis','20 min modéré')]);
+    // ③ SÉANCE CARDIO SEULE — « on veut qu'elle soit comptabilisée »
+    o.seul=test([ex('Rameur','30 min intense')]);
+    // ④ AU MILIEU → on ne devine pas (R29), il reste un exercice
+    o.milieu=test([muscu('Squat'), ex('Elliptique','10 min'), muscu('Développé Couché')]);
+    // ⑤ SANS DURÉE LISIBLE → aucune durée inventée
+    o.sansDuree=test([ex('Elliptique','tranquille'), muscu('Squat')]);
+    // ⑥ NON-RÉGRESSION : une séance de muscu normale ne bouge pas d'un pouce
+    o.normale=test([muscu('Squat'), muscu('Développé Couché')]);
+    // ⑦ un cardio DÉJÀ noté par la personne n'est jamais écrasé
+    S.wkt=null; _appliqueMiloSession([muscu('Squat')],{label:'x'},'start',null);
+    S.wkt.cardioAvant={type:'velo',intensity:'modere',duration:15};
+    _appliqueMiloSession([ex('Elliptique','8 min léger'), muscu('Squat')],{label:'x'},'replace',null);
+    o.deja=S.wkt.cardioAvant;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  const tc=(n,c,x)=>t(n, !CC.erreur && c, CC.erreur?'bloc en erreur':x);
+  if(CC.erreur){ t('⛔ le bloc « cardio de Milo » s\'exécute', false, CC.erreur); }
+  tc('⭐⭐ LE CAS DE MICHEL : l\'elliptique sort des exercices et remplit l\'ÉCHAUFFEMENT',
+    CC.michel && CC.michel.exs.join()==='Hip Thrust Barre'
+      && CC.michel.av && CC.michel.av.type==='elliptique' && CC.michel.av.duration===8,
+    JSON.stringify(CC.michel));
+  // ⛔ léger ≠ modéré : 4,0 contre 6,0 MET, soit 50 % d'écart sur les calories de ce cardio.
+  //    La note « 8 min léger » porte des ACCENTS — un motif non désaccentué la rate en silence.
+  tc('⛔ … avec la BONNE intensité (« léger », pas le défaut « modéré ») — 50 % d\'écart en kcal',
+    CC.michel && CC.michel.av && CC.michel.av.intensity==='leger', JSON.stringify(CC.michel&&CC.michel.av));
+  tc('⭐⭐ AVANT **ET** APRÈS dans la même séance (précision de Michel) : les deux moments remplis',
+    CC.deux && CC.deux.av && CC.deux.av.type==='elliptique'
+      && CC.deux.ap && CC.deux.ap.type==='tapis' && CC.deux.exs.join()==='Squat',
+    JSON.stringify(CC.deux));
+  tc('⭐⭐ une séance CARDIO SEULE est comptabilisée (« on veut qu\'elle soit comptabilisée »)',
+    CC.seul && CC.seul.av && CC.seul.av.type==='rameur' && CC.seul.av.duration===30
+      && CC.seul.exs.length===0, JSON.stringify(CC.seul));
+  tc('⛔ un cardio AU MILIEU reste un exercice — on ne devine pas ce qu\'elle voulait (R29)',
+    CC.milieu && CC.milieu.exs.indexOf('Elliptique')>=0 && !CC.milieu.av && !CC.milieu.ap,
+    JSON.stringify(CC.milieu));
+  tc('⛔ sans durée lisible, AUCUNE durée n\'est inventée (R29)',
+    CC.sansDuree && CC.sansDuree.exs.indexOf('Elliptique')>=0 && !CC.sansDuree.av,
+    JSON.stringify(CC.sansDuree));
+  tc('⭐ NON-RÉGRESSION : une séance de muscu normale n\'est pas touchée',
+    CC.normale && CC.normale.exs.join()==='Squat,Développé Couché' && !CC.normale.av && !CC.normale.ap,
+    JSON.stringify(CC.normale));
+  tc('⛔⛔ un cardio DÉJÀ noté par la personne n\'est JAMAIS écrasé (son vélo de 15 min reste)',
+    CC.deja && CC.deja.type==='velo' && CC.deja.duration===15, JSON.stringify(CC.deja));
+
+  /* ── 🗣️ ET MILO EST MIS AU COURANT (ft-v995, demande de Michel : « il faut que Milo soit au
+     courant, il y a déjà une fenêtre avec le cardio avant et après, et ensuite il faut donner ce
+     qu'il y a dans cette fenêtre »). Le correctif ci-dessus agit APRÈS coup, donc les données
+     étaient déjà justes — mais sans cette consigne Milo continue d'ÉCRIRE « Elliptique 1×10 »
+     dans sa phrase, et la personne lit une séance qui ne correspond pas à ce qu'elle obtient.
+     ⚠️ ON ÉPINGLE LE VOCABULAIRE, pas la formulation : les 6 types et les 3 intensités DOIVENT
+     être ceux de `CARDIO_MET` (app.js). Si quelqu'un ajoute un type au bloc sans le dire à Milo,
+     ou renomme une intensité, ce témoin rougit — c'est exactement la divergence que R2 interdit. */
+  const CG=await pc.evaluate(()=>{
+    const ctx=buildCoachContext();
+    const iP=ctx.indexOf('PROFIL ATHLÈTE:');
+    const i=ctx.indexOf('LE CARDIO A SA PROPRE FENÊTRE');
+    return { presente:i>=0, dansPersonnel:i>iP, commun:iP,
+      types:/elliptique · tapis · vélo · rameur/.test(ctx),
+      intensites:/légère · modérée · intense/.test(ctx),
+      deuxMoments:/AVANT \(échauffement\)[\s\S]{0,40}APRÈS \(cardio de fin\)/.test(ctx),
+      interdit:/NE LE METS JAMAIS DANS LA LISTE DES EXERCICES/.test(ctx),
+      duree:/Précise TOUJOURS la durée en minutes/.test(ctx),
+      seul:/cardio SEULE est parfaitement valable/.test(ctx) };
+  });
+  t('⭐⭐ MILO EST AU COURANT : la consigne dit que le bloc cardio existe', CG.presente===true);
+  t('⛔ … et lui interdit de mettre le cardio dans la liste des exercices', CG.interdit===true);
+  t('⭐ … avec les DEUX moments nommés (🔥 avant · 🧊 après)', CG.deuxMoments===true);
+  t('⭐⭐ … et le VOCABULAIRE EXACT du bloc : les 6 types de `CARDIO_MET`', CG.types===true);
+  t('⭐⭐ … et les 3 intensités (légère · modérée · intense)', CG.intensites===true);
+  // ⛔ Sans durée, le correctif refuse de placer le cardio (R29) : la consigne doit donc la réclamer,
+  //    sinon Milo produit des cardios que l'app rejette en silence — les deux moitiés vont ensemble.
+  t('⛔ … et elle RÉCLAME la durée en minutes (sans elle, l\'app ne place rien)', CG.duree===true);
+  t('⭐ … et rappelle qu\'une séance de cardio SEULE est valable', CG.seul===true);
+  /* ⚠️⚠️ CE TÉMOIN ÉPINGLAIT 45 362 AU CARACTÈRE PRÈS, ET IL A ROUGI À TORT LE LENDEMAIN.
+     Cause : ft-v996/997 (l'AUTRE session) a touché `constants.js`, donc le catalogue envoyé à
+     Milo — 3 caractères d'écart, un travail parfaitement légitime. *Un témoin qui fige une
+     valeur exacte sur un bloc PARTAGÉ rougit dès que quelqu'un d'autre travaille*, et un faux
+     rouge est ce qui fait qu'on cesse de lire les vrais (R19).
+     ⭐ CE QU'ON VOULAIT GARANTIR, et qui ne dépend de personne : la consigne cardio est dans le
+     bloc PERSONNEL (donc elle ne pèse pas sur le plafond) ET le bloc commun reste SOUS 46 500
+     pour un profil sain. Les deux sont vrais quelle que soit la taille du catalogue.
+     ⚠️ Leçon propre au travail à deux sessions : un témoin doit tolérer le travail légitime de
+     l'autre. Ce qui se fige, c'est une RÈGLE, pas une mesure du jour. */
+  t('⭐ … et elle ne pèse PAS sur le plafond du bloc commun (elle est dans le bloc personnel)',
+    CG.dansPersonnel===true && CG.commun>0 && CG.commun<46500,
+    'personnel='+CG.dansPersonnel+' · commun='+CG.commun+' (plafond 46500)');
+  await cx.close();
+}
+
+// ════════════════════════════════════════════════════════════════════
+console.log('\n-- CXII. La quantité sur un aliment repris SANS pour-100 g (ft-v999+) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pq=await cx.newPage();
+  await pq.addInitScript(seedScript({}));
+  await pq.goto('http://localhost:'+PORT+'/index.html');
+  await pq.waitForTimeout(2200);
+  const Q=await pq.evaluate(async()=>{
+   try{
+    const o={};
+    const net=()=>document.querySelectorAll('.overlay').forEach(x=>{ if(x.id!=='ov-add-food') x.classList.remove('open'); });
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    /* ⚠️ ON PASSE PAR LE VRAI CHEMIN, et c'est la leçon de ft-v984 répétée : `_afSuggLoc` est une
+       variable de SCRIPT — l'écrire depuis `window` ne pose RIEN et le test mesure du vide. On
+       TAPE donc dans le champ, le code remplit ses suggestions, puis on prend l'index 0. */
+    const reprendre=async(txt)=>{
+      openAddFood(); await new Promise(r=>setTimeout(r,260)); net();
+      const d=document.getElementById('af-desc');
+      d.value=txt; d.dispatchEvent(new Event('input',{bubbles:true}));
+      await new Promise(r=>setTimeout(r,650));
+      _afSuggPrendreLocale(0);
+      await new Promise(r=>setTimeout(r,150));
+      const bc=document.getElementById('af-bc-row'), pr=document.getElementById('af-prop-row');
+      return { grammes: !!(bc && bc.style.display!=='none'),
+               portions: !!(pr && pr.style.display==='block'),
+               texte:(pr&&pr.textContent||'').replace(/\s+/g,' ').slice(0,60) };
+    };
+    const poser=(per100)=>{
+      S.foodLog=[]; try{_afSuggVider();}catch(e){}
+      openAddFood();
+      _bcNutr = per100 ? {name:'Steak haché 5% MG',kcal100:129,prot100:21,carbs100:0,fat100:5} : null;
+      _afSetSrc({saisie:'scan',origine:'off',sourceId:'376',per100:per100||null,etat:per100?'cru':null});
+      const set=(id,v)=>{const e=document.getElementById(id); if(e)e.value=v;};
+      set('af-desc','Steak haché 5% MG'); set('af-kcal',323); set('af-prot',53); set('af-carbs',0); set('af-fat',13);
+      addFoodEntry();
+      return S.foodLog[S.foodLog.length-1]||{};
+    };
+
+    // ① LE CAS DE MICHEL : produit SCANNÉ dont Open Food Facts n'a pas les valeurs /100 g
+    const e1=poser(null);
+    o.sansPer100={per100:e1.per100, q:e1.q};
+    o.sans=await reprendre('Steak');
+    if(o.sans.portions && typeof _afApplyPortion==='function'){
+      _afApplyPortion(2);
+      o.x2={kcal:+document.getElementById('af-kcal').value, prot:+document.getElementById('af-prot').value,
+            fat:+document.getElementById('af-fat').value};
+    }
+    // ② NON-RÉGRESSION : avec un pour-100 g, c'est le bloc en GRAMMES qui sert (ft-v984)
+    poser({kcal:129,prot:21,carbs:0,fat:5});
+    o.avec=await reprendre('Steak');
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  const tq=(n,c,x)=>t(n, !Q.erreur && c, Q.erreur?'bloc en erreur':x);
+  if(Q.erreur){ t('⛔ le bloc « quantité reprise » s\'exécute', false, Q.erreur); }
+  /* ⛔⛔ LE CAS EXACT DE MICHEL, deux captures du 25/08 : « Steak haché … (U) » et « Iso zero
+     protein (ASL) » — des fiches Open Food Facts INCOMPLÈTES (pas de valeurs /100 g), donc des
+     macros tapées à la main, donc `per100:null` ET `q:null` en base. ft-v984 ne pouvait pas
+     s'appliquer : sa condition exige un pour-100 g. */
+  tq('⭐⭐ LE CAS DE MICHEL : un aliment repris SANS pour-100 g propose quand même des PORTIONS',
+    Q.sans && Q.sans.portions===true, JSON.stringify(Q.sans));
+  tq('⭐ … et le ×2 double bien les 4 valeurs (323→646, 53→106, 13→26)',
+    Q.x2 && Q.x2.kcal===646 && Q.x2.prot===106 && Q.x2.fat===26, JSON.stringify(Q.x2));
+  // ⛔ R29 : sans ancre, on n'invente AUCUN poids — on n'offre que des multiplicateurs, vrais
+  //    quelle que soit la portion de départ. Le texte doit le dire, pas l'inventer.
+  tq('⛔ … et AUCUN poids n\'est inventé (des multiplicateurs, pas des grammes) — R29',
+    Q.sans && /Portion/.test(Q.sans.texte) && !/\d+\s*g\b/.test(Q.sans.texte), Q.sans&&Q.sans.texte);
+  tq('⭐⭐ NON-RÉGRESSION : AVEC un pour-100 g, c\'est toujours le bloc en GRAMMES (ft-v984)',
+    Q.avec && Q.avec.grammes===true, JSON.stringify(Q.avec));
+  /* ⛔ LES DEUX MÉCANISMES NE S'AFFICHENT JAMAIS ENSEMBLE (R2) : `_afMajAncre` se tait tout seul
+     quand `_bcNutr` existe. Deux façons de régler la même quantité, ce serait une de trop. */
+  tq('⛔⛔ les DEUX blocs ne coexistent jamais (R2 : une seule façon de régler la quantité)',
+    Q.avec && Q.sans && Q.avec.portions===false && Q.sans.grammes===false,
+    'avec='+JSON.stringify(Q.avec)+' sans='+JSON.stringify(Q.sans));
+  await cx.close();
+}
+
+// ════════════════════════════════════════════════════════════════════
+console.log('\n-- CXIII. La bande des 7 jours du Journal nutrition (ft-v1004) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pb=await cx.newPage();
+  await pb.addInitScript(seedScript({}));
+  await pb.goto('http://localhost:'+PORT+'/index.html');
+  await pb.waitForTimeout(2200);
+  const BJ=await pb.evaluate(async()=>{
+   try{
+    const o={};
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    document.querySelectorAll('.overlay').forEach(x=>x.classList.remove('open'));
+    /* ⏰ Fixtures ancrées sur le `today()` DE L'APP et calculées à MIDI — la famille « fuseaux
+       horaires » de BUGS.md a déjà fait rougir 6 fixtures le 23/08, à 00h34. */
+    const midi=n=>{const d=new Date(today()+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    const F=(dt,kc)=>({date:dt,meal:'dejeuner',name:'Repas',kcal:kc,prot:80,carbs:40,fat:15,ts:Date.now()});
+    S.foodLog=[F(midi(0),1005), F(midi(1),3050), F(midi(3),3400), F(midi(5),2900)];
+    const nb=document.getElementById('nb-nutrition'); if(nb)nb.click();
+    await new Promise(r=>setTimeout(r,600));
+    const tb=document.getElementById('ntab-journal'); if(tb)tb.click();
+    await new Promise(r=>setTimeout(r,500));
+    const jours=()=>Array.from(document.getElementById('food-journal').querySelectorAll('button'))
+                        .filter(x=>x.querySelector('svg'));
+    const B=jours();
+    o.nb=B.length;
+    o.lettres=B.map(x=>(x.querySelector('span')||{}).textContent).join('');
+    /* ⭐⭐ LE POINT QUI A DÉCIDÉ DU FORMAT : la bande est TOUJOURS pleine. La semaine calendaire
+       (la référence de Michel) affichait 5 jours grisés sur 7 un mardi, et 6 un lundi — mesuré
+       avant de trancher. « Voir d'un seul geste ce qu'on a mangé » ne supporte pas ça. */
+    o.desactives=B.filter(x=>x.disabled).length;
+    o.dernierEstAuj = !!(B[6] && B[6].innerHTML.indexOf('var(--red)')>=0);
+    o.anneauxRemplis=B.filter(x=>x.querySelectorAll('circle').length>1).length;
+    o.orangeSurDepassement = B.some(x=>x.innerHTML.indexOf('var(--orange)')>=0);
+    o.aucunRouge = !B.some(x=>/stroke="var\(--red\)/.test(x.innerHTML));
+    const par=B[0].parentElement.getBoundingClientRect();
+    o.largeurOk = Math.round(B[6].getBoundingClientRect().right) <= Math.round(par.right)+1;
+    const cible=B[3]; cible.click();
+    await new Promise(r=>setTimeout(r,350));
+    const titre=document.querySelector('#food-journal span');
+    o.titreApresClic=(titre&&titre.textContent)||'';
+    o.clicChangeLeJour = o.titreApresClic!=='' && !/Aujourd'hui/i.test(o.titreApresClic);
+    o.pointUnique = (typeof journalAllerA==='function');
+    o.flechesPassentPar = /journalAllerA/.test(String(journalNav));
+    const d=new Date(today()+'T12:00:00'); d.setDate(d.getDate()+1);
+    journalAllerA(d.toISOString().slice(0,10));
+    await new Promise(r=>setTimeout(r,250));
+    const t2=document.querySelector('#food-journal span');
+    o.futurRefuse = (t2&&t2.textContent)===o.titreApresClic;   // rien n'a bougé
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  const tj=(n,c,x)=>t(n, !BJ.erreur && c, BJ.erreur?'bloc en erreur':x);
+  if(BJ.erreur){ t('⛔ le bloc « bande des 7 jours » s\'exécute', false, BJ.erreur); }
+  tj('⭐⭐ la bande affiche 7 jours, et chacun porte sa vraie initiale',
+    BJ.nb===7 && /^[LMJVSD]{7}$/.test(BJ.lettres||''), 'nb='+BJ.nb+' lettres='+BJ.lettres);
+  tj('⭐⭐ AUCUN jour grisé : elle est TOUJOURS pleine (7 jours glissants, pas la semaine calendaire)',
+    BJ.desactives===0, BJ.desactives+' jour(s) désactivé(s)');
+  tj('⭐ aujourd\'hui est le dernier, et porte le point de repère', BJ.dernierEstAuj===true);
+  tj('⭐⭐ « voir d\'un seul geste » : les jours notés portent un anneau rempli',
+    BJ.anneauxRemplis>=3, BJ.anneauxRemplis+' anneaux remplis sur 7');
+  /* ⛔ RÈGLE DU PRODUIT : rien de culpabilisant. Un dépassement se signale en ORANGE ; le rouge
+     d'échec n'a pas sa place sur un journal alimentaire (NUTRITION-PHILOSOPHIE, anti-TCA). */
+  tj('⛔⛔ un dépassement se voit en ORANGE, et AUCUN anneau n\'est rouge (rien de culpabilisant)',
+    BJ.orangeSurDepassement===true && BJ.aucunRouge===true,
+    'orange='+BJ.orangeSurDepassement+' aucunRouge='+BJ.aucunRouge);
+  tj('⭐⭐ un clic sur un jour change vraiment le journal affiché',
+    BJ.clicChangeLeJour===true, 'titre après clic : "'+BJ.titreApresClic+'"');
+  tj('⛔ R2 : un seul point d\'entrée pour changer de jour (les flèches y passent aussi)',
+    BJ.pointUnique===true && BJ.flechesPassentPar===true,
+    'journalAllerA='+BJ.pointUnique+' flèches='+BJ.flechesPassentPar);
+  tj('⛔ on ne peut jamais aller dans le FUTUR', BJ.futurRefuse===true);
+  tj('⭐ les 7 boutons tiennent dans la largeur (430 px max, mobile)', BJ.largeurOk===true);
+  await cx.close();
+}
+
+// ── ⭐⭐ LE BANC D'ESSAI DOIT POUVOIR JUGER CE CHANGEMENT (R34) ────────────────────────────
+// Mesuré le 24/08 AVANT de livrer : sur les 21 scénarios d'alors, **aucun** n'avait plus de
+// 1 séance — l'avant/après R34 aurait donc comparé deux contextes IDENTIQUES et rendu « aucune
+// régression ». Un faux vert. Pire : la promesse centrale du produit (« le sportif ne repart
+// jamais de zéro ») n'était vérifiée par AUCUN scénario. D'où EV-022.
+// ⚠️ Ce témoin ne teste pas la RÉPONSE de Milo (ça demande un vrai appel API) : il garantit que
+// le banc d'essai garde de quoi MORDRE. Sans lui, vider EV-022 de ses séances passerait inaperçu.
+{
+  const src=fs.readFileSync(path.join(ROOT,'tests/milo/eval-scenarios.js'),'utf8');
+  const ev22=/EV-022/.test(src);
+  const nb=(src.match(/for\s*\(\s*let\s+i\s*=\s*0\s*;\s*i\s*<\s*14\s*;/)||[]).length;
+  t('⭐⭐ le banc d\'essai garde un scénario de MÉMOIRE LONGUE (EV-022), sinon R34 ne mord pas',
+    ev22===true, 'EV-022 absent : l\'avant/après comparerait deux contextes identiques');
+  t('⭐ … et son historique dépasse les 5 séances envoyées en détail (sinon le résumé est vide)',
+    nb===1, 'la boucle qui fabrique les 14 séances a changé — vérifier que le résumé part encore');
+  /* ⚠️⚠️ CE TÉMOIN A ROUGI À TORT LE JOUR OÙ ON EST PASSÉ À 50 SCÉNARIOS, et la raison mérite
+     d'être écrite : il inspectait « tout ce qui SUIT EV-022 » — ce qui revenait au même tant
+     qu'EV-022 était le DERNIER du fichier. En ajoutant 28 scénarios après lui, il s'est mis à
+     surveiller les autres. *Un témoin borné par « la fin du fichier » se déplace tout seul.*
+     Il est désormais borné au bloc d'EV-022, et complété par le contrôle qui compte vraiment. */
+  const bloc22=src.slice(src.indexOf('EV-022'), src.indexOf('EV-023'));
+  t('⛔ aucune date en dur dans EV-022 (la fenêtre glisse sur 60 j : une date figée périmerait seule)',
+    !/date:\s*'20\d\d-\d\d-\d\d'/.test(bloc22), 'date figée trouvée dans EV-022');
+  /* ⭐ LE CONTRÔLE GÉNÉRAL : seuls DEUX champs sont réellement soumis au temps qui passe —
+     `sessions` (fenêtre glissante de 60 j) et `nextPlanned` (une date FUTURE, donc périmée à
+     coup sûr). Les autres dates figées (records, bilans, refus d'exercice) vieillissent sans
+     invalider leur scénario : on ne les interdit pas, ce serait de la rigidité gratuite (R19). */
+  const figees=[];
+  (src.match(/(sessions|nextPlanned)\s*:\s*[^\n]{0,80}/g)||[]).forEach(m=>{
+    if(/'20\d\d-\d\d-\d\d'/.test(m)) figees.push(m.slice(0,60));
+  });
+  t('⛔⛔ aucun scénario ne fige une date dans `sessions` ou `nextPlanned` (les 2 champs qui périment)',
+    figees.length===0, figees.join(' | '));
+}
+
+// ════════════════════════════════════════════════════════════════════
+console.log('\n-- CX. Un nom d\'exercice ABRÉGÉ retrouve sa fiche du catalogue (ft-v996) --');
+// ⚠️ LE CAS RÉEL (Michel, 24/08, deux captures) : sa séance portait « Hip Thrust Barre » et
+// « Abduction Cuisses » — les noms COURTS, sans la parenthèse explicative du catalogue. L'écran
+// affichait « Muscle principal deviné » + « 📷 Ajouter la photo de ta machine », alors que les
+// deux animations étaient DÉJÀ dans le dépôt. *L'app proposait d'ajouter une photo qu'elle avait.*
+// ⛔ Ces témoins tournent des DEUX côtés (ils mesurent un affichage qui existait déjà, mal) —
+// c'est ce qui rend le contrôle négatif instructif au lieu de dire « la fonction n'existe pas ».
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pn=await cx.newPage();
+  await pn.addInitScript(seedScript({}));
+  await pn.goto('http://localhost:'+PORT+'/index.html');
+  await pn.waitForTimeout(2200);
+  const N=await pn.evaluate(()=>{
+   try{
+    const o={};
+    const R=n=>(typeof exNomCatalogue==='function')?exNomCatalogue(n):n;
+    // ① LES DEUX CAS DE MICHEL, par le vrai chemin d'affichage
+    o.hipImg=_exImg('Hip Thrust Barre');
+    o.abdImg=_exImg('Abduction Cuisses');
+    // ② … et l'adduction, celle qui a motivé la question de départ
+    o.addImg=_exImg('Adduction Cuisses');
+    // ③ RIEN N'EST INVENTÉ : un exercice perso reste sans image, et son nom ne bouge pas
+    o.persoImg=_exImg('Ma Machine à Moi Bidon');
+    o.persoNom=R('Ma Machine à Moi Bidon');
+    // ④ NON-RÉGRESSION LA PLUS IMPORTANTE : aucun nom du CATALOGUE n'est modifié
+    o.nomsBouges=(EXLIB||[]).map(e=>e.n).filter(n=>R(n)!==n);
+    // ⑤ le nom complet garde exactement la même image qu'avant
+    o.pleinImg=_exImg('Hip Thrust Barre (Poussée de Hanche)');
+    // ⑥ ZÉRO COLLISION — c'est la CONDITION de la table, pas un effet de bord.
+    //    Une base ambiguë doit être RETIRÉE (on retombe sur l'ancien comportement),
+    //    jamais arbitrée vers un exercice au hasard.
+    const naz=s=>(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
+      .replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+    const noms=(EXLIB||[]).map(e=>e.n).filter(Boolean);
+    const pleins={};noms.forEach(n=>{pleins[naz(n)]=true;});
+    const vus={},collisions=[];
+    noms.forEach(n=>{const b=String(n).replace(/\s*\([^)]*\)\s*$/,'').trim();
+      if(!b||b===n)return; const k=naz(b);
+      if(pleins[k])collisions.push('base déjà un autre exercice : '+b);
+      if(vus[k]&&vus[k]!==n)collisions.push('deux exercices, même base : '+b);
+      vus[k]=n;});
+    o.collisions=collisions;
+    o.nbAbrev=(typeof _EX_BASE2NOM!=='undefined')?Object.keys(_EX_BASE2NOM).length:-1;
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(N.err)t('CX n\'a pas pu tourner',false,N.err);
+  else{
+    t('⭐⭐ « Hip Thrust Barre » (nom abrégé) retrouve son animation — le cas de Michel',
+      N.hipImg==='exercises/hip-thrust-barre.webp', 'reçu : '+N.hipImg);
+    t('⭐⭐ « Abduction Cuisses » aussi — l\'app avait déjà le fichier sous la main',
+      N.abdImg==='exercises/leg-abduction-machine-v2.webp', 'reçu : '+N.abdImg);
+    t('⭐ « Adduction Cuisses » — la question de départ (les adducteurs)',
+      N.addImg==='exercises/leg-adduction-machine-v2.webp', 'reçu : '+N.addImg);
+    t('⛔ un exercice PERSO ne reçoit aucune image inventée, et son nom ne bouge pas (R29)',
+      N.persoImg===null && N.persoNom==='Ma Machine à Moi Bidon',
+      JSON.stringify({img:N.persoImg,nom:N.persoNom}));
+    t('⛔⛔ NON-RÉGRESSION : le résolveur ne modifie AUCUN nom du catalogue',
+      Array.isArray(N.nomsBouges) && N.nomsBouges.length===0,
+      JSON.stringify((N.nomsBouges||[]).slice(0,5)));
+    t('⛔ le nom COMPLET garde exactement la même image qu\'avant',
+      N.pleinImg==='exercises/hip-thrust-barre.webp', 'reçu : '+N.pleinImg);
+    t('⛔⛔ ZÉRO COLLISION sur les bases sans parenthèse — la condition de la table',
+      Array.isArray(N.collisions) && N.collisions.length===0,
+      JSON.stringify((N.collisions||[]).slice(0,5)));
+    t('⭐ la table couvre les 77 exercices à parenthèse, pas seulement les 2 signalés',
+      N.nbAbrev===77, 'reçu : '+N.nbAbrev);
+  }
+  await cx.close();
+}
+
+// ════════════════════════════════════════════════════════════════════
+console.log('\n-- CXI. Un nom abrégé lit la FICHE ÉCRITE, plus la devinette (ft-v997) --');
+// ⚠️ LE 2ᵉ EFFET DE LA MÊME CAUSE QUE CX, et le plus large. `_mscScores` cherchait la fiche
+// avec le nom EXACT : un nom abrégé la ratait et retombait sur les règles `_MEX`, qui DEVINENT
+// — l'inverse exact de ce que le bloc annonce (« la donnée écrite passe avant les règles »).
+// ⭐ Et sa JUMELLE, trouvée en la cherchant (R8) : `estUnilateral` avait le même défaut.
+// ⛔ Ces témoins comparent l'abrégé au nom COMPLET : ils tournent des deux côtés, donc le
+//    contrôle négatif imprime l'écart réel au lieu de « la fonction n'existe pas ».
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pf=await cx.newPage();
+  await pf.addInitScript(seedScript({}));
+  await pf.goto('http://localhost:'+PORT+'/index.html');
+  await pf.waitForTimeout(2200);
+  const F=await pf.evaluate(()=>{
+   try{
+    const o={};
+    const court=n=>String(n).replace(/\s*\([^)]*\)\s*$/,'').trim();
+    const bases=Object.keys(_EX_BASE2NOM).map(k=>_EX_BASE2NOM[k]);
+    const E=n=>({name:n,sets:[{kg:50,reps:8,done:true,type:'N'}]});
+    const sc=n=>JSON.stringify((_mscScores([E(n)])||{}).sc||{});
+    // ① l'abrégé rend EXACTEMENT ce que rend le nom complet
+    o.diff=bases.filter(pl=>sc(court(pl))!==sc(pl));
+    // ② plus aucune figurine entièrement grise
+    o.vides=bases.map(court).filter(k=>sc(k)==='{}');
+    // ③ la JUMELLE : unilatéral + étiquette
+    o.uni=bases.filter(pl=>estUnilateral(court(pl))!==estUnilateral(pl));
+    o.uniLbl=bases.filter(pl=>uniLabel(court(pl))!==uniLabel(pl));
+    // ④ les calories suivent (le MET dérive des muscles)
+    o.met=[];
+    if(typeof getExerciseMET==='function')bases.forEach(pl=>{let a,b;
+      try{a=getExerciseMET(court(pl));b=getExerciseMET(pl);}catch(e){return;}
+      if(a!==b)o.met.push(court(pl));});
+    // ⑤ NON-RÉGRESSION : un nom COMPLET rend toujours EXACTEMENT sa fiche écrite
+    o.pleinsCasses=bases.filter(pl=>{
+      const f=exMuscles(pl); if(!f)return false;
+      const att={};(f.p||[]).forEach(m=>att[m]=(att[m]||0)+2);(f.s||[]).forEach(m=>att[m]=(att[m]||0)+1);
+      return sc(pl)!==JSON.stringify(att);});
+    // ⑥ RIEN N'EST INVENTÉ sur un exercice perso
+    o.persoUni=estUnilateral('Ma Machine Bidon À Moi');
+    o.persoLbl=uniLabel('Ma Machine Bidon À Moi');
+    // ⑦ les deux cas nommés dans le journal
+    o.rowing=sc('Rowing Poitrine Appuyée');
+    o.lombaire=sc('Inclinaison Lombaire');
+    o.hipUni=estUnilateral('Hip Thrust Unilatéral')+'|'+uniLabel('Hip Thrust Unilatéral');
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(F.err)t('CXI n\'a pas pu tourner',false,F.err);
+  else{
+    t('⭐⭐ MUSCLES : un nom ABRÉGÉ rend exactement ce que rend le nom complet (55 écarts avant)',
+      Array.isArray(F.diff)&&F.diff.length===0, JSON.stringify((F.diff||[]).slice(0,4)));
+    t('⭐⭐ … et plus AUCUNE figurine entièrement grise (« Inclinaison Lombaire »)',
+      Array.isArray(F.vides)&&F.vides.length===0, JSON.stringify(F.vides));
+    t('⭐⭐ LA JUMELLE (R8) : un unilatéral abrégé reste unilatéral — son volume est bien doublé',
+      Array.isArray(F.uni)&&F.uni.length===0, JSON.stringify((F.uni||[]).slice(0,4)));
+    t('⭐ … et l\'étiquette « par bras / par jambe » s\'affiche aussi sur l\'abrégé',
+      Array.isArray(F.uniLbl)&&F.uniLbl.length===0, JSON.stringify((F.uniLbl||[]).slice(0,4)));
+    t('⭐ LES CALORIES SUIVENT : plus aucun MET différent entre abrégé et nom complet',
+      Array.isArray(F.met)&&F.met.length===0, JSON.stringify((F.met||[]).slice(0,4)));
+    t('⛔⛔ NON-RÉGRESSION : un nom COMPLET rend toujours EXACTEMENT sa fiche écrite',
+      Array.isArray(F.pleinsCasses)&&F.pleinsCasses.length===0,
+      JSON.stringify((F.pleinsCasses||[]).slice(0,4)));
+    t('⛔ un exercice PERSO n\'est jamais déclaré unilatéral et ne reçoit aucune étiquette (R29)',
+      F.persoUni===false&&F.persoLbl==='', JSON.stringify({uni:F.persoUni,lbl:F.persoLbl}));
+    t('⭐⭐ « Rowing Poitrine Appuyée » abrégé ne recrédite PLUS le bas du dos (retiré exprès le 02/08)',
+      typeof F.rowing==='string'&&F.rowing.indexOf('lower-back')<0, 'reçu : '+F.rowing);
+    t('⭐ « Inclinaison Lombaire » abrégé a enfin des muscles',
+      typeof F.lombaire==='string'&&F.lombaire.indexOf('lower-back')>=0, 'reçu : '+F.lombaire);
+    t('⭐ « Hip Thrust Unilatéral » abrégé est bien unilatéral, « par jambe »',
+      F.hipUni==='true|par jambe', 'reçu : '+F.hipUni);
+  }
+  await cx.close();
+}
+
+/* == BLOC CXVI - L'HISTORIQUE DE L'OBJECTIF + L'HORODATAGE DES MESSAGES (ft-v1010) ==
+   Michel, le 19/08, a Milo : « As-tu vu que j'avais change d'objectif ? » → « Non, je ne vois pas
+   de changement d'objectif dans ce que j'ai sous la main. » ⭐ IL DISAIT VRAI : mesure dans son
+   export du 25/08, `goal` valait `recomp` et « force max » n'apparaissait NULLE PART ailleurs que
+   dans la conversation. L'app gardait la valeur du JOUR, jamais son histoire (R8).
+   ⛔ CE QUI EST MESURE ICI EST LA CHAINE ENTIERE (R4) : le changement est-il ECRIT, SURVIT-il a
+   un rechargement, et ARRIVE-t-il jusqu'au contexte de Milo ? Un maillon suffit a tout perdre.
+   ⛔ ET LES ABSENCES COMPTENT AUTANT : l'inscription ne fabrique pas un faux changement, un
+   compte sans historique n'a AUCUN bloc (pas d'en-tete vide), et rien n'est invente (R29). */
+console.log('\n-- CXVI. L\'objectif garde son histoire, les messages leur date (ft-v1010) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2200);
+  const F=await pg.evaluate(()=>{
+   try{
+    const o={};
+    // ① L'INSCRIPTION ne fabrique pas un changement (S.goal vaut « muscle » par defaut).
+    S.goalLog=[]; S.goal='muscle';
+    _goalSet('force','inscription');
+    o.inscriptionVide = (S.goalLog||[]).length===0 && S.goal==='force';
+    // ② Un vrai changement est ECRIT, avec son avant et son apres.
+    S.goalLog=[]; S.goal='force';
+    _goalSet('recomp','profil');
+    o.ecrit = JSON.stringify((S.goalLog||[]).map(g=>g.de+'>'+g.vers));
+    // ③ Reposer LA MEME valeur n'ecrit rien (sinon le journal se remplirait de bruit).
+    _goalSet('recomp','profil');
+    o.pasDeDoublon = (S.goalLog||[]).length===1;
+    // ④ Il SURVIT au rechargement (localStorage) — le maillon ou tout se perd d'habitude.
+    persist();
+    const brut=localStorage.getItem('ft4_goallog');
+    S.goalLog=[]; load();
+    o.survit = (S.goalLog||[]).length===1 && S.goalLog[0].vers==='recomp' && !!brut;
+    // ⑤ IL ARRIVE JUSQU'A MILO, et la consigne d'agir est la (changement du jour).
+    const ctx=buildCoachContext('Fais-moi une seance');
+    o.dansContexte = /SON OBJECTIF A CHANG/.test(ctx);
+    o.nommeLesDeux = /Force max/i.test(ctx) && /Perte de gras/i.test(ctx);
+    o.consigneRecente = /TIENS-EN COMPTE de toi-meme|TIENS-EN COMPTE de toi-même/.test(ctx);
+    // ⑥ ⛔ AUCUN historique → AUCUN bloc (pas d'en-tete vide, rien d'invente).
+    S.goalLog=[];
+    o.sansHistoriqueRien = !/SON OBJECTIF A CHANG/.test(buildCoachContext('Fais-moi une seance'));
+    // ⑦ Un changement ANCIEN est rappele, mais SANS la consigne d'agir (sinon c'est du bruit).
+    S.goalLog=[{date:'2026-01-15',de:'force',vers:'recomp',src:'profil'}];
+    const vieux=buildCoachContext('Fais-moi une seance');
+    o.vieuxListe = /SON OBJECTIF A CHANG/.test(vieux);
+    o.vieuxSansConsigne = !/TIENS-EN COMPTE/.test(vieux);
+    /* ⑧ HORODATAGE — PAR LE VRAI CHEMIN, ET C'EST TOUT LE SUJET.
+       ⚠️⚠️ Mon 1er témoin appelait `_lightMsg` DIRECTEMENT et était VERT pendant que la chaîne
+       réelle perdait tout : `_convLightMsgs` reconstruisait `{role, content}` à la main et
+       jetait la date. C'est ELLE qui alimente `S.coachConversations` et l'export.
+       *Un test qui n'emprunte pas le chemin de la production ne teste rien, il rassure.*
+       On archive donc pour de vrai, puis on ROUVRE, puis on relit le stockage. */
+    const av=Date.now();
+    coachHistory=[];
+    coachHistory.push({role:'user',content:'message daté',ts:av});
+    coachHistory.push({role:'assistant',content:'réponse datée',ts:av+1500});
+    coachHistory.push({role:'user',content:'vieux message sans date'});   // ⛔ rien à inventer
+    S.coachConversations=[];
+    _archiveCurrentConv();
+    const conv=(S.coachConversations||[])[0]||{};
+    o.tsArchive = JSON.stringify((conv.messages||[]).map(m=>m.ts?(m.ts-av):null));
+    loadCoachConv(conv.id);                                   // rouvrir ne doit rien effacer
+    o.tsApresReouverture = JSON.stringify(coachHistory.map(m=>m.ts?(m.ts-av):null));
+    try{ o.tsStockage = JSON.stringify(JSON.parse(localStorage.getItem('ft4_coach_hist')||'[]').map(m=>m.ts?(m.ts-av):null)); }
+    catch(e){ o.tsStockage='err'; }
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(F.err) t('CXVI n\'a pas pu tourner', false, F.err);
+  else{
+    t('⛔ l\'INSCRIPTION ne fabrique pas un faux changement (« muscle » est le défaut de load)',
+      F.inscriptionVide===true, '');
+    t('⭐⭐ un vrai changement est ÉCRIT, avec son AVANT et son APRÈS',
+      F.ecrit==='["force>recomp"]', 'reçu : '+F.ecrit);
+    t('⛔ reposer la MÊME valeur n\'écrit rien (pas de bruit dans le journal)',
+      F.pasDeDoublon===true, '');
+    t('⭐⭐ il SURVIT au rechargement — le maillon où l\'information se perd d\'habitude (R4)',
+      F.survit===true, '');
+    t('⭐⭐ IL ARRIVE JUSQU\'À MILO : le contexte porte le changement',
+      F.dansContexte===true, '');
+    t('⭐ … et il NOMME les deux objectifs, pas seulement « ça a changé »',
+      F.nommeLesDeux===true, '');
+    t('⭐ un changement RÉCENT porte la consigne d\'en tenir compte sans qu\'on le lui redise',
+      F.consigneRecente===true, '');
+    t('⛔⛔ AUCUN historique → AUCUN bloc : pas d\'en-tête vide, rien d\'inventé (R29)',
+      F.sansHistoriqueRien===true, '');
+    t('⛔ un changement ANCIEN est listé mais SANS la consigne d\'agir (sinon c\'est du bruit, R19)',
+      F.vieuxListe===true && F.vieuxSansConsigne===true,
+      'listé='+F.vieuxListe+' sans consigne='+F.vieuxSansConsigne);
+    t('⭐⭐ HORODATAGE : les dates survivent à l\'ARCHIVAGE (le vrai chemin, pas `_lightMsg` seul)',
+      F.tsArchive==='[0,1500,null]', 'reçu : '+F.tsArchive);
+    t('⭐⭐ … et ROUVRIR une conversation ne les efface pas (c\'était le 2ᵉ trou)',
+      F.tsApresReouverture==='[0,1500,null]', 'reçu : '+F.tsApresReouverture);
+    t('⭐ … ni le passage par le stockage du téléphone',
+      F.tsStockage==='[0,1500,null]', 'reçu : '+F.tsStockage);
+    t('⛔ le 3ᵉ message n\'a JAMAIS de date inventée (le `null` final est la preuve — R29)',
+      typeof F.tsArchive==='string' && /,null\]$/.test(F.tsArchive), 'reçu : '+F.tsArchive);
+  }
+  await cx.close();
+}
+
+// ════════════════════════════════════════════════════════════════════
+console.log('\n-- CXVII. Le sélecteur d\'exercices reste OUVERT (écran Séance ①/5) --');
+/* ⚠️ LE GOULOT SENTI PAR MICHEL en préparant la création de programmes : « il va falloir
+   améliorer aussi l'accès aux exercices… et que ce soit rapide ». Avant, `addExercise()`
+   appelait `closeExPicker()` à chaque ajout : 6 exercices = 6 allers-retours.
+   ⛔⛔ LES DEUX TÉMOINS QUI COMPTENT LE PLUS SONT DES GARDE-FOUS, pas la fonctionnalité :
+   ② le mode « remplacer » doit TOUJOURS fermer (il désigne UNE place précise — le laisser
+      ouvert ferait ajouter au lieu de remplacer, en silence) ;
+   ③ le bouton central « + » ne bouge pas d'un pixel (règle d'or #9), mesuré et non regardé. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const px=await cx.newPage();
+  await px.addInitScript(seedScript({}));
+  await px.goto('http://localhost:'+PORT+'/index.html');
+  await px.waitForTimeout(2300);
+  const X=await px.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={}; const ouvert=()=>document.getElementById('mod-ex').classList.contains('open');
+    const titre=()=>document.querySelector('#mod-ex .modal h2').textContent;
+    const fab=()=>{const e=document.querySelector('#nb-log,.nav-fab,.fab');
+      if(!e)return null;const r=e.getBoundingClientRect();
+      return [Math.round(r.x),Math.round(r.y),Math.round(r.width),Math.round(r.height)].join(',');};
+    S.wkt={date:today(),exs:[]}; persist();
+    document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+    document.getElementById('s-log').classList.add('active');
+    o.fabAvant=fab();
+    // ① six ajouts d'affilée, sans jamais rouvrir
+    openExPicker();
+    o.tousOuverts=true;
+    ['Squat à la Barre','Développé Couché','Tractions (Pull-up)',
+     'Press Jambes 45°','Curl Biceps Haltères','Pec Deck'].forEach(n=>{
+       addExercise(n); if(!ouvert())o.tousOuverts=false; });
+    o.nb=S.wkt.exs.length;
+    o.titre=titre();
+    o.rechercheVidee=document.getElementById('ex-search').value==='';
+    // la sortie reste possible
+    closeExPicker(); o.ferme=!ouvert(); o.titreRemisAZero=titre();
+    openExPicker(); o.compteurRepart=titre(); closeExPicker();
+    // ② le mode REMPLACER ferme toujours, et remplace vraiment
+    openExPickerForReplace(0);
+    addExercise('Soulevé de Terre');
+    o.replaceFerme=!ouvert();
+    o.aRemplace=S.wkt.exs[0].name==='Soulevé de Terre';
+    o.pasDAjout=S.wkt.exs.length===6;
+    o.fabApres=fab();
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(X.err)t('CXVI n\'a pas pu tourner',false,X.err);
+  else{
+    t('⭐⭐ SIX ajouts d\'affilée sans que le sélecteur se referme (6 allers-retours avant)',
+      X.tousOuverts===true && X.nb===6, JSON.stringify({ouvertPartout:X.tousOuverts,nb:X.nb}));
+    t('⭐ … la recherche est vidée et prête pour le suivant',  X.rechercheVidee===true);
+    t('⭐ … et le titre dit combien on a ajouté',              /6 ajoutés/.test(X.titre||''), 'reçu : '+X.titre);
+    t('⛔ … la sortie marche toujours (R24 : informer sans bloquer)', X.ferme===true);
+    t('⛔ … et le compteur repart à zéro à la réouverture',
+      X.titreRemisAZero==='Choisir un exercice' && X.compteurRepart==='Choisir un exercice',
+      JSON.stringify([X.titreRemisAZero,X.compteurRepart]));
+    t('⛔⛔ LE MODE « REMPLACER » FERME TOUJOURS — il désigne UNE place, le laisser ouvert ferait AJOUTER',
+      X.replaceFerme===true);
+    t('⛔⛔ … et il a bien REMPLACÉ, sans rien ajouter',
+      X.aRemplace===true && X.pasDAjout===true, JSON.stringify({remplace:X.aRemplace,six:X.pasDAjout}));
+    t('⛔⛔ LE BOUTON CENTRAL « + » N\'A PAS BOUGÉ (règle d\'or #9 — mesuré, pas regardé)',
+      !!X.fabAvant && X.fabAvant===X.fabApres, X.fabAvant+' → '+X.fabApres);
+  }
+  await cx.close();
+}
+
+/* == BLOC CXVIII - L'EXPORT DES CONVERSATIONS PORTE ENFIN SES DATES (ft-v1011) ==
+   Michel, en relisant son propre export : « il va falloir horodater les conversations ».
+   ⭐ ft-v1010 avait pose le `ts` a la creation et l'avait fait survivre au stockage — mais
+   PERSONNE ne le lisait. *Une donnee ecrite que rien ne relit n'existe pas* (R5). C'est tres
+   exactement ce qui m'a empeche de dater sa conversation du 19/08 quand il me l'a envoyee.
+   ⛔⛔ ET LE TITRE MENTAIT : il affichait la date de CREATION de la discussion. Celle de
+   Michel, ouverte le 19/08, s'est poursuivie jusqu'au 25 — six jours d'ecart. En la relisant,
+   on datait donc tout son contenu du 19. *Un repere faux est pire qu'un repere absent : on
+   s'y fie.* Il affiche desormais la PLAGE reelle, et un seul jour reste un seul jour.
+   ⛔ UN SEUL CONSTRUCTEUR, VERIFIE (le bouton vit cote ADMIN, Michel l'a signale) : une seule
+   fonction fabrique ce fichier, donc le correctif ne pouvait pas etre pose du mauvais cote. */
+console.log('\n-- CXVIII. L\'export des conversations porte ses dates (ft-v1011) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2200);
+  const F=await pg.evaluate(()=>{
+   try{
+    // ⛔ On capture le fichier au lieu de le telecharger : on remplace Blob, RIEN d'autre —
+    //    tout le reste emprunte le vrai chemin (lecon de ft-v1010).
+    let capture=null; const VraiBlob=window.Blob;
+    window.Blob=function(parts,opts){ capture=parts.join(''); return new VraiBlob(parts,opts); };
+    const J=24*3600*1000, base=Date.now();
+    S.coachConversations=[{ id:'c1', title:'Séance pec', ts:base-3*J, messages:[
+      {role:'user',content:'Séance pec ce soir ?',ts:base-2*J},
+      {role:'assistant',content:'Voilà ta séance.',ts:base-2*J+90000},
+      {role:'user',content:'Et pour demain ?',ts:base},          // le jour CHANGE
+      {role:'assistant',content:'Jambes.',ts:base+60000},
+      {role:'user',content:'vieux message sans date'}            // ⛔ rien a inventer
+    ]}];
+    exporterConversationsMilo();
+    window.Blob=VraiBlob;
+    const o={};
+    o.produit = !!capture;
+    const txt=capture||'';
+    o.heures = (txt.match(/── (MOI|MILO) ──  \(\d{2}:\d{2}\)/g)||[]).length;   // 4 attendues
+    o.sansHeure = (txt.match(/── MOI ──\n/g)||[]).length;                        // 1 attendue
+    o.separateurs = (txt.match(/· · · [^\n]+ · · ·/g)||[]).length;                // 2 jours
+    o.plage = /Séance pec — \d{2}\/\d{2}\/\d{4} → \d{2}\/\d{2}\/\d{4}/.test(txt);
+    o.pasDeDateCreation = txt.indexOf('(ouverte le)')<0;
+    // ⛔ Un seul jour ne doit PAS produire « du X au X ».
+    S.coachConversations=[{ id:'c2', title:'Un seul jour', ts:base, messages:[
+      {role:'user',content:'a',ts:base},{role:'assistant',content:'b',ts:base+1000}]}];
+    capture=null; window.Blob=function(parts,opts){ capture=parts.join(''); return new VraiBlob(parts,opts); };
+    exporterConversationsMilo(); window.Blob=VraiBlob;
+    o.unSeulJour = /Un seul jour — \d{2}\/\d{2}\/\d{4} ═/.test(capture||'');
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(F.err) t('CXVIII n\'a pas pu tourner', false, F.err);
+  else{
+    t('⭐⭐ chaque message DATÉ porte son heure, et eux seuls (4 sur 5)',
+      F.heures===4, 'heures='+F.heures);
+    t('⛔ le message SANS date n\'en reçoit aucune — rien n\'est inventé (R29)',
+      F.sansHeure===1, 'sans heure='+F.sansHeure);
+    t('⭐ le jour ne s\'écrit QUE quand il change (2 séparateurs pour 2 jours, pas 5)',
+      F.separateurs===2, 'séparateurs='+F.separateurs);
+    t('⭐⭐ le titre porte la PLAGE réelle, plus la date de création (le cas du 19→25/08)',
+      F.plage===true && F.pasDeDateCreation===true,
+      'plage='+F.plage+' sans date de création='+F.pasDeDateCreation);
+    t('⛔ … et une discussion d\'UN SEUL jour ne devient pas « du X au X »',
+      F.unSeulJour===true, '');
+  }
+  await cx.close();
+}
+
+// ════════════════════════════════════════════════════════════════════
+console.log('\n-- CXIX. Créer un programme depuis zéro (écran Séance ②/5) --');
+/* ⚠️ LA PORTE QUI MANQUAIT. Avant, aucun chemin ne menait à la CRÉATION d'un programme : la
+   modale « Mes Programmes » ne proposait que « Sauvegarder la séance actuelle », donc il
+   fallait monter une SÉANCE entière à la main pour obtenir un PROGRAMME. L'éditeur existait
+   pourtant en entier (`_renderProgEdit`), atteignable seulement par le ✏️ d'un programme
+   DÉJÀ créé. On a ouvert la porte, pas écrit un 2e éditeur (R13).
+   ⛔⛔ LES DEUX TÉMOINS QUI COMPTENT LE PLUS SONT DES ABSENCES :
+   ① fermer sans sauvegarder ne doit RIEN laisser (pas de programme fantôme sans titre) ;
+   ⑤ éditer un programme existant doit toujours REMPLACER, jamais ajouter — c'est le même
+      `saveProgEdit` qui sert aux deux, et l'index est ce qui les distingue. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const G=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={}; const ouvert=()=>document.getElementById('ov-prog-edit').classList.contains('open');
+    S.programmes=[]; S.wkt=null; persist();
+    // ① annuler ne crée rien
+    creerProgramme(); o.ouvre=ouvert(); o.nomVide=document.getElementById('prog-edit-name').value==='';
+    _addExToProgEdit('Squat à la Barre'); closeProgEdit();
+    o.rienApresAnnulation=(S.programmes.length===0);
+    // ② un nom vide est refusé, l'éditeur reste ouvert
+    creerProgramme(); _addExToProgEdit('Développé Couché');
+    document.getElementById('prog-edit-name').value=''; saveProgEdit();
+    o.refuseSansNom=(S.programmes.length===0 && ouvert());
+    // ③ avec un nom, le programme est créé
+    document.getElementById('prog-edit-name').value='Push A'; saveProgEdit();
+    o.cree=(S.programmes.length===1); o.nom=(S.programmes[0]||{}).name;
+    o.exGarde=(((S.programmes[0]||{}).exs||[])[0]||{}).name;
+    // ④ un 2e s'AJOUTE, il n'écrase pas
+    closeProgModal(); creerProgramme(); _addExToProgEdit('Press Jambes 45°');
+    document.getElementById('prog-edit-name').value='Legs'; saveProgEdit();
+    o.deux=(S.programmes.length===2); o.noms=S.programmes.map(x=>x.name).join('|');
+    // ⑤ NON-RÉGRESSION : éditer un existant REMPLACE, n'ajoute pas
+    closeProgModal(); editProg(0);
+    document.getElementById('prog-edit-name').value='Push A modifié'; saveProgEdit();
+    o.toujoursDeux=(S.programmes.length===2);
+    o.nomsFinaux=S.programmes.map(x=>x.name).join('|');
+    /* ⑥ LE SÉLECTEUR RESTE OUVERT DANS L'ÉDITEUR AUSSI — c'est là que Michel monte ses
+       listes. Le témoin le plus important du lot est le SUIVANT : que rien ne parte dans la
+       séance. Si le mode retombait en 'workout' après le 1er ajout, les 5 suivants iraient
+       silencieusement dans la séance du jour au lieu du programme. */
+    closeProgEdit(); S.programmes=[]; S.wkt=null; persist();
+    creerProgramme(); _openExPickerForProg(0);
+    const ouvertEx=()=>document.getElementById('mod-ex').classList.contains('open');
+    o.progResteOuvert=true;
+    ['Développé Couché','Développé Militaire','Dips',
+     'Extension Triceps Poulie','Écarté Poulie','Pompes (Push-up)'].forEach(n=>{
+       addExercise(n); if(!ouvertEx())o.progResteOuvert=false; });
+    o.progNb=(_editProgData.exs||[]).length;
+    o.progModeTenu=(_exPickerMode==='prog');
+    o.progSeanceVide=(!S.wkt||!(S.wkt.exs||[]).length);
+    closeExPicker();
+    o.progModeRendu=_exPickerMode;
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(G.err)t('CXIX n\'a pas pu tourner',false,G.err);
+  else{
+    t('⭐⭐ « Créer un programme » ouvre l\'éditeur, vierge (la porte qui manquait)',
+      G.ouvre===true && G.nomVide===true, JSON.stringify({ouvre:G.ouvre,nomVide:G.nomVide}));
+    t('⛔⛔ FERMER SANS SAUVEGARDER NE LAISSE RIEN (pas de programme fantôme sans titre)',
+      G.rienApresAnnulation===true);
+    t('⛔ un nom vide est REFUSÉ, et l\'éditeur reste ouvert (R24 : on prévient, on ne détruit pas)',
+      G.refuseSansNom===true);
+    t('⭐ avec un nom, le programme est créé — et il garde son exercice',
+      G.cree===true && G.nom==='Push A' && G.exGarde==='Développé Couché',
+      JSON.stringify({nom:G.nom,ex:G.exGarde}));
+    t('⭐ un 2ᵉ programme s\'AJOUTE, il n\'écrase pas le 1ᵉʳ',
+      G.deux===true && G.noms==='Push A|Legs', 'reçu : '+G.noms);
+    t('⛔⛔ NON-RÉGRESSION : éditer un programme EXISTANT remplace, il n\'en crée pas un 2ᵉ',
+      G.toujoursDeux===true && G.nomsFinaux==='Push A modifié|Legs', 'reçu : '+G.nomsFinaux);
+    t('⭐⭐ DANS L\'ÉDITEUR AUSSI le sélecteur reste ouvert — 6 exercices d\'affilée',
+      G.progResteOuvert===true && G.progNb===6,
+      JSON.stringify({ouvertPartout:G.progResteOuvert,nb:G.progNb}));
+    t('⛔⛔ … et RIEN NE FUIT DANS LA SÉANCE (le mode « prog » tient pendant les 6 ajouts)',
+      G.progModeTenu===true && G.progSeanceVide===true,
+      JSON.stringify({mode:G.progModeTenu,seanceVide:G.progSeanceVide}));
+    t('⛔ … puis la fermeture rend la main au mode « workout »',
+      G.progModeRendu==='workout', 'reçu : '+G.progModeRendu);
+  }
+  await cx.close();
+}
+// ⛔ Le vocabulaire des deux bouts doit dire la MÊME chose : le message de l'écran vide
+//    désignait « + Ajouter un exercice » alors que le bouton s'appelait « + Ajouter ».
+t('⭐ le bouton et le message de l\'écran vide disent tous deux « Créer ma séance »',
+  (()=>{const h=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+        const l=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        return h.indexOf('>+ Créer ma séance</button>')>=0
+            && /Appuie sur "\+ Créer ma séance"/.test(l)
+            && h.indexOf('>+ Ajouter</button>')<0;})());
+
 await b.close(); srv.close();
 
+/* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
+   Michel, capture a l'appui, en lancant le benchmark : « Ya marque annuler ou supprimer lol ».
+   La fenetre disait « Benchmark Milo — 53 scenarios / 53 appels au Coach, environ 0,79 € a
+   3,45 € » et proposait [Annuler] [SUPPRIMER]. On ne supprime rien : on LANCE, et ca coute de
+   l'argent.
+   ⭐ LE MECANISME EXISTAIT DEJA, POSE D'UN SEUL COTE : `showConfirm(title,msg,cb,okLabel)`
+   accepte un libelle depuis toujours — 10 appels sur 24 ne le passaient pas alors que leur
+   action n'etait PAS une suppression (lancer un test, importer des pesees, fusionner, vider un
+   cache, recommencer une inscription). C'est la 5e fois : ft-v973, v975, v984, v996, et ici.
+   ⛔⛔ LA JUMELLE, trouvee en la cherchant (R8) : l'ecran « Fusionner les exercices » existe a
+   DEUX endroits — `log.js` passait bien 'Fusionner', `setup.js` ne passait rien et affichait
+   donc « Supprimer » pour un RENOMMAGE. Deux copies du meme ecran, une juste, une fausse (R2).
+   ⭐⭐ ET LE TEMOIN FIGE UNE REGLE, PAS UNE LISTE. Enumerer les 24 appels rougirait au 25e et on
+   l'allongerait par reflexe. La regle est verifiable et ne perime pas : le libelle par defaut
+   est « Supprimer », DONC un appel qui ne passe pas de libelle doit avoir un titre qui commence
+   par « Supprimer ». Sinon le bouton rouge annonce autre chose que ce qu'il fait. */
+console.log('\n-- CXIV. Le bouton rouge de showConfirm dit ce qu\'il FAIT (ft-v1006) --');
+{
+  const _FIC=['app.js','coach.js','log.js','screens.js','setup.js','tracking.js','state.js'];
+  const _menteurs=[];
+  let _total=0, _avecLabel=0;
+  for(const f of _FIC){
+    let src; try{ src=fs.readFileSync(path.join(__dirname,'..','..',f),'utf8'); }catch(e){ continue; }
+    let k=-1;
+    while((k=src.indexOf('showConfirm(',k+1))>=0){
+      if(/function\s+$/.test(src.slice(Math.max(0,k-12),k))) continue;   // la definition elle-meme
+      // Borne l'appel en ignorant chaines et commentaires (sinon une parenthese dans un
+      // message francais fausse tout — mesure, pas suppose).
+      let i=src.indexOf('(',k), prof=0, q=null, fin=-1;
+      while(i<src.length){
+        const ch=src[i];
+        if(q){ if(ch==='\\'){i+=2;continue;} if(ch===q)q=null; i++; continue; }
+        if(ch==='\''||ch==='"'||ch==='`'){ q=ch; i++; continue; }
+        if(ch==='/'&&src[i+1]==='/'){ i=src.indexOf('\n',i); continue; }
+        if(ch==='/'&&src[i+1]==='*'){ i=src.indexOf('*/',i)+2; continue; }
+        if(ch==='(')prof++;
+        else if(ch===')'){ prof--; if(!prof){ fin=i; break; } }
+        i++;
+      }
+      if(fin<0) continue;
+      /* ⚠️⚠️ LE DECOUPAGE DES ARGUMENTS DOIT IGNORER LES COMMENTAIRES, PAS SEULEMENT LES
+         CHAINES. Mon 1er jet ne sautait que les chaines : une APOSTROPHE FRANCAISE dans un
+         commentaire (`// dans le clone : n'efface que les cles cl_`) ouvrait une fausse
+         chaine et avalait le reste de l'appel — le temoin accusait alors 5 appels DEJA
+         corriges et rendait 11 menteurs la ou il y en avait 10. Un lecteur, un seul, pour
+         les bornes ET pour les virgules. */
+      const d0=src.indexOf('(',k)+1;
+      const coupes=[d0]; { let j=d0, p2=0, qq=null;
+        while(j<fin){ const ch=src[j];
+          if(qq){ if(ch==='\\'){j+=2;continue;} if(ch===qq)qq=null; j++; continue; }
+          if(ch==='\''||ch==='"'||ch==='`'){ qq=ch; j++; continue; }
+          if(ch==='/'&&src[j+1]==='/'){ j=src.indexOf('\n',j); continue; }
+          if(ch==='/'&&src[j+1]==='*'){ j=src.indexOf('*/',j)+2; continue; }
+          if('([{'.indexOf(ch)>=0)p2++; else if(')]}'.indexOf(ch)>=0)p2--;
+          else if(ch===','&&!p2) coupes.push(j+1);
+          j++; }
+      }
+      coupes.push(fin+1);
+      const args=[]; for(let a=0;a<coupes.length-1;a++) args.push(src.slice(coupes[a], coupes[a+1]-1));
+      _total++;
+      const titre=args[0].trim();
+      if(args.length>=4 && args[3].trim()){ _avecLabel++; continue; }
+      // Pas de libelle → le bouton rouge dira « Supprimer ». Le titre doit le dire aussi.
+      if(!/^'Supprimer/.test(titre)){
+        _menteurs.push(f+':'+(src.slice(0,k).split('\n').length)+' '+titre.replace(/\s+/g,' ').slice(0,40));
+      }
+    }
+  }
+  t('⭐⭐ AUCUN `showConfirm` non-destructeur ne garde le bouton rouge « Supprimer »',
+    _menteurs.length===0, _menteurs.length+' menteur(s) : '+JSON.stringify(_menteurs.slice(0,6)));
+  t('⛔ le témoin a bien VU les appels (sinon il serait vert en ne mesurant rien)',
+    _total>=20, 'appels analysés = '+_total+' · dont avec libellé = '+_avecLabel);
+  t('⭐ le libellé par défaut de `showConfirm` reste « Supprimer » (c\'est ce qui rend la règle vraie)',
+    /okLabel\|\|'Supprimer'/.test(fs.readFileSync(path.join(__dirname,'..','..','log.js'),'utf8')), '');
+  t('⛔⛔ LA JUMELLE (R8) : les DEUX écrans « Fusionner les exercices » disent « Fusionner »',
+    (fs.readFileSync(path.join(__dirname,'..','..','setup.js'),'utf8').indexOf("'Fusionner'")>=0)
+    && (fs.readFileSync(path.join(__dirname,'..','..','log.js'),'utf8').indexOf("'Fusionner'")>=0), '');
+}
 
+/* == BLOC CXV - UNE FIXTURE POSEE AU MAUVAIS NIVEAU EST MUETTE (ft-v1007) ==
+   Trouve en depouillant le benchmark du 25/08. EV-009 rougissait (« il redemande le materiel
+   alors que le questionnaire dit salle complete ») — et c'etait FAUX : son `coachQuiz` etait
+   pose A COTE de `apply`, pas DEDANS. `_vcApplyPersona` lit `p.apply.coachQuiz`, donc
+   `S.coachQuiz` valait **null** : Milo ne recevait AUCUN questionnaire, et demander ou la
+   personne s'entraine etait le BON comportement — celui que EV-045 recompense.
+   ⭐ Ca expliquait aussi le « intermittent (1/2) » : la reponse variait parce qu'il DEVINAIT.
+   ⛔⛔ LE DEFAUT EST SILENCIEUX, c'est ce qui le rend couteux : la cle existe, elle est lisible
+   dans le fichier, elle a l'air juste — et elle n'atteint jamais `S`. C'est R4 applique au banc
+   d'essai lui-meme : *l'information reste dans le TEXTE et n'atteint pas la DONNEE*.
+   ⚠️ ET J'AI FAILLI EN « REPARER » TROIS QUI MARCHENT : `history` et `coachEmail` sont lus au
+   niveau du scenario par `_vcAsk` (pas par `_vcApplyPersona`), et `specAbsente` est documentaire.
+   La liste blanche porte donc QUI lit quoi — sans ca, le prochain corrigerait du code sain (R28). */
+console.log('\n-- CXV. Aucune fixture de scénario n\'est muette (ft-v1007) --');
+{
+  /* Cles autorisees AU NIVEAU DU SCENARIO, avec leur lecteur. Toute autre cle est une donnee
+     de profil qui aurait du aller dans `apply` — elle n'atteindrait jamais S. */
+  const AUTORISEES={ id:'structure', origin:'structure', titre:'structure', apply:'_vcApplyPersona',
+    scenario:'_vcAsk', verifs:'le juge', history:'_vcAsk (tours précédents)',
+    coachEmail:'_vcAsk (choisit le modèle)', specAbsente:'documentaire (règle absente du prompt)' };
+  const SC=require(path.join(__dirname,'..','milo','eval-scenarios.js'));
+  const muettes=[];
+  SC.forEach(sc=>Object.keys(sc).forEach(k=>{ if(!AUTORISEES[k]) muettes.push(sc.id+'.'+k); }));
+  t('⭐⭐ aucune clé de PROFIL posée à côté de `apply` (elle n\'atteindrait jamais S — R4)',
+    muettes.length===0, muettes.length+' muette(s) : '+JSON.stringify(muettes.slice(0,6)));
+  t('⛔ le témoin a bien LU les scénarios (sinon il serait vert en ne mesurant rien)',
+    SC.length>=50, 'scénarios lus = '+SC.length);
+  /* Et le cas précis qui a coûté un faux rouge : le questionnaire d'EV-009 doit ARRIVER. */
+  const ev9=SC.find(x=>x.id==='EV-009');
+  const q=ev9&&ev9.apply&&ev9.apply.coachQuiz;
+  t('⭐ EV-009 : le questionnaire est DANS `apply`, et il porte le matériel',
+    !!(q&&q.answers&&q.answers.place&&q.answers.matos),
+    JSON.stringify(q&&q.answers||null));
+  /* ⛔ Le lecteur n'a pas changé de nom : si `_vcApplyPersona` cessait de lire `a.coachQuiz`,
+     la règle ci-dessus deviendrait vraie pour rien. */
+  t('⛔ `_vcApplyPersona` lit toujours le questionnaire DANS apply',
+    /S\.coachQuiz\s*=\s*a\.coachQuiz/.test(fs.readFileSync(path.join(__dirname,'..','..','coach.js'),'utf8')), '');
+}
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

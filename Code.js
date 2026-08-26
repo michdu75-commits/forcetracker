@@ -626,6 +626,7 @@ function doGet(e) {
       prs:            data.prs            || {},
       sessions:       data.sessions       || [],
       weightLog:      data.weightLog      || [],
+      goalLog:        data.goalLog        || [],   // historique des changements d'objectif (ft-v1010)
       sleepLog:       data.sleepLog       || [],
       dayStateLog:    data.dayStateLog    || [],
       cycle:          data.cycle          || null,
@@ -655,6 +656,7 @@ function handleLoadProfilePost_(body) {
     prs:            data.prs            || {},
     sessions:       data.sessions       || [],
     weightLog:      data.weightLog      || [],
+    goalLog:        data.goalLog        || [],   // historique des changements d'objectif (ft-v1010)
     sleepLog:       data.sleepLog       || [],
     dayStateLog:    data.dayStateLog    || [],
     cycle:          data.cycle          || null,
@@ -685,6 +687,28 @@ function ensurePremiumEmails_() {
 // remise à zéro automatique chaque jour). Limites réglables via Script Properties
 // AI_GLOBAL_MAX / AI_EMAIL_MAX (sans redéploiement). Fail-open : en cas d'erreur,
 // on ne bloque JAMAIS un vrai utilisateur.
+/* 🔧 PLAFOND RELEVÉ POUR LES COMPTES DE DÉVELOPPEMENT (25/08/2026, demande de Michel).
+   POURQUOI : le banc d'essai de Milo (`tests/milo/eval.js`) envoie **53 appels** en une passe,
+   au-dessus du plafond de 50/jour/email — il se faisait couper au 50ᵉ scénario. Et comme une
+   mesure avant/après (R34) demande DEUX passes, 50 ne suffisait de toute façon pas.
+
+   ⛔⛔ POURQUOI 150 ET PAS PLUS — la raison est écrite juste en dessous, dans le commentaire
+   d'origine : *« baissé de 100 : l'email est usurpable »*. L'URL Apps Script est PUBLIQUE
+   (elle est dans `constants.js`, dépôt public), donc n'importe qui peut envoyer une requête
+   en se prétendant être l'un de ces emails. Relever ce chiffre, c'est ouvrir une porte que
+   quelqu'un d'autre peut emprunter. 150 laisse de quoi jouer deux passes du banc d'essai et
+   rien de plus. ⚠️ **Ne pas le monter « pour être tranquille » : c'est exactement le geste
+   contre lequel la ligne du dessous met en garde.**
+
+   ⭐ CE QUI BORNE VRAIMENT LE RISQUE reste le plafond GLOBAL (600/jour) : le pire cas d'une
+   usurpation est de brûler 150 appels au lieu de 50, jamais une facture qui s'emballe.
+
+   ⛔ MÊME MÉCANIQUE QUE `PREMIUM_HARDCODED_` (R13, on ne réinvente rien) : une liste EN DUR,
+   volontairement — une Script Property serait réglable sans redéploiement, mais elle est aussi
+   ce qui se fait réécrire en silence (cf. le déclencheur fantôme de `PREMIUM_EMAILS`). */
+var AI_MAX_DEV_ = 150;
+var AI_EMAILS_DEV_ = ['michdu75@gmail.com'];
+
 function _aiQuotaBlock_(email) {
   try {
     var sp = PropertiesService.getScriptProperties();
@@ -697,6 +721,10 @@ function _aiQuotaBlock_(email) {
     if (!q || q.date !== today) q = { date: today, global: 0, byEmail: {} };
     var e = (email || 'anon').toString().toLowerCase().trim() || 'anon';
     var ec = q.byEmail[e] || 0;
+    // ⚠️ Le plafond de développement s'applique APRÈS la lecture de la Script Property : si
+    // `AI_EMAIL_MAX` était un jour réglée PLUS HAUT que 150, on garde la valeur la plus haute
+    // — ce garde-fou relève un plafond, il ne doit jamais en abaisser un.
+    if (AI_EMAILS_DEV_.indexOf(e) >= 0 && AI_MAX_DEV_ > EMAIL_MAX) EMAIL_MAX = AI_MAX_DEV_;
     if (q.global >= GLOBAL_MAX) return { blocked: true, scope: 'global' };
     if (ec >= EMAIL_MAX)        return { blocked: true, scope: 'email' };
     q.global++;
@@ -714,7 +742,15 @@ function _aiQuotaBlock_(email) {
 // factorise plutôt que de coller une 2ᵉ empreinte SHA-256 identique quelque part.
 // ⚠️ REPLI OUVERT (comme `aiCount`) : un jeton absent/faux rend `false`, jamais une erreur —
 // une panne de configuration ne doit jamais couper Milo (règle d'or #3).
-var _COUNT_TOKEN_HASH_ = '8876f1898e466e84e3ec872c8234782649430274c040334ec2eccf79a6db112f';
+// 🔐 EMPREINTE REGÉNÉRÉE LE 25/08/2026. La clé posée le 11/08 chez Cloudflare avait été
+// PERDUE — et une empreinte ne se remonte pas, donc le plafond de dépense est resté désarmé
+// depuis. Nouvelle paire : la clé en clair vit UNIQUEMENT dans la variable `FT_COUNT_TOKEN`
+// du Worker Cloudflare, jamais ici (ce dépôt est public).
+// ⚠️ Si cette empreinte change sans que la clé suive chez Cloudflare, le plafond se DÉSARME
+// en silence — c'est exactement ce qui s'est passé le 11/08, deux jours sans que ça se voie.
+// La ligne « 🛡️ Plafond de dépense » de Profil → Admin → Santé du système est le seul endroit
+// où ça se lit : la vérifier APRÈS avoir posé la clé, pas avant.
+var _COUNT_TOKEN_HASH_ = 'cf5c9b66e4a8a0c4d479dfb9d1ea374a9a16ec6dc91cdabae95efaf7bc2e1f52';
 function _countTokenArme_(token) {
   var recu = String(token == null ? '' : token).trim();
   return recu.length >= 12 && _sha256hex_(recu) === _COUNT_TOKEN_HASH_;

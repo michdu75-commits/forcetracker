@@ -1,6 +1,6 @@
 {
- "genere": "2026-08-20",
- "total": 324,
+ "genere": "2026-08-25",
+ "total": 322,
  "nbRegles": 71,
  "fragiles": 0,
  "ex": {
@@ -1420,14 +1420,6 @@
    "met": 4,
    "frag": 0
   },
-  "Pull-over": {
-   "p": "lats",
-   "s": "pec,serratus,triceps",
-   "pat": "tirage-horizontal",
-   "eq": "barre",
-   "met": 5.5,
-   "frag": 0
-  },
   "Pull-over Barre": {
    "p": "lats",
    "s": "pec,serratus,triceps",
@@ -2033,14 +2025,6 @@
    "s": "abs,calves,hamstrings",
    "pat": "squat",
    "eq": "corps",
-   "met": 6.5,
-   "frag": 0
-  },
-  "Squat Sumo": {
-   "p": "glutes,quads",
-   "s": "adductors,calves,hamstrings,lower-back",
-   "pat": "squat",
-   "eq": "barre",
    "met": 6.5,
    "frag": 0
   },

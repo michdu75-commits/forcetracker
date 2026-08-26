@@ -222,6 +222,26 @@ Le noyau dur (`tests/milo/`) rassemble les scénarios critiques et déterministe
 version et **bloque la livraison** s'il est rouge.
 *Origine : framework de tests, 23/07/2026*
 
+### R35 — Le banc d'essai n'a PAS de taille cible : il grandit à chaque bug rencontré
+*« On augmente encore le benchmark, je ne donne pas de limite. Dès qu'il y a un bug ou une erreur,
+on rajoute »* (Michel, 25/08/2026). **C'est R17 appliqué au banc d'essai** — chaque bug devient un
+scénario permanent — mais la nuance est dans le *« pas de limite »* : un seuil chiffré produit deux
+dérives opposées, déjà écrites dans `docs/JOURNAL-DE-TEST.md` (remplir pour atteindre le chiffre ·
+s'arrêter une fois atteint). **En retirant la cible, on retire les deux.**
+**Le déclencheur n'est plus un compte, c'est un ÉVÉNEMENT** : un bug vécu, une erreur constatée, un
+comportement qui surprend. *Le banc d'essai cesse d'être une liste qu'on remplit pour devenir une
+mémoire de ce qui a raté.*
+**⛔ Ce que la règle n'autorise PAS** : ajouter pour ajouter. Le critère de `JOURNAL-DE-TEST.md`
+reste entier — *l'attendu est-il vérifiable par du CODE ?* — et s'y ajoute celui de ft-v994, payé
+au prix fort : **un scénario qui ne peut pas rougir ne mesure rien, il rassure**. Tout nouveau
+scénario s'éprouve contre une **bonne** ET une **mauvaise** réponse avant d'être livré ; sur les 23
+de ft-v994, **6 ne mordaient pas** au premier jet.
+**⚠️ Et le coût est réel, il se dit** : un scénario = un appel API à chaque passe. Passer de 21 à 50
+a multiplié le coût d'une passe par 2,4. *Ce n'est pas une raison de s'arrêter — c'est une raison de
+n'ajouter que ce qui mord.*
+*Origine : 25/08/2026 · prolonge R17 (chaque bug devient un test permanent) et R34 (un changement de
+contexte se valide au banc d'essai) · voisine de R19 (la gouvernance sert le produit).*
+
 ### R34 — Un changement de CONTEXTE se valide par un BENCHMARK avant/après, jamais au feeling
 Toute modification qui touche à ce que Milo reçoit — déplacer un bloc, changer sa position, fusionner
 une coupure de cache — se juge sur le **comportement mesuré**, pas sur l'intuition que « ça devrait

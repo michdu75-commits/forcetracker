@@ -72,14 +72,22 @@ function _cqLabel(quiz,qid,val){
 // avec leur meilleure série. Pas les séries d'échauffement, pas les notes. Le budget du prompt est
 // le grand chantier ouvert (91 % de consignes / 9 % de connaissance) — on n'y ajoute pas 20 000
 // caractères pour le confort.
-// 🔒 Réservé pour l'instant (michdu75 + christophe) : on mesure le coût réel sur deux comptes
-// bien remplis avant d'ouvrir à tout le monde. Gardée en FONCTION comme `_isNutriBeta()` : le jour
-// où on ouvre, c'est une ligne à changer, pas une chasse aux usages.
-const MEMOIRE_LARGE_EMAILS=['michdu75@gmail.com','christophe@famillelanglois.fr'];
-function _memoireLargeOn(){
-  try{ const e=((typeof S!=='undefined'&&S.email)||'').trim().toLowerCase();
-    return !!e && MEMOIRE_LARGE_EMAILS.indexOf(e)>=0; }catch(e){ return false; }
-}
+// ✅ OUVERTE À TOUT LE MONDE le 24/08/2026 (ft-v992, décision de Michel). LA RAISON D'AVANT RESTE
+// ÉCRITE (R30) : c'était réservé à michdu75 + christophe depuis le 03/08 pour « mesurer le coût réel
+// sur deux comptes bien remplis avant d'ouvrir ». ⭐⭐ CE COÛT A ÉTÉ MESURÉ, et c'est ce qui a permis
+// de trancher — il est AUTO-DÉGRESSIF, parce que la fonction ne résume que ce qui a été VÉCU :
+//     3 séances → 0 car. · 5 → 0 · 8 → 665 · 12 → 967 · 20 → 1 551 · 35 → 2 622 (plafond MAX=30)
+// ⛔⛔ ET IL NE TOUCHE PAS LE PLAFOND DU BLOC COMMUN : mesuré, ces caractères tombent intégralement
+// dans le bloc PERSONNEL — bloc commun identique au caractère près (45 362 des deux côtés). La
+// crainte « ça va dépasser 46 500 » ne s'appliquait pas ici, c'est un autre bloc.
+// ⭐ POURQUOI ON OUVRE (R9) : la mémoire longue EST la promesse du produit (« le sportif ne repart
+// jamais de zéro »). La réserver revenait à ce que Michel juge Milo sur une mémoire que PERSONNE
+// d'autre n'a — donc à corriger le mauvais Milo. Un débutant ne paie rien : sous 6 séances, les 5
+// dernières partent déjà en détail et cette fonction rend une chaîne vide.
+// 🔒 GARDÉE EN FONCTION (comme `_isNutriBeta()`) : si un jour il faut refermer ou re-restreindre,
+// c'est une ligne à changer, pas une chasse aux usages.
+const MEMOIRE_LARGE_EMAILS=[];   // vide = plus de restriction (l'historique est gardé par R30)
+function _memoireLargeOn(){ return true; }
 // ─── ⏱️ SON RYTHME RÉEL — le temps qu'une série lui coûte VRAIMENT (ft-v826) ──────────────
 // 3ᵉ retour de la séance du 10/08 : « il ne prend pas en considération la phase de décharge et
 // de charge des poids, qui peut prendre du temps ; quand on demande une séance d'une heure,
@@ -1143,6 +1151,13 @@ function _lightMsg(m){
     role: m.role,
     content: (typeof m.content === 'string') ? m.content
            : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text ? '[photo] ' + (m.content.find(p=>p&&p.type==='text').text) : '[photo]') : ''),
+    /* ⛔ L'HORODATAGE DOIT PASSER PAR ICI, sinon il meurt au premier enregistrement (ft-v1010).
+       C'est le point de passage OBLIGÉ vers `localStorage` ET vers `S.coachConversations` :
+       un `ts` posé à la création mais absent d'ici serait perdu à la seconde suivante — R4,
+       l'information reste dans l'objet en mémoire et n'atteint jamais la donnée gardée.
+       ⛔ ET ON N'EN INVENTE PAS pour les anciens messages (R29) : `ts` absent reste absent.
+       Un horodatage fabriqué serait pire que pas d'horodatage — il aurait l'air vrai. */
+    ...(m.ts?{ts:m.ts}:{}),
     ...(m._silent?{_silent:true}:{}) // consigne interne (débrief auto) : gardée pour le contexte, jamais affichée
   };
 }
@@ -1205,15 +1220,34 @@ function exporterConversationsMilo(){
     L.push('');
     L.push('══════════════════════════════════════════════════════');
     L.push('');
+    /* ⏱️ CHAQUE MESSAGE PORTE SA DATE (26/08/2026, ft-v1011) — la moitié qui manquait.
+       ft-v1010 a posé le `ts` À LA CRÉATION et l'a fait survivre au stockage ; mais PERSONNE
+       ne le lisait. Michel, en relisant son propre export : « il va falloir horodater les
+       conversations ». Il avait raison : sans date, on ne peut situer AUCUNE phrase de Milo
+       dans le temps — c'est très exactement ce qui m'a empêché de dater sa conversation du
+       19/08 quand il me l'a envoyée. *Une donnée écrite que rien ne relit n'existe pas* (R5).
+       ⛔ LE JOUR NE SE RÉPÈTE PAS À CHAQUE LIGNE : il s'écrit quand il CHANGE, et l'heure
+       seule ensuite. Une date sur les 287 messages noierait la conversation sous l'horodatage
+       — ce qu'on veut, c'est retrouver un moment, pas remplir des colonnes (R19).
+       ⛔ ET RIEN N'EST INVENTÉ POUR LES ANCIENS (R29) : un message sans `ts` n'affiche pas
+       d'heure du tout. Tous ceux d'avant ft-v1010 sont dans ce cas — mieux vaut un trou
+       visible qu'une heure fausse qui aurait l'air vraie. */
+    const _jourFR = ts => new Date(ts).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    const _heureFR = ts => new Date(ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     const ecrire=(titre,msgs)=>{
       if(!msgs.length)return;
       L.push('╔═══ '+titre+' ═══');
       L.push('');
+      let jourCourant='';
       msgs.forEach(m=>{
+        if(m.ts){
+          const j=_jourFR(m.ts);
+          if(j!==jourCourant){ jourCourant=j; L.push('· · · '+j+' · · ·'); L.push(''); }
+        }
         const qui = m.role==='user' ? 'MOI' : 'MILO';
         const txt = (typeof m.content==='string') ? m.content
                   : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text || '[photo]') : '');
-        L.push('── '+qui+' ──');
+        L.push('── '+qui+' ──'+(m.ts?('  ('+_heureFR(m.ts)+')'):''));
         L.push(String(txt).trim());
         L.push('');
       });
@@ -1223,8 +1257,22 @@ function exporterConversationsMilo(){
     // Les rangées sont stockées de la plus récente à la plus ancienne : on les remet dans
     // l'ordre du temps, c'est ainsi qu'on relit une histoire.
     rangees.slice().reverse().forEach(c=>{
-      const d=c&&c.ts?new Date(c.ts).toLocaleDateString('fr-FR'):'?';
-      ecrire((c&&c.title?String(c.title):'Discussion')+' — '+d, propre(c&&c.messages));
+      /* ⚠️ LA DATE DU TITRE ÉTAIT CELLE DE LA CRÉATION, ET ELLE MENTAIT (26/08, ft-v1011).
+         Une discussion ne meurt pas le jour où elle naît : celle de Michel ouverte le 19/08
+         s'est poursuivie jusqu'au 25 — six jours d'écart. Le titre annonçait « 19/08 »,
+         donc en la relisant on datait tout son contenu du 19. *Un repère faux est pire
+         qu'un repère absent : on s'y fie.*
+         ⭐ Maintenant que les messages portent leur date, on affiche la PLAGE réelle —
+         et un seul jour reste un seul jour, on ne fabrique pas « du 19 au 19 ». */
+      const msgs=propre(c&&c.messages);
+      const ds=msgs.map(m=>m.ts).filter(Boolean);
+      const fmt=t=>new Date(t).toLocaleDateString('fr-FR');
+      let d;
+      if(ds.length){
+        const a=fmt(Math.min.apply(null,ds)), b=fmt(Math.max.apply(null,ds));
+        d = (a===b) ? a : (a+' → '+b);
+      } else d = (c&&c.ts) ? fmt(c.ts)+' (ouverte le)' : '?';   // ⛔ dit CE QU'ELLE EST, faute de mieux
+      ecrire((c&&c.title?String(c.title):'Discussion')+' — '+d, msgs);
     });
     const nom='mes-conversations-milo-'+((typeof today==='function')?today():new Date().toISOString().slice(0,10))+'.txt';
     const blob=new Blob([L.join('\n')],{type:'text/plain;charset=utf-8'});
@@ -1317,7 +1365,15 @@ function _persistCoachConvs(){
 function _convLightMsgs(){
   // tout le fil (borné par la place), plus seulement les 40 derniers : ce qu'on range
   // doit être ce qu'on avait, sinon « ranger » redevient « perdre une partie ».
-  return _fitBudget(coachHistory.map(m=>({role:m.role, content:_lightMsg(m).content})), _HIST_BUDGET);
+  /* ⛔⛔ ON REND `_lightMsg(m)` EN ENTIER, PAS SEULEMENT SON `.content` (ft-v1010).
+     Cette ligne reconstruisait `{role, content}` à la main et JETAIT donc tout le reste —
+     l'horodatage et le drapeau `_silent`. Or c'est ELLE qui alimente `S.coachConversations`
+     ET l'export : les dates mouraient à l'archivage, en silence.
+     ⚠️ Trouvé en mesurant le VRAI chemin (archiver puis relire), pas la fonction : mon
+     premier témoin appelait `_lightMsg` directement et était VERT pendant que la chaîne
+     réelle perdait tout. *Un test qui n'emprunte pas le chemin de la production ne teste
+     rien, il rassure* — c'est la leçon n°1 de `docs/SUIVI-AUDIT.md`. */
+  return _fitBudget(coachHistory.map(_lightMsg), _HIST_BUDGET);
 }
 function _convTitle(msgs){
   const fu=(msgs||[]).find(m=>m.role==='user'&&typeof m.content==='string'&&m.content.trim());
@@ -1386,7 +1442,10 @@ function loadCoachConv(id){
   if(idx<0){ closeCoachConvs(); return; }
   const conv=S.coachConversations.splice(idx,1)[0]; // devient le fil actif → retiré de la liste
   _persistCoachConvs();
-  coachHistory=(conv.messages||[]).map(m=>({role:m.role,content:m.content}));
+  /* ⛔ CETTE RECOPIE PERDAIT L'HORODATAGE (ft-v1010) : rouvrir une vieille conversation la
+     réenregistrait sans dates, et les effaçait donc DÉFINITIVEMENT. Le `_silent` était
+     déjà perdu ici de la même façon — les deux sont rétablis. */
+  coachHistory=(conv.messages||[]).map(m=>({role:m.role,content:m.content,...(m.ts?{ts:m.ts}:{}),...(m._silent?{_silent:true}:{})}));
   _saveCoachHist();
   closeCoachConvs();
   _showCoachChat();
@@ -2920,10 +2979,31 @@ SE SOUVENIR DE LA PROCHAINE SÉANCE ANNONCÉE (cohérence — « Milo se souvien
 
 PROFIL ATHLÈTE:
 ${S.name ? '- Prénom: '+S.name+' (utilise-le naturellement, sans le répéter à chaque phrase)\n' : '- Prénom: inconnu — ne dis PAS « Salut [prénom] » à vide, commence directement\n'}- Sexe: ${S.gender === 'H' ? 'Homme' : 'Femme'} | Âge: ${S.age} ans | Taille: ${S.height}cm | Poids: ${S.bw}kg
-- BMR: ${bmr} kcal | TDEE: ${tdee} kcal${_bd&&_bd.methode==='katch'?` → ⚖️ CALCULÉ SUR SA MASSE MAIGRE MESURÉE (${_bd.lm.lm} kg, ${_bd.lm.src} du ${_bd.lm.date}), formule Katch-McArdle. C'est un chiffre SOLIDE, tenant compte de sa composition corporelle réelle : la formule habituelle (poids/taille/âge) donnerait ${_bd.mifflin} kcal, soit ${_bd.kcal-_bd.mifflin>0?'+':''}${_bd.kcal-_bd.mifflin} kcal/jour. Tu peux t'appuyer dessus sans réserve.`:(_bd?` → ⚠️ ESTIMÉ sur poids/taille/âge (Mifflin-St Jeor)${_bd.raison?', '+_bd.raison:''} — cette formule ignore la composition corporelle et SOUS-ESTIME les personnes musclées (souvent de 100 à 200 kcal). Traite ce chiffre comme un ordre de grandeur, pas comme une mesure. Si la question porte sur ses calories, tu peux lui dire qu'un bilan corporel (Progrès → Poids) rendrait le calcul nettement plus juste — une fois, sans insister.`:'')}
+- BMR: ${bmr} kcal | TDEE: ${tdee} kcal${_bd&&_bd.methode==='katch'?` → ⚖️ CALCULÉ SUR SA MASSE MAIGRE (${_bd.lm.lm} kg, ${_bd.lm.src} du ${_bd.lm.date}), formule Katch-McArdle — un MEILLEUR point de départ que la formule habituelle (poids/taille/âge), qui donnerait ${_bd.mifflin} kcal, soit ${_bd.kcal-_bd.mifflin>0?'+':''}${_bd.kcal-_bd.mifflin} kcal/jour d'écart. ⚠️ Mais cette masse maigre est une ESTIMATION, pas une mesure : ${_bd.lm.nature==='saisie'?"elle est calculée à partir d'un % de masse grasse qu'il/elle a SAISI lui/elle-même":_bd.lm.nature==='deduite'?"elle n'était pas lisible sur le rapport, elle a été retrouvée par SOUSTRACTION (poids − masse grasse)":"une balance mesure un poids et une impédance, puis ESTIME le reste avec la formule de son fabricant"}. Appuie-toi sur le CHIFFRE et sur la TENDANCE de plusieurs mesures ; ne présente jamais une variation de quelques centaines de grammes comme un gain ou une perte de tissu, et ne qualifie pas ce chiffre de « mesuré ».`:(_bd?` → ⚠️ ESTIMÉ sur poids/taille/âge (Mifflin-St Jeor)${_bd.raison?', '+_bd.raison:''} — cette formule ignore la composition corporelle et SOUS-ESTIME les personnes musclées (souvent de 100 à 200 kcal). Traite ce chiffre comme un ordre de grandeur, pas comme une mesure. Si la question porte sur ses calories, tu peux lui dire qu'un bilan corporel (Progrès → Poids) rendrait le calcul nettement plus juste — une fois, sans insister.`:'')}
 - Niveau activité sportive: ${S.activityLevel} | Type travail: ${{bureau:'Bureau/Sédentaire',debout:'Debout/Statique',actif:'Actif/En mouvement (serveur, infirmier…)',physique:'Travail Physique'}[S.workType]||'Bureau'} (+${calcWorkExtra()} kcal NEAT)
 - Tabac: ${S.smoker?'Fumeur (BMR +7%, impact cardiovasculaire — adapter l\'intensité et conseiller l\'arrêt)':'Non-fumeur'}
-- Objectif principal: ${S.goal?GOAL_LABELS[S.goal]:'NON RENSEIGNÉ — ne présume pas son objectif, observe ses séances et DEMANDE-lui ce qu\'elle vise'}${S.goal2&&GOAL_LABELS[S.goal2]?' | Priorité complémentaire (pour l\'ENTRAÎNEMENT, pas la nutrition): '+GOAL_LABELS[S.goal2]+' → équilibre tes conseils d\'entraînement entre les deux, mais la nutrition suit le principal':''} | Phase: ${S.nutritionPhase === 'charge' ? 'Charge (+100 kcal)' : 'Décharge (−100 kcal)'}
+- Objectif principal: ${S.goal?GOAL_LABELS[S.goal]:'NON RENSEIGNÉ — ne présume pas son objectif, observe ses séances et DEMANDE-lui ce qu\'elle vise'}
+${(()=>{
+  /* ⭐⭐ L'HISTORIQUE DE L'OBJECTIF (ft-v1010) — la moitié qui manquait. Michel, le 19/08 :
+     « As-tu vu que j'avais changé d'objectif ? » → « Non ». Il disait vrai : l'app ne gardait
+     que la valeur du JOUR. Depuis, `_goalSet` journalise les CHANGEMENTS, et ils arrivent ici.
+     ⛔ RIEN N'EST INVENTÉ (R29) : sans changement enregistré, ce bloc N'EXISTE PAS — pas
+     d'en-tête vide, pas de « objectif stable depuis toujours » qu'on ne peut pas savoir. Un
+     compte créé avant aujourd'hui a un journal vide, et c'est la vérité.
+     ⛔ ET ON NE LUI DIT PAS QUOI EN FAIRE À CHAQUE FOIS : la consigne n'apparaît que sur un
+     changement RÉCENT (30 jours). Une note permanente serait du bruit qu'on finit par ne plus
+     lire (R19), et rappeler un virage vieux de six mois ferait dire une banalité. */
+  const gl=(S.goalLog||[]).slice(-4);
+  if(!gl.length) return '';
+  const j=(d)=>{ try{ return Math.round((new Date(today())-new Date(d))/86400000); }catch(e){ return 999; } };
+  const L=gl.map(g=>`  · ${g.date} : ${GOAL_LABELS[g.de]||g.de} → ${GOAL_LABELS[g.vers]||g.vers}${g.src==='observation'?' (suite à une observation de tes séances)':''}`);
+  const recent=gl[gl.length-1], nb=j(recent.date);
+  return `- ⚠️ SON OBJECTIF A CHANGÉ — ce n'est pas une valeur figée, c'est une DÉCISION qu'il/elle a prise :
+${L.join('\n')}`
+    + (nb<=30
+      ? `\n  → Le dernier changement date de ${nb===0?"AUJOURD'HUI":nb===1?'HIER':'il y a '+nb+' jours'}. Il/elle vient de passer de « ${GOAL_LABELS[recent.de]||recent.de} » à « ${GOAL_LABELS[recent.vers]||recent.vers} » : TIENS-EN COMPTE de toi-même (charges, reps, repos, calories) sans attendre qu'il/elle te le rappelle, et sans le lui faire répéter.`
+      : '');
+})()}${S.goal2&&GOAL_LABELS[S.goal2]?' | Priorité complémentaire (pour l\'ENTRAÎNEMENT, pas la nutrition): '+GOAL_LABELS[S.goal2]+' → équilibre tes conseils d\'entraînement entre les deux, mais la nutrition suit le principal':''} | Phase: ${S.nutritionPhase === 'charge' ? 'Charge (+100 kcal)' : 'Décharge (−100 kcal)'}
 ${(S.priorities&&S.priorities.length&&typeof _priorityLbl==='function')?`- 💪 MUSCLES PRIORITAIRES (là où il/elle veut progresser EN PRIORITÉ): ${S.priorities.map(_priorityLbl).join(', ')}. → Quand tu conseilles ou construis un programme, donne PLUS de fréquence, de volume et de variantes à ces muscles, tout en MAINTENANT le reste du corps. C'est comme un vrai coach qui programme autour des priorités de l'athlète. ⚠️ Ça ne change PAS l'objectif (qui reste le pilote) ni la nutrition — c'est juste l'emphase d'entraînement.`:''}
 - Discipline pratiquée: ${(S.discipline&&typeof DISC_LABELS!=='undefined'&&DISC_LABELS[S.discipline])||'non renseignée (ne présume pas — demande au besoin)'}${(S.discipline&&typeof DISC_CADRE!=='undefined'&&DISC_CADRE[S.discipline])?' — son cadre de travail CHIFFRÉ est plus bas (🎽), applique-le':''}
 ${S.level?`- Niveau: ${{debutant:'Débutant (encore récent en muscu — sois pédagogue, explique la technique, ne suppose pas les termes acquis, propose des charges prudentes)',intermediaire:'Intermédiaire (bases acquises — tu peux être plus technique et pousser la progression)',confirme:'Confirmé (expérimenté — parle-lui d\'égal à égal, techniques avancées bienvenues)'}[S.level]}`:''}
@@ -3216,6 +3296,7 @@ MÉTHODE DE COACHING (très important) :
 - ADAPTE la profondeur à son niveau : débutant → simple, pédagogue, priorité technique + sécurité ; intermédiaire/confirmé → technique, périodisation (phases de charge/décharge), notion de RPE et d'autorégulation. Jamais de conseils « bateau » servis à tout le monde.
 - COMME UN VRAI COACH, quand ta réponse dépend d'infos que tu n'as pas (ressenti, douleur, matériel dispo, sensations, temps, objectif du jour) : réponds D'ABORD avec ce que tu as, PUIS pose AU PLUS UNE question — la plus décisive — pour affiner au prochain tour. Ne devine jamais un fait de SANTÉ, et ne pose aucune question si tu as déjà de quoi répondre.
 - Connais et PROPOSE spontanément les mouvements FONDAMENTAUX, pas seulement les machines : au-delà du Big 3 (squat, développé couché, soulevé de terre), les incontournables — tractions, dips, pompes, rowing, développé militaire, fentes — pour construire une vraie base. Un débutant qui ne fait que des machines, oriente-le progressivement vers ces basiques.
+- 🏃 LE CARDIO A SA PROPRE FENÊTRE DANS L'APP — ⛔ NE LE METS JAMAIS DANS LA LISTE DES EXERCICES. Un vélo, un tapis ou un elliptique n'est pas un exercice de musculation : il n'a ni charge ni séries, et posé au milieu des exercices il ne compte ni dans les calories ni dans le suivi. La séance a DEUX emplacements dédiés : 🔥 AVANT (échauffement) et 🧊 APRÈS (cardio de fin) — les deux peuvent servir dans la même séance. Quand tu en proposes un, annonce-le en une ligne avec ces trois éléments : le TYPE (elliptique · tapis · vélo · rameur · corde à sauter — sinon dis simplement « cardio »), la DURÉE en minutes, et l'INTENSITÉ (légère · modérée · intense). Exemple : « Échauffement : 8 min d'elliptique en intensité légère ». ⚠️ Précise TOUJOURS la durée en minutes : sans elle, l'app ne peut rien enregistrer et n'inventera pas un chiffre. Et une séance de cardio SEULE est parfaitement valable — elle est comptabilisée comme les autres.
 - NUANCES à connaître : le cardio LÉGER (échauffement 5-10 min, marche en pente, vélo/elliptique tranquille, LISS) est BON et n'abîme pas une séance de force — au contraire il prépare le corps. Seul le cardio LONG et INTENSE juste AVANT du lourd nuit (interférence/fatigue). Distingue bien travail de FORCE (lourd, peu de reps, longue récup) et HYPERTROPHIE (volume, reps modérées).${S.premium?'\n- PREMIUM : tu peux t\'appuyer sur des programmes reconnus et validés par le monde sportif (5/3/1 de Wendler, StrongLifts 5x5, Push/Pull/Legs, PHUL, GZCLP…) et les ADAPTER à la personne (niveau, dispo, matériel, objectif) — jamais copier-coller sans adapter.':''}
 ${_catalogueContext()}
 
@@ -4134,7 +4215,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     ? [{ type: 'image', source: { type: 'base64', media_type: imgType, data: imgData } },
        { type: 'text', text: msg || 'Analyse cette photo.' }]
     : msg;
-  coachHistory.push({ role: 'user', content: userHistContent, ...(opts.silent?{_silent:true}:{}) });
+  coachHistory.push({ role: 'user', content: userHistContent, ts: Date.now(), ...(opts.silent?{_silent:true}:{}) });
   showTyping();
 
   try {
@@ -4230,7 +4311,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     if (_qr) _appendQuickReplies(_qr);
     // Étape 2 — débrief auto : on enregistre la mémoire durable (objectif/décision/tendances)
     if (opts.debriefSess) { try { _recordDebriefMemory(reply, { id: opts.debriefSess }); } catch(e){} }
-    coachHistory.push({ role: 'assistant', content: reply });
+    coachHistory.push({ role: 'assistant', content: reply, ts: Date.now() });
     _trimCoachHistory();   // ⚠️ borne de sécurité (400), plus la coupe à 20 qui perdait le début
     _saveCoachHist(); // fil persisté (survit à la fermeture de l'appli)
     try { localStorage.setItem('ft4_coach_lastts', String(Date.now())); } catch(e) {} // horodatage du dernier échange (pour la notion de délai)
@@ -4597,7 +4678,7 @@ function startPt001Test(){
   const n=sessions.length;
   const estMin=Math.max(1,Math.round(n*6/60)); // ~6 s / débrief (génération Opus + petit throttle)
   const msg='Ça va rejouer TES '+n+' séances dans l\'ordre : Milo débriefe chacune et vérifie l\'objectif de la fois d\'avant.\n\n• ~'+estMin+' min\n• Coût : '+(n+1)+' appels au modèle du Coach (quelques €)\n• '+n+' débriefs empilés dans le Coach\n\nÀ la fin : la question « Qui suis-je en tant que sportif ? » + un rapport exportable.\n\nLancer ?';
-  showConfirm('🧪 PT-001 · Test continuité', msg, ()=>_pt001Run(sessions));
+  showConfirm('🧪 PT-001 · Test continuité', msg, ()=>_pt001Run(sessions),'Lancer');
 }
 async function _pt001Run(allSessions){
   _pt001Running=true;
@@ -4632,8 +4713,8 @@ async function _pt001Run(allSessions){
       let mem=null; try{ mem=_parseDebriefMemory(res.reply); }catch(e){}
       try{ _recordDebriefMemory(res.reply, s); }catch(e){}
       // Continuité dans le fil (le prochain débrief voit l'objectif précédent)
-      coachHistory.push({role:'user',content:instr,_silent:true});
-      coachHistory.push({role:'assistant',content:res.reply});
+      coachHistory.push({role:'user',content:instr,ts:Date.now(),_silent:true});
+      coachHistory.push({role:'assistant',content:res.reply,ts:Date.now()});
       _trimCoachHistory();
       rows.push({ i:i+1, date:s.date||'?', ok:true, kind:'valid', ms:res.ms, status:res.status, err:'',
         len:res.reply.length, parsed:!!mem,
@@ -4933,7 +5014,7 @@ function _vcApplyPersona(p){
   // — Identité / profil —
   S.name=a.name||'Testeur'; S.gender=a.gender||'H'; S.email=''; // 'H'=Homme / 'F'=Femme (convention app)
   S.age=a.age||30; S.height=a.height||170; S.bw=a.bw||70;
-  S.goal=a.goal||''; S.goal2=a.goal2||''; S.priorities=a.priorities||[]; S.discipline=a.discipline||''; S.level=a.level||'';
+  S.goal=a.goal||''; S.goalLog=a.goalLog||[]; S.goal2=a.goal2||'';   // ⛔ anti-fuite : l'historique d'objectif AUSSI (ft-v1010) S.priorities=a.priorities||[]; S.discipline=a.discipline||''; S.level=a.level||'';
   S.activityLevel=a.activityLevel||'modéré'; S.workType=''; S.smoker=false;
   S.coachTone=a.coachTone||'';
   // — Morphologie / composition / mensurations —
@@ -5008,7 +5089,7 @@ function startVcTest(id){
   if(!S.url){ toast('URL du Coach IA absente','error'); return; }
   const p=VC_PERSONAS[id]; if(!p){ toast('Persona inconnu','error'); return; }
   const msg='Persona « '+p.nom+' » ('+p.resume+').\n\nOn injecte ce persona À LA PLACE de tes données (temporairement, RIEN n\'est écrit — tes vraies données reviennent après), on envoie son message à Milo, et on regarde s\'il respecte les ATTENDUS.\n\n1 appel au Coach. Lancer ?';
-  showConfirm('🎭 '+p.id+' · Test comportemental', msg, ()=>_vcRun(p));
+  showConfirm('🎭 '+p.id+' · Test comportemental', msg, ()=>_vcRun(p),'Lancer');
 }
 async function _vcRun(persona){
   _vcRunning=true;
@@ -5211,7 +5292,7 @@ function startEvalBench(compare){
       + '\n\n'+n+' appels au Coach, soit environ '+prix+'.'
       + '\n\n🛡️ Tes données ne sont PAS touchées : chaque scénario remplace ton profil le temps de la question, puis tout revient.'
       + '\n\nLancer ?';
-    showConfirm('🧪 Benchmark Milo — '+SC.length+' scénarios', msg, ()=>_evRun(SC, !!compare));
+    showConfirm('🧪 Benchmark Milo — '+SC.length+' scénarios', msg, ()=>_evRun(SC, !!compare),'Lancer');
   }).catch(e => toast('Corpus introuvable : '+e.message,'error'));
 }
 
@@ -5621,7 +5702,7 @@ function rejouerRouges(){
       +'corrige pas pareil.\n\n'
       +n+' appels au Coach, soit environ '+bas+' € à '+haut+' €.\n\n'
       +'🛡️ Tes données ne sont pas touchées.\n\nLancer ?',
-      ()=>_evRun(sous, false, rep));
+      ()=>_evRun(sous, false, rep),'Rejouer');
   }).catch(e=>toast('Corpus introuvable : '+e.message,'error'));
 }
 
@@ -6496,8 +6577,29 @@ function _ecrireExport(avecConversations, seancesSeules){
   }catch(e){toast('Erreur export : '+e.message,'error');}
 }
 
+/* ⛔⛔ LA COURSE EST PROUVÉE, PAS SUPPOSÉE (ft-v993, 24/08/2026). Mesurée dans un navigateur,
+   en remplaçant le RÉSEAU et rien d'autre : deux résumés déclenchés à 20 ms d'écart envoient
+   tous les deux `existingMemory:"MÉMOIRE DE DÉPART"`, et le dernier REVENU écrase l'autre.
+   Résultat mesuré : « FAIT-B » perdu, sans erreur, sans trace. *Une mémoire acceptée par la
+   personne disparaissait en silence* — c'est la règle d'or #3 (zéro perte) appliquée à ce que
+   Milo retient d'elle.
+   ⭐ CE QUI REND LA COURSE POSSIBLE : `S.coachMemory` est lu au DÉPART de l'appel, et réécrit
+   au RETOUR. Entre les deux, n'importe quel autre appel peut lire la même valeur périmée.
+   L'appelant (coach.js:4251) ne fait pas `await` — c'est voulu, l'UI ne doit jamais attendre.
+   ⛔ LE CORRECTIF NE REND DONC PAS L'APPEL BLOQUANT : on SÉRIALISE dans une file, exactement
+   comme le débrief de ft-v979 (R13/R2 — on ne réinvente pas un 2ᵉ mécanisme d'attente). Chaque
+   résumé part quand le précédent est fini, et relit `S.coachMemory` À CE MOMENT-LÀ : il travaille
+   donc toujours sur la version à jour, et plus personne n'écrase personne.
+   ⚠️ La file ne se casse jamais : un appel en échec passe la main au suivant (2ᵉ argument de
+   `.then`), sinon une seule panne réseau gèlerait la mémoire pour le reste de la session. */
+let _memFile=Promise.resolve();
 async function _saveCoachMemory(){
   if(!S.url||!S.email)return; // construite pour TOUS (mémoire = acquis) — plus de barrière premium
+  _memFile=_memFile.then(_resumeCoachUn,_resumeCoachUn);
+  return _memFile;
+}
+async function _resumeCoachUn(){
+  if(!S.url||!S.email)return;
   try{
     const resp=await fetch(_aiUrl('summarizeCoach'),{method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},

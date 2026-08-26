@@ -2086,6 +2086,24 @@ function _afSuggPrendreLocale(i){
   _afSetSrc({saisie:'historique', origine:e.origine||'utilisateur',
              sourceId:e.sourceId||null, etat:e.etat||null, per100:e.per100||null,
              attendu:_afLuFormulaire()});
+  /* ⚖️ SANS POUR-100 G, ON PROPOSE QUAND MÊME DE CHANGER LA QUANTITÉ (ft-v999+)
+     Michel, deux captures à l'appui : « il y a toujours le bug sur des aliments que j'ai rentrés
+     moi-même et que je veux réutiliser — comme je l'ai rentré avec le code-barre on ne peut plus
+     remettre la quantité voulue. Ça fait pareil pour la ratatouille. »
+     ⛔⛔ REPRODUIT AVANT DE CODER, et le cas est plus étroit qu'il n'y paraît : ft-v984 marche
+     parfaitement quand le scan a rapporté un pour-100 g (mesuré : bloc affiché, « 129 kcal/100g
+     (ta dernière saisie) »). Le trou est le cas où **Open Food Facts n'a PAS les valeurs /100 g**
+     — fiche incomplète, très fréquent sur les produits de marque (« Steak haché … (U) », « Iso
+     zero protein (ASL) »). La personne tape alors ses macros à la main, et l'entrée part avec
+     `per100:null` ET `q:null`. À la reprise, la condition de ft-v984 ne peut pas être remplie.
+     ⭐ R13/R2 — RIEN N'EST RÉINVENTÉ : `_afMajAncre()` sait DÉJÀ faire exactement ça depuis
+     ft-v975 (rescale par PROPORTION, et à défaut d'ancre des portions ½ · 1 · 1½ · 2 · 3). Il
+     était branché sur l'estimation IA et sur la saisie libre — pas ici. *Le mécanisme existait,
+     posé d'un seul côté* : c'est le même oubli que ft-v973, ft-v975 et ft-v984, la 4ᵉ fois.
+     ⛔ IL SE TAIT TOUT SEUL quand un pour-100 g existe (`if(_bcNutr) → cacher`), donc les deux
+     mécanismes ne peuvent pas s'afficher ensemble (R2). Et il n'invente aucun poids (R29) :
+     sans ancre il n'offre que des multiplicateurs, vrais quelle que soit la portion de départ. */
+  if(typeof _afMajAncre==='function') _afMajAncre();
   _afNoteEtat(e.name||'');
   _afSuggVider();
   toast('Repris de ton journal 👍','success');
@@ -2155,13 +2173,20 @@ let _journalJour=null;
 let _journalReplie={};
 function _journalPli(lbl,ouvert){ _journalReplie[lbl]=!ouvert; }
 function _journalJourActif(){ return _journalJour || today(); }
-function journalNav(dir){
-  const d=new Date(_journalJourActif()+'T12:00:00');
-  d.setDate(d.getDate()+dir);
-  const ymd=d.toISOString().slice(0,10);
-  if(ymd>today()) return;                          // ⛔ jamais dans le futur
+/* 📅 UN SEUL POINT D'ENTRÉE POUR CHANGER DE JOUR (ft-v1004, R2). La bande des 7 jours et les
+   flèches ‹ › mènent toutes les deux ici : deux façons de poser `_journalJour` finiraient par
+   diverger (l'une oublierait la borne du futur, ou le re-rendu). */
+function journalAllerA(ymd){
+  if(!ymd || ymd>today()) return;                  // ⛔ jamais dans le futur
   _journalJour=(ymd===today())?null:ymd;
   renderFoodJournal();
+}
+function journalNav(dir){
+  /* ⏰ MIDI, jamais minuit : une date lue à minuit bascule d'un jour selon le fuseau — famille
+     « fuseaux horaires » de BUGS.md, qui a déjà fait rougir 6 fixtures le 23/08. */
+  const d=new Date(_journalJourActif()+'T12:00:00');
+  d.setDate(d.getDate()+dir);
+  journalAllerA(d.toISOString().slice(0,10));
 }
 let _editFoodTs=null, _editFoodMeal='dejeuner';
 /* ⚖️ MODIFIER LE POIDS D'UNE ENTRÉE (22/08/2026) — Michel, sur un « Oeuf cru » : « on ne peut
@@ -2779,7 +2804,7 @@ function obNext(step){
     // étape Niveau (son propre écran) — le niveau est déjà posé par obSetLevel
     if(_obLevel)S.level=_obLevel;
   }else if(_obStep===4){
-    S.goal=_obGoal;
+    _goalSet(_obGoal,'inscription');   // ⛔ 'inscription' = pas un changement, rien n'est journalisé (ft-v1010)
   }else if(_obStep===6){
     // étape Blessure/zone fragile → Profil Santé (le Gardien la lira)
     _obApplyInjuries();
@@ -2946,7 +2971,7 @@ async function obCheckEmailAndFinish(){
 function finishOnboarding(){
   const btn=document.getElementById('ob-start-btn');
   if(btn){btn.style.display='';btn.disabled=false;btn.textContent='⚡ COMMENCER';}
-  if(!_obDataRestored){S.goal=_obGoal;S.gender=_obGender;}
+  if(!_obDataRestored){_goalSet(_obGoal,'inscription');S.gender=_obGender;}
   const emailFinal=(document.getElementById('ob-email-final')||{}).value||'';
   if(emailFinal&&!S.email){S.email=emailFinal.trim();}
   else if(emailFinal){S.email=emailFinal.trim();}
@@ -3580,7 +3605,7 @@ function resetOnboardingTest(){
     try{localStorage.clear();}catch(e){}   // dans le clone : n'efface que les clés cl_ (stockage isolé)
     try{document.documentElement.classList.remove('ob-done');}catch(e){}
     location.reload();
-  });
+  },'Recommencer');
 }
 // Demande le code de secours (appareil sans email admin) — overlay simple
 function _promptAdminCode(){
@@ -5551,7 +5576,7 @@ function clearAppCache(){
     setTimeout(_fillStorageInfo,1500);
   };
   if(typeof showConfirm==='function'){
-    showConfirm('Vider le cache ?','Ça libère de la place et réinstalle les figurines. Tes séances, records et réglages ne sont PAS touchés.',go);
+    showConfirm('Vider le cache ?','Ça libère de la place et réinstalle les figurines. Tes séances, records et réglages ne sont PAS touchés.',go,'Vider');
   } else go();
 }
 // Barre d'installation : se remplit pendant que le Service Worker met les fichiers en cache (1re visite / mise à jour)
