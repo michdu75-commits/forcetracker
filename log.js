@@ -3466,8 +3466,19 @@ async function finishWorkout(){
   _checkLevelUp(!!_bestPr);
   _cloudSyncSessions();
   if(S.connected&&S.url){
-    const ok=await syncSheets(sess);
-    if(ok){
+    /* ⛔⛔ `syncSheets` REND UN OBJET, PAS UN BOOLÉEN (26/08/2026) — et un objet est TOUJOURS vrai.
+       L'ancien `const ok=…; if(ok)` prenait donc `{ok:false,error:'Timeout (8s)'}` pour un succès.
+       ⚠️ Deux dégâts, et le second est le vrai : ① le toast annonçait « Séance synchronisée ! »
+       alors que rien n'était parti ; ② surtout, `synced=true` était posé — or la file de
+       rattrapage (`_retrySheetQueue`) filtre `s.synced===false`. **Une séance perdue en route
+       n'était donc JAMAIS reprise**, ni au retour du réseau, ni au démarrage suivant : le seul
+       mécanisme de secours était désarmé par la ligne censée constater le succès.
+       ⭐ L'autre appelant, `_retrySheetQueue` (tracking.js), lisait `res.ok` correctement depuis
+       toujours : deux copies du même geste, une juste, une fausse (R2). C'est la copie posée sur
+       le chemin le plus fréquent — la fin de séance — qui était la mauvaise.
+       ⛔ Mesuré avant/après par le vrai chemin (seul `fetch` remplacé), pas relu. */
+    const res=await syncSheets(sess);
+    if(res&&res.ok){
       if(S.sessions.length)S.sessions[0].synced=true;
       try{localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));}catch(e){}
       toast(`Séance synchronisée ! 🔥 ${calData.total} kcal`,'success');

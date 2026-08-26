@@ -6,7 +6,31 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1013`.
+- **Version en ligne (live) :** `ft-v1015`.
+- ☁️⭐⭐ **UN ÉCHEC DE SYNC GOOGLE SHEETS ÉTAIT COMPTÉ COMME UN SUCCÈS — CORRIGÉ** (ft-v1015).
+  Trouvé en creusant la question de Michel : *« j'ai l'impression qu'il n'y a pas d'historique ou
+  c'est moi ? »*.
+  ⛔⛔ `syncSheets` **rend un OBJET, pas un booléen** — et un objet est toujours vrai. Le
+  `const ok = await syncSheets(sess); if(ok)` de `finishWorkout` prenait `{ok:false,error:…}`
+  pour un succès.
+  ⚠️⚠️ **Deux dégâts, le second est le vrai** : ① le toast disait *« Séance synchronisée ! »*
+  alors que rien n'était parti ; ② `synced=true` était posé, or la file de rattrapage filtre
+  `s.synced===false` → **une séance perdue en route n'était JAMAIS reprise**. *Le seul mécanisme
+  de secours était désarmé par la ligne censée constater le succès.*
+  ⭐ **L'autre appelant lisait `res.ok` correctement depuis toujours** (`_retrySheetQueue`) —
+  deux copies du même geste, une juste, une fausse (**R2**), et la fausse était en fin de séance.
+  ⭐⭐ **Mesuré par le vrai chemin** (seul `fetch` remplacé) : avant `synced:true` / 0 en file,
+  après `synced:false` / 1 en file, non-régression du cas réseau OK vérifiée.
+  ⚠️ **Les séances déjà perdues ne reviennent pas** (elles portent `synced:true`). Rien n'est
+  perdu côté données — l'historique local est intact et `saveProfile` est un chemin distinct —
+  c'est le **classeur Google Sheets** qui peut avoir des trous.
+  ⏭️ **Deux suites nommées, non construites** : ① la ligne du Sheet **ne porte aucun email**, donc
+  toutes les séances de tous les testeurs s'empilent dans le même onglet `Sessions` ; ② l'**historique
+  du score de récup** n'a jamais été écrit — mesuré **44 → 56 dans la même journée** (la fatigue
+  s'efface en continu), donc il faudra garder **le score ET l'heure**, jamais un score nu, sinon
+  la courbe montrerait l'heure de la journée au lieu de la récupération.
+  ⛔ **Et l'historique du SOMMEIL, lui, reste caché exprès** : c'est la décision de ft-v547
+  (*« ça prend trop de place »*, Michel), reconfirmée le 26/08 — *ne pas la « réparer »* (**R30**).
 - 📋⭐⭐ **CRÉER UN PROGRAMME DEPUIS ZÉRO — LIVRÉ** (ft-v1012). 2ᵉ brique du chantier écran
   Séance (`docs/SEANCE-DESSAI.md` §8) et le vrai besoin de Michel : *« je vais vouloir créer mon
   programme et il va falloir que ce soit rapide »*.

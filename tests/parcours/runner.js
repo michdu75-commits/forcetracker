@@ -13182,6 +13182,84 @@ console.log('\n-- CXX. L\'export « avec mes discussions » n\'oublie plus rien 
   await cx.close();
 }
 
+/* == BLOC CXXI - UN ECHEC DE SYNC SHEETS ETAIT COMPTE COMME UN SUCCES (ft-v1015) ==
+   Trouve en creusant la question de Michel : « j'ai l'impression qu'il n'y a pas d'historique ».
+   ⛔⛔ `syncSheets` REND UN OBJET, PAS UN BOOLEEN — et un objet est TOUJOURS vrai. Le
+   `const ok=await syncSheets(sess); if(ok)` de `finishWorkout` prenait donc
+   `{ok:false,error:'Timeout (8s)'}` pour un succes.
+   ⚠️ Deux degats, et le second est le vrai : ① le toast annoncait « Seance synchronisee ! »
+   alors que rien n'etait parti ; ② surtout, `synced=true` etait pose, or `_retrySheetQueue`
+   filtre `s.synced===false` — **une seance perdue en route n'etait JAMAIS reprise**. Le seul
+   mecanisme de secours etait desarme par la ligne censee constater le succes.
+   ⭐ L'autre appelant (`_retrySheetQueue`, tracking.js) lisait `res.ok` correctement depuis
+   toujours : deux copies du meme geste, une juste, une fausse (R2) — et la fausse etait sur le
+   chemin le plus frequent, la fin de seance.
+   ⛔⛔ LE TEMOIN PASSE PAR LE VRAI CHEMIN : `finishWorkout` est appelee pour de bon, seul
+   `fetch` est remplace. Un test qui appellerait `syncSheets` a la main ne mesurerait pas la
+   ligne fautive — elle est chez l'APPELANT (lecon n°1 de `docs/SUIVI-AUDIT.md`).
+   ⚠️ ET IL FAUT COUPER `_demoMode` : `seedScript` le pose a `true`, et `syncSheets` rend alors
+   `{ok:true}` SANS toucher au reseau. Sans cette ligne, le temoin serait vert en ne mesurant
+   rien — le meme piege que le levier pose a cote du code (ft-v1003, ft-v995). */
+console.log('\n-- CXXI. Un échec de sync Sheets n\'est plus compté comme un succès (ft-v1015) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ok:'1',ft4_email:'temoin@exemple.fr'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const G=await pg.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const vraiToast=window.toast, vraiFetch=window.fetch;
+    let reseauOk=false, toasts=[];
+    window.toast=(m)=>{toasts.push(String(m).split('🔥')[0].trim());};
+    window.fetch=function(u,o){
+      if(o&&typeof o.body==='string'&&o.body.indexOf('logSession')>=0){
+        return reseauOk ? Promise.resolve(new Response('{"status":"ok","count":1}',{status:200}))
+                        : Promise.reject(new Error('Failed to fetch'));   // la panne reseau reelle
+      }
+      return vraiFetch.apply(this,arguments);
+    };
+    const uneSeance=async()=>{
+      S.wkt=null; persist(); startWorkout();
+      S.wkt.exs=[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:''}]}];
+      persist(); toasts=[]; await finishWorkout();
+      return {toast:toasts.filter(x=>/synchronis|sauvegard|termin/i.test(x))[0]||null,
+              synced:(S.sessions[0]||{}).synced,
+              enAttente:(S.sessions||[]).filter(x=>x.synced===false).length};
+    };
+    /* ⛔ SANS CA LE TEMOIN NE MESURE RIEN : en mode demo, syncSheets rend {ok:true} tout seul. */
+    window._demoMode=false; S.connected=true; S.url='https://exemple.invalid/exec'; S.sessions=[];
+    const echec=await uneSeance();
+    S.sessions=[]; reseauOk=true;
+    const succes=await uneSeance();
+    window.fetch=vraiFetch; window.toast=vraiToast; window._demoMode=true;
+    return {echec,succes};
+   }catch(e){return {err:String(e)};}
+  });
+  if(G.err)t('CXXI n\'a pas pu tourner',false,G.err);
+  else{
+    t('⛔⛔ RÉSEAU EN ÉCHEC : la séance reste `synced:false` (sinon la file ne la reprend JAMAIS)',
+      G.echec.synced===false, 'reçu : synced='+JSON.stringify(G.echec.synced));
+    t('⛔⛔ … et elle est bien DANS la file de rattrapage',
+      G.echec.enAttente===1, 'en attente = '+G.echec.enAttente);
+    t('⭐ … et le toast ne MENT pas (« sauvegardée », pas « synchronisée »)',
+      G.echec.toast==='Séance sauvegardée !', 'reçu : '+JSON.stringify(G.echec.toast));
+    t('⭐ NON-RÉGRESSION — réseau OK : `synced:true`, file vide, toast « synchronisée »',
+      G.succes.synced===true && G.succes.enAttente===0 && G.succes.toast==='Séance synchronisée !',
+      JSON.stringify(G.succes));
+    /* ⛔ La regle, pas la mesure du jour : l'appelant doit lire le CHAMP, jamais l'objet. */
+    t('⛔⛔ `finishWorkout` lit `res.ok`, il ne teste plus l\'objet rendu par `syncSheets`',
+      /const\s+res\s*=\s*await\s+syncSheets\(sess\);[\s\S]{0,40}if\(res\s*&&\s*res\.ok\)/
+        .test(fs.readFileSync(path.join(ROOT,'log.js'),'utf8')), '');
+    t('⛔ … et `syncSheets` rend toujours un OBJET (c\'est ce qui rend la règle vraie)',
+      /return\s*\{ok:false,error:/.test(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8')), '');
+  }
+  await cx.close();
+}
+
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
