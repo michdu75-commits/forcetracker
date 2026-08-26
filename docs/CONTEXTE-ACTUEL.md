@@ -6,8 +6,8 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1011`.
-- 📋⭐⭐ **CRÉER UN PROGRAMME DEPUIS ZÉRO — LIVRÉ** (ft-v1011). 2ᵉ brique du chantier écran
+- **Version en ligne (live) :** `ft-v1012`.
+- 📋⭐⭐ **CRÉER UN PROGRAMME DEPUIS ZÉRO — LIVRÉ** (ft-v1012). 2ᵉ brique du chantier écran
   Séance (`docs/SEANCE-DESSAI.md` §8) et le vrai besoin de Michel : *« je vais vouloir créer mon
   programme et il va falloir que ce soit rapide »*.
   ⛔⛔ **Aucun chemin ne menait à la création d'un programme** : il fallait monter une SÉANCE

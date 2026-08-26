@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1011`** (prochaine : `ft-v1012`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1012`** (prochaine : `ft-v1013`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -437,7 +437,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
 
-**ft-v1011 — 📋 CRÉER UN PROGRAMME DEPUIS ZÉRO — la porte qui manquait** — 2ᵉ brique du chantier écran Séance (`docs/SEANCE-DESSAI.md` §8), et le vrai besoin de Michel : *« je vais vouloir créer mon programme et il va falloir que ce soit rapide »*.
+**ft-v1012 — 📋 CRÉER UN PROGRAMME DEPUIS ZÉRO — la porte qui manquait** — 2ᵉ brique du chantier écran Séance (`docs/SEANCE-DESSAI.md` §8), et le vrai besoin de Michel : *« je vais vouloir créer mon programme et il va falloir que ce soit rapide »*.
 
 **⛔⛔ IL N'EXISTAIT AUCUN CHEMIN VERS LA CRÉATION D'UN PROGRAMME.** La modale « Mes Programmes » ne proposait que *« 💾 Sauvegarder la séance actuelle »* : pour obtenir un **programme**, il fallait d'abord monter une **séance** entière à la main. *Un détour qui n'était pas un choix, juste un manque.*
 
@@ -452,7 +452,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 **⛔⛔ LE TÉMOIN LE PLUS IMPORTANT DU LOT VÉRIFIE QUE RIEN NE FUIT.** Si le mode retombait en `workout` après le 1ᵉʳ ajout, les 5 suivants partiraient **silencieusement dans la séance du jour** au lieu du programme. Mesuré : 6 ajouts d'affilée, mode tenu, **séance restée vide**, puis retour à `workout` à la fermeture.
 
 **⛔ LE VOCABULAIRE SUIT** : *« + Ajouter »* devient *« + Créer ma séance »* (Michel : *« même le bouton ajouter n'est pas top »*), et le message de l'écran vide disait *« Appuie sur + Ajouter un exercice »* — il **désignait un bouton qui ne s'appelait pas comme ça**. ⚠️ Le message de la liste vide (*« Crée une séance et utilise Sauvegarder »*) est devenu **faux le jour où le bouton est arrivé** : il envoyait faire le détour juste au-dessous du raccourci. *Quand on ouvre une porte, on relit ce que disent les panneaux.*
-Tests : **parcours 1441/1441** (+10, bloc CXVIII), croisés 50/50, calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou. ⚠️ **Contrôle négatif peu instructif, et autant l'écrire** : `creerProgramme` n'existe pas de l'autre côté, il ne dit qu'une chose. ⭐ **Ce qui tient lieu de preuve est ailleurs** : le parcours entier rejoué dans un navigateur — annuler ne laisse rien · un nom vide est refusé · un 2ᵉ programme s'ajoute sans écraser le 1ᵉʳ · et **éditer un programme existant remplace toujours**, la non-régression qui compte puisque c'est le même `saveProgEdit` qui sert aux deux. ⭐ Vérifié à l'écran (modale et éditeur). 🤝 Protocole de partage appliqué. Fichiers : `log.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1011. |
+Tests : **parcours 1441/1441** (+10, bloc CXVIII), croisés 50/50, calculs 266/266, muscles 241/241, dates 7/7, données 102 classées 0 trou. ⚠️ **Contrôle négatif peu instructif, et autant l'écrire** : `creerProgramme` n'existe pas de l'autre côté, il ne dit qu'une chose. ⭐ **Ce qui tient lieu de preuve est ailleurs** : le parcours entier rejoué dans un navigateur — annuler ne laisse rien · un nom vide est refusé · un 2ᵉ programme s'ajoute sans écraser le 1ᵉʳ · et **éditer un programme existant remplace toujours**, la non-régression qui compte puisque c'est le même `saveProgEdit` qui sert aux deux. ⭐ Vérifié à l'écran (modale et éditeur). 🤝 Protocole de partage appliqué. Fichiers : `log.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1012. |
 
 **ft-v1010 — 🎯 L'OBJECTIF GARDE SON HISTOIRE, ET LES MESSAGES LEUR DATE** — Michel, le 19/08, à Milo : *« As-tu vu que j'avais changé d'objectif ? »* → *« Non, je ne vois pas de changement d'objectif dans ce que j'ai sous la main. »* Il a fallu qu'il écrive *« j'étais en force max avant »* pour que Milo réagisse.
 
