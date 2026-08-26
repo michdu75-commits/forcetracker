@@ -3879,3 +3879,22 @@ Tests : **parcours 1305/1305** (+10, bloc CVI), calculs 266/266, muscles 241/241
 
 **⚠️ CE QUI NE PEUT PAS ÊTRE VÉRIFIÉ ICI, ET C'EST ÉCRIT** : un vrai appel facturé à l'API Anthropic, indisponible dans cet environnement — la première vraie donnée arrivera au premier appel de Michel en production.
 Tests : **parcours 1315/1315** (+10, bloc R), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, milo 10/10, données 102 classées 0 trou. Fichiers : `worker.js`, `Code.js`, `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`. sw.js ft-v990. |
+
+**ft-v991 — ⚖️ « MESURÉE » DEVIENT « ESTIMÉE » — le vocabulaire Katch de Milo** — priorité ③ tranchée par Michel, dernier point ouvert du contre-audit du 24/08.
+
+**⛔⛔ MESURÉ DANS UN VRAI NAVIGATEUR AVANT DE TOUCHER AU CODE, et le résultat est net** : les **trois** provenances possibles de la masse maigre — ① **lue** sur un rapport de balance · ② **DÉDUITE** par soustraction (poids − masse grasse) · ③ calculée depuis un **% de gras TAPÉ AU CLAVIER** — produisaient une phrase **IDENTIQUE MOT POUR MOT** dans le prompt : *« CALCULÉ SUR SA MASSE MAIGRE **MESURÉE** (…) C'est un chiffre **SOLIDE** (…) Tu peux t'appuyer dessus **sans réserve**. »*
+
+**⚠️⚠️ ET LE BRIEF DE DÉPART SE TROMPAIT DE CAUSE — c'est la mesure qui l'a dit, pas ma relecture.** Il annonçait *« motif regex qui capture trop tôt, repositionner ou affiner le motif »*. **Faux** : aucun motif ne capture trop tôt, la provenance **n'atteint jamais la sortie**. C'est **R4** dans sa forme la plus classique — *l'information existe dans la donnée et reste dans la donnée.* Le drapeau `lmDeduite` était bien écrit par `tracking.js`, et `leanMassRecente()` ne le transportait pas.
+
+**⛔⛔ POURQUOI C'EST PLUS QU'UN MOT — R32.** Une balance **MESURE** un poids et une impédance ; elle **ESTIME** tout le reste avec la formule de son fabricant. Dire *« mesurée »* d'un pourcentage de gras **tapé au clavier** n'est pas une approximation de langage : c'est **un fait faux sur la santé de quelqu'un**, présenté avec l'autorité d'un appareil. Trois phrases distinctes désormais, chacune nommant sa vraie source.
+
+**⭐⭐ ET LE TÉMOIN PROTÉGEAIT LA MAUVAISE PHRASE — c'est tout l'intérêt du cas.** Il épinglait le mot `MASSE MAIGRE MESURÉE` : **toute correction de R32 le faisait rougir et ressemblait donc à une régression**. C'est exactement pour ça que `docs/SUIVI-AUDIT.md` disait de le **corriger D'ABORD**. *Un test peut figer un bug aussi solidement qu'il protège un correctif — et rien ne distingue les deux de l'extérieur.*
+
+**⭐ KATCH N'EST PAS DÉVALUÉ POUR AUTANT, et c'était le vrai risque.** Le prompt garde *« un MEILLEUR point de départ que la formule habituelle »* et l'**écart chiffré** avec Mifflin. Corriger un excès par l'excès inverse aurait fait douter Milo d'un calcul qui **reste le bon** — mesuré en ft-v833 : **+180 kcal/jour** chez Michel. On retire l'aplomb, pas la formule.
+
+**⭐ LE DRAPEAU DE ft-v978 ÉTAIT ÉCRIT PUIS JAMAIS LU.** Son commentaire disait lui-même *« comportement différé mais NOMMÉ (R3) : il existe pour la correction du vocabulaire de Milo »*. C'est fait — et le commentaire est **mis à jour**, sinon il annonce dans six mois une correction déjà livrée (**R23**).
+
+**⚠️ COMPTÉ LES ENDROITS (famille #3 de `BUGS.md`)** : la phrase n'existait qu'à **UN seul endroit** en production — pas de jumelle posée d'un côté et pas de l'autre, contrairement à ft-v973/975/984.
+
+**⭐ ET L'ÉCRAN ÉTAIT DÉJÀ PLUS HONNÊTE QUE LE PROMPT**, ce qui est le motif exact de ft-v978 : l'aide du BMR dit depuis toujours *« chaque marque a sa formule secrète, invérifiable »* pendant que Milo, lui, disait *« sans réserve »*. **Dans presque chaque cas, le bon comportement existe déjà à quelques lignes de là.**
+Tests : **parcours 1315+8/1315+8** (bloc BMR étendu), et les témoins voisins (Katch par pesée, marqueur déduit, affichage écran) **verts sans modification**. ⚠️ **Ce qui n'est PAS prouvé ici, et autant l'écrire** : que Milo *obéisse* à la nuance. `tests/milo` prouve la **PRÉSENCE** d'une règle dans le contexte, jamais son **OBÉISSANCE** — seul un A/B sur le vrai modèle le dirait, et il coûte des appels. Fichiers : `state.js`, `coach.js`, `tracking.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`. sw.js ft-v991. |
