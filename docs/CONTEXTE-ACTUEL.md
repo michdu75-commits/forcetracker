@@ -28,6 +28,23 @@
   l'**écran rendu**, donc l'horloge réelle — à 20:12 Paris, *« ce qu'il te reste »* se tait
   exprès (ft-v1029). Horloge du navigateur figée à 14 h, aucune exigence affaiblie.
   ⏭️ **Le socle des 8 briques est complet ; ce qui reste est ailleurs** (voir plus bas).
+- ⚧⭐⭐ **LE SEXE N'EST PLUS PRÉ-COCHÉ À L'INSCRIPTION — LIVRÉ** (ft-v1040). Michel : *« pas de
+  sexe pré coché mais bloquant pour l'inscription sinon c'est n'importe quoi »*.
+  ⛔⛔ **Le défaut tenait en une classe CSS** : « ♂ Homme » portait `ob-sel` d'avance et
+  `_obGender` valait `'H'`. *L'app ne pouvait pas distinguer « il a choisi homme » de « elle
+  n'a pas regardé ».* Aucun des deux n'est coché, et l'étape **bloque** tant qu'on n'a pas
+  répondu — l'indice n'apparaît **qu'après une tentative** (R24).
+  ⭐ **Le coût, mesuré** : Mifflin diffère de **166 kcal** (+5 / −161) → **+257 kcal/jour** à
+  activité 1,55, plus la figurine, la santé, la morphologie, la masse grasse, le ton de Milo et
+  le cycle. C'est **R29**. ⭐ Nuance : avec un bilan corporel, l'app passe à Katch-McArdle, qui
+  ignore le sexe.
+  ⚠️⚠️ **Correction de ce que j'avais annoncé** : « un profil sans sexe renseigné », **ça
+  n'existe pas** — `S.gender` vaut toujours H ou F. L'asymétrie du code est réelle mais
+  inatteignable, et elle le reste (garde sur les deux écritures).
+  ⚠️⚠️ **Et 3 témoins ont rougi, les miens** : le bloc d'alignement Nutrition rendait « 0 ligne »
+  parce qu'il était **20 h 15 à Paris** — ma propre bascule du soir de ft-v1029. J'avais épinglé
+  l'heure sur les appels de **calcul**, pas sur le **rendu**. *Épingler une moitié du chemin ne
+  suffit pas : c'est le contexte entier qu'il faut figer* (`clock.setFixedTime`).
 - 🕰️⭐⭐ **BRIQUE 7 « TON HISTOIRE SPORTIVE » — SA PREMIÈRE PORTE** (ft-v1039). Michel :
   *« ah bah oui c'est super important »*. ⛔⛔ État mesuré avant : **socle seul, porte 0** —
   `dayStateLog` existait depuis des mois, **rien ne le relisait**.

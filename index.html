@@ -203,10 +203,21 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
         </div>
         <div class="ob-sub" style="text-align:left;width:100%;font-size:14px;">Juste ton prénom et ton sexe — pour que Milo t'appelle par ton nom et te conseille juste. Le reste, il te le demandera au bon moment.</div>
         <input class="ob-inp" id="ob-name" type="text" placeholder="Ton prénom" autocomplete="given-name" autocapitalize="words" maxlength="30" enterkeyhint="done" style="width:100%;">
+        <!-- ⛔⛔ AUCUN DES DEUX N'EST PRÉ-COCHÉ (ft-v1040, décision de Michel : « pas de sexe
+             pré coché mais bloquant pour l'inscription sinon c'est n'importe quoi »).
+             Avant, « ♂ Homme » portait `ob-sel` d'avance — donc l'app ne pouvait pas
+             distinguer « il a choisi homme » de « elle n'a pas regardé » : les deux
+             produisaient la même donnée. Le coût est mesuré : 166 kcal de métabolisme
+             (Mifflin : +5 homme / −161 femme), soit ~257 kcal/jour à activité 1,55 — sans
+             compter la figurine, les conditions de santé, la morphologie et le ton de Milo.
+             C'est R29 : l'erreur touche la personne, donc on DEMANDE au lieu de deviner. -->
         <div class="ob-gbrow" style="width:100%;">
-          <button class="ob-gbtn ob-sel" id="ob-gt-h" onclick="obSetGender('H')">♂ Homme</button>
+          <button class="ob-gbtn" id="ob-gt-h" onclick="obSetGender('H')">♂ Homme</button>
           <button class="ob-gbtn" id="ob-gt-f" onclick="obSetGender('F')">♀ Femme</button>
         </div>
+        <!-- Caché tant qu'on n'a pas essayé de passer sans répondre : une consigne affichée
+             d'emblée se lit comme un reproche par avance. -->
+        <div id="ob-gender-hint" style="display:none;width:100%;font-size:13px;color:var(--red);font-weight:700;margin-top:-4px;">Choisis-en un — ton métabolisme et tes repères en dépendent.</div>
       </div>
       <div class="ob-footer">
         <button class="btn btn-red" onclick="obNext(4)" style="font-size:17px;padding:16px;">Continuer →</button>
