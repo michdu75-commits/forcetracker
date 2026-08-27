@@ -110,7 +110,30 @@ gagner du temps en salle, c'est le cœur du produit. Le doc lui-même le pose en
 d'attendu vérifiable par du code — c'est un **arbitrage produit**, il revient à Michel. Le seul
 morceau qui serait mesurable, si on tranchait un jour : *une charge prescrite dépasse-t-elle le
 1RM connu ?* — mais ça, c'est déjà le sujet de ft-v980.
-**État : à trier** — et l'arbitrage est celui de Michel, pas une mesure.
+**⭐⭐ 27/08 — MICHEL DONNE LE CRITÈRE, ET IL RETOURNE LA QUESTION** : *« la coach savait que
+moi je m'y connais. Tout le monde ne connaît pas ce que représente le "lourd". »*
+👉 **Elle n'écrit pas « lourd » parce que le qualitatif serait meilleur — elle l'écrit parce
+qu'un RÉFÉRENTIEL COMMUN existe entre elle et lui.** *« Lourd » ne veut rien dire dans l'absolu :
+ça veut dire lourd POUR CETTE PERSONNE, SUR CET EXERCICE, CE MOIS-CI.* Le mot ne se suffit
+jamais à lui-même ; c'est la relation qui le rend lisible.
+
+**⭐ ET L'APP A DÉJÀ CE RÉFÉRENTIEL — vérifié dans le code, pas supposé** : `S.prs[exercice].rm1`,
+transmis à Milo (`coach.js:2561`), **et il sait déjà dire quand il manque** (`coach.js:2580` rend
+*« pas encore de record sur cet exo »*). *La donnée qui manquait au raisonnement était déjà là.*
+
+**👉 LE CRITÈRE, DONC — ce n'est pas « chiffrer OU qualifier » :**
+- **référence connue** → les DEUX, parce que le mot devient traduisible : *« lourd — environ 85 %
+  de ton max, soit ~95 kg »*. C'est le registre de la coach, rendu lisible pour qui ne l'a pas ;
+- **référence absente** → **ni l'un ni l'autre**. « Lourd » ne veut rien dire pour la personne, et
+  un chiffre inventé est **pire** — c'est très exactement **ft-v980** (3 × 5 à 95 kg, au-dessus du
+  tenable). On dit qu'on ne sait pas, et on propose de le découvrir (**Principe 18** : savoir
+  s'arrêter · **R29** : le droit de deviner dépend du coût de l'erreur).
+
+⛔ **Toujours pas promouvable en scénario tel quel** : « Milo devrait-il écrire "lourd" ? » n'a pas
+d'attendu vérifiable. ⭐ **MAIS la moitié basse l'est** : *quand aucun record n'existe sur
+l'exercice, Milo ne doit pas prescrire de charge chiffrée.* Ça, du code peut le vérifier — c'est
+la promotion à écrire le jour où on s'y met.
+**État : à trier** — le critère est nommé, l'implémentation reste à décider par Michel.
 
 ### 🟡 « Y A-T-IL UNE ÉVOLUTION PAR RAPPORT À MON PHYSIQUE ? » — il ne peut pas répondre
 **26/08/2026.** Michel a **3 études du corps** (11/07 · 28/07 · 25/08) et **aucune ne se compare à
