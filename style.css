@@ -1663,3 +1663,39 @@ html.ob-done #onboarding{display:none;}
 .tempo-chip{display:inline-block;margin-top:4px;padding:2px 7px;border-radius:999px;background:var(--bg3);
   box-shadow:inset 0 0 0 1px var(--sep);color:var(--t2);font-size:10.5px;font-weight:700;font-style:normal;
   line-height:1.5;white-space:nowrap;flex-shrink:0;align-self:center;}
+
+/* ─── 📐 ALIGNEMENT ET JUSTIFICATION DES CARTES NUTRITION (27/08/2026, ft-v1031) ──────
+   Michel, 5 captures à l'appui : « visuellement c'est pas propre, il faut que tout soit
+   aligné et justifié ».
+
+   ⛔⛔ LE DÉFAUT ÉTAIT MESURABLE, PAS UNE IMPRESSION — et sa cause tient en un mot :
+   `min-width`. Un MINIMUM laisse la colonne GRANDIR quand le texte est plus long, donc
+   « Collation 2 ~17h » (96 px) poussait sa ligne 18 px plus à droite que « Dîner ~21h »
+   (78 px). Mesuré avant correctif : le contenu démarrait à 116 · 124 · 126 · 126 · 134.
+   *Cinq départs différents pour cinq lignes qui se lisent en colonne.*
+   👉 `grid-template-columns` avec une largeur FIXE : la colonne ne dépend plus de son
+   contenu, et un libellé plus long passe à la ligne au lieu de décaler tout le reste.
+   ⚠️ Les largeurs (100 px · 120 px) sont MESURÉES sur le libellé le plus long rendu dans
+   la vraie police (99 px et 119 px), pas choisies à vue. Un témoin les épingle : un
+   libellé futur plus large fera rougir la livraison plutôt que de désaligner en silence.
+
+   ⚠️ « JUSTIFIÉ » A ÉTÉ MESURÉ AVANT D'ÊTRE APPLIQUÉ, parce que sur une colonne étroite
+   la justification peut faire PIRE que mieux (des « rivières » de blanc entre les mots).
+   Mesuré sur les 4 paragraphes réels de l'onglet, à leur largeur réelle : l'écart maximal
+   entre deux mots passe de 3,0 px à 7,0-9,6 px, et le nombre de lignes comme la hauteur
+   ne bougent PAS. C'est net, et ça ne coûte aucun défilement de plus.
+   ⚠️ `hyphens:auto` est posé pour Safari (l'appareil de Michel), où la césure française
+   réduit encore ces écarts. Il ne change RIEN dans le Chromium des tests — mesuré,
+   7,0 px avec comme sans. *On l'écrit plutôt que de laisser croire que c'est vérifié.* */
+/* ⚠️ `.tip-box` EST RATTACHÉE ICI PLUTÔT QUE MODIFIÉE SUR PLACE, et la raison compte :
+   elle est déclarée DEUX FOIS dans ce fichier (l. ~813 et ~1028), à l'identique. Toucher
+   l'une des deux, c'est jouer à pile ou face avec l'ordre de cascade. ⛔ Et le doublon a
+   DÉJÀ divergé juste à côté : `.dose-val` vaut 15px/800 dans le premier bloc et 16px/900
+   dans le second — la seconde gagne, la première est du code mort. *Deux propriétaires pour
+   une même règle, c'est un de trop* (R2). Le doublon n'est PAS corrigé ici : c'est un
+   nettoyage à part, qui demande de vérifier chaque règle du bloc. En attendant, la
+   JUSTIFICATION n'a qu'un seul propriétaire — celui-ci. */
+.txt-just,.tip-box{text-align:justify;hyphens:auto;-webkit-hyphens:auto;}
+/* Une ligne « libellé · contenu » dont la colonne de gauche ne bouge JAMAIS. */
+.nu-lgn{display:grid;grid-template-columns:100px 1fr;gap:8px;align-items:baseline;}
+.nu-reste-lgn{display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:baseline;}

@@ -1650,13 +1650,16 @@ function _portionRaisonnable(al, macro, manque, soir){
     g = Math.min(g, maxG);
     g = Math.round(g/5)*5;                                   // pas de fausse précision
     if(g < 10) return null;
-    return { texte: g + ' g ' + _deNom(al.name), apport: g * p100 / 100 };
+    /* ⛔ ESPACE INSÉCABLE entre le nombre et son unité (ft-v1031) : vu à la capture,
+       « + 250 / g de Steak haché » — le 250 finissait une ligne et le « g » commençait la
+       suivante. *Un nombre séparé de son unité se relit deux fois.* */
+    return { texte: g + '\u00A0g ' + _deNom(al.name), apport: g * p100 / 100 };
   }
   let n = manque / parPortion;
   n = Math.min(n, maxPor);
   n = Math.round(n*2)/2;                                     // au demi près
   if(n < 0.5) return null;
-  const lbl = (n===1) ? ('1 × ' + al.name) : ((n===0.5?'½':n) + ' × ' + al.name);
+  const lbl = (n===1) ? ('1\u00A0× ' + al.name) : ((n===0.5?'½':n) + '\u00A0× ' + al.name);
   return { texte: lbl, apport: n * parPortion };
 }
 
@@ -2935,7 +2938,7 @@ function toggleComboCard(id) {
    sportifs, renouvelé en 2024 (risque cardiovasculaire, cardiopathie, atteinte hépatique,
    troubles neuropsychiatriques, mineurs, grossesse et allaitement). */
 function _creatContreIndic(){
-  return '<div class="tip-box" style="margin-top:6px;border-left:3px solid var(--gold);">'
+  return '<div class="tip-box txt-just" style="margin-top:6px;border-left:3px solid var(--gold);">'
     + '\u2695\uFE0F <strong>Avant d\'en prendre</strong> — l\'ANSES déconseille la créatine en cas de maladie rénale, '
     + 'de facteurs de risque cardiovasculaire, de cardiopathie, d\'atteinte du foie ou de troubles '
     + 'neuropsychiatriques, ainsi qu\'aux mineurs et aux femmes enceintes ou allaitantes. '
