@@ -14668,6 +14668,197 @@ console.log('\n-- CXXXIII. Le tempo descend jusqu\'a la donnee (ft-v1028) --');
   }
 }
 
+/* == BLOC CXXXV - LE REPOS EST UN MAXIMUM, PAS UN COMPTE A REBOURS (ft-v1030) ==
+   Decision de Michel : « on peut repartir avant, c'est autorise ». Elle vient des 6 programmes
+   de sa coach, ou la colonne s'intitule litteralement « Repos maximum » et porte des PLAGES
+   (« 45 sec max », « 1 a 2 min »), jamais un chiffre a respecter.
+   ⛔⛔ MESURE AVANT DE TOUCHER AU CODE, sur les deux chemins : le chrono s'ARRETAIT a 0:00,
+   barre masquee, restIv vide. ft-v851 (14/08, idee de Michel) avait retire les bornes
+   Math.max(0,…) des DEUX fonctions d'AFFICHAGE sans jamais toucher a `_restTick`, qui appelait
+   `stopRest()`. Les afficheurs savaient montrer du negatif ; plus personne ne les appelait.
+   La fonctionnalite n'a JAMAIS tourne — famille « le correctif pose d'un seul cote ».
+   ⚠️ NUMEROTE CXXXV ET PAS CXXXIV, EXPRES : session-A a ft-v1029 en vol et prendra CXXXIV.
+   C'est la 4e collision de numero de la semaine ; celle-la se paie d'avance pour 0 centime. */
+console.log('\n-- CXXXV. Le repos est un maximum, pas un compte a rebours (ft-v1030) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const G=await pg.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const dors=ms=>new Promise(r=>setTimeout(r,ms));
+    const lire=()=>({
+      t:(document.getElementById('rest-time')||{}).textContent,
+      barre:document.getElementById('rest-bar').classList.contains('show'),
+      tourne:!!restIv,
+      lbl:(document.getElementById('rest-label')||{}).textContent,
+      over:(document.getElementById('rest-over')||{}).textContent });
+    /* ⏩ ON VOYAGE DANS LE TEMPS EN DEPLACANT LE DEPART, pas en attendant : `_restLeft()` est
+       une soustraction sur `restStartTs`, donc reculer le depart de N secondes equivaut
+       exactement a avoir attendu N secondes — et le test dure 2 s au lieu de 20 min. */
+    const avance=sec=>{ restStartTs-=sec*1000; _restTick(); };
+    goScreen('s-log');document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+    document.getElementById('s-log').classList.add('active');renderLog();
+    addExercise('Développé Couché');
+    const o={};
+
+    // ── ① LE CHRONO CONTINUE AU-DELA DE ZERO (le geste qui manquait a ft-v851) ──
+    startRest(60);
+    avance(59); o.avant = lire();          // 0:01, avant zero
+    avance(6);  o.apres = lire();          // 5 s de depassement
+    o.leftApres = _restLeft();
+    stopRest();
+
+    // ── ② NON-REGRESSION : avant zero, RIEN n'a bouge ──
+    startRest(60);
+    avance(30); o.milieu = lire();
+    o.barreVisible = document.getElementById('rest-bar').classList.contains('show');
+    stopRest();
+
+    /* ── ③ LE CALLBACK SUPERSET PART EXACTEMENT UNE FOIS ──
+       ⛔⛔ C'est le temoin qui protege l'enchainement des supersets. Avant, il partait DANS le
+       `stopRest()` de zero ; maintenant le chrono continue, donc il pourrait ne jamais partir
+       (rate) ou repartir a chaque tick (double). `restTot<=10` : pas d'overlay de decompte,
+       on mesure le chemin direct. */
+    let n=0;
+    startRest(8); _restDoneCb=()=>{n++;};
+    avance(9);                    // franchit zero
+    _restTick(); _restTick();     // plusieurs ticks au-dela : le callback ne doit pas repartir
+    avance(3); _restTick();
+    await dors(600);              // le callback est differe de 400 ms
+    o.cbCount=n;
+    o.tourneEncore=!!restIv;      // et le chrono tourne toujours : c'est un maximum
+    stopRest();
+
+    /* ── ④ LE LIBELLE N'APPARAIT QU'AU-DELA, et il INFORME au lieu d'accuser ── */
+    startRest(60);
+    avance(30); o.overAvant=(document.getElementById('rest-over')||{}).textContent;
+    avance(35); o.overApres=(document.getElementById('rest-over')||{}).textContent;
+    stopRest();
+
+    /* ── ⑤ #rest-label N'EST PAS ECRASE — le defaut que j'ai failli livrer ──
+       ⛔⛔ `updRest` tourne a CHAQUE tick. Ma 1re version y ecrivait le libelle de depassement,
+       ce qui aurait efface « Échauffement », « Récup. à l'échec », « 📈 Pyramide + » et
+       « ⏭️ Ensuite : … », poses par `startRest` et ses appelants. En silence, sans erreur.
+       Un element d'ecran a UN proprietaire (R2). */
+    startRest(60);
+    document.getElementById('rest-label').textContent='⏭️ Ensuite : Squat à la Barre';
+    avance(65); _restTick();
+    o.lblSurvit=(document.getElementById('rest-label')||{}).textContent;
+    o.overEnMemeTemps=(document.getElementById('rest-over')||{}).textContent;
+    stopRest();
+
+    /* ── ⑥ L'ARRET DE SECURITE : au-dela de 15 min ce n'est plus un repos ── */
+    startRest(60);
+    avance(60+REST_DEPASSEMENT_MAX+2);
+    o.apresLimite={tourne:!!restIv, barre:document.getElementById('rest-bar').classList.contains('show')};
+    o.limite=REST_DEPASSEMENT_MAX;
+    stopRest();
+
+    /* ── ⑦ LE TAP SUR L'ECRAN GO ARRETE TOUT (il ne fermait que l'overlay) ── */
+    startRest(60); avance(65); _restTick();
+    o.avantTap=!!restIv;
+    _cdownTap();
+    o.apresTap=!!restIv;
+    stopRest();
+
+    /* ── ⑦bis SKIP APRÈS DÉPASSEMENT — le chemin que ce changement REND QUOTIDIEN.
+       Avant, à zéro le chrono s'arrêtait : « Skip » après coup n'existait pas vraiment. Maintenant
+       la barre reste, donc « j'ai dépassé, je passe » devient le geste normal — et c'est
+       exactement là qu'un callback pourrait partir DEUX fois (une fois différé à zéro, une fois
+       par `skipRest`). ⚠️ J'avais RAISONNÉ que c'était bon (le callback est détaché) ; on le
+       MESURE, parce qu'un raisonnement juste sur un code faux se lit pareil. */
+    {
+      let n1=0; startRest(8); _restDoneCb=()=>{n1++;};
+      avance(9); skipRest(); await dors(700); o.skipCourt=n1; stopRest();
+      let n2=0; startRest(60); _restDoneCb=()=>{n2++;};
+      avance(52); avance(9); skipRest(); await dors(700); o.skipLong=n2; stopRest();
+      let n3=0; startRest(60); _restDoneCb=()=>{n3++;};
+      avance(20); skipRest(); await dors(700); o.skipAvant=n3; stopRest();
+    }
+
+    /* ── ⑧ LE GRAS DU TEXTE RESTE DANS SA PHRASE (defaut du CSS, trouve a la capture) ──
+       ⛔⛔ `.sw-feat b{display:block}` visait le TITRE de la carte, mais attrapait AUSSI tous
+       les `<b>` du texte : « il continue en » / « +0:12 » / « , » / « +0:45 » sortaient sur
+       quatre lignes centrees. Une phrase coupee en plein milieu n'est pas une information
+       courte, c'est une information FAUSSE (la lecon de ft-v1026, dans une feuille de style).
+       ⚠️ Et ca ne touchait pas que la nouveaute du jour : le gras dans le texte est employe
+       dans toutes les pop-ups (nouveautes, testeurs). */
+    try{
+      document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      showWhatsNew();
+      const carte=document.querySelector('#whatsnew-list .sw-feat');
+      const titre=carte&&carte.querySelector(':scope > div > b');
+      const grasTexte=carte&&carte.querySelector('small b');
+      o.titreBloc = titre ? getComputedStyle(titre).display : null;
+      o.grasTexteInline = grasTexte ? getComputedStyle(grasTexte).display : null;
+      o.grasCompte = carte ? carte.querySelectorAll('small b').length : 0;
+      closeWhatsNew();
+    }catch(e){ o.wnErr=String(e); }
+
+    // 🔴 Regle d'or #9
+    const f=document.querySelector('.nav-fab,#nb-log,.fab'); const r=f.getBoundingClientRect();
+    o.fab=[Math.round(r.x),Math.round(r.y),Math.round(r.width),Math.round(r.height)];
+    S.wkt=null; persist();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  await cx.close();
+
+  if(G.err)t('CXXXV n\'a pas pu tourner',false,G.err);
+  else{
+    /* ⭐⭐ LE TEMOIN QUI REFERME ft-v851 : sans lui, on aurait pose un libelle au-dessus d'un
+       chrono qui continue de s'arreter — c'est-a-dire exactement le defaut d'origine. */
+    t('⭐⭐ le chrono CONTINUE au-delà de zéro (+0:05 après 5 s de dépassement)',
+      G.apres.t==='+0:05' && G.apres.tourne===true && G.apres.barre===true && G.leftApres===-5,
+      JSON.stringify({avant:G.avant,apres:G.apres,left:G.leftApres}));
+    /* ⛔ NON-REGRESSION : tout ce qui se passe AVANT zéro est inchangé. C'est ce qui rend le
+       changement sûr — on a ajouté une suite, on n'a pas touché au décompte. */
+    t('⛔ NON-RÉGRESSION : avant zéro, le décompte est identique (0:30 sur un repos de 60 s)',
+      G.milieu.t==='0:30' && G.milieu.tourne===true && G.barreVisible===true,
+      JSON.stringify(G.milieu));
+    /* ⛔⛔ Le plus important pour l'usage réel : l'enchaînement des supersets. */
+    t('⛔⛔ le callback superset part EXACTEMENT une fois (ni raté, ni doublé)',
+      G.cbCount===1, JSON.stringify({appels:G.cbCount}));
+    t('⛔ … et le chrono tourne toujours après lui (c\'est un maximum, pas une fin)',
+      G.tourneEncore===true, JSON.stringify({tourne:G.tourneEncore}));
+    /* ⛔ Le « + » doit dire ce qu'il est, sinon il se lit comme un bug — mais rien avant zéro,
+       sans quoi ce serait du bruit à chaque repos (R19/R25). */
+    t('⛔ le libellé n\'apparaît QU\'AU-DELÀ de zéro',
+      G.overAvant==='' && /au-delà de ton repos max/.test(G.overApres),
+      JSON.stringify({avant:G.overAvant,apres:G.overApres}));
+    /* ⛔ Et il INFORME au lieu d'accuser : un repos plus long n'est pas une faute (R29). */
+    t('⛔ … et il informe sans accuser (aucun « tu as dépassé »)',
+      !/tu as|trop long|retard/i.test(G.overApres), JSON.stringify({texte:G.overApres}));
+    /* ⛔⛔ LE DÉFAUT QUE J'AI FAILLI LIVRER — mesuré, pas relu. */
+    t('⛔⛔ `#rest-label` survit au dépassement (il a un AUTRE propriétaire)',
+      G.lblSurvit==='⏭️ Ensuite : Squat à la Barre' && /au-delà/.test(G.overEnMemeTemps),
+      JSON.stringify({label:G.lblSurvit,over:G.overEnMemeTemps}));
+    /* ⏹️ Un chrono qui tournerait toute la nuit n'informe personne. */
+    t('⏹️ arrêt de sécurité au-delà de '+G.limite+' s de dépassement',
+      G.apresLimite.tourne===false && G.apresLimite.barre===false, JSON.stringify(G.apresLimite));
+    t('⛔ le tap sur l\'écran GO arrête le chrono (il ne fermait que l\'overlay)',
+      G.avantTap===true && G.apresTap===false, JSON.stringify({avant:G.avantTap,apres:G.apresTap}));
+    /* ⛔ « Skip » après dépassement : ni raté, ni doublé — sur les deux chemins, et avant zéro
+       (la non-régression). Un doublon ferait SAUTER un exercice dans une super-série. */
+    t('⛔ « Skip » part exactement une fois — après zéro, écran GO ouvert, et avant zéro',
+      G.skipCourt===1 && G.skipLong===1 && G.skipAvant===1,
+      JSON.stringify({court:G.skipCourt,go:G.skipLong,avant:G.skipAvant}));
+    /* ⛔⛔ LE DÉFAUT TROUVÉ À LA CAPTURE, pas dans le code : le gras du TEXTE doit rester
+       DANS la phrase. Le témoin exige les DEUX moitiés — un titre qui reste un bloc ET un
+       gras de texte qui reste en ligne — sinon corriger l'un casserait l'autre en silence. */
+    t('⛔⛔ le gras du TEXTE reste dans sa phrase (le titre, lui, reste un bloc)',
+      G.titreBloc==='block' && G.grasTexteInline==='inline' && G.grasCompte>0,
+      JSON.stringify({titre:G.titreBloc,texte:G.grasTexteInline,nbGras:G.grasCompte,err:G.wnErr}));
+    t('🔴 règle d\'or #9 : le bouton central « + » est à sa place',
+      G.fab[2]>0 && G.fab[3]>0, JSON.stringify(G.fab));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

@@ -6,7 +6,25 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1028`.
+- **Version en ligne (live) :** `ft-v1030`.
+- ⏳⭐⭐ **LE REPOS EST UN MAXIMUM, PAS UN COMPTE À REBOURS — LIVRÉ** (ft-v1030). Décision de
+  Michel : *« on peut repartir avant, c'est autorisé »*, relayée par session-A depuis les 6
+  programmes de sa coach (colonne **« Repos maximum »**, valeurs en **plages**).
+  ⛔⛔ **Et la mesure d'avant-travail a démenti ce que j'avais annoncé la veille** : le chrono
+  **s'arrêtait** à 0:00 (barre masquée, `restIv` vidé), sur les deux chemins.
+  👉 **ft-v851 (14/08) avait retiré les bornes `Math.max(0,…)` des deux fonctions d'AFFICHAGE
+  sans jamais toucher à `_restTick`**, qui appelait `stopRest()`. *Les afficheurs savaient
+  montrer du négatif ; plus personne ne les appelait.* **La fonctionnalité n'avait jamais
+  tourné** — 2ᵉ cas de la famille « le correctif posé d'un seul côté » dans `BUGS.md`, et le
+  plus coûteux : **le côté oublié était celui qui DÉCIDE**.
+  ⛔⛔ **Le défaut que j'ai failli livrer** : mon libellé écrivait dans `#rest-label`, qui porte
+  déjà *Échauffement*, *Récup. à l'échec*, *📈 Pyramide +*, *⏭️ Ensuite : …* — `updRest` tournant
+  à chaque tick, il les aurait tous effacés **en silence**. Il a son propre `#rest-over` (**R2**).
+  ⛔ Le callback superset part **exactement une fois**, le tap sur l'écran GO arrête tout, arrêt
+  de sécurité à **15 min** (un seul propriétaire pour ce nombre).
+  📣 Règle #11 en entier — la pop-up **se mérite** (un repère a bougé : la barre ne disparaît
+  plus) : `WHATS_NEW` **v61** · point rouge `repos-maximum` · aide `?` de l'onglet Séance · aide
+  détaillée · diapo du Guide **sans image, exprès** (une capture montrerait l'écran d'avant).
 - 🐢⭐⭐ **LE TEMPO DESCEND JUSQU'À LA DONNÉE — LIVRÉ** (ft-v1028). Première suite du relais de
   session-A sur les **6 programmes de la coach de Michel** (2023, `docs/NUTRITION-PROGRAMMES-REELS.md`
   §3bis) : chez elle le **tempo est une COLONNE**.

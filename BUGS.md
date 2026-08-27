@@ -1064,6 +1064,35 @@ disponible (famille 12quater).
 espaceur fait rougir la livraison**. *Le correctif de ft-v670 était juste ; ce qui manquait,
 c'est ce qui empêche de l'oublier ailleurs* (**R8/R13**).
 
+### ⭐⭐ 2ᵉ CAS *(27/08/2026, ft-v1030)* — **la variante la plus coûteuse : le côté oublié est celui qui DÉCIDE**
+
+Le 14/08 (ft-v851), sur une idée de Michel — *« faudrait qu'il continue en chiffre négatif jusqu'à
+ce que la personne appuie »* — on a retiré les bornes `Math.max(0, …)` des **deux fonctions qui
+AFFICHENT** le chrono de repos (`updRest`, `_updPill`). **On n'a jamais touché à `_restTick`**, qui
+appelait `stopRest()` dès `left<=0`.
+
+👉 ***Les afficheurs savaient montrer du négatif ; plus personne ne les appelait.*** La
+fonctionnalité a donc été **écrite, commentée, portée au journal comme livrée — et n'a jamais
+tourné une seule fois** pendant treize jours.
+
+**Ce que ce cas ajoute au premier**, et c'est la partie qui coûte cher : dans le cas de 2023 les
+six écrans étaient **équivalents**, on en avait juste oublié cinq. Ici les deux côtés ne sont pas
+du même ordre — il y a celui qui **affiche** et celui qui **décide**. *Corriger l'affichage
+pendant que le décideur garde l'ancienne règle produit un code qui a l'air complet, se relit
+comme complet, et ne fait rien.*
+
+**À quoi on le reconnaît** :
+- le correctif porte sur du **rendu** (une borne, un format, une couleur) alors que le
+  comportement voulu dépend d'un **cycle de vie** (un `setInterval`, un `return`, un `stop`) ;
+- ⚠️ **le commentaire du code affirme le comportement** — c'est le signe le plus trompeur, parce
+  qu'on le relit et qu'on le croit. Ici le commentaire de ft-v851 décrivait précisément ce que
+  l'app ne faisait pas.
+
+**Ce qui protège** : **mesurer le comportement avant de le déclarer acquis.** Ce défaut n'a été
+trouvé qu'en jouant un vrai repos dans un navigateur et en lisant le chrono seconde par seconde —
+il était **invisible à la relecture**, et je l'avais moi-même annoncé à Michel comme fonctionnel
+la veille (**R23**). *Un comportement différé ne se vérifie pas en lisant : il se joue.*
+
 
 ---
 

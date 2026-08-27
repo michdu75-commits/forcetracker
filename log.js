@@ -4017,6 +4017,9 @@ function _restLeft(){
   if(!restStartTs)return 0;
   return restTot-Math.floor((Date.now()-restStartTs)/1000);
 }
+/* ⏹️ 15 min : au-delà, ce n'est plus un repos mais une séance interrompue (ft-v1030).
+   Un seul propriétaire pour ce nombre — `_restTick` et `_updPill` le lisent tous les deux. */
+const REST_DEPASSEMENT_MAX = 900;
 
 // ─── AUDIO : AUCUN ───────────────────────────────────────────
 // ⚠️ Le timer est 100% SILENCIEUX (vibration + visuel uniquement).
@@ -4040,7 +4043,7 @@ function _updPill(){
   /* ⚠️ ELLE NE DISPARAÎT PLUS À ZÉRO (14/08/2026) — même raison que le chrono principal :
      le dépassement est précisément ce qu'on veut voir. Elle s'efface au-delà de 15 min, où
      il ne s'agit plus d'un repos mais d'une séance interrompue. */
-  if(left<=-900){pill.classList.remove('show');return;}
+  if(left<=-REST_DEPASSEMENT_MAX){pill.classList.remove('show');return;}
   const _dep=left<0, _abs=Math.abs(left);
   const m=Math.floor(_abs/60),s=_abs%60;
   pillTime.textContent=(_dep?'+':'')+`${m}:${s.toString().padStart(2,'0')}`;
@@ -4077,23 +4080,45 @@ function _restTick(){
     _countdownSecs.add(left);
     if(navigator.vibrate)navigator.vibrate(60);
   }
-  // GO : vibration + arrêt du timer (plus de dépassement/overtime, aucun son)
+  /* ⏳⏳ LE REPOS EST UN MAXIMUM, PAS UN COMPTE À REBOURS (27/08/2026, ft-v1030)
+     Décision de Michel : *« on peut repartir avant, c'est autorisé »*. Elle vient des 6
+     programmes de sa coach, où la colonne s'intitule littéralement **« Repos maximum »** et
+     porte des PLAGES (« 45 sec max », « 1 à 2 min »), jamais un chiffre à respecter.
+     *« Reste 30 s » et « il te reste au plus 30 s » ne se lisent pas pareil : le second
+     autorise à repartir avant, et il rend le DÉPASSEMENT informatif.*
+
+     ⛔⛔ ON NE S'ARRÊTE PLUS À ZÉRO — et c'est enfin ce que ft-v851 voulait faire.
+     ⚠️ MESURÉ AVANT DE TOUCHER AU CODE, sur les deux chemins (repos court sans overlay, repos
+     long avec) : le chrono s'arrêtait bel et bien à 0:00, barre masquée, `restIv` vidé.
+     👉 ft-v851 (14/08, idée de Michel) avait retiré les bornes `Math.max(0, …)` des DEUX
+     fonctions d'AFFICHAGE (`updRest`, `_updPill`) **sans jamais toucher à ce `_restTick`**, qui
+     appelait `stopRest()` ici même. *Les afficheurs savaient montrer du négatif ; plus personne
+     ne les appelait.* La fonctionnalité n'a donc jamais tourné — famille « le correctif posé
+     d'un seul côté » (`BUGS.md`). C'est le geste qui manquait, pas une idée neuve.
+
+     ⛔ CE QUI NE CHANGE PAS, exprès : la vibration de fin, l'écran GO et son cycle de couleurs
+     restent le signal « c'est reparti ». On ajoute une information, on n'enlève pas un repère.
+     ⚠️ ET LE CALLBACK SUPERSET PART EXACTEMENT UNE FOIS — `_restBeeped` le garantit, et il est
+     détaché (`_restDoneCb=null`) au moment où on le confie, pour qu'aucun autre chemin ne
+     puisse le rejouer. Vérifié : aucun de ces callbacks ne relance un repos (ce sont des
+     déplacements d'écran), donc l'ordre fermeture → callback est sans effet de bord. */
   if(left<=0&&!_restBeeped){
     _restBeeped=true;
     if(navigator.vibrate)navigator.vibrate([300,100,300,100,400]);
     if(_cdownActive){
-      // Overlay GO visible : on garde l'overlay (vert persistant + cycle couleurs).
-      // Le callback superset (avance à l'exo suivant) se déclenchera à la FERMETURE (tap/Passer),
-      // pas automatiquement — sinon l'overlay se fermait après 400ms (vert disparu, pas de cycle).
-      _cdownPendingCb=_restDoneCb;   // préservé avant que _stopRestTimerOnly le remette à null
-      _stopRestTimerOnly();
+      // Overlay GO visible : il reste affiché (vert persistant + cycle couleurs). Le callback
+      // superset se déclenche à la FERMETURE (tap/Passer), pas automatiquement.
+      _cdownPendingCb=_restDoneCb; _restDoneCb=null;
     }else if(_restDoneCb){
-      const cb=_restDoneCb;_restDoneCb=null;setTimeout(()=>{stopRest();cb();},400);
-    }else{
-      stopRest();
+      const cb=_restDoneCb;_restDoneCb=null;setTimeout(cb,400);
     }
-    return;
+    // ⛔ AUCUN `return` ICI : le dépassement est précisément ce qu'on veut voir.
   }
+  /* ⏹️ L'ARRÊT DE SÉCURITÉ, ET IL N'A QU'UN SEUL PROPRIÉTAIRE (R2) : au-delà de ce délai il ne
+     s'agit plus d'un repos mais d'une séance interrompue — un chrono qui tourne toute la nuit
+     n'informe personne. `_updPill` employait déjà ce nombre en dur de son côté ; il le lit
+     maintenant ici, pour que les deux ne puissent pas diverger. */
+  if(left<=-REST_DEPASSEMENT_MAX){ stopRest(); return; }
   updRest();
   _updPill();
 }
@@ -4218,10 +4243,13 @@ function _updateRestCountdown(){
 // Tap sur l'overlay ou bouton Passer :
 // - pendant le décompte (avant 0) → skip anticipé = fin immédiate du repos (timer + pastille effacés)
 // - après le GO → simple fermeture de l'écran (timer déjà arrêté)
-function _cdownTap(){
-  if(_cdownGoDone){_closeRestCountdown();return;}
-  stopRest();
-}
+/* ⏹️ LE TAP ARRÊTE TOUT, DANS LES DEUX CAS (ft-v1030).
+   Avant, la branche « GO déjà passé » ne fermait que l'overlay — c'était suffisant parce que
+   `_restTick` avait DÉJÀ arrêté le chrono à zéro. Maintenant qu'il continue (le repos est un
+   maximum), ne fermer que l'overlay laisserait le compteur tourner derrière.
+   ⭐ `stopRest()` fait les deux dans le bon ordre : il ferme l'overlay — ce qui déclenche le
+   callback superset mis de côté — puis coupe le chrono. */
+function _cdownTap(){ stopRest(); }
 function _closeRestCountdown(){
   if(!_cdownActive)return;
   _cdownActive=false;
@@ -4272,6 +4300,20 @@ function updRest(){
   const abs=Math.abs(reste);
   const m=Math.floor(abs/60),s=abs%60;
   timeEl.textContent=(dep?'+':'')+`${m}:${s.toString().padStart(2,'0')}`;
+  /* 🏷️ LE « + » DOIT DIRE CE QU'IL EST (ft-v1030) — sans libellé, un chrono qui repart à
+     « +0:12 » se lit comme un bug, ou pire comme un retard qu'on serait en train de prendre.
+     ⛔ ET LE MOT COMPTE : « au-delà de ton repos max » informe ; « tu as dépassé » accuse. On
+     dit le fait, la personne conclut (R29 : informer sans décider — un repos plus long n'est
+     pas une faute, c'est parfois exactement ce qu'il faut).
+     ⛔ RIEN AVANT ZÉRO : une mention à chaque repos deviendrait du bruit qu'on ne lit plus
+     (R19/R25). L'information n'apparaît qu'au moment où elle est nouvelle.
+     ⛔⛔ ET ELLE A SON PROPRE EMPLACEMENT — j'ai failli l'écrire dans `#rest-label`, qui porte
+     DÉJÀ « Échauffement », « Récup. à l'échec », « Abdos », « 📈 Pyramide + » et « ⏭️ Ensuite :
+     … », posés par `startRest` et ses appelants. Comme `updRest` tourne à chaque tick, elle les
+     aurait tous effacés — en silence, sans erreur. *Un élément d'écran a un propriétaire ; on
+     n'écrit pas dans celui d'un autre* (R2). */
+  const overEl=document.getElementById('rest-over');
+  if(overEl) overEl.textContent = dep ? 'au-delà de ton repos max' : '';
   // La barre, elle, reste bornée à 0 : une largeur négative n'a pas de sens.
   const pct=Math.max(0,Math.min(100,reste/restTot*100));
   fillEl.style.width=pct+'%';
