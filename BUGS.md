@@ -1268,3 +1268,52 @@ sement de sécurité disparaissait précisément là où il était le plus atten
 Quand un bloc d'affichage **conditionnel** en côtoie un autre qui doit être **inconditionnel**,
 les écrire sur deux lignes séparées plutôt que dans une seule expression. *Une expression qui
 mélange « parfois » et « toujours » finit par tout rendre « parfois ».*
+
+---
+
+## 20. 🎯 LA RÈGLE CSS QUI ATTRAPE PLUS LARGE QUE SA CIBLE *(27/08/2026, ft-v1029)*
+
+### Ce qui s'est passé
+La pop-up « Quoi de neuf » affichait, en production :
+
+> En arrivant sur
+> **Nutrition**
+> , tu vois maintenant
+> **ta journée d'abord**
+> : ce que tu as mangé…
+
+Chaque mot mis en valeur occupait **sa propre ligne**, la phrase était coupée en morceaux et une
+**virgule se retrouvait seule en début de ligne**.
+
+### La cause
+```css
+.sw-feat b{display:block;…}     /* visait le TITRE de la carte */
+```
+Le sélecteur attrape **tout** `<b>` descendant — donc aussi ceux du texte, dans le `<small>`.
+Corrigé en `.sw-feat>div>b` (le titre est un enfant **direct**).
+
+### ⚠️ Ce qui rend cette famille sournoise
+**Le défaut dormait depuis l'écriture de `.sw-feat`.** Il fallait qu'une description contienne du
+gras pour se voir — et sur **57** entrées « Quoi de neuf », **une seule** le faisait : celle de
+ft-v1025, écrite la veille. *Un défaut invisible n'est pas un défaut absent : il attend son
+premier cas.* Rien ne le signalait — pas d'erreur, pas de test rouge, un rendu parfaitement
+« normal » pour qui ne lit pas la phrase.
+
+### ⭐⭐ Et comment il a été trouvé — c'est le vrai enseignement
+**Par une CAPTURE prise pour vérifier tout autre chose.** Aucune mesure de texte ne pouvait le
+voir : le HTML est correct, les mots sont dans le bon ordre, `innerText` rend la bonne phrase.
+*Seul le rendu trahit un `display` — c'est la 3ᵉ fois qu'une capture attrape ce qu'une mesure de
+chaîne ne peut pas voir* (ft-v1025 : un libellé coupé en travers de son titre · ft-v1026 : une
+phrase tronquée à 42 caractères).
+
+### ⛔ Le piège du correctif
+Le témoin fige **les deux moitiés** : le titre **doit rester** en bloc, le gras du texte **doit
+rester** en ligne. Sans la première, on « corrigerait » en supprimant la règle — et tous les
+titres de cartes se colleraient à leur texte. *Une règle trop large ne se supprime pas, elle se
+vise.*
+
+### ⭐ Le réflexe
+Quand une règle CSS met en forme **un** élément d'un composant, l'ancrer sur sa **place**
+(`>div>b`) et non sur sa **balise** (`b`). Une balise de mise en forme — `b`, `i`, `small`, `span`
+— réapparaît toujours dans le contenu ; le jour où ça arrive, c'est le contenu qui prend la forme
+du titre.

@@ -340,7 +340,14 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
 /* Espace testeur — lignes de la bienvenue */
 .sw-feat{display:flex;gap:12px;align-items:flex-start;background:var(--bg3);border:1px solid var(--sep);border-radius:12px;padding:12px 13px;}
 .sw-feat>span{font-size:22px;line-height:1.2;flex:none;}
-.sw-feat b{display:block;font-size:14px;color:var(--t1);}
+/* ⚠️ `>div>b` ET NON `b` (ft-v1029) : la règle visait le TITRE de la carte, mais `.sw-feat b`
+   attrape AUSSI les gras du texte, dans le `<small>` — chaque mot mis en valeur devenait alors
+   sa PROPRE LIGNE, coupant la phrase et laissant la ponctuation orpheline (mesuré : « En
+   arrivant sur / Nutrition / , tu vois maintenant »). Le défaut dormait depuis l'écriture de
+   `.sw-feat` : il fallait qu'une description contienne du gras pour se voir, et une seule le
+   faisait — celle de ft-v1025, la mienne. *Un défaut invisible n'est pas un défaut absent : il
+   attend son premier cas.* Trouvé à la CAPTURE, pas en relisant le code. */
+.sw-feat>div>b{display:block;font-size:14px;color:var(--t1);}
 .sw-feat small{display:block;font-size:12px;color:var(--t3);line-height:1.4;margin-top:3px;}
 /* « Quoi de neuf » en carrousel (ft-v631) : la carte est SEULE à l'écran → elle
    respire. Grosse icône centrée, titre lisible, texte plus grand et contrasté

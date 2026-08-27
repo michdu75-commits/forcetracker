@@ -210,6 +210,11 @@ const _HELP_DATA={
          pop-up ANNONCE (une fois), l'aide EXPLIQUE (à chaque fois qu'on la rouvre). */
       {i:'🍽️',t:'<b>L\'onglet Macros se lit de haut en bas, du jour vers le durable.</b> En haut, <b>ta journée</b> : ce que tu as mangé en gros, ta cible en petit, trois anneaux (protéines · glucides · lipides) et « ce qu\'il te reste, en vrai » — traduit en <b>tes</b> aliments, pas en grammes abstraits. Puis le bouton pour noter, ta séance du jour, ce que l\'app a appris de ton alimentation, ta semaine. <b>Tout en bas, deux lignes repliées</b> : « Comment c\'est calculé » (BMR, TDEE, répartition en %, charge/décharge, ajuster à la main) et « Mes réglages alimentaires » (mode cétogène/low carb/paléo/méditerranéen, jeûne, régime, restrictions, allergies). ⚠️ <b>Rien n\'a été retiré</b> : ces réglages se touchent deux ou trois fois par an, ils ne sont plus au milieu de ce que tu regardes tous les jours. Le titre de chaque ligne repliée te dit déjà l\'essentiel (ton objectif et ton TDEE, ton régime en cours) — tu n\'as à l\'ouvrir que pour changer quelque chose.'},
       {i:'🍱',t:'Le <b>plan de repas</b> est replié par défaut, et c\'est volontaire : c\'est une liste écrite à l\'avance, <b>la même pour tout le monde</b>, qui ne connaît ni ce que tu manges ni ce que tu détestes. Il te donne un ordre de grandeur, pas un menu à suivre. Le jour où il saura se baser sur tes vrais aliments, il se dépliera tout seul. En attendant, « ce qu\'il te reste, en vrai » (en haut) est bien plus proche de toi : il ne propose que des aliments que <b>tu as déjà notés</b>.'},
+      /* ⛔ POURQUOI CETTE ENTREE EXISTE (ft-v1029) : le bloc CHANGE de comportement a 20 h, et un
+         changement qu'on n'explique pas se lit comme un bug — on croit que l'app s'est trompee, ou
+         qu'elle a « oublie » une macro. La phrase du bloc le dit sur le moment ; celle-ci le dit
+         quand on vient chercher pourquoi (R25 : le bloc annonce, l'aide explique). */
+      {i:'🌙',t:'<b>Le soir, « ce qu\'il te reste » devient plus léger — c\'est voulu.</b> À partir de <b>20 h</b>, l\'app ne propose plus de combinaisons (« 250 g de riz + 160 g de flocons ») mais <b>une seule idée, en petite quantité</b> : à cette heure-là, une assiette d\'un demi-kilo n\'est pas un conseil. ⚠️ Et si une macro est <b>trop loin du compte</b> pour qu\'une idée légère y change quelque chose, la ligne <b>disparaît</b> au lieu d\'afficher le manque : ce qui manque le soir ne se rattrape pas le soir, et te le mettre sous les yeux ne t\'aiderait pas. Tes chiffres, eux, ne bougent pas — ils restent dans les anneaux juste au-dessus.'},
       {i:'⚠️',t:'Les macros s\'affichent correctement uniquement si le Profil est complet (âge, poids, taille, activité, objectif).'},
       {i:'🔥',t:'<b>D\'où vient ton BMR</b> (métabolisme de base, ce que ton corps brûle au repos) : si tu as renseigné un <b>bilan corporel</b> ou ton <b>% de masse grasse</b>, l\'app le calcule sur ta <b>masse maigre</b> (formule de Katch-McArdle) au lieu de ton seul poids — chez quelqu\'un de musclé ça change souvent de <b>100 à 200 kcal par jour</b>, parce que le muscle consomme au repos et le gras beaucoup moins. Sinon, elle utilise la formule générique (Mifflin-St Jeor). <b>La ligne sous le chiffre dit toujours laquelle</b> : tape-la, le calcul est posé avec tes nombres. ⚠️ Un bilan de plus de 3 mois, ou un poids qui a bougé de plus de 5 % depuis, n\'est pas utilisé : on ne sait pas si les kilos sont du muscle ou du gras. Le métabolisme affiché par ta balance, lui, est enregistré mais pas utilisé dans le calcul — chaque marque a sa formule secrète, invérifiable.'},
       {i:'📈',t:'Phase Charge = surplus calorique pour prendre du muscle. Phase Décharge = déficit pour perdre du gras. Alterne selon tes cycles.'},
@@ -1985,11 +1990,15 @@ function _renderAujourdhui(macros){
    divergé — on aurait corrigé un garde-fou anti-TCA d'un côté seulement.
    ⛔ AUJOURD'HUI SEULEMENT (anti-TCA, P21) : sur un jour passé, « il te manquait 40 g » est un
    reproche sur une journée qu'on ne peut plus changer. */
-function _blocResteHTML(td){
+function _blocResteHTML(td, heure){
   if(td!==today()) return '';
   const reste=(typeof _resteDuJour==='function')?_resteDuJour(td):null;
-  const idees=(typeof _ideesPourLeReste==='function')?_ideesPourLeReste(reste):[];
+  const idees=(typeof _ideesPourLeReste==='function')?_ideesPourLeReste(reste,heure):[];
   if(!idees.length) return '';
+  /* ⛔ LE SOIR SE LIT SUR LES IDÉES, il ne se recalcule PAS ici (R2, ft-v1029) : deux lectures
+     de l'horloge pourraient se contredire à la minute de bascule, et le pied de bloc dirait
+     « il est tard » sous une combinaison de 500 g. Un seul propriétaire, `_estLeSoir`. */
+  const soir=!!(idees[0]&&idees[0].soir);
   const cols={prot:'var(--green)',carbs:'var(--orange)',fat:'var(--gold)'};
   return '<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--sep);">'
     +'<div style="font-size:11.5px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Ce qu\'il te reste, en vrai</div>'
@@ -2005,7 +2014,15 @@ function _blocResteHTML(td){
       +'</div>').join('')
     /* ⛔ « à peu près » n'est pas de la modestie de façade : la portion enregistrée est une
        estimation, et le dire évite qu'on prenne ça pour une prescription au gramme. */
-    +'<div style="font-size:11px;color:var(--t3);line-height:1.4;margin-top:8px;">À peu près — calculé sur <b>tes</b> aliments, pas sur une table générique. Une idée, pas une consigne.</div>'
+    /* ⛔⛔ LE SOIR, ON NIE LE RATTRAPAGE AU LIEU DE LE SUGGÉRER (anti-TCA, P21). Sans cette
+       phrase, une idée qui rétrécit à 20 h se lit comme une consigne de dernière minute —
+       *« dépêche-toi, il te reste 40 minutes »* — soit exactement le stress que la nutrition
+       ne doit jamais fabriquer. Et elle dit POURQUOI c'est plus léger : sinon le changement
+       ressemble à un bug (R30 appliqué à l'écran). */
+    +'<div style="font-size:11px;color:var(--t3);line-height:1.4;margin-top:8px;">'
+      +(soir?'Il est tard — <b>une idée légère, pas un rattrapage</b>. Ce qui manque ce soir ne se rattrape pas ce soir. '
+            :'')
+      +'À peu près — calculé sur <b>tes</b> aliments, pas sur une table générique. Une idée, pas une consigne.</div>'
     +'</div>';
 }
 
