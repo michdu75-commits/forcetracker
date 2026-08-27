@@ -800,23 +800,13 @@ html.is-clone .ob-clone-only{ display:block; }
 .nu-tabs{display:flex;background:var(--bg3);border-radius:13px;padding:4px;gap:3px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
 .nu-tab{flex:1;padding:10px 4px;border:none;border-radius:10px;background:transparent;color:var(--t3);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .2s;touch-action:manipulation;text-align:center;-webkit-tap-highlight-color:transparent;}
 .nu-tab.active{background:linear-gradient(135deg,#FF6A73,#EF3E57);color:#fff;box-shadow:0 4px 12px -4px rgba(239,62,87,.5);}
-.suppl-card{background:var(--bg2);border-radius:var(--r);border:1px solid var(--sep);overflow:hidden;margin-top:2px;}
-.suppl-header{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--sep);}
-.suppl-icon{font-size:22px;flex-shrink:0;}
-.suppl-name{font-family:var(--font-cond);font-size:16px;font-weight:900;}
-.suppl-sub{font-size:14px;color:var(--t2);margin-top:2px;}
-.suppl-body{padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
-.dose-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:.5px solid var(--sep);}
-.dose-row:last-child{border-bottom:none;}
-.dose-label{font-size:14px;color:var(--t2);}
-.dose-val{font-family:var(--font-cond);font-size:15px;font-weight:800;}
-.tip-box{background:rgba(41,121,255,.08);border:1px solid rgba(41,121,255,.2);border-radius:var(--r-sm);padding:10px 12px;font-size:13px;color:var(--t2);line-height:1.5;}
-.tip-box strong{color:var(--blue);}
-.phase-toggle-small{display:flex;background:var(--bg3);border-radius:8px;padding:3px;gap:3px;border:1px solid var(--sep);}
-.ptbtn{flex:1;padding:7px 10px;border:none;border-radius:6px;background:transparent;color:var(--t2);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .2s;touch-action:manipulation;}
-.ptbtn.active{background:var(--blue);color:#fff;}
-.protein-bar-wrap{height:8px;background:var(--sep);border-radius:4px;overflow:hidden;margin:6px 0;}
-.protein-bar-fill{height:100%;border-radius:4px;transition:width .4s;}
+/* ⛔ BLOC RETIRE ICI (ft-v1035) — 17 regles de la carte « Supplements » qui etaient ecrites
+   DEUX FOIS dans ce fichier. Le 2e exemplaire (plus bas, apres « SUPPLEMENTS & PROTEIN
+   TRACKER ») gagne toujours, et il porte un RESTYLAGE volontaire : icone 22→24 px, titre
+   16→17 px, dose 15→16 px, barre 8→10 px. Celui d'ici affichait donc des valeurs que
+   PERSONNE ne voyait — et un futur correctif pose ici n'aurait rien change a l'ecran.
+   ⚠️ Une seule propriete y etait encore vivante, `margin-top:2px` sur `.suppl-card` : elle a
+   ete REPORTEE sur la regle qui gagne, pas jetee. Voir le journal ft-v1035. */
 
 .combo-gate{background:var(--bg2);border-radius:var(--r);border:1px solid var(--sep);padding:22px 18px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;position:relative;overflow:hidden;}
 .combo-gate-blur{filter:blur(4px);pointer-events:none;opacity:.45;margin-bottom:4px;width:100%;}
@@ -1008,7 +998,11 @@ html.is-clone .ob-clone-only{ display:block; }
 /* SUPPLEMENTS & PROTEIN TRACKER */
 .protein-bar-wrap{height:10px;background:var(--sep);border-radius:5px;overflow:hidden;margin:10px 0;}
 .protein-bar-fill{height:100%;border-radius:5px;transition:width .4s;}
-.suppl-card{background:var(--bg2);border-radius:var(--r);border:1px solid var(--sep);overflow:hidden;}
+/* ⚠️ `margin-top:2px` VIENT DU BLOC SUPPRIME (ft-v1035) — c'etait la SEULE propriete
+   encore VIVANTE des 17 regles doublonnees : le 2e bloc redeclarait tout le reste, mais pas
+   celle-ci, et une propriete non redeclaree n'est PAS ecrasee, elle se CUMULE. *Un doublon
+   n'est jamais mort en entier — il faut le prouver propriete par propriete.* */
+.suppl-card{background:var(--bg2);border-radius:var(--r);border:1px solid var(--sep);overflow:hidden;margin-top:2px;}
 .suppl-header{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--sep);background:linear-gradient(90deg,rgba(41,121,255,.06),transparent);}
 .suppl-icon{font-size:24px;flex-shrink:0;}
 .suppl-name{font-family:var(--font-cond);font-size:17px;font-weight:900;letter-spacing:.3px;}

@@ -15227,6 +15227,55 @@ console.log('\n-- CXXXVIII. La barre « Seance » ne laisse plus lire dessous (f
   }
 }
 
+/* == BLOC CXXXIX - AUCUNE REGLE CSS N'EST ECRITE DEUX FOIS (ft-v1035) ==
+   Michel, en decouvrant le doublon signale la veille : « c'est quoi ca ? ».
+   ⛔⛔ 18 REGLES ETAIENT ECRITES DEUX FOIS dans `style.css` — tout le bloc de la carte
+   « Supplements », recopie 200 lignes plus bas. Quand une regle existe en double, c'est
+   TOUJOURS la derniere qui gagne : la premiere affichait des valeurs que personne ne voyait
+   (icone 22 px au lieu de 24, dose 15 au lieu de 16, barre 8 au lieu de 10).
+   ⭐⭐ ET LE VRAI COUT N'EST PAS L'AFFICHAGE, C'EST LE PROCHAIN CORRECTIF : quelqu'un qui
+   modifie la premiere version ne verra RIEN changer a l'ecran, et cherchera ailleurs.
+   ⚠️⚠️ MA PREMIERE ANALYSE ETAIT FAUSSE, ET C'EST LA LECON : j'avais annonce « la premiere est
+   du code mort ». Verifie propriete par propriete, il en restait UNE de vivante —
+   `margin-top:2px` sur `.suppl-card`, que le 2e bloc ne redeclarait pas. *Une propriete non
+   redeclaree n'est pas ecrasee, elle se CUMULE.* Sans le report, les cartes remontaient de 2 et
+   4 px — mesure. **Un doublon n'est jamais mort en entier : il faut le prouver propriete par
+   propriete, pas regle par regle.**
+   ⛔ CE TEMOIN NE PROTEGE PAS LE NETTOYAGE, IL PROTEGE LE FUTUR : il refuse qu'une regle soit
+   re-declaree deux fois. Sinon le doublon reviendra, et personne ne le verra (R30 : un retrait
+   se fige par un test).
+   ⚠️ `.ck-opt.on` EST TOLEREE, avec sa raison : les deux declarations sont VOLONTAIRES et
+   consecutives (l. 247-248) — c'est une surcharge assumee, pas un copier-coller oublie. La
+   liste blanche dit QUI est tolere ; toute autre regle doublee fait rougir la livraison. */
+console.log('\n-- CXXXIX. Aucune règle CSS n\'est écrite deux fois (ft-v1035) --');
+{
+  const css=fs.readFileSync(path.join(__dirname,'..','..','style.css'),'utf8').split('\n');
+  /* ⛔ Doublons TOLERES, avec la raison — une exception sans motif finit par etre contournee. */
+  const TOLERES={'.ck-opt.on':'surcharge volontaire et consécutive (l. 247-248)'};
+  const vus={};
+  css.forEach((l,i)=>{
+    const m=/^(\.[A-Za-z][\w .,>:()-]*)\{/.exec(l);
+    if(m){ const k=m[1].trim(); (vus[k]=vus[k]||[]).push(i+1); }
+  });
+  const doubles=Object.entries(vus).filter(([k,v])=>v.length>1 && !TOLERES[k]);
+  t('⭐⭐ aucune règle CSS n\'est déclarée deux fois (la 2ᵉ gagne, la 1ʳᵉ trompe le suivant)',
+    doubles.length===0, doubles.length?JSON.stringify(doubles.slice(0,6)):'0 doublon sur '+Object.keys(vus).length+' règles');
+  /* ⛔ Le temoin a-t-il vraiment LU le fichier ? Sinon il serait vert en ne mesurant rien. */
+  t('⛔ le témoin a bien lu `style.css` (sinon il serait vert en ne mesurant rien)',
+    Object.keys(vus).length>300, Object.keys(vus).length+' règles lues');
+  /* ⛔⛔ LA PROPRIETE REPORTEE : c'est la seule chose qui pouvait se perdre au nettoyage, et sa
+     disparition ne planterait rien — elle deplacerait les cartes de 2 px, en silence. */
+  const suppl=css.filter(l=>l.startsWith('.suppl-card{'));
+  t('⛔ `.suppl-card` garde son `margin-top` — la SEULE propriété vivante du bloc supprimé',
+    suppl.length===1 && /margin-top:2px/.test(suppl[0]),
+    suppl.length+' déclaration(s) · '+(suppl[0]||'').slice(0,90));
+  /* ⛔ Et la liste blanche doit rester JUSTE : une tolerance pour une regle qui n'est plus
+     doublee est une exception perimee, qui masquerait un vrai doublon futur du meme nom. */
+  const perimees=Object.keys(TOLERES).filter(k=>!(vus[k]&&vus[k].length>1));
+  t('⛔ aucune tolérance périmée (une exception qui ne sert plus masque le doublon suivant)',
+    perimees.length===0, JSON.stringify(perimees));
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

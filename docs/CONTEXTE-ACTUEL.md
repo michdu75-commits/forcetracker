@@ -6,7 +6,22 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1034`.
+- **Version en ligne (live) :** `ft-v1035`.
+- 🧹⭐⭐ **18 RÈGLES CSS ÉCRITES DEUX FOIS — NETTOYÉ** (ft-v1035). Michel : *« c'est quoi ça ? »*,
+  puis *« vas-y mesure »*. Tout le bloc de la carte « Suppléments » était **recopié 200 lignes
+  plus bas**, dont **10 règles avec des valeurs différentes** : la dernière gagnant toujours, la
+  première affichait des valeurs que **personne ne voyait** (icône 22 au lieu de 24, dose 15 au
+  lieu de 16, barre 8 au lieu de 10).
+  ⭐ **L'écran a toujours été juste** — le 2ᵉ bloc est un restylage volontaire. Le vrai coût est
+  le **prochain correctif** : modifier la 1ʳᵉ version ne change rien à l'écran. C'est **R2**, et
+  c'était déjà arrivé.
+  ⚠️⚠️ **Mon analyse de la veille était FAUSSE** : « la première est du code mort » — vérifié
+  propriété par propriété, il en restait **une de vivante** (`margin-top:2px`). *Une propriété
+  non redéclarée n'est pas écrasée, elle se CUMULE.* **Un doublon se prouve propriété par
+  propriété, jamais règle par règle.**
+  ⭐⭐ **384 comparaisons, 0 écart** — et le contrôle négatif détecte **34 écarts** sans le report,
+  donc la mesure sait rougir. Témoin permanent : plus aucune règle CSS en double (1 tolérance,
+  avec sa raison, et un témoin qui refuse une tolérance périmée).
 - 📐⭐⭐ **LES CARTES NUTRITION ALIGNÉES ET JUSTIFIÉES — LIVRÉ** (ft-v1034). Michel, 5 captures :
   *« visuellement c'est pas propre, il faut que tout soit aligné et justifié »*.
   ⛔⛔ **Le défaut était mesurable et sa cause tient en un mot : `min-width`.** Un minimum laisse
