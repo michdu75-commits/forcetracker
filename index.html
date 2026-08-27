@@ -203,10 +203,21 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
         </div>
         <div class="ob-sub" style="text-align:left;width:100%;font-size:14px;">Juste ton prénom et ton sexe — pour que Milo t'appelle par ton nom et te conseille juste. Le reste, il te le demandera au bon moment.</div>
         <input class="ob-inp" id="ob-name" type="text" placeholder="Ton prénom" autocomplete="given-name" autocapitalize="words" maxlength="30" enterkeyhint="done" style="width:100%;">
+        <!-- ⛔⛔ AUCUN DES DEUX N'EST PRÉ-COCHÉ (ft-v1040, décision de Michel : « pas de sexe
+             pré coché mais bloquant pour l'inscription sinon c'est n'importe quoi »).
+             Avant, « ♂ Homme » portait `ob-sel` d'avance — donc l'app ne pouvait pas
+             distinguer « il a choisi homme » de « elle n'a pas regardé » : les deux
+             produisaient la même donnée. Le coût est mesuré : 166 kcal de métabolisme
+             (Mifflin : +5 homme / −161 femme), soit ~257 kcal/jour à activité 1,55 — sans
+             compter la figurine, les conditions de santé, la morphologie et le ton de Milo.
+             C'est R29 : l'erreur touche la personne, donc on DEMANDE au lieu de deviner. -->
         <div class="ob-gbrow" style="width:100%;">
-          <button class="ob-gbtn ob-sel" id="ob-gt-h" onclick="obSetGender('H')">♂ Homme</button>
+          <button class="ob-gbtn" id="ob-gt-h" onclick="obSetGender('H')">♂ Homme</button>
           <button class="ob-gbtn" id="ob-gt-f" onclick="obSetGender('F')">♀ Femme</button>
         </div>
+        <!-- Caché tant qu'on n'a pas essayé de passer sans répondre : une consigne affichée
+             d'emblée se lit comme un reproche par avance. -->
+        <div id="ob-gender-hint" style="display:none;width:100%;font-size:13px;color:var(--red);font-weight:700;margin-top:-4px;">Choisis-en un — ton métabolisme et tes repères en dépendent.</div>
       </div>
       <div class="ob-footer">
         <button class="btn btn-red" onclick="obNext(4)" style="font-size:17px;padding:16px;">Continuer →</button>
@@ -490,6 +501,11 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   <div id="home-tester" style="padding:14px 14px 0;"></div>
   <div id="home-hdr" style="padding:0;"></div>
   <div id="home-milo" style="padding:14px 14px 0;"></div>
+  <!-- 🕰️ ft-v1039 — brique 7 « Ton histoire sportive ». SOUS la carte proactive, pour ne
+       JAMAIS la déplacer : un souvenir ne passe pas devant une relance ou un message de récup.
+       Vide la plupart du temps — la carte n'existe que les jours où il y a quelque chose à
+       relier (R24 : informer sans encombrer). Seul auteur : `_renderSouvenirCard()`. -->
+  <div id="home-souvenir" style="padding:10px 14px 0;"></div>
   <div id="home-obs" style="padding:14px 14px 0;"></div>
   <div id="home-daystate" style="padding:14px 14px 0;"></div>
   <div id="log-sleep" style="padding:14px 14px 0;"></div>
@@ -535,6 +551,13 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
          qu'un seul auteur (`updRest`) — #rest-label, lui, appartient à `startRest`. -->
     <div id="rest-over" style="font-size:11px;color:var(--gold);min-height:0;line-height:1.3;"></div>
     <div id="rest-wrap"><div id="rest-fill"></div></div>
+    <!-- 💪 ft-v1038 : LE RIR SE DEMANDE ICI, ET NULLE PART AILLEURS.
+         Valider une série démarre le repos (mesuré dans `toggleSet`) : c'est donc le seul moment
+         où la question « il t'en restait combien ? » tombe juste — la série vient de finir, et on
+         a le temps. ⛔ PAS dans la ligne de série : elle porte déjà 6 colonnes sur 430 px.
+         ⛔ Rempli par `_renderRirRow()`, qui est son SEUL auteur. Vide = la question ne se pose
+         pas (repos hors série, échauffement) — et un RIR non répondu reste `null`, jamais 0. -->
+    <div id="rest-rir"></div>
     <div id="rest-btns">
       <button class="rbtn" id="rp-60" onclick="setRestPreset(60)">1:00</button>
       <button class="rbtn" id="rp-90" onclick="setRestPreset(90)">1:30</button>
@@ -601,6 +624,10 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 
 <!-- PROGRÈS -->
 <div class="screen" id="s-progress">
+  <!-- 🔭 ft-v1041 — brique 8 « Synthèse ». En TÊTE de Progrès : c'est l'onglet où on vient
+       déjà pour regarder en arrière. Vide tant qu'il n'y a aucune séance ; sous le seuil, elle
+       DIT qu'elle ne sait pas encore. Seul auteur : `_renderSynthese()`. -->
+  <div id="prog-synth" style="padding:0 0 12px;"></div>
   <div class="nu-tabs">
     <button class="nu-tab active" id="ptab-exo" onclick="switchProgTab('exo',this)">Exercices</button>
     <button class="nu-tab" id="ptab-poids" onclick="switchProgTab('poids',this)">Poids</button>

@@ -6,7 +6,81 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1037`.
+- **Version en ligne (live) :** `ft-v1042`.
+- ⚖️⭐⭐ **LA QUANTITÉ SUR UN ALIMENT REPRIS — LIVRÉ** (ft-v1042). Michel, 2 captures : *« il faut
+  absolument que je puisse mettre le poids sur les aliments réutilisés, qu'ils soient rentrés
+  avec le code-barre, ou à la main ou encore avec l'IA »*.
+  ⛔⛔ **5ᵉ fois le même oubli**, et le code le dit déjà de lui-même (ft-v973, v975, v984, v999) :
+  *le mécanisme existait, posé d'un seul côté*. La reprise depuis le **journal** gérait la
+  quantité ; celle depuis **« Mes aliments »** remplissait les macros et s'arrêtait.
+  ⛔ **`per100` était jeté deux fois en amont** (R4) — et mettre en **favori** faisait *perdre*
+  la quantité. Le défaut n'était pas dans le calcul, il était dans le **transport**.
+  ⭐ **Mesuré sur les 3 origines** : code-barres → grammes à la **dernière quantité (150 g)** ·
+  à la main → portions · IA → portions. Recalcul juste : 150→200 g = **700 kcal / 154 g**.
+  ⚠️ **Défaut trouvé à la capture** : champ à 150 g, ligne verte « pour tes 200 g » — le total de
+  l'aliment précédent. **La jumelle** (reprise depuis le journal) l'avait aussi : les deux
+  corrigées (R8).
+- 🔭⭐⭐ **BRIQUE 8 « SYNTHÈSE » — SA PREMIÈRE PORTE, ET LES 8 BRIQUES SONT BRANCHÉES** (ft-v1041).
+  Michel : *« la brique 8 alors »*. ⛔⛔ **État mesuré avant : `signal 1, porte 0`, et le signal
+  était un LEURRE** — `briques.py` cherchait `startPt001Test`, un **outil admin**. La brique
+  n'avait pas « un socle sans porte », elle n'avait **rien**. ⚠️ 2ᵉ motif supposé corrigé en deux
+  jours : *on vérifie les noms, on ne les devine pas.*
+  ⭐⭐ **La frontière avec la 7 est écrite dans la Vision** : la 7 dit *« que s'est-il passé ? »*,
+  la 8 dit ***« qu'est-ce que cette histoire m'apprend ? »***. Tournures autorisées : *« une
+  constante apparaît »* — ⛔⛔ **jamais *« tu devrais »*** (P14, témoin dédié).
+  👉 **Trois constantes en local**, en tête de Progrès : rythme réel · l'exercice le plus fidèle ·
+  la région **dominante** (via `_calSessMix`, R13/R2 — rien de neuf n'est calculé).
+  ⛔ **Chaque ligne nomme sa fenêtre** (défaut de ft-v1027) · **aucune comparaison à une norme** ·
+  sous **8 séances / 21 jours** elle **dit qu'elle ne sait pas** (leçon ft-v1021) · aucune séance
+  → la section n'existe pas.
+  ⚠️⚠️ **Deux noms supposés m'ont coûté une constante chacun** : `m.region` au lieu de `m.reg`
+  (silencieux), et *« le tronc revient 0 fois »* — qui se lit *« tu ne le travailles jamais »*,
+  et c'est **faux** : `_calSessMix` rend la **dominante**. *Une mesure juste peut produire une
+  phrase fausse* (ft-v1035, le lendemain).
+  ⚠️ **Un témoin existant a rougi 3 fois, et la cause était la MONTRE** : le bloc CXXXVII lit
+  l'**écran rendu**, donc l'horloge réelle — à 20:12 Paris, *« ce qu'il te reste »* se tait
+  exprès (ft-v1029). Horloge du navigateur figée à 14 h, aucune exigence affaiblie.
+  ⏭️ **Le socle des 8 briques est complet ; ce qui reste est ailleurs** (voir plus bas).
+- ⚧⭐⭐ **LE SEXE N'EST PLUS PRÉ-COCHÉ À L'INSCRIPTION — LIVRÉ** (ft-v1040). Michel : *« pas de
+  sexe pré coché mais bloquant pour l'inscription sinon c'est n'importe quoi »*.
+  ⛔⛔ **Le défaut tenait en une classe CSS** : « ♂ Homme » portait `ob-sel` d'avance et
+  `_obGender` valait `'H'`. *L'app ne pouvait pas distinguer « il a choisi homme » de « elle
+  n'a pas regardé ».* Aucun des deux n'est coché, et l'étape **bloque** tant qu'on n'a pas
+  répondu — l'indice n'apparaît **qu'après une tentative** (R24).
+  ⭐ **Le coût, mesuré** : Mifflin diffère de **166 kcal** (+5 / −161) → **+257 kcal/jour** à
+  activité 1,55, plus la figurine, la santé, la morphologie, la masse grasse, le ton de Milo et
+  le cycle. C'est **R29**. ⭐ Nuance : avec un bilan corporel, l'app passe à Katch-McArdle, qui
+  ignore le sexe.
+  ⚠️⚠️ **Correction de ce que j'avais annoncé** : « un profil sans sexe renseigné », **ça
+  n'existe pas** — `S.gender` vaut toujours H ou F. L'asymétrie du code est réelle mais
+  inatteignable, et elle le reste (garde sur les deux écritures).
+  ⚠️⚠️ **Et 3 témoins ont rougi, les miens** : le bloc d'alignement Nutrition rendait « 0 ligne »
+  parce qu'il était **20 h 15 à Paris** — ma propre bascule du soir de ft-v1029. J'avais épinglé
+  l'heure sur les appels de **calcul**, pas sur le **rendu**. *Épingler une moitié du chemin ne
+  suffit pas : c'est le contexte entier qu'il faut figer* (`clock.setFixedTime`).
+- 🕰️⭐⭐ **BRIQUE 7 « TON HISTOIRE SPORTIVE » — SA PREMIÈRE PORTE** (ft-v1039). Michel :
+  *« ah bah oui c'est super important »*. ⛔⛔ État mesuré avant : **socle seul, porte 0** —
+  `dayStateLog` existait depuis des mois, **rien ne le relisait**.
+  ⚠️⚠️ **Le déclencheur de la fiche était injouable** : l'anniversaire (*« il y a un an »*) ne
+  peut pas se produire, l'app est née le **17/06/2026**. → **contextuel** en premier : une douleur
+  déjà notée revient. ⭐ Le **Souvenir** est l'objet métier de la fiche, et **la RAISON est
+  obligatoire** : sans elle, il ne remonte pas. ⛔ Il **décrit, ne prédit jamais** (P14) et dit sa
+  limite (*« parmi ceux que tu avais notés »*). ⛔ **Trois silences** : rien aujourd'hui · première
+  fois · moins de 14 jours. ⭐⭐ **La brique passe de 🟠 socle seul à ✅ branchée** — première
+  brique à changer d'état depuis le 29/07. ⏭️ ~~Reste la 8 (Synthèse) sans porte.~~ **Faite le
+  jour même, ft-v1041 ci-dessus** *(ligne barrée plutôt que réécrite : elle datait la veille du
+  jour où elle a cessé d'être vraie — R23)*.
+- 💪⭐⭐ **LE RIR — « il t'en restait combien ? » — LIVRÉ** (ft-v1038, demande de Michel).
+  ⛔⛔ **R8 dans sa forme la plus pure** : `DISC_CADRE.echec` dit la règle par discipline
+  (*« JAMAIS à l'échec »*, *« 1 à 3 en réserve »*) et Milo la reçoit — mais **RIR/RPE n'existaient
+  nulle part**. On lui demandait de juger une réserve qu'on ne mesure jamais.
+  ⭐ **Le tag `X` = Échec EST un RIR de 0** → un seul propriétaire (`_rirDeSet`), pas de 2ᵉ système.
+  ⭐ **Saisie dans la barre de repos** (valider une série démarre le repos — mesuré) ; la ligne de
+  série a déjà 6 colonnes sur 430 px. ⛔ **Facultatif, retirable, et `null` n'est PAS 0.**
+  ⚠️ **L'ordre m'a piégé** : `startRest` commence par `stopRest()`, qui vide la cible → cible
+  « en attente », déposée par `toggleSet`, consommée par `startRest` (il y en a **cinq**).
+  ⭐ Restitué dans « précédent » (*8×80·2r*) — c'est là qu'il sert : **avant de refaire la série**.
+  ⏭️ **RPE différé**, décision de Michel.
 - 🧹 **29 Mo DE PAQUET PYTHON RETIRÉS (27/08, pas de version)** — `imageio_ffmpeg-…-.whl`,
   **21 % du dépôt**, entré par un `git add -A` lors de la session où il fallait lire une vidéo.
   Personne ne le référençait ; il partait sur le **site public**. Dépôt **140 → 111 Mo**.

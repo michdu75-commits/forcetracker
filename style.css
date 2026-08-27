@@ -1693,3 +1693,41 @@ html.ob-done #onboarding{display:none;}
 /* Une ligne « libellé · contenu » dont la colonne de gauche ne bouge JAMAIS. */
 .nu-lgn{display:grid;grid-template-columns:100px 1fr;gap:8px;align-items:baseline;}
 .nu-reste-lgn{display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:baseline;}
+
+/* 💪 LE RIR dans la barre de repos (ft-v1038) — discret, tapable au gros doigt.
+   ⛔ 44 px de haut : c'est la cible tactile minimale, et on l'utilise en salle, en sueur.
+   ⛔ Aucune couleur d'alerte : noter sa réserve n'est ni bien ni mal, c'est une mesure. */
+.rir-lbl{font-size:11px;color:var(--t3);margin-top:6px;text-align:center;}
+.rir-row{display:flex;gap:6px;justify-content:center;margin-top:5px;flex-wrap:wrap;}
+.rir-b{min-width:44px;height:34px;padding:0 10px;border-radius:10px;background:var(--bg3);
+  box-shadow:inset 0 0 0 1px var(--sep);color:var(--t2);font-size:13px;font-weight:800;
+  font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.rir-b.on{background:rgba(0,230,118,.16);box-shadow:inset 0 0 0 1.5px var(--green);color:var(--green);}
+.rir-b:disabled{opacity:.55;cursor:default;}
+.rir-b.rir-x{min-width:34px;color:var(--t3);font-weight:600;}
+/* La réserve notée la fois d'avant, dans la colonne « précédent » — 9,5 px comme la note. */
+.prev-rir{font-size:9px;font-weight:800;color:var(--t3);margin-left:3px;}
+
+/* 🕰️ La carte SOUVENIR — brique 7 « Ton histoire sportive » (ft-v1039).
+   ⛔ Volontairement plus SOBRE que la carte de Milo : un souvenir se lit, il n'appelle pas
+   à l'action. Pas de rouge, pas de bouton d'action — seulement une croix pour le refermer. */
+.souv-card{display:flex;gap:11px;align-items:flex-start;background:var(--bg2);border-radius:16px;
+  padding:12px 13px;box-shadow:inset 0 0 0 1px var(--sep);}
+.souv-ic{font-size:18px;line-height:1.2;flex-shrink:0;opacity:.9;}
+.souv-t{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin-bottom:3px;}
+.souv-txt{font-size:13px;color:var(--t1);line-height:1.45;}
+.souv-why{font-size:11px;color:var(--t3);line-height:1.4;margin-top:4px;font-style:italic;}
+.souv-x{flex-shrink:0;background:none;border:none;color:var(--t3);padding:2px;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+
+/* 🔭 La SYNTHÈSE — brique 8 (ft-v1041). Sobre : ce sont des faits, pas une alerte.
+   ⛔ Aucune couleur de statut (ni vert « bien », ni rouge « mal ») : une constante n'est
+   ni un succès ni un échec, et la colorer serait déjà un jugement. */
+.synth-card{background:var(--bg2);border-radius:16px;padding:13px 14px;box-shadow:inset 0 0 0 1px var(--sep);}
+.synth-t{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin-bottom:9px;}
+.synth-l{padding:7px 0;border-top:1px solid var(--sep);}
+.synth-l:first-of-type{border-top:none;padding-top:0;}
+.synth-txt{font-size:13.5px;color:var(--t1);line-height:1.45;}
+.synth-fen{font-size:10.5px;color:var(--t3);margin-top:2px;font-style:italic;}
+.synth-vide{font-size:12.5px;color:var(--t2);line-height:1.5;}
+.synth-pied{font-size:11px;color:var(--t3);line-height:1.4;margin-top:9px;padding-top:8px;border-top:1px dashed var(--sep);}

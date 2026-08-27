@@ -81,13 +81,20 @@ BRIQUES = [
          signal=r'registre\.observations', porte=r'_renderObsCard|obs-card'),
     dict(n='6', nom='Le Gardien', quoi='adapter, pas interdire',
          signal=r'_gardien', porte=r'_gardienRules|_gardienZones'),
+    # ⚠️ PORTE CORRIGÉE LE 27/08 : le motif cherchait `histoireSportive`, un nom SUPPOSÉ à
+    #    l'époque où la brique n'avait aucune porte. Elle en a une depuis ft-v1039, et elle
+    #    s'appelle autrement. *On vérifie les noms, on ne les devine pas* — la même leçon que
+    #    la 1re mesure fausse de ce script (voir le commentaire de BRIQUES plus haut).
     dict(n='7', nom='Mémoire vivante', quoi='relier les événements dans le temps',
          signal=r'S\.dayStateLog|calcRecoveryDetail\(refTs\)|recupHistorique',
-         porte=r'histoireSportive|_histoireSport'),
-    # ⛔ Brique 8 : `startPt001Test` est un outil ADMIN (« Réservé à l'admin »), pas une
-    #    porte. Le signal reste, la porte est délibérément introuvable — c'est la vérité.
+         porte=r'_souvenirDuJour|_renderSouvenirCard|home-souvenir'),
+    # ⚠️ SIGNAL ET PORTE CORRIGÉS LE 27/08 (ft-v1041) : `startPt001Test` est un outil ADMIN,
+    #    il n'a jamais été le socle de cette brique — c'était un motif faute de mieux, à l'époque
+    #    où elle n'existait pas. Le vrai socle est `_synthConstantes` (les constantes tirées de
+    #    l'historique), et la porte est la section « Ce que ton histoire montre » de Progrès.
+    #    *On vérifie les noms, on ne les devine pas* — 2ᵉ correction du même genre aujourd'hui.
     dict(n='8', nom='Synthèse', quoi='prendre du recul sur son histoire',
-         signal=r'startPt001Test', porte=r'synthese|_syntheseHistoire'),
+         signal=r'_synthConstantes', porte=r'_renderSynthese|prog-synth'),
 ]
 
 def etat(b):

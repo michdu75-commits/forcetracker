@@ -15066,6 +15066,33 @@ console.log('\n-- CXXXVI. Le repos est un maximum, pas un compte a rebours (ft-v
 console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v1034) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  /* ⛔⛔ HORLOGE FIGÉE À 14 h — ET C'EST UN VRAI ROUGE QUI L'A IMPOSÉE, pas une précaution.
+     ⭐⭐ LES DEUX SESSIONS L'ONT TROUVÉ LE MÊME JOUR, SÉPARÉMENT (ft-v1040 et ft-v1041) :
+     lancé à 20 h passées heure de Paris, ce bloc rendait « lignes de reste = 0 » et 3 témoins
+     rougissaient. La cause n'est pas une régression, c'est **ft-v1029** : après 20 h, « ce
+     qu'il te reste » se tait exprès quand rien de léger ne couvre le manque (garde-fou
+     anti-TCA — à cette heure-là, un manque n'est plus une information, c'est un reproche sur
+     une journée qu'on ne peut plus changer).
+     ⚠️ L'heure était pourtant DÉJÀ épinglée en ft-v1029 — mais seulement sur les appels de
+     CALCUL (`_ideesPourLeReste(r, 14)`). Ce bloc-ci passe par `renderNutrition()`, donc par le
+     RENDU, qui lit l'horloge réelle. *Épingler une moitié du chemin ne suffit pas : c'est le
+     contexte entier qu'il faut figer.* Famille « fuseaux horaires » de BUGS.md, appliquée à
+     nos propres tests.
+     ⛔ UN SEUL ÉPINGLAGE, PAS DEUX (R2). La fusion en avait empilé un par session — celui du
+     contexte et celui de la page. Deux propriétaires de la même horloge finiraient par dire
+     deux heures différentes. On garde le CALCULÉ et on jette la date en dur
+     (`'2026-08-27T14:00:00+02:00'`), qui figeait aussi le décalage d'ÉTÉ : faux six mois par an.
+     ⚠️⚠️ ET L'ÉPINGLAGE LUI-MÊME S'EST TROMPÉ D'ABORD — attrapé par le témoin sentinelle
+     ci-dessous, pas par la relecture. Le 1er jet faisait `new Date().setHours(14)` **côté
+     Node**, dont le fuseau est **UTC** : la page voyait **16 h à Paris**. Tout le reste passait
+     quand même (16 h < 20 h), donc l'épinglage était **faux ET vert**. *Un témoin qui affirme
+     une condition doit la MESURER, pas la supposer remplie parce que les autres passent.*
+     ⛔ Ce bloc mesure un ALIGNEMENT, pas une heure : le figer ne lui retire rien. */
+  { const _n=new Date();
+    const _off=Math.round((new Date(_n.toLocaleString('en-US',{timeZone:'Europe/Paris'}))
+                         - new Date(_n.toLocaleString('en-US',{timeZone:'UTC'})))/6e4);
+    const _d=new Date(_n); _d.setUTCHours(14,0,0,0);
+    await cx.clock.setFixedTime(new Date(_d.getTime()-_off*6e4)); }
   const pg=await cx.newPage();
   await pg.addInitScript(seedScript({}));
   await pg.goto('http://localhost:'+PORT+'/index.html');
@@ -15073,6 +15100,9 @@ console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v10
   const F=await pg.evaluate(()=>{
    try{
     const o={}, t=today();
+    /* ⛔ Et le bloc dit l'heure à laquelle il a mesuré : si l'épinglage sautait un jour, un
+       témoin dédié le nommerait, au lieu de laisser trois autres tomber sans explication. */
+    o.heureMesure=new Date().getHours();
     S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';S.nutritionPhase='charge';
     const J=n=>{const d=new Date(t+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
     const e=(d,meal,name,h,k,p,c,f)=>({date:d,meal:meal,name:name,kcal:k,prot:p,carbs:c,fat:f,
@@ -15133,6 +15163,11 @@ console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v10
   });
   if(F.err) t('CXXXVII n\'a pas pu tourner', false, F.err);
   else{
+    /* ⛔⛔ CE TÉMOIN EXISTE POUR QUE LE BLOC NE MENTE PLUS SUR LA RAISON DE SES ROUGES.
+       Sans lui, un décrochage de l'épinglage se manifesterait par trois autres témoins qui
+       tombent — et on chercherait la régression dans le CSS, pas dans la montre. */
+    t('⚠️ le bloc mesure bien à 14 h (« ce qu\'il te reste » se tait après 20 h — ft-v1029)',
+      F.heureMesure===14, 'heure mesurée = '+F.heureMesure+' h');
     t('⛔ le témoin a bien VU les deux cartes (sinon il serait vert en ne mesurant rien)',
       F.nbLignes>=4 && F.nbReste>=2, 'lignes de repas='+F.nbLignes+' · lignes de reste='+F.nbReste);
     t('⭐⭐ « ce que l\'app a appris » : les 5 lignes démarrent au MÊME x (avant : 116→134)',
@@ -15437,6 +15472,506 @@ console.log('\n-- CXLI. Aucune graisse hors de ce que la police fournit (ft-v103
   t('⛔ les plages annoncées restent celles d\'origine (Manrope 400-800 · Space Grotesk 500-700)',
     MA.min===400 && MA.max===800 && SG.min===500 && SG.max===700,
     'Manrope '+MA.min+'-'+MA.max+' · Space Grotesk '+SG.min+'-'+SG.max);
+}
+/* == BLOC CXLII - LE RIR : « IL T'EN RESTAIT COMBIEN ? » (ft-v1038) ==
+   Demande de Michel apres la discussion sur le « lourd » : « on ajoute le RIR alors ».
+   ⛔⛔ TROU MESURE : `DISC_CADRE.echec` dit la regle PAR DISCIPLINE (« JAMAIS a l'echec » en
+   force athletique, « 1 a 3 en reserve » en musculation) et Milo la RECOIT — mais RIR/RPE
+   n'existaient nulle part dans l'app. On lui demandait de juger une reserve qu'on ne mesure
+   jamais : R8 dans sa forme la plus pure.
+   ⭐ LE DEMI-SYSTEME EXISTAIT : le tag `X` = Echec EST un RIR de 0. On n'ecrit donc PAS un
+   second systeme a cote — `_rirDeSet` est le SEUL proprietaire de la question (R2).
+   ⛔ RIEN N'EST OBLIGATOIRE, et `null` n'est PAS 0 : une serie sans RIR ne doit jamais se lire
+   « alle a l'echec » (R29 — ca changerait ce que Milo lui dit de son entrainement).
+   ⚠️⚠️ ET L'ORDRE M'A PIEGE : `startRest` COMMENCE par `stopRest()`, qui vide la cible. Poser
+   la cible avant l'appel ne servait a rien — mesure, 0 bouton affiche. D'ou la cible « en
+   attente », deposee par `toggleSet` et consommee par `startRest` : il y a CINQ `startRest`
+   dans `toggleSet`, on n'en patche pas cinq. */
+console.log('\n-- CXLII. Le RIR : il t\'en restait combien ? (ft-v1038) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const G=await pg.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    /* ── ① UN SEUL PROPRIETAIRE DE « COMBIEN EN RESERVE » ── */
+    o.f={ echec:_rirDeSet({type:'X'}), nonNote:_rirDeSet({type:'N'}), zero:_rirDeSet({type:'N',rir:0}),
+          deux:_rirDeSet({type:'N',rir:2}), horsBorne:_rirDeSet({type:'N',rir:9}), vide:_rirDeSet(null) };
+    /* ── ② LE VRAI CHEMIN : valider une serie de TRAVAIL ouvre la question ── */
+    S.wkt=null; S.sessions=[]; S.prs={}; persist();
+    goScreen('s-log');document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+    document.getElementById('s-log').classList.add('active');renderLog();
+    addExercise('Développé Couché');
+    S.wkt.exs[0].sets[1].kg=80; S.wkt.exs[0].sets[1].reps=8; persist(); renderExBlocks();
+    toggleSet(0,1);
+    await new Promise(r=>setTimeout(r,300));
+    const z=()=>document.getElementById('rest-rir');
+    o.question=(z().innerText||'').replace(/\s+/g,' ').trim();
+    o.nbBoutons=z().querySelectorAll('.rir-b').length;
+    setRir(0,1,2); await new Promise(r=>setTimeout(r,150));
+    o.apresTap=S.wkt.exs[0].sets[1].rir;
+    o.marque=!!document.querySelector('#rest-rir .rir-b.on');
+    /* ⛔ ON PEUT RETIRER SA REPONSE : sans ca, un tap par erreur deviendrait definitif. */
+    setRir(0,1,null); o.retraitOk=(S.wkt.exs[0].sets[1].rir===undefined);
+    /* ── ③ PAS DE QUESTION SUR UN ECHAUFFEMENT ── */
+    stopRest(); S.wkt.exs[0].sets[0].type='É'; S.wkt.exs[0].sets[0].kg=40; S.wkt.exs[0].sets[0].reps=5;
+    persist(); toggleSet(0,0); await new Promise(r=>setTimeout(r,250));
+    o.echauffement=(z().innerText||'').trim();
+    /* ── ④ LE REPOS S'ARRETE → la question ET la cible disparaissent ── */
+    stopRest(); await new Promise(r=>setTimeout(r,120));
+    o.apresStop=(z().innerText||'').trim(); o.cible=_rirCible;
+    /* ⛔ Un repos lance AUTREMENT ne rouvre pas la question sur une serie deja passee. */
+    startRest(90); await new Promise(r=>setTimeout(r,120));
+    o.reposSeul=(z().innerText||'').trim();
+    stopRest();
+    /* ── ⑤ LA RESERVE REVIENT LA FOIS D'APRES, la ou elle sert ── */
+    S.sessions=[{date:'2026-08-20',exs:[{name:'Développé Couché',sets:[
+      {kg:80,reps:8,done:true,type:'N',rir:2}]}],vol:640}];
+    S.wkt=null; persist(); renderLog(); addExercise('Développé Couché');
+    _expandedEx=0; renderExBlocks(); await new Promise(r=>setTimeout(r,200));
+    o.prev=[...document.querySelectorAll('.sprev')].map(e=>(e.innerText||'').replace(/\s+/g,' ').trim());
+    /* ── ⑥ MILO LE RECOIT, AVEC SA LEGENDE ── */
+    const ctx=buildCoachContext('test');
+    o.miloRir=/RIR2/.test(ctx);
+    o.miloLegende=/RIR = RÉPÉTITIONS EN RÉSERVE/.test(ctx);
+    /* ⛔⛔ ET IL NE RECOIT PAS DE RIR INVENTE : la serie sans reserve notee ne doit porter
+       aucun « RIR », sinon l'absence de mesure deviendrait une mesure. */
+    S.sessions=[{date:'2026-08-20',exs:[{name:'Squat à la Barre',sets:[
+      {kg:100,reps:5,done:true,type:'N'}]}],volume:500}];
+    persist();
+    /* ⚠️⚠️ ON LIT LA LIGNE DE LA SÉANCE, PAS TOUT LE CONTEXTE — mon 1er motif était
+       `/Squat à la Barre[^·]*RIR/` sur le contexte ENTIER : `[^·]*` traverse les retours à la
+       ligne et allait accrocher le mot « RIR » dans la LÉGENDE, 40 lignes plus bas. Il rougissait
+       donc sur un code parfaitement correct (vérifié : la vraie ligne est `S1 100×5`, sans RIR).
+       *Un motif trop large ne mesure pas ce qu'il annonce* — la famille §20, dans un test. */
+    const _ctx=buildCoachContext('test');
+    const _ligne=((_ctx.split('DERNIÈRES SÉANCES:')[1]||'').split('\n')[1]||'');
+    o.ligneSansRir=_ligne.trim().slice(0,90);
+    o.miloPasInvente=(/Squat à la Barre/.test(_ligne) && !/RIR/.test(_ligne));
+    const f=document.querySelector('.nav-fab,#nb-log,.fab');const r=f.getBoundingClientRect();
+    o.fab=[Math.round(r.x),Math.round(r.y),Math.round(r.width),Math.round(r.height)];
+    S.wkt=null; persist();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  await cx.close();
+
+  if(G.err)t('CXLII n\'a pas pu tourner',false,G.err);
+  else{
+    /* ⭐⭐ L'ECHEC EST UN RIR DE 0 — un seul proprietaire, pas deux systemes qui divergent. */
+    t('⭐⭐ `X` (échec) EST un RIR de 0 — un seul propriétaire de la question',
+      G.f.echec===0, JSON.stringify(G.f));
+    /* ⛔⛔ LE TEMOIN QUI PROTEGE LA PERSONNE : non noté n'est PAS 0. */
+    t('⛔⛔ non noté rend `null`, JAMAIS 0 (une absence de mesure n\'est pas une mesure)',
+      G.f.nonNote===null && G.f.vide===null && G.f.zero===0, JSON.stringify(G.f));
+    t('⛔ une valeur hors bornes est refusée plutôt que tronquée',
+      G.f.horsBorne===null, 'rir:9 → '+G.f.horsBorne);
+    /* ⭐⭐ LE VRAI CHEMIN — c'est lui qui a attrapé l'erreur d'ordre (startRest vide la cible). */
+    t('⭐⭐ valider une série de TRAVAIL pose la question dans la barre de repos',
+      /restait combien/i.test(G.question) && G.nbBoutons===5, JSON.stringify({q:G.question,n:G.nbBoutons}));
+    t('⭐ un tap enregistre la réserve et se voit',
+      G.apresTap===2 && G.marque===true, JSON.stringify({rir:G.apresTap,marque:G.marque}));
+    t('⛔ on peut RETIRER sa réponse (un tap par erreur n\'est pas définitif)',
+      G.retraitOk===true, 'après retrait, rir = '+G.retraitOk);
+    /* ⛔ Un echauffement n'a pas de reserve a declarer : la question serait du bruit (R19). */
+    t('⛔ aucune question sur un ÉCHAUFFEMENT',
+      G.echauffement==='', JSON.stringify(G.echauffement));
+    t('⛔ le repos fini → la question et la cible disparaissent',
+      G.apresStop==='' && G.cible===null, JSON.stringify({txt:G.apresStop,cible:G.cible}));
+    /* ⛔⛔ Sans ce temoin, un repos lance autrement redemanderait la reserve d'une serie passee. */
+    t('⛔⛔ un repos lancé AUTREMENT ne pose aucune question (pas de série derrière)',
+      G.reposSeul==='', JSON.stringify(G.reposSeul));
+    /* ⭐⭐ CE QUE LE RIR SERT VRAIMENT : le relire avant de refaire la serie. */
+    t('⭐⭐ la réserve revient dans la colonne « précédent » (8×80·2r)',
+      G.prev.some(x=>/·2r/.test(x)), JSON.stringify(G.prev));
+    /* ⭐⭐ R8 REFERMEE : la regle ET le fait arrivent enfin ensemble chez Milo. */
+    t('⭐⭐ Milo reçoit la réserve ET sa légende (R8 refermée)',
+      G.miloRir===true && G.miloLegende===true, JSON.stringify({rir:G.miloRir,legende:G.miloLegende}));
+    /* ⛔⛔ LE TÉMOIN QUI PROTÈGE LA PERSONNE, CÔTÉ MILO : une série non notée ne doit porter
+       AUCUN « RIR » dans ce qu'il reçoit — sinon l'absence de mesure deviendrait une mesure.
+       ⛔ Il exige aussi que la ligne ait bien été TROUVÉE, sinon il serait vert en ne lisant rien. */
+    t('⛔⛔ … et AUCUN RIR inventé sur une série non notée',
+      G.miloPasInvente===true, 'ligne reçue : '+G.ligneSansRir);
+    t('🔴 règle d\'or #9 : le bouton central « + » est à sa place',
+      G.fab[2]>0 && G.fab[3]>0, JSON.stringify(G.fab));
+  }
+}
+
+/* == BLOC CXLIII - BRIQUE 7 : LE PREMIER SOUVENIR (ft-v1039) ==
+   Michel : « la brique 7, ah bah oui c'est super important ».
+   ⛔⛔ ETAT MESURE AVANT : `socle seul, porte 0`. `S.dayStateLog` existait depuis des mois — son
+   commentaire dans state.js dit litteralement « brique 7 » — et RIEN ne le relisait.
+   ⚠️⚠️ LE DECLENCHEUR EVIDENT ETAIT INJOUABLE : la fiche de conception (19/07) met
+   l'ANNIVERSAIRE en premier (« il y a un an aujourd'hui »), or l'app est nee le 17/06/2026 —
+   personne n'a un an d'historique, ca ne se declencherait JAMAIS. *Un comportement qui ne peut
+   pas s'observer n'est pas construit* (R3). D'ou le CONTEXTUEL en premier.
+   ⛔ LES GARDE-FOUS DE LA FICHE : un souvenir DECRIT et ne prescrit jamais (P14, « miroir jamais
+   prophete ») · un souvenir SANS RAISON ne remonte pas · « moins mais mieux » · et il ne
+   DEPLACE aucun message (carte propre, sous celle de Milo). */
+console.log('\n-- CXLIII. Brique 7 : le premier souvenir (ft-v1039) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const G=await pg.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    const j=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
+    const pose=z=>{ S.dayState={date:j(0),energy:null,mood:null,pains:z.map(x=>({zone:x,side:null})),note:''}; };
+    /* ⛔ TROIS SILENCES — ce sont eux qui empechent la brique de devenir un flux d'anecdotes. */
+    S.dayStateLog=[{date:j(40),energy:2,mood:2,pains:[{zone:'genou'}],note:''}];
+    S.dayState=null;          o.sansDouleur=_souvenirDuJour();
+    pose(['epaule']);         o.premiereFois=_souvenirDuJour();
+    S.dayStateLog=[{date:j(2),energy:2,mood:2,pains:[{zone:'genou'}],note:''}];
+    pose(['genou']);          o.tropRecent=_souvenirDuJour();
+    /* ⭐ LE SOUVENIR LUI-MEME, avec l'objet metier complet de la fiche. */
+    S.dayStateLog=[{date:j(40),energy:2,mood:2,pains:[{zone:'genou'}],note:''}];
+    pose(['genou']);          const s=_souvenirDuJour();
+    o.s=s&&{type:s.type,date:s.date,resume:s.resume,lien:s.lien,raison:s.raison};
+    /* ⭐ LA DUREE SE CALCULE, et elle dit sa propre limite (« parmi ceux que tu avais notes »). */
+    S.dayStateLog=[j(63),j(62),j(61),j(60)].map(d=>({date:d,energy:2,mood:2,pains:[{zone:'lombaires'}],note:''}));
+    pose(['lombaires']);      const s2=_souvenirDuJour();
+    o.duree=s2&&s2.resume;
+    o.ditSaLimite=!!s2 && /parmi ceux que tu avais notés/.test(s2.resume);
+    /* ⛔⛔ AUCUNE PRESCRIPTION NI PREDICTION (P14) — c'est le garde-fou le plus important, parce
+       qu'on parle d'une DOULEUR. */
+    const txt=(s2?s2.resume+' '+s2.raison+' '+s2.lien:'');
+    o.pasDePrediction=!!s2 && !/devrait|va passer|ça ira|reprends|force|repose-toi|arrête|consulte/i.test(txt);
+    /* ⭐ LA PORTE : la carte s'affiche, et ne DEPLACE pas celle de Milo. */
+    persist(); renderHome(); await new Promise(r=>setTimeout(r,300));
+    const z=document.getElementById('home-souvenir');
+    o.carte=(z.innerText||'').replace(/\s+/g,' ').trim();
+    o.miloIntact=!!document.getElementById('home-milo');
+    o.raisonAffichee=/il y a/i.test(o.carte);
+    /* ⛔ REFERMABLE : un souvenir qu'on ne peut pas faire taire devient une notification (R24). */
+    _dismissSouvenir('contextuel|'+s2.date); await new Promise(r=>setTimeout(r,150));
+    o.apresFermeture=(document.getElementById('home-souvenir').innerText||'').trim();
+    /* ⛔ ET LA CARTE N'EXISTE PAS quand il n'y a rien : elle ne prend pas un pixel. */
+    try{localStorage.removeItem('ft4_souv');}catch(e){}
+    S.dayState=null; S.dayStateLog=[]; persist(); renderHome();
+    await new Promise(r=>setTimeout(r,200));
+    o.videSansSouvenir=(document.getElementById('home-souvenir').innerHTML||'').trim();
+    const f=document.querySelector('.nav-fab,#nb-log,.fab');const r=f.getBoundingClientRect();
+    o.fab=[Math.round(r.x),Math.round(r.y),Math.round(r.width),Math.round(r.height)];
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  await cx.close();
+
+  if(G.err)t('CXLIII n\'a pas pu tourner',false,G.err);
+  else{
+    /* ⛔⛔ LES TROIS SILENCES D'ABORD : c'est ce qui distingue une mémoire d'un bavardage. */
+    t('⛔⛔ aucune douleur aujourd\'hui → aucun souvenir (rien à relier)',
+      G.sansDouleur===null, JSON.stringify(G.sansDouleur));
+    t('⛔ une douleur JAMAIS eue avant → aucun souvenir',
+      G.premiereFois===null, JSON.stringify(G.premiereFois));
+    t('⛔ une douleur d\'avant-hier n\'est pas un SOUVENIR (on s\'en souvient très bien)',
+      G.tropRecent===null, JSON.stringify(G.tropRecent));
+    /* ⭐⭐ L'OBJET MÉTIER DE LA FICHE, en entier — type, date, résumé, lien, raison. */
+    t('⭐⭐ le souvenir porte les 5 champs de la fiche de conception',
+      !!G.s && G.s.type==='contextuel' && !!G.s.date && !!G.s.resume && !!G.s.lien && !!G.s.raison,
+      JSON.stringify(G.s));
+    /* ⛔⛔ SANS RAISON, PAS DE SOUVENIR — le garde-fou « moins mais mieux » de la fiche. */
+    t('⛔⛔ la RAISON existe et dit pourquoi MAINTENANT',
+      !!G.s && /il y a/i.test(G.s.raison), G.s&&G.s.raison);
+    t('⭐ la durée de l\'épisode se calcule, et le texte dit sa propre limite',
+      G.ditSaLimite===true, G.duree);
+    /* ⛔⛔ LE GARDE-FOU QUI COMPTE LE PLUS : on parle d'une DOULEUR. On décrit, on ne prédit
+       pas, et on ne conseille pas (Constitution P14/P22). */
+    t('⛔⛔ le souvenir DÉCRIT — aucune prédiction, aucun conseil (P14)',
+      G.pasDePrediction===true, G.duree);
+    /* ⭐ LA PORTE : c'est ce qui manquait à la brique (socle seul, porte 0). */
+    t('⭐⭐ LA PORTE : la carte « Ton histoire sportive » s\'affiche',
+      /TON HISTOIRE SPORTIVE/i.test(G.carte) && G.raisonAffichee===true, G.carte.slice(0,110));
+    /* ⛔ Elle ne DÉPLACE rien : la carte de Milo est toujours là, à sa place. */
+    t('⛔ … et elle ne déplace pas la carte de Milo',
+      G.miloIntact===true, 'carte Milo présente = '+G.miloIntact);
+    t('⛔ refermable pour la journée (sinon c\'est une notification)',
+      G.apresFermeture==='', JSON.stringify(G.apresFermeture));
+    /* ⛔ Et surtout : elle n'existe PAS quand il n'y a rien à dire. */
+    t('⛔⛔ aucun souvenir → la carte ne prend pas un pixel',
+      G.videSansSouvenir==='', JSON.stringify(G.videSansSouvenir));
+    t('🔴 règle d\'or #9 : le bouton central « + » est à sa place',
+      G.fab[2]>0 && G.fab[3]>0, JSON.stringify(G.fab));
+  }
+}
+
+/* == BLOC CXLIV - LE SEXE N'EST PLUS PRE-COCHE A L'INSCRIPTION (ft-v1040) ==
+   Michel : « pas de sexe pré coché mais bloquant pour l'inscription sinon c'est n'importe quoi ».
+   ⛔⛔ LE DEFAUT : le bouton « ♂ Homme » portait `ob-sel` d'avance et `_obGender` valait 'H'.
+   *L'app ne pouvait pas distinguer « il a choisi homme » de « elle n'a pas regarde »* — les deux
+   produisaient exactement la meme donnee.
+   ⭐ LE COUT EST MESURE, pas suppose : Mifflin ne differe que par une constante (+5 homme /
+   −161 femme), soit 166 kcal de metabolisme et ~257 kcal/jour a activite 1,55. Et le sexe pilote
+   aussi la figurine, les conditions de sante, la morphologie, la formule de masse grasse, le ton
+   de Milo et le cycle. C'est R29 : *l'erreur touche la personne, donc on DEMANDE*.
+   ⚠️ NUANCE ECRITE PLUTOT QUE TUE : des qu'il existe un bilan corporel, l'app passe a
+   Katch-McArdle, qui ignore le sexe. L'erreur ne mordait que sans mesure de composition.
+   ⛔ ET LE TEMOIN LE PLUS IMPORTANT N'EST PAS LE BLOCAGE, C'EST QUE `S.gender` NE DEVIENNE
+   JAMAIS VIDE : `state.js` lit le sexe a deux endroits avec des defauts OPPOSES (`==='H'?…` pour
+   le metabolisme, `==='F'?…` pour le plancher calorique). Tant que la valeur vaut H ou F, les
+   deux s'accordent ; une chaine vide les ferait diverger en silence. */
+console.log('\n-- CXLIV. Le sexe n\'est plus pré-coché à l\'inscription (ft-v1040) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  /* ⛔ AUCUN seed : on veut le VRAI parcours d'inscription, pas un profil deja pose. */
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async()=>{
+   try{
+    const o={}, dort=ms=>new Promise(x=>setTimeout(x,ms));
+    obGoTo(3); await dort(250);
+    const h=document.getElementById('ob-gt-h'), f=document.getElementById('ob-gt-f'),
+          hint=document.getElementById('ob-gender-hint');
+    o.lus = !!(h&&f&&hint);
+    o.aucunPreCoche = !h.classList.contains('ob-sel') && !f.classList.contains('ob-sel');
+    o.departVide    = _obGender==='';
+    /* ⛔ L'indice ne s'affiche pas D'EMBLEE : une consigne posee avant toute tentative se lit
+       comme un reproche par avance (R24 — informer sans bloquer le regard). */
+    o.indiceCacheAuDepart = getComputedStyle(hint).display==='none';
+    // ① passer sans repondre
+    obNext(4); await dort(200);
+    o.bloque       = (_obStep===3);
+    o.indiceMontre = getComputedStyle(hint).display!=='none';
+    o.genrePasVide = S.gender;                    // ⛔ jamais '' — le garde tient
+    // ② repondre
+    obSetGender('F');
+    o.indiceEfface = getComputedStyle(hint).display==='none';
+    o.uneSeuleCochee = f.classList.contains('ob-sel') && !h.classList.contains('ob-sel');
+    obNext(4); await dort(200);
+    o.passe = (_obStep===4);
+    o.enregistre = S.gender;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+  if(F.err) t('CXLIV n\'a pas pu tourner', false, F.err);
+  else{
+    t('⛔ le témoin a bien VU l\'étape (sinon il serait vert en ne mesurant rien)',
+      F.lus===true, JSON.stringify(F));
+    t('⭐⭐ AUCUN des deux sexes n\'est pré-coché — un silence ne peut plus passer pour un choix',
+      F.aucunPreCoche===true && F.departVide===true,
+      'pré-coché='+(!F.aucunPreCoche)+' · _obGender au départ = '+JSON.stringify(F.departVide));
+    t('⭐⭐ on ne PASSE PAS sans avoir répondu (décision de Michel)',
+      F.bloque===true, 'étape après tentative = '+(F.bloque?3:'passée'));
+    t('⛔⛔ … et `S.gender` n\'est JAMAIS vide — sinon `state.js` diverge en silence',
+      F.genrePasVide==='H'||F.genrePasVide==='F', 'S.gender = '+JSON.stringify(F.genrePasVide));
+    t('⛔ l\'indice n\'apparaît QU\'APRÈS une tentative, pas d\'emblée (pas de reproche par avance)',
+      F.indiceCacheAuDepart===true && F.indiceMontre===true,
+      'au départ caché='+F.indiceCacheAuDepart+' · après tentative visible='+F.indiceMontre);
+    t('⭐ répondre efface l\'indice et ne coche qu\'un seul bouton',
+      F.indiceEfface===true && F.uneSeuleCochee===true, '');
+    t('⭐ … et l\'étape passe alors, avec la BONNE valeur enregistrée',
+      F.passe===true && F.enregistre==='F', 'étape='+(F.passe?4:3)+' · S.gender='+JSON.stringify(F.enregistre));
+  }
+  await cx.close();
+}
+
+/* /!\ MON BLOC EST CXLV, PAS CXLIV : session-A a pousse son ft-v1040 la premiere et son
+   bloc porte deja CXLIV. On paie un numero plutot qu'un rapport ou deux blocs differents
+   repondent au meme nom — 4e collision de la semaine. */
+/* == BLOC CXLV - BRIQUE 8 : LES CONSTANTES (ft-v1041) ==
+   Michel : « la brique 8 alors ». Etat mesure avant : signal 1, porte 0 — et le seul signal
+   (`startPt001Test`) est un outil ADMIN. La brique n'avait RIEN.
+   ⭐⭐ LA FRONTIERE AVEC LA 7 EST ECRITE DANS LA VISION : la 7 repond a « que s'est-il passe ? »
+   (le souvenir, ft-v1039), la 8 a « QU'EST-CE QUE CETTE HISTOIRE M'APPREND ? ». Tournures
+   autorisees : « une constante apparait » — ⛔ JAMAIS « tu devrais ».
+   ⚠️⚠️ DEUX NOMS SUPPOSES M'ONT COUTE UN CAS CHACUN : `m.region` au lieu de `m.reg` (la
+   constante d'equilibre ne sortait JAMAIS, en silence), et un libelle qui disait « le tronc
+   revient 0 fois » — or `_calSessMix` rend la region DOMINANTE, donc ca se lit « tu ne
+   travailles jamais ton tronc », ce qui est FAUX. *Une mesure juste peut produire une phrase
+   fausse* (la lecon de ft-v1035, retrouvee le meme jour). */
+console.log('\n-- CXLV. Brique 8 : les constantes (ft-v1041) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const G=await pg.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    const j=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
+    const mk=(n,exs)=>({date:j(n),exs:exs.map(x=>({name:x,sets:[{kg:60,reps:8,done:true,type:'N'}]})),volume:480});
+    /* ⛔ DEUX SILENCES D'ABORD : « une constante » sur 5 séances, c'est du hasard. */
+    S.sessions=[]; persist(); o.aucune=_synthConstantes();
+    S.sessions=[0,2,4,7,9].map(n=>mk(n,['Développé Couché'])); persist();
+    const sous=_synthConstantes(); o.sousSeuil={pret:sous.pret,n:sous.nSeances,lignes:sous.lignes.length};
+    /* ⛔ … MAIS SOUS LE SEUIL ELLE DIT QU'ELLE NE SAIT PAS : un cadre vide se lit comme un
+       chargement qui a échoué (leçon de ft-v1021). */
+    goScreen('s-progress');document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+    document.getElementById('s-progress').classList.add('active'); renderProgress();
+    await new Promise(r=>setTimeout(r,300));
+    o.txtSousSeuil=(document.getElementById('prog-synth').innerText||'').replace(/\s+/g,' ').trim();
+    /* ⭐ L'HISTOIRE COMPLÈTE : 14 séances sur ~31 jours, haut du corps dominant. */
+    const S3=[];
+    for(let i=0;i<11;i++) S3.push(mk(i*3, ['Développé Couché','Élévations Latérales (Lateral Raise)']));
+    for(let i=0;i<3;i++)  S3.push(mk(i*3+1, ['Squat à la Barre','Presse à Cuisses']));
+    S.sessions=S3; persist();
+    const c=_synthConstantes();
+    o.pret=c.pret; o.cles=c.lignes.map(l=>l.cle);
+    o.chaqueLigneAsaFenetre=c.lignes.every(l=>l.fen&&l.fen.length>5);
+    o.txtEquilibre=(c.lignes.find(l=>l.cle==='equilibre')||{}).txt||'';
+    /* ⛔⛔ AUCUN VERBE DE PRESCRIPTION — c'est la règle de la Vision, et c'est ce qui
+       distingue la brique 8 d'un coach. */
+    const tout=c.lignes.map(l=>l.txt+' '+l.fen).join(' ');
+    o.pasDePrescription=!/tu devrais|il faudrait|essaie de|augmente|réduis|pense à|il faut que|tu dois/i.test(tout);
+    /* ⛔⛔ ET AUCUNE PHRASE QUI DIRAIT « tu ne travailles jamais X » : `_calSessMix` rend la
+       région DOMINANTE, pas ce qui a été travaillé. */
+    o.pasDeJamais=!/jamais|aucune fois|0 fois/i.test(tout);
+    /* ⭐ LA PORTE. */
+    renderProgress(); await new Promise(r=>setTimeout(r,350));
+    o.ecran=(document.getElementById('prog-synth').innerText||'').replace(/\s+/g,' ').trim();
+    /* ⛔ Changer de sous-onglet ne la fait pas disparaître (elle ne partage aucun état). */
+    switchProgTab('poids',document.getElementById('ptab-poids'));
+    await new Promise(r=>setTimeout(r,250));
+    o.surviteOnglet=(document.getElementById('prog-synth').innerText||'').trim().length>0;
+    const f=document.querySelector('.nav-fab,#nb-log,.fab');const r=f.getBoundingClientRect();
+    o.fab=[Math.round(r.x),Math.round(r.y),Math.round(r.width),Math.round(r.height)];
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  await cx.close();
+
+  if(G.err)t('CXLV n\'a pas pu tourner',false,G.err);
+  else{
+    t('⛔ aucune séance → la section n\'existe pas',
+      G.aucune.pret===false && G.aucune.nSeances===0, JSON.stringify(G.aucune));
+    t('⛔⛔ 5 séances sur 10 jours → AUCUNE constante (ce serait du hasard)',
+      G.sousSeuil.pret===false && G.sousSeuil.lignes===0, JSON.stringify(G.sousSeuil));
+    /* ⛔ Mais elle le DIT — elle ne laisse pas un cadre vide. */
+    t('⛔ … et sous le seuil elle DIT qu\'elle ne sait pas encore',
+      /Pas encore de quoi dégager une constante/i.test(G.txtSousSeuil), G.txtSousSeuil.slice(0,90));
+    t('⭐⭐ 14 séances sur 31 jours → les trois constantes sortent',
+      G.pret===true && G.cles.indexOf('rythme')>=0 && G.cles.indexOf('fidele')>=0
+      && G.cles.indexOf('equilibre')>=0, JSON.stringify(G.cles));
+    /* ⛔ Chaque ligne NOMME sa fenêtre : sans ça, deux constantes calculées sur des périodes
+       différentes se contredisent à l'écran sans que rien ne le dise (le défaut de ft-v1027). */
+    t('⛔ chaque constante nomme la fenêtre sur laquelle elle porte',
+      G.chaqueLigneAsaFenetre===true, JSON.stringify(G.cles));
+    /* ⛔⛔ LA RÈGLE DE LA VISION : on décrit, on ne prescrit jamais. */
+    t('⛔⛔ aucun verbe de prescription — « une constante », jamais « tu devrais »',
+      G.pasDePrescription===true, G.ecran.slice(0,110));
+    /* ⛔⛔ ET AUCUN FAIT FAUX : la région est la DOMINANTE, pas ce qui a été travaillé. */
+    t('⛔⛔ aucune phrase du type « tu ne travailles jamais X » (c\'est la DOMINANTE qu\'on mesure)',
+      G.pasDeJamais===true && /dominées par/i.test(G.txtEquilibre), G.txtEquilibre);
+    t('⭐⭐ LA PORTE : la section s\'affiche en tête de Progrès',
+      /CE QUE TON HISTOIRE MONTRE/i.test(G.ecran), G.ecran.slice(0,100));
+    t('⛔ changer de sous-onglet ne la fait pas disparaître',
+      G.surviteOnglet===true, 'toujours là = '+G.surviteOnglet);
+    t('🔴 règle d\'or #9 : le bouton central « + » est à sa place',
+      G.fab[2]>0 && G.fab[3]>0, JSON.stringify(G.fab));
+  }
+}
+
+/* == BLOC CXLVI - LA QUANTITE SUR UN ALIMENT REPRIS DE « MES ALIMENTS » (ft-v1042) ==
+   Michel, 2 captures : « il faut absolument que je puisse mettre le poids sur les aliments
+   reutilises, qu'ils soient rentres avec le code-barre, ou a la main ou encore avec l'IA ».
+   ⛔⛔ 5e FOIS LE MEME OUBLI, ET LE CODE LE DIT DEJA DE LUI-MEME : *« le mecanisme existait,
+   pose d'un seul cote »* (ft-v973, v975, v984, v999). La reprise depuis le JOURNAL gerait la
+   quantite ; celle depuis « Mes aliments » remplissait les 4 champs de macros et s'arretait.
+   ⛔ ET `per100` ETAIT JETE DEUX FOIS EN AMONT : `_buildFoodQuickItems` ne recopiait que
+   `{name,kcal,prot,carbs,fat}`, et la mise en FAVORI non plus — *mettre une etoile faisait
+   PERDRE la quantite*. L'information existait dans l'entree et n'atteignait pas l'ecran (R4).
+   ⭐ R13 : rien n'est reinvente — on emprunte le chemin de la reprise du journal.
+   ⭐⭐ ET LE TEMOIN QUI COMPTE LE PLUS EST CELUI DU TRANSPORT (`per100` survit) : sans lui, les
+   autres seraient verts le jour ou le bloc s'afficherait pour une mauvaise raison. */
+console.log('\n-- CXLVI. La quantité sur un aliment repris de « Mes aliments » (ft-v1042) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  /* ⛔ Horloge figée : cette modale vit dans la nutrition du jour (leçon de ft-v1040). */
+  await cx.clock.setFixedTime(new Date('2026-08-27T14:00:00+02:00'));
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async()=>{
+   try{
+    const o={}, dort=ms=>new Promise(x=>setTimeout(x,ms)), t=today();
+    S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';
+    /* LES TROIS ORIGINES QUE MICHEL NOMME, telles que l'app les enregistre vraiment. */
+    S.foodLog=[
+      {date:t,meal:'midi',name:'Riz Basmati (Taureau Ailé)',kcal:525,prot:10,carbs:115,fat:1,ts:Date.now()-3e6,
+       saisie:'code-barres',origine:'openfoodfacts',q:150,u:'g',per100:{kcal:350,prot:7,carbs:77,fat:1}},
+      {date:t,meal:'collation',name:'Iso zero protein (ASL)',kcal:156,prot:35,carbs:1,fat:1,ts:Date.now()-2e6,
+       saisie:'manuel',origine:'utilisateur',q:null,u:null,per100:null},
+      {date:t,meal:'soir',name:'Oeuf cru',kcal:280,prot:26,carbs:0,fat:20,ts:Date.now()-1e6,
+       saisie:'ia',origine:'estimation',q:null,u:null,per100:null}];
+    S.savedFoods=[]; S.hiddenFoods=[];
+    goScreen('nutrition'); renderNutrition();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await dort(350);
+    const lire=nom=>{
+      const i=_afQuickItems.findIndex(x=>x.name===nom);
+      if(i<0) return {absent:true};
+      quickFillFood(i);
+      const row=document.getElementById('af-bc-row'), prop=document.getElementById('af-prop-row'),
+            tot=document.getElementById('af-bc-total');
+      const vis=e=>!!e && getComputedStyle(e).display!=='none';
+      return { transporte:!!_afQuickItems[i].per100, grammes:vis(row), portions:vis(prop),
+               champG:(document.getElementById('af-bc-grams')||{}).value,
+               total: vis(tot) ? tot.textContent : '',
+               kcal:(document.getElementById('af-kcal')||{}).value };
+    };
+    o.bc   = lire('Riz Basmati (Taureau Ailé)');
+    o.main = lire('Iso zero protein (ASL)');
+    o.ia   = lire('Oeuf cru');
+    /* ⭐ Le recalcul marche-t-il VRAIMENT ? 150 g → 200 g. */
+    const i=_afQuickItems.findIndex(x=>x.name==='Riz Basmati (Taureau Ailé)');
+    quickFillFood(i);
+    const g=document.getElementById('af-bc-grams'); g.value='200'; _bcApplyGrams();
+    o.recalc={kcal:+document.getElementById('af-kcal').value, carbs:+document.getElementById('af-carbs').value};
+    /* ⛔ LE FAVORI garde-t-il son pour-100 g ? (l'étoile ne doit pas faire perdre la quantité) */
+    const j=_afQuickItems.findIndex(x=>x.name==='Riz Basmati (Taureau Ailé)');
+    toggleFavFood(j);
+    o.favGardePer100 = !!((S.savedFoods||[]).find(f=>f.name==='Riz Basmati (Taureau Ailé)')||{}).per100;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+  if(F.err) t('CXLVI n\'a pas pu tourner', false, F.err);
+  else{
+    t('⛔ le témoin a bien VU les trois aliments (sinon il serait vert en ne mesurant rien)',
+      !F.bc.absent && !F.main.absent && !F.ia.absent, JSON.stringify({bc:!!F.bc.absent,main:!!F.main.absent,ia:!!F.ia.absent}));
+    /* ⭐⭐ LE TRANSPORT : sans lui, rien de ce qui suit n'est possible (R4). */
+    t('⭐⭐ `per100` SURVIT jusqu\'à l\'aliment repris — il était jeté avant (R4)',
+      F.bc.transporte===true, 'per100 transporté = '+F.bc.transporte);
+    t('⭐⭐ CODE-BARRES repris → bloc « Quantité (g) », à la DERNIÈRE quantité (150, pas 100)',
+      F.bc.grammes===true && F.bc.champG==='150', 'bloc='+F.bc.grammes+' · champ='+F.bc.champG);
+    t('⭐⭐ SAISI À LA MAIN (sans pour-100 g) → bloc PORTIONS, jamais rien du tout',
+      F.main.portions===true && F.main.grammes===false, JSON.stringify({portions:F.main.portions,grammes:F.main.grammes}));
+    t('⭐⭐ ESTIMÉ PAR L\'IA (sans pour-100 g) → bloc PORTIONS aussi',
+      F.ia.portions===true && F.ia.grammes===false, JSON.stringify({portions:F.ia.portions,grammes:F.ia.grammes}));
+    /* ⛔ R2 : un seul réglage de quantité visible à la fois, sinon on ne sait plus lequel pilote. */
+    t('⛔ les deux réglages ne s\'affichent JAMAIS ensemble (R2)',
+      [F.bc,F.main,F.ia].every(x=>!(x.grammes&&x.portions)), '');
+    /* ⛔ Le défaut vu À LA CAPTURE : la ligne verte parlait de l'aliment précédent. */
+    t('⛔ la ligne du total parle de la BONNE quantité (vu à la capture : 150 dans le champ, « 200 g » sur la ligne)',
+      /pour tes 150 g/.test(F.bc.total) && /525 kcal/.test(F.bc.total), F.bc.total.slice(0,72));
+    t('⛔ … et elle ne survit PAS à un aliment sans quantité connue (pas de total orphelin)',
+      F.main.total==='' && F.ia.total==='', JSON.stringify({main:F.main.total.slice(0,40),ia:F.ia.total.slice(0,40)}));
+    t('⭐ le recalcul marche : 150 → 200 g donne 700 kcal et 154 g de glucides',
+      F.recalc.kcal===700 && F.recalc.carbs===154, JSON.stringify(F.recalc));
+    /* ⛔ NON-RÉGRESSION : on ne recalcule pas les macros en arrivant — la personne a pu les
+       corriger à la main, les réécrire effacerait sa correction sans le dire (R29). */
+    t('⛔ NON-RÉGRESSION : les macros ne sont PAS recalculées à l\'arrivée (525 kcal, intactes)',
+      F.bc.kcal==='525' && F.main.kcal==='156' && F.ia.kcal==='280', JSON.stringify([F.bc.kcal,F.main.kcal,F.ia.kcal]));
+    t('⛔ mettre en FAVORI ne fait plus PERDRE le pour-100 g',
+      F.favGardePer100===true, 'favori garde per100 = '+F.favGardePer100);
+  }
+  await cx.close();
 }
 
 await b.close(); srv.close();
