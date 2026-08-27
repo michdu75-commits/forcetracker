@@ -15378,6 +15378,67 @@ console.log('\n-- CXXXIX. Une charge prescrite sans repere le dit (ft-v1035) --'
   }
 }
 
+/* == BLOC CXLI - AUCUNE GRAISSE HORS DE CE QUE LA POLICE FOURNIT (ft-v1037) ==
+   Michel a demande un audit des polices et des tailles.
+   ⛔⛔ MESURE EN COMPTANT L'ENCRE DEPOSEE, pas en lisant le CSS : on dessine le meme texte dans
+   un canvas a chaque graisse et on compte les pixels noircis. Manrope fournit 400→800 (le pas
+   800→900 depose +0,0 % d'encre) et Space Grotesk 500→700 (700→800 et 800→900 : +0,0 %).
+   125 declarations demandaient une graisse absente du fichier — 85 sur Space Grotesk, 40 sur
+   Manrope. Le navigateur ramene silencieusement au plafond.
+   ⚠️ RIEN N'ETAIT CASSE A L'ECRAN. Le cout est celui du doublon de la veille : *ecrire 900 pour
+   etre plus lourd que le 800 d'a cote ne change RIEN*, et le suivant cherche ailleurs. Sur
+   Space Grotesk, 700/800/900 etaient trois ecritures pour un seul resultat.
+   ⭐⭐ LES PLAFONDS SONT LUS DANS `@font-face`, PAS ECRITS EN DUR : le jour ou quelqu'un change
+   de fichier de police, le temoin suit la nouvelle plage au lieu de defendre l'ancienne.
+   ⛔ ON NE TESTE QUE LE DEPASSEMENT VERS LE HAUT : une graisse sous le plancher est aussi
+   ramenee, mais il n'y en a aucune aujourd'hui (mesure) et la remontee est moins piegeuse —
+   personne n'ecrit 400 en croyant obtenir plus fin que 500. */
+console.log('\n-- CXLI. Aucune graisse hors de ce que la police fournit (ft-v1037) --');
+{
+  const RACINE=path.join(__dirname,'..','..');
+  const css=fs.readFileSync(path.join(RACINE,'style.css'),'utf8');
+  /* ① Les plages REELLES, lues dans les @font-face du fichier servi. */
+  const plages={};
+  css.replace(/@font-face\s*\{([^}]*)\}/g,(_,corps)=>{
+    const fam=/font-family:\s*['"]([^'"]+)['"]/.exec(corps);
+    const w=/font-weight:\s*(\d+)(?:\s+(\d+))?/.exec(corps);
+    if(fam&&w) plages[fam[1]]={min:+w[1], max:+(w[2]||w[1])};
+    return '';
+  });
+  const SG=plages['Space Grotesk'], MA=plages['Manrope'];
+  t('⛔ les plages sont LUES dans `@font-face` (sinon le témoin défendrait une police disparue)',
+    !!(SG&&MA&&SG.max&&MA.max), JSON.stringify(plages));
+
+  /* ② Toute declaration de graisse, avec la famille deduite du MEME bloc. */
+  const FICHIERS=['style.css','index.html'].concat(fs.readdirSync(RACINE).filter(f=>/\.js$/.test(f)))
+    .filter(f=>!['Code.js','worker.js','sw.js'].includes(f));
+  const hors=[];
+  let nLues=0;
+  FICHIERS.forEach(f=>{
+    let s; try{ s=fs.readFileSync(path.join(RACINE,f),'utf8'); }catch(e){ return; }
+    const re=/font-weight:\s*(\d{3})/g; let m;
+    while((m=re.exec(s))){
+      nLues++;
+      const p=+m[1];
+      const g=Math.max(s.lastIndexOf('{',m.index), s.lastIndexOf('"',m.index), s.lastIndexOf("'",m.index));
+      const cands=[s.indexOf('}',re.lastIndex), s.indexOf('"',re.lastIndex), s.indexOf("'",re.lastIndex)].filter(x=>x>=0);
+      const d=cands.length?Math.min.apply(null,cands):s.length;
+      const bloc=s.slice(g+1,d);
+      const max=/font-cond/.test(bloc)?SG.max:MA.max;
+      if(p>max) hors.push(f+' : font-weight:'+p+' > '+max);
+    }
+  });
+  t('⛔ le témoin a bien LU les fichiers servis (sinon il serait vert en ne mesurant rien)',
+    nLues>700, nLues+' déclarations de graisse lues');
+  t('⭐⭐ aucune graisse ne dépasse ce que son fichier de police contient',
+    hors.length===0, hors.length?JSON.stringify(hors.slice(0,6)):'0 dépassement sur '+nLues+' déclarations');
+  /* ③ Et le plafond n'a pas ete « corrige » en elargissant la police : si quelqu'un pousse
+     Manrope a 900 dans @font-face sans le fichier qui va avec, le rendu ne suivra pas. */
+  t('⛔ les plages annoncées restent celles d\'origine (Manrope 400-800 · Space Grotesk 500-700)',
+    MA.min===400 && MA.max===800 && SG.min===500 && SG.max===700,
+    'Manrope '+MA.min+'-'+MA.max+' · Space Grotesk '+SG.min+'-'+SG.max);
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

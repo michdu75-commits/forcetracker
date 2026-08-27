@@ -296,7 +296,7 @@ function _dProchaine(){
   const ex=(n.exs||n.exercices||[]).slice(0,6)
     .map(e=>`<div style="padding:5px 0;font-size:13px;color:var(--t1)">• ${(e.name||e)||''}</div>`).join('');
   return `<div class="card2"><h3>Prochaine séance</h3>
-    <div style="font-size:19px;font-weight:900;margin-bottom:2px">${n.label}</div>
+    <div style="font-size:19px;font-weight:800;margin-bottom:2px">${n.label}</div>
     <div class="kpi-s" style="margin-bottom:10px">${n.date?new Date(n.date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}):''}</div>
     ${ex||'<div class="vide">Les exercices ne sont pas encore détaillés.</div>'}</div>`;
 }

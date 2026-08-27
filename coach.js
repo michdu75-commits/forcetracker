@@ -6361,8 +6361,8 @@ const _DRAWER_CONTENT = {
         +'</div>'):'';
       return`<div style="text-align:center;padding:10px 0 20px;">
       <img src="logo.png" style="width:80px;height:80px;border-radius:20px;margin-bottom:16px;">
-      <div style="font-family:var(--font-cond);font-size:28px;font-weight:900;background:linear-gradient(135deg,#FF2D55,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;">Force Tracker</div>
-      <div id="_about-ver" style="display:inline-block;background:rgba(255,45,85,.12);color:var(--red);font-family:var(--font-cond);font-size:15px;font-weight:800;padding:5px 16px;border-radius:20px;letter-spacing:.05em;border:1px solid rgba(255,45,85,.22);margin-bottom:20px;">…</div>
+      <div style="font-family:var(--font-cond);font-size:28px;font-weight:700;background:linear-gradient(135deg,#FF2D55,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;">Force Tracker</div>
+      <div id="_about-ver" style="display:inline-block;background:rgba(255,45,85,.12);color:var(--red);font-family:var(--font-cond);font-size:15px;font-weight:700;padding:5px 16px;border-radius:20px;letter-spacing:.05em;border:1px solid rgba(255,45,85,.22);margin-bottom:20px;">…</div>
       ${_origHtml}
       <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;margin-bottom:12px;font-size:13px;line-height:1.7;color:var(--t2);">
         Application de suivi de musculation Progressive Web App.<br>
@@ -6398,7 +6398,7 @@ function openDrawerContent(key){
   closeDrawer();
   const body=document.getElementById('drawer-cnt-body');
   const htmlContent=typeof cnt.html==='function'?cnt.html():cnt.html;
-  if(body)body.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--sep);"><span style="font-weight:900;font-size:17px;">${cnt.title}</span><button onclick="closeDrawerContent()" style="width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--sep);color:var(--t2);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button></div>${htmlContent}`;
+  if(body)body.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--sep);"><span style="font-weight:800;font-size:17px;">${cnt.title}</span><button onclick="closeDrawerContent()" style="width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--sep);color:var(--t2);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button></div>${htmlContent}`;
   const ov=document.getElementById('ov-drawer-cnt');
   ov.classList.add('open');
   const modal=ov.querySelector('.modal');

@@ -3010,7 +3010,7 @@ function renderRecoveryCard(){
   el.innerHTML=`
   <div style="display:flex;align-items:center;gap:14px;">
     <div style="width:56px;height:56px;border-radius:50%;border:3px solid ${info.color};display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;background:${info.color}1a;">
-      <div style="font-family:var(--font-cond);font-size:17px;font-weight:900;color:${info.color};line-height:1;">${scoreDisp}</div>
+      <div style="font-family:var(--font-cond);font-size:17px;font-weight:700;color:${info.color};line-height:1;">${scoreDisp}</div>
       ${score!==null?`<div style="font-size:11px;color:${info.color};font-weight:700;">/100</div>`:''}
     </div>
     <div style="flex:1;">
