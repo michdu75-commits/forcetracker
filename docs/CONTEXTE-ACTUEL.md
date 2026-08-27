@@ -6,7 +6,18 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1036`.
+- **Version en ligne (live) :** `ft-v1038`.
+- 💪⭐⭐ **LE RIR — « il t'en restait combien ? » — LIVRÉ** (ft-v1038, demande de Michel).
+  ⛔⛔ **R8 dans sa forme la plus pure** : `DISC_CADRE.echec` dit la règle par discipline
+  (*« JAMAIS à l'échec »*, *« 1 à 3 en réserve »*) et Milo la reçoit — mais **RIR/RPE n'existaient
+  nulle part**. On lui demandait de juger une réserve qu'on ne mesure jamais.
+  ⭐ **Le tag `X` = Échec EST un RIR de 0** → un seul propriétaire (`_rirDeSet`), pas de 2ᵉ système.
+  ⭐ **Saisie dans la barre de repos** (valider une série démarre le repos — mesuré) ; la ligne de
+  série a déjà 6 colonnes sur 430 px. ⛔ **Facultatif, retirable, et `null` n'est PAS 0.**
+  ⚠️ **L'ordre m'a piégé** : `startRest` commence par `stopRest()`, qui vide la cible → cible
+  « en attente », déposée par `toggleSet`, consommée par `startRest` (il y en a **cinq**).
+  ⭐ Restitué dans « précédent » (*8×80·2r*) — c'est là qu'il sert : **avant de refaire la série**.
+  ⏭️ **RPE différé**, décision de Michel.
 - 🧹⭐⭐ **18 RÈGLES CSS ÉCRITES DEUX FOIS — NETTOYÉ** (ft-v1036). Michel : *« c'est quoi ça ? »*,
   puis *« vas-y mesure »*. Tout le bloc de la carte « Suppléments » était **recopié 200 lignes
   plus bas**, dont **10 règles avec des valeurs différentes** : la dernière gagnant toujours, la

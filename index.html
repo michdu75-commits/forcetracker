@@ -535,6 +535,13 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
          qu'un seul auteur (`updRest`) — #rest-label, lui, appartient à `startRest`. -->
     <div id="rest-over" style="font-size:11px;color:var(--gold);min-height:0;line-height:1.3;"></div>
     <div id="rest-wrap"><div id="rest-fill"></div></div>
+    <!-- 💪 ft-v1038 : LE RIR SE DEMANDE ICI, ET NULLE PART AILLEURS.
+         Valider une série démarre le repos (mesuré dans `toggleSet`) : c'est donc le seul moment
+         où la question « il t'en restait combien ? » tombe juste — la série vient de finir, et on
+         a le temps. ⛔ PAS dans la ligne de série : elle porte déjà 6 colonnes sur 430 px.
+         ⛔ Rempli par `_renderRirRow()`, qui est son SEUL auteur. Vide = la question ne se pose
+         pas (repos hors série, échauffement) — et un RIR non répondu reste `null`, jamais 0. -->
+    <div id="rest-rir"></div>
     <div id="rest-btns">
       <button class="rbtn" id="rp-60" onclick="setRestPreset(60)">1:00</button>
       <button class="rbtn" id="rp-90" onclick="setRestPreset(90)">1:30</button>

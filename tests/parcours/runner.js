@@ -15378,6 +15378,135 @@ console.log('\n-- CXXXIX. Une charge prescrite sans repere le dit (ft-v1035) --'
   }
 }
 
+/* == BLOC CXL - LE RIR : « IL T'EN RESTAIT COMBIEN ? » (ft-v1038) ==
+   Demande de Michel apres la discussion sur le « lourd » : « on ajoute le RIR alors ».
+   ⛔⛔ TROU MESURE : `DISC_CADRE.echec` dit la regle PAR DISCIPLINE (« JAMAIS a l'echec » en
+   force athletique, « 1 a 3 en reserve » en musculation) et Milo la RECOIT — mais RIR/RPE
+   n'existaient nulle part dans l'app. On lui demandait de juger une reserve qu'on ne mesure
+   jamais : R8 dans sa forme la plus pure.
+   ⭐ LE DEMI-SYSTEME EXISTAIT : le tag `X` = Echec EST un RIR de 0. On n'ecrit donc PAS un
+   second systeme a cote — `_rirDeSet` est le SEUL proprietaire de la question (R2).
+   ⛔ RIEN N'EST OBLIGATOIRE, et `null` n'est PAS 0 : une serie sans RIR ne doit jamais se lire
+   « alle a l'echec » (R29 — ca changerait ce que Milo lui dit de son entrainement).
+   ⚠️⚠️ ET L'ORDRE M'A PIEGE : `startRest` COMMENCE par `stopRest()`, qui vide la cible. Poser
+   la cible avant l'appel ne servait a rien — mesure, 0 bouton affiche. D'ou la cible « en
+   attente », deposee par `toggleSet` et consommee par `startRest` : il y a CINQ `startRest`
+   dans `toggleSet`, on n'en patche pas cinq. */
+console.log('\n-- CXL. Le RIR : il t\'en restait combien ? (ft-v1038) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const G=await pg.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    /* ── ① UN SEUL PROPRIETAIRE DE « COMBIEN EN RESERVE » ── */
+    o.f={ echec:_rirDeSet({type:'X'}), nonNote:_rirDeSet({type:'N'}), zero:_rirDeSet({type:'N',rir:0}),
+          deux:_rirDeSet({type:'N',rir:2}), horsBorne:_rirDeSet({type:'N',rir:9}), vide:_rirDeSet(null) };
+    /* ── ② LE VRAI CHEMIN : valider une serie de TRAVAIL ouvre la question ── */
+    S.wkt=null; S.sessions=[]; S.prs={}; persist();
+    goScreen('s-log');document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+    document.getElementById('s-log').classList.add('active');renderLog();
+    addExercise('Développé Couché');
+    S.wkt.exs[0].sets[1].kg=80; S.wkt.exs[0].sets[1].reps=8; persist(); renderExBlocks();
+    toggleSet(0,1);
+    await new Promise(r=>setTimeout(r,300));
+    const z=()=>document.getElementById('rest-rir');
+    o.question=(z().innerText||'').replace(/\s+/g,' ').trim();
+    o.nbBoutons=z().querySelectorAll('.rir-b').length;
+    setRir(0,1,2); await new Promise(r=>setTimeout(r,150));
+    o.apresTap=S.wkt.exs[0].sets[1].rir;
+    o.marque=!!document.querySelector('#rest-rir .rir-b.on');
+    /* ⛔ ON PEUT RETIRER SA REPONSE : sans ca, un tap par erreur deviendrait definitif. */
+    setRir(0,1,null); o.retraitOk=(S.wkt.exs[0].sets[1].rir===undefined);
+    /* ── ③ PAS DE QUESTION SUR UN ECHAUFFEMENT ── */
+    stopRest(); S.wkt.exs[0].sets[0].type='É'; S.wkt.exs[0].sets[0].kg=40; S.wkt.exs[0].sets[0].reps=5;
+    persist(); toggleSet(0,0); await new Promise(r=>setTimeout(r,250));
+    o.echauffement=(z().innerText||'').trim();
+    /* ── ④ LE REPOS S'ARRETE → la question ET la cible disparaissent ── */
+    stopRest(); await new Promise(r=>setTimeout(r,120));
+    o.apresStop=(z().innerText||'').trim(); o.cible=_rirCible;
+    /* ⛔ Un repos lance AUTREMENT ne rouvre pas la question sur une serie deja passee. */
+    startRest(90); await new Promise(r=>setTimeout(r,120));
+    o.reposSeul=(z().innerText||'').trim();
+    stopRest();
+    /* ── ⑤ LA RESERVE REVIENT LA FOIS D'APRES, la ou elle sert ── */
+    S.sessions=[{date:'2026-08-20',exs:[{name:'Développé Couché',sets:[
+      {kg:80,reps:8,done:true,type:'N',rir:2}]}],vol:640}];
+    S.wkt=null; persist(); renderLog(); addExercise('Développé Couché');
+    _expandedEx=0; renderExBlocks(); await new Promise(r=>setTimeout(r,200));
+    o.prev=[...document.querySelectorAll('.sprev')].map(e=>(e.innerText||'').replace(/\s+/g,' ').trim());
+    /* ── ⑥ MILO LE RECOIT, AVEC SA LEGENDE ── */
+    const ctx=buildCoachContext('test');
+    o.miloRir=/RIR2/.test(ctx);
+    o.miloLegende=/RIR = RÉPÉTITIONS EN RÉSERVE/.test(ctx);
+    /* ⛔⛔ ET IL NE RECOIT PAS DE RIR INVENTE : la serie sans reserve notee ne doit porter
+       aucun « RIR », sinon l'absence de mesure deviendrait une mesure. */
+    S.sessions=[{date:'2026-08-20',exs:[{name:'Squat à la Barre',sets:[
+      {kg:100,reps:5,done:true,type:'N'}]}],volume:500}];
+    persist();
+    /* ⚠️⚠️ ON LIT LA LIGNE DE LA SÉANCE, PAS TOUT LE CONTEXTE — mon 1er motif était
+       `/Squat à la Barre[^·]*RIR/` sur le contexte ENTIER : `[^·]*` traverse les retours à la
+       ligne et allait accrocher le mot « RIR » dans la LÉGENDE, 40 lignes plus bas. Il rougissait
+       donc sur un code parfaitement correct (vérifié : la vraie ligne est `S1 100×5`, sans RIR).
+       *Un motif trop large ne mesure pas ce qu'il annonce* — la famille §20, dans un test. */
+    const _ctx=buildCoachContext('test');
+    const _ligne=((_ctx.split('DERNIÈRES SÉANCES:')[1]||'').split('\n')[1]||'');
+    o.ligneSansRir=_ligne.trim().slice(0,90);
+    o.miloPasInvente=(/Squat à la Barre/.test(_ligne) && !/RIR/.test(_ligne));
+    const f=document.querySelector('.nav-fab,#nb-log,.fab');const r=f.getBoundingClientRect();
+    o.fab=[Math.round(r.x),Math.round(r.y),Math.round(r.width),Math.round(r.height)];
+    S.wkt=null; persist();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  await cx.close();
+
+  if(G.err)t('CXL n\'a pas pu tourner',false,G.err);
+  else{
+    /* ⭐⭐ L'ECHEC EST UN RIR DE 0 — un seul proprietaire, pas deux systemes qui divergent. */
+    t('⭐⭐ `X` (échec) EST un RIR de 0 — un seul propriétaire de la question',
+      G.f.echec===0, JSON.stringify(G.f));
+    /* ⛔⛔ LE TEMOIN QUI PROTEGE LA PERSONNE : non noté n'est PAS 0. */
+    t('⛔⛔ non noté rend `null`, JAMAIS 0 (une absence de mesure n\'est pas une mesure)',
+      G.f.nonNote===null && G.f.vide===null && G.f.zero===0, JSON.stringify(G.f));
+    t('⛔ une valeur hors bornes est refusée plutôt que tronquée',
+      G.f.horsBorne===null, 'rir:9 → '+G.f.horsBorne);
+    /* ⭐⭐ LE VRAI CHEMIN — c'est lui qui a attrapé l'erreur d'ordre (startRest vide la cible). */
+    t('⭐⭐ valider une série de TRAVAIL pose la question dans la barre de repos',
+      /restait combien/i.test(G.question) && G.nbBoutons===5, JSON.stringify({q:G.question,n:G.nbBoutons}));
+    t('⭐ un tap enregistre la réserve et se voit',
+      G.apresTap===2 && G.marque===true, JSON.stringify({rir:G.apresTap,marque:G.marque}));
+    t('⛔ on peut RETIRER sa réponse (un tap par erreur n\'est pas définitif)',
+      G.retraitOk===true, 'après retrait, rir = '+G.retraitOk);
+    /* ⛔ Un echauffement n'a pas de reserve a declarer : la question serait du bruit (R19). */
+    t('⛔ aucune question sur un ÉCHAUFFEMENT',
+      G.echauffement==='', JSON.stringify(G.echauffement));
+    t('⛔ le repos fini → la question et la cible disparaissent',
+      G.apresStop==='' && G.cible===null, JSON.stringify({txt:G.apresStop,cible:G.cible}));
+    /* ⛔⛔ Sans ce temoin, un repos lance autrement redemanderait la reserve d'une serie passee. */
+    t('⛔⛔ un repos lancé AUTREMENT ne pose aucune question (pas de série derrière)',
+      G.reposSeul==='', JSON.stringify(G.reposSeul));
+    /* ⭐⭐ CE QUE LE RIR SERT VRAIMENT : le relire avant de refaire la serie. */
+    t('⭐⭐ la réserve revient dans la colonne « précédent » (8×80·2r)',
+      G.prev.some(x=>/·2r/.test(x)), JSON.stringify(G.prev));
+    /* ⭐⭐ R8 REFERMEE : la regle ET le fait arrivent enfin ensemble chez Milo. */
+    t('⭐⭐ Milo reçoit la réserve ET sa légende (R8 refermée)',
+      G.miloRir===true && G.miloLegende===true, JSON.stringify({rir:G.miloRir,legende:G.miloLegende}));
+    /* ⛔⛔ LE TÉMOIN QUI PROTÈGE LA PERSONNE, CÔTÉ MILO : une série non notée ne doit porter
+       AUCUN « RIR » dans ce qu'il reçoit — sinon l'absence de mesure deviendrait une mesure.
+       ⛔ Il exige aussi que la ligne ait bien été TROUVÉE, sinon il serait vert en ne lisant rien. */
+    t('⛔⛔ … et AUCUN RIR inventé sur une série non notée',
+      G.miloPasInvente===true, 'ligne reçue : '+G.ligneSansRir);
+    t('🔴 règle d\'or #9 : le bouton central « + » est à sa place',
+      G.fab[2]>0 && G.fab[3]>0, JSON.stringify(G.fab));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

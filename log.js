@@ -815,7 +815,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
     return`<div id="sr-wrap-${ei}-${si}">`
       +`<div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">`
       +`<div class="snum">${si+1}</div>`
-      +`<div class="sprev" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="Ajouter une note">${p?`<div>${p.reps}×${p.kg}${_prevTypeBadge(p)}</div>`:'<div>—</div>'}${_setPrevNote(set,p)}</div>`
+      +`<div class="sprev" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="Ajouter une note">${p?`<div>${p.reps}×${p.kg}${_prevTypeBadge(p)}${_prevRirBadge(p)}</div>`:'<div>—</div>'}${_setPrevNote(set,p)}</div>`
       +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${set.maxi?'max':(p?p.reps:'')}" inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
       +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="done" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
       +`<button class="tbtn ${set.type||'N'}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||'Normal'}" id="tbtn-${ei}-${si}"><span style="line-height:1">${set.type&&set.type!=='N'?set.type:''}</span><span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span></button>`
@@ -1170,6 +1170,48 @@ function _prevTypeBadge(p){
   const col={'É':'var(--blue)','W':'var(--blue)','X':'var(--red)','E':'var(--red)','D':'#BF5AF2'}[t]||'var(--t3)';
   return `<sup style="font-size:9px;font-weight:800;color:${col};margin-left:2px;">${t}</sup>`;
 }
+
+/* 💪 CE QUE LE RIR SERT VRAIMENT : le revoir LA FOIS D'APRÈS (ft-v1038).
+   Noter « il m'en restait 2 » n'a aucune valeur sur le moment — la valeur est de le RELIRE
+   avant de refaire la série : *« la dernière fois, 8×80 avec 2 en réserve »* dit s'il faut
+   monter, et de combien. C'est la promesse du produit appliquée à une série (`VISION`).
+   ⛔ Un `X` porte DÉJÀ son badge rouge via `_prevTypeBadge` : on ne réécrit pas « échec » à
+   côté, ce serait la même information deux fois sur la même ligne (R2/R19). */
+function _prevRirBadge(p){
+  const n=_rirDeSet(p);
+  if(n===null||(p&&p.type==='X')) return '';
+  return `<span class="prev-rir">·${n>=RIR_MAX?RIR_MAX+'+':n}r</span>`;
+}
+
+/* 💪 LE RIR — « il t'en restait combien ? » (27/08/2026, ft-v1038)
+   Demande de Michel après la discussion sur le « lourd » : *« on ajoute le RIR alors »*.
+
+   ⛔⛔ POURQUOI C'ÉTAIT UN TROU, ET IL EST MESURÉ : `DISC_CADRE.echec` dit la règle **par
+   discipline** — *« JAMAIS à l'échec »* en force athlétique, *« 1 à 3 répétitions en réserve »*
+   en musculation, *« 0 à 2 sur les dernières séries »* en bodybuilding — et **Milo la reçoit**.
+   Mais **RIR et RPE n'existaient nulle part dans l'app** : zéro occurrence. *On lui demandait de
+   juger une réserve qu'on ne mesure jamais.* C'est **R8** dans sa forme la plus pure — une
+   consigne qui NOMME une source absente du contexte.
+
+   ⭐⭐ ET LE DEMI-SYSTÈME EXISTAIT DÉJÀ : le tag **`X` = Échec** (`SET_TYPE_LABELS`) dit
+   exactement « cette série est allée à l'échec », c'est-à-dire **RIR 0**. Il pilote déjà le
+   repos (240 s) et les avertissements. ⛔ On n'écrit donc PAS un second système à côté : `X`
+   reste le tag, `rir` est la graduation, et **une seule fonction répond à la question** — sans
+   quoi les deux diraient un jour des choses différentes sur la même série (R2).
+
+   ⛔ RIEN N'EST OBLIGATOIRE : `null` veut dire « je n'ai pas noté », et ce n'est PAS 0. Un RIR
+   absent ne doit jamais être compté comme un échec (R29 : on ne devine pas ce qui touche la
+   personne — ici, ça changerait ce que Milo lui dit de son entraînement). */
+const RIR_MAX = 4;                        // 4 = « 4 ou plus » — au-delà, la précision n'apporte rien
+function _rirDeSet(set){
+  if(!set) return null;
+  if(set.type==='X') return 0;            // ⭐ l'échec EST un RIR de 0 — un seul propriétaire
+  const v=set.rir;
+  if(v===null||v===undefined||v==='') return null;
+  const n=Math.round(+v);
+  return (n>=0&&n<=RIR_MAX)?n:null;
+}
+function _rirTxt(n){ return n===null?'':(n===0?'échec':(n>=RIR_MAX?RIR_MAX+'+ en réserve':n+' en réserve')); }
 /* 🎯 « PRÉCÉDENT » SE LIT PAR RÔLE, PAS PAR POSITION (15/08/2026)
    Capture de Michel, en séance : *« regarde y'a pas une couille là ? »*. Sur ses 6 lignes, les 3
    premières sont une MONTÉE EN CHARGE que l'app venait d'ajouter (5×27,5 · 3×37,5 · 2×50), et la
@@ -1225,9 +1267,13 @@ function toggleSet(ei,si){
     //    partait à l'ouverture de l'écran — voir le commentaire de `startWorkout`.
     if(S.wkt&&!S.wkt.startTs){ S.wkt.startTs=Date.now(); S.wkt.startHour=new Date().getHours(); }
     if(S.wkt&&S.wkt.startTs) set.at=Math.round(_wktElapsedMs()/1000);
-  } else delete set.at;   // dévalidée → l'horodatage n'a plus d'objet
+  } else { delete set.at; _rirPending=null; }   // dévalidée → l'horodatage ET la question du RIR n'ont plus d'objet
   persist();
   if(set.done){
+    /* 💪 ft-v1038 : la série qu'on vient de valider est la cible de la question du RIR. On la
+       DÉPOSE (voir `_rirPending`) ; c'est `startRest` qui la prendra, quel que soit celui des
+       cinq chemins qui s'exécute. ⛔ Et on l'efface plus bas si la série est dévalidée. */
+    _rirPending={ei,si};
     const exName=S.wkt.exs[ei].name;
     const isAbdo=EXLIB.some(e=>e.n===exName&&e.g==='Abdominaux');
     const savedPref=(S.exRestPref||{})[exName];
@@ -4345,7 +4391,11 @@ function startRest(sec){
   _countdownSecs=new Set();
   const bar=document.getElementById('rest-bar');
   bar.classList.add('show');
-  updRest();_updPill();
+  /* 💪 ft-v1038 : la cible déposée par `toggleSet` est consommée ICI — après le `stopRest()`
+     ci-dessus, qui vient justement de vider `_rirCible`. Une seule fois : elle ne survit pas
+     au repos suivant. */
+  _rirCible=_rirPending; _rirPending=null;
+  updRest();_updPill();_renderRirRow();
   restIv=setInterval(_restTick,250);
   if(_pillIv)clearInterval(_pillIv);
   _pillIv=setInterval(_updPill,500);
@@ -4404,6 +4454,12 @@ function _stopRestTimerOnly(){
   const bar=document.getElementById('rest-bar');
   if(bar){bar.classList.remove('show');bar.style.borderColor='';}
   const lbl=document.getElementById('rest-label');if(lbl)lbl.textContent='';
+  const ov=document.getElementById('rest-over');if(ov)ov.textContent='';
+  /* 💪 ft-v1038 : la question du RIR n'a plus d'objet une fois le repos fini — et surtout, la
+     CIBLE doit disparaître, sinon le repos suivant (démarré autrement) rouvrirait la question
+     sur une série déjà passée. */
+  _rirCible=null;
+  const rz=document.getElementById('rest-rir');if(rz)rz.innerHTML='';
   _updPill();
 }
 
@@ -4436,6 +4492,57 @@ function updateRMLive(ei,si){
 }
 let _restStep=15;
 let _restEx=null;
+
+/* 💪 LA QUESTION DU RIR, POSÉE DANS LA BARRE DE REPOS (ft-v1038)
+   ⛔ `_rirCible` dit DE QUELLE SÉRIE on parle. Sans lui, la barre poserait la question dans le
+   vide dès qu'un repos démarre pour une autre raison (bouton repos seul, enchaînement). */
+let _rirCible=null;                       // {ei, si} ou null — la série dont on parle MAINTENANT
+/* ⛔⛔ ET UNE CIBLE « EN ATTENTE », parce que l'ordre m'a piégé une première fois : `startRest`
+   COMMENCE par `stopRest()`, qui remet la cible à null. Poser la cible avant l'appel ne servait
+   donc à rien — la question ne s'affichait jamais (mesuré : 0 bouton).
+   ⭐ Et il y a **cinq** `startRest` dans `toggleSet` (paliers, superset, dernier palier, cas
+   normal…). Plutôt que d'en patcher cinq, `toggleSet` DÉPOSE la cible et `startRest` la
+   CONSOMME : un seul endroit décide, et un repos lancé autrement (bouton repos, enchaînement)
+   trouve l'attente vide — donc ne pose aucune question sur une série qui n'existe pas. */
+let _rirPending=null;
+
+/* ⛔ UN SEUL AUTEUR POUR `#rest-rir` (R2) — la leçon de `#rest-label`, ce matin : `updRest`
+   tourne à chaque tick et aurait effacé ce que `startRest` y met. Ici, personne d'autre
+   n'écrit dans cet élément, et le rendu ne dépend que de `_rirCible`. */
+function _renderRirRow(){
+  const z=document.getElementById('rest-rir');
+  if(!z) return;
+  const c=_rirCible;
+  const set=(c&&S.wkt&&S.wkt.exs&&S.wkt.exs[c.ei]&&S.wkt.exs[c.ei].sets[c.si])||null;
+  if(!set){ z.innerHTML=''; return; }
+  /* ⛔ ON NE DEMANDE PAS SUR UN ÉCHAUFFEMENT : une série de chauffe n'a pas de réserve à
+     déclarer, et poser la question à chaque palier serait du bruit (R19). */
+  if(set.type==='É'||set.type==='W'){ z.innerHTML=''; return; }
+  const cur=_rirDeSet(set);
+  /* ⭐ L'ÉCHEC EST DÉJÀ RÉPONDU : si la série porte le tag `X`, la réponse est 0 et on le DIT,
+     au lieu de redemander — c'est la même information, saisie autrement (R2). */
+  const fige=(set.type==='X');
+  const btn=n=>{
+    const on=(cur===n);
+    const lbl=(n===0?'échec':(n>=RIR_MAX?RIR_MAX+'+':String(n)));
+    return `<button class="rir-b${on?' on':''}"${fige?' disabled':''} onclick="setRir(${c.ei},${c.si},${n})">${lbl}</button>`;
+  };
+  let html='<div class="rir-lbl">'+(fige
+      ? 'Série à l\'échec — 0 en réserve'
+      : 'Il t\'en restait combien ?')+'</div><div class="rir-row">';
+  for(let n=0;n<=RIR_MAX;n++) html+=btn(n);
+  /* ⛔ ET ON PEUT RETIRER SA RÉPONSE : sans ça, un tap par erreur deviendrait une mesure
+     définitive. `null` n'est pas 0, il faut pouvoir y revenir (R29). */
+  if(cur!==null&&!fige) html+='<button class="rir-b rir-x" onclick="setRir('+c.ei+','+c.si+',null)" title="Retirer">✕</button>';
+  z.innerHTML=html+'</div>';
+}
+function setRir(ei,si,n){
+  const set=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]&&S.wkt.exs[ei].sets[si];
+  if(!set||set.type==='X') return;
+  if(n===null) delete set.rir; else set.rir=Math.max(0,Math.min(RIR_MAX,Math.round(+n)||0));
+  persist(); _renderRirRow(); renderExBlocks();
+  if(navigator.vibrate)navigator.vibrate(30);
+}
 let _cexMusclesP=[],_cexMusclesS=[],_cexImg=null,_editingCustomExName=null;
 function _highlightRestPreset(sec){
   [60,90,120].forEach(v=>{const b=document.getElementById('rp-'+v);if(b)b.classList.toggle('rp-active',v===sec);});
