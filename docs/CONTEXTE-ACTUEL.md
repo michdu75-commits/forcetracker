@@ -6,8 +6,8 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1035`.
-- 🧹⭐⭐ **18 RÈGLES CSS ÉCRITES DEUX FOIS — NETTOYÉ** (ft-v1035). Michel : *« c'est quoi ça ? »*,
+- **Version en ligne (live) :** `ft-v1036`.
+- 🧹⭐⭐ **18 RÈGLES CSS ÉCRITES DEUX FOIS — NETTOYÉ** (ft-v1036). Michel : *« c'est quoi ça ? »*,
   puis *« vas-y mesure »*. Tout le bloc de la carte « Suppléments » était **recopié 200 lignes
   plus bas**, dont **10 règles avec des valeurs différentes** : la dernière gagnant toujours, la
   première affichait des valeurs que **personne ne voyait** (icône 22 au lieu de 24, dose 15 au
@@ -22,6 +22,16 @@
   ⭐⭐ **384 comparaisons, 0 écart** — et le contrôle négatif détecte **34 écarts** sans le report,
   donc la mesure sait rougir. Témoin permanent : plus aucune règle CSS en double (1 tolérance,
   avec sa raison, et un témoin qui refuse une tolérance périmée).
+- 📍⭐⭐ **UNE CHARGE PRESCRITE SANS REPÈRE LE DIT — LIVRÉ** (ft-v1035), application du critère
+  donné par Michel : *« la coach savait que moi je m'y connais ; tout le monde ne connaît pas ce
+  que représente le "lourd" »*. 👉 La question n'était pas *chiffrer ou qualifier*, mais
+  **« a-t-on la référence ? »**. ⛔⛔ Trou mesuré : `_intensiteDefauts` se tait **entièrement**
+  sans record — Milo pouvait donc chiffrer sur un exercice jamais fait sans un mot (**ft-v980**
+  privé de garde-fou). ⛔ **Le nombre n'est pas retiré** (R24) : il est **nommé** pour ce qu'il est.
+  ⚠️ Le résolveur de noms **ne suffisait pas** (`exNomCatalogue('Developpe Couche')` rend la chaîne
+  telle quelle) → comparaison normalisée, sinon on affirmait un **fait faux sur la personne** (R29).
+  ⏭️ **Ce que ça ne fait PAS** : ça n'empêche pas Milo de chiffrer. Le registre qualitatif
+  (« lourd ») reste **une décision produit de Michel**, non tranchée.
 - 📐⭐⭐ **LES CARTES NUTRITION ALIGNÉES ET JUSTIFIÉES — LIVRÉ** (ft-v1034). Michel, 5 captures :
   *« visuellement c'est pas propre, il faut que tout soit aligné et justifié »*.
   ⛔⛔ **Le défaut était mesurable et sa cause tient en un mot : `min-width`.** Un minimum laisse

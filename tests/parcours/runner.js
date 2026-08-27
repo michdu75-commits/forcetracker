@@ -15227,7 +15227,7 @@ console.log('\n-- CXXXVIII. La barre « Seance » ne laisse plus lire dessous (f
   }
 }
 
-/* == BLOC CXXXIX - AUCUNE REGLE CSS N'EST ECRITE DEUX FOIS (ft-v1035) ==
+/* == BLOC CXL - AUCUNE REGLE CSS N'EST ECRITE DEUX FOIS (ft-v1036) ==
    Michel, en decouvrant le doublon signale la veille : « c'est quoi ca ? ».
    ⛔⛔ 18 REGLES ETAIENT ECRITES DEUX FOIS dans `style.css` — tout le bloc de la carte
    « Supplements », recopie 200 lignes plus bas. Quand une regle existe en double, c'est
@@ -15247,7 +15247,7 @@ console.log('\n-- CXXXVIII. La barre « Seance » ne laisse plus lire dessous (f
    ⚠️ `.ck-opt.on` EST TOLEREE, avec sa raison : les deux declarations sont VOLONTAIRES et
    consecutives (l. 247-248) — c'est une surcharge assumee, pas un copier-coller oublie. La
    liste blanche dit QUI est tolere ; toute autre regle doublee fait rougir la livraison. */
-console.log('\n-- CXXXIX. Aucune règle CSS n\'est écrite deux fois (ft-v1035) --');
+console.log('\n-- CXL. Aucune règle CSS n\'est écrite deux fois (ft-v1036) --');
 {
   const css=fs.readFileSync(path.join(__dirname,'..','..','style.css'),'utf8').split('\n');
   /* ⛔ Doublons TOLERES, avec la raison — une exception sans motif finit par etre contournee. */
@@ -15274,6 +15274,108 @@ console.log('\n-- CXXXIX. Aucune règle CSS n\'est écrite deux fois (ft-v1035) 
   const perimees=Object.keys(TOLERES).filter(k=>!(vus[k]&&vus[k].length>1));
   t('⛔ aucune tolérance périmée (une exception qui ne sert plus masque le doublon suivant)',
     perimees.length===0, JSON.stringify(perimees));
+}
+
+/* == BLOC CXXXIX - UNE CHARGE PRESCRITE SANS REPERE LE DIT (ft-v1035) ==
+   Applique le critere donne par Michel : « la coach savait que moi je m'y connais ; tout le
+   monde ne connait pas ce que represente le lourd ». Elle ecrit « lourd » parce qu'un
+   REFERENTIEL COMMUN existe entre eux. Milo parle a des gens dont il ne sait parfois rien.
+   ⛔⛔ TROU MESURE : `_intensiteDefauts` commence par `if(!(rm1>0)) return out;` — aucun record,
+   le controle se tait ENTIEREMENT. Milo pouvait donc ecrire « 4x8 a 60 kg » sur un exercice
+   jamais fait sans qu'un mot ne soit dit. C'est ft-v980 prive de garde-fou.
+   ⛔ ON NE RETIRE PAS LE NOMBRE (R24) : une charge pre-remplie fait gagner du temps en salle.
+   Ce qui etait faux, c'est qu'elle soit presentee comme si elle etait calibree.
+   ⚠️⚠️ ET LE PIEGE EST LE NOM : mesure, `exNomCatalogue('Developpe Couche')` rend la chaine
+   TELLE QUELLE (il connait les alias declares, pas les variantes d'accent). Sans comparaison
+   normalisee, on annoncait « pas de repere » a quelqu'un dont le record existe — un fait FAUX
+   sur la personne, le pire cout d'erreur (R29). */
+console.log('\n-- CXXXIX. Une charge prescrite sans repere le dit (ft-v1035) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const G=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    const S3=[{kg:60,reps:8,type:'N'},{kg:60,reps:8,type:'N'},{kg:60,reps:8,type:'N'}];
+    S.prs={}; S.sessions=[]; persist();
+    o.sansRepere = _repereDefauts('Développé Couché', S3);
+    S.prs={'Développé Couché':{rm1:100,kg:90,reps:3,date:'2026-07-01'}}; persist();
+    o.avecRecord = _repereDefauts('Développé Couché', S3);
+    /* ⭐ LE TEMOIN QUI COMPTE LE PLUS : nom voisin (sans accents), record sous le vrai nom. */
+    o.nomVoisin  = _repereDefauts('Developpe Couche', S3);
+    o.resolveur  = (typeof exNomCatalogue==='function')?exNomCatalogue('Developpe Couche'):'';
+    S.prs={}; S.sessions=[{date:'2026-08-01',exs:[{name:'Développé Couché',sets:[{kg:50,reps:10,done:true}]}]}]; persist();
+    o.avecHisto  = _repereDefauts('Développé Couché', S3);
+    o.autreExo   = _repereDefauts('Squat à la Barre', S3);
+    S.prs={}; S.sessions=[]; persist();
+    o.sansCharge = _repereDefauts('Développé Couché', [{kg:0,reps:8,type:'N'}]);
+    o.echauffOnly= _repereDefauts('Développé Couché', [{kg:40,reps:5,type:'É'}]);
+
+    /* ⭐⭐ ET SURTOUT : LE VRAI CHEMIN. La lecon de ft-v1015 — le defaut vit souvent chez
+       l'APPELANT. On joue une vraie proposition de Milo, et on verifie que l'avertissement
+       arrive jusqu'a l'exercice ET qu'il ne CHASSE pas celui de `_validationSeance`. */
+    S.prs={}; S.sessions=[]; S.wkt=null; persist();
+    /* ⚠️ LE DÉCLENCHEUR EST UN DOUBLON, PAS UNE BLESSURE — et c'est un correctif de MON témoin.
+       Ma 1re fixture posait `healthProfile.injuries`, mais `_validationSeance` n'alerte que sur
+       une zone DOULOUREUSE AUJOURD'HUI (une fragilité durable mais calme reste l'affaire du
+       Gardien dans la conversation, c'est écrit dans son commentaire). Le témoin exigeait donc
+       une ligne dans le seul état où elle ne peut pas exister — le défaut de ft-v1027, refait.
+       ⭐ Le doublon produit une ligne de `_validationSeance` sans aucune donnée de santé : c'est
+       le même champ partagé, donc la même règle, avec un déclencheur qui marche à coup sûr. */
+    const newExs=[{name:'Développé Couché',sets:S3.map(s=>Object.assign({},s,{done:false,rest:120}))},
+                  {name:'Développé Couché',sets:S3.map(s=>Object.assign({},s,{done:false,rest:120}))}];
+    /* ⚠️ mode 'start' et non 'replace' : `replace` suppose une séance DÉJÀ en cours
+       (`S.wkt.exs=newExs` sur un `S.wkt` null). Le cas NORMAL — celui de Michel — est
+       aucune séance en cours, et c'est la branche `else`. Mon 1er jet testait le chemin
+       le moins fréquent, et il plantait avant de mesurer quoi que ce soit. */
+    _appliqueMiloSession(newExs,{},'start',null);
+    const ex=(S.wkt&&S.wkt.exs&&S.wkt.exs[0])||{};
+    o.warnReels=(ex.seanceWarn||[]).slice();
+    o.aRepere = o.warnReels.some(t=>/repère/i.test(t));
+    /* ⛔ ET LE VOISIN N'A PAS ETE EFFACE : `_validationSeance` ecrivait `o.seanceWarn=w`, une
+       AFFECTATION. Depuis qu'on ecrit ici juste avant, elle aurait efface notre ligne. */
+    o.aVoisin = o.warnReels.some(t=>/🔁|déjà présent/i.test(t));
+    S.wkt=null; persist();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  await cx.close();
+
+  if(G.err)t('CXXXIX n\'a pas pu tourner',false,G.err);
+  else{
+    t('⭐⭐ aucun repère + charge chiffrée → on le DIT (au lieu de se taire)',
+      G.sansRepere.length===1 && /point de départ/i.test(G.sansRepere[0]), JSON.stringify(G.sansRepere));
+    /* ⛔ Les deux détecteurs ne se recouvrent JAMAIS : dès qu'un repère existe, celui-ci se tait
+       et `_intensiteDefauts` reprend la main. */
+    t('⛔ un record existe → on se tait (c\'est la question de l\'autre détecteur)',
+      G.avecRecord.length===0, JSON.stringify(G.avecRecord));
+    t('⛔ un historique sans record est AUSSI un repère → on se tait',
+      G.avecHisto.length===0, JSON.stringify(G.avecHisto));
+    /* ⚠️⚠️ LE TEMOIN LE PLUS IMPORTANT DU LOT : ne jamais affirmer un FAIT FAUX sur la personne.
+       Il epingle aussi que le resolveur seul NE SUFFIT PAS — sinon on « simplifierait » la
+       comparaison normalisee un jour, en croyant qu'elle fait double emploi. */
+    t('⚠️⚠️ nom voisin (sans accents) : on NE dit PAS « pas de repère » à qui en a un',
+      G.nomVoisin.length===0, JSON.stringify({sortie:G.nomVoisin, resolveurSeul:G.resolveur}));
+    t('⛔ … et le résolveur SEUL n\'y suffisait pas (c\'est ce qui rend la normalisation nécessaire)',
+      G.resolveur==='Developpe Couche', 'exNomCatalogue rend : '+G.resolveur);
+    /* ⭐ Sans celui-ci, tous les « on se tait » seraient verts en ne mesurant rien. */
+    t('⭐ le témoin MORD : un exercice vraiment inconnu déclenche bien l\'avertissement',
+      G.autreExo.length===1, JSON.stringify(G.autreExo));
+    t('⛔ aucune charge chiffrée, ou échauffement seul → rien à dire (R29)',
+      G.sansCharge.length===0 && G.echauffOnly.length===0,
+      JSON.stringify({sansCharge:G.sansCharge,echauffement:G.echauffOnly}));
+    /* ⭐⭐ LE VRAI CHEMIN, mesure par `_appliqueMiloSession` et non en appelant la fonction. */
+    t('⭐⭐ par le VRAI chemin : l\'avertissement arrive jusqu\'à l\'exercice de la séance',
+      G.aRepere===true, JSON.stringify(G.warnReels));
+    /* ⛔⛔ Et il n'a pas CHASSE celui du Gardien : `_validationSeance` faisait `o.seanceWarn=w`. */
+    t('⛔⛔ … et il n\'écrase pas la ligne de `_validationSeance` (champ partagé = on concatène)',
+      G.aRepere===true && G.aVoisin===true, JSON.stringify(G.warnReels));
+  }
 }
 
 await b.close(); srv.close();
