@@ -7,6 +7,14 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1037`.
+- ⛔ **DÉCISION (27/08) — ON NE TOUCHE PAS À `deploy-pages.yml`.** Michel : *« on ne touche pas au
+  workflow surtout »*. ⚠️ **À lire avant de reproposer l'optimisation évidente** : mesuré, **17
+  déploiements pour 3 livraisons** (les lignes de réservation 🟡 sont du markdown seul et
+  redéploient tout), et 9,4 Mo inutiles empaquetés à chaque run. **Un `paths-ignore` a été
+  proposé et refusé** : ce workflow existe *parce que* les déploiements se bloquaient **en
+  silence** (ft-v600, ft-v616), et un filtre qui empêche un run de partir recrée ce mode de panne
+  (**R18**). ⛔ **Et la dépense invoquée n'existe pas** : `forcetracker` est **public**, donc
+  Actions y est **gratuit et illimité** ; le relevé affiche **0 $ facturé**.
 - 🔤⭐⭐ **125 GRAISSES QUI N'EXISTAIENT PAS — CORRIGÉ** (ft-v1037). Michel : *« fais un check de
   toutes les polices et les tailles »*, puis *« fais les 2 premiers points »*.
   ⛔⛔ **Mesuré en comptant l'ENCRE déposée** : **Manrope** fournit 400→800 (le pas 800→900 dépose
