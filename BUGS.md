@@ -1391,3 +1391,55 @@ d'appelant. *Un défaut invisible n'est pas un défaut absent : il attend son pr
 Quand on ajoute du contenu à un écran, se demander : *qu'est-ce que cet écran ne faisait pas avant,
 et qui devient possible maintenant ?* Défiler, déborder, se replier, tenir sur deux lignes — chacun
 de ces « maintenant » peut réveiller quelque chose d'endormi ailleurs.
+
+---
+
+## 21. 📸 LA MESURE QUI NE SE REPRODUIT PAS ELLE-MÊME *(27/08/2026, ft-v1037)*
+
+### Ce qui s'est passé
+Pour prouver qu'un changement de graisses n'avait **aucun effet visuel**, j'ai comparé des
+captures d'écran avant/après sur 9 écrans. Résultat : **les 9 avaient changé.** J'étais à un
+cheveu d'annoncer *« mon hypothèse est fausse, le correctif se voit »*.
+
+### Ce qui l'a sauvé
+Une question avant de conclure : *ma mesure sait-elle se reproduire ?* J'ai relancé la capture
+**sur le même code**, deux fois de suite. **Les 9 écrans différaient aussi.**
+
+👉 Le « tout a changé » ne disait rien de mon correctif — il disait que **mes captures étaient
+instables** (horloges, animations, contenus datés). *Un contrôle qui varie tout seul ne compare
+rien : il fabrique du bruit qu'on prend pour un signal.*
+
+### ⭐ Ce qui l'a remplacé
+Une mesure **déterministe** : pour chacun des **11 915 éléments de texte** des 9 écrans, la
+famille et la graisse **effective** (celle après plafonnement par le fichier de police). Résultat
+lisible : **1 182 graisses demandées changent · 0 graisse effective change.**
+Et le contrôle négatif dans l'autre sens : une erreur injectée exprès est **détectée sur 9
+écrans**. *La mesure sait rougir, donc son vert veut dire quelque chose.*
+
+### ⭐ Le réflexe
+Avant de conclure d'une comparaison avant/après : **la lancer deux fois sur le MÊME code**. Si les
+deux passes diffèrent, la comparaison est inutilisable — quel que soit ce qu'elle raconte. C'est
+le miroir du *contrôle circulaire* (§ plus haut) : là un vert ne pouvait pas rougir, ici un rouge
+ne voulait rien dire.
+
+---
+
+## 22. 🔤 « JAMAIS CHARGÉ » N'EST PAS « JAMAIS UTILISÉ » *(27/08/2026, ft-v1037)*
+
+### Ce qui s'est passé
+Audit des polices. `document.fonts` annonçait **`Pacifico … unloaded`**. J'en ai conclu — et
+**annoncé à Michel** — que la police ne servait à rien et qu'on pouvait la retirer.
+
+**Faux.** Pacifico compose le prénom en doré de l'**écran d'anniversaire**. Elle n'était pas
+chargée parce que **cet écran n'était pas affiché** : une police ne se télécharge qu'au moment où
+un élément l'utilise vraiment.
+
+### ⭐ Ce que ça généralise
+Toute API qui décrit **l'état courant** du navigateur — polices chargées, images décodées, styles
+appliqués, éléments visibles — décrit **ce qui s'est passé jusqu'ici**, pas ce dont l'app a
+besoin. *Mesurer une absence sur un écran ne prouve rien sur les autres.*
+
+### ⭐ Le réflexe
+Pour prouver qu'une ressource est morte, **chercher ses usages dans le CODE** (`grep`), jamais
+dans l'état d'exécution. C'est **R30** (un retrait se décide, il ne se constate pas) appliqué aux
+ressources — et la 2ᵉ fois en deux jours que j'appelle « mort » quelque chose de vivant.

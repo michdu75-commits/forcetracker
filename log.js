@@ -352,7 +352,7 @@ function renderLog(){
   const hdr=document.getElementById('log-hdr');
   const hasExs=S.wkt&&S.wkt.exs&&S.wkt.exs.length>0;
   if(hdr)hdr.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding-bottom:10px;">'
-    +'<span style="font-family:var(--font-cond);font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--t1);flex:1;">Séance</span>'
+    +'<span style="font-family:var(--font-cond);font-size:21px;font-weight:700;letter-spacing:-.02em;color:var(--t1);flex:1;">Séance</span>'
     +'<span id="wkt-chrono" style="font-family:\'SF Mono\',ui-monospace,monospace;font-size:14px;font-weight:700;color:'+(_isWktPaused()?'var(--orange)':'var(--t3)')+';letter-spacing:.04em;flex-shrink:0;">'+_fmtElapsed()+'</span>'
     +'<span id="log-hdr-btns" style="display:flex;gap:8px;">'
     +_pauseBtnHtml()
@@ -838,7 +838,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       const p=prevAl[si];
       if(isCur){
         return`<div id="sr-wrap-${ei}-${si}"><div class="set-row" id="sr-${ei}-${si}" style="background:rgba(255,109,0,.06);">`
-          +`<div class="snum" style="color:var(--orange);font-weight:900;">${si+1}</div>`
+          +`<div class="snum" style="color:var(--orange);font-weight:800;">${si+1}</div>`
           +`<div style="font-size:10px;color:var(--orange);font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>`
           +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)">`
           +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()">`
@@ -1069,7 +1069,7 @@ function openSetNote(ei,si){
   if(!ov){ov=document.createElement('div');ov.className='overlay';ov.id='ov-set-note';ov.onclick=e=>{if(e.target===ov)closeSetNote();};document.body.appendChild(ov);}
   ov.innerHTML=`<div class="modal" style="max-width:360px;">
     <div class="modal-handle"></div>
-    <div style="font-weight:900;font-size:16px;margin-bottom:3px;text-align:center;">💬 Note — série ${si+1}</div>
+    <div style="font-weight:800;font-size:16px;margin-bottom:3px;text-align:center;">💬 Note — série ${si+1}</div>
     <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:12px;">Une info à retrouver la prochaine fois (réglage machine, sensation, technique…). Elle s'affichera dans « précédent ».</div>
     <textarea id="set-note-ta" rows="3" style="width:100%;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);padding:10px;font-size:15px;font-family:var(--font);resize:none;box-sizing:border-box;outline:none;" placeholder="Ex: cran 4 sur la machine, prise serrée, dos bien calé…">${_escNote(set.note)}</textarea>
     <div style="margin-top:12px;display:flex;gap:8px;">

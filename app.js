@@ -2828,7 +2828,7 @@ function renderSupplCombos() {
         </div>
       </div>
       <div style="font-size:28px;margin-bottom:2px;">🔒</div>
-      <div style="font-family:var(--font-cond);font-size:18px;font-weight:900;color:var(--t1);">Combinaisons réservées aux membres Premium</div>
+      <div style="font-family:var(--font-cond);font-size:18px;font-weight:700;color:var(--t1);">Combinaisons réservées aux membres Premium</div>
       <div style="font-size:13px;color:var(--t2);line-height:1.5;max-width:280px;">Stacks sur-mesure par objectif : dosages précis, timing optimal, synergies et contre-indications.</div>
       <button class="btn" style="background:linear-gradient(135deg,#FFB800,#FF6D00);color:#fff;font-weight:800;font-size:15px;padding:13px 26px;border-radius:14px;margin-top:4px;box-shadow:0 8px 22px -8px rgba(255,109,0,.5);" onclick="openPremiumInfo()">⭐ Débloquer Premium — 6,99 € / mois</button>
     </div>`;

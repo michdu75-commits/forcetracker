@@ -168,7 +168,7 @@ Ce qui a été **annoncé dans la pop-up « Quoi de neuf »** — donc censé ex
 
 | # | | Nouveauté |
 |---|---|---|
-| 62 | 💪 | Note ce qu'il te restait dans le moteur |
+| 62 | 💪 | Note ce qu'il te restait |
 | 61 | \u23f3 | Ton repos est un MAXIMUM |
 | 60 | \u{1F37D}\uFE0F | L'onglet Macros a \u00e9t\u00e9 rang\u00e9 |
 | 59 | 🎽 | Ta discipline change enfin quelque chose |

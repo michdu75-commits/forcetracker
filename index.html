@@ -89,7 +89,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
           <img src="force-tracker-logo-gray.png" style="width:44px;height:44px;border-radius:11px;object-fit:cover;flex-shrink:0;">
           <div>
-            <div style="font-family:var(--font-cond);font-size:19px;font-weight:900;">Installe Force Tracker</div>
+            <div style="font-family:var(--font-cond);font-size:19px;font-weight:700;">Installe Force Tracker</div>
             <div style="font-size:11px;color:var(--t3);margin-top:1px;">En 3 étapes — comme une vraie app 📲</div>
           </div>
         </div>
@@ -133,7 +133,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <!-- Android layout -->
       <div id="ob0-android" style="flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px 0;">
         <img src="logo.png" style="width:72px;height:72px;border-radius:18px;object-fit:cover;margin-bottom:20px;">
-        <div style="font-family:var(--font-cond);font-size:26px;font-weight:900;text-align:center;margin-bottom:6px;">Installe Force Tracker</div>
+        <div style="font-family:var(--font-cond);font-size:26px;font-weight:700;text-align:center;margin-bottom:6px;">Installe Force Tracker</div>
         <div style="font-size:14px;color:var(--t2);text-align:center;margin-bottom:28px;line-height:1.45;">Accès instantané depuis ton écran d'accueil</div>
         <button id="ob0-install-btn" class="btn btn-red" onclick="ob0Install()" style="font-size:17px;padding:17px;width:100%;display:flex;align-items:center;justify-content:center;gap:9px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="7" x2="12" y2="14"/><polyline points="9 11 12 14 15 11"/></svg> Installer l'app</button>
         <div id="ob0-android-fallback" style="display:none;margin-top:16px;background:var(--bg3);border-radius:12px;padding:12px 16px;width:100%;font-size:13px;color:var(--t2);text-align:center;line-height:1.55;">Chrome <strong style="color:var(--t1);">⋮</strong> → <strong style="color:var(--t1);">Ajouter à l'écran d'accueil</strong></div>
@@ -357,7 +357,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
       <img src="logo.png" style="width:48px;height:48px;border-radius:12px;flex-shrink:0;">
       <div>
-        <div style="font-family:var(--font-cond);font-size:21px;font-weight:900;line-height:1.1;">Installer Force Tracker</div>
+        <div style="font-family:var(--font-cond);font-size:21px;font-weight:700;line-height:1.1;">Installer Force Tracker</div>
         <div style="font-size:12px;color:var(--t2);margin-top:2px;line-height:1.4;">Accès depuis ton écran d'accueil, sans navigateur.</div>
       </div>
     </div>
@@ -402,7 +402,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <!-- OVERLAY PAYSAGE -->
 <div id="rotate-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:#0C0D11;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
   <div style="font-size:48px;">📱</div>
-  <div style="font-family:var(--font-cond);font-size:20px;font-weight:800;color:#FF5A64;">Retourne ton téléphone</div>
+  <div style="font-family:var(--font-cond);font-size:20px;font-weight:700;color:#FF5A64;">Retourne ton téléphone</div>
   <div style="font-size:14px;color:rgba(242,243,245,.6);text-align:center;max-width:240px;line-height:1.5;">Force Tracker est optimisé pour le mode portrait</div>
 </div>
 
@@ -435,7 +435,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <!-- DRAWER MENU -->
 <div class="drawer" id="drawer">
   <div class="drawer-hd">
-    <span style="font-family:var(--font-cond);font-size:19px;font-weight:900;background:linear-gradient(135deg,#FF2D55,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Force Tracker</span>
+    <span style="font-family:var(--font-cond);font-size:19px;font-weight:700;background:linear-gradient(135deg,#FF2D55,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Force Tracker</span>
     <button onclick="closeDrawer()" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
   <div style="flex:1;overflow-y:auto;">
@@ -802,14 +802,14 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
               <circle id="ring-fat" cx="60" cy="60" r="52" fill="none" stroke="var(--gold)" stroke-width="11" stroke-dasharray="0 327" stroke-dashoffset="0"/>
             </svg>
             <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-              <span style="font-family:var(--font-cond);font-size:26px;font-weight:900;color:var(--t1);line-height:1;" id="nu-calc-kcal">—</span>
+              <span style="font-family:var(--font-cond);font-size:26px;font-weight:700;color:var(--t1);line-height:1;" id="nu-calc-kcal">—</span>
               <span style="font-size:9.5px;color:var(--t3);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:2px;">kcal / jour</span>
             </div>
           </div>
           <div style="flex:1;min-width:0;">
             <div id="nu-goal-info" style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--t2);margin-bottom:9px;line-height:1.3;"></div>
             <div id="nu-delta-chip" style="display:inline-flex;align-items:baseline;gap:5px;border-radius:10px;padding:6px 11px;margin-bottom:10px;">
-              <span style="font-family:var(--font-cond);font-size:19px;font-weight:900;" id="nu-delta-val">—</span>
+              <span style="font-family:var(--font-cond);font-size:19px;font-weight:700;" id="nu-delta-val">—</span>
               <span style="font-size:11px;font-weight:700;color:var(--t3);"><span id="nu-delta-lbl">Delta</span> kcal/j</span>
             </div>
             <div style="display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--t3);font-weight:600;">
@@ -823,7 +823,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
         <div style="display:flex;gap:8px;">
           <div style="flex:1;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 4px;text-align:center;">
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:3px;">BMR</div>
-            <div style="font-family:var(--font-cond);font-size:14px;font-weight:800;color:var(--t1);" id="nu-bmr">—</div>
+            <div style="font-family:var(--font-cond);font-size:14px;font-weight:700;color:var(--t1);" id="nu-bmr">—</div>
             <!-- ⚠️ D'OÙ VIENT LE CHIFFRE — jamais une bascule silencieuse (11/08/2026).
                  L'app peut employer deux formules ; celle qui tient compte de la masse maigre
                  donne ~180 kcal de plus chez quelqu'un de musclé. Voir un chiffre changer sans
@@ -832,7 +832,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
           </div>
           <div style="flex:1;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 4px;text-align:center;">
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:3px;">TDEE</div>
-            <div style="font-family:var(--font-cond);font-size:14px;font-weight:800;color:var(--t1);" id="nu-tdee">—</div>
+            <div style="font-family:var(--font-cond);font-size:14px;font-weight:700;color:var(--t1);" id="nu-tdee">—</div>
           </div>
         </div>
         <!-- Réglage manuel des calories/macros — rempli par renderNutrition -->
@@ -894,7 +894,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
       <div style="display:flex;align-items:center;gap:12px;">
         <div class="fg" style="flex:1;"><label>Protéines mangées (g)</label><input type="number" id="prot-eaten" placeholder="0" min="0" max="500" inputmode="numeric" enterkeyhint="done" oninput="updateProteinBar()"></div>
-        <div style="text-align:center;"><div style="font-family:var(--font-cond);font-size:26px;font-weight:900;color:var(--green);" id="prot-pct-disp">0%</div><div style="font-size:12px;color:var(--t2);">objectif</div></div>
+        <div style="text-align:center;"><div style="font-family:var(--font-cond);font-size:26px;font-weight:700;color:var(--green);" id="prot-pct-disp">0%</div><div style="font-size:12px;color:var(--t2);">objectif</div></div>
       </div>
       <!-- ⭐ D'OÙ VIENT LE CHIFFRE (ft-v969). Michel : « sur cette image c'est la portion ou
            juste le nombre de protéine ? » — la question elle-même montrait le trou : le champ
@@ -1401,7 +1401,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   <div class="overlay" id="ov-coach-convs" onclick="if(event.target===this)closeCoachConvs()">
     <div class="modal" style="max-width:430px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <div style="font-size:18px;font-weight:900;color:var(--t1);display:flex;align-items:center;gap:8px;">
+        <div style="font-size:18px;font-weight:800;color:var(--t1);display:flex;align-items:center;gap:8px;">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Mes discussions</div>
         <button onclick="closeCoachConvs()" style="background:none;border:none;color:var(--t2);font-size:24px;cursor:pointer;line-height:1;padding:0 4px;">✕</button>
       </div>
@@ -1525,7 +1525,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
         <label>Durée du cycle</label>
         <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
           <input type="range" id="cycle-weeks-slider" min="8" max="20" value="12" step="1" style="flex:1;accent-color:var(--red);" oninput="updCycleWeeks(this.value)">
-          <span style="font-family:var(--font-cond);font-size:24px;font-weight:900;color:var(--red);min-width:28px;text-align:right;" id="cycle-weeks-disp">12</span>
+          <span style="font-family:var(--font-cond);font-size:24px;font-weight:700;color:var(--red);min-width:28px;text-align:right;" id="cycle-weeks-disp">12</span>
           <span style="font-size:12px;color:var(--t2);font-weight:600;">sem.</span>
         </div>
         <div style="font-size:13px;color:var(--t3);margin-top:6px;line-height:1.5;" id="cycle-phase-preview">Accumulation: 5s · Intensification: 4s · Peak: 2s · Décharge: 1s</div>
@@ -1542,7 +1542,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   <div id="cycle-active-view" style="display:none;flex-direction:column;gap:12px;">
     <div class="card cp">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div style="font-family:var(--font-cond);font-size:18px;font-weight:900;" id="cyc-week-title">—</div>
+        <div style="font-family:var(--font-cond);font-size:18px;font-weight:700;" id="cyc-week-title">—</div>
         <div id="cyc-phase-chip"></div>
       </div>
       <div class="prog-bar"><div class="prog-fill" id="cyc-prog-fill" style="width:0%;"></div></div>
@@ -1612,7 +1612,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-super-welcome" style="z-index:500;">
   <div class="modal" style="max-width:400px;text-align:center;">
     <div style="font-size:50px;line-height:1;">🌟</div>
-    <div style="font-size:22px;font-weight:900;color:var(--gold);margin-top:8px;">Super Testeur</div>
+    <div style="font-size:22px;font-weight:800;color:var(--gold);margin-top:8px;">Super Testeur</div>
     <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Michel te remercie 🙏<br>Tu testes l’appli à fond — alors tu as droit à un <b style="color:var(--t1);">espace rien que pour toi</b> :</div>
     <div style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;">
       <div class="sw-feat"><span>🔬</span><div><b>Analyse approfondie de tes photos</b><small>En avant-première. Jusqu’à 4 séries de photos par mois, comparées entre elles et analysées à fond.</small></div></div>
@@ -1628,7 +1628,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-billoute" style="z-index:500;">
   <div class="modal" style="max-width:400px;text-align:center;">
     <div style="font-size:50px;line-height:1;">✅</div>
-    <div style="font-size:22px;font-weight:900;color:var(--gold);margin-top:8px;">C'est fait, billoute !</div>
+    <div style="font-size:22px;font-weight:800;color:var(--gold);margin-top:8px;">C'est fait, billoute !</div>
     <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Michel a traité <b>TOUTES</b> tes remontées de la boîte à idées 🙌<br>Jette un œil et dis-moi si tout est bon 👇</div>
     <div style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;">
       <div class="sw-feat"><span>🏋️</span><div><b>Les poids du programme reviennent tout seuls</b><small>Quand tu charges un programme, les charges de ta dernière séance sont reprises automatiquement — <b>série par série</b> (60, 70, 80… chacune à sa valeur). Vérifie sur ton programme importé !</small></div></div>
@@ -1645,7 +1645,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-christophe-photos" style="z-index:9999;">
   <div class="modal" style="max-width:400px;text-align:center;">
     <div style="font-size:48px;line-height:1;">🗑️</div>
-    <div style="font-size:21px;font-weight:900;color:var(--gold);margin-top:8px;">Tu peux supprimer tes séries photos</div>
+    <div style="font-size:21px;font-weight:800;color:var(--gold);margin-top:8px;">Tu peux supprimer tes séries photos</div>
     <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Salut Christophe ! J'ai ajouté ce que tu voulais 👍<br><br>Dans <b>Mon suivi photos</b> (Espace testeur), chaque série a maintenant une petite <b>corbeille 🗑️</b> à droite. Un tap → la série et ses photos sont <b>effacées de ton téléphone</b>.</div>
     <div style="font-size:13px;line-height:1.55;color:var(--t3);margin-top:12px;background:var(--bg3);border-radius:12px;padding:11px 13px;text-align:left;">Comme ça tu peux retirer les photos que tu as prises pour quelqu'un d'autre. 🔒 Rappel : ces photos ne sont JAMAIS parties dans le cloud — elles ne sont que sur ton téléphone.</div>
     <button class="btn btn-red" onclick="closeChristophePhotos()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">Compris, merci ! 👊</button>
@@ -1656,7 +1656,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-memoire-c" style="z-index:9999;">
   <div class="modal" style="max-width:400px;text-align:center;">
     <div style="font-size:48px;line-height:1;">🧠</div>
-    <div style="font-size:21px;font-weight:900;color:var(--gold);margin-top:8px;">Milo se souvient de bien plus</div>
+    <div style="font-size:21px;font-weight:800;color:var(--gold);margin-top:8px;">Milo se souvient de bien plus</div>
     <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Salut Christophe ! Tu fais partie des deux comptes qui essuient les plâtres sur ce coup-là 👍<br><br>Jusqu'ici Milo avait le <b>détail</b> de tes <b>5 dernières séances</b> seulement — soit environ une semaine. Il a maintenant, en plus, <b>une ligne par séance sur les 8 dernières semaines</b> : la date et tes charges principales.<br><br>Tu peux donc lui demander <i>« qu'est-ce que j'ai fait le 15 juillet ? »</i> ou <i>« mon squat a bougé depuis un mois ? »</i>.</div>
     <div style="font-size:13px;line-height:1.55;color:var(--t3);margin-top:12px;background:var(--bg3);border-radius:12px;padding:11px 13px;text-align:left;">⚠️ C'est un <b>résumé</b>, pas le détail complet : sur ces séances plus anciennes il connaît ta meilleure série par exercice, pas toutes tes séries. S'il te répond qu'il ne l'a pas, c'est normal — il a pour consigne de ne rien inventer. Dis-moi si tu le prends en défaut 🙏</div>
     <button class="btn btn-red" onclick="closeMemoireC()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">Compris, je teste 👊</button>
@@ -1667,7 +1667,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-pesee-nav-c" style="z-index:9999;">
   <div class="modal" style="max-width:400px;text-align:center;">
     <div style="font-size:48px;line-height:1;">⚖️</div>
-    <div style="font-size:21px;font-weight:900;color:var(--gold);margin-top:8px;">Ton idée est dans l'app !</div>
+    <div style="font-size:21px;font-weight:800;color:var(--gold);margin-top:8px;">Ton idée est dans l'app !</div>
     <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Salut Christophe ! Ton idée de la boîte — <i>« se déplacer de gauche à droite pour voir les jours suivants ou précédents »</i> — est <b>livrée</b> 👍<br><br>Dans la fenêtre de pesée (Progrès → tap sur un point de ta courbe de poids) : les <b>flèches ‹ ›</b> ou un <b>glissement du doigt</b> gauche/droite passent d'une pesée à l'autre, avec un compteur « Pesée 12 sur 42 ».</div>
     <div style="font-size:13px;line-height:1.55;color:var(--t3);margin-top:12px;background:var(--bg3);border-radius:12px;padding:11px 13px;text-align:left;">Merci pour l'idée — continue de remplir la boîte, c'est comme ça que l'app avance 🙏</div>
     <button class="btn btn-red" onclick="closePeseeNavC()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">Compris, merci ! 👊</button>
@@ -1678,7 +1678,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-pesee-nav-e" style="z-index:9999;">
   <div class="modal" style="max-width:400px;text-align:center;">
     <div style="font-size:48px;line-height:1;">💪</div>
-    <div style="font-size:21px;font-weight:900;color:var(--gold);margin-top:8px;">Ton retour a été traité !</div>
+    <div style="font-size:21px;font-weight:800;color:var(--gold);margin-top:8px;">Ton retour a été traité !</div>
     <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Salut Eline ! Merci pour ton message dans la boîte à idées 🙏<br><br>① <b>La masse maigre de ton bilan</b> : c'est réglé — elle s'affiche maintenant sur ton bilan de balance, <b>sans rien refaire</b> (et les prochains imports la liront ou la calculeront tout seuls).<br><br>② Nouveau au passage : dans la fenêtre de pesée, les <b>flèches ‹ ›</b> ou un glissement gauche/droite passent d'une pesée à l'autre (une idée de Christophe).</div>
     <button class="btn btn-red" onclick="closePeseeNavE()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">Super, merci ! 🙌</button>
   </div>
@@ -1688,7 +1688,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-emma-welcome" style="z-index:9999;">
   <div class="modal" style="max-width:400px;text-align:center;">
     <div style="font-size:50px;line-height:1;">🎉</div>
-    <div style="font-size:22px;font-weight:900;color:var(--gold);margin-top:8px;">Bienvenue dans l'équipe, Emma !</div>
+    <div style="font-size:22px;font-weight:800;color:var(--gold);margin-top:8px;">Bienvenue dans l'équipe, Emma !</div>
     <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Michel t'a donné un accès spécial rien que pour toi 👇</div>
     <div style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;">
       <div class="sw-feat"><span>🌟</span><div><b>Tu es Testeuse de l'app</b><small>Tu vois maintenant une <b>carte dorée « Testeur »</b> tout en haut de ton Accueil. C'est ta porte d'entrée vers l'Espace Testeur.</small></div></div>
@@ -1702,18 +1702,18 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <!-- OVERLAY : réglage manuel des calories/macros -->
 <div class="overlay" id="ov-kcal-edit" style="z-index:500;">
   <div class="modal" style="max-width:400px;">
-    <div style="font-size:19px;font-weight:900;color:var(--t1);margin-bottom:4px;">🎯 Ajuster mes objectifs</div>
+    <div style="font-size:19px;font-weight:800;color:var(--t1);margin-bottom:4px;">🎯 Ajuster mes objectifs</div>
     <div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:14px;">Corrige tes calories à la main. Les protéines et lipides restent calés sur ton profil ; les glucides s'ajustent tout seuls pour garder un équilibre sain.</div>
     <label style="font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;">Calories par jour</label>
     <div style="display:flex;align-items:center;gap:8px;margin:6px 0 4px;">
-      <input id="kcal-edit-inp" type="number" inputmode="numeric" min="800" max="6000" oninput="_kcalPreview()" style="flex:1;background:var(--bg2);border:1px solid var(--sep);border-radius:10px;padding:12px;color:var(--t1);font-family:var(--font-cond);font-size:22px;font-weight:900;text-align:center;box-sizing:border-box;">
+      <input id="kcal-edit-inp" type="number" inputmode="numeric" min="800" max="6000" oninput="_kcalPreview()" style="flex:1;background:var(--bg2);border:1px solid var(--sep);border-radius:10px;padding:12px;color:var(--t1);font-family:var(--font-cond);font-size:22px;font-weight:700;text-align:center;box-sizing:border-box;">
       <span style="font-size:13px;color:var(--t3);font-weight:700;">kcal</span>
     </div>
     <div id="kcal-edit-auto" style="font-size:11.5px;color:var(--t3);margin-bottom:12px;line-height:1.4;"></div>
     <div style="background:var(--bg2);border-radius:12px;padding:12px;display:flex;justify-content:space-around;text-align:center;">
-      <div><div id="kcal-pv-prot" style="font-family:var(--font-cond);font-size:18px;font-weight:900;color:var(--green);">—</div><div style="font-size:10.5px;color:var(--t3);font-weight:700;">Protéines</div></div>
-      <div><div id="kcal-pv-carb" style="font-family:var(--font-cond);font-size:18px;font-weight:900;color:var(--orange);">—</div><div style="font-size:10.5px;color:var(--t3);font-weight:700;">Glucides</div></div>
-      <div><div id="kcal-pv-fat" style="font-family:var(--font-cond);font-size:18px;font-weight:900;color:var(--gold);">—</div><div style="font-size:10.5px;color:var(--t3);font-weight:700;">Lipides</div></div>
+      <div><div id="kcal-pv-prot" style="font-family:var(--font-cond);font-size:18px;font-weight:700;color:var(--green);">—</div><div style="font-size:10.5px;color:var(--t3);font-weight:700;">Protéines</div></div>
+      <div><div id="kcal-pv-carb" style="font-family:var(--font-cond);font-size:18px;font-weight:700;color:var(--orange);">—</div><div style="font-size:10.5px;color:var(--t3);font-weight:700;">Glucides</div></div>
+      <div><div id="kcal-pv-fat" style="font-family:var(--font-cond);font-size:18px;font-weight:700;color:var(--gold);">—</div><div style="font-size:10.5px;color:var(--t3);font-weight:700;">Lipides</div></div>
     </div>
     <button class="btn btn-red" onclick="saveKcalEdit()" style="width:100%;margin-top:16px;padding:13px;font-size:15px;">Enregistrer mes calories</button>
     <button class="btn btn-bg2" id="kcal-edit-reset" onclick="resetKcalAuto()" style="width:100%;margin-top:8px;">Revenir en automatique</button>
@@ -1725,7 +1725,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-tester-guide" style="z-index:9999;">
   <div class="modal" style="max-width:410px;text-align:center;">
     <div style="font-size:50px;line-height:1;">🎉</div>
-    <div style="font-size:22px;font-weight:900;color:var(--gold);margin-top:8px;">Bienvenue dans l'équipe<span id="tguide-name"></span> !</div>
+    <div style="font-size:22px;font-weight:800;color:var(--gold);margin-top:8px;">Bienvenue dans l'équipe<span id="tguide-name"></span> !</div>
     <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Tu fais partie des <b style="color:var(--t1);">testeuses</b> de Force Tracker 🙏<br>Voici ce que tu peux faire — et surtout comment m'aider à améliorer l'appli 👇</div>
     <div style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;">
       <div class="sw-feat"><span>🏋️</span><div><b>Suivre tes séances</b><small>Note tes exercices, séries, reps et poids. L'appli calcule tes records et ta progression toute seule.</small></div></div>
@@ -1743,7 +1743,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-whatsnew" style="z-index:500;">
   <div class="modal" style="max-width:400px;text-align:center;">
     <div style="font-size:50px;line-height:1;">✨</div>
-    <div id="whatsnew-title" style="font-size:22px;font-weight:900;color:var(--red);margin-top:8px;">Quoi de neuf ?</div>
+    <div id="whatsnew-title" style="font-size:22px;font-weight:800;color:var(--red);margin-top:8px;">Quoi de neuf ?</div>
     <div id="whatsnew-sub" style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Voici les dernières nouveautés 👇</div>
     <div id="whatsnew-list" style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;"></div>
     <div id="wn-dots" style="display:flex;gap:6px;justify-content:center;margin:14px 0 0;flex-wrap:wrap;"></div>
@@ -1759,7 +1759,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-tester-eq" style="z-index:500;">
   <div class="modal" style="max-width:410px;text-align:center;">
     <div style="display:inline-block;background:rgba(255,45,85,.14);color:var(--red);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 12px;border-radius:20px;">🧪 Test testeurs</div>
-    <div style="font-size:21px;font-weight:900;color:var(--t1);margin-top:12px;">Types de matériel</div>
+    <div style="font-size:21px;font-weight:800;color:var(--t1);margin-top:12px;">Types de matériel</div>
     <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:10px;">Nouveauté en test : quand tu <b style="color:var(--t1);">choisis un exercice</b>, chacun affiche maintenant <b style="color:var(--t1);">son type de matériel</b> — pour t'y retrouver d'un coup d'œil.</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px;">
       <span class="ex-eq" style="color:#FF6C00;background:rgba(255,108,0,.13);font-size:13px;padding:5px 12px;">🏋️ Barre</span>
@@ -1777,7 +1777,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   <div class="modal" style="max-width:410px;text-align:center;">
     <div style="display:inline-block;background:rgba(255,45,85,.14);color:var(--red);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 12px;border-radius:20px;">🧪 Test testeurs</div>
     <div style="font-size:28px;margin-top:14px;">🌡️</div>
-    <div style="font-size:21px;font-weight:900;color:var(--t1);margin-top:6px;">Comment tu te sens aujourd'hui ?</div>
+    <div style="font-size:21px;font-weight:800;color:var(--t1);margin-top:6px;">Comment tu te sens aujourd'hui ?</div>
     <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:10px;">Tout en haut de l'écran <b style="color:var(--t1);">Accueil</b>, une nouvelle carte : tape ton <b style="color:var(--t1);">énergie du jour</b> (😴 → ⚡) et coche une <b style="color:var(--t1);">zone qui te fait mal</b> aujourd'hui (dos, épaule, genou…).</div>
     <div style="font-size:13.5px;line-height:1.6;color:var(--t2);margin-top:14px;background:var(--bg3);border-radius:12px;padding:12px 14px;text-align:left;">
       <b style="color:var(--t1);">Ce qu'on aimerait que tu vérifies :</b><br>
@@ -1793,7 +1793,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-tester-space" style="z-index:480;" onclick="if(event.target===this)closeTesterSpace()">
   <div class="modal" style="max-width:430px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div style="font-size:18px;font-weight:900;color:var(--gold);display:flex;align-items:center;gap:7px;"><svg viewBox="0 0 24 24" width="18" height="18" fill="var(--gold)" stroke="var(--gold)" stroke-width="1.2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Espace Testeur</div>
+      <div style="font-size:18px;font-weight:800;color:var(--gold);display:flex;align-items:center;gap:7px;"><svg viewBox="0 0 24 24" width="18" height="18" fill="var(--gold)" stroke="var(--gold)" stroke-width="1.2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Espace Testeur</div>
       <button onclick="closeTesterSpace()" style="background:none;border:none;color:var(--t2);font-size:24px;cursor:pointer;line-height:1;padding:0 4px;">✕</button>
     </div>
     <div id="tester-space-body"></div>
@@ -1870,7 +1870,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   <div class="modal" style="text-align:center;padding:24px 20px;">
     <div class="modal-handle"></div>
     <div style="font-size:32px;margin-bottom:6px;">📲</div>
-    <div style="font-family:var(--font-cond);font-size:24px;font-weight:900;margin-bottom:4px;">Partager Force Tracker</div>
+    <div style="font-family:var(--font-cond);font-size:24px;font-weight:700;margin-bottom:4px;">Partager Force Tracker</div>
     <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.5;">Montre ce QR code — ton ami le scanne et l'app s'ouvre directement.</div>
     <div style="background:#fff;border-radius:14px;padding:12px;display:inline-block;margin-bottom:10px;">
       <img id="share-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Fmichdu75-commits.github.io%2Fforcetracker%2F" style="width:180px;height:180px;display:block;">
@@ -2564,7 +2564,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-morpho-analysis" onclick="if(event.target===this)closeMorphoAnalysis()">
   <div class="modal" style="max-width:400px;">
     <div class="modal-handle"></div>
-    <div style="font-weight:900;font-size:18px;margin-bottom:2px;text-align:center;">🧬 Analyse morphologique</div>
+    <div style="font-weight:800;font-size:18px;margin-bottom:2px;text-align:center;">🧬 Analyse morphologique</div>
     <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:14px;">🔒 Photos non stockées — analysées puis supprimées immédiatement</div>
     <div style="display:flex;flex-direction:column;gap:12px;" id="morpho-slots">
       <!-- Slot Face -->
@@ -2618,14 +2618,14 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div class="modal-handle"></div>
     <div style="text-align:center;">
       <div style="font-size:44px;line-height:1;">⭐</div>
-      <div style="font-size:21px;font-weight:900;color:#FFC754;margin-top:6px;">Force Tracker Premium</div>
+      <div style="font-size:21px;font-weight:800;color:#FFC754;margin-top:6px;">Force Tracker Premium</div>
     </div>
     <div id="premium-info-status"></div>
     <div style="font-size:14px;line-height:1.6;color:var(--t2);margin-top:12px;">L'appli est <b style="color:var(--t1);">gratuite</b> et le restera : séances, progrès, records, calendrier, nutrition… <b style="color:var(--t1);">Le Premium débloque Milo, ton coach IA, en illimité</b> — celui qui connaît ton historique, tes records et tes objectifs. Tu as <b style="color:var(--t1);">10 questions offertes</b> pour l'essayer.</div>
     <!-- rempli depuis PREMIUM_PERKS (source unique, constants.js) par _renderPremiumPerks -->
     <div id="premium-info-perks" style="margin-top:14px;background:var(--bg3);border-radius:14px;padding:13px 14px;display:flex;flex-direction:column;gap:9px;"></div>
     <div id="premium-info-cta">
-      <div style="text-align:center;margin-top:14px;font-size:24px;font-weight:900;color:var(--t1);">6,99€ <span style="font-size:13px;color:var(--t3);font-weight:600;">/ mois</span></div>
+      <div style="text-align:center;margin-top:14px;font-size:24px;font-weight:800;color:var(--t1);">6,99€ <span style="font-size:13px;color:var(--t3);font-weight:600;">/ mois</span></div>
       <div style="text-align:center;font-size:12.5px;color:var(--t3);margin-top:3px;">ou <b style="color:var(--t2);">34,99 €</b> / 6 mois (−17 %) · essai <b style="color:var(--t2);">3 jours pour 1,99 €</b></div>
       <a href="mailto:michdu75@gmail.com?subject=Force%20Tracker%20Premium&body=Bonjour%2C%20je%20souhaite%20acc%C3%A9der%20au%20Coach%20IA%20Premium." style="width:100%;text-decoration:none;display:block;margin-top:10px;">
         <button class="btn btn-red" style="width:100%;padding:14px;font-size:15px;">✉️ Contacter pour le Premium</button>
@@ -2647,7 +2647,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;" ontouchstart="_weighTS(event)" ontouchend="_weighTE(event)">
       <button id="weigh-nav-prev" onclick="_weighNav(1)" aria-label="Pesée précédente" style="width:38px;height:38px;border-radius:50%;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:20px;font-weight:700;cursor:pointer;flex-shrink:0;line-height:1;touch-action:manipulation;">‹</button>
       <div style="flex:1;text-align:center;">
-        <div style="font-weight:900;font-size:18px;">Modifier la pesée</div>
+        <div style="font-weight:800;font-size:18px;">Modifier la pesée</div>
         <div id="weigh-nav-pos" style="font-size:11.5px;color:var(--t3);margin-top:2px;"></div>
       </div>
       <button id="weigh-nav-next" onclick="_weighNav(-1)" aria-label="Pesée suivante" style="width:38px;height:38px;border-radius:50%;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:20px;font-weight:700;cursor:pointer;flex-shrink:0;line-height:1;touch-action:manipulation;">›</button>
@@ -2677,7 +2677,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <!-- OVERLAY: scan « analyse du rapport en cours » (visuel pendant la lecture IA) -->
 <div class="overlay" id="ov-bs-scan" style="z-index:520;">
   <div class="modal" style="max-width:340px;text-align:center;">
-    <div id="bs-scan-title" style="font-weight:900;font-size:17px;margin-bottom:4px;">🔍 Analyse du rapport…</div>
+    <div id="bs-scan-title" style="font-weight:800;font-size:17px;margin-bottom:4px;">🔍 Analyse du rapport…</div>
     <div id="bs-scan-sub" style="font-size:12px;color:var(--t3);margin-bottom:12px;">L'IA lit tes chiffres</div>
     <div class="bs-scan-frame"><img id="bs-scan-img" alt=""><div class="bs-scan-grid"></div><div class="bs-scan-line"></div></div>
     <div id="bs-scan-foot" style="font-size:13px;color:var(--t2);margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;"><span class="bs-scan-dot"></span>Détection des valeurs…</div>
@@ -2690,7 +2690,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-health-lock" style="z-index:9999;">
   <div class="modal" style="max-width:400px;text-align:center;">
     <div style="font-size:48px;line-height:1;">🔒</div>
-    <div style="font-size:21px;font-weight:900;color:var(--t1);margin-top:8px;">Protège ton compte d'abord</div>
+    <div style="font-size:21px;font-weight:800;color:var(--t1);margin-top:8px;">Protège ton compte d'abord</div>
     <div id="health-lock-txt" style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;text-align:left;"></div>
     <button id="health-lock-btn" class="btn btn-red" onclick="goProtectFromHealth()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">🔐 Protéger mon compte</button>
     <button class="btn btn-bg2" onclick="closeHealthLock()" style="width:100%;margin-top:8px;padding:11px;font-size:14px;">Plus tard</button>
@@ -2700,7 +2700,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-bodyscan-form" onclick="if(event.target===this)closeBodyScanForm()">
   <div class="modal" style="max-width:400px;max-height:88vh;overflow-y:auto;">
     <div class="modal-handle"></div>
-    <div style="font-weight:900;font-size:18px;margin-bottom:2px;text-align:center;">🧪 Bilan corporel</div>
+    <div style="font-weight:800;font-size:18px;margin-bottom:2px;text-align:center;">🧪 Bilan corporel</div>
     <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:14px;">Recopie les chiffres de ta balance pro (impédancemètre). Seul le poids est obligatoire.</div>
     <div style="display:flex;flex-direction:column;gap:11px;">
       <div>
@@ -2726,7 +2726,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-blood-redact" style="z-index:530;">
   <div class="modal" style="max-width:440px;max-height:94vh;display:flex;flex-direction:column;">
     <div class="modal-handle"></div>
-    <div style="font-weight:900;font-size:17px;text-align:center;">🔒 Masque tes infos perso</div>
+    <div style="font-weight:800;font-size:17px;text-align:center;">🔒 Masque tes infos perso</div>
     <div style="font-size:12px;color:var(--t3);text-align:center;margin:4px 0 10px;line-height:1.4;">Passe le doigt sur ton <b>nom</b>, ta <b>date de naissance</b>, ton <b>n° patient</b>… pour les noircir. Seul ce qui reste part à l'IA — ton identité ne sort pas du téléphone.</div>
     <div id="blood-redact-wrap" style="flex:1;overflow:auto;background:#0e1016;border-radius:10px;display:flex;justify-content:center;align-items:center;min-height:200px;">
       <canvas id="blood-redact-canvas" style="max-width:100%;max-height:64vh;touch-action:none;display:block;border-radius:6px;"></canvas>
@@ -2747,7 +2747,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-blood-test" onclick="if(event.target===this)closeBloodTest()">
   <div class="modal" style="max-width:420px;max-height:90vh;overflow-y:auto;">
     <div class="modal-handle"></div>
-    <div style="font-weight:900;font-size:18px;text-align:center;">🩸 Bilan sanguin</div>
+    <div style="font-weight:800;font-size:18px;text-align:center;">🩸 Bilan sanguin</div>
     <div id="blood-test-date" style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:6px;"></div>
     <div style="font-size:11px;color:var(--t3);background:var(--bg3);border-radius:10px;padding:9px 11px;line-height:1.45;margin-bottom:6px;">⚕️ Chiffres recopiés de ton labo, sans interprétation. Pastille orange = hors de l'intervalle du labo → <b>parles-en à ton médecin</b>. L'appli ne pose aucun diagnostic.</div>
     <div id="blood-test-body"></div>
@@ -2761,7 +2761,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-body-study" onclick="if(event.target===this)closeBodyStudy()">
   <div class="modal" style="max-width:400px;">
     <div class="modal-handle"></div>
-    <div style="font-weight:900;font-size:18px;margin-bottom:2px;text-align:center;">📐 Étude du corps</div>
+    <div style="font-weight:800;font-size:18px;margin-bottom:2px;text-align:center;">📐 Étude du corps</div>
     <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:4px;">Posture, insertions, équilibre & exercices suggérés</div>
     <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:14px;">🔒 Tes photos restent <b>uniquement sur ton téléphone</b> (jamais envoyées sur le serveur) — gardées pour comparer ton évolution.</div>
       <div id="body-history-top"></div>
@@ -2799,7 +2799,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-photo-menu" style="z-index:470;" onclick="if(event.target===this)closePhotoMenu()">
   <div class="modal" style="max-width:430px;">
     <div class="modal-handle"></div>
-    <div style="font-weight:900;font-size:17px;text-align:center;margin-bottom:3px;">📷 Analyses photo</div>
+    <div style="font-weight:800;font-size:17px;text-align:center;margin-bottom:3px;">📷 Analyses photo</div>
     <div style="font-size:12.5px;color:var(--t3);text-align:center;margin-bottom:14px;line-height:1.45;">Laisse Milo analyser ton corps à partir de tes photos.</div>
     <div id="photo-menu-body" style="display:flex;flex-direction:column;gap:10px;"></div>
     <button class="btn btn-bg2" style="width:100%;margin-top:14px;" onclick="closePhotoMenu()">Fermer</button>
@@ -2810,7 +2810,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-coach-quiz" style="z-index:480;" onclick="if(event.target===this)closeCoachQuiz()">
   <div class="modal" style="max-width:430px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div id="cq-title" style="font-size:16px;font-weight:900;display:flex;align-items:center;gap:7px;"></div>
+      <div id="cq-title" style="font-size:16px;font-weight:800;display:flex;align-items:center;gap:7px;"></div>
       <button onclick="closeCoachQuiz()" style="background:none;border:none;color:var(--t2);font-size:24px;cursor:pointer;line-height:1;padding:0 4px;">✕</button>
     </div>
     <div class="cq-progress"><div id="cq-progress-fill" class="cq-progress-fill"></div></div>
@@ -2827,7 +2827,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-body-series" style="z-index:485;" onclick="if(event.target===this)closeBodySeries()">
   <div class="modal" style="max-width:430px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div style="font-size:17px;font-weight:900;color:var(--gold);display:flex;align-items:center;gap:7px;"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Suivi photos</div>
+      <div style="font-size:17px;font-weight:800;color:var(--gold);display:flex;align-items:center;gap:7px;"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Suivi photos</div>
       <button onclick="closeBodySeries()" style="background:none;border:none;color:var(--t2);font-size:24px;cursor:pointer;line-height:1;padding:0 4px;">✕</button>
     </div>
     <div id="bser-body"></div>
@@ -2837,7 +2837,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <!-- OVERLAY: Morpho loading -->
 <div class="overlay" id="ov-morpho-loading" data-no-dismiss style="background:rgba(0,0,0,.97);z-index:300;align-items:center;justify-content:center;">
   <div style="width:100%;max-width:380px;padding:0 24px;display:flex;flex-direction:column;align-items:center;gap:22px;">
-    <div style="font-family:var(--font-cond);font-size:20px;font-weight:900;color:#fff;letter-spacing:2px;text-align:center;">ANALYSE IA</div>
+    <div style="font-family:var(--font-cond);font-size:20px;font-weight:700;color:#fff;letter-spacing:2px;text-align:center;">ANALYSE IA</div>
     <div style="position:relative;display:flex;gap:8px;width:100%;justify-content:center;border-radius:10px;overflow:hidden;" id="ml-photos">
       <div id="ml-scan-line" style="position:absolute;left:0;right:0;top:-70px;height:70px;background:linear-gradient(180deg,rgba(0,224,158,0),rgba(0,224,158,.12) 40%,rgba(140,255,220,.85) 50%,rgba(0,224,158,.12) 60%,rgba(0,224,158,0));box-shadow:0 0 16px 5px rgba(0,224,158,.4);animation:ml-scan 2.6s ease-in-out infinite;pointer-events:none;z-index:2;"></div>
     </div>
@@ -2983,7 +2983,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   <div class="modal" style="max-width:420px;max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
     <div style="position:sticky;top:0;z-index:5;background:var(--bg2);border-radius:16px 16px 0 0;padding:14px 16px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--sep);flex-shrink:0;">
       <div style="flex:1;min-width:0;">
-        <div style="font-weight:900;font-size:16px;">🤖 Analyse du programme</div>
+        <div style="font-weight:800;font-size:16px;">🤖 Analyse du programme</div>
         <div style="font-size:12px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="prog-analysis-title"></div>
       </div>
       <button onclick="document.getElementById('ov-prog-analysis').classList.remove('open')" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--bg3);color:var(--t2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
@@ -3003,7 +3003,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div id="menu-drawer">
   <!-- Header -->
   <div style="padding:max(env(safe-area-inset-top),44px) 16px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--sep);">
-    <span style="font-family:var(--font-cond);font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--t1);">Menu</span>
+    <span style="font-family:var(--font-cond);font-size:21px;font-weight:700;letter-spacing:-.02em;color:var(--t1);">Menu</span>
     <div style="display:flex;align-items:center;gap:8px;">
       <button onclick="openShareModal()" style="display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:20px;box-shadow:inset 0 0 0 1px var(--sep);background:var(--bg2);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;border:none;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
@@ -3126,7 +3126,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div id="ov-protect" class="overlay" style="z-index:9999;" onclick="if(event.target===this)closeProtect()">
   <div class="modal" style="max-width:400px;padding:22px 20px 22px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div style="font-size:19px;font-weight:900;color:var(--t1);">🔒 Protéger mon compte</div>
+      <div style="font-size:19px;font-weight:800;color:var(--t1);">🔒 Protéger mon compte</div>
       <button onclick="closeProtect()" style="width:32px;height:32px;border-radius:50%;background:var(--bg3);border:none;color:var(--t2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;">✕</button>
     </div>
     <div id="protect-body"></div>
@@ -3170,7 +3170,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div id="bday-instr-wrap" style="margin:4px 0 10px;font-size:13px;color:#ffd700;font-weight:700;display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap;text-align:center;min-height:28px;">
       <span style="opacity:.6;">➜</span>
       <span id="bday-instr-txt">Passe ton doigt sur les bougies — encore</span>
-      <span id="bday-n" style="font-size:22px;font-weight:900;line-height:1;">19</span>
+      <span id="bday-n" style="font-size:22px;font-weight:800;line-height:1;">19</span>
     </div>
 
     <!-- JOYEUX ANNIVERSAIRE -->
@@ -3203,7 +3203,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <!-- Anneau SVG + chiffre -->
     <div style="position:relative;width:200px;height:200px;margin-bottom:32px;flex-shrink:0;">
       <svg id="rcd-svg" viewBox="0 0 200 200" width="200" height="200" style="position:absolute;inset:0;"></svg>
-      <div id="rcd-num" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:110px;font-weight:900;color:#FF6C00;line-height:1;font-family:var(--font-cond),system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.02em;"></div>
+      <div id="rcd-num" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:110px;font-weight:700;color:#FF6C00;line-height:1;font-family:var(--font-cond),system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.02em;"></div>
     </div>
     <!-- Prochaine série -->
     <div id="rcd-next-label" style="font-size:11px;font-weight:800;letter-spacing:.22em;color:rgba(255,255,255,.35);margin-bottom:6px;">SÉRIE SUIVANTE</div>

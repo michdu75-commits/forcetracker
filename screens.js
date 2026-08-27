@@ -701,10 +701,10 @@ function _renderHomeHero(){
           +'<div id="rr-arc"></div><div id="rr-shine"></div>'
         +'</div>'
         +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">'
-        +'<span id="rr-num" style="font-family:var(--font-cond);font-size:32px;font-weight:900;color:var(--t1);line-height:1;text-shadow:0 2px 6px rgba(0,0,0,.5);">'+score+'</span>'
+        +'<span id="rr-num" style="font-family:var(--font-cond);font-size:32px;font-weight:700;color:var(--t1);line-height:1;text-shadow:0 2px 6px rgba(0,0,0,.5);">'+score+'</span>'
         +'<span style="font-size:10px;color:var(--t3);font-weight:700;">/100</span>'
         +'</div></div>'
-      : '<div style="flex:none;width:100px;text-align:center;font-family:var(--font-cond);font-size:30px;font-weight:800;color:var(--t3);">—</div>')
+      : '<div style="flex:none;width:100px;text-align:center;font-family:var(--font-cond);font-size:30px;font-weight:700;color:var(--t3);">—</div>')
     +'<div style="flex:1;min-width:0;"><div style="font-size:16px;font-weight:700;color:var(--t1);">'+heroLabel+'</div>'
     +'<div style="font-size:12.5px;color:var(--t2);line-height:1.45;margin-top:3px;">'+heroDesc+'</div></div></div>'
      )
@@ -801,7 +801,7 @@ function openRecoWhy(){
       +'<div style="font-size:12.5px;color:var(--t2);line-height:1.45;margin-top:2px;">'+(f.why||'')+'</div></div></div>';
   }).join('');
   body.innerHTML=
-    '<div style="text-align:center;margin:4px 0 2px;"><div style="font-family:var(--font-cond);font-size:42px;font-weight:800;color:'+info.color+';line-height:1;">'+d.score+'<span style="font-size:16px;color:var(--t3);font-weight:700;">/100</span></div>'
+    '<div style="text-align:center;margin:4px 0 2px;"><div style="font-family:var(--font-cond);font-size:42px;font-weight:700;color:'+info.color+';line-height:1;">'+d.score+'<span style="font-size:16px;color:var(--t3);font-weight:700;">/100</span></div>'
     +'<div style="font-size:14px;font-weight:700;color:'+info.color+';margin-top:2px;">'+info.label+'</div></div>'
     +'<div style="font-size:13px;color:var(--t2);line-height:1.5;margin:12px 0 8px;">Ce score estime à quel point ton corps est <b>prêt à s\'entraîner</b> aujourd\'hui (100 = parfaitement frais). Voici ce qui l\'a fait bouger :</div>'
     +factorsHtml
@@ -1462,7 +1462,7 @@ function renderHome(){try{
   const _sc=(oc,ic,icBg,icStroke,valHtml,label)=>'<div'+(oc?' onclick="'+oc+'" style="cursor:pointer;':' style="')+'background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px var(--sep);padding:14px;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:space-between;gap:10px;">'
     +'<div style="width:34px;height:34px;border-radius:10px;background:'+icBg+';display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="'+icStroke+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+ic+'</svg></div>'
     +'<div style="text-align:right;min-width:0;">'
-    +'<div style="font-family:var(--font-cond);font-size:22px;font-weight:800;line-height:1;">'+valHtml+'</div>'
+    +'<div style="font-family:var(--font-cond);font-size:22px;font-weight:700;line-height:1;">'+valHtml+'</div>'
     +'<div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin-top:5px;white-space:nowrap;">'+label+'</div></div></div>';
   const _moName=now.toLocaleDateString('fr-FR',{month:'long'});
   if(statsEl)statsEl.innerHTML='<div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 3px 9px;"><span style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--t3);">CE MOIS</span><span style="font-size:12.5px;color:var(--t3);text-transform:capitalize;">'+_moName+'</span></div>'
@@ -1666,7 +1666,7 @@ function _renderHomeCalendar(){
         html+='<div'+(has?' onclick="_calSelect(\''+ymd+'\')" class="ft-press"':'')+' style="'+st+'">'
           +(isPr?'<span style="position:absolute;top:3px;right:4px;line-height:0;">'
                 +'<svg width="11" height="11" viewBox="0 0 24 24" fill="var(--gold)"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1L12 2Z"/></svg></span>':'')
-          +'<span style="font-family:var(--font-cond);font-size:16px;font-weight:800;line-height:1;color:'
+          +'<span style="font-family:var(--font-cond);font-size:16px;font-weight:700;line-height:1;color:'
             +(c.inMonth?'var(--t1)':'var(--t3)')+';">'+num+'</span>'
           +(has?'<span style="width:'+(10+Math.round(9*rat))+'px;height:3px;border-radius:2px;background:'+_calSessColor(sess)+';"></span>'
                :(isToday?'<span style="font-size:7.5px;font-weight:800;letter-spacing:.06em;line-height:1;color:var(--red);">AUJ</span>':''))
@@ -1724,13 +1724,13 @@ function _calDayPanel(volByDay,prSet){
   sess.forEach(s=>{(s.exs||[]).forEach(ex=>{exs++;(ex.sets||[]).forEach(st=>{if(st.done&&st.type!=='É'&&st.type!=='W')sets++;});});});
   const isPr=!!(prSet||{})[_calSelDay];
   const cell=(v,l)=>'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">'
-    +'<span style="font-family:var(--font-cond);font-size:16px;font-weight:800;color:var(--t1);line-height:1;">'+v+'</span>'
+    +'<span style="font-family:var(--font-cond);font-size:16px;font-weight:700;color:var(--t1);line-height:1;">'+v+'</span>'
     +'<span style="font-size:8px;font-weight:700;letter-spacing:.08em;color:var(--t3);">'+l+'</span></div>';
   const sep='<div style="width:1px;background:var(--sep);"></div>';
   return '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--sep);">'
     +'<div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">'
       +'<span style="width:8px;height:8px;border-radius:3px;flex:none;background:'+_calSessColor(sess[0])+';"></span>'
-      +'<span style="font-family:var(--font-cond);font-size:16px;font-weight:800;color:var(--t1);line-height:1;text-transform:capitalize;">'+titre+'</span>'
+      +'<span style="font-family:var(--font-cond);font-size:16px;font-weight:700;color:var(--t1);line-height:1;text-transform:capitalize;">'+titre+'</span>'
       +'<span style="flex:1;"></span>'
       +(isPr?'<span style="font-size:9.5px;font-weight:800;letter-spacing:.06em;color:var(--bg);background:var(--gold);border-radius:5px;padding:3px 7px;line-height:1;">RECORD</span>':'')
     +'</div>'
@@ -1952,7 +1952,7 @@ function _renderAujourdhui(macros){
             +' stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'"/>':'')
         +'</svg>'
         +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">'
-          +'<span style="font-family:var(--font-cond);font-size:22px;font-weight:900;color:var(--t1);line-height:1;">'+v+'</span>'
+          +'<span style="font-family:var(--font-cond);font-size:22px;font-weight:700;color:var(--t1);line-height:1;">'+v+'</span>'
           +'<span style="font-size:9.5px;color:var(--t3);font-weight:700;margin-top:1px;">/ '+c+' g</span>'
         +'</div>'
       +'</div>'
@@ -1962,7 +1962,7 @@ function _renderAujourdhui(macros){
 
   el.innerHTML=
      '<div style="display:flex;align-items:baseline;gap:7px;margin-top:8px;">'
-      +'<span style="font-family:var(--font-cond);font-size:40px;font-weight:900;color:var(--t1);line-height:1;">'+mange.toLocaleString('fr-FR')+'</span>'
+      +'<span style="font-family:var(--font-cond);font-size:40px;font-weight:700;color:var(--t1);line-height:1;">'+mange.toLocaleString('fr-FR')+'</span>'
       +'<span style="font-size:12.5px;color:var(--t3);font-weight:700;">kcal mangées</span>'
     +'</div>'
     +'<div style="height:4px;border-radius:3px;background:var(--bg3);overflow:hidden;margin:10px 0 7px;">'
@@ -2108,7 +2108,7 @@ function _renderOuTuEnEs(macros){
   // ── Personne n'a rien noté : on invite, on ne juge pas ──────────────────────────────
   if(!joursTous.length){
     el.innerHTML='<div style="background:var(--bg2);border:1px solid var(--sep);border-radius:16px;padding:16px;">'
-      +'<div style="font-family:var(--font-cond);font-size:17px;font-weight:800;color:var(--t1);">Ta semaine</div>'
+      +'<div style="font-family:var(--font-cond);font-size:17px;font-weight:700;color:var(--t1);">Ta semaine</div>'
       +'<div style="font-size:13px;color:var(--t2);line-height:1.45;margin-top:6px;">Note un repas et cette carte te dira où tu en es — aujourd\'hui et sur la semaine. Pas besoin de tout peser : ce qui compte, c\'est la tendance.</div>'
       +'<button class="btn btn-red" style="width:100%;margin-top:12px;padding:11px;font-size:14px;border-radius:12px;" onclick="switchNuTab(\'journal\',document.getElementById(\'ntab-journal\'));setTimeout(()=>{if(typeof openAddFood===\'function\')openAddFood();},120)">➕ Noter mon premier repas</button>'
       +'</div>';
@@ -2161,12 +2161,12 @@ function _renderOuTuEnEs(macros){
      qu'on lit deux fois la même chose. */
   el.innerHTML='<div style="background:var(--bg2);border:1px solid var(--sep);border-radius:16px;padding:16px;">'
     +'<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:12px;">'
-      +'<div style="font-family:var(--font-cond);font-size:17px;font-weight:800;color:var(--t1);">Ta semaine</div>'
+      +'<div style="font-family:var(--font-cond);font-size:17px;font-weight:700;color:var(--t1);">Ta semaine</div>'
       +'<div style="font-size:11px;color:var(--t3);">'+(jours.length?sJours+' sur 7':'journée en cours')+'</div></div>'
     +'<div style="display:flex;gap:16px;align-items:flex-start;">'
       +(jours.length
         ? '<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);">Moyenne des '+sJours+'</div>'
-          +'<div style="font-family:var(--font-cond);font-size:22px;font-weight:900;color:var(--t1);margin-top:2px;">'+moyK.toLocaleString('fr-FR')+' <span style="font-size:12px;font-weight:700;color:var(--t3);">kcal/j</span></div>'
+          +'<div style="font-family:var(--font-cond);font-size:22px;font-weight:700;color:var(--t1);margin-top:2px;">'+moyK.toLocaleString('fr-FR')+' <span style="font-size:12px;font-weight:700;color:var(--t3);">kcal/j</span></div>'
           +(sEcart?'<div style="font-size:11.5px;margin-top:4px;">'+sEcart+'</div>':'')
           +'<div style="font-size:11.5px;color:var(--t2);margin-top:6px;">Protéines '+moyP+' g/j · '+pctP+' % de ta cible</div>'
           +barre(Math.min(100,pctP),'var(--blue)')+'</div>'
@@ -2449,7 +2449,7 @@ function renderNutrition(){try{
       nuCycleBanner.innerHTML=`<div class="cycle-phase-banner" style="background:rgba(170,0,255,.08);border:1px solid rgba(170,0,255,.2);">
         <span style="font-size:26px;flex-shrink:0;">${cp.icon}</span>
         <div style="flex:1;">
-          <div style="font-family:var(--font-cond);font-size:16px;font-weight:900;color:${cp.color};">${cp.phase} — Jour ${cp.day}/${S.mensCycleDur}</div>
+          <div style="font-family:var(--font-cond);font-size:16px;font-weight:700;color:${cp.color};">${cp.phase} — Jour ${cp.day}/${S.mensCycleDur}</div>
           <div style="font-size:12px;color:var(--t2);margin-top:4px;line-height:1.5;"><strong style="color:var(--t1);">Nutrition :</strong> ${cp.nutrition}</div>
           <div style="font-size:12px;color:var(--t2);margin-top:3px;line-height:1.5;"><strong style="color:var(--t1);">Entraînement :</strong> ${cp.training}</div>
         </div>
@@ -2642,7 +2642,7 @@ function renderFoodJournal(){
           :`<span style="font-size:12px;color:${remCol};font-weight:700;">${rem>=0?rem+' kcal en dessous':Math.abs(rem)+' kcal au-dessus'}</span>`)
       +`</div>`
       +`<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:10px;">`
-        +`<span style="font-family:var(--font-cond);font-size:30px;font-weight:900;color:var(--t1);line-height:1;">${tot.kcal}</span>`
+        +`<span style="font-family:var(--font-cond);font-size:30px;font-weight:700;color:var(--t1);line-height:1;">${tot.kcal}</span>`
         +`<span style="font-size:13px;color:var(--t3);">/ ${target.calories} kcal</span>`
       +`</div>`
       +`<div style="height:8px;border-radius:5px;background:var(--bg3);overflow:hidden;margin-bottom:12px;"><div style="height:100%;width:${pct}%;background:${rem<0?'var(--red)':'var(--red)'};border-radius:5px;"></div></div>`

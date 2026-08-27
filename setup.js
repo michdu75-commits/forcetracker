@@ -232,21 +232,21 @@ function renderChart(){
 ${chipsHtml}
 <div style="display:flex;margin-bottom:16px;">
   <div style="flex:1;text-align:center;">
-    <div style="font-family:var(--font-cond);font-size:25px;font-weight:900;color:var(--t1);line-height:1;">${fmt(last.rm1)}<span style="font-size:13px;color:var(--t3);font-weight:700;"> kg</span></div>
+    <div style="font-family:var(--font-cond);font-size:25px;font-weight:700;color:var(--t1);line-height:1;">${fmt(last.rm1)}<span style="font-size:13px;color:var(--t3);font-weight:700;"> kg</span></div>
     <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-top:6px;">1RM Actuel</div>
   </div>
   <div style="flex:1;text-align:center;border-left:1px solid var(--sep);">
-    <div style="font-family:var(--font-cond);font-size:25px;font-weight:900;color:var(--gold);line-height:1;">${fmt(maxPt.rm1)}<span style="font-size:13px;color:var(--t3);font-weight:700;"> kg</span></div>
+    <div style="font-family:var(--font-cond);font-size:25px;font-weight:700;color:var(--gold);line-height:1;">${fmt(maxPt.rm1)}<span style="font-size:13px;color:var(--t3);font-weight:700;"> kg</span></div>
     <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-top:6px;">Record</div>
   </div>
   <div style="flex:1;text-align:center;border-left:1px solid var(--sep);">
-    <div style="font-family:var(--font-cond);font-size:25px;font-weight:900;color:${pos?'var(--green)':'var(--red)'};line-height:1;">${delta!==null?(pos?'+':'')+delta:'—'}<span style="font-size:13px;color:var(--t3);font-weight:700;"> kg</span></div>
+    <div style="font-family:var(--font-cond);font-size:25px;font-weight:700;color:${pos?'var(--green)':'var(--red)'};line-height:1;">${delta!==null?(pos?'+':'')+delta:'—'}<span style="font-size:13px;color:var(--t3);font-weight:700;"> kg</span></div>
     <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-top:6px;">Progrès${deltaPct!==null?' '+(deltaPct>=0?'+':'')+deltaPct+'%':''}</div>
   </div>
 </div>
 ${maxLoad?`<div style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 10px;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 12px;margin-bottom:14px;font-size:13.5px;">
   <span style="color:var(--t2);font-weight:600;white-space:nowrap;">🏋️ Charge max soulevée</span>
-  <span style="white-space:nowrap;"><span style="color:var(--t3);">${maxLoad.reps} reps ×</span> <b style="font-family:var(--font-cond);font-size:16px;font-weight:900;color:var(--t1);">${fmt(maxLoad.kg)} kg</b> <span style="color:var(--t3);">→</span> <span style="color:var(--t2);font-weight:700;">~${fmt(bz(maxLoad.kg,maxLoad.reps))} kg 1RM</span></span>
+  <span style="white-space:nowrap;"><span style="color:var(--t3);">${maxLoad.reps} reps ×</span> <b style="font-family:var(--font-cond);font-size:16px;font-weight:700;color:var(--t1);">${fmt(maxLoad.kg)} kg</b> <span style="color:var(--t3);">→</span> <span style="color:var(--t2);font-weight:700;">~${fmt(bz(maxLoad.kg,maxLoad.reps))} kg 1RM</span></span>
 </div>`:''}
 <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;overflow:visible;">
   <defs>
@@ -267,7 +267,7 @@ ${maxLoad?`<div style="display:flex;align-items:center;justify-content:center;fl
 <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(41,121,255,.06);border:1px solid rgba(41,121,255,.15);border-radius:10px;padding:9px 12px;margin-top:8px;min-height:42px;">
   <span style="font-size:12px;color:var(--t3);font-weight:600;" id="tt-hint">Tape un point pour les détails</span>
   <div style="text-align:right;display:none;" id="tt-vals">
-    <div style="font-family:var(--font-cond);font-size:17px;font-weight:900;color:var(--red);" id="tt-rm"></div>
+    <div style="font-family:var(--font-cond);font-size:17px;font-weight:700;color:var(--red);" id="tt-rm"></div>
     <div style="font-size:13px;color:var(--t2);" id="tt-set"></div>
   </div>
 </div>
@@ -1920,7 +1920,7 @@ function renderBFCard(){
   const grasse=bw?Math.round(bw*bf/100):0;
   const maigre=bw?Math.round(bw*(1-bf/100)):0;
   el.innerHTML=`<div style="background:rgba(41,121,255,.08);border:1px solid rgba(41,121,255,.2);border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
-    <div><div style="font-size:28px;font-weight:900;font-family:var(--font-cond);color:${cat[2]};">${bf}%</div>
+    <div><div style="font-size:28px;font-weight:700;font-family:var(--font-cond);color:${cat[2]};">${bf}%</div>
     <div style="font-size:13px;color:var(--t3);margin-top:1px;">Masse grasse (Marine US)</div></div>
     <div style="text-align:right;"><span style="background:${cat[2]};color:#fff;border-radius:20px;padding:4px 12px;font-size:13px;font-weight:800;">${cat[1]}</span>
     ${bw?`<div style="font-size:13px;color:var(--t3);margin-top:6px;">${grasse} kg gras · ${maigre} kg maigre</div>`:''}
@@ -2234,7 +2234,7 @@ function _renderProfileCompletion(){
   el.innerHTML=
     '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">'
      +'<span style="font-size:13px;font-weight:700;color:var(--t1);">Profil rempli</span>'
-     +'<span style="font-family:var(--font-cond);font-size:20px;font-weight:800;color:'+col+';">'+c.pct+'%</span>'
+     +'<span style="font-family:var(--font-cond);font-size:20px;font-weight:700;color:'+col+';">'+c.pct+'%</span>'
     +'</div>'
     +'<div style="height:8px;border-radius:6px;background:var(--bg3);overflow:hidden;margin-bottom:9px;">'
      +'<div style="height:100%;width:'+c.pct+'%;background:'+col+';border-radius:6px;transition:width .5s;"></div>'

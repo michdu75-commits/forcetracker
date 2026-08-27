@@ -18,6 +18,32 @@
   « en attente », déposée par `toggleSet`, consommée par `startRest` (il y en a **cinq**).
   ⭐ Restitué dans « précédent » (*8×80·2r*) — c'est là qu'il sert : **avant de refaire la série**.
   ⏭️ **RPE différé**, décision de Michel.
+- ⛔ **DÉCISION (27/08) — ON NE TOUCHE PAS À `deploy-pages.yml`.** Michel : *« on ne touche pas au
+  workflow surtout »*. ⚠️ **À lire avant de reproposer l'optimisation évidente** : mesuré, **17
+  déploiements pour 3 livraisons** (les lignes de réservation 🟡 sont du markdown seul et
+  redéploient tout), et 9,4 Mo inutiles empaquetés à chaque run. **Un `paths-ignore` a été
+  proposé et refusé** : ce workflow existe *parce que* les déploiements se bloquaient **en
+  silence** (ft-v600, ft-v616), et un filtre qui empêche un run de partir recrée ce mode de panne
+  (**R18**). ⛔ **Et la dépense invoquée n'existe pas** : `forcetracker` est **public**, donc
+  Actions y est **gratuit et illimité** ; le relevé affiche **0 $ facturé**.
+- 🔤⭐⭐ **125 GRAISSES QUI N'EXISTAIENT PAS — CORRIGÉ** (ft-v1037). Michel : *« fais un check de
+  toutes les polices et les tailles »*, puis *« fais les 2 premiers points »*.
+  ⛔⛔ **Mesuré en comptant l'ENCRE déposée** : **Manrope** fournit 400→800 (le pas 800→900 dépose
+  **+0,0 %**), **Space Grotesk** 500→700 (700→800 et 800→900 : **+0,0 %**). 125 déclarations
+  demandaient une graisse absente du fichier. Rien n'était cassé — le navigateur ramène au
+  plafond ; le coût est que *`900` pour être plus lourd que le `800` d'à côté ne change **rien***.
+  ⛔ **Règle de sûreté** : `900 → 800` est sans effet quelle que soit la famille ; on ne descend à
+  700 que là où la règle déclare elle-même `--font-cond`.
+  ⚠️⚠️ **Ma 1ʳᵉ mesure était inutilisable** : comparaison de captures, les 9 écrans « changeaient »
+  — mais **deux captures du MÊME code différaient aussi**. Remplacée par une mesure déterministe :
+  **11 915 éléments** de texte, **1 182 graisses demandées changent · 0 graisse effective**. Une
+  erreur injectée est détectée sur 9 écrans. Famille **§21** de `BUGS.md`.
+  ⚠️⚠️ **Le point 1 (retirer Pacifico) est ANNULÉ, et l'erreur était de moi** : elle compose le
+  prénom de l'**écran d'anniversaire**. `document.fonts` disait `unloaded` parce que cet écran
+  n'était pas affiché. Famille **§22** — *« jamais chargé » n'est pas « jamais utilisé »*.
+  ⏭️ **Reste ouvert (point 3, non fait)** : tout est en **pixels figés** — quelqu'un qui agrandit
+  la police dans les réglages de son téléphone ne voit **aucun changement**. Vrai chantier
+  d'accessibilité, à décider.
 - 🧹⭐⭐ **18 RÈGLES CSS ÉCRITES DEUX FOIS — NETTOYÉ** (ft-v1036). Michel : *« c'est quoi ça ? »*,
   puis *« vas-y mesure »*. Tout le bloc de la carte « Suppléments » était **recopié 200 lignes
   plus bas**, dont **10 règles avec des valeurs différentes** : la dernière gagnant toujours, la
