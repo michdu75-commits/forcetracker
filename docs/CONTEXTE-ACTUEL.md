@@ -6,7 +6,15 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1030`.
+- **Version en ligne (live) :** `ft-v1032`.
+- 🪟⭐ **LA BARRE « SÉANCE » LAISSAIT LIRE CE QUI DÉFILE DESSOUS — CORRIGÉ** (ft-v1032), trouvé sur
+  une **vraie vidéo** de l'iPhone de Michel. `#log-hdr` à `rgba(…,.55)` : *« Choisis par quoi tu
+  commences 👇 »* se lisait **à travers**, emoji compris. ⛔ **Pas une bizarrerie iOS** — reproduit
+  dans Chromium : *un flou adoucit, il ne cache pas.* Opacité → **`.96`**, flou **conservé**.
+  ⛔⛔ **Et le CSS n'avait pas bougé** : l'écran Séance **vide** était défilable de **0 px** avant
+  ft-v1026, de **224 px** depuis les cartes de types. *Le défaut était inatteignable, pas absent.*
+  **3ᵉ fois en deux jours** → nouvelle famille **§21** de `BUGS.md` : *dater la ligne fautive avant
+  d'accuser sa propre livraison.*
 - ⏳⭐⭐ **LE REPOS EST UN MAXIMUM, PAS UN COMPTE À REBOURS — LIVRÉ** (ft-v1030). Décision de
   Michel : *« on peut repartir avant, c'est autorisé »*, relayée par session-A depuis les 6
   programmes de sa coach (colonne **« Repos maximum »**, valeurs en **plages**).

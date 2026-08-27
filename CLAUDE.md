@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1030`** (prochaine : `ft-v1031`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1032`** (prochaine : `ft-v1033`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -436,6 +436,19 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1032 — 🪟 LA BARRE « SÉANCE » LAISSAIT LIRE CE QUI DÉFILE DESSOUS** — trouvé sur une **vraie vidéo** de l'iPhone de Michel (8 s, en production), pas en relisant le code.
+
+**⭐⭐ LE DÉFAUT EN UNE PHRASE** : `#log-hdr` est en `rgba(12,13,17,.55)` + `blur(12px)`, et à cette opacité on **lit** le contenu qui passe dessous — *« Choisis par quoi tu commences 👇 »* traversait la barre, **emoji compris**, avec le liseré rouge du bouton « + Créer ma séance » en prime.
+
+**⛔ CE N'EST PAS UNE BIZARRERIE iOS, et il fallait le vérifier avant de le dire.** Reproduit dans Chromium, où le `backdrop-filter` s'applique pourtant correctement : *un flou **adoucit**, il ne **cache** pas.* Aucune valeur de `blur` ne rattrape 0,55 — c'est l'opacité, et elle seule. Portée à **`.96`**, ⛔ **le flou conservé** : on opacifie, on ne supprime pas l'effet (**R30** — corriger un défaut en perdant le dessin serait une autre régression).
+
+**⛔⛔ ET J'AI DÛ ME CORRIGER EN COURS DE ROUTE : j'avais dit « c'est de mon fait ».** La mesure dit autre chose, et elle est nette — le CSS **n'a pas bougé d'un caractère** (`git log -S` : il date d'au moins le 29/07) ; ce qui a changé, c'est que l'écran Séance **vide** est passé de **0 px** à **224 px** de hauteur défilable avec mes 5 cartes de types (ft-v1026). 👉 ***Le défaut était INATTEIGNABLE, pas absent — il attendait son premier cas.*** C'est la **3ᵉ fois en deux jours** (le gras de `.sw-feat` attendait une description en gras ; le chrono négatif de ft-v851 attendait un appelant), d'où la nouvelle famille **§21** de `BUGS.md` : *dater la ligne fautive avant d'accuser sa propre livraison.*
+
+**⛔ JUMELLES CHERCHÉES (R8), ET IL N'Y EN A PAS** : `#log-hdr` est le **seul** élément collant du dépôt avec ce motif. Les deux autres `backdrop-filter` sont des **voiles d'overlay** (`.overlay`, `#install-popup`), où la translucidité est exactement l'effet voulu et où rien ne défile derrière.
+
+**⛔ PAS DE POP-UP `WHATS_NEW`, et c'est délibéré** (règle d'or #11) : rien à faire pour la personne, aucun repère déplacé — la barre est au même endroit, elle est juste lisible. *La pop-up se mérite* ; annoncer « on a rendu un fond plus opaque » serait du bruit (**R19/R25**).
+Tests : **parcours ⏳ passe en cours au moment du commit — chiffre posé juste après** (+4, bloc **CXXXVIII** — ⚠️ **CXXXVII sauté exprès** : session-A a une ft-v1031 en vol et le prendra vraisemblablement ; 3ᵉ collision de la semaine, on paie un numéro plutôt qu'un rapport illisible), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 102 classées 0 trou. **CONTRÔLE NÉGATIF : rouge, et le détail imprimé EST le bug** — contre l'ancien `index.html`, `background = rgba(12, 13, 17, 0.55)`. ⭐⭐ **Et les 3 autres témoins sont verts DES DEUX CÔTÉS, ce qui est leur rôle** : la barre existe et reste collante · le flou est conservé · **et surtout l'écran défile vraiment** (224 px) — sans ce dernier, le témoin central serait vert en ne mesurant rien le jour où l'écran cesserait de défiler. ⚠️ **Sa limite est écrite** : « lisible » ne se mesure pas dans le DOM, donc le témoin épingle l'**opacité** — c'est un proxy, et la preuve est la capture avant/après. ⭐ **Vérifié à l'écran** : avant, le texte fantôme traverse ; après, plus rien. Fichiers : `index.html`, `tests/parcours/runner.js`, `BUGS.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1032. |
 
 **ft-v1030 — ⏳ LE REPOS EST UN MAXIMUM, PAS UN COMPTE À REBOURS** — décision de Michel, relayée par session-A : *« on peut repartir avant, c'est autorisé »*. Elle vient des 6 programmes de sa coach, où la colonne s'intitule littéralement **« Repos maximum »** et porte des **plages** (*« 45 sec max »*, *« 1 à 2 min »*), jamais un chiffre à respecter. *« Reste 30 s » et « il te reste au plus 30 s » ne se lisent pas pareil : le second autorise à repartir avant, et il rend le dépassement informatif.*
 
