@@ -1897,6 +1897,78 @@ function _intensiteDefauts(nom, sets){
   return out;
 }
 
+/* 📍 UNE CHARGE PRESCRITE SANS REPÈRE LE DIT (27/08/2026, ft-v1033)
+   Vient du critère donné par Michel : *« la coach savait que moi je m'y connais ; tout le monde
+   ne connaît pas ce que représente le "lourd" »*. Elle écrit « lourd » parce qu'un **référentiel
+   commun** existe entre eux — le mot ne se suffit jamais à lui-même. Milo, lui, parle à des gens
+   dont il ne sait parfois rien.
+
+   ⛔⛔ LE TROU EST DANS LE VOISIN, ET IL EST MESURÉ : `_intensiteDefauts` commence par
+   `if(!(rm1>0)) return out;` — **aucun record, le contrôle se tait ENTIÈREMENT**. Ce silence est
+   juste pour SA question (« est-ce trop lourd ? » n'a pas de réponse sans repère), mais il laisse
+   passer l'autre : *« 4×8 à 60 kg »* sur un exercice jamais fait, sans un mot. C'est **ft-v980**
+   privé de garde-fou — et un chiffre inventé est PIRE que pas de chiffre pour un débutant, qui
+   n'a aucun moyen de savoir qu'il est faux.
+
+   ⛔ ON NE RETIRE PAS LE NOMBRE (R24 : informer sans bloquer). Une charge pré-remplie fait gagner
+   du temps en salle, c'est le cœur du produit. Ce qui est faux, ce n'est pas le nombre : c'est
+   qu'il soit présenté comme s'il était calibré. **On le nomme pour ce qu'il est.**
+
+   ⚠️⚠️ ET LE NOM EST RÉSOLU AVANT DE CONCLURE — sans ça, on dirait « tu n'as pas de repère » à
+   quelqu'un qui en a un, c'est-à-dire **un fait faux sur la personne** (R29, le pire coût
+   d'erreur). `_startSessionFromMilo` prend `e.name` **brut** : si Milo écrit un nom voisin du
+   catalogue, la clé de `S.prs` ne tombe pas juste. On essaie donc les variantes.
+   ⭐ Vérifié au passage : un renommage d'exercice MIGRE bien le record (`S.prs[n]=S.prs[o]`),
+   donc ce chemin-là ne perd rien.
+
+   ⛔ ET LE REPÈRE N'EST PAS QUE LE 1RM : quelqu'un qui a déjà FAIT l'exercice a une référence,
+   même sans record estimé. On regarde donc aussi l'historique — sinon la phrase serait fausse
+   pour lui. */
+function _repereDefauts(nom, sets){
+  const out=[];
+  try{
+    const variantes=[];
+    const push=v=>{ if(v&&variantes.indexOf(v)<0)variantes.push(v); };
+    push(nom);
+    if(typeof exNomCatalogue==='function') push(exNomCatalogue(nom));
+    if(typeof exNomActuel==='function')    push(exNomActuel(nom));
+    if(typeof exNomCatalogue==='function'&&typeof exNomActuel==='function')
+      push(exNomActuel(exNomCatalogue(nom)));
+    /* ⚠️⚠️ ET LA COMPARAISON EST NORMALISÉE, parce que le résolveur NE SUFFIT PAS — mesuré :
+       `exNomCatalogue('Developpe Couche')` rend `'Developpe Couche'` tel quel. Il connaît les
+       alias DÉCLARÉS, pas les variantes d'accent ou de ponctuation. Sans cette normalisation, on
+       annonçait « pas encore de repère » à quelqu'un dont le record existait sous le vrai nom.
+       ⭐ `_normEx` existe déjà (minuscules + accents retirés + alphanumérique) — on la réutilise,
+       on n'en écrit pas une deuxième (R13/R2). */
+    const nz = (typeof _normEx==='function') ? _normEx : (s=>String(s||'').toLowerCase());
+    const cibles = variantes.map(nz);
+    const memeEx = n => cibles.indexOf(nz(n))>=0;
+    const prs=S.prs||{};
+    const aRecord = Object.keys(prs).some(k=>memeEx(k)&&(+prs[k].rm1||0)>0);
+    /* ⛔ L'historique se lit ICI et pas via `getPrev`, qui compare le nom EXACTEMENT et sert
+       ailleurs : le corriger changerait le comportement de tous ses appelants (R14). */
+    const aHisto = (S.sessions||[]).some(s=>((s.exs||s.exercises||[])
+      .some(e=>e&&memeEx(e.name)&&(e.sets||[]).some(x=>x&&x.done!==false))));
+    if(aRecord||aHisto) return out;              // il y a un repère → ce n'est pas notre question
+    // Séries de TRAVAIL seulement : un échauffement chiffré ne prétend rien (même règle que le voisin).
+    const trav=(sets||[]).filter(s=>s&&s.type!=='É'&&(+s.kg>0));
+    if(!trav.length) return out;                 // aucune charge chiffrée → rien à dire (R29)
+    const kgs=trav.map(s=>+s.kg).filter(k=>k>0);
+    const max=Math.max.apply(null,kgs), min=Math.min.apply(null,kgs);
+    const combien=(max===min)?(max+' kg'):(min+' à '+max+' kg');
+    /* ⛔⛔ LE MOT DIT OÙ EST L'ABSENCE — correction de Michel, et elle rendait ma 1re version
+       FAUSSE. J'avais écrit « Pas encore de repère sur cet exercice », qui se lit *« tu n'as
+       jamais fait cet exercice »*. Or quelqu'un qui soulève depuis dix ans et installe l'app
+       hier n'a rien dans l'app : lui dire ça, c'est **affirmer un fait faux sur lui** (R29, le
+       pire coût d'erreur). L'absence est dans **l'historique de l'app**, pas dans son expérience
+       — et c'est exactement ce que le code mesure, ni plus ni moins.
+       ⛔ Et on informe sans accuser, comme pour le dépassement de repos : « point de départ à
+       ajuster » dit ce que c'est, sans reprocher quoi que ce soit. */
+    out.push('📍 Aucun repère dans ton historique pour cet exercice — '+combien+' est un point de départ à ajuster, pas une mesure.');
+  }catch(e){ /* jamais bloquant */ }
+  return out;
+}
+
 /**
  * COMPLÈTE la montée de Milo — elle ne la REMPLACE jamais.
  *
@@ -6245,6 +6317,15 @@ function _appliqueMiloSession(newExs, data, mode, btn){
   (newExs||[]).forEach(o=>{
     const d=(typeof _intensiteDefauts==='function')?_intensiteDefauts(o.name,o.sets):[];
     if(d.length){ o.intensiteWarn=d; alertes.push(o.name); }
+    /* 📍 ft-v1033 : et là où le contrôle d'intensité SE TAIT faute de repère, on dit qu'il n'y
+       en a pas. Les deux ne se recouvrent jamais — `_repereDefauts` rend `[]` dès qu'un record
+       ou un historique existe, `_intensiteDefauts` rend `[]` quand il n'y en a aucun.
+       ⛔ Le message part dans `seanceWarn` et non `intensiteWarn` : il porte son propre 📍, et
+       `intensiteWarn` est préfixé d'un ⚡ par `_intensiteBandeau`. Un seul propriétaire par
+       forme d'affichage (R2). ⛔ Et on AJOUTE, on n'écrase pas : `_validationSeance` remplit ce
+       même champ juste en dessous. */
+    const r=(typeof _repereDefauts==='function')?_repereDefauts(o.name,o.sets):[];
+    if(r.length) o.seanceWarn=(o.seanceWarn||[]).concat(r);
   });
   /* ⚠️ ON PRÉVIENT, ON NE BLOQUE PAS (R24 : informer sans bloquer). La séance démarre
      normalement ; l'avertissement reste attaché à l'exercice, donc lisible AU MOMENT de le
@@ -6261,7 +6342,11 @@ function _appliqueMiloSession(newExs, data, mode, btn){
     const bl=verdict.blessures.find(x=>x.nom===o.name);
     if(bl) w.push('🛡️ Sollicite '+bl.zones.join(', ')+' — une zone que tu protèges en ce moment.');
     if(verdict.doublons.indexOf(o.name)>=0) w.push('🔁 Déjà présent ailleurs dans cette séance.');
-    if(w.length) o.seanceWarn=w;
+    /* ⚠️ ON CONCATÈNE, ON N'AFFECTE PAS (ft-v1033) — c'était `o.seanceWarn=w`, une affectation.
+       Tant que ce bloc était le seul à écrire ici, c'était sans conséquence ; depuis que
+       `_repereDefauts` y met sa ligne juste au-dessus, une affectation l'EFFACERAIT en silence.
+       *Un champ partagé se remplit par ajout, jamais par remplacement* (R2). */
+    if(w.length) o.seanceWarn=(o.seanceWarn||[]).concat(w);
   });
   const nAlerte=verdict.doublons.length+verdict.exclusions.length+verdict.blessures.length;
   if(nAlerte&&typeof toast==='function')

@@ -95,6 +95,31 @@ n'avait pas pu promouvoir avant son correctif). **À promouvoir le jour où le r
 l'attendu sera alors vérifiable — *cite-t-il un jour réel du journal ?*
 **État : à trier.**
 
+### 🟡 « PAS DE RECORD » NE VEUT PAS DIRE « JAMAIS FAIT » — et le mot doit le dire
+**27/08/2026, correction de Michel en cours de livraison de ft-v1033** : *« est-ce que "pas de
+record" veut vraiment dire "jamais fait" ? Clairement non. »*
+
+**⭐ Le CODE, lui, était déjà juste** : `_repereDefauts` compte comme repère le record **et**
+l'historique de séances, avec comparaison normalisée des noms. Ce n'est pas la mesure qui était
+fausse.
+
+**⛔⛔ C'ÉTAIT LE LIBELLÉ.** J'avais écrit *« Pas encore de repère sur cet exercice »*, qui se lit
+***« tu n'as jamais fait cet exercice »***. Or quelqu'un qui pratique depuis dix ans et installe
+l'app hier n'a **rien dans l'app** — et lui dire ça, c'est **affirmer un fait faux sur lui**, le
+pire coût d'erreur (**R29**, Constitution **P4**). 👉 Corrigé en *« Aucun repère **dans ton
+historique** pour cet exercice »* : l'absence est nommée **là où elle est réellement**, c'est-à-dire
+dans les données de l'app, jamais dans l'expérience de la personne. Les 4 surfaces d'aide disent
+désormais *« jamais noté dans l'app »* et *« même si tu le pratiques depuis des années ailleurs »*.
+
+**⭐⭐ LA LEÇON QUI SE REPPLIQUE, ET ELLE VAUT PLUS QUE LE CAS** : *une mesure juste peut produire
+une phrase fausse.* Le code mesurait « je n'ai pas de donnée » ; le texte affirmait « tu n'as pas
+fait ». **Avant d'écrire une phrase à partir d'une mesure, se demander ce que la mesure prouve
+EXACTEMENT** — une absence de donnée ne prouve jamais une absence de fait.
+
+⛔ **Pas promouvable en scénario** : ça ne concerne pas Milo mais un texte de l'app, et ça se
+vérifie à la lecture, pas par un attendu de conversation.
+**État : à trier** — gardé comme repère de méthode, pas comme piège à Milo.
+
 ### 🟡 MILO CHIFFRE LA CHARGE ; UNE COACH HUMAINE ÉCRIT « LOURD »
 **26/08/2026, relais de session-A sur les 6 programmes écrits par la coach de Michel**
 (`docs/NUTRITION-PROGRAMMES-REELS.md` §3bis). **Compté sur les six documents : « lourd » 18 fois ·
@@ -133,7 +158,15 @@ transmis à Milo (`coach.js:2561`), **et il sait déjà dire quand il manque** (
 d'attendu vérifiable. ⭐ **MAIS la moitié basse l'est** : *quand aucun record n'existe sur
 l'exercice, Milo ne doit pas prescrire de charge chiffrée.* Ça, du code peut le vérifier — c'est
 la promotion à écrire le jour où on s'y met.
-**État : à trier** — le critère est nommé, l'implémentation reste à décider par Michel.
+**⭐ 27/08 — LA MOITIÉ CÔTÉ APP EST LIVRÉE (ft-v1033), ET IL FAUT DIRE LAQUELLE.** L'app **dit**
+désormais qu'elle n'a pas de repère quand Milo chiffre sur un exercice jamais fait
+(`_repereDefauts`, 9 témoins, bloc CXXXIX). ⛔ **Ce n'est PAS la question de cette entrée** : on
+n'a **pas** empêché Milo de chiffrer, et on n'a **pas** introduit le registre « lourd ». On a
+seulement cessé de laisser passer un chiffre **sans repère** pour un chiffre calibré.
+⏭️ **Ce qui reste ouvert, et qui revient à Michel** : Milo doit-il *lui-même* basculer en
+qualitatif quand il n'a pas la référence, plutôt que de proposer un nombre à ajuster ? Ça touche
+au **prompt**, donc au dernier levier (**R7**), et ça se mesurerait au banc d'essai (**R34**).
+**État : à trier** — le critère est nommé, la moitié app est faite, l'arbitrage reste à Michel.
 
 ### 🟡 « Y A-T-IL UNE ÉVOLUTION PAR RAPPORT À MON PHYSIQUE ? » — il ne peut pas répondre
 **26/08/2026.** Michel a **3 études du corps** (11/07 · 28/07 · 25/08) et **aucune ne se compare à

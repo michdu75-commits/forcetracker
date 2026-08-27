@@ -6,7 +6,17 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1032`.
+- **Version en ligne (live) :** `ft-v1033`.
+- 📍⭐⭐ **UNE CHARGE PRESCRITE SANS REPÈRE LE DIT — LIVRÉ** (ft-v1033), application du critère
+  donné par Michel : *« la coach savait que moi je m'y connais ; tout le monde ne connaît pas ce
+  que représente le "lourd" »*. 👉 La question n'était pas *chiffrer ou qualifier*, mais
+  **« a-t-on la référence ? »**. ⛔⛔ Trou mesuré : `_intensiteDefauts` se tait **entièrement**
+  sans record — Milo pouvait donc chiffrer sur un exercice jamais fait sans un mot (**ft-v980**
+  privé de garde-fou). ⛔ **Le nombre n'est pas retiré** (R24) : il est **nommé** pour ce qu'il est.
+  ⚠️ Le résolveur de noms **ne suffisait pas** (`exNomCatalogue('Developpe Couche')` rend la chaîne
+  telle quelle) → comparaison normalisée, sinon on affirmait un **fait faux sur la personne** (R29).
+  ⏭️ **Ce que ça ne fait PAS** : ça n'empêche pas Milo de chiffrer. Le registre qualitatif
+  (« lourd ») reste **une décision produit de Michel**, non tranchée.
 - 🪟⭐ **LA BARRE « SÉANCE » LAISSAIT LIRE CE QUI DÉFILE DESSOUS — CORRIGÉ** (ft-v1032), trouvé sur
   une **vraie vidéo** de l'iPhone de Michel. `#log-hdr` à `rgba(…,.55)` : *« Choisis par quoi tu
   commences 👇 »* se lisait **à travers**, emoji compris. ⛔ **Pas une bizarrerie iOS** — reproduit
