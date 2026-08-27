@@ -15044,7 +15044,7 @@ console.log('\n-- CXXXVI. Le repos est un maximum, pas un compte a rebours (ft-v
   }
 }
 
-/* == BLOC CXXXVII - LES CARTES NUTRITION ALIGNEES ET JUSTIFIEES (ft-v1031) ==
+/* == BLOC CXXXVII - LES CARTES NUTRITION ALIGNEES ET JUSTIFIEES (ft-v1033) ==
    Michel, 5 captures a l'appui : « visuellement c'est pas propre, il faut que tout soit aligne
    et justifie ».
    ⛔⛔ LE DEFAUT ETAIT MESURABLE, ET SA CAUSE TIENT EN UN MOT : `min-width`. Un MINIMUM laisse
@@ -15063,7 +15063,7 @@ console.log('\n-- CXXXVI. Le repos est un maximum, pas un compte a rebours (ft-v
    3,0 px a 7,0-9,6 px, et le nombre de lignes NE BOUGE PAS. C'est le prix, il est borne.
    ⭐ ET UN DEFAUT TROUVE A LA CAPTURE, que la mesure de position ne voyait pas : « + 250 / g de
    Steak hache » — le nombre finissait une ligne, son unite commencait la suivante. */
-console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v1031) --');
+console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v1033) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
@@ -15157,6 +15157,72 @@ console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v10
       !!F.fab && F.fab[1]>0, JSON.stringify(F.fab));
   }
   await cx.close();
+/* == BLOC CXXXVIII - LA BARRE « SEANCE » NE LAISSE PLUS LIRE CE QUI DEFILE DESSOUS (ft-v1032) ==
+   /!\ CXXXVII est volontairement SAUTE : session-A a une ft-v1033 en vol et prendra
+   vraisemblablement ce numero. C'est la 3e collision de bloc de la semaine — on paie deux
+   numeros plutot qu'un rapport illisible.
+
+   Trouve sur une VRAIE VIDEO de l'iPhone de Michel, en production, pas en relisant le code.
+   `#log-hdr` etait en rgba(12,13,17,.55) + blur(12px) : on lisait « Choisis par quoi tu
+   commences » A TRAVERS la barre, emoji compris.
+   ⛔ CE N'EST PAS UNE BIZARRERIE iOS — reproduit dans Chromium, ou le flou s'applique pourtant
+   correctement. *Un flou ADOUCIT, il ne CACHE pas.* Aucune valeur de blur ne rattrape 0,55.
+   ⛔⛔ ET LE CSS N'AVAIT PAS BOUGE : mesure, l'ecran Seance VIDE etait defilable de 0 px avant
+   ft-v1026 et l'est de 224 px depuis les cartes de types. *Le defaut etait INATTEIGNABLE, pas
+   absent — il attendait son premier cas* (meme famille que le gras de .sw-feat, la veille).
+   ⚠️ CE QUE CE TEMOIN EST, HONNETEMENT : un PROXY. « Lisible » ne se mesure pas dans le DOM ;
+   on epingle donc l'opacite, avec sa raison. La preuve visuelle est la capture avant/apres. */
+console.log('\n-- CXXXVIII. La barre « Seance » ne laisse plus lire dessous (ft-v1032) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_discipline:'powerbuilding'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const G=await pg.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    S.wkt=null; S.sessions=[{date:'2026-08-20',exs:[],volume:1}]; persist();
+    goScreen('s-log');document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+    document.getElementById('s-log').classList.add('active');renderLog();
+    await new Promise(r=>setTimeout(r,400));
+    const h=document.getElementById('log-hdr');
+    o.existe=!!h;
+    if(!h) return o;
+    const cs=getComputedStyle(h);
+    o.bg=cs.backgroundColor;
+    const m=/rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(?:,\s*([\d.]+))?\s*\)/.exec(cs.backgroundColor||'');
+    o.alpha = m ? (m[1]===undefined ? 1 : parseFloat(m[1])) : null;
+    o.blur=(cs.backdropFilter||cs.webkitBackdropFilter||'');
+    o.sticky=cs.position;
+    /* ⭐ ET ON VERIFIE QUE LA CONDITION DU DEFAUT EXISTE VRAIMENT : si l'ecran ne defilait pas,
+       le temoin ci-dessus serait vert en ne mesurant RIEN — c'est le faux vert de ft-v1017. */
+    const sc=document.getElementById('s-log');
+    o.defilable=sc.scrollHeight-sc.clientHeight;
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  await cx.close();
+
+  if(G.err)t('CXXXVIII n\'a pas pu tourner',false,G.err);
+  else{
+    t('⛔ la barre « Séance » existe et reste collante',
+      G.existe===true && G.sticky==='sticky', JSON.stringify({existe:G.existe,position:G.sticky}));
+    /* ⛔⛔ LE TEMOIN CENTRAL. Le seuil n'est pas esthetique : a 0,55 le texte se LISAIT
+       (mesure dans Chromium ET vu sur l'iPhone). On exige une opacite qui cache. */
+    t('⛔⛔ elle est assez opaque pour qu\'on ne lise RIEN à travers (≥ 0,9)',
+      typeof G.alpha==='number' && G.alpha>=0.9, 'background = '+G.bg);
+    /* ⛔ ET LE FLOU RESTE : sans ce temoin, un futur « correctif » pourrait supprimer l'effet
+       au lieu de l'opacifier — on aurait corrige le defaut en perdant le dessin (R30). */
+    t('⛔ … et le flou est CONSERVÉ (on opacifie, on ne supprime pas l\'effet)',
+      /blur\(\s*\d/.test(G.blur), 'backdrop-filter = '+(G.blur||'(aucun)'));
+    /* ⭐⭐ SANS CELUI-CI, LES DEUX PRECEDENTS SERAIENT VERTS EN NE MESURANT RIEN : il faut que
+       l'ecran DEFILE pour que quoi que ce soit puisse passer sous la barre. */
+    t('⭐⭐ le témoin MORD : l\'écran Séance vide défile bien (sinon rien ne passerait dessous)',
+      G.defilable>50, 'défilable = '+G.defilable+' px');
+  }
 }
 
 await b.close(); srv.close();

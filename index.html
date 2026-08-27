@@ -509,7 +509,17 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 
 <!-- SÉANCE -->
 <div class="screen" id="s-log">
-  <div id="log-hdr" style="padding:10px 14px 0;position:sticky;top:0;z-index:26;background:rgba(12,13,17,.55);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-radius:16px;"></div>
+  <!-- ⚠️⚠️ L'OPACITÉ N'EST PAS UN DÉTAIL D'ESTHÉTIQUE (27/08/2026, ft-v1032) — trouvé sur une
+       VRAIE vidéo de l'iPhone de Michel, en production. À `.55`, cette barre laissait LIRE le
+       contenu qui défile dessous : « Choisis par quoi tu commences 👇 » traversait, emoji compris.
+       ⛔ CE N'EST PAS UNE BIZARRERIE iOS : reproduit dans Chromium, où le flou s'applique
+       pourtant correctement. *Un flou adoucit, il ne cache pas* — 0,55 est trop transparent, et
+       aucune valeur de `blur` ne rattrape ça.
+       ⛔⛔ ET LE CSS N'AVAIT PAS BOUGÉ : mesuré, l'écran Séance VIDE était défilable de 0 px avant
+       ft-v1026 et l'est de 224 px depuis les cartes de types. *Le défaut était inatteignable, pas
+       absent — il attendait son premier cas* (même famille que le gras de `.sw-feat`, la veille).
+       ⭐ Le flou reste, pour la profondeur ; c'est l'opacité seule qui monte. -->
+  <div id="log-hdr" style="padding:10px 14px 0;position:sticky;top:0;z-index:26;background:rgba(12,13,17,.96);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-radius:16px;"></div>
   <div style="display:flex;gap:8px;align-items:center;">
     <label for="s-date" style="flex:1;height:46px;padding:0 16px;background:var(--bg2);border-radius:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" id="s-date-lbl">
       <span style="display:flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t2);flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span id="s-date-txt" style="font-size:14px;font-weight:600;color:var(--t1);"></span></span>

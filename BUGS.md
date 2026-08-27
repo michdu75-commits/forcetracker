@@ -1346,3 +1346,48 @@ Quand une règle CSS met en forme **un** élément d'un composant, l'ancrer sur 
 (`>div>b`) et non sur sa **balise** (`b`). Une balise de mise en forme — `b`, `i`, `small`, `span`
 — réapparaît toujours dans le contenu ; le jour où ça arrive, c'est le contenu qui prend la forme
 du titre.
+
+---
+
+## 21. 🕰️ LE DÉFAUT DORMANT QU'UNE NOUVELLE FONCTIONNALITÉ RÉVEILLE *(27/08/2026, ft-v1032)*
+
+**Le mécanisme.** Un défaut existe depuis des mois dans du code que personne ne touche. Il ne se
+voit pas — non pas parce qu'il est subtil, mais parce que **la condition qui le rend visible
+n'existe pas encore**. Une fonctionnalité sans rapport crée cette condition, et le défaut apparaît
+le jour de sa livraison. On l'attribue alors au dernier changement, qui n'y est pour rien.
+
+**Le cas réel.** La barre « Séance » (`#log-hdr`) est en `rgba(12,13,17,.55)` + `blur(12px)` depuis
+au moins le 29/07. À `.55`, elle laisse **lire** le contenu qui défile dessous. Personne ne l'avait
+jamais vu, et la mesure dit pourquoi :
+
+| | écran Séance **vide**, hauteur défilable |
+|---|---|
+| avant ft-v1026 | **0 px** |
+| après (5 cartes de types) | **224 px** |
+
+*Le CSS n'a pas bougé d'un caractère.* Ce sont les cartes qui ont rendu l'écran assez long pour
+que quelque chose puisse passer sous la barre. Trouvé sur une **vidéo de production**, pas en
+relisant le code — et confirmé dans Chromium, ce qui a écarté la piste « bizarrerie iOS ».
+
+**⚠️ Et c'est la 3ᵉ fois en deux jours** : le gras de `.sw-feat` dormait jusqu'à ce qu'une
+description contienne du gras (§20) ; le chrono négatif de ft-v851 n'a jamais tourné faute
+d'appelant. *Un défaut invisible n'est pas un défaut absent : il attend son premier cas.*
+
+### 🔎 Comment la reconnaître
+- Un défaut qui apparaît juste après une livraison **qui ne touche pas le fichier concerné**.
+- Le réflexe qui trompe : « c'est forcément ma dernière modif ». Souvent non — elle a seulement
+  **créé la condition**.
+- La question qui tranche en une commande : *`git log -S` sur la ligne fautive.* Si elle n'a pas
+  bougé, le défaut est ancien et c'est **l'exposition** qui est neuve.
+
+### 🛡️ Ce qui protège
+- **Dater la ligne fautive avant d'accuser sa propre livraison.** Ça change ce qu'on écrit dans le
+  journal, et ça évite de « corriger » au mauvais endroit.
+- Mesurer **la condition**, pas seulement le symptôme (ici : la hauteur défilable avant/après).
+- Et le témoin doit épingler **la condition aussi** — sans elle, il serait vert en ne mesurant
+  rien le jour où l'écran cesserait de défiler.
+
+### ⭐ Le réflexe
+Quand on ajoute du contenu à un écran, se demander : *qu'est-ce que cet écran ne faisait pas avant,
+et qui devient possible maintenant ?* Défiler, déborder, se replier, tenir sur deux lignes — chacun
+de ces « maintenant » peut réveiller quelque chose d'endormi ailleurs.
