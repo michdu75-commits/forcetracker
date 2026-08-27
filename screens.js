@@ -154,6 +154,7 @@ const _HELP_DATA={
   home:{
     title:'🏠 Accueil',
     tips:[
+      {i:'🕰️',t:'<b>Ton histoire sportive</b> : si tu notes une douleur que tu avais déjà eue il y a plus de deux semaines, une carte te rappelle <b>quand</b> et <b>combien de temps</b> elle avait duré. Elle décrit ce que tu avais noté — <b>elle ne prédit rien</b>. Elle ne s\'affiche que quand il y a quelque chose à relier.'},
       {i:'📅',t:'Le calendrier de ton mois, qui se lit d\'un coup d\'œil : <b>plus une case est foncée, plus tu as soulevé lourd ce jour-là</b>. Le petit trait sous le chiffre dit ce que tu as travaillé (rouge = haut, bleu = dos, violet = bas, orange = tronc, vert = full body), et l\'étoile ⭐ marque un RECORD. À gauche, le n° de semaine avec ton tonnage — tape-le pour voir la semaine entière. <b>Tape un jour</b> et son détail s\'ouvre dessous : tonnage, séries, exercices, et comment tu te sentais (sommeil, énergie, humeur, douleur) si tu l\'as noté. Le calendrier devient ta mémoire.'},
       {i:'💚',t:'Ta carte récup existe en <b>deux styles</b> — Menu → Apparence → Carte récup : l\'anneau (par défaut) ou le moniteur, avec ton score en gros et un tracé cardiaque. Mêmes données, mise en forme différente.'},
       {i:'📊',t:'Les 4 stats du mois (volume, Big3, séances, poids) se calculent depuis tes séances et ton journal de poids.'},
@@ -989,6 +990,39 @@ function _renderMiloCard(){
     +'<button class="milo-x" onclick="event.stopPropagation();_dismissMilo(\''+m.id+'\')" aria-label="Fermer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'
     +'</div>';
 }
+/* 🕰️ LA CARTE DU SOUVENIR (ft-v1039) — la première PORTE de la brique 7.
+   ⛔ Elle n'existe que s'il y a un souvenir : le reste du temps, elle ne prend pas un pixel.
+   ⛔ Et elle est REFERMABLE pour la journée, comme la carte de Milo — un souvenir qu'on ne peut
+      pas faire taire deviendrait une notification (R24).
+   ⚠️ `_souvEsc` : le résumé est construit à partir de libellés de zones et de dates, donc de
+      données locales — mais il part dans `innerHTML`, alors on échappe quand même. La règle ne
+      dépend pas de la confiance qu'on a dans la source du jour. */
+function _souvEsc(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function _renderSouvenirCard(){
+  const el=document.getElementById('home-souvenir'); if(!el) return;
+  const s=(typeof _souvenirDuJour==='function')?_souvenirDuJour():null;
+  if(!s){ el.innerHTML=''; return; }
+  let dism=null; try{dism=JSON.parse(localStorage.getItem('ft4_souv')||'null');}catch(e){}
+  const cle=s.type+'|'+s.date;
+  if(dism&&dism.date===today()&&dism.cle===cle){ el.innerHTML=''; return; }
+  el.innerHTML='<div class="souv-card">'
+    +'<div class="souv-ic">🕰️</div>'
+    +'<div style="flex:1;min-width:0;">'
+      +'<div class="souv-t">Ton histoire sportive</div>'
+      +'<div class="souv-txt">'+_souvEsc(s.resume)+'</div>'
+      /* ⭐ LA RAISON EST AFFICHÉE, pas seulement calculée : elle dit à la personne POURQUOI ça
+         remonte maintenant. Un souvenir dont on ne comprend pas la présence ressemble à du hasard. */
+      +'<div class="souv-why">'+_souvEsc(s.raison)+'</div>'
+    +'</div>'
+    +'<button class="souv-x" onclick="_dismissSouvenir(\''+_souvEsc(cle)+'\')" aria-label="Fermer">'
+    +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>'
+    +'</div>';
+}
+function _dismissSouvenir(cle){
+  try{localStorage.setItem('ft4_souv',JSON.stringify({date:today(),cle:cle}));}catch(e){}
+  _renderSouvenirCard();
+}
+
 // Fix déterministe (ft-v616) : « Milo me relance alors que je vais au sport demain ». Le chat→Accueil (ft-v601)
 // dépend de Milo qui émet un marqueur caché (pas fiable). Ici un bouton pose directement la séance de demain.
 function _planTomorrow(){
@@ -1127,6 +1161,109 @@ function _dayState(){
   if(!S.dayState||S.dayState.date!==t)S.dayState={date:t,energy:null,mood:null,pains:[],note:''};
   return S.dayState;
 }
+/* 🕰️ BRIQUE 7 — « TON HISTOIRE SPORTIVE » : LE SOUVENIR (27/08/2026, ft-v1039)
+   Michel : *« la brique 7, ah bah oui c'est super important »*.
+
+   ⛔⛔ ÉTAT MESURÉ AVANT DE COMMENCER : `socle seul, porte 0`. `S.dayStateLog` existe depuis des
+   mois — son commentaire dans `state.js` dit littéralement *« brique 7 »* — et **rien ne le
+   relit**. La donnée s'accumulait pour personne.
+
+   ⚠️⚠️ ET LE DÉCLENCHEUR ÉVIDENT EST INJOUABLE, il fallait le mesurer avant d'écrire une ligne :
+   la fiche de conception (19/07) met l'**anniversaire** en premier (*« il y a un an aujourd'hui »*).
+   Or **l'app est née le 17/06/2026** — personne n'a un an d'historique, et ça ne se déclencherait
+   **jamais**. *Un comportement qui ne peut pas s'observer n'est pas construit, il est écrit* (R3).
+   👉 On commence donc par le **CONTEXTUEL**, qui marche avec deux mois de données.
+
+   ⭐ LE SOUVENIR EST L'OBJET MÉTIER DE LA FICHE, pas une phrase : `{type, date, resume, lien,
+   raison}`. ⛔⛔ **La `raison` n'est pas décorative — c'est LE garde-fou « moins mais mieux » :
+   un souvenir sans raison ne remonte pas.** C'est ce qui empêche la brique de devenir un flux
+   d'anecdotes.
+
+   ⛔ IL DÉCRIT, IL NE PRESCRIT JAMAIS (Constitution P14, « miroir jamais prophète »). *« Elle
+   avait disparu au bout de 5 jours »* est un fait ; *« ça devrait passer en 5 jours »* est une
+   prédiction, et on n'en fait pas — surtout sur une douleur.
+   ⛔ ET IL NE DÉPLACE RIEN : il vit dans sa propre carte, sous la carte proactive, et cette carte
+   n'existe QUE les jours où il y a quelque chose à dire (R24 : informer sans encombrer). */
+const SOUVENIR_MIN_JOURS = 14;    // en deçà, ce n'est pas un souvenir : c'est la semaine en cours
+const SOUVENIR_MAX_JOURS = 730;   // au-delà, `dayStateLog` ne garde plus (garde-fou de taille)
+
+/* ⛔ UN SEUL PROPRIÉTAIRE de « cette douleur est-elle déjà venue ? » — sinon la carte et un futur
+   message de Milo répondraient un jour différemment sur le même fait (R2). */
+function _souvenirDouleur(refTs){
+  try{
+    const auj=(typeof today==='function')?today(refTs):null;
+    if(!auj) return null;
+    const dj=(S.dayState&&S.dayState.date===auj)?S.dayState:null;
+    const zonesAuj=((dj&&dj.pains)||[]).map(p=>p&&p.zone).filter(Boolean);
+    if(!zonesAuj.length) return null;                 // aucune douleur aujourd'hui → rien à relier
+    const log=(S.dayStateLog||[]).filter(e=>e&&e.date&&e.date<auj);
+    if(!log.length) return null;
+    const jours=(a,b)=>Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5);
+    let best=null;
+    zonesAuj.forEach(z=>{
+      // Les jours PASSÉS où cette zone était douloureuse, du plus récent au plus ancien.
+      const eux=log.filter(e=>(e.pains||[]).some(p=>p&&p.zone===z)).sort((a,b)=>a.date<b.date?1:-1);
+      if(!eux.length) return;
+      const dernier=eux[0];
+      const ecart=jours(dernier.date,auj);
+      /* ⛔ TROP RÉCENT = CE N'EST PAS UN SOUVENIR : une douleur d'avant-hier, la personne s'en
+         souvient très bien. Le lui « rappeler » serait du bruit, et ferait passer la brique pour
+         un compteur (R19). */
+      if(!(ecart>=SOUVENIR_MIN_JOURS && ecart<=SOUVENIR_MAX_JOURS)) return;
+      /* ⭐ COMBIEN DE TEMPS ÇA AVAIT DURÉ — c'est le fait qui a de la valeur, et il se calcule :
+         on remonte les jours CONSÉCUTIFS notés où la zone apparaissait encore.
+         ⚠️ On ne compte que les jours RENSEIGNÉS : un trou dans le journal n'est pas une guérison,
+         et on ne comble pas un trou par une supposition (R29). */
+      const dates=eux.map(e=>e.date).sort();
+      let debut=dernier.date;
+      for(let i=dates.length-1;i>0;i--){
+        const d1=dates[i-1], d2=dates[i];
+        if(jours(d1,d2)<=3 && d2<=dernier.date) debut=d1; else if(d2<=dernier.date) break;
+      }
+      const duree=jours(debut,dernier.date)+1;
+      const nbFois=eux.length;
+      const cand={zone:z, date:dernier.date, debut:debut, ecart:ecart, duree:duree, nbFois:nbFois};
+      // Le plus ANCIEN écart gagne : c'est celui dont on se souvient le moins.
+      if(!best || cand.ecart>best.ecart) best=cand;
+    });
+    if(!best) return null;
+    const lbl=(typeof _dayZoneLbl==='function')?_dayZoneLbl(best.zone):best.zone;
+    const fdate=s=>s.split('-').reverse().slice(0,2).join('/');
+    const moisFr=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+    const enLettres=s=>{const p=s.split('-');return (+p[2])+' '+moisFr[(+p[1])-1];};
+    /* ⛔ LE RÉSUMÉ EST DESCRIPTIF, ET IL DIT SA PROPRE LIMITE : « sur les jours que tu avais
+       notés ». Sans ça, « 5 jours » se lirait comme une mesure médicale (P14/P22). */
+    /* ⛔ LA ZONE EN TÊTE, ET C'EST UNE DÉCISION DE LANGUE, pas de mise en page : « une douleur
+       genou » et « une douleur bas du dos » sont faux, et la préposition change selon la zone
+       (AU genou, À L'épaule, AUX pectoraux, À LA nuque). Une table de prépositions serait une
+       2ᵉ source à tenir à jour à côté de `_DAY_ZONES` (R2). Mettre la zone devant supprime le
+       problème au lieu de le gérer — et elle se repère mieux à l'œil. */
+    const resume = best.duree>1
+      ? lbl + ' : tu avais déjà noté cette douleur à partir du ' + enLettres(best.debut)
+        + ' — elle apparaissait sur ' + best.duree + ' jours parmi ceux que tu avais notés.'
+      : lbl + ' : tu avais déjà noté cette douleur le ' + enLettres(best.date) + '.';
+    return {
+      type   : 'contextuel',
+      date   : best.date,
+      resume : resume,
+      lien   : 'Tu l\'as notée à nouveau aujourd\'hui.',
+      /* ⛔⛔ LA RAISON — sans elle, pas de souvenir. Elle dit pourquoi MAINTENANT et pas hier. */
+      raison : 'C\'était il y a ' + (best.ecart>=60 ? Math.round(best.ecart/30)+' mois' : best.ecart+' jours')
+               + (best.nbFois>1 ? ', et ce n\'est pas la première fois' : ''),
+      _z:best.zone, _ecart:best.ecart, _duree:best.duree, _nbFois:best.nbFois
+    };
+  }catch(e){ return null; }   // jamais bloquant : un souvenir est un plus, pas une fonctionnalité
+}
+
+/* ⭐ LE POINT D'ENTRÉE de la brique — un seul souvenir à la fois (« moins mais mieux »).
+   Les autres déclencheurs de la fiche (anniversaire, demandé) viendront ici, dans cet ordre de
+   priorité, quand la donnée les rendra jouables. */
+function _souvenirDuJour(refTs){
+  const s=_souvenirDouleur(refTs);
+  if(!s || !s.raison) return null;   // ⛔ un souvenir sans RAISON ne remonte pas (fiche 19/07)
+  return s;
+}
+
 // Historise le check-in du jour : upsert de S.dayState (aujourd'hui) dans S.dayStateLog, pour ne plus l'effacer chaque nuit (brique 7).
 function _saveDayStateToLog(){
   const d=S.dayState;if(!d||!d.date)return;
@@ -1446,6 +1583,9 @@ function renderHome(){try{
   _renderTesterCard();
   _renderHomeHdr();
   _renderMiloCard();
+  /* 🕰️ ft-v1039 — la carte du souvenir se peint APRÈS celle de Milo, et séparément : elle ne
+     partage aucun état avec elle, donc l'une ne peut pas faire disparaître l'autre (R2). */
+  if(typeof _renderSouvenirCard==='function')_renderSouvenirCard();
   _renderObsCard();
   _renderDayStateCard();
   _renderHomeHero();

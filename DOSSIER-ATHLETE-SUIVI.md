@@ -93,11 +93,11 @@
 |---|---|---|---|---|---|
 | **1** | **Registre Athlète** | la mémoire durable | ✅ branchée | `149` | `107` |
 | **2** | **Cerveau (faits mesurés)** | les faits injectés dans Milo | ✅ branchée | `8` | `6` |
-| **3** | **État du jour** | énergie / douleur ponctuelle | ✅ branchée | `15` | `8` |
+| **3** | **État du jour** | énergie / douleur ponctuelle | ✅ branchée | `18` | `8` |
 | **4** | **ADN sportif** | le portrait durable déclaré | ✅ branchée | `21` | `2` |
 | **5** | **Observations intelligentes** | Milo propose → la personne valide | ✅ branchée | `15` | `34` |
 | **6** | **Le Gardien** | adapter, pas interdire | ✅ branchée | `34` | `11` |
-| **7** | **Mémoire vivante** | relier les événements dans le temps | 🟠 socle seul | `23` | `0` |
+| **7** | **Mémoire vivante** | relier les événements dans le temps | ✅ branchée | `24` | `8` |
 | **8** | **Synthèse** | prendre du recul sur son histoire | 🟠 socle seul | `1` | `0` |
 
 **Comment lire ce tableau — et surtout ce qu'il NE dit PAS :**

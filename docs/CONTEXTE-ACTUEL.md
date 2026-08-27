@@ -6,7 +6,17 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1038`.
+- **Version en ligne (live) :** `ft-v1039`.
+- 🕰️⭐⭐ **BRIQUE 7 « TON HISTOIRE SPORTIVE » — SA PREMIÈRE PORTE** (ft-v1039). Michel :
+  *« ah bah oui c'est super important »*. ⛔⛔ État mesuré avant : **socle seul, porte 0** —
+  `dayStateLog` existait depuis des mois, **rien ne le relisait**.
+  ⚠️⚠️ **Le déclencheur de la fiche était injouable** : l'anniversaire (*« il y a un an »*) ne
+  peut pas se produire, l'app est née le **17/06/2026**. → **contextuel** en premier : une douleur
+  déjà notée revient. ⭐ Le **Souvenir** est l'objet métier de la fiche, et **la RAISON est
+  obligatoire** : sans elle, il ne remonte pas. ⛔ Il **décrit, ne prédit jamais** (P14) et dit sa
+  limite (*« parmi ceux que tu avais notés »*). ⛔ **Trois silences** : rien aujourd'hui · première
+  fois · moins de 14 jours. ⭐⭐ **La brique passe de 🟠 socle seul à ✅ branchée** — première
+  brique à changer d'état depuis le 29/07. ⏭️ **Reste la 8 (Synthèse) sans porte.**
 - 💪⭐⭐ **LE RIR — « il t'en restait combien ? » — LIVRÉ** (ft-v1038, demande de Michel).
   ⛔⛔ **R8 dans sa forme la plus pure** : `DISC_CADRE.echec` dit la règle par discipline
   (*« JAMAIS à l'échec »*, *« 1 à 3 en réserve »*) et Milo la reçoit — mais **RIR/RPE n'existaient

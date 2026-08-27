@@ -3863,6 +3863,9 @@ const APP_GUIDE_SLIDES=[
   /* ⛔ SANS IMAGE : une capture montrerait une charge et un exercice précis, que le lecteur
      n'a pas — et la diapo se lirait comme une recommandation d'intensité. */
   {icon:'💪', t:'À quel point tu as forcé', cap:'Après une série, la barre de repos te demande <b>« il t\'en restait combien ? »</b>. Un tap — <b>échec, 1, 2, 3, 4+</b> — et c\'est <b>facultatif</b>. Tu le <b>revois la fois d\'après</b> pour savoir s\'il faut monter, et <b>Milo</b> peut enfin vérifier le cadre de ta discipline au lieu de le supposer.'},
+  /* ⛔ SANS IMAGE : la carte n'apparaît que quand il y a un souvenir à relier — une capture
+     montrerait un cas qui n'est pas celui du lecteur, et laisserait croire qu'elle est permanente. */
+  {icon:'🕰️', t:'Il se souvient de ce que tu as vécu', cap:'Chaque check-in que tu remplis reste. Quand tu notes une douleur que tu avais <b>déjà eue il y a longtemps</b>, l\'Accueil te rappelle <b>quand</b> et <b>combien de temps</b> elle avait duré. Il <b>décrit</b> ce que tu avais noté — il ne prédit rien.'},
   {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
 let _agIdx=0,_agSwipeInit=false;

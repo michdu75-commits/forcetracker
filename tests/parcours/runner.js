@@ -15567,6 +15567,110 @@ console.log('\n-- CXLII. Le RIR : il t\'en restait combien ? (ft-v1038) --');
   }
 }
 
+/* == BLOC CXLIII - BRIQUE 7 : LE PREMIER SOUVENIR (ft-v1039) ==
+   Michel : « la brique 7, ah bah oui c'est super important ».
+   ⛔⛔ ETAT MESURE AVANT : `socle seul, porte 0`. `S.dayStateLog` existait depuis des mois — son
+   commentaire dans state.js dit litteralement « brique 7 » — et RIEN ne le relisait.
+   ⚠️⚠️ LE DECLENCHEUR EVIDENT ETAIT INJOUABLE : la fiche de conception (19/07) met
+   l'ANNIVERSAIRE en premier (« il y a un an aujourd'hui »), or l'app est nee le 17/06/2026 —
+   personne n'a un an d'historique, ca ne se declencherait JAMAIS. *Un comportement qui ne peut
+   pas s'observer n'est pas construit* (R3). D'ou le CONTEXTUEL en premier.
+   ⛔ LES GARDE-FOUS DE LA FICHE : un souvenir DECRIT et ne prescrit jamais (P14, « miroir jamais
+   prophete ») · un souvenir SANS RAISON ne remonte pas · « moins mais mieux » · et il ne
+   DEPLACE aucun message (carte propre, sous celle de Milo). */
+console.log('\n-- CXLIII. Brique 7 : le premier souvenir (ft-v1039) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const G=await pg.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    const j=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
+    const pose=z=>{ S.dayState={date:j(0),energy:null,mood:null,pains:z.map(x=>({zone:x,side:null})),note:''}; };
+    /* ⛔ TROIS SILENCES — ce sont eux qui empechent la brique de devenir un flux d'anecdotes. */
+    S.dayStateLog=[{date:j(40),energy:2,mood:2,pains:[{zone:'genou'}],note:''}];
+    S.dayState=null;          o.sansDouleur=_souvenirDuJour();
+    pose(['epaule']);         o.premiereFois=_souvenirDuJour();
+    S.dayStateLog=[{date:j(2),energy:2,mood:2,pains:[{zone:'genou'}],note:''}];
+    pose(['genou']);          o.tropRecent=_souvenirDuJour();
+    /* ⭐ LE SOUVENIR LUI-MEME, avec l'objet metier complet de la fiche. */
+    S.dayStateLog=[{date:j(40),energy:2,mood:2,pains:[{zone:'genou'}],note:''}];
+    pose(['genou']);          const s=_souvenirDuJour();
+    o.s=s&&{type:s.type,date:s.date,resume:s.resume,lien:s.lien,raison:s.raison};
+    /* ⭐ LA DUREE SE CALCULE, et elle dit sa propre limite (« parmi ceux que tu avais notes »). */
+    S.dayStateLog=[j(63),j(62),j(61),j(60)].map(d=>({date:d,energy:2,mood:2,pains:[{zone:'lombaires'}],note:''}));
+    pose(['lombaires']);      const s2=_souvenirDuJour();
+    o.duree=s2&&s2.resume;
+    o.ditSaLimite=!!s2 && /parmi ceux que tu avais notés/.test(s2.resume);
+    /* ⛔⛔ AUCUNE PRESCRIPTION NI PREDICTION (P14) — c'est le garde-fou le plus important, parce
+       qu'on parle d'une DOULEUR. */
+    const txt=(s2?s2.resume+' '+s2.raison+' '+s2.lien:'');
+    o.pasDePrediction=!!s2 && !/devrait|va passer|ça ira|reprends|force|repose-toi|arrête|consulte/i.test(txt);
+    /* ⭐ LA PORTE : la carte s'affiche, et ne DEPLACE pas celle de Milo. */
+    persist(); renderHome(); await new Promise(r=>setTimeout(r,300));
+    const z=document.getElementById('home-souvenir');
+    o.carte=(z.innerText||'').replace(/\s+/g,' ').trim();
+    o.miloIntact=!!document.getElementById('home-milo');
+    o.raisonAffichee=/il y a/i.test(o.carte);
+    /* ⛔ REFERMABLE : un souvenir qu'on ne peut pas faire taire devient une notification (R24). */
+    _dismissSouvenir('contextuel|'+s2.date); await new Promise(r=>setTimeout(r,150));
+    o.apresFermeture=(document.getElementById('home-souvenir').innerText||'').trim();
+    /* ⛔ ET LA CARTE N'EXISTE PAS quand il n'y a rien : elle ne prend pas un pixel. */
+    try{localStorage.removeItem('ft4_souv');}catch(e){}
+    S.dayState=null; S.dayStateLog=[]; persist(); renderHome();
+    await new Promise(r=>setTimeout(r,200));
+    o.videSansSouvenir=(document.getElementById('home-souvenir').innerHTML||'').trim();
+    const f=document.querySelector('.nav-fab,#nb-log,.fab');const r=f.getBoundingClientRect();
+    o.fab=[Math.round(r.x),Math.round(r.y),Math.round(r.width),Math.round(r.height)];
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  await cx.close();
+
+  if(G.err)t('CXLIII n\'a pas pu tourner',false,G.err);
+  else{
+    /* ⛔⛔ LES TROIS SILENCES D'ABORD : c'est ce qui distingue une mémoire d'un bavardage. */
+    t('⛔⛔ aucune douleur aujourd\'hui → aucun souvenir (rien à relier)',
+      G.sansDouleur===null, JSON.stringify(G.sansDouleur));
+    t('⛔ une douleur JAMAIS eue avant → aucun souvenir',
+      G.premiereFois===null, JSON.stringify(G.premiereFois));
+    t('⛔ une douleur d\'avant-hier n\'est pas un SOUVENIR (on s\'en souvient très bien)',
+      G.tropRecent===null, JSON.stringify(G.tropRecent));
+    /* ⭐⭐ L'OBJET MÉTIER DE LA FICHE, en entier — type, date, résumé, lien, raison. */
+    t('⭐⭐ le souvenir porte les 5 champs de la fiche de conception',
+      !!G.s && G.s.type==='contextuel' && !!G.s.date && !!G.s.resume && !!G.s.lien && !!G.s.raison,
+      JSON.stringify(G.s));
+    /* ⛔⛔ SANS RAISON, PAS DE SOUVENIR — le garde-fou « moins mais mieux » de la fiche. */
+    t('⛔⛔ la RAISON existe et dit pourquoi MAINTENANT',
+      !!G.s && /il y a/i.test(G.s.raison), G.s&&G.s.raison);
+    t('⭐ la durée de l\'épisode se calcule, et le texte dit sa propre limite',
+      G.ditSaLimite===true, G.duree);
+    /* ⛔⛔ LE GARDE-FOU QUI COMPTE LE PLUS : on parle d'une DOULEUR. On décrit, on ne prédit
+       pas, et on ne conseille pas (Constitution P14/P22). */
+    t('⛔⛔ le souvenir DÉCRIT — aucune prédiction, aucun conseil (P14)',
+      G.pasDePrediction===true, G.duree);
+    /* ⭐ LA PORTE : c'est ce qui manquait à la brique (socle seul, porte 0). */
+    t('⭐⭐ LA PORTE : la carte « Ton histoire sportive » s\'affiche',
+      /TON HISTOIRE SPORTIVE/i.test(G.carte) && G.raisonAffichee===true, G.carte.slice(0,110));
+    /* ⛔ Elle ne DÉPLACE rien : la carte de Milo est toujours là, à sa place. */
+    t('⛔ … et elle ne déplace pas la carte de Milo',
+      G.miloIntact===true, 'carte Milo présente = '+G.miloIntact);
+    t('⛔ refermable pour la journée (sinon c\'est une notification)',
+      G.apresFermeture==='', JSON.stringify(G.apresFermeture));
+    /* ⛔ Et surtout : elle n'existe PAS quand il n'y a rien à dire. */
+    t('⛔⛔ aucun souvenir → la carte ne prend pas un pixel',
+      G.videSansSouvenir==='', JSON.stringify(G.videSansSouvenir));
+    t('🔴 règle d\'or #9 : le bouton central « + » est à sa place',
+      G.fab[2]>0 && G.fab[3]>0, JSON.stringify(G.fab));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
