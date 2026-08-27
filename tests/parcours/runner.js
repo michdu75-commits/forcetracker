@@ -15157,6 +15157,8 @@ console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v10
       !!F.fab && F.fab[1]>0, JSON.stringify(F.fab));
   }
   await cx.close();
+}
+
 /* == BLOC CXXXVIII - LA BARRE « SEANCE » NE LAISSE PLUS LIRE CE QUI DEFILE DESSOUS (ft-v1032) ==
    /!\ CXXXVII est volontairement SAUTE : session-A a une ft-v1033 en vol et prendra
    vraisemblablement ce numero. C'est la 3e collision de bloc de la semaine — on paie deux
