@@ -3077,7 +3077,11 @@ function updateProteinBar() {
 }
 
 // ─── ONBOARDING ──────────────────────────────────────────────
-let _obStep=1,_obGender='H',_obGoal='muscle',_obLevel='',_obDataRestored=false;
+/* ⛔ `_obGender` PART VIDE (ft-v1040) : une valeur par défaut rend la question invisible —
+   on ne peut plus distinguer une réponse d'un silence. L'étape 3 bloque tant qu'elle n'est
+   pas remplie, et les deux écritures vers `S.gender` sont gardées : une chaîne vide
+   n'atteint JAMAIS l'état, sinon l'asymétrie de `state.js` deviendrait atteignable. */
+let _obStep=1,_obGender='',_obGoal='muscle',_obLevel='',_obDataRestored=false;
 let _obPlace='',_obTime='',_obFreq=''; // écran « Ton entraînement » (ft-v604) → écrit dans S.coachQuiz.answers
 const _OB_GOALS={muscle:'ob-gm',perte:'ob-gp',recomp:'ob-gr',force:'ob-gf',equilibre:'ob-ge',endurance:'ob-gen'};
 const _OB_LEVELS={debutant:'ob-lv-d',intermediaire:'ob-lv-i',confirme:'ob-lv-c'};
@@ -3154,6 +3158,16 @@ function obNext(step){
       S.name=name;
       const cta=document.getElementById('ob-cta-title');
       if(cta)cta.textContent='C\'est parti, '+name+' !';
+    }
+    /* ⛔⛔ BLOQUANT (décision de Michel) : on ne passe pas sans avoir répondu. Sans ça,
+       « ♂ Homme » pré-coché faisait passer un silence pour un choix — et une femme qui ne
+       tape rien était calculée en homme, à 257 kcal/jour près. */
+    if(!_obGender){
+      const hint=document.getElementById('ob-gender-hint');
+      if(hint)hint.style.display='';
+      const row=document.querySelector('#ob-3 .ob-gbrow');
+      if(row&&row.scrollIntoView)try{row.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}
+      return;                                   // ⛔ on NE change pas d'étape
     }
     S.gender=_obGender;
   }else if(_obStep===2){
@@ -3237,6 +3251,7 @@ function _obApplyTraining(){
 
 function obSetGender(g){
   _obGender=g;
+  const hint=document.getElementById('ob-gender-hint'); if(hint)hint.style.display='none';
   document.getElementById('ob-gt-h').classList.toggle('ob-sel',g==='H');
   document.getElementById('ob-gt-f').classList.toggle('ob-sel',g==='F');
 }
@@ -3327,7 +3342,10 @@ async function obCheckEmailAndFinish(){
 function finishOnboarding(){
   const btn=document.getElementById('ob-start-btn');
   if(btn){btn.style.display='';btn.disabled=false;btn.textContent='⚡ COMMENCER';}
-  if(!_obDataRestored){_goalSet(_obGoal,'inscription');S.gender=_obGender;}
+  /* ⛔ `if(_obGender)` : une chaîne vide n'atteint jamais `S.gender` (ft-v1040). L'étape 3
+     bloque déjà, mais un futur chemin qui la contournerait ne doit pas poser une valeur que
+     `state.js` interprète différemment selon l'endroit. */
+  if(!_obDataRestored){_goalSet(_obGoal,'inscription');if(_obGender)S.gender=_obGender;}
   const emailFinal=(document.getElementById('ob-email-final')||{}).value||'';
   if(emailFinal&&!S.email){S.email=emailFinal.trim();}
   else if(emailFinal){S.email=emailFinal.trim();}

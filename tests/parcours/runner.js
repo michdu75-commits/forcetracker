@@ -15066,6 +15066,16 @@ console.log('\n-- CXXXVI. Le repos est un maximum, pas un compte a rebours (ft-v
 console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v1034) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  /* ⛔⛔ HORLOGE FIGÉE À 14 h (ft-v1040) — ET C'EST UN VRAI ROUGE QUI L'A IMPOSÉ, pas une
+     précaution : lancé à 20 h 15 heure de Paris, ce bloc rendait « lignes de reste = 0 » et
+     3 témoins rougissaient. La cause est MA propre bascule du soir (ft-v1029) : après 20 h,
+     « ce qu'il te reste » se tait quand rien de léger ne couvre le manque.
+     ⚠️ J'avais pourtant épinglé l'heure en ft-v1029 — mais seulement sur les appels de CALCUL
+     (`_ideesPourLeReste(r, 14)`). Ce bloc-ci passe par `renderNutrition()`, donc par le RENDU,
+     qui lit l'horloge réelle. *Épingler une moitié du chemin ne suffit pas : c'est le contexte
+     entier qu'il faut figer.* Famille « fuseaux horaires » de BUGS.md, appliquée à nos tests.
+     ⛔ Ce bloc mesure un ALIGNEMENT, pas une heure : le figer ne lui retire rien. */
+  await cx.clock.setFixedTime(new Date('2026-08-27T14:00:00+02:00'));
   const pg=await cx.newPage();
   await pg.addInitScript(seedScript({}));
   await pg.goto('http://localhost:'+PORT+'/index.html');
@@ -15669,6 +15679,77 @@ console.log('\n-- CXLIII. Brique 7 : le premier souvenir (ft-v1039) --');
     t('🔴 règle d\'or #9 : le bouton central « + » est à sa place',
       G.fab[2]>0 && G.fab[3]>0, JSON.stringify(G.fab));
   }
+}
+
+/* == BLOC CXLIV - LE SEXE N'EST PLUS PRE-COCHE A L'INSCRIPTION (ft-v1040) ==
+   Michel : « pas de sexe pré coché mais bloquant pour l'inscription sinon c'est n'importe quoi ».
+   ⛔⛔ LE DEFAUT : le bouton « ♂ Homme » portait `ob-sel` d'avance et `_obGender` valait 'H'.
+   *L'app ne pouvait pas distinguer « il a choisi homme » de « elle n'a pas regarde »* — les deux
+   produisaient exactement la meme donnee.
+   ⭐ LE COUT EST MESURE, pas suppose : Mifflin ne differe que par une constante (+5 homme /
+   −161 femme), soit 166 kcal de metabolisme et ~257 kcal/jour a activite 1,55. Et le sexe pilote
+   aussi la figurine, les conditions de sante, la morphologie, la formule de masse grasse, le ton
+   de Milo et le cycle. C'est R29 : *l'erreur touche la personne, donc on DEMANDE*.
+   ⚠️ NUANCE ECRITE PLUTOT QUE TUE : des qu'il existe un bilan corporel, l'app passe a
+   Katch-McArdle, qui ignore le sexe. L'erreur ne mordait que sans mesure de composition.
+   ⛔ ET LE TEMOIN LE PLUS IMPORTANT N'EST PAS LE BLOCAGE, C'EST QUE `S.gender` NE DEVIENNE
+   JAMAIS VIDE : `state.js` lit le sexe a deux endroits avec des defauts OPPOSES (`==='H'?…` pour
+   le metabolisme, `==='F'?…` pour le plancher calorique). Tant que la valeur vaut H ou F, les
+   deux s'accordent ; une chaine vide les ferait diverger en silence. */
+console.log('\n-- CXLIV. Le sexe n\'est plus pré-coché à l\'inscription (ft-v1040) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  /* ⛔ AUCUN seed : on veut le VRAI parcours d'inscription, pas un profil deja pose. */
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async()=>{
+   try{
+    const o={}, dort=ms=>new Promise(x=>setTimeout(x,ms));
+    obGoTo(3); await dort(250);
+    const h=document.getElementById('ob-gt-h'), f=document.getElementById('ob-gt-f'),
+          hint=document.getElementById('ob-gender-hint');
+    o.lus = !!(h&&f&&hint);
+    o.aucunPreCoche = !h.classList.contains('ob-sel') && !f.classList.contains('ob-sel');
+    o.departVide    = _obGender==='';
+    /* ⛔ L'indice ne s'affiche pas D'EMBLEE : une consigne posee avant toute tentative se lit
+       comme un reproche par avance (R24 — informer sans bloquer le regard). */
+    o.indiceCacheAuDepart = getComputedStyle(hint).display==='none';
+    // ① passer sans repondre
+    obNext(4); await dort(200);
+    o.bloque       = (_obStep===3);
+    o.indiceMontre = getComputedStyle(hint).display!=='none';
+    o.genrePasVide = S.gender;                    // ⛔ jamais '' — le garde tient
+    // ② repondre
+    obSetGender('F');
+    o.indiceEfface = getComputedStyle(hint).display==='none';
+    o.uneSeuleCochee = f.classList.contains('ob-sel') && !h.classList.contains('ob-sel');
+    obNext(4); await dort(200);
+    o.passe = (_obStep===4);
+    o.enregistre = S.gender;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+  if(F.err) t('CXLIV n\'a pas pu tourner', false, F.err);
+  else{
+    t('⛔ le témoin a bien VU l\'étape (sinon il serait vert en ne mesurant rien)',
+      F.lus===true, JSON.stringify(F));
+    t('⭐⭐ AUCUN des deux sexes n\'est pré-coché — un silence ne peut plus passer pour un choix',
+      F.aucunPreCoche===true && F.departVide===true,
+      'pré-coché='+(!F.aucunPreCoche)+' · _obGender au départ = '+JSON.stringify(F.departVide));
+    t('⭐⭐ on ne PASSE PAS sans avoir répondu (décision de Michel)',
+      F.bloque===true, 'étape après tentative = '+(F.bloque?3:'passée'));
+    t('⛔⛔ … et `S.gender` n\'est JAMAIS vide — sinon `state.js` diverge en silence',
+      F.genrePasVide==='H'||F.genrePasVide==='F', 'S.gender = '+JSON.stringify(F.genrePasVide));
+    t('⛔ l\'indice n\'apparaît QU\'APRÈS une tentative, pas d\'emblée (pas de reproche par avance)',
+      F.indiceCacheAuDepart===true && F.indiceMontre===true,
+      'au départ caché='+F.indiceCacheAuDepart+' · après tentative visible='+F.indiceMontre);
+    t('⭐ répondre efface l\'indice et ne coche qu\'un seul bouton',
+      F.indiceEfface===true && F.uneSeuleCochee===true, '');
+    t('⭐ … et l\'étape passe alors, avec la BONNE valeur enregistrée',
+      F.passe===true && F.enregistre==='F', 'étape='+(F.passe?4:3)+' · S.gender='+JSON.stringify(F.enregistre));
+  }
+  await cx.close();
 }
 
 await b.close(); srv.close();
