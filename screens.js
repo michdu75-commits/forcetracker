@@ -238,6 +238,7 @@ const _HELP_DATA={
   progress:{
     title:'📈 Progrès',
     tips:[
+      {i:'🔭',t:'<b>Ce que ton histoire montre</b> (en haut de l\'onglet) : des <b>constantes</b> tirées de tout ton historique — rythme réel, exercice le plus fidèle, région dominante. Ce sont des <b>faits</b>, pas des conseils : à toi d\'en tirer ce que tu veux. Il faut au moins <b>8 séances sur 21 jours</b> — en dessous, elle le dit.'},
       {i:'💪',t:'Le graphique affiche ton 1RM estimé (Brzycki) par exercice — sans avoir besoin de tester à l\'échec. Les boutons 3 mois / 6 mois / 1 an / Tout choisissent la période. Et tape un point de la courbe : tu vois la date + la charge, puis « Voir cette séance » t\'ouvre directement le détail de ce jour-là.'},
       {i:'🎯',t:'« Objectif de force » (sous le graphe d\'un exercice) : fixe le 1RM que tu vises (ex. Squat → 130 kg). Une barre de progression te montre où tu en es (« 87 % · encore 17 kg ») et une ligne verte repère apparaît sur ton graphe. C\'est TON objectif, tu le changes ou le retires quand tu veux (laisse vide + ✓).'},
       {i:'⚖️',t:'Log ton poids régulièrement (idéalement le matin à jeun) pour une courbe fiable. Tap sur une entrée pour la corriger — et dans la fenêtre de pesée, les flèches ‹ › (ou un glissement gauche/droite) passent d\'une pesée à l\'autre sans rouvrir le graphique.'},

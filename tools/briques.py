@@ -88,10 +88,13 @@ BRIQUES = [
     dict(n='7', nom='Mémoire vivante', quoi='relier les événements dans le temps',
          signal=r'S\.dayStateLog|calcRecoveryDetail\(refTs\)|recupHistorique',
          porte=r'_souvenirDuJour|_renderSouvenirCard|home-souvenir'),
-    # ⛔ Brique 8 : `startPt001Test` est un outil ADMIN (« Réservé à l'admin »), pas une
-    #    porte. Le signal reste, la porte est délibérément introuvable — c'est la vérité.
+    # ⚠️ SIGNAL ET PORTE CORRIGÉS LE 27/08 (ft-v1041) : `startPt001Test` est un outil ADMIN,
+    #    il n'a jamais été le socle de cette brique — c'était un motif faute de mieux, à l'époque
+    #    où elle n'existait pas. Le vrai socle est `_synthConstantes` (les constantes tirées de
+    #    l'historique), et la porte est la section « Ce que ton histoire montre » de Progrès.
+    #    *On vérifie les noms, on ne les devine pas* — 2ᵉ correction du même genre aujourd'hui.
     dict(n='8', nom='Synthèse', quoi='prendre du recul sur son histoire',
-         signal=r'startPt001Test', porte=r'synthese|_syntheseHistoire'),
+         signal=r'_synthConstantes', porte=r'_renderSynthese|prog-synth'),
 ]
 
 def etat(b):

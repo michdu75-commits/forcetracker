@@ -6,7 +6,28 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1039`.
+- **Version en ligne (live) :** `ft-v1041`.
+- 🔭⭐⭐ **BRIQUE 8 « SYNTHÈSE » — SA PREMIÈRE PORTE, ET LES 8 BRIQUES SONT BRANCHÉES** (ft-v1041).
+  Michel : *« la brique 8 alors »*. ⛔⛔ **État mesuré avant : `signal 1, porte 0`, et le signal
+  était un LEURRE** — `briques.py` cherchait `startPt001Test`, un **outil admin**. La brique
+  n'avait pas « un socle sans porte », elle n'avait **rien**. ⚠️ 2ᵉ motif supposé corrigé en deux
+  jours : *on vérifie les noms, on ne les devine pas.*
+  ⭐⭐ **La frontière avec la 7 est écrite dans la Vision** : la 7 dit *« que s'est-il passé ? »*,
+  la 8 dit ***« qu'est-ce que cette histoire m'apprend ? »***. Tournures autorisées : *« une
+  constante apparaît »* — ⛔⛔ **jamais *« tu devrais »*** (P14, témoin dédié).
+  👉 **Trois constantes en local**, en tête de Progrès : rythme réel · l'exercice le plus fidèle ·
+  la région **dominante** (via `_calSessMix`, R13/R2 — rien de neuf n'est calculé).
+  ⛔ **Chaque ligne nomme sa fenêtre** (défaut de ft-v1027) · **aucune comparaison à une norme** ·
+  sous **8 séances / 21 jours** elle **dit qu'elle ne sait pas** (leçon ft-v1021) · aucune séance
+  → la section n'existe pas.
+  ⚠️⚠️ **Deux noms supposés m'ont coûté une constante chacun** : `m.region` au lieu de `m.reg`
+  (silencieux), et *« le tronc revient 0 fois »* — qui se lit *« tu ne le travailles jamais »*,
+  et c'est **faux** : `_calSessMix` rend la **dominante**. *Une mesure juste peut produire une
+  phrase fausse* (ft-v1035, le lendemain).
+  ⚠️ **Un témoin existant a rougi 3 fois, et la cause était la MONTRE** : le bloc CXXXVII lit
+  l'**écran rendu**, donc l'horloge réelle — à 20:12 Paris, *« ce qu'il te reste »* se tait
+  exprès (ft-v1029). Horloge du navigateur figée à 14 h, aucune exigence affaiblie.
+  ⏭️ **Le socle des 8 briques est complet ; ce qui reste est ailleurs** (voir plus bas).
 - 🕰️⭐⭐ **BRIQUE 7 « TON HISTOIRE SPORTIVE » — SA PREMIÈRE PORTE** (ft-v1039). Michel :
   *« ah bah oui c'est super important »*. ⛔⛔ État mesuré avant : **socle seul, porte 0** —
   `dayStateLog` existait depuis des mois, **rien ne le relisait**.
@@ -16,7 +37,9 @@
   obligatoire** : sans elle, il ne remonte pas. ⛔ Il **décrit, ne prédit jamais** (P14) et dit sa
   limite (*« parmi ceux que tu avais notés »*). ⛔ **Trois silences** : rien aujourd'hui · première
   fois · moins de 14 jours. ⭐⭐ **La brique passe de 🟠 socle seul à ✅ branchée** — première
-  brique à changer d'état depuis le 29/07. ⏭️ **Reste la 8 (Synthèse) sans porte.**
+  brique à changer d'état depuis le 29/07. ⏭️ ~~Reste la 8 (Synthèse) sans porte.~~ **Faite le
+  jour même, ft-v1041 ci-dessus** *(ligne barrée plutôt que réécrite : elle datait la veille du
+  jour où elle a cessé d'être vraie — R23)*.
 - 💪⭐⭐ **LE RIR — « il t'en restait combien ? » — LIVRÉ** (ft-v1038, demande de Michel).
   ⛔⛔ **R8 dans sa forme la plus pure** : `DISC_CADRE.echec` dit la règle par discipline
   (*« JAMAIS à l'échec »*, *« 1 à 3 en réserve »*) et Milo la reçoit — mais **RIR/RPE n'existaient

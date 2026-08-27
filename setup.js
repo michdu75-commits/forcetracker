@@ -18,7 +18,140 @@ function _renderProgChips(chips){
   +`<button onclick="openProgExoEditor()" title="Personnaliser" style="flex-shrink:0;width:36px;border-radius:14px;border:none;background:var(--bg3);color:var(--t2);cursor:pointer;touch-action:manipulation;font-size:14px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);-webkit-tap-highlight-color:transparent;">✏️</button>`;
 }
 
+/* 🔭 BRIQUE 8 — « SYNTHÈSE » : LES CONSTANTES (27/08/2026, ft-v1041)
+   Michel : *« la brique 8 alors »*.
+
+   ⭐⭐ LA FRONTIÈRE AVEC LA BRIQUE 7 EST ÉCRITE DANS LA VISION, ET ELLE DÉCIDE DE TOUT :
+     · la **7** répond à *« que s'est-il passé ? »* — relier les événements (le souvenir, ft-v1039) ;
+     · la **8** répond à ***« qu'est-ce que cette histoire m'apprend ? »*** — prendre du recul.
+   Tournures autorisées par la Vision : *« ton historique semble montrer que… »*, *« une constante
+   apparaît… »*. ⛔⛔ **JAMAIS « tu devrais »** — sinon on trahit la Vision, et la brique devient
+   un coach qui prescrit au lieu d'un miroir (P14).
+
+   ⛔ UNE CONSTANTE EST UN FAIT COMPTÉ, PAS UN JUGEMENT. « Le haut du corps revient 3 fois plus
+   souvent que le bas » se vérifie ; « tu négliges tes jambes » est un reproche, et personne n'a
+   demandé un avis. La personne tire sa propre conclusion — c'est tout l'objet de la brique.
+
+   ⛔ CHAQUE LIGNE NOMME SA FENÊTRE. Sans ça, deux constantes calculées sur des périodes
+   différentes se contredisent à l'écran sans que rien ne le dise — exactement le défaut de
+   ft-v1027, qu'on ne refait pas.
+
+   ⛔ ET SOUS LE SEUIL, ELLE DIT QU'ELLE NE SAIT PAS ENCORE — elle ne se tait pas : un cadre vide
+   se lit comme un chargement qui n'a pas abouti (leçon de ft-v1021). */
+const SYNTH_MIN_SEANCES = 8;    // en deçà, « une constante » n'a aucun sens : c'est du hasard
+const SYNTH_MIN_JOURS   = 21;   // …et il faut aussi de la DURÉE, pas 8 séances en une semaine
+
+/* ⛔ UN SEUL PROPRIÉTAIRE de « que montre ton historique ? » — la carte et un futur message de
+   Milo doivent lire la même chose, sinon ils se contrediront un jour (R2). */
+function _synthConstantes(refTs){
+  const out={pret:false, nSeances:0, nJours:0, lignes:[]};
+  try{
+    const auj=(typeof today==='function')?today(refTs):null;
+    const sess=(S.sessions||[]).filter(s=>s&&s.date&&(!auj||s.date<=auj));
+    out.nSeances=sess.length;
+    if(!sess.length) return out;
+    const dates=sess.map(s=>s.date).sort();
+    const jours=(a,b)=>Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5);
+    out.nJours=jours(dates[0], dates[dates.length-1])+1;
+    if(out.nSeances<SYNTH_MIN_SEANCES || out.nJours<SYNTH_MIN_JOURS) return out;
+    out.pret=true;
+    const sem=out.nJours/7;
+
+    /* ① LE RYTHME RÉEL — pas celui qu'on croit tenir. C'est un fait, sans cible : on ne compare
+       à AUCUNE norme (« il faudrait 3 fois par semaine » serait une prescription déguisée). */
+    const parSem=Math.round((out.nSeances/sem)*10)/10;
+    out.lignes.push({
+      cle:'rythme',
+      txt:'Tu t\'entraînes <b>'+String(parSem).replace('.',',')+' fois par semaine</b> en moyenne.',
+      fen:'sur '+out.nSeances+' séances étalées sur '+out.nJours+' jours'
+    });
+
+    /* ② CE QUI REVIENT LE PLUS — l'exercice le plus fidèle de son histoire. */
+    const cpt={};
+    sess.forEach(s=>{
+      const vus={};
+      (s.exs||s.exercises||[]).forEach(e=>{ const n=e&&e.name; if(n&&!vus[n]){vus[n]=1;cpt[n]=(cpt[n]||0)+1;} });
+    });
+    const top=Object.keys(cpt).sort((a,b)=>cpt[b]-cpt[a])[0];
+    /* ⛔ On ne sort la constante que si elle EN EST une : un exercice vu 2 fois sur 20 séances
+       n'est pas « ce qui revient le plus », c'est du bruit. */
+    if(top && cpt[top]>=3 && cpt[top]/out.nSeances>=0.3){
+      out.lignes.push({
+        cle:'fidele',
+        txt:'<b>'+top+'</b> revient dans <b>'+cpt[top]+' de tes '+out.nSeances+' séances</b>.',
+        fen:'sur tout ton historique'
+      });
+    }
+
+    /* ③ L'ÉQUILIBRE — réutilise `_calSessMix`, qui range déjà en haut/dos/bas/tronc via
+       `_mscScores` (R13/R2 : on ne recrée pas une 2ᵉ façon de classer un exercice). */
+    if(typeof _calSessMix==='function'){
+      const reg={haut:0,dos:0,bas:0,tronc:0}; let n=0;
+      /* ⚠️ LA CLÉ EST `reg`, PAS `region` — vérifié dans `_calSessMix` (elle rend `{reg, pc}`).
+         Mon 1er jet lisait `m.region` : la constante d'équilibre ne sortait JAMAIS, en silence.
+         *On vérifie les noms, on ne les devine pas* — 3ᵉ fois aujourd'hui. */
+      sess.forEach(s=>{ const m=_calSessMix(s); const r=m&&m.reg;
+        if(r&&reg[r]!==undefined){reg[r]++;n++;} });
+      if(n>=SYNTH_MIN_SEANCES){
+        const LBL={haut:'le haut du corps',dos:'le dos',bas:'le bas du corps',tronc:'le tronc'};
+        const cles=Object.keys(reg).sort((a,b)=>reg[b]-reg[a]);
+        const fort=cles[0], faible=cles[cles.length-1];
+        /* ⛔ ON NE SORT LA LIGNE QUE SI L'ÉCART EST RÉEL (au moins du simple au double) : sinon
+           on fabriquerait une « constante » à partir d'une différence d'une séance (R29 — les
+           seuils en marche d'escalier, famille §6 de BUGS.md). */
+        if(reg[fort]>=2*Math.max(1,reg[faible]) && reg[fort]>=3){
+          /* ⚠️⚠️ LE MOT « DOMINÉE » N'EST PAS DU STYLE, IL EST EXACT. `_calSessMix` rend la
+             région DOMINANTE d'une séance, pas la liste de ce qui a été travaillé. Ma 1ʳᵉ
+             version disait « le tronc revient 0 fois » — ce qui se lit *« tu ne travailles
+             jamais ton tronc »*, et c'est FAUX : une séance peut le solliciter sans qu'il
+             domine. *Une mesure juste peut produire une phrase fausse* (la leçon de ft-v1035).
+             ⛔ Et la 2ᵉ moitié ne sort QUE si la région apparaît au moins une fois : « domine
+             0 fois » n'apprend rien et invite à la mauvaise lecture. */
+          const faibles=cles.filter(k=>reg[k]>0 && k!==fort);
+          const bas=faibles.length?faibles[faibles.length-1]:null;
+          out.lignes.push({
+            cle:'equilibre',
+            txt:'Tes séances sont le plus souvent dominées par <b>'+LBL[fort]+'</b> — '
+                +reg[fort]+' sur '+n+'.'
+                +(bas?' '+LBL[bas].charAt(0).toUpperCase()+LBL[bas].slice(1)+' domine <b>'+reg[bas]+' fois</b>.':''),
+            fen:'d\'après la région dominante de chaque séance'
+          });
+        }
+      }
+    }
+  }catch(e){ /* jamais bloquant : une synthèse est un plus, pas une fonctionnalité */ }
+  return out;
+}
+
+/* ⛔ LE RENDU N'INVENTE RIEN : il met en forme ce que `_synthConstantes` a compté, et il AFFICHE
+   la fenêtre de chaque ligne. Aucun verbe de prescription ici — un témoin le vérifie. */
+function _renderSynthese(){
+  const el=document.getElementById('prog-synth'); if(!el) return;
+  const c=(typeof _synthConstantes==='function')?_synthConstantes():null;
+  if(!c || !c.nSeances){ el.innerHTML=''; return; }   // aucune séance : la section n'existe pas
+  const tete='<div class="synth-t">🔭 Ce que ton histoire montre</div>';
+  if(!c.pret || !c.lignes.length){
+    /* ⛔ ELLE DIT QU'ELLE NE SAIT PAS ENCORE, elle ne se tait pas : un cadre vide se lit comme un
+       chargement qui a échoué, et un silence laisserait croire qu'il n'y a rien à apprendre. */
+    el.innerHTML='<div class="synth-card">'+tete
+      +'<div class="synth-vide">Pas encore de quoi dégager une constante — il faut au moins '
+      +SYNTH_MIN_SEANCES+' séances sur '+SYNTH_MIN_JOURS+' jours. '
+      +'Tu en es à <b>'+c.nSeances+'</b> sur '+c.nJours+' jours.</div></div>';
+    return;
+  }
+  el.innerHTML='<div class="synth-card">'+tete
+    +c.lignes.map(l=>'<div class="synth-l"><div class="synth-txt">'+l.txt+'</div>'
+       +'<div class="synth-fen">'+l.fen+'</div></div>').join('')
+    /* ⭐ LA PHRASE QUI DIT CE QU'EST CETTE SECTION — et ce qu'elle n'est pas. Sans elle, une
+       liste de faits se lit comme un bulletin de notes. */
+    +'<div class="synth-pied">Des faits tirés de ton historique — à toi d\'en tirer ce que tu veux.</div>'
+    +'</div>';
+}
+
 function renderProgress(){
+  /* 🔭 ft-v1041 — la synthèse se peint en tête, séparément des sous-onglets : elle ne
+     partage aucun état avec eux, donc changer d'onglet ne la fait pas disparaître (R2). */
+  if(typeof _renderSynthese==='function')_renderSynthese();
   switchProgTab('exo',document.getElementById('ptab-exo'));
   const chips=document.getElementById('big4-chips');
   if(chips)_renderProgChips(chips);

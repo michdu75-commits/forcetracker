@@ -1719,3 +1719,15 @@ html.ob-done #onboarding{display:none;}
 .souv-why{font-size:11px;color:var(--t3);line-height:1.4;margin-top:4px;font-style:italic;}
 .souv-x{flex-shrink:0;background:none;border:none;color:var(--t3);padding:2px;cursor:pointer;
   -webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+
+/* 🔭 La SYNTHÈSE — brique 8 (ft-v1041). Sobre : ce sont des faits, pas une alerte.
+   ⛔ Aucune couleur de statut (ni vert « bien », ni rouge « mal ») : une constante n'est
+   ni un succès ni un échec, et la colorer serait déjà un jugement. */
+.synth-card{background:var(--bg2);border-radius:16px;padding:13px 14px;box-shadow:inset 0 0 0 1px var(--sep);}
+.synth-t{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin-bottom:9px;}
+.synth-l{padding:7px 0;border-top:1px solid var(--sep);}
+.synth-l:first-of-type{border-top:none;padding-top:0;}
+.synth-txt{font-size:13.5px;color:var(--t1);line-height:1.45;}
+.synth-fen{font-size:10.5px;color:var(--t3);margin-top:2px;font-style:italic;}
+.synth-vide{font-size:12.5px;color:var(--t2);line-height:1.5;}
+.synth-pied{font-size:11px;color:var(--t3);line-height:1.4;margin-top:9px;padding-top:8px;border-top:1px dashed var(--sep);}

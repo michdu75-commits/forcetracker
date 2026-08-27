@@ -3866,6 +3866,9 @@ const APP_GUIDE_SLIDES=[
   /* ⛔ SANS IMAGE : la carte n'apparaît que quand il y a un souvenir à relier — une capture
      montrerait un cas qui n'est pas celui du lecteur, et laisserait croire qu'elle est permanente. */
   {icon:'🕰️', t:'Il se souvient de ce que tu as vécu', cap:'Chaque check-in que tu remplis reste. Quand tu notes une douleur que tu avais <b>déjà eue il y a longtemps</b>, l\'Accueil te rappelle <b>quand</b> et <b>combien de temps</b> elle avait duré. Il <b>décrit</b> ce que tu avais noté — il ne prédit rien.'},
+  /* ⛔ SANS IMAGE : les constantes dépendent de l'historique du lecteur — une capture
+     montrerait des chiffres qui ne sont pas les siens. */
+  {icon:'🔭', t:'Ce que ton histoire t\'apprend', cap:'En haut de <b>Progrès</b>, l\'app dégage des <b>constantes</b> de tout ton historique : ton rythme réel, ce qui revient le plus, ce que tes séances travaillent le plus souvent. Des <b>faits</b>, jamais des conseils — <b>à toi d\'en tirer ce que tu veux</b>.'},
   {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
 let _agIdx=0,_agSwipeInit=false;

@@ -11,7 +11,8 @@ surveille — d'où ce script. Trois contrôles :
   4. AUCUNE entrée de docs/JOURNAL-ARCHIVE.md n'a disparu.
   5. AUCUN document .md ne s'est fait écraser (contrôle 4 généralisé aux 54 autres).
   6. AUCUNE ligne de TÂCHE n'est tombée dans le tableau des ÉTATS du journal de partage
-  7. AUCUNE ligne 🟡 ne survit à sa propre clôture 🟢 (une fusion par UNION la ressuscite).
+  7. AUCUNE ligne 🟡 ne survit à sa propre clôture 🟢, et AUCUNE ligne 🟢 n'est en double
+     (une fusion par UNION ressuscite ce qu'on a retiré ET dédouble ce qu'on a modifié).
   8. Le tableau des 8 BRIQUES de DOSSIER-ATHLETE-SUIVI.md est à jour (généré depuis le code).
      (bug arrivé DEUX fois — elle y est invisible, donc personne ne peut la voir manquer).
 
@@ -358,6 +359,37 @@ try:
             print("   - " + l[:110])
         print("   → retirer la 🟡 : la 🟢 fait foi. ⚠️ Cause connue : une fusion par UNION ne "
               "supprime jamais, donc elle RESSUSCITE une ligne que l'autre session avait close.")
+        sys.exit(1)
+
+    # ── 2ᵉ moitié, ajoutée le 27/08 après un cas RÉEL de la MÊME cause ──────────
+    # ⚠️ CE DÉFAUT EST ENCORE DE MOI, et il montre que la 1ʳᵉ moitié ne couvrait qu'un cas
+    # sur deux. Une fusion par union a recopié ma ligne 🟢 de ft-v1032 **DEUX FOIS** — les
+    # deux exemplaires ne différaient que par un mot (« votre ft-v1031 » / « ft-v1035 »),
+    # donc aucun outil ne les voyait comme identiques, et l'œil non plus : la ligne fait
+    # 1 400 caractères.
+    # 👉 *Une union ne ressuscite pas seulement ce qui a été retiré : elle DÉDOUBLE ce qui
+    # a été modifié.* Le contrôle 7 attrapait 🟡+🟢 ; il lui manquait 🟢+🟢.
+    # LA RÈGLE : deux lignes de tâche qui portent la MÊME session et la MÊME heure de départ
+    # sont la même tâche. Il ne peut y en avoir qu'une.
+    _vus = {}
+    _doublons = []
+    for l in _lg:
+        if not l.startswith("| 🟢 |"):
+            continue
+        k = _cle(l)
+        if not k:
+            continue
+        if k in _vus:
+            _doublons.append(l)
+        _vus[k] = l
+    if _doublons:
+        print("❌ docs/JOURNAL-DE-PARTAGE.md : "
+              f"{len(_doublons)} ligne(s) 🟢 en DOUBLE (même session, même heure de départ) :")
+        for l in _doublons:
+            print("   - " + l[:110])
+        print("   → n'en garder qu'UNE. ⚠️ Cause connue : une fusion par UNION dédouble une "
+              "ligne modifiée des deux côtés — les deux exemplaires diffèrent d'un mot, "
+              "donc rien ne les distingue à l'œil sur 1 400 caractères.")
         sys.exit(1)
 except FileNotFoundError:
     pass                                        # déjà signalé par le contrôle 6

@@ -613,6 +613,10 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 
 <!-- PROGRÈS -->
 <div class="screen" id="s-progress">
+  <!-- 🔭 ft-v1041 — brique 8 « Synthèse ». En TÊTE de Progrès : c'est l'onglet où on vient
+       déjà pour regarder en arrière. Vide tant qu'il n'y a aucune séance ; sous le seuil, elle
+       DIT qu'elle ne sait pas encore. Seul auteur : `_renderSynthese()`. -->
+  <div id="prog-synth" style="padding:0 0 12px;"></div>
   <div class="nu-tabs">
     <button class="nu-tab active" id="ptab-exo" onclick="switchProgTab('exo',this)">Exercices</button>
     <button class="nu-tab" id="ptab-poids" onclick="switchProgTab('poids',this)">Poids</button>

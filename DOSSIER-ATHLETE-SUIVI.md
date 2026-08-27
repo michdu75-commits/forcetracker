@@ -98,7 +98,7 @@
 | **5** | **Observations intelligentes** | Milo propose → la personne valide | ✅ branchée | `15` | `34` |
 | **6** | **Le Gardien** | adapter, pas interdire | ✅ branchée | `34` | `11` |
 | **7** | **Mémoire vivante** | relier les événements dans le temps | ✅ branchée | `24` | `8` |
-| **8** | **Synthèse** | prendre du recul sur son histoire | 🟠 socle seul | `1` | `0` |
+| **8** | **Synthèse** | prendre du recul sur son histoire | ✅ branchée | `3` | `4` |
 
 **Comment lire ce tableau — et surtout ce qu'il NE dit PAS :**
 

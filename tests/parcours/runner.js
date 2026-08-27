@@ -15067,12 +15067,40 @@ console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v10
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
+  /* ⚠️⚠️ ÉPINGLÉ À 14 H, ET C'EST UN CORRECTIF DE TÉMOIN (27/08, ft-v1041).
+     Ce bloc était VERT le matin et ROUGE le soir : mesuré à 20:12 Paris, ses deux témoins de
+     « ce qu'il te reste » tombaient à `lignes de reste = 0`. La cause n'est pas une régression,
+     c'est **ft-v1029** — depuis 20 h le bloc se tait EXPRÈS (garde-fou anti-TCA : à cette
+     heure-là, un manque n'est plus une information, c'est un reproche sur une journée qu'on
+     ne peut plus changer).
+     ⛔ Le témoin ③ était DÉJÀ épinglé (`_ideesPourLeReste(…, 14)`), mais ① et ② lisent
+     l'**écran rendu** : `renderNutrition()` appelle la chaîne sans heure, donc l'horloge
+     réelle. *Épingler l'appel direct ne suffit pas quand on mesure le RENDU.*
+     👉 On fige l'horloge du navigateur, et on n'affaiblit AUCUNE exigence — c'est la leçon que
+     ft-v1029 avait écrite pour ses propres témoins, retrouvée un cran plus loin : un témoin
+     dont le verdict dépend de l'heure à laquelle on le lance ne mesure pas le code, il mesure
+     la montre (famille « fuseaux horaires » de `BUGS.md`, appliquée à nous-mêmes). */
+  /* ⚠️⚠️ ET L'ÉPINGLAGE LUI-MÊME S'EST TROMPÉ D'ABORD — attrapé par le témoin sentinelle
+     ci-dessous, pas par la relecture. Mon 1er jet faisait `new Date().setHours(14)` **côté
+     Node**, dont le fuseau est **UTC** : la page voyait donc **16 h à Paris**. Tout le reste
+     passait quand même (16 h < 20 h), donc c'était un épinglage **faux et vert**.
+     👉 On calcule l'instant qui vaut 14 h **à Paris**, en lisant le décalage du jour au lieu
+     d'écrire « +2 » (qui serait faux six mois par an). *C'est la famille « fuseaux horaires »
+     de `BUGS.md` — dans le test qui existe justement pour s'en protéger.* */
+  { const _n=new Date();
+    const _off=Math.round((new Date(_n.toLocaleString('en-US',{timeZone:'Europe/Paris'}))
+                         - new Date(_n.toLocaleString('en-US',{timeZone:'UTC'})))/6e4);
+    const _d=new Date(_n); _d.setUTCHours(14,0,0,0);
+    await pg.clock.setFixedTime(new Date(_d.getTime()-_off*6e4)); }
   await pg.addInitScript(seedScript({}));
   await pg.goto('http://localhost:'+PORT+'/index.html');
   await pg.waitForTimeout(2200);
   const F=await pg.evaluate(()=>{
    try{
     const o={}, t=today();
+    /* ⛔ Et le bloc dit l'heure à laquelle il a mesuré : si l'épinglage sautait un jour, un
+       témoin dédié le nommerait, au lieu de laisser trois autres tomber sans explication. */
+    o.heureMesure=new Date().getHours();
     S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';S.nutritionPhase='charge';
     const J=n=>{const d=new Date(t+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
     const e=(d,meal,name,h,k,p,c,f)=>({date:d,meal:meal,name:name,kcal:k,prot:p,carbs:c,fat:f,
@@ -15133,6 +15161,11 @@ console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v10
   });
   if(F.err) t('CXXXVII n\'a pas pu tourner', false, F.err);
   else{
+    /* ⛔⛔ CE TÉMOIN EXISTE POUR QUE LE BLOC NE MENTE PLUS SUR LA RAISON DE SES ROUGES.
+       Sans lui, un décrochage de l'épinglage se manifesterait par trois autres témoins qui
+       tombent — et on chercherait la régression dans le CSS, pas dans la montre. */
+    t('⚠️ le bloc mesure bien à 14 h (« ce qu\'il te reste » se tait après 20 h — ft-v1029)',
+      F.heureMesure===14, 'heure mesurée = '+F.heureMesure+' h');
     t('⛔ le témoin a bien VU les deux cartes (sinon il serait vert en ne mesurant rien)',
       F.nbLignes>=4 && F.nbReste>=2, 'lignes de repas='+F.nbLignes+' · lignes de reste='+F.nbReste);
     t('⭐⭐ « ce que l\'app a appris » : les 5 lignes démarrent au MÊME x (avant : 116→134)',
@@ -15666,6 +15699,103 @@ console.log('\n-- CXLIII. Brique 7 : le premier souvenir (ft-v1039) --');
     /* ⛔ Et surtout : elle n'existe PAS quand il n'y a rien à dire. */
     t('⛔⛔ aucun souvenir → la carte ne prend pas un pixel',
       G.videSansSouvenir==='', JSON.stringify(G.videSansSouvenir));
+    t('🔴 règle d\'or #9 : le bouton central « + » est à sa place',
+      G.fab[2]>0 && G.fab[3]>0, JSON.stringify(G.fab));
+  }
+}
+
+/* == BLOC CXLIV - BRIQUE 8 : LES CONSTANTES (ft-v1041) ==
+   Michel : « la brique 8 alors ». Etat mesure avant : signal 1, porte 0 — et le seul signal
+   (`startPt001Test`) est un outil ADMIN. La brique n'avait RIEN.
+   ⭐⭐ LA FRONTIERE AVEC LA 7 EST ECRITE DANS LA VISION : la 7 repond a « que s'est-il passe ? »
+   (le souvenir, ft-v1039), la 8 a « QU'EST-CE QUE CETTE HISTOIRE M'APPREND ? ». Tournures
+   autorisees : « une constante apparait » — ⛔ JAMAIS « tu devrais ».
+   ⚠️⚠️ DEUX NOMS SUPPOSES M'ONT COUTE UN CAS CHACUN : `m.region` au lieu de `m.reg` (la
+   constante d'equilibre ne sortait JAMAIS, en silence), et un libelle qui disait « le tronc
+   revient 0 fois » — or `_calSessMix` rend la region DOMINANTE, donc ca se lit « tu ne
+   travailles jamais ton tronc », ce qui est FAUX. *Une mesure juste peut produire une phrase
+   fausse* (la lecon de ft-v1035, retrouvee le meme jour). */
+console.log('\n-- CXLIV. Brique 8 : les constantes (ft-v1041) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const G=await pg.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    const j=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
+    const mk=(n,exs)=>({date:j(n),exs:exs.map(x=>({name:x,sets:[{kg:60,reps:8,done:true,type:'N'}]})),volume:480});
+    /* ⛔ DEUX SILENCES D'ABORD : « une constante » sur 5 séances, c'est du hasard. */
+    S.sessions=[]; persist(); o.aucune=_synthConstantes();
+    S.sessions=[0,2,4,7,9].map(n=>mk(n,['Développé Couché'])); persist();
+    const sous=_synthConstantes(); o.sousSeuil={pret:sous.pret,n:sous.nSeances,lignes:sous.lignes.length};
+    /* ⛔ … MAIS SOUS LE SEUIL ELLE DIT QU'ELLE NE SAIT PAS : un cadre vide se lit comme un
+       chargement qui a échoué (leçon de ft-v1021). */
+    goScreen('s-progress');document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+    document.getElementById('s-progress').classList.add('active'); renderProgress();
+    await new Promise(r=>setTimeout(r,300));
+    o.txtSousSeuil=(document.getElementById('prog-synth').innerText||'').replace(/\s+/g,' ').trim();
+    /* ⭐ L'HISTOIRE COMPLÈTE : 14 séances sur ~31 jours, haut du corps dominant. */
+    const S3=[];
+    for(let i=0;i<11;i++) S3.push(mk(i*3, ['Développé Couché','Élévations Latérales (Lateral Raise)']));
+    for(let i=0;i<3;i++)  S3.push(mk(i*3+1, ['Squat à la Barre','Presse à Cuisses']));
+    S.sessions=S3; persist();
+    const c=_synthConstantes();
+    o.pret=c.pret; o.cles=c.lignes.map(l=>l.cle);
+    o.chaqueLigneAsaFenetre=c.lignes.every(l=>l.fen&&l.fen.length>5);
+    o.txtEquilibre=(c.lignes.find(l=>l.cle==='equilibre')||{}).txt||'';
+    /* ⛔⛔ AUCUN VERBE DE PRESCRIPTION — c'est la règle de la Vision, et c'est ce qui
+       distingue la brique 8 d'un coach. */
+    const tout=c.lignes.map(l=>l.txt+' '+l.fen).join(' ');
+    o.pasDePrescription=!/tu devrais|il faudrait|essaie de|augmente|réduis|pense à|il faut que|tu dois/i.test(tout);
+    /* ⛔⛔ ET AUCUNE PHRASE QUI DIRAIT « tu ne travailles jamais X » : `_calSessMix` rend la
+       région DOMINANTE, pas ce qui a été travaillé. */
+    o.pasDeJamais=!/jamais|aucune fois|0 fois/i.test(tout);
+    /* ⭐ LA PORTE. */
+    renderProgress(); await new Promise(r=>setTimeout(r,350));
+    o.ecran=(document.getElementById('prog-synth').innerText||'').replace(/\s+/g,' ').trim();
+    /* ⛔ Changer de sous-onglet ne la fait pas disparaître (elle ne partage aucun état). */
+    switchProgTab('poids',document.getElementById('ptab-poids'));
+    await new Promise(r=>setTimeout(r,250));
+    o.surviteOnglet=(document.getElementById('prog-synth').innerText||'').trim().length>0;
+    const f=document.querySelector('.nav-fab,#nb-log,.fab');const r=f.getBoundingClientRect();
+    o.fab=[Math.round(r.x),Math.round(r.y),Math.round(r.width),Math.round(r.height)];
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  await cx.close();
+
+  if(G.err)t('CXLIV n\'a pas pu tourner',false,G.err);
+  else{
+    t('⛔ aucune séance → la section n\'existe pas',
+      G.aucune.pret===false && G.aucune.nSeances===0, JSON.stringify(G.aucune));
+    t('⛔⛔ 5 séances sur 10 jours → AUCUNE constante (ce serait du hasard)',
+      G.sousSeuil.pret===false && G.sousSeuil.lignes===0, JSON.stringify(G.sousSeuil));
+    /* ⛔ Mais elle le DIT — elle ne laisse pas un cadre vide. */
+    t('⛔ … et sous le seuil elle DIT qu\'elle ne sait pas encore',
+      /Pas encore de quoi dégager une constante/i.test(G.txtSousSeuil), G.txtSousSeuil.slice(0,90));
+    t('⭐⭐ 14 séances sur 31 jours → les trois constantes sortent',
+      G.pret===true && G.cles.indexOf('rythme')>=0 && G.cles.indexOf('fidele')>=0
+      && G.cles.indexOf('equilibre')>=0, JSON.stringify(G.cles));
+    /* ⛔ Chaque ligne NOMME sa fenêtre : sans ça, deux constantes calculées sur des périodes
+       différentes se contredisent à l'écran sans que rien ne le dise (le défaut de ft-v1027). */
+    t('⛔ chaque constante nomme la fenêtre sur laquelle elle porte',
+      G.chaqueLigneAsaFenetre===true, JSON.stringify(G.cles));
+    /* ⛔⛔ LA RÈGLE DE LA VISION : on décrit, on ne prescrit jamais. */
+    t('⛔⛔ aucun verbe de prescription — « une constante », jamais « tu devrais »',
+      G.pasDePrescription===true, G.ecran.slice(0,110));
+    /* ⛔⛔ ET AUCUN FAIT FAUX : la région est la DOMINANTE, pas ce qui a été travaillé. */
+    t('⛔⛔ aucune phrase du type « tu ne travailles jamais X » (c\'est la DOMINANTE qu\'on mesure)',
+      G.pasDeJamais===true && /dominées par/i.test(G.txtEquilibre), G.txtEquilibre);
+    t('⭐⭐ LA PORTE : la section s\'affiche en tête de Progrès',
+      /CE QUE TON HISTOIRE MONTRE/i.test(G.ecran), G.ecran.slice(0,100));
+    t('⛔ changer de sous-onglet ne la fait pas disparaître',
+      G.surviteOnglet===true, 'toujours là = '+G.surviteOnglet);
     t('🔴 règle d\'or #9 : le bouton central « + » est à sa place',
       G.fab[2]>0 && G.fab[3]>0, JSON.stringify(G.fab));
   }
