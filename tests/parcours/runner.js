@@ -15877,6 +15877,103 @@ console.log('\n-- CXLV. Brique 8 : les constantes (ft-v1041) --');
   }
 }
 
+/* == BLOC CXLVI - LA QUANTITE SUR UN ALIMENT REPRIS DE « MES ALIMENTS » (ft-v1042) ==
+   Michel, 2 captures : « il faut absolument que je puisse mettre le poids sur les aliments
+   reutilises, qu'ils soient rentres avec le code-barre, ou a la main ou encore avec l'IA ».
+   ⛔⛔ 5e FOIS LE MEME OUBLI, ET LE CODE LE DIT DEJA DE LUI-MEME : *« le mecanisme existait,
+   pose d'un seul cote »* (ft-v973, v975, v984, v999). La reprise depuis le JOURNAL gerait la
+   quantite ; celle depuis « Mes aliments » remplissait les 4 champs de macros et s'arretait.
+   ⛔ ET `per100` ETAIT JETE DEUX FOIS EN AMONT : `_buildFoodQuickItems` ne recopiait que
+   `{name,kcal,prot,carbs,fat}`, et la mise en FAVORI non plus — *mettre une etoile faisait
+   PERDRE la quantite*. L'information existait dans l'entree et n'atteignait pas l'ecran (R4).
+   ⭐ R13 : rien n'est reinvente — on emprunte le chemin de la reprise du journal.
+   ⭐⭐ ET LE TEMOIN QUI COMPTE LE PLUS EST CELUI DU TRANSPORT (`per100` survit) : sans lui, les
+   autres seraient verts le jour ou le bloc s'afficherait pour une mauvaise raison. */
+console.log('\n-- CXLVI. La quantité sur un aliment repris de « Mes aliments » (ft-v1042) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  /* ⛔ Horloge figée : cette modale vit dans la nutrition du jour (leçon de ft-v1040). */
+  await cx.clock.setFixedTime(new Date('2026-08-27T14:00:00+02:00'));
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async()=>{
+   try{
+    const o={}, dort=ms=>new Promise(x=>setTimeout(x,ms)), t=today();
+    S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';
+    /* LES TROIS ORIGINES QUE MICHEL NOMME, telles que l'app les enregistre vraiment. */
+    S.foodLog=[
+      {date:t,meal:'midi',name:'Riz Basmati (Taureau Ailé)',kcal:525,prot:10,carbs:115,fat:1,ts:Date.now()-3e6,
+       saisie:'code-barres',origine:'openfoodfacts',q:150,u:'g',per100:{kcal:350,prot:7,carbs:77,fat:1}},
+      {date:t,meal:'collation',name:'Iso zero protein (ASL)',kcal:156,prot:35,carbs:1,fat:1,ts:Date.now()-2e6,
+       saisie:'manuel',origine:'utilisateur',q:null,u:null,per100:null},
+      {date:t,meal:'soir',name:'Oeuf cru',kcal:280,prot:26,carbs:0,fat:20,ts:Date.now()-1e6,
+       saisie:'ia',origine:'estimation',q:null,u:null,per100:null}];
+    S.savedFoods=[]; S.hiddenFoods=[];
+    goScreen('nutrition'); renderNutrition();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await dort(350);
+    const lire=nom=>{
+      const i=_afQuickItems.findIndex(x=>x.name===nom);
+      if(i<0) return {absent:true};
+      quickFillFood(i);
+      const row=document.getElementById('af-bc-row'), prop=document.getElementById('af-prop-row'),
+            tot=document.getElementById('af-bc-total');
+      const vis=e=>!!e && getComputedStyle(e).display!=='none';
+      return { transporte:!!_afQuickItems[i].per100, grammes:vis(row), portions:vis(prop),
+               champG:(document.getElementById('af-bc-grams')||{}).value,
+               total: vis(tot) ? tot.textContent : '',
+               kcal:(document.getElementById('af-kcal')||{}).value };
+    };
+    o.bc   = lire('Riz Basmati (Taureau Ailé)');
+    o.main = lire('Iso zero protein (ASL)');
+    o.ia   = lire('Oeuf cru');
+    /* ⭐ Le recalcul marche-t-il VRAIMENT ? 150 g → 200 g. */
+    const i=_afQuickItems.findIndex(x=>x.name==='Riz Basmati (Taureau Ailé)');
+    quickFillFood(i);
+    const g=document.getElementById('af-bc-grams'); g.value='200'; _bcApplyGrams();
+    o.recalc={kcal:+document.getElementById('af-kcal').value, carbs:+document.getElementById('af-carbs').value};
+    /* ⛔ LE FAVORI garde-t-il son pour-100 g ? (l'étoile ne doit pas faire perdre la quantité) */
+    const j=_afQuickItems.findIndex(x=>x.name==='Riz Basmati (Taureau Ailé)');
+    toggleFavFood(j);
+    o.favGardePer100 = !!((S.savedFoods||[]).find(f=>f.name==='Riz Basmati (Taureau Ailé)')||{}).per100;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+  if(F.err) t('CXLVI n\'a pas pu tourner', false, F.err);
+  else{
+    t('⛔ le témoin a bien VU les trois aliments (sinon il serait vert en ne mesurant rien)',
+      !F.bc.absent && !F.main.absent && !F.ia.absent, JSON.stringify({bc:!!F.bc.absent,main:!!F.main.absent,ia:!!F.ia.absent}));
+    /* ⭐⭐ LE TRANSPORT : sans lui, rien de ce qui suit n'est possible (R4). */
+    t('⭐⭐ `per100` SURVIT jusqu\'à l\'aliment repris — il était jeté avant (R4)',
+      F.bc.transporte===true, 'per100 transporté = '+F.bc.transporte);
+    t('⭐⭐ CODE-BARRES repris → bloc « Quantité (g) », à la DERNIÈRE quantité (150, pas 100)',
+      F.bc.grammes===true && F.bc.champG==='150', 'bloc='+F.bc.grammes+' · champ='+F.bc.champG);
+    t('⭐⭐ SAISI À LA MAIN (sans pour-100 g) → bloc PORTIONS, jamais rien du tout',
+      F.main.portions===true && F.main.grammes===false, JSON.stringify({portions:F.main.portions,grammes:F.main.grammes}));
+    t('⭐⭐ ESTIMÉ PAR L\'IA (sans pour-100 g) → bloc PORTIONS aussi',
+      F.ia.portions===true && F.ia.grammes===false, JSON.stringify({portions:F.ia.portions,grammes:F.ia.grammes}));
+    /* ⛔ R2 : un seul réglage de quantité visible à la fois, sinon on ne sait plus lequel pilote. */
+    t('⛔ les deux réglages ne s\'affichent JAMAIS ensemble (R2)',
+      [F.bc,F.main,F.ia].every(x=>!(x.grammes&&x.portions)), '');
+    /* ⛔ Le défaut vu À LA CAPTURE : la ligne verte parlait de l'aliment précédent. */
+    t('⛔ la ligne du total parle de la BONNE quantité (vu à la capture : 150 dans le champ, « 200 g » sur la ligne)',
+      /pour tes 150 g/.test(F.bc.total) && /525 kcal/.test(F.bc.total), F.bc.total.slice(0,72));
+    t('⛔ … et elle ne survit PAS à un aliment sans quantité connue (pas de total orphelin)',
+      F.main.total==='' && F.ia.total==='', JSON.stringify({main:F.main.total.slice(0,40),ia:F.ia.total.slice(0,40)}));
+    t('⭐ le recalcul marche : 150 → 200 g donne 700 kcal et 154 g de glucides',
+      F.recalc.kcal===700 && F.recalc.carbs===154, JSON.stringify(F.recalc));
+    /* ⛔ NON-RÉGRESSION : on ne recalcule pas les macros en arrivant — la personne a pu les
+       corriger à la main, les réécrire effacerait sa correction sans le dire (R29). */
+    t('⛔ NON-RÉGRESSION : les macros ne sont PAS recalculées à l\'arrivée (525 kcal, intactes)',
+      F.bc.kcal==='525' && F.main.kcal==='156' && F.ia.kcal==='280', JSON.stringify([F.bc.kcal,F.main.kcal,F.ia.kcal]));
+    t('⛔ mettre en FAVORI ne fait plus PERDRE le pour-100 g',
+      F.favGardePer100===true, 'favori garde per100 = '+F.favGardePer100);
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

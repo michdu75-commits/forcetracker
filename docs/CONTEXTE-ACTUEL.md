@@ -6,7 +6,20 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1041`.
+- **Version en ligne (live) :** `ft-v1042`.
+- ⚖️⭐⭐ **LA QUANTITÉ SUR UN ALIMENT REPRIS — LIVRÉ** (ft-v1042). Michel, 2 captures : *« il faut
+  absolument que je puisse mettre le poids sur les aliments réutilisés, qu'ils soient rentrés
+  avec le code-barre, ou à la main ou encore avec l'IA »*.
+  ⛔⛔ **5ᵉ fois le même oubli**, et le code le dit déjà de lui-même (ft-v973, v975, v984, v999) :
+  *le mécanisme existait, posé d'un seul côté*. La reprise depuis le **journal** gérait la
+  quantité ; celle depuis **« Mes aliments »** remplissait les macros et s'arrêtait.
+  ⛔ **`per100` était jeté deux fois en amont** (R4) — et mettre en **favori** faisait *perdre*
+  la quantité. Le défaut n'était pas dans le calcul, il était dans le **transport**.
+  ⭐ **Mesuré sur les 3 origines** : code-barres → grammes à la **dernière quantité (150 g)** ·
+  à la main → portions · IA → portions. Recalcul juste : 150→200 g = **700 kcal / 154 g**.
+  ⚠️ **Défaut trouvé à la capture** : champ à 150 g, ligne verte « pour tes 200 g » — le total de
+  l'aliment précédent. **La jumelle** (reprise depuis le journal) l'avait aussi : les deux
+  corrigées (R8).
 - 🔭⭐⭐ **BRIQUE 8 « SYNTHÈSE » — SA PREMIÈRE PORTE, ET LES 8 BRIQUES SONT BRANCHÉES** (ft-v1041).
   Michel : *« la brique 8 alors »*. ⛔⛔ **État mesuré avant : `signal 1, porte 0`, et le signal
   était un LEURRE** — `briques.py` cherchait `startPt001Test`, un **outil admin**. La brique

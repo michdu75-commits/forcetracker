@@ -1791,14 +1791,23 @@ function _renderAfAiNote(){
 function closeAddFood(){document.getElementById('ov-add-food').classList.remove('open');}
 // ─── Aliments récents / favoris — ré-ajout rapide sans re-scanner ────────────
 let _afQuickItems=[];
+/* ⛔⛔ `per100` (ET la dernière quantité) SURVIVENT JUSQU'ICI — ft-v1042, R4.
+   Michel, 2 captures : « il faut absolument que je puisse mettre le poids sur les aliments
+   réutilisés ». Cette fonction ne recopiait que `{name,kcal,prot,carbs,fat}` : le pour-100 g,
+   pourtant présent dans l'entrée du journal, était **jeté au moment précis où il sert**.
+   *L'information existait et n'atteignait pas l'écran* — le défaut n'était pas dans le calcul
+   de quantité (qui marche depuis ft-v965), il était dans le transport. */
 function _buildFoodQuickItems(){
-  const favs=(S.savedFoods||[]).map(f=>({name:f.name,kcal:f.kcal||0,prot:f.prot||0,carbs:f.carbs||0,fat:f.fat||0,fav:true}));
+  const favs=(S.savedFoods||[]).map(f=>({name:f.name,kcal:f.kcal||0,prot:f.prot||0,carbs:f.carbs||0,fat:f.fat||0,
+                                         per100:f.per100||null,q:+f.q>0?+f.q:0,u:f.u||null,fav:true}));
   const seen=new Set(favs.map(f=>(f.name||'').toLowerCase()));
   const hidden=new Set((S.hiddenFoods||[]).map(x=>(x||'').toLowerCase()));
   const recent=[];
   (S.foodLog||[]).slice().sort((a,b)=>b.ts-a.ts).forEach(e=>{
     const k=(e.name||'').toLowerCase(); if(!k||seen.has(k)||hidden.has(k))return; seen.add(k);
-    recent.push({name:e.name,kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0,fav:false});
+    recent.push({name:e.name,kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0,
+                 per100:e.per100||null,q:+e.q>0?+e.q:0,u:e.u||null,
+                 origine:e.origine||null,sourceId:e.sourceId||null,etat:e.etat||null,fav:false});
   });
   return favs.concat(recent).slice(0,12);
 }
@@ -1835,11 +1844,55 @@ function deleteQuickFood(i){
   else doit();
 }
 function _unhideFood(nm){ const k=(nm||'').toLowerCase(); if(k&&S.hiddenFoods&&S.hiddenFoods.length)S.hiddenFoods=S.hiddenFoods.filter(x=>x!==k); }
+/* ⚖️ LA QUANTITÉ SUR UN ALIMENT REPRIS DE « MES ALIMENTS » (ft-v1042) — Michel, 2 captures :
+   « il faut absolument que je puisse mettre le poids sur les aliments réutilisés, qu'ils soient
+   rentrés avec le code-barre, ou à la main ou encore avec l'IA ».
+   ⛔⛔ 5ᵉ FOIS LE MÊME OUBLI, ET LE CODE LE DIT DÉJÀ DE LUI-MÊME : *« le mécanisme existait,
+   posé d'un seul côté »* (ft-v973, v975, v984, v999). La reprise depuis le JOURNAL gère la
+   quantité depuis ft-v984/999 ; celle-ci remplissait les 4 champs de macros et s'arrêtait.
+   ⭐ R13/R2 — RIEN N'EST RÉINVENTÉ : on emprunte exactement le chemin de la reprise du journal.
+   `_bcNutr` + `af-bc-row` quand un pour-100 g existe (scan, recherche, CIQUAL) ; sinon
+   `_afMajAncre()` prend le relais avec ses portions (½ · 1 · 1½ · 2 · 3), qui sont vraies
+   quelle que soit la portion de départ. Les deux ne s'affichent jamais ensemble.
+   ⛔ ET ON NE RECALCULE PAS LES MACROS EN ARRIVANT (même raison qu'en ft-v984) : elles sont
+   déjà justes, et la personne a pu les corriger à la main. Le recalcul part au premier
+   changement de quantité, quand elle le demande. */
 function quickFillFood(i){
   const it=_afQuickItems[i]; if(!it)return;
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
   set('af-desc',it.name); set('af-kcal',it.kcal||0); set('af-prot',it.prot||0); set('af-carbs',it.carbs||0); set('af-fat',it.fat||0);
-  toast('Pré-rempli — choisis le repas puis « Ajouter au journal » ✅','info');
+  /* La provenance dit ce que c'est : une REPRISE, ni une mesure ni une saisie fraîche. */
+  if(typeof _afSetSrc==='function') _afSetSrc({saisie:'liste', origine:it.origine||'reprise',
+    sourceId:it.sourceId||null, etat:it.etat||null, per100:it.per100||null,
+    attendu:(typeof _afLuFormulaire==='function')?_afLuFormulaire():null});
+  const row=document.getElementById('af-bc-row');
+  const P=it.per100;
+  if(P && (+P.kcal>0 || +P.prot>0 || +P.carbs>0 || +P.fat>0)){
+    _bcNutr={ name:(it.name||'').slice(0,60), kcal100:+P.kcal||0,
+              prot100:+P.prot||0, carbs100:+P.carbs||0, fat100:+P.fat||0 };
+    const g=document.getElementById('af-bc-grams');
+    if(g) g.value=(+it.q>0 && (!it.u||it.u==='g')) ? it.q : 100;   // la quantité de la dernière fois
+    const nm=document.getElementById('af-bc-name');
+    if(nm) nm.textContent=_bcNutr.name+' · '+Math.round(_bcNutr.kcal100)+' kcal/100g (ta dernière saisie)';
+    if(row) row.style.display='block';
+    /* ⛔⛔ LA LIGNE VERTE DU TOTAL EST REMISE À JOUR — SINON ELLE PARLE DE L'ALIMENT PRÉCÉDENT
+       (ft-v1042, vu à la capture). Le champ affichait « 150 » pendant que la ligne disait
+       « pour tes 200 g : 700 kcal » : le total d'un aliment repris juste avant. *Aucun des deux
+       nombres n'est faux — c'est leur voisinage muet qui trompe*, exactement le défaut que
+       ft-v966 avait corrigé un cran plus haut, et qui revenait par un autre chemin.
+       ⛔ ON NE L'AFFICHE QUE SI LA QUANTITÉ EST RÉELLEMENT CONNUE (R29) : sans `q`, le champ
+       retombe à 100 par défaut, et annoncer « pour tes 100 g » serait inventer une portion. */
+    if(typeof _bcMontrerTotal==='function') _bcMontrerTotal((+it.q>0 && (!it.u||it.u==='g')) ? +it.q : 0);
+  }else{
+    if(row) row.style.display='none';
+    _bcNutr=null;
+    if(typeof _bcMontrerTotal==='function') _bcMontrerTotal(0);   // ⛔ pas de total orphelin
+  }
+  /* Se tait tout seul si un pour-100 g existe (`if(_bcNutr) → cacher`) : R2, un seul réglage
+     de quantité visible à la fois. */
+  if(typeof _afMajAncre==='function') _afMajAncre();
+  if(typeof _afNoteEtat==='function') _afNoteEtat(it.name||'');
+  toast('Pré-rempli — ajuste la quantité si besoin, puis « Ajouter au journal » ✅','info');
 }
 function quickAddFood(i){
   const it=_afQuickItems[i]; if(!it)return;
@@ -1863,7 +1916,10 @@ function toggleFavFood(i){
   const key=(it.name||'').toLowerCase();
   const idx=S.savedFoods.findIndex(f=>(f.name||'').toLowerCase()===key);
   if(idx>=0){ S.savedFoods.splice(idx,1); toast('Retiré des favoris','info'); }
-  else { S.savedFoods.push({name:it.name,kcal:it.kcal||0,prot:it.prot||0,carbs:it.carbs||0,fat:it.fat||0}); toast('Ajouté aux favoris ⭐','success'); }
+  /* ⛔ LE FAVORI GARDE SON POUR-100 G (ft-v1042) : sans ça, mettre une étoile FAISAIT PERDRE
+     la quantité — l'aliment devenait moins réglable qu'avant d'être mis en favori. */
+  else { S.savedFoods.push({name:it.name,kcal:it.kcal||0,prot:it.prot||0,carbs:it.carbs||0,fat:it.fat||0,
+                            per100:it.per100||null,q:+it.q>0?+it.q:0,u:it.u||null}); toast('Ajouté aux favoris ⭐','success'); }
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   _renderFoodQuickList();
 }
@@ -2435,9 +2491,18 @@ function _afSuggPrendreLocale(i){
     const nm=document.getElementById('af-bc-name');
     if(nm) nm.textContent=_bcNutr.name+' · '+Math.round(_bcNutr.kcal100)+' kcal/100g (ta dernière saisie)';
     if(row) row.style.display='block';
+    /* ⛔⛔ LA LIGNE VERTE DU TOTAL EST REMISE À JOUR — SINON ELLE PARLE DE L'ALIMENT PRÉCÉDENT
+       (ft-v1042, vu à la capture). Le champ affichait « 150 » pendant que la ligne disait
+       « pour tes 200 g : 700 kcal » : le total d'un aliment repris juste avant. *Aucun des deux
+       nombres n'est faux — c'est leur voisinage muet qui trompe*, exactement le défaut que
+       ft-v966 avait corrigé un cran plus haut, et qui revenait par un autre chemin.
+       ⛔ ON NE L'AFFICHE QUE SI LA QUANTITÉ EST RÉELLEMENT CONNUE (R29) : sans `q`, le champ
+       retombe à 100 par défaut, et annoncer « pour tes 100 g » serait inventer une portion. */
+    if(typeof _bcMontrerTotal==='function') _bcMontrerTotal((+e.q>0 && (!e.u||e.u==='g')) ? +e.q : 0);
   }else{
     if(row) row.style.display='none';
     _bcNutr=null;
+    if(typeof _bcMontrerTotal==='function') _bcMontrerTotal(0);   // ⛔ pas de total orphelin
   }
   _afSetSrc({saisie:'historique', origine:e.origine||'utilisateur',
              sourceId:e.sourceId||null, etat:e.etat||null, per100:e.per100||null,
