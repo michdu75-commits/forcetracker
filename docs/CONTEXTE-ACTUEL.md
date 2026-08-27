@@ -18,6 +18,17 @@
   « en attente », déposée par `toggleSet`, consommée par `startRest` (il y en a **cinq**).
   ⭐ Restitué dans « précédent » (*8×80·2r*) — c'est là qu'il sert : **avant de refaire la série**.
   ⏭️ **RPE différé**, décision de Michel.
+- 🧹 **29 Mo DE PAQUET PYTHON RETIRÉS (27/08, pas de version)** — `imageio_ffmpeg-…-.whl`,
+  **21 % du dépôt**, entré par un `git add -A` lors de la session où il fallait lire une vidéo.
+  Personne ne le référençait ; il partait sur le **site public**. Dépôt **140 → 111 Mo**.
+  ⛔ **Pas une question d'argent** : mesuré, `billable: 0 ms` — un dépôt **public** ne consomme
+  aucune minute Actions, donc Force Tracker ne peut pas atteindre le plafond des 2 000. Les
+  raisons du retrait : publié, alourdit chaque clone, et **ressemble à une dépendance**.
+  ⭐ **Contrôle 9 de `check_regles.py`** : refuse tout paquet (`.whl`/`.tar.gz`) et tout fichier
+  **> 5 Mo à la racine** — il mesure la **conséquence**, pas le motif, parce qu'un `.gitignore` ne
+  protège que les formes qu'on a pensé à écrire. Éprouvé dans les deux sens.
+  ⏭️ **Signalé à session-B** : 2,9 Mo de `cap_*.png` à la racine viennent de leur branche — pas
+  touchées, c'est leur décision (**R30**).
 - ⛔ **DÉCISION (27/08) — ON NE TOUCHE PAS À `deploy-pages.yml`.** Michel : *« on ne touche pas au
   workflow surtout »*. ⚠️ **À lire avant de reproposer l'optimisation évidente** : mesuré, **17
   déploiements pour 3 livraisons** (les lignes de réservation 🟡 sont du markdown seul et

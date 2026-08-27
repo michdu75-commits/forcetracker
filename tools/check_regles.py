@@ -388,6 +388,49 @@ except FileNotFoundError:
 except Exception:
     pass                                        # jamais bloquer sur un pépin d'outillage
 
+# ══════════════════════════════════════════════════════════════════════════════
+# CONTRÔLE 9 — AUCUN PAQUET NI GROS BINAIRE N'ENTRE PAR MÉGARDE
+#
+# ⚠️ CAS RÉEL (27/08/2026) : un `imageio_ffmpeg-…-manylinux2014_x86_64.whl` de **29 Mo**
+# — 21 % du dépôt — est entré par un `git add -A`, dans une session où il fallait
+# installer de quoi lire une vidéo envoyée par Michel. Personne ne le référençait ; il
+# partait sur le site **PUBLIC** à chaque déploiement, dans un artefact de 122 Mo, et
+# alourdissait chaque clone. *Un outil installé pour dépanner n'est pas une dépendance
+# du projet.*
+#
+# ⭐ POURQUOI UN CONTRÔLE ET PAS SEULEMENT UNE LIGNE DE .gitignore : le `.gitignore` ne
+# protège que les motifs qu'on a pensé à écrire. Celui-ci mesure la CONSÉQUENCE — un gros
+# fichier posé à la racine — quelle que soit son extension. *On ne peut pas lister à
+# l'avance toutes les formes que prend une erreur ; on peut mesurer ce qu'elle produit.*
+#
+# ⛔ SEULEMENT À LA RACINE, et c'est délibéré : les dossiers d'assets ont de vraies raisons
+# d'être lourds (`data/complalim.json` = 6,4 Mo, les moteurs OCR = 3,8 Mo chacun). Ce qui
+# n'a pas de raison d'être, c'est un gros fichier posé À CÔTÉ de `index.html`.
+PLAFOND_RACINE = 5 * 1024 * 1024
+try:
+    _suivis = _git("ls-files").splitlines() if git_ok else []
+    _gros, _paquets = [], []
+    for _f in _suivis:
+        if "/" not in _f:                                     # racine uniquement
+            _p = racine / _f
+            if _p.exists() and _p.stat().st_size > PLAFOND_RACINE:
+                _gros.append(f"{_f} ({_p.stat().st_size/1048576:.1f} Mo)")
+        if _f.endswith((".whl", ".tar.gz", ".tgz")):
+            _paquets.append(_f)
+    if _gros or _paquets:
+        print("❌ des fichiers qui n'ont rien à faire dans le dépôt :")
+        for _x in _gros:    print(f"   - {_x} — trop gros pour la racine (> 5 Mo)")
+        for _x in _paquets: print(f"   - {_x} — paquet téléchargé, pas une source")
+        print("   → les retirer (`git rm`) : ils sont publiés sur le site PUBLIC et "
+              "alourdissent chaque clone.")
+        sys.exit(1)
+    print(f"✅ dépôt : aucun paquet ni gros fichier à la racine ({len(_suivis)} fichiers suivis)")
+except SystemExit:
+    raise
+except Exception:
+    pass                                        # jamais bloquer sur un pépin d'outillage
+
+
 print(f"✅ documents : aucun écrasement"
       + (f" ({len(suivis)} fichiers .md surveillés)" if git_ok and 'suivis' in dir() else
          " (⚠️ git indisponible — contrôle non effectué)"))
