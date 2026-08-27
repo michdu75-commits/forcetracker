@@ -1600,6 +1600,37 @@ function _mesAliments(max){
 /* Une quantité RAISONNABLE d'un aliment, pour couvrir au plus `manque` de cette macro.
    Rend {texte, apport} ou null. Ne dépasse jamais les bornes ci-dessus. */
 const _RESTE_MAX_PORTIONS = 2, _RESTE_MAX_G = 250;
+
+/* ═══ LA BASCULE DU SOIR (27/08/2026, ft-v1029) ══════════════════════════════════════════
+   Michel, devant la 1ʳᵉ version : *« alors à 22 h je vais pas bouffer de la ratatouille lol »*.
+   ⛔⛔ LE DÉFAUT N'EST PAS LE CHIFFRE, C'EST LE VOLUME PROPOSÉ À UNE HEURE OÙ ON NE MANGE PLUS.
+   Les bornes de ft-v1019 (2 portions / 250 g) sont justes à 14 h — il reste deux repas pour
+   les caser — et absurdes à 21 h. *Une portion raisonnable ne l'est pas de la même façon
+   selon l'heure qu'il est* : c'est la borne qui dépend de l'heure, jamais le calcul.
+
+   ⭐ L'HEURE EST TRANCHÉE PAR MICHEL : **20 h**. Ce n'est pas une moyenne trouvée dans le code,
+   c'est sa décision — on ne la déduit pas, on l'écrit (R29).
+
+   ⛔⛔ ET LE VRAI GARDE-FOU EST ANTI-TCA (Constitution P21), pas ergonomique : à 21 h,
+   « il te manque 200 g de protéines » n'est plus une information, c'est un **reproche sur une
+   journée qu'on ne peut plus changer** — exactement ce que le garde-fou ② interdisait déjà sur
+   un dépassement. 👉 Donc quand plus rien de LÉGER ne couvre une part utile du manque,
+   **on se tait** : on n'affiche pas le manque tout seul « pour information ».
+
+   ⚠️ L'HEURE EST UN ARGUMENT OPTIONNEL, comme `calcRecoveryDetail(refTs)` en ft-v1017 (R13) :
+   sans lui on lit l'horloge, avec lui un témoin peut se placer à 21 h sans toucher au système.
+   ⛔ Un SEUL propriétaire de la question « est-ce le soir ? » (R2) : le rendu et le calcul
+   doivent répondre pareil, sinon le pied de bloc dirait « il est tard » sous une combinaison
+   de 500 g. */
+const _RESTE_HEURE_SOIR = 20;
+const _RESTE_SOIR_MAX_PORTIONS = 1, _RESTE_SOIR_MAX_G = 150;
+/* En dessous de ce quart, une idée légère n'aide plus : elle constate surtout le manque. */
+const _RESTE_SOIR_COUV_MIN = 0.25;
+function _estLeSoir(heure){
+  const h = (heure==null) ? new Date().getHours() : +heure;
+  return h >= _RESTE_HEURE_SOIR;
+}
+
 const cle = n => (n||'').trim().toLowerCase();
 /* « 100 g de Amandes » — l'élision manquait. Ce n'est pas de la coquetterie : c'est du texte
    affiché à quelqu'un, et Michel l'a écrit lui-même (R31) — *plus on se rapproche d'une
@@ -1608,19 +1639,21 @@ const cle = n => (n||'').trim().toLowerCase();
    yaourt est bien plus fréquent dans un journal alimentaire que les yeux. Le « h » est
    GARDÉ pour la même raison inverse : « d'huile » est courant, « de homard » est rare. */
 const _deNom = n => /^[aeiouàâäéèêëîïôöùûüœæh]/i.test((n||'').trim()) ? ("d'" + n) : ('de ' + n);
-function _portionRaisonnable(al, macro, manque){
+function _portionRaisonnable(al, macro, manque, soir){
   const parPortion = +al[macro] || 0;
   if(parPortion <= 0 || manque <= 0) return null;
+  const maxG   = soir ? _RESTE_SOIR_MAX_G        : _RESTE_MAX_G;
+  const maxPor = soir ? _RESTE_SOIR_MAX_PORTIONS : _RESTE_MAX_PORTIONS;
   const p100 = al.per100 && +al.per100[macro];
   if(p100 > 0){
     let g = manque / p100 * 100;
-    g = Math.min(g, _RESTE_MAX_G);
+    g = Math.min(g, maxG);
     g = Math.round(g/5)*5;                                   // pas de fausse précision
     if(g < 10) return null;
     return { texte: g + ' g ' + _deNom(al.name), apport: g * p100 / 100 };
   }
   let n = manque / parPortion;
-  n = Math.min(n, _RESTE_MAX_PORTIONS);
+  n = Math.min(n, maxPor);
   n = Math.round(n*2)/2;                                     // au demi près
   if(n < 0.5) return null;
   const lbl = (n===1) ? ('1 × ' + al.name) : ((n===0.5?'½':n) + ' × ' + al.name);
@@ -1630,7 +1663,7 @@ function _portionRaisonnable(al, macro, manque){
 /* Compose une idée pour UNE macro : jusqu'à 2 aliments à lui, à doses raisonnables.
    ⛔ Les aliments déjà employés pour une autre macro sont écartés — sinon la même ligne
    revient trois fois et l'idée n'en est plus une. */
-function _ideePourMacro(al, macro, manque, pris){
+function _ideePourMacro(al, macro, manque, pris, soir){
   /* ⭐ CLASSEMENT : ce qu'il mange, avant ce qui est optimal. Favori d'abord, puis fréquence,
      puis densité pour départager. (Michel, ft-v1020 : « rester simple ».) */
   /* ⛔⛔ D'ABORD LA PERTINENCE, ENSUITE SEULEMENT LES GOÛTS — mesuré, pas supposé.
@@ -1658,8 +1691,10 @@ function _ideePourMacro(al, macro, manque, pris){
        de la moitié du manque — sinon la ligne devient une recette, et Michel a raison :
        « 250 g de riz + 160 g de flocons » ne se lit pas, ça se subit (R19). */
     if(parts.length >= 1 && couvert >= manque*0.5) break;
-    if(parts.length >= 2) break;
-    const q = _portionRaisonnable(a, macro, reste);
+    /* ⛔ LE SOIR, JAMAIS DE COMBINAISON (ft-v1029). « 250 g de riz + 160 g de flocons » se
+       subissait déjà à 14 h ; à 21 h ça ne se propose pas du tout. Une seule idée, ou rien. */
+    if(parts.length >= (soir ? 1 : 2)) break;
+    const q = _portionRaisonnable(a, macro, reste, soir);
     if(!q) continue;
     parts.push(q.texte); pris[cle(a.name)] = 1;
     couvert += q.apport; reste -= q.apport;
@@ -1671,10 +1706,11 @@ function _ideePourMacro(al, macro, manque, pris){
 /* Les idées : une par macro qui manque VRAIMENT, en commençant par celle qui manque le plus.
    ⛔ Au plus 3 — au-delà ce n'est plus une idée, c'est une liste de courses (R19). */
 const _RESTE_SEUILS = { prot:15, carbs:25, fat:8 };           // en dessous, ça ne vaut pas un conseil
-function _ideesPourLeReste(reste){
+function _ideesPourLeReste(reste, heure){
   if(!reste) return [];
   const al = _mesAliments(40);
   if(!al.length) return [];
+  const soir = _estLeSoir(heure);
   const noms = { prot:'protéines', carbs:'glucides', fat:'lipides' };
   const manques = ['prot','carbs','fat']
     .filter(m => reste[m] >= _RESTE_SEUILS[m])
@@ -1682,8 +1718,14 @@ function _ideesPourLeReste(reste){
   const out = [], pris = {};
   manques.forEach(m=>{
     if(out.length >= 3) return;
-    const idee = _ideePourMacro(al, m, reste[m], pris);
-    if(idee) out.push({ macro:m, label:noms[m], manque:reste[m], idee:idee.texte, couvert:idee.couvert });
+    const idee = _ideePourMacro(al, m, reste[m], pris, soir);
+    if(!idee) return;
+    /* ⛔⛔ LE SOIR, ON SE TAIT PLUTÔT QUE DE CONSTATER LE MANQUE (anti-TCA, P21). Une idée
+       légère qui ne couvre qu'un huitième du manque n'aide plus : ce qu'elle affiche vraiment,
+       c'est le manque. *Et un manque qu'on ne peut plus combler ce soir est un reproche, pas
+       une information* — même raison que le silence sur une cible dépassée. */
+    if(soir && idee.couvert < reste[m]*_RESTE_SOIR_COUV_MIN) return;
+    out.push({ macro:m, label:noms[m], manque:reste[m], idee:idee.texte, couvert:idee.couvert, soir:soir });
   });
   return out;
 }

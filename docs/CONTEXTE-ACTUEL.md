@@ -25,6 +25,25 @@
   📣 Règle #11 en entier — la pop-up **se mérite** (un repère a bougé : la barre ne disparaît
   plus) : `WHATS_NEW` **v61** · point rouge `repos-maximum` · aide `?` de l'onglet Séance · aide
   détaillée · diapo du Guide **sans image, exprès** (une capture montrerait l'écran d'avant).
+- 🌙⭐⭐ **« CE QU'IL TE RESTE » S'ARRÊTE DE POUSSER À 20 H — LIVRÉ** (ft-v1029). Michel :
+  *« alors à 22 h je vais pas bouffer de la ratatouille lol »*, **et c'est lui qui a tranché
+  l'heure : 20 h** (une décision, pas une moyenne trouvée dans le code — R29).
+  ⛔⛔ **Le défaut n'est pas le chiffre, c'est le VOLUME proposé à une heure où on ne mange plus** :
+  les bornes de ft-v1019 (2 portions · 250 g) sont **justes à 14 h** et **absurdes à 21 h**.
+  *C'est la BORNE qui dépend de l'heure, jamais le calcul* — `_resteDuJour` rend la même chose
+  des deux côtés, et un témoin l'épingle.
+  ⛔⛔ **Le vrai garde-fou est ANTI-TCA (P21)**, pas ergonomique : à 21 h, *« il te manque 200 g
+  de protéines »* est un **reproche sur une journée qu'on ne peut plus changer**. Donc quand plus
+  rien de léger ne couvre le quart du manque, **la ligne se tait** — sans que ce soit « tout
+  disparaît » : ce qui reste couvrable est toujours dit.
+  ⭐ **Mesuré sur les mêmes données** : plus aucune **combinaison** le soir, bornes à **1 portion
+  / 150 g**. Le pied de bloc **nie le rattrapage** au lieu de le suggérer, et une entrée d'aide
+  `?` dit pourquoi (R25). ⛔ Pas de pop-up : rien à faire, aucun repère déplacé.
+  ⚠️⚠️ **Le piège était dans les TESTS, pas dans le code** : les témoins existants lisaient
+  l'horloge réelle — **verts le matin, rouges à 21 h**. Épinglés à 14 h. *Un témoin dont le
+  verdict dépend de l'heure du lancement mesure la montre, pas le code.*
+  ⚠️ **Et un de mes témoins aurait été un FAUX VERT** : `Math.max(0,…) <= 150` passe aussi quand
+  **rien** n'est proposé. Durci avant livraison.
 - 🐢⭐⭐ **LE TEMPO DESCEND JUSQU'À LA DONNÉE — LIVRÉ** (ft-v1028). Première suite du relais de
   session-A sur les **6 programmes de la coach de Michel** (2023, `docs/NUTRITION-PROGRAMMES-REELS.md`
   §3bis) : chez elle le **tempo est une COLONNE**.

@@ -13689,7 +13689,10 @@ console.log('\n-- CXXV. Ce qu\'il te reste à manger, traduit en TES aliments (f
       {date:t,meal:'midi',name:'Riz basmati',kcal:350,prot:7,carbs:77,fat:1,ts:Date.now()-1e6,per100:{kcal:350,prot:7,carbs:77,fat:1}}];
     const r=_resteDuJour(t);
     o.reste = r ? (r.prot+'|'+r.carbs+'|'+r.fat) : null;
-    const id=_ideesPourLeReste(r);
+    /* ⚠️ L'HEURE EST FIGEE A 14 h (ft-v1029) : sans elle ce temoin lit l'horloge REELLE, donc
+       il serait vert le matin et rouge a 21 h — la combinaison n'existe plus le soir. *Un temoin
+       dont le verdict depend de l'heure a laquelle on le lance mesure la montre, pas le code.* */
+    const id=_ideesPourLeReste(r, 14);
     o.nb=id.length;
     o.textes=id.map(x=>x.idee);
     /* ⛔ AUCUNE ABSURDITÉ : ni « 5,5 × », ni un poids au-delà de la borne. */
@@ -13711,7 +13714,7 @@ console.log('\n-- CXXV. Ce qu\'il te reste à manger, traduit en TES aliments (f
                 _e(_h(1),'Riz basmati',350,7,77,1,{kcal:350,prot:7,carbs:77,fat:1}),
                 _e(_h(2),'Riz basmati',350,7,77,1,{kcal:350,prot:7,carbs:77,fat:1}),
                 _e(_h(3),'Pain complet',420,9,85,2,{kcal:250,prot:9,carbs:48,fat:2}) ];  // 1 fois, PLUS dense
-    const id2=_ideesPourLeReste(_resteDuJour(t));
+    const id2=_ideesPourLeReste(_resteDuJour(t), 14);   // ⚠️ heure figée, même raison
     const ligneG=(id2.find(x=>x.macro==='carbs')||{}).idee||'';
     o.pasDeShakePourGlucides = ligneG.indexOf('Shake')<0;
     o.frequentDAbord = ligneG.indexOf('Riz basmati')>=0;      // mangé 3 fois, passe devant le pain
@@ -14668,7 +14671,189 @@ console.log('\n-- CXXXIII. Le tempo descend jusqu\'a la donnee (ft-v1028) --');
   }
 }
 
-/* == BLOC CXXXV - LE REPOS EST UN MAXIMUM, PAS UN COMPTE A REBOURS (ft-v1030) ==
+/* == BLOC CXXXIV - LA BASCULE DU SOIR SUR « CE QU'IL TE RESTE » (ft-v1029) ==
+   Michel, devant la 1re version : « alors a 22h je vais pas bouffer de la ratatouille lol ».
+   Il a tranche l'heure lui-meme : 20 h.
+   ⛔⛔ LE DEFAUT N'EST PAS LE CHIFFRE, C'EST LE VOLUME PROPOSE A UNE HEURE OU ON NE MANGE PLUS.
+   Les bornes de ft-v1019 (2 portions / 250 g) sont justes a 14 h — il reste deux repas pour les
+   caser — et absurdes a 21 h. *C'est la BORNE qui depend de l'heure, jamais le calcul.*
+   ⛔⛔ ET LE VRAI GARDE-FOU EST ANTI-TCA (P21), pas ergonomique : a 21 h, « il te manque 200 g de
+   proteines » n'est plus une information, c'est un REPROCHE sur une journee qu'on ne peut plus
+   changer. Donc quand plus rien de leger ne couvre une part utile du manque, ON SE TAIT — on
+   n'affiche pas le manque tout seul « pour information ».
+   ⭐⭐ LE TEMOIN QUI PORTE LA DECISION EST UN AVANT/APRES SUR LES MEMES DONNEES : meme fixture,
+   meme reste, seule l'heure change. Sans ca on mesurerait deux journees differentes, et n'importe
+   quel ecart passerait pour l'effet de l'heure.
+   ⚠️ ET LE PIEGE D'ECRITURE DE CE BLOC : l'heure est un ARGUMENT OPTIONNEL (comme `refTs` en
+   ft-v1017). Un temoin qui ne le passe pas lit l'horloge REELLE — il serait vert le matin et
+   rouge a 21 h. *Un temoin dont le verdict depend de l'heure a laquelle on le lance ne mesure
+   pas le code, il mesure la montre.* C'est la famille « fuseaux horaires » de BUGS.md, appliquee
+   a nos propres tests. Tout ce qui suit passe donc une heure EXPLICITE. */
+console.log('\n-- CXXXIV. La bascule du soir : 20 h, décidée par Michel (ft-v1029) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2200);
+  const F=await pg.evaluate(()=>{
+   try{
+    const o={}, t=today();
+    S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';S.nutritionPhase='charge';
+    S.savedFoods=[
+      {name:'Shake protéiné',kcal:120,prot:25,carbs:3,fat:1},
+      {name:'Blanc de poulet',kcal:165,prot:31,carbs:0,fat:3.6,per100:{kcal:110,prot:23,carbs:0,fat:2.4}},
+      {name:'Amandes',kcal:180,prot:6,carbs:4,fat:16,per100:{kcal:600,prot:21,carbs:13,fat:53}}];
+    S.foodLog=[
+      {date:t,meal:'matin',name:'Flocons avoine',kcal:380,prot:13,carbs:60,fat:8,ts:Date.now()-3e6,per100:{kcal:380,prot:13,carbs:60,fat:8}},
+      {date:t,meal:'midi',name:'Riz basmati',kcal:350,prot:7,carbs:77,fat:1,ts:Date.now()-1e6,per100:{kcal:350,prot:7,carbs:77,fat:1}}];
+
+    /* ⛔ LE PAS EXACT, pas « le soir en gros » : 20 h est une decision de Michel, pas un ordre
+       de grandeur. 19 h doit etre le jour, 20 h le soir — a l'heure pres. */
+    o.pas = [_estLeSoir(19), _estLeSoir(20), _estLeSoir(6), _estLeSoir(23)];
+
+    /* ⛔⛔ AUCUN CALCUL N'A CHANGE : le reste est identique des deux cotes. Si ce temoin rougit,
+       c'est qu'on a touche a la mesure en croyant ne toucher qu'a l'affichage. */
+    const r=_resteDuJour(t);
+    o.reste = r.prot+'|'+r.carbs+'|'+r.fat;
+
+    const jour = _ideesPourLeReste(r, 14), soir = _ideesPourLeReste(r, 21);
+    o.jourTxt = jour.map(x=>x.idee);
+    o.soirTxt = soir.map(x=>x.idee);
+    o.jourNb = jour.length; o.soirNb = soir.length;
+
+    /* ⭐⭐ LA COMBINAISON : possible a 14 h, JAMAIS a 21 h. Le temoin exige qu'il y en ait une
+       le jour — sinon il serait vert en ne mesurant rien (deux absences ne font pas une regle). */
+    o.jourCombine = jour.some(x=>x.idee.indexOf(' + ')>0);
+    o.soirCombine = soir.some(x=>x.idee.indexOf(' + ')>0);
+
+    /* ⭐ LES BORNES RETRECISSENT : le soir, aucun poids au-dela de 150 g, aucune portion > 1 ×.
+       On lit les nombres DANS le texte affiche — c'est ce que la personne voit, pas une variable
+       interne qui pourrait etre juste pendant que le rendu ment. */
+    const poids = s => (s.match(/(\d+)\s*g\s/g)||[]).map(x=>parseInt(x,10));
+    const fois  = s => (s.match(/([\d,½.]+)\s*×/g)||[]).map(x=>parseFloat(x.replace('½','0.5').replace(',','.')));
+    o.soirMaxG   = Math.max(0, ...soir.flatMap(x=>poids(x.idee)));
+    o.soirMaxPor = Math.max(0, ...soir.flatMap(x=>fois(x.idee)));
+    o.jourMaxG   = Math.max(0, ...jour.flatMap(x=>poids(x.idee)));
+
+    /* ⛔⛔ ANTI-TCA : une macro dont il ne reste qu'un huitieme couvrable DISPARAIT le soir.
+       On la fabrique expres — un manque enorme de proteines — et on verifie que la ligne se TAIT
+       au lieu d'afficher « il te manque 200 g » avec une idee derisoire a cote. */
+    S.foodLog=[{date:t,meal:'matin',name:'Riz basmati',kcal:350,prot:7,carbs:77,fat:1,ts:Date.now()-3e6,per100:{kcal:350,prot:7,carbs:77,fat:1}}];
+    S.savedFoods=[{name:'Blanc de poulet',kcal:165,prot:31,carbs:0,fat:3.6,per100:{kcal:110,prot:23,carbs:0,fat:2.4}}];
+    const r2=_resteDuJour(t);
+    const j2=_ideesPourLeReste(r2,14), s2=_ideesPourLeReste(r2,21);
+    o.manqueProt = r2.prot;
+    o.protLeJour = j2.some(x=>x.macro==='prot');
+    o.protLeSoir = s2.some(x=>x.macro==='prot');
+    /* ⛔ ET CE N'EST PAS « TOUT DISPARAIT » : ce qui reste couvrable, on continue de le dire. */
+    o.soirPasVide = s2.length>0;
+
+    /* ⭐ LE RENDU ET LE CALCUL NE SE CONTREDISENT PAS — c'est le risque propre a une regle qui
+       depend de l'heure : deux lectures de l'horloge a la minute de bascule, et le pied de bloc
+       dirait « il est tard » sous une combinaison de 500 g. */
+    S.foodLog=[
+      {date:t,meal:'matin',name:'Flocons avoine',kcal:380,prot:13,carbs:60,fat:8,ts:Date.now()-3e6,per100:{kcal:380,prot:13,carbs:60,fat:8}},
+      {date:t,meal:'midi',name:'Riz basmati',kcal:350,prot:7,carbs:77,fat:1,ts:Date.now()-1e6,per100:{kcal:350,prot:7,carbs:77,fat:1}}];
+    S.savedFoods=[
+      {name:'Shake protéiné',kcal:120,prot:25,carbs:3,fat:1},
+      {name:'Blanc de poulet',kcal:165,prot:31,carbs:0,fat:3.6,per100:{kcal:110,prot:23,carbs:0,fat:2.4}},
+      {name:'Amandes',kcal:180,prot:6,carbs:4,fat:16,per100:{kcal:600,prot:21,carbs:13,fat:53}}];
+    const hJour=_blocResteHTML(t,14), hSoir=_blocResteHTML(t,21);
+    o.piedJour  = /Il est tard/.test(hJour);
+    o.piedSoir  = /Il est tard/.test(hSoir);
+    o.soirSansPlus = hSoir.indexOf(' + ')<0;
+    /* ⛔ Le texte nie le rattrapage au lieu de le suggerer — la phrase EST le garde-fou. */
+    o.nieRattrapage = /pas un rattrapage/.test(hSoir);
+    /* ⛔ Ce qui ne bouge pas : la mention « une idee, pas une consigne » reste des deux cotes. */
+    o.mentionJour = /Une idée, pas une consigne/.test(hJour);
+    o.mentionSoir = /Une idée, pas une consigne/.test(hSoir);
+    /* ⛔ NON-REGRESSION : les trois garde-fous d'origine tiennent le soir aussi. Un jour PASSE
+       ne rend rien, quelle que soit l'heure. */
+    o.passeSoir = _blocResteHTML('2020-01-01',21)==='';
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(F.err) t('CXXXIV n\'a pas pu tourner', false, F.err);
+  else{
+    t('⛔ la bascule est à 20 h PILE — 19 h est encore le jour (décision de Michel, pas un ordre de grandeur)',
+      JSON.stringify(F.pas)==='[false,true,false,true]', JSON.stringify(F.pas));
+    t('⭐⭐ à 14 h une idée COMBINE deux aliments, à 21 h JAMAIS — mêmes données, seule l\'heure change',
+      F.jourCombine===true && F.soirCombine===false,
+      JSON.stringify({jour:F.jourTxt, soir:F.soirTxt}));
+    /* ⚠️⚠️ CE TEMOIN A ETE DURCI AVANT D'ETRE LIVRE, et il faut dire pourquoi : ecrit « <= 150 »
+       tout seul, il serait VERT si le soir ne proposait plus RIEN — `Math.max(0)` rend 0, et
+       0 <= 150. *Un seuil « au plus » ne distingue pas « c'est borne » de « je n'ai rien
+       mesure ».* C'est exactement le faux vert de ft-v1017, retrouve dans mon propre bloc. Il
+       exige donc qu'une quantite ait REELLEMENT ete lue dans le texte affiche. */
+    t('⭐ les bornes rétrécissent le soir : ≤ 150 g et ≤ 1 portion (contre 250 g / 2 le jour)',
+      F.soirNb>0 && (F.soirMaxG>0||F.soirMaxPor>0)
+      && F.soirMaxG<=150 && F.soirMaxPor<=1 && F.jourMaxG>150,
+      JSON.stringify({soirLignes:F.soirNb,soirMaxG:F.soirMaxG,soirMaxPortions:F.soirMaxPor,jourMaxG:F.jourMaxG,soir:F.soirTxt,jour:F.jourTxt}));
+    t('⛔⛔ ANTI-TCA : un manque qu\'on ne peut plus combler ce soir SE TAIT (il est affiché le jour)',
+      F.protLeJour===true && F.protLeSoir===false,
+      'manque protéines = '+F.manqueProt+' g · affiché à 14 h='+F.protLeJour+' · à 21 h='+F.protLeSoir);
+    t('⛔ … et ce n\'est PAS « tout disparaît » : ce qui reste couvrable est toujours dit',
+      F.soirPasVide===true, 'lignes le soir (manque énorme) = '+F.soirNb);
+    t('⭐ le pied de bloc DIT pourquoi c\'est plus léger — et seulement le soir',
+      F.piedSoir===true && F.piedJour===false, JSON.stringify({jour:F.piedJour,soir:F.piedSoir}));
+    t('⛔⛔ le rendu et le calcul ne se contredisent JAMAIS (« il est tard » ne surmonte pas une combinaison)',
+      F.piedSoir===true && F.soirSansPlus===true, '');
+    t('⛔ la phrase NIE le rattrapage au lieu de le suggérer (P21)',
+      F.nieRattrapage===true, '');
+    t('⛔ NON-RÉGRESSION : « une idée, pas une consigne » reste des deux côtés',
+      F.mentionJour===true && F.mentionSoir===true, '');
+    t('⛔ NON-RÉGRESSION : un jour PASSÉ ne rend rien, le soir aussi',
+      F.passeSoir===true, '');
+  }
+  await cx.close();
+}
+
+/* == BLOC CXXXV - UN GRAS DANS LE TEXTE COUPAIT LA PHRASE EN DEUX (ft-v1029) ==
+   Trouve A LA CAPTURE en verifiant tout autre chose : la pop-up « Quoi de neuf » v60 affichait
+   « En arrivant sur / Nutrition / , tu vois maintenant / ta journee d'abord / : ce que tu as
+   mange… » — chaque mot mis en valeur sur SA PROPRE LIGNE, et une virgule orpheline en debut de
+   ligne.
+   ⛔ LA CAUSE EST UNE REGLE TROP LARGE : `.sw-feat b{display:block}` visait le TITRE de la carte,
+   et attrapait aussi les gras du `<small>`. *Le defaut dormait depuis l'ecriture de `.sw-feat`* :
+   il fallait qu'une description contienne du gras pour se voir — une seule le fait, celle de
+   ft-v1025. *Un defaut invisible n'est pas un defaut absent, il attend son premier cas.*
+   ⛔ ET LE TEMOIN FIGE LES DEUX MOITIES : le titre DOIT rester en bloc (c'est ce que la regle
+   voulait), le gras du texte DOIT rester en ligne. Sans la premiere, on « corrigerait » en
+   supprimant la regle, et tous les titres de cartes se colleraient a leur texte. */
+console.log('\n-- CXXXV. Un gras dans le texte ne coupe plus la phrase (ft-v1029) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pg=await cx.newPage();
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(1500);
+  const F=await pg.evaluate(()=>{
+   try{
+    const box=document.createElement('div');
+    box.innerHTML='<div class="sw-feat sw-solo"><span>X</span><div><b>Titre</b>'
+                 +'<small>Du texte avec <b>un gras</b> au milieu de la phrase.</small></div></div>';
+    document.body.appendChild(box);
+    const titre=box.querySelector('div>div>b'), dansTexte=box.querySelector('small b');
+    const o={ lus: !!(titre&&dansTexte),
+              titre: titre?getComputedStyle(titre).display:null,
+              dansTexte: dansTexte?getComputedStyle(dansTexte).display:null };
+    box.remove(); return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(F.err) t('CXXXV n\'a pas pu tourner', false, F.err);
+  else{
+    /* ⛔ D'ABORD : le témoin a-t-il vraiment trouvé les deux éléments ? Sinon les deux règles
+       ci-dessous seraient vertes en comparant `null` à rien. */
+    t('⛔ le témoin a bien LU les deux gras (sinon il serait vert en ne mesurant rien)',
+      F.lus===true, JSON.stringify(F));
+    t('⭐⭐ un gras DANS le texte reste EN LIGNE — la phrase ne se coupe plus',
+      F.dansTexte==='inline', 'display = '+F.dansTexte);
+    t('⛔ NON-RÉGRESSION : le TITRE de la carte reste en bloc (c\'est ce que la règle voulait)',
+      F.titre==='block', 'display = '+F.titre);
+  }
+  await cx.close();
+}
+/* == BLOC CXXXVI - LE REPOS EST UN MAXIMUM, PAS UN COMPTE A REBOURS (ft-v1030) ==
    Decision de Michel : « on peut repartir avant, c'est autorise ». Elle vient des 6 programmes
    de sa coach, ou la colonne s'intitule litteralement « Repos maximum » et porte des PLAGES
    (« 45 sec max », « 1 a 2 min »), jamais un chiffre a respecter.
@@ -14679,7 +14864,7 @@ console.log('\n-- CXXXIII. Le tempo descend jusqu\'a la donnee (ft-v1028) --');
    La fonctionnalite n'a JAMAIS tourne — famille « le correctif pose d'un seul cote ».
    ⚠️ NUMEROTE CXXXV ET PAS CXXXIV, EXPRES : session-A a ft-v1029 en vol et prendra CXXXIV.
    C'est la 4e collision de numero de la semaine ; celle-la se paie d'avance pour 0 centime. */
-console.log('\n-- CXXXV. Le repos est un maximum, pas un compte a rebours (ft-v1030) --');
+console.log('\n-- CXXXVI. Le repos est un maximum, pas un compte a rebours (ft-v1030) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
@@ -14809,7 +14994,7 @@ console.log('\n-- CXXXV. Le repos est un maximum, pas un compte a rebours (ft-v1
   });
   await cx.close();
 
-  if(G.err)t('CXXXV n\'a pas pu tourner',false,G.err);
+  if(G.err)t('CXXXVI n\'a pas pu tourner',false,G.err);
   else{
     /* ⭐⭐ LE TEMOIN QUI REFERME ft-v851 : sans lui, on aurait pose un libelle au-dessus d'un
        chrono qui continue de s'arreter — c'est-a-dire exactement le defaut d'origine. */
