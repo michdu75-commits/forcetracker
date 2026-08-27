@@ -15044,7 +15044,7 @@ console.log('\n-- CXXXVI. Le repos est un maximum, pas un compte a rebours (ft-v
   }
 }
 
-/* == BLOC CXXXVII - LES CARTES NUTRITION ALIGNEES ET JUSTIFIEES (ft-v1033) ==
+/* == BLOC CXXXVII - LES CARTES NUTRITION ALIGNEES ET JUSTIFIEES (ft-v1034) ==
    Michel, 5 captures a l'appui : « visuellement c'est pas propre, il faut que tout soit aligne
    et justifie ».
    ⛔⛔ LE DEFAUT ETAIT MESURABLE, ET SA CAUSE TIENT EN UN MOT : `min-width`. Un MINIMUM laisse
@@ -15063,7 +15063,7 @@ console.log('\n-- CXXXVI. Le repos est un maximum, pas un compte a rebours (ft-v
    3,0 px a 7,0-9,6 px, et le nombre de lignes NE BOUGE PAS. C'est le prix, il est borne.
    ⭐ ET UN DEFAUT TROUVE A LA CAPTURE, que la mesure de position ne voyait pas : « + 250 / g de
    Steak hache » — le nombre finissait une ligne, son unite commencait la suivante. */
-console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v1033) --');
+console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v1034) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
@@ -15160,7 +15160,7 @@ console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v10
 }
 
 /* == BLOC CXXXVIII - LA BARRE « SEANCE » NE LAISSE PLUS LIRE CE QUI DEFILE DESSOUS (ft-v1032) ==
-   /!\ CXXXVII est volontairement SAUTE : session-A a une ft-v1033 en vol et prendra
+   /!\ CXXXVII est volontairement SAUTE : session-A a une ft-v1034 en vol et prendra
    vraisemblablement ce numero. C'est la 3e collision de bloc de la semaine — on paie deux
    numeros plutot qu'un rapport illisible.
 

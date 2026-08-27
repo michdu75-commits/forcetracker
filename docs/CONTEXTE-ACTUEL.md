@@ -6,8 +6,8 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1033`.
-- 📐⭐⭐ **LES CARTES NUTRITION ALIGNÉES ET JUSTIFIÉES — LIVRÉ** (ft-v1033). Michel, 5 captures :
+- **Version en ligne (live) :** `ft-v1034`.
+- 📐⭐⭐ **LES CARTES NUTRITION ALIGNÉES ET JUSTIFIÉES — LIVRÉ** (ft-v1034). Michel, 5 captures :
   *« visuellement c'est pas propre, il faut que tout soit aligné et justifié »*.
   ⛔⛔ **Le défaut était mesurable et sa cause tient en un mot : `min-width`.** Un minimum laisse
   la colonne GRANDIR avec son texte → le contenu démarrait à **116 · 124 · 126 · 126 · 134**, et
