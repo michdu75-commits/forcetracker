@@ -96,7 +96,7 @@ l'attendu sera alors vérifiable — *cite-t-il un jour réel du journal ?*
 **État : à trier.**
 
 ### 🟡 « PAS DE RECORD » NE VEUT PAS DIRE « JAMAIS FAIT » — et le mot doit le dire
-**27/08/2026, correction de Michel en cours de livraison de ft-v1033** : *« est-ce que "pas de
+**27/08/2026, correction de Michel en cours de livraison de ft-v1035** : *« est-ce que "pas de
 record" veut vraiment dire "jamais fait" ? Clairement non. »*
 
 **⭐ Le CODE, lui, était déjà juste** : `_repereDefauts` compte comme repère le record **et**
@@ -158,7 +158,7 @@ transmis à Milo (`coach.js:2561`), **et il sait déjà dire quand il manque** (
 d'attendu vérifiable. ⭐ **MAIS la moitié basse l'est** : *quand aucun record n'existe sur
 l'exercice, Milo ne doit pas prescrire de charge chiffrée.* Ça, du code peut le vérifier — c'est
 la promotion à écrire le jour où on s'y met.
-**⭐ 27/08 — LA MOITIÉ CÔTÉ APP EST LIVRÉE (ft-v1033), ET IL FAUT DIRE LAQUELLE.** L'app **dit**
+**⭐ 27/08 — LA MOITIÉ CÔTÉ APP EST LIVRÉE (ft-v1035), ET IL FAUT DIRE LAQUELLE.** L'app **dit**
 désormais qu'elle n'a pas de repère quand Milo chiffre sur un exercice jamais fait
 (`_repereDefauts`, 9 témoins, bloc CXXXIX). ⛔ **Ce n'est PAS la question de cette entrée** : on
 n'a **pas** empêché Milo de chiffrer, et on n'a **pas** introduit le registre « lourd ». On a

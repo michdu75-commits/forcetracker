@@ -6,8 +6,8 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1033`.
-- 📍⭐⭐ **UNE CHARGE PRESCRITE SANS REPÈRE LE DIT — LIVRÉ** (ft-v1033), application du critère
+- **Version en ligne (live) :** `ft-v1035`.
+- 📍⭐⭐ **UNE CHARGE PRESCRITE SANS REPÈRE LE DIT — LIVRÉ** (ft-v1035), application du critère
   donné par Michel : *« la coach savait que moi je m'y connais ; tout le monde ne connaît pas ce
   que représente le "lourd" »*. 👉 La question n'était pas *chiffrer ou qualifier*, mais
   **« a-t-on la référence ? »**. ⛔⛔ Trou mesuré : `_intensiteDefauts` se tait **entièrement**
@@ -17,6 +17,24 @@
   telle quelle) → comparaison normalisée, sinon on affirmait un **fait faux sur la personne** (R29).
   ⏭️ **Ce que ça ne fait PAS** : ça n'empêche pas Milo de chiffrer. Le registre qualitatif
   (« lourd ») reste **une décision produit de Michel**, non tranchée.
+- 📐⭐⭐ **LES CARTES NUTRITION ALIGNÉES ET JUSTIFIÉES — LIVRÉ** (ft-v1034). Michel, 5 captures :
+  *« visuellement c'est pas propre, il faut que tout soit aligné et justifié »*.
+  ⛔⛔ **Le défaut était mesurable et sa cause tient en un mot : `min-width`.** Un minimum laisse
+  la colonne GRANDIR avec son texte → le contenu démarrait à **116 · 124 · 126 · 126 · 134**, et
+  les idées de « ce qu'il te reste » à **125 · 147 · 152** (27 px). Après : **138** et **144**,
+  pour toutes les lignes. Colonnes fixes en grille, largeurs **mesurées** sur le plus long
+  libellé et épinglées par un témoin.
+  ⭐⭐ **Le témoin vérifie une ÉGALITÉ, pas une valeur** : un x en dur deviendrait faux au premier
+  changement de police, et il faudrait le corriger sans rien apprendre.
+  ⚠️ **« Justifié » a été mesuré avant d'être appliqué** : écart entre mots 3,0 → 7,0-9,6 px,
+  **sans changer le nombre de lignes ni la hauteur**. `hyphens:auto` est posé pour Safari et ne
+  change rien dans le Chromium des tests — c'est écrit plutôt que présenté comme vérifié.
+  ⭐ **Un défaut trouvé à la CAPTURE** que la mesure de position ne voyait pas : *« + 250 / g de
+  Steak haché »* — parfaitement aligné, et illisible. Espace insécable partout.
+  ⚠️⚠️ **Trouvé au passage, NON corrigé exprès** : `.tip-box` est déclarée **deux fois** dans
+  `style.css`, et le bloc qui l'entoure **a déjà divergé** (`.dose-val` 15px/800 vs 16px/900 —
+  la première est du code mort). C'est **R2** en vrai. Le nettoyage demande de vérifier chaque
+  règle du bloc : à faire à part, pas au milieu d'un correctif d'alignement.
 - 🪟⭐ **LA BARRE « SÉANCE » LAISSAIT LIRE CE QUI DÉFILE DESSOUS — CORRIGÉ** (ft-v1032), trouvé sur
   une **vraie vidéo** de l'iPhone de Michel. `#log-hdr` à `rgba(…,.55)` : *« Choisis par quoi tu
   commences 👇 »* se lisait **à travers**, emoji compris. ⛔ **Pas une bizarrerie iOS** — reproduit

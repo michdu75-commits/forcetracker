@@ -15044,8 +15044,123 @@ console.log('\n-- CXXXVI. Le repos est un maximum, pas un compte a rebours (ft-v
   }
 }
 
+/* == BLOC CXXXVII - LES CARTES NUTRITION ALIGNEES ET JUSTIFIEES (ft-v1034) ==
+   Michel, 5 captures a l'appui : « visuellement c'est pas propre, il faut que tout soit aligne
+   et justifie ».
+   ⛔⛔ LE DEFAUT ETAIT MESURABLE, ET SA CAUSE TIENT EN UN MOT : `min-width`. Un MINIMUM laisse
+   la colonne GRANDIR avec son texte — « Collation 2 ~17h » fait 96 px, « Diner ~21h » 78 px —
+   donc le contenu demarrait a 116 · 124 · 126 · 126 · 134. *Cinq departs pour cinq lignes qui
+   se lisent en colonne.* Meme cause dans « ce qu'il te reste » : trois boites en flex dont la
+   premiere vaut « 429 g » ou « 86 g » → l'idee demarrait a 125, 147 et 152 (27 px d'ecart).
+   ⭐⭐ LE TEMOIN NE VERIFIE PAS UNE VALEUR, IL VERIFIE UNE EGALITE : tous les departs doivent
+   etre IDENTIQUES. Un x en dur (« 138 ») deviendrait faux au premier changement de police ou
+   de marge, et il faudrait le corriger sans rien apprendre. *Ce qu'on protege, c'est que les
+   lignes soient alignees entre elles — pas qu'elles soient a un endroit precis.*
+   ⛔ ET LA LARGEUR FIXE EST EPINGLEE CONTRE SON PLUS LONG LIBELLE : si quelqu'un ajoute demain
+   un repas au nom plus large, la livraison rougit au lieu de desaligner en silence.
+   ⚠️ « JUSTIFIE » EST MESURE, PAS SUPPOSE : sur une colonne etroite la justification peut faire
+   pire que mieux. Mesure sur les paragraphes reels : l'ecart maximal entre deux mots passe de
+   3,0 px a 7,0-9,6 px, et le nombre de lignes NE BOUGE PAS. C'est le prix, il est borne.
+   ⭐ ET UN DEFAUT TROUVE A LA CAPTURE, que la mesure de position ne voyait pas : « + 250 / g de
+   Steak hache » — le nombre finissait une ligne, son unite commencait la suivante. */
+console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v1034) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2200);
+  const F=await pg.evaluate(()=>{
+   try{
+    const o={}, t=today();
+    S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';S.nutritionPhase='charge';
+    const J=n=>{const d=new Date(t+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    const e=(d,meal,name,h,k,p,c,f)=>({date:d,meal:meal,name:name,kcal:k,prot:p,carbs:c,fat:f,
+      ts:new Date(d+'T'+String(h).padStart(2,'0')+':00:00').getTime(),
+      per100:{kcal:k,prot:p,carbs:c,fat:f}});
+    /* Les 5 repas, pour que les 5 libellés soient présents — dont le plus large. */
+    S.foodLog=[];
+    [1,3,6,9,15].forEach(dd=>{ const d=J(dd);
+      S.foodLog.push(e(d,'petitdej','Banane, chair sans peau, crue',10,90,1,23,0));
+      S.foodLog.push(e(d,'dejeuner','Steak haché, 5% Matière Grasse, France, VBF (U)',13,137,21,0,5));
+      S.foodLog.push(e(d,'collation',"POM'POTES Compotes Gourdes Pomme Nature 1x90g",16,60,0,14,0));
+      S.foodLog.push(e(d,'collation2','Iso zero protein (ASL)',17,156,35,2,1));
+      S.foodLog.push(e(d,'diner','Oeuf cru',21,140,12,1,10)); });
+    S.foodLog.push(e(t,'petitdej','Banane, chair sans peau, crue',10,90,1,23,0));
+    S.savedFoods=[{name:'Iso zero protein (ASL)',kcal:156,prot:35,carbs:2,fat:1},
+      {name:'Steak haché, 5% Matière Grasse, France, VBF (U)',kcal:137,prot:21,carbs:0,fat:5,per100:{kcal:137,prot:21,carbs:0,fat:5}},
+      {name:"Huile d'olive vierge extra",kcal:90,prot:0,carbs:0,fat:10,per100:{kcal:900,prot:0,carbs:0,fat:100}}];
+    goScreen('nutrition'); renderNutrition();
+
+    /* ── ① la carte « ce que l'app a appris » ────────────────────────────── */
+    const lignes=[...document.querySelectorAll('#nu-appris .nu-lgn')];
+    o.nbLignes=lignes.length;
+    o.apprisX=[...new Set(lignes.map(d=>Math.round(d.children[1].getBoundingClientRect().left)))];
+    o.apprisLblW=[...new Set(lignes.map(d=>Math.round(d.children[0].getBoundingClientRect().width)))];
+    /* ⛔ La colonne fixe doit CONTENIR le plus long libellé, sinon il passe à la ligne. */
+    const mes=(txt,css)=>{const s=document.createElement('span');
+      s.style.cssText='position:absolute;visibility:hidden;white-space:nowrap;'+css;
+      s.textContent=txt; document.body.appendChild(s);
+      const w=s.getBoundingClientRect().width; s.remove(); return Math.ceil(w);};
+    o.apprisPlusLarge=Math.max(...['Petit-déj ~10h','Déjeuner ~13h','Collation ~16h',
+      'Collation 2 ~17h','Dîner ~21h','Autre ~12h'].map(x=>mes(x,'font-size:12.5px;font-weight:700;')));
+    o.apprisColonne=lignes.length?Math.round(lignes[0].children[0].getBoundingClientRect().width):0;
+
+    /* ── ② « ce qu'il te reste, en vrai » ────────────────────────────────── */
+    const r=[...document.querySelectorAll('#nu-today .nu-reste-lgn')];
+    o.nbReste=r.length;
+    o.resteX=[...new Set(r.map(d=>Math.round(d.children[1].getBoundingClientRect().left)))];
+    o.resteColonne=[...new Set(r.map(d=>Math.round(d.children[0].getBoundingClientRect().width)))];
+    o.restePlusLarge=Math.max(...['429 g de glucides','222 g de protéines','86 g de lipides']
+      .map(x=>mes(x,'font-size:13px;font-weight:800;')));
+
+    /* ── ③ aucun nombre séparé de son unité (trouvé À LA CAPTURE) ────────── */
+    const idees=(typeof _ideesPourLeReste==='function')?_ideesPourLeReste(_resteDuJour(t),14):[];
+    o.idees=idees.map(x=>x.idee);
+    /* Une espace ORDINAIRE entre un chiffre et « g » ou « × » peut se couper. */
+    o.coupables=idees.map(x=>x.idee).filter(s=>/\d ( g|×)/.test(s));
+
+    /* ── ④ la justification est bien APPLIQUÉE (style calculé, pas le fichier) ── */
+    const just=[...document.querySelectorAll('#s-nutrition .txt-just')];
+    o.nbJust=just.length;
+    o.alignements=[...new Set(just.map(d=>getComputedStyle(d).textAlign))];
+
+    /* ── ⑤ règle d'or #9 ─────────────────────────────────────────────────── */
+    const f=document.getElementById('nb-log');
+    o.fab=f?[Math.round(f.getBoundingClientRect().left),Math.round(f.getBoundingClientRect().top)]:null;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+  if(F.err) t('CXXXVII n\'a pas pu tourner', false, F.err);
+  else{
+    t('⛔ le témoin a bien VU les deux cartes (sinon il serait vert en ne mesurant rien)',
+      F.nbLignes>=4 && F.nbReste>=2, 'lignes de repas='+F.nbLignes+' · lignes de reste='+F.nbReste);
+    t('⭐⭐ « ce que l\'app a appris » : les 5 lignes démarrent au MÊME x (avant : 116→134)',
+      F.apprisX.length===1, 'départs distincts = '+JSON.stringify(F.apprisX));
+    t('⛔ … et la colonne des libellés est FIXE, pas un `min-width` qui grandit',
+      F.apprisLblW.length===1, 'largeurs distinctes = '+JSON.stringify(F.apprisLblW));
+    t('⛔ la colonne CONTIENT le plus long libellé (un repas plus large fera rougir, pas désaligner)',
+      F.apprisColonne>=F.apprisPlusLarge, 'colonne '+F.apprisColonne+' px · plus long libellé '+F.apprisPlusLarge+' px');
+    t('⭐⭐ « ce qu\'il te reste » : les idées démarrent au MÊME x (avant : 125 · 147 · 152)',
+      F.resteX.length===1, 'départs distincts = '+JSON.stringify(F.resteX));
+    t('⛔ … et sa colonne de gauche contient « 222 g de protéines », le plus large',
+      F.resteColonne.length===1 && F.resteColonne[0]>=F.restePlusLarge,
+      'colonne '+JSON.stringify(F.resteColonne)+' px · plus large '+F.restePlusLarge+' px');
+    /* ⭐ Celui-ci vient de la CAPTURE, pas de la mesure de position : « + 250 / g de Steak
+       haché » était parfaitement aligné ET illisible. */
+    t('⭐ aucun nombre n\'est séparé de son unité (espace insécable — vu à la capture)',
+      F.coupables.length===0, JSON.stringify(F.coupables.length?F.coupables:F.idees));
+    t('⭐ la justification est APPLIQUÉE (style calculé, pas le fichier)',
+      F.nbJust>=3 && F.alignements.length===1 && F.alignements[0]==='justify',
+      F.nbJust+' paragraphe(s) · alignements = '+JSON.stringify(F.alignements));
+    t('🔴 règle d\'or #9 : le bouton central « + » est à sa place',
+      !!F.fab && F.fab[1]>0, JSON.stringify(F.fab));
+  }
+  await cx.close();
+}
+
 /* == BLOC CXXXVIII - LA BARRE « SEANCE » NE LAISSE PLUS LIRE CE QUI DEFILE DESSOUS (ft-v1032) ==
-   /!\ CXXXVII est volontairement SAUTE : session-A a une ft-v1031 en vol et prendra
+   /!\ CXXXVII est volontairement SAUTE : session-A a une ft-v1034 en vol et prendra
    vraisemblablement ce numero. C'est la 3e collision de bloc de la semaine — on paie deux
    numeros plutot qu'un rapport illisible.
 
@@ -15112,7 +15227,7 @@ console.log('\n-- CXXXVIII. La barre « Seance » ne laisse plus lire dessous (f
   }
 }
 
-/* == BLOC CXXXIX - UNE CHARGE PRESCRITE SANS REPERE LE DIT (ft-v1033) ==
+/* == BLOC CXXXIX - UNE CHARGE PRESCRITE SANS REPERE LE DIT (ft-v1035) ==
    Applique le critere donne par Michel : « la coach savait que moi je m'y connais ; tout le
    monde ne connait pas ce que represente le lourd ». Elle ecrit « lourd » parce qu'un
    REFERENTIEL COMMUN existe entre eux. Milo parle a des gens dont il ne sait parfois rien.
@@ -15125,7 +15240,7 @@ console.log('\n-- CXXXVIII. La barre « Seance » ne laisse plus lire dessous (f
    TELLE QUELLE (il connait les alias declares, pas les variantes d'accent). Sans comparaison
    normalisee, on annoncait « pas de repere » a quelqu'un dont le record existe — un fait FAUX
    sur la personne, le pire cout d'erreur (R29). */
-console.log('\n-- CXXXIX. Une charge prescrite sans repere le dit (ft-v1033) --');
+console.log('\n-- CXXXIX. Une charge prescrite sans repere le dit (ft-v1035) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();

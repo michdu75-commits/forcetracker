@@ -2003,16 +2003,23 @@ function _blocResteHTML(td, heure){
   const cols={prot:'var(--green)',carbs:'var(--orange)',fat:'var(--gold)'};
   return '<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--sep);">'
     +'<div style="font-size:11.5px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Ce qu\'il te reste, en vrai</div>'
-    +idees.map(i=>'<div style="display:flex;align-items:baseline;gap:7px;margin-bottom:6px;font-size:13px;line-height:1.45;">'
-        +'<span style="color:'+cols[i.macro]+';font-weight:800;white-space:nowrap;">'+i.manque+' g</span>'
-        /* ⚠️ `nowrap` : sans lui, « de glucides — » se coupe et le tiret se retrouve seul sur la
-           ligne suivante (vu à la capture, 390 px). */
-        +'<span style="color:var(--t3);white-space:nowrap;">de '+i.label+' —</span>'
-        +'<span style="color:var(--t1);font-weight:700;">'+(typeof _escNote==='function'?_escNote(i.idee):i.idee)+'</span>'
+    /* ⛔⛔ DEUX COLONNES FIXES, PLUS TROIS BOÎTES QUI SE POUSSENT (ft-v1031). En flex, la
+       largeur de « 429 g » et celle de « 86 g » ne sont pas les mêmes, donc TOUT ce qui suit
+       se décalait : mesuré, l'idée démarrait à 125, 147 et 152 px sur trois lignes voisines —
+       27 px d'écart. *Un manque et son idée se lisent en colonne : ils doivent commencer au
+       même endroit.* Le manque et sa macro tiennent désormais dans une colonne de 120 px
+       (mesurée sur « 222 g de protéines », le plus large : 119 px). */
+    +idees.map(i=>'<div class="nu-reste-lgn" style="margin-bottom:6px;font-size:13px;line-height:1.45;">'
+        +'<span><span style="color:'+cols[i.macro]+';font-weight:800;">'+i.manque+'\u00A0g</span>'
+        +'<span style="color:var(--t3);"> de '+i.label+'</span></span>'
+        +'<span style="color:var(--t1);font-weight:700;min-width:0;">'+(typeof _escNote==='function'?_escNote(i.idee):i.idee)
         /* ⛔ ON DIT CE QUE ÇA COUVRE VRAIMENT quand la combinaison ne suffit pas : faire croire
-           qu'elle tombe juste serait une fausse précision (R29). */
-        +((i.couvert && i.couvert < i.manque-5)?'<span style="color:var(--t3);white-space:nowrap;">(≈ '+i.couvert+' g)</span>':'')
-      +'</div>').join('')
+           qu'elle tombe juste serait une fausse précision (R29).
+           ⚠️ DANS la même cellule (ft-v1031) : en flex c'était une 4ᵉ boîte, donc le « (≈ 65 g) »
+           partait se coller au bord droit de la PREMIÈRE ligne pendant que l'idée courait en
+           dessous — détaché de ce qu'il qualifie. Il suit maintenant le texte. */
+        +((i.couvert && i.couvert < i.manque-5)?' <span style="color:var(--t3);font-weight:400;white-space:nowrap;">(≈ '+i.couvert+'\u00A0g)</span>':'')
+      +'</span></div>').join('')
     /* ⛔ « à peu près » n'est pas de la modestie de façade : la portion enregistrée est une
        estimation, et le dire évite qu'on prenne ça pour une prescription au gramme. */
     /* ⛔⛔ LE SOIR, ON NIE LE RATTRAPAGE AU LIEU DE LE SUGGÉRER (anti-TCA, P21). Sans cette
@@ -2020,7 +2027,7 @@ function _blocResteHTML(td, heure){
        *« dépêche-toi, il te reste 40 minutes »* — soit exactement le stress que la nutrition
        ne doit jamais fabriquer. Et elle dit POURQUOI c'est plus léger : sinon le changement
        ressemble à un bug (R30 appliqué à l'écran). */
-    +'<div style="font-size:11px;color:var(--t3);line-height:1.4;margin-top:8px;">'
+    +'<div class="txt-just" style="font-size:11px;color:var(--t3);line-height:1.4;margin-top:8px;">'
       +(soir?'Il est tard — <b>une idée légère, pas un rattrapage</b>. Ce qui manque ce soir ne se rattrape pas ce soir. '
             :'')
       +'À peu près — calculé sur <b>tes</b> aliments, pas sur une table générique. Une idée, pas une consigne.</div>'
@@ -2049,16 +2056,19 @@ function _blocApprisHTML(){
   if(pa.etat==='insuffisant'){
     /* ⛔ Le ton est FACTUEL, jamais une relance : « note ce que tu manges » serait une
        injonction, et la nutrition ne doit jamais devenir une source de pression (P21). */
-    corps='<div style="font-size:12.5px;color:var(--t3);line-height:1.5;">'
+    corps='<div class="txt-just" style="font-size:12.5px;color:var(--t3);line-height:1.5;">'
       +pa.nbJours+' jour'+(pa.nbJours>1?'s':'')+' noté'+(pa.nbJours>1?'s':'')+' — pas encore de quoi dégager une habitude. '
       +'À partir de 3 jours, l\'app commence à reconnaître ce que tu manges vraiment.</div>';
   } else {
     const lignes=Object.keys(pa.habitudes).filter(m=>LBL[m]).map(m=>{
       const noms=pa.habitudes[m].map(x=>esc(x.nom)).join(' · ');
       const h=pa.heures[m];
-      return '<div style="display:flex;gap:8px;margin-bottom:5px;font-size:12.5px;line-height:1.45;">'
-        +'<span style="color:var(--t3);min-width:78px;font-weight:700;">'+LBL[m]+((h!==undefined)?' <span style="font-weight:400;">~'+h+'h</span>':'')+'</span>'
-        +'<span style="color:var(--t1);flex:1;min-width:0;">'+noms+'</span></div>';
+      /* ⛔ COLONNE FIXE, PAS `min-width` (ft-v1031) : un minimum laisse la colonne grandir
+         avec son texte, donc « Collation 2 ~17h » décalait sa ligne de 18 px par rapport à
+         « Dîner ~21h ». Mesuré : 5 départs différents pour 5 lignes lues en colonne. */
+      return '<div class="nu-lgn" style="margin-bottom:5px;font-size:12.5px;line-height:1.45;">'
+        +'<span style="color:var(--t3);font-weight:700;">'+LBL[m]+((h!==undefined)?' <span style="font-weight:400;">~'+h+'h</span>':'')+'</span>'
+        +'<span style="color:var(--t1);min-width:0;">'+noms+'</span></div>';
     }).join('');
     /* ⭐⭐ « SUR TOUT TON JOURNAL » N'EST PAS UNE FORMULE DE POLITESSE (26/08/2026, ft-v1026) —
        c'est ce qui empêche deux chiffres justes de se contredire à l'écran. Vu sur une vraie
@@ -2072,10 +2082,10 @@ function _blocApprisHTML(){
        ⚠️ Le millier est séparé comme partout ailleurs — « 1920 » à côté de « 2 495 » se lit
        comme une coquille, pas comme une mesure. */
     corps=lignes
-      +'<div style="font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:8px;">'
+      +'<div class="txt-just" style="font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:8px;">'
       +'Observé sur <b>tout ton journal</b> : '+pa.nbJours+' jour'+(pa.nbJours>1?'s':'')+' noté'+(pa.nbJours>1?'s':'')
       +(pa.etendue>pa.nbJours?', étalés sur '+pa.etendue+' jours':'')
-      +' · en moyenne <b>'+(+pa.moyennes.kcal).toLocaleString('fr-FR')+' kcal</b> et <b>'+pa.moyennes.prot+' g</b> de protéines par jour noté.'
+      +' · en moyenne <b>'+(+pa.moyennes.kcal).toLocaleString('fr-FR')+'\u00A0kcal</b> et <b>'+pa.moyennes.prot+'\u00A0g</b> de protéines par jour noté.'
       /* ⚠️ On DIT que c'est partiel plutôt que de laisser croire à une habitude établie (R32). */
       +(pa.etat==='partiel'?' <b>C\'est encore court</b> — l\'app décrit ces jours-là, pas tes habitudes.':'')
       +'</div>';
@@ -2084,7 +2094,7 @@ function _blocApprisHTML(){
     +'<div style="font-size:12px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">🧠 Ce que l\'app a appris de ton alimentation</div>'
     +corps
     /* ⛔ Le rappel qui compte pour Michel : ça ne coûte rien. */
-    +'<div style="font-size:11px;color:var(--t3);margin-top:8px;opacity:.85;">Calculé sur ton téléphone, sans aucun appel à l\'IA.</div>'
+    +'<div class="txt-just" style="font-size:11px;color:var(--t3);margin-top:8px;opacity:.85;">Calculé sur ton téléphone, sans aucun appel à l\'IA.</div>'
     +'</div>';
 }
 

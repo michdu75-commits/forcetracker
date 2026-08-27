@@ -1897,7 +1897,7 @@ function _intensiteDefauts(nom, sets){
   return out;
 }
 
-/* 📍 UNE CHARGE PRESCRITE SANS REPÈRE LE DIT (27/08/2026, ft-v1033)
+/* 📍 UNE CHARGE PRESCRITE SANS REPÈRE LE DIT (27/08/2026, ft-v1035)
    Vient du critère donné par Michel : *« la coach savait que moi je m'y connais ; tout le monde
    ne connaît pas ce que représente le "lourd" »*. Elle écrit « lourd » parce qu'un **référentiel
    commun** existe entre eux — le mot ne se suffit jamais à lui-même. Milo, lui, parle à des gens
@@ -6317,7 +6317,7 @@ function _appliqueMiloSession(newExs, data, mode, btn){
   (newExs||[]).forEach(o=>{
     const d=(typeof _intensiteDefauts==='function')?_intensiteDefauts(o.name,o.sets):[];
     if(d.length){ o.intensiteWarn=d; alertes.push(o.name); }
-    /* 📍 ft-v1033 : et là où le contrôle d'intensité SE TAIT faute de repère, on dit qu'il n'y
+    /* 📍 ft-v1035 : et là où le contrôle d'intensité SE TAIT faute de repère, on dit qu'il n'y
        en a pas. Les deux ne se recouvrent jamais — `_repereDefauts` rend `[]` dès qu'un record
        ou un historique existe, `_intensiteDefauts` rend `[]` quand il n'y en a aucun.
        ⛔ Le message part dans `seanceWarn` et non `intensiteWarn` : il porte son propre 📍, et
@@ -6342,7 +6342,7 @@ function _appliqueMiloSession(newExs, data, mode, btn){
     const bl=verdict.blessures.find(x=>x.nom===o.name);
     if(bl) w.push('🛡️ Sollicite '+bl.zones.join(', ')+' — une zone que tu protèges en ce moment.');
     if(verdict.doublons.indexOf(o.name)>=0) w.push('🔁 Déjà présent ailleurs dans cette séance.');
-    /* ⚠️ ON CONCATÈNE, ON N'AFFECTE PAS (ft-v1033) — c'était `o.seanceWarn=w`, une affectation.
+    /* ⚠️ ON CONCATÈNE, ON N'AFFECTE PAS (ft-v1035) — c'était `o.seanceWarn=w`, une affectation.
        Tant que ce bloc était le seul à écrire ici, c'était sans conséquence ; depuis que
        `_repereDefauts` y met sa ligne juste au-dessus, une affectation l'EFFACERAIT en silence.
        *Un champ partagé se remplit par ajout, jamais par remplacement* (R2). */
