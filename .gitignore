@@ -5,6 +5,15 @@
 # NB : .clasp.json (scriptId + rootDir) N'EST PAS ignoré — il est nécessaire à
 # l'auto-déploiement et ne contient aucune clé secrète.
 
+# ⚠️ Paquets et archives téléchargés dans le dossier de travail (27/08/2026)
+# Un `imageio_ffmpeg-…-.whl` de 29 Mo — 21 % du dépôt — est entré par un `git add -A`
+# lors d'une session où il fallait lire une vidéo envoyée par Michel. Personne ne le
+# référençait, et il partait sur le site PUBLIC à chaque déploiement, dans un artefact
+# de 122 Mo. *Un outil installé pour dépanner n'est pas une dépendance du projet.*
+*.whl
+*.tar.gz
+*.tgz
+
 # Dépendances / système
 node_modules/
 .DS_Store
