@@ -16400,7 +16400,7 @@ console.log('\n-- CL. Le RPE : un vocabulaire, pas un 2e système (ft-v1046) --'
   });
   await cx.close();
 
-  if(P.err||P.absente)t('CL n\'a pas pu tourner',false,JSON.stringify(P));
+  if(P.err||P.absente)t('CLI n\'a pas pu tourner',false,JSON.stringify(P));
   else{
     /* ⛔⛔ LE TÉMOIN QUI DÉFINIT CETTE VERSION. */
     t('⛔⛔ basculer d\'échelle ne change RIEN à la donnée (`set.rir` reste le seul propriétaire)',
@@ -16439,7 +16439,8 @@ console.log('\n-- CL. Le RPE : un vocabulaire, pas un 2e système (ft-v1046) --'
   }
 }
 
-/* == BLOC CL - LA SEANCE PREVUE QUI N'A PAS EU LIEU (ft-v1047) ==
+/* == BLOC CLI - LA SEANCE PREVUE QUI N'A PAS EU LIEU (ft-v1047) ==
+   /!\ CL est pris par le ft-v1046 de session-B (le RPE), decouvert a l'execution.
    Michel, sur la methode de sa coach : « si elle est loupee elle est loupee. C'est pas grave,
    sur une semaine. Plutot elle demande ce qui s'est passe — fatigue, travail, empechement, ca
    peut arriver. » Et sa consigne pour cette version : « attention pas d'ia surtout ».
@@ -16452,7 +16453,7 @@ console.log('\n-- CL. Le RPE : un vocabulaire, pas un 2e système (ft-v1046) --'
    ⛔ ZERO APPEL API : tout est deterministe et local, un temoin compte les appels sortants.
    ⚠️ ET LE DEFAUT TROUVE A LA CAPTURE : « Pas la tete » DEBORDAIT de sa pastille (47 px,
    `.ck-opt-l` en nowrap) — invisible dans le texte rendu. Un temoin mesure le debordement. */
-console.log('\n-- CL. La séance prévue qui n\'a pas eu lieu (ft-v1047) --');
+console.log('\n-- CLI. La séance prévue qui n\'a pas eu lieu (ft-v1047) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   /* ⛔ Horloge figée : tout ce bloc compte des JOURS d'écart (leçon de ft-v1029 — un témoin
