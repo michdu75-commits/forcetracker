@@ -16783,6 +16783,146 @@ Tirage Visage
   }
 }
 
+/* == BLOC CLIV - LA SEANCE PREVUE QUI N'A PAS EU LIEU (ft-v1050) ==
+   /!\ CL a CLIII sont pris par session-B (RPE, export historique...) — 5e collision de la semaine.
+   Michel, sur la methode de sa coach : « si elle est loupee elle est loupee. C'est pas grave,
+   sur une semaine. Plutot elle demande ce qui s'est passe — fatigue, travail, empechement, ca
+   peut arriver. » Et sa consigne pour cette version : « attention pas d'ia surtout ».
+   ⛔⛔ LE TROU EST MESURE, ET IL EST PIRE QUE « NE RIEN DIRE » : `plannedSession()` rend `null`
+   des que la date est passee, puis l'Accueil executait `S.nextPlanned=null; persist()`.
+   *L'app EFFACAIT la trace, en silence.* Une annonce faite par la personne disparaissait sans
+   qu'un mot soit dit — rien pour elle, rien pour Milo (R5 : la donnee morte).
+   ⭐⭐ SA REPONSE NOMME UN TROISIEME COMPORTEMENT : ni rattraper (culpabilisant), ni se taire
+   (indifferent) — POSER UNE QUESTION, avec ses reponses deja legitimees dedans.
+   ⛔ ZERO APPEL API : tout est deterministe et local, un temoin compte les appels sortants.
+   ⚠️ ET LE DEFAUT TROUVE A LA CAPTURE : « Pas la tete » DEBORDAIT de sa pastille (47 px,
+   `.ck-opt-l` en nowrap) — invisible dans le texte rendu. Un temoin mesure le debordement. */
+console.log('\n-- CLIV. La séance prévue qui n\'a pas eu lieu (ft-v1050) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  /* ⛔ Horloge figée : tout ce bloc compte des JOURS d'écart (leçon de ft-v1029 — un témoin
+     dont le verdict dépend de l'heure à laquelle on le lance mesure la montre, pas le code). */
+  await cx.clock.setFixedTime(new Date('2026-08-28T14:00:00+02:00'));
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  /* ⚠️⚠️ LE COMPTEUR RESTE ARMÉ DEPUIS LE DÉBUT, ET C'EST VOLONTAIRE — c'est ce qui rend
+     « zéro » lisible. Mon 1ᵉʳ jet exigeait 0 en tout et rougissait en comptant **2 appels du
+     DÉMARRAGE de l'app** (l'image du QR de partage, le ping Apps Script) — ils existent depuis
+     toujours et n'ont rien à voir avec cette fonctionnalité (déjà nommés en ft-v1021).
+     ⛔ Mais l'armer APRÈS le chargement aurait été pire : « 0 appel » n'aurait plus distingué
+     « rien n'appelle » de « je n'écoute pas ». On garde donc le compteur actif, on relève sa
+     valeur À LA LIGNE DE DÉPART, et on exige que le bloc n'y AJOUTE rien. Les 2 du démarrage
+     sont alors la PREUVE que l'écoute fonctionne. */
+  const sortants=[]; pg.on('request',r=>{ if(!/^http:\/\/localhost:/.test(r.url())) sortants.push(r.url()); });
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const sortantsDepart=sortants.length;
+  const F=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';
+    const raz=(np,sess)=>{
+      S.sessions=sess||[{date:'2026-08-22',exs:[{name:'Squat',sets:[{kg:100,reps:5,done:true}]}],vol:2500}];
+      S.nextPlanned=np; S.missedLog=[]; persist();
+      try{localStorage.removeItem('ft4_milo');}catch(e){}
+      const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+      document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      goScreen('home'); renderHome();
+    };
+    const carte=()=>{ const el=document.getElementById('home-milo');
+      return { txt:(el?el.innerText:'').replace(/\n+/g,' '), n:el?el.querySelectorAll('.ck-opt').length:0 }; };
+
+    /* ① LE CAS CENTRAL : prévue il y a 2 jours, jamais faite. */
+    raz({date:'2026-08-26',label:'Haut du corps'});
+    o.manquee=carte();
+    o.pastilles=[...document.querySelectorAll('#home-milo .ck-opt')].map(x=>{
+      const l=x.querySelector('.ck-opt-l');
+      return { mot:l?l.textContent:'', deborde:l?(l.scrollWidth>l.clientWidth+1):null };
+    });
+    /* ⛔⛔ ET L'ANNONCE N'EST PAS ENCORE EFFACÉE — c'est LE défaut d'origine. */
+    o.pasEffacee = !!(S.nextPlanned&&S.nextPlanned.date==='2026-08-26');
+    /* ② ON RÉPOND → la raison est gardée, l'annonce est close, on ne redemande plus. */
+    _missedAnswer('boulot');
+    o.apres={ log:JSON.parse(JSON.stringify(S.missedLog||[])), np:S.nextPlanned,
+              redemande:(typeof seanceManquee==='function')?seanceManquee():'?' };
+    /* ③ MÊME DATE, DEUXIÈME PASSAGE : la question ne revient pas (R24). */
+    S.nextPlanned={date:'2026-08-26',label:'Haut du corps'}; persist();
+    o.pasDeRelance=(typeof seanceManquee==='function')?seanceManquee():'?';
+    /* ④ LA CROIX vaut « je ne veux pas le dire » — le FAIT est gardé, aucun motif inventé. */
+    raz({date:'2026-08-25',label:''});
+    _dismissMilo('seance-manquee');
+    o.croix={ log:JSON.parse(JSON.stringify(S.missedLog||[])), np:S.nextPlanned };
+    /* ⑤ NON-RÉGRESSION — les cas qui ne doivent RIEN déclencher. */
+    raz({date:'2026-08-30',label:''});                              // à venir
+    o.futur=(typeof seanceManquee==='function')?seanceManquee():'?';
+    raz({date:'2026-08-26',label:''},[{date:'2026-08-27',exs:[],vol:0}]); // honorée après coup
+    o.honoree=(typeof seanceManquee==='function')?seanceManquee():'?';
+    raz({date:'2026-08-01',label:''});                              // 27 jours : hors fenêtre
+    o.vieux=(typeof seanceManquee==='function')?seanceManquee():'?';
+    o.vieuxCarte=carte();
+    /* ⑥ CE QUE MILO REÇOIT (R4a) — et le cadre qui l'empêche d'en faire un reproche. */
+    S.missedLog=[{date:'2026-08-26',label:'Haut du corps',raison:'boulot',repondu:'2026-08-28'},
+                 {date:'2026-08-20',label:'',raison:null,repondu:'2026-08-21'}];
+    S.nextPlanned=null; persist();
+    o.ctx=buildCoachContext();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+  if(F.err) t('CL n\'a pas pu tourner', false, F.err);
+  else{
+    /* ⛔ Le témoin a-t-il VU la carte ? Sans ça, tout le reste serait vert en ne mesurant rien. */
+    t('⛔ le témoin a bien VU la carte, avec ses 5 pastilles',
+      /n'a pas eu lieu/.test(F.manquee.txt) && F.manquee.n===5,
+      JSON.stringify({n:F.manquee.n,txt:F.manquee.txt.slice(0,90)}));
+    /* ⭐⭐ LE DÉFAUT D'ORIGINE : l'annonce n'est plus effacée en silence. */
+    t('⭐⭐ l\'annonce n\'est PLUS effacée en silence — elle est encore là quand la question s\'affiche',
+      F.pasEffacee===true, 'nextPlanned encore posé = '+F.pasEffacee);
+    /* ⛔ Le ton : « pas grave » AVANT la question, et pas un mot sur un rattrapage. */
+    t('⛔ le ton : « pas grave » est dit AVANT la question, et JAMAIS un mot de rattrapage',
+      F.manquee.txt.indexOf('Pas grave')<F.manquee.txt.indexOf('qu\'est-ce qui s\'est passé')
+      && !/rattrap/i.test(F.manquee.txt), F.manquee.txt.slice(0,120));
+    /* ⚠️ Le défaut vu À LA CAPTURE, que la mesure de texte ne pouvait pas voir. */
+    t('⚠️ aucun libellé de pastille ne DÉBORDE de sa pastille (vu à la capture : « Pas la tête »)',
+      F.pastilles.length===5 && F.pastilles.every(p=>p.deborde===false),
+      JSON.stringify(F.pastilles));
+    /* ⭐ La réponse : gardée, et l'annonce close. */
+    t('⭐⭐ répondre garde la RAISON et clôt l\'annonce',
+      F.apres.log.length===1 && F.apres.log[0].raison==='boulot' && F.apres.log[0].date==='2026-08-26' && F.apres.np===null,
+      JSON.stringify(F.apres));
+    t('⛔ … et on ne redemande JAMAIS pour la même date (R24 — sinon ça devient un reproche)',
+      F.apres.redemande===null && F.pasDeRelance===null,
+      JSON.stringify({apres:F.apres.redemande,relance:F.pasDeRelance}));
+    /* ⛔ R15 : tout chemin de fermeture pose son marqueur. */
+    t('⛔ R15 : la CROIX clôt aussi la question — le fait est gardé, AUCUN motif inventé (raison null)',
+      F.croix.log.length===1 && F.croix.log[0].raison===null && F.croix.np===null,
+      JSON.stringify(F.croix));
+    /* ⛔ NON-RÉGRESSIONS — ce sont elles qui rendent le reste lisible. */
+    t('⛔ NON-RÉGRESSION : une séance À VENIR ne déclenche rien',
+      F.futur===null, JSON.stringify(F.futur));
+    t('⛔ NON-RÉGRESSION : une séance faite le jour prévu ou après = annonce HONORÉE, rien à demander',
+      F.honoree===null, JSON.stringify(F.honoree));
+    t('⛔ hors fenêtre (27 jours) : on ne demande plus, et la carte ne parle pas de séance manquée',
+      F.vieux===null && !/n'a pas eu lieu/.test(F.vieuxCarte.txt), F.vieuxCarte.txt.slice(0,80));
+    /* ⭐⭐ R4a : la donnée ATTEINT Milo — sinon l'app sait ce que le coach ignore. */
+    t('⭐⭐ R4a : Milo REÇOIT les séances manquées, avec la raison ET « raison non dite »',
+      /SÉANCES PRÉVUES QUI N'ONT PAS EU LIEU/.test(F.ctx) && /le travail/.test(F.ctx) && /raison non dite/.test(F.ctx),
+      (F.ctx.match(/SÉANCES PRÉVUES[^]{0,150}/)||[''])[0]);
+    /* ⛔ Le CADRE compte autant que la donnée : sans lui, un modèle en fait un reproche. */
+    t('⛔ … et le cadre le lui INTERDIT : pas de rattrapage, pas de total, l\'horizon est la semaine',
+      /ne propose JAMAIS de « rattraper »/.test(F.ctx) && /ne fais aucun total/.test(F.ctx) && /SEMAINE/.test(F.ctx), '');
+    /* ⛔⛔ « PAS D'IA SURTOUT » (Michel) — ça se mesure, ça ne s'affirme pas. */
+    t('⛔⛔ ZÉRO appel réseau AJOUTÉ par la fonctionnalité (consigne de Michel : « pas d\'IA »)',
+      sortants.length===sortantsDepart,
+      JSON.stringify({depart:sortantsDepart,fin:sortants.length,ajoutes:sortants.slice(sortantsDepart)}));
+    /* ⛔ ET CE TÉMOIN-LÀ EMPÊCHE LE PRÉCÉDENT D'ÊTRE VERT EN NE MESURANT RIEN : si l'écoute
+       ne marchait pas, le compteur vaudrait 0 au départ et « rien ajouté » serait vide de sens.
+       Les 2 appels du DÉMARRAGE (QR de partage, ping Apps Script) prouvent qu'elle marche. */
+    t('⛔ … et le compteur écoutait vraiment (il a vu les appels du démarrage, eux)',
+      sortantsDepart>0, 'appels vus au démarrage = '+sortantsDepart);
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

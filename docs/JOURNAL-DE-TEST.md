@@ -868,7 +868,7 @@ peut répondre s'il est interrogé ; il ne propose pas d'activité non demandée
 
 ---
 
-### 🟢⭐⭐ UNE SÉANCE LOUPÉE : **on DEMANDE ce qui s'est passé — ni rattrapage, ni silence**
+### 🔵⭐⭐ UNE SÉANCE LOUPÉE : **on DEMANDE ce qui s'est passé — ni rattrapage, ni silence** → **CONSTRUIT en ft-v1047**
 **28/08/2026 — Michel** : *« alors je ne loupais jamais de séance, mais si elle est loupée elle est
 loupée. C'est pas grave, sur une semaine. Plutôt elle demande ce qui s'est passé — fatigue,
 travail, empêchement, ça peut arriver. »*
@@ -891,7 +891,17 @@ de rien n'était.
 s'est passé, ne parle jamais de rattrapage, et ne qualifie pas la semaine tant qu'une seule séance
 manque.* Les trois moitiés se cherchent par motif dans la réponse.
 
+**✅ 28/08/2026 — CONSTRUIT, et sans un seul appel IA (`ft-v1050`).** Michel : *« un truc sympa
+mais **attention pas d'IA surtout** »*. Une carte sur l'Accueil pose la question avec cinq
+réponses d'un tap (*Fatigue · Boulot · Empêché · Douleur · Flemme*), la réponse part à Milo avec
+le cadre qui lui interdit d'en faire un reproche, et **zéro appel réseau** (mesuré).
+⛔ **Ce que ça n'a PAS fait, et qui reste ouvert** : ceci ne devient **pas** un scénario `EV-0XX`
+du banc d'essai. Le comportement est désormais **déterministe** — c'est du code, pas du jugement
+de modèle. Ce qui resterait à mesurer côté Milo est *sa* réaction quand on lui parle d'une séance
+manquée en conversation : ça, oui, c'est promouvable, et ça coûtera un appel par passe.
+
 ---
+
 
 ## 🔗 Où va le reste
 

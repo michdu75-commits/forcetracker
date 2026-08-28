@@ -154,6 +154,11 @@ const _HELP_DATA={
   home:{
     title:'🏠 Accueil',
     tips:[
+      /* ⛔ POURQUOI CETTE ENTREE EXISTE (ft-v1050) : la carte est RARE, donc quand elle
+         apparait la personne peut se demander d'ou l'app tient ca, et si elle « compte les
+         points ». L'aide repond aux deux : c'est SA propre annonce, et rien n'est totalise.
+         La carte annonce, l'aide explique (R25). */
+      {i:'📅',t:'<b>Une séance annoncée qui n\'a pas eu lieu ? L\'app te demande ce qui s\'est passé.</b> Quand tu dis à Milo « j\'y vais demain » et que la séance ne se fait pas, l\'app ne l\'oublie plus en silence : elle te propose <b>fatigue · boulot · empêché · douleur · flemme</b>, un tap suffit. ⛔ <b>Elle ne te propose jamais de « rattraper »</b> — une séance manquée n\'est pas grave à l\'échelle d\'une semaine, et rien n\'est comptabilisé ni affiché comme un total. ⚠️ Tu peux fermer la carte sans répondre : c\'est une réponse aussi, et on ne te redemandera pas pour cette date. Ce que tu réponds sert à Milo pour <b>adapter ton planning</b>, jamais pour te faire la morale.'},
       {i:'🕰️',t:'<b>Ton histoire sportive</b> : si tu notes une douleur que tu avais déjà eue il y a plus de deux semaines, une carte te rappelle <b>quand</b> et <b>combien de temps</b> elle avait duré. Elle décrit ce que tu avais noté — <b>elle ne prédit rien</b>. Elle ne s\'affiche que quand il y a quelque chose à relier.'},
       {i:'📅',t:'Le calendrier de ton mois, qui se lit d\'un coup d\'œil : <b>plus une case est foncée, plus tu as soulevé lourd ce jour-là</b>. Le petit trait sous le chiffre dit ce que tu as travaillé (rouge = haut, bleu = dos, violet = bas, orange = tronc, vert = full body), et l\'étoile ⭐ marque un RECORD. À gauche, le n° de semaine avec ton tonnage — tape-le pour voir la semaine entière. <b>Tape un jour</b> et son détail s\'ouvre dessous : tonnage, séries, exercices, et comment tu te sentais (sommeil, énergie, humeur, douleur) si tu l\'as noté. Le calendrier devient ta mémoire.'},
       {i:'💚',t:'Ta carte récup existe en <b>deux styles</b> — Menu → Apparence → Carte récup : l\'anneau (par défaut) ou le moniteur, avec ton score en gros et un tracé cardiaque. Mêmes données, mise en forme différente.'},
@@ -954,6 +959,30 @@ function _miloMessage(){
     const when=(typeof _frDayLabel==='function')?_frDayLabel(np.date):np.date;
     return {id:'prevu',txt:'Séance'+lab+' prévue '+when+' 💪 Je m\'en souviens — repose-toi bien d\'ici là.'};
   }
+  /* 📅 LA SÉANCE PRÉVUE QUI N'A PAS EU LIEU (ft-v1050) — AVANT le nettoyage, pas après.
+     ⛔⛔ C'est tout le correctif : la ligne juste en dessous effaçait `nextPlanned` EN SILENCE
+     dès que la date était passée. Une annonce faite par la personne disparaissait sans qu'un
+     mot soit dit. On demande maintenant ce qui s'est passé — une fois, et une seule.
+     ⛔ ET ELLE PASSE DEVANT « relance » ET « retour », exprès : sans ça, quelqu'un qui a loupé
+     sa séance de mardi lirait *« ça fait 4 jours 👀 on se refait une séance ? »* — une phrase
+     qui IGNORE ce qu'il avait annoncé. *Répondre à côté est pire que se taire.* */
+  const mq=(typeof seanceManquee==='function')?seanceManquee():null;
+  if(mq){
+    /* ⚠️ `_frDayLabel` a été écrit pour des dates À VENIR : son cas « jour de la semaine » ne
+       couvre que `diff` de 2 à 6, donc une date PASSÉE en sort toujours en « le 26/08 ».
+       ⛔ On ne l'élargit PAS pour autant — c'est un helper partagé, et « mercredi » pour une
+       date passée se lirait comme le mercredi À VENIR (R2 : on ne change pas le contrat d'une
+       fonction commune pour un seul appelant). Seul « hier », qui n'a aucune ambiguïté, est
+       ajouté ici, localement. */
+    const quand=mq.days===1?'hier':((typeof _frDayLabel==='function')?_frDayLabel(mq.date):mq.date);
+    const lab2=mq.label?' « '+_obsEsc(mq.label)+' »':'';
+    /* ⛔ LE TON EST LA MOITIÉ DU TRAVAIL. « Pas grave » AVANT la question, pas après : posée
+       seule, « qu'est-ce qui s'est passé ? » se lit comme une demande de comptes. Et aucun
+       mot sur un rattrapage — *« si elle est loupée elle est loupée »* (Michel). */
+    return {id:'seance-manquee',chips:true,
+      txt:'Ta séance'+lab2+' prévue '+quand+' n\'a pas eu lieu. Pas grave, ça arrive — '
+         +'qu\'est-ce qui s\'est passé ?'};
+  }
   if(S.nextPlanned&&S.nextPlanned.date){
     try{S.nextPlanned=null;persist();}catch(e){}  // annonce périmée : on nettoie, on retombe sur la logique normale
   }
@@ -996,6 +1025,7 @@ function _renderMiloCard(){
     +'<div style="flex:1;min-width:0;"><div class="milo-name">'+name+'</div><div class="milo-txt">'+m.txt+'</div>'
     +((m.id==='relance'||m.id==='retour')?'<button class="milo-plan ft-press" onclick="event.stopPropagation();_planTomorrow()">📅 J\'y vais demain</button>':'')
     +(m.id==='seance-faite'?'<button class="milo-plan ft-press" onclick="event.stopPropagation();_confirmPlannedDone()">✅ Oui, c\'était celle-là</button>':'')
+    +(m.chips?_missedChips():'')
     +'</div>'
     +'<button class="milo-x" onclick="event.stopPropagation();_dismissMilo(\''+m.id+'\')" aria-label="Fermer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'
     +'</div>';
@@ -1056,7 +1086,52 @@ function _confirmPlannedDone(){
     if(typeof toast==='function')toast('Noté 👍 Séance faite, je la retire de tes prévisions.','success');
   }catch(e){}
 }
+/* 📅 LES PASTILLES DE RAISON (ft-v1050)
+   ⭐ R13 : AUCUNE brique nouvelle. `.ck-opt` est la pastille du check-in (icône + mot), déjà
+   dessinée, déjà testée sur mobile, déjà accessible. On lui passe un emoji au lieu des barres.
+   ⛔ Et l'ordre vient de Michel, pas d'un classement : *« fatigue, travail, empêchement »*
+   sont ses mots, dans son ordre. Le corps et « pas la tête à ça » complètent. */
+function _missedChips(){
+  const R=(typeof MISSED_RAISONS!=='undefined')?MISSED_RAISONS:[];
+  if(!R.length)return '';
+  /* ⚠️ `.ds-row` — le conteneur RÉEL des pastilles du check-in. Mon 1ᵉʳ jet écrivait
+     `.ck-row`, qui n'existe nulle part : aucune erreur, aucun test rouge, juste une rangée
+     sans mise en forme. *Une classe inventée ne se signale jamais toute seule.* */
+  return '<div class="ds-row" style="margin-top:9px;margin-bottom:0;gap:5px;" onclick="event.stopPropagation();">'
+    +R.map(r=>'<button class="ck-opt" style="--ck:var(--t3);padding:7px 2px;" '
+      +'onclick="_missedAnswer(\''+r.id+'\')" aria-label="'+_obsEsc(r.mot)+'">'
+      +'<span style="font-size:17px;line-height:1;">'+r.emo+'</span>'
+      +'<span class="ck-opt-l">'+_obsEsc(r.mot)+'</span></button>').join('')
+    +'</div>';
+}
+/* ⛔ UN SEUL ENDROIT ÉCRIT (R2) — la réponse ET la fermeture passent par ici.
+   ⚠️ `raison:null` est un état PLEIN, pas un trou : fermer la carte sans répondre veut dire
+   « je ne veux pas le dire », et c'est une réponse légitime. On garde alors le FAIT (la séance
+   n'a pas eu lieu) sans inventer de motif — R29 : quand on ne sait pas, on se tait. */
+function _missedRecord(raison){
+  try{
+    const mq=(typeof seanceManquee==='function')?seanceManquee():null;
+    if(!mq)return null;
+    S.missedLog=(S.missedLog||[]).concat([{date:mq.date,label:mq.label||'',raison:raison||null,repondu:today()}]).slice(-12);
+    S.nextPlanned=null;                    // l'annonce est close : elle ne reviendra pas
+    persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+    return mq;
+  }catch(e){return null;}
+}
+function _missedAnswer(id){
+  const mq=_missedRecord(id);
+  if(typeof _renderMiloCard==='function')_renderMiloCard();
+  if(!mq)return;
+  /* ⛔ LE RETOUR NE COMMENTE PAS, IL ACCUSE RÉCEPTION. Pas de « tu te rattraperas », pas de
+     « ce n'est rien » condescendant : on note, et on passe à autre chose (R24, P13). */
+  const p=(typeof missedRaisonPhrase==='function')?missedRaisonPhrase(id):'';
+  if(typeof toast==='function')toast('Noté'+(p?' : '+p:'')+' 👍 On repart de maintenant.','success');
+}
 function _dismissMilo(id){
+  /* ⛔ R15 — TOUT CHEMIN DE FERMETURE POSE SON MARQUEUR. La croix sur la carte « séance
+     manquée » doit CLORE la question : sinon elle revient demain, après-demain, et une
+     question qu'on ne peut pas faire taire devient un reproche. */
+  if(id==='seance-manquee'){ _missedRecord(null); }
   try{localStorage.setItem('ft4_milo',JSON.stringify({date:today(),id}));}catch(e){}
   const el=document.getElementById('home-milo');if(el)el.innerHTML='';
 }
