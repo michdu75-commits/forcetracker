@@ -6,7 +6,24 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1046`.
+- **Version en ligne (live) :** `ft-v1047`.
+- 📅⭐⭐ **LA SÉANCE PRÉVUE QUI N'A PAS EU LIEU — on DEMANDE ce qui s'est passé** (ft-v1047).
+  Méthode de la coach de Michel, dans ses mots : *« si elle est loupée elle est loupée. C'est
+  pas grave, sur une semaine. Plutôt elle demande ce qui s'est passé — fatigue, travail,
+  empêchement, ça peut arriver. »* ⭐⭐ **Sa réponse nomme un TROISIÈME comportement** : ni
+  rattraper (culpabilisant), ni se taire (indifférent) — **poser une question**, avec ses
+  réponses déjà légitimées dedans.
+  ⛔⛔ **Et l'app faisait PIRE que « ne rien dire », mesuré** : `plannedSession()` rend `null`
+  dès que la date est passée, puis l'Accueil exécutait `S.nextPlanned=null; persist()` —
+  ***elle effaçait la trace en silence***. Rien pour la personne, rien pour Milo (**R5**).
+  ⛔ **« Pas d'IA surtout » (Michel) — et ça se mesure** : zéro appel réseau sortant sur tout
+  le bloc de témoins. Déterministe, local, marche hors ligne.
+  ⛔ **Jamais de rattrapage · aucun total · jamais deux fois pour la même date** (R24, R12,
+  P21). La **croix** vaut « je ne veux pas le dire » : le fait est gardé, aucun motif inventé.
+  ⭐ **R13 : zéro CSS ajouté** — la carte de Milo et les pastilles `.ck-opt` du check-in.
+  ⚠️ **Défaut trouvé À LA CAPTURE** : « Pas la tête » **débordait** de sa pastille de 47 px,
+  invisible dans le texte rendu. Un témoin mesure le débordement (`scrollWidth`), pas la
+  longueur des mots.
 - 🎚️⭐⭐ **LE RPE — UN VOCABULAIRE, PAS UN 2ᵉ SYSTÈME** (ft-v1046). Michel l'avait différé, puis
   donné le critère : *« c'est des gens qui connaissent bien qui connaissent le RPE »* — donc il se
   **choisit** (Profil → Échelle d'effort), il ne se demande à personne. **Le RIR reste le défaut.**

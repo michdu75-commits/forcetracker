@@ -3396,6 +3396,30 @@ PROCHAINE SÉANCE — il/elle TE l'a annoncée:
 → Tu peux t'y référer naturellement (« pour ${when.toLowerCase()} », préparer la séance, adapter la récup d'ici là) — sans le répéter à chaque message.
 `;
 })()}
+${(()=>{
+  /* 📅 LES SÉANCES PRÉVUES QUI N'ONT PAS EU LIEU (ft-v1047) — R4a : la donnée existe, elle
+     doit ATTEINDRE Milo, sinon l'app sait quelque chose que le coach ignore.
+     ⛔⛔ ET LE CADRE EST AUSSI IMPORTANT QUE LA DONNÉE. Sans consigne, un modèle à qui on
+     tend une liste de séances manquées en fera un reproche — c'est le réflexe le plus
+     naturel, et c'est exactement ce que la méthode de la coach de Michel ÉVITE : elle
+     demandait ce qui s'était passé, jamais de rattraper.
+     ⛔ L'HORIZON EST LA SEMAINE, dans ses mots : « c'est pas grave, sur une semaine ».
+     Une séance isolée n'est pas un signal (R12 : la tendance, pas le bruit). */
+  const ml=(S.missedLog||[]).filter(m=>m&&m.date);
+  if(!ml.length)return '';
+  const recent=ml.slice(-6);
+  const lignes=recent.map(m=>{
+    const p=(typeof missedRaisonPhrase==='function')?missedRaisonPhrase(m.raison):'';
+    return '- '+m.date+(m.label?' — « '+m.label+' »':'')+' : '+(p?p:'raison non dite');
+  }).join('\n');
+  return `
+SÉANCES PRÉVUES QUI N'ONT PAS EU LIEU (${recent.length} dernière${recent.length>1?'s':''}) — il/elle a répondu lui/elle-même:
+${lignes}
+→ Ce n'est PAS un relevé de fautes. Une séance manquée n'est pas grave à l'échelle d'une SEMAINE : ne la commente pas spontanément, ne propose JAMAIS de « rattraper », ne fais aucun total et ne dis jamais « tu as manqué X séances ».
+→ « raison non dite » veut dire que la personne n'a pas voulu le dire. C'est son droit : ne redemande pas, et n'invente aucune cause.
+→ Ça ne te sert que si ça AIDE : si la même raison revient plusieurs fois sur plusieurs semaines, tu peux le dire une fois, comme un fait, et proposer d'ADAPTER le planning (pas d'exiger plus de discipline).
+`;
+})()}
 
 ${wktText}${_gardienNoteDuJour()}
 ═══ SITUATION DE L'INSTANT ═══
@@ -6317,6 +6341,7 @@ const _DRAWER_CONTENT = {
            version disait « sous l'anneau », un repère qui n'existe plus à cet endroit : une aide
            qui envoie au mauvais endroit est pire qu'une aide absente, parce qu'on la croit. */
         {ic:'🍽️',t:'Nutrition — où est quoi',d:'L\'onglet <b>Macros</b> se lit de haut en bas, <b>du jour vers le durable</b>.<br><br><b>① En haut, ta journée.</b> Ce que tu as mangé en <b>gros</b>, ta cible en <b>petit</b> (elle était écrite deux fois, elle ne l\'est plus qu\'une), <b>trois anneaux</b> — protéines, glucides, lipides — et <b>« ce qu\'il te reste, en vrai »</b> : le reste de la journée traduit en <b>tes</b> aliments (ceux que tu as déjà notés), pas en grammes abstraits. ⛔ Tant que tu n\'as rien noté, aucun chiffre ne s\'affiche : un « 0 / 2 800 » à 9 h du matin serait un reproche, pas une information. ⛔ Et un dépassement ne s\'affiche <b>jamais en rouge</b> — les anneaux se remplissent, ils ne jugent pas.<br><br><b>② Puis, ta journée en cours.</b> Le bouton pour <b>noter</b> un repas, les calories de ta séance du jour, <b>« ce que l\'app a appris de ton alimentation »</b> (calculé sur ton téléphone, sans aucun appel à l\'IA), et <b>ta semaine</b> — la moyenne sur tes <b>jours notés</b>, jamais divisée par 7.<br><br><b>③ Ce que tu manges.</b> Le <b>plan de repas</b> est replié par défaut, exprès : c\'est une liste écrite à l\'avance, la même pour tout le monde. Et l\'option de générer ta semaine avec Milo (elle demande une connexion).<br><br><b>④ Tout en bas, deux lignes repliées.</b> <b>« Comment c\'est calculé »</b> : ton <b>BMR</b>, ton <b>TDEE</b>, la répartition en %, <b>Charge / Décharge</b> et le bouton <b>« ✎ Ajuster mes calories à la main »</b> — les protéines et les lipides restent calés sur ton profil, les glucides s\'ajustent, et tu peux revenir en automatique à tout moment. <b>« Mes réglages alimentaires »</b> : mode <b>cétogène / low carb / paléo / méditerranéen</b>, <b>jeûne intermittent</b>, régime, restrictions et allergies. ⚠️ <b>Rien n\'a été supprimé</b> : ces réglages se touchent deux ou trois fois par an, ils ne sont simplement plus au milieu de ce que tu regardes tous les jours. <b>Le titre de chaque ligne te dit déjà l\'essentiel</b> (ton objectif et ton TDEE, ton régime en cours) — tu n\'as à l\'ouvrir que pour changer quelque chose.'},
+        {ic:'\U0001F4C5',t:'Une s\u00e9ance annonc\u00e9e qui n\'a pas eu lieu',d:'Quand tu annonces une s\u00e9ance (\u00ab j\'y vais demain \u00bb sur l\'Accueil, ou en le disant \u00e0 Milo) et qu\'elle ne se fait pas, l\'app te pose UNE question sur l\'Accueil : \u00ab qu\'est-ce qui s\'est pass\u00e9 ? \u00bb, avec cinq r\u00e9ponses d\'un tap \u2014 fatigue, boulot, emp\u00each\u00e9, douleur, flemme. \u26d4 Trois choses qu\'elle ne fait PAS, et c\'est volontaire : elle ne te propose jamais de RATTRAPER la s\u00e9ance (une s\u00e9ance loup\u00e9e n\'est pas grave \u00e0 l\'\u00e9chelle d\'une semaine) \u2014 elle ne fait AUCUN total et ne t\'affichera jamais \u00ab tu as manqu\u00e9 X s\u00e9ances \u00bb \u2014 et elle ne redemande jamais deux fois pour la m\u00eame date. \u26a0\uFE0F Fermer la carte avec la croix est une r\u00e9ponse comme une autre : l\'app garde alors le fait (la s\u00e9ance n\'a pas eu lieu) sans inventer de motif. \u2b50 \u00c0 quoi \u00e7a sert : Milo re\u00e7oit tes r\u00e9ponses. Si la m\u00eame raison revient plusieurs fois sur plusieurs semaines \u2014 le boulot, par exemple \u2014 il peut te le dire une fois et proposer d\'ADAPTER ton planning \u00e0 ta vraie vie, au lieu de te demander plus de discipline. Avant, l\'app effa\u00e7ait simplement l\'annonce sans un mot : ni toi ni Milo n\'en gardiez la trace. \U0001F50B Tout est calcul\u00e9 dans ton t\u00e9l\u00e9phone, sans le moindre appel \u00e0 l\'IA \u2014 \u00e7a marche hors ligne.'},
         {ic:'💪',t:'Objectif « Perte de gras + muscle »',d:'Nouvel objectif dans Profil → Objectif : la recomposition. But = perdre du gras TOUT EN gardant/formant du muscle (muscles toniques, éviter le « skinny fat »). L\'app applique un léger déficit calorique + des protéines élevées. Si tu veux un chiffre précis (celui de ton coach par ex.), combine-le avec le réglage manuel des calories.'},
         {ic:'💪',t:'Muscles prioritaires',d:'Dans Profil → Objectif, tu peux choisir jusqu\'à 2 muscles à développer EN PRIORITÉ (ex. pectoraux + épaules). Comme un vrai coach qui programme autour des priorités de l\'athlète, Milo donnera alors PLUS de fréquence, de volume et de variantes à ces muscles — dans ses conseils et les programmes qu\'il te génère — tout en maintenant le reste du corps. Important : ça ne change PAS ton objectif (qui reste le pilote) ni ta nutrition ; c\'est juste l\'emphase d\'entraînement, pour cibler où tu veux progresser. C\'est ce qui distingue un vrai coach d\'un générateur de programmes.'},
         {ic:'🎯',t:'Deux objectifs : principal + complémentaire',d:'Dans Profil → Objectif, tu choisis un objectif PRINCIPAL (il pilote ta nutrition — calories, macros, plan de repas) et, si tu veux, une « priorité complémentaire » (2e objectif). Exemple : principal « Force maximale » + complémentaire « Prise de muscle ». La priorité complémentaire affine les conseils de Milo et ton entraînement, mais la nutrition suit TOUJOURS l\'objectif principal — car on ne peut pas viser deux directions de calories opposées en même temps (prendre du muscle = manger plus, perdre du gras = manger moins). L\'app masque d\'ailleurs les combinaisons contradictoires ; et pour « perdre du gras ET prendre du muscle », l\'objectif « Perte de gras + muscle » (recomposition) est fait pour ça.'},

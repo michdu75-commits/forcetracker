@@ -110,6 +110,7 @@ function load(){
     S.prs=_lsJson('ft4_prs',{});
     S.wkt=_lsJson('ft4_wkt',null);
     S.nextPlanned=_lsJson('ft4_nextplanned',null); // séance annoncée à Milo (ft-v601) : {date:'YYYY-MM-DD',label}
+    S.missedLog=_lsJson('ft4_missed',[]); // séances prévues qui n'ont pas eu lieu (ft-v1047) : [{date,label,raison,repondu}]
     S.url=DEFAULT_URL;
     S.email=localStorage.getItem('ft4_email')||'';
     S.connected=localStorage.getItem('ft4_ok')==='1';
@@ -420,6 +421,10 @@ function persist(){
     localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
     localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
     localStorage.setItem('ft4_nextplanned',JSON.stringify(S.nextPlanned||null)); // séance annoncée à Milo (ft-v601)
+    /* ⛔ PLAFOND À 12, et ce n'est pas un garde-fou de taille — c'est un garde-fou de TON.
+       Un historique sans fin des séances manquées deviendrait un registre de fautes, et
+       personne n'a besoin de se voir rappeler un empêchement d'il y a huit mois (P21, P13). */
+    localStorage.setItem('ft4_missed',JSON.stringify((S.missedLog||[]).slice(-12))); // ft-v1047
     localStorage.setItem('ft4_cycle',JSON.stringify(S.cycle||null)); // cycle de force : local-first (était lu mais jamais écrit)
     // Brouillon de secours — effacé quand séance vide ou après sauvegarde dans finishWorkout()
     if(S.wkt&&S.wkt.exs&&S.wkt.exs.length){
@@ -603,6 +608,69 @@ function plannedSession(){
     if(lastDate&&lastDate>=np.date)return null;   // annonce honorée : la séance a été faite
     return {date:np.date,label:String(np.label||''),days:days};
   }catch(e){return null;}
+}
+
+/* 📅 LA SÉANCE PRÉVUE QUI N'A PAS EU LIEU (ft-v1047)
+   D'OÙ ÇA VIENT : la méthode de la coach de Michel, dans ses mots à lui — *« si elle est
+   loupée elle est loupée. C'est pas grave, sur une semaine. Plutôt elle demande ce qui
+   s'est passé — fatigue, travail, empêchement, ça peut arriver. »*
+   ⭐⭐ SA RÉPONSE NOMME UN TROISIÈME COMPORTEMENT. Je cherchais entre *rattraper*
+   (culpabilisant) et *ne rien dire* (indifférent) : elle faisait ni l'un ni l'autre, elle
+   POSAIT UNE QUESTION — avec ses réponses déjà légitimées dans la question même.
+   ⛔⛔ ET L'APP FAISAIT PIRE QUE « NE RIEN DIRE » : `plannedSession()` rend `null` dès que la
+   date est passée, puis l'Accueil exécute `S.nextPlanned=null; persist()`. ***Elle effaçait
+   la trace, en silence.*** Une annonce que la personne avait faite disparaissait sans qu'un
+   mot soit dit — donc rien à quoi se raccrocher, et rien pour Milo (R5 : la donnée morte).
+   ⛔ PURE ET SANS EFFET DE BORD, comme `plannedSession()` : elle ne nettoie rien, elle ne
+   persiste rien. C'est l'Accueil qui écrit, lui seul — sinon deux propriétaires (R2).
+   ⚠️ LA FENÊTRE EST BORNÉE À 14 JOURS, exprès. Quelqu'un qui rouvre l'app après un mois n'a
+   pas besoin qu'on lui demande ce qui s'est passé un mardi qu'il ne se rappelle plus : la
+   question serait sans réponse possible, donc sans intérêt — et elle sonnerait comme un
+   reproche différé. Au-delà, l'annonce se nettoie sans rien demander (comme avant). */
+const MISSED_FENETRE_JOURS = 14;
+function seanceManquee(){
+  try{
+    const np=S.nextPlanned;
+    if(!np||!np.date)return null;
+    const t=today();
+    const days=Math.round((new Date(t+'T12:00:00')-new Date(np.date+'T12:00:00'))/864e5);
+    if(isNaN(days)||days<1)return null;                 // pas encore passée → ce n'est pas ce cas
+    if(days>MISSED_FENETRE_JOURS)return null;           // trop vieux : on ne demande plus
+    /* ⛔ « MANQUÉE » VEUT DIRE : AUCUNE SÉANCE LE JOUR PRÉVU NI DEPUIS. Si la personne s'est
+       entraînée ce jour-là ou après, l'annonce est honorée — c'est exactement la règle que
+       `plannedSession()` applique déjà, et elle ne doit exister qu'à un seul endroit (R2). */
+    const sess=(S.sessions||[]).filter(s=>s&&s.date);
+    const lastDate=sess.length?sess.map(s=>s.date).sort().slice(-1)[0]:null;
+    if(lastDate&&lastDate>=np.date)return null;
+    /* ⛔ ON NE REDEMANDE JAMAIS DEUX FOIS POUR LA MÊME DATE. Une question qu'on ne peut pas
+       faire taire devient une notification (R24) — et répétée, elle devient un reproche. */
+    if((S.missedLog||[]).some(m=>m&&m.date===np.date))return null;
+    return {date:np.date,label:String(np.label||''),days:days};
+  }catch(e){return null;}
+}
+/* ⛔ LES RAISONS SONT UNE LISTE FERMÉE, ET C'EST VOLONTAIRE. Elles reprennent MOT POUR MOT
+   celles que Michel a citées — *« fatigue, travail, empêchement »* — plus deux qu'il a
+   nommées autrement : *« ça peut arriver »* (aucune raison à donner) et le corps.
+   ⭐ Chacune est déjà LÉGITIME dans son libellé : la question ne demande pas de se justifier,
+   elle propose des réponses qui sont toutes acceptables. C'est ce qui fait la différence entre
+   « qu'est-ce qui s'est passé ? » et un interrogatoire (`docs/BUGS-DE-PHILOSOPHIE.md`).
+   ⛔ AUCUNE N'EST « JE N'AVAIS PAS ENVIE » présentée comme un défaut : `flemme` est écrite
+   *« pas la tête à ça »*, parce que c'est une raison comme une autre (P13 — adapter, jamais
+   juger). Et `null` reste possible : fermer la carte sans répondre est une réponse.
+   ⚠️ LES LIBELLÉS SONT COURTS PARCE QUE LA PASTILLE EST ÉTROITE — mesuré, pas estimé : à 5
+   pastilles sur 390 px il reste ~47 px chacune, et `.ck-opt-l` est en `nowrap`. Mon 1ᵉʳ jet
+   écrivait « Pas la tête », qui DÉBORDAIT par-dessus le bord de sa pastille — invisible dans
+   le texte rendu, visible sur la capture. Un témoin mesure le débordement (scrollWidth). */
+const MISSED_RAISONS=[
+  {id:'fatigue',   emo:'😴', mot:'Fatigue',  phrase:'trop fatigué'},
+  {id:'boulot',    emo:'💼', mot:'Boulot',   phrase:'le travail'},
+  {id:'empeche',   emo:'📅', mot:'Empêché',  phrase:'un empêchement'},
+  {id:'corps',     emo:'🤕', mot:'Douleur',  phrase:'une douleur ou une gêne'},
+  {id:'flemme',    emo:'🤷', mot:'Flemme',   phrase:'la flemme'}
+];
+function missedRaisonPhrase(id){
+  const r=MISSED_RAISONS.find(x=>x.id===id);
+  return r?r.phrase:'';
 }
 
 // ─── NUTRITION CALCULATIONS ──────────────────────────────────

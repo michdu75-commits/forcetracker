@@ -3961,6 +3961,10 @@ const APP_GUIDE_SLIDES=[
   /* ⛔ SANS IMAGE : la capture montrerait UNE des deux échelles, donc elle serait fausse pour
      la moitié des lecteurs — et c'est précisément le sujet de la diapo. */
   {icon:'🎚️', t:'RIR ou RPE, comme tu veux', cap:'Si tu travailles en <b>RPE</b>, dis-le à l\'app : <b>Profil → Échelle d\'effort</b>. La question posée après chaque série, la colonne « précédent » et <b>Milo</b> passent en RPE. ⛔ C\'est la <b>même mesure</b> dite dans l\'autre sens (<i>RPE = 10 − RIR</i>) : rien n\'est converti, rien n\'est perdu, et tu peux revenir.'},
+  /* \u26d4 SANS IMAGE, EXPR\u00c8S : une capture montrerait la s\u00e9ance manqu\u00e9e de QUELQU'UN
+     D'AUTRE, \u00e0 une date qui n'est pas celle du lecteur \u2014 et la carte est justement celle qui
+     ne doit pas ressembler \u00e0 un relev\u00e9 de fautes. */
+  {icon:'\U0001F4C5', t:'On te demande, on ne te reproche rien', cap:'Tu avais annonc\u00e9 une s\u00e9ance et elle ne s\'est pas faite ? L\'app te demande simplement <b>ce qui s\'est pass\u00e9</b> \u2014 fatigue, boulot, emp\u00each\u00e9, douleur, flemme \u2014 et un tap suffit. \u26d4 <b>Jamais de rattrapage propos\u00e9, jamais de total affich\u00e9</b> : une s\u00e9ance loup\u00e9e n\'est pas grave \u00e0 l\'\u00e9chelle d\'une semaine. \u2b50 Si la m\u00eame raison revient souvent, Milo peut proposer d\'<b>adapter ton planning</b> \u00e0 ta vraie vie.'},
   {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
 let _agIdx=0,_agSwipeInit=false;
