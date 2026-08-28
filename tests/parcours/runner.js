@@ -16688,6 +16688,101 @@ console.log('\n-- CLII. Exporter l\'historique en CSV et en PDF (ft-v1048) --');
   }
 }
 
+/* == BLOC CLIII - LE BOUTON « LANCER LA SEANCE » NE SORTAIT PLUS (ft-v1049) ==
+   BLOQUANT, trouve par Michel EN SALLE, capture a l'appui : Milo ecrit la seance, lui dit « le
+   bouton devrait apparaitre sous mon message »... et il n'y en a pas.
+
+   ⛔⛔ LES TROIS VOIES ECHOUAIENT POUR LA MEME RAISON. L'app a 3 facons de fabriquer le bouton :
+   ① le bloc cache, ② le cervelet (appele seulement si `_ressembleASeance`), ③ le filet
+   deterministe. Les trois lisaient `95×3` comme « 95 SERIES de 3 reps » : 95 depasse la borne des
+   12, la ligne est jetee. Ses 4 lignes jetees, 0 retenue, il en faut 2 → rien.
+   👉 Milo n'ecrit plus « 3×3 a 95 kg », il ecrit UNE LIGNE PAR SERIE : « S1 : 95×3 ».
+   *Ce n'est pas un chemin casse, c'est une hypothese de FORMAT partagee par les trois* — 2e fois
+   (le 20/08, meme symptome, autre format).
+
+   ⭐⭐ CE QUI REND LA LECTURE SURE, C'EST LE PREFIXE `S1`/`S2` : dans « 3×3 » le 1er nombre est un
+   COMPTE de series ; dans « S1 : 95×3 » la serie est deja nommee, donc c'est la CHARGE. Les bornes
+   ne pouvaient pas lever cette ambiguite — le prefixe, si. */
+console.log('\n-- CLIII. Le bouton « lancer la séance » ne sortait plus (ft-v1049) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const B=await pg.evaluate(()=>{
+   try{
+    if(typeof _ressembleASeance!=='function'||typeof _extractDaySession!=='function') return {absente:true};
+    const o={};
+    /* ⭐ SON TEXTE REEL, repris de ses deux captures — pas un exemple que j'aurais ecrit
+       moi-meme (le piege exact du 20/08 : tester ses propres exemples au lieu du reel). */
+    const sien=`Échauffement : 8 min elliptique intensité légère
+
+--
+
+Développé Couché (ancre)
+• Échauffement : 40×5 → 55×3 → 70×2 → 80×1 → 88×1
+• S1 : 95×3 — repos 1 min 30
+• S2 : 95×3 — repos 1 min 30
+• S3 : 95×3 — repos 1 min 30
+Omoplates serrées dans le banc, descente contrôlée 2s, poussée explosive.
+
+Tirage Visage (Face Pull) — S1 30×12, S2 30×12, S3 30×12 — repos 60s — Coudes hauts`;
+    /* Le MEME contenu au format « classique » : c'est le temoin de reference. */
+    const classique=`Développé Couché
+3×3 à 95 kg — repos 3 min
+Tirage Visage
+3×12 à 30 kg — repos 60s`;
+    const lire=t=>{ const d=_extractDaySession(t);
+      return (d&&d.sess)?(d.sess.exs||[]).map(e=>({n:e.name, s:(e.sets||[]).length,
+        d:(e.sets||[]).map(x=>x.kg+'x'+x.reps).join('|')})):null; };
+    o.detecteSien=_ressembleASeance(sien);
+    o.detecteClassique=_ressembleASeance(classique);
+    o.sien=lire(sien);
+    o.classique=lire(classique);
+    /* ⛔ ANTI-FAUX-POSITIF : une conversation ordinaire ne doit pas passer pour une seance. */
+    o.discussion=_ressembleASeance('Salut ! Comment tu te sens aujourd\'hui ? On peut parler de ta récup si tu veux.');
+    o.uneSeuleSerie=_ressembleASeance('Tu peux faire S1 : 60×10 pour commencer, on verra après.');
+    /* ⛔ LA LIGNE DE PALIERS D'ECHAUFFEMENT ne porte aucun `S1` : elle ne doit pas devenir des
+       series de travail (c'est pour ca qu'on s'appuie sur le prefixe, pas sur la forme). */
+    o.paliersSeuls=lire('Développé Couché\n• Échauffement : 40×5 → 55×3 → 70×2 → 80×1 → 88×1');
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  await cx.close();
+
+  if(B.err||B.absente)t('CLIII n\'a pas pu tourner',false,JSON.stringify(B));
+  else{
+    /* ⭐⭐ LE TÉMOIN QUI REFERME LE BLOQUANT. */
+    t('⭐⭐ son format « S1 : 95×3 » est enfin reconnu comme une séance (le cervelet est appelé)',
+      B.detecteSien===true, 'détecté = '+B.detecteSien);
+    t('⭐⭐ … et le FILET la lit aussi : plus besoin que le cervelet réponde pour avoir un bouton',
+      !!B.sien && B.sien.length===2, JSON.stringify(B.sien));
+    /* ⛔⛔ LE PLUS IMPORTANT : la CHARGE n'est pas prise pour un nombre de séries. */
+    t('⛔⛔ « 95×3 » se lit 95 kg × 3 reps — JAMAIS 95 séries',
+      !!B.sien && B.sien[0].s<=12 && /95x3/.test(B.sien[0].d), JSON.stringify(B.sien&&B.sien[0]));
+    /* ⭐⭐ LE TÉMOIN DE RÉFÉRENCE : le même contenu, deux écritures, une seule séance. */
+    t('⭐⭐ le MÊME contenu écrit dans les 2 formats donne EXACTEMENT la même séance',
+      !!B.sien && !!B.classique
+      && B.sien.map(e=>e.s+':'+e.d).join(' / ')===B.classique.map(e=>e.s+':'+e.d).join(' / '),
+      JSON.stringify([B.sien&&B.sien.map(e=>e.s+':'+e.d), B.classique&&B.classique.map(e=>e.s+':'+e.d)]));
+    /* ⛔ Et la variante « tout sur une ligne » (le Tirage Visage) est lue aussi. */
+    t('⛔ la variante « Nom — S1 30×12, S2 30×12, S3 30×12 » sur UNE ligne est lue aussi',
+      !!B.sien && B.sien[1].s===3 && /30x12/.test(B.sien[1].d), JSON.stringify(B.sien&&B.sien[1]));
+    /* ⛔ NON-RÉGRESSION : l'ancien format ne bouge pas. */
+    t('⛔ non-régression : le format « 3×3 à 95 kg » marche exactement comme avant',
+      B.detecteClassique===true && !!B.classique && B.classique.length===2, JSON.stringify(B.classique));
+    /* ⛔ ANTI-FAUX-POSITIF — sans lui, on dépenserait un appel sur chaque bavardage. */
+    t('⛔ une conversation ordinaire n\'est pas prise pour une séance',
+      B.discussion===false, 'détecté = '+B.discussion);
+    t('⛔ … et UNE seule série numérotée ne suffit pas (il en faut 2, comme l\'autre motif)',
+      B.uneSeuleSerie===false, 'détecté = '+B.uneSeuleSerie);
+    /* ⛔ La ligne de paliers d'échauffement ne devient pas des séries de travail. */
+    t('⛔ une ligne de PALIERS (« 40×5 → 55×3 → 70×2 ») ne devient pas des séries de travail',
+      B.paliersSeuls===null || B.paliersSeuls.length===0, JSON.stringify(B.paliersSeuls));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

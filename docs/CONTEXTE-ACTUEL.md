@@ -6,7 +6,25 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1048`.
+- **Version en ligne (live) :** `ft-v1049`.
+- 🆘⭐⭐ **BLOQUANT CORRIGÉ — le bouton « lancer la séance » ne sortait plus** (ft-v1049), trouvé
+  par Michel **en salle** : Milo écrit la séance, dit *« le bouton devrait apparaître »*, et il
+  n'y en a pas.
+  ⛔⛔ **Les TROIS voies échouaient pour la MÊME raison** (① bloc caché · ② `_ressembleASeance`
+  **false** · ③ `_extractDaySession` **null**) : toutes lisaient `95×3` comme **« 95 séries de
+  3 reps »**. 4 lignes jetées, 0 retenue, il en faut 2. ***Pas un chemin cassé : une hypothèse de
+  FORMAT partagée par les trois.*** ⚠️ **2ᵉ fois** (20/08, même symptôme, autre format).
+  ⭐⭐ **Le préfixe `S1`/`S2` lève l'ambiguïté que les bornes ne pouvaient pas lever** : dans
+  « 3×3 » le 1ᵉʳ nombre compte des séries ; dans « S1 : 95×3 » la série est déjà nommée, donc
+  c'est la **charge**.
+  ⚠️⚠️ **Une série se perdait en silence** (2 au lieu de 3) : `nomAvant` ne remonte que 3 lignes
+  et saute celles qui portent des nombres → nom vide sur `S3`. Une ligne `S2`/`S3` **hérite**
+  maintenant du nom de la `S1`.
+  ⭐⭐ **Témoin de référence** : le même contenu dans les 2 formats donne **exactement** la même
+  séance. 📣 Ni pop-up ni point rouge — c'est une réparation.
+  ⏭️ **Restent en attente du feu vert de Michel** : la règle du **repos qui suit la CHARGE** chez
+  Milo (mesuré : il reçoit *« muscle → 60-90 s »* et l'applique à un **3 reps à 88 %**), et
+  l'avertissement d'intensité **visible dans le chat**.
 - 📤⭐⭐ **EXPORTER SON HISTORIQUE EN CSV ET EN PDF** (ft-v1048, demande de Michel sur sa vidéo).
   ⚠️⚠️ **R23 a changé le travail avant qu'il commence : l'export EXISTAIT** (Menu → Exporter mes
   données → « mes séances seulement »). ***Le trou n'était pas l'export, c'était le FORMAT*** — il

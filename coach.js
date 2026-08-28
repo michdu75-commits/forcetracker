@@ -1652,7 +1652,77 @@ function _seanceDepuisTexte(reply){
        du nom sur la ligne précédente — les deux ensemble expliquent le « RIEN » mesuré sur la
        vraie séance de Michel. Ici on lit le début de la ligne et on laisse le reste. */
     const RE_SEULE=/^\s*(?:[-•*–])?\s*(\d{1,2})\s*[x×*]\s*(\d{1,3})\s*(?:reps?)?\s*(?:(?:à|@)\s*(\d{1,3}(?:[.,]\d)?)\s*kg)?/i;
+    /* 🆘 LE 3ᵉ FORMAT — LES SÉRIES NUMÉROTÉES (28/08/2026, ft-v1049)
+       Retour de terrain de Michel, EN SALLE, capture à l'appui : Milo écrit la séance, lui dit
+       « le bouton devrait apparaître sous mon message »… et il n'y a pas de bouton.
+
+       ⛔⛔ MESURÉ SUR SON TEXTE : les TROIS voies échouaient pour la MÊME raison. Milo n'écrit
+       plus « 3×3 à 95 kg » — il écrit **une ligne par SÉRIE** :
+            • S1 : 95×3 — repos 1 min 30
+       Or `95×3` était lu comme « 95 SÉRIES de 3 reps » : 95 dépasse la borne des 12, la ligne
+       est jetée. Ses 4 lignes jetées, 0 retenue, il en faut 2 → aucun bouton.
+       👉 *Ce n'est pas un chemin cassé, c'est une hypothèse de FORMAT partagée par les trois* —
+       et c'est la **2ᵉ fois** (le 20/08, même symptôme, autre format).
+
+       ⭐⭐ CE QUI REND LA LECTURE SÛRE, C'EST LE PRÉFIXE `S1`/`S2`/`S3` : il lève l'ambiguïté que
+       les bornes ne pouvaient pas lever. Dans « 3×3 » le 1ᵉʳ nombre est un COMPTE de séries ;
+       dans « S1 : 95×3 » la série est déjà nommée, donc le 1ᵉʳ nombre est la **CHARGE**. Sans ce
+       préfixe on ne pourrait pas distinguer les deux, et on inventerait des séances fausses.
+
+       ⚠️ DEUX VARIANTES, VUES TOUTES LES DEUX SUR SES CAPTURES :
+         (a) une ligne par série  → « • S1 : 95×3 — repos 1 min 30 » (nom remonté au-dessus)
+         (b) tout sur une ligne   → « Tirage Visage (Face Pull) — S1 30×12, S2 30×12, S3 30×12 »
+       ⛔ Et la ligne de PALIERS d'échauffement (« Échauffement : 40×5 → 55×3 → 70×2 ») ne porte
+       aucun `S1` : elle ne peut pas être confondue, c'est exactement pour ça qu'on s'appuie sur
+       le préfixe et pas sur la forme des nombres. */
+    const RE_SNUM=/\bS(\d{1,2})\s*[:.]?\s*(\d{1,3}(?:[.,]\d)?)\s*[x×*]\s*(\d{1,3})\b/gi;
+    const _snumLigne=t=>{
+      const out=[]; RE_SNUM.lastIndex=0; let m;
+      while((m=RE_SNUM.exec(t))){
+        const kg=parseFloat(String(m[2]).replace(',','.')), reps=+m[3];
+        if(!(kg>0&&kg<=500)||!(reps>=1&&reps<=100))continue;
+        out.push({kg,reps});
+      }
+      return out;
+    };
+    /* On collecte d'abord toutes les séries numérotées, en les rattachant à leur exercice :
+       le nom est soit AVANT le premier `S1` sur la même ligne (b), soit sur une ligne au-dessus
+       (a) — auquel cas les lignes S1/S2/S3 consécutives se REGROUPENT sous ce nom. */
+    const parSnum=[];
+    let _snumDerIdx=-9, _snumDerNom='';
     lignes.forEach((l,idx)=>{
+      const t=l.replace(/\*\*/g,'').trim(); if(!t)return;
+      const sers=_snumLigne(t); if(!sers.length)return;
+      const av=t.slice(0, t.search(/\bS\d{1,2}\s*[:.]?\s*\d/i))
+                 .replace(/[-—–:•*]+\s*$/,'').replace(/\s*\((ancre|accessoire)\)\s*/i,'').trim();
+      /* ⚠️⚠️ UNE LIGNE `S2`/`S3` HÉRITE DU NOM DE LA `S1` QUI LA PRÉCÈDE — et sans ça on PERD
+         des séries, mesuré. `nomAvant` ne remonte que 3 lignes et saute celles qui portent des
+         nombres : pour `S3`, les trois lignes au-dessus sont `S2`, `S1` et les paliers
+         d'échauffement — toutes sautées —, donc le nom sortait VIDE et la série était jetée.
+         Résultat : 2 séries de travail au lieu de 3, sur une séance qui en annonce 3.
+         👉 C'est aussi la lecture juste : `S1`/`S2`/`S3` qui se suivent SONT le même exercice. */
+      let nom=(av && /[a-zà-ÿ]{3}/i.test(av) && av.length<=60) ? av : '';
+      if(!nom && idx===_snumDerIdx+1 && _snumDerNom) nom=_snumDerNom;   // héritage de la ligne d'au-dessus
+      if(!nom) nom=nomAvant(idx);
+      if(!nom||!/[a-zà-ÿ]{3}/i.test(nom))return;
+      _snumDerIdx=idx; _snumDerNom=nom;
+      const der=parSnum[parSnum.length-1];
+      if(der && der.nom===nom) der.sets.push.apply(der.sets, sers);   // S1/S2/S3 regroupées
+      else parSnum.push({nom:nom, sets:sers.slice()});
+    });
+    parSnum.forEach(e=>{
+      if(!e.sets.length||e.sets.length>12)return;
+      const r=_matchExercise(e.nom)||{};
+      /* ⛔ MÊME RÈGLE DE NOMS QUE PLUS BAS, exprès : `via:'exact'` seulement, sinon on garde le
+         nom TEL QUEL. On ne rapproche jamais « à peu près » — la personne s'entraînerait sur un
+         autre exercice que celui que Milo lui a écrit (leçon du 04/08). */
+      const nom=(r.match && r.via==='exact') ? r.match : e.nom.slice(0,48);
+      exs.push({name:nom, sets:e.sets.map(x=>({reps:x.reps, kg:x.kg, type:'N'}))});
+    });
+    lignes.forEach((l,idx)=>{
+      /* ⛔ Une ligne déjà lue comme série numérotée ne doit pas être relue par les 2 autres
+         motifs : elle produirait un 2ᵉ exercice avec des valeurs fausses (95 séries de 3). */
+      if(_snumLigne(l).length) return;
       const t=l.replace(/\*\*/g,'').trim(); if(!t||t.length>90)return;
       let brut, nb, reps, kg;
       const m=t.match(RE);
@@ -1771,6 +1841,14 @@ function _extractDaySession(reply){
 function _ressembleASeance(txt){
   try{
     if(!txt)return false;
+    /* 🆘 ft-v1049 — LE FORMAT « SÉRIES NUMÉROTÉES » COMPTE AUSSI. Michel, en salle : Milo écrit
+       « S1 : 95×3 », le détecteur lit « 95 séries » (hors bornes), jette la ligne, conclut « ce
+       n'est pas une séance » et n'appelle JAMAIS le cervelet — donc aucun bouton.
+       ⭐ Le préfixe `S1`/`S2` lève l'ambiguïté : la série est déjà nommée, donc le 1ᵉʳ nombre est
+       la CHARGE. Deux séries numérotées suffisent — c'est le même seuil que l'autre motif, et ce
+       détecteur ne fait qu'AIGUILLER (au pire un appel dépensé pour rien, R29). */
+    const _sn=(String(txt).match(/\bS\d{1,2}\s*[:.]?\s*\d{1,3}(?:[.,]\d)?\s*[x×*]\s*\d{1,3}\b/gi)||[]).length;
+    if(_sn>=2) return true;
     const RE=/(?:^|[\s:–—-])(\d{1,2})\s*(?:[x×*]\s*|s[ée]ries?\s+de\s+)(\d{1,3})\b/i;
     let n=0;
     String(txt).split(/\n+/).forEach(l=>{
