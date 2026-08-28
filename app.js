@@ -3965,6 +3965,9 @@ const APP_GUIDE_SLIDES=[
      D'AUTRE, \u00e0 une date qui n'est pas celle du lecteur \u2014 et la carte est justement celle qui
      ne doit pas ressembler \u00e0 un relev\u00e9 de fautes. */
   {icon:'\U0001F4C5', t:'On te demande, on ne te reproche rien', cap:'Tu avais annonc\u00e9 une s\u00e9ance et elle ne s\'est pas faite ? L\'app te demande simplement <b>ce qui s\'est pass\u00e9</b> \u2014 fatigue, boulot, emp\u00each\u00e9, douleur, flemme \u2014 et un tap suffit. \u26d4 <b>Jamais de rattrapage propos\u00e9, jamais de total affich\u00e9</b> : une s\u00e9ance loup\u00e9e n\'est pas grave \u00e0 l\'\u00e9chelle d\'une semaine. \u2b50 Si la m\u00eame raison revient souvent, Milo peut proposer d\'<b>adapter ton planning</b> \u00e0 ta vraie vie.'},
+  /* ⛔ SANS IMAGE : une capture montrerait l'historique de quelqu'un d'autre, avec des
+     charges et des dates qui ne sont pas celles du lecteur. */
+  {icon:'📤', t:'Ton historique, en tableur ou en PDF', cap:'Dans <b>Progrès</b>, à côté de « Historique séances » : <b>📤 Exporter</b>. <b>CSV</b> pour Excel ou Numbers (une ligne par série), <b>PDF</b> pour un document lisible à montrer à un coach. ⛔ <b>Aucune donnée de santé</b> dedans : ni poids de corps, ni âge, ni sexe.'},
   {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
 let _agIdx=0,_agSwipeInit=false;

@@ -15865,9 +15865,15 @@ console.log('\n-- CXLV. Brique 8 : les constantes (ft-v1041) --');
     /* ⛔⛔ LA RÈGLE DE LA VISION : on décrit, on ne prescrit jamais. */
     t('⛔⛔ aucun verbe de prescription — « une constante », jamais « tu devrais »',
       G.pasDePrescription===true, G.ecran.slice(0,110));
-    /* ⛔⛔ ET AUCUN FAIT FAUX : la région est la DOMINANTE, pas ce qui a été travaillé. */
+    /* ⛔⛔ ET AUCUN FAIT FAUX : la région est la DOMINANTE, pas ce qui a été travaillé.
+       ⚠️ RE-VISÉ LE 28/08 (ft-v1047) : il épinglait la FORMULATION exacte « dominées par », que
+       ft-v1047 a dû changer (« le plus souvent » sur-affirmait à 41 %). Il rougissait donc sur du
+       code corrigé. *Un témoin doit épingler sa RÈGLE, pas la phrase du jour* — 5ᵉ fois cette
+       semaine. La règle, elle, ne bouge pas : le texte ne dit JAMAIS « tu ne travailles pas X »,
+       et il nomme explicitement qu'il s'agit de DOMINATION. */
     t('⛔⛔ aucune phrase du type « tu ne travailles jamais X » (c\'est la DOMINANTE qu\'on mesure)',
-      G.pasDeJamais===true && /dominées par/i.test(G.txtEquilibre), G.txtEquilibre);
+      G.pasDeJamais===true && /domin/i.test(G.txtEquilibre)
+      && !/tu (ne )?travailles/i.test(G.txtEquilibre), G.txtEquilibre);
     t('⭐⭐ LA PORTE : la section s\'affiche en tête de Progrès',
       /CE QUE TON HISTOIRE MONTRE/i.test(G.ecran), G.ecran.slice(0,100));
     t('⛔ changer de sous-onglet ne la fait pas disparaître',
@@ -16400,7 +16406,7 @@ console.log('\n-- CL. Le RPE : un vocabulaire, pas un 2e système (ft-v1046) --'
   });
   await cx.close();
 
-  if(P.err||P.absente)t('CLI n\'a pas pu tourner',false,JSON.stringify(P));
+  if(P.err||P.absente)t('CL n\'a pas pu tourner',false,JSON.stringify(P));
   else{
     /* ⛔⛔ LE TÉMOIN QUI DÉFINIT CETTE VERSION. */
     t('⛔⛔ basculer d\'échelle ne change RIEN à la donnée (`set.rir` reste le seul propriétaire)',
@@ -16439,8 +16445,346 @@ console.log('\n-- CL. Le RPE : un vocabulaire, pas un 2e système (ft-v1046) --'
   }
 }
 
-/* == BLOC CLI - LA SEANCE PREVUE QUI N'A PAS EU LIEU (ft-v1047) ==
-   /!\ CL est pris par le ft-v1046 de session-B (le RPE), decouvert a l'execution.
+/* == BLOC CLI - LES 3 ERREURS DES CARTES DE PROGRES, TROUVEES SUR UNE VIDEO (ft-v1047) ==
+   Michel, 10 s de son iPhone en production : « c'est pas mal mais je suis sur qu'on peut ameliorer
+   le visuel ».
+
+   ⛔⛔ LA PIRE EST DE MOI, ET DANS LA FAMILLE QUE JE PASSE LA SEMAINE A EVITER : la carte annoncait
+   « sur 37 seances etalees sur 74 jours » puis « 11 sur 27 ». DEUX DENOMINATEURS QUI SE
+   CONTREDISENT, SANS UN MOT. Cause reelle et mesuree : `_calSessMix` ne classe pas toutes les
+   seances (un exercice hors catalogue ne rend aucune region). C'est ft-v1027, refait par moi.
+   ⛔ On ne « repare » PAS en comptant sur 37 : les non classees deviendraient des seances « non
+   dominees par le haut », c'est-a-dire un fait FAUX (R29). La ligne NOMME sa fenetre, et les deux
+   nombres apparaissent ENSEMBLE.
+
+   ⚠️ ② « le plus souvent dominees » a 11/27 = 41 % : c'est le MODE, mais la phrase se lit « la
+   majorite ». ⚠️ ③ « Le tronc domine 1 fois » : 1 occurrence n'est pas une constante. */
+console.log('\n-- CLI. Les 3 erreurs des cartes de Progrès (ft-v1047) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const Q=await pg.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    const j=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+    const st=n=>Array.from({length:n},()=>({kg:60,reps:8,done:true,type:'N'}));
+    /* ⭐ LE CAS DE SA VIDEO, REPRODUIT : des seances CLASSABLES et des seances qui ne le sont pas. */
+    const S3=[];
+    for(let i=0;i<20;i++) S3.push({date:j(i*2), exs:[{name:'Développé Couché',sets:st(3)}], vol:1});
+    for(let i=0;i<8;i++)  S3.push({date:j(i*2+1), exs:[{name:'Squat à la Barre',sets:st(3)}], vol:1});
+    for(let i=0;i<10;i++) S3.push({date:j(i*2+41), exs:[{name:'Zzz Exercice Inconnu',sets:st(3)}], vol:1});
+    S.sessions=S3; persist();
+    const c=_synthConstantes();
+    const eq=(c.lignes||[]).find(l=>l.cle==='equilibre')||{};
+    o.nSeances=c.nSeances;
+    o.classables=S3.filter(s=>{const m=_calSessMix(s);return m&&m.reg;}).length;
+    o.eqTxt=(eq.txt||'').replace(/<[^>]+>/g,'');
+    o.eqFen=eq.fen||'';
+    /* ⛔⛔ ① LES DEUX DENOMINATEURS DOIVENT APPARAITRE ENSEMBLE. */
+    o.fenNommeLesDeux=new RegExp(o.classables+' de tes '+o.nSeances+' séances').test(o.eqFen);
+    /* ⚠️ ② PLUS DE « le plus souvent dominées ». */
+    o.plusDeSurAffirmation=!/le plus souvent dominées/i.test(o.eqTxt);
+    /* ⚠️ ③ UNE REGION VUE MOINS DE 3 FOIS N'EST PAS CITEE. */
+    const S4=S3.slice(0,28).concat([{date:j(90),exs:[{name:'Crunch au Sol',sets:st(3)}],vol:1}]);
+    S.sessions=S4; persist();
+    const c2=_synthConstantes();
+    const eq2=(c2.lignes||[]).find(l=>l.cle==='equilibre')||{};
+    o.eq2=(eq2.txt||'').replace(/<[^>]+>/g,'');
+    o.pasDeBruit=!/domine 1 fois/i.test(o.eq2);
+    /* ── LE VISUEL ── */
+    S.sessions=S3.concat([{date:j(0),exs:[{name:'Squat à la Barre',sets:st(5)},
+      {name:'Rowing Barre (Tirage Horizontal)',sets:st(4)}],vol:1}]); persist();
+    goScreen('s-progress');document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+    document.getElementById('s-progress').classList.add('active'); renderProgress();
+    await new Promise(r=>setTimeout(r,380));
+    const vo=document.getElementById('prog-volume'), sy=document.getElementById('prog-synth');
+    const rem=vo.querySelector('.vol-bar i'), rail=vo.querySelector('.vol-bar');
+    /* ⛔ LA BARRE PORTE LA COULEUR « MUSCLE » (celle de la figurine), pas un gris. */
+    o.barreColoree=/gradient/.test(getComputedStyle(rem).backgroundImage);
+    /* ⛔ ET TOUTES LES BARRES ONT LA MEME COULEUR : seule la LONGUEUR varie, sinon ce serait un
+       statut (« bien »/« mal »), ce que cette section refuse d'etre. */
+    const fonds=[...vo.querySelectorAll('.vol-bar i')].map(x=>getComputedStyle(x).backgroundImage);
+    o.memeCouleurPartout=new Set(fonds).size===1 && fonds.length>=2;
+    o.railEfface=/rgba\(0, 0, 0, 0\)|transparent/.test(getComputedStyle(rail).backgroundColor);
+    o.liseréSynthese=getComputedStyle(sy.querySelector('.synth-card')).borderLeftWidth;
+    o.piedCourt=((vo.querySelector('.vol-pied')||{}).textContent||'').indexOf('pas pour les triceps')<0;
+    /* ⛔ MAIS L'EXPLICATION N'A PAS DISPARU — elle vit dans l'aide (R25/R30). */
+    o.aideGardeLExemple=JSON.stringify(_HELP_DATA.progress.tips).indexOf('pas triceps')>=0;
+    const f=document.getElementById('nb-log').getBoundingClientRect();
+    o.fab=[Math.round(f.left),Math.round(f.top),Math.round(f.width),Math.round(f.height)];
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  await cx.close();
+
+  if(Q.err)t('CLI n\'a pas pu tourner',false,JSON.stringify(Q));
+  else{
+    /* ⛔ Le témoin ne mesure rien si les deux nombres sont égaux : la fixture DOIT créer l'écart. */
+    t('⛔ le témoin a bien créé l\'écart qu\'il mesure (des séances non classables existent)',
+      Q.nSeances>Q.classables && Q.classables>0, Q.nSeances+' séances · '+Q.classables+' classables');
+    t('⛔⛔ ① les DEUX dénominateurs apparaissent ENSEMBLE (ils ne peuvent plus se contredire)',
+      Q.fenNommeLesDeux===true, Q.eqFen);
+    t('⛔ … et on ne compte PAS sur le total (les non classées ne deviennent pas « non dominées »)',
+      new RegExp('sur '+Q.classables+'\\.?$|sur '+Q.classables+'\\b').test(Q.eqTxt), Q.eqTxt);
+    t('⚠️ ② plus de « le plus souvent dominées » — 41 % n\'est pas une majorité',
+      Q.plusDeSurAffirmation===true, Q.eqTxt);
+    t('⚠️ ③ une région vue moins de 3 fois n\'est plus citée (1 occurrence n\'est pas une constante)',
+      Q.pasDeBruit===true, Q.eq2);
+    /* ── LE VISUEL, MESURÉ ── */
+    t('🎨 la barre porte la couleur « muscle » de la figurine, plus un gris sans identité',
+      Q.barreColoree===true, 'dégradé = '+Q.barreColoree);
+    t('⛔⛔ … et TOUTES les barres ont la même couleur : seule la LONGUEUR varie (pas un statut)',
+      Q.memeCouleurPartout===true, 'couleurs distinctes = '+(Q.memeCouleurPartout?1:'>1'));
+    t('🎨 le rail gris pleine largeur a disparu (8 lignes de bruit sous les barres utiles)',
+      Q.railEfface===true, 'fond du rail = '+Q.railEfface);
+    t('🎨 la synthèse se distingue de la carte volume (liseré à gauche)',
+      Q.liseréSynthese==='3px', 'liseré = '+Q.liseréSynthese);
+    /* ⛔⛔ ALLÉGER N'EST PAS SUPPRIMER (R25/R30) : l'exemple quitte l'écran et RESTE dans l'aide. */
+    t('⛔⛔ le pied est allégé À L\'ÉCRAN mais l\'exemple SURVIT dans l\'aide (alléger ≠ supprimer)',
+      Q.piedCourt===true && Q.aideGardeLExemple===true,
+      'écran allégé='+Q.piedCourt+' · aide garde='+Q.aideGardeLExemple);
+    t('🔴 règle d\'or #9 : le bouton central « + » est à sa place',
+      Q.fab[2]>0 && Q.fab[3]>0, JSON.stringify(Q.fab));
+  }
+}
+
+/* == BLOC CLII - EXPORTER L'HISTORIQUE EN CSV ET EN PDF (ft-v1048) ==
+   Demande de Michel sur sa video : « pense que l'on peut aussi exporter l'historique des seances ».
+
+   ⚠️⚠️ R23 D'ABORD : un export EXISTAIT (Menu -> Exporter mes donnees -> « mes seances seulement »).
+   J'ai failli le reconstruire. Mais il sort du JSON — *le trou n'etait pas l'export, c'etait le
+   FORMAT*. L'export JSON reste ou il est : sauvegarder ses donnees et regarder son historique sont
+   deux besoins differents.
+
+   ⛔⛔ UN SEUL PRODUCTEUR DE LIGNES POUR LES DEUX FORMATS (R2) : `_histoLignes()`. Deux producteurs
+   finiraient par ne pas dire la meme chose du meme historique — le defaut que ft-v1047 vient de
+   corriger deux cartes plus haut.
+
+   ⚠️ ET LE CSV A DEUX DETAILS QUI DECIDENT DE TOUT, appris a la mesure : separateur « ; » et BOM
+   UTF-8. Sans eux, Excel FR met toute la ligne dans une colonne et rend « Developpe » en
+   « DÃ©veloppÃ© » — le fichier est correct et l'utilisateur dit « ton export est casse ». */
+console.log('\n-- CLII. Exporter l\'historique en CSV et en PDF (ft-v1048) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},
+    timezoneId:'Europe/Paris',acceptDownloads:true});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const E=await pg.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    if(typeof _histoLignes!=='function') return {absente:true};
+    const o={};
+    const j=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+    /* ⭐ La fixture porte EXPRES les cas qui cassent un CSV naif : une virgule ET des guillemets
+       dans le nom de seance, un accent, une serie NON validee, un echauffement, un tag X. */
+    S.sessions=[
+      {date:j(0), name:'Push, jour "lourd"', exs:[
+        {name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N',rir:2},
+                                       {kg:85,reps:5,done:true,type:'X'},
+                                       {kg:60,reps:10,done:true,type:'É'},
+                                       {kg:80,reps:8,done:false,type:'N'}]},
+        {name:'Rowing Barre (Tirage Horizontal)',sets:[{kg:70,reps:10,done:true,type:'N'}]}]},
+      {date:j(3), exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true,type:'N',rir:1}]}]}
+    ];
+    persist();
+    const L=_histoLignes();
+    o.n=L.length;
+    o.pasDeSerieNonValidee=!L.some(r=>r.kg===80&&r.reps===8&&r.set_num===4);
+    /* ⛔ Le RIR passe par son proprietaire : `X` vaut 0, non note reste VIDE (jamais 0). */
+    o.xVaut0=(L.find(r=>r.type==='X')||{}).rir===0;
+    o.nonNoteVide=(L.find(r=>r.type==='É')||{}).rir==='';
+    /* ⛔ AUCUNE DONNEE DE SANTE dans les colonnes. */
+    o.colonnes=HISTO_COLONNES.slice();
+    o.aucuneSante=!HISTO_COLONNES.some(c=>/bw|poids|age|gender|sexe|email/i.test(c));
+    /* ⛔ Le PDF et le CSV lisent la MEME source : un seul producteur. */
+    o.unSeulProducteur=(document.body.innerHTML,
+      (setup=>true)(0)) && (String(exportHistoCsv).indexOf('_histoLignes')>0
+                          && String(exportHistoPdf).indexOf('_histoLignes')>0);
+    /* ── LA PORTE, par le VRAI ecran ── */
+    goScreen('s-progress');document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+    document.getElementById('s-progress').classList.add('active'); renderProgress();
+    await new Promise(r=>setTimeout(r,350));
+    o.boutonDansProgres=!!document.getElementById('histo-exp-btn');
+    document.getElementById('histo-exp-btn').click();
+    await new Promise(r=>setTimeout(r,250));
+    o.modaleOuverte=document.getElementById('ov-histo-export').classList.contains('open');
+    o.modaleCompte=(document.getElementById('histo-exp-n')||{}).textContent||'';
+    o.modaleDitSante=/Aucune donnée de santé/i.test(document.getElementById('ov-histo-export').textContent);
+    closeHistoExport();
+    o.modaleFermee=!document.getElementById('ov-histo-export').classList.contains('open');
+    /* ⛔ R15 : le chemin de fermeture secondaire connaît la modale. */
+    o.dansClosers=(typeof _OVERLAY_CLOSERS!=='undefined') && _OVERLAY_CLOSERS['ov-histo-export']==='closeHistoExport';
+    /* ⛔ Rien à exporter → on ne propose pas une modale vide. */
+    const sv=S.sessions; S.sessions=[]; persist();
+    openHistoExport();
+    o.videNOuvrePas=!document.getElementById('ov-histo-export').classList.contains('open');
+    S.sessions=sv; persist();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+
+  /* ── LE FICHIER CSV, POUR DE VRAI (pas une chaîne construite à côté) ── */
+  let CSV=null, PDF=null;
+  try{
+    const d1=pg.waitForEvent('download',{timeout:20000});
+    await pg.evaluate(()=>exportHistoCsv());
+    const dl=await d1; const s1=await dl.createReadStream();
+    CSV={nom:dl.suggestedFilename(), txt:await new Promise(res=>{let t='';s1.on('data',c=>t+=c);s1.on('end',()=>res(t));})};
+  }catch(e){ CSV={err:String(e.message||e)}; }
+  try{
+    const d2=pg.waitForEvent('download',{timeout:25000});
+    await pg.evaluate(()=>exportHistoPdf());
+    const dl2=await d2; const s2=await dl2.createReadStream();
+    const buf=await new Promise(res=>{const a=[];s2.on('data',c=>a.push(c));s2.on('end',()=>res(Buffer.concat(a)));});
+    PDF={nom:dl2.suggestedFilename(), taille:buf.length, entete:buf.slice(0,5).toString()};
+  }catch(e){ PDF={err:String(e.message||e)}; }
+  await cx.close();
+
+  if(E.err||E.absente)t('CLII n\'a pas pu tourner',false,JSON.stringify(E));
+  else{
+    t('⭐⭐ l\'historique se met en lignes (5 séries validées sur les 6 posées)',
+      E.n===5, 'lignes = '+E.n);
+    t('⛔ une série NON validée n\'est pas exportée (elle n\'a pas eu lieu)',
+      E.pasDeSerieNonValidee===true, '');
+    t('⛔ le RIR passe par son propriétaire : `X` vaut 0, non noté reste VIDE (jamais 0)',
+      E.xVaut0===true && E.nonNoteVide===true, 'X→'+E.xVaut0+' · vide→'+E.nonNoteVide);
+    t('⛔⛔ AUCUNE donnée de santé dans les colonnes (ni poids de corps, ni âge, ni sexe, ni e-mail)',
+      E.aucuneSante===true, JSON.stringify(E.colonnes));
+    t('⛔⛔ le CSV et le PDF lisent le MÊME producteur (deux sources se contrediraient)',
+      E.unSeulProducteur===true, '');
+    /* ── LE FICHIER LUI-MÊME ── */
+    t('⭐⭐ le CSV est un VRAI fichier téléchargé, pas une chaîne construite à côté',
+      !!(CSV&&CSV.txt)&&/\.csv$/.test(CSV.nom||''), CSV.err||CSV.nom);
+    t('⛔⛔ … avec le BOM UTF-8 et le « ; » : sans eux, Excel FR casse les accents ET les colonnes',
+      !!CSV.txt && CSV.txt.charCodeAt(0)===0xFEFF && /^﻿date;seance;/.test(CSV.txt),
+      (CSV.txt||'').slice(0,40));
+    /* ⛔ L'ÉCHAPPEMENT est le détail qui décale toute une ligne sans rien signaler. */
+    t('⛔⛔ … et un nom qui contient une virgule ET des guillemets est ÉCHAPPÉ correctement',
+      !!CSV.txt && CSV.txt.indexOf('"Push, jour ""lourd"""')>0, (CSV.txt||'').split('\n')[2]||'');
+    t('⛔ … les accents survivent (« Développé Couché », pas « DÃ©veloppÃ© »)',
+      !!CSV.txt && CSV.txt.indexOf('Développé Couché')>0, '');
+    t('⭐⭐ le PDF est un VRAI fichier PDF (en-tête %PDF-, plusieurs Ko)',
+      !!PDF && PDF.entete==='%PDF-' && PDF.taille>3000, PDF.err||(PDF.entete+' · '+PDF.taille+' o'));
+    /* ── LA PORTE ── */
+    t('⭐ la porte est dans PROGRÈS, à côté de l\'historique (là où Michel regardait)',
+      E.boutonDansProgres===true, '');
+    t('⛔ la modale s\'ouvre, dit combien de séries et qu\'il n\'y a aucune donnée de santé',
+      E.modaleOuverte===true && E.modaleCompte==='5' && E.modaleDitSante===true,
+      'ouverte='+E.modaleOuverte+' · n='+E.modaleCompte);
+    t('⛔ R15 : le chemin de fermeture secondaire connaît la modale',
+      E.dansClosers===true && E.modaleFermee===true, '');
+    t('⛔ aucune séance → on ne propose pas une modale vide',
+      E.videNOuvrePas===true, '');
+  }
+}
+
+/* == BLOC CLIII - LE BOUTON « LANCER LA SEANCE » NE SORTAIT PLUS (ft-v1049) ==
+   BLOQUANT, trouve par Michel EN SALLE, capture a l'appui : Milo ecrit la seance, lui dit « le
+   bouton devrait apparaitre sous mon message »... et il n'y en a pas.
+
+   ⛔⛔ LES TROIS VOIES ECHOUAIENT POUR LA MEME RAISON. L'app a 3 facons de fabriquer le bouton :
+   ① le bloc cache, ② le cervelet (appele seulement si `_ressembleASeance`), ③ le filet
+   deterministe. Les trois lisaient `95×3` comme « 95 SERIES de 3 reps » : 95 depasse la borne des
+   12, la ligne est jetee. Ses 4 lignes jetees, 0 retenue, il en faut 2 → rien.
+   👉 Milo n'ecrit plus « 3×3 a 95 kg », il ecrit UNE LIGNE PAR SERIE : « S1 : 95×3 ».
+   *Ce n'est pas un chemin casse, c'est une hypothese de FORMAT partagee par les trois* — 2e fois
+   (le 20/08, meme symptome, autre format).
+
+   ⭐⭐ CE QUI REND LA LECTURE SURE, C'EST LE PREFIXE `S1`/`S2` : dans « 3×3 » le 1er nombre est un
+   COMPTE de series ; dans « S1 : 95×3 » la serie est deja nommee, donc c'est la CHARGE. Les bornes
+   ne pouvaient pas lever cette ambiguite — le prefixe, si. */
+console.log('\n-- CLIII. Le bouton « lancer la séance » ne sortait plus (ft-v1049) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const B=await pg.evaluate(()=>{
+   try{
+    if(typeof _ressembleASeance!=='function'||typeof _extractDaySession!=='function') return {absente:true};
+    const o={};
+    /* ⭐ SON TEXTE REEL, repris de ses deux captures — pas un exemple que j'aurais ecrit
+       moi-meme (le piege exact du 20/08 : tester ses propres exemples au lieu du reel). */
+    const sien=`Échauffement : 8 min elliptique intensité légère
+
+--
+
+Développé Couché (ancre)
+• Échauffement : 40×5 → 55×3 → 70×2 → 80×1 → 88×1
+• S1 : 95×3 — repos 1 min 30
+• S2 : 95×3 — repos 1 min 30
+• S3 : 95×3 — repos 1 min 30
+Omoplates serrées dans le banc, descente contrôlée 2s, poussée explosive.
+
+Tirage Visage (Face Pull) — S1 30×12, S2 30×12, S3 30×12 — repos 60s — Coudes hauts`;
+    /* Le MEME contenu au format « classique » : c'est le temoin de reference. */
+    const classique=`Développé Couché
+3×3 à 95 kg — repos 3 min
+Tirage Visage
+3×12 à 30 kg — repos 60s`;
+    const lire=t=>{ const d=_extractDaySession(t);
+      return (d&&d.sess)?(d.sess.exs||[]).map(e=>({n:e.name, s:(e.sets||[]).length,
+        d:(e.sets||[]).map(x=>x.kg+'x'+x.reps).join('|')})):null; };
+    o.detecteSien=_ressembleASeance(sien);
+    o.detecteClassique=_ressembleASeance(classique);
+    o.sien=lire(sien);
+    o.classique=lire(classique);
+    /* ⛔ ANTI-FAUX-POSITIF : une conversation ordinaire ne doit pas passer pour une seance. */
+    o.discussion=_ressembleASeance('Salut ! Comment tu te sens aujourd\'hui ? On peut parler de ta récup si tu veux.');
+    o.uneSeuleSerie=_ressembleASeance('Tu peux faire S1 : 60×10 pour commencer, on verra après.');
+    /* ⛔ LA LIGNE DE PALIERS D'ECHAUFFEMENT ne porte aucun `S1` : elle ne doit pas devenir des
+       series de travail (c'est pour ca qu'on s'appuie sur le prefixe, pas sur la forme). */
+    o.paliersSeuls=lire('Développé Couché\n• Échauffement : 40×5 → 55×3 → 70×2 → 80×1 → 88×1');
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  await cx.close();
+
+  if(B.err||B.absente)t('CLIII n\'a pas pu tourner',false,JSON.stringify(B));
+  else{
+    /* ⭐⭐ LE TÉMOIN QUI REFERME LE BLOQUANT. */
+    t('⭐⭐ son format « S1 : 95×3 » est enfin reconnu comme une séance (le cervelet est appelé)',
+      B.detecteSien===true, 'détecté = '+B.detecteSien);
+    t('⭐⭐ … et le FILET la lit aussi : plus besoin que le cervelet réponde pour avoir un bouton',
+      !!B.sien && B.sien.length===2, JSON.stringify(B.sien));
+    /* ⛔⛔ LE PLUS IMPORTANT : la CHARGE n'est pas prise pour un nombre de séries. */
+    t('⛔⛔ « 95×3 » se lit 95 kg × 3 reps — JAMAIS 95 séries',
+      !!B.sien && B.sien[0].s<=12 && /95x3/.test(B.sien[0].d), JSON.stringify(B.sien&&B.sien[0]));
+    /* ⭐⭐ LE TÉMOIN DE RÉFÉRENCE : le même contenu, deux écritures, une seule séance. */
+    t('⭐⭐ le MÊME contenu écrit dans les 2 formats donne EXACTEMENT la même séance',
+      !!B.sien && !!B.classique
+      && B.sien.map(e=>e.s+':'+e.d).join(' / ')===B.classique.map(e=>e.s+':'+e.d).join(' / '),
+      JSON.stringify([B.sien&&B.sien.map(e=>e.s+':'+e.d), B.classique&&B.classique.map(e=>e.s+':'+e.d)]));
+    /* ⛔ Et la variante « tout sur une ligne » (le Tirage Visage) est lue aussi. */
+    t('⛔ la variante « Nom — S1 30×12, S2 30×12, S3 30×12 » sur UNE ligne est lue aussi',
+      !!B.sien && B.sien[1].s===3 && /30x12/.test(B.sien[1].d), JSON.stringify(B.sien&&B.sien[1]));
+    /* ⛔ NON-RÉGRESSION : l'ancien format ne bouge pas. */
+    t('⛔ non-régression : le format « 3×3 à 95 kg » marche exactement comme avant',
+      B.detecteClassique===true && !!B.classique && B.classique.length===2, JSON.stringify(B.classique));
+    /* ⛔ ANTI-FAUX-POSITIF — sans lui, on dépenserait un appel sur chaque bavardage. */
+    t('⛔ une conversation ordinaire n\'est pas prise pour une séance',
+      B.discussion===false, 'détecté = '+B.discussion);
+    t('⛔ … et UNE seule série numérotée ne suffit pas (il en faut 2, comme l\'autre motif)',
+      B.uneSeuleSerie===false, 'détecté = '+B.uneSeuleSerie);
+    /* ⛔ La ligne de paliers d'échauffement ne devient pas des séries de travail. */
+    t('⛔ une ligne de PALIERS (« 40×5 → 55×3 → 70×2 ») ne devient pas des séries de travail',
+      B.paliersSeuls===null || B.paliersSeuls.length===0, JSON.stringify(B.paliersSeuls));
+  }
+}
+
+/* == BLOC CLIV - LA SEANCE PREVUE QUI N'A PAS EU LIEU (ft-v1050) ==
+   /!\ CL a CLIII sont pris par session-B (RPE, export historique...) — 5e collision de la semaine.
    Michel, sur la methode de sa coach : « si elle est loupee elle est loupee. C'est pas grave,
    sur une semaine. Plutot elle demande ce qui s'est passe — fatigue, travail, empechement, ca
    peut arriver. » Et sa consigne pour cette version : « attention pas d'ia surtout ».
@@ -16453,7 +16797,7 @@ console.log('\n-- CL. Le RPE : un vocabulaire, pas un 2e système (ft-v1046) --'
    ⛔ ZERO APPEL API : tout est deterministe et local, un temoin compte les appels sortants.
    ⚠️ ET LE DEFAUT TROUVE A LA CAPTURE : « Pas la tete » DEBORDAIT de sa pastille (47 px,
    `.ck-opt-l` en nowrap) — invisible dans le texte rendu. Un temoin mesure le debordement. */
-console.log('\n-- CLI. La séance prévue qui n\'a pas eu lieu (ft-v1047) --');
+console.log('\n-- CLIV. La séance prévue qui n\'a pas eu lieu (ft-v1050) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   /* ⛔ Horloge figée : tout ce bloc compte des JOURS d'écart (leçon de ft-v1029 — un témoin

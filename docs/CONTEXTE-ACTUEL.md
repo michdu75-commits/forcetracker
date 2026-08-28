@@ -6,8 +6,8 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1047`.
-- 📅⭐⭐ **LA SÉANCE PRÉVUE QUI N'A PAS EU LIEU — on DEMANDE ce qui s'est passé** (ft-v1047).
+- **Version en ligne (live) :** `ft-v1050`.
+- 📅⭐⭐ **LA SÉANCE PRÉVUE QUI N'A PAS EU LIEU — on DEMANDE ce qui s'est passé** (ft-v1050).
   Méthode de la coach de Michel, dans ses mots : *« si elle est loupée elle est loupée. C'est
   pas grave, sur une semaine. Plutôt elle demande ce qui s'est passé — fatigue, travail,
   empêchement, ça peut arriver. »* ⭐⭐ **Sa réponse nomme un TROISIÈME comportement** : ni
@@ -24,6 +24,57 @@
   ⚠️ **Défaut trouvé À LA CAPTURE** : « Pas la tête » **débordait** de sa pastille de 47 px,
   invisible dans le texte rendu. Un témoin mesure le débordement (`scrollWidth`), pas la
   longueur des mots.
+- **Version en ligne (live) :** `ft-v1049`.
+- 🆘⭐⭐ **BLOQUANT CORRIGÉ — le bouton « lancer la séance » ne sortait plus** (ft-v1049), trouvé
+  par Michel **en salle** : Milo écrit la séance, dit *« le bouton devrait apparaître »*, et il
+  n'y en a pas.
+  ⛔⛔ **Les TROIS voies échouaient pour la MÊME raison** (① bloc caché · ② `_ressembleASeance`
+  **false** · ③ `_extractDaySession` **null**) : toutes lisaient `95×3` comme **« 95 séries de
+  3 reps »**. 4 lignes jetées, 0 retenue, il en faut 2. ***Pas un chemin cassé : une hypothèse de
+  FORMAT partagée par les trois.*** ⚠️ **2ᵉ fois** (20/08, même symptôme, autre format).
+  ⭐⭐ **Le préfixe `S1`/`S2` lève l'ambiguïté que les bornes ne pouvaient pas lever** : dans
+  « 3×3 » le 1ᵉʳ nombre compte des séries ; dans « S1 : 95×3 » la série est déjà nommée, donc
+  c'est la **charge**.
+  ⚠️⚠️ **Une série se perdait en silence** (2 au lieu de 3) : `nomAvant` ne remonte que 3 lignes
+  et saute celles qui portent des nombres → nom vide sur `S3`. Une ligne `S2`/`S3` **hérite**
+  maintenant du nom de la `S1`.
+  ⭐⭐ **Témoin de référence** : le même contenu dans les 2 formats donne **exactement** la même
+  séance. 📣 Ni pop-up ni point rouge — c'est une réparation.
+  ⏭️ **Restent en attente du feu vert de Michel** : la règle du **repos qui suit la CHARGE** chez
+  Milo (mesuré : il reçoit *« muscle → 60-90 s »* et l'applique à un **3 reps à 88 %**), et
+  l'avertissement d'intensité **visible dans le chat**.
+- 📤⭐⭐ **EXPORTER SON HISTORIQUE EN CSV ET EN PDF** (ft-v1048, demande de Michel sur sa vidéo).
+  ⚠️⚠️ **R23 a changé le travail avant qu'il commence : l'export EXISTAIT** (Menu → Exporter mes
+  données → « mes séances seulement »). ***Le trou n'était pas l'export, c'était le FORMAT*** — il
+  sort du JSON. ⛔ Le JSON reste où il est (sauvegarder ≠ regarder son historique).
+  ⛔⛔ **Un seul producteur de lignes** (`_histoLignes`) pour les deux formats (R2) · **mêmes
+  colonnes que l'onglet `Sessions` du Google Sheet** + nom de séance et RIR · ⛔⛔ **aucune donnée
+  de santé** (ni poids de corps, ni âge, ni sexe, ni e-mail).
+  ⚠️ **Le CSV tient à deux détails** : séparateur `;` et **BOM UTF-8** — sans eux Excel FR met tout
+  dans une colonne et casse les accents ; échappement réel des virgules et guillemets.
+  ⚠️⚠️ **Le PDF échouait EN SILENCE** : `lastAutoTable` n'a **pas** de `startY` (que `finalY`) → le
+  titre partait à `NaN`. *On vérifie les propriétés, on ne les devine pas* — 3ᵉ fois de la session.
+  ⚠️ Et la **capture** a trouvé les en-têtes désalignés, qu'aucune mesure de chaîne ne voit.
+  ⛔ Porte dans **Progrès**, à côté de l'historique · R15 (`_OVERLAY_CLOSERS`) · rien à exporter →
+  rien ne s'ouvre.
+- 🩹⭐⭐ **TROIS ERREURS DES CARTES DE PROGRÈS, TROUVÉES SUR UNE VIDÉO DE MICHEL** (ft-v1047, 10 s
+  en production). Périmètre choisi par lui : **mes 2 cartes**, pas tout l'onglet.
+  ⛔⛔ **La pire est de moi** : *« sur **37** séances »* puis *« 11 sur **27** »* — **deux
+  dénominateurs qui se contredisent, sans un mot**. Cause reproduite : `_calSessMix` ne classe pas
+  toutes les séances. ***C'est ft-v1027, refait par moi.***
+  ⛔ **On ne répare PAS en comptant sur 37** : les non classées deviendraient des séances « non
+  dominées par le haut », un **fait faux** (R29). La ligne **nomme sa fenêtre** et les deux nombres
+  apparaissent **ensemble**.
+  ⚠️ ② *« le plus souvent dominées »* à **41 %** : c'est le mode, mais ça se lit « la majorité ».
+  ⚠️ ③ *« Le tronc domine 1 fois »* : 1 occurrence n'est pas une constante → plancher à 3.
+  🎨 **Visuel mesuré** : la barre prend la couleur **« muscle »** de la figurine — ⛔ **toutes de la
+  même couleur, seule la LONGUEUR varie**, donc ce n'est pas un statut (R31) ; le rail gris
+  disparaît ; un **liseré gris** distingue la synthèse (miroir, pas alerte) ; le pied passe de 2
+  lignes à 1 — ⛔ **alléger n'est pas supprimer**, l'exemple survit dans l'aide.
+  ⭐ **326 → 309 px** (volume), **286 → 300 px** (synthèse, prix de l'honnêteté), 🔴 bouton central
+  identique. 📣 **Ni pop-up ni point rouge** : une correction n'est pas une nouveauté.
+  ⏭️ **Ensuite** : l'export CSV + PDF de l'historique (choix de Michel) — ⚠️ **l'export JSON existe
+  déjà** (Menu → Exporter mes données → « mes séances seulement »), R23.
 - 🎚️⭐⭐ **LE RPE — UN VOCABULAIRE, PAS UN 2ᵉ SYSTÈME** (ft-v1046). Michel l'avait différé, puis
   donné le critère : *« c'est des gens qui connaissent bien qui connaissent le RPE »* — donc il se
   **choisit** (Profil → Échelle d'effort), il ne se demande à personne. **Le RIR reste le défaut.**

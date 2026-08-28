@@ -1652,7 +1652,77 @@ function _seanceDepuisTexte(reply){
        du nom sur la ligne précédente — les deux ensemble expliquent le « RIEN » mesuré sur la
        vraie séance de Michel. Ici on lit le début de la ligne et on laisse le reste. */
     const RE_SEULE=/^\s*(?:[-•*–])?\s*(\d{1,2})\s*[x×*]\s*(\d{1,3})\s*(?:reps?)?\s*(?:(?:à|@)\s*(\d{1,3}(?:[.,]\d)?)\s*kg)?/i;
+    /* 🆘 LE 3ᵉ FORMAT — LES SÉRIES NUMÉROTÉES (28/08/2026, ft-v1049)
+       Retour de terrain de Michel, EN SALLE, capture à l'appui : Milo écrit la séance, lui dit
+       « le bouton devrait apparaître sous mon message »… et il n'y a pas de bouton.
+
+       ⛔⛔ MESURÉ SUR SON TEXTE : les TROIS voies échouaient pour la MÊME raison. Milo n'écrit
+       plus « 3×3 à 95 kg » — il écrit **une ligne par SÉRIE** :
+            • S1 : 95×3 — repos 1 min 30
+       Or `95×3` était lu comme « 95 SÉRIES de 3 reps » : 95 dépasse la borne des 12, la ligne
+       est jetée. Ses 4 lignes jetées, 0 retenue, il en faut 2 → aucun bouton.
+       👉 *Ce n'est pas un chemin cassé, c'est une hypothèse de FORMAT partagée par les trois* —
+       et c'est la **2ᵉ fois** (le 20/08, même symptôme, autre format).
+
+       ⭐⭐ CE QUI REND LA LECTURE SÛRE, C'EST LE PRÉFIXE `S1`/`S2`/`S3` : il lève l'ambiguïté que
+       les bornes ne pouvaient pas lever. Dans « 3×3 » le 1ᵉʳ nombre est un COMPTE de séries ;
+       dans « S1 : 95×3 » la série est déjà nommée, donc le 1ᵉʳ nombre est la **CHARGE**. Sans ce
+       préfixe on ne pourrait pas distinguer les deux, et on inventerait des séances fausses.
+
+       ⚠️ DEUX VARIANTES, VUES TOUTES LES DEUX SUR SES CAPTURES :
+         (a) une ligne par série  → « • S1 : 95×3 — repos 1 min 30 » (nom remonté au-dessus)
+         (b) tout sur une ligne   → « Tirage Visage (Face Pull) — S1 30×12, S2 30×12, S3 30×12 »
+       ⛔ Et la ligne de PALIERS d'échauffement (« Échauffement : 40×5 → 55×3 → 70×2 ») ne porte
+       aucun `S1` : elle ne peut pas être confondue, c'est exactement pour ça qu'on s'appuie sur
+       le préfixe et pas sur la forme des nombres. */
+    const RE_SNUM=/\bS(\d{1,2})\s*[:.]?\s*(\d{1,3}(?:[.,]\d)?)\s*[x×*]\s*(\d{1,3})\b/gi;
+    const _snumLigne=t=>{
+      const out=[]; RE_SNUM.lastIndex=0; let m;
+      while((m=RE_SNUM.exec(t))){
+        const kg=parseFloat(String(m[2]).replace(',','.')), reps=+m[3];
+        if(!(kg>0&&kg<=500)||!(reps>=1&&reps<=100))continue;
+        out.push({kg,reps});
+      }
+      return out;
+    };
+    /* On collecte d'abord toutes les séries numérotées, en les rattachant à leur exercice :
+       le nom est soit AVANT le premier `S1` sur la même ligne (b), soit sur une ligne au-dessus
+       (a) — auquel cas les lignes S1/S2/S3 consécutives se REGROUPENT sous ce nom. */
+    const parSnum=[];
+    let _snumDerIdx=-9, _snumDerNom='';
     lignes.forEach((l,idx)=>{
+      const t=l.replace(/\*\*/g,'').trim(); if(!t)return;
+      const sers=_snumLigne(t); if(!sers.length)return;
+      const av=t.slice(0, t.search(/\bS\d{1,2}\s*[:.]?\s*\d/i))
+                 .replace(/[-—–:•*]+\s*$/,'').replace(/\s*\((ancre|accessoire)\)\s*/i,'').trim();
+      /* ⚠️⚠️ UNE LIGNE `S2`/`S3` HÉRITE DU NOM DE LA `S1` QUI LA PRÉCÈDE — et sans ça on PERD
+         des séries, mesuré. `nomAvant` ne remonte que 3 lignes et saute celles qui portent des
+         nombres : pour `S3`, les trois lignes au-dessus sont `S2`, `S1` et les paliers
+         d'échauffement — toutes sautées —, donc le nom sortait VIDE et la série était jetée.
+         Résultat : 2 séries de travail au lieu de 3, sur une séance qui en annonce 3.
+         👉 C'est aussi la lecture juste : `S1`/`S2`/`S3` qui se suivent SONT le même exercice. */
+      let nom=(av && /[a-zà-ÿ]{3}/i.test(av) && av.length<=60) ? av : '';
+      if(!nom && idx===_snumDerIdx+1 && _snumDerNom) nom=_snumDerNom;   // héritage de la ligne d'au-dessus
+      if(!nom) nom=nomAvant(idx);
+      if(!nom||!/[a-zà-ÿ]{3}/i.test(nom))return;
+      _snumDerIdx=idx; _snumDerNom=nom;
+      const der=parSnum[parSnum.length-1];
+      if(der && der.nom===nom) der.sets.push.apply(der.sets, sers);   // S1/S2/S3 regroupées
+      else parSnum.push({nom:nom, sets:sers.slice()});
+    });
+    parSnum.forEach(e=>{
+      if(!e.sets.length||e.sets.length>12)return;
+      const r=_matchExercise(e.nom)||{};
+      /* ⛔ MÊME RÈGLE DE NOMS QUE PLUS BAS, exprès : `via:'exact'` seulement, sinon on garde le
+         nom TEL QUEL. On ne rapproche jamais « à peu près » — la personne s'entraînerait sur un
+         autre exercice que celui que Milo lui a écrit (leçon du 04/08). */
+      const nom=(r.match && r.via==='exact') ? r.match : e.nom.slice(0,48);
+      exs.push({name:nom, sets:e.sets.map(x=>({reps:x.reps, kg:x.kg, type:'N'}))});
+    });
+    lignes.forEach((l,idx)=>{
+      /* ⛔ Une ligne déjà lue comme série numérotée ne doit pas être relue par les 2 autres
+         motifs : elle produirait un 2ᵉ exercice avec des valeurs fausses (95 séries de 3). */
+      if(_snumLigne(l).length) return;
       const t=l.replace(/\*\*/g,'').trim(); if(!t||t.length>90)return;
       let brut, nb, reps, kg;
       const m=t.match(RE);
@@ -1771,6 +1841,14 @@ function _extractDaySession(reply){
 function _ressembleASeance(txt){
   try{
     if(!txt)return false;
+    /* 🆘 ft-v1049 — LE FORMAT « SÉRIES NUMÉROTÉES » COMPTE AUSSI. Michel, en salle : Milo écrit
+       « S1 : 95×3 », le détecteur lit « 95 séries » (hors bornes), jette la ligne, conclut « ce
+       n'est pas une séance » et n'appelle JAMAIS le cervelet — donc aucun bouton.
+       ⭐ Le préfixe `S1`/`S2` lève l'ambiguïté : la série est déjà nommée, donc le 1ᵉʳ nombre est
+       la CHARGE. Deux séries numérotées suffisent — c'est le même seuil que l'autre motif, et ce
+       détecteur ne fait qu'AIGUILLER (au pire un appel dépensé pour rien, R29). */
+    const _sn=(String(txt).match(/\bS\d{1,2}\s*[:.]?\s*\d{1,3}(?:[.,]\d)?\s*[x×*]\s*\d{1,3}\b/gi)||[]).length;
+    if(_sn>=2) return true;
     const RE=/(?:^|[\s:–—-])(\d{1,2})\s*(?:[x×*]\s*|s[ée]ries?\s+de\s+)(\d{1,3})\b/i;
     let n=0;
     String(txt).split(/\n+/).forEach(l=>{
@@ -3397,7 +3475,7 @@ PROCHAINE SÉANCE — il/elle TE l'a annoncée:
 `;
 })()}
 ${(()=>{
-  /* 📅 LES SÉANCES PRÉVUES QUI N'ONT PAS EU LIEU (ft-v1047) — R4a : la donnée existe, elle
+  /* 📅 LES SÉANCES PRÉVUES QUI N'ONT PAS EU LIEU (ft-v1050) — R4a : la donnée existe, elle
      doit ATTEINDRE Milo, sinon l'app sait quelque chose que le coach ignore.
      ⛔⛔ ET LE CADRE EST AUSSI IMPORTANT QUE LA DONNÉE. Sans consigne, un modèle à qui on
      tend une liste de séances manquées en fera un reproche — c'est le réflexe le plus
@@ -5190,7 +5268,7 @@ function _vcApplyPersona(p){
      ⚠️ Et c'était aussi un piège de fixture : sans ça, le `foodLog` d'un scénario n'aurait
      JAMAIS atteint S — la fixture muette d'EV-009, refaite le lendemain de sa correction. */
   S.foodLog=a.foodLog||[];
-  /* ⛔⛔ AJOUTÉ EN ft-v1047, ET LE TÉMOIN DE ft-v1014 A REFUSÉ LA LIVRAISON SANS — il a fait
+  /* ⛔⛔ AJOUTÉ EN ft-v1050, ET LE TÉMOIN DE ft-v1014 A REFUSÉ LA LIVRAISON SANS — il a fait
      exactement son travail : `missedLog` venait d'entrer dans `buildCoachContext`, donc les
      VRAIES séances manquées de la personne seraient parties dans CHAQUE persona du banc
      d'essai. Un « persona » qui porte l'historique de quelqu'un de réel n'est plus un persona.
@@ -6327,6 +6405,7 @@ const _DRAWER_CONTENT = {
         {ic:'⚡',t:'Super-séries & Pyramides',d:'Deux façons de créer un superset : 1) le bouton "⚡ Grouper" (dès 2 exercices) → sélectionne les exercices → "Lier en supersérie". 2) Plus rapide : attrape la petite poignée (6 points, à côté du ⋯) sur un exercice et glisse-le sur un autre → le superset se crée tout seul. Ça marche EN SÉANCE et dans l\'ÉDITEUR DE PROGRAMME (✏️ — glisse une carte sur une autre). Enchaînement sans repos entre eux, avance automatique + vibration entre les blocs. Pour défaire : "↩ Retirer". Sous chaque exercice : 📉 Drop set (−10% auto) · 📈 Pyramide + (+10%) · 📉 Pyramide − (−10%).'},
         {ic:'🔥',t:'D\'où vient ton métabolisme de base',d:'Le <b>BMR</b> (onglet Nutrition) est ce que ton corps brûle au repos, sans rien faire. C\'est <b>60 à 70 % de ta dépense totale</b> — de loin le plus gros morceau, donc celui où la précision compte le plus. L\'app peut le calculer de deux façons, et elle <b>dit toujours laquelle</b> sur la ligne juste sous le chiffre. <b>① Formule générique (Mifflin-St Jeor)</b> : poids, taille, âge, sexe. C\'est ce qu\'utilisent la plupart des applis — mais elle ne connaît que ton poids TOTAL, donc elle traite 84 kg de muscle exactement comme 84 kg de gras, et elle sous-estime les personnes musclées. <b>② Sur ta masse maigre (Katch-McArdle)</b> : <i>370 + 21,6 × ta masse maigre en kg</i>. Elle s\'active dès que tu as un <b>bilan corporel</b> (Progrès → Poids) ou un <b>% de masse grasse</b> noté sur une pesée. L\'écart est réel : sur un gabarit de 84 kg à 15 % de masse grasse, c\'est <b>~180 kcal par jour</b>. <b>Quand l\'app REFUSE de l\'utiliser</b> : si ton bilan a plus de 3 mois, ou si ton poids a bougé de plus de 5 % depuis — parce qu\'on ne sait pas si ces kilos sont du muscle ou du gras, et deviner fausserait tout le reste. Elle te le dit alors, elle ne bascule jamais en silence. <b>Et le chiffre de ta balance ?</b> Il est enregistré et Milo le voit, mais il n\'entre pas dans le calcul : chaque marque a sa formule maison, invérifiable. On préfère une formule publiée, appliquée à TA mesure — un chiffre que tu peux refaire toi-même sur un coin de table.'},
         {ic:'🔀',t:'Les exercices « un côté à la fois »',d:'48 exercices de l\'app sont <b>unilatéraux</b> : la série se refait de l\'autre côté (rowing haltère, curl haltères, fentes, squat bulgare, élévations latérales à un bras, extension quadriceps unilatérale…). En séance, ils portent une pastille <b>🔀 « par bras »</b> ou <b>« par jambe »</b> à côté de leur nom — tape-la pour tout revoir. <b>QUEL POIDS NOTER</b> — une seule règle, valable partout dans l\'app : <b>tu notes le poids qui BOUGE pendant la répétition</b>. Un seul haltère monte (rowing haltère, curl alterné, élévation à un bras) → note son poids à lui, 28, jamais 56. Les deux bougent en même temps (squat bulgare avec deux haltères, développé incliné) → note le total, 60. <b>COMBIEN DE SÉRIES</b> : tu saisis <b>3</b>, comme d\'habitude — pas 6. L\'app sait qu\'il faut refaire chaque série de l\'autre côté, et <b>compte ton tonnage en double</b> toute seule. Ton <b>record</b>, lui, reste calculé sur la charge d\'un seul côté : c\'est la vraie charge que ton muscle a tenue. ⚠️ Un côté plus faible que l\'autre ne peut pas se noter séparément aujourd\'hui — ça doublerait la saisie pour tout le monde ; dis-le si ça te manque. Tes séances déjà enregistrées ne bougent pas.'},
+        {ic:'📤',t:'Exporter ton historique — et quel format choisir',d:'Dans <b>Progrès</b>, à côté de « Historique séances », le bouton <b>📤 Exporter</b> te propose deux formats. <b>CSV</b> : un fichier qui s\'ouvre dans <b>Excel, Numbers ou Google Sheets</b>, avec une ligne par série (date · séance · exercice · n° de série · type · kg · reps · RIR · volume) — c\'est le format pour trier, filtrer, faire tes propres calculs. <b>PDF</b> : un document mis en page, <b>une séance par bloc</b> avec sa date en toutes lettres — c\'est le format pour montrer à quelqu\'un (coach, kiné, préparateur). ⛔ <b>CE QU\'IL Y A DEDANS, ET CE QU\'IL N\'Y A PAS</b> : seules les séries que tu as <b>validées</b> (une série cochée non faite n\'a pas eu lieu). Et <b>aucune donnée de santé</b> — ni poids de corps, ni âge, ni sexe, ni ton adresse e-mail. C\'est voulu : ce fichier sort de l\'app, il ne doit contenir que de l\'entraînement. ⚠️ Le <b>RIR</b> y est quand tu l\'as noté ; une série non notée reste <b>vide</b>, jamais « 0 » — sinon elle passerait pour un échec. ⓘ <b>À NE PAS CONFONDRE</b> avec <b>Menu → Exporter mes données</b>, qui existe depuis longtemps : celui-là sort un <b>JSON</b>, fait pour <b>sauvegarder</b> ou faire analyser l\'ensemble de ton compte. Ici c\'est ton <b>historique d\'entraînement</b>, dans un format qui se lit.'},
         {ic:'📊',t:'Le volume par groupe musculaire, et pourquoi il n\'affiche pas d\'objectif',d:'En haut de <b>Progrès</b>, « Ce que ta semaine a travaillé » compte tes <b>séries de travail par groupe musculaire</b> sur les <b>7 derniers jours glissants</b> (pas depuis lundi : sinon un mardi, tout le monde afficherait 2 séries et croirait avoir régressé). <b>COMMENT C\'EST COMPTÉ</b> : une série compte pour le <b>muscle principal</b> de l\'exercice. Un développé couché donne 1 série aux <b>pectoraux</b>, et rien aux triceps — sinon le total exploserait et ne voudrait plus rien dire. Les <b>échauffements</b> (tag É) et les séries <b>non validées</b> ne comptent pas : le cadre parle de séries de <i>travail</i>. ⚠️ Un exercice dont l\'app ne connaît pas les muscles (nom ambigu, exercice perso sans muscles cochés) ne peut créditer personne : ses séries sont <b>comptées à part et affichées</b>, jamais effacées en silence — sinon le total serait plus petit que la réalité tout en ayant l\'air d\'un fait. <b>POURQUOI AUCUN OBJECTIF N\'EST AFFICHÉ</b> : ta discipline a bien un cadre (<i>« 10 à 20 séries par groupe et par semaine »</i> en musculation, <i>12 à 22</i> en bodybuilding) — mais <b>un mercredi, tout le monde est en dessous</b>. Afficher « 6 · cible 10-20 » se lirait comme un déficit alors que la semaine n\'est pas finie. L\'écran s\'en tient donc aux <b>faits</b>. 👉 <b>Milo</b>, lui, reçoit les deux — le compte et le cadre — et il sait quel jour on est : c\'est à lui de dire quelque chose d\'utile. ⚠️ Et pour trois disciplines sur cinq (powerbuilding, force athlétique, haltérophilie), le cadre n\'exprime <b>pas</b> le volume par muscle et par semaine — il le dit par séance ou par mouvement. Milo est prévenu de ne comparer ces chiffres à aucun objectif dans ce cas.'},
         {ic:'🎽',t:'Pourquoi le repos conseillé n\'est pas le même pour tout le monde',d:'Quand une séance te propose une charge <b>lourde</b> (au-delà de 80 % de ton maximum estimé) avec un <b>repos court</b>, l\'app te prévient. ⚠️ Jusqu\'au 27/08, elle appliquait <b>un seul chiffre à tout le monde</b> — 150 secondes — alors qu\'elle affiche à chaque discipline un cadre différent, et qu\'elle l\'envoie aussi à Milo : <i>« 3 à 5 min entre les séries lourdes »</i> en <b>force athlétique</b>, <i>« 60 à 120 s, les repos courts font partie du travail »</i> en <b>bodybuilding</b>. <b>L\'app se contredisait donc elle-même</b> : elle te montrait un cadre et en vérifiait un autre. <b>CE QUI CHANGE</b> : le seuil et le conseil sont maintenant <b>lus dans ton cadre</b>. Un powerlifter qui prenait 160 s entre deux séries à 88 % ne recevait rien — il est prévenu, et on lui dit « viser 3 à 5 min », pas « 3 min ». <b>CE QUI NE CHANGE PAS, ET C\'EST VOULU</b> : ⛔ le contrôle <b>ne se relâche jamais</b>. Il garde un plancher, parce que ce plancher vient d\'un cas réel tranché par Michel — <i>« un 3×5 avec 90 secondes de repos, c\'est impossible »</i> — et que le bas de plage de la musculation (90 s) aurait rendu son propre cas silencieux. ⛔ Et <b>la charge maximale, elle, ne bouge pas d\'un gramme</b> : ce que ton corps peut tenir est de la <b>physiologie</b>, pas de la doctrine — un powerlifter n\'a pas un maximum plus élevé parce qu\'il est powerlifter. ⛔ Enfin l\'app <b>ne te reproche pas</b> une charge au-dessus de ton cadre : les cadres disent eux-mêmes que <i>« du lourd ponctuel reste utile et ne se reproche pas »</i>. 👉 Ta discipline se change dans <b>Profil</b>, et le cadre complet s\'y affiche.'},
         {ic:'🔭',t:'Ce que ton histoire montre',d:'En haut de l\'onglet <b>Progrès</b>, l\'app dégage des <b>constantes</b> de tout ton historique : ton <b>rythme réel</b> (pas celui que tu crois tenir), l\'<b>exercice qui revient le plus</b>, et la <b>région</b> que tes séances travaillent le plus souvent. ⚠️ <b>Ce sont des faits comptés, pas des conseils</b> — tu ne liras jamais « tu devrais ». C\'est à toi d\'en tirer ce que tu veux : l\'app te montre ce qu\'elle voit, elle ne décide pas à ta place. ⛔ Chaque ligne <b>dit sur quoi elle porte</b> (« sur 14 séances étalées sur 31 jours »), pour que deux chiffres ne se contredisent pas sans explication. ⛔ Et sous <b>8 séances sur 21 jours</b>, elle dit qu\'elle ne sait pas encore : une « constante » sur 5 séances, c\'est du hasard. ⚠️ La région est la <b>dominante</b> de chaque séance — « le bas du corps domine 3 fois » ne veut pas dire que tu ne le travailles que 3 fois.'},

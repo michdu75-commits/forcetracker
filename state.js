@@ -110,7 +110,7 @@ function load(){
     S.prs=_lsJson('ft4_prs',{});
     S.wkt=_lsJson('ft4_wkt',null);
     S.nextPlanned=_lsJson('ft4_nextplanned',null); // séance annoncée à Milo (ft-v601) : {date:'YYYY-MM-DD',label}
-    S.missedLog=_lsJson('ft4_missed',[]); // séances prévues qui n'ont pas eu lieu (ft-v1047) : [{date,label,raison,repondu}]
+    S.missedLog=_lsJson('ft4_missed',[]); // séances prévues qui n'ont pas eu lieu (ft-v1050) : [{date,label,raison,repondu}]
     S.url=DEFAULT_URL;
     S.email=localStorage.getItem('ft4_email')||'';
     S.connected=localStorage.getItem('ft4_ok')==='1';
@@ -424,7 +424,7 @@ function persist(){
     /* ⛔ PLAFOND À 12, et ce n'est pas un garde-fou de taille — c'est un garde-fou de TON.
        Un historique sans fin des séances manquées deviendrait un registre de fautes, et
        personne n'a besoin de se voir rappeler un empêchement d'il y a huit mois (P21, P13). */
-    localStorage.setItem('ft4_missed',JSON.stringify((S.missedLog||[]).slice(-12))); // ft-v1047
+    localStorage.setItem('ft4_missed',JSON.stringify((S.missedLog||[]).slice(-12))); // ft-v1050
     localStorage.setItem('ft4_cycle',JSON.stringify(S.cycle||null)); // cycle de force : local-first (était lu mais jamais écrit)
     // Brouillon de secours — effacé quand séance vide ou après sauvegarde dans finishWorkout()
     if(S.wkt&&S.wkt.exs&&S.wkt.exs.length){
@@ -610,7 +610,7 @@ function plannedSession(){
   }catch(e){return null;}
 }
 
-/* 📅 LA SÉANCE PRÉVUE QUI N'A PAS EU LIEU (ft-v1047)
+/* 📅 LA SÉANCE PRÉVUE QUI N'A PAS EU LIEU (ft-v1050)
    D'OÙ ÇA VIENT : la méthode de la coach de Michel, dans ses mots à lui — *« si elle est
    loupée elle est loupée. C'est pas grave, sur une semaine. Plutôt elle demande ce qui
    s'est passé — fatigue, travail, empêchement, ça peut arriver. »*

@@ -154,7 +154,7 @@ const _HELP_DATA={
   home:{
     title:'🏠 Accueil',
     tips:[
-      /* ⛔ POURQUOI CETTE ENTREE EXISTE (ft-v1047) : la carte est RARE, donc quand elle
+      /* ⛔ POURQUOI CETTE ENTREE EXISTE (ft-v1050) : la carte est RARE, donc quand elle
          apparait la personne peut se demander d'ou l'app tient ca, et si elle « compte les
          points ». L'aide repond aux deux : c'est SA propre annonce, et rien n'est totalise.
          La carte annonce, l'aide explique (R25). */
@@ -243,6 +243,7 @@ const _HELP_DATA={
   progress:{
     title:'📈 Progrès',
     tips:[
+      {i:'📤',t:'<b>Exporter ton historique</b> : le bouton <b>📤 Exporter</b>, à côté de « Historique séances ». <b>CSV</b> pour un tableur (une ligne par série : date, séance, exercice, kg, reps, RIR, volume) · <b>PDF</b> pour un document lisible, une séance par bloc. ⛔ Seules les séries <b>validées</b> y sont, et <b>aucune donnée de santé</b> (ni poids de corps, ni âge, ni sexe). ⓘ Pour une <b>sauvegarde complète</b> de tes données, c\'est Menu → Exporter mes données.'},
       {i:'📊',t:'<b>Ce que ta semaine a travaillé</b> (en haut de l\'onglet) : tes <b>séries de travail par groupe musculaire</b> sur les <b>7 derniers jours</b>, échauffements exclus. ⚠️ Volontairement <b>sans objectif affiché</b> — en milieu de semaine, un chiffre « en dessous de la cible » ne veut rien dire. Les séries comptent pour le <b>muscle principal</b> de l\'exercice (un développé couché = pectoraux, pas triceps). Si l\'app ne connaît pas un exercice, ses séries sont <b>signalées à part</b> plutôt que perdues.'},
       {i:'🔭',t:'<b>Ce que ton histoire montre</b> (en haut de l\'onglet) : des <b>constantes</b> tirées de tout ton historique — rythme réel, exercice le plus fidèle, région dominante. Ce sont des <b>faits</b>, pas des conseils : à toi d\'en tirer ce que tu veux. Il faut au moins <b>8 séances sur 21 jours</b> — en dessous, elle le dit.'},
       {i:'💪',t:'Le graphique affiche ton 1RM estimé (Brzycki) par exercice — sans avoir besoin de tester à l\'échec. Les boutons 3 mois / 6 mois / 1 an / Tout choisissent la période. Et tape un point de la courbe : tu vois la date + la charge, puis « Voir cette séance » t\'ouvre directement le détail de ce jour-là.'},
@@ -472,6 +473,7 @@ function _blockEdgeBackSwipe(){
 // ⚠️ AJOUTER ICI toute nouvelle pop-up « à effet de bord » (marqueur vu, cooldown…), sinon elle
 // reviendra en boucle quand on la ferme au doigt.
 const _OVERLAY_CLOSERS={
+  'ov-histo-export':'closeHistoExport',            // ft-v1048 (R15 : tout chemin de fermeture)
   'ov-whatsnew':'closeWhatsNew',                   // marque les nouveautés comme vues
   'ov-super-welcome':'closeSuperWelcome',
   'ov-emma-welcome':'closeEmmaWelcome',
@@ -957,7 +959,7 @@ function _miloMessage(){
     const when=(typeof _frDayLabel==='function')?_frDayLabel(np.date):np.date;
     return {id:'prevu',txt:'Séance'+lab+' prévue '+when+' 💪 Je m\'en souviens — repose-toi bien d\'ici là.'};
   }
-  /* 📅 LA SÉANCE PRÉVUE QUI N'A PAS EU LIEU (ft-v1047) — AVANT le nettoyage, pas après.
+  /* 📅 LA SÉANCE PRÉVUE QUI N'A PAS EU LIEU (ft-v1050) — AVANT le nettoyage, pas après.
      ⛔⛔ C'est tout le correctif : la ligne juste en dessous effaçait `nextPlanned` EN SILENCE
      dès que la date était passée. Une annonce faite par la personne disparaissait sans qu'un
      mot soit dit. On demande maintenant ce qui s'est passé — une fois, et une seule.
@@ -1084,7 +1086,7 @@ function _confirmPlannedDone(){
     if(typeof toast==='function')toast('Noté 👍 Séance faite, je la retire de tes prévisions.','success');
   }catch(e){}
 }
-/* 📅 LES PASTILLES DE RAISON (ft-v1047)
+/* 📅 LES PASTILLES DE RAISON (ft-v1050)
    ⭐ R13 : AUCUNE brique nouvelle. `.ck-opt` est la pastille du check-in (icône + mot), déjà
    dessinée, déjà testée sur mobile, déjà accessible. On lui passe un emoji au lieu des barres.
    ⛔ Et l'ordre vient de Michel, pas d'un classement : *« fatigue, travail, empêchement »*

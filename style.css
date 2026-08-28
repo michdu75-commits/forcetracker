@@ -1723,7 +1723,13 @@ html.ob-done #onboarding{display:none;}
 /* 🔭 La SYNTHÈSE — brique 8 (ft-v1041). Sobre : ce sont des faits, pas une alerte.
    ⛔ Aucune couleur de statut (ni vert « bien », ni rouge « mal ») : une constante n'est
    ni un succès ni un échec, et la colorer serait déjà un jugement. */
-.synth-card{background:var(--bg2);border-radius:16px;padding:13px 14px;box-shadow:inset 0 0 0 1px var(--sep);}
+/* ⛔ LA SYNTHÈSE SE DISTINGUE DE LA CARTE VOLUME (ft-v1047, vidéo de Michel) : les deux avaient
+   le même fond, la même bordure et le même titre — elles se lisaient comme un seul bloc gris de
+   deux écrans. Un LISERÉ à gauche marque celle qui parle de tout l'historique ; celle du dessous
+   parle de la semaine. *Deux horizons différents doivent se voir différents.*
+   ⛔ Le liseré est en `--t3` (gris), pas en rouge : la synthèse est un miroir, pas une alerte. */
+.synth-card{background:var(--bg2);border-radius:16px;padding:13px 14px 13px 15px;
+  box-shadow:inset 0 0 0 1px var(--sep);border-left:3px solid var(--t3);}
 .synth-t{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin-bottom:9px;}
 .synth-l{padding:7px 0;border-top:1px solid var(--sep);}
 .synth-l:first-of-type{border-top:none;padding-top:0;}
@@ -1732,19 +1738,32 @@ html.ob-done #onboarding{display:none;}
 .synth-vide{font-size:12.5px;color:var(--t2);line-height:1.5;}
 .synth-pied{font-size:11px;color:var(--t3);line-height:1.4;margin-top:9px;padding-top:8px;border-top:1px dashed var(--sep);}
 
-/* 📊 LE VOLUME DE LA SEMAINE — brique volume (ft-v1045). Sobre, comme la synthèse :
-   ⛔ aucune couleur de statut (ni vert « bien », ni rouge « mal »). Un nombre de séries
-   n'est ni un succès ni un échec tant que la semaine n'est pas finie — le colorer serait
-   déjà porter le jugement que cette section refuse exprès de porter. */
+/* 📊 LE VOLUME DE LA SEMAINE — brique volume (ft-v1045, restylée ft-v1047 sur une vidéo de Michel :
+   « c'est pas mal mais je suis sûr qu'on peut améliorer le visuel »).
+
+   ⛔⛔ LA BARRE EST ROUGE, ET CE N'EST PAS UN STATUT — la nuance décide de tout.
+   ft-v1045 disait « aucune couleur de statut, ni vert bien ni rouge mal », et ça reste vrai :
+   **toutes les barres ont la MÊME couleur**, seule leur LONGUEUR varie. Le rouge ne dit pas
+   « bien » ou « mal », il dit **« muscle »** — c'est exactement celui de la figurine, où le rouge
+   marque le muscle moteur. *On emprunte le vocabulaire visuel du système au lieu d'en inventer un*
+   (R31 : la figurine est le vocabulaire). Avant, des rails gris ne ressemblaient à rien de l'app. */
 .vol-card{background:var(--bg2);border-radius:16px;padding:13px 14px;box-shadow:inset 0 0 0 1px var(--sep);}
 .vol-t{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin-bottom:9px;}
 .vol-l{display:flex;align-items:center;gap:8px;padding:3.5px 0;}
 /* ⛔ Largeur FIXE, pas un `min-width` : un libellé plus long ferait glisser toute la colonne
    et les barres ne se compareraient plus à l'œil (la leçon de ft-v1034). */
 .vol-nom{width:118px;flex-shrink:0;font-size:12.5px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.vol-bar{flex:1;height:7px;border-radius:4px;background:var(--bg3);overflow:hidden;}
-.vol-bar i{display:block;height:100%;border-radius:4px;background:var(--t3);opacity:.55;}
-.vol-n{width:26px;flex-shrink:0;text-align:right;font-size:13px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums;}
+/* ⛔ LE RAIL DISPARAÎT. Huit rails gris pleine largeur faisaient huit lignes de bruit sous les
+   barres utiles ; sans lui, l'œil ne suit plus que la donnée. */
+.vol-bar{flex:1;height:8px;border-radius:5px;background:transparent;overflow:hidden;}
+.vol-bar i{display:block;height:100%;border-radius:5px;
+  background:linear-gradient(90deg,var(--red2),var(--red));opacity:.9;}
+.vol-n{width:26px;flex-shrink:0;text-align:right;font-size:13.5px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums;}
 .vol-plus{font-size:11px;color:var(--t3);margin-top:5px;}
 .vol-fen{font-size:10.5px;color:var(--t3);margin-top:9px;font-style:italic;}
-.vol-pied{font-size:11px;color:var(--t3);line-height:1.4;margin-top:7px;padding-top:7px;border-top:1px dashed var(--sep);}
+/* ⛔ LE PIED EST DEVENU UNE LIGNE, PAS UN PARAGRAPHE (R25 : la carte annonce, l'aide explique).
+   L'explication complète est déjà dans l'aide « ? » de l'onglet et dans l'aide détaillée — la
+   répéter en 2 lignes grises sous chaque affichage coûtait autant de hauteur que 2 lignes de
+   données. ⚠️ On ne la SUPPRIME pas pour autant : sa raison d'être tient (quelqu'un qui recompte
+   à la main doit retrouver le même nombre), donc la version courte reste à l'écran. */
+.vol-pied{font-size:10.5px;color:var(--t3);line-height:1.4;margin-top:8px;padding-top:7px;border-top:1px dashed var(--sep);}

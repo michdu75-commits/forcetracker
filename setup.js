@@ -40,6 +40,9 @@ function _renderProgChips(chips){
    se lit comme un chargement qui n'a pas abouti (leçon de ft-v1021). */
 const SYNTH_MIN_SEANCES = 8;    // en deçà, « une constante » n'a aucun sens : c'est du hasard
 const SYNTH_MIN_JOURS   = 21;   // …et il faut aussi de la DURÉE, pas 8 séances en une semaine
+/* ⛔ Le plancher d'une RÉGION : en dessous, ce n'est pas une constante, c'est du bruit.
+   Trouvé sur une vidéo de Michel — « Le tronc domine 1 fois » se lisait comme un fait notable. */
+const SYNTH_MIN_REGION  = 3;
 
 /* ⛔ UN SEUL PROPRIÉTAIRE de « que montre ton historique ? » — la carte et un futur message de
    Milo doivent lire la même chose, sinon ils se contrediront un jour (R2). */
@@ -88,34 +91,41 @@ function _synthConstantes(refTs){
     if(typeof _calSessMix==='function'){
       const reg={haut:0,dos:0,bas:0,tronc:0}; let n=0;
       /* ⚠️ LA CLÉ EST `reg`, PAS `region` — vérifié dans `_calSessMix` (elle rend `{reg, pc}`).
-         Mon 1er jet lisait `m.region` : la constante d'équilibre ne sortait JAMAIS, en silence.
-         *On vérifie les noms, on ne les devine pas* — 3ᵉ fois aujourd'hui. */
+         Mon 1er jet lisait `m.region` : la constante d'équilibre ne sortait JAMAIS, en silence. */
       sess.forEach(s=>{ const m=_calSessMix(s); const r=m&&m.reg;
         if(r&&reg[r]!==undefined){reg[r]++;n++;} });
       if(n>=SYNTH_MIN_SEANCES){
         const LBL={haut:'le haut du corps',dos:'le dos',bas:'le bas du corps',tronc:'le tronc'};
         const cles=Object.keys(reg).sort((a,b)=>reg[b]-reg[a]);
         const fort=cles[0], faible=cles[cles.length-1];
-        /* ⛔ ON NE SORT LA LIGNE QUE SI L'ÉCART EST RÉEL (au moins du simple au double) : sinon
-           on fabriquerait une « constante » à partir d'une différence d'une séance (R29 — les
-           seuils en marche d'escalier, famille §6 de BUGS.md). */
         if(reg[fort]>=2*Math.max(1,reg[faible]) && reg[fort]>=3){
-          /* ⚠️⚠️ LE MOT « DOMINÉE » N'EST PAS DU STYLE, IL EST EXACT. `_calSessMix` rend la
-             région DOMINANTE d'une séance, pas la liste de ce qui a été travaillé. Ma 1ʳᵉ
-             version disait « le tronc revient 0 fois » — ce qui se lit *« tu ne travailles
-             jamais ton tronc »*, et c'est FAUX : une séance peut le solliciter sans qu'il
-             domine. *Une mesure juste peut produire une phrase fausse* (la leçon de ft-v1035).
-             ⛔ Et la 2ᵉ moitié ne sort QUE si la région apparaît au moins une fois : « domine
-             0 fois » n'apprend rien et invite à la mauvaise lecture. */
-          const faibles=cles.filter(k=>reg[k]>0 && k!==fort);
+          /* ⚠️⚠️ ① DEUX DÉNOMINATEURS QUI SE CONTREDISAIENT — TROUVÉ SUR UNE VIDÉO DE MICHEL
+             (28/08, ft-v1047). La carte annonçait « sur 37 séances étalées sur 74 jours » puis
+             « 11 sur 27 » : **37 ≠ 27, et rien ne le disait**. La cause est réelle et mesurée —
+             `_calSessMix` ne sait pas classer toutes les séances (un exercice hors catalogue ne
+             rend aucune région), donc l'équilibre porte sur un sous-ensemble.
+             👉 C'est **exactement le défaut de ft-v1027**, refait par moi. Le correctif est le
+             même : la ligne NOMME sa fenêtre, et les deux nombres apparaissent ENSEMBLE pour
+             qu'ils ne puissent plus se contredire en silence. ⛔ On ne « répare » PAS en
+             comptant sur 37 : les 10 non classées deviendraient des séances « non dominées par
+             le haut », ce qui serait un fait faux (R29). */
+          const fen=(n<out.nSeances)
+            ? 'd\'après la région dominante de '+n+' de tes '+out.nSeances+' séances (les autres ne sont pas classables)'
+            : 'd\'après la région dominante de chaque séance';
+          /* ⚠️ ② « LE PLUS SOUVENT DOMINÉES » SUR-AFFIRMAIT. Mesuré sur son écran : 11/27 = 41 %.
+             C'est bien le MODE, mais la phrase se lit « la majorité du temps » — et 41 % n'est pas
+             une majorité. On dit donc ce qu'on mesure vraiment : *la région la plus fréquente*,
+             avec ses deux nombres. *Une mesure juste peut produire une phrase fausse* (ft-v1035). */
+          let txt='Ta région dominante la plus fréquente est <b>'+LBL[fort]+'</b> — '
+                 +reg[fort]+' séances sur '+n+'.';
+          /* ⚠️ ③ « LE TRONC DOMINE 1 FOIS » N'EST PAS UNE CONSTANTE, C'EST DU BRUIT. La seconde
+             moitié ne sort donc que si la région la moins fréquente atteint le MÊME plancher que
+             la première (3). En dessous, on se tait : signaler une occurrence unique fabrique
+             une régularité à partir de rien, ce que le seuil de cette brique existe pour éviter. */
+          const faibles=cles.filter(k=>reg[k]>=SYNTH_MIN_REGION && k!==fort);
           const bas=faibles.length?faibles[faibles.length-1]:null;
-          out.lignes.push({
-            cle:'equilibre',
-            txt:'Tes séances sont le plus souvent dominées par <b>'+LBL[fort]+'</b> — '
-                +reg[fort]+' sur '+n+'.'
-                +(bas?' '+LBL[bas].charAt(0).toUpperCase()+LBL[bas].slice(1)+' domine <b>'+reg[bas]+' fois</b>.':''),
-            fen:'d\'après la région dominante de chaque séance'
-          });
+          if(bas) txt+=' '+LBL[bas].charAt(0).toUpperCase()+LBL[bas].slice(1)+' domine <b>'+reg[bas]+' fois</b>.';
+          out.lignes.push({cle:'equilibre', txt:txt, fen:fen});
         }
       }
     }
@@ -191,15 +201,188 @@ function _renderVolumeSemaine(){
     +(reste>0?'<div class="vol-plus">et '+reste+' autre'+(reste>1?'s':'')+'</div>':'')
     +'<div class="vol-fen">Séries de travail sur les 7 derniers jours ('
       +esc(jour(v.depuis))+' → '+esc(jour(v.jusqu))+') · '+v.seances+' séance'+(v.seances>1?'s':'')+'</div>'
-    /* ⛔ LE CHOIX DE COMPTAGE EST DIT, PAS CACHÉ : sans ça, quelqu'un qui compte ses séries de
-       triceps à la main trouverait un autre chiffre et croirait à un bug. */
-    +'<div class="vol-pied">Comptées sur le <b>muscle principal</b> de chaque exercice — un développé couché compte pour les pectoraux, pas pour les triceps.'
+    /* ⛔ LE CHOIX DE COMPTAGE RESTE DIT, MAIS EN UNE LIGNE (ft-v1047, R25 : la carte annonce,
+       l'aide explique). Sa raison d'être tient — quelqu'un qui recompte à la main doit retrouver
+       le même nombre — donc on ne le SUPPRIME pas ; l'exemple du développé couché, lui, vit
+       désormais dans l'aide « ? » de l'onglet et dans l'aide détaillée, où il était déjà. */
+    +'<div class="vol-pied">Comptées sur le <b>muscle principal</b> de chaque exercice.'
     /* ⛔ LE SOUS-COMPTAGE EST DIT, JAMAIS TU : un exercice dont l'app ne connaît pas les muscles
        (nom ambigu, exercice perso sans muscles cochés) ne peut créditer personne. Le passer sous
        silence donnerait un total plus petit que la réalité, présenté comme un fait (R29). */
     +(v.nonRattachees>0?' ⚠️ <b>'+v.nonRattachees+' série'+(v.nonRattachees>1?'s':'')+'</b> ne '+(v.nonRattachees>1?'sont':'est')+' rattachée'+(v.nonRattachees>1?'s':'')+' à aucun muscle : l\'app ne connaît pas cet exercice. Coche ses muscles pour qu\'il compte.':'')
     +'</div>'
     +'</div>';
+}
+
+/* 📤 EXPORTER SON HISTORIQUE — EN CSV ET EN PDF (28/08/2026, ft-v1048)
+   Demande de Michel sur sa vidéo : *« pense que l'on peut aussi exporter l'historique des
+   séances »* — formats choisis par lui.
+
+   ⚠️⚠️ R23 D'ABORD, ET ÇA A CHANGÉ LE TRAVAIL : un export **existe déjà** (Menu → Exporter mes
+   données → « mes séances seulement », `lancerExportSeances`). J'ai failli le reconstruire.
+   **Mais il sort du JSON** — bon pour une machine, illisible pour un humain, inouvrable dans un
+   tableur. *Le trou n'était pas l'export, c'était le FORMAT.*
+   ⛔ L'export JSON RESTE où il est : sauvegarder ses données et regarder son historique sont deux
+   besoins différents, et il porte des garanties (liste blanche, aucune donnée de santé) qu'on ne
+   duplique pas.
+
+   ⛔⛔ UN SEUL PRODUCTEUR DE LIGNES POUR LES DEUX FORMATS (R2). Le CSV et le PDF lisent
+   `_histoLignes()`. Deux producteurs finiraient par ne pas dire la même chose du même historique,
+   et on ne saurait pas lequel croire — c'est exactement le défaut que ft-v1047 vient de corriger
+   deux cartes plus haut.
+
+   ⛔ MÊMES COLONNES QUE L'ONGLET `Sessions` DU GOOGLE SHEET, qui existe côté serveur depuis
+   toujours (`date · exercise · set_num · type · kg · reps · volume`). On n'invente pas un 2ᵉ
+   vocabulaire pour la même chose (R2/R33) ; on ajoute seulement ce que le Sheet n'a pas : le NOM
+   de la séance et le RIR.
+
+   ⛔⛔ ET AUCUNE DONNÉE DE SANTÉ N'Y ENTRE — même règle que l'export restreint : pas de poids de
+   corps, pas d'âge, pas de sexe, pas d'e-mail. Ce fichier part par mail ou dans un tableur
+   partagé ; il ne doit contenir que de l'entraînement. */
+const HISTO_COLONNES = ['date','seance','exercise','set_num','type','kg','reps','rir','volume'];
+function _histoLignes(){
+  const out=[];
+  try{
+    (S.sessions||[]).slice().sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))).forEach(s=>{
+      if(!s||!s.date) return;
+      const nom=s.name||s.label||'';
+      (s.exs||s.exercises||[]).forEach(ex=>{
+        if(!ex||!ex.name) return;
+        (ex.sets||[]).forEach((st,i)=>{
+          if(!st||!st.done) return;                 // ⛔ une série non validée n'a pas eu lieu
+          const kg=+st.kg||0, reps=+st.reps||0;
+          /* ⭐ Le RIR passe par son propriétaire (`_rirDeSet`) — jamais relu à la main : un `X`
+             vaut 0, et une série non notée reste VIDE, pas 0 (la règle de ft-v1038). */
+          const r=(typeof _rirDeSet==='function')?_rirDeSet(st):null;
+          out.push({date:s.date, seance:nom, exercise:ex.name, set_num:i+1,
+                    type:st.type||'N', kg:kg, reps:reps,
+                    rir:(r===null?'':r), volume:Math.round(kg*reps)});
+        });
+      });
+    });
+  }catch(e){ /* jamais bloquant */ }
+  return out;
+}
+/* ⭐ Un seul endroit sait fabriquer un fichier et le donner — le même geste que les autres
+   exports de l'app (R13), y compris la feuille de partage iPhone quand elle existe. */
+function _donnerFichier(contenu, nom, mime){
+  try{
+    const blob=new Blob([contenu],{type:mime});
+    const f=(typeof File!=='undefined')?new File([blob],nom,{type:mime}):null;
+    if(f && navigator.canShare && navigator.canShare({files:[f]})){
+      /* ⛔⛔ AUCUN `title` SUR UN PARTAGE DE FICHIER — un témoin existant l'interdit, et il m'a
+         attrapé. La règle vient d'un vrai bug du projet (« Conseil de Milo » partait à la place
+         du fichier). Le nom du fichier suffit à le nommer. */
+      navigator.share({files:[f]}).catch(()=>{});
+      return true;
+    }
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=nom;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+    return true;
+  }catch(e){ return false; }
+}
+function exportHistoCsv(){
+  const L=_histoLignes();
+  if(!L.length){ toast('Aucune séance à exporter','info'); return; }
+  /* ⛔ ÉCHAPPEMENT CSV RÉEL : un nom d'exercice peut contenir une virgule (« Rowing Barre (Tirage
+     Horizontal) », un exercice perso « Curl, prise marteau »). Sans guillemets, la ligne se
+     décale d'une colonne dans le tableur — et rien ne le signale. */
+  const q=v=>{ const t=String(v==null?'':v);
+    return /[",;\n]/.test(t) ? '"'+t.replace(/"/g,'""')+'"' : t; };
+  /* ⚠️ SÉPARATEUR « ; » ET BOM UTF-8, exprès : Excel en français ouvre le « , » comme du texte
+     dans une seule colonne, et sans BOM il rend « Développé » en « DÃ©veloppÃ© ». Ce sont les
+     deux défauts qui font dire « ton export est cassé » alors que le fichier est correct. */
+  const csv='﻿'+HISTO_COLONNES.join(';')+'\n'
+    +L.map(r=>HISTO_COLONNES.map(c=>q(r[c])).join(';')).join('\n');
+  const ok=_donnerFichier(csv,'forcetracker-historique_'+today()+'.csv','text/csv;charset=utf-8');
+  toast(ok?(L.length+' séries exportées'):'Export impossible', ok?'success':'error');
+  closeHistoExport();
+}
+async function exportHistoPdf(){
+  const L=_histoLignes();
+  if(!L.length){ toast('Aucune séance à exporter','info'); return; }
+  try{
+    if(typeof _loadJsPdf==='function') await _loadJsPdf();
+    const JS=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+    if(!JS) throw new Error('jsPDF indisponible');
+    const doc=new JS({unit:'pt',format:'a4'});
+    const M=40; let y=M;
+    doc.setFont('helvetica','bold'); doc.setFontSize(16);
+    doc.text('Historique d\'entraînement',M,y); y+=18;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(120);
+    /* ⛔ LE DOCUMENT DIT CE QU'IL CONTIENT ET CE QU'IL NE CONTIENT PAS — il va sortir de l'app
+       (mail, coach, kiné) et il doit se lire seul, sans l'app à côté. */
+    const seances=[...new Set(L.map(r=>r.date))].length;
+    doc.text(seances+' séances · '+L.length+' séries · exporté le '+new Date().toLocaleDateString('fr-FR'),M,y); y+=12;
+    doc.text('Séries validées uniquement. Aucune donnée de santé (ni poids de corps, ni âge, ni sexe).',M,y); y+=6;
+    doc.setTextColor(0);
+    /* ⭐ R13 : `autotable` est déjà chargé avec jsPDF pour les autres PDF de l'app. Une séance
+       par tableau, pour qu'on retrouve ses séances plutôt qu'un mur de lignes. */
+    const parJour={};
+    L.forEach(r=>{ (parJour[r.date]=parJour[r.date]||[]).push(r); });
+    Object.keys(parJour).sort().reverse().forEach(d=>{
+      const rows=parJour[d];
+      /* ⚠️⚠️ LE TITRE SE POSE AVANT LE TABLEAU, PAS APRÈS — et c'est un défaut mesuré, pas un
+         choix de style. Mon 1er jet écrivait le titre après coup à `doc.lastAutoTable.startY-5` :
+         **`lastAutoTable` ne porte que `finalY`, il n'a PAS de `startY`** (sondé dans le
+         navigateur). `undefined - 5` vaut `NaN`, `doc.text(..., NaN)` lève, et mon `catch` ne
+         montrait qu'un toast « Export PDF impossible » — un échec parfaitement silencieux.
+         👉 *On vérifie les propriétés, on ne les devine pas* — 3ᵉ fois de la session (après
+         `m.reg` et `exNomCatalogue`). Ici on n'a même pas besoin de la lire : on CONNAÎT le y,
+         puisque c'est nous qui le passons. */
+      if(y>690){ doc.addPage(); y=M; }              // ⛔ un titre ne reste jamais seul en bas de page
+      const titre=(rows[0].seance? rows[0].seance+' — ':'')
+        +new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+      doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(0);
+      doc.text(titre.charAt(0).toUpperCase()+titre.slice(1),M,y+18);
+      doc.setFont('helvetica','normal');
+      doc.autoTable({
+        startY:y+24, margin:{left:M,right:M},
+        /* ⚠️ L'EN-TÊTE PORTE SON PROPRE ALIGNEMENT, cellule par cellule. Vu à la capture du PDF :
+           `columnStyles` alignait bien les VALEURS à droite, mais `headStyles` gagnait sur
+           l'en-tête, qui restait à gauche — « kg » à gauche au-dessus de « 80 » à droite.
+           *Un tableau dont l'en-tête ne suit pas sa colonne se lit de travers*, et aucune mesure
+           de chaîne ne le voit : il a fallu regarder la page. */
+        head:[[ 'Exercice',
+                {content:'Série',  styles:{halign:'center'}},
+                {content:'Type',   styles:{halign:'center'}},
+                {content:'kg',     styles:{halign:'right'}},
+                {content:'Reps',   styles:{halign:'right'}},
+                {content:'RIR',    styles:{halign:'center'}},
+                {content:'Volume', styles:{halign:'right'}} ]],
+        body:rows.map(r=>[r.exercise,r.set_num,r.type,r.kg,r.reps,r.rir,r.volume]),
+        styles:{fontSize:8.5,cellPadding:3.5,overflow:'linebreak'},
+        headStyles:{fillColor:[239,62,87],textColor:255,fontStyle:'bold',fontSize:8},
+        alternateRowStyles:{fillColor:[247,247,250]},
+        columnStyles:{0:{cellWidth:150},1:{halign:'center'},2:{halign:'center'},
+                      3:{halign:'right'},4:{halign:'right'},5:{halign:'center'},6:{halign:'right'}},
+        theme:'plain'
+      });
+      y=doc.lastAutoTable.finalY;                   // ⭐ `finalY` EXISTE, lui — vérifié
+    });
+    const nom='forcetracker-historique_'+today()+'.pdf';
+    const blob=doc.output('blob');
+    const f=(typeof File!=='undefined')?new File([blob],nom,{type:'application/pdf'}):null;
+    /* ⛔⛔ Idem ici : pas de `title` avec `files` (voir `_donnerFichier`). */
+    if(f && navigator.canShare && navigator.canShare({files:[f]})) navigator.share({files:[f]}).catch(()=>{});
+    else { const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nom;
+           document.body.appendChild(a); a.click();
+           setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); }
+    toast(seances+' séances exportées','success');
+  }catch(e){ toast('Export PDF impossible','error'); }
+  closeHistoExport();
+}
+function openHistoExport(){
+  const n=_histoLignes().length;
+  if(!n){ toast('Aucune séance à exporter','info'); return; }
+  const el=document.getElementById('histo-exp-n');
+  if(el) el.textContent=n;
+  const ov=document.getElementById('ov-histo-export'); if(ov) ov.classList.add('open');
+}
+function closeHistoExport(){
+  const ov=document.getElementById('ov-histo-export'); if(ov) ov.classList.remove('open');
 }
 
 function renderProgress(){

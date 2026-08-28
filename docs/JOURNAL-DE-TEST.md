@@ -891,7 +891,7 @@ de rien n'était.
 s'est passé, ne parle jamais de rattrapage, et ne qualifie pas la semaine tant qu'une seule séance
 manque.* Les trois moitiés se cherchent par motif dans la réponse.
 
-**✅ 28/08/2026 — CONSTRUIT, et sans un seul appel IA (`ft-v1047`).** Michel : *« un truc sympa
+**✅ 28/08/2026 — CONSTRUIT, et sans un seul appel IA (`ft-v1050`).** Michel : *« un truc sympa
 mais **attention pas d'IA surtout** »*. Une carte sur l'Accueil pose la question avec cinq
 réponses d'un tap (*Fatigue · Boulot · Empêché · Douleur · Flemme*), la réponse part à Milo avec
 le cadre qui lui interdit d'en faire un reproche, et **zéro appel réseau** (mesuré).
