@@ -1177,10 +1177,13 @@ function _prevTypeBadge(p){
    monter, et de combien. C'est la promesse du produit appliquée à une série (`VISION`).
    ⛔ Un `X` porte DÉJÀ son badge rouge via `_prevTypeBadge` : on ne réécrit pas « échec » à
    côté, ce serait la même information deux fois sur la même ligne (R2/R19). */
+/* 4 = « 4 ou plus » — au-delà, la précision n'apporte rien. En RPE, ce cran devient « ≤6 ».
+   ⛔ Déclaré AVANT ses usages : `_prevRirBadge` et `_rirDeSet` le lisent tous les deux. */
+const RIR_MAX = 4;
 function _prevRirBadge(p){
   const n=_rirDeSet(p);
   if(n===null||(p&&p.type==='X')) return '';
-  return `<span class="prev-rir">·${n>=RIR_MAX?RIR_MAX+'+':n}r</span>`;
+  return `<span class="prev-rir">·${_reserveBadgeTxt(n)}</span>`;
 }
 
 /* 💪 LE RIR — « il t'en restait combien ? » (27/08/2026, ft-v1038)
@@ -1202,7 +1205,6 @@ function _prevRirBadge(p){
    ⛔ RIEN N'EST OBLIGATOIRE : `null` veut dire « je n'ai pas noté », et ce n'est PAS 0. Un RIR
    absent ne doit jamais être compté comme un échec (R29 : on ne devine pas ce qui touche la
    personne — ici, ça changerait ce que Milo lui dit de son entraînement). */
-const RIR_MAX = 4;                        // 4 = « 4 ou plus » — au-delà, la précision n'apporte rien
 function _rirDeSet(set){
   if(!set) return null;
   if(set.type==='X') return 0;            // ⭐ l'échec EST un RIR de 0 — un seul propriétaire
@@ -1211,7 +1213,56 @@ function _rirDeSet(set){
   const n=Math.round(+v);
   return (n>=0&&n<=RIR_MAX)?n:null;
 }
-function _rirTxt(n){ return n===null?'':(n===0?'échec':(n>=RIR_MAX?RIR_MAX+'+ en réserve':n+' en réserve')); }
+/* 🎚️ LE RPE — UN CHANGEMENT DE VOCABULAIRE, PAS UN 2ᵉ SYSTÈME (28/08/2026, ft-v1046)
+   Michel avait différé le RPE le 27/08, avec son critère : *« pour le RPE en général, c'est des
+   gens qui connaissent bien qui connaissent le RPE et ils utilisent bien »*. Donc **optionnel et
+   discret** — jamais une question posée à quelqu'un qui n'a pas demandé.
+
+   ⛔⛔ ET LA DÉCISION QUI TIENT TOUT : **RIEN N'EST STOCKÉ EN PLUS.** RPE et RIR sont la même
+   mesure inversée (`RPE = 10 − RIR`), donc `set.rir` reste le **seul propriétaire** et le RPE
+   n'est qu'un **affichage**. Deux champs finiraient par se contredire sur la même série, et on
+   ne saurait plus lequel croire (**R2**). *Changer d'échelle ne change pas ce qui a été mesuré :
+   quelqu'un qui bascule retrouve son historique traduit, pas effacé.*
+
+   ⚠️ LIMITE ÉCRITE PLUTÔT QUE TUE : notre réserve est **entière** (0 à 4), donc le RPE va de
+   **6 à 10 sans demi-points**. Les 9,5 du barème existent bel et bien — mais on ne les **mesure**
+   pas, et les afficher serait une fausse précision (**R29**). Descendre le stockage au demi-point
+   abîmerait le RIR pour tout le monde ; si ça manque un jour, c'est un arbitrage de Michel.
+
+   ⛔ L'ORDRE DES BOUTONS S'INVERSE, ET C'EST VOULU : en RIR on va de l'échec vers la réserve
+   (0 → 4), en RPE on va du plus léger vers le maximum (6 → 10), parce que **c'est comme ça que
+   le barème se lit**. Quelqu'un qui a choisi le RPE le lit dans ce sens-là ; lui imposer l'ordre
+   de l'autre échelle annulerait le bénéfice d'avoir choisi. */
+function _echelleReserve(){ return (S.echelleReserve==='rpe')?'rpe':'rir'; }
+function _estRpe(){ return _echelleReserve()==='rpe'; }
+/* ⭐ LA CONVERSION N'A QU'UN SEUL ENDROIT. Elle est triviale, et c'est justement pour ça qu'elle
+   serait recopiée partout si on ne la nommait pas — puis un jour l'une des copies dirait 9. */
+function _rpeDeRir(n){ return (n===null||n===undefined)?null:(10-n); }
+
+/* Le libellé COURT d'un cran (les boutons de la barre de repos). */
+function _reserveBoutonTxt(n){
+  if(_estRpe()) return (n>=RIR_MAX?'≤'+(10-RIR_MAX):String(10-n));
+  return (n===0?'échec':(n>=RIR_MAX?RIR_MAX+'+':String(n)));
+}
+/* La question posée dans la barre de repos. ⛔ Elle NOMME l'échelle : sans ça, « 8 » veut dire
+   deux choses opposées selon le réglage, et personne ne peut savoir laquelle. */
+function _reserveQuestion(){
+  return _estRpe()?'C\'était quel RPE ?':'Il t\'en restait combien ?';
+}
+function _reserveEchecTxt(){
+  return _estRpe()?'Série à l\'échec — RPE 10':'Série à l\'échec — 0 en réserve';
+}
+/* Le badge de la colonne « précédent ». ⭐ `@8` est la notation standard du RPE (« 80×8 @8 ») —
+   on emprunte la convention du milieu plutôt que d'en inventer une. */
+function _reserveBadgeTxt(n){
+  if(_estRpe()) return '@'+(n>=RIR_MAX?'≤'+(10-RIR_MAX):String(10-n));
+  return (n>=RIR_MAX?RIR_MAX+'+':String(n))+'r';
+}
+function _rirTxt(n){
+  if(n===null) return '';
+  if(_estRpe()) return (n===0?'RPE 10 (échec)':(n>=RIR_MAX?'RPE ≤'+(10-RIR_MAX):'RPE '+(10-n)));
+  return (n===0?'échec':(n>=RIR_MAX?RIR_MAX+'+ en réserve':n+' en réserve'));
+}
 /* 🎯 « PRÉCÉDENT » SE LIT PAR RÔLE, PAS PAR POSITION (15/08/2026)
    Capture de Michel, en séance : *« regarde y'a pas une couille là ? »*. Sur ses 6 lignes, les 3
    premières sont une MONTÉE EN CHARGE que l'app venait d'ajouter (5×27,5 · 3×37,5 · 2×50), et la
@@ -4702,13 +4753,15 @@ function _renderRirRow(){
   const fige=(set.type==='X');
   const btn=n=>{
     const on=(cur===n);
-    const lbl=(n===0?'échec':(n>=RIR_MAX?RIR_MAX+'+':String(n)));
-    return `<button class="rir-b${on?' on':''}"${fige?' disabled':''} onclick="setRir(${c.ei},${c.si},${n})">${lbl}</button>`;
+    /* ⛔ LE LIBELLÉ VIENT DU VOCABULAIRE, PAS D'ICI : la VALEUR envoyée à `setRir` reste le RIR
+       dans les deux échelles — c'est ce qui fait qu'on ne stocke jamais deux choses (R2). */
+    return `<button class="rir-b${on?' on':''}"${fige?' disabled':''} onclick="setRir(${c.ei},${c.si},${n})">${_reserveBoutonTxt(n)}</button>`;
   };
-  let html='<div class="rir-lbl">'+(fige
-      ? 'Série à l\'échec — 0 en réserve'
-      : 'Il t\'en restait combien ?')+'</div><div class="rir-row">';
-  for(let n=0;n<=RIR_MAX;n++) html+=btn(n);
+  let html='<div class="rir-lbl">'+(fige?_reserveEchecTxt():_reserveQuestion())+'</div><div class="rir-row">';
+  /* ⛔ L'ORDRE S'INVERSE EN RPE, exprès : le barème se lit du plus léger au maximum (6 → 10),
+     et quelqu'un qui a CHOISI le RPE le lit dans ce sens. En RIR on garde l'échec en tête. */
+  if(_estRpe()){ for(let n=RIR_MAX;n>=0;n--) html+=btn(n); }
+  else         { for(let n=0;n<=RIR_MAX;n++) html+=btn(n); }
   /* ⛔ ET ON PEUT RETIRER SA RÉPONSE : sans ça, un tap par erreur deviendrait une mesure
      définitive. `null` n'est pas 0, il faut pouvoir y revenir (R29). */
   if(cur!==null&&!fige) html+='<button class="rir-b rir-x" onclick="setRir('+c.ei+','+c.si+',null)" title="Retirer">✕</button>';

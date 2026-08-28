@@ -1289,6 +1289,21 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
         <button class="goal-btn" id="disc-haltero" onclick="setDiscipline('haltero')"><svg class="goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12"/><circle cx="12" cy="7.5" r="1.6"/><path d="M12 9v4"/><path d="M9 11h6"/><path d="m8.5 21 3.5-8 3.5 8"/></svg><span>Haltérophilie</span></button>
       </div>
       <div id="disc-desc" style="font-size:14px;color:var(--t3);background:var(--bg3);border-radius:8px;padding:10px 12px;line-height:1.5;min-height:36px;"></div>
+      <!-- 🎚️ ft-v1046 — L'ÉCHELLE D'EFFORT (RIR ou RPE).
+           ⛔ DISCRET ET OPTIONNEL, c'est le critère de Michel : « c'est des gens qui connaissent
+           bien qui connaissent le RPE ». Personne n'est interrogé là-dessus ; qui ne connaît pas
+           ne touche à rien et garde le RIR, qui connaît vient le chercher ici.
+           ⛔ ET ÇA NE CHANGE QUE L'AFFICHAGE : `set.rir` reste la mesure, seul propriétaire (R2). -->
+      <div style="margin-top:16px;">
+        <label style="font-size:14px;color:var(--t2);display:block;margin-bottom:8px;font-weight:600;">Échelle d'effort</label>
+        <div style="display:flex;gap:8px;">
+          <!-- ⭐ R13 : on emprunte `goal-btn`, le composant de « Ton niveau » juste en dessous —
+               aucun style nouveau, cohérence visuelle gratuite. -->
+          <button class="goal-btn" id="ech-rir" onclick="setEchelleReserve('rir')" style="flex:1;padding:12px 4px;font-size:14px;"><span>RIR</span></button>
+          <button class="goal-btn" id="ech-rpe" onclick="setEchelleReserve('rpe')" style="flex:1;padding:12px 4px;font-size:14px;"><span>RPE</span></button>
+        </div>
+        <div id="ech-desc" style="font-size:13px;color:var(--t3);background:var(--bg3);border-radius:8px;padding:9px 12px;line-height:1.45;margin-top:8px;"></div>
+      </div>
       <div style="margin-top:16px;">
         <label style="font-size:14px;color:var(--t2);display:block;margin-bottom:8px;font-weight:600;">Ton niveau</label>
         <div style="display:flex;gap:8px;">

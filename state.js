@@ -128,6 +128,10 @@ function load(){
     try{S.priorities=JSON.parse(localStorage.getItem('ft4_priorities')||'[]');}catch(e){S.priorities=[];}
     if(!Array.isArray(S.priorities))S.priorities=[];
     S.discipline=localStorage.getItem('ft4_discipline')||'muscu';
+    /* 🎚️ ft-v1046 — l'échelle d'effort AFFICHÉE ('rir' par défaut · 'rpe').
+       ⛔ Ce n'est PAS une donnée d'entraînement : la mesure reste `set.rir`, seul propriétaire
+       (R2). Ceci ne dit que la LANGUE dans laquelle on la montre. */
+    S.echelleReserve=(localStorage.getItem('ft4_echelle')==='rpe')?'rpe':'rir';
     S.level=localStorage.getItem('ft4_level')||''; // '' | 'debutant' | 'intermediaire' | 'confirme' (niveau déclaré, évolue avec les séances)
     S.coachTone=localStorage.getItem('ft4_coachtone')||''; // '' (défaut, comportement actuel) | 'cool' | 'classique' | 'dynamique' | 'scientifique' — ton de Milo (Dossier Athlète, brique 0)
     // Registre Athlète (Dossier Athlète, brique 1) : mémoire durable consultée par Milo.
@@ -451,6 +455,7 @@ function persist(){
     localStorage.setItem('ft4_goal2',S.goal2||'');
     localStorage.setItem('ft4_priorities',JSON.stringify(S.priorities||[]));
     localStorage.setItem('ft4_discipline',S.discipline||'muscu');
+    localStorage.setItem('ft4_echelle',S.echelleReserve==='rpe'?'rpe':'rir');
     localStorage.setItem('ft4_level',S.level||'');
     localStorage.setItem('ft4_coachtone',S.coachTone||'');
     localStorage.setItem('ft4_registre',JSON.stringify(S.registre||{facts:{},observations:[],updatedAt:''}));

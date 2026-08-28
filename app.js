@@ -3958,6 +3958,9 @@ const APP_GUIDE_SLIDES=[
   /* ⛔ SANS IMAGE : les chiffres dépendent de l'historique du lecteur — une capture montrerait
      des séries qui ne sont pas les siennes, et un « objectif » qu'on refuse justement d'afficher. */
   {icon:'📊', t:'Ce que ta semaine a travaillé', cap:'En haut de <b>Progrès</b>, tes <b>séries de travail par groupe musculaire</b> sur les 7 derniers jours. ⚠️ <b>Sans objectif affiché</b> : en milieu de semaine, être « en dessous » ne veut rien dire. 👉 <b>Milo</b>, lui, reçoit ces chiffres — il connaissait la règle de ta discipline sans jamais savoir combien tu en faisais.'},
+  /* ⛔ SANS IMAGE : la capture montrerait UNE des deux échelles, donc elle serait fausse pour
+     la moitié des lecteurs — et c'est précisément le sujet de la diapo. */
+  {icon:'🎚️', t:'RIR ou RPE, comme tu veux', cap:'Si tu travailles en <b>RPE</b>, dis-le à l\'app : <b>Profil → Échelle d\'effort</b>. La question posée après chaque série, la colonne « précédent » et <b>Milo</b> passent en RPE. ⛔ C\'est la <b>même mesure</b> dite dans l\'autre sens (<i>RPE = 10 − RIR</i>) : rien n\'est converti, rien n\'est perdu, et tu peux revenir.'},
   {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
 let _agIdx=0,_agSwipeInit=false;

@@ -2195,6 +2195,32 @@ const DISC_DESCS={
   powerlifting:'Force maximale sur squat, développé couché et soulevé de terre (1RM).',
   haltero:'Arraché et épaulé-jeté : explosivité, mobilité et technique olympique.',
 };
+/* 🎚️ L'ÉCHELLE D'EFFORT — RIR ou RPE (28/08/2026, ft-v1046)
+   ⛔⛔ CE BOUTON NE CHANGE AUCUNE DONNÉE, ET C'EST TOUT LE SUJET. `set.rir` reste la mesure et
+   le seul propriétaire (R2) ; le RPE en est la traduction exacte (`RPE = 10 − RIR`). Basculer ne
+   convertit rien, n'efface rien, et l'historique se relit dans la nouvelle langue — c'est
+   justement ce qu'un 2ᵉ champ aurait rendu impossible.
+   ⛔ ET LE CHOIX EST DISCRET, c'est le critère de Michel : *« c'est des gens qui connaissent bien
+   qui connaissent le RPE »*. Personne n'est interrogé là-dessus à l'inscription ; qui ne connaît
+   pas garde le RIR sans rien faire. */
+const ECH_DESCS={
+  rir:'<b>RIR — répétitions en réserve.</b> Après une série, l\'app demande combien de répétitions tu aurais encore pu faire. <b>0 = échec.</b> C\'est l\'échelle par défaut, et la plus directe à répondre.',
+  rpe:'<b>RPE — effort perçu (échelle de 6 à 10).</b> <b>10 = échec</b>, 9 = il t\'en restait 1, 8 = il t\'en restait 2… C\'est la <b>même mesure que le RIR</b>, dite dans l\'autre sens : ton historique se relit tout seul, rien n\'est perdu. ⚠️ Sans demi-points (pas de 8,5) : l\'app ne les mesure pas, et les afficher serait une fausse précision.'
+};
+function setEchelleReserve(e){
+  S.echelleReserve=(e==='rpe')?'rpe':'rir';
+  persist();
+  ['rir','rpe'].forEach(x=>{ const el=document.getElementById('ech-'+x);
+    if(el)el.classList.toggle('active',x===S.echelleReserve); });
+  const d=document.getElementById('ech-desc');
+  if(d)d.innerHTML=ECH_DESCS[S.echelleReserve];
+  /* ⛔ LA SÉANCE EN COURS SUIT IMMÉDIATEMENT : sans ce rafraîchissement, la barre de repos et la
+     colonne « précédent » resteraient dans l'ancienne langue jusqu'au prochain rendu — c'est-à-dire
+     que le réglage aurait l'air de n'avoir rien fait. */
+  try{ if(typeof _renderRirRow==='function')_renderRirRow();
+       if(typeof renderExBlocks==='function'&&S.wkt)renderExBlocks(); }catch(_){}
+}
+
 function setDiscipline(d){
   S.discipline=d;persist();
   ['muscu','bodybuilding','powerbuilding','powerlifting','haltero'].forEach(x=>{
@@ -2485,6 +2511,7 @@ function renderSetup(){
   setGoal(S.goal||'muscle');
   _renderPriorities();
   setDiscipline(S.discipline||'muscu');
+  if(typeof setEchelleReserve==='function')setEchelleReserve(S.echelleReserve||'rir');
   _renderLevelSel();
   _renderCoachToneSel();
   _renderAdnSection();

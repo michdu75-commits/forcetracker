@@ -6,7 +6,24 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1045`.
+- **Version en ligne (live) :** `ft-v1046`.
+- 🎚️⭐⭐ **LE RPE — UN VOCABULAIRE, PAS UN 2ᵉ SYSTÈME** (ft-v1046). Michel l'avait différé, puis
+  donné le critère : *« c'est des gens qui connaissent bien qui connaissent le RPE »* — donc il se
+  **choisit** (Profil → Échelle d'effort), il ne se demande à personne. **Le RIR reste le défaut.**
+  ⛔⛔ **Rien n'est stocké en plus** : `RPE = 10 − RIR`, donc `set.rir` reste le **seul
+  propriétaire** et le RPE n'est qu'un **affichage** (R2). Basculer **ne convertit rien et n'efface
+  rien** — l'historique se relit dans la nouvelle langue.
+  ⭐⭐ **Le témoin central est celui de la donnée** (`set.rir` = 2 des deux côtés), et le plus
+  tranchant celui du **vrai tap** : en RPE, taper « 9 » écrit `rir=1`, jamais 9.
+  ⭐⭐ **Milo reçoit la PRÉFÉRENCE, pas une donnée traduite** : le contexte garde la mesure en RIR
+  (non ambiguë) et ajoute la consigne de langue. Convertir la donnée aurait créé la 2ᵉ source
+  qu'on refuse partout. Le bloc n'apparaît **que** si le RPE est choisi.
+  ⚠️ **Limite écrite** : **pas de demi-points** (8,5 · 9,5). Ils existent dans le barème, mais on
+  ne les **mesure** pas ; descendre le stockage au demi-point abîmerait le RIR pour tout le monde.
+  ⏭️ **Arbitrage de Michel** si ça lui manque.
+  ⭐ **R13** : les 2 boutons empruntent `goal-btn` — **0 ligne de CSS**.
+  ⚠️ Un témoin a rougi sur du code correct : il lisait `innerText`, **vide dans un écran masqué**.
+  → `textContent`.
 - 📊⭐⭐ **LE VOLUME PAR GROUPE MUSCULAIRE ET PAR SEMAINE** (ft-v1045). Dernier morceau du relais
   de session-A. ⛔⛔ **R8 dans sa forme la plus pure** : `DISC_CADRE.volume` dit à Milo *« 10 à 20
   séries par groupe musculaire et par semaine »* — **il n'a jamais su combien la personne en

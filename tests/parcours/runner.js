@@ -16321,6 +16321,124 @@ console.log('\n-- CXLIX. Le volume par groupe musculaire et par semaine (ft-v104
   }
 }
 
+/* == BLOC CL - LE RPE : UN VOCABULAIRE, PAS UN 2e SYSTEME (ft-v1046) ==
+   Michel avait differe le RPE le 27/08 avec son critere : « c'est des gens qui connaissent bien qui
+   connaissent le RPE et ils utilisent bien » — donc OPTIONNEL et DISCRET.
+
+   ⛔⛔ LE TEMOIN LE PLUS IMPORTANT DU BLOC EST CELUI DE LA DONNEE : basculer d'echelle ne doit RIEN
+   changer a `set.rir`. RPE et RIR sont la meme mesure inversee (RPE = 10 - RIR) ; un 2e champ
+   finirait par se contredire sur la meme serie (R2). *Si ce temoin tombe, la fonctionnalite est
+   devenue un 2e systeme et il faut tout reprendre.*
+
+   ⛔ ET L'ORDRE DES BOUTONS S'INVERSE EXPRES en RPE (6 -> 10) : c'est le sens de lecture du bareme,
+   et quelqu'un qui a CHOISI le RPE le lit dans ce sens.
+
+   ⚠️ PAS DE DEMI-POINTS : notre reserve est entiere, donc le RPE va de 6 a 10. Les 9,5 existent
+   dans le bareme mais on ne les MESURE pas — un temoin verifie qu'aucun n'apparait (R29). */
+console.log('\n-- CL. Le RPE : un vocabulaire, pas un 2e système (ft-v1046) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const P=await pg.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    if(typeof setEchelleReserve!=='function') return {absente:true};
+    const o={};
+    /* Une seance en cours, une serie de travail validee avec 2 en reserve. */
+    S.wkt={date:today(),start:Date.now()-600000,exs:[{name:'Développé Couché',
+      sets:[{kg:80,reps:8,done:true,type:'N',rest:150,rir:2}]}]};
+    persist();
+    const lire=()=>{ _rirCible={ei:0,si:0}; _renderRirRow();
+      const z=document.getElementById('rest-rir');
+      return {q:(z.querySelector('.rir-lbl')||{}).textContent||'',
+              boutons:[...z.querySelectorAll('.rir-b')].map(x=>x.textContent),
+              actif:([...z.querySelectorAll('.rir-b.on')][0]||{}).textContent||''}; };
+    /* ── L'ECHELLE PAR DEFAUT ── */
+    o.defaut=S.echelleReserve;
+    setEchelleReserve('rir');
+    o.rir=lire(); o.rirBadge=_reserveBadgeTxt(2); o.rirExtreme=_reserveBadgeTxt(4);
+    /* ── LA BASCULE ── */
+    setEchelleReserve('rpe');
+    o.rpe=lire(); o.rpeBadge=_reserveBadgeTxt(2); o.rpeExtreme=_reserveBadgeTxt(4);
+    o.rpeEchec=_rirTxt(0); o.rpeTxt=_rirTxt(2);
+    /* ⛔⛔ LA DONNEE N'A PAS BOUGE — le temoin central. */
+    o.donnee=S.wkt.exs[0].sets[0].rir;
+    o.rirDeSet=_rirDeSet(S.wkt.exs[0].sets[0]);
+    /* ⛔ ET AUCUN DEMI-POINT NULLE PART. */
+    o.demiPoints=(o.rpe.boutons.join(' ')+' '+o.rpeBadge+' '+o.rpeEchec).match(/\d[.,]5/g)||[];
+    /* ⛔ Le tap enregistre bien le RIR, PAS le RPE : en RPE, taper « 9 » doit ecrire rir=1. */
+    const btns=[...document.querySelectorAll('#rest-rir .rir-b')];
+    const b9=btns.find(x=>x.textContent==='9'); if(b9)b9.click();
+    o.apresTap9=S.wkt.exs[0].sets[0].rir;
+    /* ── LE CONTEXTE DE MILO ── */
+    S.sessions=[{date:today(),exs:[{name:'Développé Couché',
+      sets:[{kg:80,reps:8,done:true,type:'N',rir:2}]}],vol:640}];
+    persist();
+    setEchelleReserve('rir'); let c=buildCoachContext();
+    o.ctxRir={donnee:/RIR2/.test(c), vocab:/ATTENTION AU VOCABULAIRE/.test(c)};
+    setEchelleReserve('rpe'); c=buildCoachContext();
+    o.ctxRpe={donnee:/RIR2/.test(c), vocab:/ATTENTION AU VOCABULAIRE/.test(c),
+              formule:/RPE = 10 − RIR/.test(c), pasDemi:/n'invente pas de demi-points/.test(c)};
+    /* ── LE REGLAGE DANS PROFIL, par le VRAI ecran ── */
+    goScreen('s-setup');document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+    document.getElementById('s-setup').classList.add('active');
+    if(typeof renderSetup==='function')renderSetup();
+    await new Promise(r=>setTimeout(r,350));
+    o.boutonsProfil=!!document.getElementById('ech-rir')&&!!document.getElementById('ech-rpe');
+    o.actifProfil=(document.getElementById('ech-rpe')||{}).className||'';
+    /* ⚠️ `textContent` et NON `innerText` : `innerText` respecte le rendu, donc il rend une
+       chaîne VIDE quand l'élément est dans un écran masqué — le témoin rougirait sur du code
+       parfaitement correct, en mesurant la visibilité au lieu du contenu. */
+    o.descProfil=(document.getElementById('ech-desc')||{}).textContent||'';
+    setEchelleReserve('rir');
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  await cx.close();
+
+  if(P.err||P.absente)t('CL n\'a pas pu tourner',false,JSON.stringify(P));
+  else{
+    /* ⛔⛔ LE TÉMOIN QUI DÉFINIT CETTE VERSION. */
+    t('⛔⛔ basculer d\'échelle ne change RIEN à la donnée (`set.rir` reste le seul propriétaire)',
+      P.donnee===2 && P.rirDeSet===2, 'set.rir = '+P.donnee);
+    /* ⛔ Et le VRAI TAP écrit bien un RIR, pas un RPE : en RPE, « 9 » = 1 en réserve. */
+    t('⛔⛔ en RPE, taper « 9 » enregistre un RIR de 1 — jamais 9 (sinon c\'est un 2ᵉ système)',
+      P.apresTap9===1, 'set.rir après tap = '+P.apresTap9);
+    /* ⭐ La traduction est exacte dans les deux sens. */
+    t('⭐⭐ la même série se lit « 2 » en RIR et « 8 » en RPE (RPE = 10 − RIR)',
+      P.rir.actif==='2' && P.rpe.actif==='8', JSON.stringify([P.rir.actif,P.rpe.actif]));
+    t('⭐ … la question et le badge suivent aussi (« @8 » est la notation standard)',
+      /restait combien/.test(P.rir.q) && /quel RPE/.test(P.rpe.q)
+      && P.rirBadge==='2r' && P.rpeBadge==='@8', JSON.stringify([P.rir.q,P.rpe.q,P.rirBadge,P.rpeBadge]));
+    /* ⛔ L'ordre s'inverse exprès. */
+    t('⛔ l\'ordre des boutons s\'inverse en RPE (le barème se lit de 6 vers 10)',
+      P.rir.boutons.slice(0,5).join(',')==='échec,1,2,3,4+'
+      && P.rpe.boutons.slice(0,5).join(',')==='≤6,7,8,9,10', JSON.stringify([P.rir.boutons,P.rpe.boutons]));
+    /* ⛔ Aucun demi-point : on n'affiche pas une précision qu'on ne mesure pas. */
+    t('⛔ aucun demi-point (8,5 · 9,5) : l\'app ne les mesure pas, les afficher serait une fausse précision',
+      P.demiPoints.length===0, JSON.stringify(P.demiPoints));
+    /* ⛔ Le défaut reste le RIR : personne n'est basculé sans l'avoir demandé. */
+    t('⛔ le RIR reste l\'échelle par défaut (le RPE se choisit, il ne s\'impose pas)',
+      P.defaut==='rir', 'défaut = '+P.defaut);
+    /* ⭐⭐ Milo : la donnée reste canonique, seule la LANGUE change. */
+    t('⭐⭐ Milo reçoit toujours la donnée en RIR (non ambiguë), dans les DEUX échelles',
+      P.ctxRir.donnee===true && P.ctxRpe.donnee===true, JSON.stringify([P.ctxRir,P.ctxRpe]));
+    t('⭐⭐ … et il n\'est prévenu du vocabulaire RPE QUE si la personne l\'a choisi',
+      P.ctxRir.vocab===false && P.ctxRpe.vocab===true, JSON.stringify([P.ctxRir.vocab,P.ctxRpe.vocab]));
+    t('⛔ … avec la formule exacte, et l\'interdiction d\'inventer des demi-points',
+      P.ctxRpe.formule===true && P.ctxRpe.pasDemi===true, JSON.stringify(P.ctxRpe));
+    /* ⭐ Le réglage existe vraiment dans Profil, et il s\'y voit. */
+    t('⭐ le réglage est bien dans Profil, et le bouton choisi y est marqué actif',
+      P.boutonsProfil===true && /active/.test(P.actifProfil), P.actifProfil);
+    t('⛔ … et il EXPLIQUE que rien n\'est perdu (sinon on n\'ose pas y toucher)',
+      /même mesure|rien n'est perdu|relit/i.test(P.descProfil), P.descProfil.slice(0,110));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
