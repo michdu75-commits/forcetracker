@@ -16923,6 +16923,129 @@ console.log('\n-- CLIV. La séance prévue qui n\'a pas eu lieu (ft-v1050) --');
   await cx.close();
 }
 
+/* == BLOC CLV - LA QUANTITE AU CHOIX : GRAMMES *OU* PORTIONS (ft-v1051) ==
+   Michel, capture a l'appui : « toujours ce probleme de quantite, il faut que je puisse mettre
+   les grammes », puis la precision qui a decide de la FORME : « je ne prends pas toujours le
+   meme poids... tu prends la ratatouille, il y a differentes boites de different poids ».
+   ⛔⛔ CE QUI BLOQUAIT N'ETAIT PAS UN MANQUE DE MECANISME, C'ETAIT UN REFUS : `_afMajAncre`
+   IMPOSAIT l'un ou l'autre, et sans poids trouve elle affichait un cul-de-sac — « on ne peut
+   pas inventer un poids ». Vrai, et a cote de la question : *l'APP ne peut pas l'inventer, la
+   PERSONNE le connait*. Il fallait le lui DEMANDER, pas refuser (R29).
+   ⭐⭐ ET RIEN N'EST REINVENTE (R13) : le bloc « portion » posait DEJA `_afRef={q:1}`, donc un
+   « x2 » etait deja un rescale de facteur 2/1. Grammes et portions sont LE MEME CALCUL avec une
+   reference differente. Un seul champ actif : la quantite a UN propriétaire (R2).
+   ⛔ CE QUI EST RETENU EST LE POUR-100 g, JAMAIS LA BOITE — 100 g de ratatouille est stable.
+   ⚠️ ET LE PIEGE DU CALCUL : on divise par la quantite AFFICHEE, pas par `_afRef.q`. Declarer
+   40 g puis taper 80 laisse les champs au DOUBLE ; diviser par 40 donnerait un pour-100 g deux
+   fois trop gros. *Les valeurs affichees et la quantite affichee vont toujours ensemble.* */
+console.log('\n-- CLV. La quantité au choix : grammes ou portions (ft-v1051) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  await cx.clock.setFixedTime(new Date('2026-08-28T20:37:00+02:00'));
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async()=>{
+   try{
+    const o={}, dort=ms=>new Promise(x=>setTimeout(x,ms)), t=today();
+    S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';
+    /* L'ALIMENT EXACT DE LA CAPTURE : saisi à la main, AUCUN pour-100 g. */
+    S.foodLog=[{date:t,meal:'collation',name:'Iso zero protein (ASL)',kcal:156,prot:35,carbs:1,fat:1,
+                ts:Date.now()-2e6,saisie:'manuel',origine:'utilisateur',q:null,u:null,per100:null}];
+    S.savedFoods=[]; S.hiddenFoods=[]; persist();
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    goScreen('nutrition'); renderNutrition();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await dort(350);
+    const macros=()=>['af-kcal','af-prot','af-carbs','af-fat'].map(x=>(document.getElementById(x)||{}).value);
+    const bloc=()=>{const e=document.getElementById('af-prop-row');
+      return (e&&e.style.display!=='none')?e.innerText.replace(/\n+/g,' | '):'';};
+    const i=_afQuickItems.findIndex(x=>x.name==='Iso zero protein (ASL)');
+    quickFillFood(i); await dort(200);
+    /* ① AU DÉPART : portions, et les DEUX unités sont proposées (c'est la demande de Michel). */
+    o.depart={bloc:bloc(),macros:macros(),unite:_afUnite,
+              deuxChoix:/En grammes/.test(bloc())&&/En portions/.test(bloc()),
+              plusDeCulDeSac:!/on ne peut pas inventer un poids/.test(bloc())};
+    /* ② EN GRAMMES : le champ est VIDE (aucun poids pré-rempli) et rien n'a bougé. */
+    _afSetUnite('g'); await dort(150);
+    o.enG={macros:macros(), champVide:(document.getElementById('af-poids')||{}).value==='',
+           demande:/L'app ne peut pas le deviner/.test(bloc())};
+    /* ③ JE DÉCLARE 40 g — déclarer n'est PAS rescaler : les 4 valeurs ne bougent pas. */
+    document.getElementById('af-poids').value='40'; _afDeclarePoids(); await dort(150);
+    o.declare={macros:macros(), ref:/Référence : 40 g \(que tu as indiqué\)/.test(bloc())};
+    /* ④ JE PASSE À 80 g — tout double. */
+    document.getElementById('af-prop').value='80'; _afApplyProp(); await dort(150);
+    o.a80={macros:macros()};
+    /* ⑤ J'ENREGISTRE — R4 : le poids doit ATTEINDRE la donnée, sinon il ne sert à rien. */
+    addFoodEntry(); await dort(300);
+    const e=(S.foodLog||[]).slice(-1)[0];
+    o.enr={kcal:e.kcal,q:e.q,u:e.u,per100:e.per100};
+    /* ⑥ JE LE REPRENDS — la machinerie de ft-v1042 doit s'ouvrir toute seule. */
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await dort(350);
+    const j=_afQuickItems.findIndex(x=>x.name==='Iso zero protein (ASL)');
+    quickFillFood(j); await dort(200);
+    const vis=id=>{const x=document.getElementById(id);return !!x&&getComputedStyle(x).display!=='none';};
+    o.reprise={grammes:vis('af-bc-row'),champG:(document.getElementById('af-bc-grams')||{}).value,
+               uniteRAZ:_afUnite,poidsRAZ:_afPoidsDeclare};
+    /* ⑦ NON-RÉGRESSION : les portions marchent toujours, et un poids LU dans la phrase
+       garde son chemin d'origine (il ne passe pas par le nouveau). */
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await dort(300);
+    document.getElementById('af-desc').value='Ratatouille maison';
+    ['af-kcal','af-prot','af-carbs','af-fat'].forEach((id,k)=>document.getElementById(id).value=[120,3,14,5][k]);
+    _afMajAncre(); await dort(120);
+    o.portions={bloc:bloc(),unite:_afUnite};
+    _afApplyPortion(2); await dort(120);
+    o.x2={macros:macros()};
+    document.getElementById('af-desc').value='200 g de riz';
+    _afMajAncre(); await dort(120);
+    o.phrase={bloc:bloc(), lu:/lu dans ta phrase/.test(bloc())};
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,220)};}
+  });
+  if(F.err) t('CLV n\'a pas pu tourner', false, F.err);
+  else{
+    /* ⛔ Le témoin a-t-il VU le bloc ? Sans ça, tout le reste serait vert en ne mesurant rien. */
+    t('⛔ le témoin a bien VU le bloc quantité, avec les valeurs de la capture (156 kcal)',
+      F.depart.macros[0]==='156' && !!F.depart.bloc, JSON.stringify(F.depart.macros));
+    /* ⭐⭐ LA DEMANDE DE MICHEL : le choix existe, le cul-de-sac a disparu. */
+    t('⭐⭐ les DEUX unités sont proposées sur un aliment sans poids connu (grammes ET portions)',
+      F.depart.deuxChoix===true, F.depart.bloc.slice(0,110));
+    t('⭐⭐ le message de cul-de-sac « on ne peut pas inventer un poids » a DISPARU',
+      F.depart.plusDeCulDeSac===true, F.depart.bloc.slice(-140));
+    /* ⛔ Un chiffre pré-rempli qu'on n'a pas choisi serait un chiffre faux présenté en fait. */
+    t('⛔ en grammes, le champ est VIDE — aucun poids pré-rempli (R29)',
+      F.enG.champVide===true && F.enG.demande===true, JSON.stringify(F.enG));
+    /* ⭐⭐ DÉCLARER N'EST PAS RESCALER — sinon dire « c'est 40 g » changerait ce qu'on a mangé. */
+    t('⭐⭐ déclarer 40 g ne change PAS les 4 valeurs (156/35/1/1 intacts) et pose la référence',
+      F.declare.macros.join('/')==='156/35/1/1' && F.declare.ref===true, JSON.stringify(F.declare));
+    t('⭐ … et passer à 80 g double bien tout (312/70/2/2)',
+      F.a80.macros.join('/')==='312/70/2/2', JSON.stringify(F.a80.macros));
+    /* ⭐⭐ R4 : sans ça, la personne voit son poids à l'écran et RIEN n'est enregistré. */
+    t('⭐⭐ R4 : le poids ATTEINT la donnée — q=80 g enregistré avec l\'entrée',
+      F.enr.q===80 && F.enr.u==='g' && F.enr.kcal===312, JSON.stringify({q:F.enr.q,u:F.enr.u,kcal:F.enr.kcal}));
+    /* ⚠️ LE PIÈGE DU CALCUL : divisé par 80 (affiché), pas par 40 (référence). */
+    t('⚠️ le pour-100 g est calculé sur la quantité AFFICHÉE : 312/80×100 = 390, pas 780',
+      !!F.enr.per100 && F.enr.per100.kcal===390 && F.enr.per100.prot===88,
+      JSON.stringify(F.enr.per100));
+    /* ⭐ CE QUI EST RETENU CALIBRE L'ALIMENT POUR TOUJOURS (machinerie ft-v1042). */
+    t('⭐⭐ à la reprise, le champ en GRAMMES s\'ouvre tout seul — l\'aliment est calibré',
+      F.reprise.grammes===true && F.reprise.champG==='80', JSON.stringify(F.reprise));
+    /* ⛔ Un réglage qui survit à son sujet a l'air d'un fait. */
+    t('⛔ l\'unité et le poids déclaré sont REMIS À ZÉRO pour l\'aliment suivant',
+      F.reprise.uniteRAZ==='portion' && F.reprise.poidsRAZ===0,
+      JSON.stringify({u:F.reprise.uniteRAZ,p:F.reprise.poidsRAZ}));
+    /* ⛔ NON-RÉGRESSIONS — ce sont elles qui rendent le reste lisible. */
+    t('⛔ NON-RÉGRESSION : les portions ½/1/1½/2/3 marchent toujours (×2 → 240 kcal)',
+      F.x2.macros.join('/')==='240/6/28/10', JSON.stringify(F.x2.macros));
+    t('⛔ NON-RÉGRESSION : un poids LU DANS LA PHRASE garde son chemin d\'origine',
+      F.phrase.lu===true, F.phrase.bloc.slice(-110));
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1050`** (prochaine : `ft-v1051`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1051`** (prochaine : `ft-v1052`). Historique complet (ft-v128→574 + gouvernance
 > **Version actuelle : `ft-v1049`** (prochaine : `ft-v1050`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
@@ -437,6 +437,25 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1051 — ⚖️ LA QUANTITÉ AU CHOIX : GRAMMES *OU* PORTIONS** — Michel, capture à l'appui : *« toujours ce problème de quantité, il faut que je puisse mettre les grammes »*. Puis, quand j'ai proposé de calibrer le poids une fois pour toutes, **il m'a corrigé** — et c'est ça qui a décidé de la forme : *« je ne prends pas toujours le même poids… tu prends la ratatouille, il y a différentes boîtes de différent poids »*.
+
+**⛔⛔ CE QUI BLOQUAIT N'ÉTAIT PAS UN MANQUE DE MÉCANISME, C'ÉTAIT UN REFUS.** `_afMajAncre` **imposait** l'un ou l'autre : champ en grammes si un poids était connu (lu dans la phrase, ou estimé par l'IA), portions sinon — avec un message de cul-de-sac, *« Aucune quantité connue — on ne peut pas inventer un poids »*. 👉 ***C'est vrai, et c'est à côté de la question : l'APP ne peut pas l'inventer, la PERSONNE le connaît.*** Il fallait le lui **demander**, pas refuser (**R29** — quand l'app ne sait pas, elle montre ce qu'elle a et laisse trancher).
+
+**⭐⭐ ET RIEN N'EST RÉINVENTÉ (R13) — le mécanisme était déjà là, entier.** Le bloc « portion » posait **déjà** `_afRef={q:1}` : un « ×2 » est donc déjà un rescale de facteur 2/1. *Grammes et portions sont le MÊME calcul avec une référence différente ; l'unité n'est qu'une étiquette.* Un seul champ actif à la fois — la quantité garde **un** propriétaire (**R2**), on n'affiche jamais deux réglages concurrents.
+
+**⭐⭐ SA CORRECTION A CHANGÉ CE QU'ON RETIENT.** Mon plan était de **calibrer le poids une fois pour toutes**. Faux : une boîte de ratatouille fait 250 g, une autre 400 g. 👉 **Ce qui est retenu est le POUR-100 g, jamais la boîte** — 100 g de ratatouille est stable, la boîte non. `q` n'est qu'un pré-remplissage de confort, qu'on retape à chaque fois. *Retenir « 250 g » comme si c'était l'aliment ferait re-servir la boîte d'hier.*
+
+**⛔ DÉCLARER N'EST PAS RESCALER**, et c'est la subtilité qui rend l'écran juste : dire *« ce que j'ai devant moi pèse 40 g »* ne change pas ce qu'on a mangé — ça dit à quoi correspondent les 156 kcal affichées. Mesuré : les 4 valeurs **ne bougent pas** à la déclaration, et doublent seulement quand on passe à 80 g.
+
+**⛔ LE CHAMP EST VIDE, PAS PRÉ-REMPLI À 100.** Un chiffre proposé serait enregistré tel quel par qui valide sans regarder — *un chiffre qu'on n'a pas choisi et qui s'enregistre est un chiffre faux présenté comme un fait* (**R29**).
+
+**⚠️⚠️ ET LE PIÈGE DU CALCUL EST DANS LE DIVISEUR — je l'ai écrit faux au premier jet.** Je divisais par `_afRef.q`, la quantité de **référence**. Or après avoir déclaré 40 g puis tapé 80, les champs affichent le **double** : diviser ces valeurs-là par 40 donne un pour-100 g **deux fois trop gros**, et l'aliment resterait faux pour toujours. 👉 ***Les valeurs affichées et la quantité affichée vont toujours ensemble : c'est le seul couple sur lequel on peut diviser sans se tromper.*** Mesuré : 312 kcal ÷ 80 × 100 = **390**, pas 780.
+
+**⭐ R4 — LE POIDS DESCEND JUSQU'À LA DONNÉE**, et c'était la moitié qui manquait : sans ça, la personne voit son poids à l'écran, les 4 valeurs se recalculent… et **rien n'est enregistré**. *L'app aurait su, et n'aurait rien retenu.* ⛔ On n'écrase jamais un `per100` déjà connu (scan, CIQUAL) : une déclaration à la main ne passe pas devant une valeur mesurée (**R32** — mesuré > estimé > déclaré).
+
+**⭐⭐ ET ÇA REBRANCHE ft-v1042 SANS UNE LIGNE DE PLUS** : à la reprise depuis « Mes aliments », l'aliment a désormais son `per100`, donc **le champ en grammes s'ouvre tout seul**. Mesuré de bout en bout. ⛔ Et l'unité comme le poids déclaré sont **remis à zéro** pour l'aliment suivant : *un réglage qui survit à son sujet est pire qu'un réglage absent — il a l'air d'un fait* (la même leçon que le poids d'IA périmé, dix lignes plus haut dans le même fichier).
+Tests : **parcours %TOT%** (+13, bloc **CLV**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données classées 0 trou. ⭐⭐ **CONTRÔLE NÉGATIF CIBLÉ, et il est instructif** — le bloc entier ne peut pas tourner contre l'ancien code (`_afSetUnite` n'y existe pas), alors on a mesuré ce qui existait **des deux côtés** : contre ft-v1050, `{"deuxChoix":false,"culDeSac":true}` et le bloc rend mot pour mot *« Aucune quantité connue — on ne peut pas inventer un poids »*, c'est-à-dire la capture de Michel ; contre ft-v1051, `{"deuxChoix":true,"culDeSac":false}`. ⭐ **Et les deux non-régressions sont vertes DES DEUX CÔTÉS** (les portions ×2 rendent `240/6/28/10` · un poids lu dans la phrase garde son chemin) : ce sont elles qui empêchent de conclure que « tout a changé ». ⭐ **Vérifié à l'écran, 3 captures** (portions → grammes → 40 g déclarés → 80 g), **0 erreur JS**. Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1051. |
 
 **ft-v1050 — 📅 LA SÉANCE PRÉVUE QUI N'A PAS EU LIEU : ON DEMANDE CE QUI S'EST PASSÉ** — Michel : *« vas-y fais le scénario pour la séance loupée, un truc sympa mais **attention pas d'IA surtout** »*. La méthode vient de sa coach, dans ses mots à lui : *« alors je ne loupais jamais de séance, mais si elle est loupée elle est loupée. C'est pas grave, sur une semaine. Plutôt elle demande ce qui s'est passé — fatigue, travail, empêchement, ça peut arriver. »*
 

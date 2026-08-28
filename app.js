@@ -1110,6 +1110,31 @@ function _provFood(vals){
   const row=document.getElementById('af-bc-row');
   const g=parseFloat((document.getElementById('af-bc-grams')||{}).value)||0;
   if(row&&row.style.display!=='none'&&g>0){ p.q=g; p.u='g'; }
+  /* ⚖️ LE POIDS DÉCLARÉ À LA MAIN DESCEND JUSQU'À LA DONNÉE (ft-v1051) — R4, et c'est LA
+     moitié qui manquait : sans ces lignes, la personne voit son poids à l'écran, les 4 valeurs
+     se recalculent… et rien n'est enregistré. *L'app aurait su, et n'aurait rien retenu.*
+     ⛔ CE QU'ON GARDE EST LE POUR-100 g, PAS LA BOÎTE. Michel : *« tu prends la ratatouille, il
+     y a différentes boîtes de différent poids »*. Le pour-100 g est stable et calibre l'aliment
+     pour toujours ; `q` n'est qu'un pré-remplissage de confort, qu'on retape à chaque fois.
+     ⭐ C'est ce qui rebranche la machinerie de ft-v1042 : à la reprise depuis « Mes aliments »,
+     l'aliment aura son `per100` et le champ en grammes s'ouvrira tout seul.
+     ⛔ On n'écrase JAMAIS un `per100` déjà connu (scan, CIQUAL) : une déclaration à la main ne
+     passe pas devant une valeur mesurée (R32 — mesuré > estimé > déclaré). */
+  if(!p.per100 && typeof _afRef==='object' && _afRef && _afRef.u==='g' && _afRef.q>0 && vals){
+    /* ⚠️ ON DIVISE PAR LA QUANTITÉ AFFICHÉE, PAS PAR `_afRef.q` — et la nuance coûte cher.
+       `_afRef.q` est la quantité de RÉFÉRENCE (celle déclarée au départ) ; `_afRef.base` sont
+       les valeurs qui vont avec. Mais si la personne a ensuite tapé 80 après avoir déclaré 40,
+       les champs affichent le DOUBLE. Diviser ces valeurs-là par 40 donnerait un pour-100 g
+       deux fois trop gros. *Les valeurs affichées et la quantité affichée vont toujours
+       ensemble : c'est le seul couple sur lequel on peut diviser sans se tromper.* */
+    const q=parseFloat((document.getElementById('af-prop')||{}).value)||_afRef.q;
+    if(q>0){
+      const f=100/q;
+      p.q=q; p.u='g';
+      p.per100={kcal:Math.round((+vals.kcal||0)*f), prot:Math.round((+vals.prot||0)*f),
+                carbs:Math.round((+vals.carbs||0)*f), fat:Math.round((+vals.fat||0)*f)};
+    }
+  }
   return p;
 }
 function _loadZXing(){
@@ -2798,8 +2823,50 @@ function _afApplyProp(){
   _afProp(v/_afRef.q);
 }
 function _afApplyPortion(x){ _afProp(x); }
+/* ⚖️ LE CHOIX DE L'UNITÉ (ft-v1051) — Michel, capture à l'appui : *« toujours ce problème de
+   quantité, il faut que je puisse mettre les grammes »*, puis la précision qui a décidé de la
+   forme : *« je ne prends pas toujours le même poids… tu prends la ratatouille, il y a
+   différentes boîtes de différent poids »*.
+
+   ⛔⛔ CE QUI BLOQUAIT N'ÉTAIT PAS UN MANQUE DE MÉCANISME, C'ÉTAIT UN REFUS. `_afMajAncre`
+   IMPOSAIT l'un ou l'autre : champ en grammes si un poids était connu (phrase ou IA), portions
+   sinon, avec un message de cul-de-sac — *« on ne peut pas inventer un poids »*. C'est vrai, et
+   c'est à côté de la question : **l'app** ne peut pas l'inventer, **la personne** le connaît.
+   *Il fallait le lui DEMANDER, pas refuser* (R29 : quand l'app ne sait pas, elle montre ce
+   qu'elle a et laisse trancher).
+
+   ⭐⭐ ET RIEN N'EST RÉINVENTÉ (R13) : le bloc « portion » posait DÉJÀ `_afRef={q:1}`, donc un
+   « ×2 » est déjà un rescale de facteur 2/1. Grammes et portions sont **le même calcul avec une
+   référence différente** — l'unité n'est qu'une étiquette. Un seul champ, un seul propriétaire
+   de la quantité (R2) : on n'affiche jamais deux réglages concurrents.
+
+   ⛔ CE QUI EST RETENU EST LE POUR-100 g, JAMAIS LA QUANTITÉ. 100 g de ratatouille est stable ;
+   la boîte, non. Retenir « 250 g » comme si c'était l'aliment ferait re-servir la boîte d'hier. */
+let _afUnite='portion';        // 'portion' | 'g' — CHOISI par la personne, jamais imposé
+let _afPoidsDeclare=0;         // le poids qu'elle a indiqué pour la portion affichée (g)
+function _afResetUnite(){ _afUnite='portion'; _afPoidsDeclare=0; }
+function _afSetUnite(u){
+  if(u===_afUnite) return;
+  _afUnite=(u==='g')?'g':'portion';
+  /* ⛔ ON NE RESCALE RIEN EN CHANGEANT D'UNITÉ. Basculer de « portion » à « g » ne change pas
+     ce qu'on a mangé — ça change la façon de le COMPTER. Les 4 valeurs affichées deviennent la
+     nouvelle référence, quelle qu'elle soit. */
+  _afPoidsDeclare=0;
+  _afMajAncre();
+}
+function _afDeclarePoids(){
+  const v=parseFloat((document.getElementById('af-poids')||{}).value);
+  if(!(v>0)) return;
+  _afPoidsDeclare=v;
+  _afMajAncre();               // le bloc bascule dans son état « ancré », comme un poids lu
+}
 function _afPropCacher(){
   _afRef=null;
+  /* ⛔ L'UNITÉ SE REMET À ZÉRO AVEC LE BLOC (ft-v1051), sinon l'aliment SUIVANT hérite du
+     choix du précédent — et pire, de son poids déclaré. *Un réglage qui survit à son sujet est
+     pire qu'un réglage absent : il a l'air d'un fait.* (La même leçon que le poids de l'IA
+     périmé, quelques lignes plus haut.) */
+  if(typeof _afResetUnite==='function')_afResetUnite();
   const el=document.getElementById('af-prop-row');
   if(el){el.style.display='none';el.innerHTML='';}
 }
@@ -2829,11 +2896,39 @@ function _afMajAncre(){
       +'<input id="af-prop" type="number" inputmode="decimal" step="any" value="'+ancre.v+'" oninput="_afApplyProp()" style="'+style+'">'
       +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Référence : '+ancre.v+' '+ancre.u+' ('+ancre.src+'). Corrige-la, les 4 valeurs suivent en proportion.</div>';
   }else{
-    _afRef={base:base,q:1,u:'',src:'portion'};
-    const b=(x,l)=>'<button onclick="_afApplyPortion('+x+')" style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t2);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">'+l+'</button>';
-    el.innerHTML='<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Portion <span style="font-weight:400;">— multiplie les 4 valeurs</span></div>'
-      +'<div style="display:flex;gap:6px;">'+b(0.5,'½')+b(1,'1')+b(1.5,'1½')+b(2,'2')+b(3,'3')+'</div>'
-      +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Aucune quantité connue — on ne peut pas inventer un poids. Mets-la dans ta phrase (ex. « 20 g d\'huile d\'olive ») et ce sera un vrai poids.</div>';
+    /* ⚖️ AUCUN POIDS TROUVÉ — on ne devine pas, ON DEMANDE (ft-v1051). Deux unités au choix,
+       un seul champ actif à la fois : la quantité a un seul propriétaire (R2). */
+    const onglet=(u,l)=>'<button onclick="_afSetUnite(\''+u+'\')" style="flex:1;padding:7px 4px;border-radius:9px;border:1px solid '
+      +(_afUnite===u?'var(--red)':'var(--sep)')+';background:'+(_afUnite===u?'var(--bg3)':'var(--bg2)')
+      +';color:'+(_afUnite===u?'var(--t1)':'var(--t3)')+';font-size:12.5px;font-weight:'+(_afUnite===u?'800':'700')
+      +';font-family:var(--font);cursor:pointer;touch-action:manipulation;" aria-pressed="'+(_afUnite===u?'true':'false')+'">'+l+'</button>';
+    const choix='<div style="display:flex;gap:6px;margin-bottom:7px;">'+onglet('g','⚖️ En grammes')+onglet('portion','🍽️ En portions')+'</div>';
+    if(_afUnite==='g'&&_afPoidsDeclare>0){
+      /* ⭐ ANCRÉ PAR LA PERSONNE — à partir d'ici c'est EXACTEMENT le bloc « poids connu »
+         au-dessus : même champ, même `_afApplyProp`, même calcul. Seule la source diffère, et
+         elle est dite à l'écran (R32 : on ne présente jamais une déclaration comme une mesure). */
+      _afRef={base:base,q:_afPoidsDeclare,u:'g',src:'que tu as indiqué'};
+      el.innerHTML='<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité <span style="font-weight:400;">— recalcule les 4 valeurs</span></div>'
+        +choix
+        +'<input id="af-prop" type="number" inputmode="decimal" step="any" value="'+_afPoidsDeclare+'" oninput="_afApplyProp()" style="'+style+'">'
+        +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Référence : '+_afPoidsDeclare+' g (que tu as indiqué). Change ce nombre à chaque fois que la quantité change — les 4 valeurs suivent.</div>';
+    }else if(_afUnite==='g'){
+      /* ⛔ LE CHAMP EST VIDE, PAS PRÉ-REMPLI. Proposer « 100 » ferait enregistrer 100 g à qui
+         valide sans regarder — *un chiffre pré-rempli qu'on n'a pas choisi est un chiffre faux
+         présenté comme un fait* (R29). Tant que rien n'est indiqué, les 4 valeurs NE BOUGENT PAS. */
+      _afRef={base:base,q:1,u:'',src:'portion'};
+      el.innerHTML='<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité <span style="font-weight:400;">— recalcule les 4 valeurs</span></div>'
+        +choix
+        +'<input id="af-poids" type="number" inputmode="decimal" step="any" placeholder="poids de cette portion" onchange="_afDeclarePoids()" style="'+style+'">'
+        +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Combien pèse ce que tu as devant toi ? <b>L\'app ne peut pas le deviner, toi si.</b> Indique-le une fois : les 4 valeurs se calent dessus, et tu pourras ensuite mettre le poids que tu veux (250 g aujourd\'hui, 400 g la prochaine fois).</div>';
+    }else{
+      _afRef={base:base,q:1,u:'',src:'portion'};
+      const b=(x,l)=>'<button onclick="_afApplyPortion('+x+')" style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t2);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">'+l+'</button>';
+      el.innerHTML='<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité <span style="font-weight:400;">— multiplie les 4 valeurs</span></div>'
+        +choix
+        +'<div style="display:flex;gap:6px;">'+b(0.5,'½')+b(1,'1')+b(1.5,'1½')+b(2,'2')+b(3,'3')+'</div>'
+        +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Les 4 valeurs ci-dessous sont <b>une portion</b>. Tu connais le poids ? Passe en <b>⚖️ grammes</b> et indique-le.</div>';
+    }
   }
   el.style.display='block';
 }

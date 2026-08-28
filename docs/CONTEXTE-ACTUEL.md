@@ -6,7 +6,23 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1050`.
+- **Version en ligne (live) :** `ft-v1051`.
+- ⚖️⭐⭐ **LA QUANTITÉ AU CHOIX : GRAMMES *OU* PORTIONS** (ft-v1051). Michel, capture à l'appui :
+  *« il faut que je puisse mettre les grammes »*, puis la correction qui a décidé de la forme :
+  *« je ne prends pas toujours le même poids… tu prends la ratatouille, il y a différentes
+  boîtes de différent poids »*.
+  ⛔⛔ **Ce qui bloquait n'était pas un manque de mécanisme, c'était un REFUS** : `_afMajAncre`
+  imposait l'un ou l'autre et affichait *« on ne peut pas inventer un poids »*. ***Vrai, et à
+  côté de la question : l'APP ne peut pas l'inventer, la PERSONNE le connaît.***
+  ⭐⭐ **Rien n'est réinventé (R13)** : le bloc « portion » posait déjà `_afRef={q:1}` — grammes
+  et portions sont le MÊME calcul avec une référence différente.
+  ⛔ **Ce qui est retenu est le POUR-100 g, jamais la boîte.** `q` n'est qu'un pré-remplissage.
+  ⛔ **Déclarer n'est pas rescaler** : dire « ça pèse 40 g » ne change pas les 4 valeurs.
+  ⚠️⚠️ **Le piège était le diviseur** : après avoir déclaré 40 g puis tapé 80, les champs
+  affichent le double — diviser par 40 donnerait un pour-100 g **deux fois trop gros**.
+  *Les valeurs affichées et la quantité affichée vont toujours ensemble.*
+  ⭐⭐ **Et ça rebranche ft-v1042 sans une ligne de plus** : à la reprise, le champ en grammes
+  s'ouvre tout seul.
 - 📅⭐⭐ **LA SÉANCE PRÉVUE QUI N'A PAS EU LIEU — on DEMANDE ce qui s'est passé** (ft-v1050).
   Méthode de la coach de Michel, dans ses mots : *« si elle est loupée elle est loupée. C'est
   pas grave, sur une semaine. Plutôt elle demande ce qui s'est passé — fatigue, travail,
