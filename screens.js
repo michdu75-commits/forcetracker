@@ -246,6 +246,11 @@ const _HELP_DATA={
       {i:'📋',t:'Tap sur une séance passée dans l\'historique pour voir et modifier les kg/reps de chaque série. Sur chaque exercice de cette séance, l\'icône 📊 t\'ouvre sa progression (ton poids sur les dernières séances). Sur chaque carte, le MUSCLE travaillé (ou le nom de la séance) est en gros titre.'},
       {i:'🔎',t:'Filtre ton historique : sous « Historique séances », tape un groupe musculaire (« Pectoraux », « Quadriceps »…) pour ne voir que ces séances-là. Tape « Tous » pour tout réafficher.'},
       {i:'📉',t:'Un plateau sur plusieurs semaines est normal — le progrès n\'est jamais linéaire. Varie les charges et les volumes.'},
+      /* ⛔ POURQUOI CETTE ENTREE EXISTE (ft-v1044) : en recomposition, une balance qui ne bouge
+         presque pas est le resultat ATTENDU — mais ca se lit spontanement comme « il ne se passe
+         rien », et c'est le meilleur moyen d'abandonner un objectif qui marche. La carte le dit
+         sur le moment ; celle-ci l'explique quand on vient chercher pourquoi (R25). */
+      {i:'✨',t:'<b>Objectif « Perte de gras + muscle » : ta balance ne doit presque pas bouger, et c\'est normal.</b> En recomposition, le gras qui part et le muscle qui vient <b>s\'annulent sur le pèse-personne</b> — l\'évolution attendue est <b>stable à légèrement négative (0 à −0,3 kg par semaine)</b>. Ce chiffre vient du léger déficit que l\'app applique elle-même (−250 kcal/jour), pas d\'un objectif imposé. ⚠️ <b>Une balance immobile n\'est donc pas un échec ici</b> : ce qui te dira si ça marche, ce sont tes <b>charges</b> (l\'onglet Progrès), tes <b>mensurations</b> et tes <b>photos</b> — pas le seul chiffre du matin.'},
       {i:'🧪',t:'Bilan corporel (balance pro) : sous ta courbe de poids, section « Bilan corporel ». Tu passes sur une balance à impédance ? Enregistre tes chiffres (graisse viscérale, muscle, métabolisme, détail par segment…) par 📷 photo, ✏️ à la main ou 📋 code. Le bilan sert aussi de pesée du jour (poids + masse grasse), tu suis l\'évolution, et Milo s\'en sert.'},
     ],
     female:[

@@ -831,6 +831,68 @@ le moment n'en rate aucune.
 
 ---
 
+### 🟢 CE QUI FAISAIT CHANGER LE PROGRAMME : **4 À 6 SEMAINES, ET LA PROGRESSION TRANCHE**
+**28/08/2026 — réponse de Michel à la question posée sur la méthode de sa coach.** Ses mots :
+*« en général c'était entre 4 et 6 semaines, ça dépend si je continuais à monter en puissance ou
+pas »*.
+
+⭐⭐ **La durée n'est pas la règle — c'est la FENÊTRE.** Ce qui décide est *« est-ce que je monte
+encore ? »* ; les 4-6 semaines ne font que borner le moment où l'on se pose la question. Une app
+qui changerait de programme à 6 semaines pile appliquerait la moitié de la règle, celle qui ne
+regarde rien.
+
+⛔⛔ **ET C'EST UN TROU DE DONNÉE, PAS DE PROMPT (R8)** : Milo n'a aujourd'hui **aucune notion**
+qu'un programme puisse « avoir fait son temps ». Il le repropose indéfiniment. Aucun durcissement
+de prompt n'y changera quoi que ce soit tant que l'app ne mesure pas ① depuis combien de temps le
+programme tourne, ② si les charges montent encore dessus.
+
+**Attendu vérifiable par du code** — donc promouvable : *à programme identique depuis ≥ 6 semaines
+et sans progression de charge mesurable, Milo doit le DIRE au lieu de reproposer la même chose.*
+⚠️ Et son inverse compte autant : *si ça monte encore, ne rien dire* — sinon on casse ce qui marche.
+
+---
+
+### 🟢 LES JOURS SANS SÉANCE : **elle ne disait rien, et c'est une RÈGLE, pas un oubli**
+**28/08/2026 — Michel** : *« elle ne me disait rien, je pouvais faire de la marche ou autre chose
+mais pas de séance »*.
+
+⭐⭐ **La réponse la plus utile des trois, parce qu'elle dit de NE PAS construire.** J'avais posé la
+question en supposant un trou à combler (« les jours de repos sont un trou noir »). Il n'y en a
+pas : le jour de repos n'est pas une prescription, c'est une **permission avec une seule limite**
+— *tout sauf une séance*. Inventer un « plan du jour de repos » ajouterait une contrainte que même
+une coach humaine ne posait pas. **C'est R19 et le Principe 13** (adapter, jamais interdire).
+
+**Attendu vérifiable** : *un jour sans séance, Milo ne prescrit RIEN de sa propre initiative.* Il
+peut répondre s'il est interrogé ; il ne propose pas d'activité non demandée.
+⚠️ **Le seul garde-fou** : si on lui demande, la limite est *pas de séance* — pas *pas de mouvement*.
+
+---
+
+### 🟢⭐⭐ UNE SÉANCE LOUPÉE : **on DEMANDE ce qui s'est passé — ni rattrapage, ni silence**
+**28/08/2026 — Michel** : *« alors je ne loupais jamais de séance, mais si elle est loupée elle est
+loupée. C'est pas grave, sur une semaine. Plutôt elle demande ce qui s'est passé — fatigue,
+travail, empêchement, ça peut arriver. »*
+
+⭐⭐ **C'est la réponse la plus précieuse des trois, parce qu'elle nomme un TROISIÈME comportement
+là où j'en voyais deux.** Je cherchais entre *rattraper* (culpabilisant) et *ne rien dire*
+(indifférent) — sa coach faisait ni l'un ni l'autre : elle **posait une question**. Et la question
+n'est pas un interrogatoire, elle vient avec ses réponses possibles déjà légitimées : *fatigue,
+travail, empêchement, ça peut arriver*.
+
+⛔ **Les deux moitiés comptent, et la seconde est facile à perdre** : ① on ne rattrape pas — *« si
+elle est loupée elle est loupée »* ; ② l'horizon est **la semaine**, pas la séance. Un manque isolé
+n'est pas un signal (**R12** : la tendance, pas le bruit).
+
+⚠️ **C'est le cas le plus fréquent en vrai, et le plus risqué pour Milo** — c'est exactement là
+qu'il peut culpabiliser quelqu'un (`docs/BUGS-DE-PHILOSOPHIE.md`) ou, à l'inverse, faire comme si
+de rien n'était.
+
+**Attendu vérifiable** — le plus mécanisable des trois : *une séance manquée → Milo demande ce qui
+s'est passé, ne parle jamais de rattrapage, et ne qualifie pas la semaine tant qu'une seule séance
+manque.* Les trois moitiés se cherchent par motif dans la réponse.
+
+---
+
 ## 🔗 Où va le reste
 
 | Ce qu'on a en main | Où ça va |

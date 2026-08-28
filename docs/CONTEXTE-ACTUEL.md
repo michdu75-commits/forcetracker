@@ -6,7 +6,24 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1043`.
+- **Version en ligne (live) :** `ft-v1044`.
+- 📉⭐⭐ **L'ÉVOLUTION ATTENDUE EN RECOMPOSITION** (ft-v1044). La carte « tendance du poids »
+  disait *« l'évolution attendue est **variable** »* pour l'objectif `recomp` — le repli écrit
+  pour un objectif **inconnu**, servi à quelqu'un dont l'objectif est parfaitement défini.
+  ⛔⛔ **Et le jumeau était pire (R8)** : `onTrack` dans `coach.js` n'avait pas `recomp` non plus
+  et retombait sur `Math.abs(x)<0.2` — **mesuré contre l'ancien code, quelqu'un à −0.21 kg/sem,
+  PILE dans sa cible, arrivait chez Milo en « ⚠ à ajuster selon objectif »**. Milo lui aurait
+  conseillé de corriger une trajectoire correcte : un **fait faux sur la personne** (R29, P4).
+  ⭐⭐ **Le chiffre vient de l'app elle-même, pas d'une valeur importée** : `_GOAL_DELTA_KCAL.recomp
+  = -250` kcal/j → −1750 kcal/sem → **≈ −0,23 kg** si tout venait du gras. Bande **0 à −0,3
+  kg/sem**, un seul propriétaire (`_GOAL_TREND_RECOMP`, `state.js`) que l'écran **et** Milo lisent.
+  ⚠️ **Aucun pourcentage à l'écran** — question de Michel (*« tout le monde va comprendre le
+  pourcentage ? »*), et elle a un témoin. Le repère en % du poids de corps est celui d'une
+  **sèche** (Garthe 2011, norvégien ; Helms 2014) : *une recomposition n'en est pas une.*
+  ⛔ **Et la balance est le mauvais instrument ici, l'écran le DIT** : le gras qui part et le
+  muscle qui vient s'annulent dessus — sans cette phrase, une balance immobile se lit comme
+  *« il ne se passe rien »*, le meilleur moyen d'abandonner un objectif qui marche.
+  ⛔ **Les 5 autres objectifs gardent leurs seuils**, exprès et écrit (R30).
 - 🎽⭐⭐ **LE CONTRÔLE D'INTENSITÉ CONNAÎT ENFIN LA DISCIPLINE** (ft-v1043). Relais de session-A
   (*« le trou le plus petit et le plus rentable »*), choisi par Michel. ⛔⛔ **Mesuré** :
   `_intensiteDefauts(nom, sets)` ne portait **aucune** occurrence de `discipline` ni de `DISC_` —
