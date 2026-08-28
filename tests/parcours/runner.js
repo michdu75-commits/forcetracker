@@ -16923,6 +16923,62 @@ console.log('\n-- CLIV. La séance prévue qui n\'a pas eu lieu (ft-v1050) --');
   await cx.close();
 }
 
+/* == BLOC CLV - LE BOUTON SURVIT A UN MESSAGE DE MILO APRES LA SEANCE (ft-v1051) ==
+   3e panne du bouton en 8 jours. Michel : « pk il y a tjrs une couille avec le lancement ».
+
+   ⛔⛔ LA CAUSE : `_renderCoachThread` ne re-analysait QUE le dernier message de Milo (`break`).
+   Chez lui, ce dernier message est « la seance est ecrite au-dessus, le bouton devrait
+   apparaitre » — aucune seance dedans, donc plus aucun bouton, MEME apres ft-v1049.
+   👉 *Il suffit que Milo dise un mot apres avoir propose la seance pour perdre le bouton.*
+   ⛔ Et la borne a 3 garde l'intention d'origine : une VIEILLE seance ne doit pas ressurgir. */
+console.log('\n-- CLV. Le bouton survit à un message de Milo après la séance (ft-v1051) --');
+{
+  const SEANCE='Voilà ta séance :\n\nDéveloppé Couché (ancre)\n• S1 : 95×3 — repos 3 min\n'
+    +'• S2 : 95×3 — repos 3 min\n• S3 : 95×3 — repos 3 min\n\nRowing Barre (Tirage Horizontal)\n'
+    +'• S1 : 70×10\n• S2 : 70×10';
+  const BAVARDAGE='La séance est déjà écrite juste au-dessus — le bouton pour la démarrer devrait '
+    +'apparaître sous mon message précédent. 👆 Lance-la de là, et envoie ! 💪';
+  const jouer=async(hist)=>{
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+    const pg=await cx.newPage();
+    await pg.addInitScript(seedScript({ft4_coach_hist:JSON.stringify(hist)}));
+    await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(1600);
+    const r=await pg.evaluate(()=>{
+      try{
+        goScreen('coach');
+        if(typeof _loadCoachHist==='function')_loadCoachHist();
+        _renderCoachThread();
+        const btns=[...document.querySelectorAll('.coach-prog-save button')];
+        return {n:btns.length, lbl:btns.length?btns[0].textContent.trim():'',
+                marche:(()=>{ try{ if(!btns.length)return false; btns[0].click();
+                  return !!(S.wkt&&S.wkt.exs&&S.wkt.exs.length>=2); }catch(e){ return String(e.message);} })()};
+      }catch(e){ return {err:String(e.message||e)}; }
+    });
+    await cx.close(); return r;
+  };
+  const U=m=>({role:'user',content:m}), A=m=>({role:'assistant',content:m});
+  /* ① LE CAS DE MICHEL : séance, puis un mot de Milo par-dessus. */
+  const cas1=await jouer([U('donne-moi ma séance'),A(SEANCE),U('OK, tu peux lancer la séance'),A(BAVARDAGE)]);
+  /* ② NON-RÉGRESSION : la séance en dernier message marche toujours. */
+  const cas2=await jouer([U('donne-moi ma séance'),A(SEANCE)]);
+  /* ③ LA BORNE TIENT : une séance suivie de 3 messages de Milo ne ressurgit PAS. */
+  const cas3=await jouer([U('séance'),A(SEANCE),U('a'),A('Très bien.'),U('b'),A('D\'accord.'),
+                          U('c'),A('Je note.')]);
+
+  t('⭐⭐ ① le bouton est LÀ malgré le message de Milo posé après la séance',
+    cas1.n===1 && /Commencer cette séance|Utiliser cette séance/.test(cas1.lbl),
+    cas1.err||('boutons='+cas1.n+' · '+(cas1.lbl||'(aucun)')));
+  t('⭐ … et il MARCHE vraiment (la séance est injectée, 2 exercices)',
+    cas1.marche===true, String(cas1.marche));
+  t('⛔ ② non-régression : la séance en dernier message donne toujours le bouton',
+    cas2.n===1 && cas2.marche===true, cas2.err||('boutons='+cas2.n));
+  /* ⛔ Sans ce témoin, on aurait « corrigé » en faisant ressurgir n'importe quelle vieille séance. */
+  t('⛔⛔ ③ la borne tient : au-delà de 3 messages de Milo, une vieille séance ne ressurgit PAS',
+    cas3.n===0, cas3.err||('boutons='+cas3.n+' · '+(cas3.lbl||'')));
+  t('⛔ … et jamais DEUX boutons à la fois (on prend la séance la plus récente)',
+    cas1.n<=1 && cas2.n<=1, 'cas1='+cas1.n+' cas2='+cas2.n);
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

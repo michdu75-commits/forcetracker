@@ -1359,16 +1359,31 @@ function _renderCoachThread(){
      LE REMÈDE : on ré-analyse le DERNIER message de Milo, exactement comme à l'arrivée
      (`_extractDaySession`, la même fonction — pas une 2ᵉ analyse, R2). Rien n'est stocké en
      plus : le bloc technique est déjà dans le fil, il suffit de le relire. */
+  /* ⚠️⚠️ ON REMONTE JUSQU'À 3 MESSAGES DE MILO, PLUS UN SEUL (28/08/2026, ft-v1051)
+     3ᵉ panne du bouton en 8 jours, et Michel la nomme : *« pk il y a tjrs une couille avec le
+     lancement de la séance »*.
+     ⛔⛔ LA CAUSE ÉTAIT CE `break`. On ne ré-analysait que **le dernier** message de Milo —
+     l'intention était bonne (« une vieille séance ne doit pas ressurgir »), la mise en œuvre
+     trop stricte. Chez lui, le dernier message de Milo est *« la séance est écrite au-dessus,
+     le bouton devrait apparaître »* : **aucune séance dedans**, donc `null`, donc plus aucun
+     bouton — et ça restait vrai même après le correctif de format de ft-v1049.
+     👉 *Il suffit que Milo dise un mot après avoir proposé la séance pour que le bouton soit
+     perdu à jamais.* On remonte donc au plus **3** messages de Milo et on s'arrête au premier
+     qui porte une séance. La borne garde l'intention d'origine : au-delà, c'est une vieille
+     séance et elle ne doit pas revenir. */
   try{
-    for(let i=coachHistory.length-1;i>=0;i--){
+    let vus=0;
+    for(let i=coachHistory.length-1;i>=0 && vus<3;i--){
       const m=coachHistory[i];
       if(!m||m.role!=='assistant')continue;
+      vus++;
       const txt=(typeof m.content==='string')?m.content:'';
-      if(txt&&typeof _extractDaySession==='function'){
-        const dsx=_extractDaySession(txt);
-        if(dsx&&dsx.sess&&typeof _appendStartSessionBtn==='function')_appendStartSessionBtn(dsx.sess);
+      if(!txt||typeof _extractDaySession!=='function')continue;
+      const dsx=_extractDaySession(txt);
+      if(dsx&&dsx.sess&&typeof _appendStartSessionBtn==='function'){
+        _appendStartSessionBtn(dsx.sess);
+        break;                 // la PLUS RÉCENTE des séances trouvées, jamais deux boutons
       }
-      break;   // seulement le DERNIER : une vieille séance ne doit pas ressurgir
     }
   }catch(e){}
   _coachAuBas();

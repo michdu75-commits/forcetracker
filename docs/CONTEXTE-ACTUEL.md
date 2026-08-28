@@ -6,7 +6,21 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1050`.
+- **Version en ligne (live) :** `ft-v1051`.
+- 🆘⭐⭐ **3ᵉ PANNE DU BOUTON DE LANCEMENT EN 8 JOURS — un `break`** (ft-v1051). Michel :
+  *« pk il y a tjrs une couille avec le lancement de la séance »*.
+  ⛔⛔ `_renderCoachThread` ne ré-analysait que **le dernier** message de Milo. Chez lui, ce
+  dernier message est *« la séance est écrite au-dessus »* — **aucune séance dedans** → plus
+  aucun bouton, ***même après ft-v1049***. *Il suffit que Milo dise un mot après la séance.*
+  ⭐ L'intention (« pas de vieille séance ») était bonne, la borne fausse : on remonte au plus
+  **3 messages de Milo**, et un témoin épingle la borne — sans lui on aurait fait ressurgir
+  n'importe quoi.
+  ⭐⭐ **La leçon, relayée à session-A à la demande de Michel** : les 3 pannes viennent d'une
+  hypothèse sur la **FORME** de ce que Milo écrit, et **il change d'écriture sans prévenir**.
+  Un détecteur vérifié sur nos propres exemples ne teste rien.
+  ⚠️ Le témoin XVII testait la survie du bouton **avec la séance en dernier message** — le cas
+  « séance + un mot par-dessus » n'était couvert par rien.
+  ⚠️ Renumérotée 1050 → 1051 : git a refusé mon push, session-A avait pris 1050.
 - 📅⭐⭐ **LA SÉANCE PRÉVUE QUI N'A PAS EU LIEU — on DEMANDE ce qui s'est passé** (ft-v1050).
   Méthode de la coach de Michel, dans ses mots : *« si elle est loupée elle est loupée. C'est
   pas grave, sur une semaine. Plutôt elle demande ce qui s'est passé — fatigue, travail,
@@ -24,7 +38,6 @@
   ⚠️ **Défaut trouvé À LA CAPTURE** : « Pas la tête » **débordait** de sa pastille de 47 px,
   invisible dans le texte rendu. Un témoin mesure le débordement (`scrollWidth`), pas la
   longueur des mots.
-- **Version en ligne (live) :** `ft-v1049`.
 - 🆘⭐⭐ **BLOQUANT CORRIGÉ — le bouton « lancer la séance » ne sortait plus** (ft-v1049), trouvé
   par Michel **en salle** : Milo écrit la séance, dit *« le bouton devrait apparaître »*, et il
   n'y en a pas.
