@@ -6,7 +6,25 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1046`.
+- **Version en ligne (live) :** `ft-v1047`.
+- 🩹⭐⭐ **TROIS ERREURS DES CARTES DE PROGRÈS, TROUVÉES SUR UNE VIDÉO DE MICHEL** (ft-v1047, 10 s
+  en production). Périmètre choisi par lui : **mes 2 cartes**, pas tout l'onglet.
+  ⛔⛔ **La pire est de moi** : *« sur **37** séances »* puis *« 11 sur **27** »* — **deux
+  dénominateurs qui se contredisent, sans un mot**. Cause reproduite : `_calSessMix` ne classe pas
+  toutes les séances. ***C'est ft-v1027, refait par moi.***
+  ⛔ **On ne répare PAS en comptant sur 37** : les non classées deviendraient des séances « non
+  dominées par le haut », un **fait faux** (R29). La ligne **nomme sa fenêtre** et les deux nombres
+  apparaissent **ensemble**.
+  ⚠️ ② *« le plus souvent dominées »* à **41 %** : c'est le mode, mais ça se lit « la majorité ».
+  ⚠️ ③ *« Le tronc domine 1 fois »* : 1 occurrence n'est pas une constante → plancher à 3.
+  🎨 **Visuel mesuré** : la barre prend la couleur **« muscle »** de la figurine — ⛔ **toutes de la
+  même couleur, seule la LONGUEUR varie**, donc ce n'est pas un statut (R31) ; le rail gris
+  disparaît ; un **liseré gris** distingue la synthèse (miroir, pas alerte) ; le pied passe de 2
+  lignes à 1 — ⛔ **alléger n'est pas supprimer**, l'exemple survit dans l'aide.
+  ⭐ **326 → 309 px** (volume), **286 → 300 px** (synthèse, prix de l'honnêteté), 🔴 bouton central
+  identique. 📣 **Ni pop-up ni point rouge** : une correction n'est pas une nouveauté.
+  ⏭️ **Ensuite** : l'export CSV + PDF de l'historique (choix de Michel) — ⚠️ **l'export JSON existe
+  déjà** (Menu → Exporter mes données → « mes séances seulement »), R23.
 - 🎚️⭐⭐ **LE RPE — UN VOCABULAIRE, PAS UN 2ᵉ SYSTÈME** (ft-v1046). Michel l'avait différé, puis
   donné le critère : *« c'est des gens qui connaissent bien qui connaissent le RPE »* — donc il se
   **choisit** (Profil → Échelle d'effort), il ne se demande à personne. **Le RIR reste le défaut.**

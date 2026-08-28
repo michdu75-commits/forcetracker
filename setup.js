@@ -40,6 +40,9 @@ function _renderProgChips(chips){
    se lit comme un chargement qui n'a pas abouti (leçon de ft-v1021). */
 const SYNTH_MIN_SEANCES = 8;    // en deçà, « une constante » n'a aucun sens : c'est du hasard
 const SYNTH_MIN_JOURS   = 21;   // …et il faut aussi de la DURÉE, pas 8 séances en une semaine
+/* ⛔ Le plancher d'une RÉGION : en dessous, ce n'est pas une constante, c'est du bruit.
+   Trouvé sur une vidéo de Michel — « Le tronc domine 1 fois » se lisait comme un fait notable. */
+const SYNTH_MIN_REGION  = 3;
 
 /* ⛔ UN SEUL PROPRIÉTAIRE de « que montre ton historique ? » — la carte et un futur message de
    Milo doivent lire la même chose, sinon ils se contrediront un jour (R2). */
@@ -88,34 +91,41 @@ function _synthConstantes(refTs){
     if(typeof _calSessMix==='function'){
       const reg={haut:0,dos:0,bas:0,tronc:0}; let n=0;
       /* ⚠️ LA CLÉ EST `reg`, PAS `region` — vérifié dans `_calSessMix` (elle rend `{reg, pc}`).
-         Mon 1er jet lisait `m.region` : la constante d'équilibre ne sortait JAMAIS, en silence.
-         *On vérifie les noms, on ne les devine pas* — 3ᵉ fois aujourd'hui. */
+         Mon 1er jet lisait `m.region` : la constante d'équilibre ne sortait JAMAIS, en silence. */
       sess.forEach(s=>{ const m=_calSessMix(s); const r=m&&m.reg;
         if(r&&reg[r]!==undefined){reg[r]++;n++;} });
       if(n>=SYNTH_MIN_SEANCES){
         const LBL={haut:'le haut du corps',dos:'le dos',bas:'le bas du corps',tronc:'le tronc'};
         const cles=Object.keys(reg).sort((a,b)=>reg[b]-reg[a]);
         const fort=cles[0], faible=cles[cles.length-1];
-        /* ⛔ ON NE SORT LA LIGNE QUE SI L'ÉCART EST RÉEL (au moins du simple au double) : sinon
-           on fabriquerait une « constante » à partir d'une différence d'une séance (R29 — les
-           seuils en marche d'escalier, famille §6 de BUGS.md). */
         if(reg[fort]>=2*Math.max(1,reg[faible]) && reg[fort]>=3){
-          /* ⚠️⚠️ LE MOT « DOMINÉE » N'EST PAS DU STYLE, IL EST EXACT. `_calSessMix` rend la
-             région DOMINANTE d'une séance, pas la liste de ce qui a été travaillé. Ma 1ʳᵉ
-             version disait « le tronc revient 0 fois » — ce qui se lit *« tu ne travailles
-             jamais ton tronc »*, et c'est FAUX : une séance peut le solliciter sans qu'il
-             domine. *Une mesure juste peut produire une phrase fausse* (la leçon de ft-v1035).
-             ⛔ Et la 2ᵉ moitié ne sort QUE si la région apparaît au moins une fois : « domine
-             0 fois » n'apprend rien et invite à la mauvaise lecture. */
-          const faibles=cles.filter(k=>reg[k]>0 && k!==fort);
+          /* ⚠️⚠️ ① DEUX DÉNOMINATEURS QUI SE CONTREDISAIENT — TROUVÉ SUR UNE VIDÉO DE MICHEL
+             (28/08, ft-v1047). La carte annonçait « sur 37 séances étalées sur 74 jours » puis
+             « 11 sur 27 » : **37 ≠ 27, et rien ne le disait**. La cause est réelle et mesurée —
+             `_calSessMix` ne sait pas classer toutes les séances (un exercice hors catalogue ne
+             rend aucune région), donc l'équilibre porte sur un sous-ensemble.
+             👉 C'est **exactement le défaut de ft-v1027**, refait par moi. Le correctif est le
+             même : la ligne NOMME sa fenêtre, et les deux nombres apparaissent ENSEMBLE pour
+             qu'ils ne puissent plus se contredire en silence. ⛔ On ne « répare » PAS en
+             comptant sur 37 : les 10 non classées deviendraient des séances « non dominées par
+             le haut », ce qui serait un fait faux (R29). */
+          const fen=(n<out.nSeances)
+            ? 'd\'après la région dominante de '+n+' de tes '+out.nSeances+' séances (les autres ne sont pas classables)'
+            : 'd\'après la région dominante de chaque séance';
+          /* ⚠️ ② « LE PLUS SOUVENT DOMINÉES » SUR-AFFIRMAIT. Mesuré sur son écran : 11/27 = 41 %.
+             C'est bien le MODE, mais la phrase se lit « la majorité du temps » — et 41 % n'est pas
+             une majorité. On dit donc ce qu'on mesure vraiment : *la région la plus fréquente*,
+             avec ses deux nombres. *Une mesure juste peut produire une phrase fausse* (ft-v1035). */
+          let txt='Ta région dominante la plus fréquente est <b>'+LBL[fort]+'</b> — '
+                 +reg[fort]+' séances sur '+n+'.';
+          /* ⚠️ ③ « LE TRONC DOMINE 1 FOIS » N'EST PAS UNE CONSTANTE, C'EST DU BRUIT. La seconde
+             moitié ne sort donc que si la région la moins fréquente atteint le MÊME plancher que
+             la première (3). En dessous, on se tait : signaler une occurrence unique fabrique
+             une régularité à partir de rien, ce que le seuil de cette brique existe pour éviter. */
+          const faibles=cles.filter(k=>reg[k]>=SYNTH_MIN_REGION && k!==fort);
           const bas=faibles.length?faibles[faibles.length-1]:null;
-          out.lignes.push({
-            cle:'equilibre',
-            txt:'Tes séances sont le plus souvent dominées par <b>'+LBL[fort]+'</b> — '
-                +reg[fort]+' sur '+n+'.'
-                +(bas?' '+LBL[bas].charAt(0).toUpperCase()+LBL[bas].slice(1)+' domine <b>'+reg[bas]+' fois</b>.':''),
-            fen:'d\'après la région dominante de chaque séance'
-          });
+          if(bas) txt+=' '+LBL[bas].charAt(0).toUpperCase()+LBL[bas].slice(1)+' domine <b>'+reg[bas]+' fois</b>.';
+          out.lignes.push({cle:'equilibre', txt:txt, fen:fen});
         }
       }
     }
@@ -191,9 +201,11 @@ function _renderVolumeSemaine(){
     +(reste>0?'<div class="vol-plus">et '+reste+' autre'+(reste>1?'s':'')+'</div>':'')
     +'<div class="vol-fen">Séries de travail sur les 7 derniers jours ('
       +esc(jour(v.depuis))+' → '+esc(jour(v.jusqu))+') · '+v.seances+' séance'+(v.seances>1?'s':'')+'</div>'
-    /* ⛔ LE CHOIX DE COMPTAGE EST DIT, PAS CACHÉ : sans ça, quelqu'un qui compte ses séries de
-       triceps à la main trouverait un autre chiffre et croirait à un bug. */
-    +'<div class="vol-pied">Comptées sur le <b>muscle principal</b> de chaque exercice — un développé couché compte pour les pectoraux, pas pour les triceps.'
+    /* ⛔ LE CHOIX DE COMPTAGE RESTE DIT, MAIS EN UNE LIGNE (ft-v1047, R25 : la carte annonce,
+       l'aide explique). Sa raison d'être tient — quelqu'un qui recompte à la main doit retrouver
+       le même nombre — donc on ne le SUPPRIME pas ; l'exemple du développé couché, lui, vit
+       désormais dans l'aide « ? » de l'onglet et dans l'aide détaillée, où il était déjà. */
+    +'<div class="vol-pied">Comptées sur le <b>muscle principal</b> de chaque exercice.'
     /* ⛔ LE SOUS-COMPTAGE EST DIT, JAMAIS TU : un exercice dont l'app ne connaît pas les muscles
        (nom ambigu, exercice perso sans muscles cochés) ne peut créditer personne. Le passer sous
        silence donnerait un total plus petit que la réalité, présenté comme un fait (R29). */

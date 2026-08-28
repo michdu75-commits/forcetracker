@@ -15865,9 +15865,15 @@ console.log('\n-- CXLV. Brique 8 : les constantes (ft-v1041) --');
     /* ⛔⛔ LA RÈGLE DE LA VISION : on décrit, on ne prescrit jamais. */
     t('⛔⛔ aucun verbe de prescription — « une constante », jamais « tu devrais »',
       G.pasDePrescription===true, G.ecran.slice(0,110));
-    /* ⛔⛔ ET AUCUN FAIT FAUX : la région est la DOMINANTE, pas ce qui a été travaillé. */
+    /* ⛔⛔ ET AUCUN FAIT FAUX : la région est la DOMINANTE, pas ce qui a été travaillé.
+       ⚠️ RE-VISÉ LE 28/08 (ft-v1047) : il épinglait la FORMULATION exacte « dominées par », que
+       ft-v1047 a dû changer (« le plus souvent » sur-affirmait à 41 %). Il rougissait donc sur du
+       code corrigé. *Un témoin doit épingler sa RÈGLE, pas la phrase du jour* — 5ᵉ fois cette
+       semaine. La règle, elle, ne bouge pas : le texte ne dit JAMAIS « tu ne travailles pas X »,
+       et il nomme explicitement qu'il s'agit de DOMINATION. */
     t('⛔⛔ aucune phrase du type « tu ne travailles jamais X » (c\'est la DOMINANTE qu\'on mesure)',
-      G.pasDeJamais===true && /dominées par/i.test(G.txtEquilibre), G.txtEquilibre);
+      G.pasDeJamais===true && /domin/i.test(G.txtEquilibre)
+      && !/tu (ne )?travailles/i.test(G.txtEquilibre), G.txtEquilibre);
     t('⭐⭐ LA PORTE : la section s\'affiche en tête de Progrès',
       /CE QUE TON HISTOIRE MONTRE/i.test(G.ecran), G.ecran.slice(0,100));
     t('⛔ changer de sous-onglet ne la fait pas disparaître',
@@ -16436,6 +16442,115 @@ console.log('\n-- CL. Le RPE : un vocabulaire, pas un 2e système (ft-v1046) --'
       P.boutonsProfil===true && /active/.test(P.actifProfil), P.actifProfil);
     t('⛔ … et il EXPLIQUE que rien n\'est perdu (sinon on n\'ose pas y toucher)',
       /même mesure|rien n'est perdu|relit/i.test(P.descProfil), P.descProfil.slice(0,110));
+  }
+}
+
+/* == BLOC CLI - LES 3 ERREURS DES CARTES DE PROGRES, TROUVEES SUR UNE VIDEO (ft-v1047) ==
+   Michel, 10 s de son iPhone en production : « c'est pas mal mais je suis sur qu'on peut ameliorer
+   le visuel ».
+
+   ⛔⛔ LA PIRE EST DE MOI, ET DANS LA FAMILLE QUE JE PASSE LA SEMAINE A EVITER : la carte annoncait
+   « sur 37 seances etalees sur 74 jours » puis « 11 sur 27 ». DEUX DENOMINATEURS QUI SE
+   CONTREDISENT, SANS UN MOT. Cause reelle et mesuree : `_calSessMix` ne classe pas toutes les
+   seances (un exercice hors catalogue ne rend aucune region). C'est ft-v1027, refait par moi.
+   ⛔ On ne « repare » PAS en comptant sur 37 : les non classees deviendraient des seances « non
+   dominees par le haut », c'est-a-dire un fait FAUX (R29). La ligne NOMME sa fenetre, et les deux
+   nombres apparaissent ENSEMBLE.
+
+   ⚠️ ② « le plus souvent dominees » a 11/27 = 41 % : c'est le MODE, mais la phrase se lit « la
+   majorite ». ⚠️ ③ « Le tronc domine 1 fois » : 1 occurrence n'est pas une constante. */
+console.log('\n-- CLI. Les 3 erreurs des cartes de Progrès (ft-v1047) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const Q=await pg.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    const j=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+    const st=n=>Array.from({length:n},()=>({kg:60,reps:8,done:true,type:'N'}));
+    /* ⭐ LE CAS DE SA VIDEO, REPRODUIT : des seances CLASSABLES et des seances qui ne le sont pas. */
+    const S3=[];
+    for(let i=0;i<20;i++) S3.push({date:j(i*2), exs:[{name:'Développé Couché',sets:st(3)}], vol:1});
+    for(let i=0;i<8;i++)  S3.push({date:j(i*2+1), exs:[{name:'Squat à la Barre',sets:st(3)}], vol:1});
+    for(let i=0;i<10;i++) S3.push({date:j(i*2+41), exs:[{name:'Zzz Exercice Inconnu',sets:st(3)}], vol:1});
+    S.sessions=S3; persist();
+    const c=_synthConstantes();
+    const eq=(c.lignes||[]).find(l=>l.cle==='equilibre')||{};
+    o.nSeances=c.nSeances;
+    o.classables=S3.filter(s=>{const m=_calSessMix(s);return m&&m.reg;}).length;
+    o.eqTxt=(eq.txt||'').replace(/<[^>]+>/g,'');
+    o.eqFen=eq.fen||'';
+    /* ⛔⛔ ① LES DEUX DENOMINATEURS DOIVENT APPARAITRE ENSEMBLE. */
+    o.fenNommeLesDeux=new RegExp(o.classables+' de tes '+o.nSeances+' séances').test(o.eqFen);
+    /* ⚠️ ② PLUS DE « le plus souvent dominées ». */
+    o.plusDeSurAffirmation=!/le plus souvent dominées/i.test(o.eqTxt);
+    /* ⚠️ ③ UNE REGION VUE MOINS DE 3 FOIS N'EST PAS CITEE. */
+    const S4=S3.slice(0,28).concat([{date:j(90),exs:[{name:'Crunch au Sol',sets:st(3)}],vol:1}]);
+    S.sessions=S4; persist();
+    const c2=_synthConstantes();
+    const eq2=(c2.lignes||[]).find(l=>l.cle==='equilibre')||{};
+    o.eq2=(eq2.txt||'').replace(/<[^>]+>/g,'');
+    o.pasDeBruit=!/domine 1 fois/i.test(o.eq2);
+    /* ── LE VISUEL ── */
+    S.sessions=S3.concat([{date:j(0),exs:[{name:'Squat à la Barre',sets:st(5)},
+      {name:'Rowing Barre (Tirage Horizontal)',sets:st(4)}],vol:1}]); persist();
+    goScreen('s-progress');document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+    document.getElementById('s-progress').classList.add('active'); renderProgress();
+    await new Promise(r=>setTimeout(r,380));
+    const vo=document.getElementById('prog-volume'), sy=document.getElementById('prog-synth');
+    const rem=vo.querySelector('.vol-bar i'), rail=vo.querySelector('.vol-bar');
+    /* ⛔ LA BARRE PORTE LA COULEUR « MUSCLE » (celle de la figurine), pas un gris. */
+    o.barreColoree=/gradient/.test(getComputedStyle(rem).backgroundImage);
+    /* ⛔ ET TOUTES LES BARRES ONT LA MEME COULEUR : seule la LONGUEUR varie, sinon ce serait un
+       statut (« bien »/« mal »), ce que cette section refuse d'etre. */
+    const fonds=[...vo.querySelectorAll('.vol-bar i')].map(x=>getComputedStyle(x).backgroundImage);
+    o.memeCouleurPartout=new Set(fonds).size===1 && fonds.length>=2;
+    o.railEfface=/rgba\(0, 0, 0, 0\)|transparent/.test(getComputedStyle(rail).backgroundColor);
+    o.liseréSynthese=getComputedStyle(sy.querySelector('.synth-card')).borderLeftWidth;
+    o.piedCourt=((vo.querySelector('.vol-pied')||{}).textContent||'').indexOf('pas pour les triceps')<0;
+    /* ⛔ MAIS L'EXPLICATION N'A PAS DISPARU — elle vit dans l'aide (R25/R30). */
+    o.aideGardeLExemple=JSON.stringify(_HELP_DATA.progress.tips).indexOf('pas triceps')>=0;
+    const f=document.getElementById('nb-log').getBoundingClientRect();
+    o.fab=[Math.round(f.left),Math.round(f.top),Math.round(f.width),Math.round(f.height)];
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  await cx.close();
+
+  if(Q.err)t('CLI n\'a pas pu tourner',false,JSON.stringify(Q));
+  else{
+    /* ⛔ Le témoin ne mesure rien si les deux nombres sont égaux : la fixture DOIT créer l'écart. */
+    t('⛔ le témoin a bien créé l\'écart qu\'il mesure (des séances non classables existent)',
+      Q.nSeances>Q.classables && Q.classables>0, Q.nSeances+' séances · '+Q.classables+' classables');
+    t('⛔⛔ ① les DEUX dénominateurs apparaissent ENSEMBLE (ils ne peuvent plus se contredire)',
+      Q.fenNommeLesDeux===true, Q.eqFen);
+    t('⛔ … et on ne compte PAS sur le total (les non classées ne deviennent pas « non dominées »)',
+      new RegExp('sur '+Q.classables+'\\.?$|sur '+Q.classables+'\\b').test(Q.eqTxt), Q.eqTxt);
+    t('⚠️ ② plus de « le plus souvent dominées » — 41 % n\'est pas une majorité',
+      Q.plusDeSurAffirmation===true, Q.eqTxt);
+    t('⚠️ ③ une région vue moins de 3 fois n\'est plus citée (1 occurrence n\'est pas une constante)',
+      Q.pasDeBruit===true, Q.eq2);
+    /* ── LE VISUEL, MESURÉ ── */
+    t('🎨 la barre porte la couleur « muscle » de la figurine, plus un gris sans identité',
+      Q.barreColoree===true, 'dégradé = '+Q.barreColoree);
+    t('⛔⛔ … et TOUTES les barres ont la même couleur : seule la LONGUEUR varie (pas un statut)',
+      Q.memeCouleurPartout===true, 'couleurs distinctes = '+(Q.memeCouleurPartout?1:'>1'));
+    t('🎨 le rail gris pleine largeur a disparu (8 lignes de bruit sous les barres utiles)',
+      Q.railEfface===true, 'fond du rail = '+Q.railEfface);
+    t('🎨 la synthèse se distingue de la carte volume (liseré à gauche)',
+      Q.liseréSynthese==='3px', 'liseré = '+Q.liseréSynthese);
+    /* ⛔⛔ ALLÉGER N'EST PAS SUPPRIMER (R25/R30) : l'exemple quitte l'écran et RESTE dans l'aide. */
+    t('⛔⛔ le pied est allégé À L\'ÉCRAN mais l\'exemple SURVIT dans l\'aide (alléger ≠ supprimer)',
+      Q.piedCourt===true && Q.aideGardeLExemple===true,
+      'écran allégé='+Q.piedCourt+' · aide garde='+Q.aideGardeLExemple);
+    t('🔴 règle d\'or #9 : le bouton central « + » est à sa place',
+      Q.fab[2]>0 && Q.fab[3]>0, JSON.stringify(Q.fab));
   }
 }
 
