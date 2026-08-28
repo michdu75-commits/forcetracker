@@ -1890,7 +1890,80 @@ function _monteeDefauts(echauffements, kgTravail){
    avertissements qui, eux, sont fondés.                                                     */
 const _INT_TENUE   = 0.93;   // une série maximale ≠ N séries : coefficient de tenue (voir ci-dessus)
 const _INT_LOURD   = 0.80;   // au-delà de ce % du 1RM, on parle de charge lourde
-const _INT_REPOS   = 150;    // secondes : en dessous, le repos ne suit pas une charge lourde
+const _INT_REPOS   = 150;    // secondes : PLANCHER, décidé par Michel — voir `_cadreReposLourd`
+
+/* 🎽 LE REPOS EXIGÉ DÉPEND DE LA DISCIPLINE — ET IL SE LIT DANS LE CADRE (27/08/2026, ft-v1043)
+   Relais de session-A du 26/08, qui l'avait qualifié du « trou le plus petit et le plus
+   rentable », puis choisi par Michel.
+
+   ⛔⛔ LE DÉFAUT, MESURÉ : `_intensiteDefauts(nom, sets)` ne portait **aucune** occurrence de
+   `discipline` ni de `DISC_`. Il appliquait donc **un seul chiffre — 150 s — à tout le monde**,
+   pendant que `DISC_CADRE.repos` dit à chacun autre chose : *« 3 à 5 min entre les séries
+   lourdes »* en force athlétique, *« 60 à 120 s »* en bodybuilding. C'est **R4** : le cadre
+   restait de la PROSE envoyée à Milo, jamais un nombre que l'app vérifie — et **R2** au passage,
+   puisque l'app affichait à la personne un cadre que son propre contrôle ignorait.
+   👉 Le cas qui échappait : un powerlifter à **160 s** entre deux séries à 88 % ne recevait
+   **rien** (160 > 150), alors que le cadre qu'il a choisi lui demande 3 à 5 min.
+
+   ⛔⛔ ET LE PLANCHER À 150 s RESTE, PARCE QUE C'EST UNE DÉCISION, PAS UN DÉFAUT. Il vient de
+   Michel : *« un 3×5 avec 90 secondes de repos c'est IMPOSSIBLE »* — dit par celui qui soulève
+   la barre, sur un cas réel. Or le bas de plage de `muscu` vaut 90 s et celui de `bodybuilding`
+   60 s : lire le cadre **sans plancher** aurait rendu son propre cas SILENCIEUX.
+   *Une valeur dérivée n'écrase pas une décision mesurée* — on prend donc `max(150, bas de
+   plage)`, ce qui **ne peut que resserrer**, jamais relâcher. Un témoin l'épingle dans les
+   deux sens.
+
+   ⛔ ET LE CADRE NE COUVRE PAS LA MÊME CHOSE POUR TOUS : chez `muscu` et `bodybuilding`, la
+   plage de repos décrit des séries de travail à **65-80 %**, pas une série à 88 %. Leur bas de
+   plage n'a donc rien à dire sur le cas que ce contrôle examine — raison de plus pour que le
+   plancher tienne. Chez `powerbuilding`, `powerlifting` et `haltero`, la 1ʳᵉ plage citée EST
+   celle du lourd (vérifié phrase par phrase sur les 5).
+
+   ⛔⛔ CE QUI A ÉTÉ VÉRIFIÉ PUIS **PAS** CONSTRUIT, et il faut le lire (R30) :
+   ① **le plafond de charge ne bouge pas d'un gramme.** Brzycki est de la **physiologie**, pas
+      de la doctrine : un powerlifter n'a pas un maximum plus élevé parce qu'il est powerlifter.
+      Le moduler par discipline aurait été une fausse précision.
+   ② **`_INT_LOURD = 0,80` reste tel quel** — vérifié contre `DISC_CADRE.charge` : 80 % est le
+      HAUT de plage de `muscu`/`bodybuilding` (65-80) et le BAS de `powerlifting`/`powerbuilding`
+      (80-95 / 80-90). Il est donc déjà juste pour les cinq. *On ne « corrige » pas ce qui marche.*
+   ③ **on n'avertit PAS sur une charge au-dessus du cadre**, alors que c'était l'idée la plus
+      évidente : `DISC_CADRE` l'interdit lui-même, noir sur blanc — *« Du lourd ponctuel reste
+      utile et ne se reproche pas »* (bodybuilding), *« machines et isolation ont toute leur
+      place en accessoire — ne le reproche jamais »* (powerlifting). L'app se serait contredite
+      elle-même. */
+function _cadreReposLourd(disc){
+  const out={sec:_INT_REPOS, txt:'3 min', cadre:false};
+  try{
+    const c=(typeof DISC_CADRE!=='undefined')?DISC_CADRE[disc||'muscu']:null;
+    if(!c||!c.repos) return out;
+    /* ⭐ ON EXTRAIT LA 1ʳᵉ PLAGE CHIFFRÉE, on ne recopie pas un nombre à la main (R2) : le jour
+       où quelqu'un modifie la prose du cadre, le contrôle suit au lieu de défendre l'ancienne
+       valeur. ⛔ Et si rien n'est chiffrable, on garde le plancher — jamais de repli inventé. */
+    const m=String(c.repos).match(/(\d+)\s*(?:à|-|–)\s*(\d+)\s*(min|mn|s|sec|secondes?)\b/i);
+    if(!m) return out;
+    const mult=/^m/i.test(m[3])?60:1;
+    const bas=+m[1]*mult, haut=+m[2]*mult;
+    if(!(bas>0)) return out;
+    out.cadre=true;
+    out.sec=Math.max(_INT_REPOS, bas);          // ⛔ ne peut que RESSERRER (voir ci-dessus)
+    /* ⭐ ET LE CONSEIL NOMME LA PLAGE DU CADRE au lieu du « 3 min » écrit en dur pour tout le
+       monde — MAIS SEULEMENT QUAND C'EST LE CADRE QUI A FIXÉ LE SEUIL.
+       ⚠️⚠️ MON 1ᵉʳ JET CITAIT LA PLAGE DANS TOUS LES CAS, ET IL SE CONTREDISAIT LUI-MÊME :
+       en `muscu`, le seuil vaut 150 s (le plancher) mais la plage est 90-150 s — donc quelqu'un
+       averti à **100 s** se voyait conseiller *« viser 1,5 à 2,5 min »*, une fourchette qui
+       CONTIENT son propre repos. *Un conseil qui englobe ce qu'on vient de reprocher n'est pas
+       un conseil, c'est une contradiction.* Même chose en bodybuilding (110 s) et en haltero.
+       👉 Quand le plancher gagne, le conseil reste celui de Michel — « 3 min » —, qui est
+       cohérent avec le seuil de 150 s. Un témoin épingle la règle générale : *le minimum
+       conseillé ne descend JAMAIS sous le seuil qui a déclenché l'avertissement.* */
+    if(bas>_INT_REPOS){
+      out.txt=(mult===60)?(m[1]+' à '+m[2]+' min')
+            :(haut>=120?(Math.round(bas/60*10)/10+' à '+Math.round(haut/60*10)/10+' min')
+                       :(m[1]+' à '+m[2]+' s'));
+    }
+  }catch(e){ /* jamais bloquant : c'est un avertissement, pas une fonctionnalité */ }
+  return out;
+}
 
 /**
  * Les défauts d'INTENSITÉ d'un exercice, en clair. Même forme que `_monteeDefauts` (R13) et
@@ -1934,8 +2007,11 @@ function _intensiteDefauts(nom, sets){
       // couple charge × répétitions × repos.
       if(p.kg >= rm1*_INT_LOURD && p.rest.length){
         const r=Math.min.apply(null,p.rest);
-        if(r>0 && r<_INT_REPOS){
-          out.push('repos de '+r+' s à '+pct+' % du 1RM : trop court pour du lourd (viser 3 min)');
+        /* 🎽 ft-v1043 — le seuil et le conseil viennent du CADRE de la discipline, plus d'un
+           nombre unique pour tout le monde (voir `_cadreReposLourd`). */
+        const cad=_cadreReposLourd(S.discipline);
+        if(r>0 && r<cad.sec){
+          out.push('repos de '+r+' s à '+pct+' % du 1RM : trop court pour du lourd (viser '+cad.txt+')');
         }
       }
     });
