@@ -3355,7 +3355,13 @@ ${(()=>{
   const weeklyChange=Math.round(reg.slope*7*100)/100;
   const latest=wlog[wlog.length-1];
   const goal=S.goal||'muscle';
-  const onTrack=goal==='perte'&&weeklyChange<-0.1?true:goal==='muscle'&&weeklyChange>0.05?true:Math.abs(weeklyChange)<0.2;
+  /* ⛔ LE JUMEAU DE LA CARTE « TENDANCE » (tracking.js) — R8. `recomp` n'était nulle part :
+     il retombait sur `Math.abs(x)<0.2`, donc quelqu'un à −0.25 kg/sem — PILE dans sa cible
+     de recomposition — arrivait chez Milo en « ⚠ à ajuster selon objectif ». Milo lui aurait
+     conseillé de corriger une trajectoire correcte. Les bornes viennent de `state.js`, les
+     mêmes que celles affichées à l'écran : deux tables auraient fini par se contredire. */
+  const _tr=(typeof _GOAL_TREND_RECOMP!=='undefined')?_GOAL_TREND_RECOMP:{min:-0.3,max:0};
+  const onTrack=goal==='perte'&&weeklyChange<-0.1?true:goal==='muscle'&&weeklyChange>0.05?true:goal==='recomp'?(weeklyChange>=_tr.min&&weeklyChange<=_tr.max):Math.abs(weeklyChange)<0.2;
   return `- Poids actuel: ${latest.kg} kg (${wlog.length} mesures)
 - Tendance: ${weeklyChange>=0?'+':''}${weeklyChange} kg/semaine — ${onTrack?'✓ dans la bonne direction':'⚠ à ajuster selon objectif'}`;
 })()}

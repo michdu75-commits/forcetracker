@@ -895,6 +895,29 @@ function goalDeltaKcal(goal){
   const g=goal||'muscle';
   return Object.prototype.hasOwnProperty.call(_GOAL_DELTA_KCAL,g) ? _GOAL_DELTA_KCAL[g] : 350;
 }
+/* 📉 L'ÉVOLUTION DE POIDS ATTENDUE EN RECOMPOSITION — UN SEUL PROPRIÉTAIRE (R2)
+   Lue à DEUX endroits : la carte « tendance » de l'écran Progrès (`tracking.js`) et le
+   contexte envoyé à Milo (`coach.js`). Deux bornes écrites séparément auraient divergé —
+   et c'est le pire cas possible ici : l'écran aurait dit « tu es dans la bonne direction »
+   pendant que Milo, sur les mêmes kilos, écrivait « ⚠ à ajuster ».
+   ⛔ `recomp` manquait des DEUX côtés : la carte tombait sur son repli « variable », et
+   `onTrack` retombait sur `Math.abs(x)<0.2` — donc quelqu'un à −0.25 kg/sem, c'est-à-dire
+   PILE dans sa cible, était annoncé à Milo comme « à ajuster ». Un fait faux sur la personne.
+   ⚠️ LES BORNES SONT EN KG/SEMAINE, JAMAIS EN POURCENTAGE. Le repère de la littérature
+   pour une PERTE DE GRAS s'exprime bien en % du poids de corps (0,5–1 %/sem, Helms 2014 ;
+   0,7 %/sem préserve mieux la masse maigre que 1,4 %, Garthe 2011) — mais ① une
+   recomposition n'est pas une phase de sèche, et ② personne ne lit « 0,6 % de mon poids ».
+   La balance affiche des kilos, la carte parle en kilos.
+   ⭐ D'OÙ VIENT LE CHIFFRE : du déficit que l'app applique ELLE-MÊME, pas d'une valeur
+   importée — `_GOAL_DELTA_KCAL.recomp = -250` kcal/j, soit −1750 kcal/semaine, soit
+   ≈ −0.23 kg si tout venait du gras (≈ 7700 kcal/kg). Le muscle pris en même temps réduit
+   encore ce que la balance montre. La borne haute est donc 0, la basse −0.3.
+   *Ainsi la carte ne peut pas contredire l'onglet Nutrition : si le déficit change, la
+   raison de ces bornes change avec lui, au même endroit.*
+   ⛔ LES 5 AUTRES OBJECTIFS GARDENT LEURS SEUILS ACTUELS, exprès : ils ont déjà un
+   comportement livré, et le rectifier n'est pas le sujet de cette version (R30 — on ne
+   modifie pas en silence une décision qu'on n'a pas prise). */
+const _GOAL_TREND_RECOMP={min:-0.3,max:0,txt:'stable à légèrement négative (0 à −0.3 kg/sem)'};
 function autoKcal(phase){ return _plancherKcal(_autoKcalBrut(phase)); }
 function _autoKcalBrut(phase){
   const tdee=calcTDEE();

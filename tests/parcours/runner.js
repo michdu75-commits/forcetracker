@@ -16081,6 +16081,112 @@ console.log('\n-- CXLVII. Le contrôle d\'intensité connaît la discipline (ft-
   }
 }
 
+/* == BLOC CXLVIII - L'EVOLUTION ATTENDUE EN RECOMPOSITION (ft-v1044) ==
+   Michel : « le repere 300-500 g/semaine, c'est quoi ca deja » puis « non je veux ce qui est
+   scientifiquement prouve », puis « tout le monde va comprendre le pourcentage ? ».
+   ⛔ LA CARTE DISAIT « l'evolution attendue est VARIABLE » pour l'objectif `recomp` — un repli
+   ecrit pour un objectif INCONNU, servi a quelqu'un dont l'objectif est parfaitement defini.
+   ⛔⛔ ET LE JUMEAU ETAIT PIRE (R8) : `onTrack` dans coach.js n'avait pas non plus `recomp`, il
+   retombait sur `Math.abs(x)<0.2` — donc quelqu'un a -0.21 kg/sem, PILE dans sa cible, arrivait
+   chez Milo en « ⚠ a ajuster selon objectif ». Milo lui aurait conseille de corriger une
+   trajectoire correcte : un fait faux sur la personne (R29, P4).
+   ⚠️ AUCUN POURCENTAGE A L'ECRAN — c'est la question de Michel, et elle a un temoin. Le repere
+   de la litterature s'exprime en % du poids de corps pour une SECHE (Helms 2014, Garthe 2011),
+   mais une recomposition n'en est pas une, et la balance affiche des kilos.
+   ⭐ LES BORNES ONT UN SEUL PROPRIETAIRE (`_GOAL_TREND_RECOMP`, state.js) : l'ecran et Milo
+   lisent les memes. Deux tables auraient fini par se contredire — le pire cas ici, puisque
+   l'ecran aurait dit « bonne direction » pendant que Milo ecrivait « a ajuster ». */
+console.log('\n-- CXLVIII. L\'évolution attendue en recomposition (ft-v1044) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  await cx.clock.setFixedTime(new Date('2026-08-27T14:00:00+02:00'));
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    S.bw=85;S.age=46;S.height=178;S.gender='H';
+    /* 8 pesées, une par jour, pente EXACTE de -0.03 kg/jour → -0.21 kg/semaine.
+       C'est DANS la bande [-0.3 ; 0], donc la cible est atteinte. */
+    const jours=['2026-08-20','2026-08-21','2026-08-22','2026-08-23','2026-08-24','2026-08-25','2026-08-26','2026-08-27'];
+    const pose=(pente)=>{ S.weightLog=jours.map((d,i)=>({date:d,kg:Math.round((85+pente*i)*100)/100})); };
+    const carte=()=>{
+      goScreen('progress');
+      if(typeof setWeightMetric==='function')setWeightMetric('kg');
+      setWeightRange('all');            // ⭐ le VRAI chemin : renderWeightTab → renderWeightCorrelations
+      const el=document.getElementById('weight-correlations');
+      const c=el?el.querySelector('.corr-card'):null;
+      if(!c)return {absente:true};
+      /* ⚠️ ON S'ANCRE SUR LA STRUCTURE EXACTE, pas sur `div>div` : ce motif attrape D'ABORD
+         l'enveloppe (elle est elle-même un div enfant de `.corr-card`), et le témoin lisait
+         donc le titre à la place du texte. Famille « le premier match gagnant » de BUGS.md. */
+      const bloc=c.children[1], tit=bloc&&bloc.children[0], txt=bloc&&bloc.children[1];
+      return { titre:(tit||{}).textContent||'',
+               texte:(txt||{}).textContent||'',
+               couleur:tit?getComputedStyle(tit).color:'',
+               couleurBrute:tit?(tit.getAttribute('style')||''):'' };
+    };
+    const milo=()=>{ const m=/- Tendance:[^\n]*/.exec(buildCoachContext()); return m?m[0]:''; };
+
+    S.goal='recomp'; pose(-0.03);
+    o.recompDans={carte:carte(),milo:milo()};
+    S.goal='recomp'; pose(+0.10);        // +0.7 kg/sem → HORS de la bande
+    o.recompHors={carte:carte(),milo:milo()};
+    /* ⛔ NON-RÉGRESSION : les 5 autres objectifs ne bougent pas d'un caractère. */
+    S.goal='perte';  pose(-0.03); o.perte ={carte:carte(),milo:milo()};
+    S.goal='muscle'; pose(+0.03); o.muscle={carte:carte(),milo:milo()};
+    o.proprietaire = (typeof _GOAL_TREND_RECOMP!=='undefined') ? _GOAL_TREND_RECOMP : null;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+  if(F.err) t('CXLVIII n\'a pas pu tourner', false, F.err);
+  else{
+    /* ⛔ Le témoin a-t-il VU une carte ? Sans ça, tout ce qui suit serait vert en ne mesurant rien. */
+    t('⛔ le témoin a bien VU la carte de tendance, avec la pente attendue (-0.21 kg/sem)',
+      !F.recompDans.carte.absente && /-0\.21 kg \/ semaine/.test(F.recompDans.carte.titre),
+      JSON.stringify({absente:!!F.recompDans.carte.absente,titre:F.recompDans.carte.titre}));
+    /* ⭐⭐ LE DÉFAUT D'ORIGINE. */
+    t('⭐⭐ la carte ne dit plus « variable » en recomposition — elle nomme l\'évolution attendue',
+      !/attendue est variable/.test(F.recompDans.carte.texte) && /stable à légèrement négative/.test(F.recompDans.carte.texte),
+      F.recompDans.carte.texte.slice(0,140));
+    /* ⛔ La question de Michel, et elle se mesure : aucun % à l'écran. */
+    t('⛔ AUCUN pourcentage dans la carte — elle parle en kilos, comme la balance',
+      F.recompDans.carte.texte.indexOf('%')<0 && F.recompDans.carte.titre.indexOf('%')<0,
+      'texte contient % : '+(F.recompDans.carte.texte.indexOf('%')>=0));
+    /* ⛔ La balance est le mauvais instrument ici, et l'écran doit le DIRE. */
+    t('⛔ la carte dit que la balance seule ne montre presque rien en recomposition',
+      /la balance seule ne montre presque rien/.test(F.recompDans.carte.texte) && /mensurations/.test(F.recompDans.carte.texte),
+      F.recompDans.carte.texte.slice(-120));
+    /* ⭐ R2 : la phrase affichée EST celle du propriétaire, pas une copie. */
+    t('⭐ R2 : la carte affiche littéralement le texte de `_GOAL_TREND_RECOMP`, pas une recopie',
+      !!F.proprietaire && F.recompDans.carte.texte.indexOf(F.proprietaire.txt)>=0,
+      JSON.stringify(F.proprietaire));
+    t('⭐ dans la cible → la carte est verte',
+      /--green/.test(F.recompDans.carte.couleurBrute),
+      'couleur = '+F.recompDans.carte.couleur+' · '+F.recompDans.carte.couleurBrute.slice(0,90));
+    /* ⭐⭐ LE JUMEAU — c'est le témoin qui compte le plus (R8). */
+    t('⭐⭐ MILO reçoit « ✓ dans la bonne direction » pour la MÊME pente (il disait « ⚠ à ajuster »)',
+      /dans la bonne direction/.test(F.recompDans.milo), F.recompDans.milo);
+    /* ⛔ La bande MORD dans l'autre sens : sans ça, « vert » ne voudrait rien dire. */
+    t('⛔ hors de la bande (+0.7 kg/sem) → la carte n\'est PAS verte',
+      !/--green/.test(F.recompHors.carte.couleurBrute) && F.recompHors.carte.couleur!==F.recompDans.carte.couleur,
+      'hors = '+F.recompHors.carte.couleur+' · dans = '+F.recompDans.carte.couleur);
+    t('⛔ … et Milo reçoit bien « ⚠ à ajuster » dans ce cas',
+      /à ajuster/.test(F.recompHors.milo), F.recompHors.milo);
+    /* ⛔ NON-RÉGRESSION des 5 autres objectifs, écran ET Milo. */
+    t('⛔ NON-RÉGRESSION « Perte de poids » : phrase inchangée, et aucune note de recomposition',
+      /l'évolution attendue est négative \(−0\.3–0\.7 kg\/sem\)\.$/.test(F.perte.carte.texte.trim()) && /dans la bonne direction/.test(F.perte.milo),
+      F.perte.carte.texte.slice(-90)+' | '+F.perte.milo);
+    t('⛔ NON-RÉGRESSION « Prise de muscle » : phrase inchangée, et Milo inchangé',
+      /l'évolution attendue est légèrement positive \(\+0\.1–0\.3 kg\/sem\)\.$/.test(F.muscle.carte.texte.trim()) && /dans la bonne direction/.test(F.muscle.milo),
+      F.muscle.carte.texte.slice(-90)+' | '+F.muscle.milo);
+  }
+  await cx.close();
+}
+
+
 /* == BLOC CXLIX - LE VOLUME PAR GROUPE MUSCULAIRE ET PAR SEMAINE (ft-v1045) ==
    Dernier morceau du relais de session-A : « rien n'additionne les series x muscle x semaine ».
    /!\ CXLVIII est SAUTE expres : session-A a une ft-v1044 en vol et prendra vraisemblablement ce
