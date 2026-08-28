@@ -3961,6 +3961,9 @@ const APP_GUIDE_SLIDES=[
   /* ⛔ SANS IMAGE : la capture montrerait UNE des deux échelles, donc elle serait fausse pour
      la moitié des lecteurs — et c'est précisément le sujet de la diapo. */
   {icon:'🎚️', t:'RIR ou RPE, comme tu veux', cap:'Si tu travailles en <b>RPE</b>, dis-le à l\'app : <b>Profil → Échelle d\'effort</b>. La question posée après chaque série, la colonne « précédent » et <b>Milo</b> passent en RPE. ⛔ C\'est la <b>même mesure</b> dite dans l\'autre sens (<i>RPE = 10 − RIR</i>) : rien n\'est converti, rien n\'est perdu, et tu peux revenir.'},
+  /* ⛔ SANS IMAGE : une capture montrerait l'historique de quelqu'un d'autre, avec des
+     charges et des dates qui ne sont pas celles du lecteur. */
+  {icon:'📤', t:'Ton historique, en tableur ou en PDF', cap:'Dans <b>Progrès</b>, à côté de « Historique séances » : <b>📤 Exporter</b>. <b>CSV</b> pour Excel ou Numbers (une ligne par série), <b>PDF</b> pour un document lisible à montrer à un coach. ⛔ <b>Aucune donnée de santé</b> dedans : ni poids de corps, ni âge, ni sexe.'},
   {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
 let _agIdx=0,_agSwipeInit=false;

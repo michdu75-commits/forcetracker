@@ -6,7 +6,21 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1047`.
+- **Version en ligne (live) :** `ft-v1048`.
+- 📤⭐⭐ **EXPORTER SON HISTORIQUE EN CSV ET EN PDF** (ft-v1048, demande de Michel sur sa vidéo).
+  ⚠️⚠️ **R23 a changé le travail avant qu'il commence : l'export EXISTAIT** (Menu → Exporter mes
+  données → « mes séances seulement »). ***Le trou n'était pas l'export, c'était le FORMAT*** — il
+  sort du JSON. ⛔ Le JSON reste où il est (sauvegarder ≠ regarder son historique).
+  ⛔⛔ **Un seul producteur de lignes** (`_histoLignes`) pour les deux formats (R2) · **mêmes
+  colonnes que l'onglet `Sessions` du Google Sheet** + nom de séance et RIR · ⛔⛔ **aucune donnée
+  de santé** (ni poids de corps, ni âge, ni sexe, ni e-mail).
+  ⚠️ **Le CSV tient à deux détails** : séparateur `;` et **BOM UTF-8** — sans eux Excel FR met tout
+  dans une colonne et casse les accents ; échappement réel des virgules et guillemets.
+  ⚠️⚠️ **Le PDF échouait EN SILENCE** : `lastAutoTable` n'a **pas** de `startY` (que `finalY`) → le
+  titre partait à `NaN`. *On vérifie les propriétés, on ne les devine pas* — 3ᵉ fois de la session.
+  ⚠️ Et la **capture** a trouvé les en-têtes désalignés, qu'aucune mesure de chaîne ne voit.
+  ⛔ Porte dans **Progrès**, à côté de l'historique · R15 (`_OVERLAY_CLOSERS`) · rien à exporter →
+  rien ne s'ouvre.
 - 🩹⭐⭐ **TROIS ERREURS DES CARTES DE PROGRÈS, TROUVÉES SUR UNE VIDÉO DE MICHEL** (ft-v1047, 10 s
   en production). Périmètre choisi par lui : **mes 2 cartes**, pas tout l'onglet.
   ⛔⛔ **La pire est de moi** : *« sur **37** séances »* puis *« 11 sur **27** »* — **deux

@@ -648,12 +648,36 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     </div>
     <div class="chart-box" id="chart-box"><div class="empty">Sélectionne un exercice</div></div>
     <div id="prog-cycle-banner" style="display:none;"></div>
-    <div class="sec" id="sess-hist-title">Historique séances</div>
+    <!-- 📤 ft-v1048 — la porte de l'export vit ICI, à côté de l'historique : c'est là que
+         Michel regardait quand il l'a demandé. ⛔ L'export JSON reste dans Menu → Exporter mes
+         données — sauvegarder ses données et regarder son historique sont deux besoins
+         différents, et il porte des garanties qu'on ne duplique pas (R2/R23). -->
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="sec" id="sess-hist-title" style="flex:1;">Historique séances</div>
+      <button id="histo-exp-btn" onclick="openHistoExport()" title="Exporter mon historique"
+        style="flex-shrink:0;background:var(--bg3);color:var(--t2);border:none;border-radius:10px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">📤 Exporter</button>
+    </div>
     <div id="sess-filter"></div>
     <div id="sess-list"></div>
   </div>
 
-  <!-- TAB: Badges -->
+  <!-- 📤 ft-v1048 — CHOISIR LE FORMAT. Deux boutons, pas une liste : le choix est porté par le
+     BOUTON qu'on touche, comme la modale d'export existante — il n'y a donc aucun état coché
+     quelque part sur lequel se tromper (R13, même geste que `ov-export-choix`). -->
+<div class="overlay" id="ov-histo-export" onclick="if(event.target===this)closeHistoExport()">
+  <div class="modal" style="max-width:340px;">
+    <div style="font-weight:800;font-size:17px;text-align:center;margin-bottom:4px;">Exporter mon historique</div>
+    <div style="font-size:13px;color:var(--t3);text-align:center;line-height:1.5;margin-bottom:14px;">
+      <b id="histo-exp-n">0</b> séries validées.<br>
+      Aucune donnée de santé : ni poids de corps, ni âge, ni sexe.
+    </div>
+    <button class="btn btn-red" style="width:100%;padding:13px;margin-bottom:8px;" onclick="exportHistoCsv()">📊&nbsp; Tableur <b>(CSV)</b></button>
+    <button class="btn btn-bg2" style="width:100%;padding:13px;margin-bottom:8px;" onclick="exportHistoPdf()">📄&nbsp; Document <b>(PDF)</b></button>
+    <button class="btn btn-bg2" style="width:100%;padding:11px;" onclick="closeHistoExport()">Annuler</button>
+  </div>
+</div>
+
+<!-- TAB: Badges -->
   <div id="prog-badges" style="display:none;flex-direction:column;gap:12px;">
     <div class="sec">Mes Récompenses</div>
     <div id="badge-grid" class="badge-grid"></div>

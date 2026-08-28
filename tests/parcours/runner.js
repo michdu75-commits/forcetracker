@@ -16554,6 +16554,140 @@ console.log('\n-- CLI. Les 3 erreurs des cartes de Progrès (ft-v1047) --');
   }
 }
 
+/* == BLOC CLII - EXPORTER L'HISTORIQUE EN CSV ET EN PDF (ft-v1048) ==
+   Demande de Michel sur sa video : « pense que l'on peut aussi exporter l'historique des seances ».
+
+   ⚠️⚠️ R23 D'ABORD : un export EXISTAIT (Menu -> Exporter mes donnees -> « mes seances seulement »).
+   J'ai failli le reconstruire. Mais il sort du JSON — *le trou n'etait pas l'export, c'etait le
+   FORMAT*. L'export JSON reste ou il est : sauvegarder ses donnees et regarder son historique sont
+   deux besoins differents.
+
+   ⛔⛔ UN SEUL PRODUCTEUR DE LIGNES POUR LES DEUX FORMATS (R2) : `_histoLignes()`. Deux producteurs
+   finiraient par ne pas dire la meme chose du meme historique — le defaut que ft-v1047 vient de
+   corriger deux cartes plus haut.
+
+   ⚠️ ET LE CSV A DEUX DETAILS QUI DECIDENT DE TOUT, appris a la mesure : separateur « ; » et BOM
+   UTF-8. Sans eux, Excel FR met toute la ligne dans une colonne et rend « Developpe » en
+   « DÃ©veloppÃ© » — le fichier est correct et l'utilisateur dit « ton export est casse ». */
+console.log('\n-- CLII. Exporter l\'historique en CSV et en PDF (ft-v1048) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},
+    timezoneId:'Europe/Paris',acceptDownloads:true});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const E=await pg.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    if(typeof _histoLignes!=='function') return {absente:true};
+    const o={};
+    const j=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+    /* ⭐ La fixture porte EXPRES les cas qui cassent un CSV naif : une virgule ET des guillemets
+       dans le nom de seance, un accent, une serie NON validee, un echauffement, un tag X. */
+    S.sessions=[
+      {date:j(0), name:'Push, jour "lourd"', exs:[
+        {name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N',rir:2},
+                                       {kg:85,reps:5,done:true,type:'X'},
+                                       {kg:60,reps:10,done:true,type:'É'},
+                                       {kg:80,reps:8,done:false,type:'N'}]},
+        {name:'Rowing Barre (Tirage Horizontal)',sets:[{kg:70,reps:10,done:true,type:'N'}]}]},
+      {date:j(3), exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true,type:'N',rir:1}]}]}
+    ];
+    persist();
+    const L=_histoLignes();
+    o.n=L.length;
+    o.pasDeSerieNonValidee=!L.some(r=>r.kg===80&&r.reps===8&&r.set_num===4);
+    /* ⛔ Le RIR passe par son proprietaire : `X` vaut 0, non note reste VIDE (jamais 0). */
+    o.xVaut0=(L.find(r=>r.type==='X')||{}).rir===0;
+    o.nonNoteVide=(L.find(r=>r.type==='É')||{}).rir==='';
+    /* ⛔ AUCUNE DONNEE DE SANTE dans les colonnes. */
+    o.colonnes=HISTO_COLONNES.slice();
+    o.aucuneSante=!HISTO_COLONNES.some(c=>/bw|poids|age|gender|sexe|email/i.test(c));
+    /* ⛔ Le PDF et le CSV lisent la MEME source : un seul producteur. */
+    o.unSeulProducteur=(document.body.innerHTML,
+      (setup=>true)(0)) && (String(exportHistoCsv).indexOf('_histoLignes')>0
+                          && String(exportHistoPdf).indexOf('_histoLignes')>0);
+    /* ── LA PORTE, par le VRAI ecran ── */
+    goScreen('s-progress');document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+    document.getElementById('s-progress').classList.add('active'); renderProgress();
+    await new Promise(r=>setTimeout(r,350));
+    o.boutonDansProgres=!!document.getElementById('histo-exp-btn');
+    document.getElementById('histo-exp-btn').click();
+    await new Promise(r=>setTimeout(r,250));
+    o.modaleOuverte=document.getElementById('ov-histo-export').classList.contains('open');
+    o.modaleCompte=(document.getElementById('histo-exp-n')||{}).textContent||'';
+    o.modaleDitSante=/Aucune donnée de santé/i.test(document.getElementById('ov-histo-export').textContent);
+    closeHistoExport();
+    o.modaleFermee=!document.getElementById('ov-histo-export').classList.contains('open');
+    /* ⛔ R15 : le chemin de fermeture secondaire connaît la modale. */
+    o.dansClosers=(typeof _OVERLAY_CLOSERS!=='undefined') && _OVERLAY_CLOSERS['ov-histo-export']==='closeHistoExport';
+    /* ⛔ Rien à exporter → on ne propose pas une modale vide. */
+    const sv=S.sessions; S.sessions=[]; persist();
+    openHistoExport();
+    o.videNOuvrePas=!document.getElementById('ov-histo-export').classList.contains('open');
+    S.sessions=sv; persist();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+
+  /* ── LE FICHIER CSV, POUR DE VRAI (pas une chaîne construite à côté) ── */
+  let CSV=null, PDF=null;
+  try{
+    const d1=pg.waitForEvent('download',{timeout:20000});
+    await pg.evaluate(()=>exportHistoCsv());
+    const dl=await d1; const s1=await dl.createReadStream();
+    CSV={nom:dl.suggestedFilename(), txt:await new Promise(res=>{let t='';s1.on('data',c=>t+=c);s1.on('end',()=>res(t));})};
+  }catch(e){ CSV={err:String(e.message||e)}; }
+  try{
+    const d2=pg.waitForEvent('download',{timeout:25000});
+    await pg.evaluate(()=>exportHistoPdf());
+    const dl2=await d2; const s2=await dl2.createReadStream();
+    const buf=await new Promise(res=>{const a=[];s2.on('data',c=>a.push(c));s2.on('end',()=>res(Buffer.concat(a)));});
+    PDF={nom:dl2.suggestedFilename(), taille:buf.length, entete:buf.slice(0,5).toString()};
+  }catch(e){ PDF={err:String(e.message||e)}; }
+  await cx.close();
+
+  if(E.err||E.absente)t('CLII n\'a pas pu tourner',false,JSON.stringify(E));
+  else{
+    t('⭐⭐ l\'historique se met en lignes (5 séries validées sur les 6 posées)',
+      E.n===5, 'lignes = '+E.n);
+    t('⛔ une série NON validée n\'est pas exportée (elle n\'a pas eu lieu)',
+      E.pasDeSerieNonValidee===true, '');
+    t('⛔ le RIR passe par son propriétaire : `X` vaut 0, non noté reste VIDE (jamais 0)',
+      E.xVaut0===true && E.nonNoteVide===true, 'X→'+E.xVaut0+' · vide→'+E.nonNoteVide);
+    t('⛔⛔ AUCUNE donnée de santé dans les colonnes (ni poids de corps, ni âge, ni sexe, ni e-mail)',
+      E.aucuneSante===true, JSON.stringify(E.colonnes));
+    t('⛔⛔ le CSV et le PDF lisent le MÊME producteur (deux sources se contrediraient)',
+      E.unSeulProducteur===true, '');
+    /* ── LE FICHIER LUI-MÊME ── */
+    t('⭐⭐ le CSV est un VRAI fichier téléchargé, pas une chaîne construite à côté',
+      !!(CSV&&CSV.txt)&&/\.csv$/.test(CSV.nom||''), CSV.err||CSV.nom);
+    t('⛔⛔ … avec le BOM UTF-8 et le « ; » : sans eux, Excel FR casse les accents ET les colonnes',
+      !!CSV.txt && CSV.txt.charCodeAt(0)===0xFEFF && /^﻿date;seance;/.test(CSV.txt),
+      (CSV.txt||'').slice(0,40));
+    /* ⛔ L'ÉCHAPPEMENT est le détail qui décale toute une ligne sans rien signaler. */
+    t('⛔⛔ … et un nom qui contient une virgule ET des guillemets est ÉCHAPPÉ correctement',
+      !!CSV.txt && CSV.txt.indexOf('"Push, jour ""lourd"""')>0, (CSV.txt||'').split('\n')[2]||'');
+    t('⛔ … les accents survivent (« Développé Couché », pas « DÃ©veloppÃ© »)',
+      !!CSV.txt && CSV.txt.indexOf('Développé Couché')>0, '');
+    t('⭐⭐ le PDF est un VRAI fichier PDF (en-tête %PDF-, plusieurs Ko)',
+      !!PDF && PDF.entete==='%PDF-' && PDF.taille>3000, PDF.err||(PDF.entete+' · '+PDF.taille+' o'));
+    /* ── LA PORTE ── */
+    t('⭐ la porte est dans PROGRÈS, à côté de l\'historique (là où Michel regardait)',
+      E.boutonDansProgres===true, '');
+    t('⛔ la modale s\'ouvre, dit combien de séries et qu\'il n\'y a aucune donnée de santé',
+      E.modaleOuverte===true && E.modaleCompte==='5' && E.modaleDitSante===true,
+      'ouverte='+E.modaleOuverte+' · n='+E.modaleCompte);
+    t('⛔ R15 : le chemin de fermeture secondaire connaît la modale',
+      E.dansClosers===true && E.modaleFermee===true, '');
+    t('⛔ aucune séance → on ne propose pas une modale vide',
+      E.videNOuvrePas===true, '');
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

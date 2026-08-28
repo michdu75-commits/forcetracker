@@ -238,6 +238,7 @@ const _HELP_DATA={
   progress:{
     title:'📈 Progrès',
     tips:[
+      {i:'📤',t:'<b>Exporter ton historique</b> : le bouton <b>📤 Exporter</b>, à côté de « Historique séances ». <b>CSV</b> pour un tableur (une ligne par série : date, séance, exercice, kg, reps, RIR, volume) · <b>PDF</b> pour un document lisible, une séance par bloc. ⛔ Seules les séries <b>validées</b> y sont, et <b>aucune donnée de santé</b> (ni poids de corps, ni âge, ni sexe). ⓘ Pour une <b>sauvegarde complète</b> de tes données, c\'est Menu → Exporter mes données.'},
       {i:'📊',t:'<b>Ce que ta semaine a travaillé</b> (en haut de l\'onglet) : tes <b>séries de travail par groupe musculaire</b> sur les <b>7 derniers jours</b>, échauffements exclus. ⚠️ Volontairement <b>sans objectif affiché</b> — en milieu de semaine, un chiffre « en dessous de la cible » ne veut rien dire. Les séries comptent pour le <b>muscle principal</b> de l\'exercice (un développé couché = pectoraux, pas triceps). Si l\'app ne connaît pas un exercice, ses séries sont <b>signalées à part</b> plutôt que perdues.'},
       {i:'🔭',t:'<b>Ce que ton histoire montre</b> (en haut de l\'onglet) : des <b>constantes</b> tirées de tout ton historique — rythme réel, exercice le plus fidèle, région dominante. Ce sont des <b>faits</b>, pas des conseils : à toi d\'en tirer ce que tu veux. Il faut au moins <b>8 séances sur 21 jours</b> — en dessous, elle le dit.'},
       {i:'💪',t:'Le graphique affiche ton 1RM estimé (Brzycki) par exercice — sans avoir besoin de tester à l\'échec. Les boutons 3 mois / 6 mois / 1 an / Tout choisissent la période. Et tape un point de la courbe : tu vois la date + la charge, puis « Voir cette séance » t\'ouvre directement le détail de ce jour-là.'},
@@ -467,6 +468,7 @@ function _blockEdgeBackSwipe(){
 // ⚠️ AJOUTER ICI toute nouvelle pop-up « à effet de bord » (marqueur vu, cooldown…), sinon elle
 // reviendra en boucle quand on la ferme au doigt.
 const _OVERLAY_CLOSERS={
+  'ov-histo-export':'closeHistoExport',            // ft-v1048 (R15 : tout chemin de fermeture)
   'ov-whatsnew':'closeWhatsNew',                   // marque les nouveautés comme vues
   'ov-super-welcome':'closeSuperWelcome',
   'ov-emma-welcome':'closeEmmaWelcome',
