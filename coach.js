@@ -5190,6 +5190,15 @@ function _vcApplyPersona(p){
      ⚠️ Et c'était aussi un piège de fixture : sans ça, le `foodLog` d'un scénario n'aurait
      JAMAIS atteint S — la fixture muette d'EV-009, refaite le lendemain de sa correction. */
   S.foodLog=a.foodLog||[];
+  /* ⛔⛔ AJOUTÉ EN ft-v1047, ET LE TÉMOIN DE ft-v1014 A REFUSÉ LA LIVRAISON SANS — il a fait
+     exactement son travail : `missedLog` venait d'entrer dans `buildCoachContext`, donc les
+     VRAIES séances manquées de la personne seraient parties dans CHAQUE persona du banc
+     d'essai. Un « persona » qui porte l'historique de quelqu'un de réel n'est plus un persona.
+     ⚠️⚠️ ET EN CHERCHANT SA JUMELLE (R8), `nextPlanned` FUITAIT DÉJÀ — elle entre dans le
+     contexte depuis ft-v654 (bloc « PROCHAINE SÉANCE ») et n'a jamais été remise à zéro ici.
+     Le témoin ne l'attrapait pas parce qu'il ne surveille que les données ENTRÉES DEPUIS sa
+     ligne de base : *un garde-fou posé après coup ne voit pas ce qui est passé avant lui.* */
+  S.missedLog=a.missedLog||[]; S.nextPlanned=a.nextPlanned||null;
   S.registre=a.registre||{facts:{},observations:[],sessionLog:[],updatedAt:''};
   S.coachMemory=a.coachMemory||''; S.dayState=null;
   S.coachQuiz=a.coachQuiz||null; S.coachQuizPro=a.coachQuizPro||null; // questionnaire « ce que la personne a dit sur elle »

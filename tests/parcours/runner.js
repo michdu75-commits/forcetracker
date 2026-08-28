@@ -16460,9 +16460,18 @@ console.log('\n-- CL. La séance prévue qui n\'a pas eu lieu (ft-v1047) --');
   await cx.clock.setFixedTime(new Date('2026-08-28T14:00:00+02:00'));
   const pg=await cx.newPage();
   await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  /* ⚠️⚠️ LE COMPTEUR RESTE ARMÉ DEPUIS LE DÉBUT, ET C'EST VOLONTAIRE — c'est ce qui rend
+     « zéro » lisible. Mon 1ᵉʳ jet exigeait 0 en tout et rougissait en comptant **2 appels du
+     DÉMARRAGE de l'app** (l'image du QR de partage, le ping Apps Script) — ils existent depuis
+     toujours et n'ont rien à voir avec cette fonctionnalité (déjà nommés en ft-v1021).
+     ⛔ Mais l'armer APRÈS le chargement aurait été pire : « 0 appel » n'aurait plus distingué
+     « rien n'appelle » de « je n'écoute pas ». On garde donc le compteur actif, on relève sa
+     valeur À LA LIGNE DE DÉPART, et on exige que le bloc n'y AJOUTE rien. Les 2 du démarrage
+     sont alors la PREUVE que l'écoute fonctionne. */
   const sortants=[]; pg.on('request',r=>{ if(!/^http:\/\/localhost:/.test(r.url())) sortants.push(r.url()); });
   await pg.goto('http://localhost:'+PORT+'/index.html');
   await pg.waitForTimeout(2300);
+  const sortantsDepart=sortants.length;
   const F=await pg.evaluate(async()=>{
    try{
     const o={};
@@ -16557,8 +16566,14 @@ console.log('\n-- CL. La séance prévue qui n\'a pas eu lieu (ft-v1047) --');
     t('⛔ … et le cadre le lui INTERDIT : pas de rattrapage, pas de total, l\'horizon est la semaine',
       /ne propose JAMAIS de « rattraper »/.test(F.ctx) && /ne fais aucun total/.test(F.ctx) && /SEMAINE/.test(F.ctx), '');
     /* ⛔⛔ « PAS D'IA SURTOUT » (Michel) — ça se mesure, ça ne s'affirme pas. */
-    t('⛔⛔ ZÉRO appel réseau sortant pendant tout le bloc (consigne de Michel : « pas d\'IA »)',
-      sortants.length===0, JSON.stringify(sortants.slice(0,3)));
+    t('⛔⛔ ZÉRO appel réseau AJOUTÉ par la fonctionnalité (consigne de Michel : « pas d\'IA »)',
+      sortants.length===sortantsDepart,
+      JSON.stringify({depart:sortantsDepart,fin:sortants.length,ajoutes:sortants.slice(sortantsDepart)}));
+    /* ⛔ ET CE TÉMOIN-LÀ EMPÊCHE LE PRÉCÉDENT D'ÊTRE VERT EN NE MESURANT RIEN : si l'écoute
+       ne marchait pas, le compteur vaudrait 0 au départ et « rien ajouté » serait vide de sens.
+       Les 2 appels du DÉMARRAGE (QR de partage, ping Apps Script) prouvent qu'elle marche. */
+    t('⛔ … et le compteur écoutait vraiment (il a vu les appels du démarrage, eux)',
+      sortantsDepart>0, 'appels vus au démarrage = '+sortantsDepart);
   }
   await cx.close();
 }
