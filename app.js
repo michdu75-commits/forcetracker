@@ -3952,6 +3952,9 @@ const APP_GUIDE_SLIDES=[
   /* ⛔ SANS IMAGE : les constantes dépendent de l'historique du lecteur — une capture
      montrerait des chiffres qui ne sont pas les siens. */
   {icon:'🔭', t:'Ce que ton histoire t\'apprend', cap:'En haut de <b>Progrès</b>, l\'app dégage des <b>constantes</b> de tout ton historique : ton rythme réel, ce qui revient le plus, ce que tes séances travaillent le plus souvent. Des <b>faits</b>, jamais des conseils — <b>à toi d\'en tirer ce que tu veux</b>.'},
+  /* ⛔ SANS IMAGE : une capture montrerait une charge et un repos précis, donc elle se lirait
+     comme une recommandation d'intensité — or ce qui est vrai ici dépend de la discipline. */
+  {icon:'🎽', t:'Ton cadre décide, pas une moyenne', cap:'L\'avertissement « <b>repos trop court pour du lourd</b> » suit désormais <b>ta discipline</b>. En force athlétique on te dira « viser <b>3 à 5 min</b> », parce que c\'est ce que dit ton propre cadre — pas un chiffre unique pour tout le monde. ⚠️ Il ne se <b>relâche</b> jamais : il resserre seulement là où ton cadre est plus exigeant.'},
   {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
 let _agIdx=0,_agSwipeInit=false;

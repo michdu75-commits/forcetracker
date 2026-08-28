@@ -6,7 +6,28 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1042`.
+- **Version en ligne (live) :** `ft-v1043`.
+- 🎽⭐⭐ **LE CONTRÔLE D'INTENSITÉ CONNAÎT ENFIN LA DISCIPLINE** (ft-v1043). Relais de session-A
+  (*« le trou le plus petit et le plus rentable »*), choisi par Michel. ⛔⛔ **Mesuré** :
+  `_intensiteDefauts(nom, sets)` ne portait **aucune** occurrence de `discipline` ni de `DISC_` —
+  **un seul chiffre, 150 s, pour tout le monde**, quand `DISC_CADRE.repos` dit *« 3 à 5 min »* en
+  force athlétique et *« 60 à 120 s »* en bodybuilding. ***L'app affichait un cadre et en
+  vérifiait un autre.*** 👉 Un powerlifter à **160 s** entre deux séries à 88 % ne recevait
+  **rien** ; il est prévenu, et le conseil cite **sa** plage.
+  ⛔⛔ **Le plancher à 150 s reste** : c'est la décision de Michel (*« un 3×5 avec 90 secondes de
+  repos c'est IMPOSSIBLE »*) et le bas de plage de `muscu` vaut 90 s — lire le cadre sans
+  plancher aurait rendu **son propre cas silencieux**. Le seuil `max(150, bas de plage)` **ne peut
+  que resserrer**.
+  ⚠️⚠️ **Mon 1ᵉʳ jet se contredisait** : il citait la plage partout, donc en `muscu` quelqu'un
+  averti à 100 s se voyait conseiller *« 1,5 à 2,5 min »* — **une fourchette qui contient son
+  propre repos**. Le témoin épingle la **règle** : le minimum conseillé ne descend jamais sous le
+  seuil.
+  ⛔⛔ **Trois idées évidentes vérifiées puis ÉCARTÉES (R30)** : le plafond de charge ne bouge pas
+  (Brzycki est de la **physiologie**) · `_INT_LOURD`=0,80 est **déjà juste** pour les 5 · et on
+  n'avertit **pas** sur une charge au-dessus du cadre, que les cadres **autorisent eux-mêmes**
+  (*« du lourd ponctuel ne se reproche pas »*) — l'app se serait contredite.
+  ⏭️ **Le trou suivant est nommé** : `DISC_CADRE.volume` reste de la prose — **rien n'additionne
+  les séries × muscle × semaine**.
 - ⚖️⭐⭐ **LA QUANTITÉ SUR UN ALIMENT REPRIS — LIVRÉ** (ft-v1042). Michel, 2 captures : *« il faut
   absolument que je puisse mettre le poids sur les aliments réutilisés, qu'ils soient rentrés
   avec le code-barre, ou à la main ou encore avec l'IA »*.

@@ -15974,6 +15974,113 @@ console.log('\n-- CXLVI. La quantité sur un aliment repris de « Mes aliments �
   await cx.close();
 }
 
+/* == BLOC CXLVII - LE CONTROLE D'INTENSITE CONNAIT ENFIN LA DISCIPLINE (ft-v1043) ==
+   Relais de session-A (26/08), qui l'avait qualifie du « trou le plus petit et le plus
+   rentable » ; choisi par Michel dans la liste de ce qui restait.
+   /!\ CXLVI est pris par le ft-v1042 de session-A.
+
+   ⛔⛔ LE TROU MESURE : `_intensiteDefauts(nom, sets)` ne portait AUCUNE occurrence de
+   `discipline` ni de `DISC_`. Un seul chiffre — 150 s — pour tout le monde, quand
+   `DISC_CADRE.repos` dit « 3 a 5 min entre les series lourdes » en force athletique. Le cas qui
+   passait : un powerlifter a 160 s entre deux series a 88 % ne recevait RIEN.
+
+   ⛔⛔ ET LE PLANCHER A 150 s RESTE : c'est la decision de Michel (« un 3x5 avec 90 secondes de
+   repos c'est IMPOSSIBLE »), et le bas de plage de `muscu` vaut 90 s. Lire le cadre SANS
+   plancher aurait rendu son propre cas SILENCIEUX. *Une valeur derivee n'ecrase pas une
+   decision mesuree.* Le seuil ne peut donc que RESSERRER — un temoin l'epingle sur les 5.
+
+   ⚠️⚠️ ET MON 1er JET SE CONTREDISAIT : il citait la plage du cadre dans TOUS les cas, donc en
+   `muscu` quelqu'un averti a 100 s se voyait conseiller « viser 1,5 a 2,5 min » — une fourchette
+   qui CONTIENT son propre repos. *Un conseil qui englobe ce qu'on vient de reprocher n'est pas
+   un conseil.* D'ou le temoin de COHERENCE, qui vaut plus que les autres : il epingle la regle
+   generale, pas le cas particulier. */
+console.log('\n-- CXLVII. Le contrôle d\'intensité connaît la discipline (ft-v1043) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const D=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const o={}; const vp=S.prs, vd=S.discipline;
+    if(typeof _cadreReposLourd!=='function') return {absente:true};
+    S.prs={'Squat à la Barre':{kg:200,reps:1,rm1:200,date:'2026-08-01'}};
+    const S3=(kg,reps,rest)=>[{kg,reps,type:'N',rest},{kg,reps,type:'N',rest},{kg,reps,type:'N',rest}];
+    const DISCS=['muscu','bodybuilding','powerbuilding','powerlifting','haltero'];
+
+    /* ① LE SEUIL PAR DISCIPLINE, et le conseil qui va avec. */
+    o.seuils={}; DISCS.forEach(d=>{ const c=_cadreReposLourd(d); o.seuils[d]=[c.sec,c.txt,c.cadre]; });
+    o.inconnue=_cadreReposLourd('zzz-inexistante');
+
+    /* ② LE CAS QUI PASSAIT : 3×5 à 176 kg (88 %) avec 160 s de repos. */
+    S.discipline='powerlifting'; o.plAvertit=_intensiteDefauts('Squat à la Barre', S3(176,5,160));
+    S.discipline='muscu';        o.muAvertit=_intensiteDefauts('Squat à la Barre', S3(176,5,160));
+
+    /* ③ NON-RÉGRESSION : le cas de Michel (90 s) reste attrapé partout. */
+    o.michel90={}; DISCS.forEach(d=>{ S.discipline=d;
+      o.michel90[d]=_intensiteDefauts('Squat à la Barre', S3(176,5,90)).filter(x=>/repos de 90 s/.test(x)); });
+
+    /* ④ NON-RÉGRESSION DU PLAFOND DE CHARGE : la physiologie ne dépend pas de la discipline.
+       ⛔ Une charge trop lourde doit produire EXACTEMENT le même message pour les 5. */
+    o.plafond={}; DISCS.forEach(d=>{ S.discipline=d;
+      o.plafond[d]=_intensiteDefauts('Squat à la Barre', S3(190,5,300)).filter(x=>/% de ton 1RM estimé/.test(x)); });
+
+    /* ⑤ LE SEUIL VIENT DU CADRE, PAS D'UN NOMBRE EN DUR : on modifie la prose, il doit suivre. */
+    const sauve=DISC_CADRE.powerlifting.repos;
+    DISC_CADRE.powerlifting.repos='4 à 6 min entre les séries lourdes';
+    o.suitLaProse=_cadreReposLourd('powerlifting').sec;
+    DISC_CADRE.powerlifting.repos='on récupère comme on veut';   // rien de chiffrable
+    o.proseMuette=_cadreReposLourd('powerlifting').sec;
+    DISC_CADRE.powerlifting.repos=sauve;
+
+    S.prs=vp; S.discipline=vd;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  await cx.close();
+
+  if(D.err||D.absente)t('CXLVII n\'a pas pu tourner',false,JSON.stringify(D));
+  else{
+    /* ⭐⭐ LE TÉMOIN QUI REFERME LE TROU. */
+    t('⭐⭐ le cas qui passait : 3×5 à 88 % avec 160 s de repos est enfin signalé en force athlétique',
+      (D.plAvertit||[]).some(x=>/repos de 160 s/.test(x)&&/3 à 5 min/.test(x)), JSON.stringify(D.plAvertit));
+    /* ⛔ … ET LE MÊME CAS RESTE SILENCIEUX EN MUSCU : c'est ce qui prouve que la discipline
+       change vraiment quelque chose. Sans lui, le premier pourrait être vert parce qu'on
+       avertit désormais tout le monde — ce qui serait une régression, pas un correctif. */
+    t('⛔ … et il reste SILENCIEUX en musculation (160 s > son plancher) — la discipline décide',
+      (D.muAvertit||[]).filter(x=>/repos de/.test(x)).length===0, JSON.stringify(D.muAvertit));
+    /* ⛔⛔ LA DÉCISION DE MICHEL TIENT POUR LES CINQ. */
+    t('⛔⛔ non-régression : « 3×5 en 90 s » reste attrapé dans les 5 disciplines (décision de Michel)',
+      Object.keys(D.michel90).every(d=>D.michel90[d].length===1), JSON.stringify(D.michel90));
+    /* ⛔ LE SEUIL NE PEUT QUE RESSERRER. */
+    t('⛔ aucun seuil ne descend sous les 150 s d\'avant (on resserre, on ne relâche jamais)',
+      Object.keys(D.seuils).every(d=>D.seuils[d][0]>=150), JSON.stringify(D.seuils));
+    /* ⭐⭐ LE TÉMOIN LE PLUS IMPORTANT DU BLOC — il épingle une RÈGLE, pas un cas :
+       le minimum conseillé ne descend jamais sous le seuil qui a déclenché l'avertissement.
+       C'est lui qui a attrapé mon 1er jet (« viser 1,5 à 2,5 min » sur un seuil de 150 s). */
+    t('⭐⭐ le conseil ne CONTREDIT jamais le seuil (le minimum conseillé ≥ le seuil)',
+      Object.keys(D.seuils).every(d=>{
+        const sec=D.seuils[d][0], txt=D.seuils[d][1];
+        const m=String(txt).match(/([\d.,]+)\s*(?:à|-)?\s*[\d.,]*\s*(min|s)/);
+        if(!m) return false;
+        return parseFloat(m[1].replace(',','.'))*(m[2]==='min'?60:1) >= sec;
+      }), JSON.stringify(D.seuils));
+    /* ⛔ LA PHYSIOLOGIE NE DÉPEND PAS DE LA DISCIPLINE — vérifié, pas supposé. */
+    t('⛔⛔ le plafond de CHARGE est identique pour les 5 (Brzycki est de la physiologie, pas de la doctrine)',
+      new Set(Object.keys(D.plafond).map(d=>JSON.stringify(D.plafond[d]))).size===1
+      && D.plafond.muscu.length===1, JSON.stringify(D.plafond.muscu));
+    /* ⭐ UN SEUL PROPRIÉTAIRE : la prose du cadre est la source, pas une copie du nombre. */
+    t('⭐ le seuil SUIT la prose du cadre (« 4 à 6 min » → 240 s), il ne la recopie pas',
+      D.suitLaProse===240, 'seuil = '+D.suitLaProse+' s');
+    t('⛔ … et une prose sans rien de chiffrable retombe sur le plancher, jamais sur un repli inventé',
+      D.proseMuette===150, 'seuil = '+D.proseMuette+' s');
+    t('⛔ une discipline inconnue ne casse rien : plancher + conseil d\'origine',
+      D.inconnue && D.inconnue.sec===150 && D.inconnue.cadre===false, JSON.stringify(D.inconnue));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
