@@ -16081,6 +16081,140 @@ console.log('\n-- CXLVII. Le contrôle d\'intensité connaît la discipline (ft-
   }
 }
 
+/* == BLOC CXLIX - LE VOLUME PAR GROUPE MUSCULAIRE ET PAR SEMAINE (ft-v1045) ==
+   Dernier morceau du relais de session-A : « rien n'additionne les series x muscle x semaine ».
+   /!\ CXLVIII est SAUTE expres : session-A a une ft-v1044 en vol et prendra vraisemblablement ce
+   numero. 5e collision de la semaine — on paie un numero plutot qu'un rapport illisible.
+
+   ⛔⛔ LE TROU EST R8 : `DISC_CADRE.volume` dit a Milo « 10 a 20 series par groupe musculaire et
+   par semaine », il recoit cette regle depuis toujours et n'a JAMAIS su combien la personne en
+   avait fait. Une consigne qui NOMME une source absente du contexte.
+
+   ⛔⛔ ET LA DECISION CENTRALE EST UN SILENCE : aucune cible a l'ECRAN. Un mercredi, tout le monde
+   est sous son cadre — afficher « Pectoraux 6 · cadre 10-20 » serait un reproche sur une semaine
+   inachevee (le defaut refuse en ft-v1022 et ft-v1029). Milo, lui, recoit les deux cotes ET sait
+   quel jour on est.
+
+   ⚠️⚠️ ET LA MESURE A TROUVE UN SOUS-COMPTAGE SILENCIEUX : « Traction » et « Presse a Cuisses »
+   sont des PREFIXES de plusieurs exercices du catalogue, ils ne resolvent pas — leurs series
+   disparaissaient sans un mot, donc le total etait plus petit que la realite ET presente comme un
+   fait. Elles sont maintenant COMPTEES A PART et nommees (R29). */
+console.log('\n-- CXLIX. Le volume par groupe musculaire et par semaine (ft-v1045) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const V=await pg.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    if(typeof _volumeParMuscle!=='function') return {absente:true};
+    const o={};
+    const j=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+    const st=(n,t)=>Array.from({length:n},()=>({kg:60,reps:8,done:true,type:t||'N'}));
+    /* ⭐ NOMS VERIFIES CONTRE LE CATALOGUE, pas ecrits de memoire (la lecon de ft-v1023, ou
+       7 cibles sur 16 etaient fausses). */
+    S.sessions=[
+      {date:j(0), exs:[{name:'Développé Couché',sets:st(4)},{name:'Écarté Haltères',sets:st(3)}], vol:1},
+      {date:j(2), exs:[{name:'Squat à la Barre',sets:st(5)}], vol:1},
+      /* ⛔ 2 series d'ECHAUFFEMENT : le cadre dit « series de TRAVAIL », elles ne comptent pas. */
+      {date:j(4), exs:[{name:'Développé Couché',sets:st(4)},{name:'Développé Couché',sets:st(2,'É')}], vol:1},
+      {date:j(6), exs:[{name:'Rowing Barre (Tirage Horizontal)',sets:st(4)}], vol:1},
+      /* ⛔ « Traction » seul est un PREFIXE ambigu : il ne resout pas -> non rattache, pas ignore. */
+      {date:j(1), exs:[{name:'Traction',sets:st(3)}], vol:1},
+      /* ⛔ HORS FENETRE : 9 series qui ne doivent JAMAIS apparaitre. */
+      {date:j(20),exs:[{name:'Développé Couché',sets:st(9)}], vol:1}
+    ];
+    persist();
+    const v=_volumeParMuscle();
+    o.seances=v.seances; o.series=v.series; o.nonRatt=v.nonRattachees;
+    o.fenetre=[v.depuis,v.jusqu];
+    o.liste=v.liste.map(m=>[m.label,m.series]);
+    o.aDorsaux=v.liste.some(m=>/Dorsaux|Grand dorsal|Lats/i.test(m.label));
+    /* ⛔ Une serie non VALIDEE n'a pas eu lieu. */
+    S.sessions[0].exs[0].sets.forEach(x=>x.done=false); persist();
+    o.sansDone=_volumeParMuscle().series;
+    S.sessions[0].exs[0].sets.forEach(x=>x.done=true); persist();
+    /* ── LE CONTEXTE DE MILO : la moitie qui referme R8 ── */
+    o.ctx={};
+    S.discipline='muscu';
+    let c=_ctxVolumeMuscles();
+    o.ctx.bloc=/VOLUME PAR GROUPE MUSCULAIRE/.test(c);
+    o.ctx.fenetre=/7 derniers jours/.test(c);
+    o.ctx.primaire=/muscle PRIMAIRE/.test(c);
+    o.ctx.minimum=/est donc un MINIMUM/.test(c);
+    o.ctx.cadreMuscu=/vise 10 à 20 séries/.test(c);
+    o.ctx.antiReproche=/NE LUI REPROCHE PAS/.test(c);
+    S.discipline='powerlifting';
+    o.ctx.plPasDeCadre=/n'exprime PAS le volume par groupe/.test(_ctxVolumeMuscles());
+    S.discipline='muscu';
+    /* ── L'ECRAN ── */
+    goScreen('s-progress');document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+    document.getElementById('s-progress').classList.add('active'); renderProgress();
+    await new Promise(r=>setTimeout(r,350));
+    const el=document.getElementById('prog-volume');
+    o.ecran=(el.innerText||'').replace(/\s+/g,' ').trim();
+    o.ecranSansCible=!/10 à 20|12 à 22|cadre|objectif|cible/i.test(o.ecran);
+    o.ecranNommeFenetre=/7 derniers jours/.test(o.ecran);
+    o.ecranDitNonRatt=/rattachée/.test(o.ecran);
+    /* ⛔ Rien a compter -> pas un pixel (une section qui dirait « tu n'as rien fait » serait un
+       constat sur la personne, pas une information). */
+    const sv=S.sessions; S.sessions=[]; persist(); renderProgress();
+    await new Promise(r=>setTimeout(r,300));
+    o.videSansSeance=(document.getElementById('prog-volume').innerHTML||'')==='';
+    S.sessions=sv; persist(); renderProgress();
+    await new Promise(r=>setTimeout(r,300));
+    o.revient=(document.getElementById('prog-volume').innerHTML||'').length>0;
+    const f=document.getElementById('nb-log').getBoundingClientRect();
+    o.fab=[Math.round(f.left),Math.round(f.top),Math.round(f.width),Math.round(f.height)];
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  await cx.close();
+
+  if(V.err||V.absente)t('CXLIX n\'a pas pu tourner',false,JSON.stringify(V));
+  else{
+    /* ⭐⭐ LE COMPTE LUI-MEME : 11 series de pectoraux (4+3+4), et l'echauffement n'y est pas. */
+    t('⭐⭐ les séries sont comptées par groupe musculaire (Pectoraux 11 = 4+3+4, échauffement exclu)',
+      (V.liste||[]).some(m=>m[0]==='Pectoraux'&&m[1]===11), JSON.stringify(V.liste));
+    /* ⛔ LA FENETRE MORD : 9 séries d'il y a 20 jours ne doivent pas y être. */
+    t('⛔ la fenêtre de 7 jours MORD : les 9 séries d\'il y a 20 jours n\'y sont pas',
+      V.seances===5 && (V.liste||[]).every(m=>m[1]<=11), JSON.stringify([V.seances,V.liste]));
+    /* ⛔ Le rowing crédite bien le dos — sinon on ne mesurerait que le haut du corps par hasard. */
+    t('⛔ le témoin a bien VU plusieurs groupes (dos compris), sinon il serait vert en ne mesurant rien',
+      (V.liste||[]).length>=3 && V.aDorsaux===true, JSON.stringify(V.liste));
+    /* ⛔ Une série non validée n'a pas eu lieu. */
+    t('⛔ une série non validée ne compte pas (11 → 7 sur les pectoraux)',
+      V.sansDone===V.series-4, 'avec='+V.series+' sans='+V.sansDone);
+    /* ⭐⭐ LE SOUS-COMPTAGE EST NOMMÉ, PAS TU — le défaut trouvé à la mesure. */
+    t('⭐⭐ un exercice dont l\'app ignore les muscles est COMPTÉ À PART, jamais perdu en silence',
+      V.nonRatt===3 && V.ecranDitNonRatt===true, 'non rattachées = '+V.nonRatt);
+    /* ⛔⛔ LA DÉCISION CENTRALE : aucune cible à l'écran. */
+    t('⛔⛔ AUCUNE cible à l\'écran (un mercredi, tout le monde est sous son cadre — ce serait un reproche)',
+      V.ecranSansCible===true, V.ecran.slice(0,120));
+    t('⛔ … et l\'écran NOMME sa fenêtre (deux chiffres sur des périodes différentes se contrediraient)',
+      V.ecranNommeFenetre===true, V.ecran.slice(0,120));
+    /* ⭐⭐ LA MOITIÉ QUI REFERME R8 : Milo reçoit enfin la mesure, et le cadre avec. */
+    t('⭐⭐ R8 refermé : Milo reçoit le volume par muscle, la fenêtre, et la règle de comptage',
+      V.ctx.bloc&&V.ctx.fenetre&&V.ctx.primaire, JSON.stringify(V.ctx));
+    t('⭐ … avec le cadre de SA discipline quand celui-ci parle bien de séries par muscle et par semaine',
+      V.ctx.cadreMuscu===true && V.ctx.antiReproche===true, JSON.stringify(V.ctx));
+    /* ⛔⛔ ET IL EST PRÉVENU quand le cadre parle d'autre chose — 3 disciplines sur 5. */
+    t('⛔⛔ en force athlétique, Milo est prévenu que son cadre ne parle PAS de volume hebdo par muscle',
+      V.ctx.plPasDeCadre===true, JSON.stringify(V.ctx));
+    t('⛔ … et que le compte est un MINIMUM quand des séries ne sont rattachées à rien',
+      V.ctx.minimum===true, JSON.stringify(V.ctx));
+    /* ⛔ Aucune séance dans la fenêtre → pas un pixel, et ça revient ensuite. */
+    t('⛔ aucune séance → la section ne prend pas un pixel (et elle revient quand il y en a)',
+      V.videSansSeance===true && V.revient===true, 'vide='+V.videSansSeance+' revient='+V.revient);
+    t('🔴 règle d\'or #9 : le bouton central « + » est à sa place',
+      V.fab[2]>0 && V.fab[3]>0, JSON.stringify(V.fab));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

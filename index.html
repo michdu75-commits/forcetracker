@@ -628,6 +628,10 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
        déjà pour regarder en arrière. Vide tant qu'il n'y a aucune séance ; sous le seuil, elle
        DIT qu'elle ne sait pas encore. Seul auteur : `_renderSynthese()`. -->
   <div id="prog-synth" style="padding:0 0 12px;"></div>
+  <!-- 📊 ft-v1045 — le volume par groupe musculaire sur 7 jours glissants. SOUS la
+       synthèse : celle-ci parle de tout l'historique, celui-ci de la semaine en cours.
+       Vide s'il n'y a rien à compter. Seul auteur : `_renderVolumeSemaine()`. -->
+  <div id="prog-volume" style="padding:0 0 12px;"></div>
   <div class="nu-tabs">
     <button class="nu-tab active" id="ptab-exo" onclick="switchProgTab('exo',this)">Exercices</button>
     <button class="nu-tab" id="ptab-poids" onclick="switchProgTab('poids',this)">Poids</button>

@@ -3955,6 +3955,9 @@ const APP_GUIDE_SLIDES=[
   /* ⛔ SANS IMAGE : une capture montrerait une charge et un repos précis, donc elle se lirait
      comme une recommandation d'intensité — or ce qui est vrai ici dépend de la discipline. */
   {icon:'🎽', t:'Ton cadre décide, pas une moyenne', cap:'L\'avertissement « <b>repos trop court pour du lourd</b> » suit désormais <b>ta discipline</b>. En force athlétique on te dira « viser <b>3 à 5 min</b> », parce que c\'est ce que dit ton propre cadre — pas un chiffre unique pour tout le monde. ⚠️ Il ne se <b>relâche</b> jamais : il resserre seulement là où ton cadre est plus exigeant.'},
+  /* ⛔ SANS IMAGE : les chiffres dépendent de l'historique du lecteur — une capture montrerait
+     des séries qui ne sont pas les siennes, et un « objectif » qu'on refuse justement d'afficher. */
+  {icon:'📊', t:'Ce que ta semaine a travaillé', cap:'En haut de <b>Progrès</b>, tes <b>séries de travail par groupe musculaire</b> sur les 7 derniers jours. ⚠️ <b>Sans objectif affiché</b> : en milieu de semaine, être « en dessous » ne veut rien dire. 👉 <b>Milo</b>, lui, reçoit ces chiffres — il connaissait la règle de ta discipline sans jamais savoir combien tu en faisais.'},
   {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
 let _agIdx=0,_agSwipeInit=false;

@@ -148,10 +148,65 @@ function _renderSynthese(){
     +'</div>';
 }
 
+/* 📊 CE QUE TA SEMAINE A TRAVAILLÉ (28/08/2026, ft-v1045)
+   Le pendant visible de `_volumeParMuscle` : ce qu'on envoie à Milo, la personne doit pouvoir le
+   voir. *Un calcul qui change en silence est indiscernable d'un bug* (la leçon de ft-v1028).
+
+   ⛔⛔ AUCUNE CIBLE À L'ÉCRAN, ET C'EST LA DÉCISION CENTRALE DE CETTE VERSION.
+   `DISC_CADRE.volume` dit « 10 à 20 séries par groupe et par semaine » — mais **un mercredi, tout
+   le monde est sous son cadre**. Afficher « Pectoraux 6 · cadre 10-20 » se lit comme un déficit
+   alors que la semaine n'est pas finie : c'est un **reproche sur une période inachevée**, le défaut
+   exact refusé en ft-v1022 (le débrief) et en ft-v1029 (« ce qu'il te reste » le soir).
+   👉 L'écran montre des **faits** ; **Milo** reçoit les deux côtés — le compte ET le cadre — et lui
+   sait quel jour on est, donc il peut dire quelque chose d'utile sans se tromper. *C'est la
+   frontière `ARCHITECTURE-CERVEAU-CERVELET` : le code compte, Milo juge.*
+
+   ⛔ ET RIEN NE S'AFFICHE S'IL N'Y A RIEN À COMPTER. Une section qui annoncerait « aucune séance
+   ces 7 derniers jours » ne serait pas une information, ce serait un constat sur la personne — et
+   personne n'a demandé d'avis (R29/R24). Elle ne prend alors pas un pixel.
+   ⚠️ Différence assumée avec la synthèse juste au-dessus, qui, elle, DIT qu'elle ne sait pas
+   encore : son seuil parle de **validité statistique**, celui-ci parlerait de **la semaine de
+   quelqu'un**. Ce n'est pas la même chose, donc le silence n'est pas le même.
+
+   ⛔ LA LISTE EST BORNÉE (R19/R25) : 22 groupes affichés en entier, c'est un tableur, pas une
+   information — 8 lignes puis « et N autres ». */
+const VOL_LIGNES_MAX = 8;
+function _renderVolumeSemaine(){
+  const el=document.getElementById('prog-volume'); if(!el) return;
+  const v=(typeof _volumeParMuscle==='function')?_volumeParMuscle():null;
+  if(!v || !v.series || !v.liste.length){ el.innerHTML=''; return; }  // ⛔ rien à compter → rien
+  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const jour=d=>{ try{ const x=new Date(d+'T12:00:00');
+      return x.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}); }catch(e){ return d; } };
+  const haut=v.liste[0].series||1;
+  const vues=v.liste.slice(0,VOL_LIGNES_MAX), reste=v.liste.length-vues.length;
+  el.innerHTML='<div class="vol-card">'
+    +'<div class="vol-t">📊 Ce que ta semaine a travaillé</div>'
+    +vues.map(m=>'<div class="vol-l">'
+        +'<div class="vol-nom">'+esc(m.label)+'</div>'
+        /* ⭐ La barre est une aide à la LECTURE (elle range à l'œil), pas une jauge vers une
+           cible : elle est relative au plus travaillé de la semaine, et rien d'autre. */
+        +'<div class="vol-bar"><i style="width:'+Math.round(100*m.series/haut)+'%"></i></div>'
+        +'<div class="vol-n">'+m.series+'</div></div>').join('')
+    +(reste>0?'<div class="vol-plus">et '+reste+' autre'+(reste>1?'s':'')+'</div>':'')
+    +'<div class="vol-fen">Séries de travail sur les 7 derniers jours ('
+      +esc(jour(v.depuis))+' → '+esc(jour(v.jusqu))+') · '+v.seances+' séance'+(v.seances>1?'s':'')+'</div>'
+    /* ⛔ LE CHOIX DE COMPTAGE EST DIT, PAS CACHÉ : sans ça, quelqu'un qui compte ses séries de
+       triceps à la main trouverait un autre chiffre et croirait à un bug. */
+    +'<div class="vol-pied">Comptées sur le <b>muscle principal</b> de chaque exercice — un développé couché compte pour les pectoraux, pas pour les triceps.'
+    /* ⛔ LE SOUS-COMPTAGE EST DIT, JAMAIS TU : un exercice dont l'app ne connaît pas les muscles
+       (nom ambigu, exercice perso sans muscles cochés) ne peut créditer personne. Le passer sous
+       silence donnerait un total plus petit que la réalité, présenté comme un fait (R29). */
+    +(v.nonRattachees>0?' ⚠️ <b>'+v.nonRattachees+' série'+(v.nonRattachees>1?'s':'')+'</b> ne '+(v.nonRattachees>1?'sont':'est')+' rattachée'+(v.nonRattachees>1?'s':'')+' à aucun muscle : l\'app ne connaît pas cet exercice. Coche ses muscles pour qu\'il compte.':'')
+    +'</div>'
+    +'</div>';
+}
+
 function renderProgress(){
   /* 🔭 ft-v1041 — la synthèse se peint en tête, séparément des sous-onglets : elle ne
      partage aucun état avec eux, donc changer d'onglet ne la fait pas disparaître (R2). */
   if(typeof _renderSynthese==='function')_renderSynthese();
+  if(typeof _renderVolumeSemaine==='function')_renderVolumeSemaine();
   switchProgTab('exo',document.getElementById('ptab-exo'));
   const chips=document.getElementById('big4-chips');
   if(chips)_renderProgChips(chips);

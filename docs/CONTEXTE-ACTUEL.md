@@ -6,7 +6,27 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1043`.
+- **Version en ligne (live) :** `ft-v1045`.
+- 📊⭐⭐ **LE VOLUME PAR GROUPE MUSCULAIRE ET PAR SEMAINE** (ft-v1045). Dernier morceau du relais
+  de session-A. ⛔⛔ **R8 dans sa forme la plus pure** : `DISC_CADRE.volume` dit à Milo *« 10 à 20
+  séries par groupe musculaire et par semaine »* — **il n'a jamais su combien la personne en
+  faisait**. Contrôle négatif : `{aLaRegleDuCadre:true, aLaMESURE:false}` contre ft-v1043.
+  ⛔ **Rien de neuf n'est inventé (R2/R31)** : `_MG` porte déjà les ~22 **groupes**, `exMuscles`
+  la donnée écrite. On crédite le **muscle PRIMAIRE** seulement — compter le secondaire donnerait
+  4 séries de triceps pour un développé couché.
+  ⛔⛔ **La décision centrale est un SILENCE : aucune cible à l'écran.** Un mercredi, tout le monde
+  est sous son cadre — l'afficher serait un **reproche sur une semaine inachevée** (défaut refusé
+  en ft-v1022 et ft-v1029). L'écran donne des **faits** ; **Milo** reçoit les deux côtés et sait
+  quel jour on est. *Le code compte, Milo juge.*
+  ⚠️⚠️ **Sous-comptage silencieux trouvé à la mesure** : *« Traction »*, *« Presse à Cuisses »*
+  sont des **préfixes ambigus** qui ne résolvent pas — leurs séries disparaissaient sans un mot,
+  donc le total était **plus petit que la réalité et présenté comme un fait**. Comptées à part et
+  **nommées**. ⭐ Portée mesurée : **359 exercices du catalogue sur 359** ont leurs muscles écrits
+  — la ligne ne peut concerner qu'un nom tapé à la main ou importé.
+  ⛔ **Le cadre ne parle de cette grandeur que pour 2 disciplines sur 5** (powerbuilding compte par
+  séance, powerlifting par mouvement, haltero n'a rien de chiffrable) — Milo en est prévenu.
+  ⏭️ **Personne ne compare encore le volume à quoi que ce soit** : c'est délibéré, et le changer
+  serait un arbitrage de Michel.
 - 🎽⭐⭐ **LE CONTRÔLE D'INTENSITÉ CONNAÎT ENFIN LA DISCIPLINE** (ft-v1043). Relais de session-A
   (*« le trou le plus petit et le plus rentable »*), choisi par Michel. ⛔⛔ **Mesuré** :
   `_intensiteDefauts(nom, sets)` ne portait **aucune** occurrence de `discipline` ni de `DISC_` —

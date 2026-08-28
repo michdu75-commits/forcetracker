@@ -1731,3 +1731,20 @@ html.ob-done #onboarding{display:none;}
 .synth-fen{font-size:10.5px;color:var(--t3);margin-top:2px;font-style:italic;}
 .synth-vide{font-size:12.5px;color:var(--t2);line-height:1.5;}
 .synth-pied{font-size:11px;color:var(--t3);line-height:1.4;margin-top:9px;padding-top:8px;border-top:1px dashed var(--sep);}
+
+/* 📊 LE VOLUME DE LA SEMAINE — brique volume (ft-v1045). Sobre, comme la synthèse :
+   ⛔ aucune couleur de statut (ni vert « bien », ni rouge « mal »). Un nombre de séries
+   n'est ni un succès ni un échec tant que la semaine n'est pas finie — le colorer serait
+   déjà porter le jugement que cette section refuse exprès de porter. */
+.vol-card{background:var(--bg2);border-radius:16px;padding:13px 14px;box-shadow:inset 0 0 0 1px var(--sep);}
+.vol-t{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin-bottom:9px;}
+.vol-l{display:flex;align-items:center;gap:8px;padding:3.5px 0;}
+/* ⛔ Largeur FIXE, pas un `min-width` : un libellé plus long ferait glisser toute la colonne
+   et les barres ne se compareraient plus à l'œil (la leçon de ft-v1034). */
+.vol-nom{width:118px;flex-shrink:0;font-size:12.5px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vol-bar{flex:1;height:7px;border-radius:4px;background:var(--bg3);overflow:hidden;}
+.vol-bar i{display:block;height:100%;border-radius:4px;background:var(--t3);opacity:.55;}
+.vol-n{width:26px;flex-shrink:0;text-align:right;font-size:13px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums;}
+.vol-plus{font-size:11px;color:var(--t3);margin-top:5px;}
+.vol-fen{font-size:10.5px;color:var(--t3);margin-top:9px;font-style:italic;}
+.vol-pied{font-size:11px;color:var(--t3);line-height:1.4;margin-top:7px;padding-top:7px;border-top:1px dashed var(--sep);}

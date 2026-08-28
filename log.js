@@ -3534,6 +3534,108 @@ function _mscScores(exs){
   });
   return {sc,ind};
 }
+/* 📊 LE VOLUME PAR GROUPE MUSCULAIRE ET PAR SEMAINE (28/08/2026, ft-v1045)
+   Dernier morceau du relais de session-A : *« rien n'additionne les séries × muscle × semaine »*.
+
+   ⛔⛔ POURQUOI C'ÉTAIT UN TROU, ET C'EST **R8** DANS SA FORME LA PLUS PURE.
+   `DISC_CADRE.volume` dit *« 10 à 20 séries de travail par groupe musculaire et par semaine »*, et
+   Milo le reçoit depuis toujours — mais **rien ne lui disait combien la personne en avait fait**.
+   *Une consigne qui NOMME une source absente du contexte*, exactement comme le RIR avant ft-v1038.
+
+   ⛔ RIEN DE NEUF N'EST INVENTÉ (R2 / R31). `_MG` porte déjà les ~22 **groupes** (pec, lats, quads,
+   hamstrings…) — c'est le bon niveau, celui du frame, pas les 41 faisceaux du dessin. Et
+   `exMuscles()` porte la donnée ÉCRITE (primaire / secondaire), relue à la main début août. Une
+   2ᵉ façon de classer un exercice divergerait de la figurine, du calendrier et des calories.
+
+   ⛔⛔ ON CRÉDITE LE MUSCLE **PRIMAIRE**, ET RIEN D'AUTRE — et c'est un choix, pas une facilité.
+   Compter aussi le secondaire donnerait 4 séries de triceps pour un développé couché : le total
+   exploserait et ne voudrait plus rien dire. Et une pondération fractionnaire (« ½ série pour le
+   secondaire ») serait une **fausse précision** : aucune mesure ne la fonde ici (**R29**). Le
+   choix est donc écrit à l'écran, pas seulement dans le code.
+
+   ⛔ ÉCHAUFFEMENTS EXCLUS, SÉRIES NON FAITES EXCLUES. Le cadre dit « séries de TRAVAIL » ; une
+   série cochée `É` n'en est pas une, et une série jamais validée n'a pas eu lieu. Même filtre que
+   `_intensiteDefauts` (R2).
+
+   ⛔ FENÊTRE GLISSANTE DE 7 JOURS, ET ELLE SE NOMME. Une semaine *calendaire* remettrait le
+   compteur à zéro le lundi : un mardi, tout le monde afficherait 2 séries et croirait avoir
+   régressé. Et sans nommer la fenêtre, deux chiffres calculés sur des périodes différentes se
+   contredisent à l'écran sans que rien ne le dise — le défaut de **ft-v1027**.
+
+   ⚠️ CE QUE CE COMPTEUR NE FAIT PAS, ET C'EST DÉLIBÉRÉ : il **ne juge pas**. Voir
+   `_volumeSemaineHtml` (setup.js) pour la raison — un mercredi, tout le monde est sous son cadre. */
+function _volumeParMuscle(refTs){
+  /* ⚠️ `series` = séries de travail RATTACHÉES à au moins un muscle. Ce n'est PAS la somme de
+     `liste` : un squat crédite quadriceps ET fessiers, donc la somme des lignes est plus grande.
+     Deux chiffres qui se contredisent à l'écran, c'est le défaut de ft-v1027 — on ne les affiche
+     jamais l'un à côté de l'autre, et le nom le dit. */
+  const out={jours:7, series:0, nonRattachees:0, seances:0, liste:[], depuis:'', jusqu:''};
+  try{
+    const auj=(typeof today==='function')?today(refTs):null;
+    if(!auj) return out;
+    const fin=new Date(auj+'T12:00:00');
+    const deb=new Date(fin.getTime()-6*864e5);          // 7 jours INCLUS (aujourd'hui compris)
+    const iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+    out.depuis=iso(deb); out.jusqu=auj;
+    const cnt={};
+    (S.sessions||[]).forEach(s=>{
+      if(!s||!s.date||s.date<out.depuis||s.date>auj) return;
+      out.seances++;
+      (s.exs||s.exercises||[]).forEach(ex=>{
+        if(!ex||!ex.name) return;
+        /* ⛔ Séries de TRAVAIL réellement faites — cf. ci-dessus. */
+        const n=(ex.sets||[]).filter(st=>st&&st.done&&st.type!=='É').length;
+        if(!n) return;
+        /* ⭐ LE NOM EST RÉSOLU AVANT DE CHERCHER LA FICHE — sans ça, un nom abrégé rate la
+           donnée écrite et le muscle n'est pas crédité, EN SILENCE (la leçon de ft-v997). */
+        const fiche=(typeof exMuscles==='function')
+          ? exMuscles((typeof exNomCatalogue==='function')?exNomCatalogue(ex.name):ex.name) : null;
+        let prim=(fiche&&fiche.p)||null;
+        if(!prim){                                       // exercice perso : sa fiche à lui
+          const cex=(S.customExercises||[]).find(e=>e.n===ex.name);
+          prim=(cex&&cex.muscles&&cex.muscles.p)||null;
+        }
+        /* ⛔⛔ ON NE DEVINE PAS — MAIS ON NE SE TAIT PAS NON PLUS (R29).
+           Un nom qui ne résout pas (« Traction », « Presse à Cuisses » : des PRÉFIXES de plusieurs
+           exercices du catalogue) ou un exercice perso sans muscles cochés ne peut créditer
+           personne. Les ignorer en silence produirait un total **plus petit que la réalité, et
+           présenté comme un fait** — quelqu'un qui recompte à la main trouverait autre chose et
+           croirait à un bug. On les compte donc à part, et l'écran comme Milo le disent. */
+        if(!prim||!prim.length){ out.nonRattachees+=n; return; }
+        prim.forEach(m=>{ cnt[m]=(cnt[m]||0)+n; });
+        out.series+=n;
+      });
+    });
+    out.liste=Object.keys(cnt)
+      .filter(m=>typeof _MG!=='undefined'&&_MG[m])       // ⛔ aucun code hors vocabulaire
+      .map(m=>({code:m, label:_MG[m].label, series:cnt[m]}))
+      .sort((a,b)=>b.series-a.series||a.label.localeCompare(b.label));
+  }catch(e){ /* jamais bloquant : c'est une information, pas une fonctionnalité */ }
+  return out;
+}
+
+/* 🎽 LE CADRE DIT-IL QUELQUE CHOSE SUR CE VOLUME-LÀ ? — et la réponse est NON pour 3 disciplines
+   sur 5. C'est mesuré, phrase par phrase, pas supposé :
+     · `muscu`         → « 10 à 20 séries de travail PAR GROUPE MUSCULAIRE ET PAR SEMAINE » ✅
+     · `bodybuilding`  → « 12 à 22 séries … PAR GROUPE MUSCULAIRE ET PAR SEMAINE » ✅
+     · `powerbuilding` → « 2 à 4 séries lourdes puis 8 à 14 d'accessoires PAR SÉANCE »   ⛔ autre chose
+     · `powerlifting`  → « 3 à 6 séries de travail PAR MOUVEMENT »                        ⛔ autre chose
+     · `haltero`       → « beaucoup de séries très courtes … »                            ⛔ rien de chiffrable
+   ⛔ On ne compare donc QUE là où le cadre parle de la même grandeur. Rapprocher « 10-20 par
+   muscle et par semaine » d'un cadre qui compte « par séance » produirait un chiffre faux et
+   crédible — le pire des deux mondes (R29). */
+function _cadreVolumeSemaine(disc){
+  try{
+    const c=(typeof DISC_CADRE!=='undefined')?DISC_CADRE[disc||'muscu']:null;
+    if(!c||!c.volume) return null;
+    const t=String(c.volume);
+    if(!/par\s+groupe\s+musculaire/i.test(t)||!/par\s+semaine/i.test(t)) return null;
+    const m=t.match(/(\d+)\s*(?:à|-|–)\s*(\d+)\s*séries/i);
+    if(!m) return null;                                  // ⛔ rien de chiffrable → on se tait
+    return {bas:+m[1], haut:+m[2], txt:m[1]+' à '+m[2]};
+  }catch(e){ return null; }
+}
+
 function showMuscleName(label,evt){
   evt&&evt.stopPropagation();
   const el=document.getElementById('mm-clicked-label');
