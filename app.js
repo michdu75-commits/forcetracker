@@ -1332,6 +1332,9 @@ function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux){
   const serv=parseFloat(p.serving_quantity)||0;
   const g=serv>0?serv:100;
   const gramsEl=document.getElementById('af-bc-grams');if(gramsEl)gramsEl.value=g;
+  /* ⛔ Un scan NEUF n'a pas de « dernière fois » : la pastille d'un aliment précédent doit
+     disparaître, sinon elle proposerait le poids de quelqu'un d'autre que le produit affiché. */
+  if(typeof _bcProposerDerniere==='function') _bcProposerDerniere(0);
   const nameEl=document.getElementById('af-bc-name');if(nameEl)nameEl.textContent=_bcNutr.name+' · '+_bcNutr.kcal100+' kcal/100g';
   const row=document.getElementById('af-bc-row');if(row)row.style.display='block';
   document.getElementById('af-desc').value=_bcNutr.name;
@@ -1382,6 +1385,36 @@ function _bcApplyGrams(){
    erreur : il n'y a rien à corriger, donc rien ne se signale.
    ⭐⭐ R2 — CETTE LIGNE NE CALCULE RIEN. Elle RELIT les champs que `_bcApplyGrams` vient d'écrire :
    deux calculs du même nombre finiraient par diverger, et on ne saurait plus lequel croire. */
+/* ⚖️ « LA DERNIÈRE FOIS » : PROPOSÉ, JAMAIS IMPOSÉ (ft-v1051) — décision de Michel :
+   *« oui c'est mieux comme ça, on donne le choix et pas imposer »*.
+   ⛔ UN SEUL ENDROIT POSE LA PASTILLE, pour les DEUX chemins de reprise (« Mes aliments » et
+   le journal) : sans ça, l'un des deux garderait le pré-remplissage et on aurait de nouveau
+   deux comportements pour la même question (R2/R8 — le correctif posé d'un seul côté est le
+   défaut le plus fréquent de ce fichier).
+   ⚠️ ET LE CHEMIN DU SCAN NEUF NE CHANGE PAS, exprès : là, le champ à 100 g n'est pas une
+   affirmation sur ce qu'on a mangé — les 4 valeurs affichées SONT les valeurs pour 100 g, la
+   quantité et les chiffres se correspondent. Ce qui était faux, c'est de re-servir la quantité
+   d'un REPAS passé comme si elle décrivait celui d'aujourd'hui (R30 : on ne modifie pas en
+   silence une décision qu'on n'a pas prise). */
+function _bcProposerDerniere(q){
+  const b=document.getElementById('af-bc-last'); if(!b) return;
+  const g=document.getElementById('af-bc-grams');
+  /* ⛔ q<=0 → ON CACHE SEULEMENT, on ne touche PAS au champ. C'est ce qui permet d'appeler
+     cette fonction depuis le scan neuf (qui pose 100 g ou la portion du fabricant) sans effacer
+     sa valeur. *Une fonction qui nettoie plus que son sujet finit par effacer celui d'un autre.* */
+  if(!(+q>0)){ b.style.display='none'; b.textContent=''; delete b.dataset.q; return; }
+  if(g) g.value='';                       // ⛔ rien de pré-rempli : la personne choisit
+  b.dataset.q=String(+q);
+  b.textContent='↩ '+(+q)+' g (la dernière fois)';
+  b.style.display='inline-block';
+}
+function _bcReprendreDerniere(){
+  const b=document.getElementById('af-bc-last'); if(!b) return;
+  const q=parseFloat(b.dataset.q)||0; if(!(q>0)) return;
+  const g=document.getElementById('af-bc-grams'); if(g) g.value=q;
+  _bcApplyGrams();                        // R2 : le même calcul que la saisie à la main
+  b.style.display='none';                 // proposition consommée — elle ne repropose pas
+}
 function _bcMontrerTotal(g){
   const el=document.getElementById('af-bc-total'); if(!el) return;
   const lu=id=>parseInt((document.getElementById(id)||{}).value)||0;
@@ -1793,6 +1826,7 @@ function openAddFood(){
      sinon la référence du produit précédent piloterait la saisie suivante, en silence. */
   window._afIaGrammes=0; window._afIaDesc='';
   try{ _afPropCacher(); }catch(e){}
+  try{ _bcProposerDerniere(0); }catch(e){}   // ⛔ la pastille ne survit pas à l'aliment précédent
   const coh=document.getElementById('af-coherence');if(coh){coh.style.display='none';coh.innerHTML='';}
   const hc=document.getElementById('af-health-card');if(hc)hc.innerHTML='';
   // Code-barres + score santé : GRATUIT pour tout le monde (client-side, 0 token).
@@ -1896,7 +1930,9 @@ function quickFillFood(i){
     _bcNutr={ name:(it.name||'').slice(0,60), kcal100:+P.kcal||0,
               prot100:+P.prot||0, carbs100:+P.carbs||0, fat100:+P.fat||0 };
     const g=document.getElementById('af-bc-grams');
-    if(g) g.value=(+it.q>0 && (!it.u||it.u==='g')) ? it.q : 100;   // la quantité de la dernière fois
+    /* ⚖️ ft-v1051 : PROPOSÉE, plus imposée — le champ reste vide, la pastille offre le rappel. */
+    if(g) g.value='';
+    if(typeof _bcProposerDerniere==='function') _bcProposerDerniere((+it.q>0 && (!it.u||it.u==='g')) ? +it.q : 0);
     const nm=document.getElementById('af-bc-name');
     if(nm) nm.textContent=_bcNutr.name+' · '+Math.round(_bcNutr.kcal100)+' kcal/100g (ta dernière saisie)';
     if(row) row.style.display='block';
@@ -1907,7 +1943,13 @@ function quickFillFood(i){
        ft-v966 avait corrigé un cran plus haut, et qui revenait par un autre chemin.
        ⛔ ON NE L'AFFICHE QUE SI LA QUANTITÉ EST RÉELLEMENT CONNUE (R29) : sans `q`, le champ
        retombe à 100 par défaut, et annoncer « pour tes 100 g » serait inventer une portion. */
-    if(typeof _bcMontrerTotal==='function') _bcMontrerTotal((+it.q>0 && (!it.u||it.u==='g')) ? +it.q : 0);
+    /* ⛔⛔ AUCUN TOTAL TANT QUE LA QUANTITÉ N'EST PAS CHOISIE (ft-v1051). Vu à la mesure : le
+       champ était vide et la ligne verte annonçait déjà « → pour tes 250 g : 150 kcal ». Elle
+       décrivait la PROPOSITION, pas une décision — c'est-à-dire le « voisinage muet » de
+       ft-v966 et ft-v1042, retrouvé une 3ᵉ fois par un chemin neuf. *Un total qui devance le
+       choix de la personne se lit comme un fait sur son repas.* Il réapparaît dès qu'elle tape
+       un poids ou tape la pastille (`_bcApplyGrams` le rappelle). */
+    if(typeof _bcMontrerTotal==='function') _bcMontrerTotal(0);
   }else{
     if(row) row.style.display='none';
     _bcNutr=null;
@@ -2512,7 +2554,9 @@ function _afSuggPrendreLocale(i){
     _bcNutr={ name:(e.name||'').slice(0,60), kcal100:+P.kcal||0,
               prot100:+P.prot||0, carbs100:+P.carbs||0, fat100:+P.fat||0 };
     const g=document.getElementById('af-bc-grams');
-    if(g) g.value=(+e.q>0 && (!e.u||e.u==='g')) ? e.q : 100;   // la quantité de la dernière fois
+    /* ⚖️ ft-v1051 : la JUMELLE (R8) — le même correctif, sur le chemin « reprendre depuis le journal ». */
+    if(g) g.value='';
+    if(typeof _bcProposerDerniere==='function') _bcProposerDerniere((+e.q>0 && (!e.u||e.u==='g')) ? +e.q : 0);
     const nm=document.getElementById('af-bc-name');
     if(nm) nm.textContent=_bcNutr.name+' · '+Math.round(_bcNutr.kcal100)+' kcal/100g (ta dernière saisie)';
     if(row) row.style.display='block';
@@ -2523,7 +2567,13 @@ function _afSuggPrendreLocale(i){
        ft-v966 avait corrigé un cran plus haut, et qui revenait par un autre chemin.
        ⛔ ON NE L'AFFICHE QUE SI LA QUANTITÉ EST RÉELLEMENT CONNUE (R29) : sans `q`, le champ
        retombe à 100 par défaut, et annoncer « pour tes 100 g » serait inventer une portion. */
-    if(typeof _bcMontrerTotal==='function') _bcMontrerTotal((+e.q>0 && (!e.u||e.u==='g')) ? +e.q : 0);
+    /* ⛔⛔ AUCUN TOTAL TANT QUE LA QUANTITÉ N'EST PAS CHOISIE (ft-v1051). Vu à la mesure : le
+       champ était vide et la ligne verte annonçait déjà « → pour tes 250 g : 150 kcal ». Elle
+       décrivait la PROPOSITION, pas une décision — c'est-à-dire le « voisinage muet » de
+       ft-v966 et ft-v1042, retrouvé une 3ᵉ fois par un chemin neuf. *Un total qui devance le
+       choix de la personne se lit comme un fait sur son repas.* Il réapparaît dès qu'elle tape
+       un poids ou tape la pastille (`_bcApplyGrams` le rappelle). */
+    if(typeof _bcMontrerTotal==='function') _bcMontrerTotal(0);
   }else{
     if(row) row.style.display='none';
     _bcNutr=null;

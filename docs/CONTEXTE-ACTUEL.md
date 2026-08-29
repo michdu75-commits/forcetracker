@@ -23,6 +23,18 @@
   *Les valeurs affichées et la quantité affichée vont toujours ensemble.*
   ⭐⭐ **Et ça rebranche ft-v1042 sans une ligne de plus** : à la reprise, le champ en grammes
   s'ouvre tout seul.
+  ⚖️⭐⭐ **Et la même version corrige une incohérence que j'avais introduite**, révélée par une
+  question de Michel : ft-v1042 **pré-remplissait** la quantité du dernier repas à la reprise.
+  Pour une dose de whey c'est juste ; **pour une boîte de ratatouille, c'est le repas d'HIER
+  enregistré comme celui d'aujourd'hui** — l'argument même employé dix lignes plus haut pour
+  laisser l'autre champ vide. Sa décision : *« on donne le choix et pas imposer »*.
+  ⭐ Champ **vide** + pastille **↩ 250 g (la dernière fois)** : un tap pour ce qui ne change pas,
+  rien d'enregistré pour ce qui change. Posé sur les **deux** chemins de reprise (R8).
+  ⚠️ **3ᵉ « voisinage muet »** trouvé à la mesure : la ligne verte annonçait « pour tes 250 g »
+  alors que le champ était vide — *un total qui devance le choix se lit comme un fait*.
+  ⚠️⚠️ **Deux témoins existants ont rougi sur du code correct**, et le second deux fois : il
+  lisait le bloc en `.slice(0,60)` et mes boutons d'unité ont poussé « portion » au-delà de la
+  coupe. *Un motif cherché dans une chaîne tronquée mesure la longueur de la phrase.*
 - 📅⭐⭐ **LA SÉANCE PRÉVUE QUI N'A PAS EU LIEU — on DEMANDE ce qui s'est passé** (ft-v1050).
   Méthode de la coach de Michel, dans ses mots : *« si elle est loupée elle est loupée. C'est
   pas grave, sur une semaine. Plutôt elle demande ce qui s'est passé — fatigue, travail,
