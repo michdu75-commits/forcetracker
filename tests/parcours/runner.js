@@ -11052,8 +11052,15 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     macros(200,4,20,10);
     _afMajAncre();
     o.rien_pasDeChampPoids=!document.getElementById('af-prop');
-    o.rien_aDesPortions=/Portion/i.test(bloc().textContent);
-    o.rien_ditPourquoi=/inventer un poids/i.test(bloc().textContent);
+    /* ⚠️ RE-VISÉ EN ft-v1051 — ce témoin épinglait le LIBELLÉ (« Portion ») et la PHRASE
+       (« inventer un poids »), c'est-à-dire le texte du jour, pas la règle qu'il protège.
+       ⛔ La règle, elle, n'a pas bougé : *l'app n'invente AUCUN poids*. On la mesure donc
+       structurellement — des multiplicateurs sont offerts, aucun nombre de grammes n'est
+       affiché, et le bloc DIT comment obtenir un vrai poids. Michel a demandé que le
+       cul-de-sac disparaisse ; la garantie, elle, reste. */
+    o.rien_aDesPortions=bloc().querySelectorAll('button[onclick^="_afApplyPortion"]').length>=5;
+    o.rien_aucunGrammeAffiche=!/\d+\s*g\b/.test(bloc().textContent);
+    o.rien_ditPourquoi=/poids/i.test(bloc().textContent)&&/grammes/i.test(bloc().textContent);
     _afApplyPortion(2);
     o.rien_x2=lus();
 
@@ -11092,8 +11099,11 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       R.nom_champPoids===true && R.nom_valeur==='20' && R.nom_ditSource===true,
       'champ='+R.nom_champPoids+' valeur='+R.nom_valeur);
     t('⭐ ... et le doubler double les valeurs', R.nom_apres40==='360/0/0/40', 'lu : '+R.nom_apres40);
-    t('⛔⛔ AUCUN ANCRAGE : des PORTIONS, jamais un poids invente (R29)',
-      R.rien_pasDeChampPoids===true && R.rien_aDesPortions===true && R.rien_ditPourquoi===true, '');
+    t('⛔⛔ AUCUN ANCRAGE : des MULTIPLICATEURS, et aucun poids inventé (R29)',
+      R.rien_pasDeChampPoids===true && R.rien_aDesPortions===true
+      && R.rien_aucunGrammeAffiche===true && R.rien_ditPourquoi===true,
+      JSON.stringify({champ:R.rien_pasDeChampPoids,mult:R.rien_aDesPortions,
+                      zeroGramme:R.rien_aucunGrammeAffiche,dit:R.rien_ditPourquoi}));
     t('⭐ ... et une portion x2 double bien les 4 valeurs', R.rien_x2==='400/8/40/20', 'lu : '+R.rien_x2);
     t('⛔⛔ R2 : un pour-100 g connu GARDE la main (le bloc du scan ne se dedouble pas)',
       R.scan_blocPropCache===true, '');
@@ -12547,8 +12557,13 @@ console.log('\n-- CXII. La quantité sur un aliment repris SANS pour-100 g (ft-v
     Q.x2 && Q.x2.kcal===646 && Q.x2.prot===106 && Q.x2.fat===26, JSON.stringify(Q.x2));
   // ⛔ R29 : sans ancre, on n'invente AUCUN poids — on n'offre que des multiplicateurs, vrais
   //    quelle que soit la portion de départ. Le texte doit le dire, pas l'inventer.
+  /* ⚠️ RE-VISÉ EN ft-v1051 : il exigeait le mot « Portion » avec une majuscule — le libellé
+     du bloc, devenu « Quantité » quand Michel a demandé le choix de l'unité. *Un témoin qui
+     épingle un libellé rougit à la première reformulation, sans qu'aucune règle soit cassée.*
+     Ce qu'il protège vraiment tient en deux moitiés, et elles sont gardées : des portions sont
+     bien proposées, et AUCUN nombre de grammes n'est affiché tant que personne n'en a donné. */
   tq('⛔ … et AUCUN poids n\'est inventé (des multiplicateurs, pas des grammes) — R29',
-    Q.sans && /Portion/.test(Q.sans.texte) && !/\d+\s*g\b/.test(Q.sans.texte), Q.sans&&Q.sans.texte);
+    Q.sans && /portion/i.test(Q.sans.texte) && !/\d+\s*g\b/.test(Q.sans.texte), Q.sans&&Q.sans.texte);
   tq('⭐⭐ NON-RÉGRESSION : AVEC un pour-100 g, c\'est toujours le bloc en GRAMMES (ft-v984)',
     Q.avec && Q.avec.grammes===true, JSON.stringify(Q.avec));
   /* ⛔ LES DEUX MÉCANISMES NE S'AFFICHENT JAMAIS ENSEMBLE (R2) : `_afMajAncre` se tait tout seul
