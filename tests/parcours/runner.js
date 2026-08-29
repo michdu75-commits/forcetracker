@@ -17271,6 +17271,120 @@ console.log('\n-- CLVII. « Cette séance te convient ? » — le lancement est 
   }
 }
 
+/* == BLOC CLVIII - LA SEANCE D'HIER NE RESSURGIT PLUS (ft-v1054) ==
+   Michel, DIX MINUTES apres la livraison de ft-v1053 : « lol il vient de me sortir la seance
+   d'hier ».
+
+   ⛔⛔ LE DEFAUT VIENT DE ft-v1051, PAS DE ft-v1053 — et c'est mesure des deux cotes avant de le
+   dire (une seance de 26 h ressurgissait et s'injectait contre ft-v1052 COMME contre ft-v1053).
+   Sa borne etait « au plus 3 messages de Milo » : un NOMBRE DE MESSAGES, c'est-a-dire un PROXY de
+   « recent ». Or le fil du chat SURVIT AUX JOURS — on rouvre l'app le lendemain, la seance d'hier
+   est a deux messages de distance, et le proxy repond « recent » pour quelque chose qui a 26 h.
+   ⚠️ Ce que ft-v1053 a change, c'est le VOLUME du degat : un bouton nu passait inapercu, une
+   carte qui demande « Cette seance te convient ? » se lit comme une proposition d'aujourd'hui.
+
+   ⭐⭐ CE BLOC TIENT LES DEUX MOITIES, ET LA SECONDE COMPTE AUTANT : on refuse hier, mais on GARDE
+   le matin — c'est le cas d'origine de ft-v851 (demander le matin, ouvrir a la salle le soir), et
+   perdre le bouton est la plainte n°1 de Michel. Un correctif qui tuerait aussi ce cas-la serait
+   un recul, pas une reparation. */
+console.log('\n-- CLVIII. La séance d\'hier ne ressurgit plus (ft-v1054) --');
+{
+  const SEANCE='Voilà ta séance 💪\n\nSoulevé de Terre (ancre)\n• S1 : 140×3 — repos 3 min\n'
+    +'• S2 : 140×3 — repos 3 min\n\nFentes Haltères\n• S1 : 24×10\n• S2 : 24×10';
+  /* Le fil tel qu'il existe vraiment : la séance, puis un échange anodin par-dessus. */
+  const filA=(h)=>[{role:'user',content:'donne moi ma séance',ts:h},
+                   {role:'assistant',content:SEANCE,ts:h},
+                   {role:'user',content:'ok merci',ts:h+60000},
+                   {role:'assistant',content:'Avec plaisir, bon entraînement 💪',ts:h+61000}];
+  /* Et le fil du REPLI de ft-v1053 : une demande, une réponse illisible. */
+  const filB=(h)=>[{role:'user',content:'fais moi une séance haut du corps',ts:h},
+                   {role:'assistant',content:'La séance est écrite au-dessus 👆',ts:h}];
+  const jouer=async(hist)=>{
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    const pg=await cx.newPage();
+    await pg.addInitScript(seedScript({ft4_coach_hist:JSON.stringify(hist)}));
+    await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(1600);
+    const r=await pg.evaluate(()=>{
+      try{
+        document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+        goScreen('coach');
+        if(typeof _loadCoachHist==='function')_loadCoachHist();
+        _renderCoachThread();
+        const btn=document.querySelector('.coach-prog-save .btn-red');
+        const o={carte:!!btn, injecte:[]};
+        /* ⭐ ON VA JUSQU'À L'INJECTION : une carte affichée n'est pas le sujet, le sujet est
+           « sur quelle séance la personne va-t-elle s'entraîner ». */
+        if(btn){ S.wkt=null; persist(); btn.click();
+                 o.injecte=((S.wkt&&S.wkt.exs)||[]).map(e=>e.name); }
+        return o;
+      }catch(e){ return {err:String(e.message||e)}; }
+    });
+    await cx.close(); return r;
+  };
+  const H=(h)=>Date.now()-h*3600*1000;
+  const hier   = await jouer(filA(H(26)));   // ⛔ doit se TAIRE
+  const matin  = await jouer(filA(H(9)));    // ⭐ doit RESTER (le trajet vers la salle)
+  const hierB  = await jouer(filB(H(26)));   // ⛔ le repli aussi doit se taire
+  const matinB = await jouer(filB(H(2)));    // ⭐ … et rester quand c'est d'aujourd'hui
+
+  /* ⛔⛔ LE TÉMOIN CENTRAL : il ne regarde pas la carte, il regarde SUR QUOI ON S'ENTRAÎNE. */
+  t('⛔⛔ ① une séance de 26 h ne ressurgit plus — ni carte, ni injection',
+    hier.carte===false && hier.injecte.length===0, hier.err||JSON.stringify(hier));
+  /* ⭐⭐ SANS CETTE MOITIÉ, LE CORRECTIF SERAIT UN RECUL : c'est le cas d'origine de ft-v851. */
+  t('⭐⭐ ② … mais la séance de CE MATIN reste (demandée à 9 h, ouverte à la salle le soir)',
+    matin.carte===true && matin.injecte.length===2 && /Soulevé/.test(matin.injecte[0]||''),
+    matin.err||JSON.stringify(matin));
+  /* ⛔ LA MÊME BORNE VAUT POUR LE REPLI DE ft-v1053, sinon le correctif est posé d'un seul côté. */
+  t('⛔ ③ le repli « la personne a demandé » est borné pareil : rien pour une demande d\'hier',
+    hierB.carte===false, hierB.err||JSON.stringify(hierB));
+  t('⭐ ④ … et il s\'affiche bien pour une demande d\'aujourd\'hui (sinon ③ serait vert sans rien mesurer)',
+    matinB.carte===true, matinB.err||JSON.stringify(matinB));
+  /* ⭐ LA RÈGLE ELLE-MÊME, épinglée sur ses deux moitiés — sans ça, quelqu'un « simplifierait »
+     un jour en ne gardant que les 12 h, et reprendrait à Michel sa séance du matin. */
+  {
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    /* ⚠️⚠️ L'HORLOGE EST ÉPINGLÉE À 01 H 30, ET C'EST LE SUJET DU TÉMOIN, PAS UN DÉTAIL.
+       Le cas « moins de 12 h MAIS jour civil précédent » n'existe QUE la nuit — à 14 h, 22 h la
+       veille fait déjà 16 h. Mon premier jet mesurait donc une chose impossible à l'heure où le
+       test tourne, et il rougissait sur du code correct. *Un témoin qui affirme une condition
+       doit la CONSTRUIRE, pas espérer que l'heure du jour la lui donne.* */
+    await cx.clock.setFixedTime(new Date('2026-08-29T01:30:00+02:00'));
+    const pg=await cx.newPage();
+    await pg.addInitScript(seedScript({}));
+    await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(1600);
+    const R=await pg.evaluate(()=>{
+      const j=new Date(); j.setHours(1,0,0,0);              // 01 h ce matin = même jour civil
+      const v=new Date(j.getTime()-3*3600*1000);            // 22 h hier = < 12 h mais jour d'avant
+      const o={ maintenant:_seanceEncoreDuJour(Date.now()),
+                tôtCeMatin:_seanceEncoreDuJour(j.getTime()),
+                hierSoirMoinsDe12h:_seanceEncoreDuJour(v.getTime()),
+                hier26h:_seanceEncoreDuJour(Date.now()-26*3600*1000) };
+      /* ⚠️ LE CAS « PAS DE DATE » : `ts` n'existe que depuis le 25/08, donc un fil plus ancien
+         n'en porte aucun. Un message sans date hérite de l'âge de sa CONVERSATION. */
+      try{ localStorage.removeItem('ft4_coach_lastts'); }catch(e){}
+      o.sansRien=_seanceEncoreDuJour(undefined);            // on ne sait rien → comportement d'hier
+      try{ localStorage.setItem('ft4_coach_lastts', String(Date.now()-30*3600*1000)); }catch(e){}
+      o.filMortHier=_seanceEncoreDuJour(undefined);         // fil vivant pour la dernière fois hier
+      try{ localStorage.setItem('ft4_coach_lastts', String(Date.now()-3600*1000)); }catch(e){}
+      o.filVivantAujourdhui=_seanceEncoreDuJour(undefined);
+      return o;
+    });
+    await cx.close();
+    t('⭐ ⑤ la fenêtre est l\'UNION des deux cas : le jour civil ET les 12 h',
+      R.maintenant===true && R.tôtCeMatin===true && R.hierSoirMoinsDe12h===true && R.hier26h===false,
+      JSON.stringify(R));
+    /* ⚠️⚠️ CE TÉMOIN EXISTE PARCE QUE MON PREMIER JET AVAIT TORT : il répondait « non » sans date,
+       ce qui aurait RETIRÉ le bouton à tout fil antérieur au 25/08 — une 4ᵉ panne du bouton,
+       fabriquée en réparant la 3ᵉ. Un message sans date hérite de l'âge de sa conversation. */
+    t('⭐⭐ ⑥ un message sans date hérite de l\'âge de sa CONVERSATION (`ft4_coach_lastts`)',
+      R.filMortHier===false && R.filVivantAujourdhui===true, JSON.stringify(R));
+    /* ⛔ Et quand on ne sait vraiment rien, on retombe sur le comportement d'hier : un bouton
+       absent est SILENCIEUX (plainte n°1), une séance périmée est sous les yeux et refusable. */
+    t('⛔ ⑦ … et sans rien du tout, on ne fait pas DISPARAÎTRE le bouton (comportement d\'hier)',
+      R.sansRien===true, JSON.stringify(R));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

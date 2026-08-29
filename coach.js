@@ -1404,6 +1404,16 @@ function _renderCoachThread(){
       const m=coachHistory[i];
       if(!m||m.role!=='assistant')continue;
       vus++;
+      /* ⛔⛔ LA BORNE EST UNE DURÉE, PLUS UN NOMBRE DE MESSAGES (29/08/2026, ft-v1054).
+         Michel, dix minutes après la livraison de ft-v1053 : *« lol il vient de me sortir la
+         séance d'hier »*. Reproduit et mesuré : une séance de **26 h** ressurgissait et
+         s'injectait — et **des deux côtés**, donc le défaut vient de ft-v1051, pas de la version
+         d'hier. ⚠️ Ce que ft-v1053 a changé, c'est le VOLUME du dégât : un bouton nu passait
+         inaperçu ; une carte qui demande *« Cette séance te convient ? »* se lit comme une
+         proposition d'aujourd'hui.
+         👉 *« au plus 3 messages de Milo » était un PROXY de « récent »* — et le fil du chat
+         **survit aux jours**, donc le proxy est faux dès qu'on rouvre l'app le lendemain. */
+      if(!_seanceEncoreDuJour(m.ts))continue;
       const txt=(typeof m.content==='string')?m.content:'';
       if(!txt||typeof _extractDaySession!=='function')continue;
       const dsx=_extractDaySession(txt);
@@ -1418,17 +1428,18 @@ function _renderCoachThread(){
        trajet vers la salle, exactement le moment où Michel perd le bouton (le cas d'origine du
        14/08). ⛔ On ne stocke rien de plus : le texte de Milo et la demande sont déjà dans le
        fil, il suffit de les relire (R2, la même décision qu'en ft-v851).
-       ⚠️ La borne est la même que ci-dessus, et pour la même raison : on remonte au plus 3
-       messages de Milo, et la demande doit être le DERNIER message de la personne — une demande
-       plus ancienne, à laquelle la conversation a tourné la page, ne doit pas ressurgir. */
+       ⚠️ La borne est la même que ci-dessus, et pour la même raison : la demande doit être le
+       DERNIER message de la personne, et elle doit dater d'AUJOURD'HUI (ft-v1054) — une demande
+       à laquelle la conversation a tourné la page, ou qui date d'hier, ne doit pas ressurgir. */
     if(!pose&&typeof _demandeUneSeance==='function'&&typeof _appendSeanceQuestion==='function'){
-      let dernUser=null, dernAssist=null;
+      let dernUser=null, dernAssist=null, tsU=0, tsA=0;
       for(let i=coachHistory.length-1;i>=0;i--){
         const m=coachHistory[i]; if(!m)continue;
-        if(!dernAssist&&m.role==='assistant'&&typeof m.content==='string')dernAssist=m.content;
-        if(m.role==='user'){ dernUser=(typeof m.content==='string')?m.content:''; break; }
+        if(!dernAssist&&m.role==='assistant'&&typeof m.content==='string'){dernAssist=m.content;tsA=m.ts;}
+        if(m.role==='user'){ dernUser=(typeof m.content==='string')?m.content:''; tsU=m.ts; break; }
       }
-      if(dernAssist&&dernUser&&_demandeUneSeance(dernUser)) _appendSeanceQuestion(dernAssist);
+      if(dernAssist&&dernUser&&_seanceEncoreDuJour(tsU)&&_seanceEncoreDuJour(tsA)&&_demandeUneSeance(dernUser))
+        _appendSeanceQuestion(dernAssist);
     }
   }catch(e){}
   _coachAuBas();
@@ -1889,6 +1900,53 @@ function _extractDaySession(reply){
 //      (`_seanceDepuisTexte`, écrite le 04/08) reste le filet. Elle est plus pauvre (ni
 //      repos, ni consigne, ni type de série) mais elle est gratuite et hors ligne.
 // *On ne remplace jamais un chemin qui marche : on en ajoute un meilleur devant.*
+
+/* ⏳⭐⭐ « CETTE SÉANCE EST-ELLE ENCORE CELLE D'AUJOURD'HUI ? » (29/08/2026, ft-v1054)
+   Michel, dix minutes après la livraison de ft-v1053 : *« lol il vient de me sortir la séance
+   d'hier »*.
+
+   ⛔⛔ LE DÉFAUT VIENT DE ft-v1051, ET C'EST MESURÉ DES DEUX CÔTÉS (26 h → la séance ressurgit et
+   s'injecte, contre ft-v1052 comme contre ft-v1053). Sa borne était *« au plus 3 messages de
+   Milo »* — un **NOMBRE DE MESSAGES**, c'est-à-dire un **PROXY de « récent »**. Or le fil du chat
+   **survit aux jours** : on rouvre l'app le lendemain, la séance d'hier est à un ou deux messages
+   de distance, et le proxy dit « récent » alors qu'elle a 26 h.
+   ⚠️ *Ma version n'a pas causé ça, elle l'a rendu FORT* : un bouton nu passait inaperçu ; une
+   carte qui demande « Cette séance te convient ? » se lit comme une proposition d'aujourd'hui.
+
+   ⭐ LA FENÊTRE EST L'UNION DE DEUX CAS, et chacun vient d'un usage réel :
+   ① **le même jour civil** — c'est le cas d'origine de ft-v851 : Michel demande sa séance le
+      matin, ferme l'app, et la rouvre à la salle le soir. Une borne en heures seule la lui
+      reprendrait, et perdre le bouton est précisément sa plainte n°1.
+   ② **moins de 12 h** — pour la demande de 23 h suivie de l'entraînement à 00 h 30, que le jour
+      civil couperait au milieu.
+   *Un seul propriétaire de cette question (R2), lu par les deux endroits qui relisent le fil.*
+
+   ⚠️⚠️ ET LE CAS « PAS D'HORODATAGE » A ÉTÉ TRANCHÉ SUR UNE MESURE, PAS SUR UN PRINCIPE.
+   Mon premier jet répondait « non » — se tromper fait s'entraîner sur la mauvaise séance, donc
+   dans le doute on se tait (R29). ⛔ **Sauf que `ts` n'existe que depuis le 25/08** (ft-v1008,
+   vérifié dans l'historique, pas supposé) : un fil enregistré avant n'en porte AUCUN. La règle
+   aurait donc **retiré le bouton** à qui n'a pas reparlé à Milo depuis — c'est-à-dire fabriqué
+   une quatrième panne du bouton en voulant en réparer une autre.
+   👉 **Un message sans date hérite de l'âge de sa CONVERSATION** : `ft4_coach_lastts` est écrit à
+   chaque échange depuis longtemps, il dit quand ce fil a été vivant pour la dernière fois. C'est
+   la meilleure chose qu'on sache, et elle existe déjà — rien de neuf n'est stocké (R2/R13).
+   ⛔ Et si même ça manque (fil très ancien, stockage abîmé), on retombe sur le **comportement
+   d'hier** plutôt que de faire disparaître le bouton : *un bouton absent est silencieux et c'est
+   la plainte n°1 de Michel ; une séance périmée, elle, est SOUS LES YEUX* — son texte est affiché
+   juste au-dessus, et depuis ft-v1053 on peut répondre « Non ». */
+function _seanceEncoreDuJour(ts){
+  try{
+    let t=+ts;
+    if(!(t>0)){                                    // message sans date → l'âge de la conversation
+      try{ t=+localStorage.getItem('ft4_coach_lastts')||0; }catch(e){ t=0; }
+      if(!(t>0)) return true;                      // on ne sait rien → comportement d'hier
+    }
+    const n=Date.now();
+    if(n-t < 12*3600*1000) return true;            // ② la demande tardive qui déborde sur la nuit
+    const a=new Date(t), b=new Date(n);            // ① le même jour civil (heure locale)
+    return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+  }catch(e){ return true; }
+}
 
 /* ⭐⭐ « LA PERSONNE A-T-ELLE DEMANDÉ UNE SÉANCE ? » (29/08/2026, ft-v1053)
    ⛔⛔ CE DÉTECTEUR EXISTE POUR CHANGER LA NATURE DU DÉCLENCHEUR, et c'est tout le correctif.

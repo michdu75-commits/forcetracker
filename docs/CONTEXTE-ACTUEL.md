@@ -6,7 +6,22 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1053`.
+- **Version en ligne (live) :** `ft-v1054`.
+- ⏳⭐⭐ **LA SÉANCE D'HIER NE RESSURGIT PLUS** (ft-v1054). Michel, **10 min** après ft-v1053 :
+  *« lol il vient de me sortir la séance d'hier »*.
+  ⛔⛔ **Le défaut vient de ft-v1051, mesuré des DEUX côtés avant d'être dit** : une séance de
+  **26 h** ressurgissait **et s'injectait**, contre ft-v1052 **comme** contre ft-v1053.
+  ⭐⭐ **La cause** : la borne était *« au plus 3 messages de Milo »* — un **compte**, donc un
+  **proxy de « récent »**. Or le fil du chat **survit aux jours**. → borne en **temps**.
+  ⭐ **Fenêtre = union de deux cas** : ① **même jour civil** (demander le matin, ouvrir à la
+  salle le soir — le cas de ft-v851, et *perdre le bouton est sa plainte n°1*) ② **< 12 h** (la
+  demande de 23 h qui déborde sur la nuit).
+  ⚠️⚠️ **Mon 1ᵉʳ jet a eu tort sur le cas « pas de date »** : `ts` n'existe que depuis le **25/08**
+  → répondre « non » aurait **retiré le bouton** à tout fil plus ancien, ***une 4ᵉ panne fabriquée
+  en réparant la 3ᵉ***. 👉 un message sans date **hérite de l'âge de sa conversation**
+  (`ft4_coach_lastts`, qui existait déjà) ; sans rien, on garde le comportement d'hier.
+  ⚠️ **Et un de mes témoins mesurait une chose impossible** : « < 12 h mais jour d'avant » n'existe
+  que **la nuit**. Horloge épinglée à 01 h 30.
 - ⚡⭐⭐ **« CETTE SÉANCE TE CONVIENT ? » — LE LANCEMENT EST FIGÉ** (ft-v1053). Michel, après
   **3 pannes du bouton en 8 jours** : *« il faut absolument figer le fait d'avoir toujours la
   séance lancée quand on lui demande une séance. Explique-moi avant de coder. »* — conception
