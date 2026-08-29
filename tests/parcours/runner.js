@@ -15947,14 +15947,21 @@ console.log('\n-- CXLVI. La quantité sur un aliment repris de « Mes aliments �
       if(i<0) return {absent:true};
       quickFillFood(i);
       const row=document.getElementById('af-bc-row'), prop=document.getElementById('af-prop-row'),
-            tot=document.getElementById('af-bc-total');
+            tot=document.getElementById('af-bc-total'), pas=document.getElementById('af-bc-last');
       const vis=e=>!!e && getComputedStyle(e).display!=='none';
       return { transporte:!!_afQuickItems[i].per100, grammes:vis(row), portions:vis(prop),
                champG:(document.getElementById('af-bc-grams')||{}).value,
                total: vis(tot) ? tot.textContent : '',
+               /* ⚖️ ft-v1051 : la quantité de la dernière fois est PROPOSÉE, plus imposée. */
+               pastille: vis(pas), pastilleTxt: (pas&&pas.textContent)||'',
                kcal:(document.getElementById('af-kcal')||{}).value };
     };
     o.bc   = lire('Riz Basmati (Taureau Ailé)');
+    /* ⚖️ ft-v1051 : on tape la pastille, et le total réapparaît avec la bonne quantité. */
+    if(typeof _bcReprendreDerniere==='function') _bcReprendreDerniere();
+    await dort(150);
+    o.bcApresTap = { total:((document.getElementById('af-bc-total')||{}).textContent)||'',
+                     champG:(document.getElementById('af-bc-grams')||{}).value };
     o.main = lire('Iso zero protein (ASL)');
     o.ia   = lire('Oeuf cru');
     /* ⭐ Le recalcul marche-t-il VRAIMENT ? 150 g → 200 g. */
@@ -15976,8 +15983,16 @@ console.log('\n-- CXLVI. La quantité sur un aliment repris de « Mes aliments �
     /* ⭐⭐ LE TRANSPORT : sans lui, rien de ce qui suit n'est possible (R4). */
     t('⭐⭐ `per100` SURVIT jusqu\'à l\'aliment repris — il était jeté avant (R4)',
       F.bc.transporte===true, 'per100 transporté = '+F.bc.transporte);
-    t('⭐⭐ CODE-BARRES repris → bloc « Quantité (g) », à la DERNIÈRE quantité (150, pas 100)',
-      F.bc.grammes===true && F.bc.champG==='150', 'bloc='+F.bc.grammes+' · champ='+F.bc.champG);
+    /* ⚠️ RE-VISÉ EN ft-v1051, SUR DÉCISION DE MICHEL : « on donne le choix et pas imposer ».
+       Ce témoin exigeait que le champ soit PRÉ-REMPLI à 150 g. C'était le comportement de
+       ft-v1042 — juste pour une dose de whey, faux pour une boîte de ratatouille, où c'est le
+       repas d'HIER qui s'enregistrerait. Le champ est maintenant VIDE et la quantité est
+       PROPOSÉE par une pastille. ⭐ Le témoin garde les deux moitiés : le bloc s'ouvre bien
+       (l'aliment est calibré), et la dernière quantité n'est pas perdue — elle est offerte. */
+    t('⭐⭐ CODE-BARRES repris → bloc « Quantité (g) », champ VIDE et 150 g PROPOSÉ (plus imposé)',
+      F.bc.grammes===true && F.bc.champG==='' && F.bc.pastille===true
+      && F.bc.pastilleTxt.indexOf('150 g (la dernière fois)')>=0,
+      JSON.stringify({bloc:F.bc.grammes,champ:F.bc.champG,pastille:F.bc.pastille,txt:F.bc.pastilleTxt}));
     t('⭐⭐ SAISI À LA MAIN (sans pour-100 g) → bloc PORTIONS, jamais rien du tout',
       F.main.portions===true && F.main.grammes===false, JSON.stringify({portions:F.main.portions,grammes:F.main.grammes}));
     t('⭐⭐ ESTIMÉ PAR L\'IA (sans pour-100 g) → bloc PORTIONS aussi',
@@ -15986,8 +16001,12 @@ console.log('\n-- CXLVI. La quantité sur un aliment repris de « Mes aliments �
     t('⛔ les deux réglages ne s\'affichent JAMAIS ensemble (R2)',
       [F.bc,F.main,F.ia].every(x=>!(x.grammes&&x.portions)), '');
     /* ⛔ Le défaut vu À LA CAPTURE : la ligne verte parlait de l'aliment précédent. */
-    t('⛔ la ligne du total parle de la BONNE quantité (vu à la capture : 150 dans le champ, « 200 g » sur la ligne)',
-      /pour tes 150 g/.test(F.bc.total) && /525 kcal/.test(F.bc.total), F.bc.total.slice(0,72));
+    /* ⚠️ RE-VISÉ EN ft-v1051 : le total ne devance plus le choix. Il n'y a donc RIEN à
+       l'arrivée — puis, dès qu'on tape la pastille, il dit la bonne quantité. *Ce que ce
+       témoin protège n'a pas changé d'un mot : le total et le champ parlent du même repas.* */
+    t('⛔ AUCUN total avant le choix — puis il parle de la BONNE quantité après le tap',
+      F.bc.total==='' && /pour tes 150 g/.test(F.bcApresTap.total) && /525 kcal/.test(F.bcApresTap.total),
+      JSON.stringify({avant:F.bc.total.slice(0,40),apres:F.bcApresTap.total.slice(0,72)}));
     t('⛔ … et elle ne survit PAS à un aliment sans quantité connue (pas de total orphelin)',
       F.main.total==='' && F.ia.total==='', JSON.stringify({main:F.main.total.slice(0,40),ia:F.ia.total.slice(0,40)}));
     t('⭐ le recalcul marche : 150 → 200 g donne 700 kcal et 154 g de glucides',
@@ -17010,6 +17029,8 @@ console.log('\n-- CLV. La quantité au choix : grammes ou portions (ft-v1051) --
     quickFillFood(j); await dort(200);
     const vis=id=>{const x=document.getElementById(id);return !!x&&getComputedStyle(x).display!=='none';};
     o.reprise={grammes:vis('af-bc-row'),champG:(document.getElementById('af-bc-grams')||{}).value,
+               pastille:vis('af-bc-last'),
+               pastilleTxt:((document.getElementById('af-bc-last')||{}).textContent)||'',
                uniteRAZ:_afUnite,poidsRAZ:_afPoidsDeclare};
     /* ⑦ NON-RÉGRESSION : les portions marchent toujours, et un poids LU dans la phrase
        garde son chemin d'origine (il ne passe pas par le nouveau). */
@@ -17053,8 +17074,12 @@ console.log('\n-- CLV. La quantité au choix : grammes ou portions (ft-v1051) --
       !!F.enr.per100 && F.enr.per100.kcal===390 && F.enr.per100.prot===88,
       JSON.stringify(F.enr.per100));
     /* ⭐ CE QUI EST RETENU CALIBRE L'ALIMENT POUR TOUJOURS (machinerie ft-v1042). */
-    t('⭐⭐ à la reprise, le champ en GRAMMES s\'ouvre tout seul — l\'aliment est calibré',
-      F.reprise.grammes===true && F.reprise.champG==='80', JSON.stringify(F.reprise));
+    /* ⚠️ RE-VISÉ dans la même version, après la décision de Michel : le champ ne se
+       pré-remplit plus. Ce qui compte n'a pas bougé — l'aliment EST calibré, donc le bloc en
+       grammes s'ouvre ; et les 80 g de la dernière fois sont PROPOSÉS, pas imposés. */
+    t('⭐⭐ à la reprise, le bloc en GRAMMES s\'ouvre tout seul et 80 g sont PROPOSÉS',
+      F.reprise.grammes===true && F.reprise.champG==='' && F.reprise.pastille===true,
+      JSON.stringify(F.reprise));
     /* ⛔ Un réglage qui survit à son sujet a l'air d'un fait. */
     t('⛔ l\'unité et le poids déclaré sont REMIS À ZÉRO pour l\'aliment suivant',
       F.reprise.uniteRAZ==='portion' && F.reprise.poidsRAZ===0,
@@ -17149,7 +17174,13 @@ console.log('\n-- CLVI. « La dernière fois » : proposé, jamais imposé (ft-v
     t('⭐⭐ le champ est VIDE à la reprise — la quantité du dernier repas n\'est plus imposée',
       F.reprise.champ==='', 'champ = "'+F.reprise.champ+'"');
     t('⭐⭐ … et elle est PROPOSÉE : la pastille « 250 g (la dernière fois) » est là',
-      F.reprise.pastille===true && /250 g \(la dernière fois\)/.test(F.reprise.texte), F.reprise.texte);
+      /* ⚠️ CONTENANCE DE CHAINE, PAS UNE REGEX — et c'est la lecon de ce temoin. Il etait
+         ecrit avec des parentheses echappees, et le script qui a pose le bloc a AJOUTE un
+         niveau d'echappement : la regex cherchait un ANTISLASH litteral. *Elle ne pouvait
+         jamais etre verte, quel que soit le code.* C'est le miroir du « vert qui ne peut pas
+         rougir » de BUGS.md : un ROUGE qui ne peut pas verdir. Un indexOf supprime la classe. */
+      F.reprise.pastille===true && F.reprise.texte.indexOf('250 g (la dernière fois)')>=0,
+      JSON.stringify({visible:F.reprise.pastille,texte:F.reprise.texte}));
     /* ⛔ Le « voisinage muet » : un total qui devance le choix se lit comme un fait. */
     t('⛔ AUCUN total affiché tant que la quantité n\'est pas choisie (le « voisinage muet »)',
       F.reprise.total==='', 'total = "'+F.reprise.total.slice(0,60)+'"');
