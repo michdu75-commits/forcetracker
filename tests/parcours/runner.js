@@ -16979,6 +16979,107 @@ console.log('\n-- CLV. Le bouton survit à un message de Milo après la séance 
     cas1.n<=1 && cas2.n<=1, 'cas1='+cas1.n+' cas2='+cas2.n);
 }
 
+/* == BLOC CLVI - LE REPOS SUIT LA CHARGE, CHEZ MILO ET A L'ECRAN (ft-v1052) ==
+   Les 2 points nes des captures de Michel EN SALLE. Lui, 48 ans : « quand on fait de la force,
+   1 min 30 de repos c'est impossible, il faut la recup ».
+
+   ⛔⛔ MESURE DANS SON CONTEXTE : Milo recevait « muscle/hypertrophie → 8-15 reps, repos 60-90 s »
+   ET le cadre muscu « 90 a 150 s », et RIEN qui lie le repos a la CHARGE. Sur un « S1 : 95×3 » a
+   88 % du 1RM il prenait donc les REPS DE LA FORCE et le REPOS DE L'HYPERTROPHIE — un melange.
+   ⛔⛔ ET LE CONTROLE EXISTAIT DEJA (ft-v980/1043) mais ne s'affichait qu'a l'APPLICATION, dans
+   l'ecran Seance. Michel lit le CHAT : il n'y voyait rien, donc pour lui il n'existait pas (R3).
+
+   ⭐ LES NOMBRES NE SONT PAS REECRITS DANS LE PROMPT (R2) : la consigne est DERIVEE de
+   `_INT_LOURD` et `_cadreReposLourd`. Le temoin le plus fort du bloc le prouve — on change la
+   discipline, et la phrase envoyee a Milo suit toute seule. */
+console.log('\n-- CLVI. Le repos suit la charge, chez Milo et à l\'écran (ft-v1052) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const W=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    /* SON CAS EXACT : 1RM 108 (105×2), Milo prescrit 3 × 95×3 avec 90 s. 95/108 = 88 %. */
+    S.prs={'Développé Couché':{kg:105,reps:2,rm1:108,date:'2026-07-27'}};
+    S.age=48; S.bw=85; S.discipline='muscu'; persist();
+    // ── ① LA REGLE CHEZ MILO ──
+    const c=buildCoachContext();
+    o.regle={ presente:/LE REPOS SUIT LA CHARGE DE LA SÉRIE/.test(c),
+              seuil:/80 % de son 1RM/.test(c),
+              repos:/au moins \*\*3 min\*\*/.test(c),
+              antiMelange:/reps de la FORCE avec le repos de l'HYPERTROPHIE/.test(c) };
+    /* ⭐⭐ LA PREUVE QU'ELLE EST DERIVEE ET NON ECRITE EN DUR : on change la discipline, la
+       phrase doit suivre — force athletique = « 3 à 5 min » (son cadre dit ca). */
+    S.discipline='powerlifting'; o.suitDiscipline=/au moins \*\*3 à 5 min\*\*/.test(buildCoachContext());
+    S.discipline='muscu'; persist();
+    // ── ② L'AVERTISSEMENT DANS LE CHAT ──
+    goScreen('coach');
+    const msgs=document.getElementById('coach-msgs'); msgs.innerHTML='';
+    renderCoachMsg('coach','Développé Couché\n• S1 : 95×3 — repos 1 min 30');
+    const seance={label:'Push', exs:[{name:'Développé Couché',
+      sets:[{kg:95,reps:3,type:'N',rest:90},{kg:95,reps:3,type:'N',rest:90},{kg:95,reps:3,type:'N',rest:90}]}]};
+    o.pose=_appendStartSessionBtn(JSON.parse(JSON.stringify(seance)));
+    const w=document.querySelector('.milo-warn');
+    o.avert=w?w.textContent.replace(/\s+/g,' ').trim():'';
+    /* ⛔ R24 : ca INFORME, ca ne bloque pas — le bouton reste, pleine largeur. */
+    o.boutonReste=!!document.querySelector('.coach-prog-save .btn-red');
+    /* ⛔⛔ R29 : ON SIGNALE, ON NE CORRIGE JAMAIS TOUT SEUL. La charge et le repos prescrits
+       par Milo ne doivent PAS avoir ete retouches — Michel VOULAIT ses 95 kg. */
+    const inj=_pendingMiloSessions[_pendingMiloSessions.length-1];
+    o.rienRetouche=!!inj && (inj.exs[0].sets||[]).every(x=>+x.kg===95 && +x.reps===3);
+    /* ⛔ L'avertissement est AU-DESSUS du bouton (on le lit avant de taper). */
+    const wrap=document.querySelector('.coach-prog-save');
+    o.avantLeBouton=!!wrap && wrap.firstElementChild && wrap.firstElementChild.classList.contains('milo-warn');
+    // ── NON-REGRESSION : une seance raisonnable ne declenche RIEN ──
+    msgs.innerHTML=''; renderCoachMsg('coach','Séance normale');
+    _appendStartSessionBtn({label:'B', exs:[{name:'Développé Couché',
+      sets:[{kg:70,reps:10,type:'N',rest:120},{kg:70,reps:10,type:'N',rest:120}]}]});
+    o.ok={avert:!!document.querySelector('.milo-warn'), bouton:!!document.querySelector('.coach-prog-save .btn-red')};
+    // ── SANS RECORD CONNU : le controle se tait, et le bouton sort quand meme ──
+    S.prs={}; persist();
+    msgs.innerHTML=''; renderCoachMsg('coach','Séance');
+    _appendStartSessionBtn({label:'C', exs:[{name:'Rowing Barre (Tirage Horizontal)',
+      sets:[{kg:200,reps:3,type:'N',rest:30}]}]});
+    o.sansRecord={avert:!!document.querySelector('.milo-warn'), bouton:!!document.querySelector('.coach-prog-save .btn-red')};
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  await cx.close();
+
+  if(W.err)t('CLVI n\'a pas pu tourner',false,JSON.stringify(W));
+  else{
+    /* ── ① LA REGLE QUI MANQUAIT ── */
+    t('⭐⭐ ① Milo reçoit enfin la règle « le repos suit la CHARGE, pas l\'objectif »',
+      W.regle.presente===true && W.regle.seuil===true && W.regle.repos===true, JSON.stringify(W.regle));
+    t('⛔ … avec l\'interdiction explicite de mélanger les reps de la force et le repos de l\'hypertrophie',
+      W.regle.antiMelange===true, JSON.stringify(W.regle));
+    /* ⭐⭐ LE TÉMOIN QUI PROTÈGE R2 : la phrase est DÉRIVÉE du code, pas recopiée. */
+    t('⭐⭐ … et elle est DÉRIVÉE du code : en force athlétique la phrase dit « 3 à 5 min » toute seule',
+      W.suitDiscipline===true, 'suit la discipline = '+W.suitDiscipline);
+    /* ── ② L'AVERTISSEMENT LÀ OÙ IL LE LIT ── */
+    t('⭐⭐ ② l\'avertissement s\'affiche DANS LE CHAT, sous la séance proposée',
+      /90 s à 88 % du 1RM/.test(W.avert) && /trop court pour du lourd/.test(W.avert), W.avert||'(aucun)');
+    t('⛔ … et il est AU-DESSUS du bouton (on le lit avant de taper)',
+      W.avantLeBouton===true, 'avant = '+W.avantLeBouton);
+    /* ⛔ R24 — informer sans bloquer. */
+    t('⛔⛔ R24 : ça informe, ça ne BLOQUE pas — le bouton reste',
+      W.pose===true && W.boutonReste===true, 'posé='+W.pose+' · bouton='+W.boutonReste);
+    /* ⛔⛔ R29 — la décision reste à la personne. */
+    t('⛔⛔ R29 : la charge et les reps de Milo ne sont PAS retouchés (Michel VOULAIT ses 95 kg)',
+      W.rienRetouche===true, 'intact = '+W.rienRetouche);
+    /* ── NON-RÉGRESSIONS : sans elles, les témoins ci-dessus seraient verts en criant sur tout ── */
+    t('⛔ une séance raisonnable (70×10 en 2 min) ne déclenche AUCUN avertissement',
+      W.ok.avert===false && W.ok.bouton===true, JSON.stringify(W.ok));
+    t('⛔ sans record connu, le contrôle se TAIT — et le bouton sort quand même',
+      W.sansRecord.avert===false && W.sansRecord.bouton===true, JSON.stringify(W.sansRecord));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

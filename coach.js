@@ -179,6 +179,33 @@ function _rythmeSeance(){
    ⚠️ BLOC PERSONNEL : jamais dans le bloc commun, qui est partagé entre tous et mis en cache.
    ⛔ Et on lui donne le COMPTE, pas un verdict : c'est lui qui juge, et lui seul sait quel jour
    de la semaine on est — un mercredi, être « sous le cadre » ne veut rien dire. */
+/* 🎽 LE REPOS SUIT LA CHARGE DE LA SÉRIE, PAS L'OBJECTIF DU PROGRAMME (28/08/2026, ft-v1052)
+   ⛔⛔ MESURÉ DANS SON CONTEXTE, ET C'EST LA RÈGLE QUI MANQUAIT. Milo recevait « force → 3-6 reps
+   lourdes, repos 2-4 min ; muscle/hypertrophie → 8-15 reps, repos 60-90 s » **et** le cadre de sa
+   discipline — et RIEN qui lie le repos à la CHARGE. Sur un « S1 : 95×3 » à **88 % du 1RM** il
+   prenait donc les **reps de la force** et le **repos de l'hypertrophie**. Un mélange, pas un
+   choix. Michel, 48 ans, capture à l'appui : *« quand on fait de la force, 1 min 30 de repos
+   c'est impossible, il faut la récup »*.
+
+   ⛔ ON NE RÉÉCRIT PAS LES NOMBRES ICI (R2) : ils existent déjà côté code depuis ft-v980 et
+   ft-v1043 (`_INT_LOURD`, `_cadreReposLourd`). Un 3ᵉ chiffre dans le prompt divergerait du
+   contrôle qui vérifie la séance — et l'app dirait deux choses différentes de la même série.
+   On DÉRIVE la consigne des mêmes constantes : si le seuil bouge, la phrase suit.
+
+   ⚠️⚠️ ET ELLE EST DANS LE BLOC **PERSONNEL**, PAS LE COMMUN — un témoin existant m'a repris.
+   Mon 1ᵉʳ jet la posait dans le prompt commun : ① elle faisait passer le bloc commun de 45 973 à
+   **47 729** caractères, au-dessus du garde-fou ; ② et surtout **elle dépend de `S.discipline`**,
+   donc elle aurait fait varier en silence un bloc qui est **partagé entre tous et mis en cache**.
+   *Une phrase qui parle de LA personne n'a rien à faire dans le bloc de tout le monde.* */
+function _ctxReposCharge(){
+  try{
+    if(typeof _INT_LOURD==='undefined'||typeof _cadreReposLourd!=='function') return '';
+    const pct=Math.round(_INT_LOURD*100);
+    const c=_cadreReposLourd(S.discipline);
+    return `\n⛔⛔ LE REPOS SUIT LA CHARGE DE LA SÉRIE, PAS L'OBJECTIF DU PROGRAMME. Dès qu'une série que TU prescris atteint ${pct} % de son 1RM (ou 5 répétitions et moins sur un mouvement de base), le repos est d'au moins **${c.txt}** — quels que soient son objectif et sa discipline. Les repères « repos 60-90 s » plus haut décrivent des séries de travail ORDINAIRES, pas une série lourde : donner 90 s sur un triple à ${pct} % serait prescrire quelque chose d'inexécutable, et l'app le lui dira juste sous ta séance. ⚠️ Ne mélange donc JAMAIS les reps de la FORCE avec le repos de l'HYPERTROPHIE dans la même ligne.\n`;
+  }catch(e){ return ''; }
+}
+
 function _ctxVolumeMuscles(){
   try{
     if(typeof _volumeParMuscle!=='function') return '';
@@ -2189,7 +2216,35 @@ function _appendStartSessionBtn(sess, cible){
   const lbl=enCours?'⚡ Utiliser cette séance':'⚡ Commencer cette séance';
   const wrap=document.createElement('div');
   wrap.className='coach-prog-save';
-  wrap.innerHTML='<button class="btn btn-red" style="width:100%;margin-top:10px;padding:11px;font-size:14px;border-radius:12px;" onclick="_startSessionFromMilo('+idx+',this)">'+lbl+' ('+n+(n>1?' exercices':' exercice')+')</button>';
+  /* ⚠️ L'AVERTISSEMENT D'INTENSITÉ S'AFFICHE ICI, DANS LE CHAT (28/08/2026, ft-v1052)
+     ⛔⛔ POURQUOI C'ÉTAIT UN TROU, ET IL EST MESURÉ : `_intensiteDefauts` existe depuis ft-v980
+     et sait très bien dire *« repos de 90 s à 88 % du 1RM : trop court pour du lourd »*. Mais il
+     ne tournait qu'à l'**APPLICATION** de la séance, dans l'écran Séance. Michel, lui, lit le
+     **chat** : il n'y voyait rien, donc pour lui le contrôle n'existait pas. C'est **R3** — une
+     connaissance qui ne produit aucun comportement OBSERVABLE ne sert à personne.
+     ⭐ R13 : greffé sur `_appendStartSessionBtn`, le passage obligé des TROIS voies (bloc caché ·
+     cervelet · filet) — un seul endroit, pas trois qui divergeraient.
+     ⛔ R24 : ça INFORME, ça ne bloque pas. Le bouton reste, et la charge n'est pas retouchée —
+     *on signale, on ne corrige jamais tout seul* (R29, la règle née du cas de Michel lui-même :
+     il VOULAIT ses 95 kg). ⛔ Et c'est BORNÉ à 3 lignes : un mur d'avertissements ne se lit pas. */
+  let _av='';
+  try{
+    if(typeof _intensiteDefauts==='function'){
+      const lignes=[];
+      (norm.exs||[]).forEach(ex=>{
+        (_intensiteDefauts(ex.name, ex.sets)||[]).forEach(d=>lignes.push(ex.name+' — '+d));
+      });
+      if(lignes.length){
+        const vus=lignes.slice(0,3), reste=lignes.length-vus.length;
+        const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+        _av='<div class="milo-warn">'
+          +vus.map(l=>'<div>⚠️ '+esc(l)+'</div>').join('')
+          +(reste>0?'<div class="milo-warn-plus">et '+reste+' autre'+(reste>1?'s':'')+'</div>':'')
+          +'</div>';
+      }
+    }
+  }catch(e){ /* jamais bloquant : un avertissement ne doit pas empêcher de lancer la séance */ }
+  wrap.innerHTML=_av+'<button class="btn btn-red" style="width:100%;margin-top:10px;padding:11px;font-size:14px;border-radius:12px;" onclick="_startSessionFromMilo('+idx+',this)">'+lbl+' ('+n+(n>1?' exercices':' exercice')+')</button>';
   last.appendChild(wrap);
   _coachAuBas();
   return true;                    // posé — l'appelant peut cesser de chercher un repli
@@ -3227,6 +3282,7 @@ ${_ctxCharges()}
 ${_ctxDureeSeance()}
 ${_ctxReposRegles()}
 ${_ctxVolumeMuscles()}
+${_ctxReposCharge()}
 ${(()=>{
   // REGISTRE ATHLÈTE (Dossier Athlète, brique 1 = socle) — mémoire durable.
   // Vide pour l'instant (les faits/observations arriveront aux briques 2 & 5) → rien injecté tant que vide.
@@ -6422,7 +6478,7 @@ const _DRAWER_CONTENT = {
         {ic:'🔀',t:'Les exercices « un côté à la fois »',d:'48 exercices de l\'app sont <b>unilatéraux</b> : la série se refait de l\'autre côté (rowing haltère, curl haltères, fentes, squat bulgare, élévations latérales à un bras, extension quadriceps unilatérale…). En séance, ils portent une pastille <b>🔀 « par bras »</b> ou <b>« par jambe »</b> à côté de leur nom — tape-la pour tout revoir. <b>QUEL POIDS NOTER</b> — une seule règle, valable partout dans l\'app : <b>tu notes le poids qui BOUGE pendant la répétition</b>. Un seul haltère monte (rowing haltère, curl alterné, élévation à un bras) → note son poids à lui, 28, jamais 56. Les deux bougent en même temps (squat bulgare avec deux haltères, développé incliné) → note le total, 60. <b>COMBIEN DE SÉRIES</b> : tu saisis <b>3</b>, comme d\'habitude — pas 6. L\'app sait qu\'il faut refaire chaque série de l\'autre côté, et <b>compte ton tonnage en double</b> toute seule. Ton <b>record</b>, lui, reste calculé sur la charge d\'un seul côté : c\'est la vraie charge que ton muscle a tenue. ⚠️ Un côté plus faible que l\'autre ne peut pas se noter séparément aujourd\'hui — ça doublerait la saisie pour tout le monde ; dis-le si ça te manque. Tes séances déjà enregistrées ne bougent pas.'},
         {ic:'📤',t:'Exporter ton historique — et quel format choisir',d:'Dans <b>Progrès</b>, à côté de « Historique séances », le bouton <b>📤 Exporter</b> te propose deux formats. <b>CSV</b> : un fichier qui s\'ouvre dans <b>Excel, Numbers ou Google Sheets</b>, avec une ligne par série (date · séance · exercice · n° de série · type · kg · reps · RIR · volume) — c\'est le format pour trier, filtrer, faire tes propres calculs. <b>PDF</b> : un document mis en page, <b>une séance par bloc</b> avec sa date en toutes lettres — c\'est le format pour montrer à quelqu\'un (coach, kiné, préparateur). ⛔ <b>CE QU\'IL Y A DEDANS, ET CE QU\'IL N\'Y A PAS</b> : seules les séries que tu as <b>validées</b> (une série cochée non faite n\'a pas eu lieu). Et <b>aucune donnée de santé</b> — ni poids de corps, ni âge, ni sexe, ni ton adresse e-mail. C\'est voulu : ce fichier sort de l\'app, il ne doit contenir que de l\'entraînement. ⚠️ Le <b>RIR</b> y est quand tu l\'as noté ; une série non notée reste <b>vide</b>, jamais « 0 » — sinon elle passerait pour un échec. ⓘ <b>À NE PAS CONFONDRE</b> avec <b>Menu → Exporter mes données</b>, qui existe depuis longtemps : celui-là sort un <b>JSON</b>, fait pour <b>sauvegarder</b> ou faire analyser l\'ensemble de ton compte. Ici c\'est ton <b>historique d\'entraînement</b>, dans un format qui se lit.'},
         {ic:'📊',t:'Le volume par groupe musculaire, et pourquoi il n\'affiche pas d\'objectif',d:'En haut de <b>Progrès</b>, « Ce que ta semaine a travaillé » compte tes <b>séries de travail par groupe musculaire</b> sur les <b>7 derniers jours glissants</b> (pas depuis lundi : sinon un mardi, tout le monde afficherait 2 séries et croirait avoir régressé). <b>COMMENT C\'EST COMPTÉ</b> : une série compte pour le <b>muscle principal</b> de l\'exercice. Un développé couché donne 1 série aux <b>pectoraux</b>, et rien aux triceps — sinon le total exploserait et ne voudrait plus rien dire. Les <b>échauffements</b> (tag É) et les séries <b>non validées</b> ne comptent pas : le cadre parle de séries de <i>travail</i>. ⚠️ Un exercice dont l\'app ne connaît pas les muscles (nom ambigu, exercice perso sans muscles cochés) ne peut créditer personne : ses séries sont <b>comptées à part et affichées</b>, jamais effacées en silence — sinon le total serait plus petit que la réalité tout en ayant l\'air d\'un fait. <b>POURQUOI AUCUN OBJECTIF N\'EST AFFICHÉ</b> : ta discipline a bien un cadre (<i>« 10 à 20 séries par groupe et par semaine »</i> en musculation, <i>12 à 22</i> en bodybuilding) — mais <b>un mercredi, tout le monde est en dessous</b>. Afficher « 6 · cible 10-20 » se lirait comme un déficit alors que la semaine n\'est pas finie. L\'écran s\'en tient donc aux <b>faits</b>. 👉 <b>Milo</b>, lui, reçoit les deux — le compte et le cadre — et il sait quel jour on est : c\'est à lui de dire quelque chose d\'utile. ⚠️ Et pour trois disciplines sur cinq (powerbuilding, force athlétique, haltérophilie), le cadre n\'exprime <b>pas</b> le volume par muscle et par semaine — il le dit par séance ou par mouvement. Milo est prévenu de ne comparer ces chiffres à aucun objectif dans ce cas.'},
-        {ic:'🎽',t:'Pourquoi le repos conseillé n\'est pas le même pour tout le monde',d:'Quand une séance te propose une charge <b>lourde</b> (au-delà de 80 % de ton maximum estimé) avec un <b>repos court</b>, l\'app te prévient. ⚠️ Jusqu\'au 27/08, elle appliquait <b>un seul chiffre à tout le monde</b> — 150 secondes — alors qu\'elle affiche à chaque discipline un cadre différent, et qu\'elle l\'envoie aussi à Milo : <i>« 3 à 5 min entre les séries lourdes »</i> en <b>force athlétique</b>, <i>« 60 à 120 s, les repos courts font partie du travail »</i> en <b>bodybuilding</b>. <b>L\'app se contredisait donc elle-même</b> : elle te montrait un cadre et en vérifiait un autre. <b>CE QUI CHANGE</b> : le seuil et le conseil sont maintenant <b>lus dans ton cadre</b>. Un powerlifter qui prenait 160 s entre deux séries à 88 % ne recevait rien — il est prévenu, et on lui dit « viser 3 à 5 min », pas « 3 min ». <b>CE QUI NE CHANGE PAS, ET C\'EST VOULU</b> : ⛔ le contrôle <b>ne se relâche jamais</b>. Il garde un plancher, parce que ce plancher vient d\'un cas réel tranché par Michel — <i>« un 3×5 avec 90 secondes de repos, c\'est impossible »</i> — et que le bas de plage de la musculation (90 s) aurait rendu son propre cas silencieux. ⛔ Et <b>la charge maximale, elle, ne bouge pas d\'un gramme</b> : ce que ton corps peut tenir est de la <b>physiologie</b>, pas de la doctrine — un powerlifter n\'a pas un maximum plus élevé parce qu\'il est powerlifter. ⛔ Enfin l\'app <b>ne te reproche pas</b> une charge au-dessus de ton cadre : les cadres disent eux-mêmes que <i>« du lourd ponctuel reste utile et ne se reproche pas »</i>. 👉 Ta discipline se change dans <b>Profil</b>, et le cadre complet s\'y affiche.'},
+        {ic:'🎽',t:'Pourquoi le repos conseillé n\'est pas le même pour tout le monde',d:'Quand une séance te propose une charge <b>lourde</b> (au-delà de 80 % de ton maximum estimé) avec un <b>repos court</b>, l\'app te prévient. ⚠️ Jusqu\'au 27/08, elle appliquait <b>un seul chiffre à tout le monde</b> — 150 secondes — alors qu\'elle affiche à chaque discipline un cadre différent, et qu\'elle l\'envoie aussi à Milo : <i>« 3 à 5 min entre les séries lourdes »</i> en <b>force athlétique</b>, <i>« 60 à 120 s, les repos courts font partie du travail »</i> en <b>bodybuilding</b>. <b>L\'app se contredisait donc elle-même</b> : elle te montrait un cadre et en vérifiait un autre. <b>CE QUI CHANGE</b> : le seuil et le conseil sont maintenant <b>lus dans ton cadre</b>. Un powerlifter qui prenait 160 s entre deux séries à 88 % ne recevait rien — il est prévenu, et on lui dit « viser 3 à 5 min », pas « 3 min ». <b>CE QUI NE CHANGE PAS, ET C\'EST VOULU</b> : ⛔ le contrôle <b>ne se relâche jamais</b>. Il garde un plancher, parce que ce plancher vient d\'un cas réel tranché par Michel — <i>« un 3×5 avec 90 secondes de repos, c\'est impossible »</i> — et que le bas de plage de la musculation (90 s) aurait rendu son propre cas silencieux. ⛔ Et <b>la charge maximale, elle, ne bouge pas d\'un gramme</b> : ce que ton corps peut tenir est de la <b>physiologie</b>, pas de la doctrine — un powerlifter n\'a pas un maximum plus élevé parce qu\'il est powerlifter. ⛔ Enfin l\'app <b>ne te reproche pas</b> une charge au-dessus de ton cadre : les cadres disent eux-mêmes que <i>« du lourd ponctuel reste utile et ne se reproche pas »</i>. 👉 Ta discipline se change dans <b>Profil</b>, et le cadre complet s\'y affiche. <b>🎽 ET DEPUIS LE 28/08, MILO LE SAIT AUSSI — c\'était le vrai trou.</b> Le contrôle ci-dessus vérifiait ta séance <b>après coup</b> ; Milo, lui, n\'avait <b>aucune règle liant le repos à la charge</b>. Il recevait « force → 3-6 reps lourdes, repos 2-4 min » et « muscle → 8-15 reps, repos 60-90 s », et rien d\'autre : sur un <i>3 reps à 88 % de ton max</i> il prenait donc les <b>reps de la force</b> et le <b>repos de l\'hypertrophie</b>. Un mélange, pas un choix. Il a maintenant la règle : <b>dès 80 % du max (ou 5 reps et moins sur un mouvement de base), 3 minutes minimum</b> — quels que soient ton objectif et ta discipline. ⚠️ Ce seuil n\'est pas écrit deux fois : la phrase envoyée à Milo est <b>construite à partir du même chiffre</b> que le contrôle, donc les deux ne peuvent pas se contredire. <b>ET L\'AVERTISSEMENT SE VOIT ENFIN</b> : il s\'affiche <b>dans le chat, sous la séance proposée</b>, avant que tu la lances — avant, il n\'apparaissait qu\'une fois la séance appliquée, dans l\'écran Séance, donc si tu lisais le chat tu ne le voyais jamais. ⛔ <b>Il informe, il ne décide pas</b> : le bouton reste, la charge et le repos de Milo ne sont <b>pas retouchés</b>. Tester une charge au-dessus du cadre est une décision légitime — l\'app te dit ce qu\'elle voit, tu tranches.'},
         {ic:'🔭',t:'Ce que ton histoire montre',d:'En haut de l\'onglet <b>Progrès</b>, l\'app dégage des <b>constantes</b> de tout ton historique : ton <b>rythme réel</b> (pas celui que tu crois tenir), l\'<b>exercice qui revient le plus</b>, et la <b>région</b> que tes séances travaillent le plus souvent. ⚠️ <b>Ce sont des faits comptés, pas des conseils</b> — tu ne liras jamais « tu devrais ». C\'est à toi d\'en tirer ce que tu veux : l\'app te montre ce qu\'elle voit, elle ne décide pas à ta place. ⛔ Chaque ligne <b>dit sur quoi elle porte</b> (« sur 14 séances étalées sur 31 jours »), pour que deux chiffres ne se contredisent pas sans explication. ⛔ Et sous <b>8 séances sur 21 jours</b>, elle dit qu\'elle ne sait pas encore : une « constante » sur 5 séances, c\'est du hasard. ⚠️ La région est la <b>dominante</b> de chaque séance — « le bas du corps domine 3 fois » ne veut pas dire que tu ne le travailles que 3 fois.'},
         {ic:'📊',t:'Historique par exercice',d:'Bouton 📊 sur chaque exercice en séance → graphique du poids max sur les 5 dernières séances. Pratique pour calibrer sa charge du jour.'},
         {ic:'🧍',t:'La figurine des muscles travaillés',d:'Après ta séance (et sur chaque carte d\'historique), la figurine colore ce que tu as travaillé : ROUGE = muscle moteur, ORANGE = muscle secondaire, BLEU = sollicité indirectement, brun = pas travaillé. Depuis le 03/08 elle dessine 41 muscles au lieu de 18 zones : le pectoral en 3 faisceaux, la cuisse en 3, le trapèze en 3 étages, plus les adducteurs, le soléaire et le trapèze inférieur. Tape un muscle pour lire son nom précis. ⚠️ Plusieurs faisceaux d\'un même muscle s\'allument encore ensemble (un développé couché allume les 3 bandes du pectoral) : le dessin a pris de l\'avance sur les fiches d\'exercices, qui seront affinées ensuite.'},

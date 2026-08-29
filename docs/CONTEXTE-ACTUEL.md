@@ -6,7 +6,23 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1051`.
+- **Version en ligne (live) :** `ft-v1052`.
+- 🎽⭐⭐ **LE REPOS SUIT LA CHARGE, PAS L'OBJECTIF — chez Milo ET à l'écran** (ft-v1052).
+  ⛔⛔ **Mesuré** : Milo recevait *« muscle → 8-15 reps, repos 60-90 s »* et le cadre muscu, et
+  **rien qui lie le repos à la CHARGE** → sur un **3 reps à 88 %** il prenait les **reps de la
+  force** et le **repos de l'hypertrophie**. ⛔ Les nombres ne sont **pas réécrits** dans le
+  prompt (R2) : la phrase est **dérivée** de `_INT_LOURD` et `_cadreReposLourd` — change de
+  discipline, elle passe toute seule à « 3 à 5 min ».
+  ⛔⛔ **Et le contrôle existait déjà, il ne se voyait nulle part** : `_intensiteDefauts` ne
+  tournait qu'à l'**application**, dans l'écran Séance. Michel lit le **chat** → pour lui il
+  n'existait pas (**R3**). Il s'affiche maintenant **sous la séance proposée**.
+  ⭐ **R13** : un seul point de greffe, `_appendStartSessionBtn`, passage obligé des 3 voies.
+  ⛔ **Ça informe, ça ne décide pas** : le bouton reste (R24), charge et repos **non retouchés**
+  (R29 — *il VOULAIT ses 95 kg*), borné à 3 lignes.
+  ⚠️⚠️ **Un témoin m'a repris sur une erreur de CONCEPTION** : ma règle était dans le prompt
+  **commun** — elle le faisait dépasser (45 973 → 47 729) **et**, plus grave, elle dépend de
+  `S.discipline`, donc elle faisait varier **en silence** un bloc *partagé et mis en cache*.
+  Déplacée dans le bloc **personnel** ; le commun est même retombé à **45 363**.
 - 🆘⭐⭐ **3ᵉ PANNE DU BOUTON DE LANCEMENT EN 8 JOURS — un `break`** (ft-v1051). Michel :
   *« pk il y a tjrs une couille avec le lancement de la séance »*.
   ⛔⛔ `_renderCoachThread` ne ré-analysait que **le dernier** message de Milo. Chez lui, ce

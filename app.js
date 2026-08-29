@@ -3968,6 +3968,9 @@ const APP_GUIDE_SLIDES=[
   /* ⛔ SANS IMAGE : une capture montrerait l'historique de quelqu'un d'autre, avec des
      charges et des dates qui ne sont pas celles du lecteur. */
   {icon:'📤', t:'Ton historique, en tableur ou en PDF', cap:'Dans <b>Progrès</b>, à côté de « Historique séances » : <b>📤 Exporter</b>. <b>CSV</b> pour Excel ou Numbers (une ligne par série), <b>PDF</b> pour un document lisible à montrer à un coach. ⛔ <b>Aucune donnée de santé</b> dedans : ni poids de corps, ni âge, ni sexe.'},
+  /* ⛔ SANS IMAGE : une capture montrerait une charge et un repos précis — donc elle se lirait
+     comme une recommandation d'intensité, or ce qui est vrai ici dépend de TON maximum. */
+  {icon:'🎽', t:'Le repos suit la charge', cap:'Quand une série est <b>lourde</b> (dès 80 % de ton max), elle demande <b>3 min de repos minimum</b> — quel que soit ton objectif. Milo le sait maintenant, et si un repos trop court passe quand même, <b>l\'avertissement s\'affiche sous sa séance dans le chat</b>, avant que tu la lances. ⚠️ Il informe, il ne bloque pas : la charge ne bouge pas, c\'est toi qui décides.'},
   {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
 let _agIdx=0,_agSwipeInit=false;

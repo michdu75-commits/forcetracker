@@ -302,6 +302,7 @@ const _HELP_DATA={
   coach:{
     title:'🤖 Coach IA',
     tips:[
+      {i:'🎽',t:'<b>Le repos suit la charge</b> : si Milo te propose une série <b>lourde</b> (dès 80 % de ton max) avec un repos trop court, un <b>avertissement s\'affiche sous sa séance</b>, avant que tu la lances. ⚠️ Il <b>informe</b>, il ne bloque pas : le bouton reste et la charge n\'est pas retouchée — c\'est toi qui tranches. Et Milo a maintenant la règle : une série lourde demande <b>3 min minimum</b> (plus en force athlétique), quel que soit ton objectif.'},
       {i:'📄',t:'<b>Exporter une réponse en PDF</b> : le bouton sous chaque réponse de Milo. Si tu avais reçu « Conseil de Milo » au lieu de ton document, c\'est réparé — c\'était le titre de la feuille de partage, pas ton PDF (qui était complet et l\'est toujours). Ça valait aussi pour le PDF de programme et l\'étude du corps.'},
       {i:'💬',t:'Ton profil complet (poids, objectif, discipline, PRs, morphologie) est injecté automatiquement — pas besoin de te présenter à chaque fois.'},
       {i:'🎯',t:'Milo raisonne comme un vrai coach : il t\'évalue avant de conseiller (il peut te poser des questions), croise tes données (records, morpho, bilan corporel), justifie ses choix, s\'adapte à ta vie (horaires, travail de nuit, temps dispo) et te dit la vérité sans complaisance. Demande-lui « fais-moi un programme » ou « pourquoi je stagne au couché ? ».'},
