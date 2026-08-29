@@ -179,6 +179,33 @@ function _rythmeSeance(){
    ⚠️ BLOC PERSONNEL : jamais dans le bloc commun, qui est partagé entre tous et mis en cache.
    ⛔ Et on lui donne le COMPTE, pas un verdict : c'est lui qui juge, et lui seul sait quel jour
    de la semaine on est — un mercredi, être « sous le cadre » ne veut rien dire. */
+/* 🎽 LE REPOS SUIT LA CHARGE DE LA SÉRIE, PAS L'OBJECTIF DU PROGRAMME (28/08/2026, ft-v1052)
+   ⛔⛔ MESURÉ DANS SON CONTEXTE, ET C'EST LA RÈGLE QUI MANQUAIT. Milo recevait « force → 3-6 reps
+   lourdes, repos 2-4 min ; muscle/hypertrophie → 8-15 reps, repos 60-90 s » **et** le cadre de sa
+   discipline — et RIEN qui lie le repos à la CHARGE. Sur un « S1 : 95×3 » à **88 % du 1RM** il
+   prenait donc les **reps de la force** et le **repos de l'hypertrophie**. Un mélange, pas un
+   choix. Michel, 48 ans, capture à l'appui : *« quand on fait de la force, 1 min 30 de repos
+   c'est impossible, il faut la récup »*.
+
+   ⛔ ON NE RÉÉCRIT PAS LES NOMBRES ICI (R2) : ils existent déjà côté code depuis ft-v980 et
+   ft-v1043 (`_INT_LOURD`, `_cadreReposLourd`). Un 3ᵉ chiffre dans le prompt divergerait du
+   contrôle qui vérifie la séance — et l'app dirait deux choses différentes de la même série.
+   On DÉRIVE la consigne des mêmes constantes : si le seuil bouge, la phrase suit.
+
+   ⚠️⚠️ ET ELLE EST DANS LE BLOC **PERSONNEL**, PAS LE COMMUN — un témoin existant m'a repris.
+   Mon 1ᵉʳ jet la posait dans le prompt commun : ① elle faisait passer le bloc commun de 45 973 à
+   **47 729** caractères, au-dessus du garde-fou ; ② et surtout **elle dépend de `S.discipline`**,
+   donc elle aurait fait varier en silence un bloc qui est **partagé entre tous et mis en cache**.
+   *Une phrase qui parle de LA personne n'a rien à faire dans le bloc de tout le monde.* */
+function _ctxReposCharge(){
+  try{
+    if(typeof _INT_LOURD==='undefined'||typeof _cadreReposLourd!=='function') return '';
+    const pct=Math.round(_INT_LOURD*100);
+    const c=_cadreReposLourd(S.discipline);
+    return `\n⛔⛔ LE REPOS SUIT LA CHARGE DE LA SÉRIE, PAS L'OBJECTIF DU PROGRAMME. Dès qu'une série que TU prescris atteint ${pct} % de son 1RM (ou 5 répétitions et moins sur un mouvement de base), le repos est d'au moins **${c.txt}** — quels que soient son objectif et sa discipline. Les repères « repos 60-90 s » plus haut décrivent des séries de travail ORDINAIRES, pas une série lourde : donner 90 s sur un triple à ${pct} % serait prescrire quelque chose d'inexécutable, et l'app le lui dira juste sous ta séance. ⚠️ Ne mélange donc JAMAIS les reps de la FORCE avec le repos de l'HYPERTROPHIE dans la même ligne.\n`;
+  }catch(e){ return ''; }
+}
+
 function _ctxVolumeMuscles(){
   try{
     if(typeof _volumeParMuscle!=='function') return '';
@@ -1359,16 +1386,73 @@ function _renderCoachThread(){
      LE REMÈDE : on ré-analyse le DERNIER message de Milo, exactement comme à l'arrivée
      (`_extractDaySession`, la même fonction — pas une 2ᵉ analyse, R2). Rien n'est stocké en
      plus : le bloc technique est déjà dans le fil, il suffit de le relire. */
+  /* ⚠️⚠️ ON REMONTE JUSQU'À 3 MESSAGES DE MILO, PLUS UN SEUL (28/08/2026, ft-v1051)
+     3ᵉ panne du bouton en 8 jours, et Michel la nomme : *« pk il y a tjrs une couille avec le
+     lancement de la séance »*.
+     ⛔⛔ LA CAUSE ÉTAIT CE `break`. On ne ré-analysait que **le dernier** message de Milo —
+     l'intention était bonne (« une vieille séance ne doit pas ressurgir »), la mise en œuvre
+     trop stricte. Chez lui, le dernier message de Milo est *« la séance est écrite au-dessus,
+     le bouton devrait apparaître »* : **aucune séance dedans**, donc `null`, donc plus aucun
+     bouton — et ça restait vrai même après le correctif de format de ft-v1049.
+     👉 *Il suffit que Milo dise un mot après avoir proposé la séance pour que le bouton soit
+     perdu à jamais.* On remonte donc au plus **3** messages de Milo et on s'arrête au premier
+     qui porte une séance. La borne garde l'intention d'origine : au-delà, c'est une vieille
+     séance et elle ne doit pas revenir. */
   try{
-    for(let i=coachHistory.length-1;i>=0;i--){
+    let vus=0, pose=false;
+    for(let i=coachHistory.length-1;i>=0 && vus<3;i--){
       const m=coachHistory[i];
       if(!m||m.role!=='assistant')continue;
+      vus++;
+      /* ⛔⛔ LA BORNE EST UNE DURÉE, PLUS UN NOMBRE DE MESSAGES (29/08/2026, ft-v1054).
+         Michel, dix minutes après la livraison de ft-v1053 : *« lol il vient de me sortir la
+         séance d'hier »*. Reproduit et mesuré : une séance de **26 h** ressurgissait et
+         s'injectait — et **des deux côtés**, donc le défaut vient de ft-v1051, pas de la version
+         d'hier. ⚠️ Ce que ft-v1053 a changé, c'est le VOLUME du dégât : un bouton nu passait
+         inaperçu ; une carte qui demande *« Cette séance te convient ? »* se lit comme une
+         proposition d'aujourd'hui.
+         👉 *« au plus 3 messages de Milo » était un PROXY de « récent »* — et le fil du chat
+         **survit aux jours**, donc le proxy est faux dès qu'on rouvre l'app le lendemain. */
+      if(!_seanceEncoreDuJour(m.ts))continue;
       const txt=(typeof m.content==='string')?m.content:'';
-      if(txt&&typeof _extractDaySession==='function'){
-        const dsx=_extractDaySession(txt);
-        if(dsx&&dsx.sess&&typeof _appendStartSessionBtn==='function')_appendStartSessionBtn(dsx.sess);
+      if(!txt||typeof _extractDaySession!=='function')continue;
+      const dsx=_extractDaySession(txt);
+      if(dsx&&dsx.sess&&typeof _appendStartSessionBtn==='function'){
+        _appendStartSessionBtn(dsx.sess);
+        pose=true;
+        break;                 // la PLUS RÉCENTE des séances trouvées, jamais deux boutons
       }
-      break;   // seulement le DERNIER : une vieille séance ne doit pas ressurgir
+    }
+    /* ⭐⭐ ft-v1053 — LA QUESTION SURVIT AUSSI AU RECHARGEMENT, et il fallait le faire ici.
+       Sans ça, « figer » n'aurait tenu que jusqu'à la fermeture de l'app — c'est-à-dire jusqu'au
+       trajet vers la salle, exactement le moment où Michel perd le bouton (le cas d'origine du
+       14/08). ⛔ On ne stocke rien de plus : le texte de Milo et la demande sont déjà dans le
+       fil, il suffit de les relire (R2, la même décision qu'en ft-v851).
+       ⚠️ La borne est la même que ci-dessus, et pour la même raison : la demande doit être le
+       DERNIER message de la personne, et elle doit dater d'AUJOURD'HUI (ft-v1054) — une demande
+       à laquelle la conversation a tourné la page, ou qui date d'hier, ne doit pas ressurgir. */
+    if(!pose&&typeof _demandeUneSeance==='function'&&typeof _appendSeanceQuestion==='function'){
+      let dernUser=null, dernAssist=null, tsU=0, tsA=0;
+      for(let i=coachHistory.length-1;i>=0;i--){
+        const m=coachHistory[i]; if(!m)continue;
+        if(!dernAssist&&m.role==='assistant'&&typeof m.content==='string'){dernAssist=m.content;tsA=m.ts;}
+        /* ⛔⛔ UNE CONSIGNE INTERNE N'EST PAS UNE DEMANDE DE LA PERSONNE (29/08/2026, ft-v1055).
+           Michel, capture à l'appui : la question *« Cette séance te convient ? »* s'affichait
+           sous un **débrief de fin de séance** — il venait de terminer, et on lui proposait d'en
+           démarrer une. **Contresens complet.**
+           👉 LA CAUSE : le débrief auto envoie un message `_silent` qui commence par *« Je viens
+           de terminer **ma séance** »* — et mon détecteur y lisait une demande. *Je pairais la
+           réponse de Milo avec un texte que Michel n'a jamais tapé.*
+           ⛔ Et on **abandonne**, on ne remonte pas plus haut : le message qui a produit cette
+           réponse est interne, donc il n'y a **pas** de demande à laquelle rattacher la question.
+           Chercher une demande plus ancienne collerait la question sous une réponse qui n'y
+           répond pas — c'est le défaut qu'on est en train de corriger, une ligne plus bas.
+           ⭐ La règle existait déjà à deux endroits (l'affichage l. ~1372, le bouton « Mes
+           discussions ») : *c'est moi qui ne l'ai pas reprise*, pas l'app qui l'ignorait. */
+        if(m.role==='user'){ dernUser=m._silent?null:((typeof m.content==='string')?m.content:''); tsU=m.ts; break; }
+      }
+      if(dernAssist&&dernUser&&_seanceEncoreDuJour(tsU)&&_seanceEncoreDuJour(tsA)&&_demandeUneSeance(dernUser))
+        _appendSeanceQuestion(dernAssist);
     }
   }catch(e){}
   _coachAuBas();
@@ -1401,7 +1485,10 @@ function _convLightMsgs(){
   return _fitBudget(coachHistory.map(_lightMsg), _HIST_BUDGET);
 }
 function _convTitle(msgs){
-  const fu=(msgs||[]).find(m=>m.role==='user'&&typeof m.content==='string'&&m.content.trim());
+  /* ⛔ LA JUMELLE, trouvée en la cherchant (R8, ft-v1055) : ici aussi une consigne interne se
+     faisait passer pour une phrase de la personne — une discussion rangée pouvait s'intituler
+     « [DÉBRIEF AUTO] Je viens de terminer ma séance… ». Même règle, même mot-clé. */
+  const fu=(msgs||[]).find(m=>m.role==='user'&&!m._silent&&typeof m.content==='string'&&m.content.trim());
   let t=(fu?fu.content:'').replace(/^\[photo\]\s*/,'').replace(/\s+/g,' ').trim();
   if(t.length>44) t=t.slice(0,44)+'…';
   return t || ('Discussion du '+new Date().toLocaleDateString('fr-FR'));
@@ -1830,6 +1917,89 @@ function _extractDaySession(reply){
 //      repos, ni consigne, ni type de série) mais elle est gratuite et hors ligne.
 // *On ne remplace jamais un chemin qui marche : on en ajoute un meilleur devant.*
 
+/* ⏳⭐⭐ « CETTE SÉANCE EST-ELLE ENCORE CELLE D'AUJOURD'HUI ? » (29/08/2026, ft-v1054)
+   Michel, dix minutes après la livraison de ft-v1053 : *« lol il vient de me sortir la séance
+   d'hier »*.
+
+   ⛔⛔ LE DÉFAUT VIENT DE ft-v1051, ET C'EST MESURÉ DES DEUX CÔTÉS (26 h → la séance ressurgit et
+   s'injecte, contre ft-v1052 comme contre ft-v1053). Sa borne était *« au plus 3 messages de
+   Milo »* — un **NOMBRE DE MESSAGES**, c'est-à-dire un **PROXY de « récent »**. Or le fil du chat
+   **survit aux jours** : on rouvre l'app le lendemain, la séance d'hier est à un ou deux messages
+   de distance, et le proxy dit « récent » alors qu'elle a 26 h.
+   ⚠️ *Ma version n'a pas causé ça, elle l'a rendu FORT* : un bouton nu passait inaperçu ; une
+   carte qui demande « Cette séance te convient ? » se lit comme une proposition d'aujourd'hui.
+
+   ⭐ LA FENÊTRE EST L'UNION DE DEUX CAS, et chacun vient d'un usage réel :
+   ① **le même jour civil** — c'est le cas d'origine de ft-v851 : Michel demande sa séance le
+      matin, ferme l'app, et la rouvre à la salle le soir. Une borne en heures seule la lui
+      reprendrait, et perdre le bouton est précisément sa plainte n°1.
+   ② **moins de 12 h** — pour la demande de 23 h suivie de l'entraînement à 00 h 30, que le jour
+      civil couperait au milieu.
+   *Un seul propriétaire de cette question (R2), lu par les deux endroits qui relisent le fil.*
+
+   ⚠️⚠️ ET LE CAS « PAS D'HORODATAGE » A ÉTÉ TRANCHÉ SUR UNE MESURE, PAS SUR UN PRINCIPE.
+   Mon premier jet répondait « non » — se tromper fait s'entraîner sur la mauvaise séance, donc
+   dans le doute on se tait (R29). ⛔ **Sauf que `ts` n'existe que depuis le 25/08** (ft-v1008,
+   vérifié dans l'historique, pas supposé) : un fil enregistré avant n'en porte AUCUN. La règle
+   aurait donc **retiré le bouton** à qui n'a pas reparlé à Milo depuis — c'est-à-dire fabriqué
+   une quatrième panne du bouton en voulant en réparer une autre.
+   👉 **Un message sans date hérite de l'âge de sa CONVERSATION** : `ft4_coach_lastts` est écrit à
+   chaque échange depuis longtemps, il dit quand ce fil a été vivant pour la dernière fois. C'est
+   la meilleure chose qu'on sache, et elle existe déjà — rien de neuf n'est stocké (R2/R13).
+   ⛔ Et si même ça manque (fil très ancien, stockage abîmé), on retombe sur le **comportement
+   d'hier** plutôt que de faire disparaître le bouton : *un bouton absent est silencieux et c'est
+   la plainte n°1 de Michel ; une séance périmée, elle, est SOUS LES YEUX* — son texte est affiché
+   juste au-dessus, et depuis ft-v1053 on peut répondre « Non ». */
+function _seanceEncoreDuJour(ts){
+  try{
+    let t=+ts;
+    if(!(t>0)){                                    // message sans date → l'âge de la conversation
+      try{ t=+localStorage.getItem('ft4_coach_lastts')||0; }catch(e){ t=0; }
+      if(!(t>0)) return true;                      // on ne sait rien → comportement d'hier
+    }
+    const n=Date.now();
+    if(n-t < 12*3600*1000) return true;            // ② la demande tardive qui déborde sur la nuit
+    const a=new Date(t), b=new Date(n);            // ① le même jour civil (heure locale)
+    return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+  }catch(e){ return true; }
+}
+
+/* ⭐⭐ « LA PERSONNE A-T-ELLE DEMANDÉ UNE SÉANCE ? » (29/08/2026, ft-v1053)
+   ⛔⛔ CE DÉTECTEUR EXISTE POUR CHANGER LA NATURE DU DÉCLENCHEUR, et c'est tout le correctif.
+   Michel, après **trois pannes du bouton de lancement en huit jours** : *« il faut absolument
+   figer le fait d'avoir toujours la séance lancée quand on lui demande une séance »*.
+   Les trois pannes (le nom sur la même ligne que les séries · `95×3` lu comme « 95 séries » ·
+   le `break` qui ne relisait que le dernier message) ont **la même cause de fond** : le bouton
+   dépendait de la FORME de ce que Milo avait écrit — et Milo change d'écriture sans prévenir.
+   👉 Ici on regarde ce que **la personne a DEMANDÉ**, une chose qu'on connaît avec certitude
+   parce que c'est elle qui l'a tapée. *Un déclencheur qu'aucun modèle ne peut faire varier.*
+
+   ⚠️ POURQUOI CE N'EST PAS LE MÊME DÉTECTEUR QUE CELUI DU PROMPT (R2 examinée, puis écartée).
+   `buildCoachContext` en a un, volontairement TRÈS large (`exercices?` tout seul y suffit) :
+   là-bas une erreur ne coûte qu'une consigne inutile dans le prompt. Ici elle coûte une
+   **question posée sous une réponse qui n'y répond pas** — *« cette séance te convient ? »*
+   sous une explication sur les pectoraux. Les deux coûts ne sont pas du même ordre (R29),
+   donc les deux seuils ne peuvent pas l'être : celui-ci exige un **verbe de demande** ou une
+   **formulation de séance à faire**, jamais le simple fait qu'on parle d'entraînement.
+   ⛔ Et il ne sert QUE de repli : quand une séance a été lue, la question s'affiche de toute
+   façon, sans passer par ici. */
+function _demandeUneSeance(txt){
+  try{
+    const t=String(txt||'');
+    if(!t) return false;
+    // ① un verbe de demande suivi, dans la même phrase, du mot séance / entraînement / programme
+    if(/\b(fai[st]|donne|propose|pr[ée]pare|cr[ée]e|construis|monte|[ée]cris|lance|balance|envoie|g[ée]n[èe]re)\b[^.?!\n]{0,40}\b(s[ée]ance|entra[îi]nement|programme|prog)\b/i.test(t)) return true;
+    // ② une séance nommée comme celle qu'on va faire (« une séance », « ma séance du jour »…)
+    if(/\b(une|ma|la|nouvelle|prochaine|autre|petite|bonne)\s+s[ée]ance\b/i.test(t)) return true;
+    if(/\bs[ée]ance\s+(du\s+jour|d'aujourd|de\s+ce\s+soir|de\s+ce\s+matin|pour\s+)/i.test(t)) return true;
+    // ③ les formulations sans le mot « séance », que Michel emploie vraiment
+    if(/\b(je|on)\s+fais?\s+quoi\b/i.test(t)) return true;
+    if(/\bqu'est[- ]ce\s+que\s+(je|on)\s+(fais|fait)\b/i.test(t)) return true;
+    if(/\bon\s+s'entra[îi]ne\s+(quoi|comment)\b/i.test(t)) return true;
+    return false;
+  }catch(e){ return false; }
+}
+
 // Détecteur DÉTERMINISTE, gratuit : « ce message ressemble-t-il à une séance ? ».
 // ⚠️ VOLONTAIREMENT PLUS PERMISSIF que `_seanceDepuisTexte`, et ce n'est pas un oubli.
 // Celle-là CONSTRUIT la séance : elle doit être stricte (une ligne mal lue ferait
@@ -2171,13 +2341,214 @@ function _appendStartSessionBtn(sess, cible){
   // le bouton ne « commence » rien — il ouvre la question « ajouter ou remplacer ? ». Avant, il
   // annonçait « Commencer cette séance » et ajoutait en silence : une promesse fausse.
   const enCours=(typeof S!=='undefined')&&S.wkt&&Array.isArray(S.wkt.exs)&&S.wkt.exs.length;
-  const lbl=enCours?'⚡ Utiliser cette séance':'⚡ Commencer cette séance';
+  /* ⚠️ LE LIBELLÉ RÉPOND À LA QUESTION (ft-v1053). Il disait « ⚡ Commencer cette séance » ; sous
+     un « Cette séance te convient ? » ça ne répond pas — et un correctif posé d'un seul côté est
+     précisément le motif que ce projet passe son temps à rattraper. ⛔ Ce qui ne change PAS : la
+     distinction de ft-v750, qui dit ce qui va VRAIMENT se passer — tant qu'une séance est en
+     cours, le bouton ne « démarre » rien, il ouvre « ajouter ou remplacer ? ». */
+  const lbl=enCours?'⚡ Oui, utiliser cette séance':'⚡ Oui, on démarre';
   const wrap=document.createElement('div');
   wrap.className='coach-prog-save';
-  wrap.innerHTML='<button class="btn btn-red" style="width:100%;margin-top:10px;padding:11px;font-size:14px;border-radius:12px;" onclick="_startSessionFromMilo('+idx+',this)">'+lbl+' ('+n+(n>1?' exercices':' exercice')+')</button>';
+  /* ⚠️ L'AVERTISSEMENT D'INTENSITÉ S'AFFICHE ICI, DANS LE CHAT (28/08/2026, ft-v1052)
+     ⛔⛔ POURQUOI C'ÉTAIT UN TROU, ET IL EST MESURÉ : `_intensiteDefauts` existe depuis ft-v980
+     et sait très bien dire *« repos de 90 s à 88 % du 1RM : trop court pour du lourd »*. Mais il
+     ne tournait qu'à l'**APPLICATION** de la séance, dans l'écran Séance. Michel, lui, lit le
+     **chat** : il n'y voyait rien, donc pour lui le contrôle n'existait pas. C'est **R3** — une
+     connaissance qui ne produit aucun comportement OBSERVABLE ne sert à personne.
+     ⭐ R13 : greffé sur `_appendStartSessionBtn`, le passage obligé des TROIS voies (bloc caché ·
+     cervelet · filet) — un seul endroit, pas trois qui divergeraient.
+     ⛔ R24 : ça INFORME, ça ne bloque pas. Le bouton reste, et la charge n'est pas retouchée —
+     *on signale, on ne corrige jamais tout seul* (R29, la règle née du cas de Michel lui-même :
+     il VOULAIT ses 95 kg). ⛔ Et c'est BORNÉ à 3 lignes : un mur d'avertissements ne se lit pas. */
+  let _av='';
+  try{
+    if(typeof _intensiteDefauts==='function'){
+      const lignes=[];
+      (norm.exs||[]).forEach(ex=>{
+        (_intensiteDefauts(ex.name, ex.sets)||[]).forEach(d=>lignes.push(ex.name+' — '+d));
+      });
+      if(lignes.length){
+        const vus=lignes.slice(0,3), reste=lignes.length-vus.length;
+        const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+        _av='<div class="milo-warn">'
+          +vus.map(l=>'<div>⚠️ '+esc(l)+'</div>').join('')
+          +(reste>0?'<div class="milo-warn-plus">et '+reste+' autre'+(reste>1?'s':'')+'</div>':'')
+          +'</div>';
+      }
+    }
+  }catch(e){ /* jamais bloquant : un avertissement ne doit pas empêcher de lancer la séance */ }
+  wrap.innerHTML=_av+_carteSeanceHtml(lbl+' ('+n+(n>1?' exercices':' exercice')+')','_startSessionFromMilo('+idx+',this)');
   last.appendChild(wrap);
   _coachAuBas();
   return true;                    // posé — l'appelant peut cesser de chercher un repli
+}
+
+/* ⭐⭐ « CETTE SÉANCE TE CONVIENT ? » — LA QUESTION REMPLACE LE BOUTON, ELLE NE S'Y AJOUTE PAS
+   (29/08/2026, ft-v1053 — conception validée par Michel avant d'écrire une ligne de code.)
+
+   ⛔⛔ ZÉRO GESTE SUPPLÉMENTAIRE, ET C'EST LA CONDITION QUI A DÉCIDÉ DE LA FORME. Le bouton
+   rouge garde **exactement** sa place, sa largeur et son tap : *« Oui, on démarre »* coûte le
+   même geste qu'hier. Ce qu'on gagne est le **« Non »**, qui n'existait nulle part — jusqu'ici
+   une séance qui ne convenait pas se refusait en la retapant à la main dans le chat.
+   ⛔ D'où le refus de la disposition évidente (deux boutons côte à côte) : sur 430 px elle
+   **rétrécit la cible principale** pour loger une option qu'on prendra une fois sur dix.
+   *On n'abîme pas le geste de tous les jours pour rendre visible le cas rare.*
+
+   ⚠️⚠️ ET LE MOT « PROGRAMME » A ÉTÉ CORRIGÉ PAR MICHEL EN COURS DE CONCEPTION — c'est une
+   correction de fond, pas de style : *« un programme c'est une chose et juste la séance en est
+   une autre »*. Un programme est une structure sur des semaines (`S.programmes`, l'éditeur,
+   `MODELE-METIER.md`) ; ce qu'on lance ici est **une séance**, celle d'aujourd'hui. Écrire
+   « programme » aurait laissé croire qu'accepter engage les semaines à venir. */
+function _carteSeanceHtml(labelBtn, onclickOui){
+  const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  return '<div class="milo-ask">Cette séance te convient ?</div>'
+    +'<button class="btn btn-red" style="width:100%;margin-top:8px;padding:11px;font-size:14px;border-radius:12px;" onclick="'+onclickOui+'">'+esc(labelBtn)+'</button>'
+    +'<button class="ft-press milo-ask-no" onclick="_seanceNonRetravaille(this)">✏️ Non, retravaille</button>';
+}
+
+/* ⛔ LE « NON » NE RENVOIE PAS LA PERSONNE AU CLAVIER — il propose les raisons en un tap.
+   Sans ça, « Non » serait un bouton qui ne fait qu'ouvrir un champ vide : la personne devrait
+   formuler elle-même ce qui ne va pas, c'est-à-dire faire le travail que le bouton promettait
+   de lui épargner. Les quatre raisons sont celles qui reviennent dans les retours de Michel
+   (trop lourd, trop long, pas les bons exercices) plus une sortie libre.
+   ⭐ R13 : même mécanique que `_appendQuickReplies` — et **même arbitrage de quota** : répondre
+   à une question que l'app a posée ne consomme pas une question gratuite (`noQuota`), ce n'est
+   pas la personne qui interroge. */
+function _seanceNonRetravaille(btn){
+  try{
+    const wrap=btn&&btn.parentNode; if(!wrap)return;
+    const RAISONS=[
+      ['Trop lourd',            'Cette séance est trop lourde pour moi aujourd\'hui, allège les charges et propose-la à nouveau.'],
+      ['Trop long',             'Cette séance est trop longue, raccourcis-la et propose-la à nouveau.'],
+      ['Pas les bons exercices','Ce ne sont pas les exercices que je veux, change-les et propose la séance à nouveau.'],
+      ['Autre chose…',          null]
+    ];
+    const row=document.createElement('div');
+    row.className='milo-ask-why';
+    const lbl=document.createElement('div');
+    lbl.className='milo-ask'; lbl.textContent='Qu\'est-ce qui ne va pas ?';
+    RAISONS.forEach(([txt,envoi])=>{
+      const b=document.createElement('button');
+      b.className='ft-press coach-qr-chip milo-ask-chip';
+      b.textContent=txt;                       // textContent = 0 injection HTML
+      b.onclick=function(){
+        try{ row.remove(); lbl.remove(); }catch(e){}
+        if(envoi===null){
+          /* ⛔ « AUTRE CHOSE » N'ENVOIE RIEN : on ouvre le clavier sur un champ vide et on se
+             tait. Envoyer une phrase à sa place mettrait un motif dans sa bouche (R29) — et
+             c'est précisément le cas où on ne sait pas ce qu'elle reproche à la séance. */
+          const inp=document.getElementById('coach-inp');
+          if(inp){ try{ inp.focus(); }catch(e){} }
+          return;
+        }
+        if(typeof sendToCoach==='function') sendToCoach(envoi,txt,{noQuota:true});
+      };
+      row.appendChild(b);
+    });
+    // ⛔ Le bouton rouge RESTE (R24) : dire « non » ne doit pas fermer la porte de la séance —
+    // on peut très bien changer d'avis en lisant les raisons proposées.
+    btn.remove();
+    wrap.appendChild(lbl); wrap.appendChild(row);
+    _coachAuBas();
+  }catch(e){}
+}
+
+/* ⭐⭐⭐ LA MOITIÉ QUI « FIGE » — LA QUESTION S'AFFICHE MÊME QUAND L'ANALYSE A ÉCHOUÉ
+   (29/08/2026, ft-v1053. C'est la demande littérale de Michel : *« il faut absolument figer le
+   fait d'avoir toujours la séance lancée quand on lui demande une séance »*.)
+
+   ⛔⛔ CE QUE ÇA CORRIGE, ET POURQUOI LES TROIS CORRECTIFS PRÉCÉDENTS NE POUVAIENT PAS SUFFIRE.
+   Les trois voies (bloc caché · cervelet · filet) lisent **le texte de Milo**. Chacune a été
+   réparée séparément — 20/08, ft-v1049, ft-v1051 — et à chaque fois la panne suivante est
+   arrivée par un format qu'on n'avait pas prévu. *On ne peut pas énumérer d'avance toutes les
+   façons dont un modèle peut écrire une séance.* Tant que la présence du bouton dépend de cette
+   énumération, il y aura une quatrième panne.
+   👉 Ici la question s'affiche parce que **la personne a demandé une séance**, point. Si l'analyse
+   a réussi, « Oui » lance directement (chemin d'hier, inchangé) ; si elle a échoué, « Oui » la
+   construit **au moment du tap** — et si ça échoue encore, **l'app le dit**.
+
+   ⛔ ON NE FAIT PAS SEMBLANT (R29, P4). Le pire résultat possible serait un bouton qui a l'air
+   de marcher et qui ne fait rien : c'est exactement ce que Michel a vécu en salle, Milo écrivant
+   *« le bouton devrait apparaître 👆 »* devant une bulle vide. Un échec se dit, en clair, avec
+   ce qu'on peut faire ensuite.
+   ⛔ ET ÇA NE COÛTE RIEN QUAND ÇA N'EST PAS UTILISÉ : le cervelet n'est appelé **qu'au tap**,
+   donc quelqu'un qui ne touche pas au bouton ne dépense aucun appel (règle d'or #3 : le réseau
+   ne bloque ni ne décide jamais). */
+var _pendingSeanceTextes=[];   // textes de Milo en attente d'une lecture AU TAP (voir ci-dessus)
+
+function _appendSeanceQuestion(reply, cible){
+  try{
+    const msgs=document.getElementById('coach-msgs'); if(!msgs)return false;
+    let last=cible||null;
+    if(last&&!msgs.contains(last))last=null;                       // bulle disparue (fil vidé)
+    if(!last){ const b=msgs.querySelectorAll('.msg-coach'); last=b[b.length-1]; }
+    if(!last)return false;
+    if(last.querySelector('.coach-prog-save'))return false;        // déjà une carte dessous
+    const idx=_pendingSeanceTextes.push(String(reply||''))-1;
+    const enCours=(typeof S!=='undefined')&&S.wkt&&Array.isArray(S.wkt.exs)&&S.wkt.exs.length;
+    const lbl=enCours?'⚡ Oui, utiliser cette séance':'⚡ Oui, on démarre';
+    const wrap=document.createElement('div');
+    wrap.className='coach-prog-save';
+    wrap.innerHTML=_carteSeanceHtml(lbl,'_construireSeanceAuTap('+idx+',this)');
+    last.appendChild(wrap);
+    _coachAuBas();
+    return true;
+  }catch(e){ return false; }
+}
+
+/* Construction AU TAP — la même cascade qu'à l'arrivée (R2 : ce sont les mêmes fonctions, pas
+   une deuxième analyse écrite à côté), mais jouée au moment où on en a besoin.
+   ⚠️ Le cervelet est ici **attendu** (`await`), contrairement à l'arrivée où il ne doit jamais
+   retarder la lecture. La raison est inversée : là-bas la personne LIT, ici elle a TAPÉ et
+   n'attend plus que ça. Le bouton dit ce qu'il fait pendant ce temps, et redevient utilisable
+   si ça rate — *un bouton qui se fige sans rien dire est le défaut qu'on est en train de
+   corriger.* */
+async function _construireSeanceAuTap(idx, btn){
+  const reply=_pendingSeanceTextes[idx];
+  if(reply==null){ if(typeof toast==='function')toast('Séance introuvable','error'); return; }
+  const lblAvant=btn?btn.textContent:'';
+  const rendreLeBouton=()=>{ if(btn){ btn.disabled=false; btn.textContent=lblAvant; } };
+  try{
+    if(btn){ btn.disabled=true; btn.textContent='⏳ Je prépare ta séance…'; }
+    let sess=null;
+    // ① la lecture gratuite d'abord (bloc caché, puis filet déterministe)
+    try{ const d=(typeof _extractDaySession==='function')?_extractDaySession(reply):null; if(d&&d.sess)sess=d.sess; }catch(e){}
+    // ② puis le cervelet, seulement si ① n'a rien donné — un appel, et un seul
+    if(!sess&&typeof _cerveletSeance==='function'){
+      try{ const s=await _cerveletSeance(reply); if(s)sess=(typeof _montee==='function')?_montee(s):s; }catch(e){}
+    }
+    const bulle=btn?btn.closest('.msg-coach'):null;
+    if(sess&&typeof _appendStartSessionBtn==='function'){
+      /* ⭐ On pose la carte NORMALE (celle qui porte la séance lue) et on retire celle-ci :
+         à partir d'ici le comportement est exactement celui d'une séance détectée à l'arrivée
+         — mêmes avertissements d'intensité, même bouton, même « Non ». */
+      const carte=btn?btn.parentNode:null;
+      if(carte&&carte.parentNode)carte.parentNode.removeChild(carte);
+      if(_appendStartSessionBtn(sess, bulle))return;
+      // posée nulle part → on remet la carte d'origine plutôt que de laisser un vide
+      if(carte&&bulle){ bulle.appendChild(carte); }
+    }
+    rendreLeBouton();
+    /* ⛔ L'ÉCHEC SE DIT, ET IL PROPOSE LA SUITE. On ne laisse ni un bouton mort ni un toast seul
+       qui disparaît en trois secondes : la phrase reste sous la réponse, et le tap suivant
+       demande à Milo de réécrire la séance dans une forme lisible. */
+    const carte=btn?btn.parentNode:null;
+    if(carte&&!carte.querySelector('.milo-ask-fail')){
+      const d=document.createElement('div');
+      d.className='milo-ask-fail';
+      d.textContent='Je n\'arrive pas à lire cette séance dans sa réponse.';
+      const b=document.createElement('button');
+      b.className='ft-press coach-qr-chip milo-ask-chip';
+      b.textContent='↻ Demander à Milo de la réécrire';
+      b.onclick=function(){
+        if(typeof sendToCoach==='function')
+          sendToCoach('Réécris-moi cette séance sous forme de liste : un exercice par ligne, avec les séries, les répétitions et la charge.','Réécris la séance en liste',{noQuota:true});
+      };
+      carte.appendChild(d); carte.appendChild(b);
+      _coachAuBas();
+    }
+    if(typeof toast==='function')toast('Séance illisible — voir la réponse de Milo','error');
+  }catch(e){ rendreLeBouton(); }
 }
 
 function updateCoachHeader() {
@@ -3212,6 +3583,7 @@ ${_ctxCharges()}
 ${_ctxDureeSeance()}
 ${_ctxReposRegles()}
 ${_ctxVolumeMuscles()}
+${_ctxReposCharge()}
 ${(()=>{
   // REGISTRE ATHLÈTE (Dossier Athlète, brique 1 = socle) — mémoire durable.
   // Vide pour l'instant (les faits/observations arriveront aux briques 2 & 5) → rien injecté tant que vide.
@@ -4509,6 +4881,11 @@ async function sendToCoach(customMsg, displayMsg, opts) {
       if (!_ds && !opts.silent && !opts.debriefSess && typeof _ressembleASeance === 'function'
           && _ressembleASeance(reply)) _dsCervelet = true;
     }
+    /* ⭐ ft-v1053 — LE DÉCLENCHEUR DE REPLI SE LIT SUR LA DEMANDE, PAS SUR LA RÉPONSE.
+       ⛔ Exclu des appels internes (`silent`, débrief, programme de force) : ce ne sont pas des
+       demandes de séance de la personne, et y poser la question serait un contresens. */
+    const _dsDemande = !_fp && !opts.silent && !opts.debriefSess
+      && typeof _demandeUneSeance === 'function' && _demandeUneSeance(msg);
     // Mémoire durable : Milo peut proposer de retenir un trait durable (avec validation, Principe 3)
     const _mem = _extractMemory(reply);
     // Question guidée : Milo peut proposer des réponses rapides à taper (facultatif, une question à la fois)
@@ -4533,11 +4910,20 @@ async function sendToCoach(customMsg, displayMsg, opts) {
          seance STRUCTURELLEMENT pauvre (des exercices sans series), elle etait quand meme
          « truthy », le `|| _filet` ne jouait pas, et la fonction sortait en silence.
          Resultat : aucun bouton ET aucun repli. */
+      /* ⭐ ft-v1053 — LE DERNIER REPLI : si le cervelet ET le filet échouent tous les deux, on
+         ne laisse plus la bulle nue. La question s'affiche quand même dès lors que la personne
+         a DEMANDÉ une séance, et « Oui » la construira au tap. */
+      const _repli = () => { if (_dsDemande) _appendSeanceQuestion(reply, _bulle); };
       _cerveletSeance(reply)
-        .then(s => { if (!_appendStartSessionBtn(_montee(s), _bulle)) _appendStartSessionBtn(_filet, _bulle); })
-        .catch(() => _appendStartSessionBtn(_filet, _bulle));
+        .then(s => { if (!_appendStartSessionBtn(_montee(s), _bulle) && !_appendStartSessionBtn(_filet, _bulle)) _repli(); })
+        .catch(() => { if (!_appendStartSessionBtn(_filet, _bulle)) _repli(); });
     }
     else if (_dsFilet) _appendStartSessionBtn(_dsFilet);
+    /* ⭐⭐ ft-v1053 — ON A DEMANDÉ UNE SÉANCE, ON A DONC LA QUESTION. Aucune des trois voies n'a
+       reconnu de séance dans le texte : avant, la bulle restait nue et il n'y avait plus rien à
+       faire (c'est la panne que Michel a vécue trois fois en huit jours). Le déclencheur n'est
+       plus ce que Milo a écrit, mais ce que la personne a demandé. */
+    else if (_dsDemande) _appendSeanceQuestion(reply, _derniereBulleCoach());
     if (_mem) _appendMemoryBtns(_mem);
     if (_qr) _appendQuickReplies(_qr);
     // Étape 2 — débrief auto : on enregistre la mémoire durable (objectif/décision/tendances)
@@ -6407,7 +6793,7 @@ const _DRAWER_CONTENT = {
         {ic:'🔀',t:'Les exercices « un côté à la fois »',d:'48 exercices de l\'app sont <b>unilatéraux</b> : la série se refait de l\'autre côté (rowing haltère, curl haltères, fentes, squat bulgare, élévations latérales à un bras, extension quadriceps unilatérale…). En séance, ils portent une pastille <b>🔀 « par bras »</b> ou <b>« par jambe »</b> à côté de leur nom — tape-la pour tout revoir. <b>QUEL POIDS NOTER</b> — une seule règle, valable partout dans l\'app : <b>tu notes le poids qui BOUGE pendant la répétition</b>. Un seul haltère monte (rowing haltère, curl alterné, élévation à un bras) → note son poids à lui, 28, jamais 56. Les deux bougent en même temps (squat bulgare avec deux haltères, développé incliné) → note le total, 60. <b>COMBIEN DE SÉRIES</b> : tu saisis <b>3</b>, comme d\'habitude — pas 6. L\'app sait qu\'il faut refaire chaque série de l\'autre côté, et <b>compte ton tonnage en double</b> toute seule. Ton <b>record</b>, lui, reste calculé sur la charge d\'un seul côté : c\'est la vraie charge que ton muscle a tenue. ⚠️ Un côté plus faible que l\'autre ne peut pas se noter séparément aujourd\'hui — ça doublerait la saisie pour tout le monde ; dis-le si ça te manque. Tes séances déjà enregistrées ne bougent pas.'},
         {ic:'📤',t:'Exporter ton historique — et quel format choisir',d:'Dans <b>Progrès</b>, à côté de « Historique séances », le bouton <b>📤 Exporter</b> te propose deux formats. <b>CSV</b> : un fichier qui s\'ouvre dans <b>Excel, Numbers ou Google Sheets</b>, avec une ligne par série (date · séance · exercice · n° de série · type · kg · reps · RIR · volume) — c\'est le format pour trier, filtrer, faire tes propres calculs. <b>PDF</b> : un document mis en page, <b>une séance par bloc</b> avec sa date en toutes lettres — c\'est le format pour montrer à quelqu\'un (coach, kiné, préparateur). ⛔ <b>CE QU\'IL Y A DEDANS, ET CE QU\'IL N\'Y A PAS</b> : seules les séries que tu as <b>validées</b> (une série cochée non faite n\'a pas eu lieu). Et <b>aucune donnée de santé</b> — ni poids de corps, ni âge, ni sexe, ni ton adresse e-mail. C\'est voulu : ce fichier sort de l\'app, il ne doit contenir que de l\'entraînement. ⚠️ Le <b>RIR</b> y est quand tu l\'as noté ; une série non notée reste <b>vide</b>, jamais « 0 » — sinon elle passerait pour un échec. ⓘ <b>À NE PAS CONFONDRE</b> avec <b>Menu → Exporter mes données</b>, qui existe depuis longtemps : celui-là sort un <b>JSON</b>, fait pour <b>sauvegarder</b> ou faire analyser l\'ensemble de ton compte. Ici c\'est ton <b>historique d\'entraînement</b>, dans un format qui se lit.'},
         {ic:'📊',t:'Le volume par groupe musculaire, et pourquoi il n\'affiche pas d\'objectif',d:'En haut de <b>Progrès</b>, « Ce que ta semaine a travaillé » compte tes <b>séries de travail par groupe musculaire</b> sur les <b>7 derniers jours glissants</b> (pas depuis lundi : sinon un mardi, tout le monde afficherait 2 séries et croirait avoir régressé). <b>COMMENT C\'EST COMPTÉ</b> : une série compte pour le <b>muscle principal</b> de l\'exercice. Un développé couché donne 1 série aux <b>pectoraux</b>, et rien aux triceps — sinon le total exploserait et ne voudrait plus rien dire. Les <b>échauffements</b> (tag É) et les séries <b>non validées</b> ne comptent pas : le cadre parle de séries de <i>travail</i>. ⚠️ Un exercice dont l\'app ne connaît pas les muscles (nom ambigu, exercice perso sans muscles cochés) ne peut créditer personne : ses séries sont <b>comptées à part et affichées</b>, jamais effacées en silence — sinon le total serait plus petit que la réalité tout en ayant l\'air d\'un fait. <b>POURQUOI AUCUN OBJECTIF N\'EST AFFICHÉ</b> : ta discipline a bien un cadre (<i>« 10 à 20 séries par groupe et par semaine »</i> en musculation, <i>12 à 22</i> en bodybuilding) — mais <b>un mercredi, tout le monde est en dessous</b>. Afficher « 6 · cible 10-20 » se lirait comme un déficit alors que la semaine n\'est pas finie. L\'écran s\'en tient donc aux <b>faits</b>. 👉 <b>Milo</b>, lui, reçoit les deux — le compte et le cadre — et il sait quel jour on est : c\'est à lui de dire quelque chose d\'utile. ⚠️ Et pour trois disciplines sur cinq (powerbuilding, force athlétique, haltérophilie), le cadre n\'exprime <b>pas</b> le volume par muscle et par semaine — il le dit par séance ou par mouvement. Milo est prévenu de ne comparer ces chiffres à aucun objectif dans ce cas.'},
-        {ic:'🎽',t:'Pourquoi le repos conseillé n\'est pas le même pour tout le monde',d:'Quand une séance te propose une charge <b>lourde</b> (au-delà de 80 % de ton maximum estimé) avec un <b>repos court</b>, l\'app te prévient. ⚠️ Jusqu\'au 27/08, elle appliquait <b>un seul chiffre à tout le monde</b> — 150 secondes — alors qu\'elle affiche à chaque discipline un cadre différent, et qu\'elle l\'envoie aussi à Milo : <i>« 3 à 5 min entre les séries lourdes »</i> en <b>force athlétique</b>, <i>« 60 à 120 s, les repos courts font partie du travail »</i> en <b>bodybuilding</b>. <b>L\'app se contredisait donc elle-même</b> : elle te montrait un cadre et en vérifiait un autre. <b>CE QUI CHANGE</b> : le seuil et le conseil sont maintenant <b>lus dans ton cadre</b>. Un powerlifter qui prenait 160 s entre deux séries à 88 % ne recevait rien — il est prévenu, et on lui dit « viser 3 à 5 min », pas « 3 min ». <b>CE QUI NE CHANGE PAS, ET C\'EST VOULU</b> : ⛔ le contrôle <b>ne se relâche jamais</b>. Il garde un plancher, parce que ce plancher vient d\'un cas réel tranché par Michel — <i>« un 3×5 avec 90 secondes de repos, c\'est impossible »</i> — et que le bas de plage de la musculation (90 s) aurait rendu son propre cas silencieux. ⛔ Et <b>la charge maximale, elle, ne bouge pas d\'un gramme</b> : ce que ton corps peut tenir est de la <b>physiologie</b>, pas de la doctrine — un powerlifter n\'a pas un maximum plus élevé parce qu\'il est powerlifter. ⛔ Enfin l\'app <b>ne te reproche pas</b> une charge au-dessus de ton cadre : les cadres disent eux-mêmes que <i>« du lourd ponctuel reste utile et ne se reproche pas »</i>. 👉 Ta discipline se change dans <b>Profil</b>, et le cadre complet s\'y affiche.'},
+        {ic:'🎽',t:'Pourquoi le repos conseillé n\'est pas le même pour tout le monde',d:'Quand une séance te propose une charge <b>lourde</b> (au-delà de 80 % de ton maximum estimé) avec un <b>repos court</b>, l\'app te prévient. ⚠️ Jusqu\'au 27/08, elle appliquait <b>un seul chiffre à tout le monde</b> — 150 secondes — alors qu\'elle affiche à chaque discipline un cadre différent, et qu\'elle l\'envoie aussi à Milo : <i>« 3 à 5 min entre les séries lourdes »</i> en <b>force athlétique</b>, <i>« 60 à 120 s, les repos courts font partie du travail »</i> en <b>bodybuilding</b>. <b>L\'app se contredisait donc elle-même</b> : elle te montrait un cadre et en vérifiait un autre. <b>CE QUI CHANGE</b> : le seuil et le conseil sont maintenant <b>lus dans ton cadre</b>. Un powerlifter qui prenait 160 s entre deux séries à 88 % ne recevait rien — il est prévenu, et on lui dit « viser 3 à 5 min », pas « 3 min ». <b>CE QUI NE CHANGE PAS, ET C\'EST VOULU</b> : ⛔ le contrôle <b>ne se relâche jamais</b>. Il garde un plancher, parce que ce plancher vient d\'un cas réel tranché par Michel — <i>« un 3×5 avec 90 secondes de repos, c\'est impossible »</i> — et que le bas de plage de la musculation (90 s) aurait rendu son propre cas silencieux. ⛔ Et <b>la charge maximale, elle, ne bouge pas d\'un gramme</b> : ce que ton corps peut tenir est de la <b>physiologie</b>, pas de la doctrine — un powerlifter n\'a pas un maximum plus élevé parce qu\'il est powerlifter. ⛔ Enfin l\'app <b>ne te reproche pas</b> une charge au-dessus de ton cadre : les cadres disent eux-mêmes que <i>« du lourd ponctuel reste utile et ne se reproche pas »</i>. 👉 Ta discipline se change dans <b>Profil</b>, et le cadre complet s\'y affiche. <b>🎽 ET DEPUIS LE 28/08, MILO LE SAIT AUSSI — c\'était le vrai trou.</b> Le contrôle ci-dessus vérifiait ta séance <b>après coup</b> ; Milo, lui, n\'avait <b>aucune règle liant le repos à la charge</b>. Il recevait « force → 3-6 reps lourdes, repos 2-4 min » et « muscle → 8-15 reps, repos 60-90 s », et rien d\'autre : sur un <i>3 reps à 88 % de ton max</i> il prenait donc les <b>reps de la force</b> et le <b>repos de l\'hypertrophie</b>. Un mélange, pas un choix. Il a maintenant la règle : <b>dès 80 % du max (ou 5 reps et moins sur un mouvement de base), 3 minutes minimum</b> — quels que soient ton objectif et ta discipline. ⚠️ Ce seuil n\'est pas écrit deux fois : la phrase envoyée à Milo est <b>construite à partir du même chiffre</b> que le contrôle, donc les deux ne peuvent pas se contredire. <b>ET L\'AVERTISSEMENT SE VOIT ENFIN</b> : il s\'affiche <b>dans le chat, sous la séance proposée</b>, avant que tu la lances — avant, il n\'apparaissait qu\'une fois la séance appliquée, dans l\'écran Séance, donc si tu lisais le chat tu ne le voyais jamais. ⛔ <b>Il informe, il ne décide pas</b> : le bouton reste, la charge et le repos de Milo ne sont <b>pas retouchés</b>. Tester une charge au-dessus du cadre est une décision légitime — l\'app te dit ce qu\'elle voit, tu tranches.'},
         {ic:'🔭',t:'Ce que ton histoire montre',d:'En haut de l\'onglet <b>Progrès</b>, l\'app dégage des <b>constantes</b> de tout ton historique : ton <b>rythme réel</b> (pas celui que tu crois tenir), l\'<b>exercice qui revient le plus</b>, et la <b>région</b> que tes séances travaillent le plus souvent. ⚠️ <b>Ce sont des faits comptés, pas des conseils</b> — tu ne liras jamais « tu devrais ». C\'est à toi d\'en tirer ce que tu veux : l\'app te montre ce qu\'elle voit, elle ne décide pas à ta place. ⛔ Chaque ligne <b>dit sur quoi elle porte</b> (« sur 14 séances étalées sur 31 jours »), pour que deux chiffres ne se contredisent pas sans explication. ⛔ Et sous <b>8 séances sur 21 jours</b>, elle dit qu\'elle ne sait pas encore : une « constante » sur 5 séances, c\'est du hasard. ⚠️ La région est la <b>dominante</b> de chaque séance — « le bas du corps domine 3 fois » ne veut pas dire que tu ne le travailles que 3 fois.'},
         {ic:'📊',t:'Historique par exercice',d:'Bouton 📊 sur chaque exercice en séance → graphique du poids max sur les 5 dernières séances. Pratique pour calibrer sa charge du jour.'},
         {ic:'🧍',t:'La figurine des muscles travaillés',d:'Après ta séance (et sur chaque carte d\'historique), la figurine colore ce que tu as travaillé : ROUGE = muscle moteur, ORANGE = muscle secondaire, BLEU = sollicité indirectement, brun = pas travaillé. Depuis le 03/08 elle dessine 41 muscles au lieu de 18 zones : le pectoral en 3 faisceaux, la cuisse en 3, le trapèze en 3 étages, plus les adducteurs, le soléaire et le trapèze inférieur. Tape un muscle pour lire son nom précis. ⚠️ Plusieurs faisceaux d\'un même muscle s\'allument encore ensemble (un développé couché allume les 3 bandes du pectoral) : le dessin a pris de l\'avance sur les fiches d\'exercices, qui seront affinées ensuite.'},

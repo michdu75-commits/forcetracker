@@ -4357,8 +4357,11 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   if(X.erreur){ t('⛔ la conversation se reconstruit', false, X.erreur); }
   else{
     tx('le texte de la séance est bien réaffiché', X.texte===true);
-    tx('⭐⭐ … et le bouton « Commencer cette séance » est LÀ après rechargement',
-       /Commencer cette séance|Utiliser cette séance/.test(X.bouton), 'reçu : '+(X.bouton||'(aucun bouton)'));
+    /* ⚠️ RE-VISÉ EN ft-v1053, PAS DÉSARMÉ : le libellé répond maintenant à la question posée
+       au-dessus (« ⚡ Oui, on démarre »). Ce témoin épinglait la PHRASE ; ce qu'il protège est la
+       RÈGLE — au rechargement, le bouton de lancement est là et il nomme les exercices. */
+    tx('⭐⭐ … et le bouton de lancement est LÀ après rechargement',
+       /Oui|Commencer|Utiliser/.test(X.bouton) && /exercice/.test(X.bouton), 'reçu : '+(X.bouton||'(aucun bouton)'));
     tx('⭐ … et il fonctionne vraiment (2 exercices injectés)', X.marche===true, String(X.marche));
     tx('⚠️ le bloc technique reste caché à l\'écran', X.jsonCache===true);
   }
@@ -16969,7 +16972,7 @@ console.log('\n-- CLIV. La séance prévue qui n\'a pas eu lieu (ft-v1050) --');
   await cx.close();
 }
 
-/* == BLOC CLV - LA QUANTITE AU CHOIX : GRAMMES *OU* PORTIONS (ft-v1051) ==
+/* == BLOC CLX - LA QUANTITE AU CHOIX : GRAMMES *OU* PORTIONS (ft-v1051) ==
    Michel, capture a l'appui : « toujours ce probleme de quantite, il faut que je puisse mettre
    les grammes », puis la precision qui a decide de la FORME : « je ne prends pas toujours le
    meme poids... tu prends la ratatouille, il y a differentes boites de different poids ».
@@ -16984,7 +16987,7 @@ console.log('\n-- CLIV. La séance prévue qui n\'a pas eu lieu (ft-v1050) --');
    ⚠️ ET LE PIEGE DU CALCUL : on divise par la quantite AFFICHEE, pas par `_afRef.q`. Declarer
    40 g puis taper 80 laisse les champs au DOUBLE ; diviser par 40 donnerait un pour-100 g deux
    fois trop gros. *Les valeurs affichees et la quantite affichee vont toujours ensemble.* */
-console.log('\n-- CLV. La quantité au choix : grammes ou portions (ft-v1051) --');
+console.log('\n-- CLX. La quantité au choix : grammes ou portions (ft-v1051) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   await cx.clock.setFixedTime(new Date('2026-08-28T20:37:00+02:00'));
@@ -17053,7 +17056,7 @@ console.log('\n-- CLV. La quantité au choix : grammes ou portions (ft-v1051) --
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,220)};}
   });
-  if(F.err) t('CLV n\'a pas pu tourner', false, F.err);
+  if(F.err) t('CLX n\'a pas pu tourner', false, F.err);
   else{
     /* ⛔ Le témoin a-t-il VU le bloc ? Sans ça, tout le reste serait vert en ne mesurant rien. */
     t('⛔ le témoin a bien VU le bloc quantité, avec les valeurs de la capture (156 kcal)',
@@ -17098,7 +17101,7 @@ console.log('\n-- CLV. La quantité au choix : grammes ou portions (ft-v1051) --
   await cx.close();
 }
 
-/* == BLOC CLVI - « LA DERNIERE FOIS » : PROPOSE, JAMAIS IMPOSE (ft-v1051) ==
+/* == BLOC CLXI - « LA DERNIERE FOIS » : PROPOSE, JAMAIS IMPOSE (ft-v1051) ==
    Michel, en verifiant ma comprehension : « un code barre que je rentre a la main, c'est par
    rapport a une certaine proportion, donc on ne peut pas mettre un poids fixe — et la boite de
    ratatouille c'est un exemple parmi tant d'autres ». Puis, sur le correctif propose :
@@ -17111,7 +17114,7 @@ console.log('\n-- CLV. La quantité au choix : grammes ou portions (ft-v1051) --
    chiffre faux presente comme un fait* (R29). Deux philosophies dans le meme ecran.
    ⚠️ LE SCAN NEUF NE CHANGE PAS, expres : 100 g n'y est pas une affirmation sur le repas — les
    4 valeurs affichees SONT les valeurs pour 100 g, quantite et chiffres se correspondent. */
-console.log('\n-- CLVI. « La dernière fois » : proposé, jamais imposé (ft-v1051) --');
+console.log('\n-- CLXI. « La dernière fois » : proposé, jamais imposé (ft-v1051) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   await cx.clock.setFixedTime(new Date('2026-08-29T14:00:00+02:00'));
@@ -17170,7 +17173,7 @@ console.log('\n-- CLVI. « La dernière fois » : proposé, jamais imposé (ft-v
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,220)};}
   });
-  if(F.err) t('CLVI n\'a pas pu tourner', false, F.err);
+  if(F.err) t('CLXI n\'a pas pu tourner', false, F.err);
   else{
     /* ⛔ Le témoin a-t-il VU le bloc grammes ? Sinon tout le reste serait vert en ne mesurant rien. */
     t('⛔ le témoin a bien VU le bloc « Quantité (g) » sur l\'aliment repris',
@@ -17210,7 +17213,7 @@ console.log('\n-- CLVI. « La dernière fois » : proposé, jamais imposé (ft-v
   await cx.close();
 }
 
-/* == BLOC CLVII - LE FAVORI DEMANDE LE MOMENT DE LA JOURNEE (ft-v1052) ==
+/* == BLOC CLXII - LE FAVORI DEMANDE LE MOMENT DE LA JOURNEE (ft-v1052) ==
    Michel, capture a l'appui : « il y a les favoris c'est bien, mais il categorise direct en
    collation ou diner ou peu importe. C'est un bon principe, mais on doit donner le choix : on
    clique sur le favori et on demande a quel moment de la journee ».
@@ -17220,7 +17223,7 @@ console.log('\n-- CLVI. « La dernière fois » : proposé, jamais imposé (ft-v
    un jour et une collation le lendemain. *L'app propose ce qu'elle a vu, la personne tranche.*
    ⭐ R13 : `meal` est un argument OPTIONNEL — sans lui, le comportement d'origine est intact,
    donc le bloc LIV (ft-v849) reste vert sans etre touche. */
-console.log('\n-- CLVII. Le favori demande le moment de la journée (ft-v1052) --');
+console.log('\n-- CLXII. Le favori demande le moment de la journée (ft-v1052) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:900},timezoneId:'Europe/Paris'});
   await cx.clock.setFixedTime(new Date('2026-08-29T10:00:00+02:00'));
@@ -17277,7 +17280,7 @@ console.log('\n-- CLVII. Le favori demande le moment de la journée (ft-v1052) -
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,220)};}
   });
-  if(F.err) t('CLVII n\'a pas pu tourner', false, F.err);
+  if(F.err) t('CLXII n\'a pas pu tourner', false, F.err);
   else{
     /* ⛔ Le témoin a-t-il VU l'habitude ? Sinon tout le reste serait vert en ne mesurant rien. */
     t('⛔ le témoin a bien VU l\'habitude, et son moment observé est « Collation 2 »',
@@ -17304,6 +17307,532 @@ console.log('\n-- CLVII. Le favori demande le moment de la journée (ft-v1052) -
       F.inconnu.meals.join()==='collation2', JSON.stringify(F.inconnu));
   }
   await cx.close();
+}
+
+/* == BLOC CLV - LE BOUTON SURVIT A UN MESSAGE DE MILO APRES LA SEANCE (ft-v1051) ==
+   3e panne du bouton en 8 jours. Michel : « pk il y a tjrs une couille avec le lancement ».
+
+   ⛔⛔ LA CAUSE : `_renderCoachThread` ne re-analysait QUE le dernier message de Milo (`break`).
+   Chez lui, ce dernier message est « la seance est ecrite au-dessus, le bouton devrait
+   apparaitre » — aucune seance dedans, donc plus aucun bouton, MEME apres ft-v1049.
+   👉 *Il suffit que Milo dise un mot apres avoir propose la seance pour perdre le bouton.*
+   ⛔ Et la borne a 3 garde l'intention d'origine : une VIEILLE seance ne doit pas ressurgir. */
+console.log('\n-- CLV. Le bouton survit à un message de Milo après la séance (ft-v1051) --');
+{
+  const SEANCE='Voilà ta séance :\n\nDéveloppé Couché (ancre)\n• S1 : 95×3 — repos 3 min\n'
+    +'• S2 : 95×3 — repos 3 min\n• S3 : 95×3 — repos 3 min\n\nRowing Barre (Tirage Horizontal)\n'
+    +'• S1 : 70×10\n• S2 : 70×10';
+  const BAVARDAGE='La séance est déjà écrite juste au-dessus — le bouton pour la démarrer devrait '
+    +'apparaître sous mon message précédent. 👆 Lance-la de là, et envoie ! 💪';
+  const jouer=async(hist)=>{
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+    const pg=await cx.newPage();
+    await pg.addInitScript(seedScript({ft4_coach_hist:JSON.stringify(hist)}));
+    await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(1600);
+    const r=await pg.evaluate(()=>{
+      try{
+        goScreen('coach');
+        if(typeof _loadCoachHist==='function')_loadCoachHist();
+        _renderCoachThread();
+        /* ⚠️⚠️ RE-VISÉ SUR `.btn-red` LE 29/08/2026 (ft-v1053), PAS DÉSARMÉ.
+           Ce témoin comptait TOUS les `<button>` de la carte — c'était un proxy commode tant que
+           la carte n'en portait qu'un. Depuis « Cette séance te convient ? » elle en porte deux
+           légitimement (« Oui, on démarre » et « ✏️ Non, retravaille »), et le compte est passé à
+           2 sans qu'aucune règle ne soit violée.
+           👉 Ce que ce bloc protège n'a jamais été « un bouton », c'est **UN SEUL LANCEMENT** : pas
+           deux séances proposées à la fois. On compte donc les boutons ROUGES, qui sont exactement
+           ça. *On ne désarme pas un témoin, on le vise* — 6ᵉ fois cette semaine. */
+        const btns=[...document.querySelectorAll('.coach-prog-save .btn-red')];
+        return {n:btns.length, lbl:btns.length?btns[0].textContent.trim():'',
+                marche:(()=>{ try{ if(!btns.length)return false; btns[0].click();
+                  return !!(S.wkt&&S.wkt.exs&&S.wkt.exs.length>=2); }catch(e){ return String(e.message);} })()};
+      }catch(e){ return {err:String(e.message||e)}; }
+    });
+    await cx.close(); return r;
+  };
+  const U=m=>({role:'user',content:m}), A=m=>({role:'assistant',content:m});
+  /* ① LE CAS DE MICHEL : séance, puis un mot de Milo par-dessus. */
+  const cas1=await jouer([U('donne-moi ma séance'),A(SEANCE),U('OK, tu peux lancer la séance'),A(BAVARDAGE)]);
+  /* ② NON-RÉGRESSION : la séance en dernier message marche toujours. */
+  const cas2=await jouer([U('donne-moi ma séance'),A(SEANCE)]);
+  /* ③ LA BORNE TIENT : une séance suivie de 3 messages de Milo ne ressurgit PAS. */
+  const cas3=await jouer([U('séance'),A(SEANCE),U('a'),A('Très bien.'),U('b'),A('D\'accord.'),
+                          U('c'),A('Je note.')]);
+
+  t('⭐⭐ ① le bouton est LÀ malgré le message de Milo posé après la séance',
+    /* ⚠️ RE-VISÉ AUSSI SUR LE LIBELLÉ (ft-v1053) : il répond désormais à la question posée
+       au-dessus (« Oui, on démarre » / « Oui, utiliser cette séance »). Ce que ce témoin
+       protège reste le même — le bouton est là, il nomme l'action et le nombre d'exercices. */
+    cas1.n===1 && /Oui/.test(cas1.lbl) && /exercice/.test(cas1.lbl),
+    cas1.err||('boutons='+cas1.n+' · '+(cas1.lbl||'(aucun)')));
+  t('⭐ … et il MARCHE vraiment (la séance est injectée, 2 exercices)',
+    cas1.marche===true, String(cas1.marche));
+  t('⛔ ② non-régression : la séance en dernier message donne toujours le bouton',
+    cas2.n===1 && cas2.marche===true, cas2.err||('boutons='+cas2.n));
+  /* ⛔ Sans ce témoin, on aurait « corrigé » en faisant ressurgir n'importe quelle vieille séance. */
+  t('⛔⛔ ③ la borne tient : au-delà de 3 messages de Milo, une vieille séance ne ressurgit PAS',
+    cas3.n===0, cas3.err||('boutons='+cas3.n+' · '+(cas3.lbl||'')));
+  t('⛔ … et jamais DEUX boutons à la fois (on prend la séance la plus récente)',
+    cas1.n<=1 && cas2.n<=1, 'cas1='+cas1.n+' cas2='+cas2.n);
+}
+
+/* == BLOC CLVI - LE REPOS SUIT LA CHARGE, CHEZ MILO ET A L'ECRAN (ft-v1052) ==
+   Les 2 points nes des captures de Michel EN SALLE. Lui, 48 ans : « quand on fait de la force,
+   1 min 30 de repos c'est impossible, il faut la recup ».
+
+   ⛔⛔ MESURE DANS SON CONTEXTE : Milo recevait « muscle/hypertrophie → 8-15 reps, repos 60-90 s »
+   ET le cadre muscu « 90 a 150 s », et RIEN qui lie le repos a la CHARGE. Sur un « S1 : 95×3 » a
+   88 % du 1RM il prenait donc les REPS DE LA FORCE et le REPOS DE L'HYPERTROPHIE — un melange.
+   ⛔⛔ ET LE CONTROLE EXISTAIT DEJA (ft-v980/1043) mais ne s'affichait qu'a l'APPLICATION, dans
+   l'ecran Seance. Michel lit le CHAT : il n'y voyait rien, donc pour lui il n'existait pas (R3).
+
+   ⭐ LES NOMBRES NE SONT PAS REECRITS DANS LE PROMPT (R2) : la consigne est DERIVEE de
+   `_INT_LOURD` et `_cadreReposLourd`. Le temoin le plus fort du bloc le prouve — on change la
+   discipline, et la phrase envoyee a Milo suit toute seule. */
+console.log('\n-- CLVI. Le repos suit la charge, chez Milo et à l\'écran (ft-v1052) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const W=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    /* SON CAS EXACT : 1RM 108 (105×2), Milo prescrit 3 × 95×3 avec 90 s. 95/108 = 88 %. */
+    S.prs={'Développé Couché':{kg:105,reps:2,rm1:108,date:'2026-07-27'}};
+    S.age=48; S.bw=85; S.discipline='muscu'; persist();
+    // ── ① LA REGLE CHEZ MILO ──
+    const c=buildCoachContext();
+    o.regle={ presente:/LE REPOS SUIT LA CHARGE DE LA SÉRIE/.test(c),
+              seuil:/80 % de son 1RM/.test(c),
+              repos:/au moins \*\*3 min\*\*/.test(c),
+              antiMelange:/reps de la FORCE avec le repos de l'HYPERTROPHIE/.test(c) };
+    /* ⭐⭐ LA PREUVE QU'ELLE EST DERIVEE ET NON ECRITE EN DUR : on change la discipline, la
+       phrase doit suivre — force athletique = « 3 à 5 min » (son cadre dit ca). */
+    S.discipline='powerlifting'; o.suitDiscipline=/au moins \*\*3 à 5 min\*\*/.test(buildCoachContext());
+    S.discipline='muscu'; persist();
+    // ── ② L'AVERTISSEMENT DANS LE CHAT ──
+    goScreen('coach');
+    const msgs=document.getElementById('coach-msgs'); msgs.innerHTML='';
+    renderCoachMsg('coach','Développé Couché\n• S1 : 95×3 — repos 1 min 30');
+    const seance={label:'Push', exs:[{name:'Développé Couché',
+      sets:[{kg:95,reps:3,type:'N',rest:90},{kg:95,reps:3,type:'N',rest:90},{kg:95,reps:3,type:'N',rest:90}]}]};
+    o.pose=_appendStartSessionBtn(JSON.parse(JSON.stringify(seance)));
+    const w=document.querySelector('.milo-warn');
+    o.avert=w?w.textContent.replace(/\s+/g,' ').trim():'';
+    /* ⛔ R24 : ca INFORME, ca ne bloque pas — le bouton reste, pleine largeur. */
+    o.boutonReste=!!document.querySelector('.coach-prog-save .btn-red');
+    /* ⛔⛔ R29 : ON SIGNALE, ON NE CORRIGE JAMAIS TOUT SEUL. La charge et le repos prescrits
+       par Milo ne doivent PAS avoir ete retouches — Michel VOULAIT ses 95 kg. */
+    const inj=_pendingMiloSessions[_pendingMiloSessions.length-1];
+    o.rienRetouche=!!inj && (inj.exs[0].sets||[]).every(x=>+x.kg===95 && +x.reps===3);
+    /* ⛔ L'avertissement est AU-DESSUS du bouton (on le lit avant de taper). */
+    const wrap=document.querySelector('.coach-prog-save');
+    o.avantLeBouton=!!wrap && wrap.firstElementChild && wrap.firstElementChild.classList.contains('milo-warn');
+    // ── NON-REGRESSION : une seance raisonnable ne declenche RIEN ──
+    msgs.innerHTML=''; renderCoachMsg('coach','Séance normale');
+    _appendStartSessionBtn({label:'B', exs:[{name:'Développé Couché',
+      sets:[{kg:70,reps:10,type:'N',rest:120},{kg:70,reps:10,type:'N',rest:120}]}]});
+    o.ok={avert:!!document.querySelector('.milo-warn'), bouton:!!document.querySelector('.coach-prog-save .btn-red')};
+    // ── SANS RECORD CONNU : le controle se tait, et le bouton sort quand meme ──
+    S.prs={}; persist();
+    msgs.innerHTML=''; renderCoachMsg('coach','Séance');
+    _appendStartSessionBtn({label:'C', exs:[{name:'Rowing Barre (Tirage Horizontal)',
+      sets:[{kg:200,reps:3,type:'N',rest:30}]}]});
+    o.sansRecord={avert:!!document.querySelector('.milo-warn'), bouton:!!document.querySelector('.coach-prog-save .btn-red')};
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  await cx.close();
+
+  if(W.err)t('CLVI n\'a pas pu tourner',false,JSON.stringify(W));
+  else{
+    /* ── ① LA REGLE QUI MANQUAIT ── */
+    t('⭐⭐ ① Milo reçoit enfin la règle « le repos suit la CHARGE, pas l\'objectif »',
+      W.regle.presente===true && W.regle.seuil===true && W.regle.repos===true, JSON.stringify(W.regle));
+    t('⛔ … avec l\'interdiction explicite de mélanger les reps de la force et le repos de l\'hypertrophie',
+      W.regle.antiMelange===true, JSON.stringify(W.regle));
+    /* ⭐⭐ LE TÉMOIN QUI PROTÈGE R2 : la phrase est DÉRIVÉE du code, pas recopiée. */
+    t('⭐⭐ … et elle est DÉRIVÉE du code : en force athlétique la phrase dit « 3 à 5 min » toute seule',
+      W.suitDiscipline===true, 'suit la discipline = '+W.suitDiscipline);
+    /* ── ② L'AVERTISSEMENT LÀ OÙ IL LE LIT ── */
+    t('⭐⭐ ② l\'avertissement s\'affiche DANS LE CHAT, sous la séance proposée',
+      /90 s à 88 % du 1RM/.test(W.avert) && /trop court pour du lourd/.test(W.avert), W.avert||'(aucun)');
+    t('⛔ … et il est AU-DESSUS du bouton (on le lit avant de taper)',
+      W.avantLeBouton===true, 'avant = '+W.avantLeBouton);
+    /* ⛔ R24 — informer sans bloquer. */
+    t('⛔⛔ R24 : ça informe, ça ne BLOQUE pas — le bouton reste',
+      W.pose===true && W.boutonReste===true, 'posé='+W.pose+' · bouton='+W.boutonReste);
+    /* ⛔⛔ R29 — la décision reste à la personne. */
+    t('⛔⛔ R29 : la charge et les reps de Milo ne sont PAS retouchés (Michel VOULAIT ses 95 kg)',
+      W.rienRetouche===true, 'intact = '+W.rienRetouche);
+    /* ── NON-RÉGRESSIONS : sans elles, les témoins ci-dessus seraient verts en criant sur tout ── */
+    t('⛔ une séance raisonnable (70×10 en 2 min) ne déclenche AUCUN avertissement',
+      W.ok.avert===false && W.ok.bouton===true, JSON.stringify(W.ok));
+    t('⛔ sans record connu, le contrôle se TAIT — et le bouton sort quand même',
+      W.sansRecord.avert===false && W.sansRecord.bouton===true, JSON.stringify(W.sansRecord));
+  }
+}
+
+/* == BLOC CLVII - « CETTE SEANCE TE CONVIENT ? » : LE LANCEMENT EST FIGE (ft-v1053) ==
+   Michel, apres TROIS pannes du bouton de lancement en huit jours : « il faut absolument figer le
+   fait d'avoir toujours la seance lancee quand on lui demande une seance ».
+
+   ⛔⛔ CE QUE CE BLOC MESURE N'EST PAS UN AFFICHAGE, C'EST UN CHANGEMENT DE DECLENCHEUR.
+   Les trois pannes (le nom sur la meme ligne que les series le 20/08 · « 95×3 » lu comme
+   « 95 series » en ft-v1049 · le `break` de ft-v1051) ont la MEME cause de fond : la presence du
+   bouton dependait de la FORME de ce que Milo avait ecrit. On ne peut pas enumerer d'avance
+   toutes les facons dont un modele peut ecrire une seance — donc tant que le declencheur est la
+   reponse, il y aura une quatrieme panne.
+   👉 Le declencheur devient LA DEMANDE DE LA PERSONNE. C'est le temoin ⭐⭐ de ce bloc, et c'est
+   le seul qui distingue cette version d'un enieme rafistolage de detecteur.
+
+   ⭐ ZERO GESTE SUPPLEMENTAIRE — condition posee par Michel avant qu'on ecrive une ligne : « Oui »
+   doit couter exactement le tap d'hier. Un temoin epingle que le bouton rouge est toujours la,
+   pleine largeur, et qu'il lance vraiment la seance.
+   ⚠️ VOCABULAIRE : Michel a corrige « programme » en « seance » en cours de conception — « un
+   programme c'est une chose et juste la seance en est une autre ». Un temoin refuse le mot. */
+console.log('\n-- CLVII. « Cette séance te convient ? » — le lancement est figé (ft-v1053) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const W=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    goScreen('coach');
+    /* ⚠️ IL FAUT QUE LE CHAT SOIT RÉELLEMENT AFFICHÉ : sans historique, `updateCoachHeader` laisse
+       `#coach-msgs` en `display:none` — et un élément masqué mesure **0 px de large**. Le témoin
+       de largeur aurait alors comparé 0 à 0, c'est-à-dire ne rien mesurer en étant vert. */
+    if(typeof _showCoachChat==='function')_showCoachChat();
+    const msgs=document.getElementById('coach-msgs');
+    const net=(w)=>String(w||'').replace(/\s+/g,' ').trim();
+
+    // ── ① LA QUESTION REMPLACE LE BOUTON, ELLE NE S'Y AJOUTE PAS ──
+    msgs.innerHTML=''; renderCoachMsg('coach','Développé Couché 4×8 à 70 kg');
+    o.pose=_appendStartSessionBtn({label:'Push', exs:[{name:'Développé Couché',
+      sets:[{kg:70,reps:8,type:'N',rest:150},{kg:70,reps:8,type:'N',rest:150}]}]});
+    const ask=document.querySelector('.milo-ask');
+    o.question=ask?net(ask.textContent):'';
+    const rouge=document.querySelector('.coach-prog-save .btn-red');
+    o.btnOui=rouge?net(rouge.textContent):'';
+    /* ⭐ ZERO GESTE EN PLUS : un SEUL bouton rouge, pleine largeur (la cible principale n'a pas
+       ete retrecie pour loger le « Non »). */
+    o.rougesCount=document.querySelectorAll('.coach-prog-save .btn-red').length;
+    o.rougeLarge=rouge?Math.round(rouge.getBoundingClientRect().width):0;
+    o.wrapLarge=Math.round(document.querySelector('.coach-prog-save').getBoundingClientRect().width);
+    o.btnNon=!!document.querySelector('.milo-ask-no');
+    /* ⚠️ LE MOT DE MICHEL : « seance », jamais « programme ». */
+    o.motProgramme=/programme/i.test(net(document.querySelector('.coach-prog-save').textContent));
+
+    // ── ② LE « NON » PROPOSE LES RAISONS EN UN TAP, ET LE ROUGE RESTE (R24) ──
+    document.querySelector('.milo-ask-no').click();
+    o.raisons=Array.from(document.querySelectorAll('.milo-ask-why .milo-ask-chip')).map(b=>net(b.textContent));
+    o.rougeApresNon=!!document.querySelector('.coach-prog-save .btn-red');
+
+    // ── ③ ⭐⭐ LE DECLENCHEUR : LA DEMANDE, PAS LA REPONSE ──
+    /* Le texte ci-dessous ne ressemble a AUCUNE seance : les trois voies rendent forcement rien.
+       Avant ft-v1053, la bulle restait NUE — c'est la panne vecue par Michel en salle. */
+    const opaque='La séance est écrite au-dessus, le bouton devrait apparaître 👆';
+    o.detecte={ ressemble:_ressembleASeance(opaque),
+                extrait:!!(_extractDaySession(opaque)||{}).sess };
+    o.demande={ oui:_demandeUneSeance('fais moi une séance pecs stp'),
+                oui2:_demandeUneSeance('je fais quoi aujourd\'hui ?'),
+                oui3:_demandeUneSeance('propose moi une séance du jour'),
+                /* ⛔ ET IL NE DOIT PAS MORDRE SUR UNE SIMPLE QUESTION D'ENTRAINEMENT : sans ca,
+                   la question s'afficherait sous une explication qui n'y repond pas (R29). */
+                non1:_demandeUneSeance('c\'est quoi un bon exercice pour les pecs ?'),
+                non2:_demandeUneSeance('combien de repos entre les séries ?'),
+                non3:_demandeUneSeance('merci !') };
+    msgs.innerHTML=''; renderCoachMsg('coach',opaque);
+    o.replPose=_appendSeanceQuestion(opaque);
+    o.replQuestion=(document.querySelector('.milo-ask')||{}).textContent||'';
+    o.replBtn=net((document.querySelector('.coach-prog-save .btn-red')||{}).textContent||'');
+
+    // ── ④ L'ECHEC SE DIT — on ne laisse jamais un bouton mort (R29, P4) ──
+    o.finPromise=(async()=>{
+      await _construireSeanceAuTap(0, document.querySelector('.coach-prog-save .btn-red'));
+      return { ditLEchec:!!document.querySelector('.milo-ask-fail'),
+               proposeLaSuite:!!Array.from(document.querySelectorAll('.milo-ask-chip'))
+                 .find(b=>/réécrire/i.test(b.textContent)),
+               boutonRendu:!(document.querySelector('.coach-prog-save .btn-red')||{}).disabled };
+    })();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  // ④ se termine en asynchrone (le cervelet est attendu au tap) — on relit apres.
+  await pg.waitForTimeout(2500);
+  const F=W.err?null:await pg.evaluate(()=>({
+    ditLEchec:!!document.querySelector('.milo-ask-fail'),
+    proposeLaSuite:!!Array.from(document.querySelectorAll('.milo-ask-chip')).find(b=>/réécrire/i.test(b.textContent)),
+    boutonRendu:!(document.querySelector('.coach-prog-save .btn-red')||{}).disabled
+  }));
+
+  // ── ⑤ LE VRAI TAP LANCE VRAIMENT LA SEANCE (le chemin complet, pas la fonction appelee a la main) ──
+  const V=W.err?null:await pg.evaluate(()=>{
+   try{
+    const msgs=document.getElementById('coach-msgs'); msgs.innerHTML='';
+    S.wkt=null; persist();
+    renderCoachMsg('coach','Squat 3×5 à 100 kg');
+    _appendStartSessionBtn({label:'Bas', exs:[{name:'Squat à la Barre',
+      sets:[{kg:100,reps:5,type:'N',rest:180},{kg:100,reps:5,type:'N',rest:180},{kg:100,reps:5,type:'N',rest:180}]}]});
+    document.querySelector('.coach-prog-save .btn-red').click();
+    return { lancee:!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length),
+             nom:(S.wkt&&S.wkt.exs&&S.wkt.exs[0]?S.wkt.exs[0].name:''),
+             series:(S.wkt&&S.wkt.exs&&S.wkt.exs[0]?S.wkt.exs[0].sets.length:0) };
+   }catch(e){return {err:String(e)};}
+  });
+
+  // ── ⑥ LA QUESTION SURVIT AU RECHARGEMENT (le trajet vers la salle) ──
+  const R=W.err?null:await pg.evaluate(async()=>{
+   try{
+    coachHistory.length=0;
+    coachHistory.push({role:'user',content:'fais moi une séance haut du corps',ts:Date.now()});
+    coachHistory.push({role:'assistant',content:'La séance est écrite au-dessus 👆',ts:Date.now()});
+    _renderCoachThread();
+    const a={ apresRechargement:!!document.querySelector('.coach-prog-save .btn-red') };
+    /* ⛔ LA BORNE : sans demande de seance, rien ne doit apparaitre — sinon la question
+       surgirait au milieu de n'importe quelle conversation. */
+    coachHistory.length=0;
+    coachHistory.push({role:'user',content:'merci pour l\'explication',ts:Date.now()});
+    coachHistory.push({role:'assistant',content:'Avec plaisir !',ts:Date.now()});
+    _renderCoachThread();
+    a.sansDemande=!!document.querySelector('.coach-prog-save .btn-red');
+    return a;
+   }catch(e){return {err:String(e)};}
+  });
+  await cx.close();
+
+  if(W.err)t('CLVII n\'a pas pu tourner',false,JSON.stringify(W));
+  else{
+    /* ── ① LA QUESTION, ET LE GESTE INCHANGE ── */
+    t('① la question « Cette séance te convient ? » remplace le bouton nu',
+      W.pose===true && /Cette séance te convient/.test(W.question), W.question||'(aucune)');
+    t('⭐ ZÉRO GESTE EN PLUS : un seul bouton rouge, toujours PLEINE LARGEUR',
+      W.rougesCount===1 && W.rougeLarge>200 && W.rougeLarge===W.wrapLarge,
+      'rouges='+W.rougesCount+' · '+W.rougeLarge+'px / '+W.wrapLarge+'px');
+    t('… et « Oui, on démarre » est bien le libellé du bouton rouge',
+      /Oui|Commencer|Utiliser/.test(W.btnOui) && W.btnNon===true, W.btnOui+' · non='+W.btnNon);
+    /* ⚠️ LE MOT CORRIGÉ PAR MICHEL — « un programme c'est une chose, la séance en est une autre ». */
+    t('⚠️ le mot est « séance », JAMAIS « programme » (correction de Michel)',
+      W.motProgramme===false, 'contient « programme » = '+W.motProgramme);
+    /* ── ② LE « NON » ── */
+    t('② « Non, retravaille » propose les raisons EN UN TAP',
+      W.raisons.length===4 && /Trop lourd/.test(W.raisons[0]) && /Trop long/.test(W.raisons[1]),
+      JSON.stringify(W.raisons));
+    t('⛔ R24 : dire « non » ne ferme pas la porte — le bouton rouge RESTE',
+      W.rougeApresNon===true, 'rouge après non = '+W.rougeApresNon);
+    /* ── ③ LE TÉMOIN CENTRAL : LE DÉCLENCHEUR A CHANGÉ DE NATURE ── */
+    t('⛔⛔ CONTEXTE : sur ce texte, AUCUNE des voies de lecture ne trouve de séance',
+      W.detecte.ressemble===false && W.detecte.extrait===false, JSON.stringify(W.detecte));
+    t('⭐⭐ ③ et pourtant la question s\'affiche — le déclencheur est LA DEMANDE, plus la réponse de Milo',
+      W.replPose===true && /Cette séance te convient/.test(W.replQuestion) && /Oui/.test(W.replBtn),
+      'posé='+W.replPose+' · '+W.replBtn);
+    /* ⛔ SANS CE TÉMOIN, LE PRÉCÉDENT SERAIT VERT EN S'AFFICHANT PARTOUT. */
+    t('⛔ … et le détecteur de demande ne mord PAS sur une simple question d\'entraînement',
+      W.demande.oui===true && W.demande.oui2===true && W.demande.oui3===true &&
+      W.demande.non1===false && W.demande.non2===false && W.demande.non3===false,
+      JSON.stringify(W.demande));
+    /* ── ④ L'ÉCHEC SE DIT ── */
+    t('⛔⛔ ④ quand la séance reste illisible, l\'app le DIT et propose la suite (jamais un bouton mort)',
+      !!F && F.ditLEchec===true && F.proposeLaSuite===true && F.boutonRendu===true, JSON.stringify(F));
+    /* ── ⑤ LE VRAI CHEMIN ── */
+    t('⭐ ⑤ le VRAI tap sur « Oui » lance vraiment la séance (3 séries de Squat)',
+      !!V && V.lancee===true && /Squat/.test(V.nom||'') && V.series===3, JSON.stringify(V));
+    /* ── ⑥ LE TRAJET VERS LA SALLE ── */
+    t('⭐ ⑥ la question SURVIT au rechargement de l\'app (le cas du 14/08 : le trajet vers la salle)',
+      !!R && R.apresRechargement===true, JSON.stringify(R));
+    t('⛔ … et elle ne surgit PAS quand la personne n\'a rien demandé',
+      !!R && R.sansDemande===false, JSON.stringify(R));
+  }
+}
+
+/* == BLOC CLVIII - LA SEANCE D'HIER NE RESSURGIT PLUS (ft-v1054) ==
+   Michel, DIX MINUTES apres la livraison de ft-v1053 : « lol il vient de me sortir la seance
+   d'hier ».
+
+   ⛔⛔ LE DEFAUT VIENT DE ft-v1051, PAS DE ft-v1053 — et c'est mesure des deux cotes avant de le
+   dire (une seance de 26 h ressurgissait et s'injectait contre ft-v1052 COMME contre ft-v1053).
+   Sa borne etait « au plus 3 messages de Milo » : un NOMBRE DE MESSAGES, c'est-a-dire un PROXY de
+   « recent ». Or le fil du chat SURVIT AUX JOURS — on rouvre l'app le lendemain, la seance d'hier
+   est a deux messages de distance, et le proxy repond « recent » pour quelque chose qui a 26 h.
+   ⚠️ Ce que ft-v1053 a change, c'est le VOLUME du degat : un bouton nu passait inapercu, une
+   carte qui demande « Cette seance te convient ? » se lit comme une proposition d'aujourd'hui.
+
+   ⭐⭐ CE BLOC TIENT LES DEUX MOITIES, ET LA SECONDE COMPTE AUTANT : on refuse hier, mais on GARDE
+   le matin — c'est le cas d'origine de ft-v851 (demander le matin, ouvrir a la salle le soir), et
+   perdre le bouton est la plainte n°1 de Michel. Un correctif qui tuerait aussi ce cas-la serait
+   un recul, pas une reparation. */
+console.log('\n-- CLVIII. La séance d\'hier ne ressurgit plus (ft-v1054) --');
+{
+  const SEANCE='Voilà ta séance 💪\n\nSoulevé de Terre (ancre)\n• S1 : 140×3 — repos 3 min\n'
+    +'• S2 : 140×3 — repos 3 min\n\nFentes Haltères\n• S1 : 24×10\n• S2 : 24×10';
+  /* Le fil tel qu'il existe vraiment : la séance, puis un échange anodin par-dessus. */
+  const filA=(h)=>[{role:'user',content:'donne moi ma séance',ts:h},
+                   {role:'assistant',content:SEANCE,ts:h},
+                   {role:'user',content:'ok merci',ts:h+60000},
+                   {role:'assistant',content:'Avec plaisir, bon entraînement 💪',ts:h+61000}];
+  /* Et le fil du REPLI de ft-v1053 : une demande, une réponse illisible. */
+  const filB=(h)=>[{role:'user',content:'fais moi une séance haut du corps',ts:h},
+                   {role:'assistant',content:'La séance est écrite au-dessus 👆',ts:h}];
+  const jouer=async(hist)=>{
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    const pg=await cx.newPage();
+    await pg.addInitScript(seedScript({ft4_coach_hist:JSON.stringify(hist)}));
+    await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(1600);
+    const r=await pg.evaluate(()=>{
+      try{
+        document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+        goScreen('coach');
+        if(typeof _loadCoachHist==='function')_loadCoachHist();
+        _renderCoachThread();
+        const btn=document.querySelector('.coach-prog-save .btn-red');
+        const o={carte:!!btn, injecte:[]};
+        /* ⭐ ON VA JUSQU'À L'INJECTION : une carte affichée n'est pas le sujet, le sujet est
+           « sur quelle séance la personne va-t-elle s'entraîner ». */
+        if(btn){ S.wkt=null; persist(); btn.click();
+                 o.injecte=((S.wkt&&S.wkt.exs)||[]).map(e=>e.name); }
+        return o;
+      }catch(e){ return {err:String(e.message||e)}; }
+    });
+    await cx.close(); return r;
+  };
+  const H=(h)=>Date.now()-h*3600*1000;
+  const hier   = await jouer(filA(H(26)));   // ⛔ doit se TAIRE
+  const matin  = await jouer(filA(H(9)));    // ⭐ doit RESTER (le trajet vers la salle)
+  const hierB  = await jouer(filB(H(26)));   // ⛔ le repli aussi doit se taire
+  const matinB = await jouer(filB(H(2)));    // ⭐ … et rester quand c'est d'aujourd'hui
+
+  /* ⛔⛔ LE TÉMOIN CENTRAL : il ne regarde pas la carte, il regarde SUR QUOI ON S'ENTRAÎNE. */
+  t('⛔⛔ ① une séance de 26 h ne ressurgit plus — ni carte, ni injection',
+    hier.carte===false && hier.injecte.length===0, hier.err||JSON.stringify(hier));
+  /* ⭐⭐ SANS CETTE MOITIÉ, LE CORRECTIF SERAIT UN RECUL : c'est le cas d'origine de ft-v851. */
+  t('⭐⭐ ② … mais la séance de CE MATIN reste (demandée à 9 h, ouverte à la salle le soir)',
+    matin.carte===true && matin.injecte.length===2 && /Soulevé/.test(matin.injecte[0]||''),
+    matin.err||JSON.stringify(matin));
+  /* ⛔ LA MÊME BORNE VAUT POUR LE REPLI DE ft-v1053, sinon le correctif est posé d'un seul côté. */
+  t('⛔ ③ le repli « la personne a demandé » est borné pareil : rien pour une demande d\'hier',
+    hierB.carte===false, hierB.err||JSON.stringify(hierB));
+  t('⭐ ④ … et il s\'affiche bien pour une demande d\'aujourd\'hui (sinon ③ serait vert sans rien mesurer)',
+    matinB.carte===true, matinB.err||JSON.stringify(matinB));
+  /* ⭐ LA RÈGLE ELLE-MÊME, épinglée sur ses deux moitiés — sans ça, quelqu'un « simplifierait »
+     un jour en ne gardant que les 12 h, et reprendrait à Michel sa séance du matin. */
+  {
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    /* ⚠️⚠️ L'HORLOGE EST ÉPINGLÉE À 01 H 30, ET C'EST LE SUJET DU TÉMOIN, PAS UN DÉTAIL.
+       Le cas « moins de 12 h MAIS jour civil précédent » n'existe QUE la nuit — à 14 h, 22 h la
+       veille fait déjà 16 h. Mon premier jet mesurait donc une chose impossible à l'heure où le
+       test tourne, et il rougissait sur du code correct. *Un témoin qui affirme une condition
+       doit la CONSTRUIRE, pas espérer que l'heure du jour la lui donne.* */
+    await cx.clock.setFixedTime(new Date('2026-08-29T01:30:00+02:00'));
+    const pg=await cx.newPage();
+    await pg.addInitScript(seedScript({}));
+    await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(1600);
+    const R=await pg.evaluate(()=>{
+      const j=new Date(); j.setHours(1,0,0,0);              // 01 h ce matin = même jour civil
+      const v=new Date(j.getTime()-3*3600*1000);            // 22 h hier = < 12 h mais jour d'avant
+      const o={ maintenant:_seanceEncoreDuJour(Date.now()),
+                tôtCeMatin:_seanceEncoreDuJour(j.getTime()),
+                hierSoirMoinsDe12h:_seanceEncoreDuJour(v.getTime()),
+                hier26h:_seanceEncoreDuJour(Date.now()-26*3600*1000) };
+      /* ⚠️ LE CAS « PAS DE DATE » : `ts` n'existe que depuis le 25/08, donc un fil plus ancien
+         n'en porte aucun. Un message sans date hérite de l'âge de sa CONVERSATION. */
+      try{ localStorage.removeItem('ft4_coach_lastts'); }catch(e){}
+      o.sansRien=_seanceEncoreDuJour(undefined);            // on ne sait rien → comportement d'hier
+      try{ localStorage.setItem('ft4_coach_lastts', String(Date.now()-30*3600*1000)); }catch(e){}
+      o.filMortHier=_seanceEncoreDuJour(undefined);         // fil vivant pour la dernière fois hier
+      try{ localStorage.setItem('ft4_coach_lastts', String(Date.now()-3600*1000)); }catch(e){}
+      o.filVivantAujourdhui=_seanceEncoreDuJour(undefined);
+      return o;
+    });
+    await cx.close();
+    t('⭐ ⑤ la fenêtre est l\'UNION des deux cas : le jour civil ET les 12 h',
+      R.maintenant===true && R.tôtCeMatin===true && R.hierSoirMoinsDe12h===true && R.hier26h===false,
+      JSON.stringify(R));
+    /* ⚠️⚠️ CE TÉMOIN EXISTE PARCE QUE MON PREMIER JET AVAIT TORT : il répondait « non » sans date,
+       ce qui aurait RETIRÉ le bouton à tout fil antérieur au 25/08 — une 4ᵉ panne du bouton,
+       fabriquée en réparant la 3ᵉ. Un message sans date hérite de l'âge de sa conversation. */
+    t('⭐⭐ ⑥ un message sans date hérite de l\'âge de sa CONVERSATION (`ft4_coach_lastts`)',
+      R.filMortHier===false && R.filVivantAujourdhui===true, JSON.stringify(R));
+    /* ⛔ Et quand on ne sait vraiment rien, on retombe sur le comportement d'hier : un bouton
+       absent est SILENCIEUX (plainte n°1), une séance périmée est sous les yeux et refusable. */
+    t('⛔ ⑦ … et sans rien du tout, on ne fait pas DISPARAÎTRE le bouton (comportement d\'hier)',
+      R.sansRien===true, JSON.stringify(R));
+  }
+}
+
+/* == BLOC CLIX - UNE CONSIGNE INTERNE N'EST PAS UNE DEMANDE DE LA PERSONNE (ft-v1055) ==
+   Capture de Michel a 15 h 16 : la question « Cette seance te convient ? » s'affichait sous un
+   DEBRIEF DE FIN DE SEANCE — il venait de terminer, et l'app lui proposait d'en demarrer une.
+   Contresens complet, et la cause est dans mon code de ft-v1053.
+
+   ⛔⛔ LE DEBRIEF AUTO envoie une consigne `_silent` qui commence par « Je viens de terminer MA
+   SEANCE » — et `_demandeUneSeance` y lisait une demande. *Je pairais la reponse de Milo avec un
+   texte que Michel n'a JAMAIS tape.*
+   ⭐ LA REGLE EXISTAIT DEJA A DEUX ENDROITS (l'affichage du fil, le bouton « Mes discussions ») :
+   c'est moi qui ne l'ai pas reprise, pas l'app qui l'ignorait.
+   ⛔ ET ON ABANDONNE, on ne remonte pas plus haut : chercher une demande PLUS ANCIENNE collerait
+   la question sous une reponse qui n'y repond pas — le defaut qu'on corrige justement. */
+console.log('\n-- CLIX. Une consigne interne n\'est pas une demande de la personne (ft-v1055) --');
+{
+  const INSTR='[DÉBRIEF AUTO] Je viens de terminer ma séance (la plus récente dans mes dernières '
+    +'séances). Débriefe-la MAINTENANT, directement : rappelle mes charges par exercice…';
+  const DEBRIEF='Face Pull — fait ✅\nL\'épaule droite te remercie.\n\n--\n\nPiste prochaine séance :\n'
+    +'Le DC est prêt à monter — vise 3×3 à 98 kg avec la montée en charge corrigée.';
+  const jouer=async(hist)=>{
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    const pg=await cx.newPage();
+    await pg.addInitScript(seedScript({ft4_coach_hist:JSON.stringify(hist),
+                                       ft4_coach_lastts:String(Date.now()-60000)}));
+    await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(1600);
+    const r=await pg.evaluate(()=>{
+      try{
+        document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+        goScreen('coach');
+        if(typeof _loadCoachHist==='function')_loadCoachHist();
+        _renderCoachThread();
+        const c=document.querySelector('.coach-prog-save');
+        return { carte:!!c,
+                 titre:(typeof _convTitle==='function')?_convTitle(coachHistory):'',
+                 bullesVisibles:document.querySelectorAll('#coach-msgs .msg-bubble').length };
+      }catch(e){ return {err:String(e.message||e)}; }
+    });
+    await cx.close(); return r;
+  };
+  const N=Date.now();
+  const U=(c,s)=>({role:'user',content:c,ts:N-120000,...(s?{_silent:true}:{})});
+  const A=(c)=>({role:'assistant',content:c,ts:N-119000});
+
+  /* ① SON CAS EXACT : consigne interne + débrief. */
+  const debrief = await jouer([U(INSTR,true), A(DEBRIEF)]);
+  /* ② NON-RÉGRESSION — sans elle, ① serait vert en n'affichant plus jamais rien : une VRAIE
+     demande, tapée par la personne, sur une réponse tout aussi illisible, doit donner la carte. */
+  const vraie   = await jouer([U('fais moi une séance haut du corps',false),
+                               A('La séance est écrite au-dessus 👆')]);
+  /* ③ ET ON N'ATTRAPE PAS UNE DEMANDE PLUS ANCIENNE au passage : la vraie demande est là, mais
+     le débrief est venu APRÈS — la réponse affichée en bas n'y répond pas. */
+  const apres   = await jouer([U('fais moi une séance',false), A('La séance est écrite au-dessus 👆'),
+                               U(INSTR,true), A(DEBRIEF)]);
+
+  t('⛔⛔ ① aucune question « on démarre » sous un DÉBRIEF de fin de séance',
+    debrief.carte===false, debrief.err||JSON.stringify(debrief));
+  t('⭐⭐ ② … mais une VRAIE demande tapée par la personne la donne toujours',
+    vraie.carte===true, vraie.err||JSON.stringify(vraie));
+  t('⛔ ③ … et on ne repêche pas une demande PLUS ANCIENNE pour la coller sous le débrief',
+    apres.carte===false, apres.err||JSON.stringify(apres));
+  /* 🔍 LA JUMELLE (R8), trouvée en la cherchant : même défaut, autre endroit. */
+  t('🔍 ④ la JUMELLE : une discussion rangée ne s\'intitule pas « [DÉBRIEF AUTO] … »',
+    !/DÉBRIEF AUTO/.test(debrief.titre||''), 'titre = '+(debrief.titre||''));
+  /* ⛔ Et la règle d'affichage d'origine tient toujours : la consigne interne reste invisible. */
+  t('⛔ ⑤ la consigne interne reste INVISIBLE dans le fil (1 seule bulle affichée)',
+    debrief.bullesVisibles===1, 'bulles = '+debrief.bullesVisibles);
 }
 
 await b.close(); srv.close();

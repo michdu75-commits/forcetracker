@@ -4,6 +4,54 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🔁 CHAQUE SÉANCE FAITE PEUT INDUIRE UN FUTUR PROGRAMME (Michel, 29/08/2026)
+
+> Michel, en validant la question *« cette séance te convient ? »* de ft-v1053, et juste après
+> avoir corrigé le vocabulaire (*« un programme c'est une chose et juste la séance en est une
+> autre »*) : **« Par contre chaque séance faite, peut induire à un futur programme. »**
+
+### ⭐⭐ Ce que la phrase dit vraiment — et pourquoi elle mérite d'être gardée telle quelle
+
+Elle **ferme la boucle** que `docs/MODELE-METIER.md` laisse ouverte. Aujourd'hui le sens va
+**dans un seul sens** : *Programme → Cycle → Séance → Bloc → Série*. On descend du plan vers le
+réalisé, jamais l'inverse. Michel décrit le **retour** : un enchaînement de séances réellement
+faites finit par **dessiner** un programme, sans que personne ne l'ait écrit.
+
+👉 C'est exactement le principe **PLANIFIÉ vs RÉALISÉ** du modèle métier — mais pris par le côté
+qui n'existe pas encore : *le réalisé qui propose un planifié.*
+
+### ⭐ Et c'est la Vision, pas une fonctionnalité de plus
+
+*« Il ne te dit pas qui tu dois devenir, il se souvient de qui tu es devenu »*
+(`docs/VISION-FORCE-TRACKER.md`). Un programme **déduit de ce qu'on a vraiment fait** est
+littéralement cette phrase appliquée à la planification : on ne propose pas un modèle théorique,
+on rend visible la structure que la personne s'est déjà donnée.
+
+### ⛔ Les garde-fous à ne pas perdre en route (ils sont déjà écrits ailleurs)
+
+- **Ça PROPOSE, ça ne crée jamais tout seul** — un programme apparu sans qu'on l'ait demandé est
+  un pilote, et *« Milo ne pilote jamais »* (`docs/PROFIL-VIVANT.md`).
+- **Il faut de la RÉGULARITÉ, pas des séances** — trois séances ne font pas un programme, elles
+  font trois séances. La brique 8 (`_synthConstantes`, ft-v1041) a déjà tranché la question du
+  seuil pour un cas voisin : **8 séances sur 21 jours**, parce qu'il faut du nombre **et** de la
+  durée. Le même arbitrage vaudra probablement ici (**R12** : la tendance, pas le bruit).
+- **Ne rien recalculer de neuf (R2/R13)** : `_calSessMix` sait déjà classer une séance par région
+  dominante, `_volumeParMuscle` compte déjà les séries par groupe et par semaine (ft-v1045), et
+  l'éditeur de programmes existe (`editProg`). *La brique manquante n'est pas le calcul, c'est la
+  proposition.*
+- ⛔ **Et le mot compte** : ce qui se propose ici est un **programme** (une structure sur des
+  semaines), pas une séance. C'est la distinction que Michel vient d'imposer — la confondre serait
+  refaire l'erreur le jour même où il l'a corrigée.
+
+### ⏭️ Ce qui reste à trancher
+
+- **Qui la déclenche** : l'app quand elle remarque la régularité, ou Milo en conversation ?
+- **À quoi ça ressemble** : un programme rempli à ouvrir dans l'éditeur, ou une phrase de Milo
+  (*« tes 4 dernières semaines ressemblent à un Haut/Bas 4 jours — je te l'écris ? »*) ?
+- **Ce qu'on fait des exceptions** : la séance improvisée avec son beau-fils doit-elle compter ?
+
+---
+
 ## 🥘 ON CONNAÎT L'ATHLÈTE SPORTIVEMENT, PAS DU TOUT ALIMENTAIREMENT (Michel, 26/08/2026)
 
 > Michel, capture du **Plan alimentaire journalier** à l'appui : *« Si l'application propose des

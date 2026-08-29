@@ -6,8 +6,15 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1051`.
-- ⚖️⭐⭐ **LA QUANTITÉ AU CHOIX : GRAMMES *OU* PORTIONS** (ft-v1051). Michel, capture à l'appui :
+- **Version en ligne (live) :** `ft-v1056`.
+- ⚖️⏰⭐⭐ **ON PROPOSE, ON N'IMPOSE PAS — la quantité ET le moment** (ft-v1056). La même
+  règle trouvée **trois fois le même jour** : le champ en grammes, la quantité de la
+  dernière fois, et le **favori qui décidait du moment de la journée à la place de la
+  personne**. Un repas habituel est *observé* — donc son moment est un **bon pari**, pas
+  un fait : il est désormais marqué « d'habitude » et rien ne part sans un tap.
+  ⚠️ **Deux témoins ne pouvaient pas VERDIR** : un échappement doublé par un script, et
+  une espace **insécable** (règle ft-v1034) cherchée comme une espace ordinaire — *les
+  deux chaînes sont identiques à l'écran*. Miroir du « vert qui ne peut pas rougir ». Michel, capture à l'appui :
   *« il faut que je puisse mettre les grammes »*, puis la correction qui a décidé de la forme :
   *« je ne prends pas toujours le même poids… tu prends la ratatouille, il y a différentes
   boîtes de différent poids »*.
@@ -35,6 +42,85 @@
   ⚠️⚠️ **Deux témoins existants ont rougi sur du code correct**, et le second deux fois : il
   lisait le bloc en `.slice(0,60)` et mes boutons d'unité ont poussé « portion » au-delà de la
   coupe. *Un motif cherché dans une chaîne tronquée mesure la longueur de la phrase.*
+- **Version en ligne (live) :** `ft-v1055`.
+- 🩹⭐⭐ **UNE CONSIGNE INTERNE N'EST PAS UNE DEMANDE DE LA PERSONNE** (ft-v1055). Capture de
+  Michel à 15 h 16 : *« Cette séance te convient ? »* s'affichait **sous un débrief de fin de
+  séance** — il venait de terminer, on lui proposait d'en démarrer une.
+  ⛔⛔ **La cause est dans mon code de ft-v1053** : le débrief auto envoie une consigne `_silent`
+  qui commence par *« Je viens de terminer **ma séance** »*, et mon détecteur y lisait une
+  demande. ***Je pairais la réponse de Milo avec un texte que Michel n'a jamais tapé.***
+  ⭐ **La règle existait déjà à DEUX endroits** (l'affichage du fil, le bouton « Mes discussions »)
+  — c'est moi qui ne l'ai pas reprise. 👉 *Avant d'écrire un nouveau lecteur de `coachHistory`,
+  regarder ce que les lecteurs existants filtrent déjà.*
+  ⛔ **On abandonne, on ne remonte pas plus haut** : repêcher une demande plus ancienne collerait
+  la question sous une réponse qui n'y répond pas (témoin ③).
+  🔍 **Jumelle (R8)** : `_convTitle` — une discussion rangée pouvait s'intituler
+  *« [DÉBRIEF AUTO] Je viens de terminer ma séance… »*.
+- ⏳⭐⭐ **LA SÉANCE D'HIER NE RESSURGIT PLUS** (ft-v1054). Michel, **10 min** après ft-v1053 :
+  *« lol il vient de me sortir la séance d'hier »*.
+  ⛔⛔ **Le défaut vient de ft-v1051, mesuré des DEUX côtés avant d'être dit** : une séance de
+  **26 h** ressurgissait **et s'injectait**, contre ft-v1052 **comme** contre ft-v1053.
+  ⭐⭐ **La cause** : la borne était *« au plus 3 messages de Milo »* — un **compte**, donc un
+  **proxy de « récent »**. Or le fil du chat **survit aux jours**. → borne en **temps**.
+  ⭐ **Fenêtre = union de deux cas** : ① **même jour civil** (demander le matin, ouvrir à la
+  salle le soir — le cas de ft-v851, et *perdre le bouton est sa plainte n°1*) ② **< 12 h** (la
+  demande de 23 h qui déborde sur la nuit).
+  ⚠️⚠️ **Mon 1ᵉʳ jet a eu tort sur le cas « pas de date »** : `ts` n'existe que depuis le **25/08**
+  → répondre « non » aurait **retiré le bouton** à tout fil plus ancien, ***une 4ᵉ panne fabriquée
+  en réparant la 3ᵉ***. 👉 un message sans date **hérite de l'âge de sa conversation**
+  (`ft4_coach_lastts`, qui existait déjà) ; sans rien, on garde le comportement d'hier.
+  ⚠️ **Et un de mes témoins mesurait une chose impossible** : « < 12 h mais jour d'avant » n'existe
+  que **la nuit**. Horloge épinglée à 01 h 30.
+- ⚡⭐⭐ **« CETTE SÉANCE TE CONVIENT ? » — LE LANCEMENT EST FIGÉ** (ft-v1053). Michel, après
+  **3 pannes du bouton en 8 jours** : *« il faut absolument figer le fait d'avoir toujours la
+  séance lancée quand on lui demande une séance. Explique-moi avant de coder. »* — conception
+  discutée et **validée par lui avant** la première ligne de code.
+  ⛔⛔ **Les 3 pannes ont la même cause de fond** : la présence du bouton dépendait de la
+  **FORME** de ce que Milo écrivait. *On ne peut pas énumérer d'avance toutes les façons dont un
+  modèle écrit une séance* → tant que le déclencheur est la **réponse**, il y a une 4ᵉ panne.
+  ⭐⭐ **Le déclencheur devient LA DEMANDE DE LA PERSONNE** — une chose qu'on connaît avec
+  certitude, puisqu'elle l'a tapée. Aucun modèle ne peut la faire varier.
+  ⛔ **Zéro geste en plus** (sa condition) : *« Oui, on démarre »* = le même bouton rouge, même
+  place, **pleine largeur** (mesuré). Ce qu'on **gagne** est le *« Non, retravaille »* et ses
+  **4 raisons en un tap** — avant, refuser une séance voulait dire la **retaper à la main**.
+  ⚠️⚠️ **Vocabulaire corrigé par Michel** : *« un programme c'est une chose et juste la séance en
+  est une autre »* → le libellé dit **séance**, un témoin refuse le mot *programme*.
+  ⛔ **L'échec se DIT** : séance illisible → l'app le nomme et propose de la faire réécrire,
+  jamais un bouton mort. ⛔ Le cervelet n'est appelé **qu'au tap** (0 coût sinon).
+  ⚠️ **3 témoins existants ont rougi sans qu'aucun défaut n'existe** : ils comptaient *tous* les
+  `<button>` de la carte, qui en porte maintenant deux légitimement. Re-visés sur `.btn-red` —
+  ce qu'ils protègent est **un seul lancement**, pas un bouton. *On vise, on ne désarme pas.*
+  🧾 **Noté** : l'idée *« chaque séance faite peut induire à un futur programme »* → `IDEES-FUTURES.md`.
+- 🎽⭐⭐ **LE REPOS SUIT LA CHARGE, PAS L'OBJECTIF — chez Milo ET à l'écran** (ft-v1052).
+  ⛔⛔ **Mesuré** : Milo recevait *« muscle → 8-15 reps, repos 60-90 s »* et le cadre muscu, et
+  **rien qui lie le repos à la CHARGE** → sur un **3 reps à 88 %** il prenait les **reps de la
+  force** et le **repos de l'hypertrophie**. ⛔ Les nombres ne sont **pas réécrits** dans le
+  prompt (R2) : la phrase est **dérivée** de `_INT_LOURD` et `_cadreReposLourd` — change de
+  discipline, elle passe toute seule à « 3 à 5 min ».
+  ⛔⛔ **Et le contrôle existait déjà, il ne se voyait nulle part** : `_intensiteDefauts` ne
+  tournait qu'à l'**application**, dans l'écran Séance. Michel lit le **chat** → pour lui il
+  n'existait pas (**R3**). Il s'affiche maintenant **sous la séance proposée**.
+  ⭐ **R13** : un seul point de greffe, `_appendStartSessionBtn`, passage obligé des 3 voies.
+  ⛔ **Ça informe, ça ne décide pas** : le bouton reste (R24), charge et repos **non retouchés**
+  (R29 — *il VOULAIT ses 95 kg*), borné à 3 lignes.
+  ⚠️⚠️ **Un témoin m'a repris sur une erreur de CONCEPTION** : ma règle était dans le prompt
+  **commun** — elle le faisait dépasser (45 973 → 47 729) **et**, plus grave, elle dépend de
+  `S.discipline`, donc elle faisait varier **en silence** un bloc *partagé et mis en cache*.
+  Déplacée dans le bloc **personnel** ; le commun est même retombé à **45 363**.
+- 🆘⭐⭐ **3ᵉ PANNE DU BOUTON DE LANCEMENT EN 8 JOURS — un `break`** (ft-v1051). Michel :
+  *« pk il y a tjrs une couille avec le lancement de la séance »*.
+  ⛔⛔ `_renderCoachThread` ne ré-analysait que **le dernier** message de Milo. Chez lui, ce
+  dernier message est *« la séance est écrite au-dessus »* — **aucune séance dedans** → plus
+  aucun bouton, ***même après ft-v1049***. *Il suffit que Milo dise un mot après la séance.*
+  ⭐ L'intention (« pas de vieille séance ») était bonne, la borne fausse : on remonte au plus
+  **3 messages de Milo**, et un témoin épingle la borne — sans lui on aurait fait ressurgir
+  n'importe quoi.
+  ⭐⭐ **La leçon, relayée à session-A à la demande de Michel** : les 3 pannes viennent d'une
+  hypothèse sur la **FORME** de ce que Milo écrit, et **il change d'écriture sans prévenir**.
+  Un détecteur vérifié sur nos propres exemples ne teste rien.
+  ⚠️ Le témoin XVII testait la survie du bouton **avec la séance en dernier message** — le cas
+  « séance + un mot par-dessus » n'était couvert par rien.
+  ⚠️ Renumérotée 1050 → 1051 : git a refusé mon push, session-A avait pris 1050.
 - 📅⭐⭐ **LA SÉANCE PRÉVUE QUI N'A PAS EU LIEU — on DEMANDE ce qui s'est passé** (ft-v1050).
   Méthode de la coach de Michel, dans ses mots : *« si elle est loupée elle est loupée. C'est
   pas grave, sur une semaine. Plutôt elle demande ce qui s'est passé — fatigue, travail,
@@ -52,7 +138,6 @@
   ⚠️ **Défaut trouvé À LA CAPTURE** : « Pas la tête » **débordait** de sa pastille de 47 px,
   invisible dans le texte rendu. Un témoin mesure le débordement (`scrollWidth`), pas la
   longueur des mots.
-- **Version en ligne (live) :** `ft-v1049`.
 - 🆘⭐⭐ **BLOQUANT CORRIGÉ — le bouton « lancer la séance » ne sortait plus** (ft-v1049), trouvé
   par Michel **en salle** : Milo écrit la séance, dit *« le bouton devrait apparaître »*, et il
   n'y en a pas.

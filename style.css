@@ -1767,3 +1767,25 @@ html.ob-done #onboarding{display:none;}
    données. ⚠️ On ne la SUPPRIME pas pour autant : sa raison d'être tient (quelqu'un qui recompte
    à la main doit retrouver le même nombre), donc la version courte reste à l'écran. */
 .vol-pied{font-size:10.5px;color:var(--t3);line-height:1.4;margin-top:8px;padding-top:7px;border-top:1px dashed var(--sep);}
+
+/* ⚠️ L'AVERTISSEMENT D'INTENSITÉ SOUS UNE SÉANCE DE MILO (ft-v1052).
+   ⛔ Discret, pas alarmant : c'est une information, pas une alerte — la personne garde le
+   dernier mot et le bouton juste en dessous reste rouge et pleine largeur (R24/R29). */
+.milo-warn{margin-top:10px;padding:9px 11px;border-radius:10px;background:rgba(255,106,115,.07);
+  box-shadow:inset 0 0 0 1px rgba(255,106,115,.22);font-size:12px;line-height:1.45;color:var(--t2);}
+.milo-warn>div{margin:1px 0;}
+.milo-warn-plus{font-size:11px;color:var(--t3);margin-top:3px;}
+
+/* ⭐ « CETTE SÉANCE TE CONVIENT ? » (ft-v1053).
+   ⛔ LA GÉOMÉTRIE DU BOUTON ROUGE NE BOUGE PAS — c'est la condition posée par la conception :
+   « Oui » doit coûter exactement le tap d'hier. La question est un simple libellé au-dessus, et
+   le « Non » une ligne discrète en dessous : ni l'un ni l'autre ne prend de largeur sur la
+   cible principale. */
+.milo-ask{margin-top:10px;font-size:13px;font-weight:700;color:var(--t2);}
+.milo-ask-no{display:block;width:100%;margin-top:7px;padding:8px;border-radius:10px;
+  background:transparent;border:1px solid var(--sep);color:var(--t2);font-size:13px;cursor:pointer;}
+.milo-ask-why{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.milo-ask-chip{padding:8px 13px;border-radius:16px;background:var(--bg2);border:1px solid var(--sep);
+  color:var(--t1);font-size:13px;cursor:pointer;}
+/* ⛔ L'échec se DIT, et il ne se déguise pas en avertissement d'intensité : fond neutre. */
+.milo-ask-fail{margin-top:9px;font-size:12px;line-height:1.45;color:var(--t3);}
