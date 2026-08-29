@@ -4357,8 +4357,11 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   if(X.erreur){ t('⛔ la conversation se reconstruit', false, X.erreur); }
   else{
     tx('le texte de la séance est bien réaffiché', X.texte===true);
-    tx('⭐⭐ … et le bouton « Commencer cette séance » est LÀ après rechargement',
-       /Commencer cette séance|Utiliser cette séance/.test(X.bouton), 'reçu : '+(X.bouton||'(aucun bouton)'));
+    /* ⚠️ RE-VISÉ EN ft-v1053, PAS DÉSARMÉ : le libellé répond maintenant à la question posée
+       au-dessus (« ⚡ Oui, on démarre »). Ce témoin épinglait la PHRASE ; ce qu'il protège est la
+       RÈGLE — au rechargement, le bouton de lancement est là et il nomme les exercices. */
+    tx('⭐⭐ … et le bouton de lancement est LÀ après rechargement',
+       /Oui|Commencer|Utiliser/.test(X.bouton) && /exercice/.test(X.bouton), 'reçu : '+(X.bouton||'(aucun bouton)'));
     tx('⭐ … et il fonctionne vraiment (2 exercices injectés)', X.marche===true, String(X.marche));
     tx('⚠️ le bloc technique reste caché à l\'écran', X.jsonCache===true);
   }
@@ -16948,7 +16951,15 @@ console.log('\n-- CLV. Le bouton survit à un message de Milo après la séance 
         goScreen('coach');
         if(typeof _loadCoachHist==='function')_loadCoachHist();
         _renderCoachThread();
-        const btns=[...document.querySelectorAll('.coach-prog-save button')];
+        /* ⚠️⚠️ RE-VISÉ SUR `.btn-red` LE 29/08/2026 (ft-v1053), PAS DÉSARMÉ.
+           Ce témoin comptait TOUS les `<button>` de la carte — c'était un proxy commode tant que
+           la carte n'en portait qu'un. Depuis « Cette séance te convient ? » elle en porte deux
+           légitimement (« Oui, on démarre » et « ✏️ Non, retravaille »), et le compte est passé à
+           2 sans qu'aucune règle ne soit violée.
+           👉 Ce que ce bloc protège n'a jamais été « un bouton », c'est **UN SEUL LANCEMENT** : pas
+           deux séances proposées à la fois. On compte donc les boutons ROUGES, qui sont exactement
+           ça. *On ne désarme pas un témoin, on le vise* — 6ᵉ fois cette semaine. */
+        const btns=[...document.querySelectorAll('.coach-prog-save .btn-red')];
         return {n:btns.length, lbl:btns.length?btns[0].textContent.trim():'',
                 marche:(()=>{ try{ if(!btns.length)return false; btns[0].click();
                   return !!(S.wkt&&S.wkt.exs&&S.wkt.exs.length>=2); }catch(e){ return String(e.message);} })()};
@@ -16966,7 +16977,10 @@ console.log('\n-- CLV. Le bouton survit à un message de Milo après la séance 
                           U('c'),A('Je note.')]);
 
   t('⭐⭐ ① le bouton est LÀ malgré le message de Milo posé après la séance',
-    cas1.n===1 && /Commencer cette séance|Utiliser cette séance/.test(cas1.lbl),
+    /* ⚠️ RE-VISÉ AUSSI SUR LE LIBELLÉ (ft-v1053) : il répond désormais à la question posée
+       au-dessus (« Oui, on démarre » / « Oui, utiliser cette séance »). Ce que ce témoin
+       protège reste le même — le bouton est là, il nomme l'action et le nombre d'exercices. */
+    cas1.n===1 && /Oui/.test(cas1.lbl) && /exercice/.test(cas1.lbl),
     cas1.err||('boutons='+cas1.n+' · '+(cas1.lbl||'(aucun)')));
   t('⭐ … et il MARCHE vraiment (la séance est injectée, 2 exercices)',
     cas1.marche===true, String(cas1.marche));
@@ -17077,6 +17091,183 @@ console.log('\n-- CLVI. Le repos suit la charge, chez Milo et à l\'écran (ft-v
       W.ok.avert===false && W.ok.bouton===true, JSON.stringify(W.ok));
     t('⛔ sans record connu, le contrôle se TAIT — et le bouton sort quand même',
       W.sansRecord.avert===false && W.sansRecord.bouton===true, JSON.stringify(W.sansRecord));
+  }
+}
+
+/* == BLOC CLVII - « CETTE SEANCE TE CONVIENT ? » : LE LANCEMENT EST FIGE (ft-v1053) ==
+   Michel, apres TROIS pannes du bouton de lancement en huit jours : « il faut absolument figer le
+   fait d'avoir toujours la seance lancee quand on lui demande une seance ».
+
+   ⛔⛔ CE QUE CE BLOC MESURE N'EST PAS UN AFFICHAGE, C'EST UN CHANGEMENT DE DECLENCHEUR.
+   Les trois pannes (le nom sur la meme ligne que les series le 20/08 · « 95×3 » lu comme
+   « 95 series » en ft-v1049 · le `break` de ft-v1051) ont la MEME cause de fond : la presence du
+   bouton dependait de la FORME de ce que Milo avait ecrit. On ne peut pas enumerer d'avance
+   toutes les facons dont un modele peut ecrire une seance — donc tant que le declencheur est la
+   reponse, il y aura une quatrieme panne.
+   👉 Le declencheur devient LA DEMANDE DE LA PERSONNE. C'est le temoin ⭐⭐ de ce bloc, et c'est
+   le seul qui distingue cette version d'un enieme rafistolage de detecteur.
+
+   ⭐ ZERO GESTE SUPPLEMENTAIRE — condition posee par Michel avant qu'on ecrive une ligne : « Oui »
+   doit couter exactement le tap d'hier. Un temoin epingle que le bouton rouge est toujours la,
+   pleine largeur, et qu'il lance vraiment la seance.
+   ⚠️ VOCABULAIRE : Michel a corrige « programme » en « seance » en cours de conception — « un
+   programme c'est une chose et juste la seance en est une autre ». Un temoin refuse le mot. */
+console.log('\n-- CLVII. « Cette séance te convient ? » — le lancement est figé (ft-v1053) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const W=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    goScreen('coach');
+    /* ⚠️ IL FAUT QUE LE CHAT SOIT RÉELLEMENT AFFICHÉ : sans historique, `updateCoachHeader` laisse
+       `#coach-msgs` en `display:none` — et un élément masqué mesure **0 px de large**. Le témoin
+       de largeur aurait alors comparé 0 à 0, c'est-à-dire ne rien mesurer en étant vert. */
+    if(typeof _showCoachChat==='function')_showCoachChat();
+    const msgs=document.getElementById('coach-msgs');
+    const net=(w)=>String(w||'').replace(/\s+/g,' ').trim();
+
+    // ── ① LA QUESTION REMPLACE LE BOUTON, ELLE NE S'Y AJOUTE PAS ──
+    msgs.innerHTML=''; renderCoachMsg('coach','Développé Couché 4×8 à 70 kg');
+    o.pose=_appendStartSessionBtn({label:'Push', exs:[{name:'Développé Couché',
+      sets:[{kg:70,reps:8,type:'N',rest:150},{kg:70,reps:8,type:'N',rest:150}]}]});
+    const ask=document.querySelector('.milo-ask');
+    o.question=ask?net(ask.textContent):'';
+    const rouge=document.querySelector('.coach-prog-save .btn-red');
+    o.btnOui=rouge?net(rouge.textContent):'';
+    /* ⭐ ZERO GESTE EN PLUS : un SEUL bouton rouge, pleine largeur (la cible principale n'a pas
+       ete retrecie pour loger le « Non »). */
+    o.rougesCount=document.querySelectorAll('.coach-prog-save .btn-red').length;
+    o.rougeLarge=rouge?Math.round(rouge.getBoundingClientRect().width):0;
+    o.wrapLarge=Math.round(document.querySelector('.coach-prog-save').getBoundingClientRect().width);
+    o.btnNon=!!document.querySelector('.milo-ask-no');
+    /* ⚠️ LE MOT DE MICHEL : « seance », jamais « programme ». */
+    o.motProgramme=/programme/i.test(net(document.querySelector('.coach-prog-save').textContent));
+
+    // ── ② LE « NON » PROPOSE LES RAISONS EN UN TAP, ET LE ROUGE RESTE (R24) ──
+    document.querySelector('.milo-ask-no').click();
+    o.raisons=Array.from(document.querySelectorAll('.milo-ask-why .milo-ask-chip')).map(b=>net(b.textContent));
+    o.rougeApresNon=!!document.querySelector('.coach-prog-save .btn-red');
+
+    // ── ③ ⭐⭐ LE DECLENCHEUR : LA DEMANDE, PAS LA REPONSE ──
+    /* Le texte ci-dessous ne ressemble a AUCUNE seance : les trois voies rendent forcement rien.
+       Avant ft-v1053, la bulle restait NUE — c'est la panne vecue par Michel en salle. */
+    const opaque='La séance est écrite au-dessus, le bouton devrait apparaître 👆';
+    o.detecte={ ressemble:_ressembleASeance(opaque),
+                extrait:!!(_extractDaySession(opaque)||{}).sess };
+    o.demande={ oui:_demandeUneSeance('fais moi une séance pecs stp'),
+                oui2:_demandeUneSeance('je fais quoi aujourd\'hui ?'),
+                oui3:_demandeUneSeance('propose moi une séance du jour'),
+                /* ⛔ ET IL NE DOIT PAS MORDRE SUR UNE SIMPLE QUESTION D'ENTRAINEMENT : sans ca,
+                   la question s'afficherait sous une explication qui n'y repond pas (R29). */
+                non1:_demandeUneSeance('c\'est quoi un bon exercice pour les pecs ?'),
+                non2:_demandeUneSeance('combien de repos entre les séries ?'),
+                non3:_demandeUneSeance('merci !') };
+    msgs.innerHTML=''; renderCoachMsg('coach',opaque);
+    o.replPose=_appendSeanceQuestion(opaque);
+    o.replQuestion=(document.querySelector('.milo-ask')||{}).textContent||'';
+    o.replBtn=net((document.querySelector('.coach-prog-save .btn-red')||{}).textContent||'');
+
+    // ── ④ L'ECHEC SE DIT — on ne laisse jamais un bouton mort (R29, P4) ──
+    o.finPromise=(async()=>{
+      await _construireSeanceAuTap(0, document.querySelector('.coach-prog-save .btn-red'));
+      return { ditLEchec:!!document.querySelector('.milo-ask-fail'),
+               proposeLaSuite:!!Array.from(document.querySelectorAll('.milo-ask-chip'))
+                 .find(b=>/réécrire/i.test(b.textContent)),
+               boutonRendu:!(document.querySelector('.coach-prog-save .btn-red')||{}).disabled };
+    })();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  // ④ se termine en asynchrone (le cervelet est attendu au tap) — on relit apres.
+  await pg.waitForTimeout(2500);
+  const F=W.err?null:await pg.evaluate(()=>({
+    ditLEchec:!!document.querySelector('.milo-ask-fail'),
+    proposeLaSuite:!!Array.from(document.querySelectorAll('.milo-ask-chip')).find(b=>/réécrire/i.test(b.textContent)),
+    boutonRendu:!(document.querySelector('.coach-prog-save .btn-red')||{}).disabled
+  }));
+
+  // ── ⑤ LE VRAI TAP LANCE VRAIMENT LA SEANCE (le chemin complet, pas la fonction appelee a la main) ──
+  const V=W.err?null:await pg.evaluate(()=>{
+   try{
+    const msgs=document.getElementById('coach-msgs'); msgs.innerHTML='';
+    S.wkt=null; persist();
+    renderCoachMsg('coach','Squat 3×5 à 100 kg');
+    _appendStartSessionBtn({label:'Bas', exs:[{name:'Squat à la Barre',
+      sets:[{kg:100,reps:5,type:'N',rest:180},{kg:100,reps:5,type:'N',rest:180},{kg:100,reps:5,type:'N',rest:180}]}]});
+    document.querySelector('.coach-prog-save .btn-red').click();
+    return { lancee:!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length),
+             nom:(S.wkt&&S.wkt.exs&&S.wkt.exs[0]?S.wkt.exs[0].name:''),
+             series:(S.wkt&&S.wkt.exs&&S.wkt.exs[0]?S.wkt.exs[0].sets.length:0) };
+   }catch(e){return {err:String(e)};}
+  });
+
+  // ── ⑥ LA QUESTION SURVIT AU RECHARGEMENT (le trajet vers la salle) ──
+  const R=W.err?null:await pg.evaluate(async()=>{
+   try{
+    coachHistory.length=0;
+    coachHistory.push({role:'user',content:'fais moi une séance haut du corps',ts:Date.now()});
+    coachHistory.push({role:'assistant',content:'La séance est écrite au-dessus 👆',ts:Date.now()});
+    _renderCoachThread();
+    const a={ apresRechargement:!!document.querySelector('.coach-prog-save .btn-red') };
+    /* ⛔ LA BORNE : sans demande de seance, rien ne doit apparaitre — sinon la question
+       surgirait au milieu de n'importe quelle conversation. */
+    coachHistory.length=0;
+    coachHistory.push({role:'user',content:'merci pour l\'explication',ts:Date.now()});
+    coachHistory.push({role:'assistant',content:'Avec plaisir !',ts:Date.now()});
+    _renderCoachThread();
+    a.sansDemande=!!document.querySelector('.coach-prog-save .btn-red');
+    return a;
+   }catch(e){return {err:String(e)};}
+  });
+  await cx.close();
+
+  if(W.err)t('CLVII n\'a pas pu tourner',false,JSON.stringify(W));
+  else{
+    /* ── ① LA QUESTION, ET LE GESTE INCHANGE ── */
+    t('① la question « Cette séance te convient ? » remplace le bouton nu',
+      W.pose===true && /Cette séance te convient/.test(W.question), W.question||'(aucune)');
+    t('⭐ ZÉRO GESTE EN PLUS : un seul bouton rouge, toujours PLEINE LARGEUR',
+      W.rougesCount===1 && W.rougeLarge>200 && W.rougeLarge===W.wrapLarge,
+      'rouges='+W.rougesCount+' · '+W.rougeLarge+'px / '+W.wrapLarge+'px');
+    t('… et « Oui, on démarre » est bien le libellé du bouton rouge',
+      /Oui|Commencer|Utiliser/.test(W.btnOui) && W.btnNon===true, W.btnOui+' · non='+W.btnNon);
+    /* ⚠️ LE MOT CORRIGÉ PAR MICHEL — « un programme c'est une chose, la séance en est une autre ». */
+    t('⚠️ le mot est « séance », JAMAIS « programme » (correction de Michel)',
+      W.motProgramme===false, 'contient « programme » = '+W.motProgramme);
+    /* ── ② LE « NON » ── */
+    t('② « Non, retravaille » propose les raisons EN UN TAP',
+      W.raisons.length===4 && /Trop lourd/.test(W.raisons[0]) && /Trop long/.test(W.raisons[1]),
+      JSON.stringify(W.raisons));
+    t('⛔ R24 : dire « non » ne ferme pas la porte — le bouton rouge RESTE',
+      W.rougeApresNon===true, 'rouge après non = '+W.rougeApresNon);
+    /* ── ③ LE TÉMOIN CENTRAL : LE DÉCLENCHEUR A CHANGÉ DE NATURE ── */
+    t('⛔⛔ CONTEXTE : sur ce texte, AUCUNE des voies de lecture ne trouve de séance',
+      W.detecte.ressemble===false && W.detecte.extrait===false, JSON.stringify(W.detecte));
+    t('⭐⭐ ③ et pourtant la question s\'affiche — le déclencheur est LA DEMANDE, plus la réponse de Milo',
+      W.replPose===true && /Cette séance te convient/.test(W.replQuestion) && /Oui/.test(W.replBtn),
+      'posé='+W.replPose+' · '+W.replBtn);
+    /* ⛔ SANS CE TÉMOIN, LE PRÉCÉDENT SERAIT VERT EN S'AFFICHANT PARTOUT. */
+    t('⛔ … et le détecteur de demande ne mord PAS sur une simple question d\'entraînement',
+      W.demande.oui===true && W.demande.oui2===true && W.demande.oui3===true &&
+      W.demande.non1===false && W.demande.non2===false && W.demande.non3===false,
+      JSON.stringify(W.demande));
+    /* ── ④ L'ÉCHEC SE DIT ── */
+    t('⛔⛔ ④ quand la séance reste illisible, l\'app le DIT et propose la suite (jamais un bouton mort)',
+      !!F && F.ditLEchec===true && F.proposeLaSuite===true && F.boutonRendu===true, JSON.stringify(F));
+    /* ── ⑤ LE VRAI CHEMIN ── */
+    t('⭐ ⑤ le VRAI tap sur « Oui » lance vraiment la séance (3 séries de Squat)',
+      !!V && V.lancee===true && /Squat/.test(V.nom||'') && V.series===3, JSON.stringify(V));
+    /* ── ⑥ LE TRAJET VERS LA SALLE ── */
+    t('⭐ ⑥ la question SURVIT au rechargement de l\'app (le cas du 14/08 : le trajet vers la salle)',
+      !!R && R.apresRechargement===true, JSON.stringify(R));
+    t('⛔ … et elle ne surgit PAS quand la personne n\'a rien demandé',
+      !!R && R.sansDemande===false, JSON.stringify(R));
   }
 }
 

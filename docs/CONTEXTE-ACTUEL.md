@@ -6,7 +6,27 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1052`.
+- **Version en ligne (live) :** `ft-v1053`.
+- ⚡⭐⭐ **« CETTE SÉANCE TE CONVIENT ? » — LE LANCEMENT EST FIGÉ** (ft-v1053). Michel, après
+  **3 pannes du bouton en 8 jours** : *« il faut absolument figer le fait d'avoir toujours la
+  séance lancée quand on lui demande une séance. Explique-moi avant de coder. »* — conception
+  discutée et **validée par lui avant** la première ligne de code.
+  ⛔⛔ **Les 3 pannes ont la même cause de fond** : la présence du bouton dépendait de la
+  **FORME** de ce que Milo écrivait. *On ne peut pas énumérer d'avance toutes les façons dont un
+  modèle écrit une séance* → tant que le déclencheur est la **réponse**, il y a une 4ᵉ panne.
+  ⭐⭐ **Le déclencheur devient LA DEMANDE DE LA PERSONNE** — une chose qu'on connaît avec
+  certitude, puisqu'elle l'a tapée. Aucun modèle ne peut la faire varier.
+  ⛔ **Zéro geste en plus** (sa condition) : *« Oui, on démarre »* = le même bouton rouge, même
+  place, **pleine largeur** (mesuré). Ce qu'on **gagne** est le *« Non, retravaille »* et ses
+  **4 raisons en un tap** — avant, refuser une séance voulait dire la **retaper à la main**.
+  ⚠️⚠️ **Vocabulaire corrigé par Michel** : *« un programme c'est une chose et juste la séance en
+  est une autre »* → le libellé dit **séance**, un témoin refuse le mot *programme*.
+  ⛔ **L'échec se DIT** : séance illisible → l'app le nomme et propose de la faire réécrire,
+  jamais un bouton mort. ⛔ Le cervelet n'est appelé **qu'au tap** (0 coût sinon).
+  ⚠️ **3 témoins existants ont rougi sans qu'aucun défaut n'existe** : ils comptaient *tous* les
+  `<button>` de la carte, qui en porte maintenant deux légitimement. Re-visés sur `.btn-red` —
+  ce qu'ils protègent est **un seul lancement**, pas un bouton. *On vise, on ne désarme pas.*
+  🧾 **Noté** : l'idée *« chaque séance faite peut induire à un futur programme »* → `IDEES-FUTURES.md`.
 - 🎽⭐⭐ **LE REPOS SUIT LA CHARGE, PAS L'OBJECTIF — chez Milo ET à l'écran** (ft-v1052).
   ⛔⛔ **Mesuré** : Milo recevait *« muscle → 8-15 reps, repos 60-90 s »* et le cadre muscu, et
   **rien qui lie le repos à la CHARGE** → sur un **3 reps à 88 %** il prenait les **reps de la

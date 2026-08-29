@@ -440,6 +440,7 @@ const NEW_FEATURES=[
      quelque chose que le lecteur ne verra peut-être pas avant un mois, c'est du bruit
      (R19/R25). *La pop-up se mérite* ; le point rouge, lui, ne coûte rien. */
   {id:'seance-manquee', screen:'home', desc:'\U0001F4C5 Quand une s\u00e9ance que tu avais <b>annonc\u00e9e</b> n\'a pas eu lieu, l\'app ne l\'efface plus en silence : elle te demande <b>ce qui s\'est pass\u00e9</b> \u2014 fatigue, boulot, emp\u00each\u00e9, douleur, flemme. Un tap, c\'est not\u00e9, et on repart. \u26d4 <b>Aucun rattrapage propos\u00e9</b> : une s\u00e9ance loup\u00e9e n\'est pas grave \u00e0 l\'\u00e9chelle d\'une semaine. Tu peux aussi fermer la carte sans r\u00e9pondre.'},
+  {id:'seance-convient', screen:'coach', desc:'⚡ <b>« Cette séance te convient ? »</b> — quand Milo te propose une séance, la question apparaît sous sa réponse. <b>« Oui, on démarre »</b> est exactement le bouton rouge d\'avant : même place, même tap, <b>rien de plus à faire</b>. Ce qui est nouveau c\'est le <b>« Non, retravaille »</b> : tu tapes ce qui ne va pas (<b>trop lourd</b>, <b>trop long</b>, <b>pas les bons exercices</b>) et Milo te refait la séance — plus besoin de tout retaper. ⭐ Et surtout : <b>la question s\'affiche dès que tu demandes une séance</b>, même si Milo l\'a écrite d\'une façon que l\'app n\'avait pas prévue. Avant, le bouton pouvait tout simplement <b>ne pas apparaître</b> — c\'est fini. Si vraiment sa réponse est illisible, l\'app te le <b>dit</b> et propose de lui demander de la réécrire.'},
   {id:'repos-charge', screen:'coach', desc:'🎽 <b>Le repos suit la charge, plus l\'objectif.</b> Quand Milo te propose une série <b>lourde</b> (à partir de 80 % de ton max) avec un repos court, deux choses changent : ① <b>il ne le fait plus</b> — il sait maintenant qu\'une série lourde demande <b>3 min minimum</b>, quel que soit ton objectif ; ② si ça arrive quand même, <b>l\'avertissement s\'affiche directement sous sa séance, dans le chat</b> — avant, il n\'apparaissait qu\'une fois la séance lancée, donc tu ne le voyais pas. ⚠️ <b>Rien n\'est bloqué et rien n\'est corrigé à ta place</b> : le bouton reste, la charge ne bouge pas. C\'est toi qui décides.'},
   {id:'export-histo', screen:'progress', desc:'📤 Tu peux maintenant <b>exporter ton historique de séances</b> : bouton <b>📤 Exporter</b> à côté de « Historique séances », dans <b>Progrès</b>. Deux formats : <b>CSV</b> (s\'ouvre dans Excel ou Numbers, une ligne par série) et <b>PDF</b> (document lisible, une séance par bloc — bon à montrer à un coach ou un kiné). ⛔ <b>Aucune donnée de santé</b> n\'y entre : ni ton poids de corps, ni ton âge, ni ton sexe, ni ton e-mail. ⓘ L\'export <b>complet</b> de tes données (en JSON, pour une sauvegarde) reste dans <b>Menu → Exporter mes données</b>.'},
   {id:'echelle-rpe', screen:'setup', desc:'🎚️ Si tu travailles en <b>RPE</b>, l\'app parle maintenant ta langue : <b>Profil → Échelle d\'effort</b>, tu choisis <b>RIR</b> (par défaut) ou <b>RPE</b>. La question posée après chaque série, la colonne « précédent » et <b>Milo</b> suivent. ⛔ <b>Rien n\'est converti ni perdu</b> : c\'est la <b>même mesure</b> dite dans l\'autre sens (<i>RPE = 10 − RIR</i>), donc ton historique se relit tout seul, et tu peux revenir quand tu veux. ⚠️ <b>Sans demi-points</b> (pas de 8,5) : l\'app ne les mesure pas.'},
@@ -530,7 +531,13 @@ const NEW_FEATURES=[
   {id:'coach-share', screen:'coach',    desc:'Nouveau : partager ou copier une réponse du Coach'},
   {id:'body-study',  screen:'coach',    desc:'Nouveau : Étude du corps — 4 photos, bilan posture/insertions/équilibre + exercices (📐 Premium)'},
   {id:'force-prog',  screen:'coach', spot:'coach-action-force', desc:'Nouveau : Gagner en force (Big 3) — Milo te génère un programme powerlifting à enregistrer (🏋️)'},
-  {id:'milo-start-session', screen:'coach', desc:'Nouveau : dis à Milo ta séance du jour → un bouton « ⚡ Commencer cette séance » l\'ouvre direct dans l\'onglet Séance, poids pré-remplis'},
+  /* ⚠️ LIBELLÉ MIS À JOUR EN ft-v1053 (« Commencer cette séance » → « Oui, on démarre »).
+     ⛔ Ce `desc` n'est pas une archive : il alimente l'AIDE DÉTAILLÉE, qui doit décrire l'app
+     telle qu'elle est aujourd'hui. Laisser le nom d'un bouton qui n'existe plus, c'est
+     exactement ce que R23 décrit — un document d'état périmé fait dire des bêtises à celui qui
+     le lit. ⭐ La pop-up `WHATS_NEW` v37, elle, n'est PAS retouchée : c'est une annonce datée,
+     et réécrire une annonce passée falsifierait ce qui a été annoncé ce jour-là. */
+  {id:'milo-start-session', screen:'coach', desc:'Nouveau : dis à Milo ta séance du jour → il te demande « Cette séance te convient ? » et le bouton « ⚡ Oui, on démarre » l\'ouvre direct dans l\'onglet Séance, poids pré-remplis'},
   {id:'milo-remember', screen:'coach', desc:'Nouveau : confie un truc durable à Milo en discutant (« je m\'entraîne le matin », « une vieille tendinite à l\'épaule »…) → il te propose de le RETENIR (« 🧠 Je retiens : … ? Oui/Non »). Retrouve tout dans Menu → « Ce que Milo sait de toi »'},
   {id:'milo-value-first', screen:'coach', desc:'Nouveau : Milo t\'aide d\'abord — il te propose un vrai plan dès ton 1er message (plus d\'interrogatoire), protège tes zones fragiles en te montrant comment, et t\'affiche parfois des réponses rapides à taper (répondre ne coûte pas de question gratuite)'},
   {id:'coach-quiz',  screen:'coach', spot:'coach-quiz-card', desc:'Nouveau : réponds au questionnaire « Milo apprend à te connaître » (gratuit, ça ne compte pas dans tes questions) — Milo te donne des conseils bien plus personnalisés'},
@@ -584,6 +591,16 @@ const NEW_FEATURES=[
 // ✅ v46/47/48 = les 3 features ex-testeurs (« maxi » · calories manuelles · objectif recomposition)
 //    OUVERTES À TOUT LE MONDE (ft-v623, décision Michel) + red dots reps-maxi/manual-kcal/goal-recomp réactivés.
 const WHATS_NEW=[
+  /* ⚡ ELLE SE MÉRITE, ET C'EST LES DEUX CAS À LA FOIS (règle d'or #11).
+     ① UN REPÈRE A BOUGÉ : le bouton rouge que tout le monde connaît porte maintenant une
+        QUESTION au-dessus. Il est au même endroit et coûte le même tap — mais sans un mot,
+        la lecture naturelle serait « on me demande quelque chose en plus ».
+     ② ET IL Y A UNE ACTION NOUVELLE : le « Non, retravaille », que personne ne découvrirait
+        tout seul puisqu'il n'a jamais existé.
+     ⛔ BORNÉE À L'ESSENTIEL (R25) : la pop-up ANNONCE, l'aide EXPLIQUE. Le détail — les raisons
+     en un tap, la construction au moment du tap, ce qui se passe si Milo écrit de travers —
+     vit dans l'aide `?` et dans l'aide détaillée, pas ici. */
+  {v:63, ic:'⚡', t:'« Cette séance te convient ? »', d:'Quand Milo te propose une séance, il te demande maintenant si elle te va. <b>« Oui, on démarre »</b> est le même bouton rouge qu\'avant, au même endroit — <b>rien de plus à faire</b>. Ce qui est nouveau, c\'est le <b>« Non, retravaille »</b> : un tap sur la raison (trop lourd, trop long, pas les bons exercices) et Milo te la refait.'},
   /* 💪 ELLE SE MÉRITE, ET C'EST LE CAS « LA PERSONNE PEUT FAIRE QUELQUE CHOSE DE NOUVEAU » :
      après chaque série de travail, une question apparaît dans la barre de repos. C'est un geste
      inédit, facultatif, et personne ne le découvrirait tout seul.

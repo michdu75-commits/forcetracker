@@ -1775,3 +1775,17 @@ html.ob-done #onboarding{display:none;}
   box-shadow:inset 0 0 0 1px rgba(255,106,115,.22);font-size:12px;line-height:1.45;color:var(--t2);}
 .milo-warn>div{margin:1px 0;}
 .milo-warn-plus{font-size:11px;color:var(--t3);margin-top:3px;}
+
+/* ⭐ « CETTE SÉANCE TE CONVIENT ? » (ft-v1053).
+   ⛔ LA GÉOMÉTRIE DU BOUTON ROUGE NE BOUGE PAS — c'est la condition posée par la conception :
+   « Oui » doit coûter exactement le tap d'hier. La question est un simple libellé au-dessus, et
+   le « Non » une ligne discrète en dessous : ni l'un ni l'autre ne prend de largeur sur la
+   cible principale. */
+.milo-ask{margin-top:10px;font-size:13px;font-weight:700;color:var(--t2);}
+.milo-ask-no{display:block;width:100%;margin-top:7px;padding:8px;border-radius:10px;
+  background:transparent;border:1px solid var(--sep);color:var(--t2);font-size:13px;cursor:pointer;}
+.milo-ask-why{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.milo-ask-chip{padding:8px 13px;border-radius:16px;background:var(--bg2);border:1px solid var(--sep);
+  color:var(--t1);font-size:13px;cursor:pointer;}
+/* ⛔ L'échec se DIT, et il ne se déguise pas en avertissement d'intensité : fond neutre. */
+.milo-ask-fail{margin-top:9px;font-size:12px;line-height:1.45;color:var(--t3);}

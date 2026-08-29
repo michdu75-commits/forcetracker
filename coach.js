@@ -1399,7 +1399,7 @@ function _renderCoachThread(){
      qui porte une séance. La borne garde l'intention d'origine : au-delà, c'est une vieille
      séance et elle ne doit pas revenir. */
   try{
-    let vus=0;
+    let vus=0, pose=false;
     for(let i=coachHistory.length-1;i>=0 && vus<3;i--){
       const m=coachHistory[i];
       if(!m||m.role!=='assistant')continue;
@@ -1409,8 +1409,26 @@ function _renderCoachThread(){
       const dsx=_extractDaySession(txt);
       if(dsx&&dsx.sess&&typeof _appendStartSessionBtn==='function'){
         _appendStartSessionBtn(dsx.sess);
+        pose=true;
         break;                 // la PLUS RÉCENTE des séances trouvées, jamais deux boutons
       }
+    }
+    /* ⭐⭐ ft-v1053 — LA QUESTION SURVIT AUSSI AU RECHARGEMENT, et il fallait le faire ici.
+       Sans ça, « figer » n'aurait tenu que jusqu'à la fermeture de l'app — c'est-à-dire jusqu'au
+       trajet vers la salle, exactement le moment où Michel perd le bouton (le cas d'origine du
+       14/08). ⛔ On ne stocke rien de plus : le texte de Milo et la demande sont déjà dans le
+       fil, il suffit de les relire (R2, la même décision qu'en ft-v851).
+       ⚠️ La borne est la même que ci-dessus, et pour la même raison : on remonte au plus 3
+       messages de Milo, et la demande doit être le DERNIER message de la personne — une demande
+       plus ancienne, à laquelle la conversation a tourné la page, ne doit pas ressurgir. */
+    if(!pose&&typeof _demandeUneSeance==='function'&&typeof _appendSeanceQuestion==='function'){
+      let dernUser=null, dernAssist=null;
+      for(let i=coachHistory.length-1;i>=0;i--){
+        const m=coachHistory[i]; if(!m)continue;
+        if(!dernAssist&&m.role==='assistant'&&typeof m.content==='string')dernAssist=m.content;
+        if(m.role==='user'){ dernUser=(typeof m.content==='string')?m.content:''; break; }
+      }
+      if(dernAssist&&dernUser&&_demandeUneSeance(dernUser)) _appendSeanceQuestion(dernAssist);
     }
   }catch(e){}
   _coachAuBas();
@@ -1872,6 +1890,42 @@ function _extractDaySession(reply){
 //      repos, ni consigne, ni type de série) mais elle est gratuite et hors ligne.
 // *On ne remplace jamais un chemin qui marche : on en ajoute un meilleur devant.*
 
+/* ⭐⭐ « LA PERSONNE A-T-ELLE DEMANDÉ UNE SÉANCE ? » (29/08/2026, ft-v1053)
+   ⛔⛔ CE DÉTECTEUR EXISTE POUR CHANGER LA NATURE DU DÉCLENCHEUR, et c'est tout le correctif.
+   Michel, après **trois pannes du bouton de lancement en huit jours** : *« il faut absolument
+   figer le fait d'avoir toujours la séance lancée quand on lui demande une séance »*.
+   Les trois pannes (le nom sur la même ligne que les séries · `95×3` lu comme « 95 séries » ·
+   le `break` qui ne relisait que le dernier message) ont **la même cause de fond** : le bouton
+   dépendait de la FORME de ce que Milo avait écrit — et Milo change d'écriture sans prévenir.
+   👉 Ici on regarde ce que **la personne a DEMANDÉ**, une chose qu'on connaît avec certitude
+   parce que c'est elle qui l'a tapée. *Un déclencheur qu'aucun modèle ne peut faire varier.*
+
+   ⚠️ POURQUOI CE N'EST PAS LE MÊME DÉTECTEUR QUE CELUI DU PROMPT (R2 examinée, puis écartée).
+   `buildCoachContext` en a un, volontairement TRÈS large (`exercices?` tout seul y suffit) :
+   là-bas une erreur ne coûte qu'une consigne inutile dans le prompt. Ici elle coûte une
+   **question posée sous une réponse qui n'y répond pas** — *« cette séance te convient ? »*
+   sous une explication sur les pectoraux. Les deux coûts ne sont pas du même ordre (R29),
+   donc les deux seuils ne peuvent pas l'être : celui-ci exige un **verbe de demande** ou une
+   **formulation de séance à faire**, jamais le simple fait qu'on parle d'entraînement.
+   ⛔ Et il ne sert QUE de repli : quand une séance a été lue, la question s'affiche de toute
+   façon, sans passer par ici. */
+function _demandeUneSeance(txt){
+  try{
+    const t=String(txt||'');
+    if(!t) return false;
+    // ① un verbe de demande suivi, dans la même phrase, du mot séance / entraînement / programme
+    if(/\b(fai[st]|donne|propose|pr[ée]pare|cr[ée]e|construis|monte|[ée]cris|lance|balance|envoie|g[ée]n[èe]re)\b[^.?!\n]{0,40}\b(s[ée]ance|entra[îi]nement|programme|prog)\b/i.test(t)) return true;
+    // ② une séance nommée comme celle qu'on va faire (« une séance », « ma séance du jour »…)
+    if(/\b(une|ma|la|nouvelle|prochaine|autre|petite|bonne)\s+s[ée]ance\b/i.test(t)) return true;
+    if(/\bs[ée]ance\s+(du\s+jour|d'aujourd|de\s+ce\s+soir|de\s+ce\s+matin|pour\s+)/i.test(t)) return true;
+    // ③ les formulations sans le mot « séance », que Michel emploie vraiment
+    if(/\b(je|on)\s+fais?\s+quoi\b/i.test(t)) return true;
+    if(/\bqu'est[- ]ce\s+que\s+(je|on)\s+(fais|fait)\b/i.test(t)) return true;
+    if(/\bon\s+s'entra[îi]ne\s+(quoi|comment)\b/i.test(t)) return true;
+    return false;
+  }catch(e){ return false; }
+}
+
 // Détecteur DÉTERMINISTE, gratuit : « ce message ressemble-t-il à une séance ? ».
 // ⚠️ VOLONTAIREMENT PLUS PERMISSIF que `_seanceDepuisTexte`, et ce n'est pas un oubli.
 // Celle-là CONSTRUIT la séance : elle doit être stricte (une ligne mal lue ferait
@@ -2213,7 +2267,12 @@ function _appendStartSessionBtn(sess, cible){
   // le bouton ne « commence » rien — il ouvre la question « ajouter ou remplacer ? ». Avant, il
   // annonçait « Commencer cette séance » et ajoutait en silence : une promesse fausse.
   const enCours=(typeof S!=='undefined')&&S.wkt&&Array.isArray(S.wkt.exs)&&S.wkt.exs.length;
-  const lbl=enCours?'⚡ Utiliser cette séance':'⚡ Commencer cette séance';
+  /* ⚠️ LE LIBELLÉ RÉPOND À LA QUESTION (ft-v1053). Il disait « ⚡ Commencer cette séance » ; sous
+     un « Cette séance te convient ? » ça ne répond pas — et un correctif posé d'un seul côté est
+     précisément le motif que ce projet passe son temps à rattraper. ⛔ Ce qui ne change PAS : la
+     distinction de ft-v750, qui dit ce qui va VRAIMENT se passer — tant qu'une séance est en
+     cours, le bouton ne « démarre » rien, il ouvre « ajouter ou remplacer ? ». */
+  const lbl=enCours?'⚡ Oui, utiliser cette séance':'⚡ Oui, on démarre';
   const wrap=document.createElement('div');
   wrap.className='coach-prog-save';
   /* ⚠️ L'AVERTISSEMENT D'INTENSITÉ S'AFFICHE ICI, DANS LE CHAT (28/08/2026, ft-v1052)
@@ -2244,10 +2303,178 @@ function _appendStartSessionBtn(sess, cible){
       }
     }
   }catch(e){ /* jamais bloquant : un avertissement ne doit pas empêcher de lancer la séance */ }
-  wrap.innerHTML=_av+'<button class="btn btn-red" style="width:100%;margin-top:10px;padding:11px;font-size:14px;border-radius:12px;" onclick="_startSessionFromMilo('+idx+',this)">'+lbl+' ('+n+(n>1?' exercices':' exercice')+')</button>';
+  wrap.innerHTML=_av+_carteSeanceHtml(lbl+' ('+n+(n>1?' exercices':' exercice')+')','_startSessionFromMilo('+idx+',this)');
   last.appendChild(wrap);
   _coachAuBas();
   return true;                    // posé — l'appelant peut cesser de chercher un repli
+}
+
+/* ⭐⭐ « CETTE SÉANCE TE CONVIENT ? » — LA QUESTION REMPLACE LE BOUTON, ELLE NE S'Y AJOUTE PAS
+   (29/08/2026, ft-v1053 — conception validée par Michel avant d'écrire une ligne de code.)
+
+   ⛔⛔ ZÉRO GESTE SUPPLÉMENTAIRE, ET C'EST LA CONDITION QUI A DÉCIDÉ DE LA FORME. Le bouton
+   rouge garde **exactement** sa place, sa largeur et son tap : *« Oui, on démarre »* coûte le
+   même geste qu'hier. Ce qu'on gagne est le **« Non »**, qui n'existait nulle part — jusqu'ici
+   une séance qui ne convenait pas se refusait en la retapant à la main dans le chat.
+   ⛔ D'où le refus de la disposition évidente (deux boutons côte à côte) : sur 430 px elle
+   **rétrécit la cible principale** pour loger une option qu'on prendra une fois sur dix.
+   *On n'abîme pas le geste de tous les jours pour rendre visible le cas rare.*
+
+   ⚠️⚠️ ET LE MOT « PROGRAMME » A ÉTÉ CORRIGÉ PAR MICHEL EN COURS DE CONCEPTION — c'est une
+   correction de fond, pas de style : *« un programme c'est une chose et juste la séance en est
+   une autre »*. Un programme est une structure sur des semaines (`S.programmes`, l'éditeur,
+   `MODELE-METIER.md`) ; ce qu'on lance ici est **une séance**, celle d'aujourd'hui. Écrire
+   « programme » aurait laissé croire qu'accepter engage les semaines à venir. */
+function _carteSeanceHtml(labelBtn, onclickOui){
+  const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  return '<div class="milo-ask">Cette séance te convient ?</div>'
+    +'<button class="btn btn-red" style="width:100%;margin-top:8px;padding:11px;font-size:14px;border-radius:12px;" onclick="'+onclickOui+'">'+esc(labelBtn)+'</button>'
+    +'<button class="ft-press milo-ask-no" onclick="_seanceNonRetravaille(this)">✏️ Non, retravaille</button>';
+}
+
+/* ⛔ LE « NON » NE RENVOIE PAS LA PERSONNE AU CLAVIER — il propose les raisons en un tap.
+   Sans ça, « Non » serait un bouton qui ne fait qu'ouvrir un champ vide : la personne devrait
+   formuler elle-même ce qui ne va pas, c'est-à-dire faire le travail que le bouton promettait
+   de lui épargner. Les quatre raisons sont celles qui reviennent dans les retours de Michel
+   (trop lourd, trop long, pas les bons exercices) plus une sortie libre.
+   ⭐ R13 : même mécanique que `_appendQuickReplies` — et **même arbitrage de quota** : répondre
+   à une question que l'app a posée ne consomme pas une question gratuite (`noQuota`), ce n'est
+   pas la personne qui interroge. */
+function _seanceNonRetravaille(btn){
+  try{
+    const wrap=btn&&btn.parentNode; if(!wrap)return;
+    const RAISONS=[
+      ['Trop lourd',            'Cette séance est trop lourde pour moi aujourd\'hui, allège les charges et propose-la à nouveau.'],
+      ['Trop long',             'Cette séance est trop longue, raccourcis-la et propose-la à nouveau.'],
+      ['Pas les bons exercices','Ce ne sont pas les exercices que je veux, change-les et propose la séance à nouveau.'],
+      ['Autre chose…',          null]
+    ];
+    const row=document.createElement('div');
+    row.className='milo-ask-why';
+    const lbl=document.createElement('div');
+    lbl.className='milo-ask'; lbl.textContent='Qu\'est-ce qui ne va pas ?';
+    RAISONS.forEach(([txt,envoi])=>{
+      const b=document.createElement('button');
+      b.className='ft-press coach-qr-chip milo-ask-chip';
+      b.textContent=txt;                       // textContent = 0 injection HTML
+      b.onclick=function(){
+        try{ row.remove(); lbl.remove(); }catch(e){}
+        if(envoi===null){
+          /* ⛔ « AUTRE CHOSE » N'ENVOIE RIEN : on ouvre le clavier sur un champ vide et on se
+             tait. Envoyer une phrase à sa place mettrait un motif dans sa bouche (R29) — et
+             c'est précisément le cas où on ne sait pas ce qu'elle reproche à la séance. */
+          const inp=document.getElementById('coach-inp');
+          if(inp){ try{ inp.focus(); }catch(e){} }
+          return;
+        }
+        if(typeof sendToCoach==='function') sendToCoach(envoi,txt,{noQuota:true});
+      };
+      row.appendChild(b);
+    });
+    // ⛔ Le bouton rouge RESTE (R24) : dire « non » ne doit pas fermer la porte de la séance —
+    // on peut très bien changer d'avis en lisant les raisons proposées.
+    btn.remove();
+    wrap.appendChild(lbl); wrap.appendChild(row);
+    _coachAuBas();
+  }catch(e){}
+}
+
+/* ⭐⭐⭐ LA MOITIÉ QUI « FIGE » — LA QUESTION S'AFFICHE MÊME QUAND L'ANALYSE A ÉCHOUÉ
+   (29/08/2026, ft-v1053. C'est la demande littérale de Michel : *« il faut absolument figer le
+   fait d'avoir toujours la séance lancée quand on lui demande une séance »*.)
+
+   ⛔⛔ CE QUE ÇA CORRIGE, ET POURQUOI LES TROIS CORRECTIFS PRÉCÉDENTS NE POUVAIENT PAS SUFFIRE.
+   Les trois voies (bloc caché · cervelet · filet) lisent **le texte de Milo**. Chacune a été
+   réparée séparément — 20/08, ft-v1049, ft-v1051 — et à chaque fois la panne suivante est
+   arrivée par un format qu'on n'avait pas prévu. *On ne peut pas énumérer d'avance toutes les
+   façons dont un modèle peut écrire une séance.* Tant que la présence du bouton dépend de cette
+   énumération, il y aura une quatrième panne.
+   👉 Ici la question s'affiche parce que **la personne a demandé une séance**, point. Si l'analyse
+   a réussi, « Oui » lance directement (chemin d'hier, inchangé) ; si elle a échoué, « Oui » la
+   construit **au moment du tap** — et si ça échoue encore, **l'app le dit**.
+
+   ⛔ ON NE FAIT PAS SEMBLANT (R29, P4). Le pire résultat possible serait un bouton qui a l'air
+   de marcher et qui ne fait rien : c'est exactement ce que Michel a vécu en salle, Milo écrivant
+   *« le bouton devrait apparaître 👆 »* devant une bulle vide. Un échec se dit, en clair, avec
+   ce qu'on peut faire ensuite.
+   ⛔ ET ÇA NE COÛTE RIEN QUAND ÇA N'EST PAS UTILISÉ : le cervelet n'est appelé **qu'au tap**,
+   donc quelqu'un qui ne touche pas au bouton ne dépense aucun appel (règle d'or #3 : le réseau
+   ne bloque ni ne décide jamais). */
+var _pendingSeanceTextes=[];   // textes de Milo en attente d'une lecture AU TAP (voir ci-dessus)
+
+function _appendSeanceQuestion(reply, cible){
+  try{
+    const msgs=document.getElementById('coach-msgs'); if(!msgs)return false;
+    let last=cible||null;
+    if(last&&!msgs.contains(last))last=null;                       // bulle disparue (fil vidé)
+    if(!last){ const b=msgs.querySelectorAll('.msg-coach'); last=b[b.length-1]; }
+    if(!last)return false;
+    if(last.querySelector('.coach-prog-save'))return false;        // déjà une carte dessous
+    const idx=_pendingSeanceTextes.push(String(reply||''))-1;
+    const enCours=(typeof S!=='undefined')&&S.wkt&&Array.isArray(S.wkt.exs)&&S.wkt.exs.length;
+    const lbl=enCours?'⚡ Oui, utiliser cette séance':'⚡ Oui, on démarre';
+    const wrap=document.createElement('div');
+    wrap.className='coach-prog-save';
+    wrap.innerHTML=_carteSeanceHtml(lbl,'_construireSeanceAuTap('+idx+',this)');
+    last.appendChild(wrap);
+    _coachAuBas();
+    return true;
+  }catch(e){ return false; }
+}
+
+/* Construction AU TAP — la même cascade qu'à l'arrivée (R2 : ce sont les mêmes fonctions, pas
+   une deuxième analyse écrite à côté), mais jouée au moment où on en a besoin.
+   ⚠️ Le cervelet est ici **attendu** (`await`), contrairement à l'arrivée où il ne doit jamais
+   retarder la lecture. La raison est inversée : là-bas la personne LIT, ici elle a TAPÉ et
+   n'attend plus que ça. Le bouton dit ce qu'il fait pendant ce temps, et redevient utilisable
+   si ça rate — *un bouton qui se fige sans rien dire est le défaut qu'on est en train de
+   corriger.* */
+async function _construireSeanceAuTap(idx, btn){
+  const reply=_pendingSeanceTextes[idx];
+  if(reply==null){ if(typeof toast==='function')toast('Séance introuvable','error'); return; }
+  const lblAvant=btn?btn.textContent:'';
+  const rendreLeBouton=()=>{ if(btn){ btn.disabled=false; btn.textContent=lblAvant; } };
+  try{
+    if(btn){ btn.disabled=true; btn.textContent='⏳ Je prépare ta séance…'; }
+    let sess=null;
+    // ① la lecture gratuite d'abord (bloc caché, puis filet déterministe)
+    try{ const d=(typeof _extractDaySession==='function')?_extractDaySession(reply):null; if(d&&d.sess)sess=d.sess; }catch(e){}
+    // ② puis le cervelet, seulement si ① n'a rien donné — un appel, et un seul
+    if(!sess&&typeof _cerveletSeance==='function'){
+      try{ const s=await _cerveletSeance(reply); if(s)sess=(typeof _montee==='function')?_montee(s):s; }catch(e){}
+    }
+    const bulle=btn?btn.closest('.msg-coach'):null;
+    if(sess&&typeof _appendStartSessionBtn==='function'){
+      /* ⭐ On pose la carte NORMALE (celle qui porte la séance lue) et on retire celle-ci :
+         à partir d'ici le comportement est exactement celui d'une séance détectée à l'arrivée
+         — mêmes avertissements d'intensité, même bouton, même « Non ». */
+      const carte=btn?btn.parentNode:null;
+      if(carte&&carte.parentNode)carte.parentNode.removeChild(carte);
+      if(_appendStartSessionBtn(sess, bulle))return;
+      // posée nulle part → on remet la carte d'origine plutôt que de laisser un vide
+      if(carte&&bulle){ bulle.appendChild(carte); }
+    }
+    rendreLeBouton();
+    /* ⛔ L'ÉCHEC SE DIT, ET IL PROPOSE LA SUITE. On ne laisse ni un bouton mort ni un toast seul
+       qui disparaît en trois secondes : la phrase reste sous la réponse, et le tap suivant
+       demande à Milo de réécrire la séance dans une forme lisible. */
+    const carte=btn?btn.parentNode:null;
+    if(carte&&!carte.querySelector('.milo-ask-fail')){
+      const d=document.createElement('div');
+      d.className='milo-ask-fail';
+      d.textContent='Je n\'arrive pas à lire cette séance dans sa réponse.';
+      const b=document.createElement('button');
+      b.className='ft-press coach-qr-chip milo-ask-chip';
+      b.textContent='↻ Demander à Milo de la réécrire';
+      b.onclick=function(){
+        if(typeof sendToCoach==='function')
+          sendToCoach('Réécris-moi cette séance sous forme de liste : un exercice par ligne, avec les séries, les répétitions et la charge.','Réécris la séance en liste',{noQuota:true});
+      };
+      carte.appendChild(d); carte.appendChild(b);
+      _coachAuBas();
+    }
+    if(typeof toast==='function')toast('Séance illisible — voir la réponse de Milo','error');
+  }catch(e){ rendreLeBouton(); }
 }
 
 function updateCoachHeader() {
@@ -4580,6 +4807,11 @@ async function sendToCoach(customMsg, displayMsg, opts) {
       if (!_ds && !opts.silent && !opts.debriefSess && typeof _ressembleASeance === 'function'
           && _ressembleASeance(reply)) _dsCervelet = true;
     }
+    /* ⭐ ft-v1053 — LE DÉCLENCHEUR DE REPLI SE LIT SUR LA DEMANDE, PAS SUR LA RÉPONSE.
+       ⛔ Exclu des appels internes (`silent`, débrief, programme de force) : ce ne sont pas des
+       demandes de séance de la personne, et y poser la question serait un contresens. */
+    const _dsDemande = !_fp && !opts.silent && !opts.debriefSess
+      && typeof _demandeUneSeance === 'function' && _demandeUneSeance(msg);
     // Mémoire durable : Milo peut proposer de retenir un trait durable (avec validation, Principe 3)
     const _mem = _extractMemory(reply);
     // Question guidée : Milo peut proposer des réponses rapides à taper (facultatif, une question à la fois)
@@ -4604,11 +4836,20 @@ async function sendToCoach(customMsg, displayMsg, opts) {
          seance STRUCTURELLEMENT pauvre (des exercices sans series), elle etait quand meme
          « truthy », le `|| _filet` ne jouait pas, et la fonction sortait en silence.
          Resultat : aucun bouton ET aucun repli. */
+      /* ⭐ ft-v1053 — LE DERNIER REPLI : si le cervelet ET le filet échouent tous les deux, on
+         ne laisse plus la bulle nue. La question s'affiche quand même dès lors que la personne
+         a DEMANDÉ une séance, et « Oui » la construira au tap. */
+      const _repli = () => { if (_dsDemande) _appendSeanceQuestion(reply, _bulle); };
       _cerveletSeance(reply)
-        .then(s => { if (!_appendStartSessionBtn(_montee(s), _bulle)) _appendStartSessionBtn(_filet, _bulle); })
-        .catch(() => _appendStartSessionBtn(_filet, _bulle));
+        .then(s => { if (!_appendStartSessionBtn(_montee(s), _bulle) && !_appendStartSessionBtn(_filet, _bulle)) _repli(); })
+        .catch(() => { if (!_appendStartSessionBtn(_filet, _bulle)) _repli(); });
     }
     else if (_dsFilet) _appendStartSessionBtn(_dsFilet);
+    /* ⭐⭐ ft-v1053 — ON A DEMANDÉ UNE SÉANCE, ON A DONC LA QUESTION. Aucune des trois voies n'a
+       reconnu de séance dans le texte : avant, la bulle restait nue et il n'y avait plus rien à
+       faire (c'est la panne que Michel a vécue trois fois en huit jours). Le déclencheur n'est
+       plus ce que Milo a écrit, mais ce que la personne a demandé. */
+    else if (_dsDemande) _appendSeanceQuestion(reply, _derniereBulleCoach());
     if (_mem) _appendMemoryBtns(_mem);
     if (_qr) _appendQuickReplies(_qr);
     // Étape 2 — débrief auto : on enregistre la mémoire durable (objectif/décision/tendances)
