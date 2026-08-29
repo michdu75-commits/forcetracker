@@ -15991,7 +15991,12 @@ console.log('\n-- CXLVI. La quantité sur un aliment repris de « Mes aliments �
        (l'aliment est calibré), et la dernière quantité n'est pas perdue — elle est offerte. */
     t('⭐⭐ CODE-BARRES repris → bloc « Quantité (g) », champ VIDE et 150 g PROPOSÉ (plus imposé)',
       F.bc.grammes===true && F.bc.champG==='' && F.bc.pastille===true
-      && F.bc.pastilleTxt.indexOf('150 g (la dernière fois)')>=0,
+      /* ⚠️ ON NORMALISE L'ESPACE AVANT DE COMPARER. L'app joint le nombre et son unite par
+         une ESPACE INSECABLE (regle de ft-v1034 : « 250 g » ne doit jamais se couper en fin
+         de ligne). Un test qui tape une espace ORDINAIRE ne peut JAMAIS correspondre — il
+         mesure le caractere d'espacement, pas le contenu. *Deuxieme temoin de la journee
+         qui ne pouvait pas verdir, et la 2e cause est invisible a l'oeil nu.* */
+      && F.bc.pastilleTxt.replace(/\u00A0/g,' ').indexOf('150 g (la dernière fois)')>=0,
       JSON.stringify({bloc:F.bc.grammes,champ:F.bc.champG,pastille:F.bc.pastille,txt:F.bc.pastilleTxt}));
     t('⭐⭐ SAISI À LA MAIN (sans pour-100 g) → bloc PORTIONS, jamais rien du tout',
       F.main.portions===true && F.main.grammes===false, JSON.stringify({portions:F.main.portions,grammes:F.main.grammes}));
@@ -17179,7 +17184,7 @@ console.log('\n-- CLVI. « La dernière fois » : proposé, jamais imposé (ft-v
          niveau d'echappement : la regex cherchait un ANTISLASH litteral. *Elle ne pouvait
          jamais etre verte, quel que soit le code.* C'est le miroir du « vert qui ne peut pas
          rougir » de BUGS.md : un ROUGE qui ne peut pas verdir. Un indexOf supprime la classe. */
-      F.reprise.pastille===true && F.reprise.texte.indexOf('250 g (la dernière fois)')>=0,
+      F.reprise.pastille===true && F.reprise.texte.replace(/\u00A0/g,' ').indexOf('250 g (la dernière fois)')>=0,
       JSON.stringify({visible:F.reprise.pastille,texte:F.reprise.texte}));
     /* ⛔ Le « voisinage muet » : un total qui devance le choix se lit comme un fait. */
     t('⛔ AUCUN total affiché tant que la quantité n\'est pas choisie (le « voisinage muet »)',
@@ -17201,6 +17206,102 @@ console.log('\n-- CLVI. « La dernière fois » : proposé, jamais imposé (ft-v
     t('⛔ NON-RÉGRESSION : un aliment sans quantité connue n\'affiche AUCUNE pastille',
       F.sansQ.pastille===false && F.sansQ.grammesVisible===true && F.sansQ.champ==='',
       JSON.stringify(F.sansQ));
+  }
+  await cx.close();
+}
+
+/* == BLOC CLVII - LE FAVORI DEMANDE LE MOMENT DE LA JOURNEE (ft-v1052) ==
+   Michel, capture a l'appui : « il y a les favoris c'est bien, mais il categorise direct en
+   collation ou diner ou peu importe. C'est un bon principe, mais on doit donner le choix : on
+   clique sur le favori et on demande a quel moment de la journee ».
+   ⛔ CE QUI ETAIT FAUX N'EST PAS LA SUGGESTION, C'EST QU'ELLE S'APPLIQUE SANS ETRE VALIDEE.
+   Un repas habituel est OBSERVE (les memes aliments notes ensemble deux fois) : le moment
+   observe est un bon PARI, pas un fait sur aujourd'hui. Le meme shaker peut etre un petit-dej
+   un jour et une collation le lendemain. *L'app propose ce qu'elle a vu, la personne tranche.*
+   ⭐ R13 : `meal` est un argument OPTIONNEL — sans lui, le comportement d'origine est intact,
+   donc le bloc LIV (ft-v849) reste vert sans etre touche. */
+console.log('\n-- CLVII. Le favori demande le moment de la journée (ft-v1052) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:900},timezoneId:'Europe/Paris'});
+  await cx.clock.setFixedTime(new Date('2026-08-29T10:00:00+02:00'));
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
+    const j=n=>{const x=new Date();x.setDate(x.getDate()-n);return x.toISOString().slice(0,10);};
+    const mk=(dt,m,n,k,p)=>({date:dt,meal:m,name:n,kcal:k,prot:p,carbs:0,fat:0,ts:Date.now()});
+    /* Le favori de Michel : noté DEUX fois en « Collation 2 » — c'est le moment OBSERVÉ. */
+    S.foodLog=[mk(j(1),'collation2','Iso zero protein (ASL)',156,35),
+               mk(j(2),'collation2','Iso zero protein (ASL)',156,35)];
+    persist();
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    goScreen('nutrition'); renderNutrition();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    switchNuTab('journal', document.getElementById('ntab-journal'));
+    await d(280);
+    const vis=e=>!!e && getComputedStyle(e).display!=='none';
+    const row=()=>document.getElementById('hab-m-0');
+    const h=_repasHabituels();
+    o.observe=h[0]&&h[0].meal;
+    o.replieAuDepart=!vis(row());
+    /* ① UN TAP SUR LA CARTE : la question s'affiche, RIEN n'est encore enregistré. */
+    _habChoisirMoment('hab-m-0'); await d(150);
+    o.deplie={visible:vis(row()), texte:(row().innerText||'').replace(/\n+/g,' '),
+              rienEnregistre:(S.foodLog||[]).filter(e=>e.date===today()).length===0};
+    /* ② LE MOMENT OBSERVÉ EST MARQUÉ, pas présélectionné. */
+    const btns=[...row().querySelectorAll('button')];
+    o.moments=btns.length;
+    o.marque=btns.filter(x=>/d'habitude/.test(x.textContent)).map(x=>x.textContent.replace(/\s+/g,' ').trim());
+    /* ③ JE CHOISIS UN AUTRE MOMENT que celui d'habitude — c'est tout le sujet. */
+    rejouerRepas(h[0].sig,'petitdej'); await d(200);
+    const auj=()=>(S.foodLog||[]).filter(e=>e.date===today());
+    o.choisi={n:auj().length, meals:[...new Set(auj().map(e=>e.meal))]};
+    /* ④ NON-RÉGRESSION : sans argument, le moment OBSERVÉ est utilisé (bloc LIV intact). */
+    S.foodLog=[mk(j(1),'collation2','Iso zero protein (ASL)',156,35),
+               mk(j(2),'collation2','Iso zero protein (ASL)',156,35)];
+    persist();
+    const h2=_repasHabituels();
+    rejouerRepas(h2[0].sig); await d(200);
+    o.sansArg={meals:[...new Set(auj().map(e=>e.meal))]};
+    /* ⑤ UN MOMENT INCONNU NE PASSE PAS : on retombe sur l'observé, on n'écrit pas n'importe quoi. */
+    S.foodLog=[mk(j(1),'collation2','Iso zero protein (ASL)',156,35),
+               mk(j(2),'collation2','Iso zero protein (ASL)',156,35)];
+    persist();
+    const h3=_repasHabituels();
+    rejouerRepas(h3[0].sig,'brunch_de_noel'); await d(200);
+    o.inconnu={meals:[...new Set(auj().map(e=>e.meal))]};
+    S.foodLog=[]; persist();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,220)};}
+  });
+  if(F.err) t('CLVII n\'a pas pu tourner', false, F.err);
+  else{
+    /* ⛔ Le témoin a-t-il VU l'habitude ? Sinon tout le reste serait vert en ne mesurant rien. */
+    t('⛔ le témoin a bien VU l\'habitude, et son moment observé est « Collation 2 »',
+      F.observe==='collation2', 'observé = '+F.observe);
+    t('⛔ la question est REPLIÉE au départ (elle ne prend pas un pixel tant qu\'on ne tape pas)',
+      F.replieAuDepart===true, '');
+    /* ⭐⭐ LA DEMANDE DE MICHEL : on demande, on n'applique plus tout seul. */
+    t('⭐⭐ un tap sur le favori POSE LA QUESTION — et n\'enregistre RIEN encore',
+      F.deplie.visible===true && /À quel moment de la journée/.test(F.deplie.texte)
+      && F.deplie.rienEnregistre===true, F.deplie.texte.slice(0,90));
+    t('⭐ les 5 moments sont proposés (la liste vient de `FOOD_MEALS`, pas d\'une recopie — R2)',
+      F.moments===5, F.moments+' moments');
+    /* ⭐ « On propose, on n'impose pas » : la suggestion se VOIT, elle ne s'applique pas. */
+    t('⭐⭐ le moment observé est MARQUÉ « d\'habitude » — une suggestion visible, pas un choix fait',
+      F.marque.length===1 && /Collation 2/.test(F.marque[0]), JSON.stringify(F.marque));
+    /* ⭐⭐ LE CŒUR DU SUJET : un autre moment que l'habitude est respecté. */
+    t('⭐⭐ choisir « Petit-déj » range bien le repas en PETIT-DÉJ, pas en Collation 2',
+      F.choisi.n===1 && F.choisi.meals.join()==='petitdej', JSON.stringify(F.choisi));
+    /* ⛔ NON-RÉGRESSION : l'ancien appel, sans argument, ne change pas de sens (R13). */
+    t('⛔ NON-RÉGRESSION : sans argument, c\'est le moment OBSERVÉ qui est utilisé',
+      F.sansArg.meals.join()==='collation2', JSON.stringify(F.sansArg));
+    /* ⛔ R29 : on n\'écrit jamais un moment inventé dans le journal. */
+    t('⛔ un moment INCONNU ne passe pas — on retombe sur l\'observé, rien d\'inventé (R29)',
+      F.inconnu.meals.join()==='collation2', JSON.stringify(F.inconnu));
   }
   await cx.close();
 }

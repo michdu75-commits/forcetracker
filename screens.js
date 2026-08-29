@@ -2918,18 +2918,34 @@ function renderFoodJournal(){
   try{
     const habitudes=(typeof _repasHabituels==='function')?_repasHabituels():[];
     if(habitudes.length){
-      html+=`<div style="margin-top:14px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:7px;">Tes repas habituels — un appui</div>`
+      html+=`<div style="margin-top:14px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:7px;">Tes repas habituels</div>`
         +`<div style="display:flex;flex-direction:column;gap:6px;">`;
-      habitudes.forEach(r=>{
+      habitudes.forEach((r,idx)=>{
         const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(r.meal):{ic:'🍽️',lbl:''};
         const k=r.items.reduce((a,e)=>a+(e.kcal||0),0);
         const p=r.items.reduce((a,e)=>a+(e.prot||0),0);
         const noms=r.items.map(e=>e.name).join(' + ');
-        html+=`<button onclick="rejouerRepas('${String(r.sig).replace(/'/g,"\\'")}')" class="btn btn-bg2" style="display:flex;align-items:center;gap:10px;text-align:left;padding:11px 12px;width:100%;">`
+        html+=`<button onclick="_habChoisirMoment('hab-m-${idx}')" class="btn btn-bg2" style="display:flex;align-items:center;gap:10px;text-align:left;padding:11px 12px;width:100%;">`
           +`<span style="font-size:18px;flex:none;">${mi.ic}</span>`
           +`<span style="flex:1;min-width:0;"><span style="display:block;font-size:13.5px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escNote?_escNote(noms):noms}</span>`
           +`<span style="display:block;font-size:11.5px;color:var(--t3);margin-top:1px;">${mi.lbl||''} · ${k} kcal · ${p} g de protéines · noté ${r.n} fois</span></span>`
           +`<span style="flex:none;color:var(--red);font-size:19px;font-weight:800;">+</span></button>`;
+        /* ⏰ LA RANGÉE DES MOMENTS (ft-v1052) — repliée, dépliée par un tap sur la carte.
+           ⭐ `FOOD_MEALS` est le seul propriétaire de la liste (R2) : on ne la recopie pas ici.
+           ⭐ LE MOMENT OBSERVÉ EST MARQUÉ « d'habitude » — c'est une SUGGESTION visible, pas une
+              présélection qui s'appliquerait toute seule. *On propose, on n'impose pas.* */
+        const MM=(typeof FOOD_MEALS!=='undefined')?FOOD_MEALS:[];
+        html+=`<div class="hab-moments" id="hab-m-${idx}" style="display:none;margin-top:-2px;padding:9px 10px 10px;background:var(--bg2);border-radius:0 0 12px 12px;">`
+          +`<div style="font-size:11px;color:var(--t3);margin-bottom:7px;">À quel moment de la journée ?</div>`
+          +`<div style="display:flex;flex-wrap:wrap;gap:6px;">`
+          + MM.map(m=>{
+              const hab=(m.k===r.meal);
+              return `<button onclick="rejouerRepas('${String(r.sig).replace(/'/g,"\\'")}','${m.k}')" `
+                +`style="flex:1 1 30%;min-width:96px;padding:8px 6px;border-radius:9px;border:1px solid ${hab?'var(--red)':'var(--sep)'};`
+                +`background:var(--bg3);color:var(--t1);font-size:12.5px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">`
+                +`${m.ic} ${m.lbl}${hab?'<span style="display:block;font-size:9.5px;font-weight:600;color:var(--t3);margin-top:2px;">d\'habitude</span>':''}</button>`;
+            }).join('')
+          +`</div></div>`;
       });
       html+=`</div></div>`;
     }

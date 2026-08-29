@@ -1462,23 +1462,55 @@ function _repasHabituels(){
 /* Rejoue un repas : ses aliments sont ajoutés à AUJOURD'HUI, sur le même moment de la journée.
    ⚠️ La provenance dit « reprise » (brique 0) — ce n'est ni une mesure fraîche ni une saisie
    manuelle, et l'écrire évite qu'un chiffre repris passe un jour pour une mesure. */
-function rejouerRepas(sig){
+/* ⏰ LE MOMENT DE LA JOURNÉE SE DEMANDE, IL NE SE DEVINE PLUS (ft-v1052)
+   Michel, capture à l'appui : *« il y a les favoris c'est bien, mais il catégorise direct en
+   collation ou dîner ou peu importe. C'est un bon principe, mais on doit donner le choix : on
+   clique sur le favori et on demande à quel moment de la journée. »*
+   ⛔ CE QUI ÉTAIT FAUX N'EST PAS LA SUGGESTION, C'EST QU'ELLE S'APPLIQUE SANS ÊTRE VALIDÉE.
+   Un repas habituel est OBSERVÉ (les mêmes aliments notés ensemble deux fois) — donc le moment
+   observé est un bon PARI, pas un fait sur aujourd'hui. Le même shaker peut être un petit-déj
+   un jour et une collation le lendemain. *L'app propose ce qu'elle a vu, la personne tranche*
+   (R29 — quand l'erreur touche la personne, on demande).
+   ⭐ R13 : `meal` est un argument OPTIONNEL, comme `refTs` en ft-v1017. Sans lui, le
+   comportement d'origine est intact — donc aucun appelant existant ne change de sens. */
+function rejouerRepas(sig, meal){
   const r=_repasHabituels().find(x=>x.sig===sig);
   if(!r){toast('Repas introuvable','error');return;}
+  /* ⛔ UN MOMENT INCONNU NE PASSE PAS : on retombe sur celui qu'on a observé plutôt que
+     d'écrire n'importe quoi dans le journal (R29). `FOOD_MEALS` est le seul propriétaire
+     de la liste des moments (R2) — on ne la recopie nulle part. */
+  const ok=(typeof FOOD_MEALS!=='undefined') && FOOD_MEALS.some(m=>m.k===meal);
+  const moment=ok?meal:r.meal;
   if(!S.foodLog)S.foodLog=[];
   const av=(typeof _afSrc!=='undefined')?_afSrc:null;
   if(typeof _afSetSrc==='function')_afSetSrc({saisie:'liste',origine:'reprise'});
   r.items.forEach(e=>{
     const vals={kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0};
     const prov=(typeof _provFood==='function')?_provFood(vals):{};
-    S.foodLog.push(Object.assign({date:_journalJourActif(),meal:r.meal,name:e.name,ts:Date.now()},vals,prov,{q:null,u:null}));
+    S.foodLog.push(Object.assign({date:_journalJourActif(),meal:moment,name:e.name,ts:Date.now()},vals,prov,{q:null,u:null}));
   });
   if(typeof _afSetSrc==='function')_afSetSrc(av);   // on rend le marqueur (R15)
   persist();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   renderFoodJournal();
   try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}
-  toast(r.items.length+' aliment'+(r.items.length>1?'s':'')+' ajouté'+(r.items.length>1?'s':'')+' 🍽️','success');
+  /* ⭐ LE TOAST NOMME LE MOMENT CHOISI : sans ça, on ne peut pas vérifier d'un coup d'œil que
+     le tap a bien porté là où on voulait — et c'est justement le sujet de cette version. */
+  const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(moment):null;
+  toast(r.items.length+' aliment'+(r.items.length>1?'s':'')+' ajouté'+(r.items.length>1?'s':'')
+        +(mi&&mi.lbl?' — '+mi.lbl:'')+' 🍽️','success');
+}
+/* ⏰ LE CHOIX DU MOMENT — un dépliage, pas une pop-up (ft-v1052).
+   ⛔ PAS D'OVERLAY, exprès : une modale de plus imposerait un chemin de fermeture à déclarer
+   dans `_OVERLAY_CLOSERS` (R15) pour une question à un tap. Le dépliage vit dans la carte,
+   se referme en retapant, et n'attrape rien derrière lui (R24 — informer sans bloquer). */
+function _habChoisirMoment(id){
+  const el=document.getElementById(id); if(!el) return;
+  const ouvert=el.style.display!=='none';
+  /* ⛔ UN SEUL DÉPLIAGE OUVERT À LA FOIS : deux rangées de moments côte à côte, et on ne sait
+     plus laquelle appartient à quel repas — le « voisinage muet » appliqué aux boutons. */
+  document.querySelectorAll('.hab-moments').forEach(x=>{x.style.display='none';});
+  if(!ouvert) el.style.display='block';
 }
 function _foodTotals(date){
   const t={kcal:0,prot:0,carbs:0,fat:0};
