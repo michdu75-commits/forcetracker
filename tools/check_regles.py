@@ -438,25 +438,47 @@ except Exception:
 # ⛔ SEULEMENT À LA RACINE, et c'est délibéré : les dossiers d'assets ont de vraies raisons
 # d'être lourds (`data/complalim.json` = 6,4 Mo, les moteurs OCR = 3,8 Mo chacun). Ce qui
 # n'a pas de raison d'être, c'est un gros fichier posé À CÔTÉ de `index.html`.
+#
+# ⭐⭐ ÉTENDU LE 29/08/2026 — LES CAPTURES DE DÉBOGAGE, ET C'EST LA LIMITE DU CONTRÔLE
+# CI-DESSUS QUI L'A MONTRÉE. `cap_fab2/3/4.png` + `cap_original.png` (2,9 Mo au total) ont
+# vécu **un mois** à la racine, entrées par un merge le 29/07, référencées par **rien**, et
+# publiées sur le site public à chaque déploiement. ⚠️ **Le contrôle du dessus les laissait
+# passer** : 600 Ko à 1,1 Mo chacune, très en dessous des 5 Mo. *Le seuil mesurait le gros
+# fichier unique, pas les quatre petits qui font la même chose.*
+# ⛔ On ajoute donc un MOTIF DE NOM, et on assume la différence de nature : le plafond
+# mesure une conséquence (c'est lourd), celui-ci reconnaît une INTENTION (c'est une capture
+# jetable). Les deux sont utiles, aucun ne remplace l'autre.
+# ⚠️ Volontairement borné à la RACINE et à des noms de brouillon : `female-body.png` vit
+# aussi à la racine, n'est référencée nulle part, et est **gardée exprès** (voir CLAUDE.md,
+# « Notes techniques ») — une règle « toute image non référencée » la supprimerait, c'est-à-
+# dire casserait une décision (R30). *Un contrôle qui attrape une décision est un mauvais
+# contrôle.*
 PLAFOND_RACINE = 5 * 1024 * 1024
+CAPTURE_MOTIFS = ("cap_", "capture", "screenshot", "screen_", "shot_", "tmp_", "test_")
 try:
     _suivis = _git("ls-files").splitlines() if git_ok else []
-    _gros, _paquets = [], []
+    _gros, _paquets, _captures = [], [], []
     for _f in _suivis:
         if "/" not in _f:                                     # racine uniquement
             _p = racine / _f
             if _p.exists() and _p.stat().st_size > PLAFOND_RACINE:
                 _gros.append(f"{_f} ({_p.stat().st_size/1048576:.1f} Mo)")
+            _bas = _f.lower()
+            if _bas.endswith((".png", ".jpg", ".jpeg", ".webp", ".gif")) \
+               and _bas.startswith(CAPTURE_MOTIFS):
+                _captures.append(_f)
         if _f.endswith((".whl", ".tar.gz", ".tgz")):
             _paquets.append(_f)
-    if _gros or _paquets:
+    if _gros or _paquets or _captures:
         print("❌ des fichiers qui n'ont rien à faire dans le dépôt :")
         for _x in _gros:    print(f"   - {_x} — trop gros pour la racine (> 5 Mo)")
         for _x in _paquets: print(f"   - {_x} — paquet téléchargé, pas une source")
+        for _x in _captures: print(f"   - {_x} — capture de débogage, pas un asset du produit")
         print("   → les retirer (`git rm`) : ils sont publiés sur le site PUBLIC et "
               "alourdissent chaque clone.")
         sys.exit(1)
-    print(f"✅ dépôt : aucun paquet ni gros fichier à la racine ({len(_suivis)} fichiers suivis)")
+    print(f"✅ dépôt : aucun paquet, gros fichier ni capture de débogage à la racine "
+          f"({len(_suivis)} fichiers suivis)")
 except SystemExit:
     raise
 except Exception:
