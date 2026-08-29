@@ -5963,7 +5963,28 @@ async function _evRun(SC, compare, rep){
         for(let k=0;k<rep;k++){
           _vcApplyPersona({ apply: sc.apply || {} });   // profil remis à neutre à CHAQUE passe
           try{
-            r = await _vcAsk({ scenario:sc.scenario, coachEmail:sc.coachEmail||'',
+            /* ⛔⛔ LE BANC D'ESSAI NE PART PLUS ANONYME (29/08/2026).
+               Mesuré : sur 54 scénarios, **un seul** porte un `coachEmail` — les 53 autres
+               envoyaient `email:''`, donc le backend les comptait sous **`anon`**, plafonné à
+               **50 appels/jour**. Le jour où le plafond de dépense est armé (`FT_COUNT_TOKEN`),
+               une passe serait **coupée au 51ᵉ appel** — et les derniers scénarios
+               remonteraient en ERREUR, donc lus comme des **ROUGES**.
+               👉 *Un plafond qui fabrique de faux échecs est pire qu'un plafond absent* : on
+               corrigerait le mauvais problème, en croyant que Milo a raté des scénarios qu'on
+               ne lui a jamais posés.
+               ⭐ CE N'EST PAS UN CONTOURNEMENT, C'EST UNE CORRECTION : le benchmark se lance
+               depuis Profil → Admin, par la personne connectée. Dire qui il est, c'est juste
+               arrêter de mentir au compteur — et il hérite du plafond de développement (150/j)
+               qui existe déjà, sans qu'on crée la moindre identité nouvelle.
+               ⛔ `sc.coachEmail` GARDE LA PRIORITÉ : un scénario qui nomme un persona (le seul,
+               aujourd'hui) continue de l'employer — c'est sa raison d'être, il teste ce que
+               reçoit CETTE personne-là. On ne remplace que le vide.
+               ⚠️ VÉRIFIÉ AVANT D'ÉCRIRE CETTE LIGNE (R9) : `MODELE_MICHEL` vaut aujourd'hui
+               `claude-sonnet-4-6`, c'est-à-dire le modèle de TOUT LE MONDE — le banc mesure donc
+               bien le Milo que les gens ont. Si cette valeur changeait un jour, ce ne serait plus
+               vrai : l'avertissement est posé dans `worker.js`, à la ligne qu'il faudrait
+               modifier, et pas seulement ici. */
+            r = await _vcAsk({ scenario:sc.scenario, coachEmail:sc.coachEmail||S.email||'',
                                history:sc.history||[], evalModel:P.id });
           }catch(e){ r = {ok:false, kind:'error', err:(e&&e.message)||'?', reply:''}; }
           if(r.ok) _passes.push(_evVerifier(sc, r.reply));

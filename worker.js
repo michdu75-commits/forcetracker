@@ -493,6 +493,19 @@ async function coach(body, apiKey, meta) {
   // cause était le modèle). Ce qu'on perdrait en premier, c'est exactement ce qui fait Milo :
   // le Gardien, « au plus UNE question », l'adaptation du ton, le refus d'inventer.
   let model = 'claude-sonnet-4-6';
+  /* ⚠️⚠️ AVANT DE REMETTRE UN AUTRE MODÈLE SUR CETTE LIGNE, LIRE CECI (29/08/2026).
+     Depuis aujourd'hui, le BANC D'ESSAI envoie l'e-mail de la personne qui le lance — donc
+     celui de Michel. C'était une correction nécessaire (sans ça il partait `anon`, plafonné à
+     50 appels/jour, et une passe de 54 scénarios se faisait couper au 51ᵉ dès que le plafond
+     de dépense serait armé).
+     👉 CONSÉQUENCE : cette branche décide aussi du modèle que le benchmark MESURE. Tant que
+     `MODELE_MICHEL` vaut le même modèle que le défaut, tout va bien — c'est le cas aujourd'hui
+     (Sonnet des deux côtés). Le jour où on remet Opus ici, **le banc d'essai se mettrait à
+     mesurer un Milo que PERSONNE n'utilise**, en silence, et ses résultats deviendraient
+     ininterprétables. C'est exactement le piège que R9 nomme : *on évalue Milo sur le modèle
+     des vrais utilisateurs, jamais sur celui du fondateur.*
+     ⛔ Si cette ligne change, il faut donner au banc d'essai un modèle explicite — pas le
+     laisser suivre l'e-mail. */
   if (em === 'michdu75@gmail.com') model = MODELE_MICHEL;
 
   // ── 🧪 BENCHMARK : le seul moyen de MESURER la décision « Sonnet pour tout le monde » ──

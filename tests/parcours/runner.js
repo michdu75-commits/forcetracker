@@ -17452,6 +17452,45 @@ console.log('\n-- CLIX. Une consigne interne n\'est pas une demande de la person
     debrief.bullesVisibles===1, 'bulles = '+debrief.bullesVisibles);
 }
 
+/* == BLOC CLX - LE BANC D'ESSAI NE PART PAS ANONYME (29/08/2026) ==
+   ⛔⛔ MESURE : sur 54 scenarios, UN SEUL porte un `coachEmail`. Les 53 autres envoyaient
+   `email:''` → comptes sous `anon`, plafonne a 50 appels/jour cote backend. Le jour ou le
+   plafond de depense est arme (`FT_COUNT_TOKEN`), une passe serait COUPEE au 51e appel — et les
+   derniers scenarios remonteraient en ERREUR, donc lus comme des ROUGES.
+   👉 *Un plafond qui fabrique de faux echecs est pire qu'un plafond absent.*
+
+   ⭐ CE TEMOIN NE MESURE PAS UN AFFICHAGE, IL LIT LE CODE SERVI : la panne est silencieuse
+   (aucune erreur, aucun rouge — juste un compteur qui se remplit dans le mauvais sac), donc
+   rien d'autre ne peut la voir. */
+console.log('\n-- CLX. Le banc d\'essai ne part pas anonyme --');
+{
+  const fsx=require('fs');
+  const src=fsx.readFileSync(__dirname+'/../../coach.js','utf8');
+  /* ⭐ On epingle l'APPEL REEL du benchmark, pas une chaine au hasard. */
+  const m=src.match(/coachEmail:\s*sc\.coachEmail\s*\|\|\s*([^,]+),/);
+  t('⭐⭐ le benchmark envoie l\'e-mail de la personne qui le lance (plus jamais `anon`)',
+    !!m && /S\.email/.test(m[1]), m?('repli = '+m[1].trim()):'(appel introuvable — le témoin ne mesure rien)');
+  /* ⛔ SANS CE SECOND TEMOIN, le premier serait vert en ayant casse le cas qu'il doit preserver :
+     un scenario qui NOMME un persona doit continuer d'employer CET e-mail-la, c'est sa raison
+     d'etre (il teste ce que recoit cette personne). */
+  t('⛔ … et un scénario qui NOMME un persona garde son e-mail (priorité à `sc.coachEmail`)',
+    !!m && /sc\.coachEmail\s*\|\|/.test(m[0]), m?m[0].trim():'(introuvable)');
+  /* ⚠️ R9 — L'AVERTISSEMENT DOIT VIVRE LA OU ON CHANGERAIT LE MODELE, pas seulement pres de
+     l'appel : le jour ou `MODELE_MICHEL` repasse sur un autre modele, le banc mesurerait un Milo
+     que personne n'utilise. Un commentaire pose au mauvais endroit ne previent personne. */
+  const w=fsx.readFileSync(__dirname+'/../../worker.js','utf8');
+  const iAvert=w.indexOf('BANC D\'ESSAI envoie l\'e-mail'), iLigne=w.indexOf("em === 'michdu75@gmail.com'");
+  t('⚠️ l\'avertissement R9 est posé JUSTE AVANT la ligne qui choisit le modèle',
+    iAvert>0 && iLigne>iAvert && (iLigne-iAvert)<1600, 'avert@'+iAvert+' · ligne@'+iLigne);
+  /* ⭐ ET LA CONDITION QUI REND TOUT CA VRAI AUJOURD'HUI, epinglee : les deux modeles sont
+     IDENTIQUES. Si quelqu'un les separe, ce temoin rougit — c'est precisement le moment ou il
+     faut relire l'avertissement ci-dessus. */
+  const mm=w.match(/const MODELE_MICHEL\s*=\s*'([^']+)'/);
+  const md=w.match(/let model\s*=\s*'([^']+)'/);
+  t('⭐⭐ R9 : le modèle de Michel est le MÊME que celui de tout le monde (sinon le banc ment)',
+    !!mm && !!md && mm[1]===md[1], (mm?mm[1]:'?')+' vs '+(md?md[1]:'?'));
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
