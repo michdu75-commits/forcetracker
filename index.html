@@ -2373,6 +2373,17 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
         <input id="af-bc-grams" type="number" inputmode="numeric" value="100" oninput="_bcApplyGrams()" style="flex:1;box-sizing:border-box;padding:9px;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);">
         <span style="font-size:13px;color:var(--t3);">g</span>
       </div>
+      <!-- ⚖️ LA QUANTITÉ DE LA DERNIÈRE FOIS EST PROPOSÉE, PLUS IMPOSÉE (ft-v1051).
+           Michel : « je ne prends pas toujours le même poids sur l'aliment… tu prends la
+           ratatouille, il y a différentes boîtes de différent poids », puis, sur le correctif :
+           « oui c'est mieux comme ça, on donne le choix et pas imposer ».
+           ⛔ Le champ était PRÉ-REMPLI avec la quantité du dernier repas, et l'écran annonçait
+           aussitôt « → pour tes 150 g : … ». Pour une dose de whey c'est juste ; pour une boîte
+           de ratatouille, c'est le repas d'HIER enregistré comme celui d'aujourd'hui.
+           ⭐ Un tap sur la pastille = le comportement d'avant. Rien ne s'enregistre tant qu'on
+           n'a rien choisi. *Un chiffre qu'on n'a pas choisi et qui s'enregistre est un chiffre
+           faux présenté comme un fait* (R29) — la même règle que le champ vide du bloc « poids ». -->
+      <button id="af-bc-last" type="button" onclick="_bcReprendreDerniere()" style="display:none;margin-top:8px;padding:7px 11px;border-radius:9px;border:1px dashed var(--sep);background:transparent;color:var(--t3);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;"></button>
       <!-- ⭐ CE QUE ÇA FAIT POUR TA QUANTITÉ (ft-v966). Michel a lu « 88 g de protéines » sur la
            carte produit — qui dit pourtant « Valeurs pour 100 g » — et a cru que c'était son
            apport. Ses vrais chiffres (26 g) existaient bien, mais tout en bas, hors écran.

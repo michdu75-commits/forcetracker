@@ -1110,6 +1110,31 @@ function _provFood(vals){
   const row=document.getElementById('af-bc-row');
   const g=parseFloat((document.getElementById('af-bc-grams')||{}).value)||0;
   if(row&&row.style.display!=='none'&&g>0){ p.q=g; p.u='g'; }
+  /* ⚖️ LE POIDS DÉCLARÉ À LA MAIN DESCEND JUSQU'À LA DONNÉE (ft-v1051) — R4, et c'est LA
+     moitié qui manquait : sans ces lignes, la personne voit son poids à l'écran, les 4 valeurs
+     se recalculent… et rien n'est enregistré. *L'app aurait su, et n'aurait rien retenu.*
+     ⛔ CE QU'ON GARDE EST LE POUR-100 g, PAS LA BOÎTE. Michel : *« tu prends la ratatouille, il
+     y a différentes boîtes de différent poids »*. Le pour-100 g est stable et calibre l'aliment
+     pour toujours ; `q` n'est qu'un pré-remplissage de confort, qu'on retape à chaque fois.
+     ⭐ C'est ce qui rebranche la machinerie de ft-v1042 : à la reprise depuis « Mes aliments »,
+     l'aliment aura son `per100` et le champ en grammes s'ouvrira tout seul.
+     ⛔ On n'écrase JAMAIS un `per100` déjà connu (scan, CIQUAL) : une déclaration à la main ne
+     passe pas devant une valeur mesurée (R32 — mesuré > estimé > déclaré). */
+  if(!p.per100 && typeof _afRef==='object' && _afRef && _afRef.u==='g' && _afRef.q>0 && vals){
+    /* ⚠️ ON DIVISE PAR LA QUANTITÉ AFFICHÉE, PAS PAR `_afRef.q` — et la nuance coûte cher.
+       `_afRef.q` est la quantité de RÉFÉRENCE (celle déclarée au départ) ; `_afRef.base` sont
+       les valeurs qui vont avec. Mais si la personne a ensuite tapé 80 après avoir déclaré 40,
+       les champs affichent le DOUBLE. Diviser ces valeurs-là par 40 donnerait un pour-100 g
+       deux fois trop gros. *Les valeurs affichées et la quantité affichée vont toujours
+       ensemble : c'est le seul couple sur lequel on peut diviser sans se tromper.* */
+    const q=parseFloat((document.getElementById('af-prop')||{}).value)||_afRef.q;
+    if(q>0){
+      const f=100/q;
+      p.q=q; p.u='g';
+      p.per100={kcal:Math.round((+vals.kcal||0)*f), prot:Math.round((+vals.prot||0)*f),
+                carbs:Math.round((+vals.carbs||0)*f), fat:Math.round((+vals.fat||0)*f)};
+    }
+  }
   return p;
 }
 function _loadZXing(){
@@ -1307,6 +1332,9 @@ function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux){
   const serv=parseFloat(p.serving_quantity)||0;
   const g=serv>0?serv:100;
   const gramsEl=document.getElementById('af-bc-grams');if(gramsEl)gramsEl.value=g;
+  /* ⛔ Un scan NEUF n'a pas de « dernière fois » : la pastille d'un aliment précédent doit
+     disparaître, sinon elle proposerait le poids de quelqu'un d'autre que le produit affiché. */
+  if(typeof _bcProposerDerniere==='function') _bcProposerDerniere(0);
   const nameEl=document.getElementById('af-bc-name');if(nameEl)nameEl.textContent=_bcNutr.name+' · '+_bcNutr.kcal100+' kcal/100g';
   const row=document.getElementById('af-bc-row');if(row)row.style.display='block';
   document.getElementById('af-desc').value=_bcNutr.name;
@@ -1357,6 +1385,36 @@ function _bcApplyGrams(){
    erreur : il n'y a rien à corriger, donc rien ne se signale.
    ⭐⭐ R2 — CETTE LIGNE NE CALCULE RIEN. Elle RELIT les champs que `_bcApplyGrams` vient d'écrire :
    deux calculs du même nombre finiraient par diverger, et on ne saurait plus lequel croire. */
+/* ⚖️ « LA DERNIÈRE FOIS » : PROPOSÉ, JAMAIS IMPOSÉ (ft-v1051) — décision de Michel :
+   *« oui c'est mieux comme ça, on donne le choix et pas imposer »*.
+   ⛔ UN SEUL ENDROIT POSE LA PASTILLE, pour les DEUX chemins de reprise (« Mes aliments » et
+   le journal) : sans ça, l'un des deux garderait le pré-remplissage et on aurait de nouveau
+   deux comportements pour la même question (R2/R8 — le correctif posé d'un seul côté est le
+   défaut le plus fréquent de ce fichier).
+   ⚠️ ET LE CHEMIN DU SCAN NEUF NE CHANGE PAS, exprès : là, le champ à 100 g n'est pas une
+   affirmation sur ce qu'on a mangé — les 4 valeurs affichées SONT les valeurs pour 100 g, la
+   quantité et les chiffres se correspondent. Ce qui était faux, c'est de re-servir la quantité
+   d'un REPAS passé comme si elle décrivait celui d'aujourd'hui (R30 : on ne modifie pas en
+   silence une décision qu'on n'a pas prise). */
+function _bcProposerDerniere(q){
+  const b=document.getElementById('af-bc-last'); if(!b) return;
+  const g=document.getElementById('af-bc-grams');
+  /* ⛔ q<=0 → ON CACHE SEULEMENT, on ne touche PAS au champ. C'est ce qui permet d'appeler
+     cette fonction depuis le scan neuf (qui pose 100 g ou la portion du fabricant) sans effacer
+     sa valeur. *Une fonction qui nettoie plus que son sujet finit par effacer celui d'un autre.* */
+  if(!(+q>0)){ b.style.display='none'; b.textContent=''; delete b.dataset.q; return; }
+  if(g) g.value='';                       // ⛔ rien de pré-rempli : la personne choisit
+  b.dataset.q=String(+q);
+  b.textContent='↩ '+(+q)+' g (la dernière fois)';
+  b.style.display='inline-block';
+}
+function _bcReprendreDerniere(){
+  const b=document.getElementById('af-bc-last'); if(!b) return;
+  const q=parseFloat(b.dataset.q)||0; if(!(q>0)) return;
+  const g=document.getElementById('af-bc-grams'); if(g) g.value=q;
+  _bcApplyGrams();                        // R2 : le même calcul que la saisie à la main
+  b.style.display='none';                 // proposition consommée — elle ne repropose pas
+}
 function _bcMontrerTotal(g){
   const el=document.getElementById('af-bc-total'); if(!el) return;
   const lu=id=>parseInt((document.getElementById(id)||{}).value)||0;
@@ -1404,23 +1462,55 @@ function _repasHabituels(){
 /* Rejoue un repas : ses aliments sont ajoutés à AUJOURD'HUI, sur le même moment de la journée.
    ⚠️ La provenance dit « reprise » (brique 0) — ce n'est ni une mesure fraîche ni une saisie
    manuelle, et l'écrire évite qu'un chiffre repris passe un jour pour une mesure. */
-function rejouerRepas(sig){
+/* ⏰ LE MOMENT DE LA JOURNÉE SE DEMANDE, IL NE SE DEVINE PLUS (ft-v1052)
+   Michel, capture à l'appui : *« il y a les favoris c'est bien, mais il catégorise direct en
+   collation ou dîner ou peu importe. C'est un bon principe, mais on doit donner le choix : on
+   clique sur le favori et on demande à quel moment de la journée. »*
+   ⛔ CE QUI ÉTAIT FAUX N'EST PAS LA SUGGESTION, C'EST QU'ELLE S'APPLIQUE SANS ÊTRE VALIDÉE.
+   Un repas habituel est OBSERVÉ (les mêmes aliments notés ensemble deux fois) — donc le moment
+   observé est un bon PARI, pas un fait sur aujourd'hui. Le même shaker peut être un petit-déj
+   un jour et une collation le lendemain. *L'app propose ce qu'elle a vu, la personne tranche*
+   (R29 — quand l'erreur touche la personne, on demande).
+   ⭐ R13 : `meal` est un argument OPTIONNEL, comme `refTs` en ft-v1017. Sans lui, le
+   comportement d'origine est intact — donc aucun appelant existant ne change de sens. */
+function rejouerRepas(sig, meal){
   const r=_repasHabituels().find(x=>x.sig===sig);
   if(!r){toast('Repas introuvable','error');return;}
+  /* ⛔ UN MOMENT INCONNU NE PASSE PAS : on retombe sur celui qu'on a observé plutôt que
+     d'écrire n'importe quoi dans le journal (R29). `FOOD_MEALS` est le seul propriétaire
+     de la liste des moments (R2) — on ne la recopie nulle part. */
+  const ok=(typeof FOOD_MEALS!=='undefined') && FOOD_MEALS.some(m=>m.k===meal);
+  const moment=ok?meal:r.meal;
   if(!S.foodLog)S.foodLog=[];
   const av=(typeof _afSrc!=='undefined')?_afSrc:null;
   if(typeof _afSetSrc==='function')_afSetSrc({saisie:'liste',origine:'reprise'});
   r.items.forEach(e=>{
     const vals={kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0};
     const prov=(typeof _provFood==='function')?_provFood(vals):{};
-    S.foodLog.push(Object.assign({date:_journalJourActif(),meal:r.meal,name:e.name,ts:Date.now()},vals,prov,{q:null,u:null}));
+    S.foodLog.push(Object.assign({date:_journalJourActif(),meal:moment,name:e.name,ts:Date.now()},vals,prov,{q:null,u:null}));
   });
   if(typeof _afSetSrc==='function')_afSetSrc(av);   // on rend le marqueur (R15)
   persist();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   renderFoodJournal();
   try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}
-  toast(r.items.length+' aliment'+(r.items.length>1?'s':'')+' ajouté'+(r.items.length>1?'s':'')+' 🍽️','success');
+  /* ⭐ LE TOAST NOMME LE MOMENT CHOISI : sans ça, on ne peut pas vérifier d'un coup d'œil que
+     le tap a bien porté là où on voulait — et c'est justement le sujet de cette version. */
+  const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(moment):null;
+  toast(r.items.length+' aliment'+(r.items.length>1?'s':'')+' ajouté'+(r.items.length>1?'s':'')
+        +(mi&&mi.lbl?' — '+mi.lbl:'')+' 🍽️','success');
+}
+/* ⏰ LE CHOIX DU MOMENT — un dépliage, pas une pop-up (ft-v1052).
+   ⛔ PAS D'OVERLAY, exprès : une modale de plus imposerait un chemin de fermeture à déclarer
+   dans `_OVERLAY_CLOSERS` (R15) pour une question à un tap. Le dépliage vit dans la carte,
+   se referme en retapant, et n'attrape rien derrière lui (R24 — informer sans bloquer). */
+function _habChoisirMoment(id){
+  const el=document.getElementById(id); if(!el) return;
+  const ouvert=el.style.display!=='none';
+  /* ⛔ UN SEUL DÉPLIAGE OUVERT À LA FOIS : deux rangées de moments côte à côte, et on ne sait
+     plus laquelle appartient à quel repas — le « voisinage muet » appliqué aux boutons. */
+  document.querySelectorAll('.hab-moments').forEach(x=>{x.style.display='none';});
+  if(!ouvert) el.style.display='block';
 }
 function _foodTotals(date){
   const t={kcal:0,prot:0,carbs:0,fat:0};
@@ -1768,6 +1858,7 @@ function openAddFood(){
      sinon la référence du produit précédent piloterait la saisie suivante, en silence. */
   window._afIaGrammes=0; window._afIaDesc='';
   try{ _afPropCacher(); }catch(e){}
+  try{ _bcProposerDerniere(0); }catch(e){}   // ⛔ la pastille ne survit pas à l'aliment précédent
   const coh=document.getElementById('af-coherence');if(coh){coh.style.display='none';coh.innerHTML='';}
   const hc=document.getElementById('af-health-card');if(hc)hc.innerHTML='';
   // Code-barres + score santé : GRATUIT pour tout le monde (client-side, 0 token).
@@ -1871,7 +1962,9 @@ function quickFillFood(i){
     _bcNutr={ name:(it.name||'').slice(0,60), kcal100:+P.kcal||0,
               prot100:+P.prot||0, carbs100:+P.carbs||0, fat100:+P.fat||0 };
     const g=document.getElementById('af-bc-grams');
-    if(g) g.value=(+it.q>0 && (!it.u||it.u==='g')) ? it.q : 100;   // la quantité de la dernière fois
+    /* ⚖️ ft-v1051 : PROPOSÉE, plus imposée — le champ reste vide, la pastille offre le rappel. */
+    if(g) g.value='';
+    if(typeof _bcProposerDerniere==='function') _bcProposerDerniere((+it.q>0 && (!it.u||it.u==='g')) ? +it.q : 0);
     const nm=document.getElementById('af-bc-name');
     if(nm) nm.textContent=_bcNutr.name+' · '+Math.round(_bcNutr.kcal100)+' kcal/100g (ta dernière saisie)';
     if(row) row.style.display='block';
@@ -1882,7 +1975,13 @@ function quickFillFood(i){
        ft-v966 avait corrigé un cran plus haut, et qui revenait par un autre chemin.
        ⛔ ON NE L'AFFICHE QUE SI LA QUANTITÉ EST RÉELLEMENT CONNUE (R29) : sans `q`, le champ
        retombe à 100 par défaut, et annoncer « pour tes 100 g » serait inventer une portion. */
-    if(typeof _bcMontrerTotal==='function') _bcMontrerTotal((+it.q>0 && (!it.u||it.u==='g')) ? +it.q : 0);
+    /* ⛔⛔ AUCUN TOTAL TANT QUE LA QUANTITÉ N'EST PAS CHOISIE (ft-v1051). Vu à la mesure : le
+       champ était vide et la ligne verte annonçait déjà « → pour tes 250 g : 150 kcal ». Elle
+       décrivait la PROPOSITION, pas une décision — c'est-à-dire le « voisinage muet » de
+       ft-v966 et ft-v1042, retrouvé une 3ᵉ fois par un chemin neuf. *Un total qui devance le
+       choix de la personne se lit comme un fait sur son repas.* Il réapparaît dès qu'elle tape
+       un poids ou tape la pastille (`_bcApplyGrams` le rappelle). */
+    if(typeof _bcMontrerTotal==='function') _bcMontrerTotal(0);
   }else{
     if(row) row.style.display='none';
     _bcNutr=null;
@@ -2487,7 +2586,9 @@ function _afSuggPrendreLocale(i){
     _bcNutr={ name:(e.name||'').slice(0,60), kcal100:+P.kcal||0,
               prot100:+P.prot||0, carbs100:+P.carbs||0, fat100:+P.fat||0 };
     const g=document.getElementById('af-bc-grams');
-    if(g) g.value=(+e.q>0 && (!e.u||e.u==='g')) ? e.q : 100;   // la quantité de la dernière fois
+    /* ⚖️ ft-v1051 : la JUMELLE (R8) — le même correctif, sur le chemin « reprendre depuis le journal ». */
+    if(g) g.value='';
+    if(typeof _bcProposerDerniere==='function') _bcProposerDerniere((+e.q>0 && (!e.u||e.u==='g')) ? +e.q : 0);
     const nm=document.getElementById('af-bc-name');
     if(nm) nm.textContent=_bcNutr.name+' · '+Math.round(_bcNutr.kcal100)+' kcal/100g (ta dernière saisie)';
     if(row) row.style.display='block';
@@ -2498,7 +2599,13 @@ function _afSuggPrendreLocale(i){
        ft-v966 avait corrigé un cran plus haut, et qui revenait par un autre chemin.
        ⛔ ON NE L'AFFICHE QUE SI LA QUANTITÉ EST RÉELLEMENT CONNUE (R29) : sans `q`, le champ
        retombe à 100 par défaut, et annoncer « pour tes 100 g » serait inventer une portion. */
-    if(typeof _bcMontrerTotal==='function') _bcMontrerTotal((+e.q>0 && (!e.u||e.u==='g')) ? +e.q : 0);
+    /* ⛔⛔ AUCUN TOTAL TANT QUE LA QUANTITÉ N'EST PAS CHOISIE (ft-v1051). Vu à la mesure : le
+       champ était vide et la ligne verte annonçait déjà « → pour tes 250 g : 150 kcal ». Elle
+       décrivait la PROPOSITION, pas une décision — c'est-à-dire le « voisinage muet » de
+       ft-v966 et ft-v1042, retrouvé une 3ᵉ fois par un chemin neuf. *Un total qui devance le
+       choix de la personne se lit comme un fait sur son repas.* Il réapparaît dès qu'elle tape
+       un poids ou tape la pastille (`_bcApplyGrams` le rappelle). */
+    if(typeof _bcMontrerTotal==='function') _bcMontrerTotal(0);
   }else{
     if(row) row.style.display='none';
     _bcNutr=null;
@@ -2798,8 +2905,50 @@ function _afApplyProp(){
   _afProp(v/_afRef.q);
 }
 function _afApplyPortion(x){ _afProp(x); }
+/* ⚖️ LE CHOIX DE L'UNITÉ (ft-v1051) — Michel, capture à l'appui : *« toujours ce problème de
+   quantité, il faut que je puisse mettre les grammes »*, puis la précision qui a décidé de la
+   forme : *« je ne prends pas toujours le même poids… tu prends la ratatouille, il y a
+   différentes boîtes de différent poids »*.
+
+   ⛔⛔ CE QUI BLOQUAIT N'ÉTAIT PAS UN MANQUE DE MÉCANISME, C'ÉTAIT UN REFUS. `_afMajAncre`
+   IMPOSAIT l'un ou l'autre : champ en grammes si un poids était connu (phrase ou IA), portions
+   sinon, avec un message de cul-de-sac — *« on ne peut pas inventer un poids »*. C'est vrai, et
+   c'est à côté de la question : **l'app** ne peut pas l'inventer, **la personne** le connaît.
+   *Il fallait le lui DEMANDER, pas refuser* (R29 : quand l'app ne sait pas, elle montre ce
+   qu'elle a et laisse trancher).
+
+   ⭐⭐ ET RIEN N'EST RÉINVENTÉ (R13) : le bloc « portion » posait DÉJÀ `_afRef={q:1}`, donc un
+   « ×2 » est déjà un rescale de facteur 2/1. Grammes et portions sont **le même calcul avec une
+   référence différente** — l'unité n'est qu'une étiquette. Un seul champ, un seul propriétaire
+   de la quantité (R2) : on n'affiche jamais deux réglages concurrents.
+
+   ⛔ CE QUI EST RETENU EST LE POUR-100 g, JAMAIS LA QUANTITÉ. 100 g de ratatouille est stable ;
+   la boîte, non. Retenir « 250 g » comme si c'était l'aliment ferait re-servir la boîte d'hier. */
+let _afUnite='portion';        // 'portion' | 'g' — CHOISI par la personne, jamais imposé
+let _afPoidsDeclare=0;         // le poids qu'elle a indiqué pour la portion affichée (g)
+function _afResetUnite(){ _afUnite='portion'; _afPoidsDeclare=0; }
+function _afSetUnite(u){
+  if(u===_afUnite) return;
+  _afUnite=(u==='g')?'g':'portion';
+  /* ⛔ ON NE RESCALE RIEN EN CHANGEANT D'UNITÉ. Basculer de « portion » à « g » ne change pas
+     ce qu'on a mangé — ça change la façon de le COMPTER. Les 4 valeurs affichées deviennent la
+     nouvelle référence, quelle qu'elle soit. */
+  _afPoidsDeclare=0;
+  _afMajAncre();
+}
+function _afDeclarePoids(){
+  const v=parseFloat((document.getElementById('af-poids')||{}).value);
+  if(!(v>0)) return;
+  _afPoidsDeclare=v;
+  _afMajAncre();               // le bloc bascule dans son état « ancré », comme un poids lu
+}
 function _afPropCacher(){
   _afRef=null;
+  /* ⛔ L'UNITÉ SE REMET À ZÉRO AVEC LE BLOC (ft-v1051), sinon l'aliment SUIVANT hérite du
+     choix du précédent — et pire, de son poids déclaré. *Un réglage qui survit à son sujet est
+     pire qu'un réglage absent : il a l'air d'un fait.* (La même leçon que le poids de l'IA
+     périmé, quelques lignes plus haut.) */
+  if(typeof _afResetUnite==='function')_afResetUnite();
   const el=document.getElementById('af-prop-row');
   if(el){el.style.display='none';el.innerHTML='';}
 }
@@ -2829,11 +2978,39 @@ function _afMajAncre(){
       +'<input id="af-prop" type="number" inputmode="decimal" step="any" value="'+ancre.v+'" oninput="_afApplyProp()" style="'+style+'">'
       +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Référence : '+ancre.v+' '+ancre.u+' ('+ancre.src+'). Corrige-la, les 4 valeurs suivent en proportion.</div>';
   }else{
-    _afRef={base:base,q:1,u:'',src:'portion'};
-    const b=(x,l)=>'<button onclick="_afApplyPortion('+x+')" style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t2);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">'+l+'</button>';
-    el.innerHTML='<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Portion <span style="font-weight:400;">— multiplie les 4 valeurs</span></div>'
-      +'<div style="display:flex;gap:6px;">'+b(0.5,'½')+b(1,'1')+b(1.5,'1½')+b(2,'2')+b(3,'3')+'</div>'
-      +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Aucune quantité connue — on ne peut pas inventer un poids. Mets-la dans ta phrase (ex. « 20 g d\'huile d\'olive ») et ce sera un vrai poids.</div>';
+    /* ⚖️ AUCUN POIDS TROUVÉ — on ne devine pas, ON DEMANDE (ft-v1051). Deux unités au choix,
+       un seul champ actif à la fois : la quantité a un seul propriétaire (R2). */
+    const onglet=(u,l)=>'<button onclick="_afSetUnite(\''+u+'\')" style="flex:1;padding:7px 4px;border-radius:9px;border:1px solid '
+      +(_afUnite===u?'var(--red)':'var(--sep)')+';background:'+(_afUnite===u?'var(--bg3)':'var(--bg2)')
+      +';color:'+(_afUnite===u?'var(--t1)':'var(--t3)')+';font-size:12.5px;font-weight:'+(_afUnite===u?'800':'700')
+      +';font-family:var(--font);cursor:pointer;touch-action:manipulation;" aria-pressed="'+(_afUnite===u?'true':'false')+'">'+l+'</button>';
+    const choix='<div style="display:flex;gap:6px;margin-bottom:7px;">'+onglet('g','⚖️ En grammes')+onglet('portion','🍽️ En portions')+'</div>';
+    if(_afUnite==='g'&&_afPoidsDeclare>0){
+      /* ⭐ ANCRÉ PAR LA PERSONNE — à partir d'ici c'est EXACTEMENT le bloc « poids connu »
+         au-dessus : même champ, même `_afApplyProp`, même calcul. Seule la source diffère, et
+         elle est dite à l'écran (R32 : on ne présente jamais une déclaration comme une mesure). */
+      _afRef={base:base,q:_afPoidsDeclare,u:'g',src:'que tu as indiqué'};
+      el.innerHTML='<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité <span style="font-weight:400;">— recalcule les 4 valeurs</span></div>'
+        +choix
+        +'<input id="af-prop" type="number" inputmode="decimal" step="any" value="'+_afPoidsDeclare+'" oninput="_afApplyProp()" style="'+style+'">'
+        +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Référence : '+_afPoidsDeclare+' g (que tu as indiqué). Change ce nombre à chaque fois que la quantité change — les 4 valeurs suivent.</div>';
+    }else if(_afUnite==='g'){
+      /* ⛔ LE CHAMP EST VIDE, PAS PRÉ-REMPLI. Proposer « 100 » ferait enregistrer 100 g à qui
+         valide sans regarder — *un chiffre pré-rempli qu'on n'a pas choisi est un chiffre faux
+         présenté comme un fait* (R29). Tant que rien n'est indiqué, les 4 valeurs NE BOUGENT PAS. */
+      _afRef={base:base,q:1,u:'',src:'portion'};
+      el.innerHTML='<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité <span style="font-weight:400;">— recalcule les 4 valeurs</span></div>'
+        +choix
+        +'<input id="af-poids" type="number" inputmode="decimal" step="any" placeholder="poids de cette portion" onchange="_afDeclarePoids()" style="'+style+'">'
+        +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Combien pèse ce que tu as devant toi ? <b>L\'app ne peut pas le deviner, toi si.</b> Indique-le une fois : les 4 valeurs se calent dessus, et tu pourras ensuite mettre le poids que tu veux (250 g aujourd\'hui, 400 g la prochaine fois).</div>';
+    }else{
+      _afRef={base:base,q:1,u:'',src:'portion'};
+      const b=(x,l)=>'<button onclick="_afApplyPortion('+x+')" style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t2);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">'+l+'</button>';
+      el.innerHTML='<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité <span style="font-weight:400;">— multiplie les 4 valeurs</span></div>'
+        +choix
+        +'<div style="display:flex;gap:6px;">'+b(0.5,'½')+b(1,'1')+b(1.5,'1½')+b(2,'2')+b(3,'3')+'</div>'
+        +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Les 4 valeurs ci-dessous sont <b>une portion</b>. Tu connais le poids ? Passe en <b>⚖️ grammes</b> et indique-le.</div>';
+    }
   }
   el.style.display='block';
 }

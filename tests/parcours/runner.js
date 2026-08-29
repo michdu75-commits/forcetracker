@@ -11055,8 +11055,15 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     macros(200,4,20,10);
     _afMajAncre();
     o.rien_pasDeChampPoids=!document.getElementById('af-prop');
-    o.rien_aDesPortions=/Portion/i.test(bloc().textContent);
-    o.rien_ditPourquoi=/inventer un poids/i.test(bloc().textContent);
+    /* ⚠️ RE-VISÉ EN ft-v1051 — ce témoin épinglait le LIBELLÉ (« Portion ») et la PHRASE
+       (« inventer un poids »), c'est-à-dire le texte du jour, pas la règle qu'il protège.
+       ⛔ La règle, elle, n'a pas bougé : *l'app n'invente AUCUN poids*. On la mesure donc
+       structurellement — des multiplicateurs sont offerts, aucun nombre de grammes n'est
+       affiché, et le bloc DIT comment obtenir un vrai poids. Michel a demandé que le
+       cul-de-sac disparaisse ; la garantie, elle, reste. */
+    o.rien_aDesPortions=bloc().querySelectorAll('button[onclick^="_afApplyPortion"]').length>=5;
+    o.rien_aucunGrammeAffiche=!/\d+\s*g\b/.test(bloc().textContent);
+    o.rien_ditPourquoi=/poids/i.test(bloc().textContent)&&/grammes/i.test(bloc().textContent);
     _afApplyPortion(2);
     o.rien_x2=lus();
 
@@ -11095,8 +11102,11 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       R.nom_champPoids===true && R.nom_valeur==='20' && R.nom_ditSource===true,
       'champ='+R.nom_champPoids+' valeur='+R.nom_valeur);
     t('⭐ ... et le doubler double les valeurs', R.nom_apres40==='360/0/0/40', 'lu : '+R.nom_apres40);
-    t('⛔⛔ AUCUN ANCRAGE : des PORTIONS, jamais un poids invente (R29)',
-      R.rien_pasDeChampPoids===true && R.rien_aDesPortions===true && R.rien_ditPourquoi===true, '');
+    t('⛔⛔ AUCUN ANCRAGE : des MULTIPLICATEURS, et aucun poids inventé (R29)',
+      R.rien_pasDeChampPoids===true && R.rien_aDesPortions===true
+      && R.rien_aucunGrammeAffiche===true && R.rien_ditPourquoi===true,
+      JSON.stringify({champ:R.rien_pasDeChampPoids,mult:R.rien_aDesPortions,
+                      zeroGramme:R.rien_aucunGrammeAffiche,dit:R.rien_ditPourquoi}));
     t('⭐ ... et une portion x2 double bien les 4 valeurs', R.rien_x2==='400/8/40/20', 'lu : '+R.rien_x2);
     t('⛔⛔ R2 : un pour-100 g connu GARDE la main (le bloc du scan ne se dedouble pas)',
       R.scan_blocPropCache===true, '');
@@ -12510,7 +12520,14 @@ console.log('\n-- CXII. La quantité sur un aliment repris SANS pour-100 g (ft-v
       const bc=document.getElementById('af-bc-row'), pr=document.getElementById('af-prop-row');
       return { grammes: !!(bc && bc.style.display!=='none'),
                portions: !!(pr && pr.style.display==='block'),
-               texte:(pr&&pr.textContent||'').replace(/\s+/g,' ').slice(0,60) };
+               /* ⚠️ LE TEXTE ENTIER, ET UN EXTRAIT SÉPARÉ POUR L'AFFICHAGE (ft-v1051).
+                  Il était capturé en `.slice(0,60)` : les témoins qui cherchaient « portion »
+                  dedans mesuraient donc la LONGUEUR DE LA PHRASE, pas son contenu. Le libellé
+                  du bloc a gagné deux boutons d'unité, le mot est passé au-delà de la coupe, et
+                  un témoin a rougi sur du code parfaitement correct. *On ne cherche jamais un
+                  motif dans une chaîne tronquée.* */
+               texte:(pr&&pr.textContent||'').replace(/\s+/g,' '),
+               extrait:(pr&&pr.textContent||'').replace(/\s+/g,' ').slice(0,60) };
     };
     const poser=(per100)=>{
       S.foodLog=[]; try{_afSuggVider();}catch(e){}
@@ -12550,8 +12567,13 @@ console.log('\n-- CXII. La quantité sur un aliment repris SANS pour-100 g (ft-v
     Q.x2 && Q.x2.kcal===646 && Q.x2.prot===106 && Q.x2.fat===26, JSON.stringify(Q.x2));
   // ⛔ R29 : sans ancre, on n'invente AUCUN poids — on n'offre que des multiplicateurs, vrais
   //    quelle que soit la portion de départ. Le texte doit le dire, pas l'inventer.
+  /* ⚠️ RE-VISÉ EN ft-v1051 : il exigeait le mot « Portion » avec une majuscule — le libellé
+     du bloc, devenu « Quantité » quand Michel a demandé le choix de l'unité. *Un témoin qui
+     épingle un libellé rougit à la première reformulation, sans qu'aucune règle soit cassée.*
+     Ce qu'il protège vraiment tient en deux moitiés, et elles sont gardées : des portions sont
+     bien proposées, et AUCUN nombre de grammes n'est affiché tant que personne n'en a donné. */
   tq('⛔ … et AUCUN poids n\'est inventé (des multiplicateurs, pas des grammes) — R29',
-    Q.sans && /Portion/.test(Q.sans.texte) && !/\d+\s*g\b/.test(Q.sans.texte), Q.sans&&Q.sans.texte);
+    Q.sans && /portion/i.test(Q.sans.texte) && !/\d+\s*g\b/.test(Q.sans.texte), Q.sans&&Q.sans.extrait);
   tq('⭐⭐ NON-RÉGRESSION : AVEC un pour-100 g, c\'est toujours le bloc en GRAMMES (ft-v984)',
     Q.avec && Q.avec.grammes===true, JSON.stringify(Q.avec));
   /* ⛔ LES DEUX MÉCANISMES NE S'AFFICHENT JAMAIS ENSEMBLE (R2) : `_afMajAncre` se tait tout seul
@@ -15928,14 +15950,21 @@ console.log('\n-- CXLVI. La quantité sur un aliment repris de « Mes aliments �
       if(i<0) return {absent:true};
       quickFillFood(i);
       const row=document.getElementById('af-bc-row'), prop=document.getElementById('af-prop-row'),
-            tot=document.getElementById('af-bc-total');
+            tot=document.getElementById('af-bc-total'), pas=document.getElementById('af-bc-last');
       const vis=e=>!!e && getComputedStyle(e).display!=='none';
       return { transporte:!!_afQuickItems[i].per100, grammes:vis(row), portions:vis(prop),
                champG:(document.getElementById('af-bc-grams')||{}).value,
                total: vis(tot) ? tot.textContent : '',
+               /* ⚖️ ft-v1051 : la quantité de la dernière fois est PROPOSÉE, plus imposée. */
+               pastille: vis(pas), pastilleTxt: (pas&&pas.textContent)||'',
                kcal:(document.getElementById('af-kcal')||{}).value };
     };
     o.bc   = lire('Riz Basmati (Taureau Ailé)');
+    /* ⚖️ ft-v1051 : on tape la pastille, et le total réapparaît avec la bonne quantité. */
+    if(typeof _bcReprendreDerniere==='function') _bcReprendreDerniere();
+    await dort(150);
+    o.bcApresTap = { total:((document.getElementById('af-bc-total')||{}).textContent)||'',
+                     champG:(document.getElementById('af-bc-grams')||{}).value };
     o.main = lire('Iso zero protein (ASL)');
     o.ia   = lire('Oeuf cru');
     /* ⭐ Le recalcul marche-t-il VRAIMENT ? 150 g → 200 g. */
@@ -15957,8 +15986,21 @@ console.log('\n-- CXLVI. La quantité sur un aliment repris de « Mes aliments �
     /* ⭐⭐ LE TRANSPORT : sans lui, rien de ce qui suit n'est possible (R4). */
     t('⭐⭐ `per100` SURVIT jusqu\'à l\'aliment repris — il était jeté avant (R4)',
       F.bc.transporte===true, 'per100 transporté = '+F.bc.transporte);
-    t('⭐⭐ CODE-BARRES repris → bloc « Quantité (g) », à la DERNIÈRE quantité (150, pas 100)',
-      F.bc.grammes===true && F.bc.champG==='150', 'bloc='+F.bc.grammes+' · champ='+F.bc.champG);
+    /* ⚠️ RE-VISÉ EN ft-v1051, SUR DÉCISION DE MICHEL : « on donne le choix et pas imposer ».
+       Ce témoin exigeait que le champ soit PRÉ-REMPLI à 150 g. C'était le comportement de
+       ft-v1042 — juste pour une dose de whey, faux pour une boîte de ratatouille, où c'est le
+       repas d'HIER qui s'enregistrerait. Le champ est maintenant VIDE et la quantité est
+       PROPOSÉE par une pastille. ⭐ Le témoin garde les deux moitiés : le bloc s'ouvre bien
+       (l'aliment est calibré), et la dernière quantité n'est pas perdue — elle est offerte. */
+    t('⭐⭐ CODE-BARRES repris → bloc « Quantité (g) », champ VIDE et 150 g PROPOSÉ (plus imposé)',
+      F.bc.grammes===true && F.bc.champG==='' && F.bc.pastille===true
+      /* ⚠️ ON NORMALISE L'ESPACE AVANT DE COMPARER. L'app joint le nombre et son unite par
+         une ESPACE INSECABLE (regle de ft-v1034 : « 250 g » ne doit jamais se couper en fin
+         de ligne). Un test qui tape une espace ORDINAIRE ne peut JAMAIS correspondre — il
+         mesure le caractere d'espacement, pas le contenu. *Deuxieme temoin de la journee
+         qui ne pouvait pas verdir, et la 2e cause est invisible a l'oeil nu.* */
+      && F.bc.pastilleTxt.replace(/\u00A0/g,' ').indexOf('150 g (la dernière fois)')>=0,
+      JSON.stringify({bloc:F.bc.grammes,champ:F.bc.champG,pastille:F.bc.pastille,txt:F.bc.pastilleTxt}));
     t('⭐⭐ SAISI À LA MAIN (sans pour-100 g) → bloc PORTIONS, jamais rien du tout',
       F.main.portions===true && F.main.grammes===false, JSON.stringify({portions:F.main.portions,grammes:F.main.grammes}));
     t('⭐⭐ ESTIMÉ PAR L\'IA (sans pour-100 g) → bloc PORTIONS aussi',
@@ -15967,8 +16009,12 @@ console.log('\n-- CXLVI. La quantité sur un aliment repris de « Mes aliments �
     t('⛔ les deux réglages ne s\'affichent JAMAIS ensemble (R2)',
       [F.bc,F.main,F.ia].every(x=>!(x.grammes&&x.portions)), '');
     /* ⛔ Le défaut vu À LA CAPTURE : la ligne verte parlait de l'aliment précédent. */
-    t('⛔ la ligne du total parle de la BONNE quantité (vu à la capture : 150 dans le champ, « 200 g » sur la ligne)',
-      /pour tes 150 g/.test(F.bc.total) && /525 kcal/.test(F.bc.total), F.bc.total.slice(0,72));
+    /* ⚠️ RE-VISÉ EN ft-v1051 : le total ne devance plus le choix. Il n'y a donc RIEN à
+       l'arrivée — puis, dès qu'on tape la pastille, il dit la bonne quantité. *Ce que ce
+       témoin protège n'a pas changé d'un mot : le total et le champ parlent du même repas.* */
+    t('⛔ AUCUN total avant le choix — puis il parle de la BONNE quantité après le tap',
+      F.bc.total==='' && /pour tes 150 g/.test(F.bcApresTap.total) && /525 kcal/.test(F.bcApresTap.total),
+      JSON.stringify({avant:F.bc.total.slice(0,40),apres:F.bcApresTap.total.slice(0,72)}));
     t('⛔ … et elle ne survit PAS à un aliment sans quantité connue (pas de total orphelin)',
       F.main.total==='' && F.ia.total==='', JSON.stringify({main:F.main.total.slice(0,40),ia:F.ia.total.slice(0,40)}));
     t('⭐ le recalcul marche : 150 → 200 g donne 700 kcal et 154 g de glucides',
@@ -16922,6 +16968,343 @@ console.log('\n-- CLIV. La séance prévue qui n\'a pas eu lieu (ft-v1050) --');
        Les 2 appels du DÉMARRAGE (QR de partage, ping Apps Script) prouvent qu'elle marche. */
     t('⛔ … et le compteur écoutait vraiment (il a vu les appels du démarrage, eux)',
       sortantsDepart>0, 'appels vus au démarrage = '+sortantsDepart);
+  }
+  await cx.close();
+}
+
+/* == BLOC CLX - LA QUANTITE AU CHOIX : GRAMMES *OU* PORTIONS (ft-v1051) ==
+   Michel, capture a l'appui : « toujours ce probleme de quantite, il faut que je puisse mettre
+   les grammes », puis la precision qui a decide de la FORME : « je ne prends pas toujours le
+   meme poids... tu prends la ratatouille, il y a differentes boites de different poids ».
+   ⛔⛔ CE QUI BLOQUAIT N'ETAIT PAS UN MANQUE DE MECANISME, C'ETAIT UN REFUS : `_afMajAncre`
+   IMPOSAIT l'un ou l'autre, et sans poids trouve elle affichait un cul-de-sac — « on ne peut
+   pas inventer un poids ». Vrai, et a cote de la question : *l'APP ne peut pas l'inventer, la
+   PERSONNE le connait*. Il fallait le lui DEMANDER, pas refuser (R29).
+   ⭐⭐ ET RIEN N'EST REINVENTE (R13) : le bloc « portion » posait DEJA `_afRef={q:1}`, donc un
+   « x2 » etait deja un rescale de facteur 2/1. Grammes et portions sont LE MEME CALCUL avec une
+   reference differente. Un seul champ actif : la quantite a UN propriétaire (R2).
+   ⛔ CE QUI EST RETENU EST LE POUR-100 g, JAMAIS LA BOITE — 100 g de ratatouille est stable.
+   ⚠️ ET LE PIEGE DU CALCUL : on divise par la quantite AFFICHEE, pas par `_afRef.q`. Declarer
+   40 g puis taper 80 laisse les champs au DOUBLE ; diviser par 40 donnerait un pour-100 g deux
+   fois trop gros. *Les valeurs affichees et la quantite affichee vont toujours ensemble.* */
+console.log('\n-- CLX. La quantité au choix : grammes ou portions (ft-v1051) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  await cx.clock.setFixedTime(new Date('2026-08-28T20:37:00+02:00'));
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async()=>{
+   try{
+    const o={}, dort=ms=>new Promise(x=>setTimeout(x,ms)), t=today();
+    S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';
+    /* L'ALIMENT EXACT DE LA CAPTURE : saisi à la main, AUCUN pour-100 g. */
+    S.foodLog=[{date:t,meal:'collation',name:'Iso zero protein (ASL)',kcal:156,prot:35,carbs:1,fat:1,
+                ts:Date.now()-2e6,saisie:'manuel',origine:'utilisateur',q:null,u:null,per100:null}];
+    S.savedFoods=[]; S.hiddenFoods=[]; persist();
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    goScreen('nutrition'); renderNutrition();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await dort(350);
+    const macros=()=>['af-kcal','af-prot','af-carbs','af-fat'].map(x=>(document.getElementById(x)||{}).value);
+    const bloc=()=>{const e=document.getElementById('af-prop-row');
+      return (e&&e.style.display!=='none')?e.innerText.replace(/\n+/g,' | '):'';};
+    const i=_afQuickItems.findIndex(x=>x.name==='Iso zero protein (ASL)');
+    quickFillFood(i); await dort(200);
+    /* ① AU DÉPART : portions, et les DEUX unités sont proposées (c'est la demande de Michel). */
+    o.depart={bloc:bloc(),macros:macros(),unite:_afUnite,
+              deuxChoix:/En grammes/.test(bloc())&&/En portions/.test(bloc()),
+              plusDeCulDeSac:!/on ne peut pas inventer un poids/.test(bloc())};
+    /* ② EN GRAMMES : le champ est VIDE (aucun poids pré-rempli) et rien n'a bougé. */
+    _afSetUnite('g'); await dort(150);
+    o.enG={macros:macros(), champVide:(document.getElementById('af-poids')||{}).value==='',
+           demande:/L'app ne peut pas le deviner/.test(bloc())};
+    /* ③ JE DÉCLARE 40 g — déclarer n'est PAS rescaler : les 4 valeurs ne bougent pas. */
+    document.getElementById('af-poids').value='40'; _afDeclarePoids(); await dort(150);
+    o.declare={macros:macros(), ref:/Référence : 40 g \(que tu as indiqué\)/.test(bloc())};
+    /* ④ JE PASSE À 80 g — tout double. */
+    document.getElementById('af-prop').value='80'; _afApplyProp(); await dort(150);
+    o.a80={macros:macros()};
+    /* ⑤ J'ENREGISTRE — R4 : le poids doit ATTEINDRE la donnée, sinon il ne sert à rien. */
+    addFoodEntry(); await dort(300);
+    const e=(S.foodLog||[]).slice(-1)[0];
+    o.enr={kcal:e.kcal,q:e.q,u:e.u,per100:e.per100};
+    /* ⑥ JE LE REPRENDS — la machinerie de ft-v1042 doit s'ouvrir toute seule. */
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await dort(350);
+    const j=_afQuickItems.findIndex(x=>x.name==='Iso zero protein (ASL)');
+    quickFillFood(j); await dort(200);
+    const vis=id=>{const x=document.getElementById(id);return !!x&&getComputedStyle(x).display!=='none';};
+    o.reprise={grammes:vis('af-bc-row'),champG:(document.getElementById('af-bc-grams')||{}).value,
+               pastille:vis('af-bc-last'),
+               pastilleTxt:((document.getElementById('af-bc-last')||{}).textContent)||'',
+               uniteRAZ:_afUnite,poidsRAZ:_afPoidsDeclare};
+    /* ⑦ NON-RÉGRESSION : les portions marchent toujours, et un poids LU dans la phrase
+       garde son chemin d'origine (il ne passe pas par le nouveau). */
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await dort(300);
+    document.getElementById('af-desc').value='Ratatouille maison';
+    ['af-kcal','af-prot','af-carbs','af-fat'].forEach((id,k)=>document.getElementById(id).value=[120,3,14,5][k]);
+    _afMajAncre(); await dort(120);
+    o.portions={bloc:bloc(),unite:_afUnite};
+    _afApplyPortion(2); await dort(120);
+    o.x2={macros:macros()};
+    document.getElementById('af-desc').value='200 g de riz';
+    _afMajAncre(); await dort(120);
+    o.phrase={bloc:bloc(), lu:/lu dans ta phrase/.test(bloc())};
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,220)};}
+  });
+  if(F.err) t('CLX n\'a pas pu tourner', false, F.err);
+  else{
+    /* ⛔ Le témoin a-t-il VU le bloc ? Sans ça, tout le reste serait vert en ne mesurant rien. */
+    t('⛔ le témoin a bien VU le bloc quantité, avec les valeurs de la capture (156 kcal)',
+      F.depart.macros[0]==='156' && !!F.depart.bloc, JSON.stringify(F.depart.macros));
+    /* ⭐⭐ LA DEMANDE DE MICHEL : le choix existe, le cul-de-sac a disparu. */
+    t('⭐⭐ les DEUX unités sont proposées sur un aliment sans poids connu (grammes ET portions)',
+      F.depart.deuxChoix===true, F.depart.bloc.slice(0,110));
+    t('⭐⭐ le message de cul-de-sac « on ne peut pas inventer un poids » a DISPARU',
+      F.depart.plusDeCulDeSac===true, F.depart.bloc.slice(-140));
+    /* ⛔ Un chiffre pré-rempli qu'on n'a pas choisi serait un chiffre faux présenté en fait. */
+    t('⛔ en grammes, le champ est VIDE — aucun poids pré-rempli (R29)',
+      F.enG.champVide===true && F.enG.demande===true, JSON.stringify(F.enG));
+    /* ⭐⭐ DÉCLARER N'EST PAS RESCALER — sinon dire « c'est 40 g » changerait ce qu'on a mangé. */
+    t('⭐⭐ déclarer 40 g ne change PAS les 4 valeurs (156/35/1/1 intacts) et pose la référence',
+      F.declare.macros.join('/')==='156/35/1/1' && F.declare.ref===true, JSON.stringify(F.declare));
+    t('⭐ … et passer à 80 g double bien tout (312/70/2/2)',
+      F.a80.macros.join('/')==='312/70/2/2', JSON.stringify(F.a80.macros));
+    /* ⭐⭐ R4 : sans ça, la personne voit son poids à l'écran et RIEN n'est enregistré. */
+    t('⭐⭐ R4 : le poids ATTEINT la donnée — q=80 g enregistré avec l\'entrée',
+      F.enr.q===80 && F.enr.u==='g' && F.enr.kcal===312, JSON.stringify({q:F.enr.q,u:F.enr.u,kcal:F.enr.kcal}));
+    /* ⚠️ LE PIÈGE DU CALCUL : divisé par 80 (affiché), pas par 40 (référence). */
+    t('⚠️ le pour-100 g est calculé sur la quantité AFFICHÉE : 312/80×100 = 390, pas 780',
+      !!F.enr.per100 && F.enr.per100.kcal===390 && F.enr.per100.prot===88,
+      JSON.stringify(F.enr.per100));
+    /* ⭐ CE QUI EST RETENU CALIBRE L'ALIMENT POUR TOUJOURS (machinerie ft-v1042). */
+    /* ⚠️ RE-VISÉ dans la même version, après la décision de Michel : le champ ne se
+       pré-remplit plus. Ce qui compte n'a pas bougé — l'aliment EST calibré, donc le bloc en
+       grammes s'ouvre ; et les 80 g de la dernière fois sont PROPOSÉS, pas imposés. */
+    t('⭐⭐ à la reprise, le bloc en GRAMMES s\'ouvre tout seul et 80 g sont PROPOSÉS',
+      F.reprise.grammes===true && F.reprise.champG==='' && F.reprise.pastille===true,
+      JSON.stringify(F.reprise));
+    /* ⛔ Un réglage qui survit à son sujet a l'air d'un fait. */
+    t('⛔ l\'unité et le poids déclaré sont REMIS À ZÉRO pour l\'aliment suivant',
+      F.reprise.uniteRAZ==='portion' && F.reprise.poidsRAZ===0,
+      JSON.stringify({u:F.reprise.uniteRAZ,p:F.reprise.poidsRAZ}));
+    /* ⛔ NON-RÉGRESSIONS — ce sont elles qui rendent le reste lisible. */
+    t('⛔ NON-RÉGRESSION : les portions ½/1/1½/2/3 marchent toujours (×2 → 240 kcal)',
+      F.x2.macros.join('/')==='240/6/28/10', JSON.stringify(F.x2.macros));
+    t('⛔ NON-RÉGRESSION : un poids LU DANS LA PHRASE garde son chemin d\'origine',
+      F.phrase.lu===true, F.phrase.bloc.slice(-110));
+  }
+  await cx.close();
+}
+
+/* == BLOC CLXI - « LA DERNIERE FOIS » : PROPOSE, JAMAIS IMPOSE (ft-v1051) ==
+   Michel, en verifiant ma comprehension : « un code barre que je rentre a la main, c'est par
+   rapport a une certaine proportion, donc on ne peut pas mettre un poids fixe — et la boite de
+   ratatouille c'est un exemple parmi tant d'autres ». Puis, sur le correctif propose :
+   « oui c'est mieux comme ca, on donne le choix et pas imposer ».
+   ⛔⛔ L'INCOHERENCE ETAIT DE MOI : ft-v1042 PRE-REMPLISSAIT la quantite du dernier repas, et
+   l'ecran annoncait aussitot « pour tes 250 g : 150 kcal ». Pour une dose de whey c'est juste ;
+   pour une boite de ratatouille, c'est le repas d'HIER enregistre comme celui d'aujourd'hui.
+   👉 Et c'est l'argument que ft-v1051 venait d'employer dix lignes plus haut pour laisser le
+   champ VIDE dans l'autre chemin : *un chiffre qu'on n'a pas choisi et qui s'enregistre est un
+   chiffre faux presente comme un fait* (R29). Deux philosophies dans le meme ecran.
+   ⚠️ LE SCAN NEUF NE CHANGE PAS, expres : 100 g n'y est pas une affirmation sur le repas — les
+   4 valeurs affichees SONT les valeurs pour 100 g, quantite et chiffres se correspondent. */
+console.log('\n-- CLXI. « La dernière fois » : proposé, jamais imposé (ft-v1051) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  await cx.clock.setFixedTime(new Date('2026-08-29T14:00:00+02:00'));
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms)), t=today();
+    S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';
+    /* LA RATATOUILLE DE MICHEL : un code-barres, donc un pour-100 g, et une boîte de 250 g. */
+    S.foodLog=[{date:t,meal:'midi',name:'Ratatouille (Bonduelle)',kcal:150,prot:3,carbs:18,fat:7,
+      ts:Date.now()-3e6,saisie:'code-barres',origine:'openfoodfacts',q:250,u:'g',
+      per100:{kcal:60,prot:1,carbs:7,fat:3}}];
+    S.savedFoods=[]; S.hiddenFoods=[]; persist();
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    goScreen('nutrition'); renderNutrition();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const vis=e=>!!e && getComputedStyle(e).display!=='none';
+    const chip=()=>document.getElementById('af-bc-last');
+    const macros=()=>['af-kcal','af-prot','af-carbs','af-fat'].map(x=>(document.getElementById(x)||{}).value);
+    const reprendre=async()=>{
+      document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      openAddFood(); await d(320);
+      const i=_afQuickItems.findIndex(x=>x.name==='Ratatouille (Bonduelle)');
+      quickFillFood(i); await d(220);
+    };
+    await reprendre();
+    o.reprise={champ:document.getElementById('af-bc-grams').value, pastille:vis(chip()),
+               texte:chip().textContent, total:(document.getElementById('af-bc-total')||{}).textContent||'',
+               grammesVisible:vis(document.getElementById('af-bc-row'))};
+    /* ① LA BOÎTE D'AUJOURD'HUI FAIT 400 g — c'est le cas de Michel. */
+    const g=document.getElementById('af-bc-grams'); g.value='400'; _bcApplyGrams(); await d(150);
+    o.a400={macros:macros(), total:(document.getElementById('af-bc-total')||{}).textContent||''};
+    /* ② UN TAP SUR LA PASTILLE = le comportement d'avant, mais CHOISI. */
+    await reprendre();
+    _bcReprendreDerniere(); await d(150);
+    o.unTap={champ:document.getElementById('af-bc-grams').value, macros:macros(),
+             pastilleApres:vis(chip()), total:(document.getElementById('af-bc-total')||{}).textContent||''};
+    /* ③ LA PASTILLE NE SURVIT PAS À L'ALIMENT SUIVANT. */
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await d(320);
+    o.apresOuverture={pastille:vis(chip())};
+    /* ④ NON-RÉGRESSION : un aliment SANS quantité connue n'affiche aucune pastille. */
+    S.foodLog=[{date:t,meal:'midi',name:'Soupe maison',kcal:90,prot:2,carbs:10,fat:4,
+      ts:Date.now()-2e6,saisie:'manuel',origine:'utilisateur',q:null,u:null,
+      per100:{kcal:45,prot:1,carbs:5,fat:2}}];
+    persist();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await d(320);
+    const k=_afQuickItems.findIndex(x=>x.name==='Soupe maison');
+    quickFillFood(k); await d(220);
+    o.sansQ={pastille:vis(chip()), champ:document.getElementById('af-bc-grams').value,
+             grammesVisible:vis(document.getElementById('af-bc-row'))};
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,220)};}
+  });
+  if(F.err) t('CLXI n\'a pas pu tourner', false, F.err);
+  else{
+    /* ⛔ Le témoin a-t-il VU le bloc grammes ? Sinon tout le reste serait vert en ne mesurant rien. */
+    t('⛔ le témoin a bien VU le bloc « Quantité (g) » sur l\'aliment repris',
+      F.reprise.grammesVisible===true, JSON.stringify({vu:F.reprise.grammesVisible}));
+    /* ⭐⭐ LA DEMANDE DE MICHEL : plus rien n'est imposé. */
+    t('⭐⭐ le champ est VIDE à la reprise — la quantité du dernier repas n\'est plus imposée',
+      F.reprise.champ==='', 'champ = "'+F.reprise.champ+'"');
+    t('⭐⭐ … et elle est PROPOSÉE : la pastille « 250 g (la dernière fois) » est là',
+      /* ⚠️ CONTENANCE DE CHAINE, PAS UNE REGEX — et c'est la lecon de ce temoin. Il etait
+         ecrit avec des parentheses echappees, et le script qui a pose le bloc a AJOUTE un
+         niveau d'echappement : la regex cherchait un ANTISLASH litteral. *Elle ne pouvait
+         jamais etre verte, quel que soit le code.* C'est le miroir du « vert qui ne peut pas
+         rougir » de BUGS.md : un ROUGE qui ne peut pas verdir. Un indexOf supprime la classe. */
+      F.reprise.pastille===true && F.reprise.texte.replace(/\u00A0/g,' ').indexOf('250 g (la dernière fois)')>=0,
+      JSON.stringify({visible:F.reprise.pastille,texte:F.reprise.texte}));
+    /* ⛔ Le « voisinage muet » : un total qui devance le choix se lit comme un fait. */
+    t('⛔ AUCUN total affiché tant que la quantité n\'est pas choisie (le « voisinage muet »)',
+      F.reprise.total==='', 'total = "'+F.reprise.total.slice(0,60)+'"');
+    /* ⭐ LE CAS DE MICHEL : la boîte d'aujourd'hui fait 400 g. */
+    t('⭐⭐ la boîte du jour à 400 g donne 240 kcal — le pour-100 g pilote, pas la boîte d\'hier',
+      F.a400.macros.join('/')==='240/4/28/12' && /pour tes 400 g/.test(F.a400.total),
+      JSON.stringify(F.a400.macros));
+    /* ⭐ ET LE GAIN DE TEMPS EST GARDÉ : un tap pour un aliment dont la portion ne bouge pas. */
+    t('⭐⭐ un TAP sur la pastille remet 250 g et recalcule — le confort d\'avant, mais choisi',
+      F.unTap.champ==='250' && F.unTap.macros[0]==='150' && /pour tes 250 g/.test(F.unTap.total),
+      JSON.stringify(F.unTap));
+    t('⛔ … et la pastille disparaît une fois consommée (elle ne repropose pas)',
+      F.unTap.pastilleApres===false, 'encore visible = '+F.unTap.pastilleApres);
+    /* ⛔ Un réglage qui survit à son sujet a l'air d'un fait. */
+    t('⛔ la pastille ne survit PAS à l\'ouverture d\'un nouvel aliment',
+      F.apresOuverture.pastille===false, 'visible = '+F.apresOuverture.pastille);
+    /* ⛔ NON-RÉGRESSION : sans quantité connue, rien à proposer — et rien d'inventé. */
+    t('⛔ NON-RÉGRESSION : un aliment sans quantité connue n\'affiche AUCUNE pastille',
+      F.sansQ.pastille===false && F.sansQ.grammesVisible===true && F.sansQ.champ==='',
+      JSON.stringify(F.sansQ));
+  }
+  await cx.close();
+}
+
+/* == BLOC CLXII - LE FAVORI DEMANDE LE MOMENT DE LA JOURNEE (ft-v1052) ==
+   Michel, capture a l'appui : « il y a les favoris c'est bien, mais il categorise direct en
+   collation ou diner ou peu importe. C'est un bon principe, mais on doit donner le choix : on
+   clique sur le favori et on demande a quel moment de la journee ».
+   ⛔ CE QUI ETAIT FAUX N'EST PAS LA SUGGESTION, C'EST QU'ELLE S'APPLIQUE SANS ETRE VALIDEE.
+   Un repas habituel est OBSERVE (les memes aliments notes ensemble deux fois) : le moment
+   observe est un bon PARI, pas un fait sur aujourd'hui. Le meme shaker peut etre un petit-dej
+   un jour et une collation le lendemain. *L'app propose ce qu'elle a vu, la personne tranche.*
+   ⭐ R13 : `meal` est un argument OPTIONNEL — sans lui, le comportement d'origine est intact,
+   donc le bloc LIV (ft-v849) reste vert sans etre touche. */
+console.log('\n-- CLXII. Le favori demande le moment de la journée (ft-v1052) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:900},timezoneId:'Europe/Paris'});
+  await cx.clock.setFixedTime(new Date('2026-08-29T10:00:00+02:00'));
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
+    const j=n=>{const x=new Date();x.setDate(x.getDate()-n);return x.toISOString().slice(0,10);};
+    const mk=(dt,m,n,k,p)=>({date:dt,meal:m,name:n,kcal:k,prot:p,carbs:0,fat:0,ts:Date.now()});
+    /* Le favori de Michel : noté DEUX fois en « Collation 2 » — c'est le moment OBSERVÉ. */
+    S.foodLog=[mk(j(1),'collation2','Iso zero protein (ASL)',156,35),
+               mk(j(2),'collation2','Iso zero protein (ASL)',156,35)];
+    persist();
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    goScreen('nutrition'); renderNutrition();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    switchNuTab('journal', document.getElementById('ntab-journal'));
+    await d(280);
+    const vis=e=>!!e && getComputedStyle(e).display!=='none';
+    const row=()=>document.getElementById('hab-m-0');
+    const h=_repasHabituels();
+    o.observe=h[0]&&h[0].meal;
+    o.replieAuDepart=!vis(row());
+    /* ① UN TAP SUR LA CARTE : la question s'affiche, RIEN n'est encore enregistré. */
+    _habChoisirMoment('hab-m-0'); await d(150);
+    o.deplie={visible:vis(row()), texte:(row().innerText||'').replace(/\n+/g,' '),
+              rienEnregistre:(S.foodLog||[]).filter(e=>e.date===today()).length===0};
+    /* ② LE MOMENT OBSERVÉ EST MARQUÉ, pas présélectionné. */
+    const btns=[...row().querySelectorAll('button')];
+    o.moments=btns.length;
+    o.marque=btns.filter(x=>/d'habitude/.test(x.textContent)).map(x=>x.textContent.replace(/\s+/g,' ').trim());
+    /* ③ JE CHOISIS UN AUTRE MOMENT que celui d'habitude — c'est tout le sujet. */
+    rejouerRepas(h[0].sig,'petitdej'); await d(200);
+    const auj=()=>(S.foodLog||[]).filter(e=>e.date===today());
+    o.choisi={n:auj().length, meals:[...new Set(auj().map(e=>e.meal))]};
+    /* ④ NON-RÉGRESSION : sans argument, le moment OBSERVÉ est utilisé (bloc LIV intact). */
+    S.foodLog=[mk(j(1),'collation2','Iso zero protein (ASL)',156,35),
+               mk(j(2),'collation2','Iso zero protein (ASL)',156,35)];
+    persist();
+    const h2=_repasHabituels();
+    rejouerRepas(h2[0].sig); await d(200);
+    o.sansArg={meals:[...new Set(auj().map(e=>e.meal))]};
+    /* ⑤ UN MOMENT INCONNU NE PASSE PAS : on retombe sur l'observé, on n'écrit pas n'importe quoi. */
+    S.foodLog=[mk(j(1),'collation2','Iso zero protein (ASL)',156,35),
+               mk(j(2),'collation2','Iso zero protein (ASL)',156,35)];
+    persist();
+    const h3=_repasHabituels();
+    rejouerRepas(h3[0].sig,'brunch_de_noel'); await d(200);
+    o.inconnu={meals:[...new Set(auj().map(e=>e.meal))]};
+    S.foodLog=[]; persist();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,220)};}
+  });
+  if(F.err) t('CLXII n\'a pas pu tourner', false, F.err);
+  else{
+    /* ⛔ Le témoin a-t-il VU l'habitude ? Sinon tout le reste serait vert en ne mesurant rien. */
+    t('⛔ le témoin a bien VU l\'habitude, et son moment observé est « Collation 2 »',
+      F.observe==='collation2', 'observé = '+F.observe);
+    t('⛔ la question est REPLIÉE au départ (elle ne prend pas un pixel tant qu\'on ne tape pas)',
+      F.replieAuDepart===true, '');
+    /* ⭐⭐ LA DEMANDE DE MICHEL : on demande, on n'applique plus tout seul. */
+    t('⭐⭐ un tap sur le favori POSE LA QUESTION — et n\'enregistre RIEN encore',
+      F.deplie.visible===true && /À quel moment de la journée/.test(F.deplie.texte)
+      && F.deplie.rienEnregistre===true, F.deplie.texte.slice(0,90));
+    t('⭐ les 5 moments sont proposés (la liste vient de `FOOD_MEALS`, pas d\'une recopie — R2)',
+      F.moments===5, F.moments+' moments');
+    /* ⭐ « On propose, on n'impose pas » : la suggestion se VOIT, elle ne s'applique pas. */
+    t('⭐⭐ le moment observé est MARQUÉ « d\'habitude » — une suggestion visible, pas un choix fait',
+      F.marque.length===1 && /Collation 2/.test(F.marque[0]), JSON.stringify(F.marque));
+    /* ⭐⭐ LE CŒUR DU SUJET : un autre moment que l'habitude est respecté. */
+    t('⭐⭐ choisir « Petit-déj » range bien le repas en PETIT-DÉJ, pas en Collation 2',
+      F.choisi.n===1 && F.choisi.meals.join()==='petitdej', JSON.stringify(F.choisi));
+    /* ⛔ NON-RÉGRESSION : l'ancien appel, sans argument, ne change pas de sens (R13). */
+    t('⛔ NON-RÉGRESSION : sans argument, c\'est le moment OBSERVÉ qui est utilisé',
+      F.sansArg.meals.join()==='collation2', JSON.stringify(F.sansArg));
+    /* ⛔ R29 : on n\'écrit jamais un moment inventé dans le journal. */
+    t('⛔ un moment INCONNU ne passe pas — on retombe sur l\'observé, rien d\'inventé (R29)',
+      F.inconnu.meals.join()==='collation2', JSON.stringify(F.inconnu));
   }
   await cx.close();
 }

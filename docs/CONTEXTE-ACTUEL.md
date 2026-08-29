@@ -6,6 +6,42 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1056`.
+- ⚖️⏰⭐⭐ **ON PROPOSE, ON N'IMPOSE PAS — la quantité ET le moment** (ft-v1056). La même
+  règle trouvée **trois fois le même jour** : le champ en grammes, la quantité de la
+  dernière fois, et le **favori qui décidait du moment de la journée à la place de la
+  personne**. Un repas habituel est *observé* — donc son moment est un **bon pari**, pas
+  un fait : il est désormais marqué « d'habitude » et rien ne part sans un tap.
+  ⚠️ **Deux témoins ne pouvaient pas VERDIR** : un échappement doublé par un script, et
+  une espace **insécable** (règle ft-v1034) cherchée comme une espace ordinaire — *les
+  deux chaînes sont identiques à l'écran*. Miroir du « vert qui ne peut pas rougir ». Michel, capture à l'appui :
+  *« il faut que je puisse mettre les grammes »*, puis la correction qui a décidé de la forme :
+  *« je ne prends pas toujours le même poids… tu prends la ratatouille, il y a différentes
+  boîtes de différent poids »*.
+  ⛔⛔ **Ce qui bloquait n'était pas un manque de mécanisme, c'était un REFUS** : `_afMajAncre`
+  imposait l'un ou l'autre et affichait *« on ne peut pas inventer un poids »*. ***Vrai, et à
+  côté de la question : l'APP ne peut pas l'inventer, la PERSONNE le connaît.***
+  ⭐⭐ **Rien n'est réinventé (R13)** : le bloc « portion » posait déjà `_afRef={q:1}` — grammes
+  et portions sont le MÊME calcul avec une référence différente.
+  ⛔ **Ce qui est retenu est le POUR-100 g, jamais la boîte.** `q` n'est qu'un pré-remplissage.
+  ⛔ **Déclarer n'est pas rescaler** : dire « ça pèse 40 g » ne change pas les 4 valeurs.
+  ⚠️⚠️ **Le piège était le diviseur** : après avoir déclaré 40 g puis tapé 80, les champs
+  affichent le double — diviser par 40 donnerait un pour-100 g **deux fois trop gros**.
+  *Les valeurs affichées et la quantité affichée vont toujours ensemble.*
+  ⭐⭐ **Et ça rebranche ft-v1042 sans une ligne de plus** : à la reprise, le champ en grammes
+  s'ouvre tout seul.
+  ⚖️⭐⭐ **Et la même version corrige une incohérence que j'avais introduite**, révélée par une
+  question de Michel : ft-v1042 **pré-remplissait** la quantité du dernier repas à la reprise.
+  Pour une dose de whey c'est juste ; **pour une boîte de ratatouille, c'est le repas d'HIER
+  enregistré comme celui d'aujourd'hui** — l'argument même employé dix lignes plus haut pour
+  laisser l'autre champ vide. Sa décision : *« on donne le choix et pas imposer »*.
+  ⭐ Champ **vide** + pastille **↩ 250 g (la dernière fois)** : un tap pour ce qui ne change pas,
+  rien d'enregistré pour ce qui change. Posé sur les **deux** chemins de reprise (R8).
+  ⚠️ **3ᵉ « voisinage muet »** trouvé à la mesure : la ligne verte annonçait « pour tes 250 g »
+  alors que le champ était vide — *un total qui devance le choix se lit comme un fait*.
+  ⚠️⚠️ **Deux témoins existants ont rougi sur du code correct**, et le second deux fois : il
+  lisait le bloc en `.slice(0,60)` et mes boutons d'unité ont poussé « portion » au-delà de la
+  coupe. *Un motif cherché dans une chaîne tronquée mesure la longueur de la phrase.*
 - **Version en ligne (live) :** `ft-v1055`.
 - 🩹⭐⭐ **UNE CONSIGNE INTERNE N'EST PAS UNE DEMANDE DE LA PERSONNE** (ft-v1055). Capture de
   Michel à 15 h 16 : *« Cette séance te convient ? »* s'affichait **sous un débrief de fin de
