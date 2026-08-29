@@ -1436,7 +1436,20 @@ function _renderCoachThread(){
       for(let i=coachHistory.length-1;i>=0;i--){
         const m=coachHistory[i]; if(!m)continue;
         if(!dernAssist&&m.role==='assistant'&&typeof m.content==='string'){dernAssist=m.content;tsA=m.ts;}
-        if(m.role==='user'){ dernUser=(typeof m.content==='string')?m.content:''; tsU=m.ts; break; }
+        /* ⛔⛔ UNE CONSIGNE INTERNE N'EST PAS UNE DEMANDE DE LA PERSONNE (29/08/2026, ft-v1055).
+           Michel, capture à l'appui : la question *« Cette séance te convient ? »* s'affichait
+           sous un **débrief de fin de séance** — il venait de terminer, et on lui proposait d'en
+           démarrer une. **Contresens complet.**
+           👉 LA CAUSE : le débrief auto envoie un message `_silent` qui commence par *« Je viens
+           de terminer **ma séance** »* — et mon détecteur y lisait une demande. *Je pairais la
+           réponse de Milo avec un texte que Michel n'a jamais tapé.*
+           ⛔ Et on **abandonne**, on ne remonte pas plus haut : le message qui a produit cette
+           réponse est interne, donc il n'y a **pas** de demande à laquelle rattacher la question.
+           Chercher une demande plus ancienne collerait la question sous une réponse qui n'y
+           répond pas — c'est le défaut qu'on est en train de corriger, une ligne plus bas.
+           ⭐ La règle existait déjà à deux endroits (l'affichage l. ~1372, le bouton « Mes
+           discussions ») : *c'est moi qui ne l'ai pas reprise*, pas l'app qui l'ignorait. */
+        if(m.role==='user'){ dernUser=m._silent?null:((typeof m.content==='string')?m.content:''); tsU=m.ts; break; }
       }
       if(dernAssist&&dernUser&&_seanceEncoreDuJour(tsU)&&_seanceEncoreDuJour(tsA)&&_demandeUneSeance(dernUser))
         _appendSeanceQuestion(dernAssist);
@@ -1472,7 +1485,10 @@ function _convLightMsgs(){
   return _fitBudget(coachHistory.map(_lightMsg), _HIST_BUDGET);
 }
 function _convTitle(msgs){
-  const fu=(msgs||[]).find(m=>m.role==='user'&&typeof m.content==='string'&&m.content.trim());
+  /* ⛔ LA JUMELLE, trouvée en la cherchant (R8, ft-v1055) : ici aussi une consigne interne se
+     faisait passer pour une phrase de la personne — une discussion rangée pouvait s'intituler
+     « [DÉBRIEF AUTO] Je viens de terminer ma séance… ». Même règle, même mot-clé. */
+  const fu=(msgs||[]).find(m=>m.role==='user'&&!m._silent&&typeof m.content==='string'&&m.content.trim());
   let t=(fu?fu.content:'').replace(/^\[photo\]\s*/,'').replace(/\s+/g,' ').trim();
   if(t.length>44) t=t.slice(0,44)+'…';
   return t || ('Discussion du '+new Date().toLocaleDateString('fr-FR'));

@@ -17385,6 +17385,73 @@ console.log('\n-- CLVIII. La séance d\'hier ne ressurgit plus (ft-v1054) --');
   }
 }
 
+/* == BLOC CLIX - UNE CONSIGNE INTERNE N'EST PAS UNE DEMANDE DE LA PERSONNE (ft-v1055) ==
+   Capture de Michel a 15 h 16 : la question « Cette seance te convient ? » s'affichait sous un
+   DEBRIEF DE FIN DE SEANCE — il venait de terminer, et l'app lui proposait d'en demarrer une.
+   Contresens complet, et la cause est dans mon code de ft-v1053.
+
+   ⛔⛔ LE DEBRIEF AUTO envoie une consigne `_silent` qui commence par « Je viens de terminer MA
+   SEANCE » — et `_demandeUneSeance` y lisait une demande. *Je pairais la reponse de Milo avec un
+   texte que Michel n'a JAMAIS tape.*
+   ⭐ LA REGLE EXISTAIT DEJA A DEUX ENDROITS (l'affichage du fil, le bouton « Mes discussions ») :
+   c'est moi qui ne l'ai pas reprise, pas l'app qui l'ignorait.
+   ⛔ ET ON ABANDONNE, on ne remonte pas plus haut : chercher une demande PLUS ANCIENNE collerait
+   la question sous une reponse qui n'y repond pas — le defaut qu'on corrige justement. */
+console.log('\n-- CLIX. Une consigne interne n\'est pas une demande de la personne (ft-v1055) --');
+{
+  const INSTR='[DÉBRIEF AUTO] Je viens de terminer ma séance (la plus récente dans mes dernières '
+    +'séances). Débriefe-la MAINTENANT, directement : rappelle mes charges par exercice…';
+  const DEBRIEF='Face Pull — fait ✅\nL\'épaule droite te remercie.\n\n--\n\nPiste prochaine séance :\n'
+    +'Le DC est prêt à monter — vise 3×3 à 98 kg avec la montée en charge corrigée.';
+  const jouer=async(hist)=>{
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    const pg=await cx.newPage();
+    await pg.addInitScript(seedScript({ft4_coach_hist:JSON.stringify(hist),
+                                       ft4_coach_lastts:String(Date.now()-60000)}));
+    await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(1600);
+    const r=await pg.evaluate(()=>{
+      try{
+        document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+        goScreen('coach');
+        if(typeof _loadCoachHist==='function')_loadCoachHist();
+        _renderCoachThread();
+        const c=document.querySelector('.coach-prog-save');
+        return { carte:!!c,
+                 titre:(typeof _convTitle==='function')?_convTitle(coachHistory):'',
+                 bullesVisibles:document.querySelectorAll('#coach-msgs .msg-bubble').length };
+      }catch(e){ return {err:String(e.message||e)}; }
+    });
+    await cx.close(); return r;
+  };
+  const N=Date.now();
+  const U=(c,s)=>({role:'user',content:c,ts:N-120000,...(s?{_silent:true}:{})});
+  const A=(c)=>({role:'assistant',content:c,ts:N-119000});
+
+  /* ① SON CAS EXACT : consigne interne + débrief. */
+  const debrief = await jouer([U(INSTR,true), A(DEBRIEF)]);
+  /* ② NON-RÉGRESSION — sans elle, ① serait vert en n'affichant plus jamais rien : une VRAIE
+     demande, tapée par la personne, sur une réponse tout aussi illisible, doit donner la carte. */
+  const vraie   = await jouer([U('fais moi une séance haut du corps',false),
+                               A('La séance est écrite au-dessus 👆')]);
+  /* ③ ET ON N'ATTRAPE PAS UNE DEMANDE PLUS ANCIENNE au passage : la vraie demande est là, mais
+     le débrief est venu APRÈS — la réponse affichée en bas n'y répond pas. */
+  const apres   = await jouer([U('fais moi une séance',false), A('La séance est écrite au-dessus 👆'),
+                               U(INSTR,true), A(DEBRIEF)]);
+
+  t('⛔⛔ ① aucune question « on démarre » sous un DÉBRIEF de fin de séance',
+    debrief.carte===false, debrief.err||JSON.stringify(debrief));
+  t('⭐⭐ ② … mais une VRAIE demande tapée par la personne la donne toujours',
+    vraie.carte===true, vraie.err||JSON.stringify(vraie));
+  t('⛔ ③ … et on ne repêche pas une demande PLUS ANCIENNE pour la coller sous le débrief',
+    apres.carte===false, apres.err||JSON.stringify(apres));
+  /* 🔍 LA JUMELLE (R8), trouvée en la cherchant : même défaut, autre endroit. */
+  t('🔍 ④ la JUMELLE : une discussion rangée ne s\'intitule pas « [DÉBRIEF AUTO] … »',
+    !/DÉBRIEF AUTO/.test(debrief.titre||''), 'titre = '+(debrief.titre||''));
+  /* ⛔ Et la règle d'affichage d'origine tient toujours : la consigne interne reste invisible. */
+  t('⛔ ⑤ la consigne interne reste INVISIBLE dans le fil (1 seule bulle affichée)',
+    debrief.bullesVisibles===1, 'bulles = '+debrief.bullesVisibles);
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

@@ -6,7 +6,20 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1054`.
+- **Version en ligne (live) :** `ft-v1055`.
+- 🩹⭐⭐ **UNE CONSIGNE INTERNE N'EST PAS UNE DEMANDE DE LA PERSONNE** (ft-v1055). Capture de
+  Michel à 15 h 16 : *« Cette séance te convient ? »* s'affichait **sous un débrief de fin de
+  séance** — il venait de terminer, on lui proposait d'en démarrer une.
+  ⛔⛔ **La cause est dans mon code de ft-v1053** : le débrief auto envoie une consigne `_silent`
+  qui commence par *« Je viens de terminer **ma séance** »*, et mon détecteur y lisait une
+  demande. ***Je pairais la réponse de Milo avec un texte que Michel n'a jamais tapé.***
+  ⭐ **La règle existait déjà à DEUX endroits** (l'affichage du fil, le bouton « Mes discussions »)
+  — c'est moi qui ne l'ai pas reprise. 👉 *Avant d'écrire un nouveau lecteur de `coachHistory`,
+  regarder ce que les lecteurs existants filtrent déjà.*
+  ⛔ **On abandonne, on ne remonte pas plus haut** : repêcher une demande plus ancienne collerait
+  la question sous une réponse qui n'y répond pas (témoin ③).
+  🔍 **Jumelle (R8)** : `_convTitle` — une discussion rangée pouvait s'intituler
+  *« [DÉBRIEF AUTO] Je viens de terminer ma séance… »*.
 - ⏳⭐⭐ **LA SÉANCE D'HIER NE RESSURGIT PLUS** (ft-v1054). Michel, **10 min** après ft-v1053 :
   *« lol il vient de me sortir la séance d'hier »*.
   ⛔⛔ **Le défaut vient de ft-v1051, mesuré des DEUX côtés avant d'être dit** : une séance de
