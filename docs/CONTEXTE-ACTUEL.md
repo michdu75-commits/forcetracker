@@ -6,7 +6,19 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1065`.
+- **Version en ligne (live) :** `ft-v1067`.
+- ⚖️⭐⭐ **UN SEUL PROPRIÉTAIRE DE « COMBIEN J'EN AI PRIS ? »** (ft-v1067). Michel : *« il faut
+  qu'il y ait une cohérence quand on change la dose, peu importe le produit — même s'il faut
+  qu'on crée un algorithme exprès »*. ⭐⭐ **L'algorithme existait déjà, QUATRE fois** :
+  `valeurs = base × (saisie / référence)` — *un pour-100 g n'est pas un autre calcul, c'est CE
+  calcul avec une référence de 100*. Mesuré : **6 fonctions, 6 champs, 3 états** pour une seule
+  question. ⛔⛔ **Le même geste donnait 3 résultats** (vider le champ) : zéro · référence ·
+  valeurs orphelines. ⚠️ La dernière était **la jumelle de ft-v1061, encore vivante** — 4ᵉ fois
+  du jour, mais cette fois trouvée **par la mesure**, pas par Michel. ⛔ Et `af-bc-grams` était le
+  **seul** champ de quantité resté en `type=number` : la route code-barres jetait la virgule
+  d'Eline. ⛔⛔ **Nuance rattrapée par le témoin de ft-v966** : *les valeurs se replient sur la
+  référence, la phrase « pour tes n g » se TAIT.* ⭐ Le bloc CLXXII vérifie une **égalité de
+  comportement**, pas des chiffres — c'est ce qui empêche les 4 routes de re-diverger.
 - 0️⃣ **UN PROXY QUI DEVIENT FAUX QUAND UNE VALEUR VAUT ZÉRO** (ft-v1066). Michel : *« même quand
   je mets zéro il marque déjà 5 g de prot »*. ⚠️⚠️ **Cas NON reproduit, et c'est écrit** : mesuré
   six chemins, un 0 posé à la main **tient** (survit au rescale, s'enregistre à 0) — 3 témoins le

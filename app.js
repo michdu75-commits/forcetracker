@@ -1366,16 +1366,55 @@ function _afLuFormulaire(){
   const g=id=>parseInt((document.getElementById(id)||{}).value)||0;
   return {kcal:g('af-kcal'),prot:g('af-prot'),carbs:g('af-carbs'),fat:g('af-fat')};
 }
+/* ═══════════ UN SEUL PROPRIÉTAIRE DE « COMBIEN J'EN AI PRIS ? » (ft-v1067) ═══════════
+   Michel : *« que ce soit le code-barres, manuel, avec l'IA ou avec l'étiquette, il faut qu'il y
+   ait une COHÉRENCE quand on change la dose, peu importe le produit — même s'il faut qu'on crée
+   un algorithme exprès »*.
+
+   ⭐⭐ L'ALGORITHME EXISTAIT DÉJÀ — QUATRE FOIS, ET C'EST BIEN LE PROBLÈME.
+   `valeurs = base × (saisie / référence)`. **Un pour-100 g n'est pas un autre calcul : c'est CE
+   calcul avec une référence de 100.** Quatre écritures de la même formule, sur deux écrans, avec
+   des comportements qui ont divergé sans que personne ne le décide.
+
+   ⛔⛔ CE QUI ÉTAIT MESURÉ AVANT CE CORRECTIF — le MÊME geste (vider le champ), 3 résultats :
+     · `_bcApplyGrams` (code-barres, étiquette)  → **les 4 valeurs tombent à ZÉRO**
+     · `_efApplyGrams` (modifier, pour-100 g)     → **zéro aussi, et le contrôle de cohérence ne
+                                                    se rafraîchissait même pas**
+     · `_afApplyProp`  (IA, phrase, poids déclaré)→ retour à la référence (corrigé en ft-v1061)
+     · `_efApplyProp`  (modifier, proportion)     → **valeurs ORPHELINES** — le défaut de ft-v1061,
+                                                    toujours vivant ici : 4ᵉ fois de la journée
+                                                    qu'un correctif était posé d'un seul côté (R8).
+   *Zéro est un mensonge (personne n'a mangé zéro), et une valeur orpheline en est un autre.*
+
+   👉 **UNE SEULE RÈGLE, QUATRE ROUTES** : le champ vidé ramène à la RÉFÉRENCE — c'est-à-dire au
+   seul nombre encore écrit à l'écran. Même arrondi, même lecture de la virgule (`numFR`), même
+   rafraîchissement du contrôle de cohérence. R2 : la quantité a **un** propriétaire. */
+function _qtyRescale(pre, base, ref, saisie){
+  if(!(ref>0)) return null;
+  const v=numFR(saisie);
+  /* ⛔ Champ vidé ou illisible → facteur 1, donc les valeurs de la RÉFÉRENCE. Jamais 0. */
+  const f=(v>0? v : ref)/ref;
+  const P=(k,x)=>{const el=document.getElementById(pre+'-'+k); if(el) el.value=Math.round(x);};
+  P('kcal',(base.kcal||0)*f); P('prot',(base.prot||0)*f);
+  P('carbs',(base.carbs||0)*f); P('fat',(base.fat||0)*f);
+  /* ⭐ Le contrôle de cohérence suit TOUJOURS : les macros viennent de changer, donc l'écart
+     kcal/macros a pu apparaître ou disparaître. Il ne suivait que sur 2 routes sur 4. */
+  const coh=(pre==='af')?_afCoherence:_efCoherence;
+  if(typeof coh==='function') coh();
+  /* ⛔⛔ ON REND LA QUANTITÉ **TAPÉE**, PAS LE REPLI — et la nuance est tout l'arbitrage de
+     ft-v966, qu'un témoin a rattrapé ici. Les 4 VALEURS peuvent revenir à la référence : elles
+     doivent bien correspondre à quelque chose, et « 100 g » est écrit juste au-dessus. Mais la
+     ligne verte, elle, dit « pour **TES** n g » — annoncer un total pour une quantité que
+     personne n'a tapée serait le voisinage muet retourné dans l'autre sens.
+     👉 *Les valeurs se replient, la phrase se tait.* */
+  return v>0? v : 0;
+}
 function _bcApplyGrams(){
   if(!_bcNutr)return;
-  const g=numFR((document.getElementById('af-bc-grams')||{}).value)||0;
-  const f=g/100;
-  document.getElementById('af-kcal').value=Math.round(_bcNutr.kcal100*f);
-  document.getElementById('af-prot').value=Math.round(_bcNutr.prot100*f);
-  document.getElementById('af-carbs').value=Math.round(_bcNutr.carbs100*f);
-  document.getElementById('af-fat').value=Math.round(_bcNutr.fat100*f);
-  _bcMontrerTotal(g);
-  _afCoherence();          // les macros viennent de changer : le contrôle suit (R2)
+  /* ⭐ UN POUR-100 G EST UNE RÉFÉRENCE DE 100 — même moteur que toutes les autres routes. */
+  const g=_qtyRescale('af', {kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
+                      100, (document.getElementById('af-bc-grams')||{}).value);
+  _bcMontrerTotal(g||0);
 }
 /* ⭐ CE QUE ÇA FAIT POUR TA QUANTITÉ (ft-v966) — Michel a lu « 88 g de protéines » sur la carte
    produit (titrée « Valeurs pour 100 g ») et a cru que c'était son apport. **L'app avait raison** :
@@ -2907,10 +2946,11 @@ function _efProp(f){
   _efCoherence();
 }
 function _efApplyProp(){
-  if(!_efRef||!(_efRef.q>0)) return;
-  const v=numFR((document.getElementById('ef-prop')||{}).value);
-  if(!(v>0)) return;                       // champ vidé pendant la frappe : on ne touche à rien
-  _efProp(v/_efRef.q);
+  if(!_efRef) return;
+  /* ⛔ AVANT ft-v1067 : `if(!(v>0)) return;` — le champ vidé laissait des valeurs ORPHELINES à
+     l'écran, exactement le défaut corrigé sur l'écran d'ajout en ft-v1061. La jumelle vivait ici
+     depuis ce matin. Elle ne peut plus diverger : les deux passent par `_qtyRescale`. */
+  _qtyRescale('ef', _efRef.base, _efRef.q, (document.getElementById('ef-prop')||{}).value);
 }
 function _efApplyPortion(x){ _efProp(x); }
 /* ⛔⛔ LES CALORIES DOIVENT COLLER À LEURS PROPRES MACROS (ft-v972) — Michel, devant une ligne
@@ -2997,20 +3037,10 @@ function _afProp(f){
   _afCoherence();
 }
 function _afApplyProp(){
-  if(!_afRef||!(_afRef.q>0)) return;
-  const v=numFR((document.getElementById('af-prop')||{}).value);
-  /* ⛔⛔ CHAMP VIDÉ : ON REVIENT À LA RÉFÉRENCE, on ne laisse pas à l'écran les valeurs d'une
-     quantité qui n'y est plus (ft-v1061, capture de Michel).
-     L'intention d'origine était juste — *ne pas tout mettre à zéro pendant qu'on tape* — mais
-     sa conséquence ne l'était pas : il tape « 3 » (début de 30), les 4 valeurs tombent à 12 kcal,
-     il efface pour recommencer… et **12 kcal restent affichés à côté d'un champ vide**, juste
-     au-dessus du bouton rouge « Ajouter au journal ». *Aucun des deux n'est faux ; c'est leur
-     voisinage muet qui trompe* — la 4ᵉ fois que ce motif revient (ft-v966, v1042, v1056).
-     ⭐ Revenir à la référence garde l'invariant lisible : ce qui est affiché correspond
-     TOUJOURS à une quantité écrite juste en dessous (« Référence : 30 g »). */
-  if(!(v>0)){ _afProp(1); return; }
-  _afProp(v/_afRef.q);
+  if(!_afRef) return;
+  _qtyRescale('af', _afRef.base, _afRef.q, (document.getElementById('af-prop')||{}).value);
 }
+
 function _afApplyPortion(x){ _afProp(x); }
 /* ⚖️ LE CHOIX DE L'UNITÉ (ft-v1051) — Michel, capture à l'appui : *« toujours ce problème de
    quantité, il faut que je puisse mettre les grammes »*, puis la précision qui a décidé de la
@@ -3176,12 +3206,7 @@ function _afCorrigerKcal(v){
 // Même calcul que `_bcApplyGrams()` (R2) : pour-100g × grammes/100, appliqué aux 4 champs macro.
 function _efApplyGrams(){
   const e=(S.foodLog||[]).find(x=>x.ts===_editFoodTs); if(!e||!e.per100) return;
-  const g=numFR((document.getElementById('ef-grams')||{}).value)||0;
-  const f=g/100;
-  document.getElementById('ef-kcal').value=Math.round((e.per100.kcal||0)*f);
-  document.getElementById('ef-prot').value=Math.round((e.per100.prot||0)*f);
-  document.getElementById('ef-carbs').value=Math.round((e.per100.carbs||0)*f);
-  document.getElementById('ef-fat').value=Math.round((e.per100.fat||0)*f);
+  _qtyRescale('ef', e.per100, 100, (document.getElementById('ef-grams')||{}).value);
 }
 function saveEditFood(){
   const e=(S.foodLog||[]).find(x=>x.ts===_editFoodTs); if(!e){toast('Entrée introuvable','error');return;}

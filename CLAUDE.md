@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1066`** (prochaine : `ft-v1067`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1067`** (prochaine : `ft-v1068`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -436,6 +436,32 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1067 — ⚖️ UN SEUL PROPRIÉTAIRE DE « COMBIEN J'EN AI PRIS ? »** — Michel, après une journée à trouver le même défaut sur des écrans différents : *« que ce soit le code-barres, manuel, avec l'IA ou avec l'étiquette, il faut qu'il y ait une **cohérence** quand on change la dose, peu importe le produit — même s'il faut qu'on crée un algorithme exprès »*.
+
+**⭐⭐ L'ALGORITHME EXISTAIT DÉJÀ — QUATRE FOIS, ET C'EST EXACTEMENT LE PROBLÈME.** `valeurs = base × (saisie / référence)`. 👉 ***Un pour-100 g n'est pas un autre calcul : c'est CE calcul avec une référence de 100.*** Quatre écritures de la même formule, sur deux écrans, dont les comportements ont divergé **sans que personne ne le décide**. Mesuré avant d'y toucher : **6 fonctions de rescale, 6 champs de saisie, 3 états** pour une seule question.
+
+**⛔⛔ LE MÊME GESTE DONNAIT TROIS RÉSULTATS — vider le champ de quantité :**
+
+| route | avant | après |
+|---|---|---|
+| pour-100 g · ajout (code-barres, étiquette) | les 4 valeurs à **zéro** | référence |
+| pour-100 g · modifier | **zéro**, et le contrôle de cohérence ne se rafraîchissait même pas | référence |
+| proportion · ajout (IA, poids déclaré) | référence *(corrigé en ft-v1061)* | référence |
+| proportion · modifier | **valeurs orphelines** | référence |
+
+***Zéro est un mensonge — personne n'a mangé zéro — et une valeur orpheline en est un autre.*** ⚠️ **Et la ligne « proportion · modifier » est la jumelle de ft-v1061, encore vivante ce soir** : **4ᵉ fois de la journée** qu'un correctif était posé d'un seul côté (R8). Cette fois elle n'a pas été trouvée par Michel — elle est sortie de la mesure.
+
+**⛔ ET LA VIRGULE D'ELINE MANQUAIT ENCORE UNE ROUTE.** `af-bc-grams` était le **seul** champ de quantité resté en `type="number"` — donc le seul à jeter *« 62,5 »*. C'est la route du **code-barres et de l'étiquette**, c'est-à-dire la plus fiable, et ft-v1057 l'avait manquée : son témoin refusait `inputmode="decimal"` sur un `type="number"`, or celui-ci était en `inputmode="numeric"` et passait à travers.
+
+**⛔⛔ ET LE TÉMOIN DE ft-v966 M'A RATTRAPÉ EN PLEINE UNIFICATION**, sur une nuance qui vaut la version : mon repli faisait annoncer *« → pour tes 100 g »* au-dessus d'un champ **vide**. 👉 ***Les VALEURS se replient sur la référence — elles doivent bien correspondre à quelque chose, et « 100 g » est écrit juste au-dessus — mais la PHRASE, qui dit « pour TES n g », se tait.*** Annoncer un total pour une quantité que personne n'a tapée, c'est le voisinage muet retourné dans l'autre sens.
+
+**⭐ CE QUE LE BLOC DE TÉMOINS VÉRIFIE N'EST PAS UN CHIFFRE, C'EST UNE ÉGALITÉ DE COMPORTEMENT.** Un témoin qui figerait *« 243 kcal »* deviendrait faux au premier changement de fixture ; celui-ci reste vrai — et c'est lui qui empêche les 4 routes de re-diverger. ⛔ Le repli est vérifié comme étant **la référence de chaque route** (100 g pour un pour-100 g, la dose déclarée sinon), jamais un nombre magique commun.
+
+**⚠️ UNE DIFFÉRENCE SUBSISTE, ET ELLE EST LÉGITIME** : à 62,5 g, la route code-barres rend **243** kcal et la route proportion **244**. Ce n'est pas une incohérence — la première part du pour-100 g **exact** (388,5), la seconde des valeurs **arrondies** que la personne voit (117 pour 30 g). *La route du code-barres est simplement plus précise, et c'est un argument de plus pour elle.*
+
+**📣 RÈGLE D'OR #11 — NI POP-UP NI POINT ROUGE.** Rien n'apparaît, rien ne bouge : des comportements qui différaient deviennent identiques. Il n'y a rien à apprendre — c'est précisément le but.
+Tests : **parcours 1948/1948** (+6, bloc **CLXXII**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 106 classées 0 trou. ⭐ **Le premier témoin est celui qui empêche les autres d'être verts sur du vide** : les 4 routes rendent bien des valeurs de départ non nulles. Fichiers : `app.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1067. |
 
 **ft-v1066 — 0️⃣ UN PROXY COMMODE QUI DEVIENT FAUX QUAND UNE VALEUR VAUT ZÉRO** — Michel : *« même quand je mets zéro il marque déjà 5 g de prot »*.
 
@@ -799,27 +825,6 @@ Tests : **parcours 1784/1784** (+9, bloc **CLIII**), calculs 266/266, muscles 24
 **⚠️⚠️ ET UN TÉMOIN EXISTANT M'A ATTRAPÉ — sur une règle née d'un vrai bug du projet.** Mes deux `navigator.share` passaient un `title` **à côté de `files`** : c'est interdit ici depuis qu'un partage envoyait *« Conseil de Milo »* **à la place du fichier**. Le témoin épingle la règle dans tous les fichiers servis, et il l'a vue arriver. *Le nom du fichier suffit à le nommer.* Corrigé **aux deux endroits** — le témoin exige justement que la correction soit posée partout, pas d'un seul côté.
 Tests : **parcours 1775/1775** (+14, bloc **CLII**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données classées 0 trou. ⭐⭐ **Les témoins qui comptent le plus lisent le VRAI FICHIER TÉLÉCHARGÉ**, pas une chaîne construite à côté : le CSV est intercepté à l'événement `download`, et on y vérifie le **BOM**, le **`;`**, l'**échappement** du nom qui contient une virgule *et* des guillemets, et la survie des accents. Le PDF est vérifié sur son **en-tête `%PDF-`** et sa taille. ⭐ **Et la fixture porte exprès les cas qui cassent un CSV naïf** — sans eux, les témoins seraient verts sur un export qui se décale chez la moitié des gens. ⭐ **Vérifié à l'œil** : le PDF rendu dans un visualiseur, une séance par bloc, colonnes alignées, **0 erreur JS**. Fichiers : `setup.js`, `index.html`, `screens.js`, `coach.js`, `constants.js`, `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1048. |
 
-**ft-v1047 — 🩹 TROIS ERREURS DES CARTES DE PROGRÈS, TROUVÉES SUR UNE VIDÉO** — Michel, 10 s de son iPhone en production : *« franchement c'est pas mal mais je suis sûr qu'on peut améliorer le visuel »*. **Le périmètre est le sien** : mes deux cartes, pas tout l'onglet.
-
-**⛔⛔ ET LA PIRE EST DE MOI, DANS LA FAMILLE QUE JE PASSE LA SEMAINE À ÉVITER.** Sa carte annonçait *« sur **37** séances étalées sur 74 jours »* puis, quatre lignes plus bas, *« 11 sur **27** »*. **Deux dénominateurs qui se contredisent, sans un mot.** La cause est réelle et reproduite : `_calSessMix` ne sait pas classer toutes les séances — un exercice hors catalogue ne rend aucune région —, donc l'équilibre porte sur un sous-ensemble. 👉 ***C'est exactement ft-v1027, refait par moi***, la version où j'avais écrit qu'un écran qui se contredit *« ne fait pas douter du chiffre, il fait douter de l'app »*.
-
-**⛔ ET ON NE « RÉPARE » PAS EN COMPTANT SUR 37** — c'était l'idée évidente et elle est fausse : les 10 séances non classées deviendraient des séances *« non dominées par le haut du corps »*, c'est-à-dire **un fait faux sur son entraînement** (**R29**). Le correctif est celui de ft-v1027 : la ligne **nomme sa fenêtre**, et les deux nombres apparaissent **ensemble** — *« d'après la région dominante de 27 de tes 37 séances (les autres ne sont pas classables) »*.
-
-**⚠️ ② « LE PLUS SOUVENT DOMINÉES » SUR-AFFIRMAIT — mesuré sur son écran : 11/27 = 41 %.** C'est bien le **mode**, mais la phrase se lit *« la majorité du temps »*, et 41 % n'est pas une majorité. On dit donc ce qu'on mesure vraiment : *« Ta région dominante la plus fréquente est le haut du corps — 11 séances sur 27. »* *Une mesure juste peut produire une phrase fausse* — la leçon de ft-v1035, retrouvée une troisième fois.
-
-**⚠️ ③ « LE TRONC DOMINE 1 FOIS » N'EST PAS UNE CONSTANTE, C'EST DU BRUIT.** La seconde moitié de la phrase ne sort désormais que si la région la moins fréquente atteint **le même plancher que la première** (3). En dessous on se tait : *signaler une occurrence unique fabrique une régularité à partir de rien*, ce que le seuil de cette brique existe précisément pour éviter.
-
-**🎨 ET LE VISUEL, MESURÉ PLUTÔT QUE JUGÉ À L'ŒIL :**
-- **⛔⛔ LA BARRE PREND LA COULEUR « MUSCLE » DE LA FIGURINE — et la nuance décide de tout.** ft-v1045 disait *« aucune couleur de statut »*, et ça **reste vrai** : **toutes les barres ont la même couleur**, seule leur **longueur** varie. Le rouge ne dit pas *« bien »* ou *« mal »*, il dit **« muscle »** — c'est celui du muscle moteur sur la figurine. *On emprunte le vocabulaire visuel du système au lieu d'en inventer un* (**R31**). Un témoin épingle les deux moitiés : la barre est colorée **et** toutes le sont pareil.
-- **le rail gris pleine largeur disparaît** : huit rails sous huit barres faisaient huit lignes de bruit ; l'œil ne suit plus que la donnée.
-- **un liseré distingue la synthèse de la carte volume** : les deux avaient le même fond, la même bordure et le même titre — elles se lisaient comme un seul bloc gris de deux écrans. *Deux horizons différents doivent se voir différents.* ⛔ Le liseré est **gris, pas rouge** : la synthèse est un miroir, pas une alerte.
-- **le pied passe de deux lignes à une** (**R25** : la carte annonce, l'aide explique). ⛔⛔ **Mais alléger n'est pas supprimer** : sa raison d'être tient — *quelqu'un qui recompte à la main doit retrouver le même nombre* — donc la version courte reste, et **l'exemple du développé couché survit dans l'aide `?` et dans l'aide détaillée**, où il était déjà. Un témoin vérifie les deux moitiés, sinon le prochain « allègement » le jetterait pour de bon (**R30**).
-
-**⭐ MESURÉ AVANT/APRÈS DANS UN VRAI NAVIGATEUR** : carte volume **326 → 309 px**, synthèse **286 → 300 px** (elle grandit de 14 px, et c'est le prix de l'honnêteté : la ligne de fenêtre porte maintenant les deux dénominateurs), total **612 → 609 px**. 🔴 Bouton central `[139, 792, 56, 44]`, identique des deux côtés.
-
-**📣 RÈGLE D'OR #11 — NI POP-UP NI POINT ROUGE, et c'est l'arbitrage de ft-v1027.** Une **correction** n'est pas une nouveauté : rien n'apparaît, rien ne bouge de place, il n'y a **rien à faire** pour la personne — une phrase fausse devient juste et des barres changent de couleur. Annoncer ça reviendrait à dire *« on avait un bug »* à des gens qui ne l'avaient pas vu (**R19/R25**). L'aide, elle, **reste juste** : elle décrit toujours l'écran, exemple compris.
-**⚠️ ET UN DE MES PROPRES TÉMOINS A ROUGI — SUR DU CODE CORRIGÉ.** Celui de la brique 8 exigeait la formulation exacte *« dominées par »*, que ce correctif vient justement de changer. Il épinglait donc **la phrase du jour, pas sa règle** — 5ᵉ fois cette semaine. Re-visé sur ce qu'il protège vraiment : le texte ne dit **jamais** *« tu ne travailles pas X »*, et il **nomme** qu'il s'agit de domination. *On ne désarme pas un témoin, on le vise.*
-Tests : **parcours 1761/1761** (+11, bloc **CLI**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données classées 0 trou. ⭐⭐ **Le témoin qui compte le plus est celui de l'ÉCART** : la fixture pose exprès des séances **non classables**, et un témoin dédié vérifie que l'écart existe — *sans lui, les deux autres seraient verts en comparant deux nombres égaux*, c'est-à-dire en ne mesurant rien. ⭐ **Et celui qui protège le futur est celui du pied** : il exige que l'exemple ait quitté l'écran **et** qu'il soit toujours dans l'aide. **CONTRÔLE NÉGATIF : c'est la vidéo elle-même**, et elle est datée — *« sur 37 séances »* puis *« 11 sur 27 »* est lisible à l'image, en production, avant qu'on y touche. ⭐ **Vérifié à l'écran** après correctif : les deux dénominateurs dans la même ligne, barres rouges de longueurs franches, liseré à gauche de la synthèse, **0 erreur JS**. Fichiers : `setup.js`, `style.css`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1047. |
 
 
 
