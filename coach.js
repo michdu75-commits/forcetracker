@@ -214,11 +214,19 @@ function _ctxVolumeMuscles(){
     const MAX=12;                                        // borne le coût : payé plein tarif
     const vus=v.liste.slice(0,MAX), reste=v.liste.length-vus.length;
     const cadre=(typeof _cadreVolumeSemaine==='function')?_cadreVolumeSemaine(S.discipline):null;
-    return `\n📊 VOLUME PAR GROUPE MUSCULAIRE — 7 derniers jours (${v.depuis} → ${v.jusqu}, ${v.seances} séance(s)) :
-${vus.map(m=>`- ${m.label}: ${m.series} séries`).join('\n')}${reste>0?`\n- (+ ${reste} autre(s) groupe(s) moins travaillé(s))`:''}
+    /* ⭐⭐ MILO REÇOIT LA MÊME GRANDEUR QUE L'ÉCRAN — la MOYENNE PAR SEMAINE (ft-v1057), pas le
+       total brut sur 14 jours. C'est **R2** : deux chiffres différents pour la même chose, l'un
+       affiché et l'autre envoyé, finiraient par se contredire dans la même phrase — la personne
+       lirait « 6 » sur son écran et s'entendrait dire « tu en fais 12 ».
+       ⛔ Et c'est aussi la seule forme comparable au cadre, qui parle PAR SEMAINE.
+       ⚠️ Le nombre de séances ET la longueur de la fenêtre restent dits : sans eux, Milo ne peut
+       pas savoir qu'une moyenne de 6 peut cacher une semaine à zéro. */
+    return `\n📊 VOLUME PAR GROUPE MUSCULAIRE — MOYENNE PAR SEMAINE, mesurée sur ${v.jours} jours (${v.depuis} → ${v.jusqu}, ${v.seances} séance(s) au total sur la période) :
+${vus.map(m=>`- ${m.label}: ${m.parSem} séries/semaine`).join('\n')}${reste>0?`\n- (+ ${reste} autre(s) groupe(s) moins travaillé(s))`:''}
 ${v.nonRattachees>0?`⚠️ ${v.nonRattachees} série(s) de la période ne sont rattachées à AUCUN muscle (exercice dont l'app ne connaît pas les muscles) : le compte ci-dessus est donc un MINIMUM, pas un total.\n`:''}⚠️ Séries de TRAVAIL (échauffements exclus), créditées au muscle PRIMAIRE de chaque exercice — un développé couché compte pour les pectoraux, PAS pour les triceps. Un groupe absent de la liste n'a eu aucune série primaire sur la période.
+⚠️ Ce sont des MOYENNES sur ${v.jours} jours, pas le compte de la semaine en cours : une moyenne de 6 peut venir de 12 séries une semaine et 0 l'autre. Ne parle donc jamais de « cette semaine » à partir de ces chiffres, et sers-t'en pour la TENDANCE.
 ${cadre
-  ? `→ Le cadre de sa discipline vise ${cadre.txt} séries par groupe et par semaine. ⚠️ NE LUI REPROCHE PAS d'être en dessous si la semaine n'est pas finie : regarde la date du jour et le nombre de séances déjà faites avant de conclure quoi que ce soit.`
+  ? `→ Le cadre de sa discipline vise ${cadre.txt} séries par groupe et par semaine — c'est la même unité que les chiffres ci-dessus, ils sont donc directement comparables. ⚠️ NE LUI REPROCHE RIEN sur la base d'un seul écart : regarde le nombre de séances de la période avant de conclure quoi que ce soit.`
   : `→ ⚠️ Le cadre de sa discipline n'exprime PAS le volume par groupe et par semaine (il le dit par séance ou par mouvement) : ne compare donc ces chiffres à AUCUN objectif chiffré, sers-t'en seulement pour voir ce qui est travaillé et ce qui ne l'est pas.`}\n`;
   }catch(e){ return ''; }
 }

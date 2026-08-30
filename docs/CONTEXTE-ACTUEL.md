@@ -6,8 +6,8 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1057`.
-- 🔢⭐⭐ **LA VIRGULE DÉCIMALE — neuf mots d'ELINE, et une corruption de données** (ft-v1057).
+- **Version en ligne (live) :** `ft-v1058`.
+- 🔢⭐⭐ **LA VIRGULE DÉCIMALE — neuf mots d'ELINE, et une corruption de données** (ft-v1058).
   Retour de la fille de Michel : *« impossible de mettre la virgule pour les poids »*.
   ⛔⛔ **Elle décrit un refus ; la mesure dit bien pire** — dans un `type="number"`, `62,5` rend
   **`"625"`** : la virgule est **jetée**, pas le nombre. Mesuré au clavier sur le champ le plus
@@ -20,6 +20,20 @@
   `numFR`. ⚠️ Le plus critique (`upSet`, le kg de série) reçoit sa valeur **en argument**, donc
   il échappait à la recherche sur `.value`.
   ⏭️ **En attente de Michel** : les séances **déjà enregistrées** ×10 restent fausses (R29).
+- 📊⭐⭐ **LE VOLUME PAR MUSCLE : 14 JOURS, RAMENÉS À LA SEMAINE** (ft-v1058). Michel, capture à
+  l'appui : *« c'est super mais ça ne serait pas mieux sur 2 semaines ? »*
+  ⭐⭐ **Sa capture porte sa preuve** : la carte du dessus dit **3,4 séances/semaine** sur 78 jours,
+  celle du dessous en comptait **2**. *7 jours est un échantillon trop court pour un entraînement.*
+  ⛔⛔ **Mais les chiffres bruts ne sont PAS doublés** — `DISC_CADRE.volume` dit « 10 à 20 séries
+  par groupe **et par semaine** » : afficher 24 sur 14 jours serait **faux et crédible** face à un
+  repère hebdo. 👉 **L'échantillon s'élargit, l'UNITÉ reste la semaine** (12 → **6/sem**).
+  ⭐ Arrondi au **demi** (R29 — « 4,3 » serait une fausse précision), tri sur le brut.
+  ⛔ **Le nombre de séances reste affiché** : une moyenne noie une semaine à zéro, et lui seul dit
+  ce que la moyenne ne dit pas.
+  ⛔⛔ **Un seul propriétaire** (`_volumeParMuscle`) : l'écran **et** Milo lisent la même grandeur —
+  sinon l'écran dirait 6 et Milo 12 (R2).
+  ⚠️ **3 témoins de ft-v1045 re-visés** (ils épinglaient « 7 derniers jours » et « NE LUI REPROCHE
+  PAS » — la phrase, pas la règle). **7ᵉ fois cette semaine.**
 - ⚖️⏰⭐⭐ **ON PROPOSE, ON N'IMPOSE PAS — la quantité ET le moment** (ft-v1056). La même
   règle trouvée **trois fois le même jour** : le champ en grammes, la quantité de la
   dernière fois, et le **favori qui décidait du moment de la journée à la place de la
@@ -55,7 +69,6 @@
   ⚠️⚠️ **Deux témoins existants ont rougi sur du code correct**, et le second deux fois : il
   lisait le bloc en `.slice(0,60)` et mes boutons d'unité ont poussé « portion » au-delà de la
   coupe. *Un motif cherché dans une chaîne tronquée mesure la longueur de la phrase.*
-- **Version en ligne (live) :** `ft-v1055`.
 - 🩹⭐⭐ **UNE CONSIGNE INTERNE N'EST PAS UNE DEMANDE DE LA PERSONNE** (ft-v1055). Capture de
   Michel à 15 h 16 : *« Cette séance te convient ? »* s'affichait **sous un débrief de fin de
   séance** — il venait de terminer, on lui proposait d'en démarrer une.

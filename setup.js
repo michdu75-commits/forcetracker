@@ -190,16 +190,30 @@ function _renderVolumeSemaine(){
       return x.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}); }catch(e){ return d; } };
   const haut=v.liste[0].series||1;
   const vues=v.liste.slice(0,VOL_LIGNES_MAX), reste=v.liste.length-vues.length;
+  /* ⭐ « 6 » plutôt que « 6,0 », et la virgule française plutôt que le point (ft-v1057).
+     Un « ,0 » sur une série entière donne l'air d'une mesure de laboratoire là où on a juste
+     divisé par deux — et c'est la moitié des lignes qui en porterait un. */
+  const nb=x=>(Math.round(x)===x)?String(x):String(x).replace('.',',');
   el.innerHTML='<div class="vol-card">'
-    +'<div class="vol-t">📊 Ce que ta semaine a travaillé</div>'
+    /* ⚠️ LE TITRE A DÛ SUIVRE LA FENÊTRE (ft-v1057). Il disait « ce que TA SEMAINE a travaillé »
+       au-dessus de chiffres désormais calculés sur DEUX semaines : un titre qui nomme une période
+       que le calcul n'emploie plus est exactement le motif que ce projet passe son temps à
+       rattraper — un changement appliqué d'un seul côté. */
+    +'<div class="vol-t">📊 Ce que tu travailles, par semaine</div>'
     +vues.map(m=>'<div class="vol-l">'
         +'<div class="vol-nom">'+esc(m.label)+'</div>'
         /* ⭐ La barre est une aide à la LECTURE (elle range à l'œil), pas une jauge vers une
-           cible : elle est relative au plus travaillé de la semaine, et rien d'autre. */
+           cible : elle est relative au plus travaillé de la fenêtre, et rien d'autre.
+           ⛔ Elle reste calculée sur le BRUT : diviser les deux termes par le même nombre de
+           semaines donnerait exactement la même barre, avec un arrondi en plus. */
         +'<div class="vol-bar"><i style="width:'+Math.round(100*m.series/haut)+'%"></i></div>'
-        +'<div class="vol-n">'+m.series+'</div></div>').join('')
+        +'<div class="vol-n">'+nb(m.parSem)+'</div></div>').join('')
     +(reste>0?'<div class="vol-plus">et '+reste+' autre'+(reste>1?'s':'')+'</div>':'')
-    +'<div class="vol-fen">Séries de travail sur les 7 derniers jours ('
+    /* ⛔⛔ LA FENÊTRE SE NOMME, ET LE NOMBRE DE SÉANCES AVEC — c'est le garde-fou de la moyenne.
+       Une moyenne hebdomadaire calculée sur 14 jours NOIE une semaine à zéro : « 5 séances »
+       à côté dit ce que la moyenne, elle, ne peut pas dire. Sans ce nombre, deux personnes très
+       différentes afficheraient la même ligne (le défaut de ft-v1027, sous une autre forme). */
+    +'<div class="vol-fen">Moyenne par semaine, sur 14 jours ('
       +esc(jour(v.depuis))+' → '+esc(jour(v.jusqu))+') · '+v.seances+' séance'+(v.seances>1?'s':'')+'</div>'
     /* ⛔ LE CHOIX DE COMPTAGE RESTE DIT, MAIS EN UNE LIGNE (ft-v1047, R25 : la carte annonce,
        l'aide explique). Sa raison d'être tient — quelqu'un qui recompte à la main doit retrouver

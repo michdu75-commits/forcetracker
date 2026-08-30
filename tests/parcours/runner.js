@@ -16304,11 +16304,17 @@ console.log('\n-- CXLIX. Le volume par groupe musculaire et par semaine (ft-v104
     S.discipline='muscu';
     let c=_ctxVolumeMuscles();
     o.ctx.bloc=/VOLUME PAR GROUPE MUSCULAIRE/.test(c);
-    o.ctx.fenetre=/7 derniers jours/.test(c);
+    /* ⚠️ MÊME RE-VISÉE (ft-v1057) : ce qui compte est que Milo SACHE sur quelle durée porte
+       la mesure, pas que cette durée vaille sept. */
+    o.ctx.fenetre=/mesurée sur \d+ jours/.test(c);
     o.ctx.primaire=/muscle PRIMAIRE/.test(c);
     o.ctx.minimum=/est donc un MINIMUM/.test(c);
     o.ctx.cadreMuscu=/vise 10 à 20 séries/.test(c);
-    o.ctx.antiReproche=/NE LUI REPROCHE PAS/.test(c);
+    /* ⚠️ RE-VISÉ (ft-v1057) : la formule est passée de « NE LUI REPROCHE PAS d'être en
+       dessous si la semaine n'est pas finie » à « NE LUI REPROCHE RIEN sur la base d'un seul
+       écart » — la fenêtre n'étant plus une semaine en cours, la première phrase n'avait plus
+       de sens. La RÈGLE, elle, n'a pas bougé : Milo a l'interdiction de reprocher. */
+    o.ctx.antiReproche=/NE LUI REPROCHE (PAS|RIEN)/.test(c);
     S.discipline='powerlifting';
     o.ctx.plPasDeCadre=/n'exprime PAS le volume par groupe/.test(_ctxVolumeMuscles());
     S.discipline='muscu';
@@ -16319,7 +16325,14 @@ console.log('\n-- CXLIX. Le volume par groupe musculaire et par semaine (ft-v104
     const el=document.getElementById('prog-volume');
     o.ecran=(el.innerText||'').replace(/\s+/g,' ').trim();
     o.ecranSansCible=!/10 à 20|12 à 22|cadre|objectif|cible/i.test(o.ecran);
-    o.ecranNommeFenetre=/7 derniers jours/.test(o.ecran);
+    /* ⚠️ RE-VISÉ LE 30/08/2026 (ft-v1057), PAS DÉSARMÉ. Ce témoin épinglait la chaîne
+       « 7 derniers jours » — la FENÊTRE DU JOUR, pas la règle. Elle est passée à 14 jours
+       ramenés à la semaine, et il rougissait sur du code correct.
+       👉 Ce qu'il protège n'a jamais été « sept » : c'est que la carte DISE sur quoi elle
+       compte, pour que deux chiffres calculés sur des périodes différentes ne se contredisent
+       pas en silence (le défaut de ft-v1027). On vérifie donc qu'une durée est nommée ET que
+       l'unité l'est aussi. */
+    o.ecranNommeFenetre=/\d+\s*jours/.test(o.ecran) && /par semaine/i.test(o.ecran);
     o.ecranDitNonRatt=/rattachée/.test(o.ecran);
     /* ⛔ Rien a compter -> pas un pixel (une section qui dirait « tu n'as rien fait » serait un
        constat sur la personne, pas une information). */
@@ -17994,6 +18007,119 @@ console.log('\n-- CLXIII. La virgule décimale — retour d\'Eline (ft-v1057) --
       F.point.kg===80.5, JSON.stringify(F.point));
   }
   await cx.close();
+}
+
+/* == BLOC CLXIV - LE VOLUME PAR MUSCLE : 14 JOURS, RAMENES A LA SEMAINE (ft-v1057) ==
+   Michel, capture a l'appui : « c'est super mais ca ne serait pas mieux sur 2 semaines ? » — et
+   sa capture porte sa propre preuve : 2 seances dans la fenetre, quand la carte JUSTE AU-DESSUS
+   dit 3,4 seances/semaine sur 78 jours. *Les deux cartes parlaient du meme bonhomme sans en
+   donner la meme image* — 7 jours est un echantillon trop court pour un entrainement.
+
+   ⛔⛔ MAIS LES CHIFFRES BRUTS NE SONT PAS DOUBLES, et c'est TOUT l'arbitrage. `DISC_CADRE.volume`
+   dit « 10 a 20 series par groupe musculaire ET PAR SEMAINE » : afficher 24 sur 14 jours donnerait
+   un nombre FAUX ET CREDIBLE face a un repere hebdomadaire. L'ECHANTILLON s'elargit, l'UNITE
+   reste la semaine. */
+console.log('\n-- CLXIV. Le volume par muscle : 14 jours, ramenés à la semaine (ft-v1057) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const W=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    const J=n=>{ const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10); };
+    const ex=(nom,n)=>({name:nom, sets:Array.from({length:n},()=>({kg:60,reps:8,type:'N',done:true}))});
+    /* ⭐⭐ LA FIXTURE EST CONSTRUITE POUR QUE LES DEUX SEMAINES SOIENT DIFFERENTES — sinon la
+       moyenne vaudrait le compte de chaque semaine et le temoin ne mesurerait RIEN.
+       Semaine récente (j-2) : 4 séries de développé couché. Semaine d'avant (j-9) : 8 séries.
+       Total 12 sur 14 jours → 6 par semaine. Un calcul sur 7 jours aurait rendu 4. */
+    S.discipline='muscu';
+    S.sessions=[ {date:J(2), exs:[ex('Développé Couché',4)]},
+                 {date:J(9), exs:[ex('Développé Couché',8)]},
+                 /* ⛔ Hors fenêtre : 20 séries il y a 30 jours ne doivent RIEN changer. */
+                 {date:J(30), exs:[ex('Développé Couché',20)]} ];
+    persist();
+    const v=_volumeParMuscle();
+    o.jours=v.jours; o.seances=v.seances;
+    const pec=(v.liste||[]).find(x=>/Pectoraux/i.test(x.label))||{};
+    o.brut=pec.series; o.parSem=pec.parSem;
+    // ── L'ECRAN ──
+    goScreen('progress');
+    const c=document.getElementById('prog-volume');
+    o.titre=(c.querySelector('.vol-t')||{}).textContent||'';
+    o.fenetre=(c.querySelector('.vol-fen')||{}).textContent||'';
+    o.nAffiche=(c.querySelector('.vol-n')||{}).textContent||'';
+    /* ⛔ La carte ne doit plus dire « ta semaine » ni « 7 derniers jours ». */
+    const txt=c.textContent.replace(/\s+/g,' ');
+    o.diteSemaine7=/7 derniers jours/.test(txt);
+    o.diteTaSemaine=/ta semaine a travaill/i.test(txt);
+    /* ⛔⛔ AUCUNE CIBLE A L'ECRAN — la decision centrale de ft-v1045 ne bouge pas. */
+    o.aucuneCible=!/10 à 20|cible|objectif/i.test(txt);
+    // ── MILO : la MEME grandeur que l'écran (R2) ──
+    const ctx=buildCoachContext();
+    o.miloParSem=/Pectoraux: 6 séries\/semaine/.test(ctx);
+    o.miloDitLaFenetre=/MOYENNE PAR SEMAINE, mesurée sur 14 jours/.test(ctx);
+    o.miloAverti=/Ne parle donc jamais de « cette semaine »/.test(ctx);
+    o.miloPasDeBrut=!/Pectoraux: 12 séries/.test(ctx);
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]};}
+  });
+  // ── LE DEMI : une semaine à 4 et une à 5 donnent 4,5 — et « 4,5 », pas « 4.5 » ──
+  const D=W.err?null:await pg.evaluate(()=>{
+   try{
+    const J=n=>{ const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10); };
+    const ex=(nom,n)=>({name:nom, sets:Array.from({length:n},()=>({kg:60,reps:8,type:'N',done:true}))});
+    S.sessions=[{date:J(2),exs:[ex('Développé Couché',4)]},{date:J(9),exs:[ex('Développé Couché',5)]}];
+    persist(); goScreen('progress');
+    const n=(document.querySelector('#prog-volume .vol-n')||{}).textContent||'';
+    return {affiche:n, brut:((_volumeParMuscle().liste||[]).find(x=>/Pectoraux/i.test(x.label))||{}).series};
+   }catch(e){ return {err:String(e)}; }
+  });
+  await cx.close();
+
+  if(W.err)t('CLXIII n\'a pas pu tourner',false,JSON.stringify(W));
+  else{
+    /* ⭐⭐ LE TÉMOIN CENTRAL : la fenêtre s'élargit VRAIMENT (sinon tout le reste est cosmétique). */
+    t('⭐⭐ ① la fenêtre est de 14 jours, et les 2 séances des 2 semaines sont vues',
+      W.jours===14 && W.seances===2, JSON.stringify({jours:W.jours,seances:W.seances}));
+    /* ⭐⭐ ET CELUI QUI PORTE L'ARBITRAGE : 12 séries brutes sur la fenêtre → 6 PAR SEMAINE.
+       Sans lui, « élargir » aurait pu vouloir dire « doubler les chiffres ». */
+    t('⭐⭐ ② 12 séries sur 14 jours s\'affichent « 6 » — l\'unité reste la SEMAINE',
+      W.brut===12 && W.parSem===6 && W.nAffiche.trim()==='6',
+      JSON.stringify({brut:W.brut,parSem:W.parSem,affiche:W.nAffiche}));
+    /* ⛔ SANS CE TÉMOIN, ② serait vert sur une fixture où les 2 semaines sont identiques —
+       c'est-à-dire en ne distinguant pas 7 et 14 jours. La séance de j-30 doit rester dehors. */
+    t('⛔ ③ la fenêtre MORD : 20 séries d\'il y a 30 jours n\'entrent pas dans le compte',
+      W.brut===12, 'brut = '+W.brut+' (12 attendu, 32 si la borne ne tenait pas)');
+    /* ⚠️ LE TITRE ET LA FENÊTRE ONT SUIVI — un libellé qui nomme une période que le calcul
+       n'emploie plus est le motif « posé d'un seul côté » qu'on passe la semaine à rattraper. */
+    t('⚠️ ④ le titre et la ligne de fenêtre ne parlent plus de « 7 derniers jours »',
+      W.diteSemaine7===false && W.diteTaSemaine===false && /par semaine/i.test(W.titre)
+      && /sur 14 jours/.test(W.fenetre), JSON.stringify({titre:W.titre,fen:W.fenetre}));
+    /* ⛔ LE GARDE-FOU DE LA MOYENNE : le nombre de séances reste dit — il dit ce que la moyenne
+       ne peut pas dire (une semaine à zéro s'y noie). */
+    t('⛔ ⑤ le nombre de séances reste affiché à côté de la moyenne',
+      /2 séances/.test(W.fenetre), W.fenetre);
+    /* ⛔⛔ LA DÉCISION DE ft-v1045 NE BOUGE PAS : aucune cible à l'écran. */
+    t('⛔⛔ ⑥ toujours AUCUNE cible affichée (la décision de ft-v1045 tient)',
+      W.aucuneCible===true, 'aucune cible = '+W.aucuneCible);
+    /* ⭐⭐ R2 — MILO REÇOIT LA MÊME GRANDEUR. Sans ça, l'écran dirait 6 et Milo dirait 12. */
+    t('⭐⭐ ⑦ Milo reçoit la MÊME grandeur que l\'écran (6/semaine), jamais le brut',
+      W.miloParSem===true && W.miloPasDeBrut===true,
+      JSON.stringify({parSem:W.miloParSem,pasDeBrut:W.miloPasDeBrut}));
+    t('⛔ ⑧ … et il est prévenu que c\'est une moyenne (pas « cette semaine »)',
+      W.miloDitLaFenetre===true && W.miloAverti===true,
+      JSON.stringify({fenetre:W.miloDitLaFenetre,averti:W.miloAverti}));
+    /* ⭐ LE DEMI, ET LA VIRGULE FRANÇAISE — 9 séries sur 2 semaines = 4,5. */
+    t('⭐ ⑨ un demi s\'affiche « 4,5 » (virgule française), pas « 4.5 » ni « 5 »',
+      !!D && D.brut===9 && D.affiche.trim()==='4,5', JSON.stringify(D));
+  }
 }
 
 await b.close(); srv.close();

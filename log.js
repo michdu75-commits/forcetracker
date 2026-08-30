@@ -3611,24 +3611,47 @@ function _mscScores(exs){
    série cochée `É` n'en est pas une, et une série jamais validée n'a pas eu lieu. Même filtre que
    `_intensiteDefauts` (R2).
 
-   ⛔ FENÊTRE GLISSANTE DE 7 JOURS, ET ELLE SE NOMME. Une semaine *calendaire* remettrait le
-   compteur à zéro le lundi : un mardi, tout le monde afficherait 2 séries et croirait avoir
-   régressé. Et sans nommer la fenêtre, deux chiffres calculés sur des périodes différentes se
-   contredisent à l'écran sans que rien ne le dise — le défaut de **ft-v1027**.
+   ⛔ FENÊTRE GLISSANTE, ET ELLE SE NOMME. Une semaine *calendaire* remettrait le compteur à zéro
+   le lundi : un mardi, tout le monde afficherait 2 séries et croirait avoir régressé. Et sans
+   nommer la fenêtre, deux chiffres calculés sur des périodes différentes se contredisent à
+   l'écran sans que rien ne le dise — le défaut de **ft-v1027**.
+
+   ⭐⭐ LA FENÊTRE EST PASSÉE DE 7 À 14 JOURS LE 30/08/2026 (ft-v1057), SUR UNE MESURE DE MICHEL.
+   Sa capture : *« c'est super mais ça ne serait pas mieux sur 2 semaines ? »* — et elle porte sa
+   propre preuve. La carte du dessus dit **3,4 séances/semaine** sur 78 jours ; celle-ci en
+   comptait **2**. *Les deux cartes parlaient du même bonhomme et n'en donnaient pas la même
+   image* — non pas parce qu'un chiffre était faux, mais parce que **7 jours est un échantillon
+   trop court pour un entraînement**. Une semaine chargée et une semaine creuse alternent
+   normalement ; la fenêtre courte transformait ce va-et-vient en information.
+
+   ⛔⛔ MAIS LES CHIFFRES BRUTS NE SONT PAS DOUBLÉS — et c'est TOUT l'arbitrage de cette version.
+   `DISC_CADRE.volume` dit *« 10 à 20 séries par groupe musculaire ET PAR SEMAINE »*. Afficher 24
+   sur 14 jours produirait un nombre **faux et crédible** en face d'un repère hebdomadaire : la
+   personne (et Milo) le liraient comme un excès. 👉 **L'ÉCHANTILLON s'élargit, l'UNITÉ reste la
+   semaine.** On divise par le nombre de semaines de la fenêtre — c'est la seule opération qui
+   rende le nombre plus robuste SANS le rendre incomparable.
+   ⚠️ Le prix est écrit, pas caché : une semaine à zéro **se noie** dans la moyenne. C'est pour ça
+   que le nombre de séances reste affiché à côté — il dit ce que la moyenne ne dit pas.
 
    ⚠️ CE QUE CE COMPTEUR NE FAIT PAS, ET C'EST DÉLIBÉRÉ : il **ne juge pas**. Voir
    `_volumeSemaineHtml` (setup.js) pour la raison — un mercredi, tout le monde est sous son cadre. */
+const VOL_FENETRE_JOURS = 14;          // ⛔ un seul propriétaire de la fenêtre (l'écran ET Milo)
 function _volumeParMuscle(refTs){
   /* ⚠️ `series` = séries de travail RATTACHÉES à au moins un muscle. Ce n'est PAS la somme de
      `liste` : un squat crédite quadriceps ET fessiers, donc la somme des lignes est plus grande.
      Deux chiffres qui se contredisent à l'écran, c'est le défaut de ft-v1027 — on ne les affiche
      jamais l'un à côté de l'autre, et le nom le dit. */
-  const out={jours:7, series:0, nonRattachees:0, seances:0, liste:[], depuis:'', jusqu:''};
+  /* ⚠️ `series` et `nonRattachees` restent des TOTAUX BRUTS sur la fenêtre : ce sont des comptes
+     de contrôle (« combien de séries n'ont pu créditer personne »), pas des grandeurs à comparer
+     au cadre. Seules les lignes de `liste` portent la moyenne hebdomadaire — et c'est le nom du
+     champ qui le dit (`parSem`), pour qu'on ne puisse pas les confondre en les relisant. */
+  const out={jours:VOL_FENETRE_JOURS, semaines:VOL_FENETRE_JOURS/7,
+             series:0, nonRattachees:0, seances:0, liste:[], depuis:'', jusqu:''};
   try{
     const auj=(typeof today==='function')?today(refTs):null;
     if(!auj) return out;
     const fin=new Date(auj+'T12:00:00');
-    const deb=new Date(fin.getTime()-6*864e5);          // 7 jours INCLUS (aujourd'hui compris)
+    const deb=new Date(fin.getTime()-(VOL_FENETRE_JOURS-1)*864e5);   // aujourd'hui compris
     const iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
     out.depuis=iso(deb); out.jusqu=auj;
     const cnt={};
@@ -3660,9 +3683,15 @@ function _volumeParMuscle(refTs){
         out.series+=n;
       });
     });
+    /* ⭐ LA MOYENNE HEBDOMADAIRE EST ARRONDIE AU DEMI, PAS AU DIXIÈME (R29 — fausse précision).
+       « 4,5 séries/semaine » se lit ; « 4,3 » laisserait croire qu'on mesure au dixième de série
+       alors qu'une série est un ENTIER qu'on a divisé par 2. ⛔ Et on trie sur la valeur BRUTE :
+       trier sur l'arrondi mettrait deux muscles à égalité alors qu'ils ne le sont pas. */
     out.liste=Object.keys(cnt)
       .filter(m=>typeof _MG!=='undefined'&&_MG[m])       // ⛔ aucun code hors vocabulaire
-      .map(m=>({code:m, label:_MG[m].label, series:cnt[m]}))
+      .map(m=>({code:m, label:_MG[m].label,
+                series:cnt[m],                            // brut sur la fenêtre (contrôle)
+                parSem:Math.round((cnt[m]/out.semaines)*2)/2}))
       .sort((a,b)=>b.series-a.series||a.label.localeCompare(b.label));
   }catch(e){ /* jamais bloquant : c'est une information, pas une fonctionnalité */ }
   return out;
