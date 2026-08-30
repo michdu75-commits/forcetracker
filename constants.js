@@ -434,6 +434,12 @@ const DISC_CADRE={
 };
 
 const NEW_FEATURES=[
+  /* 👎 PAS DE POP-UP `WHATS_NEW` POUR CELLE-CI (règle d'or #11), et c'est un cas limite
+     qu'il faut argumenter plutôt que subir. Un bouton APPARAÎT sous chaque réponse de Milo,
+     donc un repère bouge — mais il ne DÉPLACE rien, ne cache rien, et s'explique en un tap :
+     la lecture naturelle de « 👎 à côté » est exactement ce qu'il fait. *La pop-up se mérite*
+     (R25) ; interrompre tout le monde pour annoncer un bouton facultatif serait du bruit. */
+  {id:'milo-a-cote', screen:'coach', desc:'\u{1F44E} Sous chaque r\u00e9ponse de Milo, un bouton <b>\u00ab \u{1F44E} \u00e0 c\u00f4t\u00e9 \u00bb</b>. Si sa r\u00e9ponse ne r\u00e9pond pas \u00e0 ta question, est <b>trop vague</b>, contient quelque chose de <b>faux</b>, ou s\'il a <b>oubli\u00e9</b> un truc que tu lui avais dit \u2014 un tap, et c\'est not\u00e9. \u26d4 <b>Rien de ta conversation n\'est envoy\u00e9</b> : seul le motif est compt\u00e9, sur ton t\u00e9l\u00e9phone. Si tu veux <b>en plus</b> montrer l\'\u00e9change \u00e0 Michel pour qu\'il corrige, il y a une case \u00e0 cocher \u2014 <b>d\u00e9coch\u00e9e par d\u00e9faut</b>, c\'est toi qui d\u00e9cides. \u2b50 \u00c0 quoi \u00e7a sert : chaque signalement devient un <b>cas de test</b> pour corriger Milo pour de bon. \u26a0\uFE0F Il n\'y a <b>pas de pouce vert</b>, expr\u00e8s : on ne veut pas transformer tes conversations en formulaire de satisfaction.'},
   /* 📅 PAS DE POP-UP `WHATS_NEW` POUR CELLE-CI, ET C'EST DÉLIBÉRÉ (règle d'or #11).
      La carte s'explique ENTIÈREMENT toute seule le jour où elle s'affiche — elle nomme la
      séance, sa date, et pose sa question. Et surtout elle est RARE : annoncer aujourd'hui

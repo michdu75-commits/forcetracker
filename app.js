@@ -1989,7 +1989,7 @@ function quickFillFood(i){
   }
   /* Se tait tout seul si un pour-100 g existe (`if(_bcNutr) → cacher`) : R2, un seul réglage
      de quantité visible à la fois. */
-  if(typeof _afMajAncre==='function') _afMajAncre();
+  if(typeof _afMajAncre==='function') _afMajAncre(true);   // reprise d'un aliment : la source change
   if(typeof _afNoteEtat==='function') _afNoteEtat(it.name||'');
   toast('Pré-rempli — ajuste la quantité si besoin, puis « Ajouter au journal » ✅','info');
 }
@@ -2150,7 +2150,7 @@ async function estimateFoodAI(){
        portions plutôt que d'afficher un poids que personne n'a donné (R29). */
     window._afIaGrammes=(d.g>0&&d.g<=5000)?d.g:0;
     window._afIaDesc=(document.getElementById('af-desc')||{}).value||'';
-    _afMajAncre();
+    _afMajAncre(true);   // estimation IA : la source change
     // ⚠️ L'IA ne donne PAS de valeur au 100 g ni de quantité : elle rend un total estimé pour la
     //    phrase. On enregistre donc l'origine et rien d'autre — inventer un `per100` ici ferait
     //    passer une estimation pour une mesure (R29).
@@ -2631,7 +2631,7 @@ function _afSuggPrendreLocale(i){
      ⛔ IL SE TAIT TOUT SEUL quand un pour-100 g existe (`if(_bcNutr) → cacher`), donc les deux
      mécanismes ne peuvent pas s'afficher ensemble (R2). Et il n'invente aucun poids (R29) :
      sans ancre il n'offre que des multiplicateurs, vrais quelle que soit la portion de départ. */
-  if(typeof _afMajAncre==='function') _afMajAncre();
+  if(typeof _afMajAncre==='function') _afMajAncre(true);   // reprise depuis le journal : la source change
   _afNoteEtat(e.name||'');
   _afSuggVider();
   toast('Repris de ton journal 👍','success');
@@ -2901,7 +2901,16 @@ function _afProp(f){
 function _afApplyProp(){
   if(!_afRef||!(_afRef.q>0)) return;
   const v=numFR((document.getElementById('af-prop')||{}).value);
-  if(!(v>0)) return;                       // champ vidé pendant la frappe : on ne touche à rien
+  /* ⛔⛔ CHAMP VIDÉ : ON REVIENT À LA RÉFÉRENCE, on ne laisse pas à l'écran les valeurs d'une
+     quantité qui n'y est plus (ft-v1061, capture de Michel).
+     L'intention d'origine était juste — *ne pas tout mettre à zéro pendant qu'on tape* — mais
+     sa conséquence ne l'était pas : il tape « 3 » (début de 30), les 4 valeurs tombent à 12 kcal,
+     il efface pour recommencer… et **12 kcal restent affichés à côté d'un champ vide**, juste
+     au-dessus du bouton rouge « Ajouter au journal ». *Aucun des deux n'est faux ; c'est leur
+     voisinage muet qui trompe* — la 4ᵉ fois que ce motif revient (ft-v966, v1042, v1056).
+     ⭐ Revenir à la référence garde l'invariant lisible : ce qui est affiché correspond
+     TOUJOURS à une quantité écrite juste en dessous (« Référence : 30 g »). */
+  if(!(v>0)){ _afProp(1); return; }
   _afProp(v/_afRef.q);
 }
 function _afApplyPortion(x){ _afProp(x); }
@@ -2955,11 +2964,34 @@ function _afPropCacher(){
 /* Décide de la source et (re)construit le bloc. ⚠️ Appelée seulement quand la SOURCE des valeurs
    change — estimation IA, ou sortie d'un champ (`onchange`, donc au blur). Jamais à chaque frappe :
    reconstruire le bloc pendant qu'on tape dedans ferait perdre le curseur. */
-function _afMajAncre(){
+function _afMajAncre(srcChange){
   const el=document.getElementById('af-prop-row'); if(!el) return;
   if(_bcNutr){ _afPropCacher(); return; }          // ① un pour-100 g est connu : `af-bc-row` s'en charge
-  const base=_afPropSetBase();
+  /* ⛔⛔ ON NE RELIT L'ÉCRAN QUE SI LA SOURCE A CHANGÉ (ft-v1061) — c'est LE correctif.
+     L'en-tête juste au-dessus le dit depuis toujours : *« appelée seulement quand la SOURCE des
+     valeurs change »*. C'était vrai des intentions, pas du code : la fonction relisait les 4
+     champs à CHAQUE appel, y compris quand elle était rappelée pour une simple reconstruction
+     (changement d'unité, déclaration de poids). Or après un rescale, ces champs ne portent plus
+     `base` — ils portent `base × facteur`. La référence redevenait donc une valeur dérivée
+     d'elle-même, et l'erreur se figeait.
+     👉 `srcChange` distingue les deux : **vrai** quand les valeurs viennent d'ailleurs (estimation
+     IA, reprise d'un aliment, macro corrigée à la main) → on relit ; **faux/absent** quand on ne
+     fait que redessiner → `base` est PRÉSERVÉE. */
+  const base=(srcChange||!_afRef||!_afRef.base)?_afPropSetBase():_afRef.base;
   if(!(base.kcal>0)){ _afPropCacher(); return; }   // rien à rescaler tant qu'il n'y a pas de valeurs
+  /* ⛔⛔ L'INVARIANT DE TOUT CE BLOC (ft-v1061) : `_afRef.base` sont TOUJOURS les valeurs de
+     `_afRef.q`. Or `base` vient d'être RELU À L'ÉCRAN — et l'écran, après un rescale, montre les
+     valeurs de la quantité TAPÉE, pas celles de l'ancienne référence.
+     👉 **La seule quantité à laquelle on a le droit d'appairer ces valeurs est celle AFFICHÉE.**
+     Sans ça, `base` et `q` se désappairent, et tout le reste est faux d'un facteur constant —
+     silencieusement, avec des nombres parfaitement crédibles. Mesuré sur l'étiquette de Michel :
+     référence 30 g, il tape 40 (→ 156 kcal, juste), un geste rappelle `_afMajAncre` (toucher une
+     macro, ou un aller-retour d'unité), `base` devient 156 pendant que `q` reste 30 — et 40 g
+     affiche alors **208 kcal / 47 g** au lieu de 156 / 35, soit **1,33× son étiquette**.
+     ⭐ C'est mot pour mot la leçon déjà écrite dans `_provFood` en ft-v1056 : *les valeurs
+     affichées et la quantité affichée vont toujours ensemble — c'est le seul couple sur lequel on
+     peut diviser sans se tromper.* Elle était posée d'un seul côté (R8, la jumelle). */
+  const qAff=numFR((document.getElementById('af-prop')||{}).value);
   const nom=String((document.getElementById('af-desc')||{}).value||'');
   const m=nom.match(/(\d+(?:[.,]\d+)?)\s*(g|ml)\b/i);
   /* ⚠️ LE POIDS DE L'IA PASSE DEVANT LE NOMBRE LU DANS LA PHRASE, ET CE N'EST PAS UN DÉTAIL.
@@ -2973,10 +3005,15 @@ function _afMajAncre(){
               : (m ? {v:parseFloat(m[1].replace(',','.')),u:m[2].toLowerCase(),src:'lu dans ta phrase'} : null);
   const style='width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);';
   if(ancre && ancre.v>0){
-    _afRef={base:base,q:ancre.v,u:ancre.u,src:ancre.src};
+    /* ⛔ La quantité affichée l'emporte sur l'ancre : si la personne l'a corrigée, ce sont SES
+       valeurs qui sont à l'écran — et la source change avec, sinon l'écran attribuerait à l'IA
+       un poids que la personne a tapé (R32 : on ne présente jamais une déclaration comme une mesure). */
+    const qR=(qAff>0)?qAff:ancre.v;
+    const sR=(qAff>0&&qAff!==ancre.v)?'que tu as indiqué':ancre.src;
+    _afRef={base:base,q:qR,u:ancre.u,src:sR};
     el.innerHTML='<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité ('+ancre.u+') <span style="font-weight:400;">— recalcule les 4 valeurs</span></div>'
-      +'<input id="af-prop" type="text" inputmode="decimal" step="any" value="'+ancre.v+'" oninput="_afApplyProp()" style="'+style+'">'
-      +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Référence : '+ancre.v+' '+ancre.u+' ('+ancre.src+'). Corrige-la, les 4 valeurs suivent en proportion.</div>';
+      +'<input id="af-prop" type="text" inputmode="decimal" step="any" value="'+qR+'" oninput="_afApplyProp()" style="'+style+'">'
+      +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Référence : '+qR+' '+ancre.u+' ('+sR+'). Corrige-la, les 4 valeurs suivent en proportion.</div>';
   }else{
     /* ⚖️ AUCUN POIDS TROUVÉ — on ne devine pas, ON DEMANDE (ft-v1051). Deux unités au choix,
        un seul champ actif à la fois : la quantité a un seul propriétaire (R2). */
@@ -2989,6 +3026,10 @@ function _afMajAncre(){
       /* ⭐ ANCRÉ PAR LA PERSONNE — à partir d'ici c'est EXACTEMENT le bloc « poids connu »
          au-dessus : même champ, même `_afApplyProp`, même calcul. Seule la source diffère, et
          elle est dite à l'écran (R32 : on ne présente jamais une déclaration comme une mesure). */
+      /* ⛔ MÊME RÈGLE, ET C'EST LE CHEMIN DE LA CAPTURE DE MICHEL : les valeurs à l'écran sont
+         celles de la quantité affichée. La référence la SUIT au lieu de rester sur l'ancienne —
+         et comme elle est écrite en toutes lettres dessous, le changement se VOIT. */
+      if(qAff>0) _afPoidsDeclare=qAff;
       _afRef={base:base,q:_afPoidsDeclare,u:'g',src:'que tu as indiqué'};
       el.innerHTML='<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité <span style="font-weight:400;">— recalcule les 4 valeurs</span></div>'
         +choix
@@ -3013,6 +3054,13 @@ function _afMajAncre(){
     }
   }
   el.style.display='block';
+  /* ⛔ ET L'ÉCRAN SE REMET D'ACCORD AVEC LA RÉFÉRENCE QU'IL VIENT D'ÉCRIRE (ft-v1061).
+     Sans cette ligne, `base` est bien préservée mais les 4 champs gardent les valeurs du rescale
+     précédent : on afficherait « Référence : 30 g » au-dessus des chiffres de 40 g. *Le voisinage
+     muet une fois de plus* — corriger le calcul sans rafraîchir l'affichage ne corrige rien de ce
+     que la personne VOIT. `af-prop` n'existe que dans les deux états ancrés, et il porte
+     exactement `_afRef.q` : le facteur vaut donc 1. */
+  if(_afRef && _afRef.q>0 && document.getElementById('af-prop')) _afProp(1);
 }
 
 function _afCorrigerKcal(v){
@@ -4153,6 +4201,10 @@ const APP_GUIDE_SLIDES=[
   /* ⛔ SANS IMAGE : une capture montrerait une charge et un repos précis — donc elle se lirait
      comme une recommandation d'intensité, or ce qui est vrai ici dépend de TON maximum. */
   {icon:'🎽', t:'Le repos suit la charge', cap:'Quand une série est <b>lourde</b> (dès 80 % de ton max), elle demande <b>3 min de repos minimum</b> — quel que soit ton objectif. Milo le sait maintenant, et si un repos trop court passe quand même, <b>l\'avertissement s\'affiche sous sa séance dans le chat</b>, avant que tu la lances. ⚠️ Il informe, il ne bloque pas : la charge ne bouge pas, c\'est toi qui décides.'},
+  /* 👎 ft-v1059 — DIAPO SANS IMAGE, EXPRÈS. Une capture montrerait une réponse de Milo, donc
+     un conseil que le lecteur n'a pas demandé, sous un bouton qui dit « à côté » — l'image
+     laisserait croire que c'est CETTE réponse-là qui était mauvaise. Le texte se suffit. */
+  {icon:'\u{1F44E}', t:'Dis-le quand Milo répond à côté', cap:'Sous chaque réponse de Milo : <b>« 👎 à côté »</b>. Un tap, quatre motifs — <b>à côté</b>, <b>trop vague</b>, <b>faux</b>, <b>il a oublié</b>. ⛔ <b>Rien de ta conversation n\'est envoyé</b> : le motif est compté sur ton téléphone. Tu peux <b>en plus</b> joindre l\'échange si tu veux que Michel le corrige — la case est <b>décochée par défaut</b>. ⭐ Chaque signalement devient un <b>test permanent</b> : c\'est comme ça que Milo s\'améliore pour de bon.'},
   {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
 let _agIdx=0,_agSwipeInit=false;

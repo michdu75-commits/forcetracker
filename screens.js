@@ -302,6 +302,11 @@ const _HELP_DATA={
   coach:{
     title:'🤖 Coach IA',
     tips:[
+      /* ⛔ POURQUOI CETTE ENTREE EXISTE (ft-v1059) : le bouton dit ce qu'il FAIT, pas ce
+         qu'il ne fait PAS. Quelqu'un peut hesiter a taper « à côté » en croyant envoyer sa
+         conversation. L'aide repond a la seule question qui retient la main. Le bouton
+         annonce, l'aide explique (R25). */
+      {i:'\u{1F44E}',t:'<b>« 👎 à côté » sous une réponse de Milo</b> : quand il répond à côté, reste trop vague, dit quelque chose de faux, ou oublie un truc que tu lui avais dit. <b>Un tap suffit</b>, et c\'est fini. ⛔ <b>Rien de ta conversation ne part</b> : seul le motif est compté, sur ton téléphone. Si tu veux <b>en plus</b> que Michel voie l\'échange pour le corriger, une case est là — <b>décochée par défaut</b>. ⭐ Chaque signalement devient un <b>cas de test</b> : c\'est comme ça que Milo s\'améliore vraiment. ⚠️ Pas de pouce vert : on mesure ce qui rate, pas ta politesse.'},
       {i:'🎽',t:'<b>Le repos suit la charge</b> : si Milo te propose une série <b>lourde</b> (dès 80 % de ton max) avec un repos trop court, un <b>avertissement s\'affiche sous sa séance</b>, avant que tu la lances. ⚠️ Il <b>informe</b>, il ne bloque pas : le bouton reste et la charge n\'est pas retouchée — c\'est toi qui tranches. Et Milo a maintenant la règle : une série lourde demande <b>3 min minimum</b> (plus en force athlétique), quel que soit ton objectif.'},
       {i:'📄',t:'<b>Exporter une réponse en PDF</b> : le bouton sous chaque réponse de Milo. Si tu avais reçu « Conseil de Milo » au lieu de ton document, c\'est réparé — c\'était le titre de la feuille de partage, pas ton PDF (qui était complet et l\'est toujours). Ça valait aussi pour le PDF de programme et l\'étude du corps.'},
       {i:'💬',t:'Ton profil complet (poids, objectif, discipline, PRs, morphologie) est injecté automatiquement — pas besoin de te présenter à chaque fois.'},
@@ -474,6 +479,10 @@ function _blockEdgeBackSwipe(){
 // ⚠️ AJOUTER ICI toute nouvelle pop-up « à effet de bord » (marqueur vu, cooldown…), sinon elle
 // reviendra en boucle quand on la ferme au doigt.
 const _OVERLAY_CLOSERS={
+  /* 👎 ft-v1059 — R15 : glisser, Échap ou taper à côté doivent fermer par la MÊME porte.
+     Ici la fermeture ne consomme rien (le motif est déjà enregistré au tap), mais l'oublier
+     laisserait l'écran ouvert derrière un retour arrière — le défaut de ft-v466/v629. */
+  'ov-milo-rate':'_miloRaterFermer',
   'ov-histo-export':'closeHistoExport',            // ft-v1048 (R15 : tout chemin de fermeture)
   'ov-whatsnew':'closeWhatsNew',                   // marque les nouveautés comme vues
   'ov-super-welcome':'closeSuperWelcome',
