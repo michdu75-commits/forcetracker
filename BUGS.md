@@ -1446,6 +1446,33 @@ ressources — et la 2ᵉ fois en deux jours que j'appelle « mort » quelque ch
 
 ---
 
+## 24. 🪟 UNE FIXTURE SANS PROFONDEUR NE TESTE PAS LE MÊME ÉCRAN *(30/08/2026, ft-v1060)*
+
+**Le cas.** Le bouton « Exporter » de l'historique ne faisait rien chez Michel — *« ça clique bien
+mais rien ne se passe »*. Mon test de la veille l'avait pourtant joué de bout en bout : bouton,
+modale, fichier téléchargé, **0 erreur JS**.
+
+**Pourquoi il passait.** Ma fixture contenait **une seule séance**. L'écran ne défilait donc pas.
+Or le défaut était *une modale en `position:absolute` enfermée dans un conteneur qui défile* :
+`inset:0` désigne alors le **haut du contenu**, pas la fenêtre — donc elle s'ouvre hors de l'écran
+**dès qu'on a défilé**. Avec 30 séances, mesuré : la modale s'ouvre à **y = −3102**, soit
+**2 800 px au-dessus**. Le test et l'utilisateur regardaient deux écrans différents.
+
+**À quoi on la reconnaît.** Le test emprunte le bon chemin, dans le bon ordre, et il est vert —
+mais **le VOLUME de données qu'il pose ne ressemble pas au réel**. Tout ce qui n'apparaît qu'au-delà
+d'un certain seuil y échappe : défilement, pagination, listes tronquées, lenteur, mise en cache.
+
+**Ce qui protège aujourd'hui.** Le témoin du bloc **CLXVI** pose **30 séances** et fait défiler
+l'écran **à fond** avant de mesurer — et un second témoin vérifie que le défilement a bien eu lieu
+(`> 500 px`) : *sans lui, le premier serait vert en ne mesurant rien.*
+
+👉 **Le réflexe.** Quand un test reproduit « le chemin heureux » et que la personne voit autre
+chose, regarder d'abord **ce que la fixture n'a pas** — avant de chercher ce que le code fait mal.
+
+⚠️ **Et c'est la famille MIROIR du « contrôle circulaire » (§ plus haut)** : là-bas le vert ne
+pouvait pas rougir ; ici le vert est **sincère**, il porte simplement sur un écran qui n'est pas
+celui de la personne. *Les deux coûtent le même prix — on cherche le défaut au mauvais endroit.*
+
 ## 23. 🔢 UN CHAMP QUI « REFUSE » UNE SAISIE PEUT EN FAIT LA MUTILER *(30/08/2026, ft-v1057)*
 
 ### Ce qui s'est passé

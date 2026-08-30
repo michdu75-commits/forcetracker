@@ -6,7 +6,20 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1059`.
+- **Version en ligne (live) :** `ft-v1060`.
+- 🪟⭐⭐ **UNE MODALE ENFERMÉE DANS UN ÉCRAN QUI DÉFILE S'OUVRE HORS DE L'ÉCRAN** (ft-v1060).
+  Michel : *« ça clique bien mais rien ne se passe »* — **ses 5 mots ont changé le diagnostic** :
+  le bouton répond, donc le défaut est **avant** la livraison du fichier.
+  ⛔⛔ **Cause mesurée** : `.overlay` est en `position:absolute` → elle se cale sur son ancêtre
+  positionné. Un `.screen` est `position:absolute` **et** `overflow-y:auto`, donc `inset:0` y
+  désigne le **haut du contenu** : écran Progrès défilé à fond, la modale s'ouvrait à
+  **y = −3102**, soit **2 800 px au-dessus**. `open` posée, modale rendue, rien de visible.
+  ⚠️⚠️ **Panne SILENCIEUSE et liée au DÉFILEMENT** : une fixture d'une seule séance ne défile pas,
+  donc le test passe. ***Mon test de la veille reproduisait le chemin heureux*** — nouvelle famille
+  **§24** de `BUGS.md`.
+  ⭐⭐ **Sur 63 overlays, 61 étaient déjà à la racine** : les 2 fautives étaient l'exception (R13).
+  ⚠️ **Jumelle plus grave (R8)** : `ov-rest-edit` — le réglage du repos **en pleine séance**.
+  ⚠️ **Correction que je me dois** : le `;charset` de ft-v1059 était un vrai défaut, **pas celui-là**.
 - 📤⭐⭐ **L'EXPORT DE L'HISTORIQUE NE MENT PLUS SUR SA RÉUSSITE** (ft-v1059). Michel : *« le
   bouton exporter dans historique ne fonctionne pas »*.
   ⛔⛔ **Mesuré d'abord** : toute la chaîne marche en Chromium (0 erreur) → c'était **spécifique

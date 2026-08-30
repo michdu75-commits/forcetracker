@@ -18302,6 +18302,97 @@ console.log('\n-- CLXV. L\'export ne ment plus sur sa réussite (ft-v1059) --');
   }
 }
 
+/* == BLOC CLXVI - UNE MODALE ENFERMEE DANS UN ECRAN QUI DEFILE S'OUVRE HORS DE L'ECRAN (ft-v1060) ==
+   Michel : « ca clique bien mais rien ne se passe » sur le bouton Exporter.
+
+   ⛔⛔ LA CAUSE, MESUREE : `.overlay` est en **position:absolute**, donc elle se cale sur son
+   ancetre POSITIONNE. A la racine c'est `.screens` et `inset:0` couvre la fenetre. Mais un
+   `.screen` est lui aussi `position:absolute` — ET `overflow-y:auto`. Une overlay enfermee
+   dedans voit donc `inset:0` designer le HAUT DU CONTENU, pas la fenetre.
+   👉 Ecran Progres defile a fond : la modale s'ouvrait a **y = −3102**, soit 2 800 px AU-DESSUS.
+   La classe `open` etait posee, la modale rendue — et il ne se passait rien.
+
+   ⚠️⚠️ CE QUI REND CETTE PANNE COUTEUSE : elle est SILENCIEUSE et ELLE DEPEND DU DEFILEMENT.
+   Rien n'echoue, aucune erreur ne remonte, et un test dont la fixture n'a qu'une seance ne
+   defile pas — donc il passe. *Mon propre test d'hier a reproduit le chemin heureux.*
+
+   ⭐⭐ LE TEMOIN CI-DESSOUS VAUT PLUS QUE LE CORRECTIF : il epingle la REGLE (aucune overlay dans
+   un ecran) au lieu du cas du jour. Mesure : sur 63 overlays, 61 etaient deja a la racine — les
+   2 fautives etaient l'exception, pas la norme. */
+console.log('\n-- CLXVI. Aucune modale n\'est enfermée dans un écran qui défile (ft-v1060) --');
+{
+  const fsx=require('fs');
+  const html=fsx.readFileSync(__dirname+'/../../index.html','utf8');
+  /* ⭐ On reconstruit la pile d'ancêtres de CHAQUE overlay — c'est structurel, donc lisible
+     dans le fichier : pas besoin d'un navigateur pour cette moitié. */
+  const enfermees=[]; let total=0;
+  const re=/<div class="overlay"[^>]*id="([^"]+)"/g; let m;
+  while((m=re.exec(html))){
+    total++;
+    const avant=html.slice(0,m.index); const pile=[]; const rt=/<(\/?)div\b([^>]*)>/g; let t;
+    while((t=rt.exec(avant))){ if(t[1]==='/') pile.pop(); else pile.push(t[2]); }
+    if(pile.some(a=>/class="screen"/.test(a))) enfermees.push(m[1]);
+  }
+  t('⭐⭐ ① aucune `.overlay` ne vit à l\'intérieur d\'un `.screen` (elle s\'ouvrirait hors écran)',
+    enfermees.length===0, enfermees.join(', ')||('aucune — '+total+' overlays vérifiées'));
+  /* ⛔ SANS CE TÉMOIN, ① serait vert le jour où quelqu'un renomme la classe : on aurait un
+     contrôle qui ne regarde plus rien. */
+  t('⛔ … et le témoin a bien VU les overlays (sinon il serait vert en ne mesurant rien)',
+    total>=60, total+' overlays trouvées');
+  /* ⭐⭐ ET LA MOITIÉ QUI COMPTE VRAIMENT : le comportement, ÉCRAN DÉFILÉ À FOND. C'est la
+     condition que ma fixture d'hier n'avait pas — une seule séance ne fait pas défiler. */
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const V=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const J=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+    /* ⭐ 30 séances : c'est ce qui fait DÉFILER, et c'est tout le sujet. */
+    S.sessions=[]; for(let i=1;i<=30;i++) S.sessions.push({date:J(i),label:'S'+i,
+      exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,type:'N',done:true},{kg:80,reps:8,type:'N',done:true}]}]});
+    persist();
+    const vue=(ov)=>{ const md=ov.querySelector('.modal'); if(!md) return null;
+      const r=md.getBoundingClientRect();
+      return {y:Math.round(r.y), dansLEcran:(r.bottom>0 && r.top<window.innerHeight)}; };
+    const o={};
+    goScreen('progress');
+    const ep=document.getElementById('s-progress');
+    ep.scrollTop=ep.scrollHeight;                       // comme Michel : tout en bas
+    o.defilement=Math.round(ep.scrollTop);
+    openHistoExport();
+    o.export=vue(document.getElementById('ov-histo-export'));
+    closeHistoExport();
+    /* ⚠️ LA JUMELLE (R8) : `ov-rest-edit`, dans l'écran Séance — le réglage du repos, EN PLEINE
+       SÉANCE. Même cause, trouvée en cherchant, pas en tombant dessus. */
+    goScreen('log');
+    const el=document.getElementById('s-log');
+    el.scrollTop=el.scrollHeight;
+    openRestEdit();
+    o.repos=vue(document.getElementById('ov-rest-edit'));
+    closeRestEdit();
+    return o;
+   }catch(e){ return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]}; }
+  });
+  await cx.close();
+
+  if(V.err) t('CLXVI n\'a pas pu tourner', false, JSON.stringify(V));
+  else{
+    /* ⛔ Sans défilement réel, les deux témoins suivants seraient verts sans rien mesurer —
+       c'est exactement le piège dans lequel je suis tombé hier. */
+    t('⛔ ② l\'écran Progrès DÉFILE vraiment dans le témoin (sinon il ne mesure rien)',
+      V.defilement>500, 'défilement = '+V.defilement+' px');
+    t('⭐⭐ ③ écran défilé à fond, la modale d\'export est DANS l\'écran',
+      !!V.export && V.export.dansLEcran===true, JSON.stringify(V.export));
+    t('⚠️ ④ LA JUMELLE (R8) : le réglage du repos aussi, en pleine séance',
+      !!V.repos && V.repos.dansLEcran===true, JSON.stringify(V.repos));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
