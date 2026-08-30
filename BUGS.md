@@ -1587,3 +1587,52 @@ gardé quand ça ne passe pas ? »*
 ⚠️ **Famille voisine** : *« le correctif posé d'un seul côté »* — ici, l'app savait lire une
 virgule à **dix endroits**, mais uniquement pour du texte venu d'AILLEURS (une phrase libre, un
 rapport de balance photographié, une réponse de Milo). **Jamais pour ce que la personne TAPE.**
+
+---
+
+## 25. 🩸 LA FUSION QUI EFFACE LE BLOC DE L'AUTRE — *et qui reprend son NUMÉRO* **(30/08/2026, ft-v1065)**
+
+### 🔎 À quoi on la reconnaît
+Un **total de tests qui BAISSE** pendant qu'on annonce des tests en plus. C'est le seul signe, et
+il tient dans le message de commit qu'on vient d'écrire soi-même.
+
+### 📉 Le cas
+En livrant **ft-v1065**, j'ai résolu un conflit de `tests/parcours/runner.js` en gardant mon côté :
+**`-140` lignes**, et **deux blocs entiers de session-A effacés** — leur **CLXX** (« j'ai 2 fois la
+même prot », 8 témoins) et leur **CLXXI** (« le choix d'unité dans Modifier l'aliment », 9 témoins).
+**17 témoins disparus d'un coup.**
+
+⛔⛔ **Et le code mesuré, lui, était intact.** `_afSetUnite` et `ef-qty-row` sont toujours dans
+`app.js`, les deux écrans marchent. *Seuls les témoins qui les protègent avaient disparu* — donc
+rien ne casse, rien ne rougit, et la prochaine régression sur ces deux écrans serait passée sans
+un bruit. **C'est la panne la plus silencieuse du catalogue : elle ne se manifeste que le jour où
+elle aurait dû servir.**
+
+⚠️⚠️ **CE QUI L'A RENDUE INVISIBLE EST PIRE QUE L'EFFACEMENT : MON BLOC A REPRIS LEUR NUMÉRO.**
+Le fichier portait toujours un `BLOC CLXX` — avec **mon** titre. Chercher « est-ce que CLXX existe
+encore ? » répondait **oui**. 👉 ***Un trou recouvert par quelque chose du même nom ne se compte
+pas : il faut compter les TÉMOINS, pas les numéros.***
+
+### ⭐⭐ Le signal était là, et je l'ai écrit sans le lire
+L'arbre d'avant portait **1949** témoins. J'ai livré **1939** en annonçant *« +4 »*.
+👉 ***Un total qui descend pendant qu'on ajoute des tests est un aveu.*** Le même motif exactement
+que le `-1793` du numstat de l'archive, le 04/08 — *lu par personne, découvert deux jours plus tard
+par hasard*. **Deuxième fois, autre fichier.**
+
+### 🛡️ Ce qui protège aujourd'hui
+- **CONTRÔLE 10 de `check_regles.py`** : il compte les `t(` de `runner.js` et **refuse toute
+  baisse** face à la version précédente. Il tourne à **chaque** livraison parce qu'il est
+  **statique** — le total réel demande 10 min de Playwright, et *un contrôle qu'on saute parce
+  qu'il est lent ne protège personne*.
+- **Franchissable exprès** : un retrait de témoin est parfois juste (**R30**). Il faut alors
+  l'écrire — `TEMOINS-RETIRES: <raison>` dans le message de commit. *On ne peut plus effacer par
+  accident, on peut seulement décider.*
+- **Éprouvé dans les deux sens** : 25 témoins retirés → **rouge**, avec le compte nommé ; le même
+  fichier avec la déclaration → **vert**, `↓ −8, retrait déclaré`.
+
+### ⭐ Le réflexe
+Après **toute** fusion du runner : ne pas se contenter de `node --check` (il dit que le fichier
+**démarre**, jamais qu'il est **entier**). Lire le **numstat** — et si le côté supprimé dépasse une
+dizaine de lignes, faire `git show HEAD -- tests/parcours/runner.js | grep '^-.*BLOC'`.
+⚠️ **Et ne jamais reprendre le numéro d'un bloc qu'on vient de voir dans le conflit** : c'est le
+signe qu'il existait, pas qu'il est libre.

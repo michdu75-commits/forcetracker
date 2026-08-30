@@ -608,14 +608,15 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 
 <!-- PROGRÈS -->
 <div class="screen" id="s-progress">
-  <!-- 🔭 ft-v1041 — brique 8 « Synthèse ». En TÊTE de Progrès : c'est l'onglet où on vient
-       déjà pour regarder en arrière. Vide tant qu'il n'y a aucune séance ; sous le seuil, elle
-       DIT qu'elle ne sait pas encore. Seul auteur : `_renderSynthese()`. -->
-  <div id="prog-synth" style="padding:0 0 12px;"></div>
-  <!-- 📊 ft-v1045 — le volume par groupe musculaire sur 7 jours glissants. SOUS la
-       synthèse : celle-ci parle de tout l'historique, celui-ci de la semaine en cours.
-       Vide s'il n'y a rien à compter. Seul auteur : `_renderVolumeSemaine()`. -->
-  <div id="prog-volume" style="padding:0 0 12px;"></div>
+  <!-- ⛔⛔ LES ONGLETS SONT EN TÊTE DEPUIS LE 30/08/2026 (ft-v1066), ET C'EST UNE MESURE.
+       Michel, capture à l'appui : « ça prend vachement d'espace en haut non ? ». Chiffré :
+       synthèse 216 px + volume 345 px (8 muscles) = **561 px** — les onglets tombaient à
+       y=699 sur un écran de 844, et le champ de recherche à 821, AU RAS DU BORD. Sur l'onglet
+       Exercices, sa progression commençait **hors écran**.
+       ⭐ Deux raisons, et la seconde est de fond : ① les onglets sont de la NAVIGATION, elle
+       doit être atteignable sans défiler ; ② depuis ft-v1065 ces deux cartes n'appartiennent
+       qu'à l'onglet Exercices — leur place est donc DANS son contenu, pas au-dessus de la
+       barre qui sert à en sortir. -->
   <div class="nu-tabs">
     <button class="nu-tab active" id="ptab-exo" onclick="switchProgTab('exo',this)">Exercices</button>
     <button class="nu-tab" id="ptab-poids" onclick="switchProgTab('poids',this)">Poids</button>
@@ -624,6 +625,32 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 
   <!-- TAB: Exercices -->
   <div id="prog-exo" style="display:flex;flex-direction:column;gap:10px;">
+    <!-- 🔭 ft-v1041 — brique 8 « Synthèse » · 📊 ft-v1045 — le volume par groupe musculaire.
+         ⛔ REPLIABLES depuis ft-v1066, et l'état est RETENU (`ft4_progAcc`) : à 561 px les deux
+         repoussaient tout le reste hors de l'écran. ⭐ R13 : on réutilise `details.acc`, le
+         motif d'accordéon déjà employé dans l'onglet Macros — **zéro ligne de CSS ajoutée**.
+         ⚠️ Le sous-titre du résumé dit ce qu'il y a DEDANS, sinon un accordéon fermé n'est
+         qu'un titre qu'on n'ouvre jamais (la leçon de ft-v1024).
+         ⛔ Les deux `div` gardent leurs id : `_renderSynthese()` et `_renderVolumeSemaine()`
+         restent les seuls auteurs, et `switchProgTab` masque le `details` entier (R2). -->
+    <details class="acc" id="prog-synth-acc">
+      <summary>
+        <span style="display:flex;flex-direction:column;gap:2px;min-width:0;">
+          <span>🔭 Ce que ton histoire montre</span>
+          <span style="font-size:11.5px;font-weight:600;color:var(--t3);">Tes constantes : rythme, régions travaillées</span>
+        </span>
+      </summary>
+      <div id="prog-synth" style="padding:0 14px 14px;"></div>
+    </details>
+    <details class="acc" id="prog-volume-acc">
+      <summary>
+        <span style="display:flex;flex-direction:column;gap:2px;min-width:0;">
+          <span>📊 Ce que tu travailles, par semaine</span>
+          <span style="font-size:11.5px;font-weight:600;color:var(--t3);">Tes séries par muscle, sur 14 jours</span>
+        </span>
+      </summary>
+      <div id="prog-volume" style="padding:0 14px 14px;"></div>
+    </details>
     <div class="sec">Progression</div>
     <div id="big4-chips" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
     <div id="prog-search-wrap" style="position:relative;">

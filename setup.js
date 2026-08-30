@@ -139,7 +139,11 @@ function _renderSynthese(){
   const el=document.getElementById('prog-synth'); if(!el) return;
   const c=(typeof _synthConstantes==='function')?_synthConstantes():null;
   if(!c || !c.nSeances){ el.innerHTML=''; return; }   // aucune séance : la section n'existe pas
-  const tete='<div class="synth-t">🔭 Ce que ton histoire montre</div>';
+  /* ⛔ PLUS DE TITRE NI DE CARTE ICI (ft-v1066) : depuis que la section vit dans un
+     `<details class="acc">`, l'accordéon porte DÉJÀ le titre et l'encadré. Les répéter donnait
+     « Ce que ton histoire montre » deux fois de suite, dans deux cadres emboîtés — trouvé à la
+     capture, invisible à toute mesure de chaîne. */
+  const tete='';
   if(!c.pret || !c.lignes.length){
     /* ⛔ ELLE DIT QU'ELLE NE SAIT PAS ENCORE, elle ne se tait pas : un cadre vide se lit comme un
        chargement qui a échoué, et un silence laisserait croire qu'il n'y a rien à apprendre. */
@@ -199,7 +203,7 @@ function _renderVolumeSemaine(){
        au-dessus de chiffres désormais calculés sur DEUX semaines : un titre qui nomme une période
        que le calcul n'emploie plus est exactement le motif que ce projet passe son temps à
        rattraper — un changement appliqué d'un seul côté. */
-    +'<div class="vol-t">📊 Ce que tu travailles, par semaine</div>'
+    /* ⛔ Idem : le titre vit dans le `<summary>` de l'accordéon (ft-v1066). */
     +vues.map(m=>'<div class="vol-l">'
         +'<div class="vol-nom">'+esc(m.label)+'</div>'
         /* ⭐ La barre est une aide à la LECTURE (elle range à l'œil), pas une jauge vers une
@@ -451,11 +455,41 @@ function closeHistoExport(){
   const ov=document.getElementById('ov-histo-export'); if(ov) ov.classList.remove('open');
 }
 
+/* ⭐⭐ L'ÉTAT DES DEUX ACCORDÉONS EST RETENU (30/08/2026, ft-v1066).
+   Michel a choisi « repliées par défaut » pour récupérer les 561 px qu'elles prenaient. Mais
+   ⛔ *un accordéon qu'on doit rouvrir à chaque visite est un accordéon qu'on n'ouvre plus* :
+   si quelqu'un déplie sa synthèse, elle doit être dépliée la fois d'après. C'est la leçon de
+   ft-v1024 (« le rangement SUIT L'USAGE »).
+   ⛔ Une seule clé pour les deux (`ft4_progAcc`), pas deux : c'est un réglage d'affichage, pas
+   une donnée de la personne — et deux clés pour la même intention divergeraient (R2).
+   ⛔ Et jamais bloquant : un stockage refusé (navigation privée) laisse simplement les cartes
+   repliées, le comportement par défaut. */
+const PROG_ACC=['prog-synth-acc','prog-volume-acc'];
+function _progAccRestore(){
+  let ouverts=[];
+  try{ ouverts=JSON.parse(localStorage.getItem('ft4_progAcc')||'[]')||[]; }catch(e){ ouverts=[]; }
+  PROG_ACC.forEach(id=>{
+    const d=document.getElementById(id); if(!d) return;
+    d.open = ouverts.indexOf(id)>=0;
+    if(!d.dataset.accWired){                    // ⛔ un seul écouteur, même si on re-rend
+      d.dataset.accWired='1';
+      d.addEventListener('toggle',_progAccSave);
+    }
+  });
+}
+function _progAccSave(){
+  try{
+    const ouverts=PROG_ACC.filter(id=>{ const d=document.getElementById(id); return d&&d.open; });
+    localStorage.setItem('ft4_progAcc', JSON.stringify(ouverts));
+  }catch(e){ /* stockage refusé : on repart repliées, c'est le défaut */ }
+}
 function renderProgress(){
-  /* 🔭 ft-v1041 — la synthèse se peint en tête, séparément des sous-onglets : elle ne
-     partage aucun état avec eux, donc changer d'onglet ne la fait pas disparaître (R2). */
+  /* 🔭 ft-v1041 — la synthèse et le volume se peignent ICI, une seule fois, indépendamment du
+     sous-onglet : `_renderSynthese()` et `_renderVolumeSemaine()` restent leurs seuls auteurs
+     (R2). Changer d'onglet ne fait que les MASQUER — jamais les vider ni les recalculer. */
   if(typeof _renderSynthese==='function')_renderSynthese();
   if(typeof _renderVolumeSemaine==='function')_renderVolumeSemaine();
+  _progAccRestore();
   switchProgTab('exo',document.getElementById('ptab-exo'));
   const chips=document.getElementById('big4-chips');
   if(chips)_renderProgChips(chips);
@@ -589,8 +623,12 @@ function switchProgTab(tab,btn){
      mais sa PORTÉE était trop large : « ne pas clignoter » ne veut pas dire « être partout ».
      ⛔ On ne les VIDE pas et on ne les recalcule pas : on les masque. Leur contenu est déjà peint
      par `renderProgress` ; les recalculer à chaque bascule coûterait pour rien (R19). */
+  /* ⚠️ ON MASQUE LE `details`, PLUS LE `div` INTÉRIEUR (ft-v1066) : les deux cartes vivent
+     désormais DANS le panneau Exercices, qui est déjà masqué par le sous-onglet. Ces deux lignes
+     restent quand même — ceinture et bretelles — parce que rien ne garantit que le panneau reste
+     leur seul parent, et parce que le témoin de ft-v1065 les épingle. */
   const tete=(tab==='exo')?'':'none';
-  ['prog-synth','prog-volume'].forEach(id=>{ const e=document.getElementById(id); if(e)e.style.display=tete; });
+  ['prog-synth-acc','prog-volume-acc'].forEach(id=>{ const e=document.getElementById(id); if(e)e.style.display=tete; });
   const exo=document.getElementById('prog-exo'),pw=document.getElementById('prog-poids'),bg=document.getElementById('prog-badges');
   if(exo){exo.style.display=tab==='exo'?'flex':'none';exo.style.flexDirection='column';exo.style.gap='10px';}
   if(pw){pw.style.display=tab==='poids'?'flex':'none';pw.style.flexDirection='column';pw.style.gap='10px';}

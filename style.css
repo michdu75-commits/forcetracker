@@ -1728,6 +1728,10 @@ html.ob-done #onboarding{display:none;}
    deux écrans. Un LISERÉ à gauche marque celle qui parle de tout l'historique ; celle du dessous
    parle de la semaine. *Deux horizons différents doivent se voir différents.*
    ⛔ Le liseré est en `--t3` (gris), pas en rouge : la synthèse est un miroir, pas une alerte. */
+/* ⛔ DANS UN ACCORDÉON, LA CARTE PERD SON ENCADRÉ (ft-v1066) — l'accordéon le fournit déjà.
+   ⭐ On garde les classes `.synth-card` / `.vol-card` : plusieurs témoins s'y accrochent, et
+   *renommer une classe pour la neutraliser casse des tests qui ne parlaient pas de style.* */
+.acc .synth-card,.acc .vol-card{background:none;box-shadow:none;padding:0;border-radius:0;border-left:0;}
 .synth-card{background:var(--bg2);border-radius:16px;padding:13px 14px 13px 15px;
   box-shadow:inset 0 0 0 1px var(--sep);border-left:3px solid var(--t3);}
 .synth-t{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin-bottom:9px;}
