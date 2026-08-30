@@ -18730,6 +18730,85 @@ console.log('\n-- CLXIX. Aucune modale n\'est enfermée dans un écran qui défi
   }
 }
 
+/* == BLOC CLXXI - LE CHOIX D'UNITE DANS « MODIFIER L'ALIMENT » (ft-v1064) ==
+   Michel, capture a l'appui : *« quand j'ajoute il ne me donne que le choix de la quantite »*.
+   Son ecran de modification n'offrait que des multiplicateurs et un cul-de-sac : *« Cette ligne
+   n'a pas de quantite connue — on ne peut pas inventer un poids. Mets la quantite dans le nom. »*
+   ⛔⛔ CETTE PHRASE EST, A DEUX MOTS PRES, CELLE QUE ft-v1056 A SUPPRIMEE DE L'ECRAN D'AJOUT.
+   Meme refus, meme journee, l'autre ecran — **le correctif avait ete pose d'un seul cote** (R8).
+   *Demander a quelqu'un de reecrire le NOM de son aliment pour en changer le poids, c'est lui
+   faire faire le travail de l'app.*
+   ⭐ R13 : rien de reinvente, c'est `_afMajAncre` transpose ; une fois le poids declare on
+   retombe sur le champ proportionnel qui existait deja ici depuis ft-v972.
+   ⭐ R4 : le poids DESCEND jusqu'a la donnee — sans ca l'app le redemande a chaque ouverture. */
+console.log('\n-- CLXXI. Le choix d\'unité dans « Modifier l\'aliment » (ft-v1064) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  const TS=Date.now()-36e5;
+  const d0=new Date(); const jr=new Date(d0.getTime()-d0.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+  /* ⭐ SON ENTRÉE : estimée par l'IA — aucun `per100`, aucun `q`, aucun poids dans le nom.
+     C'est précisément le cas que l'ancien écran envoyait dans le cul-de-sac. */
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',
+    ft4_foodlog:JSON.stringify([{ts:TS,date:jr,meal:'petitdej',name:'Iso zero protein (ASL)',
+      kcal:156,prot:35,carbs:1,fat:1}])}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async(ts)=>{
+   try{
+    const o={}, w=ms=>new Promise(x=>setTimeout(x,ms));
+    const V=id=>(document.getElementById(id)||{}).value;
+    const txt=()=>(document.getElementById('ef-qty-row')||{}).innerText||'';
+    const lire=()=>({kcal:+V('ef-kcal'),prot:+V('ef-prot')});
+    openEditFood(ts); await w(250);
+    o.onglets=/En grammes/.test(txt())&&/En portions/.test(txt());
+    o.culDeSac=/on ne peut pas inventer un poids/.test(txt());
+    o.portions=['½','1½','2','3'].every(x=>txt().indexOf(x)>=0);
+    _efSetUnite('g'); await w(180);
+    o.demande=/Combien pèse ce que tu as noté/.test(txt());
+    o.champVide=(V('ef-poids')||'')==='';
+    const p=document.getElementById('ef-poids'); p.value='30';
+    p.dispatchEvent(new Event('change',{bubbles:true})); await w(200);
+    /* ⛔ DÉCLARER N'EST PAS RESCALER : dire « ce que j'ai noté pèse 30 g » ne change pas ce qui
+       a été mangé — ça dit à quoi correspondent les 156 kcal affichées. */
+    o.declare={champ:V('ef-prop'), v:lire()};
+    const q=document.getElementById('ef-prop'); q.value='40';
+    q.dispatchEvent(new Event('input',{bubbles:true})); await w(180);
+    o.a40=lire();
+    saveEditFood(); await w(250);
+    const e=(S.foodLog||[]).find(x=>x.ts===ts);
+    o.enregistre={kcal:e.kcal,prot:e.prot,q:e.q,u:e.u};
+    openEditFood(ts); await w(250);
+    o.reouvert={champ:V('ef-prop'), culDeSac:/inventer un poids/.test(txt())};
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  },TS);
+  if(F.err) t('CLXXI n\'a pas pu tourner', false, F.err);
+  else{
+    /* ⭐⭐ SA PHRASE, MESURÉE. */
+    t('⭐⭐ SA CAPTURE : « Modifier l\'aliment » offre les DEUX unités, plus seulement des portions',
+      F.onglets===true, JSON.stringify({onglets:F.onglets,portions:F.portions}));
+    t('⛔⛔ le cul-de-sac « mets la quantité dans le nom » a disparu',
+      F.culDeSac===false, '');
+    /* ⛔ Non-régression : les portions restent pour qui ne connaît pas le poids. */
+    t('⛔ NON-RÉGRESSION : les 5 multiplicateurs sont toujours là (½ · 1 · 1½ · 2 · 3)',
+      F.portions===true, '');
+    t('⭐ « En grammes » DEMANDE le poids, et le champ est VIDE (rien de pré-rempli — R29)',
+      F.demande===true && F.champVide===true, JSON.stringify({demande:F.demande,vide:F.champVide}));
+    /* ⛔⛔ La subtilité qui rend l'écran juste. */
+    t('⛔⛔ DÉCLARER n\'est pas RESCALER : 30 g posé, les 4 valeurs ne bougent pas',
+      F.declare.champ==='30' && F.declare.v.kcal===156 && F.declare.v.prot===35, JSON.stringify(F.declare));
+    t('⭐ … et 40 g recalcule bien (156 → 208, 35 → 47)',
+      F.a40.kcal===208 && F.a40.prot===47, JSON.stringify(F.a40));
+    /* ⭐⭐ R4 — LE TÉMOIN QUI COMPTE LE PLUS : sans lui, l'app redemande à chaque ouverture. */
+    t('⭐⭐ R4 : le poids DESCEND jusqu\'à la donnée enregistrée (q=40, u=g)',
+      F.enregistre.q===40 && F.enregistre.u==='g' && F.enregistre.kcal===208, JSON.stringify(F.enregistre));
+    t('⭐⭐ … et à la RÉOUVERTURE le champ affiche 40 : le cul-de-sac ne revient jamais',
+      F.reouvert.champ==='40' && F.reouvert.culDeSac===false, JSON.stringify(F.reouvert));
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

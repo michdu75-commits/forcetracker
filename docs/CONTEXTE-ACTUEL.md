@@ -6,7 +6,17 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1062`.
+- **Version en ligne (live) :** `ft-v1064`.
+- ⚖️⭐ **LE CHOIX D'UNITÉ DANS « MODIFIER L'ALIMENT »** (ft-v1064). Michel : *« quand j'ajoute il
+  ne me donne que le choix de la quantité »*. L'écran de modification n'offrait que des
+  multiplicateurs + un cul-de-sac : *« mets la quantité dans le nom »*.
+  ⛔⛔ **Cette phrase est celle que ft-v1056 avait supprimée de l'écran d'AJOUT** — même refus,
+  l'autre écran, **correctif posé d'un seul côté** (**R8**). ⚠️ **3ᵉ fois du jour** (ft-v1061,
+  ft-v1063, celui-ci) : *la leçon n'est pas « corriger mieux », c'est **chercher la jumelle
+  AVANT de livrer**.*
+  ⭐ **R13** : `_afMajAncre` transposé, pas un 2ᵉ mécanisme. ⭐⭐ **R4, la moitié qui manquait
+  depuis ft-v972** : le poids descend jusqu'à `q`/`u` — sinon l'app le redemande à chaque
+  ouverture et le cul-de-sac revient. ⛔ Déclarer n'est pas rescaler, et le champ reste **vide**.
 - 🍽️⭐ **« J'AI 2 FOIS LA MÊME PROT »** (ft-v1063). Son shaker apparaissait **deux fois** dans
   « Tes repas habituels », deux lignes identiques. ⛔⛔ **La cause tient à un `+`** : la signature
   était `meal + '::' + aliments` — noté 6× en Collation 2 et 2× en Petit-déj, le même shaker

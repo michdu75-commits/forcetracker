@@ -2789,30 +2789,9 @@ function openEditFood(ts){
      ⛔ ET S'IL N'Y A AUCUN ANCRAGE, on ne devine pas un poids : on offre des **portions**
      (½ · 1½ · 2 ·…) qui multiplient les 4 macros sans jamais prétendre connaître des grammes.
      *Un « ×2 » est vrai quelle que soit la portion de départ ; un « 60 g » inventé serait faux.* */
-  let gramsFld='';
+  _efUnite='portion'; _efPoidsDeclare=0;   // remis à zéro à chaque ouverture (comme l'écran d'ajout)
+  let gramsFld='<div id="ef-qty-row"></div>';
   const _mNom=String(e.name||'').match(/(\d+(?:[.,]\d+)?)\s*(g|ml)\b/i);
-  const _ancre = e.per100 ? null
-    : (e.q>0 ? {v:e.q, u:e.u||'g', src:'quantité enregistrée'}
-    : (_mNom ? {v:parseFloat(_mNom[1].replace(',','.')), u:_mNom[2].toLowerCase(), src:'lu dans le nom'} : null));
-  if(e.per100){
-    let gInit;
-    if(e.q&&e.u==='g') gInit=Math.round(e.q);
-    else if(e.per100.kcal>0) gInit=Math.round((e.kcal||0)/e.per100.kcal*100);
-    else gInit=100;
-    gramsFld='<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité (g) <span style="font-weight:400;">— recalcule les macros ci-dessous</span></div>'
-      +'<input id="ef-grams" type="number" inputmode="numeric" value="'+gInit+'" oninput="_efApplyGrams()" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>';
-  } else if(_ancre && _ancre.v>0){
-    _efRef={base:{kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0}, q:_ancre.v};
-    gramsFld='<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité ('+_ancre.u+') <span style="font-weight:400;">— recalcule les macros ci-dessous</span></div>'
-      +'<input id="ef-prop" type="text" inputmode="decimal" step="any" value="'+_ancre.v+'" oninput="_efApplyProp()" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);">'
-      +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Référence '+_ancre.src+' : '+_ancre.v+' '+_ancre.u+'. Les 4 valeurs suivent en proportion.</div></div>';
-  } else {
-    _efRef={base:{kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0}, q:1};
-    const b=(x,l)=>'<button onclick="_efApplyPortion('+x+')" style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t2);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">'+l+'</button>';
-    gramsFld='<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Portion <span style="font-weight:400;">— multiplie les 4 valeurs</span></div>'
-      +'<div style="display:flex;gap:6px;">'+b(0.5,'½')+b(1,'1')+b(1.5,'1½')+b(2,'2')+b(3,'3')+'</div>'
-      +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Cette ligne n\'a pas de quantité connue — on ne peut pas inventer un poids. Mets la quantité dans le nom (ex. « 30 g de whey ») et le champ deviendra un poids.</div></div>';
-  }
   ov.innerHTML='<div class="modal" style="max-width:94vw;width:400px;padding:16px;">'
     +'<div style="font-weight:800;font-size:16px;color:var(--t1);margin-bottom:12px;">Modifier l\'aliment</div>'
     +'<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Nom</div>'
@@ -2827,6 +2806,7 @@ function openEditFood(ts){
     +'<button class="btn btn-bg2" onclick="document.getElementById(\'ov-edit-food\').classList.remove(\'open\')" style="width:100%;margin-top:8px;">Annuler</button>'
     +'</div>';
   document.getElementById('ef-name').value=e.name||''; // évite tout souci d'échappement dans l'attribut
+  _efQtyRender();                     // ⚖️ le bloc quantité, re-rendable tout seul (ft-v1064)
   _renderEditFoodMeals();
   _efCoherence();                     // l'incohérence se voit À L'OUVERTURE, sans rien toucher
   ov.classList.add('open');
@@ -2839,6 +2819,86 @@ function _renderEditFoodMeals(){FOOD_MEALS.forEach(m=>{const b=document.getEleme
    s'empileraient (30 → 60 → 90 donnerait ×2 puis ×1,5 = ×3 au lieu de ×3… et l'erreur grandirait
    à chaque frappe, chiffre par chiffre pendant la saisie). */
 let _efRef=null;
+/* ⚖️ LE CHOIX DE L'UNITÉ DANS « MODIFIER L'ALIMENT » (ft-v1064) — Michel, capture à l'appui :
+   *« quand j'ajoute il ne me donne que le choix de la quantité »*. Son écran n'offrait que des
+   multiplicateurs (½ · 1 · 1½ · 2 · 3) et un cul-de-sac : *« Cette ligne n'a pas de quantité
+   connue — on ne peut pas inventer un poids. Mets la quantité dans le nom. »*
+   ⛔⛔ CETTE PHRASE EST, À DEUX MOTS PRÈS, CELLE QUE ft-v1056 A SUPPRIMÉE DE L'ÉCRAN D'AJOUT.
+   Le même refus, le même jour, sur l'autre écran — **le correctif avait été posé d'un seul côté**
+   (R8, la jumelle). *Demander à quelqu'un de réécrire le NOM de son aliment pour pouvoir en
+   changer le poids, c'est lui faire faire le travail de l'app.*
+   ⭐ R13 : rien n'est réinventé, c'est le mécanisme de `_afMajAncre` transposé — deux onglets, un
+   seul champ actif à la fois, et une fois le poids déclaré on retombe EXACTEMENT sur le champ
+   proportionnel qui existait déjà ici depuis ft-v972. */
+let _efUnite='portion', _efPoidsDeclare=0;
+function _efSetUnite(u){
+  if(u===_efUnite) return;
+  _efUnite=(u==='g')?'g':'portion';
+  /* ⛔ On ne rescale RIEN en changeant d'unité : ça ne change pas ce qu'on a mangé, ça change la
+     façon de le compter. (Même décision qu'en ft-v1056.) */
+  _efPoidsDeclare=0; _efQtyRender();
+}
+function _efDeclarePoids(){
+  const v=numFR((document.getElementById('ef-poids')||{}).value);
+  if(!(v>0)) return;
+  _efPoidsDeclare=v; _efQtyRender();
+}
+function _efQtyRender(){
+  const el=document.getElementById('ef-qty-row'); if(!el) return;
+  const e=(S.foodLog||[]).find(x=>x.ts===_editFoodTs); if(!e){el.innerHTML='';return;}
+  /* ⛔⛔ `base` VIENT DE L'ENTRÉE ENREGISTRÉE, JAMAIS DE L'ÉCRAN — c'est la leçon de ft-v1061,
+     appliquée ici dès l'écriture : relire des champs déjà rescalés ferait de la référence une
+     valeur dérivée d'elle-même, et l'erreur se figerait. */
+  const base={kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0};
+  const style='width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);';
+  const mNom=String(e.name||'').match(/(\d+(?:[.,]\d+)?)\s*(g|ml)\b/i);
+  const ancre = e.per100 ? null
+    : (e.q>0 ? {v:e.q,u:e.u||'g',src:'quantité enregistrée'}
+    : (mNom ? {v:parseFloat(mNom[1].replace(',','.')),u:mNom[2].toLowerCase(),src:'lu dans le nom'} : null));
+  if(e.per100){
+    let g;
+    if(e.q&&e.u==='g') g=Math.round(e.q);
+    else if(e.per100.kcal>0) g=Math.round((e.kcal||0)/e.per100.kcal*100);
+    else g=100;
+    el.innerHTML='<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité (g) <span style="font-weight:400;">— recalcule les macros ci-dessous</span></div>'
+      +'<input id="ef-grams" type="text" inputmode="decimal" step="any" value="'+g+'" oninput="_efApplyGrams()" style="'+style+'"></div>';
+    return;
+  }
+  if(ancre && ancre.v>0){
+    _efRef={base:base,q:ancre.v};
+    el.innerHTML='<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité ('+ancre.u+') <span style="font-weight:400;">— recalcule les macros ci-dessous</span></div>'
+      +'<input id="ef-prop" type="text" inputmode="decimal" step="any" value="'+ancre.v+'" oninput="_efApplyProp()" style="'+style+'">'
+      +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Référence '+ancre.src+' : '+ancre.v+' '+ancre.u+'. Les 4 valeurs suivent en proportion.</div></div>';
+    return;
+  }
+  /* ⚖️ AUCUN ANCRAGE — on ne devine pas, ON DEMANDE (le correctif de ft-v1064). */
+  const onglet=(u,l)=>'<button onclick="_efSetUnite(\''+u+'\')" style="flex:1;padding:7px 4px;border-radius:9px;border:1px solid '
+    +(_efUnite===u?'var(--red)':'var(--sep)')+';background:'+(_efUnite===u?'var(--bg3)':'var(--bg2)')
+    +';color:'+(_efUnite===u?'var(--t1)':'var(--t3)')+';font-size:12.5px;font-weight:'+(_efUnite===u?'800':'700')
+    +';font-family:var(--font);cursor:pointer;touch-action:manipulation;" aria-pressed="'+(_efUnite===u?'true':'false')+'">'+l+'</button>';
+  const choix='<div style="display:flex;gap:6px;margin-bottom:7px;">'+onglet('g','⚖️ En grammes')+onglet('portion','🍽️ En portions')+'</div>';
+  let corps;
+  if(_efUnite==='g'&&_efPoidsDeclare>0){
+    _efRef={base:base,q:_efPoidsDeclare};
+    corps=choix
+      +'<input id="ef-prop" type="text" inputmode="decimal" step="any" value="'+_efPoidsDeclare+'" oninput="_efApplyProp()" style="'+style+'">'
+      +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Référence : '+_efPoidsDeclare+' g (que tu as indiqué). Change ce nombre à chaque fois que la quantité change — les 4 valeurs suivent.</div>';
+  }else if(_efUnite==='g'){
+    _efRef={base:base,q:1};
+    /* ⛔ CHAMP VIDE, PAS PRÉ-REMPLI : un « 100 » proposé s'enregistrerait tel quel chez qui valide
+       sans regarder — *un chiffre qu'on n'a pas choisi et qui s'enregistre est un chiffre faux
+       présenté comme un fait* (R29). Tant que rien n'est indiqué, les 4 valeurs NE BOUGENT PAS. */
+    corps=choix
+      +'<input id="ef-poids" type="text" inputmode="decimal" step="any" placeholder="poids de cette portion" onchange="_efDeclarePoids()" style="'+style+'">'
+      +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Combien pèse ce que tu as noté ? <b>L\'app ne peut pas le deviner, toi si.</b> Indique-le une fois : les 4 valeurs se calent dessus.</div>';
+  }else{
+    _efRef={base:base,q:1};
+    const b=(x,l)=>'<button onclick="_efApplyPortion('+x+')" style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t2);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">'+l+'</button>';
+    corps=choix+'<div style="display:flex;gap:6px;">'+b(0.5,'½')+b(1,'1')+b(1.5,'1½')+b(2,'2')+b(3,'3')+'</div>'
+      +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Les 4 valeurs ci-dessous sont <b>une portion</b>. Tu connais le poids ? Passe en <b>⚖️ grammes</b> et indique-le.</div>';
+  }
+  el.innerHTML='<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité <span style="font-weight:400;">— recalcule les 4 valeurs</span></div>'+corps+'</div>';
+}
 function _efProp(f){
   if(!_efRef) return;
   const b=_efRef.base;
@@ -3129,6 +3189,13 @@ function saveEditFood(){
   // ne veulent rien dire et on ne les invente pas (R29).
   const gEl=document.getElementById('ef-grams');
   if(gEl){ e.q=numFR(gEl.value)||0; e.u='g'; }
+  /* ⭐ R4 (ft-v1064) — LE POIDS DÉCLARÉ DESCEND JUSQU'À LA DONNÉE. Sans ça la personne le donne,
+     les 4 valeurs se recalculent à l'écran… et rien n'est retenu : à la prochaine ouverture
+     l'app lui redemande, et le cul-de-sac revient. C'est la moitié qui manquait à ft-v972.
+     ⛔ On n'écrit que ce qui est VRAIMENT en grammes : le champ proportionnel sert aussi aux
+     ancrages en `ml`, et l'unité d'origine ne se réécrit pas (R29). */
+  const pEl=document.getElementById('ef-prop');
+  if(pEl && numFR(pEl.value)>0){ e.q=numFR(pEl.value); e.u=e.u||'g'; }
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   const ov=document.getElementById('ov-edit-food'); if(ov)ov.classList.remove('open');
   renderFoodJournal();
