@@ -6,7 +6,21 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1065`.
+- **Version en ligne (live) :** `ft-v1067`.
+- 🗂️⭐⭐ **LE HAUT DE PROGRÈS : ONGLETS EN TÊTE, CARTES REPLIABLES** (ft-v1067). Michel, capture à
+  l'appui : *« ça prend vachement d'espace en haut non ? »*.
+  ⭐ **Avant** : 216 + 345 = **561 px** ; onglets à **y=699** sur un écran de 844, recherche à
+  **821 (au ras du bord)** → *sa progression commençait hors écran*.
+  ⭐ **Après** : onglets **118**, cartes repliées **132 px**, PROGRESSION **347**, recherche **392**.
+  ⭐⭐ **2 raisons, la 2ᵉ de fond** : les onglets sont de la **navigation** ; et depuis ft-v1065 ces
+  cartes n'appartiennent qu'à Exercices — leur place est DANS son contenu.
+  ⛔ **L'état est retenu** (`ft4_progAcc`) : *un accordéon qu'on rouvre à chaque visite est un
+  accordéon qu'on n'ouvre plus* (ft-v1024). ⛔ On masque, on ne recalcule pas. ⛔ **R13 : 0 CSS**.
+  ⚠️ **Titre DOUBLÉ trouvé à la capture** (le résumé + la carte) — invisible à toute mesure.
+  ⚠️ **Liseré de ft-v1047 retiré avec sa raison** (R30) : il distinguait 2 cartes grises, chacune
+  a son titre maintenant.
+  ⚠️⚠️ **8 témoins ont rougi sans qu'aucun défaut n'existe** — `innerText` sur du replié ·
+  `style.display` sur le mauvais élément · et un des miens mesurait un **mouvement** disparu.
 - 0️⃣ **UN PROXY QUI DEVIENT FAUX QUAND UNE VALEUR VAUT ZÉRO** (ft-v1066). Michel : *« même quand
   je mets zéro il marque déjà 5 g de prot »*. ⚠️⚠️ **Cas NON reproduit, et c'est écrit** : mesuré
   six chemins, un 0 posé à la main **tient** (survit au rescale, s'enregistre à 0) — 3 témoins le

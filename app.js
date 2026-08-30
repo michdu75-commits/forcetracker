@@ -4299,6 +4299,9 @@ const APP_GUIDE_SLIDES=[
   {icon:'🎽', t:'Ton cadre décide, pas une moyenne', cap:'L\'avertissement « <b>repos trop court pour du lourd</b> » suit désormais <b>ta discipline</b>. En force athlétique on te dira « viser <b>3 à 5 min</b> », parce que c\'est ce que dit ton propre cadre — pas un chiffre unique pour tout le monde. ⚠️ Il ne se <b>relâche</b> jamais : il resserre seulement là où ton cadre est plus exigeant.'},
   /* ⛔ SANS IMAGE : les chiffres dépendent de l'historique du lecteur — une capture montrerait
      des séries qui ne sont pas les siennes, et un « objectif » qu'on refuse justement d'afficher. */
+  /* ⛔ SANS IMAGE EXPRÈS : une capture montrerait l'historique de quelqu'un d'autre, et le
+     repli se comprend en une phrase. */
+  {icon:'🗂️', t:'Le haut de Progrès se replie', cap:'Les trois onglets (<b>Exercices · Poids · Badges</b>) sont <b>tout en haut</b> : tu passes de l\'un à l\'autre sans défiler. Et les deux cartes de résumé sont <b>repliées</b> — un tap sur le titre les ouvre, et <b>l\'app se souvient</b> de ton choix.'},
   {icon:'📊', t:'Ce que tu travailles, par semaine', cap:'En haut de <b>Progrès</b>, tes <b>séries de travail par groupe musculaire</b>, en <b>moyenne par semaine sur 14 jours</b>. ⭐ Deux semaines, parce qu\'une seule est trop courte pour dire quoi que ce soit — mais le chiffre reste <b>par semaine</b>. ⚠️ <b>Sans objectif affiché</b> : en milieu de semaine, être « en dessous » ne veut rien dire. 👉 <b>Milo</b>, lui, reçoit ces chiffres — il connaissait la règle de ta discipline sans jamais savoir combien tu en faisais.'},
   /* ⛔ SANS IMAGE : la capture montrerait UNE des deux échelles, donc elle serait fausse pour
      la moitié des lecteurs — et c'est précisément le sujet de la diapo. */

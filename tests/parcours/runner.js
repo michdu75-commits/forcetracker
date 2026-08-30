@@ -15871,7 +15871,10 @@ console.log('\n-- CXLV. Brique 8 : les constantes (ft-v1041) --');
     goScreen('s-progress');document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
     document.getElementById('s-progress').classList.add('active'); renderProgress();
     await new Promise(r=>setTimeout(r,300));
-    o.txtSousSeuil=(document.getElementById('prog-synth').innerText||'').replace(/\s+/g,' ').trim();
+    /* ⚠️ `textContent` ET NON `innerText` (30/08/2026, ft-v1066) : depuis que les deux cartes
+       vivent dans un `<details>` REPLIÉ par défaut, `innerText` — qui respecte le RENDU —
+       rend une chaîne VIDE. Ce que ces témoins protègent est le CONTENU, pas le dépliage. */
+    o.txtSousSeuil=(document.getElementById('prog-synth').textContent||'').replace(/\s+/g,' ').trim();
     /* ⭐ L'HISTOIRE COMPLÈTE : 14 séances sur ~31 jours, haut du corps dominant. */
     const S3=[];
     for(let i=0;i<11;i++) S3.push(mk(i*3, ['Développé Couché','Élévations Latérales (Lateral Raise)']));
@@ -15890,7 +15893,8 @@ console.log('\n-- CXLV. Brique 8 : les constantes (ft-v1041) --');
     o.pasDeJamais=!/jamais|aucune fois|0 fois/i.test(tout);
     /* ⭐ LA PORTE. */
     renderProgress(); await new Promise(r=>setTimeout(r,350));
-    o.ecran=(document.getElementById('prog-synth').innerText||'').replace(/\s+/g,' ').trim();
+    o.ecran=(document.getElementById('prog-synth').textContent||'').replace(/\s+/g,' ').trim();
+    o.accSynth=(document.getElementById('prog-synth-acc').textContent||'').replace(/\s+/g,' ').trim();
     /* ⚠️⚠️ RE-VISÉ LE 30/08/2026, ET C'EST UN RETOUR SUR MA PROPRE DÉCISION (ft-v1063).
        Ce témoin épinglait *« changer de sous-onglet ne la fait pas disparaître »* — une décision
        de ft-v1041 dont l'INTENTION était bonne (ne pas la faire clignoter) et la PORTÉE trop
@@ -15902,11 +15906,16 @@ console.log('\n-- CXLV. Brique 8 : les constantes (ft-v1041) --');
        permanente : on le vise, on ne le désarme pas.* */
     switchProgTab('poids',document.getElementById('ptab-poids'));
     await new Promise(r=>setTimeout(r,250));
-    o.masqueeHorsExo=(document.getElementById('prog-synth').style.display==='none');
+    /* ⚠️ RE-VISÉ (ft-v1066) : le masquage porte désormais sur le `<details>` parent, plus sur
+       ce `div`. On mesure donc la VISIBILITÉ RÉELLE — `offsetParent` est null dès qu'un ancêtre
+       est masqué, quel qu'il soit. *Un témoin qui nomme l'élément porteur du `display:none` se
+       périme à la première restructuration ; un témoin qui mesure ce qu'on VOIT, non.* */
+    const _vuSynth=()=>{ const e=document.getElementById('prog-synth'); return !!(e&&e.offsetParent); };
+    o.masqueeHorsExo=!_vuSynth();
     switchProgTab('exo',document.getElementById('ptab-exo'));
     await new Promise(r=>setTimeout(r,250));
-    o.surviteOnglet=(document.getElementById('prog-synth').innerText||'').trim().length>0
-                    && document.getElementById('prog-synth').style.display!=='none';
+    o.surviteOnglet=(document.getElementById('prog-synth').textContent||'').trim().length>0
+                    && _vuSynth();
     const f=document.querySelector('.nav-fab,#nb-log,.fab');const r=f.getBoundingClientRect();
     o.fab=[Math.round(r.x),Math.round(r.y),Math.round(r.width),Math.round(r.height)];
     return o;
@@ -15942,8 +15951,12 @@ console.log('\n-- CXLV. Brique 8 : les constantes (ft-v1041) --');
     t('⛔⛔ aucune phrase du type « tu ne travailles jamais X » (c\'est la DOMINANTE qu\'on mesure)',
       G.pasDeJamais===true && /domin/i.test(G.txtEquilibre)
       && !/tu (ne )?travailles/i.test(G.txtEquilibre), G.txtEquilibre);
+    /* ⚠️ RE-VISÉ (ft-v1066) : le titre a migré dans le `<summary>` de l'accordéon — la section
+       est repliée par défaut, et son titre est ce qui reste visible. On lit donc l'accordéon
+       entier. *Ce que le témoin protège est que la section soit LÀ et NOMMÉE, pas l'endroit
+       exact du DOM où le titre est peint.* */
     t('⭐⭐ LA PORTE : la section s\'affiche en tête de Progrès',
-      /CE QUE TON HISTOIRE MONTRE/i.test(G.ecran), G.ecran.slice(0,100));
+      /CE QUE TON HISTOIRE MONTRE/i.test(G.accSynth||''), (G.accSynth||'').slice(0,100));
     t('⛔ elle est MASQUÉE hors de l\'onglet Exercices (Poids et Badges parlent d\'autre chose)',
       G.masqueeHorsExo===true, 'masquée = '+G.masqueeHorsExo);
     t('⛔ … et elle REVIENT intacte quand on retourne sur Exercices (elle ne se perd pas)',
@@ -16368,7 +16381,9 @@ console.log('\n-- CXLIX. Le volume par groupe musculaire et par semaine (ft-v104
     document.getElementById('s-progress').classList.add('active'); renderProgress();
     await new Promise(r=>setTimeout(r,350));
     const el=document.getElementById('prog-volume');
-    o.ecran=(el.innerText||'').replace(/\s+/g,' ').trim();
+    /* ⚠️ `textContent` (ft-v1066) : la carte vit dans un `<details>` replié, et `innerText`
+       respecte le rendu — il rendrait une chaîne vide. */
+    o.ecran=(el.textContent||'').replace(/\s+/g,' ').trim();
     o.ecranSansCible=!/10 à 20|12 à 22|cadre|objectif|cible/i.test(o.ecran);
     /* ⚠️ RE-VISÉ LE 30/08/2026 (ft-v1057), PAS DÉSARMÉ. Ce témoin épinglait la chaîne
        « 7 derniers jours » — la FENÊTRE DU JOUR, pas la règle. Elle est passée à 14 jours
@@ -16377,7 +16392,12 @@ console.log('\n-- CXLIX. Le volume par groupe musculaire et par semaine (ft-v104
        compte, pour que deux chiffres calculés sur des périodes différentes ne se contredisent
        pas en silence (le défaut de ft-v1027). On vérifie donc qu'une durée est nommée ET que
        l'unité l'est aussi. */
-    o.ecranNommeFenetre=/\d+\s*jours/.test(o.ecran) && /par semaine/i.test(o.ecran);
+    /* ⚠️ RE-VISÉ (ft-v1066) : l'unité « par semaine » vit maintenant dans le TITRE, qui a migré
+       dans le `<summary>` de l'accordéon. On lit donc l'accordéon ENTIER — c'est ce que la
+       personne voit, résumé compris. La règle ne change pas : une durée est nommée ET l'unité
+       aussi. */
+    const _accVol=(document.getElementById('prog-volume-acc')||el).textContent||'';
+    o.ecranNommeFenetre=/\d+\s*jours/.test(_accVol) && /par semaine/i.test(_accVol);
     o.ecranDitNonRatt=/rattachée/.test(o.ecran);
     /* ⛔ Rien a compter -> pas un pixel (une section qui dirait « tu n'as rien fait » serait un
        constat sur la personne, pas une information). */
@@ -16619,7 +16639,14 @@ console.log('\n-- CLI. Les 3 erreurs des cartes de Progrès (ft-v1047) --');
     const fonds=[...vo.querySelectorAll('.vol-bar i')].map(x=>getComputedStyle(x).backgroundImage);
     o.memeCouleurPartout=new Set(fonds).size===1 && fonds.length>=2;
     o.railEfface=/rgba\(0, 0, 0, 0\)|transparent/.test(getComputedStyle(rail).backgroundColor);
-    o.liseréSynthese=getComputedStyle(sy.querySelector('.synth-card')).borderLeftWidth;
+    /* ⚠️ RE-VISÉ (ft-v1066) : le liseré de ft-v1047 existait pour DISTINGUER deux cartes grises
+       identiques, empilées sans titre propre. Depuis que chacune vit dans son accordéon titré, la
+       distinction est plus forte et vient d'ailleurs — le liseré n'était plus qu'un trait orphelin
+       à l'intérieur d'un cadre. *On ne garde pas un repère visuel dont la raison a disparu* (R30),
+       mais on garde la GARANTIE : les deux sections restent distinguables. */
+    const _s1=(document.querySelector('#prog-synth-acc summary')||{}).textContent||'';
+    const _s2=(document.querySelector('#prog-volume-acc summary')||{}).textContent||'';
+    o.deuxSectionsDistinctes=_s1.trim().length>10 && _s2.trim().length>10 && _s1!==_s2;
     o.piedCourt=((vo.querySelector('.vol-pied')||{}).textContent||'').indexOf('pas pour les triceps')<0;
     /* ⛔ MAIS L'EXPLICATION N'A PAS DISPARU — elle vit dans l'aide (R25/R30). */
     o.aideGardeLExemple=JSON.stringify(_HELP_DATA.progress.tips).indexOf('pas triceps')>=0;
@@ -16650,8 +16677,8 @@ console.log('\n-- CLI. Les 3 erreurs des cartes de Progrès (ft-v1047) --');
       Q.memeCouleurPartout===true, 'couleurs distinctes = '+(Q.memeCouleurPartout?1:'>1'));
     t('🎨 le rail gris pleine largeur a disparu (8 lignes de bruit sous les barres utiles)',
       Q.railEfface===true, 'fond du rail = '+Q.railEfface);
-    t('🎨 la synthèse se distingue de la carte volume (liseré à gauche)',
-      Q.liseréSynthese==='3px', 'liseré = '+Q.liseréSynthese);
+    t('🎨 la synthèse se distingue de la carte volume (chacune a son titre propre)',
+      Q.deuxSectionsDistinctes===true, 's1/s2 distincts = '+Q.deuxSectionsDistinctes);
     /* ⛔⛔ ALLÉGER N'EST PAS SUPPRIMER (R25/R30) : l'exemple quitte l'écran et RESTE dans l'aide. */
     t('⛔⛔ le pied est allégé À L\'ÉCRAN mais l\'exemple SURVIT dans l\'aide (alléger ≠ supprimer)',
       Q.piedCourt===true && Q.aideGardeLExemple===true,
@@ -18096,7 +18123,11 @@ console.log('\n-- CLXIV. Le volume par muscle : 14 jours, ramenés à la semaine
     // ── L'ECRAN ──
     goScreen('progress');
     const c=document.getElementById('prog-volume');
-    o.titre=(c.querySelector('.vol-t')||{}).textContent||'';
+    /* ⚠️ RE-VISÉ (ft-v1066) : le titre a migré dans le `<summary>` de l'accordéon. Ce que ce
+       témoin protège est que le titre dise « par semaine » — pas l'élément qui le porte. */
+    o.titre=((document.getElementById('prog-volume-acc')||{}).querySelector
+             ? (document.getElementById('prog-volume-acc').querySelector('summary')||{}).textContent||''
+             : (c.querySelector('.vol-t')||{}).textContent||'');
     o.fenetre=(c.querySelector('.vol-fen')||{}).textContent||'';
     o.nAffiche=(c.querySelector('.vol-n')||{}).textContent||'';
     /* ⛔ La carte ne doit plus dire « ta semaine » ni « 7 derniers jours ». */
@@ -18706,7 +18737,10 @@ console.log('\n-- CLXX. Les cartes d\'entraînement ne s\'affichent que sur « E
       exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,type:'N',done:true},{kg:80,reps:8,type:'N',done:true}]},
            {name:'Squat à la Barre',sets:[{kg:100,reps:5,type:'N',done:true}]}]});
     persist(); goScreen('progress');
-    const vis=id=>{ const e=document.getElementById(id); return !!e && e.style.display!=='none'; };
+    /* ⚠️ RE-VISÉ (ft-v1066) : `offsetParent` est null dès qu'un ANCÊTRE est masqué — le
+       `<details>` parent, le panneau de l'onglet, peu importe. On mesure ce qu'on VOIT, pas
+       quel élément porte le `display:none`. */
+    const vis=id=>{ const e=document.getElementById(id); return !!(e&&e.offsetParent); };
     const haut=id=>{ const e=document.getElementById(id); return e?Math.round(e.getBoundingClientRect().height):0; };
     const y=id=>{ const e=document.getElementById(id); return e?Math.round(e.getBoundingClientRect().y):null; };
     const o={};
@@ -18741,10 +18775,15 @@ console.log('\n-- CLXX. Les cartes d\'entraînement ne s\'affichent que sur « E
     t('⛔ ① les deux cartes sont bien LÀ sur Exercices (sinon le reste ne mesure rien)',
       W.exo.synth===true && W.exo.volume===true && W.exo.px>300,
       JSON.stringify(W.exo));
-    t('⭐⭐ ② sur POIDS, elles disparaissent — et le contenu de l\'onglet remonte',
+    /* ⚠️ RE-VISÉ (ft-v1066) : ce témoin mesurait « les onglets REMONTENT sur Poids » — vrai tant
+       que les cartes étaient AU-DESSUS d'eux. Depuis que les onglets sont en tête, ils ne bougent
+       plus : il n'y a plus de mouvement à mesurer, et le témoin rougissait sur du code correct.
+       👉 Ce qu'il protège n'a jamais été le déplacement, c'est que **le contenu de l'onglet Poids
+       commence en haut de l'écran** — donc qu'aucune carte d'entraînement ne le repousse. */
+    t('⭐⭐ ② sur POIDS, elles disparaissent — et le contenu de l\'onglet est en haut',
       W.poids.synth===false && W.poids.volume===false && W.poids.contenuVisible===true
-      && W.poids.ongletsY < W.exo.ongletsY - 300,
-      JSON.stringify({poids:W.poids, ongletsExo:W.exo.ongletsY}));
+      && W.poids.contenuY < 250,
+      JSON.stringify({poids:W.poids}));
     t('⭐⭐ ③ sur BADGES aussi (« même les badges » — Michel)',
       W.badges.synth===false && W.badges.volume===false && W.badges.contenuVisible===true,
       JSON.stringify(W.badges));
@@ -18804,6 +18843,92 @@ console.log('\n-- CLXX. Les cartes d\'entraînement ne s\'affichent que sur « E
     await cx2.close();
   }
   await cx.close();
+}
+
+/* == BLOC CLXXIII - LE HAUT DE PROGRES : ONGLETS EN TETE, CARTES REPLIABLES (ft-v1066) ==
+   Michel, capture a l'appui : « ca prend vachement d'espace en haut non ? ».
+
+   ⭐ MESURE AVANT : synthese 216 px + volume 345 px (8 muscles) = **561 px**. Les sous-onglets
+   tombaient a **y=699** sur un ecran de 844, et le champ de recherche a **821 — au ras du bord**.
+   *Sur l'onglet Exercices, sa progression commencait HORS ECRAN.*
+
+   ⭐⭐ DEUX RAISONS, ET LA SECONDE EST DE FOND : ① les onglets sont de la NAVIGATION, elle doit
+   etre atteignable sans defiler ; ② depuis ft-v1065 ces deux cartes n'appartiennent qu'a l'onglet
+   Exercices — leur place est DANS son contenu, pas au-dessus de la barre qui sert a en sortir.
+
+   ⛔ ET L'ETAT EST RETENU : *un accordeon qu'on doit rouvrir a chaque visite est un accordeon
+   qu'on n'ouvre plus* (la lecon de ft-v1024, « le rangement suit l'usage »). */
+console.log('\n-- CLXXIII. Le haut de Progrès : onglets en tête, cartes repliables (ft-v1066) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const W=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const J=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+    /* ⭐ Son profil : 38 séances, et assez de muscles pour que la carte volume soit PLEINE
+       (8 lignes). Sans ça, tout ce bloc mesurerait un écran plus court que le sien (§24). */
+    const EX=['Développé Couché','Squat à la Barre','Rowing Barre (Tirage Horizontal)',
+              'Hip Thrust Barre','Élévations Latérales Haltères','Curl Biceps Haltères',
+              'Extension Triceps Poulie','Crunch','Soulevé de Terre Roumain Barre','Mollets Debout Machine'];
+    S.sessions=[]; for(let i=0;i<38;i++) S.sessions.push({date:J(Math.round(i*78/38)),label:'S'+i,
+      exs:EX.map(n=>({name:n,sets:[{kg:60,reps:8,type:'N',done:true}]}))});
+    persist();
+    try{ localStorage.removeItem('ft4_progAcc'); }catch(e){}
+    goScreen('progress');
+    const R=id=>{const e=document.getElementById(id); if(!e)return null;
+      const r=e.getBoundingClientRect(); return {y:Math.round(r.y),h:Math.round(r.height)};};
+    const o={ecran:844, onglets:R('ptab-exo'), synth:R('prog-synth-acc'), vol:R('prog-volume-acc'),
+             progression:R('big4-chips'), recherche:R('prog-search'),
+             lignesVolume:document.querySelectorAll('#prog-volume .vol-l').length};
+    /* ⛔ REPLIÉES PAR DÉFAUT — c'est le choix de Michel, et c'est ce qui rend la place. */
+    o.repliees={synth:!document.getElementById('prog-synth-acc').open,
+                volume:!document.getElementById('prog-volume-acc').open};
+    /* ⛔ MAIS LE CONTENU EST DÉJÀ LÀ, pas vidé : on masque, on ne recalcule pas (R19/R2). */
+    o.contenuDejaPeint=(document.getElementById('prog-synth').textContent||'').trim().length>20
+                     && (document.getElementById('prog-volume').textContent||'').trim().length>20;
+    /* ⭐⭐ L'ÉTAT EST RETENU : on déplie, et ça doit survivre à un re-rendu complet. */
+    const d=document.getElementById('prog-synth-acc'); d.open=true; d.dispatchEvent(new Event('toggle'));
+    o.memoire=localStorage.getItem('ft4_progAcc');
+    o.deplieeH=R('prog-synth-acc').h;
+    renderProgress();
+    o.survitAuReRendu=document.getElementById('prog-synth-acc').open===true
+                   && document.getElementById('prog-volume-acc').open===false;
+    return o;
+   }catch(e){ return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]}; }
+  });
+  await cx.close();
+
+  if(W.err) t('CLXXIII n\'a pas pu tourner', false, JSON.stringify(W));
+  else{
+    /* ⛔ SANS CE TÉMOIN, TOUT LE BLOC MESURERAIT UN ÉCRAN PLUS COURT QUE LE SIEN (famille §24). */
+    t('⛔ ① la carte volume est PLEINE dans le témoin (8 lignes, comme chez lui)',
+      W.lignesVolume>=8, 'lignes = '+W.lignesVolume);
+    /* ⭐⭐ LA NAVIGATION EST ATTEIGNABLE SANS DÉFILER — c'est le point n°1. */
+    t('⭐⭐ ② les sous-onglets sont EN TÊTE (avant : y=699 sur un écran de 844)',
+      W.onglets && W.onglets.y<200, 'onglets y = '+(W.onglets&&W.onglets.y));
+    /* ⭐⭐ LA PLACE RENDUE : les 2 cartes tenaient 561 px, elles en prennent ~132 repliées. */
+    t('⭐⭐ ③ repliées, les 2 cartes tiennent en moins de 200 px (561 px avant)',
+      W.repliees.synth===true && W.repliees.volume===true && (W.synth.h+W.vol.h)<200,
+      'synth '+W.synth.h+' + volume '+W.vol.h+' = '+(W.synth.h+W.vol.h)+' px');
+    /* ⭐⭐ ET LE VRAI GAIN SE LIT SUR LE CONTENU : la recherche était au ras du bord (821). */
+    t('⭐⭐ ④ la progression et la recherche remontent DANS l\'écran (avant : 776 et 821)',
+      W.progression.y<450 && W.recherche.y<500,
+      'progression y='+W.progression.y+' · recherche y='+W.recherche.y);
+    /* ⛔ ON MASQUE, ON NE VIDE PAS : le contenu est peint une fois par `renderProgress`. */
+    t('⛔ ⑤ le contenu est déjà peint sous le repli (on masque, on ne recalcule pas)',
+      W.contenuDejaPeint===true, 'peint = '+W.contenuDejaPeint);
+    /* ⭐⭐ « LE RANGEMENT SUIT L'USAGE » (ft-v1024) : un accordéon qu'on rouvre à chaque visite
+       est un accordéon qu'on n'ouvre plus. */
+    t('⭐⭐ ⑥ déplier est RETENU, et ça survit à un re-rendu complet de l\'onglet',
+      W.memoire==='["prog-synth-acc"]' && W.survitAuReRendu===true && W.deplieeH>200,
+      'mémoire='+W.memoire+' · survit='+W.survitAuReRendu+' · dépliée='+W.deplieeH+'px');
+  }
 }
 
 await b.close(); srv.close();
