@@ -23,6 +23,34 @@
 > vient de me faire reproposer à Michel une figurine qu'il avait supprimée la veille (26/08).
 > ⛔ **Rien n'est supprimé en descendant** : la raison et l'historique partent avec le bloc.
 
+> ✅ **RIEN EN ATTENTE au 30/08/2026.** La dernière tâche — le plafond de dépense — est
+> close ; elle est descendue dans « ✅ Fait » **avec sa raison**, comme le veut la règle
+> écrite en tête de cette section.
+
+## ✅ Fait
+
+### ✅ CLOS — le plafond de dépense est **ARMÉ** (30/08/2026)
+Michel était devant son PC, on a refait la paire clé/empreinte de bout en bout. Vérifié dans
+l'app, Profil → Admin → Santé du système : **🛡️ Plafond de dépense — ARMÉ**, constaté le
+30/08 à 12:54. *Au-delà du plafond, les appels à Milo sont désormais refusés ; avant, ils
+étaient comptés et rien ne les arrêtait.*
+
+**⛔ POURQUOI ÇA A TRAÎNÉ SI LONGTEMPS, ET C'EST LA LEÇON À GARDER.** L'empreinte du 25/08 était
+bien en place — mais **la clé chez Cloudflare était l'ANCIENNE**, et personne ne pouvait le
+voir : Cloudflare **chiffre** ses variables, donc la valeur posée est illisible pour tout le
+monde, **y compris son propriétaire**. Michel l'a dit en une phrase en ouvrant l'écran — *« j'ai
+déjà un count token chiffré, je comprends pas »*. 👉 ***Deux secrets qu'on ne peut ni l'un ni
+l'autre relire ne se comparent jamais : ils se REFONT ensemble, des deux côtés, ou pas du tout.***
+
+**⚠️ Et un défaut de MA part au passage, qui a failli coûter un faux diagnostic.** J'ai annoncé
+« poussé, le backend se déploie » alors que mon `git push origin master` était lancé **depuis une
+autre branche** : il a poussé la branche locale `master`, pas mon travail — en répondant un
+message de **succès**. Si Michel avait collé la clé à ce moment-là, il aurait lu **DÉSARMÉ** et
+conclu que sa clé était mauvaise. *Une commande qui réussit ne fait pas forcément ce qu'on croit*
+(journal de partage) — et **R18** : on vérifie le **déploiement** (run #96 vert), pas le push.
+
+<details><summary>📋 La procédure complète, gardée pour la prochaine fois</summary>
+
 ### 🔐 Régénérer la clé du plafond de dépense (`FT_COUNT_TOKEN`) — procédure
 
 **À quoi ça sert** : sans cette clé, les appels à Milo sont **comptés mais jamais bloqués** — rien ne
@@ -55,7 +83,9 @@ _Dernier déploiement backend : **historique études corporelles** (`bodyStudies
 
 ---
 
-## ✅ Fait
+</details>
+
+---
 
 ### ✅ CLOS — « Squat Sumo » : l'exercice a été RETIRÉ (25/08/2026)
 

@@ -532,8 +532,16 @@
   ⏭️ **Non tranché, et c'est à Michel** : « ce qu'il te reste » propose 500 g d'aliments pour
   couvrir **27 %** d'un gros manque de glucides. Ce n'est pas un bug (les bornes sont voulues,
   et l'écart est annoncé) — mais sous ~40 % de couverture la ligne cesse d'aider.
-- ⏳ **CE QUI RESTE À FAIRE SUR LE PC DE MICHEL : UNE SEULE CHOSE** — coller `FT_COUNT_TOKEN`
-  dans Cloudflare (sans elle, les appels à Milo sont **comptés mais jamais bloqués**).
+- ✅🛡️ **LE PLAFOND DE DÉPENSE EST ARMÉ — plus RIEN en attente sur le PC de Michel** (30/08).
+  Vérifié dans l'app : *🛡️ Plafond de dépense — **ARMÉ***, constaté le 30/08 à 12:54. Au-delà du
+  plafond, les appels à Milo sont désormais **refusés** ; avant, ils étaient comptés et rien ne
+  les arrêtait. ⛔ **Pourquoi ça avait traîné** : l'empreinte du 25/08 était en place, mais la
+  clé chez Cloudflare était l'**ancienne** — et Cloudflare **chiffre** ses variables, donc
+  personne ne pouvait le voir, *pas même son propriétaire*. ***Deux secrets qu'on ne peut ni
+  l'un ni l'autre relire ne se comparent jamais : ils se REFONT ensemble, ou pas du tout.***
+  ⚠️ **Et un `git push origin master` lancé depuis une AUTRE branche** a poussé la branche
+  locale `master`, pas mon travail — en répondant un message de **succès**. Michel aurait lu
+  « DÉSARMÉ » et conclu que sa clé était mauvaise (**R18** : vérifier le déploiement, run #96).
   ⛔ **Le Squat Sumo n'en fait plus partie** : l'exercice a été **supprimé le 25/08** sur
   décision de Michel (*« squat sumo on supprime »*), après 12 jours d'attente d'une figurine
   **à la barre** qui n'est jamais venue. ⚠️ **Je l'ai pourtant reproposé le 26/08** — je lisais
