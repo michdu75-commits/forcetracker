@@ -18122,6 +18122,82 @@ console.log('\n-- CLXIV. Le volume par muscle : 14 jours, ramenés à la semaine
   }
 }
 
+/* == BLOC CLXIV - QUI A APPELE MILO AUJOURD'HUI (ft-v1058) ==
+   Michel : « est-il possible de savoir qui utilise Milo ou autre appel API sur l'application ? ».
+   ⭐⭐ IL N'Y AVAIT RIEN A CONSTRUIRE COTE SERVEUR : `ai_quota.byEmail` compte deja les appels
+   par personne (c'est ce qui fait respecter le plafond de 50/jour) et la route `aiUsage`
+   renvoyait DEJA `topUsers` trie, `uniqueUsers` et `global`. Mesure avant d'ecrire une ligne :
+   **zero occurrence de `topUsers` dans `app.js`**. *La donnee arrivait dans l'app et se perdait
+   a chaque ouverture* — R5, une donnee produite, exploitee pour UNE seule chose, jamais montree.
+   ⛔ ET LA LIMITE EST AFFICHEE : `ai_quota` compte des APPELS, pas des tokens ; `ai_usage` (les
+   euros) ne porte PAS l'email. « christophe : 31 appels » se dit, « christophe : 0,40 € » non. */
+console.log('\n-- CLXIV. Qui a appelé Milo aujourd\'hui (ft-v1058) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:900},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',
+    ft4_email:'michdu75@gmail.com'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    /* ⭐ On remplace le RÉSEAU, pas la fonction : `loadHealthAdmin` tourne pour de vrai sur la
+       forme exacte que renvoie la route `aiUsage` (la leçon de ft-v1015 — mesurer par le vrai
+       chemin, pas en appelant à la main la fonction qu'on vient d'écrire). */
+    const rep={ status:'ok', capArmed:true, capSeenAt:'30/08/2026 12:54', capKnown:true,
+      date:'20260830', global:47, globalMax:600, emailMax:50, uniqueUsers:3,
+      topUsers:[{email:'christophe@famillelanglois.fr',count:31},
+                {email:'michdu75@gmail.com',count:12},
+                {email:'<script>alert(1)</script>@x.fr',count:4}],
+      usage:{date:'20260830',totals:{inTok:6146,outTok:246,cacheW:0,cacheR:0,calls:2},
+             byAction:{coach:{calls:1}},byModel:{},euroTotal:0.16} };
+    const vrai=window.fetch;
+    window.fetch=async(u)=>({ok:true,json:async()=>String(u).indexOf('aiUsage')>=0?rep:{status:'ok'},text:async()=>'{}'});
+    _adminMode=true; goScreen('setup');
+    await loadHealthAdmin(); await d(400);
+    const zone=document.getElementById('admin-health')||document.body;
+    o.html=zone.innerHTML;
+    o.txt=zone.innerText.replace(/\n+/g,' ');
+    /* ⑤ AUCUN APPEL : la ligne doit le DIRE, pas disparaître ni afficher une liste vide. */
+    const rep0=Object.assign({},rep,{topUsers:[],uniqueUsers:0,global:0});
+    window.fetch=async(u)=>({ok:true,json:async()=>String(u).indexOf('aiUsage')>=0?rep0:{status:'ok'},text:async()=>'{}'});
+    await loadHealthAdmin(); await d(400);
+    o.vide=(document.getElementById('admin-health')||document.body).innerText.replace(/\n+/g,' ');
+    window.fetch=vrai;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+  if(F.err) t('CLXIV n\'a pas pu tourner', false, F.err);
+  else{
+    /* ⛔ Le témoin a-t-il VU la carte ? Sinon tout le reste serait vert pour rien. */
+    t('⛔ le témoin a bien VU la Santé du système (le plafond y est, donc la carte est rendue)',
+      /Plafond de dépense/.test(F.txt), F.txt.slice(0,80));
+    /* ⭐⭐ LA DEMANDE DE MICHEL. */
+    t('⭐⭐ la ligne « Qui a appelé Milo aujourd\'hui » existe et nomme les personnes',
+      /Qui a appelé Milo aujourd'hui/.test(F.txt) && /christophe/.test(F.txt) && /michdu75/.test(F.txt),
+      (F.txt.match(/Qui a appelé Milo[^]{0,110}/)||[''])[0]);
+    t('⭐ … avec leur nombre d\'appels et le total du jour sur le plafond global',
+      /31/.test(F.txt) && /47 sur 600/.test(F.txt), '');
+    /* ⛔ R29 : on n'affiche jamais un coût par personne, il n'est pas mesuré. */
+    t('⛔ la ligne DIT sa limite : des appels, pas des euros (R29 — pas de fausse précision)',
+      /Des APPELS, pas des euros/.test(F.txt), '');
+    /* ⛔ Le strict nécessaire : reconnaître ses testeurs, pas une liste d'adresses. */
+    t('⛔ seule la partie AVANT l\'arobase est affichée (pas les adresses complètes)',
+      !/famillelanglois\.fr/.test(F.txt) && !/@gmail\.com/.test(F.txt.split('Plafond')[0]),
+      (F.txt.match(/christophe[^·]{0,30}/)||[''])[0]);
+    /* ⛔⛔ LES EMAILS VIENNENT DU SERVEUR ET PARTENT DANS `innerHTML` : ils s'échappent. */
+    t('⛔⛔ un email piégé ne peut pas injecter de HTML (échappé avant affichage)',
+      F.html.indexOf('<script>alert(1)</script>')<0 && /&lt;script&gt;/.test(F.html),
+      'brut trouvé : '+(F.html.indexOf('<script>alert(1)</script>')>=0));
+    /* ⛔ Une liste vide se lirait comme une panne — on dit que la journée est calme. */
+    t('⛔ aucun appel → la ligne le DIT (« journée calme »), elle ne montre pas une liste vide',
+      /journée calme/.test(F.vide), (F.vide.match(/Qui a appelé Milo[^]{0,70}/)||[''])[0]);
+  }
+  await cx.close();
+}
+
 /* == BLOC CLXV - L'EXPORT NE MENT PLUS SUR SA REUSSITE (ft-v1059) ==
    Michel : « le bouton exporter dans historique ne fonctionne pas ».
 

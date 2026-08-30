@@ -6,7 +6,20 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1058`.
+- **Version en ligne (live) :** `ft-v1059`.
+- 📤⭐⭐ **L'EXPORT DE L'HISTORIQUE NE MENT PLUS SUR SA RÉUSSITE** (ft-v1059). Michel : *« le
+  bouton exporter dans historique ne fonctionne pas »*.
+  ⛔⛔ **Mesuré d'abord** : toute la chaîne marche en Chromium (0 erreur) → c'était **spécifique
+  à son iPhone**, et sans cette mesure je cherchais dans la modale.
+  ⭐⭐ **Cause mesurable, pas devinée** : sur les **7** endroits de l'app qui livrent un fichier,
+  `_donnerFichier` était **le seul** à passer `;charset=utf-8`. *`canShare` d'iOS refuse un type
+  paramétré* → repli sur `<a download>`, **qu'iOS n'honore pas** en PWA plein écran.
+  ⛔ Le charset était **décoratif** : c'est le **BOM** qui porte l'UTF-8 pour Excel.
+  ⛔⛔ **3ᵉ défaut, indépendant d'iOS** : `return true` après `a.click()` → *« 2 séries
+  exportées »* alors que rien n'était parti. **Un succès menteur envoie chercher au mauvais
+  endroit.** 4 issues distinctes maintenant.
+  ⚠️ **Réserve honnête** : je ne peux pas tester iOS d'ici — la cause est fortement étayée,
+  **pas prouvée sur son appareil**.
 - 🔢⭐⭐ **LA VIRGULE DÉCIMALE — neuf mots d'ELINE, et une corruption de données** (ft-v1058).
   Retour de la fille de Michel : *« impossible de mettre la virgule pour les poids »*.
   ⛔⛔ **Elle décrit un refus ; la mesure dit bien pire** — dans un `type="number"`, `62,5` rend
