@@ -146,6 +146,9 @@ question ne se pose que pour Tatiana, Emma ou Christophe. *Piste la moins chère
 rappel « pèse cru » au scan d'un féculent — pas une conversion.*
 ⛔ **Pas un scénario à promouvoir** : rien ici n'est vérifiable par du code aujourd'hui (l'app ne
 stocke aucun état cru/cuit). C'est une **décision produit**, pas un test.
+⭐ **La suite se note dans `docs/MESURES-CRU-CUIT.md`** — carnet ouvert à la demande de Michel
+(*« on va créer un tableau, je vais tout noter, je ferai pareil pour le riz »*) : le protocole, sa
+série de ce soir, et les séries à venir (autre cuisson · une journée au frigo · riz).
 **État : à trier.**
 
 ### 🟡 « PAS DE RECORD » NE VEUT PAS DIRE « JAMAIS FAIT » — et le mot doit le dire
