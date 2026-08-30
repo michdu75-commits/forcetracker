@@ -953,7 +953,7 @@ travail de l'autre session.
 
 ---
 
-## 🧭 Les 11 réflexes qui sortent de tout ça
+## 🧭 Les 12 réflexes qui sortent de tout ça
 
 1. **Avant de dire qu'une chose manque** → la chercher dans le code et dans `docs/INVENTAIRE.md`.
 2. **Avant de « réparer » du code orphelin** → chercher la décision. Sinon, demander.
@@ -976,9 +976,29 @@ travail de l'autre session.
    ouvrir la chose incriminée pour la lire. Deux fausses alertes sur deux dans l'audit du 18/08 :
    une recherche qui se trouvait elle-même, et une différence de CASSE. Voir la famille 12ter.
 
+12. ⭐⭐ **Quand la personne décrit un symptôme et que ta mesure dit le contraire** → c'est ta
+   MESURE qui ne reproduit pas son écran, pas elle qui se trompe. *Elle regarde le vrai
+   système ; toi, une fixture.*
+   **Le cas qui l'a fondé (30/08/2026, ft-v1062)** — trois versions pour un seul bug, et
+   **deux diagnostics faux de ma part** :
+   - ① mon test jouait tout le chemin et passait → j'ai corrigé la **livraison du fichier**.
+     Vrai défaut, mais pas le sien. Cause : ma fixture avait **1 séance**, l'écran ne défilait pas.
+   - ② en VÉRIFIANT le bon diagnostic, j'ai mesuré avec **8 séances** — la modale ressortait
+     visible, j'ai écrit « mon hypothèse est fausse ». **Elle ne l'était pas** : à 8 séances les
+     deux cartes du haut ne s'affichent pas, l'écran est plus court (473 px de défilement au lieu
+     de 905). *Le même piège, deux fois, dans la même heure.*
+   - ③ ce qui a tranché **les deux fois** : ce qu'il a envoyé. Ses **cinq mots** — *« ça clique
+     bien mais rien ne se passe »* — séparaient le bouton (qui répond) de la fenêtre (qui ne
+     s'ouvre pas), donc éliminaient la moitié du code. Puis sa **vidéo** a donné sa position de
+     défilement exacte, la seule chose qui manquait.
+   👉 **La règle qui en sort** : *une observation brute ne ment jamais ; une mesure, si — quand
+   elle porte sur autre chose que ce que la personne a sous les yeux.* Et corollaire pour les
+   questions à poser : demander **ce qui se passe** (« le bouton répond ? une fenêtre ? un
+   message ? ») vaut mieux que demander ce que la personne **croit** être la cause.
+
 ---
 
-*Dernière mise à jour : 18/08/2026 (familles 12ter — la fausse panne — et 15 — la règle définie trop étroit). À compléter à chaque nouveau bug — symptôme, cause, famille,
+*Dernière mise à jour : 30/08/2026 (famille 24 — la fixture sans profondeur — et réflexe 12 — quand la mesure contredit la personne). À compléter à chaque nouveau bug — symptôme, cause, famille,
 et ce qui le protège désormais.*
 
 
