@@ -953,7 +953,7 @@ travail de l'autre session.
 
 ---
 
-## 🧭 Les 11 réflexes qui sortent de tout ça
+## 🧭 Les 12 réflexes qui sortent de tout ça
 
 1. **Avant de dire qu'une chose manque** → la chercher dans le code et dans `docs/INVENTAIRE.md`.
 2. **Avant de « réparer » du code orphelin** → chercher la décision. Sinon, demander.
@@ -976,9 +976,29 @@ travail de l'autre session.
    ouvrir la chose incriminée pour la lire. Deux fausses alertes sur deux dans l'audit du 18/08 :
    une recherche qui se trouvait elle-même, et une différence de CASSE. Voir la famille 12ter.
 
+12. ⭐⭐ **Quand la personne décrit un symptôme et que ta mesure dit le contraire** → c'est ta
+   MESURE qui ne reproduit pas son écran, pas elle qui se trompe. *Elle regarde le vrai
+   système ; toi, une fixture.*
+   **Le cas qui l'a fondé (30/08/2026, ft-v1062)** — trois versions pour un seul bug, et
+   **deux diagnostics faux de ma part** :
+   - ① mon test jouait tout le chemin et passait → j'ai corrigé la **livraison du fichier**.
+     Vrai défaut, mais pas le sien. Cause : ma fixture avait **1 séance**, l'écran ne défilait pas.
+   - ② en VÉRIFIANT le bon diagnostic, j'ai mesuré avec **8 séances** — la modale ressortait
+     visible, j'ai écrit « mon hypothèse est fausse ». **Elle ne l'était pas** : à 8 séances les
+     deux cartes du haut ne s'affichent pas, l'écran est plus court (473 px de défilement au lieu
+     de 905). *Le même piège, deux fois, dans la même heure.*
+   - ③ ce qui a tranché **les deux fois** : ce qu'il a envoyé. Ses **cinq mots** — *« ça clique
+     bien mais rien ne se passe »* — séparaient le bouton (qui répond) de la fenêtre (qui ne
+     s'ouvre pas), donc éliminaient la moitié du code. Puis sa **vidéo** a donné sa position de
+     défilement exacte, la seule chose qui manquait.
+   👉 **La règle qui en sort** : *une observation brute ne ment jamais ; une mesure, si — quand
+   elle porte sur autre chose que ce que la personne a sous les yeux.* Et corollaire pour les
+   questions à poser : demander **ce qui se passe** (« le bouton répond ? une fenêtre ? un
+   message ? ») vaut mieux que demander ce que la personne **croit** être la cause.
+
 ---
 
-*Dernière mise à jour : 18/08/2026 (familles 12ter — la fausse panne — et 15 — la règle définie trop étroit). À compléter à chaque nouveau bug — symptôme, cause, famille,
+*Dernière mise à jour : 30/08/2026 (famille 24 — la fixture sans profondeur — et réflexe 12 — quand la mesure contredit la personne). À compléter à chaque nouveau bug — symptôme, cause, famille,
 et ce qui le protège désormais.*
 
 
@@ -1445,6 +1465,47 @@ dans l'état d'exécution. C'est **R30** (un retrait se décide, il ne se consta
 ressources — et la 2ᵉ fois en deux jours que j'appelle « mort » quelque chose de vivant.
 
 ---
+
+## 24. 🪟 UNE FIXTURE SANS PROFONDEUR NE TESTE PAS LE MÊME ÉCRAN *(30/08/2026, ft-v1060)*
+
+**Le cas.** Le bouton « Exporter » de l'historique ne faisait rien chez Michel — *« ça clique bien
+mais rien ne se passe »*. Mon test de la veille l'avait pourtant joué de bout en bout : bouton,
+modale, fichier téléchargé, **0 erreur JS**.
+
+**Pourquoi il passait.** Ma fixture contenait **une seule séance**. L'écran ne défilait donc pas.
+Or le défaut était *une modale en `position:absolute` enfermée dans un conteneur qui défile* :
+`inset:0` désigne alors le **haut du contenu**, pas la fenêtre — donc elle s'ouvre hors de l'écran
+**dès qu'on a défilé**. Avec 30 séances, mesuré : la modale s'ouvre à **y = −3102**, soit
+**2 800 px au-dessus**. Le test et l'utilisateur regardaient deux écrans différents.
+
+**À quoi on la reconnaît.** Le test emprunte le bon chemin, dans le bon ordre, et il est vert —
+mais **le VOLUME de données qu'il pose ne ressemble pas au réel**. Tout ce qui n'apparaît qu'au-delà
+d'un certain seuil y échappe : défilement, pagination, listes tronquées, lenteur, mise en cache.
+
+**Ce qui protège aujourd'hui.** Le témoin du bloc **CLXVI** pose **30 séances** et fait défiler
+l'écran **à fond** avant de mesurer — et un second témoin vérifie que le défilement a bien eu lieu
+(`> 500 px`) : *sans lui, le premier serait vert en ne mesurant rien.*
+
+👉 **Le réflexe.** Quand un test reproduit « le chemin heureux » et que la personne voit autre
+chose, regarder d'abord **ce que la fixture n'a pas** — avant de chercher ce que le code fait mal.
+
+**⭐⭐ CONFIRMÉ SUR LA VIDÉO DE MICHEL — ET JE SUIS RETOMBÉ DANS LE PIÈGE EN LE VÉRIFIANT.**
+Sa vidéo montre le bouton qui s'allume à chaque tap et **rien d'autre** : ni modale, ni message.
+J'ai alors mesuré à sa position de défilement… **avec une fixture de 8 séances**. Résultat : la
+modale était visible, donc *« mon hypothèse est fausse »*. ⛔ **Faux.** Avec 8 séances, les deux
+cartes du haut de l'écran Progrès ne s'affichent pas — l'écran est donc **plus court**, et le
+défilement nécessaire pour atteindre le bouton était de **473 px**, sous le seuil.
+👉 Refait avec **38 séances sur 78 jours** (son profil réel, les deux cartes rendues) : pour amener
+le bouton là où il est sur sa vidéo, il faut **905 px** de défilement — au-dessus du seuil de
+**742 px**. La modale sort alors à **y = −365 → −61** : `visible:false`. *Après correctif :
+540 → 844.*
+⚠️ **La leçon se replique donc sur elle-même** : j'ai failli abandonner le bon diagnostic parce que
+ma fixture de vérification manquait, elle aussi, de profondeur. **Le seuil n'est pas « ça défile »,
+c'est « ça défile AUTANT QUE CHEZ LA PERSONNE ».**
+
+⚠️ **Et c'est la famille MIROIR du « contrôle circulaire » (§ plus haut)** : là-bas le vert ne
+pouvait pas rougir ; ici le vert est **sincère**, il porte simplement sur un écran qui n'est pas
+celui de la personne. *Les deux coûtent le même prix — on cherche le défaut au mauvais endroit.*
 
 ## 23. 🔢 UN CHAMP QUI « REFUSE » UNE SAISIE PEUT EN FAIT LA MUTILER *(30/08/2026, ft-v1057)*
 
