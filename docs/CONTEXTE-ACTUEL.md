@@ -6,7 +6,19 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1069`.
+- **Version en ligne (live) :** `ft-v1070`.
+- 🚶⭐⭐ **LES PAS COMPTENT, SANS JAMAIS COMPTER DEUX FOIS** (ft-v1070). Michel : *« attention il
+  faut que ça soit cohérent — la montre compte aussi les pas si on fait du tapis »*.
+  ⛔⛔ **Il a nommé le piège de ft-v949 avant qu'on le trouve, et il est plus large que le tapis** :
+  `activityLevel` (« Modéré 3-4j ») contient aussi la **marche ordinaire**. Mesuré : avec les pas
+  bruts, une journée à 6 100 pas ajoutait **197 kcal qui n'existent pas, tous les jours**.
+  ⭐⭐ **D'où le SURPLUS sur sa propre base** (médiane 30 j · min 7 j · seuil 1 500 · borné 500 kcal) :
+  la rando ressort (+9 000 pas → ~290 kcal), le tapis habituel **est dans la base** donc surplus nul.
+  ⭐ Un seul propriétaire `_pasEcart` (tracking.js), lu par le TDEE, l'écran Nutrition et Milo (**R2**).
+  ⛔ Milo reçoit le surplus **et** l'interdiction d'inventer l'activité (*« des pas ne disent pas ce
+  qui a été fait »*).
+  ⚠️ **La moitié qui manque est écrite** : on VOIT la dépense, on ne peut toujours pas ENREGISTRER
+  la randonnée (le cardio est accroché à `S.wkt`). → `IDEES-FUTURES.md`.
 - 😴⭐⭐ **LE SOMMEIL MESURÉ ATTEINT ENFIN LE SCORE ET MILO** (ft-v1069). Michel : *« ah oui les pas
   et le sommeil ça c'est hyper important »*.
   ⛔⛔ **Le défaut était mesuré et écrit depuis 11 jours, dans `Code.js`** : la saisie manuelle

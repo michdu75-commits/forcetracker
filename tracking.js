@@ -2698,6 +2698,75 @@ function _nuitsRecentes(auj, n){
    cardiaque pendant la séance c'est utile pour rajouter à nos affinages de calculs, je ne suis
    pas d'accord »*. C'est la position du projet depuis le début, et elle est mesurée : r = 0,10
    à 0,34 entre les calories d'un bracelet et la calorimétrie indirecte en résistance. */
+/* 🚶 LES PAS — LE SURPLUS SUR SA PROPRE BASE, JAMAIS LE TOTAL (30/08/2026)
+   Michel : *« si on rajoute les pas ça rajoute forcément des calories dépensées dans la journée,
+   et ça montre aussi l'activité en l'absence de données rentrées dans l'application. Exemple :
+   on a marché 15 000 pas parce qu'on a fait une randonnée — à l'heure actuelle on ne peut pas
+   le renseigner. **Attention, il faut que ça soit cohérent** : la montre prend en compte aussi
+   le nombre de pas si on fait du tapis à la salle, ou de la course, ou du vélo elliptique. »*
+
+   ⛔⛔ IL A NOMMÉ LE PIÈGE DE ft-v949 AVANT QU'ON LE TROUVE, et il est plus large que le tapis.
+   `calcTDEE = BMR × activityLevel + workExtra + sportExtra` — **aucun terme de séance**, parce
+   que ft-v949 l'a retiré : le multiplicateur s'appelle littéralement « Modéré (3-4j) », les
+   séances sont dedans. Or il contient aussi **la marche ordinaire** d'une journée normale.
+   👉 ***Ajouter les pas BRUTS facturerait une deuxième fois la marche que le multiplicateur
+   couvre déjà*** — le même défaut, sur une autre grandeur.
+
+   ⭐⭐ D'OÙ LE SURPLUS, ET IL RÉPOND AUX DEUX CAS DE MICHEL D'UN SEUL COUP :
+   · la RANDONNÉE — 15 000 pas quand il en fait 6 000 → 9 000 pas réellement **non comptés** ;
+   · le TAPIS — s'il en fait régulièrement, c'est **dans sa base**, donc surplus nul, donc rien
+     n'est compté deux fois. Et s'il n'en fait jamais, ce jour-là EST une dépense en plus.
+   *La base n'est pas une norme : c'est SA journée ordinaire à lui.*
+
+   ⭐ R13 — RIEN N'EST INVENTÉ : c'est le motif de `_rhrEcart`, dix lignes plus bas (médiane sur
+   une fenêtre, minimum de jours avant de se prononcer, effet borné). La MÉDIANE et pas la
+   moyenne, pour la même raison : un déménagement ou une journée à Disney ne doit pas déplacer
+   la référence.
+   ⛔ MINIMUM 7 JOURS, sinon on se tait : un surplus calculé sur deux jours est du bruit présenté
+   comme un signal (R29). ⛔ Et le seuil de 1 500 pas évite de commenter chaque pas — une
+   variation quotidienne normale n'est pas une information (R12 : la tendance, pas le bruit).
+   ⛔ BORNÉ À 500 kcal : un GPS qui déraille, un trajet en voiture compté en pas, une journée de
+   déménagement ne doivent pas faire exploser une cible calorique. *Le coût de l'erreur porte sur
+   ce que la personne mange* (R29).
+   ⚠️ ET C'EST UNE ESTIMATION, DITE COMME TELLE : ~1 300 pas au kilomètre, ~0,5 kcal par kg et
+   par km. On ne prétend pas mesurer une dépense, on l'approche. */
+const PAS_JOURS_BASE = 30;   // fenêtre de référence, comme la FC au repos
+const PAS_MIN_JOURS  = 7;    // en dessous, on ne se prononce pas
+const PAS_SEUIL      = 1500; // en deçà, c'est la variation d'une journée ordinaire
+const PAS_MAX_KCAL   = 500;  // borne dure : une cible calorique ne s'envole pas sur un capteur
+const PAS_PAR_KM     = 1300;
+function _pasEcart(refTs){
+  try{
+    const j=(typeof S!=='undefined'&&S.healthDaily)||[];
+    const auj=(typeof today==='function')?today(refTs)
+             :new Date(refTs==null?Date.now():refTs).toISOString().slice(0,10);
+    /* ⛔ Les jours POSTÉRIEURS sont exclus : sans ce filtre, rejouer une journée d'il y a une
+       semaine la calculerait avec les marches d'après (la leçon de `_rhrEcart`, ft-v1017). */
+    const rec=j.filter(x=>x&&x.date&&x.steps>0&&x.date<=auj)
+               .sort((a,b)=>b.date.localeCompare(a.date));
+    if(!rec.length) return null;
+    const jour=rec[0];
+    const age=(Date.parse(auj+'T12:00:00')-Date.parse(jour.date+'T12:00:00'))/86400000;
+    if(!(age>=0)||age>1) return null;             // trop vieux → on ne dit rien (R29)
+    const base=rec.slice(1).filter(x=>{
+      const d=(Date.parse(jour.date+'T12:00:00')-Date.parse(x.date+'T12:00:00'))/86400000;
+      return d>0 && d<=PAS_JOURS_BASE;
+    }).map(x=>x.steps);
+    if(base.length<PAS_MIN_JOURS) return null;    // pas de base → pas de surplus (R29)
+    const t=base.slice().sort((a,b)=>a-b), m=t.length>>1;
+    const med=t.length%2 ? t[m] : Math.round((t[m-1]+t[m])/2);
+    const surplus=jour.steps-med;
+    return {pas:jour.steps, base:med, surplus:surplus, n:base.length, date:jour.date,
+            /* ⛔ SEULEMENT LE SURPLUS POSITIF entre dans les calories. Une journée SOUS sa base
+               ne se DÉFALQUE pas : le multiplicateur est une moyenne, il absorbe déjà les jours
+               creux — retrancher reviendrait à punir un jour de repos, et à faire baisser une
+               cible alimentaire un jour de fatigue. */
+            kcal: surplus>=PAS_SEUIL
+                  ? Math.min(PAS_MAX_KCAL,
+                      Math.round((surplus/PAS_PAR_KM)*((typeof S!=='undefined'&&S.bw)||80)*0.5))
+                  : 0};
+  }catch(e){ return null; }
+}
 const RHR_JOURS_BASE = 30;   // fenêtre de référence
 const RHR_MIN_JOURS  = 7;    // en dessous, on ne se prononce pas
 const RHR_MAX_ADJ    = 8;    // borne de l'ajustement, dans les deux sens

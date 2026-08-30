@@ -211,6 +211,10 @@ const _HELP_DATA={
   nutrition:{
     title:'🍽️ Nutrition',
     tips:[
+      /* 🚶 EN TÊTE parce que c'est la question qu'on se pose en voyant le chiffre bouger :
+         « pourquoi mon TDEE a changé aujourd'hui ? ». La pop-up ANNONCE, l'aide EXPLIQUE (R25) :
+         ici vivent les garde-fous que la pop-up ne dit pas (les 7 jours, la borne, le jour creux). */
+      {i:'🚶',t:'<b>Tes grosses journées de marche comptent dans ta dépense</b> — si ta montre envoie tes pas à Santé. ⭐ <b>Mais seulement ce qui DÉPASSE ta journée habituelle</b>, jamais le total : ton niveau d\'activité (« Modéré 3-4j »…) contient <b>déjà</b> la marche d\'une journée normale. Te compter les pas bruts te facturerait deux fois la même marche, tous les jours. <b>Exemple</b> : 6 000 pas d\'habitude, 15 000 aujourd\'hui → les <b>9 000 en plus</b> valent ~290 kcal, affichées sous ton TDEE. Un tapis que tu fais chaque semaine est <b>dans</b> ton habitude, donc rien n\'est compté deux fois. ⛔ L\'app <b>se tait</b> tant qu\'elle n\'a pas <b>7 jours</b> de mesures, une journée calme ne <b>retire</b> rien (on ne punit pas un jour de repos), et le bonus est <b>borné à 500 kcal</b> — un capteur qui déraille ne doit pas faire exploser tes macros. ⚠️ C\'est une <b>estimation</b> (~1 300 pas au kilomètre), pas une mesure.'},
       /* 🍽️ ORDRE DE L'ONGLET MACROS (ft-v1025) — en PREMIER dans l'aide, parce que c'est la
          première question qu'on se pose en arrivant : « où est passé mon TDEE ? ». R25 : la
          pop-up ANNONCE (une fois), l'aide EXPLIQUE (à chaque fois qu'on la rouvre). */
@@ -2514,6 +2518,17 @@ function renderNutrition(){try{
     srcEl.style.color = bd.methode==='katch' ? 'var(--green)' : 'var(--gold)';
   }
   document.getElementById('nu-tdee').textContent=tdee.toLocaleString('fr-FR');
+  /* 🚶 ON DIT D'OÙ VIENT LE SURPLUS — sinon le TDEE change d'un jour à l'autre sans explication,
+     et un chiffre qui bouge tout seul se lit comme un bug (la leçon du sommeil, ft-v1069).
+     ⛔ La ligne ne s'affiche QUE s'il y a un surplus : afficher « +0 kcal » tous les jours serait
+     du bruit permanent pour l'immense majorité des journées (R24, informer sans encombrer). */
+  const pasEl=document.getElementById('nu-tdee-pas');
+  if(pasEl){
+    const pe=(typeof _pasEcart==='function')?_pasEcart():null;
+    pasEl.textContent = (pe&&pe.kcal>0)
+      ? ('🚶 +'+pe.kcal+' kcal · '+pe.surplus.toLocaleString('fr-FR')+' pas de plus que d\'habitude')
+      : '';
+  }
   const todayStr=today();
   const todaySess=S.sessions.find(s=>s.date===todayStr);
   const sessCals=todaySess&&todaySess.calories?todaySess.calories:0;

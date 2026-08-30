@@ -434,6 +434,9 @@ const DISC_CADRE={
 };
 
 const NEW_FEATURES=[
+  /* 🚶 CELLE-CI A SA POP-UP (v65) : un chiffre sur lequel la personne AGIT — ses calories du
+     jour — peut maintenant changer d'un jour à l'autre. Sans un mot, ça se lit comme un bug. */
+  {id:'pas-surplus', screen:'nutrition', desc:'\u{1F6B6} Si ta montre envoie tes <b>pas</b> \u00e0 Sant\u00e9, une grosse journ\u00e9e de marche compte enfin dans ta d\u00e9pense. \u2b50\u2b50 <b>Mais seulement ce qui D\u00c9PASSE ta journ\u00e9e habituelle</b>, jamais le total \u2014 et c\'est tout ce qui rend le chiffre juste : ton niveau d\'activit\u00e9 (\u00ab Mod\u00e9r\u00e9 3-4j \u00bb\u2026) contient <b>d\u00e9j\u00e0</b> la marche d\'une journ\u00e9e normale. Ajouter tes pas bruts te compterait deux fois la m\u00eame marche, <b>tous les jours</b>. \u2b50 <b>Exemple</b> : tu fais 6 000 pas d\'habitude, tu pars en rando \u00e0 15 000 \u2192 les <b>9 000 pas en plus</b> valent ~290 kcal, ajout\u00e9es \u00e0 ta d\u00e9pense du jour. Un tapis que tu fais toutes les semaines est <b>dans</b> ton habitude : rien n\'est compt\u00e9 deux fois. \u26d4 L\'app <b>se tait</b> tant qu\'elle n\'a pas 7 jours de mesures (sans habitude connue, il n\'y a pas de \u00ab en plus \u00bb), une journ\u00e9e calme ne <b>retire</b> rien, et le bonus est <b>born\u00e9 \u00e0 500 kcal</b> \u2014 un capteur qui d\u00e9raille ne doit pas faire exploser tes macros. \u26a0\uFE0F C\'est une <b>estimation</b> (~1 300 pas au km), pas une mesure.'},
   /* 😴 CELLE-CI A SA POP-UP (v64), et c'est le cas « UN REPÈRE A BOUGÉ » à l'état pur : le
      chiffre de sommeil affiché peut désormais DIFFÉRER de celui qu'on a saisi soi-même, et le
      score de récup peut bouger avec lui. Sans un mot, ça se lit comme un bug — ou pire, comme
@@ -603,6 +606,12 @@ const NEW_FEATURES=[
 // ✅ v46/47/48 = les 3 features ex-testeurs (« maxi » · calories manuelles · objectif recomposition)
 //    OUVERTES À TOUT LE MONDE (ft-v623, décision Michel) + red dots reps-maxi/manual-kcal/goal-recomp réactivés.
 const WHATS_NEW=[
+  /* 🚶 ELLE SE MÉRITE : ce n'est pas un bouton qui apparaît, c'est un CHIFFRE SUR LEQUEL LA
+     PERSONNE AGIT — ses calories du jour — qui peut désormais bouger. *Un nombre qu'on suit et
+     qui change sans explication se lit comme un bug, ou pire, comme une erreur de l'app.*
+     ⛔ BORNÉE À L'ESSENTIEL (R25) : ce qui change, et le fait que ce soit le SURPLUS. Le reste —
+     les 7 jours de base, la borne, le jour creux qui ne retire rien — vit dans l'aide. */
+  {v:65, ic:'🚶', t:'Tes grosses journées de marche comptent', d:'Si ta montre envoie tes pas \u00e0 Sant\u00e9, une randonn\u00e9e ou une longue journ\u00e9e debout <b>s\'ajoute enfin</b> \u00e0 ta d\u00e9pense du jour. \u26d4 <b>Seulement ce qui d\u00e9passe ton habitude</b>, jamais le total : ton niveau d\'activit\u00e9 contient d\u00e9j\u00e0 la marche d\'une journ\u00e9e normale, et te la compter deux fois fausserait tes macros tous les jours. Tu fais 6 000 pas d\'habitude et 15 000 aujourd\'hui \u2192 <b>+290 kcal</b>, expliqu\u00e9es sous ton TDEE.'},
   /* 😴 ELLE SE MÉRITE, ET C'EST LE CAS « UN REPÈRE A BOUGÉ » (règle d'or #11).
      Le nombre d'heures affiché sur l'Accueil peut maintenant être DIFFÉRENT de celui qu'on a
      tapé soi-même, et le score de récup peut bouger avec. *Un chiffre qu'on a donné et qui

@@ -19384,6 +19384,133 @@ console.log('\n-- CLXXIV. Le sommeil mesuré atteint le score et Milo (ft-v1069)
   }
 }
 
+/* == BLOC CLXXV - LES PAS COMPTENT, SANS JAMAIS COMPTER DEUX FOIS (ft-v1070) ==
+   Michel : « si on rajoute les pas ça rajoute forcement des calories depensees dans la journee,
+   et ca montre aussi l'activite en l'absence de donnees rentrees dans l'application. Exemple :
+   on a marche 15 000 pas parce qu'on a fait une randonnee. **Attention il faut que ca soit
+   coherent** : la montre prend en compte aussi le nombre de pas si on fait du tapis a la salle,
+   ou de la course, ou du velo elliptique. »
+
+   ⛔⛔ IL A NOMME LE PIEGE DE ft-v949 AVANT QU'ON LE TROUVE, et il est plus large que le tapis :
+   `activityLevel` (« Modere 3-4j ») contient deja la marche d'une journee ORDINAIRE. Ajouter les
+   pas BRUTS la facturerait deux fois.
+   ⭐⭐ D'OU LE SURPLUS SUR SA PROPRE BASE — et il repond aux DEUX cas d'un coup : la randonnee
+   ressort (9 000 pas au-dessus de sa base), le tapis habituel EST dans la base donc surplus nul.
+
+   ⛔ LE TEMOIN ② EST CELUI QUI PORTE SA CONTRAINTE : une journee ordinaire n'ajoute RIEN. */
+console.log('\n-- CLXXV. Les pas comptent, sans jamais compter deux fois (ft-v1070) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_bw:'84', ft4_age:'48'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const P=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const J=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+    const o={}; S.bw=84; S.activityLevel=1.55; S.sessions=[];
+    /* ⭐ SA BASE : 6 000 pas par jour sur 14 jours. C'est SA journee ordinaire, pas une norme. */
+    const base=(pasAuj)=>{ const L=[{date:J(0),steps:pasAuj}];
+      for(let d=1;d<=14;d++) L.push({date:J(d),steps:6000+((d%3)-1)*200});   // 5800..6200
+      S.healthDaily=L; persist(); };
+
+    /* ① UNE JOURNEE ORDINAIRE N'AJOUTE RIEN — c'est la contrainte de Michel. */
+    base(6100); o.ordinaire={ecart:_pasEcart(), tdee:calcTDEE(), extra:calcPasExtra()};
+
+    /* ② LA RANDONNEE RESSORT : 15 000 pas contre une base de 6 000. */
+    base(15000); const e=_pasEcart();
+    o.rando={pas:e.pas, base:e.base, surplus:e.surplus, kcal:e.kcal, extra:calcPasExtra()};
+    o.tdeeRando=calcTDEE();
+
+    /* ③ LE TDEE MONTE EXACTEMENT DU SURPLUS, PAS D'AUTRE CHOSE (R2 : un seul proprietaire). */
+    o.deltaTdee=o.tdeeRando-o.ordinaire.tdee;
+
+    /* ④ SANS BASE (moins de 7 jours), ON SE TAIT — pas de surplus invente (R29). */
+    S.healthDaily=[{date:J(0),steps:15000},{date:J(1),steps:6000},{date:J(2),steps:6000}];
+    persist(); o.sansBase={ecart:_pasEcart(), extra:calcPasExtra(), tdee:calcTDEE()};
+
+    /* ⑤ UNE JOURNEE SOUS SA BASE NE SE DEFALQUE PAS (on ne punit pas un jour de repos). */
+    base(2000); o.jourCreux={surplus:_pasEcart().surplus, extra:calcPasExtra()};
+
+    /* ⑥ BORNE DURE : un capteur qui deraille ne fait pas exploser une cible calorique. */
+    base(200000); o.aberrant={extra:calcPasExtra(), surplus:_pasEcart().surplus};
+
+    /* ⑦ L'ECRAN DIT D'OU VIENT LE SURPLUS (sinon le TDEE bouge sans explication). */
+    base(15000); goScreen('nutrition');
+    o.ecran=String((document.getElementById('nu-tdee-pas')||{}).textContent||'');
+    base(6100); goScreen('nutrition');
+    o.ecranOrdinaire=String((document.getElementById('nu-tdee-pas')||{}).textContent||'');
+
+    /* ⑧ MILO recoit le SURPLUS, jamais le total, et le cadre qui va avec. */
+    base(15000); S.sessions=[];
+    const ctx=String(buildCoachContext()||'');
+    const i=ctx.indexOf('BEAUCOUP MARCHÉ');
+    o.milo=i>=0?ctx.slice(i-40,i+700):'(absent)';
+    o.miloTotalBrut=/15\s?000 pas, soit 9\s?000/.test(o.milo.replace(/ | /g,' '));
+
+    /* 📣 les 5 points de la regle d'or #11, MESURES et pas affirmes (lecon de ft-v1060 :
+       un journal qui affirme une surface d'aide inexistante est pire qu'un journal muet). */
+    o.regle11=(function(){ try{
+      const nf=(typeof NEW_FEATURES!=='undefined'?NEW_FEATURES:[]).find(f=>f&&f.id==='pas-surplus');
+      const wn=(typeof WHATS_NEW!=='undefined'?WHATS_NEW:[]).find(w=>w&&w.v===65);
+      const aide=((typeof _HELP_DATA!=='undefined'&&_HELP_DATA.nutrition&&_HELP_DATA.nutrition.tips)||[])
+                   .some(x=>x&&/\bpas\b/i.test(x.t||'')&&/habitu/i.test(x.t||'')
+                            &&/(D[ÉE]PASSE|surplus|de plus)/i.test(x.t||''));
+      const slides=(typeof APP_GUIDE_SLIDES!=='undefined'?APP_GUIDE_SLIDES:[]);
+      const dia=slides.filter(d=>d&&/pas comptent/i.test(d.t||''));
+      return {pointRouge:!!nf && nf.screen==='nutrition',
+              aideDetaillee:!!nf && (nf.desc||'').length>300,
+              popup:!!wn && /passe ton habitude/i.test(wn.d||''),
+              aideEcran:aide, diapo:dia.length===1,
+              /* ⛔ sans image, expres : une capture montrerait les pas de quelqu'un d'autre */
+              diapoSansImage:dia.every(d=>!d.img)};
+    }catch(e){ return {err:String(e)}; } })();
+    return o;
+   }catch(e){ return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]}; }
+  });
+  await cx.close();
+
+  if(P.err) t('CLXXV n\'a pas pu tourner', false, JSON.stringify(P));
+  else{
+    /* ⛔⛔ LE TEMOIN QUI PORTE SA CONTRAINTE — sans lui, on aurait recompte la marche ordinaire. */
+    t('⛔⛔ ① une journée ORDINAIRE n\'ajoute RIEN au TDEE (pas de double comptage)',
+      P.ordinaire.extra===0 && P.ordinaire.ecart && P.ordinaire.ecart.kcal===0,
+      JSON.stringify(P.ordinaire));
+    /* ⭐⭐ ET CELUI QUI L'EMPECHE D'ETRE VERT EN NE COMPTANT JAMAIS RIEN. */
+    t('⭐⭐ ② la RANDONNÉE ressort : 15 000 pas sur une base de 6 000 → +9 000, ~290 kcal',
+      P.rando.base>=5900 && P.rando.base<=6100 && P.rando.surplus>8900
+      && P.rando.kcal>250 && P.rando.kcal<330 && P.rando.extra===P.rando.kcal,
+      JSON.stringify(P.rando));
+    /* ⛔ R2 : le TDEE monte du surplus, et de rien d'autre. */
+    t('⛔ ③ le TDEE monte EXACTEMENT du surplus (un seul propriétaire)',
+      P.deltaTdee===P.rando.kcal, 'delta TDEE = '+P.deltaTdee+' · surplus kcal = '+P.rando.kcal);
+    /* ⛔ R29 : sans base, on ne devine pas. */
+    t('⛔ ④ moins de 7 jours de mesures → aucun surplus, l\'app se tait',
+      P.sansBase.ecart===null && P.sansBase.extra===0, JSON.stringify(P.sansBase));
+    /* ⛔ ON NE PUNIT PAS UN JOUR DE REPOS. */
+    t('⛔ ⑤ une journée SOUS sa base ne se défalque pas (surplus négatif → 0 kcal)',
+      P.jourCreux.surplus<0 && P.jourCreux.extra===0, JSON.stringify(P.jourCreux));
+    /* ⛔ LE COUT DE L'ERREUR PORTE SUR CE QU'ELLE MANGE (R29). */
+    t('⛔ ⑥ un capteur qui déraille est BORNÉ (200 000 pas ne donnent pas 12 000 kcal)',
+      P.aberrant.surplus>190000 && P.aberrant.extra===500, JSON.stringify(P.aberrant));
+    /* ⭐ UN CHIFFRE QUI BOUGE SANS EXPLICATION SE LIT COMME UN BUG (leçon de ft-v1069). */
+    t('⭐ ⑦ l\'écran NOMME le surplus, et se tait les jours ordinaires',
+      /\+\d+ kcal/.test(P.ecran) && P.ecran.indexOf('de plus que d')>=0 && P.ecranOrdinaire==='',
+      JSON.stringify({rando:P.ecran, ordinaire:P.ecranOrdinaire}));
+    /* ⭐⭐ R4 : l'information doit atteindre celui qui decide. */
+    t('📣 ⑨ règle #11 : point rouge, aide détaillée, pop-up v65, aide ? et diapo existent',
+      P.regle11 && P.regle11.pointRouge && P.regle11.aideDetaillee && P.regle11.popup
+      && P.regle11.aideEcran && P.regle11.diapo && P.regle11.diapoSansImage,
+      JSON.stringify(P.regle11));
+    t('⭐⭐ ⑧ Milo reçoit le SURPLUS (pas le total), avec l\'interdiction d\'inventer l\'activité',
+      /soit 9/.test(P.milo) && /ne les recompte pas/.test(P.milo)
+      && /Tu ne sais PAS de quoi il s'agit/.test(P.milo), P.milo.slice(0,260));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

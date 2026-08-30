@@ -3473,6 +3473,29 @@ PROFIL ATHLÈTE:
 ${S.name ? '- Prénom: '+S.name+' (utilise-le naturellement, sans le répéter à chaque phrase)\n' : '- Prénom: inconnu — ne dis PAS « Salut [prénom] » à vide, commence directement\n'}- Sexe: ${S.gender === 'H' ? 'Homme' : 'Femme'} | Âge: ${S.age} ans | Taille: ${S.height}cm | Poids: ${S.bw}kg
 - BMR: ${bmr} kcal | TDEE: ${tdee} kcal${_bd&&_bd.methode==='katch'?` → ⚖️ CALCULÉ SUR SA MASSE MAIGRE (${_bd.lm.lm} kg, ${_bd.lm.src} du ${_bd.lm.date}), formule Katch-McArdle — un MEILLEUR point de départ que la formule habituelle (poids/taille/âge), qui donnerait ${_bd.mifflin} kcal, soit ${_bd.kcal-_bd.mifflin>0?'+':''}${_bd.kcal-_bd.mifflin} kcal/jour d'écart. ⚠️ Mais cette masse maigre est une ESTIMATION, pas une mesure : ${_bd.lm.nature==='saisie'?"elle est calculée à partir d'un % de masse grasse qu'il/elle a SAISI lui/elle-même":_bd.lm.nature==='deduite'?"elle n'était pas lisible sur le rapport, elle a été retrouvée par SOUSTRACTION (poids − masse grasse)":"une balance mesure un poids et une impédance, puis ESTIME le reste avec la formule de son fabricant"}. Appuie-toi sur le CHIFFRE et sur la TENDANCE de plusieurs mesures ; ne présente jamais une variation de quelques centaines de grammes comme un gain ou une perte de tissu, et ne qualifie pas ce chiffre de « mesuré ».`:(_bd?` → ⚠️ ESTIMÉ sur poids/taille/âge (Mifflin-St Jeor)${_bd.raison?', '+_bd.raison:''} — cette formule ignore la composition corporelle et SOUS-ESTIME les personnes musclées (souvent de 100 à 200 kcal). Traite ce chiffre comme un ordre de grandeur, pas comme une mesure. Si la question porte sur ses calories, tu peux lui dire qu'un bilan corporel (Progrès → Poids) rendrait le calcul nettement plus juste — une fois, sans insister.`:'')}
 - Niveau activité sportive: ${S.activityLevel} | Type travail: ${{bureau:'Bureau/Sédentaire',debout:'Debout/Statique',actif:'Actif/En mouvement (serveur, infirmier…)',physique:'Travail Physique'}[S.workType]||'Bureau'} (+${calcWorkExtra()} kcal NEAT)
+${(()=>{
+  /* 🚶 LE SURPLUS DE PAS — et c'est le 2ᵉ usage demandé par Michel : *« ça montre l'activité en
+     l'absence de données rentrées dans l'application — on a marché 15 000 pas parce qu'on a fait
+     une randonnée »*. Sans cette ligne, une journée entière d'effort est INVISIBLE pour Milo,
+     qui la lit comme un jour de repos et peut proposer une grosse séance le lendemain (R4).
+     ⛔ On lui donne le SURPLUS, jamais le total : le total contient la marche ordinaire, déjà
+     comptée par le multiplicateur — et Milo commenterait une dépense qui n'existe pas.
+     ⛔ Et on lui dit d'où ça vient ET ce que ça ne prouve pas : des pas ne disent pas CE QUI a
+     été fait. Sans ce cadre, un modèle affirme « ta randonnée » alors qu'il ne sait rien
+     (Constitution : ne jamais faire semblant de savoir). */
+  try{
+    const e=(typeof _pasEcart==='function')?_pasEcart():null;
+    if(!e||e.kcal<=0) return '';
+    const seanceAuj=(S.sessions||[]).some(x=>x&&x.date===today());
+    return `- 🚶 AUJOURD'HUI IL/ELLE A BEAUCOUP MARCHÉ : ${e.pas.toLocaleString('fr-FR')} pas, soit `
+      + `${e.surplus.toLocaleString('fr-FR')} de plus que sa base habituelle (${e.base.toLocaleString('fr-FR')}/j sur ${e.n} jours). `
+      + `Ces ~${e.kcal} kcal sont DÉJÀ ajoutées à son TDEE ci-dessus — ne les recompte pas.`
+      + (seanceAuj ? ` Il/elle a AUSSI enregistré une séance aujourd'hui.`
+                   : ` ⚠️ AUCUNE séance n'est enregistrée aujourd'hui : cette dépense vient d'autre chose (marche, randonnée, une journée debout). `
+                     + `⛔ Tu ne sais PAS de quoi il s'agit — des pas ne disent pas ce qui a été fait. Ne l'affirme jamais ; tu peux le lui DEMANDER une fois si c'est utile, `
+                     + `et en tenir compte pour sa récupération (une grosse journée de marche n'est pas un jour de repos).`);
+  }catch(e){ return ''; }
+})()}
 - Tabac: ${S.smoker?'Fumeur (BMR +7%, impact cardiovasculaire — adapter l\'intensité et conseiller l\'arrêt)':'Non-fumeur'}
 - Objectif principal: ${S.goal?GOAL_LABELS[S.goal]:'NON RENSEIGNÉ — ne présume pas son objectif, observe ses séances et DEMANDE-lui ce qu\'elle vise'}
 ${(()=>{
@@ -4060,9 +4083,13 @@ ${(()=>{
                   monte à cause de la fatigue, d'un rhume, d'un verre de trop ou d'une chambre
                   trop chaude : la lui donner l'inviterait à interpréter, c'est-à-dire à poser un
                   diagnostic (Constitution · R10). Le score, lui, porte déjà la conclusion utile.
-     · `steps`  → PAS ENCORE. Rien ne les lit, et une donnée sans comportement observable n'a
-                  rien à faire dans le contexte (R3). Voir `IDEES-FUTURES.md` — Michel a déjà
-                  posé les deux usages ET la contrainte de double comptage. */
+     · `steps`  → TRANSMIS depuis ft-v1070, mais **seulement le SURPLUS**, jamais le total.
+                  Le total contient la marche ordinaire, déjà couverte par le multiplicateur
+                  d'activité : la donner ferait commenter à Milo une dépense qui n'existe pas
+                  (c'est le double comptage de ft-v949, sur une autre grandeur). Le surplus,
+                  lui, est une dépense RÉELLEMENT non comptée — et c'est aussi le seul signe
+                  d'une journée d'effort que l'app n'a pas vue. Propriétaire : `_pasEcart`
+                  (tracking.js), lu par le TDEE, l'écran Nutrition et ce bloc (R2). */
   const ts=(typeof _nuit==='function')?_nuit(todayStr):null;
   const qLabels={1:'Mauvais',2:'Moyen',3:'Bon',4:'Excellent'};
   const last3=(typeof _nuitsRecentes==='function')?_nuitsRecentes(todayStr,3):[];
