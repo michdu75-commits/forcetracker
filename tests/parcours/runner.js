@@ -18570,6 +18570,75 @@ console.log('\n-- CLXVIII. La quantité et les valeurs ne se désappairent plus 
   await cx.close();
 }
 
+/* == BLOC CLXIX - « J'AI 2 FOIS LA MEME PROT » (ft-v1062) ==
+   Michel, capture a l'appui : son shaker apparait DEUX FOIS dans « Tes repas habituels »,
+   deux lignes rigoureusement identiques a l'ecran (meme nom, 156 kcal, 35 g).
+   ⛔⛔ LA CAUSE TIENT A UN `+` : la signature d'un repas habituel etait `meal + '::' + aliments`.
+   Note 6 fois en Collation 2 et 2 fois en Petit-dej, le meme shaker faisait DEUX habitudes.
+   ⚠️ ET C'EST UNE REGRESSION DE ft-v1056, la notre : tant que la carte APPLIQUAIT le moment, il
+   faisait partie de l'identite de ce qu'on rejoue — deux lignes, deux resultats. Depuis que le
+   moment SE DEMANDE au tap, les deux lignes font exactement la meme chose.
+   *Un critere de regroupement qui survit a la disparition de son motif fabrique des doublons.*
+   ⛔ LE COUT N'EST PAS QUE VISUEL : la liste est bornee a 3 — une variante en double CHASSE une
+   vraie autre habitude de l'ecran. Sur sa capture, ses 3 lignes ne sont que 2 repas.
+   ⭐ ON FILTRE AVANT DE FUSIONNER, et c'est ce qui preserve son usage reel : il prend ce shaker
+   le matin ET l'apres-midi. Fusionner d'abord ferait disparaitre l'habitude entiere des qu'il
+   l'a notee une fois dans la journee — il perdrait le tap pour son 2e shaker. */
+console.log('\n-- CLXIX. « J\'ai 2 fois la même prot » (ft-v1062) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  const jr=n=>{const d=new Date(Date.now()-n*864e5);return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+  /* ⭐ SA SITUATION EXACTE, pas une fixture inventée : 6 en Collation 2, 2 en Petit-déj. */
+  const jrn=[]; let ts=Date.now();
+  for(let i=0;i<6;i++) jrn.push({ts:ts++,date:jr(i+2),meal:'collation2',name:'Iso zero protein (ASL)',kcal:156,prot:35,carbs:1,fat:1});
+  for(let i=0;i<2;i++) jrn.push({ts:ts++,date:jr(i+2),meal:'petitdej',  name:'Iso zero protein (ASL)',kcal:156,prot:35,carbs:1,fat:1});
+  for(let i=0;i<3;i++){jrn.push({ts:ts++,date:jr(i+2),meal:'dejeuner',name:'Riz Basmati',kcal:795,prot:18,carbs:176,fat:3});
+                       jrn.push({ts:ts++,date:jr(i+2),meal:'dejeuner',name:'Steak haché 5%',kcal:300,prot:52,carbs:0,fat:9});}
+  for(let i=0;i<2;i++) jrn.push({ts:ts++,date:jr(i+2),meal:'diner',name:'Oeuf cru',kcal:280,prot:26,carbs:0,fat:20});
+  /* ⭐ ET LE MÊME SHAKER NOTÉ AUJOURD'HUI en Petit-déj : c'est le cas qui protège son 2e shaker. */
+  jrn.push({ts:ts++,date:jr(0),meal:'petitdej',name:'Iso zero protein (ASL)',kcal:156,prot:35,carbs:1,fat:1});
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',
+    ft4_foodlog:JSON.stringify(jrn)}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(()=>{
+   try{
+    const h=_repasHabituels();
+    return {nb:h.length,
+      lignes:h.map(x=>({n:x.n,meal:x.meal,al:(x.items||[]).map(i=>i.name).sort().join(' + ')})),
+      /* le tap doit toujours retrouver la ligne par sa signature */
+      retrouve:h.length?!!_repasHabituels().find(x=>x.sig===h[0].sig):false};
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+  if(F.err) t('CLXIX n\'a pas pu tourner', false, F.err);
+  else{
+    const iso=F.lignes.filter(x=>/Iso zero/.test(x.al));
+    t('⛔ le témoin a bien VU des repas habituels (sinon tout le reste serait vert pour rien)',
+      F.nb===3, F.nb+' lignes : '+JSON.stringify(F.lignes));
+    /* ⭐⭐ SA PHRASE, MESURÉE. */
+    t('⭐⭐ SA CAPTURE : le même shaker n\'apparaît plus qu\'UNE fois, pas deux',
+      iso.length===1, iso.length+' ligne(s) « Iso zero » : '+JSON.stringify(iso));
+    /* ⚠️ 6 en Collation 2 + 3 en Petit-déj (dont une CE MATIN) = 9. La variante du matin est
+       écartée du CHOIX, mais son compte reste : le filtre décide de ce qu'on propose, jamais de
+       ce qu'on a compté. Ce témoin a rougi sur mon 1ᵉʳ jet, qui affichait « noté 6 fois ». */
+    t('⭐ … et TOUTES les variantes sont comptées (6 + 3 = 9), même celle écartée du choix',
+      iso.length===1 && iso[0].n===9, JSON.stringify(iso));
+    /* ⛔ Le moment proposé décrit l'habitude, pas le dernier écart. */
+    t('⛔ le moment proposé est le PLUS FRÉQUENT (Collation 2, 6 fois), pas le plus récent',
+      iso.length===1 && iso[0].meal==='collation2', JSON.stringify(iso));
+    /* ⛔⛔ LE TÉMOIN QUI EMPÊCHE LA FUSION D'ÊTRE UN RECUL. */
+    t('⛔⛔ noté CE MATIN en Petit-déj, l\'habitude reste proposée — son 2ᵉ shaker garde son tap',
+      iso.length===1, 'lignes : '+JSON.stringify(F.lignes.map(x=>x.al)));
+    /* ⛔ Le vrai gain : la 3e place rend une AUTRE habitude, plus un doublon. */
+    t('⛔ la 3ᵉ place rend une VRAIE autre habitude (« Oeuf cru »), plus un doublon',
+      F.lignes.some(x=>/Oeuf cru/.test(x.al)), JSON.stringify(F.lignes.map(x=>x.al)));
+    t('⛔ la signature reste retrouvable — le tap « rejouer » fonctionne toujours',
+      F.retrouve===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

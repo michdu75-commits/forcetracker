@@ -6,7 +6,19 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1061`.
+- **Version en ligne (live) :** `ft-v1062`.
+- 🍽️⭐ **« J'AI 2 FOIS LA MÊME PROT »** (ft-v1062). Son shaker apparaissait **deux fois** dans
+  « Tes repas habituels », deux lignes identiques. ⛔⛔ **La cause tient à un `+`** : la signature
+  était `meal + '::' + aliments` — noté 6× en Collation 2 et 2× en Petit-déj, le même shaker
+  faisait **deux habitudes**. ⚠️⚠️ **Régression de ft-v1056, la mienne** : tant que la carte
+  **appliquait** le moment, il appartenait à l'identité de ce qu'on rejoue ; depuis qu'il **se
+  demande au tap**, les deux lignes font la même chose. 👉 ***Un critère de regroupement qui
+  survit à la disparition de son motif fabrique des doublons.***
+  ⛔ **Coût réel** : la liste est bornée à 3 — un doublon **chasse une vraie habitude**.
+  ⭐⭐ **On filtre AVANT de fusionner** : il prend ce shaker le matin **et** l'après-midi ;
+  fusionner d'abord lui ferait perdre le tap du 2ᵉ dès qu'il a noté le 1ᵉʳ.
+  ⚠️ **Mon propre témoin m'a repris** : le compte doit porter sur **toutes** les variantes —
+  *le filtre décide de ce qu'on PROPOSE, jamais de ce qu'on a COMPTÉ.*
 - ⚖️⭐⭐ **LA QUANTITÉ ET LES VALEURS NE SE DÉSAPPAIRENT PLUS** (ft-v1061). Michel, 4 captures
   dont **la photo de son étiquette** : *« ça sent le bug »*. Il y en avait **deux**.
   ⛔ ① **Champ vidé** : il tape « 3 », les valeurs tombent à 12 kcal, il efface — et **12 kcal

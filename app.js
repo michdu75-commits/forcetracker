@@ -1454,8 +1454,46 @@ function _repasHabituels(){
     if(date>s.dernier){ s.dernier=date; s.items=items; }   // la version la plus RÉCENTE fait foi
   });
   const td=today();
-  return Object.values(sigs)
-    .filter(s=>s.n>=2 && s.dernier!==td && s.items && s.items.length)
+  const vivants=Object.values(sigs)
+    .filter(s=>s.n>=2 && s.dernier!==td && s.items && s.items.length);
+  /* ⛔⛔ ON FUSIONNE LES VARIANTES DU MÊME REPAS (ft-v1062) — Michel, capture à l'appui :
+     *« j'ai 2 fois la même prot »*. Son shaker est noté **6 fois en Collation 2** et **2 fois en
+     Petit-déj** : deux signatures, donc deux lignes rigoureusement identiques à l'écran.
+     ⚠️ **C'est une régression de ft-v1056, la mienne.** Tant que la carte APPLIQUAIT le moment,
+     il faisait partie de l'identité de ce qu'on rejoue — deux lignes, deux résultats différents.
+     Depuis que le moment **se demande au tap**, les deux lignes font exactement la même chose.
+     *Un critère de regroupement qui survit à la disparition de son motif fabrique des doublons.*
+     ⛔ ET LE COÛT N'EST PAS QUE VISUEL : la liste est bornée à 3, donc une variante en double
+     **chasse une vraie autre habitude** de l'écran.
+     ⭐ ON FILTRE AVANT DE FUSIONNER, ET C'EST CE QUI PRÉSERVE SON USAGE RÉEL : il prend ce même
+     shaker le matin ET l'après-midi. Fusionner d'abord ferait disparaître l'habitude entière dès
+     qu'il l'a noté une fois dans la journée — il perdrait le tap pour son 2ᵉ shaker. En filtrant
+     variante par variante, celle de l'après-midi survit à celle du matin. */
+  /* ⚠️ LE COMPTE (« noté X fois ») SE FAIT SUR **TOUTES** LES VARIANTES, y compris celles
+     écartées parce que notées aujourd'hui — sinon il MENT. Mon propre témoin l'a attrapé :
+     shaker noté 6 fois en Collation 2 et 3 fois en Petit-déj dont une ce matin, la variante du
+     matin est écartée du choix… et son compte partait avec, affichant « noté 6 fois » pour
+     quelque chose qui a été noté 9 fois. *Le filtre décide de ce qu'on PROPOSE, jamais de ce
+     qu'on a COMPTÉ.* Idem pour le moment proposé : il décrit l'habitude entière. */
+  const total={}, momentTot={};
+  Object.values(sigs).forEach(s=>{
+    const cle=s.sig.split('::')[1]||s.sig;
+    total[cle]=(total[cle]||0)+s.n;
+    (momentTot[cle]=momentTot[cle]||{})[s.meal]=((momentTot[cle]||{})[s.meal]||0)+s.n;
+  });
+  const parRepas={};
+  vivants.forEach(s=>{
+    const cle=s.sig.split('::')[1]||s.sig;      // la signature SANS le moment
+    const g=parRepas[cle]=parRepas[cle]||{sig:cle,meal:'',n:total[cle]||s.n,dernier:'',items:null,_m:momentTot[cle]||{}};
+    if(s.dernier>g.dernier){ g.dernier=s.dernier; g.items=s.items; }
+  });
+  /* ⭐ Le moment PROPOSÉ (celui entouré « d'habitude ») est le plus FRÉQUENT, pas le plus récent :
+     c'est ce qui décrit son habitude, pas son dernier écart. Rien n'est appliqué sans son tap. */
+  Object.values(parRepas).forEach(g=>{
+    g.meal=Object.keys(g._m).sort((x,y)=>(g._m[y]-g._m[x])||x.localeCompare(y))[0]||'';
+    delete g._m;
+  });
+  return Object.values(parRepas)
     .sort((a,b)=>(b.n-a.n)||b.dernier.localeCompare(a.dernier))
     .slice(0,3);
 }
