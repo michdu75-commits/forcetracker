@@ -6,7 +6,16 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1064`.
+- **Version en ligne (live) :** `ft-v1065`.
+- 0️⃣ **UN PROXY QUI DEVIENT FAUX QUAND UNE VALEUR VAUT ZÉRO** (ft-v1065). Michel : *« même quand
+  je mets zéro il marque déjà 5 g de prot »*. ⚠️⚠️ **Cas NON reproduit, et c'est écrit** : mesuré
+  six chemins, un 0 posé à la main **tient** (survit au rescale, s'enregistre à 0) — 3 témoins le
+  figent. *D'où viennent ses 5 g reste inconnu ; l'inventer serait pire que de le dire.*
+  ⛔⛔ **Mais la mesure a trouvé autre chose** : le garde testait `base.kcal>0`, donc mettre les
+  **calories** à 0 faisait disparaître tout le réglage de quantité, protéines encore à l'écran.
+  👉 *Un proxy commode — les calories pour « il y a des valeurs » — devient faux dès qu'une valeur
+  légitime vaut zéro.* Touche la boisson zéro **et surtout la frappe** (on efface les kcal pour
+  les retaper, le réglage s'évapore). Le garde regarde les **4** valeurs.
 - ⚖️⭐ **LE CHOIX D'UNITÉ DANS « MODIFIER L'ALIMENT »** (ft-v1064). Michel : *« quand j'ajoute il
   ne me donne que le choix de la quantité »*. L'écran de modification n'offrait que des
   multiplicateurs + un cul-de-sac : *« mets la quantité dans le nom »*.

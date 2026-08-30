@@ -3076,7 +3076,14 @@ function _afMajAncre(srcChange){
      IA, reprise d'un aliment, macro corrigée à la main) → on relit ; **faux/absent** quand on ne
      fait que redessiner → `base` est PRÉSERVÉE. */
   const base=(srcChange||!_afRef||!_afRef.base)?_afPropSetBase():_afRef.base;
-  if(!(base.kcal>0)){ _afPropCacher(); return; }   // rien à rescaler tant qu'il n'y a pas de valeurs
+  /* ⛔ « Y A-T-IL QUELQUE CHOSE À RESCALER ? » SE MESURE SUR LES QUATRE, PAS SUR LES CALORIES.
+     Trouvé à la mesure (ft-v1065) : le garde testait `base.kcal>0`, donc mettre les calories à 0
+     faisait DISPARAÎTRE tout le bloc quantité — alors que 35 g de protéines restaient à l'écran,
+     parfaitement rescalables. Ça touche les cas réels (une boisson zéro, un aliment dont on ne
+     connaît que les protéines) et surtout la frappe : on efface les calories pour les retaper,
+     et le réglage de quantité s'évapore sous les doigts. *Un proxy commode — les calories pour
+     « il y a des valeurs » — devient faux dès qu'une valeur légitime vaut zéro.* */
+  if(!(base.kcal>0||base.prot>0||base.carbs>0||base.fat>0)){ _afPropCacher(); return; }   // rien à rescaler tant qu'AUCUNE valeur n'est posée
   /* ⛔⛔ L'INVARIANT DE TOUT CE BLOC (ft-v1061) : `_afRef.base` sont TOUJOURS les valeurs de
      `_afRef.q`. Or `base` vient d'être RELU À L'ÉCRAN — et l'écran, après un rescale, montre les
      valeurs de la quantité TAPÉE, pas celles de l'ancienne référence.

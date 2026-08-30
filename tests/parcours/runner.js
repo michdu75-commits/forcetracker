@@ -18806,6 +18806,55 @@ console.log('\n-- CLXXI. Le choix d\'unité dans « Modifier l\'aliment » (ft-v
     t('⭐⭐ … et à la RÉOUVERTURE le champ affiche 40 : le cul-de-sac ne revient jamais',
       F.reouvert.champ==='40' && F.reouvert.culDeSac===false, JSON.stringify(F.reouvert));
   }
+  /* ═══ LE ZÉRO (ft-v1065) — Michel : *« même quand je mets zéro il marque déjà 5 g de prot »*.
+     ⚠️ Le cas décrit n'a PAS été reproduit : mesuré sur les deux écrans, un 0 posé à la main
+     TIENT — il survit à un changement de quantité et il s'enregistre à 0. Ces témoins figent ce
+     comportement, pour qu'un futur « recalcul » ne vienne pas le réécrire en silence.
+     ⛔⛔ EN REVANCHE LA MESURE A TROUVÉ AUTRE CHOSE : le garde du bloc quantité testait
+     `base.kcal>0`, donc mettre les CALORIES à 0 faisait disparaître tout le réglage — alors que
+     les protéines restaient à l'écran, parfaitement rescalables. *Un proxy commode (les calories
+     pour « il y a des valeurs ») devient faux dès qu'une valeur légitime vaut zéro.* */
+  {
+    const cx2=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+    const p2=await cx2.newPage();
+    await p2.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+    await p2.goto('http://localhost:'+PORT+'/index.html');
+    await p2.waitForTimeout(2300);
+    const Z=await p2.evaluate(async()=>{
+     try{
+      const o={}, w=ms=>new Promise(x=>setTimeout(x,ms));
+      const V=id=>(document.getElementById(id)||{}).value;
+      const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+      document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      const poser=(id,v)=>{const e=document.getElementById(id);e.value=v;
+        e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));};
+      openAddFood(); await w(200);
+      document.getElementById('af-desc').value='Iso zero protein (ASL)';
+      ['af-kcal','af-prot','af-carbs','af-fat'].forEach((id,i)=>{document.getElementById(id).value=[156,35,1,1][i];});
+      _afSetUnite('g'); await w(150);
+      poser('af-poids','30'); await w(200);
+      poser('af-prot','0'); await w(250);
+      o.zeroPose=V('af-prot');
+      const q=document.getElementById('af-prop'); q.value='40';
+      q.dispatchEvent(new Event('input',{bubbles:true})); await w(200);
+      o.apresQuantite={prot:V('af-prot'), kcal:V('af-kcal')};
+      poser('af-kcal','0'); await w(250);
+      o.kcalZero={bloc:(document.getElementById('af-prop-row')||{}).style.display,
+                  protEncoreLa:(document.getElementById('af-prot')||{}).value};
+      return o;
+     }catch(e){return {err:String(e)};}
+    });
+    if(Z.err) t('CLXXI/zéro n\'a pas pu tourner', false, Z.err);
+    else{
+      t('⛔⛔ un 0 posé à la main TIENT — un changement de quantité ne le réécrit pas',
+        Z.zeroPose==='0' && Z.apresQuantite.prot==='0', JSON.stringify(Z));
+      t('⛔ … et le témoin a bien VU le rescale à côté (156 → 208), sinon il serait vert pour rien',
+        Z.apresQuantite.kcal==='208', JSON.stringify(Z.apresQuantite));
+      t('⛔⛔ CALORIES à 0 : le réglage de quantité RESTE (il ne dépend plus des seules calories)',
+        Z.kcalZero.bloc!=='none', JSON.stringify(Z.kcalZero));
+    }
+    await cx2.close();
+  }
   await cx.close();
 }
 
