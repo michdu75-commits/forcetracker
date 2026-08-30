@@ -1443,3 +1443,61 @@ besoin. *Mesurer une absence sur un écran ne prouve rien sur les autres.*
 Pour prouver qu'une ressource est morte, **chercher ses usages dans le CODE** (`grep`), jamais
 dans l'état d'exécution. C'est **R30** (un retrait se décide, il ne se constate pas) appliqué aux
 ressources — et la 2ᵉ fois en deux jours que j'appelle « mort » quelque chose de vivant.
+
+---
+
+## 23. 🔢 UN CHAMP QUI « REFUSE » UNE SAISIE PEUT EN FAIT LA MUTILER *(30/08/2026, ft-v1057)*
+
+### Ce qui s'est passé
+**Eline**, la fille de Michel, écrit dans la boîte à idées : *« impossible de mettre la virgule
+pour les poids »*. Formulé comme un **refus** — un champ qui ne veut pas d'un caractère.
+
+**La mesure dit autre chose, et c'est bien pire.** Dans un `<input type="number">`, taper
+`62,5` ne rend pas une valeur vide : ça rend **`"625"`**. Le navigateur **jette la virgule et
+garde les chiffres**. Mesuré contre le code d'alors, sur le champ le plus utilisé de l'app :
+
+| | Ce qui arrive |
+|---|---|
+| Ce qu'elle tape | `62,5` |
+| Ce que le champ affiche | **625** |
+| Ce qui est enregistré | **625 kg** |
+| Le 1RM calculé | **776 kg** |
+
+Et l'autre moitié du défaut, ailleurs : `parseFloat('62,5')` rend **62**. La moitié du kilo
+disparaît sans un mot.
+
+### ⭐⭐ Ce que ça généralise, et c'est la vraie leçon
+***Le mode d'échec dangereux n'est pas « la saisie est refusée », c'est « la saisie devient un
+autre nombre, parfaitement crédible ».*** Un refus se voit : la personne recommence. Un **625**
+posé à la place d'un **62,5** ne se voit pas — il part dans les records, dans la courbe de
+progression, dans le contexte de Milo, et il y **reste**.
+
+⚠️ **Et le mot de la personne décrit le SYMPTÔME, jamais la cause.** Eline a dit « impossible ».
+Si on s'était arrêté là, on aurait cherché pourquoi le clavier ne propose pas la virgule — et on
+serait passé à côté des séances déjà fausses. *Un retour utilisateur est un point de départ à
+mesurer, pas un diagnostic à appliquer.*
+
+### 🔎 Comment la reconnaître
+- Un contrôle de saisie **natif** (`type="number"`, `maxlength`, `pattern`, un `min`/`max`) :
+  il ne rend pas la main à la personne, il **transforme** ce qu'elle a écrit.
+- Un écart de **facteur 10** (ou un arrondi vers le bas) dans une donnée saisie à la main.
+- Un retour qui dit *« impossible de… »* : commencer par **taper vraiment au clavier** dans un
+  navigateur, jamais par poser `.value` à la main — une affectation directe **ne reproduit pas**
+  le filtrage à la frappe, donc elle montre un écran sain sur un code cassé.
+
+### 🛡️ Ce qui protège aujourd'hui
+- **Un seul lecteur de nombre tapé**, `numFR` (R2) : 22 champs décimaux qui liraient chacun leur
+  nombre à leur façon, et le 23ᵉ oublierait la virgule.
+- Les champs décimaux sont en `type="text"` + `inputmode="decimal"` : **le pavé chiffré du
+  téléphone reste**, la virgule devient tapable. *Corriger un bug en supprimant le clavier
+  numérique aurait été un deuxième bug.*
+- **Un témoin qui protège le futur** (bloc CLXIII) : il refuse qu'un champ `inputmode="decimal"`
+  soit en `type="number"`. Le 23ᵉ champ ne pourra plus revenir en arrière en silence.
+
+### ⭐ Le réflexe
+Devant un retour de saisie : **reproduire à la frappe, et regarder ce qui est ENREGISTRÉ**, pas
+ce qui est affiché. La question n'est pas *« est-ce que ça passe ? »* mais *« qu'est-ce qui est
+gardé quand ça ne passe pas ? »*
+⚠️ **Famille voisine** : *« le correctif posé d'un seul côté »* — ici, l'app savait lire une
+virgule à **dix endroits**, mais uniquement pour du texte venu d'AILLEURS (une phrase libre, un
+rapport de balance photographié, une réponse de Milo). **Jamais pour ce que la personne TAPE.**

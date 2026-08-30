@@ -6,7 +6,20 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1056`.
+- **Version en ligne (live) :** `ft-v1057`.
+- 🔢⭐⭐ **LA VIRGULE DÉCIMALE — neuf mots d'ELINE, et une corruption de données** (ft-v1057).
+  Retour de la fille de Michel : *« impossible de mettre la virgule pour les poids »*.
+  ⛔⛔ **Elle décrit un refus ; la mesure dit bien pire** — dans un `type="number"`, `62,5` rend
+  **`"625"`** : la virgule est **jetée**, pas le nombre. Mesuré au clavier sur le champ le plus
+  utilisé : série enregistrée à **625 kg**, **1RM 776 kg** — qui partait dans ses **records** et
+  sa **courbe**. Et ailleurs `parseFloat('62,5')` rend **62**.
+  ⭐⭐ **Le mot de la personne décrit le SYMPTÔME, jamais la cause** : s'arrêter à « impossible »
+  faisait chercher le clavier et rater les séances déjà fausses. Famille **§23** de `BUGS.md`.
+  ⭐ **L'app savait lire une virgule à DIX endroits** — jamais pour ce que la personne **tape**.
+  👉 **22 champs** en `type="text"` (le pavé chiffré RESTE) + **41 lectures** par un seul
+  `numFR`. ⚠️ Le plus critique (`upSet`, le kg de série) reçoit sa valeur **en argument**, donc
+  il échappait à la recherche sur `.value`.
+  ⏭️ **En attente de Michel** : les séances **déjà enregistrées** ×10 restent fausses (R29).
 - ⚖️⏰⭐⭐ **ON PROPOSE, ON N'IMPOSE PAS — la quantité ET le moment** (ft-v1056). La même
   règle trouvée **trois fois le même jour** : le champ en grammes, la quantité de la
   dernière fois, et le **favori qui décidait du moment de la journée à la place de la

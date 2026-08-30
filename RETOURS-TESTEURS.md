@@ -79,6 +79,52 @@ du cycle (fait `ft-v442`), plus de techniques (excentrique/partielles).
 
 ---
 
+---
+
+## 🔢 Eline, 28/08/2026 — *« impossible de mettre la virgule pour les poids »*
+
+**Reçu dans la boîte à idées**, lu par Michel dans l'app le 30/08. **Une phrase de neuf mots, et
+c'est le retour le plus coûteux qu'on ait eu.**
+
+### ⛔⛔ Ce qu'elle décrit est un refus. Ce qui se passait est bien pire.
+Mesuré dans un navigateur, en **tapant vraiment au clavier** sur le champ le plus utilisé de
+l'app (le kg d'une série) :
+
+| | Ancien code | Corrigé (`ft-v1057`) |
+|---|---|---|
+| Elle tape | `62,5` | `62,5` |
+| Le champ affiche | **625** | 62,5 |
+| Ce qui est **enregistré** | **625 kg** | 62,5 kg |
+| Le 1RM calculé | **776 kg** | 77,6 kg |
+
+Et sur la **pesée**, l'autre moitié du défaut : `62,5` devenait **62** — la moitié du kilo
+disparaissait. Deux façons différentes de se tromper, **toutes deux silencieuses**.
+
+⚠️ **Le 776 kg ne serait pas resté à l'écran** : il partait dans ses **records**, dans sa
+**courbe de progression** et dans le contexte de Milo. *Un retour formulé comme une gêne
+d'ergonomie cachait une corruption de ses données.*
+
+### ⭐⭐ Ce que ce retour a appris sur la MÉTHODE
+- **Le mot de la personne décrit le symptôme, pas la cause.** En s'arrêtant à « impossible », on
+  cherchait pourquoi le clavier ne propose pas la virgule — et on passait à côté des séances
+  déjà fausses.
+- **L'app savait déjà lire une virgule, à DIX endroits** — mais uniquement pour du texte venu
+  d'ailleurs (une phrase, un rapport de balance photographié, une réponse de Milo). *Jamais pour
+  ce que la personne tape.* Le mécanisme existait, posé d'un seul côté.
+- Nouvelle famille **§23** de `BUGS.md` : *un champ qui « refuse » une saisie peut en fait la
+  mutiler* — et un nombre faux mais crédible ne se voit jamais.
+
+### Ce que ça a produit
+**`ft-v1057`** — **22 champs décimaux** acceptent la virgule (le pavé numérique du téléphone est
+conservé), **41 lectures** passent par un seul lecteur `numFR`, et un témoin permanent refuse
+qu'un 23ᵉ champ décimal revienne en `type="number"`.
+
+⏭️ **Ce qui reste ouvert** : les séances **déjà enregistrées** avec un poids ×10 sont toujours
+fausses dans son historique. Proposé à Michel, **en attente de sa décision** — on ne touche pas
+aux données de quelqu'un sans son accord (**R29**).
+
+---
+
 ## 💡 Christophe, 04/08/2026 — *« Il manque lombaires, je n'ai pas vérifié »*
 
 **Son idée, en une ligne.** Il crée son exercice (« Extension lombaires sur Booty Builder machine »)
