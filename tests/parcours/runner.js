@@ -18153,7 +18153,7 @@ console.log('\n-- CLXIV. Le volume par muscle : 14 jours, ramenés à la semaine
   }
 }
 
-/* == BLOC CLXV - QUI A APPELE MILO AUJOURD'HUI (ft-v1058) ==
+/* == BLOC CLXVII - QUI A APPELE MILO AUJOURD'HUI (ft-v1058) ==
    Michel : « est-il possible de savoir qui utilise Milo ou autre appel API sur l'application ? ».
    ⭐⭐ IL N'Y AVAIT RIEN A CONSTRUIRE COTE SERVEUR : `ai_quota.byEmail` compte deja les appels
    par personne (c'est ce qui fait respecter le plafond de 50/jour) et la route `aiUsage`
@@ -18162,7 +18162,7 @@ console.log('\n-- CLXIV. Le volume par muscle : 14 jours, ramenés à la semaine
    a chaque ouverture* — R5, une donnee produite, exploitee pour UNE seule chose, jamais montree.
    ⛔ ET LA LIMITE EST AFFICHEE : `ai_quota` compte des APPELS, pas des tokens ; `ai_usage` (les
    euros) ne porte PAS l'email. « christophe : 31 appels » se dit, « christophe : 0,40 € » non. */
-console.log('\n-- CLXV. Qui a appelé Milo aujourd\'hui (ft-v1058) --');
+console.log('\n-- CLXVII. Qui a appelé Milo aujourd\'hui (ft-v1058) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:900},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
@@ -18200,7 +18200,7 @@ console.log('\n-- CLXV. Qui a appelé Milo aujourd\'hui (ft-v1058) --');
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
   });
-  if(F.err) t('CLXV n\'a pas pu tourner', false, F.err);
+  if(F.err) t('CLXVII n\'a pas pu tourner', false, F.err);
   else{
     /* ⛔ Le témoin a-t-il VU la carte ? Sinon tout le reste serait vert pour rien. */
     t('⛔ le témoin a bien VU la Santé du système (le plafond y est, donc la carte est rendue)',
@@ -18377,6 +18377,110 @@ console.log('\n-- CLXVI. « Milo a répondu à côté » (ft-v1059) --');
     await cx2.close();
   }
   await cx.close();
+}
+
+/* == BLOC CLXV - L'EXPORT NE MENT PLUS SUR SA REUSSITE (ft-v1059) ==
+   Michel : « le bouton exporter dans historique ne fonctionne pas ».
+
+   ⛔⛔ MESURE : toute la chaine marchait en Chromium (bouton, modale, telechargement, 0 erreur).
+   Le defaut etait ailleurs, et il est MESURABLE dans le code : sur les 7 endroits de l'app qui
+   livrent un fichier, `_donnerFichier` etait LE SEUL a passer un type portant `;charset=utf-8`.
+   `navigator.canShare` d'iOS ne reconnait pas un type parametre et rend `false` → on tombait sur
+   `<a download>`, qu'iOS n'honore pas en PWA plein ecran. Rien, sans erreur.
+   ⛔ Le charset y etait DECORATIF : c'est le BOM qui porte l'UTF-8 pour Excel, pas le type MIME
+   d'un fichier qu'on partage — il n'y a aucun en-tete HTTP dans cette histoire.
+   ⛔⛔ ET LE 3e DEFAUT EST INDEPENDANT DE LA PLATEFORME : `return true` apres `a.click()`, sans
+   rien savoir. *Un succes menteur est pire qu'un echec* — Michel lisait « exportees » et n'avait
+   aucun fichier. */
+console.log('\n-- CLXV. L\'export ne ment plus sur sa réussite (ft-v1059) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},
+                               timezoneId:'Europe/Paris',acceptDownloads:true});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const J=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+    S.sessions=[{date:J(1),label:'Push, jour "lourd"',exs:[{name:'Développé Couché',
+      sets:[{kg:80,reps:8,type:'N',done:true},{kg:85,reps:6,type:'N',done:true}]}]}];
+    persist(); goScreen('progress');
+  });
+  /* ⭐⭐ LE TEMOIN CENTRAL LIT LE VRAI FICHIER TELECHARGE, pas une chaine construite a cote :
+     c'est la seule facon de savoir que le BOM a survecu au changement de type. */
+  await pg.click('#histo-exp-btn'); await pg.waitForTimeout(300);
+  const [dl]=await Promise.all([pg.waitForEvent('download',{timeout:8000}).catch(()=>null),
+                                pg.click('#ov-histo-export .btn-red')]);
+  let octets=null;
+  if(dl){ const fsx=require('fs'); const f=require('os').tmpdir()+'/ft-histo-test.csv';
+          await dl.saveAs(f); octets=fsx.readFileSync(f); }
+  /* ⭐ Le type NETTOYE, mesure sur la fonction elle-meme (c'est LA cause du bug iPhone). */
+  const T=await pg.evaluate(async()=>{
+    const vus=[];
+    const vraiFile=window.File;
+    window.File=function(p,n,o){ vus.push((o&&o.type)||''); return new vraiFile(p,n,o); };
+    try{ await _donnerFichier('a;b','x.csv','text/csv;charset=utf-8'); }catch(e){}
+    window.File=vraiFile;
+    return {typeVuParCanShare:vus[0]||'(aucun File construit)'};
+  });
+  /* ⭐⭐ ET LE SUCCES MENTEUR : sur iPhone en plein ecran, on ne dit plus « exporte ». */
+  const H=await pg.evaluate(async()=>{
+    const vraiIos=window._iosStandalone;
+    window._iosStandalone=()=>true;                       // on SIMULE le cas de Michel
+    let etat=null; try{ etat=await _donnerFichier('a;b','x.csv','text/csv'); }catch(e){}
+    window._iosStandalone=vraiIos;
+    /* et le message que ça produit, sans toucher au vrai toast */
+    const vus=[]; const vraiToast=window.toast; window.toast=(m,t)=>vus.push(m);
+    _toastFichier('inconnu',2,'séries'); _toastFichier('ok',2,'séries');
+    _toastFichier('annule',2,'séries'); _toastFichier('echec',2,'séries');
+    window.toast=vraiToast;
+    return {etatSurIphone:etat, messages:vus};
+  });
+  await cx.close();
+
+  /* ⭐⭐ ① LE FICHIER ARRIVE, ET IL EST BON — le changement de type n'a rien cassé. */
+  t('⭐⭐ ① le CSV se télécharge vraiment, et le BOM UTF-8 a survécu au type nettoyé',
+    !!octets && octets[0]===0xEF && octets[1]===0xBB && octets[2]===0xBF,
+    dl?('octets = '+(octets?[octets[0],octets[1],octets[2]].join(','):'?')):'AUCUN téléchargement');
+  t('⛔ … avec le « ; » d\'Excel, les accents et l\'échappement intacts',
+    !!octets && /Développé/.test(octets.toString('utf8'))
+             && /"Push, jour ""lourd"""/.test(octets.toString('utf8'))
+             && octets.toString('utf8').split('\n')[0].includes(';'),
+    octets?octets.toString('utf8').split('\n').slice(0,2).join(' | ').slice(0,120):'(rien)');
+  /* ⭐⭐ ② LA CAUSE DU BUG iPHONE, épinglée là où elle vit : le type que voit `canShare`. */
+  t('⭐⭐ ② le type passé au fichier partagé est NETTOYÉ de son « ;charset » (la cause iPhone)',
+    T.typeVuParCanShare==='text/csv', 'type vu = '+T.typeVuParCanShare);
+  /* ⭐⭐ ③ LE SUCCÈS MENTEUR — le défaut indépendant de la plateforme. */
+  t('⭐⭐ ③ sur iPhone en plein écran, l\'export n\'annonce PLUS une réussite qu\'il ignore',
+    H.etatSurIphone==='inconnu', 'état = '+H.etatSurIphone);
+  t('⛔ … et il dit quoi faire au lieu de se taire ou de mentir',
+    /Safari/.test(H.messages[0]||''), JSON.stringify(H.messages));
+  /* ⛔ SANS CE TÉMOIN, ③ serait vert en ne disant JAMAIS « exporté » — c'est-à-dire en cassant
+     le cas normal. Les quatre issues doivent rester distinctes. */
+  t('⛔ ④ les 4 issues restent distinctes (réussite · annulation muette · incertitude · échec)',
+    /2 séries exportées/.test(H.messages[1]||'') && H.messages.length===3
+    && /impossible/.test(H.messages[2]||''), JSON.stringify(H.messages));
+  /* ⛔ R2 — LE PDF PASSE PAR LE MÊME PROPRIÉTAIRE : il recopiait la livraison, donc il portait
+     les mêmes 3 défauts. Un correctif posé d'un seul côté les aurait laissés vivre. */
+  {
+    const fsx=require('fs');
+    const src=fsx.readFileSync(__dirname+'/../../setup.js','utf8');
+    const pdf=src.slice(src.indexOf('async function exportHistoPdf'), src.indexOf('function openHistoExport'));
+    t('⛔ ⑤ le PDF passe par `_donnerFichier` (R2) — plus de 2ᵉ livraison recopiée à côté',
+      /_donnerFichier\(/.test(pdf) && !/navigator\.canShare/.test(pdf),
+      'appelle _donnerFichier = '+/_donnerFichier\(/.test(pdf)+' · canShare recopié = '+/navigator\.canShare/.test(pdf));
+    /* ⛔ ET AUCUN EXPORT DE L'APP NE DOIT RÉINTRODUIRE UN TYPE PARAMÉTRÉ — c'est la règle, pas
+       le cas du jour : le prochain qui écrit `text/plain;charset=utf-8` casserait iOS pareil. */
+    const servis=['setup.js','coach.js','log.js','app.js','screens.js','tracking.js','state.js'];
+    const fautifs=[];
+    servis.forEach(f=>{ const c=fsx.readFileSync(__dirname+'/../../'+f,'utf8');
+      (c.match(/new File\([^)]*type:\s*'[^']*;[^']*'/g)||[]).forEach(m=>fautifs.push(f+' : '+m.slice(-40))); });
+    t('⛔⛔ ⑥ aucun `new File` de l\'app ne porte un type paramétré (`;charset=…`) — iOS le refuse',
+      fautifs.length===0, fautifs.join(' | ')||'aucun');
+  }
 }
 
 await b.close(); srv.close();
