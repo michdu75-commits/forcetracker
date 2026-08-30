@@ -6,8 +6,8 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1068`.
-- 😴⭐⭐ **LE SOMMEIL MESURÉ ATTEINT ENFIN LE SCORE ET MILO** (ft-v1068). Michel : *« ah oui les pas
+- **Version en ligne (live) :** `ft-v1069`.
+- 😴⭐⭐ **LE SOMMEIL MESURÉ ATTEINT ENFIN LE SCORE ET MILO** (ft-v1069). Michel : *« ah oui les pas
   et le sommeil ça c'est hyper important »*.
   ⛔⛔ **Le défaut était mesuré et écrit depuis 11 jours, dans `Code.js`** : la saisie manuelle
   **aplatit les mauvaises semaines** (r = **−0,96** ; 6 h 43 déclaré contre **5 h 38** réel du 6 au
@@ -25,6 +25,18 @@
   contrainte : *« la montre compte aussi les pas si on fait du tapis »* — le double comptage de
   **ft-v949**, qu'il a nommé avant qu'on le trouve. Tout est écrit dans `IDEES-FUTURES.md`.
   **⏭️ PROCHAINE ÉTAPE si Michel donne le go.**
+- ⚖️⭐⭐ **UN SEUL PROPRIÉTAIRE DE « COMBIEN J'EN AI PRIS ? »** (ft-v1068). Michel : *« il faut
+  qu'il y ait une cohérence quand on change la dose, peu importe le produit — même s'il faut
+  qu'on crée un algorithme exprès »*. ⭐⭐ **L'algorithme existait déjà, QUATRE fois** :
+  `valeurs = base × (saisie / référence)` — *un pour-100 g n'est pas un autre calcul, c'est CE
+  calcul avec une référence de 100*. Mesuré : **6 fonctions, 6 champs, 3 états** pour une seule
+  question. ⛔⛔ **Le même geste donnait 3 résultats** (vider le champ) : zéro · référence ·
+  valeurs orphelines. ⚠️ La dernière était **la jumelle de ft-v1061, encore vivante** — 4ᵉ fois
+  du jour, mais cette fois trouvée **par la mesure**, pas par Michel. ⛔ Et `af-bc-grams` était le
+  **seul** champ de quantité resté en `type=number` : la route code-barres jetait la virgule
+  d'Eline. ⛔⛔ **Nuance rattrapée par le témoin de ft-v966** : *les valeurs se replient sur la
+  référence, la phrase « pour tes n g » se TAIT.* ⭐ Le bloc CLXXII vérifie une **égalité de
+  comportement**, pas des chiffres — c'est ce qui empêche les 4 routes de re-diverger.
 - 🗂️⭐⭐ **LE HAUT DE PROGRÈS : ONGLETS EN TÊTE, CARTES REPLIABLES** (ft-v1067). Michel, capture à
   l'appui : *« ça prend vachement d'espace en haut non ? »*.
   ⭐ **Avant** : 216 + 345 = **561 px** ; onglets à **y=699** sur un écran de 844, recherche à

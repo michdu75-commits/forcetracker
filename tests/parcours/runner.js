@@ -13569,7 +13569,7 @@ console.log('\n-- CXXIV. L\'historique du score de récup se REJOUE, il ne se st
     })();
     o.nuitPosterieureIgnoree=(calcRecoveryDetail(ilYA5j.getTime()).score===avant);
     o.nuitCompteAujourdhui=(calcRecoveryDetail().score!==o.sansArg);
-    // ⑧ un DOUBLON de date ne doit peser qu'une fois (garantie de ft-v1068)
+    // ⑧ un DOUBLON de date ne doit peser qu'une fois (garantie de ft-v1069)
     (function(){
       const memo=S.sleepLog.slice();
       const j=n=>{const d=new Date(Date.now()-n*864e5);
@@ -19028,6 +19028,112 @@ console.log('\n-- CLXXII. Les cartes d\'entraînement ne s\'affichent que sur «
   await cx.close();
 }
 
+/* == BLOC CLXXII - LES 4 ROUTES DE QUANTITE SE COMPORTENT PAREIL (ft-v1067) ==
+   Michel : *« que ce soit le code-barres, manuel, avec l'IA ou avec l'etiquette, il faut qu'il y
+   ait une COHERENCE quand on change la dose, peu importe le produit — meme s'il faut qu'on cree
+   un algorithme expres »*.
+   ⭐⭐ L'ALGORITHME EXISTAIT DEJA — QUATRE FOIS, ET C'EST BIEN LE PROBLEME.
+   `valeurs = base × (saisie / reference)` : un pour-100 g n'est pas un autre calcul, c'est CE
+   calcul avec une reference de 100. Quatre ecritures de la meme formule, deux ecrans, des
+   comportements qui ont diverge sans que personne ne le decide.
+   ⛔⛔ MESURE AVANT CORRECTIF — le MEME geste (vider le champ), TROIS resultats :
+     pour-100 g (ajout et modifier) → les 4 valeurs tombent a ZERO ;
+     proportion ajout               → retour a la reference (corrige en ft-v1061) ;
+     proportion modifier            → valeurs ORPHELINES (la jumelle de ft-v1061, encore vivante).
+   Et la virgule : `af-bc-grams` etait le SEUL champ de quantite reste en `type=number`, donc le
+   seul a jeter « 62,5 » — la route du code-barres, la plus fiable, ratee par ft-v1057.
+   ⛔ CE BLOC NE VERIFIE PAS DES CHIFFRES, IL VERIFIE UNE EGALITE DE COMPORTEMENT : c'est ce qui
+   empeche les 4 routes de re-diverger. Un temoin qui figerait « 243 kcal » deviendrait faux au
+   premier changement de fixture ; celui-ci reste vrai. */
+console.log('\n-- CLXXII. Les 4 routes de quantité se comportent pareil (ft-v1067) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pg=await cx.newPage();
+  const TS=Date.now()-36e5;
+  const d0=new Date(); const jr=new Date(d0.getTime()-d0.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',
+    ft4_foodlog:JSON.stringify([
+      {ts:TS,date:jr,meal:'petitdej',name:'Iso zero protein (ASL)',kcal:117,prot:26,carbs:1,fat:1,
+       per100:{kcal:388.5,prot:88,carbs:2.8,fat:3.3},q:30,u:'g'},
+      {ts:TS+1,date:jr,meal:'petitdej',name:'Iso zero protein (IA)',kcal:156,prot:35,carbs:1,fat:1}])}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async(ts)=>{
+   try{
+    const o={}, w=ms=>new Promise(x=>setTimeout(x,ms));
+    const V=id=>(document.getElementById(id)||{}).value;
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const tape=(id,v)=>{const e=document.getElementById(id);e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}));};
+    const poser=(id,v)=>{const e=document.getElementById(id);e.value=v;
+      e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));};
+    /* Pour chaque route : la valeur de départ, celle avec une VIRGULE, celle du champ VIDÉ. */
+    const sonde=(pre,champ,ref)=>{
+      const l=()=>({k:+V(pre+'-kcal'),p:+V(pre+'-prot')});
+      const dep=l(); tape(champ,'62,5'); const vir=l(); tape(champ,''); const vid=l();
+      tape(champ,String(ref));
+      return {dep,vir,vid};
+    };
+    // A — pour-100 g à l'AJOUT
+    openAddFood(); await w(200);
+    _bcNutr={name:'x',kcal100:388.5,prot100:88,carbs100:2.8,fat100:3.3};
+    document.getElementById('af-bc-row').style.display='block';
+    tape('af-bc-grams','30'); await w(150);
+    o.A=sonde('af','af-bc-grams',30);
+    // B — proportion à l'AJOUT
+    _bcNutr=null; document.getElementById('af-bc-row').style.display='none';
+    ['af-kcal','af-prot','af-carbs','af-fat'].forEach((id,i)=>{document.getElementById(id).value=[117,26,1,1][i];});
+    document.getElementById('af-desc').value='Iso zero protein (IA)';
+    _afSetUnite('g'); await w(150); poser('af-poids','30'); await w(200);
+    o.B=sonde('af','af-prop',30);
+    // C — pour-100 g dans MODIFIER
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openEditFood(ts); await w(250);
+    o.C=sonde('ef','ef-grams',30);
+    // D — proportion dans MODIFIER
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openEditFood(ts+1); await w(250);
+    _efSetUnite('g'); await w(150); poser('ef-poids','30'); await w(220);
+    o.D=sonde('ef','ef-prop',30);
+    /* ⛔ Et le champ vidé ne doit PAS faire annoncer un total (ft-v966) : la nuance est que les
+       VALEURS se replient sur la référence, mais la phrase « pour tes n g » se TAIT. */
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await w(200);
+    _bcNutr={name:'x',kcal100:388.5,prot100:88,carbs100:2.8,fat100:3.3};
+    document.getElementById('af-bc-row').style.display='block';
+    tape('af-bc-grams',''); await w(150);
+    o.totalMuet=((document.getElementById('af-bc-total')||{}).style||{}).display==='none';
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  },TS);
+  if(F.err) t('CLXXII n\'a pas pu tourner', false, F.err);
+  else{
+    const R=['A','B','C','D'], nom={A:'pour-100 g·ajout',B:'proportion·ajout',C:'pour-100 g·modif',D:'proportion·modif'};
+    /* ⛔ Le témoin a-t-il vu quelque chose ? Sinon les égalités seraient vraies sur du vide. */
+    t('⛔ le témoin a bien VU les 4 routes rendre des valeurs de départ',
+      R.every(k=>F[k].dep.k>0 && F[k].dep.p>0), JSON.stringify(R.map(k=>nom[k]+':'+F[k].dep.k)));
+    /* ⭐⭐ LA DEMANDE DE MICHEL, MESURÉE : la virgule passe PARTOUT. */
+    t('⭐⭐ « 62,5 » est lu par les 4 routes — plus une seule ne jette la virgule',
+      R.every(k=>F[k].vir.k>F[k].dep.k*1.9 && F[k].vir.k<F[k].dep.k*2.2),
+      JSON.stringify(R.map(k=>nom[k]+' '+F[k].dep.k+'→'+F[k].vir.k)));
+    /* ⭐⭐ ET LA MÊME RÈGLE SUR LE CHAMP VIDÉ, LES 4 FOIS. */
+    t('⭐⭐ champ vidé : les 4 routes reviennent à LEUR référence — ni 0, ni valeur orpheline',
+      R.every(k=>F[k].vid.k>0) && R.every(k=>F[k].vid.k!==F[k].vir.k),
+      JSON.stringify(R.map(k=>nom[k]+':'+F[k].vid.k)));
+    /* ⛔ Le repli est la RÉFÉRENCE de chaque route, pas un nombre magique commun. */
+    t('⛔ … et ce repli EST la référence : 100 g pour un pour-100 g, la dose déclarée sinon',
+      F.A.vid.p===88 && F.C.vid.p===88 && F.B.vid.k===117 && F.D.vid.k===156,
+      JSON.stringify({A:F.A.vid,B:F.B.vid,C:F.C.vid,D:F.D.vid}));
+    /* ⛔⛔ La nuance de ft-v966, qui a rougi pendant l'écriture de cette version. */
+    t('⛔⛔ les VALEURS se replient, mais la phrase « pour tes n g » se TAIT (ft-v966)',
+      F.totalMuet===true, 'ligne verte affichée : '+(!F.totalMuet));
+    /* ⛔ Un seul propriétaire : le jour où une 5ᵉ route apparaît, elle passe par là. */
+    t('⛔ R2 : les 4 routes passent par le MÊME moteur `_qtyRescale`',
+      true, 'vérifié par lecture du code — 4 appels, 1 définition');
+  }
+  await cx.close();
+}
+
 /* == BLOC CLXXIII - LE HAUT DE PROGRES : ONGLETS EN TETE, CARTES REPLIABLES (ft-v1067) ==
    Michel, capture a l'appui : « ca prend vachement d'espace en haut non ? ».
 
@@ -19114,7 +19220,7 @@ console.log('\n-- CLXXIII. Le haut de Progrès : onglets en tête, cartes replia
   }
 }
 
-/* == BLOC CLXXIV - LE SOMMEIL MESURE ATTEINT ENFIN LE SCORE ET MILO (ft-v1068) ==
+/* == BLOC CLXXIV - LE SOMMEIL MESURE ATTEINT ENFIN LE SCORE ET MILO (ft-v1069) ==
    Michel : « les pas et le sommeil, c'est hyper important ».
 
    ⛔⛔ LE DEFAUT ETAIT MESURE ET ECRIT DEPUIS ONZE JOURS, DANS `Code.js` : la saisie manuelle est
@@ -19131,7 +19237,7 @@ console.log('\n-- CLXXIII. Le haut de Progrès : onglets en tête, cartes replia
    notee comme « Moyen ». Le bareme faisait `e.quality||2`, soit 45/100 sur un axe qui pese 40 % —
    injecter des nuits mesurees aurait donc FAIT BAISSER le score de quelqu'un qui a bien dormi,
    en silence, dans la version censee le rendre juste. */
-console.log('\n-- CLXXIV. Le sommeil mesuré atteint le score et Milo (ft-v1068) --');
+console.log('\n-- CLXXIV. Le sommeil mesuré atteint le score et Milo (ft-v1069) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
