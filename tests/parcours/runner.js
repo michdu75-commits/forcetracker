@@ -18483,6 +18483,93 @@ console.log('\n-- CLXV. L\'export ne ment plus sur sa réussite (ft-v1059) --');
   }
 }
 
+/* == BLOC CLXVIII - LA QUANTITE ET LES VALEURS NE SE DESAPPAIRENT PLUS (ft-v1061) ==
+   Michel, 4 captures : son etiquette d'Iso Zero Protein, et l'ecran de saisie. « Ca sent le bug ».
+   Il y en avait DEUX, et le second explique ses chiffres au chiffre pres.
+
+   ⛔⛔ ① LE CHAMP VIDE. Il tape « 3 » (debut de 30), les 4 valeurs tombent, il efface pour
+   recommencer — et les valeurs du « 3 » RESTENT a l'ecran a cote d'un champ vide, juste au-dessus
+   du bouton rouge « Ajouter au journal ». Le garde d'origine etait bien intentionne (*ne pas tout
+   mettre a zero pendant qu'on tape*) mais il laissait un chiffre orphelin. 4e fois que ce motif
+   revient (ft-v966, v1042, v1056).
+
+   ⛔⛔ ② LA DESYNCHRONISATION base / q — LE VRAI. `_afMajAncre` relisait les 4 champs A CHAQUE
+   appel pour en faire la nouvelle `base`, y compris quand elle n'etait rappelee que pour
+   REDESSINER (changement d'unite, declaration de poids). Or apres un rescale, ces champs ne
+   portent plus `base` mais `base × facteur` : la reference devenait une valeur derivee d'elle-meme,
+   et l'erreur se figeait. Mesure sur SON etiquette : reference 30 g, il tape 40 (156 kcal, juste),
+   un geste redessine le bloc, `base` devient 156 pendant que `q` reste 30 — et 40 g affiche alors
+   **208 kcal / 47 g**, c'est-a-dire EXACTEMENT ce que montre sa capture, et 1,33× son etiquette.
+   ⭐ L'en-tete de la fonction disait deja *« appelee seulement quand la SOURCE des valeurs
+   change »* : c'etait vrai de l'intention, pas du code. `srcChange` rend la phrase executable.
+   ⭐ Et c'est mot pour mot la lecon de `_provFood` (ft-v1056), posee d'un seul cote — R8. */
+console.log('\n-- CLXVIII. La quantité et les valeurs ne se désappairent plus (ft-v1061) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const V=id=>(document.getElementById(id)||{}).value;
+    const lire=()=>({q:V('af-prop'),kcal:+V('af-kcal'),prot:+V('af-prot')});
+    const taper=(id,v)=>{const e=document.getElementById(id);e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}));};
+    const valider=id=>document.getElementById(id).dispatchEvent(new Event('change',{bubbles:true}));
+    /* ⭐ LES VRAIES VALEURS DE SON ÉTIQUETTE pour 30 g : 116,6 kcal · 26,4 g de protéines.
+       Une fixture inventée aurait rendu le témoin vert sans rien dire de son cas. */
+    openAddFood(); await d(200);
+    document.getElementById('af-desc').value='Iso zero protein (ASL)';
+    ['af-kcal','af-prot','af-carbs','af-fat'].forEach((id,i)=>{document.getElementById(id).value=[117,26,1,1][i];});
+    _afSetUnite('g'); await d(150);
+    taper('af-poids','30'); valider('af-poids'); await d(200);
+    o.depart=lire();
+    /* ① le champ vidé */
+    taper('af-prop','3'); await d(120); o.trois=lire();
+    taper('af-prop','');  await d(120); o.vide=lire();
+    /* ② la désynchronisation : 40 g, puis un aller-retour d'unité (geste réel) */
+    taper('af-prop','40'); await d(120); o.a40=lire();
+    _afSetUnite('portion'); await d(120);
+    _afSetUnite('g'); await d(120);
+    taper('af-poids','30'); valider('af-poids'); await d(200);
+    o.re30=lire(); o.baseGardee={...(_afRef&&_afRef.base)}; o.refQ=_afRef&&_afRef.q;
+    taper('af-prop','40'); await d(120); o.re40=lire();
+    /* ③ NON-RÉGRESSION : corriger une macro À LA MAIN doit bien REDEVENIR la référence */
+    const k=document.getElementById('af-kcal'); k.value='200'; valider('af-kcal'); await d(180);
+    o.mainBase=(_afRef&&_afRef.base||{}).kcal; o.mainQ=_afRef&&_afRef.q;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+  if(F.err) t('CLXVIII n\'a pas pu tourner', false, F.err);
+  else{
+    t('⛔ le témoin a bien VU le bloc ancré (30 g → les valeurs de son étiquette)',
+      F.depart.q==='30' && F.depart.kcal===117 && F.depart.prot===26, JSON.stringify(F.depart));
+    /* ① */
+    t('⭐ taper « 3 » recalcule bien (le témoin mesure quelque chose)',
+      F.trois.kcal===12, JSON.stringify(F.trois));
+    t('⛔⛔ ① champ vidé → les valeurs reviennent à la RÉFÉRENCE, jamais un chiffre orphelin',
+      F.vide.q==='' && F.vide.kcal===117 && F.vide.prot===26, JSON.stringify(F.vide));
+    /* ② — le cœur */
+    t('⭐ 40 g donne 156 kcal / 35 g (le rescale lui-même est juste)',
+      F.a40.kcal===156 && F.a40.prot===35, JSON.stringify(F.a40));
+    t('⛔⛔ ② la RÉFÉRENCE survit à un aller-retour d\'unité : `base` reste celle de l\'étiquette',
+      F.baseGardee.kcal===117 && F.baseGardee.prot===26 && F.refQ===30,
+      'base='+JSON.stringify(F.baseGardee)+' q='+F.refQ);
+    t('⛔⛔ … et l\'ÉCRAN suit : 30 g réaffiche 117 kcal / 26 g, pas les 156 du rescale précédent',
+      F.re30.kcal===117 && F.re30.prot===26, JSON.stringify(F.re30));
+    /* ⭐⭐ LE TÉMOIN QUI PORTE SA CAPTURE : sans le correctif, on relisait 208 / 47 ici. */
+    t('⭐⭐ SA CAPTURE : 40 g redonne 156 / 35 — plus jamais les 208 / 47 de l\'écran désynchronisé',
+      F.re40.kcal===156 && F.re40.prot===35, JSON.stringify(F.re40));
+    /* ③ */
+    t('⛔ NON-RÉGRESSION : une macro corrigée À LA MAIN devient bien la nouvelle référence',
+      F.mainBase===200 && F.mainQ===40, 'base.kcal='+F.mainBase+' q='+F.mainQ);
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

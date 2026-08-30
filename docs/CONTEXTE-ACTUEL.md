@@ -6,7 +6,25 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1060`.
+- **Version en ligne (live) :** `ft-v1061`.
+- ⚖️⭐⭐ **LA QUANTITÉ ET LES VALEURS NE SE DÉSAPPAIRENT PLUS** (ft-v1061). Michel, 4 captures
+  dont **la photo de son étiquette** : *« ça sent le bug »*. Il y en avait **deux**.
+  ⛔ ① **Champ vidé** : il tape « 3 », les valeurs tombent à 12 kcal, il efface — et **12 kcal
+  restent à côté d'un champ vide**, au-dessus du bouton « Ajouter au journal ». *Le voisinage
+  muet*, 4ᵉ fois (ft-v966, v1042, v1056).
+  ⛔⛔ ② **Le vrai** : `_afMajAncre` relisait les 4 champs à CHAQUE appel pour en faire la
+  nouvelle `base`, même quand elle ne faisait que **redessiner**. Après un rescale ces champs
+  portent `base × facteur` → ***la référence devenait une valeur dérivée d'elle-même, et
+  l'erreur se figeait***. Mesuré sur son étiquette (116,6 kcal / 26,4 g pour 30 g) : réf 30 g,
+  il tape 40 (156 kcal, juste), un geste redessine, `base` devient 156 avec `q` toujours à 30 —
+  et 40 g affiche **208 / 47**, *exactement sa capture*, **1,33× l'étiquette** = 40/30.
+  ⭐ **L'en-tête de la fonction disait déjà la règle** (*« appelée seulement quand la SOURCE
+  change »*) : vraie de l'intention, pas du code. `srcChange` la rend **exécutable**.
+  ⚠️⚠️ **Défaut de ft-v1056, donc de moi** — et la leçon y était **déjà écrite** pour
+  `_provFood`, posée d'un seul côté (**R8**). ⛔ **Mon 1ᵉʳ correctif ratait l'aller-retour
+  d'unité** : c'est la **préservation de `base`** qui ferme tous les chemins, pas l'appairage.
+  ⏭️ **Non réparé, et écrit** : les entrées **déjà enregistrées** de travers restent fausses
+  dans le journal — on ne touche pas aux données de quelqu'un sans son accord (**R29**).
 - 👎⭐⭐ **« MILO A RÉPONDU À CÔTÉ » — le pouce COMPTE, il ne RACONTE rien** (ft-v1060).
   Michel : *« j'aimerais savoir si Milo déconne quand les utilisateurs posent une question…
   1 appel API qui sert à rien, et s'il met 2 ou 3 réponses avant de tomber juste. **Là ça me
