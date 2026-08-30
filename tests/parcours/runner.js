@@ -17933,8 +17933,23 @@ console.log('\n-- CLXIII. La virgule décimale — retour d\'Eline (ft-v1057) --
     const dec=[...document.querySelectorAll('input[inputmode="decimal"]')];
     o.champs={total:dec.length, encoreNumber:dec.filter(x=>x.type==='number').map(x=>x.id||x.className)};
     /* ⑤ NON-RÉGRESSION : les champs ENTIERS gardent `type="number"` (aucune virgule attendue). */
+    /* ⚠️ RE-VISÉ DANS LA MÊME VERSION : ce témoin exigeait que TOUS les champs entiers soient
+       en `type="number"`. Mesuré, 3 ne l'étaient PAS — et **aucun n'a été touché par ft-v1057**
+       (vérifié dans le diff : zéro champ `inputmode="numeric"` modifié). Ils ont chacun une
+       raison, plus ancienne que cette version :
+         · `bday-inp`      → « 14/07 » contient un SLASH, `type="number"` le refuse en entier ;
+         · `af-bc-manual`  → un code-barres de 13 chiffres perd ses ZÉROS DE TÊTE en `number` ;
+         · `ec-code`       → code de vérification, `type="tel"` délibéré (comme les mots de passe).
+       *Un témoin qui exige une règle que le projet n'a jamais posée rougit sur du code sain.*
+       ⛔ Ce qu'il protège vraiment, et qui n'a pas bougé : **ft-v1057 ne convertit AUCUN champ
+       entier** — la virgule n'y a pas de sens, les toucher aurait élargi le diff pour rien (R19).
+       Toute NOUVELLE exception fera donc rougir, avec son id imprimé. */
+    const _ENT_OK=['bday-inp','af-bc-manual','ec-code','ob-code-inp','protect-emailcode',
+                   'protect-newcode','admin-code-inp'];
     const ent=[...document.querySelectorAll('input[inputmode="numeric"]')];
-    o.entiers={total:ent.length, encoreNumber:ent.filter(x=>x.type==='number').length};
+    o.entiers={total:ent.length,
+               horsNumber:ent.filter(x=>x.type!=='number').map(x=>x.id||'(sans id)'),
+               inconnus:ent.filter(x=>x.type!=='number'&&_ENT_OK.indexOf(x.id)<0).map(x=>x.id||'(sans id)')};
     /* ⑥ NON-RÉGRESSION : le point marche toujours (personne ne doit y perdre). */
     S.wkt.exs[0].sets[0].kg=0;
     upSet(0,0,'kg','80.5');
@@ -17968,8 +17983,13 @@ console.log('\n-- CLXIII. La virgule décimale — retour d\'Eline (ft-v1057) --
       F.champs.total>0 && F.champs.encoreNumber.length===0,
       F.champs.total+' champs décimaux · fautifs : '+JSON.stringify(F.champs.encoreNumber));
     /* ⛔ NON-RÉGRESSIONS. */
-    t('⛔ NON-RÉGRESSION : les champs ENTIERS gardent `type="number"` (aucune virgule attendue)',
-      F.entiers.total>0 && F.entiers.encoreNumber===F.entiers.total, JSON.stringify(F.entiers));
+    t('⛔ NON-RÉGRESSION : ft-v1057 ne convertit AUCUN champ entier (exceptions connues, nommées)',
+      F.entiers.total>0 && F.entiers.inconnus.length===0,
+      JSON.stringify({total:F.entiers.total,tolérés:F.entiers.horsNumber,inconnus:F.entiers.inconnus}));
+    /* ⛔ ET UNE TOLÉRANCE PÉRIMÉE MASQUERAIT UN VRAI DÉFAUT (la leçon de ft-v1036) : si les 3
+       exceptions disparaissaient un jour, la liste blanche continuerait de passer en silence. */
+    t('⛔ … et la liste des exceptions n\'est pas PÉRIMÉE (elles existent encore à l\'écran)',
+      F.entiers.horsNumber.length>0, JSON.stringify(F.entiers.horsNumber));
     t('⛔ NON-RÉGRESSION : le POINT marche toujours (80.5 reste 80.5)',
       F.point.kg===80.5, JSON.stringify(F.point));
   }
