@@ -164,7 +164,7 @@ const _HELP_DATA={
       {i:'💚',t:'Ta carte récup existe en <b>deux styles</b> — Menu → Apparence → Carte récup : l\'anneau (par défaut) ou le moniteur, avec ton score en gros et un tracé cardiaque. Mêmes données, mise en forme différente.'},
       {i:'📊',t:'Les 4 stats du mois (volume, Big3, séances, poids) se calculent depuis tes séances et ton journal de poids.'},
       {i:'🌡️',t:'« Ton check-in du jour » (en haut de l\'Accueil, optionnel, repliable) se lit d\'un coup d\'œil : <b>trois tuiles</b> — un lit violet pour le <b>sommeil</b>, un éclair orange pour l\'<b>énergie</b>, un visage pour le <b>moral</b> (vert content, ambre moyen, rouge bas). Sous chaque icône, quatre petits traits montrent le niveau. Il regroupe tout ce qui te concerne AUJOURD\'HUI : ton sommeil de la nuit, ton énergie, ton moral (😔 → 😄) et une éventuelle gêne/douleur. Replié, tu vois un résumé (😴 7h · 🙂 énergie · 😄 moral) ; tape pour le déplier et renseigner. Milo adapte ses conseils du jour — s\'il y a une douleur, le Gardien PROTÈGE cette zone en priorité ; si ton moral est bas, Milo se fait plus DOUX (dédramatise, valorise, sans jamais te juger — il reste ton coach sportif, jamais un psy). Ça repart à zéro chaque jour ; le ressenti prime toujours.'},
-      {i:'😴',t:'Ton sommeil se note dans « Ton check-in du jour » (déplie la carte, en haut de l\'Accueil) : choisis la qualité + les heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Un bon sommeil fait remonter ton score de récupération (contrairement au moral/à la douleur, qui n\'y touchent pas).'},
+      {i:'😴',t:'Ton sommeil se note dans « Ton check-in du jour » (déplie la carte, en haut de l\'Accueil) : choisis la qualité + les heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Un bon sommeil fait remonter ton score de récupération (contrairement au moral/à la douleur, qui n\'y touchent pas). ⭐ <b>Si ta montre envoie ton sommeil à Santé</b> (Garmin, Apple Watch…), c\'est la <b>durée mesurée</b> qui compte, pas celle que tu tapes — la carte affiche alors « Mesuré par ta montre » et rappelle ce que tu avais noté. <b>Pourquoi</b> : la saisie à la main est bonne en moyenne, mais elle <b>lisse les mauvaises semaines</b>, donc ton score était le plus optimiste pile quand tu étais le plus fatigué. ⛔ <b>Ta saisie n\'est jamais effacée</b>, et la <b>qualité reste la tienne</b> : une montre mesure une durée, elle ne sait pas comment tu t\'es senti. Sans montre, rien ne change.'},
       {i:'📊',t:'« Historique du sommeil » (déplie le check-in, puis la barre repliable) : un mini-graphique sur 7 ou 30 jours + la liste nuit par nuit. Tape une barre ou une ligne pour ajouter/corriger cette nuit. Les jours vides affichent « ＋ à renseigner ».'},
       {i:'🩹',t:'Pour une zone qui fait mal : dans le check-in, tape directement le MUSCLE sur la figurine anatomique (vue de face + de dos) — il devient rouge. Les articulations (nuque, coude, poignet, genou, cheville) sont en boutons juste en dessous. Pour une zone comme le genou ou l\'épaule tu peux préciser le CÔTÉ (gauche/droite/les deux). Le Gardien protège cette zone du jour en priorité dans les conseils de Milo.'},
       {i:'💡',t:'Ton score de récup (sur NN/100) estime à quel point ton corps est prêt à s\'entraîner aujourd\'hui. Tape « Pourquoi ce score ? » juste en dessous pour voir, en clair, D\'OÙ il vient : sommeil, séance récente, âge, jours enchaînés… chaque facteur avec sa raison et son +/−. Il remonte au fil de la journée après une séance, et reste un simple repère — ton ressenti prime toujours.'},
@@ -1389,10 +1389,13 @@ function closeCheckin(){ if(!_checkinOpen)return; _checkinOpen=false; _renderDay
   try{ if(typeof renderLogSleep==='function')renderLogSleep(); }catch(e){} }
 function _checkinSummary(){
   const d=_dayState();
-  const ts=(S.sleepLog||[]).find(e=>e.date===today());
+  /* ⭐ MÊME PROPRIÉTAIRE QUE LE SCORE (30/08, R2) : sans ça, la tuile annoncerait la durée SAISIE
+     pendant que le score du dessus est calculé sur la durée MESURÉE — deux chiffres pour la même
+     nuit, dans le même écran. Et « à noter » s'afficherait alors qu'on connaît déjà la durée. */
+  const ts=(typeof _nuit==='function')?_nuit(today()):(S.sleepLog||[]).find(e=>e.date===today());
   const nPain=(d.pains||[]).length;
   if(d.energy==null&&d.mood==null&&!(ts&&ts.hours)&&!nPain)return ''; // rien renseigné → invite complète
-  const parts=[(ts&&ts.hours)?('😴 '+ts.hours+'h'):'😴 à noter'];
+  const parts=[(ts&&ts.hours)?('😴 '+String(ts.hours).replace('.',',')+'h'):'😴 à noter'];
   if(d.energy!=null)parts.push(_DAY_ENERGY[d.energy]+' énergie');
   if(d.mood!=null)parts.push(_DAY_MOOD[d.mood]+' moral');
   let s=parts.join(' · ');
@@ -1430,11 +1433,14 @@ function _ckTuile(ico,coul,niv,val,lgd){
 }
 function _ckTuiles(){
   const d=_dayState();
-  const ts=(S.sleepLog||[]).find(e=>e.date===today());
+  const ts=(typeof _nuit==='function')?_nuit(today()):(S.sleepLog||[]).find(e=>e.date===today());
   // Sommeil : le NIVEAU vient de la qualité (1-4), la valeur affichée reste les heures.
   const q = (ts&&ts.quality) ? ts.quality-1 : null;
   const vSom = (ts&&ts.hours) ? (String(ts.hours).replace('.',',')+' h') : '—';
-  const cSom = q==null ? 'var(--t3)' : 'var(--purp)';
+  /* ⛔ La tuile s'ALLUME dès qu'on connaît la durée, même sans qualité (30/08) : une nuit mesurée
+     est une nuit connue. Le NIVEAU des barres, lui, reste piloté par la qualité — c'est un
+     ressenti, et la montre ne le connaît pas (on n'en invente pas un). */
+  const cSom = (q==null && !(ts&&ts.hours)) ? 'var(--t3)' : 'var(--purp)';
   // Moral : la couleur porte le sens (vert content · ambre moyen · rouge bas).
   const cMor = d.mood==null ? 'var(--t3)' : d.mood>=2 ? 'var(--green)' : d.mood===1 ? 'var(--gold)' : 'var(--red)';
   const lblMor=['Bas','Moyen','Bien','Content'], lblEne=['Faible','Basse','Bonne','Au top'];

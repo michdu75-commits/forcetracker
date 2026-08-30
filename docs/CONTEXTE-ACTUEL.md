@@ -6,7 +6,25 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1067`.
+- **Version en ligne (live) :** `ft-v1068`.
+- 😴⭐⭐ **LE SOMMEIL MESURÉ ATTEINT ENFIN LE SCORE ET MILO** (ft-v1068). Michel : *« ah oui les pas
+  et le sommeil ça c'est hyper important »*.
+  ⛔⛔ **Le défaut était mesuré et écrit depuis 11 jours, dans `Code.js`** : la saisie manuelle
+  **aplatit les mauvaises semaines** (r = **−0,96** ; 6 h 43 déclaré contre **5 h 38** réel du 6 au
+  12/08). Or `S.sleepLog` est la base du score de récup **et** part chez Milo → *le score était le
+  plus optimiste exactement quand la fatigue comptait*. La donnée arrivait depuis **ft-v916** et
+  **rien ne la lisait** (seul `rhr` était exploité — **R5**).
+  ⭐⭐ **Décision de Michel** : *« la montre gagne, ET l'app le dit »* (**R32**). Un seul
+  propriétaire (`_nuit`/`_nuitsRecentes`) lu par le score, les tuiles, la carte, le registre et
+  Milo (**R2**). ⛔ La mesure ne gagne que sur la **durée** — la **qualité** reste celle de la
+  personne, jamais dérivée.
+  ⛔⛔ **Piège évité, chiffré** : `e.quality||2` faisait valoir « Moyen » à une qualité inconnue →
+  8 h mesurées seraient tombées à **72 au lieu de 90+**. Une nuit sans qualité est notée sur sa
+  **seule durée** (**R29**).
+  🚶 **Les pas ne sont PAS dans cette version, exprès.** Michel a donné leurs 2 usages et la
+  contrainte : *« la montre compte aussi les pas si on fait du tapis »* — le double comptage de
+  **ft-v949**, qu'il a nommé avant qu'on le trouve. Tout est écrit dans `IDEES-FUTURES.md`.
+  **⏭️ PROCHAINE ÉTAPE si Michel donne le go.**
 - 🗂️⭐⭐ **LE HAUT DE PROGRÈS : ONGLETS EN TÊTE, CARTES REPLIABLES** (ft-v1067). Michel, capture à
   l'appui : *« ça prend vachement d'espace en haut non ? »*.
   ⭐ **Avant** : 216 + 345 = **561 px** ; onglets à **y=699** sur un écran de 844, recherche à

@@ -13552,10 +13552,37 @@ console.log('\n-- CXXIV. L\'historique du score de récup se REJOUE, il ne se st
     // ③ une nuit POSTERIEURE a la date rejouee ne compte pas
     const ilYA5j=new Date(); ilYA5j.setDate(ilYA5j.getDate()-5); ilYA5j.setHours(10,0,0,0);
     const avant=calcRecoveryDetail(ilYA5j.getTime()).score;
-    S.sleepLog=S.sleepLog.concat([{date:(function(){const d=new Date();d.setDate(d.getDate()-1);
-      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);})(), hours:3, quality:0}]);
+    /* ⚠️⚠️ CETTE FIXTURE FAISAIT UN `concat` — DONC DEUX ENTRÉES POUR HIER (30/08/2026).
+       L'app en est INCAPABLE : ses deux écrivains (`ciPickSleep`, `saveSleepEntry`) font
+       `findIndex` puis REMPLACENT. Tant que le scoreur prenait les 3 premières lignes du
+       tableau brut, le doublon passait dans la moyenne et le témoin était vert ; depuis que les
+       nuits sont dédoublonnées PAR DATE (ft-v1068), la 2ᵉ ligne est ignorée et le témoin rougit
+       — sur du code correct. 👉 *Une fixture qui écrit d'une façon dont l'app est incapable ne
+       teste pas l'app.* Mesuré des deux façons avant de toucher quoi que ce soit : en doublon
+       76 → 76 (rien ne bouge), en remplacement 76 → 57. **La RÈGLE testée est intacte**, c'est
+       le geste d'écriture qui ne l'était pas. */
+    (function(){ const d=new Date(); d.setDate(d.getDate()-1);
+      const hier=new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+      const i=S.sleepLog.findIndex(e=>e&&e.date===hier);
+      const nuit={date:hier, hours:3, quality:0};
+      if(i>=0) S.sleepLog[i]=nuit; else S.sleepLog.unshift(nuit);   // exactement ce que fait l'app
+    })();
     o.nuitPosterieureIgnoree=(calcRecoveryDetail(ilYA5j.getTime()).score===avant);
     o.nuitCompteAujourdhui=(calcRecoveryDetail().score!==o.sansArg);
+    // ⑧ un DOUBLON de date ne doit peser qu'une fois (garantie de ft-v1068)
+    (function(){
+      const memo=S.sleepLog.slice();
+      const j=n=>{const d=new Date(Date.now()-n*864e5);
+        return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+      S.sleepLog=[{date:j(0),hours:8,quality:4},{date:j(1),hours:8,quality:4},{date:j(2),hours:8,quality:4}];
+      const sain=calcRecoveryDetail().score;
+      S.sleepLog=[{date:j(0),hours:8,quality:4},{date:j(0),hours:8,quality:4},
+                  {date:j(1),hours:8,quality:4},{date:j(2),hours:8,quality:4}];
+      const avecDoublon=calcRecoveryDetail().score;
+      o.doublonCompteUneFois=(sain===avecDoublon);
+      o.doublonDetail={sain:sain, avecDoublon:avecDoublon};
+      S.sleepLog=memo;
+    })();
     // ④ avant la 1re donnee : rien d'invente
     o.avantHistorique=recupHistorique(60).slice(0,20).every(x=>x.score===null);
     o.aujHistorique=(function(){const h=recupHistorique(7); return h[h.length-1].score!==null;})();
@@ -13586,6 +13613,13 @@ console.log('\n-- CXXIV. L\'historique du score de récup se REJOUE, il ne se st
       G.nuitPosterieureIgnoree===true);
     t('⭐ … mais elle compte bien pour AUJOURD\'HUI (le filtre ne coupe pas tout)',
       G.nuitCompteAujourdhui===true);
+    /* ⛔⛔ LA GARANTIE NÉE DE CE ROUGE (ft-v1068), FIGÉE ICI : une même date ne pèse qu'UNE fois.
+       Avant, le scoreur prenait les 3 premières lignes du TABLEAU ; deux lignes pour la même
+       nuit la comptaient donc DEUX FOIS dans une moyenne de 3 — et la 3ᵉ nuit disparaissait.
+       Ça n'arrive pas dans l'app, mais un restore cloud n'a aucun garde-fou : autant que ce
+       soit vrai par construction plutôt que par chance. */
+    t('⛔⛔ une même nuit en DOUBLE ne pèse qu\'une fois (sinon elle mange la 3ᵉ nuit)',
+      G.doublonCompteUneFois===true, JSON.stringify(G.doublonDetail));
     t('⛔⛔ avant la 1ʳᵉ donnée, le score est `null` — jamais la base neutre de 70 (R29)',
       G.avantHistorique===true);
     t('⭐ … et aujourd\'hui, lui, a bien un score',
@@ -19077,6 +19111,170 @@ console.log('\n-- CLXXIII. Le haut de Progrès : onglets en tête, cartes replia
     t('⭐⭐ ⑥ déplier est RETENU, et ça survit à un re-rendu complet de l\'onglet',
       W.memoire==='["prog-synth-acc"]' && W.survitAuReRendu===true && W.deplieeH>200,
       'mémoire='+W.memoire+' · survit='+W.survitAuReRendu+' · dépliée='+W.deplieeH+'px');
+  }
+}
+
+/* == BLOC CLXXIV - LE SOMMEIL MESURE ATTEINT ENFIN LE SCORE ET MILO (ft-v1068) ==
+   Michel : « les pas et le sommeil, c'est hyper important ».
+
+   ⛔⛔ LE DEFAUT ETAIT MESURE ET ECRIT DEPUIS ONZE JOURS, DANS `Code.js` : la saisie manuelle est
+   bonne EN MOYENNE (+12 min sur 10 semaines) mais elle APLATIT les mauvaises semaines —
+   correlation sommeil reel / erreur de saisie **r = -0,96**. Du 6 au 12 aout, Garmin disait
+   **5 h 38**, l'app **6 h 43**. Or `S.sleepLog` est LA BASE du score de recup ET part chez Milo.
+   👉 *Le score et Milo etaient donc les plus faux exactement les semaines ou ils comptaient.*
+   La donnee qui corrige ca arrivait depuis ft-v916 et **personne ne la lisait** (R5).
+
+   ⭐⭐ LA FIXTURE EST SON CAS REEL, pas un cas invente : 6,72 h declarees contre 5,63 h mesurees.
+   Une fixture inventee rendrait ces temoins verts sans rien dire de sa semaine.
+
+   ⛔ ET LE TEMOIN QUI COMPTE LE PLUS EST LE ④ : une nuit MESUREE SANS QUALITE ne doit pas etre
+   notee comme « Moyen ». Le bareme faisait `e.quality||2`, soit 45/100 sur un axe qui pese 40 % —
+   injecter des nuits mesurees aurait donc FAIT BAISSER le score de quelqu'un qui a bien dormi,
+   en silence, dans la version censee le rendre juste. */
+console.log('\n-- CLXXIV. Le sommeil mesuré atteint le score et Milo (ft-v1068) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const N=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const J=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+    const o={};
+    /* ⭐⭐ SA SEMAINE : il note 6,72 h (6 h 43), sa montre mesure 5,63 h (5 h 38). */
+    S.sleepLog=[{date:J(0),hours:6.72,quality:3},{date:J(1),hours:6.72,quality:3},{date:J(2),hours:6.72,quality:3}];
+    S.healthDaily=[{date:J(0),rhr:52,sleep:5.63,steps:9000},{date:J(1),rhr:53,sleep:5.63,steps:8000},
+                   {date:J(2),rhr:52,sleep:5.63,steps:7000}];
+    S.sessions=[]; persist();
+
+    /* ① la fixture porte bien un ECART reel — sinon tout le bloc mesurerait deux fois la meme chose */
+    const n0=_nuit(J(0));
+    o.nuit={hours:n0.hours,source:n0.source,hSaisie:n0.hSaisie,hMes:n0.hMes,ecart:n0.ecart,quality:n0.quality};
+
+    /* ② LE COEUR : le score est-il calcule sur la duree MESUREE ? On le compare a lui-meme,
+       la mesure retiree — c'est la seule facon de prouver qu'elle change quelque chose. */
+    o.scoreAvecMesure=calcRecoveryScore();
+    const gardeHD=S.healthDaily; S.healthDaily=[];
+    o.scoreSansMesure=calcRecoveryScore();
+    S.healthDaily=gardeHD;
+
+    /* ③ l'ecran DIT d'ou vient le chiffre (l'autre moitie de la decision de Michel) */
+    const det=calcRecoveryDetail();
+    const fSom=(det.factors||[]).find(f=>f.ic==='😴')||{};
+    o.libelle=String(fSom.label||''); o.pourquoi=String(fSom.why||'');
+
+    /* ④ QUALITE INCONNUE -> DUREE SEULE. Une nuit purement mesuree, sans aucune saisie :
+       si elle valait encore « Moyen » (45), le score chuterait sans raison. */
+    S.sleepLog=[]; S.healthDaily=[{date:J(0),sleep:8.0},{date:J(1),sleep:8.0},{date:J(2),sleep:8.0}];
+    persist();
+    o.scoreMesureSeule=calcRecoveryScore();
+    o.qualiteInventee=_nuit(J(0)).quality;   // doit rester null, jamais 2
+
+    /* ⑤ NON-REGRESSION : une nuit purement SAISIE se comporte exactement comme avant. */
+    S.sleepLog=[{date:J(0),hours:8.0,quality:3},{date:J(1),hours:8.0,quality:3},{date:J(2),hours:8.0,quality:3}];
+    S.healthDaily=[]; persist();
+    o.scoreSaisieSeule=calcRecoveryScore();
+
+    /* ⑥ LE CHECK-IN N'INVENTE PLUS 7,5 h quand une mesure existe (R29). */
+    S.sleepLog=[]; S.healthDaily=[{date:J(0),sleep:5.63}]; persist();
+    ciPickSleep(3);
+    o.apresCheckin=(S.sleepLog.find(e=>e.date===J(0))||{}).hours;
+
+    /* ⑦ R2 : la TUILE d'accueil et le SCORE parlent de la meme nuit. */
+    S.sleepLog=[{date:J(0),hours:6.72,quality:3}]; S.healthDaily=[{date:J(0),sleep:5.63}]; persist();
+    o.tuile=String(_ckTuiles()).replace(/\s+/g,' ');
+    o.compact=(function(){ try{ renderLogSleep();
+      return String((document.getElementById('log-sleep')||{}).textContent||'').replace(/\s+/g,' '); }catch(e){ return 'ERR '+e; } })();
+
+    /* ⑪ une nuit PUREMENT mesuree : l'app doit encore demander la QUALITE, pas se taire. */
+    S.sleepLog=[]; S.healthDaily=[{date:J(0),sleep:5.63}]; persist();
+    o.mesSeule=(function(){ try{ _sleepEditLog=false; renderLogSleep();
+      const e=document.getElementById('log-sleep');
+      return {txt:String(e.textContent||'').replace(/\s+/g,' '),
+              champ:(document.getElementById('sleep-hours')||{}).value,
+              qualiteDemandee:!!document.getElementById('sq-3')}; }catch(e){ return {err:String(e)}; } })();
+
+    /* ⑫ ... mais avec une SAISIE existante, la montre ne pre-remplit PAS son champ. */
+    S.sleepLog=[{date:J(0),hours:6.72,quality:3}]; S.healthDaily=[{date:J(0),sleep:5.63}]; persist();
+    o.avecSaisie=(function(){ try{ _sleepEditLog=true; renderLogSleep();
+      const v=(document.getElementById('sleep-hours')||{}).value; _sleepEditLog=false; return v; }catch(e){ return 'ERR'; } })();
+
+    /* ⑬ ⛔ LA VIRGULE AFFICHEE DOIT SE RELIRE : afficher « 5,63 » et ne pas savoir l'enregistrer
+       serait un 2e bug pose en corrigeant le 1er (la lecon de ft-v1057, l'autre sens). */
+    S.sleepLog=[]; S.healthDaily=[{date:J(0),sleep:5.63}]; persist();
+    o.relecture=(function(){ try{ _sleepEditLog=false; renderLogSleep();
+      setSleepQual(3); saveSleepEntry();
+      return (S.sleepLog.find(e=>e.date===J(0))||{}).hours; }catch(e){ return 'ERR '+e; } })();
+
+    /* ⑧ MILO recoit la duree mesuree ET l'ecart. */
+    S.sleepLog=[{date:J(0),hours:6.72,quality:3},{date:J(1),hours:6.72,quality:3}];
+    S.healthDaily=[{date:J(0),rhr:52,sleep:5.63},{date:J(1),rhr:52,sleep:5.63}]; persist();
+    o.ctx=String(buildCoachContext()||'');
+    const i=o.ctx.indexOf('RÉCUPÉRATION & SOMMEIL');
+    o.bloc=i>=0?o.ctx.slice(i,i+900):'(bloc introuvable)';
+    return o;
+   }catch(e){ return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]}; }
+  });
+  await cx.close();
+
+  if(N.err) t('CLXXIV n\'a pas pu tourner', false, JSON.stringify(N));
+  else{
+    /* ⛔ SANS CELUI-CI, LES SEPT AUTRES SERAIENT VERTS SUR DEUX CHIFFRES IDENTIQUES. */
+    t('⛔ ① la fixture porte un VRAI écart (6,72 h notées · 5,63 h mesurées)',
+      N.nuit.source==='mesure' && N.nuit.hours===5.63 && N.nuit.hSaisie===6.72
+      && Math.abs(N.nuit.ecart+1.09)<0.02, JSON.stringify(N.nuit));
+    /* ⭐⭐ LE COEUR : la mesure change le score, donc elle l'atteint vraiment (R4). */
+    t('⭐⭐ ② le score est calculé sur la durée MESURÉE, pas sur la déclarée',
+      N.scoreAvecMesure!==null && N.scoreSansMesure!==null && N.scoreAvecMesure<N.scoreSansMesure,
+      'avec mesure = '+N.scoreAvecMesure+' · sans = '+N.scoreSansMesure);
+    /* ⭐ « la montre gagne, ET l'app le dit » — la seconde moitié de sa décision. */
+    t('⭐ ③ l\'écran NOMME la source et donne l\'écart en minutes',
+      /mesur/i.test(N.libelle) && /montre|Santé/i.test(N.pourquoi) && /min/.test(N.pourquoi),
+      N.libelle+' | '+N.pourquoi.slice(0,140));
+    /* ⛔⛔ LE TEMOIN QUI M'A EVITE DE LIVRER UNE BAISSE SILENCIEUSE. 8 h sur la courbe valent 90 ;
+       avec un « Moyen » invente, la nuit serait tombee a 90*0.6+45*0.4 = 72. */
+    t('⛔⛔ ④ qualité inconnue → notée sur la DURÉE seule, jamais un « Moyen » inventé',
+      N.qualiteInventee===null && N.scoreMesureSeule>=85,
+      'qualité = '+JSON.stringify(N.qualiteInventee)+' · score 8 h mesurées = '+N.scoreMesureSeule);
+    /* ⛔ ET L'INVERSE : on n'a pas casse le chemin d'origine. */
+    t('⛔ ⑤ NON-RÉGRESSION : une nuit purement saisie garde son score d\'avant',
+      N.scoreSaisieSeule!==null && N.scoreSaisieSeule>0, 'score saisie seule = '+N.scoreSaisieSeule);
+    /* ⛔ R29 : un chiffre que personne n'a donne ne doit pas s'enregistrer. */
+    t('⛔ ⑥ le check-in n\'invente plus 7,5 h : il reprend la mesure (5,63)',
+      N.apresCheckin===5.63, 'heures écrites = '+N.apresCheckin);
+    /* ⛔ R2 : deux chiffres pour la meme nuit dans le meme ecran, c'est le defaut du projet. */
+    t('⛔ ⑦ la tuile d\'accueil affiche la MÊME durée que le score (5,63 h, pas 6,72)',
+      /5,63/.test(N.tuile) && !/6,72/.test(N.tuile), N.tuile.slice(0,160));
+    /* ⚠️ RENFORCÉ après le contrôle négatif A : la 1ʳᵉ version cherchait « 6,72 » n'importe où et
+       restait donc VERTE quand la saisie reprenait la main — le 6,72 venait alors du chiffre
+       PRINCIPAL au lieu du rappel. Il faut que la carte porte les DEUX, et dans le bon ordre :
+       la mesure d'abord, la saisie derrière « tu avais noté ». */
+    t('⭐ ⑧ la carte Sommeil montre 5,63 h EN GRAND et rappelle « tu avais noté 6,72 h »',
+      /Mesuré par ta montre/.test(N.compact)
+      && N.compact.indexOf('5,63') >= 0
+      && /tu avais noté 6,72h/.test(N.compact)
+      && N.compact.indexOf('5,63') < N.compact.indexOf('6,72'), N.compact.slice(0,200));
+    /* ⭐⭐ R4 : l'information doit descendre jusqu'a ce que Milo RECOIT. */
+    t('⭐⭐ ⑨ Milo reçoit la durée MESURÉE et l\'écart, encadré comme un fait',
+      /5\.63h \(MESURÉ/.test(N.bloc) && /ÉCART MESURE\/SAISIE/.test(N.bloc)
+      && /jamais comme un reproche/.test(N.bloc), N.bloc.slice(0,320));
+    /* ⛔⛔ CE QUE LA MONTRE NE SAIT PAS EST JUSTEMENT CE QU'IL FAUT CONTINUER A DEMANDER. */
+    t('⛔⛔ ⑪ une nuit purement mesurée demande ENCORE la qualité, et nomme la montre',
+      N.mesSeule.qualiteDemandee===true && N.mesSeule.champ==='5,63'
+      && /mesur/i.test(N.mesSeule.txt) && /montre/i.test(N.mesSeule.txt),
+      JSON.stringify(N.mesSeule).slice(0,220));
+    /* ⛔ ET L'INVERSE : pre-remplir par-dessus une saisie ferait DISPARAITRE l'ecart en un tap. */
+    t('⛔ ⑫ avec une saisie existante, la montre ne pré-remplit PAS son champ (6,72 conservé)',
+      N.avecSaisie==='6,72', 'champ = '+N.avecSaisie);
+    t('⛔ ⑬ la virgule affichée se RELIT : « 5,63 » s\'enregistre bien en 5.63',
+      N.relecture===5.63, 'enregistré = '+JSON.stringify(N.relecture));
+    /* ⛔ ET IL NE RECOIT PAS la valeur brute de FC : la decision du 16/08 ne bouge pas. */
+    t('⛔ ⑩ la FC au repos reste HORS du contexte (décision du 16/08 intacte)',
+      !/\b52 ?bpm\b/i.test(N.ctx) && N.ctx.indexOf('"rhr"')<0, 'rhr absent du contexte');
   }
 }
 

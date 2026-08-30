@@ -4040,13 +4040,44 @@ ${(()=>{
   const score=calcRecoveryScore();
   const info=getRecoveryInfo(score);
   const todayStr=today();
-  const ts=S.sleepLog&&S.sleepLog.find(e=>e.date===todayStr);
+  /* ⭐⭐ MILO LIT LES MÊMES NUITS QUE LE SCORE (30/08) — `_nuit`/`_nuitsRecentes` sont le seul
+     propriétaire (R2). Avant, ce bloc relisait `S.sleepLog` de son côté : l'écran et Milo
+     auraient fini par annoncer deux durées différentes de la même nuit.
+     ⛔⛔ ET C'EST ICI QUE LE DÉFAUT MORDAIT LE PLUS (R4) : la saisie aplatit les mauvaises
+     semaines (r = −0,96), et c'est elle qui partait dans ce contexte. Milo lisait donc 6 h 43
+     une semaine où la montre disait 5 h 38 — il sous-estimait la dette de récup **exactement**
+     les semaines où elle comptait, et son « implication entraînement » va jusqu'à autoriser des
+     records.
+
+     ⛔⛔ CE QUI PART DE `healthDaily`, ET CE QUI N'EN PART PAS — la raison est ici parce que
+     c'est ici qu'elle s'applique (R27 : le pourquoi vit à côté de ce qu'il protège).
+     · `sleep`  → TRANSMIS. Ce n'est pas une donnée d'une nature nouvelle : Milo recevait déjà
+                  des heures de sommeil. C'est la MÊME information, prise à une meilleure source.
+     · `rhr`    → TOUJOURS EXCLU, et cette décision d'origine (16/08) ne bouge pas : son effet
+                  atteint déjà Milo par le SCORE DE RÉCUPÉRATION, donc l'envoyer en plus serait
+                  une 2ᵉ source pour la même information (R2) — et surtout, une fréquence
+                  cardiaque est un chiffre à consonance MÉDICALE. Milo ne peut pas savoir si elle
+                  monte à cause de la fatigue, d'un rhume, d'un verre de trop ou d'une chambre
+                  trop chaude : la lui donner l'inviterait à interpréter, c'est-à-dire à poser un
+                  diagnostic (Constitution · R10). Le score, lui, porte déjà la conclusion utile.
+     · `steps`  → PAS ENCORE. Rien ne les lit, et une donnée sans comportement observable n'a
+                  rien à faire dans le contexte (R3). Voir `IDEES-FUTURES.md` — Michel a déjà
+                  posé les deux usages ET la contrainte de double comptage. */
+  const ts=(typeof _nuit==='function')?_nuit(todayStr):null;
   const qLabels={1:'Mauvais',2:'Moyen',3:'Bon',4:'Excellent'};
-  const last3=S.sleepLog&&S.sleepLog.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
-  const avgH=last3&&last3.length?Math.round(last3.reduce((a,e)=>a+e.hours,0)/last3.length*10)/10:null;
+  const last3=(typeof _nuitsRecentes==='function')?_nuitsRecentes(todayStr,3):[];
+  const avgH=last3.length?Math.round(last3.reduce((a,e)=>a+(e.hours||0),0)/last3.length*10)/10:null;
+  /* ⛔ L'ÉCART EST DIT À MILO, PAS SEULEMENT LA BONNE VALEUR. Corriger le chiffre en silence
+     réglerait le calcul et perdrait l'information la plus utile : *cette personne se croit plus
+     reposée qu'elle ne l'est*. C'est un fait sur la semaine, pas un reproche — d'où la consigne
+     explicite en dessous, sans laquelle un modèle a vite fait d'en faire une leçon de morale. */
+  const ec=last3.find(n=>n.ecart!=null&&Math.abs(n.ecart)>=0.5);
   return `- Score récupération: ${score!==null?score+'/100 ('+info.label+')':'Non renseigné — données de sommeil manquantes'}
-- Sommeil cette nuit: ${ts?ts.hours+'h | Qualité: '+qLabels[ts.quality||2]:'Non enregistré'}
-${avgH?'- Moyenne sommeil (3j): '+avgH+'h':''}
+- Sommeil cette nuit: ${ts?(ts.hours+'h'+(ts.source==='mesure'?' (MESURÉ par sa montre)':' (saisi)')
+    +' | Qualité: '+(ts.quality!=null?qLabels[ts.quality]:'non dite — ne l\'invente pas')):'Non enregistré'}
+${avgH?'- Moyenne sommeil (3j): '+avgH+'h'+(last3.some(n=>n.source==='mesure')?' (durées mesurées quand disponibles)':''):''}
+${ec?'- ÉCART MESURE/SAISIE: sa montre dit '+ec.hMes+'h là où il/elle avait noté '+ec.hSaisie+'h ('
+   +(ec.ecart>0?'+':'')+Math.round(ec.ecart*60)+' min). C\'est un FAIT, pas une faute : on ne note pas ses nuits au chronomètre. Tu peux le mentionner UNE fois si c\'est utile à la décision du jour (charge, récup), jamais comme un reproche et jamais deux fois.':''}
 - Conseil récupération: ${info.rec}
 - Implication entraînement: ${score===null?'Demander les données de sommeil à l\'athlète':score<40?'Proposer UNIQUEMENT repos actif, étirements ou séance très légère. Déconseiller fortement tout effort maximal.':score<60?'Séance possible mais pas de records. Volume modéré, technique, pas de maxima.':score<80?'Séance normale. Peut progresser mais réserver les PRs pour les jours optimal.':'JOUR IDÉAL pour PRs et séances intensives. Corps en pleine capacité de récupération.'}`;
 })()}

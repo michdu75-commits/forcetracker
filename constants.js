@@ -434,6 +434,11 @@ const DISC_CADRE={
 };
 
 const NEW_FEATURES=[
+  /* 😴 CELLE-CI A SA POP-UP (v64), et c'est le cas « UN REPÈRE A BOUGÉ » à l'état pur : le
+     chiffre de sommeil affiché peut désormais DIFFÉRER de celui qu'on a saisi soi-même, et le
+     score de récup peut bouger avec lui. Sans un mot, ça se lit comme un bug — ou pire, comme
+     si l'app avait perdu ce qu'on lui avait donné. */
+  {id:'sommeil-mesure', screen:'home', desc:'\u{1F634} Si ta montre envoie ton sommeil \u00e0 Sant\u00e9 (Garmin, Apple Watch\u2026), l\'app prend maintenant <b>la dur\u00e9e mesur\u00e9e</b> plut\u00f4t que celle que tu notes \u2014 et elle te le <b>dit</b> : \u00ab Mesur\u00e9 par ta montre \u00bb, avec un rappel de ce que tu avais not\u00e9. \u2b50 <b>Pourquoi</b> : compar\u00e9 sur 10 semaines, la saisie \u00e0 la main est bonne en moyenne mais elle <b>lisse les mauvaises semaines</b> \u2014 une semaine \u00e0 5 h 38 r\u00e9elles \u00e9tait not\u00e9e 6 h 43. Ton score de r\u00e9cup\u00e9ration \u00e9tait donc le plus optimiste <b>exactement quand tu \u00e9tais le plus fatigu\u00e9</b>, et Milo aussi. \u26d4 <b>Ta saisie n\'est jamais effac\u00e9e</b> : elle reste visible \u00e0 c\u00f4t\u00e9, et c\'est toujours <b>toi</b> qui donnes la <b>qualit\u00e9</b> de ta nuit \u2014 une montre mesure une dur\u00e9e, elle ne sait pas comment tu t\'es senti. \u26a0\uFE0F Si tu n\'envoies pas ton sommeil depuis Sant\u00e9, <b>rien ne change pour toi</b>.'},
   /* 👎 PAS DE POP-UP `WHATS_NEW` POUR CELLE-CI (règle d'or #11), et c'est un cas limite
      qu'il faut argumenter plutôt que subir. Un bouton APPARAÎT sous chaque réponse de Milo,
      donc un repère bouge — mais il ne DÉPLACE rien, ne cache rien, et s'explique en un tap :
@@ -598,6 +603,14 @@ const NEW_FEATURES=[
 // ✅ v46/47/48 = les 3 features ex-testeurs (« maxi » · calories manuelles · objectif recomposition)
 //    OUVERTES À TOUT LE MONDE (ft-v623, décision Michel) + red dots reps-maxi/manual-kcal/goal-recomp réactivés.
 const WHATS_NEW=[
+  /* 😴 ELLE SE MÉRITE, ET C'EST LE CAS « UN REPÈRE A BOUGÉ » (règle d'or #11).
+     Le nombre d'heures affiché sur l'Accueil peut maintenant être DIFFÉRENT de celui qu'on a
+     tapé soi-même, et le score de récup peut bouger avec. *Un chiffre qu'on a donné et qui
+     change tout seul, sans un mot, se lit comme une perte de données.*
+     ⛔ BORNÉE À L'ESSENTIEL (R25) : ce qui change, pourquoi, et le fait que la saisie reste.
+     Le détail — la qualité toujours donnée par la personne, ce que Milo en fait, ce qui se
+     passe sans montre — vit dans l'aide `?` et l'aide détaillée, pas ici. */
+  {v:64, ic:'😴', t:'Ton sommeil vient de ta montre', d:'Si ta montre envoie ton sommeil \u00e0 Sant\u00e9, l\'app utilise d\u00e9sormais <b>la dur\u00e9e mesur\u00e9e</b> au lieu de celle que tu notes \u2014 et elle l\'affiche clairement. <b>Pourquoi</b> : la saisie \u00e0 la main lisse les mauvaises semaines, donc ton score de r\u00e9cup\u00e9ration \u00e9tait trop optimiste pile quand tu \u00e9tais fatigu\u00e9. <b>Ta saisie reste</b>, affich\u00e9e \u00e0 c\u00f4t\u00e9 \u2014 et c\'est toujours toi qui dis si la nuit \u00e9tait bonne.'},
   /* ⚡ ELLE SE MÉRITE, ET C'EST LES DEUX CAS À LA FOIS (règle d'or #11).
      ① UN REPÈRE A BOUGÉ : le bouton rouge que tout le monde connaît porte maintenant une
         QUESTION au-dessus. Il est au même endroit et coûte le même tap — mais sans un mot,

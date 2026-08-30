@@ -390,7 +390,14 @@ function ciPickSleep(q){
   // Update sleep log (quality, default 7.5h if not yet logged)
   if(!S.sleepLog)S.sleepLog=[];
   const d=today();const idx=S.sleepLog.findIndex(e=>e.date===d);
-  const hours=(S.sleepLog.find(e=>e.date===d)||{}).hours||7.5;
+  /* ⛔⛔ LA MESURE PASSE DEVANT LE 7,5 PAR DÉFAUT (30/08). Répondre à la seule question de
+     QUALITÉ du check-in écrivait `hours = 7,5` — un chiffre que personne n'a donné, qui partait
+     ensuite dans le score ET chez Milo (R29). Inoffensif tant qu'il n'y avait rien d'autre ;
+     franchement nuisible depuis qu'une durée MESURÉE existe, car l'app aurait alors affiché
+     « tu avais noté 7,5 h » en face de la montre — un écart entièrement fabriqué par ce défaut.
+     👉 Ordre : ce qu'elle a déjà saisi · sinon la mesure de la nuit · sinon seulement 7,5. */
+  const _mes=((S.healthDaily||[]).find(x=>x&&x.date===d&&x.sleep>0)||{}).sleep;
+  const hours=(S.sleepLog.find(e=>e.date===d)||{}).hours||_mes||7.5;
   const entry={date:d,hours,quality:q};
   if(idx>=0)S.sleepLog[idx]=entry;else S.sleepLog.unshift(entry);
   S.sleepLog=S.sleepLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
@@ -1817,7 +1824,11 @@ function computeRegistreFacts(){
       if(ent.length>=2){ent.sort((a,b)=>b[1]-a[1]);F.groupe_travail={label:'Groupes musculaires (30 j)',value:`le plus : ${ent[0][0]} · le moins : ${ent[ent.length-1][0]}`};}
     }
     // 6) Sommeil moyen (7 dernières nuits renseignées)
-    const sl=(S.sleepLog||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,7);
+    /* ⭐ MÊME SOURCE QUE LE SCORE ET QUE MILO (30/08, R2) : ce fait part dans le registre, donc
+       dans le contexte. Le laisser sur `sleepLog` aurait fait dire à Milo une moyenne — et à son
+       bloc RÉCUPÉRATION une autre, pour les mêmes nuits. */
+    const sl=(typeof _nuitsRecentes==='function')?_nuitsRecentes(today(),7)
+             :(S.sleepLog||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,7);
     if(sl.length>=2){const avgH=sl.reduce((a,e)=>a+(e.hours||0),0)/sl.length;const h=Math.floor(avgH),m=Math.round((avgH-h)*60);F.sommeil_moyen={label:'Sommeil moyen',value:`~${h} h${m?(' '+String(m).padStart(2,'0')):''} / nuit (${sl.length} nuits)`};}
     // 7) Ancienneté sportive CALCULÉE (depuis la 1re séance) — ≠ niveau déclaré (déjà connu de Milo)
     if(sess.length>=3){
@@ -2472,20 +2483,37 @@ function renderLogSleep(){
   const el=document.getElementById('log-sleep');if(!el)return;
   const todayStr=today();
   const dateStr=_sleepDateFor();
-  const tsToday=S.sleepLog&&S.sleepLog.find(e=>e.date===todayStr);
+  /* ⭐ LA VUE COMPACTE LIT `_nuit` (30/08) : une nuit MESURÉE mais jamais saisie doit s'afficher,
+     sinon l'app dirait « à noter » alors qu'elle connaît déjà la durée. ⛔ En revanche l'ÉDITEUR
+     en dessous continue de lire `S.sleepLog` : c'est le champ de SA saisie, on n'y pré-remplit
+     jamais la mesure — sinon un simple « Enregistrer » recopierait le chiffre de la montre dans
+     sa saisie, et l'écart qu'on cherche justement à voir disparaîtrait pour toujours. */
+  const tsToday=(typeof _nuit==='function')?_nuit(todayStr):null;
   const ts=S.sleepLog&&S.sleepLog.find(e=>e.date===dateStr);
   const qLabels={1:'Mauvais',2:'Moyen',3:'Bon',4:'Excellent'};
   const moonSvg='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="color:var(--purp);flex-shrink:0;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
   let inner,pad;
-  const isCompact=tsToday&&!_sleepEditLog;
+  /* ⛔ COMPACT SEULEMENT QUAND ON SAIT TOUT (30/08). Une nuit purement MESURÉE donne la durée
+     mais pas la QUALITÉ : passer en compact afficherait « 5,63 h » et n'inviterait plus jamais à
+     dire comment on a dormi — l'app aurait l'air satisfaite d'une information qu'elle n'a pas.
+     *Ce que la montre ne sait pas, c'est justement ce qu'il faut continuer à demander.* */
+  const isCompact=tsToday&&tsToday.quality!=null&&!_sleepEditLog;
   // Vue compacte : cette nuit déjà renseignée et on n'édite pas
   if(isCompact){
     pad='12px 16px 0';
     inner='<div style="display:flex;justify-content:space-between;align-items:center;">'
       +'<div style="display:flex;align-items:center;gap:13px;">'
       +'<div class="home-row-ic" style="background:rgba(168,85,247,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purp)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>'
-      +'<div><div class="home-row-ttl">'+tsToday.hours+'h · '+qLabels[tsToday.quality||2]+'</div>'
-      +'<div class="home-row-sub">Sommeil de cette nuit</div></div>'
+      +'<div><div class="home-row-ttl">'+String(tsToday.hours).replace('.',',')+'h'
+        +(tsToday.quality!=null?(' · '+qLabels[tsToday.quality]):'')+'</div>'
+      /* ⛔ On NOMME la source quand c'est une mesure, et on montre l'écart. Sans ça, le chiffre
+         change sous ses yeux sans explication — et l'écart est justement l'information utile
+         (« je me croyais à 6 h 43, j'étais à 5 h 38 »). Jamais formulé comme une erreur : on ne
+         note pas ses nuits au chronomètre. */
+      +'<div class="home-row-sub">'+(tsToday.source==='mesure'
+          ? ('Mesuré par ta montre'+(tsToday.ecart!=null&&Math.abs(tsToday.ecart)>=0.5
+              ? (' · tu avais noté '+String(tsToday.hSaisie).replace('.',',')+'h') : ''))
+          : 'Sommeil de cette nuit')+'</div></div>'
       +'</div>'
       +'<button style="font-size:12px;font-weight:600;color:var(--t3);background:none;border:none;cursor:pointer;padding:4px 8px;touch-action:manipulation;" onclick="_sleepEditDate=null;_sleepEditLog=true;renderLogSleep()">Modifier</button>'
       +'</div>';
@@ -2497,6 +2525,11 @@ function renderLogSleep(){
       return '<div class="slq-bars">'+h.map(function(height,i){return'<div class="slq-bar'+(i>=n?' slq-bar-off':'')+'" style="height:'+height+'px;"></div>';}).join('')+'</div>';
     };
     const editingPast=dateStr!==todayStr;
+    /* ⭐ PRÉ-REMPLI PAR LA MONTRE, ET DIT COMME TEL — mais SEULEMENT s'il n'y a aucune saisie
+       pour ce jour-là. ⛔ Pré-remplir PAR-DESSUS une saisie existante ferait qu'un simple
+       « Enregistrer » recopierait le chiffre de la montre dans sa saisie : l'écart qu'on cherche
+       justement à lui montrer disparaîtrait pour toujours, et sans qu'il l'ait décidé (R29). */
+    const _mesNuit = ts ? null : ((S.healthDaily||[]).find(x=>x&&x.date===dateStr&&x.sleep>0)||{}).sleep;
     inner='<div style="display:flex;align-items:center;gap:7px;margin-bottom:12px;">'+moonSvg
       +'<span style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);">Sommeil — '+_fmtSleepDay(dateStr)+'</span></div>'
       +'<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">'
@@ -2509,8 +2542,11 @@ function renderLogSleep(){
       +'<button class="slq-btn" id="sq-3" onclick="setSleepQual(3)">'+bars(3)+'Bon</button>'
       +'<button class="slq-btn" id="sq-4" onclick="setSleepQual(4)">'+bars(4)+'Excellent</button>'
       +'</div>'
+      +(_mesNuit!=null?('<div style="font-size:11.5px;color:var(--t3);line-height:1.5;margin-bottom:8px;">'
+         +'\u231A <b>'+String(_mesNuit).replace('.',',')+' h</b> mesur\u00e9es par ta montre \u2014 dis juste '
+         +'comment tu as dormi, la dur\u00e9e est d\u00e9j\u00e0 l\u00e0.</div>'):'')
       +'<div style="display:flex;gap:8px;align-items:center;">'
-      +'<input type="text" id="sleep-hours" placeholder="7.5" step="0.5" min="2" max="14" inputmode="decimal" enterkeyhint="done" oninput="_toggleSleepSaveBtn(this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();saveSleepEntry();}" style="flex:1;padding:11px 12px;border-radius:10px;border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:16px;" value="'+(ts?ts.hours:'')+'">'
+      +'<input type="text" id="sleep-hours" placeholder="7.5" step="0.5" min="2" max="14" inputmode="decimal" enterkeyhint="done" oninput="_toggleSleepSaveBtn(this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();saveSleepEntry();}" style="flex:1;padding:11px 12px;border-radius:10px;border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:16px;" value="'+(ts?String(ts.hours).replace('.',','):(_mesNuit!=null?String(_mesNuit).replace('.',','):''))+'">'
       +'<span style="font-size:13px;color:var(--t2);white-space:nowrap;">h de sommeil</span>'
       +((ts||editingPast)?'<button class="btn btn-bg2 btn-sm" onclick="_sleepEditDate=null;_sleepEditLog=false;renderLogSleep()" style="flex-shrink:0;font-size:12px;padding:8px 12px;">Annuler</button>':'')
       +'</div>'
@@ -2578,6 +2614,65 @@ function _sleepCurve(h){
     }
   }
   return 70;
+}
+/* 😴 UNE NUIT, DEUX SOURCES, UN SEUL PROPRIÉTAIRE (30/08/2026)
+   Michel : *« les pas et le sommeil, c'est hyper important »*.
+
+   ⛔⛔ LE DÉFAUT ÉTAIT MESURÉ ET ÉCRIT DEPUIS ONZE JOURS, DANS `Code.js`. La saisie manuelle est
+   bonne EN MOYENNE (+12 min sur 10 semaines) mais elle **aplatit les mauvaises semaines** :
+   corrélation sommeil réel / erreur de saisie **r = −0,96**. Du 6 au 12 août, Garmin disait
+   **5 h 38**, l'app **6 h 43**. Or `S.sleepLog` est LA BASE du score de récup **et** part chez
+   Milo. 👉 ***Le score et Milo étaient donc les plus faux exactement les semaines où ils
+   comptaient le plus.*** La donnée qui corrige ça arrivait depuis ft-v916 et **personne ne la
+   lisait** : seul `rhr` était exploité (R5 — une donnée qui n'atteint aucun comportement
+   n'existe pas).
+
+   ⭐⭐ LA MESURE GAGNE SUR LA DÉCLARATION, ET L'APP LE DIT — décision de Michel, et c'est **R32**
+   (mesuré > estimé > déclaré). ⛔ Mais elle ne gagne QUE sur la DURÉE : la montre sait combien de
+   temps tu as dormi, **elle ne sait pas comment tu t'es senti**. La qualité reste donc toujours
+   celle que la personne a donnée, jamais dérivée d'une mesure.
+
+   ⚠️⚠️ LE PIÈGE QUI M'ATTENDAIT, TROUVÉ EN LISANT LE BARÈME AVANT D'ÉCRIRE : le scoreur faisait
+   `e.quality||2`, donc une qualité **inconnue** valait silencieusement « Moyen » — soit **45/100
+   sur un axe qui pèse 40 %**. Injecter des nuits mesurées sans qualité aurait donc **FAIT BAISSER
+   le score de quelqu'un qui a bien dormi**, en silence, au moment même où on prétendait le rendre
+   plus juste. 👉 Une nuit sans qualité connue est notée **sur sa seule durée** — on ne remplace
+   pas une inconnue par une valeur moyenne, c'est un fait inventé (**R29**).
+   ⛔ Et ça ne change RIEN pour l'existant : les deux seuls écrivains de `sleepLog`
+   (`ciPickSleep`, `saveSleepEntry`) posent TOUJOURS une qualité. Le chemin « durée seule » ne
+   peut concerner qu'une nuit purement mesurée. Vérifié avant d'y toucher, pas supposé.
+
+   ⚠️ `hours` PEUT ÊTRE UN DÉFAUT QUE PERSONNE N'A CHOISI : `ciPickSleep` écrit `hours||7.5` quand
+   on ne répond qu'à la question de qualité du check-in. La mesure ne remplace donc pas seulement
+   un chiffre approximatif — elle remplace parfois un chiffre que la personne n'a jamais donné. */
+function _nuit(dateStr){
+  try{
+    const saisie=(typeof S!=='undefined'&&S.sleepLog||[]).find(e=>e&&e.date===dateStr)||null;
+    const mes=(typeof S!=='undefined'&&S.healthDaily||[]).find(x=>x&&x.date===dateStr&&x.sleep>0)||null;
+    if(!saisie&&!mes) return null;
+    const hSaisie=(saisie&&saisie.hours>0)?saisie.hours:null;
+    const hMes=mes?mes.sleep:null;
+    if(hMes==null&&hSaisie==null) return null;
+    return {date:dateStr,
+            hours:  hMes!=null?hMes:hSaisie,
+            quality:(saisie&&saisie.quality!=null)?saisie.quality:null,  // ⛔ jamais dérivée d'une mesure
+            source: hMes!=null?'mesure':'saisie',
+            hSaisie, hMes,
+            // l'écart n'existe que si les DEUX existent — sinon il n'y a rien à comparer
+            ecart:(hMes!=null&&hSaisie!=null)?Math.round((hMes-hSaisie)*100)/100:null};
+  }catch(e){ return null; }
+}
+/* Les nuits récentes, de la plus proche à la plus lointaine, TOUTES SOURCES CONFONDUES.
+   ⛔ On part de l'UNION des dates : partir de `sleepLog` seul raterait une nuit mesurée que la
+   personne n'a pas saisie — c'est-à-dire précisément le cas qu'on vient d'ouvrir. */
+function _nuitsRecentes(auj, n){
+  try{
+    const d={};
+    ((typeof S!=='undefined'&&S.sleepLog)||[]).forEach(e=>{ if(e&&e.date&&e.date<=auj) d[e.date]=1; });
+    ((typeof S!=='undefined'&&S.healthDaily)||[]).forEach(x=>{ if(x&&x.date&&x.sleep>0&&x.date<=auj) d[x.date]=1; });
+    return Object.keys(d).sort((a,b)=>b.localeCompare(a)).slice(0,n||3)
+             .map(_nuit).filter(Boolean);
+  }catch(e){ return []; }
 }
 /* ❤️ LA FRÉQUENCE CARDIAQUE AU REPOS — LE 1ᵉʳ SIGNAL MESURÉ DU SCORE DE RÉCUP (16/08/2026)
    Michel, devant la liste des types que Raccourcis sait lire : *« Fréquence cardiaque c'est pas
@@ -2700,11 +2795,13 @@ function calcRecoveryDetail(refTs){
   // s'appliquent quand même, et un conseil discret invite à renseigner le sommeil.
   /* ⛔ Les nuits POSTÉRIEURES à la date demandée sont exclues : sans ce filtre, un score
      d'il y a une semaine se calculerait avec les nuits d'après (R29). */
-  const _nuits=(S.sleepLog||[]).filter(e=>e&&e.date&&e.date<=_auj);
-  const hasSleep = !!_nuits.length;
+  /* ⭐ LES NUITS VIENNENT MAINTENANT DES DEUX SOURCES (30/08) — `_nuitsRecentes` est le seul
+     propriétaire de « qu'est-ce qu'on sait de cette nuit-là » (R2). Avant, cette ligne ne lisait
+     que `S.sleepLog` : une nuit MESURÉE mais non saisie n'existait pas pour le score. */
+  const sorted=_nuitsRecentes(_auj,3);
+  const hasSleep = !!sorted.length;
   let wScore;
   if(hasSleep){
-    const sorted=_nuits.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
     const scores=sorted.map(e=>{
       const h=e.hours||0;
       // ⚠️ COURBE CONTINUE (02/08, retour Michel : « le prêt à performer est trop optimiste »).
@@ -2714,9 +2811,16 @@ function calcRecoveryDetail(refTs){
       // Et 7 h valait la note MAXIMALE, alors que c'est le minimum recommandé, pas l'optimum :
       // il faut maintenant 8 h pour approcher le haut du barème, 9 h pour l'atteindre.
       const hScore=_sleepCurve(h);
+      /* ⛔⛔ QUALITÉ INCONNUE → LA DURÉE SEULE (30/08). Avant, `e.quality||2` faisait valoir
+         « Moyen » (45/100, sur un axe qui pèse 40 %) à une qualité qu'on n'avait pas. Inoffensif
+         tant que TOUTES les nuits venaient d'une saisie — les deux écrivains posent toujours une
+         qualité. Mais une nuit purement MESURÉE n'en a aucune : la garder aurait fait BAISSER le
+         score de quelqu'un qui a bien dormi, en silence, dans la version censée le rendre juste.
+         *On ne remplace pas une inconnue par une moyenne : c'est un fait inventé* (R29). */
+      if(e.quality==null) return Math.round(hScore);
       // La QUALITÉ ressentie pèse plus lourd dans le bas : dire « j'ai mal dormi » (1/4) ne
       // doit pas laisser un score flatteur. Avant, 1/4 valait encore 25 points sur 100.
-      const qScore=[15,15,45,75,100][Math.max(0,Math.min(4,Math.round(e.quality||2)))];
+      const qScore=[15,15,45,75,100][Math.max(0,Math.min(4,Math.round(e.quality)))];
       return Math.round(hScore*0.6+qScore*0.4);
     });
     const weights=[0.6,0.3,0.1].slice(0,scores.length);
@@ -2808,8 +2912,24 @@ function calcRecoveryDetail(refTs){
   const score=Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj+accumAdj+smokerAdj+energyAdj+dayEnergyAdj+rhrAdj)));
   // Détail des facteurs (pour afficher le « pourquoi » sous le score)
   // `why` = raison en clair (français simple), utilisée par l'explication « Pourquoi ce score ? ».
-  const factors=[{ic:'😴',label:hasSleep?'Sommeil':'Récup de base',val:base,base:true,
-    why:hasSleep?'Le point de départ : la qualité et la durée de tes 3 dernières nuits.':'Tu n\'as pas encore renseigné ton sommeil, donc on part d\'une base neutre. Renseigne-le pour un score plus juste.'}];
+  /* ⭐ L'APP DIT D'OÙ VIENT LE CHIFFRE (30/08) — c'est la moitié de la décision de Michel :
+     *« la montre gagne, ET l'app le dit »*. Un score qui change parce qu'une mesure a pris la
+     main, sans que rien ne l'explique, se lit comme un bug. */
+  const _nMes=sorted.filter(n=>n.source==='mesure').length;
+  const _nEcart=sorted.find(n=>n.ecart!=null&&Math.abs(n.ecart)>=0.5);
+  const factors=[{ic:'😴',label:hasSleep?('Sommeil'+(_nMes?' (mesuré)':'')):'Récup de base',val:base,base:true,
+    why:!hasSleep
+      ? 'Tu n\'as pas encore renseigné ton sommeil, donc on part d\'une base neutre. Renseigne-le pour un score plus juste.'
+      : (_nMes
+          ? ('Le point de départ : tes 3 dernières nuits. '+(_nMes>1?_nMes+' durées viennent':'Une durée vient')
+             +' de ta montre (via Santé), pas de ta saisie — une mesure passe devant une estimation.'
+             /* ⛔ EN FRANÇAIS, PAS EN SIGNE. « −65 min » oblige à décoder une convention (mesuré
+                moins déclaré) ; « 65 min de moins que ce que tu avais noté » se lit du premier
+                coup. Michel n'est pas développeur — règle d'or #10. Trouvé À LA CAPTURE : la
+                chaîne était parfaitement correcte, c'est sa LECTURE qui ne l'était pas. */
+             +(_nEcart?(' Cette nuit-là, tu as dormi '+Math.abs(Math.round(_nEcart.ecart*60))
+               +' min '+(_nEcart.ecart<0?'de MOINS':'de PLUS')+' que ce que tu avais noté.'):''))
+          : 'Le point de départ : la qualité et la durée de tes 3 dernières nuits.')}];
   if(sessAdj) factors.push({ic:sessAdj<0?'🏋️':'🛌',label:sessAdj<0?'Séance récente':'Repos',val:sessAdj,
     why:sessAdj<0?'Tu as une séance récente : tes muscles récupèrent encore. Ce malus s\'efface en continu au fil des heures (parti au bout de ~36 h).':'Des jours de repos depuis ta dernière séance : ton corps est plus frais.'});
   if(ageAdj) factors.push({ic:'🎂',label:'Âge',val:ageAdj,why:'La récupération ralentit un peu avec l\'âge.'});
