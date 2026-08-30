@@ -693,6 +693,11 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div class="chart-box" id="weight-chart-box"><div class="empty">Ajoute au moins 2 pesées pour voir le graphique</div></div>
     <div class="sec">Corrélations & tendances</div>
     <div id="weight-correlations" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <!-- 🚶 LA COURBE DES PAS (ft-v1071). Michel : « les pas vont s'afficher où ? » — nulle part,
+         et c'était le manque. Ici parce que cet onglet porte les MESURES (poids, masse grasse,
+         bilan corporel) ; les pas viennent de la même montre. Rendu par `renderPasCard`
+         (tracking.js), qui AFFICHE le surplus de `_pasEcart` sans jamais le recalculer (R2). -->
+    <div id="pas-card"></div>
     <div class="sec">Bilan corporel (balance pro)</div>
     <div id="bodyscan-section" style="display:flex;flex-direction:column;gap:10px;"></div>
     <div id="bloodtest-sec-title" class="sec" style="display:none;">Bilan sanguin 🩸</div>

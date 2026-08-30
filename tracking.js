@@ -439,6 +439,11 @@ function saveWeightEntry(){
   toast('Poids enregistré !','success');
 }
 function renderWeightTab(){
+  /* 🚶 AU DÉBUT, PAS À LA FIN — et ce n'est pas cosmétique : cette fonction sort par un `return`
+     quand il y a moins de 2 pesées. Accrochée en bas, la carte des pas n'apparaîtrait JAMAIS chez
+     quelqu'un qui ne se pèse pas — une dépendance invisible entre deux données qui n'ont rien à
+     voir. Elle ne dépend que de `S.healthDaily`, elle se rend donc en premier. */
+  try{ if(typeof renderPasCard==='function') renderPasCard(); }catch(e){}
   const entryEl=document.getElementById('weight-entry-card');
   const chartEl=document.getElementById('weight-chart-box');
   const corrEl=document.getElementById('weight-correlations');
@@ -2372,6 +2377,116 @@ function editSleepDay(d){
   if(el)try{el.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
 }
 
+/* 🚶 LA COURBE DES PAS (30/08/2026, ft-v1071)
+   Michel, juste après ft-v1070 : *« les pas vont s'afficher où ? »*. ⛔⛔ **La réponse honnête
+   était NULLE PART** : le surplus n'apparaissait qu'en petit sous le TDEE, et **seulement les
+   jours de grosse marche**. L'app recevait la donnée, s'en servait pour ses calories, la donnait
+   à Milo — et ne la lui montrait jamais. *C'est R5 sous une forme atténuée : la donnée produisait
+   un comportement, mais pas celui qu'il attendait.* Il a choisi entre 4 emplacements : *« dans
+   Progrès, avec une courbe »*.
+
+   ⭐ POURQUOI L'ONGLET POIDS : mesuré avant de choisir — ni les pas ni la FC au repos n'avaient
+   d'écran, et cet onglet est le seul qui porte les MESURES (poids, masse grasse, bilan corporel,
+   prise de sang). Les pas viennent de la même montre.
+
+   ⭐ R13 — C'EST `_sleepChartHtml` TRANSPOSÉ, pas un composant neuf : barres SVG, ligne repère,
+   moyenne dessous, fenêtre 7/30. Comportement déjà éprouvé, cohérence visuelle gratuite.
+   ⛔⛔ ET `_pasEcart` RESTE LE SEUL PROPRIÉTAIRE DU SURPLUS (R2) : cette carte l'AFFICHE, elle ne
+   le recalcule jamais. Deux calculs du même surplus finiraient par afficher un chiffre ici et un
+   autre sous le TDEE — le défaut que ce projet passe son temps à rattraper. */
+let _pasHistOpen=false;   // replié par défaut : on ne pousse pas une carte de plus à tout le monde
+let _pasHistDays=7;
+function togglePasHist(){_pasHistOpen=!_pasHistOpen;renderPasCard();}
+function setPasHistRange(n){_pasHistDays=n;renderPasCard();}
+function _pasDaysArr(){
+  const t=new Date(today()+'T12:00:00').getTime();
+  const byDate={};((typeof S!=='undefined'&&S.healthDaily)||[]).forEach(x=>{ if(x&&x.date&&x.steps>0) byDate[x.date]=x.steps; });
+  const arr=[];
+  for(let i=_pasHistDays-1;i>=0;i--){
+    const d=new Date(t-i*864e5).toISOString().slice(0,10);
+    arr.push({date:d, pas:byDate[d]||null});
+  }
+  return arr;
+}
+function _pasChartHtml(){
+  const arr=_pasDaysArr();
+  const avec=arr.filter(a=>a.pas);
+  if(!avec.length) return '<div style="text-align:center;font-size:13px;color:var(--t3);padding:16px 0;line-height:1.5;">Aucun pas reçu sur cette période.<br>Ils arrivent de Santé, avec ton sommeil.</div>';
+  /* ⛔ LA LIGNE REPÈRE EST SA BASE, PAS UN OBJECTIF. On ne dessine JAMAIS un « 10 000 pas »
+     ici : ce serait une cible que personne n'a choisie, sur un écran qui ne fait que décrire
+     (R29, et la Vision — l'app ne dit pas qui tu dois devenir). La base vient de `_pasEcart`,
+     donc c'est EXACTEMENT le chiffre qui sert au calcul des calories. */
+  const e=(typeof _pasEcart==='function')?_pasEcart():null;
+  const base=e?e.base:null;
+  const maxP=Math.max(...avec.map(a=>a.pas), base||0);
+  const W=320,H=120,pad={t:10,r:6,b:18,l:30},iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
+  const step=iW/arr.length, bw=Math.max(3,Math.min(22,step-2));
+  const toY=v=>pad.t+iH-(Math.min(v,maxP)/maxP)*iH;
+  const fmtD=d=>{const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});};
+  const nb=n=>n.toLocaleString('fr-FR');
+  const bars=arr.map((a,i)=>{
+    if(!a.pas) return '';
+    const x=pad.l+i*step+(step-bw)/2, y=toY(a.pas), bh=pad.t+iH-y;
+    /* ⭐ VERT quand la journée dépasse la base : c'est ce qui a compté dans ses calories. On ne
+       colorie PAS en rouge une journée calme — un jour de repos n'est pas un échec (R24). */
+    const col=(base!=null && a.pas>base) ? 'var(--green)' : 'var(--t3)';
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(2,bh).toFixed(1)}" rx="2" fill="${col}" opacity=".85"><title>${fmtD(a.date)} · ${nb(a.pas)} pas</title></rect>`;
+  }).join('');
+  const moy=Math.round(avec.reduce((s,a)=>s+a.pas,0)/avec.length);
+  const yb=base!=null?toY(base):null;
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;overflow:visible;">
+    <line x1="${pad.l}" y1="${toY(maxP)}" x2="${W-pad.r}" y2="${toY(maxP)}" stroke="var(--sep)" stroke-width=".5"/>
+    <text x="${pad.l-4}" y="${toY(maxP)+3}" text-anchor="end" font-size="8.5" style="fill:var(--t3)">${nb(maxP)}</text>
+    ${yb!=null?`<line x1="${pad.l}" y1="${yb}" x2="${W-pad.r}" y2="${yb}" stroke="var(--green)" stroke-width="1" stroke-dasharray="3 3" opacity=".6"/>`:''}
+    <line x1="${pad.l}" y1="${pad.t+iH}" x2="${W-pad.r}" y2="${pad.t+iH}" stroke="var(--sep)" stroke-width=".5"/>
+    ${bars}
+    <text x="${pad.l}" y="${H-4}" text-anchor="start" font-size="8.5" style="fill:var(--t3)">${fmtD(arr[0].date)}</text>
+    <text x="${W-pad.r}" y="${H-4}" text-anchor="end" font-size="8.5" style="fill:var(--t3)">${fmtD(arr[arr.length-1].date)}</text>
+  </svg>
+  <div style="text-align:center;margin-top:6px;font-size:13px;color:var(--t2);">Moyenne : <b style="color:var(--t1)">${nb(moy)}</b> pas / jour · ${avec.length} jour${avec.length>1?'s':''} reçu${avec.length>1?'s':''}</div>
+  ${base!=null?`<div style="text-align:center;margin-top:2px;font-size:12px;color:var(--t3);">Le trait vert = <b style="color:var(--green)">ton habitude, ${nb(base)} pas/jour</b> (sur ${e.n} jours)</div>`:''}`;
+}
+function renderPasCard(){
+  const el=document.getElementById('pas-card'); if(!el) return;
+  const j=((typeof S!=='undefined'&&S.healthDaily)||[]).filter(x=>x&&x.steps>0);
+  /* ⛔ RIEN REÇU → RIEN AFFICHÉ. Une carte vide chez quelqu'un qui n'a pas de montre est du
+     bruit permanent : elle lui parle d'une chose qu'il n'a pas (R24). */
+  if(!j.length){ el.style.display='none'; el.innerHTML=''; return; }
+  el.style.display='block';
+  const e=(typeof _pasEcart==='function')?_pasEcart():null;
+  const nb=n=>n.toLocaleString('fr-FR');
+  /* ⭐ LE RÉSUMÉ REPLIÉ DIT L'ESSENTIEL : les pas du jour, et ce qu'ils ont ajouté. ⛔ Et quand
+     l'app n'a pas encore 7 jours, elle le DIT au lieu d'afficher un surplus qu'elle ne sait pas
+     calculer (R29) — sinon la personne croirait que sa journée n'a rien valu. */
+  const dernier=j.slice().sort((a,b)=>b.date.localeCompare(a.date))[0];
+  const resume = e
+    ? (e.kcal>0 ? `${nb(e.pas)} pas · <span style="color:var(--green);font-weight:700">+${e.kcal} kcal</span>`
+                : `${nb(e.pas)} pas · journée ordinaire`)
+    : `${nb(dernier.steps)} pas · <span style="color:var(--t3)">habitude pas encore connue</span>`;
+  el.innerHTML =
+    `<div style="background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;">`
+    + `<button id="pas-hist-toggle" onclick="togglePasHist()" style="width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;cursor:pointer;padding:13px 16px;font-family:var(--font);touch-action:manipulation;">`
+    +   `<span style="display:flex;align-items:center;gap:9px;"><span style="font-size:15px;">🚶</span>`
+    +   `<span style="text-align:left;"><span style="display:block;font-size:13.5px;font-weight:700;color:var(--t1);">Tes pas</span>`
+    +   `<span style="display:block;font-size:12px;color:var(--t2);margin-top:1px;">${resume}</span></span></span>`
+    +   `<span style="font-size:13px;color:var(--t3);transform:rotate(${_pasHistOpen?90:0}deg);transition:transform .15s;">›</span>`
+    + `</button>`
+    + (_pasHistOpen
+        ? `<div style="padding:0 16px 14px;">`
+          + `<div style="display:flex;gap:6px;margin-bottom:10px;">`
+          +   [[7,'7 jours'],[30,'30 jours']].map(r=>`<button class="wrange-chip${_pasHistDays===r[0]?' active':''}" onclick="setPasHistRange(${r[0]})">${r[1]}</button>`).join('')
+          + `</div>`
+          + _pasChartHtml()
+          /* ⛔ ON DIT CE QUE LA COURBE NE PROUVE PAS : des pas ne disent pas ce qui a été fait.
+             La même honnêteté que dans le contexte de Milo — l'app ne doit pas affirmer plus
+             que ce qu'elle sait, même en vert et même joliment dessiné. */
+          + `<div style="font-size:11.5px;color:var(--t3);line-height:1.5;margin-top:10px;">`
+          +   `Les jours <span style="color:var(--green);font-weight:700">en vert</span> dépassent ton habitude : c'est ce qui s'ajoute à ta dépense (onglet Nutrition). `
+          +   `⚠️ Des pas ne disent pas <b>ce que</b> tu as fait — ils disent seulement que tu as bougé plus que d'ordinaire.`
+          + `</div></div>`
+        : '')
+    + `</div>`;
+}
 // ── Historique du sommeil (repliable, façon graphique de poids) ──
 let _sleepHistOpen=false;   // panneau replié par défaut (gagne de la place)
 let _sleepHistDays=7;       // fenêtre affichée : 7 ou 30 jours (défaut 7 = cohérent avec l'aperçu mini-courbe)

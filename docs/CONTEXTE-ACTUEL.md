@@ -6,7 +6,17 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1070`.
+- **Version en ligne (live) :** `ft-v1071`.
+- 🚶📈 **LA COURBE DES PAS DANS PROGRÈS → POIDS** (ft-v1071). Michel, 10 min après ft-v1070 :
+  *« les pas vont s'afficher où ? »*. ⛔⛔ **La réponse honnête était NULLE PART** — le surplus
+  n'apparaissait qu'en petit sous le TDEE, les jours de grosse marche ; son nombre de pas nulle
+  part. *L'app recevait la donnée, s'en servait, la donnait à Milo, et ne la lui montrait jamais.*
+  ⛔⛔ **Piège évité en lisant le code AVANT de coder** : `renderWeightTab` sort par un `return`
+  sous 2 pesées → accrochée en bas, la carte n'apparaîtrait **jamais** chez qui ne se pèse pas.
+  Elle se rend **en premier**, et un témoin le fige.
+  ⛔ **Le trait vert est SON habitude, pas un objectif** : pas de « 10 000 pas » que personne n'a
+  choisi (Vision · R29). Les jours sous la base sont **gris**, jamais rouges (R24).
+  ⭐ R13 : `_sleepChartHtml` transposé · R2 : `_pasEcart` reste le seul propriétaire du surplus.
 - 🚶⭐⭐ **LES PAS COMPTENT, SANS JAMAIS COMPTER DEUX FOIS** (ft-v1070). Michel : *« attention il
   faut que ça soit cohérent — la montre compte aussi les pas si on fait du tapis »*.
   ⛔⛔ **Il a nommé le piège de ft-v949 avant qu'on le trouve, et il est plus large que le tapis** :

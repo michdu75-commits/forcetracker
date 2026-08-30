@@ -19511,6 +19511,124 @@ console.log('\n-- CLXXV. Les pas comptent, sans jamais compter deux fois (ft-v10
   }
 }
 
+/* == BLOC CLXXVI - LA COURBE DES PAS DANS PROGRES (ft-v1071) ==
+   Michel, juste apres ft-v1070 : « les pas vont s'afficher ou ? ». ⛔⛔ La reponse honnete etait
+   NULLE PART : le surplus n'apparaissait qu'en petit sous le TDEE, et seulement les jours de
+   grosse marche. L'app recevait la donnee, s'en servait, la donnait a Milo — et ne la lui
+   montrait jamais. Il a choisi entre 4 emplacements : « dans Progres, avec une courbe ».
+
+   ⛔⛔ LE TEMOIN ③ EST CELUI QUI COMPTE LE PLUS, et il vient d'un piege trouve en lisant le code
+   AVANT d'accrocher la carte : `renderWeightTab` sort par un `return` quand il y a moins de
+   2 pesees. Accrochee en bas, la carte des pas n'apparaitrait JAMAIS chez quelqu'un qui ne se
+   pese pas — une dependance invisible entre deux donnees qui n'ont rien a voir. */
+console.log('\n-- CLXXVI. La courbe des pas dans Progrès (ft-v1071) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_bw:'84', ft4_ht:'178', ft4_age:'48'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const C=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const J=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+    const o={}; S.bw=84; S.activityLevel=1.55; S.sessions=[];
+    const ouvrir=()=>{ goScreen('progress'); switchProgTab('poids', document.getElementById('ptab-poids')); };
+    const carte=()=>document.getElementById('pas-card');
+    const txt=()=>String((carte()||{}).textContent||'').replace(/\s+/g,' ');
+
+    /* ① RIEN RECU -> RIEN AFFICHE (pas de bruit chez qui n'a pas de montre) */
+    S.healthDaily=[]; S.weightLog=[{date:J(0),kg:84},{date:J(3),kg:84.4}]; persist(); ouvrir();
+    o.sansMontre={affichee:carte()&&carte().style.display!=='none', html:(carte()||{}).innerHTML||''};
+
+    /* ⛔⛔ ③ ET SURTOUT : elle doit s'afficher MEME SANS PESEE (le piege du `return`). */
+    const jours=(auj)=>{ const L=[{date:J(0),steps:auj}];
+      for(let d=1;d<=14;d++) L.push({date:J(d),steps:6000+((d%4)-1)*900});
+      S.healthDaily=L; persist(); };
+    jours(15000); S.weightLog=[]; persist(); ouvrir();
+    o.sansPesee={affichee:carte()&&carte().style.display!=='none', txt:txt().slice(0,90)};
+
+    /* ② LA CARTE MONTRE LES PAS DU JOUR ET LE SURPLUS */
+    S.weightLog=[{date:J(0),kg:84},{date:J(3),kg:84.4}]; persist(); ouvrir();
+    o.replie=txt().slice(0,120);
+
+    /* ④⑤⑥ LA COURBE : depliee, elle porte la base et distingue les jours au-dessus */
+    if(!_pasHistOpen) togglePasHist();
+    const h=(carte()||{}).innerHTML||'';
+    const e=_pasEcart();
+    o.depliee={
+      barresVertes:(h.match(/fill="var\(--green\)"/g)||[]).length,
+      barresGrises:(h.match(/fill="var\(--t3\)"/g)||[]).length,
+      traitRepere:/stroke-dasharray="3 3"/.test(h),
+      /* ⛔ LA BASE AFFICHEE EST CELLE QUI SERT AU CALCUL (R2), pas un 2e chiffre */
+      baseAffichee:(txt().match(/ton habitude, ([\d   ]+) pas\/jour/)||[])[1]||'',
+      baseCalcul:e?e.base:null,
+      /* ⛔ AUCUN OBJECTIF DE 10 000 PAS : l'ecran DECRIT, il ne prescrit pas */
+      pasDObjectif:!/10\s?000 pas|objectif/i.test(txt()),
+      ditCeQuIlIgnore:/ne disent pas/.test(txt())
+    };
+
+    /* ⑦ SANS 7 JOURS, la carte le DIT au lieu d'afficher un surplus qu'elle ignore */
+    S.healthDaily=[{date:J(0),steps:15000},{date:J(1),steps:6000}]; persist(); ouvrir();
+    o.sansBase={txt:txt().slice(0,120), ecart:_pasEcart()};
+
+    /* 📣 les points de la regle d'or #11, mesures */
+    o.regle11=(function(){ try{
+      const nf=(typeof NEW_FEATURES!=='undefined'?NEW_FEATURES:[]).find(f=>f&&f.id==='pas-courbe');
+      const aide=((typeof _HELP_DATA!=='undefined'&&_HELP_DATA.progress&&_HELP_DATA.progress.tips)||[])
+                   .some(x=>x&&/Tes pas/.test(x.t||'')&&/habitude/i.test(x.t||''));
+      const dia=(typeof APP_GUIDE_SLIDES!=='undefined'?APP_GUIDE_SLIDES:[])
+                   .filter(d=>d&&/pas comptent/i.test(d.t||''));
+      const wn=(typeof WHATS_NEW!=='undefined'?WHATS_NEW:[]);
+      return {pointRouge:!!nf && nf.screen==='progress',
+              aideDetaillee:!!nf && (nf.desc||'').length>200,
+              aideEcran:aide,
+              /* ⛔ la diapo de ft-v1070 est ENRICHIE, pas doublee (R2/R25) */
+              diapoEnrichie:dia.length===1 && /Progr[eè]s/i.test(dia[0].cap||''),
+              /* ⛔ AUCUNE pop-up au-dela de la v65 : on n'annonce pas deux fois la meme chose */
+              pasDeNouvellePopup:wn.every(w=>!w||(w.v||0)<=65)};
+    }catch(e){ return {err:String(e)}; } })();
+    return o;
+   }catch(e){ return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]}; }
+  });
+  await cx.close();
+
+  if(C.err) t('CLXXVI n\'a pas pu tourner', false, JSON.stringify(C));
+  else{
+    /* ⛔ UNE CARTE VIDE CHEZ QUI N'A PAS DE MONTRE EST DU BRUIT PERMANENT (R24). */
+    t('⛔ ① aucun pas reçu → la carte ne s\'affiche PAS du tout',
+      C.sansMontre.affichee===false && C.sansMontre.html==='', JSON.stringify(C.sansMontre).slice(0,120));
+    t('⭐⭐ ② replié, elle dit les pas du jour ET ce qu\'ils ont ajouté',
+      /15\s?000 pas/.test(C.replie.replace(/ | /g,' ')) && /\+\d+ kcal/.test(C.replie), C.replie);
+    /* ⛔⛔ LE TEMOIN LE PLUS IMPORTANT : la dependance invisible au poids. */
+    t('⛔⛔ ③ elle s\'affiche MÊME SANS AUCUNE PESÉE (renderWeightTab sort tôt sinon)',
+      C.sansPesee.affichee===true && /pas/.test(C.sansPesee.txt), JSON.stringify(C.sansPesee));
+    t('⭐ ④ la courbe distingue les jours AU-DESSUS de l\'habitude (vert) des autres (gris)',
+      C.depliee.barresVertes>=1 && C.depliee.barresGrises>=1 && C.depliee.traitRepere===true,
+      JSON.stringify({v:C.depliee.barresVertes,g:C.depliee.barresGrises,trait:C.depliee.traitRepere}));
+    /* ⛔ R2 : le chiffre affiché EST celui qui sert aux calories, pas un 2e calcul. */
+    t('⛔ ⑤ la base affichée est EXACTEMENT celle de `_pasEcart` (un seul propriétaire)',
+      C.depliee.baseAffichee.replace(/[  \s]/g,'')===String(C.depliee.baseCalcul),
+      'affichée="'+C.depliee.baseAffichee+'" · calcul='+C.depliee.baseCalcul);
+    /* ⛔ L'ECRAN DECRIT, IL NE PRESCRIT PAS (Vision : il ne dit pas qui tu dois devenir). */
+    t('⛔ ⑥ aucun objectif de 10 000 pas : le repère est SON habitude, pas une cible',
+      C.depliee.pasDObjectif===true, 'aucun objectif imposé');
+    t('⛔ ⑦ la carte dit ce que les pas NE prouvent pas',
+      C.depliee.ditCeQuIlIgnore===true, 'mention « ne disent pas » présente');
+    /* 📣 RÈGLE #11 MESURÉE, pas affirmée (leçon de ft-v1060). ⛔ Et l'ABSENCE de 2ᵉ pop-up est
+       une décision, donc elle se fige aussi : ft-v1070 vient d'annoncer la feature. */
+    t('📣 ⑨ règle #11 : point rouge, aide détaillée, aide ? — et PAS de 2ᵉ pop-up',
+      C.regle11 && C.regle11.pointRouge && C.regle11.aideDetaillee && C.regle11.aideEcran
+      && C.regle11.diapoEnrichie && C.regle11.pasDeNouvellePopup,
+      JSON.stringify(C.regle11));
+    /* ⛔ R29 : sans base, on le DIT — sinon la personne croit que sa journée n'a rien valu. */
+    t('⛔ ⑧ moins de 7 jours → la carte le dit, elle n\'invente pas de surplus',
+      C.sansBase.ecart===null && /habitude pas encore connue/.test(C.sansBase.txt), C.sansBase.txt);
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
