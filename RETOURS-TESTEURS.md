@@ -114,6 +114,18 @@ d'ergonomie cachait une corruption de ses données.*
 - Nouvelle famille **§23** de `BUGS.md` : *un champ qui « refuse » une saisie peut en fait la
   mutiler* — et un nombre faux mais crédible ne se voit jamais.
 
+### ✅ CONFIRMÉ PAR ELINE, EN PRODUCTION (30/08/2026)
+Michel, après qu'elle a retesté sur son iPhone : *« c'est bon ça fonctionne »*.
+⭐⭐ **C'est la seule validation qui compte** : celle de la personne qui a signalé le défaut,
+sur son propre appareil, sur la version déployée — pas une mesure dans un navigateur de test.
+⚠️ **Et il a fallu un aller-retour pour y arriver** : elle avait d'abord retesté sur `ft-v1056`,
+parce que j'avais dit *« c'est corrigé »* alors que le correctif dormait encore sur ma branche.
+*Corrigé dans le code n'est pas corrigé dans son téléphone* — c'est **R18** (vérifier le
+déploiement, pas le push), et je me la suis fait prendre.
+⛔ **La question « pourquoi ça marchait chez Michel » reste ouverte** — mais elle n'a plus
+d'effet : le comportement est désormais identique sur tous les moteurs. On la laisse écrite
+plutôt que de la combler par une hypothèse (**R29**).
+
 ### Ce que ça a produit
 **`ft-v1057`** — **22 champs décimaux** acceptent la virgule (le pavé numérique du téléphone est
 conservé), **41 lectures** passent par un seul lecteur `numFR`, et un témoin permanent refuse
