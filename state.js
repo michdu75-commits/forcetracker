@@ -268,6 +268,7 @@ function load(){
     })();
     S.badges=JSON.parse(localStorage.getItem('ft4_badges')||'{}');
     S.testerIdeas=JSON.parse(localStorage.getItem('ft4_tester_ideas')||'[]'); // boîte à idées (super testeur)
+    S.miloRates=_lsJson('ft4_milo_rates',[]); // « Milo a répondu à côté » (ft-v1059) : [{ts,motif}]
     S.bodySeries=JSON.parse(localStorage.getItem('ft4_body_series')||'[]'); // séries photos (super testeur) — local uniquement (photos lourdes)
     S.bday=localStorage.getItem('ft4_bday')||'';
     S.lastWeekSummary=localStorage.getItem('ft4_lws')||'';
@@ -478,6 +479,10 @@ function persist(){
     localStorage.setItem('ft4_name',S.name||'');
     localStorage.setItem('ft4_progs',JSON.stringify(S.programmes||[]));
     localStorage.setItem('ft4_tester_ideas',JSON.stringify(S.testerIdeas||[]));
+    /* 👎 ft-v1059 — PLAFOND À 40, et c'est un garde-fou de TAILLE autant que de TON.
+       Un registre sans fin des ratés de Milo grossirait pour rien (la leçon du réservoir
+       plein du 29/07) — et il n'y a aucun usage à relire un « à côté » d'il y a six mois. */
+    localStorage.setItem('ft4_milo_rates',JSON.stringify((S.miloRates||[]).slice(-40)));
     localStorage.setItem('ft4_body_series',JSON.stringify(S.bodySeries||[]));
     localStorage.setItem('ft4_progexos',JSON.stringify(S.progExos||BIG4));
     localStorage.setItem('ft4_coachFree',S.coachFree||0);

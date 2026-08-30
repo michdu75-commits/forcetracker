@@ -4477,6 +4477,85 @@ function _gardienStatsRendu(d){
     return L.join('\n');
 }
 
+/* 👎 CE QUI SE PASSE QUAND ON TAPE « À CÔTÉ » (ft-v1059)
+   ⛔⛔ LA DÉCISION QUI PORTE TOUT LE BLOC : le pouce COMPTE, il ne RACONTE rien. Le motif et
+   l'échange ne partent QUE si la personne le demande, geste par geste. Michel a été clair —
+   *« je ne veux pas savoir ce qu'ils disent à Milo, je m'en fous »* — et la Constitution dit
+   la même chose autrement (P3 : rien n'est mémorisé sans accord).
+   ⭐ POURQUOI LES MOTIFS SONT UNE LISTE FERMÉE : ils viennent des deux cas que Michel décrit —
+   *« Milo répond à côté »* et *« 2 ou 3 réponses avant de tomber juste »* — plus l'oubli, qui
+   touche la promesse centrale du produit (« il se souvient de qui tu es devenu »).
+   ⛔ ET « il a oublié » N'EST PAS UN MOTIF DE CONFORT : c'est le seul qui, s'il revient
+   souvent, dit que la mémoire elle-même ne tient pas. */
+const MILO_MOTIFS=[
+  {id:'acote',   emo:'🎯', mot:'À côté',    phrase:'la réponse ne répondait pas à la question'},
+  {id:'vague',   emo:'🌫️', mot:'Trop vague', phrase:'la réponse était trop vague pour servir'},
+  {id:'faux',    emo:'❌', mot:'Faux',      phrase:'la réponse contenait quelque chose de faux'},
+  {id:'oubli',   emo:'🕰️', mot:'Il a oublié',phrase:'il a oublié quelque chose que je lui avais dit'}
+];
+let _miloRateBulle=null;
+function _miloRaterOuvrir(btn){
+  _miloRateBulle = btn ? btn.closest('.msg-bubble') : null;
+  const ov=document.getElementById('ov-milo-rate');
+  const z=document.getElementById('milo-rate-motifs');
+  if(z) z.innerHTML=MILO_MOTIFS.map(m=>
+    '<button class="ck-opt" style="--ck:var(--t3);padding:9px 4px;" onclick="_miloRaterMotif(\''+m.id+'\')">'
+    +'<span style="font-size:17px;line-height:1;">'+m.emo+'</span>'
+    +'<span class="ck-opt-l">'+m.mot+'</span></button>').join('');
+  const j=document.getElementById('milo-rate-joindre'); if(j) j.checked=false;
+  const t=document.getElementById('milo-rate-txt'); if(t) t.value='';
+  if(ov) ov.classList.add('open');
+}
+function _miloRaterFermer(){ const ov=document.getElementById('ov-milo-rate'); if(ov) ov.classList.remove('open'); }
+/* ⛔ UN SEUL ENDROIT ÉCRIT (R2) — le tap sur un motif ET l'envoi passent par ici. */
+function _miloRaterMotif(id){
+  const m=MILO_MOTIFS.find(x=>x.id===id);
+  try{
+    S.miloRates=(S.miloRates||[]).concat([{ts:Date.now(), motif:(m?m.id:null)}]).slice(-40);
+    persist();
+  }catch(e){}
+  /* ⭐ LE COMPTAGE EST FAIT, ET IL S'ARRÊTE LÀ SI LA PERSONNE NE VA PAS PLUS LOIN.
+     C'est tout le principe : on sait QU'une réponse a raté, pas ce qu'elle disait. */
+  const env=document.getElementById('milo-rate-envoi');
+  if(env) env.style.display='block';
+  const lbl=document.getElementById('milo-rate-choisi');
+  if(lbl) lbl.textContent=m?(m.emo+' '+m.mot):'';
+  window._miloRateMotif=id;
+  if(typeof toast==='function')toast('Noté 👍 Merci, ça aide vraiment.','success');
+}
+/* 📩 L'ENVOI À MICHEL — FACULTATIF, ET IL RÉUTILISE LA BOÎTE À IDÉES (R13).
+   ⛔⛔ « JOINDRE L'ÉCHANGE » EST DÉCOCHÉ PAR DÉFAUT, et ça n'est pas négociable : cocher
+   par défaut ferait partir une conversation que personne n'a décidé d'envoyer. *Un
+   consentement pré-coché n'est pas un consentement.*
+   ⚠️ Et ce qui part est BORNÉ à 600 caractères par bulle : de quoi reproduire le cas, pas
+   de quoi rejouer une conversation entière. */
+async function _miloRaterEnvoyer(){
+  const motif=window._miloRateMotif;
+  const m=MILO_MOTIFS.find(x=>x.id===motif);
+  const libre=((document.getElementById('milo-rate-txt')||{}).value||'').trim().slice(0,500);
+  const joindre=!!(document.getElementById('milo-rate-joindre')||{}).checked;
+  let corps='[MILO À CÔTÉ] '+(m?m.phrase:'sans motif');
+  if(libre) corps+='\n\nCe qu\'en dit la personne : '+libre;
+  if(joindre && _miloRateBulle){
+    const rep=String(_miloRateBulle.dataset.raw||_miloRateBulle.innerText||'').slice(0,600);
+    let q='';
+    try{
+      const prec=_miloRateBulle.previousElementSibling;
+      if(prec && prec.classList.contains('msg-user')) q=String(prec.innerText||'').slice(0,600);
+    }catch(e){}
+    corps+='\n\n--- échange joint par la personne ---\nQUESTION : '+(q||'(non retrouvée)')
+          +'\n\nRÉPONSE DE MILO : '+rep;
+  }
+  _miloRaterFermer();
+  try{
+    const inp=document.getElementById('tester-idea-input');
+    if(inp){ inp.value=corps; await sendTesterIdea(); return; }
+    /* Repli : l'espace testeur n'est pas ouvert → on parle au serveur directement, même route. */
+    await fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'testerIdea',name:(S.name||'Testeur'),email:(S.email||''),text:corps})});
+    if(typeof toast==='function')toast('Envoyé à Michel 📩 Merci !','success');
+  }catch(e){ if(typeof toast==='function')toast('Pas de réseau — c\'est noté quand même 👍','info'); }
+}
 function renderCoachMsg(role, text) {
   const msgs = document.getElementById('coach-msgs');
   if (!msgs) return;
@@ -4527,7 +4606,22 @@ function renderCoachMsg(role, text) {
       const foot = document.createElement('div');
       foot.className = 'coach-msg-foot';
       foot.innerHTML = '<button class="coach-share-btn" onclick="exportCoachPdf(this)" aria-label="Exporter en PDF"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>PDF</button>'
-        + '<button class="coach-share-btn" onclick="shareCoachReply(this)" aria-label="Partager cette réponse"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Partager</button>';
+        + '<button class="coach-share-btn" onclick="shareCoachReply(this)" aria-label="Partager cette réponse"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Partager</button>'
+        /* 👎 « MILO A RÉPONDU À CÔTÉ » (ft-v1059) — Michel : *« j'aimerais savoir si Milo
+           déconne quand les utilisateurs posent une question… 1 appel API qui sert à rien, et
+           s'il met 2 ou 3 réponses avant de tomber juste. LÀ ça me coûte de l'argent pour rien.
+           J'appelle ça améliorer le service. »*
+           ⛔⛔ ET IL A ÉCARTÉ LA SURVEILLANCE LUI-MÊME : *« je ne veux pas savoir ce qu'ils
+           disent à Milo, je m'en fous »*. Ce qu'on mesure est la QUALITÉ, jamais le contenu.
+           ⭐ R13 : aucun composant nouveau — le pied de bulle et son style `.coach-share-btn`
+           existent depuis le bouton Partager. Zéro CSS ajouté.
+           ⛔ PAS DE POUCE VERT, et c'est délibéré. Un 👍/👎 sous chaque réponse transforme une
+           conversation en formulaire de satisfaction, et le taux de clic dirait surtout qui est
+           poli. *On ne demande que ce dont on fera quelque chose* : un raté est actionnable, un
+           « c'était bien » ne l'est pas (R19/R24).
+           ⚠️ Discret exprès : même style que les deux autres, pas de couleur d'alerte. Il ne
+           doit pas suggérer que Milo se trompe souvent. */
+        + '<button class="coach-share-btn" onclick="_miloRaterOuvrir(this)" aria-label="Signaler une réponse à côté">👎 à côté</button>';
       div.appendChild(foot);
     }
     /* 🩺 LE SEUL CONTRÔLE DE SORTIE QUI AGIT, ET C'EST LA SANTÉ QUI L'IMPOSE (ft-v983)
@@ -6813,6 +6907,11 @@ const _DRAWER_CONTENT = {
         {ic:'💚',t:'Deux styles pour ta carte récup',d:'<b>Menu → Apparence → Carte récup</b> : tu choisis comment ton score s\'affiche sur l\'Accueil. <b>⭕ Anneau</b> (par défaut) : le chiffre au centre d\'un cercle complet dont la couleur suit ton score, du rouge au vert. <b>💚 Moniteur</b> : ton score en gros à gauche, et à droite une jauge ouverte en bas — le fond rouge est ce qu\'il te reste à récupérer, le curseur vert ce que tu as récupéré, avec un point lumineux au bout. Au centre, un vrai tracé cardiaque défile en continu. <b>Ce sont les mêmes données</b>, seule la mise en forme change : tu peux basculer autant que tu veux, rien n\'est perdu. Le tracé bouge en permanence : si ça te gêne, <b>« 🩺 Figer le tracé du cœur »</b> juste en dessous l\'arrête — il reste affiché en entier, simplement immobile. Dans les deux styles, taper la carte rejoue l\'animation. Et si tu as activé « Réduire les animations » sur ton téléphone, tout se fige.'},
         {ic:'🕰️',t:'Ton histoire sportive',d:'L\'app garde chaque check-in que tu remplis (énergie, moral, douleurs) — pas pour faire des statistiques, mais pour <b>relier ce qui t\'arrive aujourd\'hui à ce que tu as déjà vécu</b>. Premier cas branché : quand tu notes une douleur que tu avais <b>déjà notée il y a plus de deux semaines</b>, une carte apparaît sur l\'Accueil et te dit <b>quand</b> c\'était et sur <b>combien de jours</b> elle était revenue. ⚠️ <b>Elle décrit, elle ne prédit jamais</b> : « elle apparaissait sur 4 jours » est un fait tiré de tes notes, pas un pronostic — et ce n\'est pas un avis médical. ⛔ Elle reste <b>silencieuse</b> si la douleur est récente (tu t\'en souviens), si c\'est la première fois, ou s\'il n\'y a rien à relier : une carte qui parlerait tous les jours ne serait plus un souvenir.'},
         {ic:'💡',t:'Comprendre ton score de récup',d:'Ton score de récupération (sur l\'Accueil, NN/100) estime à quel point ton corps est prêt à s\'entraîner aujourd\'hui — 100 = parfaitement frais. Pour comprendre le chiffre, tape « Pourquoi ce score ? » juste en dessous : une fiche t\'explique en clair chaque facteur (sommeil des 3 dernières nuits, séance récente, âge, jours enchaînés, tabac, cycle, ta forme du jour) avec sa raison et son +/−. Le malus d\'une séance récente s\'efface au fil de la journée. C\'est un repère utile, mais ton ressenti prime toujours — et une simple gêne ne fait PAS chuter le chiffre (elle affiche juste un avertissement pour t\'échauffer/adapter).'},
+        /* 👎 ft-v1059 — L'AIDE DÉTAILLÉE EST L'ENDROIT DU *POURQUOI*, pas du mode d'emploi
+           (le tap est évident). Elle porte les deux choses qu'aucune autre surface ne dit :
+           ① ce que Michel en fait (un cas de test, R35) ; ② pourquoi il n'y a pas de pouce
+           vert. Sans ②, l'absence se lit comme un oubli. */
+        {ic:'\u{1F44E}',t:'« Milo a répondu à côté » — et ce qu\'on en fait',d:'Sous chaque réponse de Milo il y a un bouton <b>« 👎 à côté »</b>. Quatre motifs, un tap : la réponse <b>ne répondait pas</b> à ta question · elle était <b>trop vague</b> · elle contenait quelque chose de <b>faux</b> · <b>il a oublié</b> quelque chose que tu lui avais dit.<br><br>⛔ <b>Rien de ta conversation n\'est envoyé.</b> Le motif est compté <b>sur ton téléphone</b>, et c\'est tout. Si tu veux <b>en plus</b> que Michel puisse voir l\'échange pour corriger le problème, il y a une case à cocher — <b>décochée par défaut</b>, et rien ne part tant que tu ne la coches pas.<br><br>⭐ <b>À quoi ça sert vraiment.</b> Quand Milo répond à côté, ce n\'est pas seulement agaçant : c\'est un appel qui a coûté quelque chose pour rien. Chaque signalement devient un <b>cas de test permanent</b> — un scénario qui sera rejoué à chaque version pour vérifier que le problème ne revient pas. Les meilleurs tests de l\'app viennent tous de vrais ratés vécus, pas de cas inventés.<br><br>⚠️ <b>Et il n\'y a pas de pouce vert, c\'est voulu.</b> Un 👍/👎 sous chaque réponse transformerait ta conversation en formulaire de satisfaction, et dirait surtout qui est poli. Un raté, on peut le corriger ; un « c\'était bien », on n\'en fait rien.<br><br>⛔ Le motif <b>« il a oublié »</b> n\'est pas là par politesse : c\'est le seul qui, s\'il revient souvent, dit que la <b>mémoire</b> de Milo ne tient pas — c\'est-à-dire la promesse principale de l\'app.'},
         {ic:'📍',t:'Une charge sans repère le dit',d:'Quand <b>Milo</b> construit ta séance, il pré-remplit les charges. Sur un exercice que tu as <b>déjà fait</b>, il se cale sur ton historique et sur ton 1RM — et si la charge dépasse ce que tu tiens, le bandeau ⚡ te le signale. Mais sur un exercice que <b>tu n\'as jamais noté ici</b>, l\'app n\'a <b>aucun repère dans ton historique</b> — et ça ne veut pas dire que tu ne le pratiques pas, seulement qu\'elle n\'en sait rien : le chiffre vient de nulle part. Elle l\'écrit alors noir sur blanc — <b>« point de départ à ajuster, pas une mesure »</b> — plutôt que de le laisser passer pour une prescription calibrée. ⚠️ <b>Rien n\'est retiré ni corrigé</b> : tu gardes la charge, tu décides. Et dès que tu notes ta première série, l\'app a son repère : le message ne revient plus.'},
         {ic:'💪',t:'Le RIR — ce qu\'il te restait dans le moteur',d:'Le <b>RIR</b> (répétitions en réserve) dit à quel point tu as forcé : <b>2</b> = tu aurais pu en faire 2 de plus, <b>échec</b> = tu n\'en pouvais plus (c\'est exactement le tag <b>X</b>, la même information saisie autrement). Après chaque série de <b>travail</b>, la barre de repos pose la question — un tap, facultatif, retirable. ⚠️ <b>Rien n\'est deviné</b> : une série que tu ne notes pas reste « non notée », jamais « échec ». 👉 <b>À quoi ça sert</b> : (1) tu le <b>revois avant de refaire la série</b>, dans la colonne « précédent » — <i>8×80·2r</i> te dit s\'il faut monter ; (2) <b>Milo le reçoit</b>, et c\'est ce qui lui manquait : il connaît depuis toujours le cadre de ta discipline (<i>« garder 1 à 3 répétitions en réserve »</i> en musculation, <i>« jamais à l\'échec »</i> en force athlétique) sans avoir aucun moyen de savoir si tu le respectais. ⛔ Pas d\'échauffement : une série de chauffe n\'a pas de réserve à déclarer. <b>🎚️ ET SI TU TRAVAILLES EN RPE</b> — <b>Profil → Échelle d\'effort</b> te laisse basculer. Le RPE et le RIR sont la <b>même mesure dite dans l\'autre sens</b> : <i>RPE = 10 − RIR</i>, donc <b>10 = échec</b>, 9 = il t\'en restait 1, 8 = il t\'en restait 2, et ainsi de suite. ⛔ Basculer <b>ne convertit rien et n\'efface rien</b> : l\'app ne stocke qu\'une seule valeur, et l\'affiche dans la langue que tu as choisie — ton historique entier se relit, et tu peux revenir quand tu veux. La question posée après la série, le badge de la colonne « précédent » (<i>8×80·@8</i>) et <b>Milo</b> suivent tous les trois. ⚠️ <b>Pas de demi-points</b> (8,5 · 9,5) : ils existent dans le barème, mais l\'app ne les <b>mesure</b> pas — les afficher serait une précision qu\'on n\'a pas. ⚠️ Et l\'ordre des boutons s\'inverse, exprès : en RIR on part de l\'échec, en RPE on va de 6 à 10, parce que c\'est comme ça que le barème se lit.'},
         {ic:'⚡',t:'Démarrer une séance',d:'Bouton rouge central ⚡ ou "Commencer une séance" depuis l\'accueil. Ajoute tes exercices, saisis kg × reps, valide chaque série avec ✓. Le timer de repos se lance automatiquement entre les séries — et c\'est un <b>MAXIMUM</b>, pas un temps à attendre : tu peux repartir avant, c\'est permis. Il ne s\'arrête plus à zéro, il continue en +0:12, +0:45… avec « au-delà de ton repos max ». ⚠️ Ce n\'est ni un reproche ni une erreur d\'affichage : c\'est une information, parce que le repos réellement pris vaut souvent 2 à 3 fois le repos réglé. Au-delà de 15 min il s\'arrête seul (ce n\'est plus un repos). Astuce : dans la recherche d\'exercices, tes FAVORIS (ceux que tu utilises le plus souvent) remontent automatiquement en tête, avec une ★ — tu retrouves tes mouvements habituels sans scroller.'},

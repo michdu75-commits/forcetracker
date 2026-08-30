@@ -4153,6 +4153,10 @@ const APP_GUIDE_SLIDES=[
   /* ⛔ SANS IMAGE : une capture montrerait une charge et un repos précis — donc elle se lirait
      comme une recommandation d'intensité, or ce qui est vrai ici dépend de TON maximum. */
   {icon:'🎽', t:'Le repos suit la charge', cap:'Quand une série est <b>lourde</b> (dès 80 % de ton max), elle demande <b>3 min de repos minimum</b> — quel que soit ton objectif. Milo le sait maintenant, et si un repos trop court passe quand même, <b>l\'avertissement s\'affiche sous sa séance dans le chat</b>, avant que tu la lances. ⚠️ Il informe, il ne bloque pas : la charge ne bouge pas, c\'est toi qui décides.'},
+  /* 👎 ft-v1059 — DIAPO SANS IMAGE, EXPRÈS. Une capture montrerait une réponse de Milo, donc
+     un conseil que le lecteur n'a pas demandé, sous un bouton qui dit « à côté » — l'image
+     laisserait croire que c'est CETTE réponse-là qui était mauvaise. Le texte se suffit. */
+  {icon:'\u{1F44E}', t:'Dis-le quand Milo répond à côté', cap:'Sous chaque réponse de Milo : <b>« 👎 à côté »</b>. Un tap, quatre motifs — <b>à côté</b>, <b>trop vague</b>, <b>faux</b>, <b>il a oublié</b>. ⛔ <b>Rien de ta conversation n\'est envoyé</b> : le motif est compté sur ton téléphone. Tu peux <b>en plus</b> joindre l\'échange si tu veux que Michel le corrige — la case est <b>décochée par défaut</b>. ⭐ Chaque signalement devient un <b>test permanent</b> : c\'est comme ça que Milo s\'améliore pour de bon.'},
   {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
 let _agIdx=0,_agSwipeInit=false;

@@ -75,6 +75,7 @@
     "coachFree": "compteur de questions gratuites, technique",
     "colorblind": "réglage d'affichage",
     "connected": "état réseau, technique",
+    "creatDose": "dose de créatine réglée à la main — un réglage de complément, pas un fait sur la personne : Milo n'a pas à s'en servir pour construire une séance ou un plan, et le lui envoyer l'inviterait à commenter un choix qui appartient à la personne.",
     "defRest": "repos par défaut — le réglage global, pas une connaissance sur la personne",
     "ecgStill": "réglage d'apparence",
     "email": "donnée de compte, jamais envoyée au modèle",
@@ -82,9 +83,12 @@
     "exPhotos": "photos d'exercices, volumineux",
     "expandAll": "préférence d'affichage",
     "foodAiUses": "compteur d'usage, technique",
+    "gardienStats": "Compteur de dérives du Gardien (des NOMBRES : {depuis, dernier, total, codes}). Milo n'a rien à en faire — c'est un instrument de MESURE sur lui, pas une information sur la personne : le lui donner l'inviterait à commenter son propre score, ce qui est exactement la sortie de rôle qu'on traque. Il part en revanche dans la sauvegarde cloud (ft-v945), pour mesurer les dérives chez de VRAIS utilisateurs et pas seulement chez le fondateur, dont le Milo est débridé — cousin de R9.",
     "halo": "réglage d'apparence",
     "haloColor": "réglage d'apparence",
     "haloDir": "réglage d'apparence",
+    "healthDaily": "fréquence cardiaque au repos, une valeur par jour (Santé → raccourci iOS). EXCLUE VOLONTAIREMENT : son effet atteint déjà Milo par le SCORE DE RÉCUPÉRATION, qui lui est transmis — envoyer la valeur brute en plus serait une 2e source pour la même information (R2). Et surtout : une fréquence cardiaque est un chiffre à consonance médicale. Milo n'a aucun moyen de savoir si elle monte à cause de la fatigue, d'un rhume, d'un verre de trop ou d'une chambre trop chaude — le lui donner l'inviterait à interpréter, c'est-à-dire à faire un diagnostic (Constitution : jamais de diagnostic · R10 : aucune hypothèse dans les domaines sensibles). Le score, lui, porte déjà la conclusion utile.",
+    "healthInbox": "boîte de réception brute de la montre (raccourci iOS → Santé). EXCLUE VOLONTAIREMENT : la partie utile — le cardio — atteint Milo une fois RATTACHÉE à la séance, et la séance lui est déjà transmise. Envoyer la boîte brute en plus créerait une 2e source pour la même information, qui finirait par contredire la première (R2) — p. ex. une marche reçue mais volontairement non rattachée, que Milo compterait quand même. À revoir le jour où la montre servira à corriger la DURÉE des séances : là, ce sera une donnée, plus une boîte.",
     "hiddenFoods": "préférence d'affichage",
     "histImports": "compteur d'imports, technique",
     "histTronque": "Drapeau technique : l'historique LOCAL a été tronqué faute de place sur le téléphone. Il protège la sauvegarde cloud (on n'envoie plus les séances tant qu'il est levé). Rien à dire à Milo : ce n'est pas une information sur la personne, et l'historique qu'il reçoit reste celui du cloud une fois restauré.",
@@ -94,6 +98,7 @@
     "levelAuto": "indicateur technique (le niveau, lui, est transmis)",
     "mealPlan": "plan de repas généré — DÉCISION À CONFIRMER : c'est une SORTIE de l'app, pas une connaissance sur la personne",
     "menuAck": "mémorise que le menu a été ouvert une fois, purement technique",
+    "miloRates": "Les 👎 « Milo a répondu à côté » (ft-v1059). EXCLU POUR DEUX RAISONS, et la seconde est la vraie : ① ça ne dit rien de la PERSONNE, seulement de la qualité d'une réponse ; ② surtout, lui envoyer le compte de ses propres ratés changerait son comportement — il s'excuserait, se sur-corrigerait, ou parlerait de lui. C'est une mesure POUR MICHEL, pas une information sur le sportif. Michel : « je ne veux pas savoir ce qu'ils disent à Milo ».",
     "premium": "statut d'abonnement",
     "premiumExpiry": "statut d'abonnement",
     "progExos": "état d'édition d'un programme, technique",
@@ -104,10 +109,6 @@
     "scaleType": "réglage d'affichage",
     "seenFeatures": "nouveautés vues, technique",
     "testerIdeas": "boîte à idées, technique",
-    "url": "adresse du serveur, jamais envoyée au modèle",
-    "healthInbox": "boîte de réception brute de la montre (raccourci iOS → Santé). EXCLUE VOLONTAIREMENT : la partie utile — le cardio — atteint Milo une fois RATTACHÉE à la séance, et la séance lui est déjà transmise. Envoyer la boîte brute en plus créerait une 2e source pour la même information, qui finirait par contredire la première (R2) — p. ex. une marche reçue mais volontairement non rattachée, que Milo compterait quand même. À revoir le jour où la montre servira à corriger la DURÉE des séances : là, ce sera une donnée, plus une boîte.",
-    "healthDaily": "fréquence cardiaque au repos, une valeur par jour (Santé → raccourci iOS). EXCLUE VOLONTAIREMENT : son effet atteint déjà Milo par le SCORE DE RÉCUPÉRATION, qui lui est transmis — envoyer la valeur brute en plus serait une 2e source pour la même information (R2). Et surtout : une fréquence cardiaque est un chiffre à consonance médicale. Milo n'a aucun moyen de savoir si elle monte à cause de la fatigue, d'un rhume, d'un verre de trop ou d'une chambre trop chaude — le lui donner l'inviterait à interpréter, c'est-à-dire à faire un diagnostic (Constitution : jamais de diagnostic · R10 : aucune hypothèse dans les domaines sensibles). Le score, lui, porte déjà la conclusion utile.",
-    "creatDose": "dose de créatine réglée à la main — un réglage de complément, pas un fait sur la personne : Milo n'a pas à s'en servir pour construire une séance ou un plan, et le lui envoyer l'inviterait à commenter un choix qui appartient à la personne.",
-    "gardienStats": "Compteur de dérives du Gardien (des NOMBRES : {depuis, dernier, total, codes}). Milo n'a rien à en faire — c'est un instrument de MESURE sur lui, pas une information sur la personne : le lui donner l'inviterait à commenter son propre score, ce qui est exactement la sortie de rôle qu'on traque. Il part en revanche dans la sauvegarde cloud (ft-v945), pour mesurer les dérives chez de VRAIS utilisateurs et pas seulement chez le fondateur, dont le Milo est débridé — cousin de R9."
+    "url": "adresse du serveur, jamais envoyée au modèle"
   }
 }

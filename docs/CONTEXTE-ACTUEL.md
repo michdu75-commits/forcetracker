@@ -6,7 +6,34 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1058`.
+- **Version en ligne (live) :** `ft-v1059`.
+- 👎⭐⭐ **« MILO A RÉPONDU À CÔTÉ » — le pouce COMPTE, il ne RACONTE rien** (ft-v1059).
+  Michel : *« j'aimerais savoir si Milo déconne quand les utilisateurs posent une question…
+  1 appel API qui sert à rien, et s'il met 2 ou 3 réponses avant de tomber juste. **Là ça me
+  coûte de l'argent pour rien.** J'appelle ça améliorer le service. »*
+  ⛔⛔ **Et il a écarté la surveillance lui-même** : *« je ne veux pas savoir ce qu'ils disent
+  à Milo, je m'en fous »* — c'est cette phrase qui décide de la **forme**, pas seulement du ton.
+  ⭐ **Mesuré avant de choisir** : aucun retour de qualité n'existait dans l'app ; en revanche
+  chaque message est **horodaté**. Deux pistes — le **pouce** (la vérité dite par la personne)
+  et la **relance rapide** (un proxy : une question qui revient en 6 s sur 2 000 caractères).
+  **Michel a tranché le pouce d'abord** ; ⏭️ *le proxy reste ouvert, il n'est pas écarté.*
+  ⛔⛔ **La confidentialité est MESURÉE** : taper un motif = **0 appel réseau**, et la trace
+  locale ne porte que **`motif` et `ts`**. Envoi sans cocher → le motif part, la question et la
+  réponse **restent**. La case « joindre l'échange » est **décochée par défaut** (P3).
+  ⛔ **Pas de pouce vert, exprès** : un 👍/👎 partout ferait un formulaire de satisfaction, et
+  le taux de clic dirait qui est **poli**. *On ne demande que ce dont on fera quelque chose.*
+  ⭐⭐ **Ce qui le rend précieux dépasse la mesure** : chaque 👎 donne un **cas réel** → **R35**,
+  un bug rencontré devient un scénario permanent du banc d'essai.
+  ⚠️⚠️ **Le seul rouge de la livraison était un FAUX rouge**, et sa cause se réplique : le
+  témoin anti-fuite (CXXII) mesure une fenêtre de **238 675 caractères / 41 fonctions** pour une
+  fonction qui en fait **129 483**. 👉 **4 des 8 « fuites possibles » documentées depuis ft-v1014
+  n'en sont pas** — elles vivent chez les voisines. La fenêtre n'est **pas rétrécie** (trop large
+  = faux rouges, jamais de faux verts ; rétrécir un filet mérite sa propre mesure, **R34**) ;
+  c'est la **liste** qui est corrigée, et 2 témoins figent les deux comptes.
+- 📇 **Qui a appelé Milo aujourd'hui** (livré un commit plus tôt, sous le cache ft-v1058) :
+  `ai_quota.byEmail` comptait **déjà** les appels par personne et `aiUsage` renvoyait **déjà**
+  `topUsers` — **zéro occurrence dans `app.js`** : la donnée arrivait et se perdait (**R5**).
+  ⛔ Limite écrite à l'écran : des **APPELS**, pas des euros (`ai_usage` ne porte pas l'email).
 - 🔢⭐⭐ **LA VIRGULE DÉCIMALE — neuf mots d'ELINE, et une corruption de données** (ft-v1058).
   Retour de la fille de Michel : *« impossible de mettre la virgule pour les poids »*.
   ⛔⛔ **Elle décrit un refus ; la mesure dit bien pire** — dans un `type="number"`, `62,5` rend

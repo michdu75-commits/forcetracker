@@ -13451,17 +13451,38 @@ console.log('\n-- CXXII. Anti-fuite du banc d\'essai : rien de réel ne part dan
   const app=src.slice(iA, src.indexOf('\n}', src.indexOf('S.premium=true', iA)));
   const lus=Array.from(new Set((ctx.match(/\bS\.[a-zA-Z][A-Za-z0-9_]{2,}\b/g)||[]).map(x=>x.slice(2))));
   const poses=new Set((app.match(/\bS\.[a-zA-Z][A-Za-z0-9_]{2,}\s*=/g)||[]).map(x=>x.slice(2).replace(/\s*=$/,'')));
-  /* Trous CONNUS, chacun avec sa raison — la liste est la décision, pas un constat. */
+  /* ⚠️⚠️ MESURÉ LE 30/08 — LA FENÊTRE DE CE TÉMOIN DÉBORDE, ET LA MOITIÉ DES « FUITES
+     POSSIBLES » CI-DESSOUS SONT DES ARTEFACTS DE CE DÉBORDEMENT.
+     Elle va de `buildCoachContext` jusqu'à `_vcApplyPersona` — soit **238 675 caractères et
+     41 fonctions**, quand le corps réel de `buildCoachContext` en fait **129 483**. Mesuré des
+     deux façons le même jour : le vrai corps lit **47** clés dont **4** ne sont pas remises à
+     zéro ; la fenêtre large en lit **55** dont **8**. 👉 *Les 4 de l'écart ne sont lues nulle
+     part dans le contexte* — elles vivent chez les 40 fonctions voisines.
+     ⛔ LA FENÊTRE N'EST PAS RÉTRÉCIE ICI, ET C'EST DÉLIBÉRÉ : trop large, elle attrape trop
+     (des faux rouges) ; jamais trop peu. Rétrécir un filet de sécurité mérite sa propre mesure,
+     pas d'être fait en passant pendant la livraison d'autre chose (R34).
+     ⛔⛔ CE QUI EST CORRIGÉ, C'EST LE MENSONGE DE LA LISTE : quelqu'un qui la lisait croyait
+     que les stats du Gardien et les conversations rangées de la personne partaient dans le
+     contexte de chaque persona. **Elles n'y sont pas.** Les deux groupes sont désormais nommés
+     séparément. *Un trou qu'on mesure vaut mieux qu'un trou qu'on découvre — encore faut-il
+     qu'il soit un trou.* */
   const CONNUS={
-    url:'⛔ NE DOIT PAS être réinitialisée : c\'est l\'adresse du serveur, le persona en a besoin pour appeler',
-    coachConversations:'fuite possible — non corrigée ici (changerait le contexte, R34)',
+    /* ── ① LUES POUR DE VRAI PAR `buildCoachContext` — ce sont les seules vraies fuites ── */
     exSwaps:'fuite possible — exercices écartés par la personne',
     fasting:'fuite possible — jeûne en cours',
     foodMode:'fuite possible — mode de saisie nutrition',
-    gardienStats:'compteur interne du Gardien',
-    nextPlanned:'fuite possible — séance annoncée',
-    programmes:'fuite possible — ses programmes'
+    programmes:'fuite possible — ses programmes',
+    /* ── ② JAMAIS LUES PAR LE CONTEXTE : attrapées par le débordement de la fenêtre ──
+       Les laisser décrites comme des « fuites » ferait corriger un problème qui n'existe pas. */
+    url:'⛔ hors contexte ET ne doit PAS être réinitialisée : c\'est l\'adresse du serveur',
+    coachConversations:'hors contexte — fils rangés, lus par l\'export et PT-001, pas par Milo',
+    gardienStats:'hors contexte — compteur interne du Gardien',
+    miloRates:'hors contexte — les 👎 « à côté » (ft-v1059), lus par personne d\'autre'
   };
+  /* ⭐ ET LE DÉBORDEMENT LUI-MÊME EST ÉPINGLÉ : s'il grossit encore, on veut le savoir. */
+  const etroit=ctx.slice(0, ctx.indexOf('\n}\n')+2);
+  const lusEtroit=Array.from(new Set((etroit.match(/\bS\.[a-zA-Z][A-Za-z0-9_]{2,}\b/g)||[]).map(x=>x.slice(2))));
+  const manqueEtroit=lusEtroit.filter(k=>!poses.has(k));
   const manque=lus.filter(k=>!poses.has(k));
   const nouveaux=manque.filter(k=>!CONNUS[k]);
   const disparus=Object.keys(CONNUS).filter(k=>manque.indexOf(k)<0 && k!=='url');
@@ -13473,6 +13494,16 @@ console.log('\n-- CXXII. Anti-fuite du banc d\'essai : rien de réel ne part dan
     nouveaux.length===0, nouveaux.length+' nouvelle(s) : '+JSON.stringify(nouveaux));
   t('⭐ le témoin a bien LU les deux fonctions (sinon il serait vert en ne mesurant rien)',
     lus.length>30 && poses.size>30, 'lues='+lus.length+' posées='+poses.size);
+  /* ⛔⛔ LE TÉMOIN QUI DIT CE QUE LE TÉMOIN MESURE VRAIMENT (30/08).
+     Il fige les DEUX comptes. Sans lui, la fenêtre pourrait déborder un peu plus à chaque
+     fonction ajoutée dans `coach.js`, et la liste des « fuites » gonflerait toute seule
+     jusqu'à ce que plus personne ne la croie. */
+  t('⛔⛔ le CORPS RÉEL de `buildCoachContext` ne laisse échapper que les 4 trous connus',
+    manqueEtroit.length===4 && manqueEtroit.every(k=>!!CONNUS[k]),
+    manqueEtroit.length+' : '+JSON.stringify(manqueEtroit));
+  t('⭐ … et l\'écart avec la fenêtre large est bien un DÉBORDEMENT, pas des fuites de plus',
+    manque.length-manqueEtroit.length===4,
+    'large='+manque.length+' étroit='+manqueEtroit.length);
   /* ⭐ Et si un trou connu se referme, on veut le savoir : la liste doit MAIGRIR, pas dormir. */
   if(disparus.length) console.log('   ℹ️ trous refermés depuis (à retirer de la liste) : '+disparus.join(', '));
 }
@@ -18122,7 +18153,7 @@ console.log('\n-- CLXIV. Le volume par muscle : 14 jours, ramenés à la semaine
   }
 }
 
-/* == BLOC CLXIV - QUI A APPELE MILO AUJOURD'HUI (ft-v1058) ==
+/* == BLOC CLXV - QUI A APPELE MILO AUJOURD'HUI (ft-v1058) ==
    Michel : « est-il possible de savoir qui utilise Milo ou autre appel API sur l'application ? ».
    ⭐⭐ IL N'Y AVAIT RIEN A CONSTRUIRE COTE SERVEUR : `ai_quota.byEmail` compte deja les appels
    par personne (c'est ce qui fait respecter le plafond de 50/jour) et la route `aiUsage`
@@ -18131,7 +18162,7 @@ console.log('\n-- CLXIV. Le volume par muscle : 14 jours, ramenés à la semaine
    a chaque ouverture* — R5, une donnee produite, exploitee pour UNE seule chose, jamais montree.
    ⛔ ET LA LIMITE EST AFFICHEE : `ai_quota` compte des APPELS, pas des tokens ; `ai_usage` (les
    euros) ne porte PAS l'email. « christophe : 31 appels » se dit, « christophe : 0,40 € » non. */
-console.log('\n-- CLXIV. Qui a appelé Milo aujourd\'hui (ft-v1058) --');
+console.log('\n-- CLXV. Qui a appelé Milo aujourd\'hui (ft-v1058) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:900},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
@@ -18169,7 +18200,7 @@ console.log('\n-- CLXIV. Qui a appelé Milo aujourd\'hui (ft-v1058) --');
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
   });
-  if(F.err) t('CLXIV n\'a pas pu tourner', false, F.err);
+  if(F.err) t('CLXV n\'a pas pu tourner', false, F.err);
   else{
     /* ⛔ Le témoin a-t-il VU la carte ? Sinon tout le reste serait vert pour rien. */
     t('⛔ le témoin a bien VU la Santé du système (le plafond y est, donc la carte est rendue)',
@@ -18194,6 +18225,156 @@ console.log('\n-- CLXIV. Qui a appelé Milo aujourd\'hui (ft-v1058) --');
     /* ⛔ Une liste vide se lirait comme une panne — on dit que la journée est calme. */
     t('⛔ aucun appel → la ligne le DIT (« journée calme »), elle ne montre pas une liste vide',
       /journée calme/.test(F.vide), (F.vide.match(/Qui a appelé Milo[^]{0,70}/)||[''])[0]);
+  }
+  await cx.close();
+}
+
+/* == BLOC CLXVI - « MILO A REPONDU A COTE » (ft-v1059) ==
+   Michel : « j'aimerais savoir si Milo deconne quand les utilisateurs posent une question…
+   1 appel API qui sert a rien, et s'il met 2 ou 3 reponses avant de tomber juste. LA ca me
+   coute de l'argent pour rien. J'appelle ca ameliorer le service. »
+   ⛔⛔ ET IL A ECARTE LA SURVEILLANCE LUI-MEME : « je ne veux pas savoir ce qu'ils disent a
+   Milo, je m'en fous ». D'ou la decision qui porte tout le bloc : **le pouce COMPTE, il ne
+   RACONTE rien.** Le contenu ne part QUE si la personne coche, et la case est DECOCHEE par
+   defaut — *un consentement pre-coche n'est pas un consentement* (Constitution P3).
+   ⭐ R13 : aucun composant neuf — le pied de bulle et `.coach-share-btn` existent depuis le
+   bouton Partager ; les pastilles reutilisent `.ck-opt` du check-in. Zero CSS ajoute.
+   ⛔ PAS DE POUCE VERT, expres : un 👍/👎 sous chaque reponse transforme la conversation en
+   formulaire de satisfaction. *On ne demande que ce dont on fera quelque chose* (R19/R24). */
+console.log('\n-- CLXVI. « Milo a répondu à côté » (ft-v1059) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    /* ⭐ ON CAPTURE CE QUI PART SUR LE RÉSEAU — c'est LA garantie à prouver, pas une intention. */
+    const envois=[]; const vrai=window.fetch;
+    window.fetch=async(u,opt)=>{ envois.push(String((opt&&opt.body)||'')); return {ok:true,json:async()=>({status:'ok'}),text:async()=>'{}'}; };
+    goScreen('coach');
+    renderCoachMsg('user','Je peux faire du squat avec mon genou ?');
+    renderCoachMsg('coach','Voici un programme de 4 semaines pour les pectoraux.');
+    await d(200);
+    const btn=[...document.querySelectorAll('.coach-share-btn')].find(x=>/à côté/.test(x.textContent));
+    o.bouton=!!btn;
+    /* ⛔ NON-RÉGRESSION : les deux boutons d'origine sont toujours là. */
+    o.autresBoutons=[...document.querySelectorAll('.coach-share-btn')].length;
+    btn.click(); await d(200);
+    const ov=document.getElementById('ov-milo-rate');
+    o.ecran={ouvert:ov.classList.contains('open'),
+             motifs:ov.querySelectorAll('#milo-rate-motifs button').length,
+             joindreDecoche:document.getElementById('milo-rate-joindre').checked===false,
+             ditQueRienNePart:/Rien de ta conversation n'est envoyé/.test(ov.innerText)};
+    /* ① TAPER UN MOTIF : compté sur le téléphone, ZÉRO appel réseau. */
+    _miloRaterMotif('acote'); await d(200);
+    o.motif={enregistre:(S.miloRates||[]).length,
+             id:((S.miloRates||[]).slice(-1)[0]||{}).motif,
+             sansContenu:Object.keys((S.miloRates||[]).slice(-1)[0]||{}).sort().join(','),
+             reseau:envois.length};
+    /* ② ENVOYER SANS COCHER : le motif part, le contenu NON. */
+    await _miloRaterEnvoyer(); await d(200);
+    o.sansJoindre={envois:envois.length,
+                   question:envois.some(e=>/genou/.test(e)),
+                   reponse:envois.some(e=>/pectoraux/.test(e)),
+                   motif:envois.some(e=>/MILO À CÔTÉ/.test(e))};
+    /* ③ EN COCHANT : la personne l'a décidé, l'échange part. */
+    envois.length=0;
+    btn.click(); await d(150); _miloRaterMotif('oubli'); await d(150);
+    document.getElementById('milo-rate-joindre').checked=true;
+    await _miloRaterEnvoyer(); await d(200);
+    o.avecJoindre={question:envois.some(e=>/genou/.test(e)), reponse:envois.some(e=>/pectoraux/.test(e))};
+    /* ④ LE PLAFOND : un registre sans fin des ratés grossirait pour rien. */
+    S.miloRates=[]; for(let i=0;i<60;i++) S.miloRates.push({ts:Date.now()+i,motif:'acote'});
+    persist(); load();
+    o.plafond=(S.miloRates||[]).length;
+    /* ⑤ R15 : le chemin de fermeture est déclaré. */
+    o.closer=(typeof _OVERLAY_CLOSERS!=='undefined') && _OVERLAY_CLOSERS['ov-milo-rate']==='_miloRaterFermer';
+    window.fetch=vrai;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,220)};}
+  });
+  if(F.err) t('CLXVI n\'a pas pu tourner', false, F.err);
+  else{
+    t('⛔ le témoin a bien VU le bouton « 👎 à côté » sous une réponse de Milo',
+      F.bouton===true, 'boutons dans le pied : '+F.autresBoutons);
+    t('⛔ NON-RÉGRESSION : les boutons Exporter et Partager sont toujours là (3 en tout)',
+      F.autresBoutons===3, F.autresBoutons+' boutons');
+    t('⭐ l\'écran s\'ouvre avec les 4 motifs, et il DIT que rien de la conversation ne part',
+      F.ecran.ouvert===true && F.ecran.motifs===4 && F.ecran.ditQueRienNePart===true,
+      JSON.stringify(F.ecran));
+    /* ⛔⛔ LE TÉMOIN QUI PORTE LA DEMANDE DE MICHEL : mesurer sans surveiller. */
+    t('⭐⭐ taper un motif ne fait AUCUN appel réseau — c\'est compté sur le téléphone',
+      F.motif.reseau===0 && F.motif.enregistre===1 && F.motif.id==='acote', JSON.stringify(F.motif));
+    t('⭐⭐ … et la trace locale ne contient QUE l\'heure et le motif, jamais un texte',
+      F.motif.sansContenu==='motif,ts', 'clés enregistrées : '+F.motif.sansContenu);
+    /* ⛔⛔ LA GARANTIE, MESURÉE SUR CE QUI PART VRAIMENT. */
+    t('⛔⛔ envoyer SANS cocher : le motif part, la question et la réponse NON',
+      F.sansJoindre.motif===true && F.sansJoindre.question===false && F.sansJoindre.reponse===false,
+      JSON.stringify(F.sansJoindre));
+    t('⛔ la case « joindre » est DÉCOCHÉE par défaut (un consentement pré-coché n\'en est pas un)',
+      F.ecran.joindreDecoche===true, '');
+    t('⭐ en cochant, l\'échange part bien — c\'est la personne qui l\'a décidé',
+      F.avecJoindre.question===true && F.avecJoindre.reponse===true, JSON.stringify(F.avecJoindre));
+    /* ⛔ Garde-fou de taille ET de ton : pas de registre sans fin des ratés. */
+    t('⛔ la trace est plafonnée à 40 (60 posés → 40 gardés) — pas de registre sans fin',
+      F.plafond===40, F.plafond+' gardés');
+    /* ⛔ R15. */
+    t('⛔ R15 : le chemin de fermeture de l\'écran est déclaré dans `_OVERLAY_CLOSERS`',
+      F.closer===true, '');
+  }
+  /* 📣 RÈGLE D'OR #11 — LES POINTS 2 À 5 SE MESURENT, ILS NE SE DÉCLARENT PAS.
+     ⚠️ Écrite parce que je les avais annoncés dans le journal AVANT de les poser : un
+     journal qui affirme une surface d'aide inexistante est pire qu'un journal muet, on le
+     croit. Le témoin rend la phrase vérifiable. */
+  {
+    const cx2=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+    const p2=await cx2.newPage();
+    await p2.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1'}));
+    await p2.goto('http://localhost:'+PORT+'/index.html');
+    await p2.waitForTimeout(2300);
+    const H=await p2.evaluate(async()=>{
+     try{
+      const o={},d=ms=>new Promise(x=>setTimeout(x,ms));
+      const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+      document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      const f=NEW_FEATURES.find(x=>x.id==='milo-a-cote');
+      o.pointRouge=!!f && f.screen==='coach';
+      localStorage.removeItem('ft4_nf_seen');
+      if(typeof _refreshNewDots==='function')_refreshNewDots();
+      await d(200);
+      o.pastille=!!document.querySelector('#nb-coach .new-dot');
+      o.aideOnglet=_HELP_DATA.coach.tips.some(x=>/à côté/.test(x.t));
+      const g=APP_GUIDE_SLIDES.find(x=>/répond à côté/.test(x.t||''));
+      o.diapo=!!g; o.diapoSansImage=!!g && !g.img;
+      openDrawerContent('help'); await d(500);
+      const txt=document.body.innerText;
+      o.aideDetail=/Milo a répondu à côté/.test(txt);
+      o.ditPourquoiPasDePouceVert=/pas de pouce vert/.test(txt);
+      /* ⛔ Aucune pop-up : elle ne se mérite pas ici (rien à faire, rien de déplacé). */
+      o.pasDePopup=!WHATS_NEW.some(x=>/à côté/.test(x.t||''));
+      return o;
+     }catch(e){return {err:String(e)};}
+    });
+    if(H.err) t('CLXVI/#11 n\'a pas pu tourner', false, H.err);
+    else{
+      t('📣 #11 point 2 : le point rouge `milo-a-cote` existe ET s\'allume sur l\'onglet Coach',
+        H.pointRouge===true && H.pastille===true, JSON.stringify({def:H.pointRouge,dot:H.pastille}));
+      t('📣 #11 point 3 : l\'aide `?` de l\'onglet Coach en parle',
+        H.aideOnglet===true, '');
+      t('📣 #11 point 4 : l\'aide détaillée en parle — ET dit POURQUOI il n\'y a pas de pouce vert',
+        H.aideDetail===true && H.ditPourquoiPasDePouceVert===true,
+        JSON.stringify({entree:H.aideDetail,pourquoi:H.ditPourquoiPasDePouceVert}));
+      t('📣 #11 point 5 : la diapo du Guide existe, et SANS image (une capture montrerait un conseil)',
+        H.diapo===true && H.diapoSansImage===true, JSON.stringify(H));
+      t('⛔ … et AUCUNE pop-up `WHATS_NEW` : elle se mérite, rien n\'est déplacé ici (R25)',
+        H.pasDePopup===true, '');
+    }
+    await cx2.close();
   }
   await cx.close();
 }
