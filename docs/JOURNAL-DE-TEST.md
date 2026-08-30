@@ -95,6 +95,30 @@ n'avait pas pu promouvoir avant son correctif). **À promouvoir le jour où le r
 l'attendu sera alors vérifiable — *cite-t-il un jour réel du journal ?*
 **État : à trier.**
 
+### 🟡 PESER CUIT EST INGÉRABLE — mesuré chez Michel, × 2,80 au lieu de × 2,18
+**30/08/2026, Michel, sa balance à la main** : *« 140 grammes de pâtes crues (coquillettes), cuites
+392 grammes. Mais ça va dépendre de combien je les laisse cuire lol. »*
+⭐⭐ **Sa mesure est la meilleure preuve du dossier, et elle vient du terrain** : facteur réel
+**× 2,80** contre **× 2,18** dans CIQUAL. S'il pesait cuit avec le facteur de la table, son assiette
+serait comptée **654 kcal au lieu de 509 — +28 %**, sur un chiffre parfaitement crédible.
+⛔ **Ça ferme une piste que j'avais proposée** : une conversion cru↔cuit dans l'app. Le facteur ne
+dépend pas de l'aliment mais de **sa casserole** — *un facteur moyen appliqué à son assiette est une
+fausse précision qui se trompe de 28 % sans jamais le dire* (R29).
+⭐ **Ce qui reste vrai et suffit** : la cuisson ajoute de l'**eau**, pas des calories. Vérifié dans la
+table elle-même — 100 g cru = 364 kcal, et 218 g cuits × 167 kcal/100g = **364 kcal**. Donc *le poids
+CRU est le seul fait ; le poids cuit est une information sur la cuisson, pas sur la nutrition.*
+⚠️ **Et la poêle est pire** : l'eau s'évapore (poids ↓, kcal =) pendant que l'huile est absorbée
+(poids ↑, kcal ↑). *La balance ne montre que la somme, elle ne peut pas les distinguer* — aucune
+pesée d'après-cuisson n'est convertible.
+⛔ **Le vrai risque produit est le code-barres** : un paquet donne les valeurs du produit **sec**, et
+on pèse souvent dans l'assiette. Scanner puis taper le poids cuit compte **2,3× trop**.
+⛔ **Rien n'est construit** : Michel n'a rien demandé, et pour lui c'est acquis (il pèse cru). La
+question ne se pose que pour Tatiana, Emma ou Christophe. *Piste la moins chère si elle se pose : un
+rappel « pèse cru » au scan d'un féculent — pas une conversion.*
+⛔ **Pas un scénario à promouvoir** : rien ici n'est vérifiable par du code aujourd'hui (l'app ne
+stocke aucun état cru/cuit). C'est une **décision produit**, pas un test.
+**État : à trier.**
+
 ### 🟡 « PAS DE RECORD » NE VEUT PAS DIRE « JAMAIS FAIT » — et le mot doit le dire
 **27/08/2026, correction de Michel en cours de livraison de ft-v1035** : *« est-ce que "pas de
 record" veut vraiment dire "jamais fait" ? Clairement non. »*
