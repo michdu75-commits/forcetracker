@@ -1469,6 +1469,20 @@ l'écran **à fond** avant de mesurer — et un second témoin vérifie que le d
 👉 **Le réflexe.** Quand un test reproduit « le chemin heureux » et que la personne voit autre
 chose, regarder d'abord **ce que la fixture n'a pas** — avant de chercher ce que le code fait mal.
 
+**⭐⭐ CONFIRMÉ SUR LA VIDÉO DE MICHEL — ET JE SUIS RETOMBÉ DANS LE PIÈGE EN LE VÉRIFIANT.**
+Sa vidéo montre le bouton qui s'allume à chaque tap et **rien d'autre** : ni modale, ni message.
+J'ai alors mesuré à sa position de défilement… **avec une fixture de 8 séances**. Résultat : la
+modale était visible, donc *« mon hypothèse est fausse »*. ⛔ **Faux.** Avec 8 séances, les deux
+cartes du haut de l'écran Progrès ne s'affichent pas — l'écran est donc **plus court**, et le
+défilement nécessaire pour atteindre le bouton était de **473 px**, sous le seuil.
+👉 Refait avec **38 séances sur 78 jours** (son profil réel, les deux cartes rendues) : pour amener
+le bouton là où il est sur sa vidéo, il faut **905 px** de défilement — au-dessus du seuil de
+**742 px**. La modale sort alors à **y = −365 → −61** : `visible:false`. *Après correctif :
+540 → 844.*
+⚠️ **La leçon se replique donc sur elle-même** : j'ai failli abandonner le bon diagnostic parce que
+ma fixture de vérification manquait, elle aussi, de profondeur. **Le seuil n'est pas « ça défile »,
+c'est « ça défile AUTANT QUE CHEZ LA PERSONNE ».**
+
 ⚠️ **Et c'est la famille MIROIR du « contrôle circulaire » (§ plus haut)** : là-bas le vert ne
 pouvait pas rougir ; ici le vert est **sincère**, il porte simplement sur un écran qui n'est pas
 celui de la personne. *Les deux coûtent le même prix — on cherche le défaut au mauvais endroit.*
