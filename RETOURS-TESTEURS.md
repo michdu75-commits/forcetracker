@@ -119,9 +119,14 @@ d'ergonomie cachait une corruption de ses données.*
 conservé), **41 lectures** passent par un seul lecteur `numFR`, et un témoin permanent refuse
 qu'un 23ᵉ champ décimal revienne en `type="number"`.
 
-⏭️ **Ce qui reste ouvert** : les séances **déjà enregistrées** avec un poids ×10 sont toujours
-fausses dans son historique. Proposé à Michel, **en attente de sa décision** — on ne touche pas
-aux données de quelqu'un sans son accord (**R29**).
+⏭️ **Ce qui reste ouvert — et l'alerte a été REVUE À LA BAISSE, à raison.** J'avais annoncé
+des séances « ×10 » dans son historique. Michel : *« moi je mets aussi des virgules »* — et
+chez lui, sur iPhone, **ça marche**. Le `×10` est mesuré dans **Chromium** ; **WebKit accepte
+la virgule et la convertit**. Sur un iPhone, le pire cas est donc un **arrondi** (12 au lieu
+de 12,5) : imprécis, pas faux. ⛔ **Rien n'est corrigé dans ses données**, et c'est la bonne
+décision — *on ne répare pas un historique sur une hypothèse* (**R29**).
+⚠️ **Reste inexpliqué, et écrit comme tel** : pourquoi le champ refuse chez elle alors qu'il
+accepte chez son père. Sans savoir sur quel appareil elle est, toute réponse serait inventée.
 
 ---
 

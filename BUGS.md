@@ -1477,6 +1477,31 @@ Si on s'était arrêté là, on aurait cherché pourquoi le clavier ne propose p
 serait passé à côté des séances déjà fausses. *Un retour utilisateur est un point de départ à
 mesurer, pas un diagnostic à appliquer.*
 
+### ⚠️⚠️ La nuance qui a failli manquer : DEUX MOTEURS, DEUX ÉCHECS DIFFÉRENTS
+J'avais écrit ci-dessus « la série enregistre 625 kg » sans dire **où c'était mesuré**. Michel a
+corrigé le tir en une phrase : *« moi je mets aussi des virgules »* — et chez lui, sur iPhone,
+**ça marche**. Remesuré :
+
+| Moteur | Ce qu'il fait d'un `62,5` tapé dans un `type="number"` |
+|---|---|
+| **Chromium** (mesuré ici, en `en-US` **et** en `fr-FR` — la locale n'y change rien) | la virgule est **jetée** → `"625"` |
+| **WebKit / Safari iOS** (rapporté par Michel) | la virgule est **acceptée et convertie** → ça marche |
+| Le cas d'Eline | **refus** — elle ne peut pas la saisir du tout |
+
+⛔ **Donc « tous les historiques sont pourris » serait FAUX.** Le `×10` demande un moteur qui jette
+la virgule ; sur les iPhone de l'équipe, le pire cas est un **arrondi** (12 au lieu de 12,5).
+⚠️ **Et ce qui reste inexpliqué est écrit plutôt que comblé** : on ne sait pas *pourquoi* le champ
+refuse chez Eline alors qu'il accepte chez son père. Appareil, version, réglage de région — sans
+son navigateur sous la main, toute réponse serait une invention (**R29**).
+
+### ⭐⭐ Ce que cette nuance apprend, et c'est le vrai enseignement
+***Un contrôle de saisie natif n'a pas UN comportement, il en a autant que de moteurs.*** Mesurer
+dans un seul navigateur donne un résultat vrai **et non généralisable** — et une phrase écrite
+sans dire *où* elle a été mesurée devient un fait faux dès qu'on la relit ailleurs.
+👉 **C'est aussi l'argument le plus fort pour le correctif** : `type="text"` + un lecteur unique
+donnent le **même** comportement partout, au lieu de trois comportements qu'on découvre un par un
+au fil des retours.
+
 ### 🔎 Comment la reconnaître
 - Un contrôle de saisie **natif** (`type="number"`, `maxlength`, `pattern`, un `min`/`max`) :
   il ne rend pas la main à la personne, il **transforme** ce qu'elle a écrit.
