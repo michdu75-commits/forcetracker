@@ -4,6 +4,80 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🚶 LES PAS — CE QU'ILS DOIVENT CHANGER, DIT PAR MICHEL (30/08/2026)
+
+> Question posée : *« les pas doivent changer QUOI concrètement ? »* (règle **R3** — une donnée
+> qui ne produit aucun comportement observable ne sert à personne). Sa réponse, gardée entière
+> parce qu'elle contient **les deux usages ET la contrainte qui décide de tout** :
+>
+> **« Ah bah pour moi si on rajoute les pas ça rajoute forcément des calories dépensées dans la
+> journée, et ça montre aussi l'activité en absence de données rentrées dans l'application.
+> Exemple : on a marché 15 000 pas parce qu'on a fait une randonnée, à l'heure actuelle on ne
+> peut pas le renseigner dans l'application. Attention, il faut que ça soit cohérent, c'est-à-dire
+> la montre prend en compte aussi le nombre de pas si on fait du tapis à la salle de sport, ou de
+> la course, ou du vélo elliptique. »**
+
+### ⭐⭐ Il y a DEUX usages, et le second est celui qu'on n'aurait pas trouvé
+
+① **Les calories** — des pas, c'est de la dépense, et elle n'est nulle part aujourd'hui.
+② **⭐ L'activité que l'app ne voit pas** — *« on a fait une randonnée, on ne peut pas le
+renseigner »*. C'est un **trou fonctionnel réel**, pas un confort : une journée entière d'effort
+est aujourd'hui invisible pour l'app **et pour Milo**, qui la lira comme un jour de repos. Les pas
+sont la seule trace qui en reste.
+
+### ⛔⛔ ET LA CONTRAINTE EST LE CŒUR DU SUJET — il l'a nommée avant qu'on la trouve
+
+*« La montre prend en compte aussi le nombre de pas si on fait du tapis, ou de la course, ou du
+vélo elliptique. »* 👉 ***Une séance de tapis déjà enregistrée dans l'app produit aussi des pas :
+ajouter naïvement les calories des pas la compterait DEUX FOIS.***
+
+⚠️ **C'est exactement le défaut de ft-v949**, où l'écran affichait *« Total = dépense + séance »*
+alors que le multiplicateur d'activité (« Modéré 3-4j ») comptait déjà la séance. Le projet a déjà
+payé ce piège une fois ; ici il est **annoncé avant de coder**.
+
+### ✅ FAIT en ft-v1070 — le SURPLUS, et pourquoi c'est ça la réponse
+
+Livré : `_pasEcart` (tracking.js) rend le surplus sur **sa propre base** (médiane 30 j, minimum
+7 j, seuil 1 500 pas, borné à 500 kcal), lu par le **TDEE**, l'**écran Nutrition** et **Milo**.
+
+⭐⭐ **Le surplus répond aux DEUX cas de Michel d'un seul coup** — c'est ce qui a fait choisir
+cette forme plutôt qu'une soustraction des activités connues : la randonnée ressort (9 000 pas
+au-dessus de sa base), et le tapis habituel **est dans la base**, donc surplus nul, donc rien
+n'est compté deux fois. *On n'a pas eu à deviner combien de pas produit une séance de tapis —
+question à laquelle personne ne sait répondre.*
+
+⛔ **Et le piège était plus large que le tapis** : `activityLevel` (« Modéré 3-4j ») contient
+aussi la **marche ordinaire**. Mesuré au contrôle négatif : avec les pas bruts, une journée
+ordinaire à 6 100 pas ajoutait **197 kcal qui n'existent pas**, *tous les jours*.
+
+### 🕳️ Ce qui reste à trancher (rien n'est décidé)
+
+**⏭️ ENREGISTRER LA RANDONNÉE ELLE-MÊME.** ft-v1070 fait *voir* la dépense et la donne à Milo,
+mais on ne peut toujours pas **noter** la sortie : vérifié, le cardio est accroché à `S.wkt`
+(une séance), il n'existe aucune entrée autonome. C'est la moitié qui manque à son *« on ne peut
+pas le renseigner dans l'application »*. ⚠️ Et ça demande de décider comment ça se combine avec
+le surplus — sinon on recompte une 3ᵉ fois ce qu'on vient d'apprendre à ne pas compter deux fois.
+
+**⏭️ LES PAS DANS LA RÉCUPÉRATION.** *Une journée à 18 000 pas n'est pas un jour de repos.* C'est
+la 3ᵉ option que Michel n'a pas retenue ; le surplus existe désormais, donc c'est devenu bon
+marché. ⛔ Mais c'est une question à part : le score de récup et les calories ne se règlent pas
+avec la même prudence.
+
+
+- **Comment on déduit la part déjà comptée.** `S.healthInbox` reçoit les *activités* du téléphone
+  avec leurs créneaux horaires — c'est peut-être là qu'est la réponse, à mesurer avant de choisir.
+- **Où va la dépense** : dans le TDEE (donc les macros), ou seulement affichée ? ⚠️ Toucher au TDEE
+  touche ses calories du jour — **R29**, le coût de l'erreur n'est pas nul.
+- **Comment on propose d'enregistrer la randonnée** sans que ça devienne une notification de plus.
+- **Et les pas entrent-ils dans la récupération ?** Une journée à 18 000 pas n'est pas un jour de
+  repos — mais c'est une 3ᵉ question, à ne pas mélanger aux deux premières.
+
+⛔ **Ordre convenu avec Michel** : le **sommeil d'abord**, livré et vu à l'écran ; les pas ensuite.
+C'est la règle d'ordre de travail de `CLAUDE.md` — *une seule fonctionnalité à la fois, testée
+avant de passer à la suivante*.
+
+---
+
 ## 🔁 CHAQUE SÉANCE FAITE PEUT INDUIRE UN FUTUR PROGRAMME (Michel, 29/08/2026)
 
 > Michel, en validant la question *« cette séance te convient ? »* de ft-v1053, et juste après

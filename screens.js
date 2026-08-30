@@ -164,7 +164,7 @@ const _HELP_DATA={
       {i:'💚',t:'Ta carte récup existe en <b>deux styles</b> — Menu → Apparence → Carte récup : l\'anneau (par défaut) ou le moniteur, avec ton score en gros et un tracé cardiaque. Mêmes données, mise en forme différente.'},
       {i:'📊',t:'Les 4 stats du mois (volume, Big3, séances, poids) se calculent depuis tes séances et ton journal de poids.'},
       {i:'🌡️',t:'« Ton check-in du jour » (en haut de l\'Accueil, optionnel, repliable) se lit d\'un coup d\'œil : <b>trois tuiles</b> — un lit violet pour le <b>sommeil</b>, un éclair orange pour l\'<b>énergie</b>, un visage pour le <b>moral</b> (vert content, ambre moyen, rouge bas). Sous chaque icône, quatre petits traits montrent le niveau. Il regroupe tout ce qui te concerne AUJOURD\'HUI : ton sommeil de la nuit, ton énergie, ton moral (😔 → 😄) et une éventuelle gêne/douleur. Replié, tu vois un résumé (😴 7h · 🙂 énergie · 😄 moral) ; tape pour le déplier et renseigner. Milo adapte ses conseils du jour — s\'il y a une douleur, le Gardien PROTÈGE cette zone en priorité ; si ton moral est bas, Milo se fait plus DOUX (dédramatise, valorise, sans jamais te juger — il reste ton coach sportif, jamais un psy). Ça repart à zéro chaque jour ; le ressenti prime toujours.'},
-      {i:'😴',t:'Ton sommeil se note dans « Ton check-in du jour » (déplie la carte, en haut de l\'Accueil) : choisis la qualité + les heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Un bon sommeil fait remonter ton score de récupération (contrairement au moral/à la douleur, qui n\'y touchent pas).'},
+      {i:'😴',t:'Ton sommeil se note dans « Ton check-in du jour » (déplie la carte, en haut de l\'Accueil) : choisis la qualité + les heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Un bon sommeil fait remonter ton score de récupération (contrairement au moral/à la douleur, qui n\'y touchent pas). ⭐ <b>Si ta montre envoie ton sommeil à Santé</b> (Garmin, Apple Watch…), c\'est la <b>durée mesurée</b> qui compte, pas celle que tu tapes — la carte affiche alors « Mesuré par ta montre » et rappelle ce que tu avais noté. <b>Pourquoi</b> : la saisie à la main est bonne en moyenne, mais elle <b>lisse les mauvaises semaines</b>, donc ton score était le plus optimiste pile quand tu étais le plus fatigué. ⛔ <b>Ta saisie n\'est jamais effacée</b>, et la <b>qualité reste la tienne</b> : une montre mesure une durée, elle ne sait pas comment tu t\'es senti. Sans montre, rien ne change.'},
       {i:'📊',t:'« Historique du sommeil » (déplie le check-in, puis la barre repliable) : un mini-graphique sur 7 ou 30 jours + la liste nuit par nuit. Tape une barre ou une ligne pour ajouter/corriger cette nuit. Les jours vides affichent « ＋ à renseigner ».'},
       {i:'🩹',t:'Pour une zone qui fait mal : dans le check-in, tape directement le MUSCLE sur la figurine anatomique (vue de face + de dos) — il devient rouge. Les articulations (nuque, coude, poignet, genou, cheville) sont en boutons juste en dessous. Pour une zone comme le genou ou l\'épaule tu peux préciser le CÔTÉ (gauche/droite/les deux). Le Gardien protège cette zone du jour en priorité dans les conseils de Milo.'},
       {i:'💡',t:'Ton score de récup (sur NN/100) estime à quel point ton corps est prêt à s\'entraîner aujourd\'hui. Tape « Pourquoi ce score ? » juste en dessous pour voir, en clair, D\'OÙ il vient : sommeil, séance récente, âge, jours enchaînés… chaque facteur avec sa raison et son +/−. Il remonte au fil de la journée après une séance, et reste un simple repère — ton ressenti prime toujours.'},
@@ -211,6 +211,10 @@ const _HELP_DATA={
   nutrition:{
     title:'🍽️ Nutrition',
     tips:[
+      /* 🚶 EN TÊTE parce que c'est la question qu'on se pose en voyant le chiffre bouger :
+         « pourquoi mon TDEE a changé aujourd'hui ? ». La pop-up ANNONCE, l'aide EXPLIQUE (R25) :
+         ici vivent les garde-fous que la pop-up ne dit pas (les 7 jours, la borne, le jour creux). */
+      {i:'🚶',t:'<b>Tes grosses journées de marche comptent dans ta dépense</b> — si ta montre envoie tes pas à Santé. ⭐ <b>Mais seulement ce qui DÉPASSE ta journée habituelle</b>, jamais le total : ton niveau d\'activité (« Modéré 3-4j »…) contient <b>déjà</b> la marche d\'une journée normale. Te compter les pas bruts te facturerait deux fois la même marche, tous les jours. <b>Exemple</b> : 6 000 pas d\'habitude, 15 000 aujourd\'hui → les <b>9 000 en plus</b> valent ~290 kcal, affichées sous ton TDEE. Un tapis que tu fais chaque semaine est <b>dans</b> ton habitude, donc rien n\'est compté deux fois. ⛔ L\'app <b>se tait</b> tant qu\'elle n\'a pas <b>7 jours</b> de mesures, une journée calme ne <b>retire</b> rien (on ne punit pas un jour de repos), et le bonus est <b>borné à 500 kcal</b> — un capteur qui déraille ne doit pas faire exploser tes macros. ⚠️ C\'est une <b>estimation</b> (~1 300 pas au kilomètre), pas une mesure.'},
       /* 🍽️ ORDRE DE L'ONGLET MACROS (ft-v1025) — en PREMIER dans l'aide, parce que c'est la
          première question qu'on se pose en arrivant : « où est passé mon TDEE ? ». R25 : la
          pop-up ANNONCE (une fois), l'aide EXPLIQUE (à chaque fois qu'on la rouvre). */
@@ -243,6 +247,10 @@ const _HELP_DATA={
   progress:{
     title:'📈 Progrès',
     tips:[
+      /* 🚶 EN TÊTE de l'aide Progrès : c'est une carte NEUVE, donc la première question est
+         « c'est quoi ce truc ? ». La pop-up de ft-v1070 a annoncé que les pas comptent ;
+         ici on dit seulement OÙ les voir et comment lire la courbe (R25). */
+      {i:'🚶',t:'<b>« Tes pas »</b> (sous-onglet <b>Poids</b>) : tes pas du jour, et dépliée, ta <b>courbe sur 7 ou 30 jours</b>. ⭐ Le <b>trait vert</b> est <b>ton habitude</b> — <b>pas</b> un objectif de 10 000 pas que tu n\'as pas choisi. Les <b>barres vertes</b> sont les journées qui la dépassent : ce sont exactement celles qui s\'ajoutent à ta dépense (onglet Nutrition). ⛔ Sans pas envoyés depuis Santé, la carte <b>ne s\'affiche pas</b>. ⚠️ Des pas ne disent pas <b>ce que</b> tu as fait — seulement que tu as bougé plus que d\'ordinaire.'},
       {i:'📤',t:'<b>Exporter ton historique</b> : le bouton <b>📤 Exporter</b>, à côté de « Historique séances ». <b>CSV</b> pour un tableur (une ligne par série : date, séance, exercice, kg, reps, RIR, volume) · <b>PDF</b> pour un document lisible, une séance par bloc. ⛔ Seules les séries <b>validées</b> y sont, et <b>aucune donnée de santé</b> (ni poids de corps, ni âge, ni sexe). ⓘ Pour une <b>sauvegarde complète</b> de tes données, c\'est Menu → Exporter mes données.'},
       {i:'🗂️',t:'<b>Le haut de l\'onglet se replie</b> : les trois onglets (Exercices · Poids · Badges) sont en tête, et les deux cartes de résumé sont <b>repliées</b> — un tap sur leur titre les ouvre, et <b>l\'app retient ton choix</b>. ⚠️ Elles ne s\'affichent que sur <b>Exercices</b> : sur Poids et sur Badges, elles n\'auraient rien à y faire.'},
       {i:'📊',t:'<b>Ce que tu travailles, par semaine</b> (en haut de l\'onglet) : tes <b>séries de travail par groupe musculaire</b>, en <b>moyenne par semaine sur 14 jours</b>, échauffements exclus. ⭐ Deux semaines plutôt qu\'une parce qu\'une semaine seule est trop courte — mais le chiffre reste <b>par semaine</b>, donc comparable au repère de ta discipline. ⚠️ Une moyenne noie une semaine creuse : regarde le <b>nombre de séances</b> affiché à côté. ⚠️ Volontairement <b>sans objectif affiché</b> — en milieu de semaine, un chiffre « en dessous de la cible » ne veut rien dire. Les séries comptent pour le <b>muscle principal</b> de l\'exercice (un développé couché = pectoraux, pas triceps). Si l\'app ne connaît pas un exercice, ses séries sont <b>signalées à part</b> plutôt que perdues.'},
@@ -1389,10 +1397,13 @@ function closeCheckin(){ if(!_checkinOpen)return; _checkinOpen=false; _renderDay
   try{ if(typeof renderLogSleep==='function')renderLogSleep(); }catch(e){} }
 function _checkinSummary(){
   const d=_dayState();
-  const ts=(S.sleepLog||[]).find(e=>e.date===today());
+  /* ⭐ MÊME PROPRIÉTAIRE QUE LE SCORE (30/08, R2) : sans ça, la tuile annoncerait la durée SAISIE
+     pendant que le score du dessus est calculé sur la durée MESURÉE — deux chiffres pour la même
+     nuit, dans le même écran. Et « à noter » s'afficherait alors qu'on connaît déjà la durée. */
+  const ts=(typeof _nuit==='function')?_nuit(today()):(S.sleepLog||[]).find(e=>e.date===today());
   const nPain=(d.pains||[]).length;
   if(d.energy==null&&d.mood==null&&!(ts&&ts.hours)&&!nPain)return ''; // rien renseigné → invite complète
-  const parts=[(ts&&ts.hours)?('😴 '+ts.hours+'h'):'😴 à noter'];
+  const parts=[(ts&&ts.hours)?('😴 '+String(ts.hours).replace('.',',')+'h'):'😴 à noter'];
   if(d.energy!=null)parts.push(_DAY_ENERGY[d.energy]+' énergie');
   if(d.mood!=null)parts.push(_DAY_MOOD[d.mood]+' moral');
   let s=parts.join(' · ');
@@ -1430,11 +1441,14 @@ function _ckTuile(ico,coul,niv,val,lgd){
 }
 function _ckTuiles(){
   const d=_dayState();
-  const ts=(S.sleepLog||[]).find(e=>e.date===today());
+  const ts=(typeof _nuit==='function')?_nuit(today()):(S.sleepLog||[]).find(e=>e.date===today());
   // Sommeil : le NIVEAU vient de la qualité (1-4), la valeur affichée reste les heures.
   const q = (ts&&ts.quality) ? ts.quality-1 : null;
   const vSom = (ts&&ts.hours) ? (String(ts.hours).replace('.',',')+' h') : '—';
-  const cSom = q==null ? 'var(--t3)' : 'var(--purp)';
+  /* ⛔ La tuile s'ALLUME dès qu'on connaît la durée, même sans qualité (30/08) : une nuit mesurée
+     est une nuit connue. Le NIVEAU des barres, lui, reste piloté par la qualité — c'est un
+     ressenti, et la montre ne le connaît pas (on n'en invente pas un). */
+  const cSom = (q==null && !(ts&&ts.hours)) ? 'var(--t3)' : 'var(--purp)';
   // Moral : la couleur porte le sens (vert content · ambre moyen · rouge bas).
   const cMor = d.mood==null ? 'var(--t3)' : d.mood>=2 ? 'var(--green)' : d.mood===1 ? 'var(--gold)' : 'var(--red)';
   const lblMor=['Bas','Moyen','Bien','Content'], lblEne=['Faible','Basse','Bonne','Au top'];
@@ -2508,6 +2522,17 @@ function renderNutrition(){try{
     srcEl.style.color = bd.methode==='katch' ? 'var(--green)' : 'var(--gold)';
   }
   document.getElementById('nu-tdee').textContent=tdee.toLocaleString('fr-FR');
+  /* 🚶 ON DIT D'OÙ VIENT LE SURPLUS — sinon le TDEE change d'un jour à l'autre sans explication,
+     et un chiffre qui bouge tout seul se lit comme un bug (la leçon du sommeil, ft-v1069).
+     ⛔ La ligne ne s'affiche QUE s'il y a un surplus : afficher « +0 kcal » tous les jours serait
+     du bruit permanent pour l'immense majorité des journées (R24, informer sans encombrer). */
+  const pasEl=document.getElementById('nu-tdee-pas');
+  if(pasEl){
+    const pe=(typeof _pasEcart==='function')?_pasEcart():null;
+    pasEl.textContent = (pe&&pe.kcal>0)
+      ? ('🚶 +'+pe.kcal+' kcal · '+pe.surplus.toLocaleString('fr-FR')+' pas de plus que d\'habitude')
+      : '';
+  }
   const todayStr=today();
   const todaySess=S.sessions.find(s=>s.date===todayStr);
   const sessCals=todaySess&&todaySess.calories?todaySess.calories:0;

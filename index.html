@@ -693,6 +693,11 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div class="chart-box" id="weight-chart-box"><div class="empty">Ajoute au moins 2 pesées pour voir le graphique</div></div>
     <div class="sec">Corrélations & tendances</div>
     <div id="weight-correlations" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <!-- 🚶 LA COURBE DES PAS (ft-v1071). Michel : « les pas vont s'afficher où ? » — nulle part,
+         et c'était le manque. Ici parce que cet onglet porte les MESURES (poids, masse grasse,
+         bilan corporel) ; les pas viennent de la même montre. Rendu par `renderPasCard`
+         (tracking.js), qui AFFICHE le surplus de `_pasEcart` sans jamais le recalculer (R2). -->
+    <div id="pas-card"></div>
     <div class="sec">Bilan corporel (balance pro)</div>
     <div id="bodyscan-section" style="display:flex;flex-direction:column;gap:10px;"></div>
     <div id="bloodtest-sec-title" class="sec" style="display:none;">Bilan sanguin 🩸</div>
@@ -880,6 +885,8 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
           <div style="flex:1;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 4px;text-align:center;">
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:3px;">TDEE</div>
             <div style="font-family:var(--font-cond);font-size:14px;font-weight:700;color:var(--t1);" id="nu-tdee">—</div>
+            <!-- 🚶 la provenance du SURPLUS de pas — meme motif que `nu-bmr-src` sous le BMR (R13) -->
+            <div style="font-size:9.5px;font-weight:700;color:var(--green);margin-top:2px;line-height:1.25;" id="nu-tdee-pas"></div>
           </div>
         </div>
         <!-- Réglage manuel des calories/macros — rempli par renderNutrition -->

@@ -823,7 +823,22 @@ function calcSportExtra(){
   if(!os||os==='aucun')return 0;
   return (S.activityLevel||1.55)>=1.725?0:150;
 }
-function calcTDEE(){return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra());}
+/* 🚶 LE 4ᵉ TERME : LE SURPLUS DE PAS (30/08/2026, ft-v1070).
+   ⛔⛔ CE N'EST PAS « LES PAS DU JOUR », ET LA DISTINCTION EST TOUTE LA DÉCISION. Le
+   multiplicateur `activityLevel` contient déjà la marche d'une journée ORDINAIRE — y ajouter le
+   total des pas la facturerait deux fois, exactement comme la séance avant ft-v949. Seul entre
+   ici ce qui DÉPASSE sa propre base : une randonnée, un déménagement, une journée de visite.
+   ⛔ Et ça vaut 0 tant que l'app n'a pas 7 jours de mesures — pas de base, pas de surplus (R29).
+   Le calcul, les bornes et le pourquoi vivent dans `_pasEcart` (tracking.js), propriétaire
+   unique : le TDEE, l'écran et Milo lisent tous cette fonction (R2). */
+function calcPasExtra(refTs){
+  try{
+    if(typeof _pasEcart!=='function')return 0;    // tracking.js pas encore chargé
+    const e=_pasEcart(refTs);
+    return (e&&e.kcal>0)?e.kcal:0;
+  }catch(e){ return 0; }
+}
+function calcTDEE(refTs){return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra()+calcPasExtra(refTs));}
 
 /* 🏋️ LE NIVEAU D'ACTIVITÉ CONTIENT DÉJÀ L'ENTRAÎNEMENT — et il ne se mettait JAMAIS à jour
    (21/08/2026). Michel : « bon la nutrition lol ? ».

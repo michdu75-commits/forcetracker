@@ -6,7 +6,47 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1067`.
+- **Version en ligne (live) :** `ft-v1071`.
+- 🚶📈 **LA COURBE DES PAS DANS PROGRÈS → POIDS** (ft-v1071). Michel, 10 min après ft-v1070 :
+  *« les pas vont s'afficher où ? »*. ⛔⛔ **La réponse honnête était NULLE PART** — le surplus
+  n'apparaissait qu'en petit sous le TDEE, les jours de grosse marche ; son nombre de pas nulle
+  part. *L'app recevait la donnée, s'en servait, la donnait à Milo, et ne la lui montrait jamais.*
+  ⛔⛔ **Piège évité en lisant le code AVANT de coder** : `renderWeightTab` sort par un `return`
+  sous 2 pesées → accrochée en bas, la carte n'apparaîtrait **jamais** chez qui ne se pèse pas.
+  Elle se rend **en premier**, et un témoin le fige.
+  ⛔ **Le trait vert est SON habitude, pas un objectif** : pas de « 10 000 pas » que personne n'a
+  choisi (Vision · R29). Les jours sous la base sont **gris**, jamais rouges (R24).
+  ⭐ R13 : `_sleepChartHtml` transposé · R2 : `_pasEcart` reste le seul propriétaire du surplus.
+- 🚶⭐⭐ **LES PAS COMPTENT, SANS JAMAIS COMPTER DEUX FOIS** (ft-v1070). Michel : *« attention il
+  faut que ça soit cohérent — la montre compte aussi les pas si on fait du tapis »*.
+  ⛔⛔ **Il a nommé le piège de ft-v949 avant qu'on le trouve, et il est plus large que le tapis** :
+  `activityLevel` (« Modéré 3-4j ») contient aussi la **marche ordinaire**. Mesuré : avec les pas
+  bruts, une journée à 6 100 pas ajoutait **197 kcal qui n'existent pas, tous les jours**.
+  ⭐⭐ **D'où le SURPLUS sur sa propre base** (médiane 30 j · min 7 j · seuil 1 500 · borné 500 kcal) :
+  la rando ressort (+9 000 pas → ~290 kcal), le tapis habituel **est dans la base** donc surplus nul.
+  ⭐ Un seul propriétaire `_pasEcart` (tracking.js), lu par le TDEE, l'écran Nutrition et Milo (**R2**).
+  ⛔ Milo reçoit le surplus **et** l'interdiction d'inventer l'activité (*« des pas ne disent pas ce
+  qui a été fait »*).
+  ⚠️ **La moitié qui manque est écrite** : on VOIT la dépense, on ne peut toujours pas ENREGISTRER
+  la randonnée (le cardio est accroché à `S.wkt`). → `IDEES-FUTURES.md`.
+- 😴⭐⭐ **LE SOMMEIL MESURÉ ATTEINT ENFIN LE SCORE ET MILO** (ft-v1069). Michel : *« ah oui les pas
+  et le sommeil ça c'est hyper important »*.
+  ⛔⛔ **Le défaut était mesuré et écrit depuis 11 jours, dans `Code.js`** : la saisie manuelle
+  **aplatit les mauvaises semaines** (r = **−0,96** ; 6 h 43 déclaré contre **5 h 38** réel du 6 au
+  12/08). Or `S.sleepLog` est la base du score de récup **et** part chez Milo → *le score était le
+  plus optimiste exactement quand la fatigue comptait*. La donnée arrivait depuis **ft-v916** et
+  **rien ne la lisait** (seul `rhr` était exploité — **R5**).
+  ⭐⭐ **Décision de Michel** : *« la montre gagne, ET l'app le dit »* (**R32**). Un seul
+  propriétaire (`_nuit`/`_nuitsRecentes`) lu par le score, les tuiles, la carte, le registre et
+  Milo (**R2**). ⛔ La mesure ne gagne que sur la **durée** — la **qualité** reste celle de la
+  personne, jamais dérivée.
+  ⛔⛔ **Piège évité, chiffré** : `e.quality||2` faisait valoir « Moyen » à une qualité inconnue →
+  8 h mesurées seraient tombées à **72 au lieu de 90+**. Une nuit sans qualité est notée sur sa
+  **seule durée** (**R29**).
+  🚶 **Les pas ne sont PAS dans cette version, exprès.** Michel a donné leurs 2 usages et la
+  contrainte : *« la montre compte aussi les pas si on fait du tapis »* — le double comptage de
+  **ft-v949**, qu'il a nommé avant qu'on le trouve. Tout est écrit dans `IDEES-FUTURES.md`.
+  **⏭️ PROCHAINE ÉTAPE si Michel donne le go.**
 - ⚖️⭐⭐ **UN SEUL PROPRIÉTAIRE DE « COMBIEN J'EN AI PRIS ? »** (ft-v1068). Michel : *« il faut
   qu'il y ait une cohérence quand on change la dose, peu importe le produit — même s'il faut
   qu'on crée un algorithme exprès »*. ⭐⭐ **L'algorithme existait déjà, QUATRE fois** :
