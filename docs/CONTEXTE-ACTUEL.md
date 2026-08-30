@@ -18,6 +18,14 @@
   l'erreur se figeait***. Mesuré sur son étiquette (116,6 kcal / 26,4 g pour 30 g) : réf 30 g,
   il tape 40 (156 kcal, juste), un geste redessine, `base` devient 156 avec `q` toujours à 30 —
   et 40 g affiche **208 / 47**, *exactement sa capture*, **1,33× l'étiquette** = 40/30.
+  ⚠️⚠️ **CORRECTION LE JOUR MÊME — j'ai sur-affirmé la cause.** La mesure établit que sa `base`
+  valait **156 / 35** (les « 16 / 4 » du champ vidé ne sortent que de là). ⛔ **Mais DEUX
+  histoires donnent cette base et le même écran** : ① l'IA estimait juste (117/26) et mon bug l'a
+  désappairée ; ② **l'IA a directement estimé ~156/35**, soit une dose de **40 g**. *Les captures
+  ne les départagent pas.* ⭐ Son écran dit *« Référence : 30 g (que tu as indiqué) »* → l'IA n'a
+  renvoyé aucun poids exploitable, donc `base` est l'estimation **brute** du modèle : ② est le
+  plus probable. 👉 **Le correctif reste justifié** (le bug est réel et reproduit) **mais il ne
+  répond pas à la vraie question de Michel**, qui porte sur la **PROVENANCE** des valeurs.
   ⭐ **L'en-tête de la fonction disait déjà la règle** (*« appelée seulement quand la SOURCE
   change »*) : vraie de l'intention, pas du code. `srcChange` la rend **exécutable**.
   ⚠️⚠️ **Défaut de ft-v1056, donc de moi** — et la leçon y était **déjà écrite** pour
