@@ -6,7 +6,17 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1071`.
+- **Version en ligne (live) :** `ft-v1072`.
+- 🔒⭐⭐ **ON N'ANNONCE QU'À CEUX QUI PEUVENT S'EN SERVIR** (ft-v1072). Michel : *« sauf que les
+  pas ne sont que pour moi attention »*. ⛔⛔ **Le défaut était dans l'ANNONCE, pas le comportement** :
+  `WHATS_NEW`/`NEW_FEATURES` n'avaient **aucun filtre par personne** → les pop-ups **v64** (sommeil
+  mesuré) et **v65** (pas) partaient chez des testeurs **sans raccourci iOS**. ⭐ Le code était déjà
+  correct (carte masquée, TDEE inchangé) — *ce n'est pas la fonctionnalité qui débordait, c'est sa
+  publicité.* ⭐⭐ **Défaut DOUBLE, trouvé en cherchant la jumelle (R8)** : ft-v1069 avait le même.
+  👉 Prédicat optionnel **`si`** résolu par `_featSi`, seul propriétaire (R2), 8 lecteurs redirigés.
+  ⛔ Sans `si`, comportement **strictement** inchangé (121 entrées).
+  ⛔⛔ **Piège du marqueur « vu »** : `ft4_wn_seen` est un **plafond numérique** — il aurait enterré
+  une conditionnelle jamais affichée. Les conditionnelles se suivent **par id** (`ft4_wn_cond`).
 - 🍝 **CARNET DE MESURES CRU/CUIT ouvert** (`docs/MESURES-CRU-CUIT.md`, 30/08) — ⛔ **aucun code,
   aucune version** : c'est une décision produit en cours d'instruction, pas une livraison.
   Michel a mesuré sa propre assiette de bout en bout : **392 · 381 · 368 · 325 g** pour une valeur

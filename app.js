@@ -5405,10 +5405,27 @@ function _whatsNewSeen(){
   }catch(e){}
   return 0;
 }
+/* 🔒 LES ENTRÉES CONDITIONNELLES SE SUIVENT PAR ID, PAS PAR NUMÉRO (ft-v1072).
+   ⚠️⚠️ LE PIÈGE, ET IL EST SUBTIL : `ft4_wn_seen` est un **plafond numérique** — le fermer
+   marque vues TOUTES les entrées jusqu'à `WHATS_NEW_MAX`. Une entrée conditionnelle **jamais
+   affichée** (parce que la personne n'avait pas encore de montre) serait donc **enterrée pour
+   toujours** : le jour où elle branche son raccourci, elle ne verrait jamais l'annonce.
+   👉 Les conditionnelles sont donc suivies **une par une**, comme les points rouges de
+   `NEW_FEATURES` — le plafond ne les concerne pas. */
+function _wnCondVues(){
+  try{ var v=JSON.parse(localStorage.getItem('ft4_wn_cond')||'[]'); return Array.isArray(v)?v:[]; }
+  catch(e){ return []; }
+}
 function _whatsNewUnseen(){
   if(typeof WHATS_NEW==='undefined') return [];
   var seen=_whatsNewSeen();
-  var list=WHATS_NEW.filter(function(f){return f.v>seen;});
+  var cond=_wnCondVues();
+  var list=WHATS_NEW.filter(function(f){
+    /* ⛔ « cette personne peut-elle s'en servir ? » — même propriétaire que les points rouges */
+    if(typeof _featSi==='function' && !_featSi(f)) return false;
+    if(f.si) return cond.indexOf(f.v)<0;          // conditionnelle : suivie par son numéro à elle
+    return f.v>seen;                              // ordinaire : le plafond, comme avant
+  });
   if(typeof WHATS_NEW_SHOW_MAX==='number') list=list.slice(0,WHATS_NEW_SHOW_MAX);
   return list;
 }
@@ -5480,7 +5497,15 @@ function _renderWhatsNew(){
   var next=document.getElementById('wn-next');
   if(next) next.textContent=(_wnIdx===_wnItems.length-1)?(_wnHistory?'Fermer':"C'est parti 💪"):'Suivant →';
 }
-function _whatsNewMarkSeen(){try{localStorage.setItem('ft4_wn_seen',String(typeof WHATS_NEW_MAX==='number'?WHATS_NEW_MAX:0));localStorage.setItem('ft4_whatsnew_v2','1');}catch(e){}}
+function _whatsNewMarkSeen(){try{
+  localStorage.setItem('ft4_wn_seen',String(typeof WHATS_NEW_MAX==='number'?WHATS_NEW_MAX:0));
+  localStorage.setItem('ft4_whatsnew_v2','1');
+  /* ⛔ ON NE MARQUE QUE LES CONDITIONNELLES RÉELLEMENT MONTRÉES (`_wnItems`), jamais toutes :
+     sinon le plafond reviendrait par la fenêtre et enterrerait celles qu'on vient d'épargner. */
+  var vues=_wnCondVues();
+  (_wnItems||[]).forEach(function(f){ if(f&&f.si&&vues.indexOf(f.v)<0) vues.push(f.v); });
+  localStorage.setItem('ft4_wn_cond',JSON.stringify(vues));
+}catch(e){}}
 function closeWhatsNew(){
   if(!_wnHistory)_whatsNewMarkSeen();   // historique = simple consultation, aucun marqueur
   _wnHistory=false;

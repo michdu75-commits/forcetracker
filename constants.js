@@ -433,21 +433,45 @@ const DISC_CADRE={
   }
 };
 
+/* 🔒 LES ANNONCES CONDITIONNELLES — « ne l'annonce qu'à ceux qui peuvent s'en servir »
+   (30/08/2026, ft-v1072). Michel, en voyant partir la pop-up des pas : *« sauf que les pas ne
+   sont que pour moi attention »*.
+
+   ⛔⛔ IL AVAIT RAISON, ET LE DÉFAUT ÉTAIT DANS L'ANNONCE, PAS DANS LE COMPORTEMENT. Mesuré :
+   `WHATS_NEW` et `NEW_FEATURES` n'avaient **aucun filtre par personne** — seulement « déjà vu ».
+   Le sommeil mesuré (v64) et les pas (v65) exigent un **raccourci iOS que seul Michel a
+   installé** : Christophe, Eline, Emma et Tatiana recevaient donc une pop-up et des points
+   rouges pour une fonctionnalité qu'ils ne peuvent pas avoir. ⭐ Le CODE, lui, était déjà
+   correct (carte masquée, aucune ligne sous le TDEE, TDEE inchangé) — *ce n'est pas la
+   fonctionnalité qui débordait, c'est sa publicité*.
+
+   👉 UN PRÉDICAT OPTIONNEL `si`. Sans lui, une entrée se comporte exactement comme avant
+   (rétrocompatible, comme `refTs` en ft-v1017). Avec, elle n'apparaît que le jour où la
+   personne peut vraiment s'en servir — *l'annonce attend la donnée au lieu de la précéder*.
+   ⛔ Et c'est un NOM, pas une fonction : ces tableaux partent dans le cloud et sont relus par
+   des outils ; une fonction n'y survivrait pas. Le nom est résolu par `_featSi` (screens.js),
+   seul propriétaire de « cette personne peut-elle s'en servir ? » (R2). */
+const FEAT_SI = {
+  /* ⌚ a-t-on DÉJÀ reçu quelque chose de la montre ? On ne demande pas « as-tu une montre »
+     (l'app ne le sait pas), on regarde si la donnée est arrivée — c'est le seul fait vérifiable. */
+  montreSommeil: () => { try{ return ((S&&S.healthDaily)||[]).some(x=>x&&x.sleep>0); }catch(e){ return false; } },
+  montrePas:     () => { try{ return ((S&&S.healthDaily)||[]).some(x=>x&&x.steps>0); }catch(e){ return false; } }
+};
 const NEW_FEATURES=[
   /* 🚶 PAS DE POP-UP POUR CELLE-CI (règle d'or #11), et c'est argumenté : ft-v1070 vient
      d'annoncer que les pas comptent (`WHATS_NEW` v65). Une 2ᵉ pop-up le lendemain pour dire
      « et voilà où les voir » serait du bruit — *la pop-up ANNONCE, l'aide EXPLIQUE* (R25).
      ⛔ Et on ne RÉÉCRIT pas la v65 : réécrire une annonce datée falsifie ce qui a été annoncé
      ce jour-là. Rien ne se déplace ici, rien à faire : une carte s'ajoute. */
-  {id:'pas-courbe', screen:'progress', desc:'\u{1F6B6} <b>Progr\u00e8s \u2192 Poids</b> : une carte <b>\u00ab Tes pas \u00bb</b> montre tes pas du jour, et d\u00e9pli\u00e9e, ta <b>courbe sur 7 ou 30 jours</b>. \u2b50 Le <b>trait vert</b> est <b>ton habitude</b> \u2014 pas un objectif de 10 000 pas que personne n\'a choisi. Les <b>barres vertes</b> sont les journ\u00e9es qui la d\u00e9passent : ce sont exactement celles qui s\'ajoutent \u00e0 ta d\u00e9pense dans l\'onglet Nutrition. \u26d4 Si tu n\'envoies pas tes pas depuis Sant\u00e9, <b>la carte ne s\'affiche pas du tout</b>. \u26a0\uFE0F Et elle dit ce qu\'elle ignore : des pas ne disent pas <b>ce que</b> tu as fait.'},
+  {id:'pas-courbe', screen:'progress', si:'montrePas', desc:'\u{1F6B6} <b>Progr\u00e8s \u2192 Poids</b> : une carte <b>\u00ab Tes pas \u00bb</b> montre tes pas du jour, et d\u00e9pli\u00e9e, ta <b>courbe sur 7 ou 30 jours</b>. \u2b50 Le <b>trait vert</b> est <b>ton habitude</b> \u2014 pas un objectif de 10 000 pas que personne n\'a choisi. Les <b>barres vertes</b> sont les journ\u00e9es qui la d\u00e9passent : ce sont exactement celles qui s\'ajoutent \u00e0 ta d\u00e9pense dans l\'onglet Nutrition. \u26d4 Si tu n\'envoies pas tes pas depuis Sant\u00e9, <b>la carte ne s\'affiche pas du tout</b>. \u26a0\uFE0F Et elle dit ce qu\'elle ignore : des pas ne disent pas <b>ce que</b> tu as fait.'},
   /* 🚶 CELLE-CI A SA POP-UP (v65) : un chiffre sur lequel la personne AGIT — ses calories du
      jour — peut maintenant changer d'un jour à l'autre. Sans un mot, ça se lit comme un bug. */
-  {id:'pas-surplus', screen:'nutrition', desc:'\u{1F6B6} Si ta montre envoie tes <b>pas</b> \u00e0 Sant\u00e9, une grosse journ\u00e9e de marche compte enfin dans ta d\u00e9pense. \u2b50\u2b50 <b>Mais seulement ce qui D\u00c9PASSE ta journ\u00e9e habituelle</b>, jamais le total \u2014 et c\'est tout ce qui rend le chiffre juste : ton niveau d\'activit\u00e9 (\u00ab Mod\u00e9r\u00e9 3-4j \u00bb\u2026) contient <b>d\u00e9j\u00e0</b> la marche d\'une journ\u00e9e normale. Ajouter tes pas bruts te compterait deux fois la m\u00eame marche, <b>tous les jours</b>. \u2b50 <b>Exemple</b> : tu fais 6 000 pas d\'habitude, tu pars en rando \u00e0 15 000 \u2192 les <b>9 000 pas en plus</b> valent ~290 kcal, ajout\u00e9es \u00e0 ta d\u00e9pense du jour. Un tapis que tu fais toutes les semaines est <b>dans</b> ton habitude : rien n\'est compt\u00e9 deux fois. \u26d4 L\'app <b>se tait</b> tant qu\'elle n\'a pas 7 jours de mesures (sans habitude connue, il n\'y a pas de \u00ab en plus \u00bb), une journ\u00e9e calme ne <b>retire</b> rien, et le bonus est <b>born\u00e9 \u00e0 500 kcal</b> \u2014 un capteur qui d\u00e9raille ne doit pas faire exploser tes macros. \u26a0\uFE0F C\'est une <b>estimation</b> (~1 300 pas au km), pas une mesure.'},
+  {id:'pas-surplus', screen:'nutrition', si:'montrePas', desc:'\u{1F6B6} Si ta montre envoie tes <b>pas</b> \u00e0 Sant\u00e9, une grosse journ\u00e9e de marche compte enfin dans ta d\u00e9pense. \u2b50\u2b50 <b>Mais seulement ce qui D\u00c9PASSE ta journ\u00e9e habituelle</b>, jamais le total \u2014 et c\'est tout ce qui rend le chiffre juste : ton niveau d\'activit\u00e9 (\u00ab Mod\u00e9r\u00e9 3-4j \u00bb\u2026) contient <b>d\u00e9j\u00e0</b> la marche d\'une journ\u00e9e normale. Ajouter tes pas bruts te compterait deux fois la m\u00eame marche, <b>tous les jours</b>. \u2b50 <b>Exemple</b> : tu fais 6 000 pas d\'habitude, tu pars en rando \u00e0 15 000 \u2192 les <b>9 000 pas en plus</b> valent ~290 kcal, ajout\u00e9es \u00e0 ta d\u00e9pense du jour. Un tapis que tu fais toutes les semaines est <b>dans</b> ton habitude : rien n\'est compt\u00e9 deux fois. \u26d4 L\'app <b>se tait</b> tant qu\'elle n\'a pas 7 jours de mesures (sans habitude connue, il n\'y a pas de \u00ab en plus \u00bb), une journ\u00e9e calme ne <b>retire</b> rien, et le bonus est <b>born\u00e9 \u00e0 500 kcal</b> \u2014 un capteur qui d\u00e9raille ne doit pas faire exploser tes macros. \u26a0\uFE0F C\'est une <b>estimation</b> (~1 300 pas au km), pas une mesure.'},
   /* 😴 CELLE-CI A SA POP-UP (v64), et c'est le cas « UN REPÈRE A BOUGÉ » à l'état pur : le
      chiffre de sommeil affiché peut désormais DIFFÉRER de celui qu'on a saisi soi-même, et le
      score de récup peut bouger avec lui. Sans un mot, ça se lit comme un bug — ou pire, comme
      si l'app avait perdu ce qu'on lui avait donné. */
-  {id:'sommeil-mesure', screen:'home', desc:'\u{1F634} Si ta montre envoie ton sommeil \u00e0 Sant\u00e9 (Garmin, Apple Watch\u2026), l\'app prend maintenant <b>la dur\u00e9e mesur\u00e9e</b> plut\u00f4t que celle que tu notes \u2014 et elle te le <b>dit</b> : \u00ab Mesur\u00e9 par ta montre \u00bb, avec un rappel de ce que tu avais not\u00e9. \u2b50 <b>Pourquoi</b> : compar\u00e9 sur 10 semaines, la saisie \u00e0 la main est bonne en moyenne mais elle <b>lisse les mauvaises semaines</b> \u2014 une semaine \u00e0 5 h 38 r\u00e9elles \u00e9tait not\u00e9e 6 h 43. Ton score de r\u00e9cup\u00e9ration \u00e9tait donc le plus optimiste <b>exactement quand tu \u00e9tais le plus fatigu\u00e9</b>, et Milo aussi. \u26d4 <b>Ta saisie n\'est jamais effac\u00e9e</b> : elle reste visible \u00e0 c\u00f4t\u00e9, et c\'est toujours <b>toi</b> qui donnes la <b>qualit\u00e9</b> de ta nuit \u2014 une montre mesure une dur\u00e9e, elle ne sait pas comment tu t\'es senti. \u26a0\uFE0F Si tu n\'envoies pas ton sommeil depuis Sant\u00e9, <b>rien ne change pour toi</b>.'},
+  {id:'sommeil-mesure', screen:'home', si:'montreSommeil', desc:'\u{1F634} Si ta montre envoie ton sommeil \u00e0 Sant\u00e9 (Garmin, Apple Watch\u2026), l\'app prend maintenant <b>la dur\u00e9e mesur\u00e9e</b> plut\u00f4t que celle que tu notes \u2014 et elle te le <b>dit</b> : \u00ab Mesur\u00e9 par ta montre \u00bb, avec un rappel de ce que tu avais not\u00e9. \u2b50 <b>Pourquoi</b> : compar\u00e9 sur 10 semaines, la saisie \u00e0 la main est bonne en moyenne mais elle <b>lisse les mauvaises semaines</b> \u2014 une semaine \u00e0 5 h 38 r\u00e9elles \u00e9tait not\u00e9e 6 h 43. Ton score de r\u00e9cup\u00e9ration \u00e9tait donc le plus optimiste <b>exactement quand tu \u00e9tais le plus fatigu\u00e9</b>, et Milo aussi. \u26d4 <b>Ta saisie n\'est jamais effac\u00e9e</b> : elle reste visible \u00e0 c\u00f4t\u00e9, et c\'est toujours <b>toi</b> qui donnes la <b>qualit\u00e9</b> de ta nuit \u2014 une montre mesure une dur\u00e9e, elle ne sait pas comment tu t\'es senti. \u26a0\uFE0F Si tu n\'envoies pas ton sommeil depuis Sant\u00e9, <b>rien ne change pour toi</b>.'},
   /* 👎 PAS DE POP-UP `WHATS_NEW` POUR CELLE-CI (règle d'or #11), et c'est un cas limite
      qu'il faut argumenter plutôt que subir. Un bouton APPARAÎT sous chaque réponse de Milo,
      donc un repère bouge — mais il ne DÉPLACE rien, ne cache rien, et s'explique en un tap :
@@ -617,7 +641,7 @@ const WHATS_NEW=[
      qui change sans explication se lit comme un bug, ou pire, comme une erreur de l'app.*
      ⛔ BORNÉE À L'ESSENTIEL (R25) : ce qui change, et le fait que ce soit le SURPLUS. Le reste —
      les 7 jours de base, la borne, le jour creux qui ne retire rien — vit dans l'aide. */
-  {v:65, ic:'🚶', t:'Tes grosses journées de marche comptent', d:'Si ta montre envoie tes pas \u00e0 Sant\u00e9, une randonn\u00e9e ou une longue journ\u00e9e debout <b>s\'ajoute enfin</b> \u00e0 ta d\u00e9pense du jour. \u26d4 <b>Seulement ce qui d\u00e9passe ton habitude</b>, jamais le total : ton niveau d\'activit\u00e9 contient d\u00e9j\u00e0 la marche d\'une journ\u00e9e normale, et te la compter deux fois fausserait tes macros tous les jours. Tu fais 6 000 pas d\'habitude et 15 000 aujourd\'hui \u2192 <b>+290 kcal</b>, expliqu\u00e9es sous ton TDEE.'},
+  {v:65, si:'montrePas', ic:'🚶', t:'Tes grosses journées de marche comptent', d:'Si ta montre envoie tes pas \u00e0 Sant\u00e9, une randonn\u00e9e ou une longue journ\u00e9e debout <b>s\'ajoute enfin</b> \u00e0 ta d\u00e9pense du jour. \u26d4 <b>Seulement ce qui d\u00e9passe ton habitude</b>, jamais le total : ton niveau d\'activit\u00e9 contient d\u00e9j\u00e0 la marche d\'une journ\u00e9e normale, et te la compter deux fois fausserait tes macros tous les jours. Tu fais 6 000 pas d\'habitude et 15 000 aujourd\'hui \u2192 <b>+290 kcal</b>, expliqu\u00e9es sous ton TDEE.'},
   /* 😴 ELLE SE MÉRITE, ET C'EST LE CAS « UN REPÈRE A BOUGÉ » (règle d'or #11).
      Le nombre d'heures affiché sur l'Accueil peut maintenant être DIFFÉRENT de celui qu'on a
      tapé soi-même, et le score de récup peut bouger avec. *Un chiffre qu'on a donné et qui
@@ -625,7 +649,7 @@ const WHATS_NEW=[
      ⛔ BORNÉE À L'ESSENTIEL (R25) : ce qui change, pourquoi, et le fait que la saisie reste.
      Le détail — la qualité toujours donnée par la personne, ce que Milo en fait, ce qui se
      passe sans montre — vit dans l'aide `?` et l'aide détaillée, pas ici. */
-  {v:64, ic:'😴', t:'Ton sommeil vient de ta montre', d:'Si ta montre envoie ton sommeil \u00e0 Sant\u00e9, l\'app utilise d\u00e9sormais <b>la dur\u00e9e mesur\u00e9e</b> au lieu de celle que tu notes \u2014 et elle l\'affiche clairement. <b>Pourquoi</b> : la saisie \u00e0 la main lisse les mauvaises semaines, donc ton score de r\u00e9cup\u00e9ration \u00e9tait trop optimiste pile quand tu \u00e9tais fatigu\u00e9. <b>Ta saisie reste</b>, affich\u00e9e \u00e0 c\u00f4t\u00e9 \u2014 et c\'est toujours toi qui dis si la nuit \u00e9tait bonne.'},
+  {v:64, si:'montreSommeil', ic:'😴', t:'Ton sommeil vient de ta montre', d:'Si ta montre envoie ton sommeil \u00e0 Sant\u00e9, l\'app utilise d\u00e9sormais <b>la dur\u00e9e mesur\u00e9e</b> au lieu de celle que tu notes \u2014 et elle l\'affiche clairement. <b>Pourquoi</b> : la saisie \u00e0 la main lisse les mauvaises semaines, donc ton score de r\u00e9cup\u00e9ration \u00e9tait trop optimiste pile quand tu \u00e9tais fatigu\u00e9. <b>Ta saisie reste</b>, affich\u00e9e \u00e0 c\u00f4t\u00e9 \u2014 et c\'est toujours toi qui dis si la nuit \u00e9tait bonne.'},
   /* ⚡ ELLE SE MÉRITE, ET C'EST LES DEUX CAS À LA FOIS (règle d'or #11).
      ① UN REPÈRE A BOUGÉ : le bouton rouge que tout le monde connaît porte maintenant une
         QUESTION au-dessus. Il est au même endroit et coûte le même tap — mais sans un mot,

@@ -19629,6 +19629,115 @@ console.log('\n-- CLXXVI. La courbe des pas dans Progrès (ft-v1071) --');
   }
 }
 
+/* == BLOC CLXXVII - ON N'ANNONCE QU'A CEUX QUI PEUVENT S'EN SERVIR (ft-v1072) ==
+   Michel, en voyant partir la pop-up des pas : « sauf que les pas ne sont que pour moi
+   attention ».
+
+   ⛔⛔ IL AVAIT RAISON, ET LE DEFAUT ETAIT DANS L'ANNONCE, PAS DANS LE COMPORTEMENT. `WHATS_NEW`
+   et `NEW_FEATURES` n'avaient AUCUN filtre par personne — seulement « deja vu ». Le sommeil
+   mesure (v64) et les pas (v65) exigent un raccourci iOS que seul Michel a installe.
+   ⭐ Le CODE etait deja correct (carte masquee, aucune ligne sous le TDEE) : *ce n'est pas la
+   fonctionnalite qui debordait, c'est sa publicite.*
+
+   ⛔⛔ LE TEMOIN ④ PORTE LE PIEGE LE PLUS SUBTIL : `ft4_wn_seen` est un PLAFOND NUMERIQUE.
+   Fermer une pop-up ordinaire marquait vues TOUTES les entrees jusqu'au maximum — donc une
+   conditionnelle jamais affichee aurait ete ENTERREE POUR TOUJOURS. */
+console.log('\n-- CLXXVII. On n\'annonce qu\'à ceux qui peuvent s\'en servir (ft-v1072) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const A=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const J=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+    const o={};
+    const vus=()=>_whatsNewUnseen().map(f=>f.v);
+    const feats=()=>_featVisibles().map(f=>f.id);
+
+    /* ⛔ le temoin ne mesure quelque chose que si les entrees EXISTENT */
+    o.existent={
+      popups:(typeof WHATS_NEW!=='undefined'?WHATS_NEW:[]).filter(w=>w&&(w.v===64||w.v===65)).length,
+      feats:(typeof NEW_FEATURES!=='undefined'?NEW_FEATURES:[])
+              .filter(f=>f&&['sommeil-mesure','pas-surplus','pas-courbe'].includes(f.id)).length
+    };
+
+    /* ① SANS MONTRE : ni pop-up, ni point rouge pour ces 3 features */
+    S.healthDaily=[]; S.seenFeatures=[];
+    try{ localStorage.removeItem('ft4_wn_seen'); localStorage.removeItem('ft4_wn_cond'); }catch(e){}
+    persist();
+    o.sansMontre={popups:vus().filter(v=>v===64||v===65),
+                  feats:feats().filter(id=>['sommeil-mesure','pas-surplus','pas-courbe'].includes(id))};
+
+    /* ② AVEC LA MONTRE : elles apparaissent */
+    S.healthDaily=[{date:J(0),sleep:5.63,steps:15000}]; persist();
+    o.avecMontre={popups:vus().filter(v=>v===64||v===65),
+                  feats:feats().filter(id=>['sommeil-mesure','pas-surplus','pas-courbe'].includes(id))};
+
+    /* ③ FINEMENT : le sommeil seul n'ouvre PAS l'annonce des pas, et reciproquement */
+    S.healthDaily=[{date:J(0),sleep:5.63}]; persist();
+    o.sommeilSeul={popups:vus().filter(v=>v===64||v===65),
+                   feats:feats().filter(id=>['sommeil-mesure','pas-surplus','pas-courbe'].includes(id))};
+
+    /* ④⛔⛔ LE PIEGE DU PLAFOND : sans montre, on ferme une pop-up ordinaire -> les
+       conditionnelles ne doivent PAS etre enterrees. */
+    S.healthDaily=[]; persist();
+    try{ localStorage.removeItem('ft4_wn_cond'); }catch(e){}
+    _wnItems=[]; _whatsNewMarkSeen();                 // simule la fermeture d'un « Quoi de neuf »
+    S.healthDaily=[{date:J(0),sleep:5.63,steps:15000}]; persist();
+    o.apresFermeture=vus().filter(v=>v===64||v===65);
+
+    /* ⑤ ET UNE FOIS REELLEMENT MONTREE, elle ne revient plus */
+    _wnItems=WHATS_NEW.filter(f=>f.v===64||f.v===65); _whatsNewMarkSeen();
+    o.apresAvoirVu=vus().filter(v=>v===64||v===65);
+
+    /* ⑥ RETROCOMPAT — se mesure SANS MONTRE. Mon 1er jet le mesurait APRES en avoir posé une :
+       les 3 conditionnées y étaient légitimement visibles, donc il comparait 124 à 124 et ne
+       mesurait rien. *Un témoin doit CONSTRUIRE l'état qu'il affirme.* */
+    S.healthDaily=[]; persist();
+    o.retro={sansSi:(typeof WHATS_NEW!=='undefined'?WHATS_NEW:[]).filter(w=>w&&!w.si).length,
+             tousVisibles:_featVisibles().length,
+             totalFeats:(typeof NEW_FEATURES!=='undefined'?NEW_FEATURES:[]).length};
+    /* ⑦ UN NOM INCONNU LAISSE PASSER (un bug muet se subit, un bug visible se corrige) */
+    o.inconnu=_featSi({id:'x', si:'nExistePas'});
+    return o;
+   }catch(e){ return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]}; }
+  });
+  await cx.close();
+
+  if(A.err) t('CLXXVII n\'a pas pu tourner', false, JSON.stringify(A));
+  else{
+    /* ⛔ SANS CELUI-CI, TOUT LE BLOC SERAIT VERT EN NE MESURANT RIEN. */
+    t('⛔ ① les 2 pop-ups et les 3 points rouges concernés existent bien',
+      A.existent.popups===2 && A.existent.feats===3, JSON.stringify(A.existent));
+    /* ⛔⛔ SA REMARQUE, FIGEE : on n'annonce pas une montre a qui n'en a pas. */
+    t('⛔⛔ ② sans montre : AUCUNE pop-up et AUCUN point rouge pour ces features',
+      A.sansMontre.popups.length===0 && A.sansMontre.feats.length===0, JSON.stringify(A.sansMontre));
+    /* ⭐⭐ ET CELUI QUI L'EMPECHE D'ETRE VERT EN N'ANNONCANT PLUS JAMAIS RIEN. */
+    t('⭐⭐ ③ avec la montre : les 2 pop-ups ET les 3 points rouges reviennent',
+      A.avecMontre.popups.length===2 && A.avecMontre.feats.length===3, JSON.stringify(A.avecMontre));
+    t('⭐ ④ le sommeil seul n\'ouvre PAS l\'annonce des pas (chaque condition est distincte)',
+      A.sommeilSeul.popups.join()==='64' && A.sommeilSeul.feats.join()==='sommeil-mesure',
+      JSON.stringify(A.sommeilSeul));
+    /* ⛔⛔ LE PIEGE DU PLAFOND NUMERIQUE — le temoin le plus important du bloc. */
+    t('⛔⛔ ⑤ fermer un « Quoi de neuf » sans montre n\'ENTERRE PAS les conditionnelles',
+      A.apresFermeture.length===2, 'restent annonçables = '+JSON.stringify(A.apresFermeture));
+    t('⛔ ⑥ … mais une fois RÉELLEMENT montrée, elle ne revient plus',
+      A.apresAvoirVu.length===0, JSON.stringify(A.apresAvoirVu));
+    /* ⛔ LE CHANGEMENT NE DOIT RIEN CASSER POUR LES 60+ ENTREES EXISTANTES. */
+    t('⛔ ⑦ RÉTROCOMPAT : toutes les entrées sans `si` restent visibles (sauf les 3 conditionnées)',
+      A.retro.tousVisibles===A.retro.totalFeats-3 && A.retro.sansSi>=50,
+      JSON.stringify(A.retro));
+    /* ⛔ UN BUG MUET SE SUBIT, UN BUG VISIBLE SE CORRIGE. */
+    t('⛔ ⑧ un nom de condition inconnu LAISSE PASSER, il ne cache pas en silence',
+      A.inconnu===true, 'inconnu → '+A.inconnu);
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

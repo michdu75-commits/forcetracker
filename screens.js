@@ -13,13 +13,33 @@ function _closeAllPanels(){
   document.getElementById('drawer')?.classList.remove('open');
   document.getElementById('drawer-backdrop')?.classList.remove('open');
 }
+/* 🔒 « CETTE PERSONNE PEUT-ELLE S'EN SERVIR ? » — le seul propriétaire (ft-v1072, R2).
+   Michel : *« sauf que les pas ne sont que pour moi attention »*. Une annonce qui parle d'un
+   raccourci iOS que la personne n'a pas installé est du bruit : elle cherche une fonctionnalité
+   qu'elle ne peut pas avoir (R24). ⛔ SANS `si`, le comportement est EXACTEMENT celui d'avant —
+   c'est ce qui rend le changement sûr : les 60+ entrées existantes ne bougent pas d'un pixel. */
+function _featSi(f){
+  try{
+    if(!f||!f.si) return true;                    // pas de condition → visible, comme avant
+    const fn=(typeof FEAT_SI!=='undefined')?FEAT_SI[f.si]:null;
+    /* ⚠️ UN NOM INCONNU LAISSE PASSER, il ne cache pas. Une faute de frappe dans `si` doit
+       produire l'ANCIEN comportement (trop d'annonces), jamais un silence que personne ne
+       verrait — un bug visible se corrige, un bug muet se subit. */
+    return fn ? !!fn() : true;
+  }catch(e){ return true; }
+}
+function _featVisibles(){
+  try{ return (typeof NEW_FEATURES!=='undefined'?NEW_FEATURES:[]).filter(_featSi); }
+  catch(e){ return (typeof NEW_FEATURES!=='undefined'?NEW_FEATURES:[]); }
+}
+
 function _markScreenSeen(screen){
   // À l'ouverture d'un écran : on ne marque « vu » QUE les features SANS ancre ni spot.
   // - features ancrées (ex. Profil) : marquées à l'ouverture de leur item précis (menu).
   // - features « spot » (point rouge sur un élément de l'écran) : marquées quand on QUITTE
   //   l'écran (_markSpotSeen) → le point rouge reste visible tout le temps où l'utilisateur
   //   est sur l'écran, puis disparaît à la visite suivante.
-  const unseen=NEW_FEATURES.filter(f=>f.screen===screen&&!f.anchor&&!f.spot&&!(S.seenFeatures||[]).includes(f.id));
+  const unseen=_featVisibles().filter(f=>f.screen===screen&&!f.anchor&&!f.spot&&!(S.seenFeatures||[]).includes(f.id));
   if(!unseen.length)return;
   S.seenFeatures=[...(S.seenFeatures||[]),...unseen.map(f=>f.id)];
   localStorage.setItem('ft4_seen_ft',JSON.stringify(S.seenFeatures));
@@ -27,7 +47,7 @@ function _markScreenSeen(screen){
 }
 // Marque « vues » les features « spot » d'un écran qu'on vient de quitter (le point a été montré).
 function _markSpotSeen(screen){
-  const ids=NEW_FEATURES.filter(f=>f.screen===screen&&f.spot).map(f=>f.id);
+  const ids=_featVisibles().filter(f=>f.screen===screen&&f.spot).map(f=>f.id);
   if(ids.length)_markFeatureSeen.apply(null,ids);
 }
 // Points rouges sur des éléments PRÉCIS d'un écran (onglet Progrès, carte Coach…) →
@@ -36,7 +56,7 @@ function _updateScreenDots(screen){
   const seen=S.seenFeatures||[];
   document.querySelectorAll('.feat-dot').forEach(d=>d.remove());
   const done={};
-  NEW_FEATURES.forEach(f=>{
+  _featVisibles().forEach(f=>{
     if(f.screen!==screen||!f.spot||seen.includes(f.id)||done[f.spot])return;
     const el=document.getElementById(f.spot);if(!el)return;
     done[f.spot]=true;
@@ -57,7 +77,7 @@ function _markFeatureSeen(){
 }
 // Marque vues toutes les features ancrées à un élément (ex. ouvrir la carte Profil)
 function _markAnchorSeen(anchorId){
-  const ids=NEW_FEATURES.filter(f=>f.anchor===anchorId).map(f=>f.id);
+  const ids=_featVisibles().filter(f=>f.anchor===anchorId).map(f=>f.id);
   if(ids.length)_markFeatureSeen.apply(null,ids);
 }
 function _updateNewBadges(){
@@ -69,8 +89,8 @@ function _updateNewBadges(){
     // (features déjà dans `menuAck`). Les points inline des lignes restent pour montrer OÙ.
     // Les autres onglets gardent le comportement d'origine (point tant qu'une feature de l'écran est non vue).
     const hasNew = sc==='setup'
-      ? NEW_FEATURES.some(f=>f.screen==='setup'&&!seen.includes(f.id)&&ack.indexOf(f.id)<0)
-      : NEW_FEATURES.some(f=>f.screen===sc&&!seen.includes(f.id));
+      ? _featVisibles().some(f=>f.screen==='setup'&&!seen.includes(f.id)&&ack.indexOf(f.id)<0)
+      : _featVisibles().some(f=>f.screen===sc&&!seen.includes(f.id));
     let dot=btn.querySelector('.new-dot');
     if(hasNew&&!dot){dot=document.createElement('span');dot.className='new-dot';btn.appendChild(dot);}
     else if(!hasNew&&dot)dot.remove();
@@ -80,7 +100,7 @@ function _updateNewBadges(){
 // (sans marquer les features « vues » : les points sur les lignes restent pour guider).
 function _ackMenu(){
   const seen=S.seenFeatures||[];
-  const cur=NEW_FEATURES.filter(f=>f.screen==='setup'&&!seen.includes(f.id)).map(f=>f.id);
+  const cur=_featVisibles().filter(f=>f.screen==='setup'&&!seen.includes(f.id)).map(f=>f.id);
   const ack=S.menuAck||[];
   const add=cur.filter(id=>ack.indexOf(id)<0);
   if(add.length){S.menuAck=[...ack,...add];try{localStorage.setItem('ft4_menu_ack',JSON.stringify(S.menuAck));}catch(e){}}
@@ -91,7 +111,7 @@ function _ackMenu(){
 function _updateMenuDots(){
   const seen=S.seenFeatures||[];
   const anchors={};
-  NEW_FEATURES.forEach(f=>{if(f.anchor&&!seen.includes(f.id))anchors[f.anchor]=true;});
+  _featVisibles().forEach(f=>{if(f.anchor&&!seen.includes(f.id))anchors[f.anchor]=true;});
   // Retire d'abord tous les points existants (reset)
   document.querySelectorAll('.menu-new-dot').forEach(d=>d.remove());
   Object.keys(anchors).forEach(aid=>{
