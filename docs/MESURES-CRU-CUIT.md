@@ -32,6 +32,37 @@ libre, sans aucune cuisson — mesuré). Une pesée sans heure ne se compare à 
 ⛔ **Ce qui n'a PAS besoin d'être parfait** : la vitesse d'évaporation. L'eau ne pèse aucune calorie.
 Le chronomètre à la seconde sert à tracer une **courbe**, pas à corriger un chiffre nutritionnel.
 
+### ⚖️ La balance — soulevé par Michel : *« pas sûr que toutes les balances pèsent la même chose »*
+
+Il a raison, et le problème mord **exactement** là où ça compte.
+
+⭐ **CE QUI EST IMMUNISÉ, ET C'EST L'ESSENTIEL DE LA SÉRIE** : les pesées successives
+(392 → 381 → 368 → 325) sont des **différences prises sur la même balance**. Un décalage
+systématique — elle pèse 5 g de trop — **s'annule dans une soustraction**. *Les vitesses
+d'évaporation restent justes même avec une balance menteuse.* Idem pour l'ancre : si les 140 g
+crus valent en vrai 138, l'erreur est de 1,4 % et **constante**, donc sans effet sur les comparaisons.
+
+⛔⛔ **CE QUI NE L'EST PAS : L'HUILE.** Le seul chiffre qui porte des calories est aussi celui qui
+est **à la limite de résolution**. Sur une balance au gramme, *« 1 g de résidu »* signifie
+**entre 0,5 et 1,5 g** :
+
+| hypothèse | huile absorbée | kcal |
+|---|---|---|
+| favorable | 8,0 g (94 %) | 72 |
+| **la lecture de Michel** | 7,0 g (88 %) | **63** |
+| défavorable | 6,0 g (80 %) | 54 |
+
+👉 **Le « 87 % » est en réalité « entre 80 et 94 % ».** Sur l'assiette : **562 à 580 kcal** au lieu
+de 572, soit **±1,6 %**. Négligeable pour le suivi — *mais ça veut dire que ce chiffre ne mérite pas
+sa deuxième décimale, et qu'on ne doit pas l'écrire comme s'il la méritait* (**R29**).
+
+**Les trois règles qui en découlent :**
+1. **Une seule balance par série**, et on note laquelle. Coût : zéro.
+2. **Verser PLUS d'huile** — 15 à 20 g au lieu de 8. La résolution devient négligeable devant la
+   quantité, et c'est le seul moyen de faire descendre l'incertitude sur le chiffre qui compte.
+3. **En changeant de balance, la recaler** sur un objet connu : une bouteille d'eau neuve d'1 L
+   pèse 1000 g à quelques grammes près.
+
 ---
 
 ## 🍝 SÉRIE 1 — Coquillettes, 30/08/2026 · ✅ FAITE
@@ -50,6 +81,8 @@ Le chronomètre à la seconde sert à tracer une **courbe**, pas à corriger un 
 → **50 g d'eau partis**, et **7 g d'huile absorbés (87 %)**.
 
 **L'assiette : 509 kcal (les pâtes) + 62 kcal (l'huile) = 572 kcal.**
+⚠️ **À lire comme « 562 à 580 kcal »** : le résidu d'huile (1 g) est à la limite de résolution de la
+balance — voir *« ⚖️ La balance »* dans le protocole. Le 87 % vaut « entre 80 et 94 % ».
 
 ⚠️⚠️ **UNE PRÉDICTION FAUSSE, GARDÉE COMME TELLE** : j'avais annoncé que le film d'huile
 **freinerait** l'évaporation. Mesuré : **10,0 g/min avec huile contre 2,6 à sec — 3,8× plus vite.**
@@ -70,6 +103,8 @@ Même égouttage, même feu, même tout — sinon on mesure autre chose.
 | durée de cuisson | ⬜ |
 | eau salée | ⬜ |
 | durée d'égouttage | ⬜ |
+| **balance utilisée** | ⬜ |
+| huile versée (viser 15-20 g) | ⬜ |
 
 | # | moment | heure | poids | × cru | remarque |
 |---|---|---|---|---|---|

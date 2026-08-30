@@ -7,6 +7,20 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1071`.
+- 🍝 **CARNET DE MESURES CRU/CUIT ouvert** (`docs/MESURES-CRU-CUIT.md`, 30/08) — ⛔ **aucun code,
+  aucune version** : c'est une décision produit en cours d'instruction, pas une livraison.
+  Michel a mesuré sa propre assiette de bout en bout : **392 · 381 · 368 · 325 g** pour une valeur
+  nutritionnelle **constante** (509 kcal, celle des 140 g crus). 👉 *Le poids cuit n'est pas une
+  mesure de ce qu'on mange, c'est une mesure de l'heure qu'il est.*
+  ⛔⛔ **Ce que ça DÉCIDE : on ne construira PAS de conversion cru↔cuit.** Son facteur est **×2,80**
+  quand CIQUAL suppose ×2,18 — le facteur dépend de sa casserole, pas de l'aliment (**R29**).
+  ⭐ **Ce qui reste sur la table, et rien de plus** : un rappel *« pèse cru »* au scan d'un féculent
+  (un code-barres donne les valeurs du produit **sec**, on pèse souvent dans l'assiette → **2,3×
+  trop**). ⛔ Non construit : Michel pèse cru. La question est pour Tatiana, Emma, Christophe —
+  **son arbitrage, pas le mien**.
+  ⚠️ **Deux prédictions de moi dans ce dossier, une déjà fausse** : j'avais annoncé que l'huile
+  freinerait l'évaporation → mesuré **10,0 g/min contre 2,6 à sec, 3,8× plus VITE** (l'huile est un
+  conducteur, pas un couvercle). La seconde — *le débit ralentit-il ?* — est posée comme falsifiable.
 - 🚶📈 **LA COURBE DES PAS DANS PROGRÈS → POIDS** (ft-v1071). Michel, 10 min après ft-v1070 :
   *« les pas vont s'afficher où ? »*. ⛔⛔ **La réponse honnête était NULLE PART** — le surplus
   n'apparaissait qu'en petit sous le TDEE, les jours de grosse marche ; son nombre de pas nulle

@@ -146,6 +146,16 @@ question ne se pose que pour Tatiana, Emma ou Christophe. *Piste la moins chère
 rappel « pèse cru » au scan d'un féculent — pas une conversion.*
 ⛔ **Pas un scénario à promouvoir** : rien ici n'est vérifiable par du code aujourd'hui (l'app ne
 stocke aucun état cru/cuit). C'est une **décision produit**, pas un test.
+⚠️⚠️ **ET MICHEL A TROUVÉ LA LIMITE DE SA PROPRE MESURE** : *« pas sûr que toutes les balances
+pèsent la même chose »*. ⭐ **Les DIFFÉRENCES sont immunisées** (392→381→368→325 sont prises sur la
+même balance : un décalage systématique s'annule dans une soustraction) — donc les vitesses
+d'évaporation tiennent. ⛔⛔ **Mais l'HUILE, non** : le seul chiffre qui porte des calories est aussi
+celui qui est **à la limite de résolution**. Sur une balance au gramme, « 1 g de résidu » vaut
+**0,5 à 1,5 g** → le **87 % est en réalité « 80 à 94 % »**, et l'assiette **562 à 580 kcal**.
+*Le chiffre ne mérite pas sa deuxième décimale, et on ne l'écrit donc pas comme s'il la méritait*
+(**R29**). 👉 Correctif de protocole : **verser 15-20 g d'huile** au lieu de 8 — la résolution
+devient négligeable devant la quantité.
+
 ⭐ **La suite se note dans `docs/MESURES-CRU-CUIT.md`** — carnet ouvert à la demande de Michel
 (*« on va créer un tableau, je vais tout noter, je ferai pareil pour le riz »*) : le protocole, sa
 série de ce soir, et les séries à venir (autre cuisson · une journée au frigo · riz).
