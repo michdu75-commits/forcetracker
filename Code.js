@@ -742,6 +742,11 @@ function _aiQuotaBlock_(email) {
 // factorise plutôt que de coller une 2ᵉ empreinte SHA-256 identique quelque part.
 // ⚠️ REPLI OUVERT (comme `aiCount`) : un jeton absent/faux rend `false`, jamais une erreur —
 // une panne de configuration ne doit jamais couper Milo (règle d'or #3).
+// 🔐 EMPREINTE REGÉNÉRÉE LE 30/08/2026 — Michel était devant son PC, on arme enfin la
+// serrure. L'empreinte du 25/08 était bien là, mais sa clé en clair n'existait NULLE PART
+// (elle ne doit jamais toucher ce dépôt public) : une empreinte ne se remonte pas, donc la
+// seule issue était d'en refaire une paire. La clé a été transmise à Michel dans la
+// conversation, et posée par lui dans `FT_COUNT_TOKEN` chez Cloudflare.
 // 🔐 EMPREINTE REGÉNÉRÉE LE 25/08/2026. La clé posée le 11/08 chez Cloudflare avait été
 // PERDUE — et une empreinte ne se remonte pas, donc le plafond de dépense est resté désarmé
 // depuis. Nouvelle paire : la clé en clair vit UNIQUEMENT dans la variable `FT_COUNT_TOKEN`
@@ -750,7 +755,7 @@ function _aiQuotaBlock_(email) {
 // en silence — c'est exactement ce qui s'est passé le 11/08, deux jours sans que ça se voie.
 // La ligne « 🛡️ Plafond de dépense » de Profil → Admin → Santé du système est le seul endroit
 // où ça se lit : la vérifier APRÈS avoir posé la clé, pas avant.
-var _COUNT_TOKEN_HASH_ = 'cf5c9b66e4a8a0c4d479dfb9d1ea374a9a16ec6dc91cdabae95efaf7bc2e1f52';
+var _COUNT_TOKEN_HASH_ = '0882b64cea5a100f52ef8d8e7b02e688dde6f94a47bdbe66524eb048bf94630a';
 function _countTokenArme_(token) {
   var recu = String(token == null ? '' : token).trim();
   return recu.length >= 12 && _sha256hex_(recu) === _COUNT_TOKEN_HASH_;

@@ -38,7 +38,10 @@ soit transmise, et le plafond est resté désarmé deux jours sans que ça se vo
 **Les 4 étapes** :
 1. Générer une clé (≥ 12 caractères, **alphanumérique uniquement** — rien à échapper chez Cloudflare)
    et calculer son empreinte : `python3 -c "import hashlib;print(hashlib.sha256('LA_CLE'.encode()).hexdigest())"`
-2. Remplacer `_HASH_COUNT` dans `Code.js` par l'empreinte — **jamais la clé en clair**, le dépôt est public
+2. Remplacer **`_COUNT_TOKEN_HASH_`** dans `Code.js` par l'empreinte — **jamais la clé en clair**,
+   le dépôt est public. ⚠️ *Cette étape disait `_HASH_COUNT` jusqu'au 30/08/2026 : ce nom n'existe
+   plus depuis le 24/08, où le jeton a été factorisé pour servir aussi à `aiUsageLog`. Une
+   procédure qui nomme une constante disparue envoie son lecteur chercher au mauvais endroit* (R23).
 3. Pousser sur `master` : le backend se déploie tout seul (~1-2 min, workflow `deploy-appsscript.yml`)
 4. Coller **la clé** dans Cloudflare → le Worker de Milo → variable **`FT_COUNT_TOKEN`**
    (⚠️ **rien à mettre dans Google** — c'était le but du changement du 11/08)
