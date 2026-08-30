@@ -18706,7 +18706,156 @@ console.log('\n-- CLXIX. Aucune modale n\'est enfermée dans un écran qui défi
   }
 }
 
-/* == BLOC CLXX - LES CARTES D'ENTRAINEMENT NE S'AFFICHENT QUE SUR « EXERCICES » (ft-v1063) ==
+/* == BLOC CLXX - « J'AI 2 FOIS LA MEME PROT » (ft-v1062) ==
+   Michel, capture a l'appui : son shaker apparait DEUX FOIS dans « Tes repas habituels »,
+   deux lignes rigoureusement identiques a l'ecran (meme nom, 156 kcal, 35 g).
+   ⛔⛔ LA CAUSE TIENT A UN `+` : la signature d'un repas habituel etait `meal + '::' + aliments`.
+   Note 6 fois en Collation 2 et 2 fois en Petit-dej, le meme shaker faisait DEUX habitudes.
+   ⚠️ ET C'EST UNE REGRESSION DE ft-v1056, la notre : tant que la carte APPLIQUAIT le moment, il
+   faisait partie de l'identite de ce qu'on rejoue — deux lignes, deux resultats. Depuis que le
+   moment SE DEMANDE au tap, les deux lignes font exactement la meme chose.
+   *Un critere de regroupement qui survit a la disparition de son motif fabrique des doublons.*
+   ⛔ LE COUT N'EST PAS QUE VISUEL : la liste est bornee a 3 — une variante en double CHASSE une
+   vraie autre habitude de l'ecran. Sur sa capture, ses 3 lignes ne sont que 2 repas.
+   ⭐ ON FILTRE AVANT DE FUSIONNER, et c'est ce qui preserve son usage reel : il prend ce shaker
+   le matin ET l'apres-midi. Fusionner d'abord ferait disparaitre l'habitude entiere des qu'il
+   l'a notee une fois dans la journee — il perdrait le tap pour son 2e shaker. */
+console.log('\n-- CLXX. « J\'ai 2 fois la même prot » (ft-v1062) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  const jr=n=>{const d=new Date(Date.now()-n*864e5);return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+  /* ⭐ SA SITUATION EXACTE, pas une fixture inventée : 6 en Collation 2, 2 en Petit-déj. */
+  const jrn=[]; let ts=Date.now();
+  for(let i=0;i<6;i++) jrn.push({ts:ts++,date:jr(i+2),meal:'collation2',name:'Iso zero protein (ASL)',kcal:156,prot:35,carbs:1,fat:1});
+  for(let i=0;i<2;i++) jrn.push({ts:ts++,date:jr(i+2),meal:'petitdej',  name:'Iso zero protein (ASL)',kcal:156,prot:35,carbs:1,fat:1});
+  for(let i=0;i<3;i++){jrn.push({ts:ts++,date:jr(i+2),meal:'dejeuner',name:'Riz Basmati',kcal:795,prot:18,carbs:176,fat:3});
+                       jrn.push({ts:ts++,date:jr(i+2),meal:'dejeuner',name:'Steak haché 5%',kcal:300,prot:52,carbs:0,fat:9});}
+  for(let i=0;i<2;i++) jrn.push({ts:ts++,date:jr(i+2),meal:'diner',name:'Oeuf cru',kcal:280,prot:26,carbs:0,fat:20});
+  /* ⭐ ET LE MÊME SHAKER NOTÉ AUJOURD'HUI en Petit-déj : c'est le cas qui protège son 2e shaker. */
+  jrn.push({ts:ts++,date:jr(0),meal:'petitdej',name:'Iso zero protein (ASL)',kcal:156,prot:35,carbs:1,fat:1});
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',
+    ft4_foodlog:JSON.stringify(jrn)}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(()=>{
+   try{
+    const h=_repasHabituels();
+    return {nb:h.length,
+      lignes:h.map(x=>({n:x.n,meal:x.meal,al:(x.items||[]).map(i=>i.name).sort().join(' + ')})),
+      /* le tap doit toujours retrouver la ligne par sa signature */
+      retrouve:h.length?!!_repasHabituels().find(x=>x.sig===h[0].sig):false};
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+  if(F.err) t('CLXX n\'a pas pu tourner', false, F.err);
+  else{
+    const iso=F.lignes.filter(x=>/Iso zero/.test(x.al));
+    t('⛔ le témoin a bien VU des repas habituels (sinon tout le reste serait vert pour rien)',
+      F.nb===3, F.nb+' lignes : '+JSON.stringify(F.lignes));
+    /* ⭐⭐ SA PHRASE, MESURÉE. */
+    t('⭐⭐ SA CAPTURE : le même shaker n\'apparaît plus qu\'UNE fois, pas deux',
+      iso.length===1, iso.length+' ligne(s) « Iso zero » : '+JSON.stringify(iso));
+    /* ⚠️ 6 en Collation 2 + 3 en Petit-déj (dont une CE MATIN) = 9. La variante du matin est
+       écartée du CHOIX, mais son compte reste : le filtre décide de ce qu'on propose, jamais de
+       ce qu'on a compté. Ce témoin a rougi sur mon 1ᵉʳ jet, qui affichait « noté 6 fois ». */
+    t('⭐ … et TOUTES les variantes sont comptées (6 + 3 = 9), même celle écartée du choix',
+      iso.length===1 && iso[0].n===9, JSON.stringify(iso));
+    /* ⛔ Le moment proposé décrit l'habitude, pas le dernier écart. */
+    t('⛔ le moment proposé est le PLUS FRÉQUENT (Collation 2, 6 fois), pas le plus récent',
+      iso.length===1 && iso[0].meal==='collation2', JSON.stringify(iso));
+    /* ⛔⛔ LE TÉMOIN QUI EMPÊCHE LA FUSION D'ÊTRE UN RECUL. */
+    t('⛔⛔ noté CE MATIN en Petit-déj, l\'habitude reste proposée — son 2ᵉ shaker garde son tap',
+      iso.length===1, 'lignes : '+JSON.stringify(F.lignes.map(x=>x.al)));
+    /* ⛔ Le vrai gain : la 3e place rend une AUTRE habitude, plus un doublon. */
+    t('⛔ la 3ᵉ place rend une VRAIE autre habitude (« Oeuf cru »), plus un doublon',
+      F.lignes.some(x=>/Oeuf cru/.test(x.al)), JSON.stringify(F.lignes.map(x=>x.al)));
+    t('⛔ la signature reste retrouvable — le tap « rejouer » fonctionne toujours',
+      F.retrouve===true, '');
+  }
+  await cx.close();
+}
+
+/* == BLOC CLXXI - LE CHOIX D'UNITE DANS « MODIFIER L'ALIMENT » (ft-v1064) ==
+   Michel, capture a l'appui : *« quand j'ajoute il ne me donne que le choix de la quantite »*.
+   Son ecran de modification n'offrait que des multiplicateurs et un cul-de-sac : *« Cette ligne
+   n'a pas de quantite connue — on ne peut pas inventer un poids. Mets la quantite dans le nom. »*
+   ⛔⛔ CETTE PHRASE EST, A DEUX MOTS PRES, CELLE QUE ft-v1056 A SUPPRIMEE DE L'ECRAN D'AJOUT.
+   Meme refus, meme journee, l'autre ecran — **le correctif avait ete pose d'un seul cote** (R8).
+   *Demander a quelqu'un de reecrire le NOM de son aliment pour en changer le poids, c'est lui
+   faire faire le travail de l'app.*
+   ⭐ R13 : rien de reinvente, c'est `_afMajAncre` transpose ; une fois le poids declare on
+   retombe sur le champ proportionnel qui existait deja ici depuis ft-v972.
+   ⭐ R4 : le poids DESCEND jusqu'a la donnee — sans ca l'app le redemande a chaque ouverture. */
+console.log('\n-- CLXXI. Le choix d\'unité dans « Modifier l\'aliment » (ft-v1064) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  const TS=Date.now()-36e5;
+  const d0=new Date(); const jr=new Date(d0.getTime()-d0.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+  /* ⭐ SON ENTRÉE : estimée par l'IA — aucun `per100`, aucun `q`, aucun poids dans le nom.
+     C'est précisément le cas que l'ancien écran envoyait dans le cul-de-sac. */
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',
+    ft4_foodlog:JSON.stringify([{ts:TS,date:jr,meal:'petitdej',name:'Iso zero protein (ASL)',
+      kcal:156,prot:35,carbs:1,fat:1}])}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async(ts)=>{
+   try{
+    const o={}, w=ms=>new Promise(x=>setTimeout(x,ms));
+    const V=id=>(document.getElementById(id)||{}).value;
+    const txt=()=>(document.getElementById('ef-qty-row')||{}).innerText||'';
+    const lire=()=>({kcal:+V('ef-kcal'),prot:+V('ef-prot')});
+    openEditFood(ts); await w(250);
+    o.onglets=/En grammes/.test(txt())&&/En portions/.test(txt());
+    o.culDeSac=/on ne peut pas inventer un poids/.test(txt());
+    o.portions=['½','1½','2','3'].every(x=>txt().indexOf(x)>=0);
+    _efSetUnite('g'); await w(180);
+    o.demande=/Combien pèse ce que tu as noté/.test(txt());
+    o.champVide=(V('ef-poids')||'')==='';
+    const p=document.getElementById('ef-poids'); p.value='30';
+    p.dispatchEvent(new Event('change',{bubbles:true})); await w(200);
+    /* ⛔ DÉCLARER N'EST PAS RESCALER : dire « ce que j'ai noté pèse 30 g » ne change pas ce qui
+       a été mangé — ça dit à quoi correspondent les 156 kcal affichées. */
+    o.declare={champ:V('ef-prop'), v:lire()};
+    const q=document.getElementById('ef-prop'); q.value='40';
+    q.dispatchEvent(new Event('input',{bubbles:true})); await w(180);
+    o.a40=lire();
+    saveEditFood(); await w(250);
+    const e=(S.foodLog||[]).find(x=>x.ts===ts);
+    o.enregistre={kcal:e.kcal,prot:e.prot,q:e.q,u:e.u};
+    openEditFood(ts); await w(250);
+    o.reouvert={champ:V('ef-prop'), culDeSac:/inventer un poids/.test(txt())};
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  },TS);
+  if(F.err) t('CLXXI n\'a pas pu tourner', false, F.err);
+  else{
+    /* ⭐⭐ SA PHRASE, MESURÉE. */
+    t('⭐⭐ SA CAPTURE : « Modifier l\'aliment » offre les DEUX unités, plus seulement des portions',
+      F.onglets===true, JSON.stringify({onglets:F.onglets,portions:F.portions}));
+    t('⛔⛔ le cul-de-sac « mets la quantité dans le nom » a disparu',
+      F.culDeSac===false, '');
+    /* ⛔ Non-régression : les portions restent pour qui ne connaît pas le poids. */
+    t('⛔ NON-RÉGRESSION : les 5 multiplicateurs sont toujours là (½ · 1 · 1½ · 2 · 3)',
+      F.portions===true, '');
+    t('⭐ « En grammes » DEMANDE le poids, et le champ est VIDE (rien de pré-rempli — R29)',
+      F.demande===true && F.champVide===true, JSON.stringify({demande:F.demande,vide:F.champVide}));
+    /* ⛔⛔ La subtilité qui rend l'écran juste. */
+    t('⛔⛔ DÉCLARER n\'est pas RESCALER : 30 g posé, les 4 valeurs ne bougent pas',
+      F.declare.champ==='30' && F.declare.v.kcal===156 && F.declare.v.prot===35, JSON.stringify(F.declare));
+    t('⭐ … et 40 g recalcule bien (156 → 208, 35 → 47)',
+      F.a40.kcal===208 && F.a40.prot===47, JSON.stringify(F.a40));
+    /* ⭐⭐ R4 — LE TÉMOIN QUI COMPTE LE PLUS : sans lui, l'app redemande à chaque ouverture. */
+    t('⭐⭐ R4 : le poids DESCEND jusqu\'à la donnée enregistrée (q=40, u=g)',
+      F.enregistre.q===40 && F.enregistre.u==='g' && F.enregistre.kcal===208, JSON.stringify(F.enregistre));
+    t('⭐⭐ … et à la RÉOUVERTURE le champ affiche 40 : le cul-de-sac ne revient jamais',
+      F.reouvert.champ==='40' && F.reouvert.culDeSac===false, JSON.stringify(F.reouvert));
+  }
+  await cx.close();
+}
+
+
+/* == BLOC CLXXII - LES CARTES D'ENTRAINEMENT NE S'AFFICHENT QUE SUR « EXERCICES » (ft-v1065) ==
    Michel, video a l'appui : « le haut de l'onglet exercice ou l'on montre les seances moyennes de
    la semaine, mais sur le poids et le record on s'en fout un peu de ca non ? », puis « meme les
    badges ».
@@ -18718,7 +18867,7 @@ console.log('\n-- CLXIX. Aucune modale n\'est enfermée dans un écran qui défi
 
    ⭐ MESURE : les deux cartes pesent 216 + 191 = 407 px. Sur Poids, les sous-onglets passent de
    y=545 a y=118 — 427 px rendus a l'ecran, et la pesee du jour remonte de ~600 a 170. */
-console.log('\n-- CLXX. Les cartes d\'entraînement ne s\'affichent que sur « Exercices » (ft-v1063) --');
+console.log('\n-- CLXXII. Les cartes d\'entraînement ne s\'affichent que sur « Exercices » (ft-v1065) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
@@ -18768,7 +18917,7 @@ console.log('\n-- CLXX. Les cartes d\'entraînement ne s\'affichent que sur « E
   });
   await cx.close();
 
-  if(W.err) t('CLXX n\'a pas pu tourner', false, JSON.stringify(W));
+  if(W.err) t('CLXXII n\'a pas pu tourner', false, JSON.stringify(W));
   else{
     /* ⛔ SANS CE TÉMOIN, TOUT LE BLOC SERAIT VERT EN NE MESURANT RIEN : si les cartes ne se
        rendaient pas du tout, « masquée sur Poids » serait vrai pour la mauvaise raison. */
@@ -18845,7 +18994,7 @@ console.log('\n-- CLXX. Les cartes d\'entraînement ne s\'affichent que sur « E
   await cx.close();
 }
 
-/* == BLOC CLXXIII - LE HAUT DE PROGRES : ONGLETS EN TETE, CARTES REPLIABLES (ft-v1066) ==
+/* == BLOC CLXXIII - LE HAUT DE PROGRES : ONGLETS EN TETE, CARTES REPLIABLES (ft-v1067) ==
    Michel, capture a l'appui : « ca prend vachement d'espace en haut non ? ».
 
    ⭐ MESURE AVANT : synthese 216 px + volume 345 px (8 muscles) = **561 px**. Les sous-onglets
@@ -18858,7 +19007,7 @@ console.log('\n-- CLXX. Les cartes d\'entraînement ne s\'affichent que sur « E
 
    ⛔ ET L'ETAT EST RETENU : *un accordeon qu'on doit rouvrir a chaque visite est un accordeon
    qu'on n'ouvre plus* (la lecon de ft-v1024, « le rangement suit l'usage »). */
-console.log('\n-- CLXXIII. Le haut de Progrès : onglets en tête, cartes repliables (ft-v1066) --');
+console.log('\n-- CLXXIII. Le haut de Progrès : onglets en tête, cartes repliables (ft-v1067) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();

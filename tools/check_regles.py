@@ -485,6 +485,61 @@ except Exception:
     pass                                        # jamais bloquer sur un pépin d'outillage
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# CONTRÔLE 10 — LE NOMBRE DE TÉMOINS NE DESCEND JAMAIS
+#
+# ⚠️⚠️ CAS RÉEL (30/08/2026) — et c'est L'ARCHIVE DU 04/08 REJOUÉE DANS LE RUNNER.
+# Ma fusion de ft-v1065 a résolu un conflit de `tests/parcours/runner.js` en **écrasant
+# le côté de l'autre session** : `-140` lignes, et **deux blocs entiers effacés** — le
+# CLXX de session-A (« j'ai 2 fois la même prot », 8 témoins) et son CLXXI (« le choix
+# d'unité dans Modifier l'aliment », 9 témoins). Pire, mon bloc a **repris leur numéro**,
+# ce qui masquait le trou : le fichier avait toujours un « BLOC CLXX ».
+#
+# ⛔⛔ LE CODE MESURÉ, LUI, ÉTAIT INTACT (`_afSetUnite`, `ef-qty-row` toujours dans
+# `app.js`). *Seuls les témoins qui le protègent avaient disparu* — c'est-à-dire la panne
+# la plus silencieuse qui soit : rien ne casse, rien ne rougit, et la prochaine régression
+# sur ces deux écrans passerait sans un bruit.
+#
+# ⭐⭐ ET LE SIGNAL ÉTAIT LÀ, DANS MON PROPRE MESSAGE DE COMMIT : l'arbre d'avant portait
+# **1949** témoins, j'ai livré **1939** en annonçant *« +4 »*. ***Un total qui BAISSE
+# pendant qu'on ajoute des tests est un aveu, et je l'ai écrit sans le lire.***
+# 👉 D'où ce contrôle : il compare le compte de `t(` de `runner.js` à celui de la version
+# précédente et **refuse toute baisse**. La même leçon que le contrôle de l'archive
+# (« 0 perdue ») — *on ne surveille pas ce qu'on ajoute, on surveille ce qui disparaît.*
+#
+# ⛔ POURQUOI UN COMPTE STATIQUE ET PAS LE TOTAL DE LA SUITE : le total demande de faire
+# tourner Playwright pendant ~10 min. Celui-ci se lit dans le fichier, donc il tourne à
+# **chaque** livraison — un contrôle qu'on saute parce qu'il est lent ne protège personne.
+#
+# ⚠️ ET IL EST FRANCHISSABLE EXPRÈS : retirer un témoin est parfois juste (R30 — un retrait
+# volontaire s'écrit). Le contrôle demande alors la **raison** dans le message de commit,
+# via `TEMOINS-RETIRES:`. *On ne peut plus effacer par accident — on peut seulement décider.*
+RUNNER = racine / "tests" / "parcours" / "runner.js"
+def _compte_temoins(txt):
+    return len(re.findall(r"(?:^|[^A-Za-z0-9_$.])t\(\s*['\"]", txt))
+try:
+    if git_ok and RUNNER.exists():
+        _av_txt = _git("show", "HEAD:tests/parcours/runner.js")
+        if _av_txt:
+            _av = _compte_temoins(_av_txt)
+            _ap = _compte_temoins(RUNNER.read_text(encoding="utf-8"))
+            _msg = _git("log", "-1", "--format=%B") or ""
+            if _ap < _av and "TEMOINS-RETIRES:" not in _msg:
+                print(f"❌ le runner a PERDU des témoins : {_av} → {_ap} ({_av - _ap} en moins)")
+                print("   → une fusion a probablement écrasé le bloc de l'autre session.")
+                print("   → vérifier : git show HEAD -- tests/parcours/runner.js | grep '^-.*BLOC'")
+                print("   → si le retrait est VOULU, l'écrire : `TEMOINS-RETIRES: <raison>` "
+                      "dans le message de commit (R30).")
+                sys.exit(1)
+            _fl = ("→" if _ap == _av
+                   else (f"↑ +{_ap - _av}" if _ap > _av else f"↓ −{_av - _ap}, retrait déclaré"))
+            print(f"✅ témoins du runner : {_ap} ({_fl})")
+except SystemExit:
+    raise
+except Exception:
+    pass                                        # jamais bloquer sur un pépin d'outillage
+
+
 print(f"✅ documents : aucun écrasement"
       + (f" ({len(suivis)} fichiers .md surveillés)" if git_ok and 'suivis' in dir() else
          " (⚠️ git indisponible — contrôle non effectué)"))
