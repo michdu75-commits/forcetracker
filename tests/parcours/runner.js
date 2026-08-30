@@ -17874,6 +17874,108 @@ console.log('\n-- CLX. Le banc d\'essai ne part pas anonyme --');
     !!mm && !!md && mm[1]===md[1], (mm?mm[1]:'?')+' vs '+(md?md[1]:'?'));
 }
 
+/* == BLOC CLXIII - LA VIRGULE DECIMALE (ft-v1057) ==
+   Retour d'ELINE, la fille de Michel, lu dans la boite a idees des testeurs :
+   « impossible de mettre la virgule pour les poids ».
+   ⛔⛔ MESURE, ET C'EST PIRE QUE « IMPOSSIBLE » — deux facons de se tromper, silencieuses :
+     · dans un `type="number"`, taper « 62,5 » rend **"625"** : la virgule est JETEE, pas le
+       nombre. Mesure contre l'ancien code : la serie enregistre **625 kg** et un 1RM de
+       **776 kg**, qui serait reste dans ses records ET dans sa courbe de progression ;
+     · et `parseFloat('62,5')` rend **62** : la moitie du poids disparait.
+   ⭐⭐ L'APP SAVAIT DEJA LIRE UNE VIRGULE — a DIX endroits — mais uniquement pour du texte venu
+   d'AILLEURS (une phrase, un rapport de balance, Milo). *Jamais pour ce que la personne TAPE.*
+   ⛔ 22 champs decimaux passent en `type="text"` + `inputmode="decimal"` : le pave chiffre du
+   telephone RESTE, la virgule devient tapable. Verifie avant : rien ne dependait de
+   `type="number"` (ni `valueAsNumber`, ni `stepUp`, ni le CSS).
+   ⛔ ET UN SEUL LECTEUR, `numFR` (R2) : 22 champs qui liraient chacun leur nombre a leur facon,
+   et le 23e oublierait la virgule. */
+console.log('\n-- CLXIII. La virgule décimale — retour d\'Eline (ft-v1057) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_name:'Eline',ft4_bw:'62',ft4_gender:'F',
+    ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>{const ip=document.getElementById('install-popup');if(ip)ip.classList.add('hidden');
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));});
+
+  /* ⭐⭐ ON TAPE VRAIMENT AU CLAVIER, on ne pose pas `.value` a la main — c'est TOUT le sujet :
+     `type="number"` filtre la virgule A LA FRAPPE, une affectation directe ne le montrerait pas. */
+  await pg.evaluate(()=>{ startWorkout(); addExercise('Développé Couché'); renderLog(); });
+  await pg.waitForTimeout(400);
+  const sinp=await pg.$$('.sinp');
+  let K={};
+  if(sinp.length>=2){
+    await sinp[0].click(); await pg.keyboard.type('8');
+    await sinp[1].click(); await pg.keyboard.type('62,5');
+    await pg.keyboard.press('Tab');
+    await pg.waitForTimeout(200);
+    K=await pg.evaluate(()=>({ type:document.querySelectorAll('.sinp')[1].type,
+      clavier:document.querySelectorAll('.sinp')[1].getAttribute('inputmode'),
+      affiche:document.querySelectorAll('.sinp')[1].value,
+      kg:S.wkt.exs[0].sets[0].kg, rm1:S.wkt.exs[0].sets[0].rm1 }));
+  }
+  const F=await pg.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
+    /* ② LA PESÉE DU JOUR — l'autre champ que nomme Eline. */
+    goScreen('progress'); if(typeof renderWeightTab==='function') renderWeightTab(); await d(300);
+    const w=document.getElementById('wentry-inp');
+    if(w){ w.value='62,5'; saveWeightEntry(); await d(200);
+      const der=(S.weightLog||[]).slice(-1)[0];
+      o.pesee={type:w.type, enregistre:der&&der.kg, bw:S.bw};
+    } else o.pesee={absent:true};
+    /* ③ LE LECTEUR LUI-MÊME, sur les écritures qu'on rencontre vraiment. */
+    o.lecteur={virgule:numFR('62,5'), point:numFR('62.5'), espace:numFR('1 500'),
+               nombre:numFR(62.5), vide:isNaN(numFR('')), nul:isNaN(numFR(null))};
+    /* ④ AUCUN CHAMP DÉCIMAL NE RESTE EN `type="number"` — c'est ce qui filtre la virgule. */
+    const dec=[...document.querySelectorAll('input[inputmode="decimal"]')];
+    o.champs={total:dec.length, encoreNumber:dec.filter(x=>x.type==='number').map(x=>x.id||x.className)};
+    /* ⑤ NON-RÉGRESSION : les champs ENTIERS gardent `type="number"` (aucune virgule attendue). */
+    const ent=[...document.querySelectorAll('input[inputmode="numeric"]')];
+    o.entiers={total:ent.length, encoreNumber:ent.filter(x=>x.type==='number').length};
+    /* ⑥ NON-RÉGRESSION : le point marche toujours (personne ne doit y perdre). */
+    S.wkt.exs[0].sets[0].kg=0;
+    upSet(0,0,'kg','80.5');
+    o.point={kg:S.wkt.exs[0].sets[0].kg};
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+  if(F.err) t('CLXIII n\'a pas pu tourner', false, F.err);
+  else{
+    /* ⛔ Le témoin a-t-il VU les champs de série ? Sinon tout le reste serait vert pour rien. */
+    t('⛔ le témoin a bien TAPÉ dans le champ kg d\'une série (pas une affectation directe)',
+      !!K.type && K.affiche!==undefined, JSON.stringify({type:K.type,affiche:K.affiche}));
+    /* ⭐⭐ LE CAS D'ELINE, MOT POUR MOT. */
+    t('⭐⭐ « 62,5 » tapé dans le kg d\'une série s\'AFFICHE « 62,5 » (l\'ancien code rendait « 625 »)',
+      K.affiche==='62,5', 'affiché = '+K.affiche);
+    t('⭐⭐ … et il ENREGISTRE 62.5 kg — l\'ancien code enregistrait 625 kg et un 1RM de 776',
+      K.kg===62.5 && K.rm1>70 && K.rm1<90, JSON.stringify({kg:K.kg,rm1:K.rm1}));
+    /* ⛔ Le pavé numérique du téléphone ne doit PAS disparaître avec `type="text"`. */
+    t('⛔ le pavé numérique reste (inputmode="decimal" conservé) — sinon on corrige un bug en en créant un',
+      K.clavier==='decimal', 'inputmode = '+K.clavier);
+    /* ⭐ L'autre champ nommé par Eline. */
+    t('⭐⭐ la PESÉE accepte « 62,5 » et enregistre 62.5 (l\'ancien code retenait 62)',
+      F.pesee.enregistre===62.5 && F.pesee.bw===62.5, JSON.stringify(F.pesee));
+    /* ⭐ Le lecteur unique, sur les écritures réelles. */
+    t('⭐ `numFR` lit les deux écritures, les espaces, et refuse ce qui n\'est pas un nombre',
+      F.lecteur.virgule===62.5 && F.lecteur.point===62.5 && F.lecteur.espace===1500
+      && F.lecteur.nombre===62.5 && F.lecteur.vide===true && F.lecteur.nul===true,
+      JSON.stringify(F.lecteur));
+    /* ⛔⛔ LE TÉMOIN QUI PROTÈGE LE FUTUR : un 23ᵉ champ décimal en `type="number"` reviendrait. */
+    t('⛔⛔ AUCUN champ décimal ne reste en `type="number"` (c\'est lui qui filtre la virgule)',
+      F.champs.total>0 && F.champs.encoreNumber.length===0,
+      F.champs.total+' champs décimaux · fautifs : '+JSON.stringify(F.champs.encoreNumber));
+    /* ⛔ NON-RÉGRESSIONS. */
+    t('⛔ NON-RÉGRESSION : les champs ENTIERS gardent `type="number"` (aucune virgule attendue)',
+      F.entiers.total>0 && F.entiers.encoreNumber===F.entiers.total, JSON.stringify(F.entiers));
+    t('⛔ NON-RÉGRESSION : le POINT marche toujours (80.5 reste 80.5)',
+      F.point.kg===80.5, JSON.stringify(F.point));
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

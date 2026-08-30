@@ -1248,7 +1248,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div class="three-col">
         <div class="fg"><label>Âge</label><input type="number" id="age-inp" placeholder="30" min="14" max="80" inputmode="numeric"></div>
         <div class="fg"><label>Taille (cm)</label><input type="number" id="ht-inp" placeholder="175" inputmode="numeric"></div>
-        <div class="fg"><label>Poids (kg)</label><input type="number" id="bw-inp" placeholder="80" step="0.1" inputmode="decimal"></div>
+        <div class="fg"><label>Poids (kg)</label><input type="text" id="bw-inp" placeholder="80" step="0.1" inputmode="decimal"></div>
       </div>
       <div class="fg"><label>Date d'anniversaire</label><input type="text" id="bday-inp" placeholder="JJ/MM (ex: 14/07)" inputmode="numeric" maxlength="5" style="text-align:center;letter-spacing:2px;" oninput="fmtBday(this)"></div>
       <div class="two-col">
@@ -1361,11 +1361,11 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       </div></details>
       <details class="acc"><summary class="acc-h"><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;"><circle cx="12" cy="4.5" r="1.4"/><path d="m9 20 3-6 3 6"/><path d="m6 8 6 2 6-2"/><path d="M12 10v4"/></svg>Composition corporelle</summary><div class="acc-inner">
       <div class="two-col">
-        <div class="fg"><label>Tour de cou (cm)</label><input type="number" id="neck-inp" placeholder="37" step="0.5" inputmode="decimal" oninput="renderBFCard()"></div>
-        <div class="fg"><label>Tour de taille (cm)</label><input type="number" id="waist-inp" placeholder="85" step="0.5" inputmode="decimal" oninput="renderBFCard()"></div>
+        <div class="fg"><label>Tour de cou (cm)</label><input type="text" id="neck-inp" placeholder="37" step="0.5" inputmode="decimal" oninput="renderBFCard()"></div>
+        <div class="fg"><label>Tour de taille (cm)</label><input type="text" id="waist-inp" placeholder="85" step="0.5" inputmode="decimal" oninput="renderBFCard()"></div>
       </div>
       <div class="fg" id="hip-fg" style="display:none;">
-        <label>Tour de hanches (cm)</label><input type="number" id="hip-inp" placeholder="95" step="0.5" inputmode="decimal" oninput="renderBFCard()">
+        <label>Tour de hanches (cm)</label><input type="text" id="hip-inp" placeholder="95" step="0.5" inputmode="decimal" oninput="renderBFCard()">
       </div>
       <div id="bf-result-card"></div>
       </div></details>
@@ -1973,7 +1973,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   <div class="modal">
     <div class="modal-handle"></div>
     <h2>🔢 Calculateur de plaques</h2>
-    <div class="fg"><label>Charge cible (kg)</label><input type="number" id="plate-kg" placeholder="100" step="0.5" inputmode="decimal" oninput="renderPlates()"></div>
+    <div class="fg"><label>Charge cible (kg)</label><input type="text" id="plate-kg" placeholder="100" step="0.5" inputmode="decimal" oninput="renderPlates()"></div>
     <p style="font-size:12px;color:var(--t3);margin-top:6px;">Barre : <span id="bar-disp">20</span> kg</p>
     <div id="plate-viz" style="margin:14px 0;"></div>
     <p id="plate-result" style="font-size:13px;color:var(--t2);text-align:center;min-height:18px;"></p>
@@ -2733,11 +2733,11 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       </div>
       <div>
         <label style="font-size:12px;color:var(--t3);display:block;margin-bottom:4px;">Poids (kg)</label>
-        <input type="number" id="weigh-edit-kg" step="0.1" min="20" max="300" inputmode="decimal" style="width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);box-sizing:border-box;">
+        <input type="text" id="weigh-edit-kg" step="0.1" min="20" max="300" inputmode="decimal" style="width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);box-sizing:border-box;">
       </div>
       <div>
         <label style="font-size:12px;color:var(--t3);display:block;margin-bottom:4px;">Masse grasse (%) — optionnel</label>
-        <input type="number" id="weigh-edit-bf" step="0.1" min="2" max="70" inputmode="decimal" placeholder="—" style="width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);box-sizing:border-box;">
+        <input type="text" id="weigh-edit-bf" step="0.1" min="2" max="70" inputmode="decimal" placeholder="—" style="width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);box-sizing:border-box;">
       </div>
     </div>
     <div style="margin-top:16px;display:flex;gap:8px;">

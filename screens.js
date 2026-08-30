@@ -2072,14 +2072,14 @@ function openKcalEdit(){
 }
 function _kcalPreview(){
   const inp=document.getElementById('kcal-edit-inp');
-  const v=inp?Math.round(parseFloat(inp.value)||0):0;
+  const v=inp?Math.round(numFR(inp.value)||0):0;
   const mm=(typeof macrosForKcal==='function')?macrosForKcal(v):{prot_g:0,carbs_g:0,fat_g:0};
   const set=(id,val)=>{const e=document.getElementById(id);if(e)e.textContent=val+' g';};
   set('kcal-pv-prot',mm.prot_g);set('kcal-pv-carb',mm.carbs_g);set('kcal-pv-fat',mm.fat_g);
 }
 function saveKcalEdit(){
   const inp=document.getElementById('kcal-edit-inp');
-  let v=inp?Math.round(parseFloat(inp.value)||0):0;
+  let v=inp?Math.round(numFR(inp.value)||0):0;
   if(!(v>0)){toast('Entre un nombre de calories valide','info');return;}
   v=Math.max(800,Math.min(6000,v));
   S.manualKcal=v;persist();closeKcalEdit();renderNutrition();

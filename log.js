@@ -817,7 +817,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       +`<div class="snum">${si+1}</div>`
       +`<div class="sprev" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="Ajouter une note">${p?`<div>${p.reps}×${p.kg}${_prevTypeBadge(p)}${_prevRirBadge(p)}</div>`:'<div>—</div>'}${_setPrevNote(set,p)}</div>`
       +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${set.maxi?'max':(p?p.reps:'')}" inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
-      +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="done" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
+      +`<input class="sinp" type="text" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="done" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
       +`<button class="tbtn ${set.type||'N'}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||'Normal'}" id="tbtn-${ei}-${si}"><span style="line-height:1">${set.type&&set.type!=='N'?set.type:''}</span><span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span></button>`
       +`<button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>`
       +`</div></div>`;
@@ -841,7 +841,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
           +`<div class="snum" style="color:var(--orange);font-weight:800;">${si+1}</div>`
           +`<div style="font-size:10px;color:var(--orange);font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>`
           +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)">`
-          +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()">`
+          +`<input class="sinp" type="text" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()">`
           +`<div></div>`
           +`<button class="chk" onclick="toggleSet(${ei},${si})"></button>`
           +`</div></div>`;
@@ -1293,11 +1293,14 @@ function getPrev(name){
     if(ex){const sets=(ex.sets||[]).filter(s=>s.done!==false);if(sets.length)return sets;}
   }return[];
 }
-function upSet(ei,si,f,v){const s=S.wkt.exs[ei].sets[si];s[f]=parseFloat(v)||0;if(s.kg&&s.reps)s.rm1=bz(s.kg,s.reps);persist();}
+/* 🔢 ft-v1057 : `numFR` et pas `parseFloat` — la valeur arrive du HTML en ARGUMENT
+   (`this.value`), donc elle echappait a la recherche sur `.value`. C'est le champ le
+   PLUS utilise de l'app : `parseFloat('62,5')` y rendait 62, la moitie du poids. */
+function upSet(ei,si,f,v){const s=S.wkt.exs[ei].sets[si];s[f]=numFR(v)||0;if(s.kg&&s.reps)s.rm1=bz(s.kg,s.reps);persist();}
 function toggleSet(ei,si){
   const set=S.wkt.exs[ei].sets[si];
   const row=document.getElementById(`sr-${ei}-${si}`);
-  if(row){const inps=row.querySelectorAll('.sinp');if(!set.reps&&inps[0])set.reps=parseInt(inps[0].value||inps[0].placeholder)||0;if(!set.kg&&inps[1])set.kg=parseFloat(inps[1].value||inps[1].placeholder)||0;}
+  if(row){const inps=row.querySelectorAll('.sinp');if(!set.reps&&inps[0])set.reps=parseInt(inps[0].value||inps[0].placeholder)||0;if(!set.kg&&inps[1])set.kg=numFR(inps[1].value||inps[1].placeholder)||0;}
   set.done=!set.done;if(set.kg&&set.reps)set.rm1=bz(set.kg,set.reps);
   // ── HORODATAGE DE LA SÉRIE (12/08/2026) ────────────────────────────────────────────
   // ⚠️ POURQUOI : jusqu'ici on écrivait `done=true` et RIEN d'autre — l'app ne savait pas
@@ -4715,7 +4718,7 @@ function updateRMLive(ei,si){
   if(!row)return;
   const inps=row.querySelectorAll('.sinp');
   const reps=parseInt(inps[0]&&(inps[0].value||inps[0].placeholder))||0;
-  const kg=parseFloat(inps[1]&&(inps[1].value||inps[1].placeholder))||0;
+  const kg=numFR(inps[1]&&(inps[1].value||inps[1].placeholder))||0;
   const trmEl=document.getElementById(`trm-${ei}-${si}`);
   if(trmEl)trmEl.textContent=kg&&reps?'~'+fmt(bz(kg,reps)):'';
 }
@@ -8572,7 +8575,7 @@ function closePlate(){document.getElementById('mod-plate').classList.remove('ope
 function calcPlatesArr(t,bar){const ps=[25,20,15,10,5,2.5,1.25,0.5];let r=(t-bar)/2;if(r<0)return null;const res=[];for(const p of ps){while(r>=p-.001){res.push(p);r=Math.round((r-p)*1000)/1000;}}return res;}
 function plateCls(p){return p>=25?'p25':p>=20?'p20':p>=15?'p15':p>=10?'p10':p>=5?'p5':p>=2?'p2':'p1';}
 function renderPlates(){
-  const t=parseFloat(document.getElementById('plate-kg').value);
+  const t=numFR(document.getElementById('plate-kg').value);
   const viz=document.getElementById('plate-viz'),res=document.getElementById('plate-result');
   if(!t||t<S.barW){viz.innerHTML='';res.textContent=t&&t<S.barW?`Min: ${S.barW}kg (barre seule)`:'';return;}
   const arr=calcPlatesArr(t,S.barW);
@@ -8581,7 +8584,7 @@ function renderPlates(){
   const total=S.barW+arr.reduce((a,b)=>a+b,0)*2;
   res.textContent=arr.length?`Chaque côté: ${arr.map(p=>p+'kg').join('+')} = ${fmt(total)}kg total`:`Barre seule = ${S.barW}kg`;
 }
-function applyPlate(){if(plateExIdx===null)return;const t=parseFloat(document.getElementById('plate-kg').value);if(!t)return;S.wkt.exs[plateExIdx].sets.forEach(s=>{if(!s.done)s.kg=t;});persist();closePlate();renderExBlocks();toast('Charge appliquée !','success');}
+function applyPlate(){if(plateExIdx===null)return;const t=numFR(document.getElementById('plate-kg').value);if(!t)return;S.wkt.exs[plateExIdx].sets.forEach(s=>{if(!s.done)s.kg=t;});persist();closePlate();renderExBlocks();toast('Charge appliquée !','success');}
 
 // (Déblocage audio supprimé — le timer est 100% silencieux, voir bloc AUDIO : AUCUN plus haut)
 

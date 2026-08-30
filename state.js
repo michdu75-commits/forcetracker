@@ -539,6 +539,32 @@ function persist(){
 }
 
 // ─── UTILS ───────────────────────────────────────────────────
+/* 🔢 LE LECTEUR DE NOMBRE TAPÉ PAR UN HUMAIN — UN SEUL PROPRIÉTAIRE (ft-v1057, R2)
+   D'OÙ ÇA VIENT : **Eline**, la fille de Michel, dans la boîte à idées des testeurs —
+   *« impossible de mettre la virgule pour les poids »*.
+
+   ⛔⛔ MESURÉ, ET C'EST PIRE QUE « IMPOSSIBLE ». Dans un `<input type="number">`, taper
+   `62,5` ne rend PAS une valeur vide : ça rend **`"625"`**. Le navigateur jette la virgule
+   et garde les chiffres. Et `parseFloat('62,5')` rend **62**, pas 62,5.
+   👉 Selon le clavier, la personne voit soit un refus (le cas d'Eline), soit
+   ***62,5 kg enregistré en 625 kg***. Aucun message, aucune erreur, aucun test rouge.
+
+   ⭐⭐ ET L'APP SAVAIT DÉJÀ FAIRE — à DIX endroits (`replace(',','.')`) : pour une phrase
+   libre, pour un rapport de balance photographié, pour une réponse de Milo. **Jamais pour ce
+   que la personne TAPE.** *Le mécanisme existait, posé d'un seul côté* — la famille de bugs
+   la plus fréquente de ce projet, retrouvée sur le geste le plus banal qui soit.
+
+   ⛔ POURQUOI UNE SEULE FONCTION (R2) : 20 champs décimaux liraient chacun leur nombre à leur
+   façon, et le 21e oublierait la virgule. Une grandeur, un proprietaire, une lecture.
+   ⚠️ Elle rend `NaN` sur ce qui n'est pas un nombre — c'est `parseFloat` qui décide, pas nous :
+   les appelants ont déjà leurs garde-fous (`||0`, `>0`, bornes), on ne les double pas ici.
+   ⚠️ Les espaces sont retirées d'abord : un « 1 500 » copié d'un tableur ne doit pas devenir
+   un nombre à moitié lu. */
+function numFR(v){
+  if(v==null) return NaN;
+  if(typeof v==='number') return v;
+  return parseFloat(String(v).replace(/\s|\u00A0|\u202F/g,'').replace(',','.'));
+}
 const fmt=n=>Math.round(n*10)/10;
 const bz=(kg,r)=>(!kg||!r||r<1)?0:(r===1?kg:fmt(kg/(1.0278-0.0278*Math.min(r,20))));
 // ⚠️ LA DATE DU JOUR EST CELLE DU TÉLÉPHONE, JAMAIS CELLE DE GREENWICH (ft-v655).

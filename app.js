@@ -1108,7 +1108,7 @@ function _provFood(vals){
   }
   // La quantité n'existe que si le champ grammes est réellement affiché (scan / étiquette).
   const row=document.getElementById('af-bc-row');
-  const g=parseFloat((document.getElementById('af-bc-grams')||{}).value)||0;
+  const g=numFR((document.getElementById('af-bc-grams')||{}).value)||0;
   if(row&&row.style.display!=='none'&&g>0){ p.q=g; p.u='g'; }
   /* ⚖️ LE POIDS DÉCLARÉ À LA MAIN DESCEND JUSQU'À LA DONNÉE (ft-v1051) — R4, et c'est LA
      moitié qui manquait : sans ces lignes, la personne voit son poids à l'écran, les 4 valeurs
@@ -1127,7 +1127,7 @@ function _provFood(vals){
        les champs affichent le DOUBLE. Diviser ces valeurs-là par 40 donnerait un pour-100 g
        deux fois trop gros. *Les valeurs affichées et la quantité affichée vont toujours
        ensemble : c'est le seul couple sur lequel on peut diviser sans se tromper.* */
-    const q=parseFloat((document.getElementById('af-prop')||{}).value)||_afRef.q;
+    const q=numFR((document.getElementById('af-prop')||{}).value)||_afRef.q;
     if(q>0){
       const f=100/q;
       p.q=q; p.u='g';
@@ -1368,7 +1368,7 @@ function _afLuFormulaire(){
 }
 function _bcApplyGrams(){
   if(!_bcNutr)return;
-  const g=parseFloat((document.getElementById('af-bc-grams')||{}).value)||0;
+  const g=numFR((document.getElementById('af-bc-grams')||{}).value)||0;
   const f=g/100;
   document.getElementById('af-kcal').value=Math.round(_bcNutr.kcal100*f);
   document.getElementById('af-prot').value=Math.round(_bcNutr.prot100*f);
@@ -2766,7 +2766,7 @@ function openEditFood(ts){
   } else if(_ancre && _ancre.v>0){
     _efRef={base:{kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0}, q:_ancre.v};
     gramsFld='<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité ('+_ancre.u+') <span style="font-weight:400;">— recalcule les macros ci-dessous</span></div>'
-      +'<input id="ef-prop" type="number" inputmode="decimal" step="any" value="'+_ancre.v+'" oninput="_efApplyProp()" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);">'
+      +'<input id="ef-prop" type="text" inputmode="decimal" step="any" value="'+_ancre.v+'" oninput="_efApplyProp()" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);">'
       +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Référence '+_ancre.src+' : '+_ancre.v+' '+_ancre.u+'. Les 4 valeurs suivent en proportion.</div></div>';
   } else {
     _efRef={base:{kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0}, q:1};
@@ -2810,7 +2810,7 @@ function _efProp(f){
 }
 function _efApplyProp(){
   if(!_efRef||!(_efRef.q>0)) return;
-  const v=parseFloat((document.getElementById('ef-prop')||{}).value);
+  const v=numFR((document.getElementById('ef-prop')||{}).value);
   if(!(v>0)) return;                       // champ vidé pendant la frappe : on ne touche à rien
   _efProp(v/_efRef.q);
 }
@@ -2839,7 +2839,7 @@ function _efApplyPortion(x){ _efProp(x); }
 const _KCAL_ALCOOL=/\b(bi[eè]re|vin\b|ros[eé]\b|champagne|cidre|whisky|vodka|rhum|gin\b|t[eé]quila|punch|mojito|ap[eé]ritif|ap[eé]ro|alcool|liqueur|porto|pastis|cocktail|spritz|sangria|kir\b|calvados|cognac|armagnac|hydromel|saké|sake)\b/i;
 function _coherenceKcal(pfx, corrigeur){
   const el=document.getElementById(pfx+'-coherence'); if(!el) return;
-  const g=id=>parseFloat((document.getElementById(pfx+'-'+id)||{}).value)||0;
+  const g=id=>numFR((document.getElementById(pfx+'-'+id)||{}).value)||0;
   const nom=String((document.getElementById(pfx+'-'+(pfx==='af'?'desc':'name'))||{}).value||'');
   const kcal=g('kcal'), theo=4*g('prot')+4*g('carbs')+9*g('fat');
   const ecart=Math.abs(kcal-theo);
@@ -2900,7 +2900,7 @@ function _afProp(f){
 }
 function _afApplyProp(){
   if(!_afRef||!(_afRef.q>0)) return;
-  const v=parseFloat((document.getElementById('af-prop')||{}).value);
+  const v=numFR((document.getElementById('af-prop')||{}).value);
   if(!(v>0)) return;                       // champ vidé pendant la frappe : on ne touche à rien
   _afProp(v/_afRef.q);
 }
@@ -2937,7 +2937,7 @@ function _afSetUnite(u){
   _afMajAncre();
 }
 function _afDeclarePoids(){
-  const v=parseFloat((document.getElementById('af-poids')||{}).value);
+  const v=numFR((document.getElementById('af-poids')||{}).value);
   if(!(v>0)) return;
   _afPoidsDeclare=v;
   _afMajAncre();               // le bloc bascule dans son état « ancré », comme un poids lu
@@ -2975,7 +2975,7 @@ function _afMajAncre(){
   if(ancre && ancre.v>0){
     _afRef={base:base,q:ancre.v,u:ancre.u,src:ancre.src};
     el.innerHTML='<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité ('+ancre.u+') <span style="font-weight:400;">— recalcule les 4 valeurs</span></div>'
-      +'<input id="af-prop" type="number" inputmode="decimal" step="any" value="'+ancre.v+'" oninput="_afApplyProp()" style="'+style+'">'
+      +'<input id="af-prop" type="text" inputmode="decimal" step="any" value="'+ancre.v+'" oninput="_afApplyProp()" style="'+style+'">'
       +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Référence : '+ancre.v+' '+ancre.u+' ('+ancre.src+'). Corrige-la, les 4 valeurs suivent en proportion.</div>';
   }else{
     /* ⚖️ AUCUN POIDS TROUVÉ — on ne devine pas, ON DEMANDE (ft-v1051). Deux unités au choix,
@@ -2992,7 +2992,7 @@ function _afMajAncre(){
       _afRef={base:base,q:_afPoidsDeclare,u:'g',src:'que tu as indiqué'};
       el.innerHTML='<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité <span style="font-weight:400;">— recalcule les 4 valeurs</span></div>'
         +choix
-        +'<input id="af-prop" type="number" inputmode="decimal" step="any" value="'+_afPoidsDeclare+'" oninput="_afApplyProp()" style="'+style+'">'
+        +'<input id="af-prop" type="text" inputmode="decimal" step="any" value="'+_afPoidsDeclare+'" oninput="_afApplyProp()" style="'+style+'">'
         +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Référence : '+_afPoidsDeclare+' g (que tu as indiqué). Change ce nombre à chaque fois que la quantité change — les 4 valeurs suivent.</div>';
     }else if(_afUnite==='g'){
       /* ⛔ LE CHAMP EST VIDE, PAS PRÉ-REMPLI. Proposer « 100 » ferait enregistrer 100 g à qui
@@ -3001,7 +3001,7 @@ function _afMajAncre(){
       _afRef={base:base,q:1,u:'',src:'portion'};
       el.innerHTML='<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité <span style="font-weight:400;">— recalcule les 4 valeurs</span></div>'
         +choix
-        +'<input id="af-poids" type="number" inputmode="decimal" step="any" placeholder="poids de cette portion" onchange="_afDeclarePoids()" style="'+style+'">'
+        +'<input id="af-poids" type="text" inputmode="decimal" step="any" placeholder="poids de cette portion" onchange="_afDeclarePoids()" style="'+style+'">'
         +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Combien pèse ce que tu as devant toi ? <b>L\'app ne peut pas le deviner, toi si.</b> Indique-le une fois : les 4 valeurs se calent dessus, et tu pourras ensuite mettre le poids que tu veux (250 g aujourd\'hui, 400 g la prochaine fois).</div>';
     }else{
       _afRef={base:base,q:1,u:'',src:'portion'};
@@ -3023,7 +3023,7 @@ function _afCorrigerKcal(v){
 // Même calcul que `_bcApplyGrams()` (R2) : pour-100g × grammes/100, appliqué aux 4 champs macro.
 function _efApplyGrams(){
   const e=(S.foodLog||[]).find(x=>x.ts===_editFoodTs); if(!e||!e.per100) return;
-  const g=parseFloat((document.getElementById('ef-grams')||{}).value)||0;
+  const g=numFR((document.getElementById('ef-grams')||{}).value)||0;
   const f=g/100;
   document.getElementById('ef-kcal').value=Math.round((e.per100.kcal||0)*f);
   document.getElementById('ef-prot').value=Math.round((e.per100.prot||0)*f);
@@ -3042,7 +3042,7 @@ function saveEditFood(){
   // La quantité ne se met à jour QUE si le champ était affiché (per100 connu) — sinon `q`/`u`
   // ne veulent rien dire et on ne les invente pas (R29).
   const gEl=document.getElementById('ef-grams');
-  if(gEl){ e.q=parseFloat(gEl.value)||0; e.u='g'; }
+  if(gEl){ e.q=numFR(gEl.value)||0; e.u='g'; }
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   const ov=document.getElementById('ov-edit-food'); if(ov)ov.classList.remove('open');
   renderFoodJournal();

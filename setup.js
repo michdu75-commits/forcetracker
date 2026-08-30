@@ -591,7 +591,7 @@ function renderChart(){
     +'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">'
       +'<div style="font-size:13.5px;font-weight:800;color:var(--t1);">🎯 Objectif de force</div>'
       +'<div style="display:flex;gap:7px;align-items:center;flex-shrink:0;">'
-        +'<input type="number" id="strgoal-inp" value="'+(goal||'')+'" placeholder="kg" step="0.5" min="1" max="600" inputmode="decimal" style="width:66px;padding:8px 9px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">'
+        +'<input type="text" id="strgoal-inp" value="'+(goal||'')+'" placeholder="kg" step="0.5" min="1" max="600" inputmode="decimal" style="width:66px;padding:8px 9px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">'
         +'<button class="ft-press" onclick="setStrengthGoal()" style="background:linear-gradient(135deg,#22C55E,#16A34A);color:#fff;border:none;border-radius:8px;padding:9px 12px;font-size:15px;font-weight:700;cursor:pointer;">✓</button>'
       +'</div></div>'
     +(goal>0?('<div style="margin-top:10px;height:8px;border-radius:5px;background:var(--bg3);overflow:hidden;"><div style="height:100%;width:'+gPct+'%;background:linear-gradient(90deg,#22C55E,#5BE39A);border-radius:5px;"></div></div>'
@@ -649,7 +649,7 @@ ${goalCard}
 // Objectif de force par exercice : fixe/retire le 1RM visé pour l'exo affiché
 function setStrengthGoal(){
   const name=_progEx; if(!name)return;
-  const v=parseFloat((document.getElementById('strgoal-inp')||{}).value);
+  const v=numFR((document.getElementById('strgoal-inp')||{}).value);
   S.strengthGoals=S.strengthGoals||{};
   if(!v){delete S.strengthGoals[name];persist();renderChart();toast('Objectif retiré','info');return;}
   if(v<1||v>600){toast('Objectif invalide (1–600 kg)','error');return;}
@@ -1045,7 +1045,7 @@ function _renderSessDetailContent(){
                style="width:46px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
                onchange="updateSessSet(${ei},${si},'reps',+this.value)">
         <span style="color:var(--t2);font-size:12px">reps ×</span>
-        <input type="number" step="0.5" min="0" inputmode="decimal" value="${s.kg}"
+        <input type="text" step="0.5" min="0" inputmode="decimal" value="${s.kg}"
                style="width:58px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
                onchange="updateSessSet(${ei},${si},'kg',+this.value)">
         <span style="color:var(--t2);font-size:12px">kg</span>
@@ -1295,7 +1295,7 @@ function toggleSessExs(i,ev){
 
 // ─── 1RM CALCULATOR ──────────────────────────────────────────
 function calcRM(){
-  const kg=parseFloat(document.getElementById('rm-kg').value);
+  const kg=numFR(document.getElementById('rm-kg').value);
   const r=parseInt(document.getElementById('rm-reps').value);
   const rm=bz(kg,r);
   document.getElementById('rm-out').textContent=rm?fmt(rm)+' kg':'— kg';
@@ -2269,11 +2269,11 @@ function renderCycleProfileCard(){
 
 function renderBFCard(){
   const el=document.getElementById('bf-result-card');if(!el)return;
-  const neck=parseFloat((document.getElementById('neck-inp')||{}).value)||S.neck||0;
-  const waist=parseFloat((document.getElementById('waist-inp')||{}).value)||S.waist||0;
-  const hip=parseFloat((document.getElementById('hip-inp')||{}).value)||S.hip||0;
-  const ht=parseFloat((document.getElementById('ht-inp')||{}).value)||S.height||0;
-  const bw=parseFloat((document.getElementById('bw-inp')||{}).value)||S.bw||0;
+  const neck=numFR((document.getElementById('neck-inp')||{}).value)||S.neck||0;
+  const waist=numFR((document.getElementById('waist-inp')||{}).value)||S.waist||0;
+  const hip=numFR((document.getElementById('hip-inp')||{}).value)||S.hip||0;
+  const ht=numFR((document.getElementById('ht-inp')||{}).value)||S.height||0;
+  const bw=numFR((document.getElementById('bw-inp')||{}).value)||S.bw||0;
   if(!ht||!neck||!waist){el.innerHTML='';return;}
   let bf;
   if(S.gender==='H'){
@@ -2734,11 +2734,11 @@ function saveProfile(){
       try{const mn=document.getElementById('menu-name-lbl');if(mn)mn.textContent=S.name||'Athlète';}catch(e){}
     } }
   const age=parseInt(document.getElementById('age-inp').value);
-  const ht=parseFloat(document.getElementById('ht-inp').value);
-  const bw=parseFloat(document.getElementById('bw-inp').value);
+  const ht=numFR(document.getElementById('ht-inp').value);
+  const bw=numFR(document.getElementById('bw-inp').value);
   const actEl=document.getElementById('act-sel');
   const restEl=document.getElementById('rest-sel');
-  const act=actEl?parseFloat(actEl.value):S.activityLevel;
+  const act=actEl?numFR(actEl.value):S.activityLevel;
   const rest=restEl?parseInt(restEl.value):S.defRest;
   if(age){if(age>13&&age<100)S.age=age;else{toast('Âge invalide (14–99 ans)','error');return;}}
   if(ht){if(ht>100&&ht<230)S.height=ht;else{toast('Taille invalide (100–229 cm)','error');return;}}
@@ -2755,9 +2755,9 @@ function saveProfile(){
   const neckEl=document.getElementById('neck-inp');
   const waistEl=document.getElementById('waist-inp');
   const hipEl=document.getElementById('hip-inp');
-  if(neckEl&&neckEl.value){const v=parseFloat(neckEl.value);if(v>20&&v<60)S.neck=v;}
-  if(waistEl&&waistEl.value){const v=parseFloat(waistEl.value);if(v>40&&v<200)S.waist=v;}
-  if(hipEl&&hipEl.value){const v=parseFloat(hipEl.value);if(v>40&&v<200)S.hip=v;}
+  if(neckEl&&neckEl.value){const v=numFR(neckEl.value);if(v>20&&v<60)S.neck=v;}
+  if(waistEl&&waistEl.value){const v=numFR(waistEl.value);if(v>40&&v<200)S.waist=v;}
+  if(hipEl&&hipEl.value){const v=numFR(hipEl.value);if(v>40&&v<200)S.hip=v;}
   persist();renderHome();renderNutrition();
   renderCycleProfileCard();renderBFCard();_renderProfileCompletion();
   if(typeof toast==='function')toast('Profil enregistré ✅','success');

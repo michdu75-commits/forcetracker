@@ -224,7 +224,7 @@ function renderCycleSetup() {
     const ph = ex === 'Squat à la Barre' ? '120' : ex === 'Développé Couché' ? '90' : ex === 'Soulevé de Terre' ? '140' : '65';
     return `<div style="display:flex;align-items:center;gap:10px;">
       <span style="font-size:13px;font-weight:600;flex:1;">${ex}</span>
-      <input type="number" id="rm-inp-${ex.replace(/ /g,'_')}" value="${rm}" placeholder="${ph}" inputmode="decimal" step="0.5" style="width:90px;text-align:center;padding:8px;" oninput="renderCycleProjections()">
+      <input type="text" id="rm-inp-${ex.replace(/ /g,'_')}" value="${rm}" placeholder="${ph}" inputmode="decimal" step="0.5" style="width:90px;text-align:center;padding:8px;" oninput="renderCycleProjections()">
       <span style="font-size:12px;color:var(--t3);">kg</span>
     </div>`;
   }).join('');
@@ -234,7 +234,7 @@ function renderCycleSetup() {
 function getCycleInputRM(ex) {
   const el = document.getElementById('rm-inp-' + ex.replace(/ /g,'_'));
   if (!el) return 0;
-  return parseFloat(el.value) || parseFloat(el.placeholder) || 0;
+  return numFR(el.value) || parseFloat(el.placeholder) || 0;
 }
 
 function renderCycleProjections(weeks) {
@@ -421,7 +421,7 @@ function linearRegression(pts){
 }
 function saveWeightEntry(){
   const inp=document.getElementById('wentry-inp');
-  const kg=parseFloat(inp?inp.value:0);
+  const kg=numFR(inp?inp.value:0);
   if(!kg||kg<20||kg>300){toast('Poids invalide (20–300 kg)','error');return;}
   if(!S.weightLog)S.weightLog=[];
   const d=today();const idx=S.weightLog.findIndex(w=>w.date===d);
@@ -447,7 +447,7 @@ function renderWeightTab(){
       <div style="font-size:13px;color:var(--t3);margin-top:2px;">${todayW?'✓ Enregistré : '+todayW.kg+' kg':'Pas encore saisie aujourd\'hui'}</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
-      <input type="number" id="wentry-inp" value="${prefill}" placeholder="${S.bw||80}" step="0.1" min="20" max="300" inputmode="decimal" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();saveWeightEntry();}" style="width:76px;padding:9px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">
+      <input type="text" id="wentry-inp" value="${prefill}" placeholder="${S.bw||80}" step="0.1" min="20" max="300" inputmode="decimal" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();saveWeightEntry();}" style="width:76px;padding:9px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">
       <button class="btn-xs btn-red" onclick="saveWeightEntry()" style="background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;border:none;padding:10px 14px;font-size:16px;">✓</button>
     </div>
   </div>`;
@@ -584,13 +584,13 @@ function renderWeightTarget(){
      +'<div><div style="font-size:14px;font-weight:800;color:var(--t1);">🎯 Poids objectif</div>'
      +'<div style="font-size:12px;color:var(--t3);margin-top:2px;">'+sub+'</div></div>'
      +'<div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">'
-       +'<input type="number" id="target-inp" value="'+(tw||'')+'" placeholder="kg" step="0.1" min="20" max="300" inputmode="decimal" style="width:70px;padding:9px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">'
+       +'<input type="text" id="target-inp" value="'+(tw||'')+'" placeholder="kg" step="0.1" min="20" max="300" inputmode="decimal" style="width:70px;padding:9px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">'
        +'<button class="btn-xs btn-red" onclick="setTargetWeight()" style="background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;border:none;padding:10px 14px;font-size:16px;">✓</button>'
      +'</div>'
     +'</div>';
 }
 function setTargetWeight(){
-  const v=parseFloat((document.getElementById('target-inp')||{}).value);
+  const v=numFR((document.getElementById('target-inp')||{}).value);
   if(!v){S.targetWeight=0;persist();renderWeightTab();toast('Objectif retiré','info');return;}
   if(v<20||v>300){toast('Objectif invalide (20–300 kg)','error');return;}
   S.targetWeight=v;persist();renderWeightTab();
@@ -611,7 +611,7 @@ function _bfNavy(neck,waist,hip,ht,gender){
 }
 function _bfMeasInput(id,label,val){
   return '<div style="flex:1;"><div style="font-size:10px;color:var(--t3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em;">'+label+'</div>'
-    +'<input type="number" id="'+id+'" value="'+(val||'')+'" placeholder="cm" step="0.5" inputmode="decimal" oninput="_recalcNavyBf()" style="width:100%;padding:8px 6px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:15px;font-family:var(--font);text-align:center;box-sizing:border-box;"></div>';
+    +'<input type="text" id="'+id+'" value="'+(val||'')+'" placeholder="cm" step="0.5" inputmode="decimal" oninput="_recalcNavyBf()" style="width:100%;padding:8px 6px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:15px;font-family:var(--font);text-align:center;box-sizing:border-box;"></div>';
 }
 function _navyBfHtml(){
   const navy=_bfNavy(S.neck,S.waist,S.hip,S.height,S.gender);
@@ -641,7 +641,7 @@ function renderBodyFatCard(){
      +'<div><div style="font-size:14px;font-weight:800;color:var(--t1);">Masse grasse du jour</div>'
      +'<div style="font-size:12px;color:var(--t3);margin-top:2px;">'+sub+'</div></div>'
      +'<div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">'
-       +'<input type="number" id="bf-inp" value="'+prefill+'" placeholder="%" step="0.1" min="2" max="70" inputmode="decimal" style="width:70px;padding:9px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">'
+       +'<input type="text" id="bf-inp" value="'+prefill+'" placeholder="%" step="0.1" min="2" max="70" inputmode="decimal" style="width:70px;padding:9px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">'
        +'<button class="btn-xs btn-red" onclick="saveBodyFat()" style="background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;border:none;padding:10px 14px;font-size:16px;">✓</button>'
      +'</div>'
     +'</div>'
@@ -660,8 +660,8 @@ function renderBodyFatCard(){
 }
 function saveBodyFat(){
   // Mensurations saisies (aussi utilisées pour le calcul US Navy de secours)
-  const nk=parseFloat((document.getElementById('bf-neck')||{}).value),wa=parseFloat((document.getElementById('bf-waist')||{}).value),hp=parseFloat((document.getElementById('bf-hip')||{}).value);
-  let bf=parseFloat((document.getElementById('bf-inp')||{}).value);
+  const nk=numFR((document.getElementById('bf-neck')||{}).value),wa=numFR((document.getElementById('bf-waist')||{}).value),hp=numFR((document.getElementById('bf-hip')||{}).value);
+  let bf=numFR((document.getElementById('bf-inp')||{}).value);
   // Rien tapé à la main → on prend directement le calcul US Navy des mesures
   if(!bf){const navy=_bfNavy(nk||S.neck,wa||S.waist,hp||S.hip,S.height,S.gender);if(navy!=null)bf=navy;}
   if(!bf||bf<2||bf>70){toast('Entre un % ou tes mesures (cou + taille)','error');return;}
@@ -723,12 +723,12 @@ function _weighTE(e){
   _weighNav(dx>0?1:-1);                                     // glisser vers la droite = remonter vers la plus ancienne
 }
 function saveWeighEdit(){
-  const kg=parseFloat((document.getElementById('weigh-edit-kg')||{}).value);
+  const kg=numFR((document.getElementById('weigh-edit-kg')||{}).value);
   const newDate=(document.getElementById('weigh-edit-date')||{}).value;
   if(!kg||kg<20||kg>300){toast('Poids invalide (20–300 kg)','error');return;}
   if(!newDate){toast('Date invalide','error');return;}
   if(newDate>today()){toast('Date dans le futur','error');return;}
-  const bfv=parseFloat((document.getElementById('weigh-edit-bf')||{}).value);
+  const bfv=numFR((document.getElementById('weigh-edit-bf')||{}).value);
   const entry={date:newDate,kg:kg};
   if(bfv>=2&&bfv<=70)entry.bf=bfv;
   // retire l'ancienne entrée + toute entrée sur la nouvelle date, puis ré-insère
@@ -1472,7 +1472,7 @@ async function openBodyScanForm(idx){
   if(dateEl)dateEl.value=sc?sc.date:today();   // date du TÉLÉPHONE (ft-v655)
   const inpHtml=f=>`<div>
     <label style="font-size:11px;color:var(--t3);display:block;margin-bottom:3px;">${f.l}${f.u?' ('+f.u+')':''}${f.req?' *':''}</label>
-    <input type="number" id="bs-${f.k}" step="0.1" inputmode="decimal" value="${sc&&sc[f.k]!=null?sc[f.k]:''}" placeholder="—" style="width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);box-sizing:border-box;">
+    <input type="text" id="bs-${f.k}" step="0.1" inputmode="decimal" value="${sc&&sc[f.k]!=null?sc[f.k]:''}" placeholder="—" style="width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);box-sizing:border-box;">
   </div>`;
   if(grid)grid.innerHTML=_BS_FIELDS.map(inpHtml).join('');
   const seg=document.getElementById('bs-seg-grid');
@@ -1484,10 +1484,10 @@ function closeBodyScanForm(){const ov=document.getElementById('ov-bodyscan-form'
 function saveBodyScan(){
   const dEl=document.getElementById('bs-date');const date=dEl?dEl.value:'';
   if(!date){toast('Choisis une date','error');return;}
-  const wEl=document.getElementById('bs-weight');const weight=wEl?parseFloat(wEl.value):NaN;
+  const wEl=document.getElementById('bs-weight');const weight=wEl?numFR(wEl.value):NaN;
   if(!weight||weight<=0){toast('Le poids est obligatoire','error');return;}
   const obj={date};
-  _BS_FIELDS.concat(_BS_SEG_FIELDS).forEach(f=>{const e=document.getElementById('bs-'+f.k);if(!e)return;const v=parseFloat(e.value);if(!isNaN(v))obj[f.k]=v;});
+  _BS_FIELDS.concat(_BS_SEG_FIELDS).forEach(f=>{const e=document.getElementById('bs-'+f.k);if(!e)return;const v=numFR(e.value);if(!isNaN(v))obj[f.k]=v;});
   if((obj.imc==null||isNaN(obj.imc))&&S.height){obj.imc=+(weight/Math.pow(S.height/100,2)).toFixed(1);}
   /* 🏷️ CE QUI EST NORMALISÉ GARDE D'OÙ IL VIENT (R33). Sans ça, impossible d'auditer plus tard
      une valeur douteuse — ni de savoir si elle a été LUE, CALCULÉE ou tapée à la main. */
@@ -2510,7 +2510,7 @@ function renderLogSleep(){
       +'<button class="slq-btn" id="sq-4" onclick="setSleepQual(4)">'+bars(4)+'Excellent</button>'
       +'</div>'
       +'<div style="display:flex;gap:8px;align-items:center;">'
-      +'<input type="number" id="sleep-hours" placeholder="7.5" step="0.5" min="2" max="14" inputmode="decimal" enterkeyhint="done" oninput="_toggleSleepSaveBtn(this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();saveSleepEntry();}" style="flex:1;padding:11px 12px;border-radius:10px;border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:16px;" value="'+(ts?ts.hours:'')+'">'
+      +'<input type="text" id="sleep-hours" placeholder="7.5" step="0.5" min="2" max="14" inputmode="decimal" enterkeyhint="done" oninput="_toggleSleepSaveBtn(this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();saveSleepEntry();}" style="flex:1;padding:11px 12px;border-radius:10px;border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:16px;" value="'+(ts?ts.hours:'')+'">'
       +'<span style="font-size:13px;color:var(--t2);white-space:nowrap;">h de sommeil</span>'
       +((ts||editingPast)?'<button class="btn btn-bg2 btn-sm" onclick="_sleepEditDate=null;_sleepEditLog=false;renderLogSleep()" style="flex-shrink:0;font-size:12px;padding:8px 12px;">Annuler</button>':'')
       +'</div>'
@@ -3056,7 +3056,7 @@ function updateSleepQualBtns(){
 }
 function saveSleepEntry(){
   const hEl=document.getElementById('sleep-hours');
-  const hours=parseFloat(hEl?hEl.value:0)||0;
+  const hours=numFR(hEl?hEl.value:0)||0;
   if(!hours||hours<2||hours>14){toast('Heures invalides (entre 2 et 14h)','error');return;}
   if(!S.sleepLog)S.sleepLog=[];
   const dateStr=_sleepDateFor();
