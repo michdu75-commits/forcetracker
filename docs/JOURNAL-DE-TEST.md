@@ -95,6 +95,72 @@ n'avait pas pu promouvoir avant son correctif). **À promouvoir le jour où le r
 l'attendu sera alors vérifiable — *cite-t-il un jour réel du journal ?*
 **État : à trier.**
 
+### 🟡 PESER CUIT EST INGÉRABLE — la série complète de Michel, du paquet à l'assiette
+**30/08/2026, Michel, sa balance à la main, du paquet à l'assiette** : *« 140 grammes de pâtes crues
+(coquillettes), cuites 392 grammes. Mais ça va dépendre de combien je les laisse cuire lol. »* Puis il
+a poursuivi la série jusqu'au bout, en direct.
+
+⭐⭐ **LA SÉRIE COMPLÈTE — LA MÊME ASSIETTE, QUATRE POIDS, UNE SEULE VALEUR NUTRITIONNELLE :**
+
+| étape | poids | × cru | kcal |
+|---|---|---|---|
+| crues | 140 g | — | **509** |
+| cuites, égouttées | 392 g | × 2,80 | **509** |
+| + 10 min à l'air, **aucune cuisson** | 381 g | × 2,72 | **509** |
+| + 5 min poêle **à sec** | 368 g | × 2,63 | **509** |
+| + 5 min poêle **avec 8 g d'huile** | 325 g | × 2,32 | 509 **+ 62** |
+
+👉 ***Amplitude de 67 g, soit 17 %, pour une valeur nutritionnelle constante.*** Si l'app avait
+converti « poids cuit → calories » avec le facteur CIQUAL, elle aurait annoncé **654 · 636 · 614 ·
+542 kcal** pour la même assiette (de +28 % à +7 %). *Le poids cuit n'est pas une mesure de ce qu'on
+mange : c'est une mesure de l'heure qu'il est.*
+
+⭐⭐ **ET UNE DONNÉE QU'AUCUNE TABLE N'A : 87 % DE L'HUILE FINIT DANS L'ASSIETTE.** 8 g versés,
+**1 g** récupéré dans l'assiette et retiré → **7 g absorbés = 62 kcal**. La méthode qui l'obtient
+contourne l'objection de Michel (*« même avec l'huile elles vont perdre encore de l'eau »*) : comme
+**l'huile ne s'évapore pas**, elle est soit dans les pâtes soit ailleurs — la peser ailleurs suffit,
+et le résultat ne dépend pas du tout de l'évaporation.
+
+⚠️⚠️ **ET J'AI PRÉDIT LE CONTRAIRE DE CE QUI S'EST PASSÉ.** J'avais écrit que le film d'huile
+**freinerait** l'évaporation, donc que 2,6 g/min était un *plafond*. Mesuré : **10,0 g/min avec
+l'huile contre 2,6 g/min à sec — 3,8× plus RAPIDE.** L'huile n'est pas un couvercle, c'est un
+**conducteur** : à sec les pâtes ne touchent le métal qu'en quelques points, avec de l'air entre ;
+l'huile met toute la surface en contact thermique. *Une intuition physique plausible, énoncée sans
+mesure, et fausse d'un facteur 4.*
+⭐⭐ **Sa mesure est la meilleure preuve du dossier, et elle vient du terrain** : facteur réel
+**× 2,80** contre **× 2,18** dans CIQUAL. S'il pesait cuit avec le facteur de la table, son assiette
+serait comptée **654 kcal au lieu de 509 — +28 %**, sur un chiffre parfaitement crédible.
+⛔ **Ça ferme une piste que j'avais proposée** : une conversion cru↔cuit dans l'app. Le facteur ne
+dépend pas de l'aliment mais de **sa casserole** — *un facteur moyen appliqué à son assiette est une
+fausse précision qui se trompe de 28 % sans jamais le dire* (R29).
+⭐ **Ce qui reste vrai et suffit** : la cuisson ajoute de l'**eau**, pas des calories. Vérifié dans la
+table elle-même — 100 g cru = 364 kcal, et 218 g cuits × 167 kcal/100g = **364 kcal**. Donc *le poids
+CRU est le seul fait ; le poids cuit est une information sur la cuisson, pas sur la nutrition.*
+⚠️ **Et la poêle est pire** : l'eau s'évapore (poids ↓, kcal =) pendant que l'huile est absorbée
+(poids ↑, kcal ↑). *La balance ne montre que la somme, elle ne peut pas les distinguer* — aucune
+pesée d'après-cuisson n'est convertible.
+⛔ **Le vrai risque produit est le code-barres** : un paquet donne les valeurs du produit **sec**, et
+on pèse souvent dans l'assiette. Scanner puis taper le poids cuit compte **2,3× trop**.
+⛔ **Rien n'est construit** : Michel n'a rien demandé, et pour lui c'est acquis (il pèse cru). La
+question ne se pose que pour Tatiana, Emma ou Christophe. *Piste la moins chère si elle se pose : un
+rappel « pèse cru » au scan d'un féculent — pas une conversion.*
+⛔ **Pas un scénario à promouvoir** : rien ici n'est vérifiable par du code aujourd'hui (l'app ne
+stocke aucun état cru/cuit). C'est une **décision produit**, pas un test.
+⚠️⚠️ **ET MICHEL A TROUVÉ LA LIMITE DE SA PROPRE MESURE** : *« pas sûr que toutes les balances
+pèsent la même chose »*. ⭐ **Les DIFFÉRENCES sont immunisées** (392→381→368→325 sont prises sur la
+même balance : un décalage systématique s'annule dans une soustraction) — donc les vitesses
+d'évaporation tiennent. ⛔⛔ **Mais l'HUILE, non** : le seul chiffre qui porte des calories est aussi
+celui qui est **à la limite de résolution**. Sur une balance au gramme, « 1 g de résidu » vaut
+**0,5 à 1,5 g** → le **87 % est en réalité « 80 à 94 % »**, et l'assiette **562 à 580 kcal**.
+*Le chiffre ne mérite pas sa deuxième décimale, et on ne l'écrit donc pas comme s'il la méritait*
+(**R29**). 👉 Correctif de protocole : **verser 15-20 g d'huile** au lieu de 8 — la résolution
+devient négligeable devant la quantité.
+
+⭐ **La suite se note dans `docs/MESURES-CRU-CUIT.md`** — carnet ouvert à la demande de Michel
+(*« on va créer un tableau, je vais tout noter, je ferai pareil pour le riz »*) : le protocole, sa
+série de ce soir, et les séries à venir (autre cuisson · une journée au frigo · riz).
+**État : à trier.**
+
 ### 🟡 « PAS DE RECORD » NE VEUT PAS DIRE « JAMAIS FAIT » — et le mot doit le dire
 **27/08/2026, correction de Michel en cours de livraison de ft-v1035** : *« est-ce que "pas de
 record" veut vraiment dire "jamais fait" ? Clairement non. »*
