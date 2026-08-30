@@ -278,26 +278,76 @@ function _histoLignes(){
   return out;
 }
 /* ⭐ Un seul endroit sait fabriquer un fichier et le donner — le même geste que les autres
-   exports de l'app (R13), y compris la feuille de partage iPhone quand elle existe. */
-function _donnerFichier(contenu, nom, mime){
+   exports de l'app (R13), y compris la feuille de partage iPhone quand elle existe.
+
+   ⛔⛔ RÉÉCRITE LE 30/08/2026 — LE BOUTON NE DONNAIT RIEN SUR L'iPHONE DE MICHEL, ET IL
+   ANNONÇAIT UNE RÉUSSITE. Trois défauts, dont deux indépendants de la plateforme :
+
+   ① ⭐⭐ LE TYPE PORTAIT UN `;charset=utf-8`, ET C'EST MESURABLE : sur les **7** endroits de
+      l'app qui livrent un fichier, celui-ci était **le seul**. Les six autres — le CSV du banc
+      d'essai, les PDF de séance et de programme, l'export de conversation — passent des types
+      **propres** (`text/csv`, `application/pdf`), et eux marchent sur son téléphone.
+      *`navigator.canShare` d'iOS ne reconnaît pas un type paramétré et rend `false`*, donc on
+      tombait sur `<a download>` — **qu'iOS n'honore pas**, encore moins dans une PWA installée
+      en plein écran : rien ne se passe, aucune erreur.
+      ⛔ Et le charset y était **décoratif** : ce qui fait lire l'UTF-8 à Excel, c'est le **BOM**
+      dans les octets du fichier, pas le type MIME d'un fichier qu'on partage — il n'y a aucun
+      en-tête HTTP dans cette histoire. On ne perd donc rien, et un témoin fige le BOM.
+
+   ② ⛔ LE PARTAGE N'ÉTAIT PAS ATTENDU (`.catch()` sans `await`) : le toast « 2 séries
+      exportées » partait avant que la feuille de partage ait rendu quoi que ce soit.
+
+   ③ ⛔⛔ ET SURTOUT `return true` APRÈS `a.click()`, SANS RIEN SAVOIR. *Un succès menteur est
+      pire qu'un échec* : Michel voyait « exportées » et n'avait aucun fichier. On ne prétend
+      plus : quand on ne peut pas confirmer, on rend `'inconnu'` et l'appelant le dit. */
+async function _donnerFichier(contenu, nom, mime){
   try{
-    const blob=new Blob([contenu],{type:mime});
-    const f=(typeof File!=='undefined')?new File([blob],nom,{type:mime}):null;
-    if(f && navigator.canShare && navigator.canShare({files:[f]})){
+    /* ⛔ Le type est NETTOYÉ de ses paramètres pour le partage (voir ① ci-dessus). */
+    const propre=String(mime||'application/octet-stream').split(';')[0].trim();
+    const blob=new Blob([contenu],{type:propre});
+    const f=(typeof File!=='undefined')?new File([blob],nom,{type:propre}):null;
+    if(f && navigator.share && navigator.canShare && navigator.canShare({files:[f]})){
       /* ⛔⛔ AUCUN `title` SUR UN PARTAGE DE FICHIER — un témoin existant l'interdit, et il m'a
          attrapé. La règle vient d'un vrai bug du projet (« Conseil de Milo » partait à la place
          du fichier). Le nom du fichier suffit à le nommer. */
-      navigator.share({files:[f]}).catch(()=>{});
-      return true;
+      try{ await navigator.share({files:[f]}); return 'ok'; }
+      /* ⛔ Fermer la feuille de partage n'est PAS un échec : on ne crie pas « impossible » à
+         quelqu'un qui vient de dire non. Mais on ne dit pas « exporté » non plus. */
+      catch(err){ if(err && err.name==='AbortError') return 'annule'; }
     }
     const a=document.createElement('a');
     a.href=URL.createObjectURL(blob); a.download=nom;
     document.body.appendChild(a); a.click();
     setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
-    return true;
+    /* ⚠️ ON NE SAIT PAS SI ÇA A MARCHÉ, et on le dit. `a.click()` ne rend rien, ne lève rien, et
+       sur iOS il ne fait souvent RIEN. `download` est justement l'attribut qu'iOS n'honore pas :
+       c'est donc exactement là que l'incertitude est la plus grande. */
+    return (typeof _iosStandalone==='function' && _iosStandalone()) ? 'inconnu' : 'ok';
+  }catch(e){ return 'echec'; }
+}
+/* ⛔ « Sommes-nous dans l'app installée sur iPhone ? » — c'est le seul cas où `<a download>` ne
+   fait RIEN sans le dire. Ailleurs il marche, et prétendre le contraire inquiéterait pour rien. */
+function _iosStandalone(){
+  try{
+    const ios=/iP(hone|ad|od)/.test(navigator.userAgent)
+      || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);   // iPad récent
+    const seul=!!(window.navigator.standalone) ||
+      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+    return ios && seul;
   }catch(e){ return false; }
 }
-function exportHistoCsv(){
+/* ⛔ CE QU'ON DIT APRÈS COUP, ET SEULEMENT CE QU'ON SAIT (30/08/2026). Avant, le toast annonçait
+   « N séries exportées » dans TOUS les cas, y compris quand rien n'était parti — c'est ce que
+   Michel a vécu. Les quatre issues sont maintenant distinctes, et l'incertitude en est une. */
+function _toastFichier(etat, n, unite){
+  if(etat==='ok'){ toast(n+' '+(unite||'séries')+' exportées','success'); return; }
+  if(etat==='annule') return;                     // il a fermé la feuille de partage : rien à dire
+  if(etat==='inconnu'){                           // iPhone en plein écran : `download` n'y fait rien
+    toast('Ouvre l\'app dans Safari pour enregistrer le fichier','info'); return;
+  }
+  toast('Export impossible','error');
+}
+async function exportHistoCsv(){
   const L=_histoLignes();
   if(!L.length){ toast('Aucune séance à exporter','info'); return; }
   /* ⛔ ÉCHAPPEMENT CSV RÉEL : un nom d'exercice peut contenir une virgule (« Rowing Barre (Tirage
@@ -310,9 +360,11 @@ function exportHistoCsv(){
      deux défauts qui font dire « ton export est cassé » alors que le fichier est correct. */
   const csv='﻿'+HISTO_COLONNES.join(';')+'\n'
     +L.map(r=>HISTO_COLONNES.map(c=>q(r[c])).join(';')).join('\n');
-  const ok=_donnerFichier(csv,'forcetracker-historique_'+today()+'.csv','text/csv;charset=utf-8');
-  toast(ok?(L.length+' séries exportées'):'Export impossible', ok?'success':'error');
-  closeHistoExport();
+  /* ⛔ Type PROPRE : le BOM ci-dessus porte déjà l'UTF-8 pour Excel, et un `;charset=…` ici
+     empêchait `canShare` de reconnaître le fichier sur iPhone (voir `_donnerFichier`). */
+  closeHistoExport();                     // on referme AVANT : la feuille de partage iOS prend la main
+  const etat=await _donnerFichier(csv,'forcetracker-historique_'+today()+'.csv','text/csv');
+  _toastFichier(etat, L.length, 'séries');
 }
 async function exportHistoPdf(){
   const L=_histoLignes();
@@ -377,14 +429,14 @@ async function exportHistoPdf(){
       y=doc.lastAutoTable.finalY;                   // ⭐ `finalY` EXISTE, lui — vérifié
     });
     const nom='forcetracker-historique_'+today()+'.pdf';
-    const blob=doc.output('blob');
-    const f=(typeof File!=='undefined')?new File([blob],nom,{type:'application/pdf'}):null;
-    /* ⛔⛔ Idem ici : pas de `title` avec `files` (voir `_donnerFichier`). */
-    if(f && navigator.canShare && navigator.canShare({files:[f]})) navigator.share({files:[f]}).catch(()=>{});
-    else { const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nom;
-           document.body.appendChild(a); a.click();
-           setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); }
-    toast(seances+' séances exportées','success');
+    /* ⛔⛔ LE PDF PASSE PAR LE MÊME PROPRIÉTAIRE QUE LE CSV (R2, 30/08/2026). Il recopiait ici la
+       livraison de fichier — donc il portait **les mêmes trois défauts**, et le correctif posé
+       d'un seul côté les aurait laissés vivre. *Deux façons de donner un fichier finissent par ne
+       plus donner le même résultat, et on ne sait plus laquelle croire.* */
+    closeHistoExport();                   // avant le partage : la feuille iOS prend la main
+    const etat=await _donnerFichier(doc.output('blob'), nom, 'application/pdf');
+    _toastFichier(etat, seances, 'séances');
+    return;
   }catch(e){ toast('Export PDF impossible','error'); }
   closeHistoExport();
 }
