@@ -95,9 +95,38 @@ n'avait pas pu promouvoir avant son correctif). **À promouvoir le jour où le r
 l'attendu sera alors vérifiable — *cite-t-il un jour réel du journal ?*
 **État : à trier.**
 
-### 🟡 PESER CUIT EST INGÉRABLE — mesuré chez Michel, × 2,80 au lieu de × 2,18
-**30/08/2026, Michel, sa balance à la main** : *« 140 grammes de pâtes crues (coquillettes), cuites
-392 grammes. Mais ça va dépendre de combien je les laisse cuire lol. »*
+### 🟡 PESER CUIT EST INGÉRABLE — la série complète de Michel, du paquet à l'assiette
+**30/08/2026, Michel, sa balance à la main, du paquet à l'assiette** : *« 140 grammes de pâtes crues
+(coquillettes), cuites 392 grammes. Mais ça va dépendre de combien je les laisse cuire lol. »* Puis il
+a poursuivi la série jusqu'au bout, en direct.
+
+⭐⭐ **LA SÉRIE COMPLÈTE — LA MÊME ASSIETTE, QUATRE POIDS, UNE SEULE VALEUR NUTRITIONNELLE :**
+
+| étape | poids | × cru | kcal |
+|---|---|---|---|
+| crues | 140 g | — | **509** |
+| cuites, égouttées | 392 g | × 2,80 | **509** |
+| + 10 min à l'air, **aucune cuisson** | 381 g | × 2,72 | **509** |
+| + 5 min poêle **à sec** | 368 g | × 2,63 | **509** |
+| + 5 min poêle **avec 8 g d'huile** | 325 g | × 2,32 | 509 **+ 62** |
+
+👉 ***Amplitude de 67 g, soit 17 %, pour une valeur nutritionnelle constante.*** Si l'app avait
+converti « poids cuit → calories » avec le facteur CIQUAL, elle aurait annoncé **654 · 636 · 614 ·
+542 kcal** pour la même assiette (de +28 % à +7 %). *Le poids cuit n'est pas une mesure de ce qu'on
+mange : c'est une mesure de l'heure qu'il est.*
+
+⭐⭐ **ET UNE DONNÉE QU'AUCUNE TABLE N'A : 87 % DE L'HUILE FINIT DANS L'ASSIETTE.** 8 g versés,
+**1 g** récupéré dans l'assiette et retiré → **7 g absorbés = 62 kcal**. La méthode qui l'obtient
+contourne l'objection de Michel (*« même avec l'huile elles vont perdre encore de l'eau »*) : comme
+**l'huile ne s'évapore pas**, elle est soit dans les pâtes soit ailleurs — la peser ailleurs suffit,
+et le résultat ne dépend pas du tout de l'évaporation.
+
+⚠️⚠️ **ET J'AI PRÉDIT LE CONTRAIRE DE CE QUI S'EST PASSÉ.** J'avais écrit que le film d'huile
+**freinerait** l'évaporation, donc que 2,6 g/min était un *plafond*. Mesuré : **10,0 g/min avec
+l'huile contre 2,6 g/min à sec — 3,8× plus RAPIDE.** L'huile n'est pas un couvercle, c'est un
+**conducteur** : à sec les pâtes ne touchent le métal qu'en quelques points, avec de l'air entre ;
+l'huile met toute la surface en contact thermique. *Une intuition physique plausible, énoncée sans
+mesure, et fausse d'un facteur 4.*
 ⭐⭐ **Sa mesure est la meilleure preuve du dossier, et elle vient du terrain** : facteur réel
 **× 2,80** contre **× 2,18** dans CIQUAL. S'il pesait cuit avec le facteur de la table, son assiette
 serait comptée **654 kcal au lieu de 509 — +28 %**, sur un chiffre parfaitement crédible.
