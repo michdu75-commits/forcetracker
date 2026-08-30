@@ -5716,6 +5716,36 @@ async function loadHealthAdmin(){
       } else if(ai.usage===null){
         h+=_healthRow('💰','Coût réel du jour','warn','Aucun appel enregistré aujourd\'hui pour l\'instant.');
       }
+      /* 👥 QUI APPELLE MILO AUJOURD'HUI (ft-v1058) — Michel : *« est-il possible de savoir qui
+         utilise Milo ou autre appel API sur l'application ? »*.
+         ⭐⭐ IL N'Y AVAIT RIEN À CONSTRUIRE : `ai_quota.byEmail` compte déjà les appels par
+         personne — c'est ce qui fait respecter le plafond de 50/jour — et la route `aiUsage`
+         renvoyait DÉJÀ `topUsers` trié, `uniqueUsers` et `global`. Mesuré avant d'écrire une
+         ligne : **zéro occurrence de `topUsers` dans ce fichier**. *La donnée arrivait dans
+         l'app et se perdait à chaque ouverture* — R5, une donnée produite, exploitée pour une
+         seule chose, jamais montrée.
+         ⛔ CE QU'ON NE PEUT PAS DIRE, ET C'EST ÉCRIT À L'ÉCRAN : `ai_quota` compte des APPELS,
+         pas des tokens. L'instrumentation des euros (`ai_usage`) ne porte PAS l'email. On peut
+         donc afficher « christophe : 31 appels », **jamais** « christophe : 0,40 € » — le dire
+         serait une fausse précision (R29).
+         ⛔ ET ON N'AFFICHE QUE LA PARTIE AVANT L'ARROBASE. Michel a besoin de reconnaître ses
+         testeurs, pas d'une liste d'adresses complètes recopiable. *Le strict nécessaire pour
+         répondre à la question posée* — et sa question était « qui », jamais « quoi ».
+         ⚠️ La ligne se tait s'il n'y a eu aucun appel : une liste vide se lirait comme une
+         panne, alors que c'est une journée calme. */
+      if(ai.topUsers && ai.topUsers.length){
+        const _court=e=>String(e||'').split('@')[0].slice(0,18);
+        const _liste=ai.topUsers.slice(0,8)
+          .map(u=>(typeof _obsEsc==='function'?_obsEsc(_court(u.email)):_court(u.email))+' <b>'+(u.count||0)+'</b>').join(' · ');
+        const _n=ai.uniqueUsers||ai.topUsers.length;
+        const _plaf=(ai.global!=null&&ai.globalMax)?(' · <span style="color:var(--t3)">'+ai.global+' sur '+ai.globalMax+' pour tout le monde</span>'):'';
+        h+=_healthRow('👥','Qui a appelé Milo aujourd\'hui','ok',
+          '<b>'+_n+'</b> personne'+(_n>1?'s':'')+_plaf
+          +'<br><span style="font-size:11.5px;color:var(--t2);">'+_liste+'</span>'
+          +'<br><span style="font-size:11px;color:var(--t3);">Des APPELS, pas des euros — le coût par personne n\'est pas mesuré.</span>');
+      } else if(ai.topUsers){
+        h+=_healthRow('👥','Qui a appelé Milo aujourd\'hui','ok','Personne pour l\'instant — journée calme.');
+      }
       // 🛡️ LE PLAFOND EST-IL ARMÉ ? (11/08/2026) — il ne l'est que si le secret partagé est posé
       // côté Cloudflare. Avant cette ligne, l'information n'était affichée NULLE PART : on posait
       // le secret sans aucun moyen de vérifier qu'il avait pris. *Un garde-fou qu'on ne peut pas
