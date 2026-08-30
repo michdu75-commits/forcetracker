@@ -576,6 +576,21 @@ function _saveProgExoSlot(idx,name){
   else selectProgEx(_progEx);
 }
 function switchProgTab(tab,btn){
+  /* ⛔⛔ LES DEUX CARTES DU HAUT SUIVENT LE SOUS-ONGLET (30/08/2026) — et c'est un RETOUR SUR MA
+     PROPRE DÉCISION de ft-v1041, où j'avais écrit *« elle survit au changement de sous-onglet »*
+     et posé un témoin dessus.
+     Michel, vidéo à l'appui : *« sur le poids et le record on s'en fout un peu de ça non ? »*.
+     ⭐ Il a raison, et la raison est de fond : « Ce que ton histoire montre » et « Ce que tu
+     travailles, par semaine » parlent d'**ENTRAÎNEMENT**. Sur **Poids** (une pesée) et sur
+     **Badges** (des récompenses), elles ne répondent à aucune question qu'on vient s'y poser —
+     elles repoussent seulement le contenu hors de l'écran. Mesuré sur sa vidéo : l'onglet Poids
+     est *entièrement* occupé par les deux cartes, la pesée du jour est au ras du bas.
+     ⚠️ L'intention d'origine reste juste — ne pas les faire clignoter quand on change d'onglet —
+     mais sa PORTÉE était trop large : « ne pas clignoter » ne veut pas dire « être partout ».
+     ⛔ On ne les VIDE pas et on ne les recalcule pas : on les masque. Leur contenu est déjà peint
+     par `renderProgress` ; les recalculer à chaque bascule coûterait pour rien (R19). */
+  const tete=(tab==='exo')?'':'none';
+  ['prog-synth','prog-volume'].forEach(id=>{ const e=document.getElementById(id); if(e)e.style.display=tete; });
   const exo=document.getElementById('prog-exo'),pw=document.getElementById('prog-poids'),bg=document.getElementById('prog-badges');
   if(exo){exo.style.display=tab==='exo'?'flex':'none';exo.style.flexDirection='column';exo.style.gap='10px';}
   if(pw){pw.style.display=tab==='poids'?'flex':'none';pw.style.flexDirection='column';pw.style.gap='10px';}

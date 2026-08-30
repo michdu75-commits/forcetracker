@@ -6,7 +6,19 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1064`.
+- **Version en ligne (live) :** `ft-v1065`.
+- 📊⭐⭐ **LES CARTES D'ENTRAÎNEMENT NE S'AFFICHENT QUE SUR « EXERCICES »** (ft-v1065). Michel,
+  vidéo à l'appui : *« sur le poids et le record on s'en fout un peu de ça non ? »*, puis
+  *« même les badges »*.
+  ⭐ **Raison de fond** : les deux cartes parlent d'**entraînement** ; sur Poids et Badges elles
+  ne répondent à aucune question qu'on vient y poser, elles repoussent le contenu hors écran.
+  ⭐ **Chiffré** : 216 + 191 = **407 px** ; sur Poids les sous-onglets remontent de **545 → 118**
+  (**427 px rendus**) et la pesée du jour de ~600 à **170**.
+  ⚠️⚠️ **Retour sur ma décision de ft-v1041** (*« elle survit au changement de sous-onglet »*) :
+  l'intention était bonne, la **portée** trop large. *Ne pas clignoter ≠ être partout.* Le témoin
+  est **re-visé** — masquée hors d'Exercices **et** revient **intacte**.
+  ⚠️ **`CLAUDE.md` corrigé** : `S.weightLog` porte **`kg`**, pas `bw` — la doc mentait, et c'est
+  elle qui m'a fait écrire une fixture rendant *« undefined »* dans le champ de pesée (**R23**).
 - ⚖️⭐ **LE CHOIX D'UNITÉ DANS « MODIFIER L'ALIMENT »** (ft-v1064). Michel : *« quand j'ajoute il
   ne me donne que le choix de la quantité »*. L'écran de modification n'offrait que des
   multiplicateurs + un cul-de-sac : *« mets la quantité dans le nom »*.
