@@ -16,7 +16,9 @@
   ⭐ Une piste tient (**familles de mouvement**, 2/2 et 0/9) ⚠️ **mais mes 9 séances normales sont
   écrites par moi** — piège de ft-v994/1016. Le contrôle qui vaudrait est **l'historique réel**.
   👉 Dossier : `IDEES-FUTURES.md` · attendu : `docs/JOURNAL-DE-TEST.md` (🟢, non promu exprès)
-  · relais posé à session-B dans `docs/JOURNAL-DE-PARTAGE.md`.
+  · **avis demandé à session-B** dans `docs/JOURNAL-DE-PARTAGE.md` (état ❓) — ⚠️ *ce n'est pas
+  un relais* : Michel rassemble **plusieurs lectures** du même problème (il a déjà celle de
+  GPT). Une demande d'avis attend une **contradiction**, pas une exécution.
 - **Version en ligne (live) :** `ft-v1083`. ✅ **Les deux déploiements sont VERTS** (site + backend
   Apps Script) — la route de nettoyage est réellement en ligne, vérifié dans les Actions.
 - ⏭️ **CE QUI ATTEND MICHEL AU RÉVEIL** (rien d'urgent, rien de cassé) :

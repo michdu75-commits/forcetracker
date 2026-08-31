@@ -7,7 +7,11 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 ## 🧩 UNE SÉANCE « SANS SUJET » : QUEL CRITÈRE LA DÉTECTE ? — EN DISCUSSION (31/08/2026)
 
 > ⛔⛔ **RIEN N'EST DÉCIDÉ, RIEN N'EST CONSTRUIT.** Michel : *« non on en discute et il faut voir
-> aussi avec l'autre Claude »*. Ce bloc existe pour que **la mesure ne meure pas avec la session**
+> aussi avec l'autre Claude »*. ⭐ **Et « voir avec l'autre Claude » veut dire un AVIS, pas un
+> relais** — il l'a précisé : *« la session B c'est pas un relais c'est pour avoir plusieurs
+> avis »*. Il rassemble donc **trois lectures** du même problème (GPT · session-A · session-B),
+> et *une lecture qui ne peut pas contredire les autres ne sert à rien* : ce qui suit est **une**
+> voix, pas une conclusion. Ce bloc existe pour que **la mesure ne meure pas avec la session**
 > (R27) — pas pour préparer une livraison.
 
 ### Le cas d'origine
