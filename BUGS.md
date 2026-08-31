@@ -1777,3 +1777,44 @@ d'annoncer une perte. Et pour la personne : **ne jamais écrire « ❌ » sur un
 constatée** — le local-first garantit que rien n'est perdu, le message doit le dire (**R29**).
 ⚠️ Corollaire : si l'opération n'est pas **idempotente**, un délai dépassé fabrique des doublons
 en silence. Ici c'est un classeur de log, le coût est du bruit ; ailleurs, ce serait pire.
+
+---
+
+## 29. 🚧 LE GARDE-FOU CALIBRÉ SUR UN RATIO REFUSE LE CAS QU'IL VISE **(31/08/2026, ft-v1083)**
+
+### 🔎 À quoi on la reconnaît
+Un garde-fou qui **sonne prudent** — *« si ça touche plus de la moitié, on refuse »*, *« si l'écart
+dépasse 50 %, on ignore »* — et qui n'a **jamais été mesuré sur le cas réel** qu'il est censé
+encadrer. Le signe : le seuil a été choisi à l'écriture, pas tiré d'une donnée.
+
+### 💥 Le cas
+La route de nettoyage des doublons refusait de supprimer plus de **la moitié** des lignes d'une
+personne : au-delà, on supposait un défaut de signature qui ratisserait tout le classeur.
+👉 Or la séance de Michel était écrite **7 fois** : **6 lignes sur 7** étaient des doublons
+parfaitement légitimes. ***Le garde-fou aurait refusé exactement le seul cas pour lequel la route
+avait été écrite.***
+
+*Un ratio ne distingue pas « je me trompe en grand » de « il y a vraiment beaucoup de doublons ».*
+C'est la même grandeur dans les deux cas ; seule la **cause** diffère, et un pourcentage ne la voit
+pas.
+
+### ⛔ Pourquoi ça coûte cher : l'échec est POLI
+Le refus n'est pas un plantage. Il s'affiche proprement, il a l'air raisonnable, et il dit même
+pourquoi. La personne conclut que l'outil « a jugé que c'était trop risqué » — et **personne ne va
+vérifier si le seuil avait raison**. Un garde-fou qui se trompe ne ressemble jamais à un bug : il
+ressemble à de la prudence.
+
+### 🛡️ Ce qui protège aujourd'hui
+- **Le plafond est ABSOLU**, pas proportionnel : il n'attrape plus que l'échelle absurde.
+- **La vraie protection n'est pas un seuil** : c'est l'**aperçu** (la personne voit le nombre avant
+  de confirmer) et le fait qu'on ne supprime **jamais** la première occurrence d'une signature —
+  **garanti par construction**.
+- **Bloc CLXXXVIII, témoin ⑦** : une séance écrite **7 fois** (86 % de doublons) doit passer. Il
+  porte le cas réel, pas un cas inventé — un ratio le fait rougir.
+
+### ⭐ Le réflexe
+Avant d'écrire un seuil, **le passer sur le cas réel qui a motivé le travail**. S'il le refuse, ce
+n'est pas le cas qui est anormal, c'est le seuil.
+⚠️ Et se demander ce que le seuil **prétend** distinguer : s'il est censé séparer deux *causes*
+(un bug vs une situation extrême), un chiffre sur la *conséquence* ne le fera jamais. Chercher
+alors la garantie **par construction** — ici : on ne touche jamais au premier exemplaire.

@@ -20661,6 +20661,130 @@ console.log('\n-- CLXXXVII. Le repos suit la charge du palier · le plafond suit
 }
 
 
+/* == BLOC CLXXXVIII - NETTOYER LES DOUBLONS : LA SEULE ROUTE QUI SUPPRIME (ft-v1083) ==
+   Michel a donne son go APRES avoir vu le constat : sa seance du 31/08 ecrite **7 fois**,
+   celle du 28/08 en double, **157 lignes en trop**. Jamais avant (R29).
+   ⛔⛔ C'EST LA SEULE ROUTE DE `Code.js` QUI EFFACE DES DONNEES DEJA ECRITES, donc c'est ici
+   qu'il faut le plus de temoins — et les 4 premiers ne mesurent pas ce qu'elle supprime,
+   mais ce qu'elle NE supprime PAS. */
+console.log('\n-- CLXXXVIII. Nettoyer les doublons : la seule route qui supprime (ft-v1083) --');
+{
+  const src=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  const vm=require('vm');
+  const EN=['date','exercise','set_num','type','kg','reps','volume','rm1','bw','gender','age','email'];
+  const onglet=(lignes)=>{
+    const g={lignes:lignes.map(r=>r.slice()), copies:[], suppressions:0, blocs:0};
+    const self={_g:g,
+      getDataRange:()=>({getValues:()=>[EN.slice()].concat(g.lignes.map(r=>r.slice()))}),
+      getLastRow:()=>1+g.lignes.length, getLastColumn:()=>EN.length,
+      copyTo:()=>({setName:(n)=>{ g.copies.push(n); }}),
+      /* deleteRows(depart, n) : `depart` est une ligne de FEUILLE (en-tête = 1). */
+      deleteRows:(dep,n)=>{ g.blocs++; g.suppressions+=n; g.lignes.splice(dep-2,n); },
+      appendRow:()=>{}, getRange:()=>({getValues:()=>[[]],setValue:()=>{},setValues:()=>{}})};
+    return self;
+  };
+  const lancer=(o,params,jeton)=>{
+    const ctx={console,JSON,String,Number,Math,Date,Array,Object,
+      SpreadsheetApp:{openById:()=>({getSheetByName:()=>o, insertSheet:()=>o})},
+      PropertiesService:{getScriptProperties:()=>({
+        getProperty:(k)=>(k==='IDEES_TOKEN2'?jeton:''), setProperty:()=>{} })},
+      Utilities:{formatDate:(d,tz,f)=>(f&&f.indexOf('HH')>=0?'2026-08-31-1930':'2026-08-31')},
+      Logger:{log:()=>{}},GmailApp:{},DriveApp:{},UrlFetchApp:{},CacheService:{},
+      LockService:{},Session:{},ScriptApp:{getProjectTriggers:()=>[]},MailApp:{},
+      ContentService:{createTextOutput:(t)=>({setMimeType:()=>({_t:t}),_t:t}),MimeType:{JSON:'json'}}};
+    ctx.global=ctx; vm.createContext(ctx); vm.runInContext(src,ctx,{filename:'Code.js'});
+    const r=vm.runInContext('doGet',ctx)({parameter:params});
+    try{ return JSON.parse(r&&r._t||'{}'); }catch(e){ return {brut:String(r&&r._t||'')}; }
+  };
+  const JET='jeton-de-test-assez-long', MOI='michdu75@gmail.com';
+  const li=(d,ex,n,em)=>[d,ex,n,'N',60,8,480,'75',84,'H',43,em];
+  /* SON CAS : une séance de 3 séries écrite 3 fois · une séance saine · un autre testeur ·
+     une vieille ligne sans email. */
+  const base=()=>{ const L=[];
+    for(let k=0;k<3;k++) for(let i=1;i<=3;i++) L.push(li('2026-08-31','Tirage Poulie Haute',i,MOI));
+    for(let i=1;i<=2;i++) L.push(li('2026-08-30','Squat à la Barre',i,MOI));
+    L.push(li('2026-08-31','Rowing Machine',1,'christophe@famillelanglois.fr'));
+    L.push(li('2026-07-01','Développé Couché',1,''));
+    return L; };
+
+  /* ⛔⛔ ① SANS `confirme=1`, LA ROUTE NE SUPPRIME RIEN. C'est le témoin le plus important. */
+  let o=onglet(base());
+  let d=lancer(o,{action:'sessionNettoyer',token:JET,email:MOI},JET);
+  t('⛔⛔ ① l\'aperçu ne supprime RIEN et ne copie RIEN (6 lignes en trop annoncées)',
+    d.apercuSeul===true && d.aSupprimer===6 && o._g.suppressions===0 && o._g.copies.length===0
+    && o._g.lignes.length===13,
+    'à supprimer='+d.aSupprimer+' · supprimées='+o._g.suppressions+' · copies='+o._g.copies.length);
+
+  /* ⛔⛔ ② LA COPIE DE SÛRETÉ EST FAITE, ET AVANT. */
+  o=onglet(base());
+  d=lancer(o,{action:'sessionNettoyer',token:JET,email:MOI,confirme:'1'},JET);
+  t('⛔⛔ ② une copie de l\'onglet est faite avant de supprimer, et son nom est rendu',
+    o._g.copies.length===1 && /^Sessions-avant-nettoyage-/.test(o._g.copies[0])
+    && d.copie===o._g.copies[0], JSON.stringify(o._g.copies));
+
+  /* ⛔⛔ ③ CE QU'IL RESTE EST EXACTEMENT CE QU'IL FAUT — un exemplaire de chaque série. */
+  const reste=o._g.lignes;
+  const sigs=reste.map(r=>r[0]+'|'+r[1]+'|'+r[2]);
+  t('⛔⛔ ③ il reste UN exemplaire de chaque série (13 → 7 lignes, 0 doublon)',
+    d.supprimees===6 && reste.length===7 && new Set(sigs).size===7,
+    'reste '+reste.length+' lignes : '+JSON.stringify(sigs));
+
+  /* ⛔⛔ ④ ET SURTOUT : CE QU'ELLE N'A PAS LE DROIT DE TOUCHER EST INTACT. */
+  t('⛔⛔ ④ la ligne d\'un autre testeur et la ligne SANS email sont intactes',
+    reste.some(r=>r[11]==='christophe@famillelanglois.fr')
+    && reste.some(r=>r[11]==='' && r[1]==='Développé Couché'),
+    JSON.stringify(reste.map(r=>r[11])));
+
+  /* ⛔ ⑤ LA SÉANCE SAINE GARDE SES DEUX SÉRIES — un nettoyage qui « range » trop est pire. */
+  t('⛔ ⑤ la séance saine du 30/08 garde ses 2 séries',
+    reste.filter(r=>r[0]==='2026-08-30').length===2,
+    JSON.stringify(reste.filter(r=>r[0]==='2026-08-30').map(r=>r[2])));
+
+  /* ⚠️⚠️ ⑥ PAR BLOCS, PAS LIGNE À LIGNE : 157 `deleteRow` referaient le bug de ft-v1077. */
+  t('⛔⛔ ⑥ la suppression se fait par BLOCS contigus, pas une ligne à la fois',
+    d.blocs>=1 && d.blocs<d.supprimees, d.supprimees+' lignes en '+d.blocs+' bloc(s)');
+
+  /* ⛔⛔ ⑦ SON CAS RÉEL DOIT PASSER, ET C'EST UNE MESURE QUI A CORRIGÉ MA CONCEPTION.
+     Mon 1ᵉʳ plafond était un RATIO (« plus de la moitié → refus »). Or sa séance du 31/08 est
+     écrite **7 fois** : 6 lignes sur 7 sont des doublons légitimes. *Le garde-fou aurait refusé
+     le seul cas pour lequel on écrit cette route.* Le plafond est devenu ABSOLU. */
+  const sept=[]; for(let k=0;k<7;k++) for(let i=1;i<=3;i++) sept.push(li('2026-08-31','Tirage Poulie Haute',i,MOI));
+  const o2=onglet(sept);
+  const d2=lancer(o2,{action:'sessionNettoyer',token:JET,email:MOI,confirme:'1'},JET);
+  t('⛔⛔ ⑦ une séance écrite 7 FOIS (86 % de doublons) est bien nettoyée — un ratio l\'aurait refusée',
+    d2.status==='ok' && d2.supprimees===18 && o2._g.lignes.length===3,
+    JSON.stringify(d2).slice(0,120)+' · reste '+o2._g.lignes.length);
+
+  /* ⛔ ⑧ SANS JETON, RIEN — cette route efface les données de quelqu'un. */
+  const o3=onglet(base());
+  const d3=lancer(o3,{action:'sessionNettoyer',token:'faux',email:MOI,confirme:'1'},JET);
+  t('⛔ ⑧ sans le bon jeton : refus, 0 suppression, 0 copie',
+    d3.status==='error' && o3._g.suppressions===0 && o3._g.copies.length===0,
+    JSON.stringify(d3).slice(0,80));
+
+  /* ⛔ ⑨ ET RIEN À NETTOYER NE DOIT RIEN FAIRE (ni copie inutile, ni suppression). */
+  const o4=onglet([li('2026-08-30','Squat à la Barre',1,MOI)]);
+  const d4=lancer(o4,{action:'sessionNettoyer',token:JET,email:MOI,confirme:'1'},JET);
+  t('⛔ ⑨ aucun doublon → aucune suppression, aucune copie de sûreté inutile',
+    d4.aSupprimer===0 && o4._g.suppressions===0 && o4._g.copies.length===0,
+    JSON.stringify(d4).slice(0,80));
+}
+
+/* ⛔ ET LA MOITIE ECRAN : le bouton qui SUPPRIME ne doit pas exister avant l'apercu. */
+{
+  const a=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+  const h=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+  t('⛔⛔ ⑩ l\'écran ne porte AUCUN bouton de suppression : il naît de l\'aperçu',
+    h.indexOf('confirmerNettoyageAdmin')<0 && /apercuNettoyageAdmin\(\)/.test(h)
+    && /onclick="confirmerNettoyageAdmin\(/.test(a), '');
+  /* ⛔ ⑪ Et l'appel de confirmation passe par le MEME propriétaire que l'aperçu (R2) :
+     deux appels séparés finiraient par ne plus viser la même chose — c'est-à-dire par
+     supprimer autre chose que ce qui a été montré. */
+  t('⛔ ⑪ aperçu et suppression passent par le même appel (`_nettoyageAppel`)',
+    (a.match(/_nettoyageAppel\(/g)||[]).length===3
+    && (a.match(/action=sessionNettoyer/g)||[]).length===1, '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

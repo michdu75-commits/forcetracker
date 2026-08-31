@@ -17,6 +17,29 @@
   écrites par moi** — piège de ft-v994/1016. Le contrôle qui vaudrait est **l'historique réel**.
   👉 Dossier : `IDEES-FUTURES.md` · attendu : `docs/JOURNAL-DE-TEST.md` (🟢, non promu exprès)
   · relais posé à session-B dans `docs/JOURNAL-DE-PARTAGE.md`.
+- **Version en ligne (live) :** `ft-v1083`. ✅ **Les deux déploiements sont VERTS** (site + backend
+  Apps Script) — la route de nettoyage est réellement en ligne, vérifié dans les Actions.
+- ⏭️ **CE QUI ATTEND MICHEL AU RÉVEIL** (rien d'urgent, rien de cassé) :
+  ① **le nettoyage des doublons** — Profil → Admin → « 🧹 Voir ce qui partirait », puis le bouton
+  rouge. Une **copie de l'onglet** est faite avant ; il la supprimera à la main quand il aura
+  vérifié. ② **sa séance du 31/08 est toujours fausse** dans l'historique (Tirage Poulie
+  enregistré « Rowing Hammer Strength », 1RM fabriqué de **81,9 kg**) — **rien n'a été touché**,
+  c'est **sa** décision (**R29**). ③ Les 2 manips en attente de `A-FAIRE-SUR-PC.md` :
+  `installDailyBackupTrigger_` (2 sauvegardes/jour) · **sommeil et pas** dans le raccourci iOS —
+  sans quoi ft-v1069/1070/1071 restent **dormantes**.
+- 🧾 **Famille §29 de `BUGS.md`** ajoutée : *un garde-fou calibré sur un RATIO refuse le cas qu'il
+  vise*. Née de ce soir — mon plafond « plus de la moitié » aurait refusé sa séance écrite 7 fois.
+- 🧹 **NETTOYER LES DOUBLONS DU CLASSEUR — la seule route qui SUPPRIME** (ft-v1083). Go de
+  Michel **après** avoir vu le constat (**R29**) : sa séance du 31/08 **écrite 7 fois**, celle du
+  **28/08 en double** — *donc le défaut de ft-v1077 mordait déjà la semaine dernière*.
+  ⛔⛔ **3 garde-fous** : aperçu par défaut (le bouton rouge n'existe pas avant) · **copie de
+  l'onglet AVANT** (si elle rate, on s'arrête net) · plafond.
+  ⭐⭐ **Et le test a corrigé ma conception** : mon 1ᵉʳ plafond était un **ratio** (« plus de la
+  moitié → refus »). Or 6 lignes sur 7 sont des doublons légitimes chez lui — ***le garde-fou
+  aurait refusé le seul cas visé***. Devenu **absolu** ; la vraie protection est l'aperçu et le
+  fait qu'on ne supprime jamais la 1ʳᵉ occurrence (**par construction**).
+  ⚠️ Suppression **par blocs, de bas en haut** — 157 `deleteRow` referaient le bug de ft-v1077,
+  et de haut en bas les index deviendraient faux **en silence**.
 - 🔥⭐⭐ **LE REPOS D'UN PALIER SUIT SA CHARGE · ET LE PLAFOND DE PALIERS AUSSI** (ft-v1082).
   Document de revue des échauffements relayé par Michel, puis *« vas-y go »*.
   ⛔⛔ **Les 4 cas « priorité haute » du document sont DÉJÀ réparés — rejoués dans un navigateur,

@@ -621,6 +621,97 @@ function doGet(e) {
     } catch(err) { return json_({status:'error', error:err.message}); }
   }
 
+  /* 🧹 NETTOYER LES DOUBLONS — ?action=sessionNettoyer&token=…&email=…[&confirme=1]
+     ⚠️ C'EST LA SEULE ROUTE DE CE FICHIER QUI SUPPRIME DES LIGNES, et elle est écrite en
+     conséquence. Michel a donné son go APRÈS avoir vu le constat (sa séance du 31/08 écrite
+     **7 fois**, celle du 28/08 en double, 157 lignes en trop) — jamais avant (**R29**).
+
+     ⛔⛔ TROIS GARDE-FOUS, ET AUCUN N'EST DÉCORATIF :
+     ① **APERÇU PAR DÉFAUT.** Sans `confirme=1`, la route ne supprime RIEN : elle rend ce
+        qui partirait. *On ne détruit pas sur la foi d'un algorithme que personne n'a vu
+        tourner.*
+     ② **UNE COPIE DE L'ONGLET AVANT DE TOUCHER QUOI QUE CE SOIT.** La sauvegarde nocturne
+        garde les COMPTES, pas le classeur : sans cette copie, une suppression n'aurait
+        aucun retour arrière. Elle est faite AVANT la 1ʳᵉ suppression, et si elle échoue on
+        s'arrête net.
+     ③ **PLAFOND DE SÛRETÉ — ET IL N'EST PAS UN RATIO, C'EST UNE MESURE QUI L'A DIT.** Mon
+        1ᵉʳ jet refusait au-delà de **la moitié** des lignes de la personne. ⛔⛔ Or le cas de
+        Michel est précisément celui-là : sa séance du 31/08 est écrite **7 fois**, donc
+        **6 lignes sur 7 sont des doublons légitimes** — le garde-fou aurait refusé le seul
+        cas pour lequel on écrit cette route. *Un ratio ne distingue pas « je me trompe en
+        grand » de « il y a vraiment beaucoup de doublons ».*
+        👉 Le plafond est donc **absolu** (échelle absurde), et la vraie protection est
+        ailleurs : ① l'**aperçu**, où la personne voit le nombre avant de confirmer, et le
+        fait qu'on ne supprime **jamais** la première occurrence d'une signature — c'est
+        garanti par construction, pas par un seuil.
+
+     ⛔ ON GARDE LE PREMIER EXEMPLAIRE de chaque série (le plus ancien : c'est l'écriture
+     d'origine), et on ne touche QUE les lignes qui portent l'email demandé — ni celles des
+     autres testeurs, ni les ~3000 lignes sans email (écrites avant ft-v1018), qui ne sont
+     attribuables à personne.
+
+     ⚠️⚠️ ET LA SUPPRESSION SE FAIT PAR BLOCS, DE BAS EN HAUT. 157 `deleteRow` referaient
+     EXACTEMENT le bug de ft-v1077 — un aller-retour vers le classeur par ligne, et le
+     téléphone abandonne à 8 s. De bas en haut, parce que supprimer une ligne décale toutes
+     celles du dessous : en descendant, les index qu'on n'a pas encore traités deviendraient
+     faux, en silence. */
+  if (p.action === 'sessionNettoyer') {
+    if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
+    var _m = String(p.email || '').toLowerCase().trim();
+    if (!_m) return json_({status:'error', error:'email requis'});
+    try {
+      var _s = _getSheet_().getSheetByName('Sessions');
+      if (!_s) return json_({status:'ok', aSupprimer:0, lignes:[]});
+      var _vals = _s.getDataRange().getValues();
+      var _vu = {}, _tuer = [], _aMoi = 0, _apercu = [];
+      for (var i = 1; i < _vals.length; i++) {
+        var r = _vals[i];
+        if (!r || !r[0]) continue;
+        var em = String(r[11] == null ? '' : r[11]).toLowerCase().trim();
+        if (em !== _m) continue;                 // autres testeurs et lignes sans email : jamais touchées
+        _aMoi++;
+        var d = (r[0] instanceof Date)
+          ? Utilities.formatDate(r[0], 'Europe/Paris', 'yyyy-MM-dd')
+          : String(r[0]).slice(0, 10);
+        var sig = [d, r[1], r[2], r[3], r[4], r[5]].join('|');
+        if (_vu[sig]) {
+          _tuer.push(i + 1);                     // ligne de la FEUILLE (1-indexée, en-tête inclus)
+          if (_apercu.length < 8) _apercu.push({date:d, exercice:String(r[1]), serie:r[2], kg:r[4], reps:r[5]});
+        } else { _vu[sig] = true; }
+      }
+      if (!_tuer.length) return json_({status:'ok', aSupprimer:0, total:_aMoi, apercu:[]});
+      /* ③ le plafond, ABSOLU : à cette échelle ce n'est plus un doublon, c'est un défaut de
+         signature qui ratisserait tout le classeur. Un RATIO refuserait le cas de Michel
+         (7 exemplaires → 6 lignes sur 7 à retirer), c'est-à-dire le seul qu'on vise. */
+      if (_tuer.length > 5000)
+        return json_({status:'error', error:'refus de sûreté : '+_tuer.length
+                      +' lignes, c\'est trop pour être des doublons. Rien n\'a été touché.'});
+      if (String(p.confirme || '') !== '1')
+        return json_({status:'ok', apercuSeul:true, aSupprimer:_tuer.length,
+                      total:_aMoi, apercu:_apercu});
+      // ② la copie de sûreté, AVANT la première suppression
+      var _nomCopie = 'Sessions-avant-nettoyage-'
+        + Utilities.formatDate(new Date(), 'Europe/Paris', 'yyyy-MM-dd-HHmm');
+      try { _s.copyTo(_getSheet_()).setName(_nomCopie); }
+      catch (eCopie) {
+        return json_({status:'error', error:'copie de sûreté impossible ('+eCopie.message
+                      +') — RIEN n\'a été supprimé.'});
+      }
+      // ⚠️ de BAS en HAUT, et par blocs contigus (jamais une ligne à la fois)
+      _tuer.sort(function(a,b){ return b - a; });
+      var _blocs = 0, _fin = 0;
+      while (_fin < _tuer.length) {
+        var haut = _tuer[_fin], k = _fin;
+        while (k + 1 < _tuer.length && _tuer[k + 1] === _tuer[k] - 1) k++;
+        var bas = _tuer[k];
+        _s.deleteRows(bas, haut - bas + 1);
+        _blocs++; _fin = k + 1;
+      }
+      return json_({status:'ok', supprimees:_tuer.length, blocs:_blocs,
+                    copie:_nomCopie, total:_aMoi});
+    } catch(err) { return json_({status:'error', error:err.message}); }
+  }
+
   // Test garde-fou universel — ?action=testGardeFou
   if (p.action === 'testGardeFou') {
     try {
