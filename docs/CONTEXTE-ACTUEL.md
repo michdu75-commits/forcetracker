@@ -6,8 +6,8 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1080`.
-- 🔁 **VOIR LES DOUBLONS DU CLASSEUR, SANS RIEN SUPPRIMER** (ft-v1080). Michel : *« comment
+- **Version en ligne (live) :** `ft-v1081`.
+- 🔁 **VOIR LES DOUBLONS DU CLASSEUR, SANS RIEN SUPPRIMER** (ft-v1081). Michel : *« comment
   vérifier si ma séance a été écrite plusieurs fois ? »* ⚠️ **Ces doublons viennent de nous** :
   avant ft-v1077, le téléphone abandonnait à 8 s **pendant que Google finissait d'écrire**, donc
   chaque nouvel essai re-collait les mêmes lignes.
@@ -17,6 +17,16 @@
   celles **sans email** (avant ft-v1018) sont comptées à part et **affichées**, jamais accusées.
   ⏭️ **La suppression n'existe pas** : si Michel veut nettoyer, ce sera un 2ᵉ bouton qui montre
   d'abord **quelles lignes** partiraient.
+- 🦴⭐⭐ **DEUX CHARNIÈRES DE HANCHE DANS LA MÊME SÉANCE** (ft-v1080). Michel : *« répare la séance
+  bizarre de Milo — soulevé de terre, dos, puis soulevé de terre roumain »*.
+  ⛔⛔ **R4 dans sa forme la plus pure** : `_movPattern()` rend **`hip-hinge` pour les deux** (elle
+  sert au calcul des calories depuis toujours) et `_validationSeance` rendait **`doublons: []`** —
+  *l'information existait, elle n'atteignait pas la validation*, qui ne comparait que des NOMS.
+  ⛔⛔ **Mais « deux charnières » aurait crié au loup** : **43 exercices** en `hip-hinge`, la
+  famille mélange le soulevé de terre avec le Hip Thrust et les Kickbacks.
+  ⭐⭐ **Le discriminant est dans la donnée** (R13) : `lower-back` de `_mscScores` — **24 à 2**,
+  **12 non**. *Une liste écrite de mémoire se périmerait ; celle-ci se recalcule.*
+  ⛔ **Informe, ne bloque pas, ne corrige rien** : lourd + roumain léger est un schéma classique.
 - 🪞 **LE MIROIR DE SAUVEGARDE POUVAIT MOURIR EN SILENCE** (ft-v1079). Michel : *« on a la
   sauvegarde qui fonctionne sur le miroir supabase ? »* — **c'est en vérifiant que le trou est
   sorti**. ⛔⛔ `index.html` sert **10** scripts, `PRECACHE` en portait **9** : `supabase.js`
