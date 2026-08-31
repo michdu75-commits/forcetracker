@@ -9618,10 +9618,18 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   t('⭐⭐ le menu admin est RANGÉ en 6 sections repliables',
     nb(zA,/<details class="adm-grp"/g)===6 && nb(zA,/<\/details>/g)===6,
     nb(zA,/<details class="adm-grp"/g)+' section(s)');
-  /* ⛔ Le témoin qui compte : déplacer 19 cartes ne doit RIEN perdre. */
+  /* ⛔ Le témoin qui compte : déplacer 19 cartes ne doit RIEN perdre.
+     ⚠️ RE-VISÉ LE 31/08/2026, ET LA NUANCE EST TOUTE LA VALEUR DU TÉMOIN. Il figeait une
+     ÉGALITÉ (19 cartes, 34 boutons), donc il rougissait aussi sur un AJOUT légitime — le
+     détecteur de doublons de ft-v1080. Or sa garantie est *« rien n'a été PERDU »*, pas
+     *« rien n'a bougé »* : c'est donc un PLANCHER. ⛔ On ne l'affaiblit pas — le plancher
+     reste exactement à ce qui existait au rangement, et perdre une seule carte le fait
+     toujours rougir. *On ne désarme pas un témoin, on le vise* — mais un témoin visé sur un
+     nombre exact se périme au premier ajout, et un témoin qui rougit pour rien finit
+     désactivé (R19). */
   t('⛔⛔ ... et AUCUNE carte ni AUCUN bouton n\'a été perdu au passage',
-    nb(zA,/class="card cp"/g)===19 && nb(zA,/onclick=/g)===34,
-    nb(zA,/class="card cp"/g)+' cartes · '+nb(zA,/onclick=/g)+' boutons');
+    nb(zA,/class="card cp"/g)>=19 && nb(zA,/onclick=/g)>=34,
+    nb(zA,/class="card cp"/g)+' cartes · '+nb(zA,/onclick=/g)+' boutons (plancher 19 / 34)');
   /* ⛔ Ce qu'on a REFUSÉ de retirer doit rester joignable — sinon le « rangement » a
      supprimé en douce (R30 : un retrait se décide, il ne se constate pas). */
   t('⛔ PT-001 est TOUJOURS joignable (il mesure la mémoire longue, rien d\'autre ne le fait)',

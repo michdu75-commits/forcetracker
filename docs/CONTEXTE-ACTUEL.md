@@ -6,7 +6,17 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1079`.
+- **Version en ligne (live) :** `ft-v1080`.
+- 🔁 **VOIR LES DOUBLONS DU CLASSEUR, SANS RIEN SUPPRIMER** (ft-v1080). Michel : *« comment
+  vérifier si ma séance a été écrite plusieurs fois ? »* ⚠️ **Ces doublons viennent de nous** :
+  avant ft-v1077, le téléphone abandonnait à 8 s **pendant que Google finissait d'écrire**, donc
+  chaque nouvel essai re-collait les mêmes lignes.
+  ⛔⛔ **Le témoin central n'est pas le comptage, c'est que la route n'écrit RIEN** (**R29**) :
+  on montre, il décide. Profil → Admin → « 🔁 Chercher les doublons ».
+  ⛔ Une **seule** lecture du classeur · les lignes des autres testeurs ne sont pas comptées ·
+  celles **sans email** (avant ft-v1018) sont comptées à part et **affichées**, jamais accusées.
+  ⏭️ **La suppression n'existe pas** : si Michel veut nettoyer, ce sera un 2ᵉ bouton qui montre
+  d'abord **quelles lignes** partiraient.
 - 🪞 **LE MIROIR DE SAUVEGARDE POUVAIT MOURIR EN SILENCE** (ft-v1079). Michel : *« on a la
   sauvegarde qui fonctionne sur le miroir supabase ? »* — **c'est en vérifiant que le trou est
   sorti**. ⛔⛔ `index.html` sert **10** scripts, `PRECACHE` en portait **9** : `supabase.js`
