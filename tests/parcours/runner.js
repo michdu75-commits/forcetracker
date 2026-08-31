@@ -20008,6 +20008,69 @@ console.log('\n-- CLXXX. Un récap n\'est pas une proposition · le dépassement
   }
 }
 
+/* == BLOC CLXXXI - LES SERIES NUMEROTEES 1, 2... 5 (ft-v1076) ==
+   Michel, video a l'appui : dans le detail de sa seance, son Rowing Hammer affiche « 1, 2, 5 »
+   — le Face Pull juste en dessous est bien 1-2-3.
+
+   ⛔ LA CAUSE : les series NON FAITES sont SAUTEES (`!s.done?'':`) mais le numero affiche
+   restait `si+1`, l'index dans le tableau COMPLET. 5 series dont les n°3 et 4 non faites →
+   il affiche 1, 2, 5.
+   ⛔⛔ ET `si` DOIT RESTER L'INDEX REEL : il est passe a `updateSessSet(ei,si,…)`. Renumeroter
+   l'index aurait fait ecrire la bonne valeur dans la MAUVAISE serie — un correctif d'affichage
+   qui abime les donnees. Il faut donc un compteur SEPARE.
+   ⭐ R8 verifie : les 3 autres sites (log.js, en seance) affichent TOUTES les series, leur
+   numero y est juste — on n'y touche pas. */
+console.log('\n-- CLXXXI. Les séries numérotées 1, 2… 5 (ft-v1076) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const N=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    /* ⭐ SON CAS : 5 séries dont les n°3 et 4 NON FAITES (montée en charge ajoutée par l'app
+       et non réalisée) — exactement ce que montre sa vidéo. */
+    S.sessions=[{date:today(), ts:Date.now(), id:Date.now(), volume:1000, exs:[
+      {name:'Rowing Hammer Strength', sets:[
+        {kg:40,reps:4,done:true, type:'É'},
+        {kg:60,reps:8,done:true, type:'N'},
+        {kg:60,reps:8,done:false,type:'N'},
+        {kg:60,reps:8,done:false,type:'N'},
+        {kg:60,reps:8,done:true, type:'N'}]}
+    ]}]; persist();
+    openSessDetail(S.sessions[0].ts||S.sessions[0].id);
+    const box=document.getElementById('sd-body')||document.body;
+    const html=String(box.innerHTML||'');
+    /* les numéros affichés, dans l'ordre */
+    o.nums=Array.from(box.querySelectorAll('span'))
+             .filter(e=>/min-width:\s*14px/.test(e.getAttribute('style')||''))
+             .map(e=>String(e.textContent||'').trim());
+    /* ⛔ ET L'INDEX RÉEL doit rester celui du tableau : la 3e ligne VISIBLE est la série d'index 4 */
+    o.idx=(html.match(/updateSessSet\(0,(\d+),'kg'/g)||[]).map(x=>x.match(/,(\d+),/)[1]);
+    o.lignes=(html.match(/updateSessSet\(0,\d+,'kg'/g)||[]).length;
+    return o;
+   }catch(e){ return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]}; }
+  });
+  await cx.close();
+
+  if(N.err) t('CLXXXI n\'a pas pu tourner', false, JSON.stringify(N));
+  else{
+    /* ⛔ SANS LUI, LE RESTE SERAIT VERT SUR UN ÉCRAN VIDE. */
+    t('⛔ ① le détail affiche bien les 3 séries FAITES (les 2 non faites sont masquées)',
+      N.lignes===3, 'lignes visibles = '+N.lignes);
+    /* ⛔⛔ SON CAS : plus de trou dans la numérotation. */
+    t('⛔⛔ ② les séries visibles sont numérotées 1, 2, 3 — plus « 1, 2, 5 »',
+      N.nums.slice(0,3).join(',')==='1,2,3', 'numéros = '+JSON.stringify(N.nums.slice(0,4)));
+    /* ⛔⛔ ET LE TÉMOIN QUI PROTÈGE LES DONNÉES : l'index passé au setter reste le VRAI. */
+    t('⛔⛔ ③ l\'index passé à `updateSessSet` reste l\'index RÉEL (0, 1, 4), pas le numéro affiché',
+      N.idx.join(',')==='0,1,4', 'index = '+JSON.stringify(N.idx));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

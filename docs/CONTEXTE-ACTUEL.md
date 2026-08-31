@@ -6,7 +6,14 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1075`.
+- **Version en ligne (live) :** `ft-v1076`.
+- 🔢 **LES SÉRIES NUMÉROTÉES « 1, 2… 5 »** (ft-v1076). Les séries **non faites sont masquées** mais
+  le numéro restait `si+1`, l'index du tableau COMPLET. ⭐ Michel a corrigé ma lecture — *« il ne
+  manque rien, j'ai mis exactement ce que j'ai fait »* : les 2 invisibles sont la **montée en
+  charge ajoutée par l'app**, proposée et jamais faite. **Le trou était dans le comptage, pas dans
+  ses données.** ⛔⛔ **Piège évité** : ce même `si` dit à `updateSessSet` **quelle série écrire** —
+  le renuméroter aurait fait corriger la MAUVAISE série. Compteur d'affichage **séparé**, témoin
+  sur l'index réel (0, 1, 4).
 - 🔁⏱️ **UN RÉCAP N'EST PAS UNE PROPOSITION · LE DÉPASSEMENT S'AFFICHE** (ft-v1075).
   ⛔⛔ ① Le débrief **récapitule** la séance avec exercices et charges → `_extractDaySession` y lit
   une séance → Milo proposait de **refaire celle qu'on vient de finir**. *L'intention ne se lit pas
