@@ -1138,6 +1138,11 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Jusqu'au 31/08, une grosse séance pouvait mettre plus de 8 s à s'écrire : le téléphone abandonnait <em>pendant que Google finissait quand même</em>, et chaque nouvel essai <strong>re-collait les mêmes lignes</strong>. Ce bouton <strong>regarde et compte</strong> — il ne supprime <strong>rien</strong>.</div>
       <button class="btn btn-bg2" onclick="loadDoublonsAdmin()" style="padding:11px;font-size:14px;">🔁 Chercher les doublons</button>
       <div id="admin-doublons" style="margin-top:4px;"></div>
+      <!-- ⛔ LE NETTOYAGE EST EN DEUX TEMPS, ET LE BOUTON ROUGE N'APPARAÎT QU'APRÈS L'APERÇU.
+           Une copie de l'onglet est faite AVANT toute suppression : la sauvegarde nocturne
+           garde les COMPTES, pas le classeur. -->
+      <button class="btn btn-bg2" onclick="apercuNettoyageAdmin()" style="padding:11px;font-size:14px;">🧹 Voir ce qui partirait</button>
+      <div id="admin-nettoyage" style="margin-top:4px;"></div>
     </div>
     </details>
     <details class="adm-grp">

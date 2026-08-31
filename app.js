@@ -5403,6 +5403,84 @@ async function loadDoublonsAdmin(){
   }
 }
 
+// ── ADMIN : 🧹 NETTOYER LES DOUBLONS, EN DEUX TEMPS (31/08/2026) ─────────────────
+// ⛔⛔ LE BOUTON QUI SUPPRIME N'EXISTE PAS TANT QU'ON N'A PAS VU CE QUI PARTIRAIT. C'est le
+// seul endroit de l'app qui efface des données déjà écrites : il se mérite en deux gestes,
+// et le premier ne touche à rien. *On ne détruit pas sur la foi d'un algorithme que
+// personne n'a vu tourner* (R29) — Michel a donné son go APRÈS avoir vu le constat.
+// ⛔ Et le serveur copie l'onglet AVANT la première suppression : la sauvegarde nocturne
+// garde les COMPTES, pas le classeur. Sans cette copie, il n'y aurait aucun retour arrière.
+async function apercuNettoyageAdmin(){
+  const box=document.getElementById('admin-nettoyage');
+  if(!box)return;
+  if(!_isAdminUnlocked()){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'; return; }
+  if(!S.url||!S.email){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Pas d\'email ou pas d\'URL.</div>'; return; }
+  box.innerHTML='<div style="font-size:12.5px;color:var(--t2);">Calcul de l\'aperçu…</div>';
+  try{
+    const d=await _nettoyageAppel(false);
+    if(!d) return;
+    if(!d.aSupprimer){
+      box.innerHTML='<div style="font-size:13px;color:var(--green);font-weight:700;">✅ Rien à nettoyer.</div>';
+      return;
+    }
+    let h='<div style="font-size:13px;color:var(--gold);font-weight:700;">🧹 '
+      +d.aSupprimer+' ligne'+(d.aSupprimer>1?'s':'')+' partiraient, sur '+d.total+' à ton nom.</div>'
+      +'<div style="font-size:11.5px;color:var(--t3);margin-top:4px;line-height:1.5;">On garde <b>un</b> exemplaire de chaque série (le plus ancien). Rien n\'est touché chez les autres testeurs, ni dans les lignes sans email. Une <b>copie de l\'onglet</b> est faite avant.</div>'
+      +'<div style="font-size:12px;color:var(--t2);margin-top:8px;line-height:1.8;font-family:\'SF Mono\',ui-monospace,monospace;">';
+    (d.apercu||[]).forEach(x=>{
+      h+='<div>'+_escIdea(x.date)+' · '+_escIdea(String(x.exercice))+' · série '+x.serie
+        +' · '+x.kg+' kg × '+x.reps+'</div>';
+    });
+    if(d.aSupprimer>(d.apercu||[]).length)
+      h+='<div style="color:var(--t3);">… et '+(d.aSupprimer-(d.apercu||[]).length)+' autres</div>';
+    h+='</div>'
+      +'<button class="btn btn-red" style="width:100%;padding:12px;margin-top:10px;font-size:14px;" onclick="confirmerNettoyageAdmin('+d.aSupprimer+')">🗑️ Supprimer ces '+d.aSupprimer+' lignes</button>';
+    box.innerHTML=h;
+  }catch(e){
+    box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Erreur : '+_escIdea(String(e&&e.message||e))+'</div>';
+  }
+}
+function confirmerNettoyageAdmin(n){
+  const box=document.getElementById('admin-nettoyage');
+  if(!box)return;
+  /* ⛔ Une 2ᵉ confirmation EXPLICITE avant d'effacer — et le libellé du bouton dit ce qu'il FAIT
+     (la leçon de ft-v1006 : « Supprimer » ne doit jamais s'afficher sur un geste anodin,
+     et l'inverse est vrai aussi). */
+  /* ⚠️ `showConfirm` prend un CALLBACK, pas une promesse — vérifié dans `log.js`, pas supposé.
+     Un `await` dessus aurait rendu `undefined`, donc « annulé » quoi qu'il arrive : le bouton
+     n'aurait JAMAIS supprimé, et rien ne l'aurait dit. */
+  showConfirm('Supprimer '+n+' ligne'+(n>1?'s':'')+' du classeur ?',
+    'Une copie de l\'onglet « Sessions » est faite avant. Un exemplaire de chaque série est gardé.',
+    async ()=>{
+      box.innerHTML='<div style="font-size:12.5px;color:var(--t2);">Copie de sûreté puis suppression…</div>';
+      try{
+        const d=await _nettoyageAppel(true);
+        if(!d) return;
+        box.innerHTML='<div style="font-size:13px;color:var(--green);font-weight:700;">✅ '
+          +d.supprimees+' ligne'+(d.supprimees>1?'s':'')+' supprimée'+(d.supprimees>1?'s':'')
+          +' en '+d.blocs+' bloc'+(d.blocs>1?'s':'')+'.</div>'
+          +'<div style="font-size:11.5px;color:var(--t2);margin-top:6px;line-height:1.5;">Copie de sûreté : <b>'
+          +_escIdea(d.copie||'—')+'</b> — un onglet de ton classeur, à supprimer quand tu auras vérifié.</div>';
+      }catch(e){
+        box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Erreur : '+_escIdea(String(e&&e.message||e))+'</div>';
+      }
+    }, 'Supprimer');
+}
+/* ⛔ UN SEUL PROPRIÉTAIRE DE L'APPEL (R2) : l'aperçu et la suppression ne diffèrent QUE par
+   `confirme`. Deux fonctions d'appel séparées finiraient par ne plus viser la même chose —
+   et ici, « ne plus viser la même chose » voudrait dire supprimer autre chose que ce qui a
+   été montré. */
+async function _nettoyageAppel(confirme){
+  const box=document.getElementById('admin-nettoyage');
+  const url=S.url+'?action=sessionNettoyer&token='+encodeURIComponent(_adminTok())
+           +'&email='+encodeURIComponent(S.email)+(confirme?'&confirme=1':'');
+  const r=await fetch(url,{method:'GET'});
+  const d=await r.json();
+  if(_adminTokRefuse(d)){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Jeton refusé — relance, il te sera redemandé.</div>'; return null; }
+  if(!d||d.status!=='ok'){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">'+_escIdea((d&&d.error)||'réponse inattendue')+'</div>'; return null; }
+  return d;
+}
+
 // ── ADMIN : qui a POSÉ un code d'accès perso (04/08) ──────────────────────────────
 // Né de la découverte du 04/08 : `loadProfile` sert un compte ENTIER quand la personne
 // n'a pas de code perso (`_authCheck_` renvoie ok:true dans ce cas — invariant de
