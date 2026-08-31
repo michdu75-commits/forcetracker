@@ -5344,6 +5344,65 @@ async function loadSbAdmin(){
     +_escIdea(r.texte)+'</div>'
     +(etat?'<div style="font-size:11.5px;color:var(--t2);margin-top:8px;line-height:1.5;">'+_escIdea(etat.texte)+'</div>':'');
 }
+// ── ADMIN : 🔁 DOUBLONS DANS LE CLASSEUR (31/08/2026) ────────────────────────────
+// ⚠️ POURQUOI. Avant ft-v1077, `handleLogSession_` écrivait UNE ligne par série : une
+// grosse séance dépassait les 8 s d'attente du téléphone, qui abandonnait — pendant que
+// le script Google, lui, finissait d'écrire. Chaque nouvel essai re-collait donc les
+// mêmes lignes. *Un délai dépassé n'est pas un échec, c'est une réponse qu'on n'a pas
+// attendue.* La cause est corrigée ; ce qui a déjà été écrit, non.
+//
+// ⛔⛔ ET CETTE CARTE NE SUPPRIME RIEN, C'EST DÉLIBÉRÉ (R29). Le classeur porte les données
+// de la personne : on lui MONTRE ce qu'on voit, elle décide ensuite. Nettoyer d'office sur
+// la foi d'un algorithme qu'elle n'a pas vu tourner serait exactement le geste qu'on refuse
+// — le même que « réparer » sa séance sans lui demander.
+//
+// ⛔ ET ON DIT CE QU'ON NE PEUT PAS VOIR : les lignes écrites avant ft-v1018 n'ont pas de
+// colonne `email`. Elles ne sont attribuables à personne, donc elles ne sont ni comptées ni
+// accusées — mais leur nombre est AFFICHÉ, sinon un total qui ne colle pas passerait pour
+// une erreur de l'outil.
+async function loadDoublonsAdmin(){
+  const box=document.getElementById('admin-doublons');
+  if(!box)return;
+  if(!_isAdminUnlocked()){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'; return; }
+  if(!S.url||!S.email){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Pas d\'email ou pas d\'URL.</div>'; return; }
+  box.innerHTML='<div style="font-size:12.5px;color:var(--t2);">Lecture du classeur…</div>';
+  try{
+    const url=S.url+'?action=sessionDoublons&token='+encodeURIComponent(_adminTok())
+             +'&email='+encodeURIComponent(S.email);
+    const r=await fetch(url,{method:'GET'});
+    const d=await r.json();
+    if(_adminTokRefuse(d)){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Jeton refusé — relance, il te sera redemandé.</div>'; return; }
+    if(!d||d.status!=='ok'){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">'+_escIdea((d&&d.error)||'réponse inattendue')+'</div>'; return; }
+    let h='';
+    if(!d.total){
+      h='<div style="font-size:12.5px;color:var(--t2);">Aucune ligne à ton nom dans le classeur.</div>';
+    }else if(!d.lignesEnTrop){
+      h='<div style="font-size:13px;color:var(--green);font-weight:700;">✅ Aucun doublon — '
+        +d.total+' ligne'+(d.total>1?'s':'')+' à ton nom.</div>';
+    }else{
+      /* ⛔ On annonce le CONSTAT, jamais une action : la personne lit, puis décide. */
+      h='<div style="font-size:13px;color:var(--gold);font-weight:700;">🔁 '
+        +d.lignesEnTrop+' ligne'+(d.lignesEnTrop>1?'s':'')+' en trop, sur '
+        +d.datesAvecDoublons+' séance'+(d.datesAvecDoublons>1?'s':'')+'.</div>'
+        +'<div style="font-size:11.5px;color:var(--t3);margin-top:4px;">Rien n\'a été supprimé. Voici ce qu\'on voit :</div>';
+      h+='<div style="font-size:12px;color:var(--t2);margin-top:8px;line-height:1.8;font-family:\'SF Mono\',ui-monospace,monospace;">';
+      d.dates.filter(x=>x.enTrop>0).slice(0,12).forEach(x=>{
+        h+='<div>'+_escIdea(x.date)+' · '+x.lignes+' lignes pour '+x.uniques
+          +' série'+(x.uniques>1?'s':'')+' → <b>écrite '+x.exemplaires+' fois</b></div>';
+      });
+      h+='</div>';
+    }
+    if(d.sansEmail){
+      h+='<div style="font-size:11.5px;color:var(--t3);margin-top:10px;line-height:1.5;">⚠️ '
+        +d.sansEmail+' ligne'+(d.sansEmail>1?'s':'')
+        +' du classeur n\'ont pas d\'email (écrites avant le 26/08) : elles ne sont attribuables à personne, donc elles ne sont pas comptées ici.</div>';
+    }
+    box.innerHTML=h;
+  }catch(e){
+    box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Erreur : '+_escIdea(String(e&&e.message||e))+'</div>';
+  }
+}
+
 // ── ADMIN : qui a POSÉ un code d'accès perso (04/08) ──────────────────────────────
 // Né de la découverte du 04/08 : `loadProfile` sert un compte ENTIER quand la personne
 // n'a pas de code perso (`_authCheck_` renvoie ok:true dans ce cas — invariant de

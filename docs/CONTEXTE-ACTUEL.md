@@ -27,6 +27,17 @@
   disparaître « ⏭️ Ensuite : … ») — **c'est un chantier à part** (R30).
   ⏭️ **Non traité, écrit plutôt que corrigé** : à égalité de trous, l'insertion prend toujours le
   plus **bas** (à 90 kg elle bouche 40→60 et laisse 60→80). Comportement d'avant ce chantier.
+- **Version en ligne (live) :** `ft-v1081`.
+- 🔁 **VOIR LES DOUBLONS DU CLASSEUR, SANS RIEN SUPPRIMER** (ft-v1081). Michel : *« comment
+  vérifier si ma séance a été écrite plusieurs fois ? »* ⚠️ **Ces doublons viennent de nous** :
+  avant ft-v1077, le téléphone abandonnait à 8 s **pendant que Google finissait d'écrire**, donc
+  chaque nouvel essai re-collait les mêmes lignes.
+  ⛔⛔ **Le témoin central n'est pas le comptage, c'est que la route n'écrit RIEN** (**R29**) :
+  on montre, il décide. Profil → Admin → « 🔁 Chercher les doublons ».
+  ⛔ Une **seule** lecture du classeur · les lignes des autres testeurs ne sont pas comptées ·
+  celles **sans email** (avant ft-v1018) sont comptées à part et **affichées**, jamais accusées.
+  ⏭️ **La suppression n'existe pas** : si Michel veut nettoyer, ce sera un 2ᵉ bouton qui montre
+  d'abord **quelles lignes** partiraient.
 - 🦴⭐⭐ **DEUX CHARNIÈRES DE HANCHE DANS LA MÊME SÉANCE** (ft-v1080). Michel : *« répare la séance
   bizarre de Milo — soulevé de terre, dos, puis soulevé de terre roumain »*.
   ⛔⛔ **R4 dans sa forme la plus pure** : `_movPattern()` rend **`hip-hinge` pour les deux** (elle
