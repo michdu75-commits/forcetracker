@@ -6,6 +6,27 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1082`.
+- 🔥⭐⭐ **LE REPOS D'UN PALIER SUIT SA CHARGE · ET LE PLAFOND DE PALIERS AUSSI** (ft-v1082).
+  Document de revue des échauffements relayé par Michel, puis *« vas-y go »*.
+  ⛔⛔ **Les 4 cas « priorité haute » du document sont DÉJÀ réparés — rejoués dans un navigateur,
+  pas relus dans le journal** : Tirage Poulie Haute 16/08 (l'app n'ajoute plus rien) · Pec Deck
+  (**0** palier, *accessoire*) · Développé Épaules (**1** approche, pas 3) · RDL après squat
+  (**0 ajout**). 👉 *« Pourquoi 5 chauffes le 16 et 1 le 20 ? » a pour réponse une **DATE** : le
+  correctif est sorti le **17/08** (ft-v887).* Un audit sans accès au dépôt date les symptômes,
+  pas les correctifs (**R23**).
+  ⛔ **Ce qui restait, mesuré** : ① `restByType` rendait **45 s à plat** — `100×2 → 115×1` (88 %
+  de la charge du jour) en 45 s ; ② le plafond de `_monteeCompletee` était un **5 en dur**, donc
+  **5 paliers / 19 reps de 60 kg à 150 kg à l'identique** — *un squat à 60 kg recevait le
+  protocole d'un squat à 150*, pendant que le barème de zéro sait doser (2 à 50 kg, 4 à 130).
+  ⭐ **Aucun chiffre neuf** : mêmes zones que les répétitions (`_PALIER_ZONES`), et le plafond
+  **appelle le barème** — un seul propriétaire de « combien de paliers cette charge mérite » (R2).
+  ⛔ **Deux bornes** : jamais plus court qu'avant, jamais plus long que **son** repos de travail.
+  ⚠️ **`startRest()` VIDE `#rest-label`** — « Échauffement », « Récup. à l'échec » et « Abdos »
+  sont muets **depuis toujours** sur ce chemin. Non réparé exprès (remplir le libellé ferait
+  disparaître « ⏭️ Ensuite : … ») — **c'est un chantier à part** (R30).
+  ⏭️ **Non traité, écrit plutôt que corrigé** : à égalité de trous, l'insertion prend toujours le
+  plus **bas** (à 90 kg elle bouche 40→60 et laisse 60→80). Comportement d'avant ce chantier.
 - **Version en ligne (live) :** `ft-v1081`.
 - 🔁 **VOIR LES DOUBLONS DU CLASSEUR, SANS RIEN SUPPRIMER** (ft-v1081). Michel : *« comment
   vérifier si ma séance a été écrite plusieurs fois ? »* ⚠️ **Ces doublons viennent de nous** :

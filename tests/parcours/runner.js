@@ -19605,8 +19605,15 @@ console.log('\n-- CLXXVI. La courbe des pas dans Progrès (ft-v1071) --');
               aideEcran:aide,
               /* ⛔ la diapo de ft-v1070 est ENRICHIE, pas doublee (R2/R25) */
               diapoEnrichie:dia.length===1 && /Progr[eè]s/i.test(dia[0].cap||''),
-              /* ⛔ AUCUNE pop-up au-dela de la v65 : on n'annonce pas deux fois la meme chose */
-              pasDeNouvellePopup:wn.every(w=>!w||(w.v||0)<=65)};
+              /* ⛔ ON N'ANNONCE PAS DEUX FOIS LES PAS : aucune pop-up posterieure a la v65 ne doit
+                 reparler de la courbe des pas (ft-v1070 l'a deja annoncee).
+                 ⚠️⚠️ RE-VISE LE 31/08 (ft-v1082) : ce temoin exigeait `w.v <= 65` POUR TOUTE la
+                 liste — il figeait donc l'etat « aucune nouveaute apres la v65 » et rougissait a
+                 la premiere feature suivante qui merite legitimement sa pop-up, quel qu'en soit
+                 le sujet. *Un temoin qui fige un ETAT rougit des qu'une decision est prise ; ce
+                 qu'on fige, c'est une REGLE.* L'exigence n'est pas affaiblie, elle est VISEE. */
+              pasDeNouvellePopup:wn.filter(w=>w&&(w.v||0)>65)
+                                   .every(w=>!/\bpas\b|podom|marche|steps/i.test((w.t||'')+' '+(w.d||'')))};
     }catch(e){ return {err:String(e)}; } })();
     return o;
    }catch(e){ return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]}; }
@@ -20515,6 +20522,144 @@ console.log('\n-- CLXXXV. Voir les doublons du classeur, sans rien supprimer (ft
   t('⛔⛔ ⑨ chaque groupe de l\'Admin annonce le VRAI nombre de cartes qu\'il porte',
     faux.length===0, JSON.stringify(faux));
 }
+
+/* ═══ CLXXXVII. LE REPOS D'UN PALIER SUIT SA CHARGE · LE PLAFOND DE PALIERS AUSSI (ft-v1082) ══
+   Deux défauts mesurés le 31/08 sur une revue des séances de Michel :
+   ① `restByType` rendait **45 s à plat** entre paliers — donc `100×2 → 115×1`, un passage à 88 %
+      de la charge du jour, 45 secondes après un palier à 77 % ;
+   ② le plafond de paliers de `_monteeCompletee` était un **5 fixe**, quelle que soit la charge —
+      mesuré, il rendait 5 paliers et 19 répétitions **de 60 kg à 150 kg**, à l'identique.
+   ⚠️ CE BLOC DOIT POUVOIR ROUGIR : les non-régressions ci-dessous (le repos vers une série de
+   travail, le barème de zéro, l'invariant « on ne retire jamais une série ») sont vertes des DEUX
+   côtés — ce sont elles qui empêchent les autres d'être vertes en ne mesurant rien. */
+console.log('\n-- CLXXXVII. Le repos suit la charge du palier · le plafond suit la charge (ft-v1082) --');
+{
+  const mesure = async (rest)=>{
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+    const pg=await cx.newPage();
+    await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',ft4_rest:String(rest)}));
+    await pg.goto('http://localhost:'+PORT+'/index.html');
+    await pg.waitForTimeout(2300);
+    const F=await pg.evaluate(()=>{
+     try{
+      const o={};
+      const N=(kg,reps)=>({kg,reps,type:'N'}), E=(kg,reps)=>({kg,reps,type:'É'});
+      /* ── ① LE REPOS, par le VRAI chemin (`toggleSet`), pas la fonction appelée à la main ── */
+      const vu=[]; const vrai=window.startRest;
+      window.startRest=function(sec){ vu.push(sec); try{ stopRest(); }catch(e){} };
+      const chaine=(sets)=>{
+        startWorkout(); S.wkt.exs.length=0;
+        S.wkt.exs.push({name:'Soulevé de Terre', sets:JSON.parse(JSON.stringify(sets))});
+        renderLog();
+        const r=[]; const lb=[];
+        for(let i=0;i<sets.length;i++){ vu.length=0; toggleSet(0,i);
+          r.push(vu.length?vu[0]:null);
+          const e=document.getElementById('rest-label'); lb.push(e?e.textContent:''); }
+        return {sec:r, lbl:lb};
+      };
+      const sdt=[E(60,5),E(80,3),E(100,2),E(115,1),N(130,3),N(130,3),N(132,3)];
+      o.sdt=chaine(sdt);
+      /* Un repos écrit EXPRÈS sur la série gagne toujours (décision explicite — R29). */
+      const force=JSON.parse(JSON.stringify(sdt)); force[2].rest=20;
+      o.force=chaine(force).sec[2];
+      window.startRest=vrai;
+      o.defRest=S.defRest;
+      /* ── ② LE PLAFOND DE PALIERS ────────────────────────────────────────── */
+      const pas=_pasCharge('Squat'), r=k=>Math.max(pas, Math.round(k/pas)*pas);
+      const miloTrois=T=>[{kg:r(T*0.44),reps:5,type:'É'},{kg:r(T*0.66),reps:5,type:'É'},{kg:r(T*0.89),reps:2,type:'É'}];
+      o.comp={};
+      [60,90,130].forEach(T=>{ o.comp[T]=_monteeCompletee(miloTrois(T), T, pas, 'Squat').length; });
+      o.bareme={}; [60,90,110,130].forEach(T=>{ o.bareme[T]=(_monteeEnCharge(T,pas,'Squat')||[]).length; });
+      /* L'INVARIANT DU 11/08 : on n'enlève JAMAIS un palier que Milo a écrit. */
+      const miloCinq=[{kg:40,reps:5,type:'É'},{kg:45,reps:5,type:'É'},{kg:50,reps:5,type:'É'},
+                      {kg:55,reps:3,type:'É'},{kg:60,reps:2,type:'É'}];
+      o.jamaisMoins=_monteeCompletee(miloCinq, 70, pas, 'Squat').length;
+      /* Sa séance du 13/08, par le VRAI chemin (l'exercice complet, pas la fonction seule). */
+      const sess={exs:[{name:'Squat',sets:[E(40,5),E(60,5),E(80,2),N(90,4),N(90,5),N(90,5)]}]};
+      _completerMonteeEnCharge(sess);
+      o.squat13=sess.exs[0].sets.filter(x=>x.type==='É').length;
+      /* ── ③ LA JUMELLE (R8) : le placeholder de l'éditeur suit le réglage de la personne ── */
+      o.placeholderN=_defRestForType('N');
+      o.placeholderE=_defRestForType('É');
+      return o;
+     }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+    });
+    await cx.close();
+    return F;
+  };
+
+  const A=await mesure(130);        // le profil de Michel
+  const B2=await mesure(60);        // quelqu'un qui règle des repos COURTS
+
+  if(A.err) t('CLXXXVII n\'a pas pu tourner', false, A.err);
+  else{
+    /* ⭐⭐ LE TÉMOIN CENTRAL — la courbe mesurée sur SA montée. */
+    t('⭐⭐ SA MONTÉE : le repos monte avec la charge du palier qui vient (45 · 90 · 120)',
+      A.sdt.sec[0]===45 && A.sdt.sec[1]===90 && A.sdt.sec[2]===120, JSON.stringify(A.sdt.sec));
+    /* ⛔ NON-RÉGRESSION : la règle du 17/08 (vers une série de TRAVAIL) est intacte. */
+    t('⛔ NON-RÉGRESSION : avant une série de TRAVAIL, c\'est le repos de travail (130 s)',
+      A.sdt.sec[3]===130 && A.sdt.sec[4]===130, JSON.stringify(A.sdt.sec.slice(3)));
+    /* ⛔ ON NE RACCOURCIT JAMAIS : un palier léger garde ses 45 s. */
+    t('⛔ un palier LÉGER garde 45 s — on n\'a rien raccourci ni allongé sans raison',
+      A.sdt.sec[0]===45, String(A.sdt.sec[0]));
+    /* ⛔ ET ON NE DÉPASSE JAMAIS LE REPOS DE TRAVAIL DE LA PERSONNE. */
+    t('⛔ repos de travail réglé à 60 s → un palier lourd ne dépasse pas 60 s (jamais plus qu\'une série lourde)',
+      B2.err?false:(B2.sdt.sec[2]===60 && B2.defRest===60), JSON.stringify(B2.err||B2.sdt.sec));
+    /* ⛔ Une décision explicite passe avant toute déduction (R29). */
+    t('⛔ un repos écrit EXPRÈS sur la série gagne toujours (20 s, pas 120)',
+      A.force===20, String(A.force));
+    /* 🗣️ Et l'écran DIT pourquoi : 120 s au lieu de 45 se lirait comme un chrono cassé. */
+    /* 🗣️ L'ÉTIquette DIT POURQUOI — et elle dit VRAI : ma 1ʳᵉ version écrivait « palier lourd »
+       à 77 % de la charge de travail, c'est-à-dire un fait faux sur la série qui vient. Le
+       témoin épingle donc les TROIS zones, pas seulement celle du haut. */
+    t('🗣️ l\'étiquette suit la zone RÉELLE : rien (léger) · « ça monte » (77 %) · « palier lourd » (88 %)',
+      A.sdt.lbl[0]==='' && /ça monte/.test(A.sdt.lbl[1]) && /palier lourd/.test(A.sdt.lbl[2]),
+      JSON.stringify(A.sdt.lbl.slice(0,3)));
+    /* ⚠️⚠️ ET ELLE EST POSÉE APRÈS `startRest`, qui appelle `stopRest()` et VIDE le libellé.
+       Sans ce témoin, quelqu'un « rangerait » la ligne près des autres libellés — et elle
+       redeviendrait muette sans qu'aucun test ne bronche (c'est là qu'était ma 1ʳᵉ version). */
+    t('⚠️ … et elle survit à `startRest` (qui vide le libellé — le piège où j\'étais tombé)',
+      A.sdt.lbl[2].length>0, JSON.stringify(A.sdt.lbl[2]));
+
+    /* ⭐⭐ LE PLAFOND — il rendait 5 partout, il suit maintenant la charge. */
+    t('⭐⭐ le plafond suit la charge : 60 kg → 3 paliers, 90 kg → 4, 130 kg → 4 (c\'était 5 partout)',
+      A.comp[60]===3 && A.comp[90]===4 && A.comp[130]===4, JSON.stringify(A.comp));
+    t('⭐⭐ SON SQUAT DU 13/08, par le vrai chemin : 4 paliers, plus 5',
+      A.squat13===4, String(A.squat13));
+    /* ⛔ LE TÉMOIN QUI EMPÊCHE « 4 PARTOUT » : une charge qui mérite 5 en garde 5. */
+    t('⛔ le barème de zéro est INCHANGÉ (2→5 selon la charge) — c\'est lui le propriétaire (R2)',
+      A.bareme[60]===3 && A.bareme[90]===4 && A.bareme[110]===5 && A.bareme[130]===4,
+      JSON.stringify(A.bareme));
+    /* ⛔ INVARIANT DU 11/08 : le nombre de séries ne DIMINUE jamais. */
+    t('⛔ INVARIANT : Milo écrit 5 paliers pour 70 kg → on n\'en retire aucun',
+      A.jamaisMoins===5, String(A.jamaisMoins));
+
+    /* ⛔ LA JUMELLE (R8) — deux endroits pour la même règle, ils avaient divergé. */
+    t('⛔ R8 : le placeholder de l\'éditeur suit le repos RÉGLÉ (130), il n\'annonce plus 90',
+      A.placeholderN===130 && B2.placeholderN===60,
+      JSON.stringify([A.placeholderN, B2.err?'?':B2.placeholderN]));
+    t('⛔ … et l\'échauffement y reste à 45 s, lu dans la même table (R2)',
+      A.placeholderE===45, String(A.placeholderE));
+  }
+  /* ⛔⛔ UN SEUL PROPRIÉTAIRE DES SEUILS D'INTENSITÉ : si quelqu'un ré-écrit 0.85 en dur, les
+     répétitions et le repos pourront se contredire — c'est le défaut du 10/08 sur les charges. */
+  {
+    const src=fs.readFileSync(path.join(__dirname,'..','..','log.js'),'utf8')
+              .replace(/\/\*[\s\S]*?\*\//g,'').replace(/^[ \t]*\/\/.*$/gm,'');
+    const zones=(src.match(/_PALIER_ZONES\.(lourd|moyen|soutenu)/g)||[]).length;
+    t('⛔⛔ les seuils d\'intensité ont UN propriétaire (`_PALIER_ZONES`), lu par les reps ET le repos',
+      zones>=5 && /_PALIER_ZONES\s*=\s*\{/.test(src), 'lectures = '+zones);
+    /* ⚠️ RE-VISÉ AVANT D'ÊTRE LIVRÉ : ma 1ʳᵉ version comptait « au moins 4 lectures », c'est-à-dire
+       la FORME que le code avait à ce moment-là. En le rendant vraiment mono-source (une seule
+       lecture indexée par la zone), je l'ai fait rougir sur une amélioration. *Ce qu'on fige,
+       c'est la règle — ici : les secondes ne sont écrites qu'à UN endroit.* */
+    const decl=(src.match(/_REPOS_PALIER\s*=\s*\{/g)||[]).length;
+    t('⛔ … et les secondes d\'un palier ne sont écrites qu\'à UN endroit (`_REPOS_PALIER`)',
+      decl===1 && /_REPOS_PALIER\[/.test(src) && /_REPOS_PALIER\.leger/.test(src),
+      'déclarations = '+decl);
+  }
+}
+
 
 await b.close(); srv.close();
 

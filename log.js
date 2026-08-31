@@ -1367,7 +1367,23 @@ function toggleSet(ei,si){
        d'une série de travail garde ses 240 s. */
     const _suite=(S.wkt.exs[ei].sets||[]).slice(si+1).filter(x=>x&&!x.done)[0];
     const _versTravail=!!(_suite && _suite.type!=='É' && _suite.type!=='W');
-    const _base=(restByType[set.type]||defForEx);
+    let _base=(restByType[set.type]||defForEx);
+    /* 🔥 ENTRE DEUX PALIERS, LE REPOS SUIT LA CHARGE DE CELUI QUI VIENT (31/08/2026)
+       Prolongement direct de la règle du 17/08 juste au-dessus — *le repos regarde ce qui vient
+       APRÈS* — appliqué au cas qu'elle ne couvrait pas : le palier suivant n'est pas une série de
+       travail, mais il est déjà lourd. Mesuré avant correctif sur son soulevé de terre à 130 kg :
+       `100×2 → 115×1` rendait **45 s** pour un palier à 88 % de la charge du jour.
+       ⚠️ ON NE RACCOURCIT JAMAIS (le `Math.max` sur `_base`, qui vaut 45 s), et on ne dépasse
+       jamais le repos de travail de la personne (le `Math.min` sur `defForEx`) : se reposer plus
+       entre deux échauffements qu'entre deux séries lourdes serait absurde, et un profil réglé
+       très court (30 s) ne doit pas se voir imposer 120 s au milieu de sa montée.
+       ⚠️ Un repos écrit EXPRÈS sur la série (`set.rest`) gagne toujours — inchangé. */
+    let _palierLbl='';
+    if(!_versTravail && _suite && (set.type==='É'||set.type==='W')){
+      const _kgT=_kgTravailEx(S.wkt.exs[ei]);
+      const _prop=Math.min(_reposPalier(+_suite.kg||0, _kgT), defForEx);
+      if(_prop>_base){ _base=_prop; _palierLbl=_LABEL_PALIER[_zonePalier(+_suite.kg||0, _kgT)]||''; }
+    }
     const sec=(set.rest>0?set.rest:(_versTravail?Math.max(_base,defForEx):_base));
     // ─── Dropset : avance entre paliers ─────────────────────────────────────
     if(S.wkt.exs[ei].dropset){
@@ -1483,6 +1499,23 @@ function toggleSet(ei,si){
       // serait plus déroutant que de ne rien faire (R29 — le coût de l'erreur décide).
     }
     startRest(sec);
+    /* 🗣️ ON DIT POURQUOI LE CHRONO A CHANGÉ, sinon 2 min au lieu de 45 s se lit comme un bug
+       (R30 appliqué à l'écran).
+       ⚠️⚠️ ET C'EST POSÉ **APRÈS** `startRest`, PAS AVANT — trouvé en vérifiant à l'écran, pas
+       en relisant : `startRest()` appelle `stopRest()`, qui VIDE `#rest-label`. Mesuré des deux
+       côtés, l'étiquette écrite ~150 lignes plus haut (« Échauffement », « Récup. à l'échec »,
+       « Abdos ») sort **vide** sur ce chemin, et c'est le cas depuis toujours — ma 1ʳᵉ version
+       s'était posée au même endroit mort. *Le code était juste, l'endroit ne l'était pas.*
+       ⛔ ON NE RESTAURE PAS l'étiquette générale au passage, et c'est délibéré : le voisin
+       « ⏭️ Ensuite : … » ne s'écrit que si le libellé est VIDE — la remplir ici le ferait
+       disparaître. On ne corrige que ce qu'on est venu corriger (R30) ; le libellé mort est
+       noté dans le journal plutôt que réparé au milieu d'un autre chantier.
+       ⚠️ Aucun conflit possible avec « ⏭️ Ensuite » : celui-là exige que TOUTES les séries de
+       l'exercice soient faites, ce qui ne peut pas arriver quand un palier plus lourd suit. */
+    if(_palierLbl){
+      const _lp=document.getElementById('rest-label');
+      if(_lp) _lp.textContent=_palierLbl;
+    }
     if(_suiv!==null){
       _restDoneCb=()=>{_expandedEx=_suiv;renderExBlocks();_scrollTo(_suiv);};
       const _lb=document.getElementById('rest-label');
@@ -1741,14 +1774,67 @@ function _pasCharge(nom){
    ⚠️ Le palier au-delà de 85 % rend 1 : c'est exactement ce que `_monteeDefauts` exige (« plus de
    2 reps à 85 % de la charge, c'est déjà une série de travail ») — la règle et le contrôle disent
    la même chose parce qu'ils sont écrits une seule fois. */
+/* ⚖️ LES ZONES D'INTENSITÉ D'UNE MONTÉE — UN SEUL PROPRIÉTAIRE (31/08/2026)
+   Les répétitions d'un palier ET son repos se lisent tous les deux sur la même chose : la part de
+   la charge de travail que ce palier représente. Écrire 0,85 à deux endroits garantirait qu'un
+   jour l'app compte 1 répétition sur un palier qu'elle juge « léger » côté repos (R2). */
+const _PALIER_ZONES = { lourd:0.85, moyen:0.75, soutenu:0.60 };
 function _repsPalier(kg, kgTravail){
   const T = +kgTravail || 0, k = +kg || 0;
   if(!(T > 0)) return 5;
   const pct = k/T;
-  if(pct >= 0.85) return 1;
-  if(pct >= 0.75) return 2;
-  if(pct >= 0.60) return 3;
+  if(pct >= _PALIER_ZONES.lourd) return 1;
+  if(pct >= _PALIER_ZONES.moyen) return 2;
+  if(pct >= _PALIER_ZONES.soutenu) return 3;
   return 5;
+}
+/* ⏱️ LE REPOS D'UN PALIER SE LIT SUR SA CHARGE, PAS SUR SON TYPE (31/08/2026)
+   Relevé dans une revue des séances de Michel, puis MESURÉ sur son soulevé de terre : les trois
+   transitions d'échauffement rendaient **45 s à plat** — donc `100×2 → 115×1`, c'est-à-dire un
+   passage à **88 % de la charge du jour**, 45 secondes après un palier à 77 %.
+   ⚠️ LA MOITIÉ DU PROBLÈME ÉTAIT DÉJÀ RÉGLÉE, et il faut le dire pour ne pas la refaire : le
+   dernier palier suivi d'une SÉRIE DE TRAVAIL prend déjà le repos de travail (règle du 17/08).
+   Ce qui manquait, c'est le repos entre deux paliers *quand le second est déjà lourd*.
+   👉 Ce sont les MÊMES zones que les répétitions (`_PALIER_ZONES`) : un palier qui mérite d'être
+   fait en 1 répétition mérite d'être abordé reposé. *Une seule échelle d'intensité pour toute la
+   montée* (R2) — deux barèmes finiraient par se contredire, comme le 10/08 sur les charges.
+   ⛔ ON N'INVENTE PAS DE 4ᵉ CHIFFRE : 45 s est le repos d'échauffement existant, 90 s et 120 s
+   sont les paliers déjà employés par les presets de la barre de repos.
+   ⚠️ ET ÇA NE RACCOURCIT JAMAIS RIEN (appliqué chez l'appelant) : on ne descend jamais sous les
+   45 s d'avant, et on ne dépasse jamais le repos que la personne a réglé pour ses séries de
+   travail — se reposer plus entre deux échauffements qu'entre deux séries lourdes n'aurait
+   aucun sens.
+   ⭐ Rappel qui borne la portée de ce correctif : depuis `repos-maximum`, ce chrono est un
+   MAXIMUM, jamais un compte à rebours à subir. On corrige une suggestion par défaut, on
+   n'impose rien de plus qu'avant. */
+const _REPOS_PALIER = { lourd:120, moyen:90, leger:45 };
+/* ⚠️ L'ÉTIQUETTE SUIT LA ZONE RÉELLEMENT APPLIQUÉE — trouvé en regardant l'écran, pas le code.
+   Ma 1ʳᵉ version écrivait « palier lourd » dès que le repos montait : à 77 % de la charge de
+   travail, l'écran affirmait donc quelque chose de faux sur la série qui vient. *Une mesure juste
+   peut produire une phrase fausse* (la leçon de ft-v1035). Un seul propriétaire des deux : la
+   même fonction rend la zone, le repos et le mot. */
+const _LABEL_PALIER = { lourd:'Échauffement · palier lourd',
+                        moyen:'Échauffement · ça monte',
+                        leger:'' };
+function _zonePalier(kgSuivant, kgTravail){
+  const T = +kgTravail || 0, k = +kgSuivant || 0;
+  if(!(T > 0) || !(k > 0)) return 'leger';
+  const pct = k/T;
+  if(pct >= _PALIER_ZONES.lourd) return 'lourd';
+  if(pct >= _PALIER_ZONES.moyen) return 'moyen';
+  return 'leger';
+}
+function _reposPalier(kgSuivant, kgTravail){
+  return _REPOS_PALIER[_zonePalier(kgSuivant, kgTravail)];
+}
+/* ⚖️ LA CHARGE DE TRAVAIL D'UN EXERCICE — un seul propriétaire (R2)
+   `_completerMonteeEnCharge` la calculait chez elle ; le repos en a besoin aussi. Deux calculs du
+   même chiffre divergeraient, et l'app appliquerait un repos calé sur une charge que sa propre
+   montée ne reconnaît pas. */
+function _kgTravailEx(ex){
+  const sets = (ex && Array.isArray(ex.sets)) ? ex.sets : [];
+  return sets.filter(s=>s && s.type!=='É' && s.type!=='W')
+             .reduce((m,s)=>Math.max(m, +s.kg||0), 0);
 }
 /* 🎯 UNE CHARGE QU'ELLE A DÉJÀ CHARGÉE EXISTE FORCÉMENT (17/08/2026)
    Michel, le 15/08 : *« dans une salle c'est chiant de trouver les poids de 1,25, je perds du
@@ -2170,9 +2256,25 @@ function _monteeCompletee(echauffements, kgTravail, pas, nom){
   // ⚠️ Les répétitions d'un palier inséré viennent de sa CHARGE (`_repsPalier`), jamais d'un
   // forfait ni de ses voisins — voir la démonstration au-dessus de `_repsPalier`. Et on ne
   // touche JAMAIS aux répétitions que Milo a écrites (PB-008 : on ne décide pas à sa place).
-  // ⚠️ PLAFOND À 5 PALIERS : au-delà on fatigue au lieu de préparer (règle des 5 sources).
-  // Donc on ne peut pas boucher tous les trous — on bouche les PLUS GROS d'abord.
-  const MAX = 5;
+  /* ⚠️ PLAFOND : au-delà on fatigue au lieu de préparer (règle des 5 sources). Donc on ne peut pas
+     boucher tous les trous — on bouche les PLUS GROS d'abord.
+     ⛔⛔ ET CE PLAFOND N'EST PLUS UN 5 FIXE (31/08/2026) — MESURÉ, IL RENDAIT 5 PARTOUT.
+     Le barème qui fabrique une montée de zéro sait déjà doser : **2 paliers à 50 kg, 3 à 70,
+     4 à 130, 5 à 110** (mesuré sur 13 charges). La complétion, elle, plafonnait à 5 *quelle que
+     soit la charge* — et comme Milo écrit presque toujours 3 paliers avec des écarts de ~22 %,
+     elle en insérait 2 à chaque fois. Résultat mesuré : **5 paliers et 19 répétitions
+     d'échauffement de 60 kg à 150 kg**, identiques. *Un squat à 60 kg recevait le protocole d'un
+     squat à 150.*
+     👉 LE PLAFOND VAUT DONC CE QUE LE BARÈME PRODUIRAIT POUR CETTE CHARGE — un seul propriétaire
+     de la question « combien de paliers cette charge mérite-t-elle ? » (R2). Deux réponses à la
+     même question, c'était exactement le défaut.
+     ⚠️ ET LE NOMBRE DE SÉRIES NE DIMINUE JAMAIS (invariant du 11/08) : le plafond ne descend
+     jamais sous ce que Milo a écrit — `Math.max(out.length, …)`. On cesse d'AJOUTER, on ne
+     retire rien.
+     ⚠️ Repli sur 5 si le barème ne rend rien (charge sous le seuil) : on garde l'ancien
+     comportement plutôt que de bloquer toute insertion. */
+  const _bareme = (_monteeEnCharge(T, pas, nom)||[]).length;
+  const MAX = Math.max(out.length, _bareme > 0 ? _bareme : 5);
   for(let garde=0; garde<4 && out.length<MAX; garde++){
     // ① démarrage trop haut → on prépose un palier bas
     if((+out[0].kg||0) > _MONTEE_DEPART_MAX*T){
@@ -2236,7 +2338,7 @@ function _completerMonteeEnCharge(sess){
       const sets = Array.isArray(ex.sets) ? ex.sets : [];
       const travail = sets.filter(s=>s && s.type!=='É' && s.type!=='W');
       if(!travail.length) return;
-      const kgT = travail.reduce((m,s)=>Math.max(m, +s.kg||0), 0);
+      const kgT = _kgTravailEx(ex);   // ⚠️ un seul propriétaire, partagé avec le repos (R2)
       if(!(kgT >= _MONTEE_SEUIL_KG)) return;
       let pat=null; try{ pat=_movPattern(ex.name); }catch(e){}
       let role='accessoire'; try{ role=_exRole(ex.name); }catch(e){}
@@ -7614,7 +7716,16 @@ function _cleanProgEditExercises(){
   else toast('Aucun doublon évident à rattacher 👍','info');
 }
 // Repos par défaut selon le type de série (pour le placeholder de l'éditeur)
-function _defRestForType(type){return type==='É'||type==='W'?45:((type==='X'||type==='E')?240:(type==='D'?20:90));}
+/* ⚠️ LA JUMELLE (R8, 31/08/2026) — ce placeholder de l'éditeur de programmes annonçait **90 s**
+   pour une série normale, alors que la séance applique le repos RÉGLÉ par la personne (mesuré :
+   130 s sur le profil de Michel). *Deux endroits pour la même règle, et ils avaient déjà divergé*
+   (R2). Les autres valeurs sont bien celles de `restByType`.
+   ⚠️ Le placeholder ne peut pas connaître la charge du palier (on édite un programme, pas une
+   série en cours) : il annonce donc le repos d'échauffement de base, comme avant. */
+function _defRestForType(type){
+  const _n=(typeof S!=='undefined' && +S.defRest>0) ? +S.defRest : 90;
+  return type==='É'||type==='W'?_REPOS_PALIER.leger:((type==='X'||type==='E')?240:(type==='D'?20:_n));
+}
 // Formate des secondes en 1'30 / 45s (affichage type PDF)
 function _fmtRest(sec){sec=parseInt(sec)||0;if(sec<=0)return'';if(sec<60)return sec+'s';const m=Math.floor(sec/60),s=sec%60;return m+"'"+String(s).padStart(2,'0');}
 // Retourne l'exercice ciblé dans l'éditeur (multi-jours ou à plat)
