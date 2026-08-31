@@ -6,7 +6,24 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1073`.
+- **Version en ligne (live) :** `ft-v1074`.
+- 🔤⭐⭐ **DEUX COUCHES DE GUILLEMETS, UN SEUL ÉCHAPPEMENT — 2 bugs de Michel n'en font qu'un**
+  (ft-v1074). Son journal d'erreurs : **4 × `SyntaxError`**, dont 3 en 11 s.
+  ⛔⛔ `'onclick="f('+JSON.stringify(v)+')"'` rend `onclick="f("gene")"` → **l'attribut se referme
+  au 1ᵉʳ guillemet**, le navigateur compile `function onclick(e){ f( }`. *JSON.stringify échappe
+  pour JS, pas pour HTML.* ⭐⭐ **Le « bug d'image » (`changeExImg`) est le MÊME défaut.**
+  ⛔ Coût : depuis le **28/08**, aucune réponse à « Pourquoi ce changement ? » n'a été enregistrée
+  → `S.exSwaps` vide → la promesse *« Milo ne te le repropose plus »* n'a jamais tenu.
+  ⭐⭐ **R8** : 5 sites, **1 déjà juste** (`oublierExSwap`) — *le dépôt contenait la réponse*.
+  Un seul propriétaire désormais, `_argAttr` (R2). 🧾 Famille **§27** de `BUGS.md`.
+- 💾 **2 SAUVEGARDES PAR JOUR** (2h et 14h UTC) — demande de Michel. ⭐ Le fichier gérait déjà un
+  2ᵉ passage. ⚠️ **À ACTIVER** : un déploiement ne recrée pas les déclencheurs → 1 clic sur
+  `installDailyBackupTrigger_` dans l'IDE (`A-FAIRE-SUR-PC.md`). ⚠️ Append-only : ~730 fichiers/an
+  pour une alerte de quota à 1000 → **la purge devra être une décision, dans ~16 mois**.
+- ⏭️ **2 bugs de sa séance du 31/08 restent** : le **chrono négatif** invisible sous l'écran GO ·
+  le **récap qui devient une nouvelle séance** (régression de ft-v1055, corrigée d'un seul côté).
+  ⏭️ **Et sa séance du 31/08 est toujours fausse** (Tirage Poulie enregistré « Rowing Hammer ») —
+  réparation **non faite**, en attente de sa décision (**R29**).
 - 🔴⭐⭐ **LE SÉLECTEUR RENOMMAIT AU LIEU D'AJOUTER — il abîmait l'historique** (ft-v1073).
   Michel : *« mon tirage a été remplacé par le rowing hammer »*.
   ⛔⛔ **R15, 3ᵉ fois — mais la 1ʳᵉ qui touche aux DONNÉES** : `mod-ex` n'était pas dans

@@ -3179,13 +3179,25 @@ function installDailyBackupTrigger_() {
       Logger.log('[FT backup] Ancien trigger supprimé.');
     }
   });
-  // Trigger journalier entre 2h et 3h UTC (≈ 4h heure de Paris en été)
-  ScriptApp.newTrigger('backupAllUserData_')
-    .timeBased()
-    .everyDays(1)
-    .atHour(2)
-    .create();
-  Logger.log('[FT backup] Trigger journalier installé — backupAllUserData_ à 2h UTC chaque nuit.');
+  /* 💾 DEUX SAUVEGARDES PAR JOUR (31/08/2026) — demande de Michel, après le bug du sélecteur
+     qui a abîmé une séance : *« on verra si on peut pas faire 2 sauvegardes par jour »*.
+     ⭐ RIEN À CONSTRUIRE CÔTÉ FICHIER : `backupAllUserData_` gère DÉJÀ un 2ᵉ passage le même
+     jour — il suffixe `-HH-mm` quand `backup-YYYY-MM-DD.json` existe déjà (ligne ~2714).
+     ⛔ POURQUOI 2h ET 14h, ET PAS 2h ET 3h : ce qu'on veut réduire, c'est la FENÊTRE DE PERTE.
+     Une seule sauvegarde nocturne veut dire qu'une séance faite à 13h et abîmée à 14h n'a
+     jamais été sauvegardée. Les deux passages encadrent donc la journée d'entraînement.
+     ⚠️ ET LE COÛT EST RÉEL, IL SE DIT : le dossier est en APPEND-ONLY (rien n'est purgé), donc
+     on passe de ~365 à ~730 fichiers par an, pour un avertissement de quota Drive posé à 1000
+     (@54). *À ce rythme l'alerte tombe en ~16 mois* — c'est écrit ici pour que la purge soit
+     une décision, pas une découverte. */
+  [2, 14].forEach(function(h){
+    ScriptApp.newTrigger('backupAllUserData_')
+      .timeBased()
+      .everyDays(1)
+      .atHour(h)
+      .create();
+  });
+  Logger.log('[FT backup] 2 triggers installés — backupAllUserData_ à 2h ET 14h UTC.');
 }
 
 // Fonction utilitaire publique — exécuter UNE SEULE FOIS depuis l'IDE pour autoriser

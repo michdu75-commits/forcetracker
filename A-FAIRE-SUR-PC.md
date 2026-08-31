@@ -23,6 +23,36 @@
 > vient de me faire reproposer à Michel une figurine qu'il avait supprimée la veille (26/08).
 > ⛔ **Rien n'est supprimé en descendant** : la raison et l'historique partent avec le bloc.
 
+### 💾 RELANCER L'INSTALLATEUR DE SAUVEGARDE — **1 clic dans l'IDE Apps Script** *(31/08/2026)*
+
+> Michel, après le bug du sélecteur qui a abîmé une séance : *« on verra si on peut pas faire
+> 2 sauvegardes par jour »*. **C'est fait dans le code (ft-v1074) — il reste à l'activer.**
+
+**⛔⛔ POURQUOI CE N'EST PAS AUTOMATIQUE.** `Code.js` part tout seul en prod à chaque push
+(workflow `deploy-appsscript.yml`), **mais un déploiement ne recrée PAS les déclencheurs** : ils
+vivent dans le projet Apps Script, pas dans le code. *Tant que l'installateur n'est pas relancé,
+la sauvegarde reste à 1 par jour.*
+
+**👉 LA MANIP, une fois :**
+1. [script.google.com](https://script.google.com) → projet **Force Tracker**
+2. dans la liste des fonctions, choisir **`installDailyBackupTrigger_`**
+3. **Exécuter**
+4. vérifier dans **Journaux** : `2 triggers installés — backupAllUserData_ à 2h ET 14h UTC`
+
+⛔ L'installateur **supprime d'abord les anciens** déclencheurs de sauvegarde : le relancer deux
+fois ne crée pas de doublons.
+
+**⭐ POURQUOI 2h ET 14h** (et pas 2h et 3h) : ce qu'on réduit, c'est la **fenêtre de perte**. Avec
+une seule sauvegarde nocturne, une séance faite à 13h et abîmée à 14h n'a **jamais** été
+sauvegardée. Les deux passages encadrent la journée d'entraînement.
+
+**⚠️ LE COÛT, ÉCRIT PLUTÔT QUE DÉCOUVERT** : le dossier Drive est en **append-only** (rien n'est
+purgé). On passe de ~365 à **~730 fichiers par an**, pour un avertissement de quota posé à
+**1000** (@54). *L'alerte tombera donc dans ~16 mois* — la purge devra être une décision, pas une
+surprise.
+
+---
+
 ### ⌚ AJOUTER LE SOMMEIL ET LES PAS AU RACCOURCI iOS *(30/08/2026)* — **sur le TÉLÉPHONE, pas le PC**
 
 > Michel : *« on devait le faire mais on n'a pas rajouté les pas et le sommeil »*.

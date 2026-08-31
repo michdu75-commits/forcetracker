@@ -19842,6 +19842,82 @@ console.log('\n-- CLXXVIII. Le sélecteur renommait au lieu d\'ajouter (ft-v1073
   }
 }
 
+/* == BLOC CLXXIX - UN GUILLEMET DOUBLE DANS UN ATTRIBUT EN GUILLEMETS DOUBLES (ft-v1074) ==
+   Michel : « l'image quand je veux changer d'exercice a un beug » — et son journal d'erreurs
+   portait 4 × `SyntaxError: Unexpected token '}'`, dont 3 en 11 secondes a 12:55.
+
+   ⛔⛔ REPRODUIT : `'onclick="f('+JSON.stringify(v)+')"'` rend `onclick="f("gene")"`.
+   L'attribut se referme au 1er guillemet double, le navigateur compile
+   `function onclick(event){ f( }` — d'ou l'accolade « inattendue » de son message.
+   ⭐⭐ ET SES DEUX BUGS N'EN FONT QU'UN : « Pourquoi ce changement ? » et le bouton PHOTO
+   d'un exercice partagent la meme cause. Un seul correctif.
+   ⭐ Le depot contenait DEJA la bonne reponse a un seul endroit (`oublierExSwap`) : R13. */
+console.log('\n-- CLXXIX. Guillemets doubles imbriqués : 3 boutons morts (ft-v1074) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  const jsErrs=[]; pg.on('pageerror',e=>jsErrs.push(String(e.message||e)));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const Q=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    /* ① LE PROPRIETAIRE : un seul echappement pour les 5 sites (R2) */
+    o.helper=(typeof _argAttr==='function') ? _argAttr('gene') : 'ABSENT';
+    /* ⛔ il doit produire du &quot;, PAS un guillemet nu */
+    o.helperSansGuillemet = o.helper.indexOf('"')<0 && /&quot;/.test(o.helper);
+
+    /* ②⛔⛔ SON CAS : la modale « Pourquoi ce changement ? », avec un VRAI clic */
+    S.wkt={date:today(), exs:[{name:'Leg Curl Couché Machine', sets:[{kg:52,reps:10,done:true,type:'N'}]}]};
+    persist();
+    _demanderPourquoiSwap('Leg Curl Couché Machine','Leg Curl Assis Machine');
+    const box=document.getElementById('ex-swap-btns');
+    const b1=box&&box.querySelector('button');
+    o.attribut=b1?b1.getAttribute('onclick'):'(pas de bouton)';
+    /* ⛔ l'attribut doit etre ENTIER : la parenthese fermante doit y etre */
+    o.attributEntier=/repondreExSwap\(.+\)$/.test(o.attribut||'');
+    S.exSwaps={};                                  // on part propre
+    if(b1) b1.click();                             // LE VRAI CLIC
+    o.enregistre=JSON.parse(JSON.stringify(S.exSwaps||{}));
+    o.raisonGardee=(o.enregistre['Leg Curl Couché Machine']||{}).r;
+
+    /* ③ LE BOUTON PHOTO — son « bug d'image », meme cause */
+    o.photo=(function(){
+      try{
+        const d=document.createElement('div');
+        d.innerHTML='<button onclick="event.stopPropagation();changeExImg('+_argAttr('Tirage Poulie Haute (Lat Pulldown)')+')">x</button>';
+        const bb=d.querySelector('button');
+        return {attr:bb.getAttribute('onclick'), entier:/changeExImg\(.+\)$/.test(bb.getAttribute('onclick')||'')};
+      }catch(e){ return {err:String(e)}; }
+    })();
+
+    /* ④ R8 : plus AUCUN JSON.stringify nu dans un onclick, dans les fichiers servis */
+    return o;
+   }catch(e){ return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]}; }
+  });
+  await cx.close();
+
+  if(Q.err) t('CLXXIX n\'a pas pu tourner', false, JSON.stringify(Q));
+  else{
+    t('⛔ ① `_argAttr` existe et rend du &quot;, jamais un guillemet nu',
+      Q.helper!=='ABSENT' && Q.helperSansGuillemet===true, 'rendu = '+Q.helper);
+    /* ⛔⛔ LE TEMOIN QUI PORTE SON CAS : on CLIQUE, et la reponse doit etre ENREGISTREE. */
+    t('⛔⛔ ② SON CAS : un vrai clic sur « Pourquoi ce changement ? » ENREGISTRE la raison',
+      Q.raisonGardee==='gene', 'attribut='+String(Q.attribut).slice(0,60)+' · enregistré='+JSON.stringify(Q.enregistre));
+    t('⛔ ③ l\'attribut onclick est ENTIER (il ne se referme plus au 1er guillemet)',
+      Q.attributEntier===true, String(Q.attribut).slice(0,80));
+    /* ⭐⭐ SON « BUG D'IMAGE » EST LE MEME DEFAUT — un nom d'exercice avec espaces ET parentheses. */
+    t('⭐⭐ ④ le bouton PHOTO survit à un nom d\'exercice avec espaces et parenthèses',
+      Q.photo && Q.photo.entier===true, JSON.stringify(Q.photo).slice(0,140));
+    /* ⛔ AUCUNE erreur JS sur tout le parcours — c'etait son symptome visible. */
+    t('⛔ ⑤ ZÉRO erreur JS (son bandeau rouge venait exactement de là)',
+      jsErrs.length===0, jsErrs.slice(0,2).join(' | '));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

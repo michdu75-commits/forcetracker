@@ -2643,7 +2643,7 @@ function _renderExSwaps(){
       +'<b>'+esc(k)+'</b><div style="color:var(--t3);font-size:11.5px;">'+_EX_SWAP_LBL[v.r]
       +(v.to?' · tu lui préfères '+esc(v.to):'')+'</div></div>'
       +'<button class="btn btn-bg2" style="padding:6px 11px;font-size:14px;" '
-      +'onclick="oublierExSwap('+JSON.stringify(k).replace(/"/g,'&quot;')+')" aria-label="Retirer">✕</button></div>';
+      +'onclick="oublierExSwap('+_argAttr(k)+')" aria-label="Retirer">✕</button></div>';
   }).join('');
 }
 function oublierExSwap(nom){
@@ -3272,8 +3272,8 @@ function detectDuplicates(){
       +'<div style="color:var(--t3);font-size:11px;">dist.'+d+'</div>'
       +'<div style="color:var(--t1);font-weight:600;font-size:13px;">'+a+' <span style="color:var(--t3);font-weight:400;">≈</span> '+b+'</div>'
       +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'
-      +'<button class="btn btn-bg2" onclick="mergeExercises('+JSON.stringify(a)+','+JSON.stringify(b)+')" style="padding:7px 10px;font-size:12px;flex:1;">Garder "'+la+'"</button>'
-      +'<button class="btn btn-bg2" onclick="mergeExercises('+JSON.stringify(b)+','+JSON.stringify(a)+')" style="padding:7px 10px;font-size:12px;flex:1;">Garder "'+lb+'"</button>'
+      +'<button class="btn btn-bg2" onclick="mergeExercises('+_argAttr(a)+','+_argAttr(b)+')" style="padding:7px 10px;font-size:12px;flex:1;">Garder "'+la+'"</button>'
+      +'<button class="btn btn-bg2" onclick="mergeExercises('+_argAttr(b)+','+_argAttr(a)+')" style="padding:7px 10px;font-size:12px;flex:1;">Garder "'+lb+'"</button>'
       +'</div></div>';
   }).join('');
 }

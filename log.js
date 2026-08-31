@@ -2806,6 +2806,24 @@ function _rmSetHoldEnd(btn){
 let _expandedEx=null;
 let _groupMode=false;let _selectedGroupExs=new Set();
 let _exPickerMode='workout';
+/* 🔤 UN ARGUMENT DANS UN `onclick=""` TRAVERSE **DEUX** COUCHES DE GUILLEMETS (31/08, ft-v1074)
+   Michel : *« l'image quand je veux changer d'exercice a un beug »* — et son journal d'erreurs
+   portait **4 × `SyntaxError: Unexpected token '}'`**, dont 3 en 11 secondes.
+
+   ⛔⛔ LA CAUSE, REPRODUITE : `'onclick="f('+JSON.stringify(v)+')"'` rend
+   `onclick="f("gene")"`. **L'attribut se referme au 1ᵉʳ guillemet double.** Le navigateur
+   compile alors `function onclick(event){ f( }` — d'où l'accolade « inattendue » de son message.
+   Le handler reçoit `undefined`, et rien n'est enregistré.
+   👉 `JSON.stringify` échappe correctement pour **JavaScript**. Il ne sait rien de l'**HTML**,
+   qui est la couche du dessus. *Deux couches, deux échappements — en oublier un ne casse pas le
+   texte, ça casse le CODE.*
+
+   ⭐ ET LE DÉPÔT CONTENAIT DÉJÀ LA BONNE RÉPONSE, à un seul endroit (`oublierExSwap`,
+   setup.js) : `.replace(/"/g,'&quot;')`. **R13** — on fait ce que fait celui qui marche ; **R2** —
+   un seul propriétaire, pour que le 4ᵉ site ne réinvente pas un 4ᵉ échappement.
+   ⛔ Le nom est explicite EXPRÈS : `_argAttr` se lit « argument pour un attribut ». Un
+   `_esc()` générique se serait fait employer là où il ne fallait pas. */
+function _argAttr(v){ return JSON.stringify(v).replace(/"/g,'&quot;'); }
 let _replaceEi=null; // index de l'exo à remplacer (menu ⋯ → Remplacer l'exercice)
 let _editProgIdx=-1,_editProgData=null,_editDayIdx=0;
 function addExercise(name){
@@ -2947,7 +2965,7 @@ function _demanderPourquoiSwap(de, vers){
     const box=document.getElementById('ex-swap-btns');
     if(box) box.innerHTML=_EX_SWAP_RAISONS.map(o=>
       '<button class="btn btn-bg2" style="width:100%;text-align:left;padding:12px 14px;" '+
-      'onclick="repondreExSwap('+JSON.stringify(o.r)+')">'+o.ico+'&nbsp; '+o.txt+'</button>').join('');
+      'onclick="repondreExSwap('+_argAttr(o.r)+')">'+o.ico+'&nbsp; '+o.txt+'</button>').join('');
     const ov=document.getElementById('ov-ex-swap');
     if(ov) setTimeout(()=>ov.classList.add('open'), 420);  // après le toast, pas par-dessus
   }catch(e){ console.warn('[swap qcm]', e); }
@@ -8601,7 +8619,7 @@ function toggleExGif(ei,name){
     html+=`<div style="text-align:center;padding:8px 0;"><img src="${file}" style="width:160px;height:auto;display:block;margin:0 auto;"></div>`;
     html+=`<div style="text-align:center;font-size:12px;color:var(--t3);margin-top:2px;">${ex?ex.g:'Muscle principal deviné'}</div>`;
     // Machine importée sans image dédiée → proposer d'ajouter la vraie photo (deviendra la vignette + le grand format)
-    html+=`<button class="btn btn-bg2" style="width:100%;margin-top:10px;font-size:13px;" onclick="event.stopPropagation();changeExImg(${JSON.stringify(name)})">📷 Ajouter la photo de ta machine</button>`;
+    html+=`<button class="btn btn-bg2" style="width:100%;margin-top:10px;font-size:13px;" onclick="event.stopPropagation();changeExImg(${_argAttr(name)})">📷 Ajouter la photo de ta machine</button>`;
   }
   html+='</div>';
   panel.innerHTML=html;

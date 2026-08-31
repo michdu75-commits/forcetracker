@@ -1685,3 +1685,52 @@ sortir sans le remettre à zéro** — et surtout, **de quel côté il tombe qua
 défaut sûr (« ajouter ») vaut mieux qu'un défaut destructeur (« remplacer »).
 ⚠️ **3ᵉ fois pour la famille R15** (ft-v466 point rouge, ft-v629 pop-up, celle-ci les données) :
 à chaque fois, le chemin oublié était **le glisser du doigt**.
+
+---
+
+## 27. 🔤 DEUX COUCHES DE GUILLEMETS, UN SEUL ÉCHAPPEMENT **(31/08/2026, ft-v1074)**
+
+### 🔎 À quoi on la reconnaît
+Un bouton qui **ne fait rien**, et une `SyntaxError` bizarre — *`Unexpected token '}'`* ou
+*`Unexpected end of input`* — alors qu'aucun `}` ne manque dans le code source.
+
+### 💥 Le cas
+`'onclick="f('+JSON.stringify(v)+')"'` rend `onclick="f("gene")"`.
+👉 ***L'attribut se referme au 1ᵉʳ guillemet double.*** Le navigateur ne garde que
+`f(`, l'enveloppe dans `function onclick(event){ … }` — et l'accolade fermante devient
+« inattendue ». **C'est de là que vient le message, pas d'une accolade manquante.**
+
+`JSON.stringify` échappe parfaitement pour **JavaScript**. Il ne sait rien de l'**HTML**, qui est
+la couche du dessus. *Deux couches, deux échappements — en oublier un ne casse pas le texte, ça
+casse le CODE.*
+
+### ⛔ Pourquoi ça coûte cher : c'est SILENCIEUX du bon côté
+Le bouton s'affiche, il se tape, il s'allume. Seul un bandeau d'erreur passe — et il ressemble à
+n'importe quel pépin. **Michel a répondu 4 fois à « Pourquoi ce changement ? » ; ses 4 erreurs
+horodatées SONT ses 4 appuis.** `S.exSwaps` est resté vide depuis le 28/08, donc la promesse
+*« dis-moi pourquoi et Milo ne te le repropose plus »* n'a **jamais** tenu.
+
+### ⭐⭐ Et deux bugs distincts n'en faisaient qu'un
+Il a signalé *« l'image quand je veux changer d'exercice a un beug »* et *« le QCM ne marche
+pas »* comme deux choses. C'était **la même ligne de faute** à deux endroits — le bouton photo
+(`changeExImg`) casse dès que le nom contient un espace ou une parenthèse.
+*Deux symptômes éloignés peuvent partager une cause : c'est le journal d'erreurs qui les a
+réunis, pas le raisonnement.*
+
+### 🛡️ Ce qui protège aujourd'hui
+- **Un seul propriétaire**, `_argAttr` (**R2**) — 5 sites y passent, dont le seul qui était déjà
+  correct. *Sans ça, le 6ᵉ site réinventera un 6ᵉ échappement.*
+- **Le nom est explicite exprès** : `_argAttr` se lit « argument pour un attribut ». Un `_esc()`
+  générique se serait fait employer là où il ne fallait pas.
+- **Bloc CLXXIX** : le témoin va jusqu'au **vrai clic** et vérifie que la raison est
+  **enregistrée** — lire l'attribut n'aurait prouvé qu'une chaîne bien formée, pas un bouton qui
+  marche. Plus un témoin qui compte les **erreurs JS** de tout le parcours.
+
+### ⭐ Le réflexe
+**R8 d'abord, et il paie ici plus qu'ailleurs** : sur 5 occurrences du motif, **1 était déjà
+juste**. *Le dépôt contenait la réponse ; personne n'était allé la chercher.* Devant un défaut
+d'échappement, chercher immédiatement le même motif partout — et regarder si un endroit fait
+déjà bien (**R13**).
+⚠️ Et pour l'utilisateur : **un bandeau d'erreur générique est une piste, pas un diagnostic.** Le
+journal d'erreurs (Profil → Admin) porte l'heure exacte — c'est lui qui a relié les appuis au
+défaut.
