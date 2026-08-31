@@ -1411,6 +1411,23 @@ function _renderCoachThread(){
     for(let i=coachHistory.length-1;i>=0 && vus<3;i--){
       const m=coachHistory[i];
       if(!m||m.role!=='assistant')continue;
+      /* ⛔⛔ UN RÉCAP N'EST PAS UNE PROPOSITION (31/08/2026, ft-v1075).
+         Michel : *« pour le récap de ma séance il me met une nouvelle séance lol »*.
+         👉 LA CAUSE : le débrief de fin de séance RÉCAPITULE ce qu'il vient de faire — avec les
+         exercices ET les charges. `_extractDaySession` y lit donc une séance parfaitement
+         valide, et la carte « Cette séance te convient ? » lui propose de **refaire celle qu'il
+         vient de terminer**. *Le texte est le même ; c'est l'INTENTION qui diffère, et elle ne
+         se lit pas dans le texte.*
+         ⛔ On la lit dans le VOISIN : la réponse à une consigne interne (`_silent`, le débrief
+         auto) n'est jamais une proposition. On remonte au dernier message de la personne avant
+         cette réponse — s'il est interne, ce bloc-là ne peut pas porter de séance à démarrer.
+         ⚠️ ET C'EST MA RÉGRESSION : ft-v1055 a corrigé exactement ça… sur l'AUTRE branche (celle
+         de la demande, dix lignes plus bas). *Un correctif posé d'un seul côté* (**R8**) — le
+         motif que ce fichier passe son temps à rattraper, refait par celui qui l'avait écrit. */
+      let _interne=false;
+      for(let k=i-1;k>=0;k--){ const p=coachHistory[k];
+        if(p&&p.role==='user'){ _interne=!!p._silent; break; } }
+      if(_interne) continue;
       vus++;
       /* ⛔⛔ LA BORNE EST UNE DURÉE, PLUS UN NOMBRE DE MESSAGES (29/08/2026, ft-v1054).
          Michel, dix minutes après la livraison de ft-v1053 : *« lol il vient de me sortir la

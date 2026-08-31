@@ -19918,6 +19918,96 @@ console.log('\n-- CLXXIX. Guillemets doubles imbriqués : 3 boutons morts (ft-v1
   }
 }
 
+/* == BLOC CLXXX - UN RECAP N'EST PAS UNE PROPOSITION + LE DEPASSEMENT S'AFFICHE (ft-v1075) ==
+   ① Michel : « pour le recap de ma seance il me met une nouvelle seance lol ».
+   ⛔⛔ Le debrief RECAPITULE sa seance avec les exercices ET les charges → `_extractDaySession`
+   y lit une seance valide → la carte « Cette seance te convient ? » lui propose de REFAIRE
+   celle qu'il vient de terminer. *Le texte est le meme, c'est l'INTENTION qui differe — et elle
+   ne se lit pas dans le texte, mais dans le VOISIN (une consigne `_silent`).*
+   ⚠️ MA REGRESSION : ft-v1055 a corrige exactement ca, sur l'AUTRE branche (R8).
+
+   ② Michel : « le chrono negatif ne fonctionne pas ». Il fonctionnait — l'ecran GO le CACHAIT :
+   il remplace le nombre par « GO » et reste jusqu'au tap. Telephone dans la poche, on revient
+   et on lit « GO » sans savoir si ca fait 20 s ou 4 min. */
+console.log('\n-- CLXXX. Un récap n\'est pas une proposition · le dépassement s\'affiche (ft-v1075) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const D=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    /* ⭐ SON DEBRIEF : un recap qui contient bien des exercices et des charges */
+    const RECAP='Belle séance ! Voici ce que tu as fait :\n'
+      +'- Soulevé de Terre : S1 130×3, S2 130×3, S3 135×3\n'
+      +'- Tirage Poulie Haute (Lat Pulldown) : S1 65×8, S2 65×8, S3 65×8\n'
+      +'PR sur le Roumain, SDT en progression. La dynamique est bonne.';
+    const carte=()=>{ const f=document.getElementById('coach-msgs')||document.body;
+      return String(f.textContent||''); };
+
+    /* ⛔ ① LE TEMOIN QUI EMPECHE LES AUTRES D'ETRE VERTS POUR RIEN :
+       ce texte DOIT bien contenir une seance extractible, sinon on ne mesure rien. */
+    o.extractible = !!(typeof _extractDaySession==='function'
+                       && (_extractDaySession(RECAP)||{}).sess);
+
+    /* ⛔⛔ ② SON CAS : le recap arrive en reponse a une consigne INTERNE → aucune carte */
+    coachHistory=[{role:'user',content:'[DÉBRIEF AUTO] Je viens de terminer ma séance…',_silent:true,ts:Date.now()},
+                  {role:'assistant',content:RECAP,ts:Date.now()}];
+    _renderCoachThread();
+    o.apresDebrief = carte();
+    o.carteSousDebrief = /Cette séance te convient/.test(o.apresDebrief);
+
+    /* ⭐ ③ ET L'INVERSE : une VRAIE demande garde bien sa carte (sinon ② serait vert pour rien) */
+    coachHistory=[{role:'user',content:'fais-moi une séance dos',ts:Date.now()},
+                  {role:'assistant',content:RECAP,ts:Date.now()}];
+    _renderCoachThread();
+    o.carteSurVraieDemande = /Cette séance te convient/.test(carte());
+
+    /* ④ LE DEPASSEMENT : l'ecran GO doit DIRE depuis combien de temps */
+    o.fmt={s:_fmtDepassement(45), min:_fmtDepassement(150), rond:_fmtDepassement(120)};
+    restTot=90; restStartTs=Date.now()-(90+135)*1000;   // 2 min 15 de dépassement
+    _cdownActive=false; _showRestCountdown();
+    _updateRestCountdown();
+    const num=document.getElementById('rcd-num'), lab=document.getElementById('rcd-label');
+    o.go={num:num?num.textContent:'', label:lab?lab.textContent:'(absent)'};
+
+    /* ⑤ ET IL NE SURVIT PAS AU REPOS SUIVANT */
+    restTot=120; restStartTs=Date.now(); _cdownActive=false; _showRestCountdown();
+    _updateRestCountdown();
+    o.apresNouveauRepos=(document.getElementById('rcd-label')||{}).textContent;
+    try{ stopRest(); }catch(e){}
+    return o;
+   }catch(e){ return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]}; }
+  });
+  await cx.close();
+
+  if(D.err) t('CLXXX n\'a pas pu tourner', false, JSON.stringify(D));
+  else{
+    /* ⛔ SANS LUI, ② SERAIT VERT PARCE QUE RIEN N'EST EXTRACTIBLE, pas parce qu'on filtre. */
+    t('⛔ ① le récap contient BIEN une séance extractible (sinon on ne mesure rien)',
+      D.extractible===true, 'extractible = '+D.extractible);
+    /* ⛔⛔ SON CAS. */
+    t('⛔⛔ ② un récap de fin de séance ne propose PLUS de la refaire',
+      D.carteSousDebrief===false, 'carte sous le débrief = '+D.carteSousDebrief);
+    /* ⭐ ET LE CORRECTIF N'EST PAS UN RECUL : une vraie demande garde sa carte. */
+    t('⭐ ③ une VRAIE demande de séance garde bien sa carte',
+      D.carteSurVraieDemande===true, 'carte sur vraie demande = '+D.carteSurVraieDemande);
+    /* ⏱️ SON 2e BUG. */
+    t('⏱️ ④ l\'écran GO DIT le dépassement (« GO » reste, le temps s\'écrit dessous)',
+      D.go.num==='GO' && /C'EST REPARTI · \+2 min 15/.test(D.go.label), JSON.stringify(D.go));
+    /* ⛔ MÊME FAMILLE QUE LE MODE DU SÉLECTEUR (ft-v1073) : un état qui survit à son geste
+       ment sur le suivant. Un « +2 min » hérité sur un décompte neuf serait faux. */
+    t('⛔ ⑤ le dépassement ne SURVIT pas au repos suivant',
+      /\+/.test(D.apresNouveauRepos)===false, 'après nouveau repos = '+JSON.stringify(D.apresNouveauRepos));
+    t('⭐ ⑥ le format se lit (45 s · 2 min 30 · 2 min pile)',
+      D.fmt.s==='45 s' && D.fmt.min==='2 min 30' && D.fmt.rond==='2 min', JSON.stringify(D.fmt));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

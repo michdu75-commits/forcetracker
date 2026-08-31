@@ -6,7 +6,22 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1074`.
+- **Version en ligne (live) :** `ft-v1075`.
+- 🔁⏱️ **UN RÉCAP N'EST PAS UNE PROPOSITION · LE DÉPASSEMENT S'AFFICHE** (ft-v1075).
+  ⛔⛔ ① Le débrief **récapitule** la séance avec exercices et charges → `_extractDaySession` y lit
+  une séance → Milo proposait de **refaire celle qu'on vient de finir**. *L'intention ne se lit pas
+  dans le texte, mais dans le VOISIN* (une consigne `_silent`). ⚠️ **Ma régression** : ft-v1055
+  corrigeait ça sur l'**autre** branche (**R8**).
+  ⏱️ ② Le chrono négatif **fonctionnait — l'écran GO le cachait** (« GO » jusqu'au tap). Devenu
+  **« C'EST REPARTI · +2 min 15 »**. ⚠️ Position corrigée **à la capture** (il tombait par-dessus
+  l'anneau) ; ⚠️ et **mon témoin ⑤ a trouvé** que le libellé n'était repeint que dans la branche
+  `left<=0` — un « +2 min » survivait au repos suivant (famille de ft-v1073, à 2 jours d'écart).
+- ✅ **Les 4 bugs de sa séance du 31/08 sont corrigés** (ft-v1073 → ft-v1075).
+- ⏭️ **RESTE, et c'est sa décision** : sa séance du 31/08 est toujours fausse dans l'historique
+  (Tirage Poulie enregistré « Rowing Hammer Strength », 1RM fabriqué de 81,9 kg). **Rien n'a été
+  touché** — on ne modifie pas les données de quelqu'un sans son accord (**R29**).
+- ⏭️ **2 manips lui restent** (`A-FAIRE-SUR-PC.md`) : activer les **2 sauvegardes/jour**
+  (`installDailyBackupTrigger_`) · ajouter **sommeil et pas** au raccourci iOS.
 - 🔤⭐⭐ **DEUX COUCHES DE GUILLEMETS, UN SEUL ÉCHAPPEMENT — 2 bugs de Michel n'en font qu'un**
   (ft-v1074). Son journal d'erreurs : **4 × `SyntaxError`**, dont 3 en 11 s.
   ⛔⛔ `'onclick="f('+JSON.stringify(v)+')"'` rend `onclick="f("gene")"` → **l'attribut se referme

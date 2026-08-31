@@ -4594,9 +4594,25 @@ function _showRestCountdown(){
   if(nextDetailEl)nextDetailEl.textContent=_fmtNextSet(info);
   // Fond sombre garanti à chaque ouverture (l'inline HTML #0e1016 avait pu être effacé par un GO précédent)
   ov.style.background='#0e1016';ov.style.transition='';ov.classList.remove('go-cycle');
+  /* ⛔⛔ LE DÉPASSEMENT DU REPOS PRÉCÉDENT NE DOIT PAS SURVIVRE (ft-v1075), et mon témoin ⑤ a
+     trouvé que SI. Je croyais le libellé repeint à chaque tick : il ne l'est que dans la branche
+     `left<=0`. Un repos neuf (left>0) le laissait donc tel quel — « C'EST REPARTI · +2 min 15 »
+     affiché sur un décompte qui vient de démarrer. *Exactement la famille du mode de sélecteur de
+     ft-v1073 : un état qui survit à son geste ment sur le suivant.* On le remet ici, à côté du
+     fond, qui est là pour la même raison. */
+  const _lab=document.getElementById('rcd-label'); if(_lab)_lab.textContent='';
   ov.style.display='block';
   _updateRestCountdown();
 }
+/* ⏱️ « depuis combien de temps » — un seul propriétaire du format (R2) : l'écran GO et la
+   pilule doivent dire la MÊME durée, sinon deux compteurs du même dépassement divergent. */
+function _fmtDepassement(sec){
+  const s=Math.max(0,Math.round(sec));
+  if(s<60) return s+' s';
+  const m=Math.floor(s/60), r=s%60;
+  return m+' min'+(r?(' '+String(r).padStart(2,'0')):'');
+}
+
 function _updateRestCountdown(){
   if(!_cdownActive)return;
   const left=_restLeft();
@@ -4622,9 +4638,26 @@ function _updateRestCountdown(){
   const numEl=document.getElementById('rcd-num');
   const labelEl=document.getElementById('rcd-label');
   if(left<=0){
-    // Écran GO persistant : reste affiché jusqu'au tap / bouton Passer (pas d'auto-close)
+    /* ⏱️ LE DÉPASSEMENT S'AFFICHE ICI, ET IL LE FAUT (31/08/2026, ft-v1075).
+       Michel : *« le chrono négatif ne fonctionne pas »*.
+       ⛔⛔ IL FONCTIONNAIT — mais cet écran le CACHAIT. L'overlay GO remplace le nombre par
+       « GO » et **reste jusqu'au tap** (c'est voulu : c'est le filet visuel en mode silencieux).
+       Résultat : téléphone dans la poche, on revient et on lit « GO » — *sans savoir si ça fait
+       20 secondes ou 4 minutes*. Or c'est EXACTEMENT ce que le chrono négatif devait dire.
+       👉 Le « GO » reste (c'est le signal qu'on cherche du coin de l'œil), et le dépassement
+       s'écrit **dessous**, en petit. On ajoute une information, on n'en retire aucune.
+       ⛔ RIEN PENDANT LA 1ʳᵉ SECONDE : afficher « +0 s » à l'instant du GO serait du bruit sur
+       le seul moment où l'écran doit être lisible d'un coup d'œil. */
     if(labelEl){labelEl.textContent="C'EST REPARTI";labelEl.style.color='rgba(255,255,255,.9)';}
     if(numEl){numEl.textContent='GO';numEl.style.fontSize='80px';numEl.style.color='#fff';}
+    /* ⚠️ IL VIT DANS LE LIBELLÉ, PAS DANS UN ÉLÉMENT À PART — trouvé À LA CAPTURE, invisible à
+       tout test de chaîne : glissé après le « GO », il tombait **à gauche, par-dessus l'anneau**.
+       Le texte était correct, sa POSITION ne l'était pas. Dans la ligne qui dit déjà « C'EST
+       REPARTI », il est centré par construction et il se lit d'un trait. *Un élément de moins,
+       c'est aussi une mise en page de moins à se tromper.* */
+    const dep=-left;                                  // secondes écoulées depuis le GO
+    if(labelEl) labelEl.textContent = dep>=1
+      ? ("C'EST REPARTI · +"+_fmtDepassement(dep)) : "C'EST REPARTI";
     _paintCdownTicks(0);
     return;
   }
