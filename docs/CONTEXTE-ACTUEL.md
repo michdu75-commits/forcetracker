@@ -6,7 +6,22 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1072`.
+- **Version en ligne (live) :** `ft-v1073`.
+- 🔴⭐⭐ **LE SÉLECTEUR RENOMMAIT AU LIEU D'AJOUTER — il abîmait l'historique** (ft-v1073).
+  Michel : *« mon tirage a été remplacé par le rowing hammer »*.
+  ⛔⛔ **R15, 3ᵉ fois — mais la 1ʳᵉ qui touche aux DONNÉES** : `mod-ex` n'était pas dans
+  `_OVERLAY_CLOSERS` → fermé **au doigt**, `closeExPicker()` n'était jamais appelé → le mode
+  restait `'replace'` **avec son index**, et l'ouverture suivante **renommait** au lieu d'ajouter.
+  ⛔ Dégât : son Tirage Poulie enregistré comme « Rowing Hammer » avec un 1RM fabriqué de 81,9 kg,
+  parti dans ses records, Sheets et le débrief de Milo. **Aucune donnée touchée par le correctif** —
+  la réparation de sa séance reste à lui proposer (**R29**).
+  ⭐⭐ **Le vrai correctif est le second** : `openExPicker(mode)` **impose** son mode au lieu de
+  l'hériter — *quand un état se perd, il doit se perdre du bon côté*. Les 5 modes spéciaux passent
+  par le paramètre (R2). 🧾 Famille **§26** de `BUGS.md`.
+- ⏭️ **3 bugs de sa séance du 31/08 restent à corriger** : le **chrono négatif** invisible sous
+  l'écran GO · **« Pourquoi ce changement ? »** cassé (guillemets doubles imbriqués → `SyntaxError`,
+  toutes ses réponses perdues depuis le 28/08) · le **récap qui devient une nouvelle séance**
+  (régression de ft-v1055, corrigée d'un seul côté).
 - 🔒⭐⭐ **ON N'ANNONCE QU'À CEUX QUI PEUVENT S'EN SERVIR** (ft-v1072). Michel : *« sauf que les
   pas ne sont que pour moi attention »*. ⛔⛔ **Le défaut était dans l'ANNONCE, pas le comportement** :
   `WHATS_NEW`/`NEW_FEATURES` n'avaient **aucun filtre par personne** → les pop-ups **v64** (sommeil

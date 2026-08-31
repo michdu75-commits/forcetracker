@@ -19738,6 +19738,110 @@ console.log('\n-- CLXXVII. On n\'annonce qu\'à ceux qui peuvent s\'en servir (f
   }
 }
 
+/* == BLOC CLXXVIII - LE SELECTEUR RENOMMAIT AU LIEU D'AJOUTER (ft-v1073) ==
+   Michel, capture a l'appui : « je rajoute le rowing hammer... et en regardant de plus pres je
+   vois que mon tirage a ete remplace par le rowing hammer ».
+
+   ⛔⛔ LA CAUSE, ET C'EST R15 : `mod-ex` n'etait PAS dans `_OVERLAY_CLOSERS`. Ferme en glissant,
+   a cote ou par Echap, `closeExPicker()` n'etait JAMAIS appele → `_exPickerMode` restait
+   `'replace'` ET `_replaceEi` gardait son index. L'ouverture suivante, faite pour AJOUTER,
+   RENOMMAIT l'exercice memorise.
+   ⛔ Degat reel : son Tirage Poulie est devenu « Rowing Hammer Strength » en gardant ses series
+   et sa consigne — donc dans ses records, dans Sheets et dans le debrief de Milo.
+   ⭐ 3e fois pour cette famille (ft-v466, ft-v629) et la PREMIERE qui touche aux DONNEES. */
+console.log('\n-- CLXXVIII. Le sélecteur renommait au lieu d\'ajouter (ft-v1073) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const X=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    const noms=()=>((S.wkt&&S.wkt.exs)||[]).map(e=>e.name);
+    /* ⭐ SA SEANCE : les deux exercices que Milo lui avait donnes */
+    const monter=()=>{ S.wkt={date:today(), exs:[
+      {name:'Tirage Poulie Haute (Lat Pulldown)', note:'Prise large', sets:[{kg:65,reps:8,done:true,type:'N'}]},
+      {name:'Rowing Poitrine Appuyée (Chest Supported)', note:'Buste stable', sets:[{kg:60,reps:8,done:true,type:'N'}]}
+    ]}; persist(); };
+
+    /* ⛔ le temoin ne mesure quelque chose que si la seance existe */
+    monter(); o.depart=noms();
+
+    /* ⛔⛔ LE CAS DE MICHEL, REJOUE A L'IDENTIQUE :
+       ① il ouvre « Remplacer » sur le 2e exercice
+       ② il ferme AU DOIGT (glisser / a cote / Echap) — donc PAS par closeExPicker
+       ③ il rouvre pour AJOUTER, et choisit Rowing Hammer */
+    openExPickerForReplace(1);
+    o.modeApresReplace=_exPickerMode;
+    _closeOverlayProper(document.getElementById('mod-ex'));   // la fermeture au doigt
+    o.modeApresFermetureDoigt=_exPickerMode;
+    o.indexApresFermetureDoigt=_replaceEi;
+    openExPicker();                                           // il rouvre pour AJOUTER
+    o.modeAOuverture=_exPickerMode;
+    addExercise('Rowing Hammer Strength');
+    o.apres=noms();
+    o.aAjoute=(o.apres.length===3 && o.apres[2]==='Rowing Hammer Strength');
+    o.aRenomme=(o.apres.indexOf('Tirage Poulie Haute (Lat Pulldown)')<0);
+
+    /* ⭐ NON-REGRESSION : le VRAI remplacement doit marcher, et garder les series */
+    monter();
+    openExPickerForReplace(0);
+    addExercise('Rowing Hammer Strength');
+    o.remplacement={noms:noms(), series:((S.wkt.exs[0]||{}).sets||[]).length,
+                    kg:((S.wkt.exs[0]||{}).sets||[{}])[0].kg};
+
+    /* ⛔ R15 : la regle elle-meme, pas seulement le cas du jour */
+    o.declare=(typeof _OVERLAY_CLOSERS!=='undefined') && _OVERLAY_CLOSERS['mod-ex']==='closeExPicker';
+
+    /* ⭐ LES 4 AUTRES MODES restent atteignables (on ne casse pas ce qui marchait) */
+    const essaiMode=(fn)=>{ try{ fn(); const m=_exPickerMode; closeExPicker(); return m; }catch(e){ return 'ERR'; } };
+    o.modes={
+      replace:  essaiMode(()=>openExPicker('replace')),
+      prog:     essaiMode(()=>openExPicker('prog')),
+      addGroup: essaiMode(()=>openExPicker('addToGroup')),
+      addSess:  essaiMode(()=>openExPicker('addSess')),
+      replSess: essaiMode(()=>openExPicker('replaceSess')),
+      defaut:   essaiMode(()=>openExPicker())
+    };
+    /* ⛔ un index qui survit a son mode est une cible qui attend */
+    _replaceEi=7; openExPicker(); o.indexPurge=_replaceEi;
+    return o;
+   }catch(e){ return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]}; }
+  });
+  await cx.close();
+
+  if(X.err) t('CLXXVIII n\'a pas pu tourner', false, JSON.stringify(X));
+  else{
+    t('⛔ ① la séance de départ porte bien les 2 exercices de Milo',
+      X.depart.length===2 && /Tirage Poulie/.test(X.depart[0]), JSON.stringify(X.depart));
+    /* ⛔⛔ SON CAS, ET C'EST LE TEMOIN QUI COMPTE. */
+    t('⛔⛔ ② SON CAS : « Remplacer » fermé au doigt, puis AJOUTER → ça AJOUTE, ça ne renomme pas',
+      X.aAjoute===true && X.aRenomme===false, JSON.stringify({apres:X.apres}));
+    t('⛔ ③ le mode ne SURVIT pas à une fermeture au doigt',
+      X.modeApresReplace==='replace' && X.modeApresFermetureDoigt==='workout'
+      && X.indexApresFermetureDoigt===null,
+      JSON.stringify({apresReplace:X.modeApresReplace, apresDoigt:X.modeApresFermetureDoigt, idx:X.indexApresFermetureDoigt}));
+    /* ⛔ LA RÈGLE, pas le cas : la prochaine modale devra passer par la même porte. */
+    t('⛔ ④ R15 : `mod-ex` est déclaré dans les fermetures propres',
+      X.declare===true, 'déclaré = '+X.declare);
+    /* ⭐ ON NE CASSE PAS CE QUI MARCHAIT. */
+    t('⭐ ⑤ NON-RÉGRESSION : le vrai remplacement marche et GARDE les séries',
+      X.remplacement.noms[0]==='Rowing Hammer Strength' && X.remplacement.noms.length===2
+      && X.remplacement.series===1 && X.remplacement.kg===65, JSON.stringify(X.remplacement));
+    t('⭐ ⑥ NON-RÉGRESSION : les 5 modes spéciaux restent atteignables, le défaut est « workout »',
+      X.modes.replace==='replace' && X.modes.prog==='prog' && X.modes.addGroup==='addToGroup'
+      && X.modes.addSess==='addSess' && X.modes.replSess==='replaceSess' && X.modes.defaut==='workout',
+      JSON.stringify(X.modes));
+    /* ⛔ L'INDEX ET LE MODE VIVENT ET MEURENT ENSEMBLE (R2). */
+    t('⛔ ⑦ un index d\'exercice ne survit pas à une ouverture en mode « ajouter »',
+      X.indexPurge===null, '_replaceEi après ouverture = '+JSON.stringify(X.indexPurge));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

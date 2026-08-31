@@ -390,8 +390,8 @@ function createSupersetFrom(ei){
   const gid='ss'+Date.now();
   S.wkt.exs[ei].group=gid;S.wkt.exs[ei].groupType='super';
   _expandedEx=ei;persist();
-  _exPickerMode='addToGroup';_addToGroupGid=gid;
-  openExPicker();
+  _addToGroupGid=gid;
+  openExPicker('addToGroup');
   toast('Choisis le 2ᵉ exercice de la supersérie','info');
 }
 // Lie l'exercice avec CELUI DU DESSUS en superset (demande Christophe : « glisser sur le
@@ -2891,8 +2891,7 @@ function _majTitreExPicker(){
 function openExPickerForReplace(ei){
   closeExMenu();
   _replaceEi=ei;
-  _exPickerMode='replace';
-  openExPicker();
+  openExPicker('replace');
   toast('Choisis le bon exercice','info');
 }
 function _replaceExInWorkout(name){
@@ -5019,7 +5018,19 @@ function _exPickRow(e){
     :`<span class="ex-pick-name">${fav}${_escNote(e.n)}${edit}</span>`;
   return `<div class="ex-pick" onclick="addExercise('${safe}')" style="display:flex;align-items:center;">${thumb}${mid}<span class="ex-pick-grp">${e.g}</span></div>`;
 }
-function openExPicker(){
+/* 🔴 LE MODE EST IMPOSÉ PAR CELUI QUI OUVRE, JAMAIS HÉRITÉ (ft-v1073).
+   ⛔⛔ AVANT, `openExPicker()` ne posait PAS le mode : il prenait celui qui traînait. Combiné à
+   une fermeture qui ne passait pas par `closeExPicker` (R15, corrigé au-dessus), un « ajouter »
+   devenait un « remplacer » — et l'app RENOMMAIT un exercice au lieu d'en ajouter un.
+   👉 Le défaut de fond n'est pas la fermeture, c'est qu'un état pouvait SURVIVRE à son geste.
+   Les deux correctifs sont posés ensemble exprès : le premier ferme le chemin connu, celui-ci
+   ferme **tous les autres** — un mode oublié par n'importe quelle voie retombe sur « ajouter »,
+   qui est le geste sans conséquence. *Quand un état se perd, il doit se perdre du bon côté.*
+   ⛔ `_replaceEi` est vidé avec lui : un index d'exercice qui survit à son mode est une cible
+   qui attend (R2 — l'index et le mode décrivent la MÊME intention, ils vivent et meurent ensemble). */
+function openExPicker(mode){
+  _exPickerMode = mode || 'workout';
+  if(_exPickerMode!=='replace') _replaceEi=null;
   _exGrp=null;
   const s=document.getElementById('ex-search');if(s)s.value='';
   filterEx();
@@ -7649,8 +7660,7 @@ function _progDragEnd(){
 }
 function _openExPickerForProg(dayIdx){
   _editDayIdx=dayIdx;
-  _exPickerMode='prog';
-  openExPicker();
+  openExPicker('prog');
 }
 function _removeExFromProgEdit(dayIdx,exIdx){
   const d=_editProgData;if(!d)return;

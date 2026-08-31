@@ -1217,8 +1217,7 @@ function addSessSet(ei){
 }
 function openSessAddEx(){
   if(!_sessEdits)return;
-  _exPickerMode='addSess';
-  openExPicker();
+  openExPicker('addSess');
   toast('Choisis l\'exercice à ajouter','info');
 }
 function _addSessExPick(name){
@@ -1257,8 +1256,7 @@ let _replaceSessEi=null;
 function replaceSessEx(ei){
   if(!_sessEdits||!_sessEdits.exs[ei])return;
   _replaceSessEi=ei;
-  _exPickerMode='replaceSess';
-  openExPicker();
+  openExPicker('replaceSess');
   toast('Choisis le bon exercice','info');
 }
 function _replaceSessExPick(name){

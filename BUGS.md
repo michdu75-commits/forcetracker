@@ -1636,3 +1636,52 @@ Après **toute** fusion du runner : ne pas se contenter de `node --check` (il di
 dizaine de lignes, faire `git show HEAD -- tests/parcours/runner.js | grep '^-.*BLOC'`.
 ⚠️ **Et ne jamais reprendre le numéro d'un bloc qu'on vient de voir dans le conflit** : c'est le
 signe qu'il existait, pas qu'il est libre.
+
+---
+
+## 26. 🔴 UN ÉTAT QUI SURVIT À SON GESTE — *et cette fois il abîme les données* **(31/08/2026, ft-v1073)**
+
+### 🔎 À quoi on la reconnaît
+Une action fait **autre chose que ce qu'elle annonce**, et seulement *parfois*. Le geste est bon,
+l'écran est bon — c'est ce qui reste **de la fois d'avant** qui décide.
+
+### 💥 Le cas
+Michel : *« je rajoute le rowing hammer… et en regardant de plus près je vois que mon tirage a été
+remplacé par le rowing hammer »*.
+
+Le sélecteur d'exercices garde un **mode** (`_exPickerMode`) et un **index** (`_replaceEi`), tous
+deux remis à zéro par `closeExPicker()`. Mais `mod-ex` **n'était pas déclaré** dans
+`_OVERLAY_CLOSERS` : fermé **en glissant, à côté ou par Échap**, on tombait sur le repli
+(`classList.remove('open')`) et **`closeExPicker()` n'était jamais appelé**.
+👉 Le mode restait `'replace'` **avec son index** — et l'ouverture suivante, faite pour
+**AJOUTER**, ***renommait*** l'exercice mémorisé.
+
+⛔⛔ **ET C'EST LA PREMIÈRE DE CETTE FAMILLE QUI TOUCHE AUX DONNÉES.** Son Tirage Poulie Haute est
+devenu « Rowing Hammer Strength » **en gardant ses séries et sa consigne** — donc un 1RM fabriqué
+de **81,9 kg** parti dans ses records, dans Sheets, et dans le débrief de Milo, qui a commenté
+« le saut vers 66 kg était trop brutal » **sur le mauvais exercice**. *Le tirage n'existe plus
+dans son historique.*
+
+### ⭐⭐ Ce que la correction ajoute à R15
+Déclarer la modale ferme **le chemin connu**. Ça ne suffisait pas : ***le défaut de fond n'est pas
+la fermeture, c'est qu'un état pouvait SURVIVRE à son geste.***
+👉 `openExPicker(mode)` **impose** désormais son mode (défaut `'workout'`) au lieu de l'hériter.
+Un mode oublié par **n'importe quelle** voie retombe donc sur « ajouter », le geste sans
+conséquence. *Quand un état se perd, il doit se perdre du bon côté.*
+⛔ Et l'index part avec le mode : ils décrivent la **même intention**, ils vivent et meurent
+ensemble (**R2**). *Un index d'exercice qui survit à son mode est une cible qui attend.*
+
+### 🛡️ Ce qui protège aujourd'hui
+- `'mod-ex':'closeExPicker'` dans `_OVERLAY_CLOSERS` (**R15**) ;
+- le mode imposé à l'ouverture, l'index purgé avec lui ;
+- **bloc CLXXVIII** : son cas rejoué à l'identique (ouvrir en « remplacer » → fermer **au doigt**
+  → rouvrir pour ajouter), plus 2 non-régressions (le vrai remplacement garde les séries, les
+  5 modes spéciaux restent atteignables). **Contrôle négatif** : l'ancien code rend
+  `{"apresDoigt":"replace","idx":1}` et **2 exercices au lieu de 3**.
+
+### ⭐ Le réflexe
+Devant un état de module (`_mode`, `_index`, `_cible`) : se demander **par quelles portes on peut
+sortir sans le remettre à zéro** — et surtout, **de quel côté il tombe quand on l'oublie**. Un
+défaut sûr (« ajouter ») vaut mieux qu'un défaut destructeur (« remplacer »).
+⚠️ **3ᵉ fois pour la famille R15** (ft-v466 point rouge, ft-v629 pop-up, celle-ci les données) :
+à chaque fois, le chemin oublié était **le glisser du doigt**.

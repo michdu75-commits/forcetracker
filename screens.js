@@ -527,6 +527,18 @@ const _OVERLAY_CLOSERS={
   'ov-pesee-nav-e':'closePeseeNavE',               // annonce boîte à idées traitée (Eline)
   'ov-export-choix':'closeExportChoix',           // fermer au doigt = annuler, jamais exporter
   'ov-ex-swap':'closeExSwap',                      // pas de marqueur à poser, mais la paire en cours doit être oubliée
+  /* 🔴🔴 ft-v1073 — LE PLUS COÛTEUX DE LA FAMILLE R15, ET IL CORROMPAIT L'HISTORIQUE.
+     Michel : *« mon tirage a été remplacé par le rowing hammer »*.
+     Le sélecteur d'exercices garde un MODE (`_exPickerMode`) et un INDEX (`_replaceEi`), tous
+     deux remis à zéro par `closeExPicker()`. Il n'était pas déclaré ici : fermé **en glissant,
+     à côté ou par Échap**, on tombait sur le repli (`classList.remove('open')`) et
+     `closeExPicker()` n'était **JAMAIS appelé**. 👉 Le mode restait `'replace'` avec son index —
+     et l'ouverture suivante, faite pour **AJOUTER**, RENOMMAIT l'exercice mémorisé.
+     ⛔ Conséquence chez lui : son Tirage Poulie Haute est devenu « Rowing Hammer Strength » en
+     gardant ses séries et sa consigne, avec un 1RM fabriqué de 81,9 kg — parti dans ses records,
+     dans Sheets et dans le débrief de Milo. *Une fermeture au doigt qui abîme un historique.*
+     ⚠️ 3ᵉ fois pour cette famille (ft-v466, ft-v629) — et la première qui touche aux DONNÉES. */
+  'mod-ex':'closeExPicker',
 };
 function _closeOverlayProper(ov){
   try{
