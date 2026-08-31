@@ -20286,13 +20286,19 @@ console.log('\n-- CLXXXIII. L\'export d\'historique commence par la dernière s�
       JSON.stringify(E.exos));
   }
   /* ⛔ ⑥ ET UN SEUL PROPRIÉTAIRE DE L'ORDRE : ni le CSV ni le PDF ne re-trient dans leur coin. */
-  (()=>{ const s=fs.readFileSync(path.join(ROOT,'setup.js'),'utf8');
+  /* ⚠️ ET IL A FALLU RETIRER LES COMMENTAIRES AVANT DE MESURER — mon 1ᵉʳ jet était ROUGE sur du
+     code correct : il attrapait le commentaire qui EXPLIQUE le retrait (« il triait ses dates
+     lui-même (`.sort().reverse()`) »). *Un témoin qui lit du texte source ne distingue pas le code
+     de ce qui le raconte* — et dans ce projet, ce qui le raconte est long. */
+  (()=>{ const brut=fs.readFileSync(path.join(ROOT,'setup.js'),'utf8');
+    const s=brut.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
     const pdf=(s.match(/async function exportHistoPdf\(\)[\s\S]*?\n\}/)||[''])[0];
     const csv=(s.match(/async function exportHistoCsv\(\)[\s\S]*?\n\}/)||[''])[0];
     t('⛔ ⑥ le CSV et le PDF SUIVENT l\'ordre de `_histoLignes` — aucun des deux ne le refait (R2)',
       pdf.length>200 && csv.length>200 && !/\.sort\(/.test(pdf) && !/\.sort\(/.test(csv)
       && /ordre\.forEach/.test(pdf),
-      'tri dans le PDF = '+/\.sort\(/.test(pdf)+' · dans le CSV = '+/\.sort\(/.test(csv));
+      'tri dans le PDF = '+/\.sort\(/.test(pdf)+' · dans le CSV = '+/\.sort\(/.test(csv)
+      +' · tailles '+pdf.length+'/'+csv.length);
   })();
 }
 
