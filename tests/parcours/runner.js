@@ -20340,6 +20340,106 @@ console.log('\n-- CLXXXIV. Aucun script servi n\'est absent du cache (ft-v1079) 
     /sbMirror\s*===?\s*'function'|typeof sbMirror==='function'/.test(fs.readFileSync(path.join(ROOT,'setup.js'),'utf8')), '');
 }
 
+/* == BLOC CLXXXV - VOIR LES DOUBLONS DU CLASSEUR, SANS RIEN SUPPRIMER (ft-v1080) ==
+   Michel : « comment verifier si ma seance a ete ecrite plusieurs fois ? ». Avant ft-v1077,
+   une grosse seance depassait les 8 s d'attente du telephone — qui abandonnait pendant que le
+   script Google finissait d'ecrire. Chaque nouvel essai re-collait donc les memes lignes.
+   ⛔⛔ LE TEMOIN CENTRAL N'EST PAS LE COMPTAGE, C'EST QUE LA ROUTE N'ECRIT RIEN (R29) : le
+   classeur porte les donnees de la personne, on lui MONTRE ce qu'on voit, elle decide ensuite.
+   *Un detecteur qui nettoie d'office est exactement le geste qu'on refuse.* */
+console.log('\n-- CLXXXV. Voir les doublons du classeur, sans rien supprimer (ft-v1080) --');
+{
+  const src=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  const vm=require('vm');
+  const EN=['date','exercise','set_num','type','kg','reps','volume','rm1','bw','gender','age','email'];
+  const onglet=(lignes)=>{
+    const g={entete:EN.slice(), lignes:lignes.map(r=>r.slice()), ecritures:0};
+    return {_g:g,
+      getLastColumn:()=>g.entete.length,
+      getLastRow:()=>1+g.lignes.length,
+      getDataRange:()=>({getValues:()=>[g.entete.slice()].concat(g.lignes.map(r=>r.slice()))}),
+      getRange:(r,c,nr,nc)=>({getValues:()=>[g.entete.slice(c-1,(c-1)+(nc||1))],
+        setValue:()=>{ g.ecritures++; },
+        setValues:()=>{ g.ecritures++; }}),
+      appendRow:()=>{ g.ecritures++; }};
+  };
+  const lancer=(o,params,jeton)=>{
+    const ctx={console,JSON,String,Number,Math,Date,Array,Object,
+      SpreadsheetApp:{openById:()=>({getSheetByName:()=>o, insertSheet:()=>o})},
+      PropertiesService:{getScriptProperties:()=>({
+        getProperty:(k)=>(k==='IDEES_TOKEN2'?jeton:''), setProperty:()=>{} })},
+      Utilities:{formatDate:(d)=>d.toISOString().slice(0,10)},
+      Logger:{log:()=>{}},GmailApp:{},DriveApp:{},UrlFetchApp:{},CacheService:{},
+      LockService:{},Session:{},ScriptApp:{getProjectTriggers:()=>[]},MailApp:{},
+      ContentService:{createTextOutput:(t)=>({setMimeType:()=>({_t:t}),_t:t}),MimeType:{JSON:'json'}}};
+    ctx.global=ctx; vm.createContext(ctx); vm.runInContext(src,ctx,{filename:'Code.js'});
+    const r=vm.runInContext('doGet',ctx)({parameter:params});
+    try{ return JSON.parse(r&&r._t||'{}'); }catch(e){ return {brut:String(r&&r._t||'')}; }
+  };
+  const JET='jeton-de-test-assez-long';
+  const serie=(d,ex,n,em)=>[d,ex,n,'N',60,8,480,'75',84,'H',43,em];
+  const MOI='michdu75@gmail.com';
+  /* SON CAS : une séance de 3 séries, écrite TROIS FOIS (les 3 essais avant ft-v1077),
+     + une séance saine la veille, + une ligne d'un autre testeur, + une vieille ligne
+     sans email (écrite avant ft-v1018). */
+  const L=[];
+  for(let k=0;k<3;k++) for(let i=1;i<=3;i++) L.push(serie('2026-08-31','Tirage Poulie Haute',i,MOI));
+  for(let i=1;i<=2;i++) L.push(serie('2026-08-30','Squat à la Barre',i,MOI));
+  L.push(serie('2026-08-31','Rowing Machine',1,'christophe@famillelanglois.fr'));
+  L.push(serie('2026-07-01','Développé Couché',1,''));
+
+  const o=onglet(L);
+  const d=lancer(o,{action:'sessionDoublons',token:JET,email:MOI},JET);
+
+  /* ⛔ ① SANS LUI, TOUT LE RESTE SERAIT VERT SUR UNE LECTURE RATÉE. */
+  t('⛔ ① la route lit bien le classeur et trouve ses 11 lignes',
+    d.status==='ok' && d.total===11, JSON.stringify(d).slice(0,150));
+  /* ⛔⛔ ② LE TÉMOIN QUI COMPTE LE PLUS : elle n'écrit RIEN (R29). */
+  t('⛔⛔ ② la route n\'écrit RIEN dans le classeur — 0 écriture (elle montre, elle ne nettoie pas)',
+    o._g.ecritures===0 && o._g.lignes.length===L.length,
+    'écritures = '+o._g.ecritures+' · lignes = '+o._g.lignes.length);
+  /* ⛔⛔ ③ SON CAS : la séance du 31/08 est vue « écrite 3 fois », 6 lignes en trop. */
+  const j31=(d.dates||[]).find(x=>x.date==='2026-08-31');
+  t('⛔⛔ ③ la séance du 31/08 est signalée « écrite 3 fois » (6 lignes en trop sur 9)',
+    !!j31 && j31.exemplaires===3 && j31.lignes===9 && j31.uniques===3 && j31.enTrop===6,
+    JSON.stringify(j31));
+  /* ⛔ ④ ET LA SÉANCE SAINE N'EST PAS ACCUSÉE — sinon l'outil crierait sur tout. */
+  const j30=(d.dates||[]).find(x=>x.date==='2026-08-30');
+  t('⛔ ④ la séance saine de la veille n\'est PAS signalée (0 en trop)',
+    !!j30 && j30.enTrop===0 && d.datesAvecDoublons===1 && d.lignesEnTrop===6,
+    JSON.stringify(j30)+' · dates sales = '+d.datesAvecDoublons);
+  /* ⛔⛔ ⑤ LES LIGNES DE QUELQU'UN D'AUTRE NE SONT NI LUES NI COMPTÉES. */
+  t('⛔⛔ ⑤ la ligne d\'un autre testeur n\'entre pas dans le compte (11, pas 12)',
+    d.total===11 && JSON.stringify(d).indexOf('christophe')<0, 'total = '+d.total);
+  /* ⛔ ⑥ ET CE QU'ON NE PEUT PAS ATTRIBUER EST DIT, PAS AVALÉ. */
+  t('⛔ ⑥ la vieille ligne sans email est comptée À PART, jamais accusée',
+    d.sansEmail===1, 'sansEmail = '+d.sansEmail);
+  /* ⛔ ⑦ SANS JETON, RIEN. Cette route lit l'entraînement de quelqu'un. */
+  const refus=lancer(onglet(L),{action:'sessionDoublons',token:'faux',email:MOI},JET);
+  t('⛔ ⑦ sans le bon jeton, la route refuse (elle lit l\'entraînement de quelqu\'un)',
+    refus.status==='error', JSON.stringify(refus).slice(0,80));
+}
+
+/* ⛔ ET LA MOITIE ECRAN : le compteur d'un groupe de l'Admin doit dire combien de cartes il
+   porte. Regle, pas cas du jour — j'ai failli livrer « 4 » sur un groupe qui en compte 5. */
+{
+  const html=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+  const grp=html.split('<details class="adm-grp">').slice(1);
+  const faux=[];
+  grp.forEach(bloc=>{
+    const fin=bloc.indexOf('</details>');
+    const corps=fin>=0?bloc.slice(0,fin):bloc;
+    const m=/<summary>([^<]*)<span class="adm-n">(\d+)<\/span>/.exec(corps);
+    if(!m) return;
+    const n=(corps.match(/class="card cp"/g)||[]).length;
+    if(n!==+m[2]) faux.push(m[1].trim()+' : annonce '+m[2]+', porte '+n);
+  });
+  t('⛔ ⑧ le témoin voit bien les groupes de l\'Admin (sinon il serait vert en ne lisant rien)',
+    grp.length>=3, 'groupes lus = '+grp.length);
+  t('⛔⛔ ⑨ chaque groupe de l\'Admin annonce le VRAI nombre de cartes qu\'il porte',
+    faux.length===0, JSON.stringify(faux));
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

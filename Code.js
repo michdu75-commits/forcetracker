@@ -563,6 +563,64 @@ function doGet(e) {
     });
   }
 
+  /* 🔁 DOUBLONS DANS L'ONGLET `Sessions` — ?action=sessionDoublons&token=…&email=…
+     ⛔⛔ LECTURE SEULE. CETTE ROUTE NE SUPPRIME RIEN, ET C'EST LE POINT (R29). Les données
+     du classeur sont celles de la personne : on lui MONTRE ce qu'on voit, elle décide. Un
+     nettoyage automatique sur la foi d'un algorithme qu'elle n'a pas vu tourner, c'est
+     exactement le geste qu'on refuse.
+
+     ⚠️ POURQUOI ELLE EXISTE (31/08/2026). Avant ft-v1077, `handleLogSession_` écrivait une
+     ligne PAR SÉRIE : une grosse séance dépassait les 8 s d'attente du téléphone, qui
+     abandonnait — mais **le script Google, lui, finissait d'écrire**. La séance restait
+     marquée « non synchronisée », et chaque nouvel essai re-collait les mêmes lignes.
+     *Un délai dépassé n'est pas un échec, c'est une réponse qu'on n'a pas attendue.*
+
+     ⛔ UNE SEULE LECTURE DU CLASSEUR (`getDataRange`), pas une par ligne — c'est la leçon
+     qu'on vient de payer juste au-dessus : ce qui grandit avec les données finit par
+     dépasser un délai fixe.
+
+     ⚠️ LA LIMITE EST RENDUE, PAS TUE : les lignes écrites AVANT ft-v1018 n'ont pas de
+     colonne `email`. Elles ne sont attribuables à personne, donc elles ne sont ni comptées
+     ni accusées — et leur nombre est renvoyé, pour que l'écran puisse le dire. */
+  if (p.action === 'sessionDoublons') {
+    if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
+    var _mail = String(p.email || '').toLowerCase().trim();
+    if (!_mail) return json_({status:'error', error:'email requis'});
+    try {
+      var _sh = _getSheet_().getSheetByName('Sessions');
+      if (!_sh) return json_({status:'ok', total:0, sansEmail:0, dates:[]});
+      var _v = _sh.getDataRange().getValues();
+      var _sansEmail = 0, _aMoi = 0;
+      var _parDate = {};                       // date → { signature → nb }
+      for (var i = 1; i < _v.length; i++) {
+        var r = _v[i];
+        if (!r || !r[0]) continue;
+        var em = String(r[11] == null ? '' : r[11]).toLowerCase().trim();
+        if (!em) { _sansEmail++; continue; }
+        if (em !== _mail) continue;
+        _aMoi++;
+        var d = (r[0] instanceof Date)
+          ? Utilities.formatDate(r[0], 'Europe/Paris', 'yyyy-MM-dd')
+          : String(r[0]).slice(0, 10);
+        // La signature d'une SÉRIE : ce qui doit être unique dans une séance.
+        var sig = [r[1], r[2], r[3], r[4], r[5]].join('|');
+        if (!_parDate[d]) _parDate[d] = {};
+        _parDate[d][sig] = (_parDate[d][sig] || 0) + 1;
+      }
+      var _dates = Object.keys(_parDate).sort().reverse().map(function(d){
+        var m = _parDate[d], lignes = 0, uniques = 0, maxi = 1;
+        for (var k in m) { lignes += m[k]; uniques++; if (m[k] > maxi) maxi = m[k]; }
+        return {date:d, lignes:lignes, uniques:uniques,
+                exemplaires:maxi, enTrop:lignes - uniques};
+      });
+      var _sales = _dates.filter(function(x){ return x.enTrop > 0; });
+      return json_({status:'ok', total:_aMoi, sansEmail:_sansEmail,
+                    datesAvecDoublons:_sales.length,
+                    lignesEnTrop:_sales.reduce(function(a,x){ return a + x.enTrop; }, 0),
+                    dates:_dates.slice(0, 40)});
+    } catch(err) { return json_({status:'error', error:err.message}); }
+  }
+
   // Test garde-fou universel — ?action=testGardeFou
   if (p.action === 'testGardeFou') {
     try {
