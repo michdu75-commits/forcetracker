@@ -24,6 +24,7 @@
 
 | État | Quand (UTC) | Qui | Sujet | Fichiers | Version |
 |---|---|---|---|---|---|
+| 🟢 | 31/08 16:50 → 17:00 | session-B (claude-md-docs) | **🛡️ LE JOURNAL DE PARTAGE SE GARDE ENFIN LUI-MÊME — demandé par Michel, et il avait raison.** *« C'est pas la première fois que tu me dis que les lignes risquent d'être écrasées, pourtant on avait fait le nécessaire. »* ⭐ **Ce qui était vrai** : git n'écrase rien tout seul, un push non-fast-forward **échoue** — le vrai verrou a tenu à chaque fois. *Ma formulation était mauvaise, pas le mécanisme : ce qui « a failli » n'a rien risqué, git a refusé.* ⛔⛔ **Ce qui ne l'était pas** : le danger n'a jamais été git, c'est **la résolution MANUELLE du conflit qui suit** — et elle est manuelle **à chaque fois**, puisque les deux sessions insèrent au même endroit, la 1ʳᵉ ligne du même tableau. Ça a déjà coûté 2 blocs de test à session-A le 30/08 (ft-v1065). ⭐⭐ **ET LE TROU A ÉTÉ MESURÉ AVANT D'ÊTRE BOUCHÉ** : en supprimant la ligne 🟡 de session-A, `check_regles.py` sortait **VERT sur toute la ligne**. Le contrôle 5 ne pouvait pas la voir — il exige **25 % du fichier ET 15 lignes**, or une ligne du tableau est **une** ligne. *Une chose surveillée, sa jumelle pas du tout* — le motif du 17/08. 👉 **CONTRÔLE 11** : les lignes sont comptées **par session**, toute baisse est refusée. Une 🟡 qui devient 🟢 est une modification **sur place**, le compte ne bouge pas — *on ne surveille pas ce qu'on ajoute, on surveille ce qui disparaît*. ⚠️ Franchissable exprès (**R30**) : `LIGNES-PARTAGE-RETIREES:` dans le message de commit. **ÉPROUVÉ DANS LES DEUX SENS** : ligne de session-A retirée → **sortie 1** et le message la NOMME (`session-A : 47 → 46`) ; rétablie → **sortie 0**. ⛔ Aucune version, aucun `sw.js` : c'est de l'outillage, rien n'est servi au téléphone. | `tools/check_regles.py`, `docs/JOURNAL-DE-PARTAGE.md` | — (outillage) |
 | 🟡 | 31/08 16:45 | session-B (claude-md-docs) | **DÉTECTEUR DE DOUBLONS DANS LE CLASSEUR** — les délais dépassés d'avant ft-v1077 ont pu écrire la même séance plusieurs fois dans l'onglet `Sessions` (le serveur finissait son travail après l'abandon du téléphone). ⛔ **Lecture seule, AUCUNE suppression** : on montre, Michel décide (**R29**) | `Code.js`, `app.js`, `index.html`, `tests/parcours/runner.js` | — |
 | 🟡 | 31/08 08:10 | session-A (project-status) | **LA SÉANCE BIZARRE DE MILO — soulevé de terre, dos, puis soulevé de terre ROUMAIN.** Michel me relaie le sujet vu avec vous. **Deux charnières de hanche lourdes dans la même séance**, la seconde en dernier, sur un dos déjà cuit. ⭐ **Hypothèse à mesurer avant de coder** : `_movPattern()` existe déjà (elle sert au calcul MET) et sait probablement classer les deux en « charnière de hanche » — donc l'information existerait et n'atteindrait pas `_validationSeance`, qui ne regarde aujourd'hui que les **doublons de NOM**, les exclusions et les blessures. Ce serait **R4** (l'info reste dans le calcul, n'atteint pas la validation) + **R13** (ne rien réinventer). ⚠️ **Je mesure d'abord, je ne code pas sur cette hypothèse.** ⚠️ **Fichiers dans mon chemin** : `log.js` (`_validationSeance`), peut-être `constants.js` (`_movPattern`) — dites-moi si vous y êtes. | `log.js`, `constants.js`, `tests/parcours/runner.js` | — |
 | 🟢 | 31/08 16:25 → 17:05 | session-B (claude-md-docs) | **🪞 LE MIROIR DE SAUVEGARDE POUVAIT MOURIR EN SILENCE — CORRIGÉ.** Michel : *« on a la sauvegarde qui fonctionne sur le miroir supabase ? »* — **c'est en vérifiant pour lui répondre que le trou est sorti**, pas en le cherchant. ⛔⛔ **Mesure** : `index.html` sert **10** scripts, `PRECACHE` en portait **9**. `supabase.js` était le **seul** absent, et **sans raison écrite** (contrairement à `data/ciqual.json`, argumentée trois lignes plus haut — **R30**). C'est **R8** dans sa forme la plus simple. ⚠️⚠️ **L'AVERTISSEMENT QUI VOUS SERVIRA — la panne est silencieuse ET elle touche une SAUVEGARDE** : app ouverte hors ligne juste après une mise à jour → la balise `<script>` échoue → `sbMirror` n'existe pas → le `try/catch` de `_cloudSync` **avale l'absence** (il est là pour que le réseau ne bloque jamais, règle d'or #3) → ***la copie miroir est morte pour toute la session***, même au retour du réseau. Rien à l'écran, rien dans le journal d'erreurs. ⭐⭐ **Et le fichier se décrivait lui-même sans le savoir** : son en-tête dit *« un miroir de sauvegarde qui n'écrit pas est PIRE que pas de miroir, parce qu'on croit être couvert »* — écrit en août pour justifier un bouton, il décrivait aussi le défaut de sa propre mise en cache. ⛔ **Le témoin protège la RÈGLE, pas le cas** : il compare les scripts **réellement servis** à la liste préchargée — le prochain oubli rougira. *Rien d'autre ne le voyait : ni test, ni erreur, ni retour utilisateur* (**R28**). ⛔ Un 4ᵉ témoin vérifie que `_cloudSync` **appelle** toujours le miroir : *mettre en cache un module mort aurait été un vert parfait sur une sauvegarde morte* (**R5**). ⚠️ **La leçon de ft-v1078 a servi le jour même** : les commentaires sont retirés **avant** la mesure — celui qui explique ce correctif **nomme `supabase.js`**, il aurait rendu le témoin vert pour rien. ✅ **ET MICHEL A LEVÉ LA RÉSERVE LUI-MÊME** (capture) : *« Écriture réussie (HTTP 204) »* + dernière copie miroir au **31/08 18:15:33**. Le miroir **écrit** — ce que je ne pouvais pas savoir d'ici (**R18**). **Tests : parcours 2050/2050**, calculs 266, muscles 241, croisés 50, dates 7, données 106 classées 0 trou. **CONTRÔLE NÉGATIF contre `HEAD`** : le témoin **nomme le coupable** (`["supabase.js"]`) avant, liste **vide** après, sur les mêmes 10 scripts. ⛔ 1 entrée déménagée (ft-v1059 ; **591, 0 perdue**). | `sw.js`, `tests/parcours/runner.js` | **ft-v1079** |
@@ -227,6 +228,33 @@ pas de protocole du tout.
    considérée périmée ; on la passe en ⏰ **avec la raison**, et le sujet se reprend.
 3. **Ça repose sur la discipline.** Si une session oublie d'écrire sa ligne, rien ne le signale.
    Le protocole réduit le risque, il ne l'annule pas.
+
+### ⛔⛔ LA 4ᵉ LIMITE, ET ELLE ÉTAIT LA PLUS PROCHE DE NOUS (31/08/2026)
+
+**C'est Michel qui l'a nommée**, après m'avoir entendu dire une fois de trop que des lignes
+« avaient failli s'écraser » : *« c'est pas la première fois que tu me dis ça, pourtant on avait
+fait le nécessaire, va falloir voir ça »*.
+
+**⭐ Ce qui était vrai** : git n'écrase rien tout seul. Un push non-fast-forward **échoue** — c'est
+le vrai verrou, et il a tenu à chaque fois. *Ce qui « a failli » n'a jamais rien risqué : git a
+refusé, c'est-à-dire qu'il a fait son travail.* La formulation était mauvaise, pas le mécanisme.
+
+**⛔⛔ Ce qui ne l'était pas** : le danger n'a jamais été git, c'est **la résolution manuelle du
+conflit qui suit**. Et elle est manuelle **à chaque fois**, parce que les deux sessions insèrent
+leur ligne exactement au même endroit — la 1ʳᵉ ligne du même tableau. *Le protocole garantit qu'on
+se voit ; il ne garantissait pas qu'on se recopie bien.* Ça a déjà coûté deux blocs de test à
+session-A le 30/08 (ft-v1065), d'où le contrôle 10 sur le runner. **Le journal, lui, n'était gardé
+par personne.**
+
+**⭐⭐ Et le trou a été MESURÉ avant d'être bouché** : en supprimant la ligne 🟡 de session-A,
+`python3 tools/check_regles.py` sortait **vert sur toute la ligne**. Le contrôle 5 (« aucun document
+écrasé ») ne pouvait pas la voir — il exige une perte d'au moins **25 % du fichier ET 15 lignes**,
+or une ligne de ce tableau est **une** ligne.
+
+👉 **Ce qui la referme** : le **contrôle 11** de `check_regles.py` compte les lignes du tableau
+**par session** et refuse toute baisse. Une 🟡 qui devient 🟢 est une modification sur place, donc
+le compte ne bouge pas ; seule la **perte** se voit. ⚠️ Franchissable exprès (**R30**) — élaguer de
+vieilles lignes est légitime, mais ça s'écrit : `LIGNES-PARTAGE-RETIREES:` dans le message de commit.
 
 ### ⚠️ APRÈS UN CONTENEUR RECRÉÉ : `git fetch --all` PEUT MENTIR (constaté le 26/08/2026)
 

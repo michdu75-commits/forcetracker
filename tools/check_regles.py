@@ -540,6 +540,69 @@ except Exception:
     pass                                        # jamais bloquer sur un pépin d'outillage
 
 
+# ── CONTRÔLE 11 — AUCUNE SESSION NE PERD SA LIGNE DANS LE JOURNAL DE PARTAGE ──
+#
+# ⚠️⚠️ POURQUOI IL EXISTE (31/08/2026) — c'est Michel qui l'a demandé, et il avait raison :
+# *« c'est pas la première fois que tu me dis que les lignes risquent d'être écrasées,
+# pourtant on avait fait le nécessaire »*.
+#
+# ⭐ CE QUI ÉTAIT VRAI : git n'écrase rien tout seul. Un push non-fast-forward ÉCHOUE —
+# c'est le vrai verrou, et il a tenu à chaque fois. Ce que le journal de partage dit
+# lui-même : *« il évite le doublon de TRAVAIL, git évite l'écrasement de CODE »*.
+#
+# ⛔⛔ CE QUI NE L'ÉTAIT PAS : le danger n'a jamais été git, c'est la RÉSOLUTION MANUELLE
+# du conflit qui suit. Et elle est manuelle À CHAQUE FOIS, parce que les deux sessions
+# insèrent leur ligne exactement au même endroit — la 1ʳᵉ ligne du même tableau.
+# *Le protocole garantit qu'on se voit ; il ne garantit pas qu'on se recopie bien.*
+# C'est déjà arrivé le 30/08 (ft-v1065) : ma fusion a effacé DEUX blocs de test de
+# l'autre session — d'où le contrôle 10. Le journal, lui, n'était gardé par personne.
+#
+# ⭐⭐ ET LE TROU A ÉTÉ MESURÉ AVANT D'ÊTRE BOUCHÉ : en supprimant la ligne 🟡 de
+# session-A du journal, `check_regles.py` sortait **VERT SUR TOUTE LA LIGNE** (sortie 0).
+# Le contrôle 5 (« aucun document écrasé ») ne pouvait pas la voir : il exige une perte
+# d'au moins **25 % du fichier ET 15 lignes**, or une ligne de ce tableau est UNE ligne.
+# *Une chose surveillée, sa jumelle pas du tout* — le motif du 17/08, une fois de plus.
+#
+# 👉 CE QU'IL FAIT : il compte les lignes du tableau PAR SESSION et refuse toute BAISSE.
+# Une ligne 🟡 qui devient 🟢 est une MODIFICATION sur place, pas une disparition : le
+# compte ne bouge pas. Seule la perte se voit — *on ne surveille pas ce qu'on ajoute,
+# on surveille ce qui disparaît* (la leçon de l'archive du 04/08).
+#
+# ⚠️ ET IL EST FRANCHISSABLE EXPRÈS (R30) : élaguer de vieilles lignes est légitime, mais
+# ça se décide et ça s'écrit — `LIGNES-PARTAGE-RETIREES:` dans le message de commit.
+PARTAGE = racine / "docs" / "JOURNAL-DE-PARTAGE.md"
+def _compte_par_session(txt):
+    """Lignes du tableau, par session. Une ligne = `| <état> | <quand> | <qui> | …`."""
+    d = {}
+    for m in re.finditer(r"^\|[^|\n]*\|[^|\n]*\|\s*(session-[^|(\n]*)", txt, re.M):
+        qui = m.group(1).strip()
+        d[qui] = d.get(qui, 0) + 1
+    return d
+try:
+    if git_ok and PARTAGE.exists():
+        _av_txt = _git("show", "HEAD:docs/JOURNAL-DE-PARTAGE.md")
+        if _av_txt:
+            _av = _compte_par_session(_av_txt)
+            _ap = _compte_par_session(PARTAGE.read_text(encoding="utf-8"))
+            _msg = _git("log", "-1", "--format=%B") or ""
+            _perdus = {k: (v, _ap.get(k, 0)) for k, v in _av.items() if _ap.get(k, 0) < v}
+            if _perdus and "LIGNES-PARTAGE-RETIREES:" not in _msg:
+                for k, (a, b) in _perdus.items():
+                    print(f"❌ le journal de partage a PERDU une ligne de {k} : {a} → {b}")
+                print("   → une fusion a probablement écrasé la ligne de l'autre session.")
+                print("   → vérifier : git show HEAD -- docs/JOURNAL-DE-PARTAGE.md | grep '^-| '")
+                print("   → si le retrait est VOULU, l'écrire : "
+                      "`LIGNES-PARTAGE-RETIREES: <raison>` dans le message de commit (R30).")
+                sys.exit(1)
+            print("✅ journal de partage : "
+                  + " · ".join(f"{k} {v}" for k, v in sorted(_ap.items()))
+                  + " (aucune ligne perdue)")
+except SystemExit:
+    raise
+except Exception:
+    pass                                        # jamais bloquer sur un pépin d'outillage
+
+
 print(f"✅ documents : aucun écrasement"
       + (f" ({len(suivis)} fichiers .md surveillés)" if git_ok and 'suivis' in dir() else
          " (⚠️ git indisponible — contrôle non effectué)"))
