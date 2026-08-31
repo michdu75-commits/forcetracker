@@ -20302,6 +20302,71 @@ console.log('\n-- CLXXXIII. L\'export d\'historique commence par la dernière s�
   })();
 }
 
+/* == BLOC CLXXXIV - LA SEANCE BIZARRE DE MILO : DEUX CHARNIERES DE HANCHE (ft-v1079) ==
+   Michel : « repare la seance bizarre de Milo — souleve de terre, dos, puis souleve de terre
+   roumain ». Deux charnieres de hanche lourdes dans la meme seance, la seconde sur des lombaires
+   deja cuites par le souleve de terre ET le travail de dos.
+   ⛔⛔ ET L'APP LE SAVAIT DEJA — R4 DANS SA FORME LA PLUS PURE. Mesure avant d'ecrire une ligne :
+   `_movPattern()` rend **hip-hinge pour les DEUX** (elle sert au calcul des calories depuis
+   toujours), et `_validationSeance` rendait pourtant **doublons: []**. *L'information existait,
+   elle n'atteignait pas la validation* — qui ne comparait que des NOMS.
+   ⛔⛔ MAIS « DEUX CHARNIERES » AURAIT CRIE AU LOUP : mesure sur le catalogue, **43 exercices**
+   sont en hip-hinge, et la famille melange le souleve de terre avec le Hip Thrust, le Pont Fessier
+   et les Kickbacks. *Un avertissement qui se trompe souvent finit par ne plus etre lu* (R19).
+   ⭐⭐ LE DISCRIMINANT EST DANS LA DONNEE, PAS DANS UNE LISTE ECRITE A LA MAIN (R13) : le muscle
+   `lower-back` de `_mscScores`. Mesure sur les 43 — 24 le chargent a 2, 12 non. *Une liste ecrite
+   de memoire se perimerait au prochain exercice ajoute ; celle-ci se recalcule.* */
+console.log('\n-- CLXXXIV. La séance bizarre de Milo : deux charnières de hanche (ft-v1079) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(()=>{
+   try{
+    const E=n=>({name:n,sets:[{kg:60,reps:8}]});
+    const v=(l,m)=>_validationSeance(l.map(E),m);
+    const o={};
+    /* ⛔ Le témoin voit-il quelque chose ? Sinon les « rien » plus bas seraient verts pour rien. */
+    o.patterns=[_movPattern('Soulevé de Terre'),_movPattern('Soulevé de Terre Roumain Barre')];
+    o.michel=v(['Soulevé de Terre','Rowing Barre','Tirage Vertical','Soulevé de Terre Roumain Barre']).charnieres;
+    o.fessiers=v(['Hip Thrust Barre (Poussée de Hanche)','Extension Fessiers Arrière (Kickback)','Pont Fessier (Glute Bridge)']).charnieres;
+    o.uneSeule=v(['Soulevé de Terre','Rowing Barre','Tirage Vertical']).charnieres;
+    const d=v(['Soulevé de Terre','Soulevé de Terre']);
+    o.memeNom={ch:d.charnieres.length, doub:d.doublons.length};
+    o.categories=Object.keys(v(['Soulevé de Terre'])).sort().join(',');
+    /* ⭐ Le VRAI chemin : la phrase arrive-t-elle jusqu'à l'exercice ? (la leçon de ft-v1015) */
+    const exs=['Soulevé de Terre','Soulevé de Terre Roumain Barre'].map(E);
+    const w=_validationSeance(exs).charnieres.find(x=>x.nom==='Soulevé de Terre');
+    o.phrase=w?('🦴 Charge le bas du dos, comme « '+w.avec.join(' » et « ')+' » dans cette séance.'):'';
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+  if(F.err) t('CLXXXIV n\'a pas pu tourner', false, F.err);
+  else{
+    t('⛔ le témoin a bien VU que l\'app classe les deux en `hip-hinge` (la donnée existait)',
+      F.patterns[0]==='hip-hinge' && F.patterns[1]==='hip-hinge', JSON.stringify(F.patterns));
+    /* ⭐⭐ SA SÉANCE. */
+    t('⭐⭐ SA SÉANCE : les deux soulevés de terre sont signalés, chacun NOMMANT l\'autre',
+      F.michel.length===2 && F.michel.every(x=>x.avec.length===1), JSON.stringify(F.michel));
+    t('⭐ … et la phrase affichée nomme bien l\'autre exercice (sans lui elle serait inutilisable)',
+      /Soulevé de Terre Roumain Barre/.test(F.phrase), F.phrase);
+    /* ⛔⛔ LE TÉMOIN QUI EMPÊCHE L'AVERTISSEMENT DE CRIER AU LOUP. */
+    t('⛔⛔ FAUX POSITIF ÉVITÉ : Hip Thrust + Kickback + Pont Fessier ne déclenche RIEN',
+      F.fessiers.length===0, JSON.stringify(F.fessiers));
+    t('⛔ une SEULE charnière lourde ne déclenche rien non plus',
+      F.uneSeule.length===0, JSON.stringify(F.uneSeule));
+    /* ⛔ R2 : deux fois le même nom, c'est un doublon — on ne le dit pas deux fois. */
+    t('⛔ le MÊME nom deux fois reste un « doublon », pas une charnière (R2 — on ne le dit qu\'une fois)',
+      F.memeNom.ch===0 && F.memeNom.doub===1, JSON.stringify(F.memeNom));
+    /* ⛔ NON-RÉGRESSION. */
+    t('⛔ NON-RÉGRESSION : les 3 catégories d\'origine sont toujours là',
+      F.categories==='blessures,charnieres,doublons,exclusions', F.categories);
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

@@ -6540,7 +6540,7 @@ function _supersetInterdit(name){
    scripts sont chargés : `typeof X==='function'` protège seulement contre leur absence
    éventuelle, pas contre un ordre de chargement (même garde que partout ailleurs, R13). */
 function _validationSeance(newExs, mode){
-  const out={doublons:[], exclusions:[], blessures:[]};
+  const out={doublons:[], exclusions:[], blessures:[], charnieres:[]};
   try{
     // ── DOUBLONS : le même exercice cité deux fois dans ce que Milo propose ──
     // (mode 'add' : on compare AUSSI à ce qui tourne déjà, sinon on rate le cas le plus probable)
@@ -6587,6 +6587,57 @@ function _validationSeance(newExs, mode){
           out.blessures.push({nom:o.name, zones:touchees.map(z=>lbl[z]||z)});
         }
       });
+    }
+
+    /* 🦴 DEUX MOUVEMENTS QUI CHARGENT LE BAS DU DOS DANS LA MÊME SÉANCE (ft-v1079)
+       Michel : *« répare la séance bizarre de Milo — soulevé de terre, dos, puis soulevé de terre
+       roumain »*. Milo proposait un **soulevé de terre** puis, après le dos, un **soulevé de terre
+       roumain** : deux charnières de hanche lourdes, la seconde sur des lombaires déjà cuites.
+
+       ⛔⛔ ET L'APP LE SAVAIT DÉJÀ — C'EST **R4** DANS SA FORME LA PLUS PURE. Mesuré avant d'écrire
+       une ligne : `_movPattern()` rend **`hip-hinge`** pour les DEUX (elle sert au calcul des
+       calories depuis toujours), et `_validationSeance` rendait pourtant **`doublons: []`**.
+       *L'information existait, elle n'atteignait pas la validation* — qui ne comparait que des NOMS.
+
+       ⛔⛔ MAIS « DEUX CHARNIÈRES » AURAIT CRIÉ AU LOUP. Mesuré sur le catalogue : **43 exercices**
+       sont en `hip-hinge`, et la famille mélange le soulevé de terre avec le **Hip Thrust**, le
+       **Pont Fessier** et les **Kickbacks**. Une séance fessiers parfaitement normale aurait été
+       signalée — *et un avertissement qui se trompe souvent finit par ne plus être lu* (R19).
+
+       ⭐⭐ LE DISCRIMINANT EST DANS LA DONNÉE, PAS DANS UNE LISTE ÉCRITE À LA MAIN (R13) : le muscle
+       `lower-back` de `_mscScores`. Mesuré sur les 43 — **24 le chargent à 2** (toute la famille
+       soulevé de terre, Good Morning, Rack Pull, Zercher, hyperextensions lestées) et **12 non**
+       (Hip Thrust, Pont Fessier, Kickback, Cable Pull Through, Kettlebell Swing). *Une liste écrite
+       de mémoire se périmerait au prochain exercice ajouté au catalogue ; celle-ci se recalcule.*
+
+       ⛔ ON INFORME, ON NE BLOQUE PAS ET ON NE CORRIGE RIEN (R24/R29) : deux charnières lourdes
+       peuvent être un choix — un soulevé de terre lourd puis un roumain léger en accessoire est un
+       schéma classique. On NOMME le fait et l'autre exercice ; la personne tranche.
+       ⛔ Et si c'est le MÊME nom deux fois, on se tait : `doublons` le dit déjà, mieux (R2). */
+    if(typeof _movPattern==='function' && typeof _mscScores==='function'){
+      const chargeLeDos=n=>{
+        try{
+          if(_movPattern(n)!=='hip-hinge') return false;
+          const sc=(_mscScores([{name:n,sets:[{kg:60,reps:8,done:1}]}])||{}).sc||{};
+          return (sc['lower-back']||0)>=2;
+        }catch(e){ return false; }
+      };
+      /* ⚠️ Comme pour les doublons : en mode `add`, on compare AUSSI à ce qui tourne déjà —
+         sinon on rate le cas le plus probable, l'ajout d'un roumain sur une séance en cours. */
+      const enJeu=[];
+      (newExs||[]).forEach(o=>{ const n=(o&&o.name||'').trim(); if(n) enJeu.push(n); });
+      if(mode==='add' && S.wkt && Array.isArray(S.wkt.exs)){
+        S.wkt.exs.forEach(e=>{ const n=(e&&e.name||'').trim(); if(n) enJeu.push(n); });
+      }
+      const lourds=[...new Set(enJeu.filter(chargeLeDos))];
+      if(lourds.length>1){
+        (newExs||[]).forEach(o=>{
+          const n=(o&&o.name||'').trim();
+          if(!n || lourds.indexOf(n)<0) return;
+          const autres=lourds.filter(x=>x!==n);
+          if(autres.length) out.charnieres.push({nom:n, avec:autres});
+        });
+      }
     }
   }catch(e){ console.warn('[FT validation séance]', e); }
   return out;
@@ -6766,7 +6817,7 @@ function _appliqueMiloSession(newExs, data, mode, btn){
     toast('⚡ Charge élevée sur '+alertes[0]+(alertes.length>1?' (+'+(alertes.length-1)+')':'')+' — détail dans la séance','info');
 
   // 🛡️ LA VALIDATION UNIQUE (ft-v989) — même point, même philosophie que ci-dessus.
-  const verdict=(typeof _validationSeance==='function')?_validationSeance(newExs,mode):{doublons:[],exclusions:[],blessures:[]};
+  const verdict=(typeof _validationSeance==='function')?_validationSeance(newExs,mode):{doublons:[],exclusions:[],blessures:[],charnieres:[]};
   (newExs||[]).forEach(o=>{
     const w=[];
     const excl=verdict.exclusions.find(x=>x.nom===o.name);
@@ -6774,13 +6825,16 @@ function _appliqueMiloSession(newExs, data, mode, btn){
     const bl=verdict.blessures.find(x=>x.nom===o.name);
     if(bl) w.push('🛡️ Sollicite '+bl.zones.join(', ')+' — une zone que tu protèges en ce moment.');
     if(verdict.doublons.indexOf(o.name)>=0) w.push('🔁 Déjà présent ailleurs dans cette séance.');
+    /* 🦴 ft-v1079 — on nomme l'AUTRE exercice : sans lui la phrase serait vraie et inutilisable. */
+    const ch=(verdict.charnieres||[]).find(x=>x.nom===o.name);
+    if(ch) w.push('🦴 Charge le bas du dos, comme « '+ch.avec.join(' » et « ')+' » dans cette séance.');
     /* ⚠️ ON CONCATÈNE, ON N'AFFECTE PAS (ft-v1035) — c'était `o.seanceWarn=w`, une affectation.
        Tant que ce bloc était le seul à écrire ici, c'était sans conséquence ; depuis que
        `_repereDefauts` y met sa ligne juste au-dessus, une affectation l'EFFACERAIT en silence.
        *Un champ partagé se remplit par ajout, jamais par remplacement* (R2). */
     if(w.length) o.seanceWarn=(o.seanceWarn||[]).concat(w);
   });
-  const nAlerte=verdict.doublons.length+verdict.exclusions.length+verdict.blessures.length;
+  const nAlerte=verdict.doublons.length+verdict.exclusions.length+verdict.blessures.length+(verdict.charnieres||[]).length;
   if(nAlerte&&typeof toast==='function')
     toast('🛡️ '+nAlerte+' point'+(nAlerte>1?'s':'')+' à vérifier dans ta séance — détail sur l\'exercice concerné','info');
   if(mode==='add'){
