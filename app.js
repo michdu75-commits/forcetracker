@@ -4346,6 +4346,11 @@ const APP_GUIDE_SLIDES=[
      un conseil que le lecteur n'a pas demandé, sous un bouton qui dit « à côté » — l'image
      laisserait croire que c'est CETTE réponse-là qui était mauvaise. Le texte se suffit. */
   {icon:'\u{1F44E}', t:'Dis-le quand Milo répond à côté', cap:'Sous chaque réponse de Milo : <b>« 👎 à côté »</b>. Un tap, quatre motifs — <b>à côté</b>, <b>trop vague</b>, <b>faux</b>, <b>il a oublié</b>. ⛔ <b>Rien de ta conversation n\'est envoyé</b> : le motif est compté sur ton téléphone. Tu peux <b>en plus</b> joindre l\'échange si tu veux que Michel le corrige — la case est <b>décochée par défaut</b>. ⭐ Chaque signalement devient un <b>test permanent</b> : c\'est comme ça que Milo s\'améliore pour de bon.'},
+  /* 🔥 ft-v1082 — DIAPO SANS IMAGE, EXPRÈS. Une capture montrerait une montée précise (des kilos,
+     un chrono à 2:00) : elle se lirait comme une recommandation de charge, or tout ce qui est
+     dit ici est RELATIF au maximum du lecteur. Même raison que la diapo « Le repos suit la
+     charge » juste au-dessus. */
+  {icon:'🔥', t:'Ton échauffement se dose à ta charge', cap:'Deux choses ont changé dans ta montée en charge.<br><br>⏱️ <b>LE REPOS ENTRE PALIERS SUIT LA CHARGE.</b> Il restait à <b>45 s</b> quel que soit le poids — tu passais donc au palier le plus lourd 45 secondes après le précédent. Maintenant : <b>45 s</b> tant que c\'est léger, <b>90 s</b> à partir de 75 % de ta charge de travail, <b>2 min</b> à partir de 85 %. La barre affiche « <b>palier lourd</b> » pour que tu saches pourquoi.<br><br>⛔ <b>Jamais plus que ton propre repos de travail</b> : si tu l\'as réglé court, un palier lourd le respecte. ⏳ Et c\'est toujours un <b>maximum</b> — tu peux repartir avant.<br><br>📉 <b>MOINS DE PALIERS SUR LES CHARGES LÉGÈRES.</b> L\'app en ajoutait jusqu\'à <b>5 quelle que soit la charge</b> : un squat à 60 kg recevait le protocole d\'un squat à 150. Elle en met désormais autant que la charge le demande.<br><br>⛔ <b>Elle n\'enlève jamais un palier que Milo t\'a écrit</b> — elle arrête seulement d\'en rajouter.'},
   {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
 let _agIdx=0,_agSwipeInit=false;
