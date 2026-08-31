@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v1079'; // 🦴 ft-v1079 = LA SEANCE BIZARRE DE MILO : DEUX CHARNIERES DE HANCHE. Michel : « repare la seance bizarre de Milo — souleve de terre, dos, puis souleve de terre roumain ». Deux charnieres de hanche LOURDES dans la meme seance, la seconde sur des lombaires deja cuites. ⛔⛔ ET L'APP LE SAVAIT DEJA — R4 dans sa forme la plus pure : `_movPattern()` rend **hip-hinge pour les DEUX** (elle sert au calcul des calories depuis toujours) et `_validationSeance` rendait pourtant **doublons: []**. *L'information existait, elle n'atteignait pas la validation*, qui ne comparait que des NOMS. ⛔⛔ MAIS « DEUX CHARNIERES » AURAIT CRIE AU LOUP : mesure sur le catalogue, **43 exercices** sont en hip-hinge et la famille melange le souleve de terre avec le Hip Thrust, le Pont Fessier et les Kickbacks — une seance fessiers normale aurait ete signalee. ⭐⭐ LE DISCRIMINANT EST DANS LA DONNEE, PAS DANS UNE LISTE ECRITE A LA MAIN (R13) : le muscle `lower-back` de `_mscScores` — mesure sur les 43, **24 le chargent a 2**, **12 non**. *Une liste ecrite de memoire se perimerait au prochain exercice ajoute au catalogue ; celle-ci se recalcule.* ⛔ ON INFORME, ON NE BLOQUE PAS ET ON NE CORRIGE RIEN (R24/R29) : un souleve de terre lourd puis un roumain leger en accessoire est un schema classique. On NOMME le fait et l'autre exercice, la personne tranche.
+const CACHE = 'ft-v1080'; // 🦴 ft-v1080 = LA SEANCE BIZARRE DE MILO : DEUX CHARNIERES DE HANCHE. Michel : « repare la seance bizarre de Milo — souleve de terre, dos, puis souleve de terre roumain ». Deux charnieres de hanche LOURDES dans la meme seance, la seconde sur des lombaires deja cuites. ⛔⛔ ET L'APP LE SAVAIT DEJA — R4 dans sa forme la plus pure : `_movPattern()` rend **hip-hinge pour les DEUX** (elle sert au calcul des calories depuis toujours) et `_validationSeance` rendait pourtant **doublons: []**. *L'information existait, elle n'atteignait pas la validation*, qui ne comparait que des NOMS. ⛔⛔ MAIS « DEUX CHARNIERES » AURAIT CRIE AU LOUP : mesure sur le catalogue, **43 exercices** sont en hip-hinge et la famille melange le souleve de terre avec le Hip Thrust, le Pont Fessier et les Kickbacks — une seance fessiers normale aurait ete signalee. ⭐⭐ LE DISCRIMINANT EST DANS LA DONNEE, PAS DANS UNE LISTE ECRITE A LA MAIN (R13) : le muscle `lower-back` de `_mscScores` — mesure sur les 43, **24 le chargent a 2**, **12 non**. *Une liste ecrite de memoire se perimerait au prochain exercice ajoute au catalogue ; celle-ci se recalcule.* ⛔ ON INFORME, ON NE BLOQUE PAS ET ON NE CORRIGE RIEN (R24/R29) : un souleve de terre lourd puis un roumain leger en accessoire est un schema classique. On NOMME le fait et l'autre exercice, la personne tranche.
 // ⬆️ 11e collision de la semaine : session-A a publie SA ft-v1068 (les 4 routes de quantite)
 // pendant ce travail. Ma version devient ft-v1069 — un numero de cache ne recule jamais.
 // Leur entree reste la leur, on ne renumerote pas le travail de l'autre.
@@ -12,6 +12,16 @@ const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
   './setup.js', './tracking.js', './coach.js', './app.js', './food-health.js',
+  /* ⛔⛔ `supabase.js` MANQUAIT ICI, ET C'ETAIT LE SEUL DES 10 (31/08/2026). Trouve en
+     repondant a Michel sur le miroir de sauvegarde. Les 9 autres scripts servis par
+     `index.html` etaient preches ; celui-la non, et sans raison ecrite (contrairement a
+     `data/ciqual.json`, dont l'exclusion est argumentee juste en dessous — R30).
+     ⚠️ LA PANNE ETAIT SILENCIEUSE ET ELLE TOUCHAIT UNE SAUVEGARDE : app ouverte hors ligne
+     apres une mise a jour → la balise `<script>` echoue → `sbMirror` n'existe pas → le
+     `try/catch` de `_cloudSync` avale l'absence, et la copie miroir est morte pour toute la
+     session, sans un mot. *Une sauvegarde dont on ne verifie jamais qu'elle ecrit est pire
+     que pas de sauvegarde* — c'est l'en-tete de `supabase.js` lui-meme. */
+  './supabase.js',
   './manifest.json', './logo.png', './female-body.png',
   /* ⛔ `data/ciqual.json` ET `data/complalim.json` NE SONT VOLONTAIREMENT PAS ICI (22/08/2026). Le préchargement
      tourne à CHAQUE mise à jour du cache : ce serait 250 Ko re-téléchargés à chaque version,
