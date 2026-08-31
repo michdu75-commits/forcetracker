@@ -6,7 +6,18 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1083`.
+- **Version en ligne (live) :** `ft-v1083`. ✅ **Les deux déploiements sont VERTS** (site + backend
+  Apps Script) — la route de nettoyage est réellement en ligne, vérifié dans les Actions.
+- ⏭️ **CE QUI ATTEND MICHEL AU RÉVEIL** (rien d'urgent, rien de cassé) :
+  ① **le nettoyage des doublons** — Profil → Admin → « 🧹 Voir ce qui partirait », puis le bouton
+  rouge. Une **copie de l'onglet** est faite avant ; il la supprimera à la main quand il aura
+  vérifié. ② **sa séance du 31/08 est toujours fausse** dans l'historique (Tirage Poulie
+  enregistré « Rowing Hammer Strength », 1RM fabriqué de **81,9 kg**) — **rien n'a été touché**,
+  c'est **sa** décision (**R29**). ③ Les 2 manips en attente de `A-FAIRE-SUR-PC.md` :
+  `installDailyBackupTrigger_` (2 sauvegardes/jour) · **sommeil et pas** dans le raccourci iOS —
+  sans quoi ft-v1069/1070/1071 restent **dormantes**.
+- 🧾 **Famille §29 de `BUGS.md`** ajoutée : *un garde-fou calibré sur un RATIO refuse le cas qu'il
+  vise*. Née de ce soir — mon plafond « plus de la moitié » aurait refusé sa séance écrite 7 fois.
 - 🧹 **NETTOYER LES DOUBLONS DU CLASSEUR — la seule route qui SUPPRIME** (ft-v1083). Go de
   Michel **après** avoir vu le constat (**R29**) : sa séance du 31/08 **écrite 7 fois**, celle du
   **28/08 en double** — *donc le défaut de ft-v1077 mordait déjà la semaine dernière*.
