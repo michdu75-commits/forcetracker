@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1082`** (prochaine : `ft-v1083`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1083`** (prochaine : `ft-v1084`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -436,6 +436,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1083 — 🧹 NETTOYER LES DOUBLONS DU CLASSEUR — la seule route de l'app qui SUPPRIME** — Michel, après avoir vu le constat : *« Go »*. ⭐ **Son go est venu APRÈS le constat, jamais avant** (**R29**) : sa séance du 31/08 **écrite 7 fois**, celle du 28/08 **en double**, **157 lignes en trop**.
+
+**⭐⭐ ET SA MESURE DIT PLUS QUE LE NETTOYAGE À FAIRE : LE DÉFAUT ÉTAIT PLUS VIEUX QU'AUJOURD'HUI.** La séance du **28/08** est en double — donc le délai dépassé de ft-v1077 mordait **déjà la semaine dernière**, en silence, sans que rien ne le dise. *Le détecteur n'a pas seulement compté des lignes : il a daté la panne.*
+
+**⛔⛔ TROIS GARDE-FOUS, ET AUCUN N'EST DÉCORATIF.** ① **Aperçu par défaut** — sans confirmation explicite, la route ne supprime **rien** et ne copie rien ; le bouton rouge **n'existe pas** tant qu'on n'a pas vu le nombre. ② **Copie de l'onglet AVANT la première suppression**, et si la copie échoue **on s'arrête net** — *la sauvegarde nocturne garde les COMPTES, pas le classeur* : sans elle, il n'y aurait aucun retour arrière. ③ Un plafond, mais pas celui que j'avais écrit.
+
+**⭐⭐ ET C'EST LE TEST QUI A CORRIGÉ MA CONCEPTION, PAS UNE RELECTURE.** Mon 1ᵉʳ plafond refusait au-delà de **la moitié** des lignes de la personne — ça *sonnait* prudent. Or sa séance est écrite **7 fois** : **6 lignes sur 7 sont des doublons parfaitement légitimes**. 👉 ***Le garde-fou aurait refusé exactement le seul cas pour lequel on écrit cette route.*** *Un ratio ne distingue pas « je me trompe en grand » de « il y a vraiment beaucoup de doublons ».* Plafond devenu **absolu**, et la vraie protection est ailleurs : l'aperçu, et le fait qu'on ne supprime **jamais** la première occurrence d'une signature — **garanti par construction, pas par un seuil**.
+
+**⛔ ON NE TOUCHE QUE CE QUI PORTE SON EMAIL.** Ni les lignes des autres testeurs, ni les **~3000 lignes sans email** (écrites avant ft-v1018), qui ne sont attribuables à personne. Deux témoins le figent — *un nettoyage qui range trop est pire que pas de nettoyage*.
+
+**⚠️⚠️ LA SUPPRESSION SE FAIT PAR BLOCS, ET DE BAS EN HAUT.** 157 `deleteRow` referaient **exactement** le bug de ft-v1077 — un aller-retour par ligne, et le téléphone abandonne à 8 s. Et de **bas en haut** parce que supprimer une ligne décale toutes celles du dessous : en descendant, les index non encore traités deviendraient faux **en silence**. *Le même défaut que celui qu'on répare, retourné dans l'autre sens.*
+
+**⚠️ ET UNE SIGNATURE VÉRIFIÉE PLUTÔT QUE DEVINÉE M'A ÉVITÉ UN BOUTON MORT** : `showConfirm` prend un **callback**, pas une promesse (lu dans `log.js`). Un `await` dessus aurait rendu `undefined`, donc « annulé » **quoi qu'il arrive** — le bouton n'aurait **jamais** supprimé, et rien ne l'aurait dit. *3ᵉ fois que « on vérifie les propriétés, on ne les devine pas » paie cette semaine.*
+
+**📣 RÈGLE D'OR #11 — RIEN.** Outil **réservé à l'admin** : personne d'autre ne le verra jamais. Annoncer à tous un bouton qu'ils ne peuvent pas ouvrir est le défaut corrigé en ft-v1072.
+Tests : **parcours 2092/2092** (+11, bloc **CLXXXVIII** — ⚠️ **CLXXXVII était déjà pris** par le ft-v1082 de session-A, publié pendant ce travail ; **13ᵉ collision**, ma version devient **ft-v1083**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 106 classées 0 trou. ⭐⭐ **Les quatre premiers témoins ne mesurent pas ce que la route supprime, mais ce qu'elle NE supprime PAS.** ⭐⭐ **Et le ⑦ porte la leçon** : une séance écrite **7 fois** (86 % de doublons) doit passer — *un ratio l'aurait refusée*. ⛔ **Le ⑩ fige la forme en deux temps** : aucun bouton de suppression dans l'écran, il naît de l'aperçu. ⛔ **Le ⑪ protège R2** : aperçu et suppression passent par **le même appel**, sinon on finirait par supprimer autre chose que ce qui a été montré. ⚠️ Le bloc ne peut pas tourner contre `HEAD` (`sessionNettoyer` n'y existe pas) — limite honnête habituelle. Fichiers : `Code.js`, `app.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1083. |
 
 **ft-v1082 — 🔥 LE REPOS D'UN PALIER SUIT SA CHARGE · ET LE PLAFOND DE PALIERS AUSSI** — Michel relaie un document de revue de ses échauffements, puis tranche : *« vas-y go »* (correctifs A **et** B).
 
@@ -795,23 +812,6 @@ Tests : **parcours 1939/1939** (+4, bloc **CLXXII**), calculs 266/266, muscles 2
 
 **📣 RÈGLE D'OR #11 — NI POP-UP NI POINT ROUGE.** Un refus disparaît et deux onglets apparaissent là où il était : rien ne se déplace, rien de nouveau à apprendre — c'est le même geste que sur l'écran d'ajout, que l'aide décrit déjà.
 Tests : **parcours 1949/1949** (+8, bloc **CLXXI**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 106 classées 0 trou. ⭐⭐ **La fixture EST son entrée** : estimée par l'IA, **aucun `per100`, aucun `q`, aucun poids dans le nom** — précisément le cas que l'ancien écran envoyait dans le cul-de-sac. ⭐⭐ **Le témoin qui compte le plus est celui de R4** : sans lui, les sept autres seraient verts sur un écran qui redemande le poids à chaque ouverture. ⛔ **Et la non-régression garde les 5 multiplicateurs** : ils restent la bonne réponse pour qui ne connaît pas le poids. Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1064. |
-
-**ft-v1063 — 🍽️ « J'AI 2 FOIS LA MÊME PROT » — UN CRITÈRE DE REGROUPEMENT QUI A SURVÉCU À SON MOTIF** — Michel, capture à l'appui : son shaker apparaît **deux fois** dans « Tes repas habituels », deux lignes rigoureusement identiques à l'écran (même nom, 156 kcal, 35 g).
-
-**⛔⛔ LA CAUSE TIENT À UN `+`** : la signature d'un repas habituel était `meal + '::' + aliments`. Noté **6 fois en Collation 2** et **2 fois en Petit-déj**, le même shaker faisait donc **deux habitudes**.
-
-**⚠️⚠️ ET C'EST UNE RÉGRESSION DE ft-v1056, LA MIENNE.** Tant que la carte **appliquait** le moment, il faisait légitimement partie de l'identité de ce qu'on rejoue : deux lignes, deux résultats différents. Depuis que le moment **se demande au tap**, les deux lignes font **exactement la même chose** et posent la même question. 👉 ***Un critère de regroupement qui survit à la disparition de son motif ne trie plus rien : il fabrique des doublons.*** Le motif avait disparu six versions plus tôt, le critère est resté.
-
-**⛔ ET LE COÛT N'EST PAS QUE VISUEL** : la liste est bornée à **3**. Une variante en double **chasse une vraie autre habitude** de l'écran — sur sa capture, ses 3 lignes ne sont en réalité que **2 repas**. Mesuré : après fusion, la 3ᵉ place rend une habitude qui n'avait jamais pu s'afficher.
-
-**⭐⭐ ON FILTRE AVANT DE FUSIONNER, ET C'EST TOUT L'ARBITRAGE.** Michel prend ce même shaker **le matin ET l'après-midi** — c'est visible dans son journal. Fusionner d'abord ferait disparaître l'habitude **entière** dès qu'il l'a notée une fois dans la journée : *il perdrait le tap pour son 2ᵉ shaker, et le correctif serait devenu une gêne*. En filtrant variante par variante, celle de l'après-midi survit à celle du matin. Un témoin épingle exactement ce cas.
-
-**⚠️⚠️ ET MON PROPRE TÉMOIN M'A REPRIS, SUR UNE ERREUR QUE JE N'AVAIS PAS VUE VENIR.** Mon premier jet affichait *« noté 6 fois »* pour un repas noté **9** fois : la variante du matin, écartée parce que déjà consommée aujourd'hui, emportait son compte avec elle. 👉 ***Le filtre décide de ce qu'on PROPOSE, jamais de ce qu'on a COMPTÉ.*** Le compte et le moment proposé portent désormais sur **toutes** les variantes.
-
-**⛔ LE MOMENT PROPOSÉ EST LE PLUS FRÉQUENT, PAS LE PLUS RÉCENT** : il décrit l'habitude, pas le dernier écart. Et rien n'est appliqué sans son tap — la décision de ft-v1056 ne bouge pas.
-
-**📣 RÈGLE D'OR #11 — NI POP-UP NI POINT ROUGE.** Réparation : une ligne en double disparaît, rien n'apparaît, rien à faire.
-Tests : **parcours 1936/1936** (+7, bloc **CLXX**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 106 classées 0 trou. ⭐⭐ **La fixture EST son journal** (6 en Collation 2, 2 en Petit-déj, plus un 3ᵉ noté **ce matin**). **CONTRÔLE NÉGATIF : il rend sa capture au pixel** — contre ft-v1061, `[{n:6,meal:"collation2"},{n:3,meal:"dejeuner"},{n:2,meal:"petitdej"}]`, soit **deux lignes « Iso zero protein » identiques** et « Oeuf cru » chassé de la liste. Après : une seule, `n=8`, et « Oeuf cru » reprend sa place. ⛔ **Le témoin qui empêche le correctif d'être un recul** : shaker noté ce matin en Petit-déj → l'habitude **reste proposée**. Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1063. |
 
 **⭐⭐ LA FRONTIÈRE AVEC LA BRIQUE 7 EST ÉCRITE DANS LA VISION, ET C'EST ELLE QUI DÉCIDE DE TOUT** : la **7** répond à *« que s'est-il passé ? »* — elle **relie** des événements (le souvenir d'hier) ; la **8** répond à ***« qu'est-ce que cette histoire m'apprend ? »*** — elle **prend du recul**. Tournures autorisées noir sur blanc : *« ton historique semble montrer que… »*, *« une constante apparaît… »*. ⛔⛔ **Jamais *« tu devrais »*** — sinon la brique cesse d'être un miroir et devient un coach qui prescrit (**P14**). Un témoin refuse tout verbe de prescription dans le rendu.
 

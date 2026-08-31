@@ -6,7 +6,18 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1082`.
+- **Version en ligne (live) :** `ft-v1083`.
+- 🧹 **NETTOYER LES DOUBLONS DU CLASSEUR — la seule route qui SUPPRIME** (ft-v1083). Go de
+  Michel **après** avoir vu le constat (**R29**) : sa séance du 31/08 **écrite 7 fois**, celle du
+  **28/08 en double** — *donc le défaut de ft-v1077 mordait déjà la semaine dernière*.
+  ⛔⛔ **3 garde-fous** : aperçu par défaut (le bouton rouge n'existe pas avant) · **copie de
+  l'onglet AVANT** (si elle rate, on s'arrête net) · plafond.
+  ⭐⭐ **Et le test a corrigé ma conception** : mon 1ᵉʳ plafond était un **ratio** (« plus de la
+  moitié → refus »). Or 6 lignes sur 7 sont des doublons légitimes chez lui — ***le garde-fou
+  aurait refusé le seul cas visé***. Devenu **absolu** ; la vraie protection est l'aperçu et le
+  fait qu'on ne supprime jamais la 1ʳᵉ occurrence (**par construction**).
+  ⚠️ Suppression **par blocs, de bas en haut** — 157 `deleteRow` referaient le bug de ft-v1077,
+  et de haut en bas les index deviendraient faux **en silence**.
 - 🔥⭐⭐ **LE REPOS D'UN PALIER SUIT SA CHARGE · ET LE PLAFOND DE PALIERS AUSSI** (ft-v1082).
   Document de revue des échauffements relayé par Michel, puis *« vas-y go »*.
   ⛔⛔ **Les 4 cas « priorité haute » du document sont DÉJÀ réparés — rejoués dans un navigateur,
