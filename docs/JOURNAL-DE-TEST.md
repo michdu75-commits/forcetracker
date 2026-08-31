@@ -69,6 +69,32 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟢 UNE SÉANCE « SANS SUJET » — le critère de GPT se DÉSARME quand le cas empire
+**31/08/2026, sur le PDF envoyé à GPT puis sa réponse relayée par Michel.** Sa séance : *soulevé
+de terre · rowing · tirage vertical · soulevé de terre roumain*, et sa remarque — *« c'est de la
+même famille, ainsi que le leg curl »*.
+
+⭐ **Le volet sécurité est livré** (ft-v1080, deux charnières de hanche + lombaires). Ce qui reste
+est la **cohérence** de la séance, et c'est là que le leg curl compte.
+
+⛔⛔ **CE QUI SE MESURE, ET QUI EST L'ENTRÉE UTILE ICI** : le critère proposé par GPT (*« un muscle
+hors-thème prend trop de place »*, thème = muscle dominant) **se désarme exactement quand le
+problème s'aggrave**. Sur sa séance à 4 exercices, les ischios sont hors-thème (12 contre 18) →
+il sonne. **On ajoute le leg curl : les ischios passent à 18, à égalité avec les dorsaux, donc
+DOMINANTS — et l'alerte les lâche.** *Un détecteur qui se tait quand le cas empire est pire qu'un
+détecteur absent : on se croit couvert.*
+
+✅ **L'attendu est vérifiable par du CODE**, donc c'est promouvable — et il se formule en deux
+temps, ce qui est rare et précieux : ① la séance à 4 exercices est signalée ; ② **la même + leg
+curl l'est ENCORE PLUS**, jamais moins. *Un scénario qui exige la monotonie du signal.*
+
+⚠️ **Pas promu tout de suite, exprès** : rien n'est construit, Michel a dit *« on en discute »*, et
+un vérificateur écrit avant le correctif rougirait sur un chemin qui n'existe pas (la leçon
+d'EV-051). Le dossier chiffré — les 3 critères mesurés (A : 5/9 faux positifs · B : 3/9 ·
+E : 0/9) et la limite honnête (**mes 9 séances « normales » sont écrites par moi**, ft-v994/1016)
+— est dans `IDEES-FUTURES.md`.
+**État : prête.**
+
 ### 🟡 « LES NOIX DE MACADAMIA J'EN MANGE PAS, ET EN PLUS C'EST DÉGUEULASSE »
 **26/08/2026, Michel, devant le Plan alimentaire journalier.** Dit en riant — et c'est le
 meilleur résumé du problème en une phrase. Le plan lui propose *« Yaourt grec entier + noix de

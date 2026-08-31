@@ -4,6 +4,79 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🧩 UNE SÉANCE « SANS SUJET » : QUEL CRITÈRE LA DÉTECTE ? — EN DISCUSSION (31/08/2026)
+
+> ⛔⛔ **RIEN N'EST DÉCIDÉ, RIEN N'EST CONSTRUIT.** Michel : *« non on en discute et il faut voir
+> aussi avec l'autre Claude »*. Ce bloc existe pour que **la mesure ne meure pas avec la session**
+> (R27) — pas pour préparer une livraison.
+
+### Le cas d'origine
+Sa séance, qu'il trouve bizarre : **Soulevé de terre · Rowing barre · Tirage vertical · Soulevé de
+terre roumain**. Sa remarque : *« le soulevé de terre et le soulevé de terre roumain, c'est de la
+même famille, ainsi que le leg curl »*.
+✅ **Le volet SÉCURITÉ est livré** (ft-v1080) : deux charnières de hanche qui chargent les lombaires
+dans la même séance sont signalées. Il attrape ce cas-là.
+🕳️ **Le volet COHÉRENCE ne l'est pas** — et c'est lui qui répond à sa remarque sur le **leg curl**,
+qui n'est pas une charnière de hanche.
+
+### L'avis extérieur demandé à GPT (PDF du 31/08) : **B + garder le contrôle existant**
+Sa position, résumée : ⛔ A (*« trop d'exercices sur le même muscle »*) est trop grossier ·
+⭐ B = *« un muscle qui n'est pas le sujet de la séance prend une place excessive »*, le sujet
+étant **déduit** de la somme des scores musculaires pondérée par les séries · ⛔ garder les **deux
+niveaux** (fatigue structurelle **et** cohérence) · ⛔ **informer sans corriger** · ⛔ *« mieux vaut
+manquer quelques cas que générer trop de faux positifs »*.
+👉 **Sur ces quatre derniers points il a raison et ça ne se rediscute pas.** C'est
+l'**opérationnalisation** de B qui ne tient pas, et c'est mesuré.
+
+### ⛔⛔ LA MESURE — les 3 critères codés en sonde, sur 2 séances à signaler et 9 normales
+
+| critère | attrape le cas | **faux positifs** |
+|---|---|---|
+| **A** — ≥ 3 exercices sur le même muscle principal | 1/2 | **5/9** |
+| **B** — muscle hors-thème (proposition GPT) | 2/2 | **3/9** |
+| **E** — deux **familles de mouvement** lourdes | **2/2** | **0/9** |
+
+**Ce que B accuse à tort** : les **trapèzes** sur un dos classique · les **ischios et quadriceps**
+sur une séance jambes ordinaire (squat · presse · RDL · leg curl) · les **dorsaux** sur un
+dos + biceps. *C'est exactement le reproche qu'il fait à A.*
+
+### ⛔⛔ ET LE DÉFAUT DE B EST RETOURNÉ — c'est le point le plus important de ce bloc
+Sa prémisse est *« le dos semble être le thème principal »*. **Les scores disent le contraire** :
+`lats:18 · lower-back:15 · traps:15 · glutes:12 · hamstrings:12`. Le dos **ne domine pas** — la
+séance est moitié-moitié, et *c'est précisément ce qui la rend bizarre*.
+👉 Pire, mesuré : **on ajoute le leg curl et les ischios deviennent DOMINANTS** (18, à égalité avec
+les dorsaux). Ils cessent donc d'être « hors-thème » et l'alerte les lâche.
+***Plus le problème s'aggrave, moins le critère se déclenche.*** Un détecteur qui se désarme quand
+le cas empire est pire qu'un détecteur absent : on croit être couvert.
+
+### ⭐ La piste qui tient à la mesure (E) — et ce qui a failli me la faire jeter
+Ne pas demander *« quel muscle »* mais *« combien de **familles d'effort lourdes** »*, en ne
+comptant que les **ancres** (un curl ne fait pas une famille) :
+`charnière×2 + tirage×2` sur sa séance → **elle n'a pas de sujet** · `tirage×4` sur un dos
+classique → un seul sujet, rien · `squat×2`, `poussée×4`, `charnière×3` → rien.
+⚠️ **Ma 1ʳᵉ version rendait 0/2** : elle comptait les **schémas**, et ses deux exercices de dos sont
+un tirage *vertical* et un tirage *horizontal* — **deux schémas, une seule famille d'effort**.
+*Sans le regroupement en familles, le critère ne mord jamais.*
+
+### ⚠️ LA LIMITE DE CETTE MESURE, ET ELLE EST SÉRIEUSE
+Les **9 séances « normales » sont des séances que j'ai écrites moi-même**. Le projet s'est déjà
+fait avoir exactement là-dessus (ft-v994, ft-v1016) : *un vérificateur éprouvé sur ses propres
+exemples ne mesure que l'imagination de celui qui l'a écrit.*
+👉 **Le seul contrôle qui vaudrait** : passer les trois critères sur **l'historique réel de
+Michel**, qui n'est pas dans le conteneur. Tant que ce n'est pas fait, `E : 0/9` est une
+**hypothèse encourageante, pas un résultat**.
+
+### ⏭️ Ce qui reste à trancher (personne ne l'a fait)
+- **le critère** : E, B corrigé, ou autre chose — la mesure oriente, elle ne décide pas ;
+- **le seuil** : « 2 familles à ≥ 2 ancres » est un jugement, comme le 62 % de `_MONTEE_DEPART_MAX` ;
+- **la phrase** : dire *« cette séance n'a pas de sujet »* à quelqu'un qui l'a construite exprès
+  (un full body, un powerbuilding) serait un fait faux sur lui (**R29**, **P4**) — or ces deux
+  séances-là ne sonnent pas dans la mesure, ce qui est plutôt bon signe ;
+- ⛔ **et l'app n'a toujours pas le droit de corriger la séance** : elle informe, la personne
+  tranche (**R24**).
+
+---
+
 ## 🚶 LES PAS — CE QU'ILS DOIVENT CHANGER, DIT PAR MICHEL (30/08/2026)
 
 > Question posée : *« les pas doivent changer QUOI concrètement ? »* (règle **R3** — une donnée

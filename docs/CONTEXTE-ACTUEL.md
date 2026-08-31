@@ -7,6 +7,16 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1082`.
+- 🧩⏸️ **« SÉANCE SANS SUJET » — EN DISCUSSION, RIEN N'EST CONSTRUIT** (31/08). Michel : *« non on
+  en discute et il faut voir aussi avec l'autre Claude »*. ⭐ Le volet **sécurité** est livré
+  (ft-v1080) ; le volet **cohérence** — celui qui répond au **leg curl** — ne l'est pas.
+  GPT recommande **B + garder l'existant**. ⛔⛔ **Mesuré, son critère B se DÉSARME quand le cas
+  empire** : ajouter le leg curl rend les ischios *dominants*, donc plus « hors-thème », et
+  l'alerte les lâche. Et il fait **3 faux positifs sur 9** séances normales (A : 5/9).
+  ⭐ Une piste tient (**familles de mouvement**, 2/2 et 0/9) ⚠️ **mais mes 9 séances normales sont
+  écrites par moi** — piège de ft-v994/1016. Le contrôle qui vaudrait est **l'historique réel**.
+  👉 Dossier : `IDEES-FUTURES.md` · attendu : `docs/JOURNAL-DE-TEST.md` (🟢, non promu exprès)
+  · relais posé à session-B dans `docs/JOURNAL-DE-PARTAGE.md`.
 - 🔥⭐⭐ **LE REPOS D'UN PALIER SUIT SA CHARGE · ET LE PLAFOND DE PALIERS AUSSI** (ft-v1082).
   Document de revue des échauffements relayé par Michel, puis *« vas-y go »*.
   ⛔⛔ **Les 4 cas « priorité haute » du document sont DÉJÀ réparés — rejoués dans un navigateur,
