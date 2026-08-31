@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v1078'; // 📤 ft-v1078 = « LA DERNIERE SEANCE N'APPARAIT PAS DANS MON EXPORT ». Michel, apres avoir exporte son historique. ⭐ MESURE AVANT DE CHERCHER : elle Y ETAIT — **tout en bas**. Le CSV triait du plus ANCIEN au plus recent (`localeCompare(a,b)`), quand l'ecran Historique **et** le PDF vont du plus recent au plus ancien. 👉 ***Une donnee qu'on doit chercher a l'autre bout du fichier se lit comme une donnee absente*** — et c'est exactement ce qu'il a lu. ⛔⛔ ET LE DEFAUT DE FOND EST QU'IL Y AVAIT TROIS PROPRIETAIRES DU MEME ORDRE : l'ecran (`unshift`), le PDF (`Object.keys().sort().reverse()`) et le CSV (le tri du producteur) — dont un a l'envers. L'ordre appartient desormais a `_histoLignes` (**R2**), et les deux formats le SUIVENT au lieu de le refaire. ⛔ Le tri ne porte que sur les SEANCES : a l'interieur, les series restent 1, 2, 3 — c'est l'ordre dans lequel elles ont ete faites. ⛔ On REORDONNE, on ne perd rien : meme nombre de lignes, memes exercices (mesure avant/apres).
+const CACHE = 'ft-v1079'; // 🪞 ft-v1079 = LE MIROIR DE SAUVEGARDE POUVAIT MOURIR EN SILENCE. Michel : « on a la sauvegarde qui fonctionne sur le miroir supabase ? » — et c'est en verifiant que le trou est sorti. ⛔⛔ MESURE : `index.html` sert **10** scripts, `PRECACHE` en portait **9**. `supabase.js` etait le SEUL absent, et **sans raison ecrite** (contrairement a `data/ciqual.json`, dont l'exclusion est argumentee — R30). ⚠️ LA PANNE EST SILENCIEUSE ET ELLE TOUCHE UNE SAUVEGARDE : app ouverte hors ligne apres une mise a jour → la balise `<script>` echoue → `sbMirror` n'existe pas → le `try/catch` de `_cloudSync` avale l'absence → la copie miroir est morte pour toute la session, sans un mot. ⭐⭐ *Une sauvegarde dont on ne verifie jamais qu'elle ecrit est pire que pas de sauvegarde* — c'est l'en-tete de `supabase.js` lui-meme, et il se decrivait sans le savoir. ⛔ LE TEMOIN PROTEGE LA REGLE, PAS LE CAS : il compare les scripts REELLEMENT servis a la liste prechargee — le prochain oubli rougira. Rien d'autre ne le voyait. ⚠️ ET LES COMMENTAIRES SONT RETIRES AVANT DE MESURER (lecon du temoin ⑥ de ft-v1078) : celui qui explique le correctif NOMME `supabase.js`, il aurait rendu le temoin vert pour rien.
 // ⬆️ 11e collision de la semaine : session-A a publie SA ft-v1068 (les 4 routes de quantite)
 // pendant ce travail. Ma version devient ft-v1069 — un numero de cache ne recule jamais.
 // Leur entree reste la leur, on ne renumerote pas le travail de l'autre.
@@ -12,6 +12,16 @@ const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
   './setup.js', './tracking.js', './coach.js', './app.js', './food-health.js',
+  /* ⛔⛔ `supabase.js` MANQUAIT ICI, ET C'ETAIT LE SEUL DES 10 (31/08/2026). Trouve en
+     repondant a Michel sur le miroir de sauvegarde. Les 9 autres scripts servis par
+     `index.html` etaient preches ; celui-la non, et sans raison ecrite (contrairement a
+     `data/ciqual.json`, dont l'exclusion est argumentee juste en dessous — R30).
+     ⚠️ LA PANNE ETAIT SILENCIEUSE ET ELLE TOUCHAIT UNE SAUVEGARDE : app ouverte hors ligne
+     apres une mise a jour → la balise `<script>` echoue → `sbMirror` n'existe pas → le
+     `try/catch` de `_cloudSync` avale l'absence, et la copie miroir est morte pour toute la
+     session, sans un mot. *Une sauvegarde dont on ne verifie jamais qu'elle ecrit est pire
+     que pas de sauvegarde* — c'est l'en-tete de `supabase.js` lui-meme. */
+  './supabase.js',
   './manifest.json', './logo.png', './female-body.png',
   /* ⛔ `data/ciqual.json` ET `data/complalim.json` NE SONT VOLONTAIREMENT PAS ICI (22/08/2026). Le préchargement
      tourne à CHAQUE mise à jour du cache : ce serait 250 Ko re-téléchargés à chaque version,

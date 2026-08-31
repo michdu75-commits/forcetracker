@@ -20302,6 +20302,44 @@ console.log('\n-- CLXXXIII. L\'export d\'historique commence par la dernière s�
   })();
 }
 
+/* == BLOC CLXXXIV - UN SCRIPT SERVI QUI N'EST PAS DANS LE CACHE (ft-v1079) ==
+   Trouve en repondant a Michel sur le miroir de sauvegarde Supabase : `supabase.js` etait le
+   SEUL des 10 scripts de `index.html` absent du prechargement du service worker.
+   ⚠️ LA PANNE EST SILENCIEUSE, ET ELLE TOUCHAIT UNE SAUVEGARDE : app ouverte hors ligne apres
+   une mise a jour → la balise `<script>` echoue → `sbMirror` n'existe pas → le `try/catch` de
+   `_cloudSync` avale l'absence, et la copie miroir est morte pour toute la session, sans un mot.
+   ⛔ CE TEMOIN PROTEGE LA REGLE, PAS LE CAS : il compare la liste des scripts REELLEMENT servis
+   a la liste prechargee. Le prochain fichier ajoute a `index.html` et oublie dans `sw.js` le
+   fera rougir — c'est la seule chose qui rende l'oubli visible, puisque rien d'autre ne le voit. */
+console.log('\n-- CLXXXIV. Aucun script servi n\'est absent du cache (ft-v1079) --');
+{
+  const html=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+  const sw=fs.readFileSync(path.join(ROOT,'sw.js'),'utf8');
+  const pre=sw.slice(sw.indexOf('const PRECACHE'), sw.indexOf('PRECACHE_SENTINEL'));
+  /* ⛔ Les commentaires sont retires AVANT de mesurer — la lecon du témoin ⑥ de ft-v1078, qui
+     avait rougi en attrapant le commentaire qui expliquait un retrait. Ici le commentaire
+     ci-dessus NOMME `supabase.js` : sans ce nettoyage, le témoin serait vert pour rien. */
+  const preCode=pre.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+  const scripts=(html.match(/<script src="([^"]+)"/g)||[])
+    .map(x=>x.replace(/^<script src="/,'').replace(/"$/,''))
+    .filter(u=>!/^https?:/.test(u));                 // seuls les fichiers du dépôt
+  const absents=scripts.filter(f=>preCode.indexOf("'./"+f+"'")<0);
+  /* ⛔ ① SANS LUI, « aucun absent » serait vert si la lecture échouait. */
+  t('⛔ ① le témoin lit bien les deux listes (sinon « aucun absent » ne mesurerait rien)',
+    scripts.length>=9 && preCode.length>200,
+    scripts.length+' scripts servis · liste préchargée de '+preCode.length+' car.');
+  /* ⛔⛔ ② LA RÈGLE : ce qui est servi au démarrage est dans le cache. */
+  t('⛔⛔ ② aucun script servi par `index.html` n\'est absent du préchargement du service worker',
+    absents.length===0, 'absents = '+JSON.stringify(absents));
+  /* ⭐ ③ LE CAS DU JOUR, nommé exprès : c'est lui qui a coûté une sauvegarde silencieuse. */
+  t('⭐ ③ `supabase.js` (le miroir de sauvegarde) est bien préchargé',
+    preCode.indexOf("'./supabase.js'")>=0, '');
+  /* ⛔ ④ ET LE MIROIR EST TOUJOURS BRANCHÉ — un fichier en cache qui n'est appelé par personne
+     ne sauvegarderait rien (R5). */
+  t('⛔ ④ … et `_cloudSync` l\'appelle toujours (un miroir jamais appelé ne sauvegarde rien)',
+    /sbMirror\s*===?\s*'function'|typeof sbMirror==='function'/.test(fs.readFileSync(path.join(ROOT,'setup.js'),'utf8')), '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

@@ -6,7 +6,18 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1078`.
+- **Version en ligne (live) :** `ft-v1079`.
+- 🪞 **LE MIROIR DE SAUVEGARDE POUVAIT MOURIR EN SILENCE** (ft-v1079). Michel : *« on a la
+  sauvegarde qui fonctionne sur le miroir supabase ? »* — **c'est en vérifiant que le trou est
+  sorti**. ⛔⛔ `index.html` sert **10** scripts, `PRECACHE` en portait **9** : `supabase.js`
+  était le seul absent, **sans raison écrite** (R8/R30).
+  ⚠️ Panne **silencieuse** : app ouverte hors ligne après une mise à jour → le `<script>` échoue
+  → `sbMirror` n'existe pas → le `try/catch` de `_cloudSync` avale l'absence → **le miroir est
+  mort pour toute la session**. ⭐⭐ *Une sauvegarde dont on ne vérifie jamais qu'elle écrit est
+  pire que pas de sauvegarde* — c'est l'en-tête de `supabase.js` lui-même.
+  ⛔ Témoin qui protège la **règle** : aucun script servi ne peut être hors cache.
+  ⏭️ **Ce que ça ne dit pas** : branché + en cache ≠ **écrit**. Supabase est injoignable depuis
+  le conteneur → le seul verdict est **Profil → Admin → 🪞 Tester la copie miroir** (R18).
 - 📤 **« LA DERNIÈRE SÉANCE N'APPARAÎT PAS DANS MON EXPORT »** (ft-v1078). ⭐ **Mesuré : elle y
   était — tout en bas.** Le CSV triait du plus **ancien** au plus récent, quand l'écran Historique
   **et** le PDF vont du plus récent au plus ancien. *Une donnée qu'on doit chercher à l'autre bout
