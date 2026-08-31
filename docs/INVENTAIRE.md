@@ -1,7 +1,7 @@
 # 📒 Inventaire — ce qui existe dans Force Tracker
 
 > ⚙️ **FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer avec `python3 tools/inventaire.py`.
-> Généré depuis **le code** (version `ft-v1081`, dernier commit 2026-08-31).
+> Généré depuis **le code** (version `ft-v1082`, dernier commit 2026-08-31).
 >
 > **À quoi il sert** : répondre à *« est-ce que c'est déjà construit ? »*. Le journal des versions
 > (`CLAUDE.md`, `docs/JOURNAL-ARCHIVE.md`) répond à *« que s'est-il passé, quand, pourquoi ? »* —
@@ -21,7 +21,7 @@
 | Fenêtres (modales) | 64 | 14 |
 | Actions du serveur | 43 | 0 |
 | Fonctions JS | 579 | — |
-| Nouveautés annoncées | 60 | — |
+| Nouveautés annoncées | 61 | — |
 
 ## 🖥️ Écrans
 
@@ -171,6 +171,7 @@ Ce qui a été **annoncé dans la pop-up « Quoi de neuf »** — donc censé ex
 
 | # | | Nouveauté |
 |---|---|---|
+| 66 | 🔥 | Ton échauffement se dose à ta charge |
 | 63 | ⚡ | « Cette séance te convient ? » |
 | 62 | 💪 | Note ce qu'il te restait |
 | 61 | \u23f3 | Ton repos est un MAXIMUM |
