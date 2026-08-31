@@ -58,7 +58,7 @@
   ⛔⛔ **Le défaut était mesuré et écrit depuis 11 jours, dans `Code.js`** : la saisie manuelle
   **aplatit les mauvaises semaines** (r = **−0,96** ; 6 h 43 déclaré contre **5 h 38** réel du 6 au
   12/08). Or `S.sleepLog` est la base du score de récup **et** part chez Milo → *le score était le
-  plus optimiste exactement quand la fatigue comptait*. La donnée arrivait depuis **ft-v916** et
+  plus optimiste exactement quand la fatigue comptait*. La donnée arrivait depuis **ft-v916** et ⚠️⚠️ **CORRECTION DU 30/08 AU SOIR, ET ELLE EST DE TAILLE.** J'ai écrit que *« la donnée arrivait depuis ft-v916 et rien ne la lisait »*. **C'est FAUX**, et c'est Michel qui l'a dit : *« mais on n'a pas fait le raccourci des pas ni le sommeil »*. Ce qui est vrai : le **serveur ACCEPTE** `sleep` et `steps` depuis ft-v916 (`handlePushHealth_`). Ce qui est faux : **rien ne les a jamais envoyés** — son raccourci iOS ne pousse que la **FC au repos**. 👉 ***Ce n'était donc pas une donnée qui dormait, c'était un TUYAU JAMAIS BRANCHÉ*** — et j'ai bâti trois versions (ft-v1069, 1070, 1071) sur une donnée qui n'est jamais arrivée. ⛔ **Le code reste juste et testé**, il est simplement **DORMANT** tant que le raccourci n'envoie pas les deux champs. *Une vérification que je n'ai pas faite : j'ai lu que le serveur acceptait, et j'en ai déduit que ça arrivait* — c'est **R28** appliqué à l'envers, une capacité prise pour un fait. La recette du raccourci est dans `A-FAIRE-SUR-PC.md`.
   **rien ne la lisait** (seul `rhr` était exploité — **R5**).
   ⭐⭐ **Décision de Michel** : *« la montre gagne, ET l'app le dit »* (**R32**). Un seul
   propriétaire (`_nuit`/`_nuitsRecentes`) lu par le score, les tuiles, la carte, le registre et

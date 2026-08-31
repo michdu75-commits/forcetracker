@@ -23,9 +23,42 @@
 > vient de me faire reproposer à Michel une figurine qu'il avait supprimée la veille (26/08).
 > ⛔ **Rien n'est supprimé en descendant** : la raison et l'historique partent avec le bloc.
 
-> ✅ **RIEN EN ATTENTE au 30/08/2026.** La dernière tâche — le plafond de dépense — est
-> close ; elle est descendue dans « ✅ Fait » **avec sa raison**, comme le veut la règle
-> écrite en tête de cette section.
+### ⌚ AJOUTER LE SOMMEIL ET LES PAS AU RACCOURCI iOS *(30/08/2026)* — **sur le TÉLÉPHONE, pas le PC**
+
+> Michel : *« on devait le faire mais on n'a pas rajouté les pas et le sommeil »*.
+
+**⛔⛔ POURQUOI C'EST LA SEULE CHOSE QUI MANQUE.** Trois versions ont été livrées et testées —
+**ft-v1069** (le sommeil mesuré remplace la saisie), **ft-v1070** (les pas comptent dans le TDEE),
+**ft-v1071** (la courbe des pas dans Progrès). Elles sont **correctes et vertes**, mais elles sont
+**DORMANTES** : le raccourci n'envoie que la **FC au repos**, donc `sleep` et `steps` n'arrivent
+jamais. *Rien ne s'affichera tant que ces deux champs ne partent pas.*
+
+**⚠️ ET C'EST UNE ERREUR QUE J'AI ÉCRITE TROIS FOIS** : j'ai affirmé dans les journaux que « la
+donnée arrivait depuis ft-v916 ». Le **serveur l'accepte** depuis ft-v916 — mais **personne ne
+l'envoie**. *J'ai pris une capacité pour un fait* (**R28** à l'envers). Corrigé dans `CLAUDE.md`,
+`docs/CONTEXTE-ACTUEL.md` et le journal de partage.
+
+**👉 CE QU'IL FAUT AJOUTER** — le raccourci envoie déjà `action`, `email`, `authCode`, `date` et
+`rhr` (sinon la FC au repos ne marcherait pas). Il ne manque que **deux champs** dans le même
+dictionnaire JSON :
+
+| champ | valeur | unité / format |
+|---|---|---|
+| `sleep` | Santé → **Analyse du sommeil**, durée de la nuit | **en HEURES décimales** (ex. `6.5`, pas `6h30`) |
+| `steps` | Santé → **Pas**, total du jour | **entier** (ex. `9430`) |
+
+**⛔ LES BORNES DU SERVEUR** (au-delà, la valeur est **ignorée en silence**) : `sleep` doit être
+**> 0 et < 16** — *si tu envoies des minutes (390) au lieu d'heures (6.5), rien ne passe et rien
+ne le dit* ; `steps` doit être **≥ 0 et < 100 000**.
+
+**⭐ COMMENT VÉRIFIER EN 10 SECONDES** : la réponse du serveur renvoie ce qu'il a accepté —
+`{"status":"ok","rhr":…,"sleep":…,"steps":…}`. Un `null` sur `sleep` ou `steps` = la valeur a été
+refusée (mauvaise unité, ou champ absent). Sinon, côté app : **Progrès → Poids** — si la carte
+« Tes pas » apparaît, ça marche.
+
+**⏳ ET IL FAUDRA 7 JOURS** avant que le surplus de pas se calcule et que tes calories bougent :
+sans base connue, l'app ne sait pas ce qu'est « en plus » chez toi, et elle préfère se taire que
+d'inventer. Le **sommeil**, lui, agit **dès la première nuit reçue**.
 
 ## ✅ Fait
 
