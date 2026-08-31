@@ -258,10 +258,19 @@ function _renderVolumeSemaine(){
    corps, pas d'âge, pas de sexe, pas d'e-mail. Ce fichier part par mail ou dans un tableur
    partagé ; il ne doit contenir que de l'entraînement. */
 const HISTO_COLONNES = ['date','seance','exercise','set_num','type','kg','reps','rir','volume'];
+/* ⛔⛔ L'ORDRE APPARTIENT À CE PRODUCTEUR, ET IL VA DU PLUS RÉCENT AU PLUS ANCIEN (31/08/2026).
+   Michel : *« la dernière séance n'apparaît pas dans mon export »*. Elle Y ÉTAIT — **tout en bas**,
+   parce que le CSV triait du plus ANCIEN au plus récent, quand l'écran Historique **et** le PDF
+   vont du plus récent au plus ancien. 👉 ***Une donnée qu'on doit chercher à l'autre bout du
+   fichier se lit comme une donnée absente*** — et c'est bien ce qu'il a lu.
+   ⛔ L'ordre est décidé ICI, une fois (R2) : le CSV et le PDF le SUIVENT au lieu de le refaire
+   chacun de son côté — deux tris finissent par ne plus donner le même fichier.
+   ⛔ Et le tri ne porte que sur les SÉANCES : à l'intérieur d'une séance, les séries restent
+   1, 2, 3 — c'est l'ordre dans lequel elles ont été faites, il ne s'inverse pas. */
 function _histoLignes(){
   const out=[];
   try{
-    (S.sessions||[]).slice().sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))).forEach(s=>{
+    (S.sessions||[]).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).forEach(s=>{
       if(!s||!s.date) return;
       const nom=s.name||s.label||'';
       (s.exs||s.exercises||[]).forEach(ex=>{
@@ -390,9 +399,13 @@ async function exportHistoPdf(){
     doc.setTextColor(0);
     /* ⭐ R13 : `autotable` est déjà chargé avec jsPDF pour les autres PDF de l'app. Une séance
        par tableau, pour qu'on retrouve ses séances plutôt qu'un mur de lignes. */
-    const parJour={};
-    L.forEach(r=>{ (parJour[r.date]=parJour[r.date]||[]).push(r); });
-    Object.keys(parJour).sort().reverse().forEach(d=>{
+    /* ⛔ LE PDF SUIT L'ORDRE DU PRODUCTEUR, IL NE LE REFAIT PAS (R2, 31/08/2026). Il triait ses
+       dates lui-même (`.sort().reverse()`) : le résultat était le même, mais c'était un DEUXIÈME
+       propriétaire de l'ordre — et le CSV, lui, en avait un troisième, à l'envers. *C'est comme ça
+       que deux exports du même historique finissent par ne pas se ressembler.* */
+    const parJour={}, ordre=[];
+    L.forEach(r=>{ if(!parJour[r.date]){ parJour[r.date]=[]; ordre.push(r.date); } parJour[r.date].push(r); });
+    ordre.forEach(d=>{
       const rows=parJour[d];
       /* ⚠️⚠️ LE TITRE SE POSE AVANT LE TABLEAU, PAS APRÈS — et c'est un défaut mesuré, pas un
          choix de style. Mon 1er jet écrivait le titre après coup à `doc.lastAutoTable.startY-5` :

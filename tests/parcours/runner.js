@@ -20224,6 +20224,78 @@ console.log('\n-- CLXXXII (suite). Un délai dépassé n\'est pas une perte (ft-
   }
 }
 
+/* == BLOC CLXXXIII - « LA DERNIERE SEANCE N'APPARAIT PAS DANS MON EXPORT » (ft-v1078) ==
+   Michel, apres l'export de son historique. ⭐ MESURE : elle Y ETAIT — **tout en bas**. Le CSV
+   triait du plus ANCIEN au plus recent, quand l'ecran Historique ET le PDF vont du plus recent au
+   plus ancien. 👉 *Une donnee qu'on doit chercher a l'autre bout du fichier se lit comme une
+   donnee absente.*
+   ⛔ L'ordre appartient desormais au PRODUCTEUR (`_histoLignes`, R2) : le CSV et le PDF le
+   SUIVENT. Avant, il y avait trois proprietaires du meme ordre, dont un a l'envers. */
+console.log('\n-- CLXXXIII. L\'export d\'historique commence par la dernière séance (ft-v1078) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const E=await pg.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const o={}, j=d=>new Date(Date.now()-d*864e5).toISOString().slice(0,10);
+    /* L'app EMPILE par le haut (`unshift`) : S.sessions[0] est la plus RÉCENTE. */
+    S.sessions=[
+     {date:j(0),ts:Date.now(),      id:1,volume:900,exs:[{name:'Rowing Hammer Strength',
+       sets:[{kg:60,reps:8,done:true,type:'N'},{kg:60,reps:8,done:true,type:'N'}]}]},
+     {date:j(1),ts:Date.now()-864e5,id:2,volume:800,exs:[{name:'Squat à la Barre',
+       sets:[{kg:100,reps:5,done:true,type:'N'}]}]},
+     {date:j(2),ts:Date.now()-2*864e5,id:3,volume:700,exs:[{name:'Développé Couché',
+       sets:[{kg:80,reps:8,done:true,type:'N'}]}]}
+    ]; persist();
+    const L=_histoLignes();
+    o.n=L.length;
+    o.dates=L.map(r=>r.date);
+    o.datesUniques=[...new Set(L.map(r=>r.date))];
+    o.ecran=[...new Set(S.sessions.map(s=>s.date))];   // l'ordre de l'écran Historique
+    o.premiere=L[0]&&L[0].date;
+    o.aujourdhui=j(0);
+    o.setNums=L.filter(r=>r.date===j(0)).map(r=>r.set_num);
+    o.exos=L.map(r=>r.exercise);
+    return o;
+   }catch(e){ return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]}; }
+  });
+  await cx.close();
+
+  if(E.err) t('CLXXXIII n\'a pas pu tourner', false, JSON.stringify(E));
+  else{
+    /* ⛔ ① SANS LUI, « la plus récente d'abord » serait vert sur un export vide ou à une séance. */
+    t('⛔ ① l\'export porte bien les 3 séances et leurs 4 séries (sinon le reste ne mesure rien)',
+      E.n===4 && E.datesUniques.length===3, 'lignes = '+E.n+' · dates = '+JSON.stringify(E.datesUniques));
+    /* ⛔⛔ ② SA PLAINTE : sa dernière séance est en TÊTE, plus tout en bas. */
+    t('⛔⛔ ② la 1ʳᵉ ligne de l\'export est la séance du JOUR — plus la plus ancienne',
+      E.premiere===E.aujourdhui, 'première = '+E.premiere+' · aujourd\'hui = '+E.aujourdhui);
+    /* ⭐ ③ ET L'ORDRE EST CELUI DE L'ÉCRAN : c'est ce qui rend le fichier lisible sans surprise. */
+    t('⭐ ③ l\'ordre des séances est EXACTEMENT celui de l\'écran Historique (R2)',
+      JSON.stringify(E.datesUniques)===JSON.stringify(E.ecran),
+      'export = '+JSON.stringify(E.datesUniques)+' · écran = '+JSON.stringify(E.ecran));
+    /* ⛔⛔ ④ LE TRI NE PORTE QUE SUR LES SÉANCES : les séries ne s'inversent pas. */
+    t('⛔⛔ ④ à l\'intérieur d\'une séance, les séries restent 1, 2 (l\'ordre où elles ont été faites)',
+      JSON.stringify(E.setNums)==='[1,2]', 'séries = '+JSON.stringify(E.setNums));
+    /* ⛔ ⑤ NON-RÉGRESSION : on RÉORDONNE, on ne perd rien. */
+    t('⛔ ⑤ rien n\'est perdu : les 3 exercices sont tous là',
+      ['Rowing Hammer Strength','Squat à la Barre','Développé Couché'].every(x=>E.exos.includes(x)),
+      JSON.stringify(E.exos));
+  }
+  /* ⛔ ⑥ ET UN SEUL PROPRIÉTAIRE DE L'ORDRE : ni le CSV ni le PDF ne re-trient dans leur coin. */
+  (()=>{ const s=fs.readFileSync(path.join(ROOT,'setup.js'),'utf8');
+    const pdf=(s.match(/async function exportHistoPdf\(\)[\s\S]*?\n\}/)||[''])[0];
+    const csv=(s.match(/async function exportHistoCsv\(\)[\s\S]*?\n\}/)||[''])[0];
+    t('⛔ ⑥ le CSV et le PDF SUIVENT l\'ordre de `_histoLignes` — aucun des deux ne le refait (R2)',
+      pdf.length>200 && csv.length>200 && !/\.sort\(/.test(pdf) && !/\.sort\(/.test(csv)
+      && /ordre\.forEach/.test(pdf),
+      'tri dans le PDF = '+/\.sort\(/.test(pdf)+' · dans le CSV = '+/\.sort\(/.test(csv));
+  })();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

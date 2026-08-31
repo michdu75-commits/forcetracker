@@ -6,7 +6,15 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1077`.
+- **Version en ligne (live) :** `ft-v1078`.
+- 📤 **« LA DERNIÈRE SÉANCE N'APPARAÎT PAS DANS MON EXPORT »** (ft-v1078). ⭐ **Mesuré : elle y
+  était — tout en bas.** Le CSV triait du plus **ancien** au plus récent, quand l'écran Historique
+  **et** le PDF vont du plus récent au plus ancien. *Une donnée qu'on doit chercher à l'autre bout
+  du fichier se lit comme une donnée absente.*
+  ⛔⛔ **Le défaut de fond** : **trois propriétaires** du même ordre (l'écran, le PDF, le
+  producteur), dont un à l'envers. L'ordre appartient désormais à `_histoLignes` seul (**R2**),
+  les deux formats le **suivent**. ⛔ Le tri ne porte que sur les **séances** : les séries restent
+  1, 2, 3. ⛔ On réordonne, on ne perd rien (4 lignes des deux côtés, mesuré).
 - ☁️⭐⭐ **LA SÉANCE QUI NE PARTAIT PAS, MÊME EN WIFI** (ft-v1077). Michel : *« J'ai testé en
   wifi il fallait que je fasse un truc sur Google ? »* — **non**, rien côté Google n'était en
   cause pour la synchro (la manip en attente concerne les **sauvegardes**).
