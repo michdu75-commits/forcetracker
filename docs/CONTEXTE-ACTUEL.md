@@ -6,7 +6,23 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1076`.
+- **Version en ligne (live) :** `ft-v1077`.
+- ☁️⭐⭐ **LA SÉANCE QUI NE PARTAIT PAS, MÊME EN WIFI** (ft-v1077). Michel : *« J'ai testé en
+  wifi il fallait que je fasse un truc sur Google ? »* — **non**, rien côté Google n'était en
+  cause pour la synchro (la manip en attente concerne les **sauvegardes**).
+  ⛔⛔ **Cause** : `handleLogSession_` faisait **un `appendRow` PAR SÉRIE** — mesuré **3 séries
+  → 3 écritures · 25 → 25 · 60 → 60**. C'était le **seul endroit de `Code.js` dont la durée
+  grandit avec les données**, donc le seul capable de dépasser les **8 s** du téléphone.
+  ⭐⭐ **Et l'abandon du téléphone n'arrête pas le script Google** : les lignes s'écrivaient
+  quand même, donc **chaque nouvel essai re-collait la même séance**. *Un délai dépassé n'est
+  pas un échec — c'est une réponse qu'on n'a pas attendue.*
+  👉 Écriture **en bloc** (`setValues`) : 1 séance = 1 écriture. Contenu **identique**, mesuré.
+  ⛔ Et « ❌ Sync : Timeout (8s) » annonçait une **perte non constatée** → plus ni croix ni rouge
+  pour un réseau lent ; une **vraie** erreur garde les siennes. 🧾 Famille **§28** de `BUGS.md`.
+  ⚠️ **Honnête** : sortie réseau bloquée depuis le conteneur → **son serveur n'a pas été
+  chronométré**. La cause est établie par le code, pas par un chronomètre chez lui.
+  ⏭️ **Son onglet `Sessions` porte probablement des doublons** de cette séance — **rien touché**,
+  c'est son classeur (**R29**).
 - 🔢 **LES SÉRIES NUMÉROTÉES « 1, 2… 5 »** (ft-v1076). Les séries **non faites sont masquées** mais
   le numéro restait `si+1`, l'index du tableau COMPLET. ⭐ Michel a corrigé ma lecture — *« il ne
   manque rien, j'ai mis exactement ce que j'ai fait »* : les 2 invisibles sont la **montée en
@@ -42,10 +58,6 @@
   2ᵉ passage. ⚠️ **À ACTIVER** : un déploiement ne recrée pas les déclencheurs → 1 clic sur
   `installDailyBackupTrigger_` dans l'IDE (`A-FAIRE-SUR-PC.md`). ⚠️ Append-only : ~730 fichiers/an
   pour une alerte de quota à 1000 → **la purge devra être une décision, dans ~16 mois**.
-- ⏭️ **2 bugs de sa séance du 31/08 restent** : le **chrono négatif** invisible sous l'écran GO ·
-  le **récap qui devient une nouvelle séance** (régression de ft-v1055, corrigée d'un seul côté).
-  ⏭️ **Et sa séance du 31/08 est toujours fausse** (Tirage Poulie enregistré « Rowing Hammer ») —
-  réparation **non faite**, en attente de sa décision (**R29**).
 - 🔴⭐⭐ **LE SÉLECTEUR RENOMMAIT AU LIEU D'AJOUTER — il abîmait l'historique** (ft-v1073).
   Michel : *« mon tirage a été remplacé par le rowing hammer »*.
   ⛔⛔ **R15, 3ᵉ fois — mais la 1ʳᵉ qui touche aux DONNÉES** : `mod-ex` n'était pas dans
@@ -57,10 +69,6 @@
   ⭐⭐ **Le vrai correctif est le second** : `openExPicker(mode)` **impose** son mode au lieu de
   l'hériter — *quand un état se perd, il doit se perdre du bon côté*. Les 5 modes spéciaux passent
   par le paramètre (R2). 🧾 Famille **§26** de `BUGS.md`.
-- ⏭️ **3 bugs de sa séance du 31/08 restent à corriger** : le **chrono négatif** invisible sous
-  l'écran GO · **« Pourquoi ce changement ? »** cassé (guillemets doubles imbriqués → `SyntaxError`,
-  toutes ses réponses perdues depuis le 28/08) · le **récap qui devient une nouvelle séance**
-  (régression de ft-v1055, corrigée d'un seul côté).
 - 🔒⭐⭐ **ON N'ANNONCE QU'À CEUX QUI PEUVENT S'EN SERVIR** (ft-v1072). Michel : *« sauf que les
   pas ne sont que pour moi attention »*. ⛔⛔ **Le défaut était dans l'ANNONCE, pas le comportement** :
   `WHATS_NEW`/`NEW_FEATURES` n'avaient **aucun filtre par personne** → les pop-ups **v64** (sommeil

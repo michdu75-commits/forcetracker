@@ -104,7 +104,12 @@ async function syncSheets(sess){
     return{ok:false,error:data&&data.error?data.error:'status='+(data&&data.status||'?')};
   }catch(e){
     console.warn('[FT syncSheets] échec:',e.message);
-    return{ok:false,error:e.name==='AbortError'?'Timeout (8s)':e.message};
+    /* ⛔ UN DÉLAI DÉPASSÉ N'EST PAS UN ÉCHEC — c'est une réponse qu'on n'a pas attendue, et le
+       serveur a très bien pu écrire. On le NOMME (`timeout`) au lieu de le noyer dans les autres
+       erreurs : ce qu'on dit à la personne n'est pas la même chose (R29 — on n'annonce pas une
+       perte qu'on n'a pas constatée). La séance reste `synced:false` et repassera : au pire on
+       aura réessayé pour rien, jamais perdu quoi que ce soit. */
+    return{ok:false,timeout:e.name==='AbortError',error:e.name==='AbortError'?'Réseau trop lent (8 s)':e.message};
   }
 }
 
@@ -120,7 +125,7 @@ async function _retrySheetQueue(){
   for(const sess of toSync){
     const res=await syncSheets(sess);
     if(res.ok){sess.synced=true;synced++;}
-    else errors.push({date:sess.date,error:res.error||'erreur inconnue'});
+    else errors.push({date:sess.date,error:res.error||'erreur inconnue',timeout:!!res.timeout});
   }
   if(synced>0){
     try{localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));}catch(e){}
@@ -128,6 +133,12 @@ async function _retrySheetQueue(){
   _updateAdminSyncInfo(errors);
   if(synced>0&&errors.length===0)toast('☁️ '+synced+' séance'+(synced>1?'s':'')+' synchronisée'+(synced>1?'s':'')+' !','success');
   else if(synced>0)toast('☁️ '+synced+'/'+(synced+errors.length)+' séances sync — '+errors.length+' échec(s)','info');
+  /* ⛔ « ❌ Sync : Timeout (8s) » se lisait comme une séance PERDUE — Michel l'a lu comme ça, et
+     il a eu peur pour ses données. Or rien n'est perdu : tout est en local, la séance repassera
+     toute seule. Un délai dépassé n'a donc ni la croix, ni le rouge : il dit ce qui s'est passé
+     et ce qui va se passer. Une VRAIE erreur, elle, garde sa croix rouge — sinon on effacerait
+     la différence entre « c'est plus long que prévu » et « le serveur a refusé ». */
+  else if(errors.length>0&&errors.every(e=>e.timeout))toast('⏳ Réseau trop lent — ta séance est gardée, on réessaiera','info');
   else if(errors.length>0)toast('❌ Sync : '+errors[0].error.substring(0,60),'error');
 }
 
@@ -140,8 +151,13 @@ function _updateAdminSyncInfo(errors){
   let html=n===0
     ?'<span style="color:var(--green)">✅ Tout synchronisé ('+total+' séance'+(total>1?'s':'')+')</span>'
     :'<span style="color:var(--gold)">⚠️ '+n+' séance'+(n>1?'s':'')+' non synchronisée'+(n>1?'s':'')+' / '+total+'</span>';
-  if(errors&&errors.length)
-    html+='<br><span style="color:var(--red);font-size:11px;">'+errors.map(e=>e.date+' : '+e.error).join(' | ')+'</span>';
+  if(errors&&errors.length){
+    // Même règle qu'au toast : un délai dépassé n'est pas rouge, et il dit que rien n'est perdu.
+    const tout=errors.every(e=>e.timeout);
+    html+='<br><span style="color:var('+(tout?'--t3':'--red')+');font-size:11px;">'
+        +errors.map(e=>e.date+' : '+e.error).join(' | ')
+        +(tout?' — rien n\'est perdu, elle repassera toute seule':'')+'</span>';
+  }
   else if(n>0)
     html+='<br><span style="color:var(--t3);font-size:11px;">Appuie sur Resynchroniser pour réessayer.</span>';
   el.innerHTML=html;

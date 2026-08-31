@@ -1734,3 +1734,46 @@ déjà bien (**R13**).
 ⚠️ Et pour l'utilisateur : **un bandeau d'erreur générique est une piste, pas un diagnostic.** Le
 journal d'erreurs (Profil → Admin) porte l'heure exacte — c'est lui qui a relié les appuis au
 défaut.
+
+---
+
+## 28. ⏳ LE CLIENT ABANDONNE, LE SERVEUR CONTINUE **(31/08/2026, ft-v1077)**
+
+### 🔎 À quoi on la reconnaît
+Une opération marquée **échouée** côté téléphone — et pourtant **elle a eu lieu** côté serveur.
+Le signe qui doit alerter : le message d'erreur parle de **temps** (*timeout*, *délai dépassé*,
+*abort*), jamais de **refus**. Et le geste **se répète** : la personne réessaie, ça « rate »
+encore, et à chaque fois quelque chose s'écrit pour de bon.
+
+### 💥 Le cas
+`syncSheets` coupe à 8 s avec un `AbortController`. Le message *« ❌ Sync : Timeout (8s) »*
+s'affichait en rouge, la séance restait `synced:false`… mais l'abandon coupe **l'attente du
+téléphone**, pas le script Google : **les lignes s'écrivaient quand même**. Chaque nouvel essai
+re-collait donc la même séance dans l'onglet `Sessions`.
+
+👉 ***Un délai dépassé n'est pas un échec — c'est une réponse qu'on n'a pas attendue.***
+Les deux se ressemblent côté client ; ils n'ont **rien** à voir côté serveur.
+
+### ⛔ Et la cause de la lenteur était une boucle d'écritures
+`handleLogSession_` faisait **un `appendRow` par série** — un aller-retour complet vers le
+classeur à chaque fois. Mesuré : **3 séries → 3 écritures · 25 → 25 · 60 → 60**. C'était le
+**seul endroit de `Code.js` dont la durée grandit avec les données**, donc le seul capable de
+dépasser un délai fixe. *Une lenteur qui dépend de la taille finit toujours par franchir le
+seuil : la question n'est pas si, c'est quand.*
+
+### 🛡️ Ce qui protège aujourd'hui
+- **L'écriture en bloc** (`setValues`) : 1 séance = **1 écriture**, qu'elle fasse 3 ou 60 séries.
+  La durée cesse de dépendre de la taille.
+- **`_safeCell_` transforme une case absente en case vide** : l'écriture en bloc est plus stricte
+  que `appendRow`, et une vieille ligne incomplète ne doit pas faire échouer **toute** la séance.
+- **Le message dit la vérité** : un délai dépassé n'a plus ni croix ni rouge (*« ta séance est
+  gardée, on réessaiera »*), mais une **vraie** erreur garde les siennes — un témoin interdit
+  d'effacer la différence.
+- **Bloc CLXXXII** : le témoin compte les **allers-retours** vers le classeur, pas les lignes.
+
+### ⭐ Le réflexe
+Devant un « échec » réseau, se demander **ce que le serveur a fait pendant ce temps-là** avant
+d'annoncer une perte. Et pour la personne : **ne jamais écrire « ❌ » sur une chose qu'on n'a pas
+constatée** — le local-first garantit que rien n'est perdu, le message doit le dire (**R29**).
+⚠️ Corollaire : si l'opération n'est pas **idempotente**, un délai dépassé fabrique des doublons
+en silence. Ici c'est un classeur de log, le coût est du bruit ; ailleurs, ce serait pire.

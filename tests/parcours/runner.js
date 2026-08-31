@@ -13682,13 +13682,23 @@ console.log('\n-- CXXV. La ligne du classeur porte son email (ft-v1018) --');
   const src=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
   const vm=require('vm');
   const EN=['date','exercise','set_num','type','kg','reps','volume','rm1','bw','gender','age'];
+  /* ⚠️ LE FAUX CLASSEUR A DÛ APPRENDRE `setValues` ET `getLastRow` (31/08/2026) — le serveur
+     n'écrit plus série par série mais EN BLOC (ft-v1077). *Le levier change, la garantie ne
+     change pas* : on ne désarme pas un témoin, on le vise. `_ecritures` compte les allers-retours
+     vers le classeur — c'est ce que le bloc CLXXXII mesure. */
   const faireOnglet=(entete,lignes)=>{
-    const g={entete:(entete||[]).slice(), lignes:(lignes||[]).map(r=>r.slice())};
+    const g={entete:(entete||[]).slice(), lignes:(lignes||[]).map(r=>r.slice()), ecritures:0};
     return {_g:g,
       getLastColumn:()=>g.entete.length,
+      getLastRow:()=>(g.entete.length?1:0)+g.lignes.length,
       getRange:(r,c,nr,nc)=>({getValues:()=>[g.entete.slice(c-1,(c-1)+(nc||1))],
-        setValue:(v)=>{ while(g.entete.length<c-1)g.entete.push(''); g.entete[c-1]=v; }}),
-      appendRow:(row)=>{ if(!g.entete.length && row[0]==='date') g.entete=row.slice(); else g.lignes.push(row.slice()); }};
+        setValue:(v)=>{ while(g.entete.length<c-1)g.entete.push(''); g.entete[c-1]=v; },
+        setValues:(m)=>{ g.ecritures++;
+          m.forEach((row,i)=>{ const dest=(r-1)+i-(g.entete.length?1:0);
+            while(g.lignes.length<dest)g.lignes.push([]);
+            g.lignes[dest]=row.slice(); }); }}),
+      appendRow:(row)=>{ g.ecritures++;
+        if(!g.entete.length && row[0]==='date') g.entete=row.slice(); else g.lignes.push(row.slice()); }};
   };
   const lancer=(onglet,body,existe)=>{
     const ctx={console,JSON,String,Number,Math,Date,Array,Object,
@@ -20068,6 +20078,149 @@ console.log('\n-- CLXXXI. Les séries numérotées 1, 2… 5 (ft-v1076) --');
     /* ⛔⛔ ET LE TÉMOIN QUI PROTÈGE LES DONNÉES : l'index passé au setter reste le VRAI. */
     t('⛔⛔ ③ l\'index passé à `updateSessSet` reste l\'index RÉEL (0, 1, 4), pas le numéro affiché',
       N.idx.join(',')==='0,1,4', 'index = '+JSON.stringify(N.idx));
+  }
+}
+
+/* == BLOC CLXXXII - UNE SEANCE QUI NE SE SYNCHRONISE PAS, MEME EN WIFI (ft-v1077) ==
+   Michel : « J'ai teste en wifi » — et l'admin affichait toujours « 1 seance non synchronisee / 39 ».
+   Son toast de 17:11 disait « Timeout (8s) ».
+   ⛔⛔ LA CAUSE EST DANS `Code.js` : `handleLogSession_` faisait UN `appendRow` PAR SERIE, et
+   c'est le SEUL ecrivain du fichier dont la duree grandit avec les donnees. Le telephone
+   abandonne a 8 s ; le serveur, lui, continuait d'ecrire.
+   ⚠️ CE BLOC MESURE LE VRAI `Code.js` DANS UN BAC A SABLE (meme faux classeur que CXXV) : ce
+   qu'on compte, ce sont les ALLERS-RETOURS vers le classeur, pas le nombre de lignes.
+   ⛔ ET LA MOITIE FRONTEND : un delai depasse n'est pas une perte, donc il ne se dit pas en
+   rouge avec une croix — mais une VRAIE erreur garde la sienne. */
+console.log('\n-- CLXXXII. La séance qui ne partait pas : 1 écriture au lieu de 25 (ft-v1077) --');
+{
+  const src=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  const vm=require('vm');
+  const EN=['date','exercise','set_num','type','kg','reps','volume','rm1','bw','gender','age'];
+  const onglet=(entete,lignes)=>{
+    const g={entete:(entete||[]).slice(), lignes:(lignes||[]).map(r=>r.slice()), ecritures:0};
+    return {_g:g,
+      getLastColumn:()=>g.entete.length,
+      getLastRow:()=>(g.entete.length?1:0)+g.lignes.length,
+      getRange:(r,c,nr,nc)=>({getValues:()=>[g.entete.slice(c-1,(c-1)+(nc||1))],
+        setValue:(v)=>{ while(g.entete.length<c-1)g.entete.push(''); g.entete[c-1]=v; },
+        setValues:(m)=>{ g.ecritures++;
+          m.forEach((row,i)=>{ const dest=(r-1)+i-(g.entete.length?1:0);
+            while(g.lignes.length<dest)g.lignes.push([]);
+            g.lignes[dest]=row.slice(); }); }}),
+      appendRow:(row)=>{ g.ecritures++;
+        if(!g.entete.length && row[0]==='date') g.entete=row.slice(); else g.lignes.push(row.slice()); }};
+  };
+  const lancer=(o,body)=>{
+    const ctx={console,JSON,String,Number,Math,Date,Array,Object,
+      SpreadsheetApp:{openById:()=>({getSheetByName:()=>o, insertSheet:()=>o})},
+      PropertiesService:{getScriptProperties:()=>({getProperty:()=>'',setProperty:()=>{}})},
+      Utilities:{},Logger:{log:()=>{}},GmailApp:{},DriveApp:{},UrlFetchApp:{},CacheService:{},
+      LockService:{},Session:{},
+      ContentService:{createTextOutput:(t)=>({setMimeType:()=>({_t:t}),_t:t}),MimeType:{JSON:'json'}}};
+    ctx.global=ctx; vm.createContext(ctx); vm.runInContext(src,ctx,{filename:'Code.js'});
+    return vm.runInContext('handleLogSession_',ctx)(body);
+  };
+  const seance=(n)=>({rows:Array.from({length:n},(_,i)=>({
+      date:'2026-08-31',exercise:'Tirage Poulie Haute',set_num:i+1,type:'N',
+      kg:60,reps:8,volume:480,rm1:'75',bw:84,gender:'H',age:43})),
+    email:'michdu75@gmail.com'});
+
+  // ⛔ ① SANS LUI, « 1 écriture » serait vert parce qu'on n'écrit RIEN.
+  const o25=onglet(EN.concat(['email']),[['2026-08-01','Développé Couché',1,'N',80,8,640,'99',84,'H',43,'x@y.z']]);
+  const r25=lancer(o25,seance(25));
+  t('⛔ ① les 25 séries sont bien toutes écrites (sinon le témoin ② mesurerait le vide)',
+    o25._g.lignes.length===26 && r25 && String(r25._t||'').indexOf('"count":25')>=0,
+    'lignes = '+o25._g.lignes.length);
+
+  // ⛔⛔ ② LE CŒUR : le nombre d'allers-retours ne dépend plus du nombre de séries.
+  const o60=onglet(EN.concat(['email']),[]);
+  lancer(o60,seance(60));
+  t('⛔⛔ ② UNE seule écriture vers le classeur, que la séance fasse 25 ou 60 séries',
+    o25._g.ecritures===1 && o60._g.ecritures===1,
+    '25 séries → '+o25._g.ecritures+' écriture(s) · 60 séries → '+o60._g.ecritures);
+
+  // ⛔ ③ ET RIEN N'A CHANGÉ DE CE QUI EST ÉCRIT : 12 colonnes, l'email en 12ᵉ, l'ancienne ligne intacte.
+  t('⛔ ③ le contenu ne change pas : 12 colonnes, email en 12ᵉ, et la ligne d\'avant est intacte',
+    o25._g.lignes[0][1]==='Développé Couché' && o25._g.lignes[0][11]==='x@y.z'
+    && o25._g.lignes[1].length===12 && o25._g.lignes[1][11]==='michdu75@gmail.com'
+    && o25._g.lignes[1][1]==='Tirage Poulie Haute',
+    JSON.stringify(o25._g.lignes[1]));
+
+  // ⛔ ④ et une séance VIDE n'écrit toujours rien (setValues refuserait 0 ligne).
+  const oV=onglet(EN.concat(['email']),[]);
+  lancer(oV,{rows:[],email:'a@b.fr'});
+  t('⛔ ④ une séance sans série ne déclenche AUCUNE écriture (0 ligne casserait l\'écriture en bloc)',
+    oV._g.ecritures===0 && oV._g.lignes.length===0, 'écritures = '+oV._g.ecritures);
+
+  /* ⛔⛔ ⑤ UNE CASE ABSENTE NE DOIT PAS FAIRE TOMBER TOUTE LA SÉANCE. `appendRow` acceptait un
+     `undefined` (case vide) ; l'écriture en bloc est plus stricte. Une vieille version de l'app,
+     ou un import, peut envoyer une série sans `rm1` — elle doit passer, vide. */
+  const oU=onglet(EN.concat(['email']),[]);
+  lancer(oU,{rows:[{date:'2026-08-31',exercise:'Face Pull',set_num:1,type:'N',
+                    kg:20,reps:12,volume:240,bw:84,gender:'H',age:43}],email:'a@b.fr'});
+  t('⛔⛔ ⑤ une série SANS `rm1` passe quand même, avec une case vide (pas un échec de séance)',
+    oU._g.lignes.length===1 && oU._g.lignes[0].length===12 && oU._g.lignes[0][7]==='',
+    JSON.stringify(oU._g.lignes[0]));
+}
+
+/* ⛔ LA MOITIE FRONTEND — « ❌ Sync : Timeout (8s) » se lisait comme une seance PERDUE.
+   ⚠️ On rejoue le VRAI chemin : `fetch` rejette avec une erreur nommee `AbortError`, exactement
+   ce que produit le `AbortController` au bout de 8 s — sans attendre 8 s. */
+console.log('\n-- CLXXXII (suite). Un délai dépassé n\'est pas une perte (ft-v1077) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const R=await pg.evaluate(async()=>{
+   const vf=window.fetch, vt=window.toast, vu=S.url, ve=S.email;
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    if(!document.getElementById('admin-sync-info')){
+      const d=document.createElement('div'); d.id='admin-sync-info'; document.body.appendChild(d);
+    }
+    const o={}; let toasts=[];
+    window.toast=(m,ty)=>toasts.push({m:String(m),ty:String(ty||'')});
+    S.url='https://exemple.invalide/exec'; S.email='michdu75@gmail.com';
+    S.sessions=[{date:'2026-08-31', ts:Date.now(), id:Date.now(), synced:false, volume:1000,
+                 exs:[{name:'Tirage Poulie Haute',sets:[{kg:60,reps:8,done:true,type:'N'}]}]}];
+    // ① DÉLAI DÉPASSÉ (ce qu'a vu Michel)
+    toasts=[];
+    window.fetch=()=>Promise.reject(Object.assign(new Error('aborted'),{name:'AbortError'}));
+    await _retrySheetQueue();
+    o.tOut=toasts.slice(); o.syncedApres=S.sessions[0].synced;
+    o.adminOut=document.getElementById('admin-sync-info').innerHTML;
+    // ② UNE VRAIE ERREUR garde sa croix rouge
+    toasts=[];
+    window.fetch=()=>Promise.reject(new Error('Failed to fetch'));
+    await _retrySheetQueue();
+    o.tErr=toasts.slice();
+    o.adminErr=document.getElementById('admin-sync-info').innerHTML;
+    return o;
+   }catch(e){ return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]}; }
+   finally{ window.fetch=vf; window.toast=vt; S.url=vu; S.email=ve; }
+  });
+  await cx.close();
+
+  if(R.err) t('CLXXXII (suite) n\'a pas pu tourner', false, JSON.stringify(R));
+  else{
+    /* ⛔ ⑤ SANS LUI, LES SUIVANTS SERAIENT VERTS SUR UNE FILE VIDE. */
+    t('⛔ ⑥ la file a bien tenté la séance en attente (un toast est sorti)',
+      R.tOut.length===1, JSON.stringify(R.tOut));
+    /* ⛔⛔ ⑥ CE QU'IL A LU : plus de croix rouge pour un réseau lent. */
+    t('⛔⛔ ⑦ un délai dépassé se dit sans croix ni rouge, et dit que la séance est gardée',
+      R.tOut[0] && R.tOut[0].ty!=='error' && /gardée/.test(R.tOut[0].m) && !/❌/.test(R.tOut[0].m),
+      JSON.stringify(R.tOut[0]));
+    /* ⛔⛔ ⑦ ET LA PROMESSE : elle repassera — donc elle NE DOIT PAS être marquée synchronisée. */
+    t('⛔⛔ ⑧ … et la séance reste `synced:false` : rien n\'est perdu, elle repassera',
+      R.syncedApres===false, 'synced = '+JSON.stringify(R.syncedApres));
+    t('⛔ ⑨ la ligne de l\'Admin n\'est pas rouge pour un délai, et le dit',
+      !/--red/.test(R.adminOut) && /rien n'est perdu/.test(R.adminOut), R.adminOut.slice(0,160));
+    /* ⛔ ⑨ NON-RÉGRESSION : sinon « plus jamais de rouge » serait vert pour la mauvaise raison. */
+    t('⛔ ⑩ une VRAIE erreur garde sa croix rouge (on n\'efface pas la différence)',
+      R.tErr[0] && R.tErr[0].ty==='error' && /❌/.test(R.tErr[0].m) && /--red/.test(R.adminErr),
+      JSON.stringify(R.tErr[0]));
   }
 }
 

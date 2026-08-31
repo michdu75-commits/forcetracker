@@ -122,6 +122,11 @@ function _lectureAutorisee_(email, code){
 // qui commence par = + - @ (ou une tabulation) est exécutée comme formule quand on
 // ouvre le Sheet → on la préfixe d'une apostrophe (invisible, affichage identique).
 function _safeCell_(v) {
+  /* ⛔ Une case ABSENTE devient une case VIDE, explicitement (31/08/2026). `appendRow` le faisait
+     tout seul ; l'écriture en bloc (`setValues`, ft-v1077) est plus stricte et peut refuser un
+     `undefined` — c'est-à-dire transformer une vieille ligne incomplète en ÉCHEC COMPLET de la
+     séance. Le comportement ne change pas, il cesse seulement de dépendre du mode d'écriture. */
+  if (v === undefined || v === null) return '';
   if (typeof v === 'string' && /^[=+\-@\t\r]/.test(v)) return "'" + v;
   return v;
 }
@@ -1337,11 +1342,24 @@ function handleLogSession_(body) {
        qu'il s'étale sur les lignes, parce qu'un tableur en a besoin colonne par colonne.
        ⛔ Vide s'il est absent — une ligne anonyme reste anonyme, on ne devine pas. */
     const email = String(body.email || '').toLowerCase().trim().substring(0, 120);
-    rows.forEach(r => sheet.appendRow(_safeRow_([
+
+    /* ⛔⛔ UNE SEULE ÉCRITURE, PAS UNE PAR SÉRIE (31/08/2026 — la séance de Michel qui ne
+       partait pas, même en wifi). `appendRow` est un ALLER-RETOUR COMPLET vers le classeur :
+       une séance de 25 séries en faisait 25, et c'est le SEUL endroit de ce fichier dont la
+       durée grandit avec la taille des données. Le téléphone, lui, abandonne à 8 secondes.
+       ⚠️⚠️ ET L'ABANDON DU TÉLÉPHONE N'ARRÊTE PAS CE SCRIPT : les lignes s'écrivaient quand
+       même. La séance restait donc marquée « non synchronisée », et CHAQUE nouvel essai
+       re-collait les mêmes lignes dans l'onglet. *Un délai dépassé n'est pas un échec — c'est
+       une réponse qu'on n'a pas attendue.*
+       ⛔ Les lignes partent en BLOC, à la suite de la dernière : le nombre d'écritures ne
+       dépend plus du nombre de séries (1 séance = 1 écriture, qu'elle fasse 3 ou 60 séries). */
+    const matrice = rows.map(r => _safeRow_([
       r.date, r.exercise, r.set_num, r.type,
       r.kg, r.reps, r.volume, r.rm1,
       r.bw, r.gender, r.age, email
-    ])));
+    ]));
+    sheet.getRange(sheet.getLastRow() + 1, 1, matrice.length, EN_TETE.length)
+         .setValues(matrice);
 
     return json_({status:'ok', count: rows.length});
   } catch(err) {
