@@ -831,7 +831,13 @@ function doGet(e) {
       sleepLog:       data.sleepLog       || [],
       dayStateLog:    data.dayStateLog    || [],
       cycle:          data.cycle          || null,
-      nutritionPhase: data.nutritionPhase || 'charge',
+      /* ⚠️ ft-v1092 — CETTE CLÉ ANNONÇAIT UNE PHASE QUI ÉTAIT UNE CONSTANTE. `handleSaveProfile_`
+         range `nutritionPhase` dans `profile`, jamais à la racine : `data.nutritionPhase` était
+         donc toujours `undefined` et cette ligne rendait « charge » à tout le monde, quelle que
+         soit la vraie valeur — assise juste à côté, dans `profile`. Rien n'était cassé pour la
+         personne (l'app lit `profile.nutritionPhase`), mais un seul propriétaire (R2) : le jour
+         où un écran ou un outil lit cette clé, il ne repartira pas silencieusement en « charge ». */
+      nutritionPhase: (data.profile && data.profile.nutritionPhase) || 'charge',
       coachMemory:    (data.profile && data.profile.coachMemory) || '',
       healthInbox:    data.healthInbox    || [],
       healthDaily:    data.healthDaily    || []
@@ -864,7 +870,7 @@ function handleLoadProfilePost_(body) {
     programmes:     data.programmes     || [],
     exRestPref:     data.exRestPref     || {},
     exSwaps:        data.exSwaps        || {},
-    nutritionPhase: data.nutritionPhase || 'charge',
+    nutritionPhase: (data.profile && data.profile.nutritionPhase) || 'charge',   // idem — un seul propriétaire (ft-v1092)
     coachMemory:    (data.profile && data.profile.coachMemory) || '',
     healthInbox:    data.healthInbox    || [],
     healthDaily:    data.healthDaily    || []
@@ -1314,6 +1320,20 @@ function handleSaveProfile_(body) {
     if (body.goal2         !== undefined) profile.goal2         = _ps_(body.goal2,         profile.goal2);
     if (body.priorities    !== undefined) profile.priorities    = _pa_(body.priorities,    profile.priorities);
     if (body.workType      !== undefined) profile.workType      = _ps_(body.workType,      profile.workType);
+    /* 🍽️🍽️ ft-v1092 — LE MODE ALIMENTAIRE ET LE JEÛNE N'ÉTAIENT STOCKÉS NULLE PART.
+       L'app les ENVOIE depuis le 02/08 (setup.js) et les ATTEND au retour (`d.foodMode`,
+       `d.fasting`) — mais aucune ligne ne les écrivait ici : `grep body.foodMode` rendait 0.
+       Mesuré en aller-retour complet, même compte 84 kg : keto + jeûne 16/8 partent, reviennent
+       VIDES, et les glucides passent de 39 g à 432 g. Milo cesse en même temps de savoir qu'il
+       ne faut proposer ni pain, ni riz, ni petit-déjeuner. Rien à l'écran ne le dit : les cases
+       sont simplement revenues à blanc, ce qui ressemble à un compte neuf, pas à une perte.
+       ⛔⛔ ET SURTOUT PAS `_ps_` ICI, malgré la convention du dessus. Ces deux réglages se
+       DÉCOCHENT (`S.foodMode=(S.foodMode===v?'':v)`, screens.js) : '' est une DÉCISION de la
+       personne, pas un envoi vide. Avec le garde-fou « le vide ne gagne jamais », arrêter le
+       cétogène ne repartirait jamais, et un changement de téléphone le ferait revenir —
+       on remplacerait une perte par un réglage qu'on ne peut plus retirer. */
+    if (body.foodMode      !== undefined) profile.foodMode      = String(body.foodMode || '');
+    if (body.fasting       !== undefined) profile.fasting       = String(body.fasting  || '');
     if (body.nutritionPhase!== undefined) profile.nutritionPhase= _ps_(body.nutritionPhase,profile.nutritionPhase);
     if (body.mensCycleStart!== undefined) profile.mensCycleStart= _ps_(body.mensCycleStart,profile.mensCycleStart);
     if (body.contraception !== undefined) profile.contraception = _ps_(body.contraception, profile.contraception);
@@ -1465,6 +1485,23 @@ function handleSaveProfile_(body) {
       if (inDL.length === 0 && exDL.length > 0) {
         Logger.log('[FT GARDE-FOU dayStateLog] refusé : ' + exDL.length + ' entrées conservées');
       } else { existing.dayStateLog = inDL; }
+    }
+    /* 🎯🎯 ft-v1092 — `goalLog` ÉTAIT CASSÉ DES DEUX CÔTÉS, et c'est la panne que ft-v1010
+       disait avoir réparée. Le commentaire de `setup.js` l'annonce noir sur blanc : « sans ça,
+       changer de téléphone perdrait l'histoire de l'objectif (R4) ». Mesuré : elle la perd.
+       ① ICI, rien ne l'écrivait — `data.goalLog` était donc toujours vide, et les deux réponses
+          de `loadProfile` renvoyaient un `[]` constant.
+       ② Et côté app, la restauration le lisait dans `raw.profile` alors que la réponse le met
+          à la RACINE (corrigé dans `setup.js` : ses voisins `cycle`/`programmes`/`exSwaps`
+          montraient déjà la bonne forme — R8).
+       ⛔ Garde-fou identique à `weightLog`/`sessions` : un journal VIDE n'écrase jamais un
+       journal rempli. Un historique ne rétrécit pas tout seul ; s'il arrive vide, c'est un
+       appareil qui n'a pas encore restauré, pas une décision de la personne. */
+    if (body.goalLog !== undefined) {
+      const inGL = body.goalLog || [], exGL = existing.goalLog || [];
+      if (inGL.length === 0 && exGL.length > 0) {
+        Logger.log('[FT GARDE-FOU goalLog] refusé : ' + exGL.length + ' entrées conservées');
+      } else { existing.goalLog = inGL; }
     }
     if (body.exRestPref !== undefined) existing.exRestPref = body.exRestPref;
     if (body.exSwaps !== undefined) existing.exSwaps = body.exSwaps;

@@ -127,11 +127,16 @@ async function _retrySheetQueue(){
     if(res.ok){sess.synced=true;synced++;}
     else errors.push({date:sess.date,error:res.error||'erreur inconnue',timeout:!!res.timeout});
   }
-  if(synced>0){
-    try{localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));}catch(e){}
-  }
+  let _drapeauEcrit=true;
+  if(synced>0){ _drapeauEcrit=_ecrireSessionsLocal(); }   // ft-v1092 : l'échec n'est plus muet
   _updateAdminSyncInfo(errors);
-  if(synced>0&&errors.length===0)toast('☁️ '+synced+' séance'+(synced>1?'s':'')+' synchronisée'+(synced>1?'s':'')+' !','success');
+  /* ⛔ ft-v1092 — ON N'ANNONCE PAS UN SUCCÈS PROPRE SI LE DRAPEAU N'A PAS PU ÊTRE ÉCRIT.
+     Les séances SONT parties dans le classeur (c'est vrai, et on le dit), mais la marque
+     « déjà envoyée » n'a pas atteint le disque : au prochain lancement elles repartiront et
+     s'écriront en double. Le dire est la seule chose qui permette d'agir — un « ✅ » à cet
+     instant fabriquerait exactement les doublons qu'on a passé deux versions à nettoyer. */
+  if(synced>0&&!_drapeauEcrit)toast('⚠️ '+synced+' séance'+(synced>1?'s':'')+' envoyée'+(synced>1?'s':'')+', mais le téléphone n\'a pas pu le noter (stockage plein ?) — fais de la place, sinon elles repartiront','error');
+  else if(synced>0&&errors.length===0)toast('☁️ '+synced+' séance'+(synced>1?'s':'')+' synchronisée'+(synced>1?'s':'')+' !','success');
   else if(synced>0)toast('☁️ '+synced+'/'+(synced+errors.length)+' séances sync — '+errors.length+' échec(s)','info');
   /* ⛔ « ❌ Sync : Timeout (8s) » se lisait comme une séance PERDUE — Michel l'a lu comme ça, et
      il a eu peur pour ses données. Or rien n'est perdu : tout est en local, la séance repassera

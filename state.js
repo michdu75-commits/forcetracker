@@ -410,6 +410,27 @@ function _migrateFragileToHealth(){
     localStorage.setItem('ft4_fragmig1','1');
   }catch(e){console.warn('[FT fragmig]',e);}
 }
+/* ⛔⛔ ft-v1092 — POSER LE DRAPEAU « séance envoyée », ET SAVOIR SI L'ÉCRITURE A EU LIEU.
+   Les DEUX endroits qui écrivent `synced=true` — la fin de séance (`log.js`) et la file de
+   rattrapage (`tracking.js`) — faisaient `localStorage.setItem('ft4_sessions',…)` dans un
+   `catch(e){}` **VIDE**. Si l'écriture échoue (stockage plein : ce projet l'a déjà vécu côté
+   serveur, à 102 % de son réservoir), le drapeau ne vit plus qu'en MÉMOIRE :
+     · l'app annonce « Séance synchronisée ! » — donc tout va bien, en apparence ;
+     · au démarrage suivant, `S.sessions` est relu du disque avec `synced:false` ;
+     · `_retrySheetQueue` renvoie la séance, et le classeur reçoit une DEUXIÈME ligne.
+   👉 C'est un mécanisme de doublons distinct de celui de ft-v1077 (le délai de 8 s), et il est
+   plus vicieux : celui-là se répète à CHAQUE lancement tant que le disque est plein.
+   ⛔ Un seul propriétaire de cette écriture (R2), et elle DIT si elle a réussi — l'échec cesse
+   d'être muet, ce qui est tout l'objet du correctif (le reste est une décision d'affichage). */
+function _ecrireSessionsLocal(){
+  if(window._demoMode)return true;
+  try{ localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500))); return true; }
+  catch(e){
+    console.warn('[FT sessions] écriture locale refusée',e);
+    try{ if(typeof _logErr==='function')_logErr({m:'ft4_sessions non écrit : '+String((e&&e.message)||e).slice(0,120)}); }catch(_){}
+    return false;
+  }
+}
 function persist(){
   // Mode démo : on ne sauvegarde RIEN (ni local, ni cloud) — les vraies données restent figées telles quelles
   if(window._demoMode)return;

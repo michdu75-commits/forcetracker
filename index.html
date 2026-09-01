@@ -2177,7 +2177,12 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
       <div style="display:flex;align-items:flex-start;gap:12px">
         <span style="font-size:13px;font-weight:800;background:rgba(41,121,255,.1);border:1px solid rgba(41,121,255,.5);color:var(--blue);border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">É</span>
-        <div><div style="font-weight:700;font-size:14px">Échauffement</div><div style="font-size:13px;color:var(--t2);margin-top:2px">Série légère de préparation. <strong>Exclue du volume et des PRs.</strong> Timer 45 s. Précède automatiquement la 1ère série si tu as un historique.</div></div>
+        <!-- ⚠️ ft-v1092 — CE TEXTE DISAIT « Timer 45 s » DEPUIS ft-v1082, ET C'ÉTAIT FAUX.
+             Le repos d'un palier suit la charge du palier QUI VIENT (45 / 90 / 120 s). Les 5
+             autres surfaces qui décrivent ce chrono avaient été corrigées le 31/08 ; celle-ci,
+             non — et `coach.js` porte même un commentaire qui dit qu'elle est devenue fausse.
+             Un correctif posé sur 5 endroits sur 6 laisse la 6ᵉ contredire l'écran. -->
+        <div><div style="font-weight:700;font-size:14px">Échauffement</div><div style="font-size:13px;color:var(--t2);margin-top:2px">Série légère de préparation. <strong>Exclue du volume et des PRs.</strong> Timer <strong>selon la charge du palier suivant</strong> : 45 s tant que c'est léger, 90 s à partir de 75 % de ta charge de travail, 2 min à partir de 85 % — jamais plus que ton propre repos. Précède automatiquement la 1ère série si tu as un historique.</div></div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:12px">
         <span style="font-size:13px;font-weight:800;background:var(--bg3);border:1px solid rgba(240,240,255,.15);color:var(--t3);border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">—</span>
@@ -2196,21 +2201,24 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div style="font-weight:800;font-size:15px;margin-bottom:12px;text-align:center">Chaînes d'exercices</div>
       <div style="font-size:12px;color:var(--t2);margin-bottom:12px;line-height:1.5">Dans le footer d'un exercice, des boutons permettent d'enchaîner automatiquement plusieurs exercices ou séries :</div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px">
+        <!-- ⚠️⚠️ ft-v1092 — CETTE LISTE DÉCRIVAIT L'ANCIENNE INTERFACE, mesurée bouton par bouton.
+             Le pied d'un exercice porte TROIS boutons : « ⚡ Super », « 📉 Drop », « 📈 +% ».
+             L'aide en annonçait quatre, dont un « 📉 −10% » qui n'existe plus, et décrivait des
+             comportements disparus : « repos 20 s entre chaque palier » (mesuré : AUCUN repos
+             entre paliers, le code dit lui-même « on passe direct au suivant ») et « ~10 % »
+             (mesuré : le défaut d'un dropset est −20 %). La modale de configuration écrit
+             pourtant l'inverse de l'aide, dans la même app (R2). -->
         <div style="display:flex;align-items:flex-start;gap:10px">
-          <span style="font-size:12px;font-weight:800;background:rgba(255,109,0,.1);border:1px solid rgba(255,109,0,.4);color:var(--orange);border-radius:6px;padding:4px 8px;white-space:nowrap">⚡ Super Set</span>
+          <span style="font-size:12px;font-weight:800;background:rgba(255,109,0,.1);border:1px solid rgba(255,109,0,.4);color:var(--orange);border-radius:6px;padding:4px 8px;white-space:nowrap">⚡ Super</span>
           <div style="font-size:12px;color:var(--t2);line-height:1.5">Enchaîne 2+ exercices <strong>sans repos</strong>. Le timer se déclenche après le dernier exercice du tour, puis repart au 1er automatiquement.</div>
         </div>
         <div style="display:flex;align-items:flex-start;gap:10px">
           <span style="font-size:12px;font-weight:800;background:rgba(191,90,242,.1);border:1px solid rgba(191,90,242,.4);color:#BF5AF2;border-radius:6px;padding:4px 8px;white-space:nowrap">📉 Drop</span>
-          <div style="font-size:12px;color:var(--t2);line-height:1.5">Réduit le poids de <strong>~10%</strong> sans pause. Repos 20s automatique entre chaque palier. Crée autant de paliers que tu veux.</div>
+          <div style="font-size:12px;color:var(--t2);line-height:1.5"><strong>Dropset</strong> : tu choisis le nombre de paliers (2 à 5) et la baisse (−10 % à −30 %, <strong>−20 % par défaut</strong>). <strong>Aucun repos entre les paliers</strong> — on enchaîne direct, c'est le principe. Le chrono ne part qu'après le <strong>dernier</strong> palier.</div>
         </div>
         <div style="display:flex;align-items:flex-start;gap:10px">
-          <span style="font-size:12px;font-weight:800;background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.4);color:var(--green);border-radius:6px;padding:4px 8px;white-space:nowrap">📈 +10%</span>
-          <div style="font-size:12px;color:var(--t2);line-height:1.5"><strong>Pyramide montante</strong> : crée 2 séries à +10% et +21%. Poids pré-rempli, ajustable.</div>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:10px">
-          <span style="font-size:12px;font-weight:800;background:rgba(255,214,0,.1);border:1px solid rgba(255,214,0,.4);color:var(--gold);border-radius:6px;padding:4px 8px;white-space:nowrap">📉 −10%</span>
-          <div style="font-size:12px;color:var(--t2);line-height:1.5"><strong>Pyramide descendante</strong> : crée 2 séries à −10% et −19%. Poids pré-rempli, ajustable.</div>
+          <span style="font-size:12px;font-weight:800;background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.4);color:var(--green);border-radius:6px;padding:4px 8px;white-space:nowrap">📈 +%</span>
+          <div style="font-size:12px;color:var(--t2);line-height:1.5"><strong>Pyramide montante</strong> : mêmes réglages, dans l'autre sens (2 à 5 paliers, +10 % par défaut). Là, le <strong>repos normal s'applique</strong> entre les paliers. Poids pré-rempli, ajustable.</div>
         </div>
       </div>
     </div>

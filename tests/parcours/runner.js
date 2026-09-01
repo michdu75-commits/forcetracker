@@ -21151,7 +21151,7 @@ console.log('\n-- CXCIII. La suite du lot d\'audit (ft-v1087) --');
       F.sem8.derriere===true && F.sem8.aucuneSuite===true, JSON.stringify(F.sem8));
   }
 }
-/* == BLOC CXCIII - « null » DANS LE CHAMP KG, ET LE NaN QU'IL FABRIQUAIT (ft-v1090) ==
+/* == BLOC CXCVIII - « null » DANS LE CHAMP KG, ET LE NaN QU'IL FABRIQUAIT (ft-v1090) ==
    Michel, capture du compte d'Eline : son Pec Deck affichait `10 reps × null kg` sur deux
    series. Le detail d'une seance PASSEE rendait `value="${s.kg}"` sans garde — un poids
    inconnu s'ecrivait donc « null » en toutes lettres dans le champ.
@@ -21168,7 +21168,7 @@ console.log('\n-- CXCIII. La suite du lot d\'audit (ft-v1087) --');
    `value="${set.kg||''}"`. C'est le detail d'une seance passee qui ne l'avait pas.
    ⛔ ET UN 3e DEFAUT PARTAIT AVEC, de la famille de ft-v1057 (la virgule d'Eline) : `+this.value`
    rendait NaN sur « 62,5 ». Ce champ passe desormais par `numFR`, comme celui de la seance. */
-console.log('\n-- CXCIII. « null » dans le champ kg, et le NaN qu\'il fabriquait (ft-v1088) --');
+console.log('\n-- CXCVIII. « null » dans le champ kg, et le NaN qu\'il fabriquait (ft-v1090) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
@@ -21212,7 +21212,7 @@ console.log('\n-- CXCIII. « null » dans le champ kg, et le NaN qu\'il fabriqua
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
   });
-  if(N.err) t('CXCIII n\'a pas pu tourner', false, N.err);
+  if(N.err) t('CXCVIII n\'a pas pu tourner', false, N.err);
   else{
     t('⛔ le témoin a bien OUVERT le détail : les 3 champs de poids sont rendus',
       N.nbChamps===3, 'champs = '+JSON.stringify(N.champsKg));
@@ -21582,6 +21582,216 @@ console.log('\n-- CXCVII. Ce qu\'une fermeture au doigt emporte (ft-v1091) --');
     t('⛔ le témoin de contrôle : un check-in complet enregistre bien (sinon le stockage serait en cause)',
       F.temoinCheckinComplet===true, 'complet sauvé = '+F.temoinCheckinComplet);
   }
+}
+
+/* ═══ CXCIX. LA 3ᵉ PORTE DU RETOUR · CE QUI NE PARTAIT PAS AU CLOUD · LES TEXTES QUI MENTAIENT (ft-v1092) ═══
+   Michel : « continue à chercher des incohérences ». 3ᵉ passe.
+   ⛔⛔ ① LE BOUTON RETOUR ÉTAIT LA 3ᵉ PORTE, ET LA SEULE ENCORE OUVERTE. ft-v1091 a fait passer
+   le glissement du doigt par `_closeOverlayProper` ; le gestionnaire `popstate`, lui, faisait
+   `classList.remove('open')` en direct. Sur Android, le retour EST le geste de fermeture.
+   Mesuré : `closeBarcodeScanner` appelée **0 fois** (caméra allumée), `ft4_wn_seen` toujours
+   **null** (les pop-ups « une seule fois » reviennent à chaque démarrage), les 3 écrans
+   `data-no-dismiss` fermés quand même, et l'écran fermé n'était pas celui du dessus.
+   ⚠️ MA 1ʳᵉ SONDE MESURAIT AUTRE CHOSE : une pop-up de DÉMARRAGE (`ov-whatsnew`) reste ouverte
+   au chargement — elle était « celle du dessus », donc toutes mes mesures la visaient. D'où le
+   témoin ⓪ : on part d'un écran propre, et on le VÉRIFIE.
+   ⛔⛔ ② LE RÉGIME ET LE JEÛNE N'ÉTAIENT STOCKÉS NULLE PART. Envoyés depuis le 02/08, attendus
+   au retour — et aucune ligne de `Code.js` ne les écrivait. Mesuré en aller-retour complet :
+   keto + 16/8 partent, reviennent VIDES ; les glucides passent de 39 g à 432 g.
+   ⛔ ③ `goalLog` cassé DES DEUX CÔTÉS — c'est la panne que ft-v1010 disait avoir réparée.
+   ⛔ ④ ET LES TEXTES QUI ANNONÇAIENT UN CHIFFRE QUE LE CODE N'APPLIQUE PLUS (le « ~36 h » de
+   ft-v1086, cherché partout) : « Timer 45 s », « repos 20 s entre chaque palier », « 7 derniers
+   jours glissants », « 18 badges », et un bouton « 📉 −10% » qui n'existe plus. */
+console.log('\n-- CXCIX. La 3ᵉ porte du retour · le cloud · les textes périmés (ft-v1092) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const B=await pg.evaluate(async()=>{
+   try{
+    const o={}, wait=(ms)=>new Promise(r=>setTimeout(r,ms));
+    const back=async()=>{ window.dispatchEvent(new PopStateEvent('popstate')); await wait(60); };
+    const nettoyer=()=>[...document.querySelectorAll('.overlay.open')].forEach(x=>x.classList.remove('open'));
+    /* ⓪ TÉMOIN : on part d'un écran propre — sinon une pop-up de démarrage est « celle du
+       dessus » et tout le reste la mesure, elle, pas la cible. */
+    nettoyer(); o.ecranPropre=document.querySelectorAll('.overlay.open').length===0;
+    // ① TÉMOIN DE CONTRÔLE : la fermeture officielle appelle bien le closer.
+    let vus=[]; const vrai=window.closeBarcodeScanner;
+    window.closeBarcodeScanner=function(){vus.push(1);return vrai&&vrai.apply(this,arguments);};
+    let bc=document.getElementById('ov-bc-scan');
+    if(!bc){bc=document.createElement('div');bc.className='overlay';bc.id='ov-bc-scan';document.body.appendChild(bc);}
+    bc.classList.add('open'); window._closeOverlayProper(bc);
+    o.temoinFermetureOfficielle=vus.length===1;
+    // ② LE RETOUR coupe-t-il la caméra ?
+    nettoyer(); vus=[]; bc.classList.add('open'); await back();
+    o.retourCoupeCamera=vus.length===1;
+    // ③ data-no-dismiss : les 3 écrans doivent RESTER
+    const nd=[];
+    for(const id of ['ov-confirm','ov-session-end','ov-morpho-loading']){
+      const e=document.getElementById(id); if(!e){nd.push(id+':absent');continue;}
+      nettoyer(); e.classList.add('open'); await back();
+      nd.push(id+':'+(e.classList.contains('open')?'reste':'FERMÉ'));
+    }
+    nettoyer(); o.noDismiss=nd; o.noDismissTousRestes=nd.every(x=>x.endsWith(':reste'));
+    // ④ ORDRE : ov-confirm (z-index 10000) est AVANT ov-sess-detail dans le HTML
+    const a=document.getElementById('ov-confirm'), z=document.getElementById('ov-sess-detail');
+    if(a&&z){
+      nettoyer(); z.classList.add('open'); a.classList.add('open');
+      o.popAuraitPris=[...document.querySelectorAll('.overlay.open')].map(x=>x.id).pop();
+      o.vraimentAuDessus=(document.elementFromPoint(195,400)||{}).closest?((document.elementFromPoint(195,400).closest('.overlay')||{}).id):null;
+      await back();
+      o.dessousResteOuvert=z.classList.contains('open');   // le retour ne doit PAS l'avoir fermé
+      nettoyer();
+    }
+    // ⑤ MARQUEUR « déjà vu » : le « Quoi de neuf ». ⚠️ pas `ft4_guide_shown`, posé à
+    //    l'OUVERTURE du guide — le mesurer serait un témoin qui ne peut pas rougir.
+    const w=document.getElementById('ov-whatsnew');
+    if(w){
+      try{localStorage.removeItem('ft4_wn_seen');}catch(e){}
+      nettoyer(); w.classList.add('open'); await back();
+      o.retourPoseLeMarqueur=!!(()=>{try{return localStorage.getItem('ft4_wn_seen');}catch(e){return null;}})();
+      try{localStorage.removeItem('ft4_wn_seen');}catch(e){}
+      nettoyer(); w.classList.add('open'); window._closeOverlayProper(w);
+      o.temoinMarqueurOfficiel=!!(()=>{try{return localStorage.getItem('ft4_wn_seen');}catch(e){return null;}})();
+      nettoyer();
+    }
+    // ⑥ le barème d'échauffement, pour le texte de la carte de nouveauté
+    o.paliers={}; [50,60,80,90].forEach(T=>{try{o.paliers[T]=(_monteeEnCharge(T,2.5,'Squat à la Barre')||[]).length;}catch(e){o.paliers[T]='err';}});
+    o.nbBadges=(typeof BADGES!=='undefined')?BADGES.length:null;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+  await cx.close();
+  if(B.err) t('CXCIX (navigateur) n\'a pas pu tourner', false, B.err);
+  else{
+    t('⛔ le témoin ⓪ : on mesure sur un écran PROPRE (une pop-up de démarrage fausserait tout)',
+      B.ecranPropre===true, 'propre = '+B.ecranPropre);
+    t('⛔ le témoin de contrôle : la fermeture OFFICIELLE coupe bien la caméra',
+      B.temoinFermetureOfficielle===true, 'appelée = '+B.temoinFermetureOfficielle);
+    t('⭐⭐ le BOUTON RETOUR coupe la caméra (3ᵉ porte — sur Android c\'est LE geste de fermeture)',
+      B.retourCoupeCamera===true, 'coupée = '+B.retourCoupeCamera);
+    t('⭐⭐ … et il pose le marqueur « déjà vu » (sinon les pop-ups « une seule fois » reviennent)',
+      B.retourPoseLeMarqueur===true, 'marqueur = '+B.retourPoseLeMarqueur);
+    t('⛔ le témoin de contrôle : la fermeture officielle, elle, pose bien ce marqueur',
+      B.temoinMarqueurOfficiel===true, 'marqueur officiel = '+B.temoinMarqueurOfficiel);
+    t('⭐ un écran `data-no-dismiss` RESTE ouvert au retour (l\'attribut promet qu\'il bloque)',
+      B.noDismissTousRestes===true, JSON.stringify(B.noDismiss));
+    t('⭐⭐ le retour ne ferme plus l\'écran DU DESSOUS en laissant la confirmation flotter',
+      B.dessousResteOuvert===true, JSON.stringify({popAuraitPris:B.popAuraitPris,vraimentAuDessus:B.vraimentAuDessus,dessousOuvert:B.dessousResteOuvert}));
+    t('⛔ le témoin : `.pop()` et « au-dessus » désignent bien DEUX écrans différents (sinon rien à prouver)',
+      B.popAuraitPris!==B.vraimentAuDessus, JSON.stringify({pop:B.popAuraitPris,dessus:B.vraimentAuDessus}));
+  }
+
+  /* ⑦ LE CLOUD, dans un bac à sable qui exécute le VRAI `Code.js` (même patron que CXXV).
+     ⚠️ La sortie réseau est bloquée depuis ce conteneur : on mesure le CODE, pas la prod (R18). */
+  const vm=require('vm');
+  const bacASable=()=>{
+    const props={LECTURE_STRICTE:'off'};
+    const ctx={console,JSON,String,Number,Math,Date,Array,Object,isNaN,parseInt,parseFloat,
+      SpreadsheetApp:{openById:()=>({getSheetByName:()=>null,insertSheet:()=>null})},
+      PropertiesService:{getScriptProperties:()=>({getProperties:()=>props,
+        getProperty:(k)=>(props[k]===undefined?null:props[k]),
+        setProperty:(k,v)=>{props[k]=String(v);},deleteProperty:(k)=>{delete props[k];}})},
+      Utilities:{formatDate:()=>'2026-09-01',gzip:()=>{throw new Error('pas de gzip');},
+        ungzip:()=>{throw new Error('pas de gzip');},newBlob:()=>({getBytes:()=>[]}),
+        base64Encode:()=>'',base64Decode:()=>[]},
+      Logger:{log:()=>{}},GmailApp:{sendEmail:()=>{}},MailApp:{sendEmail:()=>{}},DriveApp:{},
+      UrlFetchApp:{},CacheService:{},LockService:{},Session:{},ScriptApp:{getProjectTriggers:()=>[]},
+      ContentService:{createTextOutput:(x)=>({setMimeType:()=>({_t:x}),_t:x}),MimeType:{JSON:'json'}}};
+    ctx.global=ctx; vm.createContext(ctx);
+    vm.runInContext(fs.readFileSync(path.join(ROOT,'Code.js'),'utf8'),ctx,{filename:'Code.js'});
+    return ctx;
+  };
+  let C={};
+  try{
+    const ctx=bacASable(), doPost=vm.runInContext('doPost',ctx);
+    const lire=(x)=>{try{return JSON.parse((x&&x._t)||'{}');}catch(e){return {};}};
+    const post=(o)=>lire(doPost({postData:{contents:JSON.stringify(o)}}));
+    const EM='essai@forcetracker.test';
+    post({action:'saveProfile',email:EM,name:'Testeur',bw:84,gender:'H',goal:'muscle',
+      nutritionPhase:'seche',foodMode:'keto',fasting:'16-8',
+      goalLog:[{date:'2026-07-15',from:'perte',to:'muscle'},{date:'2026-08-02',from:'muscle',to:'seche'}],
+      cycle:{startDate:'2026-08-01',weeks:6},programmes:[{name:'PPL'}]});
+    const r=post({action:'loadProfile',email:EM});
+    C.temoinName=(r.profile||{}).name; C.temoinCycle=!!r.cycle; C.temoinProg=(r.programmes||[]).length;
+    C.foodMode=(r.profile||{}).foodMode; C.fasting=(r.profile||{}).fasting;
+    C.goalLog=(r.goalLog||[]).length; C.phase=r.nutritionPhase;
+    // un journal VIDE ne doit pas effacer celui qui est en base
+    post({action:'saveProfile',email:EM,goalLog:[]});
+    C.goalLogApresVide=(post({action:'loadProfile',email:EM}).goalLog||[]).length;
+    // décocher le keto doit VRAIMENT partir : '' est une DÉCISION, pas un envoi vide
+    post({action:'saveProfile',email:EM,foodMode:'',fasting:''});
+    const r2=post({action:'loadProfile',email:EM});
+    C.ketoDecoche=(r2.profile||{}).foodMode===''&&(r2.profile||{}).fasting==='';
+  }catch(e){C.err=String(e);}
+  if(C.err) t('CXCIX (cloud) n\'a pas pu tourner', false, C.err);
+  else{
+    t('⛔ le témoin de contrôle : des champs voisins du MÊME envoi reviennent intacts',
+      C.temoinName==='Testeur'&&C.temoinCycle===true&&C.temoinProg===1,
+      JSON.stringify({name:C.temoinName,cycle:C.temoinCycle,programmes:C.temoinProg}));
+    t('⭐⭐ le RÉGIME et le JEÛNE survivent à un changement de téléphone (keto → 432 g de glucides)',
+      C.foodMode==='keto'&&C.fasting==='16-8', JSON.stringify({foodMode:C.foodMode,fasting:C.fasting}));
+    t('⭐⭐ … et les DÉCOCHER repart vraiment (sinon on ne pourrait plus arrêter le cétogène)',
+      C.ketoDecoche===true, 'décoché = '+C.ketoDecoche);
+    t('⭐ l\'histoire de l\'objectif (`goalLog`) revient — la panne que ft-v1010 disait réparer',
+      C.goalLog===2, 'entrées = '+C.goalLog);
+    t('⛔ … et un `goalLog` VIDE n\'efface jamais celui qui est en base',
+      C.goalLogApresVide===2, 'après envoi vide = '+C.goalLogApresVide);
+    t('⛔ `nutritionPhase` n\'est plus une constante « charge » à la racine de la réponse (R2)',
+      C.phase==='seche', 'phase = '+C.phase);
+  }
+
+  /* ⑧ LES TEXTES. ⚠️ On retire les commentaires AVANT de mesurer : le commentaire qui EXPLIQUE
+     un correctif contient forcément la phrase corrigée — c'est le faux positif de ft-v1078. */
+  const sansCom=(f)=>fs.readFileSync(path.join(ROOT,f),'utf8')
+    .replace(/<!--[\s\S]*?-->/g,'').replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+  const CORPUS=['index.html','coach.js','screens.js','constants.js','app.js','log.js'].map(sansCom).join('\n');
+  t('⛔ le témoin de contrôle : le corpus des textes visibles a VRAIMENT été lu',
+    CORPUS.length>400000 && /Tags de série/.test(CORPUS), 'taille = '+CORPUS.length);
+  t('⭐ plus aucune surface n\'annonce « Timer 45 s » pour un échauffement (le chrono fait 45/90/120)',
+    !/Timer\s*:?\s*45\s?s/i.test(CORPUS) && !/Timer\s+É\s*45s/i.test(CORPUS), '');
+  t('⭐ plus aucune surface ne promet un « repos 20s entre chaque palier » de dropset (il n\'y en a AUCUN)',
+    !/[Rr]epos\s*20\s?s.{0,30}palier/.test(CORPUS), '');
+  t('⭐ plus aucune surface ne décrit le volume par muscle « sur les 7 derniers jours »',
+    !/7 derniers jours glissants/.test(CORPUS), '');
+  t('⭐ plus aucune aide ne décrit un bouton « 📉 −10% » : le pied d\'exercice en porte 3 (Super · Drop · +%)',
+    !/📉 −10%/.test(sansCom('index.html')), '');
+  /* ⑨ TÉMOIN DE RÈGLE (façon ft-v1081) : un compteur écrit à la main se périme au premier ajout.
+     Celui-ci compare l'annonce au CONTENU RÉEL, il rougira au prochain badge. */
+  const nbBadges=(()=>{const s=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+    const i=s.indexOf('const BADGES=['); const j=s.indexOf('\n];',i);
+    return (s.slice(i,j).match(/\{id:'/g)||[]).length;})();
+  const annonces=[...CORPUS.matchAll(/(\d+)\s+badges\s+en\s+4\s+catégories/g)].map(m=>+m[1]);
+  t('⛔ le témoin : des textes annoncent bien un NOMBRE de badges (sinon la règle ne mesure rien)',
+    annonces.length>=2 && nbBadges>0, JSON.stringify({annonces,reel:nbBadges}));
+  t('⭐ chaque texte qui annonce un nombre de badges dit le VRAI nombre (il se périmait tout seul)',
+    annonces.every(n=>n===nbBadges), JSON.stringify({annonces,reel:nbBadges}));
+  /* ⑩ Le barème d'échauffement : la carte de nouveauté annonçait « 3 sous 80 kg, 4 au-delà ». */
+  if(B && B.paliers){
+    t('⛔ le témoin : le barème rend bien des paliers différents selon la charge',
+      B.paliers[50]!==B.paliers[90], JSON.stringify(B.paliers));
+    t('⭐ la carte « échauffement » annonce le barème RÉEL (2 à 50 kg · 3 de 60 à 80 · 4 dès 90)',
+      B.paliers[50]===2&&B.paliers[60]===3&&B.paliers[80]===3&&B.paliers[90]===4
+      && /2 paliers jusqu/.test(sansCom('constants.js')), JSON.stringify(B.paliers));
+  }
+  /* ⑪ RÈGLE : le drapeau « séance envoyée » ne s'écrit plus dans un `catch` vide.
+     Un échec muet fait repartir la séance au démarrage suivant → 2ᵉ ligne dans le classeur. */
+  const brut=(f)=>fs.readFileSync(path.join(ROOT,f),'utf8');
+  const catchVideSessions=['log.js','tracking.js'].filter(f=>
+    /try\{\s*localStorage\.setItem\('ft4_sessions'[^}]*\}catch\(e\)\{\}/.test(sansCom(f)));
+  t('⭐⭐ plus aucun `ft4_sessions` écrit dans un `catch` vide (un échec muet fabrique des doublons)',
+    catchVideSessions.length===0, JSON.stringify(catchVideSessions));
+  t('⛔ … et un seul propriétaire de cette écriture, qui DIT si elle a réussi (R2)',
+    /function _ecrireSessionsLocal/.test(brut('state.js'))
+    && /_ecrireSessionsLocal\(\)/.test(brut('log.js'))
+    && /_ecrireSessionsLocal\(\)/.test(brut('tracking.js')), '');
+  /* ⑫ RÈGLE : le gestionnaire du bouton retour ne choisit plus l'écran tout seul. */
+  const pop=(()=>{const s=sansCom('app.js'); const i=s.indexOf("addEventListener('popstate'"); return s.slice(i,i+700);})();
+  t('⛔ le retour passe par les DEUX propriétaires (`_overlayDuDessus` + `_closeOverlayProper`)',
+    /_overlayDuDessus/.test(pop) && /_closeOverlayProper/.test(pop) && /data-no-dismiss/.test(pop),
+    pop.replace(/\s+/g,' ').slice(0,200));
 }
 
 await b.close(); srv.close();

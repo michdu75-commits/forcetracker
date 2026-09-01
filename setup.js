@@ -2991,7 +2991,13 @@ function _applyRestoreData(raw){
      silence : on ne garde le journal sauvegardé que s'il est au moins aussi riche que celui
      du téléphone — même règle prudente que `weightLog` juste en dessous. */
   try{if(d.goal)S.goal=d.goal;}catch(e){console.warn('[FT restore] goal',e);}
-  try{const gl=d.goalLog||[];if(Array.isArray(gl)&&gl.length>=(S.goalLog||[]).length)S.goalLog=gl;}catch(e){console.warn('[FT restore] goalLog',e);}
+  /* 🎯 ft-v1092 — `d` vaut `raw.profile`, or le serveur renvoie `goalLog` à la RACINE de la
+     réponse. On lisait donc toujours `undefined` → `[]` → l'histoire de l'objectif était
+     perdue à chaque restauration, malgré ft-v1010. Ses voisins (`raw.cycle`, `raw.programmes`,
+     `raw.exSwaps`, quelques lignes plus bas) avaient déjà la bonne forme : la jumelle était
+     à portée de regard (R8). ⛔ `d.goalLog` reste en repli — une sauvegarde restaurée depuis un
+     FICHIER arrive à plat, et la retirer casserait ce chemin-là. */
+  try{const gl=(raw&&Array.isArray(raw.goalLog)&&raw.goalLog.length?raw.goalLog:(d.goalLog||[]));if(Array.isArray(gl)&&gl.length>=(S.goalLog||[]).length)S.goalLog=gl;}catch(e){console.warn('[FT restore] goalLog',e);}
   try{if(d.goal2!==undefined)S.goal2=d.goal2;}catch(e){console.warn('[FT restore] goal2',e);}
   try{if(Array.isArray(d.priorities))S.priorities=d.priorities;}catch(e){console.warn('[FT restore] priorities',e);}
   try{if(d.discipline)S.discipline=d.discipline;}catch(e){console.warn('[FT restore] discipline',e);}

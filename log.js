@@ -4153,8 +4153,10 @@ async function finishWorkout(){
     const res=await syncSheets(sess);
     if(res&&res.ok){
       if(S.sessions.length)S.sessions[0].synced=true;
-      try{localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));}catch(e){}
-      toast(`Séance synchronisée ! 🔥 ${calData.total} kcal`,'success');
+      /* ⛔ ft-v1092 — la jumelle de `_retrySheetQueue` (R8) : c'est le chemin le PLUS fréquent
+         de l'app, et c'est celui où un drapeau non écrit coûte le plus cher. */
+      if(_ecrireSessionsLocal())toast(`Séance synchronisée ! 🔥 ${calData.total} kcal`,'success');
+      else toast(`Séance envoyée, mais non notée sur le téléphone (stockage plein ?) — fais de la place`,'error');
     }else toast(`Séance sauvegardée ! 🔥 ${calData.total} kcal`,'success');
   }else{
     toast(`Séance terminée ! 🔥 ${calData.total} kcal brûlées`,'success');

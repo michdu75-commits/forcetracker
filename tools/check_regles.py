@@ -606,3 +606,44 @@ except Exception:
 print(f"✅ documents : aucun écrasement"
       + (f" ({len(suivis)} fichiers .md surveillés)" if git_ok and 'suivis' in dir() else
          " (⚠️ git indisponible — contrôle non effectué)"))
+
+
+# ── CONTRÔLE 12 — L'ARCHIVE NE PORTE JAMAIS DEUX FOIS LA MÊME ENTRÉE ─────────
+# ⚠️ POURQUOI IL MANQUAIT (01/09/2026, ft-v1092). Le contrôle 4 garde l'archive contre la
+# DISPARITION d'une entrée — il est né du script qui l'avait écrasée en perdant 297 entrées.
+# Il ne sait pas voir le défaut SYMÉTRIQUE : la même entrée écrite DEUX fois. Or c'est ce que
+# fabrique une fusion par union entre deux sessions — le journal de partage l'écrit déjà
+# (« une fusion par union ne ressuscite pas seulement ce qu'on a retiré : elle DÉDOUBLE ce
+# qu'on a modifié »), mais rien ne le mesurait ici.
+# MESURÉ le 01/09 : 7 entrées écrites deux fois (ft-v996, 1026, 1027, 1030, 1032, 1034, 1035),
+# les deux copies identiques à des lignes vides près — 123 lignes de recopie. Le contrôle 4
+# était vert pendant tout ce temps : aucune n'avait disparu.
+# ⛔ POURQUOI C'EST GRAVE PLUTÔT QUE SALE : le jour où l'une des deux copies est corrigée et
+# pas l'autre, l'archive raconte la même version de deux façons et rien ne dit laquelle fait
+# foi (R2). Et un `grep ft-v1030` rend deux endroits.
+# ⭐ L'EXCEPTION EST NOMMÉE, PAS IGNORÉE (R30) : ft-v887 a bien deux entrées, et ce ne sont
+# PAS des copies — l'une est l'en-tête d'origine (avec les mots de Michel), l'autre le récit
+# complet restitué le 19/08 sous un autre titre. Les fusionner perdrait les citations. On les
+# garde, et on écrit pourquoi ici plutôt que de laisser le contrôle rouge à vie.
+# ⚠️ Et le motif exige le tiret cadratin (`**ft-vNNN —`) : sans lui, une simple RÉFÉRENCE en
+# gras en début de ligne (« **ft-v1009** pendant ce travail… ») compte comme une entrée. Mon
+# premier détecteur l'a fait, et il a annoncé un 8ᵉ doublon qui n'existait pas.
+try:
+    _arch = (racine / "docs" / "JOURNAL-ARCHIVE.md").read_text(encoding="utf-8")
+    _vus = re.findall(r"(?m)^\*\*(ft-v\d+) —", _arch)
+    _EXCEPTIONS = {"ft-v887"}
+    _dbl = sorted({v for v in _vus if _vus.count(v) > 1} - _EXCEPTIONS,
+                  key=lambda x: int(x[5:]))
+    if _dbl:
+        print(f"❌ archive : {len(_dbl)} entrée(s) écrite(s) DEUX fois — "
+              + ", ".join(_dbl))
+        print("   → une fusion par union a dédoublé ces entrées. Vérifier que les deux copies "
+              "sont identiques (aux lignes vides près) AVANT d'en retirer une : si elles "
+              "diffèrent ailleurs, c'est un choix, pas un nettoyage — il revient à Michel.")
+        sys.exit(1)
+    print(f"✅ archive : {len(set(_vus))} entrées, aucune écrite deux fois"
+          + (f" ({len(_EXCEPTIONS)} exception documentée)" if _EXCEPTIONS else ""))
+except SystemExit:
+    raise
+except Exception:
+    pass                                        # jamais bloquer sur un pépin d'outillage

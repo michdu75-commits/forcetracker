@@ -5250,8 +5250,29 @@ window.addEventListener('popstate',()=>{
   // Blur l'input actif avant tout — évite le dialog iOS "annuler la saisie ?"
   if(document.activeElement&&(document.activeElement.tagName==='INPUT'||document.activeElement.tagName==='TEXTAREA'))document.activeElement.blur();
   history.pushState(null,'',location.href);
-  const ov=[...document.querySelectorAll('.overlay.open')].pop();
-  if(ov){ov.classList.remove('open');return;}
+  /* 🔴🔴 ft-v1092 — LE BOUTON RETOUR ÉTAIT LA 3ᵉ PORTE, ET ELLE N'AVAIT JAMAIS ÉTÉ FERMÉE.
+     ft-v1091 a fermé le glissement du doigt en faisant passer les fermetures par
+     `_closeOverlayProper` (qui appelle le vrai `close…()` de l'écran : il coupe la caméra,
+     pose le marqueur « déjà vu », arrête les minuteurs). Cette ligne-ci, elle, faisait
+     `classList.remove('open')` en direct — donc, MESURÉ dans un navigateur :
+       ① `closeBarcodeScanner` appelée 0 fois → LA CAMÉRA RESTE ALLUMÉE. Sur Android, le
+          bouton/geste retour EST le geste de fermeture : c'est la porte la plus empruntée
+          de toutes, et c'était la seule encore ouverte.
+       ② `ft4_guide_shown` toujours `null` après fermeture → les 18 écrans à marqueur (pop-ups
+          « une seule fois », guides, messages testeurs) reviennent à chaque démarrage — le
+          bug de ft-v629, rejoué par une autre porte (R15).
+       ③ les 3 écrans `data-no-dismiss` se fermaient quand même — dont « analyse en cours »,
+          marqué non-fermable EXPRÈS, dont le minuteur continue ensuite de repeindre un écran
+          caché pour le reste de la session.
+       ④ et il fermait le MAUVAIS écran (voir `_overlayDuDessus`).
+     ⛔ Un écran `data-no-dismiss` ne se ferme PAS au retour, et on ne ferme rien d'autre à sa
+     place : l'attribut promet que l'écran bloque, il doit bloquer aussi ce geste-là. */
+  const ov=(typeof _overlayDuDessus==='function')?_overlayDuDessus():[...document.querySelectorAll('.overlay.open')].pop();
+  if(ov){
+    if(ov.hasAttribute('data-no-dismiss'))return;
+    if(typeof _closeOverlayProper==='function')_closeOverlayProper(ov); else ov.classList.remove('open');
+    return;
+  }
   if(window._curScreen!=='home')navBack();
 });
 // Trick iOS Safari : garde les inputs "propres" → plus de dialog "Voulez-vous annuler la saisie ?"

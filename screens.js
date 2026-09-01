@@ -278,7 +278,7 @@ const _HELP_DATA={
       {i:'💪',t:'Le graphique affiche ton 1RM estimé (Brzycki) par exercice — sans avoir besoin de tester à l\'échec. Les boutons 3 mois / 6 mois / 1 an / Tout choisissent la période. Et tape un point de la courbe : tu vois la date + la charge, puis « Voir cette séance » t\'ouvre directement le détail de ce jour-là.'},
       {i:'🎯',t:'« Objectif de force » (sous le graphe d\'un exercice) : fixe le 1RM que tu vises (ex. Squat → 130 kg). Une barre de progression te montre où tu en es (« 87 % · encore 17 kg ») et une ligne verte repère apparaît sur ton graphe. C\'est TON objectif, tu le changes ou le retires quand tu veux (laisse vide + ✓).'},
       {i:'⚖️',t:'Log ton poids régulièrement (idéalement le matin à jeun) pour une courbe fiable. Tap sur une entrée pour la corriger — et dans la fenêtre de pesée, les flèches ‹ › (ou un glissement gauche/droite) passent d\'une pesée à l\'autre sans rouvrir le graphique.'},
-      {i:'🏅',t:'18 badges en 4 catégories : évolution, performance, streak, spécial. Vérifie l\'onglet Badges pour les débloquer.'},
+      {i:'🏅',t:'19 badges en 4 catégories : évolution, performance, streak, spécial. Vérifie l\'onglet Badges pour les débloquer.'},
       {i:'📋',t:'Tap sur une séance passée dans l\'historique pour voir et modifier les kg/reps de chaque série. Sur chaque exercice de cette séance, l\'icône 📊 t\'ouvre sa progression (ton poids sur les dernières séances). Sur chaque carte, le MUSCLE travaillé (ou le nom de la séance) est en gros titre.'},
       {i:'🔎',t:'Filtre ton historique : sous « Historique séances », tape un groupe musculaire (« Pectoraux », « Quadriceps »…) pour ne voir que ces séances-là. Tape « Tous » pour tout réafficher.'},
       {i:'📉',t:'Un plateau sur plusieurs semaines est normal — le progrès n\'est jamais linéaire. Varie les charges et les volumes.'},
@@ -567,6 +567,25 @@ function _closeOverlayProper(ov){
     if(fn&&typeof window[fn]==='function'){window[fn]();return;}   // fermeture propre (pose le marqueur)
   }catch(e){console.warn('[FT dismiss]',e);}
   if(ov)ov.classList.remove('open');                                // sinon, comportement d'origine
+}
+/* ⛔⛔ ft-v1092 — QUEL ÉCRAN EST « CELUI DU DESSUS » ? UN SEUL PROPRIÉTAIRE (R2).
+   Le bouton retour prenait `[...document.querySelectorAll('.overlay.open')].pop()`, c'est-à-dire
+   le DERNIER DANS LE FICHIER HTML — pas celui que la personne regarde. Mesuré : `ov-confirm`
+   porte `z-index:10000` et se trouve AVANT `ov-sess-detail` (z-index 200) dans `index.html`.
+   👉 Avec un détail de séance ouvert et la question « Supprimer ? » par-dessus, le retour
+   fermait le détail et LAISSAIT LA CONFIRMATION FLOTTER seule au-dessus de rien.
+   ⚠️ À z-index ÉGAL, c'est le dernier du HTML qui est peint au-dessus : le `>=` n'est pas une
+   coquille, il reproduit exactement l'ordre de peinture du navigateur. */
+function _overlayDuDessus(){
+  const ouverts=[...document.querySelectorAll('.overlay.open')];
+  if(!ouverts.length)return null;
+  let best=null,bz=-Infinity;
+  ouverts.forEach(o=>{
+    let z=parseInt(getComputedStyle(o).zIndex,10);
+    if(isNaN(z))z=0;
+    if(z>=bz){bz=z;best=o;}
+  });
+  return best;
 }
 function _initPullToDismiss(){
   let _p0y=null,_p0x=null,_pOv=null,_pCnt=null,_pLocked=false;
