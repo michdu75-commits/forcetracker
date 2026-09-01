@@ -21152,6 +21152,61 @@ console.log('\n-- CXCIII. La suite du lot d\'audit (ft-v1087) --');
   }
 }
 
+
+/* ═══ CXCIV. ON APPUIE SUR TOUS LES BOUTONS DE L'APP (ft-v1089) ══════════════════════════════
+   Michel : « lis le code et trouve des incohérences, moi je ne peux pas les voir ».
+   ⛔⛔ CE TÉMOIN NE LIT PAS LE CODE, IL APPUIE. Il a trouvé du premier coup ce qu'aucune
+   relecture n'avait vu en des mois : le bouton « 🔌 Tester la connexion » plantait à sa
+   PREMIÈRE ligne (`getElementById('setup-dot').className` sur un élément retiré du HTML), donc
+   il ne faisait **rien du tout** — pas de test, pas de message, aucune trace ailleurs.
+   ⚠️ Sa voisine `updSetup()` lisait le MÊME élément avec un `if(!d)return;` : *le même trou,
+   deux lectures, une seule protégée* — c'est ce qui rendait le défaut invisible.
+   ⛔ ON NE TESTE QUE LES APPELS SANS ARGUMENT (on ne saurait pas quoi passer) et on saute tout
+   ce qui pourrait détruire, envoyer ou payer — la liste noire est volontairement large.
+   ⚠️ ET LE COMPTE EST ÉPINGLÉ : sans lui, un témoin qui ne trouverait plus AUCUN bouton
+   passerait au vert en ne mesurant rien. */
+console.log('\n-- CXCIV. On appuie sur tous les boutons de l\'app (ft-v1089) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',
+    ft4_hascode:'1',ft4_email:'t@t.t'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async()=>{
+   try{
+    const DANGER=/reset|delete|suppr|vider|clear|restaur|logout|deconnect|factory|purge|efface|wipe|nettoy|migrat|compress|import|export|send|envoy|pay|premium|kofi|benchmark|bench|recal|backup/i;
+    const noms=new Set();
+    document.querySelectorAll('[onclick]').forEach(el=>{
+      const a=el.getAttribute('onclick')||'';
+      (a.match(/(?:^|[^\w.$])([\w$]+)\(\s*\)/g)||[]).forEach(m=>{
+        const n=m.replace(/^[^\w$]*/,'').replace(/\(\s*\)$/,'');
+        if(n && !DANGER.test(n)) noms.add(n);
+      });
+    });
+    const plantent=[], absentes=[];
+    for(const n of [...noms].sort()){
+      const f=window[n];
+      if(typeof f!=='function'){ absentes.push(n); continue; }
+      try{ const r=f(); if(r&&typeof r.then==='function') await r; }
+      catch(e){ plantent.push(n+' → '+String(e&&e.message||e).slice(0,60)); }
+      try{ document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open')); }catch(e){}
+    }
+    return {testes:noms.size, plantent, absentes};
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,160)};}
+  });
+  await cx.close();
+  if(F.err) t('CXCIV n\'a pas pu tourner', false, F.err);
+  else{
+    t('⛔⛔ le témoin appuie VRAIMENT sur des boutons (sinon il serait vert en ne mesurant rien)',
+      F.testes>=140, 'boutons sans argument trouvés = '+F.testes);
+    t('⭐⭐ AUCUN bouton de l\'app ne plante quand on appuie dessus',
+      F.plantent.length===0, JSON.stringify(F.plantent.slice(0,6)));
+    t('⛔ … et aucun ne pointe vers une fonction introuvable',
+      F.absentes.length===0, JSON.stringify(F.absentes.slice(0,6)));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
