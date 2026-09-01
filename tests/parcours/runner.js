@@ -20826,13 +20826,18 @@ console.log('\n-- CLXXXIX. Records recalculés · le vrai message du serveur (ft
       {name:'Rowing Hammer Strength',sets:[
         {kg:60,reps:8,done:true,type:'N'},
         {kg:120,reps:6,done:false,type:'N'}]},         // serie NON FAITE → doit etre IGNOREE
-      {name:'Pec Deck',sets:[{kg:75,reps:10,done:true,type:'N'}]}
+      {name:'Pec Deck',sets:[{kg:75,reps:10,done:true,type:'N'}]},
+      /* ⭐ SON `Developpe Decline` : l'app ne le voit qu'a partir du 28/08, son record est du 14/06. */
+      {name:'Développé Décliné',sets:[{kg:90,reps:5,done:true,type:'N'}]}
     ]}]),
     ft4_prs:JSON.stringify({
       'Tirage Poulie Haute (Lat Pulldown)':{kg:66,reps:8,rm1:81.9,date:'2026-08-28'}, // juste
       'Rowing Hammer Strength':{kg:66,reps:8,rm1:81.9,date:'2026-08-28'},             // FANTOME
       'Pec Deck':{kg:60,reps:10,rm1:80,date:'2026-07-01'},                            // sous-evalue
-      'Squat Barre':{kg:100,reps:5,rm1:112.6,date:'2026-05-01'}                       // AUCUNE seance
+      'Squat Barre':{kg:100,reps:5,rm1:112.6,date:'2026-05-01'},                      // AUCUNE seance
+      /* ⛔⛔ SON CAS DU 01/09 : record ANTERIEUR a la plus ancienne seance de cet exercice.
+         L'app est nee le 17 juin ; ce record du 14/06 vient d'un import. Invérifiable → intouchable. */
+      'Développé Décliné':{kg:80,reps:10,rm1:106.7,date:'2026-06-14'}
     })}));
   await pg.goto('http://localhost:'+PORT+'/index.html');
   await pg.waitForTimeout(2300);
@@ -20842,6 +20847,9 @@ console.log('\n-- CLXXXIX. Records recalculés · le vrai message du serveur (ft
     const r=_prsDepuisSeances();
     o.calc=Object.keys(r.calc).sort();
     o.sansSeance=r.sansSeance.map(x=>x.nom);
+    o.horsHisto=r.horsHistorique.map(x=>x.nom);
+    o.horsDetail=r.horsHistorique.map(x=>({n:x.nom, d:x.date, p:x.premiere}));
+    o.declineApres=(S.prs['Développé Décliné']||{}).rm1;
     o.corriges={}; r.corriges.forEach(c=>{ o.corriges[c.nom]=Math.round(c.apres.rm1*10)/10; });
     o.nouveaux=r.nouveaux.map(x=>x.nom);
     o.intacts=r.intacts.slice().sort();
@@ -20875,8 +20883,14 @@ console.log('\n-- CLXXXIX. Records recalculés · le vrai message du serveur (ft
   if(R.err) t('CXCII n\'a pas pu tourner', false, R.err);
   else{
     /* ⛔ ① Le temoin voit-il quelque chose ? Sinon tous les « rien » seraient verts sur du vide. */
-    t('⛔ le témoin a bien LU l\'historique : les 3 exercices sont recalculés',
-      R.calc.length===3, JSON.stringify(R.calc));
+    /* ⚠️ CE TÉMOIN A ROUGI SUR MON PROPRE AJOUT : il figeait « 3 exercices », et j'en ai mis
+       un 4ᵉ dans la fixture (le `Développé Décliné` de Michel). *Un témoin visé sur un COMPTE
+       se périme au premier ajout légitime* — 3ᵉ fois cette semaine, après le R2 du Gardien et
+       le bloc LXXXI. Il vise donc les NOMS attendus : il rougit si l'un d'eux cesse d'être
+       recalculé, et pas si la fixture s'enrichit. */
+    t('⛔ le témoin a bien LU l\'historique : les exercices de la fixture sont recalculés',
+      ['Tirage Poulie Haute (Lat Pulldown)','Rowing Hammer Strength','Pec Deck','Développé Décliné']
+        .every(n=>R.calc.indexOf(n)>=0), JSON.stringify(R.calc));
     /* ⭐⭐ ② LE TEMOIN QUI COMPTE LE PLUS. */
     t('⭐⭐ un record SANS AUCUNE SÉANCE n\'est ni corrigé ni supprimé (Squat Barre intact à 112,6)',
       R.sansSeance.length===1 && R.sansSeance[0]==='Squat Barre'
@@ -20885,6 +20899,23 @@ console.log('\n-- CLXXXIX. Records recalculés · le vrai message du serveur (ft
     /* ⭐⭐ ③ Son fantome. */
     t('⭐⭐ SON CAS : le fantôme du Rowing Hammer tombe de 81,9 à sa vraie perf (74,5)',
       R.corriges['Rowing Hammer Strength']===74.5, JSON.stringify(R.corriges));
+    /* ⛔⛔ ③bis LE TROU TROUVE PAR MICHEL SUR SES VRAIES DONNEES (01/09), et c'est le
+       temoin qui compte le plus de cette correction : la regle « aucune seance DU TOUT »
+       ne suffisait pas. Son `Developpe Decline` a des seances RECENTES, donc il echappait
+       a la protection — mais son record est du 14/06, alors que l'app est nee le 17 juin. */
+    t('⭐⭐ SON 2ᵉ CAS : un record ANTÉRIEUR à la plus ancienne séance de son exercice est INTOUCHABLE',
+      R.horsHisto.length===1 && R.horsHisto[0]==='Développé Décliné'
+      && !('Développé Décliné' in R.corriges) && R.declineApres===106.7,
+      JSON.stringify({hors:R.horsDetail, apres:R.declineApres}));
+    t('⭐ … et l\'écran le DIT, avec sa date et celle de la 1ʳᵉ séance connue (un refus muet ressemble à une absence de problème)',
+      /Gardés tels quels — plus vieux que ton historique/.test(R.txt)
+      && /2026-06-14/.test(R.txt) && /2026-08-28/.test(R.txt), R.txt.slice(-420));
+    /* ⛔ ET LA PROTECTION NE VAUT QUE POUR UNE BAISSE : une montee est prouvee par
+       l'historique, elle ne detruit rien. Le Pec Deck (record du 01/07, seance du 28/08,
+       donc lui aussi « anterieur ») doit MONTER normalement. */
+    t('⛔ la protection ne bloque QUE les baisses : le Pec Deck, tout aussi « ancien », monte quand même',
+      R.corriges['Pec Deck']===100 && R.horsHisto.indexOf('Pec Deck')<0,
+      JSON.stringify({pecDeck:R.corriges['Pec Deck'], hors:R.horsHisto}));
     /* ⛔ ④ R2 : la regle d'eligibilite est CELLE DE LA PRODUCTION, pas une copie. */
     t('⛔ R2 : l\'échauffement à 200 kg et la série non faite à 120 kg sont IGNORÉS (`_serieFaitFoiPourPR`)',
       R.tirageCalc===81.9 && R.rowingCalc===74.5,
@@ -20987,7 +21018,7 @@ console.log('\n-- CXCII. Les quatre petits défauts de l\'audit (ft-v1086) --');
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
   });
   await cx.close();
-  if(F.err) t('CLXXXIX n\'a pas pu tourner', false, F.err);
+  if(F.err) t('CXCII n\'a pas pu tourner', false, F.err);
   else{
     /* ⛔ Sans ça, tous les « cohérent » seraient verts en ne mesurant rien. */
     t('⛔ le témoin voit bien deux comportements DIFFÉRENTS pour H et F (sinon rien à mesurer)',

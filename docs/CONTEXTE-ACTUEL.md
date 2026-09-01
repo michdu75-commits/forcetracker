@@ -6,7 +6,20 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1085`.
+- **Version en ligne (live) :** `ft-v1088`.
+- 🛡️ **UN RECORD PLUS VIEUX QUE L'HISTORIQUE DE SON EXERCICE EST INTOUCHABLE** (ft-v1087).
+  ⛔⛔ **Trouvé par Michel sur ses vraies données**, aperçu à l'appui, deux heures après
+  ft-v1085. La règle ③ ne protégeait que *« aucune séance DU TOUT »* — trop étroit : son
+  `Développé Décliné` porte un record du **14/06**, or **l'app est née le 17 juin**. La séance
+  qui l'a fait ne peut pas être dans l'historique ; mais l'exercice a des séances plus
+  **récentes**, donc il échappait à la protection. ***Appliquer aurait effacé un vrai record.***
+  👉 Un record **antérieur à la plus ancienne séance de son exercice** — ou **sans date** — est
+  invérifiable par construction : gardé tel quel, affiché à part avec les deux dates.
+  ⛔ **La protection ne vaut que pour une BAISSE** (une montée est prouvée par l'historique) :
+  son `Pec Deck`, tout aussi ancien, monte toujours.
+  ⭐ **La leçon** : le garde-fou existait, était nommé et testé — il ne couvrait qu'**un** des
+  deux chemins. *C'est l'aperçu montré à quelqu'un qui connaît ses données qui a trouvé
+  l'autre* (**R29** : montrer avant d'écrire n'est pas une politesse, c'est un contrôle).
 - 🏅 **RECALCULER LES RECORDS DEPUIS L'HISTORIQUE** (ft-v1085, admin). Un faux record **mesuré**
   dans ses données : `Rowing Hammer Strength` portait **exactement les chiffres de son Tirage
   Poulie Haute**, même date — le fantôme du renommage de ft-v1073. Faux **vers le haut**, donc
@@ -43,7 +56,7 @@
   ⏭️ **LE BANC D'ESSAI N'A PAS TOURNÉ** : Worker en 403, Apps Script en 403, aucune clé API.
   On sait que la règle **arrive** ; pas qu'elle est **suivie**. **Seul Michel peut lancer la
   passe** (Profil → Admin → 🧪, devis affiché avant confirmation).
-- 🧹⭐⭐ **LA SUITE DU LOT D'AUDIT — et l'un des quatre est RÉFUTÉ** (ft-v1087).
+- 🧹⭐⭐ **LA SUITE DU LOT D'AUDIT — et l'un des quatre est RÉFUTÉ** (ft-v1088).
   ⛔⛔ **① La projection ne regardait que le squat** : un soulevé de terre à **180 kg** était
   projeté comme un **débutant total** (+10,8 %). `getLevel` (dormante depuis ft-v385) réveillée
   après avoir cherché POURQUOI elle dormait (R30) — l'indice 4 est enfin atteignable.
@@ -85,7 +98,7 @@
   **E′ = 1/39.** ⚠️ Et un aller-retour instructif : desserrer « exactement 2 » en « au moins 2 »
   faisait sonner un **full body volontaire** — le fait faux qu'on avait nommé (R29/P4).
   👉 Détail chiffré et limites : `IDEES-FUTURES.md` (§ « une séance sans sujet »).
-- **Version en ligne (live) :** `ft-v1087`. ✅ **Les deux déploiements sont VERTS** (site + backend
+- ✅ **Les deux déploiements de ft-v1087 sont VERTS** (site + backend
   Apps Script) — la route de nettoyage est réellement en ligne, vérifié dans les Actions.
 - ⏭️ **CE QUI ATTEND MICHEL AU RÉVEIL** (rien d'urgent, rien de cassé) :
   ① **le nettoyage des doublons** — Profil → Admin → « 🧹 Voir ce qui partirait », puis le bouton

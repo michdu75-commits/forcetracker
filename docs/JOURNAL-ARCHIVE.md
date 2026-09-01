@@ -5372,3 +5372,30 @@ Tests : **parcours 1952/1952** (+3, dans le bloc **CLXXI**), calculs 266/266, mu
 
 **📣 RÈGLE D'OR #11 — les points 2 à 5, et PAS de pop-up.** Point rouge `progres-repli` sur l'onglet Progrès · aide `?` · aide détaillée · diapo du Guide **sans image exprès** (une capture montrerait l'historique de quelqu'un d'autre). ⛔ **La pop-up ne se mérite pas** : rien à faire, et le repère n'est pas perdu — les deux titres restent à l'écran, à un tap de leur contenu.
 Tests : **parcours 1945/1945** (+6, bloc **CLXXIII**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données classées 0 trou. ⛔ **Le témoin ① existe pour que les cinq autres mesurent quelque chose** : la carte volume doit être **pleine** (8 lignes) dans la fixture — sinon on mesurerait un écran plus court que le sien (famille **§24**). ⭐⭐ **Le ⑥ est celui qui compte le plus** : déplier est **retenu** et **survit à un re-rendu complet** — sans lui, le repli enterrerait les deux cartes. ⭐ **Vérifié à l'écran** (2 captures : repliées et dépliées), **0 erreur JS**, 🔴 **bouton central `[139, 792, 56, 44]`**. Fichiers : `index.html`, `setup.js`, `style.css`, `constants.js`, `screens.js`, `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1067. |
+
+
+**ft-v1068 — ⚖️ UN SEUL PROPRIÉTAIRE DE « COMBIEN J'EN AI PRIS ? »** — Michel, après une journée à trouver le même défaut sur des écrans différents : *« que ce soit le code-barres, manuel, avec l'IA ou avec l'étiquette, il faut qu'il y ait une **cohérence** quand on change la dose, peu importe le produit — même s'il faut qu'on crée un algorithme exprès »*.
+
+**⭐⭐ L'ALGORITHME EXISTAIT DÉJÀ — QUATRE FOIS, ET C'EST EXACTEMENT LE PROBLÈME.** `valeurs = base × (saisie / référence)`. 👉 ***Un pour-100 g n'est pas un autre calcul : c'est CE calcul avec une référence de 100.*** Quatre écritures de la même formule, sur deux écrans, dont les comportements ont divergé **sans que personne ne le décide**. Mesuré avant d'y toucher : **6 fonctions de rescale, 6 champs de saisie, 3 états** pour une seule question.
+
+**⛔⛔ LE MÊME GESTE DONNAIT TROIS RÉSULTATS — vider le champ de quantité :**
+
+| route | avant | après |
+|---|---|---|
+| pour-100 g · ajout (code-barres, étiquette) | les 4 valeurs à **zéro** | référence |
+| pour-100 g · modifier | **zéro**, et le contrôle de cohérence ne se rafraîchissait même pas | référence |
+| proportion · ajout (IA, poids déclaré) | référence *(corrigé en ft-v1061)* | référence |
+| proportion · modifier | **valeurs orphelines** | référence |
+
+***Zéro est un mensonge — personne n'a mangé zéro — et une valeur orpheline en est un autre.*** ⚠️ **Et la ligne « proportion · modifier » est la jumelle de ft-v1061, encore vivante ce soir** : **4ᵉ fois de la journée** qu'un correctif était posé d'un seul côté (R8). Cette fois elle n'a pas été trouvée par Michel — elle est sortie de la mesure.
+
+**⛔ ET LA VIRGULE D'ELINE MANQUAIT ENCORE UNE ROUTE.** `af-bc-grams` était le **seul** champ de quantité resté en `type="number"` — donc le seul à jeter *« 62,5 »*. C'est la route du **code-barres et de l'étiquette**, c'est-à-dire la plus fiable, et ft-v1057 l'avait manquée : son témoin refusait `inputmode="decimal"` sur un `type="number"`, or celui-ci était en `inputmode="numeric"` et passait à travers.
+
+**⛔⛔ ET LE TÉMOIN DE ft-v966 M'A RATTRAPÉ EN PLEINE UNIFICATION**, sur une nuance qui vaut la version : mon repli faisait annoncer *« → pour tes 100 g »* au-dessus d'un champ **vide**. 👉 ***Les VALEURS se replient sur la référence — elles doivent bien correspondre à quelque chose, et « 100 g » est écrit juste au-dessus — mais la PHRASE, qui dit « pour TES n g », se tait.*** Annoncer un total pour une quantité que personne n'a tapée, c'est le voisinage muet retourné dans l'autre sens.
+
+**⭐ CE QUE LE BLOC DE TÉMOINS VÉRIFIE N'EST PAS UN CHIFFRE, C'EST UNE ÉGALITÉ DE COMPORTEMENT.** Un témoin qui figerait *« 243 kcal »* deviendrait faux au premier changement de fixture ; celui-ci reste vrai — et c'est lui qui empêche les 4 routes de re-diverger. ⛔ Le repli est vérifié comme étant **la référence de chaque route** (100 g pour un pour-100 g, la dose déclarée sinon), jamais un nombre magique commun.
+
+**⚠️ UNE DIFFÉRENCE SUBSISTE, ET ELLE EST LÉGITIME** : à 62,5 g, la route code-barres rend **243** kcal et la route proportion **244**. Ce n'est pas une incohérence — la première part du pour-100 g **exact** (388,5), la seconde des valeurs **arrondies** que la personne voit (117 pour 30 g). *La route du code-barres est simplement plus précise, et c'est un argument de plus pour elle.*
+
+**📣 RÈGLE D'OR #11 — NI POP-UP NI POINT ROUGE.** Rien n'apparaît, rien ne bouge : des comportements qui différaient deviennent identiques. Il n'y a rien à apprendre — c'est précisément le but.
+Tests : **parcours 1948/1948** (+6, bloc **CLXXII**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 106 classées 0 trou. ⭐ **Le premier témoin est celui qui empêche les autres d'être verts sur du vide** : les 4 routes rendent bien des valeurs de départ non nulles. Fichiers : `app.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1068. |

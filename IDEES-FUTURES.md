@@ -15,7 +15,7 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 contexte de Milo annonçait *« Objectif : tenir 3 semaines »* **et** *« prépare-le/la à la suite du
 parcours »*. 👉 *Trois mois plus tard, il redemandait de « tenir 3 semaines » à quelqu'un qui
 s'entraîne depuis douze, et le préparait à une suite qui n'existe pas.*
-✅ **Ce qui est fait (ft-v1087)** : après 3 semaines, Milo **cesse** de redemander l'objectif
+✅ **Ce qui est fait (ft-v1088)** : après 3 semaines, Milo **cesse** de redemander l'objectif
 initial et **n'annonce plus aucune étape suivante**. On arrête de promettre, on ne construit pas.
 ⏭️ **La question ouverte** : y a-t-il une étape 2, et laquelle ? *(monter en fréquence · passer aux
 barres · un premier cycle de force ?)* — c'est une brique produit, pas un correctif.
@@ -24,7 +24,7 @@ barres · un premier cycle de force ?)* — c'est une brique produit, pas un cor
 Le générateur ajoutait une abduction et un hip thrust sur le seul test `gender==='F'` — une
 **supposition sur la personne**, alors que `S.priorities` existe (Profil → Objectif), part au
 cloud et **atteint même Milo** (**R4**).
-✅ **Ce qui est fait (ft-v1087)** : une priorité déclarée décide, **quel que soit le sexe** — un
+✅ **Ce qui est fait (ft-v1088)** : une priorité déclarée décide, **quel que soit le sexe** — un
 homme qui coche « Fessiers » reçoit enfin le hip thrust, ce qui n'arrivait jamais.
 ⏭️ **CE QUI N'EST PAS TRANCHÉ** : que reçoit une femme qui **n'a rien déclaré** ? Aujourd'hui, le
 comportement d'avant est conservé à l'identique. ⚠️ *Le retirer serait décider à sa place dans
