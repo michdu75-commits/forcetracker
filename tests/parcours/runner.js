@@ -658,7 +658,16 @@ t('plus AUCUN vieux prix (« 4,99 » / « 2 mois ») dans tout le frontend — m
 t('comptes compressés : pack auto-vérifié + les 3 lecteurs décompressent + migration compressStore',
   (()=>{const s=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
         return /_packUser_\(JSON\.stringify\(data\)\)/.test(s)
-            && /_unpackUser_\(PropertiesService\.getScriptProperties\(\)\.getProperty\(userKey_\(email\)\)\)/.test(s)
+            /* ⚠️ CE TÉMOIN FIGEAIT L'EXPRESSION LITTÉRALE de la lecture — il a rougi le
+               01/09 quand `loadUserData_` a sorti l'accesseur dans une variable (`sp`), sur
+               du code parfaitement correct. *Un témoin visé sur une FORME se périme au premier
+               remaniement.* Il vise donc la GARANTIE : dans `loadUserData_`, la clé du compte
+               n'est jamais lue sans passer par `_unpackUser_`. */
+            && (()=>{ const f=s.slice(s.indexOf('function loadUserData_'));
+                      const corps=f.slice(0, f.indexOf('\n}'));
+                      const lectures=(corps.match(/getProperty\(userKey_\(email\)\)/g)||[]).length;
+                      const enveloppees=(corps.match(/_unpackUser_\([^)]*getProperty\(userKey_\(email\)\)/g)||[]).length;
+                      return lectures>0 && lectures===enveloppees; })()
             && (s.match(/JSON\.parse\(_unpackUser_\(/g)||[]).length>=2
             && /_unpackUser_\(gz\) === json/.test(s)
             && /action === 'compressStore'/.test(s);})());
@@ -21585,7 +21594,7 @@ console.log('\n-- CXCVII. Ce qu\'une fermeture au doigt emporte (ft-v1091) --');
 }
 
 
-/* == BLOC CXCVII - LES DONNEES DE SANTE VIVENT DANS LEUR PROPRE CLE (ft-v1091) ==
+/* == BLOC CXCVIII - LES DONNEES DE SANTE VIVENT DANS LEUR PROPRE CLE (ft-v1091) ==
    Idee de Michel : « on peut pas creer une section sante pour eviter justement que tout se
    trouve dans le meme JSON ? ».
    ⭐⭐ ELLE EST PLUS FORTE QUE LA PROMESSE QU'ON VENAIT D'ECRIRE : la politique dit que les
@@ -21593,7 +21602,7 @@ console.log('\n-- CXCVII. Ce qu\'une fermeture au doigt emporte (ft-v1091) --');
    garantie de CONSTRUCTION : l'outil ne l'a pas en main.
    ⛔⛔ C'EST LA COUCHE DE STOCKAGE, donc les temoins ne mesurent pas la fonctionnalite, ils
    mesurent QU'ON NE PERD RIEN (regle d'or #3). */
-console.log('\n-- CXCVII. La santé vit dans sa propre clé, sans rien perdre (ft-v1091) --');
+console.log('\n-- CXCVIII. La santé vit dans sa propre clé, sans rien perdre (ft-v1091) --');
 {
   const src=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
   const vm=require('vm');
@@ -21636,9 +21645,22 @@ console.log('\n-- CXCVII. La santé vit dans sa propre clé, sans rien perdre (f
     const avant=compte();
     vm.runInContext('saveUserData_',ctx)(MAIL, avant);
     const apres=vm.runInContext('loadUserData_',ctx)(MAIL);
-    t('⭐⭐ ALLER-RETOUR : le compte rechargé est IDENTIQUE à celui qu\'on a sauvé (0 perte)',
-      JSON.stringify(apres)===JSON.stringify(avant),
-      'diff : '+JSON.stringify(apres).slice(0,180));
+    /* ⚠️ MON PROPRE TÉMOIN A ROUGI, ET IL AVAIT TORT : il comparait deux CHAÎNES. La santé
+       est réappliquée À LA FIN au rechargement, donc l'ORDRE des clés change — le CONTENU,
+       lui, est intact. *« Rien n'est perdu » n'est pas « même ordre de clés »* : comparer des
+       chaînes mesurait plus que la garantie, et aurait rougi pour toujours. On compare donc
+       le contenu, clé par clé, en profondeur. */
+    const memeContenu=(a,b)=>{
+      if(a===b) return true;
+      if(typeof a!=='object'||typeof b!=='object'||a===null||b===null) return false;
+      const ka=Object.keys(a).sort(), kb=Object.keys(b).sort();
+      if(ka.length!==kb.length||ka.some((k,i)=>k!==kb[i])) return false;
+      return ka.every(k=>memeContenu(a[k],b[k]));
+    };
+    const manquants=Object.keys(avant.profile).filter(k=>!(k in (apres.profile||{})));
+    t('⭐⭐ ALLER-RETOUR : le compte rechargé porte EXACTEMENT les mêmes données (0 perte)',
+      memeContenu(apres,avant),
+      'champs manquants : '+JSON.stringify(manquants)+' · '+JSON.stringify(apres).slice(0,140));
     /* ⛔ Le témoin voit-il quelque chose ? Sinon « identique » serait vrai sur deux vides. */
     t('⛔ le témoin a bien SAUVÉ quelque chose (2 clés écrites)',
       Object.keys(m.st).length===2 && ('u_'+MAIL in m.st) && ('h_'+MAIL in m.st),
