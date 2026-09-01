@@ -6,7 +6,20 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1083`.
+- **Version en ligne (live) :** `ft-v1084`.
+- 🦴 **UNE SÉANCE A UN SUJET — MILO EST ENFIN PRÉVENU** (ft-v1084). Michel : *« j'ai pas envie
+  que Milo me repropose une séance bizarre »* + *« ça me fait dépenser de l'API en lui disant »*
+  + *« si un mec demande une séance et qu'il sort ça, ça fait pas sérieux »*.
+  ⛔⛔ **R8 pur** : `_movPattern()` classe le soulevé de terre ET le roumain en `hip-hinge`
+  **depuis toujours**, `_validationSeance` le signale depuis ft-v1080 — **mais après coup**.
+  *Rien, dans ce que Milo reçoit, ne lui disait de ne pas l'écrire.*
+  ⛔ Règle posée dans le **bloc personnel** (hors du plafond de 46 500) → 0 dilution, 0 appel.
+  ⭐⭐ La 3ᵉ ligne — **ce qui reste permis** — vient de la mesure sur **140 séances réelles** :
+  sans elle, Milo refuserait un dos complet. ⚠️ **2ᵉ fois** (déjà le 22/08) : EV-041 existait,
+  mais il mesure l'**ordre** — la séance réordonnée le passerait. D'où **EV-055** (composition).
+  ⏭️ **LE BANC D'ESSAI N'A PAS TOURNÉ** : Worker en 403, Apps Script en 403, aucune clé API.
+  On sait que la règle **arrive** ; pas qu'elle est **suivie**. **Seul Michel peut lancer la
+  passe** (Profil → Admin → 🧪, devis affiché avant confirmation).
 - 🧩➡️ **« SÉANCE SANS SUJET » — SUJET PRIS PAR SESSION-B** (01/09). Michel : *« l'autre claude
   s'occupe des séances bizarres »*. ⛔ **session-A n'y touche plus.**
   ⭐ Le volet **sécurité** est livré (ft-v1080) ; le volet **cohérence** est chez eux, rien n'est
