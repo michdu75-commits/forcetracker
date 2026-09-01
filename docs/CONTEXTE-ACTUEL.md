@@ -6,7 +6,28 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1090`.
+- **Version en ligne (live) :** `ft-v1090`. ✅ **Les DEUX déploiements sont verts** — backend
+  Apps Script (run #102) et site (run **#759**), vérifiés sur le commit et pas seulement poussés
+  (**R18**). ⚠️ Il a fallu **trois tentatives** : délai dépassé de 10 min sur Pages, puis une
+  relance de ma part qui a **dupliqué l'artefact** — sur ce workflow, on lance un **nouveau run**
+  (`workflow_dispatch`), on ne relance jamais les jobs échoués. Détail : `docs/GALERES-ET-LECONS.md`.
+- ⏭️ **OUVERT — SÉPARER LES DONNÉES DE SANTÉ DU RESTE DU JSON** (idée de Michel, 01/09) :
+  *« on peut pas créer une section santé pour éviter justement que tout se trouve dans le même
+  JSON ? »*. ⭐⭐ **Son idée est plus forte que ce que la politique promet** : aujourd'hui la
+  garantie est **comportementale** (l'outil choisit de ne pas montrer la santé), une clé séparée
+  la rendrait **structurelle** (l'outil ne l'a pas en main).
+  Aujourd'hui **une seule clé `u_{email}`** porte `healthProfile`, `bloodTests`, `bodyScans`,
+  `bodyStudy`, `exPhotos`, `morpho`, `smoker`, `contraception`, `mensCycleStart/Dur`, `cycle` —
+  à côté des séances. ⭐ **Bénéfice en plus** : ces champs sont **gros et changent rarement**, et
+  ils sont re-sérialisés et re-compressés **à chaque sauvegarde de profil** (c'est le réservoir
+  qui avait explosé le 29/07).
+  ⚠️ **Ce que ça ne fait PAS** : ça ne retire pas l'accès à l'auteur — ça supprime l'exposition
+  **incidente** (sauvegarde ouverte pour autre chose, outil de diagnostic, export).
+  ⛔ **C'est la couche de stockage, donc règle d'or #3 en plein** : sauvegarde, chargement,
+  backup Drive, restauration, migration de compression, miroir Supabase, suppression de compte.
+  **Migration additive obligatoire** — écrire aux deux endroits, lire le neuf avec repli sur
+  l'ancien, ne cesser d'écrire l'ancien qu'une fois mesuré que tout le monde a migré.
+  **En attente du go de Michel.**
 - 🩹 **« null » DANS LE CHAMP KG — et c'est le correctif de la virgule qui avait ouvert le trou**
   (ft-v1090). Capture du compte d'**Eline** : `10 reps × null kg` sur deux séries.
   ⛔⛔ **La cause vient de Michel** : *« Eline avait mis des valeurs, et si je dis pas de bêtises

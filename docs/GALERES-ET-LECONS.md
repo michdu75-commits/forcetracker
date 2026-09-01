@@ -365,3 +365,38 @@ ft-v868/869 est bâti dessus et pas sur la durée brute.
 ⚠️ **Et une séance rejouée ne peut PAS être devinée** : personne ne sait ce qu'elle a duré. C'est
 exactement le cas pour lequel la **saisie manuelle de la durée** (ft-v852) avait été construite —
 on demande, on n'invente pas (R8).
+
+---
+
+## 🚀 La relance qui aggrave la panne — déploiement Pages (01/09/2026, ft-v1090)
+
+**Ce qui s'est passé**, dans l'ordre :
+
+1. Le déploiement automatique du site part sur le commit de `ft-v1090`. Les 4 premières étapes
+   passent (récupération, configuration, empaquetage). La 5ᵉ — **« Déployer sur GitHub Pages »** —
+   tourne **exactement 10 minutes** puis échoue. **Un délai dépassé, pas une erreur de code.**
+2. Je relance avec **« relancer les jobs échoués »**. Échec en **0 seconde** :
+   > `Multiple artifacts named "github-pages" were unexpectedly found for this workflow run.`
+   > `Artifact count is 2.`
+3. Un **nouveau run** (`workflow_dispatch`) passe **du premier coup**.
+
+### ⛔⛔ La leçon, et elle est contre-intuitive
+**Relancer les jobs échoués du MÊME run rejoue l'étape d'empaquetage**, qui dépose un **second**
+artefact portant le même nom dans le même run. L'action de déploiement en trouve deux et refuse de
+départager. 👉 ***Le geste réflexe pour réparer une panne en a fabriqué une deuxième, différente et
+plus opaque que la première.***
+
+Sur ce workflow, la remédiation est donc : **lancer un nouveau run** (`workflow_dispatch` sur
+`master`), jamais relancer celui qui a échoué.
+
+### ⚠️ Ce que ça dit de plus, et qui vaut au-delà de GitHub
+- *Une relance qui aggrave la panne ressemble à une panne qui s'aggrave toute seule.* Le second
+  message d'erreur ne parlait plus du tout du premier problème — sans lire les journaux du job,
+  on aurait cherché une régression dans le code.
+- **La bonne réaction à un délai dépassé n'est pas « refaire pareil »**, c'est **repartir propre** :
+  un état intermédiaire a survécu à l'échec, et c'est lui qui bloque. *C'est la même famille que
+  §28 de `BUGS.md`* — le client abandonne, le serveur continue : l'échec n'efface pas ce qui a
+  déjà été fait.
+- Et **R18 a payé une fois de plus** : *« c'est poussé » ne veut pas dire « c'est en ligne »*. Le
+  backend était vert, le site non — sans vérification, Michel aurait ouvert l'app le soir même sur
+  la version précédente **en croyant avoir le correctif**, sur un défaut qui détruit des données.
