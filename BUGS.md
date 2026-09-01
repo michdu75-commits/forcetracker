@@ -1892,3 +1892,43 @@ lister **tous** les sites qu'il touche et vérifier que **chacun** reçoit le re
 oublié n'est pas resté « comme avant » — il est devenu **plus fragile qu'avant**.
 ⚠️ Et se méfier des correctifs qui annoncent un **nombre** dans leur titre (« 22 champs ») : le
 nombre dit ce qui a été traité, jamais ce qui a été **manqué**.
+
+---
+
+## 31. 🎯 LE TÉMOIN VISÉ SUR UNE FORME, PAS SUR SA GARANTIE **(01/09/2026, ft-v1092)**
+
+> **Quatre fois en une semaine.** Ce n'est plus une coïncidence : c'est la façon dont un test
+> écrit *correctement* devient faux tout seul.
+
+### 🔁 Les quatre cas, et ils ne se ressemblent qu'à la fin
+| version | ce que le témoin figeait | ce qui l'a fait rougir |
+|---|---|---|
+| ft-v1085 | *« exactement 2 écritures »* du compteur du Gardien | il y en a **3**, la 3ᵉ écrit un bloc **séparé exprès** |
+| ft-v1087 | *« 3 exercices recalculés »* | j'ai ajouté un **4ᵉ** cas à la fixture |
+| ft-v1092 | l'**expression littérale** de la lecture du compte | la fonction a sorti son accesseur dans une variable |
+| ft-v1092 | l'**expression littérale** de l'écriture du compte | la fonction écrit un objet allégé (`aEcrire`) |
+
+### ⛔ À quoi on la reconnaît
+- Le témoin rougit sur un changement **qui améliore le code** ou qui n'a rien à voir avec lui.
+- Son libellé annonce une **garantie** (« un seul propriétaire », « tous les lecteurs
+  décompressent ») mais son assertion contient un **nombre** ou une **chaîne recopiée du code**.
+- ⚠️ **Le piège du diagnostic** : le premier réflexe est de croire à une régression, et de
+  « réparer » du code sain. *Un témoin qui a tort coûte deux fois — le temps de le croire, puis
+  le temps de ne pas le croire.*
+
+### ⚠️ Pourquoi c'est dangereux et pas seulement agaçant
+Un témoin qui rougit pour rien **finit désactivé** (**R19**) — et il emporte alors la vraie
+garantie avec lui. ***Le risque n'est pas le faux rouge, c'est le vrai vert qu'on perdra après.***
+
+### 🛡️ Ce qui protège aujourd'hui
+- **On ne désarme pas un témoin, on le VISE.** Un compte exact devient un **plancher** (`>=`) ;
+  une chaîne recopiée devient une **propriété mesurée** (*« toute lecture de cette clé passe par
+  `_unpackUser_` »*, *« aucun autre écrivain de `analysees`/`total` »*).
+- **Et on éprouve la nouvelle visée dans les DEUX sens** avant de la garder : casser la garantie
+  doit le faire rougir. Fait à chaque fois — sinon on remplace un témoin trop strict par un
+  témoin mort, ce qui est pire.
+
+### ⭐ Le réflexe, en une question
+Avant d'écrire l'assertion : **« si quelqu'un améliore ce code demain, mon témoin rougit-il ? »**
+Si oui, il mesure la **forme**. La bonne question à poser au code n'est jamais *« ressembles-tu
+encore à ça ? »* mais *« la propriété que je protège tient-elle toujours ? »*

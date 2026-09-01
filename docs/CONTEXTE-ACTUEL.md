@@ -6,28 +6,25 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1090`. ✅ **Les DEUX déploiements sont verts** — backend
+- **Version en ligne (live) :** `ft-v1092`. ✅ **Les DEUX déploiements sont verts** — backend
   Apps Script (run #102) et site (run **#759**), vérifiés sur le commit et pas seulement poussés
   (**R18**). ⚠️ Il a fallu **trois tentatives** : délai dépassé de 10 min sur Pages, puis une
   relance de ma part qui a **dupliqué l'artefact** — sur ce workflow, on lance un **nouveau run**
   (`workflow_dispatch`), on ne relance jamais les jobs échoués. Détail : `docs/GALERES-ET-LECONS.md`.
-- ⏭️ **OUVERT — SÉPARER LES DONNÉES DE SANTÉ DU RESTE DU JSON** (idée de Michel, 01/09) :
-  *« on peut pas créer une section santé pour éviter justement que tout se trouve dans le même
-  JSON ? »*. ⭐⭐ **Son idée est plus forte que ce que la politique promet** : aujourd'hui la
-  garantie est **comportementale** (l'outil choisit de ne pas montrer la santé), une clé séparée
-  la rendrait **structurelle** (l'outil ne l'a pas en main).
-  Aujourd'hui **une seule clé `u_{email}`** porte `healthProfile`, `bloodTests`, `bodyScans`,
-  `bodyStudy`, `exPhotos`, `morpho`, `smoker`, `contraception`, `mensCycleStart/Dur`, `cycle` —
-  à côté des séances. ⭐ **Bénéfice en plus** : ces champs sont **gros et changent rarement**, et
-  ils sont re-sérialisés et re-compressés **à chaque sauvegarde de profil** (c'est le réservoir
-  qui avait explosé le 29/07).
-  ⚠️ **Ce que ça ne fait PAS** : ça ne retire pas l'accès à l'auteur — ça supprime l'exposition
-  **incidente** (sauvegarde ouverte pour autre chose, outil de diagnostic, export).
-  ⛔ **C'est la couche de stockage, donc règle d'or #3 en plein** : sauvegarde, chargement,
-  backup Drive, restauration, migration de compression, miroir Supabase, suppression de compte.
-  **Migration additive obligatoire** — écrire aux deux endroits, lire le neuf avec repli sur
-  l'ancien, ne cesser d'écrire l'ancien qu'une fois mesuré que tout le monde a migré.
-  **En attente du go de Michel.**
+- 🔐 **LA SANTÉ VIT DANS SA PROPRE CLÉ** (ft-v1092, go de Michel). ⭐⭐ Son idée est **plus
+  forte que la promesse** de la politique : celle-ci dit que les outils ne montrent que le
+  nécessaire (garantie de **comportement**) ; deux clés `u_`/`h_` en font une garantie de
+  **construction** — l'outil ne l'a pas en main. Le détecteur de séries abîmées en est la
+  preuve : il ne lit que `u_`, donc il est **aveugle à la santé sans avoir été modifié**.
+  ⛔⛔ **Le garde-fou** : la santé est écrite dans `h_` **et relue** avant d'être retirée de
+  `u_` — *aucun ordre ne la retire avant qu'elle soit confirmée ailleurs*. Repli sur l'ancien :
+  un compte non migré se charge exactement comme avant (**règle d'or #3**).
+  ⛔ **Trois chemins alignés en même temps** : suppression de compte (sinon la séparation
+  *créait* une fuite), sauvegarde Drive (sinon perte des bilans dès le lendemain), compression.
+  ⚠️ **Ce que ça ne fait pas** : ça ne retire pas l'accès à l'auteur — ça supprime l'exposition
+  **incidente**.
+  ⏭️ **À surveiller chez Michel** : les comptes migrent **à leur prochaine sauvegarde**, pas
+  d'un coup. Tant que `h_` n'existe pas pour quelqu'un, sa santé reste dans `u_` — c'est voulu.
 - **Version en ligne (live) :** `ft-v1091`.
 - 👆⭐⭐ **CE QU'UNE FERMETURE AU DOIGT EMPORTE — dont la CAMÉRA** (ft-v1091). Michel :
   *« continue à chercher des incohérences »*. Même méthode qu'en ft-v1089 — **des détecteurs,

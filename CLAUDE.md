@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1091`** (prochaine : `ft-v1092`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1092`** (prochaine : `ft-v1093`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -436,6 +436,25 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1092 — 🔐 LES DONNÉES DE SANTÉ VIVENT DANS LEUR PROPRE CLÉ DE STOCKAGE** — Michel, une heure après avoir lu la nouvelle politique de confidentialité : *« on peut pas créer une section santé pour éviter justement que tout se trouve dans le même JSON ? »*, puis *« go pour la section santé »*.
+
+**⭐⭐ SON IDÉE EST PLUS FORTE QUE LA PROMESSE QU'ON VENAIT D'ÉCRIRE, ET C'EST TOUT L'INTÉRÊT.** La politique dit que les outils de diagnostic ne montrent *que le nécessaire* : c'est une garantie de **COMPORTEMENT** — l'outil **choisit** de ne pas montrer. Avec deux clés (`u_` et `h_`), elle devient une garantie de **CONSTRUCTION** : ***l'outil ne l'a pas en main***. *C'est toujours la seconde qui tient.* ⭐ Et le détecteur livré deux heures plus tôt en est la preuve immédiate : il ne lit que `u_`, donc il est désormais **aveugle à la santé sans avoir été modifié**.
+
+**⛔⛔ LE GARDE-FOU TIENT EN UNE PHRASE, ET C'EST LUI QUI REND L'OPÉRATION FAISABLE : la santé est écrite dans `h_` ET RELUE avant d'être retirée de `u_`.** Script Properties n'a **pas de transaction** — deux écritures peuvent réussir l'une sans l'autre. Avec cet ordre : `h_` échoue → **on ne retire rien**, l'ancien état est intact ; `u_` échoue après un `h_` réussi → la santé existe **aux deux endroits**, et la lecture préfère `h_`. 👉 ***Il n'existe aucun ordre où la santé est retirée avant d'être confirmée ailleurs.*** C'est la prudence de `_packUser_`, qui ne rend un paquet que s'il se relit — appliquée un cran plus haut.
+
+**⛔ ET LE REPLI SUR L'ANCIEN REND LA MIGRATION SANS EFFET DE BORD** : un compte pas encore migré garde sa santé **dans `u_`** et se charge exactement comme avant. `h_` ne fait que **recouvrir** ce qu'il contient. Tant qu'il n'existe pas, **rien ne change pour personne** (règle d'or **#3**).
+
+**⛔⛔ ET LE VRAI RISQUE N'ÉTAIT PAS LA SÉPARATION, C'ÉTAIT LES TROIS ENDROITS QUI SERAIENT DEVENUS FAUX SANS ÊTRE TOUCHÉS.** ① La **suppression de compte** aurait laissé la santé derrière — ***la séparation aurait CRÉÉ une fuite en prétendant en fermer une***. ② La **sauvegarde Drive** aurait perdu bilans sanguins et corporels **dès le lendemain**, en silence, découvert au moment d'en avoir besoin. ③ La **compression** aurait laissé `h_` en clair — le réservoir plein à 102 % du 29/07. *Quand on range une donnée ailleurs, on déplace aussi tout ce qui la lisait et tout ce qui la faisait disparaître.*
+
+**⚠️ DEUX VÉRIFICATIONS ONT CORRIGÉ LA LISTE AVANT D'ÉCRIRE UNE LIGNE.** ⛔ `cycle` est le **cycle de FORCE** (`startDate`/`weeks`/`rm1s`), pas le menstruel : le déplacer aurait cassé l'écran Cycle de force — le menstruel, ce sont `mensCycleStart`, `mensCycleDur`, `contraception`. ⛔ Et `exPhotos` (photos d'**exercices**) et `morpho` (silhouette **déclarée**) ne sont pas des données de santé. 👉 ***Une liste écrite de mémoire aurait emporté le cycle de force et laissé le tabac.***
+
+**⚠️ CE QUE ÇA NE FAIT PAS, ET IL FAUT LE DIRE** : ça ne retire pas l'accès à l'auteur — il reste propriétaire du stockage. Ça supprime l'exposition **incidente** : une sauvegarde ouverte pour autre chose, un outil de diagnostic, un export. *Vendre ça comme « personne ne peut plus voir » serait un mensonge de plus dans un fichier qui vient d'en corriger un.*
+
+**📣 RÈGLE D'OR #11 — NI POP-UP NI POINT ROUGE.** Rien ne bouge à l'écran, rien à faire, rien à apprendre : c'est du rangement dans le stockage. ⚠️ *Et l'annoncer obligerait à expliquer que tout était dans le même fichier avant — une inquiétude pour un progrès que personne ne peut vérifier.* La politique de confidentialité, elle, le dit déjà.
+
+Tests : **parcours 2190/2190** (+12, bloc **CXCVIII**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 106 classées 0 trou, **noyau Milo 12/12**. ⭐⭐ **Le témoin qui porte tout le risque n'est pas celui qui vérifie la séparation, c'est celui qui SIMULE SON ÉCHEC** : écriture de `h_` refusée → *la santé est restée dans `u_`*, et le compte se recharge entier. **C'est le seul scénario où on perdrait des données, donc c'est celui qu'il faut jouer.** ⭐ **Le ① existe pour que les autres mesurent quelque chose** (2 clés réellement écrites) et le **rétrocompatible** joue un compte **jamais migré**. ⛔ **Trois témoins lisent le SOURCE**, parce que c'est le seul moyen de figer qu'aucun chemin n'a été oublié : suppression de compte, sauvegarde Drive, compression. ⚠️⚠️ **ET TROIS ROUGES SONT TOMBÉS, AUCUN NE SIGNALANT UN DÉFAUT DE CODE** — tous des témoins visés sur une **forme** : le mien comparait deux **chaînes** (la santé est réappliquée à la fin, donc l'ORDRE des clés change, le contenu non — *« rien n'est perdu » n'est pas « même ordre de clés »*), et un témoin **existant** figeait les **expressions littérales** de la lecture ET de l'écriture du compte. 👉 **4ᵉ fois cette semaine** : c'est devenu la famille **§31** de `BUGS.md`. Les trois sont **re-visés sur leur garantie et éprouvés dans les deux sens** — lecture brute → rouge, écriture non compressée → rouge. ⚠️ **17ᵉ collision** : session-A avait aussi nommé son bloc **CXCVII**, le mien glisse en **CXCVIII**. Fichiers : `Code.js`, `tests/parcours/runner.js`, `BUGS.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1092. |
+
 
 **ft-v1091 — 👆 CE QU'UNE FERMETURE AU DOIGT EMPORTE — dont la CAMÉRA, qui restait allumée** — Michel : *« continue à chercher des incohérences »*. Même méthode qu'en ft-v1089 : **des détecteurs, pas des avis** — et on privilégie ceux qui **mesurent un comportement** plutôt que ceux qui lisent du texte.
 
@@ -797,27 +816,6 @@ Tests : **parcours 2021/2021** (+5, bloc **CLXXIX**), calculs 266/266, muscles 2
 
 **📣 RÈGLE D'OR #11 — NI POP-UP NI POINT ROUGE.** C'est une **réparation** : « ajouter » ajoute. Rien n'apparaît, rien ne bouge, il n'y a rien à apprendre.
 Tests : **parcours 2016/2016** (+7, bloc **CLXXVIII**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 106 classées 0 trou. ⭐⭐ **Le témoin ② rejoue SON cas à l'identique** — ouvrir « Remplacer », fermer **au doigt**, rouvrir pour ajouter. ⛔ **Le ① existe pour que les autres mesurent quelque chose** (la séance de départ porte bien ses 2 exercices). ⭐ **Deux non-régressions** : le vrai remplacement garde ses séries (65 kg intacts), et les 5 modes spéciaux répondent toujours. **CONTRÔLE NÉGATIF : l'ancien code REPRODUIT son bug** — `{"apresDoigt":"replace","idx":1}` et **2 exercices au lieu de 3**, le troisième n'ayant jamais été ajouté. 🧾 Famille **§26** de `BUGS.md` — *à chaque fois, le chemin oublié était le glisser du doigt*. ⭐ Point de retour : `0ca1335`. Fichiers : `screens.js`, `log.js`, `setup.js`, `tests/parcours/runner.js`, `BUGS.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1073. |
-
-**ft-v1072 — 🔒 ON N'ANNONCE QU'À CEUX QUI PEUVENT S'EN SERVIR** — Michel, en voyant partir la pop-up des pas : *« sauf que les pas ne sont que pour moi attention »*.
-
-**⛔⛔ IL AVAIT RAISON, ET LE DÉFAUT ÉTAIT DANS L'ANNONCE, PAS DANS LE COMPORTEMENT.** Mesuré : `WHATS_NEW` et `NEW_FEATURES` n'avaient **aucun filtre par personne** — seulement « déjà vu ». Or le sommeil mesuré (**v64**, ft-v1069) et les pas (**v65**, ft-v1070) exigent un **raccourci iOS que seul Michel a installé**. 👉 ***Christophe, Eline, Emma et Tatiana recevaient donc une pop-up et trois points rouges pour une fonctionnalité qu'ils ne peuvent pas avoir.*** ⭐ **Le code, lui, était déjà correct** — carte masquée, aucune ligne sous le TDEE, TDEE inchangé : *ce n'est pas la fonctionnalité qui débordait, c'est sa publicité.*
-
-**⭐⭐ ET LE DÉFAUT ÉTAIT DOUBLE, DONC IL VENAIT DE MOI DEUX FOIS.** Sa remarque portait sur les pas ; en cherchant la jumelle (**R8**), le **sommeil mesuré de ft-v1069 avait exactement le même défaut**, livré la veille. *Une remarque sur un cas révèle une famille — c'est le réflexe le plus rentable de ce projet.*
-
-**👉 UN PRÉDICAT OPTIONNEL `si`**, résolu par `_featSi` — **seul propriétaire** de *« cette personne peut-elle s'en servir ? »* (**R2**), et les **8 lecteurs** de `NEW_FEATURES` y passent tous (sans quoi le correctif serait posé d'un seul côté, le motif que ce fichier passe son temps à rattraper). ⛔ **Sans `si`, le comportement est EXACTEMENT celui d'avant** : les **121 entrées existantes ne bougent pas d'un pixel**, et c'est ce qui rend le changement sûr (**R13**, comme `refTs` en ft-v1017).
-
-**⛔ ET C'EST UN NOM, PAS UNE FONCTION** : ces tableaux partent dans le cloud et sont relus par des outils — une fonction n'y survivrait pas. Le registre `FEAT_SI` les résout.
-
-**⛔ LA CONDITION EST UN FAIT VÉRIFIABLE, PAS UNE DÉCLARATION.** On ne demande pas *« as-tu une montre ? »* — l'app ne le sait pas : on regarde si **la donnée est arrivée** (`healthDaily[].sleep` / `.steps`). ⭐ Et les deux conditions sont **distinctes** : recevoir le sommeil n'ouvre pas l'annonce des pas.
-
-**⛔⛔ ET LE PIÈGE ÉTAIT DANS LE MARQUEUR « VU », TROUVÉ EN LISANT LE CODE AVANT D'ÉCRIRE.** `ft4_wn_seen` est un **plafond numérique** : le fermer marque vues **toutes** les entrées jusqu'au maximum. Une conditionnelle **jamais affichée** aurait donc été **enterrée pour toujours** — le jour où la personne branche son raccourci, elle n'aurait **jamais** vu l'annonce. 👉 Les conditionnelles se suivent **une par une, par leur numéro** (`ft4_wn_cond`), comme les points rouges. ⭐ **Le témoin ⑤ fige exactement ça** : sans montre, on ferme un « Quoi de neuf », puis on branche la montre → les deux pop-ups sont **toujours annonçables**.
-
-**⛔ UN NOM INCONNU LAISSE PASSER, IL NE CACHE PAS.** Une faute de frappe dans `si` doit produire l'**ancien** comportement (trop d'annonces), jamais un silence que personne ne verrait : *un bug visible se corrige, un bug muet se subit.*
-
-**⚠️ ET UN DE MES PROPRES TÉMOINS A ROUGI SUR DU CODE CORRECT** : le ⑦ mesurait la rétrocompatibilité **après** avoir posé une montre — les 3 conditionnées y étaient donc **légitimement** visibles, et il comparait 124 à 124, c'est-à-dire **rien**. *Un témoin doit CONSTRUIRE l'état qu'il affirme*, pas hériter de celui du témoin précédent. (Même leçon qu'en ft-v1054, où j'épinglais une heure impossible.)
-
-**📣 RÈGLE D'OR #11 — NI POP-UP NI POINT ROUGE, et c'est le seul choix cohérent.** *Annoncer un correctif dont l'objet est de moins annoncer serait une contradiction.* Pour ceux qui n'ont pas de montre, du bruit disparaît ; pour Michel, rien ne change.
-Tests : **parcours 2009/2009** (+8, bloc **CLXXVII**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 106 classées 0 trou. ⛔ **Le témoin ① existe pour que les sept autres mesurent quelque chose** : les 2 pop-ups et les 3 points rouges concernés doivent **exister** — sinon « aucune annonce » serait vrai pour la mauvaise raison. ⭐⭐ **Le ② porte sa remarque** (sans montre : rien) et le **③ l'empêche d'être vert en n'annonçant plus jamais rien** (avec la montre : tout revient). ⛔ **Le ⑤ est le plus important** : le plafond n'enterre plus les conditionnelles. **CONTRÔLE NÉGATIF : le résolveur remis à `return true` (l'état d'avant)** → **②④ rouges**, et le détail imprime exactement sa plainte : `{"popups":[65,64],"feats":["pas-courbe","pas-surplus","sommeil-mesure"]}` chez quelqu'un **sans montre**. Fichiers : `constants.js`, `screens.js`, `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1072. |
 
 
 
