@@ -3377,11 +3377,16 @@ function _seanceHorodatee(s){
       effacer ce qu'on ne retrouve pas.* Sans cette règle, l'outil détruirait des records
       légitimes en silence, ce qui est bien pire que le fantôme qu'il vient réparer. */
 function _prsDepuisSeances(){
-  const calc={};
+  const calc={}, premiere={};
   (S.sessions||[]).forEach(sess=>{
     const d=sess&&sess.date; if(!d) return;
     (sess.exs||sess.exercises||[]).forEach(ex=>{
       if(!ex||!ex.name) return;
+      /* ⛔ LA PLUS ANCIENNE APPARITION DE L'EXERCICE, toutes séries confondues — même un
+         échauffement, même une série non faite. On ne cherche pas ici une performance : on
+         cherche **depuis quand l'app voit cet exercice**. Un échauffement prouve que la séance
+         est là autant qu'une série de travail. */
+      if(!premiere[ex.name] || String(d) < String(premiere[ex.name])) premiere[ex.name]=d;
       (ex.sets||[]).forEach(st=>{
         if(typeof _serieFaitFoiPourPR==='function' ? !_serieFaitFoiPourPR(st)
            : !(st&&st.done&&st.kg&&st.reps&&st.type!=='É'&&st.type!=='W')) return;
@@ -3390,16 +3395,34 @@ function _prsDepuisSeances(){
       });
     });
   });
-  const corriges=[], intacts=[], sansSeance=[];
+  const corriges=[], intacts=[], sansSeance=[], horsHistorique=[];
   Object.keys(S.prs||{}).forEach(n=>{
     const av=S.prs[n], ap=calc[n];
     if(!ap){ sansSeance.push({nom:n, rm1:av&&av.rm1}); return; }   // ③ jamais supprimé
-    if(Math.abs((av&&av.rm1||0)-ap.rm1)>0.05) corriges.push({nom:n, avant:av, apres:ap});
-    else intacts.push(n);
+    if(Math.abs((av&&av.rm1||0)-ap.rm1)<=0.05){ intacts.push(n); return; }
+    /* ⛔⛔ LE TROU DE LA 1ʳᵉ VERSION, TROUVÉ PAR MICHEL SUR SES VRAIES DONNÉES (01/09/2026).
+       La règle ③ ne protégeait que « aucune séance DU TOUT ». Or son `Développé Décliné` porte
+       un record du **14/06** — l'app est née le **17 juin** : la séance qui l'a fait ne peut pas
+       être dans l'historique, elle vient d'un import ou d'une saisie. L'exercice, lui, a des
+       séances plus récentes → il échappait à ③ et tombait dans « baisse ».
+       👉 ***Un record ANTÉRIEUR à la plus ancienne séance de son exercice est, par construction,
+       invérifiable*** — et l'appliquer effacerait un vrai record. Un record SANS DATE l'est
+       aussi : on ne peut pas prouver que la séance est encore là.
+       ⛔ La protection ne vaut que pour une BAISSE : une montée est prouvée par l'historique
+       lui-même, elle ne détruit rien. */
+    const monte = ap.rm1 > (av&&av.rm1||0);
+    if(!monte){
+      const dRec=av&&av.date, dPrem=premiere[n];
+      if(!dRec || (dPrem && String(dRec) < String(dPrem))){
+        horsHistorique.push({nom:n, rm1:av&&av.rm1, date:dRec||null, premiere:dPrem||null, propose:ap});
+        return;
+      }
+    }
+    corriges.push({nom:n, avant:av, apres:ap});
   });
   const nouveaux=Object.keys(calc).filter(n=>!(S.prs||{})[n])
                        .map(n=>({nom:n, apres:calc[n]}));
-  return {calc, corriges, intacts, sansSeance, nouveaux};
+  return {calc, premiere, corriges, intacts, sansSeance, horsHistorique, nouveaux};
 }
 
 /* ⛔ EN DEUX TEMPS, comme le nettoyage des doublons : le bouton qui ÉCRIT n'existe pas tant
@@ -3447,6 +3470,20 @@ function apercuRecordsAdmin(){
       h+='</div>';
     }
     h+='<button class="btn btn-red" style="width:100%;padding:12px;margin-top:10px;font-size:14px;" onclick="appliquerRecordsAdmin()">🏅 Appliquer ces corrections</button>';
+  }
+  /* ⛔⛔ LES INVÉRIFIABLES SE VOIENT, AVEC LEUR RAISON ET LEUR DATE. Les cacher serait pire que
+     de les corriger : la personne croirait que l'outil n'a rien trouvé là, alors qu'il a trouvé
+     et REFUSÉ. *Un refus muet ressemble à une absence de problème.* */
+  if(r.horsHistorique.length){
+    h+='<div style="font-size:12px;color:var(--t2);margin-top:12px;line-height:1.7;">'
+      +'<div style="color:var(--t1);font-weight:700;margin-bottom:4px;">🛡️ Gardés tels quels — plus vieux que ton historique</div>'
+      +'<div style="font-size:11.5px;color:var(--t3);margin-bottom:6px;">Leur record est <b>antérieur</b> à la plus ancienne séance que l\'app connaît pour cet exercice (ou n\'a pas de date) : la séance qui l\'a fait vient d\'un import ou d\'un autre appareil. <b>On n\'y touche pas.</b></div>';
+    r.horsHistorique.slice(0,10).forEach(c=>{
+      h+='<div><b>'+_escIdea(c.nom)+'</b><br><span style="color:var(--t3)">record '
+        +(Math.round((c.rm1||0)*10)/10)+' kg'+(c.date?' du '+_escIdea(c.date):' (sans date)')
+        +(c.premiere?' · l\'app ne le voit qu\'à partir du '+_escIdea(c.premiere):'')
+        +'</span></div>'; });
+    h+='</div>';
   }
   /* ⛔ ON DIT CE QU'ON NE TOUCHE PAS — sinon la personne croit que l'outil a tout vu. */
   h+='<div style="font-size:11.5px;color:var(--t3);margin-top:10px;line-height:1.5;">'
