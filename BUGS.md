@@ -1686,7 +1686,7 @@ défaut sûr (« ajouter ») vaut mieux qu'un défaut destructeur (« remplacer 
 ⚠️ **3ᵉ fois pour la famille R15** (ft-v466 point rouge, ft-v629 pop-up, celle-ci les données) :
 à chaque fois, le chemin oublié était **le glisser du doigt**.
 
-### 🔴🔴 4ᵉ FOIS — ET CETTE FOIS C'EST UN CAPTEUR **(01/09/2026, ft-v1090)**
+### 🔴🔴 4ᵉ FOIS — ET CETTE FOIS C'EST UN CAPTEUR **(01/09/2026, ft-v1091)**
 Le scanner de code-barres : `closeBarcodeScanner()` est la **seule** chose qui coupe le flux
 vidéo (`_bcReader.reset()` puis `stopStreams()`). `#ov-bc-scan` n'était déclaré **nulle part**
 dans `_OVERLAY_CLOSERS`, et il n'a même pas de fermeture au clic sur le fond.
@@ -1844,3 +1844,51 @@ n'est pas le cas qui est anormal, c'est le seuil.
 ⚠️ Et se demander ce que le seuil **prétend** distinguer : s'il est censé séparer deux *causes*
 (un bug vs une situation extrême), un chiffre sur la *conséquence* ne le fera jamais. Chercher
 alors la garantie **par construction** — ici : on ne touche jamais au premier exemplaire.
+
+---
+
+## 30. 🩹 LE CORRECTIF QUI RETIRE UNE PROTECTION SANS METTRE LA SIENNE **(01/09/2026, ft-v1088)**
+
+> **Le cas** — Michel, capture du compte d'Eline : son Pec Deck affiche `10 reps × **null** kg` sur
+> deux séries. Et sa lecture est la bonne : *« Eline avait mis des valeurs, et si je dis pas de
+> bêtises c'est en mettant la virgule »*.
+
+### 🔗 La chaîne, maillon par maillon (établie dans le code, pas déduite)
+1. **ft-v1057** (30/08, *« la virgule décimale : 22 champs et un seul lecteur de nombre »*) fait
+   passer le champ kg du détail de séance de `type="number"` à **`type="text"`**…
+2. ⛔⛔ **…en laissant `+this.value`.** Or `type="number"` était **la seule chose qui protégeait ce
+   champ** : le navigateur refusait la virgule, `.value` rendait `''`, donc `+'' = 0`.
+3. À partir de là, `+'62,5'` = **`NaN`**.
+4. `persist()` fait `JSON.stringify`, et **`JSON.stringify(NaN)` vaut `null`**.
+5. Au rechargement, `value="${s.kg}"` écrit le mot **« null »** à l'écran.
+
+### ⛔ À quoi on la reconnaît
+- Un correctif **généralise** un changement (« tous les champs passent en texte », « on retire le
+  `type=number` partout ») **sans que chaque site reçoive le remplacement**.
+- Le symptôme apparaît **là où le correctif est passé**, pas là où il a manqué — donc on cherche
+  la régression du mauvais côté.
+- La valeur affichée est **un mot** (`null`, `undefined`, `NaN`) et non un nombre : c'est la
+  signature d'une donnée **détruite à l'écriture**, pas d'un affichage raté.
+
+### ⚠️ Pourquoi elle coûte plus cher qu'un oubli ordinaire
+Un champ simplement **oublié** garde son ancien comportement — imparfait, mais stable. Ici le champ
+a été **rendu pire qu'avant** : il était protégé par le navigateur, il ne l'est plus, et rien ne
+l'a remplacé. ⛔ **Et la donnée est PERDUE, pas masquée** : Eline a tapé un poids, il n'existe plus.
+On ne le devine pas à sa place (**R29**).
+👉 *Le danger n'est pas dans ce que le correctif ajoute, il est dans ce qu'il ENLÈVE.*
+
+### 🛡️ Ce qui protège aujourd'hui
+- Le champ passe par **`numFR`** — ce que ft-v1057 aurait dû faire ici.
+- Un champ vidé rend **`null`** (« je ne sais pas »), jamais `0` : *écrire 0 dirait qu'elle a
+  poussé zéro, ce qui est faux*.
+- **Bloc CXCIII, témoin de RÈGLE** : *aucun champ décimal en `type="text"` ne lit par
+  `+this.value`*. Il ne protège pas le cas, il protège la paire — il rougira au prochain champ
+  converti en texte dont on oubliera le lecteur de nombre. **Contrôle négatif fait** : remis dans
+  l'état de ft-v1057, il **nomme le champ coupable**.
+
+### ⭐ Le réflexe
+Quand un correctif **retire un garde-fou** (une contrainte de navigateur, une validation, un type),
+lister **tous** les sites qu'il touche et vérifier que **chacun** reçoit le remplacement. Un site
+oublié n'est pas resté « comme avant » — il est devenu **plus fragile qu'avant**.
+⚠️ Et se méfier des correctifs qui annoncent un **nombre** dans leur titre (« 22 champs ») : le
+nombre dit ce qui a été traité, jamais ce qui a été **manqué**.

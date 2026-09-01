@@ -21151,6 +21151,251 @@ console.log('\n-- CXCIII. La suite du lot d\'audit (ft-v1087) --');
       F.sem8.derriere===true && F.sem8.aucuneSuite===true, JSON.stringify(F.sem8));
   }
 }
+/* == BLOC CXCIII - « null » DANS LE CHAMP KG, ET LE NaN QU'IL FABRIQUAIT (ft-v1090) ==
+   Michel, capture du compte d'Eline : son Pec Deck affichait `10 reps × null kg` sur deux
+   series. Le detail d'une seance PASSEE rendait `value="${s.kg}"` sans garde — un poids
+   inconnu s'ecrivait donc « null » en toutes lettres dans le champ.
+   ⛔⛔ ET « null » EST LE RESIDU, PAS LA CAUSE — trouvee par Michel : « Eline avait mis des
+   valeurs, et si je dis pas de betises c'est en mettant la virgule ». La chaine, maillon par
+   maillon : ① ft-v1057 fait passer CE champ de `type="number"` a `type="text"` EN LAISSANT
+   `+this.value` — le correctif de la virgule a corrige 22 champs, oublie celui-la, et lui a
+   RETIRE la seule protection qu'il avait (`type=number` filtrait la virgule) ; ② `+'62,5'` =
+   NaN ; ③ `persist()` fait `JSON.stringify`, et `JSON.stringify(NaN)` vaut **null** ; ④ au
+   rechargement le mot « null » s'affiche. Sa valeur est PERDUE, pas masquee.
+   ⭐ *Un correctif qui enleve un garde-fou du navigateur sans le remplacer par le sien fabrique
+   un bug pire que celui qu'il repare.*
+   ⭐ LA JUMELLE CHERCHEE (R8) EXISTAIT ET ETAIT SAINE : l'ecran de seance rend deja
+   `value="${set.kg||''}"`. C'est le detail d'une seance passee qui ne l'avait pas.
+   ⛔ ET UN 3e DEFAUT PARTAIT AVEC, de la famille de ft-v1057 (la virgule d'Eline) : `+this.value`
+   rendait NaN sur « 62,5 ». Ce champ passe desormais par `numFR`, comme celui de la seance. */
+console.log('\n-- CXCIII. « null » dans le champ kg, et le NaN qu\'il fabriquait (ft-v1088) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  /* ⭐ LA FIXTURE EST SA SEANCE : serie 1 renseignee, series 2 et 3 sans poids (Milo ecrit
+     « 3 × 10 » sans charge, elle n'a rempli que la premiere). */
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',
+    ft4_sessions:JSON.stringify([{id:1756000000000,date:'2026-08-28',vol:120,exs:[
+      {name:'Pec Deck',sets:[
+        {kg:12,reps:10,done:true,type:'N',rm1:16},
+        {kg:null,reps:10,done:true,type:'N'},
+        {reps:10,done:true,type:'N'}                       // kg ABSENT, pas meme null
+      ]}]}])}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const N=await pg.evaluate(()=>{
+   try{
+    const o={};
+    openSessDetail(1756000000000);
+    /* ⛔ On lit UNIQUEMENT les champs du détail de séance (`#sd-content`) : un sélecteur large
+       ramasserait les champs de nutrition et de pesée, et le témoin serait vert sur les leurs. */
+    const champs=[...document.querySelectorAll('#sd-content input[inputmode="decimal"]')].map(i=>i.value);
+    o.champsKg=champs;
+    o.aucunNull = champs.every(v=>v!=='null' && v!=='undefined' && v!=='NaN');
+    /* ⛔ Le temoin voit-il quelque chose ? Sinon « aucun null » serait vrai sur 0 champ. */
+    o.nbChamps=champs.length;
+    o.premier=champs[0];
+    /* ⛔⛔ LE PLUS IMPORTANT : toucher le champ ne doit plus fabriquer de NaN. */
+    updateSessSet(0,1,'kg','');
+    o.apresVide=_sessEdits.exs[0].sets[1].kg;
+    updateSessSet(0,1,'kg','null');
+    o.apresTexte=_sessEdits.exs[0].sets[1].kg;
+    /* ⛔ … et la virgule d'Eline passe (famille ft-v1057). */
+    updateSessSet(0,0,'kg','62,5');
+    o.virgule=_sessEdits.exs[0].sets[0].kg;
+    /* ⛔ une vraie saisie reste une vraie saisie. */
+    updateSessSet(0,0,'reps','8');
+    o.reps=_sessEdits.exs[0].sets[0].reps;
+    /* ③ L'aller-retour : c'est `JSON.stringify` qui transformait NaN en `null`. */
+    updateSessSet(0,0,'kg','62,5');
+    o.apresPersist=JSON.parse(JSON.stringify(_sessEdits)).exs[0].sets[0].kg;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+  if(N.err) t('CXCIII n\'a pas pu tourner', false, N.err);
+  else{
+    t('⛔ le témoin a bien OUVERT le détail : les 3 champs de poids sont rendus',
+      N.nbChamps===3, 'champs = '+JSON.stringify(N.champsKg));
+    t('⭐⭐ SON CAS : plus aucun « null » / « undefined » / « NaN » dans les champs',
+      N.aucunNull===true, JSON.stringify(N.champsKg));
+    t('⛔ … et la valeur CONNUE est toujours affichée (on n\'a pas vidé tout le monde)',
+      N.premier==='12', 'premier champ = '+N.premier);
+    /* ⛔⛔ LE TÉMOIN QUI PROTÈGE LES DONNÉES, pas l'affichage. */
+    t('⛔⛔ toucher le champ n\'écrit plus NaN : un champ vidé rend `null`, pas 0 ni NaN (R29)',
+      N.apresVide===null && N.apresTexte===null,
+      JSON.stringify({vide:N.apresVide, texte:N.apresTexte}));
+    t('⛔ la virgule d\'Eline passe ici aussi : « 62,5 » vaut 62,5 (famille ft-v1057)',
+      N.virgule===62.5, 'virgule = '+N.virgule);
+    t('⛔ NON-RÉGRESSION : une saisie normale s\'écrit toujours',
+      N.reps===8, 'reps = '+N.reps);
+    /* ⛔⛔ LE MAILLON ③ : c'est `JSON.stringify(NaN)` qui fabrique le « null ». On mesure
+       l'ALLER-RETOUR complet, pas seulement la valeur en mémoire — sinon on prouverait
+       seulement que le champ ne dit plus NaN, pas que la donnée SURVIT au rechargement. */
+    t('⭐⭐ ALLER-RETOUR : « 62,5 » survit à `JSON.stringify` (avant, NaN devenait `null`)',
+      N.apresPersist===62.5, 'après persist = '+JSON.stringify(N.apresPersist));
+    /* ⛔⛔ LA PAIRE QUE ft-v1057 A CASSÉE, ET C'EST ELLE QU'IL FAUT FIGER : un champ passé en
+       `type="text"` n'est plus protégé par le navigateur, donc il DOIT lire par `numFR`.
+       Ce témoin protège la RÈGLE, pas le cas : il rougira au prochain champ converti en texte
+       dont on aura oublié le lecteur de nombre — exactement ce qui est arrivé ici. */
+    {
+      const srcS=fs.readFileSync(path.join(ROOT,'setup.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
+      const coupables=[];
+      srcS.split(/<input /).slice(1).forEach(bal=>{
+        const b=bal.slice(0, bal.indexOf('>')+1);
+        if(!/type="text"/.test(b)) return;
+        if(!/inputmode="decimal"/.test(b)) return;
+        const m=b.match(/on(?:change|input)="([^"]*\+this\.value[^"]*)"/);
+        if(m) coupables.push(m[1].slice(0,60));
+      });
+      t('⛔⛔ RÈGLE : aucun champ décimal en `type="text"` ne lit encore par `+this.value`',
+        coupables.length===0, JSON.stringify(coupables));
+    }
+    t('⛔ 0 erreur JS sur tout le bloc', errs.length===0, JSON.stringify(errs.slice(0,3)));
+  }
+  await cx.close();
+}
+
+
+/* == BLOC CXCV - CHERCHER LES SERIES ABIMEES CHEZ TOUT LE MONDE (ft-v1090) ==
+   Michel, apres avoir vu le compte d'Eline : « ce que j'ai eu moi les autres peuvent l'avoir
+   aussi, faut absolument qu'on puisse verifier le compte des autres utilisateurs ».
+   ⛔⛔ IL A RAISON, ET LA RAISON EST UNE DATE : le defaut est ne le 30/08 et il a dure jusqu'au
+   correctif. Personne ne peut le remarquer seul — le champ affiche « null », ce qui ressemble a
+   un bug d'affichage, pas a une donnee detruite.
+   ⛔⛔ LES TROIS PREMIERS TEMOINS NE MESURENT PAS CE QUE LA ROUTE TROUVE, MAIS CE QU'ELLE NE
+   FAIT PAS : elle n'ecrit rien, elle ne rend ni charges ni profil, et un compte illisible n'est
+   jamais compte comme sain. */
+console.log('\n-- CXCV. Les séries abîmées par la virgule, chez tout le monde (ft-v1090) --');
+{
+  const src=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  const vm=require('vm');
+  const compte=(email,sessions)=>JSON.stringify({email:email,sessions:sessions,
+    bw:80, healthProfile:{blessures:'genou'}, coachMemory:['secret']});
+  const lancer=(props,jeton)=>{
+    const ecrits=[];
+    const ctx={console,JSON,String,Number,Math,Date,Array,Object,
+      SpreadsheetApp:{openById:()=>({getSheetByName:()=>null, insertSheet:()=>null})},
+      /* ⚠️ LE FAUX MAGASIN REND CE QUI EST *STOCKÉ*, JAMAIS CE QU'ON PRÉSENTE. Ma première
+         version renvoyait le jeton FOURNI comme jeton stocké : la comparaison passait donc
+         toujours, et le témoin du refus était rouge sur du code parfaitement sain. *Une fixture
+         qui ne parle pas la langue de l'app ne teste pas l'app* — même famille que le `concat`
+         de ft-v1069 et le `ft4_height` de ft-v1070. */
+      PropertiesService:{getScriptProperties:()=>({
+        getProperties:()=>props,
+        getProperty:(k)=>(props[k]||''),
+        setProperty:(k,v)=>{ ecrits.push(k); },
+        deleteProperty:(k)=>{ ecrits.push('del:'+k); } })},
+      Utilities:{formatDate:()=>'2026-09-01', ungzip:()=>({getDataAsString:()=>''}),
+                 newBlob:()=>({}), base64Decode:()=>[]},
+      Logger:{log:()=>{}},GmailApp:{},DriveApp:{},UrlFetchApp:{},CacheService:{},
+      LockService:{},Session:{},ScriptApp:{getProjectTriggers:()=>[]},MailApp:{},
+      ContentService:{createTextOutput:(t)=>({setMimeType:()=>({_t:t}),_t:t}),MimeType:{JSON:'json'}}};
+    ctx.global=ctx; vm.createContext(ctx); vm.runInContext(src,ctx,{filename:'Code.js'});
+    const r=vm.runInContext('doGet',ctx)({parameter:{action:'setsCorrompus',token:jeton}});
+    let d; try{ d=JSON.parse(r&&r._t||'{}'); }catch(e){ d={brut:String(r&&r._t||'')}; }
+    return {d, ecrits};
+  };
+  const JET='jeton-de-test-assez-long';
+  /* ⭐ LA FIXTURE EST LEUR CAS : Eline avec deux séries à `null` (ce que JSON.stringify fait de
+     NaN) et une SANS la clé `kg` du tout (ce qu'il fait de `undefined`) ; Christophe sain. */
+  const props={
+    IDEES_TOKEN2:JET,
+    'u_eline':compte('eline@x.fr',[{date:'2026-08-28',exs:[
+      {name:'Pec Deck',sets:[{kg:12,reps:10,done:true},{kg:null,reps:10,done:true},{reps:10,done:true}]}]}]),
+    'u_chris':compte('chris@x.fr',[{date:'2026-08-29',exs:[
+      {name:'Squat Barre',sets:[{kg:100,reps:5,done:true}]}]}]),
+    /* ⛔ Une série NON FAITE à `null` est NORMALE (elle n'a pas encore de poids) : si elle
+       comptait, l'outil accuserait tout le monde et on n'y croirait plus (R19). */
+    'u_tanna':compte('tanna@x.fr',[{date:'2026-08-30',exs:[
+      {name:'Rowing Barre',sets:[{kg:null,reps:8,done:false}]}]}]),
+    'autre_cle':'rien-a-voir'
+  };
+  const R=lancer(props,JET);
+  const d=R.d;
+  if(d.status!=='ok') t('CXCV n\'a pas pu tourner', false, JSON.stringify(d).slice(0,220));
+  else{
+    /* ⛔ ① Le témoin voit-il quelque chose ? Sinon tous les « rien » seraient verts sur du vide. */
+    t('⛔ le témoin a bien LU les comptes (3 comptes, la clé étrangère ignorée)',
+      d.comptesLus===3, 'comptes lus = '+d.comptesLus);
+    /* ⭐⭐ ② LE TÉMOIN QUI COMPTE LE PLUS : la route NE TOUCHE À AUCUN COMPTE.
+       ⚠️ Il visait d'abord « 0 écriture de propriété » et il a rougi sur du code sain : `doGet`
+       exécute au passage de vieilles migrations one-shot (`triggers_purged_*`), qui n'ont rien
+       à voir avec cette route. *Un témoin visé trop large accuse le voisin* — il vise donc la
+       GARANTIE : aucun compte (`u_*`) écrit, aucune propriété supprimée. Si la route touchait
+       un jour à un compte, il rougirait. */
+    const touche=R.ecrits.filter(k=>k.indexOf('u_')===0||k.indexOf('del:')===0);
+    t('⭐⭐ LA ROUTE NE TOUCHE À AUCUN COMPTE — 0 écriture `u_*`, 0 suppression (R29)',
+      touche.length===0, JSON.stringify({touche:touche, toutesEcritures:R.ecrits.slice(0,5)}));
+    /* ⭐⭐ ③ … et elle ne rend NI charges NI profil NI santé. */
+    const brut=JSON.stringify(d);
+    t('⭐⭐ elle ne rend NI charges NI profil NI santé (juste des comptes et des dates)',
+      brut.indexOf('genou')<0 && brut.indexOf('secret')<0 && brut.indexOf('"bw"')<0
+      && brut.indexOf('"kg"')<0, brut.slice(0,200));
+    /* ⭐⭐ ④ SON CAS : Eline sort, avec ses 2 séries. */
+    const el=(d.comptes||[]).find(c=>c.email==='eline@x.fr');
+    t('⭐⭐ SON CAS : le compte d\'Eline est signalé, avec ses 2 séries abîmées',
+      !!el && el.series===2, JSON.stringify(el||null));
+    t('⭐ … et la ligne nomme la date et l\'exercice (le minimum pour pouvoir la prévenir)',
+      !!el && el.lignes[0].date==='2026-08-28' && el.lignes[0].ex==='Pec Deck',
+      JSON.stringify(el&&el.lignes||null));
+    /* ⛔ ⑤⑥ LES DEUX FAUX POSITIFS À NE PAS FAIRE. */
+    t('⛔ un compte SAIN n\'est pas signalé',
+      !(d.comptes||[]).some(c=>c.email==='chris@x.fr'), JSON.stringify((d.comptes||[]).map(c=>c.email)));
+    t('⛔⛔ FAUX POSITIF ÉVITÉ : une série NON FAITE à `null` est normale, elle ne compte pas',
+      !(d.comptes||[]).some(c=>c.email==='tanna@x.fr'), JSON.stringify((d.comptes||[]).map(c=>c.email)));
+    t('⛔ le total est cohérent avec le détail (2 séries, 1 compte)',
+      d.totalSeries===2 && d.comptes.length===1,
+      JSON.stringify({total:d.totalSeries, comptes:d.comptes.length}));
+  }
+  /* ⛔ ⑨ JETON OBLIGATOIRE : cette route regarde les comptes des autres. */
+  const refus=lancer(props,'mauvais-jeton').d;
+  t('⛔⛔ sans le bon jeton, la route REFUSE (elle lit les comptes des autres)',
+    refus && refus.status==='error' && refus.error==='token', JSON.stringify(refus));
+}
+
+
+/* == BLOC CXCVI - LA POLITIQUE DE CONFIDENTIALITE DIT CE QU'ON FAIT VRAIMENT (ft-v1090) ==
+   Michel : « oui il faut etre transparent sur la politique de confidentialite [...] au depart je
+   t'ai dit que les donnees ne m'interessaient pas, et plus le temps passe plus je remarque des
+   petits bugs par-ci par-la [...] si moi j'ai un bug, les autres l'ont peut-etre — eux vont se
+   dire c'est pas grave, pour moi c'est grave. Et je ne vais surtout pas utiliser ces donnees, et
+   encore moins les revendre. En plus c'est illegal. »
+   ⛔⛔ LE DEFAUT ETAIT REEL ET IL ETAIT ECRIT : la page promettait que les donnees servent
+   « UNIQUEMENT a faire fonctionner l'app pour toi ». Or ce jour-la, on a lu les seances de
+   8 comptes pour mesurer un critere, et on vient de livrer un outil qui ouvre tous les comptes
+   pour trouver les series abimees. *Une promesse qu'on ne tient plus est pire qu'une promesse
+   qu'on n'a jamais faite.*
+   ⛔ CE TEMOIN PROTEGE UN ENGAGEMENT, PAS UN COMPORTEMENT. Un engagement peut disparaitre d'une
+   reecriture sans que rien ne plante — c'est exactement le cas ou plus rien ne le rattrape
+   (R30). Il verifie que la page porte toujours ① l'acces de diagnostic, ② la regle du minimum
+   necessaire, ③ le fait que les donnees sensibles en sont exclues, ④ le droit de s'y opposer. */
+console.log('\n-- CXCVI. La politique de confidentialité dit ce qu\'on fait vraiment (ft-v1090) --');
+{
+  const pol=fs.readFileSync(path.join(ROOT,'confidentialite.html'),'utf8');
+  /* ⛔ Le témoin a-t-il bien lu la page ? Sinon les 4 « présent » seraient faux pour rien. */
+  t('⛔ le témoin a bien LU la politique (elle est servie et non vide)',
+    pol.length>3000 && pol.indexOf('Politique de confidentialité')>=0, 'taille = '+pol.length);
+  t('⭐⭐ elle DIT que l\'auteur peut consulter les comptes, et pourquoi (diagnostic de bugs)',
+    /consulte/i.test(pol) && /diagnostiquer des bugs/i.test(pol), '');
+  t('⭐⭐ … et la règle du MINIMUM NÉCESSAIRE y est écrite (les outils ne montrent pas tout)',
+    /minimum nécessaire/i.test(pol), '');
+  t('⛔⛔ … les données SENSIBLES sont explicitement hors du diagnostic technique',
+    /ne sont pas consultées pour du diagnostic technique/i.test(pol), '');
+  t('⛔ … et le droit de s\'y OPPOSER est offert, avec l\'adresse pour le faire',
+    /opposer/i.test(pol) && /forcetracker\.app@gmail\.com/.test(pol), '');
+  /* ⛔⛔ ET LA PHRASE DEVENUE FAUSSE NE DOIT PAS REVENIR : « uniquement pour toi » contredirait
+     la section qu'on vient d'écrire, et c'est la contradiction qu'un lecteur croirait. */
+  t('⛔⛔ la promesse devenue fausse (« servent UNIQUEMENT à faire fonctionner l\'app pour toi ») a disparu',
+    !/servent\s*<strong>uniquement<\/strong>/i.test(pol), '');
+  /* ⛔ La page doit rester ATTEIGNABLE hors ligne : une politique qu'on ne peut pas ouvrir
+     n'informe personne (règle d'or #4). */
+  t('⛔ la page reste préchargée par le service worker (lisible hors ligne)',
+    /confidentialite\.html/.test(fs.readFileSync(path.join(ROOT,'sw.js'),'utf8')), '');
+  /* ⛔ Et la date de mise à jour doit avoir bougé : une politique modifiée qui garde son
+     ancienne date se lit comme une politique inchangée. */
+  t('⛔ la date de dernière mise à jour a été actualisée',
+    /septembre 2026/.test(pol), (pol.match(/Dernière mise à jour[^<]*(<sup>[^<]*<\/sup>)?[^<]*/)||[''])[0].slice(0,60));
+}
 
 
 /* ═══ CXCIV. ON APPUIE SUR TOUS LES BOUTONS DE L'APP (ft-v1089) ══════════════════════════════
@@ -21207,7 +21452,7 @@ console.log('\n-- CXCIV. On appuie sur tous les boutons de l\'app (ft-v1089) --'
   }
 }
 
-/* ═══ CXCV. CE QU'UNE FERMETURE AU DOIGT EMPORTE — 2ᵉ PASSE DE CHASSE (ft-v1090) ═════════════
+/* ═══ CXCVII. CE QU'UNE FERMETURE AU DOIGT EMPORTE — 2ᵉ PASSE DE CHASSE (ft-v1091) ═════════════
    Michel : « continue à chercher des incohérences ».
    ⛔⛔ ① LE BANDEAU « SAUVEGARDE EN LIGNE EN PAUSE » ÉTAIT EFFACÉ PAR L'ÉCRAN QUI LE PORTE.
    Deux fonctions écrivaient dans `#email-verify-card` (R2) : `_renderAuthRefusCard()` et
@@ -21223,7 +21468,7 @@ console.log('\n-- CXCIV. On appuie sur tous les boutons de l\'app (ft-v1089) --'
    sur `window`, alors que c'est un `let` de portée fichier — elle mesurait ses PROPRES
    variables, et son contrôle est ce qui l'a dit. Ici on espionne `closeBarcodeScanner`, et le
    bouton « Annuler » doit l'appeler : sinon « 0 appel » ne prouverait rien. */
-console.log('\n-- CXCV. Ce qu\'une fermeture au doigt emporte (ft-v1090) --');
+console.log('\n-- CXCVII. Ce qu\'une fermeture au doigt emporte (ft-v1091) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
   const pg=await cx.newPage();
@@ -21312,7 +21557,7 @@ console.log('\n-- CXCV. Ce qu\'une fermeture au doigt emporte (ft-v1090) --');
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,160)};}
   });
   await cx.close();
-  if(F.err) t('CXCV n\'a pas pu tourner', false, F.err);
+  if(F.err) t('CXCVII n\'a pas pu tourner', false, F.err);
   else{
     t('⛔ le témoin peint VRAIMENT le bandeau de refus (sinon les suivants mesurent du vide)',
       F.peint===true, 'peint = '+F.peint);

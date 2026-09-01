@@ -539,7 +539,7 @@ const _OVERLAY_CLOSERS={
      dans Sheets et dans le débrief de Milo. *Une fermeture au doigt qui abîme un historique.*
      ⚠️ 3ᵉ fois pour cette famille (ft-v466, ft-v629) — et la première qui touche aux DONNÉES. */
   'mod-ex':'closeExPicker',
-  /* 🔴🔴 ft-v1090 — 4ᵉ FOIS, ET CETTE FOIS C'EST LA CAMÉRA QUI RESTE ALLUMÉE.
+  /* 🔴🔴 ft-v1091 — 4ᵉ FOIS, ET CETTE FOIS C'EST LA CAMÉRA QUI RESTE ALLUMÉE.
      `closeBarcodeScanner()` est la SEULE chose qui coupe le flux vidéo
      (`_bcReader.reset()` + `stopStreams()`). L'overlay est fabriqué en JS
      (app.js `openBarcodeScanner`) avec `className='overlay'` — donc il est bien
@@ -552,7 +552,7 @@ const _OVERLAY_CLOSERS={
      ⚠️ Mesuré : fermeture au doigt → `closeBarcodeScanner` appelée 0 fois ; le
      bouton « Annuler » → 1 fois. C'est le témoin de contrôle qui prouve la sonde. */
   'ov-bc-scan':'closeBarcodeScanner',
-  /* ⚠️ ft-v1090 — même famille, conséquence plus douce mais DÉFINITIVE.
+  /* ⚠️ ft-v1091 — même famille, conséquence plus douce mais DÉFINITIVE.
      `closeAppGuide()` déclenche `_afterAppGuide`, qui enchaîne le « installe
      l'app » pour un NOUVEL inscrit. Le clic sur le fond est déjà géré par la
      balise elle-même ; le **glisser** et **Échap** ne l'étaient pas. Or

@@ -3837,7 +3837,7 @@ function verifyEmailCode(){
       else { toast('Code incorrect, réessaie','error'); }
     }).catch(()=>{ if(btn){btn.disabled=false;btn.textContent='Vérifier';} toast('Réseau indisponible','error'); });
 }
-/* ⛔⛔ ft-v1090 — UN SEUL PROPRIÉTAIRE DE `#email-verify-card` (R2).
+/* ⛔⛔ ft-v1091 — UN SEUL PROPRIÉTAIRE DE `#email-verify-card` (R2).
    DEUX fonctions écrivaient dans le même emplacement : celle-ci et
    `_renderAuthRefusCard()`. Or `renderSetup()` appelle celle-ci → **ouvrir
    l'onglet Profil effaçait le bandeau « Sauvegarde en ligne en pause »**,
@@ -3885,7 +3885,7 @@ function _renderAuthRefusCard(){
   const el=document.getElementById('email-verify-card'); if(!el)return;
   // ⚠️ DEUX MESSAGES, PAS UN (ft-v789). Réclamer « ton code » à quelqu'un qui n'en a jamais posé,
   // c'est le laisser chercher un truc qui n'existe pas — la meilleure façon qu'il abandonne.
-  /* ⚠️ ft-v1090 — APRÈS UN RECHARGEMENT, `window._ftAuthNeedsCode` n'existe plus.
+  /* ⚠️ ft-v1091 — APRÈS UN RECHARGEMENT, `window._ftAuthNeedsCode` n'existe plus.
      C'est précisément à ça que sert la valeur stockée (`'new'` ou `'1'`), écrite
      depuis ft-v788 et jamais relue : sans elle, on réclamerait « ton code » à
      quelqu'un qui n'en a jamais posé — le défaut que ft-v789 avait corrigé.
@@ -5395,6 +5395,61 @@ async function loadSbAdmin(){
 // colonne `email`. Elles ne sont attribuables à personne, donc elles ne sont ni comptées ni
 // accusées — mais leur nombre est AFFICHÉ, sinon un total qui ne colle pas passerait pour
 // une erreur de l'outil.
+/* 🩹 LES SÉRIES ABÎMÉES PAR LA VIRGULE, CHEZ TOUT LE MONDE (01/09/2026) — Michel, après avoir
+   vu le compte d'Eline : « ce que j'ai eu moi les autres peuvent l'avoir aussi, faut absolument
+   qu'on puisse vérifier le compte des autres utilisateurs ».
+   ⛔⛔ IL A RAISON, ET LA RAISON EST UNE DATE : le défaut est né le **30/08** (ft-v1057 passe le
+   champ en `type="text"` sans changer `+this.value`) et il a duré jusqu'au correctif. Toute
+   personne ayant corrigé un poids **avec une virgule** dans le détail d'une séance passée a
+   perdu cette valeur. *Personne ne peut le remarquer tout seul : le champ affiche « null », ce
+   qui ressemble à un bug d'affichage, pas à une donnée détruite.*
+   ⛔ ON REGARDE, ON NE RÉPARE PAS. La valeur d'origine n'existe plus ; seule la personne la
+   connaît (**R29**). Et on ne lit ni ses charges ni son profil — un détecteur qui ouvrirait les
+   données de tout le monde pour trouver trois séries nulles serait pire que le défaut. */
+async function loadSetsCorrompusAdmin(){
+  const box=document.getElementById('admin-corrompus');
+  if(!box)return;
+  if(!_isAdminUnlocked()){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'; return; }
+  if(!S.url){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Pas d\'URL serveur.</div>'; return; }
+  box.innerHTML='<div style="font-size:12.5px;color:var(--t2);">Lecture des comptes…</div>';
+  try{
+    const url=S.url+'?action=setsCorrompus&token='+encodeURIComponent(_adminTok());
+    const r=await fetch(url,{method:'GET'});
+    const d=await r.json();
+    if(_adminTokRefuse(d)){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Jeton refusé — relance, il te sera redemandé.</div>'; return; }
+    if(!d||d.status!=='ok'){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">'+_escIdea((d&&d.error)||'réponse inattendue')+'</div>'; return; }
+    let h='';
+    if(!d.totalSeries){
+      h='<div style="font-size:13px;color:var(--green);font-weight:700;">✅ Aucune série abîmée — '
+        +d.comptesLus+' compte'+(d.comptesLus>1?'s':'')+' lu'+(d.comptesLus>1?'s':'')+'.</div>';
+    }else{
+      h='<div style="font-size:13px;color:var(--gold);font-weight:700;">🩹 '
+        +d.totalSeries+' série'+(d.totalSeries>1?'s':'')+' abîmée'+(d.totalSeries>1?'s':'')
+        +', sur '+d.comptes.length+' compte'+(d.comptes.length>1?'s':'')+'.</div>'
+        +'<div style="font-size:11.5px;color:var(--t3);margin-top:4px;">Rien n\'a été modifié. La valeur d\'origine est <b>perdue</b> — seule la personne la connaît.</div>';
+      h+='<div style="font-size:12px;color:var(--t2);margin-top:8px;line-height:1.8;">';
+      d.comptes.slice(0,12).forEach(c=>{
+        h+='<div style="margin-top:6px;"><b>'+_escIdea(c.email)+'</b> — '+c.series+' série'+(c.series>1?'s':'')+'</div>';
+        (c.lignes||[]).slice(0,6).forEach(l=>{
+          h+='<div style="font-size:11.5px;color:var(--t3);font-family:\'SF Mono\',ui-monospace,monospace;">'
+            +_escIdea(l.date)+' · '+_escIdea(l.ex)+' · '+l.n+'</div>';
+        });
+      });
+      h+='</div>';
+      h+='<div style="font-size:11.5px;color:var(--t2);margin-top:10px;line-height:1.5;">👉 À leur dire : ouvrir la séance, retaper le poids. <b>Le champ marche maintenant</b>, virgule comprise.</div>';
+    }
+    /* ⛔ ON DIT CE QU'ON N'A PAS PU LIRE : un compte illisible n'est pas un compte sain. */
+    if(d.illisibles){
+      h+='<div style="font-size:11.5px;color:var(--red);margin-top:8px;line-height:1.5;">⚠️ '
+        +d.illisibles+' compte'+(d.illisibles>1?'s':'')+' illisible'+(d.illisibles>1?'s':'')
+        +' — non vérifié'+(d.illisibles>1?'s':'')+', donc pas déclaré'+(d.illisibles>1?'s':'')+' sain'+(d.illisibles>1?'s':'')+'.</div>';
+    }
+    box.innerHTML=h;
+  }catch(e){
+    box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Erreur : '+_escIdea(String(e.message||e))+'</div>';
+  }
+}
+
 async function loadDoublonsAdmin(){
   const box=document.getElementById('admin-doublons');
   if(!box)return;
@@ -6379,7 +6434,7 @@ window._premiumPending=!!S.email;
       const d2=await r2.json();
       console.log('[FT premium check]',{email:S.email,status:d2.status,premium:d2.premium,expiry:d2.premiumExpiry});
       if(d2.status==='ok'||d2.status==='not_found'){
-        /* ⭐ ft-v1090 — LA GUÉRISON, ET ELLE EST AUSSI IMPORTANTE QUE L'ALERTE.
+        /* ⭐ ft-v1091 — LA GUÉRISON, ET ELLE EST AUSSI IMPORTANTE QUE L'ALERTE.
            Le serveur vient d'accepter : il n'y a plus aucun refus à afficher. Sans
            cette ligne, `ft4_auth_refus` — qui devient LU à partir d'aujourd'hui —
            resterait posé et le bandeau rouge deviendrait permanent chez quelqu'un

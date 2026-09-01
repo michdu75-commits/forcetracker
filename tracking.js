@@ -452,7 +452,7 @@ function ciPickSleep(q){
   const entry={date:d,hours,quality:q};
   if(idx>=0)S.sleepLog[idx]=entry;else S.sleepLog.unshift(entry);
   S.sleepLog=S.sleepLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
-  /* ⛔⛔ ft-v1090 — CETTE RÉPONSE ÉTAIT PERDUE SI ON REFERMAIT AVANT LA 2ᵉ QUESTION.
+  /* ⛔⛔ ft-v1091 — CETTE RÉPONSE ÉTAIT PERDUE SI ON REFERMAIT AVANT LA 2ᵉ QUESTION.
      Le check-in a deux étapes ; seule la seconde (`ciPickEnergy`) appelait `persist()`.
      Or `mod-checkin` se ferme au doigt et **rien ne tourne à sa fermeture** : la réponse
      « comment as-tu dormi ? » restait en mémoire, et disparaissait à la fermeture de l'app.
