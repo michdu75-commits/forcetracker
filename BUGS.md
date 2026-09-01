@@ -1892,3 +1892,103 @@ lister **tous** les sites qu'il touche et vérifier que **chacun** reçoit le re
 oublié n'est pas resté « comme avant » — il est devenu **plus fragile qu'avant**.
 ⚠️ Et se méfier des correctifs qui annoncent un **nombre** dans leur titre (« 22 champs ») : le
 nombre dit ce qui a été traité, jamais ce qui a été **manqué**.
+
+---
+
+## 31. 🎯 LE TÉMOIN VISÉ SUR UNE FORME, PAS SUR SA GARANTIE **(01/09/2026, ft-v1092)**
+
+> **Quatre fois en une semaine.** Ce n'est plus une coïncidence : c'est la façon dont un test
+> écrit *correctement* devient faux tout seul.
+
+### 🔁 Les quatre cas, et ils ne se ressemblent qu'à la fin
+| version | ce que le témoin figeait | ce qui l'a fait rougir |
+|---|---|---|
+| ft-v1085 | *« exactement 2 écritures »* du compteur du Gardien | il y en a **3**, la 3ᵉ écrit un bloc **séparé exprès** |
+| ft-v1087 | *« 3 exercices recalculés »* | j'ai ajouté un **4ᵉ** cas à la fixture |
+| ft-v1092 | l'**expression littérale** de la lecture du compte | la fonction a sorti son accesseur dans une variable |
+| ft-v1092 | l'**expression littérale** de l'écriture du compte | la fonction écrit un objet allégé (`aEcrire`) |
+
+### ⛔ À quoi on la reconnaît
+- Le témoin rougit sur un changement **qui améliore le code** ou qui n'a rien à voir avec lui.
+- Son libellé annonce une **garantie** (« un seul propriétaire », « tous les lecteurs
+  décompressent ») mais son assertion contient un **nombre** ou une **chaîne recopiée du code**.
+- ⚠️ **Le piège du diagnostic** : le premier réflexe est de croire à une régression, et de
+  « réparer » du code sain. *Un témoin qui a tort coûte deux fois — le temps de le croire, puis
+  le temps de ne pas le croire.*
+
+### ⚠️ Pourquoi c'est dangereux et pas seulement agaçant
+Un témoin qui rougit pour rien **finit désactivé** (**R19**) — et il emporte alors la vraie
+garantie avec lui. ***Le risque n'est pas le faux rouge, c'est le vrai vert qu'on perdra après.***
+
+### 🛡️ Ce qui protège aujourd'hui
+- **On ne désarme pas un témoin, on le VISE.** Un compte exact devient un **plancher** (`>=`) ;
+  une chaîne recopiée devient une **propriété mesurée** (*« toute lecture de cette clé passe par
+  `_unpackUser_` »*, *« aucun autre écrivain de `analysees`/`total` »*).
+- **Et on éprouve la nouvelle visée dans les DEUX sens** avant de la garder : casser la garantie
+  doit le faire rougir. Fait à chaque fois — sinon on remplace un témoin trop strict par un
+  témoin mort, ce qui est pire.
+
+### ⭐ Le réflexe, en une question
+Avant d'écrire l'assertion : **« si quelqu'un améliore ce code demain, mon témoin rougit-il ? »**
+Si oui, il mesure la **forme**. La bonne question à poser au code n'est jamais *« ressembles-tu
+encore à ça ? »* mais *« la propriété que je protège tient-elle toujours ? »*
+
+---
+
+## 32. 🔗 L'ALLER-RETOUR CASSÉ AU MILIEU — les deux bouts sont justes, le maillon central n'existe pas **(01/09/2026, ft-v1093)**
+
+Une donnée de profil fait trois sauts : **l'app l'envoie** → **le serveur la range** → **l'app la
+relit** à la restauration. Cette famille est le cas où **les deux extrémités sont parfaitement
+écrites** et où **le maillon du milieu n'a jamais été posé**. Personne ne le voit, parce que chaque
+bout, pris seul, a l'air correct — et parce que le symptôme n'apparaît **que le jour où on change
+de téléphone**, c'est-à-dire une fois par an et jamais chez le développeur.
+
+### 🔎 Les cas mesurés
+- **`foodMode` / `fasting`** (ft-v1093). Envoyés depuis le 02/08 (`setup.js`), **attendus au
+  retour** (`setup.js` les lit et recalcule `S.keto`) — et `grep body.foodMode Code.js` rend **0**
+  sur 3 500 lignes. Aller-retour joué en vrai : keto + jeûne 16/8 partent, **reviennent vides**,
+  et les glucides passent de **39 g à 432 g**.
+- **`goalLog`** (ft-v1093). Cassé **deux fois** : le serveur ne l'écrivait nulle part, **et** la
+  restauration le lisait dans `raw.profile` alors que la réponse le met à la **racine**. Réparer
+  un seul des deux maillons n'aurait rien changé — et c'est la panne que **ft-v1010** disait
+  explicitement avoir corrigée, commentaire à l'appui.
+- **`nutritionPhase`** (ft-v1093), variante inoffensive mais parlante : la réponse annonçait une
+  phase qui était en réalité une **constante** (`data.nutritionPhase` toujours `undefined` → le
+  repli `'charge'`), pendant que la vraie valeur dormait dans `profile`, juste à côté.
+
+### ⛔ À quoi on la reconnaît
+- Un champ qui **part** dans le payload et qu'un lecteur **attend** au retour, sans que personne
+  n'ait vérifié le **milieu**.
+- Un commentaire qui **promet** la persistance (*« sans ça, changer de téléphone perdrait… »*) :
+  il prouve l'intention, jamais le fait.
+- Un champ classé **« transmis »** dans un fichier de suivi — le classement décrit ce qui atteint
+  **Milo**, pas ce qui survit à une **restauration**. Ce ne sont pas les mêmes trajets.
+- Une réponse serveur qui expose une clé qu'**aucune écriture** ne remplit : le repli (`|| ''`,
+  `|| []`, `|| 'charge'`) rend alors une valeur **plausible**, ce qui est pire qu'une erreur.
+
+### ⚠️ Pourquoi elle échappe à tout
+Aucun test d'un seul côté ne peut la voir. Le frontend est **correct** : il envoie et il relit. Le
+backend est **cohérent** : il ne connaît simplement pas le champ. Il n'y a **ni erreur, ni log, ni
+écran rouge** — la personne retrouve juste un réglage à blanc, *ce qui ressemble à un compte neuf
+et pas à une perte*. Et comme la donnée n'a jamais atteint le serveur, elle n'est **dans aucune
+sauvegarde** : elle n'est pas récupérable, seulement re-saisissable.
+
+### 🛡️ Ce qui protège aujourd'hui
+Le bloc **CXCIX** de `tests/parcours/runner.js` joue l'**aller-retour complet** — le vrai `Code.js`
+dans un bac à sable, `saveProfile` puis `loadProfile` — et exige que le champ **revienne**. Un
+témoin de contrôle vérifie que des champs **voisins du même envoi** reviennent intacts : sans lui,
+un « champ vide » serait vrai parce que **rien** n'a été sauvegardé.
+
+### ⭐ Le réflexe
+**Ne jamais conclure d'un seul côté.** Quand on ajoute un champ au profil, on écrit la table des
+**trois colonnes** — *envoyé · rangé · relu* — et on la **mesure**, on ne la déduit pas. Et quand
+on répare un maillon, on vérifie **l'autre** : ici, réparer le serveur seul aurait laissé `goalLog`
+perdu, et réparer le lecteur seul aussi.
+
+### ⛔ Le piège dans le piège : la convention du voisin n'est pas forcément la bonne
+`handleSaveProfile_` applique partout `_ps_` — *« le vide ne gagne jamais sur du rempli »*. Copier
+cette ligne pour `foodMode` **aurait fabriqué un bug pire que celui qu'on répare** : ces réglages
+se **décochent** (`S.foodMode=(S.foodMode===v?'':v)`), donc `''` est une **décision** de la
+personne. Arrêter le cétogène ne serait jamais reparti, et un changement de téléphone l'aurait
+fait **revenir**. *Un garde-fou juste pour un prénom est faux pour une case à cocher* — c'est la
+famille **§30** prise à l'envers, et la seule façon de le voir est de mesurer **les deux sens**.

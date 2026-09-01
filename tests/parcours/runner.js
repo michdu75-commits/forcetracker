@@ -657,8 +657,25 @@ t('plus AUCUN vieux prix (« 4,99 » / « 2 mois ») dans tout le frontend — m
 // décompressent (chargement, backup nocturne, liste admin), et la migration one-shot existe.
 t('comptes compressés : pack auto-vérifié + les 3 lecteurs décompressent + migration compressStore',
   (()=>{const s=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
-        return /_packUser_\(JSON\.stringify\(data\)\)/.test(s)
-            && /_unpackUser_\(PropertiesService\.getScriptProperties\(\)\.getProperty\(userKey_\(email\)\)\)/.test(s)
+        /* ⚠️ MÊME DÉFAUT QUE LA LIGNE DU DESSOUS, DANS LA MÊME ASSERTION : celle-ci figeait
+           `_packUser_(JSON.stringify(data))`, et `saveUserData_` écrit désormais un objet
+           allégé de la santé (`aEcrire`). La garantie n'a jamais été le nom de la variable :
+           c'est que la clé du compte n'est JAMAIS écrite sans passer par `_packUser_`. */
+        return (()=>{ const f=s.slice(s.indexOf('function saveUserData_'));
+                      const corps=f.slice(0, f.indexOf('\n}\n'));
+                      const ecrits=(corps.match(/setProperty\(userKey_\(email\)/g)||[]).length;
+                      const packes=(corps.match(/setProperty\(userKey_\(email\), _packUser_\(/g)||[]).length;
+                      return ecrits>0 && ecrits===packes; })()
+            /* ⚠️ CE TÉMOIN FIGEAIT L'EXPRESSION LITTÉRALE de la lecture — il a rougi le
+               01/09 quand `loadUserData_` a sorti l'accesseur dans une variable (`sp`), sur
+               du code parfaitement correct. *Un témoin visé sur une FORME se périme au premier
+               remaniement.* Il vise donc la GARANTIE : dans `loadUserData_`, la clé du compte
+               n'est jamais lue sans passer par `_unpackUser_`. */
+            && (()=>{ const f=s.slice(s.indexOf('function loadUserData_'));
+                      const corps=f.slice(0, f.indexOf('\n}'));
+                      const lectures=(corps.match(/getProperty\(userKey_\(email\)\)/g)||[]).length;
+                      const enveloppees=(corps.match(/_unpackUser_\([^)]*getProperty\(userKey_\(email\)\)/g)||[]).length;
+                      return lectures>0 && lectures===enveloppees; })()
             && (s.match(/JSON\.parse\(_unpackUser_\(/g)||[]).length>=2
             && /_unpackUser_\(gz\) === json/.test(s)
             && /action === 'compressStore'/.test(s);})());
@@ -21151,7 +21168,7 @@ console.log('\n-- CXCIII. La suite du lot d\'audit (ft-v1087) --');
       F.sem8.derriere===true && F.sem8.aucuneSuite===true, JSON.stringify(F.sem8));
   }
 }
-/* == BLOC CXCVIII - « null » DANS LE CHAMP KG, ET LE NaN QU'IL FABRIQUAIT (ft-v1090) ==
+/* == BLOC CC - « null » DANS LE CHAMP KG, ET LE NaN QU'IL FABRIQUAIT (ft-v1090) ==
    Michel, capture du compte d'Eline : son Pec Deck affichait `10 reps × null kg` sur deux
    series. Le detail d'une seance PASSEE rendait `value="${s.kg}"` sans garde — un poids
    inconnu s'ecrivait donc « null » en toutes lettres dans le champ.
@@ -21168,7 +21185,7 @@ console.log('\n-- CXCIII. La suite du lot d\'audit (ft-v1087) --');
    `value="${set.kg||''}"`. C'est le detail d'une seance passee qui ne l'avait pas.
    ⛔ ET UN 3e DEFAUT PARTAIT AVEC, de la famille de ft-v1057 (la virgule d'Eline) : `+this.value`
    rendait NaN sur « 62,5 ». Ce champ passe desormais par `numFR`, comme celui de la seance. */
-console.log('\n-- CXCVIII. « null » dans le champ kg, et le NaN qu\'il fabriquait (ft-v1090) --');
+console.log('\n-- CC. « null » dans le champ kg, et le NaN qu\'il fabriquait (ft-v1090) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
@@ -21212,7 +21229,7 @@ console.log('\n-- CXCVIII. « null » dans le champ kg, et le NaN qu\'il fabriqu
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
   });
-  if(N.err) t('CXCVIII n\'a pas pu tourner', false, N.err);
+  if(N.err) t('CC n\'a pas pu tourner', false, N.err);
   else{
     t('⛔ le témoin a bien OUVERT le détail : les 3 champs de poids sont rendus',
       N.nbChamps===3, 'champs = '+JSON.stringify(N.champsKg));
@@ -21584,7 +21601,7 @@ console.log('\n-- CXCVII. Ce qu\'une fermeture au doigt emporte (ft-v1091) --');
   }
 }
 
-/* ═══ CXCIX. LA 3ᵉ PORTE DU RETOUR · CE QUI NE PARTAIT PAS AU CLOUD · LES TEXTES QUI MENTAIENT (ft-v1092) ═══
+/* ═══ CXCIX. LA 3ᵉ PORTE DU RETOUR · CE QUI NE PARTAIT PAS AU CLOUD · LES TEXTES QUI MENTAIENT (ft-v1093) ═══
    Michel : « continue à chercher des incohérences ». 3ᵉ passe.
    ⛔⛔ ① LE BOUTON RETOUR ÉTAIT LA 3ᵉ PORTE, ET LA SEULE ENCORE OUVERTE. ft-v1091 a fait passer
    le glissement du doigt par `_closeOverlayProper` ; le gestionnaire `popstate`, lui, faisait
@@ -21602,7 +21619,7 @@ console.log('\n-- CXCVII. Ce qu\'une fermeture au doigt emporte (ft-v1091) --');
    ⛔ ④ ET LES TEXTES QUI ANNONÇAIENT UN CHIFFRE QUE LE CODE N'APPLIQUE PLUS (le « ~36 h » de
    ft-v1086, cherché partout) : « Timer 45 s », « repos 20 s entre chaque palier », « 7 derniers
    jours glissants », « 18 badges », et un bouton « 📉 −10% » qui n'existe plus. */
-console.log('\n-- CXCIX. La 3ᵉ porte du retour · le cloud · les textes périmés (ft-v1092) --');
+console.log('\n-- CXCIX. La 3ᵉ porte du retour · le cloud · les textes périmés (ft-v1093) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
   const pg=await cx.newPage();
@@ -21792,6 +21809,152 @@ console.log('\n-- CXCIX. La 3ᵉ porte du retour · le cloud · les textes péri
   t('⛔ le retour passe par les DEUX propriétaires (`_overlayDuDessus` + `_closeOverlayProper`)',
     /_overlayDuDessus/.test(pop) && /_closeOverlayProper/.test(pop) && /data-no-dismiss/.test(pop),
     pop.replace(/\s+/g,' ').slice(0,200));
+}
+
+
+/* == BLOC CXCVIII - LES DONNEES DE SANTE VIVENT DANS LEUR PROPRE CLE (ft-v1092) ==
+   Idee de Michel : « on peut pas creer une section sante pour eviter justement que tout se
+   trouve dans le meme JSON ? ».
+   ⭐⭐ ELLE EST PLUS FORTE QUE LA PROMESSE QU'ON VENAIT D'ECRIRE : la politique dit que les
+   outils ne montrent que le necessaire — garantie de COMPORTEMENT. Deux cles en font une
+   garantie de CONSTRUCTION : l'outil ne l'a pas en main.
+   ⛔⛔ C'EST LA COUCHE DE STOCKAGE, donc les temoins ne mesurent pas la fonctionnalite, ils
+   mesurent QU'ON NE PERD RIEN (regle d'or #3). */
+console.log('\n-- CXCVIII. La santé vit dans sa propre clé, sans rien perdre (ft-v1092) --');
+{
+  const src=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  const vm=require('vm');
+  const magasin=(init)=>{
+    const st=Object.assign({},init||{});
+    const echecs={};                       // cle -> true : simuler une ecriture qui rate
+    return {st, echecs, api:{
+      getProperty:(k)=>(k in st? st[k] : null),
+      getProperties:()=>Object.assign({},st),
+      getKeys:()=>Object.keys(st),
+      setProperty:(k,v)=>{ if(echecs[k]) throw new Error('ecriture refusee'); st[k]=v; },
+      deleteProperty:(k)=>{ delete st[k]; } }};
+  };
+  const ctxDe=(m)=>{
+    const ctx={console,JSON,String,Number,Math,Date,Array,Object,
+      SpreadsheetApp:{openById:()=>({getSheetByName:()=>null,insertSheet:()=>null})},
+      PropertiesService:{getScriptProperties:()=>m.api},
+      /* ⚠️ Pas de gzip dans le bac a sable : `_packUser_` retombe alors sur le texte brut,
+         ce qui est EXACTEMENT son repli prevu (il ne rend un paquet que s'il se relit). */
+      Utilities:{formatDate:()=>'2026-09-01', gzip:()=>{throw new Error('pas de gzip ici');},
+                 ungzip:()=>({getDataAsString:()=>''}), newBlob:()=>({}), base64Encode:()=>'',
+                 base64Decode:()=>[]},
+      Logger:{log:()=>{}},GmailApp:{},DriveApp:{},UrlFetchApp:{},CacheService:{},
+      LockService:{},Session:{},ScriptApp:{getProjectTriggers:()=>[]},MailApp:{},
+      ContentService:{createTextOutput:(t)=>({setMimeType:()=>({_t:t}),_t:t}),MimeType:{JSON:'json'}}};
+    ctx.global=ctx; vm.createContext(ctx); vm.runInContext(src,ctx,{filename:'Code.js'});
+    return ctx;
+  };
+  const MAIL='eline@x.fr';
+  const compte=()=>({email:MAIL, sessions:[{date:'2026-08-28',exs:[]}], prs:{Squat:{rm1:100}},
+    profile:{name:'Eline', bw:52,
+      healthProfile:{blessures:'genou', trt:'non'},
+      bloodTests:[{date:'2026-07-01', fer:12}],
+      bodyScans:[{date:'2026-08-01', gras:22}],
+      smoker:false, contraception:'hormonale', mensCycleStart:'2026-08-20', mensCycleDur:28,
+      morpho:'ecto', exPhotos:{Squat:'data:img'} }});
+  /* ① ALLER-RETOUR COMPLET : on sauve, on recharge, RIEN ne manque. */
+  {
+    const m=magasin(); const ctx=ctxDe(m);
+    const avant=compte();
+    vm.runInContext('saveUserData_',ctx)(MAIL, avant);
+    const apres=vm.runInContext('loadUserData_',ctx)(MAIL);
+    /* ⚠️ MON PROPRE TÉMOIN A ROUGI, ET IL AVAIT TORT : il comparait deux CHAÎNES. La santé
+       est réappliquée À LA FIN au rechargement, donc l'ORDRE des clés change — le CONTENU,
+       lui, est intact. *« Rien n'est perdu » n'est pas « même ordre de clés »* : comparer des
+       chaînes mesurait plus que la garantie, et aurait rougi pour toujours. On compare donc
+       le contenu, clé par clé, en profondeur. */
+    const memeContenu=(a,b)=>{
+      if(a===b) return true;
+      if(typeof a!=='object'||typeof b!=='object'||a===null||b===null) return false;
+      const ka=Object.keys(a).sort(), kb=Object.keys(b).sort();
+      if(ka.length!==kb.length||ka.some((k,i)=>k!==kb[i])) return false;
+      return ka.every(k=>memeContenu(a[k],b[k]));
+    };
+    const manquants=Object.keys(avant.profile).filter(k=>!(k in (apres.profile||{})));
+    t('⭐⭐ ALLER-RETOUR : le compte rechargé porte EXACTEMENT les mêmes données (0 perte)',
+      memeContenu(apres,avant),
+      'champs manquants : '+JSON.stringify(manquants)+' · '+JSON.stringify(apres).slice(0,140));
+    /* ⛔ Le témoin voit-il quelque chose ? Sinon « identique » serait vrai sur deux vides. */
+    t('⛔ le témoin a bien SAUVÉ quelque chose (2 clés écrites)',
+      Object.keys(m.st).length===2 && ('u_'+MAIL in m.st) && ('h_'+MAIL in m.st),
+      JSON.stringify(Object.keys(m.st)));
+    /* ⭐⭐ ② LA GARANTIE STRUCTURELLE : `u_` ne contient PLUS aucune donnée de santé. */
+    const u=m.st['u_'+MAIL];
+    const fuites=['healthProfile','bloodTests','bodyScans','genou','hormonale','mensCycleStart']
+      .filter(x=>u.indexOf(x)>=0);
+    t('⭐⭐ `u_` NE CONTIENT PLUS AUCUNE DONNÉE DE SANTÉ (garantie par construction)',
+      fuites.length===0, JSON.stringify(fuites));
+    /* ⛔ … et ce qui n'est PAS de la santé est resté là où il était. */
+    t('⛔ ce qui n\'est PAS de la santé reste dans `u_` (séances, records, `morpho`, `exPhotos`)',
+      u.indexOf('Squat')>=0 && u.indexOf('ecto')>=0 && u.indexOf('exPhotos')>=0,
+      u.slice(0,140));
+  }
+  /* ⛔⛔ ③ LE TÉMOIN QUI PORTE TOUT LE RISQUE : si l'écriture de `h_` échoue, la santé ne
+     doit PAS avoir été retirée de `u_`. C'est le seul scénario où on perdrait des données. */
+  {
+    const m=magasin(); m.echecs['h_'+MAIL]=true; const ctx=ctxDe(m);
+    vm.runInContext('saveUserData_',ctx)(MAIL, compte());
+    const u=m.st['u_'+MAIL]||'';
+    t('⭐⭐ ÉCRITURE DE `h_` EN ÉCHEC → la santé est RESTÉE dans `u_` (aucune perte possible)',
+      u.indexOf('healthProfile')>=0 && u.indexOf('genou')>=0, u.slice(0,160));
+    const apres=vm.runInContext('loadUserData_',ctx)(MAIL);
+    t('⛔ … et le compte se recharge quand même EN ENTIER',
+      !!(apres && apres.profile && apres.profile.healthProfile
+         && apres.profile.bloodTests && apres.sessions.length===1),
+      JSON.stringify(apres&&apres.profile&&Object.keys(apres.profile)));
+  }
+  /* ⛔ ④ RÉTROCOMPATIBILITÉ : un compte JAMAIS migré (santé encore dans `u_`, pas de `h_`)
+     se charge exactement comme avant. C'est ce qui rend la migration sans effet de bord. */
+  {
+    const ancien=compte();
+    const m=magasin({['u_'+MAIL]: JSON.stringify(ancien)}); const ctx=ctxDe(m);
+    const d=vm.runInContext('loadUserData_',ctx)(MAIL);
+    t('⭐⭐ RÉTROCOMPATIBLE : un compte NON migré (santé dans `u_`, aucun `h_`) se charge entier',
+      JSON.stringify(d)===JSON.stringify(ancien), JSON.stringify(d).slice(0,160));
+  }
+  /* ⛔ ⑤ UNE SANTÉ ILLISIBLE NE DOIT JAMAIS EMPÊCHER DE CHARGER L'ENTRAÎNEMENT.
+     *Un filet qui fait tomber ce qu'il protège est pire que pas de filet.* */
+  {
+    const m=magasin({['u_'+MAIL]: JSON.stringify({email:MAIL,sessions:[1,2],profile:{name:'E'}}),
+                     ['h_'+MAIL]: '{ceci n est pas du json'});
+    const ctx=ctxDe(m);
+    const d=vm.runInContext('loadUserData_',ctx)(MAIL);
+    t('⛔ une santé ILLISIBLE ne fait pas tomber le chargement de l\'entraînement',
+      !!(d && d.sessions && d.sessions.length===2), JSON.stringify(d));
+  }
+  /* ⛔⛔ ⑥ LES TROIS ENDROITS QUI DEVIENDRAIENT FAUX SANS ÊTRE TOUCHÉS. Ce témoin lit le
+     source : c'est le seul moyen de figer qu'on n'a pas oublié un chemin. */
+  {
+    const sc=src.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+    t('⭐⭐ SUPPRESSION DE COMPTE : `h_` est effacé aussi (sinon la séparation CRÉERAIT une fuite)',
+      /var cles = \['u_' \+ CIBLE, 'h_' \+ CIBLE/.test(sc), '');
+    t('⭐⭐ SAUVEGARDE DRIVE : elle relit `h_` (sinon elle perdrait la santé de tout le monde)',
+      /users\.push\(\{ email: email, data: data, sante: sante \}\)/.test(sc), '');
+    t('⛔ COMPRESSION : `h_` est compressée elle aussi (sinon le réservoir regrossit)',
+      /indexOf\('u_'\) === 0 \|\| k\.indexOf\('h_'\) === 0/.test(sc), '');
+    /* ⛔ ET LE DÉTECTEUR DE SÉRIES ABÎMÉES DEVIENT STRUCTURELLEMENT AVEUGLE À LA SANTÉ :
+       il ne lit que `u_`, qui n'en contient plus. C'est la promesse de la politique,
+       devenue vraie par construction. */
+    t('⭐⭐ le détecteur ne lit que `u_` — il est désormais AVEUGLE à la santé par construction',
+      /_cl = Object\.keys\(_pr\)\.filter\(function\(k\)\{ return k\.indexOf\('u_'\) === 0; \}\)/.test(sc), '');
+  }
+  /* ⛔ ⑦ LA LISTE elle-même : deux vérifications l'ont corrigée avant écriture. */
+  {
+    const m=magasin(); const ctx=ctxDe(m);
+    const L=vm.runInContext('_CHAMPS_SANTE_',ctx);
+    t('⛔⛔ `cycle` N\'EST PAS dans la liste — c\'est le cycle de FORCE, pas le menstruel',
+      L.indexOf('cycle')<0, JSON.stringify(L));
+    t('⛔ `exPhotos` et `morpho` non plus (photos d\'exercices · silhouette déclarée)',
+      L.indexOf('exPhotos')<0 && L.indexOf('morpho')<0, JSON.stringify(L));
+    t('⭐ … mais le menstruel et le tabac y sont bien',
+      ['mensCycleStart','mensCycleDur','contraception','smoker'].every(c=>L.indexOf(c)>=0),
+      JSON.stringify(L));
+  }
 }
 
 await b.close(); srv.close();
