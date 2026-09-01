@@ -657,7 +657,15 @@ t('plus AUCUN vieux prix (« 4,99 » / « 2 mois ») dans tout le frontend — m
 // décompressent (chargement, backup nocturne, liste admin), et la migration one-shot existe.
 t('comptes compressés : pack auto-vérifié + les 3 lecteurs décompressent + migration compressStore',
   (()=>{const s=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
-        return /_packUser_\(JSON\.stringify\(data\)\)/.test(s)
+        /* ⚠️ MÊME DÉFAUT QUE LA LIGNE DU DESSOUS, DANS LA MÊME ASSERTION : celle-ci figeait
+           `_packUser_(JSON.stringify(data))`, et `saveUserData_` écrit désormais un objet
+           allégé de la santé (`aEcrire`). La garantie n'a jamais été le nom de la variable :
+           c'est que la clé du compte n'est JAMAIS écrite sans passer par `_packUser_`. */
+        return (()=>{ const f=s.slice(s.indexOf('function saveUserData_'));
+                      const corps=f.slice(0, f.indexOf('\n}\n'));
+                      const ecrits=(corps.match(/setProperty\(userKey_\(email\)/g)||[]).length;
+                      const packes=(corps.match(/setProperty\(userKey_\(email\), _packUser_\(/g)||[]).length;
+                      return ecrits>0 && ecrits===packes; })()
             /* ⚠️ CE TÉMOIN FIGEAIT L'EXPRESSION LITTÉRALE de la lecture — il a rougi le
                01/09 quand `loadUserData_` a sorti l'accesseur dans une variable (`sp`), sur
                du code parfaitement correct. *Un témoin visé sur une FORME se périme au premier
