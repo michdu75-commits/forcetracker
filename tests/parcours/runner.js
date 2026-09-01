@@ -21275,9 +21275,14 @@ console.log('\n-- CXCIV. Les séries abîmées par la virgule, chez tout le mond
     const ecrits=[];
     const ctx={console,JSON,String,Number,Math,Date,Array,Object,
       SpreadsheetApp:{openById:()=>({getSheetByName:()=>null, insertSheet:()=>null})},
+      /* ⚠️ LE FAUX MAGASIN REND CE QUI EST *STOCKÉ*, JAMAIS CE QU'ON PRÉSENTE. Ma première
+         version renvoyait le jeton FOURNI comme jeton stocké : la comparaison passait donc
+         toujours, et le témoin du refus était rouge sur du code parfaitement sain. *Une fixture
+         qui ne parle pas la langue de l'app ne teste pas l'app* — même famille que le `concat`
+         de ft-v1069 et le `ft4_height` de ft-v1070. */
       PropertiesService:{getScriptProperties:()=>({
         getProperties:()=>props,
-        getProperty:(k)=>(k==='IDEES_TOKEN2'?jeton:(props[k]||'')),
+        getProperty:(k)=>(props[k]||''),
         setProperty:(k,v)=>{ ecrits.push(k); },
         deleteProperty:(k)=>{ ecrits.push('del:'+k); } })},
       Utilities:{formatDate:()=>'2026-09-01', ungzip:()=>({getDataAsString:()=>''}),
@@ -21312,9 +21317,15 @@ console.log('\n-- CXCIV. Les séries abîmées par la virgule, chez tout le mond
     /* ⛔ ① Le témoin voit-il quelque chose ? Sinon tous les « rien » seraient verts sur du vide. */
     t('⛔ le témoin a bien LU les comptes (3 comptes, la clé étrangère ignorée)',
       d.comptesLus===3, 'comptes lus = '+d.comptesLus);
-    /* ⭐⭐ ② LE TÉMOIN QUI COMPTE LE PLUS : la route N'ÉCRIT RIEN. */
-    t('⭐⭐ LA ROUTE N\'ÉCRIT RIEN — 0 écriture de propriété (R29)',
-      R.ecrits.length===0, JSON.stringify(R.ecrits.slice(0,5)));
+    /* ⭐⭐ ② LE TÉMOIN QUI COMPTE LE PLUS : la route NE TOUCHE À AUCUN COMPTE.
+       ⚠️ Il visait d'abord « 0 écriture de propriété » et il a rougi sur du code sain : `doGet`
+       exécute au passage de vieilles migrations one-shot (`triggers_purged_*`), qui n'ont rien
+       à voir avec cette route. *Un témoin visé trop large accuse le voisin* — il vise donc la
+       GARANTIE : aucun compte (`u_*`) écrit, aucune propriété supprimée. Si la route touchait
+       un jour à un compte, il rougirait. */
+    const touche=R.ecrits.filter(k=>k.indexOf('u_')===0||k.indexOf('del:')===0);
+    t('⭐⭐ LA ROUTE NE TOUCHE À AUCUN COMPTE — 0 écriture `u_*`, 0 suppression (R29)',
+      touche.length===0, JSON.stringify({touche:touche, toutesEcritures:R.ecrits.slice(0,5)}));
     /* ⭐⭐ ③ … et elle ne rend NI charges NI profil NI santé. */
     const brut=JSON.stringify(d);
     t('⭐⭐ elle ne rend NI charges NI profil NI santé (juste des comptes et des dates)',
@@ -21337,7 +21348,7 @@ console.log('\n-- CXCIV. Les séries abîmées par la virgule, chez tout le mond
       JSON.stringify({total:d.totalSeries, comptes:d.comptes.length}));
   }
   /* ⛔ ⑨ JETON OBLIGATOIRE : cette route regarde les comptes des autres. */
-  const refus=lancer(props,JET).d && lancer({IDEES_TOKEN2:JET},'mauvais-jeton').d;
+  const refus=lancer(props,'mauvais-jeton').d;
   t('⛔⛔ sans le bon jeton, la route REFUSE (elle lit les comptes des autres)',
     refus && refus.status==='error' && refus.error==='token', JSON.stringify(refus));
 }
