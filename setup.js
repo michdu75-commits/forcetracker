@@ -1173,13 +1173,13 @@ function _renderSessDetailContent(){
       ${(()=>{ let _n=0; return ex.sets.map((s,si)=>{ if(!s.done) return ''; _n++; return `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
         <span style="font-size:11px;color:var(--t3);min-width:14px">${_n}</span>
         <span style="font-size:11px;background:var(--bg3);padding:2px 5px;border-radius:4px;color:var(--t2);min-width:22px;text-align:center">${s.type||'N'}</span>
-        <input type="number" min="1" inputmode="numeric" value="${s.reps}"
+        <input type="number" min="1" inputmode="numeric" value="${_champNum(s.reps)}"
                style="width:46px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
-               onchange="updateSessSet(${ei},${si},'reps',+this.value)">
+               onchange="updateSessSet(${ei},${si},'reps',this.value)">
         <span style="color:var(--t2);font-size:12px">reps ×</span>
-        <input type="text" step="0.5" min="0" inputmode="decimal" value="${s.kg}"
+        <input type="text" step="0.5" min="0" inputmode="decimal" value="${_champNum(s.kg)}"
                style="width:58px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
-               onchange="updateSessSet(${ei},${si},'kg',+this.value)">
+               onchange="updateSessSet(${ei},${si},'kg',this.value)">
         <span style="color:var(--t2);font-size:12px">kg</span>
         ${s.kg&&s.reps?`<span style="font-size:12px;color:var(--t1);font-weight:600;margin-left:2px" title="1RM potentiel estimé de cette série">~${fmt(s.rm1||bz(s.kg,s.reps))}kg</span>`:''}
         <button class="btn btn-bg2" style="padding:3px 7px;font-size:11px;color:var(--red);margin-left:auto" onclick="deleteSessSet(${ei},${si})">✕</button>
@@ -1250,8 +1250,29 @@ function setSessCardio(field,val,moment){
   _renderSessDetailContent();
 }
 
+/* ⛔⛔ « null » DANS LE CHAMP KG — retour de Michel sur le compte d'Eline (01/09/2026), capture
+   à l'appui : son Pec Deck affichait `10 reps × null kg` sur deux séries.
+   ⚠️⚠️ ET CE QU'ON VOIT N'EST PAS LE PLUS GRAVE — mais il faut dire lequel exactement, sinon
+   la raison écrite ici sera fausse. Le champ écrivait `+this.value`, donc **toute saisie non
+   numérique y devenait `NaN`**, écrit dans SA séance. Le cas réel n'est pas le mot « null »
+   (l'effacer et taper 16 marchait) : c'est **la virgule** — `+'62,5'` = `NaN`. C'est la famille
+   de **ft-v1057**, et Eline est précisément la personne qui l'a fait remonter. *Or c'est en
+   voulant corriger ce « null » qu'on tape dans le champ.* Il passe donc par `numFR`, comme
+   celui de l'écran de séance.
+   ⭐ L'écran de séance, lui, était déjà juste (`value="${set.kg||''}"`) : la jumelle cherchée
+   (R8) existait, et c'est le détail d'une séance PASSÉE qui ne l'avait pas.
+   ⛔ ON NE DEVINE PAS À SA PLACE (R29) : un poids inconnu reste vide, il ne devient pas 0.
+   *Écrire 0 dirait « elle a poussé zéro », ce qui est faux ; vide dit « on ne sait pas ».* */
+function _champNum(v){
+  return (v===null || v===undefined || (typeof v==='number' && !isFinite(v))) ? '' : v;
+}
 function updateSessSet(ei,si,field,val){
-  if(_sessEdits&&_sessEdits.exs[ei]&&_sessEdits.exs[ei].sets[si])_sessEdits.exs[ei].sets[si][field]=val;
+  if(!(_sessEdits&&_sessEdits.exs[ei]&&_sessEdits.exs[ei].sets[si]))return;
+  /* ⛔ Un champ vidé rend `null` (« je ne sais pas »), jamais 0 ni NaN. */
+  const t=String(val==null?'':val).trim();
+  let n=null;
+  if(t!==''){ n=(typeof numFR==='function')?numFR(t):parseFloat(t.replace(',','.')); if(!isFinite(n))n=null; }
+  _sessEdits.exs[ei].sets[si][field]=n;
 }
 function deleteSessSet(ei,si){
   if(!_sessEdits)return;

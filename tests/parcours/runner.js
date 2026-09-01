@@ -21047,6 +21047,82 @@ console.log('\n-- CXCII. Les quatre petits défauts de l\'audit (ft-v1086) --');
   }
 }
 
+
+/* == BLOC CXCIII - « null » DANS LE CHAMP KG, ET LE NaN QU'IL FABRIQUAIT (ft-v1088) ==
+   Michel, capture du compte d'Eline : son Pec Deck affichait `10 reps × null kg` sur deux
+   series. Le detail d'une seance PASSEE rendait `value="${s.kg}"` sans garde — un poids
+   inconnu s'ecrivait donc « null » en toutes lettres dans le champ.
+   ⛔⛔ ET CE QU'ON VOIT N'EST PAS LE PLUS GRAVE : le champ ecrivait `+this.value`, donc TOUTE
+   saisie non numerique y devenait **NaN**, ecrit dans SA seance. Le cas reel n'est pas le mot
+   « null » (l'effacer et taper 16 marchait) : c'est **la virgule** — `+'62,5'` = NaN, la famille
+   de ft-v1057, et Eline est precisement celle qui l'avait fait remonter. Or c'est en voulant
+   corriger ce « null » qu'on tape dans le champ.
+   ⭐ LA JUMELLE CHERCHEE (R8) EXISTAIT ET ETAIT SAINE : l'ecran de seance rend deja
+   `value="${set.kg||''}"`. C'est le detail d'une seance passee qui ne l'avait pas.
+   ⛔ ET UN 3e DEFAUT PARTAIT AVEC, de la famille de ft-v1057 (la virgule d'Eline) : `+this.value`
+   rendait NaN sur « 62,5 ». Ce champ passe desormais par `numFR`, comme celui de la seance. */
+console.log('\n-- CXCIII. « null » dans le champ kg, et le NaN qu\'il fabriquait (ft-v1088) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  /* ⭐ LA FIXTURE EST SA SEANCE : serie 1 renseignee, series 2 et 3 sans poids (Milo ecrit
+     « 3 × 10 » sans charge, elle n'a rempli que la premiere). */
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',
+    ft4_sessions:JSON.stringify([{id:1756000000000,date:'2026-08-28',vol:120,exs:[
+      {name:'Pec Deck',sets:[
+        {kg:12,reps:10,done:true,type:'N',rm1:16},
+        {kg:null,reps:10,done:true,type:'N'},
+        {reps:10,done:true,type:'N'}                       // kg ABSENT, pas meme null
+      ]}]}])}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const N=await pg.evaluate(()=>{
+   try{
+    const o={};
+    openSessDetail(1756000000000);
+    /* ⛔ On lit UNIQUEMENT les champs du détail de séance (`#sd-content`) : un sélecteur large
+       ramasserait les champs de nutrition et de pesée, et le témoin serait vert sur les leurs. */
+    const champs=[...document.querySelectorAll('#sd-content input[inputmode="decimal"]')].map(i=>i.value);
+    o.champsKg=champs;
+    o.aucunNull = champs.every(v=>v!=='null' && v!=='undefined' && v!=='NaN');
+    /* ⛔ Le temoin voit-il quelque chose ? Sinon « aucun null » serait vrai sur 0 champ. */
+    o.nbChamps=champs.length;
+    o.premier=champs[0];
+    /* ⛔⛔ LE PLUS IMPORTANT : toucher le champ ne doit plus fabriquer de NaN. */
+    updateSessSet(0,1,'kg','');
+    o.apresVide=_sessEdits.exs[0].sets[1].kg;
+    updateSessSet(0,1,'kg','null');
+    o.apresTexte=_sessEdits.exs[0].sets[1].kg;
+    /* ⛔ … et la virgule d'Eline passe (famille ft-v1057). */
+    updateSessSet(0,0,'kg','62,5');
+    o.virgule=_sessEdits.exs[0].sets[0].kg;
+    /* ⛔ une vraie saisie reste une vraie saisie. */
+    updateSessSet(0,0,'reps','8');
+    o.reps=_sessEdits.exs[0].sets[0].reps;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+  if(N.err) t('CXCIII n\'a pas pu tourner', false, N.err);
+  else{
+    t('⛔ le témoin a bien OUVERT le détail : les 3 champs de poids sont rendus',
+      N.nbChamps===3, 'champs = '+JSON.stringify(N.champsKg));
+    t('⭐⭐ SON CAS : plus aucun « null » / « undefined » / « NaN » dans les champs',
+      N.aucunNull===true, JSON.stringify(N.champsKg));
+    t('⛔ … et la valeur CONNUE est toujours affichée (on n\'a pas vidé tout le monde)',
+      N.premier==='12', 'premier champ = '+N.premier);
+    /* ⛔⛔ LE TÉMOIN QUI PROTÈGE LES DONNÉES, pas l'affichage. */
+    t('⛔⛔ toucher le champ n\'écrit plus NaN : un champ vidé rend `null`, pas 0 ni NaN (R29)',
+      N.apresVide===null && N.apresTexte===null,
+      JSON.stringify({vide:N.apresVide, texte:N.apresTexte}));
+    t('⛔ la virgule d\'Eline passe ici aussi : « 62,5 » vaut 62,5 (famille ft-v1057)',
+      N.virgule===62.5, 'virgule = '+N.virgule);
+    t('⛔ NON-RÉGRESSION : une saisie normale s\'écrit toujours',
+      N.reps===8, 'reps = '+N.reps);
+    t('⛔ 0 erreur JS sur tout le bloc', errs.length===0, JSON.stringify(errs.slice(0,3)));
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
