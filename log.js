@@ -4034,6 +4034,14 @@ function _workVol(sess){
 }
 
 let _finishing=false;
+/* 🏅 UN SEUL PROPRIÉTAIRE DE « CETTE SÉRIE PEUT-ELLE FAIRE UN RECORD ? » (01/09/2026).
+   La règle était écrite ici, en fin de séance, et nulle part ailleurs. Le jour où un 2ᵉ endroit
+   a eu besoin de la même question — le recalcul des records depuis l'historique — la recopier
+   aurait garanti qu'elles divergent un jour (R2). Elle ne bouge PAS d'un caractère : séries
+   faites, avec charge et répétitions, hors échauffement (É) et hors W. */
+function _serieFaitFoiPourPR(s){
+  return !!(s && s.done && s.kg && s.reps && s.type!=='É' && s.type!=='W');
+}
 async function finishWorkout(){
   if(_finishing)return;
   _finishing=true;
@@ -4060,13 +4068,13 @@ async function finishWorkout(){
   // Capturer les PRs avant mise à jour pour détecter les améliorations
   const _oldPrs={};Object.keys(S.prs||{}).forEach(k=>{_oldPrs[k]={...S.prs[k]};});
   sess.exs.forEach(ex=>ex.sets.forEach(s=>{
-    if(!s.done||!s.kg||!s.reps||s.type==='É'||s.type==='W')return;
+    if(!_serieFaitFoiPourPR(s))return;
     const rm=bz(s.kg,s.reps),cur=S.prs[ex.name];
     if(!cur||rm>cur.rm1)S.prs[ex.name]={kg:s.kg,reps:s.reps,rm1:rm,date:sess.date};
   }));
   let _bestPr=null;const _prExs=new Set();
   sess.exs.forEach(ex=>ex.sets.forEach(s=>{
-    if(!s.done||!s.kg||!s.reps||s.type==='É'||s.type==='W')return;
+    if(!_serieFaitFoiPourPR(s))return;
     const rm=bz(s.kg,s.reps),old=_oldPrs[ex.name];
     if(!old||rm>old.rm1){
       _prExs.add(ex.name);

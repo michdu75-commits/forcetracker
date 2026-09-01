@@ -3355,6 +3355,125 @@ function _seanceHorodatee(s){
   return (s.exs||[]).some(e=>(e.sets||[]).some(x=>x&&x.at!==undefined&&x.at!==null));
 }
 
+/* 🏅 RECALCULER LES RECORDS DEPUIS L'HISTORIQUE (01/09/2026) — demandé par Michel, et né
+   d'un faux record MESURÉ dans ses données : `Rowing Hammer Strength` portait **66 kg × 8 →
+   81,9 kg**, c'est-à-dire **exactement les chiffres de son Tirage Poulie Haute**, même date.
+   Le sélecteur avait renommé son exercice (ft-v1073) ; il a réparé la séance, le bon record
+   du Tirage est revenu — **mais le fantôme est resté**. Sa vraie perf ce jour-là : 60 kg × 8,
+   soit ~74,5. Record surévalué de **7,4 kg**.
+   ⚠️ CE N'EST PAS COSMÉTIQUE : ce maximum sert de référence aux charges que Milo propose, à la
+   montée en charge que l'app ajoute, et au % du max dans le calcul des calories. Et comme il
+   est faux VERS LE HAUT, il ne sera jamais battu — il resterait pour toujours.
+
+   ⛔⛔ TROIS RÈGLES, ET LA TROISIÈME EST LA PLUS IMPORTANTE :
+   ① La règle d'éligibilité n'est PAS réécrite : `_serieFaitFoiPourPR` est le propriétaire
+      unique, partagé avec la fin de séance (R2). Un recalcul qui n'appliquerait pas la même
+      règle que la production fabriquerait un 2ᵉ historique, pas une correction.
+   ② APERÇU D'ABORD : la fonction ne fait que CALCULER et rendre l'écart. Rien n'est écrit
+      tant que la personne n'a pas vu ce qui changerait (R29).
+   ③ ⛔⛔ ON NE SUPPRIME JAMAIS UN RECORD QU'ON NE PEUT PAS VÉRIFIER. Un exercice sans aucune
+      série dans l'historique (import ancien, séance effacée, autre appareil) garde son record
+      TEL QUEL et est listé à part. *Recalculer, c'est corriger ce qu'on peut prouver — pas
+      effacer ce qu'on ne retrouve pas.* Sans cette règle, l'outil détruirait des records
+      légitimes en silence, ce qui est bien pire que le fantôme qu'il vient réparer. */
+function _prsDepuisSeances(){
+  const calc={};
+  (S.sessions||[]).forEach(sess=>{
+    const d=sess&&sess.date; if(!d) return;
+    (sess.exs||sess.exercises||[]).forEach(ex=>{
+      if(!ex||!ex.name) return;
+      (ex.sets||[]).forEach(st=>{
+        if(typeof _serieFaitFoiPourPR==='function' ? !_serieFaitFoiPourPR(st)
+           : !(st&&st.done&&st.kg&&st.reps&&st.type!=='É'&&st.type!=='W')) return;
+        const rm=bz(st.kg,st.reps), cur=calc[ex.name];
+        if(!cur||rm>cur.rm1) calc[ex.name]={kg:st.kg,reps:st.reps,rm1:rm,date:d};
+      });
+    });
+  });
+  const corriges=[], intacts=[], sansSeance=[];
+  Object.keys(S.prs||{}).forEach(n=>{
+    const av=S.prs[n], ap=calc[n];
+    if(!ap){ sansSeance.push({nom:n, rm1:av&&av.rm1}); return; }   // ③ jamais supprimé
+    if(Math.abs((av&&av.rm1||0)-ap.rm1)>0.05) corriges.push({nom:n, avant:av, apres:ap});
+    else intacts.push(n);
+  });
+  const nouveaux=Object.keys(calc).filter(n=>!(S.prs||{})[n])
+                       .map(n=>({nom:n, apres:calc[n]}));
+  return {calc, corriges, intacts, sansSeance, nouveaux};
+}
+
+/* ⛔ EN DEUX TEMPS, comme le nettoyage des doublons : le bouton qui ÉCRIT n'existe pas tant
+   qu'on n'a pas vu ce qui changerait. C'est le seul outil qui touche aux records. */
+function apercuRecordsAdmin(){
+  const box=document.getElementById('admin-records'); if(!box) return;
+  if(typeof _isAdminUnlocked==='function' && !_isAdminUnlocked()){
+    box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'; return; }
+  const r=_prsDepuisSeances();
+  const f=(p)=>p? (p.kg+' kg × '+p.reps+' → '+(Math.round(p.rm1*10)/10)+' kg'+(p.date?' · '+p.date:'')) : '—';
+  /* ⛔⛔ MONTER ET DESCENDRE NE SE VALENT PAS, ET C'EST LA MESURE QUI L'A DIT (01/09/2026).
+     Rejoué sur les 39 séances réelles de Michel : 6 corrections, dont **2 vers le HAUT** (son
+     Pec Deck passe de 93,1 à 119,2 — son historique contient mieux que son record) et **4 vers
+     le BAS**. ⭐ Une MONTÉE est sûre : l'historique en porte la preuve. ⚠️ Une BAISSE ne l'est
+     pas : elle suppose que la séance qui a fait le record est **encore** dans l'historique. Si
+     elle a été effacée, importée d'ailleurs ou faite sur un autre appareil, on détruit un vrai
+     record. 👉 Les deux sont donc SÉPARÉS à l'écran et la baisse porte son avertissement.
+     *Un outil de correction qui ne distingue pas « je complète » de « j'efface » finit par
+     effacer.* */
+  const monte=r.corriges.filter(c=>c.apres.rm1>(c.avant&&c.avant.rm1||0));
+  const baisse=r.corriges.filter(c=>c.apres.rm1<=(c.avant&&c.avant.rm1||0));
+  const ligne=(c,couleur)=>'<div><b>'+_escIdea(c.nom)+'</b><br><span style="color:var(--t3)">'
+    +_escIdea(f(c.avant))+'</span> → <span style="color:var('+couleur+')">'+_escIdea(f(c.apres))+'</span></div>';
+  let h='';
+  if(!r.corriges.length && !r.nouveaux.length){
+    h='<div style="font-size:13px;color:var(--green);font-weight:700;">✅ Tes records collent à ton historique — rien à corriger.</div>';
+  }else{
+    h='<div style="font-size:13px;color:var(--gold);font-weight:700;">🏅 '
+      +r.corriges.length+' record'+(r.corriges.length>1?'s':'')+' à corriger'
+      +(r.nouveaux.length?' · '+r.nouveaux.length+' à créer':'')+'.</div>'
+      +'<div style="font-size:11.5px;color:var(--t3);margin-top:4px;">Rien n\'est modifié pour l\'instant.</div>';
+    if(monte.length||r.nouveaux.length){
+      h+='<div style="font-size:12px;color:var(--t2);margin-top:10px;line-height:1.7;">'
+        +'<div style="color:var(--green);font-weight:700;margin-bottom:4px;">⬆️ Ton historique prouve mieux — sans risque</div>';
+      monte.slice(0,10).forEach(c=>{ h+=ligne(c,'--green'); });
+      r.nouveaux.slice(0,6).forEach(c=>{
+        h+='<div><b>'+_escIdea(c.nom)+'</b><br><span style="color:var(--t3)">aucun record</span> → '+_escIdea(f(c.apres))+'</div>'; });
+      h+='</div>';
+    }
+    if(baisse.length){
+      h+='<div style="font-size:12px;color:var(--t2);margin-top:12px;line-height:1.7;">'
+        +'<div style="color:var(--red);font-weight:700;margin-bottom:4px;">⬇️ Plus bas que ton record actuel — à lire</div>'
+        +'<div style="font-size:11.5px;color:var(--t3);margin-bottom:6px;">Ça corrige un record fantôme (exercice renommé), <b>mais</b> ça efface aussi un vrai record si la séance qui l\'a fait n\'est plus dans ton historique (import, autre appareil, séance supprimée). Vérifie les lignes avant.</div>';
+      baisse.slice(0,10).forEach(c=>{ h+=ligne(c,'--red'); });
+      h+='</div>';
+    }
+    h+='<button class="btn btn-red" style="width:100%;padding:12px;margin-top:10px;font-size:14px;" onclick="appliquerRecordsAdmin()">🏅 Appliquer ces corrections</button>';
+  }
+  /* ⛔ ON DIT CE QU'ON NE TOUCHE PAS — sinon la personne croit que l'outil a tout vu. */
+  h+='<div style="font-size:11.5px;color:var(--t3);margin-top:10px;line-height:1.5;">'
+    +r.intacts.length+' record'+(r.intacts.length>1?'s':'')+' déjà juste'+(r.intacts.length>1?'s':'')+'.'
+    +(r.sansSeance.length? ' · <b>'+r.sansSeance.length+'</b> gardé'+(r.sansSeance.length>1?'s':'')
+      +' tel'+(r.sansSeance.length>1?'s':'')+' quel'+(r.sansSeance.length>1?'s':'')
+      +' : aucune séance dans l\'historique pour les vérifier (import ancien, autre appareil) — <b>jamais supprimés</b>.':'')
+    +'</div>';
+  box.innerHTML=h;
+}
+function appliquerRecordsAdmin(){
+  const box=document.getElementById('admin-records'); if(!box) return;
+  const r=_prsDepuisSeances();
+  const n=r.corriges.length+r.nouveaux.length;
+  if(!n){ apercuRecordsAdmin(); return; }
+  showConfirm('Corriger '+n+' record'+(n>1?'s':'')+' ?',
+    'Recalculés depuis tes séances. ⚠️ Ceux qui BAISSENT effacent le record actuel — assure-toi d\'avoir lu la liste rouge. Les records sans aucune séance ne sont pas touchés.',
+    ()=>{
+      r.corriges.forEach(c=>{ S.prs[c.nom]=c.apres; });
+      r.nouveaux.forEach(c=>{ S.prs[c.nom]=c.apres; });
+      persist();
+      try{ if(typeof _cloudSync==='function') _cloudSync(); }catch(e){}
+      toast(n+' record'+(n>1?'s':'')+' corrigé'+(n>1?'s':'')+' ✅','success');
+      apercuRecordsAdmin();
+    }, 'Corriger');
+}
+
 function _recalerAnciennesSeances(){
   if(!_isAdminUnlocked()){ toast('Réservé à l\'admin','error'); return; }
   const el=document.getElementById('admin-recal-res');

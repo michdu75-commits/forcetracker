@@ -1096,7 +1096,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     </div>
     </details>
     <details class="adm-grp">
-      <summary>🔧 Le compte et la connexion <span class="adm-n">5</span></summary>
+      <summary>🔧 Le compte et la connexion <span class="adm-n">6</span></summary>
     <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
       <div class="fg">
         <label>Email Admin</label>
@@ -1143,6 +1143,16 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
            garde les COMPTES, pas le classeur. -->
       <button class="btn btn-bg2" onclick="apercuNettoyageAdmin()" style="padding:11px;font-size:14px;">🧹 Voir ce qui partirait</button>
       <div id="admin-nettoyage" style="margin-top:4px;"></div>
+    </div>
+    <!-- 🏅 RECORDS RECALCULÉS DEPUIS L'HISTORIQUE (01/09). Né d'un faux record mesuré chez
+         Michel : un exercice renommé avait laissé un fantôme à 81,9 kg, 7,4 kg au-dessus de sa
+         vraie perf — et ce maximum sert de référence aux charges proposées. ⛔ En deux temps,
+         et un record sans séance dans l'historique n'est JAMAIS supprimé. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🏅 Vérifier mes records</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Recalcule tes records <strong>depuis tes séances</strong>, avec la même règle que la fin de séance. Utile après un exercice renommé : le record peut rester accroché à l'ancien nom. ⛔ Un record dont aucune séance ne parle est <strong>gardé tel quel</strong>, jamais supprimé.</div>
+      <button class="btn btn-bg2" onclick="apercuRecordsAdmin()" style="padding:11px;font-size:14px;">🏅 Comparer avec mon historique</button>
+      <div id="admin-records" style="margin-top:4px;"></div>
     </div>
     </details>
     <details class="adm-grp">
