@@ -4380,13 +4380,38 @@ const _GARDIEN_CLE='ft4_gardienStats';
    plus compter la même chose, et on ne saurait pas laquelle croire. */
 const _GARDIEN_DERIVES = ['promesse_vide','interrogatoire','diagnostic','source_fabriquee'];
 const _estDerive = (f)=> !!f && _GARDIEN_DERIVES.indexOf(f.code)>=0;
+/* 🔢 LA VERSION DE LA RÈGLE (01/09/2026). Le motif `promesse_vide` a été recalibré le 22/08
+   (ft-v967) parce qu'il levait des drapeaux à tort. Or le compteur, lui, accumulait depuis le
+   21/08 : ***il traînait donc pour toujours les erreurs d'une version corrigée***, et l'écran
+   ne le disait pas — il prévenait pour l'HISTORIQUE, pas pour le direct.
+   👉 Quand ce numéro change, le compteur repart à zéro : *mélanger deux règles dans un même
+   total, c'est fabriquer un chiffre qui ne décrit aucune des deux.* */
+const _GARDIEN_REGLE = 2;   // 1 = avant ft-v967 · 2 = depuis la recalibration du 22/08
+
+/* ⛔⛔ ON COMPTE AUSSI CE QUI VA BIEN (01/09/2026) — Michel, capture à l'appui : « déjà le
+   gardien », devant un « 124 » qui semblait catastrophique.
+   ⚠️ Il ne l'était pas, et MOI AUSSI j'ai failli lire 98 % : la ligne dit « 126 réponses
+   portant au moins un drapeau », c'est-à-dire **un NUMÉRATEUR SANS DÉNOMINATEUR**. Cette
+   fonction sortait avant d'avoir rien compté quand tout allait bien (`if(!vrais.length)
+   return`), donc le total des réponses analysées n'existait nulle part.
+   👉 ***Un compteur d'anomalies qui ne compte pas les cas normaux ne peut produire qu'un
+   chiffre illisible*** — et un chiffre illisible fait peur pour rien. Le bloc HISTORIQUE, lui,
+   disait « 3 sur 101 » depuis toujours : c'est ce qui manquait ici. */
 function _gardienCompter(flags){
   try{
-    const o=JSON.parse(localStorage.getItem(_GARDIEN_CLE)||'{}')||{};
-    const vrais=(flags||[]).filter(_estDerive);
-    if(!vrais.length) return;                     // que du trafic normal : rien à compter
+    let o=JSON.parse(localStorage.getItem(_GARDIEN_CLE)||'{}')||{};
+    if((o.regle||1)!==_GARDIEN_REGLE) o={regle:_GARDIEN_REGLE};   // règle changée → on repart propre
+    o.regle=_GARDIEN_REGLE;
     const j=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
-    o.depuis=o.depuis||j; o.dernier=j; o.codes=o.codes||{};
+    o.depuis=o.depuis||j;
+    o.analysees=(o.analysees||0)+1;               // ⭐ le DÉNOMINATEUR : toute réponse passe ici
+    const vrais=(flags||[]).filter(_estDerive);
+    if(!vrais.length){                            // trafic normal : on l'enregistre quand même
+      localStorage.setItem(_GARDIEN_CLE, JSON.stringify(o));
+      try{ if(typeof S!=='undefined') S.gardienStats=o; }catch(e2){}
+      return;
+    }
+    o.dernier=j; o.codes=o.codes||{};
     vrais.forEach(f=>{ o.codes[f.code]=(o.codes[f.code]||0)+1; });
     o.total=(o.total||0)+1;                       // nombre de RÉPONSES portant au moins 1 dérive
     localStorage.setItem(_GARDIEN_CLE, JSON.stringify(o));
@@ -4491,7 +4516,12 @@ function _gardienStatsTexte(){
     L.push('📡 MESURÉ EN DIRECT (depuis ft-v944)');
   }
   L.push('Depuis le '+(o.depuis||'?')+' · dernière le '+(o.dernier||'?'));
-  L.push(o.total+' réponse(s) de Milo portant au moins un drapeau.');
+  /* ⭐ LE CHIFFRE EST UN TAUX, PLUS UN NOMBRE ORPHELIN. Tant que le dénominateur n'est pas
+     connu (compteurs d'avant ft-v1085), on le DIT au lieu d'inventer un pourcentage. */
+  L.push(o.analysees
+    ? (o.total+' réponse(s) marquée(s) sur '+o.analysees+' analysée(s) — '
+       +Math.round(100*o.total/o.analysees)+' %.')
+    : (o.total+' réponse(s) de Milo portant au moins un drapeau (total analysé inconnu — compteur d\'avant la correction).'));
   L.push('');
   cles.sort((a,b)=>codes[b]-codes[a]).forEach(c=>L.push('  · '+c+' : '+codes[c]));
   L.push('');
@@ -4673,9 +4703,11 @@ function renderCoachMsg(role, text) {
     if (typeof _gardienSortie === 'function') {
       const _g = _gardienSortie(text);
       text = _g.text; _gFlags = _g.flags;
+      /* ⛔ APPELÉE POUR TOUTE RÉPONSE (01/09/2026), plus seulement les flaguées : c'est elle
+         qui tient le dénominateur. Sans ça, « 124 » ne se rapporte à rien. */
+      try { _gardienCompter(_gFlags); } catch(e){}
       if (_gFlags.length) {
         try { console.warn('[Gardien-sortie]', _gFlags.map(f=>f.code).join(', ')); } catch(e){}
-        try { _gardienCompter(_gFlags); } catch(e){}
       }
     } else {
       text = _stripCoachTech(text); // jamais de JSON brut à l'écran ni au partage (dataset.raw)

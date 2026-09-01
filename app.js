@@ -6532,6 +6532,13 @@ function _majPeutSAppliquer(){
      : (S.wkt&&S.wkt.exs&&S.wkt.exs.length)) return false;             // séance non terminée
   const ov=document.getElementById('ov-session-end');
   if(ov&&ov.classList.contains('open')) return false;                  // récapitulatif à l'écran
+  /* ⛔⛔ LE BANC D'ESSAI EST LA SEULE CHOSE DE L'APP QUI COÛTE DE L'ARGENT (01/09/2026).
+     Trouvé en vérifiant s'il était prudent de déployer pendant que Michel lançait une passe :
+     l'écran Admin le protégeait par hasard (`_curScreen !== 'home'`), mais **une passe lancée
+     depuis l'Accueil aurait été tuée par une mise à jour**, à mi-parcours et déjà facturée.
+     *Un garde-fou qui protège par effet de bord ne protège pas : il se contente de ne pas
+     avoir échoué encore.* */
+  if(typeof _evRunning!=='undefined' && _evRunning) return false;      // passe payante en cours
   if(window._curScreen&&window._curScreen!=='home') return false;      // la personne fait autre chose
   return true;
 }
