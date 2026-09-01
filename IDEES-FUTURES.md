@@ -204,6 +204,53 @@ donc non éprouvé, et c'est un jugement sur une intention, pas une mesure.
 ③ La séparation par `(genre, âge)` est une approximation : un anniversaire coupe une personne en
 deux profils. Sans conséquence ici (on ne compare pas les personnes entre elles).
 
+### ⭐⭐ LE VERDICT — 140 SÉANCES, 8 COMPTES RÉELS, E′ SONNE UNE FOIS (01/09/2026)
+
+Michel a fini par récupérer le backup Drive et l'a envoyé. ⚠️ **Je lui avais dit ce qu'il contient
+(profils santé, bilans sanguins, bilans corporels, mémoire de Milo, cycles) ; il l'a envoyé quand
+même — c'est sa décision d'administrateur et elle est respectée.**
+⛔ **Minimisation stricte, et elle est vérifiable dans le script** : seul `data.sessions` est lu, et
+dans chaque séance **la date et les noms d'exercices** uniquement. `data.profile` n'est jamais
+ouvert. Les e-mails ne sortent pas : les comptes deviennent `P01`…`P12`.
+
+| critère | 140 séances · 8 comptes | pire compte |
+|---|---|---|
+| **A** — ≥ 3 exercices, même muscle | **53/140 (38 %)** | **85 %** (23/27) |
+| **B** — muscle hors-sujet ≥ 80 % | **75/140 (54 %)** | 70 % |
+| **E** — exactement 2 familles lourdes | 10/140 (7 %) | 27 % |
+| **E′** — … dans deux **régions** | **1/140 (0,7 %)** | — |
+
+**⭐⭐ ET LES 9 SÉANCES QUE LE FILTRE DE RÉGION RETIRE SONT TOUTES LÉGITIMES — la liste le montre
+sans qu'on ait à argumenter :**
+
+    P01 ×5   [poussée×2 tirage×2]        ← son programme haut du corps, répété
+    P04 ×2   [tirage×4 poussée×3]        ← une grosse séance haut du corps
+    P04 ×1   [squat×2 charnière×2]       ← une séance jambes classique
+    P07 ×1   [squat×2 charnière×2]       ← la séance jambes de Michel du 05/07
+
+👉 **E aurait accusé le programme habituel d'une personne cinq fois de suite.** *Un avertissement
+qui se déclenche sur la séance qu'on refait toutes les semaines n'est pas discutable : il est
+désactivé au bout de deux fois* (**R19**).
+
+**⛔⛔ A EST LE PLUS DANGEREUX DES TROIS, ET CE N'EST PAS SON TAUX MOYEN QUI LE DIT.** 38 % en
+moyenne, mais **85 % chez un compte et 12 % chez un autre**. *Un critère dont le bruit dépend de la
+personne ne se règle pas par un seuil* : il n'existe aucune valeur qui convienne aux deux.
+**B**, lui, est stable — 54 %, 56 %, 56 % sur trois jeux — *et c'est justement ce qui le condamne :
+sa constance montre que ce n'est pas un accident de calibrage, c'est ce qu'il mesure.*
+
+**⭐ TROIS JEUX, TROIS FOIS LE MÊME RÉSULTAT POUR E′** : 1/39 (son export), 0/109 (les lignes
+anonymes du classeur), 1/140 (le backup, qui inclut ses 39). **La seule séance signalée, dans tous
+les cas, est celle dont il s'est plaint.** Et le backup lève la dernière approximation : les séances
+sont **attribuées à un compte réel**, plus reconstituées par `(genre, âge)`.
+
+**⚠️ LA LIMITE N'A PAS BOUGÉ D'UN POUCE, ET ELLE EST LA SEULE QUI RESTE** : **aucune de ces 140
+séances n'est étiquetée**. On a mesuré, trois fois, qu'E′ **ne crie pas au loup**. On n'a **jamais**
+mesuré qu'il attrape ce qu'il faut. *0 faux positif peut aussi se lire « trop étroit ».* Il faudrait
+que quelqu'un relise ses propres séances et en désigne d'autres comme bizarres — c'est le seul
+travail qui reste, et aucune machine ne peut le faire.
+
+**ℹ️ Au passage** : le backup est daté du **01/09 à 00:16** — la sauvegarde nocturne **tourne**.
+
 ### ⏭️ Ce qui reste à trancher (personne ne l'a fait)
 - **le critère** : E, B corrigé, ou autre chose — la mesure oriente, elle ne décide pas ;
 - **le seuil** : « 2 familles à ≥ 2 ancres » est un jugement, comme le 62 % de `_MONTEE_DEPART_MAX` ;
