@@ -20883,8 +20883,14 @@ console.log('\n-- CLXXXIX. Records recalculés · le vrai message du serveur (ft
   if(R.err) t('CLXXXIX n\'a pas pu tourner', false, R.err);
   else{
     /* ⛔ ① Le temoin voit-il quelque chose ? Sinon tous les « rien » seraient verts sur du vide. */
-    t('⛔ le témoin a bien LU l\'historique : les 3 exercices sont recalculés',
-      R.calc.length===3, JSON.stringify(R.calc));
+    /* ⚠️ CE TÉMOIN A ROUGI SUR MON PROPRE AJOUT : il figeait « 3 exercices », et j'en ai mis
+       un 4ᵉ dans la fixture (le `Développé Décliné` de Michel). *Un témoin visé sur un COMPTE
+       se périme au premier ajout légitime* — 3ᵉ fois cette semaine, après le R2 du Gardien et
+       le bloc LXXXI. Il vise donc les NOMS attendus : il rougit si l'un d'eux cesse d'être
+       recalculé, et pas si la fixture s'enrichit. */
+    t('⛔ le témoin a bien LU l\'historique : les exercices de la fixture sont recalculés',
+      ['Tirage Poulie Haute (Lat Pulldown)','Rowing Hammer Strength','Pec Deck','Développé Décliné']
+        .every(n=>R.calc.indexOf(n)>=0), JSON.stringify(R.calc));
     /* ⭐⭐ ② LE TEMOIN QUI COMPTE LE PLUS. */
     t('⭐⭐ un record SANS AUCUNE SÉANCE n\'est ni corrigé ni supprimé (Squat Barre intact à 112,6)',
       R.sansSeance.length===1 && R.sansSeance[0]==='Squat Barre'
@@ -20942,10 +20948,10 @@ console.log('\n-- CLXXXIX. Records recalculés · le vrai message du serveur (ft
 
 
 
-/* ═══ CLXXXIX. LES QUATRE PETITS DÉFAUTS DE L'AUDIT (ft-v1086) ═══════════════════════════════
+/* ═══ CXCII. LES QUATRE PETITS DÉFAUTS DE L'AUDIT (ft-v1086) ═══════════════════════════════
    Michel : « lance tout ce que tu peux, il faut avancer ». Quatre points du palier 🔵, tous
    mesurés avant d'être corrigés — et deux d'entre eux n'étaient PAS ce que l'audit décrivait.  */
-console.log('\n-- CLXXXIX. Les quatre petits défauts de l\'audit (ft-v1086) --');
+console.log('\n-- CXCII. Les quatre petits défauts de l\'audit (ft-v1086) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
   const pg=await cx.newPage();
@@ -21012,7 +21018,7 @@ console.log('\n-- CLXXXIX. Les quatre petits défauts de l\'audit (ft-v1086) --'
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
   });
   await cx.close();
-  if(F.err) t('CLXXXIX n\'a pas pu tourner', false, F.err);
+  if(F.err) t('CXCII n\'a pas pu tourner', false, F.err);
   else{
     /* ⛔ Sans ça, tous les « cohérent » seraient verts en ne mesurant rien. */
     t('⛔ le témoin voit bien deux comportements DIFFÉRENTS pour H et F (sinon rien à mesurer)',

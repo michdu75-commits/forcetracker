@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1085`** (prochaine : `ft-v1086`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1087`** (prochaine : `ft-v1088`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -436,6 +436,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1087 — 🛡️ UN RECORD PLUS VIEUX QUE L'HISTORIQUE DE SON EXERCICE EST INTOUCHABLE** — Michel, deux heures après la livraison de l'outil, aperçu à l'appui : **6 records à corriger**, dont 4 en baisse. C'est en lisant SES lignes que le trou est sorti — pas en relisant le code.
+
+**⛔⛔ LA RÈGLE ③ ÉTAIT JUSTE, ET TROP ÉTROITE.** Elle protégeait *« aucune séance DU TOUT »*. Or son **`Développé Décliné`** porte un record du **14/06** — et ***l'app est née le 17 juin***. La séance qui l'a fait ne **peut pas** être dans l'historique : elle vient d'un import ou d'une saisie. Mais l'exercice, lui, a des séances **plus récentes** → il échappait à la protection et tombait dans la liste rouge. 👉 ***Appliquer aurait effacé un vrai record*** — exactement le dégât que l'outil est censé empêcher.
+
+**⭐⭐ ET LE DISCRIMINANT ÉTAIT DANS LA DONNÉE, PAS DANS UN JUGEMENT.** L'app connaît la **plus ancienne apparition** de chaque exercice dans l'historique. *Un record antérieur à cette date est **invérifiable par construction*** — comme un record **sans date**. Les deux sont désormais gardés tels quels. ⚠️ **Et la plus ancienne apparition se compte sur TOUTES les séries, échauffement compris** : on ne cherche pas une performance ici, on cherche **depuis quand l'app voit cet exercice** — un échauffement le prouve autant qu'une série de travail.
+
+**⛔ LA PROTECTION NE VAUT QUE POUR UNE BAISSE, et c'est ce qui l'empêche de tout bloquer.** Une **montée** est prouvée par l'historique lui-même : elle ne détruit rien. Mesuré : son `Pec Deck`, dont le record est **tout aussi ancien** que le Décliné, **monte toujours** à 100 kg. *Sans cette nuance, la correction aurait gelé l'outil au lieu de le border.*
+
+**⛔ ET LE REFUS SE VOIT, AVEC SA DATE ET CELLE DE LA 1ʳᵉ SÉANCE CONNUE.** Le cacher aurait été pire que de corriger : la personne croirait que l'outil n'a **rien trouvé** là, alors qu'il a trouvé **et refusé**. ***Un refus muet ressemble à une absence de problème.***
+
+**⚠️ CE QUE ÇA DIT DE LA 1ʳᵉ VERSION.** Le garde-fou existait, il était nommé, il était testé — et il ne couvrait qu'**un** des deux chemins par lesquels un record devient invérifiable. *Une protection qui porte le bon nom n'est pas une protection complète* : c'est l'aperçu, montré à quelqu'un qui connaît ses données, qui a trouvé le second (**R29** — montrer avant d'écrire n'est pas une politesse, c'est un contrôle).
+
+**📣 RÈGLE D'OR #11 — NI POP-UP NI POINT ROUGE.** Outil **réservé à l'admin**, et c'est une **réparation** : un outil de correction cesse de pouvoir détruire. Rien n'apparaît pour les autres.
+
+Tests : **parcours 2124/2124** (+4 dans le bloc **CLXXXIX**) ⚠️ *mesuré sur l'arbre **FUSIONNÉ** avec le ft-v1086 de session-A*, calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données classées 0 trou, **noyau Milo 12/12**. ⭐⭐ **Le témoin qui compte porte SON cas** : `Développé Décliné`, record du 14/06, plus ancienne séance connue le 28/08 → **intouchable**, et l'écran imprime **les deux dates**. ⛔ **Et celui qui l'empêche de tout bloquer** : le `Pec Deck`, tout aussi « ancien », **monte quand même** — sans lui, la correction aurait gelé l'outil au lieu de le border. ⚠️⚠️ **ET MON PROPRE TÉMOIN ① A ROUGI SUR MON PROPRE AJOUT** : il figeait « 3 exercices » et la fixture en porte 4 depuis que j'y ai mis son Décliné. 👉 *Un témoin visé sur un COMPTE se périme au premier ajout légitime* — **3ᵉ fois cette semaine**, après le R2 du Gardien et le bloc LXXXI. Re-visé sur les **noms attendus** : il rougit si l'un cesse d'être recalculé, pas si la fixture s'enrichit. ⚠️ **14ᵉ collision** : session-A avait nommé son bloc **CLXXXIX**, déjà pris par mon ft-v1085 publié avant (run #750 à 12:36 · le leur #752 à 13:33) — il glisse en **CXCII**, contenu intact, seul le libellé bouge ; *deux blocs du même nom masqueraient une disparition future*. Et leur bump à ft-v1086 avait gardé **mon** commentaire ft-v1085 dans `sw.js` : remplacé par celui de ft-v1087, avec un renvoi vers leur récit ici. Fichiers : `setup.js`, `sw.js`, `tests/parcours/runner.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1087. |
+
 
 **ft-v1086 — 🧹 LES QUATRE PETITS DÉFAUTS DE L'AUDIT, EN LOT** — Michel : *« lance tout ce que tu peux, il faut avancer »*. Quatre points du palier 🔵 de `docs/SUIVI-AUDIT.md`, tous **mesurés avant d'être corrigés** — et **deux n'étaient pas ce que l'audit décrivait**.
 
@@ -805,29 +822,6 @@ Tests : **parcours 1983/1983** (+14 : bloc **CLXXIV** avec 13 témoins, +1 dans 
 
 **📣 RÈGLE D'OR #11 — NI POP-UP NI POINT ROUGE.** Rien n'apparaît, rien ne bouge : des comportements qui différaient deviennent identiques. Il n'y a rien à apprendre — c'est précisément le but.
 Tests : **parcours 1948/1948** (+6, bloc **CLXXII**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 106 classées 0 trou. ⭐ **Le premier témoin est celui qui empêche les autres d'être verts sur du vide** : les 4 routes rendent bien des valeurs de départ non nulles. Fichiers : `app.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1068. |
-
-**ft-v1067 — 🗂️ LE HAUT DE PROGRÈS : LES ONGLETS EN TÊTE, LES CARTES REPLIABLES** — Michel, capture à l'appui : *« ça prend vachement d'espace en haut non ? »*.
-
-**⭐ LA MESURE AVANT, ET ELLE DONNE RAISON À SA CAPTURE.** Synthèse **216 px** + volume **345 px** (8 muscles) = **561 px**. Les sous-onglets tombaient à **y=699** sur un écran de 844, et le champ de recherche à **821 — au ras du bord**. 👉 ***Sur l'onglet Exercices, sa progression commençait hors écran.***
-
-**⭐⭐ DEUX RAISONS, ET LA SECONDE EST DE FOND.** ① Les onglets sont de la **navigation** : elle doit être atteignable sans défiler — il fallait scroller pour aller sur Poids. ② Depuis ft-v1065, ces deux cartes n'appartiennent **qu'à** l'onglet Exercices : leur place est **dans son contenu**, pas au-dessus de la barre qui sert à en sortir. *La correction d'hier rendait celle-ci nécessaire.*
-
-**⭐ APRÈS** : onglets **y=118**, les deux cartes repliées tiennent en **132 px**, « PROGRESSION » à **347** et la recherche à **392**. Tout l'onglet tient dans un écran. **Michel a choisi cette forme entre trois** (replier seulement · remonter les onglets seulement · les deux).
-
-**⛔ L'ÉTAT EST RETENU, et c'est ce qui distingue un repli utile d'un repli qui enterre.** *Un accordéon qu'on doit rouvrir à chaque visite est un accordéon qu'on n'ouvre plus* — la leçon de **ft-v1024** (*« le rangement suit l'usage »*). Une seule clé pour les deux (`ft4_progAcc`) : c'est un réglage d'affichage, pas une donnée de la personne (**R2**). Et jamais bloquant : un stockage refusé laisse simplement les cartes repliées.
-
-**⛔ ON MASQUE, ON NE VIDE NI NE RECALCULE** (R19/R2) : le contenu est peint une fois par `renderProgress`, et un témoin vérifie qu'il est **déjà là sous le repli**.
-
-**⛔ R13 — ZÉRO LIGNE DE CSS AJOUTÉE.** On réutilise `details.acc`, le motif d'accordéon déjà employé dans l'onglet Macros ; la seule règle écrite **neutralise** l'encadré intérieur, elle n'en crée pas.
-
-**⚠️ LE TITRE ÉTAIT DOUBLÉ — TROUVÉ À LA CAPTURE, INVISIBLE À TOUTE MESURE.** Le résumé de l'accordéon disait *« Ce que ton histoire montre »*, et la carte à l'intérieur le répétait, dans un second cadre emboîté. Aucun test ne pouvait le voir : le texte était *correct*, c'est sa **duplication à l'écran** qui ne l'était pas. Les deux fonctions de rendu ne peignent plus leur propre titre.
-
-**⚠️ ET LE LISERÉ DE ft-v1047 EST RETIRÉ, AVEC SA RAISON (R30).** Il existait pour **distinguer deux cartes grises identiques** empilées sans titre propre. Chacune a maintenant son accordéon titré : la distinction est plus forte et vient d'ailleurs — le liseré n'était plus qu'un trait orphelin dans un cadre. *On ne garde pas un repère visuel dont la raison a disparu.* Son témoin est **re-visé sur la garantie** (les deux sections restent distinguables), pas supprimé.
-
-**⚠️⚠️ HUIT TÉMOINS EXISTANTS ONT ROUGI, ET AUCUN NE SIGNALAIT UN DÉFAUT — trois causes, toutes instructives.** ① Ils lisaient `innerText` sur une carte désormais **repliée** : `innerText` respecte le rendu et rend une chaîne **vide** (3ᵉ fois cette semaine). ② Ils testaient `style.display` sur le `div` intérieur, alors que le masquage porte maintenant sur le `<details>` parent → re-visés sur `offsetParent`, c'est-à-dire sur **ce qu'on voit**, pas sur l'élément qui porte le `display:none`. ③ Et l'un des miens, d'hier, mesurait *« les onglets remontent sur Poids »* — ils ne bougent plus, puisqu'ils sont en tête partout. *Un témoin qui mesure un MOUVEMENT se périme quand le mouvement disparaît ; il fallait qu'il mesure le RÉSULTAT (le contenu commence en haut).*
-
-**📣 RÈGLE D'OR #11 — les points 2 à 5, et PAS de pop-up.** Point rouge `progres-repli` sur l'onglet Progrès · aide `?` · aide détaillée · diapo du Guide **sans image exprès** (une capture montrerait l'historique de quelqu'un d'autre). ⛔ **La pop-up ne se mérite pas** : rien à faire, et le repère n'est pas perdu — les deux titres restent à l'écran, à un tap de leur contenu.
-Tests : **parcours 1945/1945** (+6, bloc **CLXXIII**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données classées 0 trou. ⛔ **Le témoin ① existe pour que les cinq autres mesurent quelque chose** : la carte volume doit être **pleine** (8 lignes) dans la fixture — sinon on mesurerait un écran plus court que le sien (famille **§24**). ⭐⭐ **Le ⑥ est celui qui compte le plus** : déplier est **retenu** et **survit à un re-rendu complet** — sans lui, le repli enterrerait les deux cartes. ⭐ **Vérifié à l'écran** (2 captures : repliées et dépliées), **0 erreur JS**, 🔴 **bouton central `[139, 792, 56, 44]`**. Fichiers : `index.html`, `setup.js`, `style.css`, `constants.js`, `screens.js`, `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1067. |
 
 **⭐⭐ LA FRONTIÈRE AVEC LA BRIQUE 7 EST ÉCRITE DANS LA VISION, ET C'EST ELLE QUI DÉCIDE DE TOUT** : la **7** répond à *« que s'est-il passé ? »* — elle **relie** des événements (le souvenir d'hier) ; la **8** répond à ***« qu'est-ce que cette histoire m'apprend ? »*** — elle **prend du recul**. Tournures autorisées noir sur blanc : *« ton historique semble montrer que… »*, *« une constante apparaît… »*. ⛔⛔ **Jamais *« tu devrais »*** — sinon la brique cesse d'être un miroir et devient un coach qui prescrit (**P14**). Un témoin refuse tout verbe de prescription dans le rendu.
 

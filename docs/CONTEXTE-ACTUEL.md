@@ -6,7 +6,20 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1085`.
+- **Version en ligne (live) :** `ft-v1087`.
+- 🛡️ **UN RECORD PLUS VIEUX QUE L'HISTORIQUE DE SON EXERCICE EST INTOUCHABLE** (ft-v1087).
+  ⛔⛔ **Trouvé par Michel sur ses vraies données**, aperçu à l'appui, deux heures après
+  ft-v1085. La règle ③ ne protégeait que *« aucune séance DU TOUT »* — trop étroit : son
+  `Développé Décliné` porte un record du **14/06**, or **l'app est née le 17 juin**. La séance
+  qui l'a fait ne peut pas être dans l'historique ; mais l'exercice a des séances plus
+  **récentes**, donc il échappait à la protection. ***Appliquer aurait effacé un vrai record.***
+  👉 Un record **antérieur à la plus ancienne séance de son exercice** — ou **sans date** — est
+  invérifiable par construction : gardé tel quel, affiché à part avec les deux dates.
+  ⛔ **La protection ne vaut que pour une BAISSE** (une montée est prouvée par l'historique) :
+  son `Pec Deck`, tout aussi ancien, monte toujours.
+  ⭐ **La leçon** : le garde-fou existait, était nommé et testé — il ne couvrait qu'**un** des
+  deux chemins. *C'est l'aperçu montré à quelqu'un qui connaît ses données qui a trouvé
+  l'autre* (**R29** : montrer avant d'écrire n'est pas une politesse, c'est un contrôle).
 - 🏅 **RECALCULER LES RECORDS DEPUIS L'HISTORIQUE** (ft-v1085, admin). Un faux record **mesuré**
   dans ses données : `Rowing Hammer Strength` portait **exactement les chiffres de son Tirage
   Poulie Haute**, même date — le fantôme du renommage de ft-v1073. Faux **vers le haut**, donc
