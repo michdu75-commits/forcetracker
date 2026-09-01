@@ -860,6 +860,9 @@ function ensurePremiumEmails_() {
    ⛔ MÊME MÉCANIQUE QUE `PREMIUM_HARDCODED_` (R13, on ne réinvente rien) : une liste EN DUR,
    volontairement — une Script Property serait réglable sans redéploiement, mais elle est aussi
    ce qui se fait réécrire en silence (cf. le déclencheur fantôme de `PREMIUM_EMAILS`). */
+/* ⚠️ CE CHIFFRE EST RÉPÉTÉ DANS `coach.js` (`_EV_QUOTA_JOUR`) : le devis du benchmark annonce
+   ce qu'une passe consomme sur ce plafond. Deux runtimes séparés ne peuvent pas partager une
+   constante — s'il bouge ici, il bouge là-bas. */
 var AI_MAX_DEV_ = 150;
 var AI_EMAILS_DEV_ = ['michdu75@gmail.com'];
 

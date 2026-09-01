@@ -5084,7 +5084,24 @@ async function sendToCoach(customMsg, displayMsg, opts) {
         }
       }
       if (_netErr) throw _netErr;
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      /* ⛔⛔ LE SERVEUR ÉCRIT UNE PHRASE CLAIRE, ET ON LA JETAIT (01/09/2026). Michel, en pleine
+         séance, après le benchmark : « Erreur : HTTP 429. Vérifie ta connexion et réessaie » —
+         avec 5G et 97 % de batterie. ***Sa connexion n'avait rien à voir : son quota IA du jour
+         était épuisé.*** Le worker renvoie pourtant, dans le corps de la réponse,
+         « Tu as atteint ta limite d'IA pour aujourd'hui 👍 Reviens demain, l'entraînement
+         continue ! » — mais on levait une erreur sur le CODE HTTP sans jamais lire le corps.
+         👉 *L'information existe, elle est écrite, elle est envoyée — et elle n'atteint pas
+         l'écran* (**R4**). Et le message générique ENVOIE CHERCHER AU MAUVAIS ENDROIT : il fait
+         retenter dix fois une chose qui ne peut pas marcher avant demain.
+         ⛔ On ne lit que ce que le serveur a écrit : pas de message inventé ici. S'il n'en
+         fournit aucun, on retombe exactement sur l'ancien comportement. */
+      if (!resp.ok) {
+        let _msgServeur = '';
+        try { const _d = await resp.clone().json(); _msgServeur = (_d && (_d.reply || _d.error)) || ''; } catch(_){}
+        const _e = new Error(_msgServeur || ('HTTP ' + resp.status));
+        _e.duServeur = !!_msgServeur;
+        throw _e;
+      }
       const data = await resp.json();
       reply = data.reply || '🔑 Le Coach IA nécessite une clé API Anthropic. Crée un compte gratuit sur console.anthropic.com, génère une clé, et ajoute-la dans le script Google Apps Script ligne 2.';
     }
@@ -5186,7 +5203,11 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     _forceProgReq = false;
     console.error('[Coach] fetch error:', e.message, e);
     // Débrief auto (silencieux) : pas de bulle d'erreur parasite — on échoue en silence (réarmé par l'appelant)
-    if (!opts.silent) renderCoachMsg('coach', 'Erreur : ' + (e.message||'inconnue') + '. Vérifie ta connexion et réessaie.');
+    /* ⛔ Un message VENU DU SERVEUR se suffit à lui-même : on n'y colle pas « vérifie ta
+       connexion », qui est faux et fait chercher au mauvais endroit. */
+    if (!opts.silent) renderCoachMsg('coach', e && e.duServeur
+      ? String(e.message)
+      : 'Erreur : ' + (e.message||'inconnue') + '. Vérifie ta connexion et réessaie.');
   }
 
   coachBusy = false;
@@ -6136,6 +6157,10 @@ function _evVerifier(sc, reply){
 const _EV_PRIX = { bas:0.015, haut:0.065 };
 const _evPrix = (n)=> (n*_EV_PRIX.bas).toFixed(2).replace('.',',')+' € à '+(n*_EV_PRIX.haut).toFixed(2).replace('.',',')+' €';
 
+/* ⚠️ MÊME VALEUR QUE `AI_MAX_DEV_` DANS `Code.js` — deux runtimes séparés ne peuvent pas
+   littéralement partager une constante, mais ils doivent partager le CHIFFRE. Si le plafond
+   bouge là-bas, il bouge ici (le commentaire de chaque fichier renvoie à l'autre). */
+const _EV_QUOTA_JOUR = 150;
 function startEvalBench(compare){
   if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
   if(_evRunning){ toast('Benchmark déjà en cours…','info'); return; }
@@ -6157,6 +6182,14 @@ function startEvalBench(compare){
         : 'On joue les '+SC.length+' scénarios sur le modèle de production.')
       + '\n\n'+n+' appels au Coach, soit environ '+prix+'.'
       + '\n\n🛡️ Tes données ne sont PAS touchées : chaque scénario remplace ton profil le temps de la question, puis tout revient.'
+      /* ⛔⛔ LE DEVIS CHIFFRAIT L'ARGENT, PAS CE QUI A RÉELLEMENT MANQUÉ (01/09/2026).
+         Michel a lancé une passe, puis est parti à la salle — et Milo lui a répondu
+         « HTTP 429 » en pleine séance : ***le benchmark avait mangé son quota d'appels du
+         jour***, et 3 scénarios n'avaient même pas pu tourner. Le devis annonçait
+         consciencieusement des euros ; la ressource qui s'est épuisée, elle, n'était nulle
+         part. *Annoncer un coût, c'est annoncer TOUT ce que ça consomme.* */
+      + '\n\n⚠️ Ça consomme ' + n + ' de tes appels IA du jour (plafond : ' + _EV_QUOTA_JOUR
+      + '). Au-delà, Milo ne te répond plus jusqu\'à demain — y compris en pleine séance.'
       + '\n\nLancer ?';
     showConfirm('🧪 Benchmark Milo — '+SC.length+' scénarios', msg, ()=>_evRun(SC, !!compare),'Lancer');
   }).catch(e => toast('Corpus introuvable : '+e.message,'error'));
