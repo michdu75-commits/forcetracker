@@ -21452,6 +21452,138 @@ console.log('\n-- CXCIV. On appuie sur tous les boutons de l\'app (ft-v1089) --'
   }
 }
 
+/* ═══ CXCVII. CE QU'UNE FERMETURE AU DOIGT EMPORTE — 2ᵉ PASSE DE CHASSE (ft-v1091) ═════════════
+   Michel : « continue à chercher des incohérences ».
+   ⛔⛔ ① LE BANDEAU « SAUVEGARDE EN LIGNE EN PAUSE » ÉTAIT EFFACÉ PAR L'ÉCRAN QUI LE PORTE.
+   Deux fonctions écrivaient dans `#email-verify-card` (R2) : `_renderAuthRefusCard()` et
+   `_renderEmailVerifyCard()`. La seconde est appelée par `renderSetup()` → **ouvrir l'onglet
+   Profil remplaçait l'alerte rouge par le rappel jaune « confirme ton e-mail »**, qui en plus
+   envoie chercher au mauvais endroit. ft-v788 avait rendu ce refus visible ; il redevenait
+   muet au premier changement d'écran, et sa sauvegarde en ligne s'arrêtait sans un mot.
+   ⛔⛔ ② FERMER LE SCANNER DE CODE-BARRES AU DOIGT LAISSAIT LA CAMÉRA ALLUMÉE.
+   `closeBarcodeScanner()` est la SEULE chose qui coupe le flux ; `#ov-bc-scan` n'était pas
+   déclaré dans `_OVERLAY_CLOSERS` et n'a pas de fermeture au clic sur le fond. L'écran
+   disparaissait, le voyant vert restait allumé. *4ᵉ fois pour cette famille (§26 de BUGS.md).*
+   ⚠️ LES TÉMOINS DE CONTRÔLE FONT LA MOITIÉ DU TRAVAIL : ma 1ʳᵉ sonde remplaçait `_bcReader`
+   sur `window`, alors que c'est un `let` de portée fichier — elle mesurait ses PROPRES
+   variables, et son contrôle est ce qui l'a dit. Ici on espionne `closeBarcodeScanner`, et le
+   bouton « Annuler » doit l'appeler : sinon « 0 appel » ne prouverait rien. */
+console.log('\n-- CXCVII. Ce qu\'une fermeture au doigt emporte (ft-v1091) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pg=await cx.newPage();
+  /* ⛔ LE CAS EXACT : le compte est protégé par un code perso et CET appareil ne l'a pas —
+     c'est précisément la situation où le serveur refuse. Donc PAS de `ft4_authcode`. */
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',
+    ft4_email:'t@t.t',ft4_ok:'1',ft4_emailok:'1'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    const lire=()=>{const e=document.getElementById('email-verify-card');return (e&&e.innerHTML||'').replace(/\s+/g,' ');};
+    // ── ① le refus arrive : l'app peint le bandeau
+    window._ftAuthRefusee=true; window._ftAuthNeedsCode=false;
+    try{ localStorage.setItem('ft4_auth_refus','1'); }catch(e){}
+    _renderAuthRefusCard();
+    o.peint = /en pause/i.test(lire());
+    // ── ② la personne ouvre l'onglet Profil — l'écran où vit le bandeau
+    goScreen('setup', document.getElementById('nb-setup'));
+    await new Promise(r=>setTimeout(r,350));
+    o.survitAuProfil = /en pause/i.test(lire());
+    o.remplaceParEmail = /openEmailConfirm/.test(lire());
+    // ── ③ la guérison : un appareil qui A le code ne doit RIEN afficher de rouge
+    try{ localStorage.setItem('ft4_authcode','1234'); }catch(e){}
+    window._ftAuthRefusee=false;
+    _renderEmailVerifyCard();
+    o.guerit = !/en pause/i.test(lire());
+    try{ localStorage.removeItem('ft4_authcode'); }catch(e){}
+    /* ── ③bis APRÈS UN RECHARGEMENT : plus rien en mémoire, seule la valeur stockée reste.
+       ⚠️⚠️ C'est ICI que ma 1ʳᵉ version s'est trompée et a fait rougir un témoin de ft-v789 :
+       j'avais mis `_ftAuthRefusee` en garde du choix du message, alors que ce drapeau dit
+       *« y a-t-il un refus »* et non *« de quel refus s'agit-il »*. Deux questions, une seule
+       variable pour les départager → le message « protège ton compte » disparaissait. */
+    delete window._ftAuthNeedsCode;
+    try{ localStorage.setItem('ft4_auth_refus','new'); }catch(e){}
+    _renderAuthRefusCard();
+    o.rechargementGardeLeBonMessage = /openProtect\(\)/.test(lire());
+    try{ localStorage.removeItem('ft4_auth_refus'); }catch(e){}
+    window._ftAuthNeedsCode=false;
+
+    // ── ④ le scanner de code-barres : l'overlay est FABRIQUÉ en JS, comme dans l'app
+    let ov=document.getElementById('ov-bc-scan');
+    if(!ov){ ov=document.createElement('div'); ov.id='ov-bc-scan'; ov.className='overlay';
+             ov.style.zIndex='600'; document.body.appendChild(ov); }
+    const vrai=window.closeBarcodeScanner; let appels=0;
+    window.closeBarcodeScanner=function(){appels++;return vrai.apply(this,arguments);};
+    ov.classList.add('open');
+    _closeOverlayProper(ov);                       // glisser / à côté / Échap passent tous par là
+    o.doigtCoupeCamera = appels>0;
+    appels=0; ov.classList.add('open'); window.closeBarcodeScanner();
+    o.temoinBoutonAnnuler = appels>0;              // ⬅️ sans lui, « 0 appel » ne prouve rien
+    window.closeBarcodeScanner=vrai;
+
+    // ── ⑤ le guide de l'app : sa fermeture enchaîne la proposition d'installation
+    const og=document.getElementById('ov-appguide');
+    o.guideExiste=!!og;
+    if(og){ let suite=0; window._afterAppGuide=function(){suite++;};
+      og.classList.add('open'); _closeOverlayProper(og);
+      o.doigtEnchaineInstall = suite>0; window._afterAppGuide=null; }
+
+    /* ── ⑥ LE CHECK-IN : la réponse « comment as-tu dormi ? » doit survivre à une
+       fermeture avant la 2ᵉ question. Le check-in a deux étapes et seule la seconde
+       sauvegardait ; `mod-checkin` se ferme au doigt et rien ne tourne à sa fermeture.
+       ⚠️ La perte était ALÉATOIRE (n'importe quel `persist()` ultérieur la rattrapait) —
+       ce qui est pire qu'une perte franche : rien ne distingue les deux cas. */
+    const stock=()=>{ try{ return JSON.parse(localStorage.getItem('ft4_sleep')||'[]').length; }catch(e){ return -1; } };
+    try{ localStorage.setItem('ft4_sleep','[]'); }catch(e){}
+    S.sleepLog=[];
+    const mc=document.getElementById('mod-checkin');
+    o.checkinFermableAuDoigt = !!mc && !mc.hasAttribute('data-no-dismiss');
+    if(mc){
+      mc.classList.add('open');
+      ciPickSleep(3);                       // ① elle répond à la 1ʳᵉ question
+      o.sommeilEnMemoire = (S.sleepLog||[]).length;
+      _closeOverlayProper(mc);              // ② puis elle referme d'un geste
+      o.sommeilSauve = stock()>0;
+      // ③ contrôle : répondre aux DEUX questions enregistre bien (sinon « non sauvé »
+      //    pourrait venir d'un stockage cassé, pas du défaut qu'on mesure)
+      try{ localStorage.setItem('ft4_sleep','[]'); }catch(e){}
+      S.sleepLog=[]; mc.classList.add('open');
+      ciPickSleep(3); try{ ciPickEnergy(3); }catch(e){}
+      o.temoinCheckinComplet = stock()>0;
+    }
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,160)};}
+  });
+  await cx.close();
+  if(F.err) t('CXCVII n\'a pas pu tourner', false, F.err);
+  else{
+    t('⛔ le témoin peint VRAIMENT le bandeau de refus (sinon les suivants mesurent du vide)',
+      F.peint===true, 'peint = '+F.peint);
+    t('⭐⭐ le bandeau « sauvegarde en pause » SURVIT à l\'ouverture de l\'onglet Profil',
+      F.survitAuProfil===true, JSON.stringify({survit:F.survitAuProfil,remplaceParEmail:F.remplaceParEmail}));
+    t('⛔ … et il n\'est pas remplacé par le rappel « confirme ton e-mail », qui envoie au mauvais endroit',
+      F.remplaceParEmail===false, 'remplacé = '+F.remplaceParEmail);
+    t('⭐ GUÉRISON : un appareil qui A le code ne voit plus rien de rouge (sinon bandeau PERMANENT)',
+      F.guerit===true, 'guérit = '+F.guerit);
+    t('⭐ après un RECHARGEMENT, le refus garde le BON message (c\'est là que je m\'étais trompé)',
+      F.rechargementGardeLeBonMessage===true, 'protège-ton-compte = '+F.rechargementGardeLeBonMessage);
+    t('⛔ le témoin de contrôle : le bouton « Annuler » coupe bien la caméra',
+      F.temoinBoutonAnnuler===true, 'appelée = '+F.temoinBoutonAnnuler);
+    t('⭐⭐ fermer le scanner AU DOIGT coupe la caméra aussi (sinon elle tourne toujours)',
+      F.doigtCoupeCamera===true, 'coupée = '+F.doigtCoupeCamera);
+    t('⭐ fermer le guide AU DOIGT enchaîne toujours la proposition d\'installation',
+      F.guideExiste!==true || F.doigtEnchaineInstall===true, JSON.stringify({guide:F.guideExiste,suite:F.doigtEnchaineInstall}));
+    t('⛔ le témoin répond VRAIMENT à la question sommeil (sinon le suivant mesure du vide)',
+      F.sommeilEnMemoire===1, 'entrées en mémoire = '+F.sommeilEnMemoire);
+    t('⭐⭐ la réponse « comment as-tu dormi ? » est SAUVÉE même si on referme avant la 2ᵉ question',
+      F.sommeilSauve===true, JSON.stringify({sauve:F.sommeilSauve,fermableAuDoigt:F.checkinFermableAuDoigt}));
+    t('⛔ le témoin de contrôle : un check-in complet enregistre bien (sinon le stockage serait en cause)',
+      F.temoinCheckinComplet===true, 'complet sauvé = '+F.temoinCheckinComplet);
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

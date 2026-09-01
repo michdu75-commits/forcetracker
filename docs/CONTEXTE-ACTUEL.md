@@ -28,6 +28,29 @@
   **Migration additive obligatoire** — écrire aux deux endroits, lire le neuf avec repli sur
   l'ancien, ne cesser d'écrire l'ancien qu'une fois mesuré que tout le monde a migré.
   **En attente du go de Michel.**
+- **Version en ligne (live) :** `ft-v1091`.
+- 👆⭐⭐ **CE QU'UNE FERMETURE AU DOIGT EMPORTE — dont la CAMÉRA** (ft-v1091). Michel :
+  *« continue à chercher des incohérences »*. Même méthode qu'en ft-v1089 — **des détecteurs,
+  pas des avis** — en privilégiant ceux qui **mesurent un comportement**.
+  ⛔⛔ **Le plus gros : le scanner de code-barres fermé en glissant laissait la caméra
+  ALLUMÉE.** `closeBarcodeScanner()` est la seule chose qui coupe le flux, et `#ov-bc-scan`
+  n'était déclaré nulle part dans `_OVERLAY_CLOSERS` (ni fermeture au clic sur le fond).
+  L'écran disparaissait, le voyant vert restait allumé, **rien ne le disait**. *4ᵉ fois pour
+  la famille R15 (§26 de `BUGS.md`) — et la première qui touche un capteur.*
+  ⛔⛔ **Le bandeau « sauvegarde en ligne en pause » était effacé par l'écran qui le porte** :
+  deux propriétaires de `#email-verify-card` (**R2**), et `renderSetup()` appelle le mauvais.
+  ft-v788 avait rendu ce refus visible ; il redevenait muet au 1ᵉʳ changement d'écran.
+  ⭐ Le drapeau `ft4_auth_refus`, **écrit depuis ft-v788 et relu par personne** (R5), sert
+  enfin — **avec sa guérison**, sinon on remplacerait un silence par un cri permanent.
+  ⛔ La réponse *« comment as-tu dormi ? »* était perdue si on refermait avant la 2ᵉ question —
+  et perdue **aléatoirement** (n'importe quel `persist()` ultérieur la rattrapait), ce qui est
+  pire qu'une perte franche. ⛔ Le guide fermé au doigt n'enchaînait plus la proposition
+  d'installation, **définitivement** (`ft4_guide_shown` est déjà posé).
+  ⚠️ **Et un témoin de contrôle a sauvé ma 1ʳᵉ sonde** : elle remplaçait `_bcReader` sur
+  `window`, alors que c'est un `let` de portée fichier — *elle mesurait ses propres variables*.
+  ⚠️ **Deux faux positifs de mes détecteurs, à savoir avant de refaire la chasse** : un `id=`
+  « en double » qui était dans un **commentaire HTML**, et **24 clés `ft4_*`** « jamais
+  relues » qui le sont par un **helper** (`_lsJson`) ou une **constante**.
 - 🩹 **« null » DANS LE CHAMP KG — et c'est le correctif de la virgule qui avait ouvert le trou**
   (ft-v1090). Capture du compte d'**Eline** : `10 reps × null kg` sur deux séries.
   ⛔⛔ **La cause vient de Michel** : *« Eline avait mis des valeurs, et si je dis pas de bêtises

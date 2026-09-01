@@ -3837,8 +3837,33 @@ function verifyEmailCode(){
       else { toast('Code incorrect, réessaie','error'); }
     }).catch(()=>{ if(btn){btn.disabled=false;btn.textContent='Vérifier';} toast('Réseau indisponible','error'); });
 }
+/* ⛔⛔ ft-v1091 — UN SEUL PROPRIÉTAIRE DE `#email-verify-card` (R2).
+   DEUX fonctions écrivaient dans le même emplacement : celle-ci et
+   `_renderAuthRefusCard()`. Or `renderSetup()` appelle celle-ci → **ouvrir
+   l'onglet Profil effaçait le bandeau « Sauvegarde en ligne en pause »**,
+   c'est-à-dire l'écran même où ce bandeau vit. Mesuré : peint au démarrage,
+   puis remplacé par le bouton jaune « confirme ton e-mail » dès la navigation.
+   ⚠️ Et le remplaçant est pire que rien : il envoie chercher au MAUVAIS endroit
+   (confirmer un e-mail, quand le vrai problème est un code perso absent).
+   👉 ft-v788 avait rendu le refus visible ; il redevenait silencieux au 1ᵉʳ
+   changement d'écran. *Un avertissement qu'un autre rendu efface n'est pas un
+   avertissement.* Le refus PASSE DEVANT : une copie en ligne à l'arrêt compte
+   plus qu'un rappel d'e-mail. */
+function _refusAuthEnCours(){
+  /* ⭐ SE GUÉRIT TOUT SEUL : un appareil qui A le code n'est plus refusé.
+     Sans cette garde, un drapeau périmé deviendrait un bandeau rouge PERMANENT —
+     exactement le piège que ft-v788 nommait déjà (« enregistrer un code faux
+     rendrait le bandeau permanent sans jamais rien débloquer »). */
+  try{ if(typeof _authCode==='function' && _authCode()) return false; }catch(e){}
+  if(window._ftAuthRefusee) return true;
+  /* ⚠️ `ft4_auth_refus` était ÉCRIT depuis ft-v788 et relu par PERSONNE — une donnée
+     morte (R5). Il existe pour survivre à un rechargement : au démarrage suivant,
+     hors ligne ou avant que le serveur réponde, le refus doit encore se voir. */
+  try{ return !!localStorage.getItem('ft4_auth_refus'); }catch(e){ return false; }
+}
 function _renderEmailVerifyCard(){
   const el=document.getElementById('email-verify-card'); if(!el)return;
+  if(_refusAuthEnCours()){ try{ _renderAuthRefusCard(); }catch(e){} return; }
   if(!S.email){ el.innerHTML=''; return; }
   // Compte protégé (code perso) = email déjà vérifié → pas de prompt redondant.
   if(_authCode()){ el.innerHTML=''; return; }
@@ -3860,7 +3885,17 @@ function _renderAuthRefusCard(){
   const el=document.getElementById('email-verify-card'); if(!el)return;
   // ⚠️ DEUX MESSAGES, PAS UN (ft-v789). Réclamer « ton code » à quelqu'un qui n'en a jamais posé,
   // c'est le laisser chercher un truc qui n'existe pas — la meilleure façon qu'il abandonne.
-  const neuf = !!window._ftAuthNeedsCode;
+  /* ⚠️ ft-v1091 — APRÈS UN RECHARGEMENT, `window._ftAuthNeedsCode` n'existe plus.
+     C'est précisément à ça que sert la valeur stockée (`'new'` ou `'1'`), écrite
+     depuis ft-v788 et jamais relue : sans elle, on réclamerait « ton code » à
+     quelqu'un qui n'en a jamais posé — le défaut que ft-v789 avait corrigé.
+     ⚠️⚠️ ET MA 1ʳᵉ VERSION A FAIT ROUGIR UN TÉMOIN DE ft-v789 : j'avais mis `_ftAuthRefusee`
+     en garde du choix, alors que ce drapeau dit *« y a-t-il un refus »*, pas *« de quel refus
+     s'agit-il »*. Deux questions différentes, une seule variable pour les départager → le
+     message « protège ton compte » disparaissait. La mémoire vive gagne dès qu'elle a été
+     renseignée ; le stockage n'est le repli QUE lorsqu'il n'y a rien en mémoire. */
+  const neuf = (window._ftAuthNeedsCode!==undefined) ? !!window._ftAuthNeedsCode
+    : (function(){ try{ return localStorage.getItem('ft4_auth_refus')==='new'; }catch(e){ return false; } })();
   const action = neuf ? 'openProtect()' : '_saisirCodeResync()';
   const texte  = neuf
     ? 'Ta sauvegarde en ligne attend que tu protèges ton compte. Tes données restent sur ce téléphone — appuie pour le faire (2 min).'
@@ -6399,6 +6434,14 @@ window._premiumPending=!!S.email;
       const d2=await r2.json();
       console.log('[FT premium check]',{email:S.email,status:d2.status,premium:d2.premium,expiry:d2.premiumExpiry});
       if(d2.status==='ok'||d2.status==='not_found'){
+        /* ⭐ ft-v1091 — LA GUÉRISON, ET ELLE EST AUSSI IMPORTANTE QUE L'ALERTE.
+           Le serveur vient d'accepter : il n'y a plus aucun refus à afficher. Sans
+           cette ligne, `ft4_auth_refus` — qui devient LU à partir d'aujourd'hui —
+           resterait posé et le bandeau rouge deviendrait permanent chez quelqu'un
+           dont tout remarche. *Rendre un drapeau visible oblige à écrire comment il
+           s'éteint*, sinon on remplace un silence par un cri qui ne s'arrête plus. */
+        try{ localStorage.removeItem('ft4_auth_refus'); }catch(e){}
+        window._ftAuthRefusee=false;
         const wasPremium=S.premium;
         S.premium=(d2.premium===true)||(typeof _isClientPremium==='function'&&_isClientPremium());
         S.premiumExpiry=d2.premiumExpiry||'';

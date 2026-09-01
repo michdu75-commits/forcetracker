@@ -1686,6 +1686,32 @@ défaut sûr (« ajouter ») vaut mieux qu'un défaut destructeur (« remplacer 
 ⚠️ **3ᵉ fois pour la famille R15** (ft-v466 point rouge, ft-v629 pop-up, celle-ci les données) :
 à chaque fois, le chemin oublié était **le glisser du doigt**.
 
+### 🔴🔴 4ᵉ FOIS — ET CETTE FOIS C'EST UN CAPTEUR **(01/09/2026, ft-v1091)**
+Le scanner de code-barres : `closeBarcodeScanner()` est la **seule** chose qui coupe le flux
+vidéo (`_bcReader.reset()` puis `stopStreams()`). `#ov-bc-scan` n'était déclaré **nulle part**
+dans `_OVERLAY_CLOSERS`, et il n'a même pas de fermeture au clic sur le fond.
+👉 ***Fermé en glissant : l'écran disparaît, la caméra continue de tourner*** — voyant vert
+allumé sur iOS, batterie qui file, et **rien à l'écran pour le dire**.
+⭐⭐ **Ce que la 4ᵉ occurrence ajoute à la famille** : les trois premières coûtaient un marqueur,
+une pop-up, un exercice. Celle-ci laisse un **capteur** ouvert. *Le coût de cette famille n'est
+pas borné par ce qu'on a déjà payé* — la prochaine porte oubliée peut donner sur autre chose.
+⚠️ **Et l'overlay était FABRIQUÉ EN JS** (`openBarcodeScanner` le crée avec `className='overlay'`),
+donc invisible à toute recherche d'`id=` dans `index.html`. *Un détecteur qui ne lit que le HTML
+ne l'aurait jamais vu.*
+⛔ **Deux jumelles cherchées dans la même passe** (**R8**) : `getUserMedia` n'a **qu'un seul**
+utilisateur dans tout le dépôt (mesuré — donc pas d'autre caméra à fermer) ; et sur les **23**
+overlays qui posent un état, **tous** le repositionnent à l'ouverture suivante — le correctif de
+ft-v1073 tient partout ailleurs.
+
+### 🧩 La variante « ce n'est pas un état, c'est une SAUVEGARDE » (même version)
+Le check-in a **deux étapes** et seule la seconde appelait `persist()`. `mod-checkin` se ferme au
+doigt et rien ne tourne à sa fermeture : la réponse *« comment as-tu dormi ? »* restait **en
+mémoire**. ⚠️ **Et la perte était ALÉATOIRE** — `persist()` écrit tout `S`, donc n'importe quelle
+action ultérieure la rattrapait. ***Parfois gardée, parfois perdue, sans que rien ne distingue les
+deux cas*** : c'est pire qu'une perte franche, parce que ça ne se reproduit pas.
+👉 **Le réflexe s'élargit** : devant un formulaire en plusieurs étapes, se demander non seulement
+*« quel état survit ? »* mais ***« ce qui a déjà été répondu est-il écrit ? »***.
+
 ---
 
 ## 27. 🔤 DEUX COUCHES DE GUILLEMETS, UN SEUL ÉCHAPPEMENT **(31/08/2026, ft-v1074)**
