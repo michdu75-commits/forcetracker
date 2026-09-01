@@ -113,6 +113,45 @@ trouvées bizarres. ③ Mes seuils pour A et B sont **ma lecture**, pas ceux de 
 
 **⛔ ET RIEN N'EST CONSTRUIT.** Aucun code livré, aucune version : l'analyseur vit hors du dépôt.
 
+### ⚠️⚠️ E′ ATTAQUÉ FAUTE DE DEUXIÈME HISTORIQUE — et il a cassé (01/09/2026, session-B)
+
+Michel : *« teste E′ sur l'historique de Christophe — mais tu n'as pas accès à l'historique de
+Christophe »*. **Exact, et vérifié plutôt que supposé** : la sortie réseau vers Apps Script est
+bloquée depuis le conteneur (`connect_rejected`). ⛔ **Et la vraie raison n'est pas technique** :
+l'historique de Christophe est **ses** données. On ne se sert pas dans le compte de quelqu'un par
+la porte admin pour éprouver un critère — il l'exporte lui-même (le bouton existe chez lui), ou on
+s'en passe.
+
+**👉 Faute de mesurer les faux positifs sur un 2ᵉ historique, on ATTAQUE le critère** : des séances
+plausibles, construites pour le faire tomber. *Ça ne prouve rien sur son taux d'erreur ; ça peut
+prouver qu'il se trompe.*
+
+| séance construite | familles d'ancres | E′ large (ma version) | E′ **strict** |
+|---|---|---|---|
+| **son 31/08** | `charnière×2 tirage×2` | 🔔 | 🔔 |
+| jambes classique | `squat×2 charnière×2` | · | · |
+| haut push/pull | `poussée×2 tirage×2` | · | · |
+| dos pur | `tirage×3` | · | · |
+| **full body volontaire** | `squat×2 poussée×2 tirage×2` | **🔔 ❌** | · |
+| powerbuilding SBD | 4 familles × 1 | · | · |
+| pecs pur | `poussée×3` | · | · |
+
+**⛔⛔ LE DÉFAUT EST DE MOI, ET C'EST EXACTEMENT LE RISQUE QUE SESSION-A AVAIT NOMMÉ.** Ils
+écrivaient : *« dire "cette séance n'a pas de sujet" à quelqu'un qui l'a construite exprès (un full
+body, un powerbuilding) serait un fait faux sur lui »* (**R29**, **P4**). En passant leur
+« **exactement** 2 familles » à « **au moins** 2 », j'ai ouvert cette porte : ***un full body
+délibéré déclenche l'alerte.***
+
+👉 **La bonne version est la leur PLUS mon filtre** : `exactement 2 familles lourdes` **et** `deux
+régions différentes`. Re-mesuré sur les 39 séances réelles : **toujours 1/39, et c'est la sienne.**
+*Leur seuil avait une raison ; je l'ai desserré sans la chercher — c'est **R30** appliqué à un
+seuil au lieu d'une fonctionnalité.*
+
+**⏭️ CE QUI RESTE OUVERT, ET PERSONNE NE PEUT LE TRANCHER SANS MICHEL** : la séance
+`squat×2 + poussée×2` (bas + haut, deux familles) sonne dans les deux versions. Est-ce une séance
+qui hésite, ou un « upper/lower » assumé ? **La mesure ne le dira jamais** — c'est un jugement sur
+une intention, pas sur une structure.
+
 ### ⏭️ Ce qui reste à trancher (personne ne l'a fait)
 - **le critère** : E, B corrigé, ou autre chose — la mesure oriente, elle ne décide pas ;
 - **le seuil** : « 2 familles à ≥ 2 ancres » est un jugement, comme le 62 % de `_MONTEE_DEPART_MAX` ;
