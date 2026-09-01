@@ -251,6 +251,44 @@ travail qui reste, et aucune machine ne peut le faire.
 
 **ℹ️ Au passage** : le backup est daté du **01/09 à 00:16** — la sauvegarde nocturne **tourne**.
 
+### ⚠️⚠️ CORRECTION — J'AI MESURÉ SUR LA MAUVAISE POPULATION (01/09/2026, Michel)
+
+**Michel, après le verdict :** *« il faut savoir que les autres n'utilisent pas Milo, il n'y a que
+moi »*. **Ça change la portée de tout ce qui précède, et pas dans le bon sens.**
+
+**⛔⛔ CE QUE MES 140 SÉANCES SONT VRAIMENT.** Elles sont **écrites par des humains** — leur
+programme, leur habitude, leur coach. Or le critère existe pour attraper **une séance PROPOSÉE PAR
+MILO**. 👉 ***J'ai donc mesuré le taux de fausse alerte sur une population qui n'est pas celle où
+le critère servira.***
+
+**Et les deux distributions n'ont aucune raison de se ressembler** : quelqu'un qui écrit sa séance
+suit un programme, donc il produit rarement « deux familles lourdes dans deux régions ». Milo, lui,
+compose sous contraintes (temps, matériel, fatigue, exclusions) — c'est précisément là que la
+structure peut partir de travers. *Une partie de mon « 0 faux positif » est expliquée par la
+population, pas par la précision du critère.*
+
+**⛔⛔ ET LA CONSÉQUENCE SUR LES FAUX NÉGATIFS EST PIRE.** Le seul compte qui utilise Milo est celui
+de Michel. Donc, dans ces 140 séances, **le nombre d'exemples du défaut qu'on cherche est de UN —
+et il ne montera jamais**, quelle que soit la quantité de données des autres testeurs qu'on
+ajoutera. *On peut empiler des historiques indéfiniment sans jamais gagner un seul cas positif.*
+
+**⭐ CE QUI RESTE VALIDE, ET IL FAUT LE GARDER** : sur 139 séances **composées par des humains**, E′
+n'en accuse **aucune**. C'est une vraie garantie — le jour où le critère tournera aussi sur les
+séances que les gens écrivent eux-mêmes, il ne leur criera pas dessus. Et le rejet des 9 séances
+`poussée×2 tirage×2` reste un résultat solide.
+
+**👉 LA SEULE SOURCE DISPONIBLE DE LA BONNE POPULATION EST LE BANC D'ESSAI.** `tests/milo/` porte
+déjà **~6 scénarios qui demandent une séance complète à Milo** (*« fais-moi une séance complète pour
+aujourd'hui »*, *« séance haut du corps »*, *« séance épaules »*…). Récolter les séances que Milo
+**propose réellement** pendant une passe, et leur appliquer les critères, donnerait enfin le taux
+qui compte. ⚠️ Ça coûte des appels API, et **c'est le terrain de session-A** — c'est une piste, pas
+une réservation.
+
+**⏭️ Et une question de produit que la mesure ne tranche pas** : si Milo n'est utilisé que par
+Michel aujourd'hui, ce garde-fou protège une personne. Ça ne veut pas dire qu'il ne faut pas le
+construire — ça veut dire que **son urgence est un arbitrage de Michel, pas une conclusion
+technique** (**R19**).
+
 ### ⏭️ Ce qui reste à trancher (personne ne l'a fait)
 - **le critère** : E, B corrigé, ou autre chose — la mesure oriente, elle ne décide pas ;
 - **le seuil** : « 2 familles à ≥ 2 ancres » est un jugement, comme le 62 % de `_MONTEE_DEPART_MAX` ;
