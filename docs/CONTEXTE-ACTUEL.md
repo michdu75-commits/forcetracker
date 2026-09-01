@@ -43,6 +43,21 @@
   ⏭️ **LE BANC D'ESSAI N'A PAS TOURNÉ** : Worker en 403, Apps Script en 403, aucune clé API.
   On sait que la règle **arrive** ; pas qu'elle est **suivie**. **Seul Michel peut lancer la
   passe** (Profil → Admin → 🧪, devis affiché avant confirmation).
+- 🧹⭐⭐ **LA SUITE DU LOT D'AUDIT — et l'un des quatre est RÉFUTÉ** (ft-v1087).
+  ⛔⛔ **① La projection ne regardait que le squat** : un soulevé de terre à **180 kg** était
+  projeté comme un **débutant total** (+10,8 %). `getLevel` (dormante depuis ft-v385) réveillée
+  après avoir cherché POURQUOI elle dormait (R30) — l'indice 4 est enfin atteignable.
+  ⛔ **② « Femme = fessiers »** : une priorité **déclarée** décide maintenant quel que soit le
+  sexe. ⏭️ Ce que reçoit une femme qui n'a **rien** déclaré n'est **pas tranché** — arbitrage
+  produit, pas correctif.
+  ⭐⭐ **③ La course `_saveCoachMemory` est RÉFUTÉE, aucune ligne touchée** : 3 appels concurrents
+  sont sérialisés, un échec réseau ne détruit rien, et le jeton a déjà deux propriétaires. Trois
+  témoins figent la décision pour que personne ne la « répare ».
+  ⛔ **④ L'étape 1 ne finissait jamais** : `phase` est posée à 1 et rien ne l'avance — Milo
+  redemandait de « tenir 3 semaines » à quelqu'un qui s'entraîne depuis douze, et le préparait à
+  une suite **qui n'existe pas**. On arrête de promettre ; l'étape 2 reste à concevoir.
+  ⚠️⚠️ **Et mon témoin a rougi sur du code juste** : il cherchait « tenir 3 semaines » et
+  attrapait **sa propre négation**. *On cherche la CONSIGNE, pas les mots* (3ᵉ fois).
 - 🧹⭐⭐ **LES QUATRE PETITS DÉFAUTS DE L'AUDIT** (ft-v1086). Michel : *« lance tout ce que tu
   peux, il faut avancer »*. ⛔⛔ **① Deux conventions de sexe opposées** — mesuré, `"Homme"`
   donnait **TDEE de femme (1524) + plancher d'homme (1500)** ; le chemin est la **restauration**,
@@ -70,7 +85,7 @@
   **E′ = 1/39.** ⚠️ Et un aller-retour instructif : desserrer « exactement 2 » en « au moins 2 »
   faisait sonner un **full body volontaire** — le fait faux qu'on avait nommé (R29/P4).
   👉 Détail chiffré et limites : `IDEES-FUTURES.md` (§ « une séance sans sujet »).
-- **Version en ligne (live) :** `ft-v1086`. ✅ **Les deux déploiements sont VERTS** (site + backend
+- **Version en ligne (live) :** `ft-v1087`. ✅ **Les deux déploiements sont VERTS** (site + backend
   Apps Script) — la route de nettoyage est réellement en ligne, vérifié dans les Actions.
 - ⏭️ **CE QUI ATTEND MICHEL AU RÉVEIL** (rien d'urgent, rien de cassé) :
   ① **le nettoyage des doublons** — Profil → Admin → « 🧹 Voir ce qui partirait », puis le bouton

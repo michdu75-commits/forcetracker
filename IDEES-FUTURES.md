@@ -4,6 +4,36 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🎓 DEUX ARBITRAGES SORTIS DU LOT D'AUDIT — non tranchés (01/09/2026)
+
+> ⛔ **Rien n'est construit.** Les deux sont apparus en corrigeant autre chose, et aucun ne se
+> tranche sans Michel. Écrits ici pour ne pas disparaître avec la session (**R27**).
+
+### ① L'ÉTAPE 2 DU PARCOURS DÉBUTANT N'EXISTE PAS
+**Mesuré** : `beginnerJourney.phase` est posée à **1** au moment de générer le programme, et
+**rien, nulle part, ne l'avance jamais** (une seule affectation dans tout le dépôt). Or le
+contexte de Milo annonçait *« Objectif : tenir 3 semaines »* **et** *« prépare-le/la à la suite du
+parcours »*. 👉 *Trois mois plus tard, il redemandait de « tenir 3 semaines » à quelqu'un qui
+s'entraîne depuis douze, et le préparait à une suite qui n'existe pas.*
+✅ **Ce qui est fait (ft-v1087)** : après 3 semaines, Milo **cesse** de redemander l'objectif
+initial et **n'annonce plus aucune étape suivante**. On arrête de promettre, on ne construit pas.
+⏭️ **La question ouverte** : y a-t-il une étape 2, et laquelle ? *(monter en fréquence · passer aux
+barres · un premier cycle de force ?)* — c'est une brique produit, pas un correctif.
+
+### ② « FEMME = FESSIERS » : LA MOITIÉ DU BIAIS RESTE, EXPRÈS
+Le générateur ajoutait une abduction et un hip thrust sur le seul test `gender==='F'` — une
+**supposition sur la personne**, alors que `S.priorities` existe (Profil → Objectif), part au
+cloud et **atteint même Milo** (**R4**).
+✅ **Ce qui est fait (ft-v1087)** : une priorité déclarée décide, **quel que soit le sexe** — un
+homme qui coche « Fessiers » reçoit enfin le hip thrust, ce qui n'arrivait jamais.
+⏭️ **CE QUI N'EST PAS TRANCHÉ** : que reçoit une femme qui **n'a rien déclaré** ? Aujourd'hui, le
+comportement d'avant est conservé à l'identique. ⚠️ *Le retirer serait décider à sa place dans
+l'autre sens* — et pour beaucoup c'est exactement ce qu'elles veulent. **Ce n'est pas un bug, c'est
+un choix de produit** (R29, Constitution **P4**). ⭐ Une 3ᵉ voie existe : **demander** au moment de
+générer, comme la question « avec quoi tu t'entraînes ? » de ft-v1023 — zéro IA, une question.
+
+---
+
 ## 🧩 UNE SÉANCE « SANS SUJET » : QUEL CRITÈRE LA DÉTECTE ? — EN DISCUSSION (31/08/2026)
 
 > ⛔⛔ **RIEN N'EST DÉCIDÉ, RIEN N'EST CONSTRUIT.** Michel : *« non on en discute et il faut voir

@@ -203,11 +203,46 @@ function getWeekPlan(weekNum, totalWeeks) {
 
 function round25(kg) { return Math.round(kg / 2.5) * 2.5; }
 
+/* 📉 LA PROJECTION NE REGARDAIT QUE LE SQUAT — corrigé le 01/09/2026.
+   Le niveau se lisait sur `S.prs['Squat à la Barre']` **et sur rien d'autre**, avec des ratios
+   écrits en dur. Mesuré sur 12 semaines à partir de 100 kg :
+
+     débutant total (aucun record)      → +10,8 %
+     soulevé de terre à 180 kg (2,25×PdC) → +10,8 %   ← le même
+     femme, hip thrust 100 kg           → +10,8 %   ← le même
+     squat 140 kg (1,75×PdC)            → +3,6 %
+
+   👉 *Quelqu'un qui tire 180 kg au soulevé de terre était projeté comme un débutant total*,
+   simplement parce qu'il ne squatte pas. Et une femme l'était aussi — les ratios en dur
+   (1,0 / 1,25 / 1,5 × PdC) sont des repères MASCULINS appliqués à tout le monde.
+   ⛔⛔ ET L'INDICE 4 ÉTAIT MORT : la branche ne pouvait rendre que 0..3, donc le taux le plus
+   prudent de la table (`0.002`) n'était **jamais** atteint.
+   ⭐ ON RÉVEILLE `getLevel` PLUTÔT QUE D'ÉCRIRE UNE 3ᵉ ÉCHELLE (R13) : elle juge **par exercice**,
+   **par sexe** et **corrigée par l'âge** (`STD` + `ageCorr`), et elle couvre exactement les trois
+   barres du `BIG3`. Elle dort depuis ft-v385 — ⚠️ et **on a cherché pourquoi avant de la
+   promouvoir (R30)** : elle a été débranchée parce que l'AFFICHAGE du niveau a été retiré de
+   l'Accueil (remplacé par le calendrier), pas parce qu'elle était fausse. Vérifié sur ses seuils.
+   ⚠️ *Correction de ma propre alerte* : je l'avais crue cassée parce qu'elle rendait « Élite »
+   sur mes 4 essais — mes 4 essais étaient tous au-dessus du seuil haut. **Un contre-exemple mal
+   choisi accuse le code au lieu de l'éprouver.**
+   ⛔ ON PREND LE MEILLEUR des trois, pas le squat : un niveau se lit sur ce que la personne
+   pratique. ⚠️ Et **aucun record du BIG3 → on garde le comportement d'avant** (indice 0) : c'est
+   un inconnu, pas une mesure, et le changer sans donnée serait inventer (R29). */
+function _niveauForce(){
+  if(typeof getLevel!=='function' || typeof BIG3==='undefined') return 0;
+  const bw=S.bw||80, sx=(typeof sexeAthlete==='function')?sexeAthlete():(S.gender==='F'?'F':'H');
+  let best=0;
+  BIG3.forEach(ex=>{
+    const pr=(S.prs||{})[ex]; const rm=pr&&+pr.rm1||0;
+    if(!(rm>0)) return;
+    let r=null; try{ r=getLevel(ex, rm, bw, sx, S.age||30); }catch(e){}
+    if(r && r.idx>best) best=r.idx;
+  });
+  return Math.min(4, Math.max(0, best));
+}
 function projectRM(rm1, totalWeeks) {
   const age = S.age || 30;
-  const lvlIdx = Math.min(4, Math.max(0,
-    S.prs['Squat à la Barre'] ? (S.prs['Squat à la Barre'].rm1 / (S.bw||80) > 1.5 ? 3 : S.prs['Squat à la Barre'].rm1 / (S.bw||80) > 1.25 ? 2 : S.prs['Squat à la Barre'].rm1 / (S.bw||80) > 1.0 ? 1 : 0) : 0
-  ));
+  const lvlIdx = _niveauForce();
   const baseRate = [0.009, 0.007, 0.005, 0.003, 0.002][lvlIdx];
   const ageMult  = age < 30 ? 1.1 : age < 40 ? 1.0 : age < 50 ? 0.80 : age < 60 ? 0.65 : 0.50;
   const gain = baseRate * ageMult * totalWeeks;

@@ -20872,7 +20872,7 @@ console.log('\n-- CLXXXIX. Records recalculés · le vrai message du serveur (ft
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
   });
-  if(R.err) t('CLXXXIX n\'a pas pu tourner', false, R.err);
+  if(R.err) t('CXCII n\'a pas pu tourner', false, R.err);
   else{
     /* ⛔ ① Le temoin voit-il quelque chose ? Sinon tous les « rien » seraient verts sur du vide. */
     t('⛔ le témoin a bien LU l\'historique : les 3 exercices sont recalculés',
@@ -20917,10 +20917,10 @@ console.log('\n-- CLXXXIX. Records recalculés · le vrai message du serveur (ft
 
 
 
-/* ═══ CLXXXIX. LES QUATRE PETITS DÉFAUTS DE L'AUDIT (ft-v1086) ═══════════════════════════════
+/* ═══ CXCII. LES QUATRE PETITS DÉFAUTS DE L'AUDIT (ft-v1086) ═══════════════════════════════
    Michel : « lance tout ce que tu peux, il faut avancer ». Quatre points du palier 🔵, tous
    mesurés avant d'être corrigés — et deux d'entre eux n'étaient PAS ce que l'audit décrivait.  */
-console.log('\n-- CLXXXIX. Les quatre petits défauts de l\'audit (ft-v1086) --');
+console.log('\n-- CXCII. Les quatre petits défauts de l\'audit (ft-v1086) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
   const pg=await cx.newPage();
@@ -21013,6 +21013,111 @@ console.log('\n-- CLXXXIX. Les quatre petits défauts de l\'audit (ft-v1086) --'
       F.formOuvert===true, JSON.stringify(F.formOuvert));
     t('⭐⭐ ② rouvrir un bilan lu par l\'IA et le ré-enregistrer ne perd plus sa provenance',
       F.bilan.src==='ia'&&F.bilan.lm===true, JSON.stringify(F.bilan));
+  }
+}
+
+
+/* ═══ CXCIII. LA SUITE DU LOT D'AUDIT (ft-v1087) ════════════════════════════════════════════════
+   ① la projection ne regardait que le squat · ② « femme = fessiers » · ③ la course
+   `_saveCoachMemory` — **RÉFUTÉE, pas corrigée** · ④ une étape 1 qui ne finit jamais.        */
+console.log('\n-- CXCIII. La suite du lot d\'audit (ft-v1087) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    /* ── ① LA PROJECTION LIT LE MEILLEUR DES TROIS BARRES, PLUS LE SEUL SQUAT ── */
+    const proj=(prs,bw,age,g)=>{ S.prs=JSON.parse(JSON.stringify(prs)); S.bw=bw; S.age=age; S.gender=g;
+                                 return +projectRM(100,12); };
+    o.debutant = proj({},80,30,'H');
+    o.sdt180   = proj({'Soulevé de Terre':{rm1:180}},80,30,'H');
+    o.couche120= proj({'Développé Couché':{rm1:120}},80,30,'H');
+    o.squat140 = proj({'Squat à la Barre':{rm1:140}},80,30,'H');
+    /* ⛔ l'indice 4 (le taux le plus prudent) était INATTEIGNABLE : il doit l'être maintenant */
+    o.idx4Atteint = (typeof _niveauForce==='function');
+    S.prs={'Squat à la Barre':{rm1:140}}; S.bw=80; S.age=30; S.gender='H';
+    o.niveauMax = (typeof _niveauForce==='function') ? _niveauForce() : -1;
+    /* ⛔ NON-RÉGRESSION : sans aucun record du BIG3, le comportement d'avant est conservé */
+    o.sansRecordInchange = (o.debutant===110.8);
+
+    /* ── ② CE QU'ELLE A DEMANDÉ PASSE AVANT CE QU'ON SUPPOSE ── */
+    const aGlutes=p=>{ S.priorities=p;
+      const pr=_beginnerProg(S.gender,'full',3,'machines');
+      return JSON.stringify(pr).indexOf('Hip Thrust')>=0; };
+    S.gender='F'; o.femmeSansPrio = aGlutes([]);            // inchangé : elle l'a toujours
+    S.gender='H'; o.hommeSansPrio = aGlutes([]);            // inchangé : il ne l'a pas
+    S.gender='H'; o.hommeQuiDemande = aGlutes(['fessiers']); // NOUVEAU : il l'a
+    S.gender='F'; o.femmeQuiDemandeAutre = aGlutes(['pec','dos']); // ce qu'elle a demandé décide
+    S.priorities=[];
+
+    /* ── ③ LA COURSE `_saveCoachMemory` : PROUVER OU RÉFUTER ── */
+    S.url='http://x'; S.email='t@t.t'; S.coachMemory='MEMOIRE-INITIALE';
+    let appels=0; const vrai=window.fetch;
+    window.fetch=(u,opt)=>{ appels++;
+      return new Promise(r=>setTimeout(()=>r({json:async()=>({summary:'MEM-'+appels})}),20)); };
+    await Promise.all([_saveCoachMemory(),_saveCoachMemory(),_saveCoachMemory()]);
+    o.serialise = {appels, memoire:S.coachMemory};   // 3 appels, la DERNIÈRE réponse gagne
+    /* Et un échec réseau : la mémoire existante ne doit pas être détruite */
+    window.fetch=()=>Promise.reject(new Error('réseau'));
+    await _saveCoachMemory();
+    o.memoireApresEchec = S.coachMemory;
+    window.fetch=vrai;
+    /* ⛔ LA DÉCISION À FIGER (R30) : « débrief LIVRÉ » et « mémoire PRODUITE » sont deux faits
+       distincts, avec deux propriétaires — ce n'est pas un oubli, c'est écrit dans le code. */
+    o.deuxProprietaires = (typeof _dbfFaits==='function');
+
+    /* ── ④ L'ÉTAPE 1 A UNE FIN ── */
+    const ctx=(sem)=>{ const d=new Date(Date.now()-sem*6048e5).toISOString().slice(0,10);
+      S.beginnerJourney={style:'full',freq:3,startDate:d,phase:1};
+      return buildCoachContext(''); };
+    const c1=ctx(1), c8=ctx(8);
+    /* ⚠️ ON CHERCHE LA CONSIGNE, PAS LES MOTS : la nouvelle branche dit à Milo « ne lui redemande
+       plus de "tenir 3 semaines" » — un motif large attrape donc sa PROPRE NÉGATION et rougit sur
+       du code juste (c'est ce qui vient d'arriver, comme en ft-v1006 et ft-v1017). */
+    const PRESCRIT=/Objectif: tenir 3 semaines/;
+    o.sem1={tenir3:PRESCRIT.test(c1)};
+    o.sem8={tenir3:PRESCRIT.test(c8), derriere:/derrière lui\/elle/.test(c8),
+            aucuneSuite:/AUCUNE étape suivante/.test(c8),
+            /* ⛔ et la négation, elle, doit bien être PRÉSENTE — sinon on aurait « corrigé »
+               en supprimant la ligne, ce qui n'est pas la même chose. */
+            ditDeNePasLeRedemander:/Ne lui redemande plus/.test(c8)};
+    S.beginnerJourney=null;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+  await cx.close();
+  if(F.err) t('CXCIII n\'a pas pu tourner', false, F.err);
+  else{
+    t('⭐⭐ ① un soulevé de terre à 180 kg n\'est plus projeté comme un débutant total',
+      F.sdt180<F.debutant && F.couche120<F.debutant,
+      JSON.stringify({debutant:F.debutant, sdt180:F.sdt180, couche120:F.couche120}));
+    t('⛔ ① l\'indice 4 (le taux le plus prudent) est ENFIN atteignable',
+      F.niveauMax===4, 'niveau mesuré = '+F.niveauMax);
+    t('⛔ ① NON-RÉGRESSION : sans aucun record du BIG3, la projection ne change pas',
+      F.sansRecordInchange===true, String(F.debutant));
+    t('⭐⭐ ② un HOMME qui coche « Fessiers » reçoit enfin le hip thrust',
+      F.hommeQuiDemande===true && F.hommeSansPrio===false,
+      JSON.stringify({demande:F.hommeQuiDemande, sansPrio:F.hommeSansPrio}));
+    t('⛔ ② … et ce qu\'elle a DÉCLARÉ passe devant la supposition sur son sexe',
+      F.femmeQuiDemandeAutre===false, String(F.femmeQuiDemandeAutre));
+    t('⛔ ② NON-RÉGRESSION : une femme qui n\'a rien déclaré garde ce qu\'elle avait',
+      F.femmeSansPrio===true, String(F.femmeSansPrio));
+    /* ⚠️ ③ N'EST PAS UN CORRECTIF — c'est une RÉFUTATION figée (R30). */
+    t('⭐⭐ ③ RÉFUTÉ : 3 appels concurrents sont SÉRIALISÉS, la mémoire n\'est pas corrompue',
+      F.serialise.appels===3 && F.serialise.memoire==='MEM-3', JSON.stringify(F.serialise));
+    t('⛔ ③ un échec réseau ne DÉTRUIT pas la mémoire existante',
+      F.memoireApresEchec==='MEM-3', String(F.memoireApresEchec));
+    t('⛔ ③ « débrief livré » et « mémoire produite » gardent DEUX propriétaires (décision, pas oubli)',
+      F.deuxProprietaires===true, String(F.deuxProprietaires));
+    t('⭐⭐ ④ après 3 semaines, Milo ne redemande plus de « tenir 3 semaines »',
+      F.sem1.tenir3===true && F.sem8.tenir3===false,
+      JSON.stringify({semaine1:F.sem1, semaine8:F.sem8}));
+    t('⛔ ④ … et il n\'annonce plus une étape suivante qui n\'existe pas',
+      F.sem8.derriere===true && F.sem8.aucuneSuite===true, JSON.stringify(F.sem8));
   }
 }
 

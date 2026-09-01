@@ -5348,3 +5348,27 @@ Tests : **parcours 1939/1939** (+4, bloc **CLXXII**), calculs 266/266, muscles 2
 
 **📣 RÈGLE D'OR #11 — NI POP-UP NI POINT ROUGE.** Un réglage cesse de disparaître : rien n'apparaît, rien à apprendre.
 Tests : **parcours 1952/1952** (+3, dans le bloc **CLXXI**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 106 classées 0 trou. ⛔ **Le témoin du milieu est celui qui empêche les deux autres d'être verts pour rien** : il vérifie que le rescale a bien eu lieu à côté du zéro (156 → 208). Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1066. |
+
+
+**ft-v1067 — 🗂️ LE HAUT DE PROGRÈS : LES ONGLETS EN TÊTE, LES CARTES REPLIABLES** — Michel, capture à l'appui : *« ça prend vachement d'espace en haut non ? »*.
+
+**⭐ LA MESURE AVANT, ET ELLE DONNE RAISON À SA CAPTURE.** Synthèse **216 px** + volume **345 px** (8 muscles) = **561 px**. Les sous-onglets tombaient à **y=699** sur un écran de 844, et le champ de recherche à **821 — au ras du bord**. 👉 ***Sur l'onglet Exercices, sa progression commençait hors écran.***
+
+**⭐⭐ DEUX RAISONS, ET LA SECONDE EST DE FOND.** ① Les onglets sont de la **navigation** : elle doit être atteignable sans défiler — il fallait scroller pour aller sur Poids. ② Depuis ft-v1065, ces deux cartes n'appartiennent **qu'à** l'onglet Exercices : leur place est **dans son contenu**, pas au-dessus de la barre qui sert à en sortir. *La correction d'hier rendait celle-ci nécessaire.*
+
+**⭐ APRÈS** : onglets **y=118**, les deux cartes repliées tiennent en **132 px**, « PROGRESSION » à **347** et la recherche à **392**. Tout l'onglet tient dans un écran. **Michel a choisi cette forme entre trois** (replier seulement · remonter les onglets seulement · les deux).
+
+**⛔ L'ÉTAT EST RETENU, et c'est ce qui distingue un repli utile d'un repli qui enterre.** *Un accordéon qu'on doit rouvrir à chaque visite est un accordéon qu'on n'ouvre plus* — la leçon de **ft-v1024** (*« le rangement suit l'usage »*). Une seule clé pour les deux (`ft4_progAcc`) : c'est un réglage d'affichage, pas une donnée de la personne (**R2**). Et jamais bloquant : un stockage refusé laisse simplement les cartes repliées.
+
+**⛔ ON MASQUE, ON NE VIDE NI NE RECALCULE** (R19/R2) : le contenu est peint une fois par `renderProgress`, et un témoin vérifie qu'il est **déjà là sous le repli**.
+
+**⛔ R13 — ZÉRO LIGNE DE CSS AJOUTÉE.** On réutilise `details.acc`, le motif d'accordéon déjà employé dans l'onglet Macros ; la seule règle écrite **neutralise** l'encadré intérieur, elle n'en crée pas.
+
+**⚠️ LE TITRE ÉTAIT DOUBLÉ — TROUVÉ À LA CAPTURE, INVISIBLE À TOUTE MESURE.** Le résumé de l'accordéon disait *« Ce que ton histoire montre »*, et la carte à l'intérieur le répétait, dans un second cadre emboîté. Aucun test ne pouvait le voir : le texte était *correct*, c'est sa **duplication à l'écran** qui ne l'était pas. Les deux fonctions de rendu ne peignent plus leur propre titre.
+
+**⚠️ ET LE LISERÉ DE ft-v1047 EST RETIRÉ, AVEC SA RAISON (R30).** Il existait pour **distinguer deux cartes grises identiques** empilées sans titre propre. Chacune a maintenant son accordéon titré : la distinction est plus forte et vient d'ailleurs — le liseré n'était plus qu'un trait orphelin dans un cadre. *On ne garde pas un repère visuel dont la raison a disparu.* Son témoin est **re-visé sur la garantie** (les deux sections restent distinguables), pas supprimé.
+
+**⚠️⚠️ HUIT TÉMOINS EXISTANTS ONT ROUGI, ET AUCUN NE SIGNALAIT UN DÉFAUT — trois causes, toutes instructives.** ① Ils lisaient `innerText` sur une carte désormais **repliée** : `innerText` respecte le rendu et rend une chaîne **vide** (3ᵉ fois cette semaine). ② Ils testaient `style.display` sur le `div` intérieur, alors que le masquage porte maintenant sur le `<details>` parent → re-visés sur `offsetParent`, c'est-à-dire sur **ce qu'on voit**, pas sur l'élément qui porte le `display:none`. ③ Et l'un des miens, d'hier, mesurait *« les onglets remontent sur Poids »* — ils ne bougent plus, puisqu'ils sont en tête partout. *Un témoin qui mesure un MOUVEMENT se périme quand le mouvement disparaît ; il fallait qu'il mesure le RÉSULTAT (le contenu commence en haut).*
+
+**📣 RÈGLE D'OR #11 — les points 2 à 5, et PAS de pop-up.** Point rouge `progres-repli` sur l'onglet Progrès · aide `?` · aide détaillée · diapo du Guide **sans image exprès** (une capture montrerait l'historique de quelqu'un d'autre). ⛔ **La pop-up ne se mérite pas** : rien à faire, et le repère n'est pas perdu — les deux titres restent à l'écran, à un tap de leur contenu.
+Tests : **parcours 1945/1945** (+6, bloc **CLXXIII**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données classées 0 trou. ⛔ **Le témoin ① existe pour que les cinq autres mesurent quelque chose** : la carte volume doit être **pleine** (8 lignes) dans la fixture — sinon on mesurerait un écran plus court que le sien (famille **§24**). ⭐⭐ **Le ⑥ est celui qui compte le plus** : déplier est **retenu** et **survit à un re-rendu complet** — sans lui, le repli enterrerait les deux cartes. ⭐ **Vérifié à l'écran** (2 captures : repliées et dépliées), **0 erreur JS**, 🔴 **bouton central `[139, 792, 56, 44]`**. Fichiers : `index.html`, `setup.js`, `style.css`, `constants.js`, `screens.js`, `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1067. |

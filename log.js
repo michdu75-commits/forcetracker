@@ -7091,8 +7091,29 @@ const _EX_LIBRE={
   /* ⛔ « Curl Incliné » et « Gainage » n'ont PAS d'entrée : ils sont déjà en poids libre / au
      poids du corps. Une équivalence vers eux-mêmes serait du bruit qu'il faudrait maintenir. */
 };
+/* 💪 CE QU'ELLE A DEMANDÉ PASSE AVANT CE QU'ON SUPPOSE D'ELLE (01/09/2026)
+   Le générateur ajoutait une **abduction** et un **hip thrust** sur le seul test `gender==='F'`.
+   ⛔⛔ C'est une supposition sur la personne, pas une mesure : *« tu es une femme, donc tu veux
+   travailler tes fessiers »*. Et la donnée qui répondrait vraiment existe — `S.priorities`
+   (Profil → Objectif, 2 muscles au plus) — elle part au cloud, **elle atteint même Milo**, et le
+   générateur ne la lisait **nulle part** : **R4** dans sa forme habituelle.
+   👉 Une priorité déclarée décide désormais, **quel que soit le sexe** : un homme qui coche
+   « Fessiers » reçoit le hip thrust, ce qui n'arrivait jamais.
+   ⚠️ ET ON NE RETIRE RIEN À CELLES QUI N'ONT RIEN DÉCLARÉ (R30/R29) : sans priorité, le
+   comportement d'avant est conservé à l'identique. *Changer ce que reçoivent les femmes qui
+   n'ont rien demandé serait décider à leur place dans l'autre sens* — et c'est un arbitrage
+   produit, pas un correctif. Il est noté dans `IDEES-FUTURES.md` plutôt que tranché ici. */
 function _beginnerProg(gender, style, freq, matos){
   const F = gender==='F';
+  const _prio = m => {
+    const p=(typeof S!=='undefined' && Array.isArray(S.priorities)) ? S.priorities : [];
+    return p.indexOf(m)>=0;
+  };
+  /* Déclaré → ça décide. Rien de déclaré → on garde le défaut d'avant (le sexe).
+     ⚠️ `_aDeclare` est défini AVANT `_veut` : l'inverse marcherait (l'appel vient plus bas) mais
+     tiendrait à l'ordre d'exécution, pas à l'écriture — on ne laisse pas ce genre de piège. */
+  const _aDeclare = () => !!((typeof S!=='undefined' && Array.isArray(S.priorities) && S.priorities.length));
+  const _veut = m => _prio(m) || (_aDeclare() ? false : F);
   freq = (freq===2)?2:3;
   /* ⭐ UNE SEULE LISTE, TRADUITE À LA SORTIE (R2). Écrire deux catalogues parallèles — un
      « machines » et un « libre » — les ferait diverger : on corrigerait un déséquilibre d'un
@@ -7106,7 +7127,7 @@ function _beginnerProg(gender, style, freq, matos){
       // Push / Pull / Legs
       name=_bgNom(matos,'Push/Pull/Legs');
       const legs=[ex('Press Jambes 45°'),ex('Leg Curl Assis Machine'),ex('Extension Quadriceps (Leg Extension)'),ex('Hip Thrust Machine (Poussée de Hanche)')];
-      if(F)legs.push(ex('Abduction Cuisses (Leg Abduction)'));
+      if(_veut('fessiers'))legs.push(ex('Abduction Cuisses (Leg Abduction)'));
       legs.push(ex('Gainage',30));
       days=[
         {label:'Poussée',exs:[ex('Chest Press Machine Horizontale'),ex('Pec Deck'),ex('Développé Épaules Machine'),ex('Élévations Latérales Machine'),ex('Triceps Machine')]},
@@ -7117,7 +7138,7 @@ function _beginnerProg(gender, style, freq, matos){
       // Haut / Bas (2 jours)
       name=_bgNom(matos,'Haut/Bas');
       const bas=[ex('Press Jambes 45°'),ex('Leg Curl Assis Machine'),ex('Extension Quadriceps (Leg Extension)'),ex('Hip Thrust Machine (Poussée de Hanche)')];
-      if(F)bas.push(ex('Abduction Cuisses (Leg Abduction)'));
+      if(_veut('fessiers'))bas.push(ex('Abduction Cuisses (Leg Abduction)'));
       bas.push(ex('Gainage',30));
       days=[
         {label:'Haut du corps',exs:[ex('Chest Press Machine Horizontale'),ex('Tirage Poulie Haute (Lat Pulldown)'),ex('Développé Épaules Machine'),ex('Curl Pupitre Machine'),ex('Triceps Machine')]},
@@ -7128,7 +7149,7 @@ function _beginnerProg(gender, style, freq, matos){
     // Full Body (tout le corps à chaque séance)
     name=_bgNom(matos,'Full Body');
     const fb1=[ex('Press Jambes 45°'),ex('Chest Press Machine Horizontale'),ex('Tirage Poulie Haute (Lat Pulldown)'),ex('Développé Épaules Machine')];
-    if(F)fb1.push(ex('Hip Thrust Machine (Poussée de Hanche)'));
+    if(_veut('fessiers'))fb1.push(ex('Hip Thrust Machine (Poussée de Hanche)'));
     fb1.push(ex('Gainage',30));
     const fb2=[ex('Leg Curl Assis Machine'),ex('Pec Deck'),ex('Rowing Machine (Tirage Horizontal)'),ex('Curl Pupitre Machine'),ex('Crunch Machine',15)];
     const fb3=[ex('Extension Quadriceps (Leg Extension)'),ex('Chest Press Machine Inclinée'),ex('Tirage Poulie Haute Prise Serrée'),ex('Triceps Machine'),ex('Gainage',30)];

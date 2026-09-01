@@ -3567,7 +3567,30 @@ ${(()=>{const M={cool:'Cool — décontracté et complice, comme un pote de sall
 })()}
 ${S.gender==='F'?'- Ton ton avec elle: un peu plus à l\'écoute, doux et attentif — tout en restant franc, motivant et complice. Propose ton aide, demande comment elle se sent. (Sans jamais la materner ni la sous-estimer.)':''}
 ${S.level==='debutant'?`- Débutant·e : un « parcours débutant » (Étape 1 gratuite, machines guidées, 2 ou 3 séances/sem au choix, avec gainage/abdos) est disponible dans ses programmes — oriente-le/la dessus, explique les mouvements et rassure. Recommande aussi 10 à 15 min de cardio léger en fin de séance (bloc Cardio de l'app). Progression: +2,5 kg haut du corps / +5 kg jambes quand les séries passent (plus vite les premières semaines).`:''}
-${(S.beginnerJourney&&S.beginnerJourney.phase===1)?`- Il/elle a démarré son parcours (Étape 1 « Découverte », ${S.beginnerJourney.freq} séances/sem, style ${S.beginnerJourney.style==='split'?'split':'full body'}). Objectif: tenir 3 semaines en montant les charges. Encourage, félicite la régularité, et prépare-le/la à la suite du parcours.`:''}
+${(()=>{
+  /* 🎓 L'ÉTAPE 1 A UNE FIN — et jusqu'au 01/09/2026 personne ne la lui disait.
+     ⛔⛔ MESURÉ : `phase` est posée à **1** au moment de générer le programme (`log.js`) et
+     **rien, nulle part, ne l'avance jamais** — une seule affectation dans tout le dépôt.
+     Or cette ligne annonçait à Milo *« Objectif : tenir 3 semaines »* **et** *« prépare-le/la à
+     la suite du parcours »*. 👉 Trois mois plus tard, il disait encore à quelqu'un qui s'entraîne
+     depuis douze semaines qu'il doit « tenir trois semaines », et il le préparait à une suite
+     **qui n'existe pas**. *Un fait faux sur la personne, doublé d'une promesse que l'app ne peut
+     pas tenir* (**R29**, **P4**).
+     ⛔ ON NE CONSTRUIT PAS L'ÉTAPE 2 ICI : c'est une brique produit, elle demande une décision de
+     Michel. On arrête seulement de promettre ce qui n'existe pas (`IDEES-FUTURES.md`).
+     ⭐ La date de départ était déjà stockée (`startDate`) et n'était lue par personne — R4. */
+  const j=S.beginnerJourney;
+  if(!j || j.phase!==1) return '';
+  const style=j.style==='split'?'split':'full body';
+  let sem=null;
+  try{ if(j.startDate) sem=Math.floor((Date.now()-new Date(j.startDate+'T12:00:00'))/6048e5); }catch(e){}
+  const tete=`- Il/elle a démarré son parcours (Étape 1 « Découverte », ${j.freq} séances/sem, style ${style})`;
+  if(sem!=null && sem>=3)
+    return tete+`, il y a ${sem} semaines — **l'objectif des 3 premières semaines est derrière lui/elle**. `
+      +`Ne lui redemande plus de « tenir 3 semaines », et ne lui annonce AUCUNE étape suivante : `
+      +`il n'y en a pas de prévue dans l'app. Appuie-toi sur ce qu'il/elle a construit depuis.`;
+  return tete+`. Objectif: tenir 3 semaines en montant les charges. Encourage, félicite la régularité.`;
+})()}
 ${(()=>{const bmi=(S.bw&&S.height)?S.bw/((S.height/100)**2):0;return (bmi>=28||S.goal==='perte')?`- Attention au poids/articulations${bmi?` (IMC ~${Math.round(bmi)})`:''} : privilégie le cardio À FAIBLE IMPACT (vélo, marche rapide, elliptique, rameur — évite course/sauts qui tapent genoux et dos), une progression douce des charges, et un travail de gainage. Le cardio est important ici pour la santé cardiovasculaire et la perte de gras.`:''})()}
 - Calories cible: ${macros.calories || '—'} kcal | Protéines: ${macros.prot_g || '—'}g | Glucides: ${macros.carbs_g || '—'}g | Lipides: ${macros.fat_g || '—'}g
 ${(typeof dietSummary==='function'&&dietSummary())?`- ⚠️ RÉGIME ALIMENTAIRE À RESPECTER: ${dietSummary()} — ne propose JAMAIS d'aliment ou de supplément non conforme (ex. végan → pas de whey/œufs, propose protéine végétale + B12 ; halal/sans porc → aucun porc/gélatine porcine ni alcool si sans alcool).`:''}
