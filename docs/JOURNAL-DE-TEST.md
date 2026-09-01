@@ -69,6 +69,32 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 LE PARCOURS POUR CRÉER SA SÉANCE — « pas terrible », et c'est le chemin de TOUT LE MONDE
+**01/09/2026, remarque spontanée de Michel** en parlant d'autre chose : *« personne n'utilise Milo
+pour créer leur séance. Dans quelque temps je vais recréer mes propres séances — d'ailleurs en
+parlant de ça, je trouve que le parcours pour créer sa séance est pas terrible. »*
+
+⛔⛔ **DEUX PHRASES, ET LA PREMIÈRE CHANGE LA PORTÉE DE LA SECONDE.** Milo n'est utilisé que par
+Michel (établi le même jour). Donc **le chemin manuel — celui qu'il trouve mauvais — est le seul
+que les autres empruntent**. Ce n'est pas un détail d'ergonomie sur une voie secondaire : c'est
+*la* voie.
+
+⚠️ **ET ÇA CORRIGE UN BIAIS DE MESURE QU'ON A UTILISÉ AUJOURD'HUI MÊME.** Toute mesure faite sur
+son compte **surestime Milo** et **sous-estime le parcours manuel** — son compte est celui de
+quelqu'un qui teste chaque fonctionnalité au maximum, pas d'un utilisateur ordinaire. *Une
+population d'un seul, et qui n'est pas représentative de son propre produit.*
+
+⛔ **CE N'EST PAS PROMOUVABLE EN L'ÉTAT, et c'est le critère du fichier qui le dit** : *« pas
+terrible » n'est pas vérifiable par du code*. Ça ne devient un scénario que si on nomme un fait
+mesurable — nombre d'écrans, nombre de taps, un chemin qui n'existe pas, un retour en arrière
+qui perd la saisie. ⭐ **En attendant, c'est exactement le genre de remarque que ce fichier existe
+pour ne pas perdre** : elle est arrivée en incise, au milieu d'un sujet de confidentialité.
+
+⏭️ **Ce qu'il faudrait mesurer avant d'y toucher** : combien d'écrans séparent « je veux
+m'entraîner » de « ma première série est saisie », par les **trois** entrées existantes (programme
+enregistré · séance vide · sélecteur d'exercices) — et lesquelles un testeur emprunte réellement.
+**État : à trier** (juge humain tant qu'aucun fait mesurable n'est nommé).
+
 ### 🟢 UNE SÉANCE « SANS SUJET » — le critère de GPT se DÉSARME quand le cas empire
 **31/08/2026, sur le PDF envoyé à GPT puis sa réponse relayée par Michel.** Sa séance : *soulevé
 de terre · rowing · tirage vertical · soulevé de terre roumain*, et sa remarque — *« c'est de la

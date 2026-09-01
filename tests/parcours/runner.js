@@ -21353,6 +21353,50 @@ console.log('\n-- CXCIV. Les séries abîmées par la virgule, chez tout le mond
     refus && refus.status==='error' && refus.error==='token', JSON.stringify(refus));
 }
 
+
+/* == BLOC CXCV - LA POLITIQUE DE CONFIDENTIALITE DIT CE QU'ON FAIT VRAIMENT (ft-v1089) ==
+   Michel : « oui il faut etre transparent sur la politique de confidentialite [...] au depart je
+   t'ai dit que les donnees ne m'interessaient pas, et plus le temps passe plus je remarque des
+   petits bugs par-ci par-la [...] si moi j'ai un bug, les autres l'ont peut-etre — eux vont se
+   dire c'est pas grave, pour moi c'est grave. Et je ne vais surtout pas utiliser ces donnees, et
+   encore moins les revendre. En plus c'est illegal. »
+   ⛔⛔ LE DEFAUT ETAIT REEL ET IL ETAIT ECRIT : la page promettait que les donnees servent
+   « UNIQUEMENT a faire fonctionner l'app pour toi ». Or ce jour-la, on a lu les seances de
+   8 comptes pour mesurer un critere, et on vient de livrer un outil qui ouvre tous les comptes
+   pour trouver les series abimees. *Une promesse qu'on ne tient plus est pire qu'une promesse
+   qu'on n'a jamais faite.*
+   ⛔ CE TEMOIN PROTEGE UN ENGAGEMENT, PAS UN COMPORTEMENT. Un engagement peut disparaitre d'une
+   reecriture sans que rien ne plante — c'est exactement le cas ou plus rien ne le rattrape
+   (R30). Il verifie que la page porte toujours ① l'acces de diagnostic, ② la regle du minimum
+   necessaire, ③ le fait que les donnees sensibles en sont exclues, ④ le droit de s'y opposer. */
+console.log('\n-- CXCV. La politique de confidentialité dit ce qu\'on fait vraiment (ft-v1089) --');
+{
+  const pol=fs.readFileSync(path.join(ROOT,'confidentialite.html'),'utf8');
+  /* ⛔ Le témoin a-t-il bien lu la page ? Sinon les 4 « présent » seraient faux pour rien. */
+  t('⛔ le témoin a bien LU la politique (elle est servie et non vide)',
+    pol.length>3000 && pol.indexOf('Politique de confidentialité')>=0, 'taille = '+pol.length);
+  t('⭐⭐ elle DIT que l\'auteur peut consulter les comptes, et pourquoi (diagnostic de bugs)',
+    /consulte/i.test(pol) && /diagnostiquer des bugs/i.test(pol), '');
+  t('⭐⭐ … et la règle du MINIMUM NÉCESSAIRE y est écrite (les outils ne montrent pas tout)',
+    /minimum nécessaire/i.test(pol), '');
+  t('⛔⛔ … les données SENSIBLES sont explicitement hors du diagnostic technique',
+    /ne sont pas consultées pour du diagnostic technique/i.test(pol), '');
+  t('⛔ … et le droit de s\'y OPPOSER est offert, avec l\'adresse pour le faire',
+    /opposer/i.test(pol) && /forcetracker\.app@gmail\.com/.test(pol), '');
+  /* ⛔⛔ ET LA PHRASE DEVENUE FAUSSE NE DOIT PAS REVENIR : « uniquement pour toi » contredirait
+     la section qu'on vient d'écrire, et c'est la contradiction qu'un lecteur croirait. */
+  t('⛔⛔ la promesse devenue fausse (« servent UNIQUEMENT à faire fonctionner l\'app pour toi ») a disparu',
+    !/servent\s*<strong>uniquement<\/strong>/i.test(pol), '');
+  /* ⛔ La page doit rester ATTEIGNABLE hors ligne : une politique qu'on ne peut pas ouvrir
+     n'informe personne (règle d'or #4). */
+  t('⛔ la page reste préchargée par le service worker (lisible hors ligne)',
+    /confidentialite\.html/.test(fs.readFileSync(path.join(ROOT,'sw.js'),'utf8')), '');
+  /* ⛔ Et la date de mise à jour doit avoir bougé : une politique modifiée qui garde son
+     ancienne date se lit comme une politique inchangée. */
+  t('⛔ la date de dernière mise à jour a été actualisée',
+    /septembre 2026/.test(pol), (pol.match(/Dernière mise à jour[^<]*(<sup>[^<]*<\/sup>)?[^<]*/)||[''])[0].slice(0,60));
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
