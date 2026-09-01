@@ -6,7 +6,23 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1087`.
+- **Version en ligne (live) :** `ft-v1088`.
+- 🩹 **« null » DANS LE CHAMP KG — et c'est le correctif de la virgule qui avait ouvert le trou**
+  (ft-v1088). Capture du compte d'**Eline** : `10 reps × null kg` sur deux séries.
+  ⛔⛔ **La cause vient de Michel** : *« Eline avait mis des valeurs, et si je dis pas de bêtises
+  c'est en mettant la virgule »*. La chaîne : ① **ft-v1057** fait passer ce champ de
+  `type="number"` à `type="text"` **en laissant `+this.value`** — or `type="number"` était la
+  **seule** chose qui le protégeait ; ② `+'62,5'` = `NaN` ; ③ `JSON.stringify(NaN)` vaut
+  **`null`** ; ④ le mot « null » s'affiche.
+  ⚠️ **Sa valeur est PERDUE, pas masquée** — on ne la devine pas à sa place (**R29**).
+  ⭐⭐ **La leçon devient la famille §30 de `BUGS.md`** : *un correctif qui retire un garde-fou
+  sans mettre le sien fabrique un bug pire que celui qu'il répare* — un champ **oublié** garde
+  son comportement, celui-là a été **rendu plus fragile**. ⚠️ Signal d'alerte : se méfier d'un
+  correctif qui annonce un **nombre** (« 22 champs ») — *il dit ce qui a été traité, jamais ce
+  qui a été manqué*.
+  ⏭️ **Reste ouvert** : le champ du **détail de séance** est réparé ; il faudrait vérifier chez
+  Eline s'il reste d'autres séries à `null` ailleurs (elles sont réparables à la main, le champ
+  fonctionne maintenant).
 - 🛡️ **UN RECORD PLUS VIEUX QUE L'HISTORIQUE DE SON EXERCICE EST INTOUCHABLE** (ft-v1087).
   ⛔⛔ **Trouvé par Michel sur ses vraies données**, aperçu à l'appui, deux heures après
   ft-v1085. La règle ③ ne protégeait que *« aucune séance DU TOUT »* — trop étroit : son

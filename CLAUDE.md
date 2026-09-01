@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1087`** (prochaine : `ft-v1088`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1088`** (prochaine : `ft-v1089`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -436,6 +436,29 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1088 — 🩹 « null » DANS LE CHAMP KG : LE CORRECTIF DE LA VIRGULE AVAIT RETIRÉ LA PROTECTION SANS METTRE LA SIENNE** — Michel, capture du compte d'Eline : son Pec Deck affichait **`10 reps × null kg`** sur deux séries.
+
+**⛔⛔ ET C'EST SA LECTURE QUI A TROUVÉ LA CAUSE, pas la mienne.** J'avais écrit honnêtement *« je ne sais pas comment ces séries ont été validées sans poids »*. Lui : *« ah bah non, Eline avait mis des valeurs — et si je dis pas de bêtises, c'est en mettant la virgule »*. ***Il avait raison, et le coupable est mon propre correctif du 30/08.***
+
+**🔗 LA CHAÎNE, MAILLON PAR MAILLON — établie dans le code, pas déduite :**
+① **ft-v1057** (*« la virgule décimale : 22 champs et un seul lecteur de nombre »*) fait passer CE champ de `type="number"` à **`type="text"`**… ⛔⛔ **en laissant `+this.value`**. Or ***`type="number"` était la SEULE chose qui le protégeait*** : le navigateur refusait la virgule, `.value` rendait `''`, donc `+'' = 0`.
+② À partir de là, `+'62,5'` = **`NaN`**.
+③ `persist()` fait `JSON.stringify`, et ***`JSON.stringify(NaN)` vaut `null`***.
+④ Au rechargement, `value="${s.kg}"` écrit le mot **« null »** à l'écran.
+
+**⚠️⚠️ SA VALEUR EST PERDUE, PAS MASQUÉE.** Elle a tapé un poids, il n'existe plus. ⛔ **On ne le devine pas à sa place** (**R29**) : le champ marche maintenant, elle peut le retaper si elle s'en souvient.
+
+**⭐⭐ LA LEÇON VAUT PLUS QUE LE CORRECTIF, ET ELLE DEVIENT LA FAMILLE §30 DE `BUGS.md`** : ***un correctif qui retire un garde-fou sans mettre le sien fabrique un bug PIRE que celui qu'il répare***. Un champ simplement **oublié** garde son ancien comportement — imparfait mais stable. Celui-là a été **rendu plus fragile qu'avant**. 👉 *Le danger n'est pas dans ce qu'un correctif ajoute, il est dans ce qu'il ENLÈVE.* ⚠️ **Et le corollaire est un signal d'alerte concret** : se méfier d'un correctif qui annonce un **nombre** dans son titre (« 22 champs ») — *le nombre dit ce qui a été traité, jamais ce qui a été manqué*.
+
+**⭐ LA JUMELLE CHERCHÉE (R8) EXISTAIT, ET ELLE ÉTAIT SAINE** : l'écran de séance rend `value="${set.kg||''}"` et lit par `numFR` depuis ft-v1057. *C'est le détail d'une séance PASSÉE qui n'avait reçu que la moitié du correctif.*
+
+**⛔ ET UN CHAMP VIDÉ REND « JE NE SAIS PAS », JAMAIS 0.** Écrire 0 dirait *« elle a poussé zéro »*, ce qui est faux — et ce 0 partirait ensuite dans le volume, les records et le contexte de Milo comme s'il avait été mesuré.
+
+**📣 RÈGLE D'OR #11 — NI POP-UP NI POINT ROUGE.** Un champ qui affichait un mot incompréhensible affiche un poids. Rien n'apparaît, rien à apprendre. ⚠️ *Et l'annoncer reviendrait à dire « le correctif d'avant-hier détruisait vos saisies » — ce que le journal dit, et qui n'a pas à interrompre les autres.*
+
+Tests : **parcours 2133/2133** (+9, bloc **CXCIII**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 106 classées 0 trou, **noyau Milo 12/12**. ⭐ **La fixture EST sa séance** : série 1 renseignée, série 2 à `null`, série 3 **sans la clé `kg` du tout** — les deux formes que produit la chaîne. ⛔ **Le témoin ① existe pour que les autres mesurent quelque chose** : les 3 champs doivent être rendus, sinon « aucun null » serait vrai sur un écran vide. ⭐⭐ **Le témoin de l'ALLER-RETOUR est celui qui touche la cause** : il mesure `JSON.stringify`, pas la valeur en mémoire — sans lui on prouverait seulement que le champ n'affiche plus NaN, pas que la donnée **survit au rechargement**. ⭐⭐ **Et le dernier protège la RÈGLE, pas le cas** : aucun champ décimal en `type="text"` ne lit par `+this.value` — il rougira au prochain champ converti en texte dont on oubliera le lecteur de nombre, c'est-à-dire exactement ce qui est arrivé ici. **CONTRÔLE NÉGATIF, deux fois** : ① les gardes retirées, sa capture revient au caractère près — `["12","null","undefined"]` et « 62,5 » ressort en NaN ; ② le champ remis dans l'état de ft-v1057, le témoin de règle **nomme le coupable** (`updateSessSet(…,'kg',+this.value)`). 🧾 Famille **§30** de `BUGS.md`. Fichiers : `setup.js`, `tests/parcours/runner.js`, `BUGS.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1088. |
+
 
 **ft-v1087 — 🛡️ UN RECORD PLUS VIEUX QUE L'HISTORIQUE DE SON EXERCICE EST INTOUCHABLE** — Michel, deux heures après la livraison de l'outil, aperçu à l'appui : **6 records à corriger**, dont 4 en baisse. C'est en lisant SES lignes que le trou est sorti — pas en relisant le code.
 
@@ -796,32 +819,6 @@ Tests : **parcours 1992/1992** (+9, bloc **CLXXV**), calculs 266/266, muscles 24
 
 **📣 RÈGLE D'OR #11 — LES CINQ POINTS, ET LA POP-UP EST MÉRITÉE.** C'est le cas *« un repère a bougé »* à l'état pur : le nombre d'heures de l'Accueil peut désormais **différer de celui qu'on a tapé**, et le score bouge avec. `WHATS_NEW` **v64** · point rouge `sommeil-mesure` sur l'Accueil · **aide `?` et diapo du Guide ENRICHIES, pas doublées** (une entrée sommeil existait — en écrire une seconde à côté aurait été le doublon que ce projet refuse, **R2/R25**).
 Tests : **parcours 1983/1983** (+14 : bloc **CLXXIV** avec 13 témoins, +1 dans CXXIV), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, **données 106 classées 0 trou** (61 transmises · 45 exclues). ⭐⭐ **La fixture EST son cas réel** — 6,72 h notées contre 5,63 h mesurées : une fixture inventée aurait rendu ces témoins verts sans rien dire de sa semaine. ⛔ **Le témoin ① existe pour que les neuf autres mesurent quelque chose** : sans un vrai écart entre les deux sources, tout le bloc comparerait deux fois le même chiffre. **CONTRÔLE NÉGATIF : deux essais ciblés, et le second chiffre le piège évité.** ① la saisie remise en priorité → **①②⑦⑧⑨ rouges**, et ② imprime `avec mesure = 70 · sans = 70`, c'est-à-dire *la mesure ne change rien* ; ② le « Moyen » inventé remis → **④ rouge**, `score 8 h mesurées = 72` au lieu de ≥85. ⚠️ **Et un de mes témoins restait vert à tort** : ⑧ cherchait « 6,72 » n'importe où dans la carte, donc il passait quand ce 6,72 était devenu le chiffre **principal**. Re-visé sur l'**ordre** (5,63 devant, 6,72 derrière « tu avais noté ») — *un témoin qui cherche une valeur sans dire OÙ ne mesure pas ce qu'il croit*. ⭐ **Vérifié à l'écran** (2 captures : la tuile à 5,63 h, le détail du score qui nomme la montre), **0 erreur JS**, 🔴 **bouton central `[139, 792, 56, 44]`**. Fichiers : `tracking.js`, `coach.js`, `screens.js`, `constants.js`, `app.js`, `tests/donnees/donnees-milo.json`, `tests/parcours/runner.js`, `IDEES-FUTURES.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1069. |
-
-**ft-v1068 — ⚖️ UN SEUL PROPRIÉTAIRE DE « COMBIEN J'EN AI PRIS ? »** — Michel, après une journée à trouver le même défaut sur des écrans différents : *« que ce soit le code-barres, manuel, avec l'IA ou avec l'étiquette, il faut qu'il y ait une **cohérence** quand on change la dose, peu importe le produit — même s'il faut qu'on crée un algorithme exprès »*.
-
-**⭐⭐ L'ALGORITHME EXISTAIT DÉJÀ — QUATRE FOIS, ET C'EST EXACTEMENT LE PROBLÈME.** `valeurs = base × (saisie / référence)`. 👉 ***Un pour-100 g n'est pas un autre calcul : c'est CE calcul avec une référence de 100.*** Quatre écritures de la même formule, sur deux écrans, dont les comportements ont divergé **sans que personne ne le décide**. Mesuré avant d'y toucher : **6 fonctions de rescale, 6 champs de saisie, 3 états** pour une seule question.
-
-**⛔⛔ LE MÊME GESTE DONNAIT TROIS RÉSULTATS — vider le champ de quantité :**
-
-| route | avant | après |
-|---|---|---|
-| pour-100 g · ajout (code-barres, étiquette) | les 4 valeurs à **zéro** | référence |
-| pour-100 g · modifier | **zéro**, et le contrôle de cohérence ne se rafraîchissait même pas | référence |
-| proportion · ajout (IA, poids déclaré) | référence *(corrigé en ft-v1061)* | référence |
-| proportion · modifier | **valeurs orphelines** | référence |
-
-***Zéro est un mensonge — personne n'a mangé zéro — et une valeur orpheline en est un autre.*** ⚠️ **Et la ligne « proportion · modifier » est la jumelle de ft-v1061, encore vivante ce soir** : **4ᵉ fois de la journée** qu'un correctif était posé d'un seul côté (R8). Cette fois elle n'a pas été trouvée par Michel — elle est sortie de la mesure.
-
-**⛔ ET LA VIRGULE D'ELINE MANQUAIT ENCORE UNE ROUTE.** `af-bc-grams` était le **seul** champ de quantité resté en `type="number"` — donc le seul à jeter *« 62,5 »*. C'est la route du **code-barres et de l'étiquette**, c'est-à-dire la plus fiable, et ft-v1057 l'avait manquée : son témoin refusait `inputmode="decimal"` sur un `type="number"`, or celui-ci était en `inputmode="numeric"` et passait à travers.
-
-**⛔⛔ ET LE TÉMOIN DE ft-v966 M'A RATTRAPÉ EN PLEINE UNIFICATION**, sur une nuance qui vaut la version : mon repli faisait annoncer *« → pour tes 100 g »* au-dessus d'un champ **vide**. 👉 ***Les VALEURS se replient sur la référence — elles doivent bien correspondre à quelque chose, et « 100 g » est écrit juste au-dessus — mais la PHRASE, qui dit « pour TES n g », se tait.*** Annoncer un total pour une quantité que personne n'a tapée, c'est le voisinage muet retourné dans l'autre sens.
-
-**⭐ CE QUE LE BLOC DE TÉMOINS VÉRIFIE N'EST PAS UN CHIFFRE, C'EST UNE ÉGALITÉ DE COMPORTEMENT.** Un témoin qui figerait *« 243 kcal »* deviendrait faux au premier changement de fixture ; celui-ci reste vrai — et c'est lui qui empêche les 4 routes de re-diverger. ⛔ Le repli est vérifié comme étant **la référence de chaque route** (100 g pour un pour-100 g, la dose déclarée sinon), jamais un nombre magique commun.
-
-**⚠️ UNE DIFFÉRENCE SUBSISTE, ET ELLE EST LÉGITIME** : à 62,5 g, la route code-barres rend **243** kcal et la route proportion **244**. Ce n'est pas une incohérence — la première part du pour-100 g **exact** (388,5), la seconde des valeurs **arrondies** que la personne voit (117 pour 30 g). *La route du code-barres est simplement plus précise, et c'est un argument de plus pour elle.*
-
-**📣 RÈGLE D'OR #11 — NI POP-UP NI POINT ROUGE.** Rien n'apparaît, rien ne bouge : des comportements qui différaient deviennent identiques. Il n'y a rien à apprendre — c'est précisément le but.
-Tests : **parcours 1948/1948** (+6, bloc **CLXXII**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données 106 classées 0 trou. ⭐ **Le premier témoin est celui qui empêche les autres d'être verts sur du vide** : les 4 routes rendent bien des valeurs de départ non nulles. Fichiers : `app.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1068. |
 
 **⭐⭐ LA FRONTIÈRE AVEC LA BRIQUE 7 EST ÉCRITE DANS LA VISION, ET C'EST ELLE QUI DÉCIDE DE TOUT** : la **7** répond à *« que s'est-il passé ? »* — elle **relie** des événements (le souvenir d'hier) ; la **8** répond à ***« qu'est-ce que cette histoire m'apprend ? »*** — elle **prend du recul**. Tournures autorisées noir sur blanc : *« ton historique semble montrer que… »*, *« une constante apparaît… »*. ⛔⛔ **Jamais *« tu devrais »*** — sinon la brique cesse d'être un miroir et devient un coach qui prescrit (**P14**). Un témoin refuse tout verbe de prescription dans le rendu.
 
