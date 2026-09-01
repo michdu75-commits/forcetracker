@@ -5096,8 +5096,17 @@ async function sendToCoach(customMsg, displayMsg, opts) {
          ⛔ On ne lit que ce que le serveur a écrit : pas de message inventé ici. S'il n'en
          fournit aucun, on retombe exactement sur l'ancien comportement. */
       if (!resp.ok) {
+        /* ⚠️ ON N'AFFICHE QU'UNE VRAIE PHRASE, JAMAIS UN CODE TECHNIQUE. Les réponses d'erreur
+           portent aussi des jetons destinés au code (`quota`, `rate_limit`, `api_error 500`) :
+           les montrer serait remplacer un message faux par un message incompréhensible. On
+           exige donc un texte qui ressemble à une phrase — sinon on retombe sur l'ancien
+           comportement, qui a le mérite d'être clair sur ce qu'il ne sait pas. */
         let _msgServeur = '';
-        try { const _d = await resp.clone().json(); _msgServeur = (_d && (_d.reply || _d.error)) || ''; } catch(_){}
+        try {
+          const _d = await resp.clone().json();
+          const _t = String((_d && (_d.reply || _d.error)) || '').trim();
+          if (_t.length >= 25 && /\s/.test(_t) && !/^[a-z_]+( \d+)?$/.test(_t)) _msgServeur = _t;
+        } catch(_){}
         const _e = new Error(_msgServeur || ('HTTP ' + resp.status));
         _e.duServeur = !!_msgServeur;
         throw _e;
