@@ -2742,7 +2742,7 @@ function renderNutrition(){try{
       nuCycleBanner.innerHTML=`<div class="cycle-phase-banner" style="background:rgba(170,0,255,.08);border:1px solid rgba(170,0,255,.2);">
         <span style="font-size:26px;flex-shrink:0;">${cp.icon}</span>
         <div style="flex:1;">
-          <div style="font-family:var(--font-cond);font-size:16px;font-weight:700;color:${cp.color};">${cp.phase} — Jour ${cp.day}/${S.mensCycleDur}</div>
+          <div style="font-family:var(--font-cond);font-size:16px;font-weight:700;color:${cp.color};">${cp.phase}${cp.day?` — Jour ${cp.day}/${S.mensCycleDur}`:''}</div>
           <div style="font-size:12px;color:var(--t2);margin-top:4px;line-height:1.5;"><strong style="color:var(--t1);">Nutrition :</strong> ${cp.nutrition}</div>
           <div style="font-size:12px;color:var(--t2);margin-top:3px;line-height:1.5;"><strong style="color:var(--t1);">Entraînement :</strong> ${cp.training}</div>
         </div>

@@ -6670,9 +6670,29 @@ function _validationSeance(newExs, mode){
     // pleine (même exclusion que le contexte de Milo, coach.js).
     const durables=(typeof _EX_SWAP_RAISONS!=='undefined')
       ? _EX_SWAP_RAISONS.filter(x=>x.durable).map(x=>x.r) : [];
+    /* ⛔⛔ LE CONTRÔLE CHERCHAIT LE NOM EXACT — corrigé le 01/09/2026, et c'est le piège de
+       ft-v1035 retrouvé ici. `sw[o.name]` est une correspondance de CHAÎNE : la moindre
+       différence rate la règle, et l'app se tait exactement là où elle devait parler.
+       Mesuré, avec un remplacement enregistré sur « Développé Couché » :
+         « Développé Couché »     → 1 signalement ✅
+         « Developpe Couche »     → 0  ❌   (les accents sautent souvent chez Milo)
+         « développé couché »     → 0  ❌
+         «   Développé Couché   » → 0  ❌   (copié-collé)
+       ⭐ ON RÉUTILISE CE QUI EXISTE (R13) : `exNomCatalogue` résout les alias déclarés, `_normEx`
+       enlève accents, casse et espaces. Les deux côtés passent par la MÊME clé — sinon on
+       compare deux vocabulaires différents.
+       ⚠️ Et la clé de stockage ne change pas : on normalise pour COMPARER, jamais pour écrire —
+       ce que la personne a désigné reste écrit comme elle l'a désigné. */
     const sw=S.exSwaps||{};
+    const _clefEx=n=>{
+      const s=String(n||'').trim(); if(!s) return '';
+      let base=s; try{ base=exNomCatalogue(s)||s; }catch(e){}
+      try{ return _normEx(base); }catch(e){ return base.toLowerCase(); }
+    };
+    const swNorm={};
+    Object.keys(sw).forEach(k=>{ const c=_clefEx(k); if(c && !swNorm[c]) swNorm[c]=sw[k]; });
     (newExs||[]).forEach(o=>{
-      const info=sw[o&&o.name];
+      const info=swNorm[_clefEx(o&&o.name)];
       if(info && durables.indexOf(info.r)>=0) out.exclusions.push({nom:o.name, vers:info.to||''});
     });
 

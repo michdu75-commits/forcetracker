@@ -20941,6 +20941,106 @@ console.log('\n-- CLXXXIX. Records recalculés · le vrai message du serveur (ft
 }
 
 
+
+/* ═══ CLXXXIX. LES QUATRE PETITS DÉFAUTS DE L'AUDIT (ft-v1086) ═══════════════════════════════
+   Michel : « lance tout ce que tu peux, il faut avancer ». Quatre points du palier 🔵, tous
+   mesurés avant d'être corrigés — et deux d'entre eux n'étaient PAS ce que l'audit décrivait.  */
+console.log('\n-- CLXXXIX. Les quatre petits défauts de l\'audit (ft-v1086) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',
+    ft4_hascode:'1',ft4_bw:'60',ft4_age:'40',ft4_ht:'165',ft4_act:'1.2'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const F=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    /* ── ① UN SEUL PROPRIÉTAIRE DU SEXE ────────────────────────────────────
+       Deux conventions opposées coexistaient : le BMR testait ==='H' (tout le reste = femme),
+       le plancher ==='F' (tout le reste = homme). Un sexe non reconnu — atteignable par la
+       RESTAURATION — donnait donc un BMR de femme et un plancher d'homme. */
+    const REF={}; ['H','F'].forEach(g=>{ S.gender=g; REF[g]={t:calcTDEE(), p:_plancherKcal(100)}; });
+    o.refDiffere = REF.H.t!==REF.F.t && REF.H.p!==REF.F.p;   // ⛔ sinon tout serait vert pour rien
+    o.incoherents=[];
+    ['M','male','','Homme',undefined,null].forEach(g=>{
+      S.gender=g;
+      const vuT=(calcTDEE()===REF.H.t)?'H':((calcTDEE()===REF.F.t)?'F':'?');
+      const vuP=(_plancherKcal(100)===REF.H.p)?'H':((_plancherKcal(100)===REF.F.p)?'F':'?');
+      if(vuT!==vuP) o.incoherents.push(JSON.stringify(g)+':'+vuT+'/'+vuP);
+    });
+    S.gender='H';
+    o.proprietaire = (typeof sexeAthlete==='function') ? [sexeAthlete()] : ['absent'];
+    S.gender='F'; o.proprietaire.push(sexeAthlete());
+    S.gender='Homme'; o.proprietaire.push(sexeAthlete());
+
+    /* ── ③ « NE ME REMETS PLUS CET EXERCICE » : le nom n'a plus à être EXACT ── */
+    S.exSwaps={'Développé Couché':{r:'gene', to:'Développé Haltères', n:2, date:'2026-08-01'}};
+    const V=n=>_validationSeance([{name:n, sets:[{kg:60,reps:8}]}]).exclusions;
+    o.sw={exact:V('Développé Couché').length, accents:V('Developpe Couche').length,
+          casse:V('développé couché').length, espaces:V('  Développé Couché  ').length,
+          autre:V('Squat').length};
+
+    /* ── ④ LE TEXTE DE RÉCUP DIT LA MÊME DURÉE QUE LE CALCUL ── */
+    S.sessions=[{date:new Date(Date.now()-6*36e5).toISOString().slice(0,10), ts:Date.now()-6*36e5,
+                 exs:[{name:'Squat',sets:[{kg:100,reps:5,done:1}]}], vol:5000}];
+    const d=calcRecoveryDetail()||{};
+    o.nbFacteurs=(d.factors||[]).length;                      // ⛔ le témoin voit-il quelque chose ?
+    o.phraseRecup=((d.factors||[]).map(x=>x&&x.why||'').join(' ')
+                    .match(/parti au bout de ~(\d+) h/)||[])[1]||'(absente)';
+    o.constante=(typeof RECUP_EFFACE_H!=='undefined')?RECUP_EFFACE_H:'absente';
+
+    /* ── ④ bis « JOUR NULL » — la contraception hormonale n'a pas de jour de cycle ── */
+    S.gender='F'; S.contraception='pill-combo'; S.mensCycleStart=''; S.mensCycleDur=0;
+    const cp=getMensCyclePhase(Date.now());
+    o.cpSansJour = !!(cp && cp.day===null);                   // ⛔ la fixture atteint bien ce cas
+    try{ renderNutrition(); }catch(e){}
+    const ban=document.querySelector('.cycle-phase-banner');
+    o.banniere=ban?ban.textContent.replace(/\s+/g,' ').trim():'(absente)';
+
+    /* ── ② LA PROVENANCE D'UN BILAN QU'ON ROUVRE ── */
+    S.gender='H'; S.contraception='';
+    S.bodyScans=[{date:'2026-08-20', weight:80, fatMass:12, leanMass:68, src:'ia', lmDeduite:true}];
+    await openBodyScanForm(0);
+    const _w=document.getElementById('bs-weight'); if(_w)_w.value='80';
+    const _d=document.getElementById('bs-date');   if(_d)_d.value='2026-08-20';
+    o.formOuvert=!!(_w&&_d);            // ⛔ sinon saveBodyScan sortirait avant d'agir (vert muet)
+    saveBodyScan();
+    const sc=(S.bodyScans||[])[0]||{};
+    o.bilan={src:sc.src||'(perdue)', lm:sc.lmDeduite===true?true:'(perdue)'};
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+  await cx.close();
+  if(F.err) t('CLXXXIX n\'a pas pu tourner', false, F.err);
+  else{
+    /* ⛔ Sans ça, tous les « cohérent » seraient verts en ne mesurant rien. */
+    t('⛔ le témoin voit bien deux comportements DIFFÉRENTS pour H et F (sinon rien à mesurer)',
+      F.refDiffere===true, JSON.stringify(F.refDiffere));
+    t('⭐⭐ ① un sexe non reconnu ne peut plus être calculé en femme ET protégé en homme',
+      F.incoherents.length===0, JSON.stringify(F.incoherents));
+    t('⛔ ① un seul propriétaire (`sexeAthlete`) : H→H · F→F · « Homme »→H (défaut de `load()`)',
+      JSON.stringify(F.proprietaire)==='["H","F","H"]', JSON.stringify(F.proprietaire));
+    t('⭐⭐ ③ « ne me remets plus » tient sans accents, sans casse, avec des espaces',
+      F.sw.exact===1&&F.sw.accents===1&&F.sw.casse===1&&F.sw.espaces===1, JSON.stringify(F.sw));
+    t('⛔ ③ … et il ne signale PAS un exercice qui n\'a jamais été remplacé',
+      F.sw.autre===0, String(F.sw.autre));
+    t('⛔ ④ le témoin lit vraiment les facteurs de récup (sinon la phrase absente passerait)',
+      F.nbFacteurs>0, 'facteurs = '+F.nbFacteurs);
+    t('⭐⭐ ④ la phrase de récup annonce la MÊME durée que le calcul (48 h, plus 36)',
+      String(F.phraseRecup)===String(F.constante), F.phraseRecup+' vs '+F.constante);
+    t('⛔ ④bis la fixture atteint bien le cas « pas de jour de cycle »',
+      F.cpSansJour===true, JSON.stringify(F.cpSansJour));
+    t('⭐⭐ ④bis contraception hormonale : plus de « Jour null » à l\'écran',
+      !/Jour null|Jour undefined|Jour \/|\/0/.test(F.banniere) && /Contraception hormonale/.test(F.banniere),
+      F.banniere.slice(0,80));
+    t('⛔ ② le formulaire de bilan s\'ouvre vraiment (sinon la sauvegarde sortirait avant d\'agir)',
+      F.formOuvert===true, JSON.stringify(F.formOuvert));
+    t('⭐⭐ ② rouvrir un bilan lu par l\'IA et le ré-enregistrer ne perd plus sa provenance',
+      F.bilan.src==='ia'&&F.bilan.lm===true, JSON.stringify(F.bilan));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
