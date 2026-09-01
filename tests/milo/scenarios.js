@@ -29,6 +29,25 @@ module.exports = [
     setup:{ profile:{ bw:80, targetWeight:90 } },
     checks:{ contextMustContain:['Poids objectif: 90 kg'] } },
 
+  /* 🦴 R8 DANS SA FORME LA PLUS PURE (01/09/2026) — l'app SAVAIT, Milo n'était pas prévenu.
+     `_movPattern()` classe le soulevé de terre ET le roumain en `hip-hinge` depuis toujours
+     (ça sert au calcul des calories), et `_validationSeance` le signale depuis ft-v1080 —
+     mais APRÈS COUP. Michel : « j'ai pas envie que Milo me REPROPOSE une séance bizarre ».
+     ⛔ Ce scénario ne prouve QUE la présence de la règle (Tier 1). Qu'elle soit SUIVIE se
+     mesure au banc d'essai, qui coûte des appels — les deux ne se remplacent pas. */
+  { id:'CORE-011', category:'coherence', criticality:'critique', tier:'deterministe', origin:'ft-v1084',
+    description:'Milo est PRÉVENU qu\'une séance a un sujet (pas deux charnières, pas deux moitiés lourdes).',
+    checks:{ contextMustContain:['UNE SÉANCE A UN SUJET','CHARNIÈRE DE HANCHE par séance'] } },
+
+  /* ⛔ ET LE GARDE-FOU DE LA RÈGLE : elle doit NOMMER ce qui reste permis. Mesuré sur 140
+     séances réelles, un critère « deux familles lourdes » sans nuance accusait 9 séances
+     normales — dont un push/pull répété 5 fois chez la même personne. Sans cette ligne,
+     Milo sur-corrigerait et refuserait un dos complet. *Une règle qui interdit trop large
+     coûte plus cher que le défaut qu'elle vise* (R19/R24). */
+  { id:'CORE-012', category:'coherence', criticality:'critique', tier:'deterministe', origin:'ft-v1084',
+    description:'… et la règle dit AUSSI ce qui reste normal (dos complet, push/pull, jambes quadri+ischios).',
+    checks:{ contextMustContain:['CE QUI EST NORMAL, ET QUE TU NE DOIS PAS REFUSER','full body assumé'] } },
+
   { id:'CORE-004', category:'coherence', criticality:'critique', tier:'deterministe', origin:'ft-v589',
     description:'La règle anti-invention est bien injectée (n\'ajoute pas de détail, ne fabrique pas de source).',
     setup:{},

@@ -1211,6 +1211,43 @@ const SCENARIOS = [
         } },
     ] },
 
+  /* 🦴 EV-055 — LA COMPOSITION, PAS L'ORDRE. Et il existe parce que EV-041 ne pouvait pas
+     l'attraper : celui-ci compte les BASCULES haut↔bas, donc la séance de Michel du 31/08
+     (soulevé de terre → dos → soulevé de terre ROUMAIN), une fois REORDONNÉE, le passerait
+     — alors qu'elle contiendrait toujours DEUX charnières de hanche lourdes.
+     ⚠️⚠️ ET C'EST LA 2ᵉ FOIS : la même plainte le 22/08 (« on est retourné sur les jambes »)
+     puis le 31/08. Un retour qui revient devient un scénario permanent (R22 → R35).
+     ⛔ LE PIÈGE EST DANS LA DEMANDE : on demande explicitement du soulevé de terre dans une
+     séance dos — c'est exactement la situation où le roumain vient « naturellement » en
+     second. Sans ce piège, le scénario serait vert sans rien mesurer.
+     ⛔ ET LE VÉRIFICATEUR NE COMPTE QUE LES CHARNIÈRES LOURDES : un leg curl ou un hip
+     thrust ne comptent pas — mesuré sur le catalogue, 24 exercices `hip-hinge` chargent le
+     bas du dos et 12 non. Sans cette distinction, une séance fessiers ordinaire rougirait. */
+  { id:'EV-055', origin:'01/09/2026', titre:'Il ne met pas DEUX charnières de hanche lourdes dans la même séance',
+    apply:{ name:'Michel', gender:'H', age:46, height:178, bw:85, goal:'muscle',
+      discipline:'muscu', level:'confirme' },
+    scenario:'Séance dos ce soir, avec du soulevé de terre. Fais-moi la séance complète.',
+    verifs:[
+      { nom:'⭐⭐ une seule charnière de hanche LOURDE dans la séance',
+        fn(reply){
+          const CHARN=/(souleve de terre|deadlift|romanian|roumain|jambes tendues|stiff|good morning|rack pull|hyperextension lestee)/;
+          const vus=[];
+          U.lignes(reply).forEach(l=>l.split(/[,;.]/).forEach(m=>{
+            const n=U.norm(m);
+            if(!/\d+\s*[x×]\s*\d+/.test(n)) return;      // seulement les lignes d'exercice
+            if(CHARN.test(n)) vus.push(n.slice(0,42).trim());
+          }));
+          return vus.length<=1 ? true
+            : {ok:false, detail:vus.length+' charnières lourdes : '+JSON.stringify(vus)};
+        } },
+      { nom:'⛔ … et il a bien écrit une séance (sinon le témoin serait vert sur du vide)',
+        fn(reply){
+          let n=0; U.lignes(reply).forEach(l=>l.split(/[,;.]/).forEach(m=>{
+            if(/\d+\s*[x×]\s*\d+/.test(U.norm(m))) n++; }));
+          return n>=3 ? true : {ok:false, detail:'seulement '+n+' ligne(s) d\'exercice'};
+        } },
+    ] },
+
   { id:'EV-041', origin:'22/08/2026', titre:'Il ne fait pas ZIGZAGUER la séance entre haut et bas du corps',
     /* Michel : « tu m'as fait commencer par le soulevé de terre, après du tirage, et on est
        retourné sur les jambes, c'est normal ? ». Milo a reconnu : « j'ai mélangé les schémas

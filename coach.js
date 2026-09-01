@@ -426,6 +426,28 @@ function _ctxCharges(){
     +'\n\n🗺️ GROUPE LES EXERCICES PAR ZONE DE SALLE — les jambes sont ensemble, les bancs ensemble, les épaules ailleurs. Chaque changement de zone coûte une traversée (on marche, on cherche une machine libre, on refroidit).'
     +'\n- ⚠️ « Toutes les ancres d\'abord, les accessoires ensuite » FABRIQUE des zigzags : squat → militaire → leg extension → élévations = **trois traversées** pour une séance qui n\'en demande qu\'une. **Termine une zone avant de passer à la suivante**, et dans chaque zone mets l\'ancre avant ses accessoires.'
     +'\n- ⚠️ CE QUI NE CHANGE PAS : l\'ancre la PLUS LOURDE de la séance reste en premier, reposé — c\'est physiologique, ça prime sur la géographie. Et un SUPERSET antagoniste alterne EXPRÈS : ne le casse pas pour grouper.'
+    /* 🦴 UNE SÉANCE A UN SUJET (01/09/2026) — et c'est R8, pas un durcissement de prompt.
+       Michel : « j'ai pas envie que Milo me repropose une séance bizarre ». Sa séance :
+       soulevé de terre → dos → soulevé de terre ROUMAIN.
+       ⛔⛔ L'APP LE SAVAIT, MILO NON. `_movPattern()` classe les deux en `hip-hinge` depuis
+       toujours (ça sert au calcul des calories), et `_validationSeance` le signale depuis
+       ft-v1080 — mais APRÈS COUP. Rien, dans ce que Milo reçoit, ne lui disait de ne pas
+       l'écrire. *On ne durcit pas un prompt tant qu'on ne lui a pas donné le fait.*
+       ⛔⛔ ET LES DEUX INTERDITS SONT ÉTROITS EXPRÈS, PARCE QU'ILS SONT MESURÉS. Sur
+       **140 séances réelles de 8 comptes**, un critère « deux familles lourdes » sans le
+       filtre de RÉGION accusait 9 séances parfaitement normales — dont un `poussée×2 +
+       tirage×2` **cinq fois de suite chez la même personne** (son programme). D'où la 3ᵉ
+       ligne, qui NOMME ce qui reste permis : sans elle, Milo sur-corrigerait et refuserait
+       un dos complet ou une séance jambes ordinaire. *Une règle qui interdit trop large
+       coûte plus cher que le défaut qu'elle vise* (R19/R24).
+       ⛔ Elle est ICI, dans le bloc PERSONNEL, pour la même raison que la règle d'ordre
+       au-dessus : le bloc commun est plafonné à 46 500 caractères et on ne relève pas le
+       seuil pour se faire de la place. Prix payé, écrit : ~600 caractères répétés par
+       utilisateur au lieu d'être partagés. */
+    +'\n\n🦴 UNE SÉANCE A UN SUJET — ne la coupe pas en deux moitiés lourdes.'
+    +'\n- ⛔ **UN SEUL gros mouvement de CHARNIÈRE DE HANCHE par séance** (soulevé de terre, roumain, jambes tendues, good morning, rack pull). Le second arrive sur des lombaires déjà cuites par le premier : c\'est de la fatigue, pas du volume utile. Si tu veux du travail d\'ischios en plus, prends un leg curl.'
+    +'\n- ⛔ **Ne partage pas une séance entre DEUX moitiés lourdes, une du BAS et une du HAUT** (deux gros mouvements de jambes + deux gros mouvements de dos ou de pecs). Elle n\'a alors plus de sujet : on est fatigué pour les deux et on ne progresse sur aucun.'
+    +'\n- ✅ CE QUI EST NORMAL, ET QUE TU NE DOIS PAS REFUSER : un dos complet (tirage vertical **et** horizontal), un haut du corps push/pull, une séance jambes qui fait quadriceps **et** ischios, un full body assumé quand la personne le demande. Ce sont des séances à UN sujet.'
     /* ⚠️ LE TROU DE MA PROPRE RÈGLE (20/08/2026, retour de Michel : « il a inversé encore »).
        La règle ci-dessus ordonne l'ANCRE par rapport à ses ACCESSOIRES. Elle ne dit RIEN de
        l'ordre ENTRE accessoires — or c'est là que ça s'est vu : Milo a écrit
