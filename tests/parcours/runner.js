@@ -21052,11 +21052,15 @@ console.log('\n-- CXCII. Les quatre petits défauts de l\'audit (ft-v1086) --');
    Michel, capture du compte d'Eline : son Pec Deck affichait `10 reps × null kg` sur deux
    series. Le detail d'une seance PASSEE rendait `value="${s.kg}"` sans garde — un poids
    inconnu s'ecrivait donc « null » en toutes lettres dans le champ.
-   ⛔⛔ ET CE QU'ON VOIT N'EST PAS LE PLUS GRAVE : le champ ecrivait `+this.value`, donc TOUTE
-   saisie non numerique y devenait **NaN**, ecrit dans SA seance. Le cas reel n'est pas le mot
-   « null » (l'effacer et taper 16 marchait) : c'est **la virgule** — `+'62,5'` = NaN, la famille
-   de ft-v1057, et Eline est precisement celle qui l'avait fait remonter. Or c'est en voulant
-   corriger ce « null » qu'on tape dans le champ.
+   ⛔⛔ ET « null » EST LE RESIDU, PAS LA CAUSE — trouvee par Michel : « Eline avait mis des
+   valeurs, et si je dis pas de betises c'est en mettant la virgule ». La chaine, maillon par
+   maillon : ① ft-v1057 fait passer CE champ de `type="number"` a `type="text"` EN LAISSANT
+   `+this.value` — le correctif de la virgule a corrige 22 champs, oublie celui-la, et lui a
+   RETIRE la seule protection qu'il avait (`type=number` filtrait la virgule) ; ② `+'62,5'` =
+   NaN ; ③ `persist()` fait `JSON.stringify`, et `JSON.stringify(NaN)` vaut **null** ; ④ au
+   rechargement le mot « null » s'affiche. Sa valeur est PERDUE, pas masquee.
+   ⭐ *Un correctif qui enleve un garde-fou du navigateur sans le remplacer par le sien fabrique
+   un bug pire que celui qu'il repare.*
    ⭐ LA JUMELLE CHERCHEE (R8) EXISTAIT ET ETAIT SAINE : l'ecran de seance rend deja
    `value="${set.kg||''}"`. C'est le detail d'une seance passee qui ne l'avait pas.
    ⛔ ET UN 3e DEFAUT PARTAIT AVEC, de la famille de ft-v1057 (la virgule d'Eline) : `+this.value`
@@ -21099,6 +21103,9 @@ console.log('\n-- CXCIII. « null » dans le champ kg, et le NaN qu\'il fabriqua
     /* ⛔ une vraie saisie reste une vraie saisie. */
     updateSessSet(0,0,'reps','8');
     o.reps=_sessEdits.exs[0].sets[0].reps;
+    /* ③ L'aller-retour : c'est `JSON.stringify` qui transformait NaN en `null`. */
+    updateSessSet(0,0,'kg','62,5');
+    o.apresPersist=JSON.parse(JSON.stringify(_sessEdits)).exs[0].sets[0].kg;
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
   });
@@ -21118,6 +21125,28 @@ console.log('\n-- CXCIII. « null » dans le champ kg, et le NaN qu\'il fabriqua
       N.virgule===62.5, 'virgule = '+N.virgule);
     t('⛔ NON-RÉGRESSION : une saisie normale s\'écrit toujours',
       N.reps===8, 'reps = '+N.reps);
+    /* ⛔⛔ LE MAILLON ③ : c'est `JSON.stringify(NaN)` qui fabrique le « null ». On mesure
+       l'ALLER-RETOUR complet, pas seulement la valeur en mémoire — sinon on prouverait
+       seulement que le champ ne dit plus NaN, pas que la donnée SURVIT au rechargement. */
+    t('⭐⭐ ALLER-RETOUR : « 62,5 » survit à `JSON.stringify` (avant, NaN devenait `null`)',
+      N.apresPersist===62.5, 'après persist = '+JSON.stringify(N.apresPersist));
+    /* ⛔⛔ LA PAIRE QUE ft-v1057 A CASSÉE, ET C'EST ELLE QU'IL FAUT FIGER : un champ passé en
+       `type="text"` n'est plus protégé par le navigateur, donc il DOIT lire par `numFR`.
+       Ce témoin protège la RÈGLE, pas le cas : il rougira au prochain champ converti en texte
+       dont on aura oublié le lecteur de nombre — exactement ce qui est arrivé ici. */
+    {
+      const srcS=fs.readFileSync(path.join(ROOT,'setup.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
+      const coupables=[];
+      srcS.split(/<input /).slice(1).forEach(bal=>{
+        const b=bal.slice(0, bal.indexOf('>')+1);
+        if(!/type="text"/.test(b)) return;
+        if(!/inputmode="decimal"/.test(b)) return;
+        const m=b.match(/on(?:change|input)="([^"]*\+this\.value[^"]*)"/);
+        if(m) coupables.push(m[1].slice(0,60));
+      });
+      t('⛔⛔ RÈGLE : aucun champ décimal en `type="text"` ne lit encore par `+this.value`',
+        coupables.length===0, JSON.stringify(coupables));
+    }
     t('⛔ 0 erreur JS sur tout le bloc', errs.length===0, JSON.stringify(errs.slice(0,3)));
   }
   await cx.close();

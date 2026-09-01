@@ -1252,13 +1252,21 @@ function setSessCardio(field,val,moment){
 
 /* ⛔⛔ « null » DANS LE CHAMP KG — retour de Michel sur le compte d'Eline (01/09/2026), capture
    à l'appui : son Pec Deck affichait `10 reps × null kg` sur deux séries.
-   ⚠️⚠️ ET CE QU'ON VOIT N'EST PAS LE PLUS GRAVE — mais il faut dire lequel exactement, sinon
-   la raison écrite ici sera fausse. Le champ écrivait `+this.value`, donc **toute saisie non
-   numérique y devenait `NaN`**, écrit dans SA séance. Le cas réel n'est pas le mot « null »
-   (l'effacer et taper 16 marchait) : c'est **la virgule** — `+'62,5'` = `NaN`. C'est la famille
-   de **ft-v1057**, et Eline est précisément la personne qui l'a fait remonter. *Or c'est en
-   voulant corriger ce « null » qu'on tape dans le champ.* Il passe donc par `numFR`, comme
-   celui de l'écran de séance.
+   ⛔⛔ ET « null » N'EST PAS LA CAUSE, C'EST LE RÉSIDU — Michel a trouvé la vraie : *« Eline
+   avait mis des valeurs, et si je dis pas de bêtises c'est en mettant la virgule »*. La chaîne
+   est établie dans le code, maillon par maillon :
+     ① **ft-v1057** (30/08) fait passer CE champ de `type="number"` à `type="text"`…
+        ⛔⛔ **…en laissant `+this.value`.** *Le correctif de la virgule a corrigé 22 champs et
+        oublié celui-là — et en le passant en texte, il a RETIRÉ la seule chose qui le
+        protégeait* : `type="number"` filtrait la virgule (`.value` rendait `''`, donc `+'' = 0`).
+     ② à partir de là, `+'62,5'` = **`NaN`** ;
+     ③ `persist()` fait `JSON.stringify`, et **`JSON.stringify(NaN)` vaut `null`** ;
+     ④ au rechargement, `value="${s.kg}"` écrit le mot **« null »** à l'écran.
+   ⚠️ **Donc sa valeur est PERDUE, pas masquée** — elle a tapé un poids, il n'existe plus. On ne
+   le devine pas à sa place (**R29**).
+   ⭐ *Un correctif qui enlève un garde-fou du navigateur sans le remplacer par le sien fabrique
+   un bug PIRE que celui qu'il répare.* Le champ passe donc par `numFR`, comme celui de l'écran
+   de séance — c'est-à-dire ce que ft-v1057 aurait dû faire ici.
    ⭐ L'écran de séance, lui, était déjà juste (`value="${set.kg||''}"`) : la jumelle cherchée
    (R8) existait, et c'est le détail d'une séance PASSÉE qui ne l'avait pas.
    ⛔ ON NE DEVINE PAS À SA PLACE (R29) : un poids inconnu reste vide, il ne devient pas 0.
