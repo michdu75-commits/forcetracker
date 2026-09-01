@@ -452,6 +452,16 @@ function ciPickSleep(q){
   const entry={date:d,hours,quality:q};
   if(idx>=0)S.sleepLog[idx]=entry;else S.sleepLog.unshift(entry);
   S.sleepLog=S.sleepLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
+  /* ⛔⛔ ft-v1090 — CETTE RÉPONSE ÉTAIT PERDUE SI ON REFERMAIT AVANT LA 2ᵉ QUESTION.
+     Le check-in a deux étapes ; seule la seconde (`ciPickEnergy`) appelait `persist()`.
+     Or `mod-checkin` se ferme au doigt et **rien ne tourne à sa fermeture** : la réponse
+     « comment as-tu dormi ? » restait en mémoire, et disparaissait à la fermeture de l'app.
+     ⚠️ Et le pire n'est pas la perte, c'est qu'elle était ALÉATOIRE : `persist()` écrit tout
+     `S`, donc n'importe quelle action ultérieure la sauvait — parfois gardée, parfois perdue,
+     sans que rien ne distingue les deux cas. Mesuré : réponse donnée → 1 en mémoire, 0 en
+     stockage. ⭐ `sleepLog` est un journal À PART du `checkin` de la séance : sauver ici
+     n'enregistre pas un demi check-in, ça garde simplement la réponse qui a été donnée (R29). */
+  persist();
   // Mark sleep step as answered, show energy step
   document.getElementById('ci-step-sleep').style.display='none';
   document.getElementById('ci-step-energy').style.display='block';

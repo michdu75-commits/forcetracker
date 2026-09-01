@@ -539,6 +539,27 @@ const _OVERLAY_CLOSERS={
      dans Sheets et dans le débrief de Milo. *Une fermeture au doigt qui abîme un historique.*
      ⚠️ 3ᵉ fois pour cette famille (ft-v466, ft-v629) — et la première qui touche aux DONNÉES. */
   'mod-ex':'closeExPicker',
+  /* 🔴🔴 ft-v1090 — 4ᵉ FOIS, ET CETTE FOIS C'EST LA CAMÉRA QUI RESTE ALLUMÉE.
+     `closeBarcodeScanner()` est la SEULE chose qui coupe le flux vidéo
+     (`_bcReader.reset()` + `stopStreams()`). L'overlay est fabriqué en JS
+     (app.js `openBarcodeScanner`) avec `className='overlay'` — donc il est bien
+     pris par le glisser-pour-fermer — mais il n'était déclaré NULLE PART ici, et
+     il n'a même pas de fermeture au clic sur le fond. 👉 Fermé en glissant, on
+     tombait sur le repli `classList.remove('open')` : **l'écran disparaît, la
+     caméra continue de tourner** (voyant vert allumé sur iOS, batterie qui file),
+     sans rien à l'écran pour le dire. *Une fuite qui ne se voit que sur le
+     téléphone de quelqu'un, jamais dans un test qui lit du code.*
+     ⚠️ Mesuré : fermeture au doigt → `closeBarcodeScanner` appelée 0 fois ; le
+     bouton « Annuler » → 1 fois. C'est le témoin de contrôle qui prouve la sonde. */
+  'ov-bc-scan':'closeBarcodeScanner',
+  /* ⚠️ ft-v1090 — même famille, conséquence plus douce mais DÉFINITIVE.
+     `closeAppGuide()` déclenche `_afterAppGuide`, qui enchaîne le « installe
+     l'app » pour un NOUVEL inscrit. Le clic sur le fond est déjà géré par la
+     balise elle-même ; le **glisser** et **Échap** ne l'étaient pas. Or
+     `ft4_guide_shown` est déjà posé à ce moment-là : le guide ne reviendra
+     jamais, donc la proposition d'installation était **perdue pour toujours**
+     pour qui referme d'un geste. *Les trois chemins passent par la même porte.* */
+  'ov-appguide':'closeAppGuide',
 };
 function _closeOverlayProper(ov){
   try{
