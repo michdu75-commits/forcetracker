@@ -70,6 +70,49 @@ exemples ne mesure que l'imagination de celui qui l'a écrit.*
 Michel**, qui n'est pas dans le conteneur. Tant que ce n'est pas fait, `E : 0/9` est une
 **hypothèse encourageante, pas un résultat**.
 
+### ⛔⛔ LA MESURE SUR L'HISTORIQUE RÉEL — 39 SÉANCES DE MICHEL (01/09/2026, session-B)
+
+**Le bloquant écrit ci-dessus est levé** : Michel a exporté son historique (CSV, ft-v1048/1078),
+et les trois critères ont tourné dessus. ⛔ **L'analyseur ne réimplémente rien** : il charge l'app
+dans un navigateur et appelle ses **vraies** fonctions (`_mscScores`, `_movPattern`, `_exRole`) —
+*un critère mesuré avec un autre classement que celui de la prod ne mesure pas la prod* (le piège
+de ft-v994/ft-v1016). Échauffements (`É`) exclus, comme pour le volume et les PR.
+
+| critère | signalées | ce qu'il attrape |
+|---|---|---|
+| **A** — ≥ 3 exercices sur le même muscle principal | **11/39 (28 %)** | ses **journées pecs ordinaires** (`poussée×3`) |
+| **B** — un muscle hors-sujet à ≥ 80 % du sujet | **22/39 (56 %)** | **plus d'une séance sur deux** |
+| **E** — exactement 2 familles d'effort (ancres) | **2/39 (5 %)** | le 31/08 **et le 05/07** |
+| **E′** — … mais dans deux **RÉGIONS** différentes | **1/39 (3 %)** | **le 31/08, et rien d'autre** |
+
+**⛔ A et B sont éliminés par la mesure, pas par un avis.** Un avertissement qui sonne sur 28 % ou
+56 % des séances n'est pas un avertissement (**R19** : *un garde-fou qui crie pour rien finit
+désactivé*). ⚠️ Et le seuil de B change tout : à 80 % il sonne 22 fois, session-A en comptait 3 sur
+9 avec le sien — *le verdict de B dépend entièrement d'un seuil que personne n'a justifié*.
+
+**⭐⭐ ET E N'EST PAS À 0 FAUX POSITIF SUR DU RÉEL — session-A avait raison de s'en méfier.** Il
+signale aussi le **05/07** : `Squat · Press Jambes · Rowing Barre · SDT Jambes Tendues · Hip
+Thrust`. Deux familles lourdes (`squat×2` + `charnière×2`) — mais c'est **une journée jambes
+parfaitement classique** : du quadriceps-dominant et du hanche-dominant, la structure normale
+d'une séance de jambes.
+
+**⭐⭐ LE DISCRIMINANT N'EST DONC PAS LE NOMBRE DE FAMILLES, C'EST LEUR RÉGION.**
+- `squat + charnière` = **deux familles du BAS** → une séance jambes, normale ;
+- `charnière + tirage` = **une du bas, une du haut**, toutes deux lourdes → une séance qui hésite
+  entre deux sujets. C'est **exactement** le 31/08.
+
+👉 **E′ = « deux familles lourdes dans deux régions différentes » → 1/39, et c'est SA séance.**
+
+**⚠️⚠️ ET LA LIMITE DE CE RÉSULTAT, ÉCRITE PLUTÔT QUE TUE — elle est la même que celle de
+session-A, retournée contre moi.** ① **E′ a été conçu APRÈS avoir regardé ces 39 séances.** Un
+critère dessiné sur les données qui l'évaluent est toujours flatteur : il faut le passer sur
+l'historique de **quelqu'un d'autre** (Christophe, Eline) avant d'y croire. ② **Un seul positif ne
+valide rien** : on mesure ici qu'il *ne crie pas au loup*, pas qu'il *attrape ce qu'il faut*. Le
+taux de **faux négatifs** reste inconnu — personne n'a dit lesquelles des 38 autres Michel aurait
+trouvées bizarres. ③ Mes seuils pour A et B sont **ma lecture**, pas ceux de session-A.
+
+**⛔ ET RIEN N'EST CONSTRUIT.** Aucun code livré, aucune version : l'analyseur vit hors du dépôt.
+
 ### ⏭️ Ce qui reste à trancher (personne ne l'a fait)
 - **le critère** : E, B corrigé, ou autre chose — la mesure oriente, elle ne décide pas ;
 - **le seuil** : « 2 familles à ≥ 2 ancres » est un jugement, comme le 62 % de `_MONTEE_DEPART_MAX` ;
