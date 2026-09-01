@@ -6,7 +6,30 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1084`.
+- **Version en ligne (live) :** `ft-v1085`.
+- 🏅 **RECALCULER LES RECORDS DEPUIS L'HISTORIQUE** (ft-v1085, admin). Un faux record **mesuré**
+  dans ses données : `Rowing Hammer Strength` portait **exactement les chiffres de son Tirage
+  Poulie Haute**, même date — le fantôme du renommage de ft-v1073. Faux **vers le haut**, donc
+  jamais battu, donc éternel, et il sert de référence aux charges que Milo propose.
+  ⛔⛔ **Ne supprime JAMAIS un record qu'il ne peut pas vérifier** (aucune séance → gardé tel
+  quel, listé à part) · **aperçu d'abord**, le bouton rouge naît de l'aperçu (R29) · la règle
+  d'éligibilité est **celle de la production** (`_serieFaitFoiPourPR`, R2).
+  ⭐ Monter et baisser sont **séparés à l'écran** : une montée est prouvée par l'historique, une
+  baisse suppose que la séance qui a fait le record est encore là.
+  ⏭️ **Chez Michel** : Profil → Admin → « 🏅 Comparer avec mon historique » — 6 corrections
+  attendues (dont 2 vers le haut). Rien n'est écrit avant qu'il confirme.
+- ☎️ **LE 429 DE MILO — et j'ai dit une bêtise dessus** (ft-v1085). Michel en séance :
+  *« Erreur : HTTP 429. Vérifie ta connexion et réessaie »* en 5G, 97 % de batterie. Le Worker
+  écrivait la vraie raison **dans le corps** ; l'app la jetait (**R4**).
+  ⚠️⚠️ **J'ai annoncé « ton quota du jour est épuisé » — FAUX**, prouvé par *« il a répondu
+  après »*. Le plafond du Worker est un drapeau tenu **en mémoire de chaque isolat** Cloudflare
+  (« approximatif par construction », c'est écrit dans `worker.js`) : un isolat avait levé le
+  sien pendant les 52 appels du banc d'essai, la requête suivante est tombée sur un autre.
+  ⛔ **Ce rouge a produit un garde-fou** : le corps porte aussi des jetons écrits pour le code
+  (`quota`, `rate_limit`) — `_phraseServeur` est le seul propriétaire de « ce texte est-il
+  adressé à un humain ? », et **en cas de doute on n'affiche rien**.
+  ⭐ Avec : le **dénominateur du Gardien** (un numérateur seul n'est pas un taux) et la garde
+  `_evRunning` (**une mise à jour ne tue plus une passe de banc d'essai payante**).
 - 🦴 **UNE SÉANCE A UN SUJET — MILO EST ENFIN PRÉVENU** (ft-v1084). Michel : *« j'ai pas envie
   que Milo me repropose une séance bizarre »* + *« ça me fait dépenser de l'API en lui disant »*
   + *« si un mec demande une séance et qu'il sort ça, ça fait pas sérieux »*.

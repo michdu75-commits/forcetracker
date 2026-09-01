@@ -20785,6 +20785,137 @@ console.log('\n-- CLXXXVIII. Nettoyer les doublons : la seule route qui supprime
     && (a.match(/action=sessionNettoyer/g)||[]).length===1, '');
 }
 
+/* == BLOC CLXXXIX - RECALCULER LES RECORDS · ET LE 429 QUI DISAIT « VERIFIE TA CONNEXION » (ft-v1085) ==
+   DEUX correctifs nes du meme soir, et le second m'a fait dire une betise a Michel.
+
+   ① LES RECORDS. Un faux record MESURE dans ses donnees : `Rowing Hammer Strength` portait
+      66 kg × 8 → 81,9 kg, c'est-a-dire **exactement les chiffres de son Tirage Poulie Haute**,
+      meme date. Le selecteur avait renomme son exercice (ft-v1073) ; il a repare la seance, le
+      bon record du Tirage est revenu — **mais le fantome est reste**. Et comme il est faux VERS
+      LE HAUT, il ne sera jamais battu : il resterait pour toujours, en servant de reference aux
+      charges que Milo propose et a la montee en charge que l'app ajoute.
+   ⛔⛔ LES QUATRE PREMIERS TEMOINS NE MESURENT PAS CE QUE L'OUTIL CORRIGE, MAIS CE QU'IL NE
+      TOUCHE PAS. Un record sans aucune seance dans l'historique (import ancien, autre appareil,
+      seance effacee) n'est ni corrige ni supprime : *recalculer, c'est corriger ce qu'on peut
+      prouver, pas effacer ce qu'on ne retrouve pas*. Sans cette regle l'outil detruirait des
+      records legitimes en silence — bien pire que le fantome qu'il vient reparer.
+
+   ② LE 429. Michel, en pleine seance : « Erreur : HTTP 429. Verifie ta connexion et reessaie »,
+      avec 5G et 97 % de batterie. Sa connexion n'avait rien a voir — le worker ecrivait la vraie
+      raison DANS LE CORPS de la reponse, et l'app la jetait pour n'afficher que le code HTTP
+      (R4 : l'information existe, elle est envoyee, elle n'atteint pas l'ecran).
+   ⚠️⚠️ ET J'AI D'ABORD ANNONCE « TON QUOTA DU JOUR EST EPUISE » — FAUX, prouve par trois mots
+      de Michel : « il a repondu apres ». Le plafond du worker est un drapeau tenu en memoire de
+      CHAQUE ISOLAT Cloudflare, et le worker l'ecrit lui-meme : « approximatif par construction ».
+      Un isolat avait leve le sien ; la requete suivante est tombee sur un autre.
+   ⛔ CE QUE CE ROUGE A PRODUIT : le correctif affichait le message du serveur TEL QUEL. Or le
+      corps porte aussi des jetons ecrits pour le code (`quota`, `rate_limit`). Les montrer aurait
+      remplace un message faux par un message incomprehensible. */
+console.log('\n-- CLXXXIX. Records recalculés · le vrai message du serveur (ft-v1085) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  /* ⭐ LA FIXTURE EST SON CAS : le Rowing Hammer porte les chiffres du Tirage (le fantome de
+     ft-v1073), le Pec Deck a un historique MEILLEUR que son record, et le Squat n'a AUCUNE
+     seance — c'est celui-la qui ne doit pas bouger d'un gramme. */
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',
+    ft4_sessions:JSON.stringify([{date:'2026-08-28',vol:2000,exs:[
+      {name:'Tirage Poulie Haute (Lat Pulldown)',sets:[
+        {kg:66,reps:8,done:true,type:'N'},
+        {kg:200,reps:5,done:true,type:'É'}]},          // echauffement absurde → doit etre IGNORE
+      {name:'Rowing Hammer Strength',sets:[
+        {kg:60,reps:8,done:true,type:'N'},
+        {kg:120,reps:6,done:false,type:'N'}]},         // serie NON FAITE → doit etre IGNOREE
+      {name:'Pec Deck',sets:[{kg:75,reps:10,done:true,type:'N'}]}
+    ]}]),
+    ft4_prs:JSON.stringify({
+      'Tirage Poulie Haute (Lat Pulldown)':{kg:66,reps:8,rm1:81.9,date:'2026-08-28'}, // juste
+      'Rowing Hammer Strength':{kg:66,reps:8,rm1:81.9,date:'2026-08-28'},             // FANTOME
+      'Pec Deck':{kg:60,reps:10,rm1:80,date:'2026-07-01'},                            // sous-evalue
+      'Squat Barre':{kg:100,reps:5,rm1:112.6,date:'2026-05-01'}                       // AUCUNE seance
+    })}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const R=await pg.evaluate(()=>{
+   try{
+    const o={};
+    const r=_prsDepuisSeances();
+    o.calc=Object.keys(r.calc).sort();
+    o.sansSeance=r.sansSeance.map(x=>x.nom);
+    o.corriges={}; r.corriges.forEach(c=>{ o.corriges[c.nom]=Math.round(c.apres.rm1*10)/10; });
+    o.nouveaux=r.nouveaux.map(x=>x.nom);
+    o.intacts=r.intacts.slice().sort();
+    o.tirageCalc=Math.round(r.calc['Tirage Poulie Haute (Lat Pulldown)'].rm1*10)/10;
+    o.rowingCalc=Math.round(r.calc['Rowing Hammer Strength'].rm1*10)/10;
+    /* ⛔⛔ L'APERCU N'ECRIT RIEN : on photographie S.prs avant et apres. */
+    const avant=JSON.stringify(S.prs);
+    _isAdminUnlocked=()=>true;
+    apercuRecordsAdmin();
+    o.ecritureApercu = (JSON.stringify(S.prs)!==avant);
+    o.squatApres = S.prs['Squat Barre'] && S.prs['Squat Barre'].rm1;
+    const box=document.getElementById('admin-records');
+    o.html = box ? box.innerHTML : '';
+    o.txt  = box ? box.textContent : '';
+    /* ⛔ Le bouton qui ECRIT n'existe que dans l'apercu (deux temps, comme le nettoyage). */
+    o.boutonDansApercu = /appliquerRecordsAdmin\(\)/.test(o.html);
+    /* ⭐ Le filtre d'affichage : la montee et la baisse sont deux sections distinctes. */
+    o.iMonte  = o.txt.indexOf('Ton historique prouve mieux');
+    o.iBaisse = o.txt.indexOf('Plus bas que ton record actuel');
+    /* ⭐ Le message du serveur — le VRAI proprietaire, pas une copie. */
+    o.phrases={};
+    ['quota','rate_limit','api_error 500','internal_server_error 500',
+     'rate_limit_exceeded_for_model','Désolé, réessaie.','',
+     "Tu as atteint ta limite d'IA pour aujourd'hui 👍 Reviens demain, l'entraînement continue !",
+     "L'assistant IA est très sollicité aujourd'hui 🙏 Réessaie un peu plus tard ou demain."]
+     .forEach(v=>{ o.phrases[v||'(vide)'] = _phraseServeur(v); });
+    o.phraseNull=_phraseServeur(null);
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+  if(R.err) t('CLXXXIX n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ ① Le temoin voit-il quelque chose ? Sinon tous les « rien » seraient verts sur du vide. */
+    t('⛔ le témoin a bien LU l\'historique : les 3 exercices sont recalculés',
+      R.calc.length===3, JSON.stringify(R.calc));
+    /* ⭐⭐ ② LE TEMOIN QUI COMPTE LE PLUS. */
+    t('⭐⭐ un record SANS AUCUNE SÉANCE n\'est ni corrigé ni supprimé (Squat Barre intact à 112,6)',
+      R.sansSeance.length===1 && R.sansSeance[0]==='Squat Barre'
+      && !('Squat Barre' in R.corriges) && R.squatApres===112.6,
+      JSON.stringify({sansSeance:R.sansSeance, apres:R.squatApres}));
+    /* ⭐⭐ ③ Son fantome. */
+    t('⭐⭐ SON CAS : le fantôme du Rowing Hammer tombe de 81,9 à sa vraie perf (74,5)',
+      R.corriges['Rowing Hammer Strength']===74.5, JSON.stringify(R.corriges));
+    /* ⛔ ④ R2 : la regle d'eligibilite est CELLE DE LA PRODUCTION, pas une copie. */
+    t('⛔ R2 : l\'échauffement à 200 kg et la série non faite à 120 kg sont IGNORÉS (`_serieFaitFoiPourPR`)',
+      R.tirageCalc===81.9 && R.rowingCalc===74.5,
+      JSON.stringify({tirage:R.tirageCalc, rowing:R.rowingCalc}));
+    /* ⭐ ⑤ Monter et descendre ne se valent pas. */
+    t('⭐ MONTER et BAISSER sont deux sections séparées, et la baisse porte son avertissement',
+      R.iMonte>=0 && R.iBaisse>R.iMonte && /n\'est plus dans ton historique/.test(R.txt),
+      JSON.stringify({monte:R.iMonte, baisse:R.iBaisse}));
+    /* ⛔⛔ ⑥ L'apercu n'ecrit rien. */
+    t('⛔⛔ L\'APERÇU N\'ÉCRIT RIEN : `S.prs` est identique avant et après (R29)',
+      R.ecritureApercu===false, 'S.prs modifié par l\'aperçu = '+R.ecritureApercu);
+    /* ⛔ ⑦ Le bouton qui ecrit naît de l'apercu. */
+    t('⛔ le bouton qui ÉCRIT naît de l\'aperçu — il n\'existe pas dans l\'écran au repos',
+      R.boutonDansApercu===true, 'bouton dans l\'aperçu = '+R.boutonDansApercu);
+    /* ⭐⭐ ⑧ Le vrai message passe. */
+    const M1="Tu as atteint ta limite d'IA pour aujourd'hui 👍 Reviens demain, l'entraînement continue !";
+    const M2="L'assistant IA est très sollicité aujourd'hui 🙏 Réessaie un peu plus tard ou demain.";
+    t('⭐⭐ les DEUX vrais messages du serveur passent MOT POUR MOT',
+      R.phrases[M1]===M1 && R.phrases[M2]===M2, JSON.stringify([R.phrases[M1],R.phrases[M2]]));
+    /* ⛔⛔ ⑨ Aucun jeton technique n'atteint l'ecran. */
+    const jetons=['quota','rate_limit','api_error 500','internal_server_error 500',
+                  'rate_limit_exceeded_for_model','Désolé, réessaie.'];
+    const fuites=jetons.filter(j=>R.phrases[j]!=='');
+    t('⛔⛔ AUCUN jeton technique n\'atteint l\'écran (6 essais, dont 3 assez longs pour passer la taille)',
+      fuites.length===0 && R.phrases['(vide)']==='' && R.phraseNull==='',
+      JSON.stringify(fuites));
+  }
+  await cx.close();
+}
+
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
@@ -20903,6 +21034,60 @@ console.log('\n-- CXV. Aucune fixture de scénario n\'est muette (ft-v1007) --')
      la règle ci-dessus deviendrait vraie pour rien. */
   t('⛔ `_vcApplyPersona` lit toujours le questionnaire DANS apply',
     /S\.coachQuiz\s*=\s*a\.coachQuiz/.test(fs.readFileSync(path.join(__dirname,'..','..','coach.js'),'utf8')), '');
+}
+
+/* == BLOC CXC - LE COMPTEUR DU GARDIEN AVAIT UN NUMERATEUR SANS DENOMINATEUR (ft-v1085) ==
+   Michel, capture a l'appui : « 126 reponses portant au moins un drapeau ». J'ai failli lui
+   repondre « 98 % » — et c'etait une betise : `total` comptait les reponses AVEC derive, et
+   rien ne comptait les autres. *Un numerateur sans denominateur n'est pas un taux, c'est un
+   nombre qu'on ne peut pas lire.* Et le compteur ne repartait pas quand la REGLE changeait :
+   on additionnait deux epoques, dont une anterieure aux correctifs. */
+console.log('\n-- CXC. Le Gardien compte enfin son dénominateur (ft-v1085) --');
+{
+  const src=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
+  const sansCom=src.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+  /* ⭐ Le denominateur s'incremente AVANT le filtre : toute reponse passe par la. */
+  const f=sansCom.slice(sansCom.indexOf('function _gardienCompter'));
+  const corps=f.slice(0, f.indexOf('\n}'));
+  const iDen=corps.indexOf('o.analysees');
+  const iFiltre=corps.indexOf('filter(_estDerive)');
+  t('⭐⭐ le DÉNOMINATEUR est incrémenté AVANT le filtre — toute réponse est comptée',
+    iDen>=0 && iFiltre>iDen, JSON.stringify({analysees:iDen, filtre:iFiltre}));
+  t('⛔ le trafic NORMAL est enregistré lui aussi (sinon le dénominateur ne servirait à rien)',
+    /if\(!vrais\.length\)\{[\s\S]{0,200}setItem\(_GARDIEN_CLE/.test(corps), '');
+  /* ⛔ Un changement de REGLE repart propre : sinon on additionne deux epoques. */
+  t('⛔ un changement de règle repart d\'un compteur PROPRE (pas deux époques additionnées)',
+    /_GARDIEN_REGLE\)\s*o=\{regle:_GARDIEN_REGLE\}/.test(corps),
+    'const _GARDIEN_REGLE = '+((src.match(/_GARDIEN_REGLE\s*=\s*(\d+)/)||[])[1]));
+  /* ⛔ ET IL EST APPELE A CHAQUE FOIS, pas seulement quand un drapeau est leve — sans ca,
+     le denominateur serait EGAL au numerateur et le taux vaudrait toujours 100 %. */
+  const iAppel=sansCom.indexOf('_gardienCompter(_gFlags)');
+  const av=sansCom.slice(Math.max(0,iAppel-400), iAppel);
+  t('⛔⛔ `_gardienCompter` est appelé pour TOUTE réponse, pas seulement celles qui portent un drapeau',
+    iAppel>0 && !/if\s*\(\s*_gFlags\s*(&&\s*_gFlags\.length\s*)?\)\s*\{?\s*$/.test(av.trim()),
+    'appel trouvé = '+(iAppel>0));
+  /* ⛔ R2 : un seul ecrivain du compteur. */
+  t('⛔ R2 : `_gardienCompter` reste le SEUL à écrire le compteur',
+    (sansCom.match(/setItem\(_GARDIEN_CLE/g)||[]).length===2,
+    'écritures = '+(sansCom.match(/setItem\(_GARDIEN_CLE/g)||[]).length);
+}
+
+/* == BLOC CXCI - UNE MISE A JOUR NE TUE PLUS UN BANC D'ESSAI PAYANT (ft-v1085) ==
+   Le banc d'essai coute des appels API reels (52 pour une passe). Une mise a jour qui se
+   serait appliquee au milieu aurait recharge la page et jete la passe — donc l'argent avec.
+   `_majPeutSAppliquer` differait deja pendant une seance ; il ne connaissait pas le banc. */
+console.log('\n-- CXCI. Une mise à jour ne tue plus un banc d\'essai en cours (ft-v1085) --');
+{
+  const src=fs.readFileSync(path.join(ROOT,'app.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+  const f=src.slice(src.indexOf('function _majPeutSAppliquer'));
+  const corps=f.slice(0, f.indexOf('\n}'));
+  t('⭐⭐ une passe de banc d\'essai en cours DIFFÈRE la mise à jour (elle coûte des appels réels)',
+    /_evRunning/.test(corps), corps.replace(/\s+/g,' ').slice(0,160));
+  t('⛔ … sans desserrer les gardes existantes (séance en cours, écran non-accueil)',
+    /_wkt|_curScreen/.test(corps), '');
+  /* ⛔ Le drapeau existe vraiment, sinon la garde serait toujours fausse — et verte pour rien. */
+  t('⛔ le drapeau `_evRunning` existe et est bien posé par le banc d\'essai (sinon garde morte)',
+    /_evRunning\s*=\s*true/.test(fs.readFileSync(path.join(ROOT,'coach.js'),'utf8')), '');
 }
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

@@ -4960,6 +4960,24 @@ async function onCoachImgSelected(input) {
   if (prev) prev.style.display = 'block';
 }
 
+/* ⚠️ ON N'AFFICHE QU'UNE VRAIE PHRASE, JAMAIS UN CODE TECHNIQUE (01/09/2026).
+   Le corps d'une réponse d'erreur porte DEUX sortes de textes : des phrases écrites pour la
+   personne (« Tu as atteint ta limite d'IA pour aujourd'hui 👍 … ») et des jetons écrits pour
+   le code (`quota`, `rate_limit`, `api_error 500`). Afficher les seconds remplacerait un
+   message faux par un message incompréhensible — ce qui n'est pas un progrès.
+   ⛔ EN CAS DE DOUTE ON N'AFFICHE RIEN et l'appelant retombe sur l'ancien message : il est
+   vague, mais il est honnête sur ce qu'il ne sait pas.
+   ⛔ UN SEUL PROPRIÉTAIRE (R2) de « ce texte est-il adressé à un humain ? » — sinon le
+   prochain endroit qui lit une erreur serveur réinventera son propre filtre, et les deux
+   divergeront. */
+function _phraseServeur(txt){
+  const t = String(txt == null ? '' : txt).trim();
+  if (t.length < 25) return '';                 // trop court pour une phrase adressée à quelqu'un
+  if (!/\s/.test(t)) return '';                 // un seul mot = un identifiant
+  if (/^[a-z0-9_]+( \d+)?$/.test(t)) return ''; // `internal_server_error 500`
+  return t;
+}
+
 async function sendToCoach(customMsg, displayMsg, opts) {
   opts = opts || {};
   let _sentOk = false;
@@ -5086,8 +5104,16 @@ async function sendToCoach(customMsg, displayMsg, opts) {
       if (_netErr) throw _netErr;
       /* ⛔⛔ LE SERVEUR ÉCRIT UNE PHRASE CLAIRE, ET ON LA JETAIT (01/09/2026). Michel, en pleine
          séance, après le benchmark : « Erreur : HTTP 429. Vérifie ta connexion et réessaie » —
-         avec 5G et 97 % de batterie. ***Sa connexion n'avait rien à voir : son quota IA du jour
-         était épuisé.*** Le worker renvoie pourtant, dans le corps de la réponse,
+         avec 5G et 97 % de batterie. ***Sa connexion n'avait rien à voir : c'est le plafond
+         d'appels IA qui refusait.***
+         ⚠️⚠️ ET J'AI D'ABORD DIT « TON QUOTA DU JOUR EST ÉPUISÉ » — C'ÉTAIT FAUX, et ce sont
+         trois mots de Michel qui l'ont prouvé : « il a répondu après ». Le plafond du worker
+         (`_plafondAtteint`) est un drapeau tenu EN MÉMOIRE DE CHAQUE ISOLAT Cloudflare, et le
+         worker l'écrit lui-même : « approximatif par construction (plusieurs isolats), et c'est
+         assumé ». Un isolat avait levé le sien pendant les 52 appels du banc d'essai ; la
+         requête suivante est tombée sur un autre isolat, qui n'avait rien levé. *Un compteur
+         approximatif ASSUMÉ produit un refus qui n'est pas reproductible — ne pas le lire comme
+         un quota atteint.* Le worker renvoie, dans le corps de la réponse,
          « Tu as atteint ta limite d'IA pour aujourd'hui 👍 Reviens demain, l'entraînement
          continue ! » — mais on levait une erreur sur le CODE HTTP sans jamais lire le corps.
          👉 *L'information existe, elle est écrite, elle est envoyée — et elle n'atteint pas
@@ -5096,16 +5122,10 @@ async function sendToCoach(customMsg, displayMsg, opts) {
          ⛔ On ne lit que ce que le serveur a écrit : pas de message inventé ici. S'il n'en
          fournit aucun, on retombe exactement sur l'ancien comportement. */
       if (!resp.ok) {
-        /* ⚠️ ON N'AFFICHE QU'UNE VRAIE PHRASE, JAMAIS UN CODE TECHNIQUE. Les réponses d'erreur
-           portent aussi des jetons destinés au code (`quota`, `rate_limit`, `api_error 500`) :
-           les montrer serait remplacer un message faux par un message incompréhensible. On
-           exige donc un texte qui ressemble à une phrase — sinon on retombe sur l'ancien
-           comportement, qui a le mérite d'être clair sur ce qu'il ne sait pas. */
         let _msgServeur = '';
         try {
           const _d = await resp.clone().json();
-          const _t = String((_d && (_d.reply || _d.error)) || '').trim();
-          if (_t.length >= 25 && /\s/.test(_t) && !/^[a-z_]+( \d+)?$/.test(_t)) _msgServeur = _t;
+          _msgServeur = _phraseServeur((_d && (_d.reply || _d.error)) || '');
         } catch(_){}
         const _e = new Error(_msgServeur || ('HTTP ' + resp.status));
         _e.duServeur = !!_msgServeur;
