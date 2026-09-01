@@ -152,6 +152,58 @@ seuil au lieu d'une fonctionnalité.*
 qui hésite, ou un « upper/lower » assumé ? **La mesure ne le dira jamais** — c'est un jugement sur
 une intention, pas sur une structure.
 
+### ⭐⭐ LE 2ᵉ HISTORIQUE EXISTE — 109 SÉANCES, 8 PERSONNES, ET E′ NE SONNE JAMAIS (01/09/2026)
+
+**Michel envoie le classeur Google complet.** ⛔ **Seul l'onglet `Sessions` a été ouvert**, et
+seulement 5 colonnes : `date · exercise · type · gender · age`. Ni `Utilisateurs`, ni l'onglet de
+backup, ni les e-mails, ni les charges. *On prend ce qui sert au calcul, rien d'autre.*
+
+**⭐⭐ ET CE SONT LES ~3000 LIGNES « SANS EMAIL » QUI SERVENT — celles qu'on croyait perdues.**
+Écrites avant ft-v1018, elles ne sont attribuables à personne : c'est précisément ce qui les rend
+utilisables ici. On sépare les **personnes** par `(genre, âge)`, **sans jamais savoir qui elles
+sont** — 8 profils, 109 séances reconstruites.
+⚠️ **Sans cette séparation la mesure aurait été FAUSSE, et c'est mesuré** : **40 dates sur 64
+portent plusieurs profils**. Grouper par date seule aurait fusionné deux personnes entraînées le
+même jour en une « séance » de 8 exercices à cheval sur deux régions — ***E′ aurait sonné sur un
+artefact de fusion, et on aurait cru à un faux positif.***
+
+| critère | Michel (39 séances) | 8 autres profils (109 séances) |
+|---|---|---|
+| **A** — ≥ 3 exercices, même muscle principal | 11/39 (28 %) | **26/109 (24 %)** |
+| **B** — muscle hors-sujet à ≥ 80 % | 22/39 (56 %) | **61/109 (56 %)** |
+| **E** — exactement 2 familles lourdes | 2/39 (5 %) | **9/109 (8 %)** |
+| **E′** — … dans deux **régions** différentes | **1/39** (la sienne) | **0/109** |
+
+**⛔⛔ A ET B SONT MORTS, ET LA RÉPÉTITION LE PROUVE** : B sonne sur **56 %** des séances chez
+Michel **et** chez les autres — le même taux sur deux jeux indépendants, ce n'est plus un accident
+de seuil, c'est la nature du critère. ⚠️ Et A a un défaut de plus : son bruit **dépend de la
+personne** — 15 % chez l'un, **83 % (10/12)** chez un autre. *Un avertissement qui hurle chez
+certains et se tait chez d'autres est pire qu'un avertissement constant.*
+
+**⭐⭐ LE FILTRE DE RÉGION N'EST PAS COSMÉTIQUE — voici EXACTEMENT ce qu'il retire.** Les 9 séances
+que E signale et que E′ laisse passer :
+
+    H/61  2026-07-01  11 exos  [poussée×3 tirage×4]
+    H/25  ×4 séances   4 exos  [poussée×2 tirage×2]
+    H/21  ×4 séances   4 exos  [poussée×2 tirage×2]
+
+👉 ***C'est une séance haut du corps « push/pull » parfaitement classique, répétée quatre fois par
+deux personnes différentes*** — visiblement leur programme. **E l'aurait accusée à chaque fois.**
+
+**⭐ ET L'OBJECTION DE SURAJUSTEMENT TOMBE** : E′ a été dessiné sur l'historique de Michel, puis
+éprouvé sur **109 séances qu'il n'avait jamais vues**, appartenant à 8 autres personnes. *C'est un
+contrôle hors échantillon, pas une relecture de ses propres exemples.* **Sur 148 séances réelles,
+E′ sonne une fois : celle dont Michel s'est plaint.**
+
+**⚠️ CE QUE ÇA NE DIT TOUJOURS PAS, et il faut le lire :**
+① **Aucune de ces 109 séances n'est étiquetée.** On mesure qu'E′ **ne crie pas au loup** ; on ne
+mesure **pas** qu'il attrape ce qu'il faut. Le taux de **faux négatifs** reste inconnu, et 0/109
+peut aussi vouloir dire *« trop étroit »*.
+② Le cas `squat×2 + poussée×2` (bas + haut) **n'apparaît dans aucune des 148 séances** — il reste
+donc non éprouvé, et c'est un jugement sur une intention, pas une mesure.
+③ La séparation par `(genre, âge)` est une approximation : un anniversaire coupe une personne en
+deux profils. Sans conséquence ici (on ne compare pas les personnes entre elles).
+
 ### ⏭️ Ce qui reste à trancher (personne ne l'a fait)
 - **le critère** : E, B corrigé, ou autre chose — la mesure oriente, elle ne décide pas ;
 - **le seuil** : « 2 familles à ≥ 2 ancres » est un jugement, comme le 62 % de `_MONTEE_DEPART_MAX` ;
