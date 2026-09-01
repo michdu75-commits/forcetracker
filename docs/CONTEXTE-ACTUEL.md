@@ -6,19 +6,20 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1082`.
-- 🧩⏸️ **« SÉANCE SANS SUJET » — EN DISCUSSION, RIEN N'EST CONSTRUIT** (31/08). Michel : *« non on
-  en discute et il faut voir aussi avec l'autre Claude »*. ⭐ Le volet **sécurité** est livré
-  (ft-v1080) ; le volet **cohérence** — celui qui répond au **leg curl** — ne l'est pas.
-  GPT recommande **B + garder l'existant**. ⛔⛔ **Mesuré, son critère B se DÉSARME quand le cas
-  empire** : ajouter le leg curl rend les ischios *dominants*, donc plus « hors-thème », et
-  l'alerte les lâche. Et il fait **3 faux positifs sur 9** séances normales (A : 5/9).
-  ⭐ Une piste tient (**familles de mouvement**, 2/2 et 0/9) ⚠️ **mais mes 9 séances normales sont
-  écrites par moi** — piège de ft-v994/1016. Le contrôle qui vaudrait est **l'historique réel**.
-  👉 Dossier : `IDEES-FUTURES.md` · attendu : `docs/JOURNAL-DE-TEST.md` (🟢, non promu exprès)
-  · **avis demandé à session-B** dans `docs/JOURNAL-DE-PARTAGE.md` (état ❓) — ⚠️ *ce n'est pas
-  un relais* : Michel rassemble **plusieurs lectures** du même problème (il a déjà celle de
-  GPT). Une demande d'avis attend une **contradiction**, pas une exécution.
+- **Version en ligne (live) :** `ft-v1083`.
+- 🧩➡️ **« SÉANCE SANS SUJET » — SUJET PRIS PAR SESSION-B** (01/09). Michel : *« l'autre claude
+  s'occupe des séances bizarres »*. ⛔ **session-A n'y touche plus.**
+  ⭐ Le volet **sécurité** est livré (ft-v1080) ; le volet **cohérence** est chez eux, rien n'est
+  encore construit.
+  ⛔⛔ **La mesure décisive est la leur** : les 3 critères passés sur les **39 vraies séances**
+  de Michel (export CSV, vraies fonctions de l'app). **A → 11/39 · B → 22/39** — *un avertissement
+  qui sonne sur une séance sur deux n'est pas un avertissement* (R19). **Notre E → 2/39, donc PAS
+  0 faux positif** : il attrape aussi le 05/07, une journée jambes classique.
+  ⭐⭐ **Leur apport** : le discriminant est la **RÉGION**, pas le nombre de familles —
+  `squat+charnière` = deux familles du bas (normal), `charnière+tirage` = bas + haut (sa séance).
+  **E′ = 1/39.** ⚠️ Et un aller-retour instructif : desserrer « exactement 2 » en « au moins 2 »
+  faisait sonner un **full body volontaire** — le fait faux qu'on avait nommé (R29/P4).
+  👉 Détail chiffré et limites : `IDEES-FUTURES.md` (§ « une séance sans sujet »).
 - **Version en ligne (live) :** `ft-v1083`. ✅ **Les deux déploiements sont VERTS** (site + backend
   Apps Script) — la route de nettoyage est réellement en ligne, vérifié dans les Actions.
 - ⏭️ **CE QUI ATTEND MICHEL AU RÉVEIL** (rien d'urgent, rien de cassé) :
