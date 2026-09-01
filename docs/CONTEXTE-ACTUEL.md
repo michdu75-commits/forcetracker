@@ -6,9 +6,9 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1089`.
+- **Version en ligne (live) :** `ft-v1090`.
 - 🩹 **« null » DANS LE CHAMP KG — et c'est le correctif de la virgule qui avait ouvert le trou**
-  (ft-v1089). Capture du compte d'**Eline** : `10 reps × null kg` sur deux séries.
+  (ft-v1090). Capture du compte d'**Eline** : `10 reps × null kg` sur deux séries.
   ⛔⛔ **La cause vient de Michel** : *« Eline avait mis des valeurs, et si je dis pas de bêtises
   c'est en mettant la virgule »*. La chaîne : ① **ft-v1057** fait passer ce champ de
   `type="number"` à `type="text"` **en laissant `+this.value`** — or `type="number"` était la
@@ -72,6 +72,19 @@
   ⏭️ **LE BANC D'ESSAI N'A PAS TOURNÉ** : Worker en 403, Apps Script en 403, aucune clé API.
   On sait que la règle **arrive** ; pas qu'elle est **suivie**. **Seul Michel peut lancer la
   passe** (Profil → Admin → 🧪, devis affiché avant confirmation).
+- 🔌⭐⭐ **ON A APPUYÉ SUR LES 166 BOUTONS, UN SEUL PLANTAIT** (ft-v1089). Michel : *« trouve
+  des incohérences, moi je ne peux pas lire le code »*. ⛔⛔ **On n'écrit pas d'avis, on écrit
+  des détecteurs** — la veille, 2 lignes d'audit sur 4 étaient fausses ou périmées.
+  ⭐⭐ **Le détecteur qui a tout trouvé n'analyse rien : il APPUIE.** « 🔌 Tester la connexion »
+  (Profil → Admin) plantait à sa **première ligne** sur un élément retiré du HTML — donc
+  **aucun test, aucun message**. ⚠️ Sa voisine `updSetup()` lit le MÊME élément **avec** une
+  garde : *le même trou, deux lectures, une seule protégée* — d'où l'invisibilité totale.
+  ⭐⭐ **Le vrai livrable est le balayage devenu PERMANENT** (bloc CXCIV) : les 166 boutons
+  rejoués à chaque livraison, avec le NOMBRE épinglé pour qu'il ne puisse pas être vert à vide.
+  ⚠️ **Le reste de la chasse a surtout rendu du VIDE, et c'est une bonne nouvelle** : 1473
+  fonctions, 1454 atteignables, 19 orphelines dont **5 faux positifs** et **2 retraits
+  volontaires** documentés ; **zéro bouton** pointant vers une fonction inexistante ; et les 3
+  « données mortes » étaient des faux positifs de mon propre compteur.
 - 🧹⭐⭐ **LA SUITE DU LOT D'AUDIT — et l'un des quatre est RÉFUTÉ** (ft-v1088).
   ⛔⛔ **① La projection ne regardait que le squat** : un soulevé de terre à **180 kg** était
   projeté comme un **débutant total** (+10,8 %). `getLevel` (dormante depuis ft-v385) réveillée

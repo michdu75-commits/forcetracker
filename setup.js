@@ -2876,8 +2876,23 @@ function updSetup(){
   if(S.connected){d.className='sdot g';t.textContent='Connecté — sync automatique active ✓';}
   else{d.className='sdot';t.textContent='Non connecté — clique Tester la connexion';}
 }
+/* 🔌 CE BOUTON NE FAISAIT PLUS RIEN DU TOUT — trouvé le 01/09/2026 en APPUYANT sur les 166
+   boutons de l'app dans un navigateur, pas en relisant le code.
+   ⛔⛔ Il plantait à sa PREMIÈRE ligne : `getElementById('setup-dot').className = …` sur un
+   élément **qui n'existe plus dans le HTML**. `Cannot set properties of null` — la fonction
+   s'arrêtait là, donc **aucun test, aucun message, rien**. Pour la personne, le bouton est mort.
+   ⚠️ ET LA VOISINE, ELLE, ÉTAIT GARDÉE : `updSetup()` fait `if(!d)return;` deux lignes plus haut.
+   *Le même élément, deux lectures, une seule protégée* — c'est ce qui rend le défaut invisible :
+   l'app ne lève aucune erreur ailleurs, seul CE bouton casse.
+   ⛔ POURQUOI L'ÉLÉMENT A DISPARU (cherché avant de réparer, R30) : la pastille de statut a été
+   retirée du HTML — son CSS `.sdot` est resté, orphelin — et une carte **« Santé du système »**
+   fait ce test bien mieux depuis (elle appelle vraiment `?test=1`).
+   👉 On GARDE le bouton et on le rend fonctionnel : son vrai retour a toujours été le **toast**,
+   pas la pastille. Le supprimer serait une décision produit, pas un correctif (R29). */
 async function testConn(){
-  document.getElementById('setup-dot').className='sdot a';document.getElementById('setup-txt').textContent='Test…';toast('Test…','info');
+  const _d=document.getElementById('setup-dot'); if(_d)_d.className='sdot a';
+  const _t=document.getElementById('setup-txt'); if(_t)_t.textContent='Test…';
+  toast('Test…','info');
   try{
     await fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'test'})});
     S.connected=true;persist();updSetup();updatePill();toast('Serveur joignable ✅','success');
