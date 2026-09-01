@@ -21066,10 +21066,25 @@ console.log('\n-- CXC. Le Gardien compte enfin son dénominateur (ft-v1085) --')
   t('⛔⛔ `_gardienCompter` est appelé pour TOUTE réponse, pas seulement celles qui portent un drapeau',
     iAppel>0 && !/if\s*\(\s*_gFlags\s*(&&\s*_gFlags\.length\s*)?\)\s*\{?\s*$/.test(av.trim()),
     'appel trouvé = '+(iAppel>0));
-  /* ⛔ R2 : un seul ecrivain du compteur. */
-  t('⛔ R2 : `_gardienCompter` reste le SEUL à écrire le compteur',
-    (sansCom.match(/setItem\(_GARDIEN_CLE/g)||[]).length===2,
-    'écritures = '+(sansCom.match(/setItem\(_GARDIEN_CLE/g)||[]).length);
+  /* ⛔⛔ R2 : UN SEUL ÉCRIVAIN DU COMPTEUR EN DIRECT — et le témoin a d'abord figé un NOMBRE
+     (« exactement 2 écritures »), ce qui l'a fait rougir sur du code correct : `_gardienRetroDiffere`
+     écrit LUI AUSSI la clé, mais seulement le bloc `retro`, volontairement SÉPARÉ depuis ft-v946
+     (mélanger « mesuré depuis ft-v944 » et « retrouvé dans l'historique » donnerait un total qui
+     couvre deux époques, dont une ANTÉRIEURE aux correctifs).
+     👉 *Un témoin visé sur un chiffre se périme au premier ajout légitime* — le piège du bloc LXXXI,
+     retrouvé tel quel. Il vise donc la GARANTIE : les champs du compteur en direct (`analysees`,
+     `total`) ne sont écrits que par `_gardienCompter`. */
+  const autresEcrivains=[];
+  sansCom.split(/\nfunction /).forEach(f=>{
+    const nom=(f.match(/^[A-Za-z_$][\w$]*/)||['(module)'])[0];
+    if(nom==='_gardienCompter') return;
+    if(/o\.analysees\s*=|o\.total\s*=/.test(f)) autresEcrivains.push(nom);
+  });
+  t('⛔⛔ R2 : `_gardienCompter` est le SEUL à écrire les champs du compteur EN DIRECT',
+    autresEcrivains.length===0, JSON.stringify(autresEcrivains));
+  /* ⛔ Et le bloc `retro` reste distinct : s'il fusionnait, on additionnerait deux époques. */
+  t('⛔ … et l\'instantané `retro` reste un bloc SÉPARÉ (jamais additionné au direct)',
+    /o\.retro\s*=\s*r\s*;/.test(sansCom) && !/o\.total\s*\+=\s*r\./.test(sansCom), '');
 }
 
 /* == BLOC CXCI - UNE MISE A JOUR NE TUE PLUS UN BANC D'ESSAI PAYANT (ft-v1085) ==
