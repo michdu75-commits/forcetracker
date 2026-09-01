@@ -91,7 +91,7 @@
 
 | # | Brique | Ce qu'elle fait | État | Signal | Porte |
 |---|---|---|---|---|---|
-| **1** | **Registre Athlète** | la mémoire durable | ✅ branchée | `149` | `109` |
+| **1** | **Registre Athlète** | la mémoire durable | ✅ branchée | `149` | `111` |
 | **2** | **Cerveau (faits mesurés)** | les faits injectés dans Milo | ✅ branchée | `8` | `6` |
 | **3** | **État du jour** | énergie / douleur ponctuelle | ✅ branchée | `18` | `8` |
 | **4** | **ADN sportif** | le portrait durable déclaré | ✅ branchée | `21` | `2` |
