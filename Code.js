@@ -156,14 +156,84 @@ function _unpackUser_(raw) {
   return raw;
 }
 
+/* 🔐 LES DONNÉES DE SANTÉ VIVENT DANS LEUR PROPRE CLÉ (01/09/2026) — idée de Michel :
+   « on peut pas créer une section santé pour éviter justement que tout se trouve dans le même
+   JSON ? ».
+   ⭐⭐ ELLE EST PLUS FORTE QUE LA PROMESSE QU'ON VENAIT D'ÉCRIRE. La politique dit que les outils
+   de diagnostic ne montrent que le nécessaire : c'est une garantie de COMPORTEMENT — l'outil
+   CHOISIT de ne pas montrer. Avec deux clés, elle devient une garantie de CONSTRUCTION : l'outil
+   ne l'a pas en main. *C'est toujours la seconde qui tient.*
+   ⭐ Et un bénéfice qui n'est pas la vie privée : ces champs sont GROS et changent RAREMENT, or
+   ils étaient re-sérialisés et re-compressés à CHAQUE sauvegarde de profil — c'est le réservoir
+   qui avait explosé le 29/07.
+
+   ⛔⛔ LA LISTE EST EXPLICITE, ET DEUX VÉRIFICATIONS L'ONT CORRIGÉE AVANT ÉCRITURE :
+   · `cycle` est le cycle de FORCE (`startDate`/`weeks`/`rm1s`), PAS le cycle menstruel — le
+     déplacer aurait cassé l'écran Cycle de force. Le menstruel, ce sont `mensCycleStart`,
+     `mensCycleDur` et `contraception`.
+   · `exPhotos` = photos d'EXERCICES et `morpho` = silhouette déclarée : ni l'un ni l'autre n'est
+     une donnée de santé — on ne déplace pas « ce qui en a l'air ».
+   *Une liste écrite de mémoire aurait emporté le cycle de force et laissé le tabac.* */
+var _CHAMPS_SANTE_ = ['healthProfile', 'bloodTests', 'bodyScans', 'bodyScanImports',
+                      'bodyStudy', 'bodyStudies', 'smoker',
+                      'contraception', 'mensCycleStart', 'mensCycleDur'];
+function santeKey_(email) { return 'h_' + (email || '').toLowerCase().trim(); }
+
 function loadUserData_(email) {
-  const raw = _unpackUser_(PropertiesService.getScriptProperties().getProperty(userKey_(email)));
+  const sp = PropertiesService.getScriptProperties();
+  const raw = _unpackUser_(sp.getProperty(userKey_(email)));
   if (!raw) return null;
-  try { return JSON.parse(raw); } catch(e) { return null; }
+  let d; try { d = JSON.parse(raw); } catch(e) { return null; }
+  /* ⛔⛔ REPLI SUR L'ANCIEN, ET C'EST LUI QUI REND LA MIGRATION SANS PERTE : un compte pas
+     encore migré garde sa santé DANS `u_`, et il se charge exactement comme avant. La clé
+     `h_` ne fait que RECOUVRIR ce qu'elle contient. Tant qu'elle n'existe pas, rien ne
+     change pour personne (règle d'or #3). */
+  try {
+    const rs = _unpackUser_(sp.getProperty(santeKey_(email)));
+    if (rs) {
+      const st = JSON.parse(rs);
+      d.profile = d.profile || {};
+      Object.keys(st).forEach(function(c){ d.profile[c] = st[c]; });
+    }
+  } catch(e) { /* une santé illisible ne doit JAMAIS empêcher de charger l'entraînement */ }
+  return d;
 }
 
 function saveUserData_(email, data) {
-  PropertiesService.getScriptProperties().setProperty(userKey_(email), _packUser_(JSON.stringify(data)));
+  const sp = PropertiesService.getScriptProperties();
+  const prof = (data && data.profile) || null;
+  /* ① Extraire la santé — sans toucher à l'objet de l'appelant. */
+  const sante = {}; let aSante = false;
+  if (prof) _CHAMPS_SANTE_.forEach(function(c){
+    if (prof[c] !== undefined) { sante[c] = prof[c]; aSante = true; }
+  });
+  /* ⛔⛔ ② LA SANTÉ EST ÉCRITE **ET RELUE** AVANT D'ÊTRE RETIRÉE DE `u_`, et c'est TOUT le
+     garde-fou. Script Properties n'a pas de transaction : deux écritures peuvent réussir
+     l'une sans l'autre. En écrivant `h_` d'abord et en le VÉRIFIANT :
+       · l'écriture de `h_` échoue → on ne retire rien, l'ancien état est intact ;
+       · `u_` échoue après un `h_` réussi → la santé existe aux DEUX endroits, et la lecture
+         préfère `h_`.
+     ***Il n'existe aucun ordre où la santé est retirée avant d'être confirmée ailleurs.***
+     C'est la même prudence que `_packUser_`, qui ne rend un paquet que s'il se relit. */
+  let santeOk = true;
+  if (aSante) {
+    santeOk = false;
+    try {
+      const js = JSON.stringify(sante);
+      sp.setProperty(santeKey_(email), _packUser_(js));
+      santeOk = (_unpackUser_(sp.getProperty(santeKey_(email))) === js);
+    } catch(e) { santeOk = false; }
+  }
+  /* ③ `u_` sans la santé — SEULEMENT si elle est confirmée ailleurs. */
+  let aEcrire = data;
+  if (aSante && santeOk) {
+    aEcrire = {}; Object.keys(data).forEach(function(k){ aEcrire[k] = data[k]; });
+    aEcrire.profile = {};
+    Object.keys(prof).forEach(function(k){
+      if (_CHAMPS_SANTE_.indexOf(k) < 0) aEcrire.profile[k] = prof[k];
+    });
+  }
+  sp.setProperty(userKey_(email), _packUser_(JSON.stringify(aEcrire)));
 }
 
 // ─── Mirror Sheets — best-effort, jamais bloquant ───────────
@@ -509,7 +579,9 @@ function doGet(e) {
     var csDeleted = false;
     if (csp.getProperty('u_michdu75+test@gmail.com') != null) { csp.deleteProperty('u_michdu75+test@gmail.com'); csDeleted = true; }
     try { csp.deleteProperty('PING_DIAG'); } catch(eD) {}
-    var csKeys = csp.getKeys().filter(function(k){ return k.indexOf('u_') === 0; });
+    /* ⛔ `h_` AUSSI depuis la séparation du 01/09 : une clé oubliée ici resterait en clair
+       et regrossirait le réservoir — c'est exactement la panne du 29/07 (102 % de 512 Ko). */
+    var csKeys = csp.getKeys().filter(function(k){ return k.indexOf('u_') === 0 || k.indexOf('h_') === 0; });
     var csBefore = 0, csAfter = 0, csDone = 0, csDeja = 0, csVerifKo = 0;
     csKeys.forEach(function(k){
       var raw = csp.getProperty(k) || '';
@@ -2938,7 +3010,20 @@ function backupAllUserData_() {
     userKeys.forEach(k => {
       try {
         const data = JSON.parse(_unpackUser_(all[k]));
-        users.push({ email: data.email || k.slice(2), data: data });
+        const email = data.email || k.slice(2);
+        /* ⛔⛔ LA SAUVEGARDE DOIT RESTER COMPLÈTE (règle d'or #3). Depuis la séparation du
+           01/09, la santé n'est plus dans `u_` : sans cette lecture, la sauvegarde de
+           demain aurait perdu les bilans sanguins et corporels de tout le monde — en
+           silence, et on ne s'en apercevrait qu'au moment d'en avoir besoin.
+           ⭐ Mais elle est rangée dans SA PROPRE SECTION, pas refondue dans `data` : le
+           fichier reste restaurable en entier, et ce qui est sensible y est séparé de
+           l'entraînement au lieu d'être mélangé. */
+        let sante = null;
+        try {
+          const rs = _unpackUser_(all['h_' + email.toLowerCase().trim()]);
+          if (rs) sante = JSON.parse(rs);
+        } catch(eS) { Logger.log('[FT backup] santé illisible pour ' + k); }
+        users.push({ email: email, data: data, sante: sante });
       } catch(e) {
         Logger.log('[FT backup] Parse err ' + k + ' : ' + e.message);
       }
@@ -3224,7 +3309,11 @@ function preuveDeclencheur(e) {
 function supprimerCompteTest() {
   var CIBLE = 'apollonone75@gmail.com';
   var sp = PropertiesService.getScriptProperties();
-  var cles = ['u_' + CIBLE, 'auth_' + CIBLE, 'authfail_' + CIBLE, 'prem_' + CIBLE, 'confirmed_' + CIBLE];
+  /* ⛔⛔ `h_` EN TÊTE DEPUIS LA SÉPARATION DU 01/09. Sans lui, supprimer un compte laisserait
+     ses données de SANTÉ derrière — c'est-à-dire que la séparation aurait CRÉÉ une fuite en
+     prétendant en fermer une. *Quand on range une donnée ailleurs, on déplace aussi tout ce
+     qui la faisait disparaître.* */
+  var cles = ['u_' + CIBLE, 'h_' + CIBLE, 'auth_' + CIBLE, 'authfail_' + CIBLE, 'prem_' + CIBLE, 'confirmed_' + CIBLE];
   var faits = [], absents = [];
   cles.forEach(function (k) {
     if (sp.getProperty(k) != null) { sp.deleteProperty(k); faits.push(k); }
