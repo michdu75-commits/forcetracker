@@ -2927,7 +2927,20 @@ function _applyRestoreData(raw){
   try{if(d.height)S.height=parseFloat(d.height)||S.height;}catch(e){console.warn('[FT restore] height',e);}
   // NOTE : _obGender/_obGoal sont des vars onboarding (app.js) — on n'y touche pas depuis setup.js
   // _obDataRestored=true est déjà positionné avant l'appel, donc finishOnboarding() les ignore
-  try{if(d.gender)S.gender=d.gender;}catch(e){console.warn('[FT restore] gender',e);}
+  /* ⚧ ON NORMALISE À L'ENTRÉE, ON NE RATTRAPE PAS PARTOUT (R33, 01/09/2026)
+     Cette ligne écrivait `S.gender = d.gender` **tel quel**. Un fichier de sauvegarde qui porte
+     « Homme », « M » ou « male » posait donc une valeur que l'app ne sait pas lire — et mesuré,
+     les deux règles se contredisaient alors : BMR de **femme** (1524) + plancher d'**homme**
+     (1500) sur le même profil. *Le format d'une source ne devient jamais le format interne.*
+     ⛔ ET ON N'INVENTE RIEN (R29) : une valeur qu'on ne reconnaît pas ne remplace pas celle qui
+     est déjà là — on préfère garder l'ancienne que poser un fait faux sur la personne. */
+  try{
+    const _g=String(d.gender==null?'':d.gender).trim().toLowerCase();
+    const _map={h:'H',homme:'H',m:'H',male:'H',man:'H',masculin:'H',
+                f:'F',femme:'F',female:'F',woman:'F',feminin:'F','féminin':'F'};
+    if(_map[_g]) S.gender=_map[_g];
+    else if(_g) console.warn('[FT restore] sexe non reconnu, valeur conservée :',d.gender);
+  }catch(e){console.warn('[FT restore] gender',e);}
   /* ⛔ RESTAURER N'EST PAS CHANGER (ft-v1010) : on écrit `S.goal` DIRECTEMENT ici, exprès —
      passer par `_goalSet` fabriquerait un faux changement daté du jour de la restauration.
      ⭐ Et l'HISTORIQUE se restaure avec, sinon une restauration effacerait l'histoire en

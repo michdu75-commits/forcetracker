@@ -43,6 +43,20 @@
   ⏭️ **LE BANC D'ESSAI N'A PAS TOURNÉ** : Worker en 403, Apps Script en 403, aucune clé API.
   On sait que la règle **arrive** ; pas qu'elle est **suivie**. **Seul Michel peut lancer la
   passe** (Profil → Admin → 🧪, devis affiché avant confirmation).
+- 🧹⭐⭐ **LES QUATRE PETITS DÉFAUTS DE L'AUDIT** (ft-v1086). Michel : *« lance tout ce que tu
+  peux, il faut avancer »*. ⛔⛔ **① Deux conventions de sexe opposées** — mesuré, `"Homme"`
+  donnait **TDEE de femme (1524) + plancher d'homme (1500)** ; le chemin est la **restauration**,
+  qui écrivait `S.gender` **sans garde**. Normalisation à l'entrée + un seul propriétaire.
+  ⛔ **② Rouvrir un bilan lu par l'IA effaçait sa provenance** (et `lmDeduite` avec) — défaut
+  **créé** par le correctif qui l'entoure, posé avant qu'on sache quel bilan on ouvre.
+  ⚠️⚠️ **③ L'audit était PÉRIMÉ** : le contrôle `exSwaps` existait ; le vrai défaut était la
+  comparaison sur le **nom exact** — « Developpe Couche » rendait **0 signalement** (ft-v1035).
+  ⛔ **④ L'écran expliquait un calcul abandonné le 02/08** (*« ~36 h »* contre 48 h réelles), et
+  la contraception hormonale affichait **« Jour null/0 »**.
+  ⚠️⚠️ **Et deux de mes sondes ne mesuraient RIEN** avant d'être réparées : l'une sortait par le
+  verrou santé (même résultat des deux côtés = un vert qui ne peut pas rougir), l'autre
+  **recopiait les formules** au lieu de lire le comportement. Chacune porte désormais un témoin
+  dont le seul rôle est d'empêcher ce vert muet.
 - 🧩➡️ **« SÉANCE SANS SUJET » — SUJET PRIS PAR SESSION-B** (01/09). Michel : *« l'autre claude
   s'occupe des séances bizarres »*. ⛔ **session-A n'y touche plus.**
   ⭐ Le volet **sécurité** est livré (ft-v1080) ; le volet **cohérence** est chez eux, rien n'est
@@ -56,7 +70,7 @@
   **E′ = 1/39.** ⚠️ Et un aller-retour instructif : desserrer « exactement 2 » en « au moins 2 »
   faisait sonner un **full body volontaire** — le fait faux qu'on avait nommé (R29/P4).
   👉 Détail chiffré et limites : `IDEES-FUTURES.md` (§ « une séance sans sujet »).
-- **Version en ligne (live) :** `ft-v1083`. ✅ **Les deux déploiements sont VERTS** (site + backend
+- **Version en ligne (live) :** `ft-v1086`. ✅ **Les deux déploiements sont VERTS** (site + backend
   Apps Script) — la route de nettoyage est réellement en ligne, vérifié dans les Actions.
 - ⏭️ **CE QUI ATTEND MICHEL AU RÉVEIL** (rien d'urgent, rien de cassé) :
   ① **le nettoyage des doublons** — Profil → Admin → « 🧹 Voir ce qui partirait », puis le bouton

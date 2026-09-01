@@ -1488,15 +1488,26 @@ function pasteBodyScan(){
 }
 async function openBodyScanForm(idx){
   if(!await _healthGate())return;          // verrou santé (Michel, 04/08)
-  /* 🏷️ D'OÙ VIENT CE BILAN (R33) — remis à « saisie main » à CHAQUE ouverture, et reposé
-     ensuite par `_bsRemplirFormulaire` si la lecture vient de l'OCR ou de l'IA. Sans ce
-     retour à zéro, un bilan tapé à la main hériterait de la provenance du précédent. */
-  _bsSource='manuel'; _bsLmDeduite=false;
   _bsEditIdx=idx;
   const grid=document.getElementById('bs-grid');
   const dateEl=document.getElementById('bs-date');
   const delBtn=document.getElementById('bs-del-btn');
   const sc=(idx>=0&&S.bodyScans&&S.bodyScans[idx])?S.bodyScans[idx]:null;
+  /* 🏷️ D'OÙ VIENT CE BILAN (R33) — remis à « saisie main » à chaque ouverture d'un bilan NEUF,
+     et reposé ensuite par `_bsRemplirFormulaire` si la lecture vient de l'OCR ou de l'IA. Sans ce
+     retour à zéro, un bilan tapé à la main hériterait de la provenance du précédent.
+     ⛔⛔ MAIS ROUVRIR UN BILAN EXISTANT EFFAÇAIT SA PROVENANCE (corrigé le 01/09/2026). La remise
+     à « manuel » était inconditionnelle ; or `saveBodyScan` **remplace l'objet entier**
+     (`S.bodyScans[idx] = obj`) et ne réécrit `src` que s'il vaut autre chose que « manuel ».
+     👉 *Ouvrir un bilan lu par l'IA et le ré-enregistrer sans rien changer suffisait à le faire
+     passer pour une saisie à la main* — et `lmDeduite` partait avec, donc Milo cessait d'être
+     prévenu que la masse maigre était une soustraction et non une mesure (ft-v978/991).
+     ⚠️ C'est un défaut CRÉÉ par le correctif qui l'entoure : la remise à zéro était juste, elle
+     était simplement posée avant qu'on sache quel bilan on ouvre.
+     ⭐ On réamorce donc depuis CE bilan — jamais depuis le précédent, ce que la règle d'origine
+     interdisait à raison. */
+  _bsSource=(sc&&sc.src)?sc.src:'manuel';
+  _bsLmDeduite=!!(sc&&sc.lmDeduite);
   if(dateEl)dateEl.value=sc?sc.date:today();   // date du TÉLÉPHONE (ft-v655)
   const inpHtml=f=>`<div>
     <label style="font-size:11px;color:var(--t3);display:block;margin-bottom:3px;">${f.l}${f.u?' ('+f.u+')':''}${f.req?' *':''}</label>
@@ -2984,6 +2995,11 @@ function _penaliteSeance(sess){
    ② `age`, `level` et `smoker` n'ont PAS d'historique : un score rejoué les prend dans leur
       valeur d'aujourd'hui. L'écart est borné (±3 pts par palier d'âge, −4 pour le tabac) et
       il ne peut pas déformer une TENDANCE, puisqu'il décale toute la courbe pareil. */
+/* ⏳ COMBIEN DE TEMPS LA FATIGUE D'UNE SÉANCE PÈSE — UN SEUL PROPRIÉTAIRE (01/09/2026).
+   Le calcul disait 48 h depuis le 02/08 ; la phrase affichée disait encore « ~36 h ».
+   Les deux lisent désormais cette constante — deux nombres pour une même règle finissent
+   toujours par diverger, et c'est celui que la personne LIT qui avait tort (R2). */
+const RECUP_EFFACE_H = 48;
 function calcRecoveryDetail(refTs){
   /* Les DEUX seuls repères de temps de la fonction. Tout ce qui suit les lit, plus jamais
      `Date.now()` ni `today()` directement — sinon une moitié du calcul se placerait
@@ -3051,10 +3067,14 @@ function calcRecoveryDetail(refTs){
     const tsSess=lastSess.ts||lastSess.id;
     const calcPen0=()=>_penaliteSeance(lastSess);
     if(tsSess){
-      // Effacement sur 48 h et non 36 h (02/08) : à 36 h, une grosse séance de jambes pesait
-      // déjà zéro. 48 h correspond mieux à ce qu'on ressent réellement après du lourd.
+      /* Effacement sur 48 h et non 36 h (02/08) : à 36 h, une grosse séance de jambes pesait
+         déjà zéro. 48 h correspond mieux à ce qu'on ressent réellement après du lourd.
+         ⛔⛔ ET LA PHRASE AFFICHÉE DISAIT ENCORE « ~36 h » — corrigé le 01/09/2026. L'écran
+         expliquait donc un calcul que l'app n'appliquait plus depuis le 02/08 : *deux sources
+         pour la même règle, qui se contredisent* (R2), et c'est celle que la personne LIT qui
+         avait tort. Une seule constante depuis, lue par le calcul ET par la phrase. */
       const hrs=Math.max(0,(_now-tsSess)/36e5);
-      if(hrs<48){ sessAdj=-Math.max(0,Math.round(calcPen0()*(48-hrs)/48)); }
+      if(hrs<RECUP_EFFACE_H){ sessAdj=-Math.max(0,Math.round(calcPen0()*(RECUP_EFFACE_H-hrs)/RECUP_EFFACE_H)); }
       else if(dCal>=2){ sessAdj=Math.min(dCal,4)*3; }        // 2j +6 · 3j +9 · 4j+ +12 (inchangé)
     } else {
       if(dCal<=0){ sessAdj=-calcPen0(); }
@@ -3131,7 +3151,7 @@ function calcRecoveryDetail(refTs){
                +' min '+(_nEcart.ecart<0?'de MOINS':'de PLUS')+' que ce que tu avais noté.'):''))
           : 'Le point de départ : la qualité et la durée de tes 3 dernières nuits.')}];
   if(sessAdj) factors.push({ic:sessAdj<0?'🏋️':'🛌',label:sessAdj<0?'Séance récente':'Repos',val:sessAdj,
-    why:sessAdj<0?'Tu as une séance récente : tes muscles récupèrent encore. Ce malus s\'efface en continu au fil des heures (parti au bout de ~36 h).':'Des jours de repos depuis ta dernière séance : ton corps est plus frais.'});
+    why:sessAdj<0?'Tu as une séance récente : tes muscles récupèrent encore. Ce malus s\'efface en continu au fil des heures (parti au bout de ~'+RECUP_EFFACE_H+' h).':'Des jours de repos depuis ta dernière séance : ton corps est plus frais.'});
   if(ageAdj) factors.push({ic:'🎂',label:'Âge',val:ageAdj,why:'La récupération ralentit un peu avec l\'âge.'});
   if(cycleAdj) factors.push({ic:'🌙',label:'Cycle'+(cpPhase?' ('+cpPhase+')':''),val:cycleAdj,
     why:cycleAdj<0?'Ta phase de cycle demande plus de récup en ce moment.':'Ta phase de cycle est plutôt favorable à la performance.'});

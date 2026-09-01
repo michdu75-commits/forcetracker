@@ -788,10 +788,32 @@ function leanMassRecente(){
 
 /** Le métabolisme de base AVEC sa provenance — pour que l'app puisse l'AFFICHER.
  *  `methode` vaut 'katch' ou 'mifflin' ; `raison` dit pourquoi quand on n'a pas pris Katch. */
+/* ⚧ LE SEXE A UN SEUL PROPRIÉTAIRE (31/08→01/09/2026) — DEUX CONVENTIONS OPPOSÉES COEXISTAIENT
+   Le BMR demandait `gender==='H'` (donc *tout ce qui n'est pas 'H'* était traité en FEMME) et le
+   plancher calories demandait `gender==='F'` (donc *tout ce qui n'est pas 'F'* était traité en
+   HOMME). Tant que la valeur vaut 'H' ou 'F' les deux tombent d'accord ; **dès qu'elle vaut autre
+   chose, elles se contredisent**.
+   ⛔⛔ ET CE N'EST PAS THÉORIQUE — le chemin est la RESTAURATION (`setup.js`), qui écrivait
+   `S.gender = d.gender` **sans aucune garde**. Mesuré sur un profil de 60 kg / 165 cm / 40 ans :
+
+     sexe stocké   TDEE   plancher   Mifflin voit   plancher voit
+     "H"           1723   1500       homme          homme          ✅
+     "F"           1524   1200       femme          femme          ✅
+     "Homme"       1524   1500       FEMME          HOMME          ❌
+     "M" · "" · absent : idem ❌
+
+   *La personne est **calculée** en femme et **protégée** en homme.* Et « Homme » est exactement ce
+   qu'un fichier de sauvegarde d'une autre source peut contenir.
+   ⚠️ LE DÉFAUT PAR DÉFAUT N'EST PAS UN CHOIX NOUVEAU : `load()` écrit déjà `…||'H'` quand la clé
+   est absente. Le bug n'était pas d'avoir un défaut, c'est que **deux lecteurs sur trois ne le
+   suivaient pas**. On ne tranche donc rien ici — on fait gagner la règle qui existait déjà.
+   ⚠️ ET C'EST LE PLUS PROTECTEUR DES DEUX (R29) : le plancher homme (1500) est plus haut que le
+   plancher femme (1200), donc un sexe inconnu ne peut pas produire une cible trop basse. */
+function sexeAthlete(){ return S.gender==='F' ? 'F' : 'H'; }
 function bmrDetail(){
   if(!S.bw||!S.height||!S.age) return {kcal:0,methode:null,raison:'profil incomplet'};
   const base=10*S.bw+6.25*S.height-5*S.age;
-  const mifflin=Math.round(S.gender==='H'?base+5:base-161);
+  const mifflin=Math.round(sexeAthlete()==='H'?base+5:base-161);
   const fin=v=>S.smoker?Math.round(v*1.07):v;   // le +7 % fumeur est un effet du tabac sur le
                                                 // métabolisme, pas un correctif de formule :
                                                 // il s'applique donc AUX DEUX, sinon arrêter de
@@ -1067,13 +1089,13 @@ function _autoKcalBrut(phase){
    l'écran, parce qu'une cible qui bouge sans raison visible est pire que pas de plancher. */
 const PLANCHER_KCAL={H:1500,F:1200};
 function _plancherKcal(k){
-  const p=PLANCHER_KCAL[(S.gender==='F')?'F':'H'];
+  const p=PLANCHER_KCAL[sexeAthlete()];
   return Math.max(Math.round(k), p);
 }
 // Le plancher a-t-il mordu ? (pour l'expliquer à l'écran — jamais un relèvement silencieux)
 function plancherKcalActif(phase){
   const brut=_autoKcalBrut(phase);
-  const p=PLANCHER_KCAL[(S.gender==='F')?'F':'H'];
+  const p=PLANCHER_KCAL[sexeAthlete()];
   return brut<p?{brut:Math.round(brut),plancher:p}:null;
 }
 /* 🍚 LES GLUCIDES PLUS HAUTS LES JOURS DE SÉANCE (21/08/2026) — Michel : « les glucides plus
