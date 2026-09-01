@@ -582,6 +582,53 @@ function doGet(e) {
      ⚠️ LA LIMITE EST RENDUE, PAS TUE : les lignes écrites AVANT ft-v1018 n'ont pas de
      colonne `email`. Elles ne sont attribuables à personne, donc elles ne sont ni comptées
      ni accusées — et leur nombre est renvoyé, pour que l'écran puisse le dire. */
+  /* 🩹 CHERCHER LA CORRUPTION DE ft-v1057 CHEZ TOUT LE MONDE (01/09/2026) — demande de Michel
+     apres avoir vu le compte d'Eline : « ce que j'ai eu moi les autres peuvent l'avoir aussi,
+     faut absolument qu'on puisse verifier le compte des autres utilisateurs ». Il a raison :
+     le defaut est arrive le 30/08 et il touche TOUTE personne ayant corrige un poids au clavier
+     depuis — on ne peut pas attendre que chacun s'en apercoive.
+     ⛔ CE QU'ON CHERCHE EST LA SIGNATURE, PAS UNE SUPPOSITION : une serie FAITE dont le poids
+     ou les reps valent `null`. C'est ce que `JSON.stringify(NaN)` produit, et l'app n'ecrit
+     jamais ca autrement (ses deux ecrivains passent par `numFR(...)||0`).
+     ⛔⛔ CETTE ROUTE NE MODIFIE RIEN, ET ELLE NE LIT PAS L'ENTRAINEMENT DES GENS. Elle rend un
+     COMPTE par personne, avec la date et le nom de l'exercice — le minimum pour pouvoir les
+     prevenir — jamais les charges, jamais le profil, jamais la sante. *Un detecteur qui ouvre
+     les donnees de tout le monde pour trouver trois series nulles serait pire que le defaut.*
+     ⛔ Et elle ne repare pas : la valeur d'origine est PERDUE, la deviner serait inventer un
+     entrainement a la place de quelqu'un (R29). */
+  if (p.action === 'setsCorrompus') {
+    if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
+    try {
+      var _pr = PropertiesService.getScriptProperties().getProperties();
+      var _cl = Object.keys(_pr).filter(function(k){ return k.indexOf('u_') === 0; });
+      var _comptes = [], _totalSeries = 0, _illisibles = 0;
+      _cl.forEach(function(k){
+        var _d;
+        try { _d = JSON.parse(_unpackUser_(_pr[k])); } catch(e){ _illisibles++; return; }
+        if (!_d) { _illisibles++; return; }
+        var _touche = [], _n = 0;
+        (_d.sessions || []).forEach(function(se){
+          (se.exs || se.exercises || []).forEach(function(ex){
+            var _c = 0;
+            (ex.sets || []).forEach(function(st){
+              if (!st || !st.done) return;
+              /* ⛔ `null` ET la clé ABSENTE : `JSON.stringify` produit l'un pour NaN et
+                 supprime l'autre pour `undefined`. Les deux viennent du même défaut. */
+              var _kgKo = (st.kg === null || st.kg === undefined);
+              var _repsKo = (st.reps === null || st.reps === undefined);
+              if (_kgKo || _repsKo) { _c++; _n++; _totalSeries++; }
+            });
+            if (_c) _touche.push({ date: se.date || '?', ex: String(ex.name || '?').slice(0, 40), n: _c });
+          });
+        });
+        if (_n) _comptes.push({ email: _d.email || k.slice(2), series: _n, lignes: _touche.slice(0, 12) });
+      });
+      _comptes.sort(function(a,b){ return b.series - a.series; });
+      return json_({ status:'ok', comptes:_comptes, totalSeries:_totalSeries,
+                     comptesLus:_cl.length, illisibles:_illisibles });
+    } catch(e) { return json_({status:'error', error:String(e)}); }
+  }
+
   if (p.action === 'sessionDoublons') {
     if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
     var _mail = String(p.email || '').toLowerCase().trim();

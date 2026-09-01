@@ -1019,7 +1019,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
          👉 36 boutons a plat -> 6 sections. Seule la SURVEILLANCE reste ouverte : c'est la
          seule qu'on regarde sans raison particuliere. -->
     <details class="adm-grp" open>
-      <summary>🩺 Surveillance — ce qui se passe chez les autres <span class="adm-n">4</span></summary>
+      <summary>🩺 Surveillance — ce qui se passe chez les autres <span class="adm-n">5</span></summary>
       <div class="adm-intro">Les 4 alertes qui ne préviennent personne. La panne du 29/07 (stockage plein à 102 %, plus aucune écriture pendant 2 jours) était lisible ici dès le 1ᵉʳ jour.</div>
     <!-- Les 4 sondes de diagnostic existaient déjà, mais il fallait taper une URL avec un jeton
          à la main — donc personne ne les consultait. La panne du 29/07 (réservoir plein à 102 %,
@@ -1054,6 +1054,17 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Un compte <strong>sans code perso</strong> est lisible côté serveur par qui connaît l'adresse. Cette liste dit qui en a un — <strong>sans lire aucune donnée personnelle</strong>.</div>
       <button class="btn btn-bg2" onclick="loadAuthStatusAdmin()" style="padding:11px;font-size:14px;">🔐 Vérifier les comptes</button>
       <div id="admin-auth-list" style="margin-top:4px;"></div>
+    </div>
+    <!-- 🩹 CHERCHER LA CORRUPTION DE ft-v1057 CHEZ TOUS LES TESTEURS (01/09). Demande de Michel
+         apres le compte d'Eline : « ce que j'ai eu moi les autres peuvent l'avoir aussi ». Le
+         defaut est arrive le 30/08 et touche toute personne ayant corrige un poids au clavier
+         depuis. ⛔ Lecture seule : la route ne modifie rien et ne rend que des COMPTES, jamais
+         les charges ni le profil de qui que ce soit. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🩹 Séries abîmées par la virgule</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Du <strong>30/08</strong> au <strong>01/09</strong>, corriger un poids <strong>avec une virgule</strong> dans le détail d'une séance passée effaçait la valeur (elle devenait <code>null</code>). Ce bouton <strong>regarde</strong> les comptes de tous les testeurs et compte les séries touchées — il ne lit ni les charges ni les profils, et <strong>ne répare rien</strong> : la valeur d'origine est perdue, seule la personne la connaît.</div>
+      <button class="btn btn-bg2" onclick="loadSetsCorrompusAdmin()" style="padding:11px;font-size:14px;">🩹 Chercher les séries abîmées</button>
+      <div id="admin-corrompus" style="margin-top:4px;"></div>
     </div>
     </details>
     <details class="adm-grp">
