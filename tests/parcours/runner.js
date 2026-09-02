@@ -22249,7 +22249,7 @@ console.log('\n-- CCI. Les 4 vérificateurs du banc d\'essai qui accusaient à t
 }
 
 
-/* == BLOC CCII - EXPORTS DATES (NUTRITION · POIDS) ET LE DOUBLON DE SEANCE (ft-v1095) ==
+/* == BLOC CCIII - EXPORTS DATES (NUTRITION · POIDS) ET LE DOUBLON DE SEANCE (ft-v1096) ==
    Michel : « il faudra créer un export daté de la nutrition et aussi côté poids », puis
    « répare le dédoublement toi-même ».
    ⛔⛔ LE DOUBLON EST LE POINT DUR, ET IL VIENT D'UN CORRECTIF : ft-v1094 signait une seance
@@ -22264,7 +22264,7 @@ console.log('\n-- CCI. Les 4 vérificateurs du banc d\'essai qui accusaient à t
    repli sur `date|nb`, DEUX VRAIES seances du meme jour fusionnaient en une — on aurait echange
    un doublon contre une PERTE, ce qui est le mauvais sens (R29). D'ou le nom du 1er exercice
    dans le repli : il ne change pas quand on corrige un poids, contrairement au volume. */
-console.log('\n-- CCII. Exports datés · et le doublon de séance de ft-v1094 (ft-v1095) --');
+console.log('\n-- CCIII. Exports datés · et le doublon de séance de ft-v1094 (ft-v1096) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
@@ -22297,7 +22297,7 @@ console.log('\n-- CCII. Exports datés · et le doublon de séance de ft-v1094 (
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
   });
-  if(E.err) t('CCII (exports) n\'a pas pu tourner', false, E.err);
+  if(E.err) t('CCIII (exports) n\'a pas pu tourner', false, E.err);
   else{
     t('⛔ le témoin a bien PRODUIT deux fichiers (sinon tout le reste serait vert sur du vide)',
       E.nb===2, JSON.stringify(E.noms));
@@ -22339,7 +22339,7 @@ console.log('\n-- CCII. Exports datés · et le doublon de séance de ft-v1094 (
     return o;
    }catch(e){return {err:String(e)};}
   });
-  if(F.err) t('CCII (doublon) n\'a pas pu tourner', false, F.err);
+  if(F.err) t('CCIII (doublon) n\'a pas pu tourner', false, F.err);
   else{
     t('⭐⭐ SON CAS : corriger une charge ne DÉDOUBLE plus la séance (avec identifiant)',
       F.corrAvecId===1, 'séances = '+F.corrAvecId);
@@ -22353,6 +22353,53 @@ console.log('\n-- CCII. Exports datés · et le doublon de séance de ft-v1094 (
       F.sansEdition===1, 'séances = '+F.sansEdition);
     t('⭐ R2 : la fusion emploie l\'identité que l\'app utilise déjà (`ts || id`)',
       F.signature===true, '');
+  }
+
+  /* ── RÈGLE D'OR #11 ET LES TEXTES QUI DÉSIGNENT L'ONGLET RENOMMÉ ────────────────────────
+     ⛔⛔ CE TÉMOIN-LÀ PROTÈGE LA PARTIE QU'ON OUBLIE. Renommer un onglet est le geste qui
+     PÉRIME le plus de textes d'un coup : 9 phrases disaient « Progrès → Poids » — l'aide `?`,
+     l'aide détaillée, une carte de nouveauté, une diapo du Guide, et jusqu'au CONTEXTE envoyé
+     à Milo. *Un texte qui envoie chercher un onglet qui n'existe plus est pire qu'un texte
+     absent : il fait douter la personne d'elle-même.* C'est la famille des « textes qui
+     annoncent ce que le code n'applique plus » (ft-v1086, ft-v1093), déclenchée cette fois
+     par un RENOMMAGE et non par un changement de calcul.
+     ⚠️ ET LE `&` N'EST PAS UN DÉTAIL : les aides sont posées en `innerHTML` (donc `&amp;`),
+     le contexte de Milo est du TEXTE BRUT (donc `&` en clair). *Le même nom, deux écritures,
+     et se tromper d'écriture affiche « Corps &amp;amp; santé » à l'écran.* */
+  const G=await pg.evaluate(()=>{
+   try{
+    const o={};
+    const f=(id)=>NEW_FEATURES.find(x=>x.id===id);
+    o.rougeNutri = !!(f('export-nutri') && f('export-nutri').screen==='nutrition');
+    o.rougePoids = !!(f('export-poids') && f('export-poids').screen==='progress');
+    o.pasDePopup = !WHATS_NEW.some(w=>/tableur \(CSV\) dat/i.test(w.d||''));
+    const tips=(sc)=>((_HELP_DATA[sc]&&_HELP_DATA[sc].tips)||[]).map(x=>x.t).join(' ');
+    o.aideNutri  = /Exporter ton journal alimentaire/.test(tips('nutrition'));
+    o.aidePoids  = /Exporter tes pes/.test(tips('progress'));
+    o.diapoGuide = APP_GUIDE_SLIDES.some(s=>/ressortent quand tu veux/.test(s.t||''));
+    const b=document.getElementById('ptab-poids');
+    o.libelle = b ? b.textContent.trim() : '(absent)';
+    const corpus = tips('nutrition')+' '+tips('progress')+' '
+                 + JSON.stringify(NEW_FEATURES)+' '+JSON.stringify(APP_GUIDE_SLIDES);
+    o.perimes = (corpus.match(/Progrès → Poids/g)||[]).length;
+    o.doubleEntite = corpus.indexOf('&amp;amp;')>=0;
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(G.err) t('CCIII (règle #11) n\'a pas pu tourner', false, G.err);
+  else{
+    t('📣 #11 · point rouge NUTRITION posé sur le bon écran', G.rougeNutri===true, '');
+    t('📣 #11 · point rouge POIDS posé sur le bon écran', G.rougePoids===true, '');
+    t('⛔ #11 · et AUCUNE pop-up : elle se mérite, deux boutons facultatifs ne la méritent pas (R25)',
+      G.pasDePopup===true, '');
+    t('📣 #11 · aide `?` de l\'onglet Nutrition', G.aideNutri===true, '');
+    t('📣 #11 · aide `?` de l\'onglet Progrès', G.aidePoids===true, '');
+    t('📣 #11 · diapo du Guide', G.diapoGuide===true, '');
+    t('🧭 l\'onglet s\'appelle « Corps & santé »', G.libelle==='Corps & santé', 'libellé = '+G.libelle);
+    t('⛔⛔ … et PLUS AUCUN texte n\'envoie vers « Progrès → Poids » (9 avant)',
+      G.perimes===0, G.perimes+' texte(s) périmé(s)');
+    t('⚠️ … sans avoir doublé l\'entité HTML au passage (« &amp;amp; » à l\'écran)',
+      G.doubleEntite===false, '');
   }
   await cx.close();
 }

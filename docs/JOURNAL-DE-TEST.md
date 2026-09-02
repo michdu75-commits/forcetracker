@@ -69,6 +69,28 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 UN ALIMENTS « ESTIMÉ » ET UN ALIMENT « SCANNÉ » — Milo fait-il la différence ?
+
+**D'où ça vient (02/09/2026, ft-v1096).** L'export du journal alimentaire porte désormais une
+colonne `source` — *scanné au code-barres · tapé à la main · estimé par l'IA* — parce qu'un
+chiffre sans provenance est invérifiable six mois plus tard (**R33**). En l'écrivant, la question
+s'est posée toute seule : **le fichier fait la distinction, Milo la fait-il ?**
+
+**Le doute, tel quel.** `S.foodLog` est **exclu du contexte** de Milo (mesuré en ft-v1093 : c'est
+une exclusion écrite, pas un oubli). Donc aujourd'hui la question n'a même pas de terrain — mais
+le jour où on branchera le journal alimentaire sur Milo, elle décidera de ce qu'il a le droit de
+dire. *Une valeur estimée par un modèle et une valeur lue sur un code-barres n'autorisent pas la
+même phrase* : « tu es à 2 100 kcal » sur des estimations est une **fausse précision** (**R29**),
+et c'est exactement le défaut que `R32` nomme pour les balances.
+
+**Ce qui rendrait l'entrée promouvable.** L'attendu est vérifiable par du code dès que le journal
+entrera dans le contexte : sur un journal composé **uniquement** de lignes `estime`, Milo ne doit
+pas annoncer un total au kcal près sans le qualifier ; sur un journal **scanné**, il peut. ⛔ Tant
+que `foodLog` reste exclu, **il n'y a rien à mesurer** — l'entrée attend son terrain, elle ne
+devient pas un scénario.
+
+**État : à trier** (bloquée par une décision produit : brancher ou non le journal sur Milo).
+
 ### 🟡 SON RÉGIME REVIENT ENFIN JUSQU'À MILO — MAIS EST-CE QU'IL LE SUIT ?
 
 **D'où ça vient (01/09/2026, ft-v1093).** Le mode alimentaire (`foodMode`) et le jeûne

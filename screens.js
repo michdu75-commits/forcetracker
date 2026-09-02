@@ -257,6 +257,10 @@ const _HELP_DATA={
       {i:'📥',t:'Tu as un plan de ta diététicienne ? Bouton « Importer un plan » (Plan de repas IA) : prends-le en photo ou importe le PDF, l\'IA range les repas.'},
       {i:'🎯',t:'Calories trop hautes ou trop basses pour toi ? Sous l\'anneau, bouton « ✎ Ajuster mes calories » : tape ton chiffre à la main. Les protéines et lipides restent calés sur ton profil, les glucides s\'ajustent → équilibre garanti. « Revenir en automatique » à tout moment.'},
       {i:'💪',t:'Objectif « Perte de gras + muscle » (Profil → Objectif) = recomposition : léger déficit + protéines élevées → perdre du gras sans perdre de muscle (muscles toniques, pas « skinny fat »).'},
+      /* 📤 AIDE DE L'ONGLET (règle d'or #11) : le bouton EXISTE, l'aide dit ce qu'on peut en
+         faire et surtout ce que le fichier CONTIENT — la provenance est ce qui distingue un
+         export utile d'une colonne de chiffres sans histoire (R33). */
+      {i:'\u{1F4E4}',t:'<b>Exporter ton journal alimentaire</b> : le bouton \u{1F4E4} en haut du journal cr\u00e9e un <b>tableur (CSV)</b> dat\u00e9 du jour, que tu ouvres dans Excel, Numbers ou Google Sheets. Une ligne par aliment : <b>date, repas, quantit\u00e9, calories et macros</b>. \u2b50 Il dit aussi <b>d\u2019o\u00f9 vient chaque valeur</b> \u2014 scann\u00e9e au code-barres, tap\u00e9e \u00e0 la main ou estim\u00e9e : sans \u00e7a, un chiffre douteux est impossible \u00e0 v\u00e9rifier six mois plus tard. \u26a0\uFE0F Rien n\u2019est envoy\u00e9 nulle part : le fichier reste sur ton t\u00e9l\u00e9phone, tu choisis quoi en faire.'},
     ],
     female:[
       {i:'🌙',t:'Tes macros s\'adaptent automatiquement : plus de glucides en folliculaire (énergie haute), légère hausse en lutéale.'},
@@ -288,6 +292,10 @@ const _HELP_DATA={
          sur le moment ; celle-ci l'explique quand on vient chercher pourquoi (R25). */
       {i:'✨',t:'<b>Objectif « Perte de gras + muscle » : ta balance ne doit presque pas bouger, et c\'est normal.</b> En recomposition, le gras qui part et le muscle qui vient <b>s\'annulent sur le pèse-personne</b> — l\'évolution attendue est <b>stable à légèrement négative (0 à −0,3 kg par semaine)</b>. Ce chiffre vient du léger déficit que l\'app applique elle-même (−250 kcal/jour), pas d\'un objectif imposé. ⚠️ <b>Une balance immobile n\'est donc pas un échec ici</b> : ce qui te dira si ça marche, ce sont tes <b>charges</b> (l\'onglet Progrès), tes <b>mensurations</b> et tes <b>photos</b> — pas le seul chiffre du matin.'},
       {i:'🧪',t:'Bilan corporel (balance pro) : sous ta courbe de poids, section « Bilan corporel ». Tu passes sur une balance à impédance ? Enregistre tes chiffres (graisse viscérale, muscle, métabolisme, détail par segment…) par 📷 photo, ✏️ à la main ou 📋 code. Le bilan sert aussi de pesée du jour (poids + masse grasse), tu suis l\'évolution, et Milo s\'en sert.'},
+      /* 📤 AIDE DE L'ONGLET (règle d'or #11), et elle nomme l'onglet par son NOUVEAU nom :
+         « Poids » est devenu « Corps & santé » en ft-v1096 — une aide qui garde l'ancien nom
+         envoie chercher un onglet qui n'existe plus (R2, la famille des textes périmés). */
+      {i:'\u{1F4E4}',t:'<b>Exporter tes pes\u00e9es</b> : dans <b>Progr\u00e8s \u2192 Corps &amp; sant\u00e9</b>, le bouton \u{1F4E4} au-dessus de tes pes\u00e9es cr\u00e9e un <b>tableur (CSV)</b> dat\u00e9 du jour \u2014 une ligne par pes\u00e9e, avec <b>la date, le poids et ton taux de masse grasse</b> quand tu l\'as not\u00e9. \u2b50 Utile pour garder ton historique ailleurs, le montrer \u00e0 un coach ou tracer ta propre courbe. \u26a0\uFE0F Le fichier reste sur ton t\u00e9l\u00e9phone : rien n\'est envoy\u00e9.'},
     ],
     female:[
       {i:'⚖️',t:'Variations de poids ±1 à 3 kg en cours de cycle = rétention d\'eau, pas de la graisse. Compare la même phase entre cycles.'},
@@ -393,7 +401,7 @@ function openBmrHelp(){
       +(bd.raison?`<br><span style="font-size:12px">Raison : ${bd.raison}.</span>`:''))
     + box('var(--bg3)','var(--sep)',
       `<b style="color:var(--t1)">Comment le rendre plus juste</b><br>`
-      +`Note ta <b>masse maigre</b> (ou ton % de masse grasse) dans Progrès → Poids → « Bilan corporel ». L\'app passera alors sur <b>Katch-McArdle</b>, qui tient compte de ton muscle — chez quelqu\'un de musclé, ça change souvent de <b>100 à 200 kcal par jour</b>.<br>`
+      +`Note ta <b>masse maigre</b> (ou ton % de masse grasse) dans Progrès → Corps &amp; santé → « Bilan corporel ». L\'app passera alors sur <b>Katch-McArdle</b>, qui tient compte de ton muscle — chez quelqu\'un de musclé, ça change souvent de <b>100 à 200 kcal par jour</b>.<br>`
       +`<span style="font-size:12px">⚠️ Un bilan de plus de 3 mois, ou un poids qui a bougé de plus de 5 % depuis, n\'est plus utilisé : on ne sait pas si les kilos sont du muscle ou du gras, et deviner ici fausserait tout le reste.</span>`);
   }
   h+=box('var(--bg3)','var(--sep)',

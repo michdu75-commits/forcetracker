@@ -6,7 +6,30 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1095`.
+- **Version en ligne (live) :** `ft-v1096`.
+- 📤⭐ **DEUX EXPORTS DATÉS — NUTRITION ET POIDS** (ft-v1096). Michel : *« il faudra aussi
+  créer un export daté de la nutrition et aussi côté poids »*. Ils **réutilisent le patron**
+  de `exportHistoCsv` (**R13**) : `;` + BOM (sans lui Excel FR ouvre le `,` en UNE colonne),
+  feuille de partage iOS, toast qui sait dire « je ne sais pas ». ⛔ **Un seul propriétaire
+  de l'échappement** (`_csvEchappe`/`_csvFichier`, **R2**). La nutrition exporte aussi
+  `saisie` et `source` — sans la provenance, on ne sait plus si une valeur a été **scannée**,
+  **tapée** ou **estimée** (**R33**). ⚠️ Le poids lit `kg`, **pas** `bw`.
+- 🩹⭐⭐ **LE DOUBLON QUE LE CORRECTIF DE LA VEILLE FABRIQUAIT** (ft-v1096). La fusion
+  multi-onglets de ft-v1094 signait une séance `date|nb|volume` — or ***corriger une charge
+  change le volume***, donc la version corrigée et celle du disque avaient deux signatures et
+  l'union **gardait les deux**. *Le correctif qui répare une perte de séance en fabriquait un
+  doublon*, celui que ft-v1083 venait de nettoyer, déclenché par le geste le plus banal.
+  ⭐ **Le propriétaire existait déjà, à trois endroits** : `s.ts || s.id` (**R2**).
+  ⚠️ **Risque symétrique mesuré AVANT d'écrire** : avec un repli `date|nb`, deux VRAIES
+  séances du même jour fusionnaient en UNE — un doublon échangé contre une **perte**, le
+  mauvais sens (**R29**). D'où le **nom du 1ᵉʳ exercice** dans le repli : il ne bouge pas
+  quand on corrige un poids. Six cas mesurés, six verts.
+- 🧭 **L'onglet « Poids » devient « Corps & santé »** (choix de Michel) : il porte aussi les
+  corrélations, le bilan corporel et le bilan sanguin. Mesuré à 3 largeurs — identique à 390
+  et 375 px, +18 px de haut à 320 px (le libellé passe sur deux lignes, rien ne déborde).
+  ⚠️ Ma 1ʳᵉ sonde mesurait **0 partout** en annonçant « ne déborde pas » : `goScreen`
+  **préfixe lui-même** par `s-`. Elle vérifie désormais que l'écran est ACTIF avant de mesurer.
+- **Version précédente :** `ft-v1095`.
 - 📥⭐⭐ **CE QU'UN MODÈLE HALLUCINE N'ENTRE PLUS DANS L'HISTORIQUE** (ft-v1095). Michel :
   *« vas-y attaque les imports »* — 5ᵉ passe, la dernière famille non instruite. Mesuré en
   rendant à l'app, **par ses vraies fonctions**, ce qu'un modèle peut lui renvoyer :
