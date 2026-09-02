@@ -1985,6 +1985,33 @@ un « champ vide » serait vrai parce que **rien** n'a été sauvegardé.
 on répare un maillon, on vérifie **l'autre** : ici, réparer le serveur seul aurait laissé `goalLog`
 perdu, et réparer le lecteur seul aussi.
 
+### 📏 CE QUI A ÉTÉ MESURÉ ET N'A RIEN RENDU — à lire avant de refaire la chasse
+
+Le balayage complet du trajet a porté sur **106 champs de `S`**, dont **69 réellement envoyés**
+(corps capturé en remplaçant `fetch`, aucune sortie réseau). Sur ces 69 : **3 cassés** (les trois
+ci-dessus) et **66 qui bouclent**. Écrire ce vide coûte trois lignes et évite de tout refaire :
+
+- **`cycle`, `programmes`, `exRestPref`, `exSwaps` sont SAINS.** Ils avaient été signalés comme
+  suspects par un détecteur *statique* lors d'une passe précédente — **faux positifs**, corrigés
+  par la mesure comportementale : ils font l'aller-retour et reviennent identiques. *Ne pas les
+  « réparer ».*
+- **`gardienStats` : absence VOLONTAIRE, pas un oubli.** Il monte bien au serveur et n'est pas
+  relu à la restauration — c'est cohérent, le compteur est **par appareil** (la modale s'intitule
+  « Gardien — ce téléphone ») et il n'existe côté cloud que pour l'agrégation admin. Le restaurer
+  importerait sur un téléphone neuf un compteur de réponses qu'il n'a pas produites (**R30**).
+- **`healthDaily` / `healthInbox` : retard d'un démarrage, pas une perte.** Ils arrivent par une
+  autre route et `autoConnect` les réinjecte au lancement suivant.
+- **37 champs ne partent pas du tout au cloud**, et aucun n'entre dans cette famille — plusieurs
+  avec leur raison écrite (`coachConversations` reste local par confidentialité, `exPhotos` a été
+  exclu parce qu'il saturait les 9 Mo).
+- ⏭️ **Un seul point reste ouvert, et il est hors de cette famille** : `beginnerJourney` n'est
+  **jamais envoyé** — il n'atteint donc même pas la première colonne. À instruire par une passe
+  « champs qui ne partent jamais », pas conclu ici.
+
+⚠️ **Limite écrite** : le serveur réel est injoignable depuis le conteneur (403). Toutes les
+mesures serveur passent par le **vrai `Code.js`** dans un bac à sable — donc elles décrivent le
+**code**, pas l'instance en production (**R18**).
+
 ### ⛔ Le piège dans le piège : la convention du voisin n'est pas forcément la bonne
 `handleSaveProfile_` applique partout `_ps_` — *« le vide ne gagne jamais sur du rempli »*. Copier
 cette ligne pour `foodMode` **aurait fabriqué un bug pire que celui qu'on répare** : ces réglages

@@ -69,6 +69,32 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 SON RÉGIME REVIENT ENFIN JUSQU'À MILO — MAIS EST-CE QU'IL LE SUIT ?
+
+**D'où ça vient (01/09/2026, ft-v1093).** Le mode alimentaire (`foodMode`) et le jeûne
+(`fasting`) étaient **envoyés au serveur et jamais stockés** : après une restauration ils
+revenaient vides. Milo recevait donc un profil **faux** — plus de cétogène, plus de jeûne — et
+pouvait proposer du pain, du riz ou un petit-déjeuner à quelqu'un qui n'en mange pas. C'est
+corrigé côté **donnée**, et un témoin le fige (bloc CXCIX).
+
+**⛔ MAIS LA DONNÉE N'EST PAS LE COMPORTEMENT.** On a prouvé que la consigne *arrive* dans le
+contexte (`coach.js` la compose bien à partir de `S.foodMode`). On n'a **jamais mesuré** que Milo
+la **suit**. C'est exactement la limite écrite au §8 de `ARCHITECTURE-CERVEAU-CERVELET` :
+*`tests/milo` prouve la PRÉSENCE, jamais l'OBÉISSANCE.*
+
+**⭐ L'attendu est vérifiable par du CODE, donc c'est promouvable** (critère du fichier) : avec
+`foodMode='keto'` + `fasting='16-8'`, une demande de repas ne doit contenir **ni pain, ni riz, ni
+pâtes, ni céréales**, et **aucune proposition de petit-déjeuner**. Rien qui dépende du goût ou du
+ton — des mots présents ou absents.
+
+**⚠️ Et le cas voisin vaut d'être joué en même temps** : quelqu'un qui **décoche** son régime.
+Le correctif a dû traiter les deux sens (`''` est une décision, pas un envoi vide), donc la
+question symétrique est réelle — *Milo cesse-t-il de parler cétogène quand la personne arrête ?*
+Une consigne qui ne sait pas s'éteindre est aussi fausse qu'une consigne absente.
+
+⏳ **Coût honnête** : 1 à 2 appels par passe. Rien n'est promu tant que ce n'est pas décidé.
+
+
 ### 🟡 LE PARCOURS POUR CRÉER SA SÉANCE — « pas terrible », et c'est le chemin de TOUT LE MONDE
 **01/09/2026, remarque spontanée de Michel** en parlant d'autre chose : *« personne n'utilise Milo
 pour créer leur séance. Dans quelque temps je vais recréer mes propres séances — d'ailleurs en
