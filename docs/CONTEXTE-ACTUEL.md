@@ -6,7 +6,9 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1099`.
+- **Version en ligne (live) :** `ft-v1099`. ✅ **Déploiement du site vérifié vert** (run **#785**,
+  commit `c18e971`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement backend : `Code.js`
+  n'a pas été touché.
 - 🚪⭐⭐ **LA TROISIÈME PORTE VERS L'EFFACEMENT — ET LA SEULE QUI NE DEMANDAIT RIEN**
   (ft-v1099). Michel : *« on continue sur les incohérences ? »*. **Charger un programme
   effaçait une séance en cours sans un mot** : mesuré par les vraies fonctions, **3 séries
