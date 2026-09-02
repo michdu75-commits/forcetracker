@@ -6,8 +6,10 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1102`. ⏳ **Déploiement à vérifier** (**R18** : « poussé »
-  ne veut pas dire « en ligne »). ⚠️ Aucun déploiement backend : `Code.js` n'a pas été touché.
+- **Version en ligne (live) :** `ft-v1102`. ✅ **Déploiement du site vérifié vert** (run **#805**,
+  commit `cfd0246`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement backend : `Code.js`
+  n'a pas été touché. ⚠️ **Le rendu sur Safari/iPhone n'a PAS pu être vérifié ici** (conteneur
+  Chromium uniquement) — c'est à Michel de l'ouvrir sur son téléphone.
 - 📏⛔⛔ **UNE PENTE QUI MESURAIT LA BALANCE, PAS LE CORPS** (ft-v1102) — **le vrai défaut du
   jour, et il n'était pas au programme.** `linearRegression` recevait l'**INDEX** du point
   comme abscisse aux **trois** endroits qui l'appelaient, puis le code faisait `slope*7` en
