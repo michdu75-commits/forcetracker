@@ -977,6 +977,27 @@ chaque changement — **et c'est une décision, pas un correctif évident**.
 👉 **Reste ici, pas promu** : ce n'est pas un comportement de Milo, c'est un affichage d'outil
 interne réservé à l'admin.
 
+### 🟡 UN PROGRAMME IMPORTÉ PEUT-IL POSER UNE CHARGE ABSURDE DANS UNE SÉANCE ?
+**02/09/2026, ft-v1096.** L'import d'**historique** est instruit (ft-v1095), le **bilan corporel**
+aussi (ft-v1096). L'import de **PROGRAMME**, lui, ne l'est pas — et il n'entre pas par la même
+porte : un programme ne pose pas de record, il **pré-remplit une séance**. La question ouverte :
+*si le modèle lit « 4×8 » comme « 48 séries », ou une charge à 700 kg, qu'est-ce qui l'arrête
+avant la salle ?*
+
+⚠️ **Et le doute est raisonné, pas gratuit** : `_serieValide` (ft-v1095) borne ce qui entre dans
+l'**historique**, pas ce qui entre dans un **programme**. Les deux chemins écrivent dans des
+structures différentes.
+👉 **Vérifiable par du CODE** (une réponse hostile rendue à la vraie fonction d'import, puis on
+regarde ce qui atterrit dans la séance) → **promouvable** dès que quelqu'un s'y met.
+
+### 🟡 LE CODE-BARRES : QUE SE PASSE-T-IL SI LE MODÈLE LIT DES CHIFFRES QUI N'EXISTENT PAS ?
+**02/09/2026, ft-v1096.** `readBarcode` renvoie des chiffres qu'on cherche ensuite gratuitement
+dans Open Food Facts. Le cas *« code inconnu »* est sans doute déjà traité (la recherche ne rend
+rien) — mais **un chiffre mal lu peut aussi tomber sur un AUTRE produit réel**. *L'app afficherait
+alors des macros parfaitement plausibles pour le mauvais aliment*, et rien ne le signalerait.
+👉 **Ce n'est pas mesurable par du code seul** (il faudrait savoir ce que la personne tenait dans
+la main) — ça relève du **juge humain**, ou d'une confirmation à l'écran avant enregistrement.
+
 ---
 
 ## ⚠️ Comment fouiller les conversations (leçon du 21/08)

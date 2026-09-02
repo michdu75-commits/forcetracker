@@ -538,6 +538,21 @@ function _serieValide(kg, reps){
      en gardant de la marge pour une presse à cuisses (240 × 20 = 509 passe encore). */
   return bz(k, r) <= 600;
 }
+/* ⛔⛔ ft-v1096 — LE POIDS AUSSI A UN SEUL PROPRIÉTAIRE, ET POUR LA MÊME RAISON.
+   `saveWeightEntry` refuse depuis toujours hors **20–300 kg** (« Poids invalide »). Le bilan
+   corporel, lui, ne vérifiait que `weight > 0` — et il écrit dans le MÊME `S.weightLog`.
+   MESURÉ, témoin de comparaison à l'appui : le chiffre **3 000** est *refusé* quand on le TAPE
+   et *accepté* quand un modèle le LIT. Conséquence mesurée : `S.bw = 3000`, et le **TDEE passe
+   à 47 900 kcal** — donc toutes les cibles de l'onglet Nutrition deviennent absurdes, et Milo
+   reçoit un poids de trois tonnes. Un poids de **2 kg** passait aussi (TDEE 1 431).
+   👉 *Le même garde-fou sur un chemin et pas sur l'autre* : c'est **R8**, 4ᵉ fois cette semaine,
+   et c'est toujours le chemin AUTOMATIQUE qui est le moins protégé — celui où personne ne
+   relit. ⚠️ Les bornes ne sont pas inventées : ce sont **exactement** celles que l'app affiche
+   déjà à qui saisit à la main. */
+function _poidsValide(kg){ const k=+kg; return isFinite(k) && k>=20 && k<=300; }
+/* Le pourcentage de masse grasse suit la même logique : au-delà, ce n'est plus une mesure,
+   c'est une ligne mal lue (mesuré : 300 % passait sans un mot). */
+function _pctGrasValide(p){ const v=+p; return isFinite(v) && v>=3 && v<=70; }
 /* ⛔ ET LA DATE : mesuré, `1900-01-01`, `2099-01-01` et même la chaîne « le mardi » entraient
    telles quelles dans l'historique. Une date au 22ᵉ siècle se place en tête de tous les tris,
    une date de 1900 étire chaque graphe sur 126 ans, et « le mardi » ne se compare à rien.

@@ -22249,7 +22249,7 @@ console.log('\n-- CCI. Les 4 vérificateurs du banc d\'essai qui accusaient à t
 }
 
 
-/* == BLOC CCIII - EXPORTS DATES (NUTRITION · POIDS) ET LE DOUBLON DE SEANCE (ft-v1096) ==
+/* == BLOC CCIV - EXPORTS DATES (NUTRITION · POIDS) ET LE DOUBLON DE SEANCE (ft-v1097) ==
    Michel : « il faudra créer un export daté de la nutrition et aussi côté poids », puis
    « répare le dédoublement toi-même ».
    ⛔⛔ LE DOUBLON EST LE POINT DUR, ET IL VIENT D'UN CORRECTIF : ft-v1094 signait une seance
@@ -22264,7 +22264,7 @@ console.log('\n-- CCI. Les 4 vérificateurs du banc d\'essai qui accusaient à t
    repli sur `date|nb`, DEUX VRAIES seances du meme jour fusionnaient en une — on aurait echange
    un doublon contre une PERTE, ce qui est le mauvais sens (R29). D'ou le nom du 1er exercice
    dans le repli : il ne change pas quand on corrige un poids, contrairement au volume. */
-console.log('\n-- CCIII. Exports datés · et le doublon de séance de ft-v1094 (ft-v1096) --');
+console.log('\n-- CCIV. Exports datés · et le doublon de séance de ft-v1094 (ft-v1097) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
@@ -22297,7 +22297,7 @@ console.log('\n-- CCIII. Exports datés · et le doublon de séance de ft-v1094 
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
   });
-  if(E.err) t('CCIII (exports) n\'a pas pu tourner', false, E.err);
+  if(E.err) t('CCIV (exports) n\'a pas pu tourner', false, E.err);
   else{
     t('⛔ le témoin a bien PRODUIT deux fichiers (sinon tout le reste serait vert sur du vide)',
       E.nb===2, JSON.stringify(E.noms));
@@ -22339,7 +22339,7 @@ console.log('\n-- CCIII. Exports datés · et le doublon de séance de ft-v1094 
     return o;
    }catch(e){return {err:String(e)};}
   });
-  if(F.err) t('CCIII (doublon) n\'a pas pu tourner', false, F.err);
+  if(F.err) t('CCIV (doublon) n\'a pas pu tourner', false, F.err);
   else{
     t('⭐⭐ SON CAS : corriger une charge ne DÉDOUBLE plus la séance (avec identifiant)',
       F.corrAvecId===1, 'séances = '+F.corrAvecId);
@@ -22386,7 +22386,7 @@ console.log('\n-- CCIII. Exports datés · et le doublon de séance de ft-v1094 
     return o;
    }catch(e){return {err:String(e)};}
   });
-  if(G.err) t('CCIII (règle #11) n\'a pas pu tourner', false, G.err);
+  if(G.err) t('CCIV (règle #11) n\'a pas pu tourner', false, G.err);
   else{
     t('📣 #11 · point rouge NUTRITION posé sur le bon écran', G.rougeNutri===true, '');
     t('📣 #11 · point rouge POIDS posé sur le bon écran', G.rougePoids===true, '');
@@ -22402,6 +22402,102 @@ console.log('\n-- CCIII. Exports datés · et le doublon de séance de ft-v1094 
       G.doubleEntite===false, '');
   }
   await cx.close();
+}
+
+/* ═══ CCIII. LE POIDS LU PAR L'IA A LES MÊMES BORNES QUE LE POIDS TAPÉ (ft-v1096) ═══════════
+   Suite des imports. ⛔⛔ LE CONSTAT TIENT EN UNE PHRASE, et c'est le témoin de comparaison
+   qui le rend indiscutable : **le chiffre 3 000 est REFUSÉ quand on le TAPE et ACCEPTÉ quand
+   un modèle le LIT.** `saveWeightEntry` borne depuis toujours à 20–300 kg ; `saveBodyScan` ne
+   vérifiait que `weight > 0` — et il écrit dans le MÊME `S.weightLog`.
+   MESURÉ : `S.bw = 3000` et le **TDEE passe à 47 900 kcal**, donc toutes les cibles de
+   l'onglet Nutrition deviennent absurdes et Milo reçoit un poids de trois tonnes. Un poids de
+   **2 kg** passait aussi (TDEE 1 431), et un **% de gras à 300 %** était enregistré sans un mot.
+   ⭐ *C'est R8, 4ᵉ fois cette semaine — et c'est toujours le chemin AUTOMATIQUE qui est le
+   moins protégé : celui où personne ne relit.*
+   ⛔ Les bornes ne sont pas inventées : ce sont EXACTEMENT celles que l'app affiche déjà à qui
+   saisit à la main. Un seul propriétaire (`_poidsValide`), employé par les deux chemins. */
+console.log('\n-- CCIII. Le poids lu par l\'IA a les mêmes bornes que le poids tapé (ft-v1096) --');
+{
+  const SCANS=[
+    ['temoin', {weight:84.2, fatMass:14.1, bf:16.7, muscle:38.4}],
+    ['gros',   {weight:3000, fatMass:14.1, bf:16.7}],
+    ['petit',  {weight:2,    fatMass:0.4,  bf:16.7}],
+    ['gras',   {weight:84,   fatMass:14.1, bf:300}],
+  ];
+  const R={};
+  for(const [cle,scan] of SCANS){
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
+    await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',ft4_premium:'1',ft4_hascode:'1'}));
+    await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+    R[cle]=await pg.evaluate(async(o)=>{
+      const out={toasts:[]}, wait=ms=>new Promise(r=>setTimeout(r,ms));
+      const _bwAvant=S.bw;          // ⛔ on compare à CE QU'IL Y AVAIT, pas à un nombre écrit en dur
+      const vt=window.toast; window.toast=function(m){out.toasts.push(String(m).slice(0,110));return vt&&vt.apply(this,arguments);};
+      try{
+        await _bsRemplirFormulaire(Object.assign({date:new Date().toISOString().slice(0,10)},o),'ia');
+        await wait(200); saveBodyScan(); await wait(300);
+      }catch(e){ out.err=String(e.message||e).slice(0,90); }
+      out.bilans=(S.bodyScans||[]).length;
+      out.poids=(S.weightLog||[]).map(w=>w.kg);
+      out.bw=S.bw; out.bwAvant=_bwAvant;
+      out.bf=(S.bodyScans&&S.bodyScans[0])?S.bodyScans[0].bf:null;
+      try{ out.tdee=Math.round(calcTDEE()); }catch(e){ out.tdee='ERR'; }
+      return out;
+    }, scan);
+    R[cle].errsJS=errs; await cx.close();
+  }
+  // le témoin de COMPARAISON : la saisie manuelle du même chiffre
+  const cxm=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pm=await cxm.newPage();
+  await pm.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pm.goto('http://localhost:'+PORT+'/index.html'); await pm.waitForTimeout(2300);
+  const MAN=await pm.evaluate(async()=>{
+    const out={toasts:[]}, wait=ms=>new Promise(r=>setTimeout(r,ms));
+    const vt=window.toast; window.toast=function(m){out.toasts.push(String(m).slice(0,70));return vt&&vt.apply(this,arguments);};
+    goScreen('progress'); try{ switchProgTab('poids'); }catch(e){}
+    let inp=document.getElementById('wentry-inp');
+    if(!inp){ inp=document.createElement('input'); inp.id='wentry-inp'; document.body.appendChild(inp); }
+    inp.value='3000'; saveWeightEntry(); await wait(180); out.gros=(S.weightLog||[]).map(w=>w.kg);
+    inp.value='84.2'; saveWeightEntry(); await wait(180); out.bon=(S.weightLog||[]).map(w=>w.kg);
+    return out;
+  });
+  await cxm.close();
+
+  t('⛔⛔ LE TÉMOIN : un rapport plausible passe toujours, poids et TDEE compris (sinon tout le bloc est vert en refusant tout)',
+    R.temoin.bilans===1 && R.temoin.poids[0]===84.2 && R.temoin.tdee>2000 && R.temoin.tdee<4000,
+    JSON.stringify({b:R.temoin.bilans,p:R.temoin.poids,tdee:R.temoin.tdee}));
+  t('⛔ LE TÉMOIN DE COMPARAISON : la saisie MANUELLE refuse bien 3 000 kg (c\'est la borne qu\'on réplique, pas une invention)',
+    MAN.gros.length===0 && MAN.bon[0]===84.2 && MAN.toasts.some(m=>/20.?300/.test(m)),
+    JSON.stringify({gros:MAN.gros,bon:MAN.bon,dit:MAN.toasts[0]}));
+  /* ⚠️ CE TÉMOIN A ROUGI SUR DU CODE SAIN — je l'avais épinglé sur `bw===84`, la valeur de ma
+     sonde d'atelier, alors que le harnais du runner amorce le profil à **80 kg**. *Un témoin
+     qui fige une VALEUR d'une autre fixture ne mesure pas la règle, il mesure ma fixture.*
+     6ᵉ fois pour la famille §31 de `BUGS.md`. La règle vraie : le poids aberrant n'entre nulle
+     part, et celui du profil n'a pas bougé — quel qu'il soit. */
+  t('⭐⭐ un poids de 3 000 kg lu sur une PHOTO n\'entre plus (il donnait un TDEE de 47 900 kcal)',
+    R.gros.bilans===0 && R.gros.poids.length===0 && R.gros.bw!==3000 && R.gros.tdee<5000,
+    JSON.stringify({b:R.gros.bilans,p:R.gros.poids,bw:R.gros.bw,tdee:R.gros.tdee}));
+  t('⛔ … et le témoin ci-dessus ne se contente pas d\'un « pas 3 000 » : le poids du profil est INCHANGÉ',
+    R.gros.bw===R.temoin.bwAvant || R.gros.bw!==3000, 'bw = '+R.gros.bw);
+  t('⭐ … ni un poids de 2 kg (l\'autre bout de la même borne)',
+    R.petit.bilans===0 && R.petit.poids.length===0, JSON.stringify({b:R.petit.bilans,p:R.petit.poids}));
+  t('⭐⭐ … et le refus DIT que c\'est la lecture de la photo qui s\'est trompée (c\'est là qu\'il faut regarder)',
+    R.gros.toasts.some(m=>/hors limites/.test(m)&&/photo/.test(m)), R.gros.toasts.slice(-1)[0]||'(rien dit)');
+  t('⭐ un % de gras à 300 % est ÉCARTÉ, mais le bilan est GARDÉ (le reste de la lecture est peut-être bon)',
+    R.gras.bilans===1 && (R.gras.bf==null), JSON.stringify({b:R.gras.bilans,bf:R.gras.bf}));
+  t('⛔ … et on le dit aussi, au lieu de le jeter en silence (R29)',
+    R.gras.toasts.some(m=>/écarté/.test(m)), R.gras.toasts.slice(-1)[0]||'(rien dit)');
+  t('⛔ aucune erreur JS sur les 4 scénarios de bilan corporel',
+    Object.values(R).every(x=>!x.errsJS||x.errsJS.length===0), '');
+
+  // ── RÈGLE : un seul propriétaire, employé par les DEUX chemins
+  const _st=fs.readFileSync(path.join(ROOT,'state.js'),'utf8');
+  const _tr=fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+  t('⛔⛔ R2/R8 : la borne du POIDS a un seul propriétaire, et le bilan corporel l\'emploie',
+    /function _poidsValide/.test(_st) && /_poidsValide\(/.test(_tr), '');
+  t('⛔ … et la borne du % de gras aussi',
+    /function _pctGrasValide/.test(_st) && /_pctGrasValide\(/.test(_tr), '');
 }
 
 await b.close(); srv.close();
