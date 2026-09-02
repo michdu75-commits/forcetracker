@@ -1332,6 +1332,7 @@ function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux){
   const serv=parseFloat(p.serving_quantity)||0;
   const g=serv>0?serv:100;
   const gramsEl=document.getElementById('af-bc-grams');if(gramsEl)gramsEl.value=g;
+  _bcQsrc(serv, 'la fiche produit');   // ⛔ le nombre garde sa source écrite à côté (ft-v1105)
   /* ⛔ Un scan NEUF n'a pas de « dernière fois » : la pastille d'un aliment précédent doit
      disparaître, sinon elle proposerait le poids de quelqu'un d'autre que le produit affiché. */
   if(typeof _bcProposerDerniere==='function') _bcProposerDerniere(0);
@@ -1435,6 +1436,32 @@ function _bcApplyGrams(){
    quantité et les chiffres se correspondent. Ce qui était faux, c'est de re-servir la quantité
    d'un REPAS passé comme si elle décrivait celui d'aujourd'hui (R30 : on ne modifie pas en
    silence une décision qu'on n'a pas prise). */
+/* ⚖️⛔⛔ D'OÙ VIENT LE NOMBRE PRÉ-REMPLI DANS « Quantité » (ft-v1105)
+   Michel, étiquette du pot à l'appui : « c'est cette prot là, toujours le même souci ».
+   ⛔⛔ LE CHAMP SE REMPLIT AVEC LA PORTION DÉCLARÉE PAR LA SOURCE — `serving_quantity` côté
+   fiche produit, `serving` côté photo d'étiquette — **pas la dosette qu'on a dans la main**.
+   Le commentaire de `_bcProposerDerniere` le dit déjà en toutes lettres (« la portion du
+   fabricant ») et **l'écran n'en disait rien**.
+   ⭐ MESURÉ : une fiche annonçant une dosette de **40 g** produit **156 kcal et 35 g de
+   protéines** sur un pot titré 88 g/100 g — des valeurs *parfaitement justes pour une portion
+   que personne n'a mangée*. C'est exactement le couple de chiffres de sa capture.
+   👉 ***Un nombre qui a l'air d'un fait alors que c'est l'hypothèse d'un tiers*** (R32/R33 :
+   ce qui est repris garde d'où il vient).
+   ⛔ ON NE RETIRE PAS LE PRÉ-REMPLISSAGE : sans lui on retombe à 100 g, ce qui est pire, et le
+   chemin rapide disparaît. *On ne cache pas le nombre, on lui rend sa source.* C'est la même
+   décision qu'en ft-v1051 — « on donne le choix et pas imposer » — prise alors pour la quantité
+   de la DERNIÈRE FOIS, et pas pour celle-ci (R8, la jumelle).
+   ⛔ UN SEUL PROPRIÉTAIRE (R2), qui AFFICHE et EFFACE : sinon une provenance orpheline resterait
+   au-dessus d'un autre aliment — le défaut exact de ft-v1042, deux lignes plus haut. */
+function _bcQsrc(serv, source){
+  const qs=document.getElementById('af-bc-qsrc'); if(!qs) return;
+  if(serv===null){ qs.style.display='none'; qs.innerHTML=''; return; }
+  const src=source||'la fiche produit';
+  qs.innerHTML = (+serv>0)
+    ? '⚖️ <b>'+(+serv)+'&nbsp;g</b> est la portion déclarée par '+src+' — <b>vérifie ta dosette</b>, elle peut être différente.'
+    : 'Aucune portion déclarée par '+src+' : <b>100&nbsp;g</b> par défaut. Mets ta quantité réelle.';
+  qs.style.display='block';
+}
 function _bcProposerDerniere(q){
   const b=document.getElementById('af-bc-last'); if(!b) return;
   const g=document.getElementById('af-bc-grams');
@@ -1942,6 +1969,7 @@ function openAddFood(){
      personne croyait neuf. */
   try{ if(_afSuggTimer) clearTimeout(_afSuggTimer); _afSuggVider(); }catch(e){}
   const bcRow=document.getElementById('af-bc-row');if(bcRow)bcRow.style.display='none';
+  _bcQsrc(null);                      // ⛔ pas de provenance orpheline (ft-v1105)
   /* R15 : le poids supposé par l'IA et le bloc « Quantité » se rendent comme la provenance —
      sinon la référence du produit précédent piloterait la saisie suivante, en silence. */
   window._afIaGrammes=0; window._afIaDesc='';
@@ -2072,6 +2100,7 @@ function quickFillFood(i){
     if(typeof _bcMontrerTotal==='function') _bcMontrerTotal(0);
   }else{
     if(row) row.style.display='none';
+    _bcQsrc(null);
     _bcNutr=null;
     if(typeof _bcMontrerTotal==='function') _bcMontrerTotal(0);   // ⛔ pas de total orphelin
   }
@@ -2167,6 +2196,7 @@ async function onFoodLabelFile(input){
     if(!_bcNutr.kcal100&&!_bcNutr.prot100&&!_bcNutr.carbs100&&!_bcNutr.fat100){toast('Valeurs non lues — réessaie ou saisis à la main','error');return;}
     const g=(parseFloat(d.serving)>0)?parseFloat(d.serving):100;
     const gramsEl=document.getElementById('af-bc-grams');if(gramsEl)gramsEl.value=g;
+    _bcQsrc(g, 'l\'étiquette');       // ⛔ le nombre garde sa source écrite à côté (ft-v1105)
     const nameEl=document.getElementById('af-bc-name');if(nameEl)nameEl.textContent=_bcNutr.name+' · '+_bcNutr.kcal100+' kcal/100g (lu sur l\'étiquette)';
     const row=document.getElementById('af-bc-row');if(row)row.style.display='block';
     document.getElementById('af-desc').value=_bcNutr.name;
@@ -2696,6 +2726,7 @@ function _afSuggPrendreLocale(i){
     if(typeof _bcMontrerTotal==='function') _bcMontrerTotal(0);
   }else{
     if(row) row.style.display='none';
+    _bcQsrc(null);
     _bcNutr=null;
     if(typeof _bcMontrerTotal==='function') _bcMontrerTotal(0);   // ⛔ pas de total orphelin
   }
