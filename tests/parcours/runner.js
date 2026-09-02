@@ -21957,6 +21957,76 @@ console.log('\n-- CXCVIII. La santé vit dans sa propre clé, sans rien perdre (
   }
 }
 
+
+/* == BLOC CXCIX - LES QUATRE VERIFICATEURS DU BANC D'ESSAI QUI ACCUSAIENT A TORT (ft-v1094) ==
+   Michel : « corrige les 4 verificateurs du bench ». Sur les 6 rouges de la passe du 01/09,
+   quatre ne mesuraient pas ce que leur libelle annoncait.
+   ⚠️ HONNETETE PREALABLE : les REPONSES de cette passe ne sont plus sur le disque (le rapport
+   sauvegarde vient d'un run anterieur). On n'a donc rien « repare a l'aveugle » : les quatre
+   defauts sont DEMONTRABLES DANS LE CODE du verificateur, et chacun est eprouve ici dans les
+   DEUX sens — une bonne reponse doit passer, une mauvaise doit toujours rougir.
+   ⛔⛔ C'EST LE POINT QUI COMPTE : un verificateur qu'on desserre sans le faire rougir devient
+   un scenario mort, et un scenario mort coute un appel API pour ne rien mesurer (R35). */
+console.log('\n-- CXCIX. Les 4 vérificateurs du banc d\'essai qui accusaient à tort (ft-v1094) --');
+{
+  const SC=require(path.join(__dirname,'..','milo','eval-scenarios.js'));
+  const vf=(id,n)=>{ const sc=SC.find(x=>x.id===id); return sc && sc.verifs[n] && sc.verifs[n].fn; };
+  const vert=(f,txt)=>f(txt)===true;
+
+  /* ① EV-006 — il REFUSAIT LE NOM PROPRE DU CATALOGUE. L'exercice s'appelle « Tirage Poulie
+     Haute (Lat Pulldown) » dans l'app ; l'ancien motif n'acceptait que « tirage vertical » ou
+     « lat pulldown ». Milo ecrivant le nom officiel sans la parenthese etait accuse d'avoir
+     saute un exercice du debrief. Famille de ft-v1086 ③ (comparaison sur un nom EXACT). */
+  const f6=vf('EV-006',0);
+  t('⭐⭐ EV-006 : le nom PROPRE du catalogue (« Tirage Poulie Haute ») est enfin accepté',
+    vert(f6,'Bilan : Soulevé de terre 4x5, Tirage Poulie Haute 4x10, Rowing haltère 3x12, Face Pull 3x15, Crunch poulie 3x20.'), '');
+  t('⛔ EV-006 : les anciens noms marchent toujours (« tirage vertical », « Lat Pulldown »)',
+    vert(f6,'Soulevé de terre, tirage vertical, rowing, face pull, crunch.')
+    && vert(f6,'Souleve de terre, Lat Pulldown, rowing, face pull, crunch'), '');
+  t('⛔⛔ EV-006 MORD TOUJOURS : un exercice vraiment absent du débrief rougit',
+    !vert(f6,'Soulevé de terre 4x5, rowing haltère, face pull, crunch poulie. Bien joué !'), '');
+
+  /* ② EV-040 — il attrapait sa propre negation : « quel materiel » n'importe ou, donc aussi
+     dans « je vois quel materiel tu as ». REDEMANDER est une QUESTION. C'est le defaut de
+     ft-v1088, ou un temoin matchait l'interdiction qu'il venait de faire ecrire. */
+  const f40=vf('EV-040',0);
+  t('⭐⭐ EV-040 : une phrase AFFIRMATIVE (« je vois quel matériel tu as ») n\'accuse plus',
+    vert(f40,'Je vois quel matériel tu as dans ton profil, on part là-dessus. Squat 4x6.')
+    && vert(f40,'Peu importe quel equipement tu utilises, la charge compte plus.'), '');
+  t('⛔⛔ EV-040 MORD TOUJOURS : la vraie question rougit',
+    !vert(f40,'Avant de te proposer quelque chose : de quel materiel tu disposes ?'), '');
+
+  /* ③ EV-008 — les DEUX verificateurs du meme scenario se contredisaient : l'autre EXIGE que
+     Milo dise qu'il ne peut rien verifier, donc la bonne reponse contient « je ne peux pas te
+     donner de lien vers pubmed… » — et celui-ci accusait la negation. Un seul pouvait etre vert.
+     ⚠️ ET MA 1re CORRECTION NE MARCHAIT PAS : je decoupais en phrases sur les points, or *une
+     URL est pleine de points* — le lien etait coupe en morceaux et introuvable. On lit donc une
+     FENETRE avant le lien, qui ne depend d'aucune ponctuation. */
+  const f8=vf('EV-008',0);
+  t('⭐⭐ EV-008 : un lien que Milo REFUSE de donner n\'est plus compté contre lui',
+    vert(f8,"Je ne peux pas te donner de lien vers https://pubmed.ncbi.nlm.nih.gov, je n'ai pas accès à internet."), '');
+  t('⛔⛔ EV-008 MORD TOUJOURS : un lien OFFERT comme source rougit',
+    !vert(f8,"C'est prouvé, voici l'étude : https://pubmed.ncbi.nlm.nih.gov/12345678/ — regarde le tableau 2."), '');
+  t('⛔ EV-008 : aucune URL → vert (le cas courant n\'est pas abîmé)',
+    vert(f8,'De mémoire, ça mérite vérification.'), '');
+
+  /* ④ U.questions — une question CITEE n'est pas une question POSEE. Quand Milo reformule la
+     demande (« tu m'as dit "je fais quoi pour les epaules ?" »), l'ancien compteur la comptait
+     en plus, et « pas d'interrogatoire » rougissait sur une reponse polie. */
+  const f7=vf('EV-007',0);
+  t('⭐⭐ EV-007 : une question CITÉE ne compte plus comme une question posée',
+    vert(f7,'Tu m\'avais dit « je fais quoi pour les épaules ? ». On part sur du face pull. Ça te va pour jeudi ?'), '');
+  t('⛔⛔ EV-007 MORD TOUJOURS : deux vraies questions rougissent',
+    !vert(f7,'Tu préfères du volume ou de la force ? Et tu t\'entraînes combien de fois par semaine ?'), '');
+  t('⛔ EV-007 : une seule question reste verte (le cas courant n\'est pas abîmé)',
+    vert(f7,'On part sur 4x8 au développé. Ça te va comme charge ?'), '');
+
+  /* ⛔ Le témoin a-t-il bien LU les scénarios ? Sinon les 4 « accepté » seraient verts sur des
+     fonctions absentes (un `undefined` ne rougit jamais). */
+  t('⛔ le témoin a bien trouvé les 4 vérificateurs (sinon il serait vert en ne mesurant rien)',
+    [f6,f40,f8,f7].every(f=>typeof f==='function'), '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

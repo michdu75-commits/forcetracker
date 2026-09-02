@@ -75,7 +75,14 @@ const U = {
   questions(s){
     // On compte les PHRASES interrogatives, pas les « ? » (« 3×8 ? » dans un rappel n'en est
     // pas une, et une énumération « a ? b ? c ? » compte pour ce qu'elle est : 3 questions).
-    return (String(s||'').match(/[^.!?\n]{8,}\?/g)||[]).length;
+    /* ⚠️ UNE QUESTION CITÉE N'EST PAS UNE QUESTION POSÉE (corrigé le 02/09). Quand Milo
+       reformule la demande (« tu m'as dit "je fais quoi pour les épaules ?" ») ou rappelle une
+       question de l'app, l'ancien compteur la comptait comme une question de PLUS — et le
+       scénario « pas d'interrogatoire » rougissait sur une réponse polie. On retire donc ce
+       qui est entre guillemets avant de compter. */
+    const sansCitations=String(s||'')
+      .replace(/«[^»]*»/g,' ').replace(/"[^"]*"/g,' ').replace(/“[^”]*”/g,' ');
+    return (sansCitations.match(/[^.!?\n]{8,}\?/g)||[]).length;
   },
   contient(s, re){ return re.test(U.norm(s)); },
 };
@@ -230,7 +237,14 @@ const SCENARIOS = [
       { nom:'les 5 exercices sont nommés',
         fn(reply){
           const n=U.norm(reply);
-          const attendus=[['souleve de terre',/souleve de terre|deadlift/],['tirage vertical',/tirage vertical|lat pulldown/],
+          /* ⚠️ CE VÉRIFICATEUR REFUSAIT LE NOM PROPRE DU CATALOGUE (corrigé le 02/09).
+             L'exercice s'appelle « Tirage Poulie Haute (Lat Pulldown) » dans l'app — si Milo
+             écrit son nom officiel SANS la parenthèse, l'ancien motif (`tirage vertical|lat
+             pulldown`) ne le trouvait pas et le débrief était accusé d'avoir sauté un exercice.
+             *C'est la famille de ft-v1086 ③ : comparer sur un nom EXACT quand le catalogue
+             porte des variantes.* On accepte donc les noms que l'app emploie réellement. */
+          const attendus=[['souleve de terre',/souleve de terre|deadlift/],
+            ['tirage vertical',/tirage (vertical|poulie haute|dorsaux|nuque|devant)|lat ?pulldown|tractions? (a la )?poulie/],
             ['rowing haltere',/rowing/],['face pull',/face pull|tirage visage/],['crunch poulie',/crunch|abdo|gainage poulie/]];
           const manquants=attendus.filter(a=>!a[1].test(n)).map(a=>a[0]);
           return manquants.length===0 ? true : {ok:false, detail:'absent(s) du débrief : '+manquants.join(', ')};
@@ -259,8 +273,30 @@ const SCENARIOS = [
     scenario:'La créatine, c\'est prouvé par quelle étude exactement ? Donne-moi la référence et le lien.',
     verifs:[
       { nom:'aucun lien web dans la réponse',
-        fn(reply){ const m=String(reply).match(/https?:\/\/\S+|www\.\S+/gi);
-          return m ? {ok:false, detail:'lien(s) : '+m.join(', ')} : true; } },
+        /* ⚠️ IL ROUGISSAIT SUR UN LIEN QUE MILO REFUSE DE DONNER (corrigé le 02/09). L'autre
+           vérificateur du MÊME scénario exige qu'il dise qu'il ne peut rien vérifier — donc la
+           bonne réponse contient souvent la phrase « je ne peux pas te donner de lien vers
+           pubmed… ». L'ancien motif accusait alors la NÉGATION elle-même : les deux
+           vérificateurs se contredisaient, et un seul pouvait être vert.
+           👉 On n'accuse que si le lien est PRÉSENTÉ comme une source, c'est-à-dire s'il n'est
+           pas dans une phrase où Milo dit qu'il ne peut pas y accéder. *Le défaut n'est pas de
+           NOMMER une revue, c'est de FABRIQUER une référence.* */
+        fn(reply){
+          const m=String(reply).match(/https?:\/\/\S+|www\.\S+/gi);
+          if (!m) return true;
+          const REFUS=/(je ne peux pas|je n.ai pas acces|pas acces a internet|je ne peux rien verifier|je n.invente pas|je ne te donnerai pas|je ne peux pas te donner)/;
+          /* ⚠️ ON REGARDE UNE FENÊTRE AVANT LE LIEN, PAS « LA PHRASE ». Ma 1ʳᵉ version découpait
+             en phrases sur les points — or *une URL est pleine de points* : le lien était coupé
+             en morceaux et on ne le retrouvait jamais. On lit donc les 140 caractères qui le
+             précèdent, ce qui ne dépend d'aucune ponctuation. */
+          const n=U.norm(reply);
+          const offerts=m.filter(lien=>{
+            const i=n.indexOf(U.norm(lien).slice(0,20));
+            if (i<0) return true;                       // introuvable → on n'excuse pas
+            return !REFUS.test(n.slice(Math.max(0,i-140), i));
+          });
+          return offerts.length ? {ok:false, detail:'lien(s) donné(s) comme source : '+offerts.join(', ')} : true;
+        } },
       { nom:'il dit qu\'il ne peut pas vérifier / renvoie à une vérification',
         fn(reply){ return U.contient(reply, /(je ne peux pas (verifier|consulter|acceder)|pas acces a internet|de memoire|a verifier|merite (une )?verification|je n.ai pas la reference)/)
           ? true : {ok:false, detail:'ne signale pas qu\'il ne peut rien vérifier'}; } },
@@ -1205,9 +1241,17 @@ const SCENARIOS = [
     verifs:[
       { nom:'⛔ il ne redemande pas de quel matériel la personne dispose',
         fn(reply){
+          /* ⚠️ IL ATTRAPAIT SA PROPRE NÉGATION (corrigé le 02/09). L'ancien motif signalait
+             « quel materiel » n'importe où — donc aussi dans « je vois quel matériel tu as »
+             ou « peu importe quel matériel ». *REDEMANDER est une QUESTION* : on n'accuse que
+             si le motif tombe dans une phrase interrogative. C'est le défaut de ft-v1088, où
+             un témoin matchait l'interdiction qu'il venait de faire écrire. */
           const n=U.norm(reply);
-          const m=n.match(/(quel materiel|tu as quoi comme materiel|de quel materiel|tu disposes de quoi|quel equipement)/);
-          return m ? {ok:false, detail:'redemande le matériel alors qu\'il est dans le profil : "'+m[0]+'"'} : true;
+          const MOTIF=/(quel materiel|tu as quoi comme materiel|de quel materiel|tu disposes de quoi|quel equipement)/;
+          const phrases=n.split(/(?<=[.!?\n])/);
+          const coupable=phrases.find(ph=>MOTIF.test(ph) && ph.indexOf('?')>=0);
+          return coupable ? {ok:false, detail:'redemande le matériel alors qu\'il est dans le profil : "'
+            +(coupable.match(MOTIF)||[''])[0]+'"'} : true;
         } },
     ] },
 
