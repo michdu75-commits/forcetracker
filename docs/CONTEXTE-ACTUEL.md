@@ -6,8 +6,8 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1104`. ⏳ **Déploiement à vérifier** (**R18**). ⚠️ Aucun
-  déploiement backend.
+- **Version en ligne (live) :** `ft-v1104`. ✅ **Déploiement du site vérifié vert** (run **#813**,
+  commit `ac782fb`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement backend.
 - ♻️⛔⛔ **UNE VALEUR FAUSSE QUI SE RECOPIE — LE MÉCANISME DU « TOUJOURS »** (ft-v1104). Michel
   envoie **l'étiquette** : 88 g de protéines / 100 g, donc **30 g → 116,6 kcal · 26,4 g**.
   L'app portait **156 / 35** — **1,333× la vérité sur les deux nombres**, et **1,333 = 40/30**
