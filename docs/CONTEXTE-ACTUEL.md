@@ -6,7 +6,38 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1095`. ✅ **Déploiement du site vérifié vert** (run **#772**,
+- **Version en ligne (live) :** `ft-v1096`. ⏳ déploiement à vérifier. ⚠️ Aucun déploiement
+  backend : `Code.js` n'a pas été touché, le correctif vit dans `state.js` et `tracking.js`.
+- ⚖️⭐⭐ **LE POIDS LU PAR L'IA A LES MÊMES BORNES QUE LE POIDS SAISI À LA MAIN** (ft-v1096).
+  Michel : *« continue avec les autres imports mais regarde ce que j'ai vu avec gpt »*.
+  Mesuré par le vrai chemin (la lecture IA remplit le formulaire, puis on Enregistre) : un
+  rapport de balance mal lu à **3 000 kg** entrait dans le bilan, **dans le journal de poids**
+  et **dans le profil** → **TDEE 47 900 kcal**, et toute la nutrition fausse ensuite. Un **%
+  de gras à 300 %** entrait pareil. ⭐⭐ **Le témoin de comparaison est ce qui rend le défaut
+  lisible** : la saisie **manuelle** du même chiffre était refusée depuis toujours (20–300 kg).
+  *Deux portes vers la même donnée, une seule fermée* — **R8**, 4ᵉ fois cette semaine, et le
+  motif est constant : **le chemin automatique est toujours le moins protégé que son équivalent
+  manuel**. Nouvelle famille **§35** de `BUGS.md` (les 4 cas en table). ⛔ Un seul propriétaire
+  des bornes (`_poidsValide`, `_pctGrasValide` dans `state.js`, **R2**). ⛔ On écarte la
+  **valeur** (% de gras) mais on refuse le **bilan** entier sur un poids aberrant — la
+  granularité suit le coût de l'erreur (**R29**). ⭐ Et le refus dit **où regarder** : « la
+  lecture de la photo s'est trompée » d'un côté, « corrige la valeur » de l'autre.
+- ⏭️ **CE QUI RESTE, dit plutôt que sous-entendu** : l'import de **PROGRAMME**, le
+  **CODE-BARRES** et le **bilan sanguin** n'ont **pas** été instruits. *La famille n'est pas
+  fermée.*
+- 🍽️ **ANALYSE NUTRITION DE GPT — un document, zéro code** (`docs/NUTRITION-ANALYSE-GPT.md`).
+  Le document demande explicitement de **ne rien implémenter** avant validation. Traité comme
+  un audit, donc **mesuré** : son **§3** décrit un défaut corrigé en **ft-v949** (et le défaut
+  réel était l'inverse — la séance comptée deux fois) ; ses **§4** et **§10** décrivent un
+  écran **antérieur à ft-v1025**. ⛔ Ses **§1, §2 et §9 sont fondés** — ⚠️ ma première mesure,
+  faite **sans aliment noté**, disait le contraire ; re-mesurée avec des aliments, les lignes
+  sont bien là. Le doc porte la chaîne chiffrée (BMR 1743 → TDEE 2702 → objectif 3152), la
+  table du cycle glucidique, les 7 réponses, et **4 décisions qui attendent Michel** (largeur
+  de la zone · seuil de tendance · droit de conclure · plancher lipidique).
+- ⚠️⚠️ **LEÇON DE SONDE — trois noms de champ inventés dans la même passe** (`ft4_weight` pour
+  `ft4_wlog`, `fatPct` pour `bf`, `p/c/f` pour `prot/carbs/fat`). *Chacun rend **zéro**, et
+  zéro ressemble exactement à une perte de données.* Nouvelle famille **§36** de `BUGS.md`.
+- **Version précédente :** `ft-v1095`. ✅ **Déploiement du site vérifié vert** (run **#772**,
   commit `336c674`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement backend : `Code.js`
   n'a pas été touché, tout le correctif est dans `state.js`, `log.js` et `coach.js`.
 - 📥⭐⭐ **CE QU'UN MODÈLE HALLUCINE N'ENTRE PLUS DANS L'HISTORIQUE** (ft-v1095). Michel :

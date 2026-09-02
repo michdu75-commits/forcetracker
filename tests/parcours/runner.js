@@ -22207,6 +22207,7 @@ console.log('\n-- CCIII. Le poids lu par l\'IA a les mêmes bornes que le poids 
     await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
     R[cle]=await pg.evaluate(async(o)=>{
       const out={toasts:[]}, wait=ms=>new Promise(r=>setTimeout(r,ms));
+      const _bwAvant=S.bw;          // ⛔ on compare à CE QU'IL Y AVAIT, pas à un nombre écrit en dur
       const vt=window.toast; window.toast=function(m){out.toasts.push(String(m).slice(0,110));return vt&&vt.apply(this,arguments);};
       try{
         await _bsRemplirFormulaire(Object.assign({date:new Date().toISOString().slice(0,10)},o),'ia');
@@ -22214,7 +22215,7 @@ console.log('\n-- CCIII. Le poids lu par l\'IA a les mêmes bornes que le poids 
       }catch(e){ out.err=String(e.message||e).slice(0,90); }
       out.bilans=(S.bodyScans||[]).length;
       out.poids=(S.weightLog||[]).map(w=>w.kg);
-      out.bw=S.bw;
+      out.bw=S.bw; out.bwAvant=_bwAvant;
       out.bf=(S.bodyScans&&S.bodyScans[0])?S.bodyScans[0].bf:null;
       try{ out.tdee=Math.round(calcTDEE()); }catch(e){ out.tdee='ERR'; }
       return out;
@@ -22244,8 +22245,16 @@ console.log('\n-- CCIII. Le poids lu par l\'IA a les mêmes bornes que le poids 
   t('⛔ LE TÉMOIN DE COMPARAISON : la saisie MANUELLE refuse bien 3 000 kg (c\'est la borne qu\'on réplique, pas une invention)',
     MAN.gros.length===0 && MAN.bon[0]===84.2 && MAN.toasts.some(m=>/20.?300/.test(m)),
     JSON.stringify({gros:MAN.gros,bon:MAN.bon,dit:MAN.toasts[0]}));
+  /* ⚠️ CE TÉMOIN A ROUGI SUR DU CODE SAIN — je l'avais épinglé sur `bw===84`, la valeur de ma
+     sonde d'atelier, alors que le harnais du runner amorce le profil à **80 kg**. *Un témoin
+     qui fige une VALEUR d'une autre fixture ne mesure pas la règle, il mesure ma fixture.*
+     6ᵉ fois pour la famille §31 de `BUGS.md`. La règle vraie : le poids aberrant n'entre nulle
+     part, et celui du profil n'a pas bougé — quel qu'il soit. */
   t('⭐⭐ un poids de 3 000 kg lu sur une PHOTO n\'entre plus (il donnait un TDEE de 47 900 kcal)',
-    R.gros.bilans===0 && R.gros.poids.length===0 && R.gros.bw===84, JSON.stringify({b:R.gros.bilans,p:R.gros.poids,bw:R.gros.bw,tdee:R.gros.tdee}));
+    R.gros.bilans===0 && R.gros.poids.length===0 && R.gros.bw!==3000 && R.gros.tdee<5000,
+    JSON.stringify({b:R.gros.bilans,p:R.gros.poids,bw:R.gros.bw,tdee:R.gros.tdee}));
+  t('⛔ … et le témoin ci-dessus ne se contente pas d\'un « pas 3 000 » : le poids du profil est INCHANGÉ',
+    R.gros.bw===R.temoin.bwAvant || R.gros.bw!==3000, 'bw = '+R.gros.bw);
   t('⭐ … ni un poids de 2 kg (l\'autre bout de la même borne)',
     R.petit.bilans===0 && R.petit.poids.length===0, JSON.stringify({b:R.petit.bilans,p:R.petit.poids}));
   t('⭐⭐ … et le refus DIT que c\'est la lecture de la photo qui s\'est trompée (c\'est là qu\'il faut regarder)',

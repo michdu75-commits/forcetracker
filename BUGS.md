@@ -2124,3 +2124,74 @@ Elle appelait `_histAnalyzeBatch` — qui ne fait que **rendre** le tableau — 
 quatorze réponses hostiles rendaient donc le même résultat. *Le témoin de contrôle doit être le
 PREMIER cas d'un banc de réponses hostiles, pas le dernier* — sans lui, « tout est refusé » et
 « je ne mesure rien » sont indistinguables.
+
+---
+
+## 35. 🤖 LE CHEMIN AUTOMATIQUE EST TOUJOURS LE MOINS PROTÉGÉ **(02/09/2026, ft-v1096)**
+
+Quand une même valeur peut entrer par **deux portes** — tapée par la personne, ou lue par une
+machine — c'est presque toujours la porte **automatique** qui n'a pas de garde-fou. Et c'est
+l'inverse de ce qu'il faudrait : *sur le chemin manuel, quelqu'un relit ; sur le chemin
+automatique, personne.*
+
+### 🔎 Le cas fondateur, mesuré avec son témoin de comparaison
+Le **poids**. `saveWeightEntry` (saisie manuelle) refuse depuis toujours hors **20–300 kg** et
+affiche *« Poids invalide »*. `saveBodyScan` (photo de balance lue par un modèle) ne vérifiait
+que `weight > 0` — **et il écrit dans le même `S.weightLog`**.
+👉 ***Le chiffre 3 000 était REFUSÉ quand on le TAPE et ACCEPTÉ quand un modèle le LIT.***
+Conséquence mesurée : `S.bw = 3000`, **TDEE 47 900 kcal** — donc toutes les cibles de l'onglet
+Nutrition absurdes, et un poids de trois tonnes envoyé à Milo. Un poids de **2 kg** passait
+aussi (TDEE 1 431), et un **% de gras à 300 %** était enregistré sans un mot.
+
+### 🔁 Ce n'est pas un cas isolé — c'est la 4ᵉ de la semaine
+| version | la valeur | bornée sur | pas bornée sur |
+|---|---|---|---|
+| ft-v1086 | le sexe | le BMR | le plancher calorique |
+| ft-v1089 | un élément d'écran | `updSetup` | le bouton « Tester la connexion » |
+| ft-v1095 | charge et répétitions | la lecture d'une conversation | **l'import d'historique** |
+| ft-v1096 | le poids | **la saisie manuelle** | **le bilan corporel lu par l'IA** |
+
+### ⛔ À quoi on la reconnaît
+- Deux fonctions écrivent dans **le même champ** de `S`, et une seule valide.
+- La porte non protégée est celle qui vient d'un **modèle, d'un OCR, d'un import, d'un webhook**.
+- Le garde-fou existant porte un **message pour l'humain** (« Poids invalide (20–300 kg) »), ce
+  qui fait croire qu'il est global alors qu'il vit dans un seul appelant.
+
+### 🛡️ Ce qui protège aujourd'hui
+`_poidsValide()` et `_pctGrasValide()` dans `state.js`, employés par **les deux** chemins — et
+deux témoins qui vérifient que le second les emploie vraiment (bloc **CCIII**). ⭐ **Les bornes
+ne sont pas inventées** : ce sont **exactement** celles que l'app affiche déjà à qui saisit à la
+main. *Répliquer une borne existante ne demande aucun arbitrage ; en inventer une, si.*
+
+### ⭐ Le réflexe
+Quand on borne une valeur, chercher **tout de suite** qui d'autre écrit dans le même champ
+(**R8**) — et se rappeler que le chemin automatique est celui qui en a le plus besoin, pas le
+moins. ⛔ Et **on écarte la valeur, pas tout le document** : le reste de la lecture est
+peut-être bon (règle d'or #3). ⭐ Le refus **nomme la source** — *« la lecture de la photo s'est
+trompée »* — parce que c'est là que la personne doit regarder, pas dans ses propres doigts.
+
+---
+
+## 36. 🔤 UNE SONDE QUI INVENTE UN NOM DE CHAMP MESURE TOUJOURS ZÉRO **(02/09/2026, ft-v1096)**
+
+Ce n'est pas un bug de l'app : c'est un bug de **celui qui mesure**, et il coûte cher parce que
+son résultat est **crédible**. Une clé qui n'existe pas ne lève aucune erreur en JavaScript —
+elle rend `undefined`, qui devient `0`, qui ressemble à une donnée perdue.
+
+### 🔎 Trois fois dans la même session, sur trois sondes différentes
+| ce que j'ai écrit | ce qui existe | ce que ça rendait |
+|---|---|---|
+| `ft4_weight` | `ft4_wlog` | *« la pesée n'atteint jamais le disque »* — faux |
+| `fatPct` | `bf` | le cas « % de gras à 300 % » n'était **jamais joué** |
+| `p` / `c` / `f` | `prot` / `carbs` / `fat` | *« les macros consommées ne sont pas comptées »* — faux |
+
+### ⛔ À quoi on la reconnaît
+- La mesure rend **zéro, ou vide, ou identique partout** — la même signature que le témoin qui
+  ne mesure rien (§31, et les quatre faux positifs de ft-v1094).
+- Le résultat **confirme un peu trop bien** ce qu'on soupçonnait.
+- Le cas « hostile » et le cas « valide » donnent **le même** verdict.
+
+### 🛡️ Le réflexe, en une ligne
+**Avant d'accuser le code, `grep` le nom du champ.** Trente secondes. Et poser dans chaque banc
+d'essai un **cas valide en PREMIER** : si lui aussi rend zéro, c'est la sonde qui est cassée,
+pas l'app (leçon de ft-v1095, où quatorze réponses hostiles rendaient le même résultat).
