@@ -6,7 +6,25 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1100`. ✅ **Déploiement du site vérifié vert** (run **#791**,
+- **Version en ligne (live) :** `ft-v1101`. ✅ **Déploiement du site vérifié vert** (run **#793**,
+  commit `e94eeae`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement backend.
+- 🏁⭐⭐ **UN CYCLE TERMINÉ NE LE DISAIT JAMAIS — NI À L'ÉCRAN, NI À MILO** (ft-v1101).
+  `getCurrentCycleWeek` **plafonne** à `weeks` : juste pour une barre de progression, faux
+  pour tout le reste. **Mesuré** : un cycle fini depuis 1 jour, 1 an et **six ans** rend un
+  écran **identique** à celui de la dernière semaine — *« Semaine 12/12 — Décharge, 55 % 1RM »*,
+  présenté comme la consigne du jour. ⛔⛔ **Et la même valeur partait chez Milo**, qui
+  prescrivait donc une décharge sur un fait faux (**R4/R10**). ⭐ Un seul propriétaire
+  (`cycleTermine`, **R2**), lu par l'écran **et** par le contexte. ⚠️ **On ne clôture pas tout
+  seul** (**R29**) : `S.cycle` porte les 1RM de départ de la personne — on le dit, elle décide.
+- ⏭️ **Cinq familles ont rendu du vide** (écrit pour ne pas refaire la chasse, **R23**) : le
+  **texte libre** est bien échappé partout · le **timer** de repos s'appuie sur `Date.now()`
+  donc résiste au sommeil · les **séries spéciales** comptent pareil partout · la **file** de
+  synchro ne renvoie que `synced===false` · le **quota** reste gardé par `_premiumPending`.
+- ⚠️ **Et quatre de mes sondes ne mesuraient rien avant d'être réparées**, toujours au même
+  signe (*un résultat identique des deux côtés*) : `_demoMode` court-circuite `syncSheets`,
+  `S.connected` manquait, la fixture du cycle employait `rm1s` au lieu de `exercises`, et je
+  cherchais le **mot** « cycle » dans le contexte de Milo au lieu de ses **valeurs**.
+- **Version précédente :** `ft-v1100`. ✅ **Déploiement du site vérifié vert** (run **#791**,
   commit `8e860f3`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement
   backend : `Code.js` n'a pas été touché.
 - ⚖️⭐⭐ **UNE SEULE SOURCE POUR LES PLAGES DE POIDS** (ft-v1100). GPT tranche : *« corriger la

@@ -1660,6 +1660,16 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 
   <!-- VUE CYCLE ACTIF -->
   <div id="cycle-active-view" style="display:none;flex-direction:column;gap:12px;">
+    <!-- 🏁 Bandeau « cycle terminé » (ft-v1100) : n'apparaît QUE passé la dernière semaine.
+         Avant, l'écran présentait la dernière semaine comme la consigne du jour, pour toujours. -->
+    <div class="card" id="cyc-fini-carte" style="display:none;border:1px solid var(--red);">
+      <div style="font-family:var(--font-cond);font-size:17px;font-weight:700;margin-bottom:4px;">🏁 Ce cycle est terminé</div>
+      <div style="font-size:13.5px;color:var(--t2);line-height:1.45;" id="cyc-fini-txt">—</div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn btn-red" style="flex:1;padding:11px;" onclick="endCycle()">Clôturer</button>
+      </div>
+      <div style="font-size:12px;color:var(--t3);margin-top:8px;line-height:1.4;">Rien n'est supprimé tant que tu ne clôtures pas : tes 1RM de départ et tes objectifs restent.</div>
+    </div>
     <div class="card cp">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div style="font-family:var(--font-cond);font-size:18px;font-weight:700;" id="cyc-week-title">—</div>
