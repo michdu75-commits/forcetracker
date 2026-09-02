@@ -6,7 +6,8 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1096`. ⏳ déploiement à vérifier. ⚠️ Aucun déploiement
+- **Version en ligne (live) :** `ft-v1096`. ✅ **Déploiement du site vérifié vert** (run **#775**,
+  commit `b1e0c1e`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement
   backend : `Code.js` n'a pas été touché, le correctif vit dans `state.js` et `tracking.js`.
 - ⚖️⭐⭐ **LE POIDS LU PAR L'IA A LES MÊMES BORNES QUE LE POIDS SAISI À LA MAIN** (ft-v1096).
   Michel : *« continue avec les autres imports mais regarde ce que j'ai vu avec gpt »*.
