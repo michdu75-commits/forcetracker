@@ -6,7 +6,9 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1093`.
+- **Version en ligne (live) :** `ft-v1093`. ✅ **Les DEUX déploiements sont verts** — site
+  (run **#764**) et backend Apps Script (run **#104**), vérifiés sur le commit `da33cf1a` et
+  pas seulement poussés (**R18**).
 - 🔙⭐⭐ **LE BOUTON RETOUR ÉTAIT LA 3ᵉ PORTE, ET LA SEULE ENCORE OUVERTE** (ft-v1093). Michel :
   *« continue à chercher des incohérences »* — 3ᵉ passe. ft-v1091 avait fait passer le glissement
   du doigt par `_closeOverlayProper` ; le gestionnaire `popstate`, lui, faisait
