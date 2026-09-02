@@ -1303,7 +1303,12 @@ function cycleGlucides(m, kcal){
     if(S.foodMode==='keto'||S.keto||S.foodMode==='lowcarb') return m;   // le % EST le régime
     if(typeof _weeklyCounts!=='function') return m;
     const wk=_weeklyCounts(4);
-    const f=Math.round(wk.reduce((a,b)=>a+b,0)/wk.length);
+    /* ⛔⛔ ON DIVISE PAR LES SEMAINES VÉCUES, PAS PAR 4 EN DUR (ft-v1098).
+       Le détail et la mesure sont dans `_semainesVecues` (tracking.js) — un seul propriétaire
+       de la question « depuis combien de temps cette personne est-elle là ? » (R2). */
+    const nSem=(typeof _semainesVecues==='function')?_semainesVecues(wk.length):wk.length;
+    if(!(nSem>0)) return m;                       // moins d'une semaine d'historique : on ne cycle pas
+    const f=Math.round(wk.reduce((a,b)=>a+b,0)/nSem);
     /* ⛔ Aucun contraste à créer : 0 séance par semaine, ou 7 sur 7. Dans les deux cas il n'y a
        pas de « jour de repos » à compenser — on ne cycle pas, et on le dit. */
     if(!(f>0&&f<7)) return m;
@@ -1340,9 +1345,29 @@ function cycleGlucides(m, kcal){
        s'accumule sur la semaine (mesuré : jusqu'à 9 g d'écart, ce qui a fait rougir le témoin
        de neutralité). *Un arrondi appliqué trop tôt dans une compensation devient un biais.* */
     const carbs_g=Math.max(0,Math.round((kcal-m.prot_g*4-fatExact*9)/4));
+    /* 🔭 L'AUTRE BOUT DE LA SEMAINE — calculé ICI, par la MÊME formule (ft-v1098).
+       ⛔⛔ POURQUOI IL EXISTE : l'écran n'affichait qu'un POINT (« 478 g »), alors que le
+       moteur prescrit à la même personne **368 à 478 g** selon le jour — 26 % d'écart sur les
+       glucides, 38 % sur les lipides, mesurés. *Deux valeurs justes, une seule affichée, et
+       rien ne disait que l'autre existait* — c'est le défaut de ft-v1027 sur un autre écran.
+       ⛔ IL SE CALCULE ICI ET NULLE PART AILLEURS : l'écran qui refait la formule finirait par
+       ne plus dire la même chose que le moteur (**R2**). Il lit, il ne dérive pas.
+       ⚠️ ET SA LIMITE EST ÉCRITE : quand l'autre jour est un jour de SÉANCE, on ne sait pas
+       LAQUELLE — donc on prend `rMoy`, la moyenne de ses séances récentes, pas le facteur
+       d'une séance précise. C'est « un jour de séance typique », jamais « ta prochaine
+       séance » ; l'écran doit le formuler ainsi (R29).
+       ⚠️ Le plancher lipidique s'applique aussi de ce côté : `D` a été raboté avec `rJour`, et
+       `rMoy` peut être plus grand — sans cette borne, l'autre bout pourrait annoncer une valeur
+       que le moteur ne prescrirait jamais. */
+    const autreDFat = js.seance ? +(D*rMoy*f/7) : -(D*rMoy*(7-f)/7);
+    const autreFatExact = Math.max(plancher, m.fat_g+autreDFat);
+    const autre = {jour: js.seance?'repos':'seance',
+                   fat_g: Math.round(autreFatExact),
+                   carbs_g: Math.max(0,Math.round((kcal-m.prot_g*4-autreFatExact*9)/4)),
+                   estime: !js.seance};      // vrai quand l'autre bout est une séance : c'est une moyenne
     return {prot_g:m.prot_g, fat_g, carbs_g,
             cycle:{jour:js.seance?'seance':'repos', freq:f, dFat:Math.round(dFat),
-                   dCarbs:carbs_g-m.carbs_g, region:js.seance?rJour:null}};
+                   dCarbs:carbs_g-m.carbs_g, region:js.seance?rJour:null, autre}};
   }catch(e){ return m; }
 }
 function calcMacros(phase){

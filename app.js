@@ -1826,9 +1826,20 @@ function _portionRaisonnable(al, macro, manque, soir){
   n = Math.min(n, maxPor);
   n = Math.round(n*2)/2;                                     // au demi près
   if(n < 0.5) return null;
-  const lbl = (n===1) ? ('1\u00A0× ' + al.name) : ((n===0.5?'½':n) + '\u00A0× ' + al.name);
-  return { texte: lbl, apport: n * parPortion };
+  return { texte: _portionLbl(n) + '\u00A0× ' + al.name, apport: n * parPortion };
 }
+
+/* ½ UNE PORTION ET DEMIE S'ÉCRIT « 1½ », PAS « 1.5 » (ft-v1098) — trouvé à la CAPTURE.
+   ⛔⛔ L'app écrivait les DEUX, à deux écrans d'écart : les boutons de quantité disent
+   `½ · 1 · 1½ · 2 · 3`, et « ce qu'il te reste » sortait **« 1.5 × Amandes »** — un point
+   décimal anglais, dans un écran qui écrit par ailleurs « 1 492 » et « ≈ 140 g ».
+   *Deux écritures pour la même quantité, c'est une de trop* (**R2**), et celle-là se lit
+   comme une coquille — exactement le défaut du séparateur de milliers de ft-v1027.
+   ⛔ UN SEUL PROPRIÉTAIRE, lu par les trois endroits (ici et les deux rangées de boutons de
+   quantité). Au-delà de 3, on retombe sur le nombre nu — avec la VIRGULE française —
+   plutôt que d'inventer une notation : les demis s'arrêtent là où les boutons s'arrêtent. */
+const _PORTION_LBL={0.5:'½',1:'1',1.5:'1½',2:'2',2.5:'2½',3:'3'};
+function _portionLbl(n){ return _PORTION_LBL[n] || String(n).replace('.',','); }
 
 /* Compose une idée pour UNE macro : jusqu'à 2 aliments à lui, à doses raisonnables.
    ⛔ Les aliments déjà employés pour une autre macro sont écartés — sinon la même ligne
@@ -2933,7 +2944,7 @@ function _efQtyRender(){
   }else{
     _efRef={base:base,q:1};
     const b=(x,l)=>'<button onclick="_efApplyPortion('+x+')" style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t2);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">'+l+'</button>';
-    corps=choix+'<div style="display:flex;gap:6px;">'+b(0.5,'½')+b(1,'1')+b(1.5,'1½')+b(2,'2')+b(3,'3')+'</div>'
+    corps=choix+'<div style="display:flex;gap:6px;">'+[0.5,1,1.5,2,3].map(x=>b(x,_portionLbl(x))).join('')+'</div>'
       +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Les 4 valeurs ci-dessous sont <b>une portion</b>. Tu connais le poids ? Passe en <b>⚖️ grammes</b> et indique-le.</div>';
   }
   el.innerHTML='<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité <span style="font-weight:400;">— recalcule les 4 valeurs</span></div>'+corps+'</div>';
@@ -3184,7 +3195,7 @@ function _afMajAncre(srcChange){
       const b=(x,l)=>'<button onclick="_afApplyPortion('+x+')" style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t2);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">'+l+'</button>';
       el.innerHTML='<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité <span style="font-weight:400;">— multiplie les 4 valeurs</span></div>'
         +choix
-        +'<div style="display:flex;gap:6px;">'+b(0.5,'½')+b(1,'1')+b(1.5,'1½')+b(2,'2')+b(3,'3')+'</div>'
+        +'<div style="display:flex;gap:6px;">'+[0.5,1,1.5,2,3].map(x=>b(x,_portionLbl(x))).join('')+'</div>'
         +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Les 4 valeurs ci-dessous sont <b>une portion</b>. Tu connais le poids ? Passe en <b>⚖️ grammes</b> et indique-le.</div>';
     }
   }

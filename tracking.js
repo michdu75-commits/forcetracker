@@ -2132,6 +2132,35 @@ function _weeklyCounts(nWeeks){
   });
   return counts; // [semaine 0 = 7 derniers jours, 1, 2, 3]
 }
+/* 📅 COMBIEN DE SEMAINES LA PERSONNE A-T-ELLE RÉELLEMENT VÉCUES DANS L'APP ? (ft-v1098)
+   ⛔⛔ NÉ D'UN DÉFAUT MESURÉ, PAS D'UNE IDÉE : `cycleGlucides` faisait
+   `f = round(somme / wk.length)` avec `wk.length` = 4, **toujours** — donc il divisait par des
+   semaines où la personne n'avait pas encore installé l'app. Mesuré :
+     · 2 semaines à 3 séances/sem → l'app lit **2**  (au lieu de 3) ;
+     · 1 semaine  à 4 séances/sem → l'app lit **1**  (au lieu de 4).
+   ⚠️ ET L'EFFET EST À L'ENVERS DE CE QU'IL FAUDRAIT : plus `f` est petit, plus l'amplitude
+   `(7−f)/7` est GRANDE. *Le pratiquant le plus récent, celui dont on sait le moins, recevait
+   le cyclage le plus agressif* — 52 g de lipides un jour de séance pour un plancher à 50,4.
+   ⭐ Le voisin immédiat, `_pendingFreqContext`, se protégeait DÉJÀ (`<3 semaines non vides →
+   null`) : le même piège, deux lecteurs, un seul gardé. C'est **R8**, encore.
+   ⛔ LE DÉNOMINATEUR N'EST PAS « les semaines où il a fait quelque chose » : une semaine
+   SAUTÉE fait partie de sa fréquence (mesuré : [3,2,0,3] doit rendre 2, et il rend bien 2).
+   C'est l'étendue de l'historique qui compte, pas son remplissage.
+   ⛔ ET ON NE MOYENNE PAS SUR MOINS D'UNE SEMAINE COMPLÈTE : rendre 0 laisse l'appelant
+   désactiver le cyclage, ce qu'il faisait déjà pour un profil tout neuf (aucune régression).
+   *Une « moyenne par semaine » calculée sur trois jours n'est pas une moyenne, c'est une
+   extrapolation* (R29). */
+function _semainesVecues(nWeeks){
+  try{
+    const dates=(S.sessions||[]).map(s=>s&&(s.date||(s.ts?dayOfTs(s.ts):null))).filter(Boolean).sort();
+    if(!dates.length)return 0;
+    const t=new Date(today()+'T12:00:00'), d0=new Date(dates[0]+'T12:00:00');
+    if(isNaN(t)||isNaN(d0))return 0;
+    const span=Math.round((t-d0)/864e5)+1;               // en jours, aujourd'hui compris
+    if(!(span>=7))return 0;                              // pas encore UNE semaine pleine
+    return Math.min(nWeeks, Math.max(1, Math.round(span/7)));
+  }catch(e){ return 0; }
+}
 function _pendingFreqContext(){
   try{
     const declared=(S.coachQuiz&&S.coachQuiz.answers&&S.coachQuiz.answers.freq)||'';

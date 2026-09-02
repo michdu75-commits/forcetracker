@@ -2308,6 +2308,25 @@ function _renderAujourdhui(macros){
       +anneau(auj.carbs,macros.carbs_g,'Glucides' ,'var(--orange)')
       +anneau(auj.fat  ,macros.fat_g  ,'Lipides'  ,'var(--gold)')
     +'</div>'
+    /* 🔭 LA CIBLE DU JOUR N'EST PAS LA CIBLE DE TOUS LES JOURS — ON LE DIT ICI (ft-v1098).
+       ⛔⛔ MESURÉ : le moteur prescrit à la même personne **368 à 478 g** de glucides et
+       **56 à 82 g** de lipides selon le jour. La carte n'en montrait qu'un, sans dire lequel —
+       donc quelqu'un qui mange pareil tous les jours se voyait « en dessous » un jour et
+       « au-dessus » le lendemain, sans comprendre pourquoi. *C'est ft-v1027 : deux valeurs
+       justes, une seule affichée, et rien qui nomme la fenêtre.*
+       ⛔ UNE LIGNE, ZÉRO CHIFFRE RECOPIÉ : les deux bouts vivent dans « comment c'est calculé »,
+       qui est la surface qui EXPLIQUE (**R25** — la carte annonce, l'aide explique). Recopier
+       les nombres ici les ferait diverger le jour où l'un des deux blocs change (**R2**).
+       ⛔ Rien ne s'affiche s'il n'y a pas de cyclage (kéto, low carb, 0 ou 7 séances/semaine,
+       moins d'une semaine d'historique) : on n'explique pas une variation qui n'a pas lieu. */
+    +(function(){
+       const c=macros.cycle;
+       if(!c||!c.dCarbs) return '';
+       return '<div style="font-size:11.5px;color:var(--t3);margin-top:9px;text-align:center;line-height:1.4;">'
+         +(c.jour==='seance'?'🍚 Jour de séance':'😴 Jour de repos')
+         +' — tes cibles glucides et lipides changent selon le jour. '
+         +'<span style="color:var(--t2);">Les deux dans « comment c’est calculé ».</span></div>';
+     })()
     /* 🍽️ « Ce qu'il te reste, en vrai » : le MÊME bloc que dans le Journal, un seul code (R2). */
     +(typeof _blocResteHTML==='function'?_blocResteHTML(today()):'');
 }
@@ -2739,13 +2758,40 @@ function renderNutrition(){try{
     else{
       const seance=c.jour==='seance';
       const signe=(c.dCarbs>0?'+':'')+c.dCarbs;
-      _cy.innerHTML='<div style="display:flex;gap:8px;background:var(--bg2);border:1px solid var(--sep);border-radius:10px;padding:9px 11px;margin-top:10px;">'
+      /* 🔭 LES DEUX BOUTS, PAS SEULEMENT CELUI D'AUJOURD'HUI (ft-v1098).
+         ⛔ Le bloc annonçait déjà POURQUOI le chiffre bouge (« +46 g, compensés par les
+         lipides ») — il ne disait jamais VERS QUOI. *Savoir qu'une valeur varie sans connaître
+         l'autre bout, ce n'est pas une information : on ne peut rien en faire.*
+         ⛔ Les deux valeurs viennent de `macros.cycle`, calculées par le moteur : l'écran ne
+         refait aucune formule (**R2**).
+         ⛔ ET LES PROTÉINES N'Y SONT PAS, EXPRÈS : mesuré, leur amplitude est de **0 g** — le
+         moteur les fixe au poids de corps, elles ne bougent pas d'un jour à l'autre. *On
+         n'invente pas une zone à une macro qui n'en a pas* (R29). */
+      const nb=(n)=>String(n).replace(/ /g,' ')+' g';
+      const A={t:'🍚 Jour de séance', c:seance?macros.carbs_g:(c.autre&&c.autre.carbs_g),
+                                      f:seance?macros.fat_g  :(c.autre&&c.autre.fat_g)};
+      const B={t:'😴 Jour de repos',  c:seance?(c.autre&&c.autre.carbs_g):macros.carbs_g,
+                                      f:seance?(c.autre&&c.autre.fat_g)  :macros.fat_g};
+      const ligne=(o,actif)=>'<div style="display:flex;justify-content:space-between;gap:10px;'
+        +'font-size:11.5px;padding:3px 0;'+(actif?'color:var(--t1);font-weight:700;':'color:var(--t3);')+'">'
+        +'<span>'+o.t+(actif?' · aujourd’hui':'')+'</span>'
+        +'<span>'+(o.c!=null?nb(o.c)+' de glucides · '+nb(o.f)+' de lipides':'—')+'</span></div>';
+      const bornes=(c.autre&&c.autre.carbs_g!=null)
+        ? '<div style="margin-top:7px;padding-top:6px;border-top:1px solid var(--sep);">'
+          +ligne(A,seance)+ligne(B,!seance)
+          + (c.autre.estime
+              ? '<div style="font-size:10.5px;color:var(--t3);margin-top:3px;">Le jour de séance est estimé sur '
+                +'la moyenne de tes séances récentes — une séance de jambes en demande un peu plus.</div>'
+              : '')
+          +'</div>'
+        : '';
+      _cy.innerHTML='<div style="background:var(--bg2);border:1px solid var(--sep);border-radius:10px;padding:9px 11px;margin-top:10px;">'
         +'<span style="font-size:11.5px;color:var(--t2);line-height:1.45;">'
         +(seance?'🍚 <b style="color:var(--t1);">Jour de séance</b> — '
                  :'😴 <b style="color:var(--t1);">Jour de repos</b> — ')
         +'<b>'+signe+' g</b> de glucides, compensés par les lipides. '
         +'<span style="color:var(--t3);">Tes calories du jour ne changent pas, et sur la semaine le total est le même : les glucides vont là où tu t\'entraînes.</span>'
-        +'</span></div>';
+        +'</span>'+bornes+'</div>';
     }
   }
   // Barres macros = part des calories (prot/glucides 4 kcal/g, lipides 9 kcal/g)
