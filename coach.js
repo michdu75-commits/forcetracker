@@ -3909,10 +3909,25 @@ ${(()=>{
      de recomposition — arrivait chez Milo en « ⚠ à ajuster selon objectif ». Milo lui aurait
      conseillé de corriger une trajectoire correcte. Les bornes viennent de `state.js`, les
      mêmes que celles affichées à l'écran : deux tables auraient fini par se contredire. */
-  const _tr=(typeof _GOAL_TREND_RECOMP!=='undefined')?_GOAL_TREND_RECOMP:{min:-0.3,max:0};
-  const onTrack=goal==='perte'&&weeklyChange<-0.1?true:goal==='muscle'&&weeklyChange>0.05?true:goal==='recomp'?(weeklyChange>=_tr.min&&weeklyChange<=_tr.max):Math.abs(weeklyChange)<0.2;
+  /* ⛔⛔ CE SEUIL ÉTAIT ÉCRIT ICI, DIFFÉRENT DE CELUI DE L'ÉCRAN (corrigé ft-v1100).
+     Mesuré : `> 0.05` pour « muscle » déclarait **+1,6 kg/semaine** « dans la bonne
+     direction », alors que l'écran annonçait « +0.1 à +0.3 » au même instant. Milo recevait
+     donc un FAIT FAUX sur la personne. Un seul juge désormais (`poidsDansLaPlage`, state.js).
+     ⚠️ ET IL PEUT RENDRE `null` : objectif inconnu, ou plage volontairement floue (force,
+     endurance). *On ne transforme pas « je ne sais pas » en « c'est bon »* (R29). */
+  const _plage=(typeof trendPourObjectif==='function')?trendPourObjectif(goal):null;
+  const onTrack=(typeof poidsDansLaPlage==='function')?poidsDansLaPlage(weeklyChange,goal):null;
+  /* ⛔ On lit le RYTHME, pas la position numérique : sur une plage négative, « au-dessus »
+     veut dire « plus lent ». Un seul propriétaire de cette bascule (`rythmeVsPlage`). */
+  const _pos=(typeof rythmeVsPlage==='function')?rythmeVsPlage(weeklyChange,goal):null;
+  const _mots={'plus rapide':'PLUS RAPIDE que','plus lent':'PLUS LENT que',
+               'au-dessus':'AU-DESSUS de','en-dessous':'EN-DESSOUS de'};
+  const _verdict = (_pos===null||_pos==='flou')
+      ? `plage attendue non chiffrée pour cet objectif — ne juge pas la vitesse`
+    : _pos==='dans' ? `✓ dans la plage attendue (${_plage.txt})`
+                    : `⚠ ${_mots[_pos]||'HORS de'} la plage attendue (${_plage.txt})`;
   return `- Poids actuel: ${latest.kg} kg (${wlog.length} mesures)
-- Tendance: ${weeklyChange>=0?'+':''}${weeklyChange} kg/semaine — ${onTrack?'✓ dans la bonne direction':'⚠ à ajuster selon objectif'}`;
+- Tendance: ${weeklyChange>=0?'+':''}${weeklyChange} kg/semaine — ${_verdict}`;
 })()}
 
 CHECK-IN SÉANCES RÉCENTES:

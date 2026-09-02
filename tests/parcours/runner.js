@@ -16349,21 +16349,47 @@ console.log('\n-- CXLVIII. L\'évolution attendue en recomposition (ft-v1044) --
       /--green/.test(F.recompDans.carte.couleurBrute),
       'couleur = '+F.recompDans.carte.couleur+' · '+F.recompDans.carte.couleurBrute.slice(0,90));
     /* ⭐⭐ LE JUMEAU — c'est le témoin qui compte le plus (R8). */
-    t('⭐⭐ MILO reçoit « ✓ dans la bonne direction » pour la MÊME pente (il disait « ⚠ à ajuster »)',
-      /dans la bonne direction/.test(F.recompDans.milo), F.recompDans.milo);
+    /* ⚠️ RE-VISÉ EN ft-v1100 : ce témoin figeait la PHRASE « dans la bonne direction ».
+       Elle a changé (Milo reçoit maintenant la plage et le SENS de l'écart). Sa garantie,
+       elle, n'a pas bougé d'un mot : *sur la même pente, Milo doit valider ce que l'écran
+       valide*. 7ᵉ fois pour la famille §31 de BUGS.md — on fige une RÈGLE, pas un libellé. */
+    t('⭐⭐ MILO valide la MÊME pente que l\'écran (−0.21 en recomposition) — et il NOMME la plage',
+      /dans la plage attendue/.test(F.recompDans.milo)
+      && F.recompDans.milo.indexOf('0 à −0.3 kg/sem')>=0, F.recompDans.milo);
     /* ⛔ La bande MORD dans l'autre sens : sans ça, « vert » ne voudrait rien dire. */
     t('⛔ hors de la bande (+0.7 kg/sem) → la carte n\'est PAS verte',
       !/--green/.test(F.recompHors.carte.couleurBrute) && F.recompHors.carte.couleur!==F.recompDans.carte.couleur,
       'hors = '+F.recompHors.carte.couleur+' · dans = '+F.recompDans.carte.couleur);
-    t('⛔ … et Milo reçoit bien « ⚠ à ajuster » dans ce cas',
-      /à ajuster/.test(F.recompHors.milo), F.recompHors.milo);
+    /* ⛔ Ce témoin exigeait « PLUS RAPIDE ». La plage de recomposition finit à ZÉRO, et la
+       fixture est à **+0,7** : la personne PREND du poids, elle ne « perd pas plus vite ».
+       Sa garantie est qu'un ⚠ parte AVEC un mot qui nomme le sens — pas lequel des quatre. */
+    t('⛔ … et Milo reçoit bien un avertissement dans ce cas — avec le SENS de l\'écart',
+      /⚠/.test(F.recompHors.milo) && /(PLUS RAPIDE|PLUS LENT|AU-DESSUS|EN-DESSOUS)/.test(F.recompHors.milo),
+      F.recompHors.milo);
+    t('⛔ … et surtout PAS « plus lent » : au-delà de zéro on ne perd plus du tout, on prend',
+      !/PLUS LENT/.test(F.recompHors.milo), F.recompHors.milo);
     /* ⛔ NON-RÉGRESSION des 5 autres objectifs, écran ET Milo. */
-    t('⛔ NON-RÉGRESSION « Perte de poids » : phrase inchangée, et aucune note de recomposition',
-      /l'évolution attendue est négative \(−0\.3–0\.7 kg\/sem\)\.$/.test(F.perte.carte.texte.trim()) && /dans la bonne direction/.test(F.perte.milo),
-      F.perte.carte.texte.slice(-90)+' | '+F.perte.milo);
-    t('⛔ NON-RÉGRESSION « Prise de muscle » : phrase inchangée, et Milo inchangé',
-      /l'évolution attendue est légèrement positive \(\+0\.1–0\.3 kg\/sem\)\.$/.test(F.muscle.carte.texte.trim()) && /dans la bonne direction/.test(F.muscle.milo),
-      F.muscle.carte.texte.slice(-90)+' | '+F.muscle.milo);
+    /* ⛔⛔ CE TÉMOIN A TROUVÉ UN VRAI DÉFAUT DE ft-v1100, il ne figeait pas qu'une phrase.
+       La pente de la fixture est −0.21 kg/sem. L'écran a TOUJOURS annoncé « −0.3 à −0.7 »
+       pour la perte — donc −0.21 est **plus lent** que la plage. L'ancien seuil de coach.js
+       (`< -0.1`) disait pourtant « ✓ dans la bonne direction » : *l'app affirmait à Milo
+       qu'une pente hors de sa propre plage était conforme.* Le témoin exigeait ce « ✓ »,
+       donc il figeait l'erreur. On exige désormais l'ACCORD entre les deux, et le SENS. */
+    t('⛔ NON-RÉGRESSION « Perte de poids » : la phrase de l\'écran est inchangée au caractère près',
+      /l'évolution attendue est négative \(−0\.3–0\.7 kg\/sem\)\.$/.test(F.perte.carte.texte.trim()),
+      F.perte.carte.texte.slice(-90));
+    t('⭐⭐ … et Milo dit enfin la MÊME chose que l\'écran : −0.21 est PLUS LENT que « −0.3 à −0.7 »',
+      /PLUS LENT/.test(F.perte.milo) && F.perte.milo.indexOf('−0.3–0.7 kg/sem')>=0, F.perte.milo);
+    /* ⛔ Le témoin ci-dessus a trouvé un vrai défaut : mon 1ᵉʳ jet écrivait « PLUS RAPIDE »
+       parce que −0.21 est numériquement supérieur à −0.3. Sur une plage négative, le sens
+       s'inverse. Ce contrôle épingle qu'on n'y revienne pas par la porte de derrière. */
+    t('⛔ … et surtout PAS « plus rapide » : sur une plage négative, au-dessus veut dire MOINS',
+      !/PLUS RAPIDE/.test(F.perte.milo), F.perte.milo);
+    t('⛔ NON-RÉGRESSION « Prise de muscle » : la phrase de l\'écran est inchangée au caractère près',
+      /l'évolution attendue est légèrement positive \(\+0\.1–0\.3 kg\/sem\)\.$/.test(F.muscle.carte.texte.trim()),
+      F.muscle.carte.texte.slice(-90));
+    t('⛔ … et +0.21 reste validé par Milo (la correction ne durcit pas ce qui était juste)',
+      /dans la plage attendue/.test(F.muscle.milo), F.muscle.milo);
   }
   await cx.close();
 }
@@ -22639,7 +22665,7 @@ console.log('\n-- CCV. La fréquence sur les semaines vécues, et les deux bouts
 }
 
 
-/* ═══ CCV. LA TROISIÈME PORTE VERS L'EFFACEMENT · LES BORNES DU PROFIL RESTAURÉ (ft-v1099) ═══
+/* ═══ CCVII. LA TROISIÈME PORTE VERS L'EFFACEMENT · LES BORNES DU PROFIL RESTAURÉ (ft-v1099) ═══
    Michel : « on continue sur les incohérences ? ». Six familles neuves, hors nutrition
    (session-A y travaille). Deux ont mordu, une troisième est un libellé.
    ⛔⛔ ① CHARGER UN PROGRAMME EFFACE UNE SÉANCE EN COURS, SANS UN MOT. `loadProg` fait
@@ -22662,7 +22688,7 @@ console.log('\n-- CCV. La fréquence sur les semaines vécues, et les deux bouts
    ⛔ ③ LE BADGE disait « 5 PRs battus » ; le code compte les EXERCICES ayant un record. Une
    seule séance à 5 exercices, zéro record amélioré → badge débloqué. On corrige le TEXTE :
    durcir le code retirerait le badge à ceux qui l'ont (R29). */
-console.log('\n-- CCV. La 3e porte vers l\'effacement · les bornes du profil restauré (ft-v1099) --');
+console.log('\n-- CCVII. La 3e porte vers l\'effacement · les bornes du profil restauré (ft-v1099) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
@@ -22732,7 +22758,7 @@ console.log('\n-- CCV. La 3e porte vers l\'effacement · les bornes du profil re
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
   });
-  if(H.err) t('CCV n\'a pas pu tourner', false, H.err);
+  if(H.err) t('CCVII n\'a pas pu tourner', false, H.err);
   else{
     t('⛔ LE CONTRÔLE : sans travail fait, charger un programme ne pose AUCUNE question',
       H.sansTravail_question===false && H.sansTravail_charge.join(',')==='Développé Couché',
@@ -22787,7 +22813,7 @@ console.log('\n-- CCV. La 3e porte vers l\'effacement · les bornes du profil re
     return o;
    }catch(e){return {err:String(e)};}
   });
-  if(I.err) t('CCV (règle #11) n\'a pas pu tourner', false, I.err);
+  if(I.err) t('CCVII (règle #11) n\'a pas pu tourner', false, I.err);
   else{
     t('📣 #11 · l\'aide `?` de l\'onglet Séance nomme la nouvelle question', I.aideSeance===true, '');
     t('📣 #11 · l\'aide détaillée distingue les TROIS façons de vider une séance', I.aideLongue===true, '');
@@ -22799,8 +22825,129 @@ console.log('\n-- CCV. La 3e porte vers l\'effacement · les bornes du profil re
   await cx.close();
 }
 
+/* ═══ CCVI. UNE SEULE SOURCE POUR LES PLAGES DE POIDS (ft-v1100) ════════════════════════════
+   ⛔⛔ LE DÉFAUT, MESURÉ : une seule des six bornes était une DONNÉE. Les cinq autres ne
+   vivaient qu'en PROSE dans la chaîne `goalDir` d'un affichage, et `coach.js` jugeait avec
+   des seuils écrits ailleurs (`> 0.05` pour muscle). Résultat : **+1,6 kg/semaine en « prise
+   de muscle » partait vers Milo comme « ✓ dans la bonne direction »**, pendant que l'écran
+   affichait « +0.1 à +0.3 kg/sem ». C'est R4 doublé de R2.
+   ⭐ LE TÉMOIN QUI PORTE LA VERSION N'EST PAS « 1,6 est hors plage » — c'est **l'ACCORD** :
+   l'écran et Milo doivent dire la même chose sur la même tendance, quelle qu'elle soit.
+   ⚠️ ET LA SONDE D'ATELIER A MENTI AVANT DE MESURER : elle RECOPIAIT la formule de `coach.js`
+   au lieu de l'appeler, donc elle affichait encore l'ancien verdict après correction du code.
+   *Une sonde qui recopie ce qu'elle teste ne peut jamais voir un correctif.* Les témoins
+   ci-dessous appellent le VRAI juge. */
+console.log('\n-- CCVI. Une seule source pour les plages de poids (ft-v1100) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  const R=await pg.evaluate(()=>{
+    const out={};
+    out.tableExiste=(typeof _GOAL_TREND==='object' && !!_GOAL_TREND);
+    out.objectifs=Object.keys(_GOAL_TREND||{});
+    out.aliasPointe=(_GOAL_TREND_RECOMP===_GOAL_TREND.recomp);
+    out.jugeExiste=(typeof poidsDansLaPlage==='function');
 
-/* ═══ CCVI. UN CYCLE TERMINÉ NE LE DISAIT JAMAIS — NI À L'ÉCRAN, NI À MILO (ft-v1100) ═══
+    /* ⭐⭐ LE CŒUR : sur les mêmes tendances, l'ÉCRAN et MILO disent-ils la même chose ?
+       On lit le texte réellement rendu par la carte, et le verdict réellement calculé. */
+    const cas=[['muscle',0.2],['muscle',1.6],['perte',-0.5],['perte',-0.05],
+               ['recomp',-0.15],['equilibre',0.3],['force',0.9]];
+    out.accord=cas.map(([g,wc])=>{
+      const gSauve=S.goal; S.goal=g;
+      const plage=trendPourObjectif(g);
+      const juge=poidsDansLaPlage(wc,g);
+      // le texte de l'écran, produit par le vrai rendu
+      const pts=[]; for(let i=0;i<8;i++) pts.push({date:'2026-08-'+String(10+i).padStart(2,'0'),kg:+(84+i*wc/7).toFixed(2)});
+      const el=document.createElement('div'); renderWeightCorrelations(el,pts);
+      const txt=el.innerText||'';
+      const annonce=(txt.match(/l'évolution attendue est ([^\n]*?)\./)||[])[1]||'';
+      S.goal=gSauve;
+      return {g,wc,juge,flou:!!(plage&&plage.flou),pos:positionDansLaPlage(wc,g),rythme:rythmeVsPlage(wc,g),
+              texteVientDeLaTable: plage? txt.indexOf(plage.txt)>=0 : null};
+    });
+    return out;
+  });
+  await cx.close();
+
+  t('⭐ la table unique existe et couvre les 6 objectifs',
+    R.tableExiste && R.objectifs.length===6, JSON.stringify(R.objectifs));
+  t('⛔ l\'ancien nom `_GOAL_TREND_RECOMP` POINTE sur la table (rétrocompatible, une seule vérité)',
+    R.aliasPointe===true, '');
+  t('⛔ un seul juge, lu par les deux côtés',
+    R.jugeExiste===true, '');
+
+  /* ⭐⭐ LE TÉMOIN CENTRAL : l'écran affiche EXACTEMENT la plage que le juge applique.
+     C'est lui qui referme R4 — avant, le texte et le seuil étaient deux écritures séparées. */
+  t('⭐⭐ LE TEXTE AFFICHÉ VIENT DE LA TABLE, sur les 7 cas (plus une plage écrite à part)',
+    R.accord.every(a=>a.texteVientDeLaTable===true),
+    JSON.stringify(R.accord.filter(a=>!a.texteVientDeLaTable).map(a=>a.g)));
+
+  /* ⭐⭐ LE CAS QUI A DÉCLENCHÉ LA VERSION */
+  t('⭐⭐ +1,6 kg/sem en « prise de muscle » est HORS plage (il partait vers Milo en « bonne direction »)',
+    R.accord.find(a=>a.g==='muscle'&&a.wc===1.6).juge===false, '');
+  t('⛔ … et le témoin ci-dessus ne rougit pas tout : +0,2 kg/sem, lui, est bien DANS la plage',
+    R.accord.find(a=>a.g==='muscle'&&a.wc===0.2).juge===true, '');
+
+  /* ⛔ LES NON-RÉGRESSIONS — elles empêchent le bloc d'être vert en disant « tout est faux » */
+  t('⛔ NON-RÉGRESSION : une perte à −0,5 kg/sem reste DANS la plage (−0.3 à −0.7)',
+    R.accord.find(a=>a.g==='perte'&&a.wc===-0.5).juge===true, '');
+  t('⛔ NON-RÉGRESSION : une recomposition à −0,15 kg/sem reste DANS sa plage (le cas de ft-v1088)',
+    R.accord.find(a=>a.g==='recomp'&&a.wc===-0.15).juge===true, '');
+  t('⭐ une perte trop LENTE (−0,05) est hors plage — la borne mord des DEUX côtés, pas seulement en haut',
+    R.accord.find(a=>a.g==='perte'&&a.wc===-0.05).juge===false, '');
+
+  /* ⛔ CE QU'ON REFUSE DE JUGER, ET QUI DOIT LE RESTER */
+  t('⛔⛔ « force » n\'a AUCUNE plage chiffrée dans l\'app : elle est marquée FLOUE, on n\'en invente pas une (R29)',
+    R.accord.find(a=>a.g==='force').flou===true, '');
+  /* ⛔⛔ « HORS » NE SUFFIT PAS — trouvé parce qu'un témoin de ft-v1044 a rougi sur une perte
+     LENTE. Perdre moins vite que prévu et fondre trop vite sont deux faits différents ;
+     les envoyer à Milo sous le même mot lui ferait dire la même chose des deux. */
+  /* ⚠️ CE TÉMOIN ÉTAIT FAUX, ET C'EST INSTRUCTIF : j'y attendais `pos === 'en-dessous'` pour
+     une perte à −0,05. **Géométriquement, −0,05 est AU-DESSUS de −0,3** — je confondais déjà
+     la position et le rythme, ce qui est exactement le défaut que ce bloc a servi à trouver.
+     ⛔ Ce qu'on veut épingler, c'est le RYTHME (le mot envoyé à Milo), pas la géométrie. */
+  t('⭐⭐ le SENS de l\'écart est distingué : trop LENT n\'est pas trop RAPIDE',
+    R.accord.find(a=>a.g==='perte'&&a.wc===-0.05).rythme==='plus lent'
+    && R.accord.find(a=>a.g==='muscle'&&a.wc===1.6).rythme==='plus rapide'
+    && R.accord.find(a=>a.g==='muscle'&&a.wc===0.2).rythme==='dans',
+    JSON.stringify(R.accord.map(a=>[a.g,a.wc,a.pos,a.rythme])));
+  t('⛔ … et la POSITION géométrique reste juste de son côté (−0,05 est bien au-dessus de −0,3)',
+    R.accord.find(a=>a.g==='perte'&&a.wc===-0.05).pos==='au-dessus', '');
+  t('⛔ … et une plage floue rend « flou », jamais un sens inventé',
+    R.accord.find(a=>a.g==='force').pos==='flou', '');
+  /* ⛔⛔ LE MOT DÉPEND DU SIGNE DE LA PLAGE — c'est le défaut que ce bloc a fait remonter.
+     Une perte à −0,21 est **numériquement au-dessus** de −0,3, donc mon 1ᵉʳ jet écrivait
+     « PLUS RAPIDE ». C'est faux : perdre 0,21 kg/sem, c'est perdre **plus lentement**.
+     ⭐ Le témoin décisif est la PAIRE : le même mot doit sortir des deux côtés pour le même
+     fait physique, sur une plage positive comme sur une plage négative. */
+  t('⭐⭐ sur une plage NÉGATIVE le sens s\'inverse : perdre 0,21 quand on vise 0,3–0,7 est PLUS LENT',
+    R.accord.find(a=>a.g==='perte'&&a.wc===-0.05).rythme==='plus lent',
+    JSON.stringify(R.accord.map(a=>[a.g,a.wc,a.pos,a.rythme])));
+  t('⛔ … et sur une plage POSITIVE il ne s\'inverse pas : +1,6 quand on vise 0,1–0,3 est PLUS RAPIDE',
+    R.accord.find(a=>a.g==='muscle'&&a.wc===1.6).rythme==='plus rapide', '');
+  t('⛔ une plage qui TRAVERSE ZÉRO garde le vocabulaire géométrique (ni vite ni lent n\'y veut dire quelque chose)',
+    R.accord.find(a=>a.g==='equilibre'&&a.wc===0.3).rythme==='au-dessus', '');
+  t('⛔ un objectif inconnu rend `null`, jamais un verdict par défaut',
+    true, '');   // vérifié côté source ci-dessous
+  const st=fs.readFileSync(path.join(ROOT,'state.js'),'utf8');
+  t('⛔ … et c\'est écrit dans le code, pas seulement espéré',
+    /if\(!t\|\|!isFinite\(kgParSemaine\)\)\s*return null/.test(st), '');
+
+  /* ⛔⛔ LA GARDE ANTI-RECHUTE : plus aucune plage ne doit être réécrite hors de la table.
+     Sans elle, quelqu'un rajoutera un jour « +0.1–0.3 » dans une phrase, et on y retournera. */
+  const tr=fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
+  const co=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
+  t('⛔⛔ plus aucune plage kg/sem écrite en dur hors de `state.js` (c\'est la rechute à empêcher)',
+    !/goalDir\s*=/.test(tr) && !/weeklyChange\s*[<>]\s*-?0\.(0?5|1|2)/.test(co),
+    'tracking goalDir='+/goalDir\s*=/.test(tr)+' · coach seuils='+/weeklyChange\s*[<>]\s*-?0\.(0?5|1|2)/.test(co));
+  t('⛔ le témoin ci-dessus sait rougir : le motif attrape bien une plage écrite en dur',
+    /weeklyChange\s*[<>]\s*-?0\.(0?5|1|2)/.test('const x = weeklyChange > 0.05 ? 1 : 0;'), '');
+  t('⛔ aucune erreur JS', errs.length===0, JSON.stringify(errs.slice(0,2)));
+}
+
+/* ═══ CCVIII. UN CYCLE TERMINÉ NE LE DISAIT JAMAIS — NI À L'ÉCRAN, NI À MILO (ft-v1101) ═══
    Michel : « continue stp ». 2e passe. ⛔ Elle commence par une DETTE : j'avais annoncé le
    cycle « non mesuré » en ft-v1099 parce que mes sondes s'étaient trompées de champ. Repris
    avec une fixture LUE dans `startCycle` — {rm1, target}, active:true.
@@ -22818,7 +22965,7 @@ console.log('\n-- CCV. La 3e porte vers l\'effacement · les bornes du profil re
    ⛔⛔ LE TÉMOIN QUI PORTE TOUT LE RISQUE N'EST PAS CELUI DU CYCLE FINI : c'est celui de la
    DERNIÈRE SEMAINE, qui ne doit RIEN afficher. Un bandeau « terminé » pendant la semaine de
    décharge serait faux et décourageant. */
-console.log('\n-- CCVI. Un cycle terminé ne le disait jamais (ft-v1100) --');
+console.log('\n-- CCVIII. Un cycle terminé ne le disait jamais (ft-v1101) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
@@ -22865,7 +23012,7 @@ console.log('\n-- CCVI. Un cycle terminé ne le disait jamais (ft-v1100) --');
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
   });
-  if(J.err) t('CCVI n\'a pas pu tourner', false, J.err);
+  if(J.err) t('CCVIII n\'a pas pu tourner', false, J.err);
   else{
     t('⛔⛔ LE TÉMOIN QUI PORTE LE RISQUE : pendant la DERNIÈRE semaine, aucun bandeau « terminé »',
       J.derniere.banniere===false, JSON.stringify(J.derniere));

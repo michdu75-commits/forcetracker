@@ -1249,7 +1249,87 @@ function goalDeltaKcal(goal){
    ⛔ LES 5 AUTRES OBJECTIFS GARDENT LEURS SEUILS ACTUELS, exprès : ils ont déjà un
    comportement livré, et le rectifier n'est pas le sujet de cette version (R30 — on ne
    modifie pas en silence une décision qu'on n'a pas prise). */
-const _GOAL_TREND_RECOMP={min:-0.3,max:0,txt:'stable à légèrement négative (0 à −0.3 kg/sem)'};
+/* ⚖️⛔⛔ LES PLAGES DE POIDS ATTENDUES PAR OBJECTIF — UNE SEULE SOURCE (ft-v1100)
+   ⛔⛔ CE QUI ÉTAIT CASSÉ, ET C'EST MESURÉ : une seule des six bornes était une DONNÉE
+   (`_GOAL_TREND_RECOMP`). **Les cinq autres n'existaient qu'en PROSE**, dans la chaîne
+   `goalDir` d'un affichage de `tracking.js` — et `coach.js` jugeait avec des seuils
+   ÉCRITS AILLEURS (`> 0.05` pour `muscle`, `< -0.1` pour `perte`, `abs < 0.2` sinon).
+   ⚠️ RÉSULTAT MESURÉ DANS UN NAVIGATEUR : **+1,6 kg/semaine en « prise de muscle » partait
+   vers Milo comme « ✓ dans la bonne direction »**, pendant que l'écran affichait juste à
+   côté que l'évolution attendue est « +0.1 à +0.3 kg/sem ». *Cinq fois la borne haute.*
+   👉 C'est **R4** (l'info reste dans le TEXTE et n'atteint jamais la DONNÉE) doublé de
+   **R2** (deux sources pour une même règle, qui ont divergé — la seule question était quand).
+   ⛔ LES VALEURS NE SONT PAS INVENTÉES : ce sont **exactement celles que l'écran affiche
+   déjà**, transcrites de la prose vers la donnée. Le texte est désormais **dérivé** de la
+   table, jamais réécrit à côté — sinon on recréerait le défaut qu'on corrige.
+   ⚠️ `force` et `endurance` ne portaient AUCUN chiffre (« légèrement positive », « stable
+   ou légèrement positive »). On ne leur en invente pas : leur borne est celle, volontairement
+   large, que `coach.js` appliquait déjà à tout objectif non nommé (±0.2), et `flou:true` le
+   DIT — un juge qui ne sait pas doit pouvoir le dire (R29). */
+const _GOAL_TREND={
+  muscle:   {min: 0.1, max: 0.3, txt:'légèrement positive (+0.1–0.3 kg/sem)'},
+  perte:    {min:-0.7, max:-0.3, txt:'négative (−0.3–0.7 kg/sem)'},
+  recomp:   {min:-0.3, max: 0,   txt:'stable à légèrement négative (0 à −0.3 kg/sem)'},
+  equilibre:{min:-0.1, max: 0.1, txt:'stable (±0.1 kg/sem)'},
+  force:    {min:-0.2, max: 0.2, txt:'légèrement positive', flou:true},
+  endurance:{min:-0.2, max: 0.2, txt:'stable ou légèrement positive', flou:true}
+};
+/* ⛔ RÉTROCOMPATIBILITÉ : `_GOAL_TREND_RECOMP` était lu par `tracking.js` ET `coach.js`.
+   On ne le supprime pas, on le fait POINTER sur la table — une seule vérité, deux noms. */
+const _GOAL_TREND_RECOMP=_GOAL_TREND.recomp;
+/* ⛔ UN SEUL JUGE, lu par l'écran Progrès ET par le contexte de Milo (R2).
+   ⚠️ Il rend `null` quand l'objectif est inconnu — et ce `null` ne se remplace JAMAIS par
+   un verdict par défaut : *ne pas savoir est une réponse, se tromper n'en est pas une* (R29). */
+function trendPourObjectif(goal){ return _GOAL_TREND[goal||'muscle']||null; }
+function poidsDansLaPlage(kgParSemaine, goal){
+  const t=trendPourObjectif(goal);
+  if(!t||!isFinite(kgParSemaine)) return null;
+  return kgParSemaine>=t.min && kgParSemaine<=t.max;
+}
+/* ⛔⛔ « HORS DE LA PLAGE » NE SUFFIT PAS : LES DEUX SENS NE SE VALENT PAS (ft-v1100).
+   Trouvé parce qu'un témoin existant a rougi sur `perte` à −0,21 kg/sem. L'ancien code
+   disait « ✓ » (son seuil était `< -0.1`) ; la plage affichée, elle, est −0.3 à −0.7. Donc
+   −0,21 est bien HORS — mais **plus LENT** que prévu, ce qui n'a rien à voir avec **plus
+   RAPIDE**. *Perdre moins vite que prévu n'est pas le même fait que fondre trop vite, et
+   Milo ne doit pas les recevoir sous le même mot* (R29 : on donne le fait, il conclut). */
+function positionDansLaPlage(kgParSemaine, goal){
+  const t=trendPourObjectif(goal);
+  if(!t||!isFinite(kgParSemaine)) return null;          // ⛔ « je ne sais pas » reste une réponse
+  if(t.flou) return 'flou';                             // plage non chiffrée dans l'app : on ne juge pas
+  if(kgParSemaine>t.max) return 'au-dessus';
+  if(kgParSemaine<t.min) return 'en-dessous';
+  return 'dans';
+}
+/* ⚖️⛔⛔ LE MOT DÉPEND DU SIGNE DE LA PLAGE — et j'ai écrit le contraire au 1ᵉʳ jet (ft-v1100).
+   ⚠️ ATTRAPÉ PAR UN TÉMOIN, pas par une relecture : une perte à **−0,21 kg/sem** sortait
+   « ⚠ PLUS RAPIDE que la plage attendue (−0.3–0.7) ». C'est **numériquement** exact —
+   −0,21 est supérieur à −0,3 — et **factuellement faux** : perdre 0,21 kg par semaine, c'est
+   perdre **plus LENTEMENT** que 0,3.
+   👉 *Sur une plage négative, « au-dessus » veut dire « moins ».* Le mot ne se lit pas sur
+   le nombre, il se lit sur le SENS de l'objectif — et c'est exactement le genre de phrase
+   qu'on envoie ensuite à Milo comme un fait.
+   ⛔ ET LA PLAGE « équilibre » TRAVERSE ZÉRO (−0.1 à +0.1) : ni « plus vite » ni « plus lent »
+   n'y veulent dire quoi que ce soit. On y garde donc le vocabulaire géométrique, qui reste
+   vrai : *au-dessus* / *en-dessous* de la plage. Un mot qu'on ne sait pas choisir ne
+   s'invente pas (R29). */
+function rythmeVsPlage(kgParSemaine, goal){
+  const pos=positionDansLaPlage(kgParSemaine, goal);
+  if(pos===null||pos==='flou'||pos==='dans') return pos;
+  const t=trendPourObjectif(goal);
+  const traverseZero = t.min<0 && t.max>0;
+  if(traverseZero) return pos;                          // 'au-dessus' / 'en-dessous', tels quels
+  /* ⛔⛔ 2ᵉ PIÈGE, TROUVÉ PAR LE MÊME TÉMOIN, UN CRAN PLUS PROFOND (ft-v1100).
+     La plage de la RECOMPOSITION va de −0,3 à **0**. Une tendance de **+0,7 kg/sem** y est
+     bien « au-dessus » — mais la personne **PREND** du poids, elle ne « perd pas plus
+     lentement ». *Au-delà de zéro, on n'est plus sur le même axe : on va dans l'AUTRE sens.*
+     \u{1F449} Le vocabulaire « plus vite / plus lent » n'a de sens que si la valeur reste **du
+     même côté de zéro** que la plage. Sinon on garde le mot géométrique, qui reste vrai. */
+  const memeCote = (kgParSemaine<=0 && t.max<=0) || (kgParSemaine>=0 && t.min>=0);
+  if(!memeCote) return pos;
+  const plagePositive = t.min>=0;                       // prise de poids attendue
+  if(plagePositive) return pos==='au-dessus' ? 'plus rapide' : 'plus lent';
+  return pos==='au-dessus' ? 'plus lent' : 'plus rapide';   // plage NÉGATIVE : le sens s'inverse
+}
 function autoKcal(phase){ return _plancherKcal(_autoKcalBrut(phase)); }
 function _autoKcalBrut(phase){
   const tdee=calcTDEE();
