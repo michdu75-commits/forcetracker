@@ -2158,7 +2158,14 @@ function _semainesVecues(nWeeks){
     if(isNaN(t)||isNaN(d0))return 0;
     const span=Math.round((t-d0)/864e5)+1;               // en jours, aujourd'hui compris
     if(!(span>=7))return 0;                              // pas encore UNE semaine pleine
-    return Math.min(nWeeks, Math.max(1, Math.round(span/7)));
+    /* ⚠⚠ CEIL, PAS ROUND — et c'est un témoin EXISTANT qui me l'a appris.
+       Mon 1ᵉʳ jet arrondissait au plus proche. Or le numérateur vient de `_weeklyCounts`, qui
+       range les séances dans des **casiers** de 7 jours : une séance vieille de 23 jours tombe
+       dans le casier n° 3, donc **quatre** casiers sont en jeu — pendant que `round(23/7)`
+       n'en comptait que 3. *Un dénominateur qui n'arrondit pas comme le découpage qu'il divise
+       fabrique une fréquence trop haute.* Mesuré : le témoin de neutralité hebdomadaire des
+       calculs est parti à **−67 g** à 2 séances/semaine. */
+    return Math.min(nWeeks, Math.max(1, Math.ceil(span/7)));
   }catch(e){ return 0; }
 }
 function _pendingFreqContext(){

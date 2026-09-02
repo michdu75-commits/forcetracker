@@ -471,6 +471,20 @@ function _fusionListe(memoire, disque, cle){
   disque.forEach(e=>{ const k=cle(e); if(!vus.has(k)){ out.push(e); vus.add(k); } });
   return out;
 }
+/* ⛔⛔ CE QUE CETTE FUSION NE COUVRE PAS — LIMITE ASSUMÉE, PAS UN OUBLI (R30, ft-v1098).
+   Signalée par l'autre session, **mesurée par elle** : un programme créé dans l'onglet A puis
+   un `persist()` depuis l'onglet B, et « Prog B » est perdu.
+   · **COUVERTES (5)** : `sessions`, `weightLog`, `sleepLog`, `foodLog`, `prs`.
+   · **NON COUVERTES (8)** : `programmes`, `badges`, `customExercises`, `exSwaps`, `registre`,
+     `coachMemory`, `goalLog`, `exRestPref`.
+   ⚠️ **ET LA RAISON N'EST PAS LA PARESSE** : les cinq couvertes sont des **listes d'entrées
+   DATÉES**, donc l'union se départage toute seule (à signature égale, on garde la plus
+   récente). Les huit autres n'ont **aucune date par entrée** — il n'existe rien pour dire
+   laquelle des deux versions est la bonne. *Étendre le mécanisme tel quel choisirait au
+   hasard, ce qui est pire que de ne rien fusionner.*
+   👉 C'est une **question de conception** (dater les entrées, ou versionner la collection),
+   pas une rustine — et elle est écrite ici pour que le suivant la lise comme une décision
+   ouverte, pas comme un trou qu'on aurait manqué. */
 function _fusionnerAvecLeDisque(){
   const lire=(k,d)=>{ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } };
   try{

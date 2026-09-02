@@ -458,6 +458,15 @@ const FEAT_SI = {
   montrePas:     () => { try{ return ((S&&S.healthDaily)||[]).some(x=>x&&x.steps>0); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* 🔭 POINT ROUGE, PAS DE POP-UP `WHATS_NEW` (règle d'or #11), et c'est argumenté :
+     ① il y a bien quelque chose à découvrir — une ligne apparaît sur la carte du jour et les
+     DEUX bouts de la semaine s'affichent dans « comment c'est calculé » ;
+     ② mais **rien à faire**, et **aucun repère ne bouge** : la carte garde son ordre, les trois
+     anneaux sont inchangés, le bouton « noter » est à la même place.
+     ⚠️ Le seul chiffre qui bouge est la CIBLE de quelqu'un qui a moins de 4 semaines
+     d'historique — et il bouge de quelques grammes, vers le juste. *La pop-up se mérite*
+     (R25 : la pop-up ANNONCE, l'aide EXPLIQUE) ; l'aide `?` porte les deux explications. */
+  {id:'zone-jour', screen:'nutrition', desc:'\u{1F52D} <b>Nutrition \u2192 ta cible n\u2019est pas la m\u00eame tous les jours</b>, et l\u2019\u00e9cran le dit enfin. Les jours o\u00f9 tu t\u2019entra\u00eenes, l\u2019app te donne <b>plus de glucides</b> et <b>moins de lipides</b> ; les jours de repos, l\u2019inverse \u2014 tes calories, elles, ne bougent pas. \u2b50 Ce qui change : la carte du jour dit <b>o\u00f9 tu en es</b> (\u00ab \u{1F35A} Jour de s\u00e9ance \u00bb / \u00ab \u{1F634} Jour de repos \u00bb), et <b>les DEUX chiffres</b> sont d\u00e9sormais dans \u00ab Comment c\u2019est calcul\u00e9 \u00bb : tu peux pr\u00e9voir ton jour de repos sans attendre qu\u2019il arrive. \u26d4 <b>Les prot\u00e9ines n\u2019y sont pas</b> : elles se calculent sur ton poids, pas sur ta s\u00e9ance \u2014 elles n\u2019ont pas de fourchette, et on ne leur en invente pas une. \u26a0\uFE0F Et si tu viens d\u2019arriver, <b>tes chiffres sont plus justes</b> : l\u2019app divisait ta fr\u00e9quence par 4 semaines m\u00eame quand tu n\u2019en avais v\u00e9cu que deux.'},
   /* 📤 POINT ROUGE MAIS PAS DE POP-UP `WHATS_NEW` (règle d'or #11), et c'est argumenté :
      deux boutons APPARAISSENT, donc il y a bien quelque chose à découvrir — mais rien n'oblige
      à agir, aucun repère existant ne bouge et aucun chiffre affiché ne change. *La pop-up se

@@ -22500,6 +22500,144 @@ console.log('\n-- CCIII. Le poids lu par l\'IA a les mêmes bornes que le poids 
     /function _pctGrasValide/.test(_st) && /_pctGrasValide\(/.test(_tr), '');
 }
 
+/* ═══ CCV. LA FRÉQUENCE D'ENTRAÎNEMENT, ET LES DEUX BOUTS DE LA SEMAINE (ft-v1098) ══════════
+   ⛔⛔ ① LE DÉFAUT : `cycleGlucides` faisait `f = round(somme / wk.length)` avec `wk.length`
+   toujours égal à 4 — il divisait donc par des semaines où la personne n'avait pas encore
+   installé l'app. Mesuré : 2 semaines à 3 séances/sem → l'app lit **2** ; 1 semaine à
+   4 séances/sem → elle lit **1**. Et l'effet est à l'envers de ce qu'il faudrait : plus `f`
+   est petit, plus l'amplitude `(7−f)/7` est GRANDE — le pratiquant le plus récent, celui dont
+   on sait le moins, recevait le cyclage le plus agressif (52 g de lipides pour un plancher
+   à 50,4). Son voisin `_pendingFreqContext` se protégeait déjà : **R8**, encore.
+   ⛔ ② LE SECOND DÉFAUT EST D'AFFICHAGE : le moteur prescrit **368 à 478 g** de glucides et
+   **56 à 82 g** de lipides à la même personne selon le jour, et l'écran n'en montrait qu'un,
+   sans dire lequel. *Deux valeurs justes, une seule affichée* — le défaut de ft-v1027.
+   ⭐ LE PREMIER TÉMOIN EST UN CAS DE CONTRÔLE (4 semaines pleines) : l'ancien et le nouveau
+   calcul DOIVENT y tomber pareil. Sans lui, « tout change » et « je ne mesure rien » sont
+   indistinguables — la leçon de ft-v1095. */
+console.log('\n-- CCV. La fréquence sur les semaines vécues, et les deux bouts de la semaine (ft-v1098) --');
+{
+  const J=(n)=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
+  const sess=(jours)=>jours.map(d=>({date:J(d),
+    exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:8,done:true},{kg:100,reps:8,done:true}]}],vol:1600}));
+  const CAS={
+    temoin:   [0,2,4, 7,9,11, 14,16,18, 21,23,25],   // 4 semaines pleines, 3×/sem  → f=3
+    deuxSem:  [0,2,4, 7,9,11],                        // 2 semaines,        3×/sem  → f=3
+    uneSem:   [0,2,4,6],                              // 1 semaine,         4×/sem  → f=4
+    premier:  [0],                                    // tout premier jour           → pas de cyclage
+    saute:    [0,2,4, 7,9, 21,23,25],                 // 4 sem dont une sautée       → f=2
+  };
+  const R={};
+  for(const cle in CAS){
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
+    await pg.addInitScript(seedScript({ft4_bw:'84',ft4_age:'43',ft4_ob2:'1',ft4_guide_shown:'1',
+      ft4_wn_seen:'99',ft4_premium:'1',ft4_hascode:'1',ft4_sessions:JSON.stringify(sess(CAS[cle]))}));
+    await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+    R[cle]=await pg.evaluate(async()=>{
+      const out={}, wait=ms=>new Promise(r=>setTimeout(r,ms));
+      const t=today(), toutes=(S.sessions||[]).slice(), wkt=S.wkt;
+      /* ⭐ LE TÉMOIN QUI DIT SI LA SONDE MESURE QUELQUE CHOSE : les deux états doivent
+         d'abord être DIFFÉRENTS pour `jourSeance()`. Sans lui, deux résultats égaux sont
+         indistinguables d'une sonde muette (la leçon de ma sonde `window.today`, qui créait
+         une propriété que personne ne lit — `today` est un const lexical). */
+      const etat=(seance)=>{ S.sessions=seance?toutes:toutes.filter(s=>s&&s.date!==t);
+                             S.wkt=seance?wkt:null;
+                             return {js:jourSeance().seance, m:calcMacros('charge')}; };
+      const A=etat(true), B=etat(false); S.sessions=toutes; S.wkt=wkt;
+      out.sondeVivante={seance:A.js, repos:B.js};
+      out.f=A.m.cycle?A.m.cycle.freq:null;
+      out.nSem=(typeof _semainesVecues==='function')?_semainesVecues(4):null;
+      out.cyclage=!!(A.m.cycle&&A.m.cycle.dCarbs);
+      out.carbsS=A.m.carbs_g; out.fatS=A.m.fat_g;
+      out.carbsR=B.m.carbs_g; out.fatR=B.m.fat_g;
+      out.autreS=A.m.cycle?A.m.cycle.autre:null;
+      out.autreR=B.m.cycle?B.m.cycle.autre:null;
+      // l'écran : la ligne de la carte du jour + les deux bouts dans « comment c'est calculé »
+      S.foodLog=[{date:t,meal:'dejeuner',name:'Riz basmati',qty:250,kcal:1300,prot:24,carbs:280,fat:3}];
+      goScreen('nutrition'); await wait(500);
+      const carte=document.getElementById('nu-today'), cy=document.getElementById('nu-cycle');
+      out.carte=carte?carte.innerText:'';
+      out.bornes=cy?cy.innerHTML:'';                 // innerText rend '' : le bloc est dans un accordéon replié
+      out.err=errs=>0;
+      return out;
+    });
+    R[cle].errs=errs; await cx.close();
+  }
+
+  /* ⭐ ① LE CAS DE CONTRÔLE — il ne doit RIEN changer. C'est lui qui empêche le bloc d'être
+     vert en disant simplement « tout a bougé ». */
+  t('⭐ TÉMOIN DE CONTRÔLE : 4 semaines pleines à 3 séances/sem → la fréquence lue vaut bien 3',
+    R.temoin.f===3 && R.temoin.cyclage===true, JSON.stringify({f:R.temoin.f,c:R.temoin.carbsS}));
+  t('⛔ … et la sonde n\'est pas muette : jour de séance et jour de repos sont bien DEUX états',
+    R.temoin.sondeVivante.seance===true && R.temoin.sondeVivante.repos===false,
+    JSON.stringify(R.temoin.sondeVivante));
+
+  /* ⭐⭐ ② LE DÉFAUT LUI-MÊME */
+  t('⭐⭐ 2 semaines d\'historique à 3 séances/sem : la fréquence lue est 3, plus 2 (on ne divise plus par des semaines qui n\'ont pas existé)',
+    R.deuxSem.f===3, 'f = '+R.deuxSem.f);
+  t('⭐⭐ … ET C\'EST LA VRAIE PREUVE : à pratique égale, le NOUVEAU reçoit exactement la même prescription que l\'ANCIEN',
+    R.deuxSem.carbsS===R.temoin.carbsS && R.deuxSem.fatS===R.temoin.fatS
+    && R.deuxSem.carbsR===R.temoin.carbsR && R.deuxSem.fatR===R.temoin.fatR,
+    JSON.stringify({neuf:[R.deuxSem.carbsS,R.deuxSem.fatS],etabli:[R.temoin.carbsS,R.temoin.fatS]}));
+  t('⭐ 1 semaine à 4 séances/sem : lue 4, et les lipides du jour de séance ne frôlent plus le plancher (50,4 g)',
+    R.uneSem.f===4 && R.uneSem.fatS>55, JSON.stringify({f:R.uneSem.f,fat:R.uneSem.fatS}));
+
+  /* ⛔ ③ LES DEUX NON-RÉGRESSIONS QUI RENDENT LE CHANGEMENT SÛR */
+  t('⛔ NON-RÉGRESSION : moins d\'une semaine d\'historique → aucun cyclage, comme avant (on n\'extrapole pas une moyenne hebdo sur un jour)',
+    R.premier.cyclage===false && R.premier.carbsS===R.premier.carbsR,
+    JSON.stringify({cyc:R.premier.cyclage,c:R.premier.carbsS}));
+  t('⛔ NON-RÉGRESSION : une semaine SAUTÉE compte toujours dans la fréquence (elle fait partie de sa pratique) → 8 séances sur 4 semaines = 2',
+    R.saute.f===2, 'f = '+R.saute.f);
+  /* ⚠⚠ CEIL, PAS ROUND — un témoin EXISTANT (la neutralité hebdomadaire, suite `calculs`) a
+     attrapé mon 1ᵉʳ jet, qui arrondissait au plus proche. Le numérateur vient de casiers de
+     7 jours : une séance vieille de 23 jours est dans le casier n° 3, donc QUATRE casiers sont
+     en jeu, quand `round(23/7)` n'en comptait que 3 — et la fréquence sortait trop haute
+     (−67 g sur la neutralité à 2 séances/sem). Ce témoin-ci fige la RAISON, pour qu'on ne
+     « simplifie » pas le `ceil` un jour en croyant que c'est pareil. */
+  t('⚠️ le dénominateur arrondit comme le DÉCOUPAGE qu\'il divise : un historique de 26 jours compte 4 semaines, pas 3',
+    R.saute.nSem===4 && R.deuxSem.nSem===2 && R.uneSem.nSem===1,
+    JSON.stringify({saute:R.saute.nSem,deuxSem:R.deuxSem.nSem,uneSem:R.uneSem.nSem}));
+
+  /* ⭐⭐ ④ LES DEUX BOUTS — et ils doivent se répondre exactement d'un jour à l'autre */
+  t('⭐⭐ le moteur rend L\'AUTRE BOUT de la semaine, et les deux jours se répondent au gramme près',
+    !!R.temoin.autreS && !!R.temoin.autreR
+    && R.temoin.autreS.carbs_g===R.temoin.carbsR && R.temoin.autreS.fat_g===R.temoin.fatR
+    && R.temoin.autreR.carbs_g===R.temoin.carbsS && R.temoin.autreR.fat_g===R.temoin.fatS,
+    JSON.stringify({vuDuJourSeance:R.temoin.autreS,vuDuJourRepos:R.temoin.autreR}));
+  t('⛔ … et l\'écart est RÉEL, sinon nommer une zone ne servirait à rien',
+    R.temoin.carbsS-R.temoin.carbsR>=40 && R.temoin.fatR-R.temoin.fatS>=15,
+    JSON.stringify({glucides:[R.temoin.carbsR,R.temoin.carbsS],lipides:[R.temoin.fatS,R.temoin.fatR]}));
+  t('⭐ l\'autre bout se DIT quand c\'est une estimation (un jour de séance, on ne sait pas laquelle)',
+    R.temoin.autreS.estime===false && R.temoin.autreR.estime===true,
+    JSON.stringify({depuisSeance:R.temoin.autreS.estime,depuisRepos:R.temoin.autreR.estime}));
+
+  /* ⭐ ⑤ L'ÉCRAN — la carte NOMME le jour, les deux bouts vivent dans l'aide (R25) */
+  t('⭐⭐ la carte du jour NOMME la fenêtre (« Jour de séance » / « Jour de repos »)',
+    /Jour de séance|Jour de repos/.test(R.temoin.carte), R.temoin.carte.slice(-170).replace(/\n/g,' | '));
+  t('⛔ … sans recopier un seul chiffre de cible : les deux bouts restent dans « comment c\'est calculé » (R2/R25)',
+    !new RegExp(R.temoin.carbsR+'\\s*g').test(R.temoin.carte.split('Jour de')[1]||''),
+    (R.temoin.carte.split('Jour de')[1]||'').slice(0,120));
+  t('⭐⭐ les deux bouts sont AFFICHÉS, avec leurs deux macros',
+    R.temoin.bornes.indexOf(String(R.temoin.carbsS))>=0 && R.temoin.bornes.indexOf(String(R.temoin.carbsR))>=0
+    && R.temoin.bornes.indexOf(String(R.temoin.fatS))>=0 && R.temoin.bornes.indexOf(String(R.temoin.fatR))>=0,
+    R.temoin.bornes.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').slice(-160));
+  t('⛔ LES PROTÉINES N\'Y SONT PAS, ET C\'EST VOULU : leur amplitude est de 0 g, on n\'invente pas une zone à une macro qui n\'en a pas (R29)',
+    !/Prot/i.test(R.temoin.bornes), '');
+  t('⛔ rien de tout cela ne s\'affiche sans cyclage (on n\'explique pas une variation qui n\'a pas lieu)',
+    !/Jour de séance|Jour de repos/.test(R.premier.carte) && R.premier.bornes.trim()==='', '');
+  t('⛔ aucune erreur JS sur les 5 profils',
+    Object.keys(R).every(k=>!R[k].errs||!R[k].errs.length),
+    JSON.stringify(Object.keys(R).map(k=>[k,(R[k].errs||[]).length])));
+
+  /* ⭐ ⑥ « 1½ », PAS « 1.5 » — trouvé à la capture, invisible dans le code */
+  const appSrc=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+  t('⭐ une demi-portion s\'écrit « 1½ » partout : un seul propriétaire du libellé (R2)',
+    /_PORTION_LBL\s*=/.test(appSrc) && (appSrc.match(/_portionLbl\(/g)||[]).length>=3,
+    'appels = '+(appSrc.match(/_portionLbl\(/g)||[]).length);
+  t('⛔ … et plus aucune rangée de boutons ne réécrit les libellés à la main',
+    !/b\(1\.5,'1½'\)/.test(appSrc), '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
@@ -22688,6 +22826,7 @@ console.log('\n-- CXCI. Une mise à jour ne tue plus un banc d\'essai en cours (
   t('⛔ le drapeau `_evRunning` existe et est bien posé par le banc d\'essai (sinon garde morte)',
     /_evRunning\s*=\s*true/.test(fs.readFileSync(path.join(ROOT,'coach.js'),'utf8')), '');
 }
+
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

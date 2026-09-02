@@ -231,6 +231,10 @@ const _HELP_DATA={
   nutrition:{
     title:'🍽️ Nutrition',
     tips:[
+      /* 🔭 EN TÊTE avec la précédente : c'est l'autre question qu'on se pose en voyant un
+         chiffre bouger — « pourquoi ma cible glucides n'est pas la même qu'hier ? ». */
+      {i:'🔭',t:'<b>Ta cible n\'est pas la même tous les jours, et c\'est voulu.</b> Les jours où tu t\'entraînes, l\'app te donne <b>plus de glucides</b> (le carburant de l\'effort) et <b>moins de lipides</b> ; les jours de repos, l\'inverse. ⭐ <b>Tes calories, elles, ne bougent pas</b> — on échange, on n\'ajoute pas — et <b>sur la semaine le total est identique</b>. 👉 La carte du jour te dit où tu en es (« 🍚 Jour de séance » / « 😴 Jour de repos »), et <b>les deux chiffres</b> sont dans « Comment c\'est calculé » : tu peux ainsi prévoir ton jour de repos sans attendre qu\'il arrive. ⛔ <b>Les protéines ne bougent jamais</b> : elles se calculent sur ton poids, pas sur ta séance — donc elles n\'ont pas de fourchette, et on ne leur en invente pas une.'},
+      {i:'📅',t:'<b>Si tu viens d\'arriver, tes chiffres sont plus justes qu\'avant.</b> L\'app calculait ta fréquence d\'entraînement en divisant toujours par <b>4 semaines</b> — y compris celles où tu n\'avais pas encore l\'app. Quelqu\'un qui s\'entraîne 3 fois par semaine depuis 15 jours était donc lu comme s\'il s\'entraînait <b>2 fois</b>, et recevait un écart jour de séance / jour de repos <b>trop grand</b>. ⭐ Désormais on divise par <b>le temps que tu as vraiment passé dans l\'app</b> : à pratique égale, tu reçois exactement la même chose qu\'un ancien. ⛔ Sous <b>une semaine</b> d\'historique, l\'app ne cycle pas du tout : une moyenne par semaine calculée sur trois jours n\'est pas une moyenne.'},
       /* 🚶 EN TÊTE parce que c'est la question qu'on se pose en voyant le chiffre bouger :
          « pourquoi mon TDEE a changé aujourd'hui ? ». La pop-up ANNONCE, l'aide EXPLIQUE (R25) :
          ici vivent les garde-fous que la pop-up ne dit pas (les 7 jours, la borne, le jour creux). */

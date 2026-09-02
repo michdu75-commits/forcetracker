@@ -2195,3 +2195,49 @@ elle rend `undefined`, qui devient `0`, qui ressemble à une donnée perdue.
 **Avant d'accuser le code, `grep` le nom du champ.** Trente secondes. Et poser dans chaque banc
 d'essai un **cas valide en PREMIER** : si lui aussi rend zéro, c'est la sonde qui est cassée,
 pas l'app (leçon de ft-v1095, où quatorze réponses hostiles rendaient le même résultat).
+
+---
+
+## 37. 📅 LA MOYENNE DIVISÉE PAR UNE FENÊTRE QUE LA PERSONNE N'A PAS VÉCUE **(02/09/2026, ft-v1098)**
+
+**Le motif** : on fixe une fenêtre (4 semaines, 30 jours, 4 séances), on somme ce qu'on y
+trouve, **et on divise par la taille de la fenêtre** — sans se demander si la personne était
+déjà là.
+
+**⛔⛔ CE QUI REND CETTE FAMILLE PARTICULIÈREMENT VICIEUSE : le défaut est INVISIBLE POUR CELUI
+QUI TESTE.** Il ne se manifeste que sur un compte **récent**, et le développeur — comme le
+fondateur — teste avec son propre compte, plein depuis des mois. *Sur un historique complet,
+le calcul est parfaitement juste.* Le seul moment où quelqu'un le rencontre est celui où on ne
+le regarde pas : la première semaine.
+
+| version | le calcul | ce qu'il divisait par | l'effet |
+|---|---|---|---|
+| ft-v1021 | moyenne des calories du journal | les jours **écoulés** | un jour non noté se lisait comme un jour de jeûne — la moyenne mentait **vers le bas** |
+| ft-v1027 | deux moyennes, deux fenêtres | (justes toutes les deux) | **aucune ne nommait sa fenêtre** : l'écran affichait 1 920 et 2 495 kcal à 40 px d'écart |
+| ft-v1098 | fréquence d'entraînement `f` | **4 semaines, toujours** | 2 semaines à 3 séances/sem se lisaient **2** ; 1 semaine à 4 séances/sem se lisait **1** |
+
+**⚠️ Et en ft-v1098 l'effet était à L'ENVERS de ce qu'il faudrait** : l'amplitude du cyclage
+vaut `(7−f)/7`, donc **plus `f` est petit, plus la prescription est agressive**. *Le pratiquant
+le plus récent, celui dont on sait le moins, recevait l'écart le plus grand* — 52 g de lipides
+un jour de séance pour un plancher à 50,4.
+
+### 🔍 À quoi on la reconnaît
+- un dénominateur **constant** (`wk.length`, `30`, `4`) à côté d'un numérateur qui, lui, dépend
+  de ce que la personne a fait ;
+- un voisin immédiat qui, lui, **se protège** — en ft-v1098 `_pendingFreqContext` refusait déjà
+  de juger sous « 3 semaines non vides », deux lignes plus bas (c'est **R8** : le même piège,
+  deux lecteurs, un seul gardé) ;
+- une valeur qui **se corrige toute seule avec le temps** : si le bug disparaît en attendant, il
+  ne disparaît pas, il devient invisible.
+
+### ⛔ Le piège du correctif (celui où on se trompe de dénominateur)
+« Diviser par les semaines **non vides** » est tentant et **faux** : une semaine **sautée** fait
+partie de la fréquence de quelqu'un. Le bon dénominateur est **l'étendue de l'historique**, pas
+son remplissage. Mesuré : `[3,2,0,3]` doit rendre **2**, et c'est ce qu'il rend.
+⛔ Et on ne moyenne pas sur **moins d'une fenêtre complète** : rendre « je ne sais pas » (0) est
+plus honnête qu'extrapoler une moyenne hebdomadaire sur trois jours (**R29**).
+
+### 🛡️ Le réflexe, en une ligne
+**Devant une moyenne, demander « depuis quand cette personne est-elle là ? » avant de demander
+« combien a-t-elle fait ? »** — et tester avec un compte de **deux semaines**, jamais avec le sien.
+

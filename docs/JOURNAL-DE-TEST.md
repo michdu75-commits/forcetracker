@@ -998,6 +998,22 @@ alors des macros parfaitement plausibles pour le mauvais aliment*, et rien ne le
 👉 **Ce n'est pas mesurable par du code seul** (il faudrait savoir ce que la personne tenait dans
 la main) — ça relève du **juge humain**, ou d'une confirmation à l'écran avant enregistrement.
 
+### 🟡 MILO SAIT-IL QUE LA CIBLE DU JOUR N'EST PAS CELLE DE TOUS LES JOURS ?
+**02/09/2026, ft-v1098.** Le moteur prescrit à la même personne **368 à 478 g** de glucides
+selon le jour, et l'écran le dit maintenant. **Mais que reçoit Milo ?** S'il ne reçoit que la
+valeur du jour, il peut très bien dire *« tu es en dessous de tes glucides »* à quelqu'un qui
+est pile dans sa cible **d'un jour de repos**.
+👉 **Vérifiable par du CODE** : construire le contexte un jour de séance puis un jour de repos,
+et regarder si le cyclage y apparaît → **promouvable**.
+
+### 🟡 UN COMPTE DE DEUX SEMAINES EST-IL TESTÉ QUELQUE PART ?
+**02/09/2026, ft-v1098.** Le défaut de la fréquence n'était visible **que** sur un compte
+récent — et il a vécu longtemps parce que personne ne teste avec un compte neuf. *Le doute
+n'est pas sur ce calcul-là, il est sur tous les autres :* combien d'autres moyennes divisent
+par une fenêtre plus large que l'historique ? (Famille **§37** de `BUGS.md`.)
+👉 Ce n'est pas un scénario Milo, c'est une **passe de détecteur** à faire — comme le balayage
+des 166 boutons de ft-v1089, mais avec un profil de deux semaines.
+
 ---
 
 ## ⚠️ Comment fouiller les conversations (leçon du 21/08)

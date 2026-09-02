@@ -27,8 +27,27 @@
 | + objectif | **+ 450 kcal** | « prise de muscle » (`_GOAL_DELTA_KCAL`) |
 | **Cible affichée** | **3 152 kcal** | ce que l'écran annonce |
 | Protéines | **185 g** | ≈ 2,2 g/kg |
-| Lipides | **56 g** | plancher, ≈ 0,67 g/kg |
+| Lipides | **76 g** de cible, **56 g** le jour mesuré | `bw × 0,9` — puis **cyclée** selon le jour |
 | Glucides | **478 g** | **le reste** des calories |
+
+> ### ⚠⚠ CORRECTION DU 02/09 — CE DOCUMENT S'EST TROMPÉ SUR LES LIPIDES
+>
+> **La première version de ce tableau écrivait « Lipides 56 g — plancher, ≈ 0,67 g/kg ».
+> C'est faux des deux côtés**, et je l'ai vu en mesurant plutôt qu'en relisant :
+>
+> - les lipides sont une **CIBLE**, pas un plancher — `macrosForKcal` fait `bw × 0,9`, soit
+>   **76 g** à 84 kg (mesuré : `fat_g_par_kg = 0,905`) ;
+> - **56 g** n'est pas un seuil : c'est la valeur **d'un jour de séance**, après que le cyclage
+>   ait échangé des lipides contre des glucides. Un jour de repos, la même personne reçoit
+>   **82 g** ;
+> - le vrai plancher (`_CYCLE_FAT_MIN`) vaut **0,6 g/kg = 50,4 g**, et il ne sert qu'à **limiter
+>   l'amplitude du cyclage**. Il n'est jamais affiché.
+>
+> 👉 **Conséquence : la décision ④ que j'avais posée à Michel (« faut-il afficher le plancher
+> lipidique autrement ? ») reposait sur MON erreur — elle est retirée du §6.** *Un document
+> d'analyse qu'on ne vérifie pas fait prendre des décisions sur du vent* (**R23**).
+> ⚠ Ce que GPT suggérait à son §2 n'est donc pas « traiter le plancher à part » : c'est
+> **ne pas afficher une cible mobile comme un point fixe** — et là, il a raison (voir ① ci-dessous).
 
 ### 1.2 Le cycle des glucides existe déjà, et il est piloté par les séances
 
@@ -233,16 +252,21 @@ mise en page** : les vraies bornes sont à décider (§6).
 Ces quatre points sont des **décisions**, pas des questions techniques. Ils ne peuvent pas être
 pris depuis le code (**R29**).
 
-1. **La largeur des zones.** ±5 % ? ±10 % ? Une zone trop large ne dit plus rien ; trop étroite,
-   elle recrée la cible exacte qu'on veut quitter. *Aucune source du projet ne donne ce chiffre.*
+1. ~~**La largeur des zones.**~~ ✅ **TRANCHÉE PAR LA MESURE LE 02/09, sans rien inventer**
+   (ft-v1098). Je cherchais un ±X % à choisir ; **le moteur produisait déjà la zone** —
+   il prescrit à la même personne **368 à 478 g** de glucides et **56 à 82 g** de lipides
+   selon le jour (26 % et 38 % d'amplitude, mesurés). La zone, ce sont **les deux bouts de sa
+   propre semaine**, pas un pourcentage. ⛔ Et les **protéines n'en ont pas** : amplitude
+   **0 g** — on ne leur en invente pas une (**R29**). *La question était mal posée : il n'y
+   avait pas une largeur à choisir, il y avait un calcul à regarder.*
 2. **Le seuil de la tendance.** Combien de jours notés avant qu'un verdict s'affiche ? ft-v1021
    utilise **3 jours** pour parler et **8 séances sur 21 jours** ailleurs — il faut un chiffre,
    et il vaut mieux qu'il vienne de toi que d'une moyenne inventée.
 3. **Le droit de conclure.** L'app dit-elle *« ne change rien »* toute seule, ou propose-t-elle
    à Milo de commenter ? La Vision penche pour le déterministe ; c'est un arbitrage produit.
-4. **Le plancher des lipides.** 56 g pour 84 kg est un **minimum**, pas une cible : l'afficher
-   comme `54 / 56` est trompeur dans l'autre sens. Faut-il un plancher affiché différemment des
-   deux autres macros ? *GPT le suggère au §2, et il a probablement raison.*
+4. ~~**Le plancher des lipides.**~~ ⛔ **RETIRÉE LE 02/09 — elle reposait sur une erreur de ce
+   document** (voir l'encadré du §1.1) : les lipides sont une **cible** (`bw × 0,9`), pas un
+   plancher. Il n'y avait rien à trancher.
 
 ---
 

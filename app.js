@@ -4297,6 +4297,11 @@ function exitDemoMode(){
 // ── GUIDE DE L'APPLICATION (diaporama, Menu → Outils) ────────
 // Guide-film : chaque slide = un vrai écran de l'app (guide/*.jpg) + un doigt animé (tap) + une phrase.
 const APP_GUIDE_SLIDES=[
+  /* 🔭 DIAPO DU GUIDE (règle d'or #11, point 5), et **SANS IMAGE exprès** : une capture
+     montrerait une cible chiffrée — donc des grammes qui ne sont pas ceux du lecteur — et la
+     diapo se lirait comme une recommandation de macros. C'est la même raison qu'en ft-v1035.
+     ⛔ Elle ne répète aucune pop-up : il n'y en a pas (rien à faire, aucun repère déplacé). */
+  {icon:'🔭', t:'Ta cible bouge selon le jour, et c\'est normal', cap:'Les jours o\u00f9 tu <b>t\'entra\u00eenes</b>, l\'app te donne <b>plus de glucides</b> \u2014 le carburant de l\'effort \u2014 et <b>moins de lipides</b>. Les jours de <b>repos</b>, l\'inverse.<br><br>\u2b50 <b>Tes calories ne changent pas</b> : on \u00e9change, on n\'ajoute pas. Et <b>sur la semaine, le total est le m\u00eame</b>.<br><br>\u{1F449} La carte du jour te dit o\u00f9 tu en es (\u00ab \u{1F35A} Jour de s\u00e9ance \u00bb / \u00ab \u{1F634} Jour de repos \u00bb), et <b>les deux chiffres</b> sont dans \u00ab Comment c\'est calcul\u00e9 \u00bb \u2014 tu peux pr\u00e9voir ton jour de repos sans attendre qu\'il arrive.<br><br>\u26d4 <b>Les prot\u00e9ines ne bougent jamais</b> : elles se calculent sur ton poids, pas sur ta s\u00e9ance.'},
   /* 📤 DIAPO DU GUIDE (règle d'or #11, point 5). ⛔ Elle ne répète pas la pop-up — il n'y en
      a pas : ces exports ont un point rouge et de l'aide, pas d'interruption (R25). Elle est ici
      parce que le Guide se lit d'une traite par quelqu'un qui découvre l'app, et « je peux

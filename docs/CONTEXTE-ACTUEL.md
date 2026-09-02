@@ -6,7 +6,36 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1097`. ✅ **Déploiement du site vérifié vert** (run **#777**,
+- **Version en ligne (live) :** `ft-v1098`. ⏳ déploiement à vérifier. ⚠️ Aucun déploiement
+  backend : `Code.js` n'a pas été touché.
+- 🔭⭐⭐ **LA CIBLE DU JOUR N'EST PAS LA CIBLE DE TOUS LES JOURS** (ft-v1098). Michel :
+  *« continue sur la nutrition stp »*. Suite de l'analyse GPT — **et elle commence par me
+  corriger moi-même** : mon doc du matin écrivait *« lipides 56 g = plancher »*, **faux** —
+  c'est une **cible** (`bw × 0,9` = 76 g), 56 g est la valeur d'un **jour de séance**, le
+  plancher vaut 50,4 g. *La décision ④ posée à Michel reposait sur mon erreur : retirée.*
+- ⛔⛔ **① LA FRÉQUENCE DIVISÉE PAR DES SEMAINES QUI N'EXISTAIENT PAS.** `cycleGlucides` faisait
+  `f = round(somme / 4)`, **toujours**. Mesuré : 2 semaines à 3 séances/sem se lisaient **2**,
+  1 semaine à 4 séances/sem se lisait **1**. ⚠️ **Et l'effet est à l'envers** : l'amplitude vaut
+  `(7−f)/7`, donc *le pratiquant le plus récent recevait le cyclage le plus agressif* (52 g de
+  lipides pour un plancher à 50,4). Son voisin `_pendingFreqContext` se protégeait déjà —
+  **R8**. ⛔ Le bon dénominateur n'est pas « les semaines non vides » (une semaine **sautée**
+  fait partie de la fréquence) mais **l'étendue de l'historique**, en `ceil` — *un témoin
+  existant a attrapé mon `round`* (−67 g sur la neutralité hebdo). Famille **§37** de `BUGS.md`.
+- ⛔⛔ **② L'ÉCRAN NE MONTRAIT QU'UN BOUT.** Le moteur prescrit **368 à 478 g** de glucides et
+  **56 à 82 g** de lipides à la même personne selon le jour (26 % et 38 %). *Deux valeurs
+  justes, une seule affichée* — le défaut de ft-v1027. La carte **nomme** le jour, les **deux
+  bouts** vivent dans « comment c'est calculé » (**R25**), calculés par le moteur (**R2**).
+- ⭐⭐ **LA « ZONE » DE GPT N'AVAIT AUCUN POURCENTAGE À INVENTER — elle était déjà calculée.**
+  Je cherchais un ±5 %/±10 % à faire trancher : *la zone, ce sont les deux bouts de sa propre
+  semaine*. **Décision ① tranchée par la mesure.** ⛔ Et les **protéines n'en ont pas**
+  (amplitude **0 g**) : on ne leur en invente pas une (**R29**).
+- ⏭️ **CE QUI RESTE OUVERT** : les décisions **②** (combien de jours notés avant un verdict) et
+  **③** (l'app conclut-elle seule, ou passe-t-elle la main à Milo) — de vrais arbitrages
+  produit, que la mesure ne peut pas trancher. Et côté imports : **programme**, **code-barres**,
+  **bilan sanguin** ne sont toujours pas instruits.
+- ⭐ Au passage : une demi-portion s'écrit **« 1½ »** et non « 1.5 » — trouvé à la **capture**,
+  un seul propriétaire du libellé (`_portionLbl`, **R2**).
+- **Version précédente :** `ft-v1097`. ✅ **Déploiement du site vérifié vert** (run **#777**,
   commit `51dbf18`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement backend : `Code.js`
   n'a pas été touché.
 - 📤⭐ **DEUX EXPORTS DATÉS — NUTRITION ET POIDS** (ft-v1096). Michel : *« il faudra aussi
