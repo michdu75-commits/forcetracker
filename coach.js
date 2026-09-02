@@ -5968,7 +5968,15 @@ function _vcApplyPersona(p){
   S.adn=a.adn||{motivation:'',modeVie:'',prefs:'',experience:''};
   S.healthProfile=a.healthProfile||{injuries:[],conditions:[],notes:''};
   // — Historique / mémoire / bilans (anti-fuite : TOUT ce que lit le contexte) —
-  S.sessions=a.sessions||[]; S.prs=a.prs||{}; S.wkt=null; S.cycle=null;
+  /* ⛔⛔ `wkt`, `cycle` et `dayState` ÉTAIENT FORCÉS À `null` EN DUR (02/09/2026, ft-v1105).
+     Les 50 autres champs lisent la fixture ; ces trois-là ne la lisaient pas — et rien ne le
+     disait. Conséquence mesurée : un persona « il est fatigué, il a mal à l'épaule ce matin »
+     était **impossible à écrire**, tout comme un persona en cycle de force ou avec une séance
+     déjà commencée. On ne pouvait donc pas mesurer ce que la mémoire de Force Tracker change
+     à une séance — c'est-à-dire la question centrale du produit.
+     ⚠️ Le repli reste `null` : le comportement d'un persona qui ne les déclare pas ne bouge
+     pas d'un iota, et c'est ce que le contrôle du bloc CCXIV vérifie. */
+  S.sessions=a.sessions||[]; S.prs=a.prs||{}; S.wkt=a.wkt||null; S.cycle=a.cycle||null;
   S.weightLog=a.weightLog||[]; S.sleepLog=a.sleepLog||[];
   S.bodyStudy=a.bodyStudy||null; S.bodyScans=a.bodyScans||[]; S.bodySeries=a.bodySeries||[];
   S.bloodTests=a.bloodTests||[];
@@ -5991,7 +5999,30 @@ function _vcApplyPersona(p){
      ligne de base : *un garde-fou posé après coup ne voit pas ce qui est passé avant lui.* */
   S.missedLog=a.missedLog||[]; S.nextPlanned=a.nextPlanned||null;
   S.registre=a.registre||{facts:{},observations:[],sessionLog:[],updatedAt:''};
-  S.coachMemory=a.coachMemory||''; S.dayState=null;
+  S.coachMemory=a.coachMemory||''; S.dayState=a.dayState||null;   // ⬅ lit la fixture (voir plus haut)
+  /* ⛔⛔ QUATRE DONNÉES DE LA VRAIE PERSONNE PARTAIENT DANS CHAQUE PERSONA (02/09/2026, ft-v1105).
+     Mesuré avec des marqueurs reconnaissables et un contrôle positif (`sessions`, qu'on sait
+     nettoyé, disparaissait bien) : `exSwaps` — les exercices qu'elle remplace ET LA RAISON
+     qu'elle a donnée —, `programmes`, `fasting` et `foodMode` ressortaient tels quels dans le
+     contexte d'un persona qui n'en déclarait aucun.
+     C'est la 3ᵉ fois pour cette famille : `foodLog` (ft-v1014), puis `missedLog`/`nextPlanned`
+     (ft-v1050). L'obligation est écrite quinze lignes plus haut — dès qu'une donnée entre dans
+     `buildCoachContext`, elle DOIT être remise à zéro ici.
+     ⭐ ET LE TÉMOIN NE POUVAIT PAS LES VOIR, pour la raison qu'il documente lui-même : il ne
+     surveille que les données entrées DEPUIS sa ligne de base, or `exSwaps` date de ft-v888.
+     Deux témoins s'en occupent désormais, et ils ne mesurent pas la même chose : le bloc CXXII
+     lit le SOURCE et exige **zéro** donnée du contexte non remise à zéro (il exigeait « les 4
+     trous connus ») ; le bloc CCXIV, lui, MESURE dans un navigateur qu'un marqueur posé dans
+     ces champs ne ressort pas dans le contexte d'un persona.
+     ⚠️⚠️ ET `foodMode` EST LE CAS QUI APPREND QUELQUE CHOSE. Avec `keto`, la fuite semblait
+     fermée — parce que `S.keto`, son ALIAS, était bien remis à zéro juste en dessous, et que
+     c'est lui que la règle cétogène lit. Avec `paleo`, `lowcarb` ou `mediterraneen`, le
+     contexte lit `S.foodMode` : la fuite était grande ouverte. *Une fuite refermée par un
+     alias n'est pas refermée, elle est masquée par la valeur qu'on a choisie pour l'essayer.*
+     👉 Un seul propriétaire (R2) : `keto` se DÉRIVE de `foodMode`, exactement comme `load()`
+     le fait dans state.js — au lieu d'être posé à côté, où les deux divergeaient (mesuré :
+     `foodMode:'keto'` avec `keto:false` après un persona). */
+  S.exSwaps=a.exSwaps||{}; S.programmes=a.programmes||[]; S.fasting=a.fasting||'';
   S.coachQuiz=a.coachQuiz||null; S.coachQuizPro=a.coachQuizPro||null; // questionnaire « ce que la personne a dit sur elle »
   S.badges=a.badges||{}; S.beginnerJourney=a.beginnerJourney||null; S.mensCycleDur=a.mensCycleDur||0;
   // — Cycle menstruel (persona) : reset + phase simulée via cycleStartDaysAgo (ex. 1 → Jour 2 = Menstruation) —
@@ -5999,7 +6030,11 @@ function _vcApplyPersona(p){
   if(typeof a.cycleStartDaysAgo==='number'){ const _d=new Date(); _d.setDate(_d.getDate()-a.cycleStartDaysAgo); S.mensCycleStart=_d.toISOString().slice(0,10); }
   else S.mensCycleStart=a.mensCycleStart||'';
   // — Nutrition —
-  S.nutritionPhase='charge'; S.keto=a.keto||false; S.manualKcal=0;
+  /* ⚠️ `keto` est un ALIAS DÉRIVÉ de `foodMode`, pas un champ indépendant — c'est ce que fait
+     `load()` (state.js). On garde `a.keto` en repli pour les fixtures qui l'emploient seul
+     (EV-012 est écrit comme ça), sans quoi on casserait un scénario existant. */
+  S.nutritionPhase='charge'; S.foodMode=a.foodMode||(a.keto?'keto':'');
+  S.keto=(S.foodMode==='keto'); S.manualKcal=0;
   // — Divers —
   S.premium=true; S.coachFree=0; // évite un mur premium pendant le test
 }

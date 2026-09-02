@@ -29,6 +29,32 @@
   reçoit** (**R34**, décision de Michel). **Mesurée sans être appliquée** : quelqu'un qui a changé
   d'alimentation il y a 4 mois annonce à Milo *« Riz basmati (60×) »* comme déjeuner habituel —
   un aliment qu'il ne mange plus.
+- **Version en ligne (live) :** `ft-v1106`. ⏳ **Déploiement à vérifier** (R18).
+  ⚠️ Aucun déploiement backend.
+- 🧪⛔⛔ **LE BANC D'ESSAI RETROUVE SA MÉMOIRE, ET CESSE DE FUIR** (ft-v1106). Michel :
+  *« corrige les 3 lignes du banc et les fuites »*. **Aucun écran, aucun calcul de l'app n'est
+  touché — c'est du code de TEST.**
+- ⛔⛔ **Trois champs étaient forcés à `null` EN DUR**, au milieu de cinquante qui lisent la
+  fixture (`S.wkt`, `S.cycle`, `S.dayState`). Mesuré : un persona *« il est fatigué, il a mal à
+  l'épaule ce matin »* était **impossible à écrire** — tout comme un persona en cycle de force
+  ou avec une séance en cours. ***Les trois situations où l'app en sait le plus sur la personne.***
+- ⛔⛔ **Quatre données de la vraie personne partaient dans chaque persona** : `exSwaps` (les
+  exercices qu'elle remplace **et sa raison**), `programmes`, `fasting`, `foodMode`. **3ᵉ fois**
+  pour cette famille (`foodLog` ft-v1014, `missedLog`/`nextPlanned` ft-v1050).
+- ⚠️⚠️ **Elles étaient CONNUES et épinglées depuis ft-v1014**, laissées en place au nom de
+  **R34**. ⭐ Cette raison ne tenait pas, et c'est **mesurable** : `_vcApplyPersona` n'a **aucun
+  appelant hors du banc**. ***Un report prudent finit par protéger le défaut lui-même.***
+- ⚠️⚠️ **`foodMode` est le cas qui apprend quelque chose** : essayé avec `keto`, il semblait
+  propre — parce que son **alias** `S.keto` était bien nettoyé, et que c'est lui que la règle
+  cétogène lit. Essayé avec **`paleo`** (lu, lui, via `S.foodMode`), la fuite est grande ouverte.
+  ***Une fuite refermée par un alias n'est pas refermée : elle est masquée par la valeur qu'on a
+  choisie pour l'essayer.*** Un seul propriétaire depuis (**R2**) : `keto` se **dérive** de
+  `foodMode`, comme `load()` le fait.
+- ⏭️ **Ce que ça ne fait PAS** : les personas ne sont pas enrichis. **3 scénarios sur 55**
+  donnent encore un historique à Milo, 0 un programme, 0 un cycle, 0 un état du jour — alors que
+  **20 lui demandent de construire une séance**. *Ce qui change, c'est qu'on PEUT enfin les
+  écrire.* L'expérience qui répondrait à la question de GPT (le même sportif, avec et sans sa
+  mémoire) reste à lancer : **4 appels, ~0,05 €** — décision de Michel.
 - **Version précédente :** `ft-v1105`. ✅ **Déploiement du site vérifié vert** (run **#816**,
   commit `8041baf`) — pas seulement poussé (**R18**).
 - ⚖️⛔⛔ **LA PORTION PRÉ-REMPLIE N'EST PAS LA TIENNE** (ft-v1105). Michel envoie l'**étiquette**

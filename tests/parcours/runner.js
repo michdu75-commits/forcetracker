@@ -13492,12 +13492,17 @@ console.log('\n-- CXXII. Anti-fuite du banc d\'essai : rien de réel ne part dan
      séparément. *Un trou qu'on mesure vaut mieux qu'un trou qu'on découvre — encore faut-il
      qu'il soit un trou.* */
   const CONNUS={
-    /* ── ① LUES POUR DE VRAI PAR `buildCoachContext` — ce sont les seules vraies fuites ── */
-    exSwaps:'fuite possible — exercices écartés par la personne',
-    fasting:'fuite possible — jeûne en cours',
-    foodMode:'fuite possible — mode de saisie nutrition',
-    programmes:'fuite possible — ses programmes',
-    /* ── ② JAMAIS LUES PAR LE CONTEXTE : attrapées par le débordement de la fenêtre ──
+    /* ── ① LES 4 VRAIES FUITES SONT REFERMÉES (02/09/2026, ft-v1106) ──
+       `exSwaps`, `fasting`, `foodMode` et `programmes` étaient ÉPINGLÉS ICI depuis ft-v1014,
+       pas corrigés : la raison écrite était R34 (« les corriger changerait ce que Milo reçoit,
+       donc ça demande son propre avant/après »).
+       ⭐ CETTE RAISON NE TENAIT PAS, ET C'EST MESURABLE : `_vcApplyPersona` n'a AUCUN appelant
+       hors du banc d'essai (bloc CCXV le vérifie). Corriger ces quatre lignes ne change donc
+       rien à ce qu'un utilisateur réel envoie à Milo — ça change ce qu'un PERSONA envoie, et
+       c'était justement le défaut. *Un report prudent finit par protéger le défaut lui-même.*
+       ⚠️ Elles ne sont plus listées ici : la liste doit MAIGRIR quand un trou se referme,
+       sinon elle devient un décor. Le témoin d'en dessous exige désormais **zéro**.
+       ── ② JAMAIS LUES PAR LE CONTEXTE : attrapées par le débordement de la fenêtre ──
        Les laisser décrites comme des « fuites » ferait corriger un problème qui n'existe pas. */
     url:'⛔ hors contexte ET ne doit PAS être réinitialisée : c\'est l\'adresse du serveur',
     coachConversations:'hors contexte — fils rangés, lus par l\'export et PT-001, pas par Milo',
@@ -13523,12 +13528,12 @@ console.log('\n-- CXXII. Anti-fuite du banc d\'essai : rien de réel ne part dan
      Il fige les DEUX comptes. Sans lui, la fenêtre pourrait déborder un peu plus à chaque
      fonction ajoutée dans `coach.js`, et la liste des « fuites » gonflerait toute seule
      jusqu'à ce que plus personne ne la croie. */
-  t('⛔⛔ le CORPS RÉEL de `buildCoachContext` ne laisse échapper que les 4 trous connus',
-    manqueEtroit.length===4 && manqueEtroit.every(k=>!!CONNUS[k]),
+  t('⛔⛔ le CORPS RÉEL de `buildCoachContext` ne laisse échapper AUCUNE donnée (0 trou)',
+    manqueEtroit.length===0,
     manqueEtroit.length+' : '+JSON.stringify(manqueEtroit));
   t('⭐ … et l\'écart avec la fenêtre large est bien un DÉBORDEMENT, pas des fuites de plus',
-    manque.length-manqueEtroit.length===4,
-    'large='+manque.length+' étroit='+manqueEtroit.length);
+    manque.length-manqueEtroit.length===manque.length && manque.every(k=>!!CONNUS[k]),
+    'large='+manque.length+' étroit='+manqueEtroit.length+' '+JSON.stringify(manque));
   /* ⭐ Et si un trou connu se referme, on veut le savoir : la liste doit MAIGRIR, pas dormir. */
   if(disparus.length) console.log('   ℹ️ trous refermés depuis (à retirer de la liste) : '+disparus.join(', '));
 }
@@ -23701,6 +23706,160 @@ console.log('\n-- CCXIV. La portion pré-remplie n\'est pas la tienne (ft-v1105)
     /* ⛔ PAS DE PROVENANCE ORPHELINE — le défaut de ft-v1042, sur un autre objet. */
     t('⛔ elle disparaît sur un aliment sans fiche (pas de provenance orpheline)',
       R.orpheline===false, 'encore visible='+R.orpheline);
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
+/* ═══ CCXV. LE BANC D'ESSAI RETROUVE SA MÉMOIRE, ET CESSE DE FUIR (ft-v1106) ═══════════════
+   Michel : « corrige les 3 lignes du banc et les fuites ». Suite directe du contre-audit du
+   plan « Milo Session Builder » de GPT, qui posait la bonne question : *la séance est-elle
+   meilleure PARCE QUE Force Tracker connaît le sportif ?* — et à laquelle le banc d'essai ne
+   pouvait pas répondre.
+
+   ⛔⛔ ① TROIS CHAMPS ÉTAIENT FORCÉS À `null` EN DUR, au milieu de 50 autres qui lisent la
+   fixture. `S.wkt=null; S.cycle=null;` et `S.dayState=null;` — rien ne le disait, rien ne le
+   justifiait. Conséquence mesurée : un persona « il est fatigué, il a mal à l'épaule ce matin »
+   était IMPOSSIBLE À ÉCRIRE. Un persona en cycle de force aussi. Un persona avec une séance
+   déjà commencée aussi. Or ce sont exactement les trois situations où l'app en sait le plus
+   sur la personne — donc celles où sa mémoire devrait le plus se voir.
+
+   ⛔⛔ ② QUATRE DONNÉES DE LA VRAIE PERSONNE PARTAIENT DANS CHAQUE PERSONA : `exSwaps` (les
+   exercices qu'elle remplace ET LA RAISON qu'elle a donnée), `programmes`, `fasting`,
+   `foodMode`. 3ᵉ fois pour cette famille — `foodLog` (ft-v1014), `missedLog`/`nextPlanned`
+   (ft-v1050) — et l'obligation est écrite dans `_vcApplyPersona` elle-même.
+   ⚠️ Elles étaient CONNUES et épinglées par le bloc CXXII depuis ft-v1014, mais laissées en
+   place au nom de R34 (« les corriger changerait ce que Milo reçoit »). ⭐ Cette raison ne
+   tenait pas, et c'est mesurable : `_vcApplyPersona` n'a AUCUN appelant hors du banc d'essai.
+   *Un report prudent finit par protéger le défaut lui-même.*
+
+   ⚠️⚠️ ③ ET `foodMode` EST LE CAS QUI APPREND QUELQUE CHOSE. Ma première sonde l'a déclaré
+   PROPRE — parce que je l'avais essayé avec la valeur `keto`, et que `S.keto`, son ALIAS, est
+   bien remis à zéro. Or la règle cétogène lit `S.keto`, tandis que les règles paléo, low carb
+   et méditerranéen lisent `S.foodMode`. Mesuré : avec `paleo`, la fuite est grande ouverte.
+   👉 *Une fuite refermée par un alias n'est pas refermée : elle est masquée par la valeur qu'on
+   a choisie pour l'essayer.* Les deux ont désormais un seul propriétaire (R2) — `keto` se
+   DÉRIVE de `foodMode`, exactement comme `load()` le fait dans state.js. Mesuré avant : après
+   un persona, `foodMode:'keto'` cohabitait avec `keto:false`.
+
+   ⛔ CE QUI NE DOIT PAS BOUGER, ET QUI EST LA MOITIÉ DE CE BLOC : un persona qui ne déclare ni
+   `wkt`, ni `cycle`, ni `dayState` doit toujours les recevoir à `null`, et EV-012 (`keto:true`
+   sans `foodMode`) doit continuer de marcher. Sans ces contrôles, « tout est propre » et « je
+   ne mesure rien » seraient indistinguables. */
+console.log('\n-- CCXV. Le banc d\'essai retrouve sa mémoire, et cesse de fuir (ft-v1106) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(`(()=>{try{
+    localStorage.setItem('ft4_name','Michel');localStorage.setItem('ft4_bw','84');
+    localStorage.setItem('ft4_age','43');localStorage.setItem('ft4_ht','178');
+    localStorage.setItem('ft4_gender','H');localStorage.setItem('ft4_goal','muscle');
+    localStorage.setItem('ft4_ob2','1');localStorage.setItem('ft4_guide_shown','1');
+    localStorage.setItem('ft4_wn_seen','99');localStorage.setItem('ft4_premium','1');
+  }catch(e){}})();`);
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(2200);
+  const R=await p.evaluate(async()=>{ try{
+    const j=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    /* ── ① on installe des données RECONNAISSABLES de la « vraie personne » ──
+       ⚠️ FORMES RÉELLES, lues dans state.js : `fasting` et `foodMode` sont des CHAÎNES
+       (ma 1ʳᵉ sonde mettait un objet dans `fasting`, elle ne mesurait rien). */
+    const poserVraiesDonnees=()=>{
+      S.exSwaps={'Rowing Barre':{to:'ZFUITE_SWAP',r:'gene',n:3,date:j(5)}};
+      S.programmes=[{name:'ZFUITE_PROG',date:j(30),exs:[{name:'Squat',sets:[{kg:100,reps:5}]}]}];
+      S.fasting='16:8';
+      S.foodMode='paleo'; S.keto=false;
+      S.sessions=[{ts:1,date:j(1),volume:9999,exs:[{name:'ZFUITE_SESSION',sets:[{kg:77,reps:7,done:true}]}]}];
+    };
+    const PERSONA={name:'Tatiana',gender:'F',age:34,height:165,bw:60,goal:'perte',
+                   discipline:'muscu',level:'debutant'};
+
+    /* ── ② persona RICHE : il déclare fatigue, cycle et séance en cours ── */
+    poserVraiesDonnees();
+    _vcApplyPersona({apply:Object.assign({},PERSONA,{
+      dayState:{date:(typeof today==='function'?today():''),energy:2,sleep:4,pains:[{zone:'epaule',side:'R'}]},
+      cycle:{active:true,startDate:j(14),weeks:8,exercises:{}},
+      wkt:{exs:[{name:'Squat',sets:[{kg:100,reps:5,done:true}]}],start:Date.now()}})});
+    const ctxRiche=buildCoachContext("Crée-moi ma séance d'aujourd'hui.");
+    const riche={
+      dayState:!!S.dayState, cycle:!!S.cycle, wkt:!!S.wkt,
+      exSwaps:Object.keys(S.exSwaps||{}).length, programmes:(S.programmes||[]).length,
+      fasting:S.fasting||'', foodMode:S.foodMode||'', sessions:(S.sessions||[]).length,
+      fuiteSwap:ctxRiche.indexOf('ZFUITE_SWAP')>=0,
+      fuiteProg:ctxRiche.indexOf('ZFUITE_PROG')>=0,
+      fuiteSess:ctxRiche.indexOf('ZFUITE_SESSION')>=0,
+      fuiteJeune:/16:8/.test(ctxRiche),
+      fuitePaleo:/PAL[ÉE]O/i.test(ctxRiche),
+      persona:/Tatiana/.test(ctxRiche), len:ctxRiche.length };
+
+    /* ── ③ CONTRÔLE DE NON-RÉGRESSION : le même persona SANS ces trois champs ── */
+    poserVraiesDonnees();
+    _vcApplyPersona({apply:Object.assign({},PERSONA)});
+    const ctxNu=buildCoachContext("Crée-moi ma séance d'aujourd'hui.");
+    const nu={ dayState:S.dayState, cycle:S.cycle, wkt:S.wkt, len:ctxNu.length,
+               persona:/Tatiana/.test(ctxNu) };
+
+    /* ── ④ CONTRÔLE : EV-012 pose `keto:true` SANS `foodMode` — il doit continuer de marcher ── */
+    poserVraiesDonnees();
+    _vcApplyPersona({apply:Object.assign({},PERSONA,{keto:true})});
+    const ev012={ keto:S.keto===true, foodMode:S.foodMode,
+                  regle:/C[ÉE]TOG[ÈE]NE/i.test(buildCoachContext('je mange quoi ce soir ?')) };
+
+    /* ── ⑤ CONTRÔLE : `foodMode:'keto'` doit dériver `keto=true` (l'alias suit son propriétaire) ── */
+    poserVraiesDonnees();
+    _vcApplyPersona({apply:Object.assign({},PERSONA,{foodMode:'keto'})});
+    const derive={ keto:S.keto===true, foodMode:S.foodMode };
+
+    return {riche, nu, ev012, derive};
+  }catch(e){ return {err:String(e).slice(0,200)}; } });
+  await cx.close();
+
+  if(R.err){ t('⛔ la sonde CCXV a planté', false, R.err); }
+  else{
+    /* ── les trois champs que le banc ne savait pas poser ── */
+    t('⛔⛔ un persona peut enfin poser un ÉTAT DU JOUR (fatigue, douleur du matin)',
+      R.riche.dayState===true, JSON.stringify(R.riche));
+    t('⛔⛔ … un CYCLE DE FORCE', R.riche.cycle===true, '');
+    t('⛔⛔ … et une SÉANCE EN COURS', R.riche.wkt===true, '');
+    /* ── les quatre fuites ── */
+    t('⛔⛔ les EXERCICES ÉCARTÉS de la vraie personne ne partent plus dans un persona',
+      R.riche.exSwaps===0 && R.riche.fuiteSwap===false, 'exSwaps='+R.riche.exSwaps);
+    t('⛔⛔ … ni ses PROGRAMMES',
+      R.riche.programmes===0 && R.riche.fuiteProg===false, 'programmes='+R.riche.programmes);
+    t('⛔⛔ … ni son JEÛNE',
+      R.riche.fasting==='' && R.riche.fuiteJeune===false, 'fasting='+JSON.stringify(R.riche.fasting));
+    t('⛔⛔ … ni son RÉGIME ALIMENTAIRE (mesuré avec `paleo`, pas avec `keto` — voir l\'en-tête)',
+      R.riche.foodMode==='' && R.riche.fuitePaleo===false, 'foodMode='+JSON.stringify(R.riche.foodMode));
+    /* ── les contrôles, sans lesquels tout ce qui précède serait vert en ne mesurant rien ── */
+    t('⭐ CONTRÔLE — l\'historique restait déjà propre (le témoin mord bien sur une donnée connue nettoyée)',
+      R.riche.sessions===0 && R.riche.fuiteSess===false, '');
+    t('⭐ CONTRÔLE — le persona est bien EN PLACE dans les deux contextes (sinon on mesure du vide)',
+      R.riche.persona===true && R.nu.persona===true, '');
+    t('⭐⭐ NON-RÉGRESSION — un persona qui ne déclare RIEN reçoit toujours `null` pour les trois',
+      R.nu.dayState===null && R.nu.cycle===null && R.nu.wkt===null,
+      JSON.stringify({d:R.nu.dayState,c:R.nu.cycle,w:R.nu.wkt}));
+    t('⭐ … et son contexte est bien PLUS COURT que celui du persona riche (les données arrivent vraiment)',
+      R.riche.len>R.nu.len, 'riche='+R.riche.len+' nu='+R.nu.len);
+    /* ── l'alias `keto`, dans les deux sens ── */
+    t('⭐⭐ CONTRÔLE EV-012 — une fixture qui pose `keto:true` SEUL marche toujours, règle comprise',
+      R.ev012.keto===true && R.ev012.foodMode==='keto' && R.ev012.regle===true,
+      JSON.stringify(R.ev012));
+    t('⭐ … et dans l\'autre sens : `foodMode:\'keto\'` DÉRIVE bien `keto=true` (un seul propriétaire, R2)',
+      R.derive.keto===true && R.derive.foodMode==='keto', JSON.stringify(R.derive));
+    /* ── la raison écrite pour laquelle le report R34 ne s'appliquait pas ── */
+    {
+      const src=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8')
+                 .replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+      const app=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+      const log=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+      const scr=fs.readFileSync(path.join(ROOT,'screens.js'),'utf8');
+      const set=fs.readFileSync(path.join(ROOT,'setup.js'),'utf8');
+      const trk=fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8');
+      const dehors=(app+log+scr+set+trk).indexOf('_vcApplyPersona')>=0;
+      const appels=(src.match(/_vcApplyPersona\s*\(/g)||[]).length;
+      t('⛔⛔ `_vcApplyPersona` n\'est appelée NULLE PART hors du banc d\'essai (c\'est ce qui rend le correctif sûr)',
+        dehors===false, 'trouvée dans un fichier d\'écran');
+      t('⭐ … et elle a bien des appelants dans coach.js (sinon le témoin serait vert sur une fonction morte)',
+        appels>=2, 'appels='+appels);
+    }
     t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
   }
 }
