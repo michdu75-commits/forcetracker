@@ -518,6 +518,41 @@ function _fusionnerAvecLeDisque(){
   }catch(e){ console.warn('[FT fusion onglets]',e); }
 }
 
+/* ⛔⛔ ft-v1095 — LES BORNES D'UNE SÉRIE ONT UN SEUL PROPRIÉTAIRE (R2).
+   Elles existaient déjà dans `coach.js` (`kg>0 && kg<=500`, `reps>=1 && reps<=100`) pour lire
+   les séries écrites dans une conversation — **et nulle part sur le chemin de l'IMPORT**.
+   MESURÉ en rendant à l'app ce qu'un modèle peut halluciner : `500 kg × 50 reps` est accepté
+   et pose un record de ***1 060 kg de 1RM***. Une charge NÉGATIVE passe aussi, et rend un
+   record de **−90 kg**. 👉 Un faux record VERS LE HAUT n'est jamais battu, donc il est
+   **éternel** — et il sert de référence aux charges que Milo propose (famille de ft-v1085).
+   ⭐ Le même garde-fou sur un chemin et pas sur l'autre : c'est **R8**, et c'est la 3ᵉ fois
+   cette semaine. On le sort donc de `coach.js` au lieu de le recopier. */
+function _serieValide(kg, reps){
+  const k=+kg, r=+reps;
+  if(!(isFinite(k) && isFinite(r) && k>0 && k<=500 && r>=1 && r<=100)) return false;
+  /* ⛔⛔ ET LE RÉSULTAT AUSSI, pas seulement les entrées — c'est ce que la mesure a appris.
+     `500 kg × 50 reps` franchit les deux bornes ci-dessus (500 ≤ 500, 50 ≤ 100) et pose
+     pourtant un record de **1 060 kg de 1RM** : `bz()` plafonne les répétitions à 20, donc
+     toute charge × 20 vaut 2,1 fois elle-même. *Chaque valeur était plausible, la combinaison
+     ne l'était pas.* On borne donc ce qui sort, à 600 kg — au-dessus de toute barre humaine,
+     en gardant de la marge pour une presse à cuisses (240 × 20 = 509 passe encore). */
+  return bz(k, r) <= 600;
+}
+/* ⛔ ET LA DATE : mesuré, `1900-01-01`, `2099-01-01` et même la chaîne « le mardi » entraient
+   telles quelles dans l'historique. Une date au 22ᵉ siècle se place en tête de tous les tris,
+   une date de 1900 étire chaque graphe sur 126 ans, et « le mardi » ne se compare à rien.
+   ⚠️ La borne basse est un ARBITRAGE assumé : un import sert justement à récupérer un carnet
+   ANTÉRIEUR à l'app, donc on ne refuse pas « vieux » — on refuse « impossible ». 1990 laisse
+   trente-cinq ans de carnet et écarte ce qui ne peut être qu'une lecture ratée. Et rien dans
+   le FUTUR : on ne s'est pas encore entraîné demain. */
+function _dateImportValide(d){
+  const s=String(d||'');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const t=new Date(s+'T12:00:00').getTime();
+  if(!isFinite(t)) return false;
+  if(s.slice(0,4)<'1990') return false;
+  return t <= Date.now()+864e5;          // tolérance d'un jour : fuseaux
+}
 function persist(){
   // Mode démo : on ne sauvegarde RIEN (ni local, ni cloud) — les vraies données restent figées telles quelles
   if(window._demoMode)return;

@@ -6,7 +6,23 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1094`. ✅ **Déploiement du site vérifié vert** (run **#769**,
+- **Version en ligne (live) :** `ft-v1095`.
+- 📥⭐⭐ **CE QU'UN MODÈLE HALLUCINE N'ENTRE PLUS DANS L'HISTORIQUE** (ft-v1095). Michel :
+  *« vas-y attaque les imports »* — 5ᵉ passe, la dernière famille non instruite. Mesuré en
+  rendant à l'app, **par ses vraies fonctions**, ce qu'un modèle peut lui renvoyer :
+  `500 kg × 50 reps` posait un record de **1 060 kg de 1RM**, une charge négative un record de
+  **−90 kg**, les dates `1900`, `2099` et même « le mardi » entraient telles quelles, et un
+  `exercises` mal typé faisait **planter** l'import avec une trace technique à l'écran.
+  ⭐⭐ **Le cas instructif est `500 × 50`** : chaque valeur passait les bornes existantes — c'est
+  la **combinaison** qui est impossible (`bz()` plafonne les répétitions à 20). *Borner les
+  entrées ne suffit pas, il faut borner ce qui SORT.* ⛔ Les bornes ont désormais **un seul
+  propriétaire** (`_serieValide`), partagé avec `coach.js` **qui les avait déjà** (**R8**).
+  ⛔ On écarte la **série**, pas la séance ; une date invalide écarte la séance ; **et on le
+  dit**. Nouvelle famille **§34** de `BUGS.md`.
+- ⏭️ **Ce que ça ne couvre pas** : seul l'import d'**historique** a été passé au banc. Le
+  programme, le bilan sanguin, le bilan corporel et le code-barres partagent la même mécanique
+  (une réponse de modèle consommée telle quelle) — **c'est la suite, pas une conclusion**.
+- **Version précédente :** `ft-v1094`. ✅ **Déploiement du site vérifié vert** (run **#769**,
   commit `74913bc`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement backend cette fois :
   `Code.js` n'a pas été touché, le correctif est entièrement dans `state.js`.
 - 🪟⭐⭐ **DEUX ONGLETS OUVERTS, ET LE DERNIER QUI ÉCRIT EFFACE L'AUTRE** (ft-v1094). Michel :

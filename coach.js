@@ -1814,7 +1814,7 @@ function _seanceDepuisTexte(reply){
       const out=[]; RE_SNUM.lastIndex=0; let m;
       while((m=RE_SNUM.exec(t))){
         const kg=parseFloat(String(m[2]).replace(',','.')), reps=+m[3];
-        if(!(kg>0&&kg<=500)||!(reps>=1&&reps<=100))continue;
+        if(!_serieValide(kg,reps))continue;   // ft-v1095 : un seul propriétaire des bornes (R2)
         out.push({kg,reps});
       }
       return out;

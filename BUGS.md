@@ -2069,3 +2069,58 @@ bien sur le disque, mise en file, et les 5 écrans rendent (0 erreur JS) · les 
 cassent rien · et les **« seuils écrits deux fois »** étaient tous des nombres égaux **par
 hasard** — 180 secondes contre 180 minutes, 120 kg contre 120 cm. *Un détecteur de nombres
 identiques a une précision quasi nulle : l'égalité numérique n'est presque jamais une parenté.*
+
+---
+
+## 34. 📥 CE QU'UN MODÈLE HALLUCINE ENTRE DANS LES DONNÉES — et une valeur inventée est CRÉDIBLE **(02/09/2026, ft-v1095)**
+
+Un import fait entrer dans l'app des chiffres qu'**aucun humain n'a tapés** : ils viennent d'un
+modèle qui lit une photo. Le piège n'est pas qu'il se trompe — c'est que **ce qu'il invente est
+plausible**. Une charge de 500 kg ressemble à une charge. Une date de 1900 ressemble à une date.
+Rien ne plante, rien n'alerte, et la valeur s'installe.
+
+### 🔎 Ce qui a été mesuré (les vraies fonctions, seul `fetch` remplacé)
+- `500 kg × 50 reps` → record de **1 060 kg de 1RM**, accepté et annoncé « importée ✅ » ;
+- charge **négative** → record de **−90 kg** ;
+- dates `1900-01-01`, `2099-01-01`, et la chaîne **« le mardi »** → entrées telles quelles ;
+- `exercises` rendu comme une **chaîne** → l'import plante, avec la trace technique
+  *« (sess.exercises || []).forEach is not a function »* affichée à la personne.
+
+### ⛔ Pourquoi un faux record coûte plus cher qu'il n'en a l'air
+Un record faux **vers le haut** ne sera jamais battu : il est donc **éternel**. Et il ne dort
+pas — il sert de référence aux charges que Milo propose. *Une seule ligne mal lue déforme les
+prescriptions pendant des mois.* (Même famille que le faux record de ft-v1085.)
+
+### ⭐⭐ Le cas qui apprend quelque chose : `500 × 50`
+Chaque valeur franchissait les bornes existantes (500 ≤ 500, 50 ≤ 100). **C'est la combinaison
+qui est impossible** : `bz()` plafonne les répétitions à 20, donc *toute* charge × 20 vaut 2,1
+fois elle-même. 👉 **Borner les entrées ne suffit pas : il faut aussi borner ce qui SORT.**
+
+### ⛔ À quoi on la reconnaît
+- Une donnée qui entre **sans avoir été tapée** (import, OCR, réponse d'un modèle, webhook).
+- Des bornes présentes sur **un** chemin de lecture et absentes sur l'autre (**R8**) : ici
+  `coach.js` bornait déjà `kg` et `reps` pour lire une conversation — l'import, non.
+- Un `||[]` qui suppose une **forme** (`(x.exercises||[]).forEach`) : il protège du `null`,
+  jamais du **mauvais type**.
+- Un message de succès qui ne distingue pas « tout est entré » de « une partie a été jetée ».
+
+### 🛡️ Ce qui protège aujourd'hui
+`_serieValide()` et `_dateImportValide()` dans `state.js` — **un seul propriétaire** (R2),
+employé par l'import **et** par `coach.js`. La réponse est **normalisée à l'entrée** (une
+dizaine de lecteurs en aval : les rustiner un par un, c'est en oublier un). Bloc **CCII**.
+
+### ⭐ Le réflexe, et l'arbitrage qui va avec
+**On écarte la SÉRIE, pas la séance** : une ligne mal lue ne doit pas faire perdre les neuf
+autres (règle d'or #3). Une **date** invalide, elle, écarte la séance — l'aperçu ne permet pas
+de la corriger, et une date fausse pollue durablement les graphes et le contexte de Milo.
+⛔ **Et on le dit** : un rejet silencieux est indiscernable d'un import réussi (**R29**).
+⚠️ La borne basse des dates (1990) est un arbitrage **assumé** : un import sert justement à
+récupérer un carnet antérieur à l'app, donc on ne refuse pas « vieux » — on refuse
+« impossible ».
+
+### ⚠️ Et la sonde a menti deux fois avant de mesurer
+Elle appelait `_histAnalyzeBatch` — qui ne fait que **rendre** le tableau — au lieu de
+`analyzeHistPhotos`, qui **remplit** l'état ; et elle n'avait **pas de cas valide**. Les
+quatorze réponses hostiles rendaient donc le même résultat. *Le témoin de contrôle doit être le
+PREMIER cas d'un banc de réponses hostiles, pas le dernier* — sans lui, « tout est refusé » et
+« je ne mesure rien » sont indistinguables.
