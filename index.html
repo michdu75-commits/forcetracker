@@ -619,7 +619,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
        barre qui sert à en sortir. -->
   <div class="nu-tabs">
     <button class="nu-tab active" id="ptab-exo" onclick="switchProgTab('exo',this)">Exercices</button>
-    <button class="nu-tab" id="ptab-poids" onclick="switchProgTab('poids',this)">Poids</button>
+    <button class="nu-tab" id="ptab-poids" onclick="switchProgTab('poids',this)">Corps &amp; santé</button>
     <button class="nu-tab" id="ptab-badges" onclick="switchProgTab('badges',this)">Badges</button>
   </div>
 
@@ -684,6 +684,11 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 
   <!-- TAB: Poids -->
   <div id="prog-poids" style="display:none;flex-direction:column;gap:10px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="sec" style="flex:1;">Mes pesées</div>
+      <button id="poids-exp-btn" onclick="exportPoidsCsv()" title="Exporter mes pesées"
+        style="flex-shrink:0;background:var(--bg3);color:var(--t2);border:none;border-radius:10px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">📤 Exporter</button>
+    </div>
     <div class="card cp" id="weight-entry-card" style="display:flex;flex-direction:column;gap:8px;"></div>
     <div class="card cp" id="weight-target" style="display:flex;flex-direction:column;"></div>
     <div class="card cp" id="bodyfat-card" style="display:flex;flex-direction:column;"></div>
@@ -718,6 +723,15 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 
   <!-- JOURNAL ALIMENTAIRE -->
   <div id="nu-journal" style="display:none;flex-direction:column;gap:12px;">
+    <!-- 📤 La porte de l'export vit À CÔTÉ de ce qu'elle exporte, comme celle de l'historique
+         (ft-v1048) : c'est là qu'on regarde quand on veut ses données. ⛔ L'export JSON complet
+         reste dans Menu → Exporter mes données — sauvegarder et consulter sont deux besoins
+         différents, et on ne duplique pas ses garanties (R2/R23). -->
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="sec" style="flex:1;">Journal alimentaire</div>
+      <button id="nutri-exp-btn" onclick="exportNutritionCsv()" title="Exporter mon journal alimentaire"
+        style="flex-shrink:0;background:var(--bg3);color:var(--t2);border:none;border-radius:10px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">📤 Exporter</button>
+    </div>
     <div id="food-journal"></div>
   </div>
 

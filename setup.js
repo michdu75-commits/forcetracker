@@ -379,6 +379,68 @@ async function exportHistoCsv(){
   const etat=await _donnerFichier(csv,'forcetracker-historique_'+today()+'.csv','text/csv');
   _toastFichier(etat, L.length, 'séries');
 }
+/* 📤 EXPORTS DATÉS — NUTRITION ET POIDS (02/09/2026) — demande de Michel : « il faudra créer
+   un export daté de la nutrition et aussi côté poids ».
+   ⭐ ON RÉUTILISE LE PATRON DE `exportHistoCsv`, ON N'EN ÉCRIT PAS UN SECOND (R13) : le même
+   échappement CSV, le même séparateur `;` + BOM (Excel FR ouvre le « , » en une seule colonne
+   et rend « Développé » en « DÃ©veloppÃ© » sans BOM), le même `_donnerFichier` (feuille de
+   partage iOS) et le même `_toastFichier` — qui est le seul à savoir dire « je ne sais pas »
+   quand `<a download>` ne fait rien sur iPhone en plein écran.
+   ⛔ UN SEUL PROPRIÉTAIRE DE L'ÉCHAPPEMENT ET DE L'EN-TÊTE (R2) : `_csvFichier` ci-dessous. Trois
+   exports qui recopieraient chacun leur guillemet finiraient par ne plus se ressembler. */
+function _csvEchappe(v){
+  const t = String(v == null ? '' : v);
+  return /[",;\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+}
+async function _csvFichier(colonnes, lignes, nomCourt, unite){
+  if(!lignes.length){ toast('Rien à exporter pour l\'instant','info'); return; }
+  const csv = '﻿' + colonnes.join(';') + '\n'
+    + lignes.map(r => colonnes.map(c => _csvEchappe(r[c])).join(';')).join('\n');
+  /* ⛔ Le nom porte la DATE : deux exports du même écran ne s'écrasent pas dans les
+     téléchargements, et on sait de quand date le fichier qu'on rouvre trois mois plus tard. */
+  const etat = await _donnerFichier(csv, 'forcetracker-' + nomCourt + '_' + today() + '.csv', 'text/csv');
+  _toastFichier(etat, lignes.length, unite);
+}
+
+/* 🍽️ NUTRITION — une ligne par aliment noté, la plus récente d'abord.
+   ⛔ ON EXPORTE AUSSI LA PROVENANCE (`saisie`, `origine`) : c'est ce qui permet, en relisant le
+   fichier, de savoir si une valeur a été SCANNÉE, tapée à la main ou estimée par l'IA. Sans
+   elle, toutes les lignes se ressemblent et on ne peut plus juger laquelle croire (R33). */
+const NUTRI_COLONNES = ['date','repas','aliment','quantite','unite','kcal','proteines_g','glucides_g','lipides_g','saisie','source'];
+async function exportNutritionCsv(){
+  const REPAS = {matin:'Petit-déjeuner', midi:'Déjeuner', soir:'Dîner', collation:'Collation'};
+  const L = (S.foodLog || [])
+    .slice()
+    .sort((a,b) => String(b && b.date || '').localeCompare(String(a && a.date || ''))
+                || ((b && b.ts || 0) - (a && a.ts || 0)))
+    .map(e => ({
+      date: e && e.date || '', repas: REPAS[e && e.meal] || (e && e.meal) || '',
+      aliment: e && e.name || '',
+      quantite: (e && e.q != null) ? e.q : '', unite: e && e.u || '',
+      kcal: (e && e.kcal != null) ? e.kcal : '',
+      proteines_g: (e && e.prot != null) ? e.prot : '',
+      glucides_g: (e && e.carbs != null) ? e.carbs : '',
+      lipides_g: (e && e.fat != null) ? e.fat : '',
+      saisie: e && e.saisie || '', source: e && e.origine || ''
+    }));
+  await _csvFichier(NUTRI_COLONNES, L, 'nutrition', 'lignes');
+}
+
+/* ⚖️ POIDS — une ligne par pesée, la plus récente d'abord.
+   ⚠️ LA COLONNE S'APPELLE `poids_kg` ET SE LIT DANS `kg`, PAS DANS `bw` : la doc du projet a dit
+   `bw` pendant des mois alors que l'app écrit `kg` PARTOUT, et une fixture écrite d'après cette
+   ligne avait rendu « undefined » à l'écran (corrigé le 30/08). On lit le code, pas la doc. */
+const POIDS_COLONNES = ['date','poids_kg','masse_grasse_pct'];
+async function exportPoidsCsv(){
+  const L = (S.weightLog || [])
+    .slice()
+    .sort((a,b) => String(b && b.date || '').localeCompare(String(a && a.date || '')))
+    .map(e => ({ date: e && e.date || '',
+                 poids_kg: (e && e.kg != null) ? e.kg : '',
+                 masse_grasse_pct: (e && e.bf != null) ? e.bf : '' }));
+  await _csvFichier(POIDS_COLONNES, L, 'poids', 'pesées');
+}
+
 async function exportHistoPdf(){
   const L=_histoLignes();
   if(!L.length){ toast('Aucune séance à exporter','info'); return; }

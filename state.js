@@ -474,7 +474,30 @@ function _fusionListe(memoire, disque, cle){
 function _fusionnerAvecLeDisque(){
   const lire=(k,d)=>{ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } };
   try{
-    const sigSess = s => (s&&s.date||'')+'|'+((s&&s.exs||[]).length)+'|'+(s&&s.vol||0);
+    /* ⛔⛔ L'IDENTITÉ D'UNE SÉANCE EST `ts || id`, PAS SON CONTENU (corrigé le 02/09/2026,
+       trouvé en relisant ft-v1094 à la demande de Michel).
+       La 1ʳᵉ version signait `date|nb exercices|volume` — or **corriger une charge change le
+       volume**, donc la version corrigée et celle du disque avaient deux signatures
+       différentes et l'union GARDAIT LES DEUX. Mesuré dans un vrai navigateur : même date →
+       **2 séances**, volumes [1100, 1000]. 👉 ***Le correctif qui répare une perte de séance
+       en fabriquait un DOUBLON*** — c'est-à-dire exactement ce que ft-v1083 venait de nettoyer
+       dans le classeur, et le geste qui le déclenche est le plus banal : corriger un poids.
+       ⭐ ET LE PROPRIÉTAIRE EXISTAIT DÉJÀ (R2) : `openSessDetail`, la suppression et la mise à
+       jour identifient toutes une séance par `s.ts || s.id`. La signature en avait inventé un
+       second — et deux propriétaires de la même question finissent toujours par diverger.
+       ⚠️ LE REPLI, POUR LES SÉANCES SANS `ts`/`id` (importées avant que l'app en pose un) :
+       date + nombre d'exercices + **nom du premier exercice**. ⛔ PAS le volume — c'est la seule
+       part qui change quand on corrige une charge, donc c'est précisément elle qu'il fallait
+       retirer. ⭐ Et le nom du 1ᵉʳ exercice est ajouté pour le RISQUE SYMÉTRIQUE, mesuré avant
+       d'être écrit : sans lui, **deux vraies séances du même jour et de même taille
+       fusionneraient en une** — on aurait échangé un doublon contre une perte, ce qui est le
+       mauvais sens (**R29**). Mesuré : 2 séances distinctes restent 2.
+       ⚠️ LIMITE ÉCRITE PLUTÔT QUE TUE : deux séances le même jour, toutes deux SANS identifiant,
+       de même taille ET commençant par le même exercice, fusionneraient encore. Le cas suppose
+       des séances d'avant les identifiants ET deux onglets ouverts ; le doublon qu'on répare,
+       lui, se déclenche en corrigeant un poids. */
+    const sigSess = s => String((s&&(s.ts||s.id))
+      || ((s&&s.date||'')+'|'+((s&&s.exs||[]).length)+'|'+(((s&&s.exs||[])[0]||{}).name||'')));
     S.sessions   = _fusionListe(S.sessions,   lire('ft4_sessions',[]), sigSess)
                      .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,1500);
     S.weightLog  = _fusionListe(S.weightLog,  lire('ft4_wlog',[]),  e=>String(e&&e.date||''));

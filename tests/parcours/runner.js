@@ -22150,6 +22150,115 @@ console.log('\n-- CCI. Les 4 vérificateurs du banc d\'essai qui accusaient à t
     [f6,f40,f8,f7].every(f=>typeof f==='function'), '');
 }
 
+
+/* == BLOC CCII - EXPORTS DATES (NUTRITION · POIDS) ET LE DOUBLON DE SEANCE (ft-v1095) ==
+   Michel : « il faudra créer un export daté de la nutrition et aussi côté poids », puis
+   « répare le dédoublement toi-même ».
+   ⛔⛔ LE DOUBLON EST LE POINT DUR, ET IL VIENT D'UN CORRECTIF : ft-v1094 signait une seance
+   `date|nb exercices|volume` pour fusionner deux onglets — or CORRIGER UNE CHARGE CHANGE LE
+   VOLUME, donc la version corrigee et celle du disque avaient deux signatures differentes et
+   l'union gardait LES DEUX. ***Le correctif qui repare une perte de seance en fabriquait un
+   doublon*** — celui-la meme que ft-v1083 venait de nettoyer dans le classeur, declenche par
+   le geste le plus banal qui soit.
+   ⭐ LE PROPRIETAIRE EXISTAIT DEJA (R2) : `openSessDetail`, la suppression et la mise a jour
+   identifient une seance par `s.ts || s.id`. La signature en avait invente un second.
+   ⚠️ ET MON PROPRE CORRECTIF PORTAIT UN RISQUE SYMETRIQUE, MESURE AVANT D'ETRE ECRIT : avec un
+   repli sur `date|nb`, DEUX VRAIES seances du meme jour fusionnaient en une — on aurait echange
+   un doublon contre une PERTE, ce qui est le mauvais sens (R29). D'ou le nom du 1er exercice
+   dans le repli : il ne change pas quand on corrige un poids, contrairement au volume. */
+console.log('\n-- CCII. Exports datés · et le doublon de séance de ft-v1094 (ft-v1095) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',
+    ft4_foodlog:JSON.stringify([
+      {date:'2026-09-01',meal:'midi',name:'Riz, basmati',q:150,u:'g',kcal:195,prot:4,carbs:43,fat:1,saisie:'scan',origine:'off'},
+      {date:'2026-08-30',meal:'matin',name:'Œufs',q:2,u:'piece',kcal:140,prot:12,carbs:1,fat:10,saisie:'manuel',origine:'ciqual'}]),
+    ft4_wlog:JSON.stringify([{date:'2026-09-01',kg:84.2,bf:18.5},{date:'2026-08-25',kg:84.8}])}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const E=await pg.evaluate(async()=>{
+   try{
+    const o={}; const pris=[];
+    /* On intercepte la remise du fichier : on veut lire le CONTENU, pas declencher un partage. */
+    const vrai=window._donnerFichier;
+    window._donnerFichier=(c,n,m)=>{ pris.push({c,n,m}); return Promise.resolve('ok'); };
+    await exportNutritionCsv(); await exportPoidsCsv();
+    window._donnerFichier=vrai;
+    o.nb=pris.length;
+    o.noms=pris.map(p=>p.n);
+    o.nutri=pris[0]?pris[0].c:''; o.poids=pris[1]?pris[1].c:'';
+    /* ⛔ La virgule du nom d'aliment doit etre ECHAPPEE, sinon la ligne se decale d'une colonne
+       dans le tableur — et rien ne le signale. */
+    o.echappe = o.nutri.indexOf('"Riz, basmati"')>=0;
+    o.bom = o.nutri.charCodeAt(0)===0xFEFF;
+    o.provenance = o.nutri.indexOf('scan')>=0 && o.nutri.indexOf('ciqual')>=0;
+    o.poidsLit = o.poids.indexOf('84.2')>=0 && o.poids.indexOf('18.5')>=0;
+    /* ⛔ Le plus RECENT en premier : on ouvre un export pour voir ce qui vient de se passer. */
+    const l=o.nutri.split('\n'); o.ordre = l[1].indexOf('2026-09-01')===0;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+  if(E.err) t('CCII (exports) n\'a pas pu tourner', false, E.err);
+  else{
+    t('⛔ le témoin a bien PRODUIT deux fichiers (sinon tout le reste serait vert sur du vide)',
+      E.nb===2, JSON.stringify(E.noms));
+    t('⭐⭐ les deux fichiers portent la DATE du jour (deux exports ne s\'écrasent plus)',
+      E.noms.every(n=>/^forcetracker-(nutrition|poids)_\d{4}-\d{2}-\d{2}\.csv$/.test(n)), JSON.stringify(E.noms));
+    t('⭐ NUTRITION : une virgule dans un nom d\'aliment est échappée (« Riz, basmati »)',
+      E.echappe===true, E.nutri.split('\n')[1]||'');
+    t('⛔ … et le BOM UTF-8 est là (sans lui Excel FR rend « Développé » en « DÃ©veloppÃ© »)',
+      E.bom===true, 'BOM = '+E.bom);
+    t('⭐⭐ … et la PROVENANCE est exportée (scan / ciqual) — sinon on ne sait plus quoi croire',
+      E.provenance===true, '');
+    t('⭐⭐ POIDS : la colonne lit `kg` (et non `bw`) et garde la masse grasse',
+      E.poidsLit===true, (E.poids||'').split('\n')[1]||'');
+    t('⛔ le plus RÉCENT en premier dans les deux fichiers',
+      E.ordre===true, (E.nutri||'').split('\n')[1]||'');
+    t('⛔ 0 erreur JS sur les deux exports', errs.length===0, JSON.stringify(errs.slice(0,2)));
+  }
+
+  /* ── LE DOUBLON DE SEANCE : six cas, dont deux qui protegent contre MON PROPRE correctif. */
+  const F=await pg.evaluate(()=>{
+   try{
+    const o={};
+    const jouer=(disque,memoire,date)=>{
+      localStorage.setItem('ft4_sessions', JSON.stringify(disque));
+      S.sessions=memoire; _fusionnerAvecLeDisque();
+      return S.sessions.filter(s=>s.date===date).length;
+    };
+    const sn=(d,vol,n,nom,ts)=>{ const s={date:d,vol:vol,
+      exs:[{name:nom,sets:[]}].concat(new Array(Math.max(0,n-1)).fill({name:'X',sets:[]}))};
+      if(ts) s.ts=ts; return s; };
+    o.corrAvecId  = jouer([sn('2026-09-02',1000,1,'Squat',111)],[sn('2026-09-02',1100,1,'Squat',111)],'2026-09-02');
+    o.corrSansId  = jouer([sn('2026-09-03',1000,3,'Squat')],    [sn('2026-09-03',1100,3,'Squat')],    '2026-09-03');
+    o.deuxIds     = jouer([sn('2026-09-04',1000,1,'Squat',111)],[sn('2026-09-04', 900,1,'Squat',222)],'2026-09-04');
+    o.deuxSansId  = jouer([sn('2026-09-05',1000,3,'Squat')],    [sn('2026-09-05', 900,3,'Développé')],'2026-09-05');
+    o.sansEdition = jouer([sn('2026-09-06',1000,3,'Squat')],    [sn('2026-09-06',1000,3,'Squat')],    '2026-09-06');
+    /* ⛔ ET LE CAS NORMAL : un SEUL onglet ne fusionne rien du tout. */
+    o.signature = _fusionnerAvecLeDisque.toString().indexOf('s.ts||s.id')>=0
+               || _fusionnerAvecLeDisque.toString().indexOf('s.ts || s.id')>=0;
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(F.err) t('CCII (doublon) n\'a pas pu tourner', false, F.err);
+  else{
+    t('⭐⭐ SON CAS : corriger une charge ne DÉDOUBLE plus la séance (avec identifiant)',
+      F.corrAvecId===1, 'séances = '+F.corrAvecId);
+    t('⭐⭐ … ni sans identifiant (vieille séance importée)',
+      F.corrSansId===1, 'séances = '+F.corrSansId);
+    t('⛔⛔ RISQUE SYMÉTRIQUE ÉCARTÉ : deux VRAIES séances du même jour restent DEUX (ids ≠)',
+      F.deuxIds===2, 'séances = '+F.deuxIds);
+    t('⛔⛔ … et sans identifiant non plus, tant que le 1ᵉʳ exercice diffère',
+      F.deuxSansId===2, 'séances = '+F.deuxSansId);
+    t('⛔ le témoin de contrôle : sans édition, une séance reste UNE (sinon rien n\'est prouvé)',
+      F.sansEdition===1, 'séances = '+F.sansEdition);
+    t('⭐ R2 : la fusion emploie l\'identité que l\'app utilise déjà (`ts || id`)',
+      F.signature===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
