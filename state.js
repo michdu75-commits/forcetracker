@@ -1481,6 +1481,150 @@ function cycleGlucides(m, kcal){
                    dCarbs:carbs_g-m.carbs_g, region:js.seance?rJour:null, autre}};
   }catch(e){ return m; }
 }
+/* ═══ 📉 LE MOTEUR DE TENDANCE — 14 JOURS, DÉTERMINISTE, ZÉRO APPEL IA (ft-v1102) ═══════════
+   ⛔⛔ AUCUN SEUIL N'EST INVENTÉ ICI, et c'est la contrainte qui a décidé de tout :
+     · la fenêtre de 14 jours et les états `insuffisant/partiel/solide` existaient déjà
+       (`_PA_MIN_JOURS` = 3, `_PA_SOLIDE` = 14, posés en ft-v1021, indépendamment) ;
+     · le minimum de 3 pesées est celui que la carte de corrélations applique déjà
+       (`pts.length < 3` → elle n'affiche rien) ;
+     · les plages de poids par objectif viennent de `_GOAL_TREND` (ft-v1100) ;
+     · et la force ne se compare **qu'à nombre de répétitions ÉGAL** — voir plus bas.
+   ⛔ IL REND « JE NE SAIS PAS », ET CE VIDE NE SE REMPLACE JAMAIS PAR UN VERDICT (R29).
+   ⛔ IL NE MODIFIE AUCUN APPORT. Il constate, il nomme, il se tait. */
+
+/* ⭐⭐ LA FORCE SE COMPARE À NOMBRE DE RÉPÉTITIONS ÉGAL — mesuré, pas choisi (ft-v1102).
+   ⛔⛔ Le e1RM (Brzycki) est **confondu par le format de séance** : à force RIGOUREUSEMENT
+   identique, passer de `100 kg × 3` à `100 kg × 10` fait bouger la valeur de **+26 %**, quand
+   une vraie progression vaut **+1,8 à +3,0 %** par pas (la charge bouge par 2,5 kg, les reps
+   sont des entiers). *Le bruit est 3 à 6 fois plus grand que le signal.*
+   👉 **Aucun seuil en pourcentage ne peut donc marcher** : assez grand pour rejeter un
+   changement de format, il rejetterait toutes les vraies progressions. Mesuré, l'écart max
+   introduit par la règle de comparaison elle-même : reps ÉGALES **0,0 %** · ±1 rep **4,0 %** ·
+   bande 6-10 **16,0 %** · reps libres **36,1 %**. **Une seule règle passe sous le signal.**
+   ⛔ D'où : on compare la meilleure CHARGE à reps égales, exercice par exercice, entre les deux
+   moitiés de la fenêtre. C'est la mesure de progression la plus classique qui soit, et elle ne
+   demande **aucun seuil**. S'il n'existe aucune paire comparable, on rend `null` — on ne
+   fabrique pas une comparaison (R29). */
+function _forceSurFenetre(jours){
+  try{
+    const j = jours||14;
+    const t = today();
+    const auJour = d => Math.round((new Date(t+'T12:00:00') - new Date(d+'T12:00:00'))/864e5);
+    /* meilleure charge par [exercice, reps] et par MOITIÉ de fenêtre */
+    const moitie = {0:{}, 1:{}};
+    (S.sessions||[]).forEach(sess=>{
+      const d = sess && (sess.date || (sess.ts ? dayOfTs(sess.ts) : null));
+      if(!d) return;
+      const k = auJour(d);
+      if(!(k>=0 && k<j)) return;
+      const m = k < j/2 ? 0 : 1;                 // 0 = la moitié RÉCENTE
+      (sess.exs||[]).forEach(e=>{
+        const nom = (typeof exNomCatalogue==='function') ? exNomCatalogue(e.name||'') : (e.name||'');
+        (e.sets||[]).forEach(x=>{
+          if(!x || x.done===false) return;
+          const kg=+x.kg, r=+x.reps;
+          if(!(kg>0 && r>0)) return;
+          /* ⛔ les séries d'échauffement ne mesurent pas une progression de force */
+          if(x.type==='W' || x.type==='E') return;
+          const cle = nom+'|'+r;
+          if(!moitie[m][cle] || kg>moitie[m][cle]) moitie[m][cle]=kg;
+        });
+      });
+    });
+    const paires=[];
+    for(const cle in moitie[1]){
+      if(moitie[0][cle]!=null) paires.push({cle, avant:moitie[1][cle], apres:moitie[0][cle]});
+    }
+    if(!paires.length) return null;              // ⛔ aucune comparaison possible : on se tait
+    /* La progression est la MOYENNE des variations relatives, exercice par exercice — pas la
+       somme des charges : un squat à 140 kg écraserait un curl à 12 kg. */
+    const pct = paires.reduce((a,p)=>a + (p.apres-p.avant)/p.avant, 0) / paires.length * 100;
+    return { pct: Math.round(pct*10)/10, paires: paires.length,
+             /* ⛔ Le VOLUME sert de garde-fou de contexte : une baisse pendant une semaine à
+                volume effondré est une DÉCHARGE, pas une régression. */
+             detail: paires.slice(0,4) };
+  }catch(e){ return null; }
+}
+/* Volume total (kg soulevés) par moitié de fenêtre — garde-fou de `_forceSurFenetre`. */
+function _volumeParMoitie(jours){
+  try{
+    const j=jours||14, t=today();
+    const v=[0,0];
+    (S.sessions||[]).forEach(sess=>{
+      const d = sess && (sess.date || (sess.ts ? dayOfTs(sess.ts) : null));
+      if(!d) return;
+      const k = Math.round((new Date(t+'T12:00:00') - new Date(d+'T12:00:00'))/864e5);
+      if(!(k>=0 && k<j)) return;
+      const m = k < j/2 ? 0 : 1;
+      (sess.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{
+        if(x && x.done!==false && +x.kg>0 && +x.reps>0) v[m]+= (+x.kg)*(+x.reps);
+      }));
+    });
+    return {recent:Math.round(v[0]), avant:Math.round(v[1])};
+  }catch(e){ return null; }
+}
+
+const TENDANCE_FENETRE = 14;          // ⛔ la même que `_PA_SOLIDE` et que la carte de volume
+const TENDANCE_MIN_PESEES = 3;        // ⛔ le minimum déjà appliqué par la carte de corrélations
+
+function tendance14j(){
+  try{
+    const t=today();
+    const dans = d => { const k=Math.round((new Date(t+'T12:00:00')-new Date(d+'T12:00:00'))/864e5);
+                        return k>=0 && k<TENDANCE_FENETRE; };
+    const out={ fenetre:TENDANCE_FENETRE, manque:[], faits:[] };
+
+    /* ① LE POIDS — la plage attendue vient de `_GOAL_TREND` (ft-v1100), jamais réécrite ici */
+    const pts=(S.weightLog||[]).filter(w=>w&&w.date&&dans(w.date))
+                .sort((a,b)=>a.date<b.date?-1:1).map(w=>({date:w.date,kg:+w.kg}));
+    if(pts.length>=TENDANCE_MIN_PESEES && typeof penteKgParSemaine==='function'){
+      const kgSem=penteKgParSemaine(pts,'kg');
+      out.poids={ kgSem, n:pts.length,
+                  dans:(typeof poidsDansLaPlage==='function')?poidsDansLaPlage(kgSem,S.goal):null,
+                  rythme:(typeof rythmeVsPlage==='function')?rythmeVsPlage(kgSem,S.goal):null };
+    } else {
+      out.manque.push(pts.length ? (pts.length+' pesée'+(pts.length>1?'s':'')+' sur '+TENDANCE_FENETRE+' jours (il en faut '+TENDANCE_MIN_PESEES+')')
+                                 : 'aucune pesée sur '+TENDANCE_FENETRE+' jours');
+    }
+
+    /* ② LA FORCE — à nombre de reps ÉGAL, avec le volume en garde-fou */
+    const f=_forceSurFenetre(TENDANCE_FENETRE);
+    if(f){
+      const vol=_volumeParMoitie(TENDANCE_FENETRE);
+      /* ⛔ Une baisse pendant une semaine à volume EFFONDRÉ n'est pas une régression : c'est
+         une décharge, une semaine allégée, ou une semaine de vie. On ne conclut pas. */
+      const dechargeProbable = !!(vol && vol.avant>0 && vol.recent < vol.avant*0.6 && f.pct<0);
+      out.force={ pct:f.pct, paires:f.paires, decharge:dechargeProbable, vol };
+    } else {
+      out.manque.push('aucun exercice comparable à répétitions égales dans les deux moitiés');
+    }
+
+    /* ③ L'ALIMENTATION — on réutilise les états déjà en production (ft-v1021) */
+    const joursAlim=Array.from(new Set((S.foodLog||[]).filter(e=>e&&e.date&&dans(e.date)).map(e=>e.date)));
+    const nAlim=joursAlim.length;
+    const solide=(typeof _PA_SOLIDE!=='undefined')?_PA_SOLIDE:14;
+    const mini  =(typeof _PA_MIN_JOURS!=='undefined')?_PA_MIN_JOURS:3;
+    out.alim={ jours:nAlim, etat: nAlim>=solide?'solide' : nAlim>=mini?'partiel' : 'insuffisant' };
+    if(out.alim.etat==='insuffisant')
+      out.manque.push(nAlim+' jour'+(nAlim>1?'s':'')+' de repas notés (il en faut '+mini+')');
+
+    /* ④ L'ÉTAT — quatre, pas cinq (décision produit) */
+    const sources=[out.poids?1:0, out.force?1:0, out.alim.etat!=='insuffisant'?1:0]
+                    .reduce((a,b)=>a+b,0);
+    if(sources<2){ out.etat='insuffisante'; return out; }
+
+    /* Le sens de chaque signal disponible, par rapport à l'OBJECTIF déclaré. */
+    const signaux=[];
+    if(out.poids) signaux.push({ q:'poids', ok: out.poids.dans===true, connu: out.poids.dans!==null });
+    if(out.force) signaux.push({ q:'force', ok: out.force.pct>=0 || out.force.decharge, connu:true });
+    const connus=signaux.filter(x=>x.connu);
+    if(connus.length<2 || out.alim.etat==='partiel'){ out.etat='partielle'; return out; }
+    out.etat = connus.every(x=>x.ok) ? 'coherente' : 'ambigue';
+    if(out.etat==='ambigue') out.faits=connus.filter(x=>!x.ok).map(x=>x.q);
+    return out;
+  }catch(e){ return {etat:'insuffisante', fenetre:TENDANCE_FENETRE, manque:['erreur de calcul'], faits:[]}; }
+}
+
 function calcMacros(phase){
   const auto=autoKcal(phase);
   // Réglage manuel (comme MyFitnessPal) : si l'utilisateur a fixé ses calories à la main,

@@ -532,6 +532,40 @@ function ciPickEnergy(e){
 }
 
 // ─── WEIGHT TRACKER ──────────────────────────────────────────
+/* ⚖️⛔⛔ « kg / SEMAINE » SE CALCULE SUR LES JOURS, PAS SUR LE NOMBRE DE PESÉES (ft-v1102)
+   ⛔⛔ LE DÉFAUT, MESURÉ : les trois appelants passaient l'**INDEX** du point comme abscisse
+   (`map((p,i)=>({x:i,…}))`), puis multipliaient la pente par 7. La pente était donc en
+   **kg par PESÉE**, et « ×7 » voulait dire « sur 7 pesées » — pas sur 7 jours.
+   ⚠️ Même évolution réelle (+0,20 kg/sem), mesurée à quatre fréquences de pesée :
+     · tous les jours → **+0,20** ✅   · tous les 2 jours → **+0,40** (×2)
+     · tous les 3 jours → **+0,60** (×3) · une fois par semaine → **+1,40** (×7)
+   👉 ***Le chiffre mesurait la fréquence de la balance, pas le corps.*** Quelqu'un qui se pèse
+   le dimanche voyait sa tendance multipliée par sept.
+   ⭐ ET ft-v1100 A RENDU CE DÉFAUT VISIBLE au lieu de le créer : tant que le juge de Milo
+   disait « ✓ bonne direction » dès que le poids montait, l'erreur était **masquée**. Depuis
+   qu'on compare à une plage, elle produit un « ⚠ PLUS RAPIDE » sur quelqu'un de parfaitement
+   dans sa cible. *Un garde-fou juste révèle les mesures fausses qu'il consomme.*
+   ⛔ C'est la famille **§37** de `BUGS.md` sous une autre forme : un taux divisé par le nombre
+   d'ÉCHANTILLONS au lieu du temps écoulé.
+   ⛔ `linearRegression` n'est pas touchée : elle est générique et sert aussi à **tracer** des
+   droites, où l'abscisse en index est correcte. C'est ce qu'on lui DONNE qui était faux. */
+function penteKgParSemaine(pts, champ){
+  try{
+    const f=champ||'kg';
+    const p=(pts||[]).filter(x=>x&&x.date&&isFinite(+x[f]))
+                     .sort((a,b)=>a.date<b.date?-1:1);
+    if(p.length<2) return 0;
+    const t0=new Date(p[0].date+'T12:00:00').getTime();
+    if(!isFinite(t0)) return 0;
+    /* x = JOURS écoulés depuis la première mesure. Deux pesées le même jour ne créent donc
+       plus de pas de temps fictif — elles pèsent simplement toutes les deux sur ce jour-là. */
+    const xy=p.map(x=>({x:(new Date(x.date+'T12:00:00').getTime()-t0)/864e5, y:+x[f]}));
+    const etendue=xy[xy.length-1].x;
+    if(!(etendue>0)) return 0;                 // ⛔ tout le même jour : aucune pente à annoncer
+    const reg=linearRegression(xy);
+    return Math.round(reg.slope*7*100)/100;    // pente par JOUR × 7 = par semaine, cette fois
+  }catch(e){ return 0; }
+}
 function linearRegression(pts){
   const n=pts.length;if(n<2)return{slope:0,intercept:pts[0]?pts[0].y:0};
   const sx=pts.reduce((a,p)=>a+p.x,0),sy=pts.reduce((a,p)=>a+p.y,0);
@@ -1859,8 +1893,8 @@ function renderWeightChart(pts,box,metric){
   }
   const area=path+` L${toX(pts.length-1)} ${pad.t+iH} L${toX(0)} ${pad.t+iH} Z`;
   // Linear regression trend
-  const reg=linearRegression(pts.map((p,i)=>({x:i,y:p[field]})));
-  const weeklyChange=Math.round(reg.slope*7*100)/100;
+  const reg=linearRegression(pts.map((p,i)=>({x:i,y:p[field]})));   // ⛔ index : c'est pour TRACER la droite
+  const weeklyChange=penteKgParSemaine(pts, field);                 // ⛔ jours : c'est pour ANNONCER un rythme
   const tY0=toY(reg.intercept),tY1=toY(reg.intercept+reg.slope*(pts.length-1));
   // Y-axis ticks
   const ticks=4;const tickStep=(maxY-minY)/ticks;
@@ -2472,8 +2506,7 @@ function renderWeightCorrelations(el,pts){
   const vals=pts.map(p=>p.kg);
   const avg=arr=>arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0;
   // 1. Trend card
-  const reg=linearRegression(pts.map((p,i)=>({x:i,y:p.kg})));
-  const weeklyChange=Math.round(reg.slope*7*100)/100;
+  const weeklyChange=penteKgParSemaine(pts,'kg');
   const goal=S.goal||'muscle';
   /* 📉 `recomp` MANQUAIT ICI — la carte disait « l'évolution attendue est variable » à
      quelqu'un qui a un objectif parfaitement défini. Les bornes viennent de `state.js`
