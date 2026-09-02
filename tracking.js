@@ -2431,16 +2431,27 @@ function renderWeightCorrelations(el,pts){
   /* 📉 `recomp` MANQUAIT ICI — la carte disait « l'évolution attendue est variable » à
      quelqu'un qui a un objectif parfaitement défini. Les bornes viennent de `state.js`
      (`_GOAL_TREND_RECOMP`), jamais réécrites ici : Milo lit les mêmes (R2). */
+  /* ⛔⛔ CE BLOC ÉCRIVAIT LES PLAGES EN TOUTES LETTRES — c'était la SOURCE du défaut
+     (ft-v1100) : cinq des six bornes ne vivaient que dans cette chaîne, donc aucun code ne
+     pouvait les lire, et `coach.js` en appliquait d'autres. Le texte est maintenant DÉRIVÉ
+     de la table de `state.js`. *Une plage affichée doit être la plage appliquée* (R2/R4). */
+  const _plage=(typeof trendPourObjectif==='function')?trendPourObjectif(S.goal||'muscle'):null;
   const _tr=(typeof _GOAL_TREND_RECOMP!=='undefined')?_GOAL_TREND_RECOMP:{min:-0.3,max:0,txt:'stable à légèrement négative (0 à −0.3 kg/sem)'};
-  const goalDir={muscle:'légèrement positive (+0.1–0.3 kg/sem)',perte:'négative (−0.3–0.7 kg/sem)',recomp:_tr.txt,force:'légèrement positive',equilibre:'stable (±0.1 kg/sem)',endurance:'stable ou légèrement positive'};
   /* ⛔ ET LA BALANCE EST LE MAUVAIS INSTRUMENT ICI, il faut le DIRE : en recomposition le
      gras qui part et le muscle qui vient s'annulent sur le pèse-personne. Sans cette
      phrase, une balance immobile se lit comme « il ne se passe rien » — alors que c'est
      exactement le résultat attendu. (Barakat et al. 2020, revue sur la recomposition.) */
   const goalNote={recomp:` En recomposition, la balance seule ne montre presque rien : le gras qui part et le muscle qui vient s'annulent dessus. Ce sont tes charges et tes mensurations qui le disent.`};
-  const _dansLaCible=goal==='recomp'&&weeklyChange>=_tr.min&&weeklyChange<=_tr.max;
-  const trendColor=goal==='perte'&&weeklyChange<0?'var(--green)':goal==='muscle'&&weeklyChange>0?'var(--green)':_dansLaCible?'var(--green)':Math.abs(weeklyChange)>0.8?'var(--orange)':'var(--t2)';
-  cards.push({icon:'📈',title:`${weeklyChange>=0?'+':''}${weeklyChange} kg / semaine`,text:`Tendance sur ${pts.length} mesures. Pour ton objectif "${GOAL_LABELS[goal]}", l'évolution attendue est ${goalDir[goal]||'variable'}.${goalNote[goal]||''}`,color:trendColor});
+  /* ⛔ LA COULEUR SUIT LA MÊME TABLE QUE LE TEXTE (ft-v1100). Avant, elle passait au vert dès
+     que le poids montait en objectif « muscle » — donc **+1,6 kg/sem s'affichait en vert**
+     sous une phrase annonçant « +0.1 à +0.3 ». La couleur disait le contraire du texte
+     qu'elle surlignait. ⚠️ `flou` reste NEUTRE : on ne colorie pas un jugement qu'on ne sait
+     pas porter (R29). */
+  const _dansLaCible=(typeof poidsDansLaPlage==='function')?poidsDansLaPlage(weeklyChange,goal):null;
+  const trendColor=(_plage&&_plage.flou)?'var(--t2)'
+    :_dansLaCible===true?'var(--green)'
+    :_dansLaCible===false?'var(--orange)':'var(--t2)';
+  cards.push({icon:'📈',title:`${weeklyChange>=0?'+':''}${weeklyChange} kg / semaine`,text:`Tendance sur ${pts.length} mesures. Pour ton objectif "${GOAL_LABELS[goal]}", l'évolution attendue est ${(_plage&&_plage.txt)||'variable'}.${goalNote[goal]||''}`,color:trendColor});
   // 2. Training days correlation
   const sessDates=new Set(S.sessions.map(s=>s.date));
   const afterSess=pts.filter(w=>{const prev=new Date(w.date+'T12:00:00');prev.setDate(prev.getDate()-1);return sessDates.has(prev.toISOString().split('T')[0]);});

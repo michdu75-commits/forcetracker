@@ -6,7 +6,33 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1099`. ✅ **Déploiement du site vérifié vert** (run **#785**,
+- **Version en ligne (live) :** `ft-v1100`. ⏳ déploiement à vérifier. ⚠️ Aucun déploiement
+  backend : `Code.js` n'a pas été touché.
+- ⚖️⭐⭐ **UNE SEULE SOURCE POUR LES PLAGES DE POIDS** (ft-v1100). GPT tranche : *« corriger la
+  contradiction des plages AVANT de construire le moteur de tendance »*. **C'était un défaut
+  mesuré, donc c'est le seul code touché.** Mesuré : **+1,6 kg/sem** en « prise de muscle »
+  partait vers Milo en *« ✓ bonne direction »* pendant que l'écran annonçait *« +0.1 à +0.3 »*.
+  ⛔ **Une seule des six bornes était une DONNÉE** ; les cinq autres vivaient en **prose** dans
+  une chaîne d'affichage, et `coach.js` appliquait des seuils écrits ailleurs. **R4 + R2.**
+  ⛔ Table unique `_GOAL_TREND`, valeurs **transcrites au caractère près** ; texte **et couleur**
+  dérivés de la table (avant, +1,6 s'affichait en **vert** sous « +0.1 à +0.3 »).
+- ⭐⭐ **ET DEUX DÉFAUTS DE MA CORRECTION ONT ÉTÉ TROUVÉS PAR DES TÉMOINS EXISTANTS** : ① sur une
+  plage **négative**, « au-dessus » veut dire **moins** — perdre 0,21 quand on vise 0,3–0,7 est
+  plus **lent** ; ② une plage qui **finit à zéro** (recomposition) n'a pas d'axe « plus vite »
+  vers le haut — à +0,7 on **prend** du poids. *Le mot ne se lit pas sur le nombre, il se lit
+  sur le sens de l'objectif.*
+- ⚠️ **CE QUE ÇA NE PROUVE PAS** : le correctif change ce que Milo **reçoit**. Le drapeau est
+  vérifié en local ; **ce qu'il en DIT** demanderait une passe payante du banc d'essai (**R34**)
+  — décision de Michel.
+- 📐 **5 LIVRABLES DE SPÉCIFICATION, ZÉRO CODE** (`docs/NUTRITION-MOTEUR-TENDANCE.md` + PDF) :
+  ⭐⭐ **le seuil de bruit du e1RM n'existe pas** — le e1RM ne peut pas varier de moins de
+  **1,8 %**, et un simple changement de format de séance le fait bouger de **+26 %** à force
+  identique. *Aucun seuil en % ne peut marcher* ; la règle qui marche est de comparer **à
+  nombre de reps ÉGAL** (bruit **0,0 %**). ⭐ La proposition visuelle est **l'écran réel**
+  (4 états capturés dans l'app). ⭐⭐ **Et la hauteur a été mesurée, pas affirmée** : la carte
+  pleine pousse « Noter » de **+220 px**, la compacte de **+85 px** — c'est la compacte.
+- **Version précédente :** `ft-v1099`.
+- **Version précédente :** `ft-v1099`. ✅ **Déploiement du site vérifié vert** (run **#785**,
   commit `c18e971`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement backend : `Code.js`
   n'a pas été touché.
 - 🚪⭐⭐ **LA TROISIÈME PORTE VERS L'EFFACEMENT — ET LA SEULE QUI NE DEMANDAIT RIEN**

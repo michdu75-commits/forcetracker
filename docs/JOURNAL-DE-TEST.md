@@ -1057,6 +1057,25 @@ prouvent la PRÉSENCE d'une donnée, jamais l'OBÉISSANCE à une consigne.*
 ⚠️ **Vérifiable par du CODE pour la moitié « drapeau »** (donc promouvable tout de suite) ; la
 moitié « qu'en dit-il » demande un **scénario de banc d'essai**, qui coûte un appel par passe.
 
+### 🟡 QUE FAIT MILO D'UN « ⚠ PLUS RAPIDE QUE LA PLAGE ATTENDUE » ?
+**02/09/2026, ft-v1100.** Le drapeau envoyé à Milo est désormais **juste** — c'était le sujet
+de la version. Mais *ce qu'il en fait* n'a **jamais** été mesuré, ni avant ni après.
+
+⚠️ **Et l'enjeu a changé de nature** : avant, il recevait « ✓ bonne direction » pour +1,6 kg/sem,
+donc il ne pouvait rien en dire. Maintenant il reçoit **« ⚠ PLUS RAPIDE que la plage attendue
+(+0.1–0.3 kg/sem) »**. 👉 *Va-t-il conseiller de réduire les calories ? Le mentionner en passant ?
+Le prendre pour un reproche ?* Une prise rapide peut être **voulue** (prise de masse assumée), et
+la Constitution dit d'adapter, jamais d'interdire.
+⛔ **Ce n'est pas vérifiable par du code** — c'est un scénario de banc d'essai, donc **un appel
+par passe**. À promouvoir quand une passe payante est décidée.
+
+### 🟡 MILO SAIT-IL LIRE « PLUS LENT » SANS EN FAIRE UN ÉCHEC ?
+**02/09/2026, ft-v1100.** Symétrique du précédent, et probablement plus délicat. Quelqu'un qui
+perd **0,21 kg/sem** au lieu des 0,3–0,7 visés **progresse quand même**. Il reçoit désormais
+*« ⚠ PLUS LENT que la plage attendue »*. ⚠️ *Le mot « PLUS LENT » est factuel ; « ⚠ » ne l'est
+pas tout à fait.* Le risque est qu'un fait neutre soit lu comme un problème à corriger.
+👉 Même statut : **juge humain ou banc d'essai**, pas de code.
+
 ---
 
 ## ⚠️ Comment fouiller les conversations (leçon du 21/08)
