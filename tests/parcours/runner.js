@@ -13492,12 +13492,12 @@ console.log('\n-- CXXII. Anti-fuite du banc d\'essai : rien de réel ne part dan
      séparément. *Un trou qu'on mesure vaut mieux qu'un trou qu'on découvre — encore faut-il
      qu'il soit un trou.* */
   const CONNUS={
-    /* ── ① LES 4 VRAIES FUITES SONT REFERMÉES (02/09/2026, ft-v1105) ──
+    /* ── ① LES 4 VRAIES FUITES SONT REFERMÉES (02/09/2026, ft-v1106) ──
        `exSwaps`, `fasting`, `foodMode` et `programmes` étaient ÉPINGLÉS ICI depuis ft-v1014,
        pas corrigés : la raison écrite était R34 (« les corriger changerait ce que Milo reçoit,
        donc ça demande son propre avant/après »).
        ⭐ CETTE RAISON NE TENAIT PAS, ET C'EST MESURABLE : `_vcApplyPersona` n'a AUCUN appelant
-       hors du banc d'essai (bloc CCXIV le vérifie). Corriger ces quatre lignes ne change donc
+       hors du banc d'essai (bloc CCXV le vérifie). Corriger ces quatre lignes ne change donc
        rien à ce qu'un utilisateur réel envoie à Milo — ça change ce qu'un PERSONA envoie, et
        c'était justement le défaut. *Un report prudent finit par protéger le défaut lui-même.*
        ⚠️ Elles ne sont plus listées ici : la liste doit MAIGRIR quand un trou se referme,
@@ -23634,7 +23634,83 @@ console.log('\n-- CCXIII. Une valeur fausse qui se recopie : le « toujours » (
   }
 }
 
-/* ═══ CCXIV. LE BANC D'ESSAI RETROUVE SA MÉMOIRE, ET CESSE DE FUIR (ft-v1105) ═══════════════
+/* ═══ CCXIV. LA PORTION PRÉ-REMPLIE N'EST PAS LA TIENNE (ft-v1105) ═══════════════════════════
+   Michel envoie l'étiquette de son pot : 88 g de protéines / 100 g, dosette de 30 g.
+   ⛔⛔ LE CHAMP « Quantité » SE REMPLIT AVEC LA PORTION DÉCLARÉE PAR LA SOURCE
+   (`serving_quantity` côté fiche produit, `serving` côté photo d'étiquette) — pas la dosette
+   qu'on a dans la main — et l'écran n'en disait RIEN.
+   ⭐⭐ LE TÉMOIN CENTRAL EST UNE REPRODUCTION EXACTE : une fiche annonçant 40 g produit
+   156 kcal et 35 g de protéines, c'est-à-dire LES DEUX CHIFFRES DE SA CAPTURE, au chiffre près.
+   *Des valeurs parfaitement justes pour une portion que personne n'a mangée.*
+   ⛔ ON NE RETIRE PAS LE PRÉ-REMPLISSAGE (sans lui on retombe à 100 g, pire) : on le NOMME. */
+console.log('\n-- CCXIV. La portion pré-remplie n\'est pas la tienne (ft-v1105) --');
+{
+  const fiche=(sq)=>({product_name:'Iso zero protein',brands:'ASL',serving_quantity:sq,
+    nutriments:{'energy-kcal_100g':388.5,'proteins_100g':88,'carbohydrates_100g':2.8,'fat_100g':3.3}});
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
+  await p.addInitScript(`(()=>{try{
+    localStorage.setItem('ft4_name','Michel');localStorage.setItem('ft4_bw','84');
+    localStorage.setItem('ft4_age','43');localStorage.setItem('ft4_ht','178');
+    localStorage.setItem('ft4_gender','H');localStorage.setItem('ft4_goal','muscle');
+    localStorage.setItem('ft4_act','1.55');localStorage.setItem('ft4_ob2','1');
+    localStorage.setItem('ft4_guide_shown','1');localStorage.setItem('ft4_wn_seen','99');
+    localStorage.setItem('ft4_premium','1');
+  }catch(e){}})();`);
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(2200);
+  const R=await p.evaluate(async(f40)=>{ try{
+    const w=ms=>new Promise(r=>setTimeout(r,ms));
+    const f=(sq)=>JSON.parse(JSON.stringify(f40).replace('"serving_quantity":40','"serving_quantity":'+sq));
+    const scan=async(sq)=>{
+      document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+      const vrai=window.fetch;
+      window.fetch=async(u)=>{ if(String(u).indexOf('openfoodfacts')>=0)
+          return {ok:true,json:async()=>({status:1,product:f(sq)})}; return vrai(u); };
+      goScreen('nutrition'); await w(260); openAddFood(); await w(300);
+      await _lookupBarcode('5999886331696','clavier'); await w(600);
+      const qs=document.getElementById('af-bc-qsrc');
+      const lu=id=>(document.getElementById(id)||{}).value;
+      return {vu:!!(qs&&qs.offsetParent!==null), txt:(qs&&qs.innerText||'').replace(/\n/g,' '),
+              grams:lu('af-bc-grams'), kcal:lu('af-kcal'), prot:lu('af-prot')};
+    };
+    const q40=await scan(40), q30=await scan(30), q0=await scan(0);
+    // ⛔ et elle doit DISPARAÎTRE quand on reprend un aliment qui n'a pas de fiche
+    S.foodLog=[{date:new Date().toISOString().slice(0,10),meal:'collation2',ts:9,
+                name:'Riz maison',q:200,u:'g',kcal:260,prot:5,carbs:56,fat:1}];
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    goScreen('nutrition'); await w(250); openAddFood(); await w(300);
+    document.getElementById('af-desc').value='riz'; _afSuggInput(); await w(700);
+    _afSuggPrendreLocale(0); await w(400);
+    const qs=document.getElementById('af-bc-qsrc');
+    return {q40,q30,q0, orpheline: !!(qs&&qs.offsetParent!==null)};
+  }catch(e){ return {err:String(e)}; } }, fiche(40));
+  await cx.close();
+
+  if(R.err) t('CCXIV n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⭐⭐ LA REPRODUCTION EXACTE DE SA CAPTURE — c'est ce témoin qui porte la version. */
+    t('⭐⭐ une portion déclarée à 40 g reproduit SES chiffres : 156 kcal · 35 g',
+      String(R.q40.kcal)==='156' && String(R.q40.prot)==='35' && String(R.q40.grams)==='40',
+      JSON.stringify(R.q40));
+    /* ⛔ ET LE CAS JUSTE DOIT RESTER JUSTE : 30 g → 117 kcal · 26 g (la vraie étiquette). */
+    t('⛔ … et une portion déclarée à 30 g donne bien 117 kcal · 26 g (l\'étiquette réelle)',
+      String(R.q30.kcal)==='117' && String(R.q30.prot)==='26', JSON.stringify(R.q30));
+    t('⛔⛔ le nombre pré-rempli DIT d\'où il vient (il ne le disait pas)',
+      R.q40.vu===true && /portion déclarée/.test(R.q40.txt) && /40/.test(R.q40.txt), R.q40.txt.slice(0,80));
+    /* ⛔ IL INVITE À VÉRIFIER, IL N'AFFIRME PAS QUE C'EST FAUX (R29) : l'app ne sait pas quelle
+       dosette la personne emploie — elle nomme la source et laisse trancher. */
+    t('⛔ il invite à vérifier sa dosette, il n\'accuse pas',
+      /vérifie ta dosette/.test(R.q40.txt) && !/erreur|faux/i.test(R.q40.txt), R.q40.txt.slice(0,80));
+    t('⛔ sans portion déclarée, il dit que 100 g est un DÉFAUT, pas une mesure',
+      R.q0.vu===true && /100/.test(R.q0.txt) && /défaut/.test(R.q0.txt), R.q0.txt.slice(0,80));
+    /* ⛔ PAS DE PROVENANCE ORPHELINE — le défaut de ft-v1042, sur un autre objet. */
+    t('⛔ elle disparaît sur un aliment sans fiche (pas de provenance orpheline)',
+      R.orpheline===false, 'encore visible='+R.orpheline);
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
+/* ═══ CCXV. LE BANC D'ESSAI RETROUVE SA MÉMOIRE, ET CESSE DE FUIR (ft-v1106) ═══════════════
    Michel : « corrige les 3 lignes du banc et les fuites ». Suite directe du contre-audit du
    plan « Milo Session Builder » de GPT, qui posait la bonne question : *la séance est-elle
    meilleure PARCE QUE Force Tracker connaît le sportif ?* — et à laquelle le banc d'essai ne
@@ -23669,7 +23745,7 @@ console.log('\n-- CCXIII. Une valeur fausse qui se recopie : le « toujours » (
    `wkt`, ni `cycle`, ni `dayState` doit toujours les recevoir à `null`, et EV-012 (`keto:true`
    sans `foodMode`) doit continuer de marcher. Sans ces contrôles, « tout est propre » et « je
    ne mesure rien » seraient indistinguables. */
-console.log('\n-- CCXIV. Le banc d\'essai retrouve sa mémoire, et cesse de fuir (ft-v1105) --');
+console.log('\n-- CCXV. Le banc d\'essai retrouve sa mémoire, et cesse de fuir (ft-v1106) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
@@ -23736,7 +23812,7 @@ console.log('\n-- CCXIV. Le banc d\'essai retrouve sa mémoire, et cesse de fuir
   }catch(e){ return {err:String(e).slice(0,200)}; } });
   await cx.close();
 
-  if(R.err){ t('⛔ la sonde CCXIV a planté', false, R.err); }
+  if(R.err){ t('⛔ la sonde CCXV a planté', false, R.err); }
   else{
     /* ── les trois champs que le banc ne savait pas poser ── */
     t('⛔⛔ un persona peut enfin poser un ÉTAT DU JOUR (fatigue, douleur du matin)',
@@ -23958,7 +24034,6 @@ console.log('\n-- CXC. Le Gardien compte enfin son dénominateur (ft-v1085) --')
   t('⛔ … et l\'instantané `retro` reste un bloc SÉPARÉ (jamais additionné au direct)',
     /o\.retro\s*=\s*r\s*;/.test(sansCom) && !/o\.total\s*\+=\s*r\./.test(sansCom), '');
 }
-
 
 /* == BLOC CXCI - UNE MISE A JOUR NE TUE PLUS UN BANC D'ESSAI PAYANT (ft-v1085) ==
    Le banc d'essai coute des appels API reels (52 pour une passe). Une mise a jour qui se

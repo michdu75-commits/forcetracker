@@ -2503,6 +2503,16 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
         <input id="af-bc-grams" type="text" inputmode="decimal" step="any" value="100" oninput="_bcApplyGrams()" style="flex:1;box-sizing:border-box;padding:9px;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);">
         <span style="font-size:13px;color:var(--t3);">g</span>
       </div>
+      <!-- ⚖️⛔⛔ D'OÙ VIENT LE NOMBRE PRÉ-REMPLI (ft-v1105) — Michel, étiquette à l'appui :
+           « c'est cette prot là, toujours le même souci ». Le champ se remplit avec
+           `serving_quantity`, LA PORTION DÉCLARÉE PAR LA FICHE PRODUIT — le commentaire de
+           `_bcProposerDerniere` le dit déjà en toutes lettres — et l'écran n'en disait RIEN.
+           Une dosette annoncée à 40 g sur un pot dont la mesure fait 30 produit des macros
+           justes pour une portion que personne n'a mangée : *un nombre qui a l'air d'un fait
+           alors que c'est l'hypothèse d'un tiers* (R32/R33 — ce qui est repris garde d'où il
+           vient). ⛔ On ne retire PAS le pré-remplissage : sans lui on retombe à 100 g, ce qui
+           est pire. On le NOMME. -->
+      <div id="af-bc-qsrc" style="display:none;font-size:11px;color:var(--t3);margin-top:6px;line-height:1.4;"></div>
       <!-- ⚖️ LA QUANTITÉ DE LA DERNIÈRE FOIS EST PROPOSÉE, PLUS IMPOSÉE (ft-v1051).
            Michel : « je ne prends pas toujours le même poids sur l'aliment… tu prends la
            ratatouille, il y a différentes boîtes de différent poids », puis, sur le correctif :

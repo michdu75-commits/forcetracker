@@ -6,9 +6,9 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1105`. ⏳ **Déploiement à vérifier** (R18).
+- **Version en ligne (live) :** `ft-v1106`. ⏳ **Déploiement à vérifier** (R18).
   ⚠️ Aucun déploiement backend.
-- 🧪⛔⛔ **LE BANC D'ESSAI RETROUVE SA MÉMOIRE, ET CESSE DE FUIR** (ft-v1105). Michel :
+- 🧪⛔⛔ **LE BANC D'ESSAI RETROUVE SA MÉMOIRE, ET CESSE DE FUIR** (ft-v1106). Michel :
   *« corrige les 3 lignes du banc et les fuites »*. **Aucun écran, aucun calcul de l'app n'est
   touché — c'est du code de TEST.**
 - ⛔⛔ **Trois champs étaient forcés à `null` EN DUR**, au milieu de cinquante qui lisent la
@@ -32,6 +32,28 @@
   **20 lui demandent de construire une séance**. *Ce qui change, c'est qu'on PEUT enfin les
   écrire.* L'expérience qui répondrait à la question de GPT (le même sportif, avec et sans sa
   mémoire) reste à lancer : **4 appels, ~0,05 €** — décision de Michel.
+- **Version précédente :** `ft-v1105`. ✅ **Déploiement du site vérifié vert** (run **#816**,
+  commit `8041baf`) — pas seulement poussé (**R18**).
+- ⚖️⛔⛔ **LA PORTION PRÉ-REMPLIE N'EST PAS LA TIENNE** (ft-v1105). Michel envoie l'**étiquette**
+  (88 g/100 g, dosette de 30 g) et **corrige mon explication de la veille** : *« pourtant j'ai
+  écrit le code barre, je n'ai rien recopié »*. ⚠️⚠️ **Il a raison — §12quater DEUX FOIS dans la
+  même journée** : le mécanisme de recopie est réel et mesuré, mais **je ne l'avais pas vérifié
+  contre ce qu'il a FAIT**.
+- ⛔⛔ **Le vrai chemin, reproduit** : le champ « Quantité » se remplit avec `serving_quantity`,
+  **la portion que la fiche produit déclare** — et l'écran n'en disait rien. Mesuré : une fiche
+  annonçant **40 g** produit **156 kcal · 35 g** sur ce pot, ***les deux chiffres de sa capture***.
+  *Des valeurs justes pour une portion que personne n'a mangée.* ⛔ Le commentaire de
+  `_bcProposerDerniere` disait **déjà** « la portion du fabricant » : le code le savait, l'écran
+  ne le disait pas (**R32/R33**).
+- ⛔ **On ne retire pas le pré-remplissage** (sans lui : 100 g, pire) — **on le nomme**. C'est mot
+  pour mot ft-v1051 (*« on donne le choix et pas imposer »*), appliqué alors à la quantité de la
+  **dernière fois** et pas à celle-ci : **R8**, 3ᵉ fois en deux jours. Les **deux** chemins sont
+  traités (scan et photo d'étiquette).
+- ⏭️⚠️ **NON ÉTABLI, et dit plutôt que conclu une 2ᵉ fois** : ***je ne sais pas quel chemin a
+  produit SON entrée*** (`q=30` **sans** pour-100 g ≠ un scan réussi). ⭐ Deux hypothèses
+  **éliminées par la mesure** : le pour-100 g **survit** au rechargement, et un scan réussi
+  enregistre bien `q` **et** `per100`. 👉 **La réponse est dans son export CSV**, colonnes
+  `saisie` et `source` (ft-v1097).
 - **Version précédente :** `ft-v1104`. ✅ **Déploiement du site vérifié vert** (run **#813**,
   commit `ac782fb`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement backend.
 - ♻️⛔⛔ **UNE VALEUR FAUSSE QUI SE RECOPIE — LE MÉCANISME DU « TOUJOURS »** (ft-v1104). Michel

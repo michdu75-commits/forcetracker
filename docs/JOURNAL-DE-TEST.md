@@ -1169,6 +1169,24 @@ correct : rien n'y est physiquement impossible. 👉 ***La règle attrape l'impo
 faux.*** Détecter un décalage de portion **en général** demanderait une référence par aliment
 qu'on n'a pas. **À trier** : est-ce que ça vaut une comparaison au pour-100 g quand il existe ?
 
+### 🟡 COMBIEN DE FICHES PRODUIT DÉCLARENT UNE PORTION DIFFÉRENTE DE LA VRAIE DOSETTE ?
+**02/09/2026, ft-v1105.** Le cas de Michel est reproduit : une fiche annonçant 40 g produit
+exactement ses chiffres sur un pot dont la mesure fait 30 g. ⚠️ **Ce qu'on ignore, c'est la
+fréquence** — si c'est courant sur les compléments (dosettes qui changent entre lots, fiches
+saisies par des contributeurs), la ligne d'explication ne suffira pas et il faudra sans doute
+**demander** la quantité au lieu de la pré-remplir. 👉 **Mesurable sans appel API** : comparer
+`serving_quantity` à la quantité finalement enregistrée, sur les entrées `origine:'off'` d'un
+journal réel. **À trier** tant qu'on n'a pas ce chiffre — *une décision d'UX prise sur une
+intuition de fréquence est une décision prise à pile ou face.*
+
+### 🟡 UNE LIGNE GRISE SOUS UN CHAMP SE LIT-ELLE VRAIMENT ?
+**02/09/2026, ft-v1105.** Michel n'a pas remarqué que le champ affichait 40 alors qu'il prend
+30 g. ⛔ Le correctif ajoute une phrase **en gris, 11 px, sous le champ**. ⚠️ *Rien ne prouve
+qu'elle sera lue mieux que le nombre lui-même ne l'a été* — et un texte discret qu'on ne lit pas
+donne l'illusion d'avoir traité le problème. 👉 **Juge humain** : est-ce que ça l'arrête, la
+prochaine fois qu'il scanne ce pot ? Si la réponse est non, la bonne réponse n'est pas de grossir
+le texte, c'est de **ne plus pré-remplir** (ft-v1051 l'a déjà tranché pour l'autre quantité).
+
 ---
 
 ## ⚠️ Comment fouiller les conversations (leçon du 21/08)
