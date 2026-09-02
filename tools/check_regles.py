@@ -40,7 +40,14 @@ Sortie 1 si un contrôle échoue.  Lancer : python3 tools/check_regles.py
 """
 import re, sys, pathlib, subprocess
 
-SEUIL_JOURNAL = 20          # au-delà, déménager les plus anciennes dans docs/JOURNAL-ARCHIVE.md
+SEUIL_JOURNAL = 8           # au-delà, déménager les plus anciennes dans docs/JOURNAL-ARCHIVE.md
+# 📉 20 → 8 le 02/09/2026, sur une MESURE et pas une impression. Michel : « pourquoi il est
+# plein ? il n'arrête pas de compacter ». Chaque session charge ~58 000 jetons AVANT le premier
+# mot (CLAUDE.md 48 k + REGLES-ARCHITECTURE.md 10 k, auto-importés), et 66 % de CLAUDE.md était
+# le journal : 122 000 caractères pour 20 entrées, 6 000 de moyenne, une à 24 000.
+# ⚠️ Le fichier le documentait lui-même : la scission du 28/07 a eu lieu à 33 000 mots dont 79 %
+# de journal — on était revenus à 29 900 mots dont 66 %. C'est R20 : plus on charge, moins
+# chaque règle pèse. Rien n'est perdu, tout déménage dans l'archive (qui ne se réécrit JAMAIS).
 racine = pathlib.Path(__file__).resolve().parent.parent
 court  = (racine / "CLAUDE.md").read_text(encoding="utf-8")
 long_  = (racine / "docs" / "REGLES-OR.md").read_text(encoding="utf-8")
