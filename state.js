@@ -431,9 +431,75 @@ function _ecrireSessionsLocal(){
     return false;
   }
 }
+/* ⛔⛔ ft-v1094 — DEUX ONGLETS OUVERTS, ET LE DERNIER QUI ÉCRIT EFFACE L'AUTRE.
+   `persist()` écrit **tout `S`** d'un coup, depuis la mémoire de l'onglet qui l'appelle. Or
+   l'app est une PWA : elle est très souvent ouverte à DEUX endroits en même temps — l'icône
+   de l'écran d'accueil **et** un onglet du navigateur, qui partagent le même stockage.
+   MESURÉ, par les vraies fonctions, dans deux pages du même contexte :
+     · l'onglet B termine une séance → 1 séance et ses records sur le disque ;
+     · l'onglet A règle son temps de repos (le geste le plus banal qui soit) → `persist()` ;
+     · résultat : **0 séance, 0 record**, et le rechargement ne les ramène pas.
+   👉 ***Une séance terminée disparaît sans un mot*** — c'est la règle d'or #3 (« zéro perte de
+   séance, priorité n°1 absolue ») mise en défaut par un geste ordinaire.
+   ⚠️ Et rien ne protégeait : le dépôt n'a **aucun** écouteur `storage`, aucun `BroadcastChannel`.
+
+   👉 LE CORRECTIF : quand un AUTRE onglet a écrit depuis notre dernière écriture, on ne
+   remplace plus les collections — on prend l'**union** de ce qu'on a et de ce qui est sur le
+   disque. Le navigateur nous le dit lui-même : l'événement `storage` ne se déclenche QUE dans
+   les autres onglets, donc il est exactement le signal qu'il nous faut, sans sondage.
+   ⛔ ET DANS LE CAS NORMAL — un seul onglet — `persist()` NE CHANGE PAS D'UN CARACTÈRE : le
+   drapeau reste faux, aucune fusion n'a lieu. C'est la propriété qui rend ce correctif sûr,
+   et un témoin l'épingle : on ne touche pas à la fonction la plus critique de l'app pour
+   99,9 % des cas afin d'en réparer un.
+   ⚠️ LIMITE ÉCRITE PLUTÔT QUE TUE : si on SUPPRIME volontairement une entrée pendant qu'un
+   autre onglet écrit, la fusion peut la faire revenir. On échange une suppression rare et
+   refaisable contre une séance perdue pour toujours — et le sens de l'échange est le bon
+   (**R29** : le coût de l'erreur décide). */
+let _ftAutreOnglet = false;
+try{
+  window.addEventListener('storage', e=>{
+    if(e && typeof e.key==='string' && e.key.indexOf('ft4_')===0) _ftAutreOnglet = true;
+  });
+}catch(e){}
+
+/* Union de deux listes d'entrées, par une SIGNATURE stable. En cas d'égalité, la mémoire de
+   cet onglet gagne : on n'invente rien, on ne fait qu'ajouter ce qu'on ne connaissait pas. */
+function _fusionListe(memoire, disque, cle){
+  const out = Array.isArray(memoire) ? memoire.slice() : [];
+  if(!Array.isArray(disque) || !disque.length) return out;
+  const vus = new Set(out.map(cle));
+  disque.forEach(e=>{ const k=cle(e); if(!vus.has(k)){ out.push(e); vus.add(k); } });
+  return out;
+}
+function _fusionnerAvecLeDisque(){
+  const lire=(k,d)=>{ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } };
+  try{
+    const sigSess = s => (s&&s.date||'')+'|'+((s&&s.exs||[]).length)+'|'+(s&&s.vol||0);
+    S.sessions   = _fusionListe(S.sessions,   lire('ft4_sessions',[]), sigSess)
+                     .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,1500);
+    S.weightLog  = _fusionListe(S.weightLog,  lire('ft4_wlog',[]),  e=>String(e&&e.date||''));
+    S.sleepLog   = _fusionListe(S.sleepLog,   lire('ft4_sleep',[]), e=>String(e&&e.date||''));
+    S.foodLog    = _fusionListe(S.foodLog,    lire('ft4_foodlog',[]),
+                     e=>String(e&&e.date||'')+'|'+String(e&&e.name||'')+'|'+String(e&&e.meal||'')+'|'+String(e&&e.kcal||''));
+    /* Les records sont un OBJET : pour un exercice connu des deux côtés, on garde le plus
+       RÉCENT — sinon un onglet resté ouvert écraserait un record battu ailleurs par son
+       ancienne valeur, ce qui est précisément la perte qu'on répare. */
+    const dPrs = lire('ft4_prs',{}) || {};
+    S.prs = S.prs || {};
+    Object.keys(dPrs).forEach(k=>{
+      const a=S.prs[k], b=dPrs[k];
+      if(!a){ S.prs[k]=b; return; }
+      const da=String(a&&a.date||''), db=String(b&&b.date||'');
+      if(db>da) S.prs[k]=b;
+    });
+  }catch(e){ console.warn('[FT fusion onglets]',e); }
+}
+
 function persist(){
   // Mode démo : on ne sauvegarde RIEN (ni local, ni cloud) — les vraies données restent figées telles quelles
   if(window._demoMode)return;
+  // ⛔ un autre onglet a écrit depuis notre dernière sauvegarde → on ajoute, on n'écrase pas
+  if(_ftAutreOnglet){ _ftAutreOnglet=false; _fusionnerAvecLeDisque(); }
   try{
     localStorage.setItem('ft4_bw',S.bw);localStorage.setItem('ft4_bar',S.barW);
     localStorage.setItem('ft4_rest',S.defRest);localStorage.setItem('ft4_expandall',S.expandAll?'1':'0');localStorage.setItem('ft4_keto',S.keto?'1':'0');localStorage.setItem('ft4_foodmode',S.foodMode||'');localStorage.setItem('ft4_fasting',S.fasting||'');localStorage.setItem('ft4_gender',S.gender);

@@ -21957,6 +21957,129 @@ console.log('\n-- CXCVIII. La santé vit dans sa propre clé, sans rien perdre (
   }
 }
 
+/* ═══ CCI. DEUX ONGLETS · HORS LIGNE · LES DATES RARES (ft-v1094) ═══════════════════════════
+   Michel : « on continue avec les incohérences ? ». 4ᵉ passe, six familles NEUVES.
+   ⛔⛔ LA SEULE QUI A MORDU, ET ELLE TOUCHE LA RÈGLE D'OR #3. `persist()` écrit **tout `S`**
+   depuis la mémoire de l'onglet qui l'appelle. Or l'app est une PWA : elle est très souvent
+   ouverte à DEUX endroits (l'icône de l'écran d'accueil ET un onglet du navigateur), qui
+   partagent le même stockage. Mesuré par les vraies fonctions, dans deux pages du même
+   contexte : l'onglet B termine une séance (1 séance + 1 record sur le disque), l'onglet A
+   règle son temps de repos → **0 séance, 0 record**, et le rechargement ne les ramène pas.
+   ⚠️ Rien ne protégeait : aucun écouteur `storage`, aucun `BroadcastChannel` dans le dépôt.
+   ⛔ LE CORRECTIF NE CHANGE RIEN AU CAS NORMAL, et c'est ce qui le rend sûr : le drapeau
+   reste faux tant qu'aucun autre onglet n'a écrit, donc aucune fusion n'a lieu. Le témoin ①
+   l'épingle, et le ② vérifie qu'une SUPPRESSION volontaire reste possible.
+   ⚠️ LES CINQ AUTRES FAMILLES ONT RENDU DU VIDE, mesuré — c'est écrit pour ne pas refaire la
+   chasse : hors ligne rien ne se perd, les 8 dates rares ne cassent rien, et les « seuils
+   écrits deux fois » étaient tous des nombres égaux par hasard (180 s vs 180 min…). */
+console.log('\n-- CCI. Deux onglets · hors ligne · les dates rares (ft-v1094) --');
+{
+  // ── A. DEUX ONGLETS, MÊME STOCKAGE (le cas réel de la PWA installée + le navigateur)
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  await cx.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  const errsOnglets=[];
+  const PA=await cx.newPage(); PA.on('pageerror',e=>errsOnglets.push('A:'+String(e.message).slice(0,90)));
+  await PA.goto('http://localhost:'+PORT+'/index.html'); await PA.waitForTimeout(2300);
+  const vuParA=await PA.evaluate(()=>({
+    sessions:(S.sessions||[]).length,
+    drapeau:(typeof _ftAutreOnglet!=='undefined')?_ftAutreOnglet:'ABSENT' }));
+
+  const PB=await cx.newPage(); PB.on('pageerror',e=>errsOnglets.push('B:'+String(e.message).slice(0,90)));
+  await PB.goto('http://localhost:'+PORT+'/index.html'); await PB.waitForTimeout(2300);
+  const faitParB=await PB.evaluate(async()=>{
+    window.fetch=()=>Promise.resolve({ok:true,status:200,json:()=>Promise.resolve({status:'ok'}),text:()=>Promise.resolve('{"status":"ok"}')});
+    startWorkout();
+    S.wkt.exs.push({name:'Développé Couché',sets:[{kg:100,reps:5,done:true,type:'N'},{kg:100,reps:5,done:true,type:'N'}]});
+    await finishWorkout(); await new Promise(r=>setTimeout(r,1100));
+    return { sessions:(S.sessions||[]).length,
+      surDisque:(()=>{try{return JSON.parse(localStorage.getItem('ft4_sessions')||'[]').length;}catch(e){return 'err';}})(),
+      prsSurDisque:(()=>{try{return Object.keys(JSON.parse(localStorage.getItem('ft4_prs')||'{}')).length;}catch(e){return 'err';}})() };
+  });
+  // l'onglet A fait le geste le plus banal qui soit
+  const apresA=await PA.evaluate(()=>{
+    const avant=(typeof _ftAutreOnglet!=='undefined')?_ftAutreOnglet:'ABSENT';
+    S.defRest=150; persist();
+    return { drapeauAvantPersist:avant,
+      sessions:(()=>{try{return JSON.parse(localStorage.getItem('ft4_sessions')||'[]').length;}catch(e){return 'err';}})(),
+      prs:(()=>{try{return Object.keys(JSON.parse(localStorage.getItem('ft4_prs')||'{}')).length;}catch(e){return 'err';}})() };
+  });
+  await PB.reload(); await PB.waitForTimeout(2300);
+  const finalB=await PB.evaluate(()=>({sessions:(S.sessions||[]).length,prs:Object.keys(S.prs||{}).length}));
+  await cx.close();
+
+  t('⛔ le témoin : l\'onglet A a bien chargé AVANT que B ne travaille (sinon rien à écraser)',
+    vuParA.sessions===0 && faitParB.sessions===1, JSON.stringify({A:vuParA.sessions,B:faitParB.sessions}));
+  t('⛔ le témoin : la séance de B a bien atteint le disque (sinon la suite mesure du vide)',
+    faitParB.surDisque===1 && faitParB.prsSurDisque>=1, JSON.stringify(faitParB));
+  t('⛔ le témoin : l\'onglet A a bien VU qu\'un autre onglet écrivait (sinon aucune fusion)',
+    apresA.drapeauAvantPersist===true, 'drapeau = '+apresA.drapeauAvantPersist);
+  t('⭐⭐ RÈGLE D\'OR #3 : une SÉANCE terminée dans un onglet survit au `persist()` de l\'autre',
+    apresA.sessions===1, 'séances sur le disque = '+apresA.sessions);
+  t('⭐⭐ … et son RECORD aussi (il partait avec elle)',
+    apresA.prs>=1, 'records sur le disque = '+apresA.prs);
+  t('⭐ … et elle est toujours là APRÈS rechargement (sinon la perte est seulement différée)',
+    finalB.sessions===1 && finalB.prs>=1, JSON.stringify(finalB));
+  t('⛔ aucune erreur JS pendant tout le scénario à deux onglets',
+    errsOnglets.length===0, errsOnglets.slice(0,2).join(' | '));
+
+  // ── B. UN SEUL ONGLET : rien ne doit changer, et supprimer doit rester possible
+  const cx2=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  await cx2.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  const P1=await cx2.newPage(); await P1.goto('http://localhost:'+PORT+'/index.html'); await P1.waitForTimeout(2300);
+  const solo=await P1.evaluate(()=>{
+    const o={ drapeau:(typeof _ftAutreOnglet!=='undefined')?_ftAutreOnglet:'ABSENT' };
+    S.sessions=[{date:'2026-09-01',vol:1000,exs:[{name:'A',sets:[]}]},{date:'2026-08-30',vol:900,exs:[{name:'B',sets:[]}]}];
+    persist(); o.avant=JSON.parse(localStorage.getItem('ft4_sessions')||'[]').length;
+    S.sessions=S.sessions.slice(1); persist();          // suppression volontaire
+    o.apres=JSON.parse(localStorage.getItem('ft4_sessions')||'[]').length;
+    o.drapeauApres=_ftAutreOnglet;
+    return o;
+  });
+  await cx2.close();
+  t('⛔⛔ UN SEUL ONGLET : le drapeau reste faux, donc `persist()` ne fusionne JAMAIS',
+    solo.drapeau===false && solo.drapeauApres===false, JSON.stringify(solo));
+  t('⭐⭐ … et une SUPPRESSION volontaire reste possible (2 → 1) — sinon on aurait échangé un bug contre un autre',
+    solo.avant===2 && solo.apres===1, JSON.stringify(solo));
+
+  // ── C. RÈGLES figées dans le code
+  const _st=fs.readFileSync(path.join(ROOT,'state.js'),'utf8');
+  const _stSansCom=_st.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+  t('⛔ l\'écouteur `storage` existe et ne réagit qu\'aux clés `ft4_` (pas à celles des autres apps)',
+    /addEventListener\('storage'/.test(_stSansCom) && /indexOf\('ft4_'\)===0/.test(_stSansCom), '');
+  t('⛔ la fusion est conditionnée au drapeau, et le drapeau est baissé juste après (un seul propriétaire)',
+    /if\(_ftAutreOnglet\)\{\s*_ftAutreOnglet=false;\s*_fusionnerAvecLeDisque\(\);\s*\}/.test(_stSansCom), '');
+
+  // ── D. HORS LIGNE — famille ⑤, elle a rendu du VIDE, on fige ce vide
+  const cx3=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  await cx3.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  const P3=await cx3.newPage(); const errsOff=[]; P3.on('pageerror',e=>errsOff.push(String(e.message).slice(0,90)));
+  await P3.goto('http://localhost:'+PORT+'/index.html'); await P3.waitForTimeout(2300);
+  await cx3.setOffline(true);
+  const off=await P3.evaluate(async()=>{
+    const o={}, wait=ms=>new Promise(r=>setTimeout(r,ms));
+    startWorkout();
+    S.wkt.exs.push({name:'Squat à la Barre',sets:[{kg:120,reps:5,done:true,type:'N'},{kg:120,reps:5,done:true,type:'N'}]});
+    try{ await finishWorkout(); await wait(1100); }catch(e){ o.err=String(e).slice(0,90); }
+    o.sessions=(S.sessions||[]).length;
+    o.enFile=(S.sessions&&S.sessions[0])?S.sessions[0].synced:'(aucune)';
+    o.surDisque=(()=>{try{return JSON.parse(localStorage.getItem('ft4_sessions')||'[]').length;}catch(e){return 'err';}})();
+    o.ecrans={};
+    for(const id of ['home','progress','nutrition','setup','log']){
+      try{ goScreen(id); await wait(230); const el=document.getElementById('s-'+id);
+        o.ecrans[id]= el&&el.classList.contains('active') ? (el.innerText||'').trim().length : 'PAS ACTIF';
+      }catch(e){ o.ecrans[id]='ERR'; }
+    }
+    return o;
+  });
+  await cx3.close();
+  t('⭐⭐ HORS LIGNE : une séance terminée sans réseau est SUR LE DISQUE (règle d\'or #3)',
+    off.sessions===1 && off.surDisque===1, JSON.stringify({m:off.sessions,d:off.surDisque,err:off.err}));
+  t('⛔ … et elle est mise EN FILE pour plus tard, pas donnée pour envoyée',
+    off.enFile===false, 'synced = '+off.enFile);
+  t('⭐ HORS LIGNE : les 5 écrans s\'affichent quand même, avec du contenu, 0 erreur JS',
+    Object.values(off.ecrans).every(v=>typeof v==='number'&&v>50) && errsOff.length===0,
+    JSON.stringify(off.ecrans)+' · '+errsOff.slice(0,1));
+}
 
 /* == BLOC CCI - LES QUATRE VERIFICATEURS DU BANC D'ESSAI QUI ACCUSAIENT A TORT (ft-v1094) ==
    Michel : « corrige les 4 verificateurs du bench ». Sur les 6 rouges de la passe du 01/09,

@@ -6,7 +6,24 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1093`. ✅ **Les DEUX déploiements sont verts** — site
+- **Version en ligne (live) :** `ft-v1094`. ✅ **Déploiement du site vérifié vert** (run **#769**,
+  commit `74913bc`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement backend cette fois :
+  `Code.js` n'a pas été touché, le correctif est entièrement dans `state.js`.
+- 🪟⭐⭐ **DEUX ONGLETS OUVERTS, ET LE DERNIER QUI ÉCRIT EFFACE L'AUTRE** (ft-v1094). Michel :
+  *« on continue avec les incohérences ? »* — 4ᵉ passe, six familles neuves, **une seule a
+  mordu** et elle touche la **règle d'or #3**. `persist()` écrit **tout `S`** depuis la mémoire
+  de l'onglet qui l'appelle ; or l'app est une **PWA**, très souvent ouverte à deux endroits
+  (l'icône de l'écran d'accueil **et** un onglet du navigateur) qui partagent le même stockage.
+  Mesuré : l'onglet B termine une séance (1 séance + 1 record sur le disque), l'onglet A règle
+  son temps de repos → **0 séance, 0 record**, que le rechargement ne ramène pas. ⚠️ Rien ne
+  protégeait — **aucun** écouteur `storage` dans le dépôt. ⛔ Le correctif ne change **rien** au
+  cas normal (un seul onglet ⇒ aucune fusion), et la **suppression volontaire** reste possible.
+  Nouvelle famille **§33** de `BUGS.md`.
+- 📏 **CE QUI N'A RIEN RENDU, écrit pour ne pas refaire la chasse** : hors ligne rien ne se perd ·
+  les 8 dates rares (1ᵉʳ janvier, 1ᵉʳ du mois, 29 février, changement d'heure…) ne cassent rien ·
+  les « seuils écrits deux fois » étaient tous des nombres égaux **par hasard**. ⏭️ **Les imports
+  n'ont pas été instruits** — c'est la famille qui reste pour une 5ᵉ passe.
+- **Version précédente :** `ft-v1093`. ✅ **Les DEUX déploiements sont verts** — site
   (run **#764**) et backend Apps Script (run **#104**), vérifiés sur le commit `da33cf1a` et
   pas seulement poussés (**R18**).
 - 🔙⭐⭐ **LE BOUTON RETOUR ÉTAIT LA 3ᵉ PORTE, ET LA SEULE ENCORE OUVERTE** (ft-v1093). Michel :
