@@ -13,6 +13,13 @@
 > **Mode d'emploi** : coller le bloc ci-dessous **en tête de la demande de maquette**. L'outil dessine
 > alors avec les **vraies** valeurs → ce qui s'affiche à l'écran est directement transposable.
 
+> ⚠️⚠️ **NE PAS CONFONDRE AVEC `docs/BRIEF-TECHNIQUE-IA-EXTERNE.md` (02/09/2026).** Ce kit-ci
+> s'adresse à un outil qui **DESSINE**, et il lui demande explicitement *« rends-moi UN SEUL
+> fichier HTML autonome »*. L'autre s'adresse à une IA qui **RAISONNE** (GPT en analyse), et il
+> lui **INTERDIT** de rendre du code. ⛔ *Envoyer les deux au même interlocuteur produit
+> exactement la contradiction qu'on cherche à éviter.* Choisir selon ce qu'on attend en retour :
+> **une image → ce fichier · une spécification → l'autre.**
+
 ---
 
 ## 📋 LE BLOC À COLLER
