@@ -792,6 +792,12 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
          ⚠️ DÉPLACÉE DEPUIS LE JOURNAL le 26/08 (ft-v1025), pas dupliquée : deux exemplaires du
          même bloc auraient divergé (R2), et le Journal ne tenait déjà plus dans un écran.
          Le rendu vit dans `_blocApprisHTML()` — un seul propriétaire. -->
+    <!-- ②bis TON ÉVOLUTION — APRÈS le bouton « noter », et c'est une décision, pas un hasard.
+         On ouvre Nutrition pour enregistrer son repas ou voir sa journée, pas pour relire une
+         tendance de 14 jours à chaque aliment ajouté. La mettre en tête aurait repoussé
+         « Noter ce que je mange » de 148 px (mesuré) ; ici il ne bouge pas d'un pixel. -->
+    <div id="nu-evolution"></div>
+
     <div id="nu-appris"></div>
 
     <!-- ⑥ TA SEMAINE (ft-v909, _renderOuTuEnEs). Elle a perdu sa moitié « Aujourd'hui » : elle

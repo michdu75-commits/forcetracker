@@ -3900,8 +3900,10 @@ POIDS & COMPOSITION:
 ${(()=>{
   const wlog=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];
   if(wlog.length<2)return '- Suivi de poids: Pas assez de données';
-  const reg=linearRegression(wlog.map((p,i)=>({x:i,y:p.kg})));
-  const weeklyChange=Math.round(reg.slope*7*100)/100;
+  /* ⛔ La pente se calcule sur les JOURS, pas sur le nombre de pesées (ft-v1102) : un seul
+     propriétaire, le même que l'écran Progrès. Quelqu'un qui se pesait une fois par semaine
+     voyait sa tendance multipliée par SEPT, et Milo la recevait telle quelle. */
+  const weeklyChange=(typeof penteKgParSemaine==='function')?penteKgParSemaine(wlog,'kg'):0;
   const latest=wlog[wlog.length-1];
   const goal=S.goal||'muscle';
   /* ⛔ LE JUMEAU DE LA CARTE « TENDANCE » (tracking.js) — R8. `recomp` n'était nulle part :

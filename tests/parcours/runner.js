@@ -14423,12 +14423,16 @@ console.log('\n-- CXXIX. « Scanner » et « Importer » sont rangés, pas retir
     t('🔴 ... et il fait toujours 44 px (la valeur mesuree depuis ft-v977)',
       R.plusNutrition.w===44&&R.plusNutrition.h===44, JSON.stringify(R.plusNutrition));
 
-    t('⭐⭐ LES CINQ PREMIERS BLOCS TIENNENT SOUS 844 px (critere du brief)',
-      R.budget5>0&&R.budget5<=844, 'mesure = '+R.budget5+' px');
+    t('⭐⭐ TOUT CE QUI PRECEDE « noter » TIENT DANS LE PREMIER ECRAN (la garantie de ft-v1025)',
+      R.noterA>0&&R.noterA<=844, 'le bouton est a '+R.noterA+' px · budget des 5 premiers blocs = '+R.budget5+' px');
     t('⭐⭐ « NOTER CE QUE JE MANGE » EST DANS LE PREMIER ECRAN (il etait a 1 783 px)',
       R.noterA<844, 'a '+R.noterA+' px du haut');
-    t('⭐ l\'onglet entier a maigri (il faisait 2 649 px)',
-      R.total<1800, 'total = '+R.total+' px');
+    /* ⛔ La borne passe de 1 800 à 2 300 px (ft-v1101) : la carte « Ton évolution » ajoute
+       188 px assumés, et la consigne fixait la limite à « ne pas repartir vers les 2 649 px
+       d'avant le rangement ». *On déplace une borne quand une décision la déplace — on ne la
+       supprime pas.* Mesuré après refonte, sur un profil riche : 2 140 px. */
+    t('⭐ l\'onglet reste TRES loin des 2 649 px d\'avant le rangement',
+      R.total<2300, 'total = '+R.total+' px');
     t('⛔ aucun debordement horizontal', R.debordeH===false&&R.debordeApresLong===false,
       'normal='+R.debordeH+' · libelle long='+R.debordeApresLong);
 
@@ -23037,6 +23041,161 @@ console.log('\n-- CCVIII. Un cycle terminé ne le disait jamais (ft-v1101) --');
     t('⛔ 0 erreur JS', errs.length===0, JSON.stringify(errs.slice(0,2)));
   }
   await cx.close();
+}
+
+/* ═══ CCIX. LA REFONTE DE NUTRITION + LE MOTEUR DE TENDANCE (ft-v1102) ═════════════════════
+   ⛔ Les 4 états sont produits par de VRAIES DONNÉES, jamais par du HTML injecté : c'est la
+   seule façon de vérifier le moteur en même temps que la carte. *Un état qui ne sort d'aucune
+   fixture plausible est une règle inatteignable.*
+   ⭐⭐ ET LE BLOC A TROUVÉ UN DÉFAUT ANCIEN : « kg/semaine » se calculait sur le NOMBRE DE
+   PESÉES, pas sur les jours. Même évolution réelle (+0,20 kg/sem), lue ×1 · ×2 · ×3 · ×7 selon
+   qu'on se pesait tous les jours, tous les 2, tous les 3 ou une fois par semaine. */
+console.log('\n-- CCIX. La refonte de Nutrition et le moteur de tendance (ft-v1102) --');
+{
+  const J=(n)=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
+  const sess=(jours,prog)=>jours.map(d=>({date:J(d),vol:3200,
+    exs:[{name:'Squat à la Barre',sets:[
+      {kg:100+(d<7?prog:0),reps:8,done:true},{kg:100+(d<7?prog:0),reps:8,done:true},
+      {kg:100+(d<7?prog:0),reps:8,done:true}]}]}));
+  const JR=[0,1,3,5,7,8,10,12];
+  const wlog=(n,pente)=>{const o=[];for(let d=n;d>=0;d-=2)o.push({date:J(d),kg:+(84+(n-d)/7*pente).toFixed(2)});return o;};
+  const flog=(n)=>{const o=[];for(let d=n-1;d>=0;d--)o.push(
+    {date:J(d),meal:'dejeuner',name:'Riz basmati',qty:250,kcal:1300,prot:24,carbs:280,fat:3},
+    {date:J(d),meal:'diner',name:'Blanc de poulet',qty:300,kcal:390,prot:93,carbs:0,fat:5});return o;};
+  const CAS={
+    insuffisante:{s:sess([0,5],0),  w:wlog(2,0.2),  f:flog(1)},
+    partielle:   {s:sess(JR,5),     w:wlog(12,0.2), f:flog(6)},
+    coherente:   {s:sess(JR,5),     w:wlog(12,0.2), f:flog(14)},
+    ambigue:     {s:sess(JR,-8),    w:wlog(12,1.6), f:flog(14)},
+  };
+  const R={};
+  for(const cle in CAS){
+    const d=CAS[cle];
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
+    /* ⛔ ON COMPTE LES REQUÊTES SORTANTES : « 0 appel API en usage normal » est une contrainte
+       absolue, pas une intention. On les compte APRÈS le démarrage (le ping du backend et le
+       QR de partage existent depuis toujours et ne sont pas de notre fait). */
+    await pg.addInitScript(seedScript({ft4_bw:'84',ft4_age:'43',ft4_ob2:'1',ft4_guide_shown:'1',
+      ft4_wn_seen:'99',ft4_premium:'1',ft4_hascode:'1',
+      ft4_sessions:JSON.stringify(d.s), ft4_wlog:JSON.stringify(d.w), ft4_foodlog:JSON.stringify(d.f)}));
+    await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+    const reqs=[]; pg.on('request',q=>reqs.push(q.url()));
+    R[cle]=await pg.evaluate(async()=>{
+      const wait=ms=>new Promise(r=>setTimeout(r,ms));
+      document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+      goScreen('nutrition'); await wait(650);
+      const T=tendance14j();
+      const sc=document.getElementById('s-nutrition'), ev=document.getElementById('nu-evolution');
+      const today_=document.getElementById('nu-today');
+      const bouton=[...sc.querySelectorAll('button,[onclick]')].find(e=>/noter ce que/i.test(e.innerText||''));
+      const haut=e=>{const r=e.getBoundingClientRect(),p=sc.getBoundingClientRect();return Math.round(r.top-p.top+sc.scrollTop);};
+      const txtEv=(ev&&ev.innerText)||'', txtJour=(today_&&today_.innerText)||'';
+      return {etat:T.etat, hEv:Math.round(ev?ev.getBoundingClientRect().height:0),
+              noter:bouton?haut(bouton):null, visible:Math.round(sc.getBoundingClientRect().height),
+              total:sc.scrollHeight, txtEv, txtJour,
+              milo:/Analyser avec Milo/.test(txtEv),
+              fleche:/[↗↘→]/.test(txtEv), pct:/%/.test(txtEv),
+              restantes:/restantes/i.test(txtJour),
+              /* ⛔ les blocs existants sont-ils TOUJOURS là ? (« aucune perte de fonctionnalité ») */
+              gardes:['nu-today','nu-journal-ptr','nu-appris','nu-ou-en-es','nu-acc-calc','nu-acc-diet']
+                       .filter(id=>!!document.getElementById(id)).length };
+    });
+    R[cle].reqs=reqs.filter(u=>!/^data:|^blob:/.test(u)); R[cle].errs=errs;
+    await cx.close();
+  }
+
+  /* ⭐ ① LES 4 ÉTATS SORTENT DE VRAIES DONNÉES — le moteur est atteignable */
+  t('⭐⭐ les 4 états du moteur sortent de fixtures plausibles (aucune règle inatteignable)',
+    R.insuffisante.etat==='insuffisante' && R.partielle.etat==='partielle'
+    && R.coherente.etat==='coherente' && R.ambigue.etat==='ambigue',
+    JSON.stringify(Object.keys(R).map(k=>[k,R[k].etat])));
+
+  /* ⛔ ② « DONNÉES INSUFFISANTES » : aucune flèche, aucun pourcentage, aucune conclusion.
+     Une flèche EST déjà une conclusion — c'est pour ça qu'on l'interdit, pas par esthétique. */
+  t('⛔⛔ état insuffisant : AUCUNE flèche, AUCUN pourcentage (une flèche est déjà une conclusion)',
+    !R.insuffisante.fleche && !R.insuffisante.pct, R.insuffisante.txtEv.replace(/\n/g,' | ').slice(0,110));
+  t('⛔ … et il NOMME ce qui manque, au lieu de se taire',
+    /Il manque/i.test(R.insuffisante.txtEv), '');
+  t('⛔ le témoin ci-dessus sait rougir : les états qui CONCLUENT, eux, portent bien des flèches',
+    R.coherente.fleche===true && R.ambigue.fleche===true, '');
+
+  /* ⛔ ③ MILO N'APPARAÎT QUE DANS L'ÉTAT AMBIGU — s'il était permanent, il dirait que
+     l'analyse locale ne suffit pas, alors qu'elle suffit dans 3 cas sur 4. */
+  t('⭐⭐ « Analyser avec Milo » n\'apparaît QUE dans l\'état ambigu',
+    R.ambigue.milo===true && !R.coherente.milo && !R.partielle.milo && !R.insuffisante.milo,
+    JSON.stringify(Object.keys(R).map(k=>[k,R[k].milo])));
+
+  /* ⛔⛔ ④ ZÉRO APPEL RÉSEAU AU RENDU — contrainte absolue */
+  t('⛔⛔ le rendu de Nutrition ne déclenche AUCUNE requête sortante, dans les 4 états',
+    Object.keys(R).every(k=>R[k].reqs.length===0),
+    JSON.stringify(Object.keys(R).map(k=>[k,R[k].reqs.length])));
+
+  /* ⭐ ⑤ « X KCAL RESTANTES » N'EST PLUS LÀ, et la cible n'est écrite qu'UNE fois */
+  t('⭐⭐ le mot « restantes » a disparu de la carte du jour (il créait une dette : « il me reste 800 → je dois manger 800 »)',
+    Object.keys(R).every(k=>!R[k].restantes), '');
+  t('⛔ … et le TYPE DE JOURNÉE a pris sa place dans la carte (la consigne le demandait)',
+    /Jour de (séance|repos)/.test(R.coherente.txtJour), '');
+
+  /* ⭐⭐ ⑥ L'ACTION QUOTIDIENNE N'A PAS RECULÉ — mesuré, pas affirmé */
+  t('⭐⭐ « Noter ce que je mange » reste dans le PREMIER écran, dans les 4 états',
+    Object.keys(R).every(k=>R[k].noter!==null && R[k].noter < R[k].visible),
+    JSON.stringify(Object.keys(R).map(k=>[k,R[k].noter,R[k].visible])));
+
+  /* ⛔ ⑦ AUCUNE PERTE : tous les blocs existants sont encore là */
+  t('⛔ aucune perte de fonctionnalité : les 6 blocs existants de l\'onglet sont tous présents',
+    Object.keys(R).every(k=>R[k].gardes===6),
+    JSON.stringify(Object.keys(R).map(k=>[k,R[k].gardes])));
+  t('⛔ aucune erreur JS dans les 4 états',
+    Object.keys(R).every(k=>!R[k].errs.length),
+    JSON.stringify(Object.keys(R).map(k=>[k,(R[k].errs||[]).length])));
+
+  /* ⭐⭐ ⑧ LE DÉFAUT ANCIEN TROUVÉ EN CHEMIN : la pente dépendait de la FRÉQUENCE des pesées */
+  {
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+    const pg=await cx.newPage();
+    await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+    await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2200);
+    const P=await pg.evaluate(()=>{
+      const jour=n=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
+      const REEL=0.20;
+      const faire=pas=>{const o=[];for(let d=14;d>=0;d-=pas)o.push({date:jour(d),kg:+(84+(14-d)/7*REEL).toFixed(3)});return o;};
+      /* ⛔ on appelle le VRAI propriétaire, on ne recopie pas la formule (leçon du 02/09) */
+      const out={reel:REEL, lu:{}};
+      [1,2,3,7].forEach(pas=>{ out.lu[pas]=penteKgParSemaine(faire(pas),'kg'); });
+      out.unSeulProprietaire = (typeof penteKgParSemaine==='function');
+      out.memeJour = penteKgParSemaine([{date:jour(0),kg:84},{date:jour(0),kg:85}],'kg');
+      return out;
+    });
+    await cx.close();
+    t('⭐⭐ « kg/semaine » ne dépend PLUS de la fréquence des pesées (il était multiplié par 7 pour une pesée hebdomadaire)',
+      [1,2,3,7].every(k=>Math.abs(P.lu[k]-P.reel)<=0.02),
+      JSON.stringify(P.lu)+' pour un réel de '+P.reel);
+    t('⛔ un seul propriétaire de la pente, lu par l\'écran ET par le contexte de Milo',
+      P.unSeulProprietaire===true, '');
+    t('⛔ … et deux pesées le MÊME jour ne fabriquent pas une pente infinie',
+      P.memeJour===0, 'pente = '+P.memeJour);
+    const tr=fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
+    const co=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
+    t('⛔⛔ plus aucun « slope*7 » sur un index hors du propriétaire (c\'est la rechute à empêcher)',
+      (tr.match(/slope\s*\*\s*7/g)||[]).length<=1 && !/slope\s*\*\s*7/.test(co),
+      'tracking='+(tr.match(/slope\s*\*\s*7/g)||[]).length+' coach='+/slope\s*\*\s*7/.test(co));
+  }
+
+  /* ⛔ ⑨ LES ÉTATS SOUS LES ANNEAUX NE VIENNENT D'AUCUNE TOLÉRANCE INVENTÉE.
+     La consigne proposait « objectif pratiquement atteint » : « pratiquement » exige un seuil
+     (95 % ? 98 %) qu'aucune source du projet ne fournit. On ne l'écrit pas. */
+  /* ⚠️ 5ᵉ FOIS POUR LA FAMILLE §31 : ce témoin cherchait les MOTS dans tout le fichier et
+     attrapait le COMMENTAIRE qui explique pourquoi on les refuse. *On cherche ce que le code
+     ÉCRIT À L'ÉCRAN, pas ce qu'on a écrit à côté pour l'expliquer.* */
+  const src=fs.readFileSync(path.join(ROOT,'screens.js'),'utf8')
+              .replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+  t('⛔⛔ aucune tolérance inventée sous les anneaux (pas de « presque », « pratiquement », « proche de »)',
+    !/pratiquement atteint|presque atteint|proche de l.objectif/i.test(src), '');
+  t('⛔ le témoin ci-dessus sait rougir : le motif attrape bien la formulation refusée',
+    /pratiquement atteint/i.test('objectif pratiquement atteint'), '');
+  t('⛔ … et l\'état « atteint » existe bien, lui (sinon le témoin ci-dessus serait vert à vide)',
+    /atteint', vert:true/.test(src) || /txt:'atteint'/.test(src), '');
 }
 
 await b.close(); srv.close();

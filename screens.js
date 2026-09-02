@@ -2279,7 +2279,7 @@ function _renderAujourdhui(macros){
      (rotation -90°). Le tour de piste est PLUS LARGE que l'arc coloré : c'est ce qui donne la
      profondeur — pas une teinte inventée (leçon de l'anneau de récup, trois retours de Michel
      sur un gris qui ne se voyait pas sur un iPhone). */
-  const anneau=(val,cib,lbl,coul)=>{
+  const anneau=(val,cib,lbl,coul,etat)=>{
     const v=Math.round(val||0), c=Math.round(cib||0);
     const p=c?Math.min(100,v/c*100):0;
     const C=251.3, off=(C*(1-p/100)).toFixed(1);
@@ -2296,7 +2296,27 @@ function _renderAujourdhui(macros){
         +'</div>'
       +'</div>'
       +'<span style="font-size:9.5px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;">'+lbl+'</span>'
+      +(etat?'<span style="font-size:9.5px;color:'+(etat.vert?'var(--green)':'var(--t3)')+';line-height:1.25;text-align:center;margin-top:2px;">'+etat.txt+'</span>':'')
       +'</div>';
+  };
+  /* ⛔⛔ L'ÉTAT SOUS CHAQUE ANNEAU — ET IL NE VIENT D'AUCUNE TOLÉRANCE INVENTÉE (ft-v1102).
+     La demande était « PROTÉINES 181 g — objectif pratiquement atteint ». **« Pratiquement »
+     exige un seuil** (95 %&nbsp;? 98 %&nbsp;?) qu'**aucune source du projet ne fournit** — le
+     poser reviendrait à inventer la tolérance que la consigne interdit. *On ne l'écrit pas.*
+     ⭐ Ce qui EXISTE, en revanche, et qui répond à la vraie question (« pourquoi ce chiffre-là
+     aujourd'hui&nbsp;? ») : le **cyclage**. Mesuré en ft-v1098, la cible glucides va de 368 à
+     478 g et les lipides de 56 à 82 g **selon le jour**, quand les protéines ne bougent
+     **jamais** (amplitude 0 g). Chaque anneau dit donc ce que le jour fait à SA macro.
+     ⛔ Et « atteint » remplace tout le reste dès que la cible est touchée : c'est l'information
+     la plus utile, et **c'est le seul état coloré** — aucun rouge d'échec en face (P21). */
+  const _etatMacro=(cur,cible,quoi)=>{
+    if(cible>0 && cur>=cible) return {txt:'atteint', vert:true};
+    const c=macros.cycle;
+    if(!c||!c.dCarbs) return null;                    // pas de cyclage : rien à expliquer
+    const seance=c.jour==='seance';
+    if(quoi==='prot')  return {txt:'identique chaque jour'};
+    if(quoi==='carbs') return {txt:(seance?'↑':'↓')+'&nbsp;'+(seance?'jour de séance':'jour de repos')};
+    return {txt:(seance?'↓':'↑')+'&nbsp;'+(seance?'jour de séance':'jour de repos')};
   };
 
   el.innerHTML=
@@ -2306,16 +2326,24 @@ function _renderAujourdhui(macros){
     +'</div>'
     +'<div style="height:4px;border-radius:3px;background:var(--bg3);overflow:hidden;margin:10px 0 7px;">'
       +'<div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--red2),var(--red));border-radius:3px;"></div></div>'
-    /* ⛔ « Un jour, pas une tendance » n'est pas une politesse : c'est ce qui empêche de lire un
-       dépassement comme un échec. La cohérence prime sur la réactivité (R12). */
-    +'<div style="font-size:12.5px;color:var(--t2);">'
-      +(reste>=0 ? reste.toLocaleString('fr-FR')+' kcal restantes'
-                 : 'Cible dépassée de '+Math.abs(reste).toLocaleString('fr-FR')+' kcal. <span style="color:var(--t3);">Un jour, pas une tendance.</span>')
+    /* ⛔⛔ « X KCAL RESTANTES » N'EST PLUS L'INFORMATION DOMINANTE (décision Michel, ft-v1102).
+       La formulation crée une **dette psychologique** : *« il me reste 800 kcal → je dois manger
+       800 kcal »*. Le calcul, lui, ne change pas d'une virgule — il continue d'alimenter
+       « ce qu'il te reste, en vrai » juste dessous, qui le traduit en **aliments réels**, donc
+       en quelque chose d'actionnable. *On déplace le nombre là où il sert, on ne le supprime pas.*
+       ⛔ Ce qui prend sa place est la RÉFÉRENCE du jour, écrite une seule fois et en discret.
+       ⛔ « Un jour, pas une tendance » RESTE sur le dépassement : c'est ce qui empêche de le lire
+       comme un échec (R12, anti-TCA P21). */
+    +'<div style="font-size:12.5px;color:var(--t3);">'
+      +(reste>=0 ? (macros.cycle&&macros.cycle.dCarbs
+                      ? (macros.cycle.jour==='seance'?'🍚 Jour de séance':'😴 Jour de repos')
+                      : '')          /* ⛔ pas de cyclage → rien : la cible est déjà en en-tête */
+                 : '<span style="color:var(--t2);">Cible dépassée de '+Math.abs(reste).toLocaleString('fr-FR')+' kcal.</span> Un jour, pas une tendance.')
     +'</div>'
     +'<div style="display:grid;grid-template-columns:repeat(3,1fr);justify-items:center;gap:6px;margin-top:14px;padding-top:14px;border-top:1px solid var(--sep);">'
-      +anneau(auj.prot ,macros.prot_g ,'Protéines','var(--green)')
-      +anneau(auj.carbs,macros.carbs_g,'Glucides' ,'var(--orange)')
-      +anneau(auj.fat  ,macros.fat_g  ,'Lipides'  ,'var(--gold)')
+      +anneau(auj.prot ,macros.prot_g ,'Protéines','var(--green)' ,_etatMacro(auj.prot ,macros.prot_g ,'prot'))
+      +anneau(auj.carbs,macros.carbs_g,'Glucides' ,'var(--orange)',_etatMacro(auj.carbs,macros.carbs_g,'carbs'))
+      +anneau(auj.fat  ,macros.fat_g  ,'Lipides'  ,'var(--gold)'  ,_etatMacro(auj.fat  ,macros.fat_g  ,'fat'))
     +'</div>'
     /* 🔭 LA CIBLE DU JOUR N'EST PAS LA CIBLE DE TOUS LES JOURS — ON LE DIT ICI (ft-v1098).
        ⛔⛔ MESURÉ : le moteur prescrit à la même personne **368 à 478 g** de glucides et
@@ -2331,13 +2359,109 @@ function _renderAujourdhui(macros){
     +(function(){
        const c=macros.cycle;
        if(!c||!c.dCarbs) return '';
-       return '<div style="font-size:11.5px;color:var(--t3);margin-top:9px;text-align:center;line-height:1.4;">'
-         +(c.jour==='seance'?'🍚 Jour de séance':'😴 Jour de repos')
-         +' — tes cibles glucides et lipides changent selon le jour. '
-         +'<span style="color:var(--t2);">Les deux dans « comment c’est calculé ».</span></div>';
+       return '<div style="font-size:11px;color:var(--t3);margin-top:8px;text-align:center;">'
+         +'Tes deux cibles du jour dans « comment c’est calculé ».</div>';
      })()
     /* 🍽️ « Ce qu'il te reste, en vrai » : le MÊME bloc que dans le Journal, un seul code (R2). */
     +(typeof _blocResteHTML==='function'?_blocResteHTML(today()):'');
+}
+
+/* ═══ 📉 LA CARTE « TON ÉVOLUTION » (ft-v1102) ══════════════════════════════════════════════
+   ⛔ ELLE N'A AUCUNE INTELLIGENCE : tout vient de `tendance14j()` (state.js). L'écran lit,
+   il ne dérive pas — sinon la carte et le moteur finiraient par ne plus dire la même chose (R2).
+   ⛔ QUATRE ÉTATS, PAS CINQ. Et dans « données insuffisantes » : **aucune flèche, aucun
+   pourcentage, aucune conclusion** — une flèche EST déjà une conclusion.
+   ⛔ MILO N'APPARAÎT QUE DANS L'ÉTAT AMBIGU, et sur appui volontaire. S'il était là en
+   permanence, il dirait que l'analyse locale ne suffit pas — or elle suffit dans trois cas
+   sur quatre. Usage normal de l'onglet = **0 appel API**.
+   ⛔ ANTI-TCA (P21) : aucun rouge d'échec, aucune injonction à « remplir ». */
+function _blocEvolutionHTML(){
+  if(typeof tendance14j!=='function') return '';
+  const T=tendance14j(); if(!T) return '';
+  const fl=(t,c)=>'<span style="color:'+c+';font-weight:700;">'+t+'</span>';
+  /* Une ligne de signal : le nom, la flèche, le chiffre. Jamais de flèche sans chiffre. */
+  const ligne=(lbl,val,coul)=>'<div style="display:flex;justify-content:space-between;align-items:baseline;'
+    +'gap:10px;font-size:12.5px;padding:2.5px 0;"><span style="color:var(--t2);">'+lbl+'</span>'
+    +'<span style="color:'+(coul||'var(--t1)')+';font-weight:700;white-space:nowrap;">'+val+'</span></div>';
+
+  let ic,titre,corps='',pied='',bouton='';
+  const fen='Sur '+T.fenetre+' jours';
+
+  if(T.etat==='insuffisante'){
+    ic='○'; titre='Pas encore assez de données pour analyser ton évolution';
+    /* ⛔ On NOMME ce qui manque — sans chiffre de tendance, sans flèche. */
+    corps='<div style="font-size:12px;color:var(--t3);line-height:1.45;margin-top:5px;">'
+      +(T.manque.length?'Il manque&nbsp;: '+T.manque.join('&nbsp;· '):'')+'</div>';
+  }else{
+    const L=[];
+    if(T.poids){
+      const c = T.poids.dans===true?'var(--green)' : T.poids.dans===false?'var(--orange)' : 'var(--t2)';
+      const s = T.poids.kgSem>0?'↗' : T.poids.kgSem<0?'↘' : '→';
+      L.push(ligne('Poids', s+'&nbsp;'+(T.poids.kgSem>0?'+':'')+String(T.poids.kgSem).replace('.',',')+'&nbsp;kg/sem', c));
+    }
+    if(T.force){
+      /* ⛔ Une baisse sur une semaine à volume effondré est une DÉCHARGE : on ne la colorie pas
+         comme une régression, et on le DIT plutôt que de la faire disparaître. */
+      const c = T.force.decharge?'var(--t2)' : T.force.pct>=0?'var(--green)':'var(--orange)';
+      const s = T.force.pct>0?'↗' : T.force.pct<0?'↘' : '→';
+      L.push(ligne('Force'+(T.force.decharge?' <span style="color:var(--t3);font-weight:400;">(semaine allégée)</span>':''),
+        s+'&nbsp;'+(T.force.pct>0?'+':'')+String(T.force.pct).replace('.',',')+'&nbsp;%', c));
+    }
+    L.push(ligne('Nutrition', T.alim.etat==='solide'?'✓&nbsp;'+T.alim.jours+'&nbsp;j notés'
+                            : T.alim.jours+'&nbsp;j notés',
+                 T.alim.etat==='solide'?'var(--green)':'var(--t2)'));
+    corps='<div style="margin-top:7px;">'+L.join('')+'</div>';
+
+    if(T.etat==='coherente'){
+      ic='✓'; titre='Tu progresses dans la direction prévue';
+      pied='<b style="color:var(--t1);">Continue comme ça.</b>';
+    }else if(T.etat==='partielle'){
+      ic='◐'; titre='Les premières tendances apparaissent';
+      pied='<span style="color:var(--t3);">Encore un peu tôt pour conclure.</span>'
+        +(T.manque.length?'<br><span style="color:var(--t3);">Il manque&nbsp;: '+T.manque.join('&nbsp;· ')+'</span>':'');
+    }else{
+      /* ⛔ « À regarder de plus près » plutôt que « directions différentes » : le titre doit
+         rester vrai quand les deux signaux sont mauvais ENSEMBLE — ils ne divergent pas alors,
+         et l'app ne doit pas pour autant conclure à leur place. */
+      ic='⇅'; titre='À regarder de plus près';
+      pied='<span style="color:var(--t2);">'
+        +(T.faits.indexOf('poids')>=0 && T.poids ? 'Ton poids évolue hors de la plage attendue pour ton objectif. ':'')
+        +(T.faits.indexOf('force')>=0 && T.force ? 'Tes charges baissent sur la période. ':'')
+        +'</span>';
+      bouton='<div onclick="_evolutionVersMilo()" style="margin-top:10px;display:inline-flex;align-items:center;gap:7px;'
+        +'font-size:12.5px;font-weight:700;color:var(--t1);background:var(--bg3);border:1px solid var(--sep);'
+        +'border-radius:10px;padding:8px 13px;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
+        +'🤖 Analyser avec Milo</div>';
+    }
+  }
+
+  return '<div style="background:var(--bg2);border:1px solid var(--sep);border-radius:14px;padding:11px 13px;margin-bottom:12px;">'
+    +'<div style="font-size:10.5px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">Ton évolution</div>'
+    +'<div style="display:flex;align-items:baseline;gap:7px;">'
+      +'<span style="font-size:13px;">'+ic+'</span>'
+      +'<span style="font-size:14.5px;font-weight:700;color:var(--t1);line-height:1.25;">'+titre+'</span></div>'
+    +'<div style="font-size:10.5px;color:var(--t3);margin-top:2px;">'+fen+'</div>'
+    +corps
+    +(pied?'<div style="font-size:12.5px;margin-top:8px;line-height:1.45;">'+pied+'</div>':'')
+    +bouton
+    +'</div>';
+}
+/* ⛔ LE SEUL CHEMIN QUI COÛTE UN APPEL, ET IL EST VOLONTAIRE. On n'appelle rien ici : on
+   ouvre le Coach avec une question pré-écrite, la personne l'envoie si elle le veut. */
+function _evolutionVersMilo(){
+  try{
+    const T=(typeof tendance14j==='function')?tendance14j():null;
+    if(!T) return;
+    /* ⛔ CONTEXTE COMPACT : les tendances et la fenêtre, JAMAIS le journal alimentaire. */
+    const bouts=[];
+    if(T.poids) bouts.push('mon poids évolue de '+String(T.poids.kgSem).replace('.',',')+' kg/semaine');
+    if(T.force) bouts.push('mes charges de '+(T.force.pct>0?'+':'')+String(T.force.pct).replace('.',',')+' % (sur '+T.force.paires+' comparaison'+(T.force.paires>1?'s':'')+' à répétitions égales)');
+    bouts.push(T.alim.jours+' jours de repas notés sur '+T.fenetre);
+    const q='Sur '+T.fenetre+' derniers jours : '+bouts.join(', ')+'. Ces signaux ne vont pas tous dans le sens de mon objectif — qu\'est-ce que tu en penses ?';
+    goScreen('coach');
+    setTimeout(()=>{ const i=document.getElementById('coach-inp');
+      if(i){ i.value=q; i.focus(); try{i.dispatchEvent(new Event('input'));}catch(e){} } },350);
+  }catch(e){ console.warn('[FT evolution]',e); }
 }
 
 /* 🍽️ CE QUE LE RESTE REPRÉSENTE VRAIMENT (26/08/2026, ft-v1019) — demande de Michel :
@@ -2695,6 +2819,7 @@ function renderNutrition(){try{
   /* 🍽️ ft-v1025 — la carte du jour, et la carte « ce que l'app a appris » remontée du Journal.
      ⛔ Chacune dans son `try` : une carte qui plante ne doit pas emporter tout l'onglet. */
   try{ _renderAujourdhui(macros); }catch(e){ /* jamais bloquant */ }
+  try{ const _ev=document.getElementById('nu-evolution'); if(_ev)_ev.innerHTML=_blocEvolutionHTML(); }catch(e){}
   try{ const _ap=document.getElementById('nu-appris'); if(_ap)_ap.innerHTML=_blocApprisHTML(); }catch(e){}
   document.getElementById('m-kcal').textContent=macros.calories.toLocaleString('fr-FR');
   /* Le même chiffre au centre de l'anneau de répartition, dans l'accordéon « comment c'est
