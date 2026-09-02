@@ -2019,3 +2019,53 @@ se **décochent** (`S.foodMode=(S.foodMode===v?'':v)`), donc `''` est une **déc
 personne. Arrêter le cétogène ne serait jamais reparti, et un changement de téléphone l'aurait
 fait **revenir**. *Un garde-fou juste pour un prénom est faux pour une case à cocher* — c'est la
 famille **§30** prise à l'envers, et la seule façon de le voir est de mesurer **les deux sens**.
+
+---
+
+## 33. 🪟 DEUX ONGLETS, UN SEUL ÉTAT — le dernier qui écrit efface l'autre **(02/09/2026, ft-v1094)**
+
+L'app garde tout dans un objet global `S` et le sauvegarde **en bloc** : `persist()` réécrit
+chaque clé depuis la mémoire de l'onglet qui l'appelle. Tant qu'il n'y a qu'un onglet, c'est
+juste. Dès qu'il y en a deux, **celui qui écrit en dernier impose sa vision périmée** et efface
+tout ce que l'autre a fait depuis son chargement.
+
+### ⚠️ Pourquoi ce n'est pas un cas d'école
+C'est une **PWA**. L'icône de l'écran d'accueil et un onglet du navigateur sont deux pages
+distinctes qui partagent le **même** stockage. Les avoir toutes les deux ouvertes n'est pas une
+manipulation exotique : c'est le mode d'usage normal de quelqu'un qui a installé l'app *et* qui
+ouvre parfois le lien.
+
+### 🔎 Ce qui a été mesuré (par les vraies fonctions, deux pages du même contexte)
+- l'onglet **B** termine une séance → **1 séance + 1 record** sur le disque ;
+- l'onglet **A** règle son temps de repos — *le geste le plus banal qui soit* → `persist()` ;
+- résultat : **0 séance, 0 record**. Le rechargement ne les ramène pas.
+- Même chose pour une **pesée** notée dans un onglet : effacée par la série validée dans l'autre.
+
+### ⛔ À quoi on la reconnaît
+- Un état global sauvegardé **en bloc** (`setItem` de tout l'objet) plutôt que par delta.
+- **Aucun** écouteur `storage`, aucun `BroadcastChannel` : l'app ne sait pas qu'elle existe
+  ailleurs. C'était le cas ici — vérifié, zéro occurrence dans tout le dépôt.
+- Le symptôme est **silencieux et différé** : rien ne plante, aucune erreur ; la donnée est
+  simplement absente la fois d'après, et on croit ne l'avoir jamais saisie.
+
+### 🛡️ Ce qui protège aujourd'hui
+Le navigateur signale lui-même l'écriture des autres onglets : l'événement `storage` ne se
+déclenche **que** dans les autres pages. Quand il est reçu, le `persist()` suivant prend
+l'**union** des collections datées au lieu de remplacer. Bloc **CCI** de `tests/parcours`.
+
+### ⭐ Le réflexe, et la propriété qui rend le correctif sûr
+**Ne jamais toucher à `persist()` pour tout le monde afin de réparer un cas.** Le drapeau reste
+faux tant qu'aucun autre onglet n'a écrit : dans 99,9 % des ouvertures, la fonction est
+identique au caractère près. Deux témoins l'épinglent — dont celui qui vérifie qu'une
+**suppression volontaire** reste possible, sinon on aurait échangé un bug contre un autre.
+⚠️ **Limite écrite** : si on supprime une entrée pendant qu'un autre onglet écrit, la fusion
+peut la faire revenir. On échange une suppression rare et refaisable contre une séance perdue
+pour toujours — et le sens de l'échange est le bon (**R29** : le coût de l'erreur décide).
+
+### 📏 Ce qui a été cherché dans la même passe et n'a RIEN rendu
+Écrire le vide évite de refaire la chasse : **hors ligne**, une séance terminée sans réseau est
+bien sur le disque, mise en file, et les 5 écrans rendent (0 erreur JS) · les **8 dates rares**
+(1ᵉʳ janvier, 31 décembre, 1ᵉʳ du mois, lundi, 29 février, changement d'heure, minuit) ne
+cassent rien · et les **« seuils écrits deux fois »** étaient tous des nombres égaux **par
+hasard** — 180 secondes contre 180 minutes, 120 kg contre 120 cm. *Un détecteur de nombres
+identiques a une précision quasi nulle : l'égalité numérique n'est presque jamais une parenté.*
