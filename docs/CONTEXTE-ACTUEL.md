@@ -6,7 +6,8 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1105`. ⏳ **Déploiement à vérifier** (**R18**).
+- **Version en ligne (live) :** `ft-v1105`. ✅ **Déploiement du site vérifié vert** (run **#816**,
+  commit `8041baf`) — pas seulement poussé (**R18**).
 - ⚖️⛔⛔ **LA PORTION PRÉ-REMPLIE N'EST PAS LA TIENNE** (ft-v1105). Michel envoie l'**étiquette**
   (88 g/100 g, dosette de 30 g) et **corrige mon explication de la veille** : *« pourtant j'ai
   écrit le code barre, je n'ai rien recopié »*. ⚠️⚠️ **Il a raison — §12quater DEUX FOIS dans la
