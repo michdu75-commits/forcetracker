@@ -6,7 +6,8 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1101`.
+- **Version en ligne (live) :** `ft-v1101`. ✅ **Déploiement du site vérifié vert** (run **#793**,
+  commit `e94eeae`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement backend.
 - 🏁⭐⭐ **UN CYCLE TERMINÉ NE LE DISAIT JAMAIS — NI À L'ÉCRAN, NI À MILO** (ft-v1101).
   `getCurrentCycleWeek` **plafonne** à `weeks` : juste pour une barre de progression, faux
   pour tout le reste. **Mesuré** : un cycle fini depuis 1 jour, 1 an et **six ans** rend un
