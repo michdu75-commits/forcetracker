@@ -1567,6 +1567,49 @@ function _volumeParMoitie(jours){
 const TENDANCE_FENETRE = 14;          // ⛔ la même que `_PA_SOLIDE` et que la carte de volume
 const TENDANCE_MIN_PESEES = 3;        // ⛔ le minimum déjà appliqué par la carte de corrélations
 
+/* 🍽️⛔⛔ CE JOUR EST-IL ASSEZ REMPLI POUR COMPTER ? (ft-v1106)
+   ⛔⛔ LE DÉFAUT, MESURÉ : un « jour noté » est un jour qui a **au moins une entrée**. Une
+   journée où seul le petit-déjeuner a été saisi compte donc comme une journée complète.
+   Chiffré sur 6 jours à 4 repas + 1 jour à 1 repas : la moyenne affichée tombe à **1 798 kcal/j**
+   au lieu de **2 067** — ***269 kcal/j d'erreur fabriqués par un seul oubli de saisie***, et
+   l'écart à la cible passe de −1 085 à −1 354.
+   ⭐⭐ ET LE PROBLÈME AVAIT DÉJÀ ÉTÉ VU : `entreesParJour` est calculé dans `_profilAlimentaire`
+   depuis ft-v1021, avec ce commentaire — *« une moyenne de 1,2 entrée par jour ne décrit pas une
+   journée »*. **Il n'est lu nulle part.** C'est une donnée morte au sens de **R5** : l'outil
+   existait, il n'était pas branché.
+
+   ⛔⛔ AUCUN SEUIL INVENTÉ, ET C'EST LE POINT DUR. « 3 repas », « 80 % des repas », « au moins
+   1 500 kcal » sont tous des chiffres qu'il faudrait CHOISIR — et une personne qui mange deux
+   fois par jour n'a pas tort. 👉 ***La barre est la personne elle-même*** : on compte, pour
+   chaque jour, le nombre de MOMENTS distincts notés (petit-déj, déjeuner…), et on garde les
+   jours qui atteignent **sa propre médiane**. La médiane ne se choisit pas, elle se constate —
+   c'est la même logique que `_GOAL_TREND` en ft-v1100 (transcrire, pas décider).
+   ⛔ MÉDIANE ET NON MOYENNE : un seul jour à 6 entrées ne doit pas relever la barre de tous les
+   autres (même raison que pour les horaires de `_profilAlimentaire`).
+   ⛔ ET ON NE JUGE PAS UN JOUR EN COURS : `today()` est exclu — il n'est pas incomplet, il n'est
+   pas fini. C'est le même garde-fou que `_nutriJoursNotes(n, true)`.
+   ⚠️ CE QUE ÇA NE SAIT PAS FAIRE, ÉCRIT PLUTÔT QUE TU : chez quelqu'un qui ne note QUE son
+   petit-déjeuner, la médiane vaut 1 et tous ses jours « passent ». On ne peut alors pas
+   distinguer un vrai jour bas d'un jour à moitié saisi — et c'est pour ça que l'appelant exige
+   en plus un nombre minimum de jours (R29 : quand on ne sait pas, on ne conclut pas). */
+function _joursAlimComplets(fenetre){
+  try{
+    const t=today();
+    const dans = d => { const k=Math.round((new Date(t+'T12:00:00')-new Date(d+'T12:00:00'))/864e5);
+                        return k>0 && k<fenetre; };          // ⛔ k>0 : le jour en cours est exclu
+    const moments={};
+    (S.foodLog||[]).forEach(e=>{
+      if(!e||!e.date||!dans(e.date)) return;
+      (moments[e.date]=moments[e.date]||{})[e.meal||'autre']=1;
+    });
+    const jours=Object.keys(moments);
+    if(!jours.length) return {complets:[], ecartes:0, barre:0};
+    const n=jours.map(d=>Object.keys(moments[d]).length).sort((a,b)=>a-b);
+    const barre=n[Math.floor(n.length/2)];                   // ⛔ médiane, jamais moyenne
+    const complets=jours.filter(d=>Object.keys(moments[d]).length>=barre).sort();
+    return {complets:complets, ecartes:jours.length-complets.length, barre:barre};
+  }catch(e){ return {complets:[], ecartes:0, barre:0}; }
+}
 function tendance14j(){
   try{
     const t=today();
@@ -1607,6 +1650,31 @@ function tendance14j(){
     out.alim={ jours:nAlim, etat: nAlim>=solide?'solide' : nAlim>=mini?'partiel' : 'insuffisant' };
     if(out.alim.etat==='insuffisant')
       out.manque.push(nAlim+' jour'+(nAlim>1?'s':'')+' de repas notés (il en faut '+mini+')');
+
+    /* 🍽️⛔⛔ L'APPORT MOYEN — LE MAILLON QUI MANQUAIT (ft-v1106)
+       Jusqu'ici ce moteur **comptait** les jours de repas et ne lisait **jamais** les calories :
+       l'app savait dire « ton poids baisse plus vite que prévu » et « tu manges 1 354 kcal sous
+       ta cible » **dans deux cartes différentes, sur deux fenêtres différentes**, sans jamais
+       les rapprocher. C'est le seul trou réel de l'audit du 02/09.
+       ⛔ MOYENNE SUR LES JOURS COMPLETS UNIQUEMENT, et le nombre d'écartés est RENDU pour que
+       l'écran puisse le dire — *un jour mis de côté en silence est une moyenne truquée*.
+       ⛔ ET ON EXIGE `_PA_MIN_JOURS` JOURS COMPLETS (R2 : le seuil existe déjà, on ne
+       s'en invente pas un deuxième). En dessous, `kcal` reste absent : « je ne sais pas » est
+       une réponse valide (R29), et c'est mieux qu'une moyenne bâtie sur deux jours.
+       ⛔⛔ ET CE N'EST PAS UN SIGNAL JUGÉ : l'apport est un FAIT affiché à côté des autres, il
+       n'entre pas dans le calcul « cohérente / ambiguë ». *Un apport sous la cible n'est pas un
+       échec* (Constitution P21, anti-TCA) — et faire basculer l'état sur lui transformerait
+       l'écran en jugement quotidien sur ce qu'on mange. Les 4 états restent inchangés. */
+    const jc=_joursAlimComplets(TENDANCE_FENETRE);
+    out.alim.ecartes=jc.ecartes; out.alim.barre=jc.barre;
+    if(jc.complets.length>=mini && typeof _foodTotals==='function'){
+      let somme=0; jc.complets.forEach(d=>{ somme+=(_foodTotals(d).kcal||0); });
+      const moy=Math.round(somme/jc.complets.length);
+      const cible=(typeof calcMacros==='function')?(calcMacros(S.nutritionPhase).calories||0):0;
+      out.alim.kcal={ moy:moy, jours:jc.complets.length, cible:cible,
+                      /* ⚠️ L'écart n'a de sens que si une cible existe. `null` se lit, `0` ment. */
+                      ecart: cible>0 ? moy-cible : null };
+    }
 
     /* ④ L'ÉTAT — quatre, pas cinq (décision produit) */
     const sources=[out.poids?1:0, out.force?1:0, out.alim.etat!=='insuffisant'?1:0]

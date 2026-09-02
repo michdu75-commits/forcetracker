@@ -3,10 +3,14 @@
 > **Créé le 02/09/2026**, à la demande de Michel : *« Ok avant lit ça »*, en relayant un document
 > de GPT écrit après visionnage de deux vidéos des écrans **Nutrition** et **Journal**.
 >
-> ⛔ **PHASE 1 UNIQUEMENT — aucune ligne de code n'a été écrite.** GPT le demande explicitement
-> (*« Contre-audite d'abord. On décidera ensuite »*), et c'est aussi la bonne méthode : sur les
-> passes précédentes, **2 constats d'audit sur 4** se sont révélés faux ou périmés une fois
-> mesurés. Tout ce qui suit est **mesuré dans un navigateur**, par les vraies fonctions.
+> ⛔ **Les §1 à §6 sont le CONTRE-AUDIT SEUL — aucune ligne de code n'y correspond.** GPT le
+> demande explicitement (*« Contre-audite d'abord. On décidera ensuite »*), et c'est la bonne
+> méthode : sur les passes précédentes, **2 constats d'audit sur 4** se sont révélés faux ou
+> périmés une fois mesurés. Tout est **mesuré dans un navigateur**, par les vraies fonctions.
+>
+> ⭐ **Le §7 a été ajouté APRÈS**, quand Michel a tranché — *« il va falloir améliorer tout ça »* :
+> il décrit ce qui a été livré en **ft-v1106** et ce qui ne l'a **pas** été. *Un document d'audit
+> qui garderait « aucune ligne de code » en tête après coup mentirait sur lui-même* (**R23**).
 
 ---
 
@@ -182,6 +186,57 @@ On ne touche pas : « Ta semaine » (seule moyenne calorique, sur 7 j — c'est 
 vrai journal** (combien de ses journées ont 1 ou 2 entrées ?) avant de choisir un chiffre.
 ② **la récence de la mémoire alimentaire** — combien de temps une habitude reste-t-elle vraie ?
 C'est une question produit, et elle touche ce que Milo reçoit.
+
+---
+
+## 7. ⭐ CE QUI A ÉTÉ FAIT ENSUITE (ft-v1106, le même jour)
+
+Michel : *« il va falloir améliorer tout ça »*. **Les trous ① et ② sont comblés, le ③ ne l'est
+pas — et c'est délibéré.**
+
+### ✅ ① L'apport entre dans le moteur
+`tendance14j()` rend désormais `alim.kcal = {moy, jours, cible, ecart}`. La carte « Ton
+évolution » affiche une ligne de plus : *« Apport (11 j complets) · 2 067 kcal/j · −1 085 vs
+cible »*, à côté du poids et de la force. **Aucune nouvelle carte, aucun graphique.**
+⛔ **L'apport n'est pas un signal jugé** : ni couleur, ni bascule d'état. *Un apport sous sa
+cible n'est pas un échec* (**P21**) — les 4 états sont inchangés, et leurs témoins le tiennent.
+
+### ✅ ② Les jours à moitié notés sont écartés — sans seuil inventé
+La barre est la **médiane des moments notés par jour de la personne**. Elle ne se choisit pas,
+elle se constate. Mesuré :
+
+| Journal | Barre | Écartés | Moyenne |
+|---|---|---|---|
+| 5 jours à 4 moments + 1 jour à 1 | **4** | **1** | **2 067** (au lieu de 1 798) |
+| 6 jours à 4 moments | **4** | **0** | 2 067 *(contrôle : rien ne bouge)* |
+| 6 jours à **2 moments** | **2** | **0** | 1 250 *(l'app ne décrète pas qu'il note mal)* |
+
+⛔⛔ **Et la jumelle comptait double (R8)** : la distorsion de 269 kcal avait été chiffrée **sur
+« Ta semaine »**, pas sur la carte neuve. La corriger d'un seul côté aurait laissé le défaut à
+l'endroit exact où il avait été mesuré. Un seul propriétaire (`_joursAlimComplets`) : les deux
+cartes ne diffèrent plus que par leur **fenêtre** (7 j / 14 j), ce qui est écrit à l'écran.
+⛔ **Les jours écartés sont dits des deux côtés**, et le libellé suit le calcul.
+
+### ⏭️ ③ La récence — MESURÉE, PAS APPLIQUÉE
+Elle change **ce que Milo reçoit**, donc elle passe par un avant/après au banc d'essai
+(**R34**) : c'est une décision de Michel, pas la mienne. **Ce qui était gratuit a été fait —
+la chiffrer.** Profil simulé : quelqu'un qui a changé d'alimentation il y a 4 mois
+(60 jours de riz/poulet, puis 21 jours de patate douce/saumon).
+
+| | Déjeuner annoncé à Milo | Dîner |
+|---|---|---|
+| **Aujourd'hui** (aucune fenêtre) | **Riz basmati (60×)** · Patate douce (21×) | **Poulet grillé (60×)** · Saumon (21×) |
+| **Avec 60 jours** (simulé) | Patate douce (21×) | Saumon (21×) |
+
+👉 ***Milo reçoit aujourd'hui, en premier, un aliment que la personne ne mange plus depuis
+quatre mois*** — et il bâtit ses propositions dessus.
+
+### ⚠️ CE QUE LA CAPTURE A MONTRÉ, ET QUI RESTE OUVERT
+Trois moyennes caloriques cohabitent à 400 px : **2 067** (Ton évolution, 14 j, jours complets),
+**1 836** (mémoire, tout l'historique), **1 798 → 2 067** (Ta semaine, 7 j). Chacune dit sa base,
+**aucune n'est fausse** — c'est leur voisinage qui interroge (famille **§7** de `BUGS.md`).
+Les deux premières sont désormais calculées **par la même règle** ; la troisième porte sur
+**tout l'historique**, ce qui est un autre sujet — et c'est celui que la récence trancherait.
 
 ---
 

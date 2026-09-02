@@ -6,7 +6,30 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1105`. ✅ **Déploiement du site vérifié vert** (run **#816**,
+- **Version en ligne (live) :** `ft-v1106`. ⏳ **Déploiement à vérifier** (**R18**).
+- 🍽️⭐⭐ **L'APPORT ENTRE DANS LE MOTEUR DE TRAJECTOIRE** (ft-v1106), après le **contre-audit**
+  d'une proposition GPT (`docs/NUTRITION-CONTRE-AUDIT-TRAJECTOIRE.md`). ⭐ **Vingt-huit
+  paragraphes réduits à UN trou** : son axe « trajectoire » était **déjà en production**
+  (ft-v1102) ; il manquait le **premier** maillon — le moteur **comptait** les jours de repas et
+  ne **lisait jamais les calories**.
+- ⛔⛔ **Un jour mal noté déformait la moyenne de 269 kcal/j** (1 798 au lieu de 2 067, mesuré).
+  ⭐ L'indicateur qui le détecterait, `entreesParJour`, était **calculé depuis ft-v1021 et lu
+  nulle part** — donnée morte (**R5**).
+- ⛔⛔ **Aucun seuil inventé** : la barre est la **médiane des moments notés par jour de la
+  personne**. Chez qui note 2 moments, elle vaut 2 et **rien n'est écarté** — *l'app ne décrète
+  pas qu'il note mal.*
+- ⛔⛔ **Et la jumelle comptait double (R8)** : la distorsion avait été chiffrée **sur « Ta
+  semaine »**, et je la corrigeais **seulement dans la carte neuve**. Un seul propriétaire
+  (`_joursAlimComplets`) ; les deux cartes ne diffèrent plus que par leur **fenêtre**.
+- ⛔ **L'apport est un FAIT, pas un signal jugé** : ni couleur, ni bascule d'état (**P21**).
+- ⚠️ **J'ai failli annoncer une régression inexistante** : 476 px contre 445 « en ft-v1102 » —
+  rejoué sur la **même fixture**, 476 des deux côtés. *Deux mesures sur deux fixtures
+  différentes ne se comparent pas.* Vraie mesure : carte +22 px, « Noter » **inchangé**.
+- ⏭️ **NON FAIT, exprès — la récence de la mémoire alimentaire** : elle change ce que **Milo
+  reçoit** (**R34**, décision de Michel). **Mesurée sans être appliquée** : quelqu'un qui a changé
+  d'alimentation il y a 4 mois annonce à Milo *« Riz basmati (60×) »* comme déjeuner habituel —
+  un aliment qu'il ne mange plus.
+- **Version précédente :** `ft-v1105`. ✅ **Déploiement du site vérifié vert** (run **#816**,
   commit `8041baf`) — pas seulement poussé (**R18**).
 - ⚖️⛔⛔ **LA PORTION PRÉ-REMPLIE N'EST PAS LA TIENNE** (ft-v1105). Michel envoie l'**étiquette**
   (88 g/100 g, dosette de 30 g) et **corrige mon explication de la veille** : *« pourtant j'ai

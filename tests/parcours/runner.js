@@ -23705,6 +23705,120 @@ console.log('\n-- CCXIV. La portion pré-remplie n\'est pas la tienne (ft-v1105)
   }
 }
 
+/* ═══ CCXV. L'APPORT ENTRE DANS LE MOTEUR DE TRAJECTOIRE (ft-v1106) ══════════════════════════
+   Contre-audit de la proposition GPT du 02/09. Le trou mesuré était unique : `tendance14j()`
+   COMPTAIT les jours de repas et ne lisait JAMAIS les calories.
+   ⛔⛔ ET UN JOUR MAL NOTÉ DÉFORMAIT LA MOYENNE DE 269 kcal/j — mesuré : 6 jours à 4 repas + 1
+   jour à 1 repas donnaient 1 798 kcal/j au lieu de 2 067.
+   ⛔⛔ AUCUN SEUIL INVENTÉ : la barre est la MÉDIANE des moments notés par jour DE LA PERSONNE.
+   Elle ne se choisit pas, elle se constate — même logique que `_GOAL_TREND` en ft-v1100.
+   ⛔⛔ ET LA JUMELLE COMPTE DOUBLE ICI (R8) : la distorsion avait été chiffrée SUR « Ta
+   semaine », pas sur la carte neuve. La corriger d'un seul côté aurait laissé le défaut là où
+   il avait été mesuré, et fabriqué deux moyennes calculées différemment à 400 px d'écart. */
+console.log('\n-- CCXV. L\'apport entre dans le moteur de trajectoire (ft-v1106) --');
+{
+  const J=n=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
+  const SET=[['petitdej','Flocons',450],['dejeuner','Riz + poulet',800],
+             ['collation2','Iso zero',117],['diner','Saumon',700]];
+  /* `plan[i]` = nombre de MOMENTS notés le jour (i+1). Le jour 0 (aujourd'hui) n'est jamais jugé. */
+  const journal=plan=>{const o=[];plan.forEach((n,i)=>{const d=i+1;
+    for(let k=0;k<n;k++) o.push({date:J(d),meal:SET[k][0],ts:Date.now()-d*864e5+k*36e5,
+      name:SET[k][1],kcal:SET[k][2],prot:30,carbs:40,fat:10});});return o;};
+  const CAS={
+    unJourAMoitie: journal([1,4,4,4,4,4]),
+    tousComplets:  journal([4,4,4,4,4,4]),
+    toutAMoitie:   journal([2,2,2,2,2,2]),
+    deuxAMoitie:   journal([1,4,1,4,4,4]),
+  };
+  /* ⚠️ IL FAUT DES SÉANCES ET DES PESÉES, SINON LA CARTE EST EN ÉTAT « INSUFFISANTE » et
+     n'affiche AUCUNE ligne — mon 1ᵉʳ jet ne posait que le journal alimentaire, donc le témoin
+     des « jours écartés » cherchait un texte dans une carte qui ne pouvait pas l'écrire.
+     *Une fixture qui ne peut pas produire l'état qu'on mesure ne mesure rien.* */
+  const sessCC=[0,1,3,5,7,8,10,12].map(d=>({date:J(d),vol:3200,exs:[{name:'Squat à la Barre',
+    sets:[{kg:100+(d<7?5:0),reps:8,done:true},{kg:100+(d<7?5:0),reps:8,done:true},
+          {kg:100+(d<7?5:0),reps:8,done:true}]}]}));
+  const wlCC=(()=>{const o=[];for(let d=12;d>=0;d-=2)o.push({date:J(d),kg:+(84+(12-d)/7*0.2).toFixed(2)});return o;})();
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
+  await p.addInitScript(`(()=>{try{
+    localStorage.setItem('ft4_name','Michel');localStorage.setItem('ft4_bw','84');
+    localStorage.setItem('ft4_age','43');localStorage.setItem('ft4_ht','178');
+    localStorage.setItem('ft4_gender','H');localStorage.setItem('ft4_goal','muscle');
+    localStorage.setItem('ft4_act','1.55');localStorage.setItem('ft4_ob2','1');
+    localStorage.setItem('ft4_guide_shown','1');localStorage.setItem('ft4_wn_seen','99');
+    localStorage.setItem('ft4_premium','1');
+    localStorage.setItem('ft4_sessions',${JSON.stringify(JSON.stringify(sessCC))});
+    localStorage.setItem('ft4_wlog',${JSON.stringify(JSON.stringify(wlCC))});
+  }catch(e){}})();`);
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(2200);
+  const R=await p.evaluate(async(CAS)=>{ try{
+    const w=ms=>new Promise(r=>setTimeout(r,ms)); const out={};
+    let reqs=0;
+    const vraiFetch=window.fetch; window.fetch=(...a)=>{reqs++; return vraiFetch(...a);};
+    for(const k of Object.keys(CAS)){
+      S.foodLog=CAS[k]; if(typeof persist==='function') persist();
+      document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+      goScreen('nutrition'); await w(520);
+      const T=tendance14j();
+      out[k]={ alim:T.alim,
+               semaine:(document.getElementById('nu-ou-en-es')||{}).innerText.replace(/\n/g,' | '),
+               evo:(document.getElementById('nu-evolution')||{}).innerText.replace(/\n/g,' | ') };
+    }
+    out.requetes=reqs;
+    return out;
+  }catch(e){ return {err:String(e)}; } }, CAS);
+  await cx.close();
+
+  if(R.err) t('CCXV n\'a pas pu tourner', false, R.err);
+  else{
+    const A=R.unJourAMoitie, C=R.tousComplets, M=R.toutAMoitie, D=R.deuxAMoitie;
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : le moteur LIT les calories. Avant, `alim` ne
+       contenait qu'un compte de jours. */
+    t('⭐⭐ le moteur de trajectoire LIT l\'apport (il ne comptait que les jours)',
+      !!(A.alim && A.alim.kcal && A.alim.kcal.moy>0 && A.alim.kcal.cible>0),
+      JSON.stringify(A.alim));
+    /* ⛔⛔ LA CORRECTION MESURÉE : 2 067, pas 1 798. */
+    t('⛔⛔ un jour à moitié noté ne tire plus la moyenne vers le bas (2 067, pas 1 798)',
+      A.alim.kcal.moy===2067 && A.alim.kcal.jours===5, JSON.stringify(A.alim.kcal));
+    /* ⛔ LE CONTRÔLE QUI EMPÊCHE LE VERT À VIDE : sans jour partiel, RIEN ne doit être écarté
+       et la moyenne doit être la même. Sans lui, « écarter » et « ne rien mesurer » se
+       ressemblent. */
+    t('⛔ CONTRÔLE — sans jour partiel, 0 écarté et la MÊME moyenne',
+      C.alim.ecartes===0 && C.alim.kcal.moy===2067, JSON.stringify(C.alim));
+    /* ⛔⛔ AUCUN SEUIL INVENTÉ : la barre est la médiane de la personne. Chez quelqu'un qui note
+       systématiquement 2 moments, la barre vaut 2 et RIEN n'est écarté — l'app ne décrète pas
+       qu'il « note mal ». */
+    t('⛔⛔ la barre est la MÉDIANE de la personne, pas un seuil choisi (2 moments → 0 écarté)',
+      M.alim.barre===2 && M.alim.ecartes===0, JSON.stringify(M.alim));
+    t('⛔ … et elle vaut 4 chez quelqu\'un qui note 4 moments (elle suit l\'usage)',
+      A.alim.barre===4 && C.alim.barre===4, 'A='+A.alim.barre+' C='+C.alim.barre);
+    /* ⛔⛔ LA JUMELLE (R8) : « Ta semaine » applique la MÊME règle — c'est là que la distorsion
+       de 269 kcal avait été mesurée. */
+    t('⛔⛔ « Ta semaine » applique la MÊME règle (la distorsion y avait été mesurée)',
+      /2\s?067/.test(A.semaine.replace(/ | /g,' ')) && /jours complets/.test(A.semaine),
+      A.semaine.slice(0,110));
+    t('⛔ … et son libellé redevient « notés » quand rien n\'est écarté (il suit le calcul)',
+      /jours notés/.test(C.semaine) && !/complets/.test(C.semaine), C.semaine.slice(0,90));
+    /* ⛔ LES JOURS ÉCARTÉS SONT DITS, DES DEUX CÔTÉS — un jour mis de côté en silence est une
+       moyenne truquée. */
+    t('⛔ la carte évolution est bien en état de PARLER (sinon le témoin suivant est vert à vide)',
+      /Apport/.test(A.evo) && /kcal\/j/.test(A.evo), A.evo.slice(0,90));
+    t('⛔⛔ les jours écartés sont DITS dans les deux cartes, jamais silencieux',
+      /mis de côté/.test(A.semaine) && /mis de côté/.test(A.evo)
+      && /2 jours à moitié/.test(D.evo), 'A.evo='+A.evo.slice(-70));
+    /* ⛔ ANTI-TCA (P21) : l'apport est un FAIT, pas un signal jugé. Ni vert ni orange dessus,
+       et l'état global ne bascule pas sur lui. */
+    t('⛔⛔ l\'apport n\'est pas coloré comme un jugement (P21 : sous sa cible n\'est pas un échec)',
+      !/var\(--orange\)|var\(--green\)/.test(
+        fs.readFileSync(path.join(ROOT,'screens.js'),'utf8')
+          .split("if(T.alim.kcal){")[1].split("L.push(ligne('Nutrition'")[0]), '');
+    /* ⛔ ET LE COÛT RESTE NUL — c'était la promesse de ft-v1102, elle ne doit pas être perdue. */
+    t('⛔⛔ toujours 0 requête sortante au rendu des 4 journaux',
+      R.requetes===0, R.requetes+' requêtes');
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

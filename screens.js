@@ -231,6 +231,13 @@ const _HELP_DATA={
   nutrition:{
     title:'🍽️ Nutrition',
     tips:[
+      /* 🍽️ POINT 3 DE LA RÈGLE #11 — ni pop-up ni point rouge, et c'est argumenté : une ligne
+         apparaît dans une carte livrée la veille, et un chiffre existant devient plus juste ;
+         rien n'est à faire, aucun repère ne bouge. ⚠️ Mais la moyenne de « Ta semaine » PEUT
+         MONTER chez quelqu'un qui oublie des repas — *un chiffre qu'on suit et qui change
+         mérite une explication*, et c'est l'aide qui la porte, pas une interruption (R25). */
+      {i:'🍽️',t:'<b>Les journées à moitié notées ne comptent plus dans tes moyennes.</b> Si tu notes ton petit-déj puis que tu oublies le reste, cette journée-là ressemblait à une journée à 450 kcal — et elle tirait ta moyenne vers le bas. ⭐ <b>Mesuré</b> : un seul jour comme ça déplaçait la moyenne de <b>269 kcal</b>. ⛔ <b>L\'app ne décide pas ce qu\'est une « vraie » journée</b> : elle compare au <b>nombre de moments que TU notes d\'habitude</b>. Si tu notes deux repas par jour, deux repas est ta normale et <b>rien n\'est écarté</b>. 👉 Les jours mis de côté sont toujours <b>dits sous la carte</b> — jamais en silence. ⚠️ Ta moyenne peut donc <b>monter</b> par rapport à avant : elle est plus juste, tu n\'as rien changé.'},
+      {i:'📈',t:'<b>« Ton évolution » dit maintenant ce que tu manges, à côté de ce que ton corps fait.</b> Tu y trouves ton <b>apport moyen</b> et son écart à ta cible, juste sous ton poids et tes charges — sur la même fenêtre de 14 jours. ⭐ C\'est la seule carte où les trois se lisent ensemble : ailleurs, ils vivent sur des périodes différentes. ⛔ <b>Ton apport n\'est ni vert ni orange</b>, et il ne fait pas basculer le verdict de la carte : manger sous sa cible <b>n\'est pas un échec</b>, c\'est un fait. ⛔ Et ça ne coûte <b>aucune question à Milo</b> : tout est calculé sur ton téléphone.'},
       /* ⚖️ POINT 3 DE LA RÈGLE D'OR #11 — ET NI POP-UP NI POINT ROUGE, C'EST ARGUMENTÉ.
          Rien n'apparaît en usage normal : l'alerte ne se montre que sur une ligne déjà fausse,
          et aucun repère n'a bougé. Un point rouge enverrait chercher, sur un onglet où il n'y a
@@ -2430,10 +2437,35 @@ function _blocEvolutionHTML(){
       L.push(ligne('Force'+(T.force.decharge?' <span style="color:var(--t3);font-weight:400;">(semaine allégée)</span>':''),
         s+'&nbsp;'+(T.force.pct>0?'+':'')+String(T.force.pct).replace('.',',')+'&nbsp;%', c));
     }
+    /* 🍽️⛔⛔ L'APPORT MOYEN, ET C'EST LE MAILLON QUI MANQUAIT (ft-v1106).
+       La carte disait « 14 j notés » — un COMPTE. Elle dit maintenant ce qui a été mangé, à
+       côté de la tendance de poids : c'est la relation apport → cible → poids → objectif, sur
+       une seule carte et une seule fenêtre.
+       ⛔⛔ AUCUNE COULEUR DE JUGEMENT SUR L'APPORT (P21, anti-TCA) : le poids et la force sont
+       colorés parce qu'ils décrivent une trajectoire ; un apport sous sa cible n'est **pas** un
+       échec, c'est un fait. *Le vert et l'orange, ici, se liraient comme une note.*
+       ⛔ ET LES JOURS ÉCARTÉS SONT DITS : un jour mis de côté en silence est une moyenne
+       truquée. Mesuré : un seul jour à un repas déplace la moyenne de 269 kcal/j. */
+    if(T.alim.kcal){
+      const k=T.alim.kcal;
+      const ec = (k.ecart===null) ? ''
+        : (Math.abs(k.ecart)<=100 ? ' <span style="color:var(--t3);font-weight:400;">≈ ta cible</span>'
+          : ' <span style="color:var(--t3);font-weight:400;">'+(k.ecart<0?'−':'+')
+            +Math.abs(k.ecart).toLocaleString('fr-FR')+' vs cible</span>');
+      L.push(ligne('Apport <span style="color:var(--t3);font-weight:400;">('+k.jours+'&nbsp;j complets)</span>',
+        k.moy.toLocaleString('fr-FR')+'&nbsp;kcal/j'+ec, 'var(--t1)'));
+    }
     L.push(ligne('Nutrition', T.alim.etat==='solide'?'✓&nbsp;'+T.alim.jours+'&nbsp;j notés'
                             : T.alim.jours+'&nbsp;j notés',
                  T.alim.etat==='solide'?'var(--green)':'var(--t2)'));
-    corps='<div style="margin-top:7px;">'+L.join('')+'</div>';
+    corps='<div style="margin-top:7px;">'+L.join('')+'</div>'
+      /* ⛔ La raison de l'écart est écrite SOUS le bloc, en petit : elle explique un chiffre,
+         elle ne réclame rien (P21 — pas d'injonction à mieux noter). */
+      +((T.alim.kcal && T.alim.ecartes>0)
+        ? '<div style="font-size:11px;color:var(--t3);margin-top:6px;line-height:1.4;">'
+          +T.alim.ecartes+' jour'+(T.alim.ecartes>1?'s':'')+' à moitié noté'+(T.alim.ecartes>1?'s':'')
+          +' mis de côté — '+(T.alim.ecartes>1?'ils fausseraient':'il fausserait')+' la moyenne vers le bas.</div>'
+        : '');
 
     if(T.etat==='coherente'){
       ic='✓'; titre='Tu progresses dans la direction prévue';
@@ -2620,10 +2652,24 @@ function _renderOuTuEnEs(macros){
     return;
   }
 
-  // ── La semaine : moyenne sur les jours NOTÉS, jamais sur 7 ──────────────────────────
+  /* ── La semaine : moyenne sur les jours NOTÉS, jamais sur 7 ────────────────────────
+     ⛔⛔ ET SUR LES JOURS ASSEZ REMPLIS, DEPUIS ft-v1106 — c'est LA JUMELLE (R8), et elle
+     comptait double : la distorsion de **269 kcal/j** que l'audit du 02/09 a mesurée l'a été
+     **sur cette carte-ci**, pas sur la carte « Ton évolution ». La corriger seulement dans la
+     carte neuve aurait laissé le défaut à l'endroit exact où il avait été chiffré, et fabriqué
+     deux moyennes qui ne se calculent pas pareil à 400 px l'une de l'autre.
+     ⭐ UN SEUL PROPRIÉTAIRE DE LA RÈGLE (`_joursAlimComplets`, R2) : les deux cartes ne
+     diffèrent plus que par leur FENÊTRE — 7 jours ici, 14 là-bas — ce qui est dit à l'écran.
+     ⛔ REPLI SÛR : si la règle écarte trop et qu'il reste moins de jours que ce qu'on avait,
+     on garde ce qu'on avait. *Un garde-fou ne doit jamais faire disparaître l'information
+     qu'il protège.* */
+  const _jc=(typeof _joursAlimComplets==='function')?_joursAlimComplets(7):null;
+  const _dispo=(_jc&&_jc.complets.length)?_jc.complets.filter(d=>jours.indexOf(d)>=0):[];
+  const joursCalc=_dispo.length?_dispo:jours;
+  const ecartes=jours.length-joursCalc.length;
   let sk=0, sp=0;
-  jours.forEach(d=>{ const t=_foodTotals(d); sk+=t.kcal; sp+=t.prot; });
-  const moyK=Math.round(sk/jours.length), moyP=Math.round(sp/jours.length);
+  joursCalc.forEach(d=>{ const t=_foodTotals(d); sk+=t.kcal; sp+=t.prot; });
+  const moyK=Math.round(sk/joursCalc.length), moyP=Math.round(sp/joursCalc.length);
   const ecart=cible?Math.round(moyK-cible):0;
   /* ⚠️ LE POURCENTAGE N'EST PLUS PLAFONNÉ À 100 (19/08) — le plafond a du sens sur une BARRE
      (elle ne peut pas déborder), aucun sur un nombre affiché : quelqu'un qui mange 50 % de trop
@@ -2650,13 +2696,16 @@ function _renderOuTuEnEs(macros){
      est une information ; « moyenne de la semaine » calculée sur 3 jours est un mensonge. */
   /* ⚠️ « Moyenne des N jours notés », jamais « en moyenne » tout court : les deux relectures
      extérieures ont pointé la même ambiguïté — « en moyenne » se lit comme « sur la semaine ». */
-  const sJours=jours.length+' jour'+(jours.length>1?'s':'')+' noté'+(jours.length>1?'s':'');
+  /* ⚠️ LE LIBELLÉ SUIT LE CALCUL : si on a écarté des jours, on ne peut plus écrire
+     « jours notés » — ce serait annoncer une base qui n'est pas celle du chiffre. */
+  const sJours=joursCalc.length+' jour'+(joursCalc.length>1?'s':'')
+             +(ecartes>0?' complet'+(joursCalc.length>1?'s':''):' noté'+(joursCalc.length>1?'s':''));
   /* ⚠️⚠️ ON NE JUGE PAS UN ÉCART TANT QU'ON N'A PAS DE QUOI (19/08) : avec un seul jour terminé,
      « 2 367 kcal sous ta cible » n'est pas une information, c'est un constat d'échec adressé à
      quelqu'un qui vient de faire son premier geste. C'est exactement le reproche qu'on croyait
      avoir supprimé avec le « 0 / 2 547 » — déplacé sur la moyenne. Il faut AU MOINS 3 jours
      terminés pour qu'un écart veuille dire quelque chose. */
-  const sEcart=(!cible||jours.length<3) ? '' : (Math.abs(ecart)<=100
+  const sEcart=(!cible||joursCalc.length<3) ? '' : (Math.abs(ecart)<=100
     ? '<span style="color:var(--green);font-weight:700;">dans ta cible</span>'
     : (ecart<0 ? '<span style="color:var(--t2);font-weight:700;">'+Math.abs(ecart)+' kcal sous ta cible</span>'
                : '<span style="color:var(--t2);font-weight:700;">'+ecart+' kcal au-dessus</span>'));
@@ -2678,7 +2727,10 @@ function _renderOuTuEnEs(macros){
         : '<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);">Ta moyenne</div>'
           +'<div style="font-size:13px;color:var(--t2);line-height:1.4;margin-top:4px;">Elle apparaîtra dès qu\'une journée entière sera derrière toi.</div></div>')
     +'</div>'
-    +(jours.length<3?'<div style="font-size:11.5px;color:var(--t3);line-height:1.4;margin-top:11px;">Encore quelques jours notés et la moyenne deviendra un vrai repère — c\'est elle qui compte, pas une journée isolée.</div>':'')
+    +(ecartes>0?'<div style="font-size:11px;color:var(--t3);line-height:1.4;margin-top:9px;">'
+        +ecartes+' jour'+(ecartes>1?'s':'')+' à moitié noté'+(ecartes>1?'s':'')+' mis de côté — '
+        +(ecartes>1?'ils fausseraient':'il fausserait')+' la moyenne vers le bas.</div>':'')
+    +(joursCalc.length<3?'<div style="font-size:11.5px;color:var(--t3);line-height:1.4;margin-top:11px;">Encore quelques jours notés et la moyenne deviendra un vrai repère — c\'est elle qui compte, pas une journée isolée.</div>':'')
     +'</div>';
 }
 
