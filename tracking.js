@@ -1575,8 +1575,25 @@ function saveBodyScan(){
   if(!date){toast('Choisis une date','error');return;}
   const wEl=document.getElementById('bs-weight');const weight=wEl?numFR(wEl.value):NaN;
   if(!weight||weight<=0){toast('Le poids est obligatoire','error');return;}
+  /* ⛔⛔ ft-v1096 — LA MÊME BORNE QUE LA SAISIE MANUELLE (R2/R8). Mesuré : 3 000 kg était
+     *refusé* en le tapant et *accepté* en le faisant lire par l'IA — puis écrit dans le même
+     `S.weightLog`, avec un TDEE à 47 900 kcal à la clé. ⛔ On refuse, et on DIT que la valeur
+     vient d'être lue sur une photo : c'est là que la personne doit regarder (R29). */
+  if(typeof _poidsValide==='function' && !_poidsValide(weight)){
+    toast('Poids hors limites : '+weight+' kg (attendu 20–300). '
+      +(_bsSource==='manuel'?'Corrige la valeur.':'La lecture de la photo s\'est trompée — corrige avant d\'enregistrer.'),'error');
+    return;
+  }
   const obj={date};
-  _BS_FIELDS.concat(_BS_SEG_FIELDS).forEach(f=>{const e=document.getElementById('bs-'+f.k);if(!e)return;const v=numFR(e.value);if(!isNaN(v))obj[f.k]=v;});
+  /* ⛔ ft-v1096 — UN POURCENTAGE DE GRAS HORS DU VIVANT N'EST PAS UNE MESURE, c'est une ligne
+     mal lue : mesuré, **300 %** était enregistré sans un mot. On écarte LA VALEUR, pas le
+     bilan — le reste de la lecture est peut-être bon, et le poids, lui, est déjà validé
+     au-dessus (règle d'or #3 : on ne fait pas perdre ce qui est juste). Et on le dit. */
+  let _bsEcartes=[];
+  _BS_FIELDS.concat(_BS_SEG_FIELDS).forEach(f=>{const e=document.getElementById('bs-'+f.k);if(!e)return;const v=numFR(e.value);
+    if(isNaN(v))return;
+    if(f.k==='bf' && typeof _pctGrasValide==='function' && !_pctGrasValide(v)){ _bsEcartes.push('% de gras ('+v+' %)'); return; }
+    obj[f.k]=v;});
   if((obj.imc==null||isNaN(obj.imc))&&S.height){obj.imc=+(weight/Math.pow(S.height/100,2)).toFixed(1);}
   /* 🏷️ CE QUI EST NORMALISÉ GARDE D'OÙ IL VIENT (R33). Sans ça, impossible d'auditer plus tard
      une valeur douteuse — ni de savoir si elle a été LUE, CALCULÉE ou tapée à la main. */
@@ -1605,7 +1622,7 @@ function saveBodyScan(){
   closeBodyScanForm();
   if(typeof renderWeightTab==='function')renderWeightTab(); else renderBodyScanCard();
   if(typeof renderHome==='function')renderHome();
-  toast('Bilan enregistré ✅ (poids + masse grasse mis à jour)','success');
+  toast('Bilan enregistré ✅'+(_bsEcartes.length?' — '+_bsEcartes.join(', ')+' écarté'+(_bsEcartes.length>1?'s':'')+' (hors limites)':'')+' (poids + masse grasse mis à jour)','success');
 }
 function deleteBodyScan(){
   if(_bsEditIdx<0||!S.bodyScans||!S.bodyScans[_bsEditIdx])return;
