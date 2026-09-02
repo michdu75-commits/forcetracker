@@ -21958,7 +21958,7 @@ console.log('\n-- CXCVIII. La santé vit dans sa propre clé, sans rien perdre (
 }
 
 
-/* == BLOC CXCIX - LES QUATRE VERIFICATEURS DU BANC D'ESSAI QUI ACCUSAIENT A TORT (ft-v1094) ==
+/* == BLOC CCI - LES QUATRE VERIFICATEURS DU BANC D'ESSAI QUI ACCUSAIENT A TORT (ft-v1094) ==
    Michel : « corrige les 4 verificateurs du bench ». Sur les 6 rouges de la passe du 01/09,
    quatre ne mesuraient pas ce que leur libelle annoncait.
    ⚠️ HONNETETE PREALABLE : les REPONSES de cette passe ne sont plus sur le disque (le rapport
@@ -21967,7 +21967,7 @@ console.log('\n-- CXCVIII. La santé vit dans sa propre clé, sans rien perdre (
    DEUX sens — une bonne reponse doit passer, une mauvaise doit toujours rougir.
    ⛔⛔ C'EST LE POINT QUI COMPTE : un verificateur qu'on desserre sans le faire rougir devient
    un scenario mort, et un scenario mort coute un appel API pour ne rien mesurer (R35). */
-console.log('\n-- CXCIX. Les 4 vérificateurs du banc d\'essai qui accusaient à tort (ft-v1094) --');
+console.log('\n-- CCI. Les 4 vérificateurs du banc d\'essai qui accusaient à tort (ft-v1094) --');
 {
   const SC=require(path.join(__dirname,'..','milo','eval-scenarios.js'));
   const vf=(id,n)=>{ const sc=SC.find(x=>x.id===id); return sc && sc.verifs[n] && sc.verifs[n].fn; };
