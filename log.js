@@ -6220,7 +6220,17 @@ async function _histAnalyzeBatch(imgs){
   console.log('[ImportHist] Réponse brute lot :', raw.slice(0,500));
   const d=JSON.parse(raw);
   if(d.status!=='ok'||!d.data)throw new Error(d.error||'Extraction échouée');
-  return (d.data.sessions||[]);
+  /* ⛔ ft-v1095 — ON NORMALISE À L'ENTRÉE, UNE FOIS (R2). Mesuré : un `exercises` rendu comme
+     une CHAÎNE faisait planter l'analyse avec « (sess.exercises || []).forEach is not a
+     function » — une trace technique montrée à la personne. Il y a **une dizaine** de lecteurs
+     de `sess.exercises` en aval ; les rustiner un par un, c'est en oublier un. Ce qui entre
+     doit être de la bonne FORME, et ça se décide ici. */
+  const brutes = Array.isArray(d.data.sessions) ? d.data.sessions : [];
+  return brutes.filter(x=>x&&typeof x==='object').map(x=>Object.assign({}, x, {
+    exercises: (Array.isArray(x.exercises)?x.exercises:[])
+      .filter(e=>e&&typeof e==='object'&&e.name)
+      .map(e=>Object.assign({}, e, {sets: Array.isArray(e.sets)?e.sets.filter(t=>t&&typeof t==='object'):[]}))
+  }));
 }
 // Limite premium : import de journal gratuit = 1 seul au total (illimité en premium).
 // ⚠️ Ne concerne QUE l'import de journal — l'import de PROGRAMME n'est pas limité.
@@ -6267,7 +6277,13 @@ async function analyzeHistPhotos(){
   if(!allSessions.length){
     histGoStep(2);
     const dense=/JSON invalide|tronqu/i.test(lastErr);
-    toast(dense?'Pages trop denses pour l\'analyse — réessaie avec moins de pages à la fois':'Erreur analyse : '+lastErr,'error');
+    /* ⛔ ft-v1095 — « Erreur analyse : » SUIVI DE RIEN. Depuis que la réponse est normalisée à
+       l'entrée, une réponse bien formée mais SANS séance exploitable ne lève plus d'exception :
+       `lastErr` reste vide et le message se terminait sur deux-points. *Un message tronqué se
+       lit comme un bug de l'app alors que le problème est la page.* On distingue les deux. */
+    toast(dense?'Pages trop denses pour l\'analyse — réessaie avec moins de pages à la fois'
+      :(lastErr?'Erreur analyse : '+lastErr
+              :'Aucune séance lisible sur cette page — vérifie qu\'on y voit bien les exercices, les charges et la date'),'error');
     return;
   }
   if(failed)toast(failed+' lot'+(failed>1?'s':'')+' non lu'+(failed>1?'s':'')+' — vérifie l\'aperçu, tu pourras réimporter les pages manquantes','info');
@@ -6394,7 +6410,7 @@ function finalImportHist(){
   // Créer les exercices personnalisés manquants
   const allExNames=new Set([...EXLIB,...(S.customExercises||[])].map(e=>e.n.toLowerCase()));
   const toCreate=[];
-  sessions.forEach(sess=>(sess.exercises||[]).forEach(ex=>{
+  sessions.forEach(sess=>(Array.isArray(sess.exercises)?sess.exercises:[]).forEach(ex=>{
     const low=(ex.name||'').toLowerCase();
     if(low&&!allExNames.has(low)&&!toCreate.find(n=>n.toLowerCase()===low))toCreate.push(ex.name);
   }));
@@ -6409,11 +6425,25 @@ function finalImportHist(){
   // Trier par date ASC pour insertion + calcul PRs chronologique
   const sessionsAsc=[...sessions].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
 
+  /* ⛔⛔ ft-v1095 — CE QUI ENTRE DANS L'HISTORIQUE EST VÉRIFIÉ. Mesuré en rendant à l'app ce
+     qu'un modèle peut halluciner : `500 kg × 50 reps` posait un record de **1 060 kg de 1RM**,
+     une charge négative un record de **−90 kg**, et les dates `1900-01-01`, `2099-01-01` ou
+     même « le mardi » entraient telles quelles. *Un faux record vers le haut n'est jamais
+     battu : il est éternel, et il sert de référence aux charges que Milo propose.*
+     ⛔ ON ÉCARTE LA SÉRIE, PAS LA SÉANCE : une page mal lue sur une ligne ne doit pas faire
+     perdre les neuf autres (**règle d'or #3**). Une date invalide, elle, écarte la séance —
+     l'aperçu ne permet pas de la corriger, et une date fausse pollue durablement tous les
+     graphes et le contexte de Milo.
+     ⭐ ET ON LE DIT : un rejet silencieux est indiscernable d'un import réussi (**R29**). */
+  let _seriesEcartees=0, _seancesDateKO=0, _seancesVides=0;
   sessionsAsc.forEach((sess,si)=>{
     const origIdx=sessions.indexOf(sess);
     const conflict=_histConflicts.find(c=>c.idx===origIdx);
 
     if(conflict&&conflict.resolution==='keep')return;
+    if(typeof _dateImportValide==='function' && !_dateImportValide(sess.date)){ _seancesDateKO++; return; }
+    // ⛔ une séance SANS aucun exercice est du bruit dans l'historique — et elle fausse le compte
+    if(!(Array.isArray(sess.exercises)&&sess.exercises.length)){ _seancesVides++; return; }
     if(conflict&&conflict.resolution==='replace'){
       const idx=(S.sessions||[]).findIndex(s=>s.date===sess.date);
       if(idx>=0)S.sessions.splice(idx,1);
@@ -6421,8 +6451,17 @@ function finalImportHist(){
 
     // Construire la séance au format attendu par l'app
     let vol=0;
-    const exs=(sess.exercises||[]).map(ex=>{
-      const sets=(ex.sets||[]).map(s=>{
+    /* ⛔ ft-v1095 — `exercises` n'est pas forcément un TABLEAU : mesuré, une chaîne faisait
+       planter l'import avec « (sess.exercises || []).forEach is not a function » montré à la
+       personne. Un type inattendu doit produire un refus lisible, pas une trace technique. */
+    const exs=(Array.isArray(sess.exercises)?sess.exercises:[]).map(ex=>{
+      const sets=(ex.sets||[]).filter(s=>{
+        // ⛔ ft-v1095 : hors bornes physiques → la série n'entre pas (voir `_serieValide`)
+        if(typeof _serieValide!=='function') return true;
+        const ok=_serieValide(s&&s.kg, s&&s.reps);
+        if(!ok)_seriesEcartees++;
+        return ok;
+      }).map(s=>{
         const kg=s.kg||0,reps=s.reps||0;
         const type=s.type==='D'?'D':'';
         // Volume : tout sauf Échauffement (W). Drop set D compte.
@@ -6450,7 +6489,9 @@ function finalImportHist(){
   });
 
   if(!addedCount){
-    toast('Aucune séance importée (toutes conservées)','info');
+    if(_seancesVides&&!_seancesDateKO)toast('Aucune séance importée — '+_seancesVides+' séance'+(_seancesVides>1?'s':'')+' sans exercice lisible. Vérifie la page.','error');
+    else if(_seancesDateKO)toast('Aucune séance importée — '+_seancesDateKO+' date'+(_seancesDateKO>1?'s':'')+' illisible'+(_seancesDateKO>1?'s':'')+' ou hors limites. Vérifie la page.','error');
+    else toast('Aucune séance importée (toutes conservées)','info');
     closeImportHist();
     return;
   }
@@ -6484,7 +6525,14 @@ function finalImportHist(){
   _cloudSyncSessions();
   checkBadges(true);
   closeImportHist();
-  toast(addedCount+' séance'+(addedCount>1?'s':'')+' importée'+(addedCount>1?'s':'')+' dans l\'historique ✅','success');
+  /* ⭐ ft-v1095 — un rejet SILENCIEUX est indiscernable d'un import réussi : on dit ce qui
+     n'est pas entré, et pourquoi, pour que la personne puisse vérifier sa page (R29). */
+  const _ecarts=[];
+  if(_seancesDateKO)_ecarts.push(_seancesDateKO+' séance'+(_seancesDateKO>1?'s':'')+' sans date lisible');
+  if(_seancesVides)_ecarts.push(_seancesVides+' séance'+(_seancesVides>1?'s':'')+' sans exercice lisible');
+  if(_seriesEcartees)_ecarts.push(_seriesEcartees+' série'+(_seriesEcartees>1?'s':'')+' hors limites (poids ou répétitions)');
+  toast(addedCount+' séance'+(addedCount>1?'s':'')+' importée'+(addedCount>1?'s':'')+' dans l\'historique ✅'
+    +(_ecarts.length?' — '+_ecarts.join(', ')+' mise'+(_seancesDateKO+_seriesEcartees>1?'s':'')+' de côté':''),'success');
 }
 
 // ─── SÉLECTION DU JOUR ────────────────────────────────────────

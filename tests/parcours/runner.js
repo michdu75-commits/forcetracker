@@ -22081,6 +22081,94 @@ console.log('\n-- CCI. Deux onglets · hors ligne · les dates rares (ft-v1094) 
     JSON.stringify(off.ecrans)+' · '+errsOff.slice(0,1));
 }
 
+/* ═══ CCII. LES IMPORTS — CE QU'UN MODÈLE HALLUCINE N'ENTRE PLUS DANS L'HISTORIQUE (ft-v1095) ═══
+   Michel : « vas-y attaque les imports ». Dernière famille non instruite des 4 passes.
+   La question qui décide (R33) : un document partiel, illisible ou aberrant produit-il un
+   ÉCHEC PROPRE, ou une DONNÉE INVENTÉE ? Mesuré en rendant à l'app, par ses vraies fonctions,
+   ce qu'un modèle peut lui renvoyer — seul `fetch` est remplacé.
+   ⛔⛔ CE QUI PASSAIT AVANT : `500 kg × 50 reps` posait un record de **1 060 kg de 1RM** · une
+   charge NÉGATIVE un record de **−90 kg** · les dates `1900-01-01`, `2099-01-01` et même la
+   chaîne « le mardi » entraient telles quelles · et un `exercises` rendu comme une CHAÎNE
+   faisait planter l'import avec une trace technique à l'écran.
+   ⭐⭐ LE 500 × 50 EST LE CAS INSTRUCTIF : chaque valeur passait les bornes de `coach.js`
+   (500 ≤ 500, 50 ≤ 100). C'est la COMBINAISON qui est impossible — `bz()` plafonne les
+   répétitions à 20, donc toute charge × 20 vaut 2,1 fois elle-même. *On borne donc aussi ce
+   qui SORT.* ⭐ Un faux record vers le HAUT n'est jamais battu : il est éternel, et il sert de
+   référence aux charges que Milo propose (famille de ft-v1085).
+   ⛔ Les bornes ont désormais UN SEUL propriétaire (`_serieValide`), partagé avec `coach.js`
+   qui les avait déjà — le même garde-fou sur un chemin et pas sur l'autre, c'est R8. */
+console.log('\n-- CCII. Les imports : ce qu\'un modèle hallucine n\'entre plus (ft-v1095) --');
+{
+  const CAS=[
+    ['temoin',   {status:'ok',data:{sessions:[{date:'2026-08-10',label:'S',exercises:[{name:'Développé Couché',sets:[{kg:100,reps:5,type:''},{kg:100,reps:5,type:''}]}]}]}}],
+    ['aberrant', {status:'ok',data:{sessions:[{date:'2026-08-01',label:'S',exercises:[{name:'Développé Couché',sets:[{kg:500,reps:50,type:''}]}]}]}}],
+    ['negatif',  {status:'ok',data:{sessions:[{date:'2026-08-02',label:'S',exercises:[{name:'Squat à la Barre',sets:[{kg:-80,reps:5,type:''}]}]}]}}],
+    ['date1900', {status:'ok',data:{sessions:[{date:'1900-01-01',label:'S',exercises:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,type:''}]}]}]}}],
+    ['futur',    {status:'ok',data:{sessions:[{date:'2099-01-01',label:'S',exercises:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,type:''}]}]}]}}],
+    ['dateKO',   {status:'ok',data:{sessions:[{date:'le mardi',label:'S',exercises:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,type:''}]}]}]}}],
+    ['exChaine', {status:'ok',data:{sessions:[{date:'2026-08-07',label:'S',exercises:'Squat 3x5'}]}}],
+  ];
+  const R={};
+  for(const [cle,rep] of CAS){
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
+    await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',ft4_premium:'1'}));
+    await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+    R[cle]=await pg.evaluate(async(payload)=>{
+      const o={toasts:[]}, wait=ms=>new Promise(r=>setTimeout(r,ms));
+      const corps=JSON.stringify(payload);
+      window.fetch=()=>Promise.resolve({ok:true,status:200,text:()=>Promise.resolve(corps),json:()=>Promise.resolve(JSON.parse(corps))});
+      const vt=window.toast; window.toast=function(m,t){o.toasts.push(String(m).slice(0,90));return vt&&vt.apply(this,arguments);};
+      try{ _histPhotos.length=0; _histPhotos.push({type:'image/jpeg',data:'x'}); await analyzeHistPhotos(); await wait(500); }
+      catch(e){ o.errAnalyse=String(e.message||e).slice(0,80); }
+      try{ if(typeof finalImportHist==='function'){ finalImportHist(); await wait(350); } }
+      catch(e){ o.errFinal=String(e.message||e).slice(0,80); }
+      o.sessions=(S.sessions||[]).length;
+      o.maxRM=Math.max(0,...Object.values(S.prs||{}).map(v=>+v.rm1||0));
+      o.minRM=Math.min(0,...Object.values(S.prs||{}).map(v=>+v.rm1||0));
+      o.dates=(S.sessions||[]).map(s=>s.date);
+      return o;
+    }, rep);
+    R[cle].errsJS=errs;
+    await cx.close();
+  }
+  t('⛔⛔ LE TÉMOIN : une réponse VALIDE est toujours acceptée, avec son record (sinon tout le bloc est vert en refusant tout)',
+    R.temoin.sessions===1 && R.temoin.maxRM>100 && R.temoin.maxRM<130, JSON.stringify({s:R.temoin.sessions,rm:R.temoin.maxRM}));
+  t('⭐⭐ `500 kg × 50 reps` n\'entre plus : AUCUN record (il valait 1 060 kg de 1RM, éternel)',
+    R.aberrant.maxRM===0, 'record max = '+R.aberrant.maxRM);
+  t('⭐ … et la séance elle-même est GARDÉE : une ligne mal lue ne fait pas perdre la page (règle d\'or #3)',
+    R.aberrant.sessions===1, 'séances = '+R.aberrant.sessions);
+  t('⭐⭐ … et on le DIT — un rejet silencieux est indiscernable d\'un import réussi (R29)',
+    R.aberrant.toasts.some(m=>/hors limites/.test(m)), R.aberrant.toasts.slice(-1)[0]||'(rien dit)');
+  t('⭐ une charge NÉGATIVE ne pose plus de record (il valait −90 kg)',
+    R.negatif.minRM===0 && R.negatif.maxRM===0, JSON.stringify({min:R.negatif.minRM,max:R.negatif.maxRM}));
+  t('⭐⭐ une date en 1900 n\'entre plus dans l\'historique (elle étirait chaque graphe sur 126 ans)',
+    R.date1900.sessions===0, JSON.stringify(R.date1900.dates));
+  t('⭐⭐ … ni une date dans le FUTUR (on ne s\'est pas encore entraîné demain)',
+    R.futur.sessions===0, JSON.stringify(R.futur.dates));
+  t('⭐ … ni une date illisible (« le mardi » entrait telle quelle)',
+    R.dateKO.sessions===0, JSON.stringify(R.dateKO.dates));
+  t('⛔ … et chaque refus de date dit POURQUOI, au lieu de « aucune séance »',
+    R.date1900.toasts.some(m=>/date/i.test(m)&&/limites|illisible/i.test(m)), R.date1900.toasts.slice(-1)[0]||'(rien dit)');
+  t('⭐⭐ un `exercises` de type inattendu ne fait plus PLANTER l\'import (trace technique à l\'écran)',
+    !R.exChaine.errAnalyse && !R.exChaine.errFinal && R.exChaine.errsJS.length===0,
+    JSON.stringify({a:R.exChaine.errAnalyse,f:R.exChaine.errFinal,js:R.exChaine.errsJS.slice(0,1)}));
+  t('⛔ … et la séance vide qui en résulte n\'entre pas dans l\'historique, en le disant',
+    R.exChaine.sessions===0 && R.exChaine.toasts.some(m=>/sans exercice/i.test(m)),
+    JSON.stringify({s:R.exChaine.sessions,dit:R.exChaine.toasts.slice(-1)[0]}));
+
+  // ── RÈGLES figées : un seul propriétaire des bornes, et les deux chemins l'emploient
+  const _st=fs.readFileSync(path.join(ROOT,'state.js'),'utf8');
+  const _co=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+  const _lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+  t('⛔⛔ R2/R8 : les bornes d\'une série ont UN SEUL propriétaire, et les DEUX chemins l\'emploient',
+    /function _serieValide/.test(_st) && /_serieValide\(/.test(_co) && /_serieValide\(/.test(_lg), '');
+  t('⛔ … et aucun des deux ne réécrit les bornes en dur à côté (elles divergeraient)',
+    !/kg<=500/.test(_co) && !/reps<=100/.test(_co), '');
+  t('⛔ la borne porte aussi sur le 1RM PRODUIT, pas seulement sur les entrées (le cas 500 × 50)',
+    /bz\(k,\s*r\)\s*<=\s*600/.test(_st), '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
