@@ -22799,6 +22799,99 @@ console.log('\n-- CCV. La 3e porte vers l\'effacement · les bornes du profil re
   await cx.close();
 }
 
+
+/* ═══ CCVI. UN CYCLE TERMINÉ NE LE DISAIT JAMAIS — NI À L'ÉCRAN, NI À MILO (ft-v1100) ═══
+   Michel : « continue stp ». 2e passe. ⛔ Elle commence par une DETTE : j'avais annoncé le
+   cycle « non mesuré » en ft-v1099 parce que mes sondes s'étaient trompées de champ. Repris
+   avec une fixture LUE dans `startCycle` — {rm1, target}, active:true.
+   ⛔⛔ LE DÉFAUT : `getCurrentCycleWeek` PLAFONNE à `weeks`. Juste pour une barre de
+   progression, faux pour tout le reste — passé la fin, la fonction rend éternellement la
+   dernière semaine. MESURÉ : un cycle fini depuis 1 jour, 1 an et SIX ANS rend un écran
+   rigoureusement IDENTIQUE à celui de la dernière semaine (« Semaine 12/12 — Décharge,
+   55 % 1RM · 2×5 reps »), présenté comme la consigne du jour.
+   ⛔⛔ ET CE N'EST PAS QU'UN AFFICHAGE : la même valeur partait dans le contexte de Milo
+   (« Actif - Semaine 12/12 - Phase Décharge »). Milo prescrivait donc une décharge sur la foi
+   d'un fait faux sur la personne — famille R4/R10.
+   ⭐ UN SEUL PROPRIÉTAIRE (`cycleTermine`, R2), lu par l'écran ET par `buildCoachContext`.
+   ⚠️ ON NE CLÔTURE PAS TOUT SEUL (R29) : `S.cycle` porte les 1RM de départ et les objectifs
+   de la personne. On le DIT, elle décide.
+   ⛔⛔ LE TÉMOIN QUI PORTE TOUT LE RISQUE N'EST PAS CELUI DU CYCLE FINI : c'est celui de la
+   DERNIÈRE SEMAINE, qui ne doit RIEN afficher. Un bandeau « terminé » pendant la semaine de
+   décharge serait faux et décourageant. */
+console.log('\n-- CCVI. Un cycle terminé ne le disait jamais (ft-v1100) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2200);
+
+  const J=await pg.evaluate(()=>{
+   try{
+    const o={};
+    const ex={'Squat':{rm1:100,target:110}};
+    const jours=(n)=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    const jouer=(nbJours,weeks)=>{
+      S.cycle={active:true,startDate:jours(nbJours),weeks,exercises:ex};
+      renderCycleScreen();
+      const c=document.getElementById('cyc-fini-carte');
+      return {banniere: !!(c && c.style.display!=='none'),
+              txt:(document.getElementById('cyc-fini-txt')||{}).textContent||'',
+              semaine:getCurrentCycleWeek()};
+    };
+    o.enCours  = jouer(15,  12);   // semaine 3
+    o.derniere = jouer(78,  12);   // DERNIÈRE semaine — le témoin qui compte
+    o.finiPeu  = jouer(85,  12);   // fini depuis moins d'une semaine
+    o.finiAn   = jouer(449, 12);   // fini depuis un an
+    /* ⛔ LE CONTRÔLE DE LA SONDE : la dernière semaine et « fini » doivent DIFFÉRER,
+       sinon la mesure ne prouve rien (leçon des 4 faux positifs de ft-v1099). */
+    o.sondeMord = o.derniere.banniere!==o.finiPeu.banniere;
+    /* ── ce que reçoit MILO, dans les deux états ── */
+    S.cycle={active:true,startDate:jours(15),weeks:12,exercises:ex};
+    const c1=buildCoachContext();
+    o.miloEnCours = /Actif - Semaine 3\/12/.test(c1) && !/TERMIN/.test(c1);
+    S.cycle={active:true,startDate:jours(449),weeks:12,exercises:ex};
+    const c2=buildCoachContext();
+    o.miloFiniDit = /TERMIN/.test(c2);
+    o.miloFiniPasActif = !/Actif - Semaine 12\/12/.test(c2);
+    o.miloConsigne = /Ne prescris PLUS/.test(c2);
+    /* ── R2 : un seul propriétaire, employé par les DEUX ── */
+    o.unSeulProprio = /cycleTermine\(\)/.test(String(renderCycleActive))
+                   && /cycleTermine/.test(String(buildCoachContext));
+    /* ── R29 : on ne clôture pas tout seul ── */
+    o.pasDeCloture = !!S.cycle && S.cycle.active===true;
+    /* ── aide détaillée (règle d'or #11) ── */
+    o.aide = JSON.stringify(_DRAWER_CONTENT||{}).indexOf('cycle de force est termin')>=0;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+  if(J.err) t('CCVI n\'a pas pu tourner', false, J.err);
+  else{
+    t('⛔⛔ LE TÉMOIN QUI PORTE LE RISQUE : pendant la DERNIÈRE semaine, aucun bandeau « terminé »',
+      J.derniere.banniere===false, JSON.stringify(J.derniere));
+    t('⛔ … ni en cours de cycle (semaine 3)', J.enCours.banniere===false, JSON.stringify(J.enCours));
+    t('⛔ … et la sonde MORD (les deux états diffèrent, sinon elle ne prouve rien)',
+      J.sondeMord===true, '');
+    t('⭐⭐ SON CAS : un cycle fini le DIT, et dit depuis quand',
+      J.finiPeu.banniere===true && /achev/.test(J.finiPeu.txt), J.finiPeu.txt);
+    t('⭐ … même un an après, avec le bon nombre de semaines',
+      J.finiAn.banniere===true && /53 semaines/.test(J.finiAn.txt), J.finiAn.txt);
+    t('⛔⛔ MILO ne reçoit plus « Actif - Semaine 12/12 » pour un cycle fini',
+      J.miloFiniPasActif===true, '');
+    t('⭐⭐ … il reçoit TERMINÉ, et la consigne de ne plus prescrire ses pourcentages',
+      J.miloFiniDit===true && J.miloConsigne===true, '');
+    t('⛔ … pendant qu\'un cycle EN COURS lui arrive toujours normalement (non-régression)',
+      J.miloEnCours===true, '');
+    t('⭐ R2 : un seul propriétaire de « ce cycle est-il fini ? », lu par l\'écran ET par Milo',
+      J.unSeulProprio===true, '');
+    t('⛔ R29 : l\'app ne clôture RIEN toute seule — les 1RM de départ restent',
+      J.pasDeCloture===true, '');
+    t('📣 #11 · l\'aide détaillée explique l\'état « terminé »', J.aide===true, '');
+    t('⛔ 0 erreur JS', errs.length===0, JSON.stringify(errs.slice(0,2)));
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

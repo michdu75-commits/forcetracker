@@ -262,6 +262,37 @@ function getCurrentCycleWeek() {
   return Math.min(Math.max(1, w), S.cycle.weeks);
 }
 
+/* ⛔⛔ UN CYCLE TERMINÉ NE LE DIT JAMAIS (ft-v1100).
+   `getCurrentCycleWeek` PLAFONNE à `weeks` — c'est juste pour afficher une barre de
+   progression, et faux pour tout le reste : passé la fin, la fonction rend éternellement la
+   dernière semaine. **Mesuré** : un cycle fini depuis 1 jour, 1 an et **6 ans** rend un écran
+   RIGOUREUSEMENT IDENTIQUE à celui de la dernière semaine — « Semaine 12 / 12 — Décharge,
+   55 % 1RM · 2 × 5 reps », présenté comme la consigne du jour.
+   ⛔⛔ ET CE N'EST PAS QU'UN AFFICHAGE : la même valeur part dans le contexte de Milo
+   (« Actif - Semaine 12/12 - Phase Décharge »). *Milo prescrit donc une semaine de décharge
+   pour un cycle terminé depuis des années* — un fait faux sur la personne, exactement ce que
+   R4/R10 interdisent.
+   ⭐ UN SEUL PROPRIÉTAIRE de la question (R2), lu par l'écran ET par `buildCoachContext` :
+   sinon les deux divergeront le jour où l'un des deux est retouché.
+   ⚠️ ON NE FERME PAS LE CYCLE TOUT SEUL (R29) : `S.cycle` porte ses 1RM de départ et ses
+   objectifs — c'est le travail de la personne. On le DIT, elle décide. */
+function _cycleSemaineBrute() {
+  if (!S.cycle || !S.cycle.startDate) return 1;
+  const start = new Date(S.cycle.startDate);
+  if (isNaN(start)) return 1;
+  return Math.max(1, Math.floor((new Date() - start) / (7 * 24 * 60 * 60 * 1000)) + 1);
+}
+function cycleTermine() {
+  if (!S.cycle || !S.cycle.active || !S.cycle.weeks) return false;
+  return _cycleSemaineBrute() > S.cycle.weeks;
+}
+/* Depuis combien de semaines ? — sert à écrire « terminé depuis 3 semaines » plutôt qu'un
+   « terminé » sec : la personne doit pouvoir situer quand ça s'est arrêté. */
+function cycleFiniDepuis() {
+  if (!cycleTermine()) return 0;
+  return _cycleSemaineBrute() - S.cycle.weeks;
+}
+
 function updCycleWeeks(v) {
   document.getElementById('cycle-weeks-disp').textContent = v;
   const d = phaseDistrib(parseInt(v));
@@ -351,6 +382,22 @@ function renderCycleActive() {
   const curW = getCurrentCycleWeek();
   const plan = getWeekPlan(curW, cyc.weeks);
   const pct = Math.round((curW / cyc.weeks) * 100);
+
+  /* 🏁 LE CYCLE EST-IL FINI ? (ft-v1100) — la carte n'apparaît que passé la dernière semaine,
+     et le CONTRÔLE qui compte est qu'elle reste CACHÉE pendant la dernière semaine elle-même :
+     un bandeau « terminé » affiché la semaine de décharge serait faux et décourageant. */
+  const _fini = (typeof cycleTermine==='function') && cycleTermine();
+  const _carte = document.getElementById('cyc-fini-carte');
+  if (_carte) {
+    _carte.style.display = _fini ? 'block' : 'none';
+    if (_fini) {
+      const n = cycleFiniDepuis();
+      const _txt = document.getElementById('cyc-fini-txt');
+      if (_txt) _txt.textContent =
+        'Il s\'est achevé il y a ' + (n<=1 ? 'moins d\'une semaine' : n + ' semaines')
+        + '. Les charges ci-dessous sont celles de sa dernière semaine — ce ne sont plus des consignes du jour.';
+    }
+  }
 
   // Header
   document.getElementById('cyc-week-title').textContent = `Semaine ${curW} — ${plan.phase}`;
