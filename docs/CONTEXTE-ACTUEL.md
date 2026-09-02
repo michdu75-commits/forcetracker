@@ -6,7 +6,8 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1098`. ⏳ déploiement à vérifier. ⚠️ Aucun déploiement
+- **Version en ligne (live) :** `ft-v1098`. ✅ **Déploiement du site vérifié vert** (run **#781**,
+  commit `1849ccd`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement
   backend : `Code.js` n'a pas été touché.
 - 🔭⭐⭐ **LA CIBLE DU JOUR N'EST PAS LA CIBLE DE TOUS LES JOURS** (ft-v1098). Michel :
   *« continue sur la nutrition stp »*. Suite de l'analyse GPT — **et elle commence par me
