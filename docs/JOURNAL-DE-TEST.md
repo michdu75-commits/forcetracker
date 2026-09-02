@@ -69,6 +69,33 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 LA MÉMOIRE DE FORCE TRACKER CHANGE-T-ELLE VRAIMENT LA SÉANCE QUE MILO ÉCRIT ?
+
+**D'où ça vient (02/09/2026, ft-v1105).** Contre-audit du plan « Milo Session Builder » de GPT.
+Sa question centrale est la bonne et **personne n'y a répondu** : *la séance est-elle meilleure
+PARCE QUE Force Tracker connaît le sportif, ou est-ce ce que n'importe quel modèle écrirait ?*
+
+**Ce qui est mesuré, et qui ne répond PAS à la question** : la mémoire pèse **+5 464 caractères**
+dans le contexte (39 % → 43 % du payload parle de la personne), les records, l'historique daté,
+le sommeil et les blessures **arrivent bien** jusqu'à Milo. ⛔ *C'est de la PRÉSENCE, pas de
+l'OBÉISSANCE.*
+
+**Ce qui bloquait, et qui est réparé aujourd'hui** : les personas du banc n'avaient pas de
+mémoire — **3 scénarios sur 55** donnent un historique, 0 un programme, 0 un cycle, 0 un état du
+jour, alors que **20 demandent de construire une séance**. Et `dayState`/`cycle`/`wkt` étaient
+**impossibles à poser**. Ils ne le sont plus.
+
+**L'attendu, s'il devient un scénario** : le même sportif, deux fixtures (nue / mémoire complète),
+la même phrase *« Crée-moi ma séance d'aujourd'hui »*. Si les **charges prescrites** sont
+identiques des deux côtés alors qu'un record de 110 kg n'existe que d'un côté, c'est le signal
+qu'on cherche.
+
+⚠️ **Vérifiable par du code ?** *En partie* — comparer deux jeux de charges est déterministe. Mais
+*« la séance est-elle MEILLEURE »* ne l'est pas, et ne le sera jamais : ça reste au **juge
+humain**. On ne promeut donc que la moitié mesurable.
+
+**État : à trier** — coûte **4 appels API (~0,05 €)**, donc c'est une décision de Michel.
+
 ### 🟡 UN RECORD SURVIT À LA SUPPRESSION DE SA SÉANCE — et Milo continue de s'y fier
 
 **D'où ça vient (02/09/2026, ft-v1099).** Mesuré par le vrai chemin : deux séances, un record de
