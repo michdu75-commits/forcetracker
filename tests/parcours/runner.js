@@ -23039,6 +23039,108 @@ console.log('\n-- CCVIII. Un cycle terminé ne le disait jamais (ft-v1101) --');
   await cx.close();
 }
 
+
+/* ═══ CCIX. R8 PERMANENT — LE PROMPT NOMME-T-IL UNE SOURCE QU'IL NE REÇOIT PAS ? ═══════════
+   Michel : « tu peux faire un audit sur Milo ? ». L'audit a rendu du VERT partout — donc ce
+   qui reste de lui n'est pas un correctif, c'est ce DÉTECTEUR, rendu permanent (R17/R35).
+   ⛔⛔ POURQUOI CETTE FAMILLE MÉRITE UN TÉMOIN PERMANENT : R8 dit qu'un prompt ne compense
+   jamais une donnée absente, et le signe qui la trahit est toujours le même — *une consigne
+   qui NOMME une source (« ta bibliothèque », « ton planning », « ses records ») sans que
+   cette source soit dans le contexte*. Elle a produit CINQ vrais bugs : l'inscription
+   (ft-v604), le prénom (ft-v652), les jours à venir (ft-v658), les dates de records
+   (ft-v660), le catalogue d'exercices (ft-v713). À chaque fois, Milo répondait « un peu
+   moins bien » et RIEN ne le signalait.
+   ⭐⭐ CE QUE CE TÉMOIN FAIT, ET QUE `tests/donnees` NE FAIT PAS : ce dernier vérifie qu'une
+   donnée est CLASSÉE, et il le dit lui-même — « le compteur des transmises est une
+   DÉCLARATION, pas une mesure ». Ici on construit le VRAI contexte et on cherche la VALEUR.
+   ⛔ ON CHERCHE DES VALEURS, JAMAIS LE MOT : le prompt est plein de ses propres mots. Chercher
+   « cycle » dans un contexte qui parle de périodisation rend un vert qui ne prouve rien —
+   c'est l'erreur que j'ai faite pendant l'audit, et elle a failli me faire publier un trou
+   R4 inexistant.
+   ⛔ ET LES FIXTURES SONT CELLES DU CODE, PAS CELLES QU'ON DEVINE : `customExercises` stocke
+   `{n,g}` et non `{name}`, le Gardien lit `healthProfile.injuries` avec `status:'active'` et
+   `dayState.pains`. Mes premières versions rendaient « ABSENT » sur du code parfaitement
+   sain — deux fois. *Une sonde qui invente un nom de champ produit le résultat le plus
+   crédible qui soit : un vide.* (BUGS.md §36.) */
+console.log('\n-- CCIX. R8 permanent : une source nommée est-elle vraiment transmise ? --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'84',ft4_age:'42',ft4_ht:'181'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2200);
+
+  const K=await pg.evaluate(()=>{
+   try{
+    const o={};
+    const j=(n)=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    S.sessions=[];
+    for(let i=0;i<24;i++) S.sessions.push({ts:5000+i,date:j(i*3),volume:9000+i*20,synced:true,
+      exs:[{name:'Squat',sets:[{kg:120,reps:5,done:true,rm1:135,type:'N'}]},
+           {name:'Développé Couché',sets:[{kg:95,reps:6,done:true,rm1:110,type:'N'}]},
+           {name:'Tirage Poulie Haute (Lat Pulldown)',sets:[{kg:70,reps:10,done:true,rm1:93,type:'N'}]}]});
+    S.prs={'Squat':{kg:120,reps:5,rm1:135,date:j(0)},
+           'Développé Couché':{kg:95,reps:6,rm1:110,date:j(3)},
+           'Soulevé de Terre':{kg:150,reps:3,rm1:159,date:j(9)}};
+    S.weightLog=[]; for(let i=0;i<16;i++) S.weightLog.push({date:j(i*7),kg:84-i*0.12});
+    S.sleepLog=[{date:j(0),hours:7,energy:4},{date:j(1),hours:6.5,energy:3}];
+    S.programmes=[{name:'Haut du corps',exs:[{name:'Développé Couché',sets:[{kg:95,reps:6}]}]}];
+    S.customExercises=[{n:'Tirage Sangle Perso',g:'Dos',custom:true}];  // ⛔ forme RÉELLE {n,g}
+    S.cycle={active:true,startDate:j(20),weeks:12,exercises:{'Squat':{rm1:135,target:148}}};
+    S.exRestPref={'Squat':180};
+    persist();
+    const ctx=buildCoachContext();
+    o.taille=ctx.length;
+
+    const sources=[
+     ['la bibliothèque d\'exercices', /biblioth[èe]que|catalogue/i,        /Lat Pulldown|Pec Deck|Leg Curl/i],
+     ['ses records',                  /records?|PR\b/i,                     /135|150 kg|159/],
+     ['son planning / ses jours',     /planning|jours? (à venir|de la semaine)/i, /lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche/i],
+     ['son prénom',                   /pr[ée]nom/i,                         /Michel/],
+     ['ses exercices persos',         /perso/i,                             /Tirage Sangle Perso/],
+     ['son poids de corps',           /poids de corps|poids actuel/i,       /84/],
+     ['son cycle de force',           /cycle/i,                             /Semaine \d+\/12|TERMIN/],
+     ['son sommeil',                  /sommeil/i,                           /6[.,]5|7 ?h/],
+     ['ses programmes enregistrés',   /programmes?/i,                       /Haut du corps/],
+     ['son temps de repos par exo',   /temps de repos|repos/i,              /180|3 ?min/],
+     ['sa tendance de poids',         /tendance/i,                          /kg\/sem|kg par semaine/],
+    ];
+    o.trous = sources.filter(([n,cite,preuve])=> cite.test(ctx) && !preuve.test(ctx)).map(x=>x[0]);
+    o.verifiees = sources.length;
+    /* ⛔ LE CONTRÔLE DE LA SONDE : elle doit savoir dire NON. Une source inventée, citée
+       nulle part et absente partout, ne doit PAS compter comme un trou — et un motif de
+       preuve impossible sur une source bien citée DOIT, lui, en produire un. */
+    o.faussePreuve = [['son cycle de force', /cycle/i, /Ce_Mot_N_Existe_Nulle_Part_42/]]
+      .filter(([n,c,p])=> c.test(ctx) && !p.test(ctx)).length;
+
+    /* ── LE GARDIEN : contrôle d'abord (vide sans blessure), puis il doit MORDRE ── */
+    o.gardienVide = String(_gardienRules()).length;
+    S.healthProfile={injuries:[{zone:'épaule',status:'active'}], notes:'épaule droite fragile'};
+    S.dayState={date:today(), pains:[{zone:'epaule'}]};
+    persist();
+    const ctxG=buildCoachContext();
+    o.gardienArme = String(_gardienRules()).length;
+    o.gardienDansCtx = /paule|fragile/i.test(ctxG);
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+  if(K.err) t('CCIX n\'a pas pu tourner', false, K.err);
+  else{
+    t('⛔⛔ R8 : AUCUNE source nommée par le prompt n\'est absente du contexte ('+K.verifiees+' vérifiées)',
+      K.trous.length===0, 'citée(s) mais absente(s) : '+JSON.stringify(K.trous));
+    t('⛔ … et la sonde sait dire NON (un motif de preuve impossible produit bien un trou)',
+      K.faussePreuve===1, 'devrait valoir 1, vaut '+K.faussePreuve);
+    t('⛔ LE CONTRÔLE : sans blessure déclarée, le Gardien est VIDE',
+      K.gardienVide===0, K.gardienVide+' caractères');
+    t('⭐⭐ … et une blessure déclarée l\'ARME vraiment (il ne se contente pas d\'exister)',
+      K.gardienArme>500, K.gardienArme+' caractères');
+    t('⭐ … et la zone fragile atteint le contexte envoyé à Milo',
+      K.gardienDansCtx===true, '');
+    t('⛔ 0 erreur JS', errs.length===0, JSON.stringify(errs.slice(0,2)));
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
