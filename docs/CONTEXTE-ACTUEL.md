@@ -6,7 +6,28 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1103`. ✅ **Déploiement du site vérifié vert** (run **#810**,
+- **Version en ligne (live) :** `ft-v1104`. ⏳ **Déploiement à vérifier** (**R18**). ⚠️ Aucun
+  déploiement backend.
+- ♻️⛔⛔ **UNE VALEUR FAUSSE QUI SE RECOPIE — LE MÉCANISME DU « TOUJOURS »** (ft-v1104). Michel
+  envoie **l'étiquette** : 88 g de protéines / 100 g, donc **30 g → 116,6 kcal · 26,4 g**.
+  L'app portait **156 / 35** — **1,333× la vérité sur les deux nombres**, et **1,333 = 40/30**
+  (des valeurs de dosette de 40 g sur une portion de 30). ⛔⛔ **Le « toujours » a un mécanisme,
+  dans le code** : les suggestions ont pour source ① *ce que la personne a déjà noté*, donc une
+  estimation fausse **se reprend en un tap, indéfiniment**. ***Une valeur fausse qui se recopie
+  coûte plus cher que la valeur fausse d'origine.***
+- ⛔ **Le garde-fou de ft-v1103 ne la voyait pas sur ce chemin, pour 2 raisons** : ① `af-bc-grams`
+  vaut `"100"` dans le HTML **même caché** — il comparait 37 g à une portion que personne ne voit ;
+  ② `e.q` (30 g, bien enregistré) n'était lu que dans la branche `per100` (**R4**).
+- ⚠️⚠️ **Et une jumelle manquée par moi la veille (R8)** : `ef-grams` dans la modale,
+  **`af-bc-grams`** à l'ajout — le contrôle était **aveugle sur tout le chemin code-barres**,
+  là où arrivent justement les valeurs d'un produit emballé. *Le journal ne protège pas de ce
+  qu'il documente.*
+- ⭐⭐ **Le chemin fiable est MESURÉ** : le pour-100 g de la vraie étiquette sur 30 g rend
+  **117 kcal · 26 g · 1 · 1**, au chiffre près et **en silence** (**R33** vérifiée sur son pot).
+- ⚠️ **Ce que ça ne prouve pas** : le garde-fou n'attrape ce cas **que parce que la poudre titre
+  88 %**. La même erreur de dosette sur du **poulet** ne déclencherait rien — *la règle attrape
+  l'impossible, pas le faux*. ⏭️ Et **sa ligne reste fausse** : l'app la signale, ne la corrige pas.
+- **Version précédente :** `ft-v1103`. ✅ **Déploiement du site vérifié vert** (run **#810**,
   commit `7a32e26`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement backend.
 - ⚖️⛔⛔ **UNE VALEUR PEUT ÊTRE COHÉRENTE AVEC ELLE-MÊME ET IMPOSSIBLE** (ft-v1103). Michel,
   capture à l'appui : *« encore le souci avec la prot »* — **35 g de protéines + 1 + 1 = 37 g de

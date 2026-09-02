@@ -1125,6 +1125,23 @@ la lecture, pas une mesure**. ⚠️ Le risque anti-TCA (**P21**) est réel : un
 d'un aliment peut se lire comme un jugement sur ce qu'on mange, alors qu'elle ne parle que d'un
 chiffre. 👉 **Juge humain** — l'attendu n'est pas vérifiable par du code.
 
+### 🟡 COMBIEN DE LIGNES DÉJÀ ENREGISTRÉES SONT DES COPIES D'UNE PREMIÈRE ERREUR ?
+**02/09/2026, ft-v1104.** Le mécanisme est établi : une estimation fausse devient une
+**suggestion**, reprise en un tap. ⚠️ **Ce qu'on ne sait pas, c'est l'ampleur** — une ligne fausse
+recopiée 40 fois ne se voit nulle part, et elle pèse 40 fois dans les moyennes que Milo reçoit.
+👉 **Mesurable sans aucun appel API** : compter, dans un journal, les entrées de même nom aux
+mêmes macros. **À trier** — si le chiffre est élevé, la vraie question n'est plus le garde-fou
+mais *faut-il proposer de corriger les copies quand on corrige l'originale ?* (et **R29** dit
+que ça se propose, jamais en silence).
+
+### 🟡 UNE ERREUR DE DOSETTE PASSE INAPERÇUE DÈS QUE L'ALIMENT N'EST PAS CONCENTRÉ
+**02/09/2026, ft-v1104.** Le cas de Michel (valeurs de 40 g sur une portion de 30) n'est attrapé
+que parce que sa poudre titre **88 %** : 37 g de macros dans 30 g est *impossible*. ⚠️ **La même
+erreur sur du poulet** — 8,7 g de protéines au lieu de 6,5 — ne déclenche **rien**, et c'est
+correct : rien n'y est physiquement impossible. 👉 ***La règle attrape l'impossible, pas le
+faux.*** Détecter un décalage de portion **en général** demanderait une référence par aliment
+qu'on n'a pas. **À trier** : est-ce que ça vaut une comparaison au pour-100 g quand il existe ?
+
 ---
 
 ## ⚠️ Comment fouiller les conversations (leçon du 21/08)

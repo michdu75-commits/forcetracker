@@ -23541,6 +23541,94 @@ console.log('\n-- CCXII. Les macros ne pèsent jamais plus que la portion (ft-v1
   }
 }
 
+/* ═══ CCXIII. UNE VALEUR FAUSSE QUI SE RECOPIE — LE « TOUJOURS » (ft-v1104) ═══════════════════
+   Michel, étiquette du pot à l'appui : « c'est cette prot là, toujours le même souci ».
+   ⛔⛔ LE « TOUJOURS » A UN MÉCANISME, ET IL EST DANS LE CODE : les suggestions de l'écran
+   d'ajout ont pour source ① CE QUE LA PERSONNE A DÉJÀ NOTÉ. Une estimation fausse notée une
+   fois devient donc une proposition qu'on reprend en un tap, indéfiniment.
+   ⛔⛔ ET LE GARDE-FOU DE ft-v1103 NE LA VOYAIT PAS SUR CE CHEMIN, pour deux raisons distinctes :
+     ① `af-bc-grams` porte `value="100"` dans le HTML et garde cette valeur même CACHÉ — le
+        contrôle comparait donc 37 g à une portion de 100 g que personne ne voyait ;
+     ② et `e.q` (30 g, bien enregistré) n'était lu que dans la branche `per100` : à la reprise
+        d'un aliment SANS pour-100 g, la quantité n'atteignait pas l'écran (R4).
+   ⭐ LES VALEURS DE CONTRÔLE SONT CELLES DE L'ÉTIQUETTE RÉELLE : 88 g de protéines / 100 g,
+   donc 30 g → 116,6 kcal · 26,4 g. C'est ce qui rend le cas « la vraie étiquette » vérifiable. */
+console.log('\n-- CCXIII. Une valeur fausse qui se recopie : le « toujours » (ft-v1104) --');
+{
+  const J=new Date().toISOString().slice(0,10);
+  /* Sa ligne telle qu'elle est enregistrée : impossible, et sans pour-100 g. */
+  const log=[{date:J,meal:'collation2',ts:880001,name:'Iso zero protein (ASL)',q:30,u:'g',
+              kcal:156,prot:35,carbs:1,fat:1}];
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
+  await p.addInitScript(`(()=>{try{
+    localStorage.setItem('ft4_name','Michel');localStorage.setItem('ft4_bw','84');
+    localStorage.setItem('ft4_age','43');localStorage.setItem('ft4_ht','178');
+    localStorage.setItem('ft4_gender','H');localStorage.setItem('ft4_goal','muscle');
+    localStorage.setItem('ft4_act','1.55');localStorage.setItem('ft4_ob2','1');
+    localStorage.setItem('ft4_guide_shown','1');localStorage.setItem('ft4_wn_seen','99');
+    localStorage.setItem('ft4_premium','1');
+    localStorage.setItem('ft4_foodlog',${JSON.stringify(JSON.stringify(log))});
+  }catch(e){}})();`);
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(2200);
+  const R=await p.evaluate(async()=>{ try{
+    const w=ms=>new Promise(r=>setTimeout(r,ms));
+    const lu=id=>(document.getElementById(id)||{}).value;
+    const alerte=()=>{const el=document.getElementById('af-coherence');
+                      return (el&&el.style.display!=='none')?(el.innerText||''):'';};
+    // ① reprendre sa propre ligne fausse depuis son journal
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    goScreen('nutrition'); await w(300); openAddFood(); await w(320);
+    document.getElementById('af-desc').value='iso'; _afSuggInput(); await w(700);
+    const proposee=(_afSuggLoc||[]).length;
+    _afSuggPrendreLocale(0); await w(450);
+    const rep={proposee, q:_qtyGrammesEcran('af'), prot:lu('af-prot'), brut:alerte()};
+    // ② le pour-100 g de la VRAIE étiquette (88 g/100 g), 30 g
+    const pose=async(p100,g)=>{
+      document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+      goScreen('nutrition'); await w(220); openAddFood(); await w(280);
+      document.getElementById('af-desc').value='Iso zero protein';
+      _bcNutr={name:'Iso zero protein',kcal100:p100[0],prot100:p100[1],carbs100:p100[2],fat100:p100[3]};
+      const row=document.getElementById('af-bc-row'); if(row) row.style.display='block';
+      document.getElementById('af-bc-grams').value=String(g);
+      _bcApplyGrams(); await w(320);
+      return {q:_qtyGrammesEcran('af'), kcal:lu('af-kcal'), prot:lu('af-prot'), brut:alerte()};
+    };
+    const vraie   = await pose([388.5,88,2.8,3.3],30);
+    const corrompu= await pose([500,117,3,3],30);
+    return {rep, vraie, corrompu};
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXIII n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ SANS CE TÉMOIN, LES SUIVANTS SERAIENT VERTS À VIDE : encore faut-il que sa ligne soit
+       bien re-proposée — c'est ELLE le mécanisme du « toujours ». */
+    t('⛔ sa ligne fausse EST bien re-proposée depuis son journal (c\'est ça, le « toujours »)',
+      R.rep.proposee>=1 && String(R.rep.prot)==='35', 'proposées='+R.rep.proposee+' prot='+R.rep.prot);
+    /* ⛔⛔ R4 : la quantité enregistrée doit ATTEINDRE L'ÉCRAN, sinon rien n'a de référence. */
+    t('⛔⛔ … et sa quantité enregistrée (30 g) atteint l\'écran à la reprise (R4)',
+      R.rep.q===30, 'q lue='+R.rep.q);
+    t('⛔⛔ … donc l\'erreur ne se recopie plus en silence : l\'alerte tombe à la reprise',
+      /ne tiennent pas dans/.test(R.rep.brut), R.rep.brut.replace(/\n/g,' ').slice(0,80));
+    /* ⭐ LE CAS QUI COMPTE AUTANT : la VRAIE étiquette doit passer, et tomber JUSTE.
+       88 g/100 g × 30 g = 26,4 g de protéines et 116,6 kcal — c'est le pot de Michel. */
+    t('⭐ la VRAIE étiquette (88 g/100 g) sur 30 g tombe juste : 117 kcal · 26 g',
+      String(R.vraie.kcal)==='117' && String(R.vraie.prot)==='26', JSON.stringify(R.vraie));
+    t('⛔ … et elle ne déclenche AUCUNE alerte (sinon le garde-fou serait inutilisable)',
+      R.vraie.brut==='', R.vraie.brut.slice(0,60));
+    /* ⛔ ET LE CHEMIN CODE-BARRES EST COUVERT : c'est la jumelle que mon 1ᵉʳ jet avait manquée,
+       parce que le champ s'appelle `af-bc-grams` ici et `ef-grams` dans la modale (R8). */
+    t('⛔⛔ un pour-100 g corrompu (117 g/100 g) est attrapé sur le chemin code-barres',
+      /ne tiennent pas dans/.test(R.corrompu.brut) && R.corrompu.q===30,
+      'q='+R.corrompu.q+' '+R.corrompu.brut.replace(/\n/g,' ').slice(0,60));
+    /* ⛔ LE FAUX NÉGATIF QUE J'AI FABRIQUÉ : un champ caché porte encore sa valeur. */
+    t('⛔ le contrôle ne lit QUE des champs visibles (`af-bc-grams` vaut "100" même caché)',
+      /offsetParent===null/.test(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')), '');
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

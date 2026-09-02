@@ -2719,6 +2719,21 @@ function _afSuggPrendreLocale(i){
      ⛔ IL SE TAIT TOUT SEUL quand un pour-100 g existe (`if(_bcNutr) → cacher`), donc les deux
      mécanismes ne peuvent pas s'afficher ensemble (R2). Et il n'invente aucun poids (R29) :
      sans ancre il n'offre que des multiplicateurs, vrais quelle que soit la portion de départ. */
+  /* ⚖️⛔⛔ LA QUANTITÉ DÉJÀ ENREGISTRÉE DOIT ATTEINDRE L'ÉCRAN (ft-v1104) — R4, à trois lignes
+     du commentaire qui l'explique. Sans pour-100 g, `e.q` était **simplement laissé de côté** :
+     il n'est lu que dans la branche `per100` juste au-dessus. Conséquence mesurée sur le cas de
+     Michel — sa ligne « Iso zero protein » reprise depuis son journal revenait **sans aucune
+     quantité à l'écran**, alors que l'entrée porte `q:30`.
+     ⛔⛔ ET C'EST CE QUI FAISAIT LE « TOUJOURS LE MÊME SOUCI » : une estimation fausse notée une
+     fois devient une SUGGESTION, reprise en un tap, et sans quantité affichée le garde-fou de
+     masse n'avait rien à quoi comparer. *Une valeur fausse qui se recopie coûte plus cher que
+     la valeur fausse d'origine — elle, au moins, ne se reproduit pas.*
+     ⭐ R13 : rien n'est réinventé, on emprunte le mécanisme du poids déclaré (`_afPoidsDeclare`),
+     et le libellé « que tu as indiqué » reste VRAI — elle l'a indiqué la fois d'avant.
+     ⛔ Grammes seulement, et jamais par-dessus un pour-100 g (qui a déjà son propre champ). */
+  if(!_bcNutr && +e.q>0 && (!e.u||e.u==='g')){
+    _afUnite='g'; _afPoidsDeclare=+e.q;
+  }
   if(typeof _afMajAncre==='function') _afMajAncre(true);   // reprise depuis le journal : la source change
   _afNoteEtat(e.name||'');
   _afSuggVider();
@@ -2858,8 +2873,13 @@ function openEditFood(ts){
   document.getElementById('ef-name').value=e.name||''; // évite tout souci d'échappement dans l'attribut
   _efQtyRender();                     // ⚖️ le bloc quantité, re-rendable tout seul (ft-v1064)
   _renderEditFoodMeals();
-  _efCoherence();                     // l'incohérence se voit À L'OUVERTURE, sans rien toucher
+  /* ⛔⛔ L'ORDRE COMPTE DEPUIS ft-v1104, ET C'EST UNE RÉGRESSION QUE J'AI FABRIQUÉE : le contrôle
+     ne lit désormais que des champs VISIBLES (un champ caché porte encore sa valeur), donc
+     l'appeler AVANT `.open` revenait à mesurer un écran qui n'est pas encore affiché — la
+     quantité tombait à 0 et l'alerte ne partait jamais. *On ne peut pas lire ce qui est à
+     l'écran avant qu'il y soit.* On ouvre, PUIS on mesure. */
   ov.classList.add('open');
+  _efCoherence();                     // l'incohérence se voit À L'OUVERTURE, sans rien toucher
 }
 function _setEditFoodMeal(k){_editFoodMeal=k;_renderEditFoodMeals();}
 function _renderEditFoodMeals(){FOOD_MEALS.forEach(m=>{const b=document.getElementById('ef-meal-'+m.k);if(!b)return;const sel=m.k===_editFoodMeal;b.style.background=sel?'var(--red)':'var(--bg3)';b.style.color=sel?'#fff':'var(--t2)';});}
@@ -3020,10 +3040,23 @@ const _KCAL_ALCOOL=/\b(bi[eè]re|vin\b|ros[eé]\b|champagne|cidre|whisky|vodka|r
    ~26 g de protéines) et les macros qui sont fausses — un bouton « mettre 37 g » aurait donc
    aggravé sa ligne au lieu de la réparer. *On montre, la personne tranche* (R29). */
 function _qtyGrammesEcran(pfx){
-  const lu=id=>{const el=document.getElementById(pfx+'-'+id); return el?numFR(el.value):0;};
-  /* ⛔ `-grams` n'existe que sur un pour-100 g : il est TOUJOURS en grammes.
+  /* ⛔⛔ UN CHAMP INVISIBLE PORTE ENCORE SA VALEUR, ET C'EST UN FAUX NÉGATIF SILENCIEUX.
+     `af-bc-grams` est écrit `value="100"` dans le HTML : quand son bloc est CACHÉ, il contient
+     quand même « 100 ». Mon premier jet lisait donc une portion de 100 g qui n'est nulle part à
+     l'écran — et 37 g de macros « tenaient » confortablement dedans. *Le contrôle ne rougissait
+     pas : il mesurait un champ que personne ne voyait.* On ne lit que ce qui est AFFICHÉ. */
+  const lu=id=>{const el=document.getElementById(pfx+'-'+id);
+                if(!el || el.offsetParent===null) return 0;      // caché = pas une quantité
+                return numFR(el.value);};
+  /* ⛔⛔ LES DEUX NOMS DU MÊME CHAMP, ET C'EST UNE JUMELLE MANQUÉE (R8, corrigée le jour même) :
+     la modale de modification l'appelle `ef-grams`, le formulaire d'ajout `af-bc-grams`. Mon
+     premier jet ne lisait que le premier — donc le contrôle était **aveugle sur tout le chemin
+     code-barres / étiquette de l'écran d'ajout**, c'est-à-dire précisément là où arrivent les
+     valeurs d'un produit emballé. *J'ai écrit la règle de la jumelle dans le journal la veille,
+     et je l'ai manquée le lendemain.*
+     ⛔ Ces deux champs n'existent que sur un pour-100 g : ils sont TOUJOURS en grammes.
      `-prop` suit l'unité de son ancre — on ne la devine pas, on la lit. */
-  const g=lu('grams'); if(g>0) return g;
+  const g=lu('grams')||lu('bc-grams'); if(g>0) return g;
   const ref=(pfx==='af')?(typeof _afRef!=='undefined'&&_afRef):(typeof _efRef!=='undefined'&&_efRef);
   const prop=lu('prop');
   if(prop>0 && ref && (ref.u||'g')==='g' && ref.q>0) return prop;
