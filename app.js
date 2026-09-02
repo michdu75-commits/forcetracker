@@ -2915,7 +2915,7 @@ function _efQtyRender(){
     return;
   }
   if(ancre && ancre.v>0){
-    _efRef={base:base,q:ancre.v};
+    _efRef={base:base,q:ancre.v,u:ancre.u};   // ⛔ l'unité VOYAGE (ft-v1103) : 100 ml de miel pèsent ~140 g
     el.innerHTML='<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité ('+ancre.u+') <span style="font-weight:400;">— recalcule les macros ci-dessous</span></div>'
       +'<input id="ef-prop" type="text" inputmode="decimal" step="any" value="'+ancre.v+'" oninput="_efApplyProp()" style="'+style+'">'
       +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Référence '+ancre.src+' : '+ancre.v+' '+ancre.u+'. Les 4 valeurs suivent en proportion.</div></div>';
@@ -2929,12 +2929,12 @@ function _efQtyRender(){
   const choix='<div style="display:flex;gap:6px;margin-bottom:7px;">'+onglet('g','⚖️ En grammes')+onglet('portion','🍽️ En portions')+'</div>';
   let corps;
   if(_efUnite==='g'&&_efPoidsDeclare>0){
-    _efRef={base:base,q:_efPoidsDeclare};
+    _efRef={base:base,q:_efPoidsDeclare,u:'g'};   // l'onglet « ⚖️ En grammes » : c'est des grammes
     corps=choix
       +'<input id="ef-prop" type="text" inputmode="decimal" step="any" value="'+_efPoidsDeclare+'" oninput="_efApplyProp()" style="'+style+'">'
       +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Référence : '+_efPoidsDeclare+' g (que tu as indiqué). Change ce nombre à chaque fois que la quantité change — les 4 valeurs suivent.</div>';
   }else if(_efUnite==='g'){
-    _efRef={base:base,q:1};
+    _efRef={base:base,q:1,u:null};   // ⛔ portions : aucune masse connue, le contrôle se tait
     /* ⛔ CHAMP VIDE, PAS PRÉ-REMPLI : un « 100 » proposé s'enregistrerait tel quel chez qui valide
        sans regarder — *un chiffre qu'on n'a pas choisi et qui s'enregistre est un chiffre faux
        présenté comme un fait* (R29). Tant que rien n'est indiqué, les 4 valeurs NE BOUGENT PAS. */
@@ -2942,7 +2942,7 @@ function _efQtyRender(){
       +'<input id="ef-poids" type="text" inputmode="decimal" step="any" placeholder="poids de cette portion" onchange="_efDeclarePoids()" style="'+style+'">'
       +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Combien pèse ce que tu as noté ? <b>L\'app ne peut pas le deviner, toi si.</b> Indique-le une fois : les 4 valeurs se calent dessus.</div>';
   }else{
-    _efRef={base:base,q:1};
+    _efRef={base:base,q:1,u:null};   // ⛔ portions : aucune masse connue, le contrôle se tait
     const b=(x,l)=>'<button onclick="_efApplyPortion('+x+')" style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t2);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">'+l+'</button>';
     corps=choix+'<div style="display:flex;gap:6px;">'+[0.5,1,1.5,2,3].map(x=>b(x,_portionLbl(x))).join('')+'</div>'
       +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Les 4 valeurs ci-dessous sont <b>une portion</b>. Tu connais le poids ? Passe en <b>⚖️ grammes</b> et indique-le.</div>';
@@ -2986,12 +2986,76 @@ function _efApplyPortion(x){ _efProp(x); }
    ⚠️ LA LISTE EST COURTE ET EXPLICITE, et elle ne fait que SE TAIRE : elle n'invente aucune
    valeur, ne corrige rien, et un aliment mal nommé retombe simplement dans le cas général. */
 const _KCAL_ALCOOL=/\b(bi[eè]re|vin\b|ros[eé]\b|champagne|cidre|whisky|vodka|rhum|gin\b|t[eé]quila|punch|mojito|ap[eé]ritif|ap[eé]ro|alcool|liqueur|porto|pastis|cocktail|spritz|sangria|kir\b|calvados|cognac|armagnac|hydromel|saké|sake)\b/i;
+/* ⚖️⛔⛔ LES MACROS NE PEUVENT PAS PESER PLUS QUE LA PORTION (ft-v1103)
+   Michel, capture à l'appui, sur une ligne « Iso zero protein (ASL) » : *« encore le souci avec
+   la prot »*. **35 g de protéines + 1 g de glucides + 1 g de lipides = 37 g de matière dans une
+   portion de 30 g.** C'est impossible — la masse ne se crée pas.
+
+   ⛔⛔ ET LE CONTRÔLE QUI EXISTAIT NE POUVAIT PAS LE VOIR, sans être en faute : `_coherenceKcal`
+   compare les **calories aux macros**, et ici elles collent parfaitement (4×35 + 4×1 + 9×1 = 153
+   contre 156 affichées, soit 2 % d'écart). *Une valeur inventée peut être parfaitement cohérente
+   avec elle-même* — c'est exactement la famille §34 de `BUGS.md`. Il manquait la **seconde**
+   question : est-ce que ça TIENT dans la portion ?
+
+   ⭐ REPRODUIT PAR LE VRAI CHEMIN avant d'écrire une ligne (§12quater — on ne déduit pas une
+   cause d'un seul nombre) : la réponse du modèle entre telle quelle dans `S.foodLog`, sans une
+   alerte. Une réponse à 150 P / 80 G / 70 L pour 100 g y entrait aussi — **300 g dans 100 g**.
+
+   ⛔ SEULEMENT EN GRAMMES, et ce n'est pas un détail : 100 ml de miel pèsent ~140 g et portent
+   ~116 g de glucides. Appliquer la règle aux millilitres ferait hurler l'app sur un sirop, un
+   miel ou une huile — *un garde-fou qui se trompe sur le miel ne survit pas au petit-déjeuner*
+   (R19, la leçon de la bière du contrôle voisin).
+
+   ⛔ LA TOLÉRANCE EST DÉRIVÉE, PAS INVENTÉE (R29) : les quatre champs sont arrondis à l'entier
+   (`Math.round` dans les deux rescalers), donc chacune des 3 macros peut être gonflée de moins
+   de 0,5 g et la quantité rabotée d'autant — **2 g au pire**, et rien de plus. Mesuré : une
+   huile (10 g pour 10 g de lipides) et du sucre (20 g pour 20 g de glucides) restent muettes,
+   alors qu'elles sont à 100 % d'une seule macro. *La limite physique est l'égalité, pas un
+   pourcentage qu'il faudrait choisir.*
+
+   ⛔⛔ ET AUCUN BOUTON DE CORRECTION, CONTRAIREMENT AU CONTRÔLE DES CALORIES — c'est une
+   décision, pas un oubli. Quand les calories ne collent pas, la valeur juste **se calcule**.
+   Ici, l'app sait que l'un des deux est faux et **ne sait pas lequel** : soit la portion, soit
+   les macros. Chez Michel c'est la portion qui est JUSTE (un dosette de 30 g d'isolat porte
+   ~26 g de protéines) et les macros qui sont fausses — un bouton « mettre 37 g » aurait donc
+   aggravé sa ligne au lieu de la réparer. *On montre, la personne tranche* (R29). */
+function _qtyGrammesEcran(pfx){
+  const lu=id=>{const el=document.getElementById(pfx+'-'+id); return el?numFR(el.value):0;};
+  /* ⛔ `-grams` n'existe que sur un pour-100 g : il est TOUJOURS en grammes.
+     `-prop` suit l'unité de son ancre — on ne la devine pas, on la lit. */
+  const g=lu('grams'); if(g>0) return g;
+  const ref=(pfx==='af')?(typeof _afRef!=='undefined'&&_afRef):(typeof _efRef!=='undefined'&&_efRef);
+  const prop=lu('prop');
+  if(prop>0 && ref && (ref.u||'g')==='g' && ref.q>0) return prop;
+  return 0;                       // ⛔ portions, millilitres, rien de déclaré : on se tait
+}
+/* ⭐ R2 — UNE SEULE DÉFINITION DE « CES MACROS NE TIENNENT PAS DANS CETTE PORTION », lue par
+   l'estimation IA, le formulaire d'ajout et la modale de modification. Rend `null` quand il n'y
+   a rien à dire : « je ne sais pas » est une réponse valide (R29). */
+function _masseImpossible(pfx){
+  const q=_qtyGrammesEcran(pfx); if(!(q>0)) return null;
+  const lu=id=>numFR((document.getElementById(pfx+'-'+id)||{}).value)||0;
+  const somme=lu('prot')+lu('carbs')+lu('fat');
+  if(!(somme>0) || somme<=q+2) return null;      // +2 g : l'arrondi des 4 champs, rien de plus
+  return {q:q, somme:Math.round(somme*10)/10};
+}
 function _coherenceKcal(pfx, corrigeur){
   const el=document.getElementById(pfx+'-coherence'); if(!el) return;
   const g=id=>numFR((document.getElementById(pfx+'-'+id)||{}).value)||0;
   const nom=String((document.getElementById(pfx+'-'+(pfx==='af'?'desc':'name'))||{}).value||'');
   const kcal=g('kcal'), theo=4*g('prot')+4*g('carbs')+9*g('fat');
   const ecart=Math.abs(kcal-theo);
+  /* ⚖️ LA MASSE D'ABORD (ft-v1103) : quand les macros ne tiennent pas dans la portion, c'est le
+     défaut le plus grave des deux — les calories peuvent coller parfaitement à des macros
+     impossibles, et c'est précisément ce qui est arrivé (156 kcal pour 153 théoriques). */
+  const masse=_masseImpossible(pfx);
+  if(masse){
+    el.innerHTML='⚠️ <b>'+masse.somme+' g</b> de protéines, glucides et lipides ne tiennent pas dans '
+      +'<b>'+masse.q+' g</b>. Un aliment ne peut pas contenir plus de matière qu\'il ne pèse.'
+      +'<div style="color:var(--t3);margin-top:6px;">Soit la quantité, soit une des trois valeurs '
+      +'est à revoir — <b>l\'app ne peut pas savoir laquelle</b>, elle ne touche à rien.</div>';
+    el.style.display='block'; return;
+  }
   if(!(kcal>0) || !(theo>0) || ecart<60 || ecart/Math.max(kcal,theo)<0.25
      || (kcal>theo && _KCAL_ALCOOL.test(nom))){   // ⛔ calories « en trop » sur une boisson alcoolisée : normal
     el.style.display='none'; el.innerHTML=''; return;
