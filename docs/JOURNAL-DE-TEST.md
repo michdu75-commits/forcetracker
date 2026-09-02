@@ -1161,7 +1161,7 @@ prochaine fois qu'il scanne ce pot ? Si la réponse est non, la bonne réponse n
 le texte, c'est de **ne plus pré-remplir** (ft-v1051 l'a déjà tranché pour l'autre quantité).
 
 ### 🟡 MILO PROPOSE-T-IL DES ALIMENTS QUE LA PERSONNE NE MANGE PLUS ?
-**02/09/2026, ft-v1106.** Mesuré sans appliquer : la mémoire alimentaire n'a **aucune récence**.
+**02/09/2026, ft-v1107.** Mesuré sans appliquer : la mémoire alimentaire n'a **aucune récence**.
 Quelqu'un qui a changé d'alimentation il y a 4 mois annonce à Milo **« Riz basmati (60×) »** en
 premier — un aliment qu'il ne mange plus. Avec une fenêtre de 60 jours, ce serait « Patate douce
 (21×) ». ⛔ **Le correctif n'est pas fait exprès** : il change ce que Milo reçoit, donc il passe
@@ -1171,7 +1171,7 @@ reste-t-elle vraie ?* 30 jours ? 60 ? 90 ? Aucune source du projet ne le dit, et
 exactement le genre de chiffre qu'on ne doit pas inventer**.
 
 ### 🟡 TROIS MOYENNES CALORIQUES SUR LE MÊME ÉCRAN — EST-CE QUE ÇA TROUBLE ?
-**02/09/2026, ft-v1106.** Vu **à la capture**, pas en relisant : l'onglet Nutrition affiche
+**02/09/2026, ft-v1107.** Vu **à la capture**, pas en relisant : l'onglet Nutrition affiche
 **2 067** (Ton évolution, 14 j, jours complets), **1 836** (mémoire, tout l'historique) et
 **2 067** (Ta semaine, 7 j) — à 400 px les unes des autres. ⭐ Chacune **dit sa base**, et
 **aucune n'est fausse** : c'est leur voisinage muet qui interroge (famille **§7**). ⛔ Les deux

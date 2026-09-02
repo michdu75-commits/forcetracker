@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1106`** (prochaine : `ft-v1107`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1107`** (prochaine : `ft-v1108`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -447,7 +447,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
 
-**ft-v1106 — 🍽️ L'APPORT ENTRE DANS LE MOTEUR DE TRAJECTOIRE** — Michel relaie un document de GPT (« bloc de pilotage Nutrition »), puis : *« il va falloir améliorer tout ça »*. **Le contre-audit est venu d'abord** (`docs/NUTRITION-CONTRE-AUDIT-TRAJECTOIRE.md`), et il a réduit vingt-huit paragraphes à **un seul trou**.
+**ft-v1107 — 🍽️ L'APPORT ENTRE DANS LE MOTEUR DE TRAJECTOIRE** — Michel relaie un document de GPT (« bloc de pilotage Nutrition »), puis : *« il va falloir améliorer tout ça »*. **Le contre-audit est venu d'abord** (`docs/NUTRITION-CONTRE-AUDIT-TRAJECTOIRE.md`), et il a réduit vingt-huit paragraphes à **un seul trou**.
 
 **⭐⭐ LE RÉSULTAT DE L'AUDIT TIENT EN UNE PHRASE** : l'axe « trajectoire » que GPT propose est **en production depuis la veille** (`tendance14j()` + carte « Ton évolution », ft-v1102). Sa chaîne **apport → cible → poids → tendance → objectif** avait **quatre maillons sur cinq**. ⛔⛔ Le manquant était le **premier** : le moteur **COMPTAIT** les jours de repas (`alim:{jours:7}`) et ne **lisait JAMAIS les calories**. *L'app savait dire « ton poids baisse plus vite que prévu » et « tu manges 1 354 kcal sous ta cible » — dans deux cartes, sur deux fenêtres, sans jamais les rapprocher.*
 
@@ -469,7 +469,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 **📣 RÈGLE D'OR #11 — L'AIDE, ni pop-up ni point rouge.** Une **ligne apparaît** dans une carte livrée la veille, et un **chiffre existant devient plus juste**. ⛔ Mais rien n'est à faire et aucun repère ne bouge. ⚠️ La nuance qui décide : la moyenne de « Ta semaine » **peut monter** chez quelqu'un qui oublie des repas — *un chiffre qu'on suit et qui change mérite une explication*, et c'est l'aide `?` qui la porte, pas une interruption (**R25**).
 
-Tests : **parcours 2438/2438** (+11, bloc **CCXV**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données classées 0 trou. ⭐⭐ **Le témoin de CONTRÔLE est le plus important du bloc** : sans jour partiel, **0 écarté et la MÊME moyenne** — *sans lui, « écarter des jours » et « ne rien mesurer » se ressemblent*. ⭐ **Et deux témoins portent la règle plutôt que le chiffre** : la barre vaut 2 chez qui note 2 moments (donc 0 écarté), et 4 chez qui en note 4 — *c'est ce qui prouve qu'aucun seuil n'a été choisi.* ⚠️ **Un de mes témoins a rougi sur une fixture incapable de produire l'état mesuré** (aucune séance, aucune pesée → carte « insuffisante », donc aucune ligne à lire) : corrigé, et un témoin de plus vérifie que la carte **peut parler** avant qu'on lise ce qu'elle dit. Fichiers : `state.js`, `screens.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/NUTRITION-CONTRE-AUDIT-TRAJECTOIRE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1106. |
+Tests : **parcours 2438/2438** (+11, bloc **CCXVI**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données classées 0 trou. ⭐⭐ **Le témoin de CONTRÔLE est le plus important du bloc** : sans jour partiel, **0 écarté et la MÊME moyenne** — *sans lui, « écarter des jours » et « ne rien mesurer » se ressemblent*. ⭐ **Et deux témoins portent la règle plutôt que le chiffre** : la barre vaut 2 chez qui note 2 moments (donc 0 écarté), et 4 chez qui en note 4 — *c'est ce qui prouve qu'aucun seuil n'a été choisi.* ⚠️ **Un de mes témoins a rougi sur une fixture incapable de produire l'état mesuré** (aucune séance, aucune pesée → carte « insuffisante », donc aucune ligne à lire) : corrigé, et un témoin de plus vérifie que la carte **peut parler** avant qu'on lise ce qu'elle dit. Fichiers : `state.js`, `screens.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/NUTRITION-CONTRE-AUDIT-TRAJECTOIRE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1107. |
 
 **ft-v1105 — ⚖️ LA PORTION PRÉ-REMPLIE N'EST PAS LA TIENNE** — Michel envoie **l'étiquette** de son pot (88 g de protéines / 100 g, dosette de **30 g**) et **corrige mon explication de la veille** : *« pourtant j'ai écrit le code barre, je n'ai rien recopié »*.
 

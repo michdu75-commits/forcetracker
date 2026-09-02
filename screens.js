@@ -2437,7 +2437,7 @@ function _blocEvolutionHTML(){
       L.push(ligne('Force'+(T.force.decharge?' <span style="color:var(--t3);font-weight:400;">(semaine allégée)</span>':''),
         s+'&nbsp;'+(T.force.pct>0?'+':'')+String(T.force.pct).replace('.',',')+'&nbsp;%', c));
     }
-    /* 🍽️⛔⛔ L'APPORT MOYEN, ET C'EST LE MAILLON QUI MANQUAIT (ft-v1106).
+    /* 🍽️⛔⛔ L'APPORT MOYEN, ET C'EST LE MAILLON QUI MANQUAIT (ft-v1107).
        La carte disait « 14 j notés » — un COMPTE. Elle dit maintenant ce qui a été mangé, à
        côté de la tendance de poids : c'est la relation apport → cible → poids → objectif, sur
        une seule carte et une seule fenêtre.
@@ -2653,7 +2653,7 @@ function _renderOuTuEnEs(macros){
   }
 
   /* ── La semaine : moyenne sur les jours NOTÉS, jamais sur 7 ────────────────────────
-     ⛔⛔ ET SUR LES JOURS ASSEZ REMPLIS, DEPUIS ft-v1106 — c'est LA JUMELLE (R8), et elle
+     ⛔⛔ ET SUR LES JOURS ASSEZ REMPLIS, DEPUIS ft-v1107 — c'est LA JUMELLE (R8), et elle
      comptait double : la distorsion de **269 kcal/j** que l'audit du 02/09 a mesurée l'a été
      **sur cette carte-ci**, pas sur la carte « Ton évolution ». La corriger seulement dans la
      carte neuve aurait laissé le défaut à l'endroit exact où il avait été chiffré, et fabriqué

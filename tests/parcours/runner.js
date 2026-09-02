@@ -23705,7 +23705,7 @@ console.log('\n-- CCXIV. La portion pré-remplie n\'est pas la tienne (ft-v1105)
   }
 }
 
-/* ═══ CCXV. L'APPORT ENTRE DANS LE MOTEUR DE TRAJECTOIRE (ft-v1106) ══════════════════════════
+/* ═══ CCXVI. L'APPORT ENTRE DANS LE MOTEUR DE TRAJECTOIRE (ft-v1107) ══════════════════════════
    Contre-audit de la proposition GPT du 02/09. Le trou mesuré était unique : `tendance14j()`
    COMPTAIT les jours de repas et ne lisait JAMAIS les calories.
    ⛔⛔ ET UN JOUR MAL NOTÉ DÉFORMAIT LA MOYENNE DE 269 kcal/j — mesuré : 6 jours à 4 repas + 1
@@ -23715,7 +23715,7 @@ console.log('\n-- CCXIV. La portion pré-remplie n\'est pas la tienne (ft-v1105)
    ⛔⛔ ET LA JUMELLE COMPTE DOUBLE ICI (R8) : la distorsion avait été chiffrée SUR « Ta
    semaine », pas sur la carte neuve. La corriger d'un seul côté aurait laissé le défaut là où
    il avait été mesuré, et fabriqué deux moyennes calculées différemment à 400 px d'écart. */
-console.log('\n-- CCXV. L\'apport entre dans le moteur de trajectoire (ft-v1106) --');
+console.log('\n-- CCXVI. L\'apport entre dans le moteur de trajectoire (ft-v1107) --');
 {
   const J=n=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
   const SET=[['petitdej','Flocons',450],['dejeuner','Riz + poulet',800],
@@ -23769,7 +23769,7 @@ console.log('\n-- CCXV. L\'apport entre dans le moteur de trajectoire (ft-v1106)
   }catch(e){ return {err:String(e)}; } }, CAS);
   await cx.close();
 
-  if(R.err) t('CCXV n\'a pas pu tourner', false, R.err);
+  if(R.err) t('CCXVI n\'a pas pu tourner', false, R.err);
   else{
     const A=R.unJourAMoitie, C=R.tousComplets, M=R.toutAMoitie, D=R.deuxAMoitie;
     /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : le moteur LIT les calories. Avant, `alim` ne

@@ -6,8 +6,8 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1106`. ⏳ **Déploiement à vérifier** (**R18**).
-- 🍽️⭐⭐ **L'APPORT ENTRE DANS LE MOTEUR DE TRAJECTOIRE** (ft-v1106), après le **contre-audit**
+- **Version en ligne (live) :** `ft-v1107`. ⏳ **Déploiement à vérifier** (**R18**).
+- 🍽️⭐⭐ **L'APPORT ENTRE DANS LE MOTEUR DE TRAJECTOIRE** (ft-v1107), après le **contre-audit**
   d'une proposition GPT (`docs/NUTRITION-CONTRE-AUDIT-TRAJECTOIRE.md`). ⭐ **Vingt-huit
   paragraphes réduits à UN trou** : son axe « trajectoire » était **déjà en production**
   (ft-v1102) ; il manquait le **premier** maillon — le moteur **comptait** les jours de repas et

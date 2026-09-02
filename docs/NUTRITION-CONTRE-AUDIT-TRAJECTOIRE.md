@@ -9,7 +9,7 @@
 > périmés une fois mesurés. Tout est **mesuré dans un navigateur**, par les vraies fonctions.
 >
 > ⭐ **Le §7 a été ajouté APRÈS**, quand Michel a tranché — *« il va falloir améliorer tout ça »* :
-> il décrit ce qui a été livré en **ft-v1106** et ce qui ne l'a **pas** été. *Un document d'audit
+> il décrit ce qui a été livré en **ft-v1107** et ce qui ne l'a **pas** été. *Un document d'audit
 > qui garderait « aucune ligne de code » en tête après coup mentirait sur lui-même* (**R23**).
 
 ---
@@ -189,7 +189,7 @@ C'est une question produit, et elle touche ce que Milo reçoit.
 
 ---
 
-## 7. ⭐ CE QUI A ÉTÉ FAIT ENSUITE (ft-v1106, le même jour)
+## 7. ⭐ CE QUI A ÉTÉ FAIT ENSUITE (ft-v1107, le même jour)
 
 Michel : *« il va falloir améliorer tout ça »*. **Les trous ① et ② sont comblés, le ③ ne l'est
 pas — et c'est délibéré.**

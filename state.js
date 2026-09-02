@@ -1567,7 +1567,7 @@ function _volumeParMoitie(jours){
 const TENDANCE_FENETRE = 14;          // ⛔ la même que `_PA_SOLIDE` et que la carte de volume
 const TENDANCE_MIN_PESEES = 3;        // ⛔ le minimum déjà appliqué par la carte de corrélations
 
-/* 🍽️⛔⛔ CE JOUR EST-IL ASSEZ REMPLI POUR COMPTER ? (ft-v1106)
+/* 🍽️⛔⛔ CE JOUR EST-IL ASSEZ REMPLI POUR COMPTER ? (ft-v1107)
    ⛔⛔ LE DÉFAUT, MESURÉ : un « jour noté » est un jour qui a **au moins une entrée**. Une
    journée où seul le petit-déjeuner a été saisi compte donc comme une journée complète.
    Chiffré sur 6 jours à 4 repas + 1 jour à 1 repas : la moyenne affichée tombe à **1 798 kcal/j**
@@ -1651,7 +1651,7 @@ function tendance14j(){
     if(out.alim.etat==='insuffisant')
       out.manque.push(nAlim+' jour'+(nAlim>1?'s':'')+' de repas notés (il en faut '+mini+')');
 
-    /* 🍽️⛔⛔ L'APPORT MOYEN — LE MAILLON QUI MANQUAIT (ft-v1106)
+    /* 🍽️⛔⛔ L'APPORT MOYEN — LE MAILLON QUI MANQUAIT (ft-v1107)
        Jusqu'ici ce moteur **comptait** les jours de repas et ne lisait **jamais** les calories :
        l'app savait dire « ton poids baisse plus vite que prévu » et « tu manges 1 354 kcal sous
        ta cible » **dans deux cartes différentes, sur deux fenêtres différentes**, sans jamais
