@@ -6,7 +6,8 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1100`. ⏳ déploiement à vérifier. ⚠️ Aucun déploiement
+- **Version en ligne (live) :** `ft-v1100`. ✅ **Déploiement du site vérifié vert** (run **#791**,
+  commit `8e860f3`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement
   backend : `Code.js` n'a pas été touché.
 - ⚖️⭐⭐ **UNE SEULE SOURCE POUR LES PLAGES DE POIDS** (ft-v1100). GPT tranche : *« corriger la
   contradiction des plages AVANT de construire le moteur de tendance »*. **C'était un défaut
