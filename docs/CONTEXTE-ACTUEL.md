@@ -6,7 +6,9 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1094`.
+- **Version en ligne (live) :** `ft-v1094`. ✅ **Déploiement du site vérifié vert** (run **#769**,
+  commit `74913bc`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement backend cette fois :
+  `Code.js` n'a pas été touché, le correctif est entièrement dans `state.js`.
 - 🪟⭐⭐ **DEUX ONGLETS OUVERTS, ET LE DERNIER QUI ÉCRIT EFFACE L'AUTRE** (ft-v1094). Michel :
   *« on continue avec les incohérences ? »* — 4ᵉ passe, six familles neuves, **une seule a
   mordu** et elle touche la **règle d'or #3**. `persist()` écrit **tout `S`** depuis la mémoire
