@@ -6,8 +6,8 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1103`. ⏳ **Déploiement à vérifier** (**R18**). ⚠️ Aucun
-  déploiement backend : `Code.js` n'a pas été touché.
+- **Version en ligne (live) :** `ft-v1103`. ✅ **Déploiement du site vérifié vert** (run **#810**,
+  commit `7a32e26`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement backend.
 - ⚖️⛔⛔ **UNE VALEUR PEUT ÊTRE COHÉRENTE AVEC ELLE-MÊME ET IMPOSSIBLE** (ft-v1103). Michel,
   capture à l'appui : *« encore le souci avec la prot »* — **35 g de protéines + 1 + 1 = 37 g de
   matière dans une portion de 30 g**. ⛔⛔ **Le contrôle qui existait ne pouvait pas le voir, et
