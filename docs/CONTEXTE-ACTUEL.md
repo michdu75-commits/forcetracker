@@ -6,7 +6,9 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1097`.
+- **Version en ligne (live) :** `ft-v1097`. ✅ **Déploiement du site vérifié vert** (run **#777**,
+  commit `51dbf18`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement backend : `Code.js`
+  n'a pas été touché.
 - 📤⭐ **DEUX EXPORTS DATÉS — NUTRITION ET POIDS** (ft-v1096). Michel : *« il faudra aussi
   créer un export daté de la nutrition et aussi côté poids »*. Ils **réutilisent le patron**
   de `exportHistoCsv` (**R13**) : `;` + BOM (sans lui Excel FR ouvre le `,` en UNE colonne),
