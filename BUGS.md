@@ -2256,3 +2256,62 @@ plus honnête qu'extrapoler une moyenne hebdomadaire sur trois jours (**R29**).
 **Devant une moyenne, demander « depuis quand cette personne est-elle là ? » avant de demander
 « combien a-t-elle fait ? »** — et tester avec un compte de **deux semaines**, jamais avec le sien.
 
+
+---
+
+## 38. 📏 UN TAUX DIVISÉ PAR LE NOMBRE D'ÉCHANTILLONS AU LIEU DU TEMPS ÉCOULÉ **(02/09/2026, ft-v1102)**
+
+> **La famille §37 sous sa forme la plus pure**, et la plus chère : là-bas c'était une *moyenne*
+> divisée par une fenêtre non vécue ; ici c'est une *pente* divisée par le **nombre de mesures**.
+> Même signature, même invisibilité — et cette fois le facteur d'erreur est le **rythme de la
+> personne**, donc chacun voit un chiffre faux d'un facteur différent.
+
+### 🔍 Le cas
+`linearRegression(pts)` recevait, aux **trois** endroits qui l'appelaient, l'**index** du point
+comme abscisse : `pts.map((p,i)=>({x:i, y:p.kg}))`. La pente sortait donc en **kg par pesée**.
+Le code écrivait ensuite `slope*7` en croyant lire « par semaine » — il lisait **« sur 7 pesées »**.
+
+**Mesuré, à évolution réelle strictement identique (+0,20 kg/semaine) :**
+
+| Rythme de pesée | Ce que l'app annonçait | Facteur |
+|---|---|---|
+| tous les jours | **+0,20 kg/sem** | ×1 ✅ |
+| tous les 2 jours | **+0,40 kg/sem** | ×2 |
+| tous les 3 jours | **+0,60 kg/sem** | ×3 |
+| une fois par semaine | **+1,40 kg/sem** | **×7** |
+
+👉 ***Le chiffre mesurait la fréquence de la balance, pas le corps.*** Quelqu'un de rigoureux qui
+se pèse tous les matins voyait juste ; quelqu'un qui se pèse le dimanche voyait sa tendance
+**multipliée par sept** — et Milo la recevait telle quelle, en clair, dans son contexte.
+
+### ⭐⭐ Ce qui rend ce cas instructif : le correctif de la veille l'a RÉVÉLÉ, pas créé
+Tant que le juge de ft-v1044 disait *« ✓ dans la bonne direction »* dès que le poids montait, une
+pente ×7 restait **dans la bonne direction** — donc **invisible**. C'est ft-v1100, en remplaçant
+ce juge par une comparaison à une **plage chiffrée**, qui a fait sortir un `⚠ PLUS RAPIDE que la
+plage attendue` sur quelqu'un de parfaitement dans sa cible.
+
+> **Un garde-fou juste révèle les mesures fausses qu'il consomme.** Le premier réflexe, devant ce
+> rouge, était de croire que le nouveau juge était trop strict — c'est-à-dire d'aller « réparer »
+> le seul morceau du système qui venait de dire la vérité.
+
+### 🔍 À quoi on la reconnaît
+- un `map((p,i)=>({x:i, …}))` suivi, plus loin, d'une **multiplication par une durée** (`*7`,
+  `*30`, `*365`) : l'abscisse est en *rangs*, le facteur est en *jours* ;
+- une fonction **générique** (ici `linearRegression`) correcte en elle-même, avec **plusieurs
+  appelants** dont certains ont raison — quand on **trace** une droite, l'index EST la bonne
+  abscisse ; c'est seulement quand on **annonce un rythme** qu'il devient faux ;
+- un chiffre qui **paraît juste chez celui qui teste** : quiconque a des données quotidiennes voit
+  ×1. *Le bug ne se manifeste que chez les gens qui mesurent moins souvent que le développeur.*
+
+### ⛔ Le piège du correctif
+Ne **pas** toucher à la fonction générique : elle n'a jamais menti, c'est ce qu'on lui **donne**
+qui était faux. Corriger `linearRegression` aurait cassé les tracés de courbes, qui ont raison.
+👉 Un **seul propriétaire** de « kg par semaine » (`penteKgParSemaine`), lu par l'écran Progrès,
+par le moteur de tendance **et** par le contexte de Milo (**R2**) — et un témoin permanent refuse
+tout nouveau `slope*7` sur un index hors de ce propriétaire, sinon la rechute est certaine.
+⚠️ Et une garde qu'on n'aurait pas eue en gardant l'index : **deux pesées le même jour** donnent
+une étendue nulle ; on rend `0`, pas une pente infinie.
+
+### 🛡️ Le réflexe, en une ligne
+**Devant un taux « par semaine », chercher son dénominateur et vérifier qu'il est en JOURS** —
+puis le mesurer sur quelqu'un qui note *moins souvent que soi*, jamais sur ses propres données.

@@ -4297,6 +4297,18 @@ function exitDemoMode(){
 // ── GUIDE DE L'APPLICATION (diaporama, Menu → Outils) ────────
 // Guide-film : chaque slide = un vrai écran de l'app (guide/*.jpg) + un doigt animé (tap) + une phrase.
 const APP_GUIDE_SLIDES=[
+  /* 📉 DIAPO DU GUIDE (règle d'or #11, point 5), et **SANS IMAGE exprès** — pour deux raisons
+     distinctes, et les deux comptent :
+     ① une capture de la carte du jour montrerait des **grammes qui ne sont pas ceux du
+        lecteur**, donc la diapo se lirait comme une recommandation de macros (même raison
+        qu'en ft-v1035 et que pour la diapo 🔭 ci-dessous) ;
+     ② et surtout, une capture de « Ton évolution » montrerait **UN de ses quatre états** — or
+        celui que le lecteur verra dépend de ce qu'il a noté. *Montrer l'état « tu progresses »
+        à quelqu'un qui ouvrira l'app sur « pas encore assez de données » fabrique exactement
+        l'incompréhension que la diapo devait éviter.*
+     ⛔ Elle ne répète pas la pop-up : celle-ci ANNONCE que le chiffre a bougé ; la diapo dit ce
+     que la carte FAIT, et pourquoi elle se tait parfois (R25). */
+  {icon:'📉', t:'Ta journée d\'abord, ton évolution ensuite', cap:'⛔ <b>« X kcal restantes » n\'a pas été supprimé</b> : le calcul est le même, mais le reste est maintenant traduit en <b>aliments que tu manges déjà</b> (« ≈ 2 × blanc de poulet »). Un nombre de calories ne se mange pas.<br><br>📈 <b>Une carte « Ton évolution »</b> croise ton <b>poids</b>, tes <b>charges</b> et tes <b>repas notés</b> sur <b>14 jours</b>, et te dit si tout va dans le sens de ton objectif.<br><br>⭐ Elle est calculée <b>sur ton téléphone</b> : elle marche <b>hors ligne</b> et ne coûte <b>aucune question à Milo</b>.<br><br>⛔ <b>Et quand elle n\'a pas assez de données, elle le dit et s\'arrête là</b> — pas de flèche, pas de pourcentage. <b>Une flèche est déjà une conclusion.</b>'},
   /* 🔭 DIAPO DU GUIDE (règle d'or #11, point 5), et **SANS IMAGE exprès** : une capture
      montrerait une cible chiffrée — donc des grammes qui ne sont pas ceux du lecteur — et la
      diapo se lirait comme une recommandation de macros. C'est la même raison qu'en ft-v1035.

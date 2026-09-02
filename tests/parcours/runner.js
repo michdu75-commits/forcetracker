@@ -19659,8 +19659,14 @@ console.log('\n-- CLXXVI. La courbe des pas dans Progrès (ft-v1071) --');
                  la premiere feature suivante qui merite legitimement sa pop-up, quel qu'en soit
                  le sujet. *Un temoin qui fige un ETAT rougit des qu'une decision est prise ; ce
                  qu'on fige, c'est une REGLE.* L'exigence n'est pas affaiblie, elle est VISEE. */
+              /* ⚠️⚠️ 2ᵉ RE-VISÉE (02/09, ft-v1102) — ET CELLE-CI ÉTAIT UN FAUX ROUGE, PAS UN VRAI.
+                 `\bpas\b` attrape la NÉGATION française (« il n'a **pas** disparu »), pas le nom.
+                 Une pop-up de nutrition a rougi en niant cinq fois, sans un mot sur les pas.
+                 *Un motif qui capture le mot le plus fréquent de la langue ne mesure pas un sujet,
+                 il mesure la longueur du texte.* On vise le sens NOMINAL : un nombre ou un
+                 déterminant devant « pas », ou les mots qui ne veulent dire que ça. */
               pasDeNouvellePopup:wn.filter(w=>w&&(w.v||0)>65)
-                                   .every(w=>!/\bpas\b|podom|marche|steps/i.test((w.t||'')+' '+(w.d||'')))};
+                                   .every(w=>!/(?:\d|tes|ses|mes|des|les|[0-9\u202f\u00a0]\s?)\s?pas\b|pas quotidiens|podom|marche|steps/i.test((w.t||'')+' '+(w.d||'')))};
     }catch(e){ return {err:String(e)}; } })();
     return o;
    }catch(e){ return {err:String(e)+' | '+(e&&e.stack||'').split('\n')[1]}; }
@@ -23292,12 +23298,59 @@ console.log('\n-- CCX. La refonte de Nutrition et le moteur de tendance (ft-v110
      ÉCRIT À L'ÉCRAN, pas ce qu'on a écrit à côté pour l'expliquer.* */
   const src=fs.readFileSync(path.join(ROOT,'screens.js'),'utf8')
               .replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+  /* ⚠️⚠️ 6ᵉ FOIS POUR LA FAMILLE §31, ET DANS LA MÊME LIVRAISON QUE LA 5ᵉ : ce témoin cherchait
+     encore dans TOUT le fichier, donc il a attrapé l'entrée d'aide `?` que je venais d'écrire —
+     laquelle **cite** « presque atteint » précisément pour dire qu'on ne l'affiche jamais.
+     ⛔ Sa garantie n'a jamais été « ce mot n'apparaît nulle part dans le fichier », c'est
+     « aucune tolérance inventée ne s'écrit SOUS LES ANNEAUX ». On mesure donc le seul endroit
+     qui écrit sous les anneaux — `_etatMacro` — au lieu du fichier entier. *Retirer les
+     commentaires ne suffit pas : une CHAÎNE de texte peut expliquer une interdiction, elle
+     aussi.* L'exigence n'est pas affaiblie, elle est VISÉE. */
+  const blocEtat = (src.split('const _etatMacro=')[1]||'').split('\n  };')[0];
+  t('⛔ le bloc qui écrit sous les anneaux est bien trouvé (sinon le témoin suivant est vert à vide)',
+    blocEtat.length>80 && /txt:/.test(blocEtat), blocEtat.length+' caractères');
   t('⛔⛔ aucune tolérance inventée sous les anneaux (pas de « presque », « pratiquement », « proche de »)',
-    !/pratiquement atteint|presque atteint|proche de l.objectif/i.test(src), '');
+    !/pratiquement|presque|proche de/i.test(blocEtat), blocEtat.slice(0,120));
   t('⛔ le témoin ci-dessus sait rougir : le motif attrape bien la formulation refusée',
     /pratiquement atteint/i.test('objectif pratiquement atteint'), '');
   t('⛔ … et l\'état « atteint » existe bien, lui (sinon le témoin ci-dessus serait vert à vide)',
     /atteint', vert:true/.test(src) || /txt:'atteint'/.test(src), '');
+
+  /* ⛔⛔ UN LIBELLÉ CITÉ DANS L'AIDE DOIT EXISTER À L'ÉCRAN (famille §31 de `BUGS.md`).
+     ⚠️ TROUVÉ SUR UNE CAPTURE, PAS EN RELISANT : ma pop-up et mon aide `?` annonçaient
+     « cible haute · jour de séance » et « la même tous les jours » — deux libellés d'une
+     version intermédiaire que le code ne produit **plus**. L'écran, lui, affichait
+     « ↑ jour de séance » et « identique chaque jour ». *Une aide qui nomme un repère
+     inexistant est pire qu'une aide absente, parce qu'on la croit* (leçon de ft-v1025).
+     ⛔ Le témoin ne fige AUCUNE formulation : il extrait les libellés que `_etatMacro`
+     produit réellement, et exige que chaque libellé cité entre guillemets par l'aide ou la
+     pop-up soit **dans cette liste**. Le jour où quelqu'un renomme un état, c'est la
+     livraison qui rougit — pas l'utilisateur qui cherche un mot qui n'existe pas. */
+  {
+    /* ⚠️ LA FENÊTRE SE FERME SUR `\n  };`, PAS SUR LE PREMIER `};` — mon 1ᵉʳ jet coupait au
+       `return {txt:'atteint', vert:true};` de la 1ʳᵉ ligne et ne voyait donc qu'UN libellé sur
+       quatre. *Une fenêtre de mesure qui se ferme trop tôt ne rougit pas : elle rougit à tort,
+       ou pire, elle verdit à vide.* (Même défaut qu'en ft-v1017.) */
+    const bloc = blocEtat;                         // ⛔ un seul extracteur (R2)
+    const vrais = (bloc.match(/txt:'([^']+)'/g)||[]).map(x=>x.slice(5,-1))
+                  .concat((bloc.match(/'(jour de (?:séance|repos))'/g)||[]).map(x=>x.slice(1,-1)));
+    t('⛔ les libellés d\'état des anneaux sont bien lisibles dans le code (sinon le témoin suivant est vert à vide)',
+      vrais.length>=3, JSON.stringify(vrais));
+
+    /* Les libellés que l'aide `?` et la pop-up mettent entre guillemets français, sur ce sujet. */
+    const textes = fs.readFileSync(path.join(ROOT,'constants.js'),'utf8')
+                 + fs.readFileSync(path.join(ROOT,'screens.js'),'utf8');
+    const cites = (textes.match(/«\s*(?:↑|↓)?\s*(?:cible [a-zà-ÿ]+|identique [a-zà-ÿ]+|la même [a-zà-ÿ ]+)[^»]*»/gi)||[])
+                  .map(x=>x.replace(/[«»]/g,'').replace(/&nbsp;/g,' ').trim());
+    /* ⛔ ÉGALITÉ STRICTE APRÈS NORMALISATION, PAS UNE INCLUSION — mon 1ᵉʳ jet acceptait toute
+       citation CONTENANT un vrai libellé, donc « cible haute · jour de séance » passait au vert
+       en s'appuyant sur le « jour de séance » qu'il contient. *Une comparaison par inclusion
+       laisse toujours passer le sur-texte, qui est précisément ce qu'on cherche.* */
+    const n=x=>x.replace(/&nbsp;/g,' ').replace(/[↑↓]/g,'').replace(/\s+/g,' ').trim().toLowerCase();
+    const orphelins = cites.filter(c=>!vrais.some(v=>n(c)===n(v)));
+    t('⛔⛔ aucun libellé d\'état cité par l\'aide ou la pop-up n\'est absent de l\'écran',
+      orphelins.length===0, orphelins.join(' | '));
+  }
 }
 
 await b.close(); srv.close();

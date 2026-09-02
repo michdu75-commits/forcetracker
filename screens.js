@@ -231,6 +231,19 @@ const _HELP_DATA={
   nutrition:{
     title:'🍽️ Nutrition',
     tips:[
+      /* 📉 EN TÊTE, ET C'EST LA RÈGLE R25 APPLIQUÉE : la pop-up ANNONCE que le chiffre a
+         bougé, l'aide EXPLIQUE **où il est parti**. C'est la première question de quelqu'un qui
+         ouvre l'aide après avoir cherché son compteur. */
+      {i:'📉',t:'<b>« X kcal restantes » n\'a pas été supprimé — il a changé de forme.</b> Le calcul est <b>exactement le même</b> ; ce qui change, c\'est ce qu\'on en montre. ⭐ Un nombre de calories ne se mange pas : « il te reste 800 kcal » ne dit pas quoi mettre dans l\'assiette, et crée une <b>dette</b> (« je DOIS manger 800 kcal »). 👉 Le même reste est donc traduit juste dessous en <b>aliments réels que tu manges déjà</b> (« ≈ 2 × blanc de poulet »). ⭐ <b>La cible, elle, n\'est plus écrite qu\'une fois</b> — en haut de la carte : elle l\'était <b>deux fois</b>, à deux endroits et dans deux mises en forme. ⛔ Et à la place du compteur, en petit, le <b>type de journée</b> (« 🍚 Jour de séance » / « 😴 Jour de repos ») — c\'est lui qui explique pourquoi tes cibles ne sont pas celles d\'hier.'},
+      /* 📈 LE DÉTAIL DE LA CARTE « TON ÉVOLUTION » : ce que la pop-up n'a pas le droit de
+         dire (R25). Les 4 états, la fenêtre, et surtout POURQUOI elle se tait. */
+      {i:'📈',t:'<b>La carte « Ton évolution » croise trois choses sur 14 jours</b> : ton <b>poids</b>, tes <b>charges</b> et tes <b>repas notés</b>. ⭐ <b>Pourquoi 14 jours</b> : en dessous, une seule mauvaise nuit ou un repas salé déplace la courbe ; au-dessus, on ne verrait plus ce que tu as changé la semaine dernière. ⭐ <b>Les charges se comparent à répétitions égales</b> (8 reps contre 8 reps) : comparer 8 reps à 5 reps ferait bouger le chiffre de <b>plus de 25 %</b> sans que tu sois plus fort. ⛔ <b>Une semaine allégée est reconnue</b> et signalée comme telle — une décharge n\'est pas une régression. ⛔ <b>Et quand elle n\'a pas assez de données, elle le dit et s\'arrête</b> : ni flèche, ni pourcentage, ni conclusion. <b>Une flèche est déjà une conclusion.</b>'},
+      /* 🤖 LE COÛT, parce que c'est la question qu'on se pose devant un bouton « Milo »
+         (et parce que la réponse est rassurante : elle est GRATUITE trois fois sur quatre). */
+      {i:'🤖',t:'<b>Cette carte ne consulte aucun serveur et ne coûte aucune question à Milo.</b> Tout est calculé sur ton téléphone, donc ça marche aussi <b>hors ligne</b>, dans une salle sans réseau. ⭐ Le bouton <b>« Analyser avec Milo »</b> n\'apparaît que dans <b>un seul cas</b> : quand tes signaux ne vont pas tous dans le même sens et que l\'app <b>ne veut pas trancher à ta place</b>. Il n\'envoie rien tout seul — il ouvre le chat avec la question déjà écrite, tu l\'envoies si tu veux. ⛔ Milo reçoit alors <b>tes tendances, jamais ton journal alimentaire</b>.'},
+      /* 🍚 LES ÉTATS SOUS LES ANNEAUX — et la raison pour laquelle il n'y a PAS de
+         « pratiquement atteint » : ce mot exigerait un seuil que rien dans le projet ne fournit. */
+      {i:'🍚',t:'<b>Sous chaque anneau, un mot dit pourquoi cette cible-là aujourd\'hui</b> : « ↑ jour de séance » ou « ↓ jour de séance » selon que la macro monte ou descend ce jour-là, et « identique chaque jour » pour les protéines. Dès que la cible est touchée, il affiche <b>« atteint »</b> — et c\'est le <b>seul état coloré</b> : il n\'y a <b>aucun rouge d\'échec</b> en face d\'une macro. ⛔ Tu ne verras jamais « presque atteint » : ce mot demanderait un seuil (95 % ? 98 % ?) que <b>rien ne permet de justifier</b>, et l\'app préfère se taire plutôt qu\'inventer une tolérance.'},
       /* 🔭 EN TÊTE avec la précédente : c'est l'autre question qu'on se pose en voyant un
          chiffre bouger — « pourquoi ma cible glucides n'est pas la même qu'hier ? ». */
       {i:'🔭',t:'<b>Ta cible n\'est pas la même tous les jours, et c\'est voulu.</b> Les jours où tu t\'entraînes, l\'app te donne <b>plus de glucides</b> (le carburant de l\'effort) et <b>moins de lipides</b> ; les jours de repos, l\'inverse. ⭐ <b>Tes calories, elles, ne bougent pas</b> — on échange, on n\'ajoute pas — et <b>sur la semaine le total est identique</b>. 👉 La carte du jour te dit où tu en es (« 🍚 Jour de séance » / « 😴 Jour de repos »), et <b>les deux chiffres</b> sont dans « Comment c\'est calculé » : tu peux ainsi prévoir ton jour de repos sans attendre qu\'il arrive. ⛔ <b>Les protéines ne bougent jamais</b> : elles se calculent sur ton poids, pas sur ta séance — donc elles n\'ont pas de fourchette, et on ne leur en invente pas une.'},
@@ -2331,7 +2344,10 @@ function _renderAujourdhui(macros){
        800 kcal »*. Le calcul, lui, ne change pas d'une virgule — il continue d'alimenter
        « ce qu'il te reste, en vrai » juste dessous, qui le traduit en **aliments réels**, donc
        en quelque chose d'actionnable. *On déplace le nombre là où il sert, on ne le supprime pas.*
-       ⛔ Ce qui prend sa place est la RÉFÉRENCE du jour, écrite une seule fois et en discret.
+       ⛔ Ce qui prend sa place est le TYPE DE JOUR, pas la cible : la cible est déjà en
+       en-tête, et l'écrire ici la mettrait **deux fois dans la même carte** (R2) — je l'ai
+       recréée deux fois avant de le voir. ⛔ Sans cyclage : **rien**. *Un espace vide n'est pas
+       un défaut ; une information écrite deux fois en est un.*
        ⛔ « Un jour, pas une tendance » RESTE sur le dépassement : c'est ce qui empêche de le lire
        comme un échec (R12, anti-TCA P21). */
     +'<div style="font-size:12.5px;color:var(--t3);">'

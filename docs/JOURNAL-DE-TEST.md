@@ -1076,6 +1076,39 @@ perd **0,21 kg/sem** au lieu des 0,3–0,7 visés **progresse quand même**. Il 
 pas tout à fait.* Le risque est qu'un fait neutre soit lu comme un problème à corriger.
 👉 Même statut : **juge humain ou banc d'essai**, pas de code.
 
+### 🟡 MILO REÇOIT-IL DES TENDANCES QU'IL A DÉJÀ VUES À L'ÉCRAN, ET QUE FAIT-IL DU DÉSACCORD ?
+**02/09/2026, ft-v1102.** Le bouton « Analyser avec Milo » de la carte « Ton évolution » lui envoie
+une question **pré-écrite** qui contient déjà le verdict local : *« mes charges baissent de −6 %,
+mon poids monte de +1,2 kg/sem, ces signaux ne vont pas tous dans le sens de mon objectif »*.
+⚠️ **Le risque n'est pas qu'il se trompe, c'est qu'il PARAPHRASE** — qu'il réponde en reformulant
+les trois chiffres que la personne vient de lire, sans rien ajouter. *Un débrief qui répète l'écran
+coûte un appel pour zéro information.* ⚠️ Et le risque symétrique : qu'il **contredise** l'écran
+(« non, tu progresses bien ») sans expliquer sur quoi il s'appuie — l'app dirait alors deux choses
+opposées à 400 px d'écart, la famille « deux sources qui se contredisent » de `BUGS.md`.
+👉 **Attendu non vérifiable par du code** (c'est du jugement, du ton, de la valeur ajoutée) :
+**juge humain ou banc d'essai**, jamais un scénario automatique.
+
+### 🟡 UNE PENTE FAUSSE A-T-ELLE ATTEINT LES RÉPONSES DE MILO, ET DEPUIS QUAND ?
+**02/09/2026, ft-v1102.** Le défaut corrigé aujourd'hui (pente en *kg par pesée* au lieu de *par
+jour*, §38 de `BUGS.md`) partait **en clair dans le contexte de Milo**, pas seulement à l'écran.
+Quelqu'un qui se pesait une fois par semaine lui annonçait donc une prise de poids **multipliée
+par sept**. ⚠️ **La question ouverte n'est pas le correctif — il est fait et mesuré — c'est ce que
+Milo a RÉPONDU pendant tout ce temps** : a-t-il conseillé de réduire les calories de gens qui ne
+prenaient rien d'anormal ? Ça ne se lit nulle part (et on ne va pas lire les conversations —
+décision de Michel). 👉 Le seul angle honnête est un **banc d'essai avant/après** (R34) sur un
+profil « une pesée par semaine ». **À trier** : il faut d'abord décider si ça vaut une passe payante.
+
+### 🟡 « PAS ENCORE ASSEZ DE DONNÉES » SE LIT-IL COMME UNE PANNE ?
+**02/09/2026, ft-v1102.** La carte « Ton évolution » se tait volontairement sous 3 pesées ou moins
+de 8 jours d'historique : ni flèche, ni pourcentage, ni conclusion — *une flèche est déjà une
+conclusion*. **Mesuré : c'est bien ce qu'elle fait.** ⚠️ **Ce qui n'est pas mesuré, c'est comment
+ça se LIT** : est-ce qu'un nouveau comprend « l'app attend que je note », ou est-ce qu'il comprend
+« la carte est cassée » ? La carte nomme ce qui manque, ce qui devrait suffire — mais c'est une
+hypothèse, pas une mesure. ⛔ Et le garde-fou anti-TCA interdit d'en faire une injonction (« note
+tes repas ! ») : *on dit ce qui manque, on ne réclame pas.* 👉 **Juge humain** — le premier
+utilisateur qui ouvre l'onglet avec un journal vide.
+
+
 ---
 
 ## ⚠️ Comment fouiller les conversations (leçon du 21/08)

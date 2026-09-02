@@ -458,6 +458,11 @@ const FEAT_SI = {
   montrePas:     () => { try{ return ((S&&S.healthDaily)||[]).some(x=>x&&x.steps>0); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* 📉 POINT ROUGE **ET** POP-UP (règle d'or #11) — les deux, et c'est argumenté :
+     la pop-up annonce le déplacement du chiffre (ce qui se lirait comme un retrait) ; le point
+     rouge, lui, sert à celui qui ferme la pop-up sans la lire et ouvre l'onglet trois jours
+     plus tard. *La pop-up passe une fois, le point rouge attend.* */
+  {id:'nutri-evolution', screen:'nutrition', desc:'\u{1F4C9} <b>Nutrition \u2192 la carte du jour a chang\u00e9 d\u2019ordre</b>, et une carte <b>\u00ab Ton \u00e9volution \u00bb</b> est apparue sous le bouton \u00ab noter \u00bb. \u2b50 Ce qu\u2019elle fait : elle regarde <b>ton poids, tes charges et tes repas not\u00e9s sur 14 jours</b> et dit si tout va dans le sens de ton objectif. \u26d4 Elle ne consulte <b>aucun serveur</b> et ne co\u00fbte <b>aucune question \u00e0 Milo</b> \u2014 tout est calcul\u00e9 sur ton t\u00e9l\u00e9phone, m\u00eame hors ligne. \u26a0\uFE0F Et \u00ab X kcal restantes \u00bb n\u2019a pas disparu : il est devenu la ligne \u00ab ce qu\u2019il te reste, en vrai \u00bb, juste en dessous.'},
   /* 🔭 POINT ROUGE, PAS DE POP-UP `WHATS_NEW` (règle d'or #11), et c'est argumenté :
      ① il y a bien quelque chose à découvrir — une ligne apparaît sur la carte du jour et les
      DEUX bouts de la semaine s'affichent dans « comment c'est calculé » ;
@@ -654,6 +659,19 @@ const NEW_FEATURES=[
 // ✅ v46/47/48 = les 3 features ex-testeurs (« maxi » · calories manuelles · objectif recomposition)
 //    OUVERTES À TOUT LE MONDE (ft-v623, décision Michel) + red dots reps-maxi/manual-kcal/goal-recomp réactivés.
 const WHATS_NEW=[
+  /* 📉 ELLE SE MÉRITE, ET C'EST LE CAS LE PLUS NET DE « UN REPÈRE A BOUGÉ » (règle d'or #11).
+     ⛔⛔ « X kcal restantes » N'EST PLUS À SA PLACE dans la carte du jour. C'est le chiffre que
+     la personne lisait en premier depuis des mois. **La lecture la plus naturelle serait « ils
+     ont supprimé mon compteur »** — c'est exactement ce que la pop-up doit empêcher.
+     ⭐ Et la pop-up doit dire OÙ il est parti : il n'a pas disparu, il est traduit en aliments
+     réels juste dessous. *Annoncer un retrait sans dire ce qui le remplace fabrique l'inquiétude
+     qu'on voulait éviter.*
+     ⛔ BORNÉE À L'ESSENTIEL (R25) : ce qui bouge, et ce qui apparaît. Le détail — les 4 états,
+     la fenêtre de 14 jours, pourquoi la force se compare à répétitions égales, pourquoi Milo
+     n'apparaît que dans un seul cas — vit dans l'aide `?`, l'aide détaillée et le Guide.
+     ⛔ ANTI-TCA (P21) : la pop-up ne dit nulle part « remplis ton journal ». Elle dit ce que
+     l'app fait quand il est vide : *elle se tait*. */
+  {v:67, ic:'📉', t:'Nutrition : ta journée d’abord, ton évolution ensuite', d:'① <b>« X kcal restantes » n’est plus le gros chiffre de la carte</b> — il n’a pas disparu, il est traduit juste dessous en <b>aliments réels</b> (« ≈ 2 × blanc de poulet »). Un nombre de calories ne se mange pas. ② <b>Une carte « Ton évolution »</b> apparaît sous le bouton « noter » : elle croise <b>ton poids, tes charges et tes repas notés sur 14 jours</b>, sur ton téléphone et sans réseau. ⛔ Quand elle n’a pas assez de données, <b>elle le dit et s’arrête là</b> — aucune conclusion inventée.'},
   /* 🔥 ELLE SE MÉRITE, ET C'EST « UN REPÈRE A BOUGÉ » DEUX FOIS (règle d'or #11).
      ① Le chrono d'échauffement affichait **45 s** depuis toujours ; il peut maintenant afficher
         90 ou 120 s sur les derniers paliers. *Un chrono qu'on connaît par cœur et qui triple sans

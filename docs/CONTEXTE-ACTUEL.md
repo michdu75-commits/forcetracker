@@ -6,7 +6,49 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1101`. ✅ **Déploiement du site vérifié vert** (run **#793**,
+- **Version en ligne (live) :** `ft-v1102`. ⏳ **Déploiement à vérifier** (**R18** : « poussé »
+  ne veut pas dire « en ligne »). ⚠️ Aucun déploiement backend : `Code.js` n'a pas été touché.
+- 📏⛔⛔ **UNE PENTE QUI MESURAIT LA BALANCE, PAS LE CORPS** (ft-v1102) — **le vrai défaut du
+  jour, et il n'était pas au programme.** `linearRegression` recevait l'**INDEX** du point
+  comme abscisse aux **trois** endroits qui l'appelaient, puis le code faisait `slope*7` en
+  croyant lire « par semaine ». **Mesuré, à évolution réelle identique (+0,20 kg/sem)** :
+  tous les jours **+0,20** · tous les 2 jours **+0,40** · tous les 3 jours **+0,60** · **une
+  fois par semaine +1,40 (×7)**. ⛔⛔ Et **ça partait en clair dans le contexte de Milo**.
+  ⭐⭐ **ft-v1100 ne l'a pas créé, il l'a RÉVÉLÉ** : tant que le juge disait « ✓ bonne
+  direction », une pente ×7 restait invisible. *Un garde-fou juste révèle les mesures fausses
+  qu'il consomme.* Nouvelle famille **§38** de `BUGS.md`. ⛔ `linearRegression` **n'est pas
+  touchée** (l'index est correct pour TRACER) ; un seul propriétaire `penteKgParSemaine`
+  (**R2**) + un témoin qui refuse tout nouveau `slope*7` sur un index.
+- 📉 **LA REFONTE DE L'ONGLET NUTRITION** (décision produit en 20 points, relayée par Michel).
+  ⛔⛔ *« X kcal restantes »* cesse d'être l'information dominante : **le calcul ne change pas**,
+  il est traduit en **aliments réels** juste dessous (*un nombre de calories ne se mange pas*).
+  Le **type de journée** prend sa place (*« 🍚 Jour de séance »*), et **rien** sans cyclage ;
+  la **cible**, elle, n'est plus écrite qu'**une fois** en en-tête — elle l'était **deux fois**.
+  ⚠️ **Défaut attrapé à la CAPTURE** : l'aide `?` et la pop-up nommaient *« cible haute · jour
+  de séance »*, un libellé d'une version intermédiaire — l'écran dit *« ↑ jour de séance »*.
+  *Une aide qui nomme un repère inexistant est pire qu'une aide absente* (**§31**). Un témoin
+  refuse désormais tout libellé cité qui ne sorte pas de `_etatMacro`.
+  ⭐ Sous chaque anneau, un mot dit **pourquoi cette cible-là aujourd'hui** (cyclage de
+  ft-v1098), et **« atteint »** est le **seul état coloré** — aucun rouge d'échec (**P21**).
+  ⛔ **Pas de « pratiquement atteint »** : ce mot exigerait un seuil qu'**aucune source du
+  projet ne fournit**.
+- 📈 **LA CARTE « TON ÉVOLUTION »** — poids + charges + repas notés sur **14 jours**, **4 états**,
+  **0 appel API** (mesuré : 0 requête sortante au rendu dans les 4 états, donc ça marche hors
+  ligne). ⛔ Les charges se comparent **à répétitions égales** : un changement de schéma déplace
+  le e1RM de **+26 %** à force identique, quand la quantification du matériel n'en produit que
+  **1,78 %** — *aucun seuil en pourcentage ne peut trancher, seule la règle de comparaison le
+  peut.* ⛔ Dans « données insuffisantes » : **aucune flèche, aucun pourcentage** (*une flèche
+  est déjà une conclusion*), et **aucune injonction à remplir**. ⛔ **Milo n'apparaît que dans
+  l'état ambigu**, sur appui volontaire, et reçoit les **tendances** — jamais le journal.
+- ⭐ **Mesure avant/après, même fixture** : onglet **1 939 → 2 140 px** (plafond posé : ne pas
+  revenir à 2 600) · *« Noter ce que je mange »* **525 → 525 px, inchangé au pixel** · carte du
+  jour **445 → 445 px**, en portant **4 informations de plus**.
+- ⏭️⚠️ **CE QUI N'EST PAS DANS CETTE LIVRAISON, et il faut le lire** : le **journal de
+  mensurations** (§10 de la décision) et les **repas habituels** (§16) ne sont **pas**
+  construits — pas commencés, pas différés à moitié. ⚠️ **Et une vérification demandée n'a PAS
+  pu être faite ici** : *« le déploiement réel sur Safari/iPhone »* — le conteneur n'a que
+  Chromium, **c'est à Michel de l'ouvrir sur son téléphone**.
+- **Version précédente :** `ft-v1101`. ✅ **Déploiement du site vérifié vert** (run **#793**,
   commit `e94eeae`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement backend.
 - 🏁⭐⭐ **UN CYCLE TERMINÉ NE LE DISAIT JAMAIS — NI À L'ÉCRAN, NI À MILO** (ft-v1101).
   `getCurrentCycleWeek` **plafonne** à `weeks` : juste pour une barre de progression, faux
