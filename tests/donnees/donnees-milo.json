@@ -4,7 +4,6 @@
     "activityLevel",
     "adn",
     "age",
-    "badges",
     "beginnerJourney",
     "bloodTests",
     "bodyScans",
@@ -18,7 +17,6 @@
     "customExercises",
     "cycle",
     "dayState",
-    "dayStateLog",
     "diet",
     "dietNotes",
     "dietRestrictions",
@@ -63,7 +61,10 @@
     "wkt",
     "workType"
   ],
-  "manquant": {},
+  "manquant": {
+    "badges": "MESURÉ le 02/09/2026 : déclaré transmis, il ne l'est PAS. `S.badges` n'apparaît qu'UNE fois dans coach.js, dans `_vcApplyPersona` — le remetteur à zéro des personas de test, qui EFFACE le champ pour qu'aucune donnée de Michel ne fuite. Aucune ligne ne le lit pour construire le contexte. ⛔ Trou VOLONTAIREMENT laissé ouvert pour l'instant : le combler changerait ce que Milo REÇOIT, ce qui se valide au banc d'essai (R34) — et le banc coûte des appels réels. Décision de Michel, pas la nôtre.",
+    "dayStateLog": "MESURÉ le 02/09/2026 : déclaré transmis, il ne l'est PAS. `S.dayStateLog` a ZÉRO occurrence dans coach.js. Il est bien lu — mais par `screens.js` (les souvenirs de l'Accueil), `tracking.js` et `setup.js`, jamais par le constructeur du contexte. ⭐ C'est l'historique du check-in (énergie, moral, douleurs, note) : la donnée qui dirait à Milo comment la personne s'est sentie SUR LA DURÉE, et il ne l'a pas. Candidat sérieux, mais même raison de ne pas le combler à la légère : ça change ce que Milo reçoit (R34)."
+  },
   "exclu": {
     "a11y": "réglage d'accessibilité, aucun intérêt pour le coaching",
     "anonId": "identifiant technique",

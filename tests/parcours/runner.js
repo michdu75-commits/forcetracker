@@ -23151,14 +23151,119 @@ console.log('\n-- CCIX. R8 permanent : une source nommée est-elle vraiment tran
   await cx.close();
 }
 
-/* ═══ CCX. LA REFONTE DE NUTRITION + LE MOTEUR DE TENDANCE (ft-v1102) ═════════════════════
+
+/* ═══ CCX. OÙ MILO VA CHERCHER SES INFORMATIONS — LA CARTE MESURÉE (02/09/2026) ═════════════
+   Michel : « essaye de voir aussi où Milo va chercher ses informations dans l'application,
+   pour voir si on n'a rien loupé » — et « pas nécessaire de faire des appels API ». 0 €.
+   ⛔⛔ CE QUE CE BLOC CORRIGE EST UN MENSONGE DE GARDE-FOU. `tests/donnees` vérifie qu'une
+   donnée est CLASSÉE, et il le dit lui-même en tête : « le compteur des transmises est une
+   DÉCLARATION, pas une mesure ». Deux champs étaient dans cet état exact — déclarés
+   « transmis », lus NULLE PART par le constructeur du contexte :
+     · `badges`      → 1 seule occurrence dans coach.js, dans `_vcApplyPersona`, le remetteur
+                       à zéro des personas de TEST (il EFFACE le champ). Jamais lu pour le contexte.
+     · `dayStateLog` → ZÉRO occurrence dans coach.js. Lu par screens.js/tracking.js/setup.js,
+                       jamais par Milo. C'est pourtant l'historique du check-in — comment la
+                       personne s'est sentie SUR LA DURÉE.
+   ⭐⭐ LA DÉCOUVERTE STRUCTURELLE : LE PAYLOAD A SIX CANAUX, PAS UN.
+   `{action, email, message, context, history, coachMemory}` — et `coachMemory` voyage EN
+   DEHORS du contexte. *Tout audit qui ne regarde que `buildCoachContext` le déclarerait
+   manquant.* C'est ce qui a failli m'arriver.
+   ⛔ ON NE COMBLE PAS LES DEUX TROUS ICI : les combler changerait ce que Milo REÇOIT, ce qui
+   se valide au banc d'essai réel (R34) — et Michel a explicitement écarté les appels payants.
+   On corrige la CARTE, pas Milo. Le témoin fige la mesure pour que la déclaration ne puisse
+   plus redevenir fausse en silence (R30).
+   ⚠️⚠️ ET LA LEÇON DE MÉTHODE : HUIT de mes fixtures étaient fausses dans cette seule passe.
+   Un marqueur inventé ne marche PAS sur un champ à vocabulaire fermé (`discipline`,
+   `contraception` — le vrai vocabulaire est `pill-combo`, pas « pilule »), ni sur une donnée
+   qui n'arrive que DÉRIVÉE (`healthDaily` se tait sous 7 jours d'historique). Sept candidats
+   « absents » sur neuf se sont effondrés à la re-mesure. *Sans contrôle, j'aurais publié sept
+   trous qui n'existent pas.* */
+console.log('\n-- CCX. Où Milo va chercher ses informations : la carte mesurée --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'84',ft4_age:'42',ft4_ht:'181'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2200);
+
+  const L=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    const j=(n)=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    S.url='https://exemple.invalide/exec'; S.email='sonde@test.fr'; S.premium=true;
+    S.sessions=[];
+    for(let i=0;i<12;i++) S.sessions.push({ts:7000+i,date:j(i*3),volume:9000,synced:true,
+      exs:[{name:'Squat',sets:[{kg:120,reps:5,done:true,rm1:135,type:'N'}]}]});
+    S.prs={'Squat':{kg:120,reps:5,rm1:135,date:j(0)}};
+    S.weightLog=[]; for(let i=0;i<10;i++) S.weightLog.push({date:j(i*7),kg:84-i*0.1});
+    S.coachMemory='ZMEM_MARQ';                       // ⛔ c'est une CHAÎNE, pas un tableau
+    S.badges={ZBADGE_MARQ:{unlockedAt:j(5)}};
+    S.dayStateLog=[{date:j(1),energy:3,mood:4,pains:[],note:'ZDAYLOG_MARQ'}];
+    persist();
+    let capt=null; const vrai=window.fetch;
+    window.fetch=function(u,opt){
+      try{const bd=JSON.parse(String(opt&&opt.body||'{}')); if(bd.action==='coach')capt=bd;}catch(e){}
+      return Promise.resolve(new Response(JSON.stringify({reply:'ok'}),{status:200}));
+    };
+    /* ⛔⛔ DEUX PIÈGES DANS CET APPEL, et chacun a produit un « payload non capturé » :
+       ① `sendToCoach` PREND le message en argument — sans lui, il lit un champ de saisie et
+          sort aussitôt ;
+       ② et un simple « Salut » ne part PAS : l'app répond aux salutations SANS appeler l'IA
+          (mesuré — zéro requête réseau). *Une sonde qui dit bonjour ne mesure rien.*
+       ⚠️ Dans les deux cas le symptôme est identique — tout paraît absent — d'où le contrôle
+       ci-dessous, qui exige de VOIR une donnée connue avant de conclure quoi que ce soit. */
+    await sendToCoach('Salut, tu peux me faire une séance ?');
+    await new Promise(r=>setTimeout(r,700));
+    window.fetch=vrai;
+    if(!capt) return {err:'payload non capturé'};
+    const tout=JSON.stringify(capt), ctx=capt.context||'';
+    o.canaux=Object.keys(capt).sort();
+    o.controle = ctx.indexOf('Michel')>=0;           // ⛔ la sonde mesure-t-elle quelque chose ?
+    o.memoireHorsContexte = ctx.indexOf('ZMEM_MARQ')<0 && tout.indexOf('ZMEM_MARQ')>=0;
+    o.badgeAbsent   = tout.indexOf('ZBADGE_MARQ')<0;
+    o.daylogAbsent  = tout.indexOf('ZDAYLOG_MARQ')<0;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+  if(L.err) t('CCX n\'a pas pu tourner', false, L.err);
+  else{
+    t('⛔ LE CONTRÔLE : la sonde capture bien le payload et y voit une donnée connue',
+      L.controle===true, '');
+    t('⭐⭐ LE PAYLOAD A SIX CANAUX — un audit qui ne lit que `context` en rate deux',
+      JSON.stringify(L.canaux)===JSON.stringify(['action','coachMemory','context','email','history','message']),
+      JSON.stringify(L.canaux));
+    t('⭐⭐ … et `coachMemory` voyage EN DEHORS du contexte (sinon on le croit manquant)',
+      L.memoireHorsContexte===true, '');
+    t('⛔⛔ TROU CONNU FIGÉ : `badges` n\'atteint Milo par AUCUN canal (déclaré « manquant »)',
+      L.badgeAbsent===true, '');
+    t('⛔⛔ TROU CONNU FIGÉ : `dayStateLog` non plus — l\'historique du check-in lui échappe',
+      L.daylogAbsent===true, '');
+    t('⛔ 0 erreur JS', errs.length===0, JSON.stringify(errs.slice(0,2)));
+  }
+  await cx.close();
+}
+
+/* ⛔ ET LA DÉCLARATION ELLE-MÊME : les deux trous doivent rester CLASSÉS COMME TELS.
+   Sans ça, quelqu'un les remet dans « transmis » pour faire taire l'alerte — c'est
+   exactement le mensonge que ce bloc vient de corriger. */
+{
+  const decl=JSON.parse(fs.readFileSync(path.join(ROOT,'tests/donnees/donnees-milo.json'),'utf8'));
+  t('⛔ `badges` et `dayStateLog` restent des TROUS déclarés, pas des « transmis »',
+    !!(decl.manquant&&decl.manquant.badges&&decl.manquant.dayStateLog)
+    && (decl.transmis||[]).indexOf('badges')<0 && (decl.transmis||[]).indexOf('dayStateLog')<0,
+    JSON.stringify(Object.keys(decl.manquant||{})));
+  t('⛔ … et chaque trou porte sa RAISON (un trou sans raison finit par être « réparé » au hasard)',
+    String((decl.manquant||{}).badges||'').length>80 && String((decl.manquant||{}).dayStateLog||'').length>80, '');
+}
+
+/* ═══ CCXI. LA REFONTE DE NUTRITION + LE MOTEUR DE TENDANCE (ft-v1102) ═════════════════════
    ⛔ Les 4 états sont produits par de VRAIES DONNÉES, jamais par du HTML injecté : c'est la
    seule façon de vérifier le moteur en même temps que la carte. *Un état qui ne sort d'aucune
    fixture plausible est une règle inatteignable.*
    ⭐⭐ ET LE BLOC A TROUVÉ UN DÉFAUT ANCIEN : « kg/semaine » se calculait sur le NOMBRE DE
    PESÉES, pas sur les jours. Même évolution réelle (+0,20 kg/sem), lue ×1 · ×2 · ×3 · ×7 selon
    qu'on se pesait tous les jours, tous les 2, tous les 3 ou une fois par semaine. */
-console.log('\n-- CCX. La refonte de Nutrition et le moteur de tendance (ft-v1102) --');
+console.log('\n-- CCXI. La refonte de Nutrition et le moteur de tendance (ft-v1102) --');
 {
   const J=(n)=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
   const sess=(jours,prog)=>jours.map(d=>({date:J(d),vol:3200,
