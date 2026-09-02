@@ -22163,8 +22163,18 @@ console.log('\n-- CCII. Les imports : ce qu\'un modèle hallucine n\'entre plus 
   const _lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
   t('⛔⛔ R2/R8 : les bornes d\'une série ont UN SEUL propriétaire, et les DEUX chemins l\'emploient',
     /function _serieValide/.test(_st) && /_serieValide\(/.test(_co) && /_serieValide\(/.test(_lg), '');
-  t('⛔ … et aucun des deux ne réécrit les bornes en dur à côté (elles divergeraient)',
-    !/kg<=500/.test(_co) && !/reps<=100/.test(_co), '');
+  /* ⚠️⚠️ CE TÉMOIN A ROUGI SUR DU CODE SAIN, et c'est la 5ᵉ fois pour cette famille (§31 de
+     `BUGS.md`) : je l'avais visé sur une FORME — la chaîne `reps<=100` — au lieu de sa
+     GARANTIE. Or `coach.js` porte deux bornes `nb>=1&&nb<=12 || reps>=1&&reps<=100` qui
+     encadrent une PRESCRIPTION (« 3×8 » : un nombre de séries et de répétitions), pas une
+     série exécutée avec une charge. Rien à voir, et rien à corriger.
+     👉 La règle vraie est : personne ne réécrit la borne de CHARGE d'une série faite. */
+  t('⛔ … et aucun des deux ne réécrit la borne de CHARGE en dur à côté (elles divergeraient)',
+    !/kg\s*<=\s*500/.test(_co) && !/kg\s*<=\s*500/.test(_lg), '');
+  t('⛔ le témoin ci-dessus ne se trompe pas de cible : les bornes restantes de `coach.js` encadrent un « 3×8 », pas une charge',
+    (_co.match(/reps>=1&&reps<=100/g)||[]).every((_,i)=>true) &&
+    (_co.match(/[^\n]*reps<=100[^\n]*/g)||[]).every(l=>/nb>=1/.test(l)),
+    JSON.stringify((_co.match(/[^\n]*reps<=100[^\n]*/g)||[]).map(x=>x.trim().slice(0,60))));
   t('⛔ la borne porte aussi sur le 1RM PRODUIT, pas seulement sur les entrées (le cas 500 × 50)',
     /bz\(k,\s*r\)\s*<=\s*600/.test(_st), '');
 }
