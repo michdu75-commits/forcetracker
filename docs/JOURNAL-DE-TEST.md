@@ -69,6 +69,33 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 UN RECORD SURVIT À LA SUPPRESSION DE SA SÉANCE — et Milo continue de s'y fier
+
+**D'où ça vient (02/09/2026, ft-v1099).** Mesuré par le vrai chemin : deux séances, un record de
+112,5 kg au Squat porté par la première. On supprime cette séance depuis le détail — `S.sessions`
+passe de **2 à 1**, et le record de **112,5 reste**. ⛔ Et il n'est pas décoratif : il **atteint le
+contexte de Milo**, donc il sert de référence aux charges qu'il propose.
+
+**Pourquoi ce n'est PAS un correctif évident (et c'est tout l'intérêt de l'entrée).** Recalculer
+les records à la suppression paraît juste, et c'est exactement ce que **ft-v1085 a refusé de faire
+automatiquement**, avec une raison écrite dans le code : *une BAISSE de record suppose que la
+séance qui l'a fait est encore dans l'historique*. Un record venu d'un **import**, d'un **autre
+appareil** ou d'une **saisie à la main** n'a jamais eu de séance ici — le recalculer l'**efface**.
+👉 *Le cas de la suppression est différent (on sait que la séance était là, on vient de l'enlever
+soi-même), mais la frontière entre les deux est fine, et se tromper détruit un vrai record.*
+
+**Ce que ça donnerait comme scénario.** La forme honnête est de **dire** plutôt que de réécrire
+(**R29**) : au moment de supprimer, l'app sait que cette séance porte un record — elle peut le
+nommer et laisser la personne trancher. L'attendu est vérifiable par du code : *après suppression
+d'une séance qui portait le seul record d'un exercice, la personne a-t-elle été informée ?*
+
+**⚠️ Et la question pour Milo, elle, est du ressort du juge humain** : quand il propose une charge
+appuyée sur un record dont la séance n'existe plus, doit-il le dire ? *« Ton record de 112,5 vient
+d'une séance qui n'est plus dans ton historique »* est une phrase juste, mais savoir si elle aide
+ou si elle inquiète ne se mesure pas par du code.
+
+**État : à trier** — bloquée par une décision produit (avertir à la suppression, ou ne rien faire).
+
 ### 🟡 UN ALIMENTS « ESTIMÉ » ET UN ALIMENT « SCANNÉ » — Milo fait-il la différence ?
 
 **D'où ça vient (02/09/2026, ft-v1096).** L'export du journal alimentaire porte désormais une

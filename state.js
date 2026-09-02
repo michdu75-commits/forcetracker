@@ -567,6 +567,23 @@ function _poidsValide(kg){ const k=+kg; return isFinite(k) && k>=20 && k<=300; }
 /* Le pourcentage de masse grasse suit la même logique : au-delà, ce n'est plus une mesure,
    c'est une ligne mal lue (mesuré : 300 % passait sans un mot). */
 function _pctGrasValide(p){ const v=+p; return isFinite(v) && v>=3 && v<=70; }
+/* ⛔⛔ L'ÂGE ET LA TAILLE, MÊME HISTOIRE — ET C'EST §35 POUR LA 5ᵉ FOIS (ft-v1099).
+   `saveProfile` refuse depuis toujours un âge hors 14–99 et une taille hors 100–229, avec un
+   message. La RESTAURATION, elle, écrivait `parseInt(d.age)` sans rien regarder.
+   ⭐⭐ MESURÉ PAR LES DEUX CHEMINS, le même jeu de valeurs : à la main → **refusé**, le profil
+   ne bouge pas ; restauré → **âge 500, taille 20 cm** acceptés, et le **TDEE tombe à −2 433
+   kcal**. *Un TDEE négatif n'est pas une grosse erreur, c'est une valeur qui n'a plus de sens*
+   — et Milo reçoit « 500 ans » comme un fait sur la personne.
+   ⚠️⚠️ ET LE PLUS VICIEUX EST QUE ÇA NE SE VOIT PAS : le plancher de `calcMacros` ramène la
+   cible affichée à 1 500 kcal. *L'écran montre un chiffre plausible au-dessus d'un calcul qui
+   n'a plus aucun sens* — il n'y a donc rien à remarquer, jamais.
+   ⛔ Les bornes ne sont pas inventées : ce sont EXACTEMENT celles que l'app affiche déjà à qui
+   saisit à la main. Un seul propriétaire (R2), employé par les deux chemins. */
+function _ageValide(a){ const v=+a; return isFinite(v) && v>13 && v<100; }
+function _tailleValide(h){ const v=+h; return isFinite(v) && v>100 && v<230; }
+/* ⏳ Le repos par défaut : le sélecteur ne propose que des durées sensées, mais la restauration
+   acceptait `999999` — soit un chrono de onze jours. 10 s à 15 min couvre du HIIT au force pure. */
+function _reposValide(r){ const v=+r; return isFinite(v) && v>=10 && v<=900; }
 /* ⛔ ET LA DATE : mesuré, `1900-01-01`, `2099-01-01` et même la chaîne « le mardi » entraient
    telles quelles dans l'historique. Une date au 22ᵉ siècle se place en tête de tous les tris,
    une date de 1900 étire chaque graphe sur 126 ans, et « le mardi » ne se compare à rien.

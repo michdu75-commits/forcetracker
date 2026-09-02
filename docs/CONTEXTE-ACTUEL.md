@@ -6,7 +6,29 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1098`. ✅ **Déploiement du site vérifié vert** (run **#781**,
+- **Version en ligne (live) :** `ft-v1099`.
+- 🚪⭐⭐ **LA TROISIÈME PORTE VERS L'EFFACEMENT — ET LA SEULE QUI NE DEMANDAIT RIEN**
+  (ft-v1099). Michel : *« on continue sur les incohérences ? »*. **Charger un programme
+  effaçait une séance en cours sans un mot** : mesuré par les vraies fonctions, **3 séries
+  faites → 0**, et `ft4_wkt` réécrit sur le **disque** — le rechargement ne les ramène pas.
+  **Règle d'or #3.** ⭐⭐ Le témoin de comparaison est à quinze lignes dans le même fichier :
+  *« Annuler la séance »* et *« Vider la séance »* détruisent la même chose et **demandent
+  toutes les deux** (**R8**) — et le texte de « Vider » dit même *« pratique si tu as chargé
+  le mauvais programme »*. ⛔ On ne demande **que** s'il y a du travail fait à perdre
+  (**R29/R24**) : le geste de tous les jours reste un seul tap.
+- ⚖️⛔ **LE PROFIL RESTAURÉ N'AVAIT AUCUNE BORNE** (ft-v1099), alors que la saisie manuelle en
+  a depuis toujours. Mêmes valeurs par les deux chemins : à la main **refusé**, restauré
+  **accepté** — âge 500, taille 20 cm, repos 999 999 s → **TDEE = −2 433 kcal**, et Milo
+  reçoit « 500 ans ». C'est **§35 pour la 5ᵉ fois**, toujours dans le même sens. ⚠️ Et ça ne
+  se voyait pas : le **plancher** de `calcMacros` ramenait la cible affichée à 1 500 kcal.
+- 🏅 **Le badge disait « 5 PRs battus »**, le code compte les **exercices ayant un record**
+  (ft-v1099). On corrige le **texte** : durcir le code retirerait le badge à ceux qui l'ont
+  déjà (**R29**).
+- ⏭️ **RESTE OUVERT, mesuré mais pas corrigé** : un **record survit à la suppression de sa
+  séance** et atteint Milo. Le recalcul automatique est refusé exprès depuis ft-v1085 (il
+  effacerait un record importé). La bonne forme est de **prévenir** à la suppression — c'est
+  une décision produit, elle attend Michel. Noté dans `docs/JOURNAL-DE-TEST.md`.
+- **Version précédente :** `ft-v1098`. ✅ **Déploiement du site vérifié vert** (run **#781**,
   commit `1849ccd`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement
   backend : `Code.js` n'a pas été touché.
 - 🔭⭐⭐ **LA CIBLE DU JOUR N'EST PAS LA CIBLE DE TOUS LES JOURS** (ft-v1098). Michel :

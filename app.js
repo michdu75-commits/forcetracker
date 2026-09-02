@@ -4578,8 +4578,16 @@ const BADGES=[
   {id:'veteran_50',icon:'🏆',name:'Vétéran',desc:'50 séances au total',cat:'evolution'},
   {id:'legend_100',icon:'💎',name:'Légende',desc:'100 séances au total',cat:'evolution'},
   {id:'first_pr',icon:'🎯',name:'Premier PR',desc:'Premier record personnel battu',cat:'perf'},
-  {id:'prog_5',icon:'📈',name:'En progression',desc:'5 PRs battus',cat:'perf'},
-  {id:'machine_20',icon:'🚀',name:'Machine',desc:'20 PRs battus',cat:'perf'},
+  /* ⛔⛔ LE LIBELLÉ DISAIT « BATTUS », LE CODE COMPTE AUTRE CHOSE (corrigé ft-v1099).
+     `prCount = Object.keys(S.prs).length` = le nombre d'EXERCICES qui ont un record, pas le
+     nombre de records BATTUS. Mesuré : **une seule séance** avec 5 exercices différents, zéro
+     record amélioré → le badge « 5 PRs battus » tombe quand même.
+     ⭐⭐ ON CORRIGE LE TEXTE, PAS LE CODE, ET C'EST UN ARBITRAGE (R29) : durcir la condition
+     RETIRERAIT le badge à tous ceux qui l'ont déjà. *Reprendre une récompense obtenue coûte
+     plus cher qu'un libellé imprécis* — et le code, lui, mesure quelque chose de vrai et
+     d'utile : la variété travaillée. On lui donne son vrai nom. */
+  {id:'prog_5',icon:'📈',name:'En progression',desc:'5 exercices avec un record',cat:'perf'},
+  {id:'machine_20',icon:'🚀',name:'Machine',desc:'20 exercices avec un record',cat:'perf'},
   {id:'club_100',icon:'💯',name:'Club des 100kg',desc:'Squat ou Développé Couché à 100kg',cat:'perf'},
   {id:'club_140',icon:'🔱',name:'Club des 140kg',desc:'Soulevé de Terre à 140kg',cat:'perf'},
   {id:'streak_7',icon:'📅',name:'Streak 7 jours',desc:'7 jours consécutifs d\'entraînement',cat:'streak'},

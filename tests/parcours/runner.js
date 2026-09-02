@@ -22638,6 +22638,167 @@ console.log('\n-- CCV. La fréquence sur les semaines vécues, et les deux bouts
     !/b\(1\.5,'1½'\)/.test(appSrc), '');
 }
 
+
+/* ═══ CCV. LA TROISIÈME PORTE VERS L'EFFACEMENT · LES BORNES DU PROFIL RESTAURÉ (ft-v1099) ═══
+   Michel : « on continue sur les incohérences ? ». Six familles neuves, hors nutrition
+   (session-A y travaille). Deux ont mordu, une troisième est un libellé.
+   ⛔⛔ ① CHARGER UN PROGRAMME EFFACE UNE SÉANCE EN COURS, SANS UN MOT. `loadProg` fait
+   `S.wkt = {…}` : mesuré par les vraies fonctions, 3 séries FAITES sur 2 exercices → 0, et
+   `ft4_wkt` réécrit sur le disque. Le rechargement ne les ramène pas. RÈGLE D'OR #3.
+   ⭐⭐ LE TÉMOIN DE COMPARAISON EST À QUINZE LIGNES DANS LE MÊME FICHIER : « Annuler la
+   séance » et « Vider la séance » détruisent la MÊME chose et demandent toutes les deux
+   confirmation. Trois portes, deux gardées (R8) — et le texte de « Vider » dit même
+   « pratique si tu as chargé le mauvais programme » : l'app avait prévu l'erreur sans
+   empêcher sa version destructrice.
+   ⛔ ON NE DEMANDE QUE S'IL Y A QUELQUE CHOSE À PERDRE (R29/R24) : le cas de tous les jours
+   — ouvrir l'app et charger son programme — ne pose aucune question.
+   ⛔⛔ ② LE PROFIL RESTAURÉ N'AVAIT AUCUNE BORNE, alors que la saisie manuelle en a. Même jeu
+   de valeurs par les deux chemins : à la main REFUSÉ (le profil ne bouge pas), restauré
+   ACCEPTÉ — âge 500, taille 20 cm, repos 999 999 s. TDEE = -2 433 kcal, et Milo reçoit
+   « 500 ans ». C'est §35 pour la 5e fois, toujours dans le même sens : le chemin
+   AUTOMATIQUE est le moins protégé.
+   ⚠️⚠️ ET ÇA NE SE VOIT PAS : le plancher de `calcMacros` ramène la cible à 1 500 kcal —
+   un chiffre plausible au-dessus d'un calcul qui n'a plus de sens.
+   ⛔ ③ LE BADGE disait « 5 PRs battus » ; le code compte les EXERCICES ayant un record. Une
+   seule séance à 5 exercices, zéro record amélioré → badge débloqué. On corrige le TEXTE :
+   durcir le code retirerait le badge à ceux qui l'ont (R29). */
+console.log('\n-- CCV. La 3e porte vers l\'effacement · les bornes du profil restauré (ft-v1099) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2200);
+
+  const H=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    const faites=()=>(S.wkt&&S.wkt.exs||[]).reduce((n,e)=>n+((e&&e.sets||[]).filter(s=>s&&s.done).length),0);
+    const ouverts=()=>[...document.querySelectorAll('.overlay.open')].map(x=>x.id);
+    S.sessions=[];S.prs={};S.wkt=null;persist();
+    S.programmes=[{name:'Prog A',exs:[{name:'Développé Couché',sets:[{kg:60,reps:8}]}]},
+                  {name:'Prog Jours',days:[{label:'Jour 1',exs:[{name:'Rowing Barre',sets:[{kg:50,reps:8}]}]}]}];
+
+    /* ⓪ LE TÉMOIN DE CONTRÔLE : sans travail en cours, charger reste SANS friction. */
+    startWorkout(); persist();
+    loadProg(0);
+    o.sansTravail_charge=(S.wkt&&S.wkt.exs||[]).map(e=>e.name);
+    o.sansTravail_question=ouverts().indexOf('ov-confirm')>=0;
+
+    /* ① AVEC du travail fait : la question doit apparaître ET rien ne doit bouger avant. */
+    S.wkt.exs=[{name:'Squat',sets:[{kg:100,reps:5,done:true,type:'N'},{kg:100,reps:5,done:true,type:'N'}]},
+               {name:'Presse à Cuisses',sets:[{kg:200,reps:8,done:true,type:'N'}]}];
+    persist();
+    o.avantFaites=faites();
+    loadProg(0);
+    o.question=ouverts().indexOf('ov-confirm')>=0;
+    o.apresQuestion={exs:(S.wkt&&S.wkt.exs||[]).map(e=>e.name), faites:faites()};
+    const disque=JSON.parse(localStorage.getItem('ft4_wkt')||'null');
+    o.disqueIntact=(disque&&disque.exs||[]).map(e=>e.name).join(',')==='Squat,Presse à Cuisses';
+
+    /* ② ET SI ON CONFIRME, ça remplace pour de bon (sinon on aurait cassé la fonction). */
+    const btn=document.querySelector('#ov-confirm .btn-red, #ov-confirm [onclick*="_confirmOk"]');
+    o.boutonTrouve=!!btn; if(btn) btn.click();
+    o.apresConfirm=(S.wkt&&S.wkt.exs||[]).map(e=>e.name);
+
+    /* ③ LA JUMELLE (R8) : un programme à JOURS passe par loadProgDay. */
+    S.wkt={date:today(),exs:[{name:'Squat',sets:[{kg:100,reps:5,done:true,type:'N'}]}]};
+    persist();
+    loadProgDay(1,0);
+    o.jourQuestion=ouverts().indexOf('ov-confirm')>=0;
+    o.jourIntact=(S.wkt&&S.wkt.exs||[]).map(e=>e.name).join(',')==='Squat';
+
+    /* ④ LES BORNES : le TÉMOIN DE COMPARAISON d'abord — la saisie manuelle refuse-t-elle ? */
+    const set=(id,v)=>{const e=document.getElementById(id); if(e){e.value=v;return true;} return false;};
+    const avant={age:S.age,height:S.height};
+    o.champsPresents = set('age-inp',500) && set('ht-inp',20);
+    try{ saveProfile(); }catch(e){}
+    o.manuelRefuse = S.age===avant.age && S.height===avant.height;
+
+    /* ⑤ … puis le chemin AUTOMATIQUE, avec les mêmes valeurs. */
+    _applyRestoreData({profile:{age:500,height:20,defRest:999999},prs:{},sessions:[],weightLog:[],sleepLog:[]});
+    o.restaure={age:S.age,height:S.height,rest:S.defRest};
+    o.tdee=calcTDEE();
+    o.ctx500=/\b500\s*ans/.test(buildCoachContext());
+
+    /* ⑥ … ET UN PROFIL VALIDE PASSE TOUJOURS (sinon on aurait cassé la restauration). */
+    _applyRestoreData({profile:{age:42,height:181,defRest:150},prs:{},sessions:[],weightLog:[],sleepLog:[]});
+    o.valide={age:S.age,height:S.height,rest:S.defRest};
+
+    /* ⑦ LE LIBELLÉ DU BADGE dit ce que le code compte. */
+    const b5=(typeof BADGES!=='undefined')?BADGES.find(x=>x.id==='prog_5'):null;
+    o.badgeLibelle=b5?b5.desc:'(absent)';
+    o.badgeCodeCompte=/Object\.keys\(S\.prs\|\|\{\}\)\.length/.test(String(_checkBadgeCond));
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+  if(H.err) t('CCV n\'a pas pu tourner', false, H.err);
+  else{
+    t('⛔ LE CONTRÔLE : sans travail fait, charger un programme ne pose AUCUNE question',
+      H.sansTravail_question===false && H.sansTravail_charge.join(',')==='Développé Couché',
+      JSON.stringify([H.sansTravail_question,H.sansTravail_charge]));
+    t('⛔ … et le témoin a bien 3 séries FAITES à perdre (sinon le reste serait vert sur du vide)',
+      H.avantFaites===3, 'séries faites = '+H.avantFaites);
+    t('⭐⭐ SON CAS : charger un programme sur une séance en cours DEMANDE d\'abord',
+      H.question===true, '');
+    t('⭐⭐ … et RIEN n\'a bougé tant qu\'on n\'a pas répondu (mémoire)',
+      H.apresQuestion.faites===3, JSON.stringify(H.apresQuestion));
+    t('⛔⛔ … ni sur le DISQUE — c\'est là que la perte était définitive',
+      H.disqueIntact===true, '');
+    t('⭐ … et si on confirme, le programme se charge vraiment (on n\'a pas cassé la fonction)',
+      H.boutonTrouve===true && H.apresConfirm.join(',')==='Développé Couché',
+      JSON.stringify(H.apresConfirm));
+    t('⛔ LA JUMELLE (R8) : un programme à JOURS demande aussi, et ne touche à rien avant',
+      H.jourQuestion===true && H.jourIntact===true, JSON.stringify([H.jourQuestion,H.jourIntact]));
+    t('⛔⛔ TÉMOIN DE COMPARAISON : la saisie MANUELLE refuse 500 ans / 20 cm depuis toujours',
+      H.champsPresents===true && H.manuelRefuse===true, JSON.stringify(H));
+    t('⭐⭐ … et le chemin RESTAURÉ les refuse enfin AUSSI (§35, 5ᵉ fois)',
+      H.restaure.age!==500 && H.restaure.height!==20 && H.restaure.rest!==999999,
+      JSON.stringify(H.restaure));
+    t('⛔⛔ … donc plus de TDEE NÉGATIF (mesuré à −2 433 kcal avant)',
+      H.tdee>0, 'TDEE = '+H.tdee);
+    t('⛔ … et Milo ne reçoit plus « 500 ans » comme un fait sur la personne',
+      H.ctx500===false, '');
+    t('⭐ … pendant qu\'un profil VALIDE passe toujours (42 ans, 181 cm, 150 s)',
+      H.valide.age===42 && H.valide.height===181 && H.valide.rest===150,
+      JSON.stringify(H.valide));
+    t('⛔ le badge annonce ce que le code COMPTE (des exercices, pas des records battus)',
+      /exercices avec un record/.test(H.badgeLibelle) && H.badgeCodeCompte===true,
+      H.badgeLibelle);
+    t('⛔ 0 erreur JS sur tout le bloc', errs.length===0, JSON.stringify(errs.slice(0,2)));
+  }
+
+  /* ── RÈGLE D'OR #11 : L'AIDE, ET PAS DE POP-UP — c'est une DÉCISION, elle doit rougir
+     si quelqu'un l'inverse « pour faire bien ». Une question neuve apparaît dans un geste
+     familier, donc l'aide `?` et l'aide détaillée la nomment. ⛔ Mais rien n'est à découvrir
+     ni à faire : c'est une porte qu'on ferme (R25), et l'annoncer reviendrait à dire « vos
+     séances pouvaient disparaître » — une alarme rétroactive pour un trou déjà comblé. */
+  const I=await pg.evaluate(()=>{
+   try{
+    const o={};
+    const tips=(sc)=>((_HELP_DATA[sc]&&_HELP_DATA[sc].tips)||[]).map(x=>x.t).join(' ');
+    o.aideSeance = /ne peut plus effacer ta séance en cours/.test(tips('log'));
+    /* ⚠️ Le conteneur s'appelle `_DRAWER_CONTENT`, pas `_COACH_HELP` — ma 1ʳᵉ version a levé
+       une `ReferenceError`, et c'est le seul cas où un nom inventé se VOIT : ailleurs il
+       aurait rendu `[]`, donc un rouge silencieux qu'on aurait pris pour un vrai défaut. */
+    o.aideLongue = JSON.stringify(_DRAWER_CONTENT||{}).indexOf('Remplacer la s')>=0;
+    o.pasDePopup = !WHATS_NEW.some(w=>/Remplacer la séance|effacer ta séance/i.test(w.d||''));
+    o.pasDeRouge = !NEW_FEATURES.some(f=>/Remplacer la séance|effacer ta séance/i.test(f.desc||''));
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(I.err) t('CCV (règle #11) n\'a pas pu tourner', false, I.err);
+  else{
+    t('📣 #11 · l\'aide `?` de l\'onglet Séance nomme la nouvelle question', I.aideSeance===true, '');
+    t('📣 #11 · l\'aide détaillée distingue les TROIS façons de vider une séance', I.aideLongue===true, '');
+    t('⛔ #11 · et AUCUNE pop-up : annoncer « vos séances pouvaient disparaître » alarmerait rétroactivement',
+      I.pasDePopup===true, '');
+    t('⛔ #11 · ni point rouge : il n\'y a rien à découvrir, c\'est une porte qu\'on ferme',
+      I.pasDeRouge===true, '');
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

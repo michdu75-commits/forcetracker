@@ -3029,8 +3029,10 @@ function _applyRestoreData(raw){
   // Profil de base — chaque champ isolé pour qu'une erreur n'en bloque pas d'autres
   try{if(d.name)S.name=d.name;}catch(e){console.warn('[FT restore] name',e);}
   try{if(d.bw)S.bw=parseFloat(d.bw)||S.bw;}catch(e){console.warn('[FT restore] bw',e);}
-  try{if(d.age)S.age=parseInt(d.age)||S.age;}catch(e){console.warn('[FT restore] age',e);}
-  try{if(d.height)S.height=parseFloat(d.height)||S.height;}catch(e){console.warn('[FT restore] height',e);}
+  /* ⛔ MÊMES BORNES QUE LA SAISIE MANUELLE (R2/R8, §35) : une valeur hors limites est
+     ÉCARTÉE, elle n'écrase pas ce qu'on a déjà — un âge absurde rendait le TDEE négatif. */
+  try{const _a=parseInt(d.age); if(_ageValide(_a))S.age=_a;}catch(e){console.warn('[FT restore] age',e);}
+  try{const _h=parseFloat(d.height); if(_tailleValide(_h))S.height=_h;}catch(e){console.warn('[FT restore] height',e);}
   // NOTE : _obGender/_obGoal sont des vars onboarding (app.js) — on n'y touche pas depuis setup.js
   // _obDataRestored=true est déjà positionné avant l'appel, donc finishOnboarding() les ignore
   /* ⚧ ON NORMALISE À L'ENTRÉE, ON NE RATTRAPE PAS PARTOUT (R33, 01/09/2026)
@@ -3080,7 +3082,7 @@ function _applyRestoreData(raw){
   try{if(d.barW)S.barW=parseFloat(d.barW)||20;}catch(e){}
   try{if(d.foodMode!==undefined){S.foodMode=d.foodMode||'';S.keto=(S.foodMode==='keto');}}catch(e){}
   try{if(d.fasting!==undefined)S.fasting=d.fasting||'';}catch(e){}
-  try{if(d.defRest)S.defRest=parseInt(d.defRest)||120;}catch(e){}
+  try{const _r=parseInt(d.defRest); if(_reposValide(_r))S.defRest=_r;}catch(e){}
   try{if(d.mensCycleStart)S.mensCycleStart=d.mensCycleStart;}catch(e){}
   try{if(d.mensCycleDur)S.mensCycleDur=parseInt(d.mensCycleDur)||28;}catch(e){}
   try{if(d.contraception!==undefined)S.contraception=d.contraception||'';}catch(e){}

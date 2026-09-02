@@ -2150,6 +2150,21 @@ aussi (TDEE 1 431), et un **% de gras à 300 %** était enregistré sans un mot.
 | ft-v1089 | un élément d'écran | `updSetup` | le bouton « Tester la connexion » |
 | ft-v1095 | charge et répétitions | la lecture d'une conversation | **l'import d'historique** |
 | ft-v1096 | le poids | **la saisie manuelle** | **le bilan corporel lu par l'IA** |
+| ft-v1099 | **l'âge, la taille, le repos** | **la saisie manuelle** (14–99 ans, 100–229 cm) | **la RESTAURATION du compte** |
+
+**⭐⭐ LE 5ᵉ CAS AJOUTE UNE NUANCE QUI VAUT POUR TOUTE LA FAMILLE : la porte automatique n'est pas
+forcément une IA.** Les quatre premiers cas venaient d'un modèle, d'un OCR ou d'un import — au
+point qu'on pouvait croire que la famille était « les valeurs lues par une machine ». Le 5ᵉ vient
+de la **restauration du compte**, c'est-à-dire de **nos propres données**, écrites par nous, la
+veille. *Le critère n'est pas « d'où vient la valeur », c'est « quelqu'un la relit-il avant qu'elle
+entre ? ».* Mesuré : âge **500**, taille **20 cm**, repos **999 999 s** acceptés, **TDEE −2 433
+kcal**, et Milo qui reçoit « 500 ans » comme un fait sur la personne.
+
+**⚠️ ET CELUI-CI SE CACHAIT DERRIÈRE UN PLANCHER.** `calcMacros` ramène la cible affichée à
+1 500 kcal quoi qu'il arrive : *l'écran montrait un chiffre plausible au-dessus d'un calcul qui
+n'avait plus de sens*. 👉 **Un plancher ou un plafond de sécurité MASQUE la famille §35** — il
+transforme une absurdité visible en absurdité silencieuse. Quand on cherche cette famille, mesurer
+la valeur **en amont** du plancher, jamais celle qui s'affiche.
 
 ### ⛔ À quoi on la reconnaît
 - Deux fonctions écrivent dans **le même champ** de `S`, et une seule valide.

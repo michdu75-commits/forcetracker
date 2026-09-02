@@ -7062,6 +7062,18 @@ function _appliqueMiloSession(newExs, data, mode, btn){
 function loadProgDay(progIdx,dayIdx){
   const prog=(S.programmes||[])[progIdx];
   if(!prog||!prog.days||!prog.days[dayIdx])return;
+  /* ⛔ LA JUMELLE (R8) : un programme à plusieurs jours passe par ICI, pas par `loadProg`.
+     Le même remplacement, donc la même question — et le même propriétaire (R2). */
+  if(_travailAPerdre()){
+    const _d=prog.days[dayIdx];
+    return _confirmerRemplacementSeance('« '+(_d.label||('Jour '+(dayIdx+1)))+' »',
+      ()=>_loadProgDayVraiment(progIdx,dayIdx));
+  }
+  return _loadProgDayVraiment(progIdx,dayIdx);
+}
+function _loadProgDayVraiment(progIdx,dayIdx){
+  const prog=(S.programmes||[])[progIdx];
+  if(!prog||!prog.days||!prog.days[dayIdx])return;
   const day=prog.days[dayIdx];
   S.wkt={date:today(),progLabel:day.label||('Jour '+(dayIdx+1)),exs:(day.exs||[]).map(e=>{
     const prev=getPrev(e.name);
@@ -7391,7 +7403,41 @@ function saveAsProg(){
   persist();
   renderProgModal();
 }
+/* ⛔⛔ LA TROISIÈME PORTE — LA SEULE QUI NE DEMANDAIT RIEN (ft-v1099).
+   Charger un programme fait `S.wkt = {…}` : ça REMPLACE la séance en cours, en mémoire ET sur
+   le disque, **sans une question**. Mesuré par les vraies fonctions : 3 séries faites sur 2
+   exercices → **0**, et `ft4_wkt` réécrit. *Le rechargement ne les ramène pas.*
+   ⭐⭐ ET LE TÉMOIN DE COMPARAISON EST DANS CE FICHIER, À QUINZE LIGNES : « Annuler la séance »
+   et « Vider la séance » détruisent EXACTEMENT la même chose et **demandent toutes les deux**.
+   Trois portes vers le même effacement, deux gardées — c'est **R8**, et le texte de « Vider »
+   dit même *« pratique si tu as chargé le mauvais programme »* : *l'app avait prévu l'erreur
+   sans empêcher sa version destructrice.*
+   ⛔ ON NE DEMANDE QUE S'IL Y A QUELQUE CHOSE À PERDRE (R29/R24) : une séance ouverte mais
+   vierge — le cas de tous les jours, on charge son programme et on commence — ne pose aucune
+   question. *Un garde-fou qui parle tout le temps finit par ne plus être lu.*
+   ⭐ Un seul propriétaire de « y a-t-il du travail à perdre ? » (R2) : `loadProg` et
+   `loadProgDay` sont deux portes du même geste, elles ne doivent pas diverger. */
+function _travailAPerdre(){
+  return (S.wkt&&S.wkt.exs||[]).reduce((n,e)=>n+((e&&e.sets||[]).filter(s=>s&&s.done).length),0);
+}
+function _confirmerRemplacementSeance(quoi, suite){
+  const n=_travailAPerdre();
+  if(!n) return suite();
+  showConfirm('Remplacer la séance en cours ?',
+    n+' série'+(n>1?'s':'')+' déjà faite'+(n>1?'s':'')+' ser'+(n>1?'ont':'a')+' perdue'+(n>1?'s':'')
+    +' — '+quoi+' remplace ce qui est à l\'écran. ⚠️ Rien n\'est enregistré dans ton historique : '
+    +'pour garder ce travail, termine la séance d\'abord.',
+    suite, 'Remplacer');
+}
 function loadProg(idx){
+  const prog=(S.programmes||[])[idx];
+  if(!prog)return;
+  if(_travailAPerdre() && !(prog.days&&prog.days.length)){
+    return _confirmerRemplacementSeance('« '+(prog.name||'ce programme')+' »', ()=>_loadProgVraiment(idx));
+  }
+  return _loadProgVraiment(idx);
+}
+function _loadProgVraiment(idx){
   const prog=(S.programmes||[])[idx];
   if(!prog)return;
   if(prog.days&&prog.days.length){closeProgModal();openDaySel(idx);return;}
