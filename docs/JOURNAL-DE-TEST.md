@@ -1041,6 +1041,22 @@ par une fenêtre plus large que l'historique ? (Famille **§37** de `BUGS.md`.)
 👉 Ce n'est pas un scénario Milo, c'est une **passe de détecteur** à faire — comme le balayage
 des 166 boutons de ft-v1089, mais avec un profil de deux semaines.
 
+### 🟡 MILO CROIT-IL QU'UNE PRISE DE 1,6 kg/SEMAINE EST « DANS LA BONNE DIRECTION » ?
+**02/09/2026**, trouvé en spécifiant le moteur de tendance. **Mesuré dans un navigateur**, pas
+déduit : en objectif « prise de muscle », une tendance de **+1,6 kg/semaine** part dans le contexte
+de Milo avec la mention *« ✓ dans la bonne direction »* — pendant que l'écran, juste à côté, annonce
+que l'évolution attendue est **« +0,1 à +0,3 kg/sem »**. **Cinq fois la borne haute.**
+
+⛔ La cause est structurelle : **une seule des six bornes par objectif est une donnée**
+(`_GOAL_TREND_RECOMP`) ; les cinq autres ne vivent qu'en **prose** dans une chaîne d'affichage, et
+le juge de Milo applique des seuils écrits ailleurs. C'est **R4** doublé de **R2**.
+
+👉 **Ce qui reste à mesurer, et qui est la vraie question** : le drapeau est une chose, **ce que
+Milo en FAIT** en est une autre. Conseille-t-il de manger moins ? De continuer ? *Les tests
+prouvent la PRÉSENCE d'une donnée, jamais l'OBÉISSANCE à une consigne.*
+⚠️ **Vérifiable par du CODE pour la moitié « drapeau »** (donc promouvable tout de suite) ; la
+moitié « qu'en dit-il » demande un **scénario de banc d'essai**, qui coûte un appel par passe.
+
 ---
 
 ## ⚠️ Comment fouiller les conversations (leçon du 21/08)
