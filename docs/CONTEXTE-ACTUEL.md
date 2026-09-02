@@ -6,7 +6,9 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1095`.
+- **Version en ligne (live) :** `ft-v1095`. ✅ **Déploiement du site vérifié vert** (run **#772**,
+  commit `336c674`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement backend : `Code.js`
+  n'a pas été touché, tout le correctif est dans `state.js`, `log.js` et `coach.js`.
 - 📥⭐⭐ **CE QU'UN MODÈLE HALLUCINE N'ENTRE PLUS DANS L'HISTORIQUE** (ft-v1095). Michel :
   *« vas-y attaque les imports »* — 5ᵉ passe, la dernière famille non instruite. Mesuré en
   rendant à l'app, **par ses vraies fonctions**, ce qu'un modèle peut lui renvoyer :
