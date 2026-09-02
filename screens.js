@@ -231,6 +231,13 @@ const _HELP_DATA={
   nutrition:{
     title:'🍽️ Nutrition',
     tips:[
+      /* ⚖️ POINT 3 DE LA RÈGLE D'OR #11 — ET NI POP-UP NI POINT ROUGE, C'EST ARGUMENTÉ.
+         Rien n'apparaît en usage normal : l'alerte ne se montre que sur une ligne déjà fausse,
+         et aucun repère n'a bougé. Un point rouge enverrait chercher, sur un onglet où il n'y a
+         rien à voir (R25, la décision de ft-v1099). ⛔ Et une pop-up dirait « vos aliments
+         pouvaient être impossibles » — une alarme rétroactive pour un trou qu'on vient de
+         fermer. Mais l'aide, elle, doit porter la question qu'on se posera devant l'alerte. */
+      {i:'⚖️',t:'<b>Si l\'app te dit que tes valeurs « ne tiennent pas dans la portion », c\'est de la physique, pas un avis.</b> Protéines + glucides + lipides, c\'est de la <b>matière</b> : leur total ne peut pas dépasser ce que l\'aliment pèse. 30 g de poudre ne peuvent pas contenir 35 g de protéines. ⭐ <b>Ça arrive surtout quand l\'IA estime</b> un produit qu\'elle connaît mal : elle peut sortir des chiffres <b>cohérents entre eux</b> (les calories collent aux macros) et pourtant impossibles. ⛔ <b>L\'app ne corrige rien toute seule</b> : soit la quantité est fausse, soit une des trois valeurs l\'est, et <b>elle ne peut pas savoir laquelle</b> — c\'est à toi de trancher. 👉 Le réflexe qui marche : regarde <b>l\'étiquette</b>, et corrige la valeur qui s\'en écarte. ⚠️ Rien ne t\'empêche d\'enregistrer quand même : l\'app prévient, elle ne bloque pas.'},
       /* 📉 EN TÊTE, ET C'EST LA RÈGLE R25 APPLIQUÉE : la pop-up ANNONCE que le chiffre a
          bougé, l'aide EXPLIQUE **où il est parti**. C'est la première question de quelqu'un qui
          ouvre l'aide après avoir cherché son compteur. */

@@ -23458,6 +23458,89 @@ console.log('\n-- CCXI. La refonte de Nutrition et le moteur de tendance (ft-v11
   }
 }
 
+/* ═══ CCXII. LES MACROS NE PEUVENT PAS PESER PLUS QUE LA PORTION (ft-v1103) ══════════════════
+   Michel, capture à l'appui : « encore le souci avec la prot ». Une ligne « Iso zero protein »
+   à 35 g de protéines + 1 + 1 = 37 g de matière dans une portion de 30 g.
+   ⛔⛔ LE CONTRÔLE QUI EXISTAIT NE POUVAIT PAS LE VOIR, et il n'était pas en faute : il compare
+   les CALORIES aux MACROS, et elles collent (153 théoriques contre 156 affichées). *Une valeur
+   inventée peut être parfaitement cohérente avec elle-même* — famille §34 de BUGS.md.
+   ⛔ LES CAS « ✅ » NE SONT PAS DU REMPLISSAGE : l'huile (100 % lipides) et le sucre (100 %
+   glucides) sont À LA LIMITE PHYSIQUE — ce sont eux qui interdisent d'écrire la règle avec un
+   pourcentage. Le miel en ml aussi : 100 ml pèsent ~140 g.
+   ⭐ Les entrées sont écrites TELLES QU'ELLES SONT STOCKÉES et lues par la VRAIE modale. */
+console.log('\n-- CCXII. Les macros ne pèsent jamais plus que la portion (ft-v1103) --');
+{
+  const J=new Date().toISOString().slice(0,10);
+  const CAS=[
+    {n:'le cas de Michel — 37 g dans 30 g',      e:{name:'Iso zero protein (ASL)',q:30,u:'g',kcal:156,prot:35,carbs:1,fat:1}, rouge:true},
+    {n:'300 g de macros dans 100 g',             e:{name:'Blanc de poulet',q:100,u:'g',kcal:1200,prot:150,carbs:80,fat:70},   rouge:true},
+    {n:'CONTRÔLE whey plausible — 28 g / 30 g',  e:{name:'Iso zero protein (ASL)',q:30,u:'g',kcal:117,prot:26,carbs:1,fat:1}, rouge:false},
+    {n:'CONTRÔLE huile — 100 % lipides (10/10)', e:{name:'Huile d olive',q:10,u:'g',kcal:90,prot:0,carbs:0,fat:10},           rouge:false},
+    {n:'CONTRÔLE sucre — 100 % glucides (20/20)',e:{name:'Sucre',q:20,u:'g',kcal:80,prot:0,carbs:20,fat:0},                   rouge:false},
+    {n:'CONTRÔLE miel en ml — 116 g / 100 ml',   e:{name:'Miel 100 ml',q:100,u:'ml',kcal:420,prot:0,carbs:116,fat:0},         rouge:false},
+    {n:'arrondi limite — 32 g dans 30 g',        e:{name:'Poudre',q:30,u:'g',kcal:130,prot:30,carbs:1,fat:1},                 rouge:false},
+    {n:'juste au-delà — 33 g dans 30 g',         e:{name:'Poudre',q:30,u:'g',kcal:134,prot:31,carbs:1,fat:1},                 rouge:true},
+  ];
+  const log=CAS.map((c,i)=>Object.assign({date:J,meal:'collation2',ts:770000+i},c.e));
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
+  await p.addInitScript(`(()=>{try{
+    localStorage.setItem('ft4_name','Michel');localStorage.setItem('ft4_bw','84');
+    localStorage.setItem('ft4_age','43');localStorage.setItem('ft4_ht','178');
+    localStorage.setItem('ft4_gender','H');localStorage.setItem('ft4_goal','muscle');
+    localStorage.setItem('ft4_act','1.55');localStorage.setItem('ft4_ob2','1');
+    localStorage.setItem('ft4_guide_shown','1');localStorage.setItem('ft4_wn_seen','99');
+    localStorage.setItem('ft4_premium','1');
+    localStorage.setItem('ft4_foodlog',${JSON.stringify(JSON.stringify(log))});
+  }catch(e){}})();`);
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(2200);
+  const R=await p.evaluate(async(n)=>{ try{
+    const w=ms=>new Promise(r=>setTimeout(r,ms)); const out=[];
+    for(let i=0;i<n;i++){
+      document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+      goScreen('nutrition'); await w(220);
+      openEditFood(770000+i); await w(320);
+      const el=document.getElementById('ef-coherence');
+      const vu=!!(el && el.style.display!=='none' && (el.innerText||'').trim());
+      /* ⚠️ LES VERDICTS SE CALCULENT ICI, SUR LE TEXTE COMPLET — mon 1ᵉʳ jet testait la chaîne
+         TRONQUÉE à 80 caractères renvoyée pour l'affichage, donc il ne voyait jamais le 2ᵉ
+         paragraphe et rougissait sur du code sain. *Ce qu'on renvoie pour LIRE et ce qu'on
+         renvoie pour MESURER ne sont pas la même chose.* (§31, encore.) */
+      const brut=(el&&el.innerText)||'';
+      out.push({vu, txt: vu?brut.replace(/\n/g,' ').slice(0,80):'',
+                ditLesDeux: /37\s?g/.test(brut) && /30\s?g/.test(brut),
+                sansBouton: !/Mettre\s+\d/.test(brut) && /ne peut pas savoir laquelle/.test(brut),
+                q:(typeof _qtyGrammesEcran==='function')?_qtyGrammesEcran('ef'):-1});
+      document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    }
+    return {out, aFonction: typeof _masseImpossible==='function'};
+  }catch(e){ return {err:String(e)}; } }, CAS.length);
+  await cx.close();
+
+  if(R.err) t('CCXII n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ SANS CE PREMIER TÉMOIN, TOUS LES « ne rougit pas » SERAIENT VERTS À VIDE. */
+    t('⛔ le propriétaire de la règle existe (sinon les 8 cas ci-dessous ne mesurent rien)',
+      R.aFonction===true, 'fonction _masseImpossible');
+    CAS.forEach((c,i)=>{
+      const r=R.out[i]||{};
+      t((c.rouge?'⛔⛔ ':'⭐ ')+c.n+' → '+(c.rouge?'ALERTE':'silence'),
+        r.vu===c.rouge, 'vu='+r.vu+' q='+r.q+' '+(r.txt||''));
+    });
+    /* ⛔ L'ALERTE DOIT PORTER LES DEUX NOMBRES : « c'est incohérent » n'aide personne à choisir. */
+    t('⛔ l\'alerte dit LES DEUX chiffres (37 g et 30 g), pas juste « incohérent »',
+      R.out[0].ditLesDeux===true, R.out[0].txt);
+    /* ⛔⛔ ET ELLE NE PROPOSE AUCUNE CORRECTION, C'EST UNE DÉCISION (R29) : l'app ne sait pas
+       lequel des deux nombres est faux. Chez Michel la PORTION est juste — un bouton
+       « mettre 37 g » aurait aggravé sa ligne au lieu de la réparer. */
+    t('⛔⛔ elle ne propose AUCUN chiffre de remplacement (l\'app ne sait pas lequel est faux)',
+      R.out[0].sansBouton===true, R.out[0].txt);
+    t('⛔ le contrôle des CALORIES n\'a pas été désarmé au passage (il reste dans le fichier)',
+      /ne colle pas à ces macros/.test(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')), '');
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

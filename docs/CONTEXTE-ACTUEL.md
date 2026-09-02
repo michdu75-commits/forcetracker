@@ -6,7 +6,32 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1102`. ✅ **Déploiement du site vérifié vert** (run **#805**,
+- **Version en ligne (live) :** `ft-v1103`. ⏳ **Déploiement à vérifier** (**R18**). ⚠️ Aucun
+  déploiement backend : `Code.js` n'a pas été touché.
+- ⚖️⛔⛔ **UNE VALEUR PEUT ÊTRE COHÉRENTE AVEC ELLE-MÊME ET IMPOSSIBLE** (ft-v1103). Michel,
+  capture à l'appui : *« encore le souci avec la prot »* — **35 g de protéines + 1 + 1 = 37 g de
+  matière dans une portion de 30 g**. ⛔⛔ **Le contrôle qui existait ne pouvait pas le voir, et
+  il n'était pas en faute** : il compare les CALORIES aux MACROS, et elles collent (153 contre
+  156, 2 % d'écart). 👉 ***Un garde-fou ne protège que de la question qu'il pose*** — il manquait
+  la seconde, physique. Nouvelle famille **§39** de `BUGS.md`, suite de **§34**.
+- ⭐⭐ **Reproduit par le vrai chemin avant d'écrire une ligne** (**§12quater**, la fois où j'ai
+  livré une version entière sur une cause déduite d'un seul nombre) : la réponse du modèle entre
+  telle quelle dans `S.foodLog` ; une réponse à 150 P / 80 G / 70 L pour 100 g y entrait aussi
+  — **300 g dans 100 g**.
+- ⛔ **Un seul propriétaire** (`_masseImpossible`, **R2**) dans la boîte de cohérence existante →
+  **3 surfaces d'un coup** : estimation IA, ajout, modification. ⛔ **Grammes seulement** (100 ml
+  de miel pèsent ~140 g). ⛔ **Aucun seuil à choisir** : la limite est l'**égalité** — huile et
+  sucre sont à 100 % d'une seule macro et restent muets. ⛔⛔ **Et aucun bouton de correction** :
+  l'app ne sait pas lequel des deux nombres est faux, et chez Michel c'est la **portion** qui est
+  juste (**R29**).
+- ⚠️⚠️ **AVEU** : le correctif est parti sur `master` dans un commit intitulé « journal de
+  partage » — un `git add -A` a emporté `app.js`, donc **sans bump de cache** et sous un message
+  qui ment. Corrigé ici, l'histoire n'est pas réécrite. ***Un `git add -A` ne dit pas ce qu'il
+  ajoute.***
+- ⏭️ **Non couvert, dit plutôt que sous-entendu** : l'alerte vit dans les **formulaires**, pas
+  dans la **liste** du journal — une ligne déjà enregistrée ne se signale qu'à l'ouverture. Et la
+  ligne de Michel **reste fausse** : l'app la signale, elle ne la corrige pas.
+- **Version précédente :** `ft-v1102`. ✅ **Déploiement du site vérifié vert** (run **#805**,
   commit `cfd0246`) — pas seulement poussé (**R18**). ⚠️ Aucun déploiement backend : `Code.js`
   n'a pas été touché. ⚠️ **Le rendu sur Safari/iPhone n'a PAS pu être vérifié ici** (conteneur
   Chromium uniquement) — c'est à Michel de l'ouvrir sur son téléphone.

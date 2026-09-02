@@ -2315,3 +2315,66 @@ une étendue nulle ; on rend `0`, pas une pente infinie.
 ### 🛡️ Le réflexe, en une ligne
 **Devant un taux « par semaine », chercher son dénominateur et vérifier qu'il est en JOURS** —
 puis le mesurer sur quelqu'un qui note *moins souvent que soi*, jamais sur ses propres données.
+
+---
+
+## 39. ⚖️ UNE VALEUR PEUT ÊTRE COHÉRENTE AVEC ELLE-MÊME ET IMPOSSIBLE **(02/09/2026, ft-v1103)**
+
+> **La suite directe de §34** (*ce qu'un modèle hallucine entre dans les données, et une valeur
+> inventée est CRÉDIBLE*). §34 disait : le piège n'est pas qu'il se trompe, c'est que ce qu'il
+> invente est plausible. Celle-ci va un cran plus loin : **ce qu'il invente peut passer le
+> contrôle qu'on avait justement écrit pour ça.**
+
+### 🔍 Le cas
+Michel, capture à l'appui : *« encore le souci avec la prot »*. Une ligne **Iso zero protein**,
+portion **30 g** : **156 kcal · 35 g de protéines · 1 g de glucides · 1 g de lipides**.
+
+**35 + 1 + 1 = 37 g de matière dans une portion de 30 g.** La masse ne se crée pas.
+
+### ⛔⛔ Le contrôle existait, et il n'était pas en faute
+`_coherenceKcal` (ft-v972) vérifie que **les calories collent aux macros**. Ici :
+`4×35 + 4×1 + 9×1 = 153` contre **156 affichées** — **2 % d'écart**, il se tait, et il a raison.
+
+| Question posée | Réponse | Verdict |
+|---|---|---|
+| Les calories collent-elles aux macros ? | 153 vs 156 | ✅ cohérent |
+| **Ces macros tiennent-elles dans la portion ?** | 37 g dans 30 g | 🔴 **personne ne la posait** |
+
+👉 ***Un garde-fou ne protège que de la question qu'il pose.*** Le modèle avait produit un jeu de
+valeurs **interne­ment cohérent** — c'est-à-dire exactement ce qui franchit un contrôle de
+cohérence. Il fallait une **seconde** question, physique celle-là.
+
+### 🔍 À quoi on la reconnaît
+- un contrôle qui vérifie une **relation entre deux champs** (kcal ↔ macros) sans jamais vérifier
+  la **contrainte physique** qui les borne tous (masse, durée, volume) ;
+- une valeur qui « sonne juste » parce que ses composantes se répondent entre elles ;
+- et le signe qui aurait dû alerter : **le contrôle reste muet sur un cas que l'œil voit tout de
+  suite**. Michel l'a vu en le regardant ; l'app ne pouvait pas.
+
+### ⛔ Les trois pièges du correctif, chacun payé en mesurant
+1. **L'unité.** 100 ml de miel pèsent ~140 g et portent ~116 g de glucides : la règle appliquée
+   aux **millilitres** hurlerait sur un sirop, un miel, une huile. *Un garde-fou qui se trompe sur
+   le miel ne survit pas au petit-déjeuner* — même leçon que la bière du contrôle voisin (**R19**).
+   ⚠️ Et l'unité **ne voyageait pas** avec la référence (`_efRef` ne portait que `{base, q}`) :
+   sans la faire voyager, le repli sur « grammes » aurait produit exactement cette fausse alerte.
+2. **Le seuil.** Il n'y en a **pas à choisir** : la limite est l'**égalité**. Mesuré — une huile
+   (10 g pour 10 g de lipides) et du sucre (20 g pour 20 g de glucides) sont **à 100 % d'une
+   seule macro** et parfaitement normales. *Tout pourcentage de tolérance les aurait accusées.*
+   La seule marge admise est l'**arrondi** des 4 champs à l'entier : 3 macros gonflées de moins
+   de 0,5 g et une quantité rabotée d'autant — **2 g au pire**, dérivés, pas choisis.
+3. ⛔⛔ **Le bouton de correction — celui qu'il ne fallait PAS mettre.** Le contrôle voisin en a
+   un (*« Mettre 153 kcal »*) parce que la valeur juste **se calcule**. Ici, l'app sait que l'un
+   des deux nombres est faux et **ne sait pas lequel**. Chez Michel c'est la **portion qui est
+   juste** (30 g d'isolat portent ~26 g de protéines) : un bouton *« mettre 37 g »* aurait
+   **aggravé sa ligne au lieu de la réparer**. *On montre les deux nombres, la personne tranche*
+   (**R29**).
+
+### 🛡️ Le réflexe, en une ligne
+**Un contrôle de cohérence entre champs ne remplace jamais une contrainte physique.** Devant un
+jeu de valeurs, demander non seulement *« se répondent-elles ? »* mais *« tiennent-elles dans ce
+qui les contient ? »* — la masse, la durée, le volume.
+
+*Voisine de **§34** (l'hallucination crédible), de **§35** (le chemin automatique est le moins
+protégé — ici l'estimation IA n'avait aucune borne physique, quand l'import d'historique en a
+depuis ft-v1095), et de **§12quater** (reproduire avant d'expliquer : le cas a été rejoué par les
+vraies fonctions, seul `fetch` remplacé, avant qu'une ligne de correctif soit écrite).*

@@ -1109,6 +1109,22 @@ tes repas ! ») : *on dit ce qui manque, on ne réclame pas.* 👉 **Juge humain
 utilisateur qui ouvre l'onglet avec un journal vide.
 
 
+### 🟡 L'IA D'ESTIMATION SORT-ELLE SOUVENT DES MACROS IMPOSSIBLES, OU EST-CE UN CAS ISOLÉ ?
+**02/09/2026, ft-v1103.** Le garde-fou de masse attrape désormais le cas — mais **on ne sait pas à
+quelle fréquence il va mordre**. ⚠️ *Un garde-fou qui se déclenche une fois par an et un garde-fou
+qui se déclenche un repas sur trois ne posent pas le même problème* : le second dirait que
+l'estimation IA n'est pas fiable pour les compléments, et ça changerait la brique, pas le contrôle.
+👉 **À trier** — se mesure en regardant combien de lignes existantes du journal violent la règle,
+ce qui ne coûte **aucun appel API**. Rien n'est décidé tant qu'on n'a pas ce chiffre.
+
+### 🟡 L'ALERTE DE MASSE SE LIT-ELLE COMME UN REPROCHE ?
+**02/09/2026, ft-v1103.** Le texte dit *« Un aliment ne peut pas contenir plus de matière qu'il ne
+pèse »* puis *« l'app ne peut pas savoir laquelle »*. ⛔ L'intention est de **décharger** la
+personne (ce n'est pas sa faute, c'est l'estimation qui a dérapé) — mais **c'est une hypothèse sur
+la lecture, pas une mesure**. ⚠️ Le risque anti-TCA (**P21**) est réel : une alerte orange en face
+d'un aliment peut se lire comme un jugement sur ce qu'on mange, alors qu'elle ne parle que d'un
+chiffre. 👉 **Juge humain** — l'attendu n'est pas vérifiable par du code.
+
 ---
 
 ## ⚠️ Comment fouiller les conversations (leçon du 21/08)
