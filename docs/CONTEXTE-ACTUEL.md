@@ -6,10 +6,18 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1108`. ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** — ⚠️ celui de
-  ft-v1107 n'a jamais abouti : le job du run **#820** (session-B) est resté bloqué à l'entrée de
-  l'environnement `github-pages`, et les runs #821→823 ont tous été **annulés** dans la file.
-  **Rien à corriger côté code.** ⏭️ Si ça se reproduit : annuler le run bloqué depuis GitHub.
+- **Version en ligne (live) :** `ft-v1108` — ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#826**
+  sur le commit `ce8a05b`, `success` à 05:12. ⚠️ **Et il a fallu débloquer la file d'abord** :
+  le job du run **#820** (session-B) est resté **7 h 52** à l'entrée de l'environnement
+  `github-pages` (20:24 → 04:16), et comme les déploiements Pages sont **sérialisés**, les runs
+  #821 → #824 ont tous été **annulés** derrière lui — donc **ft-v1107 n'était jamais parti en
+  ligne**. Le run **#825** (`workflow_dispatch`, 04:16) a purgé la file ; le #826 a suivi
+  normalement. **Rien à corriger côté code à aucun moment.** 👉 *Un déploiement peut rester en
+  attente des heures sans qu'aucune alerte ne le dise* — c'est exactement la panne que R18
+  décrit, à ceci près qu'ici le run n'était ni rouge ni vert : il **attendait**. ⏭️ Si ça se
+  reproduit : annuler le run bloqué depuis GitHub, puis relancer un `workflow_dispatch` sur
+  `master` (⛔ **jamais « relancer les jobs échoués »** — mesuré le 01/09, ça produit deux
+  artefacts et l'échec en 0 s).
 - ⚖️⚠️⚠️ **LA RÈGLE DES JOURNÉES EXPLOITABLES ÉTAIT FAUSSE, corrigée le soir même** (ft-v1108).
   GPT/Michel demandent de **contre-auditer la règle sur le vrai journal exporté avant de coder** ;
   j'avais déjà codé (ft-v1107). J'ai donc fait le **procès de ma propre règle — elle l'a perdu**.
