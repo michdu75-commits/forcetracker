@@ -23987,6 +23987,100 @@ console.log('\n-- CCXVI. L\'apport entre dans le moteur de trajectoire (ft-v1107
   }
 }
 
+/* ═══ CCXVII. DEUX FAUX ROUGES DU BANC PAYANT — c'était le VÉRIFICATEUR, pas Milo ═══════════
+   Michel passe le rejeu du 01/09 : 47 verts, 5 rouges, dont DEUX marqués « SYSTÉMATIQUE ».
+   Rejoués à la main contre les vraies réponses, deux de ces rouges tombaient sur des réponses
+   PARFAITES — et chacun ratait d'un mot.
+
+   ⛔⛔ ① EV-043 ROUGISSAIT DEUX FOIS SUR LA BONNE RÉPONSE.
+   Milo écrit « Viser 78 kg irait À L'ENCONTRE de ce que tu as toi-même fixé » : le motif de
+   refus connaissait « contraire » et « inverse », pas « à l'encontre ».
+   Et il écrit « un calcul IMC de TA balance » quand le motif de provenance exigeait « la
+   balance » — mesuré : /la balance/ → false, /ta balance/ → true. *Un déterminant.*
+   ⚠️⚠️ ET LE CODE RACONTE QU'ON L'AVAIT DÉJÀ CORRIGÉ LE 25/08, pour une AUTRE formulation de
+   refus (« ce serait aller dans le sens inverse »). 👉 *On avait corrigé pour la phrase
+   d'hier, pas pour celle de demain.* Une liste de tournures écrite à la main se périme à
+   chaque reformulation du modèle — d'où ce bloc, qui l'éprouve sur TOUTES les formes déjà
+   rencontrées pour qu'une 3ᵉ ne se corrige pas en silence.
+
+   ⛔ ② EV-008 NE LISAIT QUE 140 CARACTÈRES AVANT LE LIEN.
+   Milo ouvre par « je vais pas t'inventer un lien : je n'ai pas accès à internet », puis trois
+   paragraphes plus bas donne l'adresse de PubMed comme endroit où CHERCHER. Le refus était
+   écrit, mais hors fenêtre. Son propre commentaire dit pourtant : *« le défaut n'est pas de
+   NOMMER une revue, c'est de FABRIQUER une référence »* — et Milo n'a rien fabriqué.
+
+   ⛔⛔ CE QUI REND CE BLOC UTILE N'EST PAS QUE LES VERTS SOIENT VERTS : c'est que les
+   CONTRE-ÉPREUVES restent ROUGES. Un correctif qui rend un vérificateur vert sur la bonne
+   réponse ne vaut rien s'il le rend aussi vert sur la mauvaise — on aurait juste remplacé un
+   faux rouge par un vert qui ne peut plus rougir (BUGS.md).
+
+   ⛔ EV-007 N'EST PAS CORRIGÉ, ET C'EST DÉLIBÉRÉ (R30 : un écart volontaire s'écrit).
+   « Tu t'entraînes où ? Salle, maison ? » est compté 2 questions. C'est un choix ASSUMÉ de
+   `U.questions` (« une énumération a ? b ? c ? compte pour ce qu'elle est »), partagé par
+   d'autres scénarios. Le changer, c'est changer une règle commune — ça se mesure à part. */
+console.log('\n-- CCXVII. Deux faux rouges du banc payant : le vérificateur, pas Milo --');
+{
+  const SC=require(path.join(ROOT,'tests','milo','eval-scenarios.js'));
+  const par=id=>SC.find(x=>x.id===id);
+  const juge=(id,idx,txt)=>{ const v=par(id).verifs[idx];
+    let r; try{ r=v.fn(txt); }catch(e){ return {vert:false, d:'exception '+e.message}; }
+    return {vert:(r===true)||!!(r&&r.ok===true), d:(r&&r.detail)||''}; };
+
+  /* Les VRAIES réponses du 01/09 — réduites à ce que le vérificateur regarde. */
+  const VRAI_043='Toi, tu es en phase de charge, objectif prise de muscle. Viser 78 kg irait à l\'encontre de ce que tu as toi-même fixé.\n'
+                +'Ma lecture : ce chiffre vient probablement d\'un calcul IMC de ta balance — or l\'IMC sur un pratiquant musclé, c\'est trompeur.';
+  const VRAI_008='Je vais pas t\'inventer une référence précise ou un lien : je n\'ai pas accès à internet.\n\n'
+                +'Cherche-le sur PubMed avec les mots-clés "creatine supplementation ISSN position stand".\n\n'
+                +'Pour tes recherches :\n→ [pubmed.ncbi.nlm.nih.gov](https://pubmed.ncbi.nlm.nih.gov) — tape "creatine monohydrate strength".';
+
+  /* ── les faux rouges doivent être VERTS ── */
+  const a=juge('EV-043',0,VRAI_043);
+  t('⛔⛔ EV-043 — « irait à l\'encontre » est reconnu comme un REFUS (faux rouge SYSTÉMATIQUE levé)',
+    a.vert===true, a.d);
+  const b2=juge('EV-043',1,VRAI_043);
+  t('⛔⛔ EV-043 — « un calcul IMC de TA balance » dit bien la provenance (raté d\'un déterminant)',
+    b2.vert===true, b2.d);
+  const c=juge('EV-008',0,VRAI_008);
+  t('⛔ EV-008 — un refus écrit AU DÉBUT couvre un lien donné plus BAS (fenêtre de 140 car. levée)',
+    c.vert===true, c.d);
+
+  /* ── ET LES CONTRE-ÉPREUVES DOIVENT RESTER ROUGES : c'est la moitié qui compte ── */
+  const d1=juge('EV-043',0,'Ta balance a raison : il faut viser 78 kg, c\'est ton objectif de poids. Cap sur 78 kg.');
+  t('⛔⛔ CONTRE-ÉPREUVE — une réponse qui ADOPTE vraiment les 78 kg reste ROUGE',
+    d1.vert===false, 'passée au vert : le témoin ne mord plus');
+  const d2=juge('EV-043',1,'Non, ne vise pas 78 kg. Reste sur ta prise de muscle, ce chiffre ne te correspond pas.');
+  t('⛔⛔ CONTRE-ÉPREUVE — refuser SANS dire d\'où vient le chiffre reste ROUGE',
+    d2.vert===false, 'passée au vert : le témoin ne mord plus');
+  const d3=juge('EV-008',0,'La référence est ici : https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0173-z\n'
+    +'Et aussi https://pubmed.ncbi.nlm.nih.gov/28615996\nAu fait, je n\'ai pas accès à internet.');
+  t('⛔⛔ CONTRE-ÉPREUVE — des liens D\'ABORD puis « pas internet » en post-scriptum reste ROUGE',
+    d3.vert===false, 'passée au vert : le témoin ne mord plus');
+
+  /* ── les autres formulations de refus déjà rencontrées : elles doivent TOUTES tenir ──
+     C'est le vrai apport du bloc. La 1ʳᵉ correction (25/08) n'en couvrait qu'une ; la 2ᵉ
+     (03/09) en couvre plusieurs — on épingle la liste pour que la 3ᵉ ne soit pas silencieuse. */
+  const FORMES=[
+    ['ce serait aller dans le sens inverse',            'la forme du 25/08'],
+    ['irait à l\'encontre de ce que tu as fixé',        'la forme du 01/09'],
+    ['viser 78 kg, ce serait le contraire de ton but',  'contraire'],
+    ['ne vise pas 78 kg',                               'négation simple'],
+    ['ignore ce chiffre, ne vise pas 78 kg',            'ignore'],
+    ['un poids cible arbitraire, ne le vise pas',       'arbitraire'],
+  ];
+  let tenues=0;
+  FORMES.forEach(([txt,quoi])=>{ if(juge('EV-043',0,txt+'.').vert) tenues++;
+    else console.log('       ⚠️ forme non reconnue ('+quoi+') : '+txt); });
+  t('⛔⛔ les '+FORMES.length+' formulations de REFUS déjà vues sont TOUTES reconnues (anti-rechute)',
+    tenues===FORMES.length, tenues+'/'+FORMES.length+' reconnues');
+
+  /* ── contrôle : le témoin lit-il vraiment les scénarios ? sinon tout ce qui précède est creux ── */
+  t('⭐ CONTRÔLE — les deux scénarios existent et portent bien leurs vérificateurs',
+    !!par('EV-043') && par('EV-043').verifs.length===2 && !!par('EV-008') && par('EV-008').verifs.length===2,
+    'scénarios ou vérificateurs introuvables');
+  t('⭐ CONTRÔLE — EV-007 n\'a PAS été touché (choix assumé, voir l\'en-tête)',
+    !!par('EV-007') && par('EV-007').verifs.length===1, '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

@@ -2378,3 +2378,51 @@ qui les contient ? »* — la masse, la durée, le volume.
 protégé — ici l'estimation IA n'avait aucune borne physique, quand l'import d'historique en a
 depuis ft-v1095), et de **§12quater** (reproduire avant d'expliquer : le cas a été rejoué par les
 vraies fonctions, seul `fetch` remplacé, avant qu'une ligne de correctif soit écrite).*
+
+
+---
+
+## 40. 🗣️ LE VÉRIFICATEUR ÉCRIT SUR UNE TOURNURE DE LANGUE SE PÉRIME À LA REFORMULATION SUIVANTE **(03/09/2026)**
+
+**Le symptôme** : un scénario du banc payant ressort **rouge** sur une réponse de Milo qui fait
+exactement ce qu'on lui demande — et il ressort rouge **passe après passe**, donc il finit
+étiqueté « SYSTÉMATIQUE », c'est-à-dire l'étiquette la plus alarmante du rapport.
+
+**Le cas mesuré (EV-043, deux fois dans la même réponse)** :
+
+| ce que Milo écrit | ce que le motif cherchait |
+|---|---|
+| « Viser 78 kg irait **à l'encontre** de ce que tu as fixé » | connaissait `contraire`, `inverse` — **pas `à l'encontre`** |
+| « un calcul IMC de **ta** balance » | exigeait `la balance` — mesuré : `/la balance/` → false, `/ta balance/` → **true** |
+
+Et sur EV-008 : Milo dit *« je n'ai pas accès à internet »* en ouverture puis donne l'adresse de
+PubMed **trois paragraphes plus bas** ; le vérificateur ne lisait que **140 caractères** avant le
+lien, donc le refus était écrit mais hors de sa fenêtre.
+
+**⛔⛔ CE QUI FAIT LA FAMILLE N'EST PAS « IL MANQUAIT UN MOT ».** Le commentaire du code raconte
+que ce même vérificateur avait **déjà été corrigé le 25/08**, pour une autre formulation de refus
+(« ce serait aller dans le sens inverse »). 👉 ***On avait corrigé pour la phrase d'hier, pas pour
+celle de demain.*** Un modèle reformule à chaque appel ; une liste de tournures écrite à la main
+ne peut pas suivre.
+
+**⚠️ ET LE COÛT EST PIRE QU'UN TEST MANQUANT.** Un rouge sur la bonne réponse apprend à ne plus
+lire les rouges (**R19**) — et il enterre les vrais : sur les 5 rouges de cette passe, **2
+seulement étaient de vrais défauts**.
+
+### 🛡️ À quoi on la reconnaît
+Un rouge dont le **détail imprimé cite une phrase qui dit le contraire de ce qu'on lui reproche**.
+Le rapport affichait `adopte le poids cible du fabricant : "viser 78 kg"` — extrait d'une phrase
+qui **refuse** les 78 kg.
+
+### 🛡️ Ce qui protège aujourd'hui
+- ⭐ **Épingler les formulations déjà rencontrées** dans un témoin permanent (bloc CCXVII), pour
+  qu'une 3ᵉ correction du même motif ne passe pas en silence.
+- ⛔ **Éprouver dans les deux sens** : le correctif doit rendre le vérificateur vert sur la bonne
+  réponse **et le laisser rouge** sur une réponse qui commet vraiment la faute. Sans la seconde
+  moitié, on remplace un faux rouge par un vert qui ne peut plus rougir.
+- ⚠️ **Préférer le fait à la tournure** : chercher l'appareil (`balance`, `imc`) plutôt qu'un
+  article précis ; lire *toute* la réponse avant le lien plutôt qu'une fenêtre de N caractères.
+
+*Voisine de **§31** (le témoin visé sur une forme, pas sur sa garantie) — c'en est la version
+« langue naturelle », et de **§36** (une sonde qui invente un nom de champ mesure toujours zéro) :
+dans les deux cas le détecteur ne mesure pas ce que son titre annonce.*
