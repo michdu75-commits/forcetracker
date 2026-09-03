@@ -1411,8 +1411,18 @@ function _calAppliquer(){
   if(imp){ dire('⚖️ '+imp.somme+' g de macros pour 100 g de produit : impossible. Tu as peut-être recopié la colonne « par portion » — reprends celle qui dit « pour 100 g ».'); return; }
   const nom=String((document.getElementById('af-desc')||{}).value||'').trim();
   if(!nom){ dire('Donne d\'abord un nom à l\'aliment, au-dessus.'); return; }
-  _bcNutr={name:nom.slice(0,80), kcal100:Math.round(kcal), prot100:Math.round(prot),
-           carbs100:Math.round(carbs), fat100:Math.round(fat)};
+  /* ⛔⛔ UNE DÉCIMALE GARDÉE, ET CE N'EST PAS DU ZÈLE (ft-v1111). Mesuré sur le vrai pot de
+     Michel : son étiquette dit **2,8 g de glucides et 3,3 g de lipides pour 100 g**, et
+     l'arrondi à l'entier les rangeait tous les deux à **3**. Sur une poudre de protéine ça ne
+     se voit pas ; sur une huile à **0,4 g/100 g**, la valeur qu'il a lue deviendrait **0** —
+     l'app effacerait un chiffre qu'il vient de recopier.
+     👉 *On transcrit ce que la personne a lu, on ne l'arrondit pas à sa place* (la leçon de
+     ft-v1100 : transcrire, pas décider).
+     ⭐ Et ça ne change rien à l'affichage : `_qtyRescale` arrondit déjà les 4 champs à l'entier
+     au moment de les écrire. La décimale ne sert qu'à ce qui est CONSERVÉ. */
+  const d1=x=>Math.round(x*10)/10;
+  _bcNutr={name:nom.slice(0,80), kcal100:d1(kcal), prot100:d1(prot),
+           carbs100:d1(carbs), fat100:d1(fat)};
   /* ⭐ LE CHEMIN DE CIQUAL, MOT POUR MOT — produit vide, pas de portion déclarée (donc 100 g
      par défaut, que la personne remplace par sa dose), et une provenance qui dit la vérité. */
   _offRemplirFormulaire({serving_quantity:0, nutriments:{}}, null, 'etiquette-main', false, 'etiquette');
