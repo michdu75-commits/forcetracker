@@ -120,18 +120,37 @@ def main():
         g100 = nombre(x.get('Glucides /100g'))
         l100 = nombre(x.get('Lipides /100g'))
 
-        # ── ① incomplète : on n'invente pas de zéro
+        # ── ① incomplète : on n'invente pas de zéro… MAIS ON SAIT CALCULER LES CALORIES.
+        #    ⭐ Michel demande de pouvoir chercher « pizza 4 fromages » — c'était justement la
+        #    ligne écartée : elle porte ses 3 macros et il ne manque QUE les kcal. Or les kcal
+        #    se DÉDUISENT des macros (4/4/9), et l'app fait déjà ce calcul dans
+        #    `_coherenceKcal`. Ce n'est donc pas une valeur inventée, c'est une valeur DÉRIVÉE —
+        #    et elle est marquée comme telle (`kcal_derivee`), pour qu'on ne la présente jamais
+        #    comme un chiffre publié (R32 : mesuré / estimé / propriétaire).
+        #    ⛔ L'INVERSE RESTE REFUSÉ : des kcal sans macros ne se répartissent pas. On ne
+        #    saurait pas quelle part est du gras et laquelle du sucre — c'est ça qui serait
+        #    inventé (les frites McDo de l'ancien fichier, les 7 Subway).
+        kcal_derivee = False
+        if k is None and None not in (p, g, l):
+            k = round(4 * p + 4 * g + 9 * l, 1)
+            kcal_derivee = True
         if None in (k, p, g, l) or k <= 0:
             ecartes['incomplete'].append(ens + ' · ' + nom)
             continue
 
         # ── ③ les kcal collent-elles aux macros ? (les DEUX conditions, cf. en-tête)
+        # ⛔⛔ ON NE JUGE PAS UNE VALEUR PAR LA FORMULE QUI VIENT DE LA PRODUIRE : un contrôle
+        #    qui compare une kcal dérivée à 4P+4G+9L serait un vert qui ne peut pas rougir
+        #    (`BUGS.md`, le corollaire de R33). On le saute donc pour ces lignes-là.
         theo = 4 * p + 4 * g + 9 * l
-        if abs(k - theo) > 25 and abs(k - theo) / k > 0.15:
+        if not kcal_derivee and abs(k - theo) > 25 and abs(k - theo) / k > 0.15:
             ecartes['kcal_incoherentes'].append('%s · %s (%d annoncées, %d calculées)' % (ens, nom, k, theo))
             continue
 
         # ── la portion se DÉDUIT du pour-100 g, elle ne s'invente pas
+        # ⚠️ SANS pour-100 g kcal, la portion ne se déduit pas — mais si les valeurs SONT déjà
+        #    pour 100 g (cas Domino's, la source le dit), l'aliment reste utilisable comme
+        #    n'importe quel aliment de la table : 100 g par défaut, la personne met son poids.
         portion = round(k / k100 * 100) if k100 else None
 
         # ── la matière doit tenir dans la portion (règle physique de ft-v1103)
@@ -149,6 +168,7 @@ def main():
             'fat100': round(l100, 1) if l100 is not None else (round(l / portion * 100, 1) if portion else None),
             'portion': portion,
             'taille': taille_de(nom), 'famille': famille_de(nom),
+            'kcal_derivee': kcal_derivee,
         })
 
     # ── ④ LE CONTRÔLE PAR PIÈCE : « 5 Tenders », « 7 Tenders + 7 Hot Wings », « 16 Tenders +
@@ -216,9 +236,9 @@ def main():
                  "ne les a PAS mesurées : elle les affiche en nommant leur origine. Les recettes "
                  "changent — la date de relevé fait partie de la donnee."),
         'enseignes': remarques,
-        'champs': ['ens', 'nom', 'cat', 'kcal100', 'prot100', 'carbs100', 'fat100', 'portion'],
+        'champs': ['ens', 'nom', 'cat', 'kcal100', 'prot100', 'carbs100', 'fat100', 'portion', 'kcal_derivee'],
         'a': [[a['ens'], a['nom'], a['cat'], a['kcal100'], a['prot100'], a['carbs100'],
-               a['fat100'], a['portion']] for a in gardees],
+               a['fat100'], a['portion'], 1 if a['kcal_derivee'] else 0] for a in gardees],
     }
     os.makedirs(os.path.dirname(SORTIE), exist_ok=True)
     with io.open(SORTIE, 'w', encoding='utf-8') as f:
