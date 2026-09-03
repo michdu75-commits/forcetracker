@@ -24848,6 +24848,102 @@ console.log('\n-- CCXXII bis. L\'aide ne promet plus ce qui n\'est plus vrai (ft
     !/fast-?food/i.test((fs.readFileSync(path.join(ROOT,'constants.js'),'utf8').split('const WHATS_NEW')[1]||'').split('\n];')[0]||''), '');
 }
 
+/* ═══ CCXXIII. LES MOTS QU'ON EMPLOIE ATTEIGNENT UN ALIMENT PRÉCIS (ft-v1115) ════════════════
+   Michel fournit la table d'alias V2 de GPT (602 mots), construite sur l'export CSV de notre
+   propre base. ⭐⭐ ELLE NE CRÉE AUCUNE VALEUR : un alias est une PORTE vers un code CIQUAL.
+   ⛔⛔ MESURÉ AVANT DE BRANCHER : 153 de ces mots ne rendaient **RIEN** (tortiglioni,
+   fettuccine, riz jasmin, arborio, sticky rice…), et 62 rendaient un AUTRE aliment — dont
+   « riz japonais » → **biscuit apéritif**, « patate » → **patate douce**, « tradition » → **cidre**.
+   ⭐ DÉCISION DE MICHEL sur les 13 cas cru↔cuit : *« les deux, le cuit en premier »*. La cible
+   passe devant, la recherche habituelle continue dessous — personne ne perd son aliment (R29).
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXIII. Les mots qu\'on emploie atteignent un aliment précis (ft-v1115) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    await _ciqualCharger(); const t=await _aliasCharger();
+    const n=q=>(_ciqualChercher(q,6)||[]).map(x=>[x[0],x[1],x[3]]);
+    const o={ nAlias:t?t.n:0, nCiqual:(_ciqual&&_ciqual.a)?_ciqual.a.length:0 };
+    /* ⭐ des mots qui ne rendaient RIEN hier */
+    o.neufs={}; ['tortiglioni','fettuccine','riz jasmin','riz arborio','sticky rice','pappardelle']
+      .forEach(q=>o.neufs[q]=n(q)[0]||null);
+    /* ⭐ la décision de Michel : le cuit devant, le cru juste dessous */
+    o.cru={}; ['riz','pates','jambon'].forEach(q=>o.cru[q]=n(q).slice(0,3));
+    /* ⛔ de vrais ratés corrigés */
+    o.rates={}; ['riz japonais','patate','vermicelles'].forEach(q=>o.rates[q]=n(q)[0]||null);
+    /* ⛔ NON-RÉGRESSION : ce qui n'est PAS un alias suit la recherche habituelle */
+    o.intacts={}; ['riz au lait','mcdo','coca','big mac'].forEach(q=>o.intacts[q]=n(q)[0]||null);
+    /* ⛔⛔ AUCUNE VALEUR CRÉÉE : la cible d'un alias est un aliment de CIQUAL, au chiffre près */
+    o.valeursTirees=true; o.horsBase=[];
+    const codes=new Set(_ciqual.a.map(a=>a[0]));
+    for(const k in t.a){ if(!codes.has(t.a[k])) o.horsBase.push(k); }
+    /* ⛔ … et jamais une cible sans calories déterminées (elle serait invisible) */
+    o.sansKcal=[]; const parCode={}; _ciqual.a.forEach(a=>parCode[a[0]]=a);
+    for(const k in t.a){ const a=parCode[t.a[k]]; if(a && a[3]===null) o.sansKcal.push(k); }
+    /* ⛔ R2 — un mot ne peut pas être dans les DEUX tables */
+    o.collisions=Object.keys(t.a).filter(k=>typeof FOOD_SYNONYMES!=='undefined' && FOOD_SYNONYMES[k]);
+    /* ⛔ la correspondance porte sur la REQUÊTE ENTIÈRE, jamais sur un mot isolé */
+    o.pasDeMotIsole = (n('riz au lait')[0]||[])[1];
+    /* ⛔ un échec de chargement n'est jamais bloquant */
+    const garde=_alias; _alias=null;
+    o.sansTable=(n('riz')[0]||[])[1];
+    _alias=garde;
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXIII n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ CONTRÔLE D'ABORD : les deux tables chargées, sinon tout le bloc mesure du vide. */
+    t('⛔ CONTRÔLE — la table d\'alias ET la base sont chargées',
+      R.nAlias>400 && R.nCiqual>3000, R.nAlias+' alias · '+R.nCiqual+' aliments');
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : ces mots ne rendaient RIEN. */
+    t('⭐⭐ des mots qui ne rendaient RIEN trouvent leur aliment (tortiglioni, riz jasmin, sticky rice…)',
+      Object.values(R.neufs).every(x=>x && x[2]>0),
+      Object.entries(R.neufs).map(([k,v])=>k+'→'+(v?v[1].slice(0,22):'RIEN')).join(' · '));
+    /* ⭐⭐ LA DÉCISION DE MICHEL, ET ELLE SE VÉRIFIE DANS LES DEUX SENS. */
+    t('⭐⭐ « riz » rend le CUIT en tête… et le CRU juste dessous (rien n\'est perdu — R29)',
+      R.cru.riz && /cuit/i.test(R.cru.riz[0][1]) && R.cru.riz.slice(1).some(x=>/^Riz blanc, cru/.test(x[1])),
+      R.cru.riz.map(x=>x[1].slice(0,26)+' '+x[2]).join(' | '));
+    t('⛔ … même règle pour « pâtes » et « jambon »',
+      R.cru.pates && /cuites/i.test(R.cru.pates[0][1]) && R.cru.pates.slice(1).some(x=>/crues/i.test(x[1]))
+      && R.cru.jambon && /cuit/i.test(R.cru.jambon[0][1]) && R.cru.jambon.slice(1).some(x=>/cru/i.test(x[1])),
+      [R.cru.pates[0][1],R.cru.jambon[0][1]].join(' | '));
+    /* ⛔ DE VRAIS RATÉS, mesurés avant de brancher. */
+    t('⛔ « riz japonais » ne rend plus un BISCUIT APÉRITIF, « patate » plus une patate DOUCE',
+      R.rates['riz japonais'] && /^Riz/.test(R.rates['riz japonais'][1])
+      && R.rates.patate && /^Pomme de terre/.test(R.rates.patate[1])
+      && R.rates.vermicelles && /^P[âa]tes/.test(R.rates.vermicelles[1]),
+      Object.entries(R.rates).map(([k,v])=>k+'→'+(v?v[1].slice(0,26):'RIEN')).join(' · '));
+    /* ⛔⛔ AUCUNE VALEUR NUTRITIONNELLE CRÉÉE — c'est la promesse de fond de la table. */
+    t('⛔⛔ AUCUN alias ne vise un code absent de la base (aucune valeur inventée)',
+      R.horsBase.length===0, R.horsBase.slice(0,6).join(' · '));
+    t('⛔ … ni un aliment sans calories déterminées (il serait invisible — le cas « tomate séchée »)',
+      R.sansKcal.length===0, R.sansKcal.slice(0,6).join(' · '));
+    /* ⛔ R2 : les deux tables répondent à deux questions, un mot n'est jamais dans les deux. */
+    t('⛔ R2 — aucun mot n\'est à la fois dans `FOOD_SYNONYMES` et dans la table d\'alias',
+      R.collisions.length===0, R.collisions.slice(0,6).join(' · '));
+    /* ⛔ NON-RÉGRESSION : les trois autres sources ne bougent pas. */
+    t('⛔ ce qui n\'est pas un alias suit la recherche habituelle (mcdo, coca, big mac)',
+      R.intacts.mcdo && /restauration rapide/i.test(R.intacts.mcdo[1])
+      && R.intacts.coca && /^Cola/.test(R.intacts.coca[1]),
+      Object.entries(R.intacts).map(([k,v])=>k+'→'+(v?v[1].slice(0,24):'RIEN')).join(' · '));
+    /* ⛔⛔ L'ALIAS NE DÉTOURNE PAS UNE RECHERCHE QU'IL NE VISE PAS : « riz » est un alias,
+       « riz au lait » n'en est pas un. Sans la correspondance sur la requête ENTIÈRE, tout mot
+       contenant « riz » basculerait sur du riz cuit. */
+    t('⛔⛔ la correspondance porte sur la REQUÊTE ENTIÈRE (« riz au lait » n\'est pas détourné)',
+      /riz au lait/i.test(String(R.pasDeMotIsole)), String(R.pasDeMotIsole));
+    /* ⛔ Règle d'or #4 : un échec de chargement rend le comportement d'AVANT, pas une erreur. */
+    t('⛔ sans la table (hors ligne), la recherche redevient celle d\'avant — jamais bloquante',
+      /^Riz blanc, cru/.test(String(R.sansTable)), String(R.sansTable));
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

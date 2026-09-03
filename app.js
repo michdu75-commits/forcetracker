@@ -2547,6 +2547,47 @@ async function _ciqualCharger(){
    le Korean Whopper (752 kcal annoncées, 616 calculées depuis ses propres macros) et les 3
    lignes KFC en pièces (146, 77 puis 38 kcal par pièce : elles se divisent par deux, donc au
    moins deux sont fausses et on ne sait pas laquelle est juste). */
+/* ═══ 🥗 LES MOTS QU'ON EMPLOIE → UN ALIMENT PRÉCIS (ft-v1115) ═══════════════════════════════
+   Table produite par GPT à partir de l'export CSV de notre propre base, puis vérifiée ligne à
+   ligne à l'import (`tools/alias.py`). ⭐⭐ AUCUNE VALEUR NUTRITIONNELLE N'EST CRÉÉE : un alias
+   est une PORTE vers un code CIQUAL existant. Les 4 macros de chaque ligne ont été comparées aux
+   nôtres — 0 écart sur 569.
+   ⛔⛔ POURQUOI UN CODE ET NON UNE REQUÊTE, ce qui la distingue de `FOOD_SYNONYMES` : celle-là
+   traduit une frappe en une autre frappe puis laisse le classement trier — parfait pour ouvrir
+   une FAMILLE (« mcdo »), inutilisable pour désigner UN aliment. *C'est le classement par
+   longueur de nom qui fait remonter « Veau, steak haché 15 % » avant le bœuf.* Un alias qui porte
+   le CODE ne subit aucun classement. ⚠️ Un même mot ne peut pas être dans les deux tables :
+   le générateur le refuse (R2).
+   ⭐ CORRESPONDANCE SUR LA REQUÊTE ENTIÈRE, jamais sur un mot : « riz » est un alias, « riz au
+   lait » n'en est pas un et suit la recherche normale. Sans ça, un alias détournerait des
+   recherches qu'il n'a jamais visées.
+   ⛔⛔ ET ON N'ENLÈVE RIEN : la cible de l'alias passe DEVANT, la recherche habituelle continue
+   dessous. C'est la décision de Michel sur le cru/cuit — *« les deux, le cuit en premier »* :
+   « riz » rend « Riz blanc, cuit » puis « Riz blanc, cru » juste en dessous, et personne ne perd
+   son aliment. Informer sans décider (R29). */
+let _alias=null, _aliasEnCours=null;
+async function _aliasCharger(){
+  if(_alias) return _alias;
+  if(_aliasEnCours) return _aliasEnCours;
+  _aliasEnCours=(async()=>{
+    try{
+      const r=await fetch('data/alias.json',{headers:{'Accept':'application/json'}});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const d=await r.json();
+      if(!d||!d.a||typeof d.a!=='object') throw new Error('format');
+      _alias=d; return d;
+    }catch(e){ _aliasEnCours=null; return null; }   // jamais bloquant (règle d'or #4)
+  })();
+  return _aliasEnCours;
+}
+/* Rend l'aliment CIQUAL visé par ce que la personne a tapé, ou `null`. */
+function _aliasCible(q){
+  if(!_alias||!_ciqual) return null;
+  const c=_alias.a[_afNorm(q).replace(/\s+/g,' ').trim()];
+  if(c==null) return null;
+  for(const a of _ciqual.a) if(a[0]===c) return a;
+  return null;
+}
 let _marques=null, _marquesEnCours=null;
 async function _marquesCharger(){
   if(_marques) return _marques;
@@ -2769,6 +2810,25 @@ function _foodSynonymes(q){
    « Riz blanc, cuit, sans sel ajouté ». On exige que TOUS les mots tapés soient présents —
    sinon « riz complet » remonterait tous les riz et tous les pains complets. */
 function _ciqualChercher(q, max){
+  if(!_ciqual) return [];
+  /* 🥗 ft-v1115 — L'ALIAS PASSE DEVANT, IL NE REMPLACE PAS. On met la cible en tête puis on
+     laisse la recherche habituelle remplir dessous, dédoublonnée. ⛔ Si la table n'est pas
+     chargée (hors ligne au tout premier usage), `_aliasCible` rend `null` et le comportement
+     est celui d'avant, au caractère près. */
+  const cible=(typeof _aliasCible==='function')?_aliasCible(q):null;
+  if(cible){
+    const lim=max||6, tout=[cible];
+    for(const a of _ciqualChercherSansAlias(q, lim)){
+      if(tout.length>=lim) break;
+      if(a[0]!==cible[0]) tout.push(a);
+    }
+    return tout;
+  }
+  return _ciqualChercherSansAlias(q, max);
+}
+/* ⭐ Le corps d'origine, inchangé — extrait pour que l'alias puisse l'appeler par-dessous sans
+   dupliquer une ligne de la recherche (R2). */
+function _ciqualChercherSansAlias(q, max){
   if(!_ciqual) return [];
   /* 🍔 ft-v1113 — LA REQUÊTE EST TRADUITE AVANT D'ÊTRE JOUÉE, la recherche elle-même ne change
      pas d'une ligne. Plusieurs requêtes possibles (« mcdo » ouvre la famille), unies dans
@@ -3030,6 +3090,15 @@ function _afSuggInput(){
     _ciqualCharger().then(()=>{
       const enCours=(document.getElementById('af-desc')||{}).value||'';
       if(_afNorm(enCours)!==_afNorm(q)) return;    // la frappe a continué : résultat périmé
+      _afSuggCiq=_ciqualChercher(q,6); _afSuggRendu();
+    });
+    /* 🥗 LA TABLE D'ALIAS, MÊME RÉGIME (ft-v1115) : locale, 4 Ko gzippés, chargée au premier
+       besoin et jamais au démarrage. ⛔ Elle est demandée APRÈS CIQUAL et re-rend la liste :
+       sans la base, une cible d'alias n'a rien à désigner. */
+    _aliasCharger().then(async()=>{
+      await _ciqualCharger();
+      const enCours=(document.getElementById('af-desc')||{}).value||'';
+      if(_afNorm(enCours)!==_afNorm(q)) return;
       _afSuggCiq=_ciqualChercher(q,6); _afSuggRendu();
     });
     /* 🍔 LA BASE DE MARQUES, MÊME RÉGIME (ft-v1114) : locale, chargée au premier besoin et
