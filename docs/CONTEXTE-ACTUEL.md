@@ -6,6 +6,29 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1112` — 🔢 **UNE SEULE PRÉCISION POUR LE POUR-100 g.**
+  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+- ⭐ **La question de Michel** (*« ça va être comme ça sur tous les produits ? »*) a une réponse
+  chiffrée : **non** — 3 484 aliments embarqués, code-barres, photo d'étiquette ; **la saisie à
+  la main est le dernier recours**.
+- ⛔⛔ **Mais la vérification a trouvé pire** : **6 endroits** construisent le pour-100 g, **4
+  l'arrondissaient**. Le plus coûteux est la base embarquée — `data/ciqual.json` **contient** les
+  décimales et l'app les jetait à la lecture. **3 298 aliments sur 3 484** en portent au moins
+  une ; **1 159 ont une macro entre 0 et 1 g/100 g**, qui devenait **0 ou 1**.
+- ⛔ **La photo d'étiquette est le R4 le plus pur** : le serveur demande « garde 1 decimale si
+  presente », et l'app jetait les **calories** à l'arrivée.
+- ⚠️⚠️ **R8 pour la 5ᵉ fois cette semaine** : le correctif de la veille (ft-v1111) était posé sur
+  **1 endroit sur 6**, et pas sur le plus utilisé.
+- ⚠️⚠️ **Deux témoins existants ont rougi, et les deux avaient tort** : leurs attendus étaient
+  calés sur le **double arrondi** qu'on venait de retirer (156 → **155** ; 6 → **5**). *Vérifié
+  par l'arithmétique sur les vraies données, pas déduit* — le réflexe « j'ai cassé quelque
+  chose » aurait annulé une version juste.
+- ⚠️⚠️ **LE CONTENEUR : mon clone local s'est REMBOBINÉ TROIS FOIS aujourd'hui**, emportant une
+  fois des corrections non commitées. Rien n'a jamais été perdu de ce qui était **poussé**.
+  👉 *Committer au fur et à mesure, ne jamais laisser de travail non poussé.*
+- ⏭️ **Inchangé** : les lignes déjà enregistrées gardent leur `per100` arrondi (on ne réécrit pas
+  l'historique — R29) ; elles se corrigeront à la prochaine reprise du produit. ⚠️ **Safari/iPhone
+  toujours non vérifié.**
 - **Version en ligne (live) :** `ft-v1111` — 🔢 **LE CALIBRAGE GARDE LA DÉCIMALE DE
   L'ÉTIQUETTE.** ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
 - ⭐ **Le calibrage de ft-v1110 tombe juste sur les vrais chiffres** : l'étiquette de Michel
