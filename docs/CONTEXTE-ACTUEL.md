@@ -7,7 +7,8 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1115` — 🥗 **LES MOTS QU'ON EMPLOIE ATTEIGNENT UN ALIMENT.**
-  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#854** sur `ec64523`, `success` à 18:05 UTC.
+  ⭐ Suite re-passée sur l'**arbre FUSIONNÉ** avec session-B : **2578/2578, 0 rouge**.
 - ⭐⭐ **569 alias** (`data/alias.json`, 4 Ko gzippés) produits par **GPT à partir de l'export CSV
   de notre propre base** — l'audit livré le matin même. ⛔ **Aucune valeur créée** : vérifié à
   l'import, **0 macro divergente sur 569**.
