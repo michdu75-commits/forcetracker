@@ -9717,8 +9717,23 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
        (elles sont là AVANT que le moindre appel ait pu répondre), et le seul appel possible est
        un FICHIER, jamais l'IA. *On rend le témoin exact plutôt que de l'affaiblir.* */
     o.localesSansAttendre = o.localeVue;                 // rendu synchrone, avant tout réseau
-    o.seulementLeFichier = urls.every(u=>/ciqual\.json/.test(u));
+    /* ⚠️⚠️ RE-VISÉ LE 03/09 (ft-v1114) — ET LE COMMENTAIRE CI-DESSUS DISAIT DÉJÀ LA BONNE
+       RÈGLE. Il était écrit « le seul appel possible est un FICHIER, jamais l'IA » ; le témoin,
+       lui, exigeait le NOM `ciqual.json`. Dès qu'une 2ᵉ base locale est arrivée
+       (`data/marques.json`), il a rougi sur un code parfaitement sain.
+       👉 ***Un témoin visait la FORME là où son propre commentaire écrivait la GARANTIE***
+       — famille §31 de `BUGS.md`, et la 2ᵉ fois sur CE témoin précis.
+       ⛔ IL N'EST PAS AFFAIBLI, il est rendu exact : un fichier de données LOCAL est accepté,
+       et tout ce qui ressemble à un appel de modèle est refusé explicitement. */
+    const estFichierLocal = u=>/^[^:]*\/?data\/[a-z0-9_-]+\.json(\?|$)/i.test(u) || /\/data\//.test(u);
+    const sentLIA = u=>/anthropic|script\.google|workers\.dev|\/coach|action=|openfoodfacts/i.test(u);
+    o.seulementLeFichier = urls.every(u=>estFichierLocal(u) && !sentLIA(u));
     o.appelsFrappe = urls.length;
+    o.urlsFrappe = urls.slice(0,4);
+    /* ⛔ CONTRE-ÉPREUVE — le détecteur doit savoir REFUSER, sinon il serait vert sur tout. */
+    o.detecteurMord = !estFichierLocal('https://api.anthropic.com/v1/messages')
+                   && sentLIA('https://script.google.com/macros/s/xxx/exec?action=coach')
+                   && estFichierLocal('data/marques.json') && estFichierLocal('data/ciqual.json');
     /* ⛔ Dédoublonné, et c'est la PLUS RÉCENTE qui gagne (245, pas 250). */
     o.uneSeuleFois=(h1.match(/30g protéine \+ banane/g)||[]).length===1;
     o.laPlusRecente=/245 kcal/.test(h1);
@@ -9846,8 +9861,12 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⭐⭐ ce qu\'il a DÉJÀ noté remonte quand il tape', R.localeVue===true, '');
     t('⛔⛔ ... AFFICHÉES SANS ATTENDRE le réseau (rendu synchrone)',
       R.localesSansAttendre===true, '');
-    t('⛔ ... et le seul appel déclenché est un FICHIER, jamais l\'IA',
-      R.seulementLeFichier===true, R.appelsFrappe+' appel(s) : '+(R.seulementLeFichier?'ciqual.json':'AUTRE'));
+    t('⛔ ... et les seuls appels déclenchés sont des FICHIERS locaux, jamais l\'IA',
+      R.seulementLeFichier===true, R.appelsFrappe+' appel(s) : '+(R.urlsFrappe||[]).join(' · '));
+    /* ⛔ CONTRÔLE : sans lui, le témoin ci-dessus serait vert avec un détecteur qui dit oui à
+       tout — c'est précisément le défaut qu'on vient de corriger. */
+    t('⛔ CONTRÔLE — le détecteur sait REFUSER un appel de modèle et ACCEPTER une base locale',
+      R.detecteurMord===true, '');
     t('⭐ ... dédoublonné, et c\'est la plus RÉCENTE qui gagne (245, pas 250)',
       R.uneSeuleFois===true && R.laPlusRecente===true, '');
     t('⚠️ les accents n\'empêchent pas de retrouver « Pâtes » en tapant « pates »',
@@ -24652,7 +24671,8 @@ console.log('\n-- CCXXII. On met tout et on marque le doute (ft-v1114) --');
     const brut=q=>(_marquesChercher(q,4)||[]).map(i=>_marques.a[i]);
     const o={ total:(_marques&&_marques.a)?_marques.a.length:0,
               bigmac:noms('big mac'), whopper:noms('whopper'),
-              nuggets:noms('mcnuggets'), fritesMcdo:noms('frites mcdo'),
+              tenders:noms('tenders kfc'), mcchicken:noms('mcchicken'),
+              fritesMcdo:noms('frites mcdo'),
               mcdoFrites:noms('mcdo frites'), pizza:noms('pizza 4 fromages'),
               /* ⛔ NON-RÉGRESSION : une requête ordinaire ne doit pas se remplir de fast-food. */
               riz:noms('riz'), banane:noms('banane'),
@@ -24700,9 +24720,10 @@ console.log('\n-- CCXXII. On met tout et on marque le doute (ft-v1114) --');
       R.bigmac.length>0 && /Big Mac/i.test(R.bigmac[0]) && /McDonald/i.test(R.bigmac[0]), R.bigmac.join(' | '));
     t('⭐⭐ « pizza 4 fromages » trouve la pizza (l\'autre nom qu\'il a cité)',
       R.pizza.length>0 && /4 Fromages/i.test(R.pizza[0]), R.pizza.join(' | '));
-    t('⛔ « whopper » et « mcnuggets » aussi',
-      R.whopper.some(x=>/Whopper/i.test(x)) && R.nuggets.some(x=>/Nuggets/i.test(x)),
-      R.whopper.slice(0,1)+' / '+R.nuggets.slice(0,1));
+    t('⛔ « whopper », « tenders kfc » et « mcchicken » aussi',
+      R.whopper.some(x=>/Whopper/i.test(x)) && R.tenders.some(x=>/Tenders/i.test(x))
+      && R.mcchicken.some(x=>/McChicken/i.test(x)),
+      [R.whopper[0],R.tenders[0],R.mcchicken[0]].join(' / '));
     /* ⛔ Les mots peuvent être dans les DEUX ordres : on cherche dans « enseigne + nom ». */
     t('⛔ l\'ordre des mots ne compte pas (« frites mcdo » = « mcdo frites »)',
       R.fritesMcdo.length>0 && R.fritesMcdo.join()===R.mcdoFrites.join(), R.fritesMcdo.join(' | '));
@@ -24754,7 +24775,12 @@ console.log('\n-- CCXXII. On met tout et on marque le doute (ft-v1114) --');
 console.log('\n-- CCXXII bis. L\'aide ne promet plus ce qui n\'est plus vrai (ft-v1114) --');
 {
   const sc=fs.readFileSync(path.join(ROOT,'screens.js'),'utf8');
-  const nutri=sc.slice(sc.indexOf('nutrition:'), sc.indexOf('nutrition:')+14000);
+  /* ⚠️⚠️ ON RETIRE LES COMMENTAIRES AVANT DE MESURER (03/09) — ce témoin a rougi sur le
+     commentaire que je venais d'écrire à côté, lequel CITE la promesse interdite pour dire
+     qu'on l'a retirée. *Chercher un mot interdit dans le texte qui EXPLIQUE l'interdiction ne
+     mesure rien* — c'est le défaut de ft-v1102, refait à l'identique le lendemain. */
+  const sansCom=sc.replace(/\/\*[\s\S]*?\*\//g,'');
+  const nutri=sansCom.slice(sansCom.indexOf('nutrition:'), sansCom.indexOf('nutrition:')+14000);
   /* ⛔ CONTRÔLE : la zone d'aide nutrition est bien trouvée, sinon les 2 témoins suivants
      seraient verts en ne lisant rien. */
   t('⛔ CONTRÔLE — la zone d\'aide « nutrition » est bien trouvée',
@@ -24771,6 +24797,42 @@ console.log('\n-- CCXXII bis. L\'aide ne promet plus ce qui n\'est plus vrai (ft
     /Le fast-food par son nom, avec sa provenance/.test(fs.readFileSync(path.join(ROOT,'coach.js'),'utf8')), '');
   t('⛔ la diapo du Guide existe (point 5), et SANS image (la liste va grandir)',
     /t:'Le fast-food par son nom'/.test(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')), '');
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LA LEÇON DU JOUR — et il vient d'une vraie bourde. Mon aide, ma
+     nouveauté, ma diapo et mon aide détaillée citaient toutes « mcnuggets » comme exemple à
+     taper… et il n'y a AUCUN nugget dans les 27 produits. *J'ai écrit le matin même qu'une aide
+     qui nomme un repère inexistant est pire qu'une aide absente, puis je l'ai fait.*
+     ⛔ Ce témoin ne fige AUCUNE formulation : il extrait les mots que l'aide propose de taper
+     et vérifie que chacun trouve vraiment quelque chose. Il rougira le jour où quelqu'un citera
+     un produit qui n'existe pas — c'est la seule garantie qui compte (famille §31). */
+  {
+    const marques=JSON.parse(fs.readFileSync(path.join(ROOT,'data','marques.json'),'utf8'));
+    const corpus=(marques.a||[]).map(a=>(a[0]+' '+a[1]).toLowerCase()).join(' | ');
+    const alias={'mcdo':"mcdonald's",'macdo':"mcdonald's",'kfc':'kfc','bk':'burger king'};
+    const cites=new Set();
+    [ [path.join(ROOT,'screens.js'), 'Le fast-food par son nom'],
+      [path.join(ROOT,'constants.js'), 'fastfood-marques'],
+      [path.join(ROOT,'coach.js'), 'Le fast-food par son nom, avec sa provenance'],
+      [path.join(ROOT,'app.js'), "t:'Le fast-food par son nom'"] ].forEach(([f,ancre])=>{
+      const txt=fs.readFileSync(f,'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
+      const i=txt.indexOf(ancre); if(i<0) return;
+      const zone=txt.slice(i, i+2600);
+      /* on ne garde que ce qui est présenté comme « à taper » : <b>…</b> en minuscules */
+      (zone.match(/<b>[a-z0-9' àéèêç-]{3,24}<\/b>/g)||[]).forEach(m=>{
+        const mot=m.replace(/<\/?b>/g,'').trim();
+        if(/^(et|ou|le|la|les|un|une|des|pour|tape|pas|d'où|c'est)$/.test(mot)) return;
+        cites.add(mot);
+      });
+    });
+    const orphelins=[...cites].filter(mot=>{
+      const mots=mot.split(/\s+/).map(w=>alias[w]||w).filter(w=>w.length>1);
+      return !mots.every(w=>corpus.indexOf(w)>=0);
+    });
+    /* ⛔ CONTRÔLE — sans lui, « 0 orphelin » serait vrai en n'ayant rien extrait du tout. */
+    t('⛔ CONTRÔLE — l\'extracteur trouve bien des produits cités dans les 4 surfaces d\'aide',
+      cites.size>=4, cites.size+' cités : '+[...cites].join(' · '));
+    t('⭐⭐ AUCUN produit cité par l\'aide n\'est absent de la base (« mcnuggets » n\'existait pas)',
+      orphelins.length===0, 'orphelins : '+orphelins.join(' · '));
+  }
   /* ⛔⛔ ET AUCUNE POP-UP : rien n'est à faire, aucun repère n'a bougé. Une pop-up dirait
      « vos recherches ne trouvaient rien » — une alarme rétroactive (R25). */
   t('⛔⛔ AUCUNE pop-up `WHATS_NEW` sur ce sujet (rien à faire, aucun repère déplacé — R25)',
