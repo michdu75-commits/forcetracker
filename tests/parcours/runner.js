@@ -24161,11 +24161,14 @@ console.log('\n-- CCXVII. La ligne REPAS reste à l\'écran (ft-v1109) --');
       const aide=el.innerText||'';
       o.aideRendue = aide.length>200;
       o.aideParleDuRepas = /reste sous tes yeux/.test(aide);
-      /* ⛔ LA GARANTIE, PAS LA FORMULATION (§31) : ce qui compte est que l'aide DISE que le
-         repas se déduit de l'heure — pas qu'elle emploie tel mot. Mon premier jet cherchait
-         « pré-réglé » quand le texte écrit « pré-règle », et rougissait sur un texte juste. */
-      o.aideDitQueCEstDevine = /(pré-rég|pre-reg)[a-zé]*\s+sur\s+l'heure/i.test(aide)
-                               && /Petit-déj/.test(aide);
+      /* ⛔⛔ LA GARANTIE, PAS L'ORTHOGRAPHE (§31), ET J'AI RATÉ DEUX FOIS DE SUITE.
+         Ce qui compte est que l'aide DISE que le repas se déduit de l'heure. Mon 1ᵉʳ jet
+         cherchait « pré-réglé » quand le texte écrit « pré-règle » ; mon 2ᵉ jet a « corrigé »
+         en `(pré-rég|pre-reg)`, qui ne matche toujours pas « pré-règ » — un ACCENT de
+         différence. *Deux tentatives à viser un mot, zéro à viser le sens.* On demande
+         maintenant les trois choses que l'aide doit dire, et aucune formulation précise. */
+      o.aideDitQueCEstDevine = /sur l'heure/i.test(aide) && /avant 11 h/i.test(aide)
+                               && /devin/i.test(aide);
       o.aideSansEchappement = !/\\U000[0-9A-F]/i.test(el.innerHTML||'');
       closeHelp(); await w(200);
       openDrawerContent('help'); await w(400);
