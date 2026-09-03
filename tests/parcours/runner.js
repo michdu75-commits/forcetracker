@@ -24020,7 +24020,10 @@ console.log('\n-- CCXVII. La ligne REPAS reste à l\'écran (ft-v1109) --');
   for(const L of VUES){
     const cx=await b.newContext({serviceWorkers:'block',viewport:{width:L,height:844},timezoneId:'Europe/Paris'});
     const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
-    await p.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'84',ft4_premium:'1',
+    /* ⚠️ `ft4_ob2` COMME LES 38 AUTRES BLOCS : sans lui, l'écran d'accueil « Installe Force
+       Tracker » se pose PAR-DESSUS la modale, et le témoin de fuite mesure une pop-up au lieu
+       de la bande (mesuré le 03/09 — c'est la leçon de ft-v1102, repayée). */
+    await p.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'84',ft4_premium:'1',ft4_ob2:'1',
       ft4_guide_shown:'1',ft4_wn_seen:'99',ft4_foodlog:JSON.stringify(foodLog)}));
     await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(2000);
     RES[L]=await p.evaluate(async()=>{ try{
@@ -24049,8 +24052,18 @@ console.log('\n-- CCXVII. La ligne REPAS reste à l\'écran (ft-v1109) --');
       cible.click(); await w(120); o.mealApres=_afMeal;
       /* ⛔ LE TÉMOIN QUE LES CHIFFRES N'AURAIENT PAS DONNÉ : ce qui est PEINT tout en haut. */
       modal.scrollTop=520; await w(200);
+      /* ⚠️⚠️ ON REFERME LES OVERLAYS JUSTE AVANT DE REGARDER, ET ON VÉRIFIE QU'IL N'EN RESTE
+         AUCUN. Sans ça, ce témoin mesure une POP-UP : mesuré le 03/09, la fenêtre « Installe
+         Force Tracker » (`ob0-android`) s'ouvre APRÈS le chargement et couvre la modale — le
+         témoin criait donc à la fuite sur un écran parfaitement correct. C'est la leçon de
+         ft-v1102 (« une pop-up de démarrage couvrait la première série d'images ») repayée. */
+      document.querySelectorAll('.overlay.open').forEach(x=>{ if(x.id!=='ov-add-food') x.classList.remove('open'); });
+      await w(150);
+      /* ⛔ ET ON DIT CE QU'ON A TROUVÉ EN HAUT : sans ça, « fuite=true » ne distingue pas un
+         vrai débordement d'un écran couvert par autre chose. */
       const m2=rm();
       const sous=document.elementFromPoint(Math.round(m2.left+m2.width/2), Math.round(m2.top+4));
+      o.quiEstEnHaut = sous ? ((sous.id||sous.tagName)+' :: '+(sous.textContent||'').trim().slice(0,40)) : 'rien';
       o.fuite = !(sous && (sous===bande || bande.contains(sous)));
       /* ⛔ ET LA ZONE DE SAISIE RESTE UTILISABLE SOUS LA BANDE (le coût doit rester payable). */
       const ta=document.getElementById('af-desc'); ta.scrollIntoView({block:'center'}); await w(160);
@@ -24080,7 +24093,8 @@ console.log('\n-- CCXVII. La ligne REPAS reste à l\'écran (ft-v1109) --');
     /* ⛔⛔ CELUI-CI VIENT D'UN VRAI DÉFAUT DE MA 1ʳᵉ VERSION, invisible dans tous les nombres :
        avec `top:0` les aliments défilaient dans les 16 px de marge au-dessus de la bande. */
     t('⛔⛔ rien ne défile AU-DESSUS de la bande (le défaut que la capture a trouvé, pas la mesure)',
-      A.fuite===false && B.fuite===false, '390 fuite='+A.fuite+' · 430 fuite='+B.fuite);
+      A.fuite===false && B.fuite===false,
+      '390 : '+A.quiEstEnHaut+' · 430 : '+B.quiEstEnHaut);
     t('⛔ la bande est bien COLLANTE, pas simplement en haut du document',
       A.collant==='sticky' && B.collant==='sticky', A.collant+' / '+B.collant);
     /* ⛔ LE COÛT EST BORNÉ ET MESURÉ : une bande qui mangerait la moitié de la modale serait un
@@ -24111,8 +24125,17 @@ console.log('\n-- CCXVII. La ligne REPAS reste à l\'écran (ft-v1109) --');
       const corps=f.slice(0,f.indexOf('\n}'));
       t('⛔ le toast lit `_foodMealInfo`, il ne refait pas sa propre recherche dans FOOD_MEALS',
         /_foodMealInfo/.test(corps) && !/FOOD_MEALS\s*\.\s*find/.test(corps), corps.replace(/\s+/g,' ').slice(0,120));
-      t('⛔ … et les 3 chemins d\'ajout nomment désormais le moment (aucun « Ajouté au journal »)',
-        !/Ajouté au journal/.test(app), '');
+      /* ⛔⛔ CE TÉMOIN A ROUGI SUR SA PROPRE DOCUMENTATION (famille §31) : il cherchait la
+         chaîne « Ajouté au journal » N'IMPORTE OÙ dans le fichier, et mon commentaire la CITE
+         pour expliquer qu'on l'a retirée. La garantie n'est pas « ce texte n'existe nulle
+         part », c'est « AUCUN APPEL À `toast` ne l'emploie ». On ne lit donc que les appels. */
+      const appels=(app.match(/toast\([^;]{0,200}/g)||[]).filter(x=>/Ajouté au journal|Ajouté au jour consulté/.test(x));
+      t('⛔ … et aucun APPEL à `toast` ne dit plus « Ajouté au journal » (les 3 chemins nomment le moment)',
+        appels.length===0, appels.join(' | ').slice(0,140));
+      /* ⛔ CONTRÔLE : le détecteur sait mordre — sinon « 0 appel » serait vrai même si la
+         recherche ne trouvait jamais rien. */
+      t('⛔ CONTRÔLE — le détecteur d\'appels `toast` trouve bien des appels dans le fichier',
+        (app.match(/toast\([^;]{0,200}/g)||[]).length>20, '');
     }
     t('⛔ 0 erreur JS sur les deux largeurs', A.errs.length===0 && B.errs.length===0,
       (A.errs.concat(B.errs)).join(' | '));
@@ -24126,7 +24149,7 @@ console.log('\n-- CCXVII. La ligne REPAS reste à l\'écran (ft-v1109) --');
   {
     const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
     const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
-    await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+    await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
     await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1800);
     const S2=await p.evaluate(async()=>{ try{
       const w=ms=>new Promise(r=>setTimeout(r,ms));
@@ -24138,7 +24161,11 @@ console.log('\n-- CCXVII. La ligne REPAS reste à l\'écran (ft-v1109) --');
       const aide=el.innerText||'';
       o.aideRendue = aide.length>200;
       o.aideParleDuRepas = /reste sous tes yeux/.test(aide);
-      o.aideDitQueCEstDevine = /pré-réglé sur l'heure/.test(aide);
+      /* ⛔ LA GARANTIE, PAS LA FORMULATION (§31) : ce qui compte est que l'aide DISE que le
+         repas se déduit de l'heure — pas qu'elle emploie tel mot. Mon premier jet cherchait
+         « pré-réglé » quand le texte écrit « pré-règle », et rougissait sur un texte juste. */
+      o.aideDitQueCEstDevine = /(pré-rég|pre-reg)[a-zé]*\s+sur\s+l'heure/i.test(aide)
+                               && /Petit-déj/.test(aide);
       o.aideSansEchappement = !/\\U000[0-9A-F]/i.test(el.innerHTML||'');
       closeHelp(); await w(200);
       openDrawerContent('help'); await w(400);
