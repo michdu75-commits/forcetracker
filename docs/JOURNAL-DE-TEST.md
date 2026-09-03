@@ -69,6 +69,24 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 UNE VALEUR DE MARQUE SIGNALÉE COMME DOUTEUSE — MILO EN TIENT-IL COMPTE ?
+
+**Ce qui déclenche la question** (03/09/2026, ft-v1114) : une ligne du journal peut désormais
+porter un champ `doute` (*« 752 kcal publiées, 616 calculées depuis ses macros »*). L'écran le
+dit, la donnée le garde. ⛔ **Mais je n'ai pas vérifié ce que Milo en fait** — ni même s'il le
+reçoit.
+
+**Ce qu'on ne sait pas** : si quelqu'un mange trois Korean Whopper dans la semaine, Milo doit-il
+① les compter comme n'importe quel repas, ② nuancer son commentaire calorique, ③ ou signaler
+qu'une partie de ses chiffres est incertaine ? ⚠️ **Aucune des trois n'est évidente** : nuancer
+à chaque repas serait du bruit (P21, la nutrition ne doit pas devenir une source de stress) ;
+ne rien dire laisse un total présenté comme exact alors qu'il ne l'est pas.
+
+**État : à trier** — ça change ce que Milo reçoit, donc **R34** : avant/après au banc d'essai,
+qui coûte des appels réels. Décision de Michel. ⛔ **Et le premier travail est gratuit** :
+vérifier si `doute` atteint seulement `buildCoachContext` (garde-fou `tests/donnees`), avant de
+se demander ce qu'il en dit.
+
 ### 🟡 LE REPAS EST DEVINÉ D'APRÈS L'HEURE — et cette supposition part chez Milo
 
 **D'où ça vient (03/09/2026, ft-v1109).** Michel demande que les puces de repas restent visibles
