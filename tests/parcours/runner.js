@@ -24546,6 +24546,89 @@ console.log('\n-- CCXX. Une seule précision pour le pour-100 g (ft-v1112) --');
   }
 }
 
+/* ═══ CCXXI. LES MOTS QU'ON DIT ATTEIGNENT LES ALIMENTS QU'ILS NOMMENT (ft-v1113) ═════════════
+   Michel : « il n'y a pas de fast food ? », puis « fais les synonymes et Mac Donald, avec les
+   sandwichs qui vont avec ».
+   ⛔⛔ MESURÉ AVANT DE CODER : `coca` ne rendait RIEN alors que « Cola, sucré » est dans le
+   fichier — UNE LETTRE d'écart. `soda` rien (94 « Boisson gazeuse » y sont), `mcdo`/`fast food`
+   rien (6 aliments « de restauration rapide » y sont). *La donnée est là, la porte n'existe pas.*
+   ⚠️ Et le trou est INVISIBLE AU BUREAU, BÉANT À LA SALLE : en ligne, Open Food Facts rattrape ;
+   hors ligne on n'a rien alors que l'aliment est dans le téléphone (règle d'or #4).
+   ⛔⛔ AUCUN CHIFFRE DE MARQUE N'EST ÉCRIT : les synonymes ouvrent la FAMILLE réelle de la table
+   nationale, dont le nom dit « de restauration rapide ». Rien ne se fait passer pour un Big Mac
+   (R32/R33, §34). */
+console.log('\n-- CCXXI. Les mots qu\'on dit atteignent les aliments (ft-v1113) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    await _ciqualCharger();
+    const noms=q=>(_ciqualChercher(q,6)||[]).map(x=>x[1]);
+    return { total:(_ciqual&&_ciqual.a)?_ciqual.a.length:0,
+             mcdo:noms('mcdo'), macdo:noms('macdo'), fastfood:noms('fast food'),
+             bigmac:noms('big mac'), coca:noms('coca'), cocalight:noms('coca light'),
+             soda:noms('soda'), tacos:noms('tacos'),
+             riz:noms('riz'), poulet:noms('poulet'), cola:noms('cola'), banane:noms('banane') };
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXI n\'a pas pu tourner', false, R.err);
+  else{
+    const dit=(l,re)=>l.some(x=>re.test(x));
+    /* ⛔ CONTRÔLE D'ABORD : la base est chargée, sinon tout le bloc mesurerait du vide. */
+    t('⛔ CONTRÔLE — la base embarquée est chargée (sinon tous les témoins sont vides)',
+      R.total>3000, R.total+' aliments');
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : une lettre d'écart entre ce qu'on dit et ce que la
+       table écrit suffisait à ne RIEN rendre. */
+    t('⭐⭐ « coca » trouve enfin le cola (une lettre d\'écart, zéro résultat avant)',
+      R.coca.length>0 && dit(R.coca,/^Cola/i), R.coca.slice(0,2).join(' · '));
+    t('⛔ « soda » trouve les boissons gazeuses (94 dans le fichier, 0 trouvé avant)',
+      R.soda.length>0 && dit(R.soda,/gazeuse/i), R.soda.slice(0,2).join(' · '));
+    /* ⭐⭐ LA DEMANDE DE MICHEL : « Mac Donald, avec les sandwichs qui vont avec ». */
+    t('⭐⭐ « mcdo » ouvre la famille : un SANDWICH, des FRITES et des NUGGETS (un menu, pas 6 burgers)',
+      dit(R.mcdo,/restauration rapide/i) && dit(R.mcdo,/[Ff]rites/) && dit(R.mcdo,/[Nn]uggets/),
+      R.mcdo.slice(0,3).join(' · '));
+    t('⛔ … et les autres façons de l\'écrire mènent au même endroit',
+      dit(R.macdo,/restauration rapide/i) && dit(R.fastfood,/restauration rapide/i)
+      && dit(R.bigmac,/restauration rapide/i), 'macdo/fast food/big mac');
+    /* ⛔⛔ RIEN NE SE FAIT PASSER POUR UN PRODUIT DE MARQUE : aucun nom rendu ne contient une
+       marque. C'est ce qui rend le raccourci honnête (R32/R33). */
+    {
+      const tous=[].concat(R.mcdo,R.macdo,R.fastfood,R.bigmac);
+      const marques=tous.filter(x=>/mcdo|mac ?donald|big ?mac|burger king|whopper|kfc|quick/i.test(x));
+      t('⛔⛔ AUCUN nom de marque n\'est inventé dans les résultats (on ouvre la famille, on ne fabrique rien)',
+        marques.length===0 && tous.length>0, marques.join(' · '));
+      t('⛔ … et chaque résultat « mcdo » DIT ce qu\'il est (« de restauration rapide », « frites », « nuggets »)',
+        R.mcdo.every(x=>/restauration rapide|[Ff]rites|[Nn]uggets/.test(x)), R.mcdo.join(' · ').slice(0,120));
+    }
+    /* ⛔ « light » et « zéro » n'existaient dans AUCUN des 3 484 noms : les mapper est un gain
+       sans contrepartie. */
+    t('⛔ « coca light » trouve les colas aux édulcorants (le mot « light » n\'existe pas dans la table)',
+      R.cocalight.length>0 && dit(R.cocalight,/dulcorant/), R.cocalight.slice(0,1).join(''));
+    /* ⛔⛔ CE QU'ON REFUSE DE FAIRE, ET C'EST UN TÉMOIN À PART ENTIÈRE : `tacos` n'est pas dans
+       la table ; lui coller un kebab serait inventer. On rend RIEN, exprès (R29). */
+    t('⛔⛔ « tacos » ne rend RIEN — il n\'est pas dans la table, et on ne sert pas autre chose à la place',
+      R.tacos.length===0, R.tacos.join(' · '));
+    /* ⛔ NON-RÉGRESSION : les recherches qui marchaient marchent à l'identique. */
+    t('⛔ les recherches ordinaires ne bougent pas (riz, poulet, banane, cola)',
+      R.riz.length>0 && /^Riz/.test(R.riz[0]) && R.poulet.length>0 && /^Poulet/.test(R.poulet[0])
+      && R.banane.length>0 && /^Banane/.test(R.banane[0]) && R.cola.length>0 && /^Cola/.test(R.cola[0]),
+      [R.riz[0],R.poulet[0],R.banane[0],R.cola[0]].join(' · '));
+    /* ⛔ LE PROPRIÉTAIRE EXISTE, sinon les témoins seraient verts par un autre chemin. */
+    {
+      const app=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+      t('⛔ le propriétaire unique existe (`FOOD_SYNONYMES` + `_foodSynonymes`)',
+        /const FOOD_SYNONYMES\s*=/.test(app) && /function _foodSynonymes\(/.test(app), '');
+      t('⛔⛔ et « tacos » n\'est PAS dans la table de synonymes (le retrait est écrit, R30)',
+        !/'tacos'\s*:/.test(app.split('const FOOD_SYNONYMES')[1].split('};')[0]), '');
+    }
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
