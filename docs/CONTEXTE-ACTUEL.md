@@ -6,7 +6,26 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1107`. ⏳ **Déploiement à vérifier** (**R18**).
+- **Version en ligne (live) :** `ft-v1108`. ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** — ⚠️ celui de
+  ft-v1107 n'a jamais abouti : le job du run **#820** (session-B) est resté bloqué à l'entrée de
+  l'environnement `github-pages`, et les runs #821→823 ont tous été **annulés** dans la file.
+  **Rien à corriger côté code.** ⏭️ Si ça se reproduit : annuler le run bloqué depuis GitHub.
+- ⚖️⚠️⚠️ **LA RÈGLE DES JOURNÉES EXPLOITABLES ÉTAIT FAUSSE, corrigée le soir même** (ft-v1108).
+  GPT/Michel demandent de **contre-auditer la règle sur le vrai journal exporté avant de coder** ;
+  j'avais déjà codé (ft-v1107). J'ai donc fait le **procès de ma propre règle — elle l'a perdu**.
+- ⛔⛔ **La médiane nue produit 2 FAUX INVALIDES** sur la structure réelle de Michel : une **vraie
+  journée à 3 repas** écartée, et un **changement durable** 4 → 3 repas qui écarte **4 jours sur
+  5**. 👉 ***Une médiane exclut par construction ce qui est en dessous*** — elle ne distingue pas
+  *« inhabituel »* de *« mal renseigné »*, la distinction même qui était demandée.
+- ⭐ **Cinq fractions mesurées** : toutes sauf la médiane nue donnent **0 faux valide et 0 faux
+  invalide**, et ne se distinguent **que sur un cas** (2 repas / 402 kcal). **Michel a tranché :
+  écartée** → **deux tiers de la médiane** (barre **3** chez lui). ⛔ La fraction reste un
+  **choix, pas une mesure** — seul paramètre libre, écrit dans le code.
+- ⛔ **Plancher à 1 pour l'OMAD** : sans lui la barre tomberait à 0 et rien ne serait jamais
+  écarté chez quelqu'un qui mange une fois par jour.
+- ⚠️ **Le CSV n'était PAS dans la session** : travail sur les mesures **relayées** par GPT — ni
+  vérifiables, ni complètes (pas de macros par jour, pas de noms de repas). *Dit, pas sous-entendu.*
+- **Version précédente :** `ft-v1107`. ⏳ **Déploiement à vérifier** (**R18**).
 - 🍽️⭐⭐ **L'APPORT ENTRE DANS LE MOTEUR DE TRAJECTOIRE** (ft-v1107), après le **contre-audit**
   d'une proposition GPT (`docs/NUTRITION-CONTRE-AUDIT-TRAJECTOIRE.md`). ⭐ **Vingt-huit
   paragraphes réduits à UN trou** : son axe « trajectoire » était **déjà en production**

@@ -23885,6 +23885,7 @@ console.log('\n-- CCXVI. L\'apport entre dans le moteur de trajectoire (ft-v1107
       name:SET[k][1],kcal:SET[k][2],prot:30,carbs:40,fat:10});});return o;};
   const CAS={
     unJourAMoitie: journal([1,4,4,4,4,4]),
+    troisRepas:    journal([3,4,4,4,4,4]),   // ⛔ une VRAIE journée à 3 repas : elle doit PASSER
     tousComplets:  journal([4,4,4,4,4,4]),
     toutAMoitie:   journal([2,2,2,2,2,2]),
     deuxAMoitie:   journal([1,4,1,4,4,4]),
@@ -23930,7 +23931,7 @@ console.log('\n-- CCXVI. L\'apport entre dans le moteur de trajectoire (ft-v1107
 
   if(R.err) t('CCXVI n\'a pas pu tourner', false, R.err);
   else{
-    const A=R.unJourAMoitie, C=R.tousComplets, M=R.toutAMoitie, D=R.deuxAMoitie;
+    const A=R.unJourAMoitie, C=R.tousComplets, M=R.toutAMoitie, D=R.deuxAMoitie, T3=R.troisRepas;
     /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : le moteur LIT les calories. Avant, `alim` ne
        contenait qu'un compte de jours. */
     t('⭐⭐ le moteur de trajectoire LIT l\'apport (il ne comptait que les jours)',
@@ -23944,13 +23945,21 @@ console.log('\n-- CCXVI. L\'apport entre dans le moteur de trajectoire (ft-v1107
        ressemblent. */
     t('⛔ CONTRÔLE — sans jour partiel, 0 écarté et la MÊME moyenne',
       C.alim.ecartes===0 && C.alim.kcal.moy===2067, JSON.stringify(C.alim));
-    /* ⛔⛔ AUCUN SEUIL INVENTÉ : la barre est la médiane de la personne. Chez quelqu'un qui note
-       systématiquement 2 moments, la barre vaut 2 et RIEN n'est écarté — l'app ne décrète pas
-       qu'il « note mal ». */
-    t('⛔⛔ la barre est la MÉDIANE de la personne, pas un seuil choisi (2 moments → 0 écarté)',
+    /* ⛔⛔ LA BARRE SUIT LA PERSONNE, ET ELLE EST AUX DEUX TIERS DE SA MÉDIANE (ft-v1108).
+       ⚠️ ft-v1107 prenait la MÉDIANE NUE, et c'était faux : mesuré sur le vrai journal de
+       Michel contre les 9 cas de l'audit, **2 faux invalides** — une vraie journée à 3 repas
+       écartée, et un changement durable 4→3 qui écartait 4 jours sur 5. *Une médiane exclut
+       par construction ce qui est en dessous ; elle ne distingue pas « inhabituel » de
+       « mal renseigné ».* Les deux tiers gardent l'un et écartent l'autre : 0 faux valide,
+       0 faux invalide sur les 9 cas. */
+    t('⛔⛔ chez quelqu\'un qui note 2 moments, la barre vaut 2 et RIEN n\'est écarté',
       M.alim.barre===2 && M.alim.ecartes===0, JSON.stringify(M.alim));
-    t('⛔ … et elle vaut 4 chez quelqu\'un qui note 4 moments (elle suit l\'usage)',
-      A.alim.barre===4 && C.alim.barre===4, 'A='+A.alim.barre+' C='+C.alim.barre);
+    t('⛔ … et elle vaut 3 chez quelqu\'un qui en note 4 (deux tiers, pas la médiane nue)',
+      A.alim.barre===3 && C.alim.barre===3, 'A='+A.alim.barre+' C='+C.alim.barre);
+    /* ⛔⛔ LE TÉMOIN QUI PORTE LA CORRECTION DE ft-v1108 : une VRAIE journée à 3 repas doit
+       PASSER chez quelqu'un qui en note 4 d'habitude. C'est le faux invalide qu'on répare. */
+    t('⛔⛔ une VRAIE journée à 3 repas n\'est PLUS écartée (le faux invalide de ft-v1107)',
+      T3.alim.ecartes===0 && T3.alim.kcal && T3.alim.kcal.jours===6, JSON.stringify(T3.alim));
     /* ⛔⛔ LA JUMELLE (R8) : « Ta semaine » applique la MÊME règle — c'est là que la distorsion
        de 269 kcal avait été mesurée. */
     t('⛔⛔ « Ta semaine » applique la MÊME règle (la distorsion y avait été mesurée)',

@@ -1605,7 +1605,24 @@ function _joursAlimComplets(fenetre){
     const jours=Object.keys(moments);
     if(!jours.length) return {complets:[], ecartes:0, barre:0};
     const n=jours.map(d=>Object.keys(moments[d]).length).sort((a,b)=>a-b);
-    const barre=n[Math.floor(n.length/2)];                   // ⛔ médiane, jamais moyenne
+    /* ⛔⛔ DEUX TIERS DE LA MÉDIANE, PAS LA MÉDIANE (décision de Michel, ft-v1108).
+       ⚠️ MA PREMIÈRE RÈGLE ÉTAIT LA MÉDIANE NUE, ET ELLE ÉTAIT FAUSSE — mesuré sur son vrai
+       journal (11 jours à 4-5 moments) contre les 9 cas de GPT : **2 faux invalides**.
+         · une VRAIE journée à 3 repas était **écartée** (médiane 4, jour à 3) ;
+         · un **changement durable** 4 repas → 3 repas faisait écarter 4 jours sur 5, le temps
+           que la médiane rattrape.
+       👉 ***Une médiane exclut par construction ce qui est en dessous*** : elle ne distingue
+       pas « un peu moins que d'habitude » de « manifestement pauvre ». Or c'est exactement la
+       distinction demandée — *journée inhabituelle* ≠ *journée mal renseignée*.
+       ⭐ MESURÉ SUR 5 FRACTIONS (1/3 · 1/2 · 2/3 · 3/4 · 1) : **toutes sauf la médiane nue
+       donnent 0 faux valide ET 0 faux invalide** sur les 9 cas. Elles ne se distinguent QUE
+       sur le cas ambigu — une journée à 2 repas / 402 kcal. **Michel a tranché : écartée.**
+       ⛔ Et la fraction reste un CHOIX, pas une mesure — c'est le seul paramètre libre de la
+       règle, et il est écrit ici pour qu'on sache quoi rouvrir si la décision change.
+       ⛔ LE PLANCHER À 1 PROTÈGE L'OMAD : quelqu'un qui ne mange qu'une fois par jour a une
+       médiane de 1 ; sans ce plancher la barre tomberait à 0 et la règle n'écarterait plus
+       jamais rien chez lui. *Une règle relative doit rester vraie aux extrêmes.* */
+    const barre=Math.max(1, Math.ceil(n[Math.floor(n.length/2)]*2/3));
     const complets=jours.filter(d=>Object.keys(moments[d]).length>=barre).sort();
     return {complets:complets, ecartes:jours.length-complets.length, barre:barre};
   }catch(e){ return {complets:[], ecartes:0, barre:0}; }
