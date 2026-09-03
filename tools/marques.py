@@ -8,7 +8,20 @@ GÉNÉRATEUR DE `data/marques.json` — la base fast-food France (ft-v1114).
    classeur fourni par Michel est la SOURCE, ce fichier est la RECETTE, et `data/marques.json`
    est un produit — régénérable, donc vérifiable.
 
-⛔⛔ CE QUE CE SCRIPT REFUSE D'IMPORTER, ET C'EST L'ESSENTIEL :
+⚠️⚠️ CHANGEMENT DE DOCTRINE (03/09/2026, sur une remarque de Michel) : « il faut tout mettre,
+   sinon autant rien mettre, c'est logique ». **Il a raison, et mon raisonnement était à
+   l'envers.** J'écartais les lignes douteuses pour protéger le journal ; en réalité, une ligne
+   absente pousse vers l'estimation IA — qui est PIRE qu'une valeur publiée douteuse. *C'est
+   exactement le mécanisme qui a produit son pot de protéine faux : l'absence d'une valeur
+   fiable fabrique la valeur inventée.*
+   👉 Donc ON N'ÉCARTE PLUS, ON MARQUE. Le doute voyage avec la valeur (champ `doute`), l'écran
+   l'affiche, et la personne décide. C'est R29 dans sa forme la plus stricte : *informer sans
+   décider*, en montrant les éléments pour que la décision soit facile.
+   ⛔ SEULE EXCEPTION, ET ELLE N'EST PAS DE MOI : les 91 lignes Quick du PREMIER classeur, dont
+   la feuille d'audit de Michel dit « NE PAS IMPORTER — décalage nom ↔ ligne nutritionnelle ».
+   Celles-là ne sont pas douteuses, elles sont FAUSSES, et c'est lui qui l'a tranché.
+
+⛔⛔ CE QUE CE SCRIPT SAIT DÉTECTER — et qui devient un AVERTISSEMENT, plus un rejet :
 
    ① UNE LIGNE INCOMPLÈTE. Il faut les QUATRE valeurs (kcal, protéines, glucides, lipides).
       Écrire 0 à la place d'une valeur absente serait inventer : une frite à 231 kcal avec
@@ -151,9 +164,9 @@ def main():
         #    qui compare une kcal dérivée à 4P+4G+9L serait un vert qui ne peut pas rougir
         #    (`BUGS.md`, le corollaire de R33). On le saute donc pour ces lignes-là.
         theo = 4 * p + 4 * g + 9 * l
+        doute = None
         if not kcal_derivee and abs(k - theo) > 25 and abs(k - theo) / k > 0.15:
-            ecartes['kcal_incoherentes'].append('%s · %s (%d annoncées, %d calculées)' % (ens, nom, k, theo))
-            continue
+            doute = '%d kcal publiées, %d calculées depuis ses macros' % (round(k), round(theo))
 
         # ── la portion se DÉDUIT du pour-100 g, elle ne s'invente pas
         # ⚠️ SANS pour-100 g kcal, la portion ne se déduit pas — mais si les valeurs SONT déjà
@@ -184,7 +197,7 @@ def main():
             'fat100': round(l / portion * 100, 1) if portion else l100,
             'portion': portion,
             'taille': taille_de(nom), 'famille': famille_de(nom),
-            'kcal_derivee': kcal_derivee,
+            'kcal_derivee': kcal_derivee, 'doute': doute,
         })
 
     # ── ④ LE CONTRÔLE PAR PIÈCE : « 5 Tenders », « 7 Tenders + 7 Hot Wings », « 16 Tenders +
@@ -209,7 +222,8 @@ def main():
         vals = [a['kcal'] / a['_pieces'] for a in l]
         if max(vals) > 2 * min(vals):     # un facteur 2 entre deux lignes de la même enseigne
             for a in l:
-                a['_piece_ko'] = '%.0f kcal/pièce' % (a['kcal'] / a['_pieces'])
+                a['_doute_piece'] = '%.0f kcal/pièce, incohérent avec les autres formats %s' % (
+                    a['kcal'] / a['_pieces'], ens)
 
     # ── ② LE CONTRÔLE ENTRE TAILLES : dans une famille, plus petit doit peser moins.
     #    C'est le seul qui attrape les frites Quick, et il ne peut pas s'écrire ligne à ligne.
@@ -230,12 +244,10 @@ def main():
     gardees = []
     for a in lignes:
         cle = (a['ens'], a['famille'])
-        if cle in familles_ko:
-            ecartes['tailles_incoherentes'].append('%s · %s (portion %s g)' % (a['ens'], a['nom'], a['portion']))
-            continue
-        if a.get('_piece_ko'):
-            ecartes['par_piece_incoherent'].append('%s · %s (%s)' % (a['ens'], a['nom'], a['_piece_ko']))
-            continue
+        if cle in familles_ko and not a.get('doute'):
+            a['doute'] = 'les tailles de cette gamme donnent le même poids (%s g) : au moins une est fausse' % a['portion']
+        if a.get('_doute_piece') and not a.get('doute'):
+            a['doute'] = a['_doute_piece']
         if a['kcal100'] is None or a['prot100'] is None or a['carbs100'] is None or a['fat100'] is None:
             # ⛔ SANS POUR-100 g COMPLET, le bloc quantité de l'app ne peut rien recalculer :
             #    l'aliment serait figé sur une seule portion. On l'écarte plutôt que de livrer
@@ -252,9 +264,11 @@ def main():
                  "ne les a PAS mesurées : elle les affiche en nommant leur origine. Les recettes "
                  "changent — la date de relevé fait partie de la donnee."),
         'enseignes': remarques,
-        'champs': ['ens', 'nom', 'cat', 'kcal100', 'prot100', 'carbs100', 'fat100', 'portion', 'kcal_derivee'],
+        'champs': ['ens', 'nom', 'cat', 'kcal100', 'prot100', 'carbs100', 'fat100', 'portion',
+                   'kcal_derivee', 'doute'],
         'a': [[a['ens'], a['nom'], a['cat'], a['kcal100'], a['prot100'], a['carbs100'],
-               a['fat100'], a['portion'], 1 if a['kcal_derivee'] else 0] for a in gardees],
+               a['fat100'], a['portion'], 1 if a['kcal_derivee'] else 0, a.get('doute') or 0]
+              for a in gardees],
     }
     os.makedirs(os.path.dirname(SORTIE), exist_ok=True)
     with io.open(SORTIE, 'w', encoding='utf-8') as f:

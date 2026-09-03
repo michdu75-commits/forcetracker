@@ -1071,6 +1071,14 @@ function _afSetSrc(o){ _afSrc=o||null; }
 const _SECS_QUI_GONFLENT=/p[âa]tes|spaghetti|macaroni|penne|tagliatelle|coquillettes|riz\b|basmati|quinoa|semoule|couscous|boulgour|lentille|pois cass|pois chiche|haricot sec|flageolet|avoine|floconn/i;
 function _afNoteEtat(nom){
   const el=document.getElementById('af-etat-note'); if(!el) return;
+  /* ⚠️ UN MESSAGE DIRECT PASSE TEL QUEL (ft-v1114) : cette zone était réservée à un seul cas
+     (les féculents secs, détectés sur le NOM). Un produit de marque signalé comme douteux a
+     besoin de la même place — c'est le dernier écran avant « Ajouter ». ⛔ On étend le
+     propriétaire existant plutôt que d'ouvrir une 2ᵉ zone de note, qui finirait par afficher
+     deux avertissements à deux endroits pour la même ligne (R2). */
+  if(nom && String(nom).indexOf('⚠️')===0){
+    el.textContent=String(nom); el.style.display='block'; return;
+  }
   if(nom && _SECS_QUI_GONFLENT.test(String(nom))){
     el.textContent='⚖️ Les valeurs du paquet sont pour le produit SEC. Si tu pèses après cuisson, '
       +'note le poids SEC (une portion cuite pèse 2 à 3 fois plus, et le compte serait faux d\'autant).';
@@ -1103,6 +1111,17 @@ function _provFood(vals){
        ⛔ Posé SEULEMENT s'il est vrai : un `false` recopié partout annoncerait une
        vérification qui n'a pas eu lieu sur les chemins décodés par ZXing. */
     if(_afSrc.codeDouteux===true)p.codeDouteux=true;
+    /* ⚠️⚠️ TROISIÈME FOIS AU MÊME ENDROIT (03/09/2026, ft-v1114) — et l'avertissement est écrit
+       en majuscules juste au-dessus. J'ai posé `doute` et `kcalDerivee` dans `_afSetSrc`, écrit
+       en commentaire « le doute descend jusqu'à la donnée (R4) »… et la ligne enregistrée
+       portait `doute: null`, parce que cette liste blanche ne les recopiait pas.
+       👉 ***J'ai écrit la règle juste au-dessus de l'endroit où je venais de l'enfreindre.***
+       C'est la mesure de l'entrée sauvegardée qui l'a vu, pas la relecture.
+       ⛔ Pourquoi ces deux champs comptent : un chiffre signalé comme douteux le jour où on l'a
+       pris doit rester signalé dans trois mois, sinon l'avertissement n'a servi qu'une seconde.
+       Et une kcal DÉRIVÉE des macros ne doit jamais se relire comme une valeur publiée (R32). */
+    if(_afSrc.doute)p.doute=String(_afSrc.doute).slice(0,90);
+    if(_afSrc.kcalDerivee===true)p.kcalDerivee=true;
     const a=_afSrc.attendu;
     if(a&&vals) p.modifie=['kcal','prot','carbs','fat'].some(k=>(+a[k]||0)!==(+vals[k]||0));
   }
@@ -2559,6 +2578,15 @@ const MARQUE_ALIAS={
 };
 /* Recherche dans la base de marques. Les mots peuvent être dans le désordre, et ils sont
    cherchés dans « enseigne + nom » — donc « mcdo frite » et « frite mcdo » marchent tous deux. */
+/* ⚠️ UN ÉCHAPPEUR LOCAL, ET C'EST ASSUMÉ. Le projet en compte DÉJÀ CINQ, sous cinq noms
+   différents (`_escIdea`, `_escFood`, `_escNote`, `_souvEsc`, `_obsEsc`) — et trois vivent dans
+   d'autres fichiers. En brancher un sixième par emprunt créerait une dépendance entre `app.js`
+   et `screens.js` pour trois caractères. ⛔ Mon premier jet appelait `_esc`, qui n'existe pas :
+   la liste de propositions plantait ENTIÈREMENT (« _esc is not defined »), donc plus AUCUN
+   aliment ne s'affichait — et seule la mesure à l'écran l'a vu, la fonction de recherche étant
+   parfaitement correcte. ⏭️ Le vrai sujet reste ouvert : cinq échappeurs pour un besoin est un
+   défaut R2 à traiter d'un coup, pas au détour d'une version nutrition. */
+function _marqueEsc(t){ return String(t==null?'':t).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function _marquesChercher(q, max){
   if(!_marques) return [];
   let n=_afNorm(q).replace(/[-_.]+/g,' ').replace(/\s+/g,' ').trim();
@@ -2806,12 +2834,19 @@ function _afSuggPrendreMarque(i){
   /* ⛔ LA PROVENANCE DIT CE QU'ELLE EST, y compris quand les kcal ont été DÉRIVÉES des macros
      (R32 : mesuré / estimé / propriétaire). On ne présente jamais un calcul comme une
      publication. */
+  /* ⛔ LE DOUTE DESCEND JUSQU'À LA DONNÉE (R4) : il ne suffit pas de l'afficher dans la liste,
+     il doit rester attaché à la ligne enregistrée — sinon on ne saura plus, dans trois mois,
+     qu'un chiffre du journal était signalé comme douteux le jour où on l'a pris. */
   _afSetSrc({saisie:'marque', origine:'marque', sourceId:sid, etat:null,
+             ...(a[9]? {doute:String(a[9]).slice(0,90)} : {}),
              ...(a[8]? {kcalDerivee:true} : {}),
              per100:{kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
              attendu:_afLuFormulaire()});
+  /* ⚠️ ET IL SE REDIT DANS LE FORMULAIRE, là où on appuie sur « Ajouter » : la liste défile,
+     le formulaire est le dernier écran avant l'enregistrement. */
+  _afNoteEtat(a[9] ? ('⚠️ '+String(a[9])+'. Valeur publiée par '+a[0]+' : à toi de juger.') : _bcNutr.name);
   _afSuggVider();
-  toast('Ajuste la quantité ✅','success');
+  toast(a[9] ? 'Valeur signalée — vérifie avant d\'ajouter ⚠️' : 'Ajuste la quantité ✅', a[9]?'info':'success');
 }
 function _afSuggPrendreCiqual(i){
   const a=_afSuggCiq[i]; if(!a) return;
@@ -2951,9 +2986,16 @@ function _afSuggRendu(){
     h+='<div style="font-size:11px;color:var(--t3);padding:7px 11px 4px;font-weight:700;">FAST-FOOD (SOURCES OFFICIELLES)</div>';
     _afSuggMarq.forEach((idx,i)=>{ const a=_marques.a[idx];
       const p=a[7];
-      h+=ligne('🍔', a[1]+' <span style="color:var(--t3);font-weight:500;">· '+a[0]+'</span>',
+      /* ⛔⛔ LE DOUTE S'AFFICHE, IL NE FAIT PAS DISPARAÎTRE LA LIGNE (03/09/2026). Michel :
+         « il faut tout mettre, sinon autant rien mettre, c'est logique » — et il a raison :
+         une ligne absente pousse vers l'estimation IA, qui est PIRE qu'une valeur publiée
+         douteuse. *C'est le mécanisme qui a fabriqué son pot de protéine faux.*
+         👉 On montre la valeur ET ce qui clochе, avec le chiffre qui permet de juger
+         (« 38 kcal/pièce »). R29 : informer sans décider. */
+      h+=ligne(a[9]?'⚠️':'🍔', a[1]+' <span style="color:var(--t3);font-weight:500;">· '+a[0]+'</span>',
         (p? (Math.round(a[3]*p/100)+' kcal la portion ('+p+' g)') : (a[3]+' kcal/100 g'))
-        + (a[8]? ' · <span style="color:var(--orange);">kcal calculées</span>' : ''),
+        + (a[8]? ' · <span style="color:var(--orange);">kcal calculées</span>' : '')
+        + (a[9]? '<br><span style="color:var(--orange);">⚠️ '+_marqueEsc(String(a[9]))+'</span>' : ''),
         '_afSuggPrendreMarque('+i+')'); });
   }
   /* ⭐ CIQUAL AVANT OPEN FOOD FACTS, et c'est un choix : quand on tape « banane », l'aliment
@@ -3473,6 +3515,14 @@ function _coherenceKcal(pfx, corrigeur){
       +'est à revoir — <b>l\'app ne peut pas savoir laquelle</b>, elle ne touche à rien.</div>';
     el.style.display='block'; return;
   }
+  /* ⚠️ DEUX SEUILS, DEUX MÉTIERS — et ce n'est pas une incohérence à « harmoniser » (mesuré
+     le 03/09/2026, ft-v1114). Ici : 25 % et 60 kcal, parce que ce contrôle se déclenche à
+     CHAQUE frappe d'une personne réelle et qu'un avertissement trop bavard ne se lit plus.
+     `tools/marques.py` audite une table ENTIÈRE hors ligne, une fois : il peut se permettre
+     15 %, et c'est ainsi qu'il attrape le Korean Whopper (752 publiées / 616 calculées, soit
+     18 % — sous le seuil d'ici). *Un garde-fou de saisie et un audit de table ne cherchent pas
+     la même chose : le premier protège une frappe, le second protège une base.* C'est pour ça
+     que l'avertissement de la base s'affiche à part, dans la liste ET dans le formulaire. */
   if(!(kcal>0) || !(theo>0) || ecart<60 || ecart/Math.max(kcal,theo)<0.25
      || (kcal>theo && _KCAL_ALCOOL.test(nom))){   // ⛔ calories « en trop » sur une boisson alcoolisée : normal
     el.style.display='none'; el.innerHTML=''; return;
