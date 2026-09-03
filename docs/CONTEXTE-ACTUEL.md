@@ -7,7 +7,9 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1114` — 🍔 **ON MET TOUT ET ON MARQUE LE DOUTE.**
-  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#849** sur `9b2676d`, `success` à 16:52 UTC.
+  ⭐ Suite re-passée sur l'**arbre FUSIONNÉ** avec session-B : **2554/2554, 0 rouge**.
+  ⚠️ *Le proxy de ce conteneur bloque `github.io` : je vérifie le RUN, pas la page servie.*
 - ⭐⭐ **Une base fast-food France entre dans l'app** : 27 produits (McDonald's, Burger King, KFC,
   Quick, Domino's) dans `data/marques.json`, générés par `tools/marques.py`. **`big mac`**,
   **`whopper`**, **`mcnuggets`**, **`pizza 4 fromages`**, **`frites mcdo`** trouvent le produit
