@@ -78,6 +78,90 @@ AJOUTS = {
     #    confond pas avec la précédente, elles ne portent pas les mêmes valeurs.
     'coca zero sans cafeine': (18068, 'CIQUAL distingue la version sans caféine — on ne fusionne pas'),
     'coca sans cafeine':      (18067, 'le cola sucré sans caféine, qui existe aussi'),
+
+    # ═══ 🥤 ft-v1117 — LE PIÈGE DU COCA N'ÉTAIT PAS CELUI DU COCA : IL Y EN A 9 ═══════════════
+    #  Michel : *« et les autres boissons ? »*. **Mesuré** : CIQUAL porte **9 paires**
+    #  « X, sucré, avec édulcorants » / « X, sans sucres ajoutés, avec édulcorants », et
+    #  ⛔⛔ « sucré » est TOUJOURS le nom le plus court — donc le tri choisit systématiquement
+    #  la version SUCRÉE quand on tape « light » ou « zéro ». Le Coca n'était qu'un cas sur 9.
+    #  ⚠️⚠️ ET LE CORRECTIF « PROPRE » A ÉTÉ REFUSÉ PAR LA MESURE, pas par l'intuition :
+    #  traduire `zero`/`light` en « sans sucres ajoutés » plutôt qu'en « édulcorants » corrige
+    #  3 cas… et en casse 3 autres — `yaourt light` ne rend **plus rien**, `soda light` tombe
+    #  sur « Boisson gazeuse **à la pomme** » (30 kcal, un autre produit).
+    #  👉 ***« Light » ne veut pas dire « sans sucre » : un yaourt light est 0 % de matière
+    #  grasse.*** Un mot qui a deux sens ne se traduit pas, il se DÉSIGNE — d'où ces alias.
+    'soda zero':          (18001, 'les 9 paires : « sucré » est toujours le nom le plus court, donc il gagnait'),
+    'soda light':         (18001, 'idem'),
+    'soda sans sucre':    (18001, 'idem'),
+    'boisson gazeuse zero':  (18001, 'idem'),
+    'boisson gazeuse light': (18001, 'idem'),
+    'limonade zero':      (18035, 'idem — 8 kcal/100 g au lieu de 0'),
+    'limonade light':     (18035, 'idem'),
+    'limonade sans sucre':(18035, 'idem'),
+    'tonic zero':         (18013, 'idem — 22 kcal/100 g au lieu de 0'),
+    'tonic light':        (18013, 'idem'),
+    'schweppes zero':     (18013, 'idem'),
+    'schweppes light':    (18013, 'idem'),
+    'ice tea zero':       (18065, 'idem — 17 kcal/100 g au lieu de 1'),
+    'ice tea light':      (18065, 'idem'),
+    'the glace zero':     (18065, 'idem'),
+    'the glace light':    (18065, 'idem'),
+    'red bull zero':      (18353, 'idem — 28 kcal/100 g au lieu de 9'),
+    'red bull sans sucre':(18353, 'idem'),
+    'energy drink zero':  (18353, 'idem'),
+    'boisson energisante zero': (18353, 'idem'),
+
+    # ═══ 🥤 LES BOISSONS QUI NE RENDAIENT **RIEN** ══════════════════════════════════════════
+    #  ⛔ Elles ouvrent le GÉNÉRIQUE de la table nationale, jamais un chiffre de marque : le nom
+    #  affiché dit « Boisson énergisante » ou « Boisson gazeuse aux fruits », donc rien ne se
+    #  fait passer pour le produit lui-même (R32/R33). C'est le mécanisme de « mcdo » en ft-v1113.
+    #  ⭐ Et on prend l'**aliment moyen** quand il existe : c'est la convention de CIQUAL pour un
+    #  mot générique, et elle ne choisit pas une variante à la place de la personne (R29).
+    'ice tea':      (18062, 'ne rendait RIEN — l\'aliment moyen « Boisson au thé, aromatisée »'),
+    'icetea':       (18062, 'idem'),
+    'the glace':    (18062, 'idem'),
+    'red bull':     (18324, 'ne rendait RIEN — l\'aliment moyen « Boisson énergisante »'),
+    'redbull':      (18324, 'idem'),
+    'monster':      (18324, 'idem'),
+    'energy drink': (18324, 'idem'),
+    'orangina':     (18048, 'ne rendait RIEN — l\'aliment moyen « Boisson gazeuse aux fruits, sucrée »'),
+    'sprite':       (18048, 'idem'),
+    'fanta':        (18048, 'idem'),
+    'oasis':        (18048, 'idem'),
+    'seven up':     (18048, 'idem'),
+    'tropico':      (18048, 'idem'),
+    'schweppes':    (18344, 'ne rendait RIEN — « Tonic ou bitter, sucré »'),
+    'latte':        (18151, 'ne rendait RIEN — « Café au lait, café crème ou cappuccino, prêt à boire »'),
+    'cafe latte':   (18151, 'idem'),
+    'eau petillante': (18046, 'ne rendait RIEN — l\'aliment moyen « Eau minérale, gazeuse »'),
+    'biere blonde': (5001,  'ne rendait RIEN — la bière standard « coeur de marché (4-5° alcool) »'),
+    'panache':      (5004,  'ne rendait RIEN — « Panaché (limonade et bière) »'),
+
+    # ═══ 🥛 LES LAITS VÉGÉTAUX — LE PIRE DE TOUS ═══════════════════════════════════════════
+    #  ⛔⛔ `lait amande` rendait **« Chocolat au lait aux fruits secs (noisettes, amandes) » à
+    #  559 kcal/100 g** — pour une boisson qui en fait **36**. ***× 15,5.*** Et `lait soja`,
+    #  `lait avoine` ne rendaient RIEN. Cause : CIQUAL écrit « Boisson à… », on dit « lait de… ».
+    #  ⚠️⚠️ ET ON NE TOUCHE PAS AU « LAIT DE COCO » : la table distingue le **lait de coco
+    #  culinaire** (18041, **199 kcal**) de la **boisson à la noix de coco** (18907, **30**).
+    #  Ce sont deux produits différents ; les fusionner ferait exactement le dégât qu'on répare.
+    #  ⭐ Mesuré : « lait de coco » trouve DÉJÀ le bon (18041), il n'a besoin d'aucun alias.
+    'lait amande':    (18111, 'rendait « Chocolat au lait aux fruits secs » à 559 kcal/100 g — × 15,5'),
+    'lait d amande':  (18111, 'idem'),
+    'lait damande':   (18111, 'idem'),
+    'lait soja':      (18113, 'ne rendait RIEN — CIQUAL écrit « Boisson au soja »'),
+    'lait de soja':   (18113, 'idem'),
+    'lait avoine':    (18899, 'ne rendait RIEN — CIQUAL écrit « Boisson à l\'avoine »'),
+    'lait d avoine':  (18899, 'idem'),
+    'lait de riz':    (18904, 'ne rendait RIEN — CIQUAL écrit « Boisson au riz »'),
+
+    # ⛔ « rosé » rendait « ROSETTE ou fuseau » — le SAUCISSON, à 392 kcal/100 g pour un vin qui
+    #    en fait 69. C'est la famille de `hampe` → « cham**pêtre** » : la recherche compare des
+    #    SOUS-CHAÎNES, donc « rose » se trouve dans « Rosette ».
+    #    ⭐ Et rien n'est perdu : la rosette reste trouvable en tapant « rosette », et elle
+    #    apparaît juste sous le vin dans la liste (R29).
+    'rose':     (5216, 'rendait « Rosette ou fuseau » — le saucisson, 392 kcal au lieu de 69'),
+    'vin rose': (5216, 'idem'),
+    '7up':      (18048, 'ne rendait RIEN — l\'aliment moyen « Boisson gazeuse aux fruits, sucrée »'),
 }
 
 def norm(t):
