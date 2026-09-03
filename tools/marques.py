@@ -83,9 +83,16 @@ def main():
     src = sys.argv[1]
     w = openpyxl.load_workbook(src, data_only=True)
 
-    if 'Base nutrition' not in w.sheetnames:
-        sys.exit("feuille « Base nutrition » introuvable")
-    s = w['Base nutrition']
+    # ⚠️⚠️ ON NE LIT QU'UNE SEULE FEUILLE, ET C'EST UNE LEÇON PAYÉE : dans la version contrôlée,
+    #    « FRITES vérifiées » est un SOUS-ENSEMBLE de « Base VALIDÉE » — les 14 lignes sont dans
+    #    les deux. En concaténant les deux feuilles, mon contrôle entre tailles voyait
+    #    « Petite 80 g < Petite 80 g » et déclarait la famille incohérente. *Un doublon
+    #    ressemble exactement à une incohérence pour un détecteur qui compare des voisins.*
+    feuille = next((n for n in ('Base VALIDÉE', 'Base validee', 'Base nutrition') if n in w.sheetnames), None)
+    if not feuille:
+        sys.exit("aucune feuille de référence trouvée (« Base VALIDÉE » ou « Base nutrition »)")
+    print('feuille de référence :', feuille)
+    s = w[feuille]
     hdr = [c.value for c in s[1]]
     brut = [dict(zip(hdr, r)) for r in s.iter_rows(min_row=2, values_only=True) if r[2] is not None]
 
@@ -144,6 +151,30 @@ def main():
             'taille': taille_de(nom), 'famille': famille_de(nom),
         })
 
+    # ── ④ LE CONTRÔLE PAR PIÈCE : « 5 Tenders », « 7 Tenders + 7 Hot Wings », « 16 Tenders +
+    #    16 Hot Wings » doivent donner un kcal PAR PIÈCE comparable. Mesuré sur le classeur
+    #    contrôlé : 146, 77 et 38,5 kcal/pièce — *ça se divise par deux à chaque ligne*, donc
+    #    les trois sont mutuellement incompatibles. La source signale le 16+16 comme douteux ;
+    #    la mesure montre que les TROIS le sont. On les écarte toutes plutôt que d'en garder une
+    #    au hasard : on ne sait pas laquelle est juste.
+    PIECES = re.compile(r'\b(\d+)\s+(tenders?|hot\s*wings?|wings?|nuggets?|pi[eè]ces?|morceaux)\b', re.I)
+    par_piece = defaultdict(list)
+    for a in lignes:
+        m = PIECES.findall(a['nom'])
+        if not m:
+            continue
+        n = sum(int(q) for q, _ in m)
+        if n > 0:
+            a['_pieces'] = n
+            par_piece[a['ens']].append(a)
+    for ens, l in par_piece.items():
+        if len(l) < 2:
+            continue
+        vals = [a['kcal'] / a['_pieces'] for a in l]
+        if max(vals) > 2 * min(vals):     # un facteur 2 entre deux lignes de la même enseigne
+            for a in l:
+                a['_piece_ko'] = '%.0f kcal/pièce' % (a['kcal'] / a['_pieces'])
+
     # ── ② LE CONTRÔLE ENTRE TAILLES : dans une famille, plus petit doit peser moins.
     #    C'est le seul qui attrape les frites Quick, et il ne peut pas s'écrire ligne à ligne.
     par_famille = defaultdict(list)
@@ -165,6 +196,9 @@ def main():
         cle = (a['ens'], a['famille'])
         if cle in familles_ko:
             ecartes['tailles_incoherentes'].append('%s · %s (portion %s g)' % (a['ens'], a['nom'], a['portion']))
+            continue
+        if a.get('_piece_ko'):
+            ecartes['par_piece_incoherent'].append('%s · %s (%s)' % (a['ens'], a['nom'], a['_piece_ko']))
             continue
         if a['kcal100'] is None or a['prot100'] is None or a['carbs100'] is None or a['fat100'] is None:
             # ⛔ SANS POUR-100 g COMPLET, le bloc quantité de l'app ne peut rien recalculer :
