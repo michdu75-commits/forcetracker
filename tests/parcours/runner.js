@@ -24292,6 +24292,113 @@ console.log('\n-- CCXVIII. La ligne REPAS reste à l\'écran (ft-v1109) --');
   }
 }
 
+/* ═══ CCXIX. UN PRODUIT DEVIENT CALIBRABLE À LA MAIN (ft-v1110) ═══════════════════════════════
+   Michel, 4ᵉ passe sur le même pot d'isolat : « il y a toujours le problème avec ma prot…
+   comment on peut résoudre ce problème ».
+   ⛔⛔ LA CAUSE MESURÉE N'ÉTAIT PAS UN GARDE-FOU MANQUANT : sa ligne portait `per100 = null`, et
+   AUCUN champ de l'app ne permettait d'en saisir un à la main. Un produit dont la fiche Open
+   Food Facts est incomplète restait donc incalibrable À VIE — et sa vieille ligne fausse
+   revenait en tête des propositions.
+   ⭐ Les valeurs employées ici sont celles de SON étiquette : 88 g de protéines pour 100 g. */
+console.log('\n-- CCXIX. Un produit devient calibrable à la main (ft-v1110) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'84',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    const w=ms=>new Promise(r=>setTimeout(r,ms)); const V=id=>(document.getElementById(id)||{}).value;
+    const o={};
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    goScreen('nutrition'); await w(300); openAddFood(); await w(500);
+    /* ⛔ CONTRÔLE D'ABORD : le pour-100 g n'est PAS connu au départ, sinon tout ce bloc
+       mesurerait un formulaire déjà rempli par autre chose. */
+    o.blocAvant=(()=>{const e=document.getElementById('af-bc-row');return !!(e&&e.offsetParent!==null);})();
+    document.getElementById('af-desc').value='Iso zero protein';
+    _calOuvrir(); await w(150);
+    o.champsOuverts=(()=>{const e=document.getElementById('af-cal-row');return !!(e&&e.offsetParent!==null);})();
+    document.getElementById('af-cal-kcal').value='375';
+    document.getElementById('af-cal-prot').value='88';
+    document.getElementById('af-cal-carbs').value='1';
+    document.getElementById('af-cal-fat').value='1';
+    _calAppliquer(); await w(300);
+    o.blocApres=(()=>{const e=document.getElementById('af-bc-row');return !!(e&&e.offsetParent!==null);})();
+    o.pour100={kcal:V('af-kcal'),prot:V('af-prot')};
+    document.getElementById('af-bc-grams').value='30'; _bcApplyGrams(); await w(200);
+    o.pour30={kcal:+V('af-kcal'),prot:+V('af-prot')};
+    o.alerteMuette=(document.getElementById('af-coherence')||{}).style.display==='none';
+    addFoodEntry(); await w(400);
+    const e=(S.foodLog||[]).slice(-1)[0]||{};
+    o.enregistre={kcal:e.kcal,prot:e.prot,q:e.q,per100:e.per100||null,saisie:e.saisie||null,
+                  origine:e.origine||e.source||null};
+    /* ⭐⭐ LA VRAIE PROMESSE : « la fois d'après ». Sans ça on aurait réparé un repas, pas un
+       produit — et c'est précisément le mot « toujours » de Michel. */
+    openAddFood(); await w(500);
+    o.reprisePer100=(typeof _afQuickItems!=='undefined'&&_afQuickItems[0])?(_afQuickItems[0].per100||null):null;
+    /* ⛔ ON N'APPELLE PAS DE FONCTION QU'ON N'A PAS VÉRIFIÉE : `reprendreAliment` n'existe pas
+       (le vrai nom est `_afSuggPrendreLocale`). Une branche gardée par `typeof` qui ne s'exécute
+       jamais est une sonde qui ne mord pas — la faute même que ce bloc doit éviter. La preuve
+       tient dans `reprisePer100`, qui lit ce que la proposition PORTE. */
+    /* ⛔ CONTRÔLE NÉGATIF DE LA RÈGLE PHYSIQUE : la colonne « par portion » recopiée dans la
+       colonne « pour 100 g » est l'erreur la plus probable ici — elle doit être REFUSÉE. */
+    closeAddFood(); await w(150); openAddFood(); await w(400);
+    document.getElementById('af-desc').value='Test';
+    _calOuvrir(); await w(120);
+    document.getElementById('af-cal-kcal').value='156';
+    document.getElementById('af-cal-prot').value='120';
+    document.getElementById('af-cal-carbs').value='1';
+    document.getElementById('af-cal-fat').value='1';
+    _calAppliquer(); await w(200);
+    const er=document.getElementById('af-cal-err');
+    o.refus={affiche:!!(er&&er.style.display==='block'), texte:(er&&er.textContent||'')};
+    o.refusPasCalibre=(()=>{const e=document.getElementById('af-bc-name');
+      return !/Test/.test((e&&e.textContent)||'');})();
+    /* ⛔ ET LE VIDE EST REFUSÉ AUSSI : un produit « calibré » à zéro serait une fausse
+       certitude, propagée à tous les repas suivants. */
+    ['kcal','prot','carbs','fat'].forEach(k=>{document.getElementById('af-cal-'+k).value='';});
+    _calAppliquer(); await w(150);
+    o.refusVide=!!(er&&er.style.display==='block'&&/au moins une valeur/.test(er.textContent||''));
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXIX n\'a pas pu tourner', false, R.err);
+  else{
+    t('⛔ CONTRÔLE — aucun pour-100 g n\'est connu au départ (sinon le bloc mesure autre chose)',
+      R.blocAvant===false, 'bloc quantité déjà visible');
+    t('⛔ le bloc « valeurs pour 100 g » s\'ouvre à la demande', R.champsOuverts===true, '');
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : son étiquette entre, sa dose ressort juste. */
+    t('⭐⭐ 88 g de protéines / 100 g → 30 g rendent 26 g (l\'étiquette de Michel)',
+      R.pour30.prot===26 && R.pour30.kcal===113, JSON.stringify(R.pour30));
+    t('⛔ … et le bloc quantité s\'ouvre, comme après un scan réussi (R13 : même chemin)',
+      R.blocApres===true, '');
+    t('⛔ aucune alerte sur un produit correctement calibré (le garde-fou ne gêne pas le chemin juste)',
+      R.alerteMuette===true, '');
+    /* ⛔⛔ R4 : LE POUR-100 g DESCEND JUSQU'À LA DONNÉE. Sans ça la personne le saisit, l'écran
+       se met à jour… et rien n'est retenu : la fois d'après, on recommence. */
+    t('⛔⛔ le pour-100 g est ENREGISTRÉ avec la ligne (R4 — sinon on recommence demain)',
+      !!(R.enregistre.per100 && R.enregistre.per100.prot===88) && R.enregistre.q===30,
+      JSON.stringify(R.enregistre));
+    /* ⛔ LA PROVENANCE NE MENT PAS (R33) : saisi à la main ≠ lu sur Open Food Facts. */
+    t('⛔⛔ la provenance dit « étiquette », jamais « off » (une provenance fausse se présente comme un fait)',
+      R.enregistre.origine==='etiquette' && /etiquette/.test(String(R.enregistre.saisie)),
+      JSON.stringify({o:R.enregistre.origine,s:R.enregistre.saisie}));
+    /* ⭐⭐ « TOUJOURS » : c'est LA FOIS D'APRÈS qui compte. */
+    t('⭐⭐ la fois d\'après, l\'aliment proposé PORTE son pour-100 g (le produit est réparé, pas le repas)',
+      !!(R.reprisePer100 && R.reprisePer100.prot===88), JSON.stringify(R.reprisePer100));
+    /* ⛔ CONTRÔLE NÉGATIF : l'erreur la plus probable est refusée, et rien n'est calibré. */
+    t('⛔⛔ une colonne « par portion » recopiée est REFUSÉE (120 g de macros dans 100 g)',
+      R.refus.affiche===true && /impossible/.test(R.refus.texte), R.refus.texte.slice(0,90));
+    t('⛔ … et le texte dit QUOI FAIRE, il n\'accuse pas (R29)',
+      /par portion/.test(R.refus.texte) && /pour 100 g/.test(R.refus.texte), '');
+    t('⛔ … et rien n\'a été calibré au passage', R.refusPasCalibre===true, '');
+    t('⛔ un calibrage VIDE est refusé (un produit « calibré » à zéro serait une fausse certitude)',
+      R.refusVide===true, '');
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

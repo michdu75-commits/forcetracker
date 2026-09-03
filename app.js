@@ -1327,7 +1327,11 @@ async function _lookupBarcode(ean, saisie, codeDouteux){
    chemin : mêmes grammes, même provenance, même avertissement cru/cuit, même score santé.
    Deux chemins séparés finiraient par diverger — et c'est l'avertissement du ×2,7 (le paquet
    de pâtes scanné puis pesé cuit) qui serait perdu d'un côté sans que personne ne le voie (R2). */
-function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux){
+/* ⚠️ `origine` EST UN PARAMÈTRE DEPUIS ft-v1110, ET LE DÉFAUT NE CHANGE RIEN : les quatre
+   appelants existants n'en passent pas et gardent donc `'off'`, au caractère près. Il existe
+   pour le calibrage à la main, qui doit s'enregistrer comme « étiquette » et surtout PAS comme
+   une fiche Open Food Facts — *une provenance fausse est pire que pas de provenance* (R33). */
+function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux, origine){
   // Quantité par défaut : portion si connue, sinon 100 g
   const serv=parseFloat(p.serving_quantity)||0;
   const g=serv>0?serv:100;
@@ -1346,7 +1350,7 @@ function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux){
   /* ⚠️ `codeDouteux` N'EST POSÉ QUE S'IL EST VRAI — on n'écrit pas `false` partout. Un champ
      absent veut dire « rien à signaler » ; le poser à false sur des millions d'entrées
      donnerait l'illusion d'une vérification qui n'a pas eu lieu sur les chemins décodés. */
-  _afSetSrc({saisie:saisie||'scan',origine:'off',sourceId:sourceId?String(sourceId).slice(0,32):null,
+  _afSetSrc({saisie:saisie||'scan',origine:origine||'off',sourceId:sourceId?String(sourceId).slice(0,32):null,
     etat:'tel-que-vendu',
     ...(codeDouteux?{codeDouteux:true}:{}),
     per100:{kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
@@ -1360,6 +1364,60 @@ function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux){
   if(p && p.nutriments && Object.keys(p.nutriments).length){
     try{ if(window.FoodHealth)FoodHealth.renderCard(p,'#af-health-card'); }catch(e){}
   } else if(hc){ hc.innerHTML=''; }
+}
+/* ═══ ⚖️ CALIBRER UN PRODUIT À LA MAIN (ft-v1110) ═══════════════════════════════════════════
+   Michel, 4ᵉ passe sur le même pot d'isolat : « il y a toujours le problème avec ma prot…
+   comment on peut résoudre ce problème ».
+   ⛔⛔ LA CAUSE, MESURÉE : sa ligne porte `per100 = null`, et AUCUN champ de l'app ne permettait
+   d'en saisir un à la main — ce chiffre n'arrivait que d'un scan ou de CIQUAL. Un produit dont
+   la fiche est incomplète était donc **incalibrable à vie**, et sa vieille ligne fausse revenait
+   en tête des propositions : un tap, et l'erreur recommençait.
+   👉 *Les trois versions précédentes ont ajouté des ALERTES ; aucune n'a rendu la personne
+   capable de RÉPARER le produit.* Un garde-fou dit que c'est faux, il ne corrige pas.
+   ⭐⭐ ZÉRO NOUVEAU CALCUL (R13/R2) : on rejoint le chemin de CIQUAL, qui appelle déjà
+   `_offRemplirFormulaire` avec un produit vide. Le bloc quantité, le recalcul, l'enregistrement
+   du `per100` — tout existe et ne bouge pas. */
+function _calOuvrir(){
+  const row=document.getElementById('af-cal-row'), btn=document.getElementById('af-cal-btn');
+  if(!row) return;
+  const ouvert=row.style.display!=='none';
+  row.style.display=ouvert?'none':'block';
+  if(btn) btn.textContent=ouvert?'⚖️ Saisir les valeurs pour 100 g (étiquette)':'⚖️ Masquer la saisie pour 100 g';
+  if(!ouvert){
+    /* ⭐ On pré-remplit avec ce qui est DÉJÀ à l'écran seulement si la quantité affichée vaut
+       100 g : dans ce cas les 4 champs SONT un pour-100 g, et le retaper serait absurde. Sinon
+       on laisse vide — proposer les valeurs d'une dose de 30 g comme un « pour 100 g » serait
+       exactement l'erreur qu'on essaie de réparer (R29). */
+    const q=_qtyGrammesEcran('af');
+    if(q===100){ ['kcal','prot','carbs','fat'].forEach(k=>{
+      const src=document.getElementById('af-'+k), dst=document.getElementById('af-cal-'+k);
+      if(src&&dst&&!dst.value) dst.value=src.value; }); }
+    const err=document.getElementById('af-cal-err'); if(err) err.style.display='none';
+  }
+}
+function _calAppliquer(){
+  const lu=k=>numFR((document.getElementById('af-cal-'+k)||{}).value)||0;
+  const kcal=lu('kcal'), prot=lu('prot'), carbs=lu('carbs'), fat=lu('fat');
+  const err=document.getElementById('af-cal-err');
+  const dire=m=>{ if(err){err.textContent=m; err.style.display='block';} };
+  if(err) err.style.display='none';
+  /* ⛔ On refuse le vide plutôt que d'enregistrer un produit « calibré » à zéro : ce serait une
+     fausse certitude, et elle se propagerait à tous les repas suivants. */
+  if(!(kcal>0 || prot>0 || carbs>0 || fat>0)){ dire('Recopie au moins une valeur du tableau.'); return; }
+  /* ⛔⛔ LA MÊME RÈGLE PHYSIQUE QU'À LA SAISIE (ft-v1103, propriétaire unique) : dans 100 g de
+     produit il ne peut pas y avoir plus de 100 g de matière. C'est ce qui attrape la colonne
+     « par portion » recopiée dans la colonne « pour 100 g » — l'erreur la plus probable ici. */
+  const imp=_masseImpossibleVals(100, prot, carbs, fat);
+  if(imp){ dire('⚖️ '+imp.somme+' g de macros pour 100 g de produit : impossible. Tu as peut-être recopié la colonne « par portion » — reprends celle qui dit « pour 100 g ».'); return; }
+  const nom=String((document.getElementById('af-desc')||{}).value||'').trim();
+  if(!nom){ dire('Donne d\'abord un nom à l\'aliment, au-dessus.'); return; }
+  _bcNutr={name:nom.slice(0,80), kcal100:Math.round(kcal), prot100:Math.round(prot),
+           carbs100:Math.round(carbs), fat100:Math.round(fat)};
+  /* ⭐ LE CHEMIN DE CIQUAL, MOT POUR MOT — produit vide, pas de portion déclarée (donc 100 g
+     par défaut, que la personne remplace par sa dose), et une provenance qui dit la vérité. */
+  _offRemplirFormulaire({serving_quantity:0, nutriments:{}}, null, 'etiquette-main', false, 'etiquette');
+  _calOuvrir();   // on referme : le bloc quantité prend le relais juste au-dessus
+  toast('Produit calibré ⚖️ — tape ta quantité','success');
 }
 // Lit les 4 macros telles qu'elles sont dans le formulaire À CET INSTANT (pour détecter, à
 // l'enregistrement, si la personne les a retouchées après un remplissage automatique).
@@ -3130,7 +3188,16 @@ function _qtyGrammesEcran(pfx){
 function _masseImpossible(pfx){
   const q=_qtyGrammesEcran(pfx); if(!(q>0)) return null;
   const lu=id=>numFR((document.getElementById(pfx+'-'+id)||{}).value)||0;
-  const somme=lu('prot')+lu('carbs')+lu('fat');
+  return _masseImpossibleVals(q, lu('prot'), lu('carbs'), lu('fat'));
+}
+/* ⛔⛔ LA RÈGLE PHYSIQUE, SUR DES VALEURS ET NON SUR DES CHAMPS (ft-v1110, R2).
+   Extraite telle quelle de `_masseImpossible` — pas une ligne de logique n'est changée — parce
+   que le calibrage à la main a besoin de la MÊME règle sur des nombres qui ne sont pas encore
+   dans les champs du formulaire. *Deux écritures de « ça ne tient pas dans la portion »
+   auraient fini avec deux tolérances, et on ne saurait plus laquelle croire.* */
+function _masseImpossibleVals(q, prot, carbs, fat){
+  if(!(q>0)) return null;
+  const somme=(+prot||0)+(+carbs||0)+(+fat||0);
   if(!(somme>0) || somme<=q+2) return null;      // +2 g : l'arrondi des 4 champs, rien de plus
   return {q:q, somme:Math.round(somme*10)/10};
 }

@@ -458,6 +458,14 @@ const FEAT_SI = {
   montrePas:     () => { try{ return ((S&&S.healthDaily)||[]).some(x=>x&&x.steps>0); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* ⚖️ POINT ROUGE, PAS DE POP-UP `WHATS_NEW` (règle d'or #11), et c'est argumenté :
+     ① il y a bien quelque chose à DÉCOUVRIR — un bouton neuf, sur un écran utilisé tous les
+     jours, que personne n'ira chercher tout seul ;
+     ② mais **rien n'est à faire tant qu'un produit ne pose pas problème**, et **aucun repère
+     n'a bougé** : le bouton s'ajoute sous les macros, rien ne se déplace au-dessus.
+     ⛔ Une pop-up dirait « vos produits pouvaient rester faux à vie » — une alarme rétroactive
+     sur un trou qu'on vient de combler (R25). *La pop-up ANNONCE, l'aide EXPLIQUE.* */
+  {id:'calibrer-100g', screen:'nutrition', desc:'\u2696\ufe0f <b>Un produit faux se corrige maintenant une bonne fois.</b> Dans \u00ab Ajouter un aliment \u00bb, <b>\u00ab Saisir les valeurs pour 100 g \u00bb</b> te laisse recopier le tableau de ton \u00e9tiquette : ensuite tu tapes seulement ta dose, et l\u2019app calcule \u2014 <b>cette fois-ci et les suivantes</b>.'},
   /* 📉 POINT ROUGE **ET** POP-UP (règle d'or #11) — les deux, et c'est argumenté :
      la pop-up annonce le déplacement du chiffre (ce qui se lirait comme un retrait) ; le point
      rouge, lui, sert à celui qui ferme la pop-up sans la lire et ouvre l'onglet trois jours

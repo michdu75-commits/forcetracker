@@ -2585,6 +2585,37 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
          ⭐ ATTRAPER À LA SAISIE vaut mieux qu'attraper à la relecture : le chiffre est encore
          sous les yeux, et la journée n'est pas déjà faussée. Même contrôle que la modale de
          modification (R2 : une seule définition de « ces calories sont impossibles »). -->
+    <!-- ⚖️⛔⛔ CALIBRER UN PRODUIT À LA MAIN — LE TROU QUI RENDAIT UN POT « TOUJOURS » FAUX
+         (03/09/2026, ft-v1110). Michel, 4ᵉ passe sur le même pot d'isolat : *« il y a toujours
+         le problème avec ma prot… comment on peut résoudre ce problème »*.
+         ⛔⛔ MESURÉ, ET LA CAUSE EST STRUCTURELLE : sa ligne porte `per100 = null`, et **aucun
+         champ de l'application ne permettait de saisir un pour-100 g à la main**. Ce chiffre
+         n'arrivait que d'un scan ou de la base CIQUAL — donc un produit dont la fiche est
+         incomplète restait **incalibrable à vie**, et sa vieille ligne fausse était re-proposée
+         en tête de « Mes aliments » : un tap, et l'erreur revenait.
+         👉 *Les trois versions précédentes (ft-v1103/1104/1105) ont ajouté des ALERTES ; aucune
+         n'a donné le moyen de CORRIGER le produit une fois pour toutes.* Un garde-fou dit que
+         c'est faux ; il ne rend pas la personne capable de le réparer.
+         ⭐⭐ ET ON NE RÉINVENTE RIEN (R13/R2) : la base CIQUAL appelle déjà
+         `_offRemplirFormulaire` avec un produit VIDE. Une saisie à la main, c'est exactement ce
+         chemin-là avec des valeurs tapées au lieu d'être lues dans une table — même bloc
+         quantité, même recalcul, même `per100` enregistré. Zéro nouveau calcul.
+         ⛔ LA PROVENANCE NE MENT PAS (R33) : ces valeurs sont marquées « étiquette », jamais
+         « off ». *Une provenance fausse est pire que pas de provenance : elle se présente comme
+         un fait vérifiable.* -->
+    <button class="btn btn-bg2" id="af-cal-btn" onclick="_calOuvrir()" style="width:100%;margin-bottom:12px;font-size:13.5px;">⚖️ Saisir les valeurs pour 100 g (étiquette)</button>
+    <div id="af-cal-row" style="display:none;background:var(--bg3);border-radius:10px;padding:11px 12px;margin-bottom:14px;">
+      <div style="font-size:12px;color:var(--t2);margin-bottom:4px;font-weight:600;">Recopie le tableau de ton étiquette — <b>pour 100 g</b></div>
+      <div style="font-size:11px;color:var(--t3);line-height:1.4;margin-bottom:9px;">C'est la colonne « pour 100 g », pas ta dose. Une fois saisie, tu n'auras plus qu'à taper ta quantité : l'app calculera toute seule, cette fois-ci et les suivantes.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">kcal / 100 g</div><input id="af-cal-kcal" type="number" inputmode="decimal" placeholder="375" style="width:100%;box-sizing:border-box;padding:10px;border-radius:9px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+        <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Protéines / 100 g</div><input id="af-cal-prot" type="number" inputmode="decimal" placeholder="88" style="width:100%;box-sizing:border-box;padding:10px;border-radius:9px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+        <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Glucides / 100 g</div><input id="af-cal-carbs" type="number" inputmode="decimal" placeholder="1" style="width:100%;box-sizing:border-box;padding:10px;border-radius:9px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+        <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Lipides / 100 g</div><input id="af-cal-fat" type="number" inputmode="decimal" placeholder="1" style="width:100%;box-sizing:border-box;padding:10px;border-radius:9px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+      </div>
+      <div id="af-cal-err" style="display:none;font-size:12px;line-height:1.45;color:var(--orange);margin-bottom:9px;"></div>
+      <button class="btn btn-red" onclick="_calAppliquer()" style="width:100%;">Calibrer ce produit</button>
+    </div>
     <div id="af-coherence" style="display:none;font-size:12px;line-height:1.45;color:var(--orange);background:var(--bg3);border-radius:10px;padding:10px 11px;margin-bottom:10px;"></div>
     <button class="btn btn-red" onclick="addFoodEntry()" style="width:100%;margin-bottom:8px;">✅ Ajouter au journal</button>
     <button class="btn btn-bg2" onclick="closeAddFood()" style="width:100%;">Annuler</button>
