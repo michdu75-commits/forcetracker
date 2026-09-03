@@ -7,7 +7,10 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1117` — 🥤 **LE PIÈGE DU COCA : IL Y EN AVAIT NEUF.**
-  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#859** sur `dd36727`, **job `deploy` success**,
+  les 7 étapes vertes à 20:11:20 UTC. ⚠️ Le run est resté marqué `in_progress` plusieurs minutes
+  après la fin du job — *l'''état du run retarde sur celui du job, on regarde le JOB*.
+  ⭐ Suite : **2604/2604, 0 rouge** (parcours · calculs 266 · muscles 241 · croisés 50 · dates 7).
 - ⛔⛔ **9 paires** « sucré + édulcorants » / « sans sucres ajoutés + édulcorants » dans CIQUAL, et
   **« sucré » est toujours le nom le plus court** → le tri prenait la version sucrée à chaque fois.
 - ⚠️⚠️ **LE CORRECTIF STRUCTUREL A ÉTÉ REFUSÉ PAR LA MESURE** (R7) : traduire `zero`/`light` en
