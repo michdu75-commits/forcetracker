@@ -24,3 +24,5 @@ tests/milo/report.md
 tools/__pycache__/
 captures/
 captures-nutrition/
+
+tests/milo/ab-report.json
