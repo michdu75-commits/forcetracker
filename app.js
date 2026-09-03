@@ -1353,7 +1353,10 @@ function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux, origine){
   const serv=parseFloat(p.serving_quantity)||0;
   const g=serv>0?serv:100;
   const gramsEl=document.getElementById('af-bc-grams');if(gramsEl)gramsEl.value=g;
-  _bcQsrc(serv, 'la fiche produit');   // ⛔ le nombre garde sa source écrite à côté (ft-v1105)
+  /* ⛔ LE NOMBRE GARDE SA SOURCE ÉCRITE À CÔTÉ (ft-v1105) — et pour un produit de marque, la
+     source est l'ENSEIGNE, pas « la fiche produit » : c'est elle qui publie ce poids. */
+  _bcQsrc(serv, (origine==='marque' && _bcNutr && _bcNutr.name && _bcNutr.name.indexOf(' · ')>0)
+                  ? _bcNutr.name.split(' · ').pop() : 'la fiche produit');
   /* ⛔ Un scan NEUF n'a pas de « dernière fois » : la pastille d'un aliment précédent doit
      disparaître, sinon elle proposerait le poids de quelqu'un d'autre que le produit affiché. */
   if(typeof _bcProposerDerniere==='function') _bcProposerDerniere(0);
@@ -1541,8 +1544,20 @@ function _bcQsrc(serv, source){
   const qs=document.getElementById('af-bc-qsrc'); if(!qs) return;
   if(serv===null){ qs.style.display='none'; qs.innerHTML=''; return; }
   const src=source||'la fiche produit';
+  /* ⚠️⚠️ « VÉRIFIE TA DOSETTE » DEVENAIT ABSURDE SUR UN BIG MAC (ft-v1114). Cette phrase a été
+     écrite en ft-v1105 pour la poudre de protéine, où la dosette du pot et la portion de la
+     fiche diffèrent vraiment. Recopiée telle quelle sur un produit de fast-food, elle demandait
+     de vérifier à la dosette le poids d'un sandwich. 👉 *Un comportement copié d'un contexte à
+     un autre peut devenir faux* (**R14**) — et il ne s'agit pas d'un détail de style : la
+     phrase invitait à corriger un nombre qui, ici, est le bon.
+     ⭐ La nuance qui décide : sur un produit de MARQUE, la portion publiée EST le produit
+     entier — il n'y a rien à doser. On l'annonce comme un fait, et on laisse la porte ouverte
+     (« si tu n'as pas tout mangé, mets ton poids ») sans réclamer de vérification. */
+  const marque = /^(McDonald|Burger King|KFC|Quick|Domino|Subway)/i.test(src) || src==='son enseigne';
   qs.innerHTML = (+serv>0)
-    ? '⚖️ <b>'+(+serv)+'&nbsp;g</b> est la portion déclarée par '+src+' — <b>vérifie ta dosette</b>, elle peut être différente.'
+    ? (marque
+        ? '⚖️ <b>'+(+serv)+'&nbsp;g</b> est le poids de la portion publiée par '+src+'. Si tu n\'as pas tout mangé, mets ton poids.'
+        : '⚖️ <b>'+(+serv)+'&nbsp;g</b> est la portion déclarée par '+src+' — <b>vérifie ta dosette</b>, elle peut être différente.')
     : 'Aucune portion déclarée par '+src+' : <b>100&nbsp;g</b> par défaut. Mets ta quantité réelle.';
   qs.style.display='block';
 }
@@ -2535,7 +2550,12 @@ const MARQUE_ALIAS={
   'mcdonald':"mcdonald's", 'mcdonalds':"mcdonald's", 'mac donald':"mcdonald's",
   'mac donalds':"mcdonald's", 'mcdonald s':"mcdonald's",
   'bk':'burger king', 'burgerking':'burger king',
-  'kfc':'kfc', 'dominos':"domino's", 'domino':"domino's", "domino s":"domino's"
+  'kfc':'kfc', 'dominos':"domino's", 'domino':"domino's", "domino s":"domino's",
+  /* ⚠️ ET LES NOMS DE PRODUITS ÉCRITS SANS ESPACE — mesuré : « big mac » trouvait, « bigmac »
+     ne trouvait RIEN. On ne devine pas les espaces manquants en général (ça ferait remonter
+     n'importe quoi) : on nomme les cas qui arrivent. */
+  'bigmac':'big mac', 'mcchicken':'mcchicken', 'babywhopper':'baby whopper',
+  'whopperrings':'whopper rings', 'kentuckyfries':'kentucky fries'
 };
 /* Recherche dans la base de marques. Les mots peuvent être dans le désordre, et ils sont
    cherchés dans « enseigne + nom » — donc « mcdo frite » et « frite mcdo » marchent tous deux. */

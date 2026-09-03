@@ -113,9 +113,17 @@ def main():
         g = nombre(x.get('Glucides g'))
         l = nombre(x.get('Lipides g'))
         k100 = nombre(x.get('kcal /100g'))
-        # ⭐ ON TRANSCRIT LE POUR-100 g DE LA SOURCE, on ne le recalcule pas (R33). Vérifié :
-        #   les colonnes du classeur et le dérivé (valeur / portion x 100) ne s'écartent jamais
-        #   de plus de 1,5 g sur les 123 lignes. Recalculer serait donc gratuit ET moins fidèle.
+        # ⚠️⚠️ J'AVAIS ÉCRIT L'INVERSE, ET LA MESURE M'A CORRIGÉE. J'avais transcrit les
+        #   colonnes pour-100 g du classeur en me fiant à un contrôle trop large (« jamais plus
+        #   de 1,5 g d'écart avec le dérivé »). Ce contrôle CACHAIT le défaut : les colonnes
+        #   macro pour-100 g sont ARRONDIES À L'ENTIER par la source.
+        #   Mesuré sur le Big Mac : 27 g de protéines pour 232 g font 11,64 g/100 g, que le
+        #   classeur écrit « 12 ». Repartir de 12 rend 28 g sur la portion — soit 1 g de plus
+        #   que le chiffre PUBLIÉ. Repartir de 11,6 rend 27 g, exactement le chiffre publié.
+        #   👉 *Les valeurs par PORTION sont les chiffres primaires ; la colonne pour-100 g est
+        #   un dérivé arrondi de la source.* On dérive donc du primaire, et on ne retombe sur la
+        #   colonne que s'il n'y a pas de portion (cas Domino's).
+        #   *Une tolérance trop large ne valide pas : elle dispense de regarder.*
         p100 = nombre(x.get('Protéines /100g'))
         g100 = nombre(x.get('Glucides /100g'))
         l100 = nombre(x.get('Lipides /100g'))
@@ -161,11 +169,19 @@ def main():
         lignes.append({
             'ens': ens, 'nom': nom, 'cat': str(x.get('Catégorie') or '').strip(),
             'kcal': round(k, 1), 'prot': round(p, 1), 'carbs': round(g, 1), 'fat': round(l, 1),
-            'kcal100': round(k100, 1) if k100 else None,
+            # ⛔⛔ LES QUATRE se dérivent de la portion, kcal comprises — et ce n'est PAS
+            #    circulaire, c'est une mise en cohérence. La portion (232 g) est déduite de la
+            #    colonne kcal/100 g ARRONDIE du classeur (228), donc elle porte cet arrondi.
+            #    Repartir de 228 rend 529 kcal sur 232 g ; le chiffre publié est 530. En
+            #    dérivant 530/232 = 228,4, la portion redonne 530 exactement.
+            #    👉 *Une fois la portion arrondie, la seule question est : quel pour-100 g
+            #    reproduit le chiffre publié sur CETTE portion ?* Garder les deux arrondis en
+            #    série faisait perdre 1 kcal et 1 g de protéines.
+            'kcal100': round(k / portion * 100, 1) if portion else (round(k100, 1) if k100 else None),
             # ⛔ le pour-100 g ne se DÉDUIT qu'à défaut : la source d'abord.
-            'prot100': round(p100, 1) if p100 is not None else (round(p / portion * 100, 1) if portion else None),
-            'carbs100': round(g100, 1) if g100 is not None else (round(g / portion * 100, 1) if portion else None),
-            'fat100': round(l100, 1) if l100 is not None else (round(l / portion * 100, 1) if portion else None),
+            'prot100': round(p / portion * 100, 1) if portion else p100,
+            'carbs100': round(g / portion * 100, 1) if portion else g100,
+            'fat100': round(l / portion * 100, 1) if portion else l100,
             'portion': portion,
             'taille': taille_de(nom), 'famille': famille_de(nom),
             'kcal_derivee': kcal_derivee,
