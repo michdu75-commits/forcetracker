@@ -7,7 +7,8 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1112` — 🔢 **UNE SEULE PRÉCISION POUR LE POUR-100 g.**
-  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#842** sur `01b1adb`, `success` à 11:35.
+  ⭐ Suite re-passée sur l'**arbre FUSIONNÉ** avec session-B : **2514/2514**.
 - ⭐ **La question de Michel** (*« ça va être comme ça sur tous les produits ? »*) a une réponse
   chiffrée : **non** — 3 484 aliments embarqués, code-barres, photo d'étiquette ; **la saisie à
   la main est le dernier recours**.
