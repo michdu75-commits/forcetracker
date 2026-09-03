@@ -24629,6 +24629,154 @@ console.log('\n-- CCXXI. Les mots qu\'on dit atteignent les aliments (ft-v1113) 
   }
 }
 
+/* ═══ CCXXII. ON MET TOUT ET ON MARQUE LE DOUTE (ft-v1114) ═══════════════════════════════════
+   Michel : « il faut que je puisse trouver les noms comme big Mac ou pizza 4 fromages » — puis,
+   devant ma 1ʳᵉ version qui ÉCARTAIT les lignes douteuses : « il faut tout mettre sinon autant
+   rien mettre c'est logique ».
+   ⭐⭐ IL A RAISON, ET C'EST MESURABLE : une ligne ABSENTE pousse vers l'estimation IA, qui est
+   PIRE qu'une valeur publiée douteuse — c'est exactement le mécanisme qui a fabriqué son pot de
+   protéine faux (ft-v1103/1104/1105). On montre donc la valeur ET ce qui cloche, avec le chiffre
+   qui permet de juger. R29 : informer sans décider.
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE
+   (« Target page, context or browser has been closed ») et ne dit plus rien du tout. */
+console.log('\n-- CCXXII. On met tout et on marque le doute (ft-v1114) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    await _marquesCharger();
+    const noms=q=>(_marquesChercher(q,4)||[]).map(i=>_marques.a[i][1]+' · '+_marques.a[i][0]);
+    const brut=q=>(_marquesChercher(q,4)||[]).map(i=>_marques.a[i]);
+    const o={ total:(_marques&&_marques.a)?_marques.a.length:0,
+              bigmac:noms('big mac'), whopper:noms('whopper'),
+              nuggets:noms('mcnuggets'), fritesMcdo:noms('frites mcdo'),
+              mcdoFrites:noms('mcdo frites'), pizza:noms('pizza 4 fromages'),
+              /* ⛔ NON-RÉGRESSION : une requête ordinaire ne doit pas se remplir de fast-food. */
+              riz:noms('riz'), banane:noms('banane'),
+              douteux:0, sansDoute:0 };
+    _marques.a.forEach(a=>{ if(a[9]) o.douteux++; else o.sansDoute++; });
+
+    /* ⭐⭐ REPRODUCTION : la portion du Big Mac doit redonner les chiffres publiés. */
+    const bm=brut('big mac')[0];
+    if(bm) o.bm={ nom:bm[1], ens:bm[0], portion:bm[7],
+                  kcalPortion:Math.round(bm[3]*bm[7]/100),
+                  protPortion:Math.round(bm[4]*bm[7]/100) };
+
+    /* ⭐⭐ LE DOUTE : la ligne existe, elle est proposée, et elle DIT ce qui cloche. */
+    const kw=_marques.a.filter(a=>/Korean/i.test(a[1]))[0];
+    if(kw) o.korean={ nom:kw[1], doute:kw[9]||null, trouve:noms('korean whopper').length>0 };
+
+    /* ⭐⭐ ET LE DOUTE DESCEND JUSQU'À LA DONNÉE (R4) — 3ᵉ fois au même endroit. On prend un
+       produit signalé PAR L'ÉCRAN, on l'ajoute, et on relit l'entrée enregistrée. */
+    openAddFood && openAddFood();
+    const idxK=_marques.a.findIndex(a=>/Korean/i.test(a[1]));
+    _afSuggMarq=[idxK]; _afSuggPrendreMarque(0);
+    o.srcDoute=(_afSrc&&_afSrc.doute)||null;
+    o.noteEcran=((document.getElementById('af-etat-note')||{}).textContent||'').slice(0,120);
+    o.qsrc=((document.getElementById('af-bc-qsrc')||{}).textContent||'').slice(0,160);
+    document.getElementById('af-desc').value='Korean Whopper test';
+    addFoodEntry();
+    const e=(S.foodLog||[]).slice(-1)[0]||{};
+    o.entree={ doute:e.doute||null, saisie:e.saisie||null, origine:e.origine||null,
+               sourceId:e.sourceId||null, kcalDerivee:e.kcalDerivee||null };
+
+    /* ⛔ Et une kcal DÉRIVÉE des macros ne se relit jamais comme une valeur publiée (R32). */
+    const pz=_marques.a.filter(a=>a[8])[0];
+    if(pz) o.derivee={ nom:pz[1], flag:pz[8] };
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXII n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ CONTRÔLE D'ABORD : sans la table chargée, tous les témoins seraient verts sur du vide. */
+    t('⛔ CONTRÔLE — la base d\'enseignes est chargée (sinon tous les témoins mesurent du vide)',
+      R.total>=20, R.total+' produits');
+    /* ⭐⭐ LA DEMANDE DE MICHEL, MOT POUR MOT : « big Mac ou pizza 4 fromages ». */
+    t('⭐⭐ « big mac » trouve le produit AVEC son enseigne',
+      R.bigmac.length>0 && /Big Mac/i.test(R.bigmac[0]) && /McDonald/i.test(R.bigmac[0]), R.bigmac.join(' | '));
+    t('⭐⭐ « pizza 4 fromages » trouve la pizza (l\'autre nom qu\'il a cité)',
+      R.pizza.length>0 && /4 Fromages/i.test(R.pizza[0]), R.pizza.join(' | '));
+    t('⛔ « whopper » et « mcnuggets » aussi',
+      R.whopper.some(x=>/Whopper/i.test(x)) && R.nuggets.some(x=>/Nuggets/i.test(x)),
+      R.whopper.slice(0,1)+' / '+R.nuggets.slice(0,1));
+    /* ⛔ Les mots peuvent être dans les DEUX ordres : on cherche dans « enseigne + nom ». */
+    t('⛔ l\'ordre des mots ne compte pas (« frites mcdo » = « mcdo frites »)',
+      R.fritesMcdo.length>0 && R.fritesMcdo.join()===R.mcdoFrites.join(), R.fritesMcdo.join(' | '));
+    /* ⭐⭐ REPRODUCTION EXACTE : si ce témoin cessait un jour de retomber sur les chiffres
+       publiés, c'est la BASE qui serait fausse, pas l'affichage. */
+    t('⭐⭐ la portion du Big Mac redonne les chiffres publiés (232 g → 530 kcal · 27 g de protéines)',
+      !!R.bm && R.bm.portion===232 && R.bm.kcalPortion===530 && R.bm.protPortion===27,
+      JSON.stringify(R.bm));
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA DÉCISION DE MICHEL : la ligne douteuse est LÀ, pas écartée. */
+    t('⭐⭐ « il faut tout mettre » — la ligne douteuse est PROPOSÉE, pas écartée',
+      !!R.korean && R.korean.trouve===true, JSON.stringify(R.korean&&R.korean.nom));
+    t('⭐⭐ … et elle DIT ce qui cloche, avec le chiffre qui permet de juger',
+      !!R.korean && /752/.test(String(R.korean.doute)) && /616/.test(String(R.korean.doute)),
+      String(R.korean&&R.korean.doute));
+    /* ⛔ Le doute se REDIT dans le formulaire : la liste défile, le formulaire est le dernier
+       écran avant l'enregistrement. */
+    t('⛔ l\'avertissement se redit DANS LE FORMULAIRE, là où on appuie sur « Ajouter »',
+      /⚠️/.test(R.noteEcran) && /752/.test(R.noteEcran), R.noteEcran);
+    /* ⛔⛔ R4 — 3ᵉ FOIS AU MÊME ENDROIT : la liste blanche de `_provFood` laissait tomber le
+       doute, alors que le commentaire juste au-dessus dit de ne pas le faire. */
+    t('⛔⛔ LE DOUTE DESCEND JUSQU\'À LA DONNÉE (R4) : l\'entrée enregistrée le porte encore',
+      !!R.entree && /752/.test(String(R.entree.doute)), JSON.stringify(R.entree));
+    t('⛔ … et la provenance dit « marque », pas « utilisateur »',
+      !!R.entree && R.entree.saisie==='marque' && R.entree.origine==='marque'
+      && /^marque:/.test(String(R.entree.sourceId)), JSON.stringify(R.entree));
+    /* ⛔ R14 — « vérifie ta dosette » est absurde devant un Big Mac : le texte de la quantité
+       change de sens quand la portion vient d'une enseigne. */
+    t('⛔ le texte de la quantité parle de la PORTION PUBLIÉE, jamais d\'une « dosette » (R14)',
+      R.qsrc.length>0 && !/dosette/i.test(R.qsrc) && /portion/i.test(R.qsrc), R.qsrc);
+    /* ⛔ NON-RÉGRESSION : occuper l'écran de fast-food quand on tape « riz » serait un remède
+       pire que le mal. */
+    t('⛔ une requête ordinaire ne se remplit pas de fast-food (« riz », « banane »)',
+      R.riz.length===0 && R.banane.length===0, R.riz.join(' | ')+' / '+R.banane.join(' | '));
+    /* ⛔ CONTRE-MESURE : si TOUTES les lignes portaient un doute, « la ligne douteuse est
+       proposée » serait vrai sans rien prouver. Il faut les deux populations. */
+    t('⛔ CONTRÔLE — les deux populations existent (des lignes sûres ET des lignes signalées)',
+      R.douteux>0 && R.sansDoute>0, R.douteux+' signalées · '+R.sansDoute+' sûres');
+    /* ⛔ R32 : une kcal calculée depuis les macros ne se relit pas comme une valeur publiée. */
+    t('⛔ une kcal DÉRIVÉE des macros est marquée comme telle (R32 : mesuré / estimé)',
+      !!R.derivee && R.derivee.flag===1, JSON.stringify(R.derivee));
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
+/* ═══ CCXXII bis. L'AIDE NE PROMET PLUS CE QUI N'EST PLUS VRAI (ft-v1114) ════════════════════
+   ⚠️⚠️ L'aide de ft-v1113 promettait « les noms sont GÉNÉRIQUES, jamais des marques » et « tu ne
+   verras pas Big Mac ». Depuis qu'une base d'enseignes existe, c'était FAUX — et on la croit.
+   C'est la 8ᵉ fois pour la famille §31 de `BUGS.md`. */
+console.log('\n-- CCXXII bis. L\'aide ne promet plus ce qui n\'est plus vrai (ft-v1114) --');
+{
+  const sc=fs.readFileSync(path.join(ROOT,'screens.js'),'utf8');
+  const nutri=sc.slice(sc.indexOf('nutrition:'), sc.indexOf('nutrition:')+14000);
+  /* ⛔ CONTRÔLE : la zone d'aide nutrition est bien trouvée, sinon les 2 témoins suivants
+     seraient verts en ne lisant rien. */
+  t('⛔ CONTRÔLE — la zone d\'aide « nutrition » est bien trouvée',
+    nutri.indexOf('Cherche avec les mots que tu emploies')>0, nutri.length+' caractères lus');
+  t('⛔⛔ l\'aide ne promet PLUS « jamais des marques » / « pas Big Mac » (c\'est devenu faux)',
+    !/jamais des marques/.test(nutri) && !/pas « Big Mac »/.test(nutri), '');
+  /* ⭐ Et elle explique la vraie règle : DEUX familles de résultats. */
+  t('⭐ … elle explique les DEUX familles (le produit d\'enseigne vs le générique de la table)',
+    /FAST-FOOD/.test(nutri) && /générique/.test(nutri), '');
+  /* ⛔ POINTS 2 À 5 DE LA RÈGLE D'OR #11, vérifiés dans les fichiers et non de mémoire. */
+  t('⛔ point rouge `fastfood-marques` posé sur l\'onglet nutrition',
+    /id:'fastfood-marques'[\s\S]{0,40}screen:'nutrition'/.test(fs.readFileSync(path.join(ROOT,'constants.js'),'utf8')), '');
+  t('⛔ l\'aide détaillée porte la provenance et l\'avertissement',
+    /Le fast-food par son nom, avec sa provenance/.test(fs.readFileSync(path.join(ROOT,'coach.js'),'utf8')), '');
+  t('⛔ la diapo du Guide existe (point 5), et SANS image (la liste va grandir)',
+    /t:'Le fast-food par son nom'/.test(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')), '');
+  /* ⛔⛔ ET AUCUNE POP-UP : rien n'est à faire, aucun repère n'a bougé. Une pop-up dirait
+     « vos recherches ne trouvaient rien » — une alarme rétroactive (R25). */
+  t('⛔⛔ AUCUNE pop-up `WHATS_NEW` sur ce sujet (rien à faire, aucun repère déplacé — R25)',
+    !/fast-?food/i.test((fs.readFileSync(path.join(ROOT,'constants.js'),'utf8').split('const WHATS_NEW')[1]||'').split('\n];')[0]||''), '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
