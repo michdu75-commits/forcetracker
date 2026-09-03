@@ -6,6 +6,39 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1114` — 🍔 **ON MET TOUT ET ON MARQUE LE DOUTE.**
+  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+- ⭐⭐ **Une base fast-food France entre dans l'app** : 27 produits (McDonald's, Burger King, KFC,
+  Quick, Domino's) dans `data/marques.json`, générés par `tools/marques.py`. **`big mac`**,
+  **`whopper`**, **`mcnuggets`**, **`pizza 4 fromages`**, **`frites mcdo`** trouvent le produit
+  avec son **enseigne** et le **poids de sa portion**. ⛔ Aucun nouveau mécanisme (R13/R2) : c'est
+  le chargeur, la recherche et le remplissage de CIQUAL — seule la table change.
+- ⚠️ **La source vient de MICHEL** (le proxy de ce conteneur rend `mcdonalds.fr` en 403). Je ne
+  peux pas vérifier ces valeurs moi-même ; l'app **le dit** à chaque ligne.
+- ⭐⭐ **LA DÉCISION QUI PORTE LA VERSION EST DE LUI** : ma 1ʳᵉ version **écartait** les 4 lignes
+  douteuses. *« Il faut tout mettre sinon autant rien mettre c'est logique. »* Et c'est mesurable
+  — **une ligne absente pousse vers l'estimation IA, pire qu'une valeur publiée douteuse** :
+  *c'est le mécanisme qui a fabriqué son pot de protéine faux (ft-v1103/1104/1105).* On montre
+  la valeur **et** ce qui cloche, avec le chiffre qui permet de juger (**R29**).
+- ⛔⛔ **R4, 3ᵉ fois au même endroit** : la liste blanche de `_provFood` laissait tomber `doute` —
+  et j'avais écrit *« le doute descend jusqu'à la donnée (R4) »* **juste au-dessus**. *Un
+  commentaire n'est pas un garde-fou* ; c'est la mesure de l'entrée sauvegardée qui l'a vu.
+- ⛔ **Les 4 pour-100 g sont DÉRIVÉS de la portion**, jamais recopiés des colonnes arrondies :
+  **0 écart sur 23 produits**. ⚠️ Mon 1ᵉʳ contrôle (« jamais plus de 1,5 g d'écart ») masquait
+  exactement ce défaut — *un seuil choisi pour passer cache ce qu'il devait trouver.*
+- ⚠️⚠️ **L'aide de ft-v1113 a dû être CORRIGÉE** : elle promettait *« jamais des marques, tu ne
+  verras pas Big Mac »* — **livrée la veille, fausse le lendemain**. **8ᵉ fois pour §31.**
+- ⏭️ **Non fait, et c'est écrit** : les **2 défauts de la recherche** trouvés en auditant la base
+  pour GPT — la **ponctuation reste collée** au mot tapé (`Boulgour, cuit` → rien) et les
+  **mots-outils sont exigés** (`filet de bœuf` → rien, alors que `6116 · Boeuf, filet cru`
+  existe). Mesurés, **à décider par Michel**. ⚠️ **Safari/iPhone toujours non vérifié.**
+- **Version en ligne (live) :** `ft-v1113` — 🍔 **LES MOTS QU'ON DIT ATTEIGNENT LES ALIMENTS.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#845**.
+- ⭐ `coca` ne rendait **rien** alors que « Cola, sucré » est dans le fichier — **une lettre**.
+  `soda`, `mcdo`, `fast food` non plus. ⚠️ **Trou invisible au bureau, béant à la salle** : en
+  ligne, Open Food Facts rattrape ; hors ligne on n'a rien (règle d'or #4).
+- ⛔ **On répartit, on n'empile pas** : `mcdo` rendait **six sandwichs** et coupait les frites et
+  les nuggets — or qui tape « mcdo » compose un **menu**.
 - **Version en ligne (live) :** `ft-v1112` — 🔢 **UNE SEULE PRÉCISION POUR LE POUR-100 g.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#842** sur `01b1adb`, `success` à 11:35.
   ⭐ Suite re-passée sur l'**arbre FUSIONNÉ** avec session-B : **2514/2514**.
