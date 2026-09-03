@@ -62,6 +62,35 @@ const U = {
     .replace(/[\u2018\u2019\u02bc]/g,"'").replace(/[\u201c\u201d]/g,'"')
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); },
   lignes(s){ return String(s||'').split(/\r?\n/).filter(l=>l.trim()); },
+  /* ⭐⭐ LE CATALOGUE RÉEL, PAS UNE COPIE (03/09/2026, R2).
+     Un vérificateur qui recopie une liste d'exercices fige un fait que le dépôt fera évoluer
+     sans lui : c'est ce qui a rendu EV-032 rouge sur `Tate Press` pendant deux passes, alors
+     que l'exercice était entré au catalogue et que l'app savait le mesurer (§40 de BUGS.md).
+     ⚠️ DEUX CONSOMMATEURS, DEUX CHEMINS : dans le navigateur `EXLIB` est déjà là (le banc
+     tourne dans l'app) ; en ligne de commande (`--rejouer`), on lit `constants.js` et on
+     l'évalue — mesuré : 359 entrées chargées sans effet de bord.
+     ⛔ ET SI ON N'Y ARRIVE PAS, ON REND `false` : « je ne sais pas » doit se comporter comme
+     « pas au catalogue », c'est-à-dire garder le suspect accusable. L'inverse rendrait le
+     vérificateur silencieux le jour où le chargement casse — un vert qui ne peut plus rougir. */
+  _cat:null,
+  catalogue(){
+    if(U._cat) return U._cat;
+    let lib=null;
+    try{ if(typeof EXLIB!=='undefined') lib=EXLIB; }catch(e){}
+    if(!lib){ try{
+      const fs=require('fs'), p=require('path');
+      const src=fs.readFileSync(p.join(__dirname,'..','..','constants.js'),'utf8');
+      lib=(new Function(src+'; return typeof EXLIB!=="undefined"?EXLIB:null;'))();
+    }catch(e){ lib=null; } }
+    U._cat = new Set((lib||[]).map(e=>U.norm(e&&e.n||'')).filter(Boolean));
+    return U._cat;
+  },
+  dansCatalogue(nom){
+    const c=U.catalogue(); if(!c.size) return false;      // chargement raté → on n'innocente pas
+    const n=U.norm(nom).replace(/[^a-z0-9]+/g,' ').trim();
+    for(const x of c){ if(x.replace(/[^a-z0-9]+/g,' ').trim()===n) return true; }
+    return false;
+  },
   // Toutes les charges citées, avec leur ligne : [{kg, ligne}]
   charges(s){
     const out=[];
@@ -1093,14 +1122,60 @@ const SCENARIOS = [
     verifs:[
       { nom:'⛔ aucun exercice hors catalogue mesurable n\'est PRESCRIT',
         fn(reply){
-          /* ⚠️ Liste étroite : uniquement les 5 exercices dont on a MESURÉ qu'ils sont muets
-             (aucun muscle, aucun classement). Une liste large rougirait à tort. */
-          const muets=[['tate press',/tate press/],['muscle-up',/muscle ?-? ?up/],
-            ['bird dog',/bird ?dog/],['air bike',/air ?bike/],['jefferson curl',/jefferson curl/]];
+          /* ⚠️⚠️ LA LISTE ÉTAIT FIGÉE AU 01/08/2026 ET ELLE A PÉRIMÉ — corrigé le 03/09/2026.
+             Mesuré aujourd'hui : `Tate Press` est dans EXLIB et `_mscScores` lui rend
+             {triceps:2, front-delt:1}. Autrement dit **l'app sait le mesurer**, on l'envoie
+             nous-mêmes dans le catalogue, et la consigne dit à Milo « prends-le dans cette
+             liste et écris son nom EXACTEMENT ». Il a obéi — et le scénario le sanctionnait,
+             deux passes de suite, sous l'étiquette « SYSTÉMATIQUE ».
+             Mesuré aussi : sur les **322 exercices** du catalogue envoyé, **0 est muet**, et
+             4 des 5 noms de l'ancienne liste (tate press, bird dog, air bike, jefferson curl)
+             y sont entrés depuis. Seul `muscle-up` en est encore absent.
+             ⛔⛔ LA FAMILLE N'EST PAS « IL MANQUAIT UNE MISE À JOUR » : c'est **§40** de
+             BUGS.md sous sa 2ᵉ forme — un vérificateur qui FIGE UN FAIT que le dépôt a
+             ensuite corrigé. Le premier cas était une tournure de langue qui dérive ; ici
+             c'est le catalogue qui grandit. Dans les deux cas le détecteur ment sur un code
+             devenu sain, et le rouge finit par être ignoré (R19).
+             ⭐ ON NE FIGE PLUS : la liste ne sert que de liste de SUSPECTS, et chacun est
+             confronté au CATALOGUE RÉEL avant d'être accusé (R2 : une seule source de
+             vérité, `EXLIB`). Un suspect qui entre au catalogue cesse tout seul d'être
+             coupable — sans qu'on ait à y penser. Le bloc CCXVIII épingle le mécanisme. */
+          /* ⛔⛔ LA LISTE DE 5 NOMS EST SUPPRIMÉE, PAS MISE À JOUR — et c'est le point.
+             Mesuré le 03/09 : les CINQ y sont entre-temps entrés au catalogue (`Muscle-up`
+             s'y écrit avec un `u` minuscule — mon premier `grep` l'avait manqué, pas la
+             donnée). Une liste corrigée aurait donc été VIDE, donc un témoin incapable de
+             rougir. *Remplacer une liste périmée par une liste vide, ce n'est pas corriger.*
+             ⭐ On demande maintenant la vraie question : **l'exercice prescrit est-il dans le
+             catalogue que l'app envoie ?** — 0 des 322 exercices envoyés est muet pour la
+             mesure, donc « hors catalogue » = « non mesurable ». La source est `EXLIB`, pas
+             une copie (R2) : un exercice ajouté demain cesse tout seul d'être coupable.
+             ⚠️ CALIBRÉ SUR DE VRAIES RÉPONSES, pas sur des cas inventés : 19 lignes
+             réellement écrites par Milo le 01/09 → **0 faux positif** ; 4 exercices
+             fantaisistes → **4 attrapés**. Les deux réglages qui l'ont exigé :
+             ① on compare DANS LES DEUX SENS (« Rowing Barre » écrit court, « Extension
+                Quadriceps (Leg Extension) » au catalogue) — sinon 4 faux rouges sur 30 ;
+             ② une ligne SANS nom est hors périmètre (« • S1 : 95×3 », « 3×3 à 130 kg » : le
+                nom est sur la ligne du dessus, c'est un format que Milo emploie vraiment).
+             ⚠️ LIMITE ASSUMÉE : « Squat Bulgare Martien » passerait, parce que la ligne
+             contient un vrai nom du catalogue. On préfère laisser filer un qualificatif
+             fantaisiste que d'accuser une séance juste — un rouge sur la bonne réponse est
+             ce qui a rendu ce scénario inutile pendant deux passes (§40). */
+          const cat=[...U.catalogue()].map(x=>x.replace(/[^a-z0-9]+/g,' ').trim()).filter(x=>x.length>=5);
+          const plat=t=>U.norm(t).replace(/[^a-z0-9]+/g,' ').trim();
+          /* ⚠️ le nom se lit sur la ligne BRUTE : `plat()` transforme « 4 × 5 » en « 4 5 »,
+             donc le motif de séries n'y est plus trouvable — mon 1ᵉʳ jet coupait au mauvais
+             endroit et rendait 4 faux positifs à lui tout seul. */
+          const nomEcrit=l=>{ const i=String(l).search(/\d+\s*[x×*]\s*\d+/i); return plat(i>0?String(l).slice(0,i):''); };
           const coupables=[];
-          U.lignes(reply).forEach(l=>{ const n=U.norm(l);
-            if(!/\d+\s*[x×]\s*\d+/.test(n)) return;
-            muets.forEach(m=>{ if(m[1].test(n) && coupables.indexOf(m[0])<0) coupables.push(m[0]); }); });
+          if(cat.length) U.lignes(reply).forEach(l=>{
+            if(!/\d+\s*[x×*]\s*\d+/i.test(String(l))) return;      // pas une prescription
+            const c=nomEcrit(l);
+            if(!/[a-z]{4}/.test(c) || c.replace(/[0-9\s]/g,'').length<5) return;  // ligne sans nom
+            const n=plat(l);
+            if(cat.some(x=>n.includes(x))) return;                 // un nom du catalogue est dans la ligne
+            if(cat.some(x=>x.includes(c))) return;                 // … ou le nom écrit est un raccourci
+            if(coupables.indexOf(c)<0) coupables.push(c);
+          });
           return coupables.length===0 ? true : {ok:false, detail:'prescrit un exercice non mesurable : '+coupables.join(', ')};
         } },
     ] },
@@ -1246,7 +1321,33 @@ const SCENARIOS = [
 
   { id:'EV-040', origin:'23/08/2026', titre:'Il ne redemande pas le MATÉRIEL qu\'il a déjà dans le profil',
     /* R8 au mot près : si Milo redemande une information, ce n'est pas qu'il est mal instruit,
-       c'est qu'on ne la lui transmet pas — ou qu'il ne la lit pas. Ici elle EST dans le profil. */
+       c'est qu'on ne la lui transmet pas — ou qu'il ne la lit pas.
+
+       ⛔⛔ MESURÉ LE 03/09/2026, ET LA DERNIÈRE PHRASE DE CE COMMENTAIRE ÉTAIT FAUSSE : elle
+       disait « ici elle EST dans le profil ». Elle ne l'est pas.
+       · `matos` n'est PAS une question de `COACH_QUIZ` (les 17 questions sont xp, freq, place,
+         time, bar, motiv, weak, cardio, pain, energy, goalfeel, tone, job, stress, sleep,
+         prot, split) — et `_coachQuizContext` n'itère QUE les questions déclarées : une
+         réponse sans question correspondante est jetée en silence.
+       · `S.equip` / `S.matos` / `S.materiel` : **zéro occurrence dans toute l'app.**
+       · Mesuré sur le contexte réel de CE persona : « haltères + élastiques + barre de
+         traction » → ABSENT ; « barre de traction » → ABSENT.
+       👉 La fixture posait un champ QUE L'APP NE COLLECTE PAS. C'est §36 (une sonde qui
+       invente un nom de champ mesure toujours zéro) appliqué au SCÉNARIO lui-même.
+
+       ⭐⭐ CE QUI PASSE, EN REVANCHE : le LIEU. Le contexte porte bien « Il s'entraîne :
+       Maison avec matériel → voici ce qu'il peut faire », et la phrase « Ne suppose pas son
+       matériel, demande-lui » n'est PAS envoyée à ce persona (elle ne sort que si le lieu est
+       inconnu). Donc Milo sait où elle s'entraîne, et ignore ce qu'elle possède.
+
+       ⛔ CONCLUSION : LA QUESTION DE MILO EST LÉGITIME. « Maison avec matériel » n'implique
+       pas une barre de traction. Il ne redemande pas ce qu'il a — il demande ce qu'il n'a
+       jamais reçu, et c'est exactement ce que R8 prescrit de faire.
+       ⏭️ LE VRAI CORRECTIF EST DANS L'INTERFACE, PAS DANS LE PROMPT (R8) : collecter le
+       matériel. C'est une DÉCISION PRODUIT (une question de plus à l'inscription, R19/R29) —
+       elle appartient à Michel, pas au banc d'essai. Le scénario est donc laissé EN L'ÉTAT
+       et continuera de rougir : ce rouge-là ne ment pas, il pointe un trou réel de l'app.
+       *Un scénario qu'on neutralise sans combler le trou fait disparaître le trou du radar.* */
     apply:{ name:'Michel', gender:'H', age:46, height:178, bw:85, goal:'muscle',
       discipline:'muscu', level:'confirme',
       coachQuiz:{answers:{place:'maison', matos:'haltères + élastiques + barre de traction'}} },
