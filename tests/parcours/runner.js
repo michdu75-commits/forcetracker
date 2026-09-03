@@ -23987,6 +23987,189 @@ console.log('\n-- CCXVI. L\'apport entre dans le moteur de trajectoire (ft-v1107
   }
 }
 
+
+/* ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()` — et je l'avais posé APRÈS (03/09/2026).
+   Il ne rougissait pas : il PLANTAIT (`browser.newContext: Target page, context or browser has
+   been closed`), donc il ne mesurait rien du tout et le total ne s'affichait même plus.
+   ⭐ Exactement le piège que session-B avait documenté en ft-v1106, huit heures plus tôt.
+   *Un bloc qui plante ne dit rien ; un bloc qui échoue dit quelque chose.* */
+/* ═══ CCXVII. LA LIGNE « REPAS » RESTE À L'ÉCRAN, ET LE TOAST DIT OÙ (ft-v1109) ═══════════════
+   Michel, deux captures : « il faudrait que les ronds en haut soient fixes quand on descend, et
+   pareil quand on rentre un aliment quel est le jour de la journée choisi ».
+   ⛔⛔ MESURÉ AVANT DE CODER : les puces sortaient de l'écran dès 236 px, sur une modale qui en
+   défile 951 — et TOUT ce qui sert à saisir l'aliment vit en dessous de ce point. Le repas qui
+   reçoit l'aliment n'était donc JAMAIS visible au moment de valider.
+   ⚠️ ET IL EST SOUVENT DEVINÉ : `_afMeal` est pré-réglé sur l'heure qu'il est. Une supposition
+   qu'on ne montre pas est une décision prise à la place de la personne (R29).
+   ⭐ LE DÉFAUT DE LA 1ʳᵉ VERSION A ÉTÉ TROUVÉ PAR LA CAPTURE, PAS PAR LES CHIFFRES : avec
+   `top:0`, les aliments défilaient dans les 16 px de marge AU-DESSUS de la bande. Tous les
+   nombres étaient pourtant bons. D'où le témoin « fuite », qui regarde ce qui est PEINT. */
+console.log('\n-- CCXVII. La ligne REPAS reste à l\'écran (ft-v1109) --');
+{
+  const J=n=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
+  const NOMS=['Ratatouille Cuisinée','Riz Basmati','Huile d\'olive','Oeuf cru','Poulet blanc',
+              '3 oeufs','Steak haché 5%','Pain aux céréales','Saucisson sec','Banane crue'];
+  const foodLog=[];
+  NOMS.forEach((n,i)=>{ for(let k=0;k<3;k++) foodLog.push({date:J(k+1),
+    meal:['petitdej','dejeuner','diner'][k%3], ts:Date.now()-(k+1)*864e5+i*36e5,
+    name:n, kcal:100+i*20, prot:10+i, carbs:20+i, fat:5+i}); });
+  /* ⛔ DEUX LARGEURS, ET C'EST LE POINT : 390 px est le petit iPhone (les puces s'y cassaient en
+     4 + 1), 430 px celui de Michel (elles y tenaient déjà sur une ligne). Mesurer une seule
+     largeur aurait laissé croire soit à une régression, soit à un gain qui n'existe pas. */
+  const VUES=[390,430]; const RES={};
+  for(const L of VUES){
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:L,height:844},timezoneId:'Europe/Paris'});
+    const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
+    await p.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'84',ft4_premium:'1',
+      ft4_guide_shown:'1',ft4_wn_seen:'99',ft4_foodlog:JSON.stringify(foodLog)}));
+    await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(2000);
+    RES[L]=await p.evaluate(async()=>{ try{
+      const w=ms=>new Promise(r=>setTimeout(r,ms));
+      document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+      goScreen('nutrition'); await w(400); openAddFood(); await w(600);
+      const modal=document.querySelector('#ov-add-food .modal');
+      const chips=document.getElementById('af-meal-chips');
+      const bande=chips.parentElement;
+      const rm=()=>modal.getBoundingClientRect();
+      const vu=()=>{const r=chips.getBoundingClientRect(),m=rm();
+        return r.bottom>m.top+1 && r.top<m.bottom-1;};
+      const o={ collant:getComputedStyle(bande).position,
+                defile: modal.scrollHeight>modal.clientHeight+50,
+                hautDepart: Math.round(chips.getBoundingClientRect().top-rm().top),
+                lignes: new Set([...chips.querySelectorAll('button')]
+                          .map(x=>Math.round(x.getBoundingClientRect().top))).size };
+      o.vuEnHaut=vu();
+      modal.scrollTop=300; await w(140); o.vuA300=vu();
+      modal.scrollTop=modal.scrollHeight; await w(180); o.vuAuFond=vu();
+      /* ⛔ ON PEUT ENCORE CHANGER DE REPAS DEPUIS LE BAS — une bande qu'on voit sans pouvoir
+         l'utiliser ne répondrait qu'à la moitié de la demande. */
+      const cible=[...chips.querySelectorAll('button')].find(x=>/Dîner/.test(x.textContent));
+      const rc=cible.getBoundingClientRect(), m=rm();
+      o.cliquableEnBas = rc.top>=m.top-1 && rc.bottom<=m.bottom+1;
+      cible.click(); await w(120); o.mealApres=_afMeal;
+      /* ⛔ LE TÉMOIN QUE LES CHIFFRES N'AURAIENT PAS DONNÉ : ce qui est PEINT tout en haut. */
+      modal.scrollTop=520; await w(200);
+      const m2=rm();
+      const sous=document.elementFromPoint(Math.round(m2.left+m2.width/2), Math.round(m2.top+4));
+      o.fuite = !(sous && (sous===bande || bande.contains(sous)));
+      /* ⛔ ET LA ZONE DE SAISIE RESTE UTILISABLE SOUS LA BANDE (le coût doit rester payable). */
+      const ta=document.getElementById('af-desc'); ta.scrollIntoView({block:'center'}); await w(160);
+      o.champSousLaBande = ta.getBoundingClientRect().top >= bande.getBoundingClientRect().bottom-1;
+      /* ⛔ LE TOAST NOMME LE REPAS, sur les DEUX chemins qui l'ignoraient. */
+      setFoodMeal('collation2');
+      o.toast=(typeof _afToastAjout==='function')?_afToastAjout():'(pas de propriétaire)';
+      o.hauteurBande=Math.round(bande.getBoundingClientRect().height);
+      o.hauteurVisible=modal.clientHeight;
+      return o;
+    }catch(e){ return {err:String(e)}; } });
+    RES[L].errs=errs; await cx.close();
+  }
+  const A=RES[390], B=RES[430];
+  if(A.err||B.err) t('CCXVII n\'a pas pu tourner', false, A.err||B.err);
+  else{
+    /* ⛔ LE CONTRÔLE D'ABORD : sans modale qui défile, « la bande reste visible » serait vrai
+       sans rien prouver. */
+    t('⛔ CONTRÔLE — la modale d\'ajout défile vraiment (sinon les témoins suivants sont vides)',
+      A.defile && B.defile, '390='+A.defile+' 430='+B.defile);
+    t('⭐⭐ la ligne REPAS reste visible du haut au BAS de la modale (les deux largeurs)',
+      A.vuEnHaut&&A.vuA300&&A.vuAuFond && B.vuEnHaut&&B.vuA300&&B.vuAuFond,
+      '390='+JSON.stringify([A.vuEnHaut,A.vuA300,A.vuAuFond])+' 430='+JSON.stringify([B.vuEnHaut,B.vuA300,B.vuAuFond]));
+    t('⛔ … et on peut CHANGER de repas depuis le bas, pas seulement le lire',
+      A.cliquableEnBas && A.mealApres==='diner' && B.cliquableEnBas && B.mealApres==='diner',
+      A.mealApres+' / '+B.mealApres);
+    /* ⛔⛔ CELUI-CI VIENT D'UN VRAI DÉFAUT DE MA 1ʳᵉ VERSION, invisible dans tous les nombres :
+       avec `top:0` les aliments défilaient dans les 16 px de marge au-dessus de la bande. */
+    t('⛔⛔ rien ne défile AU-DESSUS de la bande (le défaut que la capture a trouvé, pas la mesure)',
+      A.fuite===false && B.fuite===false, '390 fuite='+A.fuite+' · 430 fuite='+B.fuite);
+    t('⛔ la bande est bien COLLANTE, pas simplement en haut du document',
+      A.collant==='sticky' && B.collant==='sticky', A.collant+' / '+B.collant);
+    /* ⛔ LE COÛT EST BORNÉ ET MESURÉ : une bande qui mangerait la moitié de la modale serait un
+       remède pire que le mal. 98 px sur 775 aujourd'hui. */
+    t('⛔ le coût reste borné : la bande prend moins du quart de la modale',
+      A.hauteurBande>0 && A.hauteurBande < A.hauteurVisible/4,
+      A.hauteurBande+' px sur '+A.hauteurVisible);
+    /* ⛔⛔ ET LA RAISON DU 64 px : les 5 puces tiennent sur UNE ligne, y compris sur un petit
+       écran où elles se cassaient en 4 + 1 (114 px au lieu de 71). */
+    t('⛔⛔ les 5 puces tiennent sur UNE ligne, même sur un écran de 390 px',
+      A.lignes===1 && B.lignes===1, '390='+A.lignes+' lignes · 430='+B.lignes);
+    /* ⛔ RIEN N'A BOUGÉ AU-DESSUS (règle d'or #9, l'esprit) : les puces partent du même endroit
+       qu'avant le correctif — mesuré à 122 px sur le code d'hier. */
+    t('⛔ les puces n\'ont pas bougé de place à l\'ouverture (122 px du haut, comme avant)',
+      A.hautDepart===122 && B.hautDepart===122, '390='+A.hautDepart+' 430='+B.hautDepart);
+    t('⛔ la zone de saisie reste sous la bande, jamais cachée par elle',
+      A.champSousLaBande && B.champSousLaBande, '390='+A.champSousLaBande+' 430='+B.champSousLaBande);
+    /* ⭐⭐ LA SECONDE MOITIÉ DE LA DEMANDE : « quand on rentre un aliment, quel est le moment
+       choisi ». Les deux chemins disaient « Ajouté au journal » — le 3ᵉ nommait déjà le repas
+       depuis ft-v1052 (R8, la jumelle). */
+    t('⭐⭐ la confirmation NOMME le repas au lieu de « Ajouté au journal »',
+      /Collation 2/.test(A.toast) && /Collation 2/.test(B.toast), A.toast);
+    /* ⛔ ET LE LIBELLÉ VIENT DU PROPRIÉTAIRE UNIQUE — sinon « Collation 2 » divergerait entre le
+       toast, les puces et le Journal (R2). */
+    {
+      const app=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+      const f=app.split('function _afToastAjout(')[1]||'';
+      const corps=f.slice(0,f.indexOf('\n}'));
+      t('⛔ le toast lit `_foodMealInfo`, il ne refait pas sa propre recherche dans FOOD_MEALS',
+        /_foodMealInfo/.test(corps) && !/FOOD_MEALS\s*\.\s*find/.test(corps), corps.replace(/\s+/g,' ').slice(0,120));
+      t('⛔ … et les 3 chemins d\'ajout nomment désormais le moment (aucun « Ajouté au journal »)',
+        !/Ajouté au journal/.test(app), '');
+    }
+    t('⛔ 0 erreur JS sur les deux largeurs', A.errs.length===0 && B.errs.length===0,
+      (A.errs.concat(B.errs)).join(' | '));
+  }
+
+  /* ⛔⛔ LES SURFACES SE MESURENT À L'ÉCRAN, PAS DANS LE FICHIER (règle d'or #11, points 3-4).
+     C'est la famille §31 de `BUGS.md` : une aide peut exister dans le code et ne jamais
+     s'afficher — ou s'afficher avec son icône restée à l'état d'ÉCHAPPEMENT, ce qui est
+     exactement arrivé dans cette version (`\\U0001F4CC` au lieu de 📌, attrapé avant la
+     livraison parce qu'on est allé regarder le fichier). */
+  {
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
+    await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+    await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1800);
+    const S2=await p.evaluate(async()=>{ try{
+      const w=ms=>new Promise(r=>setTimeout(r,ms));
+      document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+      goScreen('nutrition'); await w(350);
+      const o={};
+      showHelp(); await w(350);
+      const el=document.getElementById('help-content')||{};
+      const aide=el.innerText||'';
+      o.aideRendue = aide.length>200;
+      o.aideParleDuRepas = /reste sous tes yeux/.test(aide);
+      o.aideDitQueCEstDevine = /pré-réglé sur l'heure/.test(aide);
+      o.aideSansEchappement = !/\\U000[0-9A-F]/i.test(el.innerHTML||'');
+      closeHelp(); await w(200);
+      openDrawerContent('help'); await w(400);
+      const det=(document.getElementById('drawer-cnt-body')||{}).innerText||'';
+      o.detailRendu = det.length>200;
+      o.detailParleDuRepas = /restent à l'écran quand tu descends/.test(det);
+      closeDrawerContent();
+      return o;
+    }catch(e){ return {err:String(e)}; } });
+    await cx.close();
+    if(S2.err) t('CCXVII — surfaces : n\'a pas pu tourner', false, S2.err);
+    else{
+      /* ⛔ CONTRÔLE D'ABORD : si les aides ne rendaient rien, tout ce qui suit serait vert en
+         ne lisant rien. */
+      t('⛔ CONTRÔLE — l\'aide `?` de Nutrition et l\'aide détaillée rendent bien du contenu',
+        S2.aideRendue && S2.detailRendu, 'aide='+S2.aideRendue+' détail='+S2.detailRendu);
+      t('⛔ l\'aide `?` explique la bande de repas, À L\'ÉCRAN (pas seulement dans le fichier)',
+        S2.aideParleDuRepas, '');
+      t('⛔⛔ … et elle dit ce qu\'on ne devine PAS : que le repas est pré-réglé sur l\'heure',
+        S2.aideDitQueCEstDevine, '');
+      /* ⛔⛔ CELUI-CI VIENT D'UN DÉFAUT RÉEL DE CETTE VERSION. */
+      t('⛔⛔ aucune séquence d\'échappement laissée telle quelle dans l\'aide rendue',
+        S2.aideSansEchappement, '');
+      t('⛔ l\'aide détaillée porte le même point (les surfaces racontent la même chose)',
+        S2.detailParleDuRepas, '');
+      t('⛔ 0 erreur JS en ouvrant les deux aides', errs.length===0, errs.join(' | '));
+    }
+  }
+}
+
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
@@ -24176,181 +24359,6 @@ console.log('\n-- CXCI. Une mise à jour ne tue plus un banc d\'essai en cours (
     /_evRunning\s*=\s*true/.test(fs.readFileSync(path.join(ROOT,'coach.js'),'utf8')), '');
 }
 
-/* ═══ CCXVII. LA LIGNE « REPAS » RESTE À L'ÉCRAN, ET LE TOAST DIT OÙ (ft-v1109) ═══════════════
-   Michel, deux captures : « il faudrait que les ronds en haut soient fixes quand on descend, et
-   pareil quand on rentre un aliment quel est le jour de la journée choisi ».
-   ⛔⛔ MESURÉ AVANT DE CODER : les puces sortaient de l'écran dès 236 px, sur une modale qui en
-   défile 951 — et TOUT ce qui sert à saisir l'aliment vit en dessous de ce point. Le repas qui
-   reçoit l'aliment n'était donc JAMAIS visible au moment de valider.
-   ⚠️ ET IL EST SOUVENT DEVINÉ : `_afMeal` est pré-réglé sur l'heure qu'il est. Une supposition
-   qu'on ne montre pas est une décision prise à la place de la personne (R29).
-   ⭐ LE DÉFAUT DE LA 1ʳᵉ VERSION A ÉTÉ TROUVÉ PAR LA CAPTURE, PAS PAR LES CHIFFRES : avec
-   `top:0`, les aliments défilaient dans les 16 px de marge AU-DESSUS de la bande. Tous les
-   nombres étaient pourtant bons. D'où le témoin « fuite », qui regarde ce qui est PEINT. */
-console.log('\n-- CCXVII. La ligne REPAS reste à l\'écran (ft-v1109) --');
-{
-  const J=n=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
-  const NOMS=['Ratatouille Cuisinée','Riz Basmati','Huile d\'olive','Oeuf cru','Poulet blanc',
-              '3 oeufs','Steak haché 5%','Pain aux céréales','Saucisson sec','Banane crue'];
-  const foodLog=[];
-  NOMS.forEach((n,i)=>{ for(let k=0;k<3;k++) foodLog.push({date:J(k+1),
-    meal:['petitdej','dejeuner','diner'][k%3], ts:Date.now()-(k+1)*864e5+i*36e5,
-    name:n, kcal:100+i*20, prot:10+i, carbs:20+i, fat:5+i}); });
-  /* ⛔ DEUX LARGEURS, ET C'EST LE POINT : 390 px est le petit iPhone (les puces s'y cassaient en
-     4 + 1), 430 px celui de Michel (elles y tenaient déjà sur une ligne). Mesurer une seule
-     largeur aurait laissé croire soit à une régression, soit à un gain qui n'existe pas. */
-  const VUES=[390,430]; const RES={};
-  for(const L of VUES){
-    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:L,height:844},timezoneId:'Europe/Paris'});
-    const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
-    await p.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'84',ft4_premium:'1',
-      ft4_guide_shown:'1',ft4_wn_seen:'99',ft4_foodlog:JSON.stringify(foodLog)}));
-    await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(2000);
-    RES[L]=await p.evaluate(async()=>{ try{
-      const w=ms=>new Promise(r=>setTimeout(r,ms));
-      document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
-      goScreen('nutrition'); await w(400); openAddFood(); await w(600);
-      const modal=document.querySelector('#ov-add-food .modal');
-      const chips=document.getElementById('af-meal-chips');
-      const bande=chips.parentElement;
-      const rm=()=>modal.getBoundingClientRect();
-      const vu=()=>{const r=chips.getBoundingClientRect(),m=rm();
-        return r.bottom>m.top+1 && r.top<m.bottom-1;};
-      const o={ collant:getComputedStyle(bande).position,
-                defile: modal.scrollHeight>modal.clientHeight+50,
-                hautDepart: Math.round(chips.getBoundingClientRect().top-rm().top),
-                lignes: new Set([...chips.querySelectorAll('button')]
-                          .map(x=>Math.round(x.getBoundingClientRect().top))).size };
-      o.vuEnHaut=vu();
-      modal.scrollTop=300; await w(140); o.vuA300=vu();
-      modal.scrollTop=modal.scrollHeight; await w(180); o.vuAuFond=vu();
-      /* ⛔ ON PEUT ENCORE CHANGER DE REPAS DEPUIS LE BAS — une bande qu'on voit sans pouvoir
-         l'utiliser ne répondrait qu'à la moitié de la demande. */
-      const cible=[...chips.querySelectorAll('button')].find(x=>/Dîner/.test(x.textContent));
-      const rc=cible.getBoundingClientRect(), m=rm();
-      o.cliquableEnBas = rc.top>=m.top-1 && rc.bottom<=m.bottom+1;
-      cible.click(); await w(120); o.mealApres=_afMeal;
-      /* ⛔ LE TÉMOIN QUE LES CHIFFRES N'AURAIENT PAS DONNÉ : ce qui est PEINT tout en haut. */
-      modal.scrollTop=520; await w(200);
-      const m2=rm();
-      const sous=document.elementFromPoint(Math.round(m2.left+m2.width/2), Math.round(m2.top+4));
-      o.fuite = !(sous && (sous===bande || bande.contains(sous)));
-      /* ⛔ ET LA ZONE DE SAISIE RESTE UTILISABLE SOUS LA BANDE (le coût doit rester payable). */
-      const ta=document.getElementById('af-desc'); ta.scrollIntoView({block:'center'}); await w(160);
-      o.champSousLaBande = ta.getBoundingClientRect().top >= bande.getBoundingClientRect().bottom-1;
-      /* ⛔ LE TOAST NOMME LE REPAS, sur les DEUX chemins qui l'ignoraient. */
-      setFoodMeal('collation2');
-      o.toast=(typeof _afToastAjout==='function')?_afToastAjout():'(pas de propriétaire)';
-      o.hauteurBande=Math.round(bande.getBoundingClientRect().height);
-      o.hauteurVisible=modal.clientHeight;
-      return o;
-    }catch(e){ return {err:String(e)}; } });
-    RES[L].errs=errs; await cx.close();
-  }
-  const A=RES[390], B=RES[430];
-  if(A.err||B.err) t('CCXVII n\'a pas pu tourner', false, A.err||B.err);
-  else{
-    /* ⛔ LE CONTRÔLE D'ABORD : sans modale qui défile, « la bande reste visible » serait vrai
-       sans rien prouver. */
-    t('⛔ CONTRÔLE — la modale d\'ajout défile vraiment (sinon les témoins suivants sont vides)',
-      A.defile && B.defile, '390='+A.defile+' 430='+B.defile);
-    t('⭐⭐ la ligne REPAS reste visible du haut au BAS de la modale (les deux largeurs)',
-      A.vuEnHaut&&A.vuA300&&A.vuAuFond && B.vuEnHaut&&B.vuA300&&B.vuAuFond,
-      '390='+JSON.stringify([A.vuEnHaut,A.vuA300,A.vuAuFond])+' 430='+JSON.stringify([B.vuEnHaut,B.vuA300,B.vuAuFond]));
-    t('⛔ … et on peut CHANGER de repas depuis le bas, pas seulement le lire',
-      A.cliquableEnBas && A.mealApres==='diner' && B.cliquableEnBas && B.mealApres==='diner',
-      A.mealApres+' / '+B.mealApres);
-    /* ⛔⛔ CELUI-CI VIENT D'UN VRAI DÉFAUT DE MA 1ʳᵉ VERSION, invisible dans tous les nombres :
-       avec `top:0` les aliments défilaient dans les 16 px de marge au-dessus de la bande. */
-    t('⛔⛔ rien ne défile AU-DESSUS de la bande (le défaut que la capture a trouvé, pas la mesure)',
-      A.fuite===false && B.fuite===false, '390 fuite='+A.fuite+' · 430 fuite='+B.fuite);
-    t('⛔ la bande est bien COLLANTE, pas simplement en haut du document',
-      A.collant==='sticky' && B.collant==='sticky', A.collant+' / '+B.collant);
-    /* ⛔ LE COÛT EST BORNÉ ET MESURÉ : une bande qui mangerait la moitié de la modale serait un
-       remède pire que le mal. 98 px sur 775 aujourd'hui. */
-    t('⛔ le coût reste borné : la bande prend moins du quart de la modale',
-      A.hauteurBande>0 && A.hauteurBande < A.hauteurVisible/4,
-      A.hauteurBande+' px sur '+A.hauteurVisible);
-    /* ⛔⛔ ET LA RAISON DU 64 px : les 5 puces tiennent sur UNE ligne, y compris sur un petit
-       écran où elles se cassaient en 4 + 1 (114 px au lieu de 71). */
-    t('⛔⛔ les 5 puces tiennent sur UNE ligne, même sur un écran de 390 px',
-      A.lignes===1 && B.lignes===1, '390='+A.lignes+' lignes · 430='+B.lignes);
-    /* ⛔ RIEN N'A BOUGÉ AU-DESSUS (règle d'or #9, l'esprit) : les puces partent du même endroit
-       qu'avant le correctif — mesuré à 122 px sur le code d'hier. */
-    t('⛔ les puces n\'ont pas bougé de place à l\'ouverture (122 px du haut, comme avant)',
-      A.hautDepart===122 && B.hautDepart===122, '390='+A.hautDepart+' 430='+B.hautDepart);
-    t('⛔ la zone de saisie reste sous la bande, jamais cachée par elle',
-      A.champSousLaBande && B.champSousLaBande, '390='+A.champSousLaBande+' 430='+B.champSousLaBande);
-    /* ⭐⭐ LA SECONDE MOITIÉ DE LA DEMANDE : « quand on rentre un aliment, quel est le moment
-       choisi ». Les deux chemins disaient « Ajouté au journal » — le 3ᵉ nommait déjà le repas
-       depuis ft-v1052 (R8, la jumelle). */
-    t('⭐⭐ la confirmation NOMME le repas au lieu de « Ajouté au journal »',
-      /Collation 2/.test(A.toast) && /Collation 2/.test(B.toast), A.toast);
-    /* ⛔ ET LE LIBELLÉ VIENT DU PROPRIÉTAIRE UNIQUE — sinon « Collation 2 » divergerait entre le
-       toast, les puces et le Journal (R2). */
-    {
-      const app=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
-      const f=app.split('function _afToastAjout(')[1]||'';
-      const corps=f.slice(0,f.indexOf('\n}'));
-      t('⛔ le toast lit `_foodMealInfo`, il ne refait pas sa propre recherche dans FOOD_MEALS',
-        /_foodMealInfo/.test(corps) && !/FOOD_MEALS\s*\.\s*find/.test(corps), corps.replace(/\s+/g,' ').slice(0,120));
-      t('⛔ … et les 3 chemins d\'ajout nomment désormais le moment (aucun « Ajouté au journal »)',
-        !/Ajouté au journal/.test(app), '');
-    }
-    t('⛔ 0 erreur JS sur les deux largeurs', A.errs.length===0 && B.errs.length===0,
-      (A.errs.concat(B.errs)).join(' | '));
-  }
-
-  /* ⛔⛔ LES SURFACES SE MESURENT À L'ÉCRAN, PAS DANS LE FICHIER (règle d'or #11, points 3-4).
-     C'est la famille §31 de `BUGS.md` : une aide peut exister dans le code et ne jamais
-     s'afficher — ou s'afficher avec son icône restée à l'état d'ÉCHAPPEMENT, ce qui est
-     exactement arrivé dans cette version (`\\U0001F4CC` au lieu de 📌, attrapé avant la
-     livraison parce qu'on est allé regarder le fichier). */
-  {
-    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
-    const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
-    await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
-    await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1800);
-    const S2=await p.evaluate(async()=>{ try{
-      const w=ms=>new Promise(r=>setTimeout(r,ms));
-      document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
-      goScreen('nutrition'); await w(350);
-      const o={};
-      showHelp(); await w(350);
-      const el=document.getElementById('help-content')||{};
-      const aide=el.innerText||'';
-      o.aideRendue = aide.length>200;
-      o.aideParleDuRepas = /reste sous tes yeux/.test(aide);
-      o.aideDitQueCEstDevine = /pré-réglé sur l'heure/.test(aide);
-      o.aideSansEchappement = !/\\U000[0-9A-F]/i.test(el.innerHTML||'');
-      closeHelp(); await w(200);
-      openDrawerContent('help'); await w(400);
-      const det=(document.getElementById('drawer-cnt-body')||{}).innerText||'';
-      o.detailRendu = det.length>200;
-      o.detailParleDuRepas = /restent à l'écran quand tu descends/.test(det);
-      closeDrawerContent();
-      return o;
-    }catch(e){ return {err:String(e)}; } });
-    await cx.close();
-    if(S2.err) t('CCXVII — surfaces : n\'a pas pu tourner', false, S2.err);
-    else{
-      /* ⛔ CONTRÔLE D'ABORD : si les aides ne rendaient rien, tout ce qui suit serait vert en
-         ne lisant rien. */
-      t('⛔ CONTRÔLE — l\'aide `?` de Nutrition et l\'aide détaillée rendent bien du contenu',
-        S2.aideRendue && S2.detailRendu, 'aide='+S2.aideRendue+' détail='+S2.detailRendu);
-      t('⛔ l\'aide `?` explique la bande de repas, À L\'ÉCRAN (pas seulement dans le fichier)',
-        S2.aideParleDuRepas, '');
-      t('⛔⛔ … et elle dit ce qu\'on ne devine PAS : que le repas est pré-réglé sur l\'heure',
-        S2.aideDitQueCEstDevine, '');
-      /* ⛔⛔ CELUI-CI VIENT D'UN DÉFAUT RÉEL DE CETTE VERSION. */
-      t('⛔⛔ aucune séquence d\'échappement laissée telle quelle dans l\'aide rendue',
-        S2.aideSansEchappement, '');
-      t('⛔ l\'aide détaillée porte le même point (les surfaces racontent la même chose)',
-        S2.detailParleDuRepas, '');
-      t('⛔ 0 erreur JS en ouvrant les deux aides', errs.length===0, errs.join(' | '));
-    }
-  }
-}
 
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
