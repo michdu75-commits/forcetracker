@@ -6,6 +6,21 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1117` — 🥤 **LE PIÈGE DU COCA : IL Y EN AVAIT NEUF.**
+  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+- ⛔⛔ **9 paires** « sucré + édulcorants » / « sans sucres ajoutés + édulcorants » dans CIQUAL, et
+  **« sucré » est toujours le nom le plus court** → le tri prenait la version sucrée à chaque fois.
+- ⚠️⚠️ **LE CORRECTIF STRUCTUREL A ÉTÉ REFUSÉ PAR LA MESURE** (R7) : traduire `zero`/`light` en
+  « sans sucres ajoutés » corrige 3 cas **et en casse 3** — `yaourt light` ne rend plus rien,
+  `soda light` tombe sur « Boisson gazeuse **à la pomme** ». 👉 *« Light » ne veut pas dire « sans
+  sucre » : un yaourt light est 0 % MG.* **Un mot à deux sens ne se traduit pas, il se DÉSIGNE.**
+- ⛔⛔ **Pire cas, et il dépasse le Coca** : `lait amande` rendait un **chocolat à 559 kcal/100 g**
+  pour une boisson qui en fait **36** — **× 15,5**. `lait soja`/`lait avoine` : rien.
+- ⛔⛔ **Ce qu'on refuse de fusionner** : le **lait de coco culinaire** (199 kcal) n'est pas la
+  **boisson à la noix de coco** (30). ⭐ Et il trouvait **déjà** le bon — *avant d'ajouter une
+  porte, vérifier qu'elle n'est pas déjà ouverte.*
+- ⭐ **80 boissons mesurées : 28 sans résultat → 9.** Ce qui reste vide est **listé** (powerade,
+  gatorade, mojito, whey — aucune boisson isotonique n'existe dans CIQUAL).
 - **Version en ligne (live) :** `ft-v1116` — 🥤 **LE COCA ZÉRO ÉTAIT COMPTÉ 24 FOIS TROP.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#857** sur `414cdce`, **job `deploy` success**,
   les 7 étapes vertes (« Déployer sur GitHub Pages » comprise) à 19:22:50 UTC.

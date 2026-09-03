@@ -25160,8 +25160,18 @@ console.log('\n-- CCXXV. Le piège du Coca n\'était pas celui du Coca : il y en
     /* ⛔ La sous-chaîne « rose » vivait dans « ROSETTE » — le saucisson à 392 kcal. */
     t('⛔ « rosé » rend le VIN (69 kcal), plus la ROSETTE (le saucisson, 392)',
       /^Vin ros/i.test(nom('rose')) && kcal('rose')===69, nom('rose')+' '+kcal('rose'));
-    t('⛔ … et la rosette reste trouvable en la tapant (on n\'a rien fermé)',
-      /Rosette/i.test(nom('rosette')), nom('rosette'));
+    /* ⚠️⚠️ TÉMOIN RE-VISÉ À LA 1ʳᵉ PASSE — §31, 3ᵉ fois de la journée. Il exigeait « Rosette » en
+       PREMIER résultat ; or la garantie est qu'elle reste **TROUVABLE**, pas qu'elle soit en tête.
+       ⭐ Mesuré avant de toucher quoi que ce soit : « rosette » rend « Saucisson sec » d'abord et
+       « Rosette ou fuseau » juste après — **et c'était déjà le cas avant cette version** (le tri
+       par nom le plus court : 13 caractères contre 17). *Ce n'est donc pas une régression, et
+       « réparer » le code ici aurait cassé quelque chose de sain.*
+       ⛔ On vérifie la vraie garantie, et DES DEUX CÔTÉS : elle sort en tapant « rosette », et
+       elle reste visible sous le vin quand on tape « rosé ». Rien n'a été fermé. */
+    t('⛔ … et la rosette reste TROUVABLE (on n\'a fermé aucune porte)',
+      R.rosette.some(x=>/Rosette/i.test(x[1])), R.rosette.map(x=>x[1].slice(0,22)).join(' · '));
+    t('⛔ … et elle apparaît même sous le vin quand on tape « rosé »',
+      R.rose.some(x=>/Rosette/i.test(x[1])), R.rose.map(x=>x[1].slice(0,22)).join(' · '));
     /* ⛔ Les boissons qui ne rendaient RIEN — le générique, jamais un chiffre de marque. */
     t('⛔ « ice tea », « red bull », « orangina », « latte », « bière blonde » trouvent leur générique',
       ['ice tea','red bull','orangina','latte','biere blonde'].every(q=>!!prem(q)),
