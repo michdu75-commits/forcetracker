@@ -6,6 +6,24 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1115` — 🥗 **LES MOTS QU'ON EMPLOIE ATTEIGNENT UN ALIMENT.**
+  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+- ⭐⭐ **569 alias** (`data/alias.json`, 4 Ko gzippés) produits par **GPT à partir de l'export CSV
+  de notre propre base** — l'audit livré le matin même. ⛔ **Aucune valeur créée** : vérifié à
+  l'import, **0 macro divergente sur 569**.
+- ⛔⛔ **Mesuré AVANT de brancher** : 219 mots déjà justes · **153 ne rendaient RIEN** · 135 pas en
+  tête · **62 rendaient un AUTRE aliment** — `riz japonais` → **biscuit apéritif**, `patate` →
+  **patate douce**, `tradition` → **cidre**.
+- ⭐⭐ **Décision de Michel** sur les 13 cas cru↔cuit : ***« les deux, le cuit en premier »***.
+  `riz` rend *cuit* (155) puis *cru* (350) juste dessous. **R29**.
+- ⛔ **Une erreur trouvée chez GPT** : `tomate` visait « Tomate, séchée », **kcal non déterminées**
+  → jamais proposable. *Un alias qui ouvre une porte fermée est pire qu'un alias absent.*
+  Corrigé vers l'aliment moyen, **la correction est imprimée** par le générateur.
+- 📣 **La pop-up se MÉRITE ici** (`WHATS_NEW` v68) : un chiffre noté tous les jours change **du
+  simple au double**. *Le danger n'est pas qu'il le remarque — c'est qu'il ne le remarque pas.*
+- ⏭️ **Toujours non corrigés** (audit du matin) : la **ponctuation collée** (`Boulgour, cuit` →
+  rien) et les **mots-outils exigés** (`filet de bœuf` → rien). La table les **contourne**, elle
+  ne les répare pas. ⚠️ **Safari/iPhone non vérifié.**
 - **Version en ligne (live) :** `ft-v1114` — 🍔 **ON MET TOUT ET ON MARQUE LE DOUTE.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#849** sur `9b2676d`, `success` à 16:52 UTC.
   ⭐ Suite re-passée sur l'**arbre FUSIONNÉ** avec session-B : **2554/2554, 0 rouge**.
