@@ -24386,8 +24386,13 @@ console.log('\n-- CCXIX. Un produit devient calibrable à la main (ft-v1110) --'
       R.blocAvant===false, 'bloc quantité déjà visible');
     t('⛔ le bloc « valeurs pour 100 g » s\'ouvre à la demande', R.champsOuverts===true, '');
     /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : son étiquette entre, sa dose ressort juste. */
-    t('⭐⭐ 88 g de protéines / 100 g → 30 g rendent 26 g (l\'étiquette de Michel)',
-      R.pour30.prot===26 && R.pour30.kcal===113, JSON.stringify(R.pour30));
+    /* ⚠️ L'ATTENDU SUIT LA FIXTURE, ET JE L'AVAIS OUBLIÉ : ce témoin attendait 113 kcal, calé
+       sur mon chiffre PROVISOIRE de 375 kcal/100 g. La photo de l'étiquette donne 388,5, donc
+       117. *Changer une fixture sans changer son attendu produit un rouge qui accuse le code
+       alors qu'il ne décrit qu'un chiffre périmé dans le test.*
+       ⭐ Les 116,6 kcal de l'étiquette pour 30 g tombent bien entre les deux : 388,5 × 0,3. */
+    t('⭐⭐ l\'étiquette de Michel (388,5 kcal · 88 g/100 g) → 30 g rendent 117 kcal et 26 g',
+      R.pour30.prot===26 && R.pour30.kcal===117, JSON.stringify(R.pour30));
     t('⛔ … et le bloc quantité s\'ouvre, comme après un scan réussi (R13 : même chemin)',
       R.blocApres===true, '');
     t('⛔ aucune alerte sur un produit correctement calibré (le garde-fou ne gêne pas le chemin juste)',
