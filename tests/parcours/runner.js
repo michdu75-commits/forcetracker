@@ -25077,13 +25077,24 @@ console.log('\n-- CCXXIV. Le Coca Zéro était compté 24 fois trop (ft-v1116) -
     const py=fs.readFileSync(path.join(ROOT,'tools','alias.py'),'utf8');
     t('⛔⛔ R27 — les ajouts sont dans `tools/alias.py`, pas écrits à la main dans le JSON généré',
       /AJOUTS\s*=\s*\{/.test(py) && /'coca zero'\s*:\s*\(18060/.test(py), '');
-    /* ⛔ … et chacun porte SA RAISON : un ajout dont on a oublié le motif finit contourné (R30). */
+    /* ⛔ … et chacun porte SA RAISON : un ajout dont on a oublié le motif finit contourné (R30).
+       ⚠️⚠️ TÉMOIN RE-VISÉ À LA 1ʳᵉ PASSE — §31, sur un témoin que je venais d'écrire. Il exigeait
+       une raison d'au moins 8 caractères, donc il refusait les 8 `'idem'`… qui sont une raison
+       parfaitement valable : *elle renvoie à la ligne du dessus*. Il mesurait la LONGUEUR du
+       texte, pas la présence d'un motif. 👉 La vraie garantie est double : **aucune raison vide**,
+       et **`idem` n'est jamais le PREMIER** (sinon il ne renverrait à rien). */
     const bloc=(py.split('AJOUTS = {')[1]||'').split('\n}')[0];
-    const lignes=(bloc.match(/^\s*'[^']+':\s*\(\d+,/gm)||[]);
-    const avecRaison=(bloc.match(/^\s*'[^']+':\s*\(\d+,\s*'[^']{8,}'\)/gm)||[]);
-    t('⛔ … et chaque ajout porte sa raison écrite (R30)',
-      lignes.length>0 && lignes.length===avecRaison.length,
-      avecRaison.length+' / '+lignes.length);
+    const lignes=(bloc.match(/^\s*'[^']+':\s*\(\d+,\s*'([^']*)'\)/gm)||[]);
+    const raisons=[...bloc.matchAll(/^\s*'[^']+':\s*\(\d+,\s*'([^']*)'\)/gm)].map(m=>m[1].trim());
+    const vides=raisons.filter(r=>r.length===0);
+    t('⛔ … et chaque ajout porte sa raison écrite, jamais vide (R30)',
+      raisons.length>=10 && vides.length===0, raisons.length+' raisons · '+vides.length+' vide(s)');
+    /* ⛔ « idem » renvoie à la ligne du dessus : il ne peut pas être le premier, ni suivre un vide. */
+    t('⛔ … et « idem » n\'est jamais la PREMIÈRE raison (il renverrait à rien)',
+      raisons.length>0 && !/^idem$/i.test(raisons[0]), raisons[0]||'(aucune)');
+    /* ⛔ CONTRE-ÉPREUVE : le détecteur sait distinguer une raison d'une absence de raison. */
+    t('⛔ CONTRÔLE — le motif attrape bien une raison vide (sinon il serait vert sur tout)',
+      /^\s*'x':\s*\(1,\s*''\)/m.test("  'x': (1, '')"), '');
   }
 }
 

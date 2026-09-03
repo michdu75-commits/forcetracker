@@ -6,6 +6,19 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1116` — 🥤 **LE COCA ZÉRO ÉTAIT COMPTÉ 24 FOIS TROP.**
+  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+- ⛔⛔ `coca zéro` rendait « Cola, **SUCRÉ**, avec édulcorants » (**24 kcal/100 g**) avant « Cola,
+  **sans sucres ajoutés** » (**1 kcal**). Sur 50 cl : **120 kcal enregistrées au lieu de 5**.
+- ⭐⭐ **La cause n'est pas une faute de la traduction, c'est sa LIMITE** : `zero`/`light` → « édulcorants »
+  est exact, mais **les deux lignes portent ce mot** — c'est le tri par nom le plus court qui
+  tranche, et il tranche mal. 👉 *Un mot traduit désigne une FAMILLE, pas un aliment.*
+  ⭐ C'est **la frontière écrite la veille** entre `FOOD_SYNONYMES` et la table d'alias,
+  **vérifiée sur un vrai cas trouvé par l'USAGE** — Michel notait son repas.
+- ⛔ **On ne retire pas l'autre ligne** : elle est le bon aliment pour un cola à la stévia, elle
+  reste **juste en dessous** (R29). ⛔ Et la variante **sans caféine** garde son entrée propre.
+- ⛔⛔ **Les ajouts vivent dans `tools/alias.py`**, jamais dans `data/alias.json` qui est **généré** :
+  une retouche à la main y disparaîtrait **sans bruit** (R27). Deux témoins l'épinglent.
 - **Version en ligne (live) :** `ft-v1115` — 🥗 **LES MOTS QU'ON EMPLOIE ATTEIGNENT UN ALIMENT.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#854** sur `ec64523`, `success` à 18:05 UTC.
   ⭐ Suite re-passée sur l'**arbre FUSIONNÉ** avec session-B : **2578/2578, 0 rouge**.
