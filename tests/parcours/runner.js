@@ -11886,8 +11886,14 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     Q.repris && /dernière saisie/.test(Q.repris.libelle||''), JSON.stringify(Q.repris));
   t('⛔⛔ QUANTITÉ : les macros CORRIGÉES À LA MAIN ne sont pas écrasées à l\'arrivée (29, pas 48)',
     Q.repris && Q.repris.kcal==='29', JSON.stringify(Q.repris));
-  t('⭐ … mais elles suivent dès qu\'on change la quantité (50 g → 24 kcal · 6 g)',
-    Q.a50g && Q.a50g.kcal==='24' && Q.a50g.prot==='6', JSON.stringify(Q.a50g));
+  /* ⚠️ 5 g ET NON 6 DEPUIS ft-v1112, et c'est un GAIN de justesse, pas une regression.
+     Le blanc d'œuf cru titre 10,9 g de proteines/100 g dans la base embarquee. L'ancien code
+     l'arrondissait d'abord a 11, puis 11 x 0,5 = 5,5 s'arrondissait a 6 : un DOUBLE arrondi.
+     Aujourd'hui 10,9 x 0,5 = 5,45 -> 5, la vraie valeur. *Un attendu cale sur un artefact
+     d'arrondi rougit le jour ou on retire l'artefact : c'est le TEMOIN qu'on corrige, pas le
+     code.* Verifie par l'arithmetique sur `data/ciqual.json`, pas deduit. */
+  t('⭐ … mais elles suivent dès qu\'on change la quantité (50 g → 24 kcal · 5 g)',
+    Q.a50g && Q.a50g.kcal==='24' && Q.a50g.prot==='5', JSON.stringify(Q.a50g));
   t('⛔⛔ QUANTITÉ : une entrée tapée à la main n\'a PAS le bloc — aucun poids inventé (R29)',
     Q.sansPer100 && Q.sansPer100.bloc===false, JSON.stringify(Q.sansPer100));
 
@@ -23689,8 +23695,14 @@ console.log('\n-- CCXIV. La portion pré-remplie n\'est pas la tienne (ft-v1105)
   if(R.err) t('CCXIV n\'a pas pu tourner', false, R.err);
   else{
     /* ⭐⭐ LA REPRODUCTION EXACTE DE SA CAPTURE — c'est ce témoin qui porte la version. */
-    t('⭐⭐ une portion déclarée à 40 g reproduit SES chiffres : 156 kcal · 35 g',
-      String(R.q40.kcal)==='156' && String(R.q40.prot)==='35' && String(R.q40.grams)==='40',
+    /* ⚠️⚠️ 155 ET NON 156 DEPUIS ft-v1112 — ET LA CAPTURE DE MICHEL DISAIT BIEN 156.
+       La difference d'1 kcal est un DOUBLE ARRONDI qu'on a retire : la fiche porte 388,5 kcal
+       pour 100 g, l'ancien code l'arrondissait a 389 AVANT de multiplier (389 x 0,4 = 155,6 ->
+       156), alors que la vraie valeur est 388,5 x 0,4 = 155,4 -> 155.
+       ⭐ CE QUE LE TEMOIN GARANTIT N'A PAS CHANGE : une portion declaree a 40 g produit les
+       chiffres qu'il a vus — dont 35 g de proteines au chiffre pres. */
+    t('⭐⭐ une portion déclarée à 40 g reproduit SES chiffres : 155 kcal (156 sur sa capture, double arrondi) · 35 g',
+      String(R.q40.kcal)==='155' && String(R.q40.prot)==='35' && String(R.q40.grams)==='40',
       JSON.stringify(R.q40));
     /* ⛔ ET LE CAS JUSTE DOIT RESTER JUSTE : 30 g → 117 kcal · 26 g (la vraie étiquette). */
     t('⛔ … et une portion déclarée à 30 g donne bien 117 kcal · 26 g (l\'étiquette réelle)',
