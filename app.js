@@ -2593,12 +2593,21 @@ function _afRang(mots, n){
    Open Food Facts finit par rattraper le coup ; hors ligne ou en 4G faible, on n'a rien — alors
    que l'aliment est **dans le téléphone**. C'est la règle d'or #4 qui se joue ici, pas du
    confort.
-   ⛔⛔ CE QUI N'EST PAS FAIT, ET C'EST UNE DÉCISION : aucun chiffre de marque n'est écrit. Un
-   Big Mac a un poids et des macros que je ne peux pas SOURCER depuis ce conteneur ; les taper
-   de mémoire fabriquerait une valeur crédible et fausse (§34 de `BUGS.md`, le défaut qu'on
-   corrige depuis deux jours). Les synonymes pointent donc vers les aliments RÉELS de la table
-   nationale, **dont le nom dit lui-même « de restauration rapide »** : la personne voit ce
-   qu'elle prend, et rien ne se fait passer pour un produit de marque (R32/R33).
+   ⛔⛔ CE QUI N'EST PAS FAIT, ET LA RAISON A ÉTÉ MESURÉE (pas supposée) : aucun chiffre de
+   marque n'est écrit. ⚠️ **J'avais d'abord dit « je n'ai pas accès à internet », et Michel m'a
+   reprise : c'était faux.** La recherche web fonctionne ; ce qui est bloqué par le proxy (403
+   vérifié) est `openfoodfacts.org`, `mcdonalds.fr`, `informationsnutritionnelles.fr` — donc je
+   peux recevoir un RÉSUMÉ de recherche, jamais LIRE une table publiée.
+   ⛔⛔ ET LE RÉSUMÉ NE TIENT PAS DEBOUT, mesuré en posant DEUX FOIS la même question :
+     · 1ʳᵉ réponse : 510 kcal · 37 g de protéines · 41 g de glucides · 26 g de lipides
+     · 2ᵉ réponse  : 580 kcal · 25 g de protéines · 45 g de glucides · 34 g de lipides
+   — et la seconde se contredit elle-même (580 kcal pour 220 g, mais « 257 kcal/100 g » = 565).
+   👉 *Un résumé de moteur de recherche n'est pas une source : c'est le bas de l'échelle de R33,
+   et deux réponses incohérentes le prouvent mieux qu'un principe.* Les synonymes pointent donc
+   vers les aliments RÉELS de la table nationale, **dont le nom dit lui-même « de restauration
+   rapide »** : la personne voit ce qu'elle prend, et rien ne se fait passer pour un produit de
+   marque (R32/R33). Pour l'exact, le calibrage à la main de ft-v1110 est là — les valeurs sont
+   affichées en restaurant.
    ⛔ `tacos` N'EST PAS MAPPÉ, exprès : il n'est pas dans la table, et lui coller un kebab serait
    inventer. *On dit qu'on ne l'a pas plutôt que de servir autre chose.*
    ⭐ R2 : une seule table, un seul point d'entrée. La recherche ne change pas — c'est la
