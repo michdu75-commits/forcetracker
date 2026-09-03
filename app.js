@@ -1071,6 +1071,14 @@ function _afSetSrc(o){ _afSrc=o||null; }
 const _SECS_QUI_GONFLENT=/p[âa]tes|spaghetti|macaroni|penne|tagliatelle|coquillettes|riz\b|basmati|quinoa|semoule|couscous|boulgour|lentille|pois cass|pois chiche|haricot sec|flageolet|avoine|floconn/i;
 function _afNoteEtat(nom){
   const el=document.getElementById('af-etat-note'); if(!el) return;
+  /* ⚠️ UN MESSAGE DIRECT PASSE TEL QUEL (ft-v1114) : cette zone était réservée à un seul cas
+     (les féculents secs, détectés sur le NOM). Un produit de marque signalé comme douteux a
+     besoin de la même place — c'est le dernier écran avant « Ajouter ». ⛔ On étend le
+     propriétaire existant plutôt que d'ouvrir une 2ᵉ zone de note, qui finirait par afficher
+     deux avertissements à deux endroits pour la même ligne (R2). */
+  if(nom && String(nom).indexOf('⚠️')===0){
+    el.textContent=String(nom); el.style.display='block'; return;
+  }
   if(nom && _SECS_QUI_GONFLENT.test(String(nom))){
     el.textContent='⚖️ Les valeurs du paquet sont pour le produit SEC. Si tu pèses après cuisson, '
       +'note le poids SEC (une portion cuite pèse 2 à 3 fois plus, et le compte serait faux d\'autant).';
@@ -1103,6 +1111,17 @@ function _provFood(vals){
        ⛔ Posé SEULEMENT s'il est vrai : un `false` recopié partout annoncerait une
        vérification qui n'a pas eu lieu sur les chemins décodés par ZXing. */
     if(_afSrc.codeDouteux===true)p.codeDouteux=true;
+    /* ⚠️⚠️ TROISIÈME FOIS AU MÊME ENDROIT (03/09/2026, ft-v1114) — et l'avertissement est écrit
+       en majuscules juste au-dessus. J'ai posé `doute` et `kcalDerivee` dans `_afSetSrc`, écrit
+       en commentaire « le doute descend jusqu'à la donnée (R4) »… et la ligne enregistrée
+       portait `doute: null`, parce que cette liste blanche ne les recopiait pas.
+       👉 ***J'ai écrit la règle juste au-dessus de l'endroit où je venais de l'enfreindre.***
+       C'est la mesure de l'entrée sauvegardée qui l'a vu, pas la relecture.
+       ⛔ Pourquoi ces deux champs comptent : un chiffre signalé comme douteux le jour où on l'a
+       pris doit rester signalé dans trois mois, sinon l'avertissement n'a servi qu'une seconde.
+       Et une kcal DÉRIVÉE des macros ne doit jamais se relire comme une valeur publiée (R32). */
+    if(_afSrc.doute)p.doute=String(_afSrc.doute).slice(0,90);
+    if(_afSrc.kcalDerivee===true)p.kcalDerivee=true;
     const a=_afSrc.attendu;
     if(a&&vals) p.modifie=['kcal','prot','carbs','fat'].some(k=>(+a[k]||0)!==(+vals[k]||0));
   }
@@ -1353,7 +1372,10 @@ function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux, origine){
   const serv=parseFloat(p.serving_quantity)||0;
   const g=serv>0?serv:100;
   const gramsEl=document.getElementById('af-bc-grams');if(gramsEl)gramsEl.value=g;
-  _bcQsrc(serv, 'la fiche produit');   // ⛔ le nombre garde sa source écrite à côté (ft-v1105)
+  /* ⛔ LE NOMBRE GARDE SA SOURCE ÉCRITE À CÔTÉ (ft-v1105) — et pour un produit de marque, la
+     source est l'ENSEIGNE, pas « la fiche produit » : c'est elle qui publie ce poids. */
+  _bcQsrc(serv, (origine==='marque' && _bcNutr && _bcNutr.name && _bcNutr.name.indexOf(' · ')>0)
+                  ? _bcNutr.name.split(' · ').pop() : 'la fiche produit');
   /* ⛔ Un scan NEUF n'a pas de « dernière fois » : la pastille d'un aliment précédent doit
      disparaître, sinon elle proposerait le poids de quelqu'un d'autre que le produit affiché. */
   if(typeof _bcProposerDerniere==='function') _bcProposerDerniere(0);
@@ -1541,8 +1563,20 @@ function _bcQsrc(serv, source){
   const qs=document.getElementById('af-bc-qsrc'); if(!qs) return;
   if(serv===null){ qs.style.display='none'; qs.innerHTML=''; return; }
   const src=source||'la fiche produit';
+  /* ⚠️⚠️ « VÉRIFIE TA DOSETTE » DEVENAIT ABSURDE SUR UN BIG MAC (ft-v1114). Cette phrase a été
+     écrite en ft-v1105 pour la poudre de protéine, où la dosette du pot et la portion de la
+     fiche diffèrent vraiment. Recopiée telle quelle sur un produit de fast-food, elle demandait
+     de vérifier à la dosette le poids d'un sandwich. 👉 *Un comportement copié d'un contexte à
+     un autre peut devenir faux* (**R14**) — et il ne s'agit pas d'un détail de style : la
+     phrase invitait à corriger un nombre qui, ici, est le bon.
+     ⭐ La nuance qui décide : sur un produit de MARQUE, la portion publiée EST le produit
+     entier — il n'y a rien à doser. On l'annonce comme un fait, et on laisse la porte ouverte
+     (« si tu n'as pas tout mangé, mets ton poids ») sans réclamer de vérification. */
+  const marque = /^(McDonald|Burger King|KFC|Quick|Domino|Subway)/i.test(src) || src==='son enseigne';
   qs.innerHTML = (+serv>0)
-    ? '⚖️ <b>'+(+serv)+'&nbsp;g</b> est la portion déclarée par '+src+' — <b>vérifie ta dosette</b>, elle peut être différente.'
+    ? (marque
+        ? '⚖️ <b>'+(+serv)+'&nbsp;g</b> est le poids de la portion publiée par '+src+'. Si tu n\'as pas tout mangé, mets ton poids.'
+        : '⚖️ <b>'+(+serv)+'&nbsp;g</b> est la portion déclarée par '+src+' — <b>vérifie ta dosette</b>, elle peut être différente.')
     : 'Aucune portion déclarée par '+src+' : <b>100&nbsp;g</b> par défaut. Mets ta quantité réelle.';
   qs.style.display='block';
 }
@@ -2499,6 +2533,81 @@ async function _ciqualCharger(){
   })();
   return _ciqualEnCours;
 }
+/* ═══ 🍔 LA BASE FAST-FOOD FRANCE (ft-v1114) ═════════════════════════════════════════════════
+   Michel : « il faut que je puisse trouver les noms comme big Mac ou pizza 4 fromages », après
+   avoir fourni lui-même le classeur — la source que ce conteneur ne pouvait pas atteindre.
+   ⭐ R13/R2 : AUCUN nouveau mécanisme. Le chargeur, la recherche et le remplissage sont ceux de
+   CIQUAL ; seule la table change. Une 4ᵉ source dans la liste de propositions, pas un 4ᵉ chemin.
+   ⛔⛔ ET LA PROVENANCE EST LE CŒUR DU SUJET (R32/R33) : ces valeurs sont RELEVÉES sur les
+   sources officielles des enseignes, pas mesurées par l'app. Chaque ligne enregistrée porte son
+   enseigne, et l'écran l'affiche. *Un chiffre de marque qui ne dirait pas d'où il vient serait
+   pire qu'absent.*
+   ⚠️ CE QUI N'Y EST PAS, ET POURQUOI : `tools/marques.py` écarte ce qu'il ne peut pas garantir,
+   avec la raison à l'écran de sa sortie. Sur les 27 lignes validées du classeur, 4 sont dehors —
+   le Korean Whopper (752 kcal annoncées, 616 calculées depuis ses propres macros) et les 3
+   lignes KFC en pièces (146, 77 puis 38 kcal par pièce : elles se divisent par deux, donc au
+   moins deux sont fausses et on ne sait pas laquelle est juste). */
+let _marques=null, _marquesEnCours=null;
+async function _marquesCharger(){
+  if(_marques) return _marques;
+  if(_marquesEnCours) return _marquesEnCours;
+  _marquesEnCours=(async()=>{
+    try{
+      const r=await fetch('data/marques.json',{headers:{'Accept':'application/json'}});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const d=await r.json();
+      if(!d||!Array.isArray(d.a)) throw new Error('format');
+      _marques=d; return d;
+    }catch(e){ _marquesEnCours=null; return null; }      // jamais bloquant (règle d'or #4)
+  })();
+  return _marquesEnCours;
+}
+/* ⚠️ CE QU'ON DIT POUR NOMMER UNE ENSEIGNE : « mcdo » n'apparaît nulle part dans les données —
+   elles disent « McDonald's ». Même problème que `coca`/`cola` en ft-v1113, même remède. */
+const MARQUE_ALIAS={
+  'mcdo':"mcdonald's", 'macdo':"mcdonald's", 'mac do':"mcdonald's", 'macdonald':"mcdonald's",
+  'mcdonald':"mcdonald's", 'mcdonalds':"mcdonald's", 'mac donald':"mcdonald's",
+  'mac donalds':"mcdonald's", 'mcdonald s':"mcdonald's",
+  'bk':'burger king', 'burgerking':'burger king',
+  'kfc':'kfc', 'dominos':"domino's", 'domino':"domino's", "domino s":"domino's",
+  /* ⚠️ ET LES NOMS DE PRODUITS ÉCRITS SANS ESPACE — mesuré : « big mac » trouvait, « bigmac »
+     ne trouvait RIEN. On ne devine pas les espaces manquants en général (ça ferait remonter
+     n'importe quoi) : on nomme les cas qui arrivent. */
+  'bigmac':'big mac', 'mcchicken':'mcchicken', 'babywhopper':'baby whopper',
+  'whopperrings':'whopper rings', 'kentuckyfries':'kentucky fries'
+};
+/* Recherche dans la base de marques. Les mots peuvent être dans le désordre, et ils sont
+   cherchés dans « enseigne + nom » — donc « mcdo frite » et « frite mcdo » marchent tous deux. */
+/* ⚠️ UN ÉCHAPPEUR LOCAL, ET C'EST ASSUMÉ. Le projet en compte DÉJÀ CINQ, sous cinq noms
+   différents (`_escIdea`, `_escFood`, `_escNote`, `_souvEsc`, `_obsEsc`) — et trois vivent dans
+   d'autres fichiers. En brancher un sixième par emprunt créerait une dépendance entre `app.js`
+   et `screens.js` pour trois caractères. ⛔ Mon premier jet appelait `_esc`, qui n'existe pas :
+   la liste de propositions plantait ENTIÈREMENT (« _esc is not defined »), donc plus AUCUN
+   aliment ne s'affichait — et seule la mesure à l'écran l'a vu, la fonction de recherche étant
+   parfaitement correcte. ⏭️ Le vrai sujet reste ouvert : cinq échappeurs pour un besoin est un
+   défaut R2 à traiter d'un coup, pas au détour d'une version nutrition. */
+function _marqueEsc(t){ return String(t==null?'':t).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function _marquesChercher(q, max){
+  if(!_marques) return [];
+  let n=_afNorm(q).replace(/[-_.]+/g,' ').replace(/\s+/g,' ').trim();
+  if(MARQUE_ALIAS[n]) n=_afNorm(MARQUE_ALIAS[n]);
+  else{
+    /* mot à mot : « frites mcdo » doit devenir « frites mcdonald's » */
+    n=n.split(' ').map(m=>MARQUE_ALIAS[m]?_afNorm(MARQUE_ALIAS[m]):m).join(' ');
+  }
+  const mots=n.split(/\s+/).filter(m=>m.length>1);
+  if(!mots.length) return [];
+  const out=[];
+  for(let i=0;i<_marques.a.length;i++){
+    const a=_marques.a[i];
+    const nom=_afNorm(a[1]+' '+a[0]+' '+(a[2]||''));
+    const r=_afRang(mots, nom);
+    if(!r) continue;
+    out.push([r[0], r[1], nom.length, i]);
+  }
+  out.sort((x,y)=> x[0]-y[0] || x[1]-y[1] || x[2]-y[2]);
+  return out.slice(0, max||6).map(x=>x[3]);
+}
 /* ═══ ⛔⛔ LE PLURIEL — LE PLUS GROS TROU DE LA RECHERCHE (22/08/2026) ══════════════════════
    Michel : *« c'est comme j'ai cherché les pâtes, j'ai pas trouvé — enfin si, mais pas ce que je
    voulais trouver, et je n'ai plus la boîte pour le code-barre »*.
@@ -2710,6 +2819,35 @@ function _ciqualChercherUne(q, max){
 /* ⭐ R2 : un aliment CIQUAL remplit le formulaire par le MÊME chemin que le code-barres et la
    recherche Open Food Facts — grammes, provenance, note d'état. Un 3ᵉ chemin de remplissage
    finirait par diverger des deux autres. */
+/* 🍔 UN PRODUIT DE MARQUE REMPLIT LE FORMULAIRE PAR LE MÊME CHEMIN QUE TOUT LE RESTE (R2).
+   ⭐ La PORTION est pré-remplie (232 g pour un Big Mac) : c'est ce qu'on mange, et le champ
+   quantité dit d'où vient ce nombre depuis ft-v1105. Sans portion connue (cas Domino's, dont la
+   source ne publie que du pour-100 g), on retombe sur 100 g et la personne met son poids —
+   exactement comme un aliment de la table nationale. */
+function _afSuggPrendreMarque(i){
+  const idx=_afSuggMarq[i]; if(idx==null || !_marques) return;
+  const a=_marques.a[idx];
+  _bcNutr={ name:(a[1]+' · '+a[0]).slice(0,60), kcal100:_per100d1(a[3]),
+            prot100:_per100d1(a[4]), carbs100:_per100d1(a[5]), fat100:_per100d1(a[6]) };
+  const sid=('marque:'+a[0]+':'+a[1]).slice(0,32);
+  _offRemplirFormulaire({serving_quantity:a[7]||0, nutriments:{}}, sid, 'marque', false, 'marque');
+  /* ⛔ LA PROVENANCE DIT CE QU'ELLE EST, y compris quand les kcal ont été DÉRIVÉES des macros
+     (R32 : mesuré / estimé / propriétaire). On ne présente jamais un calcul comme une
+     publication. */
+  /* ⛔ LE DOUTE DESCEND JUSQU'À LA DONNÉE (R4) : il ne suffit pas de l'afficher dans la liste,
+     il doit rester attaché à la ligne enregistrée — sinon on ne saura plus, dans trois mois,
+     qu'un chiffre du journal était signalé comme douteux le jour où on l'a pris. */
+  _afSetSrc({saisie:'marque', origine:'marque', sourceId:sid, etat:null,
+             ...(a[9]? {doute:String(a[9]).slice(0,90)} : {}),
+             ...(a[8]? {kcalDerivee:true} : {}),
+             per100:{kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
+             attendu:_afLuFormulaire()});
+  /* ⚠️ ET IL SE REDIT DANS LE FORMULAIRE, là où on appuie sur « Ajouter » : la liste défile,
+     le formulaire est le dernier écran avant l'enregistrement. */
+  _afNoteEtat(a[9] ? ('⚠️ '+String(a[9])+'. Valeur publiée par '+a[0]+' : à toi de juger.') : _bcNutr.name);
+  _afSuggVider();
+  toast(a[9] ? 'Valeur signalée — vérifie avant d\'ajouter ⚠️' : 'Ajuste la quantité ✅', a[9]?'info':'success');
+}
 function _afSuggPrendreCiqual(i){
   const a=_afSuggCiq[i]; if(!a) return;
   /* ⛔⛔ LE PLUS COÛTEUX DES SIX : `data/ciqual.json` porte les décimales (3 298 aliments sur
@@ -2748,7 +2886,7 @@ function _afSuggPrendreCiqual(i){
       bananes de marque, pas l'aliment générique — la base CIQUAL (3 484 aliments génériques)
       reste le bon outil pour ça, et elle n'est pas encore là. On ne fait pas semblant du
       contraire, et on n'invente surtout pas de valeurs génériques nous-mêmes (R29). */
-let _afSuggTimer=null, _afSuggLoc=[], _afSuggOff=[], _afSuggCiq=[];
+let _afSuggTimer=null, _afSuggLoc=[], _afSuggOff=[], _afSuggCiq=[], _afSuggMarq=[];
 const _AF_SUGG_MIN=2;          // en dessous, tout matche : la liste serait du bruit
 const _AF_SUGG_DELAI=450;      // on ne part pas au réseau à chaque lettre
 
@@ -2824,7 +2962,7 @@ function _afSuggKcal100(p){
 }
 function _afSuggRendu(){
   const el=document.getElementById('af-sugg'); if(!el) return;
-  if(!_afSuggLoc.length && !_afSuggCiq.length && !_afSuggOff.length){ el.innerHTML=''; return; }
+  if(!_afSuggLoc.length && !_afSuggCiq.length && !_afSuggOff.length && !_afSuggMarq.length){ el.innerHTML=''; return; }
   const ligne=(ic,titre,detail,onclick)=>
     '<button onclick="'+onclick+'" style="width:100%;text-align:left;display:flex;gap:9px;align-items:baseline;'
     +'padding:9px 11px;border:none;border-bottom:1px solid var(--sep);background:none;cursor:pointer;'
@@ -2839,6 +2977,26 @@ function _afSuggRendu(){
     _afSuggLoc.forEach((e,i)=>{ h+=ligne('🕘', e.name,
       (e.kcal||0)+' kcal · P '+(e.prot||0)+' · G '+(e.carbs||0)+' · L '+(e.fat||0),
       '_afSuggPrendreLocale('+i+')'); });
+  }
+  /* ⭐⭐ LE FAST-FOOD PASSE AVANT LE GÉNÉRIQUE, et c'est l'inverse du choix fait pour les
+     bananes : quand on tape « big mac », on ne cherche pas « un hamburger en général » — on
+     cherche CE produit-là. Le nom tapé est déjà une marque, donc la marque gagne.
+     ⛔ Et chaque ligne dit son enseigne : le chiffre ne se présente jamais tout nu. */
+  if(_afSuggMarq.length && _marques){
+    h+='<div style="font-size:11px;color:var(--t3);padding:7px 11px 4px;font-weight:700;">FAST-FOOD (SOURCES OFFICIELLES)</div>';
+    _afSuggMarq.forEach((idx,i)=>{ const a=_marques.a[idx];
+      const p=a[7];
+      /* ⛔⛔ LE DOUTE S'AFFICHE, IL NE FAIT PAS DISPARAÎTRE LA LIGNE (03/09/2026). Michel :
+         « il faut tout mettre, sinon autant rien mettre, c'est logique » — et il a raison :
+         une ligne absente pousse vers l'estimation IA, qui est PIRE qu'une valeur publiée
+         douteuse. *C'est le mécanisme qui a fabriqué son pot de protéine faux.*
+         👉 On montre la valeur ET ce qui clochе, avec le chiffre qui permet de juger
+         (« 38 kcal/pièce »). R29 : informer sans décider. */
+      h+=ligne(a[9]?'⚠️':'🍔', a[1]+' <span style="color:var(--t3);font-weight:500;">· '+a[0]+'</span>',
+        (p? (Math.round(a[3]*p/100)+' kcal la portion ('+p+' g)') : (a[3]+' kcal/100 g'))
+        + (a[8]? ' · <span style="color:var(--orange);">kcal calculées</span>' : '')
+        + (a[9]? '<br><span style="color:var(--orange);">⚠️ '+_marqueEsc(String(a[9]))+'</span>' : ''),
+        '_afSuggPrendreMarque('+i+')'); });
   }
   /* ⭐ CIQUAL AVANT OPEN FOOD FACTS, et c'est un choix : quand on tape « banane », l'aliment
      GÉNÉRIQUE est presque toujours ce qu'on cherche — les bananes de marque viennent après. */
@@ -2858,13 +3016,13 @@ function _afSuggRendu(){
   if(_afSuggCiq.length) h+='<div style="font-size:10.5px;color:var(--t3);padding:6px 11px 8px;line-height:1.4;">Données aliments : table Ciqual 2025 — ANSES</div>';
   el.innerHTML=h+'</div>';
 }
-function _afSuggVider(){ _afSuggLoc=[]; _afSuggOff=[]; _afSuggCiq=[]; _afSuggRendu(); }
+function _afSuggVider(){ _afSuggLoc=[]; _afSuggOff=[]; _afSuggCiq=[]; _afSuggMarq=[]; _afSuggRendu(); }
 /* Déclenché à la frappe. Les LOCALES sortent tout de suite (aucun réseau) ; la recherche
    distante attend une pause de frappe — sinon on interroge Open Food Facts à chaque lettre. */
 function _afSuggInput(){
   const q=(document.getElementById('af-desc')||{}).value||'';
   _afSuggLoc=_afSuggLocales(q);
-  _afSuggOff=[]; _afSuggCiq=[];
+  _afSuggOff=[]; _afSuggCiq=[]; _afSuggMarq=[];
   _afSuggRendu();
   /* CIQUAL est LOCAL une fois chargé — donc pas de délai, mais le tout PREMIER accès doit
      aller chercher le fichier. On le déclenche ici et jamais au démarrage (règle d'or #4). */
@@ -2873,6 +3031,16 @@ function _afSuggInput(){
       const enCours=(document.getElementById('af-desc')||{}).value||'';
       if(_afNorm(enCours)!==_afNorm(q)) return;    // la frappe a continué : résultat périmé
       _afSuggCiq=_ciqualChercher(q,6); _afSuggRendu();
+    });
+    /* 🍔 LA BASE DE MARQUES, MÊME RÉGIME (ft-v1114) : locale, chargée au premier besoin et
+       jamais au démarrage. ⭐ Elle est petite (23 produits) mais son fichier est SÉPARÉ de
+       CIQUAL exprès — deux sources, deux provenances, et l'une peut grandir sans toucher
+       l'autre. ⛔ 4 propositions et non 6 : elles passent AVANT les génériques, et occuper tout
+       l'écran avec du fast-food quand on tape « poulet » serait un remède pire que le mal. */
+    _marquesCharger().then(()=>{
+      const enCours=(document.getElementById('af-desc')||{}).value||'';
+      if(_afNorm(enCours)!==_afNorm(q)) return;
+      _afSuggMarq=_marquesChercher(q,4); _afSuggRendu();
     });
   }
   if(_afSuggTimer) clearTimeout(_afSuggTimer);
@@ -3347,6 +3515,14 @@ function _coherenceKcal(pfx, corrigeur){
       +'est à revoir — <b>l\'app ne peut pas savoir laquelle</b>, elle ne touche à rien.</div>';
     el.style.display='block'; return;
   }
+  /* ⚠️ DEUX SEUILS, DEUX MÉTIERS — et ce n'est pas une incohérence à « harmoniser » (mesuré
+     le 03/09/2026, ft-v1114). Ici : 25 % et 60 kcal, parce que ce contrôle se déclenche à
+     CHAQUE frappe d'une personne réelle et qu'un avertissement trop bavard ne se lit plus.
+     `tools/marques.py` audite une table ENTIÈRE hors ligne, une fois : il peut se permettre
+     15 %, et c'est ainsi qu'il attrape le Korean Whopper (752 publiées / 616 calculées, soit
+     18 % — sous le seuil d'ici). *Un garde-fou de saisie et un audit de table ne cherchent pas
+     la même chose : le premier protège une frappe, le second protège une base.* C'est pour ça
+     que l'avertissement de la base s'affiche à part, dans la liste ET dans le formulaire. */
   if(!(kcal>0) || !(theo>0) || ecart<60 || ecart/Math.max(kcal,theo)<0.25
      || (kcal>theo && _KCAL_ALCOOL.test(nom))){   // ⛔ calories « en trop » sur une boisson alcoolisée : normal
     el.style.display='none'; el.innerHTML=''; return;
@@ -4775,6 +4951,10 @@ const APP_GUIDE_SLIDES=[
      dit ici est RELATIF au maximum du lecteur. Même raison que la diapo « Le repos suit la
      charge » juste au-dessus. */
   {icon:'🔥', t:'Ton échauffement se dose à ta charge', cap:'Deux choses ont changé dans ta montée en charge.<br><br>⏱️ <b>LE REPOS ENTRE PALIERS SUIT LA CHARGE.</b> Il restait à <b>45 s</b> quel que soit le poids — tu passais donc au palier le plus lourd 45 secondes après le précédent. Maintenant : <b>45 s</b> tant que c\'est léger, <b>90 s</b> à partir de 75 % de ta charge de travail, <b>2 min</b> à partir de 85 %. La barre affiche « <b>palier lourd</b> » pour que tu saches pourquoi.<br><br>⛔ <b>Jamais plus que ton propre repos de travail</b> : si tu l\'as réglé court, un palier lourd le respecte. ⏳ Et c\'est toujours un <b>maximum</b> — tu peux repartir avant.<br><br>📉 <b>MOINS DE PALIERS SUR LES CHARGES LÉGÈRES.</b> L\'app en ajoutait jusqu\'à <b>5 quelle que soit la charge</b> : un squat à 60 kg recevait le protocole d\'un squat à 150. Elle en met désormais autant que la charge le demande.<br><br>⛔ <b>Elle n\'enlève jamais un palier que Milo t\'a écrit</b> — elle arrête seulement d\'en rajouter.'},
+  /* 🍔 ft-v1114 — POINT 5 DE LA RÈGLE #11. ⛔ SANS IMAGE, exprès : une capture montrerait
+     des produits d'une enseigne précise et des grammes qui ne sont pas ceux du lecteur, et
+     surtout elle figerait une liste de 27 produits qui va grandir. */
+  {icon:'🍔', t:'Le fast-food par son nom', cap:'Tape <b>big mac</b>, <b>whopper</b>, <b>tenders kfc</b> ou <b>frites mcdo</b> dans « Ajouter un aliment » : le produit sort avec son <b>enseigne</b> et le <b>poids de sa portion</b> déjà rempli.<br><br>⭐ <b>D\'OÙ VIENNENT CES CHIFFRES.</b> Des <b>sources officielles des enseignes</b>, relevées puis vérifiées — pas de valeurs inventées par l\'app. C\'est pour ça que chaque ligne <b>affiche sa marque</b> : un chiffre qui ne dit pas d\'où il vient serait pire qu\'absent.<br><br>⚠️ <b>ET CERTAINES LIGNES PORTENT UN AVERTISSEMENT.</b> Quand une enseigne publie des calories qui ne collent pas aux macros de sa propre fiche, l\'app <b>te le dit</b> et te montre le chiffre qui permet de juger — au lieu de faire disparaître la ligne.<br><br>👉 <b>Pourquoi on ne la cache pas :</b> une ligne absente te pousse vers l\'estimation automatique, <b>moins fiable</b> qu\'une valeur publiée douteuse. Mieux vaut un chiffre discutable que tu peux juger qu\'une estimation que tu crois.<br><br>⛔ Si ton produit n\'y est pas : le <b>code-barres</b> ou la <b>photo de l\'étiquette</b> restent les chemins les plus sûrs.'},
   {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
 let _agIdx=0,_agSwipeInit=false;

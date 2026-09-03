@@ -1935,6 +1935,34 @@ encore à ça ? »* mais *« la propriété que je protège tient-elle toujours 
 
 ---
 
+### ⭐⭐ LE MIROIR, TROUVÉ LE 03/09 (ft-v1114) — *et il est plus coûteux que l'original*
+
+§31 décrit un témoin visé sur une forme. **Le miroir est une AIDE visée sur une forme** — et
+elle, personne ne la teste.
+
+Trois cas dans la même livraison, dont **deux sur du texte lu par l'utilisateur** :
+
+| où | ce qui était figé | pourquoi c'est devenu faux |
+|---|---|---|
+| témoin ft-v1113 | le **nom** `ciqual.json`, alors que son propre commentaire écrivait la garantie (*« un FICHIER, jamais l'IA »*) | une 2ᵉ base locale (`marques.json`) est arrivée |
+| **aide `?`** ft-v1113 | *« les noms sont GÉNÉRIQUES, **jamais des marques** : tu ne verras pas Big Mac »* | une base d'enseignes est arrivée **le lendemain** |
+| **aide `?` + nouveauté + diapo + aide détaillée** ft-v1114 | *« Tape **mcnuggets** »* | **il n'y a aucun nugget** dans les 27 produits — le mot n'a jamais existé |
+
+**⛔ Le 3ᵉ est le pire, et il est entièrement de mon fait** : j'ai écrit le matin même
+*« une aide qui nomme un repère inexistant est pire qu'une aide absente, parce qu'on la croit »*,
+puis j'ai cité un produit inexistant dans **quatre surfaces à la fois**. ⚠️ *Écrire la règle ne
+protège pas de l'enfreindre — seule une mesure le fait.*
+
+### 🛡️ Ce qui protège aujourd'hui
+Un témoin **extrait les produits que l'aide propose de taper** (la séquence qui suit « Tape ») et
+vérifie que chacun trouve vraiment quelque chose dans `data/marques.json`. ⛔ Il ne fige **aucune
+formulation** : on peut réécrire l'aide entièrement, il rougira seulement si elle nomme un produit
+qui n'existe pas. ⚠️ **Et son 1ᵉʳ jet était trop large** — il prenait tous les mots en gras et
+sortait « enseigne », « rien », « hors ligne » comme des produits introuvables : *un extracteur
+trop large ne mesure pas la promesse, il mesure la mise en forme.* Éprouvé **dans les deux sens**
+sur le vrai corpus (rouge sur `mcnuggets`, vert sur `big mac` et `tenders kfc`).
+
+
 ## 32. 🔗 L'ALLER-RETOUR CASSÉ AU MILIEU — les deux bouts sont justes, le maillon central n'existe pas **(01/09/2026, ft-v1093)**
 
 Une donnée de profil fait trois sauts : **l'app l'envoie** → **le serveur la range** → **l'app la

@@ -458,6 +458,16 @@ const FEAT_SI = {
   montrePas:     () => { try{ return ((S&&S.healthDaily)||[]).some(x=>x&&x.steps>0); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* 🍔 POINT ROUGE, PAS DE POP-UP `WHATS_NEW` (règle d'or #11), et c'est argumenté :
+     ① il y a bien quelque chose à DÉCOUVRIR — une SECTION NEUVE dans la liste de propositions,
+        que personne n'ira chercher en tapant « big mac » puisque ça ne marchait pas hier ;
+     ② mais **rien n'est à faire** et **aucun repère n'a bougé** : la section s'ajoute au-dessus
+        des aliments génériques, le champ où l'on tape n'a pas changé de place.
+     ⛔ Une pop-up dirait « vos recherches de fast-food ne trouvaient rien » — une alarme
+     rétroactive sur un trou qu'on vient de combler (R25). *La pop-up ANNONCE, l'aide EXPLIQUE*,
+     et ici il y a beaucoup à expliquer (d'où viennent ces chiffres, pourquoi certains portent un
+     ⚠️) : c'est le travail de l'aide `?`, pas d'une interruption. */
+  {id:'fastfood-marques', screen:'nutrition', desc:'🍔 <b>Le fast-food par son nom.</b> Tape <b>big mac</b>, <b>whopper</b>, <b>tenders kfc</b> ou <b>frites mcdo</b> : le produit sort avec son <b>enseigne</b> et le <b>poids de sa portion</b>. Les valeurs viennent des <b>sources officielles des enseignes</b> — et quand un chiffre publié est douteux, la ligne le <b>dit</b> au lieu de disparaître.'},
   /* 🍔 POINT ROUGE, PAS DE POP-UP (règle d'or #11) : il y a bien quelque chose à DÉCOUVRIR —
      des mots qui ne marchaient pas marchent, et *personne ne réessaie un mot qui a échoué une
      fois*. Mais rien à faire, aucun repère déplacé : la recherche a la même tête. ⛔ Une pop-up
