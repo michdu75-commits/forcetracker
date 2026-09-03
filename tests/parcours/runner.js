@@ -25098,6 +25098,95 @@ console.log('\n-- CCXXIV. Le Coca Zéro était compté 24 fois trop (ft-v1116) -
   }
 }
 
+/* ═══ CCXXV. LE PIÈGE DU COCA N'ÉTAIT PAS CELUI DU COCA : IL Y EN A 9 (ft-v1117) ════════════
+   Michel : *« et les autres boissons ? »*.
+   ⛔⛔ MESURÉ : CIQUAL porte **9 paires** « X, sucré, avec édulcorants » / « X, sans sucres
+   ajoutés, avec édulcorants », et « sucré » est **TOUJOURS le nom le plus court** — donc le tri
+   choisissait systématiquement la version SUCRÉE. Le Coca n'était qu'un cas sur 9.
+   ⚠️⚠️ ET LE CORRECTIF STRUCTUREL A ÉTÉ REFUSÉ PAR LA MESURE : traduire `zero`/`light` en
+   « sans sucres ajoutés » corrige 3 cas **et en casse 3** — `yaourt light` ne rend PLUS RIEN,
+   `soda light` tombe sur « Boisson gazeuse À LA POMME ». 👉 ***« Light » ne veut pas dire « sans
+   sucre » : un yaourt light est 0 % de matière grasse.*** Un mot à deux sens ne se traduit pas,
+   il se DÉSIGNE.
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXV. Le piège du Coca n\'était pas celui du Coca : il y en a 9 (ft-v1117) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    await _ciqualCharger(); await _aliasCharger();
+    const n=q=>(_ciqualChercher(q,4)||[]).map(x=>[x[0],x[1],x[3]]);
+    const o={};
+    ['soda light','soda zero','limonade light','tonic zero','ice tea zero','boisson energisante zero',
+     'ice tea','red bull','orangina','schweppes','latte','biere blonde','panache','eau petillante',
+     'lait amande','lait soja','lait avoine','lait de riz','lait de coco','rose','rosette',
+     'coca zero','yaourt light','soda','limonade','tonic','coca','lait','biere','vin rouge',
+     'powerade','gatorade','mojito'].forEach(q=>o[q]=n(q));
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXV n\'a pas pu tourner', false, R.err);
+  else{
+    const prem=q=>R[q][0]||null, kcal=q=>prem(q)?prem(q)[2]:null, nom=q=>prem(q)?prem(q)[1]:'RIEN';
+    /* ⛔ CONTRÔLE — les tables sont chargées, sinon tout le bloc mesure du vide. */
+    t('⛔ CONTRÔLE — la recherche répond (base + alias chargés)',
+      !!prem('coca') && !!prem('lait'), nom('coca'));
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : les 9 paires, pas seulement le cola. */
+    t('⭐⭐ les autres « light / zéro » rendent enfin la version SANS SUCRES AJOUTÉS',
+      /sans sucres ajout/i.test(nom('soda light')) && /sans sucres ajout/i.test(nom('limonade light'))
+      && /sans sucres ajout/i.test(nom('tonic zero')) && /sans sucres ajout/i.test(nom('ice tea zero'))
+      && /sans sucres ajout/i.test(nom('boisson energisante zero')),
+      ['soda light','limonade light','tonic zero','ice tea zero'].map(q=>q+'→'+kcal(q)).join(' · '));
+    /* ⛔ … et leurs calories le prouvent : elles ont chuté. */
+    t('⛔ … et les calories le prouvent (soda 22→0, limonade 8→0, tonic 22→0, ice tea 17→1)',
+      kcal('soda light')===0 && kcal('limonade light')===0 && kcal('tonic zero')===0
+      && kcal('ice tea zero')===1, '');
+    /* ⭐⭐ LE PIRE CAS, ET IL DÉPASSE LE COCA. */
+    t('⭐⭐ « lait amande » ne rend plus un CHOCOLAT à 559 kcal (× 15,5) mais la boisson à 36',
+      /^Boisson à l/i.test(nom('lait amande')) && kcal('lait amande')===36, nom('lait amande')+' '+kcal('lait amande'));
+    t('⛔ … et « lait soja », « lait avoine », « lait de riz » ne rendent plus RIEN',
+      /soja/i.test(nom('lait soja')) && /avoine/i.test(nom('lait avoine')) && /riz/i.test(nom('lait de riz')),
+      [nom('lait soja'),nom('lait avoine')].join(' | ').slice(0,70));
+    /* ⛔⛔ CE QU'ON REFUSE DE FUSIONNER, ET C'EST UN TÉMOIN À PART ENTIÈRE : le lait de coco
+       CULINAIRE (199 kcal) n'est pas la boisson à la noix de coco (30). Les confondre ferait
+       exactement le dégât qu'on répare. */
+    t('⛔⛔ « lait de coco » reste le CULINAIRE (199 kcal), jamais la boisson (30) — on ne fusionne pas',
+      /^Lait de coco/.test(nom('lait de coco')) && kcal('lait de coco')===199,
+      nom('lait de coco')+' '+kcal('lait de coco'));
+    /* ⛔ La sous-chaîne « rose » vivait dans « ROSETTE » — le saucisson à 392 kcal. */
+    t('⛔ « rosé » rend le VIN (69 kcal), plus la ROSETTE (le saucisson, 392)',
+      /^Vin ros/i.test(nom('rose')) && kcal('rose')===69, nom('rose')+' '+kcal('rose'));
+    t('⛔ … et la rosette reste trouvable en la tapant (on n\'a rien fermé)',
+      /Rosette/i.test(nom('rosette')), nom('rosette'));
+    /* ⛔ Les boissons qui ne rendaient RIEN — le générique, jamais un chiffre de marque. */
+    t('⛔ « ice tea », « red bull », « orangina », « latte », « bière blonde » trouvent leur générique',
+      ['ice tea','red bull','orangina','latte','biere blonde'].every(q=>!!prem(q)),
+      ['ice tea','red bull','orangina'].map(q=>nom(q).slice(0,26)).join(' | '));
+    t('⛔⛔ … et AUCUN nom de marque n\'est inventé (on ouvre le générique de la table nationale)',
+      ['ice tea','red bull','orangina','schweppes'].every(q=>
+        !/red ?bull|orangina|schweppes|monster|fanta|sprite/i.test(nom(q))),
+      ['red bull','orangina'].map(q=>nom(q).slice(0,34)).join(' | '));
+    /* ⛔⛔ LE CORRECTIF STRUCTUREL REFUSÉ : « yaourt light » doit TOUJOURS répondre. C'est lui
+       qui aurait disparu si on avait traduit `light` en « sans sucres ajoutés ». */
+    t('⛔⛔ « yaourt light » répond toujours — c\'est ce que le correctif structurel aurait cassé',
+      !!prem('yaourt light') && /yaourt|lait fermente/i.test(nom('yaourt light')), nom('yaourt light'));
+    /* ⛔ NON-RÉGRESSION : les versions SUCRÉES ne bougent pas d'un chiffre. */
+    t('⛔ NON-RÉGRESSION — « soda », « limonade », « tonic », « coca », « bière », « vin rouge » inchangés',
+      kcal('soda')===34 && kcal('limonade')===33 && kcal('tonic')===33 && kcal('coca')===40
+      && kcal('biere')===40 && kcal('vin rouge')===76,
+      ['soda','limonade','tonic','coca'].map(q=>q+'='+kcal(q)).join(' · '));
+    /* ⛔⛔ ET CE QUI N'EXISTE PAS RESTE VIDE, EXPRÈS : aucune boisson isotonique dans CIQUAL.
+       On ne sert pas un aliment approchant à la place (R29). */
+    t('⛔⛔ « powerade », « gatorade », « mojito » ne rendent RIEN — ils ne sont pas dans la table',
+      !prem('powerade') && !prem('gatorade') && !prem('mojito'), '');
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

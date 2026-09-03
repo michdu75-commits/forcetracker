@@ -458,6 +458,12 @@ const FEAT_SI = {
   montrePas:     () => { try{ return ((S&&S.healthDaily)||[]).some(x=>x&&x.steps>0); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* 🥤 POINT ROUGE (règle d'or #11) : des dizaines de boissons qui ne rendaient RIEN en rendent
+     une, et **un chiffre change** chez qui note ses sodas light. ⛔ Mais rien n'est à faire et
+     aucun repère n'a bougé : c'est une CORRECTION, pas un basculement — les valeurs d'avant
+     étaient fausses. *Une pop-up dirait « vos boissons light étaient comptées trop cher » :
+     une alarme rétroactive* (R25). L'aide `?` porte le détail. */
+  {id:'boissons-light', screen:'nutrition', desc:'🥤 <b>Les boissons trouvent enfin leur fiche.</b> <b>ice tea</b>, <b>red bull</b>, <b>orangina</b>, <b>lait d\'amande</b>, <b>bière blonde</b> ne rendaient <b>rien</b>. ⚠️ Et surtout : <b>soda light</b>, <b>limonade zéro</b>, <b>tonic zéro</b> tombaient sur la version <b>SUCRÉE</b> — le Coca n\'était qu\'un cas sur <b>9</b>.'},
   /* 🥗 POINT ROUGE, PAS DE POP-UP (règle d'or #11) : il y a bien quelque chose à DÉCOUVRIR —
      des mots qui ne marchaient pas marchent, et *personne ne réessaie un mot qui a échoué une
      fois*. ⛔ Mais rien n'est à faire et aucun repère n'a bougé : la liste a la même tête.
