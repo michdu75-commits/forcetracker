@@ -1327,7 +1327,11 @@ async function _lookupBarcode(ean, saisie, codeDouteux){
    chemin : mêmes grammes, même provenance, même avertissement cru/cuit, même score santé.
    Deux chemins séparés finiraient par diverger — et c'est l'avertissement du ×2,7 (le paquet
    de pâtes scanné puis pesé cuit) qui serait perdu d'un côté sans que personne ne le voie (R2). */
-function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux){
+/* ⚠️ `origine` EST UN PARAMÈTRE DEPUIS ft-v1110, ET LE DÉFAUT NE CHANGE RIEN : les quatre
+   appelants existants n'en passent pas et gardent donc `'off'`, au caractère près. Il existe
+   pour le calibrage à la main, qui doit s'enregistrer comme « étiquette » et surtout PAS comme
+   une fiche Open Food Facts — *une provenance fausse est pire que pas de provenance* (R33). */
+function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux, origine){
   // Quantité par défaut : portion si connue, sinon 100 g
   const serv=parseFloat(p.serving_quantity)||0;
   const g=serv>0?serv:100;
@@ -1346,7 +1350,7 @@ function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux){
   /* ⚠️ `codeDouteux` N'EST POSÉ QUE S'IL EST VRAI — on n'écrit pas `false` partout. Un champ
      absent veut dire « rien à signaler » ; le poser à false sur des millions d'entrées
      donnerait l'illusion d'une vérification qui n'a pas eu lieu sur les chemins décodés. */
-  _afSetSrc({saisie:saisie||'scan',origine:'off',sourceId:sourceId?String(sourceId).slice(0,32):null,
+  _afSetSrc({saisie:saisie||'scan',origine:origine||'off',sourceId:sourceId?String(sourceId).slice(0,32):null,
     etat:'tel-que-vendu',
     ...(codeDouteux?{codeDouteux:true}:{}),
     per100:{kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
@@ -1360,6 +1364,60 @@ function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux){
   if(p && p.nutriments && Object.keys(p.nutriments).length){
     try{ if(window.FoodHealth)FoodHealth.renderCard(p,'#af-health-card'); }catch(e){}
   } else if(hc){ hc.innerHTML=''; }
+}
+/* ═══ ⚖️ CALIBRER UN PRODUIT À LA MAIN (ft-v1110) ═══════════════════════════════════════════
+   Michel, 4ᵉ passe sur le même pot d'isolat : « il y a toujours le problème avec ma prot…
+   comment on peut résoudre ce problème ».
+   ⛔⛔ LA CAUSE, MESURÉE : sa ligne porte `per100 = null`, et AUCUN champ de l'app ne permettait
+   d'en saisir un à la main — ce chiffre n'arrivait que d'un scan ou de CIQUAL. Un produit dont
+   la fiche est incomplète était donc **incalibrable à vie**, et sa vieille ligne fausse revenait
+   en tête des propositions : un tap, et l'erreur recommençait.
+   👉 *Les trois versions précédentes ont ajouté des ALERTES ; aucune n'a rendu la personne
+   capable de RÉPARER le produit.* Un garde-fou dit que c'est faux, il ne corrige pas.
+   ⭐⭐ ZÉRO NOUVEAU CALCUL (R13/R2) : on rejoint le chemin de CIQUAL, qui appelle déjà
+   `_offRemplirFormulaire` avec un produit vide. Le bloc quantité, le recalcul, l'enregistrement
+   du `per100` — tout existe et ne bouge pas. */
+function _calOuvrir(){
+  const row=document.getElementById('af-cal-row'), btn=document.getElementById('af-cal-btn');
+  if(!row) return;
+  const ouvert=row.style.display!=='none';
+  row.style.display=ouvert?'none':'block';
+  if(btn) btn.textContent=ouvert?'⚖️ Saisir les valeurs pour 100 g (étiquette)':'⚖️ Masquer la saisie pour 100 g';
+  if(!ouvert){
+    /* ⭐ On pré-remplit avec ce qui est DÉJÀ à l'écran seulement si la quantité affichée vaut
+       100 g : dans ce cas les 4 champs SONT un pour-100 g, et le retaper serait absurde. Sinon
+       on laisse vide — proposer les valeurs d'une dose de 30 g comme un « pour 100 g » serait
+       exactement l'erreur qu'on essaie de réparer (R29). */
+    const q=_qtyGrammesEcran('af');
+    if(q===100){ ['kcal','prot','carbs','fat'].forEach(k=>{
+      const src=document.getElementById('af-'+k), dst=document.getElementById('af-cal-'+k);
+      if(src&&dst&&!dst.value) dst.value=src.value; }); }
+    const err=document.getElementById('af-cal-err'); if(err) err.style.display='none';
+  }
+}
+function _calAppliquer(){
+  const lu=k=>numFR((document.getElementById('af-cal-'+k)||{}).value)||0;
+  const kcal=lu('kcal'), prot=lu('prot'), carbs=lu('carbs'), fat=lu('fat');
+  const err=document.getElementById('af-cal-err');
+  const dire=m=>{ if(err){err.textContent=m; err.style.display='block';} };
+  if(err) err.style.display='none';
+  /* ⛔ On refuse le vide plutôt que d'enregistrer un produit « calibré » à zéro : ce serait une
+     fausse certitude, et elle se propagerait à tous les repas suivants. */
+  if(!(kcal>0 || prot>0 || carbs>0 || fat>0)){ dire('Recopie au moins une valeur du tableau.'); return; }
+  /* ⛔⛔ LA MÊME RÈGLE PHYSIQUE QU'À LA SAISIE (ft-v1103, propriétaire unique) : dans 100 g de
+     produit il ne peut pas y avoir plus de 100 g de matière. C'est ce qui attrape la colonne
+     « par portion » recopiée dans la colonne « pour 100 g » — l'erreur la plus probable ici. */
+  const imp=_masseImpossibleVals(100, prot, carbs, fat);
+  if(imp){ dire('⚖️ '+imp.somme+' g de macros pour 100 g de produit : impossible. Tu as peut-être recopié la colonne « par portion » — reprends celle qui dit « pour 100 g ».'); return; }
+  const nom=String((document.getElementById('af-desc')||{}).value||'').trim();
+  if(!nom){ dire('Donne d\'abord un nom à l\'aliment, au-dessus.'); return; }
+  _bcNutr={name:nom.slice(0,80), kcal100:Math.round(kcal), prot100:Math.round(prot),
+           carbs100:Math.round(carbs), fat100:Math.round(fat)};
+  /* ⭐ LE CHEMIN DE CIQUAL, MOT POUR MOT — produit vide, pas de portion déclarée (donc 100 g
+     par défaut, que la personne remplace par sa dose), et une provenance qui dit la vérité. */
+  _offRemplirFormulaire({serving_quantity:0, nutriments:{}}, null, 'etiquette-main', false, 'etiquette');
+  _calOuvrir();   // on referme : le bloc quantité prend le relais juste au-dessus
+  toast('Produit calibré ⚖️ — tape ta quantité','success');
 }
 // Lit les 4 macros telles qu'elles sont dans le formulaire À CET INSTANT (pour détecter, à
 // l'enregistrement, si la personne les a retouchées après un remplissage automatique).
@@ -2124,7 +2182,7 @@ function quickAddFood(i){
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   closeAddFood(); renderFoodJournal();
   try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}
-  toast(_journalJourActif()===today()?'Ajouté au journal 🍽️':'Ajouté au jour consulté 🍽️','success');
+  toast(_afToastAjout(),'success');
 }
 function toggleFavFood(i){
   const it=_afQuickItems[i]; if(!it)return;
@@ -2143,10 +2201,41 @@ function _renderAfMealChips(){
   const el=document.getElementById('af-meal-chips');if(!el)return;
   el.innerHTML=FOOD_MEALS.map(m=>{
     const sel=m.k===_afMeal;
-    return`<button onclick="setFoodMeal('${m.k}')" style="flex:1;min-width:70px;padding:9px 6px;border-radius:12px;border:1px solid ${sel?'var(--red)':'var(--sep)'};background:${sel?'rgba(255,45,85,.12)':'var(--bg2)'};color:${sel?'var(--red)':'var(--t2)'};font-size:12px;font-weight:${sel?700:500};cursor:pointer;font-family:var(--font);touch-action:manipulation;">${m.ic}<br>${m.lbl}</button>`;
+    /* ⚠️ 64 px ET NON 70 (03/09/2026) — mesuré, pas ajusté à l'œil : sur un écran de 390 px il
+       reste 358 px utiles, et 5 puces à 70 px plus leurs écarts en demandent 374. Elles se
+       cassaient donc en 4 + 1, ce qui faisait une bande de 114 px au lieu de 56 — supportable
+       tant qu'elle défilait, permanent depuis qu'elle est fixe. À 64 px les cinq tiennent sur
+       une ligne (344 px). ⛔ Sur les grands iPhone rien ne change : `flex:1` répartit toute la
+       largeur, la valeur minimale n'est jamais atteinte. */
+    return`<button onclick="setFoodMeal('${m.k}')" style="flex:1;min-width:64px;padding:9px 6px;border-radius:12px;border:1px solid ${sel?'var(--red)':'var(--sep)'};background:${sel?'rgba(255,45,85,.12)':'var(--bg2)'};color:${sel?'var(--red)':'var(--t2)'};font-size:12px;font-weight:${sel?700:500};cursor:pointer;font-family:var(--font);touch-action:manipulation;">${m.ic}<br>${m.lbl}</button>`;
   }).join('');
 }
 function setFoodMeal(k){_afMeal=k;_renderAfMealChips();}
+/* 🍽️⛔⛔ LA CONFIRMATION DIT DANS QUEL REPAS L'ALIMENT EST TOMBÉ (03/09/2026) — c'est la
+   seconde moitié de la phrase de Michel : « pareil quand on rentre un aliment, quel est le
+   jour de la journée choisi ».
+   ⛔ CE N'ÉTAIT PAS UN DÉTAIL D'ÉCRITURE, parce que le repas est le plus souvent DEVINÉ :
+   `_afMeal` est pré-réglé sur l'heure (avant 11 h → Petit-déj). L'app annonçait donc
+   « Ajouté au journal » sur un rangement qu'elle avait choisi seule, sans jamais le nommer —
+   et l'erreur se découvrait plus tard, dans le Journal, sans qu'on sache d'où elle venait.
+   *Une supposition qu'on ne montre pas est une décision prise à la place de la personne* (R29).
+   ⭐⭐ ET LA RÈGLE EXISTAIT DÉJÀ — POUR UN SEUL DES TROIS CHEMINS (R8, la jumelle). « Tes repas
+   habituels » (`rejouerRepas`) nomme le moment depuis ft-v1052, avec ce commentaire : *« sans
+   ça, on ne peut pas vérifier d'un coup d'œil que le tap a bien porté là où on voulait »*. Les
+   deux autres chemins d'ajout — la reprise d'un favori et le formulaire — disaient toujours
+   « Ajouté au journal ». *Une règle écrite pour un chemin et pas pour ses jumeaux est une règle
+   à moitié appliquée*, et c'est la 4ᵉ fois cette semaine.
+   ⛔ UN SEUL PROPRIÉTAIRE (R2) : on réutilise `_foodMealInfo`, déjà l'unique lecteur de
+   `FOOD_MEALS` — on ne refait pas un `find` à côté, sinon « Collation 2 » finirait par
+   s'appeler autrement ici que dans les puces et dans le Journal.
+   ⚠️ Et la distinction « aujourd'hui / jour consulté » est GARDÉE : elle protège d'un aliment
+   noté sur le mauvais JOUR, ce que le nom du repas ne dit pas. */
+function _afToastAjout(){
+  const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(_afMeal):null;
+  const ou=(mi&&mi.lbl)?mi.lbl:'journal';
+  return (_journalJourActif()===today()) ? ('Ajouté · '+ou+' 🍽️')
+                                         : ('Ajouté · '+ou+', jour consulté 🍽️');
+}
 // ─── LECTURE ÉTIQUETTE NUTRITIONNELLE PAR PHOTO (IA vision) ──────────────────
 // Redimensionne un fichier image en base64 JPEG (sans le préfixe data:) — assez net pour lire les chiffres.
 function _resizeToB64(file, maxPx, quality){
@@ -2801,7 +2890,7 @@ function addFoodEntry(){
   renderFoodJournal();
   try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}   // la carte « Où tu en es » suit
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
-  toast(_journalJourActif()===today()?'Ajouté au journal 🍽️':'Ajouté au jour consulté 🍽️','success');
+  toast(_afToastAjout(),'success');
 }
 function removeFoodEntry(ts){
   if(!S.foodLog)return;
@@ -3099,7 +3188,16 @@ function _qtyGrammesEcran(pfx){
 function _masseImpossible(pfx){
   const q=_qtyGrammesEcran(pfx); if(!(q>0)) return null;
   const lu=id=>numFR((document.getElementById(pfx+'-'+id)||{}).value)||0;
-  const somme=lu('prot')+lu('carbs')+lu('fat');
+  return _masseImpossibleVals(q, lu('prot'), lu('carbs'), lu('fat'));
+}
+/* ⛔⛔ LA RÈGLE PHYSIQUE, SUR DES VALEURS ET NON SUR DES CHAMPS (ft-v1110, R2).
+   Extraite telle quelle de `_masseImpossible` — pas une ligne de logique n'est changée — parce
+   que le calibrage à la main a besoin de la MÊME règle sur des nombres qui ne sont pas encore
+   dans les champs du formulaire. *Deux écritures de « ça ne tient pas dans la portion »
+   auraient fini avec deux tolérances, et on ne saurait plus laquelle croire.* */
+function _masseImpossibleVals(q, prot, carbs, fat){
+  if(!(q>0)) return null;
+  const somme=(+prot||0)+(+carbs||0)+(+fat||0);
   if(!(somme>0) || somme<=q+2) return null;      // +2 g : l'arrondi des 4 champs, rien de plus
   return {q:q, somme:Math.round(somme*10)/10};
 }

@@ -2462,7 +2462,35 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div class="modal-handle"></div>
     <div style="font-weight:800;font-size:18px;margin-bottom:14px;">🍽️ Ajouter un aliment</div>
     <div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Repas</div>
-    <div id="af-meal-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;"></div>
+    <!-- 📌⛔⛔ LA LIGNE « REPAS » RESTE À L'ÉCRAN QUAND ON DESCEND (03/09/2026) — Michel, deux
+         captures : « il faudrait que les ronds en haut soient fixes quand on descend, et pareil
+         quand on rentre un aliment quel est le jour de la journée choisi ».
+         ⛔ MESURÉ AVANT DE CODER, ET LE CHIFFRE EST SANS APPEL : les puces sortaient de l'écran
+         dès 236 px de défilement, sur une modale qui en fait 951. Or TOUT ce qui sert à saisir
+         l'aliment (le champ, l'estimation IA, la quantité, les macros) vit EN DESSOUS de ce
+         point. Autrement dit, au moment précis où l'on décide et où l'on valide, le repas qui
+         reçoit l'aliment n'était JAMAIS visible.
+         ⚠️ ET IL EST SOUVENT DEVINÉ, PAS CHOISI : `_afMeal` est pré-réglé sur l'heure qu'il est
+         (avant 11 h → Petit-déj). Un réglage deviné qu'on ne montre pas au moment de valider
+         est exactement ce que R29 interdit — l'app a le droit de proposer, pas de décider en
+         silence à la place de la personne.
+         ⭐ RIEN N'EST INVENTÉ (R13) : c'est l'en-tête collant déjà employé par `#ov-help` et
+         trois autres modales — même `position:sticky`, même fond `--bg2`, même trait de
+         séparation. Le trait n'est pas décoratif : c'est lui qui DIT que la bande est fixe.
+         ⛔ ET LES PUCES RESTENT LE MÊME ÉLÉMENT (`#af-meal-chips`, R2) : on ne fabrique pas un
+         second affichage « compact » du repas choisi, qui divergerait du vrai au premier
+         retouchage. Une seule source, rendue par `_renderAfMealChips`.
+         ⚠️ Le coût est réel et il est mesuré : la bande occupe 114 px des 775 de la modale.
+         C'est le prix de la garder sous les yeux — voir le journal (ft-v1109). -->
+    <!-- ⚠️⚠️ `top:-16px` N'EST PAS UN RÉGLAGE ESTHÉTIQUE, ET LA CAPTURE L'A TROUVÉ, PAS LA MESURE.
+         Un élément collant s'arrête au bord de la zone de défilement, qui passe À L'INTÉRIEUR des
+         16 px de marge de la modale : il restait donc une bande de 16 px au-dessus où les aliments
+         défilaient à la vue, par-dessus les puces. On remonte le fond de 16 px (`top`+`margin`) et
+         on rend ces 16 px en marge intérieure — les puces ne bougent pas d'un pixel (122 px du haut,
+         avant comme après), c'est seulement le FOND qui monte plus haut. -->
+    <div style="position:sticky;top:-16px;z-index:5;background:var(--bg2);margin:-16px -16px 16px;padding:16px 16px 10px;border-bottom:1px solid var(--sep);">
+      <div id="af-meal-chips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
     <div id="af-quick-list"></div>
     <!-- Code-barres + score santé : gratuit pour tout le monde (client-side, 0 token ; affiché par openAddFood) -->
     <div id="af-barcode-block" style="display:none;">
@@ -2557,6 +2585,42 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
          ⭐ ATTRAPER À LA SAISIE vaut mieux qu'attraper à la relecture : le chiffre est encore
          sous les yeux, et la journée n'est pas déjà faussée. Même contrôle que la modale de
          modification (R2 : une seule définition de « ces calories sont impossibles »). -->
+    <!-- ⚖️⛔⛔ CALIBRER UN PRODUIT À LA MAIN — LE TROU QUI RENDAIT UN POT « TOUJOURS » FAUX
+         (03/09/2026, ft-v1110). Michel, 4ᵉ passe sur le même pot d'isolat : *« il y a toujours
+         le problème avec ma prot… comment on peut résoudre ce problème »*.
+         ⛔⛔ MESURÉ, ET LA CAUSE EST STRUCTURELLE : sa ligne porte `per100 = null`, et **aucun
+         champ de l'application ne permettait de saisir un pour-100 g à la main**. Ce chiffre
+         n'arrivait que d'un scan ou de la base CIQUAL — donc un produit dont la fiche est
+         incomplète restait **incalibrable à vie**, et sa vieille ligne fausse était re-proposée
+         en tête de « Mes aliments » : un tap, et l'erreur revenait.
+         👉 *Les trois versions précédentes (ft-v1103/1104/1105) ont ajouté des ALERTES ; aucune
+         n'a donné le moyen de CORRIGER le produit une fois pour toutes.* Un garde-fou dit que
+         c'est faux ; il ne rend pas la personne capable de le réparer.
+         ⭐⭐ ET ON NE RÉINVENTE RIEN (R13/R2) : la base CIQUAL appelle déjà
+         `_offRemplirFormulaire` avec un produit VIDE. Une saisie à la main, c'est exactement ce
+         chemin-là avec des valeurs tapées au lieu d'être lues dans une table — même bloc
+         quantité, même recalcul, même `per100` enregistré. Zéro nouveau calcul.
+         ⛔ LA PROVENANCE NE MENT PAS (R33) : ces valeurs sont marquées « étiquette », jamais
+         « off ». *Une provenance fausse est pire que pas de provenance : elle se présente comme
+         un fait vérifiable.* -->
+    <button class="btn btn-bg2" id="af-cal-btn" onclick="_calOuvrir()" style="width:100%;margin-bottom:12px;font-size:13.5px;">⚖️ Saisir les valeurs pour 100 g (étiquette)</button>
+    <!-- ⚠️⚠️ `type="text"` ET NON `type="number"` — un témoin EXISTANT a attrapé mon
+         premier jet, qui les avait mis en `number`. Sur un clavier français, `type="number"`
+         **filtre la virgule** : « 62,5 » y devient vide ou « 625 » selon le navigateur, en
+         silence. C’est le défaut déjà payé sur 22 champs de l’app ; le 23ᵉ aurait recommencé.
+         *Un garde-fou écrit après coup vient de servir à celui qui l’avait écrit.* -->
+    <div id="af-cal-row" style="display:none;background:var(--bg3);border-radius:10px;padding:11px 12px;margin-bottom:14px;">
+      <div style="font-size:12px;color:var(--t2);margin-bottom:4px;font-weight:600;">Recopie le tableau de ton étiquette — <b>pour 100 g</b></div>
+      <div style="font-size:11px;color:var(--t3);line-height:1.4;margin-bottom:9px;">C'est la colonne « pour 100 g », pas ta dose. Une fois saisie, tu n'auras plus qu'à taper ta quantité : l'app calculera toute seule, cette fois-ci et les suivantes.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">kcal / 100 g</div><input id="af-cal-kcal" type="text" inputmode="decimal" step="any" placeholder="375" style="width:100%;box-sizing:border-box;padding:10px;border-radius:9px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+        <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Protéines / 100 g</div><input id="af-cal-prot" type="text" inputmode="decimal" step="any" placeholder="88" style="width:100%;box-sizing:border-box;padding:10px;border-radius:9px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+        <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Glucides / 100 g</div><input id="af-cal-carbs" type="text" inputmode="decimal" step="any" placeholder="1" style="width:100%;box-sizing:border-box;padding:10px;border-radius:9px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+        <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Lipides / 100 g</div><input id="af-cal-fat" type="text" inputmode="decimal" step="any" placeholder="1" style="width:100%;box-sizing:border-box;padding:10px;border-radius:9px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+      </div>
+      <div id="af-cal-err" style="display:none;font-size:12px;line-height:1.45;color:var(--orange);margin-bottom:9px;"></div>
+      <button class="btn btn-red" onclick="_calAppliquer()" style="width:100%;">Calibrer ce produit</button>
+    </div>
     <div id="af-coherence" style="display:none;font-size:12px;line-height:1.45;color:var(--orange);background:var(--bg3);border-radius:10px;padding:10px 11px;margin-bottom:10px;"></div>
     <button class="btn btn-red" onclick="addFoodEntry()" style="width:100%;margin-bottom:8px;">✅ Ajouter au journal</button>
     <button class="btn btn-bg2" onclick="closeAddFood()" style="width:100%;">Annuler</button>

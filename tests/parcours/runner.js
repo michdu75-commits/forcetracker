@@ -24081,6 +24081,324 @@ console.log('\n-- CCXVII. Deux faux rouges du banc payant : le vérificateur, pa
     !!par('EV-007') && par('EV-007').verifs.length===1, '');
 }
 
+/* ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()` — et je l'avais posé APRÈS (03/09/2026).
+   Il ne rougissait pas : il PLANTAIT (`browser.newContext: Target page, context or browser has
+   been closed`), donc il ne mesurait rien du tout et le total ne s'affichait même plus.
+   ⭐ Exactement le piège que session-B avait documenté en ft-v1106, huit heures plus tôt.
+   *Un bloc qui plante ne dit rien ; un bloc qui échoue dit quelque chose.* */
+/* ═══ CCXVIII. LA LIGNE « REPAS » RESTE À L'ÉCRAN, ET LE TOAST DIT OÙ (ft-v1109) ═══════════════
+   Michel, deux captures : « il faudrait que les ronds en haut soient fixes quand on descend, et
+   pareil quand on rentre un aliment quel est le jour de la journée choisi ».
+   ⛔⛔ MESURÉ AVANT DE CODER : les puces sortaient de l'écran dès 236 px, sur une modale qui en
+   défile 951 — et TOUT ce qui sert à saisir l'aliment vit en dessous de ce point. Le repas qui
+   reçoit l'aliment n'était donc JAMAIS visible au moment de valider.
+   ⚠️ ET IL EST SOUVENT DEVINÉ : `_afMeal` est pré-réglé sur l'heure qu'il est. Une supposition
+   qu'on ne montre pas est une décision prise à la place de la personne (R29).
+   ⭐ LE DÉFAUT DE LA 1ʳᵉ VERSION A ÉTÉ TROUVÉ PAR LA CAPTURE, PAS PAR LES CHIFFRES : avec
+   `top:0`, les aliments défilaient dans les 16 px de marge AU-DESSUS de la bande. Tous les
+   nombres étaient pourtant bons. D'où le témoin « fuite », qui regarde ce qui est PEINT. */
+console.log('\n-- CCXVIII. La ligne REPAS reste à l\'écran (ft-v1109) --');
+{
+  const J=n=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
+  const NOMS=['Ratatouille Cuisinée','Riz Basmati','Huile d\'olive','Oeuf cru','Poulet blanc',
+              '3 oeufs','Steak haché 5%','Pain aux céréales','Saucisson sec','Banane crue'];
+  const foodLog=[];
+  NOMS.forEach((n,i)=>{ for(let k=0;k<3;k++) foodLog.push({date:J(k+1),
+    meal:['petitdej','dejeuner','diner'][k%3], ts:Date.now()-(k+1)*864e5+i*36e5,
+    name:n, kcal:100+i*20, prot:10+i, carbs:20+i, fat:5+i}); });
+  /* ⛔ DEUX LARGEURS, ET C'EST LE POINT : 390 px est le petit iPhone (les puces s'y cassaient en
+     4 + 1), 430 px celui de Michel (elles y tenaient déjà sur une ligne). Mesurer une seule
+     largeur aurait laissé croire soit à une régression, soit à un gain qui n'existe pas. */
+  const VUES=[390,430]; const RES={};
+  for(const L of VUES){
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:L,height:844},timezoneId:'Europe/Paris'});
+    const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
+    /* ⚠️ `ft4_ob2` COMME LES 38 AUTRES BLOCS : sans lui, l'écran d'accueil « Installe Force
+       Tracker » se pose PAR-DESSUS la modale, et le témoin de fuite mesure une pop-up au lieu
+       de la bande (mesuré le 03/09 — c'est la leçon de ft-v1102, repayée). */
+    await p.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'84',ft4_premium:'1',ft4_ob2:'1',
+      ft4_guide_shown:'1',ft4_wn_seen:'99',ft4_foodlog:JSON.stringify(foodLog)}));
+    await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(2000);
+    RES[L]=await p.evaluate(async()=>{ try{
+      const w=ms=>new Promise(r=>setTimeout(r,ms));
+      document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+      goScreen('nutrition'); await w(400); openAddFood(); await w(600);
+      const modal=document.querySelector('#ov-add-food .modal');
+      const chips=document.getElementById('af-meal-chips');
+      const bande=chips.parentElement;
+      const rm=()=>modal.getBoundingClientRect();
+      const vu=()=>{const r=chips.getBoundingClientRect(),m=rm();
+        return r.bottom>m.top+1 && r.top<m.bottom-1;};
+      const o={ collant:getComputedStyle(bande).position,
+                defile: modal.scrollHeight>modal.clientHeight+50,
+                hautDepart: Math.round(chips.getBoundingClientRect().top-rm().top),
+                lignes: new Set([...chips.querySelectorAll('button')]
+                          .map(x=>Math.round(x.getBoundingClientRect().top))).size };
+      o.vuEnHaut=vu();
+      modal.scrollTop=300; await w(140); o.vuA300=vu();
+      modal.scrollTop=modal.scrollHeight; await w(180); o.vuAuFond=vu();
+      /* ⛔ ON PEUT ENCORE CHANGER DE REPAS DEPUIS LE BAS — une bande qu'on voit sans pouvoir
+         l'utiliser ne répondrait qu'à la moitié de la demande. */
+      const cible=[...chips.querySelectorAll('button')].find(x=>/Dîner/.test(x.textContent));
+      const rc=cible.getBoundingClientRect(), m=rm();
+      o.cliquableEnBas = rc.top>=m.top-1 && rc.bottom<=m.bottom+1;
+      cible.click(); await w(120); o.mealApres=_afMeal;
+      /* ⛔ LE TÉMOIN QUE LES CHIFFRES N'AURAIENT PAS DONNÉ : ce qui est PEINT tout en haut. */
+      modal.scrollTop=520; await w(200);
+      /* ⚠️⚠️ ON REFERME LES OVERLAYS JUSTE AVANT DE REGARDER, ET ON VÉRIFIE QU'IL N'EN RESTE
+         AUCUN. Sans ça, ce témoin mesure une POP-UP : mesuré le 03/09, la fenêtre « Installe
+         Force Tracker » (`ob0-android`) s'ouvre APRÈS le chargement et couvre la modale — le
+         témoin criait donc à la fuite sur un écran parfaitement correct. C'est la leçon de
+         ft-v1102 (« une pop-up de démarrage couvrait la première série d'images ») repayée. */
+      document.querySelectorAll('.overlay.open').forEach(x=>{ if(x.id!=='ov-add-food') x.classList.remove('open'); });
+      await w(150);
+      /* ⛔ ET ON DIT CE QU'ON A TROUVÉ EN HAUT : sans ça, « fuite=true » ne distingue pas un
+         vrai débordement d'un écran couvert par autre chose. */
+      const m2=rm();
+      const sous=document.elementFromPoint(Math.round(m2.left+m2.width/2), Math.round(m2.top+4));
+      o.quiEstEnHaut = sous ? ((sous.id||sous.tagName)+' :: '+(sous.textContent||'').trim().slice(0,40)) : 'rien';
+      o.fuite = !(sous && (sous===bande || bande.contains(sous)));
+      /* ⛔ ET LA ZONE DE SAISIE RESTE UTILISABLE SOUS LA BANDE (le coût doit rester payable). */
+      const ta=document.getElementById('af-desc'); ta.scrollIntoView({block:'center'}); await w(160);
+      o.champSousLaBande = ta.getBoundingClientRect().top >= bande.getBoundingClientRect().bottom-1;
+      /* ⛔ LE TOAST NOMME LE REPAS, sur les DEUX chemins qui l'ignoraient. */
+      setFoodMeal('collation2');
+      o.toast=(typeof _afToastAjout==='function')?_afToastAjout():'(pas de propriétaire)';
+      o.hauteurBande=Math.round(bande.getBoundingClientRect().height);
+      o.hauteurVisible=modal.clientHeight;
+      return o;
+    }catch(e){ return {err:String(e)}; } });
+    RES[L].errs=errs; await cx.close();
+  }
+  const A=RES[390], B=RES[430];
+  if(A.err||B.err) t('CCXVIII n\'a pas pu tourner', false, A.err||B.err);
+  else{
+    /* ⛔ LE CONTRÔLE D'ABORD : sans modale qui défile, « la bande reste visible » serait vrai
+       sans rien prouver. */
+    t('⛔ CONTRÔLE — la modale d\'ajout défile vraiment (sinon les témoins suivants sont vides)',
+      A.defile && B.defile, '390='+A.defile+' 430='+B.defile);
+    t('⭐⭐ la ligne REPAS reste visible du haut au BAS de la modale (les deux largeurs)',
+      A.vuEnHaut&&A.vuA300&&A.vuAuFond && B.vuEnHaut&&B.vuA300&&B.vuAuFond,
+      '390='+JSON.stringify([A.vuEnHaut,A.vuA300,A.vuAuFond])+' 430='+JSON.stringify([B.vuEnHaut,B.vuA300,B.vuAuFond]));
+    t('⛔ … et on peut CHANGER de repas depuis le bas, pas seulement le lire',
+      A.cliquableEnBas && A.mealApres==='diner' && B.cliquableEnBas && B.mealApres==='diner',
+      A.mealApres+' / '+B.mealApres);
+    /* ⛔⛔ CELUI-CI VIENT D'UN VRAI DÉFAUT DE MA 1ʳᵉ VERSION, invisible dans tous les nombres :
+       avec `top:0` les aliments défilaient dans les 16 px de marge au-dessus de la bande. */
+    t('⛔⛔ rien ne défile AU-DESSUS de la bande (le défaut que la capture a trouvé, pas la mesure)',
+      A.fuite===false && B.fuite===false,
+      '390 : '+A.quiEstEnHaut+' · 430 : '+B.quiEstEnHaut);
+    t('⛔ la bande est bien COLLANTE, pas simplement en haut du document',
+      A.collant==='sticky' && B.collant==='sticky', A.collant+' / '+B.collant);
+    /* ⛔ LE COÛT EST BORNÉ ET MESURÉ : une bande qui mangerait la moitié de la modale serait un
+       remède pire que le mal. 98 px sur 775 aujourd'hui. */
+    t('⛔ le coût reste borné : la bande prend moins du quart de la modale',
+      A.hauteurBande>0 && A.hauteurBande < A.hauteurVisible/4,
+      A.hauteurBande+' px sur '+A.hauteurVisible);
+    /* ⛔⛔ ET LA RAISON DU 64 px : les 5 puces tiennent sur UNE ligne, y compris sur un petit
+       écran où elles se cassaient en 4 + 1 (114 px au lieu de 71). */
+    t('⛔⛔ les 5 puces tiennent sur UNE ligne, même sur un écran de 390 px',
+      A.lignes===1 && B.lignes===1, '390='+A.lignes+' lignes · 430='+B.lignes);
+    /* ⛔ RIEN N'A BOUGÉ AU-DESSUS (règle d'or #9, l'esprit) : les puces partent du même endroit
+       qu'avant le correctif — mesuré à 122 px sur le code d'hier. */
+    t('⛔ les puces n\'ont pas bougé de place à l\'ouverture (122 px du haut, comme avant)',
+      A.hautDepart===122 && B.hautDepart===122, '390='+A.hautDepart+' 430='+B.hautDepart);
+    t('⛔ la zone de saisie reste sous la bande, jamais cachée par elle',
+      A.champSousLaBande && B.champSousLaBande, '390='+A.champSousLaBande+' 430='+B.champSousLaBande);
+    /* ⭐⭐ LA SECONDE MOITIÉ DE LA DEMANDE : « quand on rentre un aliment, quel est le moment
+       choisi ». Les deux chemins disaient « Ajouté au journal » — le 3ᵉ nommait déjà le repas
+       depuis ft-v1052 (R8, la jumelle). */
+    t('⭐⭐ la confirmation NOMME le repas au lieu de « Ajouté au journal »',
+      /Collation 2/.test(A.toast) && /Collation 2/.test(B.toast), A.toast);
+    /* ⛔ ET LE LIBELLÉ VIENT DU PROPRIÉTAIRE UNIQUE — sinon « Collation 2 » divergerait entre le
+       toast, les puces et le Journal (R2). */
+    {
+      const app=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+      const f=app.split('function _afToastAjout(')[1]||'';
+      const corps=f.slice(0,f.indexOf('\n}'));
+      t('⛔ le toast lit `_foodMealInfo`, il ne refait pas sa propre recherche dans FOOD_MEALS',
+        /_foodMealInfo/.test(corps) && !/FOOD_MEALS\s*\.\s*find/.test(corps), corps.replace(/\s+/g,' ').slice(0,120));
+      /* ⛔⛔ CE TÉMOIN A ROUGI SUR SA PROPRE DOCUMENTATION (famille §31) : il cherchait la
+         chaîne « Ajouté au journal » N'IMPORTE OÙ dans le fichier, et mon commentaire la CITE
+         pour expliquer qu'on l'a retirée. La garantie n'est pas « ce texte n'existe nulle
+         part », c'est « AUCUN APPEL À `toast` ne l'emploie ». On ne lit donc que les appels. */
+      const appels=(app.match(/toast\([^;]{0,200}/g)||[]).filter(x=>/Ajouté au journal|Ajouté au jour consulté/.test(x));
+      t('⛔ … et aucun APPEL à `toast` ne dit plus « Ajouté au journal » (les 3 chemins nomment le moment)',
+        appels.length===0, appels.join(' | ').slice(0,140));
+      /* ⛔ CONTRÔLE : le détecteur sait mordre — sinon « 0 appel » serait vrai même si la
+         recherche ne trouvait jamais rien. */
+      t('⛔ CONTRÔLE — le détecteur d\'appels `toast` trouve bien des appels dans le fichier',
+        (app.match(/toast\([^;]{0,200}/g)||[]).length>20, '');
+    }
+    t('⛔ 0 erreur JS sur les deux largeurs', A.errs.length===0 && B.errs.length===0,
+      (A.errs.concat(B.errs)).join(' | '));
+  }
+
+  /* ⛔⛔ LES SURFACES SE MESURENT À L'ÉCRAN, PAS DANS LE FICHIER (règle d'or #11, points 3-4).
+     C'est la famille §31 de `BUGS.md` : une aide peut exister dans le code et ne jamais
+     s'afficher — ou s'afficher avec son icône restée à l'état d'ÉCHAPPEMENT, ce qui est
+     exactement arrivé dans cette version (`\\U0001F4CC` au lieu de 📌, attrapé avant la
+     livraison parce qu'on est allé regarder le fichier). */
+  {
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
+    await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+    await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1800);
+    const S2=await p.evaluate(async()=>{ try{
+      const w=ms=>new Promise(r=>setTimeout(r,ms));
+      document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+      goScreen('nutrition'); await w(350);
+      const o={};
+      showHelp(); await w(350);
+      const el=document.getElementById('help-content')||{};
+      const aide=el.innerText||'';
+      o.aideRendue = aide.length>200;
+      o.aideParleDuRepas = /reste sous tes yeux/.test(aide);
+      /* ⛔⛔ LA GARANTIE, PAS L'ORTHOGRAPHE (§31), ET J'AI RATÉ DEUX FOIS DE SUITE.
+         Ce qui compte est que l'aide DISE que le repas se déduit de l'heure. Mon 1ᵉʳ jet
+         cherchait « pré-réglé » quand le texte écrit « pré-règle » ; mon 2ᵉ jet a « corrigé »
+         en `(pré-rég|pre-reg)`, qui ne matche toujours pas « pré-règ » — un ACCENT de
+         différence. *Deux tentatives à viser un mot, zéro à viser le sens.* On demande
+         maintenant les trois choses que l'aide doit dire, et aucune formulation précise. */
+      o.aideDitQueCEstDevine = /sur l'heure/i.test(aide) && /avant 11 h/i.test(aide)
+                               && /devin/i.test(aide);
+      o.aideSansEchappement = !/\\U000[0-9A-F]/i.test(el.innerHTML||'');
+      closeHelp(); await w(200);
+      openDrawerContent('help'); await w(400);
+      const det=(document.getElementById('drawer-cnt-body')||{}).innerText||'';
+      o.detailRendu = det.length>200;
+      o.detailParleDuRepas = /restent à l'écran quand tu descends/.test(det);
+      closeDrawerContent();
+      return o;
+    }catch(e){ return {err:String(e)}; } });
+    await cx.close();
+    if(S2.err) t('CCXVIII — surfaces : n\'a pas pu tourner', false, S2.err);
+    else{
+      /* ⛔ CONTRÔLE D'ABORD : si les aides ne rendaient rien, tout ce qui suit serait vert en
+         ne lisant rien. */
+      t('⛔ CONTRÔLE — l\'aide `?` de Nutrition et l\'aide détaillée rendent bien du contenu',
+        S2.aideRendue && S2.detailRendu, 'aide='+S2.aideRendue+' détail='+S2.detailRendu);
+      t('⛔ l\'aide `?` explique la bande de repas, À L\'ÉCRAN (pas seulement dans le fichier)',
+        S2.aideParleDuRepas, '');
+      t('⛔⛔ … et elle dit ce qu\'on ne devine PAS : que le repas est pré-réglé sur l\'heure',
+        S2.aideDitQueCEstDevine, '');
+      /* ⛔⛔ CELUI-CI VIENT D'UN DÉFAUT RÉEL DE CETTE VERSION. */
+      t('⛔⛔ aucune séquence d\'échappement laissée telle quelle dans l\'aide rendue',
+        S2.aideSansEchappement, '');
+      t('⛔ l\'aide détaillée porte le même point (les surfaces racontent la même chose)',
+        S2.detailParleDuRepas, '');
+      t('⛔ 0 erreur JS en ouvrant les deux aides', errs.length===0, errs.join(' | '));
+    }
+  }
+}
+
+/* ═══ CCXIX. UN PRODUIT DEVIENT CALIBRABLE À LA MAIN (ft-v1110) ═══════════════════════════════
+   Michel, 4ᵉ passe sur le même pot d'isolat : « il y a toujours le problème avec ma prot…
+   comment on peut résoudre ce problème ».
+   ⛔⛔ LA CAUSE MESURÉE N'ÉTAIT PAS UN GARDE-FOU MANQUANT : sa ligne portait `per100 = null`, et
+   AUCUN champ de l'app ne permettait d'en saisir un à la main. Un produit dont la fiche Open
+   Food Facts est incomplète restait donc incalibrable À VIE — et sa vieille ligne fausse
+   revenait en tête des propositions.
+   ⭐ Les valeurs employées ici sont celles de SON étiquette : 88 g de protéines pour 100 g. */
+console.log('\n-- CCXIX. Un produit devient calibrable à la main (ft-v1110) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'84',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    const w=ms=>new Promise(r=>setTimeout(r,ms)); const V=id=>(document.getElementById(id)||{}).value;
+    const o={};
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    goScreen('nutrition'); await w(300); openAddFood(); await w(500);
+    /* ⛔ CONTRÔLE D'ABORD : le pour-100 g n'est PAS connu au départ, sinon tout ce bloc
+       mesurerait un formulaire déjà rempli par autre chose. */
+    o.blocAvant=(()=>{const e=document.getElementById('af-bc-row');return !!(e&&e.offsetParent!==null);})();
+    document.getElementById('af-desc').value='Iso zero protein';
+    _calOuvrir(); await w(150);
+    o.champsOuverts=(()=>{const e=document.getElementById('af-cal-row');return !!(e&&e.offsetParent!==null);})();
+    document.getElementById('af-cal-kcal').value='375';
+    document.getElementById('af-cal-prot').value='88';
+    document.getElementById('af-cal-carbs').value='1';
+    document.getElementById('af-cal-fat').value='1';
+    _calAppliquer(); await w(300);
+    o.blocApres=(()=>{const e=document.getElementById('af-bc-row');return !!(e&&e.offsetParent!==null);})();
+    o.pour100={kcal:V('af-kcal'),prot:V('af-prot')};
+    document.getElementById('af-bc-grams').value='30'; _bcApplyGrams(); await w(200);
+    o.pour30={kcal:+V('af-kcal'),prot:+V('af-prot')};
+    o.alerteMuette=(document.getElementById('af-coherence')||{}).style.display==='none';
+    addFoodEntry(); await w(400);
+    const e=(S.foodLog||[]).slice(-1)[0]||{};
+    o.enregistre={kcal:e.kcal,prot:e.prot,q:e.q,per100:e.per100||null,saisie:e.saisie||null,
+                  origine:e.origine||e.source||null};
+    /* ⭐⭐ LA VRAIE PROMESSE : « la fois d'après ». Sans ça on aurait réparé un repas, pas un
+       produit — et c'est précisément le mot « toujours » de Michel. */
+    openAddFood(); await w(500);
+    o.reprisePer100=(typeof _afQuickItems!=='undefined'&&_afQuickItems[0])?(_afQuickItems[0].per100||null):null;
+    /* ⛔ ON N'APPELLE PAS DE FONCTION QU'ON N'A PAS VÉRIFIÉE : `reprendreAliment` n'existe pas
+       (le vrai nom est `_afSuggPrendreLocale`). Une branche gardée par `typeof` qui ne s'exécute
+       jamais est une sonde qui ne mord pas — la faute même que ce bloc doit éviter. La preuve
+       tient dans `reprisePer100`, qui lit ce que la proposition PORTE. */
+    /* ⛔ CONTRÔLE NÉGATIF DE LA RÈGLE PHYSIQUE : la colonne « par portion » recopiée dans la
+       colonne « pour 100 g » est l'erreur la plus probable ici — elle doit être REFUSÉE. */
+    closeAddFood(); await w(150); openAddFood(); await w(400);
+    document.getElementById('af-desc').value='Test';
+    _calOuvrir(); await w(120);
+    document.getElementById('af-cal-kcal').value='156';
+    document.getElementById('af-cal-prot').value='120';
+    document.getElementById('af-cal-carbs').value='1';
+    document.getElementById('af-cal-fat').value='1';
+    _calAppliquer(); await w(200);
+    const er=document.getElementById('af-cal-err');
+    o.refus={affiche:!!(er&&er.style.display==='block'), texte:(er&&er.textContent||'')};
+    o.refusPasCalibre=(()=>{const e=document.getElementById('af-bc-name');
+      return !/Test/.test((e&&e.textContent)||'');})();
+    /* ⛔ ET LE VIDE EST REFUSÉ AUSSI : un produit « calibré » à zéro serait une fausse
+       certitude, propagée à tous les repas suivants. */
+    ['kcal','prot','carbs','fat'].forEach(k=>{document.getElementById('af-cal-'+k).value='';});
+    _calAppliquer(); await w(150);
+    o.refusVide=!!(er&&er.style.display==='block'&&/au moins une valeur/.test(er.textContent||''));
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXIX n\'a pas pu tourner', false, R.err);
+  else{
+    t('⛔ CONTRÔLE — aucun pour-100 g n\'est connu au départ (sinon le bloc mesure autre chose)',
+      R.blocAvant===false, 'bloc quantité déjà visible');
+    t('⛔ le bloc « valeurs pour 100 g » s\'ouvre à la demande', R.champsOuverts===true, '');
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : son étiquette entre, sa dose ressort juste. */
+    t('⭐⭐ 88 g de protéines / 100 g → 30 g rendent 26 g (l\'étiquette de Michel)',
+      R.pour30.prot===26 && R.pour30.kcal===113, JSON.stringify(R.pour30));
+    t('⛔ … et le bloc quantité s\'ouvre, comme après un scan réussi (R13 : même chemin)',
+      R.blocApres===true, '');
+    t('⛔ aucune alerte sur un produit correctement calibré (le garde-fou ne gêne pas le chemin juste)',
+      R.alerteMuette===true, '');
+    /* ⛔⛔ R4 : LE POUR-100 g DESCEND JUSQU'À LA DONNÉE. Sans ça la personne le saisit, l'écran
+       se met à jour… et rien n'est retenu : la fois d'après, on recommence. */
+    t('⛔⛔ le pour-100 g est ENREGISTRÉ avec la ligne (R4 — sinon on recommence demain)',
+      !!(R.enregistre.per100 && R.enregistre.per100.prot===88) && R.enregistre.q===30,
+      JSON.stringify(R.enregistre));
+    /* ⛔ LA PROVENANCE NE MENT PAS (R33) : saisi à la main ≠ lu sur Open Food Facts. */
+    t('⛔⛔ la provenance dit « étiquette », jamais « off » (une provenance fausse se présente comme un fait)',
+      R.enregistre.origine==='etiquette' && /etiquette/.test(String(R.enregistre.saisie)),
+      JSON.stringify({o:R.enregistre.origine,s:R.enregistre.saisie}));
+    /* ⭐⭐ « TOUJOURS » : c'est LA FOIS D'APRÈS qui compte. */
+    t('⭐⭐ la fois d\'après, l\'aliment proposé PORTE son pour-100 g (le produit est réparé, pas le repas)',
+      !!(R.reprisePer100 && R.reprisePer100.prot===88), JSON.stringify(R.reprisePer100));
+    /* ⛔ CONTRÔLE NÉGATIF : l'erreur la plus probable est refusée, et rien n'est calibré. */
+    t('⛔⛔ une colonne « par portion » recopiée est REFUSÉE (120 g de macros dans 100 g)',
+      R.refus.affiche===true && /impossible/.test(R.refus.texte), R.refus.texte.slice(0,90));
+    t('⛔ … et le texte dit QUOI FAIRE, il n\'accuse pas (R29)',
+      /par portion/.test(R.refus.texte) && /pour 100 g/.test(R.refus.texte), '');
+    t('⛔ … et rien n\'a été calibré au passage', R.refusPasCalibre===true, '');
+    t('⛔ un calibrage VIDE est refusé (un produit « calibré » à zéro serait une fausse certitude)',
+      R.refusVide===true, '');
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
@@ -24269,6 +24587,7 @@ console.log('\n-- CXCI. Une mise à jour ne tue plus un banc d\'essai en cours (
   t('⛔ le drapeau `_evRunning` existe et est bien posé par le banc d\'essai (sinon garde morte)',
     /_evRunning\s*=\s*true/.test(fs.readFileSync(path.join(ROOT,'coach.js'),'utf8')), '');
 }
+
 
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

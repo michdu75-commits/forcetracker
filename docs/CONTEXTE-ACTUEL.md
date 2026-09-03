@@ -6,6 +6,52 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1110` — ⚖️ **UN PRODUIT DEVIENT CALIBRABLE À LA MAIN.**
+  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+- ⛔⛔ **Michel, 4ᵉ passe sur le même pot** : *« il y a toujours le problème avec ma prot »*. La
+  cause est **structurelle**, mesurée : sa ligne porte `per100 = null`, et **aucun champ de
+  l'app ne permettait de saisir un pour-100 g à la main**. Un produit dont la fiche est
+  incomplète était donc **incalibrable à vie**, et sa vieille ligne fausse revenait **en tête**
+  des propositions.
+- ⛔⛔ **C'est le procès des trois versions précédentes** : ft-v1103/1104/1105 ont toutes ajouté
+  une **alerte**, aucune n'a rendu la personne capable de **réparer** le produit. *Un garde-fou
+  dit que c'est faux ; il ne corrige pas.*
+- ⭐⭐ **Zéro nouveau calcul (R13/R2)** : on rejoint le chemin de CIQUAL, qui appelle déjà
+  `_offRemplirFormulaire` avec un produit vide. *Le trou n'était pas dans la machinerie, il
+  était dans la porte d'entrée.*
+- ⭐ **Mesuré sur son étiquette** : 88 g/100 g → **30 g rendent 26 g**, le `per100` est enregistré
+  (**R4**) et **la fois d'après la proposition le porte** — le produit est réparé, pas le repas.
+- ⚠️⚠️ **Un témoin EXISTANT a attrapé un vrai défaut de mon code** : mes 4 champs étaient en
+  `type="number"`, qui **filtre la virgule** sur clavier français (« 62,5 » → vide ou « 625 »,
+  en silence). 23ᵉ occurrence évitée. *Un garde-fou écrit après un vrai bug vient de servir à
+  celui qui l'avait écrit.*
+- ⏭️ **Ce que ça ne fait PAS** : les lignes **déjà enregistrées** ne se corrigent pas — le
+  calibrage vit dans l'écran d'**ajout**, pas dans la modale de modification. Décision de
+  périmètre, pas un oubli. ⚠️ Et **Safari/iPhone non vérifié** (Chromium seulement).
+- **Version en ligne (live) :** `ft-v1109` — 📌 **LA LIGNE « REPAS » RESTE À L'ÉCRAN, ET LA
+  CONFIRMATION DIT OÙ.** ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+- ⛔⛔ **Mesuré avant de coder** : les puces de repas sortaient de l'écran dès **236 px**, sur une
+  modale qui en défile **951** — or **tout** ce qui sert à saisir l'aliment vit en dessous. 👉
+  *Au moment précis de valider, le repas qui reçoit l'aliment n'était **jamais** visible.*
+- ⛔⛔ **Et il est le plus souvent DEVINÉ** : `_afMeal` est pré-réglé sur **l'heure qu'il est**.
+  Une supposition qu'on ne montre pas est une décision prise à la place de la personne (**R29**).
+- ⚠️⚠️ **LE DÉFAUT DE MA 1ʳᵉ VERSION A ÉTÉ TROUVÉ PAR LA CAPTURE, PAS PAR LES CHIFFRES** : avec
+  `top:0`, **tous les nombres étaient bons** et l'écran était faux — les aliments défilaient dans
+  les 16 px de marge **au-dessus** de la bande. 👉 *Une mesure dit si la règle écrite est
+  respectée ; elle ne dit pas ce qui est **peint**.* Un témoin regarde désormais le haut de la
+  modale, pas une coordonnée.
+- ⛔ **La jumelle était déjà écrite, pour UN seul des 3 chemins (R8)** : « tes repas habituels »
+  nommait le moment depuis ft-v1052, les deux autres disaient « Ajouté au journal ». Propriétaire
+  unique réutilisé : `_foodMealInfo` (**R2**).
+- ⭐ **Coût mesuré et réduit** : la bande prend **98 px sur 775**, et les puces passent de 70 à
+  **64 px** pour tenir sur **une** ligne à 390 px (elles se cassaient en 4 + 1 = 114 px). ⛔ Sur
+  les grands iPhone, `flex:1` répartit tout : **rien ne change**.
+- ⏭️⚠️ **NON VÉRIFIÉ ICI : Safari/iPhone.** Le conteneur n'a que Chromium, et `position:sticky`
+  dans un conteneur défilant est justement un point où Safari diffère (`CLAUDE.md`). **C'est à
+  Michel d'ouvrir la modale et de descendre.**
+- ⏭️ **Question ouverte notée au journal de test** : le repas deviné part dans le contexte de
+  Milo — *tire-t-il des conclusions d'une étiquette souvent fausse ?* Non mesuré (coûte des
+  appels réels, **R34**).
 - **Version en ligne (live) :** `ft-v1108` — ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#826**
   sur le commit `ce8a05b`, `success` à 05:12. ⚠️ **Et il a fallu débloquer la file d'abord** :
   le job du run **#820** (session-B) est resté **7 h 52** à l'entrée de l'environnement
@@ -33,16 +79,7 @@
   écarté chez quelqu'un qui mange une fois par jour.
 - ⚠️ **Le CSV n'était PAS dans la session** : travail sur les mesures **relayées** par GPT — ni
   vérifiables, ni complètes (pas de macros par jour, pas de noms de repas). *Dit, pas sous-entendu.*
-- **Version précédente :** `ft-v1107`. ⏳ **Déploiement à vérifier** (**R18**).
-- **Version précédente :** `ft-v1107`. ⏳ **POUSSÉ, PAS ENCORE DÉPLOYÉ** — et la cause est
-  connue (**R18** : « poussé » ne veut pas dire « en ligne »). Le job `deploy` du run **#820**
-  (session-B, commit `d3ef923`) est resté **`waiting`** à l'entrée de l'environnement
-  `github-pages` depuis 20:24, et les déploiements Pages sont **sérialisés** : mon run **#822**
-  et le run **#823** que j'ai lancé à la main (le remède prescrit par `CLAUDE.md` — *un run
-  NEUF, jamais « relancer les jobs échoués »*) sont tous deux en file derrière lui.
-  ⚠️ **Rien à corriger côté code** : `origin/master` porte bien `ft-v1107`, suite verte
-  (2456/2456). ⏭️ **À vérifier à la reprise** : si #820 est toujours bloqué, il faut
-  l'**annuler** depuis l'interface GitHub pour libérer la file.
+- **Version précédente :** `ft-v1107` + `ft-v1108`. ✅ **Déploiement vérifié vert** (run **#826**, `ce8a05b`) — c'est ce run qui a aussi mis ft-v1107 en ligne, resté 7 h 52 en file derrière un job bloqué.
 - 🍽️⭐⭐ **L'APPORT ENTRE DANS LE MOTEUR DE TRAJECTOIRE** (ft-v1107), après le **contre-audit**
   d'une proposition GPT (`docs/NUTRITION-CONTRE-AUDIT-TRAJECTOIRE.md`). ⭐ **Vingt-huit
   paragraphes réduits à UN trou** : son axe « trajectoire » était **déjà en production**
