@@ -48,6 +48,38 @@ CORRECTIONS = {
     'tomates': (20385, 'idem'),
 }
 
+# ⛔ AJOUTS QUI NE VIENNENT PAS DU CLASSEUR — nommés, avec leur raison, jamais silencieux.
+#    ⚠️ ILS VIVENT ICI ET NON DANS `data/alias.json` : ce fichier est GÉNÉRÉ, donc une retouche
+#    à la main y disparaîtrait à la prochaine exécution, sans bruit (R27 : ce qui est généré ne
+#    s'édite pas à la main).
+AJOUTS = {
+    # 🥤 LE CAS QUI LES A FAIT NAÎTRE (03/09/2026, ft-v1116) — signalé par Michel en notant son
+    #    repas. `coca zéro` rendait « Cola, SUCRÉ, avec édulcorants » (18037, **24 kcal/100 g**)
+    #    AVANT « Cola, SANS SUCRES AJOUTÉS, avec édulcorants » (18060, **1 kcal/100 g**).
+    #    ⛔⛔ Sur une canette de 50 cl : **120 kcal enregistrées au lieu de 5**.
+    #    👉 Cause : `zero`/`light` sont traduits en « édulcorants », et les DEUX lignes portent ce
+    #    mot ; c'est alors le tri par NOM LE PLUS COURT qui tranche — et il tranche mal.
+    #    *Un mot traduit désigne une famille, pas un aliment : quand la famille contient le
+    #    contraire de ce qu'on cherche, il faut le code.*
+    #    ⚠️ On ne retire PAS 18037 : c'est le bon aliment pour un cola sucré aux édulcorants
+    #    (type stévia). On l'empêche seulement de répondre à la place du zéro.
+    'coca zero':      (18060, 'rendait « Cola, sucré, avec édulcorants » (24 kcal/100 g) — 120 kcal au lieu de 5 sur 50 cl'),
+    'coca light':     (18060, 'idem'),
+    'coke zero':      (18060, 'idem'),
+    'coke light':     (18060, 'idem'),
+    'cola zero':      (18060, 'idem'),
+    'cola light':     (18060, 'idem'),
+    'coca sans sucre':(18060, 'rendait « Cola, sucré, SANS CAFÉINE » (41 kcal/100 g) — encore pire'),
+    'cola sans sucre':(18060, 'idem'),
+    'pepsi max':      (18060, 'même famille : un cola sans sucres ajoutés, aux édulcorants'),
+    'pepsi zero':     (18060, 'idem'),
+    'pepsi light':    (18060, 'idem'),
+    # ⛔ Et la variante sans caféine a SA propre entrée dans la table nationale : on ne la
+    #    confond pas avec la précédente, elles ne portent pas les mêmes valeurs.
+    'coca zero sans cafeine': (18068, 'CIQUAL distingue la version sans caféine — on ne fusionne pas'),
+    'coca sans cafeine':      (18067, 'le cola sucré sans caféine, qui existe aussi'),
+}
+
 def norm(t):
     """La MÊME normalisation que `_afNorm` dans app.js — sinon la clé ne serait jamais trouvée."""
     t = str(t or '').lower()
@@ -88,7 +120,7 @@ def main(src):
     out, vus = {}, {}
     rej = {'hors_ciqual': [], 'inconnu': [], 'non_proposable': [], 'macro': [],
            'collision': [], 'doublon': [], 'court': []}
-    corrigees = []
+    corrigees, ajoutees = [], []
 
     for l in lignes:
         a = norm(l['alias'])
@@ -130,6 +162,19 @@ def main(src):
         vus[a] = code
         out[a] = code
 
+    # ⛔ LES AJOUTS PASSENT LES MÊMES GARDE-FOUS QUE LE CLASSEUR — sinon ils seraient une porte
+    #    dérobée par laquelle une cible morte pourrait entrer.
+    for a0, (code, raison) in AJOUTS.items():
+        a = norm(a0)
+        if a in deja:   rej['collision'].append(a0); continue
+        e = base.get(code)
+        if not e:       rej['inconnu'].append((a0, code)); continue
+        if e[3] is None: rej['non_proposable'].append((a0, code, e[1])); continue
+        if a in vus and vus[a] != code:
+            rej['doublon'].append((a0, vus[a], code)); out.pop(a, None); continue
+        vus[a] = code; out[a] = code
+        ajoutees.append((a0, code, e[1], raison))
+
     dst = os.path.join(ROOT, 'data', 'alias.json')
     with open(dst, 'w', encoding='utf-8') as f:
         json.dump({'source': 'Alias FR → codes Ciqual 2025 (ANSES) — aucune valeur nutritionnelle créée',
@@ -139,6 +184,9 @@ def main(src):
     import gzip as _gz
     kz = len(_gz.compress(open(dst, 'rb').read())) / 1024
     print(f'{len(out)} alias → {dst} ({ko:.0f} Ko · {kz:.0f} Ko gzippé)')
+    if ajoutees:
+        print(f'\n⭐ {len(ajoutees)} AJOUT(S) HORS CLASSEUR — nommés, avec leur raison :')
+        for a, c, lib, r in ajoutees: print(f'   · « {a} » → {c} {lib}\n     raison : {r}')
     if corrigees:
         print(f'\n⛔ {len(corrigees)} CORRECTION(S) APPORTÉE(S) À LA TABLE — jamais en silence :')
         for a, c, lib, r in corrigees: print(f'   · « {a} » → {c} {lib}\n     raison : {r}')

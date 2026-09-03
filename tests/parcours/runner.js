@@ -25012,6 +25012,81 @@ console.log('\n-- CCXXIII bis. Les 5 surfaces de la règle #11 (ft-v1115) --');
   }
 }
 
+/* ═══ CCXXIV. LE COCA ZÉRO ÉTAIT COMPTÉ 24 FOIS TROP (ft-v1116) ═════════════════════════════
+   Michel, en notant son repas de midi : *« corrige le coca zéro »*.
+   ⛔⛔ MESURÉ : `coca zéro` rendait « Cola, **SUCRÉ**, avec édulcorants » (18037, **24 kcal/100 g**)
+   AVANT « Cola, **SANS SUCRES AJOUTÉS**, avec édulcorants » (18060, **1 kcal/100 g**). Sur une
+   canette de 50 cl : **120 kcal enregistrées au lieu de 5**.
+   ⭐⭐ LA CAUSE N'EST PAS UNE FAUTE DE LA TRADUCTION, C'EST SA LIMITE : `zero` et `light` sont
+   traduits en « édulcorants », et les DEUX lignes portent ce mot — c'est alors le tri par NOM LE
+   PLUS COURT qui tranche, et il tranche mal. *Un mot traduit désigne une FAMILLE, pas un aliment ;
+   quand la famille contient le CONTRAIRE de ce qu'on cherche, il faut le CODE.*
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXIV. Le Coca Zéro était compté 24 fois trop (ft-v1116) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    await _ciqualCharger(); await _aliasCharger();
+    const n=q=>(_ciqualChercher(q,4)||[]).map(x=>[x[0],x[1],x[3]]);
+    const o={};
+    ['coca zero','coca zéro','coca light','coke zero','pepsi max','coca sans sucre',
+     'coca zero sans cafeine','coca','cola','coca cola','soda'].forEach(q=>o[q]=n(q));
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXIV n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ CONTRÔLE — les deux lignes de cola existent bien, sinon tout le bloc mesure du vide. */
+    t('⛔ CONTRÔLE — les DEUX colas aux édulcorants existent (1 kcal et 24 kcal)',
+      R.coca.length>0 && R['coca zero'].length>0, '');
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : le bon en tête, avec SON chiffre. */
+    t('⭐⭐ « coca zéro » rend le SANS SUCRES AJOUTÉS (1 kcal/100 g), pas le SUCRÉ (24)',
+      R['coca zero'][0] && R['coca zero'][0][0]===18060 && R['coca zero'][0][2]===1,
+      R['coca zero'].slice(0,2).map(x=>x[1].slice(0,34)+' '+x[2]).join(' | '));
+    t('⛔ … avec ou sans accent, et pour « light », « coke zero », « pepsi max »',
+      [R['coca zéro'],R['coca light'],R['coke zero'],R['pepsi max']].every(r=>r[0]&&r[0][0]===18060),
+      [R['coca zéro'][0],R['coca light'][0],R['coke zero'][0],R['pepsi max'][0]].map(x=>x?x[0]:'RIEN').join(' · '));
+    /* ⛔⛔ ON N'A RIEN SUPPRIMÉ : le cola sucré aux édulcorants reste JUSTE DESSOUS. C'est un
+       vrai aliment (type stévia), on l'empêche seulement de répondre à la place du zéro (R29). */
+    t('⛔⛔ le cola SUCRÉ aux édulcorants n\'a pas disparu — il est juste en dessous',
+      R['coca zero'].slice(1).some(x=>x[0]===18037),
+      R['coca zero'].map(x=>x[0]).join(' · '));
+    /* ⛔ CIQUAL distingue la version SANS CAFÉINE : on ne fusionne pas ce qui diffère. */
+    t('⛔ « coca zéro sans caféine » a SA propre entrée (on ne fusionne pas deux aliments distincts)',
+      R['coca zero sans cafeine'][0] && R['coca zero sans cafeine'][0][0]===18068,
+      String(R['coca zero sans cafeine'][0]));
+    /* ⛔ NON-RÉGRESSION : un Coca normal reste un Coca normal. C'est le témoin qui empêche de
+       « réparer » le zéro en cassant le sucré. */
+    t('⛔ NON-RÉGRESSION — « coca » rend toujours le Cola SUCRÉ (40 kcal), « cola » et « soda » inchangés',
+      R.coca[0] && R.coca[0][0]===18018 && R.coca[0][2]===40
+      && R.cola[0] && R.cola[0][0]===18018
+      && R['coca cola'][0] && R['coca cola'][0][0]===18018
+      && R.soda[0] && /gazeuse/i.test(R.soda[0][1]),
+      [R.coca[0][1],R.soda[0][1].slice(0,28)].join(' | '));
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+  /* ⛔⛔ ET LES AJOUTS VIVENT DANS LE GÉNÉRATEUR, PAS DANS LE FICHIER GÉNÉRÉ (R27) : une
+     retouche à la main de `data/alias.json` disparaîtrait à la prochaine exécution, sans bruit.
+     Ce témoin est le seul qui protège de ça. */
+  {
+    const py=fs.readFileSync(path.join(ROOT,'tools','alias.py'),'utf8');
+    t('⛔⛔ R27 — les ajouts sont dans `tools/alias.py`, pas écrits à la main dans le JSON généré',
+      /AJOUTS\s*=\s*\{/.test(py) && /'coca zero'\s*:\s*\(18060/.test(py), '');
+    /* ⛔ … et chacun porte SA RAISON : un ajout dont on a oublié le motif finit contourné (R30). */
+    const bloc=(py.split('AJOUTS = {')[1]||'').split('\n}')[0];
+    const lignes=(bloc.match(/^\s*'[^']+':\s*\(\d+,/gm)||[]);
+    const avecRaison=(bloc.match(/^\s*'[^']+':\s*\(\d+,\s*'[^']{8,}'\)/gm)||[]);
+    t('⛔ … et chaque ajout porte sa raison écrite (R30)',
+      lignes.length>0 && lignes.length===avecRaison.length,
+      avecRaison.length+' / '+lignes.length);
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
