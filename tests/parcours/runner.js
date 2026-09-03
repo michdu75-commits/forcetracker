@@ -24079,6 +24079,33 @@ console.log('\n-- CCXVII. Deux faux rouges du banc payant : le vérificateur, pa
     'scénarios ou vérificateurs introuvables');
   t('⭐ CONTRÔLE — EV-007 n\'a PAS été touché (choix assumé, voir l\'en-tête)',
     !!par('EV-007') && par('EV-007').verifs.length===1, '');
+
+  /* ── ③ EV-032 : la liste des « non mesurables » était FIGÉE AU 01/08 et a PÉRIMÉ ──
+     Mesuré le 03/09 : `Tate Press` est dans EXLIB, `_mscScores` lui rend {triceps:2,
+     front-delt:1}, et **0 des 322 exercices du catalogue envoyé** est muet. Milo l'a
+     prescrit parce que NOUS le lui envoyons, avec la consigne « écris son nom EXACTEMENT ».
+     ⛔⛔ Et les CINQ noms de l'ancienne liste y sont entrés depuis : la corriger l'aurait
+     rendue VIDE, donc le témoin serait devenu incapable de rougir. C'est pour ça que la
+     question posée a changé — on interroge le CATALOGUE RÉEL, pas une copie (R2). */
+  {
+    const v32=par('EV-032').verifs[0];
+    const VRAIE=['Curl Incliné — 3×10 à 16 kg','Curl Zottman — 3×10 à 12 kg',
+      'Tate Press — 3×12 à 16 kg','Triceps Corde Poulie — 3×15 à 30 kg','Gainage — 3×30 s'].join('\n');
+    const r32=v32.fn(VRAIE);
+    t('⛔⛔ EV-032 — « Tate Press » n\'est plus accusé : il EST au catalogue et l\'app le mesure',
+      r32===true, (r32&&r32.detail)||'');
+    const r32b=v32.fn('Développé Lunaire Inversé — 3×10 à 40 kg\nCurl Zottman — 3×10');
+    t('⛔⛔ CONTRE-ÉPREUVE — un exercice VRAIMENT inconnu du catalogue reste ROUGE',
+      !(r32b===true), 'passé au vert : le témoin ne mord plus');
+    /* ⛔ le piège suivant est déjà là : si le catalogue ne se charge pas, tout devient vert */
+    t('⛔⛔ le CATALOGUE se charge vraiment (sinon EV-032 serait vert sur n\'importe quoi)',
+      SC.U.catalogue().size>250, 'catalogue chargé : '+SC.U.catalogue().size+' noms');
+    t('⭐ … et il reconnaît un nom écrit COURT (« Rowing Barre » vs le nom long du catalogue)',
+      SC.U.catalogue().size>0 && v32.fn('Rowing Barre 4 × 5 reps')===true, '');
+    /* ⛔ une ligne SANS nom (le nom est au-dessus) ne doit accuser personne */
+    t('⭐ … et une ligne de série seule (« • S1 : 95×3 ») reste hors périmètre',
+      v32.fn('• S1 : 95×3 — repos 1 min 30')===true, '');
+  }
 }
 
 /* ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()` — et je l'avais posé APRÈS (03/09/2026).

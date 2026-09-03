@@ -2423,6 +2423,36 @@ qui **refuse** les 78 kg.
 - ⚠️ **Préférer le fait à la tournure** : chercher l'appareil (`balance`, `imc`) plutôt qu'un
   article précis ; lire *toute* la réponse avant le lien plutôt qu'une fenêtre de N caractères.
 
+### 🛡️ 2ᵉ FORME, MESURÉE LE MÊME JOUR : LE VÉRIFICATEUR QUI FIGE UN FAIT QUE LE DÉPÔT CORRIGE
+
+`EV-032` accusait Milo de prescrire « tate press », *« que l'app ne sait pas mesurer »* — sur une
+liste de 5 noms **figée au 01/08/2026**. Mesuré le 03/09 : `Tate Press` est dans `EXLIB`,
+`_mscScores` lui rend `{triceps:2, front-delt:1}`, et **0 des 322 exercices envoyés** est muet.
+Les **cinq** noms de la liste y étaient entrés depuis. Milo l'a prescrit **parce que nous le lui
+envoyons**, avec la consigne « écris son nom EXACTEMENT ».
+
+⛔⛔ **Et le piège se referme sur le correctif évident** : mettre la liste à jour l'aurait rendue
+**vide** — donc un témoin incapable de rougir. *Remplacer une liste périmée par une liste vide,
+ce n'est pas corriger.* Le correctif est de changer la QUESTION : interroger le catalogue réel
+(`EXLIB`, source unique — **R2**) au lieu d'en garder une copie. Un exercice ajouté demain cesse
+alors tout seul d'être coupable.
+
+⚠️ **Le calibrage compte autant que l'idée** : la 1ʳᵉ version générique produisait **4 faux
+positifs sur 30 lignes réelles**. Il a fallu comparer *dans les deux sens* (Milo écrit « Rowing
+Barre », le catalogue dit « Rowing Barre Buste Penché ») et **sortir du périmètre les lignes sans
+nom** (« • S1 : 95×3 » — le nom est sur la ligne du dessus). Résultat mesuré : **0 faux positif
+sur 19 lignes réelles, 4 exercices inventés sur 4 attrapés.**
+
+### 🛡️ 3ᵉ FORME : LE SCÉNARIO QUI TESTE UN CHAMP QUE L'APP NE COLLECTE PAS
+
+`EV-040` reproche à Milo de redemander « le matériel qu'il a déjà dans le profil ». Mesuré :
+`matos` **n'est pas une question de `COACH_QUIZ`**, et `S.equip`/`S.matos`/`S.materiel` ont
+**zéro occurrence dans toute l'app**. La fixture posait un champ inexistant — **§36 appliqué au
+scénario lui-même**. Le lieu, lui, passe bien (« Il s'entraîne : Maison avec matériel »).
+👉 *La question de Milo est légitime : il demande ce qu'il n'a jamais reçu, ce que **R8**
+prescrit précisément de faire.* Ce rouge-là ne ment pas — il pointe un trou de l'app, et le
+correctif est dans l'INTERFACE, pas dans le prompt.
+
 *Voisine de **§31** (le témoin visé sur une forme, pas sur sa garantie) — c'en est la version
 « langue naturelle », et de **§36** (une sonde qui invente un nom de champ mesure toujours zéro) :
 dans les deux cas le détecteur ne mesure pas ce que son titre annonce.*
