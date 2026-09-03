@@ -24808,6 +24808,16 @@ console.log('\n-- CCXXII bis. L\'aide ne promet plus ce qui n\'est plus vrai (ft
     const marques=JSON.parse(fs.readFileSync(path.join(ROOT,'data','marques.json'),'utf8'));
     const corpus=(marques.a||[]).map(a=>(a[0]+' '+a[1]).toLowerCase()).join(' | ');
     const alias={'mcdo':"mcdonald's",'macdo':"mcdonald's",'kfc':'kfc','bk':'burger king'};
+    /* ⚠️⚠️ ON N'EXTRAIT QUE CE QUE L'AIDE PRÉSENTE COMME « À TAPER » — mon 1ᵉʳ jet prenait TOUS
+       les mots en gras de la zone et sortait « enseigne », « rien », « hors ligne » comme des
+       produits introuvables. *Un extracteur trop large ne mesure pas la promesse, il mesure la
+       mise en forme.* On lit donc la seule séquence qui suit « Tape », jusqu'aux deux points. */
+    const aTaper=txt=>{
+      const out=[]; const re=/Tape\s+((?:<b>[^<]{2,28}<\/b>[,\s]*(?:ou|et)?[,\s]*)+)/g;
+      let m; while((m=re.exec(txt))!==null)
+        (m[1].match(/<b>([^<]{2,28})<\/b>/g)||[]).forEach(b=>out.push(b.replace(/<\/?b>/g,'').trim()));
+      return out;
+    };
     const cites=new Set();
     [ [path.join(ROOT,'screens.js'), 'Le fast-food par son nom'],
       [path.join(ROOT,'constants.js'), 'fastfood-marques'],
@@ -24815,21 +24825,20 @@ console.log('\n-- CCXXII bis. L\'aide ne promet plus ce qui n\'est plus vrai (ft
       [path.join(ROOT,'app.js'), "t:'Le fast-food par son nom'"] ].forEach(([f,ancre])=>{
       const txt=fs.readFileSync(f,'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
       const i=txt.indexOf(ancre); if(i<0) return;
-      const zone=txt.slice(i, i+2600);
-      /* on ne garde que ce qui est présenté comme « à taper » : <b>…</b> en minuscules */
-      (zone.match(/<b>[a-z0-9' àéèêç-]{3,24}<\/b>/g)||[]).forEach(m=>{
-        const mot=m.replace(/<\/?b>/g,'').trim();
-        if(/^(et|ou|le|la|les|un|une|des|pour|tape|pas|d'où|c'est)$/.test(mot)) return;
-        cites.add(mot);
-      });
+      aTaper(txt.slice(i, i+1400)).forEach(x=>cites.add(x));
     });
-    const orphelins=[...cites].filter(mot=>{
-      const mots=mot.split(/\s+/).map(w=>alias[w]||w).filter(w=>w.length>1);
+    const absent=mot=>{
+      const mots=String(mot).toLowerCase().split(/\s+/).map(w=>alias[w]||w).filter(w=>w.length>1);
       return !mots.every(w=>corpus.indexOf(w)>=0);
-    });
-    /* ⛔ CONTRÔLE — sans lui, « 0 orphelin » serait vrai en n'ayant rien extrait du tout. */
-    t('⛔ CONTRÔLE — l\'extracteur trouve bien des produits cités dans les 4 surfaces d\'aide',
+    };
+    const orphelins=[...cites].filter(absent);
+    /* ⛔ CONTRÔLE ① — sans lui, « 0 orphelin » serait vrai en n'ayant rien extrait du tout. */
+    t('⛔ CONTRÔLE — l\'extracteur trouve bien les produits « à taper » des 4 surfaces d\'aide',
       cites.size>=4, cites.size+' cités : '+[...cites].join(' · '));
+    /* ⛔ CONTRÔLE ② — et il sait REFUSER : éprouvé dans les deux sens sur le vrai corpus.
+       C'est ce qui prouve que le témoin peut rougir, au lieu de rassurer. */
+    t('⛔ CONTRÔLE — le détecteur repère bien un produit inexistant (« mcnuggets »)',
+      absent('mcnuggets')===true && absent('big mac')===false && absent('tenders kfc')===false, '');
     t('⭐⭐ AUCUN produit cité par l\'aide n\'est absent de la base (« mcnuggets » n\'existait pas)',
       orphelins.length===0, 'orphelins : '+orphelins.join(' · '));
   }
