@@ -24944,6 +24944,74 @@ console.log('\n-- CCXXIII. Les mots qu\'on emploie atteignent un aliment précis
   }
 }
 
+/* ═══ CCXXIII bis. LES 5 SURFACES DE LA RÈGLE #11, ET LA POP-UP EST MÉRITÉE (ft-v1115) ═══════
+   ⛔⛔ Ici la pop-up SE MÉRITE, et c'est le cas le plus coûteux de « un repère a bougé » : un
+   chiffre que la personne NOTE tous les jours change du simple au double (riz 350 → 155). Le
+   danger n'est pas qu'elle le remarque — c'est qu'elle ne le remarque PAS. */
+console.log('\n-- CCXXIII bis. Les 5 surfaces de la règle #11 (ft-v1115) --');
+{
+  const cst=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+  const sansCom=cst.replace(/\/\*[\s\S]*?\*\//g,'');
+  const wn=(sansCom.split('const WHATS_NEW=[')[1]||'').split('\n];')[0]||'';
+  const v68=(wn.match(/\{v:68[\s\S]{0,900}?\},/)||[''])[0];
+  /* ⛔ CONTRÔLE — sans lui, les témoins suivants seraient verts en ne lisant rien. */
+  t('⛔ CONTRÔLE — la pop-up v68 est bien trouvée dans WHATS_NEW',
+    v68.length>100, v68.length+' caractères lus');
+  /* ⭐⭐ CE QU'ELLE DOIT DIRE : le chiffre qui bouge, ET où est parti l'ancien. */
+  t('⭐⭐ la pop-up annonce le basculement CUIT avec les deux chiffres (155 et 167)',
+    /155/.test(v68) && /167/.test(v68), '');
+  t('⭐⭐ … et dit que le CRU n\'a pas disparu (annoncer un retrait sans dire où, c\'est fabriquer l\'inquiétude)',
+    /crue?<\/b>\s*(n|N)['’]a pas disparu|pas disparu/.test(v68) && /juste en dessous/.test(v68), '');
+  /* ⛔ R25 — la pop-up ANNONCE, elle n'explique pas : bornée à 600 caractères de texte. */
+  {
+    const d=(v68.match(/d:'([\s\S]*?)'\},/)||['',''])[1];
+    t('⛔ R25 — la pop-up reste courte (≤ 600 caractères) : c\'est l\'aide qui explique',
+      d.length>0 && d.length<=600, d.length+' caractères');
+    /* ⛔ ANTI-TCA (P21) : elle ne réclame rien à personne. */
+    t('⛔ P21 — elle ne demande NI de remplir son journal NI de corriger ses anciennes lignes',
+      !/remplis|corrige tes|rattrape/i.test(d), '');
+  }
+  /* ⛔ LES 4 AUTRES SURFACES, vérifiées dans les fichiers et non de mémoire. */
+  t('⛔ point rouge `alias-aliments` posé sur l\'onglet nutrition',
+    /id:'alias-aliments'[\s\S]{0,60}screen:'nutrition'/.test(cst), '');
+  t('⛔ l\'aide `?` explique le cru/cuit ET que la version crue reste juste en dessous',
+    /trouvent enfin leur aliment[\s\S]{0,2200}juste en dessous/.test(
+      fs.readFileSync(path.join(ROOT,'screens.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'')), '');
+  t('⛔ l\'aide détaillée porte le piège du cru/cuit',
+    /Tes mots de tous les jours, et le piège du cru\/cuit/.test(fs.readFileSync(path.join(ROOT,'coach.js'),'utf8')), '');
+  t('⛔ la diapo du Guide existe (point 5), et SANS image',
+    /t:'Tes mots trouvent ton aliment'/.test(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')), '');
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LA LEÇON DE ft-v1114, APPLIQUÉE ICI : tout aliment CITÉ par une
+     surface d'aide comme « à taper » doit vraiment trouver quelque chose. Sans lui, on refait
+     le coup de « mcnuggets » — un mot cité dans 4 endroits qui n'existait nulle part. */
+  {
+    const al=JSON.parse(fs.readFileSync(path.join(ROOT,'data','alias.json'),'utf8')).a;
+    const cites=new Set();
+    [[path.join(ROOT,'screens.js'),'trouvent enfin leur aliment'],
+     [path.join(ROOT,'constants.js'),"id:'alias-aliments'"],
+     [path.join(ROOT,'app.js'),"t:'Tes mots trouvent ton aliment'"]].forEach(([f,ancre])=>{
+      const txt=fs.readFileSync(f,'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
+      const i=txt.indexOf(ancre); if(i<0) return;
+      (txt.slice(i,i+1200).match(/<b>[a-zà-ÿ' -]{4,22}<\/b>/g)||[]).forEach(m=>{
+        const mot=m.replace(/<\/?b>/g,'').trim();
+        /* on ne garde que ce qui ressemble à un aliment cité : présent OU absent de la table,
+           mais jamais un mot de liaison ou un mot mis en gras pour l'emphase */
+        if(/^(riz|pâtes|pates)$/.test(mot) || /^[a-zà-ÿ]+( [a-zà-ÿ]+)?$/.test(mot)) cites.add(mot);
+      });
+    });
+    /* les mots que l'aide annonce comme ABSENTS doivent l'être, ceux qu'elle donne en exemple
+       doivent être trouvables — on ne vérifie que ce second groupe, nommé explicitement */
+    const exemples=['tortiglioni','fettuccine','pappardelle','riz jasmin','riz arborio','sticky rice'];
+    const absentsAnnonces=['whey','creatine','naan','chapati'];
+    t('⛔ CONTRÔLE — l\'extracteur lit bien les surfaces d\'aide',
+      cites.size>=3, cites.size+' mots en gras lus');
+    t('⭐⭐ chaque aliment donné en EXEMPLE par l\'aide existe vraiment dans la table',
+      exemples.every(m=>al[m]!=null), exemples.filter(m=>al[m]==null).join(' · '));
+    t('⛔ … et chaque mot annoncé comme ABSENT l\'est vraiment (whey, créatine, naan, chapati)',
+      absentsAnnonces.every(m=>al[m]==null), absentsAnnonces.filter(m=>al[m]!=null).join(' · '));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

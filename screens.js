@@ -246,6 +246,10 @@ const _HELP_DATA={
          repas est **pré-réglé sur l'heure**, donc qu'il vaut la peine d'y jeter un œil. */
       /* ⚖️ POINT 3 DE LA RÈGLE #11 — L'AIDE, ET ICI UN POINT ROUGE SE JUSTIFIE : c'est un
          bouton NEUF sur un écran qu'on utilise tous les jours, et personne ne le cherchera. */
+      /* 🥗 POINT 3 DE LA RÈGLE #11 (ft-v1115) — CE QU'ON NE DEVINE PAS : pourquoi le CUIT passe
+         devant, et que le CRU n'a pas disparu. C'est le seul chiffre que la version change pour
+         quelqu'un qui utilisait déjà l'app. */
+      {i:'\ud83e\udd57',t:'<b>Des centaines de mots de tous les jours trouvent enfin leur aliment.</b> <b>tortiglioni</b>, <b>fettuccine</b>, <b>pappardelle</b>, <b>riz jasmin</b>, <b>riz arborio</b>, <b>sticky rice</b> ne rendaient <b>rien</b> — l\'aliment était pourtant dans ton téléphone. ⭐ <b>Aucune valeur n\'a été inventée</b> : ces mots ouvrent une porte vers un aliment qui existait déjà dans la table officielle française, avec ses chiffres à lui. ⚠️⚠️ <b>ET UN CHIFFRE A CHANGÉ, il faut le savoir</b> : quand tu tapes <b>riz</b> ou <b>pâtes</b>, c\'est maintenant la version <b>CUITE</b> qui arrive en premier (riz 155 kcal/100 g, pâtes 167) et non la version crue (350 et 364). C\'est ce qu\'on mange, donc c\'est ce qu\'on note le plus souvent. ⛔ <b>Mais la version crue n\'a pas disparu</b> : elle est <b>juste en dessous</b> dans la liste. Si tu pèses tes pâtes sèches avant cuisson, prends-la — elle est à un doigt. 👉 <b>Le repère qui ne trompe pas</b> : le nom le dit toujours (« cuit », « cru », « sans sel ajouté »). Lis-le avant de valider, l\'écart est du simple au double. ⛔ Et si un mot ne rend toujours rien, c\'est qu\'il n\'est pas dans la table nationale — <b>whey</b>, <b>créatine</b>, <b>naan</b> n\'y sont pas. On préfère te le dire que te servir autre chose à la place.'},
       /* 🍔 POINT 3 DE LA RÈGLE #11 (ft-v1114) — L'AIDE PORTE CE QU'ON NE DEVINE PAS : d'où
          viennent ces chiffres, pourquoi certaines lignes portent un ⚠️, et pourquoi on les
          montre quand même. ⛔ C'est le cœur du sujet : un chiffre de marque qui ne dirait pas

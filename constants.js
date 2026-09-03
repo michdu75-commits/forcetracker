@@ -458,6 +458,13 @@ const FEAT_SI = {
   montrePas:     () => { try{ return ((S&&S.healthDaily)||[]).some(x=>x&&x.steps>0); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* 🥗 POINT ROUGE, PAS DE POP-UP (règle d'or #11) : il y a bien quelque chose à DÉCOUVRIR —
+     des mots qui ne marchaient pas marchent, et *personne ne réessaie un mot qui a échoué une
+     fois*. ⛔ Mais rien n'est à faire et aucun repère n'a bougé : la liste a la même tête.
+     ⚠️ En revanche un chiffre PEUT changer chez quelqu'un qui note « riz » : il obtient
+     maintenant le riz CUIT en tête (155 kcal) et non le CRU (350). C'est précisément ce qu'une
+     nouveauté doit dire — et l'aide `?` explique pourquoi les deux restent proposés. */
+  {id:'alias-aliments', screen:'nutrition', desc:'🥗 <b>Cherche avec tes mots.</b> <b>tortiglioni</b>, <b>fettuccine</b>, <b>riz jasmin</b>, <b>sticky rice</b> ne rendaient <b>rien</b> ; ils trouvent maintenant leur aliment. ⚠️ Et <b>riz</b> ou <b>pâtes</b> proposent d\'abord la version <b>CUITE</b> — celle qu\'on mange — avec la version crue juste en dessous.'},
   /* 🍔 POINT ROUGE, PAS DE POP-UP `WHATS_NEW` (règle d'or #11), et c'est argumenté :
      ① il y a bien quelque chose à DÉCOUVRIR — une SECTION NEUVE dans la liste de propositions,
         que personne n'ira chercher en tapant « big mac » puisque ça ne marchait pas hier ;
@@ -682,6 +689,17 @@ const NEW_FEATURES=[
 // ✅ v46/47/48 = les 3 features ex-testeurs (« maxi » · calories manuelles · objectif recomposition)
 //    OUVERTES À TOUT LE MONDE (ft-v623, décision Michel) + red dots reps-maxi/manual-kcal/goal-recomp réactivés.
 const WHATS_NEW=[
+  /* 🥗 ELLE SE MÉRITE, ET C'EST « UN REPÈRE A BOUGÉ » DANS SA FORME LA PLUS COÛTEUSE :
+     ⛔⛔ un chiffre que la personne NOTE tous les jours change **du simple au double**. Quelqu'un
+     qui tape « riz » enregistrait 350 kcal/100 g, il enregistrera 155. *Le danger n'est pas qu'il
+     le remarque — c'est qu'il ne le remarque PAS et que tout son journal glisse.*
+     ⭐ Et elle doit dire que le CRU n'a pas disparu : annoncer un basculement sans dire où est
+     parti l'ancien fabrique l'inquiétude qu'on voulait éviter (leçon de la v67).
+     ⛔ BORNÉE À L'ESSENTIEL (R25) : ce qui change, et où retrouver l'autre. Le reste — les
+     centaines de mots qui trouvent enfin leur aliment, les mots absents de la table — vit dans
+     l'aide `?`, l'aide détaillée et le Guide. *La pop-up ANNONCE, l'aide EXPLIQUE.*
+     ⛔ ANTI-TCA (P21) : elle ne dit nulle part « corrige tes anciennes lignes ». */
+  {v:68, ic:'🥗', t:'Nutrition : le riz et les pâtes sont proposés CUITS', d:'① <b>« riz » et « pâtes » proposent maintenant la version CUITE en premier</b> — <b>155</b> et <b>167 kcal/100 g</b> au lieu de 350 et 364. C’est ce qu’on a dans l’assiette, mais c’est <b>du simple au double</b> : si tu notes ces aliments souvent, tes chiffres vont bouger. ⛔ <b>La version crue n’a pas disparu</b> : elle est <b>juste en dessous</b> dans la liste. 👉 Le nom le dit toujours — « cuit », « crue » : un coup d’œil avant de valider.'},
   /* 📉 ELLE SE MÉRITE, ET C'EST LE CAS LE PLUS NET DE « UN REPÈRE A BOUGÉ » (règle d'or #11).
      ⛔⛔ « X kcal restantes » N'EST PLUS À SA PLACE dans la carte du jour. C'est le chiffre que
      la personne lisait en premier depuis des mois. **La lecture la plus naturelle serait « ils
