@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1112`** (prochaine : `ft-v1113`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1113`** (prochaine : `ft-v1114`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,35 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1113 — 🍔 LES MOTS QU'ON DIT ATTEIGNENT ENFIN LES ALIMENTS QU'ILS NOMMENT** — Michel : *« il n'y a pas de fast food ? »*, puis *« vas-y fais les synonymes et Mac Donald, avec les sandwichs qui vont avec »*.
+
+**⛔⛔ MESURÉ DANS LA VRAIE RECHERCHE, ET LE CONSTAT EST TÊTU** : `coca` ne rendait **RIEN** alors que **« Cola, sucré »** est dans le fichier — ***une lettre d'écart***. `soda` rien, alors que **94** « Boisson gazeuse… » y sont. `mcdo`, `macdo`, `fast food` rien, alors que **6 aliments « de restauration rapide »** y sont (5 burgers + milkshake), plus 13 frites, 7 nuggets, 26 pizzas, kebab, wrap, hot-dog, panini, donut. 👉 ***La donnée est là, la porte n'existe pas.***
+
+**⚠️⚠️ ET LE TROU EST INVISIBLE AU BUREAU, BÉANT À LA SALLE** : avec du réseau, la recherche Open Food Facts finit par rattraper le coup — donc **personne ne voit le défaut en testant chez soi**. Hors ligne ou en 4G faible, on n'a **rien**, alors que l'aliment est **dans le téléphone**. *C'est la règle d'or #4 qui se joue ici, pas du confort.*
+
+**⭐ R2 : LA RECHERCHE NE CHANGE PAS D'UNE LIGNE** — c'est la **REQUÊTE** qu'on traduit avant de la lancer (`FOOD_SYNONYMES` + `_foodSynonymes`, un seul propriétaire). Le classement, le « tous les mots doivent être présents », la tolérance aux accents : tout est inchangé, et un témoin de non-régression le vérifie (`riz`, `poulet`, `banane`, `cola`).
+
+**⛔⛔ ON RÉPARTIT, ON N'EMPILE PAS — et c'est mesuré, pas esthétique.** En jouant les requêtes l'une après l'autre, `mcdo` rendait **six sandwichs** et coupait les frites et les nuggets à la limite d'affichage. Or ***qui tape « mcdo » compose un MENU*** : un tour à la fois — un sandwich, des frites, des nuggets, puis on recommence.
+
+**⭐ `light` ET `zero` : UN GAIN SANS CONTREPARTIE, ET C'EST MESURÉ AVANT** — ces deux mots n'existent dans **aucun** des 3 484 noms (la table dit « avec édulcorants »). Les mapper ne pouvait donc casser **aucune** recherche qui marchait. *On vérifie qu'un ajout est gratuit avant de l'appeler gratuit.*
+
+**⛔⛔ `tacos` N'EST PAS MAPPÉ, ET C'EST UN TÉMOIN À PART ENTIÈRE** : il n'est pas dans la table, et lui coller un kebab serait **inventer**. *On dit qu'on ne l'a pas plutôt que de servir autre chose* (**R29**). Un second témoin vérifie qu'il n'entre pas dans la table de synonymes — le retrait est **figé**, pas seulement décidé (**R30**).
+
+**⚠️⚠️ ET LA VRAIE LEÇON DE LA VERSION EST UNE ERREUR À MOI, QUE MICHEL A CORRIGÉE : « bien sûr que si tu as accès à internet ».** J'avais refusé d'écrire les macros d'un Big Mac en disant *« je n'ai pas accès à internet »*. **C'était faux** : la recherche web fonctionne. ⛔ **Ce qui est bloqué par le proxy (403 vérifié trois fois)** est `openfoodfacts.org`, `mcdonalds.fr`, `informationsnutritionnelles.fr` — je peux donc recevoir un **résumé** de recherche, jamais **lire** une table publiée.
+
+**⛔⛔ LA DÉCISION N'A PAS CHANGÉ, SA JUSTIFICATION EST DEVENUE UNE MESURE.** Même question posée **deux fois** :
+- **1ʳᵉ réponse** : 510 kcal · **37 g** de protéines · 41 g de glucides · 26 g de lipides
+- **2ᵉ réponse** : **580 kcal** · **25 g** de protéines · 45 g de glucides · **34 g** de lipides
+— et la seconde **se contredit elle-même** (580 kcal pour 220 g, mais « 257 kcal/100 g » = 565). 👉 ***Un résumé de moteur de recherche n'est pas une source : c'est le bas de l'échelle de R33, et deux réponses incohérentes le prouvent mieux que n'importe quel principe.*** ⭐ *Une justification fausse pour une décision juste reste à corriger* : sans la remarque de Michel, le code aurait gardé une raison inexacte, et le suivant l'aurait crue.
+
+**⭐ LE CHEMIN HONNÊTE POUR SON BIG MAC, ET IL EXISTE DÉJÀ** : taper `mcdo` → **« Hamburger, de restauration rapide »** (251 kcal/100 g, table nationale) → mettre **le poids de son burger**. Un Big Mac fait ~220 g → ~550 kcal, ce qui **tombe entre les deux réponses de recherche**. *La valeur vient de la table, le poids vient de la personne, rien n'est inventé.* Pour l'exact, le **calibrage à la main** de ft-v1110 est fait pour ça — les valeurs sont affichées en restaurant.
+
+**📣 RÈGLE D'OR #11 — POINT ROUGE + AIDE `?` + AIDE DÉTAILLÉE, pas de pop-up.** ① Il y a bien quelque chose à **découvrir** : des mots qui ne marchaient pas marchent (personne ne réessaie un mot qui a échoué une fois). ② Mais **rien à faire** et **aucun repère déplacé** : la recherche a la même tête. ⛔ Une pop-up dirait *« vos recherches ne trouvaient rien »* — une alarme rétroactive (**R25**). ⭐ Ce que l'aide porte est ce qu'on ne devine pas : **les noms sont génériques, pas des marques**, et **`tacos` n'y est pas**.
+
+**⏭️ CE QUI RESTE OUVERT, DIT PLUTÔT QUE SOUS-ENTENDU** : `tacos` (absent de la table) · les **poids de portion** des produits de marque (un Big Mac fait ~220 g, mais je ne peux pas le sourcer d'ici) · et une éventuelle base de marques, qui demanderait une **source lisible**, donc un accès que ce conteneur n'a pas. ⚠️ **Safari/iPhone non vérifié** (Chromium seulement).
+
+Tests : **parcours 2527/2527** (+13, bloc **CCXXI**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données classées 0 trou. ⭐⭐ **Le témoin qui porte la version est « une lettre d'écart »** (`coca` → Cola). ⛔⛔ **Et celui qui dit ce qu'on REFUSE de faire en est un à part entière** : `tacos` doit rendre **zéro résultat**, et un second vérifie qu'il n'est pas dans la table de synonymes. ⛔ **Deux témoins gardent l'honnêteté du raccourci** : aucun nom rendu ne contient une marque, et **chaque** résultat de `mcdo` dit ce qu'il est (« de restauration rapide », « frites », « nuggets »). ⛔ Un contrôle ouvre le bloc (la base est-elle chargée ?), sinon les treize suivants seraient verts sur du vide. Fichiers : `app.js`, `screens.js`, `coach.js`, `constants.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1113. |
 
 **ft-v1112 — 🔢 UNE SEULE PRÉCISION POUR LE POUR-100 g (six endroits, quatre comportements)** — Michel, après le calibrage à la main : *« ça va être comme ça sur tous les produits, c'est chiant ? »*. **La réponse est non — mais la vérification a trouvé bien pire que sa question.**
 
@@ -586,30 +615,6 @@ Tests : **parcours 2444/2444** (+16, bloc **CCXV**, dont **6 contrôles**), calc
 **📣 RÈGLE D'OR #11 — RIEN, et c'est argumenté.** Ce qui apparaît est **une ligne d'explication sous un champ qui existait déjà**, et seulement sur l'écran de scan. Aucun repère n'a bougé, rien n'est à faire, aucun chiffre affiché ne change. ⛔ Une pop-up dirait *« la quantité qu'on vous proposait n'était peut-être pas la vôtre »* — **une alarme rétroactive** (**R25**), et l'aide `?` de ft-v1103 couvre déjà le sujet des valeurs qui ne collent pas.
 
 Tests : **parcours 2428/2428** (+7, bloc **CCXIV**), calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données classées 0 trou. ⭐⭐ **Le témoin qui porte la version est une REPRODUCTION EXACTE** : une portion déclarée à 40 g doit rendre **156 kcal · 35 g** — *si ce témoin cessait un jour de reproduire ses chiffres, c'est l'explication qui serait fausse, pas le code*. ⭐ **Et le cas JUSTE est épinglé à côté** : 30 g → **117 kcal · 26 g**, l'étiquette réelle. ⛔ Trois témoins de plus portent ce que le texte doit **faire** : nommer la source, **inviter sans accuser**, et **disparaître** sur un aliment sans fiche (pas de provenance orpheline — le défaut de ft-v1042 sur un autre objet). Fichiers : `app.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1105. |
-
-**ft-v1104 — ♻️ UNE VALEUR FAUSSE QUI SE RECOPIE — LE MÉCANISME DU « TOUJOURS »** — Michel envoie **l'étiquette du pot** : *« c'est cette prot là, toujours le même souci »*. Le tableau donne la vérité : **88 g de protéines pour 100 g**, donc **30 g → 116,6 kcal · 26,4 g de protéines · <1 g de glucides · 1,0 g de lipides**. L'app portait **156 / 35** — soit **exactement 1,333× la vérité, sur les DEUX nombres indépendamment**. Et **1,333 = 40/30** : des valeurs pour une dosette de **40 g**, collées sur une portion de 30.
-
-**⛔⛔ MAIS LE MOT QUI COMPTE DANS SA PHRASE EST « TOUJOURS », ET IL A UN MÉCANISME — DANS LE CODE.** Les suggestions de l'écran d'ajout ont pour **source ①** *« ce que la personne a déjà noté »* (ft-v989). Une estimation fausse notée **une fois** devient donc une **proposition qu'on reprend en un tap, indéfiniment**. 👉 ***Une valeur fausse qui se RECOPIE coûte plus cher que la valeur fausse d'origine : celle-là, au moins, ne se reproduit pas.*** Mesuré : sa ligne remonte bien dans la liste et réinjecte 156 / 35.
-
-**⛔⛔ ET LE GARDE-FOU LIVRÉ HIER NE LA VOYAIT PAS SUR CE CHEMIN — pour DEUX raisons distinctes, dont une est entièrement la mienne.**
-- **① Un champ CACHÉ porte encore sa valeur.** `af-bc-grams` est écrit `value="100"` dans le HTML : bloc masqué, il contient quand même « 100 ». Le contrôle comparait donc 37 g de macros à une portion de **100 g que personne ne voyait**. *Il ne rougissait pas — il mesurait un champ invisible.* On ne lit plus que ce qui est **affiché**.
-- **② ⛔ R4, à trois lignes du commentaire qui l'explique.** `e.q` (30 g, **bien enregistré**) n'était lu que dans la branche `per100`. À la reprise d'un aliment **sans** pour-100 g — le cas de ce produit, dont la fiche Open Food Facts est incomplète, *et le code le nomme déjà* — la quantité **n'atteignait pas l'écran**. Sans référence affichée, le garde-fou de masse n'avait rien à quoi comparer.
-
-**⚠️⚠️ ET UNE JUMELLE MANQUÉE PAR MOI, LA VEILLE (R8).** Le champ s'appelle `ef-grams` dans la modale de modification et **`af-bc-grams`** dans le formulaire d'ajout. Mon premier jet ne lisait que le premier : le contrôle était donc **aveugle sur tout le chemin code-barres / étiquette**, c'est-à-dire **précisément là où arrivent les valeurs d'un produit emballé**. 👉 *J'ai écrit la règle de la jumelle dans le journal la veille, et je l'ai manquée le lendemain.* **Le journal ne protège pas de ce qu'il documente.**
-
-**⚠️⚠️ ET MON PROPRE CORRECTIF A CASSÉ LE BLOC DE LA VEILLE — 5 rouges, attrapés par les témoins de ft-v1103.** Le contrôle ne lit plus que des champs **visibles** ; or `openEditFood` appelait `_efCoherence()` **avant** `ov.classList.add('open')`. Il mesurait donc un écran **pas encore affiché** : la quantité tombait à 0 et l'alerte ne partait jamais. 👉 ***On ne peut pas lire ce qui est à l'écran avant qu'il y soit*** — on ouvre, puis on mesure. *Un durcissement de garde-fou peut désarmer le garde-fou d'à côté, et c'est le banc d'essai qui l'a dit, pas la relecture.*
-
-**⭐ RIEN N'EST RÉINVENTÉ (R13)** : on emprunte le mécanisme du **poids déclaré** (`_afPoidsDeclare`), et son libellé *« que tu as indiqué »* reste **vrai** — elle l'a indiqué la fois d'avant. ⛔ Grammes seulement, et jamais par-dessus un pour-100 g, qui a déjà son propre champ (**R2**).
-
-**⭐⭐ ET LE CHEMIN FIABLE EST MESURÉ, PAS SUPPOSÉ.** Le pour-100 g de la **vraie étiquette** (88 g/100 g) sur 30 g rend **117 kcal · 26 g · 1 g · 1 g** — au chiffre près, **et en silence**. C'est **R33** (l'échelle des sources) vérifiée sur son pot : *le code-barres ou la photo de l'étiquette battent l'estimation*, et le garde-fou ne gêne pas le chemin juste.
-
-**⚠️ CE QUE ÇA NE PROUVE PAS, ET IL FAUT LE DIRE** : le garde-fou de masse n'attrape ce cas **que parce que la poudre titre 88 %**. La **même erreur de dosette** (valeurs pour 40 g sur une portion de 30) sur du **poulet** donnerait ~8,7 g de protéines dans 30 g — **aucune alerte**, et c'est normal : rien ne serait physiquement impossible. *La règle attrape l'impossible, pas le faux.* Détecter un décalage de portion en général demanderait une référence qu'on n'a pas.
-
-**📣 RÈGLE D'OR #11 — RIEN DE NEUF, l'aide de ft-v1103 couvre déjà le sujet.** Aucun repère n'a bougé, rien n'apparaît : ce qui change, c'est qu'une **quantité déjà enregistrée s'affiche enfin** quand on reprend un aliment — donc un champ **manquant qui revient**, pas un repère déplacé. ⛔ Et l'annoncer reviendrait à dire *« vos aliments repris perdaient leur quantité »* : une alarme rétroactive sur un trou qu'on ferme (**R25**).
-
-**⏭️ ET SA LIGNE À LUI RESTE FAUSSE.** L'app la lui signale désormais **à l'ouverture ET à la reprise** — elle ne la corrige pas (**R29**, elle ne sait pas lequel des deux nombres est faux). *Le plus sûr pour ce pot est le code-barres ou la photo de l'étiquette, qui donnent le pour-100 g exact.*
-
-Tests : **parcours 2421/2421** (+9, bloc **CCXIII**) ⚠️ *mesuré sur l'arbre **FUSIONNÉ** avec les contre-audits de session-B*, calculs 266/266, muscles 241/241, croisés 50/50, dates 7/7, données classées 0 trou. ⭐⭐ **Le premier témoin du bloc est celui du mécanisme** : sa ligne doit **être re-proposée** — *sans lui, les suivants seraient verts en ne mesurant rien*. ⭐⭐ **Et deux témoins portent le chemin JUSTE, pas le défaut** : la vraie étiquette doit tomber sur **117 kcal / 26 g** et rester **muette** — *un garde-fou qu'on ne vérifie que sur ses prises est un garde-fou dont on ignore le coût*. Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/JOURNAL-DE-PARTAGE.md`. sw.js ft-v1104. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

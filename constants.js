@@ -458,6 +458,11 @@ const FEAT_SI = {
   montrePas:     () => { try{ return ((S&&S.healthDaily)||[]).some(x=>x&&x.steps>0); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* 🍔 POINT ROUGE, PAS DE POP-UP (règle d'or #11) : il y a bien quelque chose à DÉCOUVRIR —
+     des mots qui ne marchaient pas marchent, et *personne ne réessaie un mot qui a échoué une
+     fois*. Mais rien à faire, aucun repère déplacé : la recherche a la même tête. ⛔ Une pop-up
+     dirait « vos recherches ne trouvaient rien » — une alarme rétroactive (R25). */
+  {id:'synonymes-recherche', screen:'nutrition', desc:'\ud83c\udf54 <b>Cherche avec tes mots.</b> <b>mcdo</b>, <b>macdo</b>, <b>fast food</b> sortent un menu (sandwich, frites, nuggets) ; <b>coca</b>, <b>coca z\u00e9ro</b> et <b>soda</b> trouvent enfin les boissons. Ces mots ne rendaient <b>rien</b> avant, alors que les aliments \u00e9taient d\u00e9j\u00e0 dans ton t\u00e9l\u00e9phone.'},
   /* ⚖️ POINT ROUGE, PAS DE POP-UP `WHATS_NEW` (règle d'or #11), et c'est argumenté :
      ① il y a bien quelque chose à DÉCOUVRIR — un bouton neuf, sur un écran utilisé tous les
      jours, que personne n'ira chercher tout seul ;
