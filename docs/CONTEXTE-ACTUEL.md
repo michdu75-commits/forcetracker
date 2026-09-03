@@ -6,6 +6,28 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1110` — ⚖️ **UN PRODUIT DEVIENT CALIBRABLE À LA MAIN.**
+  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+- ⛔⛔ **Michel, 4ᵉ passe sur le même pot** : *« il y a toujours le problème avec ma prot »*. La
+  cause est **structurelle**, mesurée : sa ligne porte `per100 = null`, et **aucun champ de
+  l'app ne permettait de saisir un pour-100 g à la main**. Un produit dont la fiche est
+  incomplète était donc **incalibrable à vie**, et sa vieille ligne fausse revenait **en tête**
+  des propositions.
+- ⛔⛔ **C'est le procès des trois versions précédentes** : ft-v1103/1104/1105 ont toutes ajouté
+  une **alerte**, aucune n'a rendu la personne capable de **réparer** le produit. *Un garde-fou
+  dit que c'est faux ; il ne corrige pas.*
+- ⭐⭐ **Zéro nouveau calcul (R13/R2)** : on rejoint le chemin de CIQUAL, qui appelle déjà
+  `_offRemplirFormulaire` avec un produit vide. *Le trou n'était pas dans la machinerie, il
+  était dans la porte d'entrée.*
+- ⭐ **Mesuré sur son étiquette** : 88 g/100 g → **30 g rendent 26 g**, le `per100` est enregistré
+  (**R4**) et **la fois d'après la proposition le porte** — le produit est réparé, pas le repas.
+- ⚠️⚠️ **Un témoin EXISTANT a attrapé un vrai défaut de mon code** : mes 4 champs étaient en
+  `type="number"`, qui **filtre la virgule** sur clavier français (« 62,5 » → vide ou « 625 »,
+  en silence). 23ᵉ occurrence évitée. *Un garde-fou écrit après un vrai bug vient de servir à
+  celui qui l'avait écrit.*
+- ⏭️ **Ce que ça ne fait PAS** : les lignes **déjà enregistrées** ne se corrigent pas — le
+  calibrage vit dans l'écran d'**ajout**, pas dans la modale de modification. Décision de
+  périmètre, pas un oubli. ⚠️ Et **Safari/iPhone non vérifié** (Chromium seulement).
 - **Version en ligne (live) :** `ft-v1109` — 📌 **LA LIGNE « REPAS » RESTE À L'ÉCRAN, ET LA
   CONFIRMATION DIT OÙ.** ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
 - ⛔⛔ **Mesuré avant de coder** : les puces de repas sortaient de l'écran dès **236 px**, sur une
