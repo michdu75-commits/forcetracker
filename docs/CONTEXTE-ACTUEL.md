@@ -7,7 +7,13 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1116` — 🥤 **LE COCA ZÉRO ÉTAIT COMPTÉ 24 FOIS TROP.**
-  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#857** sur `414cdce`, **job `deploy` success**,
+  les 7 étapes vertes (« Déployer sur GitHub Pages » comprise) à 19:22:50 UTC.
+  ⚠️ **Le RUN était encore marqué `in_progress` quand le JOB était déjà fini** — l'état du run
+  retarde sur celui du job. *Regarder le job, pas seulement le run : sinon on croit un
+  déploiement en cours alors qu'il est terminé* (et l'inverse est arrivé le 02/09, un run qui
+  ATTENDAIT 7 h 52 sans être ni rouge ni vert).
+  ⭐ Suite re-passée sur l'**arbre FUSIONNÉ** avec session-B : **2589/2589, 0 rouge**.
 - ⛔⛔ `coca zéro` rendait « Cola, **SUCRÉ**, avec édulcorants » (**24 kcal/100 g**) avant « Cola,
   **sans sucres ajoutés** » (**1 kcal**). Sur 50 cl : **120 kcal enregistrées au lieu de 5**.
 - ⭐⭐ **La cause n'est pas une faute de la traduction, c'est sa LIMITE** : `zero`/`light` → « édulcorants »
