@@ -24345,11 +24345,16 @@ console.log('\n-- CCXIX. Un produit devient calibrable à la main (ft-v1110) --'
     document.getElementById('af-desc').value='Iso zero protein';
     _calOuvrir(); await w(150);
     o.champsOuverts=(()=>{const e=document.getElementById('af-cal-row');return !!(e&&e.offsetParent!==null);})();
-    document.getElementById('af-cal-kcal').value='375';
+    /* ⭐ LES VRAIES VALEURS DU POT DE MICHEL (photo de l'étiquette, 03/09) : 388,5 kcal · 88 g
+       de protéines · 2,8 g de glucides · 3,3 g de lipides pour 100 g. ⛔ ET AVEC LA VIRGULE
+       FRANÇAISE, exprès : c'est ainsi qu'il les tapera, et un témoin existant a déjà attrapé
+       mes champs en `type="number"` qui l'avalaient. */
+    document.getElementById('af-cal-kcal').value='388,5';
     document.getElementById('af-cal-prot').value='88';
-    document.getElementById('af-cal-carbs').value='1';
-    document.getElementById('af-cal-fat').value='1';
+    document.getElementById('af-cal-carbs').value='2,8';
+    document.getElementById('af-cal-fat').value='3,3';
     _calAppliquer(); await w(300);
+    o.per100Garde=(typeof _bcNutr!=='undefined'&&_bcNutr)?{c:_bcNutr.carbs100,f:_bcNutr.fat100,k:_bcNutr.kcal100}:null;
     o.blocApres=(()=>{const e=document.getElementById('af-bc-row');return !!(e&&e.offsetParent!==null);})();
     o.pour100={kcal:V('af-kcal'),prot:V('af-prot')};
     document.getElementById('af-bc-grams').value='30'; _bcApplyGrams(); await w(200);
@@ -24386,6 +24391,18 @@ console.log('\n-- CCXIX. Un produit devient calibrable à la main (ft-v1110) --'
     ['kcal','prot','carbs','fat'].forEach(k=>{document.getElementById('af-cal-'+k).value='';});
     _calAppliquer(); await w(150);
     o.refusVide=!!(er&&er.style.display==='block'&&/au moins une valeur/.test(er.textContent||''));
+    /* ⛔⛔ LE CAS QUI MOTIVE LA DÉCIMALE, et il n'est PAS celui de Michel : sur sa poudre
+       l'arrondi ne se voyait pas. Sur une huile à 0,4 g de glucides pour 100 g, l'entier
+       effacerait purement et simplement un chiffre qu'elle vient de recopier. */
+    closeAddFood(); await w(150); openAddFood(); await w(400);
+    document.getElementById('af-desc').value='Huile';
+    _calOuvrir(); await w(120);
+    document.getElementById('af-cal-kcal').value='900';
+    document.getElementById('af-cal-prot').value='0';
+    document.getElementById('af-cal-carbs').value='0,4';
+    document.getElementById('af-cal-fat').value='99,9';
+    _calAppliquer(); await w(250);
+    o.petiteValeur=(typeof _bcNutr!=='undefined'&&_bcNutr)?{c:_bcNutr.carbs100,f:_bcNutr.fat100}:null;
     return o;
   }catch(e){ return {err:String(e)}; } });
   await cx.close();
@@ -24396,8 +24413,13 @@ console.log('\n-- CCXIX. Un produit devient calibrable à la main (ft-v1110) --'
       R.blocAvant===false, 'bloc quantité déjà visible');
     t('⛔ le bloc « valeurs pour 100 g » s\'ouvre à la demande', R.champsOuverts===true, '');
     /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : son étiquette entre, sa dose ressort juste. */
-    t('⭐⭐ 88 g de protéines / 100 g → 30 g rendent 26 g (l\'étiquette de Michel)',
-      R.pour30.prot===26 && R.pour30.kcal===113, JSON.stringify(R.pour30));
+    /* ⚠️ L'ATTENDU SUIT LA FIXTURE, ET JE L'AVAIS OUBLIÉ : ce témoin attendait 113 kcal, calé
+       sur mon chiffre PROVISOIRE de 375 kcal/100 g. La photo de l'étiquette donne 388,5, donc
+       117. *Changer une fixture sans changer son attendu produit un rouge qui accuse le code
+       alors qu'il ne décrit qu'un chiffre périmé dans le test.*
+       ⭐ Les 116,6 kcal de l'étiquette pour 30 g tombent bien entre les deux : 388,5 × 0,3. */
+    t('⭐⭐ l\'étiquette de Michel (388,5 kcal · 88 g/100 g) → 30 g rendent 117 kcal et 26 g',
+      R.pour30.prot===26 && R.pour30.kcal===117, JSON.stringify(R.pour30));
     t('⛔ … et le bloc quantité s\'ouvre, comme après un scan réussi (R13 : même chemin)',
       R.blocApres===true, '');
     t('⛔ aucune alerte sur un produit correctement calibré (le garde-fou ne gêne pas le chemin juste)',
@@ -24422,6 +24444,17 @@ console.log('\n-- CCXIX. Un produit devient calibrable à la main (ft-v1110) --'
     t('⛔ … et rien n\'a été calibré au passage', R.refusPasCalibre===true, '');
     t('⛔ un calibrage VIDE est refusé (un produit « calibré » à zéro serait une fausse certitude)',
       R.refusVide===true, '');
+    /* ⛔⛔ LA DÉCIMALE DE L'ÉTIQUETTE EST CONSERVÉE (ft-v1111) : 2,8 et 3,3 étaient tous deux
+       rangés à 3 par l'arrondi à l'entier. *On transcrit ce que la personne a lu, on ne
+       l'arrondit pas à sa place.* */
+    t('⛔⛔ le pour-100 g garde la décimale de l\'étiquette (2,8 et 3,3 ne deviennent pas 3)',
+      !!(R.per100Garde && R.per100Garde.c===2.8 && R.per100Garde.f===3.3 && R.per100Garde.k===388.5),
+      JSON.stringify(R.per100Garde));
+    /* ⛔⛔ ET LE CAS QUI LE MOTIVE N'EST PAS CELUI DE MICHEL : sur sa poudre l'arrondi ne se
+       voyait pas ; c'est la PETITE valeur qui aurait disparu. */
+    t('⛔⛔ une petite valeur ne tombe pas à ZÉRO (0,4 g/100 g reste 0,4)',
+      !!(R.petiteValeur && R.petiteValeur.c===0.4 && R.petiteValeur.f===99.9),
+      JSON.stringify(R.petiteValeur));
     t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
   }
 }
