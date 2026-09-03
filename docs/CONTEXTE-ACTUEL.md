@@ -6,6 +6,25 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1111` — 🔢 **LE CALIBRAGE GARDE LA DÉCIMALE DE
+  L'ÉTIQUETTE.** ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+- ⭐ **Le calibrage de ft-v1110 tombe juste sur les vrais chiffres** : l'étiquette de Michel
+  (388,5 kcal · 88 g de protéines · 2,8 g de glucides · 3,3 g de lipides / 100 g) rend
+  **117 kcal · 26 g** pour ses 30 g, contre 116,6 / 26,4 déclarés.
+- ⛔⛔ **Le défaut était dans ce qui est CONSERVÉ, pas dans ce qui est affiché** : `2,8` et `3,3`
+  étaient stockés arrondis à **3**. Invisible sur une poudre ; une **huile à 0,4 g/100 g** aurait
+  vu sa valeur devenir **0**. 👉 *On transcrit ce que la personne a lu, on ne l'arrondit pas à sa
+  place* (leçon de ft-v1100).
+- ⭐⭐ **L'étiquette tranche une question ouverte depuis ft-v1105** : elle déclare **elle-même une
+  portion de 30 g**. Les 40 g qui produisaient 156 kcal / 35 g ne venaient donc **pas** de la
+  fiche produit — c'était une **valeur inventée**. *Mon explication de ft-v1105 décrit un
+  mécanisme réel, mais pas celui qui l'a touché ; elle disait déjà ne pas savoir, c'est la seule
+  raison pour laquelle il n'y a rien à défaire.*
+- ⚠️ **Un rouge venait de MOI** : le témoin réclamait 113 kcal, calé sur un chiffre provisoire ;
+  j'avais changé la fixture sans changer l'attendu. *Un rouge qui accuse le code alors qu'il ne
+  décrit qu'un chiffre périmé dans le test.*
+- ⏭️ **Inchangé** : les lignes **déjà enregistrées** ne se corrigent pas (le calibrage vit dans
+  l'écran d'ajout). ⚠️ Et **Safari/iPhone reste non vérifié** (Chromium seulement).
 - **Version en ligne (live) :** `ft-v1110` — ⚖️ **UN PRODUIT DEVIENT CALIBRABLE À LA MAIN.**
   ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
 - ⛔⛔ **Michel, 4ᵉ passe sur le même pot** : *« il y a toujours le problème avec ma prot »*. La
