@@ -2582,10 +2582,99 @@ function _afRang(mots, n){
   }
   return [debut, approx];
 }
+/* ═══ 🍔 LES MOTS QU'ON DIT vs LES MOTS DE LA TABLE (ft-v1113) ═══════════════════════════════
+   Michel : « il n'y a pas de fast food ? », puis « fais les synonymes et Mac Donald, avec les
+   sandwichs qui vont avec ».
+   ⛔⛔ MESURÉ DANS LA VRAIE RECHERCHE, et le constat est têtu : `coca` ne rendait **rien** alors
+   que `Cola, sucré` est dans le fichier — **une lettre d'écart**. `soda` ne rendait rien alors
+   que 94 « Boisson gazeuse… » y sont. `mcdo`, `macdo`, `fast food` ne rendaient rien alors que
+   **6 aliments « de restauration rapide »** y sont. *La donnée est là, la porte n'existe pas.*
+   ⚠️⚠️ ET LE TROU EST INVISIBLE AU BUREAU, BÉANT À LA SALLE : avec du réseau, la recherche
+   Open Food Facts finit par rattraper le coup ; hors ligne ou en 4G faible, on n'a rien — alors
+   que l'aliment est **dans le téléphone**. C'est la règle d'or #4 qui se joue ici, pas du
+   confort.
+   ⛔⛔ CE QUI N'EST PAS FAIT, ET C'EST UNE DÉCISION : aucun chiffre de marque n'est écrit. Un
+   Big Mac a un poids et des macros que je ne peux pas SOURCER depuis ce conteneur ; les taper
+   de mémoire fabriquerait une valeur crédible et fausse (§34 de `BUGS.md`, le défaut qu'on
+   corrige depuis deux jours). Les synonymes pointent donc vers les aliments RÉELS de la table
+   nationale, **dont le nom dit lui-même « de restauration rapide »** : la personne voit ce
+   qu'elle prend, et rien ne se fait passer pour un produit de marque (R32/R33).
+   ⛔ `tacos` N'EST PAS MAPPÉ, exprès : il n'est pas dans la table, et lui coller un kebab serait
+   inventer. *On dit qu'on ne l'a pas plutôt que de servir autre chose.*
+   ⭐ R2 : une seule table, un seul point d'entrée. La recherche ne change pas — c'est la
+   REQUÊTE qu'on traduit avant de la lancer. */
+const FOOD_SYNONYMES={
+  /* Ce qu'on dit → ce que la table écrit. Chaque valeur est une LISTE de requêtes : « mcdo »
+     doit sortir la famille (les sandwichs, les frites, les nuggets), pas un seul aliment. */
+  'coca':['cola'], 'coca cola':['cola'], 'cocacola':['cola'], 'coke':['cola'],
+  'soda':['boisson gazeuse'], 'sodas':['boisson gazeuse'], 'boisson gazeuse':['boisson gazeuse'],
+  /* ⭐ « light » et « zéro » ne rendaient RIEN — mesuré : ces deux mots n'existent nulle part
+     dans les 3 484 noms, alors que la table dit « avec édulcorants ». Les mapper est donc un
+     gain sans contrepartie : on ne casse aucune recherche qui marchait. */
+  'light':['edulcorants'], 'zero':['edulcorants'], 'sans sucre':['sans sucres ajoutes'],
+  'mcdo':['restauration rapide','frites pommes de terre','nuggets'],
+  'mac do':['restauration rapide','frites pommes de terre','nuggets'],
+  'macdo':['restauration rapide','frites pommes de terre','nuggets'],
+  'mcdonald':['restauration rapide','frites pommes de terre','nuggets'],
+  'mcdonalds':['restauration rapide','frites pommes de terre','nuggets'],
+  'mac donald':['restauration rapide','frites pommes de terre','nuggets'],
+  'macdonald':['restauration rapide','frites pommes de terre','nuggets'],
+  'mac donalds':['restauration rapide','frites pommes de terre','nuggets'],
+  'fast food':['restauration rapide','frites pommes de terre','nuggets'],
+  'fastfood':['restauration rapide','frites pommes de terre','nuggets'],
+  'burger king':['restauration rapide'], 'quick':['restauration rapide'],
+  'kfc':['nuggets','restauration rapide'],
+  /* ⚠️ Un nom de produit de marque ne devient PAS un aliment précis : il ouvre la famille, et
+     c'est la personne qui choisit. Le nom affiché dit « de restauration rapide », donc rien ne
+     se fait passer pour le produit lui-même. */
+  'big mac':['restauration rapide'], 'bigmac':['restauration rapide'],
+  'whopper':['restauration rapide'], 'mcchicken':['restauration rapide'],
+  'filet o fish':['restauration rapide'], 'royal cheese':['restauration rapide'],
+  'menu best of':['restauration rapide'], 'happy meal':['restauration rapide']
+};
+/* Rend la LISTE de requêtes à jouer pour ce que la personne a tapé. Sans correspondance, on rend
+   la requête telle quelle — le comportement d'avant, au caractère près. */
+function _foodSynonymes(q){
+  const n=_afNorm(q).replace(/[-_.]+/g,' ').replace(/\s+/g,' ').trim();
+  if(FOOD_SYNONYMES[n]) return FOOD_SYNONYMES[n].slice();
+  /* Sinon mot à mot : « un coca light » doit devenir « un cola light ». */
+  const mots=n.split(' ');
+  let touche=false;
+  const rendus=mots.map(m=>{
+    const syn=FOOD_SYNONYMES[m];
+    if(syn && syn.length===1){ touche=true; return syn[0]; }
+    return m;
+  });
+  return touche ? [rendus.join(' ')] : [q];
+}
 /* Recherche par nom. Les mots peuvent être dans le DÉSORDRE : « riz cuit » doit retrouver
    « Riz blanc, cuit, sans sel ajouté ». On exige que TOUS les mots tapés soient présents —
    sinon « riz complet » remonterait tous les riz et tous les pains complets. */
 function _ciqualChercher(q, max){
+  if(!_ciqual) return [];
+  /* 🍔 ft-v1113 — LA REQUÊTE EST TRADUITE AVANT D'ÊTRE JOUÉE, la recherche elle-même ne change
+     pas d'une ligne. Plusieurs requêtes possibles (« mcdo » ouvre la famille), unies dans
+     l'ordre : les sandwichs d'abord, puis les frites, puis les nuggets. */
+  const reqs=(typeof _foodSynonymes==='function')?_foodSynonymes(q):[q];
+  if(reqs.length>1 || reqs[0]!==q){
+    /* ⛔⛔ ON RÉPARTIT, ON N'EMPILE PAS — et c'est mesuré, pas esthétique. En prenant les
+       requêtes l'une après l'autre, « mcdo » rendait **six sandwichs** et coupait les frites et
+       les nuggets à la limite d'affichage. Or qui tape « mcdo » compose un MENU. Un tour à la
+       fois : un sandwich, des frites, des nuggets, puis on recommence. */
+    const listes=reqs.map(r=>_ciqualChercherUne(r, max||6));
+    const vus=new Set(), tout=[], lim=max||6;
+    for(let i=0; tout.length<lim && listes.some(l=>i<l.length); i++){
+      for(const l of listes){
+        if(tout.length>=lim) break;
+        const a=l[i]; if(!a || vus.has(a[0])) continue;
+        vus.add(a[0]); tout.push(a);
+      }
+    }
+    return tout;
+  }
+  return _ciqualChercherUne(q, max);
+}
+function _ciqualChercherUne(q, max){
   if(!_ciqual) return [];
   const mots=_afNorm(q).split(/\s+/).filter(m=>m.length>1);
   if(!mots.length) return [];
