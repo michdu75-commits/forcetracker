@@ -2499,6 +2499,67 @@ async function _ciqualCharger(){
   })();
   return _ciqualEnCours;
 }
+/* ═══ 🍔 LA BASE FAST-FOOD FRANCE (ft-v1114) ═════════════════════════════════════════════════
+   Michel : « il faut que je puisse trouver les noms comme big Mac ou pizza 4 fromages », après
+   avoir fourni lui-même le classeur — la source que ce conteneur ne pouvait pas atteindre.
+   ⭐ R13/R2 : AUCUN nouveau mécanisme. Le chargeur, la recherche et le remplissage sont ceux de
+   CIQUAL ; seule la table change. Une 4ᵉ source dans la liste de propositions, pas un 4ᵉ chemin.
+   ⛔⛔ ET LA PROVENANCE EST LE CŒUR DU SUJET (R32/R33) : ces valeurs sont RELEVÉES sur les
+   sources officielles des enseignes, pas mesurées par l'app. Chaque ligne enregistrée porte son
+   enseigne, et l'écran l'affiche. *Un chiffre de marque qui ne dirait pas d'où il vient serait
+   pire qu'absent.*
+   ⚠️ CE QUI N'Y EST PAS, ET POURQUOI : `tools/marques.py` écarte ce qu'il ne peut pas garantir,
+   avec la raison à l'écran de sa sortie. Sur les 27 lignes validées du classeur, 4 sont dehors —
+   le Korean Whopper (752 kcal annoncées, 616 calculées depuis ses propres macros) et les 3
+   lignes KFC en pièces (146, 77 puis 38 kcal par pièce : elles se divisent par deux, donc au
+   moins deux sont fausses et on ne sait pas laquelle est juste). */
+let _marques=null, _marquesEnCours=null;
+async function _marquesCharger(){
+  if(_marques) return _marques;
+  if(_marquesEnCours) return _marquesEnCours;
+  _marquesEnCours=(async()=>{
+    try{
+      const r=await fetch('data/marques.json',{headers:{'Accept':'application/json'}});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const d=await r.json();
+      if(!d||!Array.isArray(d.a)) throw new Error('format');
+      _marques=d; return d;
+    }catch(e){ _marquesEnCours=null; return null; }      // jamais bloquant (règle d'or #4)
+  })();
+  return _marquesEnCours;
+}
+/* ⚠️ CE QU'ON DIT POUR NOMMER UNE ENSEIGNE : « mcdo » n'apparaît nulle part dans les données —
+   elles disent « McDonald's ». Même problème que `coca`/`cola` en ft-v1113, même remède. */
+const MARQUE_ALIAS={
+  'mcdo':"mcdonald's", 'macdo':"mcdonald's", 'mac do':"mcdonald's", 'macdonald':"mcdonald's",
+  'mcdonald':"mcdonald's", 'mcdonalds':"mcdonald's", 'mac donald':"mcdonald's",
+  'mac donalds':"mcdonald's", 'mcdonald s':"mcdonald's",
+  'bk':'burger king', 'burgerking':'burger king',
+  'kfc':'kfc', 'dominos':"domino's", 'domino':"domino's", "domino s":"domino's"
+};
+/* Recherche dans la base de marques. Les mots peuvent être dans le désordre, et ils sont
+   cherchés dans « enseigne + nom » — donc « mcdo frite » et « frite mcdo » marchent tous deux. */
+function _marquesChercher(q, max){
+  if(!_marques) return [];
+  let n=_afNorm(q).replace(/[-_.]+/g,' ').replace(/\s+/g,' ').trim();
+  if(MARQUE_ALIAS[n]) n=_afNorm(MARQUE_ALIAS[n]);
+  else{
+    /* mot à mot : « frites mcdo » doit devenir « frites mcdonald's » */
+    n=n.split(' ').map(m=>MARQUE_ALIAS[m]?_afNorm(MARQUE_ALIAS[m]):m).join(' ');
+  }
+  const mots=n.split(/\s+/).filter(m=>m.length>1);
+  if(!mots.length) return [];
+  const out=[];
+  for(let i=0;i<_marques.a.length;i++){
+    const a=_marques.a[i];
+    const nom=_afNorm(a[1]+' '+a[0]+' '+(a[2]||''));
+    const r=_afRang(mots, nom);
+    if(!r) continue;
+    out.push([r[0], r[1], nom.length, i]);
+  }
+  out.sort((x,y)=> x[0]-y[0] || x[1]-y[1] || x[2]-y[2]);
+  return out.slice(0, max||6).map(x=>x[3]);
+}
 /* ═══ ⛔⛔ LE PLURIEL — LE PLUS GROS TROU DE LA RECHERCHE (22/08/2026) ══════════════════════
    Michel : *« c'est comme j'ai cherché les pâtes, j'ai pas trouvé — enfin si, mais pas ce que je
    voulais trouver, et je n'ai plus la boîte pour le code-barre »*.
@@ -2710,6 +2771,28 @@ function _ciqualChercherUne(q, max){
 /* ⭐ R2 : un aliment CIQUAL remplit le formulaire par le MÊME chemin que le code-barres et la
    recherche Open Food Facts — grammes, provenance, note d'état. Un 3ᵉ chemin de remplissage
    finirait par diverger des deux autres. */
+/* 🍔 UN PRODUIT DE MARQUE REMPLIT LE FORMULAIRE PAR LE MÊME CHEMIN QUE TOUT LE RESTE (R2).
+   ⭐ La PORTION est pré-remplie (232 g pour un Big Mac) : c'est ce qu'on mange, et le champ
+   quantité dit d'où vient ce nombre depuis ft-v1105. Sans portion connue (cas Domino's, dont la
+   source ne publie que du pour-100 g), on retombe sur 100 g et la personne met son poids —
+   exactement comme un aliment de la table nationale. */
+function _afSuggPrendreMarque(i){
+  const idx=_afSuggMarq[i]; if(idx==null || !_marques) return;
+  const a=_marques.a[idx];
+  _bcNutr={ name:(a[1]+' · '+a[0]).slice(0,60), kcal100:_per100d1(a[3]),
+            prot100:_per100d1(a[4]), carbs100:_per100d1(a[5]), fat100:_per100d1(a[6]) };
+  const sid=('marque:'+a[0]+':'+a[1]).slice(0,32);
+  _offRemplirFormulaire({serving_quantity:a[7]||0, nutriments:{}}, sid, 'marque', false, 'marque');
+  /* ⛔ LA PROVENANCE DIT CE QU'ELLE EST, y compris quand les kcal ont été DÉRIVÉES des macros
+     (R32 : mesuré / estimé / propriétaire). On ne présente jamais un calcul comme une
+     publication. */
+  _afSetSrc({saisie:'marque', origine:'marque', sourceId:sid, etat:null,
+             ...(a[8]? {kcalDerivee:true} : {}),
+             per100:{kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
+             attendu:_afLuFormulaire()});
+  _afSuggVider();
+  toast('Ajuste la quantité ✅','success');
+}
 function _afSuggPrendreCiqual(i){
   const a=_afSuggCiq[i]; if(!a) return;
   /* ⛔⛔ LE PLUS COÛTEUX DES SIX : `data/ciqual.json` porte les décimales (3 298 aliments sur
@@ -2748,7 +2831,7 @@ function _afSuggPrendreCiqual(i){
       bananes de marque, pas l'aliment générique — la base CIQUAL (3 484 aliments génériques)
       reste le bon outil pour ça, et elle n'est pas encore là. On ne fait pas semblant du
       contraire, et on n'invente surtout pas de valeurs génériques nous-mêmes (R29). */
-let _afSuggTimer=null, _afSuggLoc=[], _afSuggOff=[], _afSuggCiq=[];
+let _afSuggTimer=null, _afSuggLoc=[], _afSuggOff=[], _afSuggCiq=[], _afSuggMarq=[];
 const _AF_SUGG_MIN=2;          // en dessous, tout matche : la liste serait du bruit
 const _AF_SUGG_DELAI=450;      // on ne part pas au réseau à chaque lettre
 
@@ -2824,7 +2907,7 @@ function _afSuggKcal100(p){
 }
 function _afSuggRendu(){
   const el=document.getElementById('af-sugg'); if(!el) return;
-  if(!_afSuggLoc.length && !_afSuggCiq.length && !_afSuggOff.length){ el.innerHTML=''; return; }
+  if(!_afSuggLoc.length && !_afSuggCiq.length && !_afSuggOff.length && !_afSuggMarq.length){ el.innerHTML=''; return; }
   const ligne=(ic,titre,detail,onclick)=>
     '<button onclick="'+onclick+'" style="width:100%;text-align:left;display:flex;gap:9px;align-items:baseline;'
     +'padding:9px 11px;border:none;border-bottom:1px solid var(--sep);background:none;cursor:pointer;'
@@ -2839,6 +2922,19 @@ function _afSuggRendu(){
     _afSuggLoc.forEach((e,i)=>{ h+=ligne('🕘', e.name,
       (e.kcal||0)+' kcal · P '+(e.prot||0)+' · G '+(e.carbs||0)+' · L '+(e.fat||0),
       '_afSuggPrendreLocale('+i+')'); });
+  }
+  /* ⭐⭐ LE FAST-FOOD PASSE AVANT LE GÉNÉRIQUE, et c'est l'inverse du choix fait pour les
+     bananes : quand on tape « big mac », on ne cherche pas « un hamburger en général » — on
+     cherche CE produit-là. Le nom tapé est déjà une marque, donc la marque gagne.
+     ⛔ Et chaque ligne dit son enseigne : le chiffre ne se présente jamais tout nu. */
+  if(_afSuggMarq.length && _marques){
+    h+='<div style="font-size:11px;color:var(--t3);padding:7px 11px 4px;font-weight:700;">FAST-FOOD (SOURCES OFFICIELLES)</div>';
+    _afSuggMarq.forEach((idx,i)=>{ const a=_marques.a[idx];
+      const p=a[7];
+      h+=ligne('🍔', a[1]+' <span style="color:var(--t3);font-weight:500;">· '+a[0]+'</span>',
+        (p? (Math.round(a[3]*p/100)+' kcal la portion ('+p+' g)') : (a[3]+' kcal/100 g'))
+        + (a[8]? ' · <span style="color:var(--orange);">kcal calculées</span>' : ''),
+        '_afSuggPrendreMarque('+i+')'); });
   }
   /* ⭐ CIQUAL AVANT OPEN FOOD FACTS, et c'est un choix : quand on tape « banane », l'aliment
      GÉNÉRIQUE est presque toujours ce qu'on cherche — les bananes de marque viennent après. */
@@ -2858,13 +2954,13 @@ function _afSuggRendu(){
   if(_afSuggCiq.length) h+='<div style="font-size:10.5px;color:var(--t3);padding:6px 11px 8px;line-height:1.4;">Données aliments : table Ciqual 2025 — ANSES</div>';
   el.innerHTML=h+'</div>';
 }
-function _afSuggVider(){ _afSuggLoc=[]; _afSuggOff=[]; _afSuggCiq=[]; _afSuggRendu(); }
+function _afSuggVider(){ _afSuggLoc=[]; _afSuggOff=[]; _afSuggCiq=[]; _afSuggMarq=[]; _afSuggRendu(); }
 /* Déclenché à la frappe. Les LOCALES sortent tout de suite (aucun réseau) ; la recherche
    distante attend une pause de frappe — sinon on interroge Open Food Facts à chaque lettre. */
 function _afSuggInput(){
   const q=(document.getElementById('af-desc')||{}).value||'';
   _afSuggLoc=_afSuggLocales(q);
-  _afSuggOff=[]; _afSuggCiq=[];
+  _afSuggOff=[]; _afSuggCiq=[]; _afSuggMarq=[];
   _afSuggRendu();
   /* CIQUAL est LOCAL une fois chargé — donc pas de délai, mais le tout PREMIER accès doit
      aller chercher le fichier. On le déclenche ici et jamais au démarrage (règle d'or #4). */
@@ -2873,6 +2969,16 @@ function _afSuggInput(){
       const enCours=(document.getElementById('af-desc')||{}).value||'';
       if(_afNorm(enCours)!==_afNorm(q)) return;    // la frappe a continué : résultat périmé
       _afSuggCiq=_ciqualChercher(q,6); _afSuggRendu();
+    });
+    /* 🍔 LA BASE DE MARQUES, MÊME RÉGIME (ft-v1114) : locale, chargée au premier besoin et
+       jamais au démarrage. ⭐ Elle est petite (23 produits) mais son fichier est SÉPARÉ de
+       CIQUAL exprès — deux sources, deux provenances, et l'une peut grandir sans toucher
+       l'autre. ⛔ 4 propositions et non 6 : elles passent AVANT les génériques, et occuper tout
+       l'écran avec du fast-food quand on tape « poulet » serait un remède pire que le mal. */
+    _marquesCharger().then(()=>{
+      const enCours=(document.getElementById('af-desc')||{}).value||'';
+      if(_afNorm(enCours)!==_afNorm(q)) return;
+      _afSuggMarq=_marquesChercher(q,4); _afSuggRendu();
     });
   }
   if(_afSuggTimer) clearTimeout(_afSuggTimer);
