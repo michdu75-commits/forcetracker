@@ -2124,7 +2124,7 @@ function quickAddFood(i){
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   closeAddFood(); renderFoodJournal();
   try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}
-  toast(_journalJourActif()===today()?'Ajouté au journal 🍽️':'Ajouté au jour consulté 🍽️','success');
+  toast(_afToastAjout(),'success');
 }
 function toggleFavFood(i){
   const it=_afQuickItems[i]; if(!it)return;
@@ -2143,10 +2143,41 @@ function _renderAfMealChips(){
   const el=document.getElementById('af-meal-chips');if(!el)return;
   el.innerHTML=FOOD_MEALS.map(m=>{
     const sel=m.k===_afMeal;
-    return`<button onclick="setFoodMeal('${m.k}')" style="flex:1;min-width:70px;padding:9px 6px;border-radius:12px;border:1px solid ${sel?'var(--red)':'var(--sep)'};background:${sel?'rgba(255,45,85,.12)':'var(--bg2)'};color:${sel?'var(--red)':'var(--t2)'};font-size:12px;font-weight:${sel?700:500};cursor:pointer;font-family:var(--font);touch-action:manipulation;">${m.ic}<br>${m.lbl}</button>`;
+    /* ⚠️ 64 px ET NON 70 (03/09/2026) — mesuré, pas ajusté à l'œil : sur un écran de 390 px il
+       reste 358 px utiles, et 5 puces à 70 px plus leurs écarts en demandent 374. Elles se
+       cassaient donc en 4 + 1, ce qui faisait une bande de 114 px au lieu de 56 — supportable
+       tant qu'elle défilait, permanent depuis qu'elle est fixe. À 64 px les cinq tiennent sur
+       une ligne (344 px). ⛔ Sur les grands iPhone rien ne change : `flex:1` répartit toute la
+       largeur, la valeur minimale n'est jamais atteinte. */
+    return`<button onclick="setFoodMeal('${m.k}')" style="flex:1;min-width:64px;padding:9px 6px;border-radius:12px;border:1px solid ${sel?'var(--red)':'var(--sep)'};background:${sel?'rgba(255,45,85,.12)':'var(--bg2)'};color:${sel?'var(--red)':'var(--t2)'};font-size:12px;font-weight:${sel?700:500};cursor:pointer;font-family:var(--font);touch-action:manipulation;">${m.ic}<br>${m.lbl}</button>`;
   }).join('');
 }
 function setFoodMeal(k){_afMeal=k;_renderAfMealChips();}
+/* 🍽️⛔⛔ LA CONFIRMATION DIT DANS QUEL REPAS L'ALIMENT EST TOMBÉ (03/09/2026) — c'est la
+   seconde moitié de la phrase de Michel : « pareil quand on rentre un aliment, quel est le
+   jour de la journée choisi ».
+   ⛔ CE N'ÉTAIT PAS UN DÉTAIL D'ÉCRITURE, parce que le repas est le plus souvent DEVINÉ :
+   `_afMeal` est pré-réglé sur l'heure (avant 11 h → Petit-déj). L'app annonçait donc
+   « Ajouté au journal » sur un rangement qu'elle avait choisi seule, sans jamais le nommer —
+   et l'erreur se découvrait plus tard, dans le Journal, sans qu'on sache d'où elle venait.
+   *Une supposition qu'on ne montre pas est une décision prise à la place de la personne* (R29).
+   ⭐⭐ ET LA RÈGLE EXISTAIT DÉJÀ — POUR UN SEUL DES TROIS CHEMINS (R8, la jumelle). « Tes repas
+   habituels » (`rejouerRepas`) nomme le moment depuis ft-v1052, avec ce commentaire : *« sans
+   ça, on ne peut pas vérifier d'un coup d'œil que le tap a bien porté là où on voulait »*. Les
+   deux autres chemins d'ajout — la reprise d'un favori et le formulaire — disaient toujours
+   « Ajouté au journal ». *Une règle écrite pour un chemin et pas pour ses jumeaux est une règle
+   à moitié appliquée*, et c'est la 4ᵉ fois cette semaine.
+   ⛔ UN SEUL PROPRIÉTAIRE (R2) : on réutilise `_foodMealInfo`, déjà l'unique lecteur de
+   `FOOD_MEALS` — on ne refait pas un `find` à côté, sinon « Collation 2 » finirait par
+   s'appeler autrement ici que dans les puces et dans le Journal.
+   ⚠️ Et la distinction « aujourd'hui / jour consulté » est GARDÉE : elle protège d'un aliment
+   noté sur le mauvais JOUR, ce que le nom du repas ne dit pas. */
+function _afToastAjout(){
+  const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(_afMeal):null;
+  const ou=(mi&&mi.lbl)?mi.lbl:'journal';
+  return (_journalJourActif()===today()) ? ('Ajouté · '+ou+' 🍽️')
+                                         : ('Ajouté · '+ou+', jour consulté 🍽️');
+}
 // ─── LECTURE ÉTIQUETTE NUTRITIONNELLE PAR PHOTO (IA vision) ──────────────────
 // Redimensionne un fichier image en base64 JPEG (sans le préfixe data:) — assez net pour lire les chiffres.
 function _resizeToB64(file, maxPx, quality){
@@ -2801,7 +2832,7 @@ function addFoodEntry(){
   renderFoodJournal();
   try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}   // la carte « Où tu en es » suit
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
-  toast(_journalJourActif()===today()?'Ajouté au journal 🍽️':'Ajouté au jour consulté 🍽️','success');
+  toast(_afToastAjout(),'success');
 }
 function removeFoodEntry(ts){
   if(!S.foodLog)return;

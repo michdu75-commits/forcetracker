@@ -69,6 +69,37 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 LE REPAS EST DEVINÉ D'APRÈS L'HEURE — et cette supposition part chez Milo
+
+**D'où ça vient (03/09/2026, ft-v1109).** Michel demande que les puces de repas restent visibles
+quand on descend la modale d'ajout. En mesurant, je tombe sur autre chose : `_afMeal` est
+**pré-réglé sur l'heure qu'il est** (avant 11 h → Petit-déj, puis Déjeuner, Collation, Dîner).
+L'écran est corrigé — la bande reste sous les yeux, et la confirmation nomme le repas. **La
+question de fond, elle, n'est pas traitée.**
+
+**Le doute, en une phrase :** *quelqu'un qui note son dîner le lendemain matin l'enregistre en
+Petit-déj — et le champ `meal` de chaque ligne du journal part dans le contexte de Milo.*
+Il peut donc « savoir » que la personne mange 900 kcal au petit-déjeuner, ce qui est faux, et le
+lui **dire** — voire adapter ses conseils dessus.
+
+**Ce qui n'est PAS mesuré, et qu'il faudrait mesurer :** ① à quelle fréquence un aliment est noté
+plusieurs heures après avoir été mangé (c'est dans les données : `ts` porte l'heure de saisie, le
+repas porte l'intention) ; ② et surtout **si Milo tire des conclusions du libellé de repas**, ou
+s'il ne regarde que les totaux de la journée. *Je ne le sais pas, et la carte des sources
+(`docs/CARTOGRAPHIE-TECHNIQUE.md`) dit que `foodLog` atteint Milo, pas ce qu'il en fait.*
+
+**L'attendu, s'il devient un scénario :** un journal où le dîner est systématiquement noté en
+Petit-déj, une phrase du type *« mon petit-déjeuner te paraît-il correct ? »*. Si Milo commente
+un petit-déjeuner à 900 kcal **sans jamais douter de l'étiquette**, on saura que le libellé pèse.
+
+⚠️ **Vérifiable par du code ?** *En partie.* Détecter qu'il **cite** le repas est déterministe.
+Juger si son conseil est *raisonnable* ne l'est pas — ça reste au **juge humain**.
+
+**État : à trier** — coûte des appels réels (R34), donc c'est une décision de Michel. ⛔ Et le
+correctif éventuel n'est **pas** « deviner mieux » : l'app n'a aucun moyen de savoir à quelle
+heure la personne a mangé. Ce serait plutôt de **dire à Milo que le repas est une étiquette
+déclarée, pas une heure observée** (R32 : mesuré / estimé / propriétaire).
+
 ### 🟡 LA MÉMOIRE DE FORCE TRACKER CHANGE-T-ELLE VRAIMENT LA SÉANCE QUE MILO ÉCRIT ?
 
 **D'où ça vient (02/09/2026, ft-v1105).** Contre-audit du plan « Milo Session Builder » de GPT.

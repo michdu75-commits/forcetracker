@@ -2378,3 +2378,50 @@ qui les contient ? »* — la masse, la durée, le volume.
 protégé — ici l'estimation IA n'avait aucune borne physique, quand l'import d'historique en a
 depuis ft-v1095), et de **§12quater** (reproduire avant d'expliquer : le cas a été rejoué par les
 vraies fonctions, seul `fetch` remplacé, avant qu'une ligne de correctif soit écrite).*
+
+
+---
+
+## 40. 📐 TOUS LES NOMBRES SONT VERTS, ET L'ÉCRAN EST FAUX **(03/09/2026, ft-v1109)**
+
+> **La jumelle géométrique de §31.** Là-bas, un témoin visait une *forme* au lieu de la garantie
+> qu'il devait tenir. Ici, tous les témoins visent la bonne garantie, la mesurent correctement,
+> et **passent à côté de ce que la personne voit** — parce qu'ils mesurent des **coordonnées**,
+> pas des **pixels peints**.
+
+### 🔍 Le cas
+Michel demande que la ligne « Repas » de la modale d'ajout reste visible quand on descend. On la
+rend collante (`position:sticky; top:0`). La sonde répond parfaitement :
+
+| Ce qui était mesuré | Résultat |
+|---|---|
+| Les puces sont-elles visibles à 300 px, 600 px, au fond ? | **oui, oui, oui** |
+| Peut-on encore changer de repas depuis le bas ? | **oui** |
+| Le champ de saisie est-il masqué par la bande ? | **non** |
+| Erreurs JS | **0** |
+
+**Et la capture d'écran montrait des aliments qui défilaient AU-DESSUS des puces.**
+
+### ⛔ La cause, qui n'est pas une faute de frappe
+Un élément collant s'arrête au bord de la **zone de défilement**, et cette zone passe **à
+l'intérieur** des 16 px de marge intérieure de la modale. Il restait donc une bande de 16 px
+au-dessus du fond de l'élément, par laquelle le contenu défilait à la vue. Toutes les
+coordonnées vérifiées étaient justes : la bande *était* bien à sa place. C'est ce qu'il y avait
+**autour** qui ne l'était pas.
+
+### 🔍 À quoi on la reconnaît
+- On mesure **des positions et des tailles** (`getBoundingClientRect`), jamais **ce qui occupe un
+  point de l'écran**.
+- Le correctif touche à `position`, `overflow`, `z-index`, `padding`, `transform` — les endroits
+  où le navigateur décide **quoi recouvre quoi**, une question qu'aucune coordonnée ne pose.
+- Tous les témoins sont verts et personne n'a **regardé** le résultat.
+
+### 🛡️ Le réflexe, en une ligne
+**Dès qu'un correctif porte sur la superposition, prendre une capture — et écrire un témoin qui
+demande *« qu'est-ce qui est PEINT ici ? »***, pas *« où est cet élément ? »*. En pratique :
+`document.elementFromPoint(x, y)`, sur le point que l'on veut protéger.
+
+*Voisine de **§31** (un témoin qui vise la forme et non la garantie) et de **§12quater**
+(reproduire avant d'expliquer). ⚠️ Et le cas dit aussi sa limite : la capture a été prise dans
+**Chromium**, alors que `position:sticky` dans un conteneur défilant est l'un des points où
+**Safari diffère** — donc même la capture ne clôt pas le sujet quand l'app est une PWA iPhone.*

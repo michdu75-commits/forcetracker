@@ -2462,7 +2462,35 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div class="modal-handle"></div>
     <div style="font-weight:800;font-size:18px;margin-bottom:14px;">🍽️ Ajouter un aliment</div>
     <div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Repas</div>
-    <div id="af-meal-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;"></div>
+    <!-- 📌⛔⛔ LA LIGNE « REPAS » RESTE À L'ÉCRAN QUAND ON DESCEND (03/09/2026) — Michel, deux
+         captures : « il faudrait que les ronds en haut soient fixes quand on descend, et pareil
+         quand on rentre un aliment quel est le jour de la journée choisi ».
+         ⛔ MESURÉ AVANT DE CODER, ET LE CHIFFRE EST SANS APPEL : les puces sortaient de l'écran
+         dès 236 px de défilement, sur une modale qui en fait 951. Or TOUT ce qui sert à saisir
+         l'aliment (le champ, l'estimation IA, la quantité, les macros) vit EN DESSOUS de ce
+         point. Autrement dit, au moment précis où l'on décide et où l'on valide, le repas qui
+         reçoit l'aliment n'était JAMAIS visible.
+         ⚠️ ET IL EST SOUVENT DEVINÉ, PAS CHOISI : `_afMeal` est pré-réglé sur l'heure qu'il est
+         (avant 11 h → Petit-déj). Un réglage deviné qu'on ne montre pas au moment de valider
+         est exactement ce que R29 interdit — l'app a le droit de proposer, pas de décider en
+         silence à la place de la personne.
+         ⭐ RIEN N'EST INVENTÉ (R13) : c'est l'en-tête collant déjà employé par `#ov-help` et
+         trois autres modales — même `position:sticky`, même fond `--bg2`, même trait de
+         séparation. Le trait n'est pas décoratif : c'est lui qui DIT que la bande est fixe.
+         ⛔ ET LES PUCES RESTENT LE MÊME ÉLÉMENT (`#af-meal-chips`, R2) : on ne fabrique pas un
+         second affichage « compact » du repas choisi, qui divergerait du vrai au premier
+         retouchage. Une seule source, rendue par `_renderAfMealChips`.
+         ⚠️ Le coût est réel et il est mesuré : la bande occupe 114 px des 775 de la modale.
+         C'est le prix de la garder sous les yeux — voir le journal (ft-v1109). -->
+    <!-- ⚠️⚠️ `top:-16px` N'EST PAS UN RÉGLAGE ESTHÉTIQUE, ET LA CAPTURE L'A TROUVÉ, PAS LA MESURE.
+         Un élément collant s'arrête au bord de la zone de défilement, qui passe À L'INTÉRIEUR des
+         16 px de marge de la modale : il restait donc une bande de 16 px au-dessus où les aliments
+         défilaient à la vue, par-dessus les puces. On remonte le fond de 16 px (`top`+`margin`) et
+         on rend ces 16 px en marge intérieure — les puces ne bougent pas d'un pixel (122 px du haut,
+         avant comme après), c'est seulement le FOND qui monte plus haut. -->
+    <div style="position:sticky;top:-16px;z-index:5;background:var(--bg2);margin:-16px -16px 16px;padding:16px 16px 10px;border-bottom:1px solid var(--sep);">
+      <div id="af-meal-chips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
     <div id="af-quick-list"></div>
     <!-- Code-barres + score santé : gratuit pour tout le monde (client-side, 0 token ; affiché par openAddFood) -->
     <div id="af-barcode-block" style="display:none;">
