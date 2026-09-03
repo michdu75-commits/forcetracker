@@ -26,6 +26,15 @@
 - ⚠️ **Le CSV n'était PAS dans la session** : travail sur les mesures **relayées** par GPT — ni
   vérifiables, ni complètes (pas de macros par jour, pas de noms de repas). *Dit, pas sous-entendu.*
 - **Version précédente :** `ft-v1107`. ⏳ **Déploiement à vérifier** (**R18**).
+- **Version précédente :** `ft-v1107`. ⏳ **POUSSÉ, PAS ENCORE DÉPLOYÉ** — et la cause est
+  connue (**R18** : « poussé » ne veut pas dire « en ligne »). Le job `deploy` du run **#820**
+  (session-B, commit `d3ef923`) est resté **`waiting`** à l'entrée de l'environnement
+  `github-pages` depuis 20:24, et les déploiements Pages sont **sérialisés** : mon run **#822**
+  et le run **#823** que j'ai lancé à la main (le remède prescrit par `CLAUDE.md` — *un run
+  NEUF, jamais « relancer les jobs échoués »*) sont tous deux en file derrière lui.
+  ⚠️ **Rien à corriger côté code** : `origin/master` porte bien `ft-v1107`, suite verte
+  (2456/2456). ⏭️ **À vérifier à la reprise** : si #820 est toujours bloqué, il faut
+  l'**annuler** depuis l'interface GitHub pour libérer la file.
 - 🍽️⭐⭐ **L'APPORT ENTRE DANS LE MOTEUR DE TRAJECTOIRE** (ft-v1107), après le **contre-audit**
   d'une proposition GPT (`docs/NUTRITION-CONTRE-AUDIT-TRAJECTOIRE.md`). ⭐ **Vingt-huit
   paragraphes réduits à UN trou** : son axe « trajectoire » était **déjà en production**
