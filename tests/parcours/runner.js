@@ -24432,6 +24432,81 @@ console.log('\n-- CCXIX. Un produit devient calibrable à la main (ft-v1110) --'
   }
 }
 
+/* ═══ CCXX. UNE SEULE PRÉCISION POUR LE POUR-100 g (ft-v1112) ════════════════════════════════
+   Michel, après le calibrage à la main : « ça va être comme ça sur tous les produits, c'est
+   chiant ? ». La réponse est non — mais la vérification a trouvé bien pire que sa question.
+   ⛔⛔ SIX ENDROITS construisent `_bcNutr`, et QUATRE arrondissaient à l'entier. Le plus coûteux
+   est la base EMBARQUÉE, celle qui sert le plus : `data/ciqual.json` CONTIENT les décimales, et
+   l'app les jetait à la lecture. Mesuré : 3 298 aliments sur 3 484 en portent au moins une, et
+   1 159 ont une macro entre 0 et 1 g/100 g — arrondie, elle devient 0 ou 1.
+   ⚠️ C'est R8 (la jumelle) : le correctif de ft-v1111 avait été posé sur 1 endroit des 6, et pas
+   sur le plus utilisé. */
+console.log('\n-- CCXX. Une seule précision pour le pour-100 g (ft-v1112) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    const w=ms=>new Promise(r=>setTimeout(r,ms)); const o={};
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    goScreen('nutrition'); await w(300); openAddFood(); await w(500);
+    const r=await fetch('data/ciqual.json'); const j=await r.json();
+    /* ⛔ CONTRÔLE D'ABORD : le fichier PORTE-t-il vraiment des décimales ? Sans ça le témoin
+       suivant serait vert en ne mesurant rien. */
+    o.total=j.a.length;
+    o.avecDecimale=j.a.filter(x=>[3,4,5,6].some(i=>typeof x[i]==='number' && x[i]!==Math.round(x[i]))).length;
+    o.souliers=j.a.filter(x=>[4,5,6].some(i=>x[i]>0 && x[i]<1)).length;
+    /* ⭐ ON PASSE PAR LA VRAIE FONCTION, pas par une affectation : `_afSuggPrendreCiqual` est
+       ce qu'un tap de la personne déclenche. */
+    const cible=j.a.find(x=>x[4]>0&&x[4]<1);
+    o.fichier={prot:cible[4],carbs:cible[5],fat:cible[6]};
+    await _ciqualCharger();
+    _afSuggCiq.length=0; _afSuggCiq.push(cible);
+    _afSuggPrendreCiqual(0); await w(400);
+    o.lu=(typeof _bcNutr!=='undefined'&&_bcNutr)?{p:_bcNutr.prot100,c:_bcNutr.carbs100,f:_bcNutr.fat100}:null;
+    /* ⛔ ET L'ÉCRAN, LUI, RESTE EN ENTIERS : la décimale ne sert qu'à ce qui est CONSERVÉ. */
+    o.champs={p:(document.getElementById('af-prot')||{}).value,
+              c:(document.getElementById('af-carbs')||{}).value};
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXX n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔⛔ LE CONTRÔLE QUI DONNE SON PRIX AU RESTE : si le fichier n'avait aucune décimale,
+       « la décimale est conservée » serait vrai sans rien prouver. */
+    t('⛔⛔ CONTRÔLE — la base embarquée PORTE bien des décimales (sinon le témoin suivant est vide)',
+      R.avecDecimale > R.total/2 && R.souliers > 100,
+      R.avecDecimale+'/'+R.total+' avec décimale · '+R.souliers+' sous 1 g/100 g');
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : un aliment dont une macro est SOUS 1 g. C'est lui
+       qui aurait été détruit — arrondi, 0,9 devient 1 et 0,4 devient 0. */
+    t('⭐⭐ un aliment de la base garde ses décimales (0,9 ne devient pas 1)',
+      !!(R.lu && R.lu.p===R.fichier.prot && R.lu.c===R.fichier.carbs && R.lu.f===R.fichier.fat),
+      'fichier='+JSON.stringify(R.fichier)+' lu='+JSON.stringify(R.lu));
+    t('⛔ … et la macro mesurée est bien SOUS 1 g (sinon on ne teste pas le cas qui coûte)',
+      R.fichier.prot>0 && R.fichier.prot<1, String(R.fichier.prot));
+    /* ⛔ L'ÉCRAN NE CHANGE PAS : c'était la promesse, elle doit tenir. */
+    t('⛔ l\'écran reste en entiers (la décimale ne sert qu\'à ce qui est conservé)',
+      /^\d+$/.test(String(R.champs.p)) && /^\d+$/.test(String(R.champs.c)),
+      JSON.stringify(R.champs));
+    /* ⛔⛔ ET LES SIX CONSTRUCTIONS PASSENT PAR LE MÊME PROPRIÉTAIRE — c'est la rechute à
+       empêcher : un 7ᵉ chemin qui ré-arrondirait ferait revenir le défaut en silence. */
+    {
+      const app=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+      const cons=(app.match(/_bcNutr\s*=\s*\{[\s\S]{0,400}?\}/g)||[]);
+      const fautifs=cons.filter(c=>/Math\.round\s*\(\s*(n\[|a\[|d\.|kcal|prot|carbs|fat)/.test(c));
+      t('⛔ CONTRÔLE — les constructions de `_bcNutr` sont bien trouvées (sinon le témoin est vide)',
+        cons.length>=5, cons.length+' trouvées');
+      t('⛔⛔ aucune construction du pour-100 g ne ré-arrondit à l\'entier (R2 : un seul propriétaire)',
+        fautifs.length===0, fautifs.map(x=>x.slice(0,70)).join(' | '));
+      t('⛔ … et le propriétaire existe vraiment', /function _per100d1\(/.test(app), '');
+    }
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

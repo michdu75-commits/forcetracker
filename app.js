@@ -1303,6 +1303,23 @@ function _manualBarcode(){
      · `photo-code-ia`        → des chiffres lus par un modèle → non vérifiés
      · `code-tape`            → des chiffres tapés par un humain → non vérifiés
    C'est l'échelle des sources de **R33**, appliquée à un seul champ. */
+/* ═══ 🔢 UNE SEULE PRÉCISION POUR LE POUR-100 g (ft-v1112, R2) ═══════════════════════════════
+   Michel, après le calibrage à la main : « ça va être comme ça sur tous les produits, c'est
+   chiant ? ». La réponse est non — mais la vérification a trouvé bien pire que sa question.
+   ⛔⛔ SIX ENDROITS construisent `_bcNutr`, et QUATRE arrondissaient à l'entier : le code-barres
+   Open Food Facts, la recherche Open Food Facts, la base CIQUAL, et les calories de la photo
+   d'étiquette. Seuls le calibrage à la main (ft-v1111) et les macros de la photo gardaient la
+   décimale. *Six écritures de la même idée, quatre comportements différents — la seule question
+   était quand on s'en apercevrait.*
+   ⛔⛔ ET LE PLUS COÛTEUX EST LA BASE EMBARQUÉE, celle qui sert le plus : `data/ciqual.json`
+   CONTIENT les décimales, et l'app les jetait à la lecture. Mesuré : **3 298 aliments sur
+   3 484** portent au moins une décimale, et **1 159 ont une macro entre 0 et 1 g/100 g** —
+   arrondie, elle devient 0 ou 1, soit **100 % d'erreur sur cette macro**.
+   ⭐ ET ÇA NE CHANGE RIEN À L'ÉCRAN : `_qtyRescale` arrondit déjà les 4 champs à l'entier au
+   moment de les écrire. La décimale ne sert qu'à ce qui est CONSERVÉ et re-multiplié.
+   ⚠️ C'est R8 (la jumelle) pour la 5ᵉ fois cette semaine : le correctif de la veille avait été
+   posé sur 1 endroit des 6, et pas sur le plus utilisé. */
+function _per100d1(x){ const v=+x||0; return Math.round(v*10)/10; }
 async function _lookupBarcode(ean, saisie, codeDouteux){
   if(!codeDouteux) toast('Recherche du produit…','info');
   let p=null;
@@ -1310,13 +1327,13 @@ async function _lookupBarcode(ean, saisie, codeDouteux){
   catch(e){ toast('Réseau indisponible pour la recherche produit','error'); return; }
   if(!p){ toast('Produit introuvable dans la base (code '+ean+') — saisis à la main','error'); return; }
   const n=p.nutriments||{};
-  const kcal100=Math.round(n['energy-kcal_100g']||(n['energy_100g']?n['energy_100g']/4.184:0)||0);
+  const kcal100=_per100d1(n['energy-kcal_100g']||(n['energy_100g']?n['energy_100g']/4.184:0)||0);
   _bcNutr={
     name:((p.product_name_fr||p.product_name||p.generic_name_fr||p.generic_name||'Produit')+(p.brands?' ('+String(p.brands).split(',')[0].trim()+')':'')).slice(0,60),
     kcal100:kcal100,
-    prot100:Math.round(n['proteins_100g']||0),
-    carbs100:Math.round(n['carbohydrates_100g']||0),
-    fat100:Math.round(n['fat_100g']||0)
+    prot100:_per100d1(n['proteins_100g']),
+    carbs100:_per100d1(n['carbohydrates_100g']),
+    fat100:_per100d1(n['fat_100g'])
   };
   if(!_bcNutr.kcal100&&!_bcNutr.prot100&&!_bcNutr.carbs100&&!_bcNutr.fat100){toast('Produit trouvé mais sans infos nutritionnelles — saisis à la main','error');return;}
   _offRemplirFormulaire(p, ean, saisie||'scan', codeDouteux===true);
@@ -1420,9 +1437,8 @@ function _calAppliquer(){
      ft-v1100 : transcrire, pas décider).
      ⭐ Et ça ne change rien à l'affichage : `_qtyRescale` arrondit déjà les 4 champs à l'entier
      au moment de les écrire. La décimale ne sert qu'à ce qui est CONSERVÉ. */
-  const d1=x=>Math.round(x*10)/10;
-  _bcNutr={name:nom.slice(0,80), kcal100:d1(kcal), prot100:d1(prot),
-           carbs100:d1(carbs), fat100:d1(fat)};
+  _bcNutr={name:nom.slice(0,80), kcal100:_per100d1(kcal), prot100:_per100d1(prot),
+           carbs100:_per100d1(carbs), fat100:_per100d1(fat)};
   /* ⭐ LE CHEMIN DE CIQUAL, MOT POUR MOT — produit vide, pas de portion déclarée (donc 100 g
      par défaut, que la personne remplace par sa dose), et une provenance qui dit la vérité. */
   _offRemplirFormulaire({serving_quantity:0, nutriments:{}}, null, 'etiquette-main', false, 'etiquette');
@@ -2287,10 +2303,13 @@ async function onFoodLabelFile(input){
     if(!d||d.status!=='ok'){toast('Étiquette illisible — rapproche-toi, éclaire, ou saisis à la main','error');return;}
     _bcNutr={
       name:(d.name||'Produit').slice(0,60),
-      kcal100:Math.round(d.kcal100||0),
-      prot100:Math.round((d.prot100||0)*10)/10,
-      carbs100:Math.round((d.carbs100||0)*10)/10,
-      fat100:Math.round((d.fat100||0)*10)/10
+      /* ⚠️ LES CALORIES ÉTAIENT LE SEUL CHAMP ARRONDI ICI, alors que le serveur demande
+         explicitement « garde 1 decimale si presente » : l'information était produite puis
+         jetée à l'arrivée (R4, dans sa forme la plus pure). */
+      kcal100:_per100d1(d.kcal100),
+      prot100:_per100d1(d.prot100),
+      carbs100:_per100d1(d.carbs100),
+      fat100:_per100d1(d.fat100)
     };
     if(!_bcNutr.kcal100&&!_bcNutr.prot100&&!_bcNutr.carbs100&&!_bcNutr.fat100){toast('Valeurs non lues — réessaie ou saisis à la main','error');return;}
     const g=(parseFloat(d.serving)>0)?parseFloat(d.serving):100;
@@ -2595,8 +2614,10 @@ function _ciqualChercher(q, max){
    finirait par diverger des deux autres. */
 function _afSuggPrendreCiqual(i){
   const a=_afSuggCiq[i]; if(!a) return;
-  _bcNutr={ name:a[1].slice(0,60), kcal100:a[3]||0,
-            prot100:Math.round(a[4]||0), carbs100:Math.round(a[5]||0), fat100:Math.round(a[6]||0) };
+  /* ⛔⛔ LE PLUS COÛTEUX DES SIX : `data/ciqual.json` porte les décimales (3 298 aliments sur
+     3 484), et on les jetait ici même, à la lecture. */
+  _bcNutr={ name:a[1].slice(0,60), kcal100:_per100d1(a[3]),
+            prot100:_per100d1(a[4]), carbs100:_per100d1(a[5]), fat100:_per100d1(a[6]) };
   /* ⚠️ PAS D'ÉTAT « tel-que-vendu » DANS LA PROVENANCE, et c'est une vraie différence avec
      Open Food Facts : un produit emballé donne toujours ses valeurs TELLES QUE VENDUES (donc
      sèches pour des pâtes), alors que CIQUAL dit l'état EN TOUTES LETTRES dans le nom — « Riz
@@ -2874,10 +2895,10 @@ function _afSuggPrendreLocale(i){
 function _afSuggPrendreOff(i){
   const p=_afSuggOff[i]; if(!p) return;
   const n=p.nutriments||{};
-  _bcNutr={ name:_afSuggNom(p), kcal100:_afSuggKcal100(p),
-            prot100:Math.round(n['proteins_100g']||0),
-            carbs100:Math.round(n['carbohydrates_100g']||0),
-            fat100:Math.round(n['fat_100g']||0) };
+  _bcNutr={ name:_afSuggNom(p), kcal100:_per100d1(_afSuggKcal100(p)),
+            prot100:_per100d1(n['proteins_100g']),
+            carbs100:_per100d1(n['carbohydrates_100g']),
+            fat100:_per100d1(n['fat_100g']) };
   _offRemplirFormulaire(p, p.code||null, 'recherche');
   _afSuggVider();
   toast('Ajuste la quantité ✅','success');
