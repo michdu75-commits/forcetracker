@@ -2604,14 +2604,19 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
          « off ». *Une provenance fausse est pire que pas de provenance : elle se présente comme
          un fait vérifiable.* -->
     <button class="btn btn-bg2" id="af-cal-btn" onclick="_calOuvrir()" style="width:100%;margin-bottom:12px;font-size:13.5px;">⚖️ Saisir les valeurs pour 100 g (étiquette)</button>
+    <!-- ⚠️⚠️ `type="text"` ET NON `type="number"` — un témoin EXISTANT a attrapé mon
+         premier jet, qui les avait mis en `number`. Sur un clavier français, `type="number"`
+         **filtre la virgule** : « 62,5 » y devient vide ou « 625 » selon le navigateur, en
+         silence. C’est le défaut déjà payé sur 22 champs de l’app ; le 23ᵉ aurait recommencé.
+         *Un garde-fou écrit après coup vient de servir à celui qui l’avait écrit.* -->
     <div id="af-cal-row" style="display:none;background:var(--bg3);border-radius:10px;padding:11px 12px;margin-bottom:14px;">
       <div style="font-size:12px;color:var(--t2);margin-bottom:4px;font-weight:600;">Recopie le tableau de ton étiquette — <b>pour 100 g</b></div>
       <div style="font-size:11px;color:var(--t3);line-height:1.4;margin-bottom:9px;">C'est la colonne « pour 100 g », pas ta dose. Une fois saisie, tu n'auras plus qu'à taper ta quantité : l'app calculera toute seule, cette fois-ci et les suivantes.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-        <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">kcal / 100 g</div><input id="af-cal-kcal" type="number" inputmode="decimal" placeholder="375" style="width:100%;box-sizing:border-box;padding:10px;border-radius:9px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
-        <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Protéines / 100 g</div><input id="af-cal-prot" type="number" inputmode="decimal" placeholder="88" style="width:100%;box-sizing:border-box;padding:10px;border-radius:9px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
-        <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Glucides / 100 g</div><input id="af-cal-carbs" type="number" inputmode="decimal" placeholder="1" style="width:100%;box-sizing:border-box;padding:10px;border-radius:9px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
-        <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Lipides / 100 g</div><input id="af-cal-fat" type="number" inputmode="decimal" placeholder="1" style="width:100%;box-sizing:border-box;padding:10px;border-radius:9px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+        <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">kcal / 100 g</div><input id="af-cal-kcal" type="text" inputmode="decimal" step="any" placeholder="375" style="width:100%;box-sizing:border-box;padding:10px;border-radius:9px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+        <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Protéines / 100 g</div><input id="af-cal-prot" type="text" inputmode="decimal" step="any" placeholder="88" style="width:100%;box-sizing:border-box;padding:10px;border-radius:9px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+        <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Glucides / 100 g</div><input id="af-cal-carbs" type="text" inputmode="decimal" step="any" placeholder="1" style="width:100%;box-sizing:border-box;padding:10px;border-radius:9px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+        <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Lipides / 100 g</div><input id="af-cal-fat" type="text" inputmode="decimal" step="any" placeholder="1" style="width:100%;box-sizing:border-box;padding:10px;border-radius:9px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
       </div>
       <div id="af-cal-err" style="display:none;font-size:12px;line-height:1.45;color:var(--orange);margin-bottom:9px;"></div>
       <button class="btn btn-red" onclick="_calAppliquer()" style="width:100%;">Calibrer ce produit</button>
