@@ -27,6 +27,25 @@
 - ⛔ **Trous connus épinglés, non corrigés (R30)** : « on fait quoi ce soir » et « on s entraîne
   quoi » **sans apostrophe** ne déclenchent pas — ratés **pré-existants**, sans rapport avec ce
   correctif qui ne fait que **retirer** des déclenchements.
+- 🛣️ **LES DEUX COULOIRS, rappelés par Michel le 04/09** : *« il ne faut pas que ça fasse obstacle
+  à l'autre Claude, au départ je t'avais rajouté pour la **nutrition** »*. ⭐ **Le rappel était
+  mérité et il est mesurable** : sur mes 8 versions du jour, **6 en nutrition** et **2 hors couloir**
+  (`ft-v1118` le cardio, `ft-v1123` le banc A/B) — *les deux dans `coach.js`, et les deux jours de
+  collision*. 👉 **session-A = nutrition & aliments · session-B = Milo, récup, séance.** Détail et
+  nuances dans `docs/JOURNAL-DE-PARTAGE.md` (un couloir n'est pas un mur ; `sw.js` collisionnera
+  toujours, le second qui fusionne monte).
+- ✅ **LA PASSE A/B A TOURNÉ POUR DE VRAI** (Michel, 04/09 ~19:47, 4 appels).
+  ⭐⭐ **AB-2 est sans appel** : avec la mémoire, **aucune** presse au-dessus de la tête sur l'épaule
+  douloureuse et couché **allégé à 75 kg** ; sans elle, le **développé militaire à 80 kg devient
+  l'ANCRE**. Poussée : **4 séries contre 9**. *La différence est DANS la séance, pas dans une phrase.*
+  ⚠️ **AB-1 est faible, et c'est dit** : sans mémoire Milo tombe sur 80×4 — plausible **par hasard**
+  pour un gars de 85 kg confirmé. Ce qui diffère vraiment : **B pose des questions**, A agit.
+  ⛔⛔ **Et la passe a trouvé un défaut DANS MA FIXTURE** : `_abHistoDC` annonce « des charges qui
+  PROGRESSENT » et fait l'inverse — j'ai **inversé le sens du temps** (`i=0` = la plus récente ET la
+  plus légère). *Le résultat tient, mais la fixture ne teste pas ce qu'elle annonce.*
+  ⏭️ **Les 2 suites sont PASSÉES À session-B** (leur couloir) : corriger le sens du temps, et
+  **promouvoir AB-2 au banc** — *« épaule douloureuse → aucune presse au-dessus de la tête »* est
+  vérifiable par du CODE, donc gratuit à chaque passe au lieu d'un test manuel à 0,26 €.
 - **Version en ligne (live) :** `ft-v1123` — 🧠 **LE TEST A/B MÉMOIRE REÇOIT SA PORTE D'ENTRÉE.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#878** sur `7d1bc06`, **job `deploy` success**,
   les 7 étapes vertes à 17:43:22 UTC. ⭐ Suite **sur l'arbre FUSIONNÉ** : parcours **2699/2699**,
