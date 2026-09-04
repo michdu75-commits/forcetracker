@@ -69,6 +69,32 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 MILO REÇOIT « (0 EXERCICE) — 0kg VOL TOTAL » POUR UNE SÉANCE DE CARDIO SEUL
+
+**Ce qui déclenche la question** (04/09/2026, ft-v1118) : mesuré dans le vrai
+`buildCoachContext`, une séance de 45 min de tapis lui arrive ainsi —
+
+> `vendredi 2026-09-04 (aujourd'hui) (0 exercice):  — 0kg vol total — cardio: après séance Tapis 45min (modere)`
+
+⭐ **La donnée EST là** (le cardio est transmis depuis le 02/08). ⛔ Mais elle est **encadrée
+par deux mentions qui disent le contraire** : *« 0 exercice »* et *« 0kg vol total »* — les mêmes
+que celles qu'on vient de retirer de l'historique parce qu'elles font passer un cardio pour une
+séance ratée. Et *« après séance »* n'a aucun sens quand il n'y a pas de séance avant (**R14**).
+⚠️ La clé technique sort aussi ici : *« (modere) »* — `coach.js` a son propre formateur, il ne
+lit pas `_cardioClair`.
+
+**Ce qu'on ne sait pas** : si ça change quoi que ce soit à ce que Milo *dit*. Un modèle capable
+lit les deux moitiés de la ligne et comprend. Un modèle léger — celui de la plupart des gens
+(**R9**) — peut très bien répondre *« tu n'as rien fait vendredi »*.
+
+**⛔ POURQUOI CE N'EST PAS CORRIGÉ TOUT DE SUITE** : c'est une modification de ce que Milo
+reçoit, donc **R34** — avant/après au banc d'essai, qui coûte des appels réels. *Et le conteneur
+ne peut pas les passer : le Worker est refusé par la politique réseau.* Le corriger « parce que
+ça se lit mal » serait exactement ce que R34 interdit : juger au feeling.
+
+**État : à trier** — décision de Michel. ⭐ Le premier travail est gratuit et déjà fait : la
+ligne est **mesurée**, pas supposée.
+
 ### 🟡 UNE SÉANCE DE CARDIO SEUL N'A PAS DE DÉBRIEF — est-ce un choix ou un oubli ?
 
 **Ce qui déclenche la question** (04/09/2026, ft-v1118) : en corrigeant le fait qu'une séance de
