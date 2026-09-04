@@ -6737,6 +6737,244 @@ function _evCopier(txt, okMsg){
   if(!_secours()) _echec();
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════════════
+   🧠 A/B MÉMOIRE — « les données de Force Tracker rendent-elles la séance MEILLEURE ? »
+   ═══════════════════════════════════════════════════════════════════════════════════════
+
+   ⛔⛔ POURQUOI CE BOUTON EXISTE, ET C'EST UNE LEÇON PLUS QU'UNE FONCTIONNALITÉ.
+   Le test vivait depuis le 03/09 dans `tests/milo/ab-memoire.js`, prêt, éprouvé hors ligne…
+   et il n'a JAMAIS tourné. On a longtemps écrit « en attente de Michel », comme s'il
+   manquait du temps. **La vraie cause est ailleurs, et elle était mesurable** : c'était le
+   SEUL test lançable par lui qui n'avait pas de porte d'entrée. Le benchmark en a une, le
+   comparateur Sonnet/Haiku, le Gardien, VM, PT-001 : tous ont leur bouton. Lui non — donc il
+   fallait un terminal, donc personne ne l'a jamais lancé.
+   👉 ***Un outil sans porte d'entrée n'est pas un outil en attente, c'est un outil qui
+   n'existe pas.*** (Michel, 04/09 : *« le test A/B je peux pas le faire »*, puis *« je ne
+   sais pas comment faire »*.)
+
+   ⭐ R13/R2 — CE N'EST PAS UN 2ᵉ CHEMIN. On appelle `_vcApplyPersona`, `buildCoachContext`
+   et `_vcAsk`, exactement comme le benchmark ; le gel (`_demoMode`) et la restauration sont
+   COPIÉS de `_evRun`, pas réinventés — c'est le chemin qui protège les vraies données
+   (règle d'or #3), et il n'en existe qu'un.
+
+   ⛔⛔ CE QU'ON RETIRE EN B, ET CE QU'ON NE RETIRE PAS. On enlève **la connaissance du
+   sportif** (historique, records, blessures, état du jour, préférences), PAS les règles ni
+   les instructions de Milo — sinon on ne mesurerait pas la mémoire, on fabriquerait un
+   mauvais chatbot pour gagner la comparaison. C'est gratuit à obtenir : `_vcApplyPersona`
+   remet tout à neutre puis applique la fixture, donc une fixture nue laisse le bloc COMMUN
+   intact et vide le bloc PERSONNE.
+
+   ⚠️⚠️ IL N'Y A AUCUN JUGE AUTOMATIQUE ICI, ET C'EST VOULU. « La séance est-elle
+   MEILLEURE ? » ne se vérifie pas par du code — c'est le critère de `JOURNAL-DE-TEST.md` :
+   ce qui dépend du jugement reste au **juge humain** et ne devient jamais un scénario du
+   banc d'essai. Le bouton produit donc **deux réponses à comparer**, pas un verdict.
+   *Afficher un ✅ ici serait mentir sur ce qu'on a mesuré.*                                */
+
+/* ⚠️⚠️ LA DATE DU JOUR EST CELLE DU TÉLÉPHONE, JAMAIS CELLE DE GREENWICH — et j'ai écrit le
+   bug avant de le corriger. Mon premier jet faisait `new Date().toISOString().slice(0,10)`
+   à trois endroits ; `tests/dates` l'a attrapé sur deux d'entre eux (motif interdit), et le
+   troisième — ce `_abJ` — passait entre les mailles parce qu'il décale la date AVANT de
+   convertir. Le défaut est pourtant le même : en France l'été, entre minuit et 2 h, Greenwich
+   est encore la veille. 👉 `today(ts)` (state.js) est le PROPRIÉTAIRE unique de cette
+   conversion (**R2**), et il applique l'écart du jour visé — donc il tient aussi au changement
+   d'heure. *Un détecteur qui n'attrape que la forme littérale d'un bug laisse passer ses
+   variantes : ce sont les fixtures d'un test, une date fausse d'un jour y fabrique un
+   historique faux d'un jour.* (Famille « fuseaux horaires » de `BUGS.md`.) */
+const _abJ = n => today(Date.now() - n * 86400000);
+
+/* ⚠️ 24 séances sur 10 semaines, avec des charges qui PROGRESSENT : sans progression,
+   « exploiter l'historique » n'aurait rien à exploiter — on mesurerait du bruit. */
+function _abHistoDC(){
+  const s = [];
+  for(let i=0;i<24;i++){
+    const kg = 80 + Math.floor(i/2.4) * 1.5;                       // 80 → 93,5
+    s.push({ ts:9000+i, date:_abJ(i*3+1), volume:8200, synced:true, duration:62,
+             exs:[{ name:'Développé Couché',
+                    sets:Array.from({length:4},()=>({ kg:Math.round(kg/2.5)*2.5, reps:5, done:true, type:'N' })) }] });
+  }
+  return s;
+}
+
+/* Le socle IDENTIQUE des deux côtés : ce qu'un chatbot saurait de toute façon. Sans lui, on
+   comparerait « Milo qui connaît Michel » à « Milo qui ne sait pas qu'il parle à un humain ». */
+const _AB_SOCLE = { name:'Michel', gender:'H', age:46, height:178, bw:85,
+                    goal:'muscle', discipline:'muscu', level:'confirme' };
+
+/* ⭐⭐ LES DEUX CAS SONT LA PROPRIÉTÉ DE L'APP (R2). `tests/milo/ab-memoire.js` les LIT
+   depuis la page au lieu de les redéfinir : deux copies des mêmes fixtures divergeraient,
+   l'une gagnerait un correctif et l'autre non, et on comparerait deux expériences
+   différentes en croyant comparer deux modèles.
+   ⛔ Chaque cas est construit pour qu'une information de Force Tracker ait une RAISON de
+   changer la prescription — deux demandes génériques ne mesureraient rien. */
+const _AB_CAS = [
+  { id:'AB-1',
+    titre:'Historique de performance — la séance exploite-t-elle les charges réelles ?',
+    demande:'Crée-moi ma séance développé couché aujourd\'hui.',
+    avec: Object.assign({}, _AB_SOCLE, {
+      sessions:_abHistoDC(),
+      prs:{ 'Développé Couché':{ kg:95, reps:4, rm1:110, date:_abJ(9) } },
+      weightLog:[{date:_abJ(21),kg:85.4},{date:_abJ(7),kg:85.1},{date:_abJ(0),kg:85}],
+      defRest:180 }),
+    sans: Object.assign({}, _AB_SOCLE),
+    attendus:['charge prescrite cohérente avec un 1RM de 110 kg (≈ 85-95 kg sur 5 reps)',
+              'les paliers partent d\'une charge réaliste, pas d\'un chiffre rond arbitraire'] },
+  { id:'AB-2',
+    titre:'Douleur active — la séance CHANGE-t-elle, ou juste le commentaire ?',
+    demande:'Fais-moi une séance haut du corps pour ce soir.',
+    avec: Object.assign({}, _AB_SOCLE, {
+      sessions:_abHistoDC(),
+      prs:{ 'Développé Couché':{ kg:95, reps:4, rm1:110, date:_abJ(9) } },
+      healthProfile:{ injuries:[{ zone:'epaule', status:'active', since:_abJ(20) }], conditions:[], notes:'' },
+      /* ⭐ possible seulement depuis ft-v1106 : avant, `dayState` était forcé à null */
+      dayState:{ date:_abJ(0), energy:2, sleep:5, pains:[{ zone:'epaule', side:'R' }] },
+      sleepLog:[{ date:_abJ(0), hours:5, energy:2 }],
+      defRest:180 }),
+    sans: Object.assign({}, _AB_SOCLE),
+    attendus:['le développé au-dessus de la tête disparaît ou s\'allège',
+              'le volume de poussée baisse',
+              'la différence est DANS la séance, pas seulement dans une phrase'] }
+];
+
+let _abReport = null;
+
+/* ⭐⭐ UN SEUL PROPRIÉTAIRE DE LA MESURE (R2) — `tests/milo/ab-memoire.js` appelle CETTE
+   fonction depuis la page au lieu de recalculer le découpage de son côté. Le détail qui
+   justifie la règle : la version du script exigeait aussi le marqueur « SITUATION DE
+   L'INSTANT » APRÈS « PROFIL ATHLÈTE », la mienne l'avait oublié. **Deux formules qui ne
+   comptent pas pareil rendraient deux « écarts de mémoire » différents pour la même passe**
+   — et c'est le chiffre sur lequel on décide si l'expérience a un sens.
+   ⛔ Le découpage suit celui de `worker.js` : ce qui précède `PROFIL ATHLÈTE:` est le bloc
+   COMMUN (les règles, mises en cache), ce qui suit est PROPRE à la personne. */
+function _abMesureContexte(ctx){
+  const pi = ctx.indexOf('PROFIL ATHLÈTE:');
+  const mi = ctx.indexOf("═══ SITUATION DE L'INSTANT ═══");
+  return { total: ctx.length,
+           commun: pi > 0 ? pi : 0,
+           propre: (pi > 0 && mi > pi) ? (ctx.length - pi) : 0 };
+}
+
+function startAbMemoire(){
+  if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
+  if(_evRunning){ toast('Une passe est déjà en cours…','info'); return; }
+  if(!S.url){ toast('URL du Coach IA absente','error'); return; }
+  const n = _AB_CAS.length * 2;                     // chaque cas est joué AVEC puis SANS
+  /* ⚠️ MÊME BARÈME que le benchmark (R2) : deux barèmes finiraient par annoncer deux prix
+     différents pour le même appel. Et le quota est annoncé AUSSI — la leçon du 01/09, où le
+     devis chiffrait consciencieusement des euros pendant que ce qui s'épuisait vraiment
+     (les appels du jour) n'était nulle part, et Milo a lâché « HTTP 429 » en pleine séance. */
+  showConfirm('🧠 A/B mémoire — '+_AB_CAS.length+' cas',
+      'On pose '+_AB_CAS.length+' fois la même question à Milo : une fois **avec** ta mémoire Force Tracker '
+    + '(historique, records, blessure, état du jour), une fois **sans**.\n\n'
+    + '⚠️ On retire ce qu\'il sait DE TOI, pas ses règles — sinon on ne mesurerait pas la mémoire, '
+    + 'on fabriquerait un mauvais chatbot pour gagner la comparaison.\n\n'
+    + n+' appels au Coach, soit environ '+_evPrix(n)+'.'
+    + '\n\n⚠️ Ça consomme '+n+' de tes appels IA du jour (plafond : '+_EV_QUOTA_JOUR+ ').'
+    + '\n\n🛡️ Tes données ne sont PAS touchées : le profil est remplacé le temps des questions, puis tout revient.'
+    + '\n\n🧑‍⚖️ Il n\'y a pas de ✅/❌ ici : « la séance est-elle meilleure ? » se juge à l\'œil. '
+    + 'Tu auras les deux réponses côte à côte.'
+    + '\n\nLancer ?', ()=>_abRun(), 'Lancer');
+}
+
+async function _abRun(){
+  _evRunning = true;
+  try{ if(typeof persist==='function') persist(); }catch(e){}     // vraies données sauvées AVANT le gel
+  try{ goScreen('coach', document.getElementById('nb-coach')); }catch(e){}
+  try{ _showCoachChat(); }catch(e){}
+  coachBusy = true; const sendBtn = document.getElementById('coach-send-btn'); if(sendBtn) sendBtn.disabled = true;
+
+  const out = { ymd:_abJ(0), cas:[] };
+  window._demoMode = true;                                        // GEL : plus aucune écriture
+  try{
+    for(let i=0;i<_AB_CAS.length;i++){
+      const cas = _AB_CAS[i];
+      _pt001Label('🧠 A/B mémoire — '+cas.id+' ('+(i+1)+'/'+_AB_CAS.length+')');
+      const paire = {};
+      for(const cote of ['avec','sans']){
+        _pt001Label('· '+cas.id+' — '+(cote==='avec'?'AVEC mémoire':'SANS mémoire'));
+        _vcApplyPersona({ apply: cas[cote] || {} });               // profil remis à neutre à CHAQUE côté
+        let mesure = {};
+        /* ⭐ On mesure ce que la mémoire PÈSE en caractères — sans ça, on lirait deux
+           réponses sans savoir si l'expérience a seulement eu lieu. */
+        try{ mesure = _abMesureContexte(buildCoachContext(cas.demande)); }
+        catch(e){ mesure = { erreur:(e&&e.message)||String(e) }; }
+        let r = { ok:false, reply:'', err:'' };
+        try{ r = await _vcAsk({ scenario:cas.demande, coachEmail:'', history:[] }) || r; }
+        catch(e){ r = { ok:false, reply:'', err:(e&&e.message)||String(e) }; }
+        paire[cote] = { ok:!!r.ok, reply:r.reply||'', err:r.err||'', ms:r.ms||0, mesure };
+      }
+      out.cas.push({ id:cas.id, titre:cas.titre, demande:cas.demande,
+                     attendus:cas.attendus, avec:paire.avec, sans:paire.sans });
+    }
+  }catch(e){ console.error('[ab-memoire]', e); }
+  finally{
+    window._demoMode = false;                                     // DÉGEL
+    try{ if(typeof load==='function') load(); }catch(e){}          // RESTAURE les vraies données
+  }
+  _abReport = out;
+  _abShowResultCard();
+  coachBusy = false; if(sendBtn) sendBtn.disabled = false; _evRunning = false;
+  toast('A/B terminé — tes données sont intactes','success');
+}
+
+/* ⭐⭐ LE CHIFFRE QUI DIT SI L'EXPÉRIENCE A UN SENS, ET IL S'AFFICHE AVANT LES RÉPONSES.
+   Si les deux contextes se ressemblent, on n'a rien mesuré du tout — et on lirait quand même
+   les deux textes en cherchant une différence, qu'on finirait par trouver. *Un écart trop
+   faible invalide la passe : mieux vaut le dire que laisser l'œil conclure.* */
+const _AB_ECART_MINI = 2000;
+
+function _abShowResultCard(){
+  const msgs = document.getElementById('coach-msgs'); if(!msgs||!_abReport) return;
+  const bloc = c => {
+    const dA = (c.avec&&c.avec.mesure)||{}, dB = (c.sans&&c.sans.mesure)||{};
+    const ecart = (dA.propre||0) - (dB.propre||0);
+    return '<p style="margin:8px 0 2px;font-weight:700">'+c.id+' — '+_escHtmlAb(c.titre)+'</p>'
+      + '<p style="margin:2px 0;font-size:12.5px;color:var(--t2)">A : '+(dA.total||0)+' car. dont '+(dA.propre||0)
+      + ' propres · B : '+(dB.total||0)+' car. dont '+(dB.propre||0)+'</p>'
+      + '<p style="margin:2px 0;font-size:12.5px;'+(ecart<_AB_ECART_MINI?'color:var(--red);font-weight:700':'color:var(--t2)')+'">'
+      + (ecart<_AB_ECART_MINI ? '⛔ écart de mémoire +'+ecart+' car. — TROP FAIBLE, la passe ne mesure rien'
+                              : '⭐ écart de mémoire : +'+ecart+' car. côté A')+'</p>'
+      + '<p style="margin:2px 0;font-size:12.5px;color:var(--t2)">réponses : '+(c.avec.reply||'').length
+      + ' car. (A) · '+(c.sans.reply||'').length+' car. (B)'
+      + ((c.avec.err||c.sans.err)?' ⚠️ '+_escHtmlAb(c.avec.err||c.sans.err):'')+'</p>';
+  };
+  const d = document.createElement('div'); d.className='msg-bubble msg-coach';
+  d.style.cssText = 'background:var(--bg3);border:1px solid var(--sep);';
+  d.innerHTML = '<p style="font-weight:800;color:var(--red);margin:0 0 6px">🧠 A/B mémoire — '+_abReport.cas.length+' cas</p>'
+    + _abReport.cas.map(bloc).join('')
+    + '<p style="margin:8px 0 2px;font-size:12.5px;color:var(--t2);line-height:1.5">'
+    + '🧑‍⚖️ <b>Aucun verdict automatique</b> : « la séance est-elle meilleure ? » se juge à l\'œil. '
+    + 'Copie les deux réponses et compare — ce qui compte est que la différence soit <b>DANS la séance</b>, '
+    + 'pas seulement dans une phrase de politesse.</p>'
+    + '<p style="margin:4px 0 2px">Tes données sont <b>intactes</b> ✅</p>'
+    + '<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
+    + '<button class="btn btn-bg2" style="flex:1;min-width:150px;padding:10px;font-size:13px" onclick="copyAbText()">📋 Copier les deux réponses</button>'
+    + '</div>';
+  msgs.appendChild(d); _coachAuBas();
+}
+
+/* ⚠️ 6ᵉ fonction d'échappement du projet — le défaut R2 est CONNU et noté depuis ft-v1114
+   (`_escIdea`, `_escFood`, `_escNote`, `_souvEsc`, `_obsEsc`). On ne le corrige pas ici :
+   regrouper six fonctions au milieu d'une autre tâche, c'est deux chantiers dans un. */
+const _escHtmlAb = s => String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ⛔ LE TEXTE PORTE LES RÉPONSES ENTIÈRES, pas un résumé : c'est tout l'intérêt de la passe,
+   et elle a coûté 4 appels. Un rapport qui tronque oblige à repayer pour relire. */
+function copyAbText(){
+  if(!_abReport){ toast('Aucune passe A/B','error'); return; }
+  const L = ['A/B MÉMOIRE FORCE TRACKER — '+_abReport.ymd, ''];
+  _abReport.cas.forEach(c => {
+    const dA=(c.avec&&c.avec.mesure)||{}, dB=(c.sans&&c.sans.mesure)||{};
+    L.push('═══ '+c.id+' — '+c.titre, 'demande : « '+c.demande+' »',
+           'attendus : '+(c.attendus||[]).join(' · '),
+           'contexte A '+(dA.total||0)+' car. (dont '+(dA.propre||0)+' propres) · B '+(dB.total||0)
+             +' car. (dont '+(dB.propre||0)+') · écart +'+((dA.propre||0)-(dB.propre||0)),
+           '', '--- A · AVEC mémoire ---', c.avec.reply || ('(pas de réponse : '+(c.avec.err||'?')+')'),
+           '', '--- B · SANS mémoire ---', c.sans.reply || ('(pas de réponse : '+(c.sans.err||'?')+')'), '');
+  });
+  L.push('⚠️ Aucun juge automatique : la comparaison est humaine (JOURNAL-DE-TEST.md).');
+  _evCopier(L.join('\n'), 'Réponses A/B copiées');   // ⭐ le MÊME chemin de copie (R2)
+}
+
 /* 🔁 REJOUER LES ROUGES — la version utilisable de « on passe à 20 passes ».
    ⭐ On ne rejoue QUE les scénarios rouges : 3 rouges × 10 = 30 appels (~0,45 €) au lieu de
    20 × 15 = 300 appels, qui coûteraient cher ET dépasseraient le plafond de 50/jour/personne.

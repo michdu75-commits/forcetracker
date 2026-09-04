@@ -6,16 +6,12 @@
 
 ---
 
-- ✅✅ **SAFARI / IPHONE VÉRIFIÉ PAR MICHEL le 04/09** — ft-v1114 → ft-v1120, **tout est bon**.
-  ⭐ **Le point qui comptait vraiment : la bande « REPAS » en `position:sticky` TIENT sur Safari
-  iOS.** C'était le seul vrai risque de la série — les règles du projet listent `position:sticky`
-  dans un conteneur de défilement comme un piège Safari connu, et il n'avait jamais été levé
-  depuis ft-v1109. ⭐ Vérifiés aussi : le clavier décimal du champ pour-100 g accepte la
-  **virgule**, les nouveaux produits sortent avec leur portion, `coca zero` rend bien la ligne à
-  **1 kcal** et non celle à 24, la pop-up v68 et le point rouge s'affichent.
-  ⚠️ *La mention « Safari non vérifié » traînait dans six entrées de journal : elle est levée pour
-  cette série, pas pour les suivantes.*
-- **Version en ligne (live) :** `ft-v1123` — ⚡ **« CETTE SÉANCE TE CONVIENT ? » NE S'AFFICHE PLUS
+- **Version en ligne (live) :** `ft-v1124` — ⚡ **« CETTE SÉANCE TE CONVIENT ? » NE S'AFFICHE PLUS
+  ⚠️⚠️ **25ᵉ COLLISION DE VERSION, la 3ᵉ en deux jours** : session-A a publié **et déployé** sa
+  propre ft-v1123 pendant que ma suite de parcours tournait. **Le premier publié garde le numéro** —
+  ma version devient **ft-v1124**. ⭐ *Ma ligne de partage était pourtant posée dès 17:10 UTC* :
+  **un panneau d'affichage évite le doublon de TRAVAIL, il n'empêche pas de choisir le même numéro.**
+  *Seul git l'attrape, et il l'a attrapé.*
   SOUS UN REPROCHE.** Michel, enregistrement d'écran à l'appui : il écrit *« pourquoi tu me donnes
   la séance à faire ? »* et l'app propose **« ⚡ Oui, on démarre »** sous une réponse de Milo qui dit
   le contraire.
@@ -31,6 +27,47 @@
 - ⛔ **Trous connus épinglés, non corrigés (R30)** : « on fait quoi ce soir » et « on s entraîne
   quoi » **sans apostrophe** ne déclenchent pas — ratés **pré-existants**, sans rapport avec ce
   correctif qui ne fait que **retirer** des déclenchements.
+- **Version en ligne (live) :** `ft-v1123` — 🧠 **LE TEST A/B MÉMOIRE REÇOIT SA PORTE D'ENTRÉE.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#878** sur `7d1bc06`, **job `deploy` success**,
+  les 7 étapes vertes à 17:43:22 UTC. ⭐ Suite **sur l'arbre FUSIONNÉ** : parcours **2699/2699**,
+  calculs **290/290**, muscles 241, croisés 50, dates **7/7**, données 0 trou — *c'est l'arbre
+  fusionné qui part en ligne, pas le mien seul.*
+- ⚠️⚠️ **24ᵉ COLLISION DE VERSION** : session-B a poussé sa **ft-v1122** (le cardio dans la
+  récupération) pendant que j'écrivais la mienne. La leur était déjà en ligne → je monte à 1123,
+  *on ne fait jamais reculer le cache*. ⭐ **C'est le verrou GIT qui a joué**, pas le journal :
+  mon push a été refusé, rien n'a été écrasé.
+- ⛔ **Et leur ft-v1122 est en ligne SANS entrée dans `CLAUDE.md`** (R23) — noté pour eux dans le
+  journal de partage. *Je ne l'écris pas à leur place : je n'ai pas fait le travail.*
+  ⭐ Elle répond d'ailleurs au **barème de récup du cardio** que j'annonçais « en attente de
+  Michel » une heure plus tôt — *exactement le doublon que ce journal existe pour éviter.*
+- ⛔⛔ **La cause n'était pas le temps de Michel, et elle était de mon côté** : `ab-memoire.js`
+  est prêt depuis le 03/09 et n'a jamais tourné parce qu'il était le **seul** test lançable par
+  lui **sans bouton**. J'ai écrit « en attente de Michel » pendant deux semaines.
+  👉 *Un outil sans porte d'entrée n'est pas un outil en attente, c'est un outil qui n'existe pas.*
+- ⭐ **R13/R2 — pas un 2ᵉ chemin** : le bouton appelle `_vcApplyPersona` / `buildCoachContext` /
+  `_vcAsk`, les mêmes que le benchmark ; le gel et la restauration sont **copiés** de `_evRun`.
+- ⛔ Les cas sont la propriété de l'app (`_AB_CAS`) ; le script node les **lit** et **échoue
+  bruyamment** s'ils manquent. ⚠️ Référence **nue** : un `const` global n'est pas sur `window`.
+- ⭐⭐ **La mesure du contexte avait DÉJÀ divergé** sans que personne l'ait touchée (un marqueur
+  manquait d'un côté) → `_abMesureContexte`, un seul propriétaire. *La duplication n'attend pas
+  qu'on la modifie pour nuire : elle naît déjà différente.*
+- ⛔⛔ **Aucun verdict automatique, exprès** : « meilleure ? » se juge à l'œil (critère de
+  `JOURNAL-DE-TEST.md`). L'écran le dit. **Mesuré à blanc (0 €)** : écart +4 516 et +5 044 car.
+- ⚠️⚠️ **J'ai écrit un bug de fuseau horaire en chemin**, le détecteur en a pris 2 sur 3 (le 3ᵉ
+  décalait la date **avant** de convertir). Puis il a rougi sur **mon commentaire** (§31) : son
+  intention couvrait déjà les `//`, pas les blocs — étendue, **contrôle négatif fait**.
+- ⏭️ **La passe n'a PAS encore tourné pour de vrai** (4 appels, ~0,25 € — décision de Michel).
+  *On ne sait donc toujours pas si la mémoire rend la séance meilleure : on sait qu'on peut
+  enfin le mesurer.* La **mémoire à 2 vitesses** attend ce même avant/après (R34).
+- ✅✅ **SAFARI / IPHONE VÉRIFIÉ PAR MICHEL le 04/09** — ft-v1114 → ft-v1120, **tout est bon**.
+  ⭐ **Le point qui comptait vraiment : la bande « REPAS » en `position:sticky` TIENT sur Safari
+  iOS.** C'était le seul vrai risque de la série — les règles du projet listent `position:sticky`
+  dans un conteneur de défilement comme un piège Safari connu, et il n'avait jamais été levé
+  depuis ft-v1109. ⭐ Vérifiés aussi : le clavier décimal du champ pour-100 g accepte la
+  **virgule**, les nouveaux produits sortent avec leur portion, `coca zero` rend bien la ligne à
+  **1 kcal** et non celle à 24, la pop-up v68 et le point rouge s'affichent.
+  ⚠️ *La mention « Safari non vérifié » traînait dans six entrées de journal : elle est levée pour
+  cette série, pas pour les suivantes.*
 - **Version précédente :** `ft-v1122` — 🔋 **LE CARDIO ENTRE ENFIN DANS LA RÉCUPÉRATION** (option A
   du contre-audit, tranchée par Michel sur les chiffres : ancrage 45 min modéré = **6 séries**,
   plancher **2**, rampe **12 h**, `projectionRecup` remis sur `RECUP_EFFACE_H`).
