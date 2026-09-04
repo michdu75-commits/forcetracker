@@ -240,5 +240,75 @@ Les deux premières sont désormais calculées **par la même règle** ; la troi
 
 ---
 
+## 8. ⚠️⚠️ LA RÈGLE DE ft-v1107 ÉTAIT FAUSSE — corrigée en ft-v1108
+
+> GPT/Michel ont demandé de **contre-auditer la règle sur le vrai journal exporté** avant de
+> coder. ⛔ **J'avais déjà codé** (ft-v1107). J'ai donc fait le procès de ma propre règle — et
+> **elle l'a perdu**.
+
+### Ce que la médiane nue faisait de faux
+Mesuré sur la **structure réelle de Michel** (11 jours à 4-5 moments, relayée par GPT) contre
+les 9 cas de son §17/§29 : **2 faux invalides**.
+
+| Cas | Médiane nue (ft-v1107) | Deux tiers (ft-v1108) |
+|---|---|---|
+| Vraie journée à **3 repas** | 🔴 **écartée** | ✅ gardée |
+| **Changement durable** 4 → 3 repas | 🔴 **4 jours écartés sur 5** | ✅ gardés |
+
+👉 ***Une médiane exclut par construction ce qui est en dessous.*** Elle ne distingue donc pas
+*« journée inhabituelle »* de *« journée mal renseignée »* — **exactement la distinction que
+GPT demandait au §2**.
+
+### La mesure qui a tranché
+Cinq fractions éprouvées sur les 9 cas :
+
+| | 1/3 | 1/2 | **2/3** | 3/4 | médiane nue |
+|---|---|---|---|---|---|
+| Barre chez Michel | 2 | 2 | **3** | 3 | 4 |
+| Faux valides | 0 | 0 | **0** | 0 | 0 |
+| Faux invalides | 0 | 0 | **0** | 0 | **2** |
+
+⭐⭐ **Toutes sauf la médiane nue sont correctes**, et elles **ne se distinguent que sur un seul
+cas** : une journée à **2 repas / 402 kcal** (le 11/07). 👉 **Michel a tranché : écartée** — donc
+les deux tiers. ⛔ **Et la fraction reste un CHOIX, pas une mesure** : c'est le seul paramètre
+libre, écrit dans le code pour qu'on sache quoi rouvrir.
+
+### Vérification finale sur les 9 cas (ft-v1108)
+| Cas | Barre | Résultat |
+|---|---|---|
+| **Journal réel de Michel** | 3 | **0 jour écarté** · moyenne **2 313** (GPT mesure 2 312) |
+| Vraie journée à 3 repas | 3 | gardée ✅ |
+| 4 repas mais **1 200 kcal** | 3 | gardée ✅ — *les calories ne sont jamais le critère* (§6) |
+| 1 repas / 1 entrée (08/07) | 3 | écartée ✅ |
+| 2 repas / 3 entrées (11/07) | 3 | écartée ✅ *(décision de Michel)* |
+| **1 énorme repas, 1 800 kcal** | 3 | écarté ✅ — *le nombre de kcal ne suffit pas* (§17-G) |
+| Jeûne intermittent (2 repas toujours) | **2** | 0 écarté ✅ |
+| **OMAD** (1 repas toujours) | **1** | 0 écarté ✅ |
+| Changement durable 4 → 3 | 3 | 0 écarté ✅ |
+
+⛔ **Le plancher à 1 protège l'OMAD** : sans lui la barre tomberait à 0 et la règle n'écarterait
+plus jamais rien chez quelqu'un qui mange une fois par jour. *Une règle relative doit rester
+vraie aux extrêmes.*
+
+### ⚠️ Ce que je n'ai PAS pu faire, dit plutôt que sous-entendu
+**Le CSV n'était pas dans la session.** GPT l'a lu, moi non. Je travaille donc sur **ses mesures
+par jour relayées** (entrées / repas / kcal) : je ne peux ni les **vérifier**, ni calculer ce
+qu'il n'a pas relayé — macros par jour, noms des repas, aliments par repas.
+⚠️ **Et les deux jours de juillet ne sont le cas d'usage de personne** : à ~8 semaines, ils sont
+**hors de toute fenêtre de 7 ou 14 jours**. Ils ont servi de *modèle* de journée partielle, pas
+de cas réel à filtrer.
+
+### Réponses aux questions restées ouvertes de GPT
+- **§19 — même fenêtre que le poids ?** ✅ **Oui, mesuré** : `tendance14j()` utilise
+  `TENDANCE_FENETRE = 14` pour le poids, la force **et** l'apport. Un seul propriétaire.
+- **§20 — combien de jours minimum ?** ⚠️ **Aucune règle produit ou scientifique n'existe** dans
+  le projet. On réutilise `_PA_MIN_JOURS = 3`, **déjà en production** — *ne pas inventer un
+  deuxième seuil est plus défendable que d'en choisir un nouveau* (**R2**). À rouvrir si un
+  usage réel montre que 3 ne suffit pas.
+- **§21 — séparer couverture et apport ?** ✅ **Déjà le cas** : la carte affiche `Apport (N j
+  complets)` **et** `Nutrition · N j notés`, plus la ligne des jours écartés. Rien de plus.
+
+---
+
 *Mesures faites le 02/09/2026 dans Chromium, par les vraies fonctions de l'app. Aucune ligne de
 code modifiée par cet audit.*

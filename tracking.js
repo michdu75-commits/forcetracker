@@ -2904,6 +2904,14 @@ function _toggleSleepSaveBtn(v){
   if(b)b.style.display=(parseFloat(v)>0)?'block':'none';
 }
 
+/* 🏁 LE NOM DU BOUTON QUI ENREGISTRE VRAIMENT — un seul propriétaire (04/09/2026, R2).
+   Il était calculé ici et nulle part ailleurs. Le jour où un 2ᵉ endroit a eu besoin de le
+   NOMMER (le message qui dit « appuie sur … en bas »), le recopier aurait garanti que les deux
+   divergent : on aurait envoyé quelqu'un chercher un bouton qui ne s'appelle plus comme ça. */
+function _labelFinSeance(){
+  const hasDone=!!(S.wkt&&S.wkt.exs&&S.wkt.exs.some(ex=>(ex.sets||[]).some(s=>s.done)));
+  return hasDone?'🏁 Terminer la séance':'🏁 Enregistrer le cardio';
+}
 function renderLogFinish(){
   const el=document.getElementById('log-finish');if(!el)return;
   if(!S.wkt){el.innerHTML='';return;}
@@ -2927,7 +2935,7 @@ function renderLogFinish(){
     const cardioTxt=`🏃 Cardio ${bouts.join(' · ')}${kcal?` · ~${kcal}kcal`:''}`;
     summary = summary ? summary+' · '+cardioTxt : cardioTxt;
   }
-  const label = hasDone ? '🏁 Terminer la séance' : '🏁 Enregistrer le cardio';
+  const label = _labelFinSeance();
   el.innerHTML=`<div style="border-top:1px solid var(--sep);padding-top:14px;margin-top:4px;">
     <div style="text-align:center;font-size:13px;color:var(--t2);margin-bottom:10px;font-weight:600;">${summary}</div>
     <button class="btn btn-red" onclick="finishWorkout()" style="font-size:17px;padding:16px;letter-spacing:.3px;">${label}</button>
@@ -3016,7 +3024,7 @@ function _nuitsRecentes(auj, n){
    au REPOS, si.
 
    ⭐ CE QUE ÇA CHANGE VRAIMENT : jusqu'ici le score de récup se calculait sur du **déclaratif**
-   (sommeil noté, séance récente, âge, jours enchaînés, humeur du jour). **Aucune mesure du
+   (sommeil noté, séance récente, âge, humeur du jour). **Aucune mesure du
    corps.** La FC au repos est le premier signal physiologique qui y entre — et c'est le seul
    que la voie gratuite permette, puisque les entraînements ne sont pas lisibles par Raccourcis.
 
@@ -3164,15 +3172,75 @@ function _derniereSeanceAvant(refTs, auj){
   }
   return null;
 }
+/* 🏃 LA CHARGE D'UN CARDIO, DANS LA MÊME UNITÉ QUE LES SÉRIES (04/09/2026, option A).
+   ⛔⛔ CE QUE ÇA RÉPARE, MESURÉ AVANT : `_penaliteSeance` ne comptait que des séries validées.
+   Un cardio n'en a aucune → `load = 0` → la fonction tombait sur son plancher. Sur **18
+   combinaisons** (3 intensités × 6 durées), **toutes** rendaient la même pénalité : 90 min de
+   tapis intense (855 MET·min) coûtaient autant que 10 min de marche (35 MET·min), et **moins**
+   que 6 séries de développé couché.
+
+   ⭐⭐ LA BASE EST LE MET·MINUTE, PAS LA CALORIE — et c'est une MESURE, pas une préférence :
+   45 min de tapis modéré valent **248 MET·min pour tout le monde**, mais **248 kcal à 60 kg,
+   330 à 80 kg et 413 à 100 kg**. Passer par les calories rendrait une personne lourde
+   automatiquement « plus fatiguée » pour exactement le même effort relatif. *Les calories
+   mesurent une dépense ; la récupération a besoin d'une charge.*
+
+   ⭐ L'ANCRAGE EST UNE DÉCISION DE MICHEL, ÉCRITE ICI PLUTÔT QUE DILUÉE DANS UN NOMBRE :
+   *« 45 min de cardio modéré = 6 séries »*. Le facteur en découle, il ne se choisit pas.
+   Il a été retenu contre l'autre candidat mesuré (8 séries) pour une raison précise : à 8, un
+   cardio SEUL de 90 min intense atteignait le **plafond de 38**, c'est-à-dire le niveau qui
+   désigne « 24 séries de squat » depuis ft-v718. À 6, il s'arrête à 35 — *le plafond reste ce
+   pour quoi il a été mesuré.*
+
+   ⛔ CETTE ÉQUIVALENCE EST STRICTEMENT INTERNE. L'app ne doit JAMAIS afficher « 45 min de tapis
+   = 6 séries » : c'est une unité de charge commune, pas une équivalence physiologique.
+   ⚠️ Les DEUX moments comptent (`cardioAvant` = échauffement, `cardio` = fin de séance) et leurs
+   MET·min s'ADDITIONNENT avant l'unique conversion — une seule somme, donc aucun double comptage. */
+const RECUP_CARDIO_ANCRE_METMIN = 5.5 * 45;   // 45 min de tapis MODÉRÉ (5,5 MET) = l'ancre
+const RECUP_CARDIO_ANCRE_SERIES = 6;          // … vaut 6 séries sur l'échelle interne (décision Michel)
+const RECUP_CARDIO_FACTEUR = RECUP_CARDIO_ANCRE_METMIN / RECUP_CARDIO_ANCRE_SERIES;   // ≈ 41,25
+function _chargeCardio(sess){
+  try{
+    if(typeof CARDIO_MET==='undefined') return 0;      // app.js charge après : jamais d'erreur
+    let mm=0;
+    [sess&&sess.cardioAvant, sess&&sess.cardio].forEach(c=>{
+      const min=c?+c.duration:0;
+      if(!(min>0)) return;
+      const t=CARDIO_MET[c.type]||CARDIO_MET.autre;
+      const met=t&&(t[c.intensity]||t.modere);
+      if(!(met>0)) return;
+      mm += met*min;
+    });
+    return mm/RECUP_CARDIO_FACTEUR;
+  }catch(e){ return 0; }
+}
+/* ⛔ LE PLANCHER EST PASSÉ DE 6 À 2 (04/09/2026). Mesuré, il fabriquait une FALAISE D'ENTRÉE :
+   aucune séance → 79, **une seule série → 75**, et 1, 2, 3 séries étaient toutes aplaties sur la
+   même valeur. La progression devient 79 · 78 · 77 · 76 · 75.
+   ⚠️ Un plancher de 2 ne mord JAMAIS par le bas — `round(1,7 × 1 série) = 2` — donc il produit
+   exactement les mêmes chiffres que « pas de plancher du tout », vérifié au banc. **On le garde
+   nommé quand même** : son origine est introuvable dans le journal, et le baisser plutôt que le
+   supprimer évite de trancher une décision qu'on n'a pas retrouvée (**R30**).
+   ⛔ ET RIEN D'AUTRE NE BOUGE : à partir de 4 séries, la pénalité est au point près celle
+   d'avant (×1,7, échec ×1,5, drop ×1,3, plafond 38 — tous inchangés). */
+const RECUP_PEN_PLANCHER = 2;
+/* ⛔⛔ LE PLAFOND EST NOMMÉ DEPUIS LE 04/09/2026, ET C'EST UN PRÉREQUIS, PAS UN NETTOYAGE.
+   L'option B le lit à un DEUXIÈME endroit (le plafond de la SOMME des séances récentes). Le
+   laisser en dur aurait refait exactement le défaut corrigé la veille dans `projectionRecup`,
+   qui écrivait `48` et `24` alors que `RECUP_EFFACE_H` existait pour être propriétaire unique.
+   *Un littéral qui a deux lecteurs n'est plus un littéral, c'est une constante qui s'ignore*
+   (**R2**). ⭐ La valeur ne change pas : 38, relevé de 30 le 02/08. */
+const RECUP_PEN_PLAFOND = 38;
 function _penaliteSeance(sess){
   let load=0;
   ((sess&&(sess.exs||sess.exercises))||[]).forEach(ex=>(ex.sets||[]).forEach(s=>{
     if(!s.done||s.type==='W'||s.type==='É')return;      // exclut échauffement
     load += s.type==='E'?1.5:s.type==='D'?1.3:1;         // échec/drop = plus fatigant
   }));
+  load += _chargeCardio(sess);                          // UNE seule charge, muscu + cardio
   // Plafond relevé de 30 à 38 (02/08) : mesuré, une séance de 24 séries de squat la veille
   // ne coûtait que 10 points — l'app affichait « Bonne récup » le lendemain d'un gros leg day.
-  return Math.max(6,Math.min(38,Math.round(load*1.7))); // ~ -10 (abdos) à -38 (grosse séance), min -6
+  return Math.max(RECUP_PEN_PLANCHER,Math.min(RECUP_PEN_PLAFOND,Math.round(load*1.7)));
 }
 /* ⭐⭐ `refTs` = L'INSTANT AUQUEL ON SE PLACE (ft-v1017), optionnel. Sans argument, la
    fonction se comporte EXACTEMENT comme avant — c'est ce qui rend le changement sûr : les
@@ -3194,6 +3262,9 @@ function _penaliteSeance(sess){
    Les deux lisent désormais cette constante — deux nombres pour une même règle finissent
    toujours par diverger, et c'est celui que la personne LIT qui avait tort (R2). */
 const RECUP_EFFACE_H = 48;
+/* ⏳ ET COMBIEN DE TEMPS LE BONUS DE REPOS MET À S'INSTALLER (04/09/2026). Voir le raccord dans
+   `calcRecoveryDetail` : sans cette rampe, le bonus apparaissait d'un bloc à 48 h pile. */
+const RECUP_BONUS_RAMPE_H = 12;
 function calcRecoveryDetail(refTs){
   /* Les DEUX seuls repères de temps de la fonction. Tout ce qui suit les lit, plus jamais
      `Date.now()` ni `today()` directement — sinon une moitié du calcul se placerait
@@ -3256,7 +3327,40 @@ function calcRecoveryDetail(refTs){
      l'instant demandé. Sans `refTs`, c'est bien `S.sessions[0]` — comportement inchangé. */
   const lastSess=_derniereSeanceAvant(_now,_auj);
   let sessAdj=0;
-  if(lastSess&&lastSess.date){
+  /* ⭐⭐ OPTION B (04/09/2026) — LA CHARGE S'ADDITIONNE. Jusqu'ici, SEULE la dernière séance
+     comptait : mesuré, 1, 2 ou 3 séances de 12 séries rendaient TOUTES le même facteur, −13.
+     Le volume doublait, triplait, et le calcul ne le voyait pas — seul un forfait « jours
+     enchaînés » de −4 / −8 l'approximait au doigt mouillé.
+     ⛔ On somme désormais le RESTE de chaque séance encore dans la fenêtre d'effacement, chacune
+     décroissant sur SES propres `RECUP_EFFACE_H` heures. Ce n'est pas un nouveau barème : c'est
+     la formule d'aujourd'hui, appliquée à toutes au lieu de la seule dernière.
+     ⛔ PLAFOND SUR LA SOMME = `RECUP_PEN_PLAFOND` (38), **décision de Michel prise sur les
+     chiffres** : la fatigue cumulée ne peut jamais dépasser ce que coûte UNE séance maximale.
+     Le candidat à 48 a été mesuré et écarté par lui — il faisait descendre son plancher de 42
+     à 38, quand celui-ci le laisse EXACTEMENT où il est.
+     ⭐⭐ ET LE RÉSULTAT EST CONTRE-INTUITIF, c'est pour ça qu'il fallait le mesurer AVANT (R34) :
+     sur ses 60 jours réels, **26 journées MONTENT** (+3,8 en moyenne) et 6 baissent. Le forfait
+     mordait 28 jours à −4 ; la vraie somme coûte le plus souvent MOINS, parce que la séance de
+     l'avant-veille a déjà fondu. *Une correction annoncée comme « plus sévère » s'est révélée
+     plus juste ET plus douce — l'inverse de ce que le contre-audit prévoyait.*
+     ⚠️ Seuls **7 jours sur 60** portent réellement 2 séances dans la fenêtre : sur les 53 autres,
+     ce qui change est le RETRAIT du forfait, pas le cumul. */
+  const _sessFenetre=(S.sessions||[]).filter(s=>{
+    const ts=s&&(s.ts||s.id); if(!ts||ts>_now) return false;
+    return (_now-ts)/36e5 < RECUP_EFFACE_H;
+  });
+  if(_sessFenetre.length>1){
+    /* ⛔ Le cumul ne s'applique QUE si plusieurs séances sont dans la fenêtre. Avec une seule,
+       on retombe volontairement dans le chemin d'origine — même formule, mêmes arrondis, donc
+       **aucun** déplacement d'historique là où il n'y a rien à cumuler (R14). */
+    let somme=0;
+    _sessFenetre.forEach(s=>{
+      const hrs=Math.max(0,(_now-(s.ts||s.id))/36e5);
+      somme += _penaliteSeance(s)*(RECUP_EFFACE_H-hrs)/RECUP_EFFACE_H;
+    });
+    sessAdj = -Math.round(Math.min(somme,RECUP_PEN_PLAFOND));
+  }
+  else if(lastSess&&lastSess.date){
     const dCal=Math.round((new Date(_auj+'T12:00:00')-new Date(lastSess.date+'T12:00:00'))/864e5);
     const tsSess=lastSess.ts||lastSess.id;
     const calcPen0=()=>_penaliteSeance(lastSess);
@@ -3269,7 +3373,24 @@ function calcRecoveryDetail(refTs){
          avait tort. Une seule constante depuis, lue par le calcul ET par la phrase. */
       const hrs=Math.max(0,(_now-tsSess)/36e5);
       if(hrs<RECUP_EFFACE_H){ sessAdj=-Math.max(0,Math.round(calcPen0()*(RECUP_EFFACE_H-hrs)/RECUP_EFFACE_H)); }
-      else if(dCal>=2){ sessAdj=Math.min(dCal,4)*3; }        // 2j +6 · 3j +9 · 4j+ +12 (inchangé)
+      /* ⛔⛔ 04/09/2026 — LE BONUS DE REPOS N'ARRIVE PLUS D'UN COUP. Mesuré : 47,9 h → **79**,
+         48,0 h → **85**. ***Six points en un dixième d'heure.*** Deux régimes qui ne se
+         raccordaient pas : en dessous une pénalité résiduelle qui tend vers 0, au-dessus un
+         bonus qui démarre plein.
+         ⚠️⚠️ C'est EXACTEMENT la famille corrigée le 30/07 sous le nom de « marche de midi »
+         (ft-v671 : *« +7 points d'un coup à 12 h 01 »*). Elle n'avait pas été supprimée, elle
+         avait été DÉPLACÉE à la frontière de l'effacement — et personne ne l'a mesurée depuis.
+         👉 Le bonus s'installe maintenant sur `RECUP_BONUS_RAMPE_H` heures. Les valeurs de
+         DESTINATION ne changent pas (+6 / +9 / +12 par jours calendaires) : seul le chemin pour
+         y arriver devient une pente. *On corrige le raccord, pas le barème* — l'historique ne
+         bouge que dans la fenêtre de 12 h qui suit les 48 h.
+         ⚠️ La marche de MINUIT (+3 au changement de jour) subsiste, volontairement : elle vaut
+         3 points, elle existe depuis toujours, et la traiter ici mélangerait un défaut mesuré
+         avec une amélioration discutable. */
+      else if(dCal>=2){
+        const rampe=Math.min(1,(hrs-RECUP_EFFACE_H)/RECUP_BONUS_RAMPE_H);
+        sessAdj=Math.round(Math.min(dCal,4)*3*rampe);         // 2j +6 · 3j +9 · 4j+ +12, installés en pente
+      }
     } else {
       if(dCal<=0){ sessAdj=-calcPen0(); }
       else if(dCal===1){ sessAdj=-12; }   // séance d'hier sans heure connue : alignée sur le nouveau barème
@@ -3288,9 +3409,18 @@ function calcRecoveryDetail(refTs){
     const cp=(typeof getMensCyclePhase==='function')?getMensCyclePhase(_now):null;
     if(cp&&cp.perf){ cycleAdj = cp.perf==='low'?-10 : cp.perf==='declining'?-5 : cp.perf==='peak'?4 : cp.perf==='rising'?2 : 0; cpPhase=cp.phase||''; }
   }catch(e){}
-  // Fatigue accumulée : plusieurs séances sur les 3 derniers jours (enchaîner sans repos)
-  const recentDays=new Set((S.sessions||[]).filter(s=>s&&s.date&&(()=>{const dd=Math.round((new Date(_auj+'T12:00:00')-new Date(s.date+'T12:00:00'))/864e5);return dd>=0&&dd<=2;})()).map(s=>s.date)).size; // jours CALENDAIRES (fin de la marche de midi)
-  const accumAdj = recentDays>=3?-8 : recentDays>=2?-4 : 0;
+  /* ⛔⛔ LE FORFAIT « JOURS ENCHAÎNÉS » EST RETIRÉ (option B, 04/09/2026) — et R30 exige que le
+     retrait soit ÉCRIT avec sa raison, sinon il ressemble à un oubli et quelqu'un le remettra.
+     Il valait −4 pour 2 jours de séance sur 3, −8 pour 3 — un **pis-aller** qui approximait au
+     forfait ce que le moteur ne savait pas mesurer : la charge cumulée. Maintenant qu'elle est
+     mesurée pour de vrai (ci-dessus), il ferait DOUBLE COMPTE.
+     ⭐ Et c'est lui qui explique le résultat contre-intuitif : il mordait **28 jours sur 60**
+     chez Michel, tous à −4, alors que la vraie somme cumulée y coûte le plus souvent moins.
+     *Un forfait ne se contente pas d'être imprécis : il est faux dans les deux sens, et il
+     punissait surtout ceux qui s'entraînent régulièrement sans jamais rien empiler.*
+     ⚠️ Le facteur affiché « 🔥 Jours enchaînés » disparaît donc de l'écran « Pourquoi ce
+     score ? ». Ce n'est pas une perte d'information : la ligne « 🏋️ Séance récente » porte
+     désormais la fatigue de TOUTES les séances récentes, et non plus de la dernière seule. */
   // Tabac : la récupération est altérée
   const smokerAdj = S.smoker?-4:0;
   // Énergie ressentie (check-in de la dernière séance, si récente) : signal direct de la forme
@@ -3323,7 +3453,7 @@ function calcRecoveryDetail(refTs){
   }catch(e){}
   const base=Math.round(wScore);
   const rhrE=(typeof _rhrEcart==='function')?_rhrEcart(_now):null, rhrAdj=_rhrAjust(rhrE);
-  const score=Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj+accumAdj+smokerAdj+energyAdj+dayEnergyAdj+rhrAdj)));
+  const score=Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj+smokerAdj+energyAdj+dayEnergyAdj+rhrAdj)));
   // Détail des facteurs (pour afficher le « pourquoi » sous le score)
   // `why` = raison en clair (français simple), utilisée par l'explication « Pourquoi ce score ? ».
   /* ⭐ L'APP DIT D'OÙ VIENT LE CHIFFRE (30/08) — c'est la moitié de la décision de Michel :
@@ -3349,7 +3479,6 @@ function calcRecoveryDetail(refTs){
   if(ageAdj) factors.push({ic:'🎂',label:'Âge',val:ageAdj,why:'La récupération ralentit un peu avec l\'âge.'});
   if(cycleAdj) factors.push({ic:'🌙',label:'Cycle'+(cpPhase?' ('+cpPhase+')':''),val:cycleAdj,
     why:cycleAdj<0?'Ta phase de cycle demande plus de récup en ce moment.':'Ta phase de cycle est plutôt favorable à la performance.'});
-  if(accumAdj) factors.push({ic:'🔥',label:'Jours enchaînés',val:accumAdj,why:'Tu enchaînes plusieurs jours de suite : la fatigue s\'accumule.'});
   if(smokerAdj) factors.push({ic:'🚬',label:'Tabac',val:smokerAdj,why:'Le tabac freine un peu la récupération.'});
   if(energyAdj) factors.push({ic:'⚡',label:'Énergie',val:energyAdj,why:'Ton niveau d\'énergie noté au dernier check-in de séance.'});
   if(dayEnergyAdj) factors.push({ic:'🌡️',label:'Forme du jour',val:dayEnergyAdj,why:'Comment tu te sens aujourd\'hui (ton check-in du jour sur l\'Accueil).'});
@@ -3365,7 +3494,9 @@ function calcRecoveryDetail(refTs){
   if(!hasSleep) tips.push('💤 Renseigne ton sommeil pour un score personnalisé et plus précis.');
   if(hasSleep&&base<70) tips.push('Vise 7–9 h de sommeil de qualité — c\'est le plus gros levier.');
   if(sessAdj<=-18) tips.push('Grosse séance récente : laisse 1–2 jours avant de reprendre lourd.');
-  if(accumAdj<0) tips.push('Tu enchaînes les jours — un jour de repos complet te ferait du bien.');
+  /* ⛔ Le conseil « tu enchaînes les jours » partait avec le forfait : il se déclenchait sur un
+     COMPTE de jours, pas sur une charge. La ligne « Séance récente » porte maintenant le cumul
+     réel, et le conseil qui l'accompagne est déjà celui de la séance récente. */
   if(cycleAdj<=-10) tips.push('Pendant les règles : repos actif ou séances légères, évite les charges max.');
   else if(cycleAdj<0) tips.push('Phase prémenstruelle : volume modéré et bonne récup entre les séances.');
   if(smokerAdj<0) tips.push('Réduire le tabac améliorerait nettement ta récupération.');
@@ -3441,14 +3572,23 @@ function projectionRecup(d){
       const ts=ls.ts||ls.id;
       const pen=_penaliteSeance(ls);
       if(ts){
-        /* La pénalité vaut `round(pen*(48−h)/48)` : elle tombe à zéro dès que ce produit passe
-           sous 0,5, donc un peu AVANT 48 h. On rend l'instant exact plutôt que « 48 h », sinon
+        /* La pénalité vaut `round(pen*(H−h)/H)` : elle tombe à zéro dès que ce produit passe
+           sous 0,5, donc un peu AVANT H. On rend l'instant exact plutôt que « 48 h », sinon
            on annoncerait une attente que le code n'applique pas. */
-        /* ⚠️ +1 MINUTE, ET CE N'EST PAS DE LA COQUETTERIE. À l'instant EXACT `48 − 24/pen`, le
+        /* ⚠️ +1 MINUTE, ET CE N'EST PAS DE LA COQUETTERIE. À l'instant EXACT `H − (H/2)/pen`, le
            produit vaut pile 0,5 — et `Math.round(0.5)` rend **1**, pas 0. Sans cette minute,
            on annoncerait la fin de la fatigue une minute avant qu'elle ne parte vraiment.
            *Un témoin l'a attrapé ; à la relecture, la formule semblait juste.* */
-        const hFin=Math.max(0,48-24/Math.max(1,pen))+1/60;
+        /* ⛔⛔ 04/09/2026 — CETTE LIGNE ÉCRIVAIT `48` ET `24` EN DUR. `RECUP_EFFACE_H` avait été
+           créée le 01/09 précisément pour qu'il n'y ait **qu'un seul propriétaire** de cette
+           durée… et ce lecteur-ci ne la lisait pas. ⭐ Le `24` n'est même pas un nombre à part :
+           c'est `H ÷ 2` (l'instant où le produit arrondi passe sous 0,5). **Les DEUX littéraux
+           dépendaient donc de la constante.** Changer `RECUP_EFFACE_H` aurait laissé la date
+           annoncée calculée sur 48 pendant que le score, lui, aurait bougé.
+           ⚠️ À H = 48 les deux expressions sont RIGOUREUSEMENT identiques : cette correction ne
+           déplace aucun score aujourd'hui. Elle ne sert qu'à ce que demain elle le fasse. */
+        const H=RECUP_EFFACE_H;
+        const hFin=Math.max(0,H-(H/2)/Math.max(1,pen))+1/60;
         const t=ts+hFin*36e5;
         if(t>now) finFat=t;
       }else{
@@ -3457,25 +3597,24 @@ function projectionRecup(d){
         if(t>now) finFat=t;
       }
     }
-    /* L'enchaînement : `accumAdj` s'annule dès qu'il reste moins de 2 jours de séance distincts
-       dans la fenêtre des 3 derniers jours. On fait GLISSER la fenêtre au lieu de refaire le
-       calcul à la main — c'est la même règle, jouée en avant. */
-    let finAcc=null;
-    const dates=[...new Set((S.sessions||[]).filter(s=>s&&s.date).map(s=>s.date))];
-    for(let d=0; d<=7; d++){
-      const ref=new Date(today()+'T12:00:00').getTime()+d*864e5;
-      const n=dates.filter(ds=>{
-        const dd=Math.round((ref-new Date(ds+'T12:00:00').getTime())/864e5);
-        return dd>=0&&dd<=2;
-      }).length;
-      if(n<2){ if(d>0) finAcc=ref; break; }
-    }
-    const quand=Math.max(finFat||0, finAcc||0)||null;
+    /* ⛔⛔ LE 2ᵉ TERME EST PARTI AVEC LE FORFAIT (option B, 04/09/2026) — et c'est le TROISIÈME
+       lecteur d'une règle qu'on change, exactement le piège de `RECUP_EFFACE_H` la veille.
+       Il faisait glisser la fenêtre des 3 jours pour dire quand le forfait « jours enchaînés »
+       s'annulerait. Ce forfait n'existe plus : gardé, ce bloc aurait promis *« ta récup
+       remonte le 6 »* en attendant l'expiration de quelque chose qui ne se produit plus.
+       👉 ***Une projection qui prédit la fin d'une règle supprimée ne se trompe pas de
+       quelques heures : elle annonce un événement qui n'aura jamais lieu.***
+       ⚠️ LIMITE ÉCRITE PLUTÔT QUE TUE (R30) : `finFat` ne regarde que la DERNIÈRE séance. Avec
+       la charge cumulée, la somme met un peu plus longtemps à tomber à zéro que cette seule
+       séance — donc la projection peut être **légèrement optimiste** quand deux séances sont
+       encore dans la fenêtre. Mesuré comme faible devant l'heure annoncée, et non corrigé ici :
+       ça se mesure à part, on ne mélange pas un retrait avec un raffinement. */
+    const quand=finFat||null;
     /* Ce qui restera à la charge de la personne — nommé, jamais chiffré à l'avance. */
     const restant=[];
     if(d && d.base<100) restant.push('tes nuits');
     if(S.dayState&&S.dayState.date===today()&&S.dayState.energy!=null&&S.dayState.energy<=1) restant.push('ta forme du jour');
-    return {quand:quand, dejaAuMax:!quand, source:(finFat&&(!finAcc||finFat>=finAcc))?'seance':'jours', restant};
+    return {quand:quand, dejaAuMax:!quand, source:finFat?'seance':null, restant};
   }catch(e){ return {quand:null, dejaAuMax:true, source:null, restant:[]}; }
 }
 

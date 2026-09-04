@@ -458,6 +458,64 @@ const FEAT_SI = {
   montrePas:     () => { try{ return ((S&&S.healthDaily)||[]).some(x=>x&&x.steps>0); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* 🔋 POINT ROUGE sur l'ACCUEIL : c'est là que le score de récup s'affiche, et c'est là que
+     « Pourquoi ce score ? » explique le détail — désormais avec une ligne cardio quand il y en a. */
+  /* ⛔ POINT ROUGE sur l'Accueil : le score change ET un facteur disparaît de l'explication.
+     La pop-up annonce, le point rouge ramène — et l'aide explique (R25). */
+  {id:'recup-cumul', screen:'home', desc:'🔋 <b>Ta fatigue s\'additionne.</b> Deux séances rapprochées coûtent maintenant <b>plus</b> qu\'une seule — avant, seule la <b>dernière</b> comptait, quel que soit ce que tu avais empilé avant. ⭐ Le forfait « Jours enchaînés » disparaît : il punissait à la louche, et sur tes 60 derniers jours il te coûtait des points <b>28 fois</b> pour rien. 💡 Tape « Pourquoi ce score ? » : la ligne « Séance récente » porte désormais <b>toutes</b> tes séances des 48 dernières heures.'},
+  {id:'recup-cardio', screen:'home', desc:'🔋 <b>Ta récupération tient compte du cardio.</b> Sa <b>durée</b> et son <b>intensité</b> comptent maintenant dans ton score — avant, <b>10 min de marche et 90 min de tapis intense</b> coûtaient exactement la même chose. ⭐ Un échauffement de 10 min pèse <b>1 point</b>, 45 min de tapis modéré en pèsent <b>10</b>. 💡 Tape « Pourquoi ce score ? » sous ton score : la ligne « Séance récente » inclut désormais ton cardio.'},
+  /* 🍔 POINT ROUGE, PAS DE POP-UP (règle d'or #11) : la base fast-food passe de 27 à 128
+     produits, avec des enseignes qui n'y étaient pas — il y a donc à DÉCOUVRIR. ⛔ Mais rien
+     n'est à faire, aucun repère n'a bougé, et **aucun chiffre existant ne change** : les 27
+     produits d'avant sont conservés à l'identique. Une pop-up n'aurait rien à annoncer qu'on
+     doive faire (R25). */
+  {id:'fastfood-v2', screen:'nutrition', desc:'🍔 <b>Le fast-food passe de 27 à 128 produits.</b> <b>Quick</b> entre avec sa table officielle complète (burgers, wraps, salades, accompagnements), et <b>Domino\'s</b> s\'étoffe. Tape le nom du produit : il sort avec son enseigne et le poids de sa portion. ⛔ Les valeurs d\'avant n\'ont pas bougé d\'un chiffre.'},
+  /* 🔍 POINT ROUGE, PAS DE POP-UP (règle d'or #11) : des mots qui échouaient marchent, et
+     *personne ne réessaie un mot qui a échoué une fois* — il y a donc à découvrir. ⛔ Mais c'est
+     une CORRECTION : rien à faire, aucun repère déplacé, et les résultats d'avant étaient
+     absents ou moins bons. Une pop-up dirait « vos recherches échouaient » — alarme rétroactive
+     (R25). L'aide `?` de ft-v1115 est ÉTENDUE plutôt que doublée (R2). */
+  {id:'recherche-ponctuation', screen:'nutrition', desc:'🔍 <b>La recherche accepte ta façon d\'écrire.</b> Une <b>virgule</b> ne fait plus échouer la recherche (<b>Boulgour, cuit</b> ne rendait rien), et les petits mots comme <b>de</b> ne bloquent plus : <b>filet de bœuf</b>, <b>joue de bœuf</b>, <b>foie de veau</b>, <b>graine de lin</b> trouvent enfin leur aliment.'},
+  /* 🏃 POINT ROUGE (règle d'or #11) : deux libellés changent sur l'écran le plus utilisé de
+     l'app, et l'un d'eux change aussi de COULEUR (le rouge est réservé au bouton qui enregistre
+     vraiment). Quelqu'un qui note son cardio tous les jours cherchera son bouton. */
+  {id:'cardio-enregistre', screen:'log', desc:'🏃 <b>Ton cardio ne se perd plus.</b> Dans le bloc Cardio, le bouton s\'appelle maintenant <b>« ✓ C\'est noté »</b> : il <b>note</b> ton cardio, il ne l\'enregistre pas. C\'est le <b>bouton rouge du bas</b> qui inscrit la séance dans ton historique. ⚠️ Et si tu repasses par l\'Accueil, il affiche désormais <b>« ↩ Reprendre la séance »</b> — avant, le bouton rouge repartait de zéro et le cardio noté disparaissait.<br><br>📈 <b>Et dans ton historique</b>, une séance de cardio seul s\'appelle désormais <b>« 🏃 Cardio »</b> et dit ce que c\'était (« Tapis 45 min (Modéré) ») — au lieu d\'un titre vide et d\'un « 0 kg » qui ressemblait à une séance ratée.'},
+  /* 🥤 POINT ROUGE (règle d'or #11) : des dizaines de boissons qui ne rendaient RIEN en rendent
+     une, et **un chiffre change** chez qui note ses sodas light. ⛔ Mais rien n'est à faire et
+     aucun repère n'a bougé : c'est une CORRECTION, pas un basculement — les valeurs d'avant
+     étaient fausses. *Une pop-up dirait « vos boissons light étaient comptées trop cher » :
+     une alarme rétroactive* (R25). L'aide `?` porte le détail. */
+  {id:'boissons-light', screen:'nutrition', desc:'🥤 <b>Les boissons trouvent enfin leur fiche.</b> <b>ice tea</b>, <b>red bull</b>, <b>orangina</b>, <b>lait d\'amande</b>, <b>bière blonde</b> ne rendaient <b>rien</b>. ⚠️ Et surtout : <b>soda light</b>, <b>limonade zéro</b>, <b>tonic zéro</b> tombaient sur la version <b>SUCRÉE</b> — le Coca n\'était qu\'un cas sur <b>9</b>.'},
+  /* 🥗 POINT ROUGE, PAS DE POP-UP (règle d'or #11) : il y a bien quelque chose à DÉCOUVRIR —
+     des mots qui ne marchaient pas marchent, et *personne ne réessaie un mot qui a échoué une
+     fois*. ⛔ Mais rien n'est à faire et aucun repère n'a bougé : la liste a la même tête.
+     ⚠️ En revanche un chiffre PEUT changer chez quelqu'un qui note « riz » : il obtient
+     maintenant le riz CUIT en tête (155 kcal) et non le CRU (350). C'est précisément ce qu'une
+     nouveauté doit dire — et l'aide `?` explique pourquoi les deux restent proposés. */
+  {id:'alias-aliments', screen:'nutrition', desc:'🥗 <b>Cherche avec tes mots.</b> <b>tortiglioni</b>, <b>fettuccine</b>, <b>riz jasmin</b>, <b>sticky rice</b> ne rendaient <b>rien</b> ; ils trouvent maintenant leur aliment. ⚠️ Et <b>riz</b> ou <b>pâtes</b> proposent d\'abord la version <b>CUITE</b> — celle qu\'on mange — avec la version crue juste en dessous.'},
+  /* 🍔 POINT ROUGE, PAS DE POP-UP `WHATS_NEW` (règle d'or #11), et c'est argumenté :
+     ① il y a bien quelque chose à DÉCOUVRIR — une SECTION NEUVE dans la liste de propositions,
+        que personne n'ira chercher en tapant « big mac » puisque ça ne marchait pas hier ;
+     ② mais **rien n'est à faire** et **aucun repère n'a bougé** : la section s'ajoute au-dessus
+        des aliments génériques, le champ où l'on tape n'a pas changé de place.
+     ⛔ Une pop-up dirait « vos recherches de fast-food ne trouvaient rien » — une alarme
+     rétroactive sur un trou qu'on vient de combler (R25). *La pop-up ANNONCE, l'aide EXPLIQUE*,
+     et ici il y a beaucoup à expliquer (d'où viennent ces chiffres, pourquoi certains portent un
+     ⚠️) : c'est le travail de l'aide `?`, pas d'une interruption. */
+  {id:'fastfood-marques', screen:'nutrition', desc:'🍔 <b>Le fast-food par son nom.</b> Tape <b>big mac</b>, <b>whopper</b>, <b>tenders kfc</b> ou <b>frites mcdo</b> : le produit sort avec son <b>enseigne</b> et le <b>poids de sa portion</b>. Les valeurs viennent des <b>sources officielles des enseignes</b> — et quand un chiffre publié est douteux, la ligne le <b>dit</b> au lieu de disparaître.'},
+  /* 🍔 POINT ROUGE, PAS DE POP-UP (règle d'or #11) : il y a bien quelque chose à DÉCOUVRIR —
+     des mots qui ne marchaient pas marchent, et *personne ne réessaie un mot qui a échoué une
+     fois*. Mais rien à faire, aucun repère déplacé : la recherche a la même tête. ⛔ Une pop-up
+     dirait « vos recherches ne trouvaient rien » — une alarme rétroactive (R25). */
+  {id:'synonymes-recherche', screen:'nutrition', desc:'\ud83c\udf54 <b>Cherche avec tes mots.</b> <b>mcdo</b>, <b>macdo</b>, <b>fast food</b> sortent un menu (sandwich, frites, nuggets) ; <b>coca</b>, <b>coca z\u00e9ro</b> et <b>soda</b> trouvent enfin les boissons. Ces mots ne rendaient <b>rien</b> avant, alors que les aliments \u00e9taient d\u00e9j\u00e0 dans ton t\u00e9l\u00e9phone.'},
+  /* ⚖️ POINT ROUGE, PAS DE POP-UP `WHATS_NEW` (règle d'or #11), et c'est argumenté :
+     ① il y a bien quelque chose à DÉCOUVRIR — un bouton neuf, sur un écran utilisé tous les
+     jours, que personne n'ira chercher tout seul ;
+     ② mais **rien n'est à faire tant qu'un produit ne pose pas problème**, et **aucun repère
+     n'a bougé** : le bouton s'ajoute sous les macros, rien ne se déplace au-dessus.
+     ⛔ Une pop-up dirait « vos produits pouvaient rester faux à vie » — une alarme rétroactive
+     sur un trou qu'on vient de combler (R25). *La pop-up ANNONCE, l'aide EXPLIQUE.* */
+  {id:'calibrer-100g', screen:'nutrition', desc:'\u2696\ufe0f <b>Un produit faux se corrige maintenant une bonne fois.</b> Dans \u00ab Ajouter un aliment \u00bb, <b>\u00ab Saisir les valeurs pour 100 g \u00bb</b> te laisse recopier le tableau de ton \u00e9tiquette : ensuite tu tapes seulement ta dose, et l\u2019app calcule \u2014 <b>cette fois-ci et les suivantes</b>.'},
   /* 📉 POINT ROUGE **ET** POP-UP (règle d'or #11) — les deux, et c'est argumenté :
      la pop-up annonce le déplacement du chiffre (ce qui se lirait comme un retrait) ; le point
      rouge, lui, sert à celui qui ferme la pop-up sans la lire et ouvre l'onglet trois jours
@@ -659,6 +717,49 @@ const NEW_FEATURES=[
 // ✅ v46/47/48 = les 3 features ex-testeurs (« maxi » · calories manuelles · objectif recomposition)
 //    OUVERTES À TOUT LE MONDE (ft-v623, décision Michel) + red dots reps-maxi/manual-kcal/goal-recomp réactivés.
 const WHATS_NEW=[
+  /* 🔋 ELLE SE MÉRITE, ET C'EST LE CAS LE PLUS NET DU CRITÈRE « UN REPÈRE A BOUGÉ » :
+     ⛔⛔ **un chiffre affiché tous les jours change tout seul, sans que la personne ait rien
+     touché** — et il change AUSSI pour le passé, puisque la courbe se recalcule à la volée.
+     Mesuré sur 60 jours réels : **33 jours sur 60 bougent, tous vers le bas, de −1 à −6**.
+     C'est exactement la situation de ft-v833 (le métabolisme de base), où la pop-up avait été
+     jugée méritée pour la même raison.
+     ⭐ ET ELLE DIT POURQUOI LE SCORE BAISSE, sinon « mon score a chuté » se lit comme une panne.
+     ⛔ BORNÉE À L'ESSENTIEL (R25) : ce qui change et pourquoi. Le détail — l'ancrage, les
+     MET·min, le raccord des 48 h — vit dans l'aide `?` et l'aide détaillée. */
+  /* 🔋 ELLE SE MÉRITE — un chiffre regardé tous les jours change tout seul, HISTORIQUE COMPRIS,
+     et un facteur DISPARAÎT de l'écran d'explication. Le danger n'est pas qu'il le remarque :
+     c'est qu'il cherche « Jours enchaînés » et ne le trouve plus.
+     ⭐⭐ ET ELLE DIT LE SENS DU CHANGEMENT, qui est l'inverse de ce qu'on attendrait : sur les
+     60 jours réels, **25 journées MONTENT** et 3 baissent. *Annoncer « c'est plus sévère »
+     serait faux, et il le verrait dès le lendemain.* */
+    {v:71, ic:'🔋', t:'Ta fatigue s\'additionne au lieu de compter une seule séance', d:'① <b>Deux séances rapprochées coûtent maintenant plus qu\'une seule.</b> Avant, seule <b>la dernière</b> comptait. ② Le facteur <b>« 🔥 Jours enchaînés »</b> disparaît : un forfait à la louche, remplacé par la vraie mesure. ⭐ <b>Bonne nouvelle</b> : sur tes 60 derniers jours, <b>25 journées REMONTENT</b>, 3 seulement baissent. ⚠️ <b>Ton historique bouge aussi</b> (au plus <b>6 points</b>). 💡 Le détail est dans l\'aide ❔ de l\'Accueil.'},
+  {v:70, ic:'🔋', t:'Ta récupération tient enfin compte du cardio', d:'① <b>Ton cardio pèse maintenant sur ton score de récup</b>, selon sa <b>durée</b> et son <b>intensité</b> — avant, 10 min d’elliptique tranquille et 90 min de tapis intense coûtaient exactement pareil. ② Le <b>bonus de repos</b> n’arrive plus d’un coup au bout de 2 jours : il s’installe en pente. ⚠️ <b>Ton score va donc baisser un peu</b> sur les jours où tu as fait du cardio, <b>y compris dans ton historique</b> — mesuré : le plus gros écart est de <b>6 points</b>. Ce n’est pas une panne : c’est du travail qui n’était pas compté.'},
+  /* 🏃 ELLE SE MÉRITE, ET SUR LES DEUX CRITÈRES À LA FOIS (règle d'or #11).
+     ① **UN REPÈRE A BOUGÉ** : le bouton du bloc Cardio change de nom ET de couleur (il n'est
+        plus rouge — le rouge est désormais réservé à celui qui enregistre pour de vrai), et le
+        bouton de l'Accueil ne dit plus la même chose quand une séance attend.
+     ② **IL Y A QUELQUE CHOSE À SAVOIR FAIRE** : le geste qui enregistre est le bouton du BAS.
+        Tant qu'on croyait que « ✓ Enregistrer le cardio » enregistrait, on ne l'apprenait pas.
+     ⛔⛔ ET ELLE DIT LE RISQUE PASSÉ EN UNE LIGNE, sans demander de réparer quoi que ce soit.
+     C'est la règle d'or #3 (zéro perte de séance) : quelqu'un dont une séance de cardio manque
+     dans l'historique a le droit de savoir POURQUOI, plutôt que de croire qu'il l'a rêvée.
+     *Une alarme rétroactive est interdite quand on comble un trou (R25) ; ici on ne comble pas
+     un trou, on répare une perte de données — la personne peut avoir un souvenir à recoller.*
+     ⛔ BORNÉE À L'ESSENTIEL (R25) : deux boutons, un seul enregistre. Le reste — pourquoi une
+     séance de cardio seul compte comme une vraie séance, ce que Milo en fait — vit dans
+     l'aide `?`, l'aide détaillée et le Guide. *La pop-up ANNONCE, l'aide EXPLIQUE.* */
+  {v:69, ic:'🏃', t:'Séance : ton cardio ne se perd plus', d:'① <b>C’est le gros bouton rouge du BAS qui enregistre ta séance</b> — cardio compris. ② Celui du bloc Cardio s’appelle maintenant <b>« ✓ C’est noté »</b> et n’est plus rouge : il <b>note</b>, il n’enregistre pas. ⚠️ Avant, une séance de <b>cardio seul</b> pouvait disparaître si tu repassais par l’Accueil et retapais le bouton rouge. C’est corrigé : l’Accueil affiche <b>« ↩ Reprendre la séance »</b> tant que quelque chose attend.'},
+  /* 🥗 ELLE SE MÉRITE, ET C'EST « UN REPÈRE A BOUGÉ » DANS SA FORME LA PLUS COÛTEUSE :
+     ⛔⛔ un chiffre que la personne NOTE tous les jours change **du simple au double**. Quelqu'un
+     qui tape « riz » enregistrait 350 kcal/100 g, il enregistrera 155. *Le danger n'est pas qu'il
+     le remarque — c'est qu'il ne le remarque PAS et que tout son journal glisse.*
+     ⭐ Et elle doit dire que le CRU n'a pas disparu : annoncer un basculement sans dire où est
+     parti l'ancien fabrique l'inquiétude qu'on voulait éviter (leçon de la v67).
+     ⛔ BORNÉE À L'ESSENTIEL (R25) : ce qui change, et où retrouver l'autre. Le reste — les
+     centaines de mots qui trouvent enfin leur aliment, les mots absents de la table — vit dans
+     l'aide `?`, l'aide détaillée et le Guide. *La pop-up ANNONCE, l'aide EXPLIQUE.*
+     ⛔ ANTI-TCA (P21) : elle ne dit nulle part « corrige tes anciennes lignes ». */
+  {v:68, ic:'🥗', t:'Nutrition : le riz et les pâtes sont proposés CUITS', d:'① <b>« riz » et « pâtes » proposent maintenant la version CUITE en premier</b> — <b>155</b> et <b>167 kcal/100 g</b> au lieu de 350 et 364. C’est ce qu’on a dans l’assiette, mais c’est <b>du simple au double</b> : si tu notes ces aliments souvent, tes chiffres vont bouger. ⛔ <b>La version crue n’a pas disparu</b> : elle est <b>juste en dessous</b> dans la liste. 👉 Le nom le dit toujours — « cuit », « crue » : un coup d’œil avant de valider.'},
   /* 📉 ELLE SE MÉRITE, ET C'EST LE CAS LE PLUS NET DE « UN REPÈRE A BOUGÉ » (règle d'or #11).
      ⛔⛔ « X kcal restantes » N'EST PLUS À SA PLACE dans la carte du jour. C'est le chiffre que
      la personne lisait en premier depuis des mois. **La lecture la plus naturelle serait « ils
@@ -769,7 +870,7 @@ const WHATS_NEW=[
   {v:36, ic:'💪', t:'Dis à Milo tes muscles prioritaires', d:'Nouveau dans Profil → Objectif : tu peux indiquer les muscles que tu veux développer EN PRIORITÉ (jusqu\'à 2, ex. pectoraux + épaules). Comme un vrai coach qui programme autour des priorités de l\'athlète, Milo donnera alors PLUS de fréquence, de volume et de variantes à ces muscles — dans ses conseils et les programmes qu\'il te génère — tout en maintenant le reste. Ton objectif reste le pilote et ta nutrition n\'est pas touchée : c\'est juste pour cibler OÙ tu veux progresser. 💪'},
   {v:35, ic:'🎯', t:'Choisis DEUX objectifs', d:'Dans ton Profil → Objectif, tu peux maintenant ajouter une « priorité complémentaire » à ton objectif principal. Exemple : principal « Force maximale » + complémentaire « Prise de muscle ». Ton objectif PRINCIPAL pilote toujours ta nutrition (calories, macros, repas) ; la priorité complémentaire, elle, affine les conseils de Milo et ton entraînement. (Pour « perdre du gras ET prendre du muscle » en même temps, l\'objectif « Perte de gras + muscle » est fait pour ça.) 🎯'},
   {v:34, ic:'🩹', t:'Tes douleurs, en tapant sur le corps', d:'Fini la liste de boutons : dans « Ton check-in du jour » (Accueil), pour signaler une gêne tu tapes maintenant directement le MUSCLE sur une vraie figurine anatomique (vue de face + de dos) — il devient rouge. Les articulations (nuque, coude, poignet, genou, cheville) restent en boutons juste en dessous, et tu précises toujours le côté (gauche/droite/les deux). Plus visuel, plus clair — et Milo protège la zone en priorité. 🩹'},
-  {v:33, ic:'💡', t:'« Pourquoi ce score ? » — ta récup expliquée', d:'Ton score de récupération (sur l\'Accueil) t\'a toujours un peu intrigué ? Tape « Pourquoi ce score ? » juste en dessous : une fiche claire t\'explique en français simple ce que le chiffre veut dire (à quel point ton corps est prêt à s\'entraîner aujourd\'hui) et D\'OÙ il vient — sommeil, séance récente, âge, jours enchaînés… chaque facteur avec sa raison. Fini le chiffre mystère. Et rappel : ce n\'est qu\'un repère, ton ressenti prime toujours. 💡'},
+  {v:33, ic:'💡', t:'« Pourquoi ce score ? » — ta récup expliquée', d:'Ton score de récupération (sur l\'Accueil) t\'a toujours un peu intrigué ? Tape « Pourquoi ce score ? » juste en dessous : une fiche claire t\'explique en français simple ce que le chiffre veut dire (à quel point ton corps est prêt à s\'entraîner aujourd\'hui) et D\'OÙ il vient — sommeil, séance récente, âge, forme du jour… chaque facteur avec sa raison. Fini le chiffre mystère. Et rappel : ce n\'est qu\'un repère, ton ressenti prime toujours. 💡'},
   {v:32, ic:'🔎', t:'Ton historique plus pratique', d:'Trois améliorations sur l\'onglet Progrès : ① tes cartes d\'historique sont plus claires — le MUSCLE travaillé (ou le nom de la séance) ressort en gros titre, les calories passent en petit ; ② tu peux maintenant FILTRER ton historique par groupe musculaire : tape « Pectoraux », « Quadriceps »… sous « Historique séances » pour retrouver une séance en un clin d\'œil ; ③ dans la recherche d\'exercices (en séance), tes FAVORIS — ceux que tu utilises le plus — remontent tout seuls en tête, avec une ★. 🔎'},
   {v:31, ic:'🎯', t:'Fixe-toi un objectif de force', d:'Nouveau dans Progrès (onglet Exercices) : pour chaque exercice, tu peux fixer un OBJECTIF de 1RM (le max que tu vises). L\'app affiche alors une barre de progression (« 87 % du chemin · encore 17 kg ») et une ligne verte repère sur ton graphe, à côté de ta vraie courbe. Un cap clair et motivant, mouvement par mouvement — que TOI tu choisis. 🎯'},
   {v:30, ic:'📅', t:'Ton calendrier se souvient de tes journées', d:'À partir de maintenant, ton check-in du jour (énergie, humeur, douleur) n\'est plus effacé chaque nuit : il est GARDÉ. Tape une semaine dans le calendrier de l\'Accueil → sous chaque jour tu revois ta séance ET comment tu te sentais (😴 sommeil · humeur · une éventuelle gêne). Dans quelques semaines, tu retrouveras d\'un coup d\'œil dans quel état tu étais le jour d\'un record. C\'est la 1re pierre de « Ton histoire sportive ». 📅'},

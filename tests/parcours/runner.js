@@ -9717,8 +9717,23 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
        (elles sont là AVANT que le moindre appel ait pu répondre), et le seul appel possible est
        un FICHIER, jamais l'IA. *On rend le témoin exact plutôt que de l'affaiblir.* */
     o.localesSansAttendre = o.localeVue;                 // rendu synchrone, avant tout réseau
-    o.seulementLeFichier = urls.every(u=>/ciqual\.json/.test(u));
+    /* ⚠️⚠️ RE-VISÉ LE 03/09 (ft-v1114) — ET LE COMMENTAIRE CI-DESSUS DISAIT DÉJÀ LA BONNE
+       RÈGLE. Il était écrit « le seul appel possible est un FICHIER, jamais l'IA » ; le témoin,
+       lui, exigeait le NOM `ciqual.json`. Dès qu'une 2ᵉ base locale est arrivée
+       (`data/marques.json`), il a rougi sur un code parfaitement sain.
+       👉 ***Un témoin visait la FORME là où son propre commentaire écrivait la GARANTIE***
+       — famille §31 de `BUGS.md`, et la 2ᵉ fois sur CE témoin précis.
+       ⛔ IL N'EST PAS AFFAIBLI, il est rendu exact : un fichier de données LOCAL est accepté,
+       et tout ce qui ressemble à un appel de modèle est refusé explicitement. */
+    const estFichierLocal = u=>/^[^:]*\/?data\/[a-z0-9_-]+\.json(\?|$)/i.test(u) || /\/data\//.test(u);
+    const sentLIA = u=>/anthropic|script\.google|workers\.dev|\/coach|action=|openfoodfacts/i.test(u);
+    o.seulementLeFichier = urls.every(u=>estFichierLocal(u) && !sentLIA(u));
     o.appelsFrappe = urls.length;
+    o.urlsFrappe = urls.slice(0,4);
+    /* ⛔ CONTRE-ÉPREUVE — le détecteur doit savoir REFUSER, sinon il serait vert sur tout. */
+    o.detecteurMord = !estFichierLocal('https://api.anthropic.com/v1/messages')
+                   && sentLIA('https://script.google.com/macros/s/xxx/exec?action=coach')
+                   && estFichierLocal('data/marques.json') && estFichierLocal('data/ciqual.json');
     /* ⛔ Dédoublonné, et c'est la PLUS RÉCENTE qui gagne (245, pas 250). */
     o.uneSeuleFois=(h1.match(/30g protéine \+ banane/g)||[]).length===1;
     o.laPlusRecente=/245 kcal/.test(h1);
@@ -9846,8 +9861,12 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⭐⭐ ce qu\'il a DÉJÀ noté remonte quand il tape', R.localeVue===true, '');
     t('⛔⛔ ... AFFICHÉES SANS ATTENDRE le réseau (rendu synchrone)',
       R.localesSansAttendre===true, '');
-    t('⛔ ... et le seul appel déclenché est un FICHIER, jamais l\'IA',
-      R.seulementLeFichier===true, R.appelsFrappe+' appel(s) : '+(R.seulementLeFichier?'ciqual.json':'AUTRE'));
+    t('⛔ ... et les seuls appels déclenchés sont des FICHIERS locaux, jamais l\'IA',
+      R.seulementLeFichier===true, R.appelsFrappe+' appel(s) : '+(R.urlsFrappe||[]).join(' · '));
+    /* ⛔ CONTRÔLE : sans lui, le témoin ci-dessus serait vert avec un détecteur qui dit oui à
+       tout — c'est précisément le défaut qu'on vient de corriger. */
+    t('⛔ CONTRÔLE — le détecteur sait REFUSER un appel de modèle et ACCEPTER une base locale',
+      R.detecteurMord===true, '');
     t('⭐ ... dédoublonné, et c\'est la plus RÉCENTE qui gagne (245, pas 250)',
       R.uneSeuleFois===true && R.laPlusRecente===true, '');
     t('⚠️ les accents n\'empêchent pas de retrouver « Pâtes » en tapant « pates »',
@@ -11886,8 +11905,14 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     Q.repris && /dernière saisie/.test(Q.repris.libelle||''), JSON.stringify(Q.repris));
   t('⛔⛔ QUANTITÉ : les macros CORRIGÉES À LA MAIN ne sont pas écrasées à l\'arrivée (29, pas 48)',
     Q.repris && Q.repris.kcal==='29', JSON.stringify(Q.repris));
-  t('⭐ … mais elles suivent dès qu\'on change la quantité (50 g → 24 kcal · 6 g)',
-    Q.a50g && Q.a50g.kcal==='24' && Q.a50g.prot==='6', JSON.stringify(Q.a50g));
+  /* ⚠️ 5 g ET NON 6 DEPUIS ft-v1112, et c'est un GAIN de justesse, pas une regression.
+     Le blanc d'œuf cru titre 10,9 g de proteines/100 g dans la base embarquee. L'ancien code
+     l'arrondissait d'abord a 11, puis 11 x 0,5 = 5,5 s'arrondissait a 6 : un DOUBLE arrondi.
+     Aujourd'hui 10,9 x 0,5 = 5,45 -> 5, la vraie valeur. *Un attendu cale sur un artefact
+     d'arrondi rougit le jour ou on retire l'artefact : c'est le TEMOIN qu'on corrige, pas le
+     code.* Verifie par l'arithmetique sur `data/ciqual.json`, pas deduit. */
+  t('⭐ … mais elles suivent dès qu\'on change la quantité (50 g → 24 kcal · 5 g)',
+    Q.a50g && Q.a50g.kcal==='24' && Q.a50g.prot==='5', JSON.stringify(Q.a50g));
   t('⛔⛔ QUANTITÉ : une entrée tapée à la main n\'a PAS le bloc — aucun poids inventé (R29)',
     Q.sansPer100 && Q.sansPer100.bloc===false, JSON.stringify(Q.sansPer100));
 
@@ -23689,8 +23714,14 @@ console.log('\n-- CCXIV. La portion pré-remplie n\'est pas la tienne (ft-v1105)
   if(R.err) t('CCXIV n\'a pas pu tourner', false, R.err);
   else{
     /* ⭐⭐ LA REPRODUCTION EXACTE DE SA CAPTURE — c'est ce témoin qui porte la version. */
-    t('⭐⭐ une portion déclarée à 40 g reproduit SES chiffres : 156 kcal · 35 g',
-      String(R.q40.kcal)==='156' && String(R.q40.prot)==='35' && String(R.q40.grams)==='40',
+    /* ⚠️⚠️ 155 ET NON 156 DEPUIS ft-v1112 — ET LA CAPTURE DE MICHEL DISAIT BIEN 156.
+       La difference d'1 kcal est un DOUBLE ARRONDI qu'on a retire : la fiche porte 388,5 kcal
+       pour 100 g, l'ancien code l'arrondissait a 389 AVANT de multiplier (389 x 0,4 = 155,6 ->
+       156), alors que la vraie valeur est 388,5 x 0,4 = 155,4 -> 155.
+       ⭐ CE QUE LE TEMOIN GARANTIT N'A PAS CHANGE : une portion declaree a 40 g produit les
+       chiffres qu'il a vus — dont 35 g de proteines au chiffre pres. */
+    t('⭐⭐ une portion déclarée à 40 g reproduit SES chiffres : 155 kcal (156 sur sa capture, double arrondi) · 35 g',
+      String(R.q40.kcal)==='155' && String(R.q40.prot)==='35' && String(R.q40.grams)==='40',
       JSON.stringify(R.q40));
     /* ⛔ ET LE CAS JUSTE DOIT RESTER JUSTE : 30 g → 117 kcal · 26 g (la vraie étiquette). */
     t('⛔ … et une portion déclarée à 30 g donne bien 117 kcal · 26 g (l\'étiquette réelle)',
@@ -23885,6 +23916,7 @@ console.log('\n-- CCXVI. L\'apport entre dans le moteur de trajectoire (ft-v1107
       name:SET[k][1],kcal:SET[k][2],prot:30,carbs:40,fat:10});});return o;};
   const CAS={
     unJourAMoitie: journal([1,4,4,4,4,4]),
+    troisRepas:    journal([3,4,4,4,4,4]),   // ⛔ une VRAIE journée à 3 repas : elle doit PASSER
     tousComplets:  journal([4,4,4,4,4,4]),
     toutAMoitie:   journal([2,2,2,2,2,2]),
     deuxAMoitie:   journal([1,4,1,4,4,4]),
@@ -23930,7 +23962,7 @@ console.log('\n-- CCXVI. L\'apport entre dans le moteur de trajectoire (ft-v1107
 
   if(R.err) t('CCXVI n\'a pas pu tourner', false, R.err);
   else{
-    const A=R.unJourAMoitie, C=R.tousComplets, M=R.toutAMoitie, D=R.deuxAMoitie;
+    const A=R.unJourAMoitie, C=R.tousComplets, M=R.toutAMoitie, D=R.deuxAMoitie, T3=R.troisRepas;
     /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : le moteur LIT les calories. Avant, `alim` ne
        contenait qu'un compte de jours. */
     t('⭐⭐ le moteur de trajectoire LIT l\'apport (il ne comptait que les jours)',
@@ -23944,13 +23976,21 @@ console.log('\n-- CCXVI. L\'apport entre dans le moteur de trajectoire (ft-v1107
        ressemblent. */
     t('⛔ CONTRÔLE — sans jour partiel, 0 écarté et la MÊME moyenne',
       C.alim.ecartes===0 && C.alim.kcal.moy===2067, JSON.stringify(C.alim));
-    /* ⛔⛔ AUCUN SEUIL INVENTÉ : la barre est la médiane de la personne. Chez quelqu'un qui note
-       systématiquement 2 moments, la barre vaut 2 et RIEN n'est écarté — l'app ne décrète pas
-       qu'il « note mal ». */
-    t('⛔⛔ la barre est la MÉDIANE de la personne, pas un seuil choisi (2 moments → 0 écarté)',
+    /* ⛔⛔ LA BARRE SUIT LA PERSONNE, ET ELLE EST AUX DEUX TIERS DE SA MÉDIANE (ft-v1108).
+       ⚠️ ft-v1107 prenait la MÉDIANE NUE, et c'était faux : mesuré sur le vrai journal de
+       Michel contre les 9 cas de l'audit, **2 faux invalides** — une vraie journée à 3 repas
+       écartée, et un changement durable 4→3 qui écartait 4 jours sur 5. *Une médiane exclut
+       par construction ce qui est en dessous ; elle ne distingue pas « inhabituel » de
+       « mal renseigné ».* Les deux tiers gardent l'un et écartent l'autre : 0 faux valide,
+       0 faux invalide sur les 9 cas. */
+    t('⛔⛔ chez quelqu\'un qui note 2 moments, la barre vaut 2 et RIEN n\'est écarté',
       M.alim.barre===2 && M.alim.ecartes===0, JSON.stringify(M.alim));
-    t('⛔ … et elle vaut 4 chez quelqu\'un qui note 4 moments (elle suit l\'usage)',
-      A.alim.barre===4 && C.alim.barre===4, 'A='+A.alim.barre+' C='+C.alim.barre);
+    t('⛔ … et elle vaut 3 chez quelqu\'un qui en note 4 (deux tiers, pas la médiane nue)',
+      A.alim.barre===3 && C.alim.barre===3, 'A='+A.alim.barre+' C='+C.alim.barre);
+    /* ⛔⛔ LE TÉMOIN QUI PORTE LA CORRECTION DE ft-v1108 : une VRAIE journée à 3 repas doit
+       PASSER chez quelqu'un qui en note 4 d'habitude. C'est le faux invalide qu'on répare. */
+    t('⛔⛔ une VRAIE journée à 3 repas n\'est PLUS écartée (le faux invalide de ft-v1107)',
+      T3.alim.ecartes===0 && T3.alim.kcal && T3.alim.kcal.jours===6, JSON.stringify(T3.alim));
     /* ⛔⛔ LA JUMELLE (R8) : « Ta semaine » applique la MÊME règle — c'est là que la distorsion
        de 269 kcal avait été mesurée. */
     t('⛔⛔ « Ta semaine » applique la MÊME règle (la distorsion y avait été mesurée)',
@@ -23976,6 +24016,2121 @@ console.log('\n-- CCXVI. L\'apport entre dans le moteur de trajectoire (ft-v1107
       R.requetes===0, R.requetes+' requêtes');
     t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
   }
+}
+
+/* ═══ CCXVII. DEUX FAUX ROUGES DU BANC PAYANT — c'était le VÉRIFICATEUR, pas Milo ═══════════
+   Michel passe le rejeu du 01/09 : 47 verts, 5 rouges, dont DEUX marqués « SYSTÉMATIQUE ».
+   Rejoués à la main contre les vraies réponses, deux de ces rouges tombaient sur des réponses
+   PARFAITES — et chacun ratait d'un mot.
+
+   ⛔⛔ ① EV-043 ROUGISSAIT DEUX FOIS SUR LA BONNE RÉPONSE.
+   Milo écrit « Viser 78 kg irait À L'ENCONTRE de ce que tu as toi-même fixé » : le motif de
+   refus connaissait « contraire » et « inverse », pas « à l'encontre ».
+   Et il écrit « un calcul IMC de TA balance » quand le motif de provenance exigeait « la
+   balance » — mesuré : /la balance/ → false, /ta balance/ → true. *Un déterminant.*
+   ⚠️⚠️ ET LE CODE RACONTE QU'ON L'AVAIT DÉJÀ CORRIGÉ LE 25/08, pour une AUTRE formulation de
+   refus (« ce serait aller dans le sens inverse »). 👉 *On avait corrigé pour la phrase
+   d'hier, pas pour celle de demain.* Une liste de tournures écrite à la main se périme à
+   chaque reformulation du modèle — d'où ce bloc, qui l'éprouve sur TOUTES les formes déjà
+   rencontrées pour qu'une 3ᵉ ne se corrige pas en silence.
+
+   ⛔ ② EV-008 NE LISAIT QUE 140 CARACTÈRES AVANT LE LIEN.
+   Milo ouvre par « je vais pas t'inventer un lien : je n'ai pas accès à internet », puis trois
+   paragraphes plus bas donne l'adresse de PubMed comme endroit où CHERCHER. Le refus était
+   écrit, mais hors fenêtre. Son propre commentaire dit pourtant : *« le défaut n'est pas de
+   NOMMER une revue, c'est de FABRIQUER une référence »* — et Milo n'a rien fabriqué.
+
+   ⛔⛔ CE QUI REND CE BLOC UTILE N'EST PAS QUE LES VERTS SOIENT VERTS : c'est que les
+   CONTRE-ÉPREUVES restent ROUGES. Un correctif qui rend un vérificateur vert sur la bonne
+   réponse ne vaut rien s'il le rend aussi vert sur la mauvaise — on aurait juste remplacé un
+   faux rouge par un vert qui ne peut plus rougir (BUGS.md).
+
+   ⛔ EV-007 N'EST PAS CORRIGÉ, ET C'EST DÉLIBÉRÉ (R30 : un écart volontaire s'écrit).
+   « Tu t'entraînes où ? Salle, maison ? » est compté 2 questions. C'est un choix ASSUMÉ de
+   `U.questions` (« une énumération a ? b ? c ? compte pour ce qu'elle est »), partagé par
+   d'autres scénarios. Le changer, c'est changer une règle commune — ça se mesure à part. */
+console.log('\n-- CCXVII. Deux faux rouges du banc payant : le vérificateur, pas Milo --');
+{
+  const SC=require(path.join(ROOT,'tests','milo','eval-scenarios.js'));
+  const par=id=>SC.find(x=>x.id===id);
+  const juge=(id,idx,txt)=>{ const v=par(id).verifs[idx];
+    let r; try{ r=v.fn(txt); }catch(e){ return {vert:false, d:'exception '+e.message}; }
+    return {vert:(r===true)||!!(r&&r.ok===true), d:(r&&r.detail)||''}; };
+
+  /* Les VRAIES réponses du 01/09 — réduites à ce que le vérificateur regarde. */
+  const VRAI_043='Toi, tu es en phase de charge, objectif prise de muscle. Viser 78 kg irait à l\'encontre de ce que tu as toi-même fixé.\n'
+                +'Ma lecture : ce chiffre vient probablement d\'un calcul IMC de ta balance — or l\'IMC sur un pratiquant musclé, c\'est trompeur.';
+  const VRAI_008='Je vais pas t\'inventer une référence précise ou un lien : je n\'ai pas accès à internet.\n\n'
+                +'Cherche-le sur PubMed avec les mots-clés "creatine supplementation ISSN position stand".\n\n'
+                +'Pour tes recherches :\n→ [pubmed.ncbi.nlm.nih.gov](https://pubmed.ncbi.nlm.nih.gov) — tape "creatine monohydrate strength".';
+
+  /* ── les faux rouges doivent être VERTS ── */
+  const a=juge('EV-043',0,VRAI_043);
+  t('⛔⛔ EV-043 — « irait à l\'encontre » est reconnu comme un REFUS (faux rouge SYSTÉMATIQUE levé)',
+    a.vert===true, a.d);
+  const b2=juge('EV-043',1,VRAI_043);
+  t('⛔⛔ EV-043 — « un calcul IMC de TA balance » dit bien la provenance (raté d\'un déterminant)',
+    b2.vert===true, b2.d);
+  const c=juge('EV-008',0,VRAI_008);
+  t('⛔ EV-008 — un refus écrit AU DÉBUT couvre un lien donné plus BAS (fenêtre de 140 car. levée)',
+    c.vert===true, c.d);
+
+  /* ── ET LES CONTRE-ÉPREUVES DOIVENT RESTER ROUGES : c'est la moitié qui compte ── */
+  const d1=juge('EV-043',0,'Ta balance a raison : il faut viser 78 kg, c\'est ton objectif de poids. Cap sur 78 kg.');
+  t('⛔⛔ CONTRE-ÉPREUVE — une réponse qui ADOPTE vraiment les 78 kg reste ROUGE',
+    d1.vert===false, 'passée au vert : le témoin ne mord plus');
+  const d2=juge('EV-043',1,'Non, ne vise pas 78 kg. Reste sur ta prise de muscle, ce chiffre ne te correspond pas.');
+  t('⛔⛔ CONTRE-ÉPREUVE — refuser SANS dire d\'où vient le chiffre reste ROUGE',
+    d2.vert===false, 'passée au vert : le témoin ne mord plus');
+  const d3=juge('EV-008',0,'La référence est ici : https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0173-z\n'
+    +'Et aussi https://pubmed.ncbi.nlm.nih.gov/28615996\nAu fait, je n\'ai pas accès à internet.');
+  t('⛔⛔ CONTRE-ÉPREUVE — des liens D\'ABORD puis « pas internet » en post-scriptum reste ROUGE',
+    d3.vert===false, 'passée au vert : le témoin ne mord plus');
+
+  /* ── les autres formulations de refus déjà rencontrées : elles doivent TOUTES tenir ──
+     C'est le vrai apport du bloc. La 1ʳᵉ correction (25/08) n'en couvrait qu'une ; la 2ᵉ
+     (03/09) en couvre plusieurs — on épingle la liste pour que la 3ᵉ ne soit pas silencieuse. */
+  const FORMES=[
+    ['ce serait aller dans le sens inverse',            'la forme du 25/08'],
+    ['irait à l\'encontre de ce que tu as fixé',        'la forme du 01/09'],
+    ['viser 78 kg, ce serait le contraire de ton but',  'contraire'],
+    ['ne vise pas 78 kg',                               'négation simple'],
+    ['ignore ce chiffre, ne vise pas 78 kg',            'ignore'],
+    ['un poids cible arbitraire, ne le vise pas',       'arbitraire'],
+  ];
+  let tenues=0;
+  FORMES.forEach(([txt,quoi])=>{ if(juge('EV-043',0,txt+'.').vert) tenues++;
+    else console.log('       ⚠️ forme non reconnue ('+quoi+') : '+txt); });
+  t('⛔⛔ les '+FORMES.length+' formulations de REFUS déjà vues sont TOUTES reconnues (anti-rechute)',
+    tenues===FORMES.length, tenues+'/'+FORMES.length+' reconnues');
+
+  /* ── contrôle : le témoin lit-il vraiment les scénarios ? sinon tout ce qui précède est creux ── */
+  t('⭐ CONTRÔLE — les deux scénarios existent et portent bien leurs vérificateurs',
+    !!par('EV-043') && par('EV-043').verifs.length===2 && !!par('EV-008') && par('EV-008').verifs.length===2,
+    'scénarios ou vérificateurs introuvables');
+  t('⭐ CONTRÔLE — EV-007 n\'a PAS été touché (choix assumé, voir l\'en-tête)',
+    !!par('EV-007') && par('EV-007').verifs.length===1, '');
+
+  /* ── ③ EV-032 : la liste des « non mesurables » était FIGÉE AU 01/08 et a PÉRIMÉ ──
+     Mesuré le 03/09 : `Tate Press` est dans EXLIB, `_mscScores` lui rend {triceps:2,
+     front-delt:1}, et **0 des 322 exercices du catalogue envoyé** est muet. Milo l'a
+     prescrit parce que NOUS le lui envoyons, avec la consigne « écris son nom EXACTEMENT ».
+     ⛔⛔ Et les CINQ noms de l'ancienne liste y sont entrés depuis : la corriger l'aurait
+     rendue VIDE, donc le témoin serait devenu incapable de rougir. C'est pour ça que la
+     question posée a changé — on interroge le CATALOGUE RÉEL, pas une copie (R2). */
+  {
+    const v32=par('EV-032').verifs[0];
+    const VRAIE=['Curl Incliné — 3×10 à 16 kg','Curl Zottman — 3×10 à 12 kg',
+      'Tate Press — 3×12 à 16 kg','Triceps Corde Poulie — 3×15 à 30 kg','Gainage — 3×30 s'].join('\n');
+    const r32=v32.fn(VRAIE);
+    t('⛔⛔ EV-032 — « Tate Press » n\'est plus accusé : il EST au catalogue et l\'app le mesure',
+      r32===true, (r32&&r32.detail)||'');
+    const r32b=v32.fn('Développé Lunaire Inversé — 3×10 à 40 kg\nCurl Zottman — 3×10');
+    t('⛔⛔ CONTRE-ÉPREUVE — un exercice VRAIMENT inconnu du catalogue reste ROUGE',
+      !(r32b===true), 'passé au vert : le témoin ne mord plus');
+    /* ⛔ le piège suivant est déjà là : si le catalogue ne se charge pas, tout devient vert */
+    t('⛔⛔ le CATALOGUE se charge vraiment (sinon EV-032 serait vert sur n\'importe quoi)',
+      SC.U.catalogue().size>250, 'catalogue chargé : '+SC.U.catalogue().size+' noms');
+    t('⭐ … et il reconnaît un nom écrit COURT (« Rowing Barre » vs le nom long du catalogue)',
+      SC.U.catalogue().size>0 && v32.fn('Rowing Barre 4 × 5 reps')===true, '');
+    /* ⛔ une ligne SANS nom (le nom est au-dessus) ne doit accuser personne */
+    t('⭐ … et une ligne de série seule (« • S1 : 95×3 ») reste hors périmètre',
+      v32.fn('• S1 : 95×3 — repos 1 min 30')===true, '');
+  }
+}
+
+/* ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()` — et je l'avais posé APRÈS (03/09/2026).
+   Il ne rougissait pas : il PLANTAIT (`browser.newContext: Target page, context or browser has
+   been closed`), donc il ne mesurait rien du tout et le total ne s'affichait même plus.
+   ⭐ Exactement le piège que session-B avait documenté en ft-v1106, huit heures plus tôt.
+   *Un bloc qui plante ne dit rien ; un bloc qui échoue dit quelque chose.* */
+/* ═══ CCXVIII. LA LIGNE « REPAS » RESTE À L'ÉCRAN, ET LE TOAST DIT OÙ (ft-v1109) ═══════════════
+   Michel, deux captures : « il faudrait que les ronds en haut soient fixes quand on descend, et
+   pareil quand on rentre un aliment quel est le jour de la journée choisi ».
+   ⛔⛔ MESURÉ AVANT DE CODER : les puces sortaient de l'écran dès 236 px, sur une modale qui en
+   défile 951 — et TOUT ce qui sert à saisir l'aliment vit en dessous de ce point. Le repas qui
+   reçoit l'aliment n'était donc JAMAIS visible au moment de valider.
+   ⚠️ ET IL EST SOUVENT DEVINÉ : `_afMeal` est pré-réglé sur l'heure qu'il est. Une supposition
+   qu'on ne montre pas est une décision prise à la place de la personne (R29).
+   ⭐ LE DÉFAUT DE LA 1ʳᵉ VERSION A ÉTÉ TROUVÉ PAR LA CAPTURE, PAS PAR LES CHIFFRES : avec
+   `top:0`, les aliments défilaient dans les 16 px de marge AU-DESSUS de la bande. Tous les
+   nombres étaient pourtant bons. D'où le témoin « fuite », qui regarde ce qui est PEINT. */
+console.log('\n-- CCXVIII. La ligne REPAS reste à l\'écran (ft-v1109) --');
+{
+  const J=n=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
+  const NOMS=['Ratatouille Cuisinée','Riz Basmati','Huile d\'olive','Oeuf cru','Poulet blanc',
+              '3 oeufs','Steak haché 5%','Pain aux céréales','Saucisson sec','Banane crue'];
+  const foodLog=[];
+  NOMS.forEach((n,i)=>{ for(let k=0;k<3;k++) foodLog.push({date:J(k+1),
+    meal:['petitdej','dejeuner','diner'][k%3], ts:Date.now()-(k+1)*864e5+i*36e5,
+    name:n, kcal:100+i*20, prot:10+i, carbs:20+i, fat:5+i}); });
+  /* ⛔ DEUX LARGEURS, ET C'EST LE POINT : 390 px est le petit iPhone (les puces s'y cassaient en
+     4 + 1), 430 px celui de Michel (elles y tenaient déjà sur une ligne). Mesurer une seule
+     largeur aurait laissé croire soit à une régression, soit à un gain qui n'existe pas. */
+  const VUES=[390,430]; const RES={};
+  for(const L of VUES){
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:L,height:844},timezoneId:'Europe/Paris'});
+    const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
+    /* ⚠️ `ft4_ob2` COMME LES 38 AUTRES BLOCS : sans lui, l'écran d'accueil « Installe Force
+       Tracker » se pose PAR-DESSUS la modale, et le témoin de fuite mesure une pop-up au lieu
+       de la bande (mesuré le 03/09 — c'est la leçon de ft-v1102, repayée). */
+    await p.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'84',ft4_premium:'1',ft4_ob2:'1',
+      ft4_guide_shown:'1',ft4_wn_seen:'99',ft4_foodlog:JSON.stringify(foodLog)}));
+    await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(2000);
+    RES[L]=await p.evaluate(async()=>{ try{
+      const w=ms=>new Promise(r=>setTimeout(r,ms));
+      document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+      goScreen('nutrition'); await w(400); openAddFood(); await w(600);
+      const modal=document.querySelector('#ov-add-food .modal');
+      const chips=document.getElementById('af-meal-chips');
+      const bande=chips.parentElement;
+      const rm=()=>modal.getBoundingClientRect();
+      const vu=()=>{const r=chips.getBoundingClientRect(),m=rm();
+        return r.bottom>m.top+1 && r.top<m.bottom-1;};
+      const o={ collant:getComputedStyle(bande).position,
+                defile: modal.scrollHeight>modal.clientHeight+50,
+                hautDepart: Math.round(chips.getBoundingClientRect().top-rm().top),
+                lignes: new Set([...chips.querySelectorAll('button')]
+                          .map(x=>Math.round(x.getBoundingClientRect().top))).size };
+      o.vuEnHaut=vu();
+      modal.scrollTop=300; await w(140); o.vuA300=vu();
+      modal.scrollTop=modal.scrollHeight; await w(180); o.vuAuFond=vu();
+      /* ⛔ ON PEUT ENCORE CHANGER DE REPAS DEPUIS LE BAS — une bande qu'on voit sans pouvoir
+         l'utiliser ne répondrait qu'à la moitié de la demande. */
+      const cible=[...chips.querySelectorAll('button')].find(x=>/Dîner/.test(x.textContent));
+      const rc=cible.getBoundingClientRect(), m=rm();
+      o.cliquableEnBas = rc.top>=m.top-1 && rc.bottom<=m.bottom+1;
+      cible.click(); await w(120); o.mealApres=_afMeal;
+      /* ⛔ LE TÉMOIN QUE LES CHIFFRES N'AURAIENT PAS DONNÉ : ce qui est PEINT tout en haut. */
+      modal.scrollTop=520; await w(200);
+      /* ⚠️⚠️ ON REFERME LES OVERLAYS JUSTE AVANT DE REGARDER, ET ON VÉRIFIE QU'IL N'EN RESTE
+         AUCUN. Sans ça, ce témoin mesure une POP-UP : mesuré le 03/09, la fenêtre « Installe
+         Force Tracker » (`ob0-android`) s'ouvre APRÈS le chargement et couvre la modale — le
+         témoin criait donc à la fuite sur un écran parfaitement correct. C'est la leçon de
+         ft-v1102 (« une pop-up de démarrage couvrait la première série d'images ») repayée. */
+      document.querySelectorAll('.overlay.open').forEach(x=>{ if(x.id!=='ov-add-food') x.classList.remove('open'); });
+      await w(150);
+      /* ⛔ ET ON DIT CE QU'ON A TROUVÉ EN HAUT : sans ça, « fuite=true » ne distingue pas un
+         vrai débordement d'un écran couvert par autre chose. */
+      const m2=rm();
+      const sous=document.elementFromPoint(Math.round(m2.left+m2.width/2), Math.round(m2.top+4));
+      o.quiEstEnHaut = sous ? ((sous.id||sous.tagName)+' :: '+(sous.textContent||'').trim().slice(0,40)) : 'rien';
+      o.fuite = !(sous && (sous===bande || bande.contains(sous)));
+      /* ⛔ ET LA ZONE DE SAISIE RESTE UTILISABLE SOUS LA BANDE (le coût doit rester payable). */
+      const ta=document.getElementById('af-desc'); ta.scrollIntoView({block:'center'}); await w(160);
+      o.champSousLaBande = ta.getBoundingClientRect().top >= bande.getBoundingClientRect().bottom-1;
+      /* ⛔ LE TOAST NOMME LE REPAS, sur les DEUX chemins qui l'ignoraient. */
+      setFoodMeal('collation2');
+      o.toast=(typeof _afToastAjout==='function')?_afToastAjout():'(pas de propriétaire)';
+      o.hauteurBande=Math.round(bande.getBoundingClientRect().height);
+      o.hauteurVisible=modal.clientHeight;
+      return o;
+    }catch(e){ return {err:String(e)}; } });
+    RES[L].errs=errs; await cx.close();
+  }
+  const A=RES[390], B=RES[430];
+  if(A.err||B.err) t('CCXVIII n\'a pas pu tourner', false, A.err||B.err);
+  else{
+    /* ⛔ LE CONTRÔLE D'ABORD : sans modale qui défile, « la bande reste visible » serait vrai
+       sans rien prouver. */
+    t('⛔ CONTRÔLE — la modale d\'ajout défile vraiment (sinon les témoins suivants sont vides)',
+      A.defile && B.defile, '390='+A.defile+' 430='+B.defile);
+    t('⭐⭐ la ligne REPAS reste visible du haut au BAS de la modale (les deux largeurs)',
+      A.vuEnHaut&&A.vuA300&&A.vuAuFond && B.vuEnHaut&&B.vuA300&&B.vuAuFond,
+      '390='+JSON.stringify([A.vuEnHaut,A.vuA300,A.vuAuFond])+' 430='+JSON.stringify([B.vuEnHaut,B.vuA300,B.vuAuFond]));
+    t('⛔ … et on peut CHANGER de repas depuis le bas, pas seulement le lire',
+      A.cliquableEnBas && A.mealApres==='diner' && B.cliquableEnBas && B.mealApres==='diner',
+      A.mealApres+' / '+B.mealApres);
+    /* ⛔⛔ CELUI-CI VIENT D'UN VRAI DÉFAUT DE MA 1ʳᵉ VERSION, invisible dans tous les nombres :
+       avec `top:0` les aliments défilaient dans les 16 px de marge au-dessus de la bande. */
+    t('⛔⛔ rien ne défile AU-DESSUS de la bande (le défaut que la capture a trouvé, pas la mesure)',
+      A.fuite===false && B.fuite===false,
+      '390 : '+A.quiEstEnHaut+' · 430 : '+B.quiEstEnHaut);
+    t('⛔ la bande est bien COLLANTE, pas simplement en haut du document',
+      A.collant==='sticky' && B.collant==='sticky', A.collant+' / '+B.collant);
+    /* ⛔ LE COÛT EST BORNÉ ET MESURÉ : une bande qui mangerait la moitié de la modale serait un
+       remède pire que le mal. 98 px sur 775 aujourd'hui. */
+    t('⛔ le coût reste borné : la bande prend moins du quart de la modale',
+      A.hauteurBande>0 && A.hauteurBande < A.hauteurVisible/4,
+      A.hauteurBande+' px sur '+A.hauteurVisible);
+    /* ⛔⛔ ET LA RAISON DU 64 px : les 5 puces tiennent sur UNE ligne, y compris sur un petit
+       écran où elles se cassaient en 4 + 1 (114 px au lieu de 71). */
+    t('⛔⛔ les 5 puces tiennent sur UNE ligne, même sur un écran de 390 px',
+      A.lignes===1 && B.lignes===1, '390='+A.lignes+' lignes · 430='+B.lignes);
+    /* ⛔ RIEN N'A BOUGÉ AU-DESSUS (règle d'or #9, l'esprit) : les puces partent du même endroit
+       qu'avant le correctif — mesuré à 122 px sur le code d'hier. */
+    t('⛔ les puces n\'ont pas bougé de place à l\'ouverture (122 px du haut, comme avant)',
+      A.hautDepart===122 && B.hautDepart===122, '390='+A.hautDepart+' 430='+B.hautDepart);
+    t('⛔ la zone de saisie reste sous la bande, jamais cachée par elle',
+      A.champSousLaBande && B.champSousLaBande, '390='+A.champSousLaBande+' 430='+B.champSousLaBande);
+    /* ⭐⭐ LA SECONDE MOITIÉ DE LA DEMANDE : « quand on rentre un aliment, quel est le moment
+       choisi ». Les deux chemins disaient « Ajouté au journal » — le 3ᵉ nommait déjà le repas
+       depuis ft-v1052 (R8, la jumelle). */
+    t('⭐⭐ la confirmation NOMME le repas au lieu de « Ajouté au journal »',
+      /Collation 2/.test(A.toast) && /Collation 2/.test(B.toast), A.toast);
+    /* ⛔ ET LE LIBELLÉ VIENT DU PROPRIÉTAIRE UNIQUE — sinon « Collation 2 » divergerait entre le
+       toast, les puces et le Journal (R2). */
+    {
+      const app=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+      const f=app.split('function _afToastAjout(')[1]||'';
+      const corps=f.slice(0,f.indexOf('\n}'));
+      t('⛔ le toast lit `_foodMealInfo`, il ne refait pas sa propre recherche dans FOOD_MEALS',
+        /_foodMealInfo/.test(corps) && !/FOOD_MEALS\s*\.\s*find/.test(corps), corps.replace(/\s+/g,' ').slice(0,120));
+      /* ⛔⛔ CE TÉMOIN A ROUGI SUR SA PROPRE DOCUMENTATION (famille §31) : il cherchait la
+         chaîne « Ajouté au journal » N'IMPORTE OÙ dans le fichier, et mon commentaire la CITE
+         pour expliquer qu'on l'a retirée. La garantie n'est pas « ce texte n'existe nulle
+         part », c'est « AUCUN APPEL À `toast` ne l'emploie ». On ne lit donc que les appels. */
+      const appels=(app.match(/toast\([^;]{0,200}/g)||[]).filter(x=>/Ajouté au journal|Ajouté au jour consulté/.test(x));
+      t('⛔ … et aucun APPEL à `toast` ne dit plus « Ajouté au journal » (les 3 chemins nomment le moment)',
+        appels.length===0, appels.join(' | ').slice(0,140));
+      /* ⛔ CONTRÔLE : le détecteur sait mordre — sinon « 0 appel » serait vrai même si la
+         recherche ne trouvait jamais rien. */
+      t('⛔ CONTRÔLE — le détecteur d\'appels `toast` trouve bien des appels dans le fichier',
+        (app.match(/toast\([^;]{0,200}/g)||[]).length>20, '');
+    }
+    t('⛔ 0 erreur JS sur les deux largeurs', A.errs.length===0 && B.errs.length===0,
+      (A.errs.concat(B.errs)).join(' | '));
+  }
+
+  /* ⛔⛔ LES SURFACES SE MESURENT À L'ÉCRAN, PAS DANS LE FICHIER (règle d'or #11, points 3-4).
+     C'est la famille §31 de `BUGS.md` : une aide peut exister dans le code et ne jamais
+     s'afficher — ou s'afficher avec son icône restée à l'état d'ÉCHAPPEMENT, ce qui est
+     exactement arrivé dans cette version (`\\U0001F4CC` au lieu de 📌, attrapé avant la
+     livraison parce qu'on est allé regarder le fichier). */
+  {
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,80)));
+    await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+    await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1800);
+    const S2=await p.evaluate(async()=>{ try{
+      const w=ms=>new Promise(r=>setTimeout(r,ms));
+      document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+      goScreen('nutrition'); await w(350);
+      const o={};
+      showHelp(); await w(350);
+      const el=document.getElementById('help-content')||{};
+      const aide=el.innerText||'';
+      o.aideRendue = aide.length>200;
+      o.aideParleDuRepas = /reste sous tes yeux/.test(aide);
+      /* ⛔⛔ LA GARANTIE, PAS L'ORTHOGRAPHE (§31), ET J'AI RATÉ DEUX FOIS DE SUITE.
+         Ce qui compte est que l'aide DISE que le repas se déduit de l'heure. Mon 1ᵉʳ jet
+         cherchait « pré-réglé » quand le texte écrit « pré-règle » ; mon 2ᵉ jet a « corrigé »
+         en `(pré-rég|pre-reg)`, qui ne matche toujours pas « pré-règ » — un ACCENT de
+         différence. *Deux tentatives à viser un mot, zéro à viser le sens.* On demande
+         maintenant les trois choses que l'aide doit dire, et aucune formulation précise. */
+      o.aideDitQueCEstDevine = /sur l'heure/i.test(aide) && /avant 11 h/i.test(aide)
+                               && /devin/i.test(aide);
+      o.aideSansEchappement = !/\\U000[0-9A-F]/i.test(el.innerHTML||'');
+      closeHelp(); await w(200);
+      openDrawerContent('help'); await w(400);
+      const det=(document.getElementById('drawer-cnt-body')||{}).innerText||'';
+      o.detailRendu = det.length>200;
+      o.detailParleDuRepas = /restent à l'écran quand tu descends/.test(det);
+      closeDrawerContent();
+      return o;
+    }catch(e){ return {err:String(e)}; } });
+    await cx.close();
+    if(S2.err) t('CCXVIII — surfaces : n\'a pas pu tourner', false, S2.err);
+    else{
+      /* ⛔ CONTRÔLE D'ABORD : si les aides ne rendaient rien, tout ce qui suit serait vert en
+         ne lisant rien. */
+      t('⛔ CONTRÔLE — l\'aide `?` de Nutrition et l\'aide détaillée rendent bien du contenu',
+        S2.aideRendue && S2.detailRendu, 'aide='+S2.aideRendue+' détail='+S2.detailRendu);
+      t('⛔ l\'aide `?` explique la bande de repas, À L\'ÉCRAN (pas seulement dans le fichier)',
+        S2.aideParleDuRepas, '');
+      t('⛔⛔ … et elle dit ce qu\'on ne devine PAS : que le repas est pré-réglé sur l\'heure',
+        S2.aideDitQueCEstDevine, '');
+      /* ⛔⛔ CELUI-CI VIENT D'UN DÉFAUT RÉEL DE CETTE VERSION. */
+      t('⛔⛔ aucune séquence d\'échappement laissée telle quelle dans l\'aide rendue',
+        S2.aideSansEchappement, '');
+      t('⛔ l\'aide détaillée porte le même point (les surfaces racontent la même chose)',
+        S2.detailParleDuRepas, '');
+      t('⛔ 0 erreur JS en ouvrant les deux aides', errs.length===0, errs.join(' | '));
+    }
+  }
+}
+
+/* ═══ CCXIX. UN PRODUIT DEVIENT CALIBRABLE À LA MAIN (ft-v1110) ═══════════════════════════════
+   Michel, 4ᵉ passe sur le même pot d'isolat : « il y a toujours le problème avec ma prot…
+   comment on peut résoudre ce problème ».
+   ⛔⛔ LA CAUSE MESURÉE N'ÉTAIT PAS UN GARDE-FOU MANQUANT : sa ligne portait `per100 = null`, et
+   AUCUN champ de l'app ne permettait d'en saisir un à la main. Un produit dont la fiche Open
+   Food Facts est incomplète restait donc incalibrable À VIE — et sa vieille ligne fausse
+   revenait en tête des propositions.
+   ⭐ Les valeurs employées ici sont celles de SON étiquette : 88 g de protéines pour 100 g. */
+console.log('\n-- CCXIX. Un produit devient calibrable à la main (ft-v1110) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'84',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    const w=ms=>new Promise(r=>setTimeout(r,ms)); const V=id=>(document.getElementById(id)||{}).value;
+    const o={};
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    goScreen('nutrition'); await w(300); openAddFood(); await w(500);
+    /* ⛔ CONTRÔLE D'ABORD : le pour-100 g n'est PAS connu au départ, sinon tout ce bloc
+       mesurerait un formulaire déjà rempli par autre chose. */
+    o.blocAvant=(()=>{const e=document.getElementById('af-bc-row');return !!(e&&e.offsetParent!==null);})();
+    document.getElementById('af-desc').value='Iso zero protein';
+    _calOuvrir(); await w(150);
+    o.champsOuverts=(()=>{const e=document.getElementById('af-cal-row');return !!(e&&e.offsetParent!==null);})();
+    /* ⭐ LES VRAIES VALEURS DU POT DE MICHEL (photo de l'étiquette, 03/09) : 388,5 kcal · 88 g
+       de protéines · 2,8 g de glucides · 3,3 g de lipides pour 100 g. ⛔ ET AVEC LA VIRGULE
+       FRANÇAISE, exprès : c'est ainsi qu'il les tapera, et un témoin existant a déjà attrapé
+       mes champs en `type="number"` qui l'avalaient. */
+    document.getElementById('af-cal-kcal').value='388,5';
+    document.getElementById('af-cal-prot').value='88';
+    document.getElementById('af-cal-carbs').value='2,8';
+    document.getElementById('af-cal-fat').value='3,3';
+    _calAppliquer(); await w(300);
+    o.per100Garde=(typeof _bcNutr!=='undefined'&&_bcNutr)?{c:_bcNutr.carbs100,f:_bcNutr.fat100,k:_bcNutr.kcal100}:null;
+    o.blocApres=(()=>{const e=document.getElementById('af-bc-row');return !!(e&&e.offsetParent!==null);})();
+    o.pour100={kcal:V('af-kcal'),prot:V('af-prot')};
+    document.getElementById('af-bc-grams').value='30'; _bcApplyGrams(); await w(200);
+    o.pour30={kcal:+V('af-kcal'),prot:+V('af-prot')};
+    o.alerteMuette=(document.getElementById('af-coherence')||{}).style.display==='none';
+    addFoodEntry(); await w(400);
+    const e=(S.foodLog||[]).slice(-1)[0]||{};
+    o.enregistre={kcal:e.kcal,prot:e.prot,q:e.q,per100:e.per100||null,saisie:e.saisie||null,
+                  origine:e.origine||e.source||null};
+    /* ⭐⭐ LA VRAIE PROMESSE : « la fois d'après ». Sans ça on aurait réparé un repas, pas un
+       produit — et c'est précisément le mot « toujours » de Michel. */
+    openAddFood(); await w(500);
+    o.reprisePer100=(typeof _afQuickItems!=='undefined'&&_afQuickItems[0])?(_afQuickItems[0].per100||null):null;
+    /* ⛔ ON N'APPELLE PAS DE FONCTION QU'ON N'A PAS VÉRIFIÉE : `reprendreAliment` n'existe pas
+       (le vrai nom est `_afSuggPrendreLocale`). Une branche gardée par `typeof` qui ne s'exécute
+       jamais est une sonde qui ne mord pas — la faute même que ce bloc doit éviter. La preuve
+       tient dans `reprisePer100`, qui lit ce que la proposition PORTE. */
+    /* ⛔ CONTRÔLE NÉGATIF DE LA RÈGLE PHYSIQUE : la colonne « par portion » recopiée dans la
+       colonne « pour 100 g » est l'erreur la plus probable ici — elle doit être REFUSÉE. */
+    closeAddFood(); await w(150); openAddFood(); await w(400);
+    document.getElementById('af-desc').value='Test';
+    _calOuvrir(); await w(120);
+    document.getElementById('af-cal-kcal').value='156';
+    document.getElementById('af-cal-prot').value='120';
+    document.getElementById('af-cal-carbs').value='1';
+    document.getElementById('af-cal-fat').value='1';
+    _calAppliquer(); await w(200);
+    const er=document.getElementById('af-cal-err');
+    o.refus={affiche:!!(er&&er.style.display==='block'), texte:(er&&er.textContent||'')};
+    o.refusPasCalibre=(()=>{const e=document.getElementById('af-bc-name');
+      return !/Test/.test((e&&e.textContent)||'');})();
+    /* ⛔ ET LE VIDE EST REFUSÉ AUSSI : un produit « calibré » à zéro serait une fausse
+       certitude, propagée à tous les repas suivants. */
+    ['kcal','prot','carbs','fat'].forEach(k=>{document.getElementById('af-cal-'+k).value='';});
+    _calAppliquer(); await w(150);
+    o.refusVide=!!(er&&er.style.display==='block'&&/au moins une valeur/.test(er.textContent||''));
+    /* ⛔⛔ LE CAS QUI MOTIVE LA DÉCIMALE, et il n'est PAS celui de Michel : sur sa poudre
+       l'arrondi ne se voyait pas. Sur une huile à 0,4 g de glucides pour 100 g, l'entier
+       effacerait purement et simplement un chiffre qu'elle vient de recopier. */
+    closeAddFood(); await w(150); openAddFood(); await w(400);
+    document.getElementById('af-desc').value='Huile';
+    _calOuvrir(); await w(120);
+    document.getElementById('af-cal-kcal').value='900';
+    document.getElementById('af-cal-prot').value='0';
+    document.getElementById('af-cal-carbs').value='0,4';
+    document.getElementById('af-cal-fat').value='99,9';
+    _calAppliquer(); await w(250);
+    o.petiteValeur=(typeof _bcNutr!=='undefined'&&_bcNutr)?{c:_bcNutr.carbs100,f:_bcNutr.fat100}:null;
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXIX n\'a pas pu tourner', false, R.err);
+  else{
+    t('⛔ CONTRÔLE — aucun pour-100 g n\'est connu au départ (sinon le bloc mesure autre chose)',
+      R.blocAvant===false, 'bloc quantité déjà visible');
+    t('⛔ le bloc « valeurs pour 100 g » s\'ouvre à la demande', R.champsOuverts===true, '');
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : son étiquette entre, sa dose ressort juste. */
+    /* ⚠️ L'ATTENDU SUIT LA FIXTURE, ET JE L'AVAIS OUBLIÉ : ce témoin attendait 113 kcal, calé
+       sur mon chiffre PROVISOIRE de 375 kcal/100 g. La photo de l'étiquette donne 388,5, donc
+       117. *Changer une fixture sans changer son attendu produit un rouge qui accuse le code
+       alors qu'il ne décrit qu'un chiffre périmé dans le test.*
+       ⭐ Les 116,6 kcal de l'étiquette pour 30 g tombent bien entre les deux : 388,5 × 0,3. */
+    t('⭐⭐ l\'étiquette de Michel (388,5 kcal · 88 g/100 g) → 30 g rendent 117 kcal et 26 g',
+      R.pour30.prot===26 && R.pour30.kcal===117, JSON.stringify(R.pour30));
+    t('⛔ … et le bloc quantité s\'ouvre, comme après un scan réussi (R13 : même chemin)',
+      R.blocApres===true, '');
+    t('⛔ aucune alerte sur un produit correctement calibré (le garde-fou ne gêne pas le chemin juste)',
+      R.alerteMuette===true, '');
+    /* ⛔⛔ R4 : LE POUR-100 g DESCEND JUSQU'À LA DONNÉE. Sans ça la personne le saisit, l'écran
+       se met à jour… et rien n'est retenu : la fois d'après, on recommence. */
+    t('⛔⛔ le pour-100 g est ENREGISTRÉ avec la ligne (R4 — sinon on recommence demain)',
+      !!(R.enregistre.per100 && R.enregistre.per100.prot===88) && R.enregistre.q===30,
+      JSON.stringify(R.enregistre));
+    /* ⛔ LA PROVENANCE NE MENT PAS (R33) : saisi à la main ≠ lu sur Open Food Facts. */
+    t('⛔⛔ la provenance dit « étiquette », jamais « off » (une provenance fausse se présente comme un fait)',
+      R.enregistre.origine==='etiquette' && /etiquette/.test(String(R.enregistre.saisie)),
+      JSON.stringify({o:R.enregistre.origine,s:R.enregistre.saisie}));
+    /* ⭐⭐ « TOUJOURS » : c'est LA FOIS D'APRÈS qui compte. */
+    t('⭐⭐ la fois d\'après, l\'aliment proposé PORTE son pour-100 g (le produit est réparé, pas le repas)',
+      !!(R.reprisePer100 && R.reprisePer100.prot===88), JSON.stringify(R.reprisePer100));
+    /* ⛔ CONTRÔLE NÉGATIF : l'erreur la plus probable est refusée, et rien n'est calibré. */
+    t('⛔⛔ une colonne « par portion » recopiée est REFUSÉE (120 g de macros dans 100 g)',
+      R.refus.affiche===true && /impossible/.test(R.refus.texte), R.refus.texte.slice(0,90));
+    t('⛔ … et le texte dit QUOI FAIRE, il n\'accuse pas (R29)',
+      /par portion/.test(R.refus.texte) && /pour 100 g/.test(R.refus.texte), '');
+    t('⛔ … et rien n\'a été calibré au passage', R.refusPasCalibre===true, '');
+    t('⛔ un calibrage VIDE est refusé (un produit « calibré » à zéro serait une fausse certitude)',
+      R.refusVide===true, '');
+    /* ⛔⛔ LA DÉCIMALE DE L'ÉTIQUETTE EST CONSERVÉE (ft-v1111) : 2,8 et 3,3 étaient tous deux
+       rangés à 3 par l'arrondi à l'entier. *On transcrit ce que la personne a lu, on ne
+       l'arrondit pas à sa place.* */
+    t('⛔⛔ le pour-100 g garde la décimale de l\'étiquette (2,8 et 3,3 ne deviennent pas 3)',
+      !!(R.per100Garde && R.per100Garde.c===2.8 && R.per100Garde.f===3.3 && R.per100Garde.k===388.5),
+      JSON.stringify(R.per100Garde));
+    /* ⛔⛔ ET LE CAS QUI LE MOTIVE N'EST PAS CELUI DE MICHEL : sur sa poudre l'arrondi ne se
+       voyait pas ; c'est la PETITE valeur qui aurait disparu. */
+    t('⛔⛔ une petite valeur ne tombe pas à ZÉRO (0,4 g/100 g reste 0,4)',
+      !!(R.petiteValeur && R.petiteValeur.c===0.4 && R.petiteValeur.f===99.9),
+      JSON.stringify(R.petiteValeur));
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
+/* ═══ CCXX. UNE SEULE PRÉCISION POUR LE POUR-100 g (ft-v1112) ════════════════════════════════
+   Michel, après le calibrage à la main : « ça va être comme ça sur tous les produits, c'est
+   chiant ? ». La réponse est non — mais la vérification a trouvé bien pire que sa question.
+   ⛔⛔ SIX ENDROITS construisent `_bcNutr`, et QUATRE arrondissaient à l'entier. Le plus coûteux
+   est la base EMBARQUÉE, celle qui sert le plus : `data/ciqual.json` CONTIENT les décimales, et
+   l'app les jetait à la lecture. Mesuré : 3 298 aliments sur 3 484 en portent au moins une, et
+   1 159 ont une macro entre 0 et 1 g/100 g — arrondie, elle devient 0 ou 1.
+   ⚠️ C'est R8 (la jumelle) : le correctif de ft-v1111 avait été posé sur 1 endroit des 6, et pas
+   sur le plus utilisé. */
+console.log('\n-- CCXX. Une seule précision pour le pour-100 g (ft-v1112) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    const w=ms=>new Promise(r=>setTimeout(r,ms)); const o={};
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    goScreen('nutrition'); await w(300); openAddFood(); await w(500);
+    const r=await fetch('data/ciqual.json'); const j=await r.json();
+    /* ⛔ CONTRÔLE D'ABORD : le fichier PORTE-t-il vraiment des décimales ? Sans ça le témoin
+       suivant serait vert en ne mesurant rien. */
+    o.total=j.a.length;
+    o.avecDecimale=j.a.filter(x=>[3,4,5,6].some(i=>typeof x[i]==='number' && x[i]!==Math.round(x[i]))).length;
+    o.souliers=j.a.filter(x=>[4,5,6].some(i=>x[i]>0 && x[i]<1)).length;
+    /* ⭐ ON PASSE PAR LA VRAIE FONCTION, pas par une affectation : `_afSuggPrendreCiqual` est
+       ce qu'un tap de la personne déclenche. */
+    const cible=j.a.find(x=>x[4]>0&&x[4]<1);
+    o.fichier={prot:cible[4],carbs:cible[5],fat:cible[6]};
+    await _ciqualCharger();
+    _afSuggCiq.length=0; _afSuggCiq.push(cible);
+    _afSuggPrendreCiqual(0); await w(400);
+    o.lu=(typeof _bcNutr!=='undefined'&&_bcNutr)?{p:_bcNutr.prot100,c:_bcNutr.carbs100,f:_bcNutr.fat100}:null;
+    /* ⛔ ET L'ÉCRAN, LUI, RESTE EN ENTIERS : la décimale ne sert qu'à ce qui est CONSERVÉ. */
+    o.champs={p:(document.getElementById('af-prot')||{}).value,
+              c:(document.getElementById('af-carbs')||{}).value};
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXX n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔⛔ LE CONTRÔLE QUI DONNE SON PRIX AU RESTE : si le fichier n'avait aucune décimale,
+       « la décimale est conservée » serait vrai sans rien prouver. */
+    t('⛔⛔ CONTRÔLE — la base embarquée PORTE bien des décimales (sinon le témoin suivant est vide)',
+      R.avecDecimale > R.total/2 && R.souliers > 100,
+      R.avecDecimale+'/'+R.total+' avec décimale · '+R.souliers+' sous 1 g/100 g');
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : un aliment dont une macro est SOUS 1 g. C'est lui
+       qui aurait été détruit — arrondi, 0,9 devient 1 et 0,4 devient 0. */
+    t('⭐⭐ un aliment de la base garde ses décimales (0,9 ne devient pas 1)',
+      !!(R.lu && R.lu.p===R.fichier.prot && R.lu.c===R.fichier.carbs && R.lu.f===R.fichier.fat),
+      'fichier='+JSON.stringify(R.fichier)+' lu='+JSON.stringify(R.lu));
+    t('⛔ … et la macro mesurée est bien SOUS 1 g (sinon on ne teste pas le cas qui coûte)',
+      R.fichier.prot>0 && R.fichier.prot<1, String(R.fichier.prot));
+    /* ⛔ L'ÉCRAN NE CHANGE PAS : c'était la promesse, elle doit tenir. */
+    t('⛔ l\'écran reste en entiers (la décimale ne sert qu\'à ce qui est conservé)',
+      /^\d+$/.test(String(R.champs.p)) && /^\d+$/.test(String(R.champs.c)),
+      JSON.stringify(R.champs));
+    /* ⛔⛔ ET LES SIX CONSTRUCTIONS PASSENT PAR LE MÊME PROPRIÉTAIRE — c'est la rechute à
+       empêcher : un 7ᵉ chemin qui ré-arrondirait ferait revenir le défaut en silence. */
+    {
+      const app=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+      const cons=(app.match(/_bcNutr\s*=\s*\{[\s\S]{0,400}?\}/g)||[]);
+      const fautifs=cons.filter(c=>/Math\.round\s*\(\s*(n\[|a\[|d\.|kcal|prot|carbs|fat)/.test(c));
+      t('⛔ CONTRÔLE — les constructions de `_bcNutr` sont bien trouvées (sinon le témoin est vide)',
+        cons.length>=5, cons.length+' trouvées');
+      t('⛔⛔ aucune construction du pour-100 g ne ré-arrondit à l\'entier (R2 : un seul propriétaire)',
+        fautifs.length===0, fautifs.map(x=>x.slice(0,70)).join(' | '));
+      t('⛔ … et le propriétaire existe vraiment', /function _per100d1\(/.test(app), '');
+    }
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
+/* ═══ CCXXI. LES MOTS QU'ON DIT ATTEIGNENT LES ALIMENTS QU'ILS NOMMENT (ft-v1113) ═════════════
+   Michel : « il n'y a pas de fast food ? », puis « fais les synonymes et Mac Donald, avec les
+   sandwichs qui vont avec ».
+   ⛔⛔ MESURÉ AVANT DE CODER : `coca` ne rendait RIEN alors que « Cola, sucré » est dans le
+   fichier — UNE LETTRE d'écart. `soda` rien (94 « Boisson gazeuse » y sont), `mcdo`/`fast food`
+   rien (6 aliments « de restauration rapide » y sont). *La donnée est là, la porte n'existe pas.*
+   ⚠️ Et le trou est INVISIBLE AU BUREAU, BÉANT À LA SALLE : en ligne, Open Food Facts rattrape ;
+   hors ligne on n'a rien alors que l'aliment est dans le téléphone (règle d'or #4).
+   ⛔⛔ AUCUN CHIFFRE DE MARQUE N'EST ÉCRIT : les synonymes ouvrent la FAMILLE réelle de la table
+   nationale, dont le nom dit « de restauration rapide ». Rien ne se fait passer pour un Big Mac
+   (R32/R33, §34). */
+console.log('\n-- CCXXI. Les mots qu\'on dit atteignent les aliments (ft-v1113) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    await _ciqualCharger();
+    const noms=q=>(_ciqualChercher(q,6)||[]).map(x=>x[1]);
+    return { total:(_ciqual&&_ciqual.a)?_ciqual.a.length:0,
+             mcdo:noms('mcdo'), macdo:noms('macdo'), fastfood:noms('fast food'),
+             bigmac:noms('big mac'), coca:noms('coca'), cocalight:noms('coca light'),
+             soda:noms('soda'), tacos:noms('tacos'),
+             riz:noms('riz'), poulet:noms('poulet'), cola:noms('cola'), banane:noms('banane') };
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXI n\'a pas pu tourner', false, R.err);
+  else{
+    const dit=(l,re)=>l.some(x=>re.test(x));
+    /* ⛔ CONTRÔLE D'ABORD : la base est chargée, sinon tout le bloc mesurerait du vide. */
+    t('⛔ CONTRÔLE — la base embarquée est chargée (sinon tous les témoins sont vides)',
+      R.total>3000, R.total+' aliments');
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : une lettre d'écart entre ce qu'on dit et ce que la
+       table écrit suffisait à ne RIEN rendre. */
+    t('⭐⭐ « coca » trouve enfin le cola (une lettre d\'écart, zéro résultat avant)',
+      R.coca.length>0 && dit(R.coca,/^Cola/i), R.coca.slice(0,2).join(' · '));
+    t('⛔ « soda » trouve les boissons gazeuses (94 dans le fichier, 0 trouvé avant)',
+      R.soda.length>0 && dit(R.soda,/gazeuse/i), R.soda.slice(0,2).join(' · '));
+    /* ⭐⭐ LA DEMANDE DE MICHEL : « Mac Donald, avec les sandwichs qui vont avec ». */
+    t('⭐⭐ « mcdo » ouvre la famille : un SANDWICH, des FRITES et des NUGGETS (un menu, pas 6 burgers)',
+      dit(R.mcdo,/restauration rapide/i) && dit(R.mcdo,/[Ff]rites/) && dit(R.mcdo,/[Nn]uggets/),
+      R.mcdo.slice(0,3).join(' · '));
+    t('⛔ … et les autres façons de l\'écrire mènent au même endroit',
+      dit(R.macdo,/restauration rapide/i) && dit(R.fastfood,/restauration rapide/i)
+      && dit(R.bigmac,/restauration rapide/i), 'macdo/fast food/big mac');
+    /* ⛔⛔ RIEN NE SE FAIT PASSER POUR UN PRODUIT DE MARQUE : aucun nom rendu ne contient une
+       marque. C'est ce qui rend le raccourci honnête (R32/R33). */
+    {
+      const tous=[].concat(R.mcdo,R.macdo,R.fastfood,R.bigmac);
+      const marques=tous.filter(x=>/mcdo|mac ?donald|big ?mac|burger king|whopper|kfc|quick/i.test(x));
+      t('⛔⛔ AUCUN nom de marque n\'est inventé dans les résultats (on ouvre la famille, on ne fabrique rien)',
+        marques.length===0 && tous.length>0, marques.join(' · '));
+      t('⛔ … et chaque résultat « mcdo » DIT ce qu\'il est (« de restauration rapide », « frites », « nuggets »)',
+        R.mcdo.every(x=>/restauration rapide|[Ff]rites|[Nn]uggets/.test(x)), R.mcdo.join(' · ').slice(0,120));
+    }
+    /* ⛔ « light » et « zéro » n'existaient dans AUCUN des 3 484 noms : les mapper est un gain
+       sans contrepartie. */
+    t('⛔ « coca light » trouve les colas aux édulcorants (le mot « light » n\'existe pas dans la table)',
+      R.cocalight.length>0 && dit(R.cocalight,/dulcorant/), R.cocalight.slice(0,1).join(''));
+    /* ⛔⛔ CE QU'ON REFUSE DE FAIRE, ET C'EST UN TÉMOIN À PART ENTIÈRE : `tacos` n'est pas dans
+       la table ; lui coller un kebab serait inventer. On rend RIEN, exprès (R29). */
+    t('⛔⛔ « tacos » ne rend RIEN — il n\'est pas dans la table, et on ne sert pas autre chose à la place',
+      R.tacos.length===0, R.tacos.join(' · '));
+    /* ⛔ NON-RÉGRESSION : les recherches qui marchaient marchent à l'identique. */
+    t('⛔ les recherches ordinaires ne bougent pas (riz, poulet, banane, cola)',
+      R.riz.length>0 && /^Riz/.test(R.riz[0]) && R.poulet.length>0 && /^Poulet/.test(R.poulet[0])
+      && R.banane.length>0 && /^Banane/.test(R.banane[0]) && R.cola.length>0 && /^Cola/.test(R.cola[0]),
+      [R.riz[0],R.poulet[0],R.banane[0],R.cola[0]].join(' · '));
+    /* ⛔ LE PROPRIÉTAIRE EXISTE, sinon les témoins seraient verts par un autre chemin. */
+    {
+      const app=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+      t('⛔ le propriétaire unique existe (`FOOD_SYNONYMES` + `_foodSynonymes`)',
+        /const FOOD_SYNONYMES\s*=/.test(app) && /function _foodSynonymes\(/.test(app), '');
+      t('⛔⛔ et « tacos » n\'est PAS dans la table de synonymes (le retrait est écrit, R30)',
+        !/'tacos'\s*:/.test(app.split('const FOOD_SYNONYMES')[1].split('};')[0]), '');
+    }
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
+/* ═══ CCXXII. ON MET TOUT ET ON MARQUE LE DOUTE (ft-v1114) ═══════════════════════════════════
+   Michel : « il faut que je puisse trouver les noms comme big Mac ou pizza 4 fromages » — puis,
+   devant ma 1ʳᵉ version qui ÉCARTAIT les lignes douteuses : « il faut tout mettre sinon autant
+   rien mettre c'est logique ».
+   ⭐⭐ IL A RAISON, ET C'EST MESURABLE : une ligne ABSENTE pousse vers l'estimation IA, qui est
+   PIRE qu'une valeur publiée douteuse — c'est exactement le mécanisme qui a fabriqué son pot de
+   protéine faux (ft-v1103/1104/1105). On montre donc la valeur ET ce qui cloche, avec le chiffre
+   qui permet de juger. R29 : informer sans décider.
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE
+   (« Target page, context or browser has been closed ») et ne dit plus rien du tout. */
+console.log('\n-- CCXXII. On met tout et on marque le doute (ft-v1114) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    await _marquesCharger();
+    const noms=q=>(_marquesChercher(q,4)||[]).map(i=>_marques.a[i][1]+' · '+_marques.a[i][0]);
+    const brut=q=>(_marquesChercher(q,4)||[]).map(i=>_marques.a[i]);
+    const o={ total:(_marques&&_marques.a)?_marques.a.length:0,
+              bigmac:noms('big mac'), whopper:noms('whopper'),
+              tenders:noms('tenders kfc'), mcchicken:noms('mcchicken'),
+              fritesMcdo:noms('frites mcdo'),
+              mcdoFrites:noms('mcdo frites'), pizza:noms('pizza 4 fromages'),
+              /* ⛔ NON-RÉGRESSION : une requête ordinaire ne doit pas se remplir de fast-food. */
+              riz:noms('riz'), banane:noms('banane'),
+              douteux:0, sansDoute:0 };
+    _marques.a.forEach(a=>{ if(a[9]) o.douteux++; else o.sansDoute++; });
+
+    /* ⭐⭐ REPRODUCTION : la portion du Big Mac doit redonner les chiffres publiés. */
+    const bm=brut('big mac')[0];
+    if(bm) o.bm={ nom:bm[1], ens:bm[0], portion:bm[7],
+                  kcalPortion:Math.round(bm[3]*bm[7]/100),
+                  protPortion:Math.round(bm[4]*bm[7]/100) };
+
+    /* ⭐⭐ LE DOUTE : la ligne existe, elle est proposée, et elle DIT ce qui cloche. */
+    const kw=_marques.a.filter(a=>/Korean/i.test(a[1]))[0];
+    if(kw) o.korean={ nom:kw[1], doute:kw[9]||null, trouve:noms('korean whopper').length>0 };
+
+    /* ⭐⭐ ET LE DOUTE DESCEND JUSQU'À LA DONNÉE (R4) — 3ᵉ fois au même endroit. On prend un
+       produit signalé PAR L'ÉCRAN, on l'ajoute, et on relit l'entrée enregistrée. */
+    openAddFood && openAddFood();
+    const idxK=_marques.a.findIndex(a=>/Korean/i.test(a[1]));
+    _afSuggMarq=[idxK]; _afSuggPrendreMarque(0);
+    o.srcDoute=(_afSrc&&_afSrc.doute)||null;
+    o.noteEcran=((document.getElementById('af-etat-note')||{}).textContent||'').slice(0,120);
+    o.qsrc=((document.getElementById('af-bc-qsrc')||{}).textContent||'').slice(0,160);
+    document.getElementById('af-desc').value='Korean Whopper test';
+    addFoodEntry();
+    const e=(S.foodLog||[]).slice(-1)[0]||{};
+    o.entree={ doute:e.doute||null, saisie:e.saisie||null, origine:e.origine||null,
+               sourceId:e.sourceId||null, kcalDerivee:e.kcalDerivee||null };
+
+    /* ⛔ Et une kcal DÉRIVÉE des macros ne se relit jamais comme une valeur publiée (R32). */
+    const pz=_marques.a.filter(a=>a[8])[0];
+    if(pz) o.derivee={ nom:pz[1], flag:pz[8] };
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXII n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ CONTRÔLE D'ABORD : sans la table chargée, tous les témoins seraient verts sur du vide. */
+    t('⛔ CONTRÔLE — la base d\'enseignes est chargée (sinon tous les témoins mesurent du vide)',
+      R.total>=20, R.total+' produits');
+    /* ⭐⭐ LA DEMANDE DE MICHEL, MOT POUR MOT : « big Mac ou pizza 4 fromages ». */
+    t('⭐⭐ « big mac » trouve le produit AVEC son enseigne',
+      R.bigmac.length>0 && /Big Mac/i.test(R.bigmac[0]) && /McDonald/i.test(R.bigmac[0]), R.bigmac.join(' | '));
+    t('⭐⭐ « pizza 4 fromages » trouve la pizza (l\'autre nom qu\'il a cité)',
+      R.pizza.length>0 && /4 Fromages/i.test(R.pizza[0]), R.pizza.join(' | '));
+    t('⛔ « whopper », « tenders kfc » et « mcchicken » aussi',
+      R.whopper.some(x=>/Whopper/i.test(x)) && R.tenders.some(x=>/Tenders/i.test(x))
+      && R.mcchicken.some(x=>/McChicken/i.test(x)),
+      [R.whopper[0],R.tenders[0],R.mcchicken[0]].join(' / '));
+    /* ⛔ Les mots peuvent être dans les DEUX ordres : on cherche dans « enseigne + nom ». */
+    t('⛔ l\'ordre des mots ne compte pas (« frites mcdo » = « mcdo frites »)',
+      R.fritesMcdo.length>0 && R.fritesMcdo.join()===R.mcdoFrites.join(), R.fritesMcdo.join(' | '));
+    /* ⭐⭐ REPRODUCTION EXACTE : si ce témoin cessait un jour de retomber sur les chiffres
+       publiés, c'est la BASE qui serait fausse, pas l'affichage. */
+    t('⭐⭐ la portion du Big Mac redonne les chiffres publiés (232 g → 530 kcal · 27 g de protéines)',
+      !!R.bm && R.bm.portion===232 && R.bm.kcalPortion===530 && R.bm.protPortion===27,
+      JSON.stringify(R.bm));
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA DÉCISION DE MICHEL : la ligne douteuse est LÀ, pas écartée. */
+    t('⭐⭐ « il faut tout mettre » — la ligne douteuse est PROPOSÉE, pas écartée',
+      !!R.korean && R.korean.trouve===true, JSON.stringify(R.korean&&R.korean.nom));
+    t('⭐⭐ … et elle DIT ce qui cloche, avec le chiffre qui permet de juger',
+      !!R.korean && /752/.test(String(R.korean.doute)) && /616/.test(String(R.korean.doute)),
+      String(R.korean&&R.korean.doute));
+    /* ⛔ Le doute se REDIT dans le formulaire : la liste défile, le formulaire est le dernier
+       écran avant l'enregistrement. */
+    t('⛔ l\'avertissement se redit DANS LE FORMULAIRE, là où on appuie sur « Ajouter »',
+      /⚠️/.test(R.noteEcran) && /752/.test(R.noteEcran), R.noteEcran);
+    /* ⛔⛔ R4 — 3ᵉ FOIS AU MÊME ENDROIT : la liste blanche de `_provFood` laissait tomber le
+       doute, alors que le commentaire juste au-dessus dit de ne pas le faire. */
+    t('⛔⛔ LE DOUTE DESCEND JUSQU\'À LA DONNÉE (R4) : l\'entrée enregistrée le porte encore',
+      !!R.entree && /752/.test(String(R.entree.doute)), JSON.stringify(R.entree));
+    t('⛔ … et la provenance dit « marque », pas « utilisateur »',
+      !!R.entree && R.entree.saisie==='marque' && R.entree.origine==='marque'
+      && /^marque:/.test(String(R.entree.sourceId)), JSON.stringify(R.entree));
+    /* ⛔ R14 — « vérifie ta dosette » est absurde devant un Big Mac : le texte de la quantité
+       change de sens quand la portion vient d'une enseigne. */
+    t('⛔ le texte de la quantité parle de la PORTION PUBLIÉE, jamais d\'une « dosette » (R14)',
+      R.qsrc.length>0 && !/dosette/i.test(R.qsrc) && /portion/i.test(R.qsrc), R.qsrc);
+    /* ⛔ NON-RÉGRESSION : occuper l'écran de fast-food quand on tape « riz » serait un remède
+       pire que le mal. */
+    t('⛔ une requête ordinaire ne se remplit pas de fast-food (« riz », « banane »)',
+      R.riz.length===0 && R.banane.length===0, R.riz.join(' | ')+' / '+R.banane.join(' | '));
+    /* ⛔ CONTRE-MESURE : si TOUTES les lignes portaient un doute, « la ligne douteuse est
+       proposée » serait vrai sans rien prouver. Il faut les deux populations. */
+    t('⛔ CONTRÔLE — les deux populations existent (des lignes sûres ET des lignes signalées)',
+      R.douteux>0 && R.sansDoute>0, R.douteux+' signalées · '+R.sansDoute+' sûres');
+    /* ⛔ R32 : une kcal calculée depuis les macros ne se relit pas comme une valeur publiée. */
+    t('⛔ une kcal DÉRIVÉE des macros est marquée comme telle (R32 : mesuré / estimé)',
+      !!R.derivee && R.derivee.flag===1, JSON.stringify(R.derivee));
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
+/* ═══ CCXXII bis. L'AIDE NE PROMET PLUS CE QUI N'EST PLUS VRAI (ft-v1114) ════════════════════
+   ⚠️⚠️ L'aide de ft-v1113 promettait « les noms sont GÉNÉRIQUES, jamais des marques » et « tu ne
+   verras pas Big Mac ». Depuis qu'une base d'enseignes existe, c'était FAUX — et on la croit.
+   C'est la 8ᵉ fois pour la famille §31 de `BUGS.md`. */
+console.log('\n-- CCXXII bis. L\'aide ne promet plus ce qui n\'est plus vrai (ft-v1114) --');
+{
+  const sc=fs.readFileSync(path.join(ROOT,'screens.js'),'utf8');
+  /* ⚠️⚠️ ON RETIRE LES COMMENTAIRES AVANT DE MESURER (03/09) — ce témoin a rougi sur le
+     commentaire que je venais d'écrire à côté, lequel CITE la promesse interdite pour dire
+     qu'on l'a retirée. *Chercher un mot interdit dans le texte qui EXPLIQUE l'interdiction ne
+     mesure rien* — c'est le défaut de ft-v1102, refait à l'identique le lendemain. */
+  const sansCom=sc.replace(/\/\*[\s\S]*?\*\//g,'');
+  const nutri=sansCom.slice(sansCom.indexOf('nutrition:'), sansCom.indexOf('nutrition:')+14000);
+  /* ⛔ CONTRÔLE : la zone d'aide nutrition est bien trouvée, sinon les 2 témoins suivants
+     seraient verts en ne lisant rien. */
+  t('⛔ CONTRÔLE — la zone d\'aide « nutrition » est bien trouvée',
+    nutri.indexOf('Cherche avec les mots que tu emploies')>0, nutri.length+' caractères lus');
+  t('⛔⛔ l\'aide ne promet PLUS « jamais des marques » / « pas Big Mac » (c\'est devenu faux)',
+    !/jamais des marques/.test(nutri) && !/pas « Big Mac »/.test(nutri), '');
+  /* ⭐ Et elle explique la vraie règle : DEUX familles de résultats. */
+  t('⭐ … elle explique les DEUX familles (le produit d\'enseigne vs le générique de la table)',
+    /FAST-FOOD/.test(nutri) && /générique/.test(nutri), '');
+  /* ⛔ POINTS 2 À 5 DE LA RÈGLE D'OR #11, vérifiés dans les fichiers et non de mémoire. */
+  t('⛔ point rouge `fastfood-marques` posé sur l\'onglet nutrition',
+    /id:'fastfood-marques'[\s\S]{0,40}screen:'nutrition'/.test(fs.readFileSync(path.join(ROOT,'constants.js'),'utf8')), '');
+  t('⛔ l\'aide détaillée porte la provenance et l\'avertissement',
+    /Le fast-food par son nom, avec sa provenance/.test(fs.readFileSync(path.join(ROOT,'coach.js'),'utf8')), '');
+  t('⛔ la diapo du Guide existe (point 5), et SANS image (la liste va grandir)',
+    /t:'Le fast-food par son nom'/.test(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')), '');
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LA LEÇON DU JOUR — et il vient d'une vraie bourde. Mon aide, ma
+     nouveauté, ma diapo et mon aide détaillée citaient toutes « mcnuggets » comme exemple à
+     taper… et il n'y a AUCUN nugget dans les 27 produits. *J'ai écrit le matin même qu'une aide
+     qui nomme un repère inexistant est pire qu'une aide absente, puis je l'ai fait.*
+     ⛔ Ce témoin ne fige AUCUNE formulation : il extrait les mots que l'aide propose de taper
+     et vérifie que chacun trouve vraiment quelque chose. Il rougira le jour où quelqu'un citera
+     un produit qui n'existe pas — c'est la seule garantie qui compte (famille §31). */
+  {
+    const marques=JSON.parse(fs.readFileSync(path.join(ROOT,'data','marques.json'),'utf8'));
+    const corpus=(marques.a||[]).map(a=>(a[0]+' '+a[1]).toLowerCase()).join(' | ');
+    const alias={'mcdo':"mcdonald's",'macdo':"mcdonald's",'kfc':'kfc','bk':'burger king'};
+    /* ⚠️⚠️ ON N'EXTRAIT QUE CE QUE L'AIDE PRÉSENTE COMME « À TAPER » — mon 1ᵉʳ jet prenait TOUS
+       les mots en gras de la zone et sortait « enseigne », « rien », « hors ligne » comme des
+       produits introuvables. *Un extracteur trop large ne mesure pas la promesse, il mesure la
+       mise en forme.* On lit donc la seule séquence qui suit « Tape », jusqu'aux deux points. */
+    const aTaper=txt=>{
+      const out=[]; const re=/Tape\s+((?:<b>[^<]{2,28}<\/b>[,\s]*(?:ou|et)?[,\s]*)+)/g;
+      let m; while((m=re.exec(txt))!==null)
+        (m[1].match(/<b>([^<]{2,28})<\/b>/g)||[]).forEach(b=>out.push(b.replace(/<\/?b>/g,'').trim()));
+      return out;
+    };
+    const cites=new Set();
+    [ [path.join(ROOT,'screens.js'), 'Le fast-food par son nom'],
+      [path.join(ROOT,'constants.js'), 'fastfood-marques'],
+      [path.join(ROOT,'coach.js'), 'Le fast-food par son nom, avec sa provenance'],
+      [path.join(ROOT,'app.js'), "t:'Le fast-food par son nom'"] ].forEach(([f,ancre])=>{
+      const txt=fs.readFileSync(f,'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
+      const i=txt.indexOf(ancre); if(i<0) return;
+      aTaper(txt.slice(i, i+1400)).forEach(x=>cites.add(x));
+    });
+    const absent=mot=>{
+      const mots=String(mot).toLowerCase().split(/\s+/).map(w=>alias[w]||w).filter(w=>w.length>1);
+      return !mots.every(w=>corpus.indexOf(w)>=0);
+    };
+    const orphelins=[...cites].filter(absent);
+    /* ⛔ CONTRÔLE ① — sans lui, « 0 orphelin » serait vrai en n'ayant rien extrait du tout. */
+    t('⛔ CONTRÔLE — l\'extracteur trouve bien les produits « à taper » des 4 surfaces d\'aide',
+      cites.size>=4, cites.size+' cités : '+[...cites].join(' · '));
+    /* ⛔ CONTRÔLE ② — et il sait REFUSER : éprouvé dans les deux sens sur le vrai corpus.
+       C'est ce qui prouve que le témoin peut rougir, au lieu de rassurer. */
+    t('⛔ CONTRÔLE — le détecteur repère bien un produit inexistant (« mcnuggets »)',
+      absent('mcnuggets')===true && absent('big mac')===false && absent('tenders kfc')===false, '');
+    t('⭐⭐ AUCUN produit cité par l\'aide n\'est absent de la base (« mcnuggets » n\'existait pas)',
+      orphelins.length===0, 'orphelins : '+orphelins.join(' · '));
+  }
+  /* ⛔⛔ ET AUCUNE POP-UP : rien n'est à faire, aucun repère n'a bougé. Une pop-up dirait
+     « vos recherches ne trouvaient rien » — une alarme rétroactive (R25). */
+  t('⛔⛔ AUCUNE pop-up `WHATS_NEW` sur ce sujet (rien à faire, aucun repère déplacé — R25)',
+    !/fast-?food/i.test((fs.readFileSync(path.join(ROOT,'constants.js'),'utf8').split('const WHATS_NEW')[1]||'').split('\n];')[0]||''), '');
+}
+
+/* ═══ CCXXIII. LES MOTS QU'ON EMPLOIE ATTEIGNENT UN ALIMENT PRÉCIS (ft-v1115) ════════════════
+   Michel fournit la table d'alias V2 de GPT (602 mots), construite sur l'export CSV de notre
+   propre base. ⭐⭐ ELLE NE CRÉE AUCUNE VALEUR : un alias est une PORTE vers un code CIQUAL.
+   ⛔⛔ MESURÉ AVANT DE BRANCHER : 153 de ces mots ne rendaient **RIEN** (tortiglioni,
+   fettuccine, riz jasmin, arborio, sticky rice…), et 62 rendaient un AUTRE aliment — dont
+   « riz japonais » → **biscuit apéritif**, « patate » → **patate douce**, « tradition » → **cidre**.
+   ⭐ DÉCISION DE MICHEL sur les 13 cas cru↔cuit : *« les deux, le cuit en premier »*. La cible
+   passe devant, la recherche habituelle continue dessous — personne ne perd son aliment (R29).
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXIII. Les mots qu\'on emploie atteignent un aliment précis (ft-v1115) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    await _ciqualCharger(); const t=await _aliasCharger();
+    const n=q=>(_ciqualChercher(q,6)||[]).map(x=>[x[0],x[1],x[3]]);
+    const o={ nAlias:t?t.n:0, nCiqual:(_ciqual&&_ciqual.a)?_ciqual.a.length:0 };
+    /* ⭐ des mots qui ne rendaient RIEN hier */
+    o.neufs={}; ['tortiglioni','fettuccine','riz jasmin','riz arborio','sticky rice','pappardelle']
+      .forEach(q=>o.neufs[q]=n(q)[0]||null);
+    /* ⭐ la décision de Michel : le cuit devant, le cru juste dessous */
+    o.cru={}; ['riz','pates','jambon'].forEach(q=>o.cru[q]=n(q).slice(0,3));
+    /* ⛔ de vrais ratés corrigés */
+    o.rates={}; ['riz japonais','patate','vermicelles'].forEach(q=>o.rates[q]=n(q)[0]||null);
+    /* ⛔ NON-RÉGRESSION : ce qui n'est PAS un alias suit la recherche habituelle */
+    o.intacts={}; ['riz au lait','mcdo','coca','big mac'].forEach(q=>o.intacts[q]=n(q)[0]||null);
+    /* ⛔⛔ AUCUNE VALEUR CRÉÉE : la cible d'un alias est un aliment de CIQUAL, au chiffre près */
+    o.valeursTirees=true; o.horsBase=[];
+    const codes=new Set(_ciqual.a.map(a=>a[0]));
+    for(const k in t.a){ if(!codes.has(t.a[k])) o.horsBase.push(k); }
+    /* ⛔ … et jamais une cible sans calories déterminées (elle serait invisible) */
+    o.sansKcal=[]; const parCode={}; _ciqual.a.forEach(a=>parCode[a[0]]=a);
+    for(const k in t.a){ const a=parCode[t.a[k]]; if(a && a[3]===null) o.sansKcal.push(k); }
+    /* ⛔ R2 — un mot ne peut pas être dans les DEUX tables */
+    o.collisions=Object.keys(t.a).filter(k=>typeof FOOD_SYNONYMES!=='undefined' && FOOD_SYNONYMES[k]);
+    /* ⛔ la correspondance porte sur la REQUÊTE ENTIÈRE, jamais sur un mot isolé */
+    o.pasDeMotIsole = (n('riz au lait')[0]||[])[1];
+    /* ⛔ un échec de chargement n'est jamais bloquant */
+    const garde=_alias; _alias=null;
+    o.sansTable=(n('riz')[0]||[])[1];
+    _alias=garde;
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXIII n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ CONTRÔLE D'ABORD : les deux tables chargées, sinon tout le bloc mesure du vide. */
+    t('⛔ CONTRÔLE — la table d\'alias ET la base sont chargées',
+      R.nAlias>400 && R.nCiqual>3000, R.nAlias+' alias · '+R.nCiqual+' aliments');
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : ces mots ne rendaient RIEN. */
+    t('⭐⭐ des mots qui ne rendaient RIEN trouvent leur aliment (tortiglioni, riz jasmin, sticky rice…)',
+      Object.values(R.neufs).every(x=>x && x[2]>0),
+      Object.entries(R.neufs).map(([k,v])=>k+'→'+(v?v[1].slice(0,22):'RIEN')).join(' · '));
+    /* ⭐⭐ LA DÉCISION DE MICHEL, ET ELLE SE VÉRIFIE DANS LES DEUX SENS. */
+    t('⭐⭐ « riz » rend le CUIT en tête… et le CRU juste dessous (rien n\'est perdu — R29)',
+      R.cru.riz && /cuit/i.test(R.cru.riz[0][1]) && R.cru.riz.slice(1).some(x=>/^Riz blanc, cru/.test(x[1])),
+      R.cru.riz.map(x=>x[1].slice(0,26)+' '+x[2]).join(' | '));
+    t('⛔ … même règle pour « pâtes » et « jambon »',
+      R.cru.pates && /cuites/i.test(R.cru.pates[0][1]) && R.cru.pates.slice(1).some(x=>/crues/i.test(x[1]))
+      && R.cru.jambon && /cuit/i.test(R.cru.jambon[0][1]) && R.cru.jambon.slice(1).some(x=>/cru/i.test(x[1])),
+      [R.cru.pates[0][1],R.cru.jambon[0][1]].join(' | '));
+    /* ⛔ DE VRAIS RATÉS, mesurés avant de brancher. */
+    t('⛔ « riz japonais » ne rend plus un BISCUIT APÉRITIF, « patate » plus une patate DOUCE',
+      R.rates['riz japonais'] && /^Riz/.test(R.rates['riz japonais'][1])
+      && R.rates.patate && /^Pomme de terre/.test(R.rates.patate[1])
+      && R.rates.vermicelles && /^P[âa]tes/.test(R.rates.vermicelles[1]),
+      Object.entries(R.rates).map(([k,v])=>k+'→'+(v?v[1].slice(0,26):'RIEN')).join(' · '));
+    /* ⛔⛔ AUCUNE VALEUR NUTRITIONNELLE CRÉÉE — c'est la promesse de fond de la table. */
+    t('⛔⛔ AUCUN alias ne vise un code absent de la base (aucune valeur inventée)',
+      R.horsBase.length===0, R.horsBase.slice(0,6).join(' · '));
+    t('⛔ … ni un aliment sans calories déterminées (il serait invisible — le cas « tomate séchée »)',
+      R.sansKcal.length===0, R.sansKcal.slice(0,6).join(' · '));
+    /* ⛔ R2 : les deux tables répondent à deux questions, un mot n'est jamais dans les deux. */
+    t('⛔ R2 — aucun mot n\'est à la fois dans `FOOD_SYNONYMES` et dans la table d\'alias',
+      R.collisions.length===0, R.collisions.slice(0,6).join(' · '));
+    /* ⛔ NON-RÉGRESSION : les trois autres sources ne bougent pas. */
+    t('⛔ ce qui n\'est pas un alias suit la recherche habituelle (mcdo, coca, big mac)',
+      R.intacts.mcdo && /restauration rapide/i.test(R.intacts.mcdo[1])
+      && R.intacts.coca && /^Cola/.test(R.intacts.coca[1]),
+      Object.entries(R.intacts).map(([k,v])=>k+'→'+(v?v[1].slice(0,24):'RIEN')).join(' · '));
+    /* ⛔⛔ L'ALIAS NE DÉTOURNE PAS UNE RECHERCHE QU'IL NE VISE PAS : « riz » est un alias,
+       « riz au lait » n'en est pas un. Sans la correspondance sur la requête ENTIÈRE, tout mot
+       contenant « riz » basculerait sur du riz cuit. */
+    t('⛔⛔ la correspondance porte sur la REQUÊTE ENTIÈRE (« riz au lait » n\'est pas détourné)',
+      /riz au lait/i.test(String(R.pasDeMotIsole)), String(R.pasDeMotIsole));
+    /* ⛔ Règle d'or #4 : un échec de chargement rend le comportement d'AVANT, pas une erreur. */
+    t('⛔ sans la table (hors ligne), la recherche redevient celle d\'avant — jamais bloquante',
+      /^Riz blanc, cru/.test(String(R.sansTable)), String(R.sansTable));
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
+/* ═══ CCXXIII bis. LES 5 SURFACES DE LA RÈGLE #11, ET LA POP-UP EST MÉRITÉE (ft-v1115) ═══════
+   ⛔⛔ Ici la pop-up SE MÉRITE, et c'est le cas le plus coûteux de « un repère a bougé » : un
+   chiffre que la personne NOTE tous les jours change du simple au double (riz 350 → 155). Le
+   danger n'est pas qu'elle le remarque — c'est qu'elle ne le remarque PAS. */
+console.log('\n-- CCXXIII bis. Les 5 surfaces de la règle #11 (ft-v1115) --');
+{
+  const cst=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+  const sansCom=cst.replace(/\/\*[\s\S]*?\*\//g,'');
+  const wn=(sansCom.split('const WHATS_NEW=[')[1]||'').split('\n];')[0]||'';
+  const v68=(wn.match(/\{v:68[\s\S]{0,900}?\},/)||[''])[0];
+  /* ⛔ CONTRÔLE — sans lui, les témoins suivants seraient verts en ne lisant rien. */
+  t('⛔ CONTRÔLE — la pop-up v68 est bien trouvée dans WHATS_NEW',
+    v68.length>100, v68.length+' caractères lus');
+  /* ⭐⭐ CE QU'ELLE DOIT DIRE : le chiffre qui bouge, ET où est parti l'ancien. */
+  t('⭐⭐ la pop-up annonce le basculement CUIT avec les deux chiffres (155 et 167)',
+    /155/.test(v68) && /167/.test(v68), '');
+  t('⭐⭐ … et dit que le CRU n\'a pas disparu (annoncer un retrait sans dire où, c\'est fabriquer l\'inquiétude)',
+    /crue?<\/b>\s*(n|N)['’]a pas disparu|pas disparu/.test(v68) && /juste en dessous/.test(v68), '');
+  /* ⛔ R25 — la pop-up ANNONCE, elle n'explique pas : bornée à 600 caractères de texte. */
+  {
+    const d=(v68.match(/d:'([\s\S]*?)'\},/)||['',''])[1];
+    t('⛔ R25 — la pop-up reste courte (≤ 600 caractères) : c\'est l\'aide qui explique',
+      d.length>0 && d.length<=600, d.length+' caractères');
+    /* ⛔ ANTI-TCA (P21) : elle ne réclame rien à personne. */
+    t('⛔ P21 — elle ne demande NI de remplir son journal NI de corriger ses anciennes lignes',
+      !/remplis|corrige tes|rattrape/i.test(d), '');
+  }
+  /* ⛔ LES 4 AUTRES SURFACES, vérifiées dans les fichiers et non de mémoire. */
+  t('⛔ point rouge `alias-aliments` posé sur l\'onglet nutrition',
+    /id:'alias-aliments'[\s\S]{0,60}screen:'nutrition'/.test(cst), '');
+  t('⛔ l\'aide `?` explique le cru/cuit ET que la version crue reste juste en dessous',
+    /trouvent enfin leur aliment[\s\S]{0,2200}juste en dessous/.test(
+      fs.readFileSync(path.join(ROOT,'screens.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'')), '');
+  t('⛔ l\'aide détaillée porte le piège du cru/cuit',
+    /Tes mots de tous les jours, et le piège du cru\/cuit/.test(fs.readFileSync(path.join(ROOT,'coach.js'),'utf8')), '');
+  t('⛔ la diapo du Guide existe (point 5), et SANS image',
+    /t:'Tes mots trouvent ton aliment'/.test(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')), '');
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LA LEÇON DE ft-v1114, APPLIQUÉE ICI : tout aliment CITÉ par une
+     surface d'aide comme « à taper » doit vraiment trouver quelque chose. Sans lui, on refait
+     le coup de « mcnuggets » — un mot cité dans 4 endroits qui n'existait nulle part. */
+  {
+    const al=JSON.parse(fs.readFileSync(path.join(ROOT,'data','alias.json'),'utf8')).a;
+    const cites=new Set();
+    [[path.join(ROOT,'screens.js'),'trouvent enfin leur aliment'],
+     [path.join(ROOT,'constants.js'),"id:'alias-aliments'"],
+     [path.join(ROOT,'app.js'),"t:'Tes mots trouvent ton aliment'"]].forEach(([f,ancre])=>{
+      const txt=fs.readFileSync(f,'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
+      const i=txt.indexOf(ancre); if(i<0) return;
+      (txt.slice(i,i+1200).match(/<b>[a-zà-ÿ' -]{4,22}<\/b>/g)||[]).forEach(m=>{
+        const mot=m.replace(/<\/?b>/g,'').trim();
+        /* on ne garde que ce qui ressemble à un aliment cité : présent OU absent de la table,
+           mais jamais un mot de liaison ou un mot mis en gras pour l'emphase */
+        if(/^(riz|pâtes|pates)$/.test(mot) || /^[a-zà-ÿ]+( [a-zà-ÿ]+)?$/.test(mot)) cites.add(mot);
+      });
+    });
+    /* les mots que l'aide annonce comme ABSENTS doivent l'être, ceux qu'elle donne en exemple
+       doivent être trouvables — on ne vérifie que ce second groupe, nommé explicitement */
+    const exemples=['tortiglioni','fettuccine','pappardelle','riz jasmin','riz arborio','sticky rice'];
+    const absentsAnnonces=['whey','creatine','naan','chapati'];
+    t('⛔ CONTRÔLE — l\'extracteur lit bien les surfaces d\'aide',
+      cites.size>=3, cites.size+' mots en gras lus');
+    t('⭐⭐ chaque aliment donné en EXEMPLE par l\'aide existe vraiment dans la table',
+      exemples.every(m=>al[m]!=null), exemples.filter(m=>al[m]==null).join(' · '));
+    t('⛔ … et chaque mot annoncé comme ABSENT l\'est vraiment (whey, créatine, naan, chapati)',
+      absentsAnnonces.every(m=>al[m]==null), absentsAnnonces.filter(m=>al[m]!=null).join(' · '));
+  }
+}
+
+/* ═══ CCXXIV. LE COCA ZÉRO ÉTAIT COMPTÉ 24 FOIS TROP (ft-v1116) ═════════════════════════════
+   Michel, en notant son repas de midi : *« corrige le coca zéro »*.
+   ⛔⛔ MESURÉ : `coca zéro` rendait « Cola, **SUCRÉ**, avec édulcorants » (18037, **24 kcal/100 g**)
+   AVANT « Cola, **SANS SUCRES AJOUTÉS**, avec édulcorants » (18060, **1 kcal/100 g**). Sur une
+   canette de 50 cl : **120 kcal enregistrées au lieu de 5**.
+   ⭐⭐ LA CAUSE N'EST PAS UNE FAUTE DE LA TRADUCTION, C'EST SA LIMITE : `zero` et `light` sont
+   traduits en « édulcorants », et les DEUX lignes portent ce mot — c'est alors le tri par NOM LE
+   PLUS COURT qui tranche, et il tranche mal. *Un mot traduit désigne une FAMILLE, pas un aliment ;
+   quand la famille contient le CONTRAIRE de ce qu'on cherche, il faut le CODE.*
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXIV. Le Coca Zéro était compté 24 fois trop (ft-v1116) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    await _ciqualCharger(); await _aliasCharger();
+    const n=q=>(_ciqualChercher(q,4)||[]).map(x=>[x[0],x[1],x[3]]);
+    const o={};
+    ['coca zero','coca zéro','coca light','coke zero','pepsi max','coca sans sucre',
+     'coca zero sans cafeine','coca','cola','coca cola','soda'].forEach(q=>o[q]=n(q));
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXIV n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ CONTRÔLE — les deux lignes de cola existent bien, sinon tout le bloc mesure du vide. */
+    t('⛔ CONTRÔLE — les DEUX colas aux édulcorants existent (1 kcal et 24 kcal)',
+      R.coca.length>0 && R['coca zero'].length>0, '');
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : le bon en tête, avec SON chiffre. */
+    t('⭐⭐ « coca zéro » rend le SANS SUCRES AJOUTÉS (1 kcal/100 g), pas le SUCRÉ (24)',
+      R['coca zero'][0] && R['coca zero'][0][0]===18060 && R['coca zero'][0][2]===1,
+      R['coca zero'].slice(0,2).map(x=>x[1].slice(0,34)+' '+x[2]).join(' | '));
+    t('⛔ … avec ou sans accent, et pour « light », « coke zero », « pepsi max »',
+      [R['coca zéro'],R['coca light'],R['coke zero'],R['pepsi max']].every(r=>r[0]&&r[0][0]===18060),
+      [R['coca zéro'][0],R['coca light'][0],R['coke zero'][0],R['pepsi max'][0]].map(x=>x?x[0]:'RIEN').join(' · '));
+    /* ⛔⛔ ON N'A RIEN SUPPRIMÉ : le cola sucré aux édulcorants reste JUSTE DESSOUS. C'est un
+       vrai aliment (type stévia), on l'empêche seulement de répondre à la place du zéro (R29). */
+    t('⛔⛔ le cola SUCRÉ aux édulcorants n\'a pas disparu — il est juste en dessous',
+      R['coca zero'].slice(1).some(x=>x[0]===18037),
+      R['coca zero'].map(x=>x[0]).join(' · '));
+    /* ⛔ CIQUAL distingue la version SANS CAFÉINE : on ne fusionne pas ce qui diffère. */
+    t('⛔ « coca zéro sans caféine » a SA propre entrée (on ne fusionne pas deux aliments distincts)',
+      R['coca zero sans cafeine'][0] && R['coca zero sans cafeine'][0][0]===18068,
+      String(R['coca zero sans cafeine'][0]));
+    /* ⛔ NON-RÉGRESSION : un Coca normal reste un Coca normal. C'est le témoin qui empêche de
+       « réparer » le zéro en cassant le sucré. */
+    t('⛔ NON-RÉGRESSION — « coca » rend toujours le Cola SUCRÉ (40 kcal), « cola » et « soda » inchangés',
+      R.coca[0] && R.coca[0][0]===18018 && R.coca[0][2]===40
+      && R.cola[0] && R.cola[0][0]===18018
+      && R['coca cola'][0] && R['coca cola'][0][0]===18018
+      && R.soda[0] && /gazeuse/i.test(R.soda[0][1]),
+      [R.coca[0][1],R.soda[0][1].slice(0,28)].join(' | '));
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+  /* ⛔⛔ ET LES AJOUTS VIVENT DANS LE GÉNÉRATEUR, PAS DANS LE FICHIER GÉNÉRÉ (R27) : une
+     retouche à la main de `data/alias.json` disparaîtrait à la prochaine exécution, sans bruit.
+     Ce témoin est le seul qui protège de ça. */
+  {
+    const py=fs.readFileSync(path.join(ROOT,'tools','alias.py'),'utf8');
+    t('⛔⛔ R27 — les ajouts sont dans `tools/alias.py`, pas écrits à la main dans le JSON généré',
+      /AJOUTS\s*=\s*\{/.test(py) && /'coca zero'\s*:\s*\(18060/.test(py), '');
+    /* ⛔ … et chacun porte SA RAISON : un ajout dont on a oublié le motif finit contourné (R30).
+       ⚠️⚠️ TÉMOIN RE-VISÉ À LA 1ʳᵉ PASSE — §31, sur un témoin que je venais d'écrire. Il exigeait
+       une raison d'au moins 8 caractères, donc il refusait les 8 `'idem'`… qui sont une raison
+       parfaitement valable : *elle renvoie à la ligne du dessus*. Il mesurait la LONGUEUR du
+       texte, pas la présence d'un motif. 👉 La vraie garantie est double : **aucune raison vide**,
+       et **`idem` n'est jamais le PREMIER** (sinon il ne renverrait à rien). */
+    const bloc=(py.split('AJOUTS = {')[1]||'').split('\n}')[0];
+    const lignes=(bloc.match(/^\s*'[^']+':\s*\(\d+,\s*'([^']*)'\)/gm)||[]);
+    const raisons=[...bloc.matchAll(/^\s*'[^']+':\s*\(\d+,\s*'([^']*)'\)/gm)].map(m=>m[1].trim());
+    const vides=raisons.filter(r=>r.length===0);
+    t('⛔ … et chaque ajout porte sa raison écrite, jamais vide (R30)',
+      raisons.length>=10 && vides.length===0, raisons.length+' raisons · '+vides.length+' vide(s)');
+    /* ⛔ « idem » renvoie à la ligne du dessus : il ne peut pas être le premier, ni suivre un vide. */
+    t('⛔ … et « idem » n\'est jamais la PREMIÈRE raison (il renverrait à rien)',
+      raisons.length>0 && !/^idem$/i.test(raisons[0]), raisons[0]||'(aucune)');
+    /* ⛔ CONTRE-ÉPREUVE : le détecteur sait distinguer une raison d'une absence de raison. */
+    t('⛔ CONTRÔLE — le motif attrape bien une raison vide (sinon il serait vert sur tout)',
+      /^\s*'x':\s*\(1,\s*''\)/m.test("  'x': (1, '')"), '');
+  }
+}
+
+/* ═══ CCXXV. LE PIÈGE DU COCA N'ÉTAIT PAS CELUI DU COCA : IL Y EN A 9 (ft-v1117) ════════════
+   Michel : *« et les autres boissons ? »*.
+   ⛔⛔ MESURÉ : CIQUAL porte **9 paires** « X, sucré, avec édulcorants » / « X, sans sucres
+   ajoutés, avec édulcorants », et « sucré » est **TOUJOURS le nom le plus court** — donc le tri
+   choisissait systématiquement la version SUCRÉE. Le Coca n'était qu'un cas sur 9.
+   ⚠️⚠️ ET LE CORRECTIF STRUCTUREL A ÉTÉ REFUSÉ PAR LA MESURE : traduire `zero`/`light` en
+   « sans sucres ajoutés » corrige 3 cas **et en casse 3** — `yaourt light` ne rend PLUS RIEN,
+   `soda light` tombe sur « Boisson gazeuse À LA POMME ». 👉 ***« Light » ne veut pas dire « sans
+   sucre » : un yaourt light est 0 % de matière grasse.*** Un mot à deux sens ne se traduit pas,
+   il se DÉSIGNE.
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXV. Le piège du Coca n\'était pas celui du Coca : il y en a 9 (ft-v1117) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    await _ciqualCharger(); await _aliasCharger();
+    const n=q=>(_ciqualChercher(q,4)||[]).map(x=>[x[0],x[1],x[3]]);
+    const o={};
+    ['soda light','soda zero','limonade light','tonic zero','ice tea zero','boisson energisante zero',
+     'ice tea','red bull','orangina','schweppes','latte','biere blonde','panache','eau petillante',
+     'lait amande','lait soja','lait avoine','lait de riz','lait de coco','rose','rosette',
+     'coca zero','yaourt light','soda','limonade','tonic','coca','lait','biere','vin rouge',
+     'powerade','gatorade','mojito'].forEach(q=>o[q]=n(q));
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXV n\'a pas pu tourner', false, R.err);
+  else{
+    const prem=q=>R[q][0]||null, kcal=q=>prem(q)?prem(q)[2]:null, nom=q=>prem(q)?prem(q)[1]:'RIEN';
+    /* ⛔ CONTRÔLE — les tables sont chargées, sinon tout le bloc mesure du vide. */
+    t('⛔ CONTRÔLE — la recherche répond (base + alias chargés)',
+      !!prem('coca') && !!prem('lait'), nom('coca'));
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : les 9 paires, pas seulement le cola. */
+    t('⭐⭐ les autres « light / zéro » rendent enfin la version SANS SUCRES AJOUTÉS',
+      /sans sucres ajout/i.test(nom('soda light')) && /sans sucres ajout/i.test(nom('limonade light'))
+      && /sans sucres ajout/i.test(nom('tonic zero')) && /sans sucres ajout/i.test(nom('ice tea zero'))
+      && /sans sucres ajout/i.test(nom('boisson energisante zero')),
+      ['soda light','limonade light','tonic zero','ice tea zero'].map(q=>q+'→'+kcal(q)).join(' · '));
+    /* ⛔ … et leurs calories le prouvent : elles ont chuté. */
+    t('⛔ … et les calories le prouvent (soda 22→0, limonade 8→0, tonic 22→0, ice tea 17→1)',
+      kcal('soda light')===0 && kcal('limonade light')===0 && kcal('tonic zero')===0
+      && kcal('ice tea zero')===1, '');
+    /* ⭐⭐ LE PIRE CAS, ET IL DÉPASSE LE COCA. */
+    t('⭐⭐ « lait amande » ne rend plus un CHOCOLAT à 559 kcal (× 15,5) mais la boisson à 36',
+      /^Boisson à l/i.test(nom('lait amande')) && kcal('lait amande')===36, nom('lait amande')+' '+kcal('lait amande'));
+    t('⛔ … et « lait soja », « lait avoine », « lait de riz » ne rendent plus RIEN',
+      /soja/i.test(nom('lait soja')) && /avoine/i.test(nom('lait avoine')) && /riz/i.test(nom('lait de riz')),
+      [nom('lait soja'),nom('lait avoine')].join(' | ').slice(0,70));
+    /* ⛔⛔ CE QU'ON REFUSE DE FUSIONNER, ET C'EST UN TÉMOIN À PART ENTIÈRE : le lait de coco
+       CULINAIRE (199 kcal) n'est pas la boisson à la noix de coco (30). Les confondre ferait
+       exactement le dégât qu'on répare. */
+    t('⛔⛔ « lait de coco » reste le CULINAIRE (199 kcal), jamais la boisson (30) — on ne fusionne pas',
+      /^Lait de coco/.test(nom('lait de coco')) && kcal('lait de coco')===199,
+      nom('lait de coco')+' '+kcal('lait de coco'));
+    /* ⛔ La sous-chaîne « rose » vivait dans « ROSETTE » — le saucisson à 392 kcal. */
+    t('⛔ « rosé » rend le VIN (69 kcal), plus la ROSETTE (le saucisson, 392)',
+      /^Vin ros/i.test(nom('rose')) && kcal('rose')===69, nom('rose')+' '+kcal('rose'));
+    /* ⚠️⚠️ TÉMOIN RE-VISÉ À LA 1ʳᵉ PASSE — §31, 3ᵉ fois de la journée. Il exigeait « Rosette » en
+       PREMIER résultat ; or la garantie est qu'elle reste **TROUVABLE**, pas qu'elle soit en tête.
+       ⭐ Mesuré avant de toucher quoi que ce soit : « rosette » rend « Saucisson sec » d'abord et
+       « Rosette ou fuseau » juste après — **et c'était déjà le cas avant cette version** (le tri
+       par nom le plus court : 13 caractères contre 17). *Ce n'est donc pas une régression, et
+       « réparer » le code ici aurait cassé quelque chose de sain.*
+       ⛔ On vérifie la vraie garantie, et DES DEUX CÔTÉS : elle sort en tapant « rosette », et
+       elle reste visible sous le vin quand on tape « rosé ». Rien n'a été fermé. */
+    t('⛔ … et la rosette reste TROUVABLE (on n\'a fermé aucune porte)',
+      R.rosette.some(x=>/Rosette/i.test(x[1])), R.rosette.map(x=>x[1].slice(0,22)).join(' · '));
+    t('⛔ … et elle apparaît même sous le vin quand on tape « rosé »',
+      R.rose.some(x=>/Rosette/i.test(x[1])), R.rose.map(x=>x[1].slice(0,22)).join(' · '));
+    /* ⛔ Les boissons qui ne rendaient RIEN — le générique, jamais un chiffre de marque. */
+    t('⛔ « ice tea », « red bull », « orangina », « latte », « bière blonde » trouvent leur générique',
+      ['ice tea','red bull','orangina','latte','biere blonde'].every(q=>!!prem(q)),
+      ['ice tea','red bull','orangina'].map(q=>nom(q).slice(0,26)).join(' | '));
+    t('⛔⛔ … et AUCUN nom de marque n\'est inventé (on ouvre le générique de la table nationale)',
+      ['ice tea','red bull','orangina','schweppes'].every(q=>
+        !/red ?bull|orangina|schweppes|monster|fanta|sprite/i.test(nom(q))),
+      ['red bull','orangina'].map(q=>nom(q).slice(0,34)).join(' | '));
+    /* ⛔⛔ LE CORRECTIF STRUCTUREL REFUSÉ : « yaourt light » doit TOUJOURS répondre. C'est lui
+       qui aurait disparu si on avait traduit `light` en « sans sucres ajoutés ». */
+    t('⛔⛔ « yaourt light » répond toujours — c\'est ce que le correctif structurel aurait cassé',
+      !!prem('yaourt light') && /yaourt|lait fermente/i.test(nom('yaourt light')), nom('yaourt light'));
+    /* ⛔ NON-RÉGRESSION : les versions SUCRÉES ne bougent pas d'un chiffre. */
+    t('⛔ NON-RÉGRESSION — « soda », « limonade », « tonic », « coca », « bière », « vin rouge » inchangés',
+      kcal('soda')===34 && kcal('limonade')===33 && kcal('tonic')===33 && kcal('coca')===40
+      && kcal('biere')===40 && kcal('vin rouge')===76,
+      ['soda','limonade','tonic','coca'].map(q=>q+'='+kcal(q)).join(' · '));
+    /* ⛔⛔ ET CE QUI N'EXISTE PAS RESTE VIDE, EXPRÈS : aucune boisson isotonique dans CIQUAL.
+       On ne sert pas un aliment approchant à la place (R29). */
+    t('⛔⛔ « powerade », « gatorade », « mojito » ne rendent RIEN — ils ne sont pas dans la table',
+      !prem('powerade') && !prem('gatorade') && !prem('mojito'), '');
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
+/* ═══ CCXXVI. UNE SÉANCE DE CARDIO SEUL N'EST PLUS INVISIBLE (ft-v1118) ══════════════════════
+   Michel, deux retours le même jour : ① *« j'ai fait 45 min de tapis et ma récup n'a pas
+   bougé »* · ② *« on me dit que j'ai pas fait le cardio hier »*. **Un seul défaut derrière.**
+   ⭐⭐ CE QUI A DÉCIDÉ DU DIAGNOSTIC EST UNE MESURE, PAS UNE LECTURE : la carte « séance
+   manquée » ne peut PAS s'afficher s'il existe une séance ce jour-là — vérifié sur les 4
+   façons de noter un cardio. Donc AUCUNE séance n'avait été enregistrée, et les deux
+   symptômes n'en font qu'un.
+   ⛔⛔ LE PIÈGE : le bouton « ✓ Enregistrer le cardio » du bloc Cardio disait *« Cardio
+   enregistré ✅ »* et n'enregistrait RIEN — il replie le bloc. Le bouton qui enregistre pour
+   de vrai est celui du BAS, et il s'appelait… « 🏁 Enregistrer le cardio ».
+   ⛔⛔ ET LE PIRE N'ÉTAIT PAS LE LIBELLÉ : `startWorkout()` remettait `S.wkt` à neuf dès qu'il
+   n'y avait pas d'exercice — donc un aller-retour par l'Accueil puis un tap sur le bouton
+   rouge **effaçait 45 min de cardio en silence** (règle d'or #3).
+   ⭐ Quatre endroits lisaient « des exercices » là où la question est « une séance ouverte ».
+   `_seanceOuverte()` en est le propriétaire unique depuis le 02/08 (R2) — il n'a pas fallu
+   écrire une règle, seulement la lire.
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXVI. Une séance de cardio seul n\'est plus invisible (ft-v1118) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'85',ft4_age:'46',ft4_ht:'178',
+    ft4_gender:'H',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(()=>{ try{
+    const o={};
+    /* ── ① LE PARCOURS EXACT DE MICHEL : noter 45 min de tapis, passer par l'Accueil, revenir ── */
+    startWorkout();
+    setCardioField('type','tapis','apres');
+    setCardioField('intensity','modere','apres');
+    setCardioField('duration','45','apres');
+    /* ⛔ CONTRÔLE : le cardio est-il VRAIMENT noté ? Sans ça, tout le bloc mesurerait du vide. */
+    o.noteAuDepart={resume:_cardioResume(), kcal:calcCardioKcalTotal(), exs:(S.wkt.exs||[]).length};
+    /* le libellé du bouton du bloc Cardio, et ce qu'il annonce quand on appuie dessus */
+    o.libelleBloc=(()=>{const e=document.getElementById('cardio-save-btn');return e?(e.textContent||'').trim():'(absent)';})();
+    const dits=[]; const vrai=window.toast; window.toast=(m)=>{dits.push(String(m));};
+    try{ saveCardioEntry(); } finally { window.toast=vrai; }
+    o.messageBloc=dits.join(' | ');
+    o.libelleBas=(typeof _labelFinSeance==='function')?_labelFinSeance():'(absente)';
+    o.zoneBas=(()=>{const e=document.getElementById('log-finish');return e?(e.innerText||'').replace(/\s+/g,' ').trim():'';})();
+    /* ── ② L'ALLER-RETOUR PAR L'ACCUEIL, puis le tap sur le bouton rouge ── */
+    goScreen('home',document.getElementById('nb-home'));
+    o.boutonAccueil=(()=>{const e=document.getElementById('home-hero');const t=(e&&e.innerText)||'';
+      const m=t.match(/(↩ Reprendre la séance|Commencer une séance)/); return m?m[1]:'(aucun)';})();
+    o.brouillonSecours=!!localStorage.getItem('ft4_wkt_draft');
+    startWorkout();                                    // ← exactement ce que fait le bouton rouge
+    o.apresLeTap={resume:_cardioResume(), reste:!!(S.wkt&&S.wkt.cardio&&+S.wkt.cardio.duration)};
+    /* ── ③ NON-RÉGRESSION LA PLUS IMPORTANTE : ouvrir l'écran Séance SANS RIEN FAIRE.
+       `renderLog()` crée un `S.wkt` vide dès qu'on affiche l'écran. Si « séance ouverte » se
+       contentait de l'existence de l'objet, l'Accueil dirait « ↩ Reprendre la séance » à tout
+       le monde, tout le temps — un élargissement bien pire que le défaut qu'on corrige. */
+    S.wkt=null; try{localStorage.removeItem('ft4_wkt_draft');}catch(e){}
+    startWorkout(); goScreen('home',document.getElementById('nb-home')); renderHome();
+    o.aVide=(()=>{const e=document.getElementById('home-hero');const t=(e&&e.innerText)||'';
+      const m=t.match(/(↩ Reprendre la séance|Commencer une séance)/);
+      return {bouton:m?m[1]:'(aucun)', ouverte:_seanceOuverte(),
+              brouillon:!!localStorage.getItem('ft4_wkt_draft')};})();
+    /* ── ④ NON-RÉGRESSION : une séance AVEC exercices se comporte comme avant ── */
+    S.wkt={date:today(),startTs:Date.now()-150*60000,pausedTotal:0,pausedAt:null,exs:[
+      {name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N',at:60}]}]};
+    persist(); goScreen('home',document.getElementById('nb-home')); renderHome();
+    o.muscu=(()=>{const e=document.getElementById('home-hero');const t=(e&&e.innerText)||'';
+      const m=t.match(/(↩ Reprendre la séance|Commencer une séance)/);
+      return {bouton:m?m[1]:'(aucun)', rappel:/terminer ta séance/.test(t),
+              brouillon:!!localStorage.getItem('ft4_wkt_draft')};})();
+    /* ── ⑤ LE SYMPTÔME RAPPORTÉ : une séance de cardio TERMINÉE ferme bien l'annonce ── */
+    const hier=(()=>{const d=new Date(today()+'T12:00:00');d.setDate(d.getDate()-1);return d.toISOString().slice(0,10);})();
+    const ts=new Date(hier+'T18:00:00').getTime();
+    S.wkt=null; S.missedLog=[]; S.nextPlanned={date:hier,label:'cardio tapis'};
+    S.sessions=[]; o.sansSeance=(seanceManquee()||{}).date||null;
+    S.sessions=[{id:ts,ts,date:hier,exs:[],exercises:[],volume:0,duration:2700,
+                 cardio:{type:'tapis',duration:45,intensity:'modere'}}];
+    o.avecCardio=(seanceManquee()||{}).date||null;
+    return o;
+  }catch(e){ return {err:String(e&&e.message||e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXVI n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ CONTRÔLE D'ABORD : sans un cardio réellement noté, les 10 témoins suivants seraient
+       verts en ne mesurant rien. Et il vérifie AUSSI qu'il n'y a AUCUN exercice — c'est la
+       condition qui rendait la séance invisible. */
+    t('⛔ CONTRÔLE — 45 min de tapis sont bien notées, et la séance n\'a AUCUN exercice',
+      R.noteAuDepart.kcal>0 && /45min/.test(R.noteAuDepart.resume) && R.noteAuDepart.exs===0,
+      JSON.stringify(R.noteAuDepart));
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : c'est celui-là qui rougissait avant. */
+    t('⭐⭐ le cardio SURVIT au bouton rouge de l\'Accueil (avant : effacé en silence)',
+      R.apresLeTap.reste===true && /45min/.test(R.apresLeTap.resume), JSON.stringify(R.apresLeTap));
+    t('⭐⭐ … et l\'Accueil dit « ↩ Reprendre la séance », pas « Commencer une séance »',
+      R.boutonAccueil==='↩ Reprendre la séance', R.boutonAccueil);
+    /* ⛔⛔ LE LIBELLÉ QUI MENTAIT — deux boutons, presque les mêmes mots, un seul enregistrait. */
+    t('⛔⛔ le bouton du bloc Cardio ne dit plus « Enregistrer » (il n\'enregistre rien)',
+      !/enregistr/i.test(R.libelleBloc), R.libelleBloc);
+    t('⛔⛔ … et son message NOMME le bouton qui enregistre vraiment, celui du bas',
+      R.messageBloc.indexOf(R.libelleBas)>=0 && !/enregistré/i.test(R.messageBloc),
+      R.messageBloc+'   [bas = '+R.libelleBas+']');
+    /* ⛔ R2 : le nom du bouton du bas a UN propriétaire. Si l'écran et le message le
+       calculaient chacun de leur côté, on enverrait un jour chercher un bouton disparu. */
+    t('⛔ R2 — le libellé annoncé est bien celui AFFICHÉ en bas de l\'écran',
+      R.zoneBas.indexOf(R.libelleBas)>=0, R.zoneBas.slice(0,80)+'   [attendu '+R.libelleBas+']');
+    t('⛔ le brouillon de secours est écrit pour une séance de cardio seul',
+      R.brouillonSecours===true, String(R.brouillonSecours));
+    /* ⛔⛔ LA NON-RÉGRESSION QUI COMPTE LE PLUS : on a élargi la définition de « séance
+       ouverte », donc il faut prouver qu'on ne l'a pas élargie à TOUT. Ouvrir l'écran Séance
+       sans rien faire ne doit rien déclencher — sinon l'Accueil dirait « Reprendre » en
+       permanence, et le correctif serait pire que le défaut. */
+    t('⛔⛔ NON-RÉGRESSION — ouvrir l\'écran Séance sans rien faire ne déclenche RIEN',
+      R.aVide.bouton==='Commencer une séance' && R.aVide.ouverte===false && R.aVide.brouillon===false,
+      JSON.stringify(R.aVide));
+    /* ⛔ NON-RÉGRESSION — on n'a pas desserré ce qui marchait pour la muscu. */
+    t('⛔ NON-RÉGRESSION — une séance avec exercices : bouton, rappel ⏰ et brouillon inchangés',
+      R.muscu.bouton==='↩ Reprendre la séance' && R.muscu.rappel===true && R.muscu.brouillon===true,
+      JSON.stringify(R.muscu));
+    /* ⛔⛔ LE SYMPTÔME RAPPORTÉ, DANS LES DEUX SENS. Un témoin qui ne vérifierait que
+       « la carte ne sort pas » serait vert même si la carte ne sortait JAMAIS. */
+    t('⛔⛔ la carte « séance manquée » sort quand il n\'y a VRAIMENT eu aucune séance',
+      R.sansSeance!==null, String(R.sansSeance));
+    t('⛔⛔ … et se tait dès qu\'une séance de CARDIO SEUL a été enregistrée ce jour-là',
+      R.avecCardio===null, String(R.avecCardio));
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
+/* ═══ CCXXVI bis. ROUVRIR L'APP AVEC UN CARDIO NON ENREGISTRÉ LE DIT (ft-v1118) ══════════════
+   Le 3ᵉ rappel aveugle : au démarrage, l'app annonce « Séance en cours — … Appuie sur
+   Reprendre » — et le faisait seulement s'il y avait des EXERCICES. Quelqu'un qui rouvrait
+   l'app avec 45 min de cardio en attente n'était prévenu par rien.
+   ⚠️ Ce bloc a son propre contexte : il faut RECHARGER la page pour que le message parte. */
+console.log('\n-- CCXXVI bis. Rouvrir l\'app avec un cardio non enregistré (ft-v1118) --');
+{
+  const jour=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+  const brouillon=JSON.stringify({date:jour,exs:[],startHour:18,
+    cardio:{type:'tapis',duration:45,intensity:'modere'}});
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'85',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99',ft4_wkt:brouillon}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(2200);
+  const R=await p.evaluate(()=>{ try{
+    return { message:(document.getElementById('toast')||{}).textContent||'',
+             cardioRelu:(S.wkt&&S.wkt.cardio&&+S.wkt.cardio.duration)||0,
+             ouverte:(typeof _seanceOuverte==='function')?_seanceOuverte():null };
+  }catch(e){ return {err:String(e&&e.message||e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXVI bis n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ CONTRÔLE : le brouillon a bien été relu au démarrage. Sinon le message manquerait
+       pour une tout autre raison, et le témoin suivant accuserait le mauvais coupable. */
+    t('⛔ CONTRÔLE — le brouillon de cardio est relu au démarrage (45 min, séance ouverte)',
+      R.cardioRelu===45 && R.ouverte===true, JSON.stringify(R));
+    t('⭐⭐ rouvrir l\'app avec un cardio en attente affiche « Séance en cours … Reprendre »',
+      /Séance en cours/.test(R.message) && /Reprendre/.test(R.message), R.message);
+    /* ⛔ Et il décrit ce qui est VRAIMENT en attente : « 0 exercice » se lirait comme une panne. */
+    t('⛔ … et il parle du CARDIO, jamais de « 0 exercice »',
+      /cardio/i.test(R.message) && !/\b0 exercice/.test(R.message), R.message);
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
+/* ═══ CCXXVI ter. LE CARDIO SE RECONNAÎT DANS L'HISTORIQUE (ft-v1118) ════════════════════════
+   Michel, dans la foulée : *« pourquoi le cardio n'apparaît pas dans mon historique ? »*.
+   ⭐⭐ MESURÉ AVANT DE RÉPONDRE, et la réponse n'était pas celle attendue : **il y EST**. Mais
+   il s'affichait *« 💪 jeu. 3 sept. · 0 kg · ⏱️45 min · 🔥351 kcal · — »* — un emoji de muscle,
+   un volume de zéro, une figurine vide et un tiret à la place des exercices. ***Ça ressemble à
+   une séance ratée, pas à 45 minutes de tapis.*** 👉 Il n'y a aucun muscle à nommer : le titre
+   nomme donc ce que la séance EST, et la ligne du bas porte le cardio en clair.
+   ⛔ Au passage, la CLÉ technique sortait à l'écran — « (modere) », sans accent. Les trois
+   intensités ont maintenant un nom et un seul propriétaire (`CARDIO_INTENSITES`, R2).
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXVI ter. Le cardio se reconnaît dans l\'historique (ft-v1118) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'85',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(()=>{ try{
+    const o={}, t=today(), ts=new Date(t+'T10:00:00').getTime();
+    const lire=()=>{ renderSessions(); const el=document.getElementById('sess-list');
+                     return (el?el.innerText:'').replace(/\s+/g,' ').trim(); };
+    goScreen('progress',document.getElementById('nb-progress'));
+    /* ① le cas de Michel : cardio SEUL */
+    S.sessions=[{id:ts,ts,date:t,exs:[],exercises:[],volume:0,duration:45*60,calories:351,
+                 cardio:{type:'tapis',duration:45,intensity:'modere'}}];
+    o.cardioSeul=lire();
+    /* ② NON-RÉGRESSION : une muscu SANS cardio ne bouge pas d'un caractère */
+    S.sessions=[{id:ts+1,ts:ts+1,date:t,volume:2560,duration:45*60,calories:250,
+                 exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N'}]}]}];
+    o.muscuSeule=lire();
+    /* ③ une muscu AVEC cardio : le cardio s'ajoute, les exercices restent */
+    S.sessions=[{id:ts+2,ts:ts+2,date:t,volume:2560,duration:60*60,calories:400,
+                 exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N'}]}],
+                 cardioAvant:{type:'velo',duration:10,intensity:'leger'}}];
+    o.muscuAvecCardio=lire();
+    /* ④ le mois compte-t-il cette séance ? (le calendrier lit les DATES, pas le volume) */
+    S.sessions=[{id:ts,ts,date:t,exs:[],volume:0,duration:45*60,calories:351,
+                 cardio:{type:'tapis',duration:45,intensity:'modere'}}];
+    goScreen('home',document.getElementById('nb-home')); renderHome();
+    const h=document.getElementById('s-home');
+    o.mois=(((h&&h.innerText)||'').replace(/\s+/g,' ').match(/(\d+)\s*séances?/i)||['(rien)'])[0];
+    return o;
+  }catch(e){ return {err:String(e&&e.message||e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXVI ter n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⭐⭐ CE QUE MICHEL CHERCHAIT : une ligne qui se reconnaît. */
+    t('⭐⭐ un cardio seul s\'intitule « 🏃 Cardio », plus « 💪 » suivi d\'une date',
+      /🏃 Cardio/.test(R.cardioSeul) && !/💪/.test(R.cardioSeul), R.cardioSeul.slice(0,110));
+    t('⭐⭐ … et la ligne du bas dit CE QUE C\'ÉTAIT, au lieu d\'un tiret',
+      /Tapis 45 min/.test(R.cardioSeul) && !/—/.test(R.cardioSeul), R.cardioSeul.slice(0,110));
+    /* ⛔ « 0 kg » laissait croire à une séance vide — et il ne disparaît QUE là. */
+    t('⛔ … et « 0 kg » ne s\'affiche plus sur un cardio (il n\'apprend rien)',
+      !/0 kg/.test(R.cardioSeul), R.cardioSeul.slice(0,110));
+    t('⛔ … la durée et les calories, elles, sont bien là',
+      /45 min/.test(R.cardioSeul) && /351 kcal/.test(R.cardioSeul), R.cardioSeul.slice(0,110));
+    /* ⛔ L'INTENSITÉ EST UN MOT, PAS UNE CLÉ : « (Modéré) », jamais « (modere) ». */
+    t('⛔ l\'intensité s\'écrit en toutes lettres — « (Modéré) », pas la clé technique',
+      /\(Modéré\)/.test(R.cardioSeul) && !/\(modere\)/.test(R.cardioSeul), R.cardioSeul.slice(0,110));
+    /* ⛔⛔ NON-RÉGRESSION : une séance de muscu ne doit RIEN perdre — c'est le cas courant. */
+    t('⛔⛔ NON-RÉGRESSION — une muscu garde son muscle, son volume et ses exercices',
+      /💪 Pectoraux/.test(R.muscuSeule) && /2560 kg/.test(R.muscuSeule)
+      && /Développé Couché/.test(R.muscuSeule), R.muscuSeule.slice(0,110));
+    t('⭐ une muscu AVEC cardio garde ses exercices ET dit son cardio',
+      /Développé Couché/.test(R.muscuAvecCardio) && /Vélo 10 min/.test(R.muscuAvecCardio)
+      && /2560 kg/.test(R.muscuAvecCardio), R.muscuAvecCardio.slice(0,130));
+    /* ⛔ Et le mois la compte : sans ça, « elle est dans l'historique » serait une demi-vérité. */
+    t('⛔ le compteur du mois compte la séance de cardio seul', /^1\s/i.test(R.mois), R.mois);
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
+/* ═══ CCXXVI quater. L'ÉCRAN DE FIN N'ANNONCE PAS UN DÉBRIEF QUI N'EXISTE PAS (ft-v1118) ═════
+   ⛔⛔ TROUVÉ SUR LA CAPTURE DE MICHEL, pas par un test : après son cardio, l'écran de fin
+   affichait *« 💬 Milo a déjà débriefé cette séance — retrouve-la dans l'onglet Coach »*.
+   **C'était faux** : `finishWorkout` ne met en file de débrief que les séances avec des séries
+   validées (« pas un cardio seul »), donc le jeton n'a jamais existé — et il n'y a rien dans
+   l'onglet Coach. Le message répondait à *« le jeton n'est pas là »* en concluant *« quelqu'un
+   l'a déjà pris »*. 👉 *Un message qui nomme quelque chose d'inexistant est pire qu'un silence :
+   on va le chercher.* Même famille que le reste de la version.
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXVI quater. L\'écran de fin n\'annonce pas un débrief inexistant (ft-v1118) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'85',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    const o={}, t=today(), ts=new Date(t+'T10:00:00').getTime();
+    const slot=document.getElementById('se-debrief');
+    if(!slot) return {err:'#se-debrief absent de la page'};
+    /* ⛔⛔ ON NE VIDE SURTOUT PAS `S.url` : le chemin « hors ligne » est testé AVANT le nôtre,
+       donc on sortirait par lui et ce bloc serait vert sans avoir jamais atteint la branche
+       qu'il prétend mesurer. ⭐ Et aucun appel n'est dépensé pour autant : dans les deux cas
+       `_dbfPrendre()` rend null (rien n'a été mis en file) et la fonction retourne avant le
+       moindre `fetch`. *Un témoin qui sort par une autre porte que celle qu'il vise ne mesure
+       rien — il rassure* (§31). */
+    const cardio={id:ts,ts,date:t,exs:[],volume:0,duration:45*60,calories:377,
+                  cardio:{type:'tapis',duration:45,intensity:'modere'}};
+    const muscu={id:ts+1,ts:ts+1,date:t,volume:2560,duration:45*60,calories:250,
+                 exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N'}]}]};
+    o.enLigne=!!S.url && (typeof navigator==='undefined' || navigator.onLine!==false);
+    {
+      S.sessions=[cardio]; slot.innerHTML='';
+      await _runSeDebrief(cardio,0); o.cardio=(slot.innerText||'').replace(/\s+/g,' ').trim();
+      /* ⛔ CONTRÔLE : sur une séance AVEC séries, le message honnête doit toujours sortir —
+         sinon on aurait juste rendu la branche muette pour tout le monde. */
+      S.sessions=[muscu]; slot.innerHTML='';
+      await _runSeDebrief(muscu,0);  o.muscu=(slot.innerText||'').replace(/\s+/g,' ').trim();
+    }
+    return o;
+  }catch(e){ return {err:String(e&&e.message||e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXVI quater n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ CONTRÔLE D'ABORD : si le test se croyait hors ligne, il sortirait par une AUTRE
+       branche et les témoins suivants seraient verts sans rien prouver. */
+    t('⛔ CONTRÔLE — le test n\'est pas parti par le chemin « hors ligne »', R.enLigne===true, String(R.enLigne));
+    t('⭐⭐ un cardio seul n\'annonce PAS « Milo a déjà débriefé cette séance »',
+      !/déjà débriefé/.test(R.cardio||''), (R.cardio||'').slice(0,120));
+    t('⛔ … et il ne renvoie pas vers l\'onglet Coach pour y chercher ce qui n\'y est pas',
+      !/onglet Coach/.test(R.cardio||''), (R.cardio||'').slice(0,120));
+    /* ⛔ Le socle chiffré, lui, reste : il ne dépend d'aucun appel (règle d'or #3). */
+    t('⛔ … mais le résumé chiffré reste affiché (il ne dépend d\'aucun réseau)',
+      !!(R.cardio||'').length, (R.cardio||'(vide)').slice(0,120));
+    /* ⛔⛔ CONTRÔLE NÉGATIF — sans lui, « le message n'apparaît pas » serait vrai parce qu'il
+       n'apparaît JAMAIS, et le témoin ci-dessus serait vert en ne prouvant rien. */
+    t('⛔⛔ CONTRÔLE — une séance AVEC séries, elle, dit bien quelque chose sur le débrief',
+      /débrief|Coach|hors ligne|analyse/i.test(R.muscu||''), (R.muscu||'').slice(0,120));
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
+/* ═══ CCXXVII. LES 2 DÉFAUTS DE LA RECHERCHE ALIMENTAIRE (ft-v1119) ═════════════════════════
+   Michel : *« corrige les 2 défauts de recherche »* — ceux mesurés le matin même en auditant la
+   base pour GPT.
+   ⛔ ① La PONCTUATION restait collée : `Boulgour, cuit` → **RIEN**, le mot cherché étant
+   `boulgour,` avec sa virgule. ⚠️ `Riz blanc, cuit` marchait **par coïncidence**.
+   ⛔ ② Les MOTS-OUTILS étaient exigés : `filet de bœuf` → **RIEN** alors que `Boeuf, filet cru`
+   existe. ⚠️ Et ça marchait **7 fois sur 8 par accident** (le « de » de « vian**de** »).
+   ⭐⭐ LA MESURE A DIT OÙ POSER LE FILTRE : **99 clés d'alias contiennent un mot-outil**, les
+   filtrer EN AMONT les cassait toutes. *On retire les mots-outils pour CHERCHER, jamais pour
+   RECONNAÎTRE.*
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXVII. Les 2 défauts de la recherche alimentaire (ft-v1119) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    await _ciqualCharger(); await _aliasCharger(); await _marquesCharger();
+    const n=q=>{ const r=_ciqualChercher(q,1); return r.length?r[0][1]:'RIEN'; };
+    const o={ norm:{}, mots:{}, q:{} };
+    ['Boulgour, cuit','Lentilles, cuites','Pois chiches, cuits','Semoule de blé, cuite',
+     'filet de boeuf','joue de boeuf','queue de boeuf','foie de veau','rognon de veau',
+     'travers de porc','graine de lin','jarret de veau','langue de boeuf',
+     'coca sans sucre','coca zero','the vert','biere sans alcool','poulet sans peau',
+     'pomme de terre','blanc de poulet','fromage de chevre','lait 1/2 ecreme',
+     'riz','pates','poulet','banane','big mac','mcdo','tortiglioni','copeaux de parmesan',
+     'parmesan'].forEach(q=>o.q[q]=n(q));
+    /* ⛔ la ponctuation devient un ESPACE, jamais rien */
+    o.norm.virgule=_afNorm('Boulgour, cuit');
+    o.norm.parenth=_afNorm('Poulet (aliment moyen)');
+    o.norm.slash  =_afNorm('bouillie/cuite');           // la barre reste, exprès
+    o.norm.apostr =_afNorm("huile d'olive");            // l'apostrophe reste supprimée
+    /* ⛔ le propriétaire du découpage, et ce qu'il ne jette JAMAIS */
+    o.mots.outils =(typeof _afMots==='function')?_afMots('filet de boeuf'):null;
+    o.mots.sans   =_afMots('coca sans sucre');
+    o.mots.avec   =_afMots('lait avec sucre');
+    o.mots.the    =_afMots('the vert');
+    o.mots.queOutils=_afMots('de la');                  // tout est mot-outil → on garde la frappe
+    o.mots.vide   =_afMots('');
+    /* ⛔⛔ LE TÉMOIN QUI EMPÊCHE LES DEUX NORMALISATIONS DE DIVERGER : chaque clé de la table
+       d'alias doit DÉJÀ être sous forme normalisée. Sinon l'app cherche une chaîne que la table
+       ne porte pas, et l'entrée disparaît en silence. */
+    o.clesNonNormalisees=Object.keys(_alias.a).filter(k=>_afNorm(k)!==k).slice(0,8);
+    o.nCles=Object.keys(_alias.a).length;
+    /* ⛔ CONTRÔLE : combien de clés portent un mot-outil ? C'est le chiffre qui interdit de
+       filtrer en amont — s'il tombait à 0, la garde ci-dessus n'aurait plus d'objet. */
+    o.clesAvecOutil=Object.keys(_alias.a).filter(k=>k.split(' ').some(m=>_AF_OUTILS.has(m))).length;
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXVII n\'a pas pu tourner', false, R.err);
+  else{
+    const q=R.q;
+    /* ⛔ CONTRÔLE — la recherche répond, sinon tout le bloc mesure du vide. */
+    t('⛔ CONTRÔLE — la recherche et les tables répondent',
+      q.riz!=='RIEN' && R.nCles>400, R.nCles+' alias');
+    /* ⭐⭐ DÉFAUT ① : la ponctuation ne fait plus échouer. */
+    t('⭐⭐ ① une VIRGULE ne fait plus échouer la recherche (« Boulgour, cuit » rendait RIEN)',
+      /Boulgour/i.test(q['Boulgour, cuit']) && /Lentille/i.test(q['Lentilles, cuites'])
+      && /Pois chiche/i.test(q['Pois chiches, cuits']) && q['Semoule de blé, cuite']!=='RIEN',
+      q['Boulgour, cuit'].slice(0,40));
+    t('⛔ … la ponctuation devient un ESPACE, jamais rien (sinon deux mots se recollent)',
+      R.norm.virgule==='boulgour cuit' && R.norm.parenth==='poulet aliment moyen', JSON.stringify(R.norm));
+    /* ⛔⛔ LA BARRE `/` RESTE, EXPRÈS : l'espacer rendrait la clé « lait 1/2 ecreme » introuvable. */
+    t('⛔⛔ la barre « / » N\'est PAS espacée — sinon la clé « lait 1/2 ecreme » deviendrait introuvable',
+      R.norm.slash==='bouillie/cuite' && q['lait 1/2 ecreme']!=='RIEN',
+      R.norm.slash+' · '+q['lait 1/2 ecreme'].slice(0,30));
+    t('⛔ … et l\'apostrophe reste SUPPRIMÉE (c\'est ce qui fait marcher « huile d\'olive » depuis toujours)',
+      R.norm.apostr==='huile dolive', R.norm.apostr);
+    /* ⭐⭐ DÉFAUT ② : les mots-outils ne bloquent plus — et ces cas ne sont PAS des alias. */
+    t('⭐⭐ ② les MOTS-OUTILS ne bloquent plus : « filet de bœuf » rend « Boeuf, filet cru »',
+      /^Boeuf, filet/i.test(q['filet de boeuf']), q['filet de boeuf']);
+    t('⛔ … et 5 autres qui ne sont couverts par AUCUN alias (joue, queue, foie, rognon, travers)',
+      /Boeuf, joue/i.test(q['joue de boeuf']) && /Boeuf, queue/i.test(q['queue de boeuf'])
+      && /^Foie, veau/i.test(q['foie de veau']) && /^Rognon, veau/i.test(q['rognon de veau'])
+      && /^Porc, travers/i.test(q['travers de porc']),
+      [q['joue de boeuf'],q['foie de veau']].join(' | ').slice(0,60));
+    /* ⭐ Et 2 qui rendaient un PLAT CUISINÉ au lieu de l'aliment. */
+    t('⭐ « jarret de veau » ne rend plus un « Osso buco à la milanaise », « langue de bœuf » plus une sauce madère',
+      /^Veau, jarret/i.test(q['jarret de veau']) && /^Langue, boeuf/i.test(q['langue de boeuf']),
+      [q['jarret de veau'],q['langue de boeuf']].join(' | ').slice(0,60));
+    /* ⛔⛔ CE QU'ON NE JETTE JAMAIS — nommé AVANT d'écrire une ligne. */
+    t('⛔⛔ « sans » et « avec » ne sont JAMAIS jetés (« coca sans sucre » deviendrait son contraire)',
+      R.mots.sans.indexOf('sans')>=0 && R.mots.avec.indexOf('avec')>=0
+      /* ⚠️ MOTIF CORRIGÉ À LA 1ʳᵉ PASSE — §31, 4ᵉ fois du jour : je cherchais « ajoutes » SANS
+         ACCENT dans un libellé qui écrit « ajoutés ». *Le code était juste, le détail imprimé le
+         montrait ; c'est le motif qui ne savait pas lire ce qu'il mesurait.* */
+      && /sans sucres? ajout/i.test(q['coca sans sucre']),
+      R.mots.sans.join('+')+' · '+q['coca sans sucre'].slice(0,34));
+    t('⛔ … ni « the », qui est le THÉ une fois les accents retirés',
+      R.mots.the.indexOf('the')>=0 && /^Thé vert/i.test(q['the vert']), R.mots.the.join('+'));
+    t('⛔ … et le filtre RETIRE bien « de » quand il le doit',
+      JSON.stringify(R.mots.outils)===JSON.stringify(['filet','boeuf']), JSON.stringify(R.mots.outils));
+    /* ⛔ Si TOUT est mot-outil, on garde la frappe : on ne rend jamais le vide de plus qu'avant. */
+    t('⛔ une frappe faite QUE de mots-outils garde ses mots (on ne fabrique pas du vide)',
+      R.mots.queOutils.length===2 && R.mots.vide.length===0, JSON.stringify(R.mots.queOutils));
+    /* ⛔⛔ LE TÉMOIN QUI PORTE LE VRAI RISQUE DE LA VERSION : les deux normalisations — celle de
+       l'app et celle de `tools/alias.py` — doivent rester identiques. Une divergence d'un seul
+       caractère fait disparaître une entrée SANS ERREUR. */
+    t('⛔⛔ CHAQUE clé d\'alias est déjà sous forme normalisée (les 2 normalisations ne divergent pas)',
+      R.clesNonNormalisees.length===0, R.clesNonNormalisees.join(' · '));
+    /* ⛔ CONTRÔLE — c'est ce chiffre qui interdit de filtrer les mots-outils EN AMONT. */
+    t('⛔ CONTRÔLE — des clés d\'alias contiennent bien un mot-outil (sinon la garde serait vide)',
+      R.clesAvecOutil>=50, R.clesAvecOutil+' clés');
+    /* ⛔ NON-RÉGRESSION : les alias à mots-outils répondent toujours, et le reste ne bouge pas. */
+    t('⛔ NON-RÉGRESSION — les alias à mots-outils tiennent (pomme de terre, blanc de poulet, fromage de chèvre)',
+      /^Pomme de terre, cuite/i.test(q['pomme de terre']) && /^Poulet, filet sans peau/i.test(q['blanc de poulet'])
+      && /^Fromage de chèvre/i.test(q['fromage de chevre']),
+      [q['pomme de terre'],q['blanc de poulet']].join(' | ').slice(0,60));
+    t('⛔ … et les recherches ordinaires sont intactes (riz, pâtes, poulet, banane, big mac, mcdo, tortiglioni)',
+      /^Riz blanc, cuit/i.test(q.riz) && /^Pâtes sèches, standard, cuites/i.test(q.pates)
+      && /^Poulet/i.test(q.poulet) && /^Banane/i.test(q.banane)
+      && /restauration rapide/i.test(q.mcdo) && /^Pâtes/i.test(q.tortiglioni), '');
+    /* ⛔ CE QUI NE MARCHE TOUJOURS PAS EST DIT : les mots de CONDITIONNEMENT n'existent pas dans
+       les libellés. Ce n'est pas un trou du correctif, c'est la table qui nomme l'ALIMENT. */
+    t('⛔ « copeaux de parmesan » ne rend toujours rien (« copeaux » n\'est dans aucun libellé) — mais « parmesan » oui',
+      q['copeaux de parmesan']==='RIEN' && /Parmesan/i.test(q.parmesan), q.parmesan);
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
+/* ═══ CCXXVIII. UN FICHIER GÉNÉRÉ DOIT RESTER RÉGÉNÉRABLE (04/09/2026) ══════════════════════
+   ⛔⛔ LE CAS RÉEL, VÉCU LA VEILLE : `data/alias.json` a été généré depuis un classeur qui vivait
+   dans un dossier TEMPORAIRE. Le conteneur a redémarré, le classeur a disparu, et la table est
+   devenue **impossible à régénérer** — plus moyen de corriger une entrée ni de vérifier d'où
+   venait un chiffre. 👉 ***Un fichier généré dont la source n'est pas versionnée est un fichier
+   figé qui s'ignore.***
+   ⚠️ Et ça rend **R27 intenable** : « ce qui est généré ne s'édite pas à la main » suppose qu'on
+   puisse le régénérer. Sans source, il ne reste que deux mauvaises options — retoucher la sortie
+   (interdit) ou renoncer.
+   ⛔ CE TÉMOIN NE VÉRIFIE PAS QUE TOUTES LES SOURCES SONT LÀ — certaines sont publiques et
+   retéléchargeables (CIQUAL), une est PERDUE et c'est écrit. Il vérifie que **chaque générateur
+   est DÉCLARÉ** et que **toute source annoncée « dans le dépôt » y est vraiment**. *Une ligne de
+   tableau qui ment est pire qu'une ligne absente.*
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXVIII. Un fichier généré doit rester régénérable (04/09/2026) --');
+{
+  const dirTools=path.join(ROOT,'tools');
+  const readme=path.join(ROOT,'data','sources','README.md');
+  /* ⛔ CONTRÔLE — le tableau existe, sinon les témoins suivants seraient verts en ne lisant rien. */
+  t('⛔ CONTRÔLE — `data/sources/README.md` existe et porte le tableau des générateurs',
+    fs.existsSync(readme) && /\| Généré \| Par \| Source \| Dans le dépôt \?/.test(fs.readFileSync(readme,'utf8')), '');
+  if(fs.existsSync(readme)){
+    const doc=fs.readFileSync(readme,'utf8');
+    /* ⭐⭐ TOUT GÉNÉRATEUR QUI LIT UN .xlsx DOIT ÊTRE DÉCLARÉ. C'est le témoin qui rougira le jour
+       où quelqu'un ajoute un `tools/xxx.py` sans se poser la question de sa source. */
+    const gens=fs.readdirSync(dirTools).filter(f=>f.endsWith('.py'))
+      .filter(f=>/\.xlsx/i.test(fs.readFileSync(path.join(dirTools,f),'utf8')));
+    const nonDeclares=gens.filter(f=>doc.indexOf('tools/'+f)<0);
+    t('⛔ CONTRÔLE — des générateurs lisant un .xlsx existent bien (sinon le témoin ne mesure rien)',
+      gens.length>=2, gens.join(' · '));
+    t('⭐⭐ CHAQUE générateur qui lit un .xlsx est DÉCLARÉ dans le tableau des sources',
+      nonDeclares.length===0, 'non déclarés : '+nonDeclares.join(' · '));
+    /* ⭐⭐ ET TOUTE SOURCE ANNONCÉE « DANS LE DÉPÔT » Y EST VRAIMENT. Sans ce témoin, le tableau
+       pourrait promettre une source absente — exactement le mensonge qu'on vient de payer. */
+    const promises=[...doc.matchAll(/`([^`]+\.xlsx)`[^|]*\|\s*✅/g)].map(m=>m[1]);
+    const manquantes=promises.filter(f=>!fs.existsSync(path.join(ROOT,'data','sources',f)));
+    t('⛔ CONTRÔLE — le tableau promet bien au moins une source versionnée',
+      promises.length>=1, promises.join(' · '));
+    t('⭐⭐ toute source annoncée « dans le dépôt » y EST vraiment (une ligne qui ment est pire qu\'absente)',
+      manquantes.length===0, 'promises mais absentes : '+manquantes.join(' · '));
+    /* ⛔ Et les trous sont NOMMÉS, pas tus (R30) : une source perdue doit se lire dans le tableau. */
+    t('⛔ … et les sources ABSENTES sont nommées avec leur raison (R30), pas passées sous silence',
+      /PERDU/.test(doc) && /retéléchargeable/.test(doc), '');
+  }
+  /* ⛔⛔ LE GÉNÉRATEUR TROUVE SA SOURCE TOUT SEUL : sans ça, la source serait versionnée mais
+     personne ne saurait laquelle passer en argument dans six mois. */
+  {
+    const py=fs.readFileSync(path.join(dirTools,'alias.py'),'utf8');
+    t('⛔⛔ `tools/alias.py` pointe sur `data/sources/` par défaut (régénérable sans rien savoir)',
+      /data',\s*'sources'/.test(py), '');
+  }
+}
+
+/* ═══ CCXXIX. LA BASE FAST-FOOD PASSE DE 27 À 128 — FUSION, PAS REMPLACEMENT (ft-v1120) ═════
+   Michel renvoie le classeur perdu, en **version 2** : 114 produits au lieu de 27.
+   ⛔⛔ MAIS LA V2 SEULE AURAIT FAIT PERDRE **TOUTES LES FRITES** — dans ce classeur elles n'ont
+   que les calories, pas les macros. *Remplacer aurait été une régression déguisée en
+   enrichissement.* D'où une FUSION : 114 lus + 14 hérités.
+   ⚠️ LES 14 HÉRITÉS SONT UN PIS-ALLER ÉCRIT COMME TEL : leur classeur d'origine est PERDU, la
+   sortie du 03/09 est leur seule trace. *Une valeur dont on ne peut plus remonter à la source
+   est une valeur qu'on ne peut plus auditer.*
+   ⭐ ET LE GARDE-FOU A SERVI LE JOUR MÊME : la pizza « 4 Fromages » était héritée le matin, la
+   V2 la fournit avec des valeurs identiques — elle est repartie dans la source. *Ce bloc doit
+   RÉTRÉCIR, jamais grossir.*
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXIX. La base fast-food passe de 27 à 128 (ft-v1120) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    const t=await _marquesCharger(); await _ciqualCharger(); await _aliasCharger();
+    const un=q=>{ const r=_marquesChercher(q,1); if(!r.length) return null;
+      const a=_marques.a[r[0]]; return {nom:a[1], ens:a[0], portion:a[7],
+        kcal:a[7]?Math.round(a[3]*a[7]/100):null, prot:a[7]?Math.round(a[4]*a[7]/100):null, doute:a[9]||0}; };
+    const o={total:t?t.a.length:0, q:{}, ens:{}};
+    ['big mac','grande frite mcdo','petite frite mcdo','moyenne frite mcdo','whopper',
+     'frites quick','mega giant','pizza 4 fromages','tenders kfc','wrap giant'].forEach(x=>o.q[x]=un(x));
+    t.a.forEach(a=>{ o.ens[a[0]]=(o.ens[a[0]]||0)+1; });
+    /* ⛔ aucune ligne en double : la fusion ne doit pas empiler deux fois le même produit */
+    const cles=t.a.map(a=>a[0]+'|'+a[1]);
+    o.doublons=cles.filter((k,i)=>cles.indexOf(k)!==i);
+    /* ⛔ toute ligne porte une portion et des macros exploitables */
+    o.sansPortion=t.a.filter(a=>!a[7]).map(a=>a[1]).slice(0,5);
+    o.sansMacro=t.a.filter(a=>!(a[3]>0)).map(a=>a[1]).slice(0,5);
+    /* ⛔ le doute connu est toujours porté */
+    o.korean=t.a.filter(a=>/Korean/i.test(a[1])).map(a=>a[9]);
+    /* ⛔ non-régression : les 3 autres sources ne bougent pas */
+    o.riz=(_ciqualChercher('riz',1)||[]).map(x=>x[1])[0];
+    o.coca=(_ciqualChercher('coca zero',1)||[]).map(x=>x[1])[0];
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXIX n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ CONTRÔLE — la base est chargée, sinon tout le bloc mesure du vide. */
+    t('⛔ CONTRÔLE — la base d\'enseignes est chargée et a bien GRANDI',
+      R.total>=120, R.total+' produits · '+JSON.stringify(R.ens));
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : les FRITES sont toujours là. C'est précisément ce
+       qu'un simple remplacement aurait fait disparaître. */
+    t('⭐⭐ les FRITES sont toujours là — c\'est ce qu\'un remplacement aurait fait perdre',
+      ['grande frite mcdo','petite frite mcdo','moyenne frite mcdo','frites quick']
+        .every(x=>R.q[x] && /[Ff]rite/.test(R.q[x].nom)),
+      ['grande frite mcdo','frites quick'].map(x=>R.q[x]?R.q[x].nom+' '+R.q[x].kcal:'RIEN').join(' · '));
+    /* ⛔ … et au CHIFFRE PRÈS : une fusion qui changerait une valeur d'avant serait pire qu'un
+       remplacement, parce qu'elle serait silencieuse. */
+    t('⛔ … et leurs chiffres n\'ont pas bougé (Grande frite 434 kcal / 150 g, Petite 231 / 80 g)',
+      R.q['grande frite mcdo'] && R.q['grande frite mcdo'].kcal===434 && R.q['grande frite mcdo'].portion===150
+      && R.q['petite frite mcdo'] && R.q['petite frite mcdo'].kcal===231,
+      JSON.stringify(R.q['grande frite mcdo']));
+    t('⛔ … ni ceux du Big Mac (530 kcal · 27 g de protéines · 232 g)',
+      R.q['big mac'] && R.q['big mac'].kcal===530 && R.q['big mac'].prot===27 && R.q['big mac'].portion===232,
+      JSON.stringify(R.q['big mac']));
+    /* ⭐ LES NOUVEAUX RÉPONDENT. */
+    t('⭐ les produits NEUFS répondent (Quick, Domino\'s, wrap)',
+      R.q['mega giant'] && /Giant/i.test(R.q['mega giant'].nom)
+      && R.q['pizza 4 fromages'] && /Fromages/i.test(R.q['pizza 4 fromages'].nom)
+      && R.q['wrap giant'] && /Wrap/i.test(R.q['wrap giant'].nom),
+      [R.q['mega giant'].nom, R.q['wrap giant'].nom].join(' · '));
+    /* ⛔⛔ LA FUSION N'EMPILE PAS : un produit fourni par le classeur ET hérité apparaîtrait
+       deux fois, et la personne ne saurait pas laquelle prendre. */
+    t('⛔⛔ AUCUN produit en double après la fusion (classeur + hérités)',
+      R.doublons.length===0, R.doublons.slice(0,4).join(' · '));
+    /* ⛔ Toute ligne reste exploitable : une portion et des calories. */
+    t('⛔ chaque ligne porte une portion ET des calories (sinon elle ne peut pas être notée)',
+      R.sansPortion.length===0 && R.sansMacro.length===0,
+      'sans portion : '+R.sansPortion.join(' · ')+' | sans kcal : '+R.sansMacro.join(' · '));
+    /* ⛔ Le doute connu survit à la fusion — il ne doit pas se perdre en chemin. */
+    t('⛔ le doute du Korean Whopper survit à la fusion (752 publiées / 616 calculées)',
+      R.korean.length>0 && /752/.test(String(R.korean[0])), String(R.korean[0]).slice(0,60));
+    /* ⛔ NON-RÉGRESSION : les autres sources sont intactes. */
+    t('⛔ NON-RÉGRESSION — les aliments et les alias ne bougent pas (riz, coca zéro)',
+      /^Riz blanc, cuit/.test(String(R.riz)) && /sans sucres? ajout/i.test(String(R.coca)),
+      [R.riz, R.coca].join(' | ').slice(0,70));
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+  /* ⛔⛔ ET LE BLOC FIGÉ DOIT RESTER UN PIS-ALLER NOMMÉ : s'il grossissait sans qu'on s'en
+     aperçoive, on reconstruirait à la main une base qu'on ne peut plus auditer. */
+  {
+    const py=fs.readFileSync(path.join(ROOT,'tools','marques.py'),'utf8');
+    const bloc=(py.split('HERITAGE = [')[1]||'').split('\n]')[0];
+    const n=(bloc.match(/^\s*\[/gm)||[]).length;
+    t('⛔⛔ le bloc HERITAGE est BORNÉ (≤ 15 lignes) et dit qu\'il doit rétrécir, jamais grossir',
+      /* ⚠️ MOTIF CORRIGÉ À LA 1ʳᵉ PASSE — §31, 5ᵉ fois du jour : je cherchais « RÉTRÉCIR » en
+         MAJUSCULES dans un commentaire qui l'écrit en minuscules. *La garantie n'a jamais été la
+         casse d'un mot : c'est que le rôle décroissant du bloc soit ÉCRIT quelque part.* */
+      n>0 && n<=15 && /r[ée]tr[ée]cir[^.]{0,20}jamais grossir/i.test(py), n+' lignes figées');
+    t('⛔ … et sa raison est écrite (source perdue, non auditable — R30)',
+      /source PERDUE|classeur d'origine est PERDU/i.test(py) && /pis-aller/i.test(py), '');
+  }
+}
+
+/* ═══ CCXXX. O'TACOS SORT DE LA BASE, ET LE RETRAIT EST FIGÉ (ft-v1121) ═════════════════════
+   Décision de Michel : *« vire-les »*. Ses 5 lignes gardées étaient **toutes des desserts** —
+   Mix glace, Milkshake, Chantilly, deux Kinder Bueno — et **aucun tacos**. Taper « tacos »
+   rendait donc une **glace**. 👉 ***Un mot qui ne désigne pas ce qu'on croit est pire qu'un mot
+   qui ne rend rien.***
+   ⭐⭐ ET ÇA RÉTABLIT UNE DÉCISION DÉJÀ PRISE : en ft-v1113, `tacos` n'avait délibérément PAS été
+   mappé dans la table nationale — *« il n'est pas dans la table, et on ne sert pas un kebab à sa
+   place »*. La base de marques contredisait cette décision **sans qu'on l'ait voulu**.
+   ⛔ R30 : UN RETRAIT SE FIGE PAR UN TEST, sinon il redevient un bug — quelqu'un les remettra en
+   croyant réparer un oubli. *C'est arrivé au calculateur de plaques, trois mois après.*
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXX. O\'Tacos sort de la base, et le retrait est figé (ft-v1121) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    const t=await _marquesCharger(); await _ciqualCharger(); await _aliasCharger();
+    const marq=q=>(_marquesChercher(q,3)||[]).map(i=>_marques.a[i][1]+' · '+_marques.a[i][0]);
+    const ciq=q=>(_ciqualChercher(q,3)||[]).map(x=>x[1]);
+    const o={total:t?t.a.length:0, ens:{}};
+    t.a.forEach(a=>{ o.ens[a[0]]=(o.ens[a[0]]||0)+1; });
+    o.tacosMarq=marq('tacos'); o.otacosMarq=marq('otacos'); o.tacosCiq=ciq('tacos');
+    o.glace=marq('mix glace'); o.kinder=marq('kinder bueno');
+    /* ⛔ NON-RÉGRESSION : les autres enseignes ne bougent pas */
+    o.bigmac=marq('big mac'); o.frite=marq('grande frite mcdo'); o.quick=marq('mega giant');
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXX n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ CONTRÔLE — la base est chargée, sinon « O'Tacos absent » serait vrai sur du vide. */
+    t('⛔ CONTRÔLE — la base d\'enseignes est chargée et répond',
+      R.total>=110 && R.bigmac.length>0, R.total+' produits · '+JSON.stringify(R.ens));
+    /* ⭐⭐ LE RETRAIT LUI-MÊME. */
+    t('⭐⭐ O\'Tacos n\'est PLUS dans la base (5 desserts, aucun tacos — décision Michel)',
+      !R.ens["O'Tacos"], JSON.stringify(R.ens));
+    /* ⭐⭐ ET SON EFFET, QUI EST LA VRAIE RAISON DU RETRAIT : « tacos » ne rend plus une glace. */
+    t('⭐⭐ « tacos » ne rend plus une GLACE — ni dans les marques, ni dans les aliments',
+      R.tacosMarq.length===0 && R.tacosCiq.length===0 && R.otacosMarq.length===0,
+      'marques : '+R.tacosMarq.join(' · ')+' | aliments : '+R.tacosCiq.join(' · '));
+    /* ⛔ Les desserts eux-mêmes sont partis, pas seulement le mot qui y menait. */
+    t('⛔ … et les desserts sont vraiment partis (mix glace, kinder bueno)',
+      R.glace.length===0 && R.kinder.length===0, R.glace.concat(R.kinder).join(' · '));
+    /* ⛔ NON-RÉGRESSION : on a retiré une enseigne, pas cassé les autres. */
+    t('⛔ NON-RÉGRESSION — Big Mac, frites McDo et Quick répondent toujours',
+      /Big Mac/.test(R.bigmac[0]||'') && /[Ff]rite/.test(R.frite[0]||'') && /Giant/.test(R.quick[0]||''),
+      [R.bigmac[0],R.frite[0],R.quick[0]].join(' | ').slice(0,80));
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+  /* ⛔⛔ R30 — LE RETRAIT EST ÉCRIT AVEC SA RAISON, ET C'EST CE TÉMOIN QUI EMPÊCHE QU'ON LE
+     « RÉPARE » DANS SIX MOIS. Un retrait volontaire ne laisse qu'une absence, et une absence
+     ressemble exactement à un oubli. */
+  {
+    const py=fs.readFileSync(path.join(ROOT,'tools','marques.py'),'utf8');
+    t('⛔⛔ R30 — le retrait est DÉCLARÉ dans le générateur, pas juste absent du résultat',
+      /ENSEIGNES_ECARTEES\s*=\s*\{/.test(py) && /O'Tacos/.test(py), '');
+    t('⛔ … et sa RAISON est écrite (aucun tacos, décision de Michel)',
+      /aucun tacos/i.test(py) && /d[ée]cision Michel/i.test(py), '');
+  }
+  /* ⛔⛔ ET L'AIDE NE PROMET PLUS CE QUI N'EST PLUS VRAI : elle disait « taper tacos te rendra une
+     glace ». 3ᵉ cas de la série — *une aide qui nomme un repère inexistant est pire qu'une aide
+     absente, parce qu'on la croit.* */
+  {
+    const sc=fs.readFileSync(path.join(ROOT,'screens.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
+    const co=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
+    t('⛔ CONTRÔLE — l\'aide parle bien d\'O\'Tacos (sinon le témoin suivant serait vert sur du vide)',
+      /O\\?'Tacos/.test(sc) && /O\\?'Tacos/.test(co), '');
+    t('⛔⛔ l\'aide ne dit PLUS que « tacos » rend une glace (c\'est devenu faux)',
+      !/te rendra donc une glace/.test(sc) && !/te rendra une glace/.test(co), '');
+  }
+}
+
+/* ═══ CCXXXI. LE TEST A/B MÉMOIRE REÇOIT SA PORTE D'ENTRÉE (ft-v1122) ═══════════════════════
+   Michel : *« le test A/B je peux pas le faire »*, puis *« je ne sais pas comment faire »*.
+   ⛔⛔ LA CAUSE N'ÉTAIT PAS LE TEMPS, ET ELLE ÉTAIT MESURABLE : `tests/milo/ab-memoire.js` est
+   prêt depuis le 03/09 et n'a JAMAIS tourné, parce qu'il était le **seul** test lançable par
+   Michel sans bouton. Le benchmark, le comparateur, le Gardien, VM et PT-001 en ont tous un.
+   👉 ***Un outil sans porte d'entrée n'est pas un outil en attente, c'est un outil qui
+   n'existe pas.*** On a écrit « en attente de Michel » pendant deux semaines pour ça.
+   ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION N'EST PAS « le bouton existe » — c'est **règle d'or #3** :
+   la passe REMPLACE le profil par un persona, et les vraies données doivent revenir. *Un
+   laboratoire qui abîme les données qu'il mesure est pire que pas de laboratoire.*
+   ⭐ ET CELUI QUI DIT SI L'EXPÉRIENCE A UN SENS : l'écart de mémoire entre A et B. Si les deux
+   contextes se ressemblent, on ne mesure rien — et on lirait quand même les deux textes en
+   cherchant une différence, qu'on finirait par trouver.
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXXI. Le test A/B mémoire reçoit sa porte d\'entrée (ft-v1122) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  /* ⭐ De VRAIES données RECONNAISSABLES : avec un profil vide, « les données reviennent »
+     serait vert même si la restauration ne marchait pas du tout. */
+  await p.addInitScript(seedScript({ft4_name:'MICHEL_VRAI',ft4_bw:'88.8',ft4_age:'46',
+    ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    const o={};
+    o.fns=['startAbMemoire','_abRun','_abShowResultCard','copyAbText','_abMesureContexte']
+      .filter(f=>typeof window[f]==='function');
+    o.nCas=(typeof _AB_CAS!=='undefined'&&Array.isArray(_AB_CAS))?_AB_CAS.length:0;
+    o.ids=(typeof _AB_CAS!=='undefined')?_AB_CAS.map(c=>c.id):[];
+    o.seuil=(typeof _AB_ECART_MINI!=='undefined')?_AB_ECART_MINI:null;
+    o.avantNom=S.name; o.avantBw=S.bw;
+    /* ⛔ ON REJOUE LE GEL EXACTEMENT COMME `_abRun`, SANS APPELER L'API : ce qu'on teste est
+       la manipulation du profil, pas la réponse de Milo (qui coûterait de l'argent). */
+    o.mes=[];
+    try{ persist(); }catch(e){}
+    window._demoMode=true;
+    try{
+      for(const cas of _AB_CAS){
+        const l={id:cas.id};
+        for(const cote of ['avec','sans']){
+          _vcApplyPersona({apply:cas[cote]||{}});
+          l[cote]=_abMesureContexte(buildCoachContext(cas.demande));
+          if(cote==='avec') l.nomPendant=S.name;
+        }
+        l.ecart=(l.avec.propre||0)-(l.sans.propre||0);
+        o.mes.push(l);
+      }
+    }catch(e){ o.errBoucle=e.message; }
+    finally{ window._demoMode=false; try{ load(); }catch(e){} }
+    o.apresNom=S.name; o.apresBw=S.bw; o.apresStock=localStorage.getItem('ft4_name');
+    return o;
+  }catch(e){ return {err:e.message}; } });
+
+  t('⛔ CONTRÔLE — les cas A/B sont chargés (sinon tout le bloc serait vert sur du vide)',
+    !R.err && R.nCas>=2 && R.ids.indexOf('AB-1')>=0, R.err||('cas: '+R.ids));
+  t('⭐ le bouton a toutes ses pièces (lancement, passe, résultat, copie, mesure)',
+    R.fns && R.fns.length===5, String(R.fns));
+
+  /* ⭐⭐ RÈGLE D'OR #3 — LE TÉMOIN QUI PORTE LA VERSION. Contrôle négatif fait le 04/09 en
+     sautant `load()` : il rougit bien (« après : Michel / 85 kg »). *Un témoin qu'on n'a pas
+     vu échouer ne prouve rien* (leçon de ft-v994). */
+  t('⛔ CONTRÔLE — pendant la passe, le profil EST le persona (sinon on ne teste aucun échange)',
+    R.mes && R.mes[0] && R.mes[0].nomPendant==='Michel', String((R.mes||[])[0]&&R.mes[0].nomPendant));
+  t('⭐⭐ RÈGLE D\'OR #3 : les VRAIES données reviennent après la passe',
+    R.apresNom==='MICHEL_VRAI' && String(R.apresBw)==='88.8', R.apresNom+' / '+R.apresBw);
+  t('⭐⭐ … et le STOCKAGE n\'a jamais été écrasé par le persona',
+    R.apresStock==='MICHEL_VRAI', String(R.apresStock));
+  t('⛔ aucune erreur pendant la passe', !R.errBoucle, String(R.errBoucle||''));
+
+  /* ⭐⭐ SANS ÉCART, LA PASSE NE MESURE RIEN — et elle coûterait quand même 4 appels. */
+  const ec=(R.mes||[]).map(m=>m.ecart||0);
+  t('⭐⭐ l\'expérience mesure quelque chose : chaque cas a un vrai écart de mémoire',
+    ec.length>=2 && ec.every(x=>x>=(R.seuil||2000)), 'écarts: '+ec.join(' · ')+' (seuil '+R.seuil+')');
+  t('⛔ … et le SANS-mémoire est bien identique d\'un cas à l\'autre (même fixture nue)',
+    R.mes && R.mes.length>=2 && R.mes[0].sans.propre===R.mes[1].sans.propre,
+    (R.mes||[]).map(m=>m.sans.propre).join(' vs '));
+  t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+
+  /* ⛔⛔ R2 — LE SCRIPT NODE NE REDÉFINIT PLUS LES CAS. Deux copies des mêmes fixtures
+     divergeraient : l'une gagnerait un correctif, l'autre non, et on comparerait deux
+     expériences différentes en croyant comparer deux mémoires. */
+  {
+    const ab=fs.readFileSync(path.join(ROOT,'tests','milo','ab-memoire.js'),'utf8');
+    const abSansCom=ab.replace(/\/\*[\s\S]*?\*\//g,'');
+    t('⭐⭐ R2 — le script node LIT `_AB_CAS` depuis la page, il ne le redéfinit pas',
+      /_AB_CAS/.test(abSansCom) && !/^\s*const\s+CAS\s*=\s*\[/m.test(abSansCom), '');
+    t('⛔ … et il ÉCHOUE bruyamment si les cas manquent (jamais un repli silencieux)',
+      /process\.exit\(2\)/.test(abSansCom) && /introuvable/.test(ab), '');
+    /* ⚠️ La référence doit être NUE : un `const` global n'est pas posé sur `window`, donc
+       `window._AB_CAS` rendrait toujours undefined — le script conclurait « les cas ont
+       disparu » sur du code parfaitement sain. */
+    t('⛔⛔ la lecture est une référence NUE, jamais `window._AB_CAS` (un const n\'est pas sur window)',
+      !/window\._AB_CAS/.test(abSansCom), '');
+    t('⭐ R2 — la mesure du contexte a UN propriétaire, appelé des deux côtés',
+      /_abMesureContexte/.test(abSansCom), '');
+  }
+
+  /* ⚠️ AUCUN NOMBRE DE CAS EN DUR DANS L'ÉCRAN — la leçon des libellés « 16 scénarios »
+     restés faux trois semaines pendant que le banc passait à 53. */
+  {
+    const ih=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+    const bout=(ih.match(/<button[^>]*startAbMemoire\(\)[^>]*>([^<]*)</)||[])[1]||'';
+    t('⛔ CONTRÔLE — le bouton A/B est bien dans l\'écran', !!bout, bout);
+    t('⚠️ … et son libellé ne fige AUCUN nombre de cas (il est annoncé à la confirmation)',
+      !!bout && !/\d/.test(bout), bout);
+    const co=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
+    t('⛔ réservé à l\'admin, comme tout le Laboratoire',
+      /function startAbMemoire\(\)\{[\s\S]{0,200}_isAdminUnlocked/.test(co), '');
+    /* ⛔⛔ ON NE PROMET AUCUN VERDICT. « La séance est-elle meilleure ? » se juge à l'œil —
+       c'est le critère de JOURNAL-DE-TEST.md. Afficher un ✅ mentirait sur ce qu'on a mesuré. */
+    t('⭐⭐ l\'écran DIT qu\'il n\'y a pas de ✅/❌ (le juge est humain)',
+      /pas de ✅\/❌/.test(ih) && /juge à l'œil|juge à l’œil/.test(ih), '');
+  }
+
+  /* ═══ CCXXXI bis. LA FIXTURE FAIT-ELLE CE QU'ELLE ANNONCE ? (04/09/2026) ═══════════════
+     ⭐⭐ Trouvé par session-A en lisant la VRAIE passe A/B, pas le code : `_abHistoDC` disait
+     en commentaire « des charges qui PROGRESSENT » et le barème DESCENDAIT — la séance la plus
+     récente était la plus légère, et la fixture contredisait son propre record (95 kg il y a
+     9 jours) en montrant 80 kg la veille.
+     👉 ***Une fixture qui ne fait pas ce qu'elle annonce ne rate pas le test : elle le fait
+     passer sur autre chose.*** Et rien ne pouvait rougir — Milo lit correctement ce qu'on lui
+     donne, donc la passe restait lisible. C'est ça qui l'a rendue durable deux semaines.
+     ⛔ Les témoins ci-dessous mesurent le SENS, jamais des valeurs en dur : un barème qui
+     changerait de bornes resterait vert tant qu'il progresse, et c'est bien la garantie. */
+  {
+    const F=await p.evaluate(()=>{
+      if(typeof _abHistoDC!=='function') return {absente:true};
+      const s=_abHistoDC(), kg=x=>x.exs[0].sets[0].kg;
+      const parDate=s.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))); // du + vieux
+      return { absente:false, n:s.length,
+        vieuxKg:kg(parDate[0]), recentKg:kg(parDate[parDate.length-1]),
+        /* ⭐ le tableau est-il rangé comme l'app range S.sessions (date décroissante) ? */
+        rangeCommeLApp:s.every((x,i)=>i===0||String(s[i-1].date)>=String(x.date)),
+        kgMonteAvecLeTemps:parDate.map(kg).every((v,i)=>i===0||v>=parDate.map(kg)[i-1]),
+        tsSuitLaDate:parDate.every((x,i)=>i===0||x.ts>=parDate[i-1].ts),
+        /* ⛔ CONTRÔLE : sans écart, « ça progresse » serait vrai sur une fixture plate. */
+        ecart:kg(parDate[parDate.length-1])-kg(parDate[0]) };
+    });
+    if(F.absente) t('⛔ CONTRÔLE — la fixture A/B existe', false, '_abHistoDC absente');
+    else{
+      t('⛔ CONTRÔLE — la fixture n\'est pas PLATE (sinon « ça progresse » ne dit rien)',
+        F.ecart>0 && F.n>=12, 'écart '+F.ecart+' kg sur '+F.n+' séances');
+      t('⭐⭐ les charges MONTENT avec le temps — ce que le commentaire annonce',
+        F.kgMonteAvecLeTemps===true, 'plus vieille '+F.vieuxKg+' kg → plus récente '+F.recentKg+' kg');
+      t('⛔ le tableau est rangé comme l\'app range `S.sessions` (date décroissante)',
+        F.rangeCommeLApp===true, '');
+      /* ⛔⛔ UN SEUL « QUAND » PAR SÉANCE. Le `ts` allait dans le sens INVERSE de la date
+         (`ts:9000+i` montait pendant que la date reculait). Inoffensif tant que `ts` n'est lu
+         que comme identifiant — *mais une fixture qui porte deux « quand » contradictoires
+         n'attend qu'un lecteur qui trie par le mauvais* (R2). */
+      t('⛔⛔ le `ts` va dans le MÊME sens que la date (un seul « quand » par séance)',
+        F.tsSuitLaDate===true, '');
+    }
+  }
+
+  /* ═══ CCXXXI ter. LE BANC D'ESSAI : DES IDS UNIQUES, ET DES FIXTURES QUI EXISTENT ═══════
+     ⭐⭐ CE BLOC EST NÉ D'UNE ERREUR QUE J'AI FAITE EN L'ÉCRIVANT (04/09) : en promouvant AB-2
+     j'ai donné à mon scénario l'id **EV-055**… déjà pris depuis le 01/09 par « deux charnières
+     de hanche », rangé hors séquence 470 lignes plus haut. Rien n'a protesté. ⛔ Et ce n'est
+     pas cosmétique : **le rapport suit les scénarios PAR ID** (c'est comme ça qu'un ❌ devenu ✅
+     se voit), donc deux scénarios du même id fusionnent silencieusement dans le suivi.
+     👉 ***Le témoin qui manquait aurait coûté une seconde ; c'est le genre qu'on n'écrit que
+     le jour où on tombe dedans.*** (R17.) */
+  {
+    let SC=null, err='';
+    try{ SC=require(path.join(ROOT,'tests','milo','eval-scenarios.js')); }catch(e){ err=e.message; }
+    t('⛔ CONTRÔLE — les scénarios du banc se chargent', Array.isArray(SC)&&SC.length>0, err||('n='+(SC&&SC.length)));
+    if(Array.isArray(SC)){
+      const ids=SC.map(x=>x&&x.id);
+      const dbl=[...new Set(ids.filter((v,i)=>ids.indexOf(v)!==i))];
+      t('⭐⭐ AUCUN id de scénario en double (le rapport les suit par id)',
+        dbl.length===0, dbl.join(', '));
+      t('⛔ … et aucun scénario sans id ni sans vérification',
+        SC.every(x=>x&&x.id&&Array.isArray(x.verifs)&&x.verifs.length>0), '');
+
+      /* ⛔⛔ LA FIXTURE D'UNE BLESSURE DOIT EMPLOYER LES NOMS QUE L'APP ÉCRIT VRAIMENT.
+         EV-050 écrivait `{zone:'épaule droite', etat:'actif'}` : DEUX champs inexistants —
+         l'écran Santé (`saveHI`) écrit `status` et des CODES de zone (`epaule_d`), et
+         `_gardienZoneKey` matche `/epaule/`, qui ne reconnaît pas « épaule » accentué.
+         Mesuré : `zones.epaule.active` restait FAUX, et le scénario passait grâce à ses
+         `notes` en texte libre — la blessure STRUCTURÉE, celle de son titre, était inerte.
+         *C'est `BUGS.md` §36 : un scénario qui teste un champ inexistant.*
+         ⛔ Le témoin vise la RÈGLE, pas EV-050 : toute fixture qui déclare une blessure doit
+         employer `status`, et une zone que le Gardien sait résoudre. */
+      const blessees=SC.filter(x=>x&&x.apply&&x.apply.healthProfile&&
+                                  (x.apply.healthProfile.injuries||[]).length);
+      t('⛔ CONTRÔLE — des scénarios déclarent bien une blessure (sinon la garde est vide)',
+        blessees.length>0, blessees.length+' scénario(s)');
+      const mauvaises=[];
+      blessees.forEach(x=>(x.apply.healthProfile.injuries||[]).forEach(inj=>{
+        if(!inj || !inj.status) mauvaises.push(x.id+' : pas de `status` ('+Object.keys(inj||{}).join(',')+')');
+        else if(!/epaule|genou|dos_bas|dos_haut|cou|coude|poignet|hanche|cheville/.test(String(inj.zone||'')))
+          mauvaises.push(x.id+' : zone « '+inj.zone+' » que `_gardienZoneKey` ne résout pas');
+      }));
+      t('⭐⭐ toute blessure de fixture emploie `status` ET une zone que le Gardien résout',
+        mauvaises.length===0, mauvaises.join(' | '));
+    }
+  }
+
+  /* ⭐ ET LE PONT EST VÉRIFIÉ SUR LE VRAI GARDIEN, pas sur ma lecture du code : la forme
+     qu'écrit l'écran Santé doit activer la zone, et `etat` ne doit RIEN activer — sinon le
+     témoin ci-dessus garderait une règle qui ne sert à rien. */
+  {
+    const G=await p.evaluate(()=>{
+      const essai=inj=>{ S.healthProfile={injuries:[inj],conditions:[],notes:''}; S.dayState=null;
+        const z=_gardienZones(); return !!(z.epaule&&z.epaule.active); };
+      const avant=JSON.stringify(S.healthProfile||null);
+      const o={ prod:essai({zone:'epaule_d',status:'active'}),
+                etat:essai({zone:'epaule_d',etat:'actif'}),
+                accent:essai({zone:'épaule droite',status:'active'}),
+                regle:(()=>{ S.healthProfile={injuries:[{zone:'epaule_d',status:'active'}],conditions:[],notes:''};
+                  return /épaule/i.test(_gardienRules()||''); })() };
+      try{ S.healthProfile=JSON.parse(avant); }catch(e){}
+      return o;
+    });
+    t('⭐⭐ la forme que l\'écran Santé ÉCRIT (`epaule_d` + `status`) active bien la zone', G.prod===true, '');
+    t('⛔⛔ … et la règle d\'épaule atteint vraiment le contexte de Milo (R4)', G.regle===true, '');
+    t('⛔ CONTRE-ÉPREUVE — `etat:\'actif\'` n\'active RIEN (c\'est la faute d\'EV-050)', G.etat===false, '');
+    t('⛔ CONTRE-ÉPREUVE — « épaule droite » accentué n\'est résolu par aucune zone', G.accent===false, '');
+  }
+}
+
+/* ═══ CCXXXII. « COÛT RÉEL DU JOUR » DIT DE QUEL JOUR (ft-v1126) ═══════════════════════════
+   Michel, capture à l'appui : *« on ne sait pas si c'est dans la journée ou depuis 1 mois »*.
+   Le titre disait « du jour » — exact, mais **rien ne le prouvait à l'écran**, et 1,02 € ne se
+   lit pas pareil selon qu'il couvre un jour ou un mois.
+   👉 ***Un chiffre sans sa période n'est pas un chiffre, c'est une impression.***
+   ⭐ RIEN À CONSTRUIRE (R5) : `_aiUsageAdd_` remet à zéro dès que la date change, et
+   `_aiUsageLire_` renvoyait DÉJÀ `u.date` — l'app la recevait et la jetait.
+   ⚠️⚠️ LE PIÈGE ÉVITÉ, ET IL A DÉJÀ COÛTÉ UNE VERSION : `_dateLisible` existe dans le projet
+   mais c'est une const LOCALE à une fonction de `coach.js`. L'appeler depuis `app.js` aurait
+   levé `is not defined` et **fait disparaître TOUT le panneau Santé** — le `_esc is not
+   defined` de ft-v1114, qui avait vidé la liste des aliments entière.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXXII. « Coût réel du jour » dit de quel jour (ft-v1126) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1700);
+  const R=await p.evaluate(()=>{ try{
+    /* ⛔ LES VRAIS CHIFFRES DE MICHEL (capture du 04/09 22:30), pas des chiffres inventés :
+       25 appels · 50 339 entrée · 8 067 sortie · 236 479 lus en cache · 1,02 €. */
+    const bloc=(dateVal)=>{
+      const t={calls:25,inTok:50339,outTok:8067,cacheR:236479};
+      const _d=String(dateVal||'');
+      let jourCompte=null;
+      if(/^\d{8}$/.test(_d)){
+        const dt=new Date(+_d.slice(0,4), +_d.slice(4,6)-1, +_d.slice(6,8));
+        jourCompte = isNaN(dt)?null:dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+      }
+      return _healthRow('💰','Coût réel du jour','ok',
+        '<b>'+t.calls+'</b> appel(s) · '+t.inTok.toLocaleString('fr-FR')+' tokens entrée'
+        +'<br><span>📅 '+(jourCompte?('journée du <b>'+_escIdea(jourCompte)+'</b>'):'journée en cours')
+        +' seulement — remis à zéro chaque nuit, rien n\'est cumulé.</span>');
+    };
+    const txt=h=>{const d=document.createElement('div');d.innerHTML=h;return d.textContent.replace(/\s+/g,' ').trim();};
+    const src=(typeof loadHealthAdmin==='function')?String(loadHealthAdmin):'';
+    return { normal:txt(bloc('20260904')), sansDate:txt(bloc('')), pourrie:txt(bloc('pasunedate')),
+             /* ⛔ la garantie n'est pas « le texte est là » mais « le code lit bien ai.usage.date » */
+             litLaDate:/ai\.usage\.date/.test(src),
+             /* ⛔⛔ et qu'il n'appelle PAS la fonction locale de coach.js */
+             nAppellePas:!/_dateLisible\s*\(/.test(src) };
+  }catch(e){ return {err:e.message}; } });
+
+  t('⛔ CONTRÔLE — le panneau Santé est chargé (sinon tout ce bloc serait vert sur du vide)',
+    !R.err && typeof R.litLaDate==='boolean', R.err||'');
+  t('⭐⭐ la période est NOMMÉE : « journée du vendredi 4 septembre »',
+    /journée du vendredi 4 septembre/.test(R.normal||''), (R.normal||'').slice(0,110));
+  t('⭐⭐ … et le doute de Michel est levé en clair : rien n\'est cumulé',
+    /remis à zéro chaque nuit/.test(R.normal||'') && /rien n'est cumulé/.test(R.normal||''), '');
+  t('⭐ le code lit bien `ai.usage.date` (la donnée existait, elle était jetée — R5)',
+    R.litLaDate===true, '');
+  /* ⛔⛔ LE TÉMOIN QUI PROTÈGE CONTRE LE BUG DE ft-v1114 : `_dateLisible` est LOCALE à
+     coach.js. Un appel d'ici ferait disparaître le panneau ENTIER, pas juste cette ligne. */
+  t('⛔⛔ … sans appeler `_dateLisible`, qui est LOCALE à coach.js (le piège de ft-v1114)',
+    R.nAppellePas===true, '');
+  /* ⛔ UN REPLI QUI MONTRE « undefined » serait pire que pas de date du tout. */
+  t('⛔ si le serveur n\'envoie pas la date : repli propre, jamais « undefined »',
+    /journée en cours/.test(R.sansDate||'') && !/undefined|NaN|Invalid/.test(R.sansDate||''), R.sansDate||'');
+  t('⛔ … et si la date est illisible, pareil',
+    /journée en cours/.test(R.pourrie||'') && !/undefined|NaN|Invalid/.test(R.pourrie||''), R.pourrie||'');
+  t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
 }
 
 await b.close(); srv.close();
@@ -24166,6 +26321,7 @@ console.log('\n-- CXCI. Une mise à jour ne tue plus un banc d\'essai en cours (
   t('⛔ le drapeau `_evRunning` existe et est bien posé par le banc d\'essai (sinon garde morte)',
     /_evRunning\s*=\s*true/.test(fs.readFileSync(path.join(ROOT,'coach.js'),'utf8')), '');
 }
+
 
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

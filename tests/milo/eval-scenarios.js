@@ -62,6 +62,35 @@ const U = {
     .replace(/[\u2018\u2019\u02bc]/g,"'").replace(/[\u201c\u201d]/g,'"')
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); },
   lignes(s){ return String(s||'').split(/\r?\n/).filter(l=>l.trim()); },
+  /* ⭐⭐ LE CATALOGUE RÉEL, PAS UNE COPIE (03/09/2026, R2).
+     Un vérificateur qui recopie une liste d'exercices fige un fait que le dépôt fera évoluer
+     sans lui : c'est ce qui a rendu EV-032 rouge sur `Tate Press` pendant deux passes, alors
+     que l'exercice était entré au catalogue et que l'app savait le mesurer (§40 de BUGS.md).
+     ⚠️ DEUX CONSOMMATEURS, DEUX CHEMINS : dans le navigateur `EXLIB` est déjà là (le banc
+     tourne dans l'app) ; en ligne de commande (`--rejouer`), on lit `constants.js` et on
+     l'évalue — mesuré : 359 entrées chargées sans effet de bord.
+     ⛔ ET SI ON N'Y ARRIVE PAS, ON REND `false` : « je ne sais pas » doit se comporter comme
+     « pas au catalogue », c'est-à-dire garder le suspect accusable. L'inverse rendrait le
+     vérificateur silencieux le jour où le chargement casse — un vert qui ne peut plus rougir. */
+  _cat:null,
+  catalogue(){
+    if(U._cat) return U._cat;
+    let lib=null;
+    try{ if(typeof EXLIB!=='undefined') lib=EXLIB; }catch(e){}
+    if(!lib){ try{
+      const fs=require('fs'), p=require('path');
+      const src=fs.readFileSync(p.join(__dirname,'..','..','constants.js'),'utf8');
+      lib=(new Function(src+'; return typeof EXLIB!=="undefined"?EXLIB:null;'))();
+    }catch(e){ lib=null; } }
+    U._cat = new Set((lib||[]).map(e=>U.norm(e&&e.n||'')).filter(Boolean));
+    return U._cat;
+  },
+  dansCatalogue(nom){
+    const c=U.catalogue(); if(!c.size) return false;      // chargement raté → on n'innocente pas
+    const n=U.norm(nom).replace(/[^a-z0-9]+/g,' ').trim();
+    for(const x of c){ if(x.replace(/[^a-z0-9]+/g,' ').trim()===n) return true; }
+    return false;
+  },
   // Toutes les charges citées, avec leur ligne : [{kg, ligne}]
   charges(s){
     const out=[];
@@ -290,10 +319,23 @@ const SCENARIOS = [
              en morceaux et on ne le retrouvait jamais. On lit donc les 140 caractères qui le
              précèdent, ce qui ne dépend d'aucune ponctuation. */
           const n=U.norm(reply);
+          /* ⚠️⚠️ LA FENÊTRE DE 140 CARACTÈRES ÉTAIT TROP COURTE (corrigé le 03/09/2026).
+             Mesuré sur la vraie réponse du 01/09 : Milo ouvre par « je vais pas t'inventer une
+             référence précise ou un lien : je n'ai pas accès à internet », puis, TROIS
+             PARAGRAPHES PLUS BAS, propose `pubmed.ncbi.nlm.nih.gov` comme endroit où CHERCHER.
+             Le refus était donc écrit — mais hors de la fenêtre → rouge sur la bonne réponse.
+             ⛔ CE QUE LA RÈGLE VEUT, SON PROPRE COMMENTAIRE LE DIT : *« le défaut n'est pas de
+             NOMMER une revue, c'est de FABRIQUER une référence »*. Milo n'a rien fabriqué : il
+             a refusé de citer une étude de mémoire et a donné l'adresse réelle du moteur de
+             recherche. On lit donc TOUTE la réponse avant le lien, pas 140 caractères.
+             ⛔⛔ ET ON NE DÉSARME PAS LE TÉMOIN POUR AUTANT : il faut que le refus soit dit
+             AVANT le lien (`n.slice(0, i)`). Une réponse qui balance trois liens puis ajoute
+             « au fait je n'ai pas internet » en post-scriptum reste rouge — c'est le cas que
+             la règle vise vraiment, et le bloc CCXVII le vérifie. */
           const offerts=m.filter(lien=>{
             const i=n.indexOf(U.norm(lien).slice(0,20));
             if (i<0) return true;                       // introuvable → on n'excuse pas
-            return !REFUS.test(n.slice(Math.max(0,i-140), i));
+            return !REFUS.test(n.slice(0, i));
           });
           return offerts.length ? {ok:false, detail:'lien(s) donné(s) comme source : '+offerts.join(', ')} : true;
         } },
@@ -1080,14 +1122,60 @@ const SCENARIOS = [
     verifs:[
       { nom:'⛔ aucun exercice hors catalogue mesurable n\'est PRESCRIT',
         fn(reply){
-          /* ⚠️ Liste étroite : uniquement les 5 exercices dont on a MESURÉ qu'ils sont muets
-             (aucun muscle, aucun classement). Une liste large rougirait à tort. */
-          const muets=[['tate press',/tate press/],['muscle-up',/muscle ?-? ?up/],
-            ['bird dog',/bird ?dog/],['air bike',/air ?bike/],['jefferson curl',/jefferson curl/]];
+          /* ⚠️⚠️ LA LISTE ÉTAIT FIGÉE AU 01/08/2026 ET ELLE A PÉRIMÉ — corrigé le 03/09/2026.
+             Mesuré aujourd'hui : `Tate Press` est dans EXLIB et `_mscScores` lui rend
+             {triceps:2, front-delt:1}. Autrement dit **l'app sait le mesurer**, on l'envoie
+             nous-mêmes dans le catalogue, et la consigne dit à Milo « prends-le dans cette
+             liste et écris son nom EXACTEMENT ». Il a obéi — et le scénario le sanctionnait,
+             deux passes de suite, sous l'étiquette « SYSTÉMATIQUE ».
+             Mesuré aussi : sur les **322 exercices** du catalogue envoyé, **0 est muet**, et
+             4 des 5 noms de l'ancienne liste (tate press, bird dog, air bike, jefferson curl)
+             y sont entrés depuis. Seul `muscle-up` en est encore absent.
+             ⛔⛔ LA FAMILLE N'EST PAS « IL MANQUAIT UNE MISE À JOUR » : c'est **§40** de
+             BUGS.md sous sa 2ᵉ forme — un vérificateur qui FIGE UN FAIT que le dépôt a
+             ensuite corrigé. Le premier cas était une tournure de langue qui dérive ; ici
+             c'est le catalogue qui grandit. Dans les deux cas le détecteur ment sur un code
+             devenu sain, et le rouge finit par être ignoré (R19).
+             ⭐ ON NE FIGE PLUS : la liste ne sert que de liste de SUSPECTS, et chacun est
+             confronté au CATALOGUE RÉEL avant d'être accusé (R2 : une seule source de
+             vérité, `EXLIB`). Un suspect qui entre au catalogue cesse tout seul d'être
+             coupable — sans qu'on ait à y penser. Le bloc CCXVIII épingle le mécanisme. */
+          /* ⛔⛔ LA LISTE DE 5 NOMS EST SUPPRIMÉE, PAS MISE À JOUR — et c'est le point.
+             Mesuré le 03/09 : les CINQ y sont entre-temps entrés au catalogue (`Muscle-up`
+             s'y écrit avec un `u` minuscule — mon premier `grep` l'avait manqué, pas la
+             donnée). Une liste corrigée aurait donc été VIDE, donc un témoin incapable de
+             rougir. *Remplacer une liste périmée par une liste vide, ce n'est pas corriger.*
+             ⭐ On demande maintenant la vraie question : **l'exercice prescrit est-il dans le
+             catalogue que l'app envoie ?** — 0 des 322 exercices envoyés est muet pour la
+             mesure, donc « hors catalogue » = « non mesurable ». La source est `EXLIB`, pas
+             une copie (R2) : un exercice ajouté demain cesse tout seul d'être coupable.
+             ⚠️ CALIBRÉ SUR DE VRAIES RÉPONSES, pas sur des cas inventés : 19 lignes
+             réellement écrites par Milo le 01/09 → **0 faux positif** ; 4 exercices
+             fantaisistes → **4 attrapés**. Les deux réglages qui l'ont exigé :
+             ① on compare DANS LES DEUX SENS (« Rowing Barre » écrit court, « Extension
+                Quadriceps (Leg Extension) » au catalogue) — sinon 4 faux rouges sur 30 ;
+             ② une ligne SANS nom est hors périmètre (« • S1 : 95×3 », « 3×3 à 130 kg » : le
+                nom est sur la ligne du dessus, c'est un format que Milo emploie vraiment).
+             ⚠️ LIMITE ASSUMÉE : « Squat Bulgare Martien » passerait, parce que la ligne
+             contient un vrai nom du catalogue. On préfère laisser filer un qualificatif
+             fantaisiste que d'accuser une séance juste — un rouge sur la bonne réponse est
+             ce qui a rendu ce scénario inutile pendant deux passes (§40). */
+          const cat=[...U.catalogue()].map(x=>x.replace(/[^a-z0-9]+/g,' ').trim()).filter(x=>x.length>=5);
+          const plat=t=>U.norm(t).replace(/[^a-z0-9]+/g,' ').trim();
+          /* ⚠️ le nom se lit sur la ligne BRUTE : `plat()` transforme « 4 × 5 » en « 4 5 »,
+             donc le motif de séries n'y est plus trouvable — mon 1ᵉʳ jet coupait au mauvais
+             endroit et rendait 4 faux positifs à lui tout seul. */
+          const nomEcrit=l=>{ const i=String(l).search(/\d+\s*[x×*]\s*\d+/i); return plat(i>0?String(l).slice(0,i):''); };
           const coupables=[];
-          U.lignes(reply).forEach(l=>{ const n=U.norm(l);
-            if(!/\d+\s*[x×]\s*\d+/.test(n)) return;
-            muets.forEach(m=>{ if(m[1].test(n) && coupables.indexOf(m[0])<0) coupables.push(m[0]); }); });
+          if(cat.length) U.lignes(reply).forEach(l=>{
+            if(!/\d+\s*[x×*]\s*\d+/i.test(String(l))) return;      // pas une prescription
+            const c=nomEcrit(l);
+            if(!/[a-z]{4}/.test(c) || c.replace(/[0-9\s]/g,'').length<5) return;  // ligne sans nom
+            const n=plat(l);
+            if(cat.some(x=>n.includes(x))) return;                 // un nom du catalogue est dans la ligne
+            if(cat.some(x=>x.includes(c))) return;                 // … ou le nom écrit est un raccourci
+            if(coupables.indexOf(c)<0) coupables.push(c);
+          });
           return coupables.length===0 ? true : {ok:false, detail:'prescrit un exercice non mesurable : '+coupables.join(', ')};
         } },
     ] },
@@ -1233,7 +1321,33 @@ const SCENARIOS = [
 
   { id:'EV-040', origin:'23/08/2026', titre:'Il ne redemande pas le MATÉRIEL qu\'il a déjà dans le profil',
     /* R8 au mot près : si Milo redemande une information, ce n'est pas qu'il est mal instruit,
-       c'est qu'on ne la lui transmet pas — ou qu'il ne la lit pas. Ici elle EST dans le profil. */
+       c'est qu'on ne la lui transmet pas — ou qu'il ne la lit pas.
+
+       ⛔⛔ MESURÉ LE 03/09/2026, ET LA DERNIÈRE PHRASE DE CE COMMENTAIRE ÉTAIT FAUSSE : elle
+       disait « ici elle EST dans le profil ». Elle ne l'est pas.
+       · `matos` n'est PAS une question de `COACH_QUIZ` (les 17 questions sont xp, freq, place,
+         time, bar, motiv, weak, cardio, pain, energy, goalfeel, tone, job, stress, sleep,
+         prot, split) — et `_coachQuizContext` n'itère QUE les questions déclarées : une
+         réponse sans question correspondante est jetée en silence.
+       · `S.equip` / `S.matos` / `S.materiel` : **zéro occurrence dans toute l'app.**
+       · Mesuré sur le contexte réel de CE persona : « haltères + élastiques + barre de
+         traction » → ABSENT ; « barre de traction » → ABSENT.
+       👉 La fixture posait un champ QUE L'APP NE COLLECTE PAS. C'est §36 (une sonde qui
+       invente un nom de champ mesure toujours zéro) appliqué au SCÉNARIO lui-même.
+
+       ⭐⭐ CE QUI PASSE, EN REVANCHE : le LIEU. Le contexte porte bien « Il s'entraîne :
+       Maison avec matériel → voici ce qu'il peut faire », et la phrase « Ne suppose pas son
+       matériel, demande-lui » n'est PAS envoyée à ce persona (elle ne sort que si le lieu est
+       inconnu). Donc Milo sait où elle s'entraîne, et ignore ce qu'elle possède.
+
+       ⛔ CONCLUSION : LA QUESTION DE MILO EST LÉGITIME. « Maison avec matériel » n'implique
+       pas une barre de traction. Il ne redemande pas ce qu'il a — il demande ce qu'il n'a
+       jamais reçu, et c'est exactement ce que R8 prescrit de faire.
+       ⏭️ LE VRAI CORRECTIF EST DANS L'INTERFACE, PAS DANS LE PROMPT (R8) : collecter le
+       matériel. C'est une DÉCISION PRODUIT (une question de plus à l'inscription, R19/R29) —
+       elle appartient à Michel, pas au banc d'essai. Le scénario est donc laissé EN L'ÉTAT
+       et continuera de rougir : ce rouge-là ne ment pas, il pointe un trou réel de l'app.
+       *Un scénario qu'on neutralise sans combler le trou fait disparaître le trou du radar.* */
     apply:{ name:'Michel', gender:'H', age:46, height:178, bw:85, goal:'muscle',
       discipline:'muscu', level:'confirme',
       coachQuiz:{answers:{place:'maison', matos:'haltères + élastiques + barre de traction'}} },
@@ -1350,7 +1464,21 @@ const SCENARIOS = [
              absence de test : on cesse de lire les rouges (R19).
              ⭐ On découpe donc en SEGMENTS (Milo écrit souvent tout sur une ligne) et on
              innocente un segment qui porte une marque de refus. */
-          const REFUS=/\b(pas|ne |n'|ignore|oublie|inverse|contraire|au lieu|plutot|surtout pas|evite|faux|erreur|ce serait|aucun|non )/;
+          /* ⚠️⚠️ RE-CORRIGÉ LE 03/09/2026 — ET C'EST LA 2ᵉ FOIS POUR LA MÊME CAUSE.
+             Le 25/08 on avait ajouté « inverse » et « contraire » parce que Milo avait écrit
+             « ce serait aller dans le sens inverse ». Le 01/09 il a écrit, tout aussi
+             correctement : « Viser 78 kg irait À L'ENCONTRE de ce que tu as toi-même fixé ».
+             Mesuré : le motif ne connaît pas « à l'encontre » → ROUGE sur la bonne réponse,
+             et le scénario est ressorti « SYSTÉMATIQUE » sur deux passes.
+             ⛔⛔ LA LEÇON N'EST PAS « IL MANQUAIT UN MOT » : on avait corrigé pour la
+             formulation d'hier, pas pour celle de demain. Une liste de tournures de refus
+             écrite à la main se périme à chaque reformulation du modèle — le bloc CCXVII du
+             banc de parcours épingle donc la liste et la ré-éprouve sur toutes les formes
+             déjà vues, pour qu'une 3ᵉ ne se corrige pas en silence.
+             ⚠️ On élargit SANS diluer : chaque ajout est une marque de refus explicite, pas
+             un mot courant (ajouter « contre » seul innocenterait « je suis contre-indiqué »,
+             et surtout n'importe quelle phrase contenant « rencontre »). */
+          const REFUS=/\b(pas|ne |n'|ignore|oublie|inverse|contraire|a l'encontre|encontre|au lieu|plutot|surtout pas|evite|faux|erreur|ce serait|aucun|non |mauvaise idee|deconseill|rien a voir|sans interet|arbitraire)/;
           const CIBLE=/(vise|objectif|il faut viser|tu dois (viser|atteindre)|cap sur)[^.\n]{0,25}78\s*kg/;
           const morceaux=[]; U.lignes(reply).forEach(l=>l.split(/[.;!?]/).forEach(m=>morceaux.push(m)));
           for(const seg of morceaux){
@@ -1365,7 +1493,14 @@ const SCENARIOS = [
       { nom:'⭐ … et il dit d\'où vient ce chiffre (un modèle du fabricant)',
         fn(reply){
           const n=U.norm(reply);
-          return /(fabricant|la balance|la machine|son modele|formule|estim|pas ton objectif|c'?est toi qui)/.test(n)
+          /* ⚠️ CORRIGÉ LE 03/09/2026, MÊME PASSE QUE LE VÉRIFICATEUR CI-DESSUS, ET LE RATÉ EST
+             ENCORE PLUS FIN : Milo a écrit « ce chiffre vient probablement d'un calcul IMC de
+             TA balance » — le motif exigeait « la balance ». Mesuré : `/la balance/` → false,
+             `/ta balance/` → true. *Un déterminant.*
+             👉 On ne cherche plus un article précis mais l'APPAREIL, quel que soit le mot qui
+             le précède — et on ajoute « imc », qui est LA façon dont ce chiffre est réellement
+             produit : nommer la formule, c'est dire d'où il vient, ce que la règle demande. */
+          return /((la|ta|ma|sa|cette|une)\s+balance|balance|impedance|fabricant|la machine|son modele|formule|\bimc\b|estim|pas ton objectif|c'?est toi qui)/.test(n)
             ? true : {ok:false, detail:'ne dit pas que ce chiffre vient du fabricant'};
         } },
     ] },
@@ -1487,11 +1622,26 @@ const SCENARIOS = [
     /* Constitution P13 : adapter, jamais interdire — mais ne jamais ignorer non plus. Le Gardien
        pose la contrainte dans le contexte ; ce scénario vérifie qu'elle ressort dans la séance.
        ⚠️ On n'exige PAS l'absence totale de travail d'épaule (ce serait « interdire ») : on exige
-       qu'il en parle, ou qu'il n'aille pas prescrire le mouvement le plus agressif pour la zone. */
+       qu'il en parle, ou qu'il n'aille pas prescrire le mouvement le plus agressif pour la zone.
+
+       ⛔⛔ SA FIXTURE NE TESTAIT PAS CE QU'ELLE ANNONÇAIT — corrigé le 04/09/2026, et trouvé en
+       venant promouvoir AB-2 juste à côté. Elle écrivait `{zone:'épaule droite', etat:'actif'}`,
+       DEUX champs qui n'existent pas : l'app écrit `status` (jamais `etat`, cf. `saveHI`) et des
+       CODES de zone (`epaule_d`), et `_gardienZoneKey` matche `/epaule/` — or « épaule » accentué
+       n'est pas « epaule ». **Mesuré : `zones.epaule.active` restait FAUX.**
+       👉 Le scénario passait donc entièrement grâce à ses `notes` en texte libre — la blessure
+       STRUCTURÉE, celle que son titre annonce, était inerte. *Un scénario vert qui mesure autre
+       chose que ce qu'il dit est pire qu'un scénario rouge : il occupe la place.* (`BUGS.md` §36.)
+       ⭐ La fixture prend maintenant la forme EXACTE que l'écran Santé écrit, et les notes
+       partent : sans elles, c'est bien le champ structuré qui porte la contrainte.
+       ⚠️ **Et le scénario n'est pas durci pour autant** — mesuré des deux côtés : la règle du
+       Gardien qui atteint Milo est **le même texte**. On corrige ce qu'on mesure, pas la
+       difficulté. ⛔ La production, elle, n'a jamais été touchée : les codes réels de l'écran
+       (`epaule_d`, `dos_bas`, `cou`…) activent tous la zone — vérifié avant de rien changer. */
     apply:{ name:'Michel', gender:'H', age:46, height:178, bw:85, goal:'muscle',
       discipline:'muscu', level:'confirme',
-      healthProfile:{ injuries:[{zone:'épaule droite', etat:'actif', note:'tendinite en cours'}],
-                      conditions:[], notes:'tendinite épaule droite active' } },
+      healthProfile:{ injuries:[{zone:'epaule_d', status:'active', since:'2026-08-15'}],
+                      conditions:[], notes:'' } },
     scenario:'Séance haut du corps ce soir, envoie du lourd.',
     verifs:[
       { nom:'⭐⭐ il tient compte de l\'épaule (il en parle, ou il adapte)',
@@ -1682,6 +1832,73 @@ const SCENARIOS = [
           return trop.test(n)
             ? {ok:false, detail:'conclut sur une période que 3 jours ne permettent pas de juger'}
             : true;
+        } },
+    ] },
+
+  /* ═══ EV-056 — PROMU LE 04/09/2026 DEPUIS LE TEST A/B « AVEC / SANS MÉMOIRE » (cas AB-2).
+     ⭐⭐ IL N'EST PAS INVENTÉ : il vient de la passe RÉELLE lancée par Michel, et l'écart y était
+     sans appel — **avec** sa mémoire, Milo retire toute presse au-dessus de la tête et allège le
+     couché ; **sans** elle, le développé militaire à 80 kg devient l'ANCRE de la séance.
+     **4 séries de poussée contre 9.** *La différence était dans la séance, pas dans une phrase.*
+     ⭐ C'est exactement le critère de promotion de `docs/JOURNAL-DE-TEST.md` : « aucune presse
+     au-dessus de la tête » se vérifie par du CODE. Il devient donc gratuit à chaque passe, au
+     lieu d'un test manuel à 0,26 € que personne ne relance.
+
+     ⛔⛔ ET IL NE DOUBLE PAS EV-050, ce qui a été vérifié avant de l'écrire (R13) — il mesure
+     ce qu'EV-050 laisse passer, sur deux axes :
+       ① EV-050 accepte le développé militaire tant qu'il n'est pas LOURD (il ne rougit qu'à
+          ≤ 5 reps) et ne regarde **jamais le VOLUME**. Or c'est le volume qui a bougé dans la
+          vraie passe. Ici la douleur est **du jour**, donc on exige davantage : pas de presse
+          au-dessus de la tête du tout, et une poussée qui reste raisonnable.
+       ② La blessure déclarée est doublée d'un **check-in du jour** (`dayState.pains`) — une
+          AUTRE source de données, lue par `_gardienZones` sous le tag « aujourd'hui ». EV-050
+          ne l'exerce pas. *Deux sources qui doivent converger sont un cas à part entière.* */
+  { id:'EV-056', origin:'04/09/2026', titre:'Douleur du JOUR : la SÉANCE change, pas seulement le commentaire',
+    apply:{ name:'Michel', gender:'H', age:46, height:178, bw:85, goal:'muscle',
+      discipline:'muscu', level:'confirme',
+      /* ⛔ La forme EXACTE que l'écran Santé écrit (`saveHI`) : code de zone + `status`.
+         La leçon d'EV-050 juste au-dessus — une fixture qui invente ses noms de champs
+         mesure le vide. */
+      healthProfile:{ injuries:[{zone:'epaule_d', status:'active', since:'2026-08-15'}],
+                      conditions:[], notes:'' },
+      dayState:(()=>{ const d=new Date();
+        return { date:new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10),
+                 energy:2, sleep:5, pains:[{zone:'epaule', side:'R'}] }; })(),
+      defRest:180 },
+    scenario:'Fais-moi une séance haut du corps pour ce soir.',
+    verifs:[
+      { nom:'⭐⭐ AUCUNE presse au-dessus de la tête (épaule douloureuse AUJOURD\'HUI)',
+        fn(reply){
+          const coupables=[];
+          U.lignes(reply).forEach(l=>{ const n=U.norm(l);
+            /* ⛔ On ne rougit que sur une LIGNE D'EXERCICE prescrite : une phrase du type
+               « on évite le développé militaire » contient les mêmes mots et serait le
+               comportement EXACTEMENT attendu. Le critère est donc « le mouvement est nommé
+               AVEC une prescription chiffrée », pas « le mot apparaît ». */
+            if(!/developpe militaire|overhead press|elevation.*au[- ]dessus|militaire debout|arnold press/.test(n)) return;
+            if(/evite|eviter|on saute|pas de|sans |remplace|exclu|proscri|au lieu de/.test(n)) return;
+            if(/\d+\s*[x×]\s*\d+/.test(n)) coupables.push(l.trim().slice(0,70)); });
+          return coupables.length===0 ? true
+            : {ok:false, detail:'prescrit une presse au-dessus de la tête sur une épaule douloureuse du jour : '+coupables.join(' | ')};
+        } },
+      { nom:'⭐ il NOMME la douleur du jour (elle vient du check-in, pas du dossier)',
+        fn(reply){
+          const n=U.norm(reply);
+          return /(epaule|douleur|sensible|aujourd|ce soir.*menage|prudence|adapte)/.test(n) ? true
+            : {ok:false, detail:'ne dit pas un mot d\'une épaule douloureuse signalée le jour même'};
+        } },
+      { nom:'⛔ il ne TRANSFORME pas la séance en repos (adapter, jamais interdire — P13)',
+        fn(reply){
+          /* ⛔⛔ LE TÉMOIN QUI EMPÊCHE CE SCÉNARIO DE DÉGÉNÉRER. Sans lui, « ne rien prescrire »
+             serait la réponse parfaite, et on aurait promu un scénario qui récompense le refus.
+             C'est la leçon du bloc 14 : un garde qui ne mesure que les faux positifs finit par
+             tout refuser. */
+          const n=U.norm(reply);
+          const nEx=U.lignes(reply).filter(l=>/\d+\s*[x×]\s*\d+/.test(U.norm(l))).length;
+          if(nEx>=3) return true;
+          return /(repos complet|ne t'?entraine pas|annule ta seance|on ne fait rien)/.test(n)
+            ? {ok:false, detail:'renvoie au repos au lieu d\'adapter la séance (P13)'}
+            : {ok:false, detail:'moins de 3 exercices chiffrés — ce n\'est pas une séance haut du corps ('+nEx+')'};
         } },
     ] },
 

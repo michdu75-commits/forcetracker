@@ -186,8 +186,19 @@ document.addEventListener('visibilitychange',()=>{
    AFFICHÉ et `sess.duration` qui traînaient derrière. Les trois sont maintenant alignés (R1/R2).
    ⚠️ On ne CRÉE plus `startTs` ici — mais on le GARDE s'il existe déjà : une séance en cours au
    moment de la mise à jour ne doit pas voir son chrono repartir de zéro. */
+/* ⛔⛔ 04/09/2026 — CE BOUTON EFFAÇAIT UN CARDIO NOTÉ, EN SILENCE.
+   La condition lisait « pas d'exercices » et concluait « rien à garder ». Or une séance de
+   cardio SEUL n'a **aucun** exercice : 45 min de tapis notées, un aller-retour par l'Accueil
+   (où le bouton disait encore « Commencer une séance », faute de la même définition), un tap,
+   et `S.wkt` repartait à neuf — **sans confirmation, sans message, sans trace**. Mesuré : le
+   cardio disparaissait pour de bon. C'est la règle d'or #3 (zéro perte) prise à revers par un
+   test de trois mots.
+   👉 On lit `_seanceOuverte()`, qui est **déjà** le propriétaire unique de « y a-t-il une
+   séance non terminée ? » (R2) et qui, lui, compte le cardio depuis le 02/08. */
 function startWorkout(){
-  if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length) S.wkt={date:today(),exs:[],startHour:new Date().getHours()};
+  const ouverte=(typeof _seanceOuverte==='function')?_seanceOuverte():!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length);
+  if(!ouverte) S.wkt={date:today(),exs:[],startHour:new Date().getHours()};
+  else if(!S.wkt.exs) S.wkt.exs=[];      // un brouillon cardio peut n'avoir jamais eu le tableau
   persist(); goScreen('log',document.getElementById('nb-log'));
   _syncWakeLock();
 }
@@ -4229,11 +4240,26 @@ function closeSessionEnd(dest){
 // l'IA l'enrichit). Le débrief est POUSSÉ dans coachHistory (mémoire + visible dans le Coach).
 // Le cardio RÉELLEMENT noté sur cette séance, en clair — vide s'il n'y en a pas.
 // Même lecture que le contexte de Milo (coach.js) : deux moments, échauffement et après-séance.
-function _seCardioTxt(sess){
+/* 🏃 UN CARDIO EN CLAIR — « Tapis 45 min (modéré) ». UN SEUL propriétaire du libellé (R2).
+   ⛔ Le MOMENT (« échauffement », « après séance ») est ajouté par l'appelant, il ne fait pas
+   partie du libellé : sur une séance de CARDIO SEUL, « après séance » n'a aucun sens — il n'y a
+   pas de séance avant. *Un texte copié d'un contexte à un autre peut devenir faux* (**R14**). */
+function _cardioClair(c){
   try{
     const L=(typeof CARDIO_LABELS!=='undefined')?CARDIO_LABELS:{};
-    const un=c=>c&&c.duration?`${L[c.type]||c.type||'cardio'} ${c.duration} min${c.intensity?' ('+c.intensity+')':''}`:'';
-    const av=un(sess&&sess.cardioAvant), ap=un(sess&&sess.cardio);
+    const I=(typeof CARDIO_INTENSITES!=='undefined')?CARDIO_INTENSITES:{};
+    return (c&&c.duration)?`${L[c.type]||c.type||'cardio'} ${c.duration} min${c.intensity?' ('+(I[c.intensity]||c.intensity)+')':''}`:'';
+  }catch(e){ return ''; }
+}
+// Tout le cardio d'une séance, sans le moment — pour les endroits qui n'ont pas d'exercices
+// à situer (la liste de l'historique). Vide s'il n'y en a pas.
+function _cardioSeanceTxt(sess){
+  return [_cardioClair(sess&&sess.cardioAvant), _cardioClair(sess&&sess.cardio)]
+    .filter(Boolean).join(' + ');
+}
+function _seCardioTxt(sess){
+  try{
+    const av=_cardioClair(sess&&sess.cardioAvant), ap=_cardioClair(sess&&sess.cardio);
     return [av?'échauffement '+av:'', ap?'après séance '+ap:''].filter(Boolean).join(' + ');
   }catch(e){ return ''; }
 }
@@ -4398,6 +4424,15 @@ async function _runSeDebrief(sess,prCount){
   // heure. Un rechargement de mise à jour pendant l'appel ne le fait donc plus disparaître —
   // il retourne dans la file au démarrage suivant (`_dbfRecuperer`).
   const _pid=(typeof _dbfPrendre==='function')?_dbfPrendre():null;
+  /* ⛔⛔ 04/09/2026 — « MILO A DÉJÀ DÉBRIEFÉ » ÉTAIT FAUX SUR UN CARDIO SEUL, et Michel l'a lu
+     sur sa propre capture. Le message répond à « le jeton n'est pas là » et en déduit « quelqu'un
+     l'a déjà pris ». Or il y a un SECOND cas : `finishWorkout` ne met en file que les séances
+     avec des séries validées (« pas un cardio seul »), donc le jeton n'a **jamais existé**.
+     👉 On envoyait alors chercher dans l'onglet Coach un débrief qui n'y est pas.
+     ⭐ *Un message qui nomme quelque chose d'inexistant est pire qu'un silence : on va le
+     chercher.* Même famille que le reste de cette version — le cas sans séries lu comme le cas
+     courant. ⚠️ Le socle CHIFFRÉ reste affiché : il ne dépend d'aucun appel. */
+  if(!_pid && !nSets){ slot.innerHTML=chiffres; return; }
   // Le Coach a déjà débriefé cette séance : on ne repaie pas un appel — mais on le DIT,
   // sinon l'écran de fin paraît vide de l'analyse alors qu'elle existe, dans le Coach.
   if(!_pid){ slot.innerHTML=avec('\ud83d\udcac Milo a déjà débriefé cette séance — retrouve-la dans l\'onglet Coach.',false); return; }

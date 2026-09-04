@@ -4,6 +4,51 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🏋️ « POIDS DU CORPS » N'EST PAS « SANS ÉQUIPEMENT » — 15 exercices sur 39 (03/09/2026)
+
+> ⛔ **Rien n'est construit** — décision de Michel : *« mets ça dans les idées, on fera ça plus
+> tard »*. Écrit avec les chiffres pour ne pas avoir à refaire la mesure (**R27**).
+
+**D'où ça vient** : le scénario `EV-040` du banc payant reproche à Milo de redemander le matériel.
+En cherchant la cause (**R7**), la vraie est apparue ailleurs.
+
+**Ce qui marche déjà, et qu'il ne faut pas reconstruire** : la question du lieu **existe** (4 choix,
+à l'inscription *et* dans le questionnaire), la réponse **atteint bien Milo**, et le catalogue est
+**filtré** en conséquence — mesuré sur les 4 valeurs : `salle` a barre + haltères + machines,
+`basic` perd les machines, `maison` perd la barre, `pdc` ne garde que le poids du corps.
+
+**⛔⛔ LE DÉFAUT MESURÉ** : quelqu'un qui coche **« Maison sans matériel »** reçoit **39** exercices
+« Poids du corps », dont **15 exigent un agrès** —
+*Tractions (Pull-up) · Traction Lestée · Tractions aux Anneaux · Traction Prise Neutre · Traction
+Supination · Traction Derrière la Nuque · Traction Australienne · Rocky Pull-up · Muscle-up · Dips ·
+Dips aux Anneaux · Dips entre Deux Bancs · Dips Triceps · Bench Dips · Montée sur Box*.
+**38 % de la liste**, présentés à Milo comme *« ce qu'il peut faire »*.
+
+**⭐ LA CAUSE EST UNE CONFUSION DE VOCABULAIRE, PAS UN OUBLI.** Le bac « Poids du corps »
+(`_exEquip`) classe par **TYPE DE CHARGE** — c'est ton corps qui fait le poids. Le filtre par lieu
+(`_CAT_LIEUX.pdc`) s'en sert comme s'il voulait dire **« n'exige aucun équipement »**. Ce sont deux
+questions différentes : *une traction est bien un exercice au poids du corps, et elle a quand même
+besoin d'une barre.* Une classification, deux usages — la cousine de **R2**.
+
+**👉 CE QUE ÇA CHANGE SUR LE CORRECTIF** : ce n'est **pas** « ajouter une question matériel au
+profil » (ce que je m'apprêtais à proposer), c'est **marquer les exercices qui exigent un agrès**
+et les sortir du filtre « sans matériel ». Une correction de **données**, pas d'interface.
+
+**⚠️ CE QUI RESTE À TRANCHER**
+- **`pdc`** : sortir les 15 est net.
+- **`maison`** : une barre de traction est **plausible mais pas garantie** — les garder, les sortir,
+  ou demander une fois ?
+- **Le choix « les deux »** manque vraiment : la question est en choix **unique** (*« où tu
+  t'entraînes le plus souvent »*), donc quelqu'un qui alterne salle et maison doit choisir. Sujet
+  **indépendant** du précédent.
+
+**⛔ ET TANT QUE CE N'EST PAS FAIT, `EV-040` DOIT RESTER ROUGE.** Quand Milo demande *« tu as une
+barre fixe ou des anneaux ? »*, il ne redemande pas ce qu'il sait : **il protège la personne d'une
+séance qu'elle ne peut pas faire.** C'est aujourd'hui le seul garde-fou. *Neutraliser le scénario
+ferait disparaître le trou du radar* (**R30**).
+
+---
+
 ## 🎓 DEUX ARBITRAGES SORTIS DU LOT D'AUDIT — non tranchés (01/09/2026)
 
 > ⛔ **Rien n'est construit.** Les deux sont apparus en corrigeant autre chose, et aucun ne se

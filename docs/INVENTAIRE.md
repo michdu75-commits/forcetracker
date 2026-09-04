@@ -1,7 +1,7 @@
 # 📒 Inventaire — ce qui existe dans Force Tracker
 
 > ⚙️ **FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer avec `python3 tools/inventaire.py`.
-> Généré depuis **le code** (version `ft-v1106`, dernier commit 2026-09-02).
+> Généré depuis **le code** (version `ft-v1126`, dernier commit 2026-09-04).
 >
 > **À quoi il sert** : répondre à *« est-ce que c'est déjà construit ? »*. Le journal des versions
 > (`CLAUDE.md`, `docs/JOURNAL-ARCHIVE.md`) répond à *« que s'est-il passé, quand, pourquoi ? »* —
@@ -18,10 +18,10 @@
 |---|---|---|
 | Écrans | 7 | 0 |
 | Lignes de menu | 6 | 1 |
-| Fenêtres (modales) | 64 | 14 |
+| Fenêtres (modales) | 64 | 13 |
 | Actions du serveur | 45 | 0 |
-| Fonctions JS | 591 | — |
-| Nouveautés annoncées | 62 | — |
+| Fonctions JS | 593 | — |
+| Nouveautés annoncées | 65 | — |
 
 ## 🖥️ Écrans
 
@@ -121,7 +121,7 @@ Chaque action = une capacité côté serveur (IA, sauvegarde, import, premium…
 | `ov-tester-space` | ✅ |
 | `ov-histo-export` | ✅ |
 | `ov-rest-edit` | ✅ |
-| `ov-help` | ❓ |
+| `ov-help` | ✅ |
 | `ov-session-end` | ✅ |
 | `mod-checkin` | ✅ |
 | `mod-share` | ✅ |
@@ -173,6 +173,9 @@ Ce qui a été **annoncé dans la pop-up « Quoi de neuf »** — donc censé ex
 
 | # | | Nouveauté |
 |---|---|---|
+| 70 | 🔋 | Ta récupération tient enfin compte du cardio |
+| 69 | 🏃 | Séance : ton cardio ne se perd plus |
+| 68 | 🥗 | Nutrition : le riz et les pâtes sont proposés CUITS |
 | 67 | 📉 | Nutrition : ta journée d’abord, ton évolution ensuite |
 | 66 | 🔥 | Ton échauffement se dose à ta charge |
 | 63 | ⚡ | « Cette séance te convient ? » |

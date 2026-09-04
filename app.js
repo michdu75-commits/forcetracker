@@ -34,6 +34,12 @@ const CARDIO_MET={
   autre:     {leger:3.5,modere:5.5,intense:8.0},
 };
 const CARDIO_LABELS={elliptique:'Elliptique',tapis:'Tapis',velo:'Vélo',rameur:'Rameur',corde:'Corde',autre:'Autre'};
+/* ⛔ 04/09/2026 — LES TROIS INTENSITÉS ONT UN NOM, ET UN SEUL PROPRIÉTAIRE (R2).
+   Elles étaient écrites en clair DANS le rendu des boutons, et nulle part ailleurs : partout où
+   l'app reparlait de ce cardio (l'historique, le contexte de Milo), c'est la CLÉ qui sortait —
+   « Tapis 45 min (modere) », sans accent. *Une valeur technique affichée telle quelle se
+   remarque le jour où on la met en évidence, pas avant.* */
+const CARDIO_INTENSITES={leger:'Léger',modere:'Modéré',intense:'Intense'};
 
 function calcCardioKcal(c){
   if(!c||!c.duration)return 0;
@@ -117,7 +123,7 @@ function renderCardioBlock(){
         ${types.map(t=>`<button onclick="setCardioField('type','${t}','${moment}')" style="flex-shrink:0;padding:5px 11px;border-radius:20px;border:none;font-size:12px;font-family:var(--font);cursor:pointer;background:${c.type===t?'var(--red)':'var(--bg2)'};color:${c.type===t?'#fff':'var(--t2)'};">${CARDIO_LABELS[t]}</button>`).join('')}
       </div>
       <div style="display:flex;gap:5px;align-items:center;margin-top:8px;">
-        ${['leger','modere','intense'].map((iv,i)=>{const lbl=['Léger','Modéré','Intense'][i];return`<button onclick="setCardioField('intensity','${iv}','${moment}')" style="flex:1;padding:6px 0;border-radius:8px;border:none;font-size:12px;font-family:var(--font);cursor:pointer;background:${c.intensity===iv?'var(--red)':'var(--bg2)'};color:${c.intensity===iv?'#fff':'var(--t2)'};">${lbl}</button>`;}).join('')}
+        ${['leger','modere','intense'].map(iv=>{const lbl=CARDIO_INTENSITES[iv];return`<button onclick="setCardioField('intensity','${iv}','${moment}')" style="flex:1;padding:6px 0;border-radius:8px;border:none;font-size:12px;font-family:var(--font);cursor:pointer;background:${c.intensity===iv?'var(--red)':'var(--bg2)'};color:${c.intensity===iv?'#fff':'var(--t2)'};">${lbl}</button>`;}).join('')}
         <div style="display:flex;align-items:center;gap:6px;margin-left:6px;">
           <label style="font-size:12px;color:var(--t2);white-space:nowrap;">Durée</label>
           <input type="number" inputmode="numeric" min="0" max="300" value="${c.duration||''}" placeholder="0" oninput="setCardioField('duration',this.value,'${moment}')" style="width:52px;padding:5px 8px;border-radius:8px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:14px;font-weight:700;font-family:var(--font);text-align:center;">
@@ -137,16 +143,25 @@ function renderCardioBlock(){
   ${_cardioOpen?`<div style="padding:0 12px 12px;border-top:1px solid var(--sep);padding-top:4px;">
     ${volet('avant','🔥 Avant la séance','échauffement')}
     ${volet('apres','🧊 Après la séance','cardio de fin')}
-    <button id="cardio-save-btn" class="btn btn-red ft-press" onclick="saveCardioEntry()" style="width:100%;margin-top:12px;padding:10px;font-size:14px;display:${aUnCardio?'block':'none'};">✓ Enregistrer le cardio</button>
+    <button id="cardio-save-btn" class="btn ft-press" onclick="saveCardioEntry()" style="width:100%;margin-top:12px;padding:10px;font-size:14px;background:var(--bg3);color:var(--t1);border:1px solid var(--sep);display:${aUnCardio?'block':'none'};">✓ C'est noté</button>
   </div>`:''}
 </div>`;
 }
-// Valide le cardio : replie le bloc (le résumé reste visible dans l'en-tête) — pas besoin de scroller.
+/* ⛔⛔ CE BOUTON DISAIT « ENREGISTRER » ET N'ENREGISTRAIT RIEN (corrigé le 04/09/2026).
+   Michel, deux retours le même jour : *« j'ai fait 45 min de tapis et ma récup n'a pas bougé »*
+   puis *« on me dit que j'ai pas fait le cardio hier »*. **Un seul défaut derrière les deux.**
+   Il s'appelait « ✓ Enregistrer le cardio » et affichait « Cardio enregistré ✅ » — alors qu'il
+   ne fait que **replier le bloc**. Le bouton qui enregistre pour de vrai est celui du BAS de
+   l'écran, et il s'appelle… « 🏁 Enregistrer le cardio ». *Deux boutons, presque les mêmes mots,
+   un seul enregistre.* Rien dans l'app ne permettait de les distinguer.
+   👉 Celui-ci dit maintenant ce qu'il fait (**noter**) et NOMME le geste qui reste — en lisant le
+   vrai libellé du bouton du bas (`_labelFinSeance`, R2) plutôt qu'en le recopiant. */
 function saveCardioEntry(){
   if(!S.wkt||!calcCardioKcalTotal()){toast('Entre une durée de cardio','info');return;}
   _cardioOpen=false;persist();renderCardioBlock();
   if(typeof renderLogFinish==='function')renderLogFinish();
-  toast('Cardio enregistré ✅','success');
+  const btn=(typeof _labelFinSeance==='function')?_labelFinSeance():'🏁 Enregistrer le cardio';
+  toast('Cardio noté — appuie sur « '+btn+' » en bas pour l\'enregistrer','info');
 }
 
 // ─── CALORIES BRÛLÉES ─────────────────────────────────────────
@@ -1071,6 +1086,14 @@ function _afSetSrc(o){ _afSrc=o||null; }
 const _SECS_QUI_GONFLENT=/p[âa]tes|spaghetti|macaroni|penne|tagliatelle|coquillettes|riz\b|basmati|quinoa|semoule|couscous|boulgour|lentille|pois cass|pois chiche|haricot sec|flageolet|avoine|floconn/i;
 function _afNoteEtat(nom){
   const el=document.getElementById('af-etat-note'); if(!el) return;
+  /* ⚠️ UN MESSAGE DIRECT PASSE TEL QUEL (ft-v1114) : cette zone était réservée à un seul cas
+     (les féculents secs, détectés sur le NOM). Un produit de marque signalé comme douteux a
+     besoin de la même place — c'est le dernier écran avant « Ajouter ». ⛔ On étend le
+     propriétaire existant plutôt que d'ouvrir une 2ᵉ zone de note, qui finirait par afficher
+     deux avertissements à deux endroits pour la même ligne (R2). */
+  if(nom && String(nom).indexOf('⚠️')===0){
+    el.textContent=String(nom); el.style.display='block'; return;
+  }
   if(nom && _SECS_QUI_GONFLENT.test(String(nom))){
     el.textContent='⚖️ Les valeurs du paquet sont pour le produit SEC. Si tu pèses après cuisson, '
       +'note le poids SEC (une portion cuite pèse 2 à 3 fois plus, et le compte serait faux d\'autant).';
@@ -1103,6 +1126,17 @@ function _provFood(vals){
        ⛔ Posé SEULEMENT s'il est vrai : un `false` recopié partout annoncerait une
        vérification qui n'a pas eu lieu sur les chemins décodés par ZXing. */
     if(_afSrc.codeDouteux===true)p.codeDouteux=true;
+    /* ⚠️⚠️ TROISIÈME FOIS AU MÊME ENDROIT (03/09/2026, ft-v1114) — et l'avertissement est écrit
+       en majuscules juste au-dessus. J'ai posé `doute` et `kcalDerivee` dans `_afSetSrc`, écrit
+       en commentaire « le doute descend jusqu'à la donnée (R4) »… et la ligne enregistrée
+       portait `doute: null`, parce que cette liste blanche ne les recopiait pas.
+       👉 ***J'ai écrit la règle juste au-dessus de l'endroit où je venais de l'enfreindre.***
+       C'est la mesure de l'entrée sauvegardée qui l'a vu, pas la relecture.
+       ⛔ Pourquoi ces deux champs comptent : un chiffre signalé comme douteux le jour où on l'a
+       pris doit rester signalé dans trois mois, sinon l'avertissement n'a servi qu'une seconde.
+       Et une kcal DÉRIVÉE des macros ne doit jamais se relire comme une valeur publiée (R32). */
+    if(_afSrc.doute)p.doute=String(_afSrc.doute).slice(0,90);
+    if(_afSrc.kcalDerivee===true)p.kcalDerivee=true;
     const a=_afSrc.attendu;
     if(a&&vals) p.modifie=['kcal','prot','carbs','fat'].some(k=>(+a[k]||0)!==(+vals[k]||0));
   }
@@ -1303,6 +1337,23 @@ function _manualBarcode(){
      · `photo-code-ia`        → des chiffres lus par un modèle → non vérifiés
      · `code-tape`            → des chiffres tapés par un humain → non vérifiés
    C'est l'échelle des sources de **R33**, appliquée à un seul champ. */
+/* ═══ 🔢 UNE SEULE PRÉCISION POUR LE POUR-100 g (ft-v1112, R2) ═══════════════════════════════
+   Michel, après le calibrage à la main : « ça va être comme ça sur tous les produits, c'est
+   chiant ? ». La réponse est non — mais la vérification a trouvé bien pire que sa question.
+   ⛔⛔ SIX ENDROITS construisent `_bcNutr`, et QUATRE arrondissaient à l'entier : le code-barres
+   Open Food Facts, la recherche Open Food Facts, la base CIQUAL, et les calories de la photo
+   d'étiquette. Seuls le calibrage à la main (ft-v1111) et les macros de la photo gardaient la
+   décimale. *Six écritures de la même idée, quatre comportements différents — la seule question
+   était quand on s'en apercevrait.*
+   ⛔⛔ ET LE PLUS COÛTEUX EST LA BASE EMBARQUÉE, celle qui sert le plus : `data/ciqual.json`
+   CONTIENT les décimales, et l'app les jetait à la lecture. Mesuré : **3 298 aliments sur
+   3 484** portent au moins une décimale, et **1 159 ont une macro entre 0 et 1 g/100 g** —
+   arrondie, elle devient 0 ou 1, soit **100 % d'erreur sur cette macro**.
+   ⭐ ET ÇA NE CHANGE RIEN À L'ÉCRAN : `_qtyRescale` arrondit déjà les 4 champs à l'entier au
+   moment de les écrire. La décimale ne sert qu'à ce qui est CONSERVÉ et re-multiplié.
+   ⚠️ C'est R8 (la jumelle) pour la 5ᵉ fois cette semaine : le correctif de la veille avait été
+   posé sur 1 endroit des 6, et pas sur le plus utilisé. */
+function _per100d1(x){ const v=+x||0; return Math.round(v*10)/10; }
 async function _lookupBarcode(ean, saisie, codeDouteux){
   if(!codeDouteux) toast('Recherche du produit…','info');
   let p=null;
@@ -1310,13 +1361,13 @@ async function _lookupBarcode(ean, saisie, codeDouteux){
   catch(e){ toast('Réseau indisponible pour la recherche produit','error'); return; }
   if(!p){ toast('Produit introuvable dans la base (code '+ean+') — saisis à la main','error'); return; }
   const n=p.nutriments||{};
-  const kcal100=Math.round(n['energy-kcal_100g']||(n['energy_100g']?n['energy_100g']/4.184:0)||0);
+  const kcal100=_per100d1(n['energy-kcal_100g']||(n['energy_100g']?n['energy_100g']/4.184:0)||0);
   _bcNutr={
     name:((p.product_name_fr||p.product_name||p.generic_name_fr||p.generic_name||'Produit')+(p.brands?' ('+String(p.brands).split(',')[0].trim()+')':'')).slice(0,60),
     kcal100:kcal100,
-    prot100:Math.round(n['proteins_100g']||0),
-    carbs100:Math.round(n['carbohydrates_100g']||0),
-    fat100:Math.round(n['fat_100g']||0)
+    prot100:_per100d1(n['proteins_100g']),
+    carbs100:_per100d1(n['carbohydrates_100g']),
+    fat100:_per100d1(n['fat_100g'])
   };
   if(!_bcNutr.kcal100&&!_bcNutr.prot100&&!_bcNutr.carbs100&&!_bcNutr.fat100){toast('Produit trouvé mais sans infos nutritionnelles — saisis à la main','error');return;}
   _offRemplirFormulaire(p, ean, saisie||'scan', codeDouteux===true);
@@ -1327,12 +1378,19 @@ async function _lookupBarcode(ean, saisie, codeDouteux){
    chemin : mêmes grammes, même provenance, même avertissement cru/cuit, même score santé.
    Deux chemins séparés finiraient par diverger — et c'est l'avertissement du ×2,7 (le paquet
    de pâtes scanné puis pesé cuit) qui serait perdu d'un côté sans que personne ne le voie (R2). */
-function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux){
+/* ⚠️ `origine` EST UN PARAMÈTRE DEPUIS ft-v1110, ET LE DÉFAUT NE CHANGE RIEN : les quatre
+   appelants existants n'en passent pas et gardent donc `'off'`, au caractère près. Il existe
+   pour le calibrage à la main, qui doit s'enregistrer comme « étiquette » et surtout PAS comme
+   une fiche Open Food Facts — *une provenance fausse est pire que pas de provenance* (R33). */
+function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux, origine){
   // Quantité par défaut : portion si connue, sinon 100 g
   const serv=parseFloat(p.serving_quantity)||0;
   const g=serv>0?serv:100;
   const gramsEl=document.getElementById('af-bc-grams');if(gramsEl)gramsEl.value=g;
-  _bcQsrc(serv, 'la fiche produit');   // ⛔ le nombre garde sa source écrite à côté (ft-v1105)
+  /* ⛔ LE NOMBRE GARDE SA SOURCE ÉCRITE À CÔTÉ (ft-v1105) — et pour un produit de marque, la
+     source est l'ENSEIGNE, pas « la fiche produit » : c'est elle qui publie ce poids. */
+  _bcQsrc(serv, (origine==='marque' && _bcNutr && _bcNutr.name && _bcNutr.name.indexOf(' · ')>0)
+                  ? _bcNutr.name.split(' · ').pop() : 'la fiche produit');
   /* ⛔ Un scan NEUF n'a pas de « dernière fois » : la pastille d'un aliment précédent doit
      disparaître, sinon elle proposerait le poids de quelqu'un d'autre que le produit affiché. */
   if(typeof _bcProposerDerniere==='function') _bcProposerDerniere(0);
@@ -1346,7 +1404,7 @@ function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux){
   /* ⚠️ `codeDouteux` N'EST POSÉ QUE S'IL EST VRAI — on n'écrit pas `false` partout. Un champ
      absent veut dire « rien à signaler » ; le poser à false sur des millions d'entrées
      donnerait l'illusion d'une vérification qui n'a pas eu lieu sur les chemins décodés. */
-  _afSetSrc({saisie:saisie||'scan',origine:'off',sourceId:sourceId?String(sourceId).slice(0,32):null,
+  _afSetSrc({saisie:saisie||'scan',origine:origine||'off',sourceId:sourceId?String(sourceId).slice(0,32):null,
     etat:'tel-que-vendu',
     ...(codeDouteux?{codeDouteux:true}:{}),
     per100:{kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
@@ -1360,6 +1418,69 @@ function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux){
   if(p && p.nutriments && Object.keys(p.nutriments).length){
     try{ if(window.FoodHealth)FoodHealth.renderCard(p,'#af-health-card'); }catch(e){}
   } else if(hc){ hc.innerHTML=''; }
+}
+/* ═══ ⚖️ CALIBRER UN PRODUIT À LA MAIN (ft-v1110) ═══════════════════════════════════════════
+   Michel, 4ᵉ passe sur le même pot d'isolat : « il y a toujours le problème avec ma prot…
+   comment on peut résoudre ce problème ».
+   ⛔⛔ LA CAUSE, MESURÉE : sa ligne porte `per100 = null`, et AUCUN champ de l'app ne permettait
+   d'en saisir un à la main — ce chiffre n'arrivait que d'un scan ou de CIQUAL. Un produit dont
+   la fiche est incomplète était donc **incalibrable à vie**, et sa vieille ligne fausse revenait
+   en tête des propositions : un tap, et l'erreur recommençait.
+   👉 *Les trois versions précédentes ont ajouté des ALERTES ; aucune n'a rendu la personne
+   capable de RÉPARER le produit.* Un garde-fou dit que c'est faux, il ne corrige pas.
+   ⭐⭐ ZÉRO NOUVEAU CALCUL (R13/R2) : on rejoint le chemin de CIQUAL, qui appelle déjà
+   `_offRemplirFormulaire` avec un produit vide. Le bloc quantité, le recalcul, l'enregistrement
+   du `per100` — tout existe et ne bouge pas. */
+function _calOuvrir(){
+  const row=document.getElementById('af-cal-row'), btn=document.getElementById('af-cal-btn');
+  if(!row) return;
+  const ouvert=row.style.display!=='none';
+  row.style.display=ouvert?'none':'block';
+  if(btn) btn.textContent=ouvert?'⚖️ Saisir les valeurs pour 100 g (étiquette)':'⚖️ Masquer la saisie pour 100 g';
+  if(!ouvert){
+    /* ⭐ On pré-remplit avec ce qui est DÉJÀ à l'écran seulement si la quantité affichée vaut
+       100 g : dans ce cas les 4 champs SONT un pour-100 g, et le retaper serait absurde. Sinon
+       on laisse vide — proposer les valeurs d'une dose de 30 g comme un « pour 100 g » serait
+       exactement l'erreur qu'on essaie de réparer (R29). */
+    const q=_qtyGrammesEcran('af');
+    if(q===100){ ['kcal','prot','carbs','fat'].forEach(k=>{
+      const src=document.getElementById('af-'+k), dst=document.getElementById('af-cal-'+k);
+      if(src&&dst&&!dst.value) dst.value=src.value; }); }
+    const err=document.getElementById('af-cal-err'); if(err) err.style.display='none';
+  }
+}
+function _calAppliquer(){
+  const lu=k=>numFR((document.getElementById('af-cal-'+k)||{}).value)||0;
+  const kcal=lu('kcal'), prot=lu('prot'), carbs=lu('carbs'), fat=lu('fat');
+  const err=document.getElementById('af-cal-err');
+  const dire=m=>{ if(err){err.textContent=m; err.style.display='block';} };
+  if(err) err.style.display='none';
+  /* ⛔ On refuse le vide plutôt que d'enregistrer un produit « calibré » à zéro : ce serait une
+     fausse certitude, et elle se propagerait à tous les repas suivants. */
+  if(!(kcal>0 || prot>0 || carbs>0 || fat>0)){ dire('Recopie au moins une valeur du tableau.'); return; }
+  /* ⛔⛔ LA MÊME RÈGLE PHYSIQUE QU'À LA SAISIE (ft-v1103, propriétaire unique) : dans 100 g de
+     produit il ne peut pas y avoir plus de 100 g de matière. C'est ce qui attrape la colonne
+     « par portion » recopiée dans la colonne « pour 100 g » — l'erreur la plus probable ici. */
+  const imp=_masseImpossibleVals(100, prot, carbs, fat);
+  if(imp){ dire('⚖️ '+imp.somme+' g de macros pour 100 g de produit : impossible. Tu as peut-être recopié la colonne « par portion » — reprends celle qui dit « pour 100 g ».'); return; }
+  const nom=String((document.getElementById('af-desc')||{}).value||'').trim();
+  if(!nom){ dire('Donne d\'abord un nom à l\'aliment, au-dessus.'); return; }
+  /* ⛔⛔ UNE DÉCIMALE GARDÉE, ET CE N'EST PAS DU ZÈLE (ft-v1111). Mesuré sur le vrai pot de
+     Michel : son étiquette dit **2,8 g de glucides et 3,3 g de lipides pour 100 g**, et
+     l'arrondi à l'entier les rangeait tous les deux à **3**. Sur une poudre de protéine ça ne
+     se voit pas ; sur une huile à **0,4 g/100 g**, la valeur qu'il a lue deviendrait **0** —
+     l'app effacerait un chiffre qu'il vient de recopier.
+     👉 *On transcrit ce que la personne a lu, on ne l'arrondit pas à sa place* (la leçon de
+     ft-v1100 : transcrire, pas décider).
+     ⭐ Et ça ne change rien à l'affichage : `_qtyRescale` arrondit déjà les 4 champs à l'entier
+     au moment de les écrire. La décimale ne sert qu'à ce qui est CONSERVÉ. */
+  _bcNutr={name:nom.slice(0,80), kcal100:_per100d1(kcal), prot100:_per100d1(prot),
+           carbs100:_per100d1(carbs), fat100:_per100d1(fat)};
+  /* ⭐ LE CHEMIN DE CIQUAL, MOT POUR MOT — produit vide, pas de portion déclarée (donc 100 g
+     par défaut, que la personne remplace par sa dose), et une provenance qui dit la vérité. */
+  _offRemplirFormulaire({serving_quantity:0, nutriments:{}}, null, 'etiquette-main', false, 'etiquette');
+  _calOuvrir();   // on referme : le bloc quantité prend le relais juste au-dessus
+  toast('Produit calibré ⚖️ — tape ta quantité','success');
 }
 // Lit les 4 macros telles qu'elles sont dans le formulaire À CET INSTANT (pour détecter, à
 // l'enregistrement, si la personne les a retouchées après un remplissage automatique).
@@ -1457,8 +1578,20 @@ function _bcQsrc(serv, source){
   const qs=document.getElementById('af-bc-qsrc'); if(!qs) return;
   if(serv===null){ qs.style.display='none'; qs.innerHTML=''; return; }
   const src=source||'la fiche produit';
+  /* ⚠️⚠️ « VÉRIFIE TA DOSETTE » DEVENAIT ABSURDE SUR UN BIG MAC (ft-v1114). Cette phrase a été
+     écrite en ft-v1105 pour la poudre de protéine, où la dosette du pot et la portion de la
+     fiche diffèrent vraiment. Recopiée telle quelle sur un produit de fast-food, elle demandait
+     de vérifier à la dosette le poids d'un sandwich. 👉 *Un comportement copié d'un contexte à
+     un autre peut devenir faux* (**R14**) — et il ne s'agit pas d'un détail de style : la
+     phrase invitait à corriger un nombre qui, ici, est le bon.
+     ⭐ La nuance qui décide : sur un produit de MARQUE, la portion publiée EST le produit
+     entier — il n'y a rien à doser. On l'annonce comme un fait, et on laisse la porte ouverte
+     (« si tu n'as pas tout mangé, mets ton poids ») sans réclamer de vérification. */
+  const marque = /^(McDonald|Burger King|KFC|Quick|Domino|Subway)/i.test(src) || src==='son enseigne';
   qs.innerHTML = (+serv>0)
-    ? '⚖️ <b>'+(+serv)+'&nbsp;g</b> est la portion déclarée par '+src+' — <b>vérifie ta dosette</b>, elle peut être différente.'
+    ? (marque
+        ? '⚖️ <b>'+(+serv)+'&nbsp;g</b> est le poids de la portion publiée par '+src+'. Si tu n\'as pas tout mangé, mets ton poids.'
+        : '⚖️ <b>'+(+serv)+'&nbsp;g</b> est la portion déclarée par '+src+' — <b>vérifie ta dosette</b>, elle peut être différente.')
     : 'Aucune portion déclarée par '+src+' : <b>100&nbsp;g</b> par défaut. Mets ta quantité réelle.';
   qs.style.display='block';
 }
@@ -2124,7 +2257,7 @@ function quickAddFood(i){
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   closeAddFood(); renderFoodJournal();
   try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}
-  toast(_journalJourActif()===today()?'Ajouté au journal 🍽️':'Ajouté au jour consulté 🍽️','success');
+  toast(_afToastAjout(),'success');
 }
 function toggleFavFood(i){
   const it=_afQuickItems[i]; if(!it)return;
@@ -2143,10 +2276,41 @@ function _renderAfMealChips(){
   const el=document.getElementById('af-meal-chips');if(!el)return;
   el.innerHTML=FOOD_MEALS.map(m=>{
     const sel=m.k===_afMeal;
-    return`<button onclick="setFoodMeal('${m.k}')" style="flex:1;min-width:70px;padding:9px 6px;border-radius:12px;border:1px solid ${sel?'var(--red)':'var(--sep)'};background:${sel?'rgba(255,45,85,.12)':'var(--bg2)'};color:${sel?'var(--red)':'var(--t2)'};font-size:12px;font-weight:${sel?700:500};cursor:pointer;font-family:var(--font);touch-action:manipulation;">${m.ic}<br>${m.lbl}</button>`;
+    /* ⚠️ 64 px ET NON 70 (03/09/2026) — mesuré, pas ajusté à l'œil : sur un écran de 390 px il
+       reste 358 px utiles, et 5 puces à 70 px plus leurs écarts en demandent 374. Elles se
+       cassaient donc en 4 + 1, ce qui faisait une bande de 114 px au lieu de 56 — supportable
+       tant qu'elle défilait, permanent depuis qu'elle est fixe. À 64 px les cinq tiennent sur
+       une ligne (344 px). ⛔ Sur les grands iPhone rien ne change : `flex:1` répartit toute la
+       largeur, la valeur minimale n'est jamais atteinte. */
+    return`<button onclick="setFoodMeal('${m.k}')" style="flex:1;min-width:64px;padding:9px 6px;border-radius:12px;border:1px solid ${sel?'var(--red)':'var(--sep)'};background:${sel?'rgba(255,45,85,.12)':'var(--bg2)'};color:${sel?'var(--red)':'var(--t2)'};font-size:12px;font-weight:${sel?700:500};cursor:pointer;font-family:var(--font);touch-action:manipulation;">${m.ic}<br>${m.lbl}</button>`;
   }).join('');
 }
 function setFoodMeal(k){_afMeal=k;_renderAfMealChips();}
+/* 🍽️⛔⛔ LA CONFIRMATION DIT DANS QUEL REPAS L'ALIMENT EST TOMBÉ (03/09/2026) — c'est la
+   seconde moitié de la phrase de Michel : « pareil quand on rentre un aliment, quel est le
+   jour de la journée choisi ».
+   ⛔ CE N'ÉTAIT PAS UN DÉTAIL D'ÉCRITURE, parce que le repas est le plus souvent DEVINÉ :
+   `_afMeal` est pré-réglé sur l'heure (avant 11 h → Petit-déj). L'app annonçait donc
+   « Ajouté au journal » sur un rangement qu'elle avait choisi seule, sans jamais le nommer —
+   et l'erreur se découvrait plus tard, dans le Journal, sans qu'on sache d'où elle venait.
+   *Une supposition qu'on ne montre pas est une décision prise à la place de la personne* (R29).
+   ⭐⭐ ET LA RÈGLE EXISTAIT DÉJÀ — POUR UN SEUL DES TROIS CHEMINS (R8, la jumelle). « Tes repas
+   habituels » (`rejouerRepas`) nomme le moment depuis ft-v1052, avec ce commentaire : *« sans
+   ça, on ne peut pas vérifier d'un coup d'œil que le tap a bien porté là où on voulait »*. Les
+   deux autres chemins d'ajout — la reprise d'un favori et le formulaire — disaient toujours
+   « Ajouté au journal ». *Une règle écrite pour un chemin et pas pour ses jumeaux est une règle
+   à moitié appliquée*, et c'est la 4ᵉ fois cette semaine.
+   ⛔ UN SEUL PROPRIÉTAIRE (R2) : on réutilise `_foodMealInfo`, déjà l'unique lecteur de
+   `FOOD_MEALS` — on ne refait pas un `find` à côté, sinon « Collation 2 » finirait par
+   s'appeler autrement ici que dans les puces et dans le Journal.
+   ⚠️ Et la distinction « aujourd'hui / jour consulté » est GARDÉE : elle protège d'un aliment
+   noté sur le mauvais JOUR, ce que le nom du repas ne dit pas. */
+function _afToastAjout(){
+  const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(_afMeal):null;
+  const ou=(mi&&mi.lbl)?mi.lbl:'journal';
+  return (_journalJourActif()===today()) ? ('Ajouté · '+ou+' 🍽️')
+                                         : ('Ajouté · '+ou+', jour consulté 🍽️');
+}
 // ─── LECTURE ÉTIQUETTE NUTRITIONNELLE PAR PHOTO (IA vision) ──────────────────
 // Redimensionne un fichier image en base64 JPEG (sans le préfixe data:) — assez net pour lire les chiffres.
 function _resizeToB64(file, maxPx, quality){
@@ -2188,10 +2352,13 @@ async function onFoodLabelFile(input){
     if(!d||d.status!=='ok'){toast('Étiquette illisible — rapproche-toi, éclaire, ou saisis à la main','error');return;}
     _bcNutr={
       name:(d.name||'Produit').slice(0,60),
-      kcal100:Math.round(d.kcal100||0),
-      prot100:Math.round((d.prot100||0)*10)/10,
-      carbs100:Math.round((d.carbs100||0)*10)/10,
-      fat100:Math.round((d.fat100||0)*10)/10
+      /* ⚠️ LES CALORIES ÉTAIENT LE SEUL CHAMP ARRONDI ICI, alors que le serveur demande
+         explicitement « garde 1 decimale si presente » : l'information était produite puis
+         jetée à l'arrivée (R4, dans sa forme la plus pure). */
+      kcal100:_per100d1(d.kcal100),
+      prot100:_per100d1(d.prot100),
+      carbs100:_per100d1(d.carbs100),
+      fat100:_per100d1(d.fat100)
     };
     if(!_bcNutr.kcal100&&!_bcNutr.prot100&&!_bcNutr.carbs100&&!_bcNutr.fat100){toast('Valeurs non lues — réessaie ou saisis à la main','error');return;}
     const g=(parseFloat(d.serving)>0)?parseFloat(d.serving):100;
@@ -2317,7 +2484,7 @@ async function _complCharger(){
    n'importe quel ordre. */
 function _complChercher(q, max){
   if(!_compl) return [];
-  const mots=_afNorm(q).split(/\s+/).filter(m=>m.length>1);
+  const mots=_afMots(q);                      // R2 : un seul propriétaire (ft-v1119)
   if(!mots.length) return [];
   const out=[];
   for(const a of _compl.a){
@@ -2380,6 +2547,122 @@ async function _ciqualCharger(){
     }catch(e){ _ciqualEnCours=null; return null; }     // jamais bloquant
   })();
   return _ciqualEnCours;
+}
+/* ═══ 🍔 LA BASE FAST-FOOD FRANCE (ft-v1114) ═════════════════════════════════════════════════
+   Michel : « il faut que je puisse trouver les noms comme big Mac ou pizza 4 fromages », après
+   avoir fourni lui-même le classeur — la source que ce conteneur ne pouvait pas atteindre.
+   ⭐ R13/R2 : AUCUN nouveau mécanisme. Le chargeur, la recherche et le remplissage sont ceux de
+   CIQUAL ; seule la table change. Une 4ᵉ source dans la liste de propositions, pas un 4ᵉ chemin.
+   ⛔⛔ ET LA PROVENANCE EST LE CŒUR DU SUJET (R32/R33) : ces valeurs sont RELEVÉES sur les
+   sources officielles des enseignes, pas mesurées par l'app. Chaque ligne enregistrée porte son
+   enseigne, et l'écran l'affiche. *Un chiffre de marque qui ne dirait pas d'où il vient serait
+   pire qu'absent.*
+   ⚠️ CE QUI N'Y EST PAS, ET POURQUOI : `tools/marques.py` écarte ce qu'il ne peut pas garantir,
+   avec la raison à l'écran de sa sortie. Sur les 27 lignes validées du classeur, 4 sont dehors —
+   le Korean Whopper (752 kcal annoncées, 616 calculées depuis ses propres macros) et les 3
+   lignes KFC en pièces (146, 77 puis 38 kcal par pièce : elles se divisent par deux, donc au
+   moins deux sont fausses et on ne sait pas laquelle est juste). */
+/* ═══ 🥗 LES MOTS QU'ON EMPLOIE → UN ALIMENT PRÉCIS (ft-v1115) ═══════════════════════════════
+   Table produite par GPT à partir de l'export CSV de notre propre base, puis vérifiée ligne à
+   ligne à l'import (`tools/alias.py`). ⭐⭐ AUCUNE VALEUR NUTRITIONNELLE N'EST CRÉÉE : un alias
+   est une PORTE vers un code CIQUAL existant. Les 4 macros de chaque ligne ont été comparées aux
+   nôtres — 0 écart sur 569.
+   ⛔⛔ POURQUOI UN CODE ET NON UNE REQUÊTE, ce qui la distingue de `FOOD_SYNONYMES` : celle-là
+   traduit une frappe en une autre frappe puis laisse le classement trier — parfait pour ouvrir
+   une FAMILLE (« mcdo »), inutilisable pour désigner UN aliment. *C'est le classement par
+   longueur de nom qui fait remonter « Veau, steak haché 15 % » avant le bœuf.* Un alias qui porte
+   le CODE ne subit aucun classement. ⚠️ Un même mot ne peut pas être dans les deux tables :
+   le générateur le refuse (R2).
+   ⭐ CORRESPONDANCE SUR LA REQUÊTE ENTIÈRE, jamais sur un mot : « riz » est un alias, « riz au
+   lait » n'en est pas un et suit la recherche normale. Sans ça, un alias détournerait des
+   recherches qu'il n'a jamais visées.
+   ⛔⛔ ET ON N'ENLÈVE RIEN : la cible de l'alias passe DEVANT, la recherche habituelle continue
+   dessous. C'est la décision de Michel sur le cru/cuit — *« les deux, le cuit en premier »* :
+   « riz » rend « Riz blanc, cuit » puis « Riz blanc, cru » juste en dessous, et personne ne perd
+   son aliment. Informer sans décider (R29). */
+let _alias=null, _aliasEnCours=null;
+async function _aliasCharger(){
+  if(_alias) return _alias;
+  if(_aliasEnCours) return _aliasEnCours;
+  _aliasEnCours=(async()=>{
+    try{
+      const r=await fetch('data/alias.json',{headers:{'Accept':'application/json'}});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const d=await r.json();
+      if(!d||!d.a||typeof d.a!=='object') throw new Error('format');
+      _alias=d; return d;
+    }catch(e){ _aliasEnCours=null; return null; }   // jamais bloquant (règle d'or #4)
+  })();
+  return _aliasEnCours;
+}
+/* Rend l'aliment CIQUAL visé par ce que la personne a tapé, ou `null`. */
+function _aliasCible(q){
+  if(!_alias||!_ciqual) return null;
+  const c=_alias.a[_afNorm(q).replace(/\s+/g,' ').trim()];
+  if(c==null) return null;
+  for(const a of _ciqual.a) if(a[0]===c) return a;
+  return null;
+}
+let _marques=null, _marquesEnCours=null;
+async function _marquesCharger(){
+  if(_marques) return _marques;
+  if(_marquesEnCours) return _marquesEnCours;
+  _marquesEnCours=(async()=>{
+    try{
+      const r=await fetch('data/marques.json',{headers:{'Accept':'application/json'}});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const d=await r.json();
+      if(!d||!Array.isArray(d.a)) throw new Error('format');
+      _marques=d; return d;
+    }catch(e){ _marquesEnCours=null; return null; }      // jamais bloquant (règle d'or #4)
+  })();
+  return _marquesEnCours;
+}
+/* ⚠️ CE QU'ON DIT POUR NOMMER UNE ENSEIGNE : « mcdo » n'apparaît nulle part dans les données —
+   elles disent « McDonald's ». Même problème que `coca`/`cola` en ft-v1113, même remède. */
+const MARQUE_ALIAS={
+  'mcdo':"mcdonald's", 'macdo':"mcdonald's", 'mac do':"mcdonald's", 'macdonald':"mcdonald's",
+  'mcdonald':"mcdonald's", 'mcdonalds':"mcdonald's", 'mac donald':"mcdonald's",
+  'mac donalds':"mcdonald's", 'mcdonald s':"mcdonald's",
+  'bk':'burger king', 'burgerking':'burger king',
+  'kfc':'kfc', 'dominos':"domino's", 'domino':"domino's", "domino s":"domino's",
+  /* ⚠️ ET LES NOMS DE PRODUITS ÉCRITS SANS ESPACE — mesuré : « big mac » trouvait, « bigmac »
+     ne trouvait RIEN. On ne devine pas les espaces manquants en général (ça ferait remonter
+     n'importe quoi) : on nomme les cas qui arrivent. */
+  'bigmac':'big mac', 'mcchicken':'mcchicken', 'babywhopper':'baby whopper',
+  'whopperrings':'whopper rings', 'kentuckyfries':'kentucky fries'
+};
+/* Recherche dans la base de marques. Les mots peuvent être dans le désordre, et ils sont
+   cherchés dans « enseigne + nom » — donc « mcdo frite » et « frite mcdo » marchent tous deux. */
+/* ⚠️ UN ÉCHAPPEUR LOCAL, ET C'EST ASSUMÉ. Le projet en compte DÉJÀ CINQ, sous cinq noms
+   différents (`_escIdea`, `_escFood`, `_escNote`, `_souvEsc`, `_obsEsc`) — et trois vivent dans
+   d'autres fichiers. En brancher un sixième par emprunt créerait une dépendance entre `app.js`
+   et `screens.js` pour trois caractères. ⛔ Mon premier jet appelait `_esc`, qui n'existe pas :
+   la liste de propositions plantait ENTIÈREMENT (« _esc is not defined »), donc plus AUCUN
+   aliment ne s'affichait — et seule la mesure à l'écran l'a vu, la fonction de recherche étant
+   parfaitement correcte. ⏭️ Le vrai sujet reste ouvert : cinq échappeurs pour un besoin est un
+   défaut R2 à traiter d'un coup, pas au détour d'une version nutrition. */
+function _marqueEsc(t){ return String(t==null?'':t).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function _marquesChercher(q, max){
+  if(!_marques) return [];
+  let n=_afNorm(q).replace(/[-_.]+/g,' ').replace(/\s+/g,' ').trim();
+  if(MARQUE_ALIAS[n]) n=_afNorm(MARQUE_ALIAS[n]);
+  else{
+    /* mot à mot : « frites mcdo » doit devenir « frites mcdonald's » */
+    n=n.split(' ').map(m=>MARQUE_ALIAS[m]?_afNorm(MARQUE_ALIAS[m]):m).join(' ');
+  }
+  const mots=_afMots(n);                      // R2 : un seul propriétaire (ft-v1119)
+  if(!mots.length) return [];
+  const out=[];
+  for(let i=0;i<_marques.a.length;i++){
+    const a=_marques.a[i];
+    const nom=_afNorm(a[1]+' '+a[0]+' '+(a[2]||''));
+    const r=_afRang(mots, nom);
+    if(!r) continue;
+    out.push([r[0], r[1], nom.length, i]);
+  }
+  out.sort((x,y)=> x[0]-y[0] || x[1]-y[1] || x[2]-y[2]);
+  return out.slice(0, max||6).map(x=>x[3]);
 }
 /* ═══ ⛔⛔ LE PLURIEL — LE PLUS GROS TROU DE LA RECHERCHE (22/08/2026) ══════════════════════
    Michel : *« c'est comme j'ai cherché les pâtes, j'ai pas trouvé — enfin si, mais pas ce que je
@@ -2464,12 +2747,129 @@ function _afRang(mots, n){
   }
   return [debut, approx];
 }
+/* ═══ 🍔 LES MOTS QU'ON DIT vs LES MOTS DE LA TABLE (ft-v1113) ═══════════════════════════════
+   Michel : « il n'y a pas de fast food ? », puis « fais les synonymes et Mac Donald, avec les
+   sandwichs qui vont avec ».
+   ⛔⛔ MESURÉ DANS LA VRAIE RECHERCHE, et le constat est têtu : `coca` ne rendait **rien** alors
+   que `Cola, sucré` est dans le fichier — **une lettre d'écart**. `soda` ne rendait rien alors
+   que 94 « Boisson gazeuse… » y sont. `mcdo`, `macdo`, `fast food` ne rendaient rien alors que
+   **6 aliments « de restauration rapide »** y sont. *La donnée est là, la porte n'existe pas.*
+   ⚠️⚠️ ET LE TROU EST INVISIBLE AU BUREAU, BÉANT À LA SALLE : avec du réseau, la recherche
+   Open Food Facts finit par rattraper le coup ; hors ligne ou en 4G faible, on n'a rien — alors
+   que l'aliment est **dans le téléphone**. C'est la règle d'or #4 qui se joue ici, pas du
+   confort.
+   ⛔⛔ CE QUI N'EST PAS FAIT, ET LA RAISON A ÉTÉ MESURÉE (pas supposée) : aucun chiffre de
+   marque n'est écrit. ⚠️ **J'avais d'abord dit « je n'ai pas accès à internet », et Michel m'a
+   reprise : c'était faux.** La recherche web fonctionne ; ce qui est bloqué par le proxy (403
+   vérifié) est `openfoodfacts.org`, `mcdonalds.fr`, `informationsnutritionnelles.fr` — donc je
+   peux recevoir un RÉSUMÉ de recherche, jamais LIRE une table publiée.
+   ⛔⛔ ET LE RÉSUMÉ NE TIENT PAS DEBOUT, mesuré en posant DEUX FOIS la même question :
+     · 1ʳᵉ réponse : 510 kcal · 37 g de protéines · 41 g de glucides · 26 g de lipides
+     · 2ᵉ réponse  : 580 kcal · 25 g de protéines · 45 g de glucides · 34 g de lipides
+   — et la seconde se contredit elle-même (580 kcal pour 220 g, mais « 257 kcal/100 g » = 565).
+   👉 *Un résumé de moteur de recherche n'est pas une source : c'est le bas de l'échelle de R33,
+   et deux réponses incohérentes le prouvent mieux qu'un principe.* Les synonymes pointent donc
+   vers les aliments RÉELS de la table nationale, **dont le nom dit lui-même « de restauration
+   rapide »** : la personne voit ce qu'elle prend, et rien ne se fait passer pour un produit de
+   marque (R32/R33). Pour l'exact, le calibrage à la main de ft-v1110 est là — les valeurs sont
+   affichées en restaurant.
+   ⛔ `tacos` N'EST PAS MAPPÉ, exprès : il n'est pas dans la table, et lui coller un kebab serait
+   inventer. *On dit qu'on ne l'a pas plutôt que de servir autre chose.*
+   ⭐ R2 : une seule table, un seul point d'entrée. La recherche ne change pas — c'est la
+   REQUÊTE qu'on traduit avant de la lancer. */
+const FOOD_SYNONYMES={
+  /* Ce qu'on dit → ce que la table écrit. Chaque valeur est une LISTE de requêtes : « mcdo »
+     doit sortir la famille (les sandwichs, les frites, les nuggets), pas un seul aliment. */
+  'coca':['cola'], 'coca cola':['cola'], 'cocacola':['cola'], 'coke':['cola'],
+  'soda':['boisson gazeuse'], 'sodas':['boisson gazeuse'], 'boisson gazeuse':['boisson gazeuse'],
+  /* ⭐ « light » et « zéro » ne rendaient RIEN — mesuré : ces deux mots n'existent nulle part
+     dans les 3 484 noms, alors que la table dit « avec édulcorants ». Les mapper est donc un
+     gain sans contrepartie : on ne casse aucune recherche qui marchait. */
+  'light':['edulcorants'], 'zero':['edulcorants'], 'sans sucre':['sans sucres ajoutes'],
+  'mcdo':['restauration rapide','frites pommes de terre','nuggets'],
+  'mac do':['restauration rapide','frites pommes de terre','nuggets'],
+  'macdo':['restauration rapide','frites pommes de terre','nuggets'],
+  'mcdonald':['restauration rapide','frites pommes de terre','nuggets'],
+  'mcdonalds':['restauration rapide','frites pommes de terre','nuggets'],
+  'mac donald':['restauration rapide','frites pommes de terre','nuggets'],
+  'macdonald':['restauration rapide','frites pommes de terre','nuggets'],
+  'mac donalds':['restauration rapide','frites pommes de terre','nuggets'],
+  'fast food':['restauration rapide','frites pommes de terre','nuggets'],
+  'fastfood':['restauration rapide','frites pommes de terre','nuggets'],
+  'burger king':['restauration rapide'], 'quick':['restauration rapide'],
+  'kfc':['nuggets','restauration rapide'],
+  /* ⚠️ Un nom de produit de marque ne devient PAS un aliment précis : il ouvre la famille, et
+     c'est la personne qui choisit. Le nom affiché dit « de restauration rapide », donc rien ne
+     se fait passer pour le produit lui-même. */
+  'big mac':['restauration rapide'], 'bigmac':['restauration rapide'],
+  'whopper':['restauration rapide'], 'mcchicken':['restauration rapide'],
+  'filet o fish':['restauration rapide'], 'royal cheese':['restauration rapide'],
+  'menu best of':['restauration rapide'], 'happy meal':['restauration rapide']
+};
+/* Rend la LISTE de requêtes à jouer pour ce que la personne a tapé. Sans correspondance, on rend
+   la requête telle quelle — le comportement d'avant, au caractère près. */
+function _foodSynonymes(q){
+  const n=_afNorm(q).replace(/[-_.]+/g,' ').replace(/\s+/g,' ').trim();
+  if(FOOD_SYNONYMES[n]) return FOOD_SYNONYMES[n].slice();
+  /* Sinon mot à mot : « un coca light » doit devenir « un cola light ». */
+  const mots=n.split(' ');
+  let touche=false;
+  const rendus=mots.map(m=>{
+    const syn=FOOD_SYNONYMES[m];
+    if(syn && syn.length===1){ touche=true; return syn[0]; }
+    return m;
+  });
+  return touche ? [rendus.join(' ')] : [q];
+}
 /* Recherche par nom. Les mots peuvent être dans le DÉSORDRE : « riz cuit » doit retrouver
    « Riz blanc, cuit, sans sel ajouté ». On exige que TOUS les mots tapés soient présents —
    sinon « riz complet » remonterait tous les riz et tous les pains complets. */
 function _ciqualChercher(q, max){
   if(!_ciqual) return [];
-  const mots=_afNorm(q).split(/\s+/).filter(m=>m.length>1);
+  /* 🥗 ft-v1115 — L'ALIAS PASSE DEVANT, IL NE REMPLACE PAS. On met la cible en tête puis on
+     laisse la recherche habituelle remplir dessous, dédoublonnée. ⛔ Si la table n'est pas
+     chargée (hors ligne au tout premier usage), `_aliasCible` rend `null` et le comportement
+     est celui d'avant, au caractère près. */
+  const cible=(typeof _aliasCible==='function')?_aliasCible(q):null;
+  if(cible){
+    const lim=max||6, tout=[cible];
+    for(const a of _ciqualChercherSansAlias(q, lim)){
+      if(tout.length>=lim) break;
+      if(a[0]!==cible[0]) tout.push(a);
+    }
+    return tout;
+  }
+  return _ciqualChercherSansAlias(q, max);
+}
+/* ⭐ Le corps d'origine, inchangé — extrait pour que l'alias puisse l'appeler par-dessous sans
+   dupliquer une ligne de la recherche (R2). */
+function _ciqualChercherSansAlias(q, max){
+  if(!_ciqual) return [];
+  /* 🍔 ft-v1113 — LA REQUÊTE EST TRADUITE AVANT D'ÊTRE JOUÉE, la recherche elle-même ne change
+     pas d'une ligne. Plusieurs requêtes possibles (« mcdo » ouvre la famille), unies dans
+     l'ordre : les sandwichs d'abord, puis les frites, puis les nuggets. */
+  const reqs=(typeof _foodSynonymes==='function')?_foodSynonymes(q):[q];
+  if(reqs.length>1 || reqs[0]!==q){
+    /* ⛔⛔ ON RÉPARTIT, ON N'EMPILE PAS — et c'est mesuré, pas esthétique. En prenant les
+       requêtes l'une après l'autre, « mcdo » rendait **six sandwichs** et coupait les frites et
+       les nuggets à la limite d'affichage. Or qui tape « mcdo » compose un MENU. Un tour à la
+       fois : un sandwich, des frites, des nuggets, puis on recommence. */
+    const listes=reqs.map(r=>_ciqualChercherUne(r, max||6));
+    const vus=new Set(), tout=[], lim=max||6;
+    for(let i=0; tout.length<lim && listes.some(l=>i<l.length); i++){
+      for(const l of listes){
+        if(tout.length>=lim) break;
+        const a=l[i]; if(!a || vus.has(a[0])) continue;
+        vus.add(a[0]); tout.push(a);
+      }
+    }
+    return tout;
+  }
+  return _ciqualChercherUne(q, max);
+}
+function _ciqualChercherUne(q, max){
+  if(!_ciqual) return [];
+  const mots=_afMots(q);                      // R2 : un seul propriétaire (ft-v1119)
   if(!mots.length) return [];
   const out=[];
   for(const a of _ciqual.a){
@@ -2494,10 +2894,41 @@ function _ciqualChercher(q, max){
 /* ⭐ R2 : un aliment CIQUAL remplit le formulaire par le MÊME chemin que le code-barres et la
    recherche Open Food Facts — grammes, provenance, note d'état. Un 3ᵉ chemin de remplissage
    finirait par diverger des deux autres. */
+/* 🍔 UN PRODUIT DE MARQUE REMPLIT LE FORMULAIRE PAR LE MÊME CHEMIN QUE TOUT LE RESTE (R2).
+   ⭐ La PORTION est pré-remplie (232 g pour un Big Mac) : c'est ce qu'on mange, et le champ
+   quantité dit d'où vient ce nombre depuis ft-v1105. Sans portion connue (cas Domino's, dont la
+   source ne publie que du pour-100 g), on retombe sur 100 g et la personne met son poids —
+   exactement comme un aliment de la table nationale. */
+function _afSuggPrendreMarque(i){
+  const idx=_afSuggMarq[i]; if(idx==null || !_marques) return;
+  const a=_marques.a[idx];
+  _bcNutr={ name:(a[1]+' · '+a[0]).slice(0,60), kcal100:_per100d1(a[3]),
+            prot100:_per100d1(a[4]), carbs100:_per100d1(a[5]), fat100:_per100d1(a[6]) };
+  const sid=('marque:'+a[0]+':'+a[1]).slice(0,32);
+  _offRemplirFormulaire({serving_quantity:a[7]||0, nutriments:{}}, sid, 'marque', false, 'marque');
+  /* ⛔ LA PROVENANCE DIT CE QU'ELLE EST, y compris quand les kcal ont été DÉRIVÉES des macros
+     (R32 : mesuré / estimé / propriétaire). On ne présente jamais un calcul comme une
+     publication. */
+  /* ⛔ LE DOUTE DESCEND JUSQU'À LA DONNÉE (R4) : il ne suffit pas de l'afficher dans la liste,
+     il doit rester attaché à la ligne enregistrée — sinon on ne saura plus, dans trois mois,
+     qu'un chiffre du journal était signalé comme douteux le jour où on l'a pris. */
+  _afSetSrc({saisie:'marque', origine:'marque', sourceId:sid, etat:null,
+             ...(a[9]? {doute:String(a[9]).slice(0,90)} : {}),
+             ...(a[8]? {kcalDerivee:true} : {}),
+             per100:{kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
+             attendu:_afLuFormulaire()});
+  /* ⚠️ ET IL SE REDIT DANS LE FORMULAIRE, là où on appuie sur « Ajouter » : la liste défile,
+     le formulaire est le dernier écran avant l'enregistrement. */
+  _afNoteEtat(a[9] ? ('⚠️ '+String(a[9])+'. Valeur publiée par '+a[0]+' : à toi de juger.') : _bcNutr.name);
+  _afSuggVider();
+  toast(a[9] ? 'Valeur signalée — vérifie avant d\'ajouter ⚠️' : 'Ajuste la quantité ✅', a[9]?'info':'success');
+}
 function _afSuggPrendreCiqual(i){
   const a=_afSuggCiq[i]; if(!a) return;
-  _bcNutr={ name:a[1].slice(0,60), kcal100:a[3]||0,
-            prot100:Math.round(a[4]||0), carbs100:Math.round(a[5]||0), fat100:Math.round(a[6]||0) };
+  /* ⛔⛔ LE PLUS COÛTEUX DES SIX : `data/ciqual.json` porte les décimales (3 298 aliments sur
+     3 484), et on les jetait ici même, à la lecture. */
+  _bcNutr={ name:a[1].slice(0,60), kcal100:_per100d1(a[3]),
+            prot100:_per100d1(a[4]), carbs100:_per100d1(a[5]), fat100:_per100d1(a[6]) };
   /* ⚠️ PAS D'ÉTAT « tel-que-vendu » DANS LA PROVENANCE, et c'est une vraie différence avec
      Open Food Facts : un produit emballé donne toujours ses valeurs TELLES QUE VENDUES (donc
      sèches pour des pâtes), alors que CIQUAL dit l'état EN TOUTES LETTRES dans le nom — « Riz
@@ -2530,7 +2961,7 @@ function _afSuggPrendreCiqual(i){
       bananes de marque, pas l'aliment générique — la base CIQUAL (3 484 aliments génériques)
       reste le bon outil pour ça, et elle n'est pas encore là. On ne fait pas semblant du
       contraire, et on n'invente surtout pas de valeurs génériques nous-mêmes (R29). */
-let _afSuggTimer=null, _afSuggLoc=[], _afSuggOff=[], _afSuggCiq=[];
+let _afSuggTimer=null, _afSuggLoc=[], _afSuggOff=[], _afSuggCiq=[], _afSuggMarq=[];
 const _AF_SUGG_MIN=2;          // en dessous, tout matche : la liste serait du bruit
 const _AF_SUGG_DELAI=450;      // on ne part pas au réseau à chaque lettre
 
@@ -2556,10 +2987,56 @@ const _AF_SUGG_DELAI=450;      // on ne part pas au réseau à chaque lettre
        retire purement et simplement (elle ne porte aucun sens pour la recherche), avec ses
        variantes \u2018 \u00b4 ` rencontr\u00e9es dans les donn\u00e9es (parfois des coquilles d'origine, ex.
        \u00ab PROBIO\u00b4DIET \u00bb, \u00ab l'acide hyaluronique \u00bb). */
+/* ⛔⛔ LA PONCTUATION DEVIENT UN ESPACE (ft-v1119) — mesuré en auditant la base pour GPT :
+   `Boulgour, cuit` ne rendait **RIEN**, parce que le mot cherché devenait `boulgour,` **avec sa
+   virgule collée**, et qu'aucun nom ne contient ça. 4 cas sur 6. ⚠️ `Riz blanc, cuit` marchait —
+   **par coïncidence** : la virgule tombait au même endroit dans le nom de la table.
+   ⭐ UN ESPACE, ET NON RIEN : supprimer un séparateur recollerait deux mots qui n'ont rien à
+   voir (« bouillie/cuite » deviendrait « bouilliecuite »).
+   ⛔⛔ ET LA BARRE `/` EST VOLONTAIREMENT ABSENTE DE LA LISTE — mesuré, pas supposé. Elle n'est
+   pas nécessaire : `Lentilles, cuites` se répare par la virgule seule, et « cuite » se trouve
+   déjà comme sous-chaîne dans « bouillie/cuite ». ⚠️ Et l'espacer coûterait cher : la table
+   d'alias porte une clé `lait 1/2 ecreme`, normalisée par `tools/alias.py` — l'app chercherait
+   `lait 1 2 ecreme` et ne la trouverait plus. *Une règle qu'on ajoute « pour être complet »
+   peut faire disparaître une entrée en silence.*
+   ⛔ L'apostrophe reste SUPPRIMÉE (et non espacée) : « huile d'olive » → `huile dolive`, et le
+   nom subit la même transformation — c'est ce qui les fait correspondre depuis toujours.
+   ⚠️ CETTE FONCTION EST LE MIROIR DE `norm()` DANS `tools/alias.py` : les clés de la table
+   d'alias sont normalisées là-bas. Toute règle ajoutée ici DOIT l'être là-bas, sinon une clé
+   devient introuvable — mesuré sur `lait 1/2 ecreme`, la seule qui portait de la ponctuation. */
 function _afNorm(t){
   return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
     .replace(/\u0153/g,'oe').replace(/\u00e6/g,'ae')
-    .replace(/['\u2019\u2018`\u00b4\u02bc]/g,'').trim();
+    .replace(/['\u2019\u2018`\u00b4\u02bc]/g,'')
+    .replace(/[,;:!?()\[\]{}\u00ab\u00bb"\u2013\u2014]+/g,' ')
+    .replace(/\s+/g,' ').trim();
+}
+/* ═══ 🔍 UN SEUL PROPRIÉTAIRE DU DÉCOUPAGE D'UNE REQUÊTE (ft-v1119, R2) ══════════════════════
+   Les QUATRE recherches — les aliments, les compléments, le fast-food et son propre journal —
+   découpaient la frappe chacune de leur côté, à l'identique. *Le commentaire de `_afRang` disait
+   déjà qu'elles avaient eu le même défaut et qu'elles devaient le corriger au même endroit.*
+   ⛔⛔ LE 2ᵉ DÉFAUT MESURÉ : les MOTS-OUTILS étaient exigés comme sous-chaîne. `filet de bœuf`
+   ne rendait **RIEN**, alors que `6116 · Boeuf, filet cru` existe — le mot `de` fait 2 lettres,
+   donc il était conservé, et « boeuf, filet cru » ne contient aucun `de`.
+   ⚠️⚠️ ET ÇA MARCHAIT 7 FOIS SUR 8 **PAR ACCIDENT** : le `de` se trouve dans « vian**de** »,
+   « Pomme **de** terre », « à **la** grecque », « **au** naturel ». *Une règle qui ne marche que
+   par accident marchera un jour de moins.*
+   ⛔⛔ CE QU'ON NE JETTE JAMAIS, ET C'ÉTAIT NOMMÉ AVANT D'ÉCRIRE UNE LIGNE :
+     · `sans` et `avec` — « coca sans sucre » deviendrait « coca sucre », **l'exact contraire** ;
+     · `the` — c'est le THÉ une fois les accents retirés, un vrai aliment ;
+     · tout ce qui n'est pas dans cette liste fermée : on ne devine pas ce qu'est un mot-outil.
+   ⛔ ET SI TOUT ÉTAIT DES MOTS-OUTILS, ON GARDE LA FRAPPE TELLE QUELLE : quelqu'un qui tape
+   « des » doit obtenir ce qu'il obtenait avant, pas le vide.
+   ⚠️⚠️ ET LE FILTRE VIT ICI, PAS AVANT LA TABLE D'ALIAS — la mesure l'a dit avant le code :
+   **99 clés d'alias contiennent un mot-outil** (`pomme de terre`, `blanc de poulet`, `fromage de
+   chèvre`…). Les filtrer en amont cassait ces 99 alias, et `pomme de terre` retombait sur la
+   version CRUE au lieu de la cuite. *On retire les mots-outils pour CHERCHER, jamais pour
+   RECONNAÎTRE.* */
+const _AF_OUTILS=new Set(['de','du','des','la','le','les','un','une','au','aux','en','et']);
+function _afMots(q){
+  const bruts=_afNorm(q).split(/\s+/).filter(m=>m.length>1);
+  const gardes=bruts.filter(m=>!_AF_OUTILS.has(m));
+  return gardes.length?gardes:bruts;          // jamais vide si la frappe ne l'était pas
 }
 /* ① CE QU'IL A DÉJÀ NOTÉ. Dédoublonné par nom, le plus RÉCENT gagne : si la quantité a changé,
    c'est la dernière qui reflète ce qu'il mange aujourd'hui. */
@@ -2567,7 +3044,7 @@ function _afSuggLocales(q){
   const n=_afNorm(q); if(n.length<_AF_SUGG_MIN) return [];
   /* ⭐ R2 (ft-v963) : son journal se cherche comme le reste — sinon il serait la SEULE des trois
      recherches à ne pas retrouver « amandes » dans son propre « Amande grillée ». */
-  const mots=n.split(/\s+/).filter(m=>m.length>1);
+  const mots=_afMots(n);                      // R2 : un seul propriétaire (ft-v1119)
   const vus=new Set(), out=[];
   (S.foodLog||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(e=>{
     if(!e||!e.name) return;
@@ -2606,7 +3083,7 @@ function _afSuggKcal100(p){
 }
 function _afSuggRendu(){
   const el=document.getElementById('af-sugg'); if(!el) return;
-  if(!_afSuggLoc.length && !_afSuggCiq.length && !_afSuggOff.length){ el.innerHTML=''; return; }
+  if(!_afSuggLoc.length && !_afSuggCiq.length && !_afSuggOff.length && !_afSuggMarq.length){ el.innerHTML=''; return; }
   const ligne=(ic,titre,detail,onclick)=>
     '<button onclick="'+onclick+'" style="width:100%;text-align:left;display:flex;gap:9px;align-items:baseline;'
     +'padding:9px 11px;border:none;border-bottom:1px solid var(--sep);background:none;cursor:pointer;'
@@ -2621,6 +3098,26 @@ function _afSuggRendu(){
     _afSuggLoc.forEach((e,i)=>{ h+=ligne('🕘', e.name,
       (e.kcal||0)+' kcal · P '+(e.prot||0)+' · G '+(e.carbs||0)+' · L '+(e.fat||0),
       '_afSuggPrendreLocale('+i+')'); });
+  }
+  /* ⭐⭐ LE FAST-FOOD PASSE AVANT LE GÉNÉRIQUE, et c'est l'inverse du choix fait pour les
+     bananes : quand on tape « big mac », on ne cherche pas « un hamburger en général » — on
+     cherche CE produit-là. Le nom tapé est déjà une marque, donc la marque gagne.
+     ⛔ Et chaque ligne dit son enseigne : le chiffre ne se présente jamais tout nu. */
+  if(_afSuggMarq.length && _marques){
+    h+='<div style="font-size:11px;color:var(--t3);padding:7px 11px 4px;font-weight:700;">FAST-FOOD (SOURCES OFFICIELLES)</div>';
+    _afSuggMarq.forEach((idx,i)=>{ const a=_marques.a[idx];
+      const p=a[7];
+      /* ⛔⛔ LE DOUTE S'AFFICHE, IL NE FAIT PAS DISPARAÎTRE LA LIGNE (03/09/2026). Michel :
+         « il faut tout mettre, sinon autant rien mettre, c'est logique » — et il a raison :
+         une ligne absente pousse vers l'estimation IA, qui est PIRE qu'une valeur publiée
+         douteuse. *C'est le mécanisme qui a fabriqué son pot de protéine faux.*
+         👉 On montre la valeur ET ce qui clochе, avec le chiffre qui permet de juger
+         (« 38 kcal/pièce »). R29 : informer sans décider. */
+      h+=ligne(a[9]?'⚠️':'🍔', a[1]+' <span style="color:var(--t3);font-weight:500;">· '+a[0]+'</span>',
+        (p? (Math.round(a[3]*p/100)+' kcal la portion ('+p+' g)') : (a[3]+' kcal/100 g'))
+        + (a[8]? ' · <span style="color:var(--orange);">kcal calculées</span>' : '')
+        + (a[9]? '<br><span style="color:var(--orange);">⚠️ '+_marqueEsc(String(a[9]))+'</span>' : ''),
+        '_afSuggPrendreMarque('+i+')'); });
   }
   /* ⭐ CIQUAL AVANT OPEN FOOD FACTS, et c'est un choix : quand on tape « banane », l'aliment
      GÉNÉRIQUE est presque toujours ce qu'on cherche — les bananes de marque viennent après. */
@@ -2640,13 +3137,13 @@ function _afSuggRendu(){
   if(_afSuggCiq.length) h+='<div style="font-size:10.5px;color:var(--t3);padding:6px 11px 8px;line-height:1.4;">Données aliments : table Ciqual 2025 — ANSES</div>';
   el.innerHTML=h+'</div>';
 }
-function _afSuggVider(){ _afSuggLoc=[]; _afSuggOff=[]; _afSuggCiq=[]; _afSuggRendu(); }
+function _afSuggVider(){ _afSuggLoc=[]; _afSuggOff=[]; _afSuggCiq=[]; _afSuggMarq=[]; _afSuggRendu(); }
 /* Déclenché à la frappe. Les LOCALES sortent tout de suite (aucun réseau) ; la recherche
    distante attend une pause de frappe — sinon on interroge Open Food Facts à chaque lettre. */
 function _afSuggInput(){
   const q=(document.getElementById('af-desc')||{}).value||'';
   _afSuggLoc=_afSuggLocales(q);
-  _afSuggOff=[]; _afSuggCiq=[];
+  _afSuggOff=[]; _afSuggCiq=[]; _afSuggMarq=[];
   _afSuggRendu();
   /* CIQUAL est LOCAL une fois chargé — donc pas de délai, mais le tout PREMIER accès doit
      aller chercher le fichier. On le déclenche ici et jamais au démarrage (règle d'or #4). */
@@ -2655,6 +3152,25 @@ function _afSuggInput(){
       const enCours=(document.getElementById('af-desc')||{}).value||'';
       if(_afNorm(enCours)!==_afNorm(q)) return;    // la frappe a continué : résultat périmé
       _afSuggCiq=_ciqualChercher(q,6); _afSuggRendu();
+    });
+    /* 🥗 LA TABLE D'ALIAS, MÊME RÉGIME (ft-v1115) : locale, 4 Ko gzippés, chargée au premier
+       besoin et jamais au démarrage. ⛔ Elle est demandée APRÈS CIQUAL et re-rend la liste :
+       sans la base, une cible d'alias n'a rien à désigner. */
+    _aliasCharger().then(async()=>{
+      await _ciqualCharger();
+      const enCours=(document.getElementById('af-desc')||{}).value||'';
+      if(_afNorm(enCours)!==_afNorm(q)) return;
+      _afSuggCiq=_ciqualChercher(q,6); _afSuggRendu();
+    });
+    /* 🍔 LA BASE DE MARQUES, MÊME RÉGIME (ft-v1114) : locale, chargée au premier besoin et
+       jamais au démarrage. ⭐ Elle est petite (23 produits) mais son fichier est SÉPARÉ de
+       CIQUAL exprès — deux sources, deux provenances, et l'une peut grandir sans toucher
+       l'autre. ⛔ 4 propositions et non 6 : elles passent AVANT les génériques, et occuper tout
+       l'écran avec du fast-food quand on tape « poulet » serait un remède pire que le mal. */
+    _marquesCharger().then(()=>{
+      const enCours=(document.getElementById('af-desc')||{}).value||'';
+      if(_afNorm(enCours)!==_afNorm(q)) return;
+      _afSuggMarq=_marquesChercher(q,4); _afSuggRendu();
     });
   }
   if(_afSuggTimer) clearTimeout(_afSuggTimer);
@@ -2775,10 +3291,10 @@ function _afSuggPrendreLocale(i){
 function _afSuggPrendreOff(i){
   const p=_afSuggOff[i]; if(!p) return;
   const n=p.nutriments||{};
-  _bcNutr={ name:_afSuggNom(p), kcal100:_afSuggKcal100(p),
-            prot100:Math.round(n['proteins_100g']||0),
-            carbs100:Math.round(n['carbohydrates_100g']||0),
-            fat100:Math.round(n['fat_100g']||0) };
+  _bcNutr={ name:_afSuggNom(p), kcal100:_per100d1(_afSuggKcal100(p)),
+            prot100:_per100d1(n['proteins_100g']),
+            carbs100:_per100d1(n['carbohydrates_100g']),
+            fat100:_per100d1(n['fat_100g']) };
   _offRemplirFormulaire(p, p.code||null, 'recherche');
   _afSuggVider();
   toast('Ajuste la quantité ✅','success');
@@ -2801,7 +3317,7 @@ function addFoodEntry(){
   renderFoodJournal();
   try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}   // la carte « Où tu en es » suit
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
-  toast(_journalJourActif()===today()?'Ajouté au journal 🍽️':'Ajouté au jour consulté 🍽️','success');
+  toast(_afToastAjout(),'success');
 }
 function removeFoodEntry(ts){
   if(!S.foodLog)return;
@@ -3099,7 +3615,16 @@ function _qtyGrammesEcran(pfx){
 function _masseImpossible(pfx){
   const q=_qtyGrammesEcran(pfx); if(!(q>0)) return null;
   const lu=id=>numFR((document.getElementById(pfx+'-'+id)||{}).value)||0;
-  const somme=lu('prot')+lu('carbs')+lu('fat');
+  return _masseImpossibleVals(q, lu('prot'), lu('carbs'), lu('fat'));
+}
+/* ⛔⛔ LA RÈGLE PHYSIQUE, SUR DES VALEURS ET NON SUR DES CHAMPS (ft-v1110, R2).
+   Extraite telle quelle de `_masseImpossible` — pas une ligne de logique n'est changée — parce
+   que le calibrage à la main a besoin de la MÊME règle sur des nombres qui ne sont pas encore
+   dans les champs du formulaire. *Deux écritures de « ça ne tient pas dans la portion »
+   auraient fini avec deux tolérances, et on ne saurait plus laquelle croire.* */
+function _masseImpossibleVals(q, prot, carbs, fat){
+  if(!(q>0)) return null;
+  const somme=(+prot||0)+(+carbs||0)+(+fat||0);
   if(!(somme>0) || somme<=q+2) return null;      // +2 g : l'arrondi des 4 champs, rien de plus
   return {q:q, somme:Math.round(somme*10)/10};
 }
@@ -3120,6 +3645,14 @@ function _coherenceKcal(pfx, corrigeur){
       +'est à revoir — <b>l\'app ne peut pas savoir laquelle</b>, elle ne touche à rien.</div>';
     el.style.display='block'; return;
   }
+  /* ⚠️ DEUX SEUILS, DEUX MÉTIERS — et ce n'est pas une incohérence à « harmoniser » (mesuré
+     le 03/09/2026, ft-v1114). Ici : 25 % et 60 kcal, parce que ce contrôle se déclenche à
+     CHAQUE frappe d'une personne réelle et qu'un avertissement trop bavard ne se lit plus.
+     `tools/marques.py` audite une table ENTIÈRE hors ligne, une fois : il peut se permettre
+     15 %, et c'est ainsi qu'il attrape le Korean Whopper (752 publiées / 616 calculées, soit
+     18 % — sous le seuil d'ici). *Un garde-fou de saisie et un audit de table ne cherchent pas
+     la même chose : le premier protège une frappe, le second protège une base.* C'est pour ça
+     que l'avertissement de la base s'affiche à part, dans la liste ET dans le formulaire. */
   if(!(kcal>0) || !(theo>0) || ecart<60 || ecart/Math.max(kcal,theo)<0.25
      || (kcal>theo && _KCAL_ALCOOL.test(nom))){   // ⛔ calories « en trop » sur une boisson alcoolisée : normal
     el.style.display='none'; el.innerHTML=''; return;
@@ -4425,6 +4958,13 @@ function exitDemoMode(){
 // ── GUIDE DE L'APPLICATION (diaporama, Menu → Outils) ────────
 // Guide-film : chaque slide = un vrai écran de l'app (guide/*.jpg) + un doigt animé (tap) + une phrase.
 const APP_GUIDE_SLIDES=[
+  /* 🏃 DIAPO DU GUIDE (règle d'or #11, point 5), et **SANS IMAGE exprès** : une capture
+     figerait DEUX libellés qui changent selon l'état de la séance — le bouton du bas dit
+     « Terminer la séance » ou « Enregistrer le cardio » selon qu'une série a été validée ou
+     non. *Montrer l'un des deux ferait chercher un bouton qui ne s'appelle pas comme ça.*
+     ⛔ Elle ne répète pas la pop-up : celle-ci ANNONCE que le bouton a changé ; la diapo dit
+     ce qu'une séance de cardio seul VAUT dans l'app, ce qu'aucune autre surface ne dit (R25). */
+  {icon:'🏃', t:'Un cardio seul est une vraie séance', cap:'Tu peux ouvrir une séance et ne faire <b>que</b> du cardio — 45 min de tapis, rien d\'autre. Elle compte : elle a sa <b>durée</b>, ses <b>calories</b>, elle apparaît dans ton <b>calendrier</b> et <b>Milo la voit</b>.<br><br>⭐ <b>Deux boutons, un seul enregistre.</b> Dans le bloc Cardio, « ✓ C\'est noté » range ta saisie et replie le bloc. C\'est le <b>gros bouton rouge du bas</b> qui inscrit la séance dans ton historique — un seul bouton rouge par écran, et c\'est toujours celui-là.<br><br>💡 Tant qu\'une séance attend d\'être enregistrée, l\'Accueil te le dit : le bouton affiche <b>« ↩ Reprendre la séance »</b> au lieu de « Commencer une séance ».'},
   /* 📉 DIAPO DU GUIDE (règle d'or #11, point 5), et **SANS IMAGE exprès** — pour deux raisons
      distinctes, et les deux comptent :
      ① une capture de la carte du jour montrerait des **grammes qui ne sont pas ceux du
@@ -4548,6 +5088,13 @@ const APP_GUIDE_SLIDES=[
      dit ici est RELATIF au maximum du lecteur. Même raison que la diapo « Le repos suit la
      charge » juste au-dessus. */
   {icon:'🔥', t:'Ton échauffement se dose à ta charge', cap:'Deux choses ont changé dans ta montée en charge.<br><br>⏱️ <b>LE REPOS ENTRE PALIERS SUIT LA CHARGE.</b> Il restait à <b>45 s</b> quel que soit le poids — tu passais donc au palier le plus lourd 45 secondes après le précédent. Maintenant : <b>45 s</b> tant que c\'est léger, <b>90 s</b> à partir de 75 % de ta charge de travail, <b>2 min</b> à partir de 85 %. La barre affiche « <b>palier lourd</b> » pour que tu saches pourquoi.<br><br>⛔ <b>Jamais plus que ton propre repos de travail</b> : si tu l\'as réglé court, un palier lourd le respecte. ⏳ Et c\'est toujours un <b>maximum</b> — tu peux repartir avant.<br><br>📉 <b>MOINS DE PALIERS SUR LES CHARGES LÉGÈRES.</b> L\'app en ajoutait jusqu\'à <b>5 quelle que soit la charge</b> : un squat à 60 kg recevait le protocole d\'un squat à 150. Elle en met désormais autant que la charge le demande.<br><br>⛔ <b>Elle n\'enlève jamais un palier que Milo t\'a écrit</b> — elle arrête seulement d\'en rajouter.'},
+  /* 🍔 ft-v1114 — POINT 5 DE LA RÈGLE #11. ⛔ SANS IMAGE, exprès : une capture montrerait
+     des produits d'une enseigne précise et des grammes qui ne sont pas ceux du lecteur, et
+     surtout elle figerait une liste de 27 produits qui va grandir. */
+  {icon:'🍔', t:'Le fast-food par son nom', cap:'Tape <b>big mac</b>, <b>whopper</b>, <b>tenders kfc</b> ou <b>frites mcdo</b> dans « Ajouter un aliment » : le produit sort avec son <b>enseigne</b> et le <b>poids de sa portion</b> déjà rempli.<br><br>⭐ <b>D\'OÙ VIENNENT CES CHIFFRES.</b> Des <b>sources officielles des enseignes</b>, relevées puis vérifiées — pas de valeurs inventées par l\'app. C\'est pour ça que chaque ligne <b>affiche sa marque</b> : un chiffre qui ne dit pas d\'où il vient serait pire qu\'absent.<br><br>⚠️ <b>ET CERTAINES LIGNES PORTENT UN AVERTISSEMENT.</b> Quand une enseigne publie des calories qui ne collent pas aux macros de sa propre fiche, l\'app <b>te le dit</b> et te montre le chiffre qui permet de juger — au lieu de faire disparaître la ligne.<br><br>👉 <b>Pourquoi on ne la cache pas :</b> une ligne absente te pousse vers l\'estimation automatique, <b>moins fiable</b> qu\'une valeur publiée douteuse. Mieux vaut un chiffre discutable que tu peux juger qu\'une estimation que tu crois.<br><br>⛔ Si ton produit n\'y est pas : le <b>code-barres</b> ou la <b>photo de l\'étiquette</b> restent les chemins les plus sûrs.'},
+  /* 🥗 ft-v1115 — POINT 5 DE LA RÈGLE #11. ⛔ SANS IMAGE : une capture montrerait une liste de
+     résultats qui dépend de ce que le lecteur tape, et figerait des chiffres. */
+  {icon:'🥗', t:'Tes mots trouvent ton aliment', cap:'<b>tortiglioni</b>, <b>fettuccine</b>, <b>riz jasmin</b>, <b>sticky rice</b> ne rendaient <b>rien</b> — l\'aliment était pourtant déjà dans ton téléphone. Plusieurs centaines de mots de tous les jours ouvrent maintenant la bonne porte.<br><br>⭐ <b>AUCUNE VALEUR N\'A ÉTÉ INVENTÉE.</b> Un mot ne fabrique pas une fiche : il désigne un aliment qui existait déjà dans la table officielle française, avec ses chiffres à lui.<br><br>⚠️ <b>UN CHIFFRE CHANGE, ET IL EST GROS.</b> <b>riz</b> et <b>pâtes</b> proposent maintenant la version <b>CUITE</b> en premier (155 et 167 kcal/100 g) au lieu de la crue (350 et 364). C\'est ce qu\'on a dans l\'assiette — mais c\'est <b>du simple au double</b>.<br><br>⛔ <b>La version crue n\'a pas disparu</b> : elle est <b>juste en dessous</b>. Si tu pèses tes pâtes sèches avant cuisson, prends-la.<br><br>👉 <b>Le repère qui ne trompe pas :</b> le nom le dit toujours — « cuit », « crue », « sans sel ajouté ». Un coup d\'œil avant de valider.'},
   {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
 let _agIdx=0,_agSwipeInit=false;
@@ -5405,11 +5952,19 @@ if(typeof _applyColorblind==='function')_applyColorblind();
 if(typeof _applyLeftHand==='function')_applyLeftHand();
 filterEx();
 goScreen('home', document.getElementById('nb-home'));
-// Notifier l'utilisateur s'il y a une séance en cours non terminée
-if(S.wkt&&S.wkt.exs&&S.wkt.exs.length){
-  const nEx=S.wkt.exs.length;
-  const nDone=S.wkt.exs.reduce((a,ex)=>a+(ex.sets||[]).filter(s=>s.done).length,0);
-  setTimeout(()=>toast('Séance en cours — '+nEx+' exercice'+(nEx>1?'s':'')+(nDone?' · '+nDone+' séries validées':'')+' · Appuie sur Reprendre','info'),1000);
+/* Notifier l'utilisateur s'il y a une séance en cours non terminée.
+   ⛔ 04/09/2026 — 3ᵉ endroit qui lisait « des exercices » au lieu de « une séance ouverte » :
+   quelqu'un qui rouvrait l'app avec 45 min de cardio non enregistrées n'était prévenu par
+   RIEN (ni ici, ni par le bouton de l'Accueil, ni par le rappel ⏰). `_seanceOuverte()` (R2). */
+if((typeof _seanceOuverte==='function')?_seanceOuverte():!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length)){
+  const nEx=(S.wkt.exs||[]).length;
+  const nDone=(S.wkt.exs||[]).reduce((a,ex)=>a+(ex.sets||[]).filter(s=>s.done).length,0);
+  const cMin=(typeof _cardioNoteMin==='function')?_cardioNoteMin():0;
+  // Ce qu'on annonce doit décrire ce qui est VRAIMENT en attente : une séance de cardio seul
+  // n'a pas d'exercice, et « 0 exercice » se lirait comme une panne.
+  const quoi=nEx?(nEx+' exercice'+(nEx>1?'s':'')+(nDone?' · '+nDone+' séries validées':'')+(cMin?' · '+cMin+' min de cardio':''))
+                :(cMin+' min de cardio en attente');
+  setTimeout(()=>toast('Séance en cours — '+quoi+' · Appuie sur Reprendre','info'),1000);
 }
 _initSwipe();
 _blockEdgeBackSwipe(); // iOS : neutralise le geste "retour" bord gauche (page blanche)
@@ -5849,7 +6404,22 @@ function _whatsNewUnseen(){
     if(f.si) return cond.indexOf(f.v)<0;          // conditionnelle : suivie par son numéro à elle
     return f.v>seen;                              // ordinaire : le plafond, comme avant
   });
-  if(typeof WHATS_NEW_SHOW_MAX==='number') list=list.slice(0,WHATS_NEW_SHOW_MAX);
+  /* ⛔⛔ 04/09/2026 — LE PLAFOND D'AFFICHAGE RE-ENTERRAIT CE QUE ft-v1072 AVAIT DÉTERRÉ.
+     Ce jour-là on avait retiré les conditionnelles du plafond NUMÉRIQUE (`ft4_wn_seen`) pour
+     qu'une annonce jamais montrée ne soit pas perdue. Mais il restait un second plafond, celui
+     du NOMBRE affiché d'un coup : la liste part de la plus récente, et une conditionnelle
+     ancienne tombe hors des 6 dès qu'une nouveauté ordinaire s'ajoute.
+     ⭐ Mesuré : en ajoutant la pop-up de ft-v1121, la conditionnelle **v64** passait en 7ᵉ
+     position et disparaissait — un témoin l'a attrapé (« avec la montre, les 2 pop-ups
+     reviennent » : il n'en revenait qu'une).
+     👉 Les conditionnelles passent DEVANT quand il faut trancher. Elles s'adressent à une
+     situation précise qui vient de se produire (« tu as branché ta montre ») : ce sont
+     justement celles qu'il ne faut pas remettre à plus tard. */
+  if(typeof WHATS_NEW_SHOW_MAX==='number' && list.length>WHATS_NEW_SHOW_MAX){
+    list=list.filter(function(f){return !!f.si;})
+             .concat(list.filter(function(f){return !f.si;}))
+             .slice(0,WHATS_NEW_SHOW_MAX);
+  }
   return list;
 }
 // ── « Quoi de neuf » en CARROUSEL (ft-v630, idée de Christophe) ────────────────
@@ -6349,10 +6919,42 @@ async function loadHealthAdmin(){
           .slice(0,6)
           .map(k=>k+' <span style="color:var(--t3)">('+ai.usage.byAction[k].calls+')</span>')
           .join(' · ');
+        /* ⛔⛔ ON DIT DE QUEL JOUR, ET CE N'EST PAS DE LA DÉCORATION (04/09/2026).
+           Michel, capture à l'appui : *« on ne sait pas si c'est dans la journée ou depuis
+           1 mois »*. Le titre disait « du jour » — exact, mais **rien ne le prouvait à
+           l'écran**, et un total de 1,02 € ne se lit pas pareil selon qu'il couvre une
+           journée ou un mois. 👉 ***Un chiffre sans sa période n'est pas un chiffre, c'est
+           une impression.***
+           ⭐ RIEN À CONSTRUIRE : `_aiUsageAdd_` (Code.js) remet le compteur à zéro dès que la
+           date change, et `_aiUsageLire_` **renvoyait déjà `u.date`** — l'app la recevait et
+           la jetait. C'est **R5** (une donnée produite, transmise, jamais montrée), le même
+           défaut que `topUsers` en ft-v1058.
+           ⚠️ La date vient du SERVEUR (fuseau du script), pas du téléphone : on l'affiche
+           telle qu'elle est comptée, sinon on mentirait sur la période à cheval sur minuit —
+           c'est la famille « fuseaux horaires » de `BUGS.md`, appliquée à un affichage. */
+        /* ⚠️⚠️ ON FORMATE ICI, ON N'APPELLE PAS `_dateLisible` : elle existe bien dans le
+           projet, mais c'est une **const LOCALE à une fonction de `coach.js`** — l'appeler
+           d'ici lèverait `_dateLisible is not defined` et **ferait disparaître tout le
+           panneau Santé**, pas seulement cette ligne. *C'est exactement le `_esc is not
+           defined` de ft-v1114, qui avait vidé la liste des aliments entière.*
+           ⛔ Vérifié avant d'écrire l'appel, pas après l'avoir livré. */
+        const _d=String(ai.usage.date||'');
+        let jourCompte = null;
+        if(/^\d{8}$/.test(_d)){
+          /* ⚠️ Date construite en LOCAL (`new Date(a, m-1, j)`) et non depuis une chaîne ISO :
+             `new Date('2026-09-04')` est interprétée en UTC et peut afficher la veille à
+             l'ouest de Greenwich. Famille « fuseaux horaires » de `BUGS.md`. */
+          const dt=new Date(+_d.slice(0,4), +_d.slice(4,6)-1, +_d.slice(6,8));
+          jourCompte = isNaN(dt) ? null
+            : dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+        }
         h+=_healthRow('💰','Coût réel du jour','ok',
           '<b>'+(t.calls||0)+'</b> appel(s) · '+(t.inTok||0).toLocaleString('fr-FR')+' tokens entrée · '
           +(t.outTok||0).toLocaleString('fr-FR')+' sortie · '+(t.cacheR||0).toLocaleString('fr-FR')+' lus en cache'
           +(ai.usage.euroTotal!=null?' · <b>≈ '+ai.usage.euroTotal.toFixed(2).replace('.',',')+' €</b> (estimation)':'')
+          +'<br><span style="font-size:11.5px;color:var(--t2);">📅 '
+            +(jourCompte?('journée du <b>'+_escIdea(jourCompte)+'</b>'):'journée en cours')
+            +' seulement — remis à zéro chaque nuit, rien n\'est cumulé.</span>'
           +(parAction?'<br><span style="font-size:11.5px;color:var(--t2);">'+parAction+'</span>':''));
       } else if(ai.usage===null){
         h+=_healthRow('💰','Coût réel du jour','warn','Aucun appel enregistré aujourd\'hui pour l\'instant.');

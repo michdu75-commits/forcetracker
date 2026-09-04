@@ -1827,6 +1827,406 @@ console.log('\n═══ 13. Supplements : ce qui est affiche est-il vrai ? ═�
   await cx.close();
 }
 
+/* ══ 🔋 RÉCUPÉRATION — OPTION A : le cardio, le plancher, le raccord (ft-v1119) ═════════
+   Trois défauts MESURÉS au banc déterministe avant d'écrire une ligne, puis tranchés par
+   Michel sur les chiffres :
+   ① le cardio ne comptait pas — **18 combinaisons** (3 intensités × 6 durées) rendaient
+      TOUTES la même pénalité, −6 : 90 min de tapis intense = 10 min de marche ;
+   ② le plancher de 6 fabriquait une falaise d'entrée — 0 séance 79, **1 série 75**, et
+      1/2/3 séries aplaties sur la même valeur ;
+   ③ le bonus de repos arrivait d'un bloc à 48 h — **47,9 h → 79, 48,0 h → 85**, six points
+      en un dixième d'heure, exactement la « marche de midi » de ft-v671 déplacée.
+   ⛔ ANCRAGE : 45 min de tapis modéré = 6 séries équivalentes (décision Michel, contre 8,
+   parce qu'à 8 un cardio SEUL de 90 min intense atteignait le plafond de 38).
+   ⛔ CE QUI N'A PAS BOUGÉ, ET LES TÉMOINS LE PROUVENT : ×1,7, échec ×1,5, drop ×1,3,
+   plafond 38, et la musculation au point près à partir de 4 séries. */
+console.log('\n═══ 12. Récupération — option A : cardio, plancher, raccord 48 h ═══');
+{
+  const {c,p,errs}=await boot('2026-09-04T18:00:00+02:00',{ft4_name:'T',ft4_ob2:'1'});
+  const R=await p.evaluate(()=>{ try{
+    const o={}, REF=Date.now();
+    const jour=n=>{const d=new Date(REF);d.setDate(d.getDate()-n);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+    const etat=(sessions,extra)=>{ extra=extra||{};
+      S.gender='H'; S.age=35; S.bw=80; S.height=178; S.level='intermediaire'; S.smoker=false;
+      S.mensCycleStart=null; S.contraception=''; S.dayState=null; S.dayStateLog=[]; S.healthDaily=[];
+      S.sleepLog=[0,1,2].map(i=>({date:jour(i),hours:7.5,quality:3}));
+      S.sessions=sessions||[];
+      Object.assign(S,extra);
+      return calcRecoveryDetail(REF).score; };
+    const seance=(nSets,opt)=>{ opt=opt||{};
+      const hAgo=opt.hAgo==null?20:opt.hAgo, ts=REF-hAgo*36e5, d=new Date(ts);
+      const date=new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+      const sets=[]; for(let i=0;i<nSets;i++) sets.push({kg:80,reps:8,done:true,type:opt.type||'N'});
+      const s={id:ts,ts,date,volume:640*nSets,duration:3600,exs:nSets?[{name:'Développé Couché',sets}]:[]};
+      if(opt.avant) s.cardioAvant=opt.avant;
+      if(opt.apres) s.cardio=opt.apres;
+      return s; };
+    const car=(inten,min,opt)=>seance(0,Object.assign({apres:{type:'tapis',intensity:inten,duration:min}},opt||{}));
+
+    /* ⛔ CONTRÔLE D'ABORD : la charge cardio existe et n'est pas nulle. Sans lui, la moitié
+       des témoins seraient verts en mesurant un cardio qui ne compte toujours pas.
+       ⚠️⚠️ ET LE REPLI `chC` N'EST PAS DE LA COQUETTERIE : sans lui, ce bloc **plante** sur
+       l'ancien code au lieu de rougir — donc le contrôle négatif ne prouverait rien. *Un bloc
+       qui explose ne mesure pas, il se tait* (leçon ft-v835, ft-v874). */
+    const chC = (typeof _chargeCardio==='function') ? _chargeCardio : (()=>0);
+    o.chargeExiste = (typeof _chargeCardio==='function')
+      && Math.round(chC(car('modere',45))*100)/100 === 6;
+    o.refSansSeance = etat([]);
+
+    /* ① le cardio : pénalité brute, par la vraie fonction */
+    o.pen={};
+    [['leger',10],['leger',20],['leger',45],['modere',10],['modere',20],['modere',45],
+     ['modere',60],['modere',90],['intense',20],['intense',45],['intense',90]]
+      .forEach(([i,m])=>o.pen[i+m]=_penaliteSeance(car(i,m)));
+    /* ② la musculation, au point près */
+    o.penMus={}; [1,2,3,4,6,8,10,12,16,20,24,30].forEach(n=>o.penMus[n]=_penaliteSeance(seance(n)));
+    o.penType={N:_penaliteSeance(seance(12)),D:_penaliteSeance(seance(12,{type:'D'})),
+               E:_penaliteSeance(seance(12,{type:'E'})),X:_penaliteSeance(seance(12,{type:'X'}))};
+    o.setTypes=(typeof SET_TYPES!=='undefined')?SET_TYPES.slice():null;
+    /* ③ la progression d'entrée */
+    o.entree=[0,1,2,3,4].map(n=>n?etat([seance(n)]):o.refSansSeance);
+    o.entreeCardio=[0,5,10,20].map(m=>m?etat([car('leger',m)]):o.refSansSeance);
+    /* ④ le raccord des 48 h */
+    o.raccord={}; [46,47,47.5,47.9,48,48.1,49,50,54,59,60,61,72].forEach(h=>
+      o.raccord[h]=etat([seance(20,{hAgo:h})]));
+    /* ⚠️ ÉCHANTILLONNAGE FIN, ET C'EST UNE CORRECTION DE TÉMOIN (§31) : ma 1ʳᵉ version
+       comparait les valeurs de la liste ci-dessus, qui SAUTE de 54 h à 59 h — elle rougissait
+       donc sur un « écart de 3 points » qui était en réalité 5 heures de pente à 1 point/heure.
+       *Le code était sain ; c'est l'échantillon qui était troué.* On balaye au demi-heure. */
+    o.pente=[]; for(let h=46;h<=62.001;h+=0.5) o.pente.push(etat([seance(20,{hAgo:h})]));
+    /* ⑤ mixte — une seule somme */
+    o.mixte={
+      cardioSeul : _penaliteSeance(car('modere',45)),
+      muscuSeule : _penaliteSeance(seance(10)),
+      avant      : _penaliteSeance(seance(10,{avant:{type:'tapis',intensity:'leger',duration:10}})),
+      apres      : _penaliteSeance(seance(10,{apres:{type:'tapis',intensity:'modere',duration:20}})),
+      lesDeux    : _penaliteSeance(seance(15,{avant:{type:'tapis',intensity:'leger',duration:10},
+                                              apres:{type:'tapis',intensity:'modere',duration:20}})),
+      /* ⛔ les deux moments s'ADDITIONNENT avant l'unique conversion */
+      sommeMM    : Math.round(chC({cardioAvant:{type:'tapis',intensity:'leger',duration:10},
+                                             cardio:{type:'tapis',intensity:'modere',duration:20}})*100)/100,
+      avantSeul  : Math.round(chC({cardioAvant:{type:'tapis',intensity:'leger',duration:10}})*100)/100,
+      apresSeul  : Math.round(chC({cardio:{type:'tapis',intensity:'modere',duration:20}})*100)/100
+    };
+    /* ⑥ projectionRecup : la date annoncée colle-t-elle au score ? */
+    o.proj=[6,17,34,38].map(penCible=>{
+      /* on fabrique une séance dont la pénalité vaut la cible, par le nombre de séries */
+      let n=1; while(_penaliteSeance(seance(n))<penCible && n<40) n++;
+      const s=seance(n,{hAgo:0.01}), pen=_penaliteSeance(s);
+      S.sessions=[s];
+      const H=RECUP_EFFACE_H, hFin=Math.max(0,H-(H/2)/Math.max(1,pen))+1/60;
+      const tFin=s.ts+hFin*36e5;
+      /* ⚠️⚠️ MARGE DE 5 MINUTES DU CÔTÉ « AVANT », ET C'EST UNE CORRECTION DE TÉMOIN.
+         Ma 1ʳᵉ version testait à −1 minute exactement… c'est-à-dire à l'instant que le code
+         AJOUTE volontairement pour éviter le bord (`+1/60`). Le témoin annulait donc la marge
+         qu'il devait protéger, et retombait pile sur le bord : mesuré, le produit y vaut
+         **0,500000000000** à douze décimales, et `Math.round` bascule d'un côté ou de l'autre
+         selon les derniers bits — 1 pour une pénalité de 7 ou 17, **0** pour 34 ou 38.
+         *Un témoin posé exactement sur une frontière ne mesure pas une règle, il mesure une
+         erreur d'arrondi* (§31). La garantie réelle est : la fatigue est encore là AVANT
+         l'instant annoncé, et partie APRÈS. */
+      const avant=calcRecoveryDetail(tFin-5*60000), apres=calcRecoveryDetail(tFin+60000);
+      const fa=(avant.factors||[]).find(f=>/Séance/.test(f.label));
+      const fp=(apres.factors||[]).find(f=>/Séance/.test(f.label));
+      return {pen, avant:fa?fa.val:0, apres:fp?fp.val:0};
+    });
+    /* ⑦ le poids ne doit PAS changer la charge cardio */
+    o.poids=[60,80,100].map(bw=>{ const sv=S.bw; S.bw=bw;
+      const ch=Math.round(chC(car('modere',45))*100)/100; S.bw=sv; return ch; });
+    /* ⑧ les constantes qu'on ne devait PAS toucher */
+    o.constantes={plancher:(typeof RECUP_PEN_PLANCHER!=='undefined')?RECUP_PEN_PLANCHER:null,
+                  efface:(typeof RECUP_EFFACE_H!=='undefined')?RECUP_EFFACE_H:null,
+                  rampe:(typeof RECUP_BONUS_RAMPE_H!=='undefined')?RECUP_BONUS_RAMPE_H:null,
+                  facteur:(typeof RECUP_CARDIO_FACTEUR!=='undefined')?Math.round(RECUP_CARDIO_FACTEUR*100)/100:null};
+    return o;
+  }catch(e){ return {err:String(e&&e.message||e)}; } });
+
+  if(R.err) t('le bloc récup option A s\'exécute', false, R.err);
+  else{
+    t('⛔ CONTRÔLE — `_chargeCardio` existe et 45 min modéré vaut bien 6 unités',
+      R.chargeExiste===true, JSON.stringify(R.constantes));
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : avant, ces 11 valeurs étaient TOUTES −6. */
+    t('⭐⭐ le cardio produit une charge qui dépend de la durée ET de l\'intensité',
+      R.pen.modere20===5 && R.pen.modere45===10 && R.pen.modere90===20
+      && R.pen.intense45===18 && R.pen.intense90===35 && R.pen.leger10===2,
+      JSON.stringify(R.pen));
+    /* ⛔ MONOTONICITÉ, dans les deux sens — c'est ce que le brief exige. */
+    t('⛔ … strictement croissant avec la DURÉE (léger 10<20<45 · modéré 10<20<45<60<90)',
+      R.pen.leger10<R.pen.leger20 && R.pen.leger20<R.pen.leger45
+      && R.pen.modere10<R.pen.modere20 && R.pen.modere20<R.pen.modere45
+      && R.pen.modere45<R.pen.modere60 && R.pen.modere60<R.pen.modere90, JSON.stringify(R.pen));
+    t('⛔ … et avec l\'INTENSITÉ à durée égale (léger < modéré < intense à 20 et 45 min)',
+      R.pen.leger20<R.pen.modere20 && R.pen.modere20<R.pen.intense20
+      && R.pen.leger45<R.pen.modere45 && R.pen.modere45<R.pen.intense45, JSON.stringify(R.pen));
+    /* ⛔ L'ancrage lui-même, figé : 45 min modéré = 6 unités → −10. */
+    t('⛔ l\'ancrage retenu est bien 6 séries pour 45 min modéré (pénalité −10)',
+      R.pen.modere45===10 && R.constantes.facteur===41.25, 'facteur='+R.constantes.facteur);
+    /* ⛔⛔ NON-RÉGRESSION LA PLUS IMPORTANTE : la musculation ne bouge pas d'un point
+       à partir de 4 séries. C'est la promesse faite à Michel (§9 de sa validation). */
+    t('⛔⛔ NON-RÉGRESSION — la musculation est INCHANGÉE à partir de 4 séries',
+      R.penMus[4]===7 && R.penMus[6]===10 && R.penMus[8]===14 && R.penMus[10]===17
+      && R.penMus[12]===20 && R.penMus[16]===27 && R.penMus[20]===34 && R.penMus[24]===38
+      && R.penMus[30]===38, JSON.stringify(R.penMus));
+    t('⛔ … et les multiplicateurs de série non plus (N 20 · D 27 · E 31 à 12 séries)',
+      R.penType.N===20 && R.penType.D===27 && R.penType.E===31, JSON.stringify(R.penType));
+    /* ⚠️⚠️ TROU CONNU, ÉPINGLÉ LE 04/09/2026 — ET TROUVÉ DANS L'EXPORT RÉEL DE MICHEL.
+       Le témoin juste au-dessus est VERT sur des types que l'app ne peut plus produire :
+       `SET_TYPES` vaut `['N','É','X']`, et une migration one-time (state.js) a converti
+       **E → X** et **D → N** dans tout l'historique. `_penaliteSeance` teste pourtant
+       `type==='E'` (×1,5) et `type==='D'` (×1,3). 👉 ***Les deux multiplicateurs sont
+       INATTEIGNABLES : une série menée à l'échec compte exactement comme une série normale.***
+       Mesuré sur ses 617 séries validées : 609 N · 8 X · **0 E · 0 D**, et l'écart que ça
+       représente est de **5 points sur 40 séances**.
+       ⛔ ON NE LE CORRIGE PAS ICI : Michel a explicitement écrit « ne pas toucher à échec ×1,5
+       / drop ×1,3 » dans l'option A. Ce témoin fige donc le trou **avec sa raison**, pour qu'il
+       ne se reperde pas — le jour où on le comble, il rougit, et c'est exactement son rôle. */
+    t('⚠️ TROU CONNU — l\'échec (X) compte comme une série NORMALE : le ×1,5 vise « E », que l\'app n\'écrit plus',
+      R.penType.X===R.penType.N && Array.isArray(R.setTypes)
+      && R.setTypes.indexOf('E')<0 && R.setTypes.indexOf('D')<0,
+      'SET_TYPES='+JSON.stringify(R.setTypes)+' · X='+R.penType.X+' N='+R.penType.N);
+    /* ⭐⭐ LA FALAISE D'ENTRÉE : 79/75/75/75/75 devient une pente. */
+    t('⭐⭐ 0/1/2/3/4 séries forment une progression régulière (plus de falaise d\'entrée)',
+      R.entree.join('/')==='79/78/77/76/75', R.entree.join('/'));
+    t('⛔ … et côté cardio aussi (0 / 5 / 10 / 20 min léger)',
+      R.entreeCardio[0]===79 && R.entreeCardio[1]<=R.entreeCardio[0]
+      && R.entreeCardio[2]<=R.entreeCardio[1] && R.entreeCardio[3]<R.entreeCardio[1]
+      && (R.entreeCardio[0]-R.entreeCardio[1])<=2, R.entreeCardio.join('/'));
+    /* ⭐⭐ LA FALAISE DES 48 H : 79 → 85 devient 79 → 79. */
+    t('⭐⭐ plus AUCUN saut à 48 h (47,9 · 48,0 · 48,1 h)',
+      R.raccord[47.9]===R.raccord[48] && R.raccord[48]===R.raccord[48.1],
+      [R.raccord[47.9],R.raccord[48],R.raccord[48.1]].join(' / '));
+    t('⛔ … et le bonus s\'installe en PENTE, jamais d\'un bloc (balayage au demi-heure, 46→62 h)',
+      R.pente.every((v,i,a)=>i===0||Math.abs(v-a[i-1])<=1) && R.pente.length>30,
+      R.pente.join(' '));
+    t('⛔ … et il ARRIVE bien à destination : +6 au bout de la rampe (60 h), +9 à 72 h',
+      R.raccord[60]===R.refSansSeance+6 && R.raccord[72]===R.refSansSeance+9,
+      R.raccord[60]+' / '+R.raccord[72]+' (réf '+R.refSansSeance+')');
+    /* ⛔ MIXTE : une seule somme, les deux moments comptent. */
+    t('⛔ séance mixte : le cardio S\'AJOUTE à la musculation (10 séries seules < + cardio)',
+      R.mixte.muscuSeule===17 && R.mixte.avant>R.mixte.muscuSeule
+      && R.mixte.apres>R.mixte.avant, JSON.stringify(R.mixte));
+    t('⛔⛔ … et les DEUX moments s\'additionnent avant l\'unique conversion (aucun perdu)',
+      Math.abs(R.mixte.sommeMM-(R.mixte.avantSeul+R.mixte.apresSeul))<0.01,
+      R.mixte.sommeMM+' vs '+R.mixte.avantSeul+'+'+R.mixte.apresSeul);
+    t('⛔ un échauffement de 10 min léger pèse peu (moins de 1 point de charge)',
+      R.mixte.avantSeul<1, String(R.mixte.avantSeul));
+    /* ⭐ LA PROJECTION COLLE AU SCORE — c'est la cohérence demandée. */
+    t('⭐ `projectionRecup` : la fatigue est encore là 5 min AVANT la fin annoncée',
+      R.proj.every(x=>x.avant<0), JSON.stringify(R.proj));
+    t('⭐ … et elle a bien disparu 1 min APRÈS',
+      R.proj.every(x=>x.apres===0), JSON.stringify(R.proj));
+    /* ⛔⛔ LE POIDS NE DOIT PAS ENTRER DANS LA CHARGE CARDIO — c'est toute la raison
+       pour laquelle on part des MET·min et pas des calories. */
+    t('⛔⛔ le POIDS ne change pas la charge cardio (60 / 80 / 100 kg → même valeur)',
+      R.poids[0]===R.poids[1] && R.poids[1]===R.poids[2] && R.poids[0]===6,
+      R.poids.join(' / '));
+    t('⛔ les constantes non touchées le restent (effacement 48 h, rampe 12 h, plancher 2)',
+      R.constantes.efface===48 && R.constantes.rampe===12 && R.constantes.plancher===2,
+      JSON.stringify(R.constantes));
+    t('0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+  await c.close();
+}
+
+/* ══ 🔒 R2 — `RECUP_EFFACE_H` EST VRAIMENT LE SEUL PROPRIÉTAIRE (ft-v1119) ═══════════════
+   ⚠️⚠️ CE TÉMOIN EST DE SOURCE, ET C'EST ASSUMÉ. À H = 48, l'ancienne expression
+   (`48 − 24/pen`) et la nouvelle (`H − (H/2)/pen`) sont RIGOUREUSEMENT identiques : un
+   témoin de comportement serait donc **vert des deux côtés** et ne prouverait rien.
+   *Ce qu'on protège ici n'est pas un résultat, c'est une DÉPENDANCE* — et une dépendance ne
+   se mesure que dans le texte du code. Sur l'ancien code, il rougit. */
+console.log('\n═══ 13. R2 — un seul propriétaire de la durée d\'effacement ═══');
+{
+  const src=fs.readFileSync(path.join(__dirname,'..','..','tracking.js'),'utf8');
+  const i=src.indexOf('function projectionRecup');
+  const corps=i<0?'':src.slice(i,src.indexOf('\n}',i));
+  const sansCom=corps.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+  t('⛔ le témoin trouve bien `projectionRecup` (sinon il serait vert en ne lisant rien)',
+    i>0 && corps.length>200, 'i='+i+' len='+corps.length);
+  t('⭐⭐ `projectionRecup` lit RECUP_EFFACE_H',
+    /RECUP_EFFACE_H/.test(sansCom), sansCom.replace(/\s+/g,' ').slice(0,140));
+  t('⛔⛔ … et n\'écrit plus 48 ni 24 en dur (le 24 EST 48/2 : les deux en dépendaient)',
+    !/\b48\b/.test(sansCom) && !/\b24\b/.test(sansCom),
+    (sansCom.match(/[^\n]*\b(48|24)\b[^\n]*/g)||[]).join(' | ').slice(0,140));
+}
+
+/* ══ ⚡ « CETTE SÉANCE TE CONVIENT ? » NE S'AFFICHE PLUS SOUS UN REPROCHE (ft-v1123) ═══
+   Michel, enregistrement d'écran à l'appui : il écrit *« Oui mais pourquoi tu me donnes la
+   séance à faire ? »* et l'app lui propose « ⚡ Oui, on démarre » **sous une réponse de Milo
+   qui dit le contraire** (« c'est pas le bon moment, t'as fini ta séance, on est en débrief »).
+   ⭐⭐ MESURÉ AVANT DE TOUCHER AU CODE, et son cas n'était pas isolé : sur six phrases, QUATRE
+   déclenchaient la carte à tort — dont trois qui sont l'exact contraire d'une demande.
+   ⛔ Ce bloc tient les DEUX populations : ce qui doit continuer de déclencher, et ce qui ne
+   doit plus. Un garde qui ne mesure que les faux positifs finit par tout refuser. */
+console.log('\n═══ 14. « Cette séance te convient ? » — demande ou commentaire ═══');
+{
+  const {c,p,errs}=await boot(null,{ft4_name:'T',ft4_ob2:'1'});
+  const R=await p.evaluate(()=>{
+    if(typeof _demandeUneSeance!=='function') return {absente:true};
+    const j=t=>_demandeUneSeance(t);
+    return {absente:false,
+      /* ⚡ DE VRAIES DEMANDES — elles doivent toutes rester vraies */
+      oui:[ 'fais moi une séance jambes', 'prépare-moi une séance haut du corps',
+            'une séance jambes stp', 'ma séance du jour ?', 'je fais quoi aujourd hui ?',
+            'donne moi une séance pour ce soir',
+            'pourquoi pas une séance jambes ?',
+            'pourquoi tu ne me fais pas une séance jambes ?' ].map(t=>[t,j(t)]),
+      /* — DES COMMENTAIRES — aucune ne doit déclencher la carte */
+      non:[ 'Oui mais pourquoi tu me donnes la séance à faire ?',
+            'la séance était trop longue', 'pourquoi ma séance ne compte pas ?',
+            'je viens de finir ma séance', 'ma séance a été dure',
+            'on est en débrief de ma séance', "j'ai fait ma séance ce matin",
+            'j ai fait ma séance ce matin',
+            'Et le squat, tu le mets après le Hip Thrust' ].map(t=>[t,j(t)]),
+      /* ⚠️ TROUS CONNUS, ÉPINGLÉS : deux formulations manquent l'apostrophe ou le « fait ».
+         Ce sont des RATÉS (la carte ne s'affiche pas alors qu'elle devrait), pré-existants et
+         SANS rapport avec ce correctif — qui, lui, ne fait que RETIRER des déclenchements.
+         On les fige avec leur raison pour qu'ils ne se reperdent pas (R30). */
+      trous:[ 'on fait quoi ce soir', 'on s entraîne quoi demain ?' ].map(t=>[t,j(t)])
+    };
+  });
+  if(R.absente) t('⛔ la fonction du filet existe', false, 'fonction absente');
+  else{
+    /* ⛔ CONTRÔLE : les deux populations sont non vides, sinon « tout est conforme » ne dit rien. */
+    t('⛔ CONTRÔLE — les deux populations existent (8 demandes, 9 commentaires)',
+      R.oui.length===8 && R.non.length===9, R.oui.length+' / '+R.non.length);
+    t('⭐⭐ le cas de Michel ne déclenche plus la carte (« pourquoi tu me donnes la séance à faire ? »)',
+      R.non[0][1]===false, JSON.stringify(R.non[0]));
+    t('⭐⭐ … ni les trois autres commentaires mesurés (était trop longue · ne compte pas · viens de finir)',
+      R.non[1][1]===false && R.non[2][1]===false && R.non[3][1]===false,
+      JSON.stringify(R.non.slice(1,4)));
+    t('⛔⛔ AUCUN commentaire ne déclenche la carte',
+      R.non.every(x=>x[1]===false), JSON.stringify(R.non.filter(x=>x[1])));
+    /* ⛔⛔ LE TÉMOIN QUI EMPÊCHE LE CORRECTIF D'ÊTRE « TOUT REFUSER ». */
+    t('⛔⛔ NON-RÉGRESSION — les 8 vraies demandes déclenchent TOUJOURS la carte',
+      R.oui.every(x=>x[1]===true), JSON.stringify(R.oui.filter(x=>!x[1])));
+    /* ⭐ Le cas limite qui distingue une exclusion fine d'une exclusion brutale. */
+    t('⭐ « pourquoi » n\'interdit pas une demande (« pourquoi tu ne me fais pas une séance ? »)',
+      R.oui[6][1]===true && R.oui[7][1]===true, JSON.stringify(R.oui.slice(6)));
+    t('⚠️ TROUS CONNUS — « on fait quoi » et « on s entraîne » (sans apostrophe) ne déclenchent pas',
+      R.trous.every(x=>x[1]===false), JSON.stringify(R.trous));
+    t('0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+  await c.close();
+}
+
+/* ══ 🔋 OPTION B — LA CHARGE S'ADDITIONNE, LE FORFAIT DISPARAÎT (ft-v1126) ═══════════════
+   Michel : *« maintenant l'option B »*, après l'option A livrée en ft-v1122.
+   ⭐⭐ MESURÉ AVANT DE CODER, et le défaut était net : 1, 2 ou 3 séances de 12 séries rendaient
+   TOUTES le même facteur, **−13**. Le volume doublait, triplait, et le calcul ne le voyait pas ;
+   seul un forfait « jours enchaînés » de −4 / −8 l'approximait au doigt mouillé.
+   ⛔ PLAFOND SUR LA SOMME = celui qui existe déjà (38), **décision de Michel sur les chiffres** :
+   le candidat à 48 faisait descendre son plancher de 42 à 38, celui-ci le laisse où il est.
+   ⭐⭐ ET LE RÉSULTAT EST CONTRE-INTUITIF : sur ses 60 jours réels, **25 journées MONTENT** et 3
+   baissent — parce que le forfait mordait 28 jours à −4 quand la vraie somme y coûte moins.
+   *Une correction annoncée comme « plus sévère » s'est révélée plus juste ET plus douce.*
+   ⛔ Ce bloc tient les DEUX moitiés : ce qui doit CHANGER, et ce qui ne doit SURTOUT pas bouger. */
+console.log('\n═══ 15. Récupération — option B : la charge cumulée ═══');
+{
+  const {c,p,errs}=await boot('2026-09-04T18:00:00+02:00',{ft4_name:'T',ft4_ob2:'1'});
+  const R=await p.evaluate(async()=>{ try{
+    const REF=Date.now();
+    const jour=t=>{const d=new Date(t);return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+    const seance=(nSets,hAgo)=>{const ts=REF-hAgo*36e5;
+      const sets=[]; for(let i=0;i<nSets;i++) sets.push({kg:80,reps:8,done:true,type:'N'});
+      return {id:ts,ts,date:jour(ts),volume:640*nSets,duration:3600,
+              exs:[{name:'Développé Couché',sets}]};};
+    const pose=ss=>{ S.gender='H'; S.age=35; S.bw=80; S.height=178; S.level='intermediaire';
+      S.smoker=false; S.mensCycleStart=null; S.contraception=''; S.dayState=null;
+      S.dayStateLog=[]; S.healthDaily=[];
+      S.sleepLog=[0,1,2].map(i=>({date:jour(REF-i*864e5),hours:7.5,quality:3}));
+      S.sessions=ss.slice().sort((a,b)=>b.ts-a.ts);
+      const d=calcRecoveryDetail(REF), f=d.factors||[];
+      const g=re=>{const x=f.find(y=>re.test(y.label||''));return x?x.val:0;};
+      return {score:d.score, seance:g(/Séance|Repos/), enchaine:g(/enchaîn/i),
+              libelles:f.map(x=>x.label)}; };
+    const o={};
+    o.une   = pose([seance(12,18)]);
+    o.deux  = pose([seance(12,18), seance(12,42)]);
+    o.hors  = pose([seance(12,18), seance(12,90)]);   // la 2ᵉ est HORS fenêtre (>48 h)
+    /* ⚠️ TOUTE FRAÎCHE (30 min), pas 18 h : à 18 h une séance a déjà fondu des deux tiers,
+       et le plafond porte sur la pénalité BRUTE, pas sur ce qu'il en reste. Mon 1ᵉʳ jet
+       exigeait −38 à 18 h et rougissait sur du code parfaitement sain (§31). ⛔ Et pas à
+       0 h pile : un témoin posé sur une frontière mesure l'arrondi, pas le comportement. */
+    o.grosse= pose([seance(40,0.5)]);                 // une seule, énorme et fraîche → plafond
+    o.enorme= pose([seance(30,4), seance(30,10), seance(30,20)]); // 3 grosses → plafond de la somme
+    o.repos = pose([seance(12,80)]);                  // rien dans la fenêtre → bonus de repos
+    o.PLAF  = (typeof RECUP_PEN_PLAFOND!=='undefined')?RECUP_PEN_PLAFOND:null;
+    o.dur   = /Math\.min\(38,/.test(String(_penaliteSeance));
+    o.proj  = (typeof projectionRecup==='function')?projectionRecup():null;
+    /* ⛔⛔ CE TÉMOIN A ÉTÉ RE-VISÉ APRÈS AVOIR ROUGI SUR MON PROPRE TRAVAIL — §31, et la leçon
+       vaut d'être gardée. Mon 1ᵉʳ jet interdisait le MOT « enchaînés » dans tout texte affiché.
+       Il a rougi sur 9 lignes, dont la pop-up, le point rouge et l'aide que je venais d'écrire
+       **pour annoncer le retrait**. *Une aide qui explique qu'un facteur a disparu doit
+       forcément le nommer* — interdire le mot rendait le retrait impossible à annoncer.
+       👉 La garantie n'est pas « le mot n'apparaît plus », c'est ***« aucun texte ne le présente
+       encore comme un facteur ACTUEL »***. On épingle donc les DEUX tournures mortes, celles
+       qui existaient vraiment et que j'ai retirées : l'énumération des facteurs du score, et la
+       phrase de projection. Un 5ᵉ lecteur qui recopierait l'une des deux rougira. */
+    o.fuites=[];
+    for(const f of ['screens.js','coach.js','constants.js','tracking.js','app.js','log.js']){
+      let txt=''; try{ txt=await (await fetch('/'+f)).text(); }catch(e){ o.fuites.push(f+' ILLISIBLE'); continue; }
+      /* ① le facteur ÉNUMÉRÉ parmi ceux qui composent le score aujourd'hui */
+      if(/âge,\s*jours enchaînés/i.test(txt)) o.fuites.push(f+' : énumère « jours enchaînés » parmi les facteurs actuels');
+      /* ② la projection qui promet la fin d'un enchaînement */
+      if(/enchaînement de jours se vide/i.test(txt)) o.fuites.push(f+' : promet la fin de « l\'enchaînement de jours »');
+    }
+    return o;
+  }catch(e){ return {err:e.message}; } });
+
+  if(R.err) t('⛔ le bloc s\'exécute', false, R.err);
+  else{
+    /* ⛔ CONTRÔLE — sans écart entre 1 et 2 séances, tout le reste serait vert sur du vide. */
+    t('⛔ CONTRÔLE — une séance seule pèse déjà quelque chose',
+      R.une.seance<0, 'facteur '+R.une.seance);
+    t('⭐⭐ DEUX séances dans la fenêtre coûtent PLUS qu\'une seule (la charge s\'additionne)',
+      R.deux.seance < R.une.seance, R.une.seance+' → '+R.deux.seance);
+    /* ⛔⛔ LE TÉMOIN QUI EMPÊCHE « ON ADDITIONNE TOUT ET N'IMPORTE QUOI ». */
+    t('⛔⛔ une séance HORS de la fenêtre d\'effacement ne compte pas',
+      R.hors.seance === R.une.seance, R.une.seance+' vs '+R.hors.seance);
+    /* ⭐ R14 — là où il n'y a rien à cumuler, le chiffre d'AVANT est conservé au point près.
+       C'est ce qui fait que 32 des 60 journées de Michel ne bougent pas d'un point. */
+    t('⭐ avec UNE seule séance, on retombe sur le chemin d\'origine (aucun déplacement)',
+      R.une.seance === -13, 'facteur '+R.une.seance+' (attendu −13, la valeur d\'avant)');
+    /* ⛔⛔ LE FORFAIT A DISPARU — et on le vérifie sur le LIBELLÉ affiché, pas sur une valeur :
+       un forfait à 0 se lirait « absent » alors qu'il serait encore là. */
+    t('⛔⛔ le forfait « Jours enchaînés » ne s\'affiche PLUS nulle part',
+      !R.deux.libelles.some(l=>/enchaîn/i.test(l||'')) && R.deux.enchaine===0,
+      JSON.stringify(R.deux.libelles));
+    /* ⛔ LE PLAFOND DE LA SOMME, décision de Michel. Trois grosses séances rapprochées ne
+       peuvent pas coûter plus qu'UNE séance maximale. */
+    t('⭐⭐ la SOMME est plafonnée à ce que coûte une séance maximale (décision de Michel)',
+      R.enorme.seance === -R.PLAF, 'facteur '+R.enorme.seance+' · plafond '+R.PLAF);
+    t('⛔ … et une séance énorme SEULE atteint le même plafond (le barème n\'a pas bougé)',
+      R.grosse.seance === -R.PLAF, 'facteur '+R.grosse.seance);
+    /* ⛔ R2 — le plafond est une CONSTANTE, pas deux littéraux. C'est le défaut exact corrigé
+       la veille dans `projectionRecup` (48 et 24 écrits en dur). */
+    t('⛔ R2 — le plafond a UN propriétaire nommé, plus aucun 38 en dur dans la pénalité',
+      R.PLAF===38 && R.dur===false, 'PLAFOND='+R.PLAF+' · littéral encore présent : '+R.dur);
+    /* ⭐ NON-RÉGRESSION — sans séance dans la fenêtre, le bonus de repos est intact. */
+    t('⭐ NON-RÉGRESSION — sans séance récente, le bonus de repos fonctionne toujours',
+      R.repos.seance > 0, 'facteur '+R.repos.seance);
+    /* ⛔⛔ LA PROJECTION NE PROMET PLUS LA FIN D'UNE RÈGLE SUPPRIMÉE. Elle calculait aussi
+       l'expiration du forfait : gardée, elle aurait annoncé une remontée qui n'arrive jamais. */
+    t('⛔⛔ `projectionRecup` ne s\'appuie plus sur le forfait retiré',
+      !!R.proj && R.proj.source!=='jours', JSON.stringify(R.proj&&R.proj.source));
+    /* ⛔⛔ LE TÉMOIN LE PLUS UTILE DU BLOC, et il vient d'une erreur de parcours : le forfait
+       avait **SIX** lecteurs, pas un. Le calcul · le conseil · `projectionRecup` · l'aide de
+       l'Accueil qui l'énumérait parmi les facteurs · l'écran de projection qui promettait « le
+       temps que ton enchaînement de jours se vide » · l'aide détaillée du Guide · **et une
+       pop-up de 2026 (v33) toujours servie aux nouveaux venus**, que je n'aurais jamais trouvée
+       à la main : c'est le témoin qui me l'a montrée, après que je l'aie cru terminé.
+       👉 ***Retirer une règle du calcul ne la retire pas de ce que la personne LIT*** — et une
+       phrase qui décrit un rouage supprimé est pire qu'une phrase absente, parce qu'on la croit.
+       ⛔ Le témoin vise les fichiers SERVIS, pas une liste d'endroits : un 5ᵉ lecteur écrit
+       demain rougira tout seul. */
+    t('⛔⛔ AUCUN texte affiché ne nomme encore le forfait retiré (6 lecteurs trouvés, 6 corrigés)',
+      R.fuites!==undefined && R.fuites.length===0, JSON.stringify(R.fuites));
+    t('0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+  await c.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL LINÉAIRE : '+ok+' ✅ · '+ko+' ❌ ════');

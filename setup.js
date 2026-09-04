@@ -273,6 +273,29 @@ function _histoLignes(){
     (S.sessions||[]).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).forEach(s=>{
       if(!s||!s.date) return;
       const nom=s.name||s.label||'';
+      /* 🏃 LE CARDIO ENTRE DANS L'EXPORT (04/09/2026). Michel, en regardant son fichier :
+         *« il faut que le cardio soit sur l'export de l'historique »*.
+         ⛔⛔ IL N'Y ÉTAIT PAS DU TOUT, et pas par oubli de filtrage : ce producteur ne parcourt
+         que des SÉRIES, or un cardio n'en a aucune — il vit dans `cardioAvant` / `cardio`. Donc
+         **aucun cardio n'a jamais pu apparaître**, ni sur une séance de muscu, ni seule. Sur son
+         historique réel : **27 cardios enregistrés, 0 exporté.**
+         ⭐ UNE LIGNE PAR CARDIO, avec `type = CARDIO` — le format « une ligne par série » n'est
+         pas cassé, le filtre d'un tableur continue de marcher, et rien d'autre ne bouge (R13).
+         La DURÉE va dans `reps` (c'est la colonne du « combien »), et `kg`/`volume` restent à 0 :
+         *on n'invente pas un tonnage pour un tapis.*
+         ⛔ Le libellé lit `_cardioClair` (log.js), le propriétaire unique du nom d'un cardio —
+         le recopier ici, c'est se retrouver un jour avec deux orthographes du même tapis (R2).
+         ⛔ ET LES DEUX MOMENTS SONT DISTINGUÉS dans `seance` (« avant » / « après ») : un
+         échauffement et un cardio de fin ne sont pas la même chose, et les fondre en une seule
+         ligne perdrait l'information au moment même où on la publie. */
+      const _cc=(c,moment)=>{
+        if(!c||!(+c.duration>0)) return;
+        const clair=(typeof _cardioClair==='function')?_cardioClair(c):'';
+        if(!clair) return;
+        out.push({date:s.date, seance:(nom?nom+' — ':'')+'cardio '+moment, exercise:clair,
+                  set_num:1, type:'CARDIO', kg:0, reps:+c.duration, rir:'', volume:0});
+      };
+      _cc(s.cardioAvant,'avant'); _cc(s.cardio,'après');
       (s.exs||s.exercises||[]).forEach(ex=>{
         if(!ex||!ex.name) return;
         (ex.sets||[]).forEach((st,i)=>{
@@ -1482,12 +1505,23 @@ function renderSessions(){
     const mini=_mscSVGmini(sc).replace('width:32px','width:46px'); // figurine plus grande sur les cartes (retour GPT, ft-v570)
     // Étiquette : nom de la séance du programme si dispo, sinon muscle le plus travaillé → devient le TITRE de la carte
     let _topLbl='';{let _b='',_bv=0;const _sc=sc.sc||{};for(const g in _sc){if(_sc[g]>_bv){_bv=_sc[g];_b=g;}}if(_b&&_MG[_b])_topLbl=_MG[_b].label;}
-    const _tag=s.progLabel?('🗂️ '+s.progLabel):(_topLbl?('💪 '+_topLbl):'');
+    /* 🏃 04/09/2026 — UNE SÉANCE DE CARDIO SEUL SE RECONNAÎT DANS LA LISTE (ft-v1118).
+       Michel : *« pourquoi le cardio n'apparaît pas dans mon historique ? »*. ⭐ Mesuré : il y
+       EST — mais il s'affichait *« 💪 jeu. 3 sept. · 0 kg · ⏱️45 min · 🔥351 kcal · — »*.
+       Une figurine vide, un muscle imaginaire, un volume de zéro et un tiret : ***ça ressemble
+       à une séance ratée, pas à 45 minutes de tapis.*** 👉 Il n'y a aucun muscle à nommer, donc
+       le titre nomme ce qu'elle EST, et la ligne d'exercices porte le cardio en clair. */
+    const _nEx=(s.exs||s.exercises||[]).length;
+    const _cardioTxt=(typeof _cardioSeanceTxt==='function')?_cardioSeanceTxt(s):'';
+    const _cardioSeul=(_nEx===0&&!!_cardioTxt);
+    const _tag=s.progLabel?('🗂️ '+s.progLabel):(_topLbl?('💪 '+_topLbl):(_cardioSeul?'🏃 Cardio':''));
     const headline=_tag||('💪 '+fmtD(s.date));
     // Ligne info : date (si le titre = muscle) · volume (rouge) · calories (discret)
     const parts=[];
     if(_tag)parts.push('<span class="sess-date2">'+fmtD(s.date)+'</span>');
-    parts.push('<span class="sess-vol2">'+Math.round(s.volume||0)+' kg</span>');
+    // ⛔ « 0 kg » n'apprend rien sur un cardio, et laisse croire à une séance vide. On le retire
+    //    UNIQUEMENT dans ce cas — une séance avec exercices garde sa ligne de volume, même à 0.
+    if(!_cardioSeul)parts.push('<span class="sess-vol2">'+Math.round(s.volume||0)+' kg</span>');
     // ⏱️ La durée était stockée depuis toujours et n'apparaissait NULLE PART (voir le
     //    commentaire du détail de séance plus haut). Ici on la met dans la liste : c'est
     //    là qu'on compare plusieurs séances d'un coup d'œil.
@@ -1498,7 +1532,12 @@ function renderSessions(){
     const metaHtml=parts.join('<span style="opacity:.4">·</span>')+sync;
     // Liste d'exos repliable (retour GPT, ft-v570) : clampée à 2 lignes, dépliable inline si beaucoup d'exos.
     const _exsArr=(s.exs||s.exercises||[]).map(e=>e.name);
-    const _exsStr=_exsArr.join(', ');
+    // ⭐ Sur un cardio seul, la ligne des exercices porte le cardio en clair (« Tapis 45 min
+    //   (modéré) ») au lieu du tiret. ⚠️ Et un cardio noté SUR une séance de muscu s'ajoute à
+    //   la suite des exercices : il faisait déjà partie de la séance, il n'y était juste pas dit.
+    const _exsStr=_cardioSeul?_cardioTxt
+                 :(_cardioTxt?[_exsArr.join(', '),_cardioTxt].filter(Boolean).join(' · ')
+                             :_exsArr.join(', '));
     const _canExpand=_exsArr.length>4||_exsStr.length>70;
     const _exsHtml='<div class="sess-exs2" id="sess-exs-'+i+'">'+(_escNote(_exsStr)||'—')+'</div>'
       +(_canExpand?'<button class="sess-exs-more" id="sess-exs-'+i+'-b" onclick="toggleSessExs('+i+',event)">voir tout ›</button>':'');

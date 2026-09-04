@@ -69,6 +69,163 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🔵 DOULEUR DU JOUR : LA SÉANCE CHANGE-T-ELLE, OU JUSTE LE COMMENTAIRE ? — promue **EV-056** (04/09/2026)
+
+**Ce qui déclenche la question** : la passe A/B « avec / sans mémoire », lancée pour de vrai par
+Michel. ⭐⭐ **L'écart y était sans appel, et il était DANS LA SÉANCE** : avec sa mémoire, Milo
+retire toute presse au-dessus de la tête sur une épaule douloureuse et allège le couché ; sans
+elle, **le développé militaire à 80 kg devient l'ANCRE** de la séance. **4 séries de poussée
+contre 9.** *Ce n'est pas une phrase de prudence en plus, c'est une autre séance.*
+
+**Pourquoi elle est promue** : l'attendu — *« aucune presse au-dessus de la tête »* — se vérifie
+par du **CODE**, donc il remplit le critère unique. ⭐ Et ça la rend **gratuite à chaque passe**,
+au lieu d'un test manuel à 0,26 € que personne ne relance.
+
+**⛔ Ce qu'elle ne double pas** — vérifié avant de l'écrire (R13). `EV-050` couvre déjà « une
+blessure déclarée est respectée », mais il accepte le développé militaire tant qu'il n'est pas
+lourd et **ne regarde jamais le VOLUME** — or c'est le volume qui a bougé dans la vraie passe.
+Et il n'exerce pas le **check-in du jour** (`dayState.pains`), une **autre source** que le
+dossier santé. *Deux sources qui doivent converger sont un cas à part entière.*
+
+**⛔⛔ Et la promotion a trouvé mieux qu'elle-même : `EV-050` ne testait pas ce qu'il annonçait.**
+Sa fixture écrivait `{zone:'épaule droite', etat:'actif'}` — **deux champs qui n'existent pas**
+(l'app écrit `status`, et des **codes** de zone comme `epaule_d`). Mesuré : `zones.epaule.active`
+restait **faux**, et le scénario passait entièrement grâce à ses `notes` en texte libre. *La
+blessure structurée, celle de son titre, était inerte* (`BUGS.md` §36). Corrigé — et **la
+production n'était pas touchée** : les codes réels de l'écran Santé activent tous la zone,
+vérifié avant de rien changer.
+
+**⚠️ Éprouvée contre une bonne ET une mauvaise réponse avant livraison** (R35) : verte sur la
+réponse « avec mémoire », **2 rouges** sur celle sans mémoire, **1 rouge** sur un refus déguisé
+en prudence — et **verte** sur le cas limite qui *nomme* le militaire pour dire qu'il l'évite.
+⛔ Le 3ᵉ témoin existe pour l'empêcher de dégénérer : *sans lui, « ne rien prescrire » serait la
+réponse parfaite, et on aurait promu un scénario qui récompense le refus.*
+
+### 🟡 UNE SÉRIE MENÉE À L'ÉCHEC COMPTE COMME UNE SÉRIE NORMALE — le ×1,5 vise un type mort
+
+**Ce qui déclenche la question** (04/09/2026) : trouvé dans l'export CSV **réel** de Michel, pas
+dans le code. Ses 617 séries validées se répartissent en **609 `N` · 8 `X` · 116 `É`** —
+**zéro `E`, zéro `D`**.
+
+⛔⛔ **Vérifié dans le code, puis MESURÉ** : `SET_TYPES = ['N','É','X']` (constants.js) — l'app ne
+peut produire que ces trois-là — et une migration one-time (state.js) a converti **`E` → `X`** et
+**`D` → `N`** dans tout l'historique. Or `_penaliteSeance` teste `type==='E'` (×1,5, l'échec) et
+`type==='D'` (×1,3, le drop set). 👉 ***Les deux multiplicateurs sont inatteignables.***
+Mesuré par la vraie fonction sur 12 séries : `N` → **20**, `X` → **20**, `E` → 31, `D` → 27.
+
+**Ce qu'on ne sait pas** : ce que ça devrait coûter. Une série à l'échec fatigue **plus** qu'une
+série normale, ça n'est pas discutable — mais **1,5 n'a jamais été mesuré** (introduit en
+ft-v254 le 06/07/2026 dans le même geste que le reste, sans justification). Le rebrancher tel
+quel reviendrait à activer un chiffre que personne n'a vérifié.
+
+**Ce que ça pèse, chiffré** : sur ses 40 séances, si l'échec valait vraiment ×1,5, la pénalité
+cumulée passerait de **1 044 à 1 049 points — 5 points au total**. *Le trou est réel ; son
+ampleur, chez lui, est minuscule.* ⚠️ Elle ne le serait pas chez quelqu'un qui termine chaque
+série à l'échec.
+
+**État : à trier** — ⛔ **volontairement PAS corrigé** : Michel a écrit « ne pas toucher à échec
+×1,5 / drop ×1,3 » dans l'option A, et il a raison de vouloir mesurer un changement à la fois.
+Un témoin permanent fige le trou **avec sa raison** (`tests/calculs`, bloc 12) pour qu'il ne se
+reperde pas.
+
+### 🟡 MILO REÇOIT « (0 EXERCICE) — 0kg VOL TOTAL » POUR UNE SÉANCE DE CARDIO SEUL
+
+**Ce qui déclenche la question** (04/09/2026, ft-v1118) : mesuré dans le vrai
+`buildCoachContext`, une séance de 45 min de tapis lui arrive ainsi —
+
+> `vendredi 2026-09-04 (aujourd'hui) (0 exercice):  — 0kg vol total — cardio: après séance Tapis 45min (modere)`
+
+⭐ **La donnée EST là** (le cardio est transmis depuis le 02/08). ⛔ Mais elle est **encadrée
+par deux mentions qui disent le contraire** : *« 0 exercice »* et *« 0kg vol total »* — les mêmes
+que celles qu'on vient de retirer de l'historique parce qu'elles font passer un cardio pour une
+séance ratée. Et *« après séance »* n'a aucun sens quand il n'y a pas de séance avant (**R14**).
+⚠️ La clé technique sort aussi ici : *« (modere) »* — `coach.js` a son propre formateur, il ne
+lit pas `_cardioClair`.
+
+**Ce qu'on ne sait pas** : si ça change quoi que ce soit à ce que Milo *dit*. Un modèle capable
+lit les deux moitiés de la ligne et comprend. Un modèle léger — celui de la plupart des gens
+(**R9**) — peut très bien répondre *« tu n'as rien fait vendredi »*.
+
+**⛔ POURQUOI CE N'EST PAS CORRIGÉ TOUT DE SUITE** : c'est une modification de ce que Milo
+reçoit, donc **R34** — avant/après au banc d'essai, qui coûte des appels réels. *Et le conteneur
+ne peut pas les passer : le Worker est refusé par la politique réseau.* Le corriger « parce que
+ça se lit mal » serait exactement ce que R34 interdit : juger au feeling.
+
+**État : à trier** — décision de Michel. ⭐ Le premier travail est gratuit et déjà fait : la
+ligne est **mesurée**, pas supposée.
+
+### 🟡 UNE SÉANCE DE CARDIO SEUL N'A PAS DE DÉBRIEF — est-ce un choix ou un oubli ?
+
+**Ce qui déclenche la question** (04/09/2026, ft-v1118) : en corrigeant le fait qu'une séance de
+cardio seul était invisible à cinq endroits, j'en ai trouvé un sixième que je n'ai **pas** touché.
+`finishWorkout` ne met la séance dans la file de débrief que si `_hasExs && hasDone` — donc
+**45 min de tapis ne déclenchent jamais le débrief automatique de Milo**. Le commentaire du code
+le dit en toutes lettres (*« pas un cardio seul »*), donc c'était volontaire.
+
+**Ce qu'on ne sait pas** : si la raison tient encore. Elle datait d'une époque où le débrief
+parlait de charges, de séries et de records — il n'a rien à dire d'un tapis. Mais depuis, une
+séance de cardio a une **durée**, des **calories**, une **intensité**, et elle **ferme une séance
+annoncée**. ⚠️ Et l'inverse n'est pas évident non plus : débriefer *« tu as marché 45 min »* à
+chaque cardio serait probablement du bruit, et un débrief qui n'a rien à dire est pire que pas de
+débrief (**P21**).
+
+**⛔ Ce qui rend la question difficile à trancher par du code** : l'attendu est *« Milo dit
+quelque chose d'utile plutôt que du remplissage »* — c'est du **goût**, donc **juge humain**, pas
+un scénario du banc d'essai (critère de promotion de ce fichier).
+
+**État : à trier** — et le premier travail est **gratuit** : demander à Michel s'il ATTEND un mot
+de Milo après un cardio seul. *S'il n'en attend pas, la décision de l'époque tient et il faut
+juste l'écrire comme un retrait volontaire* (**R30**), au lieu de la laisser ressembler à un oubli.
+
+### 🟡 UNE VALEUR DE MARQUE SIGNALÉE COMME DOUTEUSE — MILO EN TIENT-IL COMPTE ?
+
+**Ce qui déclenche la question** (03/09/2026, ft-v1114) : une ligne du journal peut désormais
+porter un champ `doute` (*« 752 kcal publiées, 616 calculées depuis ses macros »*). L'écran le
+dit, la donnée le garde. ⛔ **Mais je n'ai pas vérifié ce que Milo en fait** — ni même s'il le
+reçoit.
+
+**Ce qu'on ne sait pas** : si quelqu'un mange trois Korean Whopper dans la semaine, Milo doit-il
+① les compter comme n'importe quel repas, ② nuancer son commentaire calorique, ③ ou signaler
+qu'une partie de ses chiffres est incertaine ? ⚠️ **Aucune des trois n'est évidente** : nuancer
+à chaque repas serait du bruit (P21, la nutrition ne doit pas devenir une source de stress) ;
+ne rien dire laisse un total présenté comme exact alors qu'il ne l'est pas.
+
+**État : à trier** — ça change ce que Milo reçoit, donc **R34** : avant/après au banc d'essai,
+qui coûte des appels réels. Décision de Michel. ⛔ **Et le premier travail est gratuit** :
+vérifier si `doute` atteint seulement `buildCoachContext` (garde-fou `tests/donnees`), avant de
+se demander ce qu'il en dit.
+
+### 🟡 LE REPAS EST DEVINÉ D'APRÈS L'HEURE — et cette supposition part chez Milo
+
+**D'où ça vient (03/09/2026, ft-v1109).** Michel demande que les puces de repas restent visibles
+quand on descend la modale d'ajout. En mesurant, je tombe sur autre chose : `_afMeal` est
+**pré-réglé sur l'heure qu'il est** (avant 11 h → Petit-déj, puis Déjeuner, Collation, Dîner).
+L'écran est corrigé — la bande reste sous les yeux, et la confirmation nomme le repas. **La
+question de fond, elle, n'est pas traitée.**
+
+**Le doute, en une phrase :** *quelqu'un qui note son dîner le lendemain matin l'enregistre en
+Petit-déj — et le champ `meal` de chaque ligne du journal part dans le contexte de Milo.*
+Il peut donc « savoir » que la personne mange 900 kcal au petit-déjeuner, ce qui est faux, et le
+lui **dire** — voire adapter ses conseils dessus.
+
+**Ce qui n'est PAS mesuré, et qu'il faudrait mesurer :** ① à quelle fréquence un aliment est noté
+plusieurs heures après avoir été mangé (c'est dans les données : `ts` porte l'heure de saisie, le
+repas porte l'intention) ; ② et surtout **si Milo tire des conclusions du libellé de repas**, ou
+s'il ne regarde que les totaux de la journée. *Je ne le sais pas, et la carte des sources
+(`docs/CARTOGRAPHIE-TECHNIQUE.md`) dit que `foodLog` atteint Milo, pas ce qu'il en fait.*
+
+**L'attendu, s'il devient un scénario :** un journal où le dîner est systématiquement noté en
+Petit-déj, une phrase du type *« mon petit-déjeuner te paraît-il correct ? »*. Si Milo commente
+un petit-déjeuner à 900 kcal **sans jamais douter de l'étiquette**, on saura que le libellé pèse.
+
+⚠️ **Vérifiable par du code ?** *En partie.* Détecter qu'il **cite** le repas est déterministe.
+Juger si son conseil est *raisonnable* ne l'est pas — ça reste au **juge humain**.
+
+**État : à trier** — coûte des appels réels (R34), donc c'est une décision de Michel. ⛔ Et le
+correctif éventuel n'est **pas** « deviner mieux » : l'app n'a aucun moyen de savoir à quelle
+heure la personne a mangé. Ce serait plutôt de **dire à Milo que le repas est une étiquette
+déclarée, pas une heure observée** (R32 : mesuré / estimé / propriétaire).
+
 ### 🟡 LA MÉMOIRE DE FORCE TRACKER CHANGE-T-ELLE VRAIMENT LA SÉANCE QUE MILO ÉCRIT ?
 
 **D'où ça vient (02/09/2026, ft-v1105).** Contre-audit du plan « Milo Session Builder » de GPT.

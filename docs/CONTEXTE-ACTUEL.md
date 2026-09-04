@@ -6,7 +6,491 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1107`. ⏳ **Déploiement à vérifier** (**R18**).
+- **Version en ligne (live) :** `ft-v1127` — 🔋 **OPTION B DE LA RÉCUP : LA CHARGE S'ADDITIONNE.**
+  ⚠️⚠️ **26ᵉ COLLISION, la 2ᵉ de la journée** : session-A avait publié et déployé sa ft-v1126
+  (run #887) pendant ma passe de parcours — *même scénario que la 25ᵉ, deux heures plus tôt*.
+  ⭐ C'est **structurel** : toute version bump la même ligne de `sw.js`, et une suite complète
+  dure plus longtemps que l'intervalle entre deux livraisons. La règle suffit et tient.
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#889** sur `152bc28`, **job `deploy` success**,
+  les 7 étapes vertes à 21:28:01 UTC. ⭐ Suite sur l'arbre fusionné : **2720/2720**, calculs
+  **310/310**, muscles 241, croisés 50, dates 7, données 0 trou — **0 rouge**.
+  Avant, **seule la dernière séance** comptait : 1, 2 ou 3 séances de 12 séries rendaient toutes
+  le même facteur (−13). Un forfait « jours enchaînés » (−4 / −8) l'approximait à la louche.
+- ⭐⭐ **LE RÉSULTAT EST L'INVERSE DE CE QUE LE CONTRE-AUDIT ANNONÇAIT** — et c'est la leçon :
+  sur les **60 jours réels** de Michel, **25 journées MONTENT** (+4,0 moy.), 3 baissent (pire −6),
+  32 ne bougent pas, **le plancher reste à 42**. Le forfait mordait 28 jours à −4 quand la vraie
+  somme y coûte moins. *Un forfait est faux dans les DEUX sens.*
+- ⛔ **Plafond de la somme = 38, décision de Michel sur les chiffres** : le candidat à 48 faisait
+  descendre son plancher à 38. ⛔ Le cumul ne s'applique **que** s'il y a plusieurs séances dans
+  la fenêtre — sinon on retombe au point près sur le chemin d'origine (**R14**).
+- ⛔⛔ **LE FORFAIT AVAIT SIX LECTEURS, PAS UN** : le calcul · le conseil · `projectionRecup`
+  (elle prédisait l'expiration du forfait — gardée, elle aurait promis une remontée qui n'arrive
+  jamais) · l'aide de l'Accueil · l'écran de projection · **et une pop-up de juillet toujours
+  servie aux nouveaux venus**. 👉 *Retirer une règle du calcul ne la retire pas de ce que la
+  personne LIT.*
+- ⏭️ **LA PARTIE ② (la saturation à 0) N'EST PAS LIVRÉE, et la mesure dit pourquoi** : la
+  correction prévue par le contre-audit — borner les ajustements négatifs — **ne marche pas**,
+  tout reste à 0. La vraie cause est **en amont** : la pénalité plafonne à **38 dès 23 séries**,
+  la FC au repos à **−8 dès +6 bpm**. *24 et 60 séries rendent le même chiffre avant même le
+  zéro.* ⚠️ Michel : **on ouvre ce sujet à part**, sur ses chiffres (3 de ses 40 séances y sont
+  écrasées ; sa plus grosse fait 24 séries).
+- ⚠️ **Et je me suis trompé en route** : j'avais dit que la saturation ne le touchait pas (vrai
+  sur 60 jours) — **son profil sature avec une seule mauvaise nuit** (5 h + 20 séries).
+- **Version en ligne (live) :** `ft-v1126` — 💰 **« COÛT RÉEL DU JOUR » DIT DE QUEL JOUR.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#887** sur `353b2b7`, **job `deploy` success**,
+  les 7 étapes vertes à 20:59:17 UTC. Michel : *« on ne sait pas si c'est dans la journée
+  ou depuis 1 mois »*. Le titre disait « du jour » — **exact**, mais rien ne le prouvait à l'écran.
+  👉 *Un chiffre sans sa période n'est pas un chiffre, c'est une impression.*
+  ⭐ **Rien à construire (R5)** : `_aiUsageLire_` renvoyait déjà `u.date`, l'app la jetait.
+  ⚠️⚠️ **Piège évité** : `_dateLisible` est **locale à `coach.js`** — l'appeler depuis `app.js`
+  aurait fait disparaître **tout le panneau Santé** (le `_esc` de ft-v1114). *Vérifié avant
+  d'écrire l'appel.* ⭐ Suite : **parcours 2720/2720**, calculs 298/298, 0 rouge.
+- 💶 **LE COÛT D'UN MESSAGE À MILO, REMESURÉ le 04/09** (question de Michel : *« lire la
+  nutrition ne va pas me faire gonfler la facture ? »* puis *« combien coûte un message »*).
+  **Détail complet : `docs/BRIEFING-GPT-COUT-IA.md` §6.** En bref : **2,4 centimes** par message
+  quand le cache est chaud, **16,5** pour le premier d'une conversation.
+- ⭐⭐ **Le contexte a grossi de 35 % en un mois** (58 470 → **78 881** car.) **mais la répartition
+  s'est AMÉLIORÉE** : le bloc jamais cachable — celui payé plein tarif à chaque message — est passé
+  de **17 527 à 4 010** caractères. *Un contexte plus gros peut coûter moins cher qu'un plus petit
+  mal découpé.*
+- ⛔⛔ **Le piège à retenir** : le 1ᵉʳ message coûte **PLUS cher que sans cache** (16,5 contre 10,3)
+  — *écrire un cache d'1 h se paie ×2*. **Le cache ne rapporte que s'il est RELU.**
+- ⚠️⚠️ **Et j'ai annoncé deux chiffres faux avant de relire ce document** (8,5 / 1,9 centimes) :
+  j'avais pris le tarif du cache 5 min pour le cache 1 h, et le ratio caractères/jeton de l'anglais
+  pour un texte bourré d'emoji (**+53 % de jetons**). *Les deux constantes justes étaient à quinze
+  lignes l'une de l'autre dans le fichier que je n'avais pas ouvert* (**R23**).
+  👉 ***Le chiffre le plus dangereux n'est pas celui qu'on ignore, c'est celui qu'on calcule avec
+  la mauvaise constante : il a l'air d'une mesure.***
+- 🍽️ **La nutrition n'est PAS un sujet de facture** : 890 car. (**1,2 %**), **plafonnés à 7 jours en
+  dur** — trois ans de repas notés n'ajoutent pas une ligne. **20 à 80 centimes sur mille messages.**
+  ⭐ Et Milo reçoit bien la nutrition depuis ft-v1014 : les **totaux par jour**, jamais les noms
+  d'aliments (13 126 car. bruts → 890, **59× moins**), plus ses cibles (TDEE, kcal, macros).
+- 🛣️ **LES DEUX COULOIRS, rappelés par Michel le 04/09** : *« il ne faut pas que ça fasse obstacle
+  à l'autre Claude, au départ je t'avais rajouté pour la **nutrition** »*. ⭐ **Le rappel était
+  mérité et il est mesurable** : sur mes 8 versions du jour, **6 en nutrition** et **2 hors couloir**
+  (`ft-v1118` le cardio, `ft-v1123` le banc A/B) — *les deux dans `coach.js`, et les deux jours de
+  collision*. 👉 **session-A = nutrition & aliments · session-B = Milo, récup, séance.** Détail et
+  nuances dans `docs/JOURNAL-DE-PARTAGE.md` (un couloir n'est pas un mur ; `sw.js` collisionnera
+  toujours, le second qui fusionne monte).
+- ✅ **LA PASSE A/B A TOURNÉ POUR DE VRAI** (Michel, 04/09 ~19:47, 4 appels).
+  ⭐⭐ **AB-2 est sans appel** : avec la mémoire, **aucune** presse au-dessus de la tête sur l'épaule
+  douloureuse et couché **allégé à 75 kg** ; sans elle, le **développé militaire à 80 kg devient
+  l'ANCRE**. Poussée : **4 séries contre 9**. *La différence est DANS la séance, pas dans une phrase.*
+  ⚠️ **AB-1 est faible, et c'est dit** : sans mémoire Milo tombe sur 80×4 — plausible **par hasard**
+  pour un gars de 85 kg confirmé. Ce qui diffère vraiment : **B pose des questions**, A agit.
+  ⛔⛔ **Et la passe a trouvé un défaut DANS MA FIXTURE** : `_abHistoDC` annonce « des charges qui
+  PROGRESSENT » et fait l'inverse — j'ai **inversé le sens du temps** (`i=0` = la plus récente ET la
+  plus légère). *Le résultat tient, mais la fixture ne teste pas ce qu'elle annonce.*
+  ⏭️ **Les 2 suites sont PASSÉES À session-B** (leur couloir) : corriger le sens du temps, et
+  **promouvoir AB-2 au banc** — *« épaule douloureuse → aucune presse au-dessus de la tête »* est
+  vérifiable par du CODE, donc gratuit à chaque passe au lieu d'un test manuel à 0,26 €.
+- **Version en ligne (live) :** `ft-v1125` — 🤝 **LES 2 SUITES DU RELAIS DE SESSION-A** (Michel :
+  *« il a fini »*, puis il choisit le relais). ⛔ **① `_abHistoDC` ne faisait pas ce qu'elle
+  annonçait** : commentaire « des charges qui PROGRESSENT », barème qui **descendait** — la séance
+  la plus récente était la plus légère (80 kg la veille) pour un record de 95 kg il y a 9 jours.
+  ⭐ Les **dates** étaient justes, c'est le **kg** qui descendait. *Une fixture qui ne fait pas ce
+  qu'elle annonce ne rate pas le test : elle le fait passer sur autre chose* — et rien ne pouvait
+  rougir, ce qui l'a rendue durable deux semaines.
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#883** sur `621816f`, **job `deploy` success**,
+  les 7 étapes vertes à 19:26:21 UTC.
+- ⭐⭐ **② AB-2 promu au banc d'essai (EV-056)** — il vient de la passe RÉELLE : avec la mémoire
+  Milo retire toute presse au-dessus de la tête, sans elle le militaire à 80 kg devient l'**ancre**
+  (**4 séries de poussée contre 9**). Vérifiable par du code → **gratuit à chaque passe** au lieu
+  d'un test manuel à 0,26 €.
+- ⛔⛔ **③ ET LA PROMOTION A TROUVÉ QUE `EV-050` NE TESTAIT PAS CE QU'IL ANNONÇAIT** : sa fixture
+  écrivait `{zone:'épaule droite', etat:'actif'}`, **deux champs qui n'existent pas** (l'app écrit
+  `status` et des **codes** de zone). Mesuré : la zone restait **inactive**, et le scénario passait
+  grâce à ses `notes` en texte libre — la blessure **structurée** était inerte (`BUGS.md` §36).
+  ⛔ **La production n'a jamais été touchée**, vérifié avant de rien changer : les codes réels de
+  l'écran Santé activent tous la zone.
+- ⚠️⚠️ **④ J'ai collisionné un id en écrivant ce travail** (EV-055 était déjà pris, rangé hors
+  séquence) et **rien n'a protesté** — or le rapport suit les scénarios **par id**. Renuméroté
+  EV-056, garde-fou posé : *il aurait coûté une seconde, c'est le genre qu'on n'écrit que le jour
+  où on tombe dedans* (R17).
+- ⛔ **Contrôle négatif : 4 rouges** sur l'ancien code. Suite : **2712/2712**, calculs 298/298,
+  **0 rouge**. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+- **Version en ligne (live) :** `ft-v1124` — ⚡ **« CETTE SÉANCE TE CONVIENT ? » NE S'AFFICHE PLUS
+  SOUS UN REPROCHE.** Michel, enregistrement d'écran à l'appui : il écrit *« pourquoi tu me donnes
+  la séance à faire ? »* et l'app propose **« ⚡ Oui, on démarre »** sous une réponse de Milo qui dit
+  le contraire.
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#881** sur `5115965`, **job `deploy` success**,
+  les 7 étapes vertes à 18:17:11 UTC. ⭐ Suite mesurée sur l'arbre fusionné : **2699/2699**,
+  calculs **298/298**, muscles 241, croisés 50, dates 7, données 0 trou — **0 rouge**.
+  ⚠️⚠️ **25ᵉ COLLISION DE VERSION, la 3ᵉ en deux jours** : session-A a publié **et déployé** sa
+  propre ft-v1123 pendant que ma suite de parcours tournait. **Le premier publié garde le numéro** —
+  ma version devient **ft-v1124**. ⭐ *Ma ligne de partage était pourtant posée dès 17:10 UTC* :
+  **un panneau d'affichage évite le doublon de TRAVAIL, il n'empêche pas de choisir le même numéro.**
+  *Seul git l'attrape, et il l'a attrapé.*
+- ⛔ **La cause n'est PAS Milo** : la carte est posée par un filet déterministe du code
+  (`_demandeUneSeance`), dont la règle ② acceptait n'importe quel « la/ma séance » **sans verbe de
+  demande**. *Durcir le prompt aurait été corriger le mauvais cerveau (R7).*
+- ⭐⭐ **Mesuré avant de coder : sur six phrases, QUATRE déclenchaient à tort** — dont trois qui sont
+  l'exact contraire d'une demande (« était trop longue », « ne compte pas », « je viens de finir »).
+- ⚠️⚠️ **ET MON PREMIER JET NE MORDAIT PAS** : `\b[é]tait\b` — **`\b` est ASCII en JavaScript**,
+  il n'y a aucune frontière entre l'espace et le « é ». *Une expression régulière qui a l'air juste
+  et qui ne mord jamais est pire qu'une absence de garde : on la croit posée.* On teste désormais
+  sur une copie sans accents.
+- ⛔ **Trous connus épinglés, non corrigés (R30)** : « on fait quoi ce soir » et « on s entraîne
+  quoi » **sans apostrophe** ne déclenchent pas — ratés **pré-existants**, sans rapport avec ce
+  correctif qui ne fait que **retirer** des déclenchements.
+
+- **Version en ligne (live) :** `ft-v1123` — 🧠 **LE TEST A/B MÉMOIRE REÇOIT SA PORTE D'ENTRÉE.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#878** sur `7d1bc06`, **job `deploy` success**,
+  les 7 étapes vertes à 17:43:22 UTC. ⭐ Suite **sur l'arbre FUSIONNÉ** : parcours **2699/2699**,
+  calculs **290/290**, muscles 241, croisés 50, dates **7/7**, données 0 trou — *c'est l'arbre
+  fusionné qui part en ligne, pas le mien seul.*
+- ⚠️⚠️ **24ᵉ COLLISION DE VERSION** : session-B a poussé sa **ft-v1122** (le cardio dans la
+  récupération) pendant que j'écrivais la mienne. La leur était déjà en ligne → je monte à 1123,
+  *on ne fait jamais reculer le cache*. ⭐ **C'est le verrou GIT qui a joué**, pas le journal :
+  mon push a été refusé, rien n'a été écrasé.
+- ⛔ **Et leur ft-v1122 est en ligne SANS entrée dans `CLAUDE.md`** (R23) — noté pour eux dans le
+  journal de partage. *Je ne l'écris pas à leur place : je n'ai pas fait le travail.*
+  ⭐ Elle répond d'ailleurs au **barème de récup du cardio** que j'annonçais « en attente de
+  Michel » une heure plus tôt — *exactement le doublon que ce journal existe pour éviter.*
+- ⛔⛔ **La cause n'était pas le temps de Michel, et elle était de mon côté** : `ab-memoire.js`
+  est prêt depuis le 03/09 et n'a jamais tourné parce qu'il était le **seul** test lançable par
+  lui **sans bouton**. J'ai écrit « en attente de Michel » pendant deux semaines.
+  👉 *Un outil sans porte d'entrée n'est pas un outil en attente, c'est un outil qui n'existe pas.*
+- ⭐ **R13/R2 — pas un 2ᵉ chemin** : le bouton appelle `_vcApplyPersona` / `buildCoachContext` /
+  `_vcAsk`, les mêmes que le benchmark ; le gel et la restauration sont **copiés** de `_evRun`.
+- ⛔ Les cas sont la propriété de l'app (`_AB_CAS`) ; le script node les **lit** et **échoue
+  bruyamment** s'ils manquent. ⚠️ Référence **nue** : un `const` global n'est pas sur `window`.
+- ⭐⭐ **La mesure du contexte avait DÉJÀ divergé** sans que personne l'ait touchée (un marqueur
+  manquait d'un côté) → `_abMesureContexte`, un seul propriétaire. *La duplication n'attend pas
+  qu'on la modifie pour nuire : elle naît déjà différente.*
+- ⛔⛔ **Aucun verdict automatique, exprès** : « meilleure ? » se juge à l'œil (critère de
+  `JOURNAL-DE-TEST.md`). L'écran le dit. **Mesuré à blanc (0 €)** : écart +4 516 et +5 044 car.
+- ⚠️⚠️ **J'ai écrit un bug de fuseau horaire en chemin**, le détecteur en a pris 2 sur 3 (le 3ᵉ
+  décalait la date **avant** de convertir). Puis il a rougi sur **mon commentaire** (§31) : son
+  intention couvrait déjà les `//`, pas les blocs — étendue, **contrôle négatif fait**.
+- ⏭️ **La passe n'a PAS encore tourné pour de vrai** (4 appels, ~0,25 € — décision de Michel).
+  *On ne sait donc toujours pas si la mémoire rend la séance meilleure : on sait qu'on peut
+  enfin le mesurer.* La **mémoire à 2 vitesses** attend ce même avant/après (R34).
+- ✅✅ **SAFARI / IPHONE VÉRIFIÉ PAR MICHEL le 04/09** — ft-v1114 → ft-v1120, **tout est bon**.
+  ⭐ **Le point qui comptait vraiment : la bande « REPAS » en `position:sticky` TIENT sur Safari
+  iOS.** C'était le seul vrai risque de la série — les règles du projet listent `position:sticky`
+  dans un conteneur de défilement comme un piège Safari connu, et il n'avait jamais été levé
+  depuis ft-v1109. ⭐ Vérifiés aussi : le clavier décimal du champ pour-100 g accepte la
+  **virgule**, les nouveaux produits sortent avec leur portion, `coca zero` rend bien la ligne à
+  **1 kcal** et non celle à 24, la pop-up v68 et le point rouge s'affichent.
+  ⚠️ *La mention « Safari non vérifié » traînait dans six entrées de journal : elle est levée pour
+  cette série, pas pour les suivantes.*
+- **Version précédente :** `ft-v1122` — 🔋 **LE CARDIO ENTRE ENFIN DANS LA RÉCUPÉRATION** (option A
+  du contre-audit, tranchée par Michel sur les chiffres : ancrage 45 min modéré = **6 séries**,
+  plancher **2**, rampe **12 h**, `projectionRecup` remis sur `RECUP_EFFACE_H`).
+  ⚠️⚠️ **Cette version est partie en prod SANS entrée de journal — R23, entrée écrite après coup le
+  04/09.** *La note de `sw.js` était complète ; c'est le fichier qu'on relit à chaque session qui ne
+  l'était pas.*
+  ⭐⭐ **Rejeu des 60 derniers jours sur les vraies données de Michel** : 27 jours inchangés, 33
+  changés, **tous vers le bas**, moyenne **−2,0**, max **−6**, aucune journée absurde.
+  ⏭️ **B et C restent entiers** (consigne de Michel : *« ne commence PAS B ou C dans le même
+  commit »*).
+- **Version antérieure :** `ft-v1121` — 🌮 **O'TACOS SORT DE LA BASE** (128 → 123).
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#873** sur `f26b072`, **job `deploy` success**,
+  les 7 étapes vertes à 16:40:45 UTC. ⭐ Suite : **2682/2682, 0 rouge**.
+  ⚠️ *Le chiffre annoncé dans l'entrée était d'abord une **prédiction** (2679) : il a été remplacé
+  par la mesure. Un total de tests écrit avant la passe n'est pas un résultat.*
+- ⛔ Ses 5 lignes étaient **toutes des desserts**, **aucun tacos** → `tacos` rendait une **glace**.
+  👉 *Un mot qui ne désigne pas ce qu'on croit est pire qu'un mot qui ne rend rien.*
+- ⭐⭐ **Ça rétablit une décision déjà prise** : en ft-v1113, `tacos` n'était **pas** mappé, exprès.
+  *La base de marques contredisait cette décision sans qu'on l'ait voulu, et aucun témoin ne
+  pouvait le voir — il surveillait `_ciqualChercher`, pas `_marquesChercher`.*
+- ⛔ **Ce n'est PAS la règle « il faut tout mettre » qu'on contredit** : celle-là visait des valeurs
+  douteuses mais RÉELLES. Ici les chiffres sont justes — *c'est la question à laquelle ils
+  répondent qui est fausse.*
+- ⛔ **R30** : retrait déclaré dans le générateur avec sa raison, figé par 2 témoins.
+- ⚠️ **L'aide de la veille est devenue fausse** (« taper tacos te rendra une glace ») — corrigée
+  dans le même mouvement, **3ᵉ cas §31 de la série**.
+- **Version en ligne (live) :** `ft-v1120` — 🍔 **LA BASE FAST-FOOD : 27 → 128 PRODUITS.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#870** sur `3df7411`, **job `deploy` success**,
+  les 7 étapes vertes à 13:12:02 UTC. ⭐ Suite : **2672/2672, 0 rouge**.
+- ⭐ **Aller-retour : 0 écart sur 116 vérifiés**, et le Big Mac tombe au chiffre près sur
+  l'ancienne table — même source, étendue. *La preuve valait mieux que la confiance : le nom du
+  fichier n'était pas celui de la V1.*
+- ⛔⛔ **La V2 SEULE aurait fait perdre TOUTES LES FRITES** (elles n'ont que les calories dans ce
+  classeur) : **+95 gagnés, −15 perdus**, et personne ne l'aurait vu. 👉 *Remplacer aurait été une
+  régression déguisée en enrichissement.* D'où une **FUSION** : 114 lus + 14 hérités.
+- ⚠️ **Les 14 hérités sont un pis-aller écrit comme tel** : leur classeur est perdu, la sortie du
+  03/09 est leur seule trace. ⭐ **Le garde-fou a servi le jour même** : la pizza 4 Fromages est
+  repartie dans la source, le bloc a maigri de 15 à 14. *Il doit rétrécir, jamais grossir.*
+- ⭐ **Contrôles sur les 95 nouveaux** (91 sont du Quick, le bloc DÉCALÉ la 1ʳᵉ fois) : **1 seule
+  incohérence**, le Korean Whopper — déjà connue, déjà affichée.
+- ⚠️⚠️ **À TRANCHER PAR MICHEL : O'Tacos ne contient AUCUN tacos** — 5 desserts (dont des Kinder
+  Bueno), donc taper `tacos` rend une glace. Gardé parce que la règle est la sienne (*« il faut
+  tout mettre »*), signalé parce qu'il doit le savoir. L'aide le dit en clair.
+- ⛔ **N'entrent pas** : 8 Subway (macros absentes), 5 desserts O'Tacos (calories absentes).
+- **Version en ligne (live) :** `ft-v1119` — 🔍 **LES 2 DÉFAUTS DE LA RECHERCHE ALIMENTAIRE.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#866** sur `726ea99`, **job `deploy` success**,
+  les 7 étapes vertes à 08:44:38 UTC. ⭐ Suite : **2653/2653, 0 rouge**.
+  ⚠️ La fusion avec session-B n'a apporté que **2 fichiers de doc** (contre-audit récup),
+  aucun code — *vérifié avant de conclure qu'il n'y avait rien à re-tester.*
+- ⛔ **① la ponctuation restait collée** (`Boulgour, cuit` → RIEN, 4 cas sur 6 ; `Riz blanc, cuit`
+  marchait **par coïncidence**) · ⛔ **② les mots-outils étaient exigés** (`filet de bœuf` → RIEN),
+  et ça marchait **7 fois sur 8 par accident** (le « de » de « vian**de** »).
+- ⭐⭐ **La MESURE a dit où poser le filtre, avant la 1ʳᵉ ligne** : posé en amont, il cassait les
+  **99 clés d'alias qui contiennent un mot-outil** (`pomme de terre` retombait sur la CRUE).
+  👉 *On retire les mots-outils pour CHERCHER, jamais pour RECONNAÎTRE.*
+- ⛔⛔ **Jamais jetés** : `sans`, `avec` (« coca sans sucre » → « coca sucre », le contraire) et
+  `the`. ⛔ **La barre `/` est volontairement absente** : l'espacer d'un seul côté rendrait la clé
+  `lait 1/2 ecreme` introuvable. ⭐ Un témoin exige que **chaque clé d'alias soit déjà normalisée**.
+- ⭐ **Contrôle négatif `git stash` sur 82 requêtes : 10 réparées, 4 améliorées, 0 cassée.**
+  `jarret de veau` rendait « Osso buco à la milanaise », il rend « Veau, jarret cru ».
+- ⚠️⚠️ **TROU DE MÉTHODE À TRANCHER** : `data/alias.json` **n'est plus régénérable** — le classeur
+  source de GPT vivait dans le dossier temporaire et a disparu au redémarrage du conteneur.
+  *Un fichier généré dont la source n'est pas versionnée est un fichier figé qui s'ignore.*
+  👉 Verser le classeur dans le dépôt, ou accepter que la table soit figée. **Décision de Michel.**
+- **Version en ligne (live) :** `ft-v1118` — 🏃 **UNE SÉANCE DE CARDIO SEUL N'EST PLUS INVISIBLE.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#861** sur `273a347`, **job `deploy` success**,
+  les 7 étapes vertes à 07:47:07 UTC. ⚠️ *Je n'ai PAS pu lire l'URL live moi-même* — le proxy du
+  conteneur refuse `github.io` (`CONNECT tunnel failed, 403`), comme il refuse le Worker. La preuve
+  disponible est le JOB, pas la page : **Michel confirme par le n° de version dans « À propos »**.
+  Suite : **2635/2635, 0 rouge** (parcours ·
+  calculs 266 · muscles 241 · croisés 50 · dates 7 · données 0 trou).
+- ⭐⭐ **Deux retours de Michel le même jour, UN seul défaut** : *« 45 min de tapis et ma récup n'a
+  pas bougé »* et *« on me dit que j'ai pas fait le cardio hier »*. La mesure a tranché : la carte
+  « séance manquée » se tait dès qu'une séance existe ce jour-là (vérifié sur les **4** façons de
+  noter un cardio) → **aucune séance n'avait été enregistrée le 03/09**.
+- ⛔⛔ **Le piège** : « ✓ Enregistrer le cardio » (bloc Cardio) disait *« Cardio enregistré ✅ »* et
+  **n'enregistrait rien**. Le vrai bouton, en bas, s'appelait… **« 🏁 Enregistrer le cardio »**.
+  *Deux boutons, presque les mêmes mots, tous les deux rouges, un seul enregistre.*
+- ⛔⛔ **Et une PERTE DE DONNÉES derrière** (règle d'or #3) : `startWorkout()` repartait de zéro dès
+  qu'il n'y avait pas d'exercice → un aller-retour par l'Accueil **effaçait 45 min de cardio en
+  silence**.
+- ⭐ **Cinq endroits** lisaient « des exercices » là où la question est « une séance ouverte ».
+  `_seanceOuverte()` y répondait **depuis le 02/08** : il n'a pas fallu écrire une règle, seulement
+  la lire (**R2**). C'est **R8** — les jumelles étaient à chercher le 02/08, pas six semaines après.
+- ⭐⭐ **Sa question suivante — « pourquoi le cardio n'apparaît pas dans mon historique ? » — a trouvé
+  la même famille un cran plus loin.** Mesuré : **il y EST**, mais affiché *« 💪 jeu. 3 sept. · **0 kg**
+  · 45 min · 351 kcal · **—** »*. *Techniquement présent, humainement introuvable.* → titre **« 🏃 Cardio »**,
+  le cardio en clair sous la ligne, « 0 kg » retiré **de ce cas seulement**. ⭐ Le calendrier et le compteur
+  du mois, eux, marchaient **déjà** (vérifié, pas supposé). Et la clé technique sortait à l'écran
+  (« modere ») → `CARDIO_INTENSITES`, un seul propriétaire (**R2**).
+- ⏭️ **EN ATTENTE DE MICHEL — le barème de récup du cardio.** Mesuré à nuits identiques : aucune
+  séance **76** · 45 min de tapis **71** · 20 min **71** · 4 séries de DC **70**. `_penaliteSeance`
+  ne compte que des séries validées → plancher de **6**, alors que `calcCardioKcal` sait dire **351
+  kcal** (45 min) contre **156** (20 min). ⚠️ *Combien 45 min de tapis doivent peser face à une
+  séance de jambes est un jugement, pas une mesure — on n'invente pas l'échelle* (**R29**).
+- ⛔⛔ **ABANDONNÉ, PAS OUBLIÉ — le test A/B mémoire (`tests/milo/ab-memoire.js`)** *(04/09/2026)*.
+  Michel : *« le test A/B je peux pas le faire »*. **C'est une impasse des deux côtés, et il faut
+  l'écrire** : le conteneur ne peut pas l'exécuter (le Worker est refusé par la politique réseau),
+  et Michel non plus — c'est un script **en ligne de commande**, sans bouton dans l'app, donc
+  injouable depuis son téléphone. 👉 ***Une tâche que personne des deux ne peut faire n'est pas
+  « en attente », elle est bloquée*** — la laisser en attente la faisait revenir à chaque bilan,
+  et coûtait une question à Michel à chaque fois pour la même réponse.
+  ⭐ **Ce qu'il faudrait pour la débloquer, écrit pour que ce soit une DÉCISION et pas un oubli**
+  (**R30**) : lui donner un bouton dans le Laboratoire Milo, comme le benchmark et le comparateur
+  Sonnet/Haiku — *tout ce qui est réellement lançable par Michel a un bouton ; ce script est le
+  seul qui n'en a pas, et c'est exactement pour ça qu'il n'a jamais tourné.*
+  ⚠️ **Ce qu'on perd en attendant** : la mesure avant/après de la **mémoire à 2 vitesses** (R34).
+  *On ne construira donc pas cette brique sur une intuition — elle attend son instrument.*
+- **Version en ligne (live) :** `ft-v1117` — 🥤 **LE PIÈGE DU COCA : IL Y EN AVAIT NEUF.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#859** sur `dd36727`, **job `deploy` success**,
+  les 7 étapes vertes à 20:11:20 UTC. ⚠️ Le run est resté marqué `in_progress` plusieurs minutes
+  après la fin du job — *l'''état du run retarde sur celui du job, on regarde le JOB*.
+  ⭐ Suite : **2604/2604, 0 rouge** (parcours · calculs 266 · muscles 241 · croisés 50 · dates 7).
+- ⛔⛔ **9 paires** « sucré + édulcorants » / « sans sucres ajoutés + édulcorants » dans CIQUAL, et
+  **« sucré » est toujours le nom le plus court** → le tri prenait la version sucrée à chaque fois.
+- ⚠️⚠️ **LE CORRECTIF STRUCTUREL A ÉTÉ REFUSÉ PAR LA MESURE** (R7) : traduire `zero`/`light` en
+  « sans sucres ajoutés » corrige 3 cas **et en casse 3** — `yaourt light` ne rend plus rien,
+  `soda light` tombe sur « Boisson gazeuse **à la pomme** ». 👉 *« Light » ne veut pas dire « sans
+  sucre » : un yaourt light est 0 % MG.* **Un mot à deux sens ne se traduit pas, il se DÉSIGNE.**
+- ⛔⛔ **Pire cas, et il dépasse le Coca** : `lait amande` rendait un **chocolat à 559 kcal/100 g**
+  pour une boisson qui en fait **36** — **× 15,5**. `lait soja`/`lait avoine` : rien.
+- ⛔⛔ **Ce qu'on refuse de fusionner** : le **lait de coco culinaire** (199 kcal) n'est pas la
+  **boisson à la noix de coco** (30). ⭐ Et il trouvait **déjà** le bon — *avant d'ajouter une
+  porte, vérifier qu'elle n'est pas déjà ouverte.*
+- ⭐ **80 boissons mesurées : 28 sans résultat → 9.** Ce qui reste vide est **listé** (powerade,
+  gatorade, mojito, whey — aucune boisson isotonique n'existe dans CIQUAL).
+- **Version en ligne (live) :** `ft-v1116` — 🥤 **LE COCA ZÉRO ÉTAIT COMPTÉ 24 FOIS TROP.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#857** sur `414cdce`, **job `deploy` success**,
+  les 7 étapes vertes (« Déployer sur GitHub Pages » comprise) à 19:22:50 UTC.
+  ⚠️ **Le RUN était encore marqué `in_progress` quand le JOB était déjà fini** — l'état du run
+  retarde sur celui du job. *Regarder le job, pas seulement le run : sinon on croit un
+  déploiement en cours alors qu'il est terminé* (et l'inverse est arrivé le 02/09, un run qui
+  ATTENDAIT 7 h 52 sans être ni rouge ni vert).
+  ⭐ Suite re-passée sur l'**arbre FUSIONNÉ** avec session-B : **2589/2589, 0 rouge**.
+- ⛔⛔ `coca zéro` rendait « Cola, **SUCRÉ**, avec édulcorants » (**24 kcal/100 g**) avant « Cola,
+  **sans sucres ajoutés** » (**1 kcal**). Sur 50 cl : **120 kcal enregistrées au lieu de 5**.
+- ⭐⭐ **La cause n'est pas une faute de la traduction, c'est sa LIMITE** : `zero`/`light` → « édulcorants »
+  est exact, mais **les deux lignes portent ce mot** — c'est le tri par nom le plus court qui
+  tranche, et il tranche mal. 👉 *Un mot traduit désigne une FAMILLE, pas un aliment.*
+  ⭐ C'est **la frontière écrite la veille** entre `FOOD_SYNONYMES` et la table d'alias,
+  **vérifiée sur un vrai cas trouvé par l'USAGE** — Michel notait son repas.
+- ⛔ **On ne retire pas l'autre ligne** : elle est le bon aliment pour un cola à la stévia, elle
+  reste **juste en dessous** (R29). ⛔ Et la variante **sans caféine** garde son entrée propre.
+- ⛔⛔ **Les ajouts vivent dans `tools/alias.py`**, jamais dans `data/alias.json` qui est **généré** :
+  une retouche à la main y disparaîtrait **sans bruit** (R27). Deux témoins l'épinglent.
+- **Version en ligne (live) :** `ft-v1115` — 🥗 **LES MOTS QU'ON EMPLOIE ATTEIGNENT UN ALIMENT.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#854** sur `ec64523`, `success` à 18:05 UTC.
+  ⭐ Suite re-passée sur l'**arbre FUSIONNÉ** avec session-B : **2578/2578, 0 rouge**.
+- ⭐⭐ **569 alias** (`data/alias.json`, 4 Ko gzippés) produits par **GPT à partir de l'export CSV
+  de notre propre base** — l'audit livré le matin même. ⛔ **Aucune valeur créée** : vérifié à
+  l'import, **0 macro divergente sur 569**.
+- ⛔⛔ **Mesuré AVANT de brancher** : 219 mots déjà justes · **153 ne rendaient RIEN** · 135 pas en
+  tête · **62 rendaient un AUTRE aliment** — `riz japonais` → **biscuit apéritif**, `patate` →
+  **patate douce**, `tradition` → **cidre**.
+- ⭐⭐ **Décision de Michel** sur les 13 cas cru↔cuit : ***« les deux, le cuit en premier »***.
+  `riz` rend *cuit* (155) puis *cru* (350) juste dessous. **R29**.
+- ⛔ **Une erreur trouvée chez GPT** : `tomate` visait « Tomate, séchée », **kcal non déterminées**
+  → jamais proposable. *Un alias qui ouvre une porte fermée est pire qu'un alias absent.*
+  Corrigé vers l'aliment moyen, **la correction est imprimée** par le générateur.
+- 📣 **La pop-up se MÉRITE ici** (`WHATS_NEW` v68) : un chiffre noté tous les jours change **du
+  simple au double**. *Le danger n'est pas qu'il le remarque — c'est qu'il ne le remarque pas.*
+- ⏭️ **Toujours non corrigés** (audit du matin) : la **ponctuation collée** (`Boulgour, cuit` →
+  rien) et les **mots-outils exigés** (`filet de bœuf` → rien). La table les **contourne**, elle
+  ne les répare pas. ⚠️ **Safari/iPhone non vérifié.**
+- **Version en ligne (live) :** `ft-v1114` — 🍔 **ON MET TOUT ET ON MARQUE LE DOUTE.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#849** sur `9b2676d`, `success` à 16:52 UTC.
+  ⭐ Suite re-passée sur l'**arbre FUSIONNÉ** avec session-B : **2554/2554, 0 rouge**.
+  ⚠️ *Le proxy de ce conteneur bloque `github.io` : je vérifie le RUN, pas la page servie.*
+- ⭐⭐ **Une base fast-food France entre dans l'app** : 27 produits (McDonald's, Burger King, KFC,
+  Quick, Domino's) dans `data/marques.json`, générés par `tools/marques.py`. **`big mac`**,
+  **`whopper`**, **`mcnuggets`**, **`pizza 4 fromages`**, **`frites mcdo`** trouvent le produit
+  avec son **enseigne** et le **poids de sa portion**. ⛔ Aucun nouveau mécanisme (R13/R2) : c'est
+  le chargeur, la recherche et le remplissage de CIQUAL — seule la table change.
+- ⚠️ **La source vient de MICHEL** (le proxy de ce conteneur rend `mcdonalds.fr` en 403). Je ne
+  peux pas vérifier ces valeurs moi-même ; l'app **le dit** à chaque ligne.
+- ⭐⭐ **LA DÉCISION QUI PORTE LA VERSION EST DE LUI** : ma 1ʳᵉ version **écartait** les 4 lignes
+  douteuses. *« Il faut tout mettre sinon autant rien mettre c'est logique. »* Et c'est mesurable
+  — **une ligne absente pousse vers l'estimation IA, pire qu'une valeur publiée douteuse** :
+  *c'est le mécanisme qui a fabriqué son pot de protéine faux (ft-v1103/1104/1105).* On montre
+  la valeur **et** ce qui cloche, avec le chiffre qui permet de juger (**R29**).
+- ⛔⛔ **R4, 3ᵉ fois au même endroit** : la liste blanche de `_provFood` laissait tomber `doute` —
+  et j'avais écrit *« le doute descend jusqu'à la donnée (R4) »* **juste au-dessus**. *Un
+  commentaire n'est pas un garde-fou* ; c'est la mesure de l'entrée sauvegardée qui l'a vu.
+- ⛔ **Les 4 pour-100 g sont DÉRIVÉS de la portion**, jamais recopiés des colonnes arrondies :
+  **0 écart sur 23 produits**. ⚠️ Mon 1ᵉʳ contrôle (« jamais plus de 1,5 g d'écart ») masquait
+  exactement ce défaut — *un seuil choisi pour passer cache ce qu'il devait trouver.*
+- ⚠️⚠️ **L'aide de ft-v1113 a dû être CORRIGÉE** : elle promettait *« jamais des marques, tu ne
+  verras pas Big Mac »* — **livrée la veille, fausse le lendemain**. **8ᵉ fois pour §31.**
+- ⏭️ **Non fait, et c'est écrit** : les **2 défauts de la recherche** trouvés en auditant la base
+  pour GPT — la **ponctuation reste collée** au mot tapé (`Boulgour, cuit` → rien) et les
+  **mots-outils sont exigés** (`filet de bœuf` → rien, alors que `6116 · Boeuf, filet cru`
+  existe). Mesurés, **à décider par Michel**. ⚠️ **Safari/iPhone toujours non vérifié.**
+- **Version en ligne (live) :** `ft-v1113` — 🍔 **LES MOTS QU'ON DIT ATTEIGNENT LES ALIMENTS.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#845**.
+- ⭐ `coca` ne rendait **rien** alors que « Cola, sucré » est dans le fichier — **une lettre**.
+  `soda`, `mcdo`, `fast food` non plus. ⚠️ **Trou invisible au bureau, béant à la salle** : en
+  ligne, Open Food Facts rattrape ; hors ligne on n'a rien (règle d'or #4).
+- ⛔ **On répartit, on n'empile pas** : `mcdo` rendait **six sandwichs** et coupait les frites et
+  les nuggets — or qui tape « mcdo » compose un **menu**.
+- **Version en ligne (live) :** `ft-v1112` — 🔢 **UNE SEULE PRÉCISION POUR LE POUR-100 g.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#842** sur `01b1adb`, `success` à 11:35.
+  ⭐ Suite re-passée sur l'**arbre FUSIONNÉ** avec session-B : **2514/2514**.
+- ⭐ **La question de Michel** (*« ça va être comme ça sur tous les produits ? »*) a une réponse
+  chiffrée : **non** — 3 484 aliments embarqués, code-barres, photo d'étiquette ; **la saisie à
+  la main est le dernier recours**.
+- ⛔⛔ **Mais la vérification a trouvé pire** : **6 endroits** construisent le pour-100 g, **4
+  l'arrondissaient**. Le plus coûteux est la base embarquée — `data/ciqual.json` **contient** les
+  décimales et l'app les jetait à la lecture. **3 298 aliments sur 3 484** en portent au moins
+  une ; **1 159 ont une macro entre 0 et 1 g/100 g**, qui devenait **0 ou 1**.
+- ⛔ **La photo d'étiquette est le R4 le plus pur** : le serveur demande « garde 1 decimale si
+  presente », et l'app jetait les **calories** à l'arrivée.
+- ⚠️⚠️ **R8 pour la 5ᵉ fois cette semaine** : le correctif de la veille (ft-v1111) était posé sur
+  **1 endroit sur 6**, et pas sur le plus utilisé.
+- ⚠️⚠️ **Deux témoins existants ont rougi, et les deux avaient tort** : leurs attendus étaient
+  calés sur le **double arrondi** qu'on venait de retirer (156 → **155** ; 6 → **5**). *Vérifié
+  par l'arithmétique sur les vraies données, pas déduit* — le réflexe « j'ai cassé quelque
+  chose » aurait annulé une version juste.
+- ⚠️⚠️ **LE CONTENEUR : mon clone local s'est REMBOBINÉ TROIS FOIS aujourd'hui**, emportant une
+  fois des corrections non commitées. Rien n'a jamais été perdu de ce qui était **poussé**.
+  👉 *Committer au fur et à mesure, ne jamais laisser de travail non poussé.*
+- ⏭️ **Inchangé** : les lignes déjà enregistrées gardent leur `per100` arrondi (on ne réécrit pas
+  l'historique — R29) ; elles se corrigeront à la prochaine reprise du produit. ⚠️ **Safari/iPhone
+  toujours non vérifié.**
+- **Version en ligne (live) :** `ft-v1111` — 🔢 **LE CALIBRAGE GARDE LA DÉCIMALE DE
+  L'ÉTIQUETTE.** ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+- ⭐ **Le calibrage de ft-v1110 tombe juste sur les vrais chiffres** : l'étiquette de Michel
+  (388,5 kcal · 88 g de protéines · 2,8 g de glucides · 3,3 g de lipides / 100 g) rend
+  **117 kcal · 26 g** pour ses 30 g, contre 116,6 / 26,4 déclarés.
+- ⛔⛔ **Le défaut était dans ce qui est CONSERVÉ, pas dans ce qui est affiché** : `2,8` et `3,3`
+  étaient stockés arrondis à **3**. Invisible sur une poudre ; une **huile à 0,4 g/100 g** aurait
+  vu sa valeur devenir **0**. 👉 *On transcrit ce que la personne a lu, on ne l'arrondit pas à sa
+  place* (leçon de ft-v1100).
+- ⭐⭐ **L'étiquette tranche une question ouverte depuis ft-v1105** : elle déclare **elle-même une
+  portion de 30 g**. Les 40 g qui produisaient 156 kcal / 35 g ne venaient donc **pas** de la
+  fiche produit — c'était une **valeur inventée**. *Mon explication de ft-v1105 décrit un
+  mécanisme réel, mais pas celui qui l'a touché ; elle disait déjà ne pas savoir, c'est la seule
+  raison pour laquelle il n'y a rien à défaire.*
+- ⚠️ **Un rouge venait de MOI** : le témoin réclamait 113 kcal, calé sur un chiffre provisoire ;
+  j'avais changé la fixture sans changer l'attendu. *Un rouge qui accuse le code alors qu'il ne
+  décrit qu'un chiffre périmé dans le test.*
+- ⏭️ **Inchangé** : les lignes **déjà enregistrées** ne se corrigent pas (le calibrage vit dans
+  l'écran d'ajout). ⚠️ Et **Safari/iPhone reste non vérifié** (Chromium seulement).
+- **Version en ligne (live) :** `ft-v1110` — ⚖️ **UN PRODUIT DEVIENT CALIBRABLE À LA MAIN.**
+  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+- ⛔⛔ **Michel, 4ᵉ passe sur le même pot** : *« il y a toujours le problème avec ma prot »*. La
+  cause est **structurelle**, mesurée : sa ligne porte `per100 = null`, et **aucun champ de
+  l'app ne permettait de saisir un pour-100 g à la main**. Un produit dont la fiche est
+  incomplète était donc **incalibrable à vie**, et sa vieille ligne fausse revenait **en tête**
+  des propositions.
+- ⛔⛔ **C'est le procès des trois versions précédentes** : ft-v1103/1104/1105 ont toutes ajouté
+  une **alerte**, aucune n'a rendu la personne capable de **réparer** le produit. *Un garde-fou
+  dit que c'est faux ; il ne corrige pas.*
+- ⭐⭐ **Zéro nouveau calcul (R13/R2)** : on rejoint le chemin de CIQUAL, qui appelle déjà
+  `_offRemplirFormulaire` avec un produit vide. *Le trou n'était pas dans la machinerie, il
+  était dans la porte d'entrée.*
+- ⭐ **Mesuré sur son étiquette** : 88 g/100 g → **30 g rendent 26 g**, le `per100` est enregistré
+  (**R4**) et **la fois d'après la proposition le porte** — le produit est réparé, pas le repas.
+- ⚠️⚠️ **Un témoin EXISTANT a attrapé un vrai défaut de mon code** : mes 4 champs étaient en
+  `type="number"`, qui **filtre la virgule** sur clavier français (« 62,5 » → vide ou « 625 »,
+  en silence). 23ᵉ occurrence évitée. *Un garde-fou écrit après un vrai bug vient de servir à
+  celui qui l'avait écrit.*
+- ⏭️ **Ce que ça ne fait PAS** : les lignes **déjà enregistrées** ne se corrigent pas — le
+  calibrage vit dans l'écran d'**ajout**, pas dans la modale de modification. Décision de
+  périmètre, pas un oubli. ⚠️ Et **Safari/iPhone non vérifié** (Chromium seulement).
+- **Version en ligne (live) :** `ft-v1109` — 📌 **LA LIGNE « REPAS » RESTE À L'ÉCRAN, ET LA
+  CONFIRMATION DIT OÙ.** ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+- ⛔⛔ **Mesuré avant de coder** : les puces de repas sortaient de l'écran dès **236 px**, sur une
+  modale qui en défile **951** — or **tout** ce qui sert à saisir l'aliment vit en dessous. 👉
+  *Au moment précis de valider, le repas qui reçoit l'aliment n'était **jamais** visible.*
+- ⛔⛔ **Et il est le plus souvent DEVINÉ** : `_afMeal` est pré-réglé sur **l'heure qu'il est**.
+  Une supposition qu'on ne montre pas est une décision prise à la place de la personne (**R29**).
+- ⚠️⚠️ **LE DÉFAUT DE MA 1ʳᵉ VERSION A ÉTÉ TROUVÉ PAR LA CAPTURE, PAS PAR LES CHIFFRES** : avec
+  `top:0`, **tous les nombres étaient bons** et l'écran était faux — les aliments défilaient dans
+  les 16 px de marge **au-dessus** de la bande. 👉 *Une mesure dit si la règle écrite est
+  respectée ; elle ne dit pas ce qui est **peint**.* Un témoin regarde désormais le haut de la
+  modale, pas une coordonnée.
+- ⛔ **La jumelle était déjà écrite, pour UN seul des 3 chemins (R8)** : « tes repas habituels »
+  nommait le moment depuis ft-v1052, les deux autres disaient « Ajouté au journal ». Propriétaire
+  unique réutilisé : `_foodMealInfo` (**R2**).
+- ⭐ **Coût mesuré et réduit** : la bande prend **98 px sur 775**, et les puces passent de 70 à
+  **64 px** pour tenir sur **une** ligne à 390 px (elles se cassaient en 4 + 1 = 114 px). ⛔ Sur
+  les grands iPhone, `flex:1` répartit tout : **rien ne change**.
+- ⏭️⚠️ **NON VÉRIFIÉ ICI : Safari/iPhone.** Le conteneur n'a que Chromium, et `position:sticky`
+  dans un conteneur défilant est justement un point où Safari diffère (`CLAUDE.md`). **C'est à
+  Michel d'ouvrir la modale et de descendre.**
+- ⏭️ **Question ouverte notée au journal de test** : le repas deviné part dans le contexte de
+  Milo — *tire-t-il des conclusions d'une étiquette souvent fausse ?* Non mesuré (coûte des
+  appels réels, **R34**).
+- **Version en ligne (live) :** `ft-v1108` — ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#826**
+  sur le commit `ce8a05b`, `success` à 05:12. ⚠️ **Et il a fallu débloquer la file d'abord** :
+  le job du run **#820** (session-B) est resté **7 h 52** à l'entrée de l'environnement
+  `github-pages` (20:24 → 04:16), et comme les déploiements Pages sont **sérialisés**, les runs
+  #821 → #824 ont tous été **annulés** derrière lui — donc **ft-v1107 n'était jamais parti en
+  ligne**. Le run **#825** (`workflow_dispatch`, 04:16) a purgé la file ; le #826 a suivi
+  normalement. **Rien à corriger côté code à aucun moment.** 👉 *Un déploiement peut rester en
+  attente des heures sans qu'aucune alerte ne le dise* — c'est exactement la panne que R18
+  décrit, à ceci près qu'ici le run n'était ni rouge ni vert : il **attendait**. ⏭️ Si ça se
+  reproduit : annuler le run bloqué depuis GitHub, puis relancer un `workflow_dispatch` sur
+  `master` (⛔ **jamais « relancer les jobs échoués »** — mesuré le 01/09, ça produit deux
+  artefacts et l'échec en 0 s).
+- ⚖️⚠️⚠️ **LA RÈGLE DES JOURNÉES EXPLOITABLES ÉTAIT FAUSSE, corrigée le soir même** (ft-v1108).
+  GPT/Michel demandent de **contre-auditer la règle sur le vrai journal exporté avant de coder** ;
+  j'avais déjà codé (ft-v1107). J'ai donc fait le **procès de ma propre règle — elle l'a perdu**.
+- ⛔⛔ **La médiane nue produit 2 FAUX INVALIDES** sur la structure réelle de Michel : une **vraie
+  journée à 3 repas** écartée, et un **changement durable** 4 → 3 repas qui écarte **4 jours sur
+  5**. 👉 ***Une médiane exclut par construction ce qui est en dessous*** — elle ne distingue pas
+  *« inhabituel »* de *« mal renseigné »*, la distinction même qui était demandée.
+- ⭐ **Cinq fractions mesurées** : toutes sauf la médiane nue donnent **0 faux valide et 0 faux
+  invalide**, et ne se distinguent **que sur un cas** (2 repas / 402 kcal). **Michel a tranché :
+  écartée** → **deux tiers de la médiane** (barre **3** chez lui). ⛔ La fraction reste un
+  **choix, pas une mesure** — seul paramètre libre, écrit dans le code.
+- ⛔ **Plancher à 1 pour l'OMAD** : sans lui la barre tomberait à 0 et rien ne serait jamais
+  écarté chez quelqu'un qui mange une fois par jour.
+- ⚠️ **Le CSV n'était PAS dans la session** : travail sur les mesures **relayées** par GPT — ni
+  vérifiables, ni complètes (pas de macros par jour, pas de noms de repas). *Dit, pas sous-entendu.*
+- **Version précédente :** `ft-v1107` + `ft-v1108`. ✅ **Déploiement vérifié vert** (run **#826**, `ce8a05b`) — c'est ce run qui a aussi mis ft-v1107 en ligne, resté 7 h 52 en file derrière un job bloqué.
 - 🍽️⭐⭐ **L'APPORT ENTRE DANS LE MOTEUR DE TRAJECTOIRE** (ft-v1107), après le **contre-audit**
   d'une proposition GPT (`docs/NUTRITION-CONTRE-AUDIT-TRAJECTOIRE.md`). ⭐ **Vingt-huit
   paragraphes réduits à UN trou** : son axe « trajectoire » était **déjà en production**

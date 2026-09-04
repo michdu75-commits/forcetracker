@@ -2034,8 +2034,33 @@ function _demandeUneSeance(txt){
   try{
     const t=String(txt||'');
     if(!t) return false;
+    /* ⚠️⚠️ ON TESTE LES EXCLUSIONS SUR UNE COPIE SANS ACCENTS, ET CE N'EST PAS UN DÉTAIL.
+       Mon 1ᵉʳ jet écrivait \b[ée]tait\b. Mesuré : **il ne matche jamais.** En JavaScript,
+       \b est ASCII — « é » n'est pas un caractère de mot, donc il n'y a AUCUNE frontière
+       entre l'espace et le « é » de « était », ni après le « é » de « été ». Deux des trois
+       phrases que le garde devait attraper passaient encore. *Une expression régulière qui a
+       l'air juste et qui ne mord jamais est pire qu'une absence de garde : on la croit posée.* */
+    const p=t.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    /* ⛔⛔ 04/09/2026 — ON PARLE D'UNE SÉANCE, ON N'EN DEMANDE PAS UNE. Michel, vidéo à
+       l'appui : il écrit *« Oui mais pourquoi tu me donnes la séance à faire ? »* — un
+       REPROCHE — et l'app affiche « Cette séance te convient ? · ⚡ Oui, on démarre » **sous
+       une réponse de Milo qui dit le contraire** (« c'est pas le bon moment, t'as fini ta
+       séance, on est en débrief »).
+       ⭐⭐ MESURÉ, ET SON CAS N'ÉTAIT PAS ISOLÉ : *« la séance était trop longue »*,
+       *« pourquoi ma séance ne compte pas ? »*, *« je viens de finir ma séance »* déclenchaient
+       aussi la carte. ***Trois phrases qui sont l'exact contraire d'une demande.***
+       Le commentaire au-dessus de cette fonction prévoyait le risque en toutes lettres.
+       ⛔ DEUX NIVEAUX, ET LA FRONTIÈRE EST MESURÉE :
+       ① LE PASSÉ TUE TOUT, même la règle à verbe — parce que  attrape aussi bien
+          l'impératif « fais-moi » que le participe « j'ai FAIT ma séance ». Sans ce niveau,
+          *« j'ai fait ma séance ce matin »* déclenchait encore : même mot, sens inverse.
+       ② LES MARQUEURS AMBIGUS ne tuent que les règles SANS verbe. « pourquoi » en fait partie :
+          *« pourquoi tu ne me fais pas une séance jambes ? »* EST une demande. */
+    if(/\bai\s+fait\b|\bje\s+viens\s+de\b|\betait\b|\ba\s+ete\b|\bfini[es]?\b/i.test(p)) return false;
     // ① un verbe de demande suivi, dans la même phrase, du mot séance / entraînement / programme
     if(/\b(fai[st]|donne|propose|pr[ée]pare|cr[ée]e|construis|monte|[ée]cris|lance|balance|envoie|g[ée]n[èe]re)\b[^.?!\n]{0,40}\b(s[ée]ance|entra[îi]nement|programme|prog)\b/i.test(t)) return true;
+    // ⛔ niveau AMBIGU : après la règle ①, il ne tue que ce qui suit (les règles sans verbe)
+    if(/\bpourquoi\b(?!\s+pas\b)|\bne\s+compte\s+pas\b|\bdebrief/i.test(p)) return false;
     // ② une séance nommée comme celle qu'on va faire (« une séance », « ma séance du jour »…)
     if(/\b(une|ma|la|nouvelle|prochaine|autre|petite|bonne)\s+s[ée]ance\b/i.test(t)) return true;
     if(/\bs[ée]ance\s+(du\s+jour|d'aujourd|de\s+ce\s+soir|de\s+ce\s+matin|pour\s+)/i.test(t)) return true;
@@ -6712,6 +6737,262 @@ function _evCopier(txt, okMsg){
   if(!_secours()) _echec();
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════════════
+   🧠 A/B MÉMOIRE — « les données de Force Tracker rendent-elles la séance MEILLEURE ? »
+   ═══════════════════════════════════════════════════════════════════════════════════════
+
+   ⛔⛔ POURQUOI CE BOUTON EXISTE, ET C'EST UNE LEÇON PLUS QU'UNE FONCTIONNALITÉ.
+   Le test vivait depuis le 03/09 dans `tests/milo/ab-memoire.js`, prêt, éprouvé hors ligne…
+   et il n'a JAMAIS tourné. On a longtemps écrit « en attente de Michel », comme s'il
+   manquait du temps. **La vraie cause est ailleurs, et elle était mesurable** : c'était le
+   SEUL test lançable par lui qui n'avait pas de porte d'entrée. Le benchmark en a une, le
+   comparateur Sonnet/Haiku, le Gardien, VM, PT-001 : tous ont leur bouton. Lui non — donc il
+   fallait un terminal, donc personne ne l'a jamais lancé.
+   👉 ***Un outil sans porte d'entrée n'est pas un outil en attente, c'est un outil qui
+   n'existe pas.*** (Michel, 04/09 : *« le test A/B je peux pas le faire »*, puis *« je ne
+   sais pas comment faire »*.)
+
+   ⭐ R13/R2 — CE N'EST PAS UN 2ᵉ CHEMIN. On appelle `_vcApplyPersona`, `buildCoachContext`
+   et `_vcAsk`, exactement comme le benchmark ; le gel (`_demoMode`) et la restauration sont
+   COPIÉS de `_evRun`, pas réinventés — c'est le chemin qui protège les vraies données
+   (règle d'or #3), et il n'en existe qu'un.
+
+   ⛔⛔ CE QU'ON RETIRE EN B, ET CE QU'ON NE RETIRE PAS. On enlève **la connaissance du
+   sportif** (historique, records, blessures, état du jour, préférences), PAS les règles ni
+   les instructions de Milo — sinon on ne mesurerait pas la mémoire, on fabriquerait un
+   mauvais chatbot pour gagner la comparaison. C'est gratuit à obtenir : `_vcApplyPersona`
+   remet tout à neutre puis applique la fixture, donc une fixture nue laisse le bloc COMMUN
+   intact et vide le bloc PERSONNE.
+
+   ⚠️⚠️ IL N'Y A AUCUN JUGE AUTOMATIQUE ICI, ET C'EST VOULU. « La séance est-elle
+   MEILLEURE ? » ne se vérifie pas par du code — c'est le critère de `JOURNAL-DE-TEST.md` :
+   ce qui dépend du jugement reste au **juge humain** et ne devient jamais un scénario du
+   banc d'essai. Le bouton produit donc **deux réponses à comparer**, pas un verdict.
+   *Afficher un ✅ ici serait mentir sur ce qu'on a mesuré.*                                */
+
+/* ⚠️⚠️ LA DATE DU JOUR EST CELLE DU TÉLÉPHONE, JAMAIS CELLE DE GREENWICH — et j'ai écrit le
+   bug avant de le corriger. Mon premier jet faisait `new Date().toISOString().slice(0,10)`
+   à trois endroits ; `tests/dates` l'a attrapé sur deux d'entre eux (motif interdit), et le
+   troisième — ce `_abJ` — passait entre les mailles parce qu'il décale la date AVANT de
+   convertir. Le défaut est pourtant le même : en France l'été, entre minuit et 2 h, Greenwich
+   est encore la veille. 👉 `today(ts)` (state.js) est le PROPRIÉTAIRE unique de cette
+   conversion (**R2**), et il applique l'écart du jour visé — donc il tient aussi au changement
+   d'heure. *Un détecteur qui n'attrape que la forme littérale d'un bug laisse passer ses
+   variantes : ce sont les fixtures d'un test, une date fausse d'un jour y fabrique un
+   historique faux d'un jour.* (Famille « fuseaux horaires » de `BUGS.md`.) */
+const _abJ = n => today(Date.now() - n * 86400000);
+
+/* ⚠️ 24 séances sur 10 semaines, avec des charges qui PROGRESSENT : sans progression,
+   « exploiter l'historique » n'aurait rien à exploiter — on mesurerait du bruit.
+
+   ⛔⛔ ET PENDANT DEUX SEMAINES ELLE FAISAIT L'INVERSE DE CE QU'ELLE ANNONÇAIT — trouvé par
+   session-A en lisant la VRAIE passe, pas le code. La phrase ci-dessus disait « qui
+   PROGRESSENT » et le barème descendait : la séance la plus RÉCENTE était la plus LÉGÈRE.
+   ⭐ Mesuré avant de corriger, et la cause est plus étroite que « le temps est inversé » :
+   les DATES étaient dans le bon sens (`i=0` = hier, conforme au tri par date décroissante de
+   `state.js`) — c'est le KG qui descendait avec le temps. La fixture contredisait même son
+   propre record (95 kg il y a 9 jours) en montrant 80 kg la veille.
+   👉 ***Une fixture qui ne fait pas ce qu'elle annonce ne rate pas le test : elle le fait
+   passer sur autre chose.*** Ici la passe restait lisible (Milo lit ce qu'on lui donne), donc
+   rien ne rougissait — c'est précisément ce qui la rendait durable.
+
+   ⛔ UN SEUL « QUAND » PAR SÉANCE (`ilYA`), et c'est la vraie leçon de structure : la date et
+   le `ts` étaient calculés séparément et allaient en sens CONTRAIRE (`ts:9000+i` montait
+   pendant que la date reculait). Inoffensif tant que `ts` n'est lu que comme identifiant
+   (`s.id||s.ts||s.date`) — *mais une fixture qui porte deux « quand » qui se contredisent
+   n'attend qu'un lecteur qui trie par le mauvais* (**R2**). */
+function _abHistoDC(){
+  const s = [];
+  for(let i=0;i<24;i++){
+    const ilYA = i*3+1;                                            // jours — le SEUL « quand »
+    const kg = 93.5 - Math.floor(i/2.4) * 1.5;                     // 93,5 hier → 80 il y a 10 sem.
+    s.push({ ts:Date.now()-ilYA*86400000, date:_abJ(ilYA), volume:8200, synced:true, duration:62,
+             exs:[{ name:'Développé Couché',
+                    sets:Array.from({length:4},()=>({ kg:Math.round(kg/2.5)*2.5, reps:5, done:true, type:'N' })) }] });
+  }
+  return s;
+}
+
+/* Le socle IDENTIQUE des deux côtés : ce qu'un chatbot saurait de toute façon. Sans lui, on
+   comparerait « Milo qui connaît Michel » à « Milo qui ne sait pas qu'il parle à un humain ». */
+const _AB_SOCLE = { name:'Michel', gender:'H', age:46, height:178, bw:85,
+                    goal:'muscle', discipline:'muscu', level:'confirme' };
+
+/* ⭐⭐ LES DEUX CAS SONT LA PROPRIÉTÉ DE L'APP (R2). `tests/milo/ab-memoire.js` les LIT
+   depuis la page au lieu de les redéfinir : deux copies des mêmes fixtures divergeraient,
+   l'une gagnerait un correctif et l'autre non, et on comparerait deux expériences
+   différentes en croyant comparer deux modèles.
+   ⛔ Chaque cas est construit pour qu'une information de Force Tracker ait une RAISON de
+   changer la prescription — deux demandes génériques ne mesureraient rien. */
+const _AB_CAS = [
+  { id:'AB-1',
+    titre:'Historique de performance — la séance exploite-t-elle les charges réelles ?',
+    demande:'Crée-moi ma séance développé couché aujourd\'hui.',
+    avec: Object.assign({}, _AB_SOCLE, {
+      sessions:_abHistoDC(),
+      prs:{ 'Développé Couché':{ kg:95, reps:4, rm1:110, date:_abJ(9) } },
+      weightLog:[{date:_abJ(21),kg:85.4},{date:_abJ(7),kg:85.1},{date:_abJ(0),kg:85}],
+      defRest:180 }),
+    sans: Object.assign({}, _AB_SOCLE),
+    attendus:['charge prescrite cohérente avec un 1RM de 110 kg (≈ 85-95 kg sur 5 reps)',
+              'les paliers partent d\'une charge réaliste, pas d\'un chiffre rond arbitraire'] },
+  { id:'AB-2',
+    titre:'Douleur active — la séance CHANGE-t-elle, ou juste le commentaire ?',
+    demande:'Fais-moi une séance haut du corps pour ce soir.',
+    avec: Object.assign({}, _AB_SOCLE, {
+      sessions:_abHistoDC(),
+      prs:{ 'Développé Couché':{ kg:95, reps:4, rm1:110, date:_abJ(9) } },
+      healthProfile:{ injuries:[{ zone:'epaule', status:'active', since:_abJ(20) }], conditions:[], notes:'' },
+      /* ⭐ possible seulement depuis ft-v1106 : avant, `dayState` était forcé à null */
+      dayState:{ date:_abJ(0), energy:2, sleep:5, pains:[{ zone:'epaule', side:'R' }] },
+      sleepLog:[{ date:_abJ(0), hours:5, energy:2 }],
+      defRest:180 }),
+    sans: Object.assign({}, _AB_SOCLE),
+    attendus:['le développé au-dessus de la tête disparaît ou s\'allège',
+              'le volume de poussée baisse',
+              'la différence est DANS la séance, pas seulement dans une phrase'] }
+];
+
+let _abReport = null;
+
+/* ⭐⭐ UN SEUL PROPRIÉTAIRE DE LA MESURE (R2) — `tests/milo/ab-memoire.js` appelle CETTE
+   fonction depuis la page au lieu de recalculer le découpage de son côté. Le détail qui
+   justifie la règle : la version du script exigeait aussi le marqueur « SITUATION DE
+   L'INSTANT » APRÈS « PROFIL ATHLÈTE », la mienne l'avait oublié. **Deux formules qui ne
+   comptent pas pareil rendraient deux « écarts de mémoire » différents pour la même passe**
+   — et c'est le chiffre sur lequel on décide si l'expérience a un sens.
+   ⛔ Le découpage suit celui de `worker.js` : ce qui précède `PROFIL ATHLÈTE:` est le bloc
+   COMMUN (les règles, mises en cache), ce qui suit est PROPRE à la personne. */
+function _abMesureContexte(ctx){
+  const pi = ctx.indexOf('PROFIL ATHLÈTE:');
+  const mi = ctx.indexOf("═══ SITUATION DE L'INSTANT ═══");
+  return { total: ctx.length,
+           commun: pi > 0 ? pi : 0,
+           propre: (pi > 0 && mi > pi) ? (ctx.length - pi) : 0 };
+}
+
+function startAbMemoire(){
+  if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
+  if(_evRunning){ toast('Une passe est déjà en cours…','info'); return; }
+  if(!S.url){ toast('URL du Coach IA absente','error'); return; }
+  const n = _AB_CAS.length * 2;                     // chaque cas est joué AVEC puis SANS
+  /* ⚠️ MÊME BARÈME que le benchmark (R2) : deux barèmes finiraient par annoncer deux prix
+     différents pour le même appel. Et le quota est annoncé AUSSI — la leçon du 01/09, où le
+     devis chiffrait consciencieusement des euros pendant que ce qui s'épuisait vraiment
+     (les appels du jour) n'était nulle part, et Milo a lâché « HTTP 429 » en pleine séance. */
+  showConfirm('🧠 A/B mémoire — '+_AB_CAS.length+' cas',
+      'On pose '+_AB_CAS.length+' fois la même question à Milo : une fois **avec** ta mémoire Force Tracker '
+    + '(historique, records, blessure, état du jour), une fois **sans**.\n\n'
+    + '⚠️ On retire ce qu\'il sait DE TOI, pas ses règles — sinon on ne mesurerait pas la mémoire, '
+    + 'on fabriquerait un mauvais chatbot pour gagner la comparaison.\n\n'
+    + n+' appels au Coach, soit environ '+_evPrix(n)+'.'
+    + '\n\n⚠️ Ça consomme '+n+' de tes appels IA du jour (plafond : '+_EV_QUOTA_JOUR+ ').'
+    + '\n\n🛡️ Tes données ne sont PAS touchées : le profil est remplacé le temps des questions, puis tout revient.'
+    + '\n\n🧑‍⚖️ Il n\'y a pas de ✅/❌ ici : « la séance est-elle meilleure ? » se juge à l\'œil. '
+    + 'Tu auras les deux réponses côte à côte.'
+    + '\n\nLancer ?', ()=>_abRun(), 'Lancer');
+}
+
+async function _abRun(){
+  _evRunning = true;
+  try{ if(typeof persist==='function') persist(); }catch(e){}     // vraies données sauvées AVANT le gel
+  try{ goScreen('coach', document.getElementById('nb-coach')); }catch(e){}
+  try{ _showCoachChat(); }catch(e){}
+  coachBusy = true; const sendBtn = document.getElementById('coach-send-btn'); if(sendBtn) sendBtn.disabled = true;
+
+  const out = { ymd:_abJ(0), cas:[] };
+  window._demoMode = true;                                        // GEL : plus aucune écriture
+  try{
+    for(let i=0;i<_AB_CAS.length;i++){
+      const cas = _AB_CAS[i];
+      _pt001Label('🧠 A/B mémoire — '+cas.id+' ('+(i+1)+'/'+_AB_CAS.length+')');
+      const paire = {};
+      for(const cote of ['avec','sans']){
+        _pt001Label('· '+cas.id+' — '+(cote==='avec'?'AVEC mémoire':'SANS mémoire'));
+        _vcApplyPersona({ apply: cas[cote] || {} });               // profil remis à neutre à CHAQUE côté
+        let mesure = {};
+        /* ⭐ On mesure ce que la mémoire PÈSE en caractères — sans ça, on lirait deux
+           réponses sans savoir si l'expérience a seulement eu lieu. */
+        try{ mesure = _abMesureContexte(buildCoachContext(cas.demande)); }
+        catch(e){ mesure = { erreur:(e&&e.message)||String(e) }; }
+        let r = { ok:false, reply:'', err:'' };
+        try{ r = await _vcAsk({ scenario:cas.demande, coachEmail:'', history:[] }) || r; }
+        catch(e){ r = { ok:false, reply:'', err:(e&&e.message)||String(e) }; }
+        paire[cote] = { ok:!!r.ok, reply:r.reply||'', err:r.err||'', ms:r.ms||0, mesure };
+      }
+      out.cas.push({ id:cas.id, titre:cas.titre, demande:cas.demande,
+                     attendus:cas.attendus, avec:paire.avec, sans:paire.sans });
+    }
+  }catch(e){ console.error('[ab-memoire]', e); }
+  finally{
+    window._demoMode = false;                                     // DÉGEL
+    try{ if(typeof load==='function') load(); }catch(e){}          // RESTAURE les vraies données
+  }
+  _abReport = out;
+  _abShowResultCard();
+  coachBusy = false; if(sendBtn) sendBtn.disabled = false; _evRunning = false;
+  toast('A/B terminé — tes données sont intactes','success');
+}
+
+/* ⭐⭐ LE CHIFFRE QUI DIT SI L'EXPÉRIENCE A UN SENS, ET IL S'AFFICHE AVANT LES RÉPONSES.
+   Si les deux contextes se ressemblent, on n'a rien mesuré du tout — et on lirait quand même
+   les deux textes en cherchant une différence, qu'on finirait par trouver. *Un écart trop
+   faible invalide la passe : mieux vaut le dire que laisser l'œil conclure.* */
+const _AB_ECART_MINI = 2000;
+
+function _abShowResultCard(){
+  const msgs = document.getElementById('coach-msgs'); if(!msgs||!_abReport) return;
+  const bloc = c => {
+    const dA = (c.avec&&c.avec.mesure)||{}, dB = (c.sans&&c.sans.mesure)||{};
+    const ecart = (dA.propre||0) - (dB.propre||0);
+    return '<p style="margin:8px 0 2px;font-weight:700">'+c.id+' — '+_escHtmlAb(c.titre)+'</p>'
+      + '<p style="margin:2px 0;font-size:12.5px;color:var(--t2)">A : '+(dA.total||0)+' car. dont '+(dA.propre||0)
+      + ' propres · B : '+(dB.total||0)+' car. dont '+(dB.propre||0)+'</p>'
+      + '<p style="margin:2px 0;font-size:12.5px;'+(ecart<_AB_ECART_MINI?'color:var(--red);font-weight:700':'color:var(--t2)')+'">'
+      + (ecart<_AB_ECART_MINI ? '⛔ écart de mémoire +'+ecart+' car. — TROP FAIBLE, la passe ne mesure rien'
+                              : '⭐ écart de mémoire : +'+ecart+' car. côté A')+'</p>'
+      + '<p style="margin:2px 0;font-size:12.5px;color:var(--t2)">réponses : '+(c.avec.reply||'').length
+      + ' car. (A) · '+(c.sans.reply||'').length+' car. (B)'
+      + ((c.avec.err||c.sans.err)?' ⚠️ '+_escHtmlAb(c.avec.err||c.sans.err):'')+'</p>';
+  };
+  const d = document.createElement('div'); d.className='msg-bubble msg-coach';
+  d.style.cssText = 'background:var(--bg3);border:1px solid var(--sep);';
+  d.innerHTML = '<p style="font-weight:800;color:var(--red);margin:0 0 6px">🧠 A/B mémoire — '+_abReport.cas.length+' cas</p>'
+    + _abReport.cas.map(bloc).join('')
+    + '<p style="margin:8px 0 2px;font-size:12.5px;color:var(--t2);line-height:1.5">'
+    + '🧑‍⚖️ <b>Aucun verdict automatique</b> : « la séance est-elle meilleure ? » se juge à l\'œil. '
+    + 'Copie les deux réponses et compare — ce qui compte est que la différence soit <b>DANS la séance</b>, '
+    + 'pas seulement dans une phrase de politesse.</p>'
+    + '<p style="margin:4px 0 2px">Tes données sont <b>intactes</b> ✅</p>'
+    + '<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
+    + '<button class="btn btn-bg2" style="flex:1;min-width:150px;padding:10px;font-size:13px" onclick="copyAbText()">📋 Copier les deux réponses</button>'
+    + '</div>';
+  msgs.appendChild(d); _coachAuBas();
+}
+
+/* ⚠️ 6ᵉ fonction d'échappement du projet — le défaut R2 est CONNU et noté depuis ft-v1114
+   (`_escIdea`, `_escFood`, `_escNote`, `_souvEsc`, `_obsEsc`). On ne le corrige pas ici :
+   regrouper six fonctions au milieu d'une autre tâche, c'est deux chantiers dans un. */
+const _escHtmlAb = s => String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ⛔ LE TEXTE PORTE LES RÉPONSES ENTIÈRES, pas un résumé : c'est tout l'intérêt de la passe,
+   et elle a coûté 4 appels. Un rapport qui tronque oblige à repayer pour relire. */
+function copyAbText(){
+  if(!_abReport){ toast('Aucune passe A/B','error'); return; }
+  const L = ['A/B MÉMOIRE FORCE TRACKER — '+_abReport.ymd, ''];
+  _abReport.cas.forEach(c => {
+    const dA=(c.avec&&c.avec.mesure)||{}, dB=(c.sans&&c.sans.mesure)||{};
+    L.push('═══ '+c.id+' — '+c.titre, 'demande : « '+c.demande+' »',
+           'attendus : '+(c.attendus||[]).join(' · '),
+           'contexte A '+(dA.total||0)+' car. (dont '+(dA.propre||0)+' propres) · B '+(dB.total||0)
+             +' car. (dont '+(dB.propre||0)+') · écart +'+((dA.propre||0)-(dB.propre||0)),
+           '', '--- A · AVEC mémoire ---', c.avec.reply || ('(pas de réponse : '+(c.avec.err||'?')+')'),
+           '', '--- B · SANS mémoire ---', c.sans.reply || ('(pas de réponse : '+(c.sans.err||'?')+')'), '');
+  });
+  L.push('⚠️ Aucun juge automatique : la comparaison est humaine (JOURNAL-DE-TEST.md).');
+  _evCopier(L.join('\n'), 'Réponses A/B copiées');   // ⭐ le MÊME chemin de copie (R2)
+}
+
 /* 🔁 REJOUER LES ROUGES — la version utilisable de « on passe à 20 passes ».
    ⭐ On ne rejoue QUE les scénarios rouges : 3 rouges × 10 = 30 appels (~0,45 €) au lieu de
    20 × 15 = 300 appels, qui coûteraient cher ET dépasseraient le plafond de 50/jour/personne.
@@ -7178,7 +7459,7 @@ const _DRAWER_CONTENT = {
         {ic:'😴',t:'Sommeil & historique (Accueil)',d:'Nouveau : ton sommeil se note directement sur l\'Accueil, juste sous ton score de récup (avant il était dans Séance et personne ne le trouvait). Choisis la qualité (Mauvais → Excellent) et le nombre d\'heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Déplie « 📊 Historique du sommeil » (la flèche) pour voir un mini-graphique sur 7 ou 30 jours (barres colorées selon la qualité, ligne repère à 8h, moyenne) et la liste nuit par nuit : tape une barre ou une ligne pour ajouter/corriger cette nuit — les jours vides affichent « ＋ à renseigner ». Un bon sommeil fait remonter ton score de récupération, que le Coach Milo utilise aussi.'},
         {ic:'💚',t:'Deux styles pour ta carte récup',d:'<b>Menu → Apparence → Carte récup</b> : tu choisis comment ton score s\'affiche sur l\'Accueil. <b>⭕ Anneau</b> (par défaut) : le chiffre au centre d\'un cercle complet dont la couleur suit ton score, du rouge au vert. <b>💚 Moniteur</b> : ton score en gros à gauche, et à droite une jauge ouverte en bas — le fond rouge est ce qu\'il te reste à récupérer, le curseur vert ce que tu as récupéré, avec un point lumineux au bout. Au centre, un vrai tracé cardiaque défile en continu. <b>Ce sont les mêmes données</b>, seule la mise en forme change : tu peux basculer autant que tu veux, rien n\'est perdu. Le tracé bouge en permanence : si ça te gêne, <b>« 🩺 Figer le tracé du cœur »</b> juste en dessous l\'arrête — il reste affiché en entier, simplement immobile. Dans les deux styles, taper la carte rejoue l\'animation. Et si tu as activé « Réduire les animations » sur ton téléphone, tout se fige.'},
         {ic:'🕰️',t:'Ton histoire sportive',d:'L\'app garde chaque check-in que tu remplis (énergie, moral, douleurs) — pas pour faire des statistiques, mais pour <b>relier ce qui t\'arrive aujourd\'hui à ce que tu as déjà vécu</b>. Premier cas branché : quand tu notes une douleur que tu avais <b>déjà notée il y a plus de deux semaines</b>, une carte apparaît sur l\'Accueil et te dit <b>quand</b> c\'était et sur <b>combien de jours</b> elle était revenue. ⚠️ <b>Elle décrit, elle ne prédit jamais</b> : « elle apparaissait sur 4 jours » est un fait tiré de tes notes, pas un pronostic — et ce n\'est pas un avis médical. ⛔ Elle reste <b>silencieuse</b> si la douleur est récente (tu t\'en souviens), si c\'est la première fois, ou s\'il n\'y a rien à relier : une carte qui parlerait tous les jours ne serait plus un souvenir.'},
-        {ic:'💡',t:'Comprendre ton score de récup',d:'Ton score de récupération (sur l\'Accueil, NN/100) estime à quel point ton corps est prêt à s\'entraîner aujourd\'hui — 100 = parfaitement frais. Pour comprendre le chiffre, tape « Pourquoi ce score ? » juste en dessous : une fiche t\'explique en clair chaque facteur (sommeil des 3 dernières nuits, séance récente, âge, jours enchaînés, tabac, cycle, ta forme du jour) avec sa raison et son +/−. Le malus d\'une séance récente s\'efface au fil de la journée. C\'est un repère utile, mais ton ressenti prime toujours — et une simple gêne ne fait PAS chuter le chiffre (elle affiche juste un avertissement pour t\'échauffer/adapter).'},
+        {ic:'💡',t:'Comprendre ton score de récup',d:'Ton score de récupération (sur l\'Accueil, NN/100) estime à quel point ton corps est prêt à s\'entraîner aujourd\'hui — 100 = parfaitement frais. Pour comprendre le chiffre, tape « Pourquoi ce score ? » juste en dessous : une fiche t\'explique en clair chaque facteur (sommeil des 3 dernières nuits, séance récente, âge, tabac, cycle, ta forme du jour) avec sa raison et son +/−. Le malus d\'une séance récente s\'efface au fil de la journée. C\'est un repère utile, mais ton ressenti prime toujours — et une simple gêne ne fait PAS chuter le chiffre (elle affiche juste un avertissement pour t\'échauffer/adapter).'},
         /* 👎 ft-v1059 — L'AIDE DÉTAILLÉE EST L'ENDROIT DU *POURQUOI*, pas du mode d'emploi
            (le tap est évident). Elle porte les deux choses qu'aucune autre surface ne dit :
            ① ce que Michel en fait (un cas de test, R35) ; ② pourquoi il n'y a pas de pouce
@@ -7186,6 +7467,13 @@ const _DRAWER_CONTENT = {
         {ic:'\u{1F44E}',t:'« Milo a répondu à côté » — et ce qu\'on en fait',d:'Sous chaque réponse de Milo il y a un bouton <b>« 👎 à côté »</b>. Quatre motifs, un tap : la réponse <b>ne répondait pas</b> à ta question · elle était <b>trop vague</b> · elle contenait quelque chose de <b>faux</b> · <b>il a oublié</b> quelque chose que tu lui avais dit.<br><br>⛔ <b>Rien de ta conversation n\'est envoyé.</b> Le motif est compté <b>sur ton téléphone</b>, et c\'est tout. Si tu veux <b>en plus</b> que Michel puisse voir l\'échange pour corriger le problème, il y a une case à cocher — <b>décochée par défaut</b>, et rien ne part tant que tu ne la coches pas.<br><br>⭐ <b>À quoi ça sert vraiment.</b> Quand Milo répond à côté, ce n\'est pas seulement agaçant : c\'est un appel qui a coûté quelque chose pour rien. Chaque signalement devient un <b>cas de test permanent</b> — un scénario qui sera rejoué à chaque version pour vérifier que le problème ne revient pas. Les meilleurs tests de l\'app viennent tous de vrais ratés vécus, pas de cas inventés.<br><br>⚠️ <b>Et il n\'y a pas de pouce vert, c\'est voulu.</b> Un 👍/👎 sous chaque réponse transformerait ta conversation en formulaire de satisfaction, et dirait surtout qui est poli. Un raté, on peut le corriger ; un « c\'était bien », on n\'en fait rien.<br><br>⛔ Le motif <b>« il a oublié »</b> n\'est pas là par politesse : c\'est le seul qui, s\'il revient souvent, dit que la <b>mémoire</b> de Milo ne tient pas — c\'est-à-dire la promesse principale de l\'app.'},
         {ic:'📍',t:'Une charge sans repère le dit',d:'Quand <b>Milo</b> construit ta séance, il pré-remplit les charges. Sur un exercice que tu as <b>déjà fait</b>, il se cale sur ton historique et sur ton 1RM — et si la charge dépasse ce que tu tiens, le bandeau ⚡ te le signale. Mais sur un exercice que <b>tu n\'as jamais noté ici</b>, l\'app n\'a <b>aucun repère dans ton historique</b> — et ça ne veut pas dire que tu ne le pratiques pas, seulement qu\'elle n\'en sait rien : le chiffre vient de nulle part. Elle l\'écrit alors noir sur blanc — <b>« point de départ à ajuster, pas une mesure »</b> — plutôt que de le laisser passer pour une prescription calibrée. ⚠️ <b>Rien n\'est retiré ni corrigé</b> : tu gardes la charge, tu décides. Et dès que tu notes ta première série, l\'app a son repère : le message ne revient plus.'},
         {ic:'💪',t:'Le RIR — ce qu\'il te restait dans le moteur',d:'Le <b>RIR</b> (répétitions en réserve) dit à quel point tu as forcé : <b>2</b> = tu aurais pu en faire 2 de plus, <b>échec</b> = tu n\'en pouvais plus (c\'est exactement le tag <b>X</b>, la même information saisie autrement). Après chaque série de <b>travail</b>, la barre de repos pose la question — un tap, facultatif, retirable. ⚠️ <b>Rien n\'est deviné</b> : une série que tu ne notes pas reste « non notée », jamais « échec ». 👉 <b>À quoi ça sert</b> : (1) tu le <b>revois avant de refaire la série</b>, dans la colonne « précédent » — <i>8×80·2r</i> te dit s\'il faut monter ; (2) <b>Milo le reçoit</b>, et c\'est ce qui lui manquait : il connaît depuis toujours le cadre de ta discipline (<i>« garder 1 à 3 répétitions en réserve »</i> en musculation, <i>« jamais à l\'échec »</i> en force athlétique) sans avoir aucun moyen de savoir si tu le respectais. ⛔ Pas d\'échauffement : une série de chauffe n\'a pas de réserve à déclarer. <b>🎚️ ET SI TU TRAVAILLES EN RPE</b> — <b>Profil → Échelle d\'effort</b> te laisse basculer. Le RPE et le RIR sont la <b>même mesure dite dans l\'autre sens</b> : <i>RPE = 10 − RIR</i>, donc <b>10 = échec</b>, 9 = il t\'en restait 1, 8 = il t\'en restait 2, et ainsi de suite. ⛔ Basculer <b>ne convertit rien et n\'efface rien</b> : l\'app ne stocke qu\'une seule valeur, et l\'affiche dans la langue que tu as choisie — ton historique entier se relit, et tu peux revenir quand tu veux. La question posée après la série, le badge de la colonne « précédent » (<i>8×80·@8</i>) et <b>Milo</b> suivent tous les trois. ⚠️ <b>Pas de demi-points</b> (8,5 · 9,5) : ils existent dans le barème, mais l\'app ne les <b>mesure</b> pas — les afficher serait une précision qu\'on n\'a pas. ⚠️ Et l\'ordre des boutons s\'inverse, exprès : en RIR on part de l\'échec, en RPE on va de 6 à 10, parce que c\'est comme ça que le barème se lit.'},
+        /* 🏃 ft-v1118 — L'AIDE DÉTAILLÉE EST L'ENDROIT DU *POURQUOI*. Elle porte les trois
+           choses qu'aucune autre surface ne dit : ① ce qui distingue *noter* de *enregistrer*,
+           et pourquoi l'app a besoin des deux (on saisit son cardio avant de l'avoir fini) ;
+           ② pourquoi le rouge est désormais réservé à UN bouton par écran ; ③ et ce qu'une
+           séance de cardio seul déclenche vraiment — sans ça, « ça compte quand même ? » reste
+           une question ouverte. */
+        {ic:'🏃',t:'Noter un cardio ≠ enregistrer la séance',d:'Le bloc <b>Cardio</b> de l\'écran Séance sert à <b>noter</b> : le type (tapis, vélo, rameur…), l\'intensité et la durée, <b>avant</b> la muscu (échauffement) ou <b>après</b> (cardio de fin). Son bouton s\'appelle <b>« ✓ C\'est noté »</b> et il ne fait qu\'une chose : ranger ta saisie et replier le bloc. <b>Il n\'enregistre pas ta séance</b>, et c\'est voulu — on saisit souvent son cardio <b>pendant</b> qu\'on s\'entraîne, pas à la fin.<br><br>⭐ <b>Un seul bouton rouge par écran, et c\'est celui qui enregistre.</b> En bas de l\'écran Séance : <b>« 🏁 Terminer la séance »</b> si tu as validé des séries, <b>« 🏁 Enregistrer le cardio »</b> si tu n\'as fait que du cardio. Avant le 04/09/2026 le bouton du bloc était rouge lui aussi et disait « Enregistrer le cardio » : <b>deux boutons, presque les mêmes mots, un seul enregistrait</b>. Rien ne permettait de les distinguer.<br><br>⚠️ <b>Ce que ça coûtait</b> : une séance de cardio seul n\'a aucun exercice, et plusieurs endroits de l\'app en déduisaient « il n\'y a rien ». Tu pouvais noter 45 min de tapis, repasser par l\'Accueil, retaper le bouton rouge — et ta saisie disparaissait sans un mot. C\'est corrigé : tant qu\'une séance attend, l\'Accueil affiche <b>« ↩ Reprendre la séance »</b>, l\'app te le redit à l\'ouverture, et une copie de secours est gardée.<br><br>⭐ <b>Une séance de cardio seul est une vraie séance</b> : elle a sa durée, ses calories (calculées depuis le MET du type et ton poids), elle apparaît dans ton calendrier, elle ferme une séance annoncée à Milo, et Milo en tient compte. ⚠️ En revanche elle pèse encore <b>peu</b> sur ton score de récupération — ce barème-là reste à régler, et on ne l\'invente pas.'},
         {ic:'⚡',t:'Démarrer une séance',d:'Bouton rouge central ⚡ ou "Commencer une séance" depuis l\'accueil. Ajoute tes exercices, saisis kg × reps, valide chaque série avec ✓. Le timer de repos se lance automatiquement entre les séries — et c\'est un <b>MAXIMUM</b>, pas un temps à attendre : tu peux repartir avant, c\'est permis. Il ne s\'arrête plus à zéro, il continue en +0:12, +0:45… avec « au-delà de ton repos max ». ⚠️ Ce n\'est ni un reproche ni une erreur d\'affichage : c\'est une information, parce que le repos réellement pris vaut souvent 2 à 3 fois le repos réglé. Au-delà de 15 min il s\'arrête seul (ce n\'est plus un repos). Astuce : dans la recherche d\'exercices, tes FAVORIS (ceux que tu utilises le plus souvent) remontent automatiquement en tête, avec une ★ — tu retrouves tes mouvements habituels sans scroller.'},
         /* ⚠️ « Timer : É 45s » est devenu FAUX le 31/08 (ft-v1082) : le repos d'un palier suit
            maintenant sa charge. Une aide qui annonce un chiffre que l'app n'applique plus est
@@ -7246,7 +7534,7 @@ const _DRAWER_CONTENT = {
         {ic:'💪',t:'Objectif « Perte de gras + muscle »',d:'Nouvel objectif dans Profil → Objectif : la recomposition. But = perdre du gras TOUT EN gardant/formant du muscle (muscles toniques, éviter le « skinny fat »). L\'app applique un léger déficit calorique + des protéines élevées. Si tu veux un chiffre précis (celui de ton coach par ex.), combine-le avec le réglage manuel des calories.'},
         {ic:'💪',t:'Muscles prioritaires',d:'Dans Profil → Objectif, tu peux choisir jusqu\'à 2 muscles à développer EN PRIORITÉ (ex. pectoraux + épaules). Comme un vrai coach qui programme autour des priorités de l\'athlète, Milo donnera alors PLUS de fréquence, de volume et de variantes à ces muscles — dans ses conseils et les programmes qu\'il te génère — tout en maintenant le reste du corps. Important : ça ne change PAS ton objectif (qui reste le pilote) ni ta nutrition ; c\'est juste l\'emphase d\'entraînement, pour cibler où tu veux progresser. C\'est ce qui distingue un vrai coach d\'un générateur de programmes.'},
         {ic:'🎯',t:'Deux objectifs : principal + complémentaire',d:'Dans Profil → Objectif, tu choisis un objectif PRINCIPAL (il pilote ta nutrition — calories, macros, plan de repas) et, si tu veux, une « priorité complémentaire » (2e objectif). Exemple : principal « Force maximale » + complémentaire « Prise de muscle ». La priorité complémentaire affine les conseils de Milo et ton entraînement, mais la nutrition suit TOUJOURS l\'objectif principal — car on ne peut pas viser deux directions de calories opposées en même temps (prendre du muscle = manger plus, perdre du gras = manger moins). L\'app masque d\'ailleurs les combinaisons contradictoires ; et pour « perdre du gras ET prendre du muscle », l\'objectif « Perte de gras + muscle » (recomposition) est fait pour ça.'},
-        {ic:'📓',t:'Journal alimentaire',d:'Onglet « Journal » dans Nutrition : note tes repas et suis tes calories/macros du jour vs tes objectifs. Ajoute un aliment de 3 façons : à la main (gratuit, illimité), estimation IA (🤖 décris ton repas → l\'IA remplit les calories, 25 gratuites puis Premium), ou par code-barres (produit reconnu automatiquement, tu ajustes la quantité). Tout est sauvegardé dans ton compte.'},
+        {ic:'📓',t:'Journal alimentaire',d:'Onglet « Journal » dans Nutrition : note tes repas et suis tes calories/macros du jour vs tes objectifs. Ajoute un aliment de 3 façons : à la main (gratuit, illimité), estimation IA (🤖 décris ton repas → l\'IA remplit les calories, 25 gratuites puis Premium), ou par code-barres (produit reconnu automatiquement, tu ajustes la quantité). Tout est sauvegardé dans ton compte.<br><br><b>📌 Le repas, en haut de la fenêtre d\'ajout.</b> Les cinq puces <i>Petit-déj · Collation · Déjeuner · Collation 2 · Dîner</i> <b>restent à l\'écran quand tu descends</b>, et tu peux en changer depuis le bas de la fenêtre. Avant, elles disparaissaient dès le premier défilement — alors que le champ où tu tapes l\'aliment est plus bas : tu validais sans voir où ça tombait. ⚠️ <b>Et le repas est PRÉ-RÉGLÉ SUR L\'HEURE</b> (avant 11 h → Petit-déj, puis Déjeuner, Collation, Dîner) : c\'est une proposition, pas une décision. Si tu notes ton dîner le lendemain matin, ou ta collation de 16 h à 20 h, <b>c\'est à toi de corriger la puce</b>. 👉 Le message de confirmation <b>nomme le repas</b> (« Ajouté · Dîner ») : si ce n\'est pas celui que tu voulais, tu le vois tout de suite au lieu de le découvrir dans le Journal.<br><br><b>⚖️ Calibrer un produit dont les valeurs sont fausses.</b> Certains produits n\'ont pas de valeurs dans la base publique : l\'app est alors obligée de les estimer, et elle se trompe \u2014 toujours de la même façon, parce qu\'elle te repropose ensuite ta propre ligne. Le bouton <b>« ⚖️ Saisir les valeurs pour 100 g »</b> coupe court : tu recopies le tableau de l\'étiquette <b>une seule fois</b>, et à partir de là tu ne tapes plus que ta dose. ⚠️ <b>C\'est la colonne « pour 100 g »</b>, pas celle « par portion » : l\'app refuse une saisie où les macros pèsent plus de 100 g pour 100 g de produit, ce qui est physiquement impossible. ⭐ Ces valeurs sont enregistrées comme venant de <b>ton étiquette</b> — jamais présentées comme une source vérifiée que tu n\'aurais pas donnée toi-même.<br><br><b>🍔 Chercher avec tes mots, pas ceux de la table.</b> La base officielle française écrit « Cola, sucré » là où tu dis « coca », et « Hamburger, de restauration rapide » là où tu dis « mcdo » : ces mots ne rendaient <b>rien</b>, alors que les aliments étaient déjà dans ton téléphone. ⚠️ Le défaut ne se voyait qu\'<b>hors ligne</b> — avec du réseau, la recherche en ligne rattrapait le coup, donc à la salle en 4G faible tu n\'avais rien. ⭐ Désormais <b>mcdo</b>, <b>macdo</b>, <b>mac donald</b> et <b>fast food</b> ouvrent un menu (un sandwich, des frites, des nuggets) ; <b>coca</b>, <b>coca zéro</b>, <b>coca light</b> et <b>soda</b> trouvent les boissons. ⛔ <b>Les noms restent génériques, jamais des marques</b> : « Hamburger, de restauration rapide » et non « Big Mac ». Ce sont les valeurs de la table officielle, et rien ne se fait passer pour un produit de marque. 👉 Pour un burger précis : prends le générique et <b>mets son poids</b>. ⛔ Et <b>tacos</b> ne rend rien : il n\'est pas dans la table — on préfère te le dire que te servir un kebab à sa place.<br><br><b>🍔 Le fast-food par son nom, avec sa provenance.</b> Tape <b>big mac</b>, <b>whopper</b>, <b>tenders kfc</b> ou <b>frites mcdo</b> : une section <b>« FAST-FOOD (SOURCES OFFICIELLES) »</b> apparaît au-dessus des aliments génériques, avec l\'<b>enseigne</b> et le <b>poids de la portion</b> déjà rempli (232 g pour un Big Mac). Tu valides, ou tu mets ton poids si tu n\'as pas tout mangé. ⭐ <b>Ces valeurs sont RELEVÉES sur les sources officielles des enseignes</b>, pas mesurées par l\'app — c\'est pour ça que chaque ligne affiche sa marque. Un chiffre qui ne dirait pas d\'où il vient serait pire qu\'absent. ⚠️⚠️ <b>Et 4 lignes sur 27 portent un ⚠️, exprès.</b> Quand l\'enseigne publie des calories qui ne collent pas aux macros de sa propre fiche (un sandwich annoncé à 752 kcal quand ses macros en donnent 616), ou des morceaux dont le prix en calories varie du simple au double d\'une taille à l\'autre, l\'app <b>te le dit et te montre le chiffre qui permet de juger</b>. 👉 <b>Pourquoi elle ne les cache pas</b> : une ligne absente pousse vers l\'estimation automatique, qui est <b>moins fiable qu\'une valeur publiée douteuse</b> — c\'est exactement le mécanisme qui fabrique une ligne fausse qu\'on se repropose ensuite indéfiniment. ⭐ L\'avertissement <b>reste attaché à la ligne enregistrée</b> : dans trois mois, tu sauras encore que ce chiffre-là était signalé le jour où tu l\'as pris. ⭐⭐ <b>La base est passée de 27 à 128 produits.</b> <b>Quick</b> y entre avec sa table officielle complète — c\'est l\'enseigne qui publie le plus, donc elle pèse 91 lignes sur 128 ; les autres ne publient qu\'une sélection. <b>Domino\'s</b> s\'étoffe aussi. ⛔ <b>Les valeurs d\'avant n\'ont pas bougé d\'un chiffre</b> : c\'est la même source, étendue, et chaque valeur a été revérifiée contre ce que l\'enseigne publie. ⚠️ <b>Ce qui n\'y entre PAS, et c\'est dit</b> : les sandwichs <b>Subway</b> — leur document officiel donne les calories mais **pas** les protéines, glucides et lipides, et une ligne sans macros ne peut pas alimenter ton journal. ⚠️ Et <b>O\'Tacos a été retiré</b> : leur table ne publie que des desserts (glace, milkshake, chantilly), <b>aucun tacos</b>. La garder aurait fait qu\'en tapant « tacos » tu obtiennes une <b>glace</b> — et <i>un mot qui ne désigne pas ce qu\'on croit est pire qu\'un mot qui ne rend rien</i>. 👉 « tacos » ne rend donc rien, exactement comme dans la table nationale où il n\'est pas mappé non plus. ⛔ Et si un produit manque, le plus sûr reste le <b>code-barres</b> ou la <b>photo de l\'étiquette</b>, qui donnent le pour-100 g exact.<br><br><b>🥗 Tes mots de tous les jours, et le piège du cru/cuit.</b> La table officielle française écrit « Pâtes sèches, standard, cuites » là où tu dis <b>tortiglioni</b> ou <b>fettuccine</b>, et « Riz blanc, cuit » là où tu dis <b>riz jasmin</b> ou <b>sticky rice</b> : ces mots ne rendaient <b>rien</b>. Plusieurs centaines d\'entre eux ouvrent maintenant la bonne porte. ⭐ <b>Aucune valeur n\'a été créée</b> : un mot ne fabrique pas une fiche, il désigne un aliment qui existait déjà, avec ses chiffres à lui — chaque correspondance a été vérifiée une à une contre la base. ⚠️⚠️ <b>LE SEUL CHIFFRE QUI CHANGE POUR TOI</b> : <b>riz</b> et <b>pâtes</b> proposent désormais la version <b>CUITE</b> en premier — <b>155</b> et <b>167 kcal/100 g</b> — et non la version crue (350 et 364). C\'est <b>du simple au double</b>, et c\'est voulu : on note ce qu\'on a dans l\'assiette. ⛔ <b>La version crue est juste en dessous</b>, elle n\'a pas disparu — si tu pèses tes pâtes sèches avant de les cuire, c\'est celle-là qu\'il te faut, à un doigt de l\'autre. 👉 <b>Le repère qui ne trompe jamais : le nom le dit.</b> « cuit », « crue », « sans sel ajouté » sont écrits dans le libellé — un coup d\'œil avant de valider suffit. ⛔ Et <b>whey</b>, <b>créatine</b>, <b>naan</b>, <b>chapati</b> ne rendent rien : ils ne sont pas dans la table nationale. On préfère te le dire que te servir un aliment approchant à leur place — pour ceux-là, le <b>code-barres</b> ou « ⚖️ Saisir les valeurs pour 100 g » sont les bons chemins.<br><br><b>🥤 Deux noms presque identiques, 24 fois d\'écart.</b> La table nationale porte « Cola, <b>sucré</b>, avec édulcorants » (<b>24 kcal/100 g</b>, un cola à la stévia) <b>et</b> « Cola, <b>sans sucres ajoutés</b>, avec édulcorants » (<b>1 kcal/100 g</b>, le zéro). ⛔ Le second est celui d\'un Coca Zéro ou d\'un Coca Light — et c\'est le premier qui sortait en tête. <b>Sur une canette de 50 cl, ça faisait 120 kcal enregistrées au lieu de 5.</b> ⭐ Désormais <b>coca zéro</b>, <b>coca light</b>, <b>coke zero</b> et <b>pepsi max</b> te donnent directement la bonne ligne — et l\'autre reste <b>juste en dessous</b>, parce qu\'elle est le bon aliment pour un cola sucré aux édulcorants. 👉 <b>Le réflexe que ce cas apprend vaut partout</b> : quand deux propositions se ressemblent, <b>c\'est le libellé qui tranche</b> — « sucré » / « sans sucres ajoutés », « cru » / « cuit », « avec peau » / « sans peau ». Un coup d\'œil avant de valider. ⚠️ Et les lignes que tu as <b>déjà enregistrées</b> ne changent pas toutes seules : l\'app ne réécrit jamais ton journal derrière toi.<br><br><b>🥤 Le même piège existait sur 9 boissons, pas seulement le Coca.</b> La table nationale porte <b>neuf paires</b> « sucré avec édulcorants » / « sans sucres ajoutés avec édulcorants » — cola, limonade, tonic, ice tea, sodas, boisson énergisante… et le nom « sucré » étant <b>toujours le plus court</b>, c\'est lui qui gagnait à chaque fois. Toutes corrigées. ⭐ <b>Et des dizaines de boissons qui ne rendaient rien en rendent une</b> : ice tea, red bull, monster, orangina, sprite, fanta, oasis, schweppes, latte, bière blonde, panaché, eau pétillante, lait d\'amande, de soja, d\'avoine, de riz. ⚠️⚠️ <b>Le pire n\'était pas le Coca</b> : <b>lait d\'amande</b> rendait un <b>chocolat au lait aux fruits secs à 559 kcal/100 g</b> pour une boisson qui en fait <b>36</b> — <b>quinze fois trop</b>. Et <b>rosé</b> rendait de la <b>rosette</b> (le saucisson, 392 kcal) pour un vin à 69, parce que la recherche compare des morceaux de mots et que « rose » est dans « Rosette ». ⛔ <b>Ce qui n\'a PAS été touché, et c\'est délibéré</b> : le <b>lait de coco</b>. La table distingue le <b>lait de coco de cuisine</b> (199 kcal, celui des currys) de la <b>boisson à la noix de coco</b> (30 kcal, celle du petit-déjeuner). Deux produits, deux fiches — les fusionner aurait refait exactement le dégât qu\'on venait de réparer. ⛔ Et ce qui n\'existe pas dans la table ne rend toujours rien : <b>powerade</b>, <b>gatorade</b>, <b>mojito</b>, <b>ginger beer</b>, <b>whey</b>. Aucune boisson isotonique n\'y figure. Pour ceux-là : code-barres, photo d\'étiquette, ou saisie des valeurs pour 100 g.<br><br><b>🔍 La recherche accepte mieux ta façon d\'écrire.</b> Deux choses la faisaient échouer sans raison. ⭐ <b>Une virgule</b> : « Boulgour, cuit » ne rendait <b>rien</b>, parce que le mot cherché devenait « boulgour, » <i>avec sa virgule collée</i>. ⭐ <b>Et les petits mots</b> — « de », « du », « au » — étaient exigés à la lettre : <b>filet de bœuf</b> ne rendait rien alors que « Boeuf, filet cru » existe. ⚠️ Ça marchait <b>7 fois sur 8 par accident</b> : le « de » se trouve dans « vian<b>de</b> », « Pomme <b>de</b> terre », « <b>au</b> naturel »… 👉 Désormais <b>joue de bœuf</b>, <b>queue de bœuf</b>, <b>foie de veau</b>, <b>rognon de veau</b>, <b>travers de porc</b>, <b>graine de lin</b> trouvent leur aliment, et <b>jarret de veau</b> rend « Veau, jarret cru » au lieu d\'un « Osso buco à la milanaise ». ⛔ <b>« sans » et « avec » ne sont JAMAIS jetés</b> : « coca sans sucre » deviendrait « coca sucre », l\'exact contraire. Ni « thé », qui est un aliment. 👉 <b>Ce qui ne marche toujours pas, et c\'est normal</b> : les mots de <b>conditionnement</b>. « copeaux de parmesan », « boule de mozzarella », « carré de chocolat » ne rendent rien parce que « copeaux », « boule », « carré » n\'existent dans aucun libellé — la table nomme <b>l\'aliment</b>, pas la façon dont il est présenté. Tape <b>parmesan</b>, <b>mozzarella</b>, <b>chocolat noir</b>.'},
         {ic:'📷',t:'Code-barres : chiffres ou photo',d:'Deux façons de passer par le code-barres d\'un produit. 1) Tape les chiffres écrits sous le code → recherche gratuite (aucun crédit IA). 2) Nouveau : appuie sur « 📷 Photographier le code-barres » et prends-le en photo → l\'IA lit le numéro à ta place (pratique si les chiffres sont petits ou abîmés). La lecture par photo utilise 1 essai IA ; ensuite le produit et son score santé s\'affichent gratuitement.'},
         {ic:'🥗',t:'Score santé des produits',d:'Nouveau : dans le Journal, tape le code-barres d\'un produit → tu vois son SCORE SANTÉ : Nutri-Score (A à E) et niveau de transformation (aliment brut ou ultra-transformé). Pour repérer d\'un coup d\'œil ce qui est sain. Gratuit pour tout le monde (aucune limite), ça n\'utilise pas de crédit IA. Pour lire une étiquette en photo ou estimer un plat, c\'est l\'IA (📸/🤖, 25 essais gratuits puis Premium).'},
         {ic:'📥',t:'Importer un plan alimentaire',d:'Un plan de diététicienne (photo ou PDF) ? Bouton « Importer un plan » sous Plan de repas IA : l\'IA lit le document et range les repas jour par jour, en tenant compte de ton régime.'},

@@ -72,10 +72,29 @@ const INTERDIT=/new Date\(\)\.toISOString\(\)\s*\.\s*(slice\(0,\s*10\)|split\('T
 const fautifs=[];
 for(const f of FICHIERS){
   const p=path.join(R,f); if(!fs.existsSync(p)) continue;
+  let dansBloc=false;
   fs.readFileSync(p,'utf8').split('\n').forEach((l,i)=>{
-    if(l.trim().startsWith('//')) return;                 // les commentaires citent le motif pour l'expliquer
-    if(/typeof today\s*===?\s*'function'/.test(l)) return; // repli défensif : today() existe toujours
-    if(INTERDIT.test(l)) fautifs.push(f+':'+(i+1));
+    /* ⚠️⚠️ LES BLOCS `/* *​/` SONT SAUTÉS AUSSI (04/09/2026) — l'intention était DÉJÀ écrite
+       à la ligne du dessous (« les commentaires citent le motif pour l'expliquer »), elle ne
+       couvrait que les `//`. Le détecteur a rougi sur un COMMENTAIRE qui expliquait justement
+       pourquoi il ne fallait pas écrire ce motif : *un avertissement devenait une faute*.
+       ⛔ Ça n'affaiblit rien — un motif dans un commentaire ne s'exécute pas. La garantie est
+       « aucun CODE ne recalcule le jour à Greenwich », jamais « le mot n'apparaît nulle part »
+       (famille §31 de `BUGS.md` : un témoin visé sur la FORME et non sur la GARANTIE).
+       ⛔ Contrôle négatif fait le jour même : la ligne fautive remise en CODE est bien
+       rattrapée — le détecteur n'est pas devenu aveugle. */
+    const sansBloc = (()=>{
+      let s='', reste=l;
+      while(reste.length){
+        if(dansBloc){ const fin=reste.indexOf('*/'); if(fin<0) return s; dansBloc=false; reste=reste.slice(fin+2); continue; }
+        const deb=reste.indexOf('/*'); if(deb<0){ s+=reste; return s; }
+        s+=reste.slice(0,deb); dansBloc=true; reste=reste.slice(deb+2);
+      }
+      return s;
+    })();
+    if(sansBloc.trim().startsWith('//')) return;           // les commentaires citent le motif pour l'expliquer
+    if(/typeof today\s*===?\s*'function'/.test(sansBloc)) return; // repli défensif : today() existe toujours
+    if(INTERDIT.test(sansBloc)) fautifs.push(f+':'+(i+1));
   });
 }
 t('aucun fichier de l\'app ne recalcule le jour à l\'heure de Greenwich',

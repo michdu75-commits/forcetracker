@@ -1935,6 +1935,34 @@ encore à ça ? »* mais *« la propriété que je protège tient-elle toujours 
 
 ---
 
+### ⭐⭐ LE MIROIR, TROUVÉ LE 03/09 (ft-v1114) — *et il est plus coûteux que l'original*
+
+§31 décrit un témoin visé sur une forme. **Le miroir est une AIDE visée sur une forme** — et
+elle, personne ne la teste.
+
+Trois cas dans la même livraison, dont **deux sur du texte lu par l'utilisateur** :
+
+| où | ce qui était figé | pourquoi c'est devenu faux |
+|---|---|---|
+| témoin ft-v1113 | le **nom** `ciqual.json`, alors que son propre commentaire écrivait la garantie (*« un FICHIER, jamais l'IA »*) | une 2ᵉ base locale (`marques.json`) est arrivée |
+| **aide `?`** ft-v1113 | *« les noms sont GÉNÉRIQUES, **jamais des marques** : tu ne verras pas Big Mac »* | une base d'enseignes est arrivée **le lendemain** |
+| **aide `?` + nouveauté + diapo + aide détaillée** ft-v1114 | *« Tape **mcnuggets** »* | **il n'y a aucun nugget** dans les 27 produits — le mot n'a jamais existé |
+
+**⛔ Le 3ᵉ est le pire, et il est entièrement de mon fait** : j'ai écrit le matin même
+*« une aide qui nomme un repère inexistant est pire qu'une aide absente, parce qu'on la croit »*,
+puis j'ai cité un produit inexistant dans **quatre surfaces à la fois**. ⚠️ *Écrire la règle ne
+protège pas de l'enfreindre — seule une mesure le fait.*
+
+### 🛡️ Ce qui protège aujourd'hui
+Un témoin **extrait les produits que l'aide propose de taper** (la séquence qui suit « Tape ») et
+vérifie que chacun trouve vraiment quelque chose dans `data/marques.json`. ⛔ Il ne fige **aucune
+formulation** : on peut réécrire l'aide entièrement, il rougira seulement si elle nomme un produit
+qui n'existe pas. ⚠️ **Et son 1ᵉʳ jet était trop large** — il prenait tous les mots en gras et
+sortait « enseigne », « rien », « hors ligne » comme des produits introuvables : *un extracteur
+trop large ne mesure pas la promesse, il mesure la mise en forme.* Éprouvé **dans les deux sens**
+sur le vrai corpus (rouge sur `mcnuggets`, vert sur `big mac` et `tenders kfc`).
+
+
 ## 32. 🔗 L'ALLER-RETOUR CASSÉ AU MILIEU — les deux bouts sont justes, le maillon central n'existe pas **(01/09/2026, ft-v1093)**
 
 Une donnée de profil fait trois sauts : **l'app l'envoie** → **le serveur la range** → **l'app la
@@ -2236,6 +2264,8 @@ vaut `(7−f)/7`, donc **plus `f` est petit, plus la prescription est agressive*
 le plus récent, celui dont on sait le moins, recevait l'écart le plus grand* — 52 g de lipides
 un jour de séance pour un plancher à 50,4.
 
+**⚠️ La dernière ligne est la plus sournoise des six** : le cas n'est pas *absent*, il est **présent et méconnaissable**. Le titre venait du muscle le plus travaillé (il n'y en a aucun), la ligne du bas des noms d'exercices (il n'y en a aucun), la figurine des scores musculaires (tous nuls). Rien n'est faux ; tout est vide. 👉 ***Une ligne qui n'a rien à dire ne doit pas se taire à la place prévue pour parler : elle doit nommer ce que la chose EST.***
+
 ### 🔍 À quoi on la reconnaît
 - un dénominateur **constant** (`wk.length`, `30`, `4`) à côté d'un numérateur qui, lui, dépend
   de ce que la personne a fait ;
@@ -2378,3 +2408,185 @@ qui les contient ? »* — la masse, la durée, le volume.
 protégé — ici l'estimation IA n'avait aucune borne physique, quand l'import d'historique en a
 depuis ft-v1095), et de **§12quater** (reproduire avant d'expliquer : le cas a été rejoué par les
 vraies fonctions, seul `fetch` remplacé, avant qu'une ligne de correctif soit écrite).*
+
+
+---
+
+## 40. 🗣️ LE VÉRIFICATEUR ÉCRIT SUR UNE TOURNURE DE LANGUE SE PÉRIME À LA REFORMULATION SUIVANTE **(03/09/2026)**
+
+**Le symptôme** : un scénario du banc payant ressort **rouge** sur une réponse de Milo qui fait
+exactement ce qu'on lui demande — et il ressort rouge **passe après passe**, donc il finit
+étiqueté « SYSTÉMATIQUE », c'est-à-dire l'étiquette la plus alarmante du rapport.
+
+**Le cas mesuré (EV-043, deux fois dans la même réponse)** :
+
+| ce que Milo écrit | ce que le motif cherchait |
+|---|---|
+| « Viser 78 kg irait **à l'encontre** de ce que tu as fixé » | connaissait `contraire`, `inverse` — **pas `à l'encontre`** |
+| « un calcul IMC de **ta** balance » | exigeait `la balance` — mesuré : `/la balance/` → false, `/ta balance/` → **true** |
+
+Et sur EV-008 : Milo dit *« je n'ai pas accès à internet »* en ouverture puis donne l'adresse de
+PubMed **trois paragraphes plus bas** ; le vérificateur ne lisait que **140 caractères** avant le
+lien, donc le refus était écrit mais hors de sa fenêtre.
+
+**⛔⛔ CE QUI FAIT LA FAMILLE N'EST PAS « IL MANQUAIT UN MOT ».** Le commentaire du code raconte
+que ce même vérificateur avait **déjà été corrigé le 25/08**, pour une autre formulation de refus
+(« ce serait aller dans le sens inverse »). 👉 ***On avait corrigé pour la phrase d'hier, pas pour
+celle de demain.*** Un modèle reformule à chaque appel ; une liste de tournures écrite à la main
+ne peut pas suivre.
+
+**⚠️ ET LE COÛT EST PIRE QU'UN TEST MANQUANT.** Un rouge sur la bonne réponse apprend à ne plus
+lire les rouges (**R19**) — et il enterre les vrais : sur les 5 rouges de cette passe, **2
+seulement étaient de vrais défauts**.
+
+### 🛡️ À quoi on la reconnaît
+Un rouge dont le **détail imprimé cite une phrase qui dit le contraire de ce qu'on lui reproche**.
+Le rapport affichait `adopte le poids cible du fabricant : "viser 78 kg"` — extrait d'une phrase
+qui **refuse** les 78 kg.
+
+### 🛡️ Ce qui protège aujourd'hui
+- ⭐ **Épingler les formulations déjà rencontrées** dans un témoin permanent (bloc CCXVII), pour
+  qu'une 3ᵉ correction du même motif ne passe pas en silence.
+- ⛔ **Éprouver dans les deux sens** : le correctif doit rendre le vérificateur vert sur la bonne
+  réponse **et le laisser rouge** sur une réponse qui commet vraiment la faute. Sans la seconde
+  moitié, on remplace un faux rouge par un vert qui ne peut plus rougir.
+- ⚠️ **Préférer le fait à la tournure** : chercher l'appareil (`balance`, `imc`) plutôt qu'un
+  article précis ; lire *toute* la réponse avant le lien plutôt qu'une fenêtre de N caractères.
+
+### 🛡️ 2ᵉ FORME, MESURÉE LE MÊME JOUR : LE VÉRIFICATEUR QUI FIGE UN FAIT QUE LE DÉPÔT CORRIGE
+
+`EV-032` accusait Milo de prescrire « tate press », *« que l'app ne sait pas mesurer »* — sur une
+liste de 5 noms **figée au 01/08/2026**. Mesuré le 03/09 : `Tate Press` est dans `EXLIB`,
+`_mscScores` lui rend `{triceps:2, front-delt:1}`, et **0 des 322 exercices envoyés** est muet.
+Les **cinq** noms de la liste y étaient entrés depuis. Milo l'a prescrit **parce que nous le lui
+envoyons**, avec la consigne « écris son nom EXACTEMENT ».
+
+⛔⛔ **Et le piège se referme sur le correctif évident** : mettre la liste à jour l'aurait rendue
+**vide** — donc un témoin incapable de rougir. *Remplacer une liste périmée par une liste vide,
+ce n'est pas corriger.* Le correctif est de changer la QUESTION : interroger le catalogue réel
+(`EXLIB`, source unique — **R2**) au lieu d'en garder une copie. Un exercice ajouté demain cesse
+alors tout seul d'être coupable.
+
+⚠️ **Le calibrage compte autant que l'idée** : la 1ʳᵉ version générique produisait **4 faux
+positifs sur 30 lignes réelles**. Il a fallu comparer *dans les deux sens* (Milo écrit « Rowing
+Barre », le catalogue dit « Rowing Barre Buste Penché ») et **sortir du périmètre les lignes sans
+nom** (« • S1 : 95×3 » — le nom est sur la ligne du dessus). Résultat mesuré : **0 faux positif
+sur 19 lignes réelles, 4 exercices inventés sur 4 attrapés.**
+
+### 🛡️ 3ᵉ FORME : LE SCÉNARIO QUI TESTE UN CHAMP QUE L'APP NE COLLECTE PAS
+
+`EV-040` reproche à Milo de redemander « le matériel qu'il a déjà dans le profil ». Mesuré :
+`matos` **n'est pas une question de `COACH_QUIZ`**, et `S.equip`/`S.matos`/`S.materiel` ont
+**zéro occurrence dans toute l'app**. La fixture posait un champ inexistant — **§36 appliqué au
+scénario lui-même**. Le lieu, lui, passe bien (« Il s'entraîne : Maison avec matériel »).
+👉 *La question de Milo est légitime : il demande ce qu'il n'a jamais reçu, ce que **R8**
+prescrit précisément de faire.* Ce rouge-là ne ment pas — il pointe un trou de l'app, et le
+correctif est dans l'INTERFACE, pas dans le prompt.
+
+*Voisine de **§31** (le témoin visé sur une forme, pas sur sa garantie) — c'en est la version
+« langue naturelle », et de **§36** (une sonde qui invente un nom de champ mesure toujours zéro) :
+dans les deux cas le détecteur ne mesure pas ce que son titre annonce.*
+
+---
+
+## 41. 📐 TOUS LES NOMBRES SONT VERTS, ET L'ÉCRAN EST FAUX **(03/09/2026, ft-v1109)**
+
+> **La jumelle géométrique de §31.** Là-bas, un témoin visait une *forme* au lieu de la garantie
+> qu'il devait tenir. Ici, tous les témoins visent la bonne garantie, la mesurent correctement,
+> et **passent à côté de ce que la personne voit** — parce qu'ils mesurent des **coordonnées**,
+> pas des **pixels peints**.
+
+### 🔍 Le cas
+Michel demande que la ligne « Repas » de la modale d'ajout reste visible quand on descend. On la
+rend collante (`position:sticky; top:0`). La sonde répond parfaitement :
+
+| Ce qui était mesuré | Résultat |
+|---|---|
+| Les puces sont-elles visibles à 300 px, 600 px, au fond ? | **oui, oui, oui** |
+| Peut-on encore changer de repas depuis le bas ? | **oui** |
+| Le champ de saisie est-il masqué par la bande ? | **non** |
+| Erreurs JS | **0** |
+
+**Et la capture d'écran montrait des aliments qui défilaient AU-DESSUS des puces.**
+
+### ⛔ La cause, qui n'est pas une faute de frappe
+Un élément collant s'arrête au bord de la **zone de défilement**, et cette zone passe **à
+l'intérieur** des 16 px de marge intérieure de la modale. Il restait donc une bande de 16 px
+au-dessus du fond de l'élément, par laquelle le contenu défilait à la vue. Toutes les
+coordonnées vérifiées étaient justes : la bande *était* bien à sa place. C'est ce qu'il y avait
+**autour** qui ne l'était pas.
+
+### 🔍 À quoi on la reconnaît
+- On mesure **des positions et des tailles** (`getBoundingClientRect`), jamais **ce qui occupe un
+  point de l'écran**.
+- Le correctif touche à `position`, `overflow`, `z-index`, `padding`, `transform` — les endroits
+  où le navigateur décide **quoi recouvre quoi**, une question qu'aucune coordonnée ne pose.
+- Tous les témoins sont verts et personne n'a **regardé** le résultat.
+
+### 🛡️ Le réflexe, en une ligne
+**Dès qu'un correctif porte sur la superposition, prendre une capture — et écrire un témoin qui
+demande *« qu'est-ce qui est PEINT ici ? »***, pas *« où est cet élément ? »*. En pratique :
+`document.elementFromPoint(x, y)`, sur le point que l'on veut protéger.
+
+*Voisine de **§31** (un témoin qui vise la forme et non la garantie) et de **§12quater**
+(reproduire avant d'expliquer). ⚠️ Et le cas dit aussi sa limite : la capture a été prise dans
+**Chromium**, alors que `position:sticky` dans un conteneur défilant est l'un des points où
+**Safari diffère** — donc même la capture ne clôt pas le sujet quand l'app est une PWA iPhone.*
+
+
+
+---
+
+## 42. 🕳️ LE CAS QUI N'A PAS L'ATTRIBUT HABITUEL EST LU COMME « RIEN » **(04/09/2026, ft-v1118)**
+
+Michel, deux retours le même jour : *« j'ai fait 45 min de tapis et ma récup n'a pas bougé »*,
+puis *« on me dit que j'ai pas fait le cardio hier »*. **Un seul défaut derrière les deux.**
+
+Une séance de **cardio seul** est une séance légitime depuis le 02/08 — l'écran la propose, le
+bouton de fin l'accepte, l'app en calcule les calories. Mais elle n'a **aucun exercice**. Or
+partout ailleurs, « une séance » se reconnaissait à `S.wkt.exs.length`. **Cinq endroits** en ont
+donc déduit *« il n'y a rien »* :
+
+| Endroit | Ce que la personne voyait |
+|---|---|
+| `startWorkout()` | le bouton rouge **effaçait** 45 min de cardio, sans un mot |
+| le bouton de l'Accueil | « Commencer une séance » alors qu'une séance attendait |
+| le message d'ouverture | rien du tout en rouvrant l'app |
+| le brouillon de secours | aucune copie de sauvegarde |
+| `_penaliteSeance()` (récup) | 45 min de tapis = le **plancher**, autant que 4 séries d'abdos |
+| la liste de l'historique | *« 💪 jeu. 3 sept. · **0 kg** · 45 min · 351 kcal · **—** »* — présent, mais illisible |
+
+**⛔⛔ Et le pire est qu'AUCUN de ces six n'est un bug isolé** : chacun est parfaitement correct
+pour le cas courant. C'est la **définition partagée** qui manquait — et elle existait déjà :
+`_seanceOuverte()` (log.js) répond depuis le 02/08 *« démarrée, ou avec des exercices, ou avec un
+cardio noté »*. **Il n'a pas fallu écrire une règle, seulement la lire** (R2).
+
+### 🔍 À quoi on la reconnaît
+- Un cas **nouveau et légitime** entre dans le système (le cardio seul, l'unilatéral, une séance
+  importée…) et **il lui manque l'attribut** par lequel tout le monde reconnaissait le cas courant.
+- Le test qui trahit ressemble à `X && X.liste && X.liste.length` — il ne demande pas *« y a-t-il
+  quelque chose ? »*, il demande *« y a-t-il ce à quoi je pense d'habitude ? »*.
+- **L'échec est SILENCIEUX** : rien ne plante, aucun test ne rougit. Le cas particulier disparaît
+  simplement de tout ce qui compte, et personne ne le voit — ni celui qui code, ni celui qui teste,
+  seulement celui qui perd sa séance.
+- ⚠️ **Signe avant-coureur** : quand un cas nouveau est accepté à UN endroit (ici `finishWorkout`
+  et `renderLogFinish`, corrigés le 02/08), c'est le moment de chercher ses jumelles (**R8**) —
+  pas six semaines plus tard, sur un retour terrain.
+
+### 🎭 Le symptôme de surface, qui vaut d'être noté à part
+Le bouton du bloc Cardio s'appelait **« ✓ Enregistrer le cardio »** et affichait *« Cardio
+enregistré ✅ »* — alors qu'il ne fait que **replier le bloc**. Le bouton qui enregistre pour de
+vrai est celui du **bas**, et il s'appelait… **« 🏁 Enregistrer le cardio »**. *Deux boutons,
+presque les mêmes mots, un seul enregistre.* 👉 **Deux actions différentes ne portent jamais le
+même verbe** — et si l'une doit renvoyer à l'autre, elle la **nomme en lisant son vrai libellé**,
+jamais en le recopiant (R2 : le jour où le libellé change, on envoie chercher un bouton disparu).
+
+### 🛡️ Le réflexe, en une ligne
+**Avant d'écrire `.length` pour dire « il y a quelque chose », chercher s'il existe déjà une
+fonction qui répond à cette question-là** — et si elle existe, la lire ; si elle n'existe pas,
+l'écrire une fois, pour tout le monde.
+
+*Voisine de **R4a** (une donnée non classée est un oubli silencieux), de **R8** (chercher les
+jumelles dès qu'on trouve une absence) et de **§32** (l'aller-retour cassé au milieu). ⚠️ Le cas
+dit aussi ce qui n'est PAS corrigé : le barème de récupération du cardio reste sur son plancher —
+le corriger demanderait d'inventer une échelle, et on ne l'invente pas (R29).*
