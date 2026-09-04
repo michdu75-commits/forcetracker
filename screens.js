@@ -174,6 +174,9 @@ const _HELP_DATA={
   home:{
     title:'🏠 Accueil',
     tips:[
+      /* 🔋 ft-v1120 — CE QU'ON NE DEVINE PAS : pourquoi le score a baissé, et de combien.
+         L'aide est l'endroit du POURQUOI ; la pop-up, elle, ne fait qu'annoncer (R25). */
+      {i:'🔋',t:'<b>Ton cardio compte dans ta récupération</b> (depuis le 04/09/2026). Sa <b>durée</b> et son <b>intensité</b> pèsent sur le score — avant, <b>10 minutes de marche et 90 minutes de tapis intense</b> coûtaient exactement la même chose, parce que le calcul ne comptait que des <b>séries</b>. ⭐ Les ordres de grandeur : un échauffement de <b>10 min</b> pèse <b>1 point</b> · <b>20 min</b> modéré <b>5</b> · <b>45 min</b> modéré <b>10</b> · <b>90 min</b> intense <b>35</b>. Le cardio noté <b>avant</b> et <b>après</b> une séance s\'additionne à la musculation — une seule fois, jamais deux. ⚠️ <b>Ton historique de récup a bougé</b> : les jours où tu avais fait du cardio descendent un peu (au plus <b>6 points</b>). Ce n\'est pas une panne, c\'est du travail qui n\'était pas compté. 💡 Et le <b>bonus de repos</b> n\'arrive plus d\'un bloc au bout de 2 jours : il monte en pente, donc le score ne fait plus de saut.'},
       /* ⛔ POURQUOI CETTE ENTREE EXISTE (ft-v1050) : la carte est RARE, donc quand elle
          apparait la personne peut se demander d'ou l'app tient ca, et si elle « compte les
          points ». L'aide repond aux deux : c'est SA propre annonce, et rien n'est totalise.

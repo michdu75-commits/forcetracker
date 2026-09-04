@@ -458,6 +458,9 @@ const FEAT_SI = {
   montrePas:     () => { try{ return ((S&&S.healthDaily)||[]).some(x=>x&&x.steps>0); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* 🔋 POINT ROUGE sur l'ACCUEIL : c'est là que le score de récup s'affiche, et c'est là que
+     « Pourquoi ce score ? » explique le détail — désormais avec une ligne cardio quand il y en a. */
+  {id:'recup-cardio', screen:'home', desc:'🔋 <b>Ta récupération tient compte du cardio.</b> Sa <b>durée</b> et son <b>intensité</b> comptent maintenant dans ton score — avant, <b>10 min de marche et 90 min de tapis intense</b> coûtaient exactement la même chose. ⭐ Un échauffement de 10 min pèse <b>1 point</b>, 45 min de tapis modéré en pèsent <b>10</b>. 💡 Tape « Pourquoi ce score ? » sous ton score : la ligne « Séance récente » inclut désormais ton cardio.'},
   /* 🍔 POINT ROUGE, PAS DE POP-UP (règle d'or #11) : la base fast-food passe de 27 à 128
      produits, avec des enseignes qui n'y étaient pas — il y a donc à DÉCOUVRIR. ⛔ Mais rien
      n'est à faire, aucun repère n'a bougé, et **aucun chiffre existant ne change** : les 27
@@ -711,6 +714,16 @@ const NEW_FEATURES=[
 // ✅ v46/47/48 = les 3 features ex-testeurs (« maxi » · calories manuelles · objectif recomposition)
 //    OUVERTES À TOUT LE MONDE (ft-v623, décision Michel) + red dots reps-maxi/manual-kcal/goal-recomp réactivés.
 const WHATS_NEW=[
+  /* 🔋 ELLE SE MÉRITE, ET C'EST LE CAS LE PLUS NET DU CRITÈRE « UN REPÈRE A BOUGÉ » :
+     ⛔⛔ **un chiffre affiché tous les jours change tout seul, sans que la personne ait rien
+     touché** — et il change AUSSI pour le passé, puisque la courbe se recalcule à la volée.
+     Mesuré sur 60 jours réels : **33 jours sur 60 bougent, tous vers le bas, de −1 à −6**.
+     C'est exactement la situation de ft-v833 (le métabolisme de base), où la pop-up avait été
+     jugée méritée pour la même raison.
+     ⭐ ET ELLE DIT POURQUOI LE SCORE BAISSE, sinon « mon score a chuté » se lit comme une panne.
+     ⛔ BORNÉE À L'ESSENTIEL (R25) : ce qui change et pourquoi. Le détail — l'ancrage, les
+     MET·min, le raccord des 48 h — vit dans l'aide `?` et l'aide détaillée. */
+  {v:70, ic:'🔋', t:'Ta récupération tient enfin compte du cardio', d:'① <b>Ton cardio pèse maintenant sur ton score de récup</b>, selon sa <b>durée</b> et son <b>intensité</b> — avant, 10 min de marche et 90 min de tapis intense coûtaient exactement pareil. ② Le <b>bonus de repos</b> n’arrive plus d’un coup au bout de 2 jours : il s’installe en pente. ⚠️ <b>Ton score va donc baisser un peu</b> sur les jours où tu as fait du cardio, <b>y compris dans ton historique</b> — mesuré : le plus gros écart est de <b>6 points</b>. Ce n’est pas une panne : c’est du travail qui n’était pas compté.'},
   /* 🏃 ELLE SE MÉRITE, ET SUR LES DEUX CRITÈRES À LA FOIS (règle d'or #11).
      ① **UN REPÈRE A BOUGÉ** : le bouton du bloc Cardio change de nom ET de couleur (il n'est
         plus rouge — le rouge est désormais réservé à celui qui enregistre pour de vrai), et le
