@@ -25430,6 +25430,69 @@ console.log('\n-- CCXXVI ter. Le cardio se reconnaît dans l\'historique (ft-v11
   }
 }
 
+/* ═══ CCXXVI quater. L'ÉCRAN DE FIN N'ANNONCE PAS UN DÉBRIEF QUI N'EXISTE PAS (ft-v1118) ═════
+   ⛔⛔ TROUVÉ SUR LA CAPTURE DE MICHEL, pas par un test : après son cardio, l'écran de fin
+   affichait *« 💬 Milo a déjà débriefé cette séance — retrouve-la dans l'onglet Coach »*.
+   **C'était faux** : `finishWorkout` ne met en file de débrief que les séances avec des séries
+   validées (« pas un cardio seul »), donc le jeton n'a jamais existé — et il n'y a rien dans
+   l'onglet Coach. Le message répondait à *« le jeton n'est pas là »* en concluant *« quelqu'un
+   l'a déjà pris »*. 👉 *Un message qui nomme quelque chose d'inexistant est pire qu'un silence :
+   on va le chercher.* Même famille que le reste de la version.
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXVI quater. L\'écran de fin n\'annonce pas un débrief inexistant (ft-v1118) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'85',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    const o={}, t=today(), ts=new Date(t+'T10:00:00').getTime();
+    const slot=document.getElementById('se-debrief');
+    if(!slot) return {err:'#se-debrief absent de la page'};
+    /* ⛔⛔ ON NE VIDE SURTOUT PAS `S.url` : le chemin « hors ligne » est testé AVANT le nôtre,
+       donc on sortirait par lui et ce bloc serait vert sans avoir jamais atteint la branche
+       qu'il prétend mesurer. ⭐ Et aucun appel n'est dépensé pour autant : dans les deux cas
+       `_dbfPrendre()` rend null (rien n'a été mis en file) et la fonction retourne avant le
+       moindre `fetch`. *Un témoin qui sort par une autre porte que celle qu'il vise ne mesure
+       rien — il rassure* (§31). */
+    const cardio={id:ts,ts,date:t,exs:[],volume:0,duration:45*60,calories:377,
+                  cardio:{type:'tapis',duration:45,intensity:'modere'}};
+    const muscu={id:ts+1,ts:ts+1,date:t,volume:2560,duration:45*60,calories:250,
+                 exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N'}]}]};
+    o.enLigne=!!S.url && (typeof navigator==='undefined' || navigator.onLine!==false);
+    {
+      S.sessions=[cardio]; slot.innerHTML='';
+      await _runSeDebrief(cardio,0); o.cardio=(slot.innerText||'').replace(/\s+/g,' ').trim();
+      /* ⛔ CONTRÔLE : sur une séance AVEC séries, le message honnête doit toujours sortir —
+         sinon on aurait juste rendu la branche muette pour tout le monde. */
+      S.sessions=[muscu]; slot.innerHTML='';
+      await _runSeDebrief(muscu,0);  o.muscu=(slot.innerText||'').replace(/\s+/g,' ').trim();
+    }
+    return o;
+  }catch(e){ return {err:String(e&&e.message||e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXVI quater n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ CONTRÔLE D'ABORD : si le test se croyait hors ligne, il sortirait par une AUTRE
+       branche et les témoins suivants seraient verts sans rien prouver. */
+    t('⛔ CONTRÔLE — le test n\'est pas parti par le chemin « hors ligne »', R.enLigne===true, String(R.enLigne));
+    t('⭐⭐ un cardio seul n\'annonce PAS « Milo a déjà débriefé cette séance »',
+      !/déjà débriefé/.test(R.cardio||''), (R.cardio||'').slice(0,120));
+    t('⛔ … et il ne renvoie pas vers l\'onglet Coach pour y chercher ce qui n\'y est pas',
+      !/onglet Coach/.test(R.cardio||''), (R.cardio||'').slice(0,120));
+    /* ⛔ Le socle chiffré, lui, reste : il ne dépend d'aucun appel (règle d'or #3). */
+    t('⛔ … mais le résumé chiffré reste affiché (il ne dépend d\'aucun réseau)',
+      !!(R.cardio||'').length, (R.cardio||'(vide)').slice(0,120));
+    /* ⛔⛔ CONTRÔLE NÉGATIF — sans lui, « le message n'apparaît pas » serait vrai parce qu'il
+       n'apparaît JAMAIS, et le témoin ci-dessus serait vert en ne prouvant rien. */
+    t('⛔⛔ CONTRÔLE — une séance AVEC séries, elle, dit bien quelque chose sur le débrief',
+      /débrief|Coach|hors ligne|analyse/i.test(R.muscu||''), (R.muscu||'').slice(0,120));
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

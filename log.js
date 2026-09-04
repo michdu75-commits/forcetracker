@@ -4424,6 +4424,15 @@ async function _runSeDebrief(sess,prCount){
   // heure. Un rechargement de mise à jour pendant l'appel ne le fait donc plus disparaître —
   // il retourne dans la file au démarrage suivant (`_dbfRecuperer`).
   const _pid=(typeof _dbfPrendre==='function')?_dbfPrendre():null;
+  /* ⛔⛔ 04/09/2026 — « MILO A DÉJÀ DÉBRIEFÉ » ÉTAIT FAUX SUR UN CARDIO SEUL, et Michel l'a lu
+     sur sa propre capture. Le message répond à « le jeton n'est pas là » et en déduit « quelqu'un
+     l'a déjà pris ». Or il y a un SECOND cas : `finishWorkout` ne met en file que les séances
+     avec des séries validées (« pas un cardio seul »), donc le jeton n'a **jamais existé**.
+     👉 On envoyait alors chercher dans l'onglet Coach un débrief qui n'y est pas.
+     ⭐ *Un message qui nomme quelque chose d'inexistant est pire qu'un silence : on va le
+     chercher.* Même famille que le reste de cette version — le cas sans séries lu comme le cas
+     courant. ⚠️ Le socle CHIFFRÉ reste affiché : il ne dépend d'aucun appel. */
+  if(!_pid && !nSets){ slot.innerHTML=chiffres; return; }
   // Le Coach a déjà débriefé cette séance : on ne repaie pas un appel — mais on le DIT,
   // sinon l'écran de fin paraît vide de l'analyse alors qu'elle existe, dans le Coach.
   if(!_pid){ slot.innerHTML=avec('\ud83d\udcac Milo a déjà débriefé cette séance — retrouve-la dans l\'onglet Coach.',false); return; }
