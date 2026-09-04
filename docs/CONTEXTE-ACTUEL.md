@@ -57,7 +57,8 @@
   correctif qui ne fait que **retirer** des déclenchements.
 
 - **Version en ligne (live) :** `ft-v1126` — 💰 **« COÛT RÉEL DU JOUR » DIT DE QUEL JOUR.**
-  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18). Michel : *« on ne sait pas si c'est dans la journée
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#887** sur `353b2b7`, **job `deploy` success**,
+  les 7 étapes vertes à 20:59:17 UTC. Michel : *« on ne sait pas si c'est dans la journée
   ou depuis 1 mois »*. Le titre disait « du jour » — **exact**, mais rien ne le prouvait à l'écran.
   👉 *Un chiffre sans sa période n'est pas un chiffre, c'est une impression.*
   ⭐ **Rien à construire (R5)** : `_aiUsageLire_` renvoyait déjà `u.date`, l'app la jetait.
