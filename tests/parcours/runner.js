@@ -25848,6 +25848,121 @@ console.log('\n-- CCXXX. O\'Tacos sort de la base, et le retrait est figé (ft-v
   }
 }
 
+/* ═══ CCXXXI. LE TEST A/B MÉMOIRE REÇOIT SA PORTE D'ENTRÉE (ft-v1122) ═══════════════════════
+   Michel : *« le test A/B je peux pas le faire »*, puis *« je ne sais pas comment faire »*.
+   ⛔⛔ LA CAUSE N'ÉTAIT PAS LE TEMPS, ET ELLE ÉTAIT MESURABLE : `tests/milo/ab-memoire.js` est
+   prêt depuis le 03/09 et n'a JAMAIS tourné, parce qu'il était le **seul** test lançable par
+   Michel sans bouton. Le benchmark, le comparateur, le Gardien, VM et PT-001 en ont tous un.
+   👉 ***Un outil sans porte d'entrée n'est pas un outil en attente, c'est un outil qui
+   n'existe pas.*** On a écrit « en attente de Michel » pendant deux semaines pour ça.
+   ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION N'EST PAS « le bouton existe » — c'est **règle d'or #3** :
+   la passe REMPLACE le profil par un persona, et les vraies données doivent revenir. *Un
+   laboratoire qui abîme les données qu'il mesure est pire que pas de laboratoire.*
+   ⭐ ET CELUI QUI DIT SI L'EXPÉRIENCE A UN SENS : l'écart de mémoire entre A et B. Si les deux
+   contextes se ressemblent, on ne mesure rien — et on lirait quand même les deux textes en
+   cherchant une différence, qu'on finirait par trouver.
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXXI. Le test A/B mémoire reçoit sa porte d\'entrée (ft-v1122) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  /* ⭐ De VRAIES données RECONNAISSABLES : avec un profil vide, « les données reviennent »
+     serait vert même si la restauration ne marchait pas du tout. */
+  await p.addInitScript(seedScript({ft4_name:'MICHEL_VRAI',ft4_bw:'88.8',ft4_age:'46',
+    ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    const o={};
+    o.fns=['startAbMemoire','_abRun','_abShowResultCard','copyAbText','_abMesureContexte']
+      .filter(f=>typeof window[f]==='function');
+    o.nCas=(typeof _AB_CAS!=='undefined'&&Array.isArray(_AB_CAS))?_AB_CAS.length:0;
+    o.ids=(typeof _AB_CAS!=='undefined')?_AB_CAS.map(c=>c.id):[];
+    o.seuil=(typeof _AB_ECART_MINI!=='undefined')?_AB_ECART_MINI:null;
+    o.avantNom=S.name; o.avantBw=S.bw;
+    /* ⛔ ON REJOUE LE GEL EXACTEMENT COMME `_abRun`, SANS APPELER L'API : ce qu'on teste est
+       la manipulation du profil, pas la réponse de Milo (qui coûterait de l'argent). */
+    o.mes=[];
+    try{ persist(); }catch(e){}
+    window._demoMode=true;
+    try{
+      for(const cas of _AB_CAS){
+        const l={id:cas.id};
+        for(const cote of ['avec','sans']){
+          _vcApplyPersona({apply:cas[cote]||{}});
+          l[cote]=_abMesureContexte(buildCoachContext(cas.demande));
+          if(cote==='avec') l.nomPendant=S.name;
+        }
+        l.ecart=(l.avec.propre||0)-(l.sans.propre||0);
+        o.mes.push(l);
+      }
+    }catch(e){ o.errBoucle=e.message; }
+    finally{ window._demoMode=false; try{ load(); }catch(e){} }
+    o.apresNom=S.name; o.apresBw=S.bw; o.apresStock=localStorage.getItem('ft4_name');
+    return o;
+  }catch(e){ return {err:e.message}; } });
+
+  t('⛔ CONTRÔLE — les cas A/B sont chargés (sinon tout le bloc serait vert sur du vide)',
+    !R.err && R.nCas>=2 && R.ids.indexOf('AB-1')>=0, R.err||('cas: '+R.ids));
+  t('⭐ le bouton a toutes ses pièces (lancement, passe, résultat, copie, mesure)',
+    R.fns && R.fns.length===5, String(R.fns));
+
+  /* ⭐⭐ RÈGLE D'OR #3 — LE TÉMOIN QUI PORTE LA VERSION. Contrôle négatif fait le 04/09 en
+     sautant `load()` : il rougit bien (« après : Michel / 85 kg »). *Un témoin qu'on n'a pas
+     vu échouer ne prouve rien* (leçon de ft-v994). */
+  t('⛔ CONTRÔLE — pendant la passe, le profil EST le persona (sinon on ne teste aucun échange)',
+    R.mes && R.mes[0] && R.mes[0].nomPendant==='Michel', String((R.mes||[])[0]&&R.mes[0].nomPendant));
+  t('⭐⭐ RÈGLE D\'OR #3 : les VRAIES données reviennent après la passe',
+    R.apresNom==='MICHEL_VRAI' && String(R.apresBw)==='88.8', R.apresNom+' / '+R.apresBw);
+  t('⭐⭐ … et le STOCKAGE n\'a jamais été écrasé par le persona',
+    R.apresStock==='MICHEL_VRAI', String(R.apresStock));
+  t('⛔ aucune erreur pendant la passe', !R.errBoucle, String(R.errBoucle||''));
+
+  /* ⭐⭐ SANS ÉCART, LA PASSE NE MESURE RIEN — et elle coûterait quand même 4 appels. */
+  const ec=(R.mes||[]).map(m=>m.ecart||0);
+  t('⭐⭐ l\'expérience mesure quelque chose : chaque cas a un vrai écart de mémoire',
+    ec.length>=2 && ec.every(x=>x>=(R.seuil||2000)), 'écarts: '+ec.join(' · ')+' (seuil '+R.seuil+')');
+  t('⛔ … et le SANS-mémoire est bien identique d\'un cas à l\'autre (même fixture nue)',
+    R.mes && R.mes.length>=2 && R.mes[0].sans.propre===R.mes[1].sans.propre,
+    (R.mes||[]).map(m=>m.sans.propre).join(' vs '));
+  t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+
+  /* ⛔⛔ R2 — LE SCRIPT NODE NE REDÉFINIT PLUS LES CAS. Deux copies des mêmes fixtures
+     divergeraient : l'une gagnerait un correctif, l'autre non, et on comparerait deux
+     expériences différentes en croyant comparer deux mémoires. */
+  {
+    const ab=fs.readFileSync(path.join(ROOT,'tests','milo','ab-memoire.js'),'utf8');
+    const abSansCom=ab.replace(/\/\*[\s\S]*?\*\//g,'');
+    t('⭐⭐ R2 — le script node LIT `_AB_CAS` depuis la page, il ne le redéfinit pas',
+      /_AB_CAS/.test(abSansCom) && !/^\s*const\s+CAS\s*=\s*\[/m.test(abSansCom), '');
+    t('⛔ … et il ÉCHOUE bruyamment si les cas manquent (jamais un repli silencieux)',
+      /process\.exit\(2\)/.test(abSansCom) && /introuvable/.test(ab), '');
+    /* ⚠️ La référence doit être NUE : un `const` global n'est pas posé sur `window`, donc
+       `window._AB_CAS` rendrait toujours undefined — le script conclurait « les cas ont
+       disparu » sur du code parfaitement sain. */
+    t('⛔⛔ la lecture est une référence NUE, jamais `window._AB_CAS` (un const n\'est pas sur window)',
+      !/window\._AB_CAS/.test(abSansCom), '');
+    t('⭐ R2 — la mesure du contexte a UN propriétaire, appelé des deux côtés',
+      /_abMesureContexte/.test(abSansCom), '');
+  }
+
+  /* ⚠️ AUCUN NOMBRE DE CAS EN DUR DANS L'ÉCRAN — la leçon des libellés « 16 scénarios »
+     restés faux trois semaines pendant que le banc passait à 53. */
+  {
+    const ih=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+    const bout=(ih.match(/<button[^>]*startAbMemoire\(\)[^>]*>([^<]*)</)||[])[1]||'';
+    t('⛔ CONTRÔLE — le bouton A/B est bien dans l\'écran', !!bout, bout);
+    t('⚠️ … et son libellé ne fige AUCUN nombre de cas (il est annoncé à la confirmation)',
+      !!bout && !/\d/.test(bout), bout);
+    const co=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
+    t('⛔ réservé à l\'admin, comme tout le Laboratoire',
+      /function startAbMemoire\(\)\{[\s\S]{0,200}_isAdminUnlocked/.test(co), '');
+    /* ⛔⛔ ON NE PROMET AUCUN VERDICT. « La séance est-elle meilleure ? » se juge à l'œil —
+       c'est le critère de JOURNAL-DE-TEST.md. Afficher un ✅ mentirait sur ce qu'on a mesuré. */
+    t('⭐⭐ l\'écran DIT qu\'il n\'y a pas de ✅/❌ (le juge est humain)',
+      /pas de ✅\/❌/.test(ih) && /juge à l'œil|juge à l’œil/.test(ih), '');
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

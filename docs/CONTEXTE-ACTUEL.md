@@ -6,6 +6,27 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1122` — 🧠 **LE TEST A/B MÉMOIRE REÇOIT SA PORTE D'ENTRÉE.**
+  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+- ⛔⛔ **La cause n'était pas le temps de Michel, et elle était de mon côté** : `ab-memoire.js`
+  est prêt depuis le 03/09 et n'a jamais tourné parce qu'il était le **seul** test lançable par
+  lui **sans bouton**. J'ai écrit « en attente de Michel » pendant deux semaines.
+  👉 *Un outil sans porte d'entrée n'est pas un outil en attente, c'est un outil qui n'existe pas.*
+- ⭐ **R13/R2 — pas un 2ᵉ chemin** : le bouton appelle `_vcApplyPersona` / `buildCoachContext` /
+  `_vcAsk`, les mêmes que le benchmark ; le gel et la restauration sont **copiés** de `_evRun`.
+- ⛔ Les cas sont la propriété de l'app (`_AB_CAS`) ; le script node les **lit** et **échoue
+  bruyamment** s'ils manquent. ⚠️ Référence **nue** : un `const` global n'est pas sur `window`.
+- ⭐⭐ **La mesure du contexte avait DÉJÀ divergé** sans que personne l'ait touchée (un marqueur
+  manquait d'un côté) → `_abMesureContexte`, un seul propriétaire. *La duplication n'attend pas
+  qu'on la modifie pour nuire : elle naît déjà différente.*
+- ⛔⛔ **Aucun verdict automatique, exprès** : « meilleure ? » se juge à l'œil (critère de
+  `JOURNAL-DE-TEST.md`). L'écran le dit. **Mesuré à blanc (0 €)** : écart +4 516 et +5 044 car.
+- ⚠️⚠️ **J'ai écrit un bug de fuseau horaire en chemin**, le détecteur en a pris 2 sur 3 (le 3ᵉ
+  décalait la date **avant** de convertir). Puis il a rougi sur **mon commentaire** (§31) : son
+  intention couvrait déjà les `//`, pas les blocs — étendue, **contrôle négatif fait**.
+- ⏭️ **La passe n'a PAS encore tourné pour de vrai** (4 appels, ~0,25 € — décision de Michel).
+  *On ne sait donc toujours pas si la mémoire rend la séance meilleure : on sait qu'on peut
+  enfin le mesurer.* La **mémoire à 2 vitesses** attend ce même avant/après (R34).
 - ✅✅ **SAFARI / IPHONE VÉRIFIÉ PAR MICHEL le 04/09** — ft-v1114 → ft-v1120, **tout est bon**.
   ⭐ **Le point qui comptait vraiment : la bande « REPAS » en `position:sticky` TIENT sur Safari
   iOS.** C'était le seul vrai risque de la série — les règles du projet listent `position:sticky`

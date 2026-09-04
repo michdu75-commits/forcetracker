@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ═══════════════════════════════════════════════════════════════════════════════
-   A/B « AVEC MÉMOIRE FORCE TRACKER » vs « SANS »  —  4 appels, ~0,25 €
+   A/B « AVEC MÉMOIRE FORCE TRACKER » vs « SANS »  —  2 appels par cas, ~0,25 €
    ═══════════════════════════════════════════════════════════════════════════════
 
    LA QUESTION, ET ELLE N'A JAMAIS ÉTÉ MESURÉE :
@@ -19,7 +19,7 @@
    le bloc COMMUN du contexte) et vide le bloc PERSONNE. Mesuré le 03/09 :
    bloc commun 43 473 car. dans les deux cas, bloc personne 25 136 → 30 482.
 
-   ⛔ POURQUOI CE FICHIER N'AJOUTE PAS 4 SCÉNARIOS AU BANC DES 55 : ils seraient
+   ⛔ POURQUOI CE FICHIER N'AJOUTE PAS SES CAS AU BANC DES 55 : ils seraient
    rejoués — et REPAYÉS — à chaque passe future, pour une mesure qu'on ne fait
    qu'une fois. Ici on réutilise `_vcApplyPersona` et `_vcAsk`, les MÊMES fonctions
    que `eval.js` (R13/R2) : ce n'est pas un 2ᵉ chemin, c'est le même, appelé
@@ -28,13 +28,17 @@
    ⚠️⚠️ CE SCRIPT NE PEUT PAS TOURNER DEPUIS UN CONTENEUR CLAUDE. Mesuré le
    03/09 : le Worker `dry-field-e931.forcetracker-app.workers.dev` est refusé par
    la politique réseau (`CONNECT tunnel failed, 403` · `connect_rejected` dans
-   `__agentproxy/status`). Il est donc écrit pour être lancé PAR MICHEL, et
-   éprouvé ici hors ligne (`fetch` remplacé) — tout est vérifié sauf les 4 appels.
+   `__agentproxy/status`).
+   ⭐⭐ ET C'EST PRÉCISÉMENT POURQUOI L'APP A REÇU SON BOUTON le 04/09 : « écrit pour
+   être lancé par Michel » était FAUX tant qu'il fallait un terminal pour le lancer.
+   Le bouton « 🧠 A/B mémoire » (Laboratoire Milo) joue les mêmes cas depuis son
+   téléphone. Ce script garde ce que le bouton ne sait pas faire : le mode à blanc
+   et le fichier relisible hors ligne.
 
    USAGE
      node tests/milo/ab-memoire.js            → à blanc : 0 appel, 0 €, montre
                                                 les contextes et le devis
-     node tests/milo/ab-memoire.js --go       → 4 appels réels
+     node tests/milo/ab-memoire.js --go       → les appels réels (2 par cas)
    Le résultat brut est écrit dans tests/milo/ab-report.json (réponses entières,
    pour pouvoir les relire et les comparer sans rappeler l'API).
    ═══════════════════════════════════════════════════════════════════════════════ */
@@ -45,69 +49,16 @@ const http = require('http');
 const ROOT = path.resolve(__dirname, '..', '..');
 const GO   = process.argv.includes('--go');
 
-/* ── LES DEUX CAS, CHOISIS PARCE QUE LA MÉMOIRE PEUT Y CHANGER LA SÉANCE ──
-   GPT : « ne choisis pas quatre demandes génériques ». Chaque cas est construit
-   pour qu'une information de Force Tracker ait une raison de modifier la
-   prescription — sinon on mesurerait du bruit. */
-
-const j = n => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0,10); };
-
-/* Le socle IDENTIQUE des deux côtés : ce qu'un chatbot saurait de toute façon. */
-const SOCLE = { name:'Michel', gender:'H', age:46, height:178, bw:85,
-                goal:'muscle', discipline:'muscu', level:'confirme' };
-
-/* ⚠️ 24 séances sur 10 semaines, avec des charges qui PROGRESSENT : sans
-   progression, « exploiter l'historique » n'aurait rien à exploiter. */
-function historiqueDC(){
-  const s = [];
-  for (let i = 0; i < 24; i++) {
-    const semaine = Math.floor(i / 2.4);
-    const kg = 80 + semaine * 1.5;                       // 80 → 93,5
-    s.push({ ts: 9000 + i, date: j(i * 3 + 1), volume: 8200, synced: true, duration: 62,
-             exs: [{ name:'Développé Couché',
-                     sets: Array.from({length:4}, () => ({ kg: Math.round(kg/2.5)*2.5, reps:5, done:true, type:'N' })) }] });
-  }
-  return s;
-}
-
-const CAS = [
-  {
-    id: 'AB-1',
-    titre: 'Historique de performance — la séance exploite-t-elle les charges réelles ?',
-    demande: 'Crée-moi ma séance développé couché aujourd\'hui.',
-    /* A : il sait où elle en est. B : il ne sait rien d'elle. */
-    avec: Object.assign({}, SOCLE, {
-      sessions: historiqueDC(),
-      prs: { 'Développé Couché': { kg:95, reps:4, rm1:110, date:j(9) } },
-      weightLog: [ {date:j(21), kg:85.4}, {date:j(7), kg:85.1}, {date:j(0), kg:85} ],
-      defRest: 180
-    }),
-    sans: Object.assign({}, SOCLE),
-    /* ce qu'on regardera : les charges prescrites sont-elles calées sur 95×4 / 1RM 110 ? */
-    attendus: ['charge prescrite cohérente avec un 1RM de 110 kg (≈ 85-95 kg sur 5 reps)',
-               'les paliers partent d\'une charge réaliste, pas d\'un chiffre rond arbitraire']
-  },
-  {
-    id: 'AB-2',
-    titre: 'Douleur active — la séance CHANGE-t-elle, ou juste le commentaire ?',
-    demande: 'Fais-moi une séance haut du corps pour ce soir.',
-    avec: Object.assign({}, SOCLE, {
-      sessions: historiqueDC(),
-      prs: { 'Développé Couché': { kg:95, reps:4, rm1:110, date:j(9) } },
-      healthProfile: { injuries:[{ zone:'epaule', status:'active', since:j(20) }],
-                       conditions:[], notes:'' },
-      /* ⭐ possible seulement depuis ft-v1106 : avant, `dayState` était forcé à null */
-      dayState: { date:new Date().toISOString().slice(0,10), energy:2, sleep:5,
-                  pains:[{ zone:'epaule', side:'R' }] },
-      sleepLog: [{ date:j(0), hours:5, energy:2 }],
-      defRest: 180
-    }),
-    sans: Object.assign({}, SOCLE),
-    attendus: ['le développé au-dessus de la tête disparaît ou s\'allège',
-               'le volume de poussée baisse',
-               'la différence est DANS la séance, pas seulement dans une phrase']
-  }
-];
+/* ⛔⛔ LES DEUX CAS NE SONT PLUS DÉFINIS ICI (04/09/2026) — ils vivent dans `coach.js`,
+   sous le nom `_AB_CAS`, parce que l'app a reçu son BOUTON « 🧠 A/B mémoire » et qu'il joue
+   exactement les mêmes. **Deux copies des mêmes fixtures divergeraient** : l'une gagnerait
+   un correctif, l'autre non, et on comparerait deux expériences différentes en croyant
+   comparer deux mémoires (**R2**). Ce script les LIT donc depuis la page.
+   ⛔ Et il ÉCHOUE bruyamment si elles manquent, au lieu de se rabattre sur une copie locale :
+   *un repli silencieux ferait tourner l'ancienne version des cas sans que personne le voie.*
+   ⭐ CE QUI RESTE PROPRE À CE SCRIPT, et qui justifie qu'il survive au bouton : le **mode à
+   blanc** (0 appel, 0 €) qui montre les contextes et le devis sans rien payer, et le fichier
+   `ab-report.json` relisible hors ligne. Le bouton, lui, ne sait pas ne pas payer. */
 
 /* ── Le serveur local + le navigateur : copié de eval.js, même mécanique ── */
 const MIME = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json',
@@ -137,24 +88,41 @@ async function main(){
 
   const sortie = { date:new Date().toISOString().slice(0,10), mode: GO ? 'reel' : 'blanc', cas: [] };
 
+  /* ⛔⛔ LES CAS VIENNENT DE L'APP, PAS D'ICI (R2) — et l'absence est FATALE, pas silencieuse.
+     Si `_AB_CAS` disparaissait de `coach.js` (renommé, déplacé, retiré), un repli sur une
+     copie locale ferait tourner d'anciennes fixtures en affichant un résultat parfaitement
+     crédible. *Un test qui se rabat sans le dire ne mesure plus ce qu'il annonce.* */
+  /* ⚠️ RÉFÉRENCE NUE, PAS `window._AB_CAS` : un `const` au niveau global d'un script classique
+     vit dans la portée lexicale globale et **n'est PAS posé sur `window`**. `window._AB_CAS`
+     rendrait donc toujours `undefined`, et ce script conclurait « les cas ont disparu » sur un
+     code parfaitement sain. (Les `function`, elles, sont bien sur `window` — d'où le mélange
+     des deux styles dans les tests du projet.) */
+  const CAS = await page.evaluate(() =>
+    (typeof _AB_CAS !== 'undefined' && Array.isArray(_AB_CAS)) ? _AB_CAS : null);
+  if (!CAS || !CAS.length) {
+    console.error('\n⛔ `_AB_CAS` introuvable dans la page — les cas vivent dans coach.js depuis');
+    console.error('   le 04/09/2026 (le bouton « 🧠 A/B mémoire » les joue). Rien n\'a été lancé.');
+    await b.close(); srv.close(); process.exit(2);
+  }
+  console.log('  ' + CAS.length + ' cas lus depuis coach.js (`_AB_CAS`) — aucune copie locale.');
+
   for (const cas of CAS) {
     console.log('\n▸ ' + cas.id + ' — ' + cas.titre);
     console.log('  demande : « ' + cas.demande + ' »');
     const paire = {};
     for (const cote of ['avec', 'sans']) {
       const r = await page.evaluate(async ({ apply, demande, pourDeVrai }) => {
-        const manque = ['_vcApplyPersona','_vcAsk','buildCoachContext'].filter(f => typeof window[f] !== 'function');
+        const manque = ['_vcApplyPersona','_vcAsk','buildCoachContext','_abMesureContexte'].filter(f => typeof window[f] !== 'function');
         if (manque.length) return { erreur: 'fonction(s) absente(s) : ' + manque.join(', ') };
         window._demoMode = true;
         try {
           _vcApplyPersona({ apply });
-          const ctx = buildCoachContext(demande);
-          /* on découpe comme worker.js découpe, pour dire ce que la mémoire PÈSE */
-          const pi = ctx.indexOf('PROFIL ATHLÈTE:');
-          const mi = ctx.indexOf("═══ SITUATION DE L'INSTANT ═══");
-          const mesure = { total: ctx.length,
-                           commun: pi > 0 ? pi : 0,
-                           propre: (pi > 0 && mi > pi) ? (ctx.length - pi) : 0 };
+          /* ⭐ LA MESURE APPARTIENT À L'APP (`_abMesureContexte`, coach.js) — on ne recalcule
+             pas le découpage ici. Elle était recopiée jusqu'au 04/09, et les deux copies
+             avaient DÉJÀ divergé (le marqueur « SITUATION DE L'INSTANT » manquait d'un côté) :
+             *deux formules qui ne comptent pas pareil rendent deux écarts de mémoire
+             différents pour la même passe* — le chiffre même qui dit si l'expérience a un sens. */
+          const mesure = _abMesureContexte(buildCoachContext(demande));
           if (!pourDeVrai) return { blanc:true, mesure };
           const rep = await _vcAsk({ scenario: demande, coachEmail:'', history:[] });
           return { ok: !!rep.ok, reply: rep.reply || '', err: rep.err || '',

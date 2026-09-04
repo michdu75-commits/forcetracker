@@ -1,7 +1,7 @@
 # 📒 Inventaire — ce qui existe dans Force Tracker
 
 > ⚙️ **FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer avec `python3 tools/inventaire.py`.
-> Généré depuis **le code** (version `ft-v1112`, dernier commit 2026-09-03).
+> Généré depuis **le code** (version `ft-v1122`, dernier commit 2026-09-04).
 >
 > **À quoi il sert** : répondre à *« est-ce que c'est déjà construit ? »*. Le journal des versions
 > (`CLAUDE.md`, `docs/JOURNAL-ARCHIVE.md`) répond à *« que s'est-il passé, quand, pourquoi ? »* —
@@ -20,8 +20,8 @@
 | Lignes de menu | 6 | 1 |
 | Fenêtres (modales) | 64 | 13 |
 | Actions du serveur | 45 | 0 |
-| Fonctions JS | 591 | — |
-| Nouveautés annoncées | 62 | — |
+| Fonctions JS | 593 | — |
+| Nouveautés annoncées | 64 | — |
 
 ## 🖥️ Écrans
 
@@ -173,6 +173,8 @@ Ce qui a été **annoncé dans la pop-up « Quoi de neuf »** — donc censé ex
 
 | # | | Nouveauté |
 |---|---|---|
+| 69 | 🏃 | Séance : ton cardio ne se perd plus |
+| 68 | 🥗 | Nutrition : le riz et les pâtes sont proposés CUITS |
 | 67 | 📉 | Nutrition : ta journée d’abord, ton évolution ensuite |
 | 66 | 🔥 | Ton échauffement se dose à ta charge |
 | 63 | ⚡ | « Cette séance te convient ? » |

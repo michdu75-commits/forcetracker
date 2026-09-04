@@ -1112,6 +1112,16 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
            survit derriere une porte qui ne survit pas ne sert a rien. -->
       <button class="btn btn-bg2" onclick="rejouerVerifs()" style="padding:11px;font-size:14px;">🔬 Rejouer les vérificateurs sur la dernière passe (0 €)</button>
       <button class="btn btn-bg2" onclick="copyEvalReponses()" style="padding:11px;font-size:14px;">📥 Copier les réponses de la dernière passe</button>
+      <!-- 🧠 A/B MÉMOIRE — le test qui n'a jamais tourné parce qu'il n'avait pas de bouton.
+           Il vit depuis le 03/09 dans tests/milo/ab-memoire.js, pret et eprouve, et il etait
+           le SEUL test lancable par Michel sans porte d'entree : il fallait un terminal.
+           « Un outil sans porte d'entree n'est pas un outil en attente, c'est un outil qui
+           n'existe pas. » (04/09 : « le test A/B je peux pas le faire ».)
+           ⚠️ AUCUN NOMBRE DE CAS EN DUR ICI : _AB_CAS.length et le prix sont annonces par
+           startAbMemoire() dans la confirmation, avant tout appel paye (R2, lecon des
+           libelles « 16 scenarios » restes faux pendant trois semaines). -->
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;margin-top:6px;">🧠 <strong>A/B mémoire</strong> — la seule question qu'aucun test ne pose : <strong>est-ce que tes données rendent la séance MEILLEURE&nbsp;?</strong> On pose la même question deux fois, une fois <strong>avec</strong> ta mémoire Force Tracker (historique, records, blessure, état du jour), une fois <strong>sans</strong>. ⚠️ On retire ce que Milo sait <strong>de toi</strong>, <strong>pas ses règles</strong> — sinon on fabriquerait un mauvais chatbot pour gagner la comparaison. <strong>Ici il n'y a pas de ✅/❌</strong> : « meilleure » se juge à l'œil, tu auras les deux réponses à comparer.</div>
+      <button class="btn btn-bg2" onclick="startAbMemoire()" style="padding:11px;font-size:14px;">🧠 A/B mémoire — avec tes données vs sans</button>
       <button class="btn btn-bg2" onclick="showGardienStats()" style="padding:11px;font-size:14px;">🛡️ Dérives détectées par le Gardien</button>
       <button class="btn btn-bg2" onclick="_gardienStatsTous()" style="padding:11px;font-size:14px;">🌍 Gardien — tous les comptes</button>
       <div style="font-weight:700;color:var(--t1);font-size:14px;margin-top:6px;">🧩 Laboratoire Milo · VM (métier)</div>
