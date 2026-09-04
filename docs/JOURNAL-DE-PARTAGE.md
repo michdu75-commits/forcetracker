@@ -8,6 +8,41 @@
 
 ---
 
+## 🛣️ LES DEUX COULOIRS — rappelés par Michel le 04/09/2026
+
+> *« Il ne faut pas que ça fasse obstacle à l'autre Claude. Au départ il est vrai que je t'avais
+> rajouté pour la **nutrition**. Il faut bien écrire les journaux et ne pas avoir de conflit de
+> code. »*
+
+**Le rappel était mérité, et il est MESURABLE.** Le 04/09, session-A (moi) a livré 8 versions :
+6 en **nutrition** (`ft-v1114→1117`, `1119→1121` — base de marques, alias, boissons, recherche),
+puis **2 hors couloir** : `ft-v1118` (le cardio seul) et `ft-v1123` (le banc A/B de Milo), toutes
+deux dans `coach.js`/`log.js`. **Résultat le même jour : deux collisions de version** (24ᵉ et 25ᵉ),
+et un **doublon évité de justesse** — j'annonçais à Michel que le barème de récup du cardio
+attendait sa décision, pendant que session-B *était en train de le construire*.
+
+| | **session-A** (`project-status`) | **session-B** (`claude-md-docs`) |
+|---|---|---|
+| **Couloir** | 🍽️ **Nutrition & aliments** | 🧠 **Milo, récup, séance** |
+| Fichiers de tête | `tools/ciqual.py` · `tools/alias.py` · `tools/marques.py` · `data/*.json` · la partie nutrition de `screens.js`/`app.js` | `coach.js` · `log.js` · `tracking.js` · `tests/milo/` · le moteur de récupération |
+| Doc de cadrage | `NUTRITION-PHILOSOPHIE.md` · `NUTRITION-MOTEUR.md` · `BRIEF-NUTRITION.md` | `MOTEUR-RAISONNEMENT-MILO.md` · `CONSTITUTION-MILO.md` |
+
+⛔ **Ce que ça ne veut PAS dire** : un couloir n'est pas un mur. Un correctif d'une ligne chez le
+voisin reste normal — *ce qui coûte, c'est de CONSTRUIRE une brique dans son couloir sans lui
+dire*. La ligne du tableau reste le seul geste obligatoire, et elle suffit **si on la lit**.
+
+⚠️⚠️ **ET `sw.js` COLLISIONNERA TOUJOURS, quoi qu'on fasse au découpage** : *toute* version bump
+la même ligne. Ce n'est pas un défaut d'organisation, c'est structurel. La règle est stable et ne
+demande aucune discussion : **le second qui fusionne MONTE d'un numéro** — on ne fait jamais
+reculer le cache. *Un conflit d'une ligne qu'on sait résoudre par avance ne coûte rien ; c'est le
+doublon de travail qui coûte une journée.*
+
+⭐ **Et le vrai verrou reste GIT** — vérifié deux fois le 04/09 : le push non-fast-forward a été
+**refusé**, rien n'a été écrasé. *Le journal évite le doublon de TRAVAIL, git évite l'écrasement
+de CODE.* Les deux sont nécessaires ; aucun ne remplace l'autre.
+
+---
+
 ## 📋 Les tâches
 
 > ⭐ **CE TABLEAU EST EN TÊTE DU FICHIER, ET C'EST VOLONTAIRE (26/08/2026).** Il était à **73 %**
@@ -24,6 +59,7 @@
 
 | État | Quand (UTC) | Qui | Sujet | Fichiers | Version |
 |---|---|---|---|---|---|
+| 🔵 | 04/09 19:55 | session-A → **session-B** | **🤝 PASSAGE DE RELAIS — 2 SUITES DU BANC A/B, ELLES SONT DANS VOTRE COULOIR.** Michel a lancé la passe A/B (4 appels, réels). ⭐⭐ **AB-2 est sans appel** : avec sa mémoire, Milo retire **toute** presse au-dessus de la tête sur une épaule douloureuse et allège le couché à 75 kg ; sans elle, **le développé militaire à 80 kg devient l'ANCRE** de la séance. Poussée : **4 séries contre 9**. *La différence est dans la séance, pas dans une phrase.* ⚠️ **AB-1 est faible et il faut le dire** : sans mémoire, Milo tombe sur 80×4 — un chiffre plausible **par hasard** pour un gars de 85 kg confirmé. Ce qui diffère vraiment, c'est que **B pose des questions** et A agit. ⛔⛔ **ET LA PASSE A TROUVÉ UN DÉFAUT DANS MA FIXTURE** : `_abHistoDC` (coach.js) dit en commentaire « des charges qui PROGRESSENT » et fait **l'inverse** — `i=0` est la séance la plus RÉCENTE et la plus LÉGÈRE (80 kg), `i=23` la plus vieille et la plus lourde (93,5). *J'ai inversé le sens du temps.* Le résultat tient (Milo l'a lu correctement), mais **la fixture ne teste pas ce qu'elle annonce**. 👉 **Je vous laisse les deux suites plutôt que d'y toucher** : ① corriger le sens du temps ; ② **promouvoir AB-2 au banc d'essai** — *« épaule douloureuse → aucune presse au-dessus de la tête »* est **vérifiable par du CODE**, donc ça remplit le critère de `JOURNAL-DE-TEST.md` et ça deviendrait gratuit à chaque passe au lieu d'un test manuel à 0,26 €. **C'est le plus rentable des deux.** ⚠️ **Et un avertissement utile** : vous avez une `ft-v1123` sur votre branche, **master en a déjà une autre** (la mienne). 25ᵉ collision — au merge, montez à 1124. | `coach.js` (`_AB_CAS`, `_abHistoDC`), `tests/milo/`, `docs/JOURNAL-DE-TEST.md` | — (à vous) |
 | 🟢 | 04/09 17:00 → 18:05 | session-A (project-status) | **🧠 LE TEST A/B MÉMOIRE REÇOIT SA PORTE D'ENTRÉE. LIVRÉ (ft-v1123).** Michel : *« le test A/B je peux pas le faire »*, puis *« je ne sais pas comment faire »*. ⛔⛔ **La cause n'était pas son temps, elle était de mon côté et elle était MESURABLE** : `ab-memoire.js` est prêt depuis le 03/09 et n'a jamais tourné parce qu'il était le **seul** test lançable par lui **sans bouton** — j'ai écrit « en attente de Michel » pendant deux semaines. 👉 ***Un outil sans porte d'entrée n'est pas un outil en attente, c'est un outil qui n'existe pas.*** ⭐ **R13/R2, pas un 2ᵉ chemin** : `_vcApplyPersona` / `buildCoachContext` / `_vcAsk`, les mêmes que le benchmark ; gel et restauration **copiés** de `_evRun`. ⛔ Les cas deviennent la propriété de l'app (`_AB_CAS`) ; le script les **lit** et **échoue bruyamment** s'ils manquent. ⚠️ Référence **nue** — un `const` global n'est pas sur `window`. ⭐⭐ **La mesure du contexte avait DÉJÀ divergé** sans que personne l'ait touchée → `_abMesureContexte`, un propriétaire. ⛔⛔ **Aucun verdict automatique, exprès** (juge humain, critère de `JOURNAL-DE-TEST.md`). Mesuré à blanc, 0 € : écart **+4 516** et **+5 044** car. ⚠️⚠️ **J'ai écrit un bug de fuseau horaire**, le détecteur en a pris **2 sur 3** — le 3ᵉ décalait la date AVANT de convertir. Puis il a rougi sur **mon commentaire** (§31) : son intention couvrait déjà les `//`, pas les blocs `/* */` — **étendue, contrôle négatif fait**. 📣 Règle #11 : **RIEN** — le Laboratoire est derrière l'admin, annoncer à tous une porte qu'ils ne verront jamais serait du bruit. ⏭️ **La passe n'a pas encore tourné pour de vrai** (4 appels, ~0,25 € — décision de Michel). Bloc **CCXXXI**. **Tests : parcours 2699/2699**, calculs 266, muscles 241, croisés 50, **dates 7/7 (réparé)**, données 0 trou. ⚠️⚠️ **24ᵉ COLLISION DE VERSION — et un mot pour session-B** : votre **ft-v1122** (le cardio dans la récupération) est arrivée pendant que j'écrivais la mienne. La vôtre était **déjà poussée**, donc je monte : *on ne fait jamais reculer le numéro de cache*. **C'est le verrou git qui a joué**, pas le journal — mon push a été refusé, rien n'a été écrasé. ⛔ **Et il vous reste une chose** : votre ft-v1122 est **en ligne** (`sw.js`) mais n'a **aucune entrée dans `CLAUDE.md`** ni de ligne close ici. *Je ne l'écris pas à votre place — je n'ai pas fait le travail et j'inventerais les détails* — mais c'est **R23** : une fonctionnalité livrée sans entrée devient invisible, et quelqu'un la re-proposera. ⭐ Au passage, elle répond à une question que j'annonçais « en attente de Michel » il y a une heure (le barème de récup du cardio) : **c'est exactement le doublon que ce journal existe pour éviter.** | `coach.js`, `index.html`, `tests/milo/ab-memoire.js`, `tests/dates/runner.js`, `tests/parcours/runner.js`, `sw.js` | **ft-v1123** ✅ |
 | 🟢 | 04/09 15:05 → 15:50 | session-A (project-status) | **🌮 O'TACOS SORT DE LA BASE. LIVRÉ (ft-v1121).** Décision de Michel : *« vire-les »*. Ses 5 lignes étaient **toutes des desserts** (Mix glace, Milkshake, Chantilly, 2 Kinder Bueno), **aucun tacos** — donc `tacos` rendait une **glace**. 👉 ***Un mot qui ne désigne pas ce qu'on croit est pire qu'un mot qui ne rend rien.*** ⭐⭐ **Ça rétablit une décision déjà prise** : en ft-v1113, `tacos` n'avait **délibérément pas** été mappé (*« on ne sert pas un kebab à sa place »*). *La base de marques la contredisait sans qu'on l'ait voulu, et aucun témoin ne pouvait le voir — il surveillait `_ciqualChercher`, pas `_marquesChercher`.* ⛔ **Ce n'est pas la règle « il faut tout mettre » qu'on contredit** : elle visait des valeurs douteuses mais RÉELLES. Ici les chiffres sont **justes** — c'est la **question** à laquelle ils répondent qui est fausse. ⛔ **R30** : retrait déclaré avec sa raison, figé par 2 témoins. ⚠️ **L'aide de la veille devenue fausse**, corrigée dans le même mouvement (3ᵉ cas §31). **128 → 123.** | `tools/marques.py`, `data/marques.json`, `screens.js`, `coach.js`, `tests/parcours/runner.js`, `sw.js` | **ft-v1121** ✅ |
 | 🟢 | 04/09 12:30 → 14:10 | session-A (project-status) | **🍔 LA BASE FAST-FOOD PASSE DE 27 À 128 — FUSION V1+V2. LIVRÉ (ft-v1120).** Michel renvoie le classeur perdu, en **version 2** : 114 produits, avec Quick (91 lignes, table officielle complète), O'Tacos et Subway. ⭐ **Aller-retour : 0 écart sur 116 vérifiés**, Big Mac au chiffre près sur l'ancienne table. ⛔⛔ **LA V2 SEULE AURAIT FAIT PERDRE TOUTES LES FRITES** (elles n'ont que les calories dans ce classeur) : **+95 gagnés, −15 perdus**, invisible. 👉 ***Remplacer aurait été une régression déguisée en enrichissement.*** D'où une FUSION. ⚠️ **Les 14 hérités sont figés dans le générateur, pis-aller écrit comme tel** (classeur perdu). ⭐ **Le garde-fou a servi le jour même** : la pizza 4 Fromages est repartie dans la source, le bloc a maigri de 15 à 14 — *il doit rétrécir, jamais grossir.* ⭐ **Contrôles sur les 95 nouveaux**, dont 91 du Quick — **le bloc qui avait été DÉCALÉ la 1ʳᵉ fois** : 1 seule incohérence, le Korean Whopper, déjà connue. ⚠️⚠️ **À trancher par Michel : O'Tacos ne contient AUCUN tacos** (5 desserts), donc `tacos` rend une glace. Gardé parce que la règle est la sienne, signalé parce qu'il doit le savoir. | `tools/marques.py`, `data/marques.json`, `data/sources/`, `constants.js`, `screens.js`, `coach.js`, `tests/parcours/runner.js`, `sw.js` | **ft-v1120** ✅ |
