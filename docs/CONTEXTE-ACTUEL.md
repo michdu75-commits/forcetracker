@@ -6,6 +6,56 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1125` — 🤝 **LES 2 SUITES DU RELAIS DE SESSION-A** (Michel :
+  *« il a fini »*, puis il choisit le relais). ⛔ **① `_abHistoDC` ne faisait pas ce qu'elle
+  annonçait** : commentaire « des charges qui PROGRESSENT », barème qui **descendait** — la séance
+  la plus récente était la plus légère (80 kg la veille) pour un record de 95 kg il y a 9 jours.
+  ⭐ Les **dates** étaient justes, c'est le **kg** qui descendait. *Une fixture qui ne fait pas ce
+  qu'elle annonce ne rate pas le test : elle le fait passer sur autre chose* — et rien ne pouvait
+  rougir, ce qui l'a rendue durable deux semaines.
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#883** sur `621816f`, **job `deploy` success**,
+  les 7 étapes vertes à 19:26:21 UTC.
+- ⭐⭐ **② AB-2 promu au banc d'essai (EV-056)** — il vient de la passe RÉELLE : avec la mémoire
+  Milo retire toute presse au-dessus de la tête, sans elle le militaire à 80 kg devient l'**ancre**
+  (**4 séries de poussée contre 9**). Vérifiable par du code → **gratuit à chaque passe** au lieu
+  d'un test manuel à 0,26 €.
+- ⛔⛔ **③ ET LA PROMOTION A TROUVÉ QUE `EV-050` NE TESTAIT PAS CE QU'IL ANNONÇAIT** : sa fixture
+  écrivait `{zone:'épaule droite', etat:'actif'}`, **deux champs qui n'existent pas** (l'app écrit
+  `status` et des **codes** de zone). Mesuré : la zone restait **inactive**, et le scénario passait
+  grâce à ses `notes` en texte libre — la blessure **structurée** était inerte (`BUGS.md` §36).
+  ⛔ **La production n'a jamais été touchée**, vérifié avant de rien changer : les codes réels de
+  l'écran Santé activent tous la zone.
+- ⚠️⚠️ **④ J'ai collisionné un id en écrivant ce travail** (EV-055 était déjà pris, rangé hors
+  séquence) et **rien n'a protesté** — or le rapport suit les scénarios **par id**. Renuméroté
+  EV-056, garde-fou posé : *il aurait coûté une seconde, c'est le genre qu'on n'écrit que le jour
+  où on tombe dedans* (R17).
+- ⛔ **Contrôle négatif : 4 rouges** sur l'ancien code. Suite : **2712/2712**, calculs 298/298,
+  **0 rouge**. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+- **Version en ligne (live) :** `ft-v1124` — ⚡ **« CETTE SÉANCE TE CONVIENT ? » NE S'AFFICHE PLUS
+  SOUS UN REPROCHE.** Michel, enregistrement d'écran à l'appui : il écrit *« pourquoi tu me donnes
+  la séance à faire ? »* et l'app propose **« ⚡ Oui, on démarre »** sous une réponse de Milo qui dit
+  le contraire.
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#881** sur `5115965`, **job `deploy` success**,
+  les 7 étapes vertes à 18:17:11 UTC. ⭐ Suite mesurée sur l'arbre fusionné : **2699/2699**,
+  calculs **298/298**, muscles 241, croisés 50, dates 7, données 0 trou — **0 rouge**.
+  ⚠️⚠️ **25ᵉ COLLISION DE VERSION, la 3ᵉ en deux jours** : session-A a publié **et déployé** sa
+  propre ft-v1123 pendant que ma suite de parcours tournait. **Le premier publié garde le numéro** —
+  ma version devient **ft-v1124**. ⭐ *Ma ligne de partage était pourtant posée dès 17:10 UTC* :
+  **un panneau d'affichage évite le doublon de TRAVAIL, il n'empêche pas de choisir le même numéro.**
+  *Seul git l'attrape, et il l'a attrapé.*
+- ⛔ **La cause n'est PAS Milo** : la carte est posée par un filet déterministe du code
+  (`_demandeUneSeance`), dont la règle ② acceptait n'importe quel « la/ma séance » **sans verbe de
+  demande**. *Durcir le prompt aurait été corriger le mauvais cerveau (R7).*
+- ⭐⭐ **Mesuré avant de coder : sur six phrases, QUATRE déclenchaient à tort** — dont trois qui sont
+  l'exact contraire d'une demande (« était trop longue », « ne compte pas », « je viens de finir »).
+- ⚠️⚠️ **ET MON PREMIER JET NE MORDAIT PAS** : `\b[é]tait\b` — **`\b` est ASCII en JavaScript**,
+  il n'y a aucune frontière entre l'espace et le « é ». *Une expression régulière qui a l'air juste
+  et qui ne mord jamais est pire qu'une absence de garde : on la croit posée.* On teste désormais
+  sur une copie sans accents.
+- ⛔ **Trous connus épinglés, non corrigés (R30)** : « on fait quoi ce soir » et « on s entraîne
+  quoi » **sans apostrophe** ne déclenchent pas — ratés **pré-existants**, sans rapport avec ce
+  correctif qui ne fait que **retirer** des déclenchements.
+
 - 💶 **LE COÛT D'UN MESSAGE À MILO, REMESURÉ le 04/09** (question de Michel : *« lire la
   nutrition ne va pas me faire gonfler la facture ? »* puis *« combien coûte un message »*).
   **Détail complet : `docs/BRIEFING-GPT-COUT-IA.md` §6.** En bref : **2,4 centimes** par message
@@ -86,7 +136,17 @@
   **1 kcal** et non celle à 24, la pop-up v68 et le point rouge s'affichent.
   ⚠️ *La mention « Safari non vérifié » traînait dans six entrées de journal : elle est levée pour
   cette série, pas pour les suivantes.*
-- **Version en ligne (live) :** `ft-v1121` — 🌮 **O'TACOS SORT DE LA BASE** (128 → 123).
+- **Version précédente :** `ft-v1122` — 🔋 **LE CARDIO ENTRE ENFIN DANS LA RÉCUPÉRATION** (option A
+  du contre-audit, tranchée par Michel sur les chiffres : ancrage 45 min modéré = **6 séries**,
+  plancher **2**, rampe **12 h**, `projectionRecup` remis sur `RECUP_EFFACE_H`).
+  ⚠️⚠️ **Cette version est partie en prod SANS entrée de journal — R23, entrée écrite après coup le
+  04/09.** *La note de `sw.js` était complète ; c'est le fichier qu'on relit à chaque session qui ne
+  l'était pas.*
+  ⭐⭐ **Rejeu des 60 derniers jours sur les vraies données de Michel** : 27 jours inchangés, 33
+  changés, **tous vers le bas**, moyenne **−2,0**, max **−6**, aucune journée absurde.
+  ⏭️ **B et C restent entiers** (consigne de Michel : *« ne commence PAS B ou C dans le même
+  commit »*).
+- **Version antérieure :** `ft-v1121` — 🌮 **O'TACOS SORT DE LA BASE** (128 → 123).
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#873** sur `f26b072`, **job `deploy` success**,
   les 7 étapes vertes à 16:40:45 UTC. ⭐ Suite : **2682/2682, 0 rouge**.
   ⚠️ *Le chiffre annoncé dans l'entrée était d'abord une **prédiction** (2679) : il a été remplacé

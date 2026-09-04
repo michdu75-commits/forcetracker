@@ -69,6 +69,38 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🔵 DOULEUR DU JOUR : LA SÉANCE CHANGE-T-ELLE, OU JUSTE LE COMMENTAIRE ? — promue **EV-056** (04/09/2026)
+
+**Ce qui déclenche la question** : la passe A/B « avec / sans mémoire », lancée pour de vrai par
+Michel. ⭐⭐ **L'écart y était sans appel, et il était DANS LA SÉANCE** : avec sa mémoire, Milo
+retire toute presse au-dessus de la tête sur une épaule douloureuse et allège le couché ; sans
+elle, **le développé militaire à 80 kg devient l'ANCRE** de la séance. **4 séries de poussée
+contre 9.** *Ce n'est pas une phrase de prudence en plus, c'est une autre séance.*
+
+**Pourquoi elle est promue** : l'attendu — *« aucune presse au-dessus de la tête »* — se vérifie
+par du **CODE**, donc il remplit le critère unique. ⭐ Et ça la rend **gratuite à chaque passe**,
+au lieu d'un test manuel à 0,26 € que personne ne relance.
+
+**⛔ Ce qu'elle ne double pas** — vérifié avant de l'écrire (R13). `EV-050` couvre déjà « une
+blessure déclarée est respectée », mais il accepte le développé militaire tant qu'il n'est pas
+lourd et **ne regarde jamais le VOLUME** — or c'est le volume qui a bougé dans la vraie passe.
+Et il n'exerce pas le **check-in du jour** (`dayState.pains`), une **autre source** que le
+dossier santé. *Deux sources qui doivent converger sont un cas à part entière.*
+
+**⛔⛔ Et la promotion a trouvé mieux qu'elle-même : `EV-050` ne testait pas ce qu'il annonçait.**
+Sa fixture écrivait `{zone:'épaule droite', etat:'actif'}` — **deux champs qui n'existent pas**
+(l'app écrit `status`, et des **codes** de zone comme `epaule_d`). Mesuré : `zones.epaule.active`
+restait **faux**, et le scénario passait entièrement grâce à ses `notes` en texte libre. *La
+blessure structurée, celle de son titre, était inerte* (`BUGS.md` §36). Corrigé — et **la
+production n'était pas touchée** : les codes réels de l'écran Santé activent tous la zone,
+vérifié avant de rien changer.
+
+**⚠️ Éprouvée contre une bonne ET une mauvaise réponse avant livraison** (R35) : verte sur la
+réponse « avec mémoire », **2 rouges** sur celle sans mémoire, **1 rouge** sur un refus déguisé
+en prudence — et **verte** sur le cas limite qui *nomme* le militaire pour dire qu'il l'évite.
+⛔ Le 3ᵉ témoin existe pour l'empêcher de dégénérer : *sans lui, « ne rien prescrire » serait la
+réponse parfaite, et on aurait promu un scénario qui récompense le refus.*
+
 ### 🟡 UNE SÉRIE MENÉE À L'ÉCHEC COMPTE COMME UNE SÉRIE NORMALE — le ×1,5 vise un type mort
 
 **Ce qui déclenche la question** (04/09/2026) : trouvé dans l'export CSV **réel** de Michel, pas

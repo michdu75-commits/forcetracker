@@ -2034,8 +2034,33 @@ function _demandeUneSeance(txt){
   try{
     const t=String(txt||'');
     if(!t) return false;
+    /* ⚠️⚠️ ON TESTE LES EXCLUSIONS SUR UNE COPIE SANS ACCENTS, ET CE N'EST PAS UN DÉTAIL.
+       Mon 1ᵉʳ jet écrivait \b[ée]tait\b. Mesuré : **il ne matche jamais.** En JavaScript,
+       \b est ASCII — « é » n'est pas un caractère de mot, donc il n'y a AUCUNE frontière
+       entre l'espace et le « é » de « était », ni après le « é » de « été ». Deux des trois
+       phrases que le garde devait attraper passaient encore. *Une expression régulière qui a
+       l'air juste et qui ne mord jamais est pire qu'une absence de garde : on la croit posée.* */
+    const p=t.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    /* ⛔⛔ 04/09/2026 — ON PARLE D'UNE SÉANCE, ON N'EN DEMANDE PAS UNE. Michel, vidéo à
+       l'appui : il écrit *« Oui mais pourquoi tu me donnes la séance à faire ? »* — un
+       REPROCHE — et l'app affiche « Cette séance te convient ? · ⚡ Oui, on démarre » **sous
+       une réponse de Milo qui dit le contraire** (« c'est pas le bon moment, t'as fini ta
+       séance, on est en débrief »).
+       ⭐⭐ MESURÉ, ET SON CAS N'ÉTAIT PAS ISOLÉ : *« la séance était trop longue »*,
+       *« pourquoi ma séance ne compte pas ? »*, *« je viens de finir ma séance »* déclenchaient
+       aussi la carte. ***Trois phrases qui sont l'exact contraire d'une demande.***
+       Le commentaire au-dessus de cette fonction prévoyait le risque en toutes lettres.
+       ⛔ DEUX NIVEAUX, ET LA FRONTIÈRE EST MESURÉE :
+       ① LE PASSÉ TUE TOUT, même la règle à verbe — parce que  attrape aussi bien
+          l'impératif « fais-moi » que le participe « j'ai FAIT ma séance ». Sans ce niveau,
+          *« j'ai fait ma séance ce matin »* déclenchait encore : même mot, sens inverse.
+       ② LES MARQUEURS AMBIGUS ne tuent que les règles SANS verbe. « pourquoi » en fait partie :
+          *« pourquoi tu ne me fais pas une séance jambes ? »* EST une demande. */
+    if(/\bai\s+fait\b|\bje\s+viens\s+de\b|\betait\b|\ba\s+ete\b|\bfini[es]?\b/i.test(p)) return false;
     // ① un verbe de demande suivi, dans la même phrase, du mot séance / entraînement / programme
     if(/\b(fai[st]|donne|propose|pr[ée]pare|cr[ée]e|construis|monte|[ée]cris|lance|balance|envoie|g[ée]n[èe]re)\b[^.?!\n]{0,40}\b(s[ée]ance|entra[îi]nement|programme|prog)\b/i.test(t)) return true;
+    // ⛔ niveau AMBIGU : après la règle ①, il ne tue que ce qui suit (les règles sans verbe)
+    if(/\bpourquoi\b(?!\s+pas\b)|\bne\s+compte\s+pas\b|\bdebrief/i.test(p)) return false;
     // ② une séance nommée comme celle qu'on va faire (« une séance », « ma séance du jour »…)
     if(/\b(une|ma|la|nouvelle|prochaine|autre|petite|bonne)\s+s[ée]ance\b/i.test(t)) return true;
     if(/\bs[ée]ance\s+(du\s+jour|d'aujourd|de\s+ce\s+soir|de\s+ce\s+matin|pour\s+)/i.test(t)) return true;
@@ -6758,12 +6783,30 @@ function _evCopier(txt, okMsg){
 const _abJ = n => today(Date.now() - n * 86400000);
 
 /* ⚠️ 24 séances sur 10 semaines, avec des charges qui PROGRESSENT : sans progression,
-   « exploiter l'historique » n'aurait rien à exploiter — on mesurerait du bruit. */
+   « exploiter l'historique » n'aurait rien à exploiter — on mesurerait du bruit.
+
+   ⛔⛔ ET PENDANT DEUX SEMAINES ELLE FAISAIT L'INVERSE DE CE QU'ELLE ANNONÇAIT — trouvé par
+   session-A en lisant la VRAIE passe, pas le code. La phrase ci-dessus disait « qui
+   PROGRESSENT » et le barème descendait : la séance la plus RÉCENTE était la plus LÉGÈRE.
+   ⭐ Mesuré avant de corriger, et la cause est plus étroite que « le temps est inversé » :
+   les DATES étaient dans le bon sens (`i=0` = hier, conforme au tri par date décroissante de
+   `state.js`) — c'est le KG qui descendait avec le temps. La fixture contredisait même son
+   propre record (95 kg il y a 9 jours) en montrant 80 kg la veille.
+   👉 ***Une fixture qui ne fait pas ce qu'elle annonce ne rate pas le test : elle le fait
+   passer sur autre chose.*** Ici la passe restait lisible (Milo lit ce qu'on lui donne), donc
+   rien ne rougissait — c'est précisément ce qui la rendait durable.
+
+   ⛔ UN SEUL « QUAND » PAR SÉANCE (`ilYA`), et c'est la vraie leçon de structure : la date et
+   le `ts` étaient calculés séparément et allaient en sens CONTRAIRE (`ts:9000+i` montait
+   pendant que la date reculait). Inoffensif tant que `ts` n'est lu que comme identifiant
+   (`s.id||s.ts||s.date`) — *mais une fixture qui porte deux « quand » qui se contredisent
+   n'attend qu'un lecteur qui trie par le mauvais* (**R2**). */
 function _abHistoDC(){
   const s = [];
   for(let i=0;i<24;i++){
-    const kg = 80 + Math.floor(i/2.4) * 1.5;                       // 80 → 93,5
-    s.push({ ts:9000+i, date:_abJ(i*3+1), volume:8200, synced:true, duration:62,
+    const ilYA = i*3+1;                                            // jours — le SEUL « quand »
+    const kg = 93.5 - Math.floor(i/2.4) * 1.5;                     // 93,5 hier → 80 il y a 10 sem.
+    s.push({ ts:Date.now()-ilYA*86400000, date:_abJ(ilYA), volume:8200, synced:true, duration:62,
              exs:[{ name:'Développé Couché',
                     sets:Array.from({length:4},()=>({ kg:Math.round(kg/2.5)*2.5, reps:5, done:true, type:'N' })) }] });
   }

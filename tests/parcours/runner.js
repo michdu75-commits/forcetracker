@@ -25961,6 +25961,113 @@ console.log('\n-- CCXXXI. Le test A/B mémoire reçoit sa porte d\'entrée (ft-v
     t('⭐⭐ l\'écran DIT qu\'il n\'y a pas de ✅/❌ (le juge est humain)',
       /pas de ✅\/❌/.test(ih) && /juge à l'œil|juge à l’œil/.test(ih), '');
   }
+
+  /* ═══ CCXXXI bis. LA FIXTURE FAIT-ELLE CE QU'ELLE ANNONCE ? (04/09/2026) ═══════════════
+     ⭐⭐ Trouvé par session-A en lisant la VRAIE passe A/B, pas le code : `_abHistoDC` disait
+     en commentaire « des charges qui PROGRESSENT » et le barème DESCENDAIT — la séance la plus
+     récente était la plus légère, et la fixture contredisait son propre record (95 kg il y a
+     9 jours) en montrant 80 kg la veille.
+     👉 ***Une fixture qui ne fait pas ce qu'elle annonce ne rate pas le test : elle le fait
+     passer sur autre chose.*** Et rien ne pouvait rougir — Milo lit correctement ce qu'on lui
+     donne, donc la passe restait lisible. C'est ça qui l'a rendue durable deux semaines.
+     ⛔ Les témoins ci-dessous mesurent le SENS, jamais des valeurs en dur : un barème qui
+     changerait de bornes resterait vert tant qu'il progresse, et c'est bien la garantie. */
+  {
+    const F=await p.evaluate(()=>{
+      if(typeof _abHistoDC!=='function') return {absente:true};
+      const s=_abHistoDC(), kg=x=>x.exs[0].sets[0].kg;
+      const parDate=s.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))); // du + vieux
+      return { absente:false, n:s.length,
+        vieuxKg:kg(parDate[0]), recentKg:kg(parDate[parDate.length-1]),
+        /* ⭐ le tableau est-il rangé comme l'app range S.sessions (date décroissante) ? */
+        rangeCommeLApp:s.every((x,i)=>i===0||String(s[i-1].date)>=String(x.date)),
+        kgMonteAvecLeTemps:parDate.map(kg).every((v,i)=>i===0||v>=parDate.map(kg)[i-1]),
+        tsSuitLaDate:parDate.every((x,i)=>i===0||x.ts>=parDate[i-1].ts),
+        /* ⛔ CONTRÔLE : sans écart, « ça progresse » serait vrai sur une fixture plate. */
+        ecart:kg(parDate[parDate.length-1])-kg(parDate[0]) };
+    });
+    if(F.absente) t('⛔ CONTRÔLE — la fixture A/B existe', false, '_abHistoDC absente');
+    else{
+      t('⛔ CONTRÔLE — la fixture n\'est pas PLATE (sinon « ça progresse » ne dit rien)',
+        F.ecart>0 && F.n>=12, 'écart '+F.ecart+' kg sur '+F.n+' séances');
+      t('⭐⭐ les charges MONTENT avec le temps — ce que le commentaire annonce',
+        F.kgMonteAvecLeTemps===true, 'plus vieille '+F.vieuxKg+' kg → plus récente '+F.recentKg+' kg');
+      t('⛔ le tableau est rangé comme l\'app range `S.sessions` (date décroissante)',
+        F.rangeCommeLApp===true, '');
+      /* ⛔⛔ UN SEUL « QUAND » PAR SÉANCE. Le `ts` allait dans le sens INVERSE de la date
+         (`ts:9000+i` montait pendant que la date reculait). Inoffensif tant que `ts` n'est lu
+         que comme identifiant — *mais une fixture qui porte deux « quand » contradictoires
+         n'attend qu'un lecteur qui trie par le mauvais* (R2). */
+      t('⛔⛔ le `ts` va dans le MÊME sens que la date (un seul « quand » par séance)',
+        F.tsSuitLaDate===true, '');
+    }
+  }
+
+  /* ═══ CCXXXI ter. LE BANC D'ESSAI : DES IDS UNIQUES, ET DES FIXTURES QUI EXISTENT ═══════
+     ⭐⭐ CE BLOC EST NÉ D'UNE ERREUR QUE J'AI FAITE EN L'ÉCRIVANT (04/09) : en promouvant AB-2
+     j'ai donné à mon scénario l'id **EV-055**… déjà pris depuis le 01/09 par « deux charnières
+     de hanche », rangé hors séquence 470 lignes plus haut. Rien n'a protesté. ⛔ Et ce n'est
+     pas cosmétique : **le rapport suit les scénarios PAR ID** (c'est comme ça qu'un ❌ devenu ✅
+     se voit), donc deux scénarios du même id fusionnent silencieusement dans le suivi.
+     👉 ***Le témoin qui manquait aurait coûté une seconde ; c'est le genre qu'on n'écrit que
+     le jour où on tombe dedans.*** (R17.) */
+  {
+    let SC=null, err='';
+    try{ SC=require(path.join(ROOT,'tests','milo','eval-scenarios.js')); }catch(e){ err=e.message; }
+    t('⛔ CONTRÔLE — les scénarios du banc se chargent', Array.isArray(SC)&&SC.length>0, err||('n='+(SC&&SC.length)));
+    if(Array.isArray(SC)){
+      const ids=SC.map(x=>x&&x.id);
+      const dbl=[...new Set(ids.filter((v,i)=>ids.indexOf(v)!==i))];
+      t('⭐⭐ AUCUN id de scénario en double (le rapport les suit par id)',
+        dbl.length===0, dbl.join(', '));
+      t('⛔ … et aucun scénario sans id ni sans vérification',
+        SC.every(x=>x&&x.id&&Array.isArray(x.verifs)&&x.verifs.length>0), '');
+
+      /* ⛔⛔ LA FIXTURE D'UNE BLESSURE DOIT EMPLOYER LES NOMS QUE L'APP ÉCRIT VRAIMENT.
+         EV-050 écrivait `{zone:'épaule droite', etat:'actif'}` : DEUX champs inexistants —
+         l'écran Santé (`saveHI`) écrit `status` et des CODES de zone (`epaule_d`), et
+         `_gardienZoneKey` matche `/epaule/`, qui ne reconnaît pas « épaule » accentué.
+         Mesuré : `zones.epaule.active` restait FAUX, et le scénario passait grâce à ses
+         `notes` en texte libre — la blessure STRUCTURÉE, celle de son titre, était inerte.
+         *C'est `BUGS.md` §36 : un scénario qui teste un champ inexistant.*
+         ⛔ Le témoin vise la RÈGLE, pas EV-050 : toute fixture qui déclare une blessure doit
+         employer `status`, et une zone que le Gardien sait résoudre. */
+      const blessees=SC.filter(x=>x&&x.apply&&x.apply.healthProfile&&
+                                  (x.apply.healthProfile.injuries||[]).length);
+      t('⛔ CONTRÔLE — des scénarios déclarent bien une blessure (sinon la garde est vide)',
+        blessees.length>0, blessees.length+' scénario(s)');
+      const mauvaises=[];
+      blessees.forEach(x=>(x.apply.healthProfile.injuries||[]).forEach(inj=>{
+        if(!inj || !inj.status) mauvaises.push(x.id+' : pas de `status` ('+Object.keys(inj||{}).join(',')+')');
+        else if(!/epaule|genou|dos_bas|dos_haut|cou|coude|poignet|hanche|cheville/.test(String(inj.zone||'')))
+          mauvaises.push(x.id+' : zone « '+inj.zone+' » que `_gardienZoneKey` ne résout pas');
+      }));
+      t('⭐⭐ toute blessure de fixture emploie `status` ET une zone que le Gardien résout',
+        mauvaises.length===0, mauvaises.join(' | '));
+    }
+  }
+
+  /* ⭐ ET LE PONT EST VÉRIFIÉ SUR LE VRAI GARDIEN, pas sur ma lecture du code : la forme
+     qu'écrit l'écran Santé doit activer la zone, et `etat` ne doit RIEN activer — sinon le
+     témoin ci-dessus garderait une règle qui ne sert à rien. */
+  {
+    const G=await p.evaluate(()=>{
+      const essai=inj=>{ S.healthProfile={injuries:[inj],conditions:[],notes:''}; S.dayState=null;
+        const z=_gardienZones(); return !!(z.epaule&&z.epaule.active); };
+      const avant=JSON.stringify(S.healthProfile||null);
+      const o={ prod:essai({zone:'epaule_d',status:'active'}),
+                etat:essai({zone:'epaule_d',etat:'actif'}),
+                accent:essai({zone:'épaule droite',status:'active'}),
+                regle:(()=>{ S.healthProfile={injuries:[{zone:'epaule_d',status:'active'}],conditions:[],notes:''};
+                  return /épaule/i.test(_gardienRules()||''); })() };
+      try{ S.healthProfile=JSON.parse(avant); }catch(e){}
+      return o;
+    });
+    t('⭐⭐ la forme que l\'écran Santé ÉCRIT (`epaule_d` + `status`) active bien la zone', G.prod===true, '');
+    t('⛔⛔ … et la règle d\'épaule atteint vraiment le contexte de Milo (R4)', G.regle===true, '');
+    t('⛔ CONTRE-ÉPREUVE — `etat:\'actif\'` n\'active RIEN (c\'est la faute d\'EV-050)', G.etat===false, '');
+    t('⛔ CONTRE-ÉPREUVE — « épaule droite » accentué n\'est résolu par aucune zone', G.accent===false, '');
+  }
 }
 
 await b.close(); srv.close();
