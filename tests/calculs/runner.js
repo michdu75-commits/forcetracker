@@ -1882,7 +1882,8 @@ console.log('\n═══ 12. Récupération — option A : cardio, plancher, rac
     /* ② la musculation, au point près */
     o.penMus={}; [1,2,3,4,6,8,10,12,16,20,24,30].forEach(n=>o.penMus[n]=_penaliteSeance(seance(n)));
     o.penType={N:_penaliteSeance(seance(12)),D:_penaliteSeance(seance(12,{type:'D'})),
-               E:_penaliteSeance(seance(12,{type:'E'}))};
+               E:_penaliteSeance(seance(12,{type:'E'})),X:_penaliteSeance(seance(12,{type:'X'}))};
+    o.setTypes=(typeof SET_TYPES!=='undefined')?SET_TYPES.slice():null;
     /* ③ la progression d'entrée */
     o.entree=[0,1,2,3,4].map(n=>n?etat([seance(n)]):o.refSansSeance);
     o.entreeCardio=[0,5,10,20].map(m=>m?etat([car('leger',m)]):o.refSansSeance);
@@ -1969,6 +1970,21 @@ console.log('\n═══ 12. Récupération — option A : cardio, plancher, rac
       && R.penMus[30]===38, JSON.stringify(R.penMus));
     t('⛔ … et les multiplicateurs de série non plus (N 20 · D 27 · E 31 à 12 séries)',
       R.penType.N===20 && R.penType.D===27 && R.penType.E===31, JSON.stringify(R.penType));
+    /* ⚠️⚠️ TROU CONNU, ÉPINGLÉ LE 04/09/2026 — ET TROUVÉ DANS L'EXPORT RÉEL DE MICHEL.
+       Le témoin juste au-dessus est VERT sur des types que l'app ne peut plus produire :
+       `SET_TYPES` vaut `['N','É','X']`, et une migration one-time (state.js) a converti
+       **E → X** et **D → N** dans tout l'historique. `_penaliteSeance` teste pourtant
+       `type==='E'` (×1,5) et `type==='D'` (×1,3). 👉 ***Les deux multiplicateurs sont
+       INATTEIGNABLES : une série menée à l'échec compte exactement comme une série normale.***
+       Mesuré sur ses 617 séries validées : 609 N · 8 X · **0 E · 0 D**, et l'écart que ça
+       représente est de **5 points sur 40 séances**.
+       ⛔ ON NE LE CORRIGE PAS ICI : Michel a explicitement écrit « ne pas toucher à échec ×1,5
+       / drop ×1,3 » dans l'option A. Ce témoin fige donc le trou **avec sa raison**, pour qu'il
+       ne se reperde pas — le jour où on le comble, il rougit, et c'est exactement son rôle. */
+    t('⚠️ TROU CONNU — l\'échec (X) compte comme une série NORMALE : le ×1,5 vise « E », que l\'app n\'écrit plus',
+      R.penType.X===R.penType.N && Array.isArray(R.setTypes)
+      && R.setTypes.indexOf('E')<0 && R.setTypes.indexOf('D')<0,
+      'SET_TYPES='+JSON.stringify(R.setTypes)+' · X='+R.penType.X+' N='+R.penType.N);
     /* ⭐⭐ LA FALAISE D'ENTRÉE : 79/75/75/75/75 devient une pente. */
     t('⭐⭐ 0/1/2/3/4 séries forment une progression régulière (plus de falaise d\'entrée)',
       R.entree.join('/')==='79/78/77/76/75', R.entree.join('/'));
