@@ -3172,15 +3172,68 @@ function _derniereSeanceAvant(refTs, auj){
   }
   return null;
 }
+/* 🏃 LA CHARGE D'UN CARDIO, DANS LA MÊME UNITÉ QUE LES SÉRIES (04/09/2026, option A).
+   ⛔⛔ CE QUE ÇA RÉPARE, MESURÉ AVANT : `_penaliteSeance` ne comptait que des séries validées.
+   Un cardio n'en a aucune → `load = 0` → la fonction tombait sur son plancher. Sur **18
+   combinaisons** (3 intensités × 6 durées), **toutes** rendaient la même pénalité : 90 min de
+   tapis intense (855 MET·min) coûtaient autant que 10 min de marche (35 MET·min), et **moins**
+   que 6 séries de développé couché.
+
+   ⭐⭐ LA BASE EST LE MET·MINUTE, PAS LA CALORIE — et c'est une MESURE, pas une préférence :
+   45 min de tapis modéré valent **248 MET·min pour tout le monde**, mais **248 kcal à 60 kg,
+   330 à 80 kg et 413 à 100 kg**. Passer par les calories rendrait une personne lourde
+   automatiquement « plus fatiguée » pour exactement le même effort relatif. *Les calories
+   mesurent une dépense ; la récupération a besoin d'une charge.*
+
+   ⭐ L'ANCRAGE EST UNE DÉCISION DE MICHEL, ÉCRITE ICI PLUTÔT QUE DILUÉE DANS UN NOMBRE :
+   *« 45 min de cardio modéré = 6 séries »*. Le facteur en découle, il ne se choisit pas.
+   Il a été retenu contre l'autre candidat mesuré (8 séries) pour une raison précise : à 8, un
+   cardio SEUL de 90 min intense atteignait le **plafond de 38**, c'est-à-dire le niveau qui
+   désigne « 24 séries de squat » depuis ft-v718. À 6, il s'arrête à 35 — *le plafond reste ce
+   pour quoi il a été mesuré.*
+
+   ⛔ CETTE ÉQUIVALENCE EST STRICTEMENT INTERNE. L'app ne doit JAMAIS afficher « 45 min de tapis
+   = 6 séries » : c'est une unité de charge commune, pas une équivalence physiologique.
+   ⚠️ Les DEUX moments comptent (`cardioAvant` = échauffement, `cardio` = fin de séance) et leurs
+   MET·min s'ADDITIONNENT avant l'unique conversion — une seule somme, donc aucun double comptage. */
+const RECUP_CARDIO_ANCRE_METMIN = 5.5 * 45;   // 45 min de tapis MODÉRÉ (5,5 MET) = l'ancre
+const RECUP_CARDIO_ANCRE_SERIES = 6;          // … vaut 6 séries sur l'échelle interne (décision Michel)
+const RECUP_CARDIO_FACTEUR = RECUP_CARDIO_ANCRE_METMIN / RECUP_CARDIO_ANCRE_SERIES;   // ≈ 41,25
+function _chargeCardio(sess){
+  try{
+    if(typeof CARDIO_MET==='undefined') return 0;      // app.js charge après : jamais d'erreur
+    let mm=0;
+    [sess&&sess.cardioAvant, sess&&sess.cardio].forEach(c=>{
+      const min=c?+c.duration:0;
+      if(!(min>0)) return;
+      const t=CARDIO_MET[c.type]||CARDIO_MET.autre;
+      const met=t&&(t[c.intensity]||t.modere);
+      if(!(met>0)) return;
+      mm += met*min;
+    });
+    return mm/RECUP_CARDIO_FACTEUR;
+  }catch(e){ return 0; }
+}
+/* ⛔ LE PLANCHER EST PASSÉ DE 6 À 2 (04/09/2026). Mesuré, il fabriquait une FALAISE D'ENTRÉE :
+   aucune séance → 79, **une seule série → 75**, et 1, 2, 3 séries étaient toutes aplaties sur la
+   même valeur. La progression devient 79 · 78 · 77 · 76 · 75.
+   ⚠️ Un plancher de 2 ne mord JAMAIS par le bas — `round(1,7 × 1 série) = 2` — donc il produit
+   exactement les mêmes chiffres que « pas de plancher du tout », vérifié au banc. **On le garde
+   nommé quand même** : son origine est introuvable dans le journal, et le baisser plutôt que le
+   supprimer évite de trancher une décision qu'on n'a pas retrouvée (**R30**).
+   ⛔ ET RIEN D'AUTRE NE BOUGE : à partir de 4 séries, la pénalité est au point près celle
+   d'avant (×1,7, échec ×1,5, drop ×1,3, plafond 38 — tous inchangés). */
+const RECUP_PEN_PLANCHER = 2;
 function _penaliteSeance(sess){
   let load=0;
   ((sess&&(sess.exs||sess.exercises))||[]).forEach(ex=>(ex.sets||[]).forEach(s=>{
     if(!s.done||s.type==='W'||s.type==='É')return;      // exclut échauffement
     load += s.type==='E'?1.5:s.type==='D'?1.3:1;         // échec/drop = plus fatigant
   }));
+  load += _chargeCardio(sess);                          // UNE seule charge, muscu + cardio
   // Plafond relevé de 30 à 38 (02/08) : mesuré, une séance de 24 séries de squat la veille
   // ne coûtait que 10 points — l'app affichait « Bonne récup » le lendemain d'un gros leg day.
-  return Math.max(6,Math.min(38,Math.round(load*1.7))); // ~ -10 (abdos) à -38 (grosse séance), min -6
+  return Math.max(RECUP_PEN_PLANCHER,Math.min(38,Math.round(load*1.7)));
 }
 /* ⭐⭐ `refTs` = L'INSTANT AUQUEL ON SE PLACE (ft-v1017), optionnel. Sans argument, la
    fonction se comporte EXACTEMENT comme avant — c'est ce qui rend le changement sûr : les
@@ -3202,6 +3255,9 @@ function _penaliteSeance(sess){
    Les deux lisent désormais cette constante — deux nombres pour une même règle finissent
    toujours par diverger, et c'est celui que la personne LIT qui avait tort (R2). */
 const RECUP_EFFACE_H = 48;
+/* ⏳ ET COMBIEN DE TEMPS LE BONUS DE REPOS MET À S'INSTALLER (04/09/2026). Voir le raccord dans
+   `calcRecoveryDetail` : sans cette rampe, le bonus apparaissait d'un bloc à 48 h pile. */
+const RECUP_BONUS_RAMPE_H = 12;
 function calcRecoveryDetail(refTs){
   /* Les DEUX seuls repères de temps de la fonction. Tout ce qui suit les lit, plus jamais
      `Date.now()` ni `today()` directement — sinon une moitié du calcul se placerait
@@ -3277,7 +3333,24 @@ function calcRecoveryDetail(refTs){
          avait tort. Une seule constante depuis, lue par le calcul ET par la phrase. */
       const hrs=Math.max(0,(_now-tsSess)/36e5);
       if(hrs<RECUP_EFFACE_H){ sessAdj=-Math.max(0,Math.round(calcPen0()*(RECUP_EFFACE_H-hrs)/RECUP_EFFACE_H)); }
-      else if(dCal>=2){ sessAdj=Math.min(dCal,4)*3; }        // 2j +6 · 3j +9 · 4j+ +12 (inchangé)
+      /* ⛔⛔ 04/09/2026 — LE BONUS DE REPOS N'ARRIVE PLUS D'UN COUP. Mesuré : 47,9 h → **79**,
+         48,0 h → **85**. ***Six points en un dixième d'heure.*** Deux régimes qui ne se
+         raccordaient pas : en dessous une pénalité résiduelle qui tend vers 0, au-dessus un
+         bonus qui démarre plein.
+         ⚠️⚠️ C'est EXACTEMENT la famille corrigée le 30/07 sous le nom de « marche de midi »
+         (ft-v671 : *« +7 points d'un coup à 12 h 01 »*). Elle n'avait pas été supprimée, elle
+         avait été DÉPLACÉE à la frontière de l'effacement — et personne ne l'a mesurée depuis.
+         👉 Le bonus s'installe maintenant sur `RECUP_BONUS_RAMPE_H` heures. Les valeurs de
+         DESTINATION ne changent pas (+6 / +9 / +12 par jours calendaires) : seul le chemin pour
+         y arriver devient une pente. *On corrige le raccord, pas le barème* — l'historique ne
+         bouge que dans la fenêtre de 12 h qui suit les 48 h.
+         ⚠️ La marche de MINUIT (+3 au changement de jour) subsiste, volontairement : elle vaut
+         3 points, elle existe depuis toujours, et la traiter ici mélangerait un défaut mesuré
+         avec une amélioration discutable. */
+      else if(dCal>=2){
+        const rampe=Math.min(1,(hrs-RECUP_EFFACE_H)/RECUP_BONUS_RAMPE_H);
+        sessAdj=Math.round(Math.min(dCal,4)*3*rampe);         // 2j +6 · 3j +9 · 4j+ +12, installés en pente
+      }
     } else {
       if(dCal<=0){ sessAdj=-calcPen0(); }
       else if(dCal===1){ sessAdj=-12; }   // séance d'hier sans heure connue : alignée sur le nouveau barème
@@ -3449,14 +3522,23 @@ function projectionRecup(d){
       const ts=ls.ts||ls.id;
       const pen=_penaliteSeance(ls);
       if(ts){
-        /* La pénalité vaut `round(pen*(48−h)/48)` : elle tombe à zéro dès que ce produit passe
-           sous 0,5, donc un peu AVANT 48 h. On rend l'instant exact plutôt que « 48 h », sinon
+        /* La pénalité vaut `round(pen*(H−h)/H)` : elle tombe à zéro dès que ce produit passe
+           sous 0,5, donc un peu AVANT H. On rend l'instant exact plutôt que « 48 h », sinon
            on annoncerait une attente que le code n'applique pas. */
-        /* ⚠️ +1 MINUTE, ET CE N'EST PAS DE LA COQUETTERIE. À l'instant EXACT `48 − 24/pen`, le
+        /* ⚠️ +1 MINUTE, ET CE N'EST PAS DE LA COQUETTERIE. À l'instant EXACT `H − (H/2)/pen`, le
            produit vaut pile 0,5 — et `Math.round(0.5)` rend **1**, pas 0. Sans cette minute,
            on annoncerait la fin de la fatigue une minute avant qu'elle ne parte vraiment.
            *Un témoin l'a attrapé ; à la relecture, la formule semblait juste.* */
-        const hFin=Math.max(0,48-24/Math.max(1,pen))+1/60;
+        /* ⛔⛔ 04/09/2026 — CETTE LIGNE ÉCRIVAIT `48` ET `24` EN DUR. `RECUP_EFFACE_H` avait été
+           créée le 01/09 précisément pour qu'il n'y ait **qu'un seul propriétaire** de cette
+           durée… et ce lecteur-ci ne la lisait pas. ⭐ Le `24` n'est même pas un nombre à part :
+           c'est `H ÷ 2` (l'instant où le produit arrondi passe sous 0,5). **Les DEUX littéraux
+           dépendaient donc de la constante.** Changer `RECUP_EFFACE_H` aurait laissé la date
+           annoncée calculée sur 48 pendant que le score, lui, aurait bougé.
+           ⚠️ À H = 48 les deux expressions sont RIGOUREUSEMENT identiques : cette correction ne
+           déplace aucun score aujourd'hui. Elle ne sert qu'à ce que demain elle le fasse. */
+        const H=RECUP_EFFACE_H;
+        const hFin=Math.max(0,H-(H/2)/Math.max(1,pen))+1/60;
         const t=ts+hFin*36e5;
         if(t>now) finFat=t;
       }else{
