@@ -2227,6 +2227,47 @@ console.log('\n═══ 15. Récupération — option B : la charge cumulée �
   await c.close();
 }
 
+/* ══ 📏 LES DEUX PLAFONDS SONT GARDÉS — ET C'EST UNE DÉCISION, PAS UN OUBLI (04/09/2026) ══
+   Michel : *« vas-y pour les plafonds »*, puis, sur les chiffres : **on n'y touche ni à l'un
+   ni à l'autre**. ⛔⛔ R30 EXIGE QUE CE BLOC EXISTE : *un non-changement ne laisse aucune
+   trace*. Sans lui, le prochain qui mesure « 24 séries et 60 séries rendent le même chiffre »
+   conclura au bug — c'est le calculateur de plaques, remis en service trois mois après avoir
+   été retiré exprès.
+   ⭐ Les défauts sont RÉELS et restent écrits : le plafond de séance écrase 102 en 38, celui
+   de la FC fait compter une grippe (+20 bpm) comme un mauvais réveil (+6). Ce qui a tranché,
+   c'est la MESURE sur ses données : le premier ne lui coûte que 3 points sur 3 séances, le
+   second **zéro journée sur 60**. Et aucun candidat ne réglait le problème — sans plafond,
+   60 séries retombent à 0, la saturation revient par l'autre bout.
+   ⛔ Le témoin vise la RAISON ÉCRITE autant que la valeur : une constante qu'on retrouve à 38
+   sans savoir pourquoi finit par être « corrigée ». */
+console.log('\n═══ 16. Les deux plafonds de la récup — gardés, avec leur raison ═══');
+{
+  const src=fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8');
+  const val=(nom)=>{const m=src.match(new RegExp('const\\s+'+nom+'\\s*=\\s*(\\d+)\\s*;'));return m?+m[1]:null;};
+  t('⛔ CONTRÔLE — les deux constantes existent et sont lisibles',
+    val('RECUP_PEN_PLAFOND')!==null && val('RHR_MAX_ADJ')!==null,
+    'pénalité='+val('RECUP_PEN_PLAFOND')+' · FC='+val('RHR_MAX_ADJ'));
+  t('⭐⭐ le plafond de la pénalité reste à 38 (décision de Michel, 04/09)',
+    val('RECUP_PEN_PLAFOND')===38, String(val('RECUP_PEN_PLAFOND')));
+  t('⭐⭐ le plafond de la FC au repos reste à 8 (décision de Michel, 04/09)',
+    val('RHR_MAX_ADJ')===8, String(val('RHR_MAX_ADJ')));
+  /* ⛔⛔ CE QUI COMPTE VRAIMENT : la raison est ÉCRITE à côté. Une valeur figée sans son
+     pourquoi est une valeur qu'on contournera — c'est le mécanisme exact de R30. */
+  const raisonPen=/GARDÉ À 38[\s\S]{0,2200}?const RECUP_PEN_PLAFOND/.test(src);
+  const raisonFC =/GARDÉ À 8[\s\S]{0,2200}?const RHR_MAX_ADJ/.test(src);
+  t('⛔⛔ la raison du plafond de pénalité est écrite JUSTE AU-DESSUS de la constante', raisonPen, '');
+  t('⛔⛔ … et celle du plafond de FC aussi', raisonFC, '');
+  /* ⭐ Les deux chiffres qui ont fait la décision doivent rester dans le texte : sans eux,
+     « on a mesuré » n'est qu'une affirmation. */
+  t('⭐ la mesure qui a tranché est citée (58 journées sur 60 inchangées)',
+    /58 journées sur 60 inchangées|58 journées sur 60/.test(src), '');
+  t('⭐ … et celle de la FC aussi (ZÉRO journée changée, écart réel +4 / −3)',
+    /ZÉRO journée/.test(src) && /\+4 à −3 bpm/.test(src), '');
+  /* ⛔ Et le DÉFAUT reste nommé : on garde un plafond, on ne prétend pas qu'il est parfait. */
+  t('⛔ le défaut reste écrit, pas enterré (une grippe compte comme un mauvais réveil)',
+    /\+20 bpm/.test(src) && /102 en brut|pèse 102/.test(src), '');
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL LINÉAIRE : '+ok+' ✅ · '+ko+' ❌ ════');
