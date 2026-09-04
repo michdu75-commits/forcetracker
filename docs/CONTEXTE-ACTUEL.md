@@ -7,7 +7,10 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1119` — 🔍 **LES 2 DÉFAUTS DE LA RECHERCHE ALIMENTAIRE.**
-  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#866** sur `726ea99`, **job `deploy` success**,
+  les 7 étapes vertes à 08:44:38 UTC. ⭐ Suite : **2653/2653, 0 rouge**.
+  ⚠️ La fusion avec session-B n'a apporté que **2 fichiers de doc** (contre-audit récup),
+  aucun code — *vérifié avant de conclure qu'il n'y avait rien à re-tester.*
 - ⛔ **① la ponctuation restait collée** (`Boulgour, cuit` → RIEN, 4 cas sur 6 ; `Riz blanc, cuit`
   marchait **par coïncidence**) · ⛔ **② les mots-outils étaient exigés** (`filet de bœuf` → RIEN),
   et ça marchait **7 fois sur 8 par accident** (le « de » de « vian**de** »).
