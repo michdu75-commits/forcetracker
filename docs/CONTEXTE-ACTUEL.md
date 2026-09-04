@@ -100,8 +100,19 @@
   ne compte que des séries validées → plancher de **6**, alors que `calcCardioKcal` sait dire **351
   kcal** (45 min) contre **156** (20 min). ⚠️ *Combien 45 min de tapis doivent peser face à une
   séance de jambes est un jugement, pas une mesure — on n'invente pas l'échelle* (**R29**).
-- ⏭️ **Toujours en attente** : `node tests/milo/ab-memoire.js --go` (4 appels, ~0,25 €) — le Worker
-  est refusé par la politique réseau du conteneur, seul Michel peut le lancer.
+- ⛔⛔ **ABANDONNÉ, PAS OUBLIÉ — le test A/B mémoire (`tests/milo/ab-memoire.js`)** *(04/09/2026)*.
+  Michel : *« le test A/B je peux pas le faire »*. **C'est une impasse des deux côtés, et il faut
+  l'écrire** : le conteneur ne peut pas l'exécuter (le Worker est refusé par la politique réseau),
+  et Michel non plus — c'est un script **en ligne de commande**, sans bouton dans l'app, donc
+  injouable depuis son téléphone. 👉 ***Une tâche que personne des deux ne peut faire n'est pas
+  « en attente », elle est bloquée*** — la laisser en attente la faisait revenir à chaque bilan,
+  et coûtait une question à Michel à chaque fois pour la même réponse.
+  ⭐ **Ce qu'il faudrait pour la débloquer, écrit pour que ce soit une DÉCISION et pas un oubli**
+  (**R30**) : lui donner un bouton dans le Laboratoire Milo, comme le benchmark et le comparateur
+  Sonnet/Haiku — *tout ce qui est réellement lançable par Michel a un bouton ; ce script est le
+  seul qui n'en a pas, et c'est exactement pour ça qu'il n'a jamais tourné.*
+  ⚠️ **Ce qu'on perd en attendant** : la mesure avant/après de la **mémoire à 2 vitesses** (R34).
+  *On ne construira donc pas cette brique sur une intuition — elle attend son instrument.*
 - **Version en ligne (live) :** `ft-v1117` — 🥤 **LE PIÈGE DU COCA : IL Y EN AVAIT NEUF.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#859** sur `dd36727`, **job `deploy` success**,
   les 7 étapes vertes à 20:11:20 UTC. ⚠️ Le run est resté marqué `in_progress` plusieurs minutes
