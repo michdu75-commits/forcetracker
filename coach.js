@@ -6783,12 +6783,30 @@ function _evCopier(txt, okMsg){
 const _abJ = n => today(Date.now() - n * 86400000);
 
 /* ⚠️ 24 séances sur 10 semaines, avec des charges qui PROGRESSENT : sans progression,
-   « exploiter l'historique » n'aurait rien à exploiter — on mesurerait du bruit. */
+   « exploiter l'historique » n'aurait rien à exploiter — on mesurerait du bruit.
+
+   ⛔⛔ ET PENDANT DEUX SEMAINES ELLE FAISAIT L'INVERSE DE CE QU'ELLE ANNONÇAIT — trouvé par
+   session-A en lisant la VRAIE passe, pas le code. La phrase ci-dessus disait « qui
+   PROGRESSENT » et le barème descendait : la séance la plus RÉCENTE était la plus LÉGÈRE.
+   ⭐ Mesuré avant de corriger, et la cause est plus étroite que « le temps est inversé » :
+   les DATES étaient dans le bon sens (`i=0` = hier, conforme au tri par date décroissante de
+   `state.js`) — c'est le KG qui descendait avec le temps. La fixture contredisait même son
+   propre record (95 kg il y a 9 jours) en montrant 80 kg la veille.
+   👉 ***Une fixture qui ne fait pas ce qu'elle annonce ne rate pas le test : elle le fait
+   passer sur autre chose.*** Ici la passe restait lisible (Milo lit ce qu'on lui donne), donc
+   rien ne rougissait — c'est précisément ce qui la rendait durable.
+
+   ⛔ UN SEUL « QUAND » PAR SÉANCE (`ilYA`), et c'est la vraie leçon de structure : la date et
+   le `ts` étaient calculés séparément et allaient en sens CONTRAIRE (`ts:9000+i` montait
+   pendant que la date reculait). Inoffensif tant que `ts` n'est lu que comme identifiant
+   (`s.id||s.ts||s.date`) — *mais une fixture qui porte deux « quand » qui se contredisent
+   n'attend qu'un lecteur qui trie par le mauvais* (**R2**). */
 function _abHistoDC(){
   const s = [];
   for(let i=0;i<24;i++){
-    const kg = 80 + Math.floor(i/2.4) * 1.5;                       // 80 → 93,5
-    s.push({ ts:9000+i, date:_abJ(i*3+1), volume:8200, synced:true, duration:62,
+    const ilYA = i*3+1;                                            // jours — le SEUL « quand »
+    const kg = 93.5 - Math.floor(i/2.4) * 1.5;                     // 93,5 hier → 80 il y a 10 sem.
+    s.push({ ts:Date.now()-ilYA*86400000, date:_abJ(ilYA), volume:8200, synced:true, duration:62,
              exs:[{ name:'Développé Couché',
                     sets:Array.from({length:4},()=>({ kg:Math.round(kg/2.5)*2.5, reps:5, done:true, type:'N' })) }] });
   }

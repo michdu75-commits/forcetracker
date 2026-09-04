@@ -6,6 +6,29 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1125` — 🤝 **LES 2 SUITES DU RELAIS DE SESSION-A** (Michel :
+  *« il a fini »*, puis il choisit le relais). ⛔ **① `_abHistoDC` ne faisait pas ce qu'elle
+  annonçait** : commentaire « des charges qui PROGRESSENT », barème qui **descendait** — la séance
+  la plus récente était la plus légère (80 kg la veille) pour un record de 95 kg il y a 9 jours.
+  ⭐ Les **dates** étaient justes, c'est le **kg** qui descendait. *Une fixture qui ne fait pas ce
+  qu'elle annonce ne rate pas le test : elle le fait passer sur autre chose* — et rien ne pouvait
+  rougir, ce qui l'a rendue durable deux semaines.
+- ⭐⭐ **② AB-2 promu au banc d'essai (EV-056)** — il vient de la passe RÉELLE : avec la mémoire
+  Milo retire toute presse au-dessus de la tête, sans elle le militaire à 80 kg devient l'**ancre**
+  (**4 séries de poussée contre 9**). Vérifiable par du code → **gratuit à chaque passe** au lieu
+  d'un test manuel à 0,26 €.
+- ⛔⛔ **③ ET LA PROMOTION A TROUVÉ QUE `EV-050` NE TESTAIT PAS CE QU'IL ANNONÇAIT** : sa fixture
+  écrivait `{zone:'épaule droite', etat:'actif'}`, **deux champs qui n'existent pas** (l'app écrit
+  `status` et des **codes** de zone). Mesuré : la zone restait **inactive**, et le scénario passait
+  grâce à ses `notes` en texte libre — la blessure **structurée** était inerte (`BUGS.md` §36).
+  ⛔ **La production n'a jamais été touchée**, vérifié avant de rien changer : les codes réels de
+  l'écran Santé activent tous la zone.
+- ⚠️⚠️ **④ J'ai collisionné un id en écrivant ce travail** (EV-055 était déjà pris, rangé hors
+  séquence) et **rien n'a protesté** — or le rapport suit les scénarios **par id**. Renuméroté
+  EV-056, garde-fou posé : *il aurait coûté une seconde, c'est le genre qu'on n'écrit que le jour
+  où on tombe dedans* (R17).
+- ⛔ **Contrôle négatif : 4 rouges** sur l'ancien code. Suite : **2712/2712**, calculs 298/298,
+  **0 rouge**. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 - **Version en ligne (live) :** `ft-v1124` — ⚡ **« CETTE SÉANCE TE CONVIENT ? » NE S'AFFICHE PLUS
   SOUS UN REPROCHE.** Michel, enregistrement d'écran à l'appui : il écrit *« pourquoi tu me donnes
   la séance à faire ? »* et l'app propose **« ⚡ Oui, on démarre »** sous une réponse de Milo qui dit
