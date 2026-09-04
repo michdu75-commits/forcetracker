@@ -461,7 +461,7 @@ const NEW_FEATURES=[
   /* 🏃 POINT ROUGE (règle d'or #11) : deux libellés changent sur l'écran le plus utilisé de
      l'app, et l'un d'eux change aussi de COULEUR (le rouge est réservé au bouton qui enregistre
      vraiment). Quelqu'un qui note son cardio tous les jours cherchera son bouton. */
-  {id:'cardio-enregistre', screen:'log', desc:'🏃 <b>Ton cardio ne se perd plus.</b> Dans le bloc Cardio, le bouton s\'appelle maintenant <b>« ✓ C\'est noté »</b> : il <b>note</b> ton cardio, il ne l\'enregistre pas. C\'est le <b>bouton rouge du bas</b> qui inscrit la séance dans ton historique. ⚠️ Et si tu repasses par l\'Accueil, il affiche désormais <b>« ↩ Reprendre la séance »</b> — avant, le bouton rouge repartait de zéro et le cardio noté disparaissait.'},
+  {id:'cardio-enregistre', screen:'log', desc:'🏃 <b>Ton cardio ne se perd plus.</b> Dans le bloc Cardio, le bouton s\'appelle maintenant <b>« ✓ C\'est noté »</b> : il <b>note</b> ton cardio, il ne l\'enregistre pas. C\'est le <b>bouton rouge du bas</b> qui inscrit la séance dans ton historique. ⚠️ Et si tu repasses par l\'Accueil, il affiche désormais <b>« ↩ Reprendre la séance »</b> — avant, le bouton rouge repartait de zéro et le cardio noté disparaissait.<br><br>📈 <b>Et dans ton historique</b>, une séance de cardio seul s\'appelle désormais <b>« 🏃 Cardio »</b> et dit ce que c\'était (« Tapis 45 min (Modéré) ») — au lieu d\'un titre vide et d\'un « 0 kg » qui ressemblait à une séance ratée.'},
   /* 🥤 POINT ROUGE (règle d'or #11) : des dizaines de boissons qui ne rendaient RIEN en rendent
      une, et **un chiffre change** chez qui note ses sodas light. ⛔ Mais rien n'est à faire et
      aucun repère n'a bougé : c'est une CORRECTION, pas un basculement — les valeurs d'avant

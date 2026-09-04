@@ -22,6 +22,12 @@
 - ⭐ **Cinq endroits** lisaient « des exercices » là où la question est « une séance ouverte ».
   `_seanceOuverte()` y répondait **depuis le 02/08** : il n'a pas fallu écrire une règle, seulement
   la lire (**R2**). C'est **R8** — les jumelles étaient à chercher le 02/08, pas six semaines après.
+- ⭐⭐ **Sa question suivante — « pourquoi le cardio n'apparaît pas dans mon historique ? » — a trouvé
+  la même famille un cran plus loin.** Mesuré : **il y EST**, mais affiché *« 💪 jeu. 3 sept. · **0 kg**
+  · 45 min · 351 kcal · **—** »*. *Techniquement présent, humainement introuvable.* → titre **« 🏃 Cardio »**,
+  le cardio en clair sous la ligne, « 0 kg » retiré **de ce cas seulement**. ⭐ Le calendrier et le compteur
+  du mois, eux, marchaient **déjà** (vérifié, pas supposé). Et la clé technique sortait à l'écran
+  (« modere ») → `CARDIO_INTENSITES`, un seul propriétaire (**R2**).
 - ⏭️ **EN ATTENTE DE MICHEL — le barème de récup du cardio.** Mesuré à nuits identiques : aucune
   séance **76** · 45 min de tapis **71** · 20 min **71** · 4 séries de DC **70**. `_penaliteSeance`
   ne compte que des séries validées → plancher de **6**, alors que `calcCardioKcal` sait dire **351

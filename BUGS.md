@@ -2264,6 +2264,8 @@ vaut `(7−f)/7`, donc **plus `f` est petit, plus la prescription est agressive*
 le plus récent, celui dont on sait le moins, recevait l'écart le plus grand* — 52 g de lipides
 un jour de séance pour un plancher à 50,4.
 
+**⚠️ La dernière ligne est la plus sournoise des six** : le cas n'est pas *absent*, il est **présent et méconnaissable**. Le titre venait du muscle le plus travaillé (il n'y en a aucun), la ligne du bas des noms d'exercices (il n'y en a aucun), la figurine des scores musculaires (tous nuls). Rien n'est faux ; tout est vide. 👉 ***Une ligne qui n'a rien à dire ne doit pas se taire à la place prévue pour parler : elle doit nommer ce que la chose EST.***
+
 ### 🔍 À quoi on la reconnaît
 - un dénominateur **constant** (`wk.length`, `30`, `4`) à côté d'un numérateur qui, lui, dépend
   de ce que la personne a fait ;
@@ -2552,8 +2554,9 @@ donc déduit *« il n'y a rien »* :
 | le message d'ouverture | rien du tout en rouvrant l'app |
 | le brouillon de secours | aucune copie de sauvegarde |
 | `_penaliteSeance()` (récup) | 45 min de tapis = le **plancher**, autant que 4 séries d'abdos |
+| la liste de l'historique | *« 💪 jeu. 3 sept. · **0 kg** · 45 min · 351 kcal · **—** »* — présent, mais illisible |
 
-**⛔⛔ Et le pire est qu'AUCUN de ces cinq n'est un bug isolé** : chacun est parfaitement correct
+**⛔⛔ Et le pire est qu'AUCUN de ces six n'est un bug isolé** : chacun est parfaitement correct
 pour le cas courant. C'est la **définition partagée** qui manquait — et elle existait déjà :
 `_seanceOuverte()` (log.js) répond depuis le 02/08 *« démarrée, ou avec des exercices, ou avec un
 cardio noté »*. **Il n'a pas fallu écrire une règle, seulement la lire** (R2).
