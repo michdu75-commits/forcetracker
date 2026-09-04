@@ -6,6 +6,31 @@
 
 ---
 
+- ✅✅ **SAFARI / IPHONE VÉRIFIÉ PAR MICHEL le 04/09** — ft-v1114 → ft-v1120, **tout est bon**.
+  ⭐ **Le point qui comptait vraiment : la bande « REPAS » en `position:sticky` TIENT sur Safari
+  iOS.** C'était le seul vrai risque de la série — les règles du projet listent `position:sticky`
+  dans un conteneur de défilement comme un piège Safari connu, et il n'avait jamais été levé
+  depuis ft-v1109. ⭐ Vérifiés aussi : le clavier décimal du champ pour-100 g accepte la
+  **virgule**, les nouveaux produits sortent avec leur portion, `coca zero` rend bien la ligne à
+  **1 kcal** et non celle à 24, la pop-up v68 et le point rouge s'affichent.
+  ⚠️ *La mention « Safari non vérifié » traînait dans six entrées de journal : elle est levée pour
+  cette série, pas pour les suivantes.*
+- **Version en ligne (live) :** `ft-v1121` — 🌮 **O'TACOS SORT DE LA BASE** (128 → 123).
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#873** sur `f26b072`, **job `deploy` success**,
+  les 7 étapes vertes à 16:40:45 UTC. ⭐ Suite : **2682/2682, 0 rouge**.
+  ⚠️ *Le chiffre annoncé dans l'entrée était d'abord une **prédiction** (2679) : il a été remplacé
+  par la mesure. Un total de tests écrit avant la passe n'est pas un résultat.*
+- ⛔ Ses 5 lignes étaient **toutes des desserts**, **aucun tacos** → `tacos` rendait une **glace**.
+  👉 *Un mot qui ne désigne pas ce qu'on croit est pire qu'un mot qui ne rend rien.*
+- ⭐⭐ **Ça rétablit une décision déjà prise** : en ft-v1113, `tacos` n'était **pas** mappé, exprès.
+  *La base de marques contredisait cette décision sans qu'on l'ait voulu, et aucun témoin ne
+  pouvait le voir — il surveillait `_ciqualChercher`, pas `_marquesChercher`.*
+- ⛔ **Ce n'est PAS la règle « il faut tout mettre » qu'on contredit** : celle-là visait des valeurs
+  douteuses mais RÉELLES. Ici les chiffres sont justes — *c'est la question à laquelle ils
+  répondent qui est fausse.*
+- ⛔ **R30** : retrait déclaré dans le générateur avec sa raison, figé par 2 témoins.
+- ⚠️ **L'aide de la veille est devenue fausse** (« taper tacos te rendra une glace ») — corrigée
+  dans le même mouvement, **3ᵉ cas §31 de la série**.
 - **Version en ligne (live) :** `ft-v1120` — 🍔 **LA BASE FAST-FOOD : 27 → 128 PRODUITS.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#870** sur `3df7411`, **job `deploy` success**,
   les 7 étapes vertes à 13:12:02 UTC. ⭐ Suite : **2672/2672, 0 rouge**.

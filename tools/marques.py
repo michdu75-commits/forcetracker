@@ -153,9 +153,30 @@ def main():
             if r and r[0]:
                 remarques[str(r[0])] = {'source': str(r[2] or ''), 'remarque': str(r[3] or '')}
 
+    # ⛔⛔ ENSEIGNES ÉCARTÉES — décision de Michel, avec sa raison (R30 : un retrait s'écrit,
+    #    sinon il redevient un bug et quelqu'un le « répare » dans six mois).
+    #    🌮 O'TACOS (04/09/2026) — Michel : *« vire-les »*. Le classeur n'en garde que 5 lignes,
+    #    et ce sont **toutes des desserts** : Mix glace, Milkshake, Chantilly, deux Kinder Bueno.
+    #    ⛔⛔ **Aucun tacos.** Taper « tacos » rendait donc une GLACE — un mot qui ne désigne pas
+    #    ce qu'on croit, ce qui est pire qu'un mot qui ne rend rien.
+    #    ⭐ ET ÇA RÉTABLIT UNE DÉCISION DÉJÀ PRISE : en ft-v1113, `tacos` n'a délibérément PAS été
+    #    mappé dans la table nationale — *« il n'est pas dans la table, et on ne sert pas un kebab
+    #    à sa place »*. La base de marques contredisait cette décision sans qu'on l'ait voulu.
+    #    ⚠️ La source elle-même met en garde : « ne pas présenter cette table comme une table
+    #    France 2026 ». On ne jette pas des valeurs fausses — on jette des valeurs JUSTES qui
+    #    répondent à la mauvaise question.
+    ENSEIGNES_ECARTEES = {
+        "O'Tacos": "5 desserts et aucun tacos — « tacos » rendait une glace (décision Michel, 04/09)",
+    }
+
     ecartes = defaultdict(list)
     lignes = []
     for x in brut:
+        _ens = str(x.get('Enseigne') or '').strip()
+        if _ens in ENSEIGNES_ECARTEES:
+            ecartes['enseigne écartée'].append('%s · %s — %s'
+                % (_ens, str(x.get('Produit') or '')[:30], ENSEIGNES_ECARTEES[_ens]))
+            continue
         nom = str(x.get('Produit') or '').strip()
         ens = str(x.get('Enseigne') or '').strip()
         k = nombre(x.get('kcal portion'))

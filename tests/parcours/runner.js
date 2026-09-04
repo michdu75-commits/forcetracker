@@ -25772,6 +25772,82 @@ console.log('\n-- CCXXIX. La base fast-food passe de 27 à 128 (ft-v1120) --');
   }
 }
 
+/* ═══ CCXXX. O'TACOS SORT DE LA BASE, ET LE RETRAIT EST FIGÉ (ft-v1121) ═════════════════════
+   Décision de Michel : *« vire-les »*. Ses 5 lignes gardées étaient **toutes des desserts** —
+   Mix glace, Milkshake, Chantilly, deux Kinder Bueno — et **aucun tacos**. Taper « tacos »
+   rendait donc une **glace**. 👉 ***Un mot qui ne désigne pas ce qu'on croit est pire qu'un mot
+   qui ne rend rien.***
+   ⭐⭐ ET ÇA RÉTABLIT UNE DÉCISION DÉJÀ PRISE : en ft-v1113, `tacos` n'avait délibérément PAS été
+   mappé dans la table nationale — *« il n'est pas dans la table, et on ne sert pas un kebab à sa
+   place »*. La base de marques contredisait cette décision **sans qu'on l'ait voulu**.
+   ⛔ R30 : UN RETRAIT SE FIGE PAR UN TEST, sinon il redevient un bug — quelqu'un les remettra en
+   croyant réparer un oubli. *C'est arrivé au calculateur de plaques, trois mois après.*
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXX. O\'Tacos sort de la base, et le retrait est figé (ft-v1121) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    const t=await _marquesCharger(); await _ciqualCharger(); await _aliasCharger();
+    const marq=q=>(_marquesChercher(q,3)||[]).map(i=>_marques.a[i][1]+' · '+_marques.a[i][0]);
+    const ciq=q=>(_ciqualChercher(q,3)||[]).map(x=>x[1]);
+    const o={total:t?t.a.length:0, ens:{}};
+    t.a.forEach(a=>{ o.ens[a[0]]=(o.ens[a[0]]||0)+1; });
+    o.tacosMarq=marq('tacos'); o.otacosMarq=marq('otacos'); o.tacosCiq=ciq('tacos');
+    o.glace=marq('mix glace'); o.kinder=marq('kinder bueno');
+    /* ⛔ NON-RÉGRESSION : les autres enseignes ne bougent pas */
+    o.bigmac=marq('big mac'); o.frite=marq('grande frite mcdo'); o.quick=marq('mega giant');
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXX n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ CONTRÔLE — la base est chargée, sinon « O'Tacos absent » serait vrai sur du vide. */
+    t('⛔ CONTRÔLE — la base d\'enseignes est chargée et répond',
+      R.total>=110 && R.bigmac.length>0, R.total+' produits · '+JSON.stringify(R.ens));
+    /* ⭐⭐ LE RETRAIT LUI-MÊME. */
+    t('⭐⭐ O\'Tacos n\'est PLUS dans la base (5 desserts, aucun tacos — décision Michel)',
+      !R.ens["O'Tacos"], JSON.stringify(R.ens));
+    /* ⭐⭐ ET SON EFFET, QUI EST LA VRAIE RAISON DU RETRAIT : « tacos » ne rend plus une glace. */
+    t('⭐⭐ « tacos » ne rend plus une GLACE — ni dans les marques, ni dans les aliments',
+      R.tacosMarq.length===0 && R.tacosCiq.length===0 && R.otacosMarq.length===0,
+      'marques : '+R.tacosMarq.join(' · ')+' | aliments : '+R.tacosCiq.join(' · '));
+    /* ⛔ Les desserts eux-mêmes sont partis, pas seulement le mot qui y menait. */
+    t('⛔ … et les desserts sont vraiment partis (mix glace, kinder bueno)',
+      R.glace.length===0 && R.kinder.length===0, R.glace.concat(R.kinder).join(' · '));
+    /* ⛔ NON-RÉGRESSION : on a retiré une enseigne, pas cassé les autres. */
+    t('⛔ NON-RÉGRESSION — Big Mac, frites McDo et Quick répondent toujours',
+      /Big Mac/.test(R.bigmac[0]||'') && /[Ff]rite/.test(R.frite[0]||'') && /Giant/.test(R.quick[0]||''),
+      [R.bigmac[0],R.frite[0],R.quick[0]].join(' | ').slice(0,80));
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+  /* ⛔⛔ R30 — LE RETRAIT EST ÉCRIT AVEC SA RAISON, ET C'EST CE TÉMOIN QUI EMPÊCHE QU'ON LE
+     « RÉPARE » DANS SIX MOIS. Un retrait volontaire ne laisse qu'une absence, et une absence
+     ressemble exactement à un oubli. */
+  {
+    const py=fs.readFileSync(path.join(ROOT,'tools','marques.py'),'utf8');
+    t('⛔⛔ R30 — le retrait est DÉCLARÉ dans le générateur, pas juste absent du résultat',
+      /ENSEIGNES_ECARTEES\s*=\s*\{/.test(py) && /O'Tacos/.test(py), '');
+    t('⛔ … et sa RAISON est écrite (aucun tacos, décision de Michel)',
+      /aucun tacos/i.test(py) && /d[ée]cision Michel/i.test(py), '');
+  }
+  /* ⛔⛔ ET L'AIDE NE PROMET PLUS CE QUI N'EST PLUS VRAI : elle disait « taper tacos te rendra une
+     glace ». 3ᵉ cas de la série — *une aide qui nomme un repère inexistant est pire qu'une aide
+     absente, parce qu'on la croit.* */
+  {
+    const sc=fs.readFileSync(path.join(ROOT,'screens.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
+    const co=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
+    t('⛔ CONTRÔLE — l\'aide parle bien d\'O\'Tacos (sinon le témoin suivant serait vert sur du vide)',
+      /O\\?'Tacos/.test(sc) && /O\\?'Tacos/.test(co), '');
+    t('⛔⛔ l\'aide ne dit PLUS que « tacos » rend une glace (c\'est devenu faux)',
+      !/te rendra donc une glace/.test(sc) && !/te rendra une glace/.test(co), '');
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
