@@ -2034,8 +2034,33 @@ function _demandeUneSeance(txt){
   try{
     const t=String(txt||'');
     if(!t) return false;
+    /* ⚠️⚠️ ON TESTE LES EXCLUSIONS SUR UNE COPIE SANS ACCENTS, ET CE N'EST PAS UN DÉTAIL.
+       Mon 1ᵉʳ jet écrivait \b[ée]tait\b. Mesuré : **il ne matche jamais.** En JavaScript,
+       \b est ASCII — « é » n'est pas un caractère de mot, donc il n'y a AUCUNE frontière
+       entre l'espace et le « é » de « était », ni après le « é » de « été ». Deux des trois
+       phrases que le garde devait attraper passaient encore. *Une expression régulière qui a
+       l'air juste et qui ne mord jamais est pire qu'une absence de garde : on la croit posée.* */
+    const p=t.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    /* ⛔⛔ 04/09/2026 — ON PARLE D'UNE SÉANCE, ON N'EN DEMANDE PAS UNE. Michel, vidéo à
+       l'appui : il écrit *« Oui mais pourquoi tu me donnes la séance à faire ? »* — un
+       REPROCHE — et l'app affiche « Cette séance te convient ? · ⚡ Oui, on démarre » **sous
+       une réponse de Milo qui dit le contraire** (« c'est pas le bon moment, t'as fini ta
+       séance, on est en débrief »).
+       ⭐⭐ MESURÉ, ET SON CAS N'ÉTAIT PAS ISOLÉ : *« la séance était trop longue »*,
+       *« pourquoi ma séance ne compte pas ? »*, *« je viens de finir ma séance »* déclenchaient
+       aussi la carte. ***Trois phrases qui sont l'exact contraire d'une demande.***
+       Le commentaire au-dessus de cette fonction prévoyait le risque en toutes lettres.
+       ⛔ DEUX NIVEAUX, ET LA FRONTIÈRE EST MESURÉE :
+       ① LE PASSÉ TUE TOUT, même la règle à verbe — parce que  attrape aussi bien
+          l'impératif « fais-moi » que le participe « j'ai FAIT ma séance ». Sans ce niveau,
+          *« j'ai fait ma séance ce matin »* déclenchait encore : même mot, sens inverse.
+       ② LES MARQUEURS AMBIGUS ne tuent que les règles SANS verbe. « pourquoi » en fait partie :
+          *« pourquoi tu ne me fais pas une séance jambes ? »* EST une demande. */
+    if(/\bai\s+fait\b|\bje\s+viens\s+de\b|\betait\b|\ba\s+ete\b|\bfini[es]?\b/i.test(p)) return false;
     // ① un verbe de demande suivi, dans la même phrase, du mot séance / entraînement / programme
     if(/\b(fai[st]|donne|propose|pr[ée]pare|cr[ée]e|construis|monte|[ée]cris|lance|balance|envoie|g[ée]n[èe]re)\b[^.?!\n]{0,40}\b(s[ée]ance|entra[îi]nement|programme|prog)\b/i.test(t)) return true;
+    // ⛔ niveau AMBIGU : après la règle ①, il ne tue que ce qui suit (les règles sans verbe)
+    if(/\bpourquoi\b(?!\s+pas\b)|\bne\s+compte\s+pas\b|\bdebrief/i.test(p)) return false;
     // ② une séance nommée comme celle qu'on va faire (« une séance », « ma séance du jour »…)
     if(/\b(une|ma|la|nouvelle|prochaine|autre|petite|bonne)\s+s[ée]ance\b/i.test(t)) return true;
     if(/\bs[ée]ance\s+(du\s+jour|d'aujourd|de\s+ce\s+soir|de\s+ce\s+matin|pour\s+)/i.test(t)) return true;

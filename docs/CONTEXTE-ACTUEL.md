@@ -15,7 +15,33 @@
   **1 kcal** et non celle à 24, la pop-up v68 et le point rouge s'affichent.
   ⚠️ *La mention « Safari non vérifié » traînait dans six entrées de journal : elle est levée pour
   cette série, pas pour les suivantes.*
-- **Version en ligne (live) :** `ft-v1121` — 🌮 **O'TACOS SORT DE LA BASE** (128 → 123).
+- **Version en ligne (live) :** `ft-v1123` — ⚡ **« CETTE SÉANCE TE CONVIENT ? » NE S'AFFICHE PLUS
+  SOUS UN REPROCHE.** Michel, enregistrement d'écran à l'appui : il écrit *« pourquoi tu me donnes
+  la séance à faire ? »* et l'app propose **« ⚡ Oui, on démarre »** sous une réponse de Milo qui dit
+  le contraire.
+- ⛔ **La cause n'est PAS Milo** : la carte est posée par un filet déterministe du code
+  (`_demandeUneSeance`), dont la règle ② acceptait n'importe quel « la/ma séance » **sans verbe de
+  demande**. *Durcir le prompt aurait été corriger le mauvais cerveau (R7).*
+- ⭐⭐ **Mesuré avant de coder : sur six phrases, QUATRE déclenchaient à tort** — dont trois qui sont
+  l'exact contraire d'une demande (« était trop longue », « ne compte pas », « je viens de finir »).
+- ⚠️⚠️ **ET MON PREMIER JET NE MORDAIT PAS** : `\b[é]tait\b` — **`\b` est ASCII en JavaScript**,
+  il n'y a aucune frontière entre l'espace et le « é ». *Une expression régulière qui a l'air juste
+  et qui ne mord jamais est pire qu'une absence de garde : on la croit posée.* On teste désormais
+  sur une copie sans accents.
+- ⛔ **Trous connus épinglés, non corrigés (R30)** : « on fait quoi ce soir » et « on s entraîne
+  quoi » **sans apostrophe** ne déclenchent pas — ratés **pré-existants**, sans rapport avec ce
+  correctif qui ne fait que **retirer** des déclenchements.
+- **Version précédente :** `ft-v1122` — 🔋 **LE CARDIO ENTRE ENFIN DANS LA RÉCUPÉRATION** (option A
+  du contre-audit, tranchée par Michel sur les chiffres : ancrage 45 min modéré = **6 séries**,
+  plancher **2**, rampe **12 h**, `projectionRecup` remis sur `RECUP_EFFACE_H`).
+  ⚠️⚠️ **Cette version est partie en prod SANS entrée de journal — R23, entrée écrite après coup le
+  04/09.** *La note de `sw.js` était complète ; c'est le fichier qu'on relit à chaque session qui ne
+  l'était pas.*
+  ⭐⭐ **Rejeu des 60 derniers jours sur les vraies données de Michel** : 27 jours inchangés, 33
+  changés, **tous vers le bas**, moyenne **−2,0**, max **−6**, aucune journée absurde.
+  ⏭️ **B et C restent entiers** (consigne de Michel : *« ne commence PAS B ou C dans le même
+  commit »*).
+- **Version antérieure :** `ft-v1121` — 🌮 **O'TACOS SORT DE LA BASE** (128 → 123).
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#873** sur `f26b072`, **job `deploy` success**,
   les 7 étapes vertes à 16:40:45 UTC. ⭐ Suite : **2682/2682, 0 rouge**.
   ⚠️ *Le chiffre annoncé dans l'entrée était d'abord une **prédiction** (2679) : il a été remplacé

@@ -2050,6 +2050,66 @@ console.log('\n═══ 13. R2 — un seul propriétaire de la durée d\'efface
     (sansCom.match(/[^\n]*\b(48|24)\b[^\n]*/g)||[]).join(' | ').slice(0,140));
 }
 
+/* ══ ⚡ « CETTE SÉANCE TE CONVIENT ? » NE S'AFFICHE PLUS SOUS UN REPROCHE (ft-v1123) ═══
+   Michel, enregistrement d'écran à l'appui : il écrit *« Oui mais pourquoi tu me donnes la
+   séance à faire ? »* et l'app lui propose « ⚡ Oui, on démarre » **sous une réponse de Milo
+   qui dit le contraire** (« c'est pas le bon moment, t'as fini ta séance, on est en débrief »).
+   ⭐⭐ MESURÉ AVANT DE TOUCHER AU CODE, et son cas n'était pas isolé : sur six phrases, QUATRE
+   déclenchaient la carte à tort — dont trois qui sont l'exact contraire d'une demande.
+   ⛔ Ce bloc tient les DEUX populations : ce qui doit continuer de déclencher, et ce qui ne
+   doit plus. Un garde qui ne mesure que les faux positifs finit par tout refuser. */
+console.log('\n═══ 14. « Cette séance te convient ? » — demande ou commentaire ═══');
+{
+  const {c,p,errs}=await boot(null,{ft4_name:'T',ft4_ob2:'1'});
+  const R=await p.evaluate(()=>{
+    if(typeof _demandeUneSeance!=='function') return {absente:true};
+    const j=t=>_demandeUneSeance(t);
+    return {absente:false,
+      /* ⚡ DE VRAIES DEMANDES — elles doivent toutes rester vraies */
+      oui:[ 'fais moi une séance jambes', 'prépare-moi une séance haut du corps',
+            'une séance jambes stp', 'ma séance du jour ?', 'je fais quoi aujourd hui ?',
+            'donne moi une séance pour ce soir',
+            'pourquoi pas une séance jambes ?',
+            'pourquoi tu ne me fais pas une séance jambes ?' ].map(t=>[t,j(t)]),
+      /* — DES COMMENTAIRES — aucune ne doit déclencher la carte */
+      non:[ 'Oui mais pourquoi tu me donnes la séance à faire ?',
+            'la séance était trop longue', 'pourquoi ma séance ne compte pas ?',
+            'je viens de finir ma séance', 'ma séance a été dure',
+            'on est en débrief de ma séance', "j'ai fait ma séance ce matin",
+            'j ai fait ma séance ce matin',
+            'Et le squat, tu le mets après le Hip Thrust' ].map(t=>[t,j(t)]),
+      /* ⚠️ TROUS CONNUS, ÉPINGLÉS : deux formulations manquent l'apostrophe ou le « fait ».
+         Ce sont des RATÉS (la carte ne s'affiche pas alors qu'elle devrait), pré-existants et
+         SANS rapport avec ce correctif — qui, lui, ne fait que RETIRER des déclenchements.
+         On les fige avec leur raison pour qu'ils ne se reperdent pas (R30). */
+      trous:[ 'on fait quoi ce soir', 'on s entraîne quoi demain ?' ].map(t=>[t,j(t)])
+    };
+  });
+  if(R.absente) t('⛔ la fonction du filet existe', false, 'fonction absente');
+  else{
+    /* ⛔ CONTRÔLE : les deux populations sont non vides, sinon « tout est conforme » ne dit rien. */
+    t('⛔ CONTRÔLE — les deux populations existent (8 demandes, 9 commentaires)',
+      R.oui.length===8 && R.non.length===9, R.oui.length+' / '+R.non.length);
+    t('⭐⭐ le cas de Michel ne déclenche plus la carte (« pourquoi tu me donnes la séance à faire ? »)',
+      R.non[0][1]===false, JSON.stringify(R.non[0]));
+    t('⭐⭐ … ni les trois autres commentaires mesurés (était trop longue · ne compte pas · viens de finir)',
+      R.non[1][1]===false && R.non[2][1]===false && R.non[3][1]===false,
+      JSON.stringify(R.non.slice(1,4)));
+    t('⛔⛔ AUCUN commentaire ne déclenche la carte',
+      R.non.every(x=>x[1]===false), JSON.stringify(R.non.filter(x=>x[1])));
+    /* ⛔⛔ LE TÉMOIN QUI EMPÊCHE LE CORRECTIF D'ÊTRE « TOUT REFUSER ». */
+    t('⛔⛔ NON-RÉGRESSION — les 8 vraies demandes déclenchent TOUJOURS la carte',
+      R.oui.every(x=>x[1]===true), JSON.stringify(R.oui.filter(x=>!x[1])));
+    /* ⭐ Le cas limite qui distingue une exclusion fine d'une exclusion brutale. */
+    t('⭐ « pourquoi » n\'interdit pas une demande (« pourquoi tu ne me fais pas une séance ? »)',
+      R.oui[6][1]===true && R.oui[7][1]===true, JSON.stringify(R.oui.slice(6)));
+    t('⚠️ TROUS CONNUS — « on fait quoi » et « on s entraîne » (sans apostrophe) ne déclenchent pas',
+      R.trous.every(x=>x[1]===false), JSON.stringify(R.trous));
+    t('0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+  await c.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL LINÉAIRE : '+ok+' ✅ · '+ko+' ❌ ════');
