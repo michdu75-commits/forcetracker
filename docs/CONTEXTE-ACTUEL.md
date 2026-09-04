@@ -6,6 +6,26 @@
 
 ---
 
+- 💶 **LE COÛT D'UN MESSAGE À MILO, REMESURÉ le 04/09** (question de Michel : *« lire la
+  nutrition ne va pas me faire gonfler la facture ? »* puis *« combien coûte un message »*).
+  **Détail complet : `docs/BRIEFING-GPT-COUT-IA.md` §6.** En bref : **2,4 centimes** par message
+  quand le cache est chaud, **16,5** pour le premier d'une conversation.
+- ⭐⭐ **Le contexte a grossi de 35 % en un mois** (58 470 → **78 881** car.) **mais la répartition
+  s'est AMÉLIORÉE** : le bloc jamais cachable — celui payé plein tarif à chaque message — est passé
+  de **17 527 à 4 010** caractères. *Un contexte plus gros peut coûter moins cher qu'un plus petit
+  mal découpé.*
+- ⛔⛔ **Le piège à retenir** : le 1ᵉʳ message coûte **PLUS cher que sans cache** (16,5 contre 10,3)
+  — *écrire un cache d'1 h se paie ×2*. **Le cache ne rapporte que s'il est RELU.**
+- ⚠️⚠️ **Et j'ai annoncé deux chiffres faux avant de relire ce document** (8,5 / 1,9 centimes) :
+  j'avais pris le tarif du cache 5 min pour le cache 1 h, et le ratio caractères/jeton de l'anglais
+  pour un texte bourré d'emoji (**+53 % de jetons**). *Les deux constantes justes étaient à quinze
+  lignes l'une de l'autre dans le fichier que je n'avais pas ouvert* (**R23**).
+  👉 ***Le chiffre le plus dangereux n'est pas celui qu'on ignore, c'est celui qu'on calcule avec
+  la mauvaise constante : il a l'air d'une mesure.***
+- 🍽️ **La nutrition n'est PAS un sujet de facture** : 890 car. (**1,2 %**), **plafonnés à 7 jours en
+  dur** — trois ans de repas notés n'ajoutent pas une ligne. **20 à 80 centimes sur mille messages.**
+  ⭐ Et Milo reçoit bien la nutrition depuis ft-v1014 : les **totaux par jour**, jamais les noms
+  d'aliments (13 126 car. bruts → 890, **59× moins**), plus ses cibles (TDEE, kcal, macros).
 - 🛣️ **LES DEUX COULOIRS, rappelés par Michel le 04/09** : *« il ne faut pas que ça fasse obstacle
   à l'autre Claude, au départ je t'avais rajouté pour la **nutrition** »*. ⭐ **Le rappel était
   mérité et il est mesurable** : sur mes 8 versions du jour, **6 en nutrition** et **2 hors couloir**
