@@ -56,6 +56,14 @@
   quoi » **sans apostrophe** ne déclenchent pas — ratés **pré-existants**, sans rapport avec ce
   correctif qui ne fait que **retirer** des déclenchements.
 
+- **Version en ligne (live) :** `ft-v1126` — 💰 **« COÛT RÉEL DU JOUR » DIT DE QUEL JOUR.**
+  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18). Michel : *« on ne sait pas si c'est dans la journée
+  ou depuis 1 mois »*. Le titre disait « du jour » — **exact**, mais rien ne le prouvait à l'écran.
+  👉 *Un chiffre sans sa période n'est pas un chiffre, c'est une impression.*
+  ⭐ **Rien à construire (R5)** : `_aiUsageLire_` renvoyait déjà `u.date`, l'app la jetait.
+  ⚠️⚠️ **Piège évité** : `_dateLisible` est **locale à `coach.js`** — l'appeler depuis `app.js`
+  aurait fait disparaître **tout le panneau Santé** (le `_esc` de ft-v1114). *Vérifié avant
+  d'écrire l'appel.* ⭐ Suite : **parcours 2720/2720**, calculs 298/298, 0 rouge.
 - 💶 **LE COÛT D'UN MESSAGE À MILO, REMESURÉ le 04/09** (question de Michel : *« lire la
   nutrition ne va pas me faire gonfler la facture ? »* puis *« combien coûte un message »*).
   **Détail complet : `docs/BRIEFING-GPT-COUT-IA.md` §6.** En bref : **2,4 centimes** par message
