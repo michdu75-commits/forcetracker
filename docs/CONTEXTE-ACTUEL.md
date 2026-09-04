@@ -7,7 +7,8 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1128` — 👥 **« ANON » N'EST PAS QUELQU'UN.**
-  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18). Michel : *« c'est qui anon ? il faut que je sache
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#894** sur `918ccd8`, **job `deploy` success**,
+  les 7 étapes vertes à 23:11:32 UTC. Michel : *« c'est qui anon ? il faut que je sache
   qui utilise Milo »*. ⭐⭐ **Arithmétique exacte** : 25 appels = `michdu75` 16 + `anon` 9, et les
   9 = **5 `seanceJson`** + **4 de la passe A/B**. *Les deux étaient lui* → l'écran disait
   « 2 personnes » pour une seule.
