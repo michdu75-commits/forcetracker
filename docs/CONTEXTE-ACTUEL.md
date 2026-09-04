@@ -7,7 +7,8 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1120` — 🍔 **LA BASE FAST-FOOD : 27 → 128 PRODUITS.**
-  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#870** sur `3df7411`, **job `deploy` success**,
+  les 7 étapes vertes à 13:12:02 UTC. ⭐ Suite : **2672/2672, 0 rouge**.
 - ⭐ **Aller-retour : 0 écart sur 116 vérifiés**, et le Big Mac tombe au chiffre près sur
   l'ancienne table — même source, étendue. *La preuve valait mieux que la confiance : le nom du
   fichier n'était pas celui de la V1.*
