@@ -90,6 +90,43 @@ def famille_de(nom):
     return re.sub(r'\s+', ' ', n).strip()
 
 
+# ⛔⛔ LES 15 PRODUITS HÉRITÉS D'UNE SOURCE PERDUE (04/09/2026) ═══════════════════════════════
+#   Michel a renvoyé le classeur en **version 2** — 114 produits au lieu de 27, avec Subway et
+#   O'Tacos. Aller-retour vérifié : **0 écart sur 114**, et le Big Mac tombe au chiffre près sur
+#   l'ancienne table : c'est bien la même source, étendue.
+#   ⛔⛔ MAIS LA V2 SEULE FERAIT PERDRE **TOUTES LES FRITES**. Dans ce classeur, les frites de
+#   McDonald's, Burger King, KFC et Quick n'ont **que les calories** — pas les protéines, ni les
+#   glucides, ni les lipides. Une ligne sans macros ne peut pas alimenter un journal : le
+#   générateur les écarte, à juste titre. *Remplacer aurait été une régression déguisée en
+#   enrichissement.*
+#   ⚠️⚠️ ET LEUR CLASSEUR D'ORIGINE EST PERDU — il vivait dans un dossier temporaire, le
+#   conteneur a redémarré (c'est ce qui a fait naître `data/sources/`). Ces 15 lignes sont donc
+#   figées ICI, recopiées depuis la sortie du 03/09 qui est leur **seule trace restante**.
+#   👉 ***C'est un pis-aller, et il est écrit comme tel*** : une valeur dont on ne peut plus
+#   remonter à la source est une valeur qu'on ne peut plus auditer. Si le classeur contrôlé
+#   réapparaît un jour, ce bloc doit disparaître et redevenir une lecture (R27).
+#   ⭐ ET LE BLOC A DÉJÀ MAIGRI DE LUI-MÊME : la pizza « 4 Fromages » y était le 04/09 au matin ;
+#   la V2 la fournit, avec des valeurs **identiques au chiffre près**, donc elle est repartie dans
+#   la source. *C'est ce que ce bloc doit faire : rétrécir, jamais grossir.* Le générateur signale
+#   à chaque exécution les lignes héritées qu'un classeur fournit désormais.
+HERITAGE = [
+    ["McDonald's", "Petite frite", "Frites", 288.8, 3.4, 36.2, 13.8, 80, 0, 0],
+    ["McDonald's", "Moyenne frite", "Frites", 290.3, 3.5, 36.3, 14.2, 113, 0, 0],
+    ["McDonald's", "Grande frite", "Frites", 289.3, 3.4, 36.0, 14.0, 150, 0, 0],
+    ["Burger King", "Petites frites", "Frites", 265.6, 3.3, 40.0, 11.1, 90, 0, 0],
+    ["Burger King", "Moyennes frites", "Frites", 266.4, 3.3, 39.7, 11.2, 116, 0, 0],
+    ["Burger King", "Grandes frites", "Frites", 266.0, 3.3, 39.6, 11.3, 159, 0, 0],
+    ["Burger King", "King Fries Double Cheddar", "Frites garnies", 257.1, 4.6, 28.8, 13.2, 219, 0, 0],
+    ["KFC", "Moyennes Frites", "Frites", 226.0, 4.0, 33.7, 9.2, 100, 0, 0],
+    ["KFC", "Grandes Frites", "Frites", 226.0, 4.0, 33.7, 9.2, 140, 0, 0],
+    ["KFC", "Kentucky Fries", "Frites garnies", 282.0, 6.6, 32.2, 15.0, 182, 0, 0],
+    ["Quick", "Petite Frite", "Frites", 264.6, 3.1, 35.4, 12.3, 65, 0, 0],
+    ["Quick", "Moyenne Frite", "Frites", 266.7, 3.6, 35.1, 11.7, 111, 0, 0],
+    ["Quick", "Grande Frite", "Frites", 267.5, 3.3, 35.1, 11.9, 151, 0, 0],
+    ["Quick", "Grande Frite Cheddar", "Frites garnies", 244.8, 3.3, 30.4, 11.6, 181, 0, 0],
+]
+
+
 def main():
     if len(sys.argv) < 2:
         sys.exit("usage : python3 tools/marques.py <classeur.xlsx>")
@@ -270,11 +307,36 @@ def main():
                a['fat100'], a['portion'], 1 if a['kcal_derivee'] else 0, a.get('doute') or 0]
               for a in gardees],
     }
+    # ⛔⛔ LA FUSION, ET SES DEUX GARDE-FOUS. Les 15 lignes héritées ne sont ajoutées que si le
+    #    classeur ne les porte PAS : le jour où la V2 (ou une V3) fournira enfin les macros des
+    #    frites, elles viendront de la source et le bloc figé s'effacera de lui-même.
+    #    ⚠️ *Sans cette condition, une valeur figée écraserait silencieusement une valeur fraîche
+    #    — exactement le défaut qu'on répare depuis deux jours.*
+    deja = {(a[0], a[1]) for a in out['a']}
+    ajoutees = [h for h in HERITAGE if (h[0], h[1]) not in deja]
+    doublons = [h for h in HERITAGE if (h[0], h[1]) in deja]
+    out['a'].extend(ajoutees)
+    # ⛔ Et l'ordre est FIXE (enseigne puis nom) : sans ça, le fichier changerait à chaque
+    #    exécution sans qu'aucune valeur ne bouge, et `git diff` cesserait de vouloir dire
+    #    quelque chose.
+    out['a'].sort(key=lambda a: (a[0], a[1]))
+    out['n'] = len(out['a'])
     os.makedirs(os.path.dirname(SORTIE), exist_ok=True)
     with io.open(SORTIE, 'w', encoding='utf-8') as f:
         json.dump(out, f, ensure_ascii=False, separators=(',', ':'))
 
-    print('%s : %d produits gardés sur %d lignes' % (os.path.relpath(SORTIE, RACINE), len(gardees), len(brut)))
+    print('%s : %d produits (%d lus du classeur sur %d lignes + %d hérités)'
+          % (os.path.relpath(SORTIE, RACINE), len(out['a']), len(gardees), len(brut), len(ajoutees)))
+    if ajoutees:
+        print('\n⚠️ %d PRODUIT(S) HÉRITÉ(S) d\'une source PERDUE — figés dans ce script, non auditables :'
+              % len(ajoutees))
+        for h in ajoutees:
+            print('        · %s · %s' % (h[0], h[1]))
+    if doublons:
+        print('\n⭐ %d ligne(s) héritée(s) désormais FOURNIES par le classeur — à retirer de HERITAGE :'
+              % len(doublons))
+        for h in doublons:
+            print('        · %s · %s' % (h[0], h[1]))
     par_ens = defaultdict(int)
     for a in gardees:
         par_ens[a['ens']] += 1
