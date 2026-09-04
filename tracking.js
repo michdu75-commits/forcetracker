@@ -2904,6 +2904,14 @@ function _toggleSleepSaveBtn(v){
   if(b)b.style.display=(parseFloat(v)>0)?'block':'none';
 }
 
+/* 🏁 LE NOM DU BOUTON QUI ENREGISTRE VRAIMENT — un seul propriétaire (04/09/2026, R2).
+   Il était calculé ici et nulle part ailleurs. Le jour où un 2ᵉ endroit a eu besoin de le
+   NOMMER (le message qui dit « appuie sur … en bas »), le recopier aurait garanti que les deux
+   divergent : on aurait envoyé quelqu'un chercher un bouton qui ne s'appelle plus comme ça. */
+function _labelFinSeance(){
+  const hasDone=!!(S.wkt&&S.wkt.exs&&S.wkt.exs.some(ex=>(ex.sets||[]).some(s=>s.done)));
+  return hasDone?'🏁 Terminer la séance':'🏁 Enregistrer le cardio';
+}
 function renderLogFinish(){
   const el=document.getElementById('log-finish');if(!el)return;
   if(!S.wkt){el.innerHTML='';return;}
@@ -2927,7 +2935,7 @@ function renderLogFinish(){
     const cardioTxt=`🏃 Cardio ${bouts.join(' · ')}${kcal?` · ~${kcal}kcal`:''}`;
     summary = summary ? summary+' · '+cardioTxt : cardioTxt;
   }
-  const label = hasDone ? '🏁 Terminer la séance' : '🏁 Enregistrer le cardio';
+  const label = _labelFinSeance();
   el.innerHTML=`<div style="border-top:1px solid var(--sep);padding-top:14px;margin-top:4px;">
     <div style="text-align:center;font-size:13px;color:var(--t2);margin-bottom:10px;font-weight:600;">${summary}</div>
     <button class="btn btn-red" onclick="finishWorkout()" style="font-size:17px;padding:16px;letter-spacing:.3px;">${label}</button>

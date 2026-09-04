@@ -25197,6 +25197,166 @@ console.log('\n-- CCXXV. Le piège du Coca n\'était pas celui du Coca : il y en
   }
 }
 
+/* ═══ CCXXVI. UNE SÉANCE DE CARDIO SEUL N'EST PLUS INVISIBLE (ft-v1118) ══════════════════════
+   Michel, deux retours le même jour : ① *« j'ai fait 45 min de tapis et ma récup n'a pas
+   bougé »* · ② *« on me dit que j'ai pas fait le cardio hier »*. **Un seul défaut derrière.**
+   ⭐⭐ CE QUI A DÉCIDÉ DU DIAGNOSTIC EST UNE MESURE, PAS UNE LECTURE : la carte « séance
+   manquée » ne peut PAS s'afficher s'il existe une séance ce jour-là — vérifié sur les 4
+   façons de noter un cardio. Donc AUCUNE séance n'avait été enregistrée, et les deux
+   symptômes n'en font qu'un.
+   ⛔⛔ LE PIÈGE : le bouton « ✓ Enregistrer le cardio » du bloc Cardio disait *« Cardio
+   enregistré ✅ »* et n'enregistrait RIEN — il replie le bloc. Le bouton qui enregistre pour
+   de vrai est celui du BAS, et il s'appelait… « 🏁 Enregistrer le cardio ».
+   ⛔⛔ ET LE PIRE N'ÉTAIT PAS LE LIBELLÉ : `startWorkout()` remettait `S.wkt` à neuf dès qu'il
+   n'y avait pas d'exercice — donc un aller-retour par l'Accueil puis un tap sur le bouton
+   rouge **effaçait 45 min de cardio en silence** (règle d'or #3).
+   ⭐ Quatre endroits lisaient « des exercices » là où la question est « une séance ouverte ».
+   `_seanceOuverte()` en est le propriétaire unique depuis le 02/08 (R2) — il n'a pas fallu
+   écrire une règle, seulement la lire.
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXVI. Une séance de cardio seul n\'est plus invisible (ft-v1118) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'85',ft4_age:'46',ft4_ht:'178',
+    ft4_gender:'H',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(()=>{ try{
+    const o={};
+    /* ── ① LE PARCOURS EXACT DE MICHEL : noter 45 min de tapis, passer par l'Accueil, revenir ── */
+    startWorkout();
+    setCardioField('type','tapis','apres');
+    setCardioField('intensity','modere','apres');
+    setCardioField('duration','45','apres');
+    /* ⛔ CONTRÔLE : le cardio est-il VRAIMENT noté ? Sans ça, tout le bloc mesurerait du vide. */
+    o.noteAuDepart={resume:_cardioResume(), kcal:calcCardioKcalTotal(), exs:(S.wkt.exs||[]).length};
+    /* le libellé du bouton du bloc Cardio, et ce qu'il annonce quand on appuie dessus */
+    o.libelleBloc=(()=>{const e=document.getElementById('cardio-save-btn');return e?(e.textContent||'').trim():'(absent)';})();
+    const dits=[]; const vrai=window.toast; window.toast=(m)=>{dits.push(String(m));};
+    try{ saveCardioEntry(); } finally { window.toast=vrai; }
+    o.messageBloc=dits.join(' | ');
+    o.libelleBas=(typeof _labelFinSeance==='function')?_labelFinSeance():'(absente)';
+    o.zoneBas=(()=>{const e=document.getElementById('log-finish');return e?(e.innerText||'').replace(/\s+/g,' ').trim():'';})();
+    /* ── ② L'ALLER-RETOUR PAR L'ACCUEIL, puis le tap sur le bouton rouge ── */
+    goScreen('home',document.getElementById('nb-home'));
+    o.boutonAccueil=(()=>{const e=document.getElementById('home-hero');const t=(e&&e.innerText)||'';
+      const m=t.match(/(↩ Reprendre la séance|Commencer une séance)/); return m?m[1]:'(aucun)';})();
+    o.brouillonSecours=!!localStorage.getItem('ft4_wkt_draft');
+    startWorkout();                                    // ← exactement ce que fait le bouton rouge
+    o.apresLeTap={resume:_cardioResume(), reste:!!(S.wkt&&S.wkt.cardio&&+S.wkt.cardio.duration)};
+    /* ── ③ NON-RÉGRESSION LA PLUS IMPORTANTE : ouvrir l'écran Séance SANS RIEN FAIRE.
+       `renderLog()` crée un `S.wkt` vide dès qu'on affiche l'écran. Si « séance ouverte » se
+       contentait de l'existence de l'objet, l'Accueil dirait « ↩ Reprendre la séance » à tout
+       le monde, tout le temps — un élargissement bien pire que le défaut qu'on corrige. */
+    S.wkt=null; try{localStorage.removeItem('ft4_wkt_draft');}catch(e){}
+    startWorkout(); goScreen('home',document.getElementById('nb-home')); renderHome();
+    o.aVide=(()=>{const e=document.getElementById('home-hero');const t=(e&&e.innerText)||'';
+      const m=t.match(/(↩ Reprendre la séance|Commencer une séance)/);
+      return {bouton:m?m[1]:'(aucun)', ouverte:_seanceOuverte(),
+              brouillon:!!localStorage.getItem('ft4_wkt_draft')};})();
+    /* ── ④ NON-RÉGRESSION : une séance AVEC exercices se comporte comme avant ── */
+    S.wkt={date:today(),startTs:Date.now()-150*60000,pausedTotal:0,pausedAt:null,exs:[
+      {name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N',at:60}]}]};
+    persist(); goScreen('home',document.getElementById('nb-home')); renderHome();
+    o.muscu=(()=>{const e=document.getElementById('home-hero');const t=(e&&e.innerText)||'';
+      const m=t.match(/(↩ Reprendre la séance|Commencer une séance)/);
+      return {bouton:m?m[1]:'(aucun)', rappel:/terminer ta séance/.test(t),
+              brouillon:!!localStorage.getItem('ft4_wkt_draft')};})();
+    /* ── ⑤ LE SYMPTÔME RAPPORTÉ : une séance de cardio TERMINÉE ferme bien l'annonce ── */
+    const hier=(()=>{const d=new Date(today()+'T12:00:00');d.setDate(d.getDate()-1);return d.toISOString().slice(0,10);})();
+    const ts=new Date(hier+'T18:00:00').getTime();
+    S.wkt=null; S.missedLog=[]; S.nextPlanned={date:hier,label:'cardio tapis'};
+    S.sessions=[]; o.sansSeance=(seanceManquee()||{}).date||null;
+    S.sessions=[{id:ts,ts,date:hier,exs:[],exercises:[],volume:0,duration:2700,
+                 cardio:{type:'tapis',duration:45,intensity:'modere'}}];
+    o.avecCardio=(seanceManquee()||{}).date||null;
+    return o;
+  }catch(e){ return {err:String(e&&e.message||e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXVI n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ CONTRÔLE D'ABORD : sans un cardio réellement noté, les 10 témoins suivants seraient
+       verts en ne mesurant rien. Et il vérifie AUSSI qu'il n'y a AUCUN exercice — c'est la
+       condition qui rendait la séance invisible. */
+    t('⛔ CONTRÔLE — 45 min de tapis sont bien notées, et la séance n\'a AUCUN exercice',
+      R.noteAuDepart.kcal>0 && /45min/.test(R.noteAuDepart.resume) && R.noteAuDepart.exs===0,
+      JSON.stringify(R.noteAuDepart));
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : c'est celui-là qui rougissait avant. */
+    t('⭐⭐ le cardio SURVIT au bouton rouge de l\'Accueil (avant : effacé en silence)',
+      R.apresLeTap.reste===true && /45min/.test(R.apresLeTap.resume), JSON.stringify(R.apresLeTap));
+    t('⭐⭐ … et l\'Accueil dit « ↩ Reprendre la séance », pas « Commencer une séance »',
+      R.boutonAccueil==='↩ Reprendre la séance', R.boutonAccueil);
+    /* ⛔⛔ LE LIBELLÉ QUI MENTAIT — deux boutons, presque les mêmes mots, un seul enregistrait. */
+    t('⛔⛔ le bouton du bloc Cardio ne dit plus « Enregistrer » (il n\'enregistre rien)',
+      !/enregistr/i.test(R.libelleBloc), R.libelleBloc);
+    t('⛔⛔ … et son message NOMME le bouton qui enregistre vraiment, celui du bas',
+      R.messageBloc.indexOf(R.libelleBas)>=0 && !/enregistré/i.test(R.messageBloc),
+      R.messageBloc+'   [bas = '+R.libelleBas+']');
+    /* ⛔ R2 : le nom du bouton du bas a UN propriétaire. Si l'écran et le message le
+       calculaient chacun de leur côté, on enverrait un jour chercher un bouton disparu. */
+    t('⛔ R2 — le libellé annoncé est bien celui AFFICHÉ en bas de l\'écran',
+      R.zoneBas.indexOf(R.libelleBas)>=0, R.zoneBas.slice(0,80)+'   [attendu '+R.libelleBas+']');
+    t('⛔ le brouillon de secours est écrit pour une séance de cardio seul',
+      R.brouillonSecours===true, String(R.brouillonSecours));
+    /* ⛔⛔ LA NON-RÉGRESSION QUI COMPTE LE PLUS : on a élargi la définition de « séance
+       ouverte », donc il faut prouver qu'on ne l'a pas élargie à TOUT. Ouvrir l'écran Séance
+       sans rien faire ne doit rien déclencher — sinon l'Accueil dirait « Reprendre » en
+       permanence, et le correctif serait pire que le défaut. */
+    t('⛔⛔ NON-RÉGRESSION — ouvrir l\'écran Séance sans rien faire ne déclenche RIEN',
+      R.aVide.bouton==='Commencer une séance' && R.aVide.ouverte===false && R.aVide.brouillon===false,
+      JSON.stringify(R.aVide));
+    /* ⛔ NON-RÉGRESSION — on n'a pas desserré ce qui marchait pour la muscu. */
+    t('⛔ NON-RÉGRESSION — une séance avec exercices : bouton, rappel ⏰ et brouillon inchangés',
+      R.muscu.bouton==='↩ Reprendre la séance' && R.muscu.rappel===true && R.muscu.brouillon===true,
+      JSON.stringify(R.muscu));
+    /* ⛔⛔ LE SYMPTÔME RAPPORTÉ, DANS LES DEUX SENS. Un témoin qui ne vérifierait que
+       « la carte ne sort pas » serait vert même si la carte ne sortait JAMAIS. */
+    t('⛔⛔ la carte « séance manquée » sort quand il n\'y a VRAIMENT eu aucune séance',
+      R.sansSeance!==null, String(R.sansSeance));
+    t('⛔⛔ … et se tait dès qu\'une séance de CARDIO SEUL a été enregistrée ce jour-là',
+      R.avecCardio===null, String(R.avecCardio));
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
+/* ═══ CCXXVI bis. ROUVRIR L'APP AVEC UN CARDIO NON ENREGISTRÉ LE DIT (ft-v1118) ══════════════
+   Le 3ᵉ rappel aveugle : au démarrage, l'app annonce « Séance en cours — … Appuie sur
+   Reprendre » — et le faisait seulement s'il y avait des EXERCICES. Quelqu'un qui rouvrait
+   l'app avec 45 min de cardio en attente n'était prévenu par rien.
+   ⚠️ Ce bloc a son propre contexte : il faut RECHARGER la page pour que le message parte. */
+console.log('\n-- CCXXVI bis. Rouvrir l\'app avec un cardio non enregistré (ft-v1118) --');
+{
+  const jour=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+  const brouillon=JSON.stringify({date:jour,exs:[],startHour:18,
+    cardio:{type:'tapis',duration:45,intensity:'modere'}});
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'85',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99',ft4_wkt:brouillon}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(2200);
+  const R=await p.evaluate(()=>{ try{
+    return { message:(document.getElementById('toast')||{}).textContent||'',
+             cardioRelu:(S.wkt&&S.wkt.cardio&&+S.wkt.cardio.duration)||0,
+             ouverte:(typeof _seanceOuverte==='function')?_seanceOuverte():null };
+  }catch(e){ return {err:String(e&&e.message||e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXVI bis n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ CONTRÔLE : le brouillon a bien été relu au démarrage. Sinon le message manquerait
+       pour une tout autre raison, et le témoin suivant accuserait le mauvais coupable. */
+    t('⛔ CONTRÔLE — le brouillon de cardio est relu au démarrage (45 min, séance ouverte)',
+      R.cardioRelu===45 && R.ouverte===true, JSON.stringify(R));
+    t('⭐⭐ rouvrir l\'app avec un cardio en attente affiche « Séance en cours … Reprendre »',
+      /Séance en cours/.test(R.message) && /Reprendre/.test(R.message), R.message);
+    /* ⛔ Et il décrit ce qui est VRAIMENT en attente : « 0 exercice » se lirait comme une panne. */
+    t('⛔ … et il parle du CARDIO, jamais de « 0 exercice »',
+      /cardio/i.test(R.message) && !/\b0 exercice/.test(R.message), R.message);
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

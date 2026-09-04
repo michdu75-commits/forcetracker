@@ -458,6 +458,10 @@ const FEAT_SI = {
   montrePas:     () => { try{ return ((S&&S.healthDaily)||[]).some(x=>x&&x.steps>0); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* 🏃 POINT ROUGE (règle d'or #11) : deux libellés changent sur l'écran le plus utilisé de
+     l'app, et l'un d'eux change aussi de COULEUR (le rouge est réservé au bouton qui enregistre
+     vraiment). Quelqu'un qui note son cardio tous les jours cherchera son bouton. */
+  {id:'cardio-enregistre', screen:'log', desc:'🏃 <b>Ton cardio ne se perd plus.</b> Dans le bloc Cardio, le bouton s\'appelle maintenant <b>« ✓ C\'est noté »</b> : il <b>note</b> ton cardio, il ne l\'enregistre pas. C\'est le <b>bouton rouge du bas</b> qui inscrit la séance dans ton historique. ⚠️ Et si tu repasses par l\'Accueil, il affiche désormais <b>« ↩ Reprendre la séance »</b> — avant, le bouton rouge repartait de zéro et le cardio noté disparaissait.'},
   /* 🥤 POINT ROUGE (règle d'or #11) : des dizaines de boissons qui ne rendaient RIEN en rendent
      une, et **un chiffre change** chez qui note ses sodas light. ⛔ Mais rien n'est à faire et
      aucun repère n'a bougé : c'est une CORRECTION, pas un basculement — les valeurs d'avant
@@ -695,6 +699,21 @@ const NEW_FEATURES=[
 // ✅ v46/47/48 = les 3 features ex-testeurs (« maxi » · calories manuelles · objectif recomposition)
 //    OUVERTES À TOUT LE MONDE (ft-v623, décision Michel) + red dots reps-maxi/manual-kcal/goal-recomp réactivés.
 const WHATS_NEW=[
+  /* 🏃 ELLE SE MÉRITE, ET SUR LES DEUX CRITÈRES À LA FOIS (règle d'or #11).
+     ① **UN REPÈRE A BOUGÉ** : le bouton du bloc Cardio change de nom ET de couleur (il n'est
+        plus rouge — le rouge est désormais réservé à celui qui enregistre pour de vrai), et le
+        bouton de l'Accueil ne dit plus la même chose quand une séance attend.
+     ② **IL Y A QUELQUE CHOSE À SAVOIR FAIRE** : le geste qui enregistre est le bouton du BAS.
+        Tant qu'on croyait que « ✓ Enregistrer le cardio » enregistrait, on ne l'apprenait pas.
+     ⛔⛔ ET ELLE DIT LE RISQUE PASSÉ EN UNE LIGNE, sans demander de réparer quoi que ce soit.
+     C'est la règle d'or #3 (zéro perte de séance) : quelqu'un dont une séance de cardio manque
+     dans l'historique a le droit de savoir POURQUOI, plutôt que de croire qu'il l'a rêvée.
+     *Une alarme rétroactive est interdite quand on comble un trou (R25) ; ici on ne comble pas
+     un trou, on répare une perte de données — la personne peut avoir un souvenir à recoller.*
+     ⛔ BORNÉE À L'ESSENTIEL (R25) : deux boutons, un seul enregistre. Le reste — pourquoi une
+     séance de cardio seul compte comme une vraie séance, ce que Milo en fait — vit dans
+     l'aide `?`, l'aide détaillée et le Guide. *La pop-up ANNONCE, l'aide EXPLIQUE.* */
+  {v:69, ic:'🏃', t:'Séance : ton cardio ne se perd plus', d:'① <b>C’est le gros bouton rouge du BAS qui enregistre ta séance</b> — cardio compris. ② Celui du bloc Cardio s’appelle maintenant <b>« ✓ C’est noté »</b> et n’est plus rouge : il <b>note</b>, il n’enregistre pas. ⚠️ Avant, une séance de <b>cardio seul</b> pouvait disparaître si tu repassais par l’Accueil et retapais le bouton rouge. C’est corrigé : l’Accueil affiche <b>« ↩ Reprendre la séance »</b> tant que quelque chose attend.'},
   /* 🥗 ELLE SE MÉRITE, ET C'EST « UN REPÈRE A BOUGÉ » DANS SA FORME LA PLUS COÛTEUSE :
      ⛔⛔ un chiffre que la personne NOTE tous les jours change **du simple au double**. Quelqu'un
      qui tape « riz » enregistrait 350 kcal/100 g, il enregistrera 155. *Le danger n'est pas qu'il

@@ -6,6 +6,29 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1118` — 🏃 **UNE SÉANCE DE CARDIO SEUL N'EST PLUS INVISIBLE.**
+  ⏳ *Déploiement à vérifier (R18).* Suite : **PARCOURS_N/PARCOURS_N, 0 rouge** (parcours ·
+  calculs 266 · muscles 241 · croisés 50 · dates 7 · données 0 trou).
+- ⭐⭐ **Deux retours de Michel le même jour, UN seul défaut** : *« 45 min de tapis et ma récup n'a
+  pas bougé »* et *« on me dit que j'ai pas fait le cardio hier »*. La mesure a tranché : la carte
+  « séance manquée » se tait dès qu'une séance existe ce jour-là (vérifié sur les **4** façons de
+  noter un cardio) → **aucune séance n'avait été enregistrée le 03/09**.
+- ⛔⛔ **Le piège** : « ✓ Enregistrer le cardio » (bloc Cardio) disait *« Cardio enregistré ✅ »* et
+  **n'enregistrait rien**. Le vrai bouton, en bas, s'appelait… **« 🏁 Enregistrer le cardio »**.
+  *Deux boutons, presque les mêmes mots, tous les deux rouges, un seul enregistre.*
+- ⛔⛔ **Et une PERTE DE DONNÉES derrière** (règle d'or #3) : `startWorkout()` repartait de zéro dès
+  qu'il n'y avait pas d'exercice → un aller-retour par l'Accueil **effaçait 45 min de cardio en
+  silence**.
+- ⭐ **Cinq endroits** lisaient « des exercices » là où la question est « une séance ouverte ».
+  `_seanceOuverte()` y répondait **depuis le 02/08** : il n'a pas fallu écrire une règle, seulement
+  la lire (**R2**). C'est **R8** — les jumelles étaient à chercher le 02/08, pas six semaines après.
+- ⏭️ **EN ATTENTE DE MICHEL — le barème de récup du cardio.** Mesuré à nuits identiques : aucune
+  séance **76** · 45 min de tapis **71** · 20 min **71** · 4 séries de DC **70**. `_penaliteSeance`
+  ne compte que des séries validées → plancher de **6**, alors que `calcCardioKcal` sait dire **351
+  kcal** (45 min) contre **156** (20 min). ⚠️ *Combien 45 min de tapis doivent peser face à une
+  séance de jambes est un jugement, pas une mesure — on n'invente pas l'échelle* (**R29**).
+- ⏭️ **Toujours en attente** : `node tests/milo/ab-memoire.js --go` (4 appels, ~0,25 €) — le Worker
+  est refusé par la politique réseau du conteneur, seul Michel peut le lancer.
 - **Version en ligne (live) :** `ft-v1117` — 🥤 **LE PIÈGE DU COCA : IL Y EN AVAIT NEUF.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#859** sur `dd36727`, **job `deploy` success**,
   les 7 étapes vertes à 20:11:20 UTC. ⚠️ Le run est resté marqué `in_progress` plusieurs minutes

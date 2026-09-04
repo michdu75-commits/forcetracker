@@ -618,8 +618,12 @@ function persist(){
        personne n'a besoin de se voir rappeler un empêchement d'il y a huit mois (P21, P13). */
     localStorage.setItem('ft4_missed',JSON.stringify((S.missedLog||[]).slice(-12))); // ft-v1050
     localStorage.setItem('ft4_cycle',JSON.stringify(S.cycle||null)); // cycle de force : local-first (était lu mais jamais écrit)
-    // Brouillon de secours — effacé quand séance vide ou après sauvegarde dans finishWorkout()
-    if(S.wkt&&S.wkt.exs&&S.wkt.exs.length){
+    /* Brouillon de secours — effacé quand séance vide ou après sauvegarde dans finishWorkout().
+       ⛔ 04/09/2026 — 4ᵉ endroit qui lisait « des exercices » : une séance de CARDIO SEUL n'avait
+       aucune copie de secours, alors que c'est précisément ce qui rattrape un onglet fermé.
+       `_seanceOuverte()` (log.js) est le propriétaire unique de la question (R2) ; le repli sert
+       aux appels de `persist()` qui pourraient précéder le chargement de log.js. */
+    if((typeof _seanceOuverte==='function')?_seanceOuverte():!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length)){
       localStorage.setItem('ft4_wkt_draft',JSON.stringify(S.wkt));
     }else{
       localStorage.removeItem('ft4_wkt_draft');

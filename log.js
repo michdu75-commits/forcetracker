@@ -186,8 +186,19 @@ document.addEventListener('visibilitychange',()=>{
    AFFICHÉ et `sess.duration` qui traînaient derrière. Les trois sont maintenant alignés (R1/R2).
    ⚠️ On ne CRÉE plus `startTs` ici — mais on le GARDE s'il existe déjà : une séance en cours au
    moment de la mise à jour ne doit pas voir son chrono repartir de zéro. */
+/* ⛔⛔ 04/09/2026 — CE BOUTON EFFAÇAIT UN CARDIO NOTÉ, EN SILENCE.
+   La condition lisait « pas d'exercices » et concluait « rien à garder ». Or une séance de
+   cardio SEUL n'a **aucun** exercice : 45 min de tapis notées, un aller-retour par l'Accueil
+   (où le bouton disait encore « Commencer une séance », faute de la même définition), un tap,
+   et `S.wkt` repartait à neuf — **sans confirmation, sans message, sans trace**. Mesuré : le
+   cardio disparaissait pour de bon. C'est la règle d'or #3 (zéro perte) prise à revers par un
+   test de trois mots.
+   👉 On lit `_seanceOuverte()`, qui est **déjà** le propriétaire unique de « y a-t-il une
+   séance non terminée ? » (R2) et qui, lui, compte le cardio depuis le 02/08. */
 function startWorkout(){
-  if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length) S.wkt={date:today(),exs:[],startHour:new Date().getHours()};
+  const ouverte=(typeof _seanceOuverte==='function')?_seanceOuverte():!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length);
+  if(!ouverte) S.wkt={date:today(),exs:[],startHour:new Date().getHours()};
+  else if(!S.wkt.exs) S.wkt.exs=[];      // un brouillon cardio peut n'avoir jamais eu le tableau
   persist(); goScreen('log',document.getElementById('nb-log'));
   _syncWakeLock();
 }

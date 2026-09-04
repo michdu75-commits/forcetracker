@@ -69,6 +69,29 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 UNE SÉANCE DE CARDIO SEUL N'A PAS DE DÉBRIEF — est-ce un choix ou un oubli ?
+
+**Ce qui déclenche la question** (04/09/2026, ft-v1118) : en corrigeant le fait qu'une séance de
+cardio seul était invisible à cinq endroits, j'en ai trouvé un sixième que je n'ai **pas** touché.
+`finishWorkout` ne met la séance dans la file de débrief que si `_hasExs && hasDone` — donc
+**45 min de tapis ne déclenchent jamais le débrief automatique de Milo**. Le commentaire du code
+le dit en toutes lettres (*« pas un cardio seul »*), donc c'était volontaire.
+
+**Ce qu'on ne sait pas** : si la raison tient encore. Elle datait d'une époque où le débrief
+parlait de charges, de séries et de records — il n'a rien à dire d'un tapis. Mais depuis, une
+séance de cardio a une **durée**, des **calories**, une **intensité**, et elle **ferme une séance
+annoncée**. ⚠️ Et l'inverse n'est pas évident non plus : débriefer *« tu as marché 45 min »* à
+chaque cardio serait probablement du bruit, et un débrief qui n'a rien à dire est pire que pas de
+débrief (**P21**).
+
+**⛔ Ce qui rend la question difficile à trancher par du code** : l'attendu est *« Milo dit
+quelque chose d'utile plutôt que du remplissage »* — c'est du **goût**, donc **juge humain**, pas
+un scénario du banc d'essai (critère de promotion de ce fichier).
+
+**État : à trier** — et le premier travail est **gratuit** : demander à Michel s'il ATTEND un mot
+de Milo après un cardio seul. *S'il n'en attend pas, la décision de l'époque tient et il faut
+juste l'écrire comme un retrait volontaire* (**R30**), au lieu de la laisser ressembler à un oubli.
+
 ### 🟡 UNE VALEUR DE MARQUE SIGNALÉE COMME DOUTEUSE — MILO EN TIENT-IL COMPTE ?
 
 **Ce qui déclenche la question** (03/09/2026, ft-v1114) : une ligne du journal peut désormais

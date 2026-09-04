@@ -2531,3 +2531,59 @@ demande *« qu'est-ce qui est PEINT ici ? »***, pas *« où est cet élément ?
 **Chromium**, alors que `position:sticky` dans un conteneur défilant est l'un des points où
 **Safari diffère** — donc même la capture ne clôt pas le sujet quand l'app est une PWA iPhone.*
 
+
+
+---
+
+## 42. 🕳️ LE CAS QUI N'A PAS L'ATTRIBUT HABITUEL EST LU COMME « RIEN » **(04/09/2026, ft-v1118)**
+
+Michel, deux retours le même jour : *« j'ai fait 45 min de tapis et ma récup n'a pas bougé »*,
+puis *« on me dit que j'ai pas fait le cardio hier »*. **Un seul défaut derrière les deux.**
+
+Une séance de **cardio seul** est une séance légitime depuis le 02/08 — l'écran la propose, le
+bouton de fin l'accepte, l'app en calcule les calories. Mais elle n'a **aucun exercice**. Or
+partout ailleurs, « une séance » se reconnaissait à `S.wkt.exs.length`. **Cinq endroits** en ont
+donc déduit *« il n'y a rien »* :
+
+| Endroit | Ce que la personne voyait |
+|---|---|
+| `startWorkout()` | le bouton rouge **effaçait** 45 min de cardio, sans un mot |
+| le bouton de l'Accueil | « Commencer une séance » alors qu'une séance attendait |
+| le message d'ouverture | rien du tout en rouvrant l'app |
+| le brouillon de secours | aucune copie de sauvegarde |
+| `_penaliteSeance()` (récup) | 45 min de tapis = le **plancher**, autant que 4 séries d'abdos |
+
+**⛔⛔ Et le pire est qu'AUCUN de ces cinq n'est un bug isolé** : chacun est parfaitement correct
+pour le cas courant. C'est la **définition partagée** qui manquait — et elle existait déjà :
+`_seanceOuverte()` (log.js) répond depuis le 02/08 *« démarrée, ou avec des exercices, ou avec un
+cardio noté »*. **Il n'a pas fallu écrire une règle, seulement la lire** (R2).
+
+### 🔍 À quoi on la reconnaît
+- Un cas **nouveau et légitime** entre dans le système (le cardio seul, l'unilatéral, une séance
+  importée…) et **il lui manque l'attribut** par lequel tout le monde reconnaissait le cas courant.
+- Le test qui trahit ressemble à `X && X.liste && X.liste.length` — il ne demande pas *« y a-t-il
+  quelque chose ? »*, il demande *« y a-t-il ce à quoi je pense d'habitude ? »*.
+- **L'échec est SILENCIEUX** : rien ne plante, aucun test ne rougit. Le cas particulier disparaît
+  simplement de tout ce qui compte, et personne ne le voit — ni celui qui code, ni celui qui teste,
+  seulement celui qui perd sa séance.
+- ⚠️ **Signe avant-coureur** : quand un cas nouveau est accepté à UN endroit (ici `finishWorkout`
+  et `renderLogFinish`, corrigés le 02/08), c'est le moment de chercher ses jumelles (**R8**) —
+  pas six semaines plus tard, sur un retour terrain.
+
+### 🎭 Le symptôme de surface, qui vaut d'être noté à part
+Le bouton du bloc Cardio s'appelait **« ✓ Enregistrer le cardio »** et affichait *« Cardio
+enregistré ✅ »* — alors qu'il ne fait que **replier le bloc**. Le bouton qui enregistre pour de
+vrai est celui du **bas**, et il s'appelait… **« 🏁 Enregistrer le cardio »**. *Deux boutons,
+presque les mêmes mots, un seul enregistre.* 👉 **Deux actions différentes ne portent jamais le
+même verbe** — et si l'une doit renvoyer à l'autre, elle la **nomme en lisant son vrai libellé**,
+jamais en le recopiant (R2 : le jour où le libellé change, on envoie chercher un bouton disparu).
+
+### 🛡️ Le réflexe, en une ligne
+**Avant d'écrire `.length` pour dire « il y a quelque chose », chercher s'il existe déjà une
+fonction qui répond à cette question-là** — et si elle existe, la lire ; si elle n'existe pas,
+l'écrire une fois, pour tout le monde.
+
+*Voisine de **R4a** (une donnée non classée est un oubli silencieux), de **R8** (chercher les
+jumelles dès qu'on trouve une absence) et de **§32** (l'aller-retour cassé au milieu). ⚠️ Le cas
+dit aussi ce qui n'est PAS corrigé : le barème de récupération du cardio reste sur son plancher —
+le corriger demanderait d'inventer une échelle, et on ne l'invente pas (R29).*

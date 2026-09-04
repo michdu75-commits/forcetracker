@@ -137,16 +137,25 @@ function renderCardioBlock(){
   ${_cardioOpen?`<div style="padding:0 12px 12px;border-top:1px solid var(--sep);padding-top:4px;">
     ${volet('avant','🔥 Avant la séance','échauffement')}
     ${volet('apres','🧊 Après la séance','cardio de fin')}
-    <button id="cardio-save-btn" class="btn btn-red ft-press" onclick="saveCardioEntry()" style="width:100%;margin-top:12px;padding:10px;font-size:14px;display:${aUnCardio?'block':'none'};">✓ Enregistrer le cardio</button>
+    <button id="cardio-save-btn" class="btn ft-press" onclick="saveCardioEntry()" style="width:100%;margin-top:12px;padding:10px;font-size:14px;background:var(--bg3);color:var(--t1);border:1px solid var(--sep);display:${aUnCardio?'block':'none'};">✓ C'est noté</button>
   </div>`:''}
 </div>`;
 }
-// Valide le cardio : replie le bloc (le résumé reste visible dans l'en-tête) — pas besoin de scroller.
+/* ⛔⛔ CE BOUTON DISAIT « ENREGISTRER » ET N'ENREGISTRAIT RIEN (corrigé le 04/09/2026).
+   Michel, deux retours le même jour : *« j'ai fait 45 min de tapis et ma récup n'a pas bougé »*
+   puis *« on me dit que j'ai pas fait le cardio hier »*. **Un seul défaut derrière les deux.**
+   Il s'appelait « ✓ Enregistrer le cardio » et affichait « Cardio enregistré ✅ » — alors qu'il
+   ne fait que **replier le bloc**. Le bouton qui enregistre pour de vrai est celui du BAS de
+   l'écran, et il s'appelle… « 🏁 Enregistrer le cardio ». *Deux boutons, presque les mêmes mots,
+   un seul enregistre.* Rien dans l'app ne permettait de les distinguer.
+   👉 Celui-ci dit maintenant ce qu'il fait (**noter**) et NOMME le geste qui reste — en lisant le
+   vrai libellé du bouton du bas (`_labelFinSeance`, R2) plutôt qu'en le recopiant. */
 function saveCardioEntry(){
   if(!S.wkt||!calcCardioKcalTotal()){toast('Entre une durée de cardio','info');return;}
   _cardioOpen=false;persist();renderCardioBlock();
   if(typeof renderLogFinish==='function')renderLogFinish();
-  toast('Cardio enregistré ✅','success');
+  const btn=(typeof _labelFinSeance==='function')?_labelFinSeance():'🏁 Enregistrer le cardio';
+  toast('Cardio noté — appuie sur « '+btn+' » en bas pour l\'enregistrer','info');
 }
 
 // ─── CALORIES BRÛLÉES ─────────────────────────────────────────
@@ -4897,6 +4906,13 @@ function exitDemoMode(){
 // ── GUIDE DE L'APPLICATION (diaporama, Menu → Outils) ────────
 // Guide-film : chaque slide = un vrai écran de l'app (guide/*.jpg) + un doigt animé (tap) + une phrase.
 const APP_GUIDE_SLIDES=[
+  /* 🏃 DIAPO DU GUIDE (règle d'or #11, point 5), et **SANS IMAGE exprès** : une capture
+     figerait DEUX libellés qui changent selon l'état de la séance — le bouton du bas dit
+     « Terminer la séance » ou « Enregistrer le cardio » selon qu'une série a été validée ou
+     non. *Montrer l'un des deux ferait chercher un bouton qui ne s'appelle pas comme ça.*
+     ⛔ Elle ne répète pas la pop-up : celle-ci ANNONCE que le bouton a changé ; la diapo dit
+     ce qu'une séance de cardio seul VAUT dans l'app, ce qu'aucune autre surface ne dit (R25). */
+  {icon:'🏃', t:'Un cardio seul est une vraie séance', cap:'Tu peux ouvrir une séance et ne faire <b>que</b> du cardio — 45 min de tapis, rien d\'autre. Elle compte : elle a sa <b>durée</b>, ses <b>calories</b>, elle apparaît dans ton <b>calendrier</b> et <b>Milo la voit</b>.<br><br>⭐ <b>Deux boutons, un seul enregistre.</b> Dans le bloc Cardio, « ✓ C\'est noté » range ta saisie et replie le bloc. C\'est le <b>gros bouton rouge du bas</b> qui inscrit la séance dans ton historique — un seul bouton rouge par écran, et c\'est toujours celui-là.<br><br>💡 Tant qu\'une séance attend d\'être enregistrée, l\'Accueil te le dit : le bouton affiche <b>« ↩ Reprendre la séance »</b> au lieu de « Commencer une séance ».'},
   /* 📉 DIAPO DU GUIDE (règle d'or #11, point 5), et **SANS IMAGE exprès** — pour deux raisons
      distinctes, et les deux comptent :
      ① une capture de la carte du jour montrerait des **grammes qui ne sont pas ceux du
@@ -5884,11 +5900,19 @@ if(typeof _applyColorblind==='function')_applyColorblind();
 if(typeof _applyLeftHand==='function')_applyLeftHand();
 filterEx();
 goScreen('home', document.getElementById('nb-home'));
-// Notifier l'utilisateur s'il y a une séance en cours non terminée
-if(S.wkt&&S.wkt.exs&&S.wkt.exs.length){
-  const nEx=S.wkt.exs.length;
-  const nDone=S.wkt.exs.reduce((a,ex)=>a+(ex.sets||[]).filter(s=>s.done).length,0);
-  setTimeout(()=>toast('Séance en cours — '+nEx+' exercice'+(nEx>1?'s':'')+(nDone?' · '+nDone+' séries validées':'')+' · Appuie sur Reprendre','info'),1000);
+/* Notifier l'utilisateur s'il y a une séance en cours non terminée.
+   ⛔ 04/09/2026 — 3ᵉ endroit qui lisait « des exercices » au lieu de « une séance ouverte » :
+   quelqu'un qui rouvrait l'app avec 45 min de cardio non enregistrées n'était prévenu par
+   RIEN (ni ici, ni par le bouton de l'Accueil, ni par le rappel ⏰). `_seanceOuverte()` (R2). */
+if((typeof _seanceOuverte==='function')?_seanceOuverte():!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length)){
+  const nEx=(S.wkt.exs||[]).length;
+  const nDone=(S.wkt.exs||[]).reduce((a,ex)=>a+(ex.sets||[]).filter(s=>s.done).length,0);
+  const cMin=(typeof _cardioNoteMin==='function')?_cardioNoteMin():0;
+  // Ce qu'on annonce doit décrire ce qui est VRAIMENT en attente : une séance de cardio seul
+  // n'a pas d'exercice, et « 0 exercice » se lirait comme une panne.
+  const quoi=nEx?(nEx+' exercice'+(nEx>1?'s':'')+(nDone?' · '+nDone+' séries validées':'')+(cMin?' · '+cMin+' min de cardio':''))
+                :(cMin+' min de cardio en attente');
+  setTimeout(()=>toast('Séance en cours — '+quoi+' · Appuie sur Reprendre','info'),1000);
 }
 _initSwipe();
 _blockEdgeBackSwipe(); // iOS : neutralise le geste "retour" bord gauche (page blanche)

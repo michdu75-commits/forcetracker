@@ -361,6 +361,11 @@ const _HELP_DATA={
   log:{
     title:'⚡ Séance',
     tips:[
+      /* 🏃 ft-v1118 — CE QU'ON NE DEVINE PAS, ET QUI A COÛTÉ UNE SÉANCE : deux boutons portaient
+         presque les mêmes mots et un seul enregistrait. Les libellés sont corrigés ; l'aide dit
+         la règle générale (le bouton du bas est TOUJOURS celui qui enregistre) et la deuxième
+         chose qu'on ne devine pas — qu'un cardio seul est une vraie séance. */
+      {i:'🏃',t:'<b>Deux boutons, un seul enregistre.</b> Dans le bloc Cardio, <b>« ✓ C\'est noté »</b> range ta saisie et replie le bloc — <b>ta séance n\'est pas encore enregistrée</b>. C\'est le <b>gros bouton rouge du bas</b> qui l\'inscrit dans ton historique : il s\'appelle <b>« 🏁 Terminer la séance »</b> si tu as validé des séries, <b>« 🏁 Enregistrer le cardio »</b> si tu n\'as fait que du cardio. ⭐ <b>Un cardio seul est une vraie séance</b> : il a sa durée, ses calories, il apparaît dans ton calendrier et Milo le voit. 💡 Tant qu\'elle n\'est pas enregistrée, l\'Accueil te le rappelle avec <b>« ↩ Reprendre la séance »</b>.'},
       {i:'💪',t:'<b>RIR — répétitions en réserve</b> : après une série de travail, la barre de repos demande « il t\'en restait combien ? ». Un tap, c\'est tout, et c\'est facultatif. <b>échec</b> = 0 en réserve — c\'est la même chose que le tag <b>X</b>. Tu le relis la fois d\'après dans « précédent » (<i>8×80·2r</i>), et Milo s\'en sert pour vérifier le cadre de ta discipline. Une série non notée n\'est <b>pas</b> comptée comme un échec. 🎚️ <b>Tu préfères le RPE ?</b> Profil → <b>Échelle d\'effort</b> : la question, la colonne « précédent » (<i>8×80·@8</i>) et Milo passent en RPE. C\'est la <b>même mesure</b> (<i>RPE = 10 − RIR</i>) — rien n\'est perdu, et tu peux revenir.'},
       {i:'🎽',t:'<b>Le repos exigé suit ta discipline</b> : l\'avertissement « repos trop court pour du lourd » ne dit plus la même chose à tout le monde. Il lit le <b>cadre de ta discipline</b> — celui que tu vois dans Profil — et le conseil cite <b>sa</b> plage (<i>3 à 5 min</i> en force athlétique). ⚠️ Il ne se relâche jamais en dessous du repère d\'origine : il resserre seulement là où ton cadre est plus exigeant.'},
       {i:'📍',t:'<b>Charge sans repère</b> : si Milo propose un poids sur un exercice que tu n\'as <b>jamais noté dans l\'app</b>, un 📍 le signale sous l\'exercice. C\'est un <b>point de départ</b>, pas une mesure — il n\'a rien dans ton historique sur lequel se caler — <b>même si tu le pratiques depuis des années ailleurs</b>. Dès ta première série notée, le message disparaît et le contrôle d\'intensité (⚡) prend le relais.'},
@@ -763,7 +768,11 @@ function _renderHomeHero(){
   if(score!==null&&score<40)accent='255,106,115';
   else if(score!==null&&score<60)accent='255,138,114';
   else if(score!==null&&score<80)accent='234,179,8';
-  const hasPending=S.wkt&&S.wkt.exs&&S.wkt.exs.length;
+  /* ⛔ 04/09/2026 — « SÉANCE OUVERTE » NE VEUT PAS DIRE « DES EXERCICES » (R2).
+     Une séance de cardio seul n'en a aucun : l'Accueil affichait donc « Commencer une séance »
+     pendant que 45 min de tapis attendaient d'être enregistrées, et le bouton les effaçait.
+     `_seanceOuverte()` est le propriétaire unique de la question depuis le 02/08. */
+  const hasPending=(typeof _seanceOuverte==='function')?_seanceOuverte():!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length);
   const ctaLabel=hasPending?'↩ Reprendre la séance':'Commencer une séance';
   /* ⏰ RAPPEL « TA SÉANCE EST ENCORE OUVERTE » (14/08/2026, demande de Michel).
      Au-delà de 90 min sans une seule série validée, ce n'est plus une séance en cours :
