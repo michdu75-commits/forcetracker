@@ -16,7 +16,10 @@
   ⚠️ *La mention « Safari non vérifié » traînait dans six entrées de journal : elle est levée pour
   cette série, pas pour les suivantes.*
 - **Version en ligne (live) :** `ft-v1121` — 🌮 **O'TACOS SORT DE LA BASE** (128 → 123).
-  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#873** sur `f26b072`, **job `deploy` success**,
+  les 7 étapes vertes à 16:40:45 UTC. ⭐ Suite : **2682/2682, 0 rouge**.
+  ⚠️ *Le chiffre annoncé dans l'entrée était d'abord une **prédiction** (2679) : il a été remplacé
+  par la mesure. Un total de tests écrit avant la passe n'est pas un résultat.*
 - ⛔ Ses 5 lignes étaient **toutes des desserts**, **aucun tacos** → `tacos` rendait une **glace**.
   👉 *Un mot qui ne désigne pas ce qu'on croit est pire qu'un mot qui ne rend rien.*
 - ⭐⭐ **Ça rétablit une décision déjà prise** : en ft-v1113, `tacos` n'était **pas** mappé, exprès.
