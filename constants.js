@@ -723,7 +723,7 @@ const WHATS_NEW=[
      ⭐ ET ELLE DIT POURQUOI LE SCORE BAISSE, sinon « mon score a chuté » se lit comme une panne.
      ⛔ BORNÉE À L'ESSENTIEL (R25) : ce qui change et pourquoi. Le détail — l'ancrage, les
      MET·min, le raccord des 48 h — vit dans l'aide `?` et l'aide détaillée. */
-  {v:70, ic:'🔋', t:'Ta récupération tient enfin compte du cardio', d:'① <b>Ton cardio pèse maintenant sur ton score de récup</b>, selon sa <b>durée</b> et son <b>intensité</b> — avant, 10 min de marche et 90 min de tapis intense coûtaient exactement pareil. ② Le <b>bonus de repos</b> n’arrive plus d’un coup au bout de 2 jours : il s’installe en pente. ⚠️ <b>Ton score va donc baisser un peu</b> sur les jours où tu as fait du cardio, <b>y compris dans ton historique</b> — mesuré : le plus gros écart est de <b>6 points</b>. Ce n’est pas une panne : c’est du travail qui n’était pas compté.'},
+  {v:70, ic:'🔋', t:'Ta récupération tient enfin compte du cardio', d:'① <b>Ton cardio pèse maintenant sur ton score de récup</b>, selon sa <b>durée</b> et son <b>intensité</b> — avant, 10 min d’elliptique tranquille et 90 min de tapis intense coûtaient exactement pareil. ② Le <b>bonus de repos</b> n’arrive plus d’un coup au bout de 2 jours : il s’installe en pente. ⚠️ <b>Ton score va donc baisser un peu</b> sur les jours où tu as fait du cardio, <b>y compris dans ton historique</b> — mesuré : le plus gros écart est de <b>6 points</b>. Ce n’est pas une panne : c’est du travail qui n’était pas compté.'},
   /* 🏃 ELLE SE MÉRITE, ET SUR LES DEUX CRITÈRES À LA FOIS (règle d'or #11).
      ① **UN REPÈRE A BOUGÉ** : le bouton du bloc Cardio change de nom ET de couleur (il n'est
         plus rouge — le rouge est désormais réservé à celui qui enregistre pour de vrai), et le

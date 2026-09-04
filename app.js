@@ -6404,7 +6404,22 @@ function _whatsNewUnseen(){
     if(f.si) return cond.indexOf(f.v)<0;          // conditionnelle : suivie par son numéro à elle
     return f.v>seen;                              // ordinaire : le plafond, comme avant
   });
-  if(typeof WHATS_NEW_SHOW_MAX==='number') list=list.slice(0,WHATS_NEW_SHOW_MAX);
+  /* ⛔⛔ 04/09/2026 — LE PLAFOND D'AFFICHAGE RE-ENTERRAIT CE QUE ft-v1072 AVAIT DÉTERRÉ.
+     Ce jour-là on avait retiré les conditionnelles du plafond NUMÉRIQUE (`ft4_wn_seen`) pour
+     qu'une annonce jamais montrée ne soit pas perdue. Mais il restait un second plafond, celui
+     du NOMBRE affiché d'un coup : la liste part de la plus récente, et une conditionnelle
+     ancienne tombe hors des 6 dès qu'une nouveauté ordinaire s'ajoute.
+     ⭐ Mesuré : en ajoutant la pop-up de ft-v1121, la conditionnelle **v64** passait en 7ᵉ
+     position et disparaissait — un témoin l'a attrapé (« avec la montre, les 2 pop-ups
+     reviennent » : il n'en revenait qu'une).
+     👉 Les conditionnelles passent DEVANT quand il faut trancher. Elles s'adressent à une
+     situation précise qui vient de se produire (« tu as branché ta montre ») : ce sont
+     justement celles qu'il ne faut pas remettre à plus tard. */
+  if(typeof WHATS_NEW_SHOW_MAX==='number' && list.length>WHATS_NEW_SHOW_MAX){
+    list=list.filter(function(f){return !!f.si;})
+             .concat(list.filter(function(f){return !f.si;}))
+             .slice(0,WHATS_NEW_SHOW_MAX);
+  }
   return list;
 }
 // ── « Quoi de neuf » en CARROUSEL (ft-v630, idée de Christophe) ────────────────
