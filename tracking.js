@@ -3113,6 +3113,19 @@ function _pasEcart(refTs){
 }
 const RHR_JOURS_BASE = 30;   // fenêtre de référence
 const RHR_MIN_JOURS  = 7;    // en dessous, on ne se prononce pas
+/* ⛔⛔ GARDÉ À 8 — DÉCISION DE MICHEL DU 04/09/2026, PRISE SUR LES CHIFFRES, ET C'EST UN CHOIX
+   QU'ON ÉCRIT PARCE QU'UNE ABSENCE DE CHANGEMENT NE LAISSE AUCUNE TRACE (R30).
+   Le sujet a été ouvert pour de bon : cette borne écrase un vrai signal. **Mesuré : +20 bpm —
+   une grippe — compte exactement comme +6.** La formule brute donnerait −36 ; on en montre −8.
+   ⭐ MAIS LA MESURE A RETOURNÉ L'ARGUMENT, et c'est pour ça qu'on ne touche à rien :
+   ① sur les 60 jours réels de Michel, la porter à −20 change **ZÉRO journée** — son écart va de
+      **+4 à −3 bpm**, il ne l'atteint jamais ;
+   ② et surtout, **cette borne n'est pas qu'une bride, c'est un GARDE-FOU** : une lecture fausse
+      de la montre ferait plonger le score de 36 points sans elle. *On ne retire pas une
+      protection contre une mesure aberrante pour gagner de la finesse sur un cas jamais vu.*
+   ⚠️ Et il n'a que **6 jours de FC mesurés** : pas de quoi juger si ses données sont fiables.
+   👉 À rouvrir le jour où quelqu'un aura assez d'historique de FC pour qu'on sache si le
+   signal est propre. *La décision n'est pas « c'est bien », c'est « on n'a pas de quoi trancher ».* */
 const RHR_MAX_ADJ    = 8;    // borne de l'ajustement, dans les deux sens
 /* ⭐ `refTs` optionnel (ft-v1017) : rejoue l'écart de FC tel qu'il était à une date passée,
    pour l'historique du score de récup. ⛔ Et il ne regarde QUE les jours <= à cette date —
@@ -3230,6 +3243,21 @@ const RECUP_PEN_PLANCHER = 2;
    qui écrivait `48` et `24` alors que `RECUP_EFFACE_H` existait pour être propriétaire unique.
    *Un littéral qui a deux lecteurs n'est plus un littéral, c'est une constante qui s'ignore*
    (**R2**). ⭐ La valeur ne change pas : 38, relevé de 30 le 02/08. */
+/* ⛔⛔ GARDÉ À 38 — DÉCISION DE MICHEL DU 04/09/2026, sur les chiffres, et écrite ici parce
+   qu'un non-changement ne laisse aucune trace (R30). Le plafond écrase bel et bien : **une
+   séance de 60 séries pèse 102 en brut, on en montre 38** — 24 séries et 60 séries rendent le
+   même chiffre. C'est la VRAIE cause de la saturation à 0, mesurée pendant l'option B.
+   ⭐ MAIS LE REJEU SUR SES 60 JOURS RÉELS (vrai moteur, constante changée puis restaurée) DIT
+   QUE ÇA N'ACHÈTE RIEN POUR LUI : le porter à 50 laisse **58 journées sur 60 inchangées**, en
+   baisse 2, et fait descendre son plancher de 42 à 38. ⚠️ Et **50 est indistinguable de « pas
+   de plafond du tout »** dans ses données — sa charge brute maximale est **41**.
+   ⛔ Sa plus grosse séance fait **24 séries**, écrasée de **3 points**. *On ne déplace pas
+   l'historique de tout le monde pour 3 points sur 3 séances.*
+   ⚠️ ET AUCUN CANDIDAT NE RÉGLAIT VRAIMENT LE PROBLÈME, ce qui a pesé dans la décision : sans
+   plafond, 60 séries retombent à **0** — la saturation revient par l'autre bout, celle qu'on
+   voulait justement corriger. *Un correctif qui déplace un défaut au lieu de le retirer n'est
+   pas un correctif.*
+   👉 À rouvrir si quelqu'un fait vraiment des séances de 40 séries et plus. */
 const RECUP_PEN_PLAFOND = 38;
 function _penaliteSeance(sess){
   let load=0;

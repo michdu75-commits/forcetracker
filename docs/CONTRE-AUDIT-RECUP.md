@@ -662,3 +662,76 @@ deux côtés, sinon la date annoncée ne correspondra plus au score.
 *Aucune ligne de code n'a été modifiée pour produire ce document. Le banc d'essai vit hors du
 dépôt ; il sera versé dans `tests/` le jour où une option est retenue — un banc d'essai qui ne
 protège encore aucune décision n'a rien à faire dans la suite de tests (**R19**).*
+
+---
+
+# 📌 ÉPILOGUE — CE QUE LES OPTIONS ONT DONNÉ (04/09/2026)
+
+> Écrit **après** la livraison, parce qu'un contre-audit qui ne dit pas ce qu'il est devenu
+> laisse croire que tout reste à faire. Trois de ses cinq défauts sont corrigés, un est
+> **écarté avec sa raison**, et le cinquième s'est révélé **mal diagnostiqué par ce document
+> lui-même**.
+
+## ✅ Option A — livrée en **ft-v1122**
+
+Le cardio entre dans la récupération (MET·min, ancrage 45 min modéré = **6 séries**, décision de
+Michel), le plancher passe de 6 à 2, le raccord à 48 h devient une rampe de 12 h.
+**Rejeu 60 jours : 33 journées changées, toutes vers le bas, écart moyen −2,0.**
+
+## ✅ Option B, partie ① — livrée en **ft-v1127**
+
+La charge s'**additionne** sur la fenêtre d'effacement, le forfait « jours enchaînés »
+**disparaît**. Plafond de la somme = 38 (décision de Michel ; le candidat à 48 faisait descendre
+son plancher de 42 à 38).
+
+⭐⭐ **ET CE DOCUMENT S'ÉTAIT TROMPÉ SUR LE SENS DU CHANGEMENT.** Il annonçait *« plus sévère pour
+les gens qui s'entraînent souvent — c'est-à-dire les plus assidus »*. **Mesuré sur les 60 jours
+réels : 25 journées MONTENT (+4,0 en moyenne), 3 baissent, le plancher reste à 42.**
+👉 Parce que le forfait mordait **28 jours sur 60** à −4 quand la vraie charge cumulée y coûte
+moins. ***Un forfait n'est pas seulement imprécis : il est faux dans les deux sens, et
+celui-ci punissait surtout ceux qui s'entraînent régulièrement sans jamais rien empiler.***
+
+## ⛔ Option B, partie ② — **LE REMÈDE PROPOSÉ ICI NE MARCHE PAS**
+
+Le §11 proposait de *« borner l'ensemble des ajustements négatifs de RÉPONSE pour que le score
+cesse de saturer à 0 »*. **Mesuré : ça ne rend rien — tout reste à 0.** Quand le sommeil est
+mauvais, la base est déjà basse ; borner les négatifs ne restaure aucun ordre.
+
+⛔⛔ **La vraie cause est EN AMONT, et ce document ne l'avait pas vue** : la pénalité de séance
+plafonne à **38 dès 23 séries**, et la FC au repos à **−8 dès +6 bpm**. ***24 séries et 60 séries
+rendent le même chiffre AVANT même d'arriver au zéro.*** Le `max(0, …)` n'est que la **deuxième**
+troncature — la première est dans les barèmes eux-mêmes.
+
+## ⛔ LES DEUX PLAFONDS SONT GARDÉS — décision de Michel, sur les chiffres
+
+Le sujet a été ouvert pour de bon, mesuré sur le **vrai moteur** (constante modifiée, rejeu,
+restauration), et tranché : **on ne touche ni à l'un ni à l'autre.** *Un non-changement ne laisse
+aucune trace : il est écrit ici, à côté des constantes, et figé par des témoins (**R30**).*
+
+| | ce que le plafond écrase | ce que ça coûte à Michel | décision |
+|---|---|---|---|
+| **Pénalité (38)** | 60 séries pèsent **102** en brut, on en montre 38 | **3 points sur 3 séances** ; sa plus grosse fait 24 séries. Le porter à 50 laisse **58 journées sur 60 inchangées** et fait descendre son plancher de 42 à 38 | **gardé** |
+| **FC au repos (−8)** | **+20 bpm (une grippe) = +6 bpm** ; le brut donnerait −36 | **ZÉRO journée changée sur 60** — son écart réel va de **+4 à −3 bpm**, et il n'a que **6 jours** de FC mesurés | **gardé** |
+
+**⭐ Trois raisons, dans l'ordre où elles ont pesé :**
+
+1. **Ça n'achète rien pour lui.** 58 journées sur 60 identiques d'un côté, zéro de l'autre.
+   *On ne déplace pas l'historique de tout le monde pour 3 points sur 3 séances.*
+2. ⚠️ **Aucun candidat ne réglait vraiment le problème** : sans plafond, 60 séries retombent à
+   **0** — la saturation revient par l'autre bout, celle qu'on voulait corriger.
+   ***Un correctif qui déplace un défaut au lieu de le retirer n'est pas un correctif.***
+3. ⭐⭐ **Et la mesure a retourné l'argument sur la FC** : cette borne n'est pas qu'une bride,
+   c'est un **garde-fou contre une mesure fausse**. Une lecture aberrante de la montre ferait
+   plonger le score de 36 points sans elle. *On ne retire pas une protection contre une donnée
+   douteuse pour gagner de la finesse sur un cas jamais observé.*
+
+**⏭️ À rouvrir quand** — et c'est écrit pour que la question ne se reperde pas :
+- le plafond de **pénalité**, le jour où quelqu'un fait vraiment des séances de **40 séries et
+  plus** (personne aujourd'hui : le maximum observé est 24) ;
+- le plafond de **FC**, le jour où on aura assez d'historique pour savoir si le signal est
+  propre. *La décision n'est pas « c'est bien », c'est « on n'a pas de quoi trancher ».*
+
+## ⏭️ Ce qui reste entier
+
+**Option C** (volume habituel personnel, puis %e1RM) — non commencée, et le contre-audit prévient
+lui-même que son effet est **probablement modeste** (ft-v879 : −3 kcal médians).
