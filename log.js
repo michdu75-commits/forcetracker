@@ -4240,11 +4240,26 @@ function closeSessionEnd(dest){
 // l'IA l'enrichit). Le débrief est POUSSÉ dans coachHistory (mémoire + visible dans le Coach).
 // Le cardio RÉELLEMENT noté sur cette séance, en clair — vide s'il n'y en a pas.
 // Même lecture que le contexte de Milo (coach.js) : deux moments, échauffement et après-séance.
-function _seCardioTxt(sess){
+/* 🏃 UN CARDIO EN CLAIR — « Tapis 45 min (modéré) ». UN SEUL propriétaire du libellé (R2).
+   ⛔ Le MOMENT (« échauffement », « après séance ») est ajouté par l'appelant, il ne fait pas
+   partie du libellé : sur une séance de CARDIO SEUL, « après séance » n'a aucun sens — il n'y a
+   pas de séance avant. *Un texte copié d'un contexte à un autre peut devenir faux* (**R14**). */
+function _cardioClair(c){
   try{
     const L=(typeof CARDIO_LABELS!=='undefined')?CARDIO_LABELS:{};
-    const un=c=>c&&c.duration?`${L[c.type]||c.type||'cardio'} ${c.duration} min${c.intensity?' ('+c.intensity+')':''}`:'';
-    const av=un(sess&&sess.cardioAvant), ap=un(sess&&sess.cardio);
+    const I=(typeof CARDIO_INTENSITES!=='undefined')?CARDIO_INTENSITES:{};
+    return (c&&c.duration)?`${L[c.type]||c.type||'cardio'} ${c.duration} min${c.intensity?' ('+(I[c.intensity]||c.intensity)+')':''}`:'';
+  }catch(e){ return ''; }
+}
+// Tout le cardio d'une séance, sans le moment — pour les endroits qui n'ont pas d'exercices
+// à situer (la liste de l'historique). Vide s'il n'y en a pas.
+function _cardioSeanceTxt(sess){
+  return [_cardioClair(sess&&sess.cardioAvant), _cardioClair(sess&&sess.cardio)]
+    .filter(Boolean).join(' + ');
+}
+function _seCardioTxt(sess){
+  try{
+    const av=_cardioClair(sess&&sess.cardioAvant), ap=_cardioClair(sess&&sess.cardio);
     return [av?'échauffement '+av:'', ap?'après séance '+ap:''].filter(Boolean).join(' + ');
   }catch(e){ return ''; }
 }

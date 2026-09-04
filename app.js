@@ -34,6 +34,12 @@ const CARDIO_MET={
   autre:     {leger:3.5,modere:5.5,intense:8.0},
 };
 const CARDIO_LABELS={elliptique:'Elliptique',tapis:'Tapis',velo:'Vélo',rameur:'Rameur',corde:'Corde',autre:'Autre'};
+/* ⛔ 04/09/2026 — LES TROIS INTENSITÉS ONT UN NOM, ET UN SEUL PROPRIÉTAIRE (R2).
+   Elles étaient écrites en clair DANS le rendu des boutons, et nulle part ailleurs : partout où
+   l'app reparlait de ce cardio (l'historique, le contexte de Milo), c'est la CLÉ qui sortait —
+   « Tapis 45 min (modere) », sans accent. *Une valeur technique affichée telle quelle se
+   remarque le jour où on la met en évidence, pas avant.* */
+const CARDIO_INTENSITES={leger:'Léger',modere:'Modéré',intense:'Intense'};
 
 function calcCardioKcal(c){
   if(!c||!c.duration)return 0;
@@ -117,7 +123,7 @@ function renderCardioBlock(){
         ${types.map(t=>`<button onclick="setCardioField('type','${t}','${moment}')" style="flex-shrink:0;padding:5px 11px;border-radius:20px;border:none;font-size:12px;font-family:var(--font);cursor:pointer;background:${c.type===t?'var(--red)':'var(--bg2)'};color:${c.type===t?'#fff':'var(--t2)'};">${CARDIO_LABELS[t]}</button>`).join('')}
       </div>
       <div style="display:flex;gap:5px;align-items:center;margin-top:8px;">
-        ${['leger','modere','intense'].map((iv,i)=>{const lbl=['Léger','Modéré','Intense'][i];return`<button onclick="setCardioField('intensity','${iv}','${moment}')" style="flex:1;padding:6px 0;border-radius:8px;border:none;font-size:12px;font-family:var(--font);cursor:pointer;background:${c.intensity===iv?'var(--red)':'var(--bg2)'};color:${c.intensity===iv?'#fff':'var(--t2)'};">${lbl}</button>`;}).join('')}
+        ${['leger','modere','intense'].map(iv=>{const lbl=CARDIO_INTENSITES[iv];return`<button onclick="setCardioField('intensity','${iv}','${moment}')" style="flex:1;padding:6px 0;border-radius:8px;border:none;font-size:12px;font-family:var(--font);cursor:pointer;background:${c.intensity===iv?'var(--red)':'var(--bg2)'};color:${c.intensity===iv?'#fff':'var(--t2)'};">${lbl}</button>`;}).join('')}
         <div style="display:flex;align-items:center;gap:6px;margin-left:6px;">
           <label style="font-size:12px;color:var(--t2);white-space:nowrap;">Durée</label>
           <input type="number" inputmode="numeric" min="0" max="300" value="${c.duration||''}" placeholder="0" oninput="setCardioField('duration',this.value,'${moment}')" style="width:52px;padding:5px 8px;border-radius:8px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:14px;font-weight:700;font-family:var(--font);text-align:center;">

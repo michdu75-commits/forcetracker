@@ -25357,6 +25357,79 @@ console.log('\n-- CCXXVI bis. Rouvrir l\'app avec un cardio non enregistré (ft-
   }
 }
 
+/* ═══ CCXXVI ter. LE CARDIO SE RECONNAÎT DANS L'HISTORIQUE (ft-v1118) ════════════════════════
+   Michel, dans la foulée : *« pourquoi le cardio n'apparaît pas dans mon historique ? »*.
+   ⭐⭐ MESURÉ AVANT DE RÉPONDRE, et la réponse n'était pas celle attendue : **il y EST**. Mais
+   il s'affichait *« 💪 jeu. 3 sept. · 0 kg · ⏱️45 min · 🔥351 kcal · — »* — un emoji de muscle,
+   un volume de zéro, une figurine vide et un tiret à la place des exercices. ***Ça ressemble à
+   une séance ratée, pas à 45 minutes de tapis.*** 👉 Il n'y a aucun muscle à nommer : le titre
+   nomme donc ce que la séance EST, et la ligne du bas porte le cardio en clair.
+   ⛔ Au passage, la CLÉ technique sortait à l'écran — « (modere) », sans accent. Les trois
+   intensités ont maintenant un nom et un seul propriétaire (`CARDIO_INTENSITES`, R2).
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXVI ter. Le cardio se reconnaît dans l\'historique (ft-v1118) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_bw:'85',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(()=>{ try{
+    const o={}, t=today(), ts=new Date(t+'T10:00:00').getTime();
+    const lire=()=>{ renderSessions(); const el=document.getElementById('sess-list');
+                     return (el?el.innerText:'').replace(/\s+/g,' ').trim(); };
+    goScreen('progress',document.getElementById('nb-progress'));
+    /* ① le cas de Michel : cardio SEUL */
+    S.sessions=[{id:ts,ts,date:t,exs:[],exercises:[],volume:0,duration:45*60,calories:351,
+                 cardio:{type:'tapis',duration:45,intensity:'modere'}}];
+    o.cardioSeul=lire();
+    /* ② NON-RÉGRESSION : une muscu SANS cardio ne bouge pas d'un caractère */
+    S.sessions=[{id:ts+1,ts:ts+1,date:t,volume:2560,duration:45*60,calories:250,
+                 exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N'}]}]}];
+    o.muscuSeule=lire();
+    /* ③ une muscu AVEC cardio : le cardio s'ajoute, les exercices restent */
+    S.sessions=[{id:ts+2,ts:ts+2,date:t,volume:2560,duration:60*60,calories:400,
+                 exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N'}]}],
+                 cardioAvant:{type:'velo',duration:10,intensity:'leger'}}];
+    o.muscuAvecCardio=lire();
+    /* ④ le mois compte-t-il cette séance ? (le calendrier lit les DATES, pas le volume) */
+    S.sessions=[{id:ts,ts,date:t,exs:[],volume:0,duration:45*60,calories:351,
+                 cardio:{type:'tapis',duration:45,intensity:'modere'}}];
+    goScreen('home',document.getElementById('nb-home')); renderHome();
+    const h=document.getElementById('s-home');
+    o.mois=(((h&&h.innerText)||'').replace(/\s+/g,' ').match(/(\d+)\s*séances?/i)||['(rien)'])[0];
+    return o;
+  }catch(e){ return {err:String(e&&e.message||e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXVI ter n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⭐⭐ CE QUE MICHEL CHERCHAIT : une ligne qui se reconnaît. */
+    t('⭐⭐ un cardio seul s\'intitule « 🏃 Cardio », plus « 💪 » suivi d\'une date',
+      /🏃 Cardio/.test(R.cardioSeul) && !/💪/.test(R.cardioSeul), R.cardioSeul.slice(0,110));
+    t('⭐⭐ … et la ligne du bas dit CE QUE C\'ÉTAIT, au lieu d\'un tiret',
+      /Tapis 45 min/.test(R.cardioSeul) && !/—/.test(R.cardioSeul), R.cardioSeul.slice(0,110));
+    /* ⛔ « 0 kg » laissait croire à une séance vide — et il ne disparaît QUE là. */
+    t('⛔ … et « 0 kg » ne s\'affiche plus sur un cardio (il n\'apprend rien)',
+      !/0 kg/.test(R.cardioSeul), R.cardioSeul.slice(0,110));
+    t('⛔ … la durée et les calories, elles, sont bien là',
+      /45 min/.test(R.cardioSeul) && /351 kcal/.test(R.cardioSeul), R.cardioSeul.slice(0,110));
+    /* ⛔ L'INTENSITÉ EST UN MOT, PAS UNE CLÉ : « (Modéré) », jamais « (modere) ». */
+    t('⛔ l\'intensité s\'écrit en toutes lettres — « (Modéré) », pas la clé technique',
+      /\(Modéré\)/.test(R.cardioSeul) && !/\(modere\)/.test(R.cardioSeul), R.cardioSeul.slice(0,110));
+    /* ⛔⛔ NON-RÉGRESSION : une séance de muscu ne doit RIEN perdre — c'est le cas courant. */
+    t('⛔⛔ NON-RÉGRESSION — une muscu garde son muscle, son volume et ses exercices',
+      /💪 Pectoraux/.test(R.muscuSeule) && /2560 kg/.test(R.muscuSeule)
+      && /Développé Couché/.test(R.muscuSeule), R.muscuSeule.slice(0,110));
+    t('⭐ une muscu AVEC cardio garde ses exercices ET dit son cardio',
+      /Développé Couché/.test(R.muscuAvecCardio) && /Vélo 10 min/.test(R.muscuAvecCardio)
+      && /2560 kg/.test(R.muscuAvecCardio), R.muscuAvecCardio.slice(0,130));
+    /* ⛔ Et le mois la compte : sans ça, « elle est dans l'historique » serait une demi-vérité. */
+    t('⛔ le compteur du mois compte la séance de cardio seul', /^1\s/i.test(R.mois), R.mois);
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
