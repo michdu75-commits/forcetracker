@@ -34,7 +34,14 @@ désigner UN aliment : le classement trie par longueur de nom, et c'est ainsi qu
 ⛔ LES CORRECTIONS APPORTÉES À LA TABLE sont ci-dessous, nommées, avec leur raison. Elles ne sont
 pas silencieuses : le script les imprime à chaque exécution.
 
-Usage : python3 tools/alias.py <fichier.xlsx>   → écrit data/alias.json
+Usage : python3 tools/alias.py [fichier.xlsx]   → écrit data/alias.json
+        sans argument, il prend la source versionnée dans `data/sources/`.
+
+⚠️⚠️ LA SOURCE EST DANS LE DÉPÔT DEPUIS LE 04/09/2026, ET CE N'EST PAS DU CONFORT. Elle vivait
+   dans un dossier temporaire ; le conteneur a redémarré et elle a disparu — `data/alias.json`
+   est devenu **impossible à régénérer** pendant une journée. *Un fichier généré dont la source
+   n'est pas versionnée est un fichier figé qui s'ignore*, et R27 (« ce qui est généré ne s'édite
+   pas à la main ») devient alors intenable. Détail et état des 3 générateurs : `data/sources/README.md`.
 """
 import sys, json, re, os, unicodedata
 
@@ -294,4 +301,6 @@ def main(src):
         if len(v) > 14: print(f'   … et {len(v)-14} autres')
 
 if __name__ == '__main__':
-    main(sys.argv[1] if len(sys.argv) > 1 else 'Force_Tracker_Alias_CIQUAL_V2_Elargie.xlsx')
+    _defaut = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           'data', 'sources', 'Force_Tracker_Alias_CIQUAL_V2_Elargie.xlsx')
+    main(sys.argv[1] if len(sys.argv) > 1 else _defaut)

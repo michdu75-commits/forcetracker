@@ -25617,6 +25617,59 @@ console.log('\n-- CCXXVII. Les 2 défauts de la recherche alimentaire (ft-v1119)
   }
 }
 
+/* ═══ CCXXVIII. UN FICHIER GÉNÉRÉ DOIT RESTER RÉGÉNÉRABLE (04/09/2026) ══════════════════════
+   ⛔⛔ LE CAS RÉEL, VÉCU LA VEILLE : `data/alias.json` a été généré depuis un classeur qui vivait
+   dans un dossier TEMPORAIRE. Le conteneur a redémarré, le classeur a disparu, et la table est
+   devenue **impossible à régénérer** — plus moyen de corriger une entrée ni de vérifier d'où
+   venait un chiffre. 👉 ***Un fichier généré dont la source n'est pas versionnée est un fichier
+   figé qui s'ignore.***
+   ⚠️ Et ça rend **R27 intenable** : « ce qui est généré ne s'édite pas à la main » suppose qu'on
+   puisse le régénérer. Sans source, il ne reste que deux mauvaises options — retoucher la sortie
+   (interdit) ou renoncer.
+   ⛔ CE TÉMOIN NE VÉRIFIE PAS QUE TOUTES LES SOURCES SONT LÀ — certaines sont publiques et
+   retéléchargeables (CIQUAL), une est PERDUE et c'est écrit. Il vérifie que **chaque générateur
+   est DÉCLARÉ** et que **toute source annoncée « dans le dépôt » y est vraiment**. *Une ligne de
+   tableau qui ment est pire qu'une ligne absente.*
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXVIII. Un fichier généré doit rester régénérable (04/09/2026) --');
+{
+  const dirTools=path.join(ROOT,'tools');
+  const readme=path.join(ROOT,'data','sources','README.md');
+  /* ⛔ CONTRÔLE — le tableau existe, sinon les témoins suivants seraient verts en ne lisant rien. */
+  t('⛔ CONTRÔLE — `data/sources/README.md` existe et porte le tableau des générateurs',
+    fs.existsSync(readme) && /\| Généré \| Par \| Source \| Dans le dépôt \?/.test(fs.readFileSync(readme,'utf8')), '');
+  if(fs.existsSync(readme)){
+    const doc=fs.readFileSync(readme,'utf8');
+    /* ⭐⭐ TOUT GÉNÉRATEUR QUI LIT UN .xlsx DOIT ÊTRE DÉCLARÉ. C'est le témoin qui rougira le jour
+       où quelqu'un ajoute un `tools/xxx.py` sans se poser la question de sa source. */
+    const gens=fs.readdirSync(dirTools).filter(f=>f.endsWith('.py'))
+      .filter(f=>/\.xlsx/i.test(fs.readFileSync(path.join(dirTools,f),'utf8')));
+    const nonDeclares=gens.filter(f=>doc.indexOf('tools/'+f)<0);
+    t('⛔ CONTRÔLE — des générateurs lisant un .xlsx existent bien (sinon le témoin ne mesure rien)',
+      gens.length>=2, gens.join(' · '));
+    t('⭐⭐ CHAQUE générateur qui lit un .xlsx est DÉCLARÉ dans le tableau des sources',
+      nonDeclares.length===0, 'non déclarés : '+nonDeclares.join(' · '));
+    /* ⭐⭐ ET TOUTE SOURCE ANNONCÉE « DANS LE DÉPÔT » Y EST VRAIMENT. Sans ce témoin, le tableau
+       pourrait promettre une source absente — exactement le mensonge qu'on vient de payer. */
+    const promises=[...doc.matchAll(/`([^`]+\.xlsx)`[^|]*\|\s*✅/g)].map(m=>m[1]);
+    const manquantes=promises.filter(f=>!fs.existsSync(path.join(ROOT,'data','sources',f)));
+    t('⛔ CONTRÔLE — le tableau promet bien au moins une source versionnée',
+      promises.length>=1, promises.join(' · '));
+    t('⭐⭐ toute source annoncée « dans le dépôt » y EST vraiment (une ligne qui ment est pire qu\'absente)',
+      manquantes.length===0, 'promises mais absentes : '+manquantes.join(' · '));
+    /* ⛔ Et les trous sont NOMMÉS, pas tus (R30) : une source perdue doit se lire dans le tableau. */
+    t('⛔ … et les sources ABSENTES sont nommées avec leur raison (R30), pas passées sous silence',
+      /PERDU/.test(doc) && /retéléchargeable/.test(doc), '');
+  }
+  /* ⛔⛔ LE GÉNÉRATEUR TROUVE SA SOURCE TOUT SEUL : sans ça, la source serait versionnée mais
+     personne ne saurait laquelle passer en argument dans six mois. */
+  {
+    const py=fs.readFileSync(path.join(dirTools,'alias.py'),'utf8');
+    t('⛔⛔ `tools/alias.py` pointe sur `data/sources/` par défaut (régénérable sans rien savoir)',
+      /data',\s*'sources'/.test(py), '');
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
