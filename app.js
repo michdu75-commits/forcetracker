@@ -6919,10 +6919,42 @@ async function loadHealthAdmin(){
           .slice(0,6)
           .map(k=>k+' <span style="color:var(--t3)">('+ai.usage.byAction[k].calls+')</span>')
           .join(' · ');
+        /* ⛔⛔ ON DIT DE QUEL JOUR, ET CE N'EST PAS DE LA DÉCORATION (04/09/2026).
+           Michel, capture à l'appui : *« on ne sait pas si c'est dans la journée ou depuis
+           1 mois »*. Le titre disait « du jour » — exact, mais **rien ne le prouvait à
+           l'écran**, et un total de 1,02 € ne se lit pas pareil selon qu'il couvre une
+           journée ou un mois. 👉 ***Un chiffre sans sa période n'est pas un chiffre, c'est
+           une impression.***
+           ⭐ RIEN À CONSTRUIRE : `_aiUsageAdd_` (Code.js) remet le compteur à zéro dès que la
+           date change, et `_aiUsageLire_` **renvoyait déjà `u.date`** — l'app la recevait et
+           la jetait. C'est **R5** (une donnée produite, transmise, jamais montrée), le même
+           défaut que `topUsers` en ft-v1058.
+           ⚠️ La date vient du SERVEUR (fuseau du script), pas du téléphone : on l'affiche
+           telle qu'elle est comptée, sinon on mentirait sur la période à cheval sur minuit —
+           c'est la famille « fuseaux horaires » de `BUGS.md`, appliquée à un affichage. */
+        /* ⚠️⚠️ ON FORMATE ICI, ON N'APPELLE PAS `_dateLisible` : elle existe bien dans le
+           projet, mais c'est une **const LOCALE à une fonction de `coach.js`** — l'appeler
+           d'ici lèverait `_dateLisible is not defined` et **ferait disparaître tout le
+           panneau Santé**, pas seulement cette ligne. *C'est exactement le `_esc is not
+           defined` de ft-v1114, qui avait vidé la liste des aliments entière.*
+           ⛔ Vérifié avant d'écrire l'appel, pas après l'avoir livré. */
+        const _d=String(ai.usage.date||'');
+        let jourCompte = null;
+        if(/^\d{8}$/.test(_d)){
+          /* ⚠️ Date construite en LOCAL (`new Date(a, m-1, j)`) et non depuis une chaîne ISO :
+             `new Date('2026-09-04')` est interprétée en UTC et peut afficher la veille à
+             l'ouest de Greenwich. Famille « fuseaux horaires » de `BUGS.md`. */
+          const dt=new Date(+_d.slice(0,4), +_d.slice(4,6)-1, +_d.slice(6,8));
+          jourCompte = isNaN(dt) ? null
+            : dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+        }
         h+=_healthRow('💰','Coût réel du jour','ok',
           '<b>'+(t.calls||0)+'</b> appel(s) · '+(t.inTok||0).toLocaleString('fr-FR')+' tokens entrée · '
           +(t.outTok||0).toLocaleString('fr-FR')+' sortie · '+(t.cacheR||0).toLocaleString('fr-FR')+' lus en cache'
           +(ai.usage.euroTotal!=null?' · <b>≈ '+ai.usage.euroTotal.toFixed(2).replace('.',',')+' €</b> (estimation)':'')
+          +'<br><span style="font-size:11.5px;color:var(--t2);">📅 '
+            +(jourCompte?('journée du <b>'+_escIdea(jourCompte)+'</b>'):'journée en cours')
+            +' seulement — remis à zéro chaque nuit, rien n\'est cumulé.</span>'
           +(parAction?'<br><span style="font-size:11.5px;color:var(--t2);">'+parAction+'</span>':''));
       } else if(ai.usage===null){
         h+=_healthRow('💰','Coût réel du jour','warn','Aucun appel enregistré aujourd\'hui pour l\'instant.');

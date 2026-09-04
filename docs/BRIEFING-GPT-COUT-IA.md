@@ -222,3 +222,72 @@ réécrire un cache d'1 h plusieurs fois par jour, ce qui coûterait **bien plus
 caractères qu'on économiserait). Coût propre : **~0,02 à 0,08 centime par message**, soit **20 à
 80 centimes sur mille messages**.
 👉 *La nutrition n'est pas un sujet de facture. Les 45 000 caractères de règles en sont un.*
+
+---
+
+## 7. ⭐⭐ LE 04/09 AU SOIR — LES VRAIS CHIFFRES, ET ILS RÉFUTENT LA CONSTANTE DU §2
+
+> Michel ouvre **Profil → Admin → Santé du système** et envoie la capture. **Ce ne sont plus des
+> estimations en caractères : ce sont les jetons que l'API Anthropic renvoie à chaque appel**
+> (`usage`, capté par `_rapporterUsage` dans `worker.js`, accumulé par `_aiUsageAdd_`).
+
+### Sa journée du 4 septembre
+
+| | |
+|---|---|
+| appels | **25** — `coach` (12) · `summarizeCoach` (8) · `seanceJson` (5) |
+| entrée fraîche | **50 339** jetons |
+| lus en cache | **236 479** jetons |
+| sortie | **8 067** jetons |
+| **coût** | **≈ 1,02 €** |
+
+⭐ **Le cache travaille** : 236 479 jetons lus contre 50 339 payés plein tarif — **82 % de
+l'entrée passe au tarif ×0,1**. C'est l'inverse exact du constat d'août (§2 : lectures = 8,1 %
+des écritures, *« le cache coûte 16 % de plus que s'il n'existait pas »*). **Le cache est
+devenu rentable.**
+
+### ⛔⛔ ET CES CHIFFRES RÉFUTENT LE « ≈ 24 900 jetons » DU §2
+
+Ce nombre était posé avec un `≈` et **sans aucune méthode indiquée** — le seul du document dans
+ce cas, alors que son en-tête promet des chiffres mesurés. On peut maintenant le **borner** :
+
+> l'entrée totale traitée dans la journée vaut **286 818 jetons** pour **12 appels `coach`**.
+> Même en attribuant **tout** aux appels `coach` (les 13 autres comptent pourtant dedans), le
+> contexte pèse **au plus 23 900 jetons** — donc **au moins 3,07 caractères par jeton**.
+
+**Le ratio du §2 était 2,35.** Il est trop dense, et tout ce qui en découlait était surestimé :
+
+| ratio | 1ᵉʳ message | messages suivants |
+|---|---|---|
+| 2,35 *(constante du §2, réfutée)* | 16,5 c | 2,4 c |
+| **≥ 3,07** *(plancher tiré de ses chiffres)* | **≤ 12,9 c** | **≤ 2,1 c** |
+
+⭐ **Le chiffre le plus solide n'est aucun des deux : c'est 1,02 € pour une journée entière**,
+soit **4,1 centimes par appel** tous types confondus. *Une mesure vaut mieux que le meilleur
+modèle.*
+
+### 🧾 CE QUE J'AI APPRIS EN ME TROMPANT TROIS FOIS DE SUITE
+
+En une soirée j'ai annoncé **8,5 c**, puis **16,5 c**, avant d'arriver à **≤ 12,9 c** — et la
+seule chose qui a fait avancer, à chaque fois, c'est d'aller chercher une donnée réelle plutôt
+que de raffiner le calcul :
+
+1. ⛔ j'ai appliqué le tarif du cache **5 min** (×1,25) à un cache **1 h** (×2,0) ;
+2. ⛔ j'ai justifié un ratio dense par les **emoji** — **mesurés ensuite : 142 dans tout le
+   contexte, 0,59 % du texte** (les traits de cadre `═══ ─── │ →` pèsent 3× plus, 1,59 %).
+   *Mon explication était fausse même quand le chiffre expliqué venait d'ailleurs* ;
+3. ⛔ j'ai bâti trois calculs sur une constante que **personne ne pouvait vérifier**, dans un
+   document que je n'avais pas rouvert avant de calculer (**R23**).
+
+👉 ***Le chiffre le plus dangereux n'est pas celui qu'on ignore, c'est celui qu'on calcule avec
+la mauvaise constante : il a l'air d'une mesure.*** Et le remède n'était pas un meilleur modèle,
+**c'était d'ouvrir l'écran qui affiche la vérité** — il existait depuis le 24/08.
+
+### ⏭️ Ce qui reste à faire sur ce document
+
+- ⛔ **le « ≈ 24 900 » du §2 n'est pas corrigé sur place, exprès** : on ne réécrit pas une mesure
+  d'août avec une déduction de septembre. Il est **encadré ici**, avec sa réfutation (**R30** :
+  un chiffre écarté reste, avec sa raison).
+- ⚠️ **`cacheW` (les écritures de cache) est compté par le serveur mais PAS affiché** à l'écran.
+  Sans lui, on ne peut pas fermer le calcul — c'est le seul morceau manquant pour passer d'une
+  borne à un chiffre exact. *Une donnée produite et non montrée, encore* (**R5**).

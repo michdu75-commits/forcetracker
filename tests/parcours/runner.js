@@ -26070,6 +26070,69 @@ console.log('\n-- CCXXXI. Le test A/B mémoire reçoit sa porte d\'entrée (ft-v
   }
 }
 
+/* ═══ CCXXXII. « COÛT RÉEL DU JOUR » DIT DE QUEL JOUR (ft-v1126) ═══════════════════════════
+   Michel, capture à l'appui : *« on ne sait pas si c'est dans la journée ou depuis 1 mois »*.
+   Le titre disait « du jour » — exact, mais **rien ne le prouvait à l'écran**, et 1,02 € ne se
+   lit pas pareil selon qu'il couvre un jour ou un mois.
+   👉 ***Un chiffre sans sa période n'est pas un chiffre, c'est une impression.***
+   ⭐ RIEN À CONSTRUIRE (R5) : `_aiUsageAdd_` remet à zéro dès que la date change, et
+   `_aiUsageLire_` renvoyait DÉJÀ `u.date` — l'app la recevait et la jetait.
+   ⚠️⚠️ LE PIÈGE ÉVITÉ, ET IL A DÉJÀ COÛTÉ UNE VERSION : `_dateLisible` existe dans le projet
+   mais c'est une const LOCALE à une fonction de `coach.js`. L'appeler depuis `app.js` aurait
+   levé `is not defined` et **fait disparaître TOUT le panneau Santé** — le `_esc is not
+   defined` de ft-v1114, qui avait vidé la liste des aliments entière.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXXII. « Coût réel du jour » dit de quel jour (ft-v1126) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1700);
+  const R=await p.evaluate(()=>{ try{
+    /* ⛔ LES VRAIS CHIFFRES DE MICHEL (capture du 04/09 22:30), pas des chiffres inventés :
+       25 appels · 50 339 entrée · 8 067 sortie · 236 479 lus en cache · 1,02 €. */
+    const bloc=(dateVal)=>{
+      const t={calls:25,inTok:50339,outTok:8067,cacheR:236479};
+      const _d=String(dateVal||'');
+      let jourCompte=null;
+      if(/^\d{8}$/.test(_d)){
+        const dt=new Date(+_d.slice(0,4), +_d.slice(4,6)-1, +_d.slice(6,8));
+        jourCompte = isNaN(dt)?null:dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+      }
+      return _healthRow('💰','Coût réel du jour','ok',
+        '<b>'+t.calls+'</b> appel(s) · '+t.inTok.toLocaleString('fr-FR')+' tokens entrée'
+        +'<br><span>📅 '+(jourCompte?('journée du <b>'+_escIdea(jourCompte)+'</b>'):'journée en cours')
+        +' seulement — remis à zéro chaque nuit, rien n\'est cumulé.</span>');
+    };
+    const txt=h=>{const d=document.createElement('div');d.innerHTML=h;return d.textContent.replace(/\s+/g,' ').trim();};
+    const src=(typeof loadHealthAdmin==='function')?String(loadHealthAdmin):'';
+    return { normal:txt(bloc('20260904')), sansDate:txt(bloc('')), pourrie:txt(bloc('pasunedate')),
+             /* ⛔ la garantie n'est pas « le texte est là » mais « le code lit bien ai.usage.date » */
+             litLaDate:/ai\.usage\.date/.test(src),
+             /* ⛔⛔ et qu'il n'appelle PAS la fonction locale de coach.js */
+             nAppellePas:!/_dateLisible\s*\(/.test(src) };
+  }catch(e){ return {err:e.message}; } });
+
+  t('⛔ CONTRÔLE — le panneau Santé est chargé (sinon tout ce bloc serait vert sur du vide)',
+    !R.err && typeof R.litLaDate==='boolean', R.err||'');
+  t('⭐⭐ la période est NOMMÉE : « journée du vendredi 4 septembre »',
+    /journée du vendredi 4 septembre/.test(R.normal||''), (R.normal||'').slice(0,110));
+  t('⭐⭐ … et le doute de Michel est levé en clair : rien n\'est cumulé',
+    /remis à zéro chaque nuit/.test(R.normal||'') && /rien n'est cumulé/.test(R.normal||''), '');
+  t('⭐ le code lit bien `ai.usage.date` (la donnée existait, elle était jetée — R5)',
+    R.litLaDate===true, '');
+  /* ⛔⛔ LE TÉMOIN QUI PROTÈGE CONTRE LE BUG DE ft-v1114 : `_dateLisible` est LOCALE à
+     coach.js. Un appel d'ici ferait disparaître le panneau ENTIER, pas juste cette ligne. */
+  t('⛔⛔ … sans appeler `_dateLisible`, qui est LOCALE à coach.js (le piège de ft-v1114)',
+    R.nAppellePas===true, '');
+  /* ⛔ UN REPLI QUI MONTRE « undefined » serait pire que pas de date du tout. */
+  t('⛔ si le serveur n\'envoie pas la date : repli propre, jamais « undefined »',
+    /journée en cours/.test(R.sansDate||'') && !/undefined|NaN|Invalid/.test(R.sansDate||''), R.sansDate||'');
+  t('⛔ … et si la date est illisible, pareil',
+    /journée en cours/.test(R.pourrie||'') && !/undefined|NaN|Invalid/.test(R.pourrie||''), R.pourrie||'');
+  t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

@@ -6,7 +6,11 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1126` — 🔋 **OPTION B DE LA RÉCUP : LA CHARGE S'ADDITIONNE.**
+- **Version en ligne (live) :** `ft-v1127` — 🔋 **OPTION B DE LA RÉCUP : LA CHARGE S'ADDITIONNE.**
+  ⚠️⚠️ **26ᵉ COLLISION, la 2ᵉ de la journée** : session-A avait publié et déployé sa ft-v1126
+  (run #887) pendant ma passe de parcours — *même scénario que la 25ᵉ, deux heures plus tôt*.
+  ⭐ C'est **structurel** : toute version bump la même ligne de `sw.js`, et une suite complète
+  dure plus longtemps que l'intervalle entre deux livraisons. La règle suffit et tient.
   Avant, **seule la dernière séance** comptait : 1, 2 ou 3 séances de 12 séries rendaient toutes
   le même facteur (−13). Un forfait « jours enchaînés » (−4 / −8) l'approximait à la louche.
 - ⭐⭐ **LE RÉSULTAT EST L'INVERSE DE CE QUE LE CONTRE-AUDIT ANNONÇAIT** — et c'est la leçon :
@@ -29,6 +33,54 @@
   écrasées ; sa plus grosse fait 24 séries).
 - ⚠️ **Et je me suis trompé en route** : j'avais dit que la saturation ne le touchait pas (vrai
   sur 60 jours) — **son profil sature avec une seule mauvaise nuit** (5 h + 20 séries).
+- **Version en ligne (live) :** `ft-v1126` — 💰 **« COÛT RÉEL DU JOUR » DIT DE QUEL JOUR.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#887** sur `353b2b7`, **job `deploy` success**,
+  les 7 étapes vertes à 20:59:17 UTC. Michel : *« on ne sait pas si c'est dans la journée
+  ou depuis 1 mois »*. Le titre disait « du jour » — **exact**, mais rien ne le prouvait à l'écran.
+  👉 *Un chiffre sans sa période n'est pas un chiffre, c'est une impression.*
+  ⭐ **Rien à construire (R5)** : `_aiUsageLire_` renvoyait déjà `u.date`, l'app la jetait.
+  ⚠️⚠️ **Piège évité** : `_dateLisible` est **locale à `coach.js`** — l'appeler depuis `app.js`
+  aurait fait disparaître **tout le panneau Santé** (le `_esc` de ft-v1114). *Vérifié avant
+  d'écrire l'appel.* ⭐ Suite : **parcours 2720/2720**, calculs 298/298, 0 rouge.
+- 💶 **LE COÛT D'UN MESSAGE À MILO, REMESURÉ le 04/09** (question de Michel : *« lire la
+  nutrition ne va pas me faire gonfler la facture ? »* puis *« combien coûte un message »*).
+  **Détail complet : `docs/BRIEFING-GPT-COUT-IA.md` §6.** En bref : **2,4 centimes** par message
+  quand le cache est chaud, **16,5** pour le premier d'une conversation.
+- ⭐⭐ **Le contexte a grossi de 35 % en un mois** (58 470 → **78 881** car.) **mais la répartition
+  s'est AMÉLIORÉE** : le bloc jamais cachable — celui payé plein tarif à chaque message — est passé
+  de **17 527 à 4 010** caractères. *Un contexte plus gros peut coûter moins cher qu'un plus petit
+  mal découpé.*
+- ⛔⛔ **Le piège à retenir** : le 1ᵉʳ message coûte **PLUS cher que sans cache** (16,5 contre 10,3)
+  — *écrire un cache d'1 h se paie ×2*. **Le cache ne rapporte que s'il est RELU.**
+- ⚠️⚠️ **Et j'ai annoncé deux chiffres faux avant de relire ce document** (8,5 / 1,9 centimes) :
+  j'avais pris le tarif du cache 5 min pour le cache 1 h, et le ratio caractères/jeton de l'anglais
+  pour un texte bourré d'emoji (**+53 % de jetons**). *Les deux constantes justes étaient à quinze
+  lignes l'une de l'autre dans le fichier que je n'avais pas ouvert* (**R23**).
+  👉 ***Le chiffre le plus dangereux n'est pas celui qu'on ignore, c'est celui qu'on calcule avec
+  la mauvaise constante : il a l'air d'une mesure.***
+- 🍽️ **La nutrition n'est PAS un sujet de facture** : 890 car. (**1,2 %**), **plafonnés à 7 jours en
+  dur** — trois ans de repas notés n'ajoutent pas une ligne. **20 à 80 centimes sur mille messages.**
+  ⭐ Et Milo reçoit bien la nutrition depuis ft-v1014 : les **totaux par jour**, jamais les noms
+  d'aliments (13 126 car. bruts → 890, **59× moins**), plus ses cibles (TDEE, kcal, macros).
+- 🛣️ **LES DEUX COULOIRS, rappelés par Michel le 04/09** : *« il ne faut pas que ça fasse obstacle
+  à l'autre Claude, au départ je t'avais rajouté pour la **nutrition** »*. ⭐ **Le rappel était
+  mérité et il est mesurable** : sur mes 8 versions du jour, **6 en nutrition** et **2 hors couloir**
+  (`ft-v1118` le cardio, `ft-v1123` le banc A/B) — *les deux dans `coach.js`, et les deux jours de
+  collision*. 👉 **session-A = nutrition & aliments · session-B = Milo, récup, séance.** Détail et
+  nuances dans `docs/JOURNAL-DE-PARTAGE.md` (un couloir n'est pas un mur ; `sw.js` collisionnera
+  toujours, le second qui fusionne monte).
+- ✅ **LA PASSE A/B A TOURNÉ POUR DE VRAI** (Michel, 04/09 ~19:47, 4 appels).
+  ⭐⭐ **AB-2 est sans appel** : avec la mémoire, **aucune** presse au-dessus de la tête sur l'épaule
+  douloureuse et couché **allégé à 75 kg** ; sans elle, le **développé militaire à 80 kg devient
+  l'ANCRE**. Poussée : **4 séries contre 9**. *La différence est DANS la séance, pas dans une phrase.*
+  ⚠️ **AB-1 est faible, et c'est dit** : sans mémoire Milo tombe sur 80×4 — plausible **par hasard**
+  pour un gars de 85 kg confirmé. Ce qui diffère vraiment : **B pose des questions**, A agit.
+  ⛔⛔ **Et la passe a trouvé un défaut DANS MA FIXTURE** : `_abHistoDC` annonce « des charges qui
+  PROGRESSENT » et fait l'inverse — j'ai **inversé le sens du temps** (`i=0` = la plus récente ET la
+  plus légère). *Le résultat tient, mais la fixture ne teste pas ce qu'elle annonce.*
+  ⏭️ **Les 2 suites sont PASSÉES À session-B** (leur couloir) : corriger le sens du temps, et
+  **promouvoir AB-2 au banc** — *« épaule douloureuse → aucune presse au-dessus de la tête »* est
+  vérifiable par du CODE, donc gratuit à chaque passe au lieu d'un test manuel à 0,26 €.
 - **Version en ligne (live) :** `ft-v1125` — 🤝 **LES 2 SUITES DU RELAIS DE SESSION-A** (Michel :
   *« il a fini »*, puis il choisit le relais). ⛔ **① `_abHistoDC` ne faisait pas ce qu'elle
   annonçait** : commentaire « des charges qui PROGRESSENT », barème qui **descendait** — la séance
@@ -79,45 +131,6 @@
   quoi » **sans apostrophe** ne déclenchent pas — ratés **pré-existants**, sans rapport avec ce
   correctif qui ne fait que **retirer** des déclenchements.
 
-- 💶 **LE COÛT D'UN MESSAGE À MILO, REMESURÉ le 04/09** (question de Michel : *« lire la
-  nutrition ne va pas me faire gonfler la facture ? »* puis *« combien coûte un message »*).
-  **Détail complet : `docs/BRIEFING-GPT-COUT-IA.md` §6.** En bref : **2,4 centimes** par message
-  quand le cache est chaud, **16,5** pour le premier d'une conversation.
-- ⭐⭐ **Le contexte a grossi de 35 % en un mois** (58 470 → **78 881** car.) **mais la répartition
-  s'est AMÉLIORÉE** : le bloc jamais cachable — celui payé plein tarif à chaque message — est passé
-  de **17 527 à 4 010** caractères. *Un contexte plus gros peut coûter moins cher qu'un plus petit
-  mal découpé.*
-- ⛔⛔ **Le piège à retenir** : le 1ᵉʳ message coûte **PLUS cher que sans cache** (16,5 contre 10,3)
-  — *écrire un cache d'1 h se paie ×2*. **Le cache ne rapporte que s'il est RELU.**
-- ⚠️⚠️ **Et j'ai annoncé deux chiffres faux avant de relire ce document** (8,5 / 1,9 centimes) :
-  j'avais pris le tarif du cache 5 min pour le cache 1 h, et le ratio caractères/jeton de l'anglais
-  pour un texte bourré d'emoji (**+53 % de jetons**). *Les deux constantes justes étaient à quinze
-  lignes l'une de l'autre dans le fichier que je n'avais pas ouvert* (**R23**).
-  👉 ***Le chiffre le plus dangereux n'est pas celui qu'on ignore, c'est celui qu'on calcule avec
-  la mauvaise constante : il a l'air d'une mesure.***
-- 🍽️ **La nutrition n'est PAS un sujet de facture** : 890 car. (**1,2 %**), **plafonnés à 7 jours en
-  dur** — trois ans de repas notés n'ajoutent pas une ligne. **20 à 80 centimes sur mille messages.**
-  ⭐ Et Milo reçoit bien la nutrition depuis ft-v1014 : les **totaux par jour**, jamais les noms
-  d'aliments (13 126 car. bruts → 890, **59× moins**), plus ses cibles (TDEE, kcal, macros).
-- 🛣️ **LES DEUX COULOIRS, rappelés par Michel le 04/09** : *« il ne faut pas que ça fasse obstacle
-  à l'autre Claude, au départ je t'avais rajouté pour la **nutrition** »*. ⭐ **Le rappel était
-  mérité et il est mesurable** : sur mes 8 versions du jour, **6 en nutrition** et **2 hors couloir**
-  (`ft-v1118` le cardio, `ft-v1123` le banc A/B) — *les deux dans `coach.js`, et les deux jours de
-  collision*. 👉 **session-A = nutrition & aliments · session-B = Milo, récup, séance.** Détail et
-  nuances dans `docs/JOURNAL-DE-PARTAGE.md` (un couloir n'est pas un mur ; `sw.js` collisionnera
-  toujours, le second qui fusionne monte).
-- ✅ **LA PASSE A/B A TOURNÉ POUR DE VRAI** (Michel, 04/09 ~19:47, 4 appels).
-  ⭐⭐ **AB-2 est sans appel** : avec la mémoire, **aucune** presse au-dessus de la tête sur l'épaule
-  douloureuse et couché **allégé à 75 kg** ; sans elle, le **développé militaire à 80 kg devient
-  l'ANCRE**. Poussée : **4 séries contre 9**. *La différence est DANS la séance, pas dans une phrase.*
-  ⚠️ **AB-1 est faible, et c'est dit** : sans mémoire Milo tombe sur 80×4 — plausible **par hasard**
-  pour un gars de 85 kg confirmé. Ce qui diffère vraiment : **B pose des questions**, A agit.
-  ⛔⛔ **Et la passe a trouvé un défaut DANS MA FIXTURE** : `_abHistoDC` annonce « des charges qui
-  PROGRESSENT » et fait l'inverse — j'ai **inversé le sens du temps** (`i=0` = la plus récente ET la
-  plus légère). *Le résultat tient, mais la fixture ne teste pas ce qu'elle annonce.*
-  ⏭️ **Les 2 suites sont PASSÉES À session-B** (leur couloir) : corriger le sens du temps, et
-  **promouvoir AB-2 au banc** — *« épaule douloureuse → aucune presse au-dessus de la tête »* est
-  vérifiable par du CODE, donc gratuit à chaque passe au lieu d'un test manuel à 0,26 €.
 - **Version en ligne (live) :** `ft-v1123` — 🧠 **LE TEST A/B MÉMOIRE REÇOIT SA PORTE D'ENTRÉE.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#878** sur `7d1bc06`, **job `deploy` success**,
   les 7 étapes vertes à 17:43:22 UTC. ⭐ Suite **sur l'arbre FUSIONNÉ** : parcours **2699/2699**,
