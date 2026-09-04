@@ -458,6 +458,12 @@ const FEAT_SI = {
   montrePas:     () => { try{ return ((S&&S.healthDaily)||[]).some(x=>x&&x.steps>0); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* 🍔 POINT ROUGE, PAS DE POP-UP (règle d'or #11) : la base fast-food passe de 27 à 128
+     produits, avec des enseignes qui n'y étaient pas — il y a donc à DÉCOUVRIR. ⛔ Mais rien
+     n'est à faire, aucun repère n'a bougé, et **aucun chiffre existant ne change** : les 27
+     produits d'avant sont conservés à l'identique. Une pop-up n'aurait rien à annoncer qu'on
+     doive faire (R25). */
+  {id:'fastfood-v2', screen:'nutrition', desc:'🍔 <b>Le fast-food passe de 27 à 128 produits.</b> <b>Quick</b> entre avec sa table officielle complète (burgers, wraps, salades, accompagnements), et <b>Domino\'s</b> s\'étoffe. Tape le nom du produit : il sort avec son enseigne et le poids de sa portion. ⛔ Les valeurs d\'avant n\'ont pas bougé d\'un chiffre.'},
   /* 🔍 POINT ROUGE, PAS DE POP-UP (règle d'or #11) : des mots qui échouaient marchent, et
      *personne ne réessaie un mot qui a échoué une fois* — il y a donc à découvrir. ⛔ Mais c'est
      une CORRECTION : rien à faire, aucun repère déplacé, et les résultats d'avant étaient

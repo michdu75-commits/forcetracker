@@ -25670,6 +25670,105 @@ console.log('\n-- CCXXVIII. Un fichier généré doit rester régénérable (04/
   }
 }
 
+/* ═══ CCXXIX. LA BASE FAST-FOOD PASSE DE 27 À 128 — FUSION, PAS REMPLACEMENT (ft-v1120) ═════
+   Michel renvoie le classeur perdu, en **version 2** : 114 produits au lieu de 27.
+   ⛔⛔ MAIS LA V2 SEULE AURAIT FAIT PERDRE **TOUTES LES FRITES** — dans ce classeur elles n'ont
+   que les calories, pas les macros. *Remplacer aurait été une régression déguisée en
+   enrichissement.* D'où une FUSION : 114 lus + 14 hérités.
+   ⚠️ LES 14 HÉRITÉS SONT UN PIS-ALLER ÉCRIT COMME TEL : leur classeur d'origine est PERDU, la
+   sortie du 03/09 est leur seule trace. *Une valeur dont on ne peut plus remonter à la source
+   est une valeur qu'on ne peut plus auditer.*
+   ⭐ ET LE GARDE-FOU A SERVI LE JOUR MÊME : la pizza « 4 Fromages » était héritée le matin, la
+   V2 la fournit avec des valeurs identiques — elle est repartie dans la source. *Ce bloc doit
+   RÉTRÉCIR, jamais grossir.*
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXIX. La base fast-food passe de 27 à 128 (ft-v1120) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    const t=await _marquesCharger(); await _ciqualCharger(); await _aliasCharger();
+    const un=q=>{ const r=_marquesChercher(q,1); if(!r.length) return null;
+      const a=_marques.a[r[0]]; return {nom:a[1], ens:a[0], portion:a[7],
+        kcal:a[7]?Math.round(a[3]*a[7]/100):null, prot:a[7]?Math.round(a[4]*a[7]/100):null, doute:a[9]||0}; };
+    const o={total:t?t.a.length:0, q:{}, ens:{}};
+    ['big mac','grande frite mcdo','petite frite mcdo','moyenne frite mcdo','whopper',
+     'frites quick','mega giant','pizza 4 fromages','tenders kfc','wrap giant'].forEach(x=>o.q[x]=un(x));
+    t.a.forEach(a=>{ o.ens[a[0]]=(o.ens[a[0]]||0)+1; });
+    /* ⛔ aucune ligne en double : la fusion ne doit pas empiler deux fois le même produit */
+    const cles=t.a.map(a=>a[0]+'|'+a[1]);
+    o.doublons=cles.filter((k,i)=>cles.indexOf(k)!==i);
+    /* ⛔ toute ligne porte une portion et des macros exploitables */
+    o.sansPortion=t.a.filter(a=>!a[7]).map(a=>a[1]).slice(0,5);
+    o.sansMacro=t.a.filter(a=>!(a[3]>0)).map(a=>a[1]).slice(0,5);
+    /* ⛔ le doute connu est toujours porté */
+    o.korean=t.a.filter(a=>/Korean/i.test(a[1])).map(a=>a[9]);
+    /* ⛔ non-régression : les 3 autres sources ne bougent pas */
+    o.riz=(_ciqualChercher('riz',1)||[]).map(x=>x[1])[0];
+    o.coca=(_ciqualChercher('coca zero',1)||[]).map(x=>x[1])[0];
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXIX n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔ CONTRÔLE — la base est chargée, sinon tout le bloc mesure du vide. */
+    t('⛔ CONTRÔLE — la base d\'enseignes est chargée et a bien GRANDI',
+      R.total>=120, R.total+' produits · '+JSON.stringify(R.ens));
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : les FRITES sont toujours là. C'est précisément ce
+       qu'un simple remplacement aurait fait disparaître. */
+    t('⭐⭐ les FRITES sont toujours là — c\'est ce qu\'un remplacement aurait fait perdre',
+      ['grande frite mcdo','petite frite mcdo','moyenne frite mcdo','frites quick']
+        .every(x=>R.q[x] && /[Ff]rite/.test(R.q[x].nom)),
+      ['grande frite mcdo','frites quick'].map(x=>R.q[x]?R.q[x].nom+' '+R.q[x].kcal:'RIEN').join(' · '));
+    /* ⛔ … et au CHIFFRE PRÈS : une fusion qui changerait une valeur d'avant serait pire qu'un
+       remplacement, parce qu'elle serait silencieuse. */
+    t('⛔ … et leurs chiffres n\'ont pas bougé (Grande frite 434 kcal / 150 g, Petite 231 / 80 g)',
+      R.q['grande frite mcdo'] && R.q['grande frite mcdo'].kcal===434 && R.q['grande frite mcdo'].portion===150
+      && R.q['petite frite mcdo'] && R.q['petite frite mcdo'].kcal===231,
+      JSON.stringify(R.q['grande frite mcdo']));
+    t('⛔ … ni ceux du Big Mac (530 kcal · 27 g de protéines · 232 g)',
+      R.q['big mac'] && R.q['big mac'].kcal===530 && R.q['big mac'].prot===27 && R.q['big mac'].portion===232,
+      JSON.stringify(R.q['big mac']));
+    /* ⭐ LES NOUVEAUX RÉPONDENT. */
+    t('⭐ les produits NEUFS répondent (Quick, Domino\'s, wrap)',
+      R.q['mega giant'] && /Giant/i.test(R.q['mega giant'].nom)
+      && R.q['pizza 4 fromages'] && /Fromages/i.test(R.q['pizza 4 fromages'].nom)
+      && R.q['wrap giant'] && /Wrap/i.test(R.q['wrap giant'].nom),
+      [R.q['mega giant'].nom, R.q['wrap giant'].nom].join(' · '));
+    /* ⛔⛔ LA FUSION N'EMPILE PAS : un produit fourni par le classeur ET hérité apparaîtrait
+       deux fois, et la personne ne saurait pas laquelle prendre. */
+    t('⛔⛔ AUCUN produit en double après la fusion (classeur + hérités)',
+      R.doublons.length===0, R.doublons.slice(0,4).join(' · '));
+    /* ⛔ Toute ligne reste exploitable : une portion et des calories. */
+    t('⛔ chaque ligne porte une portion ET des calories (sinon elle ne peut pas être notée)',
+      R.sansPortion.length===0 && R.sansMacro.length===0,
+      'sans portion : '+R.sansPortion.join(' · ')+' | sans kcal : '+R.sansMacro.join(' · '));
+    /* ⛔ Le doute connu survit à la fusion — il ne doit pas se perdre en chemin. */
+    t('⛔ le doute du Korean Whopper survit à la fusion (752 publiées / 616 calculées)',
+      R.korean.length>0 && /752/.test(String(R.korean[0])), String(R.korean[0]).slice(0,60));
+    /* ⛔ NON-RÉGRESSION : les autres sources sont intactes. */
+    t('⛔ NON-RÉGRESSION — les aliments et les alias ne bougent pas (riz, coca zéro)',
+      /^Riz blanc, cuit/.test(String(R.riz)) && /sans sucres? ajout/i.test(String(R.coca)),
+      [R.riz, R.coca].join(' | ').slice(0,70));
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+  /* ⛔⛔ ET LE BLOC FIGÉ DOIT RESTER UN PIS-ALLER NOMMÉ : s'il grossissait sans qu'on s'en
+     aperçoive, on reconstruirait à la main une base qu'on ne peut plus auditer. */
+  {
+    const py=fs.readFileSync(path.join(ROOT,'tools','marques.py'),'utf8');
+    const bloc=(py.split('HERITAGE = [')[1]||'').split('\n]')[0];
+    const n=(bloc.match(/^\s*\[/gm)||[]).length;
+    t('⛔⛔ le bloc HERITAGE est BORNÉ (≤ 15 lignes) et dit qu\'il doit rétrécir, jamais grossir',
+      n>0 && n<=15 && /RÉTRÉCIR, jamais grossir/.test(py), n+' lignes figées');
+    t('⛔ … et sa raison est écrite (source perdue, non auditable — R30)',
+      /source PERDUE|classeur d'origine est PERDU/i.test(py) && /pis-aller/i.test(py), '');
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
