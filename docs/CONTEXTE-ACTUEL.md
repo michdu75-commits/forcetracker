@@ -13,6 +13,8 @@
   ⭐ Les **dates** étaient justes, c'est le **kg** qui descendait. *Une fixture qui ne fait pas ce
   qu'elle annonce ne rate pas le test : elle le fait passer sur autre chose* — et rien ne pouvait
   rougir, ce qui l'a rendue durable deux semaines.
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#883** sur `621816f`, **job `deploy` success**,
+  les 7 étapes vertes à 19:26:21 UTC.
 - ⭐⭐ **② AB-2 promu au banc d'essai (EV-056)** — il vient de la passe RÉELLE : avec la mémoire
   Milo retire toute presse au-dessus de la tête, sans elle le militaire à 80 kg devient l'**ancre**
   (**4 séries de poussée contre 9**). Vérifiable par du code → **gratuit à chaque passe** au lieu
