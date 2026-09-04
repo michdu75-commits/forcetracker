@@ -6829,7 +6829,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
   const R=await pg.evaluate(async()=>{
     const o={};
-    const j=n=>{const x=new Date();x.setDate(x.getDate()-n);return x.toISOString().slice(0,10);};
+    const j=n=>{const x=new Date();x.setDate(x.getDate()-n);return x.toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});};
     // la vraie seance du 18/08 : 4 paliers, puis 3 series de travail, note sur la 2e
     const larsen={name:'Développé Couché Larsen (Larsen Press)',sets:[
       {kg:40,reps:5,type:'É',done:true},{kg:55,reps:3,type:'É',done:true},
@@ -13879,7 +13879,7 @@ console.log('\n-- CXXV. Ce qu\'il te reste à manger, traduit en TES aliments (f
     o.ecran = /Ce qu'il te reste, en vrai/.test(lire());
     o.mention = /Une idée, pas une consigne/.test(lire());
     // ⛔ ① jour PASSÉ → rien
-    _journalJour=new Date(Date.now()-864e5).toISOString().slice(0,10); renderFoodJournal();
+    _journalJour=new Date(Date.now()-864e5).toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'}); renderFoodJournal();
     o.jourPasse = /Ce qu'il te reste/.test(lire());
     // ⛔ ② cible DÉPASSÉE → rien, aucun reproche
     _journalJour=null;
@@ -17448,7 +17448,7 @@ console.log('\n-- CLXII. Le favori demande le moment de la journée (ft-v1052) -
   const F=await pg.evaluate(async()=>{
    try{
     const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
-    const j=n=>{const x=new Date();x.setDate(x.getDate()-n);return x.toISOString().slice(0,10);};
+    const j=n=>{const x=new Date();x.setDate(x.getDate()-n);return x.toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});};
     const mk=(dt,m,n,k,p)=>({date:dt,meal:m,name:n,kcal:k,prot:p,carbs:0,fat:0,ts:Date.now()});
     /* Le favori de Michel : noté DEUX fois en « Collation 2 » — c'est le moment OBSERVÉ. */
     S.foodLog=[mk(j(1),'collation2','Iso zero protein (ASL)',156,35),
@@ -20339,7 +20339,7 @@ console.log('\n-- CLXXXIII. L\'export d\'historique commence par la dernière s�
   const E=await pg.evaluate(()=>{
    try{
     document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
-    const o={}, j=d=>new Date(Date.now()-d*864e5).toISOString().slice(0,10);
+    const o={}, j=d=>new Date(Date.now()-d*864e5).toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});
     /* L'app EMPILE par le haut (`unshift`) : S.sessions[0] est la plus RÉCENTE. */
     S.sessions=[
      {date:j(0),ts:Date.now(),      id:1,volume:900,exs:[{name:'Rowing Hammer Strength',
@@ -21071,7 +21071,7 @@ console.log('\n-- CXCII. Les quatre petits défauts de l\'audit (ft-v1086) --');
           autre:V('Squat').length};
 
     /* ── ④ LE TEXTE DE RÉCUP DIT LA MÊME DURÉE QUE LE CALCUL ── */
-    S.sessions=[{date:new Date(Date.now()-6*36e5).toISOString().slice(0,10), ts:Date.now()-6*36e5,
+    S.sessions=[{date:new Date(Date.now()-6*36e5).toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'}), ts:Date.now()-6*36e5,
                  exs:[{name:'Squat',sets:[{kg:100,reps:5,done:1}]}], vol:5000}];
     const d=calcRecoveryDetail()||{};
     o.nbFacteurs=(d.factors||[]).length;                      // ⛔ le témoin voit-il quelque chose ?
@@ -21185,7 +21185,7 @@ console.log('\n-- CXCIII. La suite du lot d\'audit (ft-v1087) --');
     o.deuxProprietaires = (typeof _dbfFaits==='function');
 
     /* ── ④ L'ÉTAPE 1 A UNE FIN ── */
-    const ctx=(sem)=>{ const d=new Date(Date.now()-sem*6048e5).toISOString().slice(0,10);
+    const ctx=(sem)=>{ const d=new Date(Date.now()-sem*6048e5).toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});
       S.beginnerJourney={style:'full',freq:3,startDate:d,phase:1};
       return buildCoachContext(''); };
     const c1=ctx(1), c8=ctx(8);
@@ -22501,7 +22501,7 @@ console.log('\n-- CCIII. Le poids lu par l\'IA a les mêmes bornes que le poids 
       const _bwAvant=S.bw;          // ⛔ on compare à CE QU'IL Y AVAIT, pas à un nombre écrit en dur
       const vt=window.toast; window.toast=function(m){out.toasts.push(String(m).slice(0,110));return vt&&vt.apply(this,arguments);};
       try{
-        await _bsRemplirFormulaire(Object.assign({date:new Date().toISOString().slice(0,10)},o),'ia');
+        await _bsRemplirFormulaire(Object.assign({date:new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'})},o),'ia');
         await wait(200); saveBodyScan(); await wait(300);
       }catch(e){ out.err=String(e.message||e).slice(0,90); }
       out.bilans=(S.bodyScans||[]).length;
@@ -22582,7 +22582,25 @@ console.log('\n-- CCIII. Le poids lu par l\'IA a les mêmes bornes que le poids 
    indistinguables — la leçon de ft-v1095. */
 console.log('\n-- CCV. La fréquence sur les semaines vécues, et les deux bouts de la semaine (ft-v1098) --');
 {
-  const J=(n)=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
+  /* ⚠️⚠️ LES DATES DES FIXTURES SE FABRIQUENT À L'HEURE DE LA PAGE, PAS EN UTC (05/09/2026).
+   ⛔ 11 témoins de ce banc sont passés au ROUGE à minuit, sur du code applicatif parfaitement
+   sain. Cause mesurée : les fixtures écrivaient `new Date().toISOString().slice(0,10)` — donc
+   la date **UTC** — pendant que les contextes de test tournent en `timezoneId:'Europe/Paris'`.
+   Entre 22 h UTC et minuit UTC (soit 00 h-02 h à Paris), la page dit **05/09** et la fixture
+   dit **04/09** : la « séance d'aujourd'hui » est datée d'hier, `jourSeance()` ne la trouve
+   plus, et tout le cyclage des macros s'effondre.
+   👉 ***C'est la famille « fuseaux horaires » de `BUGS.md` — celle que le projet documente le
+   plus — retournée contre le BANC D'ESSAI lui-même.*** `tests/dates` interdit ce motif dans
+   les fichiers de l'app ; le runner n'est pas dans sa liste, donc rien ne le voyait.
+   ⛔⛔ ET LE PIÈGE EST PIRE QU'UN TEST QUI ÉCHOUE : il n'échoue que **deux heures par jour**.
+   Le reste du temps la suite est verte, donc personne ne cherche — et à minuit quelqu'un croit
+   avoir cassé l'app.
+   ⭐ `toLocaleDateString('sv-SE', {timeZone:'Europe/Paris'})` rend `YYYY-MM-DD` dans le fuseau
+   de la page, et marche **dans Node comme dans le navigateur** — donc un seul motif partout,
+   sans avoir à savoir de quel côté on est.
+   ⛔ Les fixtures qui s'ancrent sur `today()+'T12:00:00'` (midi) n'ont jamais eu le défaut :
+   à midi, aucun décalage de ±2 h ne change le jour. C'est l'autre façon correcte de faire. */
+  const J=(n)=>new Date(Date.now()-n*864e5).toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});
   const sess=(jours)=>jours.map(d=>({date:J(d),
     exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:8,done:true},{kg:100,reps:8,done:true}]}],vol:1600}));
   const CAS={
@@ -23113,7 +23131,7 @@ console.log('\n-- CCIX. R8 permanent : une source nommée est-elle vraiment tran
   const K=await pg.evaluate(()=>{
    try{
     const o={};
-    const j=(n)=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    const j=(n)=>{const d=new Date();d.setDate(d.getDate()-n);return d.toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});};
     S.sessions=[];
     for(let i=0;i<24;i++) S.sessions.push({ts:5000+i,date:j(i*3),volume:9000+i*20,synced:true,
       exs:[{name:'Squat',sets:[{kg:120,reps:5,done:true,rm1:135,type:'N'}]},
@@ -23219,7 +23237,7 @@ console.log('\n-- CCX. Où Milo va chercher ses informations : la carte mesurée
   const L=await pg.evaluate(async()=>{
    try{
     const o={};
-    const j=(n)=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    const j=(n)=>{const d=new Date();d.setDate(d.getDate()-n);return d.toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});};
     S.url='https://exemple.invalide/exec'; S.email='sonde@test.fr'; S.premium=true;
     S.sessions=[];
     for(let i=0;i<12;i++) S.sessions.push({ts:7000+i,date:j(i*3),volume:9000,synced:true,
@@ -23295,7 +23313,7 @@ console.log('\n-- CCX. Où Milo va chercher ses informations : la carte mesurée
    qu'on se pesait tous les jours, tous les 2, tous les 3 ou une fois par semaine. */
 console.log('\n-- CCXI. La refonte de Nutrition et le moteur de tendance (ft-v1102) --');
 {
-  const J=(n)=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
+  const J=(n)=>new Date(Date.now()-n*864e5).toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});
   const sess=(jours,prog)=>jours.map(d=>({date:J(d),vol:3200,
     exs:[{name:'Squat à la Barre',sets:[
       {kg:100+(d<7?prog:0),reps:8,done:true},{kg:100+(d<7?prog:0),reps:8,done:true},
@@ -23400,7 +23418,7 @@ console.log('\n-- CCXI. La refonte de Nutrition et le moteur de tendance (ft-v11
     await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
     await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2200);
     const P=await pg.evaluate(()=>{
-      const jour=n=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
+      const jour=n=>new Date(Date.now()-n*864e5).toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});
       const REEL=0.20;
       const faire=pas=>{const o=[];for(let d=14;d>=0;d-=pas)o.push({date:jour(d),kg:+(84+(14-d)/7*REEL).toFixed(3)});return o;};
       /* ⛔ on appelle le VRAI propriétaire, on ne recopie pas la formule (leçon du 02/09) */
@@ -23500,7 +23518,7 @@ console.log('\n-- CCXI. La refonte de Nutrition et le moteur de tendance (ft-v11
    ⭐ Les entrées sont écrites TELLES QU'ELLES SONT STOCKÉES et lues par la VRAIE modale. */
 console.log('\n-- CCXII. Les macros ne pèsent jamais plus que la portion (ft-v1103) --');
 {
-  const J=new Date().toISOString().slice(0,10);
+  const J=new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});
   const CAS=[
     {n:'le cas de Michel — 37 g dans 30 g',      e:{name:'Iso zero protein (ASL)',q:30,u:'g',kcal:156,prot:35,carbs:1,fat:1}, rouge:true},
     {n:'300 g de macros dans 100 g',             e:{name:'Blanc de poulet',q:100,u:'g',kcal:1200,prot:150,carbs:80,fat:70},   rouge:true},
@@ -23585,7 +23603,7 @@ console.log('\n-- CCXII. Les macros ne pèsent jamais plus que la portion (ft-v1
    donc 30 g → 116,6 kcal · 26,4 g. C'est ce qui rend le cas « la vraie étiquette » vérifiable. */
 console.log('\n-- CCXIII. Une valeur fausse qui se recopie : le « toujours » (ft-v1104) --');
 {
-  const J=new Date().toISOString().slice(0,10);
+  const J=new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});
   /* Sa ligne telle qu'elle est enregistrée : impossible, et sans pour-100 g. */
   const log=[{date:J,meal:'collation2',ts:880001,name:'Iso zero protein (ASL)',q:30,u:'g',
               kcal:156,prot:35,carbs:1,fat:1}];
@@ -23700,7 +23718,7 @@ console.log('\n-- CCXIV. La portion pré-remplie n\'est pas la tienne (ft-v1105)
     };
     const q40=await scan(40), q30=await scan(30), q0=await scan(0);
     // ⛔ et elle doit DISPARAÎTRE quand on reprend un aliment qui n'a pas de fiche
-    S.foodLog=[{date:new Date().toISOString().slice(0,10),meal:'collation2',ts:9,
+    S.foodLog=[{date:new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'}),meal:'collation2',ts:9,
                 name:'Riz maison',q:200,u:'g',kcal:260,prot:5,carbs:56,fat:1}];
     document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
     goScreen('nutrition'); await w(250); openAddFood(); await w(300);
@@ -23789,7 +23807,7 @@ console.log('\n-- CCXV. Le banc d\'essai retrouve sa mémoire, et cesse de fuir 
   }catch(e){}})();`);
   await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(2200);
   const R=await p.evaluate(async()=>{ try{
-    const j=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    const j=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});};
     /* ── ① on installe des données RECONNAISSABLES de la « vraie personne » ──
        ⚠️ FORMES RÉELLES, lues dans state.js : `fasting` et `foodMode` sont des CHAÎNES
        (ma 1ʳᵉ sonde mettait un objet dans `fasting`, elle ne mesurait rien). */
@@ -23907,7 +23925,7 @@ console.log('\n-- CCXV. Le banc d\'essai retrouve sa mémoire, et cesse de fuir 
    il avait été mesuré, et fabriqué deux moyennes calculées différemment à 400 px d'écart. */
 console.log('\n-- CCXVI. L\'apport entre dans le moteur de trajectoire (ft-v1107) --');
 {
-  const J=n=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
+  const J=n=>new Date(Date.now()-n*864e5).toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});
   const SET=[['petitdej','Flocons',450],['dejeuner','Riz + poulet',800],
              ['collation2','Iso zero',117],['diner','Saumon',700]];
   /* `plan[i]` = nombre de MOMENTS notés le jour (i+1). Le jour 0 (aujourd'hui) n'est jamais jugé. */
@@ -24157,7 +24175,7 @@ console.log('\n-- CCXVII. Deux faux rouges du banc payant : le vérificateur, pa
    nombres étaient pourtant bons. D'où le témoin « fuite », qui regarde ce qui est PEINT. */
 console.log('\n-- CCXVIII. La ligne REPAS reste à l\'écran (ft-v1109) --');
 {
-  const J=n=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
+  const J=n=>new Date(Date.now()-n*864e5).toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});
   const NOMS=['Ratatouille Cuisinée','Riz Basmati','Huile d\'olive','Oeuf cru','Poulet blanc',
               '3 oeufs','Steak haché 5%','Pain aux céréales','Saucisson sec','Banane crue'];
   const foodLog=[];

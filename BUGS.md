@@ -2590,3 +2590,36 @@ l'écrire une fois, pour tout le monde.
 jumelles dès qu'on trouve une absence) et de **§32** (l'aller-retour cassé au milieu). ⚠️ Le cas
 dit aussi ce qui n'est PAS corrigé : le barème de récupération du cardio reste sur son plancher —
 le corriger demanderait d'inventer une échelle, et on ne l'invente pas (R29).*
+
+### §40bis — LE BANC D'ESSAI FABRIQUE SES DATES EN UTC PENDANT QUE LA PAGE VIT À PARIS *(05/09/2026)*
+
+**À quoi on la reconnaît** : la suite est verte toute la journée et **rouge entre 00 h et 02 h**
+(heure de Paris), sur du code applicatif que personne n'a touché. Le 05/09 à 00 h 34 :
+**11 témoins rouges d'un coup**, tous autour du cyclage « jour de séance / jour de repos ».
+
+**La cause, mesurée** : les fixtures écrivaient `new Date().toISOString().slice(0,10)` — la date
+**UTC** — pendant que les contextes de test tournent en `timezoneId:'Europe/Paris'`. Entre 22 h
+UTC et minuit UTC, la page dit **05/09** et la fixture dit **04/09** : la « séance d'aujourd'hui »
+est datée d'hier, `jourSeance()` ne la trouve plus, et tout le cyclage s'effondre.
+
+👉 ***C'est la famille « fuseaux horaires » — la plus documentée du projet — retournée contre le
+BANC D'ESSAI lui-même.*** `tests/dates` interdit ce motif dans les fichiers de l'app ; le runner
+n'est pas dans sa liste, donc **rien ne le voyait**.
+
+**⛔⛔ ET C'EST PIRE QU'UN TEST QUI ÉCHOUE : il n'échoue que deux heures par jour.** Le reste du
+temps la suite est verte, donc personne ne cherche — et à minuit, celui qui livre croit avoir
+cassé l'app. *Un test intermittent accuse le dernier qui a touché au code.*
+
+**⭐ Ce qui l'a tranché en une mesure** : rejouer la suite sur le commit **d'avant**. Mêmes 11
+rouges, au témoin près → le défaut ne venait pas du changement en cours. *Avant de chercher ce
+qu'on a cassé, vérifier que c'était déjà cassé.*
+
+**Ce qui protège aujourd'hui** : 18 fixtures passées à
+`toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'})` — qui rend `YYYY-MM-DD` dans le fuseau de
+la page et marche **dans Node comme dans le navigateur**, donc un seul motif des deux côtés.
+⭐ Les fixtures ancrées sur `today()+'T12:00:00'` (**midi**) n'ont jamais eu le défaut : à midi,
+aucun décalage de ±2 h ne change le jour. **C'est l'autre façon correcte de faire.**
+
+⏭️ **Ce qui n'est PAS fait** : `tests/dates` ne scanne toujours pas les runners. *Le détecteur
+existe, sa liste de fichiers s'arrête à l'app* — noté, pas élargi dans la foulée.
+
