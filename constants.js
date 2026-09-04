@@ -458,6 +458,12 @@ const FEAT_SI = {
   montrePas:     () => { try{ return ((S&&S.healthDaily)||[]).some(x=>x&&x.steps>0); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* 🔍 POINT ROUGE, PAS DE POP-UP (règle d'or #11) : des mots qui échouaient marchent, et
+     *personne ne réessaie un mot qui a échoué une fois* — il y a donc à découvrir. ⛔ Mais c'est
+     une CORRECTION : rien à faire, aucun repère déplacé, et les résultats d'avant étaient
+     absents ou moins bons. Une pop-up dirait « vos recherches échouaient » — alarme rétroactive
+     (R25). L'aide `?` de ft-v1115 est ÉTENDUE plutôt que doublée (R2). */
+  {id:'recherche-ponctuation', screen:'nutrition', desc:'🔍 <b>La recherche accepte ta façon d\'écrire.</b> Une <b>virgule</b> ne fait plus échouer la recherche (<b>Boulgour, cuit</b> ne rendait rien), et les petits mots comme <b>de</b> ne bloquent plus : <b>filet de bœuf</b>, <b>joue de bœuf</b>, <b>foie de veau</b>, <b>graine de lin</b> trouvent enfin leur aliment.'},
   /* 🏃 POINT ROUGE (règle d'or #11) : deux libellés changent sur l'écran le plus utilisé de
      l'app, et l'un d'eux change aussi de COULEUR (le rouge est réservé au bouton qui enregistre
      vraiment). Quelqu'un qui note son cardio tous les jours cherchera son bouton. */

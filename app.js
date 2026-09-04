@@ -2484,7 +2484,7 @@ async function _complCharger(){
    n'importe quel ordre. */
 function _complChercher(q, max){
   if(!_compl) return [];
-  const mots=_afNorm(q).split(/\s+/).filter(m=>m.length>1);
+  const mots=_afMots(q);                      // R2 : un seul propriétaire (ft-v1119)
   if(!mots.length) return [];
   const out=[];
   for(const a of _compl.a){
@@ -2651,7 +2651,7 @@ function _marquesChercher(q, max){
     /* mot à mot : « frites mcdo » doit devenir « frites mcdonald's » */
     n=n.split(' ').map(m=>MARQUE_ALIAS[m]?_afNorm(MARQUE_ALIAS[m]):m).join(' ');
   }
-  const mots=n.split(/\s+/).filter(m=>m.length>1);
+  const mots=_afMots(n);                      // R2 : un seul propriétaire (ft-v1119)
   if(!mots.length) return [];
   const out=[];
   for(let i=0;i<_marques.a.length;i++){
@@ -2869,7 +2869,7 @@ function _ciqualChercherSansAlias(q, max){
 }
 function _ciqualChercherUne(q, max){
   if(!_ciqual) return [];
-  const mots=_afNorm(q).split(/\s+/).filter(m=>m.length>1);
+  const mots=_afMots(q);                      // R2 : un seul propriétaire (ft-v1119)
   if(!mots.length) return [];
   const out=[];
   for(const a of _ciqual.a){
@@ -2987,10 +2987,56 @@ const _AF_SUGG_DELAI=450;      // on ne part pas au réseau à chaque lettre
        retire purement et simplement (elle ne porte aucun sens pour la recherche), avec ses
        variantes \u2018 \u00b4 ` rencontr\u00e9es dans les donn\u00e9es (parfois des coquilles d'origine, ex.
        \u00ab PROBIO\u00b4DIET \u00bb, \u00ab l'acide hyaluronique \u00bb). */
+/* ⛔⛔ LA PONCTUATION DEVIENT UN ESPACE (ft-v1119) — mesuré en auditant la base pour GPT :
+   `Boulgour, cuit` ne rendait **RIEN**, parce que le mot cherché devenait `boulgour,` **avec sa
+   virgule collée**, et qu'aucun nom ne contient ça. 4 cas sur 6. ⚠️ `Riz blanc, cuit` marchait —
+   **par coïncidence** : la virgule tombait au même endroit dans le nom de la table.
+   ⭐ UN ESPACE, ET NON RIEN : supprimer un séparateur recollerait deux mots qui n'ont rien à
+   voir (« bouillie/cuite » deviendrait « bouilliecuite »).
+   ⛔⛔ ET LA BARRE `/` EST VOLONTAIREMENT ABSENTE DE LA LISTE — mesuré, pas supposé. Elle n'est
+   pas nécessaire : `Lentilles, cuites` se répare par la virgule seule, et « cuite » se trouve
+   déjà comme sous-chaîne dans « bouillie/cuite ». ⚠️ Et l'espacer coûterait cher : la table
+   d'alias porte une clé `lait 1/2 ecreme`, normalisée par `tools/alias.py` — l'app chercherait
+   `lait 1 2 ecreme` et ne la trouverait plus. *Une règle qu'on ajoute « pour être complet »
+   peut faire disparaître une entrée en silence.*
+   ⛔ L'apostrophe reste SUPPRIMÉE (et non espacée) : « huile d'olive » → `huile dolive`, et le
+   nom subit la même transformation — c'est ce qui les fait correspondre depuis toujours.
+   ⚠️ CETTE FONCTION EST LE MIROIR DE `norm()` DANS `tools/alias.py` : les clés de la table
+   d'alias sont normalisées là-bas. Toute règle ajoutée ici DOIT l'être là-bas, sinon une clé
+   devient introuvable — mesuré sur `lait 1/2 ecreme`, la seule qui portait de la ponctuation. */
 function _afNorm(t){
   return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
     .replace(/\u0153/g,'oe').replace(/\u00e6/g,'ae')
-    .replace(/['\u2019\u2018`\u00b4\u02bc]/g,'').trim();
+    .replace(/['\u2019\u2018`\u00b4\u02bc]/g,'')
+    .replace(/[,;:!?()\[\]{}\u00ab\u00bb"\u2013\u2014]+/g,' ')
+    .replace(/\s+/g,' ').trim();
+}
+/* ═══ 🔍 UN SEUL PROPRIÉTAIRE DU DÉCOUPAGE D'UNE REQUÊTE (ft-v1119, R2) ══════════════════════
+   Les QUATRE recherches — les aliments, les compléments, le fast-food et son propre journal —
+   découpaient la frappe chacune de leur côté, à l'identique. *Le commentaire de `_afRang` disait
+   déjà qu'elles avaient eu le même défaut et qu'elles devaient le corriger au même endroit.*
+   ⛔⛔ LE 2ᵉ DÉFAUT MESURÉ : les MOTS-OUTILS étaient exigés comme sous-chaîne. `filet de bœuf`
+   ne rendait **RIEN**, alors que `6116 · Boeuf, filet cru` existe — le mot `de` fait 2 lettres,
+   donc il était conservé, et « boeuf, filet cru » ne contient aucun `de`.
+   ⚠️⚠️ ET ÇA MARCHAIT 7 FOIS SUR 8 **PAR ACCIDENT** : le `de` se trouve dans « vian**de** »,
+   « Pomme **de** terre », « à **la** grecque », « **au** naturel ». *Une règle qui ne marche que
+   par accident marchera un jour de moins.*
+   ⛔⛔ CE QU'ON NE JETTE JAMAIS, ET C'ÉTAIT NOMMÉ AVANT D'ÉCRIRE UNE LIGNE :
+     · `sans` et `avec` — « coca sans sucre » deviendrait « coca sucre », **l'exact contraire** ;
+     · `the` — c'est le THÉ une fois les accents retirés, un vrai aliment ;
+     · tout ce qui n'est pas dans cette liste fermée : on ne devine pas ce qu'est un mot-outil.
+   ⛔ ET SI TOUT ÉTAIT DES MOTS-OUTILS, ON GARDE LA FRAPPE TELLE QUELLE : quelqu'un qui tape
+   « des » doit obtenir ce qu'il obtenait avant, pas le vide.
+   ⚠️⚠️ ET LE FILTRE VIT ICI, PAS AVANT LA TABLE D'ALIAS — la mesure l'a dit avant le code :
+   **99 clés d'alias contiennent un mot-outil** (`pomme de terre`, `blanc de poulet`, `fromage de
+   chèvre`…). Les filtrer en amont cassait ces 99 alias, et `pomme de terre` retombait sur la
+   version CRUE au lieu de la cuite. *On retire les mots-outils pour CHERCHER, jamais pour
+   RECONNAÎTRE.* */
+const _AF_OUTILS=new Set(['de','du','des','la','le','les','un','une','au','aux','en','et']);
+function _afMots(q){
+  const bruts=_afNorm(q).split(/\s+/).filter(m=>m.length>1);
+  const gardes=bruts.filter(m=>!_AF_OUTILS.has(m));
+  return gardes.length?gardes:bruts;          // jamais vide si la frappe ne l'était pas
 }
 /* ① CE QU'IL A DÉJÀ NOTÉ. Dédoublonné par nom, le plus RÉCENT gagne : si la quantité a changé,
    c'est la dernière qui reflète ce qu'il mange aujourd'hui. */
@@ -2998,7 +3044,7 @@ function _afSuggLocales(q){
   const n=_afNorm(q); if(n.length<_AF_SUGG_MIN) return [];
   /* ⭐ R2 (ft-v963) : son journal se cherche comme le reste — sinon il serait la SEULE des trois
      recherches à ne pas retrouver « amandes » dans son propre « Amande grillée ». */
-  const mots=n.split(/\s+/).filter(m=>m.length>1);
+  const mots=_afMots(n);                      // R2 : un seul propriétaire (ft-v1119)
   const vus=new Set(), out=[];
   (S.foodLog||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(e=>{
     if(!e||!e.name) return;

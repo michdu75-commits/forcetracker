@@ -25493,6 +25493,130 @@ console.log('\n-- CCXXVI quater. L\'écran de fin n\'annonce pas un débrief ine
   }
 }
 
+/* ═══ CCXXVII. LES 2 DÉFAUTS DE LA RECHERCHE ALIMENTAIRE (ft-v1119) ═════════════════════════
+   Michel : *« corrige les 2 défauts de recherche »* — ceux mesurés le matin même en auditant la
+   base pour GPT.
+   ⛔ ① La PONCTUATION restait collée : `Boulgour, cuit` → **RIEN**, le mot cherché étant
+   `boulgour,` avec sa virgule. ⚠️ `Riz blanc, cuit` marchait **par coïncidence**.
+   ⛔ ② Les MOTS-OUTILS étaient exigés : `filet de bœuf` → **RIEN** alors que `Boeuf, filet cru`
+   existe. ⚠️ Et ça marchait **7 fois sur 8 par accident** (le « de » de « vian**de** »).
+   ⭐⭐ LA MESURE A DIT OÙ POSER LE FILTRE : **99 clés d'alias contiennent un mot-outil**, les
+   filtrer EN AMONT les cassait toutes. *On retire les mots-outils pour CHERCHER, jamais pour
+   RECONNAÎTRE.*
+   ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXVII. Les 2 défauts de la recherche alimentaire (ft-v1119) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_premium:'1',ft4_ob2:'1',
+    ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
+  const R=await p.evaluate(async()=>{ try{
+    await _ciqualCharger(); await _aliasCharger(); await _marquesCharger();
+    const n=q=>{ const r=_ciqualChercher(q,1); return r.length?r[0][1]:'RIEN'; };
+    const o={ norm:{}, mots:{}, q:{} };
+    ['Boulgour, cuit','Lentilles, cuites','Pois chiches, cuits','Semoule de blé, cuite',
+     'filet de boeuf','joue de boeuf','queue de boeuf','foie de veau','rognon de veau',
+     'travers de porc','graine de lin','jarret de veau','langue de boeuf',
+     'coca sans sucre','coca zero','the vert','biere sans alcool','poulet sans peau',
+     'pomme de terre','blanc de poulet','fromage de chevre','lait 1/2 ecreme',
+     'riz','pates','poulet','banane','big mac','mcdo','tortiglioni','copeaux de parmesan',
+     'parmesan'].forEach(q=>o.q[q]=n(q));
+    /* ⛔ la ponctuation devient un ESPACE, jamais rien */
+    o.norm.virgule=_afNorm('Boulgour, cuit');
+    o.norm.parenth=_afNorm('Poulet (aliment moyen)');
+    o.norm.slash  =_afNorm('bouillie/cuite');           // la barre reste, exprès
+    o.norm.apostr =_afNorm("huile d'olive");            // l'apostrophe reste supprimée
+    /* ⛔ le propriétaire du découpage, et ce qu'il ne jette JAMAIS */
+    o.mots.outils =(typeof _afMots==='function')?_afMots('filet de boeuf'):null;
+    o.mots.sans   =_afMots('coca sans sucre');
+    o.mots.avec   =_afMots('lait avec sucre');
+    o.mots.the    =_afMots('the vert');
+    o.mots.queOutils=_afMots('de la');                  // tout est mot-outil → on garde la frappe
+    o.mots.vide   =_afMots('');
+    /* ⛔⛔ LE TÉMOIN QUI EMPÊCHE LES DEUX NORMALISATIONS DE DIVERGER : chaque clé de la table
+       d'alias doit DÉJÀ être sous forme normalisée. Sinon l'app cherche une chaîne que la table
+       ne porte pas, et l'entrée disparaît en silence. */
+    o.clesNonNormalisees=Object.keys(_alias.a).filter(k=>_afNorm(k)!==k).slice(0,8);
+    o.nCles=Object.keys(_alias.a).length;
+    /* ⛔ CONTRÔLE : combien de clés portent un mot-outil ? C'est le chiffre qui interdit de
+       filtrer en amont — s'il tombait à 0, la garde ci-dessus n'aurait plus d'objet. */
+    o.clesAvecOutil=Object.keys(_alias.a).filter(k=>k.split(' ').some(m=>_AF_OUTILS.has(m))).length;
+    return o;
+  }catch(e){ return {err:String(e)}; } });
+  await cx.close();
+
+  if(R.err) t('CCXXVII n\'a pas pu tourner', false, R.err);
+  else{
+    const q=R.q;
+    /* ⛔ CONTRÔLE — la recherche répond, sinon tout le bloc mesure du vide. */
+    t('⛔ CONTRÔLE — la recherche et les tables répondent',
+      q.riz!=='RIEN' && R.nCles>400, R.nCles+' alias');
+    /* ⭐⭐ DÉFAUT ① : la ponctuation ne fait plus échouer. */
+    t('⭐⭐ ① une VIRGULE ne fait plus échouer la recherche (« Boulgour, cuit » rendait RIEN)',
+      /Boulgour/i.test(q['Boulgour, cuit']) && /Lentille/i.test(q['Lentilles, cuites'])
+      && /Pois chiche/i.test(q['Pois chiches, cuits']) && q['Semoule de blé, cuite']!=='RIEN',
+      q['Boulgour, cuit'].slice(0,40));
+    t('⛔ … la ponctuation devient un ESPACE, jamais rien (sinon deux mots se recollent)',
+      R.norm.virgule==='boulgour cuit' && R.norm.parenth==='poulet aliment moyen', JSON.stringify(R.norm));
+    /* ⛔⛔ LA BARRE `/` RESTE, EXPRÈS : l'espacer rendrait la clé « lait 1/2 ecreme » introuvable. */
+    t('⛔⛔ la barre « / » N\'est PAS espacée — sinon la clé « lait 1/2 ecreme » deviendrait introuvable',
+      R.norm.slash==='bouillie/cuite' && q['lait 1/2 ecreme']!=='RIEN',
+      R.norm.slash+' · '+q['lait 1/2 ecreme'].slice(0,30));
+    t('⛔ … et l\'apostrophe reste SUPPRIMÉE (c\'est ce qui fait marcher « huile d\'olive » depuis toujours)',
+      R.norm.apostr==='huile dolive', R.norm.apostr);
+    /* ⭐⭐ DÉFAUT ② : les mots-outils ne bloquent plus — et ces cas ne sont PAS des alias. */
+    t('⭐⭐ ② les MOTS-OUTILS ne bloquent plus : « filet de bœuf » rend « Boeuf, filet cru »',
+      /^Boeuf, filet/i.test(q['filet de boeuf']), q['filet de boeuf']);
+    t('⛔ … et 5 autres qui ne sont couverts par AUCUN alias (joue, queue, foie, rognon, travers)',
+      /Boeuf, joue/i.test(q['joue de boeuf']) && /Boeuf, queue/i.test(q['queue de boeuf'])
+      && /^Foie, veau/i.test(q['foie de veau']) && /^Rognon, veau/i.test(q['rognon de veau'])
+      && /^Porc, travers/i.test(q['travers de porc']),
+      [q['joue de boeuf'],q['foie de veau']].join(' | ').slice(0,60));
+    /* ⭐ Et 2 qui rendaient un PLAT CUISINÉ au lieu de l'aliment. */
+    t('⭐ « jarret de veau » ne rend plus un « Osso buco à la milanaise », « langue de bœuf » plus une sauce madère',
+      /^Veau, jarret/i.test(q['jarret de veau']) && /^Langue, boeuf/i.test(q['langue de boeuf']),
+      [q['jarret de veau'],q['langue de boeuf']].join(' | ').slice(0,60));
+    /* ⛔⛔ CE QU'ON NE JETTE JAMAIS — nommé AVANT d'écrire une ligne. */
+    t('⛔⛔ « sans » et « avec » ne sont JAMAIS jetés (« coca sans sucre » deviendrait son contraire)',
+      R.mots.sans.indexOf('sans')>=0 && R.mots.avec.indexOf('avec')>=0
+      /* ⚠️ MOTIF CORRIGÉ À LA 1ʳᵉ PASSE — §31, 4ᵉ fois du jour : je cherchais « ajoutes » SANS
+         ACCENT dans un libellé qui écrit « ajoutés ». *Le code était juste, le détail imprimé le
+         montrait ; c'est le motif qui ne savait pas lire ce qu'il mesurait.* */
+      && /sans sucres? ajout/i.test(q['coca sans sucre']),
+      R.mots.sans.join('+')+' · '+q['coca sans sucre'].slice(0,34));
+    t('⛔ … ni « the », qui est le THÉ une fois les accents retirés',
+      R.mots.the.indexOf('the')>=0 && /^Thé vert/i.test(q['the vert']), R.mots.the.join('+'));
+    t('⛔ … et le filtre RETIRE bien « de » quand il le doit',
+      JSON.stringify(R.mots.outils)===JSON.stringify(['filet','boeuf']), JSON.stringify(R.mots.outils));
+    /* ⛔ Si TOUT est mot-outil, on garde la frappe : on ne rend jamais le vide de plus qu'avant. */
+    t('⛔ une frappe faite QUE de mots-outils garde ses mots (on ne fabrique pas du vide)',
+      R.mots.queOutils.length===2 && R.mots.vide.length===0, JSON.stringify(R.mots.queOutils));
+    /* ⛔⛔ LE TÉMOIN QUI PORTE LE VRAI RISQUE DE LA VERSION : les deux normalisations — celle de
+       l'app et celle de `tools/alias.py` — doivent rester identiques. Une divergence d'un seul
+       caractère fait disparaître une entrée SANS ERREUR. */
+    t('⛔⛔ CHAQUE clé d\'alias est déjà sous forme normalisée (les 2 normalisations ne divergent pas)',
+      R.clesNonNormalisees.length===0, R.clesNonNormalisees.join(' · '));
+    /* ⛔ CONTRÔLE — c'est ce chiffre qui interdit de filtrer les mots-outils EN AMONT. */
+    t('⛔ CONTRÔLE — des clés d\'alias contiennent bien un mot-outil (sinon la garde serait vide)',
+      R.clesAvecOutil>=50, R.clesAvecOutil+' clés');
+    /* ⛔ NON-RÉGRESSION : les alias à mots-outils répondent toujours, et le reste ne bouge pas. */
+    t('⛔ NON-RÉGRESSION — les alias à mots-outils tiennent (pomme de terre, blanc de poulet, fromage de chèvre)',
+      /^Pomme de terre, cuite/i.test(q['pomme de terre']) && /^Poulet, filet sans peau/i.test(q['blanc de poulet'])
+      && /^Fromage de chèvre/i.test(q['fromage de chevre']),
+      [q['pomme de terre'],q['blanc de poulet']].join(' | ').slice(0,60));
+    t('⛔ … et les recherches ordinaires sont intactes (riz, pâtes, poulet, banane, big mac, mcdo, tortiglioni)',
+      /^Riz blanc, cuit/i.test(q.riz) && /^Pâtes sèches, standard, cuites/i.test(q.pates)
+      && /^Poulet/i.test(q.poulet) && /^Banane/i.test(q.banane)
+      && /restauration rapide/i.test(q.mcdo) && /^Pâtes/i.test(q.tortiglioni), '');
+    /* ⛔ CE QUI NE MARCHE TOUJOURS PAS EST DIT : les mots de CONDITIONNEMENT n'existent pas dans
+       les libellés. Ce n'est pas un trou du correctif, c'est la table qui nomme l'ALIMENT. */
+    t('⛔ « copeaux de parmesan » ne rend toujours rien (« copeaux » n\'est dans aucun libellé) — mais « parmesan » oui',
+      q['copeaux de parmesan']==='RIEN' && /Parmesan/i.test(q.parmesan), q.parmesan);
+    t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

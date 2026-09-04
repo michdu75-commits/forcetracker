@@ -6,6 +6,26 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1119` — 🔍 **LES 2 DÉFAUTS DE LA RECHERCHE ALIMENTAIRE.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#866** sur `726ea99`, **job `deploy` success**,
+  les 7 étapes vertes à 08:44:38 UTC. ⭐ Suite : **2653/2653, 0 rouge**.
+  ⚠️ La fusion avec session-B n'a apporté que **2 fichiers de doc** (contre-audit récup),
+  aucun code — *vérifié avant de conclure qu'il n'y avait rien à re-tester.*
+- ⛔ **① la ponctuation restait collée** (`Boulgour, cuit` → RIEN, 4 cas sur 6 ; `Riz blanc, cuit`
+  marchait **par coïncidence**) · ⛔ **② les mots-outils étaient exigés** (`filet de bœuf` → RIEN),
+  et ça marchait **7 fois sur 8 par accident** (le « de » de « vian**de** »).
+- ⭐⭐ **La MESURE a dit où poser le filtre, avant la 1ʳᵉ ligne** : posé en amont, il cassait les
+  **99 clés d'alias qui contiennent un mot-outil** (`pomme de terre` retombait sur la CRUE).
+  👉 *On retire les mots-outils pour CHERCHER, jamais pour RECONNAÎTRE.*
+- ⛔⛔ **Jamais jetés** : `sans`, `avec` (« coca sans sucre » → « coca sucre », le contraire) et
+  `the`. ⛔ **La barre `/` est volontairement absente** : l'espacer d'un seul côté rendrait la clé
+  `lait 1/2 ecreme` introuvable. ⭐ Un témoin exige que **chaque clé d'alias soit déjà normalisée**.
+- ⭐ **Contrôle négatif `git stash` sur 82 requêtes : 10 réparées, 4 améliorées, 0 cassée.**
+  `jarret de veau` rendait « Osso buco à la milanaise », il rend « Veau, jarret cru ».
+- ⚠️⚠️ **TROU DE MÉTHODE À TRANCHER** : `data/alias.json` **n'est plus régénérable** — le classeur
+  source de GPT vivait dans le dossier temporaire et a disparu au redémarrage du conteneur.
+  *Un fichier généré dont la source n'est pas versionnée est un fichier figé qui s'ignore.*
+  👉 Verser le classeur dans le dépôt, ou accepter que la table soit figée. **Décision de Michel.**
 - **Version en ligne (live) :** `ft-v1118` — 🏃 **UNE SÉANCE DE CARDIO SEUL N'EST PLUS INVISIBLE.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#861** sur `273a347`, **job `deploy` success**,
   les 7 étapes vertes à 07:47:07 UTC. ⚠️ *Je n'ai PAS pu lire l'URL live moi-même* — le proxy du

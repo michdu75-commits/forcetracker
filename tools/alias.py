@@ -170,7 +170,13 @@ def norm(t):
     t = unicodedata.normalize('NFD', t)
     t = ''.join(c for c in t if unicodedata.category(c) != 'Mn')
     t = t.replace('œ', 'oe').replace('æ', 'ae')
-    return re.sub(r"['’‘`´ʼ]", '', t).strip()
+    t = re.sub(r"['’‘`´ʼ]", '', t)
+    # ⛔⛔ MIROIR DE ft-v1119 : la ponctuation devient un ESPACE, exactement comme dans `_afNorm`.
+    #    ⛔ La barre `/` en est ABSENTE des deux côtés, exprès : la clé `lait 1/2 ecreme` la
+    #    porte, et l'espacer d'un seul côté la rendrait introuvable.
+    #    *Deux normalisations qui divergent d'un caractère font disparaître une entrée en silence.*
+    t = re.sub(r'[,;:!?()\[\]{}«»"–—]+', ' ', t)   # ⛔ pas le « / » : voir _afNorm
+    return re.sub(r'\s+', ' ', t).strip()
 
 def synonymes_existants(app_js):
     """Les clés de FOOD_SYNONYMES, pour interdire qu'un mot relève des deux tables (R2)."""
