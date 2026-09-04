@@ -11,6 +11,9 @@
   (run #887) pendant ma passe de parcours — *même scénario que la 25ᵉ, deux heures plus tôt*.
   ⭐ C'est **structurel** : toute version bump la même ligne de `sw.js`, et une suite complète
   dure plus longtemps que l'intervalle entre deux livraisons. La règle suffit et tient.
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#889** sur `152bc28`, **job `deploy` success**,
+  les 7 étapes vertes à 21:28:01 UTC. ⭐ Suite sur l'arbre fusionné : **2720/2720**, calculs
+  **310/310**, muscles 241, croisés 50, dates 7, données 0 trou — **0 rouge**.
   Avant, **seule la dernière séance** comptait : 1, 2 ou 3 séances de 12 séries rendaient toutes
   le même facteur (−13). Un forfait « jours enchaînés » (−4 / −8) l'approximait à la louche.
 - ⭐⭐ **LE RÉSULTAT EST L'INVERSE DE CE QUE LE CONTRE-AUDIT ANNONÇAIT** — et c'est la leçon :
