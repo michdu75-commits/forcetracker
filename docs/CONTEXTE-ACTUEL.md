@@ -6,6 +6,23 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1120` — 🍔 **LA BASE FAST-FOOD : 27 → 128 PRODUITS.**
+  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+- ⭐ **Aller-retour : 0 écart sur 116 vérifiés**, et le Big Mac tombe au chiffre près sur
+  l'ancienne table — même source, étendue. *La preuve valait mieux que la confiance : le nom du
+  fichier n'était pas celui de la V1.*
+- ⛔⛔ **La V2 SEULE aurait fait perdre TOUTES LES FRITES** (elles n'ont que les calories dans ce
+  classeur) : **+95 gagnés, −15 perdus**, et personne ne l'aurait vu. 👉 *Remplacer aurait été une
+  régression déguisée en enrichissement.* D'où une **FUSION** : 114 lus + 14 hérités.
+- ⚠️ **Les 14 hérités sont un pis-aller écrit comme tel** : leur classeur est perdu, la sortie du
+  03/09 est leur seule trace. ⭐ **Le garde-fou a servi le jour même** : la pizza 4 Fromages est
+  repartie dans la source, le bloc a maigri de 15 à 14. *Il doit rétrécir, jamais grossir.*
+- ⭐ **Contrôles sur les 95 nouveaux** (91 sont du Quick, le bloc DÉCALÉ la 1ʳᵉ fois) : **1 seule
+  incohérence**, le Korean Whopper — déjà connue, déjà affichée.
+- ⚠️⚠️ **À TRANCHER PAR MICHEL : O'Tacos ne contient AUCUN tacos** — 5 desserts (dont des Kinder
+  Bueno), donc taper `tacos` rend une glace. Gardé parce que la règle est la sienne (*« il faut
+  tout mettre »*), signalé parce qu'il doit le savoir. L'aide le dit en clair.
+- ⛔ **N'entrent pas** : 8 Subway (macros absentes), 5 desserts O'Tacos (calories absentes).
 - **Version en ligne (live) :** `ft-v1119` — 🔍 **LES 2 DÉFAUTS DE LA RECHERCHE ALIMENTAIRE.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#866** sur `726ea99`, **job `deploy` success**,
   les 7 étapes vertes à 08:44:38 UTC. ⭐ Suite : **2653/2653, 0 rouge**.
