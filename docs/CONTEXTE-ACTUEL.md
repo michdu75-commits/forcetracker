@@ -7,7 +7,18 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1123` — 🧠 **LE TEST A/B MÉMOIRE REÇOIT SA PORTE D'ENTRÉE.**
-  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#878** sur `7d1bc06`, **job `deploy` success**,
+  les 7 étapes vertes à 17:43:22 UTC. ⭐ Suite **sur l'arbre FUSIONNÉ** : parcours **2699/2699**,
+  calculs **290/290**, muscles 241, croisés 50, dates **7/7**, données 0 trou — *c'est l'arbre
+  fusionné qui part en ligne, pas le mien seul.*
+- ⚠️⚠️ **24ᵉ COLLISION DE VERSION** : session-B a poussé sa **ft-v1122** (le cardio dans la
+  récupération) pendant que j'écrivais la mienne. La leur était déjà en ligne → je monte à 1123,
+  *on ne fait jamais reculer le cache*. ⭐ **C'est le verrou GIT qui a joué**, pas le journal :
+  mon push a été refusé, rien n'a été écrasé.
+- ⛔ **Et leur ft-v1122 est en ligne SANS entrée dans `CLAUDE.md`** (R23) — noté pour eux dans le
+  journal de partage. *Je ne l'écris pas à leur place : je n'ai pas fait le travail.*
+  ⭐ Elle répond d'ailleurs au **barème de récup du cardio** que j'annonçais « en attente de
+  Michel » une heure plus tôt — *exactement le doublon que ce journal existe pour éviter.*
 - ⛔⛔ **La cause n'était pas le temps de Michel, et elle était de mon côté** : `ab-memoire.js`
   est prêt depuis le 03/09 et n'a jamais tourné parce qu'il était le **seul** test lançable par
   lui **sans bouton**. J'ai écrit « en attente de Michel » pendant deux semaines.
