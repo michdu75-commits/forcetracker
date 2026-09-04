@@ -6,6 +6,26 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1128` — 👥 **« ANON » N'EST PAS QUELQU'UN.**
+  ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18). Michel : *« c'est qui anon ? il faut que je sache
+  qui utilise Milo »*. ⭐⭐ **Arithmétique exacte** : 25 appels = `michdu75` 16 + `anon` 9, et les
+  9 = **5 `seanceJson`** + **4 de la passe A/B**. *Les deux étaient lui* → l'écran disait
+  « 2 personnes » pour une seule.
+- ⛔ **Deux causes, deux traitements** : mon bouton A/B envoyait un e-mail **vide** (défaut,
+  corrigé — `_evRun` passe `S.email` depuis le 29/08) ; **`seanceJson` a RAISON** de ne rien
+  envoyer (c'est le cervelet, appel figé à **2 clés** par un témoin). *Le réparer casserait
+  l'architecture* — **R30/R28**. L'écran **nomme** le trou au lieu de le boucher.
+- ⚠️⚠️ **ET LA SUITE EST PASSÉE DE 0 À 11 ROUGES À MINUIT, SANS QU'AUCUN CODE APPLICATIF BOUGE.**
+  ⭐⭐ Tranché en un geste : **rejouer la suite sur le commit d'avant** (`git worktree`) → **mêmes
+  11 rouges**. *Avant de chercher ce qu'on a cassé, vérifier que ce n'était pas déjà cassé.*
+- ⛔⛔ **Cause : les fixtures dataient en UTC, la page vit à Paris.** À 00 h 34, la page dit 05/09
+  et la fixture 04/09 → la « séance d'aujourd'hui » est datée d'hier, `jourSeance()` ne la trouve
+  plus, tout le cyclage s'effondre. **La famille la plus documentée du projet, retournée contre le
+  banc d'essai** — `tests/dates` interdit ce motif dans l'app, pas dans les runners.
+  ⭐ **Pire qu'un test qui échoue : il n'échoue que 2 h par jour** — donc à minuit, celui qui livre
+  croit avoir cassé l'app. **§40bis** de `BUGS.md`. **18 fixtures corrigées**, un seul motif qui
+  marche dans Node ET dans le navigateur. ⏭️ `tests/dates` ne scanne toujours pas les runners.
+
 - **Version en ligne (live) :** `ft-v1127` — 🔋 **OPTION B DE LA RÉCUP : LA CHARGE S'ADDITIONNE.**
   ⚠️⚠️ **26ᵉ COLLISION, la 2ᵉ de la journée** : session-A avait publié et déployé sa ft-v1126
   (run #887) pendant ma passe de parcours — *même scénario que la 25ᵉ, deux heures plus tôt*.
