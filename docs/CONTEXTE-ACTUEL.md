@@ -7,14 +7,17 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1124` — ⚡ **« CETTE SÉANCE TE CONVIENT ? » NE S'AFFICHE PLUS
+  SOUS UN REPROCHE.** Michel, enregistrement d'écran à l'appui : il écrit *« pourquoi tu me donnes
+  la séance à faire ? »* et l'app propose **« ⚡ Oui, on démarre »** sous une réponse de Milo qui dit
+  le contraire.
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#881** sur `5115965`, **job `deploy` success**,
+  les 7 étapes vertes à 18:17:11 UTC. ⭐ Suite mesurée sur l'arbre fusionné : **2699/2699**,
+  calculs **298/298**, muscles 241, croisés 50, dates 7, données 0 trou — **0 rouge**.
   ⚠️⚠️ **25ᵉ COLLISION DE VERSION, la 3ᵉ en deux jours** : session-A a publié **et déployé** sa
   propre ft-v1123 pendant que ma suite de parcours tournait. **Le premier publié garde le numéro** —
   ma version devient **ft-v1124**. ⭐ *Ma ligne de partage était pourtant posée dès 17:10 UTC* :
   **un panneau d'affichage évite le doublon de TRAVAIL, il n'empêche pas de choisir le même numéro.**
   *Seul git l'attrape, et il l'a attrapé.*
-  SOUS UN REPROCHE.** Michel, enregistrement d'écran à l'appui : il écrit *« pourquoi tu me donnes
-  la séance à faire ? »* et l'app propose **« ⚡ Oui, on démarre »** sous une réponse de Milo qui dit
-  le contraire.
 - ⛔ **La cause n'est PAS Milo** : la carte est posée par un filet déterministe du code
   (`_demandeUneSeance`), dont la règle ② acceptait n'importe quel « la/ma séance » **sans verbe de
   demande**. *Durcir le prompt aurait été corriger le mauvais cerveau (R7).*
