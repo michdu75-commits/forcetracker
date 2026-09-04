@@ -7,7 +7,7 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1118` — 🏃 **UNE SÉANCE DE CARDIO SEUL N'EST PLUS INVISIBLE.**
-  ⏳ *Déploiement à vérifier (R18).* Suite : **PARCOURS_N/PARCOURS_N, 0 rouge** (parcours ·
+  ⏳ *Déploiement à vérifier (R18).* Suite : **2635/2635, 0 rouge** (parcours ·
   calculs 266 · muscles 241 · croisés 50 · dates 7 · données 0 trou).
 - ⭐⭐ **Deux retours de Michel le même jour, UN seul défaut** : *« 45 min de tapis et ma récup n'a
   pas bougé »* et *« on me dit que j'ai pas fait le cardio hier »*. La mesure a tranché : la carte
