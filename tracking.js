@@ -3024,7 +3024,7 @@ function _nuitsRecentes(auj, n){
    au REPOS, si.
 
    ⭐ CE QUE ÇA CHANGE VRAIMENT : jusqu'ici le score de récup se calculait sur du **déclaratif**
-   (sommeil noté, séance récente, âge, jours enchaînés, humeur du jour). **Aucune mesure du
+   (sommeil noté, séance récente, âge, humeur du jour). **Aucune mesure du
    corps.** La FC au repos est le premier signal physiologique qui y entre — et c'est le seul
    que la voie gratuite permette, puisque les entraînements ne sont pas lisibles par Raccourcis.
 
@@ -3224,6 +3224,13 @@ function _chargeCardio(sess){
    ⛔ ET RIEN D'AUTRE NE BOUGE : à partir de 4 séries, la pénalité est au point près celle
    d'avant (×1,7, échec ×1,5, drop ×1,3, plafond 38 — tous inchangés). */
 const RECUP_PEN_PLANCHER = 2;
+/* ⛔⛔ LE PLAFOND EST NOMMÉ DEPUIS LE 04/09/2026, ET C'EST UN PRÉREQUIS, PAS UN NETTOYAGE.
+   L'option B le lit à un DEUXIÈME endroit (le plafond de la SOMME des séances récentes). Le
+   laisser en dur aurait refait exactement le défaut corrigé la veille dans `projectionRecup`,
+   qui écrivait `48` et `24` alors que `RECUP_EFFACE_H` existait pour être propriétaire unique.
+   *Un littéral qui a deux lecteurs n'est plus un littéral, c'est une constante qui s'ignore*
+   (**R2**). ⭐ La valeur ne change pas : 38, relevé de 30 le 02/08. */
+const RECUP_PEN_PLAFOND = 38;
 function _penaliteSeance(sess){
   let load=0;
   ((sess&&(sess.exs||sess.exercises))||[]).forEach(ex=>(ex.sets||[]).forEach(s=>{
@@ -3233,7 +3240,7 @@ function _penaliteSeance(sess){
   load += _chargeCardio(sess);                          // UNE seule charge, muscu + cardio
   // Plafond relevé de 30 à 38 (02/08) : mesuré, une séance de 24 séries de squat la veille
   // ne coûtait que 10 points — l'app affichait « Bonne récup » le lendemain d'un gros leg day.
-  return Math.max(RECUP_PEN_PLANCHER,Math.min(38,Math.round(load*1.7)));
+  return Math.max(RECUP_PEN_PLANCHER,Math.min(RECUP_PEN_PLAFOND,Math.round(load*1.7)));
 }
 /* ⭐⭐ `refTs` = L'INSTANT AUQUEL ON SE PLACE (ft-v1017), optionnel. Sans argument, la
    fonction se comporte EXACTEMENT comme avant — c'est ce qui rend le changement sûr : les
@@ -3320,7 +3327,40 @@ function calcRecoveryDetail(refTs){
      l'instant demandé. Sans `refTs`, c'est bien `S.sessions[0]` — comportement inchangé. */
   const lastSess=_derniereSeanceAvant(_now,_auj);
   let sessAdj=0;
-  if(lastSess&&lastSess.date){
+  /* ⭐⭐ OPTION B (04/09/2026) — LA CHARGE S'ADDITIONNE. Jusqu'ici, SEULE la dernière séance
+     comptait : mesuré, 1, 2 ou 3 séances de 12 séries rendaient TOUTES le même facteur, −13.
+     Le volume doublait, triplait, et le calcul ne le voyait pas — seul un forfait « jours
+     enchaînés » de −4 / −8 l'approximait au doigt mouillé.
+     ⛔ On somme désormais le RESTE de chaque séance encore dans la fenêtre d'effacement, chacune
+     décroissant sur SES propres `RECUP_EFFACE_H` heures. Ce n'est pas un nouveau barème : c'est
+     la formule d'aujourd'hui, appliquée à toutes au lieu de la seule dernière.
+     ⛔ PLAFOND SUR LA SOMME = `RECUP_PEN_PLAFOND` (38), **décision de Michel prise sur les
+     chiffres** : la fatigue cumulée ne peut jamais dépasser ce que coûte UNE séance maximale.
+     Le candidat à 48 a été mesuré et écarté par lui — il faisait descendre son plancher de 42
+     à 38, quand celui-ci le laisse EXACTEMENT où il est.
+     ⭐⭐ ET LE RÉSULTAT EST CONTRE-INTUITIF, c'est pour ça qu'il fallait le mesurer AVANT (R34) :
+     sur ses 60 jours réels, **26 journées MONTENT** (+3,8 en moyenne) et 6 baissent. Le forfait
+     mordait 28 jours à −4 ; la vraie somme coûte le plus souvent MOINS, parce que la séance de
+     l'avant-veille a déjà fondu. *Une correction annoncée comme « plus sévère » s'est révélée
+     plus juste ET plus douce — l'inverse de ce que le contre-audit prévoyait.*
+     ⚠️ Seuls **7 jours sur 60** portent réellement 2 séances dans la fenêtre : sur les 53 autres,
+     ce qui change est le RETRAIT du forfait, pas le cumul. */
+  const _sessFenetre=(S.sessions||[]).filter(s=>{
+    const ts=s&&(s.ts||s.id); if(!ts||ts>_now) return false;
+    return (_now-ts)/36e5 < RECUP_EFFACE_H;
+  });
+  if(_sessFenetre.length>1){
+    /* ⛔ Le cumul ne s'applique QUE si plusieurs séances sont dans la fenêtre. Avec une seule,
+       on retombe volontairement dans le chemin d'origine — même formule, mêmes arrondis, donc
+       **aucun** déplacement d'historique là où il n'y a rien à cumuler (R14). */
+    let somme=0;
+    _sessFenetre.forEach(s=>{
+      const hrs=Math.max(0,(_now-(s.ts||s.id))/36e5);
+      somme += _penaliteSeance(s)*(RECUP_EFFACE_H-hrs)/RECUP_EFFACE_H;
+    });
+    sessAdj = -Math.round(Math.min(somme,RECUP_PEN_PLAFOND));
+  }
+  else if(lastSess&&lastSess.date){
     const dCal=Math.round((new Date(_auj+'T12:00:00')-new Date(lastSess.date+'T12:00:00'))/864e5);
     const tsSess=lastSess.ts||lastSess.id;
     const calcPen0=()=>_penaliteSeance(lastSess);
@@ -3369,9 +3409,18 @@ function calcRecoveryDetail(refTs){
     const cp=(typeof getMensCyclePhase==='function')?getMensCyclePhase(_now):null;
     if(cp&&cp.perf){ cycleAdj = cp.perf==='low'?-10 : cp.perf==='declining'?-5 : cp.perf==='peak'?4 : cp.perf==='rising'?2 : 0; cpPhase=cp.phase||''; }
   }catch(e){}
-  // Fatigue accumulée : plusieurs séances sur les 3 derniers jours (enchaîner sans repos)
-  const recentDays=new Set((S.sessions||[]).filter(s=>s&&s.date&&(()=>{const dd=Math.round((new Date(_auj+'T12:00:00')-new Date(s.date+'T12:00:00'))/864e5);return dd>=0&&dd<=2;})()).map(s=>s.date)).size; // jours CALENDAIRES (fin de la marche de midi)
-  const accumAdj = recentDays>=3?-8 : recentDays>=2?-4 : 0;
+  /* ⛔⛔ LE FORFAIT « JOURS ENCHAÎNÉS » EST RETIRÉ (option B, 04/09/2026) — et R30 exige que le
+     retrait soit ÉCRIT avec sa raison, sinon il ressemble à un oubli et quelqu'un le remettra.
+     Il valait −4 pour 2 jours de séance sur 3, −8 pour 3 — un **pis-aller** qui approximait au
+     forfait ce que le moteur ne savait pas mesurer : la charge cumulée. Maintenant qu'elle est
+     mesurée pour de vrai (ci-dessus), il ferait DOUBLE COMPTE.
+     ⭐ Et c'est lui qui explique le résultat contre-intuitif : il mordait **28 jours sur 60**
+     chez Michel, tous à −4, alors que la vraie somme cumulée y coûte le plus souvent moins.
+     *Un forfait ne se contente pas d'être imprécis : il est faux dans les deux sens, et il
+     punissait surtout ceux qui s'entraînent régulièrement sans jamais rien empiler.*
+     ⚠️ Le facteur affiché « 🔥 Jours enchaînés » disparaît donc de l'écran « Pourquoi ce
+     score ? ». Ce n'est pas une perte d'information : la ligne « 🏋️ Séance récente » porte
+     désormais la fatigue de TOUTES les séances récentes, et non plus de la dernière seule. */
   // Tabac : la récupération est altérée
   const smokerAdj = S.smoker?-4:0;
   // Énergie ressentie (check-in de la dernière séance, si récente) : signal direct de la forme
@@ -3404,7 +3453,7 @@ function calcRecoveryDetail(refTs){
   }catch(e){}
   const base=Math.round(wScore);
   const rhrE=(typeof _rhrEcart==='function')?_rhrEcart(_now):null, rhrAdj=_rhrAjust(rhrE);
-  const score=Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj+accumAdj+smokerAdj+energyAdj+dayEnergyAdj+rhrAdj)));
+  const score=Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj+smokerAdj+energyAdj+dayEnergyAdj+rhrAdj)));
   // Détail des facteurs (pour afficher le « pourquoi » sous le score)
   // `why` = raison en clair (français simple), utilisée par l'explication « Pourquoi ce score ? ».
   /* ⭐ L'APP DIT D'OÙ VIENT LE CHIFFRE (30/08) — c'est la moitié de la décision de Michel :
@@ -3430,7 +3479,6 @@ function calcRecoveryDetail(refTs){
   if(ageAdj) factors.push({ic:'🎂',label:'Âge',val:ageAdj,why:'La récupération ralentit un peu avec l\'âge.'});
   if(cycleAdj) factors.push({ic:'🌙',label:'Cycle'+(cpPhase?' ('+cpPhase+')':''),val:cycleAdj,
     why:cycleAdj<0?'Ta phase de cycle demande plus de récup en ce moment.':'Ta phase de cycle est plutôt favorable à la performance.'});
-  if(accumAdj) factors.push({ic:'🔥',label:'Jours enchaînés',val:accumAdj,why:'Tu enchaînes plusieurs jours de suite : la fatigue s\'accumule.'});
   if(smokerAdj) factors.push({ic:'🚬',label:'Tabac',val:smokerAdj,why:'Le tabac freine un peu la récupération.'});
   if(energyAdj) factors.push({ic:'⚡',label:'Énergie',val:energyAdj,why:'Ton niveau d\'énergie noté au dernier check-in de séance.'});
   if(dayEnergyAdj) factors.push({ic:'🌡️',label:'Forme du jour',val:dayEnergyAdj,why:'Comment tu te sens aujourd\'hui (ton check-in du jour sur l\'Accueil).'});
@@ -3446,7 +3494,9 @@ function calcRecoveryDetail(refTs){
   if(!hasSleep) tips.push('💤 Renseigne ton sommeil pour un score personnalisé et plus précis.');
   if(hasSleep&&base<70) tips.push('Vise 7–9 h de sommeil de qualité — c\'est le plus gros levier.');
   if(sessAdj<=-18) tips.push('Grosse séance récente : laisse 1–2 jours avant de reprendre lourd.');
-  if(accumAdj<0) tips.push('Tu enchaînes les jours — un jour de repos complet te ferait du bien.');
+  /* ⛔ Le conseil « tu enchaînes les jours » partait avec le forfait : il se déclenchait sur un
+     COMPTE de jours, pas sur une charge. La ligne « Séance récente » porte maintenant le cumul
+     réel, et le conseil qui l'accompagne est déjà celui de la séance récente. */
   if(cycleAdj<=-10) tips.push('Pendant les règles : repos actif ou séances légères, évite les charges max.');
   else if(cycleAdj<0) tips.push('Phase prémenstruelle : volume modéré et bonne récup entre les séances.');
   if(smokerAdj<0) tips.push('Réduire le tabac améliorerait nettement ta récupération.');
@@ -3547,25 +3597,24 @@ function projectionRecup(d){
         if(t>now) finFat=t;
       }
     }
-    /* L'enchaînement : `accumAdj` s'annule dès qu'il reste moins de 2 jours de séance distincts
-       dans la fenêtre des 3 derniers jours. On fait GLISSER la fenêtre au lieu de refaire le
-       calcul à la main — c'est la même règle, jouée en avant. */
-    let finAcc=null;
-    const dates=[...new Set((S.sessions||[]).filter(s=>s&&s.date).map(s=>s.date))];
-    for(let d=0; d<=7; d++){
-      const ref=new Date(today()+'T12:00:00').getTime()+d*864e5;
-      const n=dates.filter(ds=>{
-        const dd=Math.round((ref-new Date(ds+'T12:00:00').getTime())/864e5);
-        return dd>=0&&dd<=2;
-      }).length;
-      if(n<2){ if(d>0) finAcc=ref; break; }
-    }
-    const quand=Math.max(finFat||0, finAcc||0)||null;
+    /* ⛔⛔ LE 2ᵉ TERME EST PARTI AVEC LE FORFAIT (option B, 04/09/2026) — et c'est le TROISIÈME
+       lecteur d'une règle qu'on change, exactement le piège de `RECUP_EFFACE_H` la veille.
+       Il faisait glisser la fenêtre des 3 jours pour dire quand le forfait « jours enchaînés »
+       s'annulerait. Ce forfait n'existe plus : gardé, ce bloc aurait promis *« ta récup
+       remonte le 6 »* en attendant l'expiration de quelque chose qui ne se produit plus.
+       👉 ***Une projection qui prédit la fin d'une règle supprimée ne se trompe pas de
+       quelques heures : elle annonce un événement qui n'aura jamais lieu.***
+       ⚠️ LIMITE ÉCRITE PLUTÔT QUE TUE (R30) : `finFat` ne regarde que la DERNIÈRE séance. Avec
+       la charge cumulée, la somme met un peu plus longtemps à tomber à zéro que cette seule
+       séance — donc la projection peut être **légèrement optimiste** quand deux séances sont
+       encore dans la fenêtre. Mesuré comme faible devant l'heure annoncée, et non corrigé ici :
+       ça se mesure à part, on ne mélange pas un retrait avec un raffinement. */
+    const quand=finFat||null;
     /* Ce qui restera à la charge de la personne — nommé, jamais chiffré à l'avance. */
     const restant=[];
     if(d && d.base<100) restant.push('tes nuits');
     if(S.dayState&&S.dayState.date===today()&&S.dayState.energy!=null&&S.dayState.energy<=1) restant.push('ta forme du jour');
-    return {quand:quand, dejaAuMax:!quand, source:(finFat&&(!finAcc||finFat>=finAcc))?'seance':'jours', restant};
+    return {quand:quand, dejaAuMax:!quand, source:finFat?'seance':null, restant};
   }catch(e){ return {quand:null, dejaAuMax:true, source:null, restant:[]}; }
 }
 

@@ -2110,6 +2110,123 @@ console.log('\n═══ 14. « Cette séance te convient ? » — demande ou co
   await c.close();
 }
 
+/* ══ 🔋 OPTION B — LA CHARGE S'ADDITIONNE, LE FORFAIT DISPARAÎT (ft-v1126) ═══════════════
+   Michel : *« maintenant l'option B »*, après l'option A livrée en ft-v1122.
+   ⭐⭐ MESURÉ AVANT DE CODER, et le défaut était net : 1, 2 ou 3 séances de 12 séries rendaient
+   TOUTES le même facteur, **−13**. Le volume doublait, triplait, et le calcul ne le voyait pas ;
+   seul un forfait « jours enchaînés » de −4 / −8 l'approximait au doigt mouillé.
+   ⛔ PLAFOND SUR LA SOMME = celui qui existe déjà (38), **décision de Michel sur les chiffres** :
+   le candidat à 48 faisait descendre son plancher de 42 à 38, celui-ci le laisse où il est.
+   ⭐⭐ ET LE RÉSULTAT EST CONTRE-INTUITIF : sur ses 60 jours réels, **25 journées MONTENT** et 3
+   baissent — parce que le forfait mordait 28 jours à −4 quand la vraie somme y coûte moins.
+   *Une correction annoncée comme « plus sévère » s'est révélée plus juste ET plus douce.*
+   ⛔ Ce bloc tient les DEUX moitiés : ce qui doit CHANGER, et ce qui ne doit SURTOUT pas bouger. */
+console.log('\n═══ 15. Récupération — option B : la charge cumulée ═══');
+{
+  const {c,p,errs}=await boot('2026-09-04T18:00:00+02:00',{ft4_name:'T',ft4_ob2:'1'});
+  const R=await p.evaluate(async()=>{ try{
+    const REF=Date.now();
+    const jour=t=>{const d=new Date(t);return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+    const seance=(nSets,hAgo)=>{const ts=REF-hAgo*36e5;
+      const sets=[]; for(let i=0;i<nSets;i++) sets.push({kg:80,reps:8,done:true,type:'N'});
+      return {id:ts,ts,date:jour(ts),volume:640*nSets,duration:3600,
+              exs:[{name:'Développé Couché',sets}]};};
+    const pose=ss=>{ S.gender='H'; S.age=35; S.bw=80; S.height=178; S.level='intermediaire';
+      S.smoker=false; S.mensCycleStart=null; S.contraception=''; S.dayState=null;
+      S.dayStateLog=[]; S.healthDaily=[];
+      S.sleepLog=[0,1,2].map(i=>({date:jour(REF-i*864e5),hours:7.5,quality:3}));
+      S.sessions=ss.slice().sort((a,b)=>b.ts-a.ts);
+      const d=calcRecoveryDetail(REF), f=d.factors||[];
+      const g=re=>{const x=f.find(y=>re.test(y.label||''));return x?x.val:0;};
+      return {score:d.score, seance:g(/Séance|Repos/), enchaine:g(/enchaîn/i),
+              libelles:f.map(x=>x.label)}; };
+    const o={};
+    o.une   = pose([seance(12,18)]);
+    o.deux  = pose([seance(12,18), seance(12,42)]);
+    o.hors  = pose([seance(12,18), seance(12,90)]);   // la 2ᵉ est HORS fenêtre (>48 h)
+    /* ⚠️ TOUTE FRAÎCHE (30 min), pas 18 h : à 18 h une séance a déjà fondu des deux tiers,
+       et le plafond porte sur la pénalité BRUTE, pas sur ce qu'il en reste. Mon 1ᵉʳ jet
+       exigeait −38 à 18 h et rougissait sur du code parfaitement sain (§31). ⛔ Et pas à
+       0 h pile : un témoin posé sur une frontière mesure l'arrondi, pas le comportement. */
+    o.grosse= pose([seance(40,0.5)]);                 // une seule, énorme et fraîche → plafond
+    o.enorme= pose([seance(30,4), seance(30,10), seance(30,20)]); // 3 grosses → plafond de la somme
+    o.repos = pose([seance(12,80)]);                  // rien dans la fenêtre → bonus de repos
+    o.PLAF  = (typeof RECUP_PEN_PLAFOND!=='undefined')?RECUP_PEN_PLAFOND:null;
+    o.dur   = /Math\.min\(38,/.test(String(_penaliteSeance));
+    o.proj  = (typeof projectionRecup==='function')?projectionRecup():null;
+    /* ⛔⛔ CE TÉMOIN A ÉTÉ RE-VISÉ APRÈS AVOIR ROUGI SUR MON PROPRE TRAVAIL — §31, et la leçon
+       vaut d'être gardée. Mon 1ᵉʳ jet interdisait le MOT « enchaînés » dans tout texte affiché.
+       Il a rougi sur 9 lignes, dont la pop-up, le point rouge et l'aide que je venais d'écrire
+       **pour annoncer le retrait**. *Une aide qui explique qu'un facteur a disparu doit
+       forcément le nommer* — interdire le mot rendait le retrait impossible à annoncer.
+       👉 La garantie n'est pas « le mot n'apparaît plus », c'est ***« aucun texte ne le présente
+       encore comme un facteur ACTUEL »***. On épingle donc les DEUX tournures mortes, celles
+       qui existaient vraiment et que j'ai retirées : l'énumération des facteurs du score, et la
+       phrase de projection. Un 5ᵉ lecteur qui recopierait l'une des deux rougira. */
+    o.fuites=[];
+    for(const f of ['screens.js','coach.js','constants.js','tracking.js','app.js','log.js']){
+      let txt=''; try{ txt=await (await fetch('/'+f)).text(); }catch(e){ o.fuites.push(f+' ILLISIBLE'); continue; }
+      /* ① le facteur ÉNUMÉRÉ parmi ceux qui composent le score aujourd'hui */
+      if(/âge,\s*jours enchaînés/i.test(txt)) o.fuites.push(f+' : énumère « jours enchaînés » parmi les facteurs actuels');
+      /* ② la projection qui promet la fin d'un enchaînement */
+      if(/enchaînement de jours se vide/i.test(txt)) o.fuites.push(f+' : promet la fin de « l\'enchaînement de jours »');
+    }
+    return o;
+  }catch(e){ return {err:e.message}; } });
+
+  if(R.err) t('⛔ le bloc s\'exécute', false, R.err);
+  else{
+    /* ⛔ CONTRÔLE — sans écart entre 1 et 2 séances, tout le reste serait vert sur du vide. */
+    t('⛔ CONTRÔLE — une séance seule pèse déjà quelque chose',
+      R.une.seance<0, 'facteur '+R.une.seance);
+    t('⭐⭐ DEUX séances dans la fenêtre coûtent PLUS qu\'une seule (la charge s\'additionne)',
+      R.deux.seance < R.une.seance, R.une.seance+' → '+R.deux.seance);
+    /* ⛔⛔ LE TÉMOIN QUI EMPÊCHE « ON ADDITIONNE TOUT ET N'IMPORTE QUOI ». */
+    t('⛔⛔ une séance HORS de la fenêtre d\'effacement ne compte pas',
+      R.hors.seance === R.une.seance, R.une.seance+' vs '+R.hors.seance);
+    /* ⭐ R14 — là où il n'y a rien à cumuler, le chiffre d'AVANT est conservé au point près.
+       C'est ce qui fait que 32 des 60 journées de Michel ne bougent pas d'un point. */
+    t('⭐ avec UNE seule séance, on retombe sur le chemin d\'origine (aucun déplacement)',
+      R.une.seance === -13, 'facteur '+R.une.seance+' (attendu −13, la valeur d\'avant)');
+    /* ⛔⛔ LE FORFAIT A DISPARU — et on le vérifie sur le LIBELLÉ affiché, pas sur une valeur :
+       un forfait à 0 se lirait « absent » alors qu'il serait encore là. */
+    t('⛔⛔ le forfait « Jours enchaînés » ne s\'affiche PLUS nulle part',
+      !R.deux.libelles.some(l=>/enchaîn/i.test(l||'')) && R.deux.enchaine===0,
+      JSON.stringify(R.deux.libelles));
+    /* ⛔ LE PLAFOND DE LA SOMME, décision de Michel. Trois grosses séances rapprochées ne
+       peuvent pas coûter plus qu'UNE séance maximale. */
+    t('⭐⭐ la SOMME est plafonnée à ce que coûte une séance maximale (décision de Michel)',
+      R.enorme.seance === -R.PLAF, 'facteur '+R.enorme.seance+' · plafond '+R.PLAF);
+    t('⛔ … et une séance énorme SEULE atteint le même plafond (le barème n\'a pas bougé)',
+      R.grosse.seance === -R.PLAF, 'facteur '+R.grosse.seance);
+    /* ⛔ R2 — le plafond est une CONSTANTE, pas deux littéraux. C'est le défaut exact corrigé
+       la veille dans `projectionRecup` (48 et 24 écrits en dur). */
+    t('⛔ R2 — le plafond a UN propriétaire nommé, plus aucun 38 en dur dans la pénalité',
+      R.PLAF===38 && R.dur===false, 'PLAFOND='+R.PLAF+' · littéral encore présent : '+R.dur);
+    /* ⭐ NON-RÉGRESSION — sans séance dans la fenêtre, le bonus de repos est intact. */
+    t('⭐ NON-RÉGRESSION — sans séance récente, le bonus de repos fonctionne toujours',
+      R.repos.seance > 0, 'facteur '+R.repos.seance);
+    /* ⛔⛔ LA PROJECTION NE PROMET PLUS LA FIN D'UNE RÈGLE SUPPRIMÉE. Elle calculait aussi
+       l'expiration du forfait : gardée, elle aurait annoncé une remontée qui n'arrive jamais. */
+    t('⛔⛔ `projectionRecup` ne s\'appuie plus sur le forfait retiré',
+      !!R.proj && R.proj.source!=='jours', JSON.stringify(R.proj&&R.proj.source));
+    /* ⛔⛔ LE TÉMOIN LE PLUS UTILE DU BLOC, et il vient d'une erreur de parcours : le forfait
+       avait **SIX** lecteurs, pas un. Le calcul · le conseil · `projectionRecup` · l'aide de
+       l'Accueil qui l'énumérait parmi les facteurs · l'écran de projection qui promettait « le
+       temps que ton enchaînement de jours se vide » · l'aide détaillée du Guide · **et une
+       pop-up de 2026 (v33) toujours servie aux nouveaux venus**, que je n'aurais jamais trouvée
+       à la main : c'est le témoin qui me l'a montrée, après que je l'aie cru terminé.
+       👉 ***Retirer une règle du calcul ne la retire pas de ce que la personne LIT*** — et une
+       phrase qui décrit un rouage supprimé est pire qu'une phrase absente, parce qu'on la croit.
+       ⛔ Le témoin vise les fichiers SERVIS, pas une liste d'endroits : un 5ᵉ lecteur écrit
+       demain rougira tout seul. */
+    t('⛔⛔ AUCUN texte affiché ne nomme encore le forfait retiré (6 lecteurs trouvés, 6 corrigés)',
+      R.fuites!==undefined && R.fuites.length===0, JSON.stringify(R.fuites));
+    t('0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+  await c.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL LINÉAIRE : '+ok+' ✅ · '+ko+' ❌ ════');

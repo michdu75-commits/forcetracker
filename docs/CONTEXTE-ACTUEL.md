@@ -6,6 +6,29 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1126` — 🔋 **OPTION B DE LA RÉCUP : LA CHARGE S'ADDITIONNE.**
+  Avant, **seule la dernière séance** comptait : 1, 2 ou 3 séances de 12 séries rendaient toutes
+  le même facteur (−13). Un forfait « jours enchaînés » (−4 / −8) l'approximait à la louche.
+- ⭐⭐ **LE RÉSULTAT EST L'INVERSE DE CE QUE LE CONTRE-AUDIT ANNONÇAIT** — et c'est la leçon :
+  sur les **60 jours réels** de Michel, **25 journées MONTENT** (+4,0 moy.), 3 baissent (pire −6),
+  32 ne bougent pas, **le plancher reste à 42**. Le forfait mordait 28 jours à −4 quand la vraie
+  somme y coûte moins. *Un forfait est faux dans les DEUX sens.*
+- ⛔ **Plafond de la somme = 38, décision de Michel sur les chiffres** : le candidat à 48 faisait
+  descendre son plancher à 38. ⛔ Le cumul ne s'applique **que** s'il y a plusieurs séances dans
+  la fenêtre — sinon on retombe au point près sur le chemin d'origine (**R14**).
+- ⛔⛔ **LE FORFAIT AVAIT SIX LECTEURS, PAS UN** : le calcul · le conseil · `projectionRecup`
+  (elle prédisait l'expiration du forfait — gardée, elle aurait promis une remontée qui n'arrive
+  jamais) · l'aide de l'Accueil · l'écran de projection · **et une pop-up de juillet toujours
+  servie aux nouveaux venus**. 👉 *Retirer une règle du calcul ne la retire pas de ce que la
+  personne LIT.*
+- ⏭️ **LA PARTIE ② (la saturation à 0) N'EST PAS LIVRÉE, et la mesure dit pourquoi** : la
+  correction prévue par le contre-audit — borner les ajustements négatifs — **ne marche pas**,
+  tout reste à 0. La vraie cause est **en amont** : la pénalité plafonne à **38 dès 23 séries**,
+  la FC au repos à **−8 dès +6 bpm**. *24 et 60 séries rendent le même chiffre avant même le
+  zéro.* ⚠️ Michel : **on ouvre ce sujet à part**, sur ses chiffres (3 de ses 40 séances y sont
+  écrasées ; sa plus grosse fait 24 séries).
+- ⚠️ **Et je me suis trompé en route** : j'avais dit que la saturation ne le touchait pas (vrai
+  sur 60 jours) — **son profil sature avec une seule mauvaise nuit** (5 h + 20 séries).
 - **Version en ligne (live) :** `ft-v1125` — 🤝 **LES 2 SUITES DU RELAIS DE SESSION-A** (Michel :
   *« il a fini »*, puis il choisit le relais). ⛔ **① `_abHistoDC` ne faisait pas ce qu'elle
   annonçait** : commentaire « des charges qui PROGRESSENT », barème qui **descendait** — la séance
