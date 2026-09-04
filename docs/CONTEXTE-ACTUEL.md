@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1122` — 🧠 **LE TEST A/B MÉMOIRE REÇOIT SA PORTE D'ENTRÉE.**
+- **Version en ligne (live) :** `ft-v1123` — 🧠 **LE TEST A/B MÉMOIRE REÇOIT SA PORTE D'ENTRÉE.**
   ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
 - ⛔⛔ **La cause n'était pas le temps de Michel, et elle était de mon côté** : `ab-memoire.js`
   est prêt depuis le 03/09 et n'a jamais tourné parce qu'il était le **seul** test lançable par

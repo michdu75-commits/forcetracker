@@ -69,6 +69,33 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 UNE SÉRIE MENÉE À L'ÉCHEC COMPTE COMME UNE SÉRIE NORMALE — le ×1,5 vise un type mort
+
+**Ce qui déclenche la question** (04/09/2026) : trouvé dans l'export CSV **réel** de Michel, pas
+dans le code. Ses 617 séries validées se répartissent en **609 `N` · 8 `X` · 116 `É`** —
+**zéro `E`, zéro `D`**.
+
+⛔⛔ **Vérifié dans le code, puis MESURÉ** : `SET_TYPES = ['N','É','X']` (constants.js) — l'app ne
+peut produire que ces trois-là — et une migration one-time (state.js) a converti **`E` → `X`** et
+**`D` → `N`** dans tout l'historique. Or `_penaliteSeance` teste `type==='E'` (×1,5, l'échec) et
+`type==='D'` (×1,3, le drop set). 👉 ***Les deux multiplicateurs sont inatteignables.***
+Mesuré par la vraie fonction sur 12 séries : `N` → **20**, `X` → **20**, `E` → 31, `D` → 27.
+
+**Ce qu'on ne sait pas** : ce que ça devrait coûter. Une série à l'échec fatigue **plus** qu'une
+série normale, ça n'est pas discutable — mais **1,5 n'a jamais été mesuré** (introduit en
+ft-v254 le 06/07/2026 dans le même geste que le reste, sans justification). Le rebrancher tel
+quel reviendrait à activer un chiffre que personne n'a vérifié.
+
+**Ce que ça pèse, chiffré** : sur ses 40 séances, si l'échec valait vraiment ×1,5, la pénalité
+cumulée passerait de **1 044 à 1 049 points — 5 points au total**. *Le trou est réel ; son
+ampleur, chez lui, est minuscule.* ⚠️ Elle ne le serait pas chez quelqu'un qui termine chaque
+série à l'échec.
+
+**État : à trier** — ⛔ **volontairement PAS corrigé** : Michel a écrit « ne pas toucher à échec
+×1,5 / drop ×1,3 » dans l'option A, et il a raison de vouloir mesurer un changement à la fois.
+Un témoin permanent fige le trou **avec sa raison** (`tests/calculs`, bloc 12) pour qu'il ne se
+reperde pas.
+
 ### 🟡 MILO REÇOIT « (0 EXERCICE) — 0kg VOL TOTAL » POUR UNE SÉANCE DE CARDIO SEUL
 
 **Ce qui déclenche la question** (04/09/2026, ft-v1118) : mesuré dans le vrai
