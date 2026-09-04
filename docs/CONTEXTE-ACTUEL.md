@@ -7,7 +7,11 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1118` — 🏃 **UNE SÉANCE DE CARDIO SEUL N'EST PLUS INVISIBLE.**
-  ⏳ *Déploiement à vérifier (R18).* Suite : **2635/2635, 0 rouge** (parcours ·
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#861** sur `273a347`, **job `deploy` success**,
+  les 7 étapes vertes à 07:47:07 UTC. ⚠️ *Je n'ai PAS pu lire l'URL live moi-même* — le proxy du
+  conteneur refuse `github.io` (`CONNECT tunnel failed, 403`), comme il refuse le Worker. La preuve
+  disponible est le JOB, pas la page : **Michel confirme par le n° de version dans « À propos »**.
+  Suite : **2635/2635, 0 rouge** (parcours ·
   calculs 266 · muscles 241 · croisés 50 · dates 7 · données 0 trou).
 - ⭐⭐ **Deux retours de Michel le même jour, UN seul défaut** : *« 45 min de tapis et ma récup n'a
   pas bougé »* et *« on me dit que j'ai pas fait le cardio hier »*. La mesure a tranché : la carte
