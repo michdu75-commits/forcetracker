@@ -25763,7 +25763,10 @@ console.log('\n-- CCXXIX. La base fast-food passe de 27 à 128 (ft-v1120) --');
     const bloc=(py.split('HERITAGE = [')[1]||'').split('\n]')[0];
     const n=(bloc.match(/^\s*\[/gm)||[]).length;
     t('⛔⛔ le bloc HERITAGE est BORNÉ (≤ 15 lignes) et dit qu\'il doit rétrécir, jamais grossir',
-      n>0 && n<=15 && /RÉTRÉCIR, jamais grossir/.test(py), n+' lignes figées');
+      /* ⚠️ MOTIF CORRIGÉ À LA 1ʳᵉ PASSE — §31, 5ᵉ fois du jour : je cherchais « RÉTRÉCIR » en
+         MAJUSCULES dans un commentaire qui l'écrit en minuscules. *La garantie n'a jamais été la
+         casse d'un mot : c'est que le rôle décroissant du bloc soit ÉCRIT quelque part.* */
+      n>0 && n<=15 && /r[ée]tr[ée]cir[^.]{0,20}jamais grossir/i.test(py), n+' lignes figées');
     t('⛔ … et sa raison est écrite (source perdue, non auditable — R30)',
       /source PERDUE|classeur d'origine est PERDU/i.test(py) && /pis-aller/i.test(py), '');
   }
