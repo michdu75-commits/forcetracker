@@ -654,3 +654,51 @@ except SystemExit:
     raise
 except Exception:
     pass                                        # jamais bloquer sur un pépin d'outillage
+
+# ══ 🩹 AUCUN MARQUEUR DE CONFLIT NE PART EN PRODUCTION (04/09/2026) ══════════════════════
+#
+# ⛔⛔ CE CONTRÔLE NAÎT D'UNE VRAIE BOURDE, LA MIENNE, LE JOUR DE ft-v1127. J'ai fusionné une
+# 26ᵉ collision de version, résolu `sw.js`, l'archive et le journal de partage… et **pas
+# `CLAUDE.md`** : la ligne qui le signalait avait été coupée par un `tail -8` sur la sortie de
+# `git merge`. Puis `git add -A` a tout avalé, et les marqueurs `<<<<<<<` sont partis en
+# production dans le fichier que CHAQUE session relit en premier.
+#
+# ⚠️ Rien n'a rougi. Les tests portent sur le comportement de l'app, pas sur la santé des
+# documents ; et mes propres vérifications (« 8 entrées », « archive 0 perdue ») étaient
+# vertes, parce que les entrées étaient bien là — les marqueurs se contentaient de vivre entre
+# elles. 👉 ***Un fichier peut être intégralement présent ET cassé : compter les morceaux ne
+# dit pas qu'ils s'assemblent.***
+#
+# ⭐ Le contrôle vise les fichiers SUIVIS par git, tous types confondus — un marqueur dans du
+# JS casserait l'app, dans un `.md` il empoisonne la mémoire du projet. Il ne coûte rien et il
+# se déclenche au seul endroit qu'on lance à chaque livraison.
+try:
+    import subprocess as _sp
+    _suivis = _sp.run(['git','ls-files'], capture_output=True, text=True,
+                      cwd=_RACINE if '_RACINE' in dir() else '.').stdout.split('\n')
+    _casses = []
+    for _f in _suivis:
+        if not _f.strip():
+            continue
+        try:
+            with open(_f, encoding='utf-8') as _fh:
+                for _n, _l in enumerate(_fh, 1):
+                    # ⛔ On exige le marqueur EN DÉBUT DE LIGNE, comme git l'écrit. Chercher
+                    #    « <<<<<<< » n'importe où rougirait sur un test qui en PARLE — c'est
+                    #    le piège §31, rencontré deux fois le même jour.
+                    if _l.startswith('<<<<<<< ') or _l.startswith('>>>>>>> '):
+                        _casses.append(f"{_f}:{_n}")
+                        break
+        except (UnicodeDecodeError, IsADirectoryError, FileNotFoundError):
+            continue
+    if _casses:
+        print(f"❌ MARQUEUR DE CONFLIT dans {len(_casses)} fichier(s) SUIVI(S) : "
+              + ", ".join(_casses[:8]))
+        print("   → une fusion n'a pas été terminée. NE PAS committer : rouvrir le fichier, "
+              "garder les DEUX côtés s'il s'agit de journaux, et relancer ce contrôle.")
+        sys.exit(1)
+    print(f"✅ fusions : aucun marqueur de conflit ({len([f for f in _suivis if f.strip()])} fichiers suivis)")
+except SystemExit:
+    raise
+except Exception:
+    pass
