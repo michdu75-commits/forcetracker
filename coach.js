@@ -6916,7 +6916,20 @@ async function _abRun(){
         try{ mesure = _abMesureContexte(buildCoachContext(cas.demande)); }
         catch(e){ mesure = { erreur:(e&&e.message)||String(e) }; }
         let r = { ok:false, reply:'', err:'' };
-        try{ r = await _vcAsk({ scenario:cas.demande, coachEmail:'', history:[] }) || r; }
+        /* ⛔⛔ L'E-MAIL DE LA PERSONNE QUI LANCE, JAMAIS UNE CHAÎNE VIDE (04/09/2026).
+           Michel, devant « Qui a appelé Milo » : *« c'est qui anon ? il faut que je sache qui
+           utilise Milo »*. **Mesuré, et l'arithmétique ferme exactement** : sur ses 25 appels
+           du jour, 9 comptaient en `anon` = 5 `seanceJson` (qui n'envoie aucun e-mail) **+ les
+           4 de cette passe A/B**, que j'avais écrite avec `coachEmail:''` en dur la veille.
+           ⛔ **C'est le défaut que `_evRun` a corrigé le 29/08, réintroduit par moi** : sans
+           e-mail, l'appel tape dans le quota **partagé** `anon` (50/jour, commun à tous les
+           anonymes) au lieu du sien, et l'écran annonce **2 personnes là où il n'y en a
+           qu'une**. `worker.js` l'écrit noir sur blanc — *« sans ça il partait anon »*.
+           👉 ***Un compteur qui compte des identités doit en recevoir une ; sinon il ne compte
+           pas des gens, il compte des trous.***
+           ⭐ Même chaîne que le banc d'essai (R2) : on prend `S.email`, et le repli reste vide
+           pour ne rien inventer si personne n'est connecté. */
+        try{ r = await _vcAsk({ scenario:cas.demande, coachEmail:S.email||'', history:[] }) || r; }
         catch(e){ r = { ok:false, reply:'', err:(e&&e.message)||String(e) }; }
         paire[cote] = { ok:!!r.ok, reply:r.reply||'', err:r.err||'', ms:r.ms||0, mesure };
       }

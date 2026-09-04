@@ -6980,11 +6980,30 @@ async function loadHealthAdmin(){
         const _court=e=>String(e||'').split('@')[0].slice(0,18);
         const _liste=ai.topUsers.slice(0,8)
           .map(u=>(typeof _obsEsc==='function'?_obsEsc(_court(u.email)):_court(u.email))+' <b>'+(u.count||0)+'</b>').join(' · ');
-        const _n=ai.uniqueUsers||ai.topUsers.length;
+        /* ⛔⛔ « anon » N'EST PAS UNE PERSONNE, ET LE COMPTER COMME TELLE MENT (04/09/2026).
+           Michel : *« c'est qui anon ? il faut que je sache qui utilise Milo »*. **Mesuré sur
+           sa journée, et l'arithmétique ferme exactement** : 25 appels, dont 9 en `anon` —
+           5 `seanceJson` + 4 de la passe A/B. **Les deux étaient LUI.** L'écran annonçait
+           donc *« 2 personnes »* pour une seule.
+           ⭐⭐ ET `seanceJson` A RAISON DE NE PAS ENVOYER D'E-MAIL : c'est le **cervelet**, et
+           le critère qui le définit est *« ça n'a pas besoin de savoir QUI est la personne »*.
+           Un témoin permanent fige son appel à **exactement 2 clés** (`action` + `texte`).
+           👉 ***Ce n'est donc pas un trou à boucher, c'est une garantie à EXPLIQUER*** — la
+           « réparer » casserait l'architecture (**R30/R28** : chercher la décision avant de
+           réparer ce qui ressemble à un oubli).
+           ⛔ On retire donc `anon` du COMPTE de personnes, et on dit ce qu'il est. */
+        const _anon=ai.topUsers.filter(u=>String(u.email||'').toLowerCase()==='anon')
+                               .reduce((s,u)=>s+(u.count||0),0);
+        const _nBrut=ai.uniqueUsers||ai.topUsers.length;
+        const _n=Math.max(0, _nBrut-(_anon?1:0));          // `anon` n'est pas quelqu'un
         const _plaf=(ai.global!=null&&ai.globalMax)?(' · <span style="color:var(--t3)">'+ai.global+' sur '+ai.globalMax+' pour tout le monde</span>'):'';
         h+=_healthRow('👥','Qui a appelé Milo aujourd\'hui','ok',
-          '<b>'+_n+'</b> personne'+(_n>1?'s':'')+_plaf
+          '<b>'+_n+'</b> personne'+(_n>1?'s':'')+(_anon?' identifiée'+(_n>1?'s':''):'')+_plaf
           +'<br><span style="font-size:11.5px;color:var(--t2);">'+_liste+'</span>'
+          +(_anon?'<br><span style="font-size:11px;color:var(--t3);">⚠️ <b>anon</b> = '+_anon
+             +' appel'+(_anon>1?'s':'')+' <b>sans e-mail</b>, pas forcément quelqu\'un d\'autre : '
+             +'la lecture de séance (le « cervelet ») n\'en envoie jamais, <b>exprès</b> — elle n\'a pas '
+             +'à savoir qui tu es.</span>':'')
           +'<br><span style="font-size:11px;color:var(--t3);">Des APPELS, pas des euros — le coût par personne n\'est pas mesuré.</span>');
       } else if(ai.topUsers){
         h+=_healthRow('👥','Qui a appelé Milo aujourd\'hui','ok','Personne pour l\'instant — journée calme.');

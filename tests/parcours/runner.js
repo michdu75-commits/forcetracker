@@ -26133,6 +26133,83 @@ console.log('\n-- CCXXXII. « Coût réel du jour » dit de quel jour (ft-v1126)
   t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
 }
 
+/* ═══ CCXXXIII. « ANON » N'EST PAS QUELQU'UN (ft-v1128) ════════════════════════════════════
+   Michel, devant l'écran : *« c'est qui anon ? il faut que je sache qui utilise Milo »*.
+   ⭐⭐ MESURÉ SUR SA JOURNÉE, ET L'ARITHMÉTIQUE FERME EXACTEMENT : 25 appels, `michdu75` 16 +
+   `anon` 9 — et les 9 se décomposent en **5 `seanceJson`** (qui n'envoie aucun e-mail) **+ 4
+   de la passe A/B** (que j'avais écrite la veille avec `coachEmail:''` en dur). *Les deux
+   étaient LUI.* L'écran annonçait donc « 2 personnes » pour une seule.
+   ⛔⛔ ET LES DEUX CAUSES NE SE TRAITENT PAS PAREIL — c'est tout l'intérêt du bloc :
+     · **le mien est un DÉFAUT** : `_evRun` passe `S.email` **depuis le 29/08, exprès**, et je
+       ne l'ai pas fait. Sans e-mail, l'appel tape dans le quota **partagé** `anon` (50/jour) ;
+     · **`seanceJson` a RAISON** : c'est le cervelet, dont le critère est *« ça n'a pas besoin
+       de savoir QUI est la personne »*, et un témoin fige son appel à **2 clés**. *Le
+       « réparer » casserait l'architecture* — **R30/R28**, chercher la décision avant de
+       réparer ce qui ressemble à un oubli.
+   👉 ***Un compteur d'identités qui n'en reçoit pas ne compte pas des gens, il compte des
+   trous*** — et le trou se NOMME, il ne se bouche pas.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXXIII. « anon » n\'est pas quelqu\'un (ft-v1128) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1700);
+  const R=await p.evaluate(()=>{ try{
+    /* ⛔ LES VRAIS CHIFFRES DE SA CAPTURE (04/09 23:53), pas des chiffres inventés. */
+    const rendu=(topUsers,uniq)=>{
+      const ai={topUsers,uniqueUsers:uniq,global:25,globalMax:1500};
+      const _court=e=>String(e||'').split('@')[0].slice(0,18);
+      const _liste=ai.topUsers.slice(0,8).map(u=>_court(u.email)+' <b>'+(u.count||0)+'</b>').join(' · ');
+      const _anon=ai.topUsers.filter(u=>String(u.email||'').toLowerCase()==='anon').reduce((s,u)=>s+(u.count||0),0);
+      const _nBrut=ai.uniqueUsers||ai.topUsers.length;
+      const _n=Math.max(0,_nBrut-(_anon?1:0));
+      return _healthRow('👥','Qui a appelé Milo','ok',
+        '<b>'+_n+'</b> personne'+(_n>1?'s':'')+(_anon?' identifiée'+(_n>1?'s':''):'')
+        +'<br><span>'+_liste+'</span>'
+        +(_anon?'<br><span>⚠️ <b>anon</b> = '+_anon+' appel'+(_anon>1?'s':'')+' <b>sans e-mail</b>, pas forcément quelqu\'un d\'autre : la lecture de séance (le « cervelet ») n\'en envoie jamais, <b>exprès</b>.</span>':''));
+    };
+    const txt=h=>{const d=document.createElement('div');d.innerHTML=h;return d.textContent.replace(/\s+/g,' ').trim();};
+    const src=(typeof loadHealthAdmin==='function')?String(loadHealthAdmin):'';
+    const co=(typeof _abRun==='function')?String(_abRun):'';
+    return { sien:txt(rendu([{email:'michdu75@gmail.com',count:16},{email:'anon',count:9}],2)),
+             deux:txt(rendu([{email:'a@x.fr',count:16},{email:'b@x.fr',count:4},{email:'anon',count:9}],3)),
+             zero:txt(rendu([{email:'michdu75@gmail.com',count:16}],1)),
+             litAnon:/toLowerCase\(\)==='anon'/.test(src),
+             abEnvoieEmail:/coachEmail:\s*S\.email/.test(co) };
+  }catch(e){ return {err:e.message}; } });
+
+  t('⛔ CONTRÔLE — le panneau Santé est chargé (sinon tout ce bloc serait vert sur du vide)',
+    !R.err && typeof R.litAnon==='boolean', R.err||'');
+  t('⭐⭐ son cas : « 1 personne identifiée », plus « 2 personnes »',
+    /1 personne identifiée/.test(R.sien||''), (R.sien||'').slice(0,90));
+  t('⭐⭐ … et `anon` est EXPLIQUÉ, pas seulement retiré du compte',
+    /anon = 9 appels sans e-mail/.test(R.sien||'') && /pas forcément quelqu'un d'autre/.test(R.sien||''), '');
+  t('⛔ … avec sa RAISON (le cervelet n\'en envoie jamais, exprès)',
+    /cervelet/.test(R.sien||'') && /exprès/.test(R.sien||''), '');
+  /* ⛔⛔ SANS CE TÉMOIN, « toujours 1 personne » serait vert. C'est lui qui prouve qu'on
+     retire `anon` et RIEN D'AUTRE. */
+  t('⛔⛔ CONTRÔLE — deux VRAIES personnes comptent bien 2 (on ne retire qu\'`anon`)',
+    /2 personnes identifiées/.test(R.deux||''), (R.deux||'').slice(0,80));
+  t('⛔ … et sans aucun `anon`, rien n\'est dit et « identifiée » ne traîne pas',
+    /1 personne/.test(R.zero||'') && !/anon/.test(R.zero||'') && !/identifiée/.test(R.zero||''), (R.zero||'').slice(0,80));
+  t('⭐ le vrai code lit bien `anon` (pas seulement la copie du témoin)', R.litAnon===true, '');
+  /* ⛔⛔ LE DÉFAUT QUI ÉTAIT LE MIEN : la passe A/B partait sans e-mail. */
+  t('⭐⭐ la passe A/B envoie l\'e-mail de la personne, plus une chaîne vide',
+    R.abEnvoieEmail===true, '');
+  t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+
+  /* ⛔⛔ ET ON NE « RÉPARE » PAS LE CERVELET : son appel doit rester à 2 clés (R30/R28).
+     Ce témoin existe pour que personne — moi le premier — n'y ajoute l'e-mail en croyant
+     boucher le trou `anon`. Le témoin d'origine vit ailleurs ; celui-ci dit POURQUOI. */
+  {
+    const co=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
+    const bloc=(co.match(/action:'seanceJson'[^}]*\}/)||[''])[0];
+    t('⛔⛔ R30 — le cervelet n\'envoie TOUJOURS pas d\'e-mail (c\'est voulu, pas un oubli)',
+      !!bloc && !/email/.test(bloc), bloc.slice(0,80));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
