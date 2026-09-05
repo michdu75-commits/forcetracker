@@ -6,7 +6,22 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1133` — ⚡ **LE CONSEIL 💡 PASSE SOUS LE BOUTON DE SÉANCE.**
+- **Version en ligne (live) :** `ft-v1134` — 📏 **LE CHECK-IN DU JOUR MAIGRIT DE 27 PX.**
+  Michel : *« essaye de diminuer la taille du checking en hauteur »*.
+  ⭐⭐ **La mesure a choisi la méthode** : la tuile faisait **94 px pour 57 px de contenu réel**.
+  ⛔ Resserrer les marges ne rendait que **9 px** → *la graisse était dans la **disposition***
+  (4 étages), pas dans les marges. L'icône passe **à côté** de la valeur : 3 étages.
+  ⭐ Mesuré sur **4 formats × 2 états** : tuile **94 → 67**, carte **157 → 130** (remplie) et
+  **183 → 156** (vierge), aucun débordement, FAB identique.
+  ⛔ **Rien n'est supprimé** (icône · jauge · valeur · légende) — *on range, on ne jette pas* (R24).
+  ⚠️ **Plancher tactile posé et figé** : la tuile **se tape**, donc ≥ 44 px (minimum Apple).
+  *Un gain de 6 px ne vaut pas un tap raté en salle.*
+  ⏭️ **Idée notée, pas traitée** (`IDEES-FUTURES.md`) : supprimer le bouton « Commencer une
+  séance » de l'Accueil. ⚠️ À vérifier avant — il devient **« ↩ Reprendre la séance »** quand une
+  séance est en cours, ce que le FAB ne dit pas.
+  ⏭️ **Michel doit vérifier sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1133` — ⚡ **LE CONSEIL 💡 PASSE SOUS LE BOUTON DE SÉANCE.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#910** sur `70d03f4`, **job `deploy` success**,
   les 7 étapes vertes à 14:01:03 UTC. Suite : **parcours 2785/2785**, calculs 339/339, dates 9/9.
   Michel, après ft-v1132 : *« le bouton commencer la séance, tu n'y as pas touché ? »*.
