@@ -2623,3 +2623,58 @@ aucun décalage de ±2 h ne change le jour. **C'est l'autre façon correcte de f
 ⏭️ **Ce qui n'est PAS fait** : `tests/dates` ne scanne toujours pas les runners. *Le détecteur
 existe, sa liste de fichiers s'arrête à l'app* — noté, pas élargi dans la foulée.
 
+
+---
+
+## 43. 🚪 DEUX PORTES MÈNENT AU MÊME ENDROIT, UNE SEULE EST ÉQUIPÉE **(05/09/2026, ft-v1129)**
+
+**Trois fois. Et la troisième s'est produite à côté d'un commentaire qui décrit exactement le
+piège**, écrit lors de la deuxième.
+
+Une séance de Milo entre dans l'app par **deux** fonctions : `_startSessionFromMilo` (aucune
+séance en cours — **le cas normal**) et `_applyMiloSession` (une séance tourne déjà, on a
+répondu « ajouter » ou « remplacer »). Chaque fois qu'on a ajouté un comportement, on l'a posé
+sur **une seule** des deux.
+
+| Quand | Ce qui a été posé sur une seule porte | Conséquence |
+|---|---|---|
+| ft-v980 | le **contrôle d'intensité** | il ne tournait jamais dans le cas le plus fréquent |
+| ft-v995 | le **cardio** vers son bloc | idem |
+| **12/08 → 05/09** | le **groupement des supersets** | *il n'a JAMAIS fonctionné en production* |
+
+### ⛔ Pourquoi ça ne se voit pas
+La fonctionnalité **marche** — sur la porte qu'on a équipée. Il faut donc, pour s'en apercevoir,
+emprunter l'autre. Or c'est souvent la porte **la moins testée** qui est la plus **empruntée** :
+ici, « aucune séance en cours » est le cas de tous les jours, et c'est celle qui n'avait rien.
+
+### ⛔⛔ Le multiplicateur : le normaliseur qui jette le champ
+Pour le superset, il y avait une **seconde couche**, et elle rendait la première invisible :
+`_normalizeMiloSession` — **seul écrivain** de `_pendingMiloSessions` en production — ne
+recopiait pas `supersetGroup`. Donc même la porte qui savait le lire ne le recevait jamais.
+👉 ***Un champ qu'un normaliseur ne recopie pas est un champ supprimé***, quoi qu'on ait payé
+pour l'obtenir (le cervelet le transcrivait correctement, à chaque fois). C'est **R4**.
+
+### ⛔⛔ Et le témoin était vert — il entrait par la porte de service
+Le banc écrivait **à la main** dans `_pendingMiloSessions` une forme que la production ne
+produit jamais (avec `supersetGroup`, donc **après** le normaliseur qui le jette), et il
+n'exerçait **que la porte B**. Variante de **§36** : le nom du champ était juste, c'est le
+**chemin** qui était faux. *Un test qui n'emploie pas le schéma NI le chemin de la production ne
+teste rien, il rassure.*
+
+### 🔎 Comment la reconnaître
+- Le code contient déjà, quelque part, la phrase *« il y a deux portes »* — et un correctif
+  récent n'est présent que dans l'une d'elles.
+- Un correctif **annoncé** à l'utilisateur que personne n'a jamais signalé comme cassé : ici
+  l'annonce `milo-superset` décrit mot pour mot le bouton qui ne marchait pas (*« quand tu
+  appuies sur ⚡ Commencer cette séance, les exercices qu'il a groupés arrivent liés »*).
+- Un test qui **construit lui-même** la structure interne au lieu d'y arriver par l'entrée
+  publique.
+
+### 🛡️ Ce qui protège aujourd'hui
+- Le comportement vit dans **`_appliqueMiloSession`**, *le seul point que les deux portes
+  traversent* (**R2**) — c'est déjà l'endroit du contrôle d'intensité et du cardio.
+- Le témoin du banc part de la **forme exacte du cervelet**, traverse le **normaliseur**, et
+  exerce **les deux portes** ; un témoin de plus exige que le normaliseur laisse passer le champ.
+- ⭐ **Le réflexe, en une ligne** : *avant de poser un comportement sur un chemin, chercher
+  combien de chemins mènent là* — et si la réponse est « deux », le poser là où ils se croisent,
+  jamais sur l'un des deux.

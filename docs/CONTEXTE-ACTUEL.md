@@ -6,7 +6,25 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1128` — 👥 **« ANON » N'EST PAS QUELQU'UN.**
+- **Version en ligne (live) :** `ft-v1129` — 🔗 **LE SUPERSET DE MILO N'ATTEIGNAIT JAMAIS LA SÉANCE.**
+  Michel : *« maintenant le seanceJson que l'autre claude m'a laissé »*.
+  ⛔⛔ **Le diagnostic relayé ne tenait pas** (vérifié avant de coder) : le cervelet ne part pas
+  quand la lecture gratuite échoue, il part quand le **bloc caché manque** — or sa spec a quitté
+  le prompt en ft-v919, donc l'étage ① est **structurellement mort**. *Les 5/12 ne sont pas un
+  taux d'échec, c'est la part des réponses qui ressemblent à une séance.* Coût mesuré :
+  **≈ 0,37 c l'appel, 1,8 % de la facture du jour** — ce n'est pas un sujet de coût.
+  ⭐⭐ **Mais un vrai défaut trouvé en chemin, à DEUX couches** : ① `_normalizeMiloSession` —
+  seul écrivain en production — **jetait `supersetGroup`** (R4) ; ② et le groupement vivait sur
+  **une seule des deux portes**, pas celle du cas normal. **Le correctif du 12/08 n'a donc jamais
+  fonctionné**, alors qu'il est **annoncé aux utilisateurs** (`milo-superset`) — et l'annonce nomme
+  exactement le bouton cassé. **3ᵉ fois** que `log.js` apprend la leçon des deux portes
+  (ft-v980, ft-v995) : le comportement vit désormais dans `_appliqueMiloSession`, *le seul point
+  que les deux traversent* (**R2**). Nouvelle famille **§43** de `BUGS.md`.
+  ⚠️ **Le témoin du banc était vert** parce qu'il écrivait à la main dans `_pendingMiloSessions`
+  une forme que la production ne produit pas, et n'exerçait qu'une porte (§36). Re-visé.
+  ⏭️ **Michel doit vérifier sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1128` — 👥 **« ANON » N'EST PAS QUELQU'UN.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#894** sur `918ccd8`, **job `deploy` success**,
   les 7 étapes vertes à 23:11:32 UTC. Michel : *« c'est qui anon ? il faut que je sache
   qui utilise Milo »*. ⭐⭐ **Arithmétique exacte** : 25 appels = `michdu75` 16 + `anon` 9, et les
