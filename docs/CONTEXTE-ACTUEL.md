@@ -7,6 +7,8 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1131` — 📐 **LE RATIO POIDS ↔ CENTIMÈTRES : UNE CARTE, PAS UNE COURBE.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#906** sur `f7013fe`, **job `deploy` success**,
+  les 7 étapes vertes à **11:24:03 UTC**.
   ⏳ **Suite complète VERTE** : **parcours 2762/2762** (+12, bloc CCXXXV), **calculs 339/339** (+21,
   bloc 16), muscles 241/241, croisés 50/50, **dates 9/9**, données classées 0 trou.
   Michel demande d'abord *« comment intégrer les mensurations sur le graphique du poids et de la
