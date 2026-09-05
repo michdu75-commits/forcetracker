@@ -6,7 +6,26 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1135` — 🔇 **LES MOTS QUITTENT LES TUILES DU CHECK-IN.**
+- **Version en ligne (live) :** `ft-v1136` — 🧹 **L'ACCUEIL ALLÉGÉ, 2ᵉ PASSE.**
+  Michel groupe **2 demandes en 1 version** (donc 1 passe au lieu de 2).
+  ⭐⭐ **① Le bouton « Commencer une séance » ne sort plus que si une séance est OUVERTE.**
+  ⛔ Vérifié : le FAB appelle **la même fonction**, mais **il ne dit jamais qu'une séance est en
+  cours**, et aucun autre élément de l'Accueil ne le dit. *Un retrait pur aurait supprimé une
+  INFORMATION.* Gain **70 px** les jours normaux (récup 370 → 300).
+  ⭐ **② « CE MOIS » en une rangée de 4, et repliable** : 184 → **124 px**, **27** une fois plié.
+  État **mémorisé** (sinon le pli n'allégerait rien), **déplié par défaut**, repli sûr.
+  ⚠️ **3 textes périmés attrapés** (une aide qui guidait vers le bouton, une branche de code
+  devenue inatteignable, un libellé non traduit).
+  ⛔⛔ **6 témoins ont rougi, tous pour la même raison** : ils lisaient **le libellé du bouton**
+  comme preuve. *Le repère disparaît, la garantie non* (§31). Re-visés sur le fait lui-même —
+  **aucun affaibli**, le premier est même plus strict.
+  ⛔⛔ **DÉCISION À NE PAS REPROPOSER (R30)** : **on ne touche pas au calendrier**. Signalé à
+  Michel que c'est le plus gros bloc (424 px) ; sa réponse : *« impec et beau »*.
+  📐 **Accueil : 1411 → 1307 px.** Sur la journée : check-in **157→112**, pavé testeur
+  **166→48**, carte récup **437→300**.
+  ⏭️ **Michel doit vérifier sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1135` — 🔇 **LES MOTS QUITTENT LES TUILES DU CHECK-IN.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#914** sur `a9dd42f`, **job `deploy` success**,
   les 7 étapes vertes à 15:23:18 UTC. Suite : **parcours 2797/2797**, calculs 339/339, dates 9/9.
   Michel : *« les mots sommeil, énergie et moral on peut les supprimer, c'est logique avec les
