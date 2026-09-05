@@ -7,6 +7,8 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1138` — 📊 **« CE MOIS » NE GARDE QUE LES TUILES QUI MÈNENT QUELQUE PART.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#921** sur `2ca007d`, **job `deploy` success**,
+  les 7 étapes vertes à **20:25:32 UTC**.
   Michel, une heure après ft-v1137 : *« quand on clique sur les tuiles, c'est pas terrible où
   j'arrive »*. ⭐⭐ **Mesuré en tapant les 4 tuiles** : `Volume` et `Force` appelaient
   `goScreen('progress')` **nu** → haut de Progrès/Exercices, où l'accordéon du volume est
