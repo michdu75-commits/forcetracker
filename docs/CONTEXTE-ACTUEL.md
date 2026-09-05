@@ -7,6 +7,9 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1132` — 🧹 **L'ACCUEIL DÉSENCOMBRÉ.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#908** sur `f4b80a5`, **job `deploy` success**,
+  les 7 étapes vertes à 12:27:23 UTC. Suite complète : **parcours 2779/2779**, calculs 339/339,
+  muscles 241, croisés 50, dates 9/9, données 0 trou.
   Michel, 2 captures : *« retire le truc énorme du super testeur ou juste un petit bouton, et
   commencer la séance sur la page d'accueil, ça fait trop chargé »*.
   ⭐⭐ **Mesuré AVANT de proposer** (iPhone 393×852) : la zone visible s'arrête à **y = 778**, le
