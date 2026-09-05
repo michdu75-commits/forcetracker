@@ -4,6 +4,34 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🔴 SUPPRIMER LE BOUTON « COMMENCER UNE SÉANCE » DE L'ACCUEIL ? — À VOIR PLUS TARD (05/09/2026)
+
+**Michel, après ft-v1133** : *« on verra par la suite pour supprimer le bouton commencer la
+séance »*. **Noté tout de suite pour ne pas le perdre** — une idée dite en conversation et non
+écrite disparaît avec la session (**R27**).
+
+**⭐ CE QUI REND L'IDÉE SÉRIEUSE** : le **FAB rouge central** de la barre du bas fait déjà
+exactement la même chose, et lui est **visible en permanence, sur TOUS les formats** — c'est le
+seul élément dont on n'a jamais à se demander s'il tient à l'écran. *Le bouton de l'Accueil est
+donc un doublon, et c'est ce doublon qui nous a coûté deux versions de mesures pour le faire
+tenir au-dessus de la barre.*
+
+**⚠️ CE QU'IL FAUDRA VÉRIFIER AVANT, et ne pas décider de tête :**
+- le bouton ne dit pas toujours la même chose : il devient **« ↩ Reprendre la séance »** quand
+  une séance est en cours (`hasPending`) — *le FAB, lui, ne le dit pas*. Supprimer le bouton
+  ferait donc disparaître une **information**, pas seulement un raccourci ;
+- il porte aussi l'**avertissement d'intensité** et le rappel de séance oubliée (`oubliHtml`)
+  juste en dessous ;
+- combien de personnes démarrent leur séance par CE bouton plutôt que par le FAB ? *On ne le
+  mesure pas aujourd'hui* — et sans ce chiffre, le retrait est une intuition (**R34**).
+
+**⛔ Ce que ça débloquerait, chiffré** : le bouton pèse **54 px** + sa marge. Sur un iPhone 13
+mini il manque **84 px** pour que la carte de récup tienne entière — donc son retrait n'y suffit
+même pas seul.
+
+---
+
+
 ## 🏋️ « POIDS DU CORPS » N'EST PAS « SANS ÉQUIPEMENT » — 15 exercices sur 39 (03/09/2026)
 
 > ⛔ **Rien n'est construit** — décision de Michel : *« mets ça dans les idées, on fera ça plus
