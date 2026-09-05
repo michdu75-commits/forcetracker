@@ -26894,6 +26894,24 @@ console.log('\n═══ CCXXXIX. Accueil allégé : bouton conditionnel + CE MO
        justement pour ça que deux d'entre elles étaient mauvaises. La garantie est qu'on arrive
        sur quelque chose de CIBLÉ — un sous-onglet précis, ou une descente jusqu'à l'ancre —
        et jamais en haut de l'écran par défaut. */
+    const lire=()=>{
+      const onglet=[...document.querySelectorAll('.nu-tab')].find(x=>x.classList.contains('active'));
+      const anc=document.getElementById('sess-hist-title');
+      return {ecran:(document.querySelector('.screen.active')||{}).id||'?',
+              onglet:onglet?onglet.textContent.trim():'—',
+              ancre:anc?Math.round(anc.getBoundingClientRect().top):null};
+    };
+    /* ⭐⭐ LE TÉMOIN DE CONTRÔLE : où atterrit-on en ouvrant Progrès SANS rien viser ?
+       ⚠️ RE-VISÉ après un rouge : j'avais d'abord écrit « l'ancre doit être à moins de 400 px ».
+       Ce seuil venait de MA fixture, pas de celle du banc — il mesurait la hauteur du contenu
+       au-dessus de l'ancre, pas le fait que la tuile vise quelque chose. Ici on compare à
+       l'arrivée NUE : *« ciblé » veut dire « différent de ce qu'on obtient sans viser »*, et
+       cette formulation-là ne dépend d'aucun jeu de données. */
+    goScreen('home',document.getElementById('nb-home')); renderHome();
+    await new Promise(r=>setTimeout(r,300));
+    goScreen('progress',document.getElementById('nb-progress'));
+    await new Promise(r=>setTimeout(r,800));
+    o.arriveeNue=lire();
     goScreen('home',document.getElementById('nb-home')); renderHome();
     await new Promise(r=>setTimeout(r,400));
     const gg=document.getElementById('home-stats').querySelector('div[style*="grid-template-columns"]');
@@ -26904,15 +26922,8 @@ console.log('\n═══ CCXXXIX. Accueil allégé : bouton conditionnel + CE MO
       const gr=document.getElementById('home-stats').querySelector('div[style*="grid-template-columns"]');
       const tuile=gr.children[i], titre=tuile.getAttribute('title')||'';
       tuile.click();
-      await new Promise(r=>setTimeout(r,800));
-      const onglet=[...document.querySelectorAll('.nu-tab')].find(x=>x.classList.contains('active'));
-      const anc=document.getElementById('sess-hist-title');
-      o.destinations.push({titre,
-        ecran:(document.querySelector('.screen.active')||{}).id||'?',
-        onglet:onglet?onglet.textContent.trim():'—',
-        /* ⭐ « ciblé » = on n'a PAS atterri sur l'onglet par défaut au repos : soit un autre
-           sous-onglet, soit une vraie descente jusqu'à l'historique. */
-        ancreHaut: anc?Math.round(anc.getBoundingClientRect().top):null});
+      await new Promise(r=>setTimeout(r,900));
+      o.destinations.push(Object.assign({titre}, lire()));
     }
     return o;
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
@@ -26949,13 +26960,27 @@ console.log('\n═══ CCXXXIX. Accueil allégé : bouton conditionnel + CE MO
      les quatre tuiles le faisaient déjà, c'est précisément ce qui rendait deux d'entre elles
      mauvaises. Il exige une destination CIBLÉE. */
   {
-    const d=E.destinations||[];
+    const d=E.destinations||[], nue=E.arriveeNue||{};
+    /* ⛔ CONTRÔLE D'ABORD — sans arrivée nue mesurée, « différent de l'arrivée nue » serait
+       vrai par accident, et le témoin ne prouverait rien. */
+    t('CCXXXIX ⛔ CONTRÔLE — l\'arrivée NUE sur Progrès a bien été mesurée',
+      nue.ecran==='s-progress' && nue.ancre!==null,
+      'écran '+nue.ecran+' · ancre '+nue.ancre);
+    /* ⭐ « CIBLÉ » = la destination DIFFÈRE de ce qu'on obtient en ouvrant Progrès sans viser :
+       soit un autre sous-onglet, soit une vraie descente vers l'ancre.
+       ⛔ On ne vérifie PAS « le clic ouvre Progrès » : les 4 tuiles le faisaient déjà, et c'est
+       exactement ce qui rendait deux d'entre elles mauvaises.
+       ⚠️ Le seuil de 100 px ne mesure pas une distance « correcte » — il sépare seulement « ça
+       a bougé » de « ça n'a rien fait » : une tuile sans ciblage rend un écart de ZÉRO, pas de
+       80. Il est haut au-dessus du bruit de rendu et bas sous n'importe quel vrai défilement. */
     const cible=x=> x.ecran==='s-progress' &&
-      ( x.onglet==='Corps & santé' || (x.ancreHaut!==null && x.ancreHaut<400) );
+      ( x.onglet!==nue.onglet ||
+        (x.ancre!==null && nue.ancre!==null && (nue.ancre-x.ancre)>=100) );
     const mauvaises=d.filter(x=>!cible(x));
     t('CCXXXIX ⭐⭐ chaque tuile restante mène à une destination CIBLÉE (plus au haut générique)',
       d.length===2 && mauvaises.length===0,
-      d.map(x=>x.titre+' → '+x.onglet+' / ancre '+x.ancreHaut).join(' | '));
+      'nu : '+nue.onglet+' / ancre '+nue.ancre+' — '
+      +d.map(x=>x.titre+' → '+x.onglet+' / ancre '+x.ancre).join(' | '));
   }
   /* ⛔⛔ R30 — LE RETRAIT EST FIGÉ, AVEC SA RAISON. Une rangée de 2 ressemble exactement à un
      oubli : sans ce témoin, le suivant (moi, dans six mois) « répare » une décision de Michel.
@@ -26975,9 +27000,19 @@ console.log('\n═══ CCXXXIX. Accueil allégé : bouton conditionnel + CE MO
        recherche parce qu'il dit « volume, Big3 » et non les libellés affichés.
        ⭐ LA GARANTIE N'EST PAS « le mot a disparu » : l'aide DOIT pouvoir nommer les tuiles
        retirées pour expliquer qu'elles sont parties. Ce qui est interdit, c'est de les
-       PRÉSENTER COMME PRÉSENTES — d'où la visée sur « les 4 stats du mois ». (§31) */
+       PRÉSENTER COMME PRÉSENTES — d'où la visée sur « les 4 stats du mois ». (§31)
+       ⚠️⚠️ ET IL A ROUGI SUR MON PROPRE COMMENTAIRE, celui qui explique le retrait — le même
+       piège qu'en ft-v1123 avec le détecteur de dates. *Un avertissement devenait une faute.*
+       On retire donc les commentaires avant de chercher : ce qui compte est le texte que
+       l'utilisateur LIT, pas celui que le développeur écrit à côté. */
+    const sansCom=SJ.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
     t('CCXXXIX ⚠️ aucune aide n\'annonce plus « 4 stats du mois »',
-      !/4 stats du mois/i.test(SJ), 'une aide décrit encore quatre tuiles');
+      !/4 stats du mois/i.test(sansCom), 'une aide décrit encore quatre tuiles');
+    /* ⛔ CONTRE-ÉPREUVE — le retrait des commentaires ne doit pas rendre le détecteur AVEUGLE :
+       s'il ne voyait plus rien du tout, il serait vert quoi qu'on écrive. */
+    t('CCXXXIX ⛔ CONTRE-ÉPREUVE — le détecteur lit toujours le vrai texte de l\'aide',
+      /Ce mois » ne garde que les tuiles/.test(sansCom),
+      'le nettoyage des commentaires a emporté le texte lui-même');
   }
   /* 📣 RÈGLE D'OR #11 — un repère bouge pour TOUT LE MONDE (deux tuiles disparaissent du haut
      de l'Accueil), donc la pop-up se mérite. ⛔ Et le témoin vérifie qu'elle DONNE L'ADRESSE DE
@@ -26994,8 +27029,10 @@ console.log('\n═══ CCXXXIX. Accueil allégé : bouton conditionnel + CE MO
       'ni la pop-up ni le point rouge ne renvoient au calendrier');
     /* ⛔ ET ELLE NE MENT PAS : le total des trois barres n'a AUCUNE adresse de renvoi. Écrire
        « rien n'est perdu » se verrait le lendemain — l'annonce doit le dire. */
+    /* ⚠️ Le fichier source ÉCHAPPE les apostrophes (`n\'est`) : un motif écrit avec une simple
+       apostrophe ne mord jamais — c'est le `\b[é]tait` de ft-v1124, autre forme. */
     t('CCXXXIX ⛔ l\'annonce dit AUSSI ce qui est vraiment perdu (le total des 3 barres)',
-      !!wn && /n['’]est plus affich|plus d['’]endroit/i.test(wn[0]),
+      !!wn && /n\\?['’]est plus affich/i.test(wn[0]),
       'la pop-up laisse croire que rien n\'a disparu');
   }
   t('CCXXXIX ⭐ le bloc se REPLIE et se rouvre', E.pliee<E.rouverte && E.pliee<50,
