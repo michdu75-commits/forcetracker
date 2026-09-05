@@ -25392,8 +25392,15 @@ console.log('\n-- CCXXVI. Une séance de cardio seul n\'est plus invisible (ft-v
        ouverte », donc il faut prouver qu'on ne l'a pas élargie à TOUT. Ouvrir l'écran Séance
        sans rien faire ne doit rien déclencher — sinon l'Accueil dirait « Reprendre » en
        permanence, et le correctif serait pire que le défaut. */
+    /* ⚠️⚠️ CE TÉMOIN VISAIT UN PROXY, ET LE PROXY A DISPARU (05/09, ft-v1136). Il prouvait
+       « aucune séance ouverte » en lisant le LIBELLÉ du bouton (« Commencer une séance »).
+       Or ce bouton ne s'affiche plus QUE si une séance est ouverte : son absence est devenue
+       le signal, et sa présence prouverait le contraire de ce qu'on veut.
+       ⭐ La GARANTIE, elle, n'a pas bougé d'un pouce : `_seanceOuverte()` doit rester FAUX, et
+       aucun brouillon ne doit être écrit. On la vérifie donc directement — c'est même plus
+       fort qu'avant, puisqu'on n'interpose plus un texte entre la mesure et le fait. */
     t('⛔⛔ NON-RÉGRESSION — ouvrir l\'écran Séance sans rien faire ne déclenche RIEN',
-      R.aVide.bouton==='Commencer une séance' && R.aVide.ouverte===false && R.aVide.brouillon===false,
+      R.aVide.ouverte===false && R.aVide.brouillon===false && R.aVide.bouton==='(aucun)',
       JSON.stringify(R.aVide));
     /* ⛔ NON-RÉGRESSION — on n'a pas desserré ce qui marchait pour la muscu. */
     t('⛔ NON-RÉGRESSION — une séance avec exercices : bouton, rappel ⏰ et brouillon inchangés',
@@ -26525,9 +26532,8 @@ console.log('\n═══ CCXXXVI. Accueil désencombré (carte testeur → bouto
     const sv=document.getElementById('home-souvenir');
     o.souvVide=!(sv.textContent||'').trim();
     o.souvHaut=Math.round(sv.getBoundingClientRect().height);
-    const btn=[...document.querySelectorAll('button,.btn,[onclick]')]
-      .find(x=>/Commencer une s[ée]ance/i.test(x.textContent||'') && x.getBoundingClientRect().height>20);
-    o.btnBas=btn?Math.round(btn.getBoundingClientRect().bottom):null;
+    const _hero=document.getElementById('home-hero');
+    o.heroY=_hero?Math.round(_hero.getBoundingClientRect().top):null;
     o.fabFin=fabPos();
     /* ⭐ L'ANNONCE EST-ELLE BIEN CIBLÉE ? C'est le seul morceau qui peut déborder sur des gens
        qui n'ont jamais vu le pavé — et un débordement d'annonce est SILENCIEUX côté code. */
@@ -26573,10 +26579,15 @@ console.log('\n═══ CCXXXVI. Accueil désencombré (carte testeur → bouto
     A.mene===true, 'sans lui, Christophe/Eline/Emma/Tatiana perdent la boîte à idées (R30)');
   t('CCXXXVI ⭐ le bloc testeur tient en une ligne (≤ 70 px, il en faisait 166)',
     A.carteHaut>0 && A.carteHaut<=70, A.carteHaut+' px');
-  /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : ce n'est pas « le bouton est petit », c'est la PLACE
-     RENDUE. Mesuré avant : le bouton « Commencer une séance » finissait à 967 px. */
-  t('CCXXXVI ⭐⭐ « Commencer une séance » remonte d\'au moins 120 px (mesuré, pas regardé)',
-    A.btnBas!==null && A.btnBas<=847, 'bas='+A.btnBas+' px (967 avant)');
+  /* ⚠️⚠️ RE-VISÉ LE 05/09 (ft-v1136) : ce témoin mesurait la position du bouton « Commencer une
+     séance ». Ce bouton **n'existe plus** quand aucune séance n'est ouverte — c'est justement
+     la version suivante. Mesurer sa position n'a donc plus d'objet ici.
+     ⭐ Mais la GARANTIE de ft-v1132 tient toujours et reste utile : ce qui a été gagné, c'est la
+     place au-dessus de la carte de récup. On mesure donc où cette carte COMMENCE — elle
+     démarrait à 619 px avec le pavé doré, et le bloc ne peut redevenir gras sans le faire
+     redescendre. *On remplace un repère disparu par le repère qu'il servait à approcher.* */
+  t('CCXXXVI ⭐⭐ la carte de récup remonte d\'au moins 100 px (mesuré, pas regardé)',
+    A.heroY!==null && A.heroY<=519, 'la carte commence à '+A.heroY+' px (619 avant)');
   /* ⛔ LE VRAI CORRECTIF DE FOND, et il vaut pour TOUT LE MONDE, pas que les testeurs. */
   t('CCXXXVI ⛔ un bloc VIDE de l\'Accueil n\'occupe AUCUNE place (il mangeait 10 px/jour)',
     A.souvVide!==true || A.souvHaut===0, 'souvenir vide='+A.souvVide+' hauteur='+A.souvHaut);
@@ -26658,13 +26669,20 @@ console.log('\n═══ CCXXXVII. Le conseil 💡 passe sous le bouton ══�
     const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
     /* ⛔ On FORCE un conseil à exister : sans lui, « le bouton est avant le conseil » serait
        vrai parce qu'il n'y a pas de conseil du tout — un vert qui ne peut pas rougir. */
-    S.sleepLog=[]; S.healthDaily=[]; persist();
+    S.sleepLog=[]; S.healthDaily=[];
+    /* ⚠️⚠️ ET ON FORCE AUSSI UNE SÉANCE OUVERTE (ajouté le 05/09, ft-v1136). Depuis cette
+       version, le bouton ne s'affiche QUE dans ce cas — sans séance en cours, ce bloc ne
+       mesurait plus rien et rougissait sur du code parfaitement sain.
+       ⭐ L'ordre « bouton AVANT le conseil » reste la garantie : c'est le rangement de la carte
+       de récup qu'on protège, et il vaut exactement pareil quand le bouton est là. */
+    S.wkt={date:today(),exs:[{name:'Squat à la Barre',sets:[{kg:130,reps:5,done:false,type:'N'}]}]};
+    persist();
     goScreen('home',document.getElementById('nb-home')); renderHome();
     await new Promise(r=>setTimeout(r,500));
     const o={};
     const hero=document.getElementById('home-hero');
     const btn=[...hero.querySelectorAll('button')]
-      .find(x=>/Commencer une s[ée]ance|Reprendre la s[ée]ance/i.test(x.textContent||'')&&x.getBoundingClientRect().height>20);
+      .find(x=>/Reprendre la s[ée]ance/i.test(x.textContent||'')&&x.getBoundingClientRect().height>20);
     const conseil=[...hero.querySelectorAll('div')].find(e=>/^💡/.test((e.textContent||'').trim())
       && e.getBoundingClientRect().height>20 && !e.querySelector('button'));
     o.btnTrouve=!!btn; o.conseilTrouve=!!conseil;
@@ -26685,8 +26703,8 @@ console.log('\n═══ CCXXXVII. Le conseil 💡 passe sous le bouton ══�
   await cc.close();
   if(C.erreur) t('CCXXXVII ⛔ le bloc s\'exécute', false, C.erreur);
   /* ⛔ LES DEUX CONTRÔLES D'ABORD : sans eux le témoin d'ordre serait vert sur du vide. */
-  t('CCXXXVII ⛔ CONTRÔLE — le bouton de séance est bien présent',
-    C.btnTrouve===true, 'sinon rien de ce qui suit ne mesure quoi que ce soit');
+  t('CCXXXVII ⛔ CONTRÔLE — une séance est ouverte, donc le bouton est bien présent',
+    C.btnTrouve===true, 'depuis ft-v1136 il n\'apparaît QUE si une séance est ouverte');
   t('CCXXXVII ⛔ CONTRÔLE — un conseil 💡 est bien affiché (sinon « avant » est vide de sens)',
     C.conseilTrouve===true && C.conseilTexte>10, 'longueur du conseil : '+C.conseilTexte);
   t('CCXXXVII ⭐⭐ le BOUTON vient AVANT le conseil dans la carte (l\'ordre, pas les pixels)',
