@@ -1,7 +1,7 @@
 # 📒 Inventaire — ce qui existe dans Force Tracker
 
 > ⚙️ **FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer avec `python3 tools/inventaire.py`.
-> Généré depuis **le code** (version `ft-v1128`, dernier commit 2026-09-04).
+> Généré depuis **le code** (version `ft-v1129`, dernier commit 2026-09-05).
 >
 > **À quoi il sert** : répondre à *« est-ce que c'est déjà construit ? »*. Le journal des versions
 > (`CLAUDE.md`, `docs/JOURNAL-ARCHIVE.md`) répond à *« que s'est-il passé, quand, pourquoi ? »* —
@@ -20,8 +20,8 @@
 | Lignes de menu | 6 | 1 |
 | Fenêtres (modales) | 64 | 13 |
 | Actions du serveur | 45 | 0 |
-| Fonctions JS | 593 | — |
-| Nouveautés annoncées | 66 | — |
+| Fonctions JS | 595 | — |
+| Nouveautés annoncées | 67 | — |
 
 ## 🖥️ Écrans
 
@@ -173,6 +173,7 @@ Ce qui a été **annoncé dans la pop-up « Quoi de neuf »** — donc censé ex
 
 | # | | Nouveauté |
 |---|---|---|
+| 72 | 📏 | Tes mensurations sont enfin gardées dans le temps |
 | 71 | 🔋 | Ta fatigue s'additionne au lieu de compter une seule séance |
 | 70 | 🔋 | Ta récupération tient enfin compte du cardio |
 | 69 | 🏃 | Séance : ton cardio ne se perd plus |

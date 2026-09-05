@@ -812,18 +812,95 @@ function renderBodyFatCard(){
       +'<div style="display:flex;gap:6px;">'
         +_bfMeasInput('bf-neck','Cou',S.neck)
         +_bfMeasInput('bf-waist','Tour de taille',S.waist)
-        +(isF?_bfMeasInput('bf-hip','Hanches',S.hip):'')
+        +_bfMeasInput('bf-hip','Hanches',S.hip)
       +'</div>'
+      /* ⭐⭐ LES TROIS PRINCIPALES SONT VISIBLES, LE RESTE EST DÉPLIABLE — demande de Michel :
+         *« de visu on ne voit que les principales, cou taille et hanches, et dépliable pour le
+         reste »*. ⛔ Et l'ordre compte : ces trois-là nourrissent le calcul US Navy, les autres
+         ne servent qu'au SUIVI. *Mettre neuf cases à plat ferait passer une saisie de 15 s à un
+         formulaire* — et un formulaire, on ne le remplit pas tous les mois (R24/R26 : le format
+         incite, la contrainte braque).
+         ⚠️ LES HANCHES DEVIENNENT VISIBLES POUR TOUT LE MONDE. Elles étaient réservées aux
+         femmes (`isF`) parce que la méthode US Navy ne les consomme que chez elles — mais
+         *un homme qui SUIT son tour de hanches n'avait aucun endroit où le noter*, alors que
+         c'est une des mesures qui bougent le plus en recomposition. Le calcul, lui, ne change
+         pas : `_bfNavy` ignore toujours les hanches chez l'homme. */
+      +_mensAutresHtml()
       +'<div style="font-size:11px;color:var(--t3);margin-top:6px;">Mesures en cm, à jeun le matin. <b>Valeur indicative</b> — pas une science exacte. Vise la régularité : c\'est la tendance qui compte.</div>'
     +'</div>';
+}
+/* ═══ 📏 LES AUTRES MENSURATIONS — dépliables (ft-v1129) ══════════════════════════════════
+   ⭐ Le bloc est REPLIÉ par défaut et dit combien de mesures il contient : *un « ▸ » nu ne
+   promet rien, donc personne ne l'ouvre.* ⛔ Et s'il porte déjà des valeurs, il le DIT dans son
+   titre — sinon on croirait que le repli cache du vide. */
+let _mensOuvert=false;
+function _mensAutresHtml(){
+  const autres=(typeof MENS_DEFS!=='undefined'?MENS_DEFS:[]).filter(m=>!m.principal);
+  if(!autres.length) return '';
+  const remplies=autres.filter(m=>mensDerniere(m.k)!=null).length;
+  const champs=autres.map(m=>_bfMeasInput('mens-'+m.k,m.l,mensDerniere(m.k))).join('');
+  return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--sep);">'
+    +'<div onclick="_mensBascule()" style="display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;user-select:none;">'
+      +'<span style="font-size:12px;color:var(--t2);font-weight:700;">'
+        +'<span id="mens-fleche" style="display:inline-block;transition:transform .15s;transform:rotate('+(_mensOuvert?'90':'0')+'deg);">▸</span> '
+        +'Autres mensurations'
+        +'<span style="color:var(--t3);font-weight:400;"> · '+autres.length+' mesures'
+          +(remplies?' <span style="color:var(--green);">('+remplies+' notée'+(remplies>1?'s':'')+')</span>':'')+'</span>'
+      +'</span>'
+    +'</div>'
+    +'<div id="mens-autres" style="display:'+(_mensOuvert?'block':'none')+';margin-top:8px;">'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">'+champs+'</div>'
+      +'<div style="font-size:11px;color:var(--t3);margin-top:6px;">Une seule valeur par zone (pas de droite/gauche). Elles ne servent <b>pas</b> au calcul du % — seulement à suivre l\'évolution.</div>'
+    +'</div>'
+  +'</div>';
+}
+/* ⛔ ON BASCULE L'AFFICHAGE, ON NE RE-RENDU PAS LA CARTE : un `renderWeightTab()` ici
+   effacerait ce que la personne est en train de taper dans les champs du dessus. */
+function _mensBascule(){
+  _mensOuvert=!_mensOuvert;
+  const d=document.getElementById('mens-autres'); if(d)d.style.display=_mensOuvert?'block':'none';
+  const f=document.getElementById('mens-fleche'); if(f)f.style.transform='rotate('+(_mensOuvert?'90':'0')+'deg)';
+}
+/* ═══ ENREGISTRE TOUT CE QUI EST TAPÉ, ET REND LE NOMBRE GARDÉ ═══════════════════════════
+   ⛔⛔ Elle ne juge RIEN et ne refuse RIEN d'autre que l'impossible (les bornes de `MENS_DEFS`).
+   C'est ce qui permet à `saveBodyFat` de dire « 1 mesure enregistrée » même quand le % ne peut
+   pas être calculé — *le cas exact que Michel a perdu*.
+   ⚠️ Un champ VIDE ne vaut pas « efface » : on ne touche pas à ce qui n'a pas été tapé. */
+function _mensEnregistrerSaisie(){
+  if(typeof MENS_DEFS==='undefined'||typeof mensAjouter!=='function') return 0;
+  const idPour={cou:'bf-neck',taille:'bf-waist',hanches:'bf-hip'};
+  let n=0;
+  MENS_DEFS.forEach(m=>{
+    const el=document.getElementById(idPour[m.k]||('mens-'+m.k));
+    if(!el) return;
+    const brut=String(el.value==null?'':el.value).trim();
+    if(!brut) return;                       // vide ≠ effacer
+    if(mensAjouter(m.k,numFR(brut),'manuel')) n++;
+  });
+  return n;
 }
 function saveBodyFat(){
   // Mensurations saisies (aussi utilisées pour le calcul US Navy de secours)
   const nk=numFR((document.getElementById('bf-neck')||{}).value),wa=numFR((document.getElementById('bf-waist')||{}).value),hp=numFR((document.getElementById('bf-hip')||{}).value);
   let bf=numFR((document.getElementById('bf-inp')||{}).value);
+  /* ⛔⛔ LES CENTIMÈTRES SONT ENREGISTRÉS **AVANT** TOUT CONTRÔLE SUR LE % — c'est le correctif
+     de la version, et il tient à l'ORDRE de ces lignes. Avant, le `return` qui refuse un %
+     invalide arrivait AVANT `S.neck=nk` : taper **le cou seul** rendait « Entre un % ou tes
+     mesures » et ***jetait les centimètres tapés***. Reproduit dans un vrai navigateur.
+     👉 ***Ce que la personne a tapé ne se perd pas parce qu'un CALCUL n'a pas abouti***
+     (règle d'or #3, appliquée à autre chose qu'une séance). Le % redevient une CONSÉQUENCE,
+     jamais une condition. */
+  const _nMens=_mensEnregistrerSaisie();
   // Rien tapé à la main → on prend directement le calcul US Navy des mesures
   if(!bf){const navy=_bfNavy(nk||S.neck,wa||S.waist,hp||S.hip,S.height,S.gender);if(navy!=null)bf=navy;}
-  if(!bf||bf<2||bf>70){toast('Entre un % ou tes mesures (cou + taille)','error');return;}
+  if(!bf||bf<2||bf>70){
+    /* ⭐ ET LE MESSAGE DIT CE QUI A ÉTÉ GARDÉ. Un « erreur » sec après une saisie sauvegardée
+       ferait croire que tout est perdu — la personne retaperait, ou abandonnerait. */
+    if(_nMens>0){ persist(); renderWeightTab();
+      toast(_nMens+' mesure'+(_nMens>1?'s':'')+' enregistrée'+(_nMens>1?'s':'')+' ✅ — il faut cou + taille pour le %','success'); }
+    else toast('Entre un % ou tes mesures (cou + taille)','error');
+    return;
+  }
   if(!S.weightLog)S.weightLog=[];
   const d=today();
   let e=S.weightLog.find(w=>w.date===d);
@@ -834,8 +911,10 @@ function saveBodyFat(){
     e={date:d,kg:kg};S.weightLog.unshift(e);
   }
   e.bf=Math.round(bf*10)/10;
-  // Mémorise les mensurations saisies (garde le profil à jour)
-  if(nk>20&&nk<80)S.neck=nk;if(wa>40&&wa<200)S.waist=wa;if(hp>40&&hp<200)S.hip=hp;
+  /* ⛔ LA MÉMORISATION DES CENTIMÈTRES A DISPARU D'ICI, ET C'EST VOULU (R2) : elle est faite
+     plus haut par `_mensEnregistrerSaisie` → `mensAjouter`, qui est désormais le SEUL endroit
+     qui écrit une mensuration. *Deux endroits qui enregistrent la même mesure finiraient avec
+     deux jeux de bornes* — c'était déjà le cas : `>20 && <80` ici, `MENS_DEFS` là-bas. */
   S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
   persist();renderWeightTab();
   toast('Masse grasse enregistrée ✅','success');
@@ -1088,6 +1167,47 @@ function _parseScaleCsv(text){
   return {rows};
 }
 // Range les lignes lues dans S.bodyScans + S.weightLog (1 par jour, garde tout l'historique)
+/* ═══ 🧮 CE QU'UN BILAN PEUT PORTER SANS ÊTRE LU — un seul propriétaire (ft-v1129) ════════
+   Michel : *« avec le même document, même format et même provenance il y a des éléments qui
+   manquent — il manque l'IMC qui peut être calculé, et le % de graisse corporelle »*.
+   ⛔⛔ MESURÉ : le secours existait, mais À UN SEUL ENDROIT. `saveBodyScan` (saisie/photo)
+   calcule l'IMC quand il manque ; `_importScaleRows` (import de fichier) copiait les colonnes
+   **et rien d'autre** — donc le MÊME document perdait son IMC selon la porte par laquelle il
+   entrait. *Deux chemins, un seul filet* : **R2**, et c'est pour ça que ce filet devient une
+   fonction que les deux appellent.
+   ⭐⭐ ET LES DEUX MANQUES NE SE COMBLENT PAS PAREIL — c'est le cœur de la décision :
+     · **L'IMC se CALCULE sans rien supposer** : poids ÷ taille². Le poids est dans la ligne,
+       la taille ne bouge pas chez un adulte. Aucun fait inventé.
+     · **LE % DE GRAS a besoin des mensurations DE CETTE DATE-LÀ.** Prendre le tour de taille
+       d'aujourd'hui pour l'appliquer à un bilan de mars ***fabriquerait un fait sur la
+       personne*** (R29). On ne le calcule donc QUE si le journal des mensurations porte des
+       mesures proches de cette date — sinon on laisse vide, et c'est honnête.
+   🏷️ ET CE QUI EST CALCULÉ LE DIT (R32/R33) : `calc` liste les champs déduits, jamais lus.
+   *Un chiffre calculé qui se fait passer pour une mesure est pire qu'un chiffre absent.* */
+const _SCAN_FENETRE_J=21;   // ± 3 semaines : au-delà, une mensuration ne décrit plus ce jour-là
+function _scanCompleter(scan){
+  if(!scan||!scan.date) return scan;
+  const calc=[];
+  /* ① L'IMC — toujours calculable, aucune supposition. */
+  if((scan.imc==null||isNaN(scan.imc)) && scan.weight>0 && S.height>0){
+    scan.imc=+(scan.weight/Math.pow(S.height/100,2)).toFixed(1); calc.push('imc');
+  }
+  /* ② LE % DE GRAS — seulement avec des mensurations DATÉES près de ce bilan. */
+  if((scan.bf==null||isNaN(scan.bf)) && typeof _bfNavy==='function' && S.height>0){
+    const proche=(k)=>{
+      const l=(S.mensLog||[]).filter(e=>e&&e.k===k&&e.d)
+        .map(e=>({v:e.v,ec:Math.abs((new Date(e.d)-new Date(scan.date))/86400000)}))
+        .filter(e=>e.ec<=_SCAN_FENETRE_J).sort((a,b)=>a.ec-b.ec);
+      return l.length?l[0].v:0;
+    };
+    const nv=_bfNavy(proche('cou'),proche('taille'),proche('hanches'),S.height,S.gender);
+    /* ⛔ `_bfNavy` rend `null` quand il lui manque de quoi conclure — on ne le remplace
+       JAMAIS par une valeur par défaut (R29 : si elle ne sait pas, elle se tait). */
+    if(nv!=null){ scan.bf=nv; calc.push('bf'); }
+  }
+  if(calc.length) scan.calc=calc;
+  return scan;
+}
 function _importScaleRows(rows){
   const byDay={}; rows.forEach(r=>{ if(r.date)byDay[r.date]=r; }); // dernière du jour gagne
   const days=Object.keys(byDay).sort();
@@ -1098,6 +1218,7 @@ function _importScaleRows(rows){
     const r=byDay[d];
     const scan={date:d};
     ['weight','bf','imc','visceral','muscle','bone','bmr','metaAge'].forEach(k=>{ if(r[k]!=null)scan[k]=r[k]; });
+    _scanCompleter(scan);        // ⭐ le MÊME filet que la saisie (R2) — c'était le manque
     if(bsIdx[d]!=null)S.bodyScans[bsIdx[d]]=scan; else {S.bodyScans.push(scan);bsIdx[d]=S.bodyScans.length-1;}
     if(r.weight!=null){
       if(wIdx[d]!=null){ S.weightLog[wIdx[d]].kg=r.weight; if(r.bf!=null)S.weightLog[wIdx[d]].bf=r.bf; }
@@ -1675,7 +1796,14 @@ function saveBodyScan(){
     if(isNaN(v))return;
     if(f.k==='bf' && typeof _pctGrasValide==='function' && !_pctGrasValide(v)){ _bsEcartes.push('% de gras ('+v+' %)'); return; }
     obj[f.k]=v;});
-  if((obj.imc==null||isNaN(obj.imc))&&S.height){obj.imc=+(weight/Math.pow(S.height/100,2)).toFixed(1);}
+  /* ⭐ LE MÊME FILET QUE L'IMPORT DE FICHIER (R2) : cette ligne calculait l'IMC toute seule,
+     et l'autre chemin ne le faisait pas du tout — d'où le bilan qui perdait son IMC selon la
+     porte d'entrée. `_scanCompleter` est désormais le seul à savoir compléter un bilan, et il
+     apporte en prime le % de gras quand les mensurations de l'époque existent. */
+  /* ⚠️ `obj.weight` est DÉJÀ posé par la boucle `_BS_FIELDS` juste au-dessus (`weight` en
+     fait partie, avec `req:true`) — vérifié avant d'écrire, pour ne pas ajouter une clé au
+     bilan enregistré en croyant combler un manque. */
+  _scanCompleter(obj);
   /* 🏷️ CE QUI EST NORMALISÉ GARDE D'OÙ IL VIENT (R33). Sans ça, impossible d'auditer plus tard
      une valeur douteuse — ni de savoir si elle a été LUE, CALCULÉE ou tapée à la main. */
   if(_bsSource&&_bsSource!=='manuel')obj.src=_bsSource;

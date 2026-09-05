@@ -462,6 +462,10 @@ const NEW_FEATURES=[
      « Pourquoi ce score ? » explique le détail — désormais avec une ligne cardio quand il y en a. */
   /* ⛔ POINT ROUGE sur l'Accueil : le score change ET un facteur disparaît de l'explication.
      La pop-up annonce, le point rouge ramène — et l'aide explique (R25). */
+  /* 📏 POINT ROUGE sur PROGRÈS : c'est là que vit la carte « Masse grasse », donc là que les
+     nouveaux champs apparaissent. ⛔ Le poser sur l'Accueil enverrait chercher sur un écran où
+     il n'y a rien à voir — le défaut corrigé en ft-v1099. */
+  {id:'mensurations', screen:'progress', desc:'📏 <b>Tes mensurations sont gardées dans le temps.</b> Cou, taille et hanches en clair — poitrine, épaules, bras, avant-bras, cuisse et mollet sous « Autres mensurations ». Avant, seule la dernière valeur survivait. Onglet Progrès → Corps &amp; santé.'},
   {id:'recup-cumul', screen:'home', desc:'🔋 <b>Ta fatigue s\'additionne.</b> Deux séances rapprochées coûtent maintenant <b>plus</b> qu\'une seule — avant, seule la <b>dernière</b> comptait, quel que soit ce que tu avais empilé avant. ⭐ Le forfait « Jours enchaînés » disparaît : il punissait à la louche, et sur tes 60 derniers jours il te coûtait des points <b>28 fois</b> pour rien. 💡 Tape « Pourquoi ce score ? » : la ligne « Séance récente » porte désormais <b>toutes</b> tes séances des 48 dernières heures.'},
   {id:'recup-cardio', screen:'home', desc:'🔋 <b>Ta récupération tient compte du cardio.</b> Sa <b>durée</b> et son <b>intensité</b> comptent maintenant dans ton score — avant, <b>10 min de marche et 90 min de tapis intense</b> coûtaient exactement la même chose. ⭐ Un échauffement de 10 min pèse <b>1 point</b>, 45 min de tapis modéré en pèsent <b>10</b>. 💡 Tape « Pourquoi ce score ? » sous ton score : la ligne « Séance récente » inclut désormais ton cardio.'},
   /* 🍔 POINT ROUGE, PAS DE POP-UP (règle d'or #11) : la base fast-food passe de 27 à 128
@@ -732,6 +736,11 @@ const WHATS_NEW=[
      ⭐⭐ ET ELLE DIT LE SENS DU CHANGEMENT, qui est l'inverse de ce qu'on attendrait : sur les
      60 jours réels, **25 journées MONTENT** et 3 baissent. *Annoncer « c'est plus sévère »
      serait faux, et il le verrait dès le lendemain.* */
+    /* ⚖️ LA POP-UP SE MÉRITE, ET ICI ELLE SE MÉRITE DEUX FOIS (règle d'or #11) : il y a
+       quelque chose à FAIRE (noter ses mensurations, elles n'étaient conservées nulle part)
+       ET un repère a bougé (le champ Hanches apparaît chez les hommes, où il était caché).
+       ⛔ Elle ANNONCE, elle n'explique pas — le détail est dans l'aide (R25). */
+    {v:72, ic:'📏', t:'Tes mensurations sont enfin gardées dans le temps', d:'① <b>Tes centimètres sont maintenant datés et conservés</b> — avant, seule la <b>dernière</b> valeur survivait : tu voyais bouger ton % de graisse sans jamais pouvoir revoir d\'où tu partais. ② <b>9 mesures</b> : cou, taille et hanches en clair, le reste (poitrine, épaules, bras, avant-bras, cuisse, mollet) sous <b>« Autres mensurations »</b>. ③ ⚠️ <b>Une mesure seule ne se perd plus</b> : avant, taper le cou <b>sans</b> le tour de taille affichait une erreur et <b>jetait ta saisie</b>. 💡 Onglet Progrès → Corps &amp; santé, carte « Masse grasse ».'},
     {v:71, ic:'🔋', t:'Ta fatigue s\'additionne au lieu de compter une seule séance', d:'① <b>Deux séances rapprochées coûtent maintenant plus qu\'une seule.</b> Avant, seule <b>la dernière</b> comptait. ② Le facteur <b>« 🔥 Jours enchaînés »</b> disparaît : un forfait à la louche, remplacé par la vraie mesure. ⭐ <b>Bonne nouvelle</b> : sur tes 60 derniers jours, <b>25 journées REMONTENT</b>, 3 seulement baissent. ⚠️ <b>Ton historique bouge aussi</b> (au plus <b>6 points</b>). 💡 Le détail est dans l\'aide ❔ de l\'Accueil.'},
   {v:70, ic:'🔋', t:'Ta récupération tient enfin compte du cardio', d:'① <b>Ton cardio pèse maintenant sur ton score de récup</b>, selon sa <b>durée</b> et son <b>intensité</b> — avant, 10 min d’elliptique tranquille et 90 min de tapis intense coûtaient exactement pareil. ② Le <b>bonus de repos</b> n’arrive plus d’un coup au bout de 2 jours : il s’installe en pente. ⚠️ <b>Ton score va donc baisser un peu</b> sur les jours où tu as fait du cardio, <b>y compris dans ton historique</b> — mesuré : le plus gros écart est de <b>6 points</b>. Ce n’est pas une panne : c’est du travail qui n’était pas compté.'},
   /* 🏃 ELLE SE MÉRITE, ET SUR LES DEUX CRITÈRES À LA FOIS (règle d'or #11).
@@ -2421,3 +2430,41 @@ function _dateAnnoncee(v){
     return '';                                                       // illisible → on n'invente pas
   }catch(e){ return ''; }
 }
+
+/* ═══ 📏 LES MENSURATIONS — définition unique (ft-v1129) ═══════════════════════════════════
+   Michel : *« construis tout, par contre de visu on ne voit que les principales — cou, taille
+   et hanches — et dépliable pour le reste »*.
+
+   ⭐⭐ UN SEUL PROPRIÉTAIRE DE LA LISTE (R2). Elle est lue par l'écran (qui dessine les champs),
+   par l'enregistrement (qui valide), par le graphique et par le contexte de Milo. *Quatre
+   endroits qui décideraient chacun de « quelles mensurations existent » divergeraient au
+   premier ajout.*
+
+   ⛔⛔ LES BORNES SONT PAR MESURE, ET CE N'EST PAS DU ZÈLE. Le code d'avant appliquait
+   `>40 && <200` à la taille ET aux hanches, et `>20 && <80` au cou. Une borne unique pour
+   toutes rejetterait un bras de 38 cm (dans la plage « cou ») ou accepterait un cou de
+   150 cm. *Une garde trop large ne garde rien ; une garde trop étroite jette du vrai.*
+   👉 Les valeurs viennent des extrêmes physiologiques humains, larges exprès : on refuse
+   l'impossible, jamais l'inhabituel (**R29** — le coût de l'erreur décide de la sévérité).
+
+   ⭐ `bf` = les trois que la méthode US Navy consomme. Elles gardent en plus leur **valeur
+   courante** dans `S.neck`/`S.waist`/`S.hip`, parce que la composition corporelle, le profil
+   et Milo la lisent déjà là — *le journal s'AJOUTE, il ne déménage rien* (décision écrite le
+   03/09 dans `docs/NUTRITION-MOTEUR-TENDANCE.md`, §10). */
+const MENS_DEFS=[
+  {k:'cou',      l:'Cou',          principal:true, bf:'neck',  min:20, max:80},
+  {k:'taille',   l:'Tour de taille',principal:true,bf:'waist', min:40, max:200},
+  {k:'hanches',  l:'Hanches',      principal:true, bf:'hip',   min:40, max:200},
+  {k:'poitrine', l:'Poitrine',     min:50, max:200},
+  {k:'epaules',  l:'Épaules',      min:60, max:200},
+  {k:'bras',     l:'Bras',         min:15, max:80},
+  {k:'avantbras',l:'Avant-bras',   min:15, max:60},
+  {k:'cuisse',   l:'Cuisse',       min:25, max:110},
+  {k:'mollet',   l:'Mollet',       min:20, max:70}
+];
+/* ⚠️ UNE SEULE VALEUR PAR ZONE, PAS DE DROITE/GAUCHE — et c'est une décision, pas un oubli.
+   Doubler les champs (bras D / bras G…) ferait passer la saisie de 9 à 15 cases pour une
+   information que presque personne ne suit des deux côtés. *On mesure ce qu'on suit ; suivre
+   deux fois ce qu'on regarde une fois fabrique des cases vides.* Si le besoin apparaît, ça
+   s'ajoute sans rien casser : la clé deviendrait `bras_d`/`bras_g`. */
+const MENS_PAR_CLE=MENS_DEFS.reduce((o,m)=>{o[m.k]=m;return o;},{});

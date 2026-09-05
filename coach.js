@@ -3637,6 +3637,38 @@ ${(()=>{
   const cat=(cats.find(c=>bf<c[0])||cats[cats.length-1])[1];
   return `- Masse grasse: ${Math.max(2,bf)}% (${cat}, Méthode Marine US) — Masse maigre ~${Math.round(S.bw*(1-Math.max(2,bf)/100))}kg`;
 })()}
+${(()=>{
+  /* ═══ 📏 SES MENSURATIONS — l'ÉVOLUTION, pas la liste (ft-v1129) ════════════════════════
+     ⛔⛔ R8, DANS SA FORME EXACTE : le prompt de Milo promet déjà, en toutes lettres, *« si tu
+     ajoutes tes mensurations, je pourrai mieux suivre ton évolution »* — et jusqu'ici il ne
+     les recevait PAS. *Une consigne qui NOMME une source absente du contexte* : c'est la 6ᵉ
+     fois pour cette famille (inscription, prénom, jours à venir, dates de records, catalogue).
+     👉 Le journal des mensurations existe depuis cette version, donc il monte ici — sinon on
+     aurait construit la donnée ET laissé Milo promettre dans le vide.
+     ⭐⭐ ON ENVOIE LA VARIATION, PAS L'HISTORIQUE — même choix que pour le journal alimentaire
+     (`totaux du jour, pas le détail`). Ce qui aide à coacher, c'est *« la taille a perdu 4 cm
+     en 2 mois »*, pas quarante lignes de centimètres. ⛔ Et une mesure notée **une seule fois**
+     ne donne aucune variation : on l'affiche sans flèche plutôt que d'inventer une tendance.
+     ⛔ CE BLOC EST DANS LA PARTIE CACHÉE, exprès : des mensurations changent une fois par mois.
+     Les mettre sous le marqueur de l'instant ferait réécrire un cache d'1 h pour rien. */
+  const L=(S.mensLog||[]); if(!L.length||typeof MENS_DEFS==='undefined') return '';
+  const lignes=[];
+  MENS_DEFS.forEach(m=>{
+    const pts=L.filter(e=>e&&e.k===m.k).sort((a,b)=>String(b.d).localeCompare(String(a.d)));
+    if(!pts.length) return;
+    const der=pts[0], prem=pts[pts.length-1];
+    if(pts.length<2||der.d===prem.d){ lignes.push(`${m.l} ${der.v} cm`); return; }
+    const d=Math.round((der.v-prem.v)*10)/10;
+    /* ⚠️ On DIT depuis quand, sinon « −4 cm » ne veut rien dire : quatre centimètres en un mois
+       et en un an ne se coachent pas pareil. */
+    const jours=Math.round((new Date(der.d)-new Date(prem.d))/86400000);
+    const quand=jours>=60?`${Math.round(jours/30)} mois`:`${jours} j`;
+    lignes.push(`${m.l} ${der.v} cm (${d>0?'+':''}${d} en ${quand})`);
+  });
+  if(!lignes.length) return '';
+  return `- Mensurations suivies: ${lignes.join(' · ')}`
+    + `\n  ⛔ Ce sont des mesures qu'elle prend elle-même : commente la TENDANCE si on te le demande, jamais le chiffre isolé, et ne réclame jamais qu'elle en ajoute.`;
+})()}
 ${(()=>{const cp=getMensCyclePhase();if(!cp)return '';
   const perfTxt={low:'énergie basse',rising:'énergie qui remonte',peak:'énergie et force au maximum',declining:'énergie en baisse'}[cp.perf]||'';
   return `- Phase cycle menstruel: ${cp.phase}${cp.day?` (Jour ${cp.day}/${S.mensCycleDur})`:''}${perfTxt?` — ${perfTxt}`:''}
@@ -5989,6 +6021,15 @@ function _vcApplyPersona(p){
   // — Morphologie / composition / mensurations —
   S.morpho=a.morpho||''; S.morphotype=a.morphotype||''; S.targetWeight=a.targetWeight||0; S.strengthGoals=a.strengthGoals||{};
   S.neck=a.neck||0; S.waist=a.waist||0; S.hip=a.hip||0; S.scaleType=a.scaleType||'';
+  /* ⛔⛔ ANTI-FUITE — le journal des mensurations AUSSI (ft-v1129). Il est né dans cette
+     version, et l'obligation est écrite dans cette fonction depuis ft-v1106 : *dès qu'une
+     donnée entre dans `buildCoachContext`, elle DOIT être remise à zéro ici.* Sans cette
+     ligne, les tours de taille RÉELS de la personne partiraient dans le contexte de chaque
+     persona du banc d'essai — 5ᵉ cas de la famille (`foodLog` ft-v1014, `missedLog`/
+     `nextPlanned` ft-v1050, `exSwaps`/`programmes`/`fasting`/`foodMode` ft-v1106).
+     👉 ***Une donnée neuve qui atteint Milo doit être remise à zéro le jour même où elle
+     naît*** — sinon personne ne saura plus, dans six mois, qu'elle a été oubliée. */
+  S.mensLog=a.mensLog||[];
   // — ADN / santé —
   S.adn=a.adn||{motivation:'',modeVie:'',prefs:'',experience:''};
   S.healthProfile=a.healthProfile||{injuries:[],conditions:[],notes:''};
@@ -7528,6 +7569,12 @@ const _DRAWER_CONTENT = {
         {ic:'⏸️',t:'Pause & Vider la séance',d:'Nouveau : en haut de la séance, "Pause" fige le chrono de durée si tu t\'interromps (le temps en pause n\'est pas compté) — "Reprendre" relance. "Vider" retire tous les exercices d\'un coup (utile si tu as chargé le mauvais programme), la séance reste ouverte et ton historique n\'est pas touché. Le "✕" annule complètement la séance.'},
         {ic:'📈',t:'Progrès & PRs',d:'Les PRs se calculent automatiquement via Brzycki (1RM estimé). Onglet Progrès → graphique par exercice · Onglet Poids → courbe de poids · Onglet Badges → 18 récompenses à débloquer. Sur le graphe d\'un exercice : les boutons 3 mois / 6 mois / 1 an / Tout choisissent la période, et si tu tapes un point tu vois la charge de ce jour-là + un bouton « Voir cette séance » qui ouvre son détail. Tu peux aussi fixer un OBJECTIF de force (1RM visé) sous le graphe → barre de progression + ligne repère verte sur ta courbe. Tap sur une séance pour voir/modifier les séries — et sur chaque exercice de cette séance, l\'icône 📊 t\'ouvre sa progression (ton poids sur les dernières séances). Sur chaque carte d\'historique, le MUSCLE travaillé (ou le nom de la séance du programme) ressort en gros titre et les calories passent en petit. Et tu peux FILTRER ton historique par groupe musculaire : des chips (« Pectoraux », « Quadriceps »…) sous « Historique séances » — tape-en un pour ne voir que ces séances.'},
         {ic:'⚖️',t:'Graphique de poids',d:'Onglet Progrès → Corps &amp; santé. Tape un point de la courbe pour modifier ou supprimer cette pesée (poids + date). Les boutons 1 mois / 3 mois / 6 mois / Tout choisissent la période affichée.'},
+        /* ⭐ L'AIDE EXPLIQUE CE QUE LA POP-UP A SEULEMENT ANNONCÉ (R25), et elle porte les
+           deux questions qu'on se posera devant l'écran : pourquoi seulement trois champs
+           visibles, et pourquoi certaines valeurs sont marquées « calculé ». */
+        {ic:'📏',t:'Tes mensurations, gardées dans le temps',d:'Onglet Progrès → Corps &amp; santé, carte « Masse grasse ». <b>Cou, taille et hanches</b> sont visibles ; les <b>6 autres</b> (poitrine, épaules, bras, avant-bras, cuisse, mollet) sont sous « <b>Autres mensurations</b> » — replié exprès, pour qu\'une saisie reste une saisie et pas un formulaire. ⭐ <b>Chaque valeur est datée</b> : tu peux enfin revoir d\'où tu es parti, ce que le seul % de graisse ne disait pas. ⭐ <b>Une seule mesure suffit</b> — tu n\'es plus obligé de remplir cou <b>et</b> taille pour que ta saisie soit gardée (avant, elle était jetée). ⛔ Se remesurer le même jour <b>corrige</b> la valeur, ça n\'empile pas : deux chiffres du même tour de taille le même jour, c\'est une hésitation, pas une tendance. ⚠️ <b>Une seule valeur par zone</b> (pas de droite/gauche). 💡 Seuls cou + taille (+ hanches chez la femme) servent au calcul du % ; les autres ne servent qu\'à suivre.'},
+        /* 🏷️ R32/R33 — pourquoi certains chiffres portent « calculé ». */
+        {ic:'🧮',t:'« Calculé » n\'est pas « mesuré »',d:'Quand tu importes un bilan de balance, il arrive qu\'il <b>manque l\'IMC ou le % de graisse</b>. L\'app les <b>complète quand elle le peut</b> — mais elle dit toujours lesquels sont <b>calculés</b> et non lus. ⭐ <b>L\'IMC se calcule sans rien supposer</b> (ton poids ÷ ta taille²). ⛔ <b>Le % de graisse, non</b> : il a besoin de tes mensurations <b>de cette époque-là</b>. Sur un bilan d\'il y a 8 mois, appliquer ton tour de taille d\'aujourd\'hui inventerait un fait sur toi — donc l\'app laisse vide plutôt que de deviner. 💡 Plus tu notes tes mensurations, plus tes anciens bilans peuvent être complétés honnêtement.'},
         {ic:'📉',t:'Suivi de la masse grasse',d:'Onglet Progrès → Corps &amp; santé, carte « Masse grasse ». Enregistre ton % de graisse au fil du temps : soit calculé automatiquement (méthode US Navy — tu entres tour de cou + taille, l\'app calcule), soit à la main (ton chiffre de balance/caliper). La bascule « Poids / Masse grasse / Les 2 » au-dessus du graphique choisit ce qu\'on affiche — « Les 2 » superpose les deux courbes (tu peux prendre du poids en perdant de la graisse). ⚠️ Valeur INDICATIVE, pas une science exacte — et la balance à impédance par les pieds est peu fiable. Vise la RÉGULARITÉ (même méthode, le matin à jeun) : c\'est la tendance qui compte.'},
         {ic:'🎯',t:'Poids objectif',d:'Onglet Progrès → Corps &amp; santé, carte « Poids objectif ». Fixe le poids que tu vises : une ligne repère verte apparaît sur le graphique et l\'app affiche les kg restants. Laisse vide (✓) pour le retirer.'},
         {ic:'🧪',t:'Bilan corporel (balance pro)',d:'Nouveau : Onglet Progrès → Corps &amp; santé → section « Bilan corporel ». Tu passes sur une balance à impédance (InBody, MyBodyCheck…) ? Enregistre tes chiffres pour suivre leur évolution : poids, % de graisse, masse grasse & maigre, muscle, muscle squelettique, masse osseuse, eau, protéine, graisse viscérale, métabolisme de base, âge corporel, IMC, score corporel — et même le détail par segment (bras/tronc/jambes gauche-droite). Trois façons de remplir : 📷 Photo (l\'IA lit ton rapport toute seule), ✏️ à la main, ou 📋 coller un code. Le bilan sert AUSSI de pesée du jour (poids + masse grasse alimentent tes courbes, pas de double saisie). Bilan après bilan, des flèches vertes montrent ce qui va dans le bon sens (muscle ↑, gras ↓). Et Milo s\'en sert pour te conseiller — avec de vrais chiffres, sans jamais en inventer ni poser de diagnostic médical.'},

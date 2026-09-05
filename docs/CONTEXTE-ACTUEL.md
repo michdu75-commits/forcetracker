@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1129` — 🔗 **LE SUPERSET DE MILO N'ATTEIGNAIT JAMAIS LA SÉANCE.**
+- **Version en ligne (live) :** `ft-v1130` — 🔗 **LE SUPERSET DE MILO N'ATTEIGNAIT JAMAIS LA SÉANCE.**
   Michel : *« maintenant le seanceJson que l'autre claude m'a laissé »*.
   ⛔⛔ **Le diagnostic relayé ne tenait pas** (vérifié avant de coder) : le cervelet ne part pas
   quand la lecture gratuite échoue, il part quand le **bloc caché manque** — or sa spec a quitté
@@ -24,6 +24,30 @@
   une forme que la production ne produit pas, et n'exerçait qu'une porte (§36). Re-visé.
   ⏭️ **Michel doit vérifier sur Safari/iPhone.**
 
+- **Version précédente :** `ft-v1129` — 📏 **LE JOURNAL DES MENSURATIONS.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#900** sur `c3e9153`, **job `deploy` success**,
+  les 7 étapes vertes à 08:16:55 UTC. ⭐ Suite **sur l'arbre FUSIONNÉ** : parcours **2746/2746**,
+  calculs **318/318**, **dates 9/9**, 0 rouge. Trois demandes de Michel dans un message.
+- ⛔⛔ **UNE PERTE DE DONNÉES, reproduite avant correction** : dans `saveBodyFat`, le `return`
+  qui refuse un % invalide était **AVANT** `S.neck=nk` — donc *les centimètres n'étaient
+  enregistrés qu'en effet de bord d'un % réussi*, et taper **le cou seul** jetait la saisie.
+  👉 **Règle d'or #3** hors séance : *ce que la personne a tapé ne se perd pas parce qu'un
+  CALCUL n'a pas abouti.*
+- ⭐ **9 mesures** (3 visibles, 6 dépliables), une par zone et par jour, **bornes par mesure**.
+  Les **hanches** deviennent visibles chez l'homme : le calcul ne les consomme pas, mais *un
+  homme qui suit son tour de hanches n'avait aucun endroit où le noter.*
+- ⛔⛔ **R8 refermé (6ᵉ fois)** : le prompt promettait déjà *« si tu ajoutes tes mensurations… »*
+  sans les recevoir. Milo reçoit la **variation**, pas la liste (**+258 car., 0,35 %**).
+- ⛔⛔ **Anti-fuite (5ᵉ cas)** : `mensLog` remis à zéro dans `_vcApplyPersona` — sans ça les
+  vraies mensurations partaient dans **chaque persona**. *Trouvé en mesurant, pas en relisant.*
+- ⛔ **Import de bilan** : le filet IMC existait dans `saveBodyScan` et **pas** dans
+  `_importScaleRows` — *le même document perdait son IMC selon la porte d'entrée* (R2). Un seul
+  propriétaire. ⭐ L'**IMC se calcule sans rien supposer** ; le **% de gras** exige des
+  mensurations **datées** (fenêtre 21 j), sinon **on se tait** (R29). Ce qui est calculé le dit.
+- ⚠️⚠️ **Un témoin a rougi sur mon commentaire** (« −4 cm en 2 mois » pris pour un vieux prix) :
+  re-visé sur **« 2 mois près d'un montant »**, **contrôle négatif fait**. §31, encore.
+- ⏭️ **Pas de droite/gauche, pas de graphique** : le journal se remplit d'abord — *on ne trace
+  pas une courbe sur un point.* ⚠️ **Safari/iPhone à vérifier par Michel.**
 - **Version précédente :** `ft-v1128` — 👥 **« ANON » N'EST PAS QUELQU'UN.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#894** sur `918ccd8`, **job `deploy` success**,
   les 7 étapes vertes à 23:11:32 UTC. Michel : *« c'est qui anon ? il faut que je sache

@@ -334,6 +334,10 @@ const _HELP_DATA={
   progress:{
     title:'📈 Progrès',
     tips:[
+      /* 📏 EN TÊTE : c'est ce qui change dans cet onglet aujourd'hui, et la première question
+         devant l'écran est « pourquoi seulement trois cases ? ». L'aide RÉPOND, la pop-up
+         s'est contentée d'annoncer (R25). */
+      {i:'📏',t:'<b>Tes mensurations sont gardées dans le temps</b> (carte « Masse grasse », sous-onglet <b>Corps &amp; santé</b>). <b>Cou, taille, hanches</b> sont visibles ; les <b>6 autres</b> — poitrine, épaules, bras, avant-bras, cuisse, mollet — sont sous « <b>Autres mensurations</b> ». ⭐ <b>Une seule mesure suffit</b> pour qu\'elle soit enregistrée : avant, taper le cou <b>sans</b> le tour de taille jetait ta saisie. ⛔ Seuls cou + taille (+ hanches chez la femme) servent au calcul du <b>%</b> ; les autres ne servent qu\'au <b>suivi</b>.'},
       /* 🚶 EN TÊTE de l'aide Progrès : c'est une carte NEUVE, donc la première question est
          « c'est quoi ce truc ? ». La pop-up de ft-v1070 a annoncé que les pas comptent ;
          ici on dit seulement OÙ les voir et comment lire la courbe (R25). */
