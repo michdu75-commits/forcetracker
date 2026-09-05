@@ -62,6 +62,13 @@
     "Séances":{en:"Workouts",es:"Sesiones",el:"Προπονήσεις",ru:"Тренировки"},
     "Poids":{en:"Weight",es:"Peso",el:"Βάρος",ru:"Вес"},
     "Commencer une séance":{en:"Start a workout",es:"Empezar una sesión",el:"Έναρξη προπόνησης",ru:"Начать тренировку"},
+    /* ⚡ AJOUTÉ LE 05/09/2026 — depuis que le bouton de l'Accueil ne s'affiche QUE si une séance
+       est ouverte, c'est ce libellé-ci qui est montré, et lui seul. Il n'était pas traduit :
+       le manque existait déjà, mais il ne touchait qu'une minorité de cas — il les touche tous
+       maintenant. ⛔ « Commencer une séance » est GARDÉ juste au-dessus : la clé sert encore
+       ailleurs, et une traduction retirée ne se remarque que le jour où quelqu'un change de
+       langue (R30). */
+    "↩ Reprendre la séance":{en:"↩ Resume workout",es:"↩ Reanudar la sesión",el:"↩ Συνέχεια προπόνησης",ru:"↩ Продолжить тренировку"},
     "Récupération":{en:"Recovery",es:"Recuperación",el:"Ανάκαμψη",ru:"Восстановление"},
     "Niveau de force":{en:"Strength level",es:"Nivel de fuerza",el:"Επίπεδο δύναμης",ru:"Уровень силы"},
     "Records":{en:"Records",es:"Récords",el:"Ρεκόρ",ru:"Рекорды"},

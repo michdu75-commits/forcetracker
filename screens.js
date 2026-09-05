@@ -788,7 +788,11 @@ function _renderHomeHero(){
      pendant que 45 min de tapis attendaient d'être enregistrées, et le bouton les effaçait.
      `_seanceOuverte()` est le propriétaire unique de la question depuis le 02/08. */
   const hasPending=(typeof _seanceOuverte==='function')?_seanceOuverte():!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length);
-  const ctaLabel=hasPending?'↩ Reprendre la séance':'Commencer une séance';
+  /* ⚠️ UN SEUL LIBELLÉ POSSIBLE DEPUIS LE 05/09 : le bouton ne s'affiche QUE si `hasPending`,
+     donc la branche « Commencer une séance » ne pouvait plus jamais être rendue. *Un ternaire
+     dont une branche est inatteignable ment au lecteur* — il laisse croire que ce bouton peut
+     encore proposer de démarrer, alors que c'est le FAB qui s'en charge. */
+  const ctaLabel='↩ Reprendre la séance';
   /* ⏰ RAPPEL « TA SÉANCE EST ENCORE OUVERTE » (14/08/2026, demande de Michel).
      Au-delà de 90 min sans une seule série validée, ce n'est plus une séance en cours :
      c'est une séance qu'on a oublié de terminer. ⚠️ Le seuil est un jugement, pas une
@@ -924,9 +928,24 @@ function _renderHomeHero(){
     +'<div style="font-size:12.5px;color:var(--t2);line-height:1.45;margin-top:3px;">'+heroDesc+'</div></div></div>'
      )
     +detailHtml+warnHtml
-    +'<button onclick="startWorkout()" class="ft-press" style="margin-top:16px;width:100%;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--red),#EF3E57);box-shadow:0 12px 28px -10px rgba(239,62,87,.55);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
-    +'<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13l0-8Z"/></svg>'
-    +'<span style="font-size:16px;font-weight:700;color:#fff;font-family:var(--font);">'+ctaLabel+'</span></button>'
+    /* ⚡ LE BOUTON NE S'AFFICHE PLUS QUE SI UNE SÉANCE EST OUVERTE (05/09/2026, décision de
+       Michel : « garde le bouton que si séance ouverte »).
+
+       ⛔⛔ POURQUOI CETTE FORME-LÀ, ET PAS UN RETRAIT PUR — c'est mesuré, pas supposé. Le FAB
+       rouge central appelle **exactement la même fonction** (`startWorkout()`, index.html:1721) :
+       pour DÉMARRER, le bouton est un doublon parfait, et le FAB, lui, reste visible sur tous
+       les formats. ⚠️ **MAIS il ne dit jamais qu'une séance est en cours** — son libellé est
+       figé sur « Démarrer une séance » — et **aucun autre élément de l'Accueil ne le dit** (la
+       pastille du haut ne parle que de la synchro Sheets, vérifié).
+       👉 ***Le retirer complètement aurait supprimé une INFORMATION, pas un raccourci.*** On
+       garde donc exactement ce que le FAB ne sait pas dire, et rien de plus.
+
+       ⭐ Gain : **54 px + sa marge** les jours normaux, c'est-à-dire presque tous. */
+    +(hasPending
+      ? '<button onclick="startWorkout()" class="ft-press" style="margin-top:16px;width:100%;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--red),#EF3E57);box-shadow:0 12px 28px -10px rgba(239,62,87,.55);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
+        +'<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13l0-8Z"/></svg>'
+        +'<span style="font-size:16px;font-weight:700;color:#fff;font-family:var(--font);">'+ctaLabel+'</span></button>'
+      : '')
     +conseilHtml+oubliHtml+'</div>';
 }
 
@@ -1568,6 +1587,17 @@ function toggleDayPain(z){const d=_dayState();const i=(d.pains||[]).findIndex(p=
 function setDayPainSide(z,side){const d=_dayState();const p=(d.pains||[]).find(x=>x&&x.zone===z);if(!p)return;p.side=side;_saveDayStateToLog();persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
 // Check-in du jour = sommeil + énergie/moral/douleur regroupés en UNE carte, repliée par défaut (désencombre l'Accueil).
 // ⚠️ On regroupe l'AFFICHAGE, pas les logiques : le sommeil nourrit le score de récup, l'énergie/moral/douleur NON (ft-v472/473).
+/* ⤵️ « CE MOIS » — PLIÉ OU DÉPLIÉ, ET ÇA SURVIT À LA FERMETURE DE L'APP (05/09/2026).
+   ⛔ Un seul propriétaire de la question (R2) : `_ceMoisOuvert()`. Le rendu ne lit jamais
+   `localStorage` directement — sinon le jour où la clé change, il faut la chasser partout.
+   ⛔ REPLI SÛR : tout ce qui n'est pas exactement « 0 » compte comme DÉPLIÉ. Un stockage vide,
+   illisible ou bloqué (navigation privée) doit rendre le comportement d'AVANT, jamais un
+   Accueil amputé que personne n'a demandé. */
+function _ceMoisOuvert(){ try{ return localStorage.getItem('ft4_cemois')!=='0'; }catch(e){ return true; } }
+function toggleCeMois(){
+  try{ localStorage.setItem('ft4_cemois', _ceMoisOuvert()?'0':'1'); }catch(e){}
+  try{ renderHome(); }catch(e){}
+}
 let _checkinOpen=false; // par session (non persisté)
 function toggleCheckin(){_checkinOpen=!_checkinOpen;_renderDayStateCard();try{if(typeof renderLogSleep==='function')renderLogSleep();}catch(e){}}
 /* ⤴️ REPLIER LE CHECK-IN APRÈS AVOIR ENREGISTRÉ (18/08/2026, retour Michel : « le check-in du
@@ -1924,19 +1954,35 @@ function renderHome(){try{
   const volDisp=vol>9999?(Math.round(vol/100)/10)+'k':Math.round(vol);
   const statsEl=document.getElementById('home-stats');
   // Restylage maquette : grille 2×2 de cartes (icône + chiffre + label) — mêmes données, mêmes clics
-  const _sc=(oc,ic,icBg,icStroke,valHtml,label)=>'<div'+(oc?' onclick="'+oc+'" style="cursor:pointer;':' style="')+'background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px var(--sep);padding:14px;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:space-between;gap:10px;">'
-    +'<div style="width:34px;height:34px;border-radius:10px;background:'+icBg+';display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="'+icStroke+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+ic+'</svg></div>'
-    +'<div style="text-align:right;min-width:0;">'
-    +'<div style="font-family:var(--font-cond);font-size:22px;font-weight:700;line-height:1;">'+valHtml+'</div>'
-    +'<div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin-top:5px;white-space:nowrap;">'+label+'</div></div></div>';
+  /* 📐 UNE RANGÉE DE 4 AU LIEU DE 2×2 (05/09/2026) — un testeur trouve l'Accueil trop chargé,
+     décision de Michel. Mesuré : **184 → 133 px**, et les 4 chiffres restent visibles d'un coup
+     d'œil. ⛔ Rien n'est retiré et aucun clic ne change : chaque tuile mène toujours au même
+     écran. La tuile passe en COLONNE (icône au-dessus du chiffre) — à 4 par rangée, il n'y a
+     plus la largeur pour les mettre côte à côte.
+     ⚠️ Le libellé long « Force · Squat+DC+SDT » ne tient plus sur une colonne étroite : il est
+     raccourci pour l'ŒIL, et le nom complet reste dans le `title` — *on ne supprime pas une
+     information, on choisit ce qui est montré en premier.* */
+  const _sc=(oc,ic,icBg,icStroke,valHtml,label,court)=>'<div'+(oc?' onclick="'+oc+'" style="cursor:pointer;':' style="')+'background:var(--bg2);border-radius:14px;box-shadow:inset 0 0 0 1px var(--sep);padding:10px 4px 9px;-webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;" title="'+label+'">'
+    +'<div style="width:28px;height:28px;border-radius:9px;background:'+icBg+';display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="'+icStroke+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+ic+'</svg></div>'
+    +'<div style="text-align:center;min-width:0;max-width:100%;">'
+    +'<div style="font-family:var(--font-cond);font-size:19px;font-weight:700;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+valHtml+'</div>'
+    +'<div style="font-size:8.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--t3);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(court||label)+'</div></div></div>';
   const _moName=now.toLocaleDateString('fr-FR',{month:'long'});
-  if(statsEl)statsEl.innerHTML='<div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 3px 9px;"><span style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--t3);">CE MOIS</span><span style="font-size:12.5px;color:var(--t3);text-transform:capitalize;">'+_moName+'</span></div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
-    +_sc("goScreen('progress',document.getElementById('nb-progress'))",'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>','rgba(255,106,115,.14)','var(--red)','<span id="h-vol" style="color:var(--t1)">'+volDisp+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Volume')
-    +_sc("goScreen('progress',document.getElementById('nb-progress'))",'<path d="M6 12h12M4 9v6M8 8v8M16 8v8M20 9v6"/>','rgba(234,179,8,.14)','var(--gold)','<span id="h-big3" style="color:var(--orange)">'+(b3>0?Math.round(b3):'—')+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Force · Squat+DC+SDT')
-    +_sc("goSessionsHistory()",'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>','rgba(168,85,247,.14)','var(--purp)','<span id="h-sess" style="color:var(--t1)">'+mo.length+'</span>','Séances ce mois')
-    +_sc("goWeightTab()",'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9.5a3 3 0 0 1 6 0"/><line x1="12" y1="9.5" x2="13.8" y2="8"/>','rgba(91,168,255,.14)','#5BA8FF','<span id="h-bw" style="color:var(--t1)">'+fmt(bwDisp)+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Poids de corps')
-    +'</div>';
+  /* ⤵️ REPLIABLE (demande de Michel, 05/09) — et l'état est MÉMORISÉ, contrairement au check-in
+     qui se rouvre à chaque lancement. ⭐ La raison est dans le but : ce pli sert à ALLÉGER
+     l'Accueil ; s'il se défaisait à chaque ouverture, il n'allégerait rien.
+     ⛔ DÉPLIÉ PAR DÉFAUT, exprès : personne ne doit voir ses chiffres du mois disparaître sans
+     l'avoir demandé (R29 — on n'enlève pas une information à la place de la personne). Celui
+     qui veut un Accueil plus court le replie une fois, et ça tient. */
+  const _cmOpen=_ceMoisOuvert();
+  const _chev='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;transition:transform .18s;'+(_cmOpen?'transform:rotate(90deg);':'')+'"><polyline points="9 18 15 12 9 6"/></svg>';
+  if(statsEl)statsEl.innerHTML='<div onclick="toggleCeMois()" style="cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 3px '+(_cmOpen?'9px':'0')+';"><span style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--t3);">CE MOIS</span><span style="margin-left:auto;font-size:12.5px;color:var(--t3);text-transform:capitalize;">'+_moName+'</span>'+_chev+'</div>'
+    +(!_cmOpen?'':'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;">'
+    +_sc("goScreen('progress',document.getElementById('nb-progress'))",'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>','rgba(255,106,115,.14)','var(--red)','<span id="h-vol" style="color:var(--t1)">'+volDisp+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Volume','Volume')
+    +_sc("goScreen('progress',document.getElementById('nb-progress'))",'<path d="M6 12h12M4 9v6M8 8v8M16 8v8M20 9v6"/>','rgba(234,179,8,.14)','var(--gold)','<span id="h-big3" style="color:var(--orange)">'+(b3>0?Math.round(b3):'—')+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Force · Squat+DC+SDT','Force')
+    +_sc("goSessionsHistory()",'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>','rgba(168,85,247,.14)','var(--purp)','<span id="h-sess" style="color:var(--t1)">'+mo.length+'</span>','Séances ce mois','Séances')
+    +_sc("goWeightTab()",'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9.5a3 3 0 0 1 6 0"/><line x1="12" y1="9.5" x2="13.8" y2="8"/>','rgba(91,168,255,.14)','#5BA8FF','<span id="h-bw" style="color:var(--t1)">'+fmt(bwDisp)+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Poids de corps','Poids')
+    +'</div>');
   // Calendrier mensuel (remplace cycle de force / niveau / records sur l'Accueil — chantier feat/accueil-calendrier)
   _renderHomeCalendar();
   updatePill();

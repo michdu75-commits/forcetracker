@@ -26806,6 +26806,105 @@ console.log('\n═══ CCXXXVIII. Le check-in maigrit, mais reste tapable ═�
   t('CCXXXVIII aucune erreur JS sur tout le bloc', ed.length===0, ed.join(' | '));
 }
 
+
+// ═════════════════════════════════════════════════════════════════════════════
+// CCXXXIX. L'ACCUEIL ALLÉGÉ, 2ᵉ PASSE — le bouton conditionnel + « CE MOIS » repliable
+// Michel : « garde le bouton que si séance ouverte » et « on m'a dit que l'accueil était trop
+// chargé en info ; les tuiles ce mois-ci, y'a pas moyen de faire ça autrement ? » + « repliable ».
+// ⛔⛔ CE QUE CE BLOC PROTÈGE N'EST PAS « c'est plus court » — c'est l'INFORMATION qui reste :
+// le FAB appelle la même fonction que le bouton, mais il ne dit JAMAIS qu'une séance est en
+// cours. Le bouton ne survit que pour ça ; s'il disparaissait aussi dans ce cas-là, l'Accueil
+// n'aurait plus aucun moyen de le dire (vérifié : la pastille du haut ne parle que de Sheets).
+console.log('\n═══ CCXXXIX. Accueil allégé : bouton conditionnel + CE MOIS repliable ═══');
+{
+  const ce=await b.newContext({serviceWorkers:'block',viewport:{width:375,height:812},timezoneId:'Europe/Paris'});
+  const pe=await ce.newPage(); const ee=[]; pe.on('pageerror',e=>ee.push(e.message));
+  await pe.addInitScript(seedScript({}));
+  await pe.goto('http://localhost:'+PORT+'/index.html');
+  await pe.waitForTimeout(2200);
+  const E=await pe.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const j=today(), o={};
+    const leBouton=()=>{const x=[...document.querySelectorAll('button')]
+      .find(e=>/Commencer une s[ée]ance|Reprendre la s[ée]ance/i.test(e.textContent||'')&&e.getBoundingClientRect().height>20);
+      return x?(x.textContent||'').trim():null;};
+    S.sessions=[{id:Date.now()-9e5,ts:Date.now()-9e5,date:j,volume:23600,duration:3600,
+                 exs:[{name:'Développé Couché',sets:[{kg:100,reps:5,done:true,type:'N'}]}]}];
+    /* ── ① AUCUNE séance en cours : le bouton doit avoir DISPARU (le FAB suffit) */
+    S.wkt=null; persist(); goScreen('home',document.getElementById('nb-home')); renderHome();
+    await new Promise(r=>setTimeout(r,450));
+    o.sansSeance=leBouton();
+    o.fabExiste=!!document.getElementById('nb-log');
+    o.fabDemarre=/startWorkout/.test(document.getElementById('nb-log').getAttribute('onclick')||'');
+    const st=document.getElementById('home-stats');
+    o.ceMois=Math.round(st.getBoundingClientRect().height);
+    const g=st.querySelector('div[style*="grid-template-columns"]');
+    o.tuiles=g?[...g.children].length:0;
+    o.uneRangee=!!(g && /repeat\(4/.test(g.getAttribute('style')||''));
+    /* ⛔ le vrai risque d'une rangée de 4 sur un petit écran : un chiffre TRONQUÉ */
+    o.tronque=g?[...g.querySelectorAll('div')].some(e=>e.scrollWidth>e.clientWidth+1):false;
+    /* ── ② une séance EN COURS : le bouton revient, et il DIT que c'est une reprise */
+    S.wkt={date:j,exs:[{name:'Squat à la Barre',sets:[{kg:130,reps:5,done:false,type:'N'}]}]};
+    persist(); renderHome(); await new Promise(r=>setTimeout(r,450));
+    o.avecSeance=leBouton();
+    /* ── ③ le pli, et sa MÉMOIRE (c'est ce qui le distingue du check-in) */
+    toggleCeMois(); await new Promise(r=>setTimeout(r,350));
+    o.pliee=Math.round(document.getElementById('home-stats').getBoundingClientRect().height);
+    o.pliStocke=localStorage.getItem('ft4_cemois');
+    o.pliApresRendu=(renderHome(),await new Promise(r=>setTimeout(r,350)),
+                     Math.round(document.getElementById('home-stats').getBoundingClientRect().height));
+    toggleCeMois(); await new Promise(r=>setTimeout(r,350));
+    o.rouverte=Math.round(document.getElementById('home-stats').getBoundingClientRect().height);
+    /* ⛔ REPLI SÛR : un stockage vide ou illisible doit rendre l'Accueil D'AVANT (déplié),
+       jamais un bloc amputé que personne n'a demandé. */
+    localStorage.removeItem('ft4_cemois');
+    o.parDefautOuvert=_ceMoisOuvert();
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  await ce.close();
+  if(E.erreur) t('CCXXXIX ⛔ le bloc s\'exécute', false, E.erreur);
+  /* ⛔ CONTRÔLE — sans FAB, retirer le bouton n'aurait aucun sens. */
+  t('CCXXXIX ⛔ CONTRÔLE — le FAB central existe et démarre bien une séance',
+    E.fabExiste===true && E.fabDemarre===true, 'FAB '+E.fabExiste+' · startWorkout '+E.fabDemarre);
+  t('CCXXXIX ⭐⭐ sans séance en cours, le bouton de l\'Accueil a DISPARU (le FAB fait la même chose)',
+    E.sansSeance===null, 'encore là : « '+E.sansSeance+' »');
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : ce n'est pas le retrait, c'est ce qu'on GARDE. */
+  t('CCXXXIX ⭐⭐ … mais SÉANCE OUVERTE, il revient et DIT que c\'est une reprise',
+    E.avecSeance!==null && /Reprendre/i.test(E.avecSeance||''),
+    'le FAB ne dit jamais qu\'une séance est en cours — reçu : « '+E.avecSeance+' »');
+  t('CCXXXIX ⭐ « CE MOIS » tient sur UNE rangée de 4 tuiles',
+    E.uneRangee===true && E.tuiles===4, E.tuiles+' tuiles · une rangée '+E.uneRangee);
+  /* ⛔ Mesuré sur 375 px de large : à 4 colonnes, un chiffre tronqué serait le premier
+     symptôme — et il est SILENCIEUX (aucune erreur, juste « 23.6… » à l'écran). */
+  t('CCXXXIX ⛔ aucun chiffre n\'est tronqué à 4 colonnes sur un petit écran',
+    E.tronque===false, 'un « … » a remplacé une valeur');
+  t('CCXXXIX ⭐ le bloc se REPLIE et se rouvre', E.pliee<E.rouverte && E.pliee<50,
+    'plié '+E.pliee+' px · rouvert '+E.rouverte+' px');
+  /* ⭐⭐ CE QUI LE DISTINGUE DU CHECK-IN : le pli SURVIT au re-rendu (et à la fermeture de
+     l'app). Sans mémoire, ce pli n'allégerait rien — il se déferait à chaque ouverture. */
+  t('CCXXXIX ⭐⭐ … et le pli est MÉMORISÉ (sinon il ne servirait à rien)',
+    E.pliStocke==='0' && E.pliApresRendu===E.pliee,
+    'stocké « '+E.pliStocke+' » · après re-rendu '+E.pliApresRendu+' px');
+  /* ⛔ REPLI SÛR — un stockage vide ne doit pas amputer l'Accueil (navigation privée…). */
+  t('CCXXXIX ⛔ sans rien en mémoire, le bloc est DÉPLIÉ (comportement d\'avant)',
+    E.parDefautOuvert===true, 'un stockage illisible ne doit rien cacher');
+  /* ⚠️ LE TEXTE QUI GUIDE — le piège du jour, pour la troisième fois. */
+  {
+    const CJ=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
+    t('CCXXXIX ⚠️ aucune aide n\'envoie plus vers « Commencer une séance » depuis l\'accueil',
+      !/"Commencer une séance" depuis l\\?'accueil/.test(CJ),
+      'une aide guide vers un bouton qui n\'apparaît plus (§31, 3ᵉ fois aujourd\'hui)');
+    const TR=fs.readFileSync(path.join(ROOT,'translations.js'),'utf8');
+    t('CCXXXIX ⛔ le libellé désormais affiché est TRADUIT (il ne l\'était pas)',
+      /Reprendre la séance"\s*:\s*\{[^}]*en:/.test(TR), 'sinon un anglophone lit du français');
+  }
+  t('CCXXXIX aucune erreur JS sur tout le bloc', ee.length===0, ee.join(' | '));
+}
+
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
