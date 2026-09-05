@@ -322,15 +322,39 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
 @keyframes feat-dot-pulse{0%,100%{box-shadow:0 0 0 2px var(--bg2),0 0 0 4px rgba(255,45,85,.35);}50%{box-shadow:0 0 0 2px var(--bg2),0 0 0 8px rgba(255,45,85,0);}}
 
 /* ─── Statut « Testeur Fondateur » (récompense exclusive) ────── */
-.tester-card{position:relative;display:flex;align-items:center;gap:13px;background:linear-gradient(135deg,rgba(234,179,8,.15),rgba(234,179,8,.03));border:1px solid rgba(234,179,8,.42);border-radius:16px;padding:14px 16px;overflow:hidden;}
-.tester-card::after{content:"";position:absolute;top:-40%;right:-10%;width:120px;height:180px;background:radial-gradient(circle,rgba(234,179,8,.16),transparent 70%);pointer-events:none;}
-.tester-card .tc-star{width:44px;height:44px;border-radius:13px;flex:none;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,rgba(234,179,8,.30),rgba(234,179,8,.05));box-shadow:0 0 0 1px rgba(234,179,8,.30) inset;animation:tc-star-pulse 2.6s ease-in-out infinite;}
-@keyframes tc-star-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
-.tester-card .tc-ttl{font-size:12px;font-weight:800;letter-spacing:.09em;color:var(--gold);text-transform:uppercase;}
-.tester-card .tc-msg{font-size:13px;line-height:1.5;color:var(--t2);margin-top:3px;}
-.tester-card .tc-sign{color:var(--gold);font-weight:700;white-space:nowrap;}
-.tester-card .tc-espace{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:7px 12px;border-radius:10px;background:rgba(234,179,8,.16);border:1px solid rgba(234,179,8,.40);color:var(--gold);font-size:12.5px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
-.tester-card .tc-espace:active{background:rgba(234,179,8,.26);}
+/* ⛔ UN BLOC VIDE NE PREND PAS DE PLACE (05/09/2026) — mesuré, pas supposé.
+   `home-souvenir` occupait **10 px** chez tout le monde, tous les jours où il n'y a pas de
+   souvenir à montrer : son `padding-top` est en dur dans `index.html`, et `_renderSouvenirCard`
+   vide bien son contenu… sans toucher à la marge. `_renderTesterCard`, lui, pense à la remettre
+   à zéro — *deux blocs voisins, deux comportements, un seul correct.*
+   ⭐ UN SEUL PROPRIÉTAIRE POUR CETTE RÈGLE (R2) : plutôt que d'ajouter la ligne oubliée dans
+   chaque fonction de rendu — et de l'oublier au bloc suivant — la règle vit ICI et couvre
+   l'Accueil entier, y compris les blocs qui n'existent pas encore.
+   ⚠️ `!important` est nécessaire : ces marges sont des styles EN LIGNE dans `index.html`.
+   ⚠️ `scroll-spacer` n'est pas touché : sa hauteur vient d'une `height`, pas d'un padding. */
+#s-home > div:empty{padding:0 !important;}
+
+/* ⭐ LE PETIT BOUTON « Espace testeur fondateur » (05/09/2026) — il REMPLACE le pavé doré.
+   Michel : « le truc énorme du super testeur… ça fait trop chargé ». Une ligne, la même
+   couleur, le même geste. Mesuré : 166 px → 48 px.
+
+   ⛔ R30 — LES 9 RÈGLES `.tester-card` ONT ÉTÉ RETIRÉES ICI, ET VOICI POURQUOI.
+   J'avais d'abord écrit qu'on les gardait « parce que le pavé vit encore dans deux pop-ups de
+   bienvenue ». ⚠️ **C'était une supposition, et elle était fausse** : un témoin m'a obligé à
+   `grep`, et `class="tester-card"` n'apparaît **nulle part** — ni dans `index.html`, ni dans
+   le JS. Les pop-ups testeurs emploient `.sw-feat`, pas ce style. Le pavé n'avait donc qu'un
+   seul auteur, `_renderTesterCard`, et il vient de changer.
+   👉 *Du CSS orphelin ressemble exactement à un oubli* : le suivant le « nettoie » sans savoir,
+   ou pire, le croit encore vivant. On le retire, et la raison est écrite — ici et dans le
+   journal. Pour le refaire : encadré doré, étoile 44 px, dégradé `rgba(234,179,8,.15→.03)`,
+   bordure `.42`. ⚠️ Et la leçon vaut au-delà du CSS : *je m'apprêtais à justifier une décision
+   par un fait que je n'avais pas vérifié* (**R28**). */
+.tester-mini{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:11px;
+  background:rgba(234,179,8,.10);border:1px solid rgba(234,179,8,.34);color:var(--gold);
+  font-size:13px;font-weight:700;cursor:pointer;touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;}
+.tester-mini:active{background:rgba(234,179,8,.20);}
+.tester-mini .tm-fl{margin-left:auto;opacity:.75;font-weight:800;}
 /* Menu analyses photo (Coach) — 1 bouton → 2 choix */
 .pm-opt{display:flex;align-items:center;gap:12px;width:100%;background:var(--bg3);border:1px solid var(--sep);border-radius:14px;padding:13px 14px;cursor:pointer;font-family:var(--font);text-align:left;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 .pm-opt:active{background:var(--bg2);}

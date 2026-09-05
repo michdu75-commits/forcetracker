@@ -455,7 +455,13 @@ const FEAT_SI = {
   /* ⌚ a-t-on DÉJÀ reçu quelque chose de la montre ? On ne demande pas « as-tu une montre »
      (l'app ne le sait pas), on regarde si la donnée est arrivée — c'est le seul fait vérifiable. */
   montreSommeil: () => { try{ return ((S&&S.healthDaily)||[]).some(x=>x&&x.sleep>0); }catch(e){ return false; } },
-  montrePas:     () => { try{ return ((S&&S.healthDaily)||[]).some(x=>x&&x.steps>0); }catch(e){ return false; } }
+  montrePas:     () => { try{ return ((S&&S.healthDaily)||[]).some(x=>x&&x.steps>0); }catch(e){ return false; } },
+  /* ⭐ TESTEUR FONDATEUR — l'annonce du 05/09 ne concerne QUE Christophe, Eline, Emma et
+     Tatiana : leur carte dorée devient un petit bouton. ⛔ Sans ce filtre, 100 % des autres
+     utilisateurs recevraient une pop-up sur un pavé qu'ils n'ont JAMAIS vu — exactement le
+     défaut des pas (ft-v1072) : *ce n'est pas la fonctionnalité qui déborde, c'est sa publicité.*
+     ⚠️ On réutilise `_isTester()` (screens.js), déjà propriétaire de cette question (R2/R13). */
+  testeur:       () => { try{ return typeof _isTester==='function' && _isTester(); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
   /* 🔋 POINT ROUGE sur l'ACCUEIL : c'est là que le score de récup s'affiche, et c'est là que
@@ -475,6 +481,9 @@ const NEW_FEATURES=[
      repère ne bouge, et il n'y a rien à faire que ce que la pop-up de la veille demandait
      déjà. *La pop-up annonce, elle ne se répète pas.* */
   {id:'ratio-compo', screen:'progress', desc:'📐 <b>Ce que tes centimètres disent de ta perte de poids.</b> Sous le graphique du poids, une carte compare la variation de ton <b>poids</b>, de ta <b>masse grasse</b> et de ton <b>tour de taille</b> — chacune en % d\'elle-même, pour qu\'on puisse les mettre sur la même barre. ⭐ Si ta taille descend plus vite que ton poids, ce qui part est surtout du gras : la balance seule ne pouvait pas le dire. Il faut <b>2 tours de taille notés à 14 jours d\'écart</b>.'},
+  /* ⭐ POINT ROUGE CIBLÉ, sur l'ACCUEIL — c'est là que le bouton a remplacé le pavé, donc là
+     qu'il faut regarder. Même filtre que la pop-up : personne d'autre n'a de quoi le chercher. */
+  {id:'testeur-mini', screen:'home', si:'testeur', desc:'⭐ <b>Ta carte Testeur Fondateur est devenue un petit bouton.</b> En haut de l\'Accueil, « ⭐ Espace testeur fondateur » ouvre le <b>même espace qu\'avant</b> — ta boîte à idées comprise. Rien n\'est perdu : le grand encadré doré prenait 166 pixels en haut de l\'écran, le bouton en prend 48. C\'est Michel qui l\'a demandé, il trouvait son Accueil trop chargé.'},
   {id:'mensurations', screen:'progress', desc:'📏 <b>Tes mensurations sont gardées dans le temps.</b> Cou, taille et hanches en clair — poitrine, épaules, bras, avant-bras, cuisse et mollet sous « Autres mensurations ». Avant, seule la dernière valeur survivait. Onglet Progrès → Corps &amp; santé.'},
   {id:'recup-cumul', screen:'home', desc:'🔋 <b>Ta fatigue s\'additionne.</b> Deux séances rapprochées coûtent maintenant <b>plus</b> qu\'une seule — avant, seule la <b>dernière</b> comptait, quel que soit ce que tu avais empilé avant. ⭐ Le forfait « Jours enchaînés » disparaît : il punissait à la louche, et sur tes 60 derniers jours il te coûtait des points <b>28 fois</b> pour rien. 💡 Tape « Pourquoi ce score ? » : la ligne « Séance récente » porte désormais <b>toutes</b> tes séances des 48 dernières heures.'},
   {id:'recup-cardio', screen:'home', desc:'🔋 <b>Ta récupération tient compte du cardio.</b> Sa <b>durée</b> et son <b>intensité</b> comptent maintenant dans ton score — avant, <b>10 min de marche et 90 min de tapis intense</b> coûtaient exactement la même chose. ⭐ Un échauffement de 10 min pèse <b>1 point</b>, 45 min de tapis modéré en pèsent <b>10</b>. 💡 Tape « Pourquoi ce score ? » sous ton score : la ligne « Séance récente » inclut désormais ton cardio.'},
@@ -750,6 +759,14 @@ const WHATS_NEW=[
        quelque chose à FAIRE (noter ses mensurations, elles n'étaient conservées nulle part)
        ET un repère a bougé (le champ Hanches apparaît chez les hommes, où il était caché).
        ⛔ Elle ANNONCE, elle n'explique pas — le détail est dans l'aide (R25). */
+    /* ⭐⭐ POP-UP CIBLÉE (05/09/2026) — elle se mérite, ET elle ne concerne que 4 personnes.
+       ⛔ POURQUOI ELLE SE MÉRITE : un repère a bougé, et il a bougé SANS QU'ILS L'AIENT DEMANDÉ.
+       La carte dorée « Testeur Fondateur » disparaît de leur Accueil ; sans un mot, quelqu'un
+       peut conclure qu'il a **perdu son statut** ou **son accès à la boîte à idées** — c'est-à-dire
+       le canal par lequel ses retours arrivent. *Une disparition muette se lit comme une punition.*
+       ⛔ POURQUOI `si:'testeur'` : les autres n'ont jamais vu ce pavé. Leur annoncer sa disparition
+       serait du bruit pur, et le mécanisme existe exprès depuis ft-v1072. */
+    {v:73, si:'testeur', ic:'⭐', t:'Ta carte Testeur Fondateur devient un bouton', d:'① <b>Le grand encadré doré de l\'Accueil laisse la place à un petit bouton</b> « ⭐ Espace testeur fondateur » — même endroit, en haut de l\'écran. ② <b>Tu n\'as rien perdu :</b> ton statut est intact et le bouton ouvre exactement le même espace, avec ta <b>boîte à idées</b>. ③ C\'est une demande de Michel, qui trouvait son Accueil trop chargé — l\'écran gagne <b>118 pixels</b>, de quoi voir ton score de récup et ton bouton de séance sans faire défiler autant. 💛 Le merci, lui, reste vrai : cette appli existe aussi grâce à toi.'},
     {v:72, ic:'📏', t:'Tes mensurations sont enfin gardées dans le temps', d:'① <b>Tes centimètres sont maintenant datés et conservés</b> — avant, seule la <b>dernière</b> valeur survivait : tu voyais bouger ton % de graisse sans jamais pouvoir revoir d\'où tu partais. ② <b>9 mesures</b> : cou, taille et hanches en clair, le reste (poitrine, épaules, bras, avant-bras, cuisse, mollet) sous <b>« Autres mensurations »</b>. ③ ⚠️ <b>Une mesure seule ne se perd plus</b> : avant, taper le cou <b>sans</b> le tour de taille affichait une erreur et <b>jetait ta saisie</b>. 💡 Onglet Progrès → Corps &amp; santé, carte « Masse grasse ».'},
     {v:71, ic:'🔋', t:'Ta fatigue s\'additionne au lieu de compter une seule séance', d:'① <b>Deux séances rapprochées coûtent maintenant plus qu\'une seule.</b> Avant, seule <b>la dernière</b> comptait. ② Le facteur <b>« 🔥 Jours enchaînés »</b> disparaît : un forfait à la louche, remplacé par la vraie mesure. ⭐ <b>Bonne nouvelle</b> : sur tes 60 derniers jours, <b>25 journées REMONTENT</b>, 3 seulement baissent. ⚠️ <b>Ton historique bouge aussi</b> (au plus <b>6 points</b>). 💡 Le détail est dans l\'aide ❔ de l\'Accueil.'},
   {v:70, ic:'🔋', t:'Ta récupération tient enfin compte du cardio', d:'① <b>Ton cardio pèse maintenant sur ton score de récup</b>, selon sa <b>durée</b> et son <b>intensité</b> — avant, 10 min d’elliptique tranquille et 90 min de tapis intense coûtaient exactement pareil. ② Le <b>bonus de repos</b> n’arrive plus d’un coup au bout de 2 jours : il s’installe en pente. ⚠️ <b>Ton score va donc baisser un peu</b> sur les jours où tu as fait du cardio, <b>y compris dans ton historique</b> — mesuré : le plus gros écart est de <b>6 points</b>. Ce n’est pas une panne : c’est du travail qui n’était pas compté.'},
@@ -945,15 +962,16 @@ const ADMIN_CODE='0115'; // code de secours (modifiable sur demande)
 
 // ─── TESTEURS FONDATEURS ─────────────────────────────────────
 // Les tout premiers testeurs de Michel — récompensés par un statut exclusif
-// (carte dorée sur l'Accueil) + fonctions réservées à venir.
+// (bouton doré « ⭐ Espace testeur fondateur » en haut de l'Accueil — c'était un PAVÉ
+// jusqu'au 05/09/2026, ft-v1132 : « ça fait trop chargé ») + fonctions réservées à venir.
 // ⚠️ Emails en minuscules (comparaison via _isTester()). Reconnaissance « anti-curieux »
 //    côté client (comme le code admin) : suffisant pour une récompense cosmétique.
 // michdu75 ajouté le 31/07/2026 : Michel voulait tester la boîte à idées avec SON compte
 // (diagnostic du mail de Christophe jamais reçu). Effet de bord assumé : il voit aussi la
-// carte « Testeur Fondateur » et les pop-ups testeurs (une fois chacune).
+// bouton « Espace testeur fondateur » et les pop-ups testeurs (une fois chacune).
 const TESTER_EMAILS=['christophe@famillelanglois.fr','elineazs32@gmail.com','emma.david16@gmail.com','tanna.valery.studio@gmail.com','michdu75@gmail.com'];
 // « Super testeur » : celui qui teste vraiment à fond → espace exclusif (analyse photos approfondie + boîte à idées remontée à Michel).
-// michdu75 y est aussi pour le suivi photos (accès via le panneau Admin) — mais PAS de carte « Testeur Fondateur » ni de message « Michel te remercie » (voir _isTester / checkSuperTesterWelcome).
+// michdu75 y est aussi pour le suivi photos (accès via le panneau Admin) — mais PAS de bouton « Espace testeur fondateur » ni de message « Michel te remercie » (voir _isTester / checkSuperTesterWelcome).
 const SUPER_TESTER_EMAILS=['christophe@famillelanglois.fr','michdu75@gmail.com','emma.david16@gmail.com'];
 // ─── PREMIUM CÔTÉ CLIENT (fondateurs / testeurs premium À VIE) ────────────────
 // Miroir de PREMIUM_HARDCODED_ (Code.js). Comme la boîte à idées (TESTER_EMAILS),

@@ -1840,22 +1840,27 @@ function _isSuperTester(){
   const e=(S.email||'').trim().toLowerCase();
   return !!e && typeof SUPER_TESTER_EMAILS!=='undefined' && SUPER_TESTER_EMAILS.indexOf(e)>=0;
 }
-// Carte dorée « Testeur Fondateur » en haut de l'Accueil — visible RIEN QUE pour eux.
+/* ⭐ « Testeur Fondateur » — UN PETIT BOUTON, PLUS UN PAVÉ (05/09/2026, demande de Michel :
+   *« retire de l'écran le truc énorme du super testeur ou juste un petit bouton… ça fait trop
+   chargé »*, deux captures à l'appui).
+
+   ⛔⛔ POURQUOI UN BOUTON ET PAS UN RETRAIT — vérifié avant de trancher, pas supposé.
+   `openTesterSpace()` n'a **aucune autre porte permanente** : ses trois autres appelants sont le
+   panneau **Admin** (que Michel seul voit) et deux **pop-ups de bienvenue** qui ne s'affichent
+   qu'une fois. Le retirer aurait donc fermé, pour Christophe · Eline · Emma · Tatiana, le seul
+   chemin vers la **boîte à idées** — c'est-à-dire le canal par lequel les retours arrivent.
+   *Un outil sans porte d'entrée n'est pas un outil en attente, c'est un outil qui n'existe pas*
+   (leçon de ft-v1123). ⭐ On enlève donc le REMERCIEMENT, qui a été lu une fois, et on garde
+   l'ACCÈS, qui sert tous les jours.
+
+   ⭐ MESURÉ : **166 px → 48 px**, soit **118 px rendus** en haut de l'Accueil. */
 function _renderTesterCard(){
   const el=document.getElementById('home-tester');if(!el)return;
   if(!_isTester()){el.innerHTML='';el.style.padding='0';return;}
-  el.style.padding='14px 14px 0';
-  const first=((S.name||'').trim().split(/\s+/)[0]||'').replace(/[<>&]/g,'');
-  const hi=first?first+', ':'';
-  // Lien vers l'Espace Testeur (boîte à idées) pour TOUS les testeurs (le suivi photos y reste réservé aux super testeurs).
-  const espace='<div class="tc-espace" onclick="openTesterSpace()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Mon espace testeur privé →</div>';
-  el.innerHTML='<div class="tester-card">'
-    +'<div class="tc-star"><svg viewBox="0 0 24 24" width="24" height="24" fill="var(--gold)" stroke="var(--gold)" stroke-width="1.2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>'
-    +'<div style="flex:1;min-width:0;">'
-    +'<div class="tc-ttl">Testeur Fondateur</div>'
-    +'<div class="tc-msg">Merci '+hi+'d’avoir cru en Force Tracker dès le premier jour — cette appli existe aussi grâce à toi. <span class="tc-sign">— Michel</span></div>'
-    +espace
-    +'</div></div>';
+  el.style.padding='10px 14px 0';
+  el.innerHTML='<div class="tester-mini" onclick="openTesterSpace()">'
+    +'<svg viewBox="0 0 24 24" width="15" height="15" fill="var(--gold)" stroke="var(--gold)" stroke-width="1.2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
+    +'<span>Espace testeur fondateur</span><span class="tm-fl">→</span></div>';
 }
 function renderHome(){try{
   _renderTesterCard();

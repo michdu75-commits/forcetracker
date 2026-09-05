@@ -6,7 +6,29 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1131` — 📐 **LE RATIO POIDS ↔ CENTIMÈTRES : UNE CARTE, PAS UNE COURBE.**
+- **Version en ligne (live) :** `ft-v1132` — 🧹 **L'ACCUEIL DÉSENCOMBRÉ.**
+  Michel, 2 captures : *« retire le truc énorme du super testeur ou juste un petit bouton, et
+  commencer la séance sur la page d'accueil, ça fait trop chargé »*.
+  ⭐⭐ **Mesuré AVANT de proposer** (iPhone 393×852) : la zone visible s'arrête à **y = 778**, le
+  bouton « Commencer une séance » finissait à **967** → *il manquait 189 px*. ⛔ **Les deux options
+  de Michel simulées : aucune ne suffisait seule** (carte retirée : 23 px ; petit bouton : 71 px)
+  — d'où la question posée **avec les chiffres**.
+  ⭐ **Pavé « Testeur Fondateur » → petit bouton** (166 → 48 px). ⛔ **Pas de retrait** : vérifié,
+  `openTesterSpace` n'a **aucune autre porte permanente** — le retirer fermait la boîte à idées
+  des 4 testeurs (leçon ft-v1123). *On enlève le remerciement, on garde l'accès.*
+  ⛔ **Vrai défaut trouvé en mesurant, pour TOUT LE MONDE** : le bloc « souvenir » **vide**
+  occupait 10 px/jour. Corrigé par **une** règle CSS propriétaire unique (R2).
+  ⚠️⚠️ **Deux fois j'ai failli justifier une décision par un fait non vérifié** : le style
+  `.tester-card` que j'affirmais « encore employé » était **orphelin**, et une pop-up promettait
+  une *« carte dorée »* qui n'existe plus. Les deux attrapées par les témoins (**R28/§31**).
+  📣 Pop-up **v73** + point rouge **CIBLÉS** (`si:'testeur'`) — un repère bouge chez 4 personnes ;
+  les autres n'ont jamais vu ce pavé (défaut des pas, ft-v1072).
+  ⏭️ **Honnête : ça n'atteint pas l'objectif.** 967 → **831** (136 px rendus), mais il reste
+  **53 px** sous la nav — et **les espacements ne pourront jamais combler l'écart** (mesuré :
+  même à zéro, il manquait 13 px). Il faudrait **déplacer** le check-in ou la carte Milo, que
+  Michel a écartés. ⏭️ **Michel doit vérifier sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1131` — 📐 **LE RATIO POIDS ↔ CENTIMÈTRES : UNE CARTE, PAS UNE COURBE.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#906** sur `f7013fe`, **job `deploy` success**,
   les 7 étapes vertes à **11:24:03 UTC**.
   ⏳ **Suite complète VERTE** : **parcours 2762/2762** (+12, bloc CCXXXV), **calculs 339/339** (+21,

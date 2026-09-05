@@ -19863,8 +19863,19 @@ console.log('\n-- CLXXVII. On n\'annonce qu\'à ceux qui peuvent s\'en servir (f
        les 3 conditionnées y étaient légitimement visibles, donc il comparait 124 à 124 et ne
        mesurait rien. *Un témoin doit CONSTRUIRE l'état qu'il affirme.* */
     S.healthDaily=[]; persist();
+    /* ⚠️⚠️ CE TÉMOIN COMPTAIT « 3 » EN DUR, ET IL A ROUGI LE 05/09 SUR DU CODE SAIN — §31.
+       Une 4ᵉ annonce conditionnée est arrivée (`testeur-mini`, si:'testeur') et le témoin l'a
+       lue comme une régression. ⛔ Or « 3 » n'a JAMAIS été la garantie : le commentaire au-dessus
+       dit « le changement ne doit rien casser pour les 60+ entrées existantes ». La garantie,
+       c'est donc *« une entrée SANS `si` reste visible »* — et le nombre d'entrées AVEC `si` est
+       un détail qui bougera à chaque annonce ciblée légitime.
+       👉 On compte donc les conditionnées DEPUIS LA DONNÉE. Le témoin mord toujours (si une
+       entrée sans condition disparaissait, l'égalité casserait) et il cesse de rougir chaque
+       fois que quelqu'un fait correctement son travail. */
+    const _cond=(typeof NEW_FEATURES!=='undefined'?NEW_FEATURES:[]).filter(f=>f&&f.si).length;
     o.retro={sansSi:(typeof WHATS_NEW!=='undefined'?WHATS_NEW:[]).filter(w=>w&&!w.si).length,
              tousVisibles:_featVisibles().length,
+             conditionnees:_cond,
              totalFeats:(typeof NEW_FEATURES!=='undefined'?NEW_FEATURES:[]).length};
     /* ⑦ UN NOM INCONNU LAISSE PASSER (un bug muet se subit, un bug visible se corrige) */
     o.inconnu=_featSi({id:'x', si:'nExistePas'});
@@ -19893,9 +19904,13 @@ console.log('\n-- CLXXVII. On n\'annonce qu\'à ceux qui peuvent s\'en servir (f
     t('⛔ ⑥ … mais une fois RÉELLEMENT montrée, elle ne revient plus',
       A.apresAvoirVu.length===0, JSON.stringify(A.apresAvoirVu));
     /* ⛔ LE CHANGEMENT NE DOIT RIEN CASSER POUR LES 60+ ENTREES EXISTANTES. */
-    t('⛔ ⑦ RÉTROCOMPAT : toutes les entrées sans `si` restent visibles (sauf les 3 conditionnées)',
-      A.retro.tousVisibles===A.retro.totalFeats-3 && A.retro.sansSi>=50,
+    t('⛔ ⑦ RÉTROCOMPAT : toutes les entrées sans `si` restent visibles (les conditionnées, non)',
+      A.retro.tousVisibles===A.retro.totalFeats-A.retro.conditionnees && A.retro.sansSi>=50,
       JSON.stringify(A.retro));
+    /* ⛔ … et le témoin du dessus ne doit pas devenir vide de sens : s'il n'y avait PLUS aucune
+       entrée conditionnée, l'égalité serait vraie sans rien prouver du filtrage. */
+    t('⛔ ⑦bis CONTRÔLE — il existe bien des entrées conditionnées à mesurer',
+      A.retro.conditionnees>=3, A.retro.conditionnees+' entrée(s) avec `si`');
     /* ⛔ UN BUG MUET SE SUBIT, UN BUG VISIBLE SE CORRIGE. */
     t('⛔ ⑧ un nom de condition inconnu LAISSE PASSER, il ne cache pas en silence',
       A.inconnu===true, 'inconnu → '+A.inconnu);
@@ -26469,6 +26484,149 @@ console.log('\n-- CCXXXV. Le ratio poids <-> centimetres dans l\'ecran (ft-v1131
   await cx.close();
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// CCXXXVI. L'ACCUEIL DÉSENCOMBRÉ — le pavé « Testeur Fondateur » devient un bouton
+// Michel, deux captures à l'appui : « retire de l'écran le truc énorme du super testeur ou
+// juste un petit bouton, et commencer la séance sur la page d'accueil, ça fait trop chargé ».
+// ⛔⛔ CE QUE CE BLOC MESURE, C'EST DE LA PLACE — EN PIXELS, PAS « ça a l'air mieux ».
+// Un témoin qui se contenterait de vérifier « le petit bouton est là » resterait vert le jour
+// où un bloc de 200 px réapparaît au-dessus : ce qu'on protège, c'est la POSITION du bouton
+// « Commencer une séance », parce que c'est ça que Michel a demandé.
+console.log('\n═══ CCXXXVI. Accueil désencombré (carte testeur → bouton) ═══');
+{
+  const ca=await b.newContext({serviceWorkers:'block',viewport:{width:393,height:852},timezoneId:'Europe/Paris'});
+  const pa=await ca.newPage(); const ea=[]; pa.on('pageerror',e=>ea.push(e.message));
+  await pa.addInitScript(seedScript({ft4_email:'christophe@famillelanglois.fr'}));
+  await pa.goto('http://localhost:'+PORT+'/index.html');
+  await pa.waitForTimeout(2200);
+  const A=await pa.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    /* 🔴 RÈGLE D'OR #9 — on MESURE le bouton central avant/après, on ne le compare pas à une
+       valeur en dur : celle-ci dépendrait de la largeur d'écran du banc et deviendrait fausse
+       le jour où quelqu'un change le viewport, sans que le FAB ait bougé d'un pixel. */
+    const fabPos=()=>{const e=document.getElementById('nb-log'); if(!e)return '?';
+      const r=e.getBoundingClientRect();
+      return [Math.round(r.x),Math.round(r.y),Math.round(r.width),Math.round(r.height)].join(',');};
+    const fabAvant=fabPos();
+    goScreen('home',document.getElementById('nb-home')); renderHome();
+    await new Promise(r=>setTimeout(r,500));
+    const o={fabAvant, fabApres:fabPos()};
+    o.estTesteur=_isTester();                       // ⛔ contrôle : sans ça, tout serait vert sur du vide
+    const nav=document.querySelector('.nav, #nav, nav');
+    o.navHaut=Math.round(nav.getBoundingClientRect().top);
+    const ct=document.getElementById('home-tester');
+    o.carteHaut=Math.round(ct.getBoundingClientRect().height);
+    o.mini=!!ct.querySelector('.tester-mini');
+    o.pave=!!ct.querySelector('.tester-card');       // le pavé ne doit plus être sur l'Accueil
+    o.mene=(ct.innerHTML||'').indexOf('openTesterSpace')>=0;   // la porte reste ouverte (R30)
+    /* ⛔ le bloc « souvenir », vide la plupart du temps, ne doit RIEN occuper */
+    const sv=document.getElementById('home-souvenir');
+    o.souvVide=!(sv.textContent||'').trim();
+    o.souvHaut=Math.round(sv.getBoundingClientRect().height);
+    const btn=[...document.querySelectorAll('button,.btn,[onclick]')]
+      .find(x=>/Commencer une s[ée]ance/i.test(x.textContent||'') && x.getBoundingClientRect().height>20);
+    o.btnBas=btn?Math.round(btn.getBoundingClientRect().bottom):null;
+    o.fabFin=fabPos();
+    /* ⭐ L'ANNONCE EST-ELLE BIEN CIBLÉE ? C'est le seul morceau qui peut déborder sur des gens
+       qui n'ont jamais vu le pavé — et un débordement d'annonce est SILENCIEUX côté code. */
+    const w=(typeof WHATS_NEW!=='undefined'?WHATS_NEW:[]).find(x=>x&&x.v===73);
+    const nf=(typeof NEW_FEATURES!=='undefined'?NEW_FEATURES:[]).find(x=>x&&x.id==='testeur-mini');
+    o.predicat=(typeof FEAT_SI!=='undefined' && typeof FEAT_SI.testeur==='function');
+    o.popExiste=!!w; o.popCiblee=!!(w&&w.si==='testeur'); o.popVue=!!(w&&_featSi(w));
+    o.dotCiblee=!!(nf&&nf.si==='testeur'); o.dotVu=!!(nf&&_featSi(nf));
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  await ca.close();
+  // ── et l'écran de quelqu'un qui n'est PAS testeur : rien de doré ne doit apparaître
+  const cb=await b.newContext({serviceWorkers:'block',viewport:{width:393,height:852},timezoneId:'Europe/Paris'});
+  const pb=await cb.newPage();
+  await pb.addInitScript(seedScript({ft4_email:'quelquun@exemple.fr'}));
+  await pb.goto('http://localhost:'+PORT+'/index.html');
+  await pb.waitForTimeout(2200);
+  const B=await pb.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    goScreen('home',document.getElementById('nb-home')); renderHome();
+    await new Promise(r=>setTimeout(r,500));
+    const ct=document.getElementById('home-tester');
+    const w=(typeof WHATS_NEW!=='undefined'?WHATS_NEW:[]).find(x=>x&&x.v===73);
+    const nf=(typeof NEW_FEATURES!=='undefined'?NEW_FEATURES:[]).find(x=>x&&x.id==='testeur-mini');
+    return { estTesteur:_isTester(), haut:Math.round(ct.getBoundingClientRect().height),
+             mini:!!ct.querySelector('.tester-mini'),
+             popVue:!!(w&&_featSi(w)), dotVu:!!(nf&&_featSi(nf)) };
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  await cb.close();
+
+  if(A.erreur) t('CCXXXVI ⛔ le bloc s\'exécute (aucun témoin ne vaut sans ça)', false, A.erreur);
+  /* ⛔ CONTRÔLE D'ABORD : le compte doit VRAIMENT être reconnu testeur, sinon « pas de pavé »
+     serait vert pour la mauvaise raison — c'est §36 (une sonde qui mesure zéro et rassure). */
+  t('CCXXXVI ⛔ CONTRÔLE — le compte de test est bien reconnu comme testeur',
+    A.estTesteur===true, 'sinon tout ce qui suit est vert sur du vide');
+  t('CCXXXVI ⭐⭐ le PAVÉ doré a quitté l\'Accueil, remplacé par un petit bouton',
+    A.pave===false && A.mini===true, 'pavé '+A.pave+' · mini '+A.mini);
+  t('CCXXXVI ⭐⭐ … et la PORTE reste ouverte : il mène toujours à l\'espace testeur',
+    A.mene===true, 'sans lui, Christophe/Eline/Emma/Tatiana perdent la boîte à idées (R30)');
+  t('CCXXXVI ⭐ le bloc testeur tient en une ligne (≤ 70 px, il en faisait 166)',
+    A.carteHaut>0 && A.carteHaut<=70, A.carteHaut+' px');
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : ce n'est pas « le bouton est petit », c'est la PLACE
+     RENDUE. Mesuré avant : le bouton « Commencer une séance » finissait à 967 px. */
+  t('CCXXXVI ⭐⭐ « Commencer une séance » remonte d\'au moins 120 px (mesuré, pas regardé)',
+    A.btnBas!==null && A.btnBas<=847, 'bas='+A.btnBas+' px (967 avant)');
+  /* ⛔ LE VRAI CORRECTIF DE FOND, et il vaut pour TOUT LE MONDE, pas que les testeurs. */
+  t('CCXXXVI ⛔ un bloc VIDE de l\'Accueil n\'occupe AUCUNE place (il mangeait 10 px/jour)',
+    A.souvVide!==true || A.souvHaut===0, 'souvenir vide='+A.souvVide+' hauteur='+A.souvHaut);
+  t('CCXXXVI 🔴 RÈGLE D\'OR #9 : le bouton central n\'a pas bougé ('+A.fabAvant+')',
+    A.fabAvant===A.fabApres && A.fabApres===A.fabFin,
+    A.fabAvant+' → '+A.fabApres+' → '+A.fabFin);
+  /* ⛔ NON-RÉGRESSION : quelqu'un qui n'est pas testeur ne voit RIEN de doré, et son bloc
+     ne laisse pas un trou — c'est le cas de 100 % des vrais utilisateurs. */
+  t('CCXXXVI ⛔ un NON-testeur ne voit aucun bouton doré, et aucun espace vide',
+    B.estTesteur===false && B.mini===false && B.haut===0,
+    'testeur '+B.estTesteur+' · mini '+B.mini+' · hauteur '+B.haut);
+  /* ⛔⛔ R30 / R28 — CE TÉMOIN A ÉTÉ ÉCRIT À L'ENVERS, ET C'EST LUI QUI M'A CORRIGÉ.
+     Je l'avais posé sur « le style `.tester-card` est GARDÉ, il a encore un lecteur », en
+     m'appuyant sur une phrase que j'avais écrite moi-même dans le CSS : *« le pavé vit encore
+     dans deux pop-ups de bienvenue »*. **Je ne l'avais pas vérifié.** Le témoin m'a forcé à
+     `grep` : `class="tester-card"` n'existe **nulle part**. Le style était donc devenu
+     ORPHELIN au moment même où j'écrivais qu'il ne l'était pas.
+     👉 Il vérifie maintenant l'inverse : le style est **retiré**, et sa raison est **écrite**
+     — sinon quelqu'un le remettra, ou pire, croira que le pavé peut encore s'afficher. */
+  {
+    const H=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+    const C=fs.readFileSync(path.join(ROOT,'style.css'),'utf8');
+    t('CCXXXVI ⛔ le style orphelin `.tester-card` est bien PARTI (aucun lecteur)',
+      !/\.tester-card\s*\{/.test(C) && !/class="tester-card"/.test(H) && !/tc-star-pulse/.test(C),
+      'css '+/\.tester-card\s*\{/.test(C)+' · html '+/class="tester-card"/.test(H));
+    t('CCXXXVI ⛔ … et le retrait est ÉCRIT avec sa raison, pas juste fait (R30)',
+      /R30/.test(C) && /orphelin/i.test(C), 'un retrait muet redevient un bug');
+    /* ⚠️ LE TEXTE PÉRIMÉ — la pop-up de bienvenue d'un NOUVEAU testeur promettait « une carte
+       dorée tout en haut de ton Accueil ». Vrai hier, faux à la seconde où ceci part en ligne.
+       *Une aide qui nomme un repère inexistant est pire qu'une aide absente : on la croit.* */
+    t('CCXXXVI ⚠️ aucun texte ne promet plus une « carte dorée » sur l\'Accueil',
+      !/carte dor[ée]e\s*«?\s*Testeur/i.test(H), 'la pop-up de bienvenue est périmée');
+  }
+  /* 📣 RÈGLE D'OR #11 — L'ANNONCE EXISTE, ET ELLE NE DÉBORDE PAS.
+     ⛔⛔ Les DEUX moitiés comptent : un témoin qui vérifierait seulement « le testeur la voit »
+     resterait vert si elle partait aussi à tout le monde — et c'est précisément le défaut que
+     `si` existe pour empêcher (ft-v1072, la pop-up des pas envoyée à 4 personnes qui ne
+     pouvaient pas s'en servir). *Ce n'est pas la fonctionnalité qui déborde, c'est sa publicité.* */
+  t('CCXXXVI 📣 le prédicat `testeur` existe dans FEAT_SI (sinon le filtre laisse tout passer)',
+    A.predicat===true, 'un `si` inconnu laisse passer, par conception — donc la garde serait morte');
+  t('CCXXXVI 📣 la pop-up v73 existe ET porte son filtre `si:testeur`',
+    A.popExiste===true && A.popCiblee===true && A.dotCiblee===true,
+    'pop '+A.popExiste+' · ciblée '+A.popCiblee+' · point rouge ciblé '+A.dotCiblee);
+  t('CCXXXVI 📣 … un TESTEUR la voit (pop-up + point rouge)',
+    A.popVue===true && A.dotVu===true, 'pop '+A.popVue+' · dot '+A.dotVu);
+  t('CCXXXVI ⛔⛔ … et un NON-testeur ne la voit PAS (l\'autre moitié du témoin)',
+    B.popVue===false && B.dotVu===false, 'pop '+B.popVue+' · dot '+B.dotVu);
+  t('CCXXXVI aucune erreur JS sur tout le bloc', ea.length===0, ea.join(' | '));
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
@@ -26657,6 +26815,7 @@ console.log('\n-- CXCI. Une mise à jour ne tue plus un banc d\'essai en cours (
   t('⛔ le drapeau `_evRunning` existe et est bien posé par le banc d\'essai (sinon garde morte)',
     /_evRunning\s*=\s*true/.test(fs.readFileSync(path.join(ROOT,'coach.js'),'utf8')), '');
 }
+
 
 
 
