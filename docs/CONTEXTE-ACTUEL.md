@@ -21,6 +21,8 @@
   **aucun affaibli**, le premier est même plus strict.
   ⛔⛔ **DÉCISION À NE PAS REPROPOSER (R30)** : **on ne touche pas au calendrier**. Signalé à
   Michel que c'est le plus gros bloc (424 px) ; sa réponse : *« impec et beau »*.
+  ⚠️ **28ᵉ collision** : session-A a publié sa ft-v1136 pendant ma passe → ma version monte à
+  **ft-v1137**. Fusion en gardant les deux côtés, **repasse sur l'arbre fusionné : 2818/2818**.
   📐 **Accueil : 1411 → 1307 px.** Sur la journée : check-in **157→112**, pavé testeur
   **166→48**, carte récup **437→300**.
 
