@@ -2268,6 +2268,121 @@ console.log('\n═══ 16. Les deux plafonds de la récup — gardés, avec le
     /\+20 bpm/.test(src) && /102 en brut|pèse 102/.test(src), '');
 }
 
+// ════════════════════════════════════════════════════════════════════
+// 📐 LE RATIO POIDS ↔ CENTIMÈTRES (ft-v1131). Michel voulait les mensurations SUR le graphique
+// du poids « sans que ce soit chargé visuellement », puis a tranché lui-même : *« ou alors fais
+// un ratio entre la perte de poids, la masse grasse et la perte de centimètres »*.
+// ⭐⭐ CE QUE CE BLOC PROTÈGE EN PRIORITÉ N'EST PAS UN CHIFFRE, C'EST UN REFUS : quand le poids
+// baisse sans que le tour de taille bouge, l'app doit dire **qu'elle ne sait pas**. C'est le
+// seul endroit où il serait facile — et faux — d'annoncer une perte de gras (R29/R32).
+console.log('\n═══ 16. Ratio poids <-> centimetres ═══');
+{
+  const {c:_cR,p:_pR}=await boot(null,{});
+  const J=(n)=>{const d=new Date();d.setDate(d.getDate()-n);
+                return d.toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});};
+  const R=await _pR.evaluate(({J40,J2,J20,J5,J1})=>{
+    const o={};
+    const pose=(mens,pesees)=>{S.mensLog=mens;S.weightLog=pesees;};
+    const kg=(d,k,bf)=>({date:d,kg:k,bf:(bf==null?null:bf)});
+    // ① LE CAS COMPLET — taille −5,4 %, poids −2,6 %, masse grasse −8,3 %
+    pose([{d:J40,k:'taille',v:93},{d:J2,k:'taille',v:88},
+          {d:J40,k:'hanches',v:102},{d:J2,k:'hanches',v:101}],
+         [kg(J40,85.3,20.6),kg(J2,83.1,18.9)]);
+    o.plein=ratioCompo();
+    o.th=ratioTailleHanches();
+    // ② PERSONNE QUI NE MESURE PAS → rien du tout (zéro bruit)
+    pose([],[kg(J40,85.3,20.6),kg(J2,83.1,18.9)]);
+    o.vide=ratioCompo();
+    // ③ UNE SEULE MESURE, ou deux trop rapprochées → état d'ATTENTE, pas de verdict
+    pose([{d:J5,k:'taille',v:90}],[kg(J5,84,null),kg(J1,83.8,null)]);
+    o.seule=ratioCompo();
+    pose([{d:J5,k:'taille',v:90},{d:J1,k:'taille',v:89}],[kg(J5,84,null),kg(J1,83.8,null)]);
+    o.proches=ratioCompo();
+    // ④ LES PESÉES SONT TROP LOIN DES MENSURATIONS (> 7 j) → pas de ratio, on le dit
+    pose([{d:J40,k:'taille',v:93},{d:J2,k:'taille',v:88}],[kg(J20,84,null)]);
+    o.sansPoids=ratioCompo();
+    // ⑤ LES HANCHES SONT TROP LOIN DE LA TAILLE (> 21 j) → aucune paire
+    pose([{d:J2,k:'taille',v:88},{d:J40,k:'hanches',v:101}],[kg(J2,83.1,null)]);
+    o.thLoin=ratioTailleHanches();
+    // ⑥ LES 9 LECTURES, sans toucher au journal : (variation poids %, variation taille %)
+    o.lect={};
+    [['gras',-2,-5],['ensemble',-3,-3.2],['recomp',-0.2,-4],['prise',2.5,-3],
+     ['inconnu',-3,0.2],['monte',3,3],['tourmonte',0.1,2.5],['divergent',-3,2.5],
+     ['stable',0.2,-0.3]].forEach(function(c){ o.lect[c[0]]=_ratioLecture(c[1],c[2]); });
+    // ⑦ LES BARRES : la plus grosse variation prend toute la largeur
+    o.barres=_ratioBarres([{l:'Poids',pct:-2.6,c:'a'},{l:'MG',pct:-8.3,c:'b'},{l:'Taille',pct:-5.4,c:'c'}]);
+    o.seuils={min:RATIO_MIN_JOURS,stable:RATIO_STABLE_PCT,app:RATIO_APPARIE_J};
+    return o;
+  },{J40:J(40),J2:J(2),J20:J(20),J5:J(5),J1:J(1)});
+
+  /* ⛔ CONTRÔLE D'ABORD : sans lui, « tout rend null » ferait passer les témoins ②③④⑤ en vert
+     et on aurait livré une carte qui ne s'affiche jamais. */
+  t('⛔ CONTRÔLE — le cas complet produit bien un résultat (sinon tout le bloc est vert sur du vide)',
+    !!R.plein && R.plein.etat==='ok', JSON.stringify(R.plein));
+  t('la variation du tour de taille est RELATIVE : 93 → 88 cm = −5.4 %',
+    R.plein && R.plein.taille.pct===-5.4, String(R.plein&&R.plein.taille.pct));
+  t('… celle du poids aussi : 85.3 → 83.1 kg = −2.6 %',
+    R.plein && R.plein.poids.pct===-2.6, String(R.plein&&R.plein.poids.pct));
+  /* ⭐⭐ C'EST CE CHIFFRE QUI REND LA COMPARAISON POSSIBLE : la masse grasse est déjà un %,
+     et sa variation RELATIVE (20.6 → 18.9 = −8.3 % de sa propre valeur) est ce qui lui permet
+     de tenir sur la même barre que des kg et des cm. */
+  t('⭐ la masse grasse varie en % DE SA PROPRE VALEUR : 20.6 → 18.9 = −8.3 %',
+    R.plein && R.plein.mg && R.plein.mg.pct===-8.3, JSON.stringify(R.plein&&R.plein.mg));
+  t('la période mesurée est celle des mensurations, pas celle des pesées (38 jours)',
+    R.plein && R.plein.jours===38, String(R.plein&&R.plein.jours));
+  t('⭐ taille qui recule plus vite que le poids → lecture « gras »',
+    R.plein && R.plein.lecture.code==='gras', String(R.plein&&R.plein.lecture.code));
+
+  /* ⛔⛔ LE TÉMOIN QUI PORTE LA VERSION : le refus de conclure. */
+  t('⛔⛔ poids en baisse + taille IMMOBILE → « on ne peut pas dire ce qui part », JAMAIS « du gras »',
+    R.lect.inconnu.code==='inconnu' && /on ne peut pas dire/i.test(R.lect.inconnu.txt)
+      && !/surtout du \*\*gras\*\*/.test(R.lect.inconnu.txt), JSON.stringify(R.lect.inconnu));
+  /* ⭐⭐ ET LE CAS QUI JUSTIFIE TOUTE LA CARTE : la balance immobile pendant que la taille
+     descend. La carte « recomposition » l'annonce depuis des mois sans pouvoir le montrer. */
+  t('⭐⭐ balance immobile + taille qui descend → « recomposition », pas « stable »',
+    R.lect.recomp.code==='recomp' && /muscle/.test(R.lect.recomp.txt), JSON.stringify(R.lect.recomp));
+  t('les 9 lectures rendent bien 9 codes DIFFÉRENTS (aucune ne mange sa voisine)',
+    new Set(Object.keys(R.lect).map(k=>R.lect[k].code)).size===9,
+    Object.keys(R.lect).map(k=>k+'→'+R.lect[k].code).join(' · '));
+  t('… et chacune rend le code attendu pour son couple (poids %, taille %)',
+    Object.keys(R.lect).every(k=>R.lect[k].code===k),
+    Object.keys(R.lect).filter(k=>R.lect[k].code!==k).join(' · '));
+  /* ⛔ Une lecture NEUTRE ne doit pas être peinte en vert : la couleur est un jugement. */
+  t('⛔ « on ne sait pas » et « divergent » ne sont PAS coloriés en vert',
+    R.lect.inconnu.c!=='var(--green)' && R.lect.divergent.c!=='var(--green)',
+    R.lect.inconnu.c+' · '+R.lect.divergent.c);
+
+  t('⛔ zéro mensuration → AUCUNE carte (on n\'explique pas à quelqu\'un ce qu\'il rate)',
+    R.vide===null, JSON.stringify(R.vide));
+  t('⭐ une seule mensuration → état d\'ATTENTE qui dit à partir de QUAND (R29), pas le silence',
+    R.seule && R.seule.etat==='attente' && /^\d{4}-\d{2}-\d{2}$/.test(R.seule.prochaine||''),
+    JSON.stringify(R.seule));
+  t('⛔ deux mensurations à 4 jours → toujours « attente » : c\'est la précision du ruban, pas une tendance',
+    R.proches && R.proches.etat==='attente', JSON.stringify(R.proches));
+  t('⛔ des pesées à plus de 7 jours des mensurations → « sanspoids », aucun ratio inventé',
+    R.sansPoids && R.sansPoids.etat==='sanspoids', JSON.stringify(R.sansPoids));
+
+  t('⚖️ taille + hanches proches → un rapport (88/101 ≈ 0.871) et son évolution',
+    R.th && R.th.ratio===0.871 && R.th.ecart!=null, JSON.stringify(R.th));
+  /* ⛔ Un tour de taille de cette semaine avec des hanches d'il y a 38 jours ne décrit
+     aucun corps réel — c'est la même règle que la fenêtre des bilans (R29). */
+  t('⛔ hanches mesurées 38 jours avant la taille → AUCUN rapport (elles ne décrivent pas le même corps)',
+    R.thLoin===null, JSON.stringify(R.thLoin));
+  /* ⛔⛔ ET AUCUN SEUIL DE SANTÉ NULLE PART : poser 0,90 / 0,85 transformerait une
+     mensuration en diagnostic, ce que la Constitution interdit. */
+  t('⛔⛔ le rapport taille/hanches ne porte AUCUN seuil de santé (ce serait un diagnostic)',
+    !/0[.,]9(0)?\s*(chez|pour|seuil)|obésité abdominale/i.test(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8')), '');
+
+  t('⭐ les barres partagent UNE échelle : la plus grosse variation prend 100 %',
+    /width:100%/.test(R.barres) && (R.barres.match(/width:(\d+)%/g)||[]).length===3,
+    (R.barres.match(/width:\d+%/g)||[]).join(' · '));
+  t('… et aucune barre ne disparaît complètement (plancher de 3 %)',
+    (R.barres.match(/width:(\d+)%/g)||[]).every(w=>+w.match(/\d+/)[0]>=3), R.barres.slice(0,200));
+  t('les trois seuils sont NOMMÉS, pas écrits en dur (14 j · 1 % · 7 j)',
+    R.seuils.min===14 && R.seuils.stable===1 && R.seuils.app===7, JSON.stringify(R.seuils));
+  await _cR.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL LINÉAIRE : '+ok+' ✅ · '+ko+' ❌ ════');

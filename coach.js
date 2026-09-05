@@ -3666,8 +3666,26 @@ ${(()=>{
     lignes.push(`${m.l} ${der.v} cm (${d>0?'+':''}${d} en ${quand})`);
   });
   if(!lignes.length) return '';
+  /* ⭐⭐ LA LECTURE POIDS ↔ CENTIMÈTRES ARRIVE ICI AUSSI (ft-v1131), ET C'EST **R2** QUI
+     L'EXIGE, pas le confort. L'app affiche désormais un verdict sous le graphique du poids
+     (« ce qui part est surtout du gras », « on ne sait pas ce qui part »…). Si Milo refaisait
+     ce raisonnement de son côté à partir des chiffres bruts, ***l'écran et lui finiraient par
+     dire deux choses différentes sur la même question***, et c'est celle que la personne pose
+     le plus souvent. Un seul propriétaire (`ratioCompo`), deux lecteurs.
+     ⛔ On envoie le VERDICT et les deux variations, pas la démonstration : ce qui coûte des
+     caractères, ce n'est pas la conclusion, c'est le calcul qu'il n'a pas à refaire.
+     ⛔⛔ ET LE CAS « ON NE SAIT PAS » PART AUSSI, exprès — c'est même le plus utile : sans lui,
+     Milo devant un poids qui baisse et une taille immobile choisirait une explication, et il
+     n'y en a pas (R29). */
+  const rc=(typeof ratioCompo==='function')?ratioCompo():null;
+  const lect=(rc&&rc.etat==='ok')
+    ? `\n- Poids ↔ centimètres (sur ${rc.jours} j): poids ${rc.poids.pct>0?'+':''}${rc.poids.pct}% · tour de taille ${rc.taille.pct>0?'+':''}${rc.taille.pct}%${rc.mg?` · masse grasse ${rc.mg.pct>0?'+':''}${rc.mg.pct}%`:''} → ${rc.lecture.ti}.`
+      + `\n  ⛔ C'est EXACTEMENT ce que son écran Progrès affiche : dis la même chose, sans recalculer autrement.`
+      + (rc.lecture.code==='inconnu'?`\n  ⛔⛔ Ici on NE SAIT PAS ce qui part (eau, muscle ou gras se ressemblent sur une balance) : ne choisis pas une explication, dis-le.`:'')
+    : '';
   return `- Mensurations suivies: ${lignes.join(' · ')}`
-    + `\n  ⛔ Ce sont des mesures qu'elle prend elle-même : commente la TENDANCE si on te le demande, jamais le chiffre isolé, et ne réclame jamais qu'elle en ajoute.`;
+    + `\n  ⛔ Ce sont des mesures qu'elle prend elle-même : commente la TENDANCE si on te le demande, jamais le chiffre isolé, et ne réclame jamais qu'elle en ajoute.`
+    + lect;
 })()}
 ${(()=>{const cp=getMensCyclePhase();if(!cp)return '';
   const perfTxt={low:'énergie basse',rising:'énergie qui remonte',peak:'énergie et force au maximum',declining:'énergie en baisse'}[cp.perf]||'';
@@ -7572,6 +7590,9 @@ const _DRAWER_CONTENT = {
         /* ⭐ L'AIDE EXPLIQUE CE QUE LA POP-UP A SEULEMENT ANNONCÉ (R25), et elle porte les
            deux questions qu'on se posera devant l'écran : pourquoi seulement trois champs
            visibles, et pourquoi certaines valeurs sont marquées « calculé ». */
+        /* ⭐ L'AIDE DÉTAILLÉE PORTE CE QUE LA CARTE NE PEUT PAS DIRE EN 3 LIGNES : pourquoi
+           des pourcentages, et surtout la phrase qu'on refuse d'écrire (R25/R32). */
+        {ic:'📐',t:'Ce que tes centimètres disent de ta perte de poids',d:'Onglet Progrès → sous-onglet <b>Poids</b>, sous le graphique. La carte compare la variation de ton <b>poids</b>, de ta <b>masse grasse</b> et de ton <b>tour de taille</b> sur la même période. ⭐ <b>Pourquoi des % et pas des kg et des cm ?</b> Parce que −3 kg et −4 cm ne se comparent pas — ce sont deux grandeurs différentes, elles ne tiennent pas sur la même règle. Chacune est donc ramenée à <b>un % d\'elle-même</b>, et là oui, elles se comparent. ⛔ <b>« −8 % » sur la masse grasse veut dire « 8 % de sa propre valeur »</b> (20 % → 18,4 %). Ça ne veut <b>PAS</b> dire « 8 % de ce que tu as perdu était du gras » : ce chiffre-là, aucune balance grand public ne permet de le calculer honnêtement, donc l\'app ne l\'écrit jamais. ⭐ <b>Les 3 lectures qui comptent :</b> ① ta taille descend <b>plus vite</b> que ton poids → ce qui part est surtout du gras ; ② ton poids <b>ne bouge pas</b> et ta taille descend → c\'est la recomposition, et le pèse-personne y est aveugle ; ③ ton poids baisse et ta taille <b>ne bouge pas</b> → l\'app te dit <b>qu\'on ne sait pas</b>, parce que l\'eau, le muscle et le gras se ressemblent sur une balance. ⚠️ Il faut <b>2 tours de taille espacés d\'au moins 14 jours</b>, et une pesée à moins de 7 jours de chacun — sinon on mesurerait l\'imprécision du mètre-ruban et pas ton corps. ⚖️ Une 2ᵉ carte apparaît si tu notes aussi tes <b>hanches</b> : le rapport taille/hanches, le seul repère ici qui <b>ne dépend d\'aucune balance</b>. On te montre sa valeur et son sens de variation — <b>aucun seuil de santé</b> : ça, c\'est à ton médecin, pas à une app.'},
         {ic:'📏',t:'Tes mensurations, gardées dans le temps',d:'Onglet Progrès → Corps &amp; santé, carte « Masse grasse ». <b>Cou, taille et hanches</b> sont visibles ; les <b>6 autres</b> (poitrine, épaules, bras, avant-bras, cuisse, mollet) sont sous « <b>Autres mensurations</b> » — replié exprès, pour qu\'une saisie reste une saisie et pas un formulaire. ⭐ <b>Chaque valeur est datée</b> : tu peux enfin revoir d\'où tu es parti, ce que le seul % de graisse ne disait pas. ⭐ <b>Une seule mesure suffit</b> — tu n\'es plus obligé de remplir cou <b>et</b> taille pour que ta saisie soit gardée (avant, elle était jetée). ⛔ Se remesurer le même jour <b>corrige</b> la valeur, ça n\'empile pas : deux chiffres du même tour de taille le même jour, c\'est une hésitation, pas une tendance. ⚠️ <b>Une seule valeur par zone</b> (pas de droite/gauche). 💡 Seuls cou + taille (+ hanches chez la femme) servent au calcul du % ; les autres ne servent qu\'à suivre.'},
         /* 🏷️ R32/R33 — pourquoi certains chiffres portent « calculé ». */
         {ic:'🧮',t:'« Calculé » n\'est pas « mesuré »',d:'Quand tu importes un bilan de balance, il arrive qu\'il <b>manque l\'IMC ou le % de graisse</b>. L\'app les <b>complète quand elle le peut</b> — mais elle dit toujours lesquels sont <b>calculés</b> et non lus. ⭐ <b>L\'IMC se calcule sans rien supposer</b> (ton poids ÷ ta taille²). ⛔ <b>Le % de graisse, non</b> : il a besoin de tes mensurations <b>de cette époque-là</b>. Sur un bilan d\'il y a 8 mois, appliquer ton tour de taille d\'aujourd\'hui inventerait un fait sur toi — donc l\'app laisse vide plutôt que de deviner. 💡 Plus tu notes tes mensurations, plus tes anciens bilans peuvent être complétés honnêtement.'},

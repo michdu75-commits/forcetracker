@@ -26389,6 +26389,86 @@ console.log('\n-- CCXXXIV. Le journal des mensurations, et la mesure qui se perd
   }
 }
 
+/* ═══ CCXXXV. LE RATIO POIDS ↔ CENTIMÈTRES DANS L'ÉCRAN (ft-v1131) ════════════════════════
+   Michel demandait de poser les mensurations SUR le graphique du poids et de la masse grasse
+   *« sans que ce soit chargé visuellement »*, puis il a tranché lui-même : *« ou alors fais un
+   ratio entre la perte de poids, la masse grasse et la perte de centimètres »*.
+   ⭐⭐ SON IDÉE RÈGLE LE PROBLÈME PAR CONSTRUCTION : le graphique porte déjà des kg (axe
+   gauche) et des % (axe droit) ; des cm y seraient une **3ᵉ unité**. *Un ratio n'a pas d'unité.*
+   ⛔⛔ CE QUE CE BLOC PROTÈGE : que la carte ARRIVE bien dans le DOM (le calcul est déjà
+   couvert par `tests/calculs` bloc 16 — ici on vérifie ce que la personne VOIT), et surtout
+   qu'une carte à barres ne casse pas les cartes en texte qui partagent le même gabarit.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXXV. Le ratio poids <-> centimetres dans l\'ecran (ft-v1131) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',
+    ft4_gender:'H',ft4_height:'178',ft4_bw:'83'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1800);
+  const R=await p.evaluate(()=>{ try{
+    const o={};
+    const J=(n)=>{const d=new Date();d.setDate(d.getDate()-n);
+                  return d.toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});};
+    const wl=[]; for(let i=45;i>=0;i--) wl.push({date:J(i),kg:+(85.3-(45-i)*0.05).toFixed(1),
+                                                bf:(i===45||i===2)?(i===45?20.6:18.9):null});
+    S.weightLog=wl;
+    S.mensLog=[{d:J(40),k:'taille',v:93,s:'manuel'},{d:J(2),k:'taille',v:88,s:'manuel'},
+               {d:J(40),k:'hanches',v:102,s:'manuel'},{d:J(2),k:'hanches',v:101,s:'manuel'}];
+    const el=document.getElementById('weight-correlations');
+    if(!el) return {err:'weight-correlations absent'};
+    renderWeightTab();
+    o.html=el.innerHTML; o.txt=el.innerText||el.textContent||'';
+    o.cartes=el.querySelectorAll('.corr-card').length;
+    /* ⛔ La carte à barres ne doit pas manger les cartes en TEXTE du même gabarit. */
+    o.tendance=/kg \/ semaine/.test(o.txt);
+    /* ② SANS AUCUNE MENSURATION : la carte disparaît, le reste reste. */
+    S.mensLog=[]; renderWeightTab();
+    o.sansMens={txt:el.innerText||el.textContent||'', cartes:el.querySelectorAll('.corr-card').length};
+    /* ③ AVEC UNE SEULE : l'état d'attente, qui DIT à partir de quand. */
+    S.mensLog=[{d:J(3),k:'taille',v:90,s:'manuel'}]; renderWeightTab();
+    o.attente=el.innerText||el.textContent||'';
+    return o;
+  }catch(e){ return {err:e.message}; } });
+
+  t('CCXXXV ⛔ CONTRÔLE — l\'écran Poids rend bien ses cartes (sinon tout le bloc est vert sur du vide)',
+    !R.err && R.cartes>=3, R.err||('cartes='+R.cartes));
+  t('CCXXXV ⭐ la carte 📐 arrive dans l\'écran, avec son verdict en titre',
+    /Ce qui part est surtout du gras/.test(R.txt||''), (R.txt||'').slice(0,180));
+  t('CCXXXV les TROIS grandeurs sont sur la même carte (poids · masse grasse · tour de taille)',
+    /Poids/.test(R.txt||'') && /Masse grasse/.test(R.txt||'') && /Tour de taille/.test(R.txt||''), '');
+  /* ⚠️ LES TROIS CHIFFRES SONT MESURÉS, PAS PRÉDITS — et j'avais écrit −2.6 de tête en le
+     recopiant de la fixture de `tests/calculs`, où les deux pesées SONT 85.3 et 83.1. Ici la
+     série est quotidienne : la pesée appariée au J−40 vaut 85.3−5×0.05 = **85.05**, celle du
+     J−2 vaut 85.3−43×0.05 = **83.15**, soit **−2.2 %**. *Un attendu qu'on n'a pas dérivé est
+     un attendu qu'on a deviné* — et il aurait fait rougir un code parfaitement juste. */
+  t('CCXXXV ⭐ … et chacune porte sa variation en % (−2.2 · −8.3 · −5.4)',
+    /-2\.2\s*%/.test(R.txt||'') && /-8\.3\s*%/.test(R.txt||'') && /-5\.4\s*%/.test(R.txt||''),
+    (R.txt||'').slice(0,300));
+  /* ⭐⭐ LA PHRASE QUI EMPÊCHE LE MALENTENDU. Sans elle, « −8.3 % » sur la masse grasse se lit
+     comme « 8 % de ce que tu as perdu était du gras » — une phrase qu'on ne sait PAS produire. */
+  t('CCXXXV ⭐⭐ la légende dit que le % est celui de CHAQUE mesure par rapport à elle-même',
+    /par rapport à elle-même/.test(R.txt||''), '');
+  t('CCXXXV la période affichée est celle des MENSURATIONS (38 jours), pas celle du zoom du graphique',
+    /Sur 38 jours/.test(R.txt||''), (R.txt||'').slice(0,300));
+  /* ⛔ Les barres partagent une seule échelle : une seule doit être à 100 %. */
+  t('CCXXXV ⛔ une seule barre est pleine largeur — les trois partagent UNE échelle',
+    ((R.html||'').match(/width:100%/g)||[]).length===1,
+    String(((R.html||'').match(/width:\d+%/g)||[]).join(' · ')));
+  t('CCXXXV ⚖️ la carte taille/hanches apparaît aussi, avec son rapport',
+    /Taille \/ hanches\s*:\s*0\.87/.test(R.txt||''), '');
+  /* ⛔ LE TÉMOIN DE NON-RÉGRESSION : `c.html` a modifié le gabarit COMMUN des cartes. */
+  t('CCXXXV ⛔ la carte de TENDANCE (texte simple) survit au nouveau gabarit',
+    R.tendance===true, '');
+  t('CCXXXV ⛔ sans aucune mensuration, la carte disparaît et les autres restent',
+    !/Tour de taille/.test(R.sansMens&&R.sansMens.txt||'') && (R.sansMens&&R.sansMens.cartes)>=2,
+    JSON.stringify(R.sansMens&&R.sansMens.cartes));
+  t('CCXXXV ⭐ une seule mensuration → la carte DIT ce qui manque au lieu de disparaître (R29)',
+    /bientôt/i.test(R.attente||'') && /14 jours/.test(R.attente||''), (R.attente||'').slice(0,240));
+  t('CCXXXV aucune erreur JS pendant tout le bloc', errs.length===0, errs.join(' | '));
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

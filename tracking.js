@@ -2628,6 +2628,180 @@ function skipConfirm(field){
   }catch(e){console.warn('[FT confirm] skip',e);}
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════
+   📐 LE RATIO POIDS ↔ CENTIMÈTRES (ft-v1131)
+   ═══════════════════════════════════════════════════════════════════════════════
+   Michel demandait d'abord de poser les mensurations SUR le graphique du poids
+   et de la masse grasse « sans que ce soit chargé visuellement », puis il a
+   tranché lui-même : *« ou alors fais un ratio entre la perte de poids, la masse
+   grasse et la perte de centimètres »*.
+   ⭐⭐ SON IDÉE RÈGLE LE PROBLÈME PAR CONSTRUCTION, et c'est ce qui l'a emporté :
+   le graphique porte déjà des **kg** (axe de gauche) et des **%** (axe de droite,
+   vue « Les 2 ») ; des centimètres y seraient une **3ᵉ unité** — c'était ça, la
+   surcharge. *Un ratio n'a pas d'unité, donc il ne demande aucun axe.*
+
+   ⛔ ON COMPARE DES VARIATIONS **RELATIVES**, JAMAIS DES VALEURS BRUTES.
+   « −3 kg » et « −4 cm » ne se comparent pas — ce sont deux grandeurs
+   différentes. « −3,8 % du poids » et « −4,5 % du tour de taille », si : ce sont
+   deux nombres sans dimension, donc ils tiennent sur la MÊME barre.
+
+   ⛔⛔ ET C'EST **R8**, LA 7ᵉ FOIS POUR CETTE FAMILLE. La carte « recomposition »
+   quelques lignes plus bas PROMET déjà cette lecture en toutes lettres —
+   *« la balance seule ne montre presque rien : le gras qui part et le muscle qui
+   vient s'annulent dessus. Ce sont tes charges et tes mensurations qui le
+   disent. »* — et **rien dans l'app ne la calculait**. On annonçait une lecture
+   qu'on ne produisait pas.
+
+   ⛔⛔ CE QU'ON N'ÉCRIRA PAS : *« 72 % de ta perte était du gras »*. Un rapport
+   cm/kg est un **indicateur**, pas une mesure de tissu, et le % de gras d'une
+   balance est **ESTIMÉ** par l'équation du fabricant (R32). On montre les deux
+   variations et le **SENS** ; quand le poids baisse sans que la taille bouge,
+   ⭐ **on dit qu'on ne sait pas** au lieu d'inventer une explication (R29).
+   ═══════════════════════════════════════════════════════════════════════════════ */
+/* ⛔ Une mensuration change en SEMAINES, pas en jours — et un mètre-ruban se lit à
+   ±1 cm près. Deux mesures rapprochées ne donnent pas une tendance, elles donnent
+   du bruit avec deux décimales (R12). */
+const RATIO_MIN_JOURS=14;
+/* Sous ce seuil, une variation relative n'est pas distinguable de l'imprécision :
+   1 % de 88 cm ≈ 0,9 cm (la précision du ruban), 1 % de 85 kg ≈ 0,85 kg (l'eau
+   d'une journée). On dit « stable », on n'invente pas un sens. */
+const RATIO_STABLE_PCT=1.0;
+/* ⛔ LES DEUX VARIATIONS DOIVENT COUVRIR LA MÊME PÉRIODE, sinon on compare la
+   taille sur 2 mois au poids sur 3 semaines et le rapport ne veut rien dire. On
+   apparie donc chaque mensuration à la pesée la plus PROCHE, pas à la première
+   et à la dernière de la fenêtre. */
+const RATIO_APPARIE_J=7;
+
+/* La pesée la plus proche d'une date, dans la limite de RATIO_APPARIE_J.
+   ⛔ Rend `null` — jamais 0, jamais la plus récente par défaut : *« je n'ai pas
+   de pesée à cette période » et « il pesait 0 kg » ne se lisent pas pareil.* */
+function _ratioPeseeProche(iso,champ){
+  const cible=new Date(iso+'T12:00:00').getTime();
+  const l=(S.weightLog||[])
+    .filter(p=>p&&p.date&&(champ==='bf'?(p.bf!=null&&!isNaN(p.bf)):(p.kg>0)))
+    .map(p=>({v:champ==='bf'?+p.bf:+p.kg,ec:Math.abs((new Date(p.date+'T12:00:00').getTime()-cible)/86400000)}))
+    .filter(p=>p.ec<=RATIO_APPARIE_J).sort((a,b)=>a.ec-b.ec);
+  return l.length?l[0].v:null;
+}
+
+/* Rend `null` (rien à dire), {etat:'attente'} (mesuré une fois, pas encore deux)
+   ou {etat:'ok', …}. `dDeb`/`dFin` bornent la fenêtre affichée par le graphique :
+   la carte parle donc EXACTEMENT de la période qu'on regarde. */
+function ratioCompo(dDeb,dFin,cle){
+  cle=cle||'taille';
+  if(typeof S==='undefined'||!Array.isArray(S.mensLog)) return null;
+  const L=S.mensLog.filter(e=>e&&e.k===cle&&e.d&&e.v>0
+                              &&(!dDeb||e.d>=dDeb)&&(!dFin||e.d<=dFin))
+                   .sort((a,b)=>String(a.d).localeCompare(String(b.d)));
+  /* ⛔ ZÉRO MESURE → ZÉRO CARTE. Quelqu'un qui ne prend pas ses mensurations n'a
+     pas à voir un encart qui lui explique ce qu'il rate à chaque ouverture (R24). */
+  if(!L.length) return null;
+  const a=L[0], b=L[L.length-1];
+  const jours=Math.round((new Date(b.d+'T12:00:00')-new Date(a.d+'T12:00:00'))/86400000);
+  /* ⭐ L'ÉTAT D'ATTENTE EXISTE EXPRÈS (R29) : quand l'app renonce à trancher, elle
+     n'efface pas la carte — elle MONTRE ce qu'elle a et dit ce qui lui manque.
+     Une carte invisible pendant trois semaines se lit comme un bug. */
+  if(jours<RATIO_MIN_JOURS){
+    const p=new Date(a.d+'T12:00:00'); p.setDate(p.getDate()+RATIO_MIN_JOURS);
+    return {etat:'attente',cle:cle,depuis:a.d,jours:jours,prochaine:today(p.getTime()),
+            manque:RATIO_MIN_JOURS-jours};
+  }
+  const pct=(v0,v1)=>(v0>0&&v1>0)?Math.round(((v1-v0)/v0)*1000)/10:null;
+  const w0=_ratioPeseeProche(a.d,'kg'), w1=_ratioPeseeProche(b.d,'kg');
+  const f0=_ratioPeseeProche(a.d,'bf'), f1=_ratioPeseeProche(b.d,'bf');
+  const pT=pct(a.v,b.v), pP=pct(w0,w1), pF=pct(f0,f1);
+  /* Sans pesée appariable, il n'y a pas de RATIO — juste une mensuration. On le dit. */
+  if(pP==null) return {etat:'sanspoids',cle:cle,jours:jours,taille:{a:a.v,b:b.v,pct:pT}};
+  return {etat:'ok',cle:cle,jours:jours,debut:a.d,fin:b.d,
+          poids:{a:w0,b:w1,pct:pP},
+          taille:{a:a.v,b:b.v,pct:pT},
+          mg:(pF!=null)?{a:f0,b:f1,pct:pF}:null,
+          lecture:_ratioLecture(pP,pT)};
+}
+
+/* La LECTURE — le seul endroit où l'on dit ce que ça veut dire. Séparée du calcul
+   pour qu'un test puisse l'éprouver sur les 9 combinaisons sans fabriquer de
+   journal de mensurations. */
+function _ratioLecture(pP,pT){
+  const S_=RATIO_STABLE_PCT;
+  const pStable=Math.abs(pP)<S_, tStable=Math.abs(pT)<S_;
+  const N='var(--t2)', V='var(--green)', B='var(--blue)', O='var(--orange)';
+  if(pT<=-S_&&pP<=-S_)
+    return (Math.abs(pT)>Math.abs(pP)+0.5)
+      ? {code:'gras',c:V,ti:'Ce qui part est surtout du gras',txt:"C'est le signe que ce qui part est surtout du **gras** : un tour de taille qui recule plus vite que le poids, la balance seule ne pouvait pas le dire."}
+      : {code:'ensemble',c:V,ti:'Poids et taille descendent ensemble',txt:"Les deux reculent **au même rythme** — une perte régulière, sans surprise à signaler."};
+  /* ⭐⭐ LE CAS QUI JUSTIFIE TOUTE LA CARTE : la balance ne bouge pas et la taille
+     descend. C'est exactement ce que la carte « recomposition » annonce depuis des
+     mois sans pouvoir le montrer. */
+  if(pT<=-S_&&pStable)
+    return {code:'recomp',c:V,ti:'Recomposition en cours',txt:"Ce que tu perds en gras, tu le reprends en **muscle** — donc le pèse-personne ne montre rien, alors qu'il se passe exactement ce qu'il faut. C'est la seule lecture ici qui le prouve."};
+  if(pT<=-S_&&pP>=S_)
+    return {code:'prise',c:B,ti:'Du poids en plus, pas de tour de taille',txt:"Sur une période d'entraînement, c'est le **meilleur signal** qu'on puisse lire ici : la masse qui arrive ne va pas autour du ventre."};
+  /* ⛔ ICI ON NE SAIT PAS, ET ON LE DIT. Attribuer la perte à de l'eau, du muscle
+     ou du gras serait fabriquer un fait sur la personne (R29). */
+  if(pP<=-S_&&tStable)
+    return {code:'inconnu',c:N,ti:'On ne sait pas ce qui part',txt:"**On ne peut pas dire ce qui part** : eau, muscle et gras se ressemblent tous sur une balance. Continue de mesurer — au bout de quelques semaines, l'écart entre les deux courbes tranchera."};
+  if(pT>=S_&&pP>=S_)
+    return {code:'monte',c:O,ti:'Poids et taille montent ensemble',txt:"Si tu es en **prise de masse**, c'est attendu et tout va bien. Sinon, c'est le moment de regarder l'alimentation plutôt que l'entraînement."};
+  if(pT>=S_&&pStable)
+    return {code:'tourmonte',c:O,ti:'Le tour de taille monte, pas le poids',txt:"C'est l'inverse exact de la recomposition — et le cas que la balance **cache le mieux**, puisqu'elle n'affiche rien du tout."};
+  if(pT>=S_&&pP<=-S_)
+    return {code:'divergent',c:N,ti:'Deux mesures qui divergent',txt:"C'est **inhabituel**. Avant d'y chercher un sens, vérifie que les deux mensurations ont été prises dans les mêmes conditions : à jeun, debout, au même endroit du ventre."};
+  return {code:'stable',c:N,ti:'Poids et taille stables',txt:"Rien ne bouge d'un côté ni de l'autre sur cette période. Ce n'est ni bon ni mauvais en soi — c'est simplement ce que disent les mesures."};
+}
+
+/* Une barre par grandeur, toutes sur la MÊME échelle (le plus gros écart = pleine
+   largeur). ⛔ Les couleurs sont celles du graphique — poids en bleu, masse grasse
+   en orange — pour qu'on n'ait pas à réapprendre un code (R13). Le tour de taille
+   prend le violet : *le lui donner en orange le ferait lire comme de la masse
+   grasse, alors que c'est justement l'autre source qu'on compare.* */
+function _ratioBarres(lignes){
+  const maxi=Math.max.apply(null,lignes.map(l=>Math.abs(l.pct)).concat([0.1]));
+  return lignes.map(function(l){
+    const w=Math.max(3,Math.round(Math.abs(l.pct)/maxi*100));
+    return '<div style="display:flex;align-items:center;gap:8px;margin-top:6px;">'
+      +'<span style="width:74px;flex-shrink:0;font-size:11.5px;color:var(--t3);">'+l.l+'</span>'
+      +'<span style="flex:1;height:7px;border-radius:4px;background:var(--bg3);overflow:hidden;display:block;">'
+        +'<span style="display:block;height:100%;width:'+w+'%;border-radius:4px;background:'+l.c+';"></span></span>'
+      +'<span style="width:52px;flex-shrink:0;text-align:right;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;color:'+l.c+';">'
+        +(l.pct>0?'+':'')+l.pct.toFixed(1)+'&nbsp;%</span></div>';
+  }).join('');
+}
+
+/* ⚖️ LE RAPPORT TAILLE / HANCHES — l'autre lecture, et elle ne demande AUCUNE balance.
+   ⭐ C'est ce qui donne enfin un usage au tour de hanches chez l'homme : ouvert à tout le
+   monde en ft-v1129 (« un homme qui SUIT son tour de hanches n'avait aucun endroit où le
+   noter »), il ne produisait jusqu'ici **aucun comportement observable** en dehors du calcul
+   US Navy, qui ne le consomme que chez la femme (R3).
+   ⛔⛔ ET ON N'AFFICHE AUCUN SEUIL DE SANTÉ. Des bornes existent (0,90 / 0,85), elles sont
+   médicales : les poser ici transformerait une mensuration en **diagnostic**, ce que la
+   Constitution interdit. On montre le nombre et son SENS de variation, rien d'autre.
+   ⛔ Les deux mesures doivent être PROCHES l'une de l'autre : un tour de taille de septembre
+   avec des hanches de juin ne décrit aucun corps réel (même raison que `_SCAN_FENETRE_J`). */
+const RATIO_TH_FENETRE_J=21;
+function ratioTailleHanches(){
+  if(typeof S==='undefined'||!Array.isArray(S.mensLog)) return null;
+  const par=(k)=>S.mensLog.filter(e=>e&&e.k===k&&e.d&&e.v>0)
+                          .sort((a,b)=>String(a.d).localeCompare(String(b.d)));
+  const T=par('taille'), H=par('hanches');
+  if(!T.length||!H.length) return null;
+  /* Une « paire » = une taille et des hanches assez proches dans le temps pour décrire le
+     même corps. On garde la plus RÉCENTE et la plus ANCIENNE. */
+  const paires=[];
+  T.forEach(function(t){
+    const h=H.map(x=>({v:x.v,d:x.d,ec:Math.abs((new Date(x.d)-new Date(t.d))/86400000)}))
+             .filter(x=>x.ec<=RATIO_TH_FENETRE_J).sort((a,b)=>a.ec-b.ec)[0];
+    if(h)paires.push({d:t.d,r:Math.round((t.v/h.v)*1000)/1000,t:t.v,h:h.v});
+  });
+  if(!paires.length) return null;
+  const der=paires[paires.length-1], prem=paires[0];
+  const jours=Math.round((new Date(der.d+'T12:00:00')-new Date(prem.d+'T12:00:00'))/86400000);
+  /* ⛔ La variation n'est rendue que si les deux paires sont assez espacées — sinon on
+     annonce une évolution là où il n'y a que du bruit (même seuil que le ratio poids/cm). */
+  const ecart=(jours>=RATIO_MIN_JOURS)?Math.round((der.r-prem.r)*1000)/1000:null;
+  return {ratio:der.r,taille:der.t,hanches:der.h,date:der.d,jours:jours,ecart:ecart,paires:paires.length};
+}
+
 function renderWeightCorrelations(el,pts){
   if(!pts||pts.length<3){el.innerHTML='';return;}
   const cards=[];
@@ -2660,6 +2834,51 @@ function renderWeightCorrelations(el,pts){
     :_dansLaCible===true?'var(--green)'
     :_dansLaCible===false?'var(--orange)':'var(--t2)';
   cards.push({icon:'📈',title:`${weeklyChange>=0?'+':''}${weeklyChange} kg / semaine`,text:`Tendance sur ${pts.length} mesures. Pour ton objectif "${GOAL_LABELS[goal]}", l'évolution attendue est ${(_plage&&_plage.txt)||'variable'}.${goalNote[goal]||''}`,color:trendColor});
+  /* 1bis. 📐 LE RATIO POIDS ↔ CENTIMÈTRES — juste sous la tendance, c'est le même sujet.
+     ⛔⛔ ON NE PASSE PAS LA FENÊTRE DU GRAPHIQUE, ET C'EST DÉLIBÉRÉ : la période affichée
+     par défaut est **1 semaine** (`_wSpanDays=7`), or il faut 14 jours pour que deux
+     mensurations disent quelque chose — la carte serait donc **perpétuellement en attente**
+     chez tout le monde. Et un même corps ne devrait pas changer de diagnostic parce qu'on a
+     zoomé. *Une tendance de composition corporelle se lit sur des mois, pas sur le réglage
+     d'un curseur.* La carte affiche donc SES propres dates, en clair. */
+  const _rc=(typeof ratioCompo==='function')?ratioCompo():null;
+  if(_rc&&_rc.etat==='attente'){
+    cards.push({icon:'📐',color:'var(--t3)',title:'Poids ↔ centimètres — bientôt',
+      text:`Tu as noté ton tour de taille ${_rc.jours===0?'aujourd\'hui':'il y a '+_rc.jours+' jour'+(_rc.jours>1?'s':'')}. Il en faut une deuxième, au moins ${RATIO_MIN_JOURS} jours après la première (soit à partir du ${_fmtWNav(_rc.prochaine)}) : deux mesures rapprochées ne donnent pas une tendance, juste l'imprécision du mètre-ruban. On te dira alors si ce que tu perds est du gras.`});
+  }else if(_rc&&_rc.etat==='sanspoids'){
+    cards.push({icon:'📐',color:'var(--t3)',title:'Poids ↔ centimètres — il manque les pesées',
+      text:`Ton tour de taille est passé de ${_rc.taille.a} à ${_rc.taille.b} cm en ${_rc.jours} jours, mais il n'y a pas de pesée à ces dates-là (à ${RATIO_APPARIE_J} jours près). Sans les deux, il n'y a pas de comparaison possible.`});
+  }else if(_rc&&_rc.etat==='ok'){
+    const lignes=[{l:'Poids',pct:_rc.poids.pct,c:'var(--blue)'}];
+    if(_rc.mg)lignes.push({l:'Masse grasse',pct:_rc.mg.pct,c:'var(--orange)'});
+    lignes.push({l:'Tour de taille',pct:_rc.taille.pct,c:'var(--purp)'});
+    /* ⛔ « % » ICI VEUT DIRE « % DE SA PROPRE VALEUR », jamais « % de ta perte ». La
+       légende le dit sous les barres — sans elle, « −8 % » sur la masse grasse se lirait
+       comme « 8 % de ce que tu as perdu était du gras », qui est une phrase qu'on ne
+       sait PAS produire (R32). */
+    cards.push({icon:'📐',color:_rc.lecture.c,
+      /* ⛔ LE TITRE PORTE LE VERDICT, PAS LES CHIFFRES — ils sont dans les barres, deux
+         lignes plus bas. *Les répéter dans le titre allongeait la carte pour ne rien
+         ajouter*, et c'est exactement la surcharge visuelle qu'on cherchait à éviter. */
+      title:_rc.lecture.ti,
+      html:_ratioBarres(lignes)
+        +`<div style="font-size:11px;color:var(--t3);margin:7px 0 6px;">Sur ${_rc.jours} jours, du ${_fmtWNav(_rc.debut)} au ${_fmtWNav(_rc.fin)} — variation de chaque mesure <b>par rapport à elle-même</b>.</div>`
+        +`<div style="font-size:13px;color:var(--t2);line-height:1.5;">${_rc.lecture.txt.replace(/\*\*(.+?)\*\*/g,'<b style="color:var(--t1);">$1</b>')}</div>`});
+  }
+  /* 1ter. ⚖️ TAILLE / HANCHES — n'apparaît que si les DEUX sont notées. */
+  const _th=(typeof ratioTailleHanches==='function')?ratioTailleHanches():null;
+  if(_th){
+    /* ⛔ AUCUN JUGEMENT SUR LA VALEUR (pas de seuil médical) — seulement sur le SENS, et
+       seulement quand il y a deux paires assez espacées pour qu'il existe. */
+    const sens=(_th.ecart==null)?'Note-le à nouveau dans quelques semaines pour voir dans quel sens il bouge.'
+      :(Math.abs(_th.ecart)<0.005)?`Stable sur ${_th.jours} jours.`
+      :(_th.ecart<0)?`Il a baissé de ${Math.abs(_th.ecart).toFixed(3)} en ${_th.jours} jours : ta taille s'affine par rapport à tes hanches.`
+      :`Il a monté de ${_th.ecart.toFixed(3)} en ${_th.jours} jours : ta taille s'épaissit par rapport à tes hanches.`;
+    cards.push({icon:'⚖️',color:'var(--purp)',
+      title:`Taille / hanches : ${_th.ratio.toFixed(2)}`,
+      text:`${_th.taille} cm de tour de taille pour ${_th.hanches} cm de hanches. C'est le seul repère ici qui ne dépend **d'aucune balance** — il décrit la forme, pas le poids. ${sens}`
+        .replace(/\*\*(.+?)\*\*/g,'$1')});
+  }
   // 2. Training days correlation
   const sessDates=new Set(S.sessions.map(s=>s.date));
   const afterSess=pts.filter(w=>{const prev=new Date(w.date+'T12:00:00');prev.setDate(prev.getDate()-1);return sessDates.has(prev.toISOString().split('T')[0]);});
@@ -2687,7 +2906,12 @@ function renderWeightCorrelations(el,pts){
   // 5. Range
   const range=Math.round((Math.max(...vals)-Math.min(...vals))*10)/10;
   cards.push({icon:'📊',title:`Plage : ${Math.min(...vals).toFixed(1)} – ${Math.max(...vals).toFixed(1)} kg (${range} kg)`,text:range>4?'Variation importante — pèse-toi toujours le matin à jeun pour des données fiables.':range>1.5?'Variation normale selon hydratation et repas.':'Poids très stable — excellente régularité nutritionnelle.',color:range>4?'var(--orange)':'var(--t3)'});
-  el.innerHTML=cards.map(c=>`<div class="corr-card"><span style="font-size:20px;flex-shrink:0;">${c.icon}</span><div><div style="font-size:14px;font-weight:800;color:${c.color};margin-bottom:3px;">${c.title}</div><div style="font-size:13px;color:var(--t2);line-height:1.5;">${c.text}</div></div></div>`).join('');
+  /* ⚠️ `flex:1;min-width:0` sur le bloc de droite : sans lui, une carte qui contient des
+     BARRES les laisse se réduire à leur contenu (largeur nulle) au lieu d'occuper la
+     carte. Inoffensif pour les cartes en texte, qui s'étalaient déjà.
+     ⭐ `c.html` est la seule addition : une carte peut porter du contenu riche au lieu
+     d'une phrase — le reste du gabarit est intact (R13). */
+  el.innerHTML=cards.map(c=>`<div class="corr-card"><span style="font-size:20px;flex-shrink:0;">${c.icon}</span><div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:800;color:${c.color};margin-bottom:3px;">${c.title}</div>${c.html||`<div style="font-size:13px;color:var(--t2);line-height:1.5;">${c.text}</div>`}</div></div>`).join('');
 }
 
 // ─── SLEEP & RECOVERY ─────────────────────────────────────────

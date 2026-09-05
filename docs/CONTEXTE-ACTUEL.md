@@ -6,7 +6,32 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1130` — 🔗 **LE SUPERSET DE MILO N'ATTEIGNAIT JAMAIS LA SÉANCE.**
+- **Version en ligne (live) :** `ft-v1131` — 📐 **LE RATIO POIDS ↔ CENTIMÈTRES : UNE CARTE, PAS UNE COURBE.**
+  Michel demande d'abord *« comment intégrer les mensurations sur le graphique du poids et de la
+  masse grasse sans que ce soit chargé visuellement ? »* (puis *« surtout la taille et les
+  hanches »*), et **trouve lui-même la sortie** : *« ou alors fais un ratio entre la perte de
+  poids, la masse grasse et la perte de centimètre »*.
+  ⭐⭐ **Son idée règle le problème par construction** : le graphique porte **déjà** des kg (axe
+  gauche) et des % (axe droit) — des cm y seraient une **3ᵉ unité**, et c'était ça la surcharge.
+  *Un ratio n'a pas d'unité, donc il ne demande aucun axe.* On compare des variations
+  **RELATIVES** (−2,6 % de poids · −8,3 % de masse grasse · −5,4 % de tour de taille) : trois
+  barres sur **UNE** échelle.
+  ⛔⛔ **R8, 7ᵉ fois** : la carte « recomposition » PROMET cette lecture depuis des mois
+  (*« ce sont tes charges et **tes mensurations** qui le disent »*) et **rien ne la calculait**.
+  ⛔⛔ **Le témoin qui porte la version est un REFUS** : poids en baisse + taille immobile →
+  *« on ne peut pas dire ce qui part »*. C'est le seul endroit où il serait facile et **faux**
+  d'annoncer du gras (R29). Contrôle négatif : **4 rouges** en remplaçant ce refus par « du gras ».
+  ⭐ **État d'attente exprès** : `mensLog` est né la veille, donc avec **une seule** mesure la
+  carte s'affiche et **dit à partir de quand** elle parlera — une carte absente 3 semaines se
+  lit comme une panne. **Zéro mesure → rien du tout.**
+  ⭐ **2ᵉ carte taille/hanches** : elle donne enfin un comportement observable au tour de hanches
+  ouvert aux hommes la veille (R3). ⛔ **Aucun seuil de santé** (ce serait un diagnostic).
+  ⛔ **R2** : le verdict part aussi à Milo (**226 car., 0,31 %**, partie cachée) — sinon l'écran
+  et lui répondraient deux choses différentes à la question la plus posée.
+  ⏭️ **Pas d'onglet séparé** (Michel l'avait proposé) : la carte vit dans le bloc existant, zéro
+  navigation en plus. **Michel doit vérifier sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1130` — 🔗 **LE SUPERSET DE MILO N'ATTEIGNAIT JAMAIS LA SÉANCE.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#902** sur `0e8550c`, **job `deploy` success**,
   les 7 étapes vertes à 08:43:43 UTC. Suite sur l'arbre **FUSIONNÉ** avec la ft-v1129 de
   session-A : **parcours 2750/2750**, calculs 318/318, dates 9/9, 0 rouge.
@@ -27,7 +52,7 @@
   une forme que la production ne produit pas, et n'exerçait qu'une porte (§36). Re-visé.
   ⏭️ **Michel doit vérifier sur Safari/iPhone.**
 
-- **Version précédente :** `ft-v1129` — 📏 **LE JOURNAL DES MENSURATIONS.**
+- **Encore avant :** `ft-v1129` — 📏 **LE JOURNAL DES MENSURATIONS.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#900** sur `c3e9153`, **job `deploy` success**,
   les 7 étapes vertes à 08:16:55 UTC. ⭐ Suite **sur l'arbre FUSIONNÉ** : parcours **2746/2746**,
   calculs **318/318**, **dates 9/9**, 0 rouge. Trois demandes de Michel dans un message.

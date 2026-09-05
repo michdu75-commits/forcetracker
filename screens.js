@@ -334,6 +334,10 @@ const _HELP_DATA={
   progress:{
     title:'📈 Progrès',
     tips:[
+      /* 📐 EN TÊTE : la carte est neuve, et la première question devant elle est « pourquoi
+         des % partout alors que j'ai noté des kg et des cm ? ». L'aide RÉPOND à ça — c'est
+         le seul point qui n'est pas devinable en regardant l'écran (R25). */
+      {i:'📐',t:'<b>« Sur N jours — X % de poids · Y % de tour de taille »</b> (sous-onglet <b>Poids</b>, sous le graphique). ⭐ <b>Pourquoi des % et pas des kg et des cm ?</b> Parce que −3 kg et −4 cm ne se comparent pas : ce sont deux grandeurs différentes. Chaque mesure est donc affichée en <b>% d\'elle-même</b> — et là, elles tiennent sur la même barre. ⛔ « −8 % » sur la masse grasse veut dire <b>« 8 % de sa propre valeur »</b> (20 % → 18,4 %), <b>jamais</b> « 8 % de ce que tu as perdu était du gras » — ce chiffre-là, personne ne sait le calculer honnêtement. ⭐ La lecture qui compte : si ton <b>tour de taille descend plus vite que ton poids</b>, ce qui part est surtout du gras. Si ton <b>poids ne bouge pas et que ta taille descend</b>, c\'est la recomposition — le pèse-personne est aveugle à ça. Et si ton poids baisse sans que ta taille bouge, la carte te dit <b>qu\'on ne sait pas</b> plutôt que d\'inventer. ⚠️ Il faut <b>2 tours de taille à 14 jours d\'écart au moins</b> : plus rapproché, on mesure l\'imprécision du mètre-ruban, pas ton corps.'},
       /* 📏 EN TÊTE : c'est ce qui change dans cet onglet aujourd'hui, et la première question
          devant l'écran est « pourquoi seulement trois cases ? ». L'aide RÉPOND, la pop-up
          s'est contentée d'annoncer (R25). */

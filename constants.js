@@ -465,6 +465,16 @@ const NEW_FEATURES=[
   /* 📏 POINT ROUGE sur PROGRÈS : c'est là que vit la carte « Masse grasse », donc là que les
      nouveaux champs apparaissent. ⛔ Le poser sur l'Accueil enverrait chercher sur un écran où
      il n'y a rien à voir — le défaut corrigé en ft-v1099. */
+  /* 📐 POINT ROUGE sur PROGRÈS, ET C'EST UN 2ᵉ EN DEUX JOURS SUR LE MÊME ONGLET — assumé.
+     ⚠️ La tentation était de le fondre dans `mensurations` (livré la veille) : deux pastilles
+     rapprochées sur le même écran, c'est du bruit (R19/R25). ⛔ Mais elles n'annoncent PAS la
+     même chose — la première dit *« tu peux enfin noter tes centimètres »*, celle-ci dit
+     *« et voilà ce qu'on en LIT »*. Quelqu'un qui a vu la première et noté ses mesures n'a
+     aucune raison de deviner qu'une lecture est apparue sous le graphique.
+     ⛔ PAS DE POP-UP en revanche : la carte **ne s'affiche que si on a déjà mesuré**, aucun
+     repère ne bouge, et il n'y a rien à faire que ce que la pop-up de la veille demandait
+     déjà. *La pop-up annonce, elle ne se répète pas.* */
+  {id:'ratio-compo', screen:'progress', desc:'📐 <b>Ce que tes centimètres disent de ta perte de poids.</b> Sous le graphique du poids, une carte compare la variation de ton <b>poids</b>, de ta <b>masse grasse</b> et de ton <b>tour de taille</b> — chacune en % d\'elle-même, pour qu\'on puisse les mettre sur la même barre. ⭐ Si ta taille descend plus vite que ton poids, ce qui part est surtout du gras : la balance seule ne pouvait pas le dire. Il faut <b>2 tours de taille notés à 14 jours d\'écart</b>.'},
   {id:'mensurations', screen:'progress', desc:'📏 <b>Tes mensurations sont gardées dans le temps.</b> Cou, taille et hanches en clair — poitrine, épaules, bras, avant-bras, cuisse et mollet sous « Autres mensurations ». Avant, seule la dernière valeur survivait. Onglet Progrès → Corps &amp; santé.'},
   {id:'recup-cumul', screen:'home', desc:'🔋 <b>Ta fatigue s\'additionne.</b> Deux séances rapprochées coûtent maintenant <b>plus</b> qu\'une seule — avant, seule la <b>dernière</b> comptait, quel que soit ce que tu avais empilé avant. ⭐ Le forfait « Jours enchaînés » disparaît : il punissait à la louche, et sur tes 60 derniers jours il te coûtait des points <b>28 fois</b> pour rien. 💡 Tape « Pourquoi ce score ? » : la ligne « Séance récente » porte désormais <b>toutes</b> tes séances des 48 dernières heures.'},
   {id:'recup-cardio', screen:'home', desc:'🔋 <b>Ta récupération tient compte du cardio.</b> Sa <b>durée</b> et son <b>intensité</b> comptent maintenant dans ton score — avant, <b>10 min de marche et 90 min de tapis intense</b> coûtaient exactement la même chose. ⭐ Un échauffement de 10 min pèse <b>1 point</b>, 45 min de tapis modéré en pèsent <b>10</b>. 💡 Tape « Pourquoi ce score ? » sous ton score : la ligne « Séance récente » inclut désormais ton cardio.'},
