@@ -7,6 +7,9 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1136` — 📏 **DEUX PORTES POUR UNE MENSURATION, UNE SEULE LA DATAIT.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#917** sur `761cd69`, **job `deploy` success**,
+  les 7 étapes vertes à **17:32:50 UTC**. Suite complète : **parcours 2807/2807**, calculs
+  **339/339**, muscles 241, croisés 50, dates 9/9, données 0 trou.
   Michel : *« la mesure qu'il y a sur mon appli là, du tour de cou et taille, elle est datée ou
   pas ? »*. ⛔⛔ **Mesuré : NON, pas toujours** — l'écran Progrès datait, le formulaire du Profil
   écrivait `S.neck`/`S.waist`/`S.hip` **et rien d'autre**. *La même mesure comptait ou ne comptait
