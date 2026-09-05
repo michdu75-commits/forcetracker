@@ -6599,6 +6599,15 @@ function _normalizeMiloSession(sess){
     // 💬 ft-v628 : la CONSIGNE de Milo (cue technique : « omoplates serrées », « amplitude contrôlée »…)
     // devient la note de l'exercice — avant, elle était jetée (`note:''`) alors que Milo la donne dans le chat.
     note:String(ex.note||'').slice(0,300),
+    /* 🔗 L'ÉTIQUETTE DE SUPERSET DOIT TRAVERSER (05/09/2026) — elle était JETÉE ICI, et c'est
+       ce qui rendait le correctif du 12/08 inopérant depuis sa livraison. Ce normaliseur est
+       le SEUL écrivain de `_pendingMiloSessions` en production (`coach.js:_appendStartSessionBtn`) :
+       tout champ absent de cet objet n'existe pas pour la suite, quoi que le cervelet ait
+       transcrit et quoi qu'on ait payé pour l'obtenir. *Un champ qu'un normaliseur ne recopie
+       pas est un champ supprimé* — c'est R4 (l'info doit descendre jusqu'à la DONNÉE).
+       ⛔ On la laisse BRUTE ("A", "B") : la transformation en identifiant unique appartient à
+       `_appliqueMiloSession`, qui en est le propriétaire (R2). */
+    supersetGroup:ex.supersetGroup,
     sets:(Array.isArray(ex.sets)?ex.sets:[]).map(s=>({
       // 0 = « Milo n'a rien précisé » (le repli sur l'historique se décide dans _startSessionFromMilo).
       // ⚠️ Ne PAS mettre 10 par défaut ici : on ne pourrait plus distinguer « Milo a dit 10 » de « Milo n'a rien dit ».
@@ -6632,12 +6641,19 @@ function _startSessionFromMilo(idx,btn){
        lui reproche une montée en charge trop courte qu'il a lui-même écrite (arrivé le 18/08,
        après le même incident le 15/08 côté app). Il suit la séance jusque dans l'historique,
        puisque `sess.exs` est copié depuis `S.wkt.exs`. Lu par `_verdictMontee` (coach.js). */
-    return {name:e.name,note:e.note||'',_milo:true,sets:(e.sets||[]).map((s,i)=>{
+    const _o={name:e.name,note:e.note||'',_milo:true,sets:(e.sets||[]).map((s,i)=>{
       const pp=_pa[i];
       const kg=(s.kg>0)?s.kg:(pp?pp.kg:0);                                   // Milo d'abord, sinon la dernière fois
       const reps=s.maxi?0:((s.reps>0)?s.reps:(pp?pp.reps:10));               // idem (série « maxi » = vide, à saisir)
       return {kg,reps,maxi:!!s.maxi,type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest)};
     })};
+    /* 🔗 L'étiquette de superset voyage AVEC l'exercice jusqu'au point de croisement.
+       ⛔ On la transporte sur l'objet plutôt que de rezipper `data.exs` par INDICE plus bas :
+       `_extraireCardioMilo` peut RETIRER des exercices de la liste, et un alignement par
+       indice poserait alors le superset sur le mauvais mouvement — c'est-à-dire, au pire,
+       sur un squat lourd. *Le coût d'une erreur décide de la méthode* (R29). */
+    if(e.supersetGroup!=null) _o.supersetGroup=e.supersetGroup;
+    return _o;
   };
   const newExs=(data.exs||[]).map(buildEx);
   if(!newExs.length){toast('Aucun exercice à ajouter','error');return;}
@@ -6864,16 +6880,12 @@ function _applyMiloSession(mode){
   closeMiloSeance();
   if(!data){toast('Séance introuvable','error');return;}
   const prev=(typeof getPrev==='function')?getPrev:null;
-  // ── SUPERSETS DEMANDÉS PAR MILO ────────────────────────────────────────────────────
-  // ⚠️ LE TROU QU'ON BOUCHE ICI (constaté le 12/08) : `loadProgDay` lit déjà
-  // `supersetGroup` pour un programme importé, mais ce chemin-ci — la séance dictée dans
-  // le chat — ne lisait RIEN. Le même superset survivait à une porte et s'évaporait à
-  // l'autre. On emploie donc EXACTEMENT le même nom de champ que l'import, pour que les
-  // deux entrées de l'app parlent la même langue (R2).
-  // Les étiquettes de Milo ("A", "B"…) deviennent des identifiants uniques : sans ça,
-  // deux séances chargées à la suite auraient des groupes qui se confondent.
-  const gMap={}, gSeed=Date.now();
-  const bloque=[];
+  /* ── SUPERSETS DEMANDÉS PAR MILO — LE GROUPEMENT A DÉMÉNAGÉ (05/09/2026) ─────────────
+     Il vivait ICI, c'est-à-dire sur UNE SEULE des deux portes. Il est maintenant dans
+     `_appliqueMiloSession`, le seul point que les deux traversent — exactement la
+     correction que le contrôle d'intensité (ft-v980) puis le cardio (ft-v995) ont déjà
+     imposée, chacun après avoir été posé au même mauvais endroit. **Troisième fois.**
+     ⛔ Ne pas le remettre ici : cette porte-ci n'est PAS le cas normal. */
   const newExs=(data.exs||[]).map(e=>{
     const pv=prev?(prev(e.name)||[]):[];
     /* ⛔ `_milo:true` MANQUAIT SUR CETTE PORTE (trouvé le 23/08 en branchant le contrôle
@@ -6888,26 +6900,9 @@ function _applyMiloSession(mode){
               reps:s.maxi?0:((s.reps>0)?s.reps:(pp?pp.reps:10)),
               maxi:!!s.maxi,type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest)};
     })};
-    const lbl=e.supersetGroup;
-    if(lbl!==undefined&&lbl!==null&&String(lbl).trim()!==''){
-      if(_supersetInterdit(e.name)) bloque.push(e.name);   // refus dur, voir plus haut
-      else{
-        const k=String(lbl).trim();
-        if(!gMap[k]) gMap[k]='ss'+gSeed+'_'+k;
-        obj.group=gMap[k]; obj.groupType='super';
-      }
-    }
+    if(e.supersetGroup!=null) obj.supersetGroup=e.supersetGroup;   // l'étiquette voyage sur l'objet
     return obj;
   });
-  // ⚠️ UN GROUPE ORPHELIN N'EST PAS UN SUPERSET. Si le garde-fou (ou Milo) laisse un seul
-  // exercice portant une étiquette, l'écran afficherait un « superset » d'un seul membre —
-  // un bloc qui promet un enchaînement qui n'existe pas. On délie ce qui reste seul.
-  const compte={};
-  newExs.forEach(o=>{ if(o.group) compte[o.group]=(compte[o.group]||0)+1; });
-  newExs.forEach(o=>{ if(o.group&&compte[o.group]<2){ delete o.group; delete o.groupType; } });
-  // On le DIT, on ne le fait pas en douce (R24 : la personne doit comprendre ce qu'elle voit)
-  if(bloque.length&&typeof toast==='function')
-    toast('Superset retiré sur '+bloque.join(', ')+' — pas sur les mouvements lourds','info');
   _appliqueMiloSession(newExs, data, mode, btn);
 }
 /** L'écriture elle-même. `mode` : 'start' (aucune séance) · 'add' · 'replace'. */
@@ -6985,6 +6980,47 @@ function _extraireCardioMilo(newExs){
   return out;
 }
 function _appliqueMiloSession(newExs, data, mode, btn){
+  /* ── 🔗 LES SUPERSETS DE MILO — POSÉS ICI, ET C'EST LA TROISIÈME FOIS QU'ON APPREND ÇA ──
+     (05/09/2026) Le groupement vivait dans `_applyMiloSession`, c'est-à-dire sur la porte
+     « une séance tourne déjà ». `_startSessionFromMilo` — **le cas normal**, aucune séance en
+     cours — ne le faisait pas. ⭐⭐ Ce fichier porte DÉJÀ cette leçon deux fois, écrite en
+     toutes lettres : le contrôle d'intensité (ft-v980) et le cardio (ft-v995) ont tous deux
+     été posés sur cette même mauvaise porte, puis déplacés ICI parce que
+     ***`_appliqueMiloSession` est le SEUL point que les deux portes traversent*** (R2).
+     Le superset y avait échappé. *Une leçon écrite à côté du code qui la viole ne protège rien.*
+
+     ⛔⛔ ET IL Y AVAIT UNE SECONDE COUCHE, mesurée le 05/09 : `_normalizeMiloSession` — seul
+     écrivain de `_pendingMiloSessions` en production — ne recopiait pas `supersetGroup`. Donc
+     même la porte qui savait le lire ne le recevait JAMAIS. **Le correctif du 12/08 n'a donc
+     jamais fonctionné en production**, et le témoin du banc était vert parce qu'il écrivait à
+     la main dans `_pendingMiloSessions` une forme que la production ne produit pas (§36).
+
+     ⚠️ POSÉ AVANT L'EXTRACTION DU CARDIO, exprès : le délieur d'orphelins doit voir la liste
+     ENTIÈRE. Un cardio retiré entre deux membres d'un même groupe ne change rien ici, mais
+     si un jour il en retirait un, le survivant doit être délié — ce que la suite fait. */
+  {
+    const gMap={}, gSeed=Date.now(), bloque=[];
+    (newExs||[]).forEach(o=>{
+      const lbl=o&&o.supersetGroup;
+      if(o) delete o.supersetGroup;                    // champ de transport, il ne va pas dans S.wkt
+      if(!o||lbl==null||String(lbl).trim()==='') return;
+      // ⛔ Refus dur sur les mouvements lourds : le superset fait gagner du TEMPS, pas du
+      //    muscle, au prix de la performance du 2ᵉ exercice (méta-analyses, 12/08).
+      if(typeof _supersetInterdit==='function'&&_supersetInterdit(o.name)){ bloque.push(o.name); return; }
+      const k=String(lbl).trim();
+      if(!gMap[k]) gMap[k]='ss'+gSeed+'_'+k;           // "A" → identifiant unique : deux séances
+      o.group=gMap[k]; o.groupType='super';            // chargées à la suite ne se confondent pas
+    });
+    // ⚠️ UN GROUPE ORPHELIN N'EST PAS UN SUPERSET. Si le garde-fou (ou Milo) laisse un seul
+    // exercice portant une étiquette, l'écran afficherait un « superset » d'un seul membre —
+    // un bloc qui promet un enchaînement qui n'existe pas. On délie ce qui reste seul.
+    const compte={};
+    (newExs||[]).forEach(o=>{ if(o&&o.group) compte[o.group]=(compte[o.group]||0)+1; });
+    (newExs||[]).forEach(o=>{ if(o&&o.group&&compte[o.group]<2){ delete o.group; delete o.groupType; } });
+    // On le DIT, on ne le fait pas en douce (R24 : la personne doit comprendre ce qu'elle voit)
+    if(bloque.length&&typeof toast==='function')
+      toast('Superset retiré sur '+bloque.join(', ')+' — pas sur les mouvements lourds','info');
+  }
   /* 🏃 LE CARDIO SORT DE LA LISTE AVANT TOUT LE RESTE (ft-v995) — avant le contrôle d'intensité
      et avant la validation, qui n'ont aucun sens sur un elliptique (il n'a ni charge ni 1RM). */
   {

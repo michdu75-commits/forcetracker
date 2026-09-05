@@ -3662,18 +3662,32 @@ console.log('\n═══ VI. Superset dicté par Milo ═══');
       const b=e.getBoundingClientRect();return [Math.round(b.x),Math.round(b.y),Math.round(b.width),Math.round(b.height)].join(',');};
     o.fabAvant=fab();
 
-    S.wkt=null;
-    _pendingMiloSessions=[{label:'Push',exs:[
+    /* ⛔⛔ CE BLOC ÉCRIVAIT DIRECTEMENT DANS `_pendingMiloSessions` — et c'est pour ça qu'il est
+       resté VERT du 12/08 au 05/09 sur un superset qui n'arrivait JAMAIS (§36). En production,
+       le SEUL écrivain est `_appendStartSessionBtn`, qui passe par `_normalizeMiloSession` — et
+       ce normaliseur JETAIT `supersetGroup`. *Un test qui n'emploie pas le schéma de la
+       production ne teste rien, il rassure.* On part donc de la forme EXACTE que rend le
+       cervelet (`worker.js`, action `seanceJson`) et on la fait traverser le normaliseur. */
+    const duCervelet=()=>({label:'Push',exs:[
       {name:'Développé Couché',sets:[{reps:5,kg:100,type:'N'}]},
       {name:'Squat à la Barre',supersetGroup:'A',sets:[{reps:5,kg:130,type:'N'}]},
       {name:'Soulevé de Terre',supersetGroup:'A',sets:[{reps:5,kg:140,type:'N'}]},
       {name:'Curl Biceps Haltères',supersetGroup:'B',sets:[{reps:12,kg:14,type:'N'}]},
       {name:'Extension Triceps Poulie',supersetGroup:'B',sets:[{reps:12,kg:25,type:'N'}]},
-      {name:'Élévations Latérales',supersetGroup:'C',sets:[{reps:15,kg:8,type:'N'}]}]}];
+      {name:'Élévations Latérales',supersetGroup:'C',sets:[{reps:15,kg:8,type:'N'}]}]});
+    o.normGarde = _normalizeMiloSession(duCervelet()).exs[3].supersetGroup==='B';
+    /* ⭐⭐ ET ON EXERCE LA PORTE NORMALE, PAS L'AUTRE. Il y a DEUX portes vers une séance de
+       Milo : `_startSessionFromMilo` (aucune séance en cours — **le cas de Michel**) et
+       `_applyMiloSession` (une séance tourne déjà). Ce bloc n'exerçait QUE la seconde, celle
+       qui portait le groupement — donc il ne pouvait pas voir que la première ne le faisait
+       pas. C'est la 3ᵉ fois que ce fichier apprend ça (ft-v980, ft-v995, puis ici). */
+    S.wkt=null;
+    _pendingMiloSessions=[_normalizeMiloSession(duCervelet())];
     _miloPendingIdx=0;_miloPendingBtn=null;
-    _applyMiloSession('new');
+    _startSessionFromMilo(0,null);
     await new Promise(r=>setTimeout(r,600));
     const ex=S.wkt.exs;
+    o.fuite = ex.some(x=>x.supersetGroup!==undefined);   // champ de TRANSPORT : il ne va pas dans S.wkt
     o.n         = ex.length;
     o.sansEtiq  = ex[0].group===undefined;                       // rien demandé → rien posé
     o.squat     = ex[1].group===undefined;                       // INTERDIT
@@ -3687,6 +3701,22 @@ console.log('\n═══ VI. Superset dicté par Milo ═══');
     if(typeof toggleSet==='function') toggleSet(3,0);
     await new Promise(r=>setTimeout(r,400));
     o.fabSerie  = fab();
+
+    /* ── L'AUTRE PORTE, celle qui portait le groupement avant le 05/09 : une séance TOURNE
+       DÉJÀ et on demande « remplacer ». Elle doit rendre le même résultat — sinon on a
+       simplement déplacé le trou d'une porte à l'autre au lieu de le combler (R2). */
+    // ⚠️ `today()` et pas `toISOString()` : la page tourne en Europe/Paris, Greenwich est
+    //    encore la veille entre 22 h et minuit — le détecteur `tests/dates` m'a repris ici même.
+    S.wkt={date:(typeof today==='function')?today():'2026-09-05',
+           exs:[{name:'Rowing Barre',sets:[{kg:60,reps:8,done:false,type:'N'}]}]};
+    _pendingMiloSessions=[_normalizeMiloSession(duCervelet())];
+    _miloPendingIdx=0;_miloPendingBtn=null;
+    _applyMiloSession('new');
+    await new Promise(r=>setTimeout(r,600));
+    const ex2=S.wkt.exs;
+    o.p2_lies    = !!(ex2[3].group && ex2[3].group===ex2[4].group && ex2[3].groupType==='super');
+    o.p2_squat   = ex2[1].group===undefined;
+    o.p2_orphelin= ex2[5].group===undefined;
 
     // ── la spec doit être DANS le contexte, sinon Milo ne peut pas l'employer (R8)
     const ctx=(typeof buildCoachContext==='function')?buildCoachContext(''):'';
@@ -3707,6 +3737,17 @@ console.log('\n═══ VI. Superset dicté par Milo ═══');
     'group '+W.lies+' · type '+W.type);
   tw('… avec un identifiant unique, pas l\'étiquette brute de Milo', W.idUnique===true);
   tw('⭐ un groupe resté SEUL est délié (pas de superset à un membre)', W.orphelin===true);
+  /* ⛔⛔ LES 4 TÉMOINS QUI PORTENT LE CORRECTIF DU 05/09 — et sans eux, tout ce qui précède
+     restait vert sur un superset qui n'atteignait jamais la séance. */
+  tw('⭐⭐ le NORMALISEUR laisse passer `supersetGroup` (il le jetait — R4)', W.normGarde===true,
+    'l\'étiquette est perdue avant même la 1ʳᵉ porte : rien de ce qui suit ne peut marcher');
+  tw('⭐⭐ la PORTE NORMALE (aucune séance en cours) groupe bien — c\'est le cas de Michel',
+    W.lies===true, 'le groupement ne vit que sur l\'autre porte');
+  tw('⭐⭐ … et l\'AUTRE PORTE (séance en cours) rend le MÊME résultat',
+    W.p2_lies===true&&W.p2_squat===true&&W.p2_orphelin===true,
+    'liés '+W.p2_lies+' · squat refusé '+W.p2_squat+' · orphelin délié '+W.p2_orphelin);
+  tw('⛔ le champ de TRANSPORT ne fuit pas dans la séance enregistrée', W.fuite===false,
+    '`supersetGroup` traîne dans S.wkt.exs — il partirait dans l\'historique et le cloud');
   tw('⭐ RÈGLE D\'OR #9 : le bouton central ne bouge pas ('+W.fabAvant+')',
     W.fabAvant===W.fabApres&&W.fabApres===W.fabSerie,
     W.fabAvant+' → '+W.fabApres+' → '+W.fabSerie);
