@@ -614,7 +614,11 @@ const SCENARIOS = [
        datée « (aujourd'hui) » — mesuré le 23/08. L'information est là, elle n'est pas suivie. */
     apply:{ name:'Michel', gender:'H', age:46, height:178, bw:85, goal:'muscle', discipline:'muscu', level:'confirme',
       prs:{ 'Développé Couché':{rm1:108,kg:105,reps:2,date:'2026-07-27'} },
-      sessions:[{ date:new Date().toISOString().slice(0,10), id:1, volume:6852, progLabel:'Poitrine / Dos', exs:[
+      /* ⛔ DATE DE PARIS, PAS DE GREENWICH (05/09/2026) — même famille que les 18 fixtures
+         corrigées par session-A la nuit précédente : entre 22 h UTC et minuit, cette
+         « séance d'aujourd'hui » était datée d'HIER, et le scénario mesurait autre chose
+         que ce qu'il annonce. Trouvé en étendant `tests/dates` aux bancs d'essai. */
+      sessions:[{ date:new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'}), id:1, volume:6852, progLabel:'Poitrine / Dos', exs:[
         {name:'Développé Couché',sets:[{kg:95,reps:3,done:true,type:'N'}]},
         {name:'Pec Deck',sets:[{kg:61,reps:12,done:true,type:'N'}]},
         {name:'Rowing Barre (Tirage Horizontal)',sets:[{kg:70,reps:8,done:true,type:'N'}]},

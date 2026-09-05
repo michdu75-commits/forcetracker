@@ -3938,6 +3938,7 @@
 >
 > **✅ MIROIR SUPABASE OPÉRATIONNEL** (05/08, 8h) — testé en vert depuis l'app. Quatrième copie des comptes, sur une infrastructure indépendante de Google. *(Les bugs d'affichage du « Créateur de programme » signalés le 04/08 au soir concernaient le projet de Tatiana, pas Force Tracker — retirés d'ici.)*
 > **🔒 Toujours ouvert (sécurité)** : `loadProfile` sert un compte entier sans code perso · le jeton de la boîte à idées est en clair dans `app.js`. Correctifs prêts, **non déployés** — c'est la production, ça se fait avec toi.
+> > ✅ **FERMÉ DEPUIS LE 07/08/2026 — encadré ajouté le 05/09** (la ligne ci-dessus est gardée telle quelle, c'est un instantané daté). **Les deux ont été déployés** : le jeton par ft-v787, et `loadProfile` par la « lecture stricte » (`_lectureAutorisee_`, `Code.js` ~108, appelée par le GET **et** le POST). ⚠️ **Cette ligne est restée fausse un mois**, et le 05/09 elle a servi à répondre à Michel sur le passage du dépôt en privé — **R23** : *un document d'état qu'on ne met pas à jour fait dire des bêtises à celui qui le lit.* Détail et clôture : `docs/ALERTE-SECURITE-BOITE-IDEES.md`.
 >
 > **↩️ Rollback de la nuit** : `git reset --hard sauvegarde-avant-allegement` *(⚠️ sur ce dépôt, les **tags** sont refusés — on utilise une **branche**.)*
 
@@ -3963,6 +3964,7 @@
 
 > **🔴 À TRAITER EN PREMIER AU RÉVEIL**
 > 1. **`docs/ALERTE-SECURITE-BOITE-IDEES.md`** — le jeton de lecture des idées est **en clair dans `app.js`**, servi publiquement depuis un dépôt public : n'importe qui peut lire **nom, e-mail et message de tous les testeurs**. Correctif écrit, **non déployé** (impossible de vérifier un déploiement backend depuis la session web, domaine bloqué). *Ça date du 12/07.*
+> > ✅ **FAIT le 07/08/2026 (ft-v787) — encadré ajouté le 05/09**, la ligne ci-dessus est un instantané daté et reste telle quelle. Le jeton ne vit plus dans `app.js`, le serveur lit `IDEES_TOKEN2` avec **repli fermé**, et un **test permanent** refuse tout secret en clair dans les fichiers servis.
 > 2. **Brancher `listUsers` dans Profil → Admin** : on ne sait pas combien de séances Emma a faites, ni personne d'autre. On mesure tout sauf l'usage.
 >
 > **📊 Ce que les retours ont appris sur la MÉTHODE**

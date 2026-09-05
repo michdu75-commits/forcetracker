@@ -86,7 +86,11 @@ async function main(){
   console.log('  A/B MÉMOIRE FORCE TRACKER — ' + (GO ? '⚠️ APPELS RÉELS' : 'À BLANC (0 appel, 0 €)'));
   console.log('═══════════════════════════════════════════════════════════════');
 
-  const sortie = { date:new Date().toISOString().slice(0,10), mode: GO ? 'reel' : 'blanc', cas: [] };
+  /* ⚠️ Ici c'est l'ÉTIQUETTE du rapport, pas une fixture : une date fausse d'un jour ne
+     fabrique aucun faux rouge, elle nomme mal un fichier. On l'aligne quand même — deux
+     façons de dater dans le même dépôt finissent par diverger (R2) — mais sans prétendre
+     que c'était le même défaut que la fixture ci-dessus. */
+  const sortie = { date:new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'}), mode: GO ? 'reel' : 'blanc', cas: [] };
 
   /* ⛔⛔ LES CAS VIENNENT DE L'APP, PAS D'ICI (R2) — et l'absence est FATALE, pas silencieuse.
      Si `_AB_CAS` disparaissait de `coach.js` (renommé, déplacé, retiré), un repli sur une
