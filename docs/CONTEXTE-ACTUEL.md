@@ -7,6 +7,10 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1137` — 🧹 **L'ACCUEIL ALLÉGÉ, 2ᵉ PASSE.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#919** sur `20ec32b`, **job `deploy` success**,
+  les 7 étapes vertes à **18:06:44 UTC**. Suite complète sur l'arbre **fusionné** :
+  **parcours 2818/2818**, calculs 339/339, muscles 241/241, croisés 50/50, dates 9/9,
+  données 0 trou.
   Michel groupe **2 demandes en 1 version** (donc 1 passe au lieu de 2).
   ⭐⭐ **① Le bouton « Commencer une séance » ne sort plus que si une séance est OUVERTE.**
   ⛔ Vérifié : le FAB appelle **la même fonction**, mais **il ne dit jamais qu'une séance est en
