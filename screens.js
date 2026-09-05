@@ -1599,17 +1599,44 @@ function toggleDayPain(z){const d=_dayState();const i=(d.pains||[]).findIndex(p=
 function setDayPainSide(z,side){const d=_dayState();const p=(d.pains||[]).find(x=>x&&x.zone===z);if(!p)return;p.side=side;_saveDayStateToLog();persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
 // Check-in du jour = sommeil + énergie/moral/douleur regroupés en UNE carte, repliée par défaut (désencombre l'Accueil).
 // ⚠️ On regroupe l'AFFICHAGE, pas les logiques : le sommeil nourrit le score de récup, l'énergie/moral/douleur NON (ft-v472/473).
-/* ⤵️ « CE MOIS » — PLIÉ OU DÉPLIÉ, ET ÇA SURVIT À LA FERMETURE DE L'APP (05/09/2026).
-   ⛔ Un seul propriétaire de la question (R2) : `_ceMoisOuvert()`. Le rendu ne lit jamais
-   `localStorage` directement — sinon le jour où la clé change, il faut la chasser partout.
-   ⛔ REPLI SÛR : tout ce qui n'est pas exactement « 0 » compte comme DÉPLIÉ. Un stockage vide,
-   illisible ou bloqué (navigation privée) doit rendre le comportement d'AVANT, jamais un
-   Accueil amputé que personne n'a demandé. */
-function _ceMoisOuvert(){ try{ return localStorage.getItem('ft4_cemois')!=='0'; }catch(e){ return true; } }
+/* ⤵️ LES BLOCS QUI SE REPLIENT ET DONT LE PLI SURVIT À LA FERMETURE DE L'APP.
+   ⛔⛔ UN SEUL PROPRIÉTAIRE DE LA QUESTION (R2), et il est devenu générique le 05/09/2026 au soir
+   quand le bloc « Apparence » du menu a eu le même besoin : deux mécanismes de pli identiques
+   auraient divergé — *le premier qui gagne un correctif le garde pour lui seul*. Le rendu ne lit
+   jamais `localStorage` directement, sinon le jour où une clé change il faut la chasser partout.
+   ⛔ REPLI SÛR, et c'est toute la subtilité : tout ce qui n'est pas exactement « 0 » compte comme
+   DÉPLIÉ. Un stockage vide, illisible ou bloqué (navigation privée) doit rendre le comportement
+   d'AVANT — jamais un écran amputé que personne n'a demandé (R29).
+   ⚠️ `_ceMoisOuvert` et `toggleCeMois` GARDENT leurs noms : ils sont appelés depuis le HTML rendu
+   et épinglés par le banc. Ils délèguent, ils ne dupliquent pas. */
+function _pliOuvert(cle){ try{ return localStorage.getItem(cle)!=='0'; }catch(e){ return true; } }
+function _pliBascule(cle){
+  const ouvert=_pliOuvert(cle);
+  try{ localStorage.setItem(cle, ouvert?'0':'1'); }catch(e){}
+  return !ouvert;
+}
+function _ceMoisOuvert(){ return _pliOuvert('ft4_cemois'); }
 function toggleCeMois(){
-  try{ localStorage.setItem('ft4_cemois', _ceMoisOuvert()?'0':'1'); }catch(e){}
+  _pliBascule('ft4_cemois');
   try{ renderHome(); }catch(e){}
 }
+/* ⤵️ « APPARENCE » DU MENU (05/09/2026) — même état, autre MÉCANIQUE, et c'est la nuance :
+   « CE MOIS » est reconstruit par `renderHome()`, alors que le menu est du HTML STATIQUE. Ici on
+   ne re-rend rien, on montre/cache — d'où `hidden` plutôt qu'un rendu conditionnel.
+   ⛔ On partage donc ce qui divergerait (la lecture/écriture de l'état, R2) et pas ce qui n'a
+   rien à voir (la façon d'afficher). *Mutualiser le mécanisme d'affichage aurait forcé le menu
+   à se re-rendre pour rien.*
+   ⚠️ `el.hidden` et non `style.display` : le bloc porte déjà des styles en ligne, et un
+   `display:''` remis à la main ne rendrait pas forcément la valeur d'origine. */
+function _apparenceOuverte(){ return _pliOuvert('ft4_apparence'); }
+function _appliquerPliApparence(){
+  const corps=document.getElementById('appr-corps'), chev=document.getElementById('appr-chev');
+  if(!corps) return;                       // le menu n'est pas dans le DOM : rien à faire
+  const ouvert=_apparenceOuverte();
+  corps.hidden=!ouvert;
+  if(chev) chev.style.transform = ouvert ? 'rotate(90deg)' : '';
+}
+function toggleApparence(){ _pliBascule('ft4_apparence'); _appliquerPliApparence(); }
 let _checkinOpen=false; // par session (non persisté)
 function toggleCheckin(){_checkinOpen=!_checkinOpen;_renderDayStateCard();try{if(typeof renderLogSleep==='function')renderLogSleep();}catch(e){}}
 /* ⤴️ REPLIER LE CHECK-IN APRÈS AVOIR ENREGISTRÉ (18/08/2026, retour Michel : « le check-in du

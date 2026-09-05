@@ -2827,6 +2827,11 @@ function openMenuDrawer(){
   if(typeof _ackMenu==='function')_ackMenu();
   // Version affichée = vrai build tournant (jamais périmé)
   if(typeof _setAppVersionEls==='function')_setAppVersionEls();
+  /* ⤵️ Le pli d'« Apparence » est réappliqué À CHAQUE OUVERTURE (05/09/2026).
+     ⛔ Sans cette ligne le pli ne servirait à RIEN : le menu est du HTML statique, donc il
+     rouvrirait déplié à chaque fois — c'est-à-dire exactement le comportement qu'on vient de
+     retirer. *Un pli mémorisé mais jamais réappliqué est un pli qui n'existe pas.* */
+  if(typeof _appliquerPliApparence==='function')_appliquerPliApparence();
 }
 function closeMenuDrawer(){
   document.getElementById('menu-drawer').classList.remove('open');

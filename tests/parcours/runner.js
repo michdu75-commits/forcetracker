@@ -27142,6 +27142,161 @@ console.log('\n-- CCXXXIX. Deux portes pour une mensuration (ft-v1136) --');
   await cx.close();
 }
 
+// ═══ CCXL. LE MENU RÉORGANISÉ — CE QUI PARLE DE TOI PASSE DEVANT (ft-v1139) ═══════════════
+// Michel : « il faut réorganiser le menu, c'est grave mélangé, il faut mettre ce qu'il y a
+// d'important en premier ».
+// ⭐ MESURÉ AVANT : le menu descend jusqu'à y=1909 pour un écran de 852, et « Ce que Milo sait
+// de toi » — la promesse centrale du produit — était à y=1090, donc HORS ÉCRAN.
+// ⛔⛔ CE QUE CE BLOC PROTÈGE N'EST PAS « c'est mieux rangé » (invérifiable) : c'est ① que rien
+// n'a été PERDU au déménagement, ② que chaque entrée mène toujours au même endroit, et ③ que
+// ce qui parle de la personne tient sur le premier écran. *Une réorganisation qui égare une
+// entrée ou casse un lien est SILENCIEUSE — rien ne plante, la ligne a juste disparu.*
+console.log('\n═══ CCXL. Menu réorganisé : ton suivi d\'abord, apparence en bas ═══');
+{
+  const cm=await b.newContext({serviceWorkers:'block',viewport:{width:393,height:852},timezoneId:'Europe/Paris'});
+  const pm=await cm.newPage(); const em=[]; pm.on('pageerror',e=>em.push(e.message));
+  await pm.addInitScript(seedScript({}));
+  await pm.goto('http://localhost:'+PORT+'/index.html');
+  await pm.waitForTimeout(2200);
+  const G=await pm.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    /* ⚠️ `openMenuDrawer` REFUSE de s'ouvrir si la pop-up d'installation est visible — et il
+       refuse EN SILENCE. Sans cette ligne, tout le bloc mesurerait un menu fermé. */
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    openMenuDrawer(); await new Promise(r=>setTimeout(r,600));
+    const d=document.getElementById('menu-drawer'), o={ecran:window.innerHeight};
+    o.ouvert=d.classList.contains('open');
+    const bas=()=>{ let m=0; d.querySelectorAll('div,button,a').forEach(e=>{
+      const r=e.getBoundingClientRect(); if(r.height>0) m=Math.max(m,Math.round(r.bottom)); }); return m; };
+    o.longueur=bas();
+    /* l'inventaire du menu : libellé → action, dans l'ordre où on les voit */
+    o.entrees=[...d.querySelectorAll('.menu-row,[id^="menu-row-"]')].map(e=>{
+      const l=e.querySelector('.menu-row-lbl')||e.querySelector('.menu-row-t');
+      const r=e.getBoundingClientRect();
+      return {nom:l?l.textContent.trim():'', y:Math.round(r.top), act:(e.getAttribute('onclick')||'')};
+    }).filter(x=>x.nom);
+    o.sections=[...d.querySelectorAll('.sec')].map(e=>e.textContent.trim());
+    /* le pli d'Apparence */
+    const corps=document.getElementById('appr-corps');
+    o.pliExiste=!!corps;
+    if(corps){
+      o.corpsHaut=Math.round(corps.getBoundingClientRect().height);
+      o.cacheAuDepart=corps.hidden;
+      toggleApparence(); await new Promise(r=>setTimeout(r,350));
+      o.cachePlie=document.getElementById('appr-corps').hidden;
+      o.longueurPliee=bas();
+      o.stocke=localStorage.getItem('ft4_apparence');
+      /* ⛔ LE POINT QUI DÉCIDE DE TOUT : le menu est du HTML STATIQUE, donc un pli qui n'est pas
+         réappliqué à l'ouverture ne sert à RIEN — il se déferait à chaque fois. */
+      closeMenuDrawer(); await new Promise(r=>setTimeout(r,250));
+      openMenuDrawer(); await new Promise(r=>setTimeout(r,500));
+      o.cacheApresReouverture=document.getElementById('appr-corps').hidden;
+      toggleApparence(); await new Promise(r=>setTimeout(r,350));
+      o.cacheRouvert=document.getElementById('appr-corps').hidden;
+      o.longueurRouverte=bas();
+      localStorage.removeItem('ft4_apparence');
+      o.defautOuvert=_apparenceOuverte();
+    }
+    /* ⛔ R2 — le pli de « CE MOIS » doit toujours marcher : il DÉLÈGUE désormais au même
+       propriétaire d'état, et une délégation ratée est muette. */
+    o.ceMoisDelegue = (typeof _ceMoisOuvert==='function') && (typeof _pliOuvert==='function')
+      && _ceMoisOuvert()===_pliOuvert('ft4_cemois');
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  await cm.close();
+  if(G.erreur) t('CCXL ⛔ le bloc s\'exécute', false, G.erreur);
+  /* ⛔⛔ LE TOUT PREMIER CONTRÔLE — le menu doit VRAIMENT être ouvert. `openMenuDrawer` peut
+     refuser sans rien dire (onboarding, pop-up d'installation) : sans cette vérification, tout
+     le bloc mesurerait un tiroir fermé et resterait vert en ne prouvant rien. */
+  t('CCXL ⛔⛔ CONTRÔLE — le menu est réellement OUVERT', G.ouvert===true,
+    'openMenuDrawer a refusé en silence');
+
+  /* ⛔⛔ CONTRÔLE D'ABORD — les 14 entrées doivent TOUTES être là. Sans lui, « ce qui parle de
+     toi est en haut » serait vert sur un menu dont on aurait perdu la moitié. */
+  const ATTENDUES=['Ce que Milo sait de toi','Bilans mensuels','Exporter mes données',
+    'Cycle de force','Calculateur 1RM','Guide de la muscu','Anatomie du corps humain',
+    'Protéines en poudre','Compléments alimentaires',"Guide de l'application",'Nouveautés',
+    'Aide détaillée','À propos','Confidentialité'];
+  const noms=(G.entrees||[]).map(x=>x.nom);
+  const perdues=ATTENDUES.filter(x=>!noms.includes(x));
+  t('CCXL ⛔⛔ CONTRÔLE — les 14 entrées du menu sont TOUTES là (rien perdu au déménagement)',
+    perdues.length===0, 'manquantes : '+perdues.join(', '));
+
+  /* ⛔⛔ ET CHACUNE MÈNE TOUJOURS AU MÊME ENDROIT. Déplacer une ligne en cassant son action ne
+     lève aucune erreur : on tape, il ne se passe rien. Les actions sont figées ici. */
+  const ACTIONS={
+    'Ce que Milo sait de toi':'openMiloKnows', 'Bilans mensuels':'openMonthReports',
+    'Exporter mes données':'exportData', 'Cycle de force':"goScreen('cycle'",
+    'Calculateur 1RM':"'rm1calc'", 'Guide de la muscu':"'guide'",
+    'Anatomie du corps humain':"'anatomy'", 'Protéines en poudre':"'proteins'",
+    'Compléments alimentaires':"'supplements'", "Guide de l'application":'openAppGuide',
+    'Nouveautés':'openWhatsNewHistory', 'Aide détaillée':"'help'", 'À propos':"'about'",
+    'Confidentialité':'confidentialite.html'};
+  const cassees=(G.entrees||[]).filter(x=>ACTIONS[x.nom] && x.act.indexOf(ACTIONS[x.nom])<0);
+  t('CCXL ⛔⛔ … et chacune mène TOUJOURS au même endroit (un lien cassé serait muet)',
+    cassees.length===0, cassees.map(x=>x.nom+' → '+x.act.slice(0,40)).join(' | '));
+
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION — et il ne mesure pas « c'est plus court » (le menu est
+     même 40 px plus long, à cause des titres de section). Il mesure ce que Michel a demandé :
+     ce qui parle de TOI tient sur le premier écran, sans défiler. */
+  {
+    const dessus=['Ce que Milo sait de toi','Bilans mensuels','Exporter mes données']
+      .map(n=>(G.entrees||[]).find(x=>x.nom===n)).filter(Boolean);
+    t('CCXL ⭐⭐ « Ton suivi » tient sur le PREMIER écran, sans défiler',
+      dessus.length===3 && dessus.every(x=>x.y>0 && x.y<G.ecran),
+      dessus.map(x=>x.nom+' y='+x.y).join(' | ')+' (écran '+G.ecran+')');
+  }
+  /* ⛔ CONTRÔLE — l'écran doit être plus court que le menu, sinon « tout tient sur le premier
+     écran » serait vrai sans rien prouver. */
+  t('CCXL ⛔ CONTRÔLE — le menu est bien plus long que l\'écran (sinon le témoin ci-dessus est vide)',
+    G.longueur>G.ecran, 'menu '+G.longueur+' px · écran '+G.ecran+' px');
+
+  /* ⭐ LES 4 RAYONS, DANS L'ORDRE — c'est la règle de rangement, écrite pour que la prochaine
+     entrée sache où aller. */
+  t('CCXL ⭐ les 4 sections sont dans l\'ordre : Ton suivi → Tes outils → Apprendre → L\'application',
+    JSON.stringify(G.sections)===JSON.stringify(['Ton suivi','Tes outils','Apprendre',"L'application"]),
+    JSON.stringify(G.sections));
+
+  /* ⭐⭐ LE PLI D'APPARENCE, et le témoin qui compte n'est pas « ça se cache » — c'est que le pli
+     SURVIT à la fermeture du menu. Le menu étant du HTML statique, un pli mémorisé mais non
+     réappliqué se déferait à chaque ouverture : il ne servirait à rien. */
+  t('CCXL ⛔ CONTRÔLE — le bloc Apparence existe et n\'est pas vide',
+    G.pliExiste===true && G.corpsHaut>100, 'corps '+G.corpsHaut+' px');
+  t('CCXL ⭐ « Apparence » se replie et se rouvre',
+    G.cacheAuDepart===false && G.cachePlie===true && G.cacheRouvert===false
+    && G.longueurPliee<G.longueurRouverte,
+    'plié '+G.longueurPliee+' px · rouvert '+G.longueurRouverte+' px');
+  t('CCXL ⭐⭐ … et le pli SURVIT à la fermeture du menu (sinon il ne sert à rien)',
+    G.cacheApresReouverture===true && G.stocke==='0',
+    'après réouverture caché='+G.cacheApresReouverture+' · stocké « '+G.stocke+' »');
+  /* ⛔ REPLI SÛR — un stockage vide ou bloqué (navigation privée) rend le comportement d'AVANT,
+     jamais des réglages disparus que personne n'a demandé de cacher (R29). */
+  t('CCXL ⛔ sans rien en mémoire, « Apparence » est DÉPLIÉE (comportement d\'avant)',
+    G.defautOuvert===true, 'un stockage illisible ne doit rien cacher');
+  /* ⛔ R2 — « CE MOIS » délègue au même propriétaire d'état. Une délégation ratée est MUETTE :
+     le pli marcherait encore, mais sur une autre clé, et les deux divergeraient en silence. */
+  t('CCXL ⛔ R2 — « CE MOIS » délègue bien au propriétaire unique du pli',
+    G.ceMoisDelegue===true, 'les deux plis ne lisent plus le même état');
+
+  /* ⚠️ LE MENU MORT — trouvé en cherchant lequel réorganiser, et FIGÉ ICI avec sa raison (R30).
+     `#drawer` porte 8 entrées et `openDrawer()` n'a AUCUN appelant : j'ai failli réorganiser
+     celui-là. Le témoin ne demande pas de le supprimer — il demande que le CONSTAT reste vrai,
+     pour que le prochain ne perde pas une heure dessus. */
+  {
+    const H=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+    const JS=['app.js','screens.js','setup.js','log.js','coach.js','tracking.js']
+      .map(f=>fs.readFileSync(path.join(ROOT,f),'utf8')).join('\n');
+    const appels=(JS.match(/openDrawer\(\)/g)||[]).length;   // 1 = sa propre définition
+    t('CCXL ⚠️ le vieux menu `#drawer` est toujours ORPHELIN (constat, pas une régression)',
+      /id="drawer"/.test(H) && appels<=1,
+      'openDrawer() a maintenant '+appels+' occurrence(s) — s\'il a été rebranché, ce constat est à réécrire');
+  }
+  t('CCXL aucune erreur JS sur tout le bloc', em.length===0, em.join(' | '));
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
