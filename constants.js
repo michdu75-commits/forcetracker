@@ -480,6 +480,13 @@ const NEW_FEATURES=[
      ⛔ PAS DE POP-UP en revanche : la carte **ne s'affiche que si on a déjà mesuré**, aucun
      repère ne bouge, et il n'y a rien à faire que ce que la pop-up de la veille demandait
      déjà. *La pop-up annonce, elle ne se répète pas.* */
+  /* 📊 POINT ROUGE SUR L'ACCUEIL, et c'est bien là qu'il va — pas sur Progrès.
+     ⚠️ La tentation était de le poser sur Progrès, « là où le volume se retrouve ». ⛔ Ç'aurait
+     été FAUX à deux titres : rien n'a changé sur Progrès (on enverrait chercher du neuf sur un
+     écran identique à hier — le défaut de ft-v1099), et ce serait un 3ᵉ point sur cet onglet en
+     trois jours, c'est-à-dire du bruit (R19). ⭐ Le changement est sur l'ACCUEIL : deux tuiles
+     ont disparu, et l'adresse de renvoi (le calendrier, juste dessous) y est aussi. */
+  {id:'cemois-2tuiles', screen:'home', desc:'📊 <b>« Ce mois » ne garde que ce qui mène quelque part.</b> Les tuiles <b>Volume</b> et <b>Force</b> ont été retirées : elles t\'envoyaient en haut de l\'onglet Progrès, sur un écran où <b>ni l\'un ni l\'autre n\'était affiché</b>. ⭐ Ton <b>tonnage</b> n\'est pas perdu — il est <b>juste en dessous, dans le calendrier</b>, semaine par semaine (« S36 · 19,3 t »). ⚠️ Le <b>total des trois barres</b> (squat + développé couché + soulevé de terre), lui, n\'est plus affiché nulle part : il reviendra le jour où il aura un écran à lui. Restent <b>Séances</b> et <b>Poids</b>, qui ouvrent bien la bonne page.'},
   {id:'ratio-compo', screen:'progress', desc:'📐 <b>Ce que tes centimètres disent de ta perte de poids.</b> Sous le graphique du poids, une carte compare la variation de ton <b>poids</b>, de ta <b>masse grasse</b> et de ton <b>tour de taille</b> — chacune en % d\'elle-même, pour qu\'on puisse les mettre sur la même barre. ⭐ Si ta taille descend plus vite que ton poids, ce qui part est surtout du gras : la balance seule ne pouvait pas le dire. Il faut <b>2 tours de taille notés à 14 jours d\'écart</b>.'},
   /* ⭐ POINT ROUGE CIBLÉ, sur l'ACCUEIL — c'est là que le bouton a remplacé le pavé, donc là
      qu'il faut regarder. Même filtre que la pop-up : personne d'autre n'a de quoi le chercher. */
@@ -766,6 +773,16 @@ const WHATS_NEW=[
        le canal par lequel ses retours arrivent. *Une disparition muette se lit comme une punition.*
        ⛔ POURQUOI `si:'testeur'` : les autres n'ont jamais vu ce pavé. Leur annoncer sa disparition
        serait du bruit pur, et le mécanisme existe exprès depuis ft-v1072. */
+  /* 📊 ELLE SE MÉRITE SUR LE CRITÈRE « UN REPÈRE A BOUGÉ » — et c'est un cas net : deux tuiles
+     que TOUT LE MONDE voyait, tout en haut de l'Accueil, disparaissent d'un coup.
+     ⛔⛔ ET SURTOUT ELLE DONNE L'ADRESSE DE RENVOI, ce qu'aucune autre surface ne fera à temps :
+     quelqu'un qui lisait son tonnage du mois tous les matins le cherchera dès demain. Sans cette
+     pop-up il conclut à une panne — *une disparition muette se lit comme une punition* (le même
+     argument qu'en ft-v1132 pour la carte dorée).
+     ⭐ ELLE DIT AUSSI CE QUI EST VRAIMENT PERDU (le total des trois barres) : annoncer « rien
+     n'est perdu » serait faux, et le mensonge se verrait le lendemain.
+     ⛔ BORNÉE (R25) : ce qui part, où le retrouver, pourquoi. Le POURQUOI long vit dans l'aide. */
+    {v:74, ic:'📊', t:'« Ce mois » ne garde que les tuiles qui mènent quelque part', d:'① <b>Les tuiles Volume et Force ont quitté l\'Accueil.</b> En les tapant, on arrivait <b>en haut de l\'onglet Progrès</b> — un écran où ni ton volume ni le total de tes trois barres n\'est affiché. <b>Un chiffre sur lequel on tape doit mener là où il est.</b> ② <b>Ton tonnage n\'est pas perdu :</b> il est <b>juste en dessous, dans le calendrier</b>, semaine par semaine (« S36 · 19,3 t »). ③ ⚠️ <b>Le total squat + développé couché + soulevé de terre, lui, n\'est plus affiché</b> — il n\'avait aucun autre endroit dans l\'app. Il reviendra quand il en aura un. 💡 Restent <b>Séances</b> et <b>Poids</b>, qui ouvrent bien la bonne page.'},
     {v:73, si:'testeur', ic:'⭐', t:'Ta carte Testeur Fondateur devient un bouton', d:'① <b>Le grand encadré doré de l\'Accueil laisse la place à un petit bouton</b> « ⭐ Espace testeur fondateur » — même endroit, en haut de l\'écran. ② <b>Tu n\'as rien perdu :</b> ton statut est intact et le bouton ouvre exactement le même espace, avec ta <b>boîte à idées</b>. ③ C\'est une demande de Michel, qui trouvait son Accueil trop chargé — l\'écran gagne <b>118 pixels</b>, de quoi voir ton score de récup et ton bouton de séance sans faire défiler autant. 💛 Le merci, lui, reste vrai : cette appli existe aussi grâce à toi.'},
     {v:72, ic:'📏', t:'Tes mensurations sont enfin gardées dans le temps', d:'① <b>Tes centimètres sont maintenant datés et conservés</b> — avant, seule la <b>dernière</b> valeur survivait : tu voyais bouger ton % de graisse sans jamais pouvoir revoir d\'où tu partais. ② <b>9 mesures</b> : cou, taille et hanches en clair, le reste (poitrine, épaules, bras, avant-bras, cuisse, mollet) sous <b>« Autres mensurations »</b>. ③ ⚠️ <b>Une mesure seule ne se perd plus</b> : avant, taper le cou <b>sans</b> le tour de taille affichait une erreur et <b>jetait ta saisie</b>. 💡 Onglet Progrès → Corps &amp; santé, carte « Masse grasse ».'},
     {v:71, ic:'🔋', t:'Ta fatigue s\'additionne au lieu de compter une seule séance', d:'① <b>Deux séances rapprochées coûtent maintenant plus qu\'une seule.</b> Avant, seule <b>la dernière</b> comptait. ② Le facteur <b>« 🔥 Jours enchaînés »</b> disparaît : un forfait à la louche, remplacé par la vraie mesure. ⭐ <b>Bonne nouvelle</b> : sur tes 60 derniers jours, <b>25 journées REMONTENT</b>, 3 seulement baissent. ⚠️ <b>Ton historique bouge aussi</b> (au plus <b>6 points</b>). 💡 Le détail est dans l\'aide ❔ de l\'Accueil.'},

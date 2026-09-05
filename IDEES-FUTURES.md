@@ -4,6 +4,50 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 📊 REMETTRE « VOLUME » ET « FORCE » DANS CE MOIS ? — RETIRÉES LE 05/09/2026 (ft-v1138)
+
+**Michel** : *« quand on clique sur les tuiles, c'est pas terrible où j'arrive, j'aime pas trop »*,
+puis *« on le retire pour l'instant, tu le notes qu'on a retiré ces tuiles, et on fera ou on le
+réimplante — écris-le bien dans les journaux »*.
+
+⛔⛔ **CE N'EST PAS UN OUBLI, C'EST UNE DÉCISION (R30).** Une rangée de 2 tuiles ressemble
+exactement à un travail inachevé — c'est précisément pour ça que ce paragraphe existe, et qu'un
+témoin du banc (bloc CCXXXIX) refuse leur retour tant que la condition ci-dessous n'est pas
+remplie. *Sans ça, le suivant « répare » une décision.*
+
+**⭐ LA RAISON EST MESURÉE, pas ressentie** — les 4 tuiles ont été tapées dans un vrai navigateur :
+
+| Tuile | Où on arrivait |
+|---|---|
+| **Volume** | haut de Progrès / Exercices — et l'accordéon qui contient le volume y est **fermé** |
+| **Force** | exactement le même endroit, et le total Squat+DC+SDT **n'est affiché nulle part** |
+| Séances | Progrès / Exercices, avec descente jusqu'à « Historique séances » (ancre 1076 → **102 px**) ✅ |
+| Poids | Progrès / **Corps & santé**, sur « Mes pesées » ✅ |
+
+👉 ***On tapait un chiffre pour arriver sur un écran qui ne le montre pas.*** Les deux appelaient
+`goScreen('progress')` **nu**, sans sous-onglet ni ancre — contrairement aux deux autres.
+
+**⛔ LA CONDITION POUR LES REMETTRE, ET ELLE N'EST PAS NÉGOCIABLE : une destination qui MONTRE le
+chiffre tapé.** Pas « un écran où l'information existe quelque part » — *un écran où on la voit en
+arrivant*. Concrètement :
+- **Volume** → il faudrait ouvrir l'accordéon `prog-volume-acc` d'office à l'arrivée **et** y
+  afficher le **tonnage du mois** (il n'y montre aujourd'hui que des *séries par groupe
+  musculaire*, ce qui n'est pas la même grandeur) ;
+- **Force** → il faudrait qu'un écran affiche le **total des trois barres**. Vérifié : `BIG3`
+  n'est relu que par `getLevel` (tracking.js) — ce total n'existe **nulle part ailleurs dans
+  l'app**. Il faut donc le construire avant de pouvoir y mener.
+
+**⚠️ CE QUI EST VRAIMENT PERDU, et il faut le dire** : le tonnage du mois reste lisible **dans le
+calendrier**, semaine par semaine (« S36 · 19,3 t ») et jour par jour — donc rien de grave. Le
+**total des trois barres**, lui, n'est plus affiché du tout. C'est une vraie perte, elle est
+annoncée aux utilisateurs (pop-up v74) plutôt que passée sous silence.
+
+**⛔ AU PASSAGE, TROIS CALCULS ONT ÉTÉ RETIRÉS AVEC ELLES** (`vol`, `volDisp`, `b3` dans
+`renderHome`) : ils n'avaient plus qu'un seul lecteur, et *un calcul sans lecteur est une donnée
+morte* (**R5**). Les remettre, c'est aussi les recalculer.
+
+---
+
 ## 🔴 SUPPRIMER LE BOUTON « COMMENCER UNE SÉANCE » DE L'ACCUEIL ? — À VOIR PLUS TARD (05/09/2026)
 
 **Michel, après ft-v1133** : *« on verra par la suite pour supprimer le bouton commencer la

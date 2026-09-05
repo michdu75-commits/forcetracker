@@ -26860,8 +26860,17 @@ console.log('\n═══ CCXXXIX. Accueil allégé : bouton conditionnel + CE MO
     o.ceMois=Math.round(st.getBoundingClientRect().height);
     const g=st.querySelector('div[style*="grid-template-columns"]');
     o.tuiles=g?[...g.children].length:0;
-    o.uneRangee=!!(g && /repeat\(4/.test(g.getAttribute('style')||''));
-    /* ⛔ le vrai risque d'une rangée de 4 sur un petit écran : un chiffre TRONQUÉ */
+    /* ⚠️ RE-VISÉ le 05/09 au soir (ft-v1138) : ce témoin exigeait `repeat(4`. Volume et Force
+       ayant été RETIRÉS (R30, voir plus bas), il rougissait sur du code parfaitement sain.
+       ⭐ La garantie n'a jamais été « il y a quatre colonnes » — c'est « CE MOIS tient sur UNE
+       SEULE RANGÉE ». On la mesure donc pour ce qu'elle est : toutes les tuiles alignées sur la
+       même ligne, quel que soit leur nombre. *Un témoin visé sur le repère du jour rougit au
+       premier changement de repère ; visé sur la garantie, il survit.* (BUGS.md §31) */
+    o.uneRangee=!!(g && [...g.children].every(e=>
+      Math.abs(e.getBoundingClientRect().top - g.children[0].getBoundingClientRect().top) < 2));
+    o.titres=g?[...g.children].map(e=>e.getAttribute('title')||''):[];
+    o.vides=g?[...g.children].filter(e=>!(e.textContent||'').trim()).length:-1;
+    /* ⛔ le vrai risque d'une rangée serrée sur un petit écran : un chiffre TRONQUÉ */
     o.tronque=g?[...g.querySelectorAll('div')].some(e=>e.scrollWidth>e.clientWidth+1):false;
     /* ── ② une séance EN COURS : le bouton revient, et il DIT que c'est une reprise */
     S.wkt={date:j,exs:[{name:'Squat à la Barre',sets:[{kg:130,reps:5,done:false,type:'N'}]}]};
@@ -26879,6 +26888,32 @@ console.log('\n═══ CCXXXIX. Accueil allégé : bouton conditionnel + CE MO
        jamais un bloc amputé que personne n'a demandé. */
     localStorage.removeItem('ft4_cemois');
     o.parDefautOuvert=_ceMoisOuvert();
+    /* ── ④ ⭐⭐ OÙ MÈNE CHAQUE TUILE (ft-v1138) — le cœur de la version.
+       Michel : « quand on clique sur les tuiles, c'est pas terrible où j'arrive ».
+       ⛔ On ne vérifie PAS « le clic ouvre Progrès » : les 4 tuiles le faisaient déjà, et c'est
+       justement pour ça que deux d'entre elles étaient mauvaises. La garantie est qu'on arrive
+       sur quelque chose de CIBLÉ — un sous-onglet précis, ou une descente jusqu'à l'ancre —
+       et jamais en haut de l'écran par défaut. */
+    goScreen('home',document.getElementById('nb-home')); renderHome();
+    await new Promise(r=>setTimeout(r,400));
+    const gg=document.getElementById('home-stats').querySelector('div[style*="grid-template-columns"]');
+    o.destinations=[];
+    for(let i=0;i<(gg?gg.children.length:0);i++){
+      goScreen('home',document.getElementById('nb-home')); renderHome();
+      await new Promise(r=>setTimeout(r,350));
+      const gr=document.getElementById('home-stats').querySelector('div[style*="grid-template-columns"]');
+      const tuile=gr.children[i], titre=tuile.getAttribute('title')||'';
+      tuile.click();
+      await new Promise(r=>setTimeout(r,800));
+      const onglet=[...document.querySelectorAll('.nu-tab')].find(x=>x.classList.contains('active'));
+      const anc=document.getElementById('sess-hist-title');
+      o.destinations.push({titre,
+        ecran:(document.querySelector('.screen.active')||{}).id||'?',
+        onglet:onglet?onglet.textContent.trim():'—',
+        /* ⭐ « ciblé » = on n'a PAS atterri sur l'onglet par défaut au repos : soit un autre
+           sous-onglet, soit une vraie descente jusqu'à l'historique. */
+        ancreHaut: anc?Math.round(anc.getBoundingClientRect().top):null});
+    }
     return o;
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
   });
@@ -26893,12 +26928,76 @@ console.log('\n═══ CCXXXIX. Accueil allégé : bouton conditionnel + CE MO
   t('CCXXXIX ⭐⭐ … mais SÉANCE OUVERTE, il revient et DIT que c\'est une reprise',
     E.avecSeance!==null && /Reprendre/i.test(E.avecSeance||''),
     'le FAB ne dit jamais qu\'une séance est en cours — reçu : « '+E.avecSeance+' »');
-  t('CCXXXIX ⭐ « CE MOIS » tient sur UNE rangée de 4 tuiles',
-    E.uneRangee===true && E.tuiles===4, E.tuiles+' tuiles · une rangée '+E.uneRangee);
-  /* ⛔ Mesuré sur 375 px de large : à 4 colonnes, un chiffre tronqué serait le premier
-     symptôme — et il est SILENCIEUX (aucune erreur, juste « 23.6… » à l'écran). */
-  t('CCXXXIX ⛔ aucun chiffre n\'est tronqué à 4 colonnes sur un petit écran',
+  t('CCXXXIX ⭐ « CE MOIS » tient sur UNE SEULE rangée (quel que soit le nombre de tuiles)',
+    E.uneRangee===true && E.tuiles>=1, E.tuiles+' tuiles · même ligne : '+E.uneRangee);
+  /* ⛔ CONTRÔLE — sans lui, « aucune tuile ne mène nulle part » serait vrai sur un bloc VIDE,
+     et le retrait de deux tuiles aurait pu en emporter quatre sans que rien ne rougisse. */
+  t('CCXXXIX ⛔ CONTRÔLE — il reste bien 2 tuiles, et aucune n\'est vide',
+    E.tuiles===2 && E.vides===0, E.tuiles+' tuiles · '+E.vides+' vide(s)');
+  /* ⛔ Mesuré sur 375 px de large : un chiffre tronqué serait le premier symptôme d'une rangée
+     trop serrée — et il est SILENCIEUX (aucune erreur, juste « 23.6… » à l'écran). */
+  t('CCXXXIX ⛔ aucun chiffre n\'est tronqué sur un petit écran',
     E.tronque===false, 'un « … » a remplacé une valeur');
+
+  /* ═══ ft-v1138 — LE RETRAIT DE « VOLUME » ET « FORCE », ET CE QUI RESTE ══════════════════
+     Michel : « quand on clique sur les tuiles, c'est pas terrible où j'arrive » → « on le
+     retire pour l'instant, tu le notes ».
+     ⭐ MESURÉ AVANT : Volume et Force appelaient `goScreen('progress')` NU → on atterrissait en
+     haut de Progrès/Exercices, où l'accordéon du volume est FERMÉ et où le total Squat+DC+SDT
+     n'est affiché NULLE PART. *On tapait un chiffre pour arriver là où il n'est pas.* */
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION — et il ne vérifie PAS « le clic ouvre Progrès » :
+     les quatre tuiles le faisaient déjà, c'est précisément ce qui rendait deux d'entre elles
+     mauvaises. Il exige une destination CIBLÉE. */
+  {
+    const d=E.destinations||[];
+    const cible=x=> x.ecran==='s-progress' &&
+      ( x.onglet==='Corps & santé' || (x.ancreHaut!==null && x.ancreHaut<400) );
+    const mauvaises=d.filter(x=>!cible(x));
+    t('CCXXXIX ⭐⭐ chaque tuile restante mène à une destination CIBLÉE (plus au haut générique)',
+      d.length===2 && mauvaises.length===0,
+      d.map(x=>x.titre+' → '+x.onglet+' / ancre '+x.ancreHaut).join(' | '));
+  }
+  /* ⛔⛔ R30 — LE RETRAIT EST FIGÉ, AVEC SA RAISON. Une rangée de 2 ressemble exactement à un
+     oubli : sans ce témoin, le suivant (moi, dans six mois) « répare » une décision de Michel.
+     👉 Ce qu'il faudra pour les remettre est écrit dans IDEES-FUTURES.md : une destination qui
+     MONTRE le chiffre tapé. Tant qu'elle n'existe pas, la tuile ne revient pas. */
+  t('CCXXXIX ⛔⛔ R30 — « Volume » et « Force » ne sont PAS revenus dans CE MOIS (retrait voulu)',
+    (E.titres||[]).every(x=>!/Volume|Squat\+DC\+SDT/i.test(x)),
+    'tuiles présentes : '+(E.titres||[]).join(' | '));
+  /* ⛔ R5 — un calcul qui n'a plus de lecteur est une donnée morte. Les deux tuiles parties,
+     `vol`/`volDisp`/`b3` n'avaient plus personne : ils ne doivent plus être calculés du tout. */
+  {
+    const SJ=fs.readFileSync(path.join(ROOT,'screens.js'),'utf8');
+    t('CCXXXIX ⛔ R5 — plus aucun calcul orphelin laissé derrière (h-vol / h-big3)',
+      !/id="h-vol"/.test(SJ) && !/id="h-big3"/.test(SJ) && !/const b3=BIG3/.test(SJ),
+      'un chiffre est encore calculé pour une tuile qui n\'existe plus');
+    /* ⚠️⚠️ LE TEXTE PÉRIMÉ — 4ᵉ de la journée, et celui-ci avait échappé à la première
+       recherche parce qu'il dit « volume, Big3 » et non les libellés affichés.
+       ⭐ LA GARANTIE N'EST PAS « le mot a disparu » : l'aide DOIT pouvoir nommer les tuiles
+       retirées pour expliquer qu'elles sont parties. Ce qui est interdit, c'est de les
+       PRÉSENTER COMME PRÉSENTES — d'où la visée sur « les 4 stats du mois ». (§31) */
+    t('CCXXXIX ⚠️ aucune aide n\'annonce plus « 4 stats du mois »',
+      !/4 stats du mois/i.test(SJ), 'une aide décrit encore quatre tuiles');
+  }
+  /* 📣 RÈGLE D'OR #11 — un repère bouge pour TOUT LE MONDE (deux tuiles disparaissent du haut
+     de l'Accueil), donc la pop-up se mérite. ⛔ Et le témoin vérifie qu'elle DONNE L'ADRESSE DE
+     RENVOI : sans « calendrier », elle annoncerait une perte sans dire où regarder — c'est
+     exactement ce qui transforme une disparition en panne supposée. */
+  {
+    const CJ=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+    const wn=/\{v:74,[^}]*\}/.exec(CJ); const nf=/\{id:'cemois-2tuiles'[^}]*\}/.exec(CJ);
+    t('CCXXXIX 📣 la nouveauté est annoncée (pop-up v74 + point rouge sur l\'Accueil)',
+      !!wn && !!nf && /screen:'home'/.test(nf[0]),
+      'pop-up '+(!!wn)+' · point rouge '+(!!nf));
+    t('CCXXXIX 📣 … et l\'annonce DIT où retrouver le tonnage (sinon c\'est une perte sèche)',
+      !!wn && /calendrier/i.test(wn[0]) && !!nf && /calendrier/i.test(nf[0]),
+      'ni la pop-up ni le point rouge ne renvoient au calendrier');
+    /* ⛔ ET ELLE NE MENT PAS : le total des trois barres n'a AUCUNE adresse de renvoi. Écrire
+       « rien n'est perdu » se verrait le lendemain — l'annonce doit le dire. */
+    t('CCXXXIX ⛔ l\'annonce dit AUSSI ce qui est vraiment perdu (le total des 3 barres)',
+      !!wn && /n['’]est plus affich|plus d['’]endroit/i.test(wn[0]),
+      'la pop-up laisse croire que rien n\'a disparu');
+  }
   t('CCXXXIX ⭐ le bloc se REPLIE et se rouvre', E.pliee<E.rouverte && E.pliee<50,
     'plié '+E.pliee+' px · rouvert '+E.rouverte+' px');
   /* ⭐⭐ CE QUI LE DISTINGUE DU CHECK-IN : le pli SURVIT au re-rendu (et à la fermeture de

@@ -189,7 +189,14 @@ const _HELP_DATA={
       {i:'🕰️',t:'<b>Ton histoire sportive</b> : si tu notes une douleur que tu avais déjà eue il y a plus de deux semaines, une carte te rappelle <b>quand</b> et <b>combien de temps</b> elle avait duré. Elle décrit ce que tu avais noté — <b>elle ne prédit rien</b>. Elle ne s\'affiche que quand il y a quelque chose à relier.'},
       {i:'📅',t:'Le calendrier de ton mois, qui se lit d\'un coup d\'œil : <b>plus une case est foncée, plus tu as soulevé lourd ce jour-là</b>. Le petit trait sous le chiffre dit ce que tu as travaillé (rouge = haut, bleu = dos, violet = bas, orange = tronc, vert = full body), et l\'étoile ⭐ marque un RECORD. À gauche, le n° de semaine avec ton tonnage — tape-le pour voir la semaine entière. <b>Tape un jour</b> et son détail s\'ouvre dessous : tonnage, séries, exercices, et comment tu te sentais (sommeil, énergie, humeur, douleur) si tu l\'as noté. Le calendrier devient ta mémoire.'},
       {i:'💚',t:'Ta carte récup existe en <b>deux styles</b> — Menu → Apparence → Carte récup : l\'anneau (par défaut) ou le moniteur, avec ton score en gros et un tracé cardiaque. Mêmes données, mise en forme différente.'},
-      {i:'📊',t:'Les 4 stats du mois (volume, Big3, séances, poids) se calculent depuis tes séances et ton journal de poids.'},
+      /* ⚠️⚠️ TEXTE PÉRIMÉ CORRIGÉ LE 05/09/2026 (ft-v1138) — il annonçait « les 4 stats du mois
+         (volume, Big3, séances, poids) » alors que Volume et Force viennent d'être retirés.
+         ⛔ Il avait échappé à ma première recherche parce qu'il écrit « volume » et « Big3 », pas
+         les libellés affichés : *chercher le mot de l'écran ne trouve pas les textes qui parlent
+         de l'écran avec d'autres mots.* 4ᵉ texte périmé attrapé dans la même journée.
+         ⭐ Et l'aide est l'endroit du POURQUOI (R25) : elle dit ce qui est parti, ce qui reste,
+         et surtout OÙ retrouver le tonnage — sinon on le cherche pour rien. */
+      {i:'📊',t:'<b>« Ce mois » ne garde que les tuiles qui mènent quelque part</b> : <b>Séances</b> (ouvre ton historique) et <b>Poids</b> (ouvre tes pesées). ⛔ <b>Volume</b> et <b>Force</b> ont été retirés le 05/09/2026 : en les tapant on arrivait en haut de l\'onglet Progrès, <b>un écran où ni l\'un ni l\'autre n\'est affiché</b> — un chiffre sur lequel on tape doit mener là où il est. ⭐ <b>Ton tonnage n\'est pas perdu</b> : il est juste en dessous, <b>dans le calendrier</b>, semaine par semaine (« S36 · 19,3 t »), et jour par jour en tapant une case. ⚠️ Le <b>total des trois barres</b> n\'a en revanche plus d\'endroit dans l\'app — il reviendra quand il en aura un. 💡 Le bloc entier se replie : tape « CE MOIS ».'},
       {i:'🌡️',t:'« Ton check-in du jour » (en haut de l\'Accueil, optionnel, repliable) se lit d\'un coup d\'œil : <b>trois tuiles</b> — un lit violet pour le <b>sommeil</b>, un éclair orange pour l\'<b>énergie</b>, un visage pour le <b>moral</b> (vert content, ambre moyen, rouge bas). Sous chaque icône, quatre petits traits montrent le niveau. Il regroupe tout ce qui te concerne AUJOURD\'HUI : ton sommeil de la nuit, ton énergie, ton moral (😔 → 😄) et une éventuelle gêne/douleur. Replié, tu vois un résumé (😴 7h · 🙂 énergie · 😄 moral) ; tape pour le déplier et renseigner. Milo adapte ses conseils du jour — s\'il y a une douleur, le Gardien PROTÈGE cette zone en priorité ; si ton moral est bas, Milo se fait plus DOUX (dédramatise, valorise, sans jamais te juger — il reste ton coach sportif, jamais un psy). Ça repart à zéro chaque jour ; le ressenti prime toujours.'},
       {i:'😴',t:'Ton sommeil se note dans « Ton check-in du jour » (déplie la carte, en haut de l\'Accueil) : choisis la qualité + les heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Un bon sommeil fait remonter ton score de récupération (contrairement au moral/à la douleur, qui n\'y touchent pas). ⭐ <b>Si ta montre envoie ton sommeil à Santé</b> (Garmin, Apple Watch…), c\'est la <b>durée mesurée</b> qui compte, pas celle que tu tapes — la carte affiche alors « Mesuré par ta montre » et rappelle ce que tu avais noté. <b>Pourquoi</b> : la saisie à la main est bonne en moyenne, mais elle <b>lisse les mauvaises semaines</b>, donc ton score était le plus optimiste pile quand tu étais le plus fatigué. ⛔ <b>Ta saisie n\'est jamais effacée</b>, et la <b>qualité reste la tienne</b> : une montre mesure une durée, elle ne sait pas comment tu t\'es senti. Sans montre, rien ne change.'},
       {i:'📊',t:'« Historique du sommeil » (déplie le check-in, puis la barre repliable) : un mini-graphique sur 7 ou 30 jours + la liste nuit par nuit. Tape une barre ou une ligne pour ajouter/corriger cette nuit. Les jours vides affichent « ＋ à renseigner ».'},
@@ -1952,26 +1959,38 @@ function renderHome(){try{
   if(typeof renderLogSleep==='function')renderLogSleep(); // sommeil du jour, juste sous le score de récup (déplacé de Séance → Accueil)
   const now=new Date();
   const mo=S.sessions.filter(s=>{const d=new Date(s.date+'T12:00:00');return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
-  const vol=mo.reduce((a,s)=>a+(_workVol(s)||s.volume||0),0);
-  const b3=BIG3.map(e=>S.prs[e]?S.prs[e].rm1:0).reduce((a,b)=>a+b,0);
+  /* ⛔⛔ « Volume » ET « Force » ONT ÉTÉ RETIRÉS DE CE BLOC LE 05/09/2026 (ft-v1138) — RETRAIT
+     VOLONTAIRE, PAS UN OUBLI (R30). Michel : « quand on clique sur les tuiles, c'est pas terrible
+     où j'arrive » → « on le retire pour l'instant, tu le notes ».
+     ⭐ LA RAISON EST MESURÉE, en tapant les 4 tuiles dans un navigateur : les deux appelaient
+     `goScreen('progress')` NU, donc on atterrissait en haut de Progrès/Exercices — où l'accordéon
+     du volume est FERMÉ, et où le total Squat+DC+SDT n'est affiché NULLE PART (vérifié : `BIG3`
+     n'est relu que par `getLevel`, dans tracking.js). *On tapait un chiffre pour arriver sur un
+     écran qui ne le montre pas.*
+     ⛔ C'est pour ça que `vol`, `volDisp` et `b3` ne sont plus calculés ici : ils n'avaient plus
+     qu'un seul lecteur, et un calcul sans lecteur est une donnée morte (R5).
+     👉 CE QU'IL FAUDRA POUR LES REMETTRE (et pas moins) : une destination qui MONTRE le chiffre
+     tapé — accordéon volume ouvert d'office, et un endroit qui affiche le total des trois barres.
+     Détail dans IDEES-FUTURES.md. */
   const latestW=S.weightLog&&S.weightLog.length?S.weightLog.slice().sort((a,b)=>b.date.localeCompare(a.date))[0]:null;
   const bwDisp=latestW?latestW.kg:(S.bw||'—');
-  const volDisp=vol>9999?(Math.round(vol/100)/10)+'k':Math.round(vol);
   const statsEl=document.getElementById('home-stats');
-  // Restylage maquette : grille 2×2 de cartes (icône + chiffre + label) — mêmes données, mêmes clics
-  /* 📐 UNE RANGÉE DE 4 AU LIEU DE 2×2 (05/09/2026) — un testeur trouve l'Accueil trop chargé,
-     décision de Michel. Mesuré : **184 → 133 px**, et les 4 chiffres restent visibles d'un coup
-     d'œil. ⛔ Rien n'est retiré et aucun clic ne change : chaque tuile mène toujours au même
-     écran. La tuile passe en COLONNE (icône au-dessus du chiffre) — à 4 par rangée, il n'y a
-     plus la largeur pour les mettre côte à côte.
-     ⚠️ Le libellé long « Force · Squat+DC+SDT » ne tient plus sur une colonne étroite : il est
-     raccourci pour l'ŒIL, et le nom complet reste dans le `title` — *on ne supprime pas une
-     information, on choisit ce qui est montré en premier.* */
-  const _sc=(oc,ic,icBg,icStroke,valHtml,label,court)=>'<div'+(oc?' onclick="'+oc+'" style="cursor:pointer;':' style="')+'background:var(--bg2);border-radius:14px;box-shadow:inset 0 0 0 1px var(--sep);padding:10px 4px 9px;-webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;" title="'+label+'">'
-    +'<div style="width:28px;height:28px;border-radius:9px;background:'+icBg+';display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="'+icStroke+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+ic+'</svg></div>'
-    +'<div style="text-align:center;min-width:0;max-width:100%;">'
-    +'<div style="font-family:var(--font-cond);font-size:19px;font-weight:700;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+valHtml+'</div>'
-    +'<div style="font-size:8.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--t3);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(court||label)+'</div></div></div>';
+  // Restylage maquette : grille de cartes (icône + chiffre + label) — mêmes données, mêmes clics
+  /* 📐 UNE SEULE RANGÉE (05/09/2026) — un testeur trouve l'Accueil trop chargé, décision de
+     Michel : 2×2 → une rangée de 4 (184 → 133 px), puis **une rangée de 2** le soir même quand
+     Volume et Force sont retirés faute de destination (voir le bloc ci-dessus, R30).
+     ⚠️ LA DISPOSITION SUIT LE NOMBRE, et ce n'est pas cosmétique : la tuile était passée en
+     COLONNE (icône AU-DESSUS du chiffre) uniquement parce qu'à 4 par rangée il n'y avait plus la
+     largeur pour les mettre côte à côte. À 2, cette raison n'existe plus — on revient à
+     l'horizontale, qui rend de la hauteur au lieu d'en manger. *Un choix copié d'un contexte à
+     un autre peut devenir faux* (R14) : ici c'est la CAUSE du choix qui a disparu, pas le goût.
+     ⚠️ Le libellé court reste un paramètre à part : le nom complet vit dans le `title` — *on ne
+     supprime pas une information, on choisit ce qui est montré en premier.* */
+  const _sc=(oc,ic,icBg,icStroke,valHtml,label,court)=>'<div'+(oc?' onclick="'+oc+'" style="cursor:pointer;':' style="')+'background:var(--bg2);border-radius:14px;box-shadow:inset 0 0 0 1px var(--sep);padding:9px 10px;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;gap:9px;min-width:0;" title="'+label+'">'
+    +'<div style="width:30px;height:30px;border-radius:9px;background:'+icBg+';display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="'+icStroke+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+ic+'</svg></div>'
+    +'<div style="min-width:0;max-width:100%;">'
+    +'<div style="font-family:var(--font-cond);font-size:20px;font-weight:700;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+valHtml+'</div>'
+    +'<div style="font-size:8.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--t3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(court||label)+'</div></div></div>';
   const _moName=now.toLocaleDateString('fr-FR',{month:'long'});
   /* ⤵️ REPLIABLE (demande de Michel, 05/09) — et l'état est MÉMORISÉ, contrairement au check-in
      qui se rouvre à chaque lancement. ⭐ La raison est dans le but : ce pli sert à ALLÉGER
@@ -1982,9 +2001,7 @@ function renderHome(){try{
   const _cmOpen=_ceMoisOuvert();
   const _chev='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;transition:transform .18s;'+(_cmOpen?'transform:rotate(90deg);':'')+'"><polyline points="9 18 15 12 9 6"/></svg>';
   if(statsEl)statsEl.innerHTML='<div onclick="toggleCeMois()" style="cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 3px '+(_cmOpen?'9px':'0')+';"><span style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--t3);">CE MOIS</span><span style="margin-left:auto;font-size:12.5px;color:var(--t3);text-transform:capitalize;">'+_moName+'</span>'+_chev+'</div>'
-    +(!_cmOpen?'':'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;">'
-    +_sc("goScreen('progress',document.getElementById('nb-progress'))",'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>','rgba(255,106,115,.14)','var(--red)','<span id="h-vol" style="color:var(--t1)">'+volDisp+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Volume','Volume')
-    +_sc("goScreen('progress',document.getElementById('nb-progress'))",'<path d="M6 12h12M4 9v6M8 8v8M16 8v8M20 9v6"/>','rgba(234,179,8,.14)','var(--gold)','<span id="h-big3" style="color:var(--orange)">'+(b3>0?Math.round(b3):'—')+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Force · Squat+DC+SDT','Force')
+    +(!_cmOpen?'':'<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:7px;">'
     +_sc("goSessionsHistory()",'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>','rgba(168,85,247,.14)','var(--purp)','<span id="h-sess" style="color:var(--t1)">'+mo.length+'</span>','Séances ce mois','Séances')
     +_sc("goWeightTab()",'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9.5a3 3 0 0 1 6 0"/><line x1="12" y1="9.5" x2="13.8" y2="8"/>','rgba(91,168,255,.14)','#5BA8FF','<span id="h-bw" style="color:var(--t1)">'+fmt(bwDisp)+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Poids de corps','Poids')
     +'</div>');
