@@ -67,10 +67,28 @@ t('New York, 23 h 30 → le jour en cours, pas le lendemain',
 // (Code.js et worker.js tournent sur un serveur, pas dans le téléphone : hors périmètre.)
 const FICHIERS=['constants.js','state.js','screens.js','log.js','setup.js',
                 'tracking.js','coach.js','food-health.js','app.js','translations.js'];
+/* ⛔⛔ LES BANCS D'ESSAI AUSSI (05/09/2026) — LE TROU QUE SESSION-A A DÉCLARÉ EN LE LAISSANT.
+   Dans la nuit du 04 au 05, **11 témoins du banc de parcours sont passés au rouge d'un coup**,
+   sur du code applicatif parfaitement sain. Cause : les fixtures dataient en `toISOString()`
+   tronqué — donc en **UTC** — pendant que les contextes de test tournent en `Europe/Paris`.
+   Entre 22 h UTC et minuit, la page dit le 5 et la fixture dit le 4 : la « séance
+   d'aujourd'hui » est datée d'hier, et tout s'effondre.
+   👉 ***Le détecteur qui interdit ce motif ne regardait pas là où il venait de faire 11
+   rouges.*** Sa liste ne portait que les 10 fichiers servis ; les runners en étaient absents.
+   ⚠️ ET C'EST PIRE QU'UN TEST QUI ÉCHOUE : il n'échouait que **deux heures par jour**. Celui
+   qui livre à minuit croit avoir cassé l'app — c'est exactement ce qui m'est arrivé, et j'ai
+   dû rejouer un ancien commit dans un worktree pour me prouver le contraire.
+   ⛔ La GARANTIE n'est pas la même des deux côtés, et le libellé du témoin le dit : dans
+   l'app, un jour calculé à Greenwich donne une **fausse date à l'utilisateur** ; dans un banc,
+   il donne un **faux rouge deux heures par nuit**. Même motif, deux dégâts différents. */
+const FICHIERS_BANCS=['tests/parcours/runner.js','tests/calculs/runner.js',
+                      'tests/muscles/runner.js','tests/croises/runner.js',
+                      'tests/donnees/runner.js','tests/milo/eval-scenarios.js',
+                      'tests/milo/ab-memoire.js'];
 // on cherche la TRONCATURE en jour calendaire ; un horodatage complet reste légitime
 const INTERDIT=/new Date\(\)\.toISOString\(\)\s*\.\s*(slice\(0,\s*10\)|split\('T'\)\[0\])/;
-const fautifs=[];
-for(const f of FICHIERS){
+const fautifs=[], fautifsBancs=[];
+for(const f of FICHIERS.concat(FICHIERS_BANCS)){
   const p=path.join(R,f); if(!fs.existsSync(p)) continue;
   let dansBloc=false;
   fs.readFileSync(p,'utf8').split('\n').forEach((l,i)=>{
@@ -94,11 +112,18 @@ for(const f of FICHIERS){
     })();
     if(sansBloc.trim().startsWith('//')) return;           // les commentaires citent le motif pour l'expliquer
     if(/typeof today\s*===?\s*'function'/.test(sansBloc)) return; // repli défensif : today() existe toujours
-    if(INTERDIT.test(sansBloc)) fautifs.push(f+':'+(i+1));
+    if(INTERDIT.test(sansBloc)) (f.startsWith('tests/')?fautifsBancs:fautifs).push(f+':'+(i+1));
   });
 }
 t('aucun fichier de l\'app ne recalcule le jour à l\'heure de Greenwich',
   fautifs.length===0, fautifs.join(' · '));
+/* ⛔ CONTRÔLE — la liste des bancs doit pointer des fichiers qui EXISTENT. Un chemin devenu
+   faux ferait un témoin vert qui ne scanne rien : le pire des deux mondes. */
+t('⛔ CONTRÔLE — les bancs listés existent tous (sinon on scanne le vide)',
+  FICHIERS_BANCS.every(f=>fs.existsSync(path.join(R,f))),
+  FICHIERS_BANCS.filter(f=>!fs.existsSync(path.join(R,f))).join(' · '));
+t('⭐⭐ aucun BANC D\'ESSAI non plus (une fixture datée en UTC fait 11 faux rouges à minuit)',
+  fautifsBancs.length===0, fautifsBancs.join(' · '));
 
 console.log('──────────────────────────────────────────────────────────');
 console.log((ko?'❌ ':'✅ ')+ok+'/'+(ok+ko));
