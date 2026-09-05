@@ -810,8 +810,20 @@ function _renderHomeHero(){
   const pillHtml=score!==null?'<div style="display:flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:'+ringColor+';box-shadow:0 0 8px '+ringColor+';"></span><span style="font-size:12px;font-weight:700;color:'+ringColor+';">Récup '+info.label+'</span></div>':'';
   // Restylage maquette : gros chiffre + barre de progression (au lieu de l'anneau). Mêmes données, CTA conservé.
   const barW=score!==null?score:0;
-  // Détail « pourquoi » + conseils pour remonter le score
-  let detailHtml='';
+  /* Détail « pourquoi » + conseils pour remonter le score.
+     ⭐⭐ LE CONSEIL 💡 EST SORTI DE `detailHtml` LE 05/09/2026, POUR PASSER **SOUS** LE BOUTON.
+     Michel : *« le bouton commencer la séance, tu n'y as pas touché ? »* — non, et c'est sa
+     question qui a fait mesurer l'INTÉRIEUR de la carte au lieu de ce qui est au-dessus d'elle.
+     ⛔ Mesuré : le conseil pèse **54 px** et il était le DERNIER obstacle entre le score et le
+     bouton. En le passant dessous, le bouton finit à **768 px** au lieu de 831 — c'est-à-dire
+     **au-dessus de la barre de navigation (778)**, donc visible sans faire défiler.
+     ⚠️ ET C'EST VRAI SUR SON TÉLÉPHONE, PAS PARTOUT — mesuré sur quatre formats : ✅ iPhone
+     14/15 Pro (marge 10 px) · ❌ iPhone 12/13/14 (manque 17) · ❌ 13 mini (84) · ❌ SE (229).
+     *On ne promet pas « visible » en général : c'est visible là où ça a été mesuré.*
+     ⭐ L'ordre de lecture devient **score → pourquoi → action → conseil**, et il se défend :
+     le conseil dit comment remonter le score DEMAIN, il n'a pas à s'interposer entre le score
+     d'aujourd'hui et le geste d'aujourd'hui. */
+  let detailHtml='', conseilHtml='';
   if(score!==null&&detail.factors&&detail.factors.length){
     const fx=detail.factors.map(f=>{
       const col=f.base?'var(--t2)':(f.val>0?'#34D399':'#FF8A72');
@@ -837,8 +849,11 @@ function _renderHomeHero(){
     detailHtml='<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:5px 7px;font-size:11px;color:var(--t3);align-items:center;">'+fx+'</div>'
       +'<div style="margin-top:9px;display:flex;align-items:center;gap:10px;">'
       +'<button onclick="openRecoWhy()" style="background:none;border:none;padding:0;color:var(--blue);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;display:flex;align-items:center;gap:3px;-webkit-tap-highlight-color:transparent;">Pourquoi ce score ?<span style="font-size:12px;">›</span></button>'
-      +sparkHtml+'</div>'
-      +(tipsHtml?'<div style="margin-top:9px;background:var(--bg3);border-radius:10px;padding:9px 11px;font-size:12px;color:var(--t2);line-height:1.5;display:flex;flex-direction:column;gap:5px;">'+tipsHtml+'</div>':'');
+      +sparkHtml+'</div>';
+    /* ⛔ Le conseil garde EXACTEMENT sa mise en forme : on le déplace, on ne le redessine pas
+       (R14 — un comportement copié d'un contexte à un autre peut devenir faux ; ici on ne
+       copie rien, on change juste sa place dans la carte). */
+    conseilHtml=tipsHtml?'<div style="margin-top:12px;background:var(--bg3);border-radius:10px;padding:9px 11px;font-size:12px;color:var(--t2);line-height:1.5;display:flex;flex-direction:column;gap:5px;">'+tipsHtml+'</div>':'';
   }
   // Bandeau contextuel « gêne du jour » (brique 3B) : une douleur ne fait PAS baisser
   // le chiffre (le corps reste récupéré) — elle prévient juste d'adapter. Adapter, pas interdire.
@@ -912,7 +927,7 @@ function _renderHomeHero(){
     +'<button onclick="startWorkout()" class="ft-press" style="margin-top:16px;width:100%;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--red),#EF3E57);box-shadow:0 12px 28px -10px rgba(239,62,87,.55);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
     +'<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13l0-8Z"/></svg>'
     +'<span style="font-size:16px;font-weight:700;color:#fff;font-family:var(--font);">'+ctaLabel+'</span></button>'
-    +oubliHtml+'</div>';
+    +conseilHtml+oubliHtml+'</div>';
 }
 
 /* 🔋 « CE QU'IL TE MANQUE POUR ARRIVER À 100 » (21/08/2026) — l'idée de Michel.
