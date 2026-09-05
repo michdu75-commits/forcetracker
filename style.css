@@ -1548,9 +1548,14 @@ html.ob-done #onboarding{display:none;}
 .ck-tuile{ background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(0,0,0,.12)), var(--bg3);
   border-radius:12px; padding:9px 6px 8px; display:flex; flex-direction:column;
   align-items:center; gap:5px;
-  /* ⚠️ PLANCHER DE CIBLE TACTILE — 44 px est le minimum d'Apple, et cette tuile SE TAPE (elle
-     ouvre le check-in déplié). Sans ce plancher, le prochain resserrage la rendrait difficile
-     à viser en salle, avec les mains moites : un gain de 6 px ne vaut pas un tap raté. */
+  /* ⚠️⚠️ PLANCHER — ET SA RAISON A ÉTÉ CORRIGÉE LE 05/09, PARCE QUE JE L'AVAIS ÉCRITE FAUSSE.
+     J'avais justifié ces 48 px par « 44 px est le minimum d'Apple, et cette tuile SE TAPE ».
+     ⛔ Vérifié depuis : `onclick="toggleCheckin()"` est sur la **carte entière**, pas sur les
+     tuiles — taper une tuile ne marche que parce que le clic REMONTE. La vraie cible tactile
+     fait donc ~112 px, et le minimum d'Apple n'a jamais porté sur la tuile.
+     ⭐ LE PLANCHER RESTE QUAND MÊME, mais pour ce qu'il fait vraiment : empêcher les trois
+     tuiles de s'écraser sur une icône et deux chiffres, et garder la rangée lisible. *Une règle
+     dont la raison est fausse finit par être contournée — ou traitée comme intouchable.* */
   min-height:48px;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 2px 5px rgba(0,0,0,.35); }
 

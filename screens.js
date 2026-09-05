@@ -1624,13 +1624,21 @@ function _ckTuile(ico,coul,niv,val,lgd){
      de la place en rangeant, jamais en jetant de l'information* (R24).
      ⚠️ LA TUILE EST UNE CIBLE TACTILE : on la garde au-dessus de **44 px** (le minimum d'Apple),
      et un témoin le figera — sinon le prochain qui « gagne encore 10 px » la rend intappable. */
-  return '<div class="ck-tuile" style="--ck:'+coul+';'+(niv==null?'':'--ck-glow:'+coul+';')+'">'
+  /* 🔇 LE MOT SOUS LA TUILE A DISPARU (05/09/2026) — Michel : « je pense que les mots sommeil,
+     énergie et moral on peut les supprimer, c'est logique avec les emojis ». ⭐ Mesuré : carte
+     **130 → 112 px**, tuile **67 → 49** — et **157 → 112 sur la journée**.
+     ⛔⛔ MAIS L'INFORMATION N'EST PAS PERDUE, ELLE CHANGE DE CANAL. La légende devient
+     l'`aria-label` de la tuile : *un mot retiré de l'ÉCRAN ne doit pas disparaître pour un
+     LECTEUR D'ÉCRAN*. Sans ça, une personne qui n'a que la voix entendrait « 8,3 h » sans jamais
+     savoir de quoi il s'agit — et c'est une perte que rien n'aurait signalée.
+     ⛔ `title` en plus : sur un appareil qui le supporte, un appui long redonne le mot. */
+  return '<div class="ck-tuile" role="img" aria-label="'+lgd+' : '+val+'" title="'+lgd+'"'
+    +' style="--ck:'+coul+';'+(niv==null?'':'--ck-glow:'+coul+';')+'">'
     +'<div class="ck-haut">'
       +'<div class="ck-ico">'+ico+'</div>'
       +'<div style="font-size:12px;font-weight:700;color:'+(niv==null?'var(--t3)':coul)+';white-space:nowrap;">'+val+'</div>'
     +'</div>'
     +'<div style="display:flex;gap:3px;">'+j+'</div>'
-    +'<div style="font-size:9.5px;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;font-weight:700;">'+lgd+'</div>'
     +'</div>';
 }
 function _ckTuiles(){
@@ -1646,11 +1654,19 @@ function _ckTuiles(){
   // Moral : la couleur porte le sens (vert content · ambre moyen · rouge bas).
   const cMor = d.mood==null ? 'var(--t3)' : d.mood>=2 ? 'var(--green)' : d.mood===1 ? 'var(--gold)' : 'var(--red)';
   const lblMor=['Bas','Moyen','Bien','Content'], lblEne=['Faible','Basse','Bonne','Au top'];
+  /* ⛔ JAMAIS « undefined » À L'ÉCRAN (05/09/2026). Trouvé en vérifiant les `aria-label` : une
+     valeur hors bornes rendait `lblMor[4]` → `undefined`, affiché tel quel dans la tuile ET
+     annoncé par un lecteur d'écran. ⚠️ Honnêtement : c'est MA fixture de test qui était fausse
+     (`mood:4`, alors que l'échelle va de 0 à 3) — l'app, elle, n'écrit que 0-3 via `setDayMood`.
+     ⭐ Le repli est posé quand même, pour deux centimes : ces valeurs viennent AUSSI du cloud et
+     d'anciens formats, et « — » est toujours meilleur qu'« undefined » (leçon de ft-v1126, où
+     une date illisible devait afficher « journée en cours » plutôt que le mot magique). */
+  const _lbl=(t,i)=>(i==null||!t[i])?'—':t[i];
   return '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px;">'
     + _ckTuile(_CK_LIT.replace(/CUR/g,cSom), 'var(--purp)', q, vSom, 'Sommeil')
     + _ckTuile(_CK_ECL.replace(/CUR/g, d.energy==null?'var(--t3)':'var(--orange)'), 'var(--orange)',
-               d.energy, d.energy==null?'—':lblEne[d.energy], 'Énergie')
-    + _ckTuile(_ckVisage(cMor,d.mood), cMor, d.mood, d.mood==null?'—':lblMor[d.mood], 'Moral')
+               d.energy, _lbl(lblEne,d.energy), 'Énergie')
+    + _ckTuile(_ckVisage(cMor,d.mood), cMor, d.mood, _lbl(lblMor,d.mood), 'Moral')
     +'</div>';
 }
 // ── Le check-in DÉPLIÉ parle le MÊME langage que les tuiles (ft-v661) ───────

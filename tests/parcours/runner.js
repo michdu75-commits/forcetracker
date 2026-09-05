@@ -26732,7 +26732,20 @@ console.log('\n═══ CCXXXVIII. Le check-in maigrit, mais reste tapable ═�
     o.icone=!!t0.querySelector('.ck-ico svg');
     o.traits=t0.querySelectorAll('.ck-b').length;
     o.valeur=/8,3\s*h/.test(t0.textContent||'');
-    o.legende=/SOMMEIL/i.test(t0.textContent||'');
+    /* 🔇 LA LÉGENDE N'EST PLUS À L'ÉCRAN (décision de Michel, 05/09) — mais elle n'a pas
+       disparu : elle est passée dans l'`aria-label`. On vérifie donc les DEUX faces du
+       retrait, parce qu'une seule ne prouverait rien : le mot ne doit plus être VU, et il
+       doit toujours être LU par un lecteur d'écran. */
+    o.legendeVisible=/SOMMEIL/i.test(t0.textContent||'');
+    o.legendeAccessible=/sommeil/i.test(t0.getAttribute('aria-label')||'');
+    o.ariaPorteLaValeur=/8,3/.test(t0.getAttribute('aria-label')||'');
+    /* ⛔ JAMAIS « undefined » — ni à l'écran, ni dans ce qu'un lecteur d'écran annonce.
+       On pousse une valeur HORS BORNES (le moral va de 0 à 3) et on exige un repli propre. */
+    S.dayState={date:today(),sleepH:8.3,energy:3,mood:9}; persist(); _renderDayStateCard();
+    await new Promise(r=>setTimeout(r,250));
+    const hb=[...document.querySelectorAll('.ck-tuile')];
+    o.horsBornesTexte=hb.map(x=>x.textContent||'').join(' ');
+    o.horsBornesAria=hb.map(x=>x.getAttribute('aria-label')||'').join(' ');
     /* ⭐ L'icône et la valeur sont bien sur la MÊME ligne — c'est ça qui fait maigrir la tuile,
        et c'est ce qu'on protège (pas une hauteur en dur, qui bougerait avec la police). */
     const ico=t0.querySelector('.ck-ico').getBoundingClientRect();
@@ -26758,12 +26771,33 @@ console.log('\n═══ CCXXXVIII. Le check-in maigrit, mais reste tapable ═�
   t('CCXXXVIII ⭐ la carte tient sous 140 px (elle en faisait 157)',
     D.carte>0 && D.carte<=140, D.carte+' px');
   /* ⛔ ON GAGNE DE LA PLACE EN RANGEANT, JAMAIS EN JETANT DE L'INFORMATION (R24). */
-  t('CCXXXVIII ⛔ rien n\'a été supprimé : icône · 4 traits · valeur · légende',
-    D.icone===true && D.traits===4 && D.valeur===true && D.legende===true,
-    'icône '+D.icone+' · traits '+D.traits+' · valeur '+D.valeur+' · légende '+D.legende);
+  t('CCXXXVIII ⛔ l\'essentiel reste à l\'écran : icône · 4 traits · valeur',
+    D.icone===true && D.traits===4 && D.valeur===true,
+    'icône '+D.icone+' · traits '+D.traits+' · valeur '+D.valeur);
+  /* ⛔⛔ R30 — LE RETRAIT DE LA LÉGENDE EST VOLONTAIRE, DONC IL EST ÉCRIT ET FIGÉ.
+     Michel : « les mots sommeil, énergie et moral on peut les supprimer, c'est logique avec les
+     emojis ». Sans ce témoin, quelqu'un les remettrait dans six mois en croyant réparer un
+     oubli — c'est le calculateur de plaques, remis en service trois mois après avoir été retiré
+     exprès. ⛔ ET LES DEUX FACES SONT VÉRIFIÉES : le mot ne doit plus être VU, mais il doit
+     toujours être LU. *Retirer un mot de l'écran ne doit pas le retirer d'un lecteur d'écran* —
+     et cette perte-là, rien ne l'aurait signalée. */
+  t('CCXXXVIII ⛔ la LÉGENDE a bien quitté l\'écran (retrait voulu par Michel, R30)',
+    D.legendeVisible===false, 'le mot « Sommeil » est revenu sous la tuile');
+  t('CCXXXVIII ⭐⭐ … mais elle reste LISIBLE par un lecteur d\'écran (aria-label)',
+    D.legendeAccessible===true && D.ariaPorteLaValeur===true,
+    'aria légende '+D.legendeAccessible+' · aria valeur '+D.ariaPorteLaValeur);
   t('CCXXXVIII ⭐ l\'icône et la valeur sont sur la MÊME ligne (c\'est ça qui fait maigrir)',
     D.memeLigne===true, 'sinon on est revenu aux 4 étages');
   t('CCXXXVIII ⛔ aucun contenu ne déborde de sa tuile', D.deborde===false);
+  /* ⛔⛔ « undefined » EST PIRE QU'UNE ABSENCE — et depuis que la valeur part aussi dans
+     l'`aria-label`, une valeur hors bornes serait ANNONCÉE À VOIX HAUTE. Trouvé en vérifiant
+     l'accessibilité, pas en lisant le code. ⚠️ Honnêtement : c'était MA fixture qui sortait des
+     bornes, pas l'app — le repli est posé quand même parce que ces valeurs viennent aussi du
+     cloud, et parce qu'il coûte une ligne (leçon de ft-v1126). */
+  t('CCXXXVIII ⛔ une valeur HORS BORNES n\'écrit jamais « undefined » à l\'écran',
+    !/undefined/i.test(D.horsBornesTexte||''), D.horsBornesTexte);
+  t('CCXXXVIII ⛔ … ni dans ce qu\'un lecteur d\'écran annonce',
+    !/undefined/i.test(D.horsBornesAria||''), D.horsBornesAria);
   t('CCXXXVIII aucune erreur JS sur tout le bloc', ed.length===0, ed.join(' | '));
 }
 
