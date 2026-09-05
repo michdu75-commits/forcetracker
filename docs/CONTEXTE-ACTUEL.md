@@ -7,6 +7,8 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1134` — 📏 **LE CHECK-IN DU JOUR MAIGRIT DE 27 PX.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#912** sur `be4678a`, **job `deploy` success**,
+  les 7 étapes vertes à 14:55:51 UTC. Suite : **parcours 2793/2793**, calculs 339/339, dates 9/9.
   Michel : *« essaye de diminuer la taille du checking en hauteur »*.
   ⭐⭐ **La mesure a choisi la méthode** : la tuile faisait **94 px pour 57 px de contenu réel**.
   ⛔ Resserrer les marges ne rendait que **9 px** → *la graisse était dans la **disposition***
