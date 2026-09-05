@@ -6,8 +6,10 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1129` — 📏 **LE JOURNAL DES MENSURATIONS.** ⏳ **POUSSÉ,
-  DÉPLOIEMENT À VÉRIFIER** (R18). Trois demandes de Michel dans un message.
+- **Version en ligne (live) :** `ft-v1129` — 📏 **LE JOURNAL DES MENSURATIONS.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#900** sur `c3e9153`, **job `deploy` success**,
+  les 7 étapes vertes à 08:16:55 UTC. ⭐ Suite **sur l'arbre FUSIONNÉ** : parcours **2746/2746**,
+  calculs **318/318**, **dates 9/9**, 0 rouge. Trois demandes de Michel dans un message.
 - ⛔⛔ **UNE PERTE DE DONNÉES, reproduite avant correction** : dans `saveBodyFat`, le `return`
   qui refuse un % invalide était **AVANT** `S.neck=nk` — donc *les centimètres n'étaient
   enregistrés qu'en effet de bord d'un % réussi*, et taper **le cou seul** jetait la saisie.
