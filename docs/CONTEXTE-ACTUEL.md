@@ -7,6 +7,9 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1130` — 🔗 **LE SUPERSET DE MILO N'ATTEIGNAIT JAMAIS LA SÉANCE.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#902** sur `0e8550c`, **job `deploy` success**,
+  les 7 étapes vertes à 08:43:43 UTC. Suite sur l'arbre **FUSIONNÉ** avec la ft-v1129 de
+  session-A : **parcours 2750/2750**, calculs 318/318, dates 9/9, 0 rouge.
   Michel : *« maintenant le seanceJson que l'autre claude m'a laissé »*.
   ⛔⛔ **Le diagnostic relayé ne tenait pas** (vérifié avant de coder) : le cervelet ne part pas
   quand la lecture gratuite échoue, il part quand le **bloc caché manque** — or sa spec a quitté
