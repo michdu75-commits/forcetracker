@@ -27294,6 +27294,41 @@ console.log('\n═══ CCXL. Menu réorganisé : ton suivi d\'abord, apparence
       /id="drawer"/.test(H) && appels<=1,
       'openDrawer() a maintenant '+appels+' occurrence(s) — s\'il a été rebranché, ce constat est à réécrire');
   }
+  /* 📣 RÈGLE D'OR #11 — un repère bouge pour TOUT LE MONDE (les 14 entrées changent de rayon),
+     et il y a quelque chose à savoir faire (Apparence se replie). ⛔ Le point rouge va sur
+     `setup` : c'est le nom interne de l'onglet Menu, et deux annonces écrites `screen:'menu'`
+     n'ont JAMAIS été affichées faute de correspondance. */
+  {
+    const CJ=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+    const wn=/\{v:75,[^}]*\}/.exec(CJ), nf=/\{id:'menu-range'[^}]*\}/.exec(CJ);
+    t('CCXL 📣 la nouveauté est annoncée (pop-up v75 + point rouge sur l\'onglet Menu)',
+      !!wn && !!nf && /screen:'setup'/.test(nf[0]),
+      'pop-up '+(!!wn)+' · point rouge '+(!!nf));
+    /* ⛔ ET ELLE RASSURE SUR LA PREMIÈRE CRAINTE : devant un menu réorganisé, on cherche ce
+       qu'on a PERDU avant de regarder ce qui a bougé. */
+    t('CCXL ⛔ … et l\'annonce dit que RIEN n\'a été supprimé',
+      !!wn && /supprim/i.test(wn[0]), 'la pop-up laisse croire qu\'on a perdu des entrées');
+  }
+  /* ⚠️⚠️ LES CHEMINS PÉRIMÉS — 5ᵉ fois de la journée que ce piège se présente. « Outils » et
+     « Compte » n'existent plus : tout texte qui y envoie ferait chercher une section absente.
+     ⭐ La garantie n'est pas « le mot Outils a disparu » (il vit dans « Tes outils ») : c'est
+     qu'aucun texte ne présente encore les ANCIENNES sections comme une destination. */
+  {
+    const src=['app.js','coach.js','screens.js','index.html','constants.js']
+      .map(f=>fs.readFileSync(path.join(ROOT,f),'utf8')).join('\n');
+    t('CCXL ⚠️ plus aucun texte n\'envoie vers « Menu → Outils » ou « Menu → Compte »',
+      !/Menu\s*→\s*Outils/.test(src) && !/Menu\s*→\s*Compte/.test(src),
+      'un texte guide vers une section qui n\'existe plus (§31)');
+    /* ⛔ CONTRE-ÉPREUVE — le détecteur doit toujours voir les chemins VALIDES, sinon il serait
+       vert parce qu'il ne lit plus rien. */
+    t('CCXL ⛔ CONTRE-ÉPREUVE — le détecteur lit bien les chemins du menu',
+      /Menu\s*→\s*Apparence/.test(src), 'le balayage ne trouve plus aucun chemin');
+    /* ⚠️ ET UN CHEMIN QUI ÉTAIT DÉJÀ FAUX AVANT CETTE VERSION : l'Espace testeur n'est pas dans
+       le Menu — il s'ouvre depuis le bouton doré de l'ACCUEIL (ft-v1132). */
+    t('CCXL ⚠️ l\'Espace testeur n\'est plus annoncé comme étant dans le Menu (il n\'y est pas)',
+      !/Menu\s*→\s*Espace Testeur/i.test(src),
+      'un texte envoie les testeurs chercher dans le menu (§8)');
+  }
   t('CCXL aucune erreur JS sur tout le bloc', em.length===0, em.join(' | '));
 }
 

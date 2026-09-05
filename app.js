@@ -4955,7 +4955,7 @@ function exitDemoMode(){
   try{goScreen('home',document.getElementById('nb-home'));}catch(e){}
   toast('✅ Tes vraies données sont de retour','success');
 }
-// ── GUIDE DE L'APPLICATION (diaporama, Menu → Outils) ────────
+// ── GUIDE DE L'APPLICATION (diaporama, Menu → L'application) ────────
 // Guide-film : chaque slide = un vrai écran de l'app (guide/*.jpg) + un doigt animé (tap) + une phrase.
 const APP_GUIDE_SLIDES=[
   /* 🏃 DIAPO DU GUIDE (règle d'or #11, point 5), et **SANS IMAGE exprès** : une capture

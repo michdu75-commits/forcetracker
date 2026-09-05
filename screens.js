@@ -220,6 +220,11 @@ const _HELP_DATA={
   setup:{
     title:'👤 Profil',
     tips:[
+      /* 🗂️ ft-v1139 — LA RÈGLE DE RANGEMENT DU MENU, en tête parce que c'est ce qui vient de
+         changer sous les yeux de tout le monde. ⛔ Elle ne se devine pas : quatre titres de
+         section ne disent pas POURQUOI une entrée est dans l'un plutôt que dans l'autre, et
+         c'est justement ce qui manquait quand tout était dans « Outils ». */
+      {i:'🗂️',t:'<b>Le menu est rangé en 4 rayons</b>, et chacun répond à une question : <b>Ton suivi</b> = ce qui parle de <b>toi</b> et de ton histoire (ce que Milo sait de toi, tes bilans mensuels, l\'export de tes données) · <b>Tes outils</b> = ce qu\'on utilise pour s\'entraîner (cycle de force, calculateur 1RM) · <b>Apprendre</b> = du contenu de référence, qui ne change pas avec toi (guide de la muscu, anatomie, protéines, compléments) · <b>L\'application</b> = l\'app elle-même (son guide, les nouveautés, l\'aide, à propos, confidentialité). ⭐ <b>Ce qui parle de toi passe en premier</b> : avant, « Ce que Milo sait de toi » était en 8ᵉ position et il fallait faire défiler. ⚠️ <b>Rien n\'a été supprimé</b> — les 14 entrées sont toutes là. 💡 <b>Apparence</b> (couleur du halo, style de la carte récup…) est descendue en bas et se <b>replie</b> : tape son titre, ton choix est gardé.'},
       /* 📏 EN TÊTE : c'est la question que Michel a posée mot pour mot (« la mesure du tour de
          cou et de taille, elle est datée ou pas ? »), donc c'est celle que d'autres se poseront.
          ⛔ Elle ne se devine PAS en regardant l'écran : deux champs identiques, deux

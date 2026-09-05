@@ -480,6 +480,11 @@ const NEW_FEATURES=[
      ⛔ PAS DE POP-UP en revanche : la carte **ne s'affiche que si on a déjà mesuré**, aucun
      repère ne bouge, et il n'y a rien à faire que ce que la pop-up de la veille demandait
      déjà. *La pop-up annonce, elle ne se répète pas.* */
+  /* 🗂️ POINT ROUGE SUR L'ONGLET MENU (= `screen:'setup'`, le seul nom valide — deux annonces
+     écrites `screen:'menu'` n'ont jamais été affichées, voir la note plus bas).
+     ⛔ PAS D'`anchor` : ce n'est pas UNE ligne qui a bougé, c'est le rangement entier. Pointer
+     une ligne dirait « regarde ici » là où il faut regarder partout. */
+  {id:'menu-range', screen:'setup', desc:'🗂️ <b>Le menu est rangé en 4 rayons.</b> <b>Ton suivi</b> (ce que Milo sait de toi, tes bilans mensuels, l\'export) · <b>Tes outils</b> (cycle de force, calculateur 1RM) · <b>Apprendre</b> (guide de la muscu, anatomie, protéines, compléments) · <b>L\'application</b> (guide, nouveautés, aide, à propos, confidentialité). ⭐ Ce qui parle de <b>toi</b> est passé tout en haut : avant, « Ce que Milo sait de toi » était en 8ᵉ position et il fallait faire défiler pour la trouver. ⚠️ <b>Rien n\'a été supprimé</b> — les 14 entrées sont toutes là, elles ont changé de rayon. 💡 <b>Apparence</b> est descendue en bas et se <b>replie</b> : tape son titre.'},
   /* 📊 POINT ROUGE SUR L'ACCUEIL, et c'est bien là qu'il va — pas sur Progrès.
      ⚠️ La tentation était de le poser sur Progrès, « là où le volume se retrouve ». ⛔ Ç'aurait
      été FAUX à deux titres : rien n'a changé sur Progrès (on enverrait chercher du neuf sur un
@@ -773,6 +778,14 @@ const WHATS_NEW=[
        le canal par lequel ses retours arrivent. *Une disparition muette se lit comme une punition.*
        ⛔ POURQUOI `si:'testeur'` : les autres n'ont jamais vu ce pavé. Leur annoncer sa disparition
        serait du bruit pur, et le mécanisme existe exprès depuis ft-v1072. */
+  /* 🗂️ ELLE SE MÉRITE, ET C'EST LE CRITÈRE « UN REPÈRE A BOUGÉ » DANS SA FORME LA PLUS NETTE :
+     quelqu'un qui savait où trouver « Guide de la muscu » ne le trouvera plus au même endroit.
+     ⛔ Et il y a quelque chose à SAVOIR FAIRE : le bloc Apparence se replie maintenant, ce qui
+     ne se devine pas — un titre qui devient cliquable ne le dit pas tout seul.
+     ⭐ ELLE DIT « RIEN N'A ÉTÉ SUPPRIMÉ » parce que c'est la première crainte devant un menu
+     réorganisé : *on cherche ce qu'on a perdu avant de regarder ce qui a bougé.*
+     ⛔ BORNÉE (R25) : les 4 rayons, ce qui remonte, le pli. Le POURQUOI vit dans l'aide. */
+    {v:75, ic:'🗂️', t:'Le menu est rangé en 4 rayons', d:'① <b>Ton suivi</b> · <b>Tes outils</b> · <b>Apprendre</b> · <b>L\'application</b>. ② <b>Ce qui parle de toi est remonté tout en haut</b> — « Ce que Milo sait de toi », tes bilans mensuels et l\'export : avant, il fallait faire défiler pour les trouver. ③ <b>Apparence</b> est descendue en bas et se <b>replie</b> (tape son titre). ⚠️ <b>Rien n\'a été supprimé</b> : les 14 entrées sont toutes là, elles ont juste changé de rayon.'},
   /* 📊 ELLE SE MÉRITE SUR LE CRITÈRE « UN REPÈRE A BOUGÉ » — et c'est un cas net : deux tuiles
      que TOUT LE MONDE voyait, tout en haut de l'Accueil, disparaissent d'un coup.
      ⛔⛔ ET SURTOUT ELLE DONNE L'ADRESSE DE RENVOI, ce qu'aucune autre surface ne fera à temps :
@@ -938,7 +951,7 @@ const WHATS_NEW=[
   {v:18, ic:'🧠', t:'Milo apprend à te connaître', d:'Milo va commencer à te poser de petites questions sur ta page d\'Accueil (par ex. « tu t\'entraînes plutôt le matin, non ? »). À chaque fois que tu confirmes, il RETIENT — et ses conseils deviennent plus justes, plus personnels. Rien n\'est mémorisé sans ton accord : tu réponds « Oui, c\'est vrai » ou « Pas vraiment ». Et tu peux voir ou effacer tout ce qu\'il a retenu dans Menu → « Ce que Milo sait de toi ». 🧠'},
   {v:17, ic:'🧬', t:'Ton ADN sportif', d:'Nouveau dans ton Profil (Menu → Profil → « Mon ADN sportif ») : dis à Milo ce qui te caractérise DURABLEMENT dans ta façon de t\'entraîner — ta motivation profonde, ton mode de vie (temps, lieu, matériel), ce que tu aimes/détestes et ton expérience. Résultat : des conseils bien plus personnels et RÉALISTES (il ne te proposera pas une séance d\'1h30 si tu as 45 min, ni des squats si tu les détestes). Tout est optionnel et privé. 🧬'},
   {v:16, ic:'😴', t:'Ton sommeil sur l\'Accueil + son historique', d:'Le sommeil est maintenant sur la page d\'Accueil, juste sous ton score de récup (avant il était dans Séance et on ne le trouvait pas). Nouveau aussi : tu peux NOTER UN JOUR OUBLIÉ (choisis la date, ex. hier) et ouvrir « 📊 Historique du sommeil » → un petit graphique (7 ou 30 jours) + la liste nuit par nuit ; tape n\'importe quel jour pour l\'ajouter ou le corriger. 😴'},
-  {v:15, ic:'🙏', t:'Petit souci réglé — merci de votre patience', d:'Ces derniers jours, les lectures par PHOTO (bilan de balance, code-barres, étiquette nutrition) et le Coach Milo pouvaient échouer quand tu n\'étais pas en wifi (4G/5G). Désolé pour la gêne ! 😅 C\'est RÉPARÉ ✅ — tout ça fonctionne maintenant PARTOUT, même sans wifi (à la salle, au magasin…). ⚠️ C\'est encore en cours de test : si tu remarques un souci, dis-le-nous (Menu → Espace testeur, ou par email). Merci de votre patience, et bon entraînement ! 💪'},
+  {v:15, ic:'🙏', t:'Petit souci réglé — merci de votre patience', d:'Ces derniers jours, les lectures par PHOTO (bilan de balance, code-barres, étiquette nutrition) et le Coach Milo pouvaient échouer quand tu n\'étais pas en wifi (4G/5G). Désolé pour la gêne ! 😅 C\'est RÉPARÉ ✅ — tout ça fonctionne maintenant PARTOUT, même sans wifi (à la salle, au magasin…). ⚠️ C\'est encore en cours de test : si tu remarques un souci, dis-le-nous (Accueil → ⭐ Espace testeur fondateur, ou par email). Merci de votre patience, et bon entraînement ! 💪'},
   {v:14, ic:'🧠', t:'Milo coache comme un vrai coach', d:'Ton Coach IA a franchi un cap : il RAISONNE comme un vrai coach. Il t\'évalue avant de te conseiller (et te pose des questions si besoin), croise tes records, ta morpho et ton bilan corporel, justifie ses choix, s\'adapte à ta vie (horaires, travail, temps dispo) et te dit la vérité sans langue de bois. Demande-lui un programme ou « pourquoi je stagne ? » — tu vas voir la différence !'},
   {v:13, ic:'✋', t:'Superset par glisser-déposer', d:'En séance, attrape la petite poignée (6 points) sur un exercice et glisse-le sur un autre → le superset (enchaînement sans repos) se crée tout seul. Plus rapide que de passer par le menu. Marche sur les exercices pas encore groupés.'},
   {v:12, ic:'📷', t:'Photographie le code-barres', d:'Dans le Journal alimentaire, plus besoin de taper les chiffres : appuie sur « 📷 Photographier le code-barres », prends-le en photo, et l\'IA lit le numéro pour toi → le produit et son score santé s\'affichent tout seuls. Pratique quand les chiffres sont petits ou abîmés.'},
