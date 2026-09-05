@@ -26637,6 +26637,67 @@ console.log('\n═══ CCXXXVI. Accueil désencombré (carte testeur → bouto
   t('CCXXXVI aucune erreur JS sur tout le bloc', ea.length===0, ea.join(' | '));
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// CCXXXVII. LE CONSEIL 💡 PASSE SOUS LE BOUTON DE SÉANCE (05/09/2026)
+// Michel, après ft-v1132 : « le bouton commencer la séance, tu n'y as pas touché ? ». Non — et
+// c'est sa question qui a fait mesurer l'INTÉRIEUR de la carte de récup au lieu de ce qui est
+// au-dessus d'elle. Le conseil pesait 54 px et était le DERNIER obstacle.
+// ⛔⛔ CE QUI EST PROTÉGÉ N'EST PAS « le conseil est en bas » — c'est l'ORDRE : le bouton doit
+// venir AVANT le conseil dans le document. Un témoin qui chercherait la position en pixels
+// deviendrait faux au premier changement de police ou de viewport du banc.
+console.log('\n═══ CCXXXVII. Le conseil 💡 passe sous le bouton ═══');
+{
+  const cc=await b.newContext({serviceWorkers:'block',viewport:{width:393,height:852},timezoneId:'Europe/Paris'});
+  const pc=await cc.newPage(); const ec=[]; pc.on('pageerror',e=>ec.push(e.message));
+  await pc.addInitScript(seedScript({ft4_email:'x@exemple.fr'}));
+  await pc.goto('http://localhost:'+PORT+'/index.html');
+  await pc.waitForTimeout(2200);
+  const C=await pc.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    /* ⛔ On FORCE un conseil à exister : sans lui, « le bouton est avant le conseil » serait
+       vrai parce qu'il n'y a pas de conseil du tout — un vert qui ne peut pas rougir. */
+    S.sleepLog=[]; S.healthDaily=[]; persist();
+    goScreen('home',document.getElementById('nb-home')); renderHome();
+    await new Promise(r=>setTimeout(r,500));
+    const o={};
+    const hero=document.getElementById('home-hero');
+    const btn=[...hero.querySelectorAll('button')]
+      .find(x=>/Commencer une s[ée]ance|Reprendre la s[ée]ance/i.test(x.textContent||'')&&x.getBoundingClientRect().height>20);
+    const conseil=[...hero.querySelectorAll('div')].find(e=>/^💡/.test((e.textContent||'').trim())
+      && e.getBoundingClientRect().height>20 && !e.querySelector('button'));
+    o.btnTrouve=!!btn; o.conseilTrouve=!!conseil;
+    if(btn&&conseil){
+      /* ⭐ L'ORDRE DANS LE DOCUMENT, pas une position en pixels : c'est ça, la garantie. */
+      o.boutonAvant=!!(btn.compareDocumentPosition(conseil)&Node.DOCUMENT_POSITION_FOLLOWING);
+      o.btnBas=Math.round(btn.getBoundingClientRect().bottom);
+      o.conseilY=Math.round(conseil.getBoundingClientRect().top);
+    }
+    const nav=document.querySelector('.nav,#nav,nav');
+    o.zone=Math.round(nav.getBoundingClientRect().top);
+    /* ⛔ Le conseil doit rester LISIBLE : déplacé, pas supprimé (on ne gagne pas de la place
+       en jetant l'information — ce serait R24 à l'envers). */
+    o.conseilTexte=conseil?(conseil.textContent||'').trim().length:0;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  await cc.close();
+  if(C.erreur) t('CCXXXVII ⛔ le bloc s\'exécute', false, C.erreur);
+  /* ⛔ LES DEUX CONTRÔLES D'ABORD : sans eux le témoin d'ordre serait vert sur du vide. */
+  t('CCXXXVII ⛔ CONTRÔLE — le bouton de séance est bien présent',
+    C.btnTrouve===true, 'sinon rien de ce qui suit ne mesure quoi que ce soit');
+  t('CCXXXVII ⛔ CONTRÔLE — un conseil 💡 est bien affiché (sinon « avant » est vide de sens)',
+    C.conseilTrouve===true && C.conseilTexte>10, 'longueur du conseil : '+C.conseilTexte);
+  t('CCXXXVII ⭐⭐ le BOUTON vient AVANT le conseil dans la carte (l\'ordre, pas les pixels)',
+    C.boutonAvant===true, 'le conseil est encore au-dessus du bouton');
+  t('CCXXXVII ⭐ … et le bouton tient au-dessus de la barre de navigation',
+    C.btnBas!==null && C.btnBas<=C.zone, 'bas='+C.btnBas+' · nav à '+C.zone);
+  t('CCXXXVII ⛔ le conseil est DÉPLACÉ, pas supprimé (on ne gagne pas de place en jetant l\'info)',
+    C.conseilY>C.btnBas, 'conseil y='+C.conseilY+' · bouton bas='+C.btnBas);
+  t('CCXXXVII aucune erreur JS sur tout le bloc', ec.length===0, ec.join(' | '));
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
