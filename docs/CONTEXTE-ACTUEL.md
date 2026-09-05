@@ -7,6 +7,8 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1139` — 🗂️ **LE MENU RANGÉ EN 4 RAYONS.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#923** sur `90c5574`, **job `deploy` success**,
+  les 7 étapes vertes à **23:18:45 UTC**.
   Michel : *« c'est grave mélangé, il faut mettre ce qu'il y a d'important en premier »*.
   ⭐⭐ **Mesuré** : le menu descendait jusqu'à **y=1909** pour un écran de 852, et **« Ce que Milo
   sait de toi » était à y=1090 — hors écran**, pendant que **363 px de réglages de couleur**
