@@ -7,6 +7,8 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1135` — 🔇 **LES MOTS QUITTENT LES TUILES DU CHECK-IN.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#914** sur `a9dd42f`, **job `deploy` success**,
+  les 7 étapes vertes à 15:23:18 UTC. Suite : **parcours 2797/2797**, calculs 339/339, dates 9/9.
   Michel : *« les mots sommeil, énergie et moral on peut les supprimer, c'est logique avec les
   emojis »*. ⭐ Carte **130 → 112 px**, tuile **67 → 49** — soit **157 → 112 sur la journée**.
   ⛔⛔ **L'information n'est pas supprimée, elle change de canal** : la légende devient
