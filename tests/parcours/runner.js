@@ -26607,8 +26607,18 @@ console.log('\n═══ CCXXXVI. Accueil désencombré (carte testeur → bouto
     /* ⚠️ LE TEXTE PÉRIMÉ — la pop-up de bienvenue d'un NOUVEAU testeur promettait « une carte
        dorée tout en haut de ton Accueil ». Vrai hier, faux à la seconde où ceci part en ligne.
        *Une aide qui nomme un repère inexistant est pire qu'une aide absente : on la croit.* */
-    t('CCXXXVI ⚠️ aucun texte ne promet plus une « carte dorée » sur l\'Accueil',
-      !/carte dor[ée]e\s*«?\s*Testeur/i.test(H), 'la pop-up de bienvenue est périmée');
+    /* ⚠️⚠️ CE TÉMOIN A ÉTÉ VISÉ TROP ÉTROIT DU PREMIER COUP, ET IL S'EST ATTRAPÉ LUI-MÊME.
+       Je l'avais écrit `carte dorée « Testeur »` — il a trouvé UNE pop-up périmée, je l'ai
+       corrigée… et il est resté rouge sur une **deuxième variante**, écrite `carte dorée →`
+       tout court, dans l'autre pop-up de bienvenue. 👉 *La garantie n'a jamais été une
+       tournure précise* : c'est qu'**aucun texte servi ne promet une carte dorée** là où il
+       n'y a plus qu'un bouton. Et ces deux-là ne décrivaient pas, elles **guidaient** :
+       « Accueil → carte dorée → Espace Testeur → Boîte à idées » est un chemin qu'on SUIT.
+       ⛔ Volontairement borné à `index.html` (ce qui est SERVI) : les commentaires de
+       `constants.js` doivent, eux, pouvoir nommer le pavé pour expliquer sa disparition —
+       c'est le piège §31, payé assez de fois. */
+    t('CCXXXVI ⚠️ aucun écran ne promet plus une « carte dorée » (elles GUIDAIENT vers elle)',
+      !/carte dor[ée]e/i.test(H), 'un chemin de navigation périmé se suit, il ne se lit pas');
   }
   /* 📣 RÈGLE D'OR #11 — L'ANNONCE EXISTE, ET ELLE NE DÉBORDE PAS.
      ⛔⛔ Les DEUX moitiés comptent : un témoin qui vérifierait seulement « le testeur la voit »
