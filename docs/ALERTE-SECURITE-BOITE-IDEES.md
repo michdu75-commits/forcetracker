@@ -1,10 +1,27 @@
-# 🔴 ALERTE SÉCURITÉ — trois failles (2 corrigées, 1 restante)
+# ✅ ALERTE SÉCURITÉ — trois failles, **les TROIS fermées** *(dossier clos, gardé comme mémoire)*
 
 > **Trouvé le 04/08/2026.** La première (la boîte à idées) a été trouvée en cherchant à lire les
 > idées depuis la session Claude ; **la seconde (les comptes entiers) en vérifiant la première** —
 > et c'est la plus grave des deux.
-> **État au 07/08/2026 : la n°0 et la n°2 sont FERMÉES. La n°1 — la plus grave — reste OUVERTE.**
-> Ce fichier se supprime le jour où les trois sont réglées.
+>
+> **✅ ÉTAT AU 05/09/2026 : les trois sont FERMÉES.** n°0 le 04/08 · n°2 le 07/08 (ft-v787) ·
+> **n°1 le 07/08 également**, par la « lecture stricte » (`_lectureAutorisee_`, Code.js) — voir
+> l'encadré de clôture au bas de sa section.
+>
+> ⚠️⚠️ **CET EN-TÊTE A ANNONCÉ « la n°1 reste OUVERTE » PENDANT UN MOIS APRÈS SA FERMETURE**, et il
+> a servi tel quel le 05/09 quand Michel a demandé s'il fallait passer le dépôt en privé. C'est
+> **R23** dans sa forme la plus coûteuse : *un document d'ÉTAT qu'on ne met pas à jour fait dire des
+> bêtises à celui qui le lit* — et le pire est le sens de l'erreur : **il fait croire à un danger
+> qui n'existe plus**, donc il pousse à des décisions (passer en privé, prévenir les testeurs) que
+> les faits ne justifient pas. ⭐ *Le correctif a été écrit dans le CODE, avec sa raison et sa
+> soupape — 30 lignes de commentaire. Il n'a jamais été reporté ICI.* La leçon vaut pour tout
+> document de ce genre : **le fichier qui annonce un état doit être fermé par la même main que le
+> code qui le change.** ⛔ Un contrôle permanent l'exige désormais (`tools/check_regles.py`, n°14).
+>
+> ⛔ **Ce fichier ne se supprime PAS** (il disait le contraire, et c'était une erreur) : il porte
+> **comment** trois failles ont été trouvées, ce qui a été mesuré, et ce que chaque correctif
+> n'a pas réglé. *Un dossier de sécurité qu'on efface une fois refermé oblige à tout redécouvrir
+> le jour où la même famille revient* — c'est **R30**, appliqué à un document.
 
 ---
 
@@ -92,7 +109,10 @@ déploiement fait partie du déménagement, pas des finitions.**
 
 ---
 
-# ⚠️ FAILLE N°1 — n'importe qui peut télécharger un compte entier
+# ✅ FAILLE N°1 — n'importe qui peut télécharger un compte entier *(**FERMÉE le 07/08/2026** — voir l'encadré de clôture en fin de section)*
+
+> ⚠️ **Tout ce qui suit décrit l'état AVANT le correctif**, gardé exprès : c'est la description du
+> problème, pas celle d'aujourd'hui. **La clôture est au bas de la section.**
 
 ## Ce qui est accessible
 
@@ -196,6 +216,56 @@ simple GET. Deux pistes, à trancher par Michel :
 ⚠️ Dans les deux cas, prévoir le chemin de **récupération** (e-mail de vérification, déjà en place)
 avant de fermer quoi que ce soit — sinon on protège les données en les rendant inaccessibles à leur
 propriétaire.
+
+## ✅ CLÔTURE — ce qui a réellement été fait (07/08/2026), constaté dans le code le 05/09/2026
+
+> ⚠️ **Cette section a été écrite un mois après le correctif**, en vérifiant `Code.js` et non ce
+> document. Voir l'avertissement de l'en-tête : *le fichier disait encore « OUVERTE »*.
+
+**Ni la piste 1 ni la piste 2 n'ont été retenues : le correctif a pris un TROISIÈME chemin**,
+appelé **« lecture stricte »** dans le code — plus simple que le secret d'appareil, et sans imposer
+d'action à qui que ce soit.
+
+**`_lectureAutorisee_(email, code)`** (`Code.js` ~108) s'intercale devant `_authCheck_` :
+
+| Cas | Réponse |
+|---|---|
+| Code perso posé, code fourni **juste** | compte servi (inchangé) |
+| Code perso posé, code **faux ou absent** | refus (inchangé) |
+| **Aucun code perso** | ⛔ **refus** — `{status:'error', error:'auth', needsCode:true}` |
+
+Elle est appelée par les **deux** portes de lecture, vérifié : `loadProfile` en **GET** (ligne 889)
+et `handleLoadProfilePost_` en **POST** (ligne 925). *Une seule des deux aurait laissé la fuite
+entière — l'appel décrit au début de cette page est un GET.*
+
+**⭐ Les trois décisions qui font que ça tient, et qui méritent d'être relues avant d'y toucher :**
+
+1. **Seule la LECTURE est fermée, pas l'écriture.** `saveProfile` reste sur `_authCheck_` seul.
+   *La fuite, c'est la lecture* ; fermer l'écriture arrêterait la sauvegarde des séances de gens qui
+   n'ont rien demandé — **règle d'or #3**, zéro perte de séance. Une fois le code posé, les deux sens
+   sont verrouillés.
+2. **On ne peut pas s'enfermer dehors** — vérifié dans le routage : `setAccessCode` et
+   `sendConfirmCode` sont appelées **directement**, sans passer par la porte. *Poser son code reste
+   possible alors même que la lecture est fermée ; sinon on protégerait les données en les rendant
+   inaccessibles à leur propriétaire*, exactement ce que l'avertissement ci-dessus demandait.
+3. **`needsCode` est renvoyé exprès**, pour que l'app dise *« protège ton compte »* au lieu de
+   réclamer un code qui n'existe pas. *Un refus qui n'explique pas ce qu'il faut faire fabrique un
+   compte que son propriétaire croit perdu.*
+
+🔧 **Soupape** : la Script Property **`LECTURE_STRICTE = 'off'`** rouvre tout **sans redéployer**
+(`ouvrirLectureTemporairement()` / `refermerLecture()`). ⛔ **Propriété absente = FERMÉ** — le repli
+est sûr, dans le bon sens : *une soupape dont l'oubli ouvre la porte n'est pas une soupape.*
+
+### ⛔ Ce que cette clôture NE dit PAS
+
+- **Les six adresses restent en clair dans le dépôt public** (`PREMIUM_HARDCODED_`,
+  `TESTER_EMAILS`). Elles n'ouvrent plus rien — mais ce sont toujours des adresses réelles publiées,
+  donc **collectables par un robot à spam**. *Ce n'est plus une faille, c'est une nuisance.*
+- **Rien n'a été mesuré sur ce qui a pu être lu entre le 04/08 et le 07/08.** La route ne journalise
+  pas les appels : *l'absence de trace n'est pas une preuve d'absence*, et ça reste vrai.
+- **Poser un code perso garde tout son intérêt** : sans code, le compte est protégé par cette porte
+  côté serveur, pas par un secret que la personne possède. La mesure de ft-v758 (les 3 portes de la
+  santé fermées sans code) reste la bonne, pour la même raison.
 
 ---
 

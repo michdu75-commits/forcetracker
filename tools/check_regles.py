@@ -702,3 +702,59 @@ except SystemExit:
     raise
 except Exception:
     pass
+
+# ── CONTRÔLE 14 — UN DOSSIER DE SÉCURITÉ NE DIT JAMAIS « OUVERT » CE QUE LE CODE A FERMÉ ──
+# ⛔⛔ CE CONTRÔLE NAÎT D'UNE ERREUR DE MA PART, LE 05/09/2026. Michel demandait quand passer le
+# dépôt de public à privé. Je me suis appuyé sur `docs/ALERTE-SECURITE-BOITE-IDEES.md`, dont
+# l'en-tête annonçait *« la n°1 — la plus grave — reste OUVERTE »*. **C'était faux depuis le
+# 07/08** : la « lecture stricte » (`_lectureAutorisee_`) était dans `Code.js` ET déployée.
+# Le correctif avait été écrit dans le CODE, avec 30 lignes de commentaire — jamais reporté dans
+# le document qui annonce l'état.
+#
+# ⚠️ **Et le sens de l'erreur est ce qui coûte cher** : un document périmé de ce genre ne fait pas
+# rater un danger, il en **invente un qui n'existe plus** — donc il pousse à des décisions
+# (fermer le dépôt, prévenir les testeurs, tout arrêter) que les faits ne justifient pas.
+# `CLAUDE.md` racontait DÉJÀ ce piège pour ce même fichier, survenu le 17/08. **Deux fois.**
+#
+# ⭐⭐ CE QUE LE CONTRÔLE MESURE — la COHÉRENCE entre le code et le document, dans les DEUX sens,
+# jamais la présence d'un mot. *Un détecteur qui interdirait le mot « OUVERTE » rougirait sur
+# l'encadré qui explique justement que cette phrase était fausse* — c'est le piège §31, payé
+# quatre fois sur ce dépôt. On regarde donc l'ÉTAT ANNONCÉ (le pictogramme du titre), pas le
+# vocabulaire du corps.
+#   ① le code ferme  → le titre ne doit plus être 🔴, et la clôture doit être écrite ;
+#   ② le doc dit fermé → le correctif doit toujours être dans le code (sinon on a retiré la
+#     protection en laissant le document jurer qu'elle est là — le sens le plus dangereux).
+_ALERTE = 'docs/ALERTE-SECURITE-BOITE-IDEES.md'
+try:
+    import os as _os
+    _rac = _RACINE if '_RACINE' in dir() else '.'
+    _pa, _pc = _os.path.join(_rac, _ALERTE), _os.path.join(_rac, 'Code.js')
+    if _os.path.exists(_pa) and _os.path.exists(_pc):
+        _txtA = open(_pa, encoding='utf-8').read()
+        _titre = _txtA.split('\n', 1)[0]
+        _codeFerme = '_lectureAutorisee_' in open(_pc, encoding='utf-8').read()
+        _docFerme  = '_lectureAutorisee_' in _txtA
+        if _codeFerme and _titre.lstrip('# ').startswith('🔴'):
+            print(f"❌ {_ALERTE} annonce encore un dossier OUVERT (titre 🔴) alors que "
+                  "`_lectureAutorisee_` est dans Code.js — la faille n°1 est fermée.")
+            print("   → mettre l'en-tête à jour ET écrire la clôture. Un document d'état périmé "
+                  "fait dire des bêtises à celui qui le lit (R23).")
+            sys.exit(1)
+        if _codeFerme and not _docFerme:
+            print(f"❌ {_ALERTE} ne mentionne pas `_lectureAutorisee_` alors que le correctif est "
+                  "dans Code.js — la clôture de la faille n°1 n'est écrite nulle part.")
+            print("   → décrire CE QUI A ÉTÉ FAIT, pas seulement changer le titre : sans ça, "
+                  "le prochain lecteur ne saura pas par quel chemin c'est fermé (R30).")
+            sys.exit(1)
+        if _docFerme and not _codeFerme:
+            print(f"❌ {_ALERTE} annonce la faille n°1 FERMÉE, mais `_lectureAutorisee_` a disparu "
+                  "de Code.js — le document jure qu'une protection existe alors qu'elle n'est plus là.")
+            print("   → c'est le sens le plus dangereux des deux : rétablir la lecture stricte, "
+                  "ou rouvrir le dossier avec la raison du retrait.")
+            sys.exit(1)
+        print("✅ alerte sécurité : le dossier et le code disent la même chose"
+              + (" (faille n°1 fermée des deux côtés)" if _codeFerme else " (dossier ouvert, code non corrigé)"))
+except SystemExit:
+    raise
+except Exception:
+    pass                                        # jamais bloquer sur un pépin d'outillage
