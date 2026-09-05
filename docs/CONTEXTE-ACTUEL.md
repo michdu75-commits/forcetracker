@@ -6,7 +6,20 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1132` — 🧹 **L'ACCUEIL DÉSENCOMBRÉ.**
+- **Version en ligne (live) :** `ft-v1133` — ⚡ **LE CONSEIL 💡 PASSE SOUS LE BOUTON DE SÉANCE.**
+  Michel, après ft-v1132 : *« le bouton commencer la séance, tu n'y as pas touché ? »*.
+  ⭐⭐ **Non — et sa question a trouvé les 53 px qui manquaient.** ft-v1132 avait dégagé 136 px
+  **au-dessus** de la carte de récup, et j'avais conclu « impossible d'aller plus loin sans
+  déplacer le check-in ou Milo ». ⛔ **Mesure juste, conclusion fausse : je n'avais regardé
+  qu'au-dessus.** Le conseil 💡 pèse **54 px** et était le dernier obstacle — *les px manquants
+  étaient DEDANS.* 👉 *Quand on conclut « impossible », on a surtout mesuré le périmètre qu'on
+  s'était donné.*
+  ⭐ **831 → 768**, au-dessus de la nav (778). ⚠️ **Mesuré sur 4 formats × 2 profils** : ✅ 14/15
+  Pro (marge 10/58) · ⚠️ 12/13/14 (✅ normal, ❌ 17 px testeur) · ❌ 13 mini · ❌ SE.
+  ⛔ Le conseil est **déplacé, pas supprimé**. Rien d'autre ne bouge (check-in et Milo intacts).
+  ⏭️ **Michel doit vérifier sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1132` — 🧹 **L'ACCUEIL DÉSENCOMBRÉ.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#908** sur `f4b80a5`, **job `deploy` success**,
   les 7 étapes vertes à 12:27:23 UTC. Suite complète : **parcours 2779/2779**, calculs 339/339,
   muscles 241, croisés 50, dates 9/9, données 0 trou.
