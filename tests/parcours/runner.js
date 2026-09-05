@@ -26923,6 +26923,89 @@ console.log('\n═══ CCXXXIX. Accueil allégé : bouton conditionnel + CE MO
 }
 
 
+/* ═══ CCXXXIX. DEUX PORTES POUR UNE MENSURATION, UNE SEULE LA DATAIT (ft-v1136) ════════════
+   Michel, après la livraison du ratio poids ↔ centimètres : *« la mesure qu'il y a sur mon
+   appli là, du tour de cou et taille, elle est datée ou pas ? »*.
+   ⛔⛔ MESURÉ : NON, PAS TOUJOURS. L'écran Progrès (carte « Masse grasse ») passe par
+   `_mensEnregistrerSaisie` → `mensAjouter` et **DATE** la valeur ; `saveProfile()` écrivait
+   `S.neck`/`S.waist`/`S.hip` **et rien d'autre**. ***La même mesure comptait ou ne comptait pas
+   pour la courbe selon l'écran par lequel elle entrait*** — la famille des DEUX PORTES, 3ᵉ fois
+   de la semaine (superset ft-v1130, IMC ft-v1129).
+   ⭐⭐ ET LE VRAI RISQUE N'EST PAS L'OUBLI, C'EST L'INVERSE : ces champs sont PRÉ-REMPLIS, donc
+   router bêtement vers le journal stamperait « cou mesuré aujourd'hui » chaque fois que
+   quelqu'un enregistre son profil pour corriger son POIDS. *On fabriquerait une mesure qu'il
+   n'a pas prise* (R29). D'où la règle : **on ne date que ce qui a CHANGÉ**.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXXIX. Deux portes pour une mensuration (ft-v1136) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',
+    ft4_gender:'H',ft4_ht:'178',ft4_bw:'83'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1800);
+  const R=await p.evaluate(()=>{ try{
+    const o={};
+    const set=(id,v)=>{const e=document.getElementById(id); if(!e) return false; e.value=v; return true;};
+    o.champs={neck:!!document.getElementById('neck-inp'),waist:!!document.getElementById('waist-inp'),
+              hip:!!document.getElementById('hip-inp')};
+    const vraiToast=window.toast; window.toast=()=>{};
+    S.mensLog=[]; S.neck=0; S.waist=0; S.hip=0;
+    /* ① UNE SAISIE NEUVE PAR LE FORMULAIRE DU PROFIL → datée, et la source le dit (R33). */
+    set('neck-inp','40'); set('waist-inp','92'); set('hip-inp','101');
+    saveProfile();
+    o.neuf={neck:S.neck,waist:S.waist,hip:S.hip,
+            n:(S.mensLog||[]).length,
+            src:(S.mensLog||[]).map(e=>e.s).join(','),
+            date:(S.mensLog[0]||{}).d, auj:(typeof today==='function')?today():''};
+    /* ② RE-ENREGISTRER SANS RIEN TOUCHER → aucune date fabriquée. */
+    const avant=JSON.stringify(S.mensLog);
+    saveProfile();
+    o.inchange={identique:JSON.stringify(S.mensLog)===avant,n:(S.mensLog||[]).length};
+    /* ③ UNE VALEUR CORRIGÉE LE MÊME JOUR → corrige, n'empile pas. */
+    set('waist-inp','90'); saveProfile();
+    o.corrige={nTaille:(S.mensLog||[]).filter(e=>e.k==='taille').length,waist:S.waist};
+    /* ④ LES BORNES SONT CELLES DE `MENS_DEFS` (R2) : un cou de 65 passait avant à la trappe. */
+    S.mensLog=[]; S.neck=0; set('neck-inp','65'); set('waist-inp',''); set('hip-inp','');
+    saveProfile();
+    o.borne65={neck:S.neck,n:(S.mensLog||[]).length};
+    /* ⑤ MAIS L'IMPOSSIBLE RESTE REFUSÉ DES DEUX CÔTÉS. */
+    S.mensLog=[]; S.neck=0; set('neck-inp','150'); saveProfile();
+    o.impossible={neck:S.neck,n:(S.mensLog||[]).length};
+    /* ⑥ UN CHAMP VIDE N'EFFACE PAS (règle d'or #3). */
+    S.mensLog=[]; S.neck=41; set('neck-inp',''); saveProfile();
+    o.vide={neck:S.neck,n:(S.mensLog||[]).length};
+    window.toast=vraiToast;
+    return o;
+  }catch(e){ return {err:e.message}; } });
+
+  /* ⛔ CONTRÔLE D'ABORD : sans lui, des champs disparus rendraient tout le bloc vert sur du vide. */
+  t('CCXXXIX ⛔ CONTRÔLE — les trois champs du formulaire Profil existent bien',
+    !R.err && R.champs && R.champs.neck && R.champs.waist && R.champs.hip,
+    R.err||JSON.stringify(R.champs));
+  t('CCXXXIX ⭐⭐ une mensuration tapée dans le PROFIL est maintenant DATÉE (elle ne l\'était pas)',
+    R.neuf && R.neuf.n===3 && R.neuf.date===R.neuf.auj, JSON.stringify(R.neuf));
+  t('CCXXXIX … et elle pose toujours S.neck / S.waist / S.hip (un seul appel fait les deux)',
+    R.neuf && R.neuf.neck===40 && R.neuf.waist===92 && R.neuf.hip===101, JSON.stringify(R.neuf));
+  /* ⭐ R33 — la provenance est gardée : on saura d'où vient une valeur douteuse. */
+  t('CCXXXIX ⭐ la provenance est écrite (« profil »), pas confondue avec la carte Masse grasse',
+    R.neuf && R.neuf.src==='profil,profil,profil', String(R.neuf&&R.neuf.src));
+  /* ⛔⛔ LE TÉMOIN QUI PORTE LA VERSION — et c'est un REFUS, pas un enregistrement. */
+  t('CCXXXIX ⛔⛔ enregistrer son profil SANS toucher aux mesures ne fabrique AUCUNE date',
+    R.inchange && R.inchange.identique===true && R.inchange.n===3, JSON.stringify(R.inchange));
+  t('CCXXXIX ⛔ se corriger le même jour REMPLACE la valeur, ça n\'empile pas',
+    R.corrige && R.corrige.nTaille===1 && R.corrige.waist===90, JSON.stringify(R.corrige));
+  /* ⛔ R2 — un seul jeu de bornes. Le formulaire refusait un cou > 60, MENS_DEFS va à 80. */
+  t('CCXXXIX ⛔ R2 — les bornes viennent de MENS_DEFS : un cou de 65 cm n\'est plus jeté',
+    R.borne65 && R.borne65.neck===65 && R.borne65.n===1, JSON.stringify(R.borne65));
+  /* ⛔ … sans quoi « on accepte tout » serait vert et on aurait remplacé un défaut par un pire. */
+  t('CCXXXIX ⛔ CONTRÔLE — l\'impossible reste refusé (un cou de 150 cm n\'entre nulle part)',
+    R.impossible && R.impossible.neck===0 && R.impossible.n===0, JSON.stringify(R.impossible));
+  t('CCXXXIX ⛔ RÈGLE D\'OR #3 — un champ vidé n\'efface pas la mesure connue',
+    R.vide && R.vide.neck===41 && R.vide.n===0, JSON.stringify(R.vide));
+  t('CCXXXIX aucune erreur JS pendant tout le bloc', errs.length===0, errs.join(' | '));
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

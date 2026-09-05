@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1136` — 🧹 **L'ACCUEIL ALLÉGÉ, 2ᵉ PASSE.**
+- **Version en ligne (live) :** `ft-v1137` — 🧹 **L'ACCUEIL ALLÉGÉ, 2ᵉ PASSE.**
   Michel groupe **2 demandes en 1 version** (donc 1 passe au lieu de 2).
   ⭐⭐ **① Le bouton « Commencer une séance » ne sort plus que si une séance est OUVERTE.**
   ⛔ Vérifié : le FAB appelle **la même fonction**, mais **il ne dit jamais qu'une séance est en
@@ -23,6 +23,30 @@
   Michel que c'est le plus gros bloc (424 px) ; sa réponse : *« impec et beau »*.
   📐 **Accueil : 1411 → 1307 px.** Sur la journée : check-in **157→112**, pavé testeur
   **166→48**, carte récup **437→300**.
+
+- **Version précédente :** `ft-v1136` — 📏 **DEUX PORTES POUR UNE MENSURATION, UNE SEULE LA DATAIT.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#917** sur `761cd69`, **job `deploy` success**,
+  les 7 étapes vertes à **17:32:50 UTC**. Suite complète : **parcours 2807/2807**, calculs
+  **339/339**, muscles 241, croisés 50, dates 9/9, données 0 trou.
+  Michel : *« la mesure qu'il y a sur mon appli là, du tour de cou et taille, elle est datée ou
+  pas ? »*. ⛔⛔ **Mesuré : NON, pas toujours** — l'écran Progrès datait, le formulaire du Profil
+  écrivait `S.neck`/`S.waist`/`S.hip` **et rien d'autre**. *La même mesure comptait ou ne comptait
+  pas pour la courbe selon la porte.* **3ᵉ fois de la semaine** pour cette famille.
+  ⭐⭐ **Le vrai risque était l'INVERSE** : ces champs sont **pré-remplis**, donc router bêtement
+  aurait stampé « cou mesuré aujourd'hui » à chaque enregistrement de profil — *une mesure
+  fabriquée* (R29). Règle : **on ne date que ce qui a CHANGÉ**.
+  ⛔ **R2** : les bornes viennent de `MENS_DEFS` seul — un cou de 65 cm partait **en silence**.
+  ⛔ **Aucune reprise de l'existant, exprès** : on ne date pas après coup une mesure dont on
+  ignore le jour. L'aide du Profil le **dit**.
+  📊 **ET L'INVENTAIRE DES DONNÉES EST NÉ DE LÀ** (`tools/donnees.py` → `docs/INVENTAIRE-DONNEES.md`,
+  **généré depuis le code**, R27) : **107 données · 15 historiques (9 datés) · 70 survivent à un
+  changement de téléphone · 60 atteignent Milo**.
+  ⛔⛔ **TROUVAILLE À CORRIGER EN PRIORITÉ : `mensLog` et `missedLog` ne quittent JAMAIS le
+  téléphone** (absents de `_cloudSync` **et** de `Code.js`). Un changement d'appareil efface tout
+  l'historique de centimètres — **règle d'or #3**. ⏭️ **C'est la prochaine version.**
+  ⚠️⚠️ **Et mon détecteur a menti deux fois** : « 0 historique daté hors sauvegarde » (le vert qui
+  ne peut pas rougir), puis **cri au loup** sur `weightLog`/`sleepLog`. Les deux causes sont
+  écrites dans le script, qui **s'arrête net** si `_applyRestoreData` ou `_cloudSync` est renommée.
   ⏭️ **Michel doit vérifier sur Safari/iPhone.**
 
 - **Version précédente :** `ft-v1135` — 🔇 **LES MOTS QUITTENT LES TUILES DU CHECK-IN.**

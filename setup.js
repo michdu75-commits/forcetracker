@@ -3027,12 +3027,46 @@ function saveProfile(){
   if(csEl&&csEl.value)S.mensCycleStart=csEl.value;
   if(cdEl&&cdEl.value){const d=parseInt(cdEl.value);if(d>=18&&d<=45)S.mensCycleDur=d;}
   if(contraEl2)S.contraception=contraEl2.value||'';
+  /* ═══ 📏 LES MENSURATIONS DU PROFIL PASSENT PAR LE MÊME PROPRIÉTAIRE (ft-v1136) ═══════════
+     Michel, après la livraison du ratio poids ↔ centimètres : *« la mesure qu'il y a sur mon
+     appli là, du tour de cou et taille, elle est datée ou pas ? »*.
+     ⛔⛔ MESURÉ : NON, PAS TOUJOURS — et c'était la famille des DEUX PORTES, la 3ᵉ fois de la
+     semaine (le superset de Milo en ft-v1130, l'IMC de l'import en ft-v1129). L'écran Progrès
+     (carte « Masse grasse ») passe par `_mensEnregistrerSaisie` → `mensAjouter`, qui **DATE**
+     la valeur dans `S.mensLog`. Ce formulaire-ci écrivait `S.neck`/`S.waist`/`S.hip` **et rien
+     d'autre**. 👉 ***La même mesure comptait ou ne comptait pas pour la courbe selon l'écran
+     par lequel elle entrait.***
+     ⛔ ET LES BORNES AVAIENT DÉJÀ DIVERGÉ : ce formulaire refusait un cou > 60 cm quand
+     `MENS_DEFS` va jusqu'à 80. *Deux jeux de règles pour la même grandeur* (**R2**) — un seul
+     propriétaire désormais, et c'est `MENS_DEFS` qui dit ce qui est impossible.
+
+     ⛔⛔ ON NE DATE QUE CE QUI A CHANGÉ, ET C'EST LE CŒUR DU CORRECTIF (R29).
+     Ces champs sont **pré-remplis** avec la valeur connue (`renderProfile`, plus haut). Écrire
+     dans le journal à chaque « Enregistrer » stamperait *« cou mesuré aujourd'hui »* alors que
+     la personne vient seulement de corriger son poids — ***on fabriquerait une mesure qu'elle
+     n'a pas prise***, et c'est exactement ce que le journal existe pour éviter.
+     ⚠️ Le prix assumé : se remesurer et retrouver **exactement** la même valeur ne pose pas de
+     date ici. *Rater une confirmation coûte moins cher qu'inventer une mesure.*
+     ⭐ La carte « Masse grasse » de Progrès, elle, garde son comportement : y appuyer sur ✓ EST
+     l'acte de déclarer ses mensurations. Les deux portes écrivent au même endroit ; seul le
+     DÉCLENCHEUR diffère, parce que les deux gestes ne veulent pas dire la même chose. */
   const neckEl=document.getElementById('neck-inp');
   const waistEl=document.getElementById('waist-inp');
   const hipEl=document.getElementById('hip-inp');
-  if(neckEl&&neckEl.value){const v=numFR(neckEl.value);if(v>20&&v<60)S.neck=v;}
-  if(waistEl&&waistEl.value){const v=numFR(waistEl.value);if(v>40&&v<200)S.waist=v;}
-  if(hipEl&&hipEl.value){const v=numFR(hipEl.value);if(v>40&&v<200)S.hip=v;}
+  const _mensProfil=[[neckEl,'cou','neck',20,60],[waistEl,'taille','waist',40,200],
+                     [hipEl,'hanches','hip',40,200]];
+  _mensProfil.forEach(function(m){
+    const el=m[0]; if(!el||!el.value) return;      // ⚠️ vide ≠ effacer
+    const v=numFR(el.value); if(!isFinite(v)) return;
+    const avant=+S[m[2]]||0;
+    if(Math.abs(v-avant)<0.05) return;             // inchangé → rien à dater
+    /* ⭐ `mensAjouter` valide, déduplique par jour ET repose `S.neck`/`S.waist`/`S.hip` :
+       un seul appel fait les deux, il n'y a pas d'écriture à recopier ici. */
+    if(typeof mensAjouter==='function' && mensAjouter(m[1],v,'profil')) return;
+    /* ⛔ REPLI — RÈGLE D'OR #3 : si le journal est indisponible (ordre de chargement) ou refuse
+       la valeur, ce que la personne a tapé ne se perd pas pour autant. Bornes d'origine. */
+    if(v>m[3]&&v<m[4]) S[m[2]]=v;
+  });
   persist();renderHome();renderNutrition();
   renderCycleProfileCard();renderBFCard();_renderProfileCompletion();
   if(typeof toast==='function')toast('Profil enregistré ✅','success');

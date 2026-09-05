@@ -213,6 +213,11 @@ const _HELP_DATA={
   setup:{
     title:'👤 Profil',
     tips:[
+      /* 📏 EN TÊTE : c'est la question que Michel a posée mot pour mot (« la mesure du tour de
+         cou et de taille, elle est datée ou pas ? »), donc c'est celle que d'autres se poseront.
+         ⛔ Elle ne se devine PAS en regardant l'écran : deux champs identiques, deux
+         comportements — c'est exactement le genre de chose qui doit vivre dans l'aide (R25). */
+      {i:'📏',t:'<b>Tes mensurations sont datées, où que tu les tapes</b> (Profil → Composition, ou Progrès → carte « Masse grasse »). Chaque valeur est <b>rangée au jour où tu l\'entres</b>, ce qui permet de suivre ton évolution et de comparer tes centimètres à ton poids. ⭐ <b>Se remesurer le même jour CORRIGE</b> la valeur, ça n\'empile pas : deux tours de taille le même jour, c\'est une hésitation, pas une tendance. ⚠️ <b>Enregistrer ton profil ne re-date rien</b> si tu n\'as pas touché aux mesures — sinon corriger ton poids ferait croire que tu t\'es mesuré aujourd\'hui, et l\'app ne fabrique pas de mesure que tu n\'as pas prise. ⛔ <b>Une valeur entrée AVANT le 4 septembre 2026 n\'a pas de date</b> : elle n\'a jamais été enregistrée avec son jour, et on ne va pas lui en inventer une. Retape-la une fois et elle comptera à partir de là.'},
       {i:'📷',t:'<b>Bilan corporel</b> (Profil → Composition) : la photo de ton rapport de balance est lue <b>sur ton téléphone</b>, gratuitement et sans réseau. L\'app <b>vérifie son propre travail</b> — les lignes du rapport se recoupent — et si le compte n\'y est pas, elle préfère ne rien te proposer plutôt que de te donner un chiffre faux. Vérifie toujours avant d\'enregistrer.'},
       {i:'📂',t:'Le Profil est organisé en sections repliables (Identité · Objectif · Discipline · Composition · Morphologie · Santé · Cycle · Accessibilité) : tape un titre pour l\'ouvrir. Le bouton "Enregistrer" confirme par une notification verte.'},
       {i:'⚖️',t:'Poids, taille et âge sont indispensables pour calculer ton TDEE (besoins caloriques) dans Nutrition.'},
