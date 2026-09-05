@@ -26698,6 +26698,75 @@ console.log('\n═══ CCXXXVII. Le conseil 💡 passe sous le bouton ══�
   t('CCXXXVII aucune erreur JS sur tout le bloc', ec.length===0, ec.join(' | '));
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// CCXXXVIII. LE CHECK-IN MAIGRIT — mais il reste TAPABLE (05/09/2026)
+// Michel : « essaye de diminuer la taille du checking en hauteur ». Mesuré avant de toucher :
+// la tuile faisait 94 px pour 57 px de contenu réel. Resserrer les marges ne rendait que 9 px —
+// la graisse était dans la DISPOSITION (4 étages), pas dans les marges. L'icône est passée à
+// côté de la valeur : 3 étages, tuile 94 → 67 px, carte 157 → 130.
+// ⛔⛔ CE BLOC N'EXISTE PAS POUR VÉRIFIER QUE « C'EST PLUS PETIT » — n'importe quel resserrage
+// futur le referait. Il existe pour empêcher le resserrage D'ALLER TROP LOIN : la tuile SE TAPE
+// (elle ouvre le check-in déplié), et sous 44 px elle devient difficile à viser en salle.
+console.log('\n═══ CCXXXVIII. Le check-in maigrit, mais reste tapable ═══');
+{
+  const cd=await b.newContext({serviceWorkers:'block',viewport:{width:393,height:852},timezoneId:'Europe/Paris'});
+  const pd=await cd.newPage(); const ed=[]; pd.on('pageerror',e=>ed.push(e.message));
+  await pd.addInitScript(seedScript({}));
+  await pd.goto('http://localhost:'+PORT+'/index.html');
+  await pd.waitForTimeout(2200);
+  const D=await pd.evaluate(async()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const j=today();
+    S.dayState={date:j,sleepH:8.3,energy:3,mood:4}; S.sleepLog=[{date:j,hours:8.3,energy:3}]; persist();
+    goScreen('home',document.getElementById('nb-home')); renderHome();
+    await new Promise(r=>setTimeout(r,500));
+    const o={};
+    const tu=[...document.querySelectorAll('.ck-tuile')];
+    o.n=tu.length;
+    o.hauteurs=tu.map(x=>Math.round(x.getBoundingClientRect().height));
+    o.carte=Math.round(document.getElementById('home-daystate').getBoundingClientRect().height);
+    /* ⛔ RIEN N'A ÉTÉ SUPPRIMÉ : icône + jauge 4 traits + valeur + légende, dans chaque tuile. */
+    const t0=tu[0];
+    o.icone=!!t0.querySelector('.ck-ico svg');
+    o.traits=t0.querySelectorAll('.ck-b').length;
+    o.valeur=/8,3\s*h/.test(t0.textContent||'');
+    o.legende=/SOMMEIL/i.test(t0.textContent||'');
+    /* ⭐ L'icône et la valeur sont bien sur la MÊME ligne — c'est ça qui fait maigrir la tuile,
+       et c'est ce qu'on protège (pas une hauteur en dur, qui bougerait avec la police). */
+    const ico=t0.querySelector('.ck-ico').getBoundingClientRect();
+    const val=[...t0.querySelector('.ck-haut').children].find(e=>e.className!=='ck-ico');
+    const vr=val?val.getBoundingClientRect():null;
+    o.memeLigne=!!(vr && Math.abs((ico.top+ico.height/2)-(vr.top+vr.height/2))<8 && vr.left>=ico.right-1);
+    /* ⛔ Aucun enfant ne déborde de sa tuile (une tuile trop serrée ferait fuir le texte). */
+    o.deborde=tu.some(x=>{const r=x.getBoundingClientRect();
+      return [...x.children].some(k=>{const q=k.getBoundingClientRect();
+        return q.right>r.right+1||q.left<r.left-1||q.bottom>r.bottom+1;});});
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  await cd.close();
+  if(D.erreur) t('CCXXXVIII ⛔ le bloc s\'exécute', false, D.erreur);
+  t('CCXXXVIII ⛔ CONTRÔLE — les 3 tuiles du check-in sont bien là',
+    D.n===3, 'reçu '+D.n+' (sinon tout ce qui suit est vert sur du vide)');
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION — et ce n'est PAS « c'est plus petit ». */
+  t('CCXXXVIII ⭐⭐ la tuile reste TAPABLE : au moins 44 px (le minimum d\'Apple)',
+    Math.min.apply(null,D.hauteurs||[0])>=44, 'hauteurs : '+(D.hauteurs||[]).join('/')+' px');
+  t('CCXXXVIII ⭐ … et elle a bien maigri (≤ 80 px, elle en faisait 94)',
+    Math.max.apply(null,D.hauteurs||[999])<=80, (D.hauteurs||[]).join('/')+' px');
+  t('CCXXXVIII ⭐ la carte tient sous 140 px (elle en faisait 157)',
+    D.carte>0 && D.carte<=140, D.carte+' px');
+  /* ⛔ ON GAGNE DE LA PLACE EN RANGEANT, JAMAIS EN JETANT DE L'INFORMATION (R24). */
+  t('CCXXXVIII ⛔ rien n\'a été supprimé : icône · 4 traits · valeur · légende',
+    D.icone===true && D.traits===4 && D.valeur===true && D.legende===true,
+    'icône '+D.icone+' · traits '+D.traits+' · valeur '+D.valeur+' · légende '+D.legende);
+  t('CCXXXVIII ⭐ l\'icône et la valeur sont sur la MÊME ligne (c\'est ça qui fait maigrir)',
+    D.memeLigne===true, 'sinon on est revenu aux 4 étages');
+  t('CCXXXVIII ⛔ aucun contenu ne déborde de sa tuile', D.deborde===false);
+  t('CCXXXVIII aucune erreur JS sur tout le bloc', ed.length===0, ed.join(' | '));
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
@@ -26886,6 +26955,7 @@ console.log('\n-- CXCI. Une mise à jour ne tue plus un banc d\'essai en cours (
   t('⛔ le drapeau `_evRunning` existe et est bien posé par le banc d\'essai (sinon garde morte)',
     /_evRunning\s*=\s*true/.test(fs.readFileSync(path.join(ROOT,'coach.js'),'utf8')), '');
 }
+
 
 
 

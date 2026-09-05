@@ -1615,10 +1615,21 @@ function _ckTuile(ico,coul,niv,val,lgd){
   // Le relief vit dans style.css (.ck-b / .ck-ico / .ck-tuile) : --ck porte la couleur.
   const n = niv==null ? 0 : Math.max(0,Math.min(4,niv+1));
   let j=''; for(let i=0;i<4;i++) j+='<i class="ck-b'+(i<n?' on':'')+'"></i>';
+  /* 📏 TROIS ÉTAGES AU LIEU DE QUATRE (05/09/2026) — Michel : « essaye de diminuer la taille du
+     checking en hauteur ». ⭐ MESURÉ AVANT DE TOUCHER : la tuile faisait 94 px pour **57 px de
+     contenu réel** — 37 px de blancs. ⛔ Et resserrer les marges ne rendait que **9 px** sur la
+     carte : *la graisse n'était pas dans les marges, elle était dans la DISPOSITION*. L'icône
+     passe donc À CÔTÉ de la valeur au lieu d'être au-dessus : une rangée disparaît.
+     ⛔ RIEN N'EST SUPPRIMÉ — icône, jauge à 4 traits, valeur et légende sont tous là. *On gagne
+     de la place en rangeant, jamais en jetant de l'information* (R24).
+     ⚠️ LA TUILE EST UNE CIBLE TACTILE : on la garde au-dessus de **44 px** (le minimum d'Apple),
+     et un témoin le figera — sinon le prochain qui « gagne encore 10 px » la rend intappable. */
   return '<div class="ck-tuile" style="--ck:'+coul+';'+(niv==null?'':'--ck-glow:'+coul+';')+'">'
-    +'<div class="ck-ico">'+ico+'</div>'
+    +'<div class="ck-haut">'
+      +'<div class="ck-ico">'+ico+'</div>'
+      +'<div style="font-size:12px;font-weight:700;color:'+(niv==null?'var(--t3)':coul)+';white-space:nowrap;">'+val+'</div>'
+    +'</div>'
     +'<div style="display:flex;gap:3px;">'+j+'</div>'
-    +'<div style="font-size:11px;font-weight:700;color:'+(niv==null?'var(--t3)':coul)+';white-space:nowrap;">'+val+'</div>'
     +'<div style="font-size:9.5px;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;font-weight:700;">'+lgd+'</div>'
     +'</div>';
 }

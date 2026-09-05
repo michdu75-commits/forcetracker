@@ -1538,12 +1538,20 @@ html.ob-done #onboarding{display:none;}
     box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 1px 2px rgba(0,0,0,.55); }
 }
 /* la figurine : ombre portée + halo léger de sa propre couleur -> elle décolle du fond */
-.ck-ico{ height:24px; display:flex; align-items:center;
+/* 📏 L'ICÔNE ET LA VALEUR SUR LA MÊME LIGNE (05/09/2026) — c'est ce qui fait maigrir la tuile
+   de 94 à ~57 px, sans rien retirer. `min-width:0` pour que la valeur puisse se serrer sur un
+   petit écran plutôt que de faire déborder la tuile. */
+.ck-haut{ display:flex; align-items:center; justify-content:center; gap:6px; min-width:0; }
+.ck-ico{ height:22px; display:flex; align-items:center; flex:none;
   filter:drop-shadow(0 2px 2px rgba(0,0,0,.65)) drop-shadow(0 0 6px var(--ck-glow,transparent)); }
 /* la tuile elle-même : légèrement bombée, comme une touche */
 .ck-tuile{ background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(0,0,0,.12)), var(--bg3);
-  border-radius:12px; padding:10px 6px 9px; display:flex; flex-direction:column;
-  align-items:center; gap:6px;
+  border-radius:12px; padding:9px 6px 8px; display:flex; flex-direction:column;
+  align-items:center; gap:5px;
+  /* ⚠️ PLANCHER DE CIBLE TACTILE — 44 px est le minimum d'Apple, et cette tuile SE TAPE (elle
+     ouvre le check-in déplié). Sans ce plancher, le prochain resserrage la rendrait difficile
+     à viser en salle, avec les mains moites : un gain de 6 px ne vaut pas un tap raté. */
+  min-height:48px;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 2px 5px rgba(0,0,0,.35); }
 
 /* ── Style « MONITEUR » de la carte récup (ft-v645) ───────────────────────────
