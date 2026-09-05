@@ -6,7 +6,31 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1138` — 📊 **« CE MOIS » NE GARDE QUE LES TUILES QUI MÈNENT QUELQUE PART.**
+- **Version en ligne (live) :** `ft-v1139` — 🗂️ **LE MENU RANGÉ EN 4 RAYONS.**
+  Michel : *« c'est grave mélangé, il faut mettre ce qu'il y a d'important en premier »*.
+  ⭐⭐ **Mesuré** : le menu descendait jusqu'à **y=1909** pour un écran de 852, et **« Ce que Milo
+  sait de toi » était à y=1090 — hors écran**, pendant que **363 px de réglages de couleur**
+  occupaient le haut.
+  ⛔ « Outils » mélangeait **quatre natures** (encyclopédie · outils · l'app · la personne) ;
+  « Compte » contenait Aide détaillée / À propos / Confidentialité.
+  ⭐ Nouvel ordre : **TON SUIVI → TES OUTILS → APPRENDRE → L'APPLICATION**, Apparence en bas et
+  **repliable**. La règle de rangement est **écrite dans le code**, pas seulement appliquée.
+  ⭐⭐ **Résultat** : Milo **1090 → 319**, bilans **1248 → 401**, export **1561 → 537** — les trois
+  sur le premier écran. ⚠️ **Honnête : le menu déplié est 40 px PLUS LONG** (titres de section) ;
+  plié il tombe à **1643 (−266)**. *Le gain n'est pas la longueur, c'est ce qu'on voit d'abord.*
+  ⛔ **R2** : un seul propriétaire de l'état de pli (`_pliOuvert`/`_pliBascule`) — mais **pas** de
+  la mécanique d'affichage, exprès (l'Accueil se re-rend, le menu est du HTML statique).
+  ⚠️⚠️ **Il y a DEUX menus dans `index.html`** — `openDrawer()` (le vieux `#drawer`, 8 entrées)
+  **n'a aucun appelant**. *J'ai failli réorganiser le menu mort.* Non touché (R30), figé par un
+  témoin qui garde le constat vrai.
+  ⚠️ **5ᵉ texte périmé de la journée**, dont une pop-up **v15 encore servie** qui envoyait vers
+  « Menu → Espace testeur ». **Le pré-contrôle a mordu avant la passe, pour 3 secondes.**
+  📣 Pop-up **v75** + point rouge sur l'onglet **Menu** (`screen:'setup'`).
+  ⚠️ Michel doit vérifier sur **Safari/iPhone**.
+  Tests : **parcours 2846/2846** (+18, bloc CCXL), calculs 339/339, muscles 241, croisés 50,
+  dates 9/9, données 0 trou. **Contrôle négatif : 7 rouges sur 9.**
+
+- **Version précédente :** `ft-v1138` — 📊 **« CE MOIS » NE GARDE QUE LES TUILES QUI MÈNENT QUELQUE PART.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#921** sur `2ca007d`, **job `deploy` success**,
   les 7 étapes vertes à **20:25:32 UTC**.
   Michel, une heure après ft-v1137 : *« quand on clique sur les tuiles, c'est pas terrible où

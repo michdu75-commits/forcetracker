@@ -1,7 +1,7 @@
 # 📒 Inventaire — ce qui existe dans Force Tracker
 
 > ⚙️ **FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer avec `python3 tools/inventaire.py`.
-> Généré depuis **le code** (version `ft-v1138`, dernier commit 2026-09-05).
+> Généré depuis **le code** (version `ft-v1139`, dernier commit 2026-09-05).
 >
 > **À quoi il sert** : répondre à *« est-ce que c'est déjà construit ? »*. Le journal des versions
 > (`CLAUDE.md`, `docs/JOURNAL-ARCHIVE.md`) répond à *« que s'est-il passé, quand, pourquoi ? »* —
@@ -17,11 +17,11 @@
 | Élément | Nombre | Absents de la doc |
 |---|---|---|
 | Écrans | 7 | 0 |
-| Lignes de menu | 6 | 1 |
+| Lignes de menu | 6 | 0 |
 | Fenêtres (modales) | 64 | 13 |
 | Actions du serveur | 45 | 0 |
-| Fonctions JS | 598 | — |
-| Nouveautés annoncées | 68 | — |
+| Fonctions JS | 599 | — |
+| Nouveautés annoncées | 69 | — |
 
 ## 🖥️ Écrans
 
@@ -39,12 +39,12 @@
 
 | Libellé | id | ouvre | doc |
 |---|---|---|---|
-| **Anatomie du corps humain** | `menu-row-profil` | `closeMenuDrawer` | ✅ |
-| **Anatomie du corps humain** | `menu-row-premium` | `closeMenuDrawer` | ❓ |
-| **Guide de l'application** | `menu-row-appguide` | `openAppGuide` | ✅ |
+| **Ce que Milo sait de toi** | `menu-row-profil` | `closeMenuDrawer` | ✅ |
+| **Ce que Milo sait de toi** | `menu-row-premium` | `closeMenuDrawer` | ✅ |
 | **Ce que Milo sait de toi** | `menu-row-miloknows` | `closeMenuDrawer` | ✅ |
+| **Exporter mes données** | `menu-row-bilanmois` | `closeMenuDrawer` | ✅ |
+| **Guide de l'application** | `menu-row-appguide` | `openAppGuide` | ✅ |
 | **Nouveautés** | `menu-row-whatsnew` | `closeMenuDrawer` | ✅ |
-| **Guide de la muscu** | `menu-row-bilanmois` | `closeMenuDrawer` | ✅ |
 
 ## 🔌 Actions du serveur (backend)
 
@@ -173,6 +173,7 @@ Ce qui a été **annoncé dans la pop-up « Quoi de neuf »** — donc censé ex
 
 | # | | Nouveauté |
 |---|---|---|
+| 75 | 🗂️ | Le menu est rangé en 4 rayons |
 | 74 | 📊 | « Ce mois » ne garde que deux tuiles |
 | 72 | 📏 | Tes mensurations sont enfin gardées dans le temps |
 | 71 | 🔋 | Ta fatigue s'additionne au lieu de compter une seule séance |
