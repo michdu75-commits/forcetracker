@@ -26764,7 +26764,12 @@ console.log('\n═══ CCXXXVIII. Le check-in maigrit, mais reste tapable ═�
   t('CCXXXVIII ⛔ CONTRÔLE — les 3 tuiles du check-in sont bien là',
     D.n===3, 'reçu '+D.n+' (sinon tout ce qui suit est vert sur du vide)');
   /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION — et ce n'est PAS « c'est plus petit ». */
-  t('CCXXXVIII ⭐⭐ la tuile reste TAPABLE : au moins 44 px (le minimum d\'Apple)',
+  /* ⚠️ LIBELLÉ CORRIGÉ LE 05/09 : il disait « la tuile reste TAPABLE, minimum d'Apple ».
+     C'était faux — `onclick="toggleCheckin()"` est sur la CARTE, pas sur les tuiles. Le
+     plancher garde donc la RANGÉE LISIBLE, il ne protège pas une cible tactile.
+     ⛔ Le seuil chiffré ne change pas : seul le mot qui l'explique était mensonger, et *un
+     témoin qui se justifie mal fait prendre une décision pour une autre.* */
+  t('CCXXXVIII ⭐⭐ les tuiles ne s\'écrasent pas (plancher de 44 px sur la rangée)',
     Math.min.apply(null,D.hauteurs||[0])>=44, 'hauteurs : '+(D.hauteurs||[]).join('/')+' px');
   t('CCXXXVIII ⭐ … et elle a bien maigri (≤ 80 px, elle en faisait 94)',
     Math.max.apply(null,D.hauteurs||[999])<=80, (D.hauteurs||[]).join('/')+' px');

@@ -6,7 +6,23 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1134` — 📏 **LE CHECK-IN DU JOUR MAIGRIT DE 27 PX.**
+- **Version en ligne (live) :** `ft-v1135` — 🔇 **LES MOTS QUITTENT LES TUILES DU CHECK-IN.**
+  Michel : *« les mots sommeil, énergie et moral on peut les supprimer, c'est logique avec les
+  emojis »*. ⭐ Carte **130 → 112 px**, tuile **67 → 49** — soit **157 → 112 sur la journée**.
+  ⛔⛔ **L'information n'est pas supprimée, elle change de canal** : la légende devient
+  l'`aria-label`. *Un mot retiré de l'écran ne doit pas disparaître pour un lecteur d'écran.*
+  Le témoin vérifie **les deux faces** (plus vu / toujours lu) — **R30**.
+  ⚠️ **Deux choses trouvées en VÉRIFIANT, pas en lisant le code** : ① « Moral : undefined » sur
+  une valeur hors bornes — *c'était MA fixture qui était fausse* (mood 4, échelle 0-3), repli
+  « — » posé quand même (ces valeurs viennent aussi du cloud) ; ② **la raison du plancher de
+  48 px écrite la veille était FAUSSE** — le clic est sur la **carte**, pas sur les tuiles. Le
+  plancher reste, sa raison est réécrite. *Une règle dont la raison est fausse finit par être
+  contournée.*
+  ⏱️ **Remarque de Michel gardée** : *« je trouve ça long »*. Une passe = **16 min**, 5 aujourd'hui
+  (~80 min), dont **2 de rattrapage de mes erreurs**. Levier gratuit : **grouper les retouches**.
+  ⏭️ **Michel doit vérifier sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1134` — 📏 **LE CHECK-IN DU JOUR MAIGRIT DE 27 PX.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#912** sur `be4678a`, **job `deploy` success**,
   les 7 étapes vertes à 14:55:51 UTC. Suite : **parcours 2793/2793**, calculs 339/339, dates 9/9.
   Michel : *« essaye de diminuer la taille du checking en hauteur »*.
