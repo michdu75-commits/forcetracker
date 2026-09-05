@@ -6,7 +6,30 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1137` — 🧹 **L'ACCUEIL ALLÉGÉ, 2ᵉ PASSE.**
+- **Version en ligne (live) :** `ft-v1138` — 📊 **« CE MOIS » NE GARDE QUE LES TUILES QUI MÈNENT QUELQUE PART.**
+  Michel, une heure après ft-v1137 : *« quand on clique sur les tuiles, c'est pas terrible où
+  j'arrive »*. ⭐⭐ **Mesuré en tapant les 4 tuiles** : `Volume` et `Force` appelaient
+  `goScreen('progress')` **nu** → haut de Progrès/Exercices, où l'accordéon du volume est
+  **fermé** et où le total Squat+DC+SDT **n'est affiché nulle part**.
+  ⭐⭐ **Le contrôle négatif donne le chiffre qui résume tout** : arrivée nue = ancre à **1117 px**,
+  `Volume` = **1117**, `Force` = **1117**. *Écart ZÉRO — elles ne faisaient rien.*
+  ⛔⛔ **Décision de Michel : on retire, et on l'écrit** (R30) — la condition pour les remettre
+  est dans `IDEES-FUTURES.md` : *une destination qui MONTRE le chiffre tapé*.
+  ⛔ **R5** : `vol`, `volDisp`, `b3` ne sont plus calculés (plus aucun lecteur).
+  ⭐ Disposition tranchée par la mesure (R14) : horizontale **89 px** contre 126 en colonne.
+  **« CE MOIS » : 184 → 124 → 89 px** en deux versions.
+  ⚠️ **4ᵉ texte périmé de la journée**, raté par mon premier grep (l'aide dit « volume, Big3 »,
+  pas les libellés affichés).
+  ⚠️⚠️ **4 témoins ont rougi, dont 2 sur mon propre travail** : pop-up à **637 car. pour un
+  plafond de 600** (R25), détecteur rougissant sur **mon commentaire**, motif oubliant
+  l'**échappement** des apostrophes, et un seuil venu de **ma** fixture — re-visé sur une
+  comparaison avec l'**arrivée nue**.
+  📣 Pop-up **v74** + point rouge sur l'**Accueil** (pas Progrès : 3ᵉ en 3 jours = bruit).
+  ⚠️ Michel doit vérifier sur **Safari/iPhone**.
+  Tests : **parcours 2828/2828**, calculs 339/339, muscles 241, croisés 50, dates 9/9, données
+  0 trou. **Contrôle négatif : 8 rouges sur 9** sur l'arbre d'avant.
+
+- **Version précédente :** `ft-v1137` — 🧹 **L'ACCUEIL ALLÉGÉ, 2ᵉ PASSE.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#919** sur `20ec32b`, **job `deploy` success**,
   les 7 étapes vertes à **18:06:44 UTC**. Suite complète sur l'arbre **fusionné** :
   **parcours 2818/2818**, calculs 339/339, muscles 241/241, croisés 50/50, dates 9/9,
