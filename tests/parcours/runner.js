@@ -645,10 +645,25 @@ t('la fiche s\'ouvre : prix affiché + champ code + appel à l\'action', G.open&
 t('l\'essai est à 1,99 € (0,99 € impayable sur Ko-fi — décision Michel 31/07)', G.essai);
 // Audit 31/07 : le mur des COMBINAISONS de suppléments affichait encore « 4,99€ / 2 mois »
 // (échappé au balayage ft-v684). Test STRUCTUREL : plus aucun vieux prix dans AUCUN fichier.
-t('plus AUCUN vieux prix (« 4,99 » / « 2 mois ») dans tout le frontend — mur des combos compris',
+/* ⚠️⚠️ RE-VISÉ LE 05/09/2026 — IL A ROUGI SUR DU CODE SAIN, et sa garantie était juste à
+   deux lignes au-dessus : *« le mur des combinaisons affichait encore 4,99€ / 2 mois »*. La
+   garantie est donc **« aucun vieux PRIX affiché »**, jamais « la chaîne "2 mois" n'apparaît
+   nulle part ». Il a épinglé un commentaire de `coach.js` qui explique le journal des
+   mensurations — *« −4 cm en 2 mois »* — où il n'y a **aucun prix**.
+   ⛔ DEUX CORRECTIONS, ET AUCUNE N'AFFAIBLIT LE TÉMOIN :
+     ① on retire les COMMENTAIRES : ils ne s'affichent pas, donc un prix qui y traîne ne peut
+        tromper personne (le raisonnement exact du détecteur de dates, ce matin) ;
+     ② « 2 mois » ne compte que **près d'un montant** — c'est ce qui en fait un tarif.
+   ⛔ `4,99` reste refusé tel quel : un montant est un montant, il n'a pas besoin de voisin.
+   ⭐ CONTRÔLE NÉGATIF fait avant de livrer : réinjecté en CODE, « 4,99 € / 2 mois » est
+   toujours attrapé — *le témoin n'est pas devenu aveugle en cessant d'être susceptible.*
+   (Famille §31 de `BUGS.md` : un témoin visé sur la FORME et non sur la GARANTIE.) */
+t('plus AUCUN vieux prix (« 4,99 » / « 2 mois » près d\'un montant) dans tout le frontend — mur des combos compris',
   ['index.html','app.js','screens.js','coach.js','tracking.js','log.js','setup.js','constants.js','state.js']
-  .every(f=>{const s=fs.readFileSync(path.join(ROOT,f),'utf8').replace(/34,99/g,'');
-             return !/4,99/.test(s)&&!/2 mois/.test(s);}));
+  .every(f=>{const s=fs.readFileSync(path.join(ROOT,f),'utf8')
+                     .replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'')
+                     .replace(/34,99/g,'');
+             return !/4,99/.test(s) && !/\d\s*(€|euros?)[^\n]{0,20}2 mois|2 mois[^\n]{0,20}\d\s*(€|euros?)/.test(s);}));
 // 31/07 : le message de Christophe n'est jamais arrivé — l'échec du mail de la boîte à idées
 // était avalé par un catch VIDE (panne invisible). Structurel : le mail part vers les 2 boîtes,
 // l'échec est TRACÉ (_logMailFail_), et la route de diagnostic mailFails existe.
@@ -26225,6 +26240,111 @@ console.log('\n-- CCXXXIII. « anon » n\'est pas quelqu\'un (ft-v1128) --');
     const bloc=(co.match(/action:'seanceJson'[^}]*\}/)||[''])[0];
     t('⛔⛔ R30 — le cervelet n\'envoie TOUJOURS pas d\'e-mail (c\'est voulu, pas un oubli)',
       !!bloc && !/email/.test(bloc), bloc.slice(0,80));
+  }
+}
+
+/* ═══ CCXXXIV. LE JOURNAL DES MENSURATIONS, ET LA MESURE QUI SE PERDAIT (ft-v1129) ═════════
+   Michel : *« construis tout, par contre de visu on ne voit que les principales — cou, taille
+   et hanches — et dépliable pour le reste »*, ET une perte : *« je viens de rentrer une valeur
+   et juste après ma pesée, ma mesure n'a pas été enregistrée »*.
+   ⛔⛔ LA PERTE EST REPRODUITE AVANT D'ÊTRE CORRIGÉE, et la cause tient à l'ORDRE de deux
+   lignes : dans `saveBodyFat`, le `return` qui refuse un % invalide arrivait AVANT `S.neck=nk`.
+   👉 ***Les centimètres n'étaient enregistrés qu'en effet de bord d'un % réussi*** — taper le
+   cou SEUL rendait « Entre un % ou tes mesures » et jetait la saisie. C'est la **règle d'or #3**
+   appliquée à autre chose qu'une séance : *ce que la personne a tapé ne se perd pas parce
+   qu'un CALCUL n'a pas abouti.*
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXXXIV. Le journal des mensurations, et la mesure qui se perdait (ft-v1129) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',
+    ft4_gender:'H',ft4_height:'178',ft4_bw:'85'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1800);
+  const R=await p.evaluate(()=>{ try{
+    const o={};
+    S.gender='H'; S.height=178; S.bw=85; S.neck=0; S.waist=0; S.hip=0; S.mensLog=[];
+    S.weightLog=[{date:today(),kg:85}];
+    const pose=(id,v)=>{ let el=document.getElementById(id);
+      if(!el){ el=document.createElement('input'); el.id=id; document.body.appendChild(el); }
+      el.value=v; };
+    /* ⭐ LE CAS EXACT DE MICHEL : le cou SEUL, sans le tour de taille. */
+    pose('bf-neck','40'); pose('bf-waist',''); pose('bf-inp','');
+    let msg=''; const vrai=window.toast; window.toast=(m)=>{msg=m;};
+    try{ saveBodyFat(); }catch(e){ msg='ERREUR '+e.message; }
+    window.toast=vrai;
+    o.couSeul={garde:S.neck, journal:(S.mensLog||[]).length, msg:msg};
+    /* ⛔ CONTRÔLE : le chemin COMPLET doit toujours produire le % (rien n'est cassé). */
+    S.mensLog=[]; S.neck=0; S.waist=0;
+    pose('bf-neck','40'); pose('bf-waist','92'); pose('bf-inp','');
+    window.toast=()=>{}; try{ saveBodyFat(); }catch(e){} window.toast=vrai;
+    o.complet={neck:S.neck,waist:S.waist,bf:(S.weightLog.find(w=>w.date===today())||{}).bf};
+    /* ── LES BORNES, PAR MESURE ── */
+    S.mensLog=[];
+    o.bornes=[['cou',40,true],['cou',150,false],['bras',38,true],['bras',5,false]]
+      .map(([k,v,att])=>mensAjouter(k,v,'manuel')===att);
+    /* ── LE BLOC DÉPLIABLE ── */
+    S.mensLog=[];
+    o.replie=_mensAutresHtml();
+    mensAjouter('bras',38,'manuel');
+    o.avecUne=_mensAutresHtml();
+    o.principales=MENS_DEFS.filter(m=>m.principal).map(m=>m.k).join(',');
+    o.nAutres=MENS_DEFS.filter(m=>!m.principal).length;
+    /* ── UNE MESURE PAR ZONE ET PAR JOUR : se remesurer CORRIGE ── */
+    S.mensLog=[]; mensAjouter('taille',92,'manuel'); mensAjouter('taille',91,'manuel');
+    o.memeJour={n:(S.mensLog||[]).length, v:mensDerniere('taille')};
+    /* ── LE BILAN COMPLÉTÉ (IMC calculable / % de gras seulement si daté) ── */
+    const j=n=>new Date(Date.now()-n*86400000).toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});
+    S.mensLog=[{d:j(2),k:'cou',v:40},{d:j(2),k:'taille',v:92}];
+    const fait=x=>{ const c=JSON.parse(JSON.stringify(x)); _scanCompleter(c); return c; };
+    o.recent=fait({date:j(1),weight:85});
+    o.ancien=fait({date:j(240),weight:88});
+    o.deja  =fait({date:j(1),weight:85,imc:26.1,bf:19.4});
+    return o;
+  }catch(e){ return {err:e.message}; } });
+
+  t('⛔ CONTRÔLE — les mensurations sont chargées (sinon tout ce bloc serait vert sur du vide)',
+    !R.err && R.principales==='cou,taille,hanches', R.err||String(R.principales));
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : la saisie partielle ne se perd plus. */
+  t('⭐⭐ RÈGLE D\'OR #3 : le COU SEUL est enregistré, il n\'est plus jeté',
+    R.couSeul && R.couSeul.garde===40 && R.couSeul.journal===1, JSON.stringify(R.couSeul));
+  t('⭐⭐ … et le message DIT ce qui a été gardé (un « erreur » sec ferait tout retaper)',
+    /1 mesure enregistrée/.test((R.couSeul||{}).msg||''), (R.couSeul||{}).msg);
+  /* ⛔ SANS CE CONTRÔLE, « on garde tout et on ne calcule plus rien » serait vert. */
+  t('⛔ CONTRÔLE — cou + taille produit TOUJOURS le % (le calcul n\'est pas cassé)',
+    R.complet && R.complet.neck===40 && R.complet.waist===92 && R.complet.bf>0, JSON.stringify(R.complet));
+  t('⛔ les bornes sont PAR mesure : un bras de 38 cm passe, un cou de 150 non',
+    Array.isArray(R.bornes) && R.bornes.every(Boolean), String(R.bornes));
+  t('⭐ les 3 principales sont cou/taille/hanches, et '+R.nAutres+' autres sont dépliables',
+    R.principales==='cou,taille,hanches' && R.nAutres>=6, '');
+  t('⛔ le bloc « Autres » est REPLIÉ par défaut et annonce ce qu\'il contient',
+    /display:none/.test(R.replie||'') && /mesures/.test(R.replie||''), '');
+  t('⛔ … et il DIT quand il porte déjà une valeur (sinon on croit qu\'il cache du vide)',
+    /notée/.test(R.avecUne||'') && !/notée/.test(R.replie||''), '');
+  t('⭐ se remesurer le même jour CORRIGE, ça n\'empile pas',
+    R.memeJour && R.memeJour.n===1 && R.memeJour.v===91, JSON.stringify(R.memeJour));
+  /* ── LE 3ᵉ POINT DE MICHEL : le bilan qui perdait l'IMC et le % de gras ── */
+  t('⭐⭐ un bilan sans IMC le reçoit CALCULÉ (85 kg / 1,78 m²)',
+    R.recent && R.recent.imc===26.8, JSON.stringify(R.recent));
+  t('⭐⭐ … et le % de gras seulement si des mensurations DATÉES existent',
+    R.recent && R.recent.bf!=null && R.ancien && R.ancien.bf==null,
+    'récent bf='+((R.recent||{}).bf)+' · ancien bf='+((R.ancien||{}).bf));
+  /* 🏷️ R32/R33 — un chiffre calculé qui se fait passer pour une mesure est pire qu'une absence. */
+  t('🏷️ ce qui est CALCULÉ est marqué comme tel, jamais présenté comme lu',
+    R.recent && (R.recent.calc||[]).indexOf('imc')>=0 && (R.ancien.calc||[]).indexOf('bf')<0, '');
+  t('⛔ un bilan qui porte DÉJÀ ses valeurs n\'est jamais écrasé',
+    R.deja && R.deja.imc===26.1 && R.deja.bf===19.4 && !R.deja.calc, JSON.stringify(R.deja));
+  t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
+
+  /* ⛔⛔ ANTI-FUITE (R4a) — 5ᵉ cas de la famille : une donnée neuve qui atteint Milo doit être
+     remise à zéro dans `_vcApplyPersona`, sinon les VRAIES mensurations de la personne partent
+     dans chaque persona du banc d'essai. Trouvé en mesurant, pas en relisant. */
+  {
+    const co=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
+    t('⭐⭐ R4a — `mensLog` est remis à zéro par `_vcApplyPersona` (anti-fuite)',
+      /S\.mensLog\s*=\s*a\.mensLog/.test(co), '');
+    t('⭐ … et il ATTEINT bien le contexte de Milo (R8 : le prompt le promettait déjà)',
+      /Mensurations suivies/.test(co), '');
   }
 }
 

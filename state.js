@@ -26,6 +26,7 @@ let S={
   priorities:[],
   sleepLog:[],
   weightLog:[],
+  mensLog:[],       // 📏 journal des mensurations — [{d,k,v,s}] · voir MENS_DEFS + mensAjouter()
   goalLog:[],        // historique des CHANGEMENTS d'objectif — voir _goalSet()
   dayStateLog:[],
   healthInbox:[],   // ⌚ activités reçues du téléphone (raccourci iOS → Santé) — voir app.js `_majHealthInbox`
@@ -168,6 +169,7 @@ function load(){
     S.beginnerJourney=_lsJson('ft4_bjourney',null); // parcours débutant : {style,freq,startDate,phase}
     S.sleepLog=_lsJson('ft4_sleep',[]);
     S.weightLog=_lsJson('ft4_wlog',[]);
+    S.mensLog=_lsJson('ft4_mens',[]);
     S.goalLog=_lsJson('ft4_goallog',[]);
     S.strengthGoals=_lsJson('ft4_strgoals',{}); // objectif de 1RM par exercice {nom:kg}
     S.name=localStorage.getItem('ft4_name')||'';
@@ -515,6 +517,10 @@ function _fusionnerAvecLeDisque(){
     S.sessions   = _fusionListe(S.sessions,   lire('ft4_sessions',[]), sigSess)
                      .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,1500);
     S.weightLog  = _fusionListe(S.weightLog,  lire('ft4_wlog',[]),  e=>String(e&&e.date||''));
+    /* ⛔ SIGNATURE `date+clé`, PAS `date` : deux onglets qui notent le tour de cou ET le tour
+       de taille le même jour produisent DEUX entrées légitimes. Une signature sur la seule
+       date en garderait une et jetterait l'autre — silencieusement. */
+    S.mensLog    = _fusionListe(S.mensLog,    lire('ft4_mens',[]), e=>String(e&&e.d||'')+'|'+String(e&&e.k||''));
     S.sleepLog   = _fusionListe(S.sleepLog,   lire('ft4_sleep',[]), e=>String(e&&e.date||''));
     S.foodLog    = _fusionListe(S.foodLog,    lire('ft4_foodlog',[]),
                      e=>String(e&&e.date||'')+'|'+String(e&&e.name||'')+'|'+String(e&&e.meal||'')+'|'+String(e&&e.kcal||''));
@@ -669,6 +675,7 @@ function persist(){
     localStorage.setItem('ft4_bjourney',JSON.stringify(S.beginnerJourney||null));
     localStorage.setItem('ft4_sleep',JSON.stringify(S.sleepLog||[]));
     localStorage.setItem('ft4_wlog',JSON.stringify(S.weightLog||[]));
+    localStorage.setItem('ft4_mens',JSON.stringify(S.mensLog||[]));
     localStorage.setItem('ft4_goallog',JSON.stringify(S.goalLog||[]));
     localStorage.setItem('ft4_strgoals',JSON.stringify(S.strengthGoals||{}));
     localStorage.setItem('ft4_name',S.name||'');
@@ -1054,6 +1061,51 @@ function calcPasExtra(refTs){
     const e=_pasEcart(refTs);
     return (e&&e.kcal>0)?e.kcal:0;
   }catch(e){ return 0; }
+}
+/* ═══ 📏 LE JOURNAL DES MENSURATIONS — un seul propriétaire de l'écriture (ft-v1129) ═══════
+   ⛔⛔ CE QUI L'A DÉCLENCHÉ EST UNE PERTE DE DONNÉES, REPRODUITE AVANT D'ÊTRE CORRIGÉE.
+   Michel : *« je viens de rentrer une valeur et juste après ma pesée, ma mesure n'a pas été
+   enregistrée »*. Mesuré dans un vrai navigateur sur `saveBodyFat` : taper **le cou SEUL** ou
+   **la taille SEULE** rendait *« Entre un % ou tes mesures »* et **jetait les centimètres
+   tapés**. La cause tient à l'ORDRE : le `return` qui refuse un % invalide était **AVANT** les
+   lignes `S.neck=nk`.
+   👉 ***Les centimètres n'étaient enregistrés qu'en effet de bord d'un % réussi*** — donc une
+   saisie partielle (la moitié d'une mesure, un aller-retour vers la pesée) disparaissait en
+   silence. C'est la **règle d'or #3** appliquée à autre chose qu'une séance : *ce que la
+   personne a tapé ne se perd pas parce qu'un CALCUL n'a pas abouti.*
+   ⭐ D'où cette fonction : **enregistrer une mensuration ne dépend plus de rien**. Le % de
+   masse grasse redevient ce qu'il aurait toujours dû être — une CONSÉQUENCE, pas une
+   condition. */
+function mensAjouter(k,v,src){
+  const def=(typeof MENS_PAR_CLE!=='undefined')?MENS_PAR_CLE[k]:null;
+  if(!def) return false;
+  const n=+v;
+  /* ⛔ On refuse l'IMPOSSIBLE, jamais l'inhabituel : les bornes viennent de `MENS_DEFS`,
+     par mesure. Une valeur hors bornes n'est pas enregistrée — et l'appelant le sait. */
+  if(!isFinite(n)||n<def.min||n>def.max) return false;
+  if(!Array.isArray(S.mensLog)) S.mensLog=[];
+  const d=today(), val=Math.round(n*10)/10;
+  /* ⭐ UNE MESURE PAR ZONE ET PAR JOUR : se remesurer le même jour CORRIGE, ça n'empile pas.
+     *Deux valeurs du même tour de taille le même jour ne sont pas une tendance, c'est une
+     hésitation* — et le graphique en ferait un pic. */
+  const i=S.mensLog.findIndex(e=>e&&e.d===d&&e.k===k);
+  const entree={d:d,k:k,v:val,s:src||'manuel'};
+  if(i>=0) S.mensLog[i]=entree; else S.mensLog.unshift(entree);
+  S.mensLog.sort((a,b)=>String(b.d).localeCompare(String(a.d)));
+  if(S.mensLog.length>4000) S.mensLog.length=4000;
+  /* ⭐⭐ LA VALEUR COURANTE RESTE OÙ ELLE EST (décision du 03/09, `NUTRITION-MOTEUR-TENDANCE`
+     §10) : `S.neck`/`S.waist`/`S.hip` sont déjà lues par la composition corporelle, le profil
+     et Milo. *Le journal s'AJOUTE, il ne déménage rien* — déplacer la valeur courante
+     obligerait à retoucher tous ses lecteurs pour un gain nul. */
+  if(def.bf) S[def.bf]=val;
+  return true;
+}
+/* La dernière valeur connue d'une mensuration, ou null. ⛔ `null`, jamais 0 : *« je ne sais
+   pas » et « zéro centimètre » ne se lisent pas pareil* (R29). */
+function mensDerniere(k){
+  const l=(S.mensLog||[]).filter(e=>e&&e.k===k)
+    .sort((a,b)=>String(b.d).localeCompare(String(a.d)));
+  return l.length?l[0].v:null;
 }
 function calcTDEE(refTs){return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra()+calcPasExtra(refTs));}
 
