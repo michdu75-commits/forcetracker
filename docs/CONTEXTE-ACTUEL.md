@@ -7,6 +7,8 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1133` — ⚡ **LE CONSEIL 💡 PASSE SOUS LE BOUTON DE SÉANCE.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#910** sur `70d03f4`, **job `deploy` success**,
+  les 7 étapes vertes à 14:01:03 UTC. Suite : **parcours 2785/2785**, calculs 339/339, dates 9/9.
   Michel, après ft-v1132 : *« le bouton commencer la séance, tu n'y as pas touché ? »*.
   ⭐⭐ **Non — et sa question a trouvé les 53 px qui manquaient.** ft-v1132 avait dégagé 136 px
   **au-dessus** de la carte de récup, et j'avais conclu « impossible d'aller plus loin sans
