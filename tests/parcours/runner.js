@@ -28010,6 +28010,153 @@ console.log('\n-- CCXLIX. On ne dépend plus du NOM pour reconnaître un cardio 
   await cx.close();
 }
 
+/* ═══ CCLI. LE CARDIO SE DÉCLARE, IL NE SE DEVINE PLUS (ft-v1152) ═══════════════════════════
+   Michel, après ft-v1150 : *« ça ne doit pas se reproduire »* — et je lui avais répondu que je
+   ne pouvais pas le promettre tant que l'app DEVINE. Sa réponse : *« prends le, ferme ça
+   définitivement »*. Le cervelet déclare maintenant `cardio:{avant,apres}` (worker.js), et
+   l'app l'UTILISE au lieu de décoder une phrase française.
+   ⛔⛔ CE QUE CE BLOC PROTÈGE, ET LE 2ᵉ COMPTE AUTANT QUE LE 1ᵉʳ :
+     ① le champ déclaré arrive vraiment jusqu'au bloc Cardio (R4 : jusqu'à la DONNÉE) ;
+     ② ⭐⭐ **la devinette de ft-v1147/1150 fonctionne TOUJOURS sans lui** — les trois voies ne
+        produisent pas toutes ce champ (le repli par lecture du texte ne le peut pas), donc un
+        correctif qui REMPLACE le filet au lieu de s'ajouter dessus serait une régression ;
+     ③ et le code VALIDE ce que le modèle propose : type inconnu → « autre », intensité inconnue
+        → « modéré », **durée absente ou absurde → le cardio est ANNULÉ**, jamais inventé (R29).
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLI. Le cardio se DÉCLARE, il ne se devine plus (ft-v1152) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'999'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1800);
+  const R=await p.evaluate(()=>{ try{
+    const o={};
+    o.fn=['_cardioValide','_cardioDeclare','_normalizeMiloSession','_appliqueMiloSession',
+          '_cerveletFidele','_montee','_extraireCardioMilo'].filter(f=>typeof window[f]!=='function');
+    const DECL={label:'Push',
+      exs:[{name:'Développé Couché',sets:[{reps:8,kg:60}]},{name:'Dips',sets:[{reps:10,kg:0}]}],
+      cardio:{avant:{type:'elliptique',duree:8,intensite:'leger'},apres:null}};
+    const cp=x=>JSON.parse(JSON.stringify(x));
+    /* ⛔⛔ CONTRÔLE n°2 — le normaliseur RECOPIE le champ. C'est la leçon de `supersetGroup`
+       (ft-v1130) : `_normalizeMiloSession` est le SEUL écrivain de `_pendingMiloSessions`, donc
+       un validateur parfait qu'il ne recopie pas laisse TOUS les autres témoins verts pendant
+       que le champ n'arrive jamais. */
+    o.recopie=_normalizeMiloSession(cp(DECL)).cardio;
+    o.absent=Object.prototype.hasOwnProperty.call(_normalizeMiloSession({label:'X',exs:cp(DECL.exs)}),'cardio');
+    /* ⛔ LA VALIDATION — le modèle propose, le code valide (BRIEF-NUTRITION §5). */
+    o.val={
+      typeInconnu:_cardioValide({type:'stepper',duree:10,intensite:'leger'}),
+      intInconnue:_cardioValide({type:'tapis',duree:10,intensite:'brutal'}),
+      accents:_cardioValide({type:'Vélo',duree:20,intensite:'Modéré'}),
+      sansDuree:_cardioValide({type:'tapis',intensite:'leger'}),
+      dureeZero:_cardioValide({type:'tapis',duree:0}),
+      dureeAbsurde:_cardioValide({type:'tapis',duree:600}),
+      nul:_cardioValide(null)
+    };
+    /* ⭐ LE TRANSIT PAR coach.js N'EST PAS SUPPOSÉ, IL EST MESURÉ. Aucune ligne n'y a été
+       ajoutée : ce témoin existe pour que ça reste vrai — le jour où l'une des deux étapes
+       reconstruit son objet au lieu de le compléter, le champ meurt en silence. */
+    const fid=_cerveletFidele(cp(DECL),'Développé Couché 4×8 à 60 kg\nDips 3×10');
+    const mon=_montee(cp(DECL));
+    o.transit={ fidele:!!(fid&&fid.cardio&&fid.cardio.avant), montee:!!(mon&&mon.cardio&&mon.cardio.avant) };
+    /* ⭐⭐ BOUT EN BOUT — le champ déclaré remplit le bloc, et les exercices restent intacts. */
+    S.wkt={}; const n1=_normalizeMiloSession(cp(DECL));
+    _appliqueMiloSession(cp(n1.exs), n1, 'start', null);
+    o.bout={ avant:S.wkt.cardioAvant, apres:S.wkt.cardio||null, exs:(S.wkt.exs||[]).map(x=>x.name) };
+    /* ⭐⭐ LE DÉCLARÉ GAGNE SUR LA DEVINETTE — et l'entrée sort quand même de la liste. Ici le
+       cervelet a désobéi à moitié : il a déclaré « rameur 12 min » ET laissé un « Échauffement »
+       dans `exs` dont la note dit « elliptique 8 min ». On garde ce qu'il a DÉCLARÉ. */
+    S.wkt={};
+    const MIX={label:'P',cardio:{avant:{type:'rameur',duree:12,intensite:'modere'},apres:null},
+      exs:[{name:'Échauffement',note:"8 min d'elliptique en intensité légère",sets:[{reps:1,kg:0}]},
+           {name:'Développé Couché',sets:[{reps:8,kg:60}]}]};
+    const n2=_normalizeMiloSession(cp(MIX));
+    _appliqueMiloSession(cp(n2.exs), n2, 'start', null);
+    o.gagne={ avant:S.wkt.cardioAvant, exs:(S.wkt.exs||[]).map(x=>x.name) };
+    /* ⛔⛔ ET SANS LE CHAMP, LA DEVINETTE DE ft-v1150 TIENT TOUJOURS. */
+    S.wkt={};
+    const SANS={label:'P',
+      exs:[{name:'Mobilité',note:"8 min d'elliptique en intensité légère",sets:[{reps:1,kg:0}]},
+           {name:'Développé Couché',sets:[{reps:8,kg:60}]}]};
+    const n3=_normalizeMiloSession(cp(SANS));
+    _appliqueMiloSession(cp(n3.exs), n3, 'start', null);
+    o.repli={ avant:S.wkt.cardioAvant, exs:(S.wkt.exs||[]).map(x=>x.name) };
+    /* ⛔ UN CARDIO QUE LA PERSONNE A NOTÉ N'EST JAMAIS ÉCRASÉ (invariant de ft-v995). */
+    S.wkt={date:'2026-09-06',progLabel:'X',exs:[{name:'Squat',sets:[{reps:5,kg:100}]}],
+           cardioAvant:{type:'velo',intensity:'modere',duration:25}};
+    const n4=_normalizeMiloSession(cp(DECL));
+    _appliqueMiloSession(cp(n4.exs), n4, 'replace', null);
+    o.pasEcrase=S.wkt.cardioAvant;
+    return o;
+  }catch(e){ return {err:e.message}; } });
+
+  t('CCLI ⛔ CONTRÔLE — les 7 fonctions existent (sinon tout le bloc est muet)',
+    !R.err && R.fn && R.fn.length===0, R.err||JSON.stringify(R.fn));
+  t('CCLI ⛔⛔ CONTRÔLE n°2 — le SEUL écrivain de `_pendingMiloSessions` recopie le champ',
+    !!(R.recopie && R.recopie.avant && R.recopie.avant.type==='elliptique'
+       && R.recopie.avant.duration===8 && R.recopie.avant.intensity==='leger') && R.absent===false,
+    JSON.stringify({recopie:R.recopie,absent:R.absent}));
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION. */
+  t('CCLI ⭐⭐ le cardio DÉCLARÉ remplit le bloc, et les exercices restent intacts',
+    !!(R.bout && R.bout.avant && R.bout.avant.type==='elliptique' && R.bout.avant.duration===8
+       && R.bout.apres===null && R.bout.exs && R.bout.exs.length===2
+       && R.bout.exs.indexOf('Développé Couché')>=0), JSON.stringify(R.bout));
+  t('CCLI ⭐⭐ le DÉCLARÉ gagne sur la devinette — et l\'entrée sort quand même des exercices',
+    !!(R.gagne && R.gagne.avant && R.gagne.avant.type==='rameur' && R.gagne.avant.duration===12
+       && R.gagne.exs && R.gagne.exs.length===1 && R.gagne.exs[0]==='Développé Couché'),
+    JSON.stringify(R.gagne));
+  /* ⛔⛔ LA NON-RÉGRESSION QUI COMPTE AUTANT QUE LE CORRECTIF : sans le champ, on devine comme
+     avant. Sinon « le champ marche » serait vrai le jour où le filet est mort. */
+  t('CCLI ⛔⛔ SANS le champ, la devinette de ft-v1150 fonctionne toujours (les 3 voies)',
+    !!(R.repli && R.repli.avant && R.repli.avant.type==='elliptique' && R.repli.avant.duration===8
+       && R.repli.exs && R.repli.exs.length===1), JSON.stringify(R.repli));
+  t('CCLI ⛔ le code VALIDE : type inconnu → « autre », intensité inconnue → « modéré »',
+    !!(R.val && R.val.typeInconnu && R.val.typeInconnu.type==='autre'
+       && R.val.intInconnue && R.val.intInconnue.intensity==='modere'), JSON.stringify(R.val));
+  /* ⛔⛔ ON N'INVENTE JAMAIS UNE DURÉE — même règle et mêmes bornes que `_cardioDepuisEx` (R2). */
+  t('CCLI ⛔⛔ durée absente, nulle ou absurde → le cardio est ANNULÉ, jamais inventé',
+    !!(R.val && R.val.sansDuree===null && R.val.dureeZero===null
+       && R.val.dureeAbsurde===null && R.val.nul===null), JSON.stringify(R.val));
+  /* ⛔ L'ACCENT — la leçon de ft-v1147 : un caractère non normalisé rend un motif aveugle sans
+     que rien ne le signale. « Vélo » et « Modéré » sont ce que Milo écrit naturellement. */
+  t('CCLI ⛔ « Vélo » et « Modéré » sont reconnus malgré leurs accents',
+    !!(R.val && R.val.accents && R.val.accents.type==='velo' && R.val.accents.intensity==='modere'),
+    JSON.stringify(R.val&&R.val.accents));
+  /* ⭐ LE TRANSIT PAR coach.js — mesuré, pas supposé : c'est ce qui justifie de n'y avoir touché
+     à RIEN, et c'est ce qui rougira si quelqu'un y reconstruit l'objet. */
+  t('CCLI ⭐ le champ traverse coach.js sans qu\'on y ait touché (`_cerveletFidele`, `_montee`)',
+    !!(R.transit && R.transit.fidele===true && R.transit.montee===true), JSON.stringify(R.transit));
+  t('CCLI ⛔ un cardio noté par la personne n\'est jamais écrasé (invariant ft-v995)',
+    !!(R.pasEcrase && R.pasEcrase.duration===25 && R.pasEcrase.type==='velo'),
+    JSON.stringify(R.pasEcrase));
+  t('CCLI aucune erreur JS pendant tout le bloc', errs.length===0, errs.join(' | '));
+  await cx.close();
+}
+/* ⛔⛔ ET LE PRODUCTEUR — un champ que personne n'émet est un champ mort. Ce témoin lit
+   `worker.js` : le cervelet doit DÉCLARER `cardio` dans son schéma de sortie ET recevoir la
+   consigne de ne jamais le mettre dans `exs`. *Le fixer des deux côtés est le seul moyen de ne
+   pas repayer ft-v1147, où le prompt écrivait la machine dans la note et le lecteur la cherchait
+   dans le nom : les deux bouts de la chaîne ne parlaient pas du même endroit.* */
+{
+  const _w=fs.readFileSync(path.join(ROOT,'worker.js'),'utf8');
+  const _sj=_w.slice(_w.indexOf('async function seanceJson'), _w.indexOf('async function estimateFood'));
+  t('CCLI ⛔⛔ le cervelet DÉCLARE `cardio:{avant,apres}` dans son schéma de sortie',
+    /"cardio":\{"avant"/.test(_sj) && /"apres"/.test(_sj), 'schéma de sortie de seanceJson');
+  t('CCLI ⛔ et il lui est dit de ne JAMAIS mettre le cardio dans "exs"',
+    /NE VA JAMAIS DANS "exs"/.test(_sj), 'règle de transcription absente');
+  t('CCLI ⛔ les valeurs permises sont énoncées (types, intensités, durée en minutes)',
+    /"elliptique", "tapis", "velo", "rameur", "corde"/.test(_sj)
+    && /"leger", "modere" ou "intense"/.test(_sj) && /duree = la durée en MINUTES/.test(_sj),
+    'valeurs permises absentes du prompt');
+  /* ⛔ ET LA MONTÉE EN CHARGE RESTE UN EXERCICE — c'est le garde de ft-v1147, énoncé cette fois
+     à celui qui écrit le JSON. Sans lui, « 40×5 → 55×3 → 70×2 » partirait au bloc cardio et la
+     séance perdrait un vrai exercice (R29 : retirer coûte infiniment plus cher que laisser). */
+  t('CCLI ⛔ une MONTÉE EN CHARGE est explicitement exclue du cardio dans le prompt',
+    // ⚠️ On lit la SOURCE, où l'apostrophe est échappée (`n\'est`) : le motif ne peut pas
+    //    s'écrire comme la phrase se lit. Mesuré — ce témoin a rougi sur sa propre citation.
+    /MONTÉE EN CHARGE[\s\S]{0,80}PAS du cardio/.test(_sj), 'garde montée en charge absent');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

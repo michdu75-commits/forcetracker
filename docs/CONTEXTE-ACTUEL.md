@@ -6,27 +6,27 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1150` — 🔥 **ON NE DÉPEND PLUS DU NOM POUR RECONNAÎTRE UN CARDIO.**
-  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#950** sur `6c7b78f`, **job `deploy` success**,
-  les 7 étapes vertes à **19:34:50 UTC**. ⛔ **`Code.js` NON modifié** → aucun déploiement backend
-  attendu, son absence n'est donc pas un signal.
-  ⏳ **Suite complète VERTE** : **parcours 2968/2968** (+9, bloc CCXLIX), calculs 339/339, muscles 241/241,
-  croisés 50/50, dates 9/9, données classées 0 trou.
-  Michel, une heure après ft-v1147 : *« pourquoi l'échauffement apparaît dans la séance, j'ai créé
-  exprès le cardio avant et après, ça ne doit pas se reproduire »*.
-  ⭐⭐ **Il avait raison** : ft-v1147 reconnaissait un cardio par une **liste de noms**. Mesuré :
-  **6 formulations sur 20 passaient encore** (`Warm-up`, `Mobilité`, `Activation`, `Préparation
-  articulaire`, `Fin de séance`, **`Vélo`**). Après : **20/20**.
-  ⛔⛔ **Le `Vélo` était piégé** : `développé` désaccentué **contient `velo`**, donc un motif nu
-  classerait tous les développés en cardio — **mesuré : 21 → 45** exercices du catalogue.
-  `\bvelo\b` lève le piège, et le classement des **322 exercices est identique** (vérifié).
-  ⭐ **Le correctif n'allonge pas la liste, il arrête de s'y fier** : la **machine** est le signal.
-  Trois gardes : pas de **charge** · une **durée** réelle · **le nom n'est pas un exercice du
-  catalogue** (sinon « Gainage · 3 min après le tapis » disparaîtrait de la séance).
-  ⚠️⚠️ **ET LE « PLUS JAMAIS » N'EST PAS TENABLE TEL QUEL** : l'app **devine**, parce que Milo n'a
-  **aucun champ** pour dire « ceci est du cardio » (**R4** : l'info reste dans le TEXTE).
-  ⏭️ **Le vrai fix définitif = un champ structuré** → touche le **prompt** (**R34**, banc d'essai)
-  et **`coach.js`** : **signalé à session-B, pas pris**.
+- **Version en ligne (live) :** `ft-v1152` — 🏁 **LE CARDIO SE DÉCLARE, IL NE SE DEVINE PLUS.**
+  ⏳ **Déploiement à vérifier** (R18) : `deploy-pages.yml` **et** `deploy-worker.yml` — ⛔ **`Code.js`
+  NON modifié** → aucun déploiement backend attendu, son absence n'est donc pas un signal.
+  Michel, après ft-v1150 : *« prends le, ferme ça définitivement »* — après que je lui aie dit que
+  je **ne pouvais pas** promettre « plus jamais » tant que l'app **devine**.
+  ⭐⭐ **Ce qui ferme n'est pas une liste plus longue, c'est un CHAMP** : le **cervelet**
+  (`worker.js`, `seanceJson`) déclare `cardio:{avant,apres}` et il lui est dit de ne JAMAIS mettre
+  le cardio dans `exs`. *Celui qui SAIT où va le cardio le DIT.*
+  ⭐⭐ **C'est le CERVELET, pas Milo** — le bloc caché a quitté le prompt de Milo en **ft-v919**.
+  👉 **Donc R34 ne s'applique pas** : le prompt de Milo n'a pas bougé d'un caractère, ce qui change
+  est l'instruction d'un **convertisseur** qui ne sait rien de la personne.
+  ⛔ **Le modèle propose, le code valide** : type hors liste → « autre », intensité inconnue →
+  « modéré », **durée absente ou absurde → cardio ANNULÉ**, jamais inventé (R29). Mêmes bornes que
+  `_cardioDepuisEx` (R2).
+  ⛔⛔ **La devinette de ft-v1147/1150 RESTE, en repli** — les trois voies ne produisent pas toutes
+  ce champ. *Un correctif qui remplace le filet devient une régression le jour où il ne s'applique
+  pas.* C'est le témoin qui compte le plus du bloc **CCLI**.
+  ⭐ **Branché dans `_normalizeMiloSession`**, seul écrivain de `_pendingMiloSessions` (leçon
+  `supersetGroup`, ft-v1130). ⭐⭐ **Et `coach.js` n'a PAS été touché** : mesuré, pas supposé —
+  `_cerveletFidele` fait `Object.assign` et `_completerMonteeEnCharge` mute sur place, le champ
+  transite seul. *Ma réservation annonçait 3 fichiers, il n'en a fallu que 2.*
   ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 
 - **Version précédente :** `ft-v1149` — 🔤 **LES DEUX BOUTONS DE FUSION DISAIENT LA MÊME CHOSE.**
