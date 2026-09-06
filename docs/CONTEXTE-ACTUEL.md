@@ -6,7 +6,27 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1147` — 🔗 **LES NOMS D'EXERCICES SE DÉDOUBLAIENT DEPUIS LE 24/08.**
+- **Version en ligne (live) :** `ft-v1147` — 🔥 **L'ÉCHAUFFEMENT CARDIO DE MILO ALLAIT DANS LA LISTE DES EXERCICES.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#944** sur `248952d`, **job `deploy` success**,
+  les 7 étapes vertes à **18:05:00 UTC**. ⛔ **`Code.js` NON modifié** → aucun déploiement backend
+  attendu, son absence n'est donc pas un signal.
+  ⏳ **Suite complète VERTE** : **parcours 2929/2929** (+10, bloc CCXLVI), calculs 339/339, muscles 241/241,
+  croisés 50/50, dates 9/9, données classées 0 trou.
+  Michel : *« Milo me propose un échauffement en début de séance, ça ne va pas du tout, pourquoi ça
+  arrive ? »* — puis *« essaye de voir ça avant de modifier quoi que ce soit »*.
+  ⭐⭐ **Milo a obéi à la lettre** : son prompt lui interdit le cardio dans la liste des exercices,
+  et lui donne pour exemple **mot pour mot** *« Échauffement : 8 min d'elliptique en intensité
+  légère »*. 👉 ***Le prompt met la machine dans la NOTE, le lecteur la cherchait dans le NOM.***
+  ⭐ **Mesuré** : `_exEquip('Elliptique')` → `cardio` · `_exEquip('Échauffement')` → **`autre`**.
+  Et `_cardioDepuisEx` savait parfaitement lire la ligne — **il n'était jamais appelé**.
+  ⛔⛔ **Le garde sur la CHARGE est le cœur du correctif** : la ligne de paliers porte le même nom
+  et une durée lisible. Sans lui (contrôle M1), la montée en charge du squat **disparaît de la
+  séance**. *Une entrée dont une série porte des kg n'est jamais du cardio* (R29).
+  ⛔ **Le prompt n'a pas bougé** (R7 : dernier levier · R34 : se validerait au banc d'essai).
+  ⏭️ **Non traité, exprès** : un cardio **au milieu** de la séance reste un exercice (décision
+  ft-v995). ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1148` — 🔗 **LES NOMS D'EXERCICES SE DÉDOUBLAIENT DEPUIS LE 24/08.**
   Michel, en salle : *« Perte de données, j'ai déjà fait cet exercice »*. ⛔⛔ **Rien n'était perdu** —
   son historique portait un **autre nom**. Mesuré sur ses **44 séances** : **4 doublons**, tous le nom
   privé de son suffixe entre parenthèses (`Développé Épaules Assis Machine` contre `… (Shoulder

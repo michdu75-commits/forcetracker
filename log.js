@@ -6997,17 +6997,74 @@ function _cardioDepuisEx(o){
   if(!m)return null;                                   // ⛔ pas de durée lisible → on ne devine pas
   const duration=+m[1];
   if(!(duration>0&&duration<=180))return null;         // hors bornes : ce n'est pas une durée
+  /* ⛔⛔ LE TYPE SE CHERCHE D'ABORD DANS LE NOM, PUIS DANS LA NOTE (06/09/2026, ft-v1147).
+     Il ne regardait QUE le nom. Or quand Milo suit son prompt à la lettre — l'exemple qu'on lui
+     donne est *« Échauffement : 8 min d'elliptique en intensité légère »* — la MACHINE est dans
+     la NOTE, et le type retombait sur « autre ». ⚠️ Ce n'est pas cosmétique : le type choisit le
+     MET, donc les calories.
+     ⛔ ET L'ORDRE EST UNE GARANTIE, PAS UN DÉTAIL : le nom reste PRIORITAIRE parce qu'il est la
+     source sûre. Chercher dans « nom + note » d'un seul bloc ferait gagner le premier motif de la
+     table, pas le plus juste — un « Rameur » dont la note dit « comme sur le tapis » deviendrait
+     un tapis (`tapis` passe avant `rameur` dans `_CARDIO_TYPES`). *C'est « le premier match
+     gagnant » de `BUGS.md`, retourné à notre avantage : on interroge la source fiable d'abord.* */
   let type='autre';
   for(const [re,t] of _CARDIO_TYPES){ if(re.test(nom)){ type=t; break; } }
+  if(type==='autre') for(const [re,t] of _CARDIO_TYPES){ if(re.test(txt)){ type=t; break; } }
   const intensity=/intense|fort|rapide|hiit|sprint/.test(txt)?'intense'
                  :/leger|legere|tranquille|doux|facile|echauffement/.test(txt)?'leger':'modere';
   return {type,intensity,duration};
+}
+/* 🔥 QUAND LE NOM EST UN EMPLACEMENT, PAS UNE MACHINE (06/09/2026, ft-v1147)
+   ═══════════════════════════════════════════════════════════════════════════════════════════
+   Michel, capture à l'appui : *« Milo me propose un échauffement en début de séance, ça ne va
+   pas du tout, pourquoi ça arrive »*. Sur son écran : un exercice **« Échauffement »**, 0/1
+   série, 8 reps, note *« 8 min d'elliptique en intensité légère »* — pendant que le bloc Cardio
+   juste au-dessus reste vide.
+
+   ⛔⛔ MILO N'A RIEN FAIT DE MAL, ET C'EST TOUT LE SUJET. Son prompt lui dit *« ⛔ NE METS JAMAIS
+   le cardio dans la liste des exercices »*… et lui donne pour exemple, mot pour mot :
+   *« Échauffement : 8 min d'elliptique en intensité légère »*. **Il a obéi à la lettre.**
+   👉 ***Le prompt met la machine dans la NOTE, le lecteur la cherchait dans le NOM.*** Les deux
+   bouts de la chaîne ne parlaient pas du même endroit — la forme exacte de ft-v995, dont le
+   correctif n'avait bouché qu'un côté.
+
+   ⭐ MESURÉ, PAS LU : `_exEquip('Elliptique')` → `cardio` ✅ · `_exEquip('Échauffement')` →
+   **`autre`** ❌. Et `_cardioDepuisEx` SAIT parfaitement lire cette ligne (il rend 8 min, léger) —
+   **il n'était simplement jamais appelé**, le filtre l'ayant écarté d'entrée.
+
+   ⛔⛔ LE GARDE SUR LA CHARGE EST CE QUI REND L'ÉLARGISSEMENT SÛR — sans lui, ce correctif
+   SUPPRIMERAIT de vrais exercices. La ligne de PALIERS d'échauffement porte **le même nom** et un
+   « repos 2 min » parfaitement lisible : « Échauffement : 40×5 → 55×3 → 70×2 — repos 2 min ».
+   Sans garde, la montée en charge d'un squat partirait au bloc cardio et **disparaîtrait de la
+   séance**. 👉 ***Retirer un exercice réel coûte infiniment plus cher que laisser un échauffement
+   dans la liste*** (**R29**) : une entrée dont une série porte des kg n'est JAMAIS du cardio.
+
+   ⚠️ LIMITE ÉCRITE PLUTÔT QUE DÉCOUVERTE : un « Échauffement épaules — 5 min » sans charge part
+   lui aussi dans le bloc, avec le type « autre ». C'est assumé — c'est bien un échauffement sans
+   charge, sa place est là, et l'erreur de calories est petite et dans le bon sens. */
+const _RE_CRENEAU_CARDIO=/^(echauffement|echauffements|warm ?up|cardio|conditionnement|retour au calme|cool ?down|recuperation active)\b/;
+function _estCreneauCardio(o){
+  try{
+    if(!o||!o.name)return false;
+    const nom=(typeof _naz==='function')?_naz(o.name):String(o.name).toLowerCase();
+    if(!_RE_CRENEAU_CARDIO.test(nom))return false;
+    // ⛔ LE GARDE : une charge au bout d'une série = de la musculation, jamais du cardio.
+    const sets=Array.isArray(o.sets)?o.sets:[];
+    if(sets.some(s=>s&&parseFloat(String(s.kg).replace(',','.'))>0))return false;
+    // ⛔ Et il faut une durée réellement lisible — `_cardioDepuisEx` n'invente jamais un chiffre.
+    return !!_cardioDepuisEx(o);
+  }catch(e){ return false; }
 }
 function _extraireCardioMilo(newExs){
   const exs=Array.isArray(newExs)?newExs.slice():[];
   const out={exs:exs,avant:null,apres:null,restes:[]};
   if(!exs.length||typeof _exEquip!=='function')return out;
-  const estCardio=o=>{ try{ return _exEquip(o&&o.name)==='cardio'; }catch(e){ return false; } };
+  /* ⚠️ DEUX FAÇONS D'ÊTRE UN CARDIO, et il fallait les deux : la machine est NOMMÉE
+     (« Elliptique » — le chemin de ft-v995), ou le nom est un EMPLACEMENT et la machine vit
+     dans la note (« Échauffement » — le cas de Michel, ci-dessus). */
+  const estCardio=o=>{ try{
+    return _exEquip(o&&o.name)==='cardio' || _estCreneauCardio(o);
+  }catch(e){ return false; } };
   // Les BORNES de la partie musculation — c'est elles qui disent « avant » et « après ».
   let premierMuscu=-1, dernierMuscu=-1;
   exs.forEach((o,i)=>{ if(!estCardio(o)){ if(premierMuscu<0)premierMuscu=i; dernierMuscu=i; } });

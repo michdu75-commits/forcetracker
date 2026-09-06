@@ -27843,6 +27843,84 @@ console.log('\n-- CCXLIV. Milo sait qu\'on le teste — chez Michel seul (ft-v11
   await cx.close();
 }
 
+/* ═══ CCXLVI. L'ÉCHAUFFEMENT CARDIO DE MILO VA DANS LE BLOC CARDIO (ft-v1147) ═══════════════
+   Michel, capture à l'appui : *« Milo me propose un échauffement en début de séance, ça ne va
+   pas du tout »*. Un exercice **« Échauffement »**, note *« 8 min d'elliptique en intensité
+   légère »*, pendant que le bloc Cardio restait vide.
+   ⛔⛔ CE BLOC PROTÈGE DEUX CHOSES OPPOSÉES, et la seconde compte plus que la première :
+   ① le cardio d'échauffement rejoint bien son bloc ; ② et surtout **rien d'autre ne le suit**.
+   Élargir le détecteur peut FAIRE DISPARAÎTRE de vrais exercices — la ligne de paliers
+   « Échauffement : 40×5 → 55×3 → 70×2 — repos 2 min » porte le même nom et une durée lisible.
+   *Retirer un exercice réel coûte infiniment plus cher que laisser un échauffement dans la
+   liste* (R29). Les témoins de refus sont donc au moins aussi importants que ceux d'extraction.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXLVI. L\'échauffement cardio de Milo va dans le bloc Cardio (ft-v1147) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'999'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1800);
+  const R=await p.evaluate(()=>{ try{
+    const o={};
+    o.fn=['_extraireCardioMilo','_cardioDepuisEx','_estCreneauCardio','_exEquip']
+          .filter(f=>typeof window[f]!=='function');
+    const ex=(n,note,sets)=>({name:n,note:note||'',sets:sets||[{reps:8,kg:'',type:'',done:false}]});
+    const run=(l)=>{ const r=_extraireCardioMilo(JSON.parse(JSON.stringify(l)));
+      return {restants:r.exs.map(x=>x.name), avant:r.avant, apres:r.apres}; };
+    const DC=ex('Développé Couché','',[{reps:8,kg:60}]);
+    /* Le classement d'origine — c'est LUI qui explique tout le défaut. */
+    o.equip={ ell:_exEquip('Elliptique'), ech:_exEquip('Échauffement') };
+    o.michel   = run([ ex('Échauffement',"8 min d'elliptique en intensité légère"), DC ]);
+    o.nomme    = run([ ex('Elliptique','8 min en intensité légère',[{reps:1}]), DC ]);
+    o.paliers  = run([ ex('Échauffement','40×5 → 55×3 → 70×2 — repos 2 min',
+                          [{reps:5,kg:40},{reps:3,kg:55},{reps:2,kg:70}]), DC ]);
+    o.reposNote= run([ ex('Développé Couché','repos 3 min entre les séries',[{reps:8,kg:60}]),
+                       ex('Squat','',[{reps:5,kg:100}]) ]);
+    o.finCardio= run([ DC, ex('Cardio','12 min de tapis en intensité modérée') ]);
+    o.sansDuree= run([ ex('Échauffement','vélo tranquille'), DC ]);
+    /* ⚠️ L'ORDRE nom > note : le nom est la source SÛRE. */
+    o.typeOrdre=_cardioDepuisEx(ex('Rameur','10 min, comme sur le tapis'));
+    return o;
+  }catch(e){ return {err:e.message}; } });
+
+  /* ⛔ CONTRÔLES D'ABORD — sans eux, « rien ne part au cardio » serait vert sur un extracteur mort. */
+  t('CCXLVI ⛔ CONTRÔLE — les 4 fonctions existent (sinon tout le bloc est muet)',
+    !R.err && R.fn && R.fn.length===0, R.err||JSON.stringify(R.fn));
+  t('CCXLVI ⛔ CONTRÔLE — NON-RÉGRESSION ft-v995 : une machine NOMMÉE part toujours au bloc cardio',
+    R.nomme && R.nomme.restants.join()==='Développé Couché'
+      && R.nomme.avant && R.nomme.avant.type==='elliptique', JSON.stringify(R.nomme));
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION — le cas exact de la capture de Michel. */
+  t('CCXLVI ⭐⭐ « Échauffement » + note « 8 min d\'elliptique » quitte la liste et remplit le bloc AVANT',
+    R.michel && R.michel.restants.join()==='Développé Couché'
+      && R.michel.avant && R.michel.avant.duration===8
+      && R.michel.avant.intensity==='leger' && R.michel.avant.type==='elliptique',
+    JSON.stringify(R.michel));
+  /* ⭐ Et il documente la CAUSE, pour que personne ne la redécouvre : le nom n'est pas une machine. */
+  t('CCXLVI ⭐ la cause est figée : `_exEquip` classe « Elliptique » en cardio, « Échauffement » non',
+    R.equip && R.equip.ell==='cardio' && R.equip.ech!=='cardio', JSON.stringify(R.equip));
+  /* ⛔⛔ LES TROIS REFUS — ce sont eux qui empêchent le correctif de manger de vraies séances. */
+  t('CCXLVI ⛔⛔ la ligne de PALIERS (même nom, mais des KG) reste un EXERCICE, jamais du cardio',
+    R.paliers && R.paliers.restants.join()==='Échauffement,Développé Couché'
+      && R.paliers.avant===null && R.paliers.apres===null, JSON.stringify(R.paliers));
+  t('CCXLVI ⛔ un exercice de muscu dont la NOTE dit « repos 3 min » ne part pas au cardio',
+    R.reposNote && R.reposNote.restants.join()==='Développé Couché,Squat'
+      && R.reposNote.avant===null && R.reposNote.apres===null, JSON.stringify(R.reposNote));
+  t('CCXLVI ⛔ sans DURÉE lisible, rien ne bouge — on n\'invente jamais un nombre de minutes',
+    R.sansDuree && R.sansDuree.restants.join()==='Échauffement,Développé Couché'
+      && R.sansDuree.avant===null, JSON.stringify(R.sansDuree));
+  /* ⭐ La position décide encore : après le dernier exercice → cardio de FIN. */
+  t('CCXLVI ⭐ un « Cardio » en fin de séance remplit le bloc APRÈS, pas celui d\'avant',
+    R.finCardio && R.finCardio.restants.join()==='Développé Couché'
+      && R.finCardio.avant===null && R.finCardio.apres
+      && R.finCardio.apres.type==='tapis' && R.finCardio.apres.duration===12,
+    JSON.stringify(R.finCardio));
+  /* ⛔ L'ORDRE nom > note est une GARANTIE : sinon le 1ᵉʳ motif de la table gagnerait. */
+  t('CCXLVI ⛔ le TYPE se lit d\'abord dans le NOM : un « Rameur » dont la note dit « tapis » reste un rameur',
+    R.typeOrdre && R.typeOrdre.type==='rameur', JSON.stringify(R.typeOrdre));
+  t('CCXLVI aucune erreur JS pendant tout le bloc', errs.length===0, errs.join(' | '));
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
@@ -28183,7 +28261,7 @@ console.log('\n-- CCXLV. Le compteur de contradictions Milo ↔ contrôle d\'int
     /onclick="showIntensiteStats\(\)"/.test(fs.readFileSync(path.join(ROOT,'index.html'),'utf8')), '');
 }
 
-/* ═══ CCXLVI. LE NOM DE MILO REJOINT CELUI DU CATALOGUE (06/09/2026, ft-v1147) ══════════════
+/* ═══ CCXLVII. LE NOM DE MILO REJOINT CELUI DU CATALOGUE (06/09/2026, ft-v1147) ══════════════
    Michel, en salle : « Perte de données, j'ai déjà fait cet exercice ». Rien n'était perdu :
    son historique portait `Développé Épaules Assis Machine (Shoulder Press)` et sa séance du
    jour `Développé Épaules Assis Machine`. Mesuré sur ses 44 séances : **4 doublons, tous le
@@ -28191,7 +28269,7 @@ console.log('\n-- CCXLV. Le compteur de contradictions Milo ↔ contrôle d\'int
    sur l'AFFICHAGE et pas sur l'historique, ce qui a rendu le doublon invisible.
    ⭐ Les témoins sont FONCTIONNELS : le résolveur est réellement exécuté sur les VRAIS noms
    de son export. Un `grep` dirait que le code appelle une fonction, pas qu'elle résout. */
-console.log('\n-- CCXLVI. Le nom de Milo rejoint celui du catalogue (ft-v1147) --');
+console.log('\n-- CCXLVII. Le nom de Milo rejoint celui du catalogue (ft-v1147) --');
 {
   const srcLog=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
   const srcSet=fs.readFileSync(path.join(ROOT,'setup.js'),'utf8');
@@ -28200,9 +28278,9 @@ console.log('\n-- CCXLVI. Le nom de Milo rejoint celui du catalogue (ft-v1147) -
   /* ⛔⛔ CONTRÔLE AVANT TOUT LE RESTE — et il porte sur l'ENDROIT, pas sur la présence.
      `_normalizeMiloSession` est le SEUL écrivain de `_pendingMiloSessions` en production :
      un résolveur branché ailleurs serait parfaitement correct et parfaitement inutile. */
-  t('CCXLVI ⛔ CONTRÔLE — le nom est résolu DANS `_normalizeMiloSession` (le seul écrivain)',
+  t('CCXLVII ⛔ CONTRÔLE — le nom est résolu DANS `_normalizeMiloSession` (le seul écrivain)',
     /function _normalizeMiloSession[\s\S]{0,900}name:_nomMiloVersCatalogue\(ex\.name\)/.test(srcLog), '');
-  t('CCXLVI ⛔ CONTRÔLE — `_nomMiloVersCatalogue` existe et s\'appuie sur `exNomCatalogue` (R13)',
+  t('CCXLVII ⛔ CONTRÔLE — `_nomMiloVersCatalogue` existe et s\'appuie sur `exNomCatalogue` (R13)',
     /function _nomMiloVersCatalogue/.test(srcLog) && /exNomCatalogue\(brut\)/.test(srcLog), '');
 
   /* ⚠️⚠️ ON EXÉCUTE LA VRAIE FONCTION DE `log.js`, PAS UNE COPIE — et cette correction a été
@@ -28226,7 +28304,7 @@ console.log('\n-- CCXLVI. Le nom de Milo rejoint celui du catalogue (ft-v1147) -
       +'globalThis.__X=(typeof EXLIB!=="undefined")?EXLIB:null;', sb, {timeout:8000});
     if(sb.__r && sb.__X){ R=sb.__r; R.cat=(n)=>sb.__X.some(e=>e&&e.n===n); }
   }catch(e){ R=null; }
-  t('CCXLVI ⛔ CONTRÔLE — le catalogue et son résolveur se chargent (sinon tout serait vert sur du vide)',
+  t('CCXLVII ⛔ CONTRÔLE — le catalogue et son résolveur se chargent (sinon tout serait vert sur du vide)',
     !!R, R?'':'bac à sable indisponible');
 
   if(R){
@@ -28236,31 +28314,31 @@ console.log('\n-- CCXLVI. Le nom de Milo rejoint celui du catalogue (ft-v1147) -
                ['Hip Thrust Barre','Hip Thrust Barre (Poussée de Hanche)'],
                ['Abduction Cuisses','Abduction Cuisses (Leg Abduction)']];
     const rates=CAS.filter(([a,b])=>R(a)!==b);
-    t('CCXLVI ⭐⭐ les 4 doublons réels de l\'historique de Michel se recollent au catalogue',
+    t('CCXLVII ⭐⭐ les 4 doublons réels de l\'historique de Michel se recollent au catalogue',
       rates.length===0, rates.map(([a])=>a+' -> '+R(a)).join(' | '));
 
     /* ⛔⛔ LE CONTRE-TEST, ET C'EST LUI QUI PORTE LA VERSION. Deux machines RÉELLEMENT
        différentes ne doivent JAMAIS fusionner : afficher les charges de l'une sous l'autre
        serait pire que l'absence, parce qu'on le croirait (R29). */
-    t('CCXLVI ⛔⛔ « Développé Épaules Machine » ne devient PAS « … Assis Machine » (2 vraies machines)',
+    t('CCXLVII ⛔⛔ « Développé Épaules Machine » ne devient PAS « … Assis Machine » (2 vraies machines)',
       R('Développé Épaules Machine')==='Développé Épaules Machine',
       'reçu : '+R('Développé Épaules Machine'));
     const voisins=[['Développé Épaules Machine','Développé Épaules Assis Machine (Shoulder Press)'],
                    ['Leg Curl Assis Machine','Leg Curl Couché Machine'],
                    ['Curl Barre','Curl EZ']];
     const fusionnes=voisins.filter(([a,b])=>R(a)===b);
-    t('CCXLVI ⛔ aucun exercice voisin mais DIFFÉRENT n\'est rapproché',
+    t('CCXLVII ⛔ aucun exercice voisin mais DIFFÉRENT n\'est rapproché',
       fusionnes.length===0, JSON.stringify(fusionnes));
 
     /* ⛔ Un nom que le catalogue ne connaît pas reste TEL QUEL — c'est la décision de
        `_seanceDepuisTexte` (proposer un exercice différent de celui annoncé serait pire). */
     ['ISO lateral low row','Chest press cable Life fitness','Un Exercice Qui N Existe Pas',''].forEach(n=>{
-      t('CCXLVI ⛔ un nom hors catalogue reste intact : « '+(n||'(vide)')+' »',
+      t('CCXLVII ⛔ un nom hors catalogue reste intact : « '+(n||'(vide)')+' »',
         R(n)===String(n).trim(), 'reçu : '+R(n));
     });
     /* ⛔ Et on ne résout JAMAIS vers un nom qui n'existe pas au catalogue. */
     const cibles=CAS.map(([,b])=>b).filter(b=>!R.cat(b));
-    t('CCXLVI ⛔ toute cible de résolution est un exercice RÉEL du catalogue',
+    t('CCXLVII ⛔ toute cible de résolution est un exercice RÉEL du catalogue',
       cibles.length===0, cibles.join(' | '));
     /* ⚠️⚠️ ET CETTE GARDE-LÀ EST DÉFENSIVE — je le dis plutôt que de laisser croire qu'elle est
        éprouvée. `_EX_BASE2NOM` est construit DEPUIS `EXLIB`, donc aujourd'hui `exNomCatalogue`
@@ -28268,11 +28346,11 @@ console.log('\n-- CCXLVI. Le nom de Milo rejoint celui du catalogue (ft-v1147) -
        ligne**. Elle protège une évolution future de la table, pas un défaut d'aujourd'hui.
        ⛔ On la fige donc par sa PRÉSENCE, sans prétendre l'avoir vue mordre — un témoin qui
        annoncerait le contraire serait un vert qui ne peut pas rougir (R35). */
-    t('CCXLVI ⚠️ la garde « la cible doit exister » est ÉCRITE (défensive : aucun cas actuel ne la déclenche)',
+    t('CCXLVII ⚠️ la garde « la cible doit exister » est ÉCRITE (défensive : aucun cas actuel ne la déclenche)',
       /const existe=\(typeof EXLIB!=='undefined'\) && EXLIB\.some\(e=>e && e\.n===cible\)/.test(srcLog)
       && /return existe \? cible : brut;/.test(srcLog), '');
     /* ⛔ Idempotent : un nom déjà complet ne bouge pas (sinon un aller-retour le casserait). */
-    t('CCXLVI ⛔ un nom DÉJÀ complet est inchangé (résolution idempotente)',
+    t('CCXLVII ⛔ un nom DÉJÀ complet est inchangé (résolution idempotente)',
       CAS.every(([,b])=>R(b)===b), '');
   }
 
@@ -28280,19 +28358,19 @@ console.log('\n-- CCXLVI. Le nom de Milo rejoint celui du catalogue (ft-v1147) -
      Il rapprochait sur l'égalité normalisée ou une distance de Levenshtein ≤ 1 ; ` (Shoulder
      Press)` fait 15 caractères d'écart. Il est fait pour les fautes de frappe, pas pour les
      suffixes — deux familles, un seul critère jusqu'ici. */
-  t('CCXLVI ⭐ `detectDuplicates` reconnaît la famille « suffixe » via `exNomCatalogue`',
+  t('CCXLVII ⭐ `detectDuplicates` reconnaît la famille « suffixe » via `exNomCatalogue`',
     /detectDuplicates[\s\S]{0,2600}exNomCatalogue\(arr\[i\]\)[\s\S]{0,200}_normEx\(ca\)===_normEx\(cb\)/.test(srcSet), '');
   /* ⛔⛔ ET IL NE S'EST PAS ASSOUPLI : le seuil de ressemblance reste à 1. Élargir la distance
      aurait « marché » aussi — et aurait proposé de fusionner deux machines différentes. */
-  t('CCXLVI ⛔⛔ le seuil de ressemblance reste à 1 lettre (on ajoute une famille, on n\'élargit pas l\'à-peu-près)',
+  t('CCXLVII ⛔⛔ le seuil de ressemblance reste à 1 lettre (on ajoute une famille, on n\'élargit pas l\'à-peu-près)',
     /const d=_lev\(na,nb\);\s*\n?\s*if\(d<=1\)pairs\.push/.test(srcSet), '');
-  t('CCXLVI ⛔ l\'écran DIT de quelle famille vient le rapprochement (« dist.suffixe » ne voulait rien dire)',
+  t('CCXLVII ⛔ l\'écran DIT de quelle famille vient le rapprochement (« dist.suffixe » ne voulait rien dire)',
     /même exercice, un nom est raccourci/.test(srcSet) && /celui du catalogue/.test(srcSet), '');
   /* ⛔ La réparation du passé reste possible : l'outil de fusion n'a pas été touché. */
-  t('CCXLVI ⛔ `mergeExercises` existe toujours (réparer le passé reste possible, et reste un CHOIX)',
+  t('CCXLVII ⛔ `mergeExercises` existe toujours (réparer le passé reste possible, et reste un CHOIX)',
     /function mergeExercises\(keep,remove\)/.test(srcSet) && /showConfirm\(/.test(srcSet), '');
   /* ⛔ Rien n'est fusionné automatiquement : on montre, la personne tranche (R29). */
-  t('CCXLVI ⛔ aucune fusion AUTOMATIQUE n\'a été ajoutée (on informe, on ne décide pas — R29)',
+  t('CCXLVII ⛔ aucune fusion AUTOMATIQUE n\'a été ajoutée (on informe, on ne décide pas — R29)',
     !/mergeExercises\([^)]*\)\s*;\s*\}\s*\)\s*;?\s*\/\/\s*auto/i.test(srcSet)
     && (srcSet.match(/mergeExercises\(/g)||[]).length<=4, '');
 }
