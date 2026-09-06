@@ -7291,47 +7291,12 @@ function _appliqueMiloSession(newExs, data, mode, btn){
 
      ⛔ ON N'A RIEN CHANGÉ DANS `newExs` : les charges de Milo partent INTACTES. On ATTACHE un
      avertissement, la personne décide (R29). Michel voulait ses 95 kg — il les a eus. */
-  const alertes=[];
-  (newExs||[]).forEach(o=>{
-    const d=(typeof _intensiteDefauts==='function')?_intensiteDefauts(o.name,o.sets):[];
-    if(d.length){ o.intensiteWarn=d; alertes.push(o.name); }
-    /* 📍 ft-v1035 : et là où le contrôle d'intensité SE TAIT faute de repère, on dit qu'il n'y
-       en a pas. Les deux ne se recouvrent jamais — `_repereDefauts` rend `[]` dès qu'un record
-       ou un historique existe, `_intensiteDefauts` rend `[]` quand il n'y en a aucun.
-       ⛔ Le message part dans `seanceWarn` et non `intensiteWarn` : il porte son propre 📍, et
-       `intensiteWarn` est préfixé d'un ⚡ par `_intensiteBandeau`. Un seul propriétaire par
-       forme d'affichage (R2). ⛔ Et on AJOUTE, on n'écrase pas : `_validationSeance` remplit ce
-       même champ juste en dessous. */
-    const r=(typeof _repereDefauts==='function')?_repereDefauts(o.name,o.sets):[];
-    if(r.length) o.seanceWarn=(o.seanceWarn||[]).concat(r);
-  });
-  /* ⚠️ ON PRÉVIENT, ON NE BLOQUE PAS (R24 : informer sans bloquer). La séance démarre
-     normalement ; l'avertissement reste attaché à l'exercice, donc lisible AU MOMENT de le
-     faire — un toast seul aurait disparu avant la première série. */
-  if(alertes.length&&typeof toast==='function')
-    toast('⚡ Charge élevée sur '+alertes[0]+(alertes.length>1?' (+'+(alertes.length-1)+')':'')+' — détail dans la séance','info');
-
-  // 🛡️ LA VALIDATION UNIQUE (ft-v989) — même point, même philosophie que ci-dessus.
-  const verdict=(typeof _validationSeance==='function')?_validationSeance(newExs,mode):{doublons:[],exclusions:[],blessures:[],charnieres:[]};
-  (newExs||[]).forEach(o=>{
-    const w=[];
-    const excl=verdict.exclusions.find(x=>x.nom===o.name);
-    if(excl) w.push('🚫 Tu avais écarté cet exercice'+(excl.vers?' — tu lui préfères « '+excl.vers+' »':'')+'.');
-    const bl=verdict.blessures.find(x=>x.nom===o.name);
-    if(bl) w.push('🛡️ Sollicite '+bl.zones.join(', ')+' — une zone que tu protèges en ce moment.');
-    if(verdict.doublons.indexOf(o.name)>=0) w.push('🔁 Déjà présent ailleurs dans cette séance.');
-    /* 🦴 ft-v1079 — on nomme l'AUTRE exercice : sans lui la phrase serait vraie et inutilisable. */
-    const ch=(verdict.charnieres||[]).find(x=>x.nom===o.name);
-    if(ch) w.push('🦴 Charge le bas du dos, comme « '+ch.avec.join(' » et « ')+' » dans cette séance.');
-    /* ⚠️ ON CONCATÈNE, ON N'AFFECTE PAS (ft-v1035) — c'était `o.seanceWarn=w`, une affectation.
-       Tant que ce bloc était le seul à écrire ici, c'était sans conséquence ; depuis que
-       `_repereDefauts` y met sa ligne juste au-dessus, une affectation l'EFFACERAIT en silence.
-       *Un champ partagé se remplit par ajout, jamais par remplacement* (R2). */
-    if(w.length) o.seanceWarn=(o.seanceWarn||[]).concat(w);
-  });
-  const nAlerte=verdict.doublons.length+verdict.exclusions.length+verdict.blessures.length+(verdict.charnieres||[]).length;
-  if(nAlerte&&typeof toast==='function')
-    toast('🛡️ '+nAlerte+' point'+(nAlerte>1?'s':'')+' à vérifier dans ta séance — détail sur l\'exercice concerné','info');
+  /* 🛡️ ft-v1153 — LES AVERTISSEMENTS VIVENT DANS LEUR PROPRE FONCTION, parce que les
+     PROGRAMMES en ont besoin aussi (définition juste sous cette fonction).
+     ⚠️ UN SEUL toast, pas deux : `toast()` REMPLACE — les deux appels d'avant s'effaçaient l'un
+     l'autre dès qu'ils tombaient ensemble. Rendre des messages répare ça au passage. */
+  const _msgs=_avertissementsSeance(newExs, mode);
+  if(_msgs.length&&typeof toast==='function') toast(_msgs.join(' · '),'info');
   if(mode==='add'){
     S.wkt.exs=S.wkt.exs.concat(newExs);
   }else if(mode==='replace'){
@@ -7380,6 +7345,81 @@ function _appliqueMiloSession(newExs, data, mode, btn){
        :'Séance prête — c\'est parti ! 💪','success');
 }
 
+
+/* ═══ 🛡️ LES AVERTISSEMENTS DE SÉANCE — UNE SEULE FONCTION, DEUX APPELANTS (06/09/2026, ft-v1153)
+   ═══════════════════════════════════════════════════════════════════════════════════════════
+   Michel, en annonçant qu'il allait charger un programme : *« je n'ai jamais testé cet angle »*.
+   ⛔⛔ **MESURÉ, ET LE TROU EST RÉEL** : `_loadProgDayVraiment` et `_loadProgVraiment` construisent
+   `S.wkt` **en direct** — ils ne traversent **JAMAIS** `_appliqueMiloSession`. Donc un jour de
+   programme n'avait ni **alerte blessure**, ni exercice écarté, ni doublon, ni charnière, ni
+   contrôle d'intensité, ni « aucun repère » (ft-v980/989/1035/1079).
+
+   ⭐⭐ ET C'EST `BUGS.md` FAMILLE 15 — *la règle juste, définie trop étroit*. Le commentaire de
+   `_appliqueMiloSession` dit en toutes lettres *« le SEUL point que les DEUX portes traversent »*.
+   C'est **vrai**… et **les deux portes sont celles de MILO**. Le programme est une **TROISIÈME
+   porte** que personne n'a comptée. *Une phrase exacte peut cacher un trou : elle décrit bien son
+   périmètre, elle ne dit pas que ce périmètre est le bon.*
+
+   ⛔⛔ ON EXTRAIT, ON NE COPIE PAS (R2). Recopier ces trente lignes dans les deux chargeurs aurait
+   « marché » ce soir et divergé dans trois semaines — *c'est exactement le mécanisme qui fabrique
+   cette famille de bugs.* Un propriétaire, deux appelants.
+
+   ⛔ DÉCISION DE MICHEL, ÉCRITE POUR NE PAS LA ROUVRIR (R30) : **les avertissements SEULEMENT.**
+   Le cardio ne sort **PAS** de la liste sur un programme. *Chez Milo on corrige une machine qui a
+   mal rangé ; dans un programme, la personne a écrit sa propre liste* — et déplacer ce qu'elle a
+   écrit coûte plus cher que de l'y laisser (**R29**).
+
+   ⚠️⚠️ ET ELLE REND UNE LISTE DE MESSAGES, PAS UN TOAST — correction mesurée, pas choix de style.
+   `toast()` **REMPLACE** (un seul élément, `textContent`, `clearTimeout`) : deux appels d'affilée
+   et le second **efface** le premier. 👉 ***Le toast d'intensité était donc déjà avalé par celui de
+   la validation chaque fois que les deux tombaient ensemble.*** En rendant les messages, l'appelant
+   en fait **UN** seul — ce qui répare le chemin de Milo au passage — et un programme peut l'afficher
+   **APRÈS** son « chargé ! 💪 » au lieu d'être effacé par lui. */
+function _avertissementsSeance(newExs, mode){
+  const msgs=[];
+  const alertes=[];
+  (newExs||[]).forEach(o=>{
+    const d=(typeof _intensiteDefauts==='function')?_intensiteDefauts(o.name,o.sets):[];
+    if(d.length){ o.intensiteWarn=d; alertes.push(o.name); }
+    /* 📍 ft-v1035 : et là où le contrôle d'intensité SE TAIT faute de repère, on dit qu'il n'y
+       en a pas. Les deux ne se recouvrent jamais — `_repereDefauts` rend `[]` dès qu'un record
+       ou un historique existe, `_intensiteDefauts` rend `[]` quand il n'y en a aucun.
+       ⛔ Le message part dans `seanceWarn` et non `intensiteWarn` : il porte son propre 📍, et
+       `intensiteWarn` est préfixé d'un ⚡ par `_intensiteBandeau`. Un seul propriétaire par
+       forme d'affichage (R2). ⛔ Et on AJOUTE, on n'écrase pas : `_validationSeance` remplit ce
+       même champ juste en dessous. */
+    const r=(typeof _repereDefauts==='function')?_repereDefauts(o.name,o.sets):[];
+    if(r.length) o.seanceWarn=(o.seanceWarn||[]).concat(r);
+  });
+  /* ⚠️ ON PRÉVIENT, ON NE BLOQUE PAS (R24 : informer sans bloquer). La séance démarre
+     normalement ; l'avertissement reste attaché à l'exercice, donc lisible AU MOMENT de le
+     faire — un toast seul aurait disparu avant la première série. */
+  if(alertes.length)
+    msgs.push('⚡ Charge élevée sur '+alertes[0]+(alertes.length>1?' (+'+(alertes.length-1)+')':'')+' — détail dans la séance');
+
+  // 🛡️ LA VALIDATION UNIQUE (ft-v989) — même point, même philosophie que ci-dessus.
+  const verdict=(typeof _validationSeance==='function')?_validationSeance(newExs,mode):{doublons:[],exclusions:[],blessures:[],charnieres:[]};
+  (newExs||[]).forEach(o=>{
+    const w=[];
+    const excl=verdict.exclusions.find(x=>x.nom===o.name);
+    if(excl) w.push('🚫 Tu avais écarté cet exercice'+(excl.vers?' — tu lui préfères « '+excl.vers+' »':'')+'.');
+    const bl=verdict.blessures.find(x=>x.nom===o.name);
+    if(bl) w.push('🛡️ Sollicite '+bl.zones.join(', ')+' — une zone que tu protèges en ce moment.');
+    if(verdict.doublons.indexOf(o.name)>=0) w.push('🔁 Déjà présent ailleurs dans cette séance.');
+    /* 🦴 ft-v1079 — on nomme l'AUTRE exercice : sans lui la phrase serait vraie et inutilisable. */
+    const ch=(verdict.charnieres||[]).find(x=>x.nom===o.name);
+    if(ch) w.push('🦴 Charge le bas du dos, comme « '+ch.avec.join(' » et « ')+' » dans cette séance.');
+    /* ⚠️ ON CONCATÈNE, ON N'AFFECTE PAS (ft-v1035) — c'était `o.seanceWarn=w`, une affectation.
+       Tant que ce bloc était le seul à écrire ici, c'était sans conséquence ; depuis que
+       `_repereDefauts` y met sa ligne juste au-dessus, une affectation l'EFFACERAIT en silence.
+       *Un champ partagé se remplit par ajout, jamais par remplacement* (R2). */
+    if(w.length) o.seanceWarn=(o.seanceWarn||[]).concat(w);
+  });
+  const nAlerte=verdict.doublons.length+verdict.exclusions.length+verdict.blessures.length+(verdict.charnieres||[]).length;
+  if(nAlerte)
+    msgs.push('🛡️ '+nAlerte+' point'+(nAlerte>1?'s':'')+' à vérifier — détail sur l\'exercice concerné');
+  return msgs;
+}
 function loadProgDay(progIdx,dayIdx){
   const prog=(S.programmes||[])[progIdx];
   if(!prog||!prog.days||!prog.days[dayIdx])return;
@@ -7413,11 +7453,20 @@ function _loadProgDayVraiment(progIdx,dayIdx){
     if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
     return obj;
   })};
+  /* 🛡️ ft-v1153 — LES MÊMES AVERTISSEMENTS QUE SUR UNE SÉANCE DE MILO (une seule fonction, R2).
+     ⛔ POSÉ ICI, entre la construction de `S.wkt` et le rendu : les avertissements s'ATTACHENT aux
+        exercices, donc ils doivent exister AVANT `renderExBlocks()`, sinon l'écran n'en sait rien.
+     ⛔⛔ ET LE TOAST PART EN DERNIER, APRÈS le « chargé ! 💪 » — `toast()` REMPLACE, donc l'annoncer
+        avant reviendrait à le faire EFFACER par le message de succès. *Un avertissement invisible
+        est pire qu'aucun avertissement : on croit être prévenu.*
+     ⛔ Les charges du programme ne bougent PAS : on attache, la personne décide (R29). */
+  var _av=(typeof _avertissementsSeance==='function')?_avertissementsSeance(S.wkt.exs,'start'):[];
   persist();closeDaySel();closeProgModal();
   _expandedEx=0;
   goScreen('log',document.getElementById('nb-log'));
   renderExBlocks();
   toast('"'+prog.name+' — '+day.label+'" chargé ! 💪','success');
+  if(_av.length&&typeof toast==='function') setTimeout(()=>toast(_av.join(' · '),'info'),2200);
 }
 
 // ─── PARCOURS DÉBUTANT — Étape 1 « Découverte » (gratuit) ─────
@@ -7784,11 +7833,16 @@ function _loadProgVraiment(idx){
       return obj;
     })
   };
+  /* 🛡️ ft-v1153 — LA JUMELLE (R8). Un programme à UN SEUL jour passe par ici, pas par
+     `loadProgDay` : même besoin, même fonction, même ordre. *Poser le correctif d'un seul côté
+     est précisément la faute que ce fichier passe son temps à rattraper.* */
+  var _av=(typeof _avertissementsSeance==='function')?_avertissementsSeance(S.wkt.exs,'start'):[];
   persist();
   closeProgModal();
   goScreen('log',document.getElementById('nb-log'));
   renderExBlocks();
   toast('"'+prog.name+'" chargé ! 💪','success');
+  if(_av.length&&typeof toast==='function') setTimeout(()=>toast(_av.join(' · '),'info'),2200);
 }
 function deleteProg(idx){
   if(!S.programmes)return;

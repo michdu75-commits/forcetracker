@@ -393,6 +393,12 @@ const _HELP_DATA={
   log:{
     title:'⚡ Séance',
     tips:[
+      /* 🛡️ ft-v1153 — CE QU'ON NE DEVINE PAS : ces avertissements existaient DEPUIS UN MOIS,
+         mais seulement sur les séances proposées par Milo. Quelqu'un qui travaille au programme
+         ne les avait jamais vus — et n'avait aucune raison de savoir qu'ils existaient.
+         ⛔ L'aide dit aussi la LIMITE, parce qu'elle se devine encore moins : on prévient, on ne
+         corrige pas, et le cardio d'un programme reste là où la personne l'a écrit (R29). */
+      {i:'🛡️',t:'<b>Tes programmes sont vérifiés, eux aussi</b> (depuis le 07/09/2026). Quand tu charges un jour de programme, l\'app regarde la même chose que sur une séance proposée par Milo et <b>colle un avertissement sur l\'exercice concerné</b> : 🛡️ il sollicite une <b>zone que tu protèges</b> · ⚡ la <b>charge est élevée</b> pour ton niveau du moment · 🔁 l\'exercice est <b>en double</b> · 🚫 tu l\'avais <b>écarté</b> · 🦴 deux mouvements chargent <b>le bas du dos</b> dans la même séance · 📍 l\'app n\'a <b>aucun repère</b> sur cet exercice. ⭐ <b>Pourquoi ça compte surtout ici</b> : un programme se répète pendant des semaines — une alerte blessure y vaut plus que sur une séance isolée. ⛔ <b>On prévient, on ne change RIEN</b> : tes charges, ton ordre et ton cardio restent exactement comme tu les as écrits. C\'est toi qui décides.'},
       /* 🏃 ft-v1118 — CE QU'ON NE DEVINE PAS, ET QUI A COÛTÉ UNE SÉANCE : deux boutons portaient
          presque les mêmes mots et un seul enregistrait. Les libellés sont corrigés ; l'aide dit
          la règle générale (le bouton du bas est TOUJOURS celui qui enregistre) et la deuxième
