@@ -7,6 +7,9 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1140` — ☁️ **LES MENSURATIONS SURVIVENT ENFIN À UN CHANGEMENT DE TÉLÉPHONE.**
+  ✅ **LES DEUX DÉPLOIEMENTS VÉRIFIÉS VERTS** (R18) : site run **#927** (7 étapes, 09:01:30 UTC)
+  **ET** backend run **#105** (9 étapes — `clasp push`, redéploiement, « le backend répond
+  VRAIMENT », `authStatus` — 09:01:37 UTC), tous deux sur `29bf4f7`.
   ⏳ **Suite complète VERTE** : **parcours 2859/2859** (+13, bloc CCXLI), **calculs 339/339**,
   muscles 241/241, croisés 50/50, **dates 9/9**, données classées 0 trou.
   Michel : *« oui vas-y pour le cloud des mensurations »*.
