@@ -899,16 +899,34 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     /* ⚠️ LA SONDE DU JOUR (13/08/2026) — « le serveur répond-il MAINTENANT ? ». Elle
        manquait : la carte lisait l'historique des déploiements GitHub et affichait « serveur
        OK » (avant-hier) pendant qu'un appel échouait sous les yeux de Michel. */
-    if(u.includes('test=1')) return nom==='ok'
+    /* ⚠️⚠️ `nom!=='panne'` ET NON `nom==='ok'` — MON TÉMOIN A MORDU LÀ-DESSUS (06/09/2026).
+       Le 3ᵉ scénario `manque` tombait dans la branche « panne » de TOUTES les autres sondes
+       (stockage à 102 %, serveur injoignable, mails en échec) : la carte partait en alarme
+       générale, et mon témoin lisait 3 verts au lieu de 7. ***Il ne mesurait plus « une
+       programmation manquante », il mesurait « tout est en panne ».*** Un scénario ciblé doit
+       être SAIN partout sauf sur le point qu'il vise, sinon il ne vise rien. */
+    if(u.includes('test=1')) return nom!=='panne'
       ? J({status:'online',version:'3.5'})
       : route.fulfill({status:503,contentType:'text/plain',body:'indisponible'});
-    if(u.includes('storeHealth')) return J(nom==='ok'
+    if(u.includes('storeHealth')) return J(nom!=='panne'
       ? {status:'ok',pourcentPlein:41,totalOctets:210000,nbCles:38,testEcriture:'ok'}
       : {status:'ok',pourcentPlein:102,totalOctets:524000,nbCles:44,testEcriture:'ECHEC: quota'});
+    /* ⏰ FIXTURE RECALÉE LE 06/09/2026 — elle rendait `triggersInstalled:1`, ce qui décrit
+       aujourd'hui un état DÉGRADÉ (une programmation sur deux depuis le 31/08) tout en
+       s'appelant « ok ». *Une fixture qui n'emploie plus le schéma de la production ne teste
+       rien, elle rassure.* Le 3ᵉ cas `manque` est le nouvel état que l'app doit savoir voir. */
     if(u.includes('checkBackup')) return J(nom==='ok'
-      ? {status:'ok',triggersInstalled:1,fileCount:34,lastFiles:['backup-'+auj+'.json']}
-      : {status:'ok',triggersInstalled:0,fileCount:12,lastFiles:['backup-2026-07-20.json']});
-    if(u.includes('mailFails')) return J(nom==='ok'
+      ? {status:'ok',triggersInstalled:2,triggersAttendus:2,
+         schedLabel:'2× par jour (2h et 14h UTC)',backupHours:[2,14],
+         fileCount:34,lastFiles:['backup-'+auj+'.json']}
+      : nom==='manque'
+      ? {status:'ok',triggersInstalled:1,triggersAttendus:2,
+         schedLabel:'2× par jour (2h et 14h UTC)',backupHours:[2,14],
+         fileCount:34,lastFiles:['backup-'+auj+'.json']}
+      : {status:'ok',triggersInstalled:0,triggersAttendus:2,
+         schedLabel:'2× par jour (2h et 14h UTC)',
+         fileCount:12,lastFiles:['backup-2026-07-20.json']});
+    if(u.includes('mailFails')) return J(nom!=='panne'
       ? {status:'ok',fails:[],quotaRestant:98} : {status:'ok',fails:[{d:'a'},{d:'b'}]});
     // ⚠️ Le plafond de dépense fait partie de la SANTÉ depuis le 11/08 : il ne sert à rien
     //    s'il est désarmé, et cet état n'était visible nulle part (Michel a posé le secret
@@ -916,7 +934,7 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     // ⚠️ date RÉCENTE (calculée, pas figée) : une date en dur finirait par périmer toute
     //    seule et ferait rougir le témoin de péremption des mois plus tard.
     if(u.includes('aiUsage')) return J({status:'ok',used:127,limit:1000,
-      capKnown:true, capArmed:(nom==='ok'), capSeenAt:new Date(Date.now()-3600000).toISOString()});
+      capKnown:true, capArmed:(nom!=='panne'), capSeenAt:new Date(Date.now()-3600000).toISOString()});
     return J({status:'ok'});
   });
   // Les MISES EN LIGNE sont lues sur l'API publique de GitHub (dépôt public, aucun jeton).
@@ -935,11 +953,24 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     const box=document.getElementById('admin-health');
     return {rouges:(box.innerHTML.match(/🔴/g)||[]).length,
             verts:(box.innerHTML.match(/🟢/g)||[]).length,
+            /* 🟠 compté depuis le 06/09 : l'état « dégradé mais pas mort » (une programmation
+               de sauvegarde sur deux) n'était mesuré par AUCUN témoin — donc invisible. */
+            oranges:(box.innerHTML.match(/🟠/g)||[]).length,
             txt:(box.textContent||'').replace(/\s+/g,' ')};
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
   });
   await scenario('ok');   await deploys('ok');   const hOk=await lire();
   await scenario('panne'); await deploys('panne'); const hKo=await lire();
+  /* ⏰ 3ᵉ CAS (06/09/2026) — UNE PROGRAMMATION SUR DEUX. Michel a lancé la réparation depuis
+     l'IDE Apps Script : tout a marché, et le journal lui a répondu *« Déclencheurs actifs : 2
+     (attendu : 1) »* — un état PARFAIT annoncé comme une anomalie, parce que le « 1 » n'avait
+     pas suivi le passage à 2 sauvegardes/jour du 31/08.
+     ⛔⛔ EN CHERCHANT CE TEXTE, LE VRAI TROU EST APPARU, ET IL EST PLUS GRAVE : l'app ne testait
+     que `!bk.triggersInstalled`, donc elle ne rougissait qu'à ZÉRO. ***Une programmation sur
+     deux — la moitié des sauvegardes disparue — s'affichait comme un état parfaitement sain.***
+     C'est la famille « l'alarme qui ne peut pas sonner » : la panne d'août a coûté 36 jours
+     exactement parce qu'on regardait un voyant qui ne pouvait pas passer au rouge. */
+  await scenario('manque'); await deploys('ok'); const hMq=await lire();
   // ⚠️ ATTENTE RÉVISÉE le 02/08 (pas une régression) : la carte compte une 6ᵉ ligne,
   // « 🛡️ Historiques protégés », qui remonte les sauvegardes refusées par le garde-fou.
   t('⭐ le tableau de santé s\'affiche et tout est vert quand tout va bien',
@@ -957,6 +988,19 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     'les scénarios utilisent une date de moins de 6 h');
   t('⭐ la carte montre la ligne « Historiques protégés » (le garde-fou zéro perte)',
     /Historiques protégés/.test(hOk.txt), hOk.txt.slice(0,160));
+  /* ⏰ LES 3 TÉMOINS DE L'HORAIRE DES SAUVEGARDES (06/09/2026). */
+  t('⏰ l\'écran dit le VRAI rythme des sauvegardes (2×/jour), plus « chaque nuit »',
+    /2× par jour/.test(hOk.txt) && !/chaque nuit/i.test(hOk.txt), hOk.txt.slice(0,240));
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LE CORRECTIF : il ne mesure pas un libellé, il mesure que l'app
+     SAIT VOIR une programmation manquante. Sans lui, « 1 sur 2 » resterait vert pour toujours
+     et personne ne le saurait — c'est le mode de panne qui a coûté 36 jours. */
+  t('⭐⭐ UNE programmation sur DEUX n\'est plus un état sain : la carte le DIT et perd son vert',
+    /1 programmation sur 2/.test(hMq.txt) && hMq.verts===7 && hMq.oranges===1,
+    JSON.stringify({verts:hMq.verts,oranges:hMq.oranges,txt:hMq.txt.slice(0,240)}));
+  /* ⛔ ET LE CONTRÔLE QUI L'EMPÊCHE DE DÉGÉNÉRER : un état COMPLET ne doit déclencher aucune
+     alerte, sinon « on signale un écart » serait vrai en signalant tout le temps. */
+  t('⛔ … et un état COMPLET (2 sur 2) ne déclenche AUCUNE alerte d\'écart',
+    !/programmation sur/.test(hOk.txt) && hOk.verts===8, hOk.txt.slice(0,200));
   t('⭐ un déploiement RATÉ est visible (il ne prévient personne autrement)',
     /ÉCHEC/.test(hKo.txt)&&/tes changements ne partent pas/.test(hKo.txt),
     JSON.stringify(hKo).slice(0,240));

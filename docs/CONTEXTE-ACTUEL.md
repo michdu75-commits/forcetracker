@@ -6,7 +6,28 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1144` — 🤝 **MILO EST MIS AU COURANT QU'ON LE TESTE — CHEZ MICHEL SEUL.**
+- **Version en ligne (live) :** `ft-v1145` — 🌙 **UN ÉTAT PARFAIT ANNONCÉ COMME UNE ANOMALIE.**
+  ✅ **LES DEUX DÉPLOIEMENTS VÉRIFIÉS VERTS** (R18) : site run **#939** (7 étapes, 15:05:25 UTC)
+  **ET** backend run **#107** (9 étapes, dont « le backend répond VRAIMENT » et `authStatus` —
+  15:05:37 UTC), tous deux sur `6a29f4d`.
+  ⏳ **Suite complète VERTE** : **parcours 2904/2904** (+3), calculs 339/339, muscles 241/241,
+  croisés 50/50, dates 9/9, données classées 0 trou.
+  Michel a lancé `reparerSauvegardeNuit` dans l'IDE : **tout a marché** (2 déclencheurs à 2h et
+  14h, `backup-2026-09-06-16-27.json`, 1102 Ko, 12 comptes) — et le journal a répondu
+  ***« Déclencheurs actifs : 2 (attendu : 1) »***. Le « 1 » n'avait pas suivi le passage à
+  2 sauvegardes/jour du 31/08.
+  ⭐⭐ **Le vrai trou a été trouvé en cherchant ce texte, et il est pire** : l'écran Admin ne
+  testait que `!triggersInstalled`, donc il ne rougissait qu'à **ZÉRO**. Mesuré : « 1 sur 2 »
+  s'affichait **exactement** comme « 2 sur 2 » — 8 verts, 0 orange, **écart ZÉRO**.
+  ***La moitié des sauvegardes pouvait disparaître sans qu'aucun voyant ne bouge.***
+  ⭐ **Correctif = une source unique (R2)** : `BACKUP_HOURS_` (Code.js) possède les heures, le
+  nombre attendu et la phrase ; `checkBackup` les envoie ; `app.js` **affiche** au lieu d'écrire
+  en dur. Repli prévu si le serveur n'est pas encore redéployé.
+  ⏭️ **Reste ouvert** : aucune alerte ne PART toute seule (il faut ouvrir l'écran Admin), et la
+  **purge du dossier Drive** (append-only, ~730 fichiers/an, quota averti à 1000).
+  ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1144` — 🤝 **MILO EST MIS AU COURANT QU'ON LE TESTE — CHEZ MICHEL SEUL.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#935** sur `0048585`, **job `deploy` success**,
   les 7 étapes vertes à **14:18:53 UTC**. ⛔ **`Code.js` NON modifié** (vérifié : 0 changement)
   → **aucun déploiement backend attendu**, et son absence n'est donc pas un signal.
@@ -33,7 +54,7 @@
   donc la borne redevenait nulle) : la sonde l'a attrapé avant le témoin.
   ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 
-- **Version précédente :** `ft-v1143` — 📐 **LES 38 PX DE VIDE EN HAUT DE TOUS LES ÉCRANS.**
+- **Avant :** `ft-v1143` — 📐 **LES 38 PX DE VIDE EN HAUT DE TOUS LES ÉCRANS.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#933** sur `9df36c7`, **job `deploy` success**,
   les 7 étapes vertes à **13:46:12 UTC**.
   ⭐⭐ **C'est Michel qui a vu que j'avais tort.** Je lui avais affirmé que le haut de l'en-tête

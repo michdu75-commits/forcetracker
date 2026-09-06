@@ -6890,9 +6890,22 @@ async function loadHealthAdmin(){
       // à Paris, l'écart peut donc afficher un jour de plus. Assumé — mieux vaut ce décalage
       // cosmétique qu'une exception à une règle née d'un vrai bug de dates.)
       const jours=m?Math.round((Date.parse(today()+'T00:00:00Z')-Date.parse(m[1]+'T00:00:00Z'))/86400000):null;
-      const et=(!bk.triggersInstalled||jours===null||jours>2)?'ko':(jours>1?'warn':'ok');
+      /* ⏰ L'HORAIRE VIENT DU SERVEUR (06/09/2026, R2) — il était écrit ICI, en dur, et disait
+         « Programmée chaque nuit » alors qu'on est passés à DEUX passages le 31/08 (2h et 14h,
+         la 2ᵉ existe exprès pour couvrir les séances de la journée). *Une phrase recopiée dans
+         un autre fichier ne suit pas le mécanisme qu'elle décrit.* Repli sur l'ancien texte si
+         un serveur pas encore redéployé ne l'envoie pas — jamais de ligne vide. */
+      const sched=bk.schedLabel||'Programmée automatiquement';
+      /* ⚠️ ET ON VOIT MAINTENANT UN ÉCART : 1 déclencheur posé sur 2 attendus n'est PAS un état
+         sain, et l'ancien test (`!bk.triggersInstalled`) le trouvait parfaitement normal —
+         il ne rougissait qu'à ZÉRO. *Une sauvegarde sur deux qui disparaît ne se voyait pas.* */
+      const att=+bk.triggersAttendus||0, pose=+bk.triggersInstalled||0;
+      const manque=att>0 && pose>0 && pose<att;
+      const et=(!bk.triggersInstalled||jours===null||jours>2)?'ko':((jours>1||manque)?'warn':'ok');
       h+=_healthRow('🌙','Sauvegardes automatiques', et,
-        (bk.triggersInstalled?'Programmée chaque nuit':'<b>AUCUNE programmation</b> — plus de sauvegarde !')
+        (bk.triggersInstalled
+          ? _escIdea(sched)+(manque?' — <b>⚠️ '+pose+' programmation sur '+att+'</b>':'')
+          : '<b>AUCUNE programmation</b> — plus de sauvegarde !')
         +' · '+(bk.fileCount||0)+' fichiers'
         +(dernier?'<br>Dernière : <b>'+_escIdea(dernier)+'</b>'+(jours===null?'':(jours<=0?' (aujourd\'hui)':(jours===1?' (hier)':' (il y a '+jours+' j)'))):'<br><b>Aucune sauvegarde trouvée</b>'));
     } else h+=_healthRow('🌙','Sauvegardes automatiques','ko','Sonde injoignable : '+_escIdea((bk&&bk.error)||'?'));
