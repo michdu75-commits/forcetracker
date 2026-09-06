@@ -458,6 +458,14 @@ function doGet(e) {
       const dernier = infos.length ? infos[infos.length-1] : null;
       return json_({status:'ok', triggersInstalled:cnt, driveFolder:'ForceTracker-Backups',
         folderId:folder.getId(), fileCount:files.length, lastFiles:files.slice(-5),
+        /* ⏰ L'HORAIRE EST ENVOYÉ, PLUS ÉCRIT EN DUR DANS L'APP (06/09/2026, R2). `app.js`
+           affichait « Programmée chaque nuit » depuis toujours — faux depuis le 31/08, où on
+           est passés à 2 passages (2h ET 14h). *Une phrase recopiée dans un autre fichier ne
+           suit pas le mécanisme qu'elle décrit.* `triggersAttendus` permet en plus à l'app de
+           voir un ÉCART (2 posés sur 2 attendus ≠ 1 posé sur 2). */
+        triggersAttendus: BACKUP_HOURS_.length,
+        backupHours: BACKUP_HOURS_.slice(),
+        schedLabel: _backupSchedLabel_(),
         // Date du plus récent, donnée explicitement : l'app n'a plus à la deviner d'après un nom.
         lastDate: dernier ? new Date(dernier.d).toISOString() : null,
         lastName: dernier ? dernier.n : null});
@@ -3323,8 +3331,14 @@ function reparerSauvegardeNuit() {
     } catch (e) { res = 'dossier Drive illisible : ' + e; }
   }
 
-  var msg = '[FT] Déclencheurs de sauvegarde actifs : ' + n
-          + ' (attendu : 1) — ' + res;
+  /* ⛔ LE NOMBRE ATTENDU N'EST PLUS ÉCRIT ICI (voir `BACKUP_HOURS_`) : il disait « 1 » depuis le
+     passage à 2 sauvegardes/jour, donc il annonçait une INSTALLATION RÉUSSIE comme une anomalie.
+     Et on DIT si ça correspond, plutôt que de laisser lire deux nombres côte à côte. */
+  var attendu = BACKUP_HOURS_.length;
+  var msg = '[FT] Déclencheurs de sauvegarde actifs : ' + n + '/' + attendu
+          + (n === attendu ? ' ✅ (' + _backupSchedLabel_() + ')'
+                           : ' ⚠️ ÉCART — attendu ' + attendu + ', trouvé ' + n)
+          + ' — ' + res;
   Logger.log(msg); console.log(msg);
   return msg;
 }
@@ -3558,6 +3572,31 @@ function voirResultatDeclencheur() {
   return msg;
 }
 
+/* ⏰ LES HEURES DE SAUVEGARDE — UNE SEULE SOURCE, ET C'EST LE POINT DE CETTE CONSTANTE (R2).
+   Le 31/08 on est passés de 1 à 2 sauvegardes par jour. La liste `[2, 14]` a bien été changée
+   ici… et TROIS textes sont restés à « 1 » ailleurs : le journal de `reparerSauvegardeNuit`
+   (« attendu : 1 »), la ligne de log de l'installation, et l'écran Admin de l'app
+   (« Programmée chaque nuit »).
+   ⛔⛔ CE QUE ÇA A PRODUIT, et c'est le pire cas possible pour une sonde : Michel a lancé la
+   réparation le 06/09, **tout a parfaitement marché**, et le journal lui a répondu
+   ***« Déclencheurs actifs : 2 (attendu : 1) »*** — un état PARFAIT annoncé comme une anomalie.
+   *Une alarme qui crie pour rien est une alarme qu'on apprend à ignorer* — c'est exactement ce
+   qui a coûté 36 jours sans sauvegarde en août, et c'était déjà écrit dans ce fichier.
+   👉 Le nombre attendu n'est plus écrit nulle part : il vaut `BACKUP_HOURS_.length`. Changer les
+   heures met tout à jour, y compris la phrase affichée dans l'app (elle est envoyée par
+   `checkBackup`, elle n'est plus écrite en dur dans `app.js`). */
+const BACKUP_HOURS_ = [2, 14];   // heures UTC — encadrent la journée d'entraînement (voir plus bas)
+
+/* 🗣️ La même chose en français, pour l'écran Admin. ⚠️ Elle vit ICI, à côté des heures :
+   une phrase écrite dans le frontend redeviendrait fausse au prochain changement — elle l'a
+   déjà été une fois, c'est tout l'objet de ce correctif. */
+function _backupSchedLabel_() {
+  const h = BACKUP_HOURS_.map(function(x){ return x + 'h'; });
+  if (!h.length) return 'AUCUNE programmation';
+  if (h.length === 1) return 'Programmée chaque jour à ' + h[0] + ' UTC';
+  return h.length + '× par jour (' + h.join(' et ') + ' UTC)';
+}
+
 // ── Trigger backup QUOTIDIEN ─────────────────────────────────
 // ⚠️ Nom terminé par `_` = fonction PRIVÉE : elle n'apparaît PAS dans le menu d'exécution
 // de l'IDE. Pour la lancer à la main, passer par `reparerSauvegardeNuit()` ci-dessus.
@@ -3580,14 +3619,15 @@ function installDailyBackupTrigger_() {
      on passe de ~365 à ~730 fichiers par an, pour un avertissement de quota Drive posé à 1000
      (@54). *À ce rythme l'alerte tombe en ~16 mois* — c'est écrit ici pour que la purge soit
      une décision, pas une découverte. */
-  [2, 14].forEach(function(h){
+  BACKUP_HOURS_.forEach(function(h){
     ScriptApp.newTrigger('backupAllUserData_')
       .timeBased()
       .everyDays(1)
       .atHour(h)
       .create();
   });
-  Logger.log('[FT backup] 2 triggers installés — backupAllUserData_ à 2h ET 14h UTC.');
+  Logger.log('[FT backup] ' + BACKUP_HOURS_.length + ' trigger(s) installé(s) — backupAllUserData_ à '
+             + BACKUP_HOURS_.map(function(h){ return h + 'h'; }).join(' et ') + ' UTC.');
 }
 
 // Fonction utilitaire publique — exécuter UNE SEULE FOIS depuis l'IDE pour autoriser
