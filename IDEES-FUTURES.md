@@ -4,6 +4,45 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🧠 AMÉLIORER LE CERVELET — et d'abord POUVOIR LE NOTER (06/09/2026)
+
+**Michel**, dans la minute où **ft-v1152** est partie en ligne : *« il va falloir améliorer le
+cervelet alors dans le futur »*.
+
+**⭐⭐ C'EST LA CONSÉQUENCE EXACTE DE ft-v1152, ET IL L'A VUE AVANT MOI.** La place du cardio
+dépendait d'une **devinette de l'app** (du code, corrigeable — corrigé 3 fois). Elle dépend
+désormais d'un **champ déclaré par le cervelet**. 👉 ***Le point faible n'a pas disparu, il a
+changé de nature*** : d'un bug de code vers un comportement de modèle. **L'échange est bon** (une
+devinette a des trous par construction), mais il déplace le travail restant.
+
+**⛔⛔ L'OBSTACLE EN PREMIER, avant toute proposition** : les témoins de ft-v1152 vérifient que le
+prompt du cervelet **DIT** la règle — **aucun ne vérifie qu'il l'APPLIQUE**. Je ne peux pas le faire
+tourner (pas de clé API). *C'est §8 de `ARCHITECTURE-CERVEAU-CERVELET.md` mot pour mot : on prouve
+la PRÉSENCE, jamais l'OBÉISSANCE.* Donc **« améliorer » commence par « pouvoir noter »**, jamais par
+retoucher le prompt (**R7**).
+
+**⭐⭐ ET LA BONNE NOUVELLE EST RÉELLE : le cervelet est BEAUCOUP plus facile à noter que Milo.**
+Entrée = **un texte**. Sortie = **un JSON**. Attendu = **vérifiable par du CODE**, toujours.
+**Aucun juge humain**, jamais — il n'y a pas de ton ni de goût à arbitrer : ou bien le cardio est
+dans `cardio`, ou bien il est dans `exs`. Et le modèle est **Haiku**, le moins cher du projet.
+👉 ***C'est le seul banc d'essai de ce projet qui n'ait aucun obstacle de méthode*** — là où celui
+de Milo bute sur les scénarios qui dépendent du jugement. ⭐ Le **corpus existe déjà** (les vrais
+messages de Milo) et la sortie attendue est **ce que Michel a déjà validé à l'écran**.
+
+**🔧 L'ordre, du moins cher au plus cher** — détaillé en **§10.3** de
+`docs/ARCHITECTURE-CERVEAU-CERVELET.md` :
+1. la **validation côté code** (gratuit, aucun appel) — *le modèle propose, le code valide* ;
+2. le **banc du cervelet** (un appel Haiku par cas) ;
+3. le **prompt**, seulement une fois qu'un avant/après est mesurable (**R34**) ;
+4. le **MODÈLE** (**R9**) — *personne n'a jamais mesuré ce que la même tâche donnerait un cran
+   au-dessus de Haiku*. Sans banc, monter de gamme, c'est payer plus sans savoir si on gagne.
+
+**⛔ Ce que ça ne veut PAS dire** : aucune refonte, et **le repli reste non négociable** (§5.3bis) —
+c'est lui qui fait qu'un cervelet imparfait, ou un worker pas encore déployé, laisse l'app marcher.
+*On améliore le convertisseur, on ne devient jamais dépendant de lui.*
+
+---
+
 ## 📊 REMETTRE « VOLUME » ET « FORCE » DANS CE MOIS ? — RETIRÉES LE 05/09/2026 (ft-v1138)
 
 **Michel** : *« quand on clique sur les tuiles, c'est pas terrible où j'arrive, j'aime pas trop »*,

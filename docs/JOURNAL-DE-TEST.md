@@ -69,6 +69,29 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 LE CERVELET OBÉIT-IL À SES PROPRES RÈGLES ? — personne ne le sait (06/09/2026)
+
+**Ce qui déclenche l'entrée** : **ft-v1152**. Le cervelet reçoit désormais l'ordre de déclarer le
+cardio dans `cardio:{avant,apres}` et de ne **jamais** le mettre dans `exs`. Mes témoins vérifient
+que le prompt **le dit** — ⛔ **aucun ne vérifie qu'il le FAIT**, et je ne peux pas le lancer (pas
+de clé API). Michel, dans la foulée : *« il va falloir améliorer le cervelet alors dans le futur »*.
+
+**⚠️ Le doute, écrit tel quel plutôt que perdu** : on ne sait pas à quelle fréquence le cervelet
+range correctement un cardio, ni ce qu'il fait des cas tordus (un cardio au milieu, deux cardios
+avant, une durée en secondes, « 10-15 min », un échauffement de mobilité sans machine).
+
+**⭐⭐ CE N'EST PAS UNE ENTRÉE COMME LES AUTRES, ET C'EST POUR ÇA QU'ELLE EST ICI** : c'est le
+**premier** cas de ce fichier où l'attendu est vérifiable par du code **par construction**. Entrée =
+un texte, sortie = un JSON, comparaison = du code. **Aucun juge humain n'est possible ni
+nécessaire.** 👉 *Mais elle ne peut pas devenir un `EV-0XX` : le benchmark note **Milo**, pas le
+convertisseur.* Elle attend un **banc du cervelet**, qui n'existe pas — cadré en **§10.2** de
+`docs/ARCHITECTURE-CERVEAU-CERVELET.md`.
+
+**Reste 🟡 exprès** : ce n'est pas « à trier » par paresse, c'est *prête mais sans banc pour
+l'accueillir*. Elle repassera 🟢 le jour où ce banc existera.
+
+---
+
 ### 🟢 MILO APLATIT LA RAMPE — promu **EV-057** (06/09/2026)
 
 **Ce qui déclenche l'entrée** : Michel, le jour même : *« il m'a proposé une séance avec des charges
