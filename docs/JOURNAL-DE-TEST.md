@@ -69,6 +69,28 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 « IL Y A UN PROBLÈME AVEC LE RIR AUSSI » — signalé par Michel, pas encore reproduit (06/09/2026)
+
+**Ce qui déclenche l'entrée** : Michel, en salle, dans le même message que son « go » sur les doublons
+de noms : *« et il y a un problème avec le rir aussi »*. **Aucun détail encore** — la ligne est posée
+tout de suite, avant d'avoir la réponse, parce que c'est exactement le régime de ce fichier : *une
+question notée coûte dix secondes, une question laissée dans une conversation disparaît avec elle*
+(**R27**).
+
+**⚠️ Ce qui est déjà su, et qui ne prouve rien** : dans son export du jour, le RIR est bien écrit là
+où il a été saisi (`Rowing Poitrine Appuyée 4 N 52 8 **1** 416`, `Machine Oiseau 3 N 59 10 **2** 590`)
+et absent ailleurs — ce qui est le comportement attendu (*une série non notée n'est pas un échec*).
+**Donc le symptôme n'est pas dans l'export.** Il est ailleurs : la saisie, l'affichage « précédent »,
+la conversion RPE, ou ce que Milo en fait.
+
+**⛔ À NE PAS FAIRE : deviner.** Trois fois aujourd'hui j'ai conclu avant de mesurer, et Michel m'a
+repris trois fois — dont deux où il avait raison contre une « preuve » que mon propre outil avait
+fabriquée. *Cette entrée reste ouverte jusqu'à ce qu'il dise ce qu'il voit.*
+
+**Attendu vérifiable** : à définir une fois le symptôme connu. ⚠️ Le RIR touche au moins **cinq**
+endroits (saisie sur la barre de repos · colonne « précédent » · échelle RIR/RPE · export ·
+contexte de Milo) — *un défaut à un seul de ces endroits ressemble à un défaut du RIR tout entier.*
+
 ### 🔵 « PERTE DE DONNÉES » EN PLEINE SÉANCE — c'était un NOM, et le code le savait déjà (06/09/2026)
 
 **Ce qui déclenche l'entrée** : Michel, en salle, séance en cours : *« Perte de données. Dans
