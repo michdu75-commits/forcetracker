@@ -2678,3 +2678,52 @@ teste rien, il rassure.*
 - ⭐ **Le réflexe, en une ligne** : *avant de poser un comportement sur un chemin, chercher
   combien de chemins mènent là* — et si la réponse est « deux », le poser là où ils se croisent,
   jamais sur l'un des deux.
+
+
+---
+
+## 44. ✂️ LA COUPE D'AFFICHAGE QUI SUPPRIME EXACTEMENT CE QUI DISTINGUE **(06/09/2026, ft-v1149)**
+
+L'écran Admin des doublons coupe les noms d'exercice aux **18 premiers caractères** pour tenir
+dans deux boutons côte à côte. Le jour où ft-v1148 lui a appris à voir la famille « suffixe »
+(`Développé Épaules Assis Machine` ↔ `… (Shoulder Press)`), **mesuré sur les 4 doublons réels de
+Michel : 2 paires sur 4 affichaient DEUX FOIS LE MÊME BOUTON**, et les 2 autres ne différaient
+que par un `…` ou une parenthèse ouvrante.
+
+### ⛔⛔ Ce qui rend la famille vicieuse
+La coupe garde le **DÉBUT**. Or les paires qu'on demande à la personne de départager sont, par
+construction, celles qui **se ressemblent** — et se ressembler, pour un nom d'exercice, veut
+presque toujours dire **partager son début**. 👉 ***La troncature garde ce que les deux ont en
+commun et jette ce qui les sépare*** : elle est d'autant plus aveugle que le cas est plus utile.
+
+### ⛔ Le multiplicateur : c'est le correctif de la veille qui a rendu le cas fréquent
+Avant ft-v1148, ce détecteur ne rapprochait que sur une distance d'**une lettre** — deux noms
+quasi identiques, donc deux étiquettes quasi identiques… mais on n'en voyait presque jamais.
+En ouvrant la famille « suffixe », on a rendu **courant** le seul cas que l'affichage ne savait
+pas rendre. *Un correctif peut fabriquer son propre défaut d'affichage sans qu'aucun test ne
+bouge, et sans que le correctif soit faux.*
+
+### ⛔⛔ Pourquoi c'est grave ici et pas ailleurs
+`mergeExercises` est **IRRÉVERSIBLE**. Deux boutons jumeaux ne font pas renoncer : ils font
+**taper au hasard une fois sur deux**. *Une action sans retour dont on ne peut pas lire les
+options est pire qu'une action absente* (**R29**).
+
+### 🔎 Comment la reconnaître
+- Un écran qui demande de **choisir entre deux choses proches**, et qui **tronque** leur libellé.
+- Une troncature écrite pour un cas (« un nom est trop long ») réutilisée pour un autre (« deux
+  noms se ressemblent ») — c'est **R14**, le comportement copié d'un contexte à un autre.
+- Le signe qui aurait dû alerter : *la coupe est faite nom par nom, alors que la question posée
+  est une COMPARAISON*.
+
+### 🛡️ Ce qui protège aujourd'hui
+- `_libellesDoublon(a,b)` étiquette la **paire**, pas chaque nom séparément : si les deux têtes
+  se ressemblent, on garde la **FIN** — ce qui les sépare — et en dernier recours on ne coupe plus.
+- Un témoin exige que le **suffixe reste visible**, pas seulement que les deux étiquettes
+  diffèrent : *« …e Machine » et « …s Machine » seraient distinctes et ne diraient rien.*
+- ⚠️ **Et la comparaison porte sur ce que l'ŒIL voit** : `Hip Thrust Barre` et `Hip Thrust
+  Barre (` sont deux chaînes différentes pour le code et le même mot pour la personne ; `Squat`
+  et `Squat ` ne diffèrent que d'une espace. *Un test d'égalité écrit sur les chaînes brutes
+  aurait été vert sur les deux cas où l'écran ment* — c'est **§31** (le témoin visé sur la forme
+  et non sur la garantie), attrapé cette fois au contrôle négatif.
+- ⭐ **Le réflexe, en une ligne** : *quand un écran fait choisir, la coupe se décide sur la
+  PAIRE, jamais sur un élément à la fois.*

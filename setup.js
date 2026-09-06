@@ -3539,6 +3539,44 @@ async function debugPremiumCheck(){
   }
 }
 
+/* 🔤 LES DEUX BOUTONS DE FUSION DOIVENT ÊTRE DISTINGUABLES — ft-v1149 (06/09/2026).
+   ⛔⛔ Le défaut, mesuré sur la capture de Michel le jour même de ft-v1148 : les étiquettes
+   étaient coupées aux **18 PREMIERS** caractères, donc sur ses 4 doublons réels **2 paires
+   affichaient DEUX FOIS LE MÊME BOUTON** — « Garder "Développé Épaules …" » à gauche comme à
+   droite — et les 2 autres ne différaient que par un « … » ou une parenthèse ouvrante.
+   ⭐⭐ Et ce n'est pas un hasard de longueur : la famille « suffixe » ouverte la veille est
+   **par définition** celle où les deux noms partagent leur DÉBUT. *Le correctif d'hier a rendu
+   fréquent le cas que cette coupe ne savait pas afficher.*
+   ⛔ Ce que ça coûte : `mergeExercises` est **IRRÉVERSIBLE**. Deux boutons indiscernables sur
+   une fusion définitive sont pires que pas de bouton du tout — on ne renonce pas, on tape au
+   hasard une chance sur deux (**R29** : le coût de l'erreur décide de la méthode).
+   👉 **La règle** : on coupe là où c'est INFORMATIF. Si les deux têtes se ressemblent, on garde
+   la **FIN** — c'est-à-dire exactement ce qui les sépare. Et en dernier recours on ne coupe
+   plus du tout : un bouton long est laid, un bouton ambigu est dangereux.
+   ⚠️ La comparaison ignore le « … » et la ponctuation de fin : « Hip Thrust Barre » contre
+   « Hip Thrust Barre ( » sont deux chaînes différentes pour le code et **le même mot** pour
+   l'œil — *la seule égalité qui compte ici est celle que la personne LIT.* */
+function _libellesDoublon(a,b){
+  const A=String(a==null?'':a), B=String(b==null?'':b);
+  const _nu=s=>s.replace(/[\s…(«"'\-]+$/,'').replace(/^…/,'');
+  const _tete=n=> n.length>18 ? n.slice(0,18)+'…' : n;
+  const _queue=n=> n.length>22 ? '…'+n.slice(-22) : n;
+  let la=_tete(A), lb=_tete(B);
+  if(_nu(la)===_nu(lb)){ la=_queue(A); lb=_queue(B); }
+  if(_nu(la)===_nu(lb)){ la=A; lb=B; }
+  /* ⛔ Dernier recours, et il est nécessaire : deux noms qui ne diffèrent que par une ESPACE de
+     fin s'affichent pareil **même sans aucune coupe** (« Squat » et « Squat »), et c'est un vrai
+     cas — la famille « même nom normalisé » existe dans ce détecteur depuis toujours. On rend
+     alors la différence LISIBLE au lieu de laisser deux boutons jumeaux sur une action définitive. */
+  /* ⚠️ On compare ici ce que l'ŒIL voit, pas ce que la chaîne CONTIENT : « Squat » et
+     « Squat » diffèrent d'une espace pour le code et de RIEN pour la personne. Comparer les
+     chaînes brutes rendrait ce garde-fou vert sans qu'il protège quoi que ce soit. */
+  const _vu=s=>s.replace(/\s+/g,' ').trim();
+  if(_vu(la)===_vu(lb)){ la=A+' ('+A.length+' car.)'; lb=B+' ('+B.length+' car.)'; }
+  if(_vu(la)===_vu(lb)){ la=A+' « 1 »'; lb=B+' « 2 »'; }
+  return [la,lb];
+}
+
 function detectDuplicates(){
   const seen=new Map();
   (S.sessions||[]).forEach(s=>(s.exs||[]).forEach(ex=>{if(ex.name)seen.set(ex.name,ex.name);}));
@@ -3582,8 +3620,7 @@ function detectDuplicates(){
   el.style.display='flex';
   if(!pairs.length){el.innerHTML='<div style="color:var(--t3);padding:8px 0;">Aucun doublon détecté ✅</div>';return;}
   el.innerHTML=pairs.map(([a,b,d])=>{
-    const la=a.length>18?a.slice(0,18)+'…':a;
-    const lb=b.length>18?b.slice(0,18)+'…':b;
+    const [la,lb]=_libellesDoublon(a,b);
     /* 🔗 ft-v1147 — on DIT de quelle famille vient le rapprochement, et laquelle est au
        catalogue. ⛔ On ne tranche pas à sa place (R29) : les deux boutons restent, on
        montre juste ce qu'il faut pour décider en une seconde. Un « dist.suffixe » brut
@@ -3597,8 +3634,8 @@ function detectDuplicates(){
       +'<div style="color:var(--t3);font-size:11px;">'+_etiq+'</div>'
       +'<div style="color:var(--t1);font-weight:600;font-size:13px;">'+a+' <span style="color:var(--t3);font-weight:400;">≈</span> '+b+'</div>'
       +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'
-      +'<button class="btn btn-bg2" onclick="mergeExercises('+_argAttr(a)+','+_argAttr(b)+')" style="padding:7px 10px;font-size:12px;flex:1;">Garder "'+la+'"</button>'
-      +'<button class="btn btn-bg2" onclick="mergeExercises('+_argAttr(b)+','+_argAttr(a)+')" style="padding:7px 10px;font-size:12px;flex:1;">Garder "'+lb+'"</button>'
+      +'<button class="btn btn-bg2" onclick="mergeExercises('+_argAttr(a)+','+_argAttr(b)+')" style="padding:7px 10px;font-size:12px;flex:1;min-width:0;overflow-wrap:anywhere;">Garder "'+la+'"</button>'
+      +'<button class="btn btn-bg2" onclick="mergeExercises('+_argAttr(b)+','+_argAttr(a)+')" style="padding:7px 10px;font-size:12px;flex:1;min-width:0;overflow-wrap:anywhere;">Garder "'+lb+'"</button>'
       +'</div></div>';
   }).join('');
 }

@@ -28375,6 +28375,116 @@ console.log('\n-- CCXLVII. Le nom de Milo rejoint celui du catalogue (ft-v1147) 
     && (srcSet.match(/mergeExercises\(/g)||[]).length<=4, '');
 }
 
+/* ═══ CCXLVIII. LES DEUX BOUTONS DE FUSION SONT DISTINGUABLES (06/09/2026, ft-v1149) ═════════
+   Capture de Michel sur l'écran Admin, le jour même de ft-v1148 : ses 4 doublons sont bien
+   détectés et bien étiquetés… et **2 paires sur 4 affichent DEUX FOIS LE MÊME BOUTON**
+   (« Garder "Développé Épaules …" » des deux côtés), les 2 autres ne différant que par un
+   « … » ou une parenthèse ouvrante.
+   ⛔⛔ Ce n'est pas un hasard de longueur : la famille « suffixe » ouverte la veille est **par
+   définition** celle où les deux noms partagent leur DÉBUT — *le correctif d'hier a rendu
+   fréquent le cas que cette coupe ne savait pas afficher*. Et `mergeExercises` est
+   **IRRÉVERSIBLE** : deux boutons jumeaux sur une action définitive ne font pas renoncer, ils
+   font taper au hasard une fois sur deux (R29).
+   ⭐ Témoins FONCTIONNELS : la vraie fonction est extraite de `setup.js` et exécutée. Un `grep`
+   dirait que le code coupe autrement, jamais que les deux étiquettes SE LISENT différemment. */
+console.log('\n-- CCXLVIII. Les deux boutons de fusion sont distinguables (ft-v1149) --');
+{
+  const srcSet=fs.readFileSync(path.join(ROOT,'setup.js'),'utf8');
+
+  /* ⛔⛔ DEUX CONTRÔLES AVANT TOUT LE RESTE — le second est le plus important : une fonction
+     d'étiquetage parfaite qui n'est jamais appelée laisserait TOUS les autres témoins verts
+     pendant que l'écran continue d'afficher deux boutons identiques. */
+  t('CCXLVIII ⛔ CONTRÔLE — `_libellesDoublon` existe',
+    /function _libellesDoublon\(a,b\)/.test(srcSet), '');
+  t('CCXLVIII ⛔⛔ CONTRÔLE — l\'écran des doublons l\'UTILISE (sinon tout serait vert sur du vide)',
+    /const \[la,lb\]=_libellesDoublon\(a,b\);/.test(srcSet), '');
+
+  let L=null;
+  try{
+    const vm=require('vm');
+    const d=srcSet.indexOf('function _libellesDoublon(');
+    let corps=null;
+    if(d>=0){ let i=srcSet.indexOf('{',d), p=0;
+      for(let k=i;k<srcSet.length;k++){ if(srcSet[k]==='{')p++; else if(srcSet[k]==='}'){p--; if(!p){corps=srcSet.slice(d,k+1);break;}} } }
+    const sb={console:{log(){},warn(){}}};
+    vm.createContext(sb);
+    vm.runInContext((corps||'')+'\n;globalThis.__l=(typeof _libellesDoublon!=="undefined")?_libellesDoublon:null;',
+      sb, {timeout:8000});
+    L=sb.__l||null;
+  }catch(e){ L=null; }
+  t('CCXLVIII ⛔ CONTRÔLE — la fonction s\'exécute dans le bac à sable', !!L, L?'':'indisponible');
+
+  if(L){
+    /* ⚠️ « Différent » ne suffit pas : la seule égalité qui compte est celle que l'ŒIL voit.
+       « Hip Thrust Barre » et « Hip Thrust Barre ( » sont deux chaînes différentes pour le
+       code et le même mot pour la personne. On compare donc ce qui RESTE une fois retirés le
+       « … » et la ponctuation de fin — exactement ce que la fonction elle-même refuse. */
+    const _lu=s=>String(s).replace(/[\s…(«"'\-]+$/,'').replace(/^…/,'');
+    const CAS=[['Développé Épaules Assis Machine','Développé Épaules Assis Machine (Shoulder Press)'],
+               ['Rowing Poitrine Appuyée','Rowing Poitrine Appuyée (Chest Supported)'],
+               ['Hip Thrust Barre','Hip Thrust Barre (Poussée de Hanche)'],
+               ['Abduction Cuisses','Abduction Cuisses (Leg Abduction)']];
+
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION — sur ses 4 VRAIS doublons du 06/09. */
+    const jumeaux=CAS.filter(([a,b])=>{ const [la,lb]=L(a,b); return _lu(la)===_lu(lb); });
+    t('CCXLVIII ⭐⭐ les 4 doublons réels de Michel donnent DEUX boutons qui se lisent différemment',
+      jumeaux.length===0, jumeaux.map(([a,b])=>L(a,b).join(' == ')).join(' | '));
+
+    /* ⛔⛔ ET C'EST LA MOITIÉ UTILE : distinct ne suffit pas, il faut que ce soit le SUFFIXE
+       — c'est-à-dire l'élément qui permet de décider — qui reste lisible. Deux étiquettes
+       « …e Machine » et « …s Machine » seraient distinctes et ne diraient rien. */
+    const suffixes=[['Développé Épaules Assis Machine (Shoulder Press)','Shoulder Press)'],
+                    ['Rowing Poitrine Appuyée (Chest Supported)','Chest Supported)'],
+                    ['Hip Thrust Barre (Poussée de Hanche)','de Hanche)'],
+                    ['Abduction Cuisses (Leg Abduction)','Leg Abduction)']];
+    const perdus=suffixes.filter(([nom,fin],k)=>{ const [,lb]=L(CAS[k][0],nom); return lb.indexOf(fin)<0; });
+    t('CCXLVIII ⛔⛔ le SUFFIXE reste visible dans l\'étiquette (c\'est lui qui permet de trancher)',
+      perdus.length===0, perdus.map(([n])=>n).join(' | '));
+
+    /* ⛔ Le cas dur, et il est RÉEL : la famille « même nom normalisé » existe dans ce
+       détecteur depuis toujours, donc deux noms qui ne diffèrent que par une espace de fin
+       peuvent s'y retrouver — et là, aucune coupe ne les sépare. */
+    const _vu=s=>String(s).replace(/\s+/g,' ').trim();
+    const [e1,e2]=L('Squat','Squat ');
+    t('CCXLVIII ⛔ deux noms séparés par une SEULE espace de fin restent distinguables À L\'ŒIL',
+      _vu(e1)!==_vu(e2) && e1.length>0 && e2.length>0, e1+' == '+e2);
+
+    /* ⛔ Non-régression du cas courant : un nom court n'est pas coupé, et une paire déjà
+       lisible (accents) n'est pas déguisée en « …fin de mot ». */
+    const [c1,c2]=L('Développé Couché','Developpé Couche');
+    t('CCXLVIII ⛔ une paire déjà lisible n\'est PAS recoupée (pas de régression du cas courant)',
+      c1==='Développé Couché' && c2==='Developpé Couche', c1+' | '+c2);
+
+    /* ⛔ L'étiquette reste bornée : on répare l'ambiguïté, on ne fabrique pas un pavé. */
+    /* ⛔ L'étiquette reste COURTE : la coupe par la fin n'est pas décorative, c'est elle qui
+       permet d'être lisible ET bref. Sans elle la fonction retomberait sur les noms entiers —
+       distincts, informatifs, et deux fois trop longs pour deux boutons côte à côte. */
+    const trop=CAS.filter(([a,b])=>L(a,b).some(s=>s.length>30));
+    t('CCXLVIII ⛔ les étiquettes restent courtes (≤ 30 car.) — lisibles ET brèves',
+      trop.length===0, trop.map(([a,b])=>L(a,b).join(' / ')).join(' | '));
+
+    /* ⛔ Total sur des entrées bizarres : cette fonction est appelée dans une boucle de rendu,
+       une exception y viderait l'écran des doublons au lieu d'afficher une paire fautive. */
+    let dur=true, det='';
+    [[null,undefined],[0,''],['',''],[{},[]],['a','a']].forEach(([x,y])=>{
+      try{ const r=L(x,y); if(!Array.isArray(r)||r.length!==2) { dur=false; det='retour invalide'; } }
+      catch(err){ dur=false; det=String(err&&err.message); }
+    });
+    t('CCXLVIII ⛔ aucune entrée bizarre ne fait planter le rendu des doublons', dur, det);
+  }
+
+  /* ⛔ NON-RÉGRESSION DE ft-v1148 — je ne touche qu'à l'ÉTIQUETTE. Ni le rapprochement, ni le
+     seuil, ni l'outil de fusion ne bougent : sinon « les boutons sont lisibles » serait vrai
+     le jour où plus aucun doublon n'est détecté. */
+  t('CCXLVIII ⛔ la famille « suffixe » est toujours détectée (ft-v1148 intact)',
+    /_normEx\(ca\)===_normEx\(cb\)/.test(srcSet) && /'suffixe'/.test(srcSet), '');
+  t('CCXLVIII ⛔ le seuil de ressemblance est toujours à 1 lettre',
+    /const d=_lev\(na,nb\);\s*\n?\s*if\(d<=1\)pairs\.push/.test(srcSet), '');
+  t('CCXLVIII ⛔ la fusion reste un CHOIX : aucune fusion automatique n\'a été ajoutée (R29)',
+    /function mergeExercises\(keep,remove\)/.test(srcSet) && /showConfirm\(/.test(srcSet)
+    && (srcSet.match(/mergeExercises\(/g)||[]).length<=4, '');
+}
+
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
 })().catch(e=>{console.error(e);process.exit(2);});

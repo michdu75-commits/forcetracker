@@ -6,7 +6,28 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1147` — 🔥 **L'ÉCHAUFFEMENT CARDIO DE MILO ALLAIT DANS LA LISTE DES EXERCICES.**
+- **Version en ligne (live) :** `ft-v1149` — 🔤 **LES DEUX BOUTONS DE FUSION DISAIENT LA MÊME CHOSE.**
+  Capture de Michel sur l'écran Admin, **le jour même** de ft-v1148 : ses 4 doublons sont tous
+  détectés et bien étiquetés — mais les deux boutons de choix étaient coupés aux **18 premiers**
+  caractères, donc **mesuré : 2 paires sur 4 affichaient DEUX FOIS LE MÊME BOUTON**.
+  ⭐⭐ **Ce n'est pas un hasard de longueur** : la famille « suffixe » ouverte la veille est **par
+  définition** celle où les deux noms partagent leur **début**. *Le correctif d'hier a rendu
+  fréquent le cas que cette coupe ne savait pas afficher.*
+  ⛔⛔ **Et `mergeExercises` est IRRÉVERSIBLE** : deux boutons jumeaux ne font pas renoncer, ils
+  font **taper au hasard une fois sur deux** (R29).
+  ⭐ **La règle** : on coupe là où c'est **informatif** — si les deux têtes se ressemblent, on garde
+  la **FIN**, c'est-à-dire ce qui les sépare ; en dernier recours on ne coupe plus du tout. Un témoin
+  exige que le **suffixe reste visible**, pas seulement que les étiquettes diffèrent.
+  ⚠️ **La seule égalité qui compte est celle que l'ŒIL voit** : `Hip Thrust Barre` contre `Hip Thrust
+  Barre (`, `Squat` contre `Squat ` — *une comparaison écrite sur les chaînes brutes aurait été verte
+  sur les deux cas où l'écran ment* (attrapé au contrôle négatif). Famille **44** de `BUGS.md`.
+  ⛔ **Je n'ai touché QU'À L'ÉTIQUETTE** : ni le rapprochement, ni le seuil de 1 lettre, ni la fusion
+  — 3 témoins de non-régression le figent.
+  ⏭️ **Reste ouvert, inchangé** : la réparation du passé est **derrière l'admin** · la recherche ne
+  découpe pas les mots (*« biceps marteau »* → **0 résultat**) · le tiret ne dit pas « 1ʳᵉ fois ».
+  ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1147` — 🔥 **L'ÉCHAUFFEMENT CARDIO DE MILO ALLAIT DANS LA LISTE DES EXERCICES.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#944** sur `248952d`, **job `deploy` success**,
   les 7 étapes vertes à **18:05:00 UTC**. ⛔ **`Code.js` NON modifié** → aucun déploiement backend
   attendu, son absence n'est donc pas un signal.
@@ -26,7 +47,7 @@
   ⏭️ **Non traité, exprès** : un cardio **au milieu** de la séance reste un exercice (décision
   ft-v995). ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 
-- **Version précédente :** `ft-v1148` — 🔗 **LES NOMS D'EXERCICES SE DÉDOUBLAIENT DEPUIS LE 24/08.**
+- **Version précédente (déployée, run #946 vert — R18) :** `ft-v1148` — 🔗 **LES NOMS D'EXERCICES SE DÉDOUBLAIENT DEPUIS LE 24/08.**
   Michel, en salle : *« Perte de données, j'ai déjà fait cet exercice »*. ⛔⛔ **Rien n'était perdu** —
   son historique portait un **autre nom**. Mesuré sur ses **44 séances** : **4 doublons**, tous le nom
   privé de son suffixe entre parenthèses (`Développé Épaules Assis Machine` contre `… (Shoulder
