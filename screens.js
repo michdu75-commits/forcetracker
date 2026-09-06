@@ -618,6 +618,7 @@ const _OVERLAY_CLOSERS={
      Ici la fermeture ne consomme rien (le motif est déjà enregistré au tap), mais l'oublier
      laisserait l'écran ouvert derrière un retour arrière — le défaut de ft-v466/v629. */
   'ov-milo-rate':'_miloRaterFermer',
+  'ov-ev-histo':'closeEvalHistorique',             // ft-v1141 (R15 : tout chemin de fermeture)
   'ov-histo-export':'closeHistoExport',            // ft-v1048 (R15 : tout chemin de fermeture)
   'ov-whatsnew':'closeWhatsNew',                   // marque les nouveautés comme vues
   'ov-super-welcome':'closeSuperWelcome',

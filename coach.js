@@ -6487,9 +6487,96 @@ async function _evRun(SC, compare, rep){
   // 💾 Les réponses sont gardées APRÈS le dégel et APRÈS la restauration des vraies données :
   // jamais pendant, pour qu'un échec d'écriture ne puisse pas croiser le chemin du profil.
   try{ _evRepsEcrire(parPasse, _evReport.ymd, compare); }catch(e){}
+  /* 📊 ft-v1141 — LE JOURNAL DES PASSES, écrit ICI et nulle part ailleurs : c'est le seul
+     endroit du code où une VRAIE passe vient de se terminer. Posé après `_evBuildReport`
+     (qui écrit déjà l'historique par scénario) pour que les deux magasins décrivent la même
+     passe, et **après** la restauration des vraies données comme son voisin. */
+  try{ _evPassesEcrire(parPasse, compare); if(typeof persist==='function') persist(); }catch(e){}
   _evShowResultCard();
   coachBusy = false; if(sendBtn) sendBtn.disabled = false; _evRunning = false;
   toast('Benchmark terminé — tes données sont intactes','success');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════
+   📊 LE JOURNAL DES PASSES (ft-v1141) — « il faudrait créer un historique des benchmark »
+   ═══════════════════════════════════════════════════════════════════════════════════════
+   ⭐⭐ UN HISTORIQUE EXISTAIT DÉJÀ, ET IL RESTE : celui juste en dessous (`ft4_evalHist`),
+   qui garde les 8 dernières passes **PAR SCÉNARIO** (`EV-012 ✅ ❌ ✅ → intermittent`). Il est
+   plus FIN que ce qu'on ajoute ici, et c'est lui qui dit quoi corriger. *On n'a pas construit
+   par-dessus : on a construit à côté, pour la question qu'il ne sait pas répondre.*
+
+   ⛔ CE QU'IL NE SAIT PAS DIRE : *« est-ce qu'on progresse ? »*. Il est rangé par scénario,
+   donc il n'y a **aucune ligne par PASSE** — ni date, ni total, ni modèle. Il faut en plus
+   **2 passes** sur un scénario pour qu'une seule ligne apparaisse.
+
+   ⛔⛔ ET ON NE PEUT PAS SE CONTENTER DE LE REGROUPER PAR DATE, c'est la raison qui justifie
+   un second magasin (R2 : chacun possède UNE chose) : `_evHistEcrire` **n'enregistre que
+   `vert` et `rouge`** — les `muet` et les `spec` sont volontairement jetés, parce que ce ne
+   sont pas des verdicts. ***Un total dérivé de lui sous-compterait le nombre de scénarios
+   joués***, et un compteur qui se trompe sur le dénominateur est pire qu'un compteur absent.
+   ⚠️ Deuxième raison : deux passes le MÊME JOUR y sont indistinguables (même `d`), alors
+   qu'un horodatage les sépare sans ambiguïté.
+
+   ⛔ ET IL NE DUPLIQUE RIEN : il ne stocke aucun état par scénario — six nombres par passe.
+   Le « qu'est-ce qui a changé » est DÉRIVÉ de `ft4_evalHist`, son propriétaire.
+   ═══════════════════════════════════════════════════════════════════════════════════════ */
+const _EV_PASSES_CLE = 'ft4_evalPasses';
+const _EV_PASSES_MAX = 12;   // ~1 an de passes mensuelles ; au-delà la tendance ne se lit plus
+
+function _evPassesLire(){
+  try{ const a=JSON.parse(localStorage.getItem(_EV_PASSES_CLE)||'[]'); return Array.isArray(a)?a:[]; }
+  catch(e){ return []; }
+}
+/* ⛔ APPELÉE UNIQUEMENT SUR UNE VRAIE PASSE, jamais sur un rejeu de vérificateurs : un rejeu
+   ne mesure pas Milo, il mesure le CODE des vérificateurs sur des réponses déjà payées.
+   L'inscrire ferait croire à une passe de plus — exactement l'erreur que `sansHist` évite
+   déjà pour l'historique par scénario. */
+function _evPassesEcrire(parPasse, compare){
+  try{
+    const prod = (parPasse && parPasse.prod) || [];
+    if(!prod.length) return _evPassesLire();
+    const cpt = (e)=> prod.filter(x=>x && x.etat===e).length;
+    const l = _evPassesLire();
+    l.push({ ts: Date.now(),
+             d: (typeof today==='function')?today():'',
+             n: prod.length,                    // scénarios JOUÉS (tous états confondus)
+             v: cpt('vert'), r: cpt('rouge'),
+             a: prod.length - cpt('vert') - cpt('rouge'),   // muet / spec : ni vert ni rouge
+             c: !!compare });
+    /* On coupe par le DÉBUT : les plus anciennes partent, la tendance récente reste. */
+    while(l.length > _EV_PASSES_MAX) l.shift();
+    localStorage.setItem(_EV_PASSES_CLE, JSON.stringify(l));
+    if(typeof S!=='undefined') S.evalPasses = l;
+    return l;
+  }catch(e){ return _evPassesLire(); }          // jamais bloquant : un journal est un confort
+}
+
+/* ⭐⭐ CE QUI A CHANGÉ ENTRE LES DEUX DERNIÈRES PASSES — et c'est le cœur de l'écran.
+   Le rapport le dit déjà en toutes lettres : *« le TOTAL peut ne pas bouger alors que la
+   composition change : une correction et une régression se compensent »*. 👉 ***Afficher le
+   seul total ferait donc lire « rien n'a bougé » un jour où deux choses ont bougé en sens
+   contraire.*** On DÉRIVE la comparaison de `ft4_evalHist` (son propriétaire) : aucun état
+   par scénario n'est recopié dans le journal des passes.
+   ⚠️ Deux passes le même jour : on garde la DERNIÈRE entrée de ce jour pour un scénario —
+   c'est celle qui décrit l'état où on est reparti. La limite est écrite plutôt que découverte. */
+function _evPassesDelta(){
+  try{
+    const h = (typeof _evHistLire==='function') ? _evHistLire() : {};
+    const jours = [];
+    Object.keys(h).forEach(id=>(h[id]||[]).forEach(z=>{ if(z && z.d && jours.indexOf(z.d)<0) jours.push(z.d); }));
+    jours.sort();
+    if(jours.length < 2) return null;            // une seule date : rien à comparer
+    const av=jours[jours.length-2], ap=jours[jours.length-1];
+    const etat=(id,j)=>{ const l=(h[id]||[]).filter(z=>z&&z.d===j); return l.length?l[l.length-1].e:null; };
+    const corriges=[], regresses=[];
+    Object.keys(h).forEach(id=>{
+      const a=etat(id,av), b=etat(id,ap);
+      if(a===null||b===null) return;             // absent d'une des deux passes : pas un changement
+      if(a==='R' && b==='V') corriges.push(id);
+      if(a==='V' && b==='R') regresses.push(id);
+    });
+    return { avant:av, apres:ap, corriges:corriges.sort(), regresses:regresses.sort() };
+  }catch(e){ return null; }
 }
 
 /* 📊 L'HISTORIQUE PAR SCÉNARIO — le défaut que la 3ᵉ passe réelle a révélé (21/08/2026).
@@ -6609,6 +6696,10 @@ function _evHistEcrire(parPasse){
       h[x.id]=(h[x.id]||[]).concat([{d:ymd,e:x.etat==='rouge'?'R':'V'}]).slice(-_EV_HIST_MAX);
     });
     localStorage.setItem(_EV_HIST_CLE, JSON.stringify(h));
+    /* 📊 ft-v1141 — `S` reflète le magasin, sinon la sauvegarde cloud enverrait un
+       historique périmé : cette fonction écrit dans localStorage, et `_cloudSync` lit `S`.
+       *Deux chemins qui ne se croisent pas fabriquent une sauvegarde qui a l'air correcte.* */
+    if(typeof S!=='undefined') S.evalHist=h;
     return h;
   }catch(e){ return _evHistLire(); }   // jamais bloquant : un historique est un confort
 }
@@ -6764,6 +6855,81 @@ function _evShowResultCard(){
    partage — et c'est celui dont Michel a réellement besoin : il colle le texte dans la
    conversation. Motif repris tel quel de `copyAppLink` (app.js, 13/08) : presse-papier →
    repli `execCommand` → et si les deux tombent, **on le DIT** au lieu de rester muet. */
+/* ═══ 📊 L'ÉCRAN « HISTORIQUE DES PASSES » (ft-v1141) — 0 appel, 0 € ═══════════════════════
+   Michel : *« il faudrait créer un historique des benchmark »*. ⭐ Le manque n'était pas le
+   STOCKAGE (il existait) mais le fait de pouvoir simplement **REGARDER** : jusqu'ici la seule
+   façon de voir l'historique était de faire produire un rapport — donc de lancer une passe,
+   ou de rejouer les vérificateurs. *Une donnée qu'on ne peut consulter qu'en produisant autre
+   chose est une donnée à moitié absente* (**R5**). */
+function openEvalHistorique(){
+  if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
+  const l = _evPassesLire();
+  const d = _evPassesDelta();
+  const esc = (t)=>String(t==null?'':t).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+  /* ⚠️ Le formateur est défini ICI, pas dans la branche « il y a des passes » : le bloc
+     « ce qui a changé » plus bas en a besoin AUSSI, et le laisser dans le `else` lui faisait
+     afficher des dates brutes (`2026-09-02`) à côté de dates lisibles (`6 sept.`). */
+  const fmt=(iso)=>{ try{ const [a,m,j]=String(iso).split('-').map(Number);
+      return new Date(a,m-1,j).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}); }
+    catch(e){ return iso||'—'; } };
+  let H = '<div style="font-size:15px;font-weight:800;color:var(--t1);margin-bottom:8px;">📊 Historique des passes</div>';
+  if(!l.length){
+    /* ⛔ ON DIT CE QU'IL FAUT FAIRE, pas seulement « rien ». Et on précise que les passes
+       d'AVANT cette version n'y sont pas : sinon un journal vide se lit comme une panne
+       alors que c'est simplement un journal qui vient de naître. */
+    H += '<div style="font-size:13px;color:var(--t2);line-height:1.55;">Aucune passe enregistrée. '
+      +  'Le journal démarre à cette version : les passes lancées <b>avant</b> n\'y sont pas — '
+      +  'elles n\'ont jamais été comptées, et on ne va pas leur inventer un total.<br><br>'
+      +  'Lance « 🧪 Lancer le benchmark » : la prochaine passe ouvrira la première ligne.</div>';
+  }else{
+    /* La plus RÉCENTE en haut : c'est celle qu'on vient chercher. */
+    H += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    l.slice().reverse().forEach((p,i)=>{
+      const pc = p.n ? Math.round(p.v/p.n*100) : 0;
+      const col = pc>=95?'var(--green)' : pc>=80?'var(--gold)' : 'var(--orange)';
+      H += '<div style="display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:10px;'
+        +  'background:var(--bg2);border:1px solid var(--sep);">'
+        +  '<span style="width:56px;flex-shrink:0;font-size:12px;color:var(--t3);">'+esc(fmt(p.d))+'</span>'
+        +  '<span style="flex:1;min-width:0;font-size:14px;font-weight:800;color:'+col+';font-variant-numeric:tabular-nums;">'
+        +  p.v+'/'+p.n+'</span>'
+        /* ⛔ Les « autres » (muet / spec) sont AFFICHÉS séparément et jamais fondus dans les
+           rouges : ce ne sont pas des violations, ce sont des scénarios sans verdict. Les
+           compter comme des échecs ferait paniquer sur un problème qui n'existe pas. */
+        +  (p.r ? '<span style="font-size:12px;color:var(--orange);">'+p.r+' rouge'+(p.r>1?'s':'')+'</span>' : '')
+        +  (p.a ? '<span style="font-size:12px;color:var(--t3);">'+p.a+' sans verdict</span>' : '')
+        +  (p.c ? '<span style="font-size:11px;color:var(--t3);">×2</span>' : '')
+        +  (i===0 ? '<span style="font-size:11px;color:var(--t3);">dernière</span>' : '')
+        +  '</div>';
+    });
+    H += '</div>';
+  }
+  /* ⭐⭐ LE TOTAL SEUL PEUT MENTIR, et le rapport le dit déjà : une correction et une
+     régression se compensent. On affiche donc CE QUI A CHANGÉ, pas seulement le chiffre. */
+  if(d && (d.corriges.length || d.regresses.length)){
+    H += '<div style="margin-top:12px;padding:10px 11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);">'
+      +  '<div style="font-size:12px;color:var(--t3);margin-bottom:5px;">Entre le '+esc(fmt(d.avant))+' et le '+esc(fmt(d.apres))+'</div>'
+      +  (d.corriges.length ? '<div style="font-size:13px;color:var(--green);">✅ corrigés : '+esc(d.corriges.join(' · '))+'</div>' : '')
+      +  (d.regresses.length ? '<div style="font-size:13px;color:var(--orange);margin-top:3px;">❌ revenus au rouge : '+esc(d.regresses.join(' · '))+'</div>' : '')
+      +  '</div>';
+  }else if(d){
+    H += '<div style="margin-top:12px;font-size:12.5px;color:var(--t3);">Aucun scénario n\'a changé d\'état entre le '
+      +  esc(fmt(d.avant))+' et le '+esc(fmt(d.apres))+'.</div>';
+  }
+  H += '<div style="margin-top:12px;font-size:11.5px;color:var(--t3);line-height:1.55;">'
+    +  '⚠️ Le <b>total</b> ne dit pas tout : une correction et une régression se compensent — '
+    +  'c\'est la ligne « ce qui a changé » qui parle. Le détail <b>par scénario</b> (systématique / '
+    +  'intermittent) vit dans le rapport : « 📋 Copier le rapport » ou « ♻️ Rejouer les vérificateurs ».'
+    +  '<br>Cet écran ne lance rien et ne coûte rien.</div>';
+  try{
+    const box=document.getElementById('ev-histo-box'); if(box) box.innerHTML=H;
+    const ov=document.getElementById('ov-ev-histo'); if(ov) ov.classList.add('open');
+  }catch(e){ console.warn('[FT ev-histo]', e); }
+}
+
+function closeEvalHistorique(){
+  try{ const ov=document.getElementById('ov-ev-histo'); if(ov) ov.classList.remove('open'); }catch(e){}
+}
+
 function copyEvalText(){
   if(!_evReport){ toast('Aucun rapport','error'); return; }
   _evCopier(_evReport.text, 'Rapport copié');

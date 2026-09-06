@@ -1111,6 +1111,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
            reponses, elles, sont gardees en local exprès pour lui survivre. Un stockage qui
            survit derriere une porte qui ne survit pas ne sert a rien. -->
       <button class="btn btn-bg2" onclick="rejouerVerifs()" style="padding:11px;font-size:14px;">🔬 Rejouer les vérificateurs sur la dernière passe (0 €)</button>
+      <button class="btn btn-bg2" onclick="openEvalHistorique()" style="padding:11px;font-size:14px;">📊 Historique des passes (0 €)</button>
       <button class="btn btn-bg2" onclick="copyEvalReponses()" style="padding:11px;font-size:14px;">📥 Copier les réponses de la dernière passe</button>
       <!-- 🧠 A/B MÉMOIRE — le test qui n'a jamais tourné parce qu'il n'avait pas de bouton.
            Il vit depuis le 03/09 dans tests/milo/ab-memoire.js, pret et eprouve, et il etait
@@ -3552,6 +3553,16 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
      *« j'aimerais savoir si Milo déconne… 1 appel API qui sert à rien »*. Zéro appel API ici :
      tout est local, et rien ne part sans que la personne le décide.
      ⛔ « Joindre l'échange » est DÉCOCHÉ par défaut — un consentement pré-coché n'en est pas un. -->
+<!-- 📊 ft-v1141 — HISTORIQUE DES PASSES DU BANC. Admin seulement, 0 appel, 0 €.
+     ⛔ Enregistrée dans `_OVERLAY_CLOSERS` (screens.js) : glisser, Échap et taper à côté
+     doivent fermer par la MÊME porte que la croix (R15, le défaut de ft-v466/v629). -->
+<div class="overlay" id="ov-ev-histo" style="z-index:640;" onclick="if(event.target===this)closeEvalHistorique()">
+  <div class="modal" style="max-width:430px;max-height:88vh;overflow-y:auto;padding:16px;">
+    <div class="modal-handle"></div>
+    <div id="ev-histo-box"></div>
+    <button class="btn btn-bg2" onclick="closeEvalHistorique()" style="width:100%;margin-top:14px;padding:11px;">Fermer</button>
+  </div>
+</div>
 <div class="overlay" id="ov-milo-rate" style="z-index:640;" onclick="if(event.target===this)_miloRaterFermer()">
   <div class="modal" style="max-width:430px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">

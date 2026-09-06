@@ -6,7 +6,26 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1140` — ☁️ **LES MENSURATIONS SURVIVENT ENFIN À UN CHANGEMENT DE TÉLÉPHONE.**
+- **Version en ligne (live) :** `ft-v1141` — 📊 **L'HISTORIQUE DES PASSES DU BANC D'ESSAI.**
+  Michel : *« il faudrait créer un historique des benchmark »*.
+  ⭐⭐ **Il en existait DÉJÀ un, et je l'ai dit avant de construire** (`ft4_evalHist`, 8 passes,
+  une ligne **par SCÉNARIO**). ⛔ Le manque réel était plus étroit : **rien par PASSE** (aucun
+  total, aucune date), et on ne pouvait le **voir** qu'en produisant un rapport (**R5**).
+  ⛔⛔ **Un 2ᵉ magasin se justifie par une mesure** : `_evHistEcrire` **jette les `muet`/`spec`**,
+  donc un total dérivé de lui **sous-compterait les scénarios joués**. Il ne duplique rien :
+  6 nombres par passe, le « qu'est-ce qui a changé » est **dérivé** de `evalHist`.
+  ⭐⭐ **Le total seul ment** — mesuré sur la maquette : **deux passes à 54/56 d'affilée** avec
+  **deux scénarios basculés en sens contraire**. L'écran affiche donc ce qui a changé.
+  ⛔ **Sauvegardé au cloud** (les deux magasins) : même défaut que `mensLog` le matin même.
+  ⚠️ **Piège propre à `evalHist`** : c'est un OBJET — un garde-fou en `.length` y vaudrait
+  `undefined`, donc il aurait **l'air posé sans rien protéger**. Il compte ses **clés**.
+  ⛔ **R4a** : les 2 données sont **exclues de Milo avec leur raison** — lui donner sa note le
+  ferait parler de son évaluation, et le détail par scénario serait **le corrigé**.
+  ⏭️ **Non fait, exprès** : `ft4_evalReps` ne garde toujours que la **dernière** passe, donc on
+  ne peut pas comparer deux réponses dans le temps. **Michel doit vérifier sur Safari/iPhone.**
+  ⚠️ `Code.js` modifié → **backend en prod tout seul**, à vérifier aussi.
+
+- **Version précédente :** `ft-v1140` — ☁️ **LES MENSURATIONS SURVIVENT ENFIN À UN CHANGEMENT DE TÉLÉPHONE.**
   ✅ **LES DEUX DÉPLOIEMENTS VÉRIFIÉS VERTS** (R18) : site run **#927** (7 étapes, 09:01:30 UTC)
   **ET** backend run **#105** (9 étapes — `clasp push`, redéploiement, « le backend répond
   VRAIMENT », `authStatus` — 09:01:37 UTC), tous deux sur `29bf4f7`.

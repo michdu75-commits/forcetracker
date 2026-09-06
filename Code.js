@@ -904,6 +904,8 @@ function doGet(e) {
       dayStateLog:    data.dayStateLog    || [],
       mensLog:        data.mensLog        || [],   // 📏 journal des mensurations (ft-v1140)
       missedLog:      data.missedLog      || [],   // séances prévues et non faites (ft-v1140)
+      evalPasses:     data.evalPasses     || [],   // 📊 historique du banc (ft-v1141)
+      evalHist:       data.evalHist       || {},   // … et son détail par scénario
       cycle:          data.cycle          || null,
       /* ⚠️ ft-v1092 — CETTE CLÉ ANNONÇAIT UNE PHASE QUI ÉTAIT UNE CONSTANTE. `handleSaveProfile_`
          range `nutritionPhase` dans `profile`, jamais à la racine : `data.nutritionPhase` était
@@ -942,6 +944,8 @@ function handleLoadProfilePost_(body) {
     dayStateLog:    data.dayStateLog    || [],
     mensLog:        data.mensLog        || [],   // 📏 journal des mensurations (ft-v1140)
     missedLog:      data.missedLog      || [],   // séances prévues et non faites (ft-v1140)
+    evalPasses:     data.evalPasses     || [],   // 📊 historique du banc (ft-v1141)
+    evalHist:       data.evalHist       || {},   // … et son détail par scénario
     cycle:          data.cycle          || null,
     programmes:     data.programmes     || [],
     exRestPref:     data.exRestPref     || {},
@@ -1598,6 +1602,25 @@ function handleSaveProfile_(body) {
       if (inMI.length === 0 && exMI.length > 0) {
         Logger.log('[FT GARDE-FOU missedLog] refusé : ' + exMI.length + ' entrées conservées');
       } else { existing.missedLog = inMI; }
+    }
+    /* 📊 ft-v1141 — L'HISTORIQUE DU BANC D'ESSAI. Michel : « il faudrait créer un historique
+       des benchmark ». Il existait en localStorage seulement — donc il disparaissait au premier
+       changement de téléphone, exactement comme `mensLog` le matin même.
+       ⛔ Garde-fou identique : un journal VIDE n'écrase jamais un journal rempli. */
+    if (body.evalPasses !== undefined) {
+      const inEP = body.evalPasses || [], exEP = existing.evalPasses || [];
+      if (inEP.length === 0 && exEP.length > 0) {
+        Logger.log('[FT GARDE-FOU evalPasses] refusé : ' + exEP.length + ' passes conservées');
+      } else { existing.evalPasses = inEP; }
+    }
+    /* ⚠️ `evalHist` est un OBJET (une clé par scénario), pas une liste : on compte ses CLÉS.
+       Un `.length` sur un objet vaut `undefined`, et la comparaison serait toujours fausse —
+       le garde-fou aurait l'air posé sans jamais rien protéger. */
+    if (body.evalHist !== undefined) {
+      const inEH = body.evalHist || {}, exEH = existing.evalHist || {};
+      if (Object.keys(inEH).length === 0 && Object.keys(exEH).length > 0) {
+        Logger.log('[FT GARDE-FOU evalHist] refusé : ' + Object.keys(exEH).length + ' scénarios conservés');
+      } else { existing.evalHist = inEH; }
     }
     if (body.exRestPref !== undefined) existing.exRestPref = body.exRestPref;
     if (body.exSwaps !== undefined) existing.exSwaps = body.exSwaps;

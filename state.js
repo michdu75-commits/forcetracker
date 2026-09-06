@@ -27,6 +27,8 @@ let S={
   sleepLog:[],
   weightLog:[],
   mensLog:[],       // 📏 journal des mensurations — [{d,k,v,s}] · voir MENS_DEFS + mensAjouter()
+  evalPasses:[],    // 📊 journal des passes du banc — [{ts,d,n,v,r,a,c}] · voir _evPassesEcrire (coach.js)
+  evalHist:{},      // 📊 … et le détail PAR SCÉNARIO ({id:[{d,e}]}) — propriétaire : _evHistEcrire
   goalLog:[],        // historique des CHANGEMENTS d'objectif — voir _goalSet()
   dayStateLog:[],
   healthInbox:[],   // ⌚ activités reçues du téléphone (raccourci iOS → Santé) — voir app.js `_majHealthInbox`
@@ -170,6 +172,11 @@ function load(){
     S.sleepLog=_lsJson('ft4_sleep',[]);
     S.weightLog=_lsJson('ft4_wlog',[]);
     S.mensLog=_lsJson('ft4_mens',[]);
+    /* 📊 ft-v1141 — les deux magasins du banc d'essai. Ils vivaient UNIQUEMENT en
+       localStorage : un changement de téléphone effaçait tout l'historique des passes.
+       Même défaut que `mensLog` corrigé le matin même (ft-v1140), même correctif. */
+    S.evalPasses=_lsJson('ft4_evalPasses',[]);
+    S.evalHist=_lsJson('ft4_evalHist',{})||{};
     S.goalLog=_lsJson('ft4_goallog',[]);
     S.strengthGoals=_lsJson('ft4_strgoals',{}); // objectif de 1RM par exercice {nom:kg}
     S.name=localStorage.getItem('ft4_name')||'';
@@ -676,6 +683,11 @@ function persist(){
     localStorage.setItem('ft4_sleep',JSON.stringify(S.sleepLog||[]));
     localStorage.setItem('ft4_wlog',JSON.stringify(S.weightLog||[]));
     localStorage.setItem('ft4_mens',JSON.stringify(S.mensLog||[]));
+    localStorage.setItem('ft4_evalPasses',JSON.stringify(S.evalPasses||[]));
+    /* ⛔ `evalHist` est écrit par `_evHistEcrire` (son propriétaire) directement dans
+       localStorage ; ici on ne fait que RECOPIER ce que `S` porte, sans jamais écraser
+       par un objet vide — sinon un `persist()` déclenché ailleurs effacerait l'historique. */
+    if(S.evalHist && Object.keys(S.evalHist).length) localStorage.setItem('ft4_evalHist',JSON.stringify(S.evalHist));
     localStorage.setItem('ft4_goallog',JSON.stringify(S.goalLog||[]));
     localStorage.setItem('ft4_strgoals',JSON.stringify(S.strengthGoals||{}));
     localStorage.setItem('ft4_name',S.name||'');
