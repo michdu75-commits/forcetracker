@@ -6,7 +6,28 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1139` — 🗂️ **LE MENU RANGÉ EN 4 RAYONS.**
+- **Version en ligne (live) :** `ft-v1140` — ☁️ **LES MENSURATIONS SURVIVENT ENFIN À UN CHANGEMENT DE TÉLÉPHONE.**
+  Michel : *« oui vas-y pour le cloud des mensurations »*.
+  ⛔⛔ **Mesuré : `mensLog` avait ZÉRO occurrence dans `Code.js`** — ni `_cloudSync`, ni
+  `_applyRestoreData`, ni serveur. *Un changement d'appareil effaçait tout l'historique de
+  centimètres*, et avec lui la carte du ratio livrée la veille. **Règle d'or #3.**
+  ⭐⭐ **Personne ne pouvait le voir** : le journal est né le 04/09, aucun utilisateur n'avait
+  encore changé de téléphone. *Trouvé par un OUTIL (`tools/donnees.py`), pas par un symptôme.*
+  ⭐⭐ **La fusion est la seule vraie décision** : le patron du voisin (`goalLog`, « remplace si
+  le serveur en a autant ») aurait perdu **3 mesures locales** face à 4 côté serveur, en
+  silence. Une fusion ne peut rien perdre ; en cas de doublon, **la locale gagne**.
+  ⛔ **R14 — le sens de la coupe** : `mensLog` est trié du plus récent au plus ancien, donc
+  `slice(0,800)` ; un `slice(-800)` copié sur ses voisins aurait jeté les mesures d'aujourd'hui.
+  ⚠️ **800 et pas 4000** : le réservoir Script Properties a été **plein à 102 % le 29/07**.
+  ⛔ **Le tri est une garantie** : `mensDerniere()` prend le premier élément — un tri perdu lui
+  ferait rendre une vieille valeur sans que rien ne plante.
+  ⭐ **La meilleure preuve n'est pas un témoin** : `tools/donnees.py` annonçait **2 historiques
+  datés hors sauvegarde** avant, **0 après** — et le « 0 » est croyable parce que le même
+  détecteur disait « 2 » une heure plus tôt.
+  ⏭️ **Michel doit vérifier sur Safari/iPhone.** ⚠️ `Code.js` modifié → le **backend part en
+  prod tout seul** (workflow `deploy-appsscript.yml`), à vérifier aussi.
+
+- **Version précédente :** `ft-v1139` — 🗂️ **LE MENU RANGÉ EN 4 RAYONS.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#923** sur `90c5574`, **job `deploy` success**,
   les 7 étapes vertes à **23:18:45 UTC**.
   Michel : *« c'est grave mélangé, il faut mettre ce qu'il y a d'important en premier »*.

@@ -27332,6 +27332,110 @@ console.log('\n═══ CCXL. Menu réorganisé : ton suivi d\'abord, apparence
   t('CCXL aucune erreur JS sur tout le bloc', em.length===0, em.join(' | '));
 }
 
+/* ═══ CCXLI. LES MENSURATIONS SURVIVENT ENFIN À UN CHANGEMENT DE TÉLÉPHONE (ft-v1140) ══════
+   Trouvé en construisant l'inventaire des données demandé par Michel (`tools/donnees.py`,
+   ft-v1136) : `mensLog` avait **ZÉRO occurrence dans `Code.js`**, et n'était ni dans
+   `_cloudSync` ni dans `_applyRestoreData`. ***Un changement de téléphone effaçait tout
+   l'historique de centimètres*** — et avec lui la carte du ratio livrée la veille. Règle d'or #3.
+   ⭐⭐ LA SEULE VRAIE DÉCISION DE CONCEPTION EST LA FUSION. Le patron du voisin (`goalLog`) est
+   « je remplace si le serveur en a au moins autant » : appliqué ici, un téléphone portant 3
+   mesures inconnues du serveur les perdrait toutes les trois, en silence. *Une fusion ne peut
+   rien perdre.*
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXLI. Les mensurations survivent a un changement de telephone (ft-v1140) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',
+    ft4_gender:'H',ft4_ht:'178',ft4_bw:'85',ft4_email:'test@test.fr'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1800);
+  const R=await p.evaluate(async()=>{ try{
+    const o={};
+    const PROFIL={name:'Michel',bw:85,age:46,gender:'H',goal:'muscle'};
+    /* ── ALLER : ce qui part réellement au serveur ── */
+    S.mensLog=[]; for(let i=0;i<1200;i++) S.mensLog.push({d:'2020-01-01',k:'taille',v:80,s:'manuel'});
+    S.missedLog=[]; for(let i=0;i<30;i++) S.missedLog.push({date:'2026-08-01',label:'S'+i});
+    let envoye=null; const vrai=window.fetch;
+    const espion=()=>{ window.fetch=(u,opt)=>{ try{const b=JSON.parse(opt&&opt.body||'{}');
+                         if(b.action==='saveProfile') envoye=b; }catch(e){}
+                       return Promise.resolve({ok:true,json:()=>Promise.resolve({status:'ok'}),
+                                               text:()=>Promise.resolve('{}')}); }; };
+    espion(); await _cloudSync(); window.fetch=vrai;
+    o.aller = envoye ? {present:('mensLog' in envoye), mens:(envoye.mensLog||[]).length,
+                        missed:(envoye.missedLog||[]).length} : {absent:true};
+    /* ⛔ LE SENS DE LA COUPE : `mensLog` est trié du PLUS RÉCENT au plus ancien, donc on garde
+       le DÉBUT. Un `slice(-800)` copié sur ses voisins jetterait les mesures d'AUJOURD'HUI. */
+    S.mensLog=[{d:'2026-09-06',k:'taille',v:88,s:'manuel'}];
+    for(let i=0;i<900;i++) S.mensLog.push({d:'2019-01-01',k:'cou',v:40,s:'x'});
+    envoye=null; espion(); await _cloudSync(); window.fetch=vrai;
+    o.coupe = envoye ? {n:(envoye.mensLog||[]).length,
+                        garde_recent:(envoye.mensLog||[]).some(e=>e.d==='2026-09-06')} : {absent:true};
+    /* ── RETOUR : la fusion n'a le droit de rien perdre ── */
+    S.mensLog=[{d:'2026-09-06',k:'taille',v:88,s:'manuel'},{d:'2026-09-05',k:'cou',v:40,s:'manuel'},
+               {d:'2026-09-04',k:'hanches',v:101,s:'manuel'}];
+    S.missedLog=[{date:'2026-09-01',label:'Jambes'}];
+    _applyRestoreData({profile:PROFIL,
+      mensLog:[{d:'2026-08-01',k:'taille',v:92,s:'profil'},{d:'2026-07-01',k:'taille',v:95,s:'profil'},
+               {d:'2026-06-01',k:'taille',v:97,s:'profil'},{d:'2026-09-06',k:'taille',v:999,s:'serveur'}],
+      missedLog:[{date:'2026-08-15',label:'Dos'}]});
+    o.fusion={ n:S.mensLog.length,
+               locale_gagne:(S.mensLog.find(e=>e.d==='2026-09-06'&&e.k==='taille')||{}).v,
+               trie:S.mensLog.every((e,i,a)=>i===0||a[i-1].d>=e.d),
+               derniere:(typeof mensDerniere==='function')?mensDerniere('taille'):null,
+               missed:S.missedLog.length };
+    /* ⛔ Un serveur VIDE ne doit RIEN effacer (même garde-fou que côté Code.js). */
+    const avant=S.mensLog.length;
+    _applyRestoreData({profile:PROFIL,mensLog:[],missedLog:[]});
+    o.vide={intact:S.mensLog.length===avant, n:S.mensLog.length};
+    return o;
+  }catch(e){ return {err:e.message}; } });
+
+  /* ⛔ CONTRÔLE D'ABORD : sans lui, « rien n'est envoyé » rendrait les autres témoins muets. */
+  t('CCXLI ⛔ CONTRÔLE — la sync a bien été interceptée (sinon tout le bloc mesure du vide)',
+    !R.err && R.aller && !R.aller.absent, R.err||JSON.stringify(R.aller));
+  t('CCXLI ⭐⭐ `mensLog` part enfin au serveur (il n\'y allait PAS — règle d\'or #3)',
+    R.aller && R.aller.present===true && R.aller.mens>0, JSON.stringify(R.aller));
+  t('CCXLI … et `missedLog` aussi, borné à 12 comme en local',
+    R.aller && R.aller.missed===12, JSON.stringify(R.aller));
+  /* ⚠️ Le réservoir Script Properties a été PLEIN à 102 % le 29/07 : on ne rouvre pas ce trou. */
+  t('CCXLI ⚠️ le volume envoyé est BORNÉ à 800 mesures (1200 en local → 800 envoyées)',
+    R.aller && R.aller.mens===800, String(R.aller&&R.aller.mens));
+  /* ⛔⛔ LE TÉMOIN QUI ATTRAPE LE COPIER-COLLER : couper du mauvais côté jetterait AUJOURD'HUI. */
+  t('CCXLI ⛔⛔ la coupe garde les mesures RÉCENTES, pas les plus vieilles (R14)',
+    R.coupe && R.coupe.n===800 && R.coupe.garde_recent===true, JSON.stringify(R.coupe));
+
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : la fusion ne perd RIEN. */
+  t('CCXLI ⭐⭐ au retour, RIEN n\'est perdu : 3 mesures locales + 4 du serveur = 6 (1 commune)',
+    R.fusion && R.fusion.n===6, JSON.stringify(R.fusion));
+  /* ⛔ En cas de doublon, la mémoire locale gagne — le serveur ne réécrit pas une valeur
+     que la personne vient de corriger sur son téléphone. */
+  t('CCXLI ⛔ sur une clé commune, la valeur LOCALE gagne (88, pas les 999 du serveur)',
+    R.fusion && R.fusion.locale_gagne===88, String(R.fusion&&R.fusion.locale_gagne));
+  /* ⛔⛔ LE TRI EST UNE GARANTIE, PAS UNE COQUETTERIE : `mensDerniere()` prend le PREMIER
+     élément. Un tri perdu lui ferait rendre une VIEILLE valeur sans que rien ne plante. */
+  t('CCXLI ⛔⛔ le journal reste trié après fusion — sinon `mensDerniere` rend une vieille valeur',
+    R.fusion && R.fusion.trie===true && R.fusion.derniere===88, JSON.stringify(R.fusion));
+  t('CCXLI les séances manquées fusionnent aussi (1 locale + 1 serveur = 2)',
+    R.fusion && R.fusion.missed===2, String(R.fusion&&R.fusion.missed));
+  /* ⛔ CONTRÔLE — sans lui, « la fusion n'ajoute jamais rien » serait vert partout. */
+  t('CCXLI ⛔ un serveur VIDE n\'efface RIEN (un historique ne rétrécit pas tout seul)',
+    R.vide && R.vide.intact===true, JSON.stringify(R.vide));
+  t('CCXLI aucune erreur JS pendant tout le bloc', errs.length===0, errs.join(' | '));
+
+  /* ⛔ ET LE BACKEND EST ÉPINGLÉ ICI AUSSI : le frontend peut envoyer parfaitement, si
+     `Code.js` ne stocke ni ne renvoie la donnée, elle disparaît quand même. C'est exactement
+     l'état dans lequel `mensLog` a été trouvé — 0 occurrence dans ce fichier. */
+  const _code=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  t('CCXLI ⛔ `Code.js` STOCKE mensLog + missedLog (avec le garde-fou « vide n\'écrase pas »)',
+    /body\.mensLog\s*!==\s*undefined/.test(_code) && /GARDE-FOU mensLog/.test(_code)
+      && /body\.missedLog\s*!==\s*undefined/.test(_code), '');
+  t('CCXLI ⛔ … et les DEUX réponses de `loadProfile` les RENVOIENT (sinon le retour est vide)',
+    (_code.match(/mensLog:\s+data\.mensLog/g)||[]).length===2
+      && (_code.match(/missedLog:\s+data\.missedLog/g)||[]).length===2,
+    String((_code.match(/mensLog:\s+data\.mensLog/g)||[]).length));
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

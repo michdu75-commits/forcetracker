@@ -926,6 +926,23 @@ function _cloudSync(){
       weightLog:(S.weightLog||[]).slice(-4000), // historique complet (~11 ans de pesées quotidiennes) — entrées minuscules, pas seulement 1 an
       sleepLog:(S.sleepLog||[]).slice(-4000),
       dayStateLog:(S.dayStateLog||[]).slice(-800), // historique du check-in du jour (brique 7) — 1 entrée/jour, ~2 ans
+      /* ☁️ ft-v1140 — `mensLog` ET `missedLog` NE QUITTAIENT JAMAIS LE TÉLÉPHONE.
+         Trouvé en construisant l'inventaire des données (`tools/donnees.py`, ft-v1136) :
+         `mensLog` avait **zéro occurrence dans `Code.js`** et n'était ni ici ni dans
+         `_applyRestoreData`. 👉 ***Un changement de téléphone, un navigateur vidé ou une
+         restauration effaçait tout l'historique de mensurations*** — et avec lui la carte du
+         ratio poids/centimètres livrée la veille. C'est la **règle d'or #3** ailleurs que sur
+         une séance : ce que la personne a saisi ne se perd pas.
+         ⚠️ LE VOLUME EST BORNÉ EXPRÈS, ET CE N'EST PAS DE LA PRUDENCE DE PRINCIPE : le
+         réservoir Script Properties a été **plein à 102 % le 29/07** et plus AUCUNE écriture
+         n'aboutissait pendant deux jours. Le local garde 4000 entrées ; on n'en envoie que
+         **800** — soit ~7 ans de mensurations mensuelles sur les 9 zones.
+         ⛔ `mensLog` est trié du PLUS RÉCENT au plus ancien (`mensAjouter`), donc on coupe par
+         le DÉBUT (`slice(0,800)`) — un `slice(-800)` copié sur ses voisins garderait les plus
+         VIEILLES et jetterait les mesures d'aujourd'hui. *Un comportement copié d'un contexte à
+         un autre peut devenir faux* (**R14**). */
+      mensLog:(S.mensLog||[]).slice(0,800),
+      missedLog:(S.missedLog||[]).slice(-12), // même borne que le local (state.js) : 12 suffisent
       cycle:S.cycle||null,
       programmes:S.programmes||[],
       exRestPref:S.exRestPref||{},
@@ -3140,6 +3157,36 @@ function _applyRestoreData(raw){
      à portée de regard (R8). ⛔ `d.goalLog` reste en repli — une sauvegarde restaurée depuis un
      FICHIER arrive à plat, et la retirer casserait ce chemin-là. */
   try{const gl=(raw&&Array.isArray(raw.goalLog)&&raw.goalLog.length?raw.goalLog:(d.goalLog||[]));if(Array.isArray(gl)&&gl.length>=(S.goalLog||[]).length)S.goalLog=gl;}catch(e){console.warn('[FT restore] goalLog',e);}
+  /* ☁️☁️ ft-v1140 — LES MENSURATIONS ET LES SÉANCES MANQUÉES REVIENNENT DU CLOUD.
+     ⭐⭐ ET ELLES SE FUSIONNENT, ELLES NE SE REMPLACENT PAS — c'est la seule décision de
+     conception de ce correctif, et elle n'est pas cosmétique. Le patron du voisin (`goalLog`,
+     juste au-dessus) est *« je remplace si le serveur en a AU MOINS AUTANT »*. Appliqué ici,
+     un téléphone qui porte **3 mesures que le serveur ne connaît pas** contre **4 côté
+     serveur** les perdrait toutes les trois — sans un mot. 👉 ***Une fusion ne peut rien
+     perdre*** : elle ajoute ce qu'elle ne connaissait pas, et en cas d'égalité la mémoire
+     locale gagne.
+     ⭐ `_fusionListe` existe déjà dans `state.js` pour le multi-onglet, avec **exactement la
+     même signature** pour `mensLog` (`jour|zone`) — on ne réécrit pas une deuxième union
+     (R13/R2). ⛔ Repli sur une simple reprise si la fonction n'est pas chargée : *une
+     restauration ne doit jamais échouer parce qu'un utilitaire manque.*
+     ⚠️ `raw` d'abord, `d` en repli : la réponse du serveur met ces listes à la RACINE, un
+     fichier de sauvegarde restauré à la main les met à plat — le défaut exact de `goalLog`
+     en ft-v1092 (R8). */
+  try{
+    const _fus=(nom,cle)=>{
+      const srv=(raw&&Array.isArray(raw[nom])&&raw[nom].length)?raw[nom]:(Array.isArray(d[nom])?d[nom]:null);
+      if(!srv||!srv.length) return;                     // rien à ajouter : on ne touche à rien
+      const local=Array.isArray(S[nom])?S[nom]:[];
+      S[nom]=(typeof _fusionListe==='function')?_fusionListe(local,srv,cle)
+                                               :(srv.length>=local.length?srv:local);
+    };
+    _fus('mensLog',   e=>String(e&&e.d||'')+'|'+String(e&&e.k||''));
+    _fus('missedLog', e=>String(e&&e.date||'')+'|'+String(e&&e.label||''));
+    /* ⛔ La fusion peut désordonner : `mensLog` DOIT rester trié du plus récent au plus
+       ancien — `mensDerniere()` prend simplement le premier élément, et un tri perdu lui
+       ferait rendre une vieille valeur SANS que rien ne plante. */
+    if(Array.isArray(S.mensLog)) S.mensLog.sort((a,b)=>String(b&&b.d||'').localeCompare(String(a&&a.d||'')));
+  }catch(e){console.warn('[FT restore] mensLog/missedLog',e);}
   try{if(d.goal2!==undefined)S.goal2=d.goal2;}catch(e){console.warn('[FT restore] goal2',e);}
   try{if(Array.isArray(d.priorities))S.priorities=d.priorities;}catch(e){console.warn('[FT restore] priorities',e);}
   try{if(d.discipline)S.discipline=d.discipline;}catch(e){console.warn('[FT restore] discipline',e);}

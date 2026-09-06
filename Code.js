@@ -902,6 +902,8 @@ function doGet(e) {
       goalLog:        data.goalLog        || [],   // historique des changements d'objectif (ft-v1010)
       sleepLog:       data.sleepLog       || [],
       dayStateLog:    data.dayStateLog    || [],
+      mensLog:        data.mensLog        || [],   // 📏 journal des mensurations (ft-v1140)
+      missedLog:      data.missedLog      || [],   // séances prévues et non faites (ft-v1140)
       cycle:          data.cycle          || null,
       /* ⚠️ ft-v1092 — CETTE CLÉ ANNONÇAIT UNE PHASE QUI ÉTAIT UNE CONSTANTE. `handleSaveProfile_`
          range `nutritionPhase` dans `profile`, jamais à la racine : `data.nutritionPhase` était
@@ -938,6 +940,8 @@ function handleLoadProfilePost_(body) {
     goalLog:        data.goalLog        || [],   // historique des changements d'objectif (ft-v1010)
     sleepLog:       data.sleepLog       || [],
     dayStateLog:    data.dayStateLog    || [],
+    mensLog:        data.mensLog        || [],   // 📏 journal des mensurations (ft-v1140)
+    missedLog:      data.missedLog      || [],   // séances prévues et non faites (ft-v1140)
     cycle:          data.cycle          || null,
     programmes:     data.programmes     || [],
     exRestPref:     data.exRestPref     || {},
@@ -1574,6 +1578,26 @@ function handleSaveProfile_(body) {
       if (inGL.length === 0 && exGL.length > 0) {
         Logger.log('[FT GARDE-FOU goalLog] refusé : ' + exGL.length + ' entrées conservées');
       } else { existing.goalLog = inGL; }
+    }
+    /* 📏☁️ ft-v1140 — LES MENSURATIONS ET LES SÉANCES MANQUÉES N'ÉTAIENT NULLE PART ICI.
+       Mesuré en construisant l'inventaire des données (`tools/donnees.py`) : `mensLog` avait
+       **ZÉRO occurrence dans ce fichier**. Le journal des mensurations est né le 04/09, la
+       carte du ratio poids/centimètres le 05/09 — et rien de tout ça ne survivait à un
+       changement de téléphone. C'est la **règle d'or #3** appliquée ailleurs qu'à une séance.
+       ⛔ Garde-fou identique à `goalLog`/`weightLog` juste au-dessus, et pour la même raison :
+       *un historique ne rétrécit pas tout seul.* Un journal VIDE qui arrive vient d'un appareil
+       qui n'a pas encore restauré, jamais d'une décision de la personne — il n'écrase rien. */
+    if (body.mensLog !== undefined) {
+      const inML = body.mensLog || [], exML = existing.mensLog || [];
+      if (inML.length === 0 && exML.length > 0) {
+        Logger.log('[FT GARDE-FOU mensLog] refusé : ' + exML.length + ' mesures conservées');
+      } else { existing.mensLog = inML; }
+    }
+    if (body.missedLog !== undefined) {
+      const inMI = body.missedLog || [], exMI = existing.missedLog || [];
+      if (inMI.length === 0 && exMI.length > 0) {
+        Logger.log('[FT GARDE-FOU missedLog] refusé : ' + exMI.length + ' entrées conservées');
+      } else { existing.missedLog = inMI; }
     }
     if (body.exRestPref !== undefined) existing.exRestPref = body.exRestPref;
     if (body.exSwaps !== undefined) existing.exSwaps = body.exSwaps;

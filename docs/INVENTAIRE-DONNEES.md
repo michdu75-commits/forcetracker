@@ -24,13 +24,10 @@ vidage de navigateur. C'est la règle d'or #3 appliquée ailleurs que sur une s�
 
 ## ⚠️ CE QUI SE PERDRAIT AUJOURD'HUI (à lire en premier)
 
-**29 données sur 107 ne quittent jamais le téléphone.** La plupart sont des réglages ou de
+**27 données sur 107 ne quittent jamais le téléphone.** La plupart sont des réglages ou de
 l'état passager, et c'est très bien. Celles qui posent problème sont les **historiques** :
 
-| Donnée | Clé sur le téléphone | Milo la reçoit |
-|---|---|---|
-| **`mensLog`** | `ft4_mens` | ✅ oui |
-| **`missedLog`** | `ft4_missed` | ✅ oui |
+*Aucun historique daté n'est aujourd'hui hors sauvegarde.*
 
 Les autres pertes possibles (séries non datées et valeurs) :
 `beginnerJourney` · `bodySeries` · `coachConversations` · `coachFree` · `connected` · `creatDose` · `ecgStill` · `echelleReserve` · `expandAll` · `halo` · `haloColor` · `haloDir` · `hiddenFoods` · `histTronque` · `lastMonthSummary` · `lastWeekSummary` · `levelAuto` · `mealPlan` · `menuAck` · `miloRates` · `nextPlanned` · `progExos` · `reportedCustomEx` · `ringStyle` · `seenFeatures` · `testerIdeas` · `wkt`
@@ -50,9 +47,9 @@ Ce sont eux qui portent la mémoire du produit — *« tu ne repars jamais de z�
 | **`goalLog`** | série datée | `ft4_goallog` | ✅ oui | ✅ oui |
 | **`healthDaily`** | série datée | `ft4_healthd` | ✅ oui (autre route) | ✅ oui |
 | **`healthInbox`** | série | `ft4_healthbox` | ✅ oui (autre route) | — |
-| **`mensLog`** | série datée | `ft4_mens` | ⛔ NON — locale | ✅ oui |
+| **`mensLog`** | série datée | `ft4_mens` | ✅ oui (autre route) | ✅ oui |
 | **`miloRates`** | série | `ft4_milo_rates` | ⛔ NON — locale | — |
-| **`missedLog`** | série datée | `ft4_missed` | ⛔ NON — locale | ✅ oui |
+| **`missedLog`** | série datée | `ft4_missed` | ✅ oui (autre route) | ✅ oui |
 | **`priorities`** | série | `ft4_priorities` | ✅ oui | ✅ oui |
 | **`programmes`** | série | `ft4_progs` | ✅ oui | ✅ oui |
 | **`sessions`** | série datée | `ft4_sessions` | ✅ oui | ✅ oui |
@@ -138,10 +135,10 @@ Ce sont eux qui portent la mémoire du produit — *« tu ne repars jamais de z�
 | `mealPlan` | valeur | `ft4_mealplan` | ⛔ NON — locale | — |
 | `mensCycleDur` | valeur | `ft4_mcdur` | ✅ oui | ✅ oui |
 | `mensCycleStart` | valeur | `ft4_mcstart` | ✅ oui | ✅ oui |
-| `mensLog` | série datée | `ft4_mens` | ⛔ NON — locale | ✅ oui |
+| `mensLog` | série datée | `ft4_mens` | ✅ oui (autre route) | ✅ oui |
 | `menuAck` | valeur | `—` | ⛔ NON — locale | — |
 | `miloRates` | série | `ft4_milo_rates` | ⛔ NON — locale | — |
-| `missedLog` | série datée | `ft4_missed` | ⛔ NON — locale | ✅ oui |
+| `missedLog` | série datée | `ft4_missed` | ✅ oui (autre route) | ✅ oui |
 | `morpho` | valeur | `ft4_morpho` | ✅ oui | ✅ oui |
 | `morphotype` | valeur | `ft4_morphot` | ✅ oui | ✅ oui |
 | `name` | valeur | `ft4_name` | ✅ oui | ✅ oui |
@@ -179,7 +176,7 @@ Ce sont eux qui portent la mémoire du produit — *« tu ne repars jamais de z�
 
 - **107 données** suivies au total
 - **15 historiques** (dont **9 datés**)
-- **70** survivent à un changement de téléphone · **29** ne le survivraient pas
+- **72** survivent à un changement de téléphone · **27** ne le survivraient pas
 - **60** atteignent Milo · **45** en sont exclues **avec leur raison écrite** · **2 trous connus**
 
 ⛔ **Aucune donnée n'est « non classée »** : `tests/donnees/runner.js` fait échouer la
