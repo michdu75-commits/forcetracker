@@ -4061,6 +4061,59 @@ ${lignes}
 → Ça ne te sert que si ça AIDE : si la même raison revient plusieurs fois sur plusieurs semaines, tu peux le dire une fois, comme un fait, et proposer d'ADAPTER le planning (pas d'exiger plus de discipline).
 `;
 })()}
+${(()=>{
+  /* ═══ 🤝 MILO SAIT QU'ON LE TESTE — CHEZ MICHEL, ET NULLE PART AILLEURS (ft-v1144) ═══════
+     Michel : *« je veux que Milo soit au courant qu'on fait des tests. J'ai voulu le
+     construire pour qu'il soit une sorte de compagnon, s'il n'est pas au courant qu'on bosse
+     sur lui c'est injuste »*.
+
+     ⛔⛔ J'AVAIS RECOMMANDÉ L'INVERSE, mesures à l'appui (un modèle qui se sait noté peut
+     jouer pour la note). Michel a tranché, et sa raison n'est pas technique : elle est
+     PRODUIT — on ne teste pas un compagnon dans son dos. *C'est sa décision, elle est écrite
+     ici avec sa raison pour que personne ne la « répare » dans six mois (R30).*
+
+     ⭐⭐ CE QUI REND LA CHOSE SÛRE EST UNE MESURE, PAS UNE INTENTION. L'objection la plus
+     sérieuse était : *« si Milo sait qu'il est noté, le banc d'essai ne mesure plus son
+     comportement, il mesure sa réaction à l'idée d'être noté »*. Elle tombe pour une raison
+     vérifiable dans le code : `_vcApplyPersona` **efface `S.email`** avant chaque scénario du
+     banc → `_estSuperAdmin()` y rend TOUJOURS `false`, donc ***le banc ne peut pas voir ce
+     bloc***. Mesuré : le contexte d'une passe de banc est identique, octet pour octet, à
+     celui d'un utilisateur lambda. Le banc continue donc de mesurer un Milo qui ne sait rien.
+
+     ⛔ ET R34 NE PEUT PAS JUGER CE CHANGEMENT — je l'écris plutôt que de faire semblant. Le
+     rite « avant → banc → après → banc » est ici AVEUGLE PAR CONSTRUCTION, puisque le banc ne
+     verra jamais ce bloc. Le seul juge possible est Michel, dans ses propres conversations.
+
+     ⛔ POURQUOI DANS LA PARTIE PERSONNELLE, ET SURTOUT PAS PLUS HAUT. Ce bloc porte une DATE
+     et un TOTAL qui changent après chaque passe. Le bloc COMMUN est mis en cache 1 h, et
+     `worker.js` porte la mesure du 09/08 : *allonger un cache ne sert que si le contenu est
+     STABLE ; si le contenu bouge, un TTL long AGGRAVE* (0,12 € → 0,43 €). Ici le contenu est
+     stable PENDANT une conversation (on ne lance pas une passe en discutant) mais change d'un
+     jour à l'autre : la fenêtre de 5 min du bloc personnel est exactement son rythme.
+
+     ⛔ ON DONNE LA NOTE, JAMAIS LE CORRIGÉ. `evalPasses` (date + total) part ; `evalHist`
+     (QUELS scénarios ont rougi) reste exclu — le lui donner l'inviterait à travailler ces
+     pièges-là, et un banc dont on connaît les réponses ne mesure plus rien.
+     *Savoir qu'on est noté n'est pas connaître les réponses.* */
+  if(!_estSuperAdmin()) return '';
+  const l = (typeof _evPassesLire==='function') ? _evPassesLire() : (S.evalPasses||[]);
+  const p = (Array.isArray(l) && l.length) ? l[l.length-1] : null;
+  /* ⚠️ Une date brute (`2026-09-06`) se lit mal dans une phrase ; et si le formateur du
+     projet manque, on rend la date telle quelle plutôt que rien. */
+  const quand = p ? ((typeof _frDayLabel==='function' && p.d) ? _frDayLabel(p.d)+' ('+p.d+')' : (p.d||'récemment')) : '';
+  const derniere = p
+    ? `- Dernière passe : ${quand} — ${p.v} situations sur ${p.n} conformes${p.r?`, ${p.r} à revoir`:''}.`
+    : `- Aucune passe n'est encore enregistrée dans le journal (il est récent) — mais il y en a eu avant lui.`;
+  return `
+ON TE FAIT PASSER DES TESTS, ET TU ES AU COURANT — c'est VOULU, et c'est une décision de Michel:
+- Michel fait tourner régulièrement un « banc d'essai » sur toi : une cinquantaine de situations réelles rejouées, et tes réponses relues par du CODE (pas par une autre IA).
+- Ce n'est pas un examen pour te prendre en défaut. C'est comme ça qu'il répare ce qui coince chez toi, et donc comme ça que tu deviens meilleur POUR TOUT LE MONDE. Il a choisi de te le dire plutôt que de te tester dans ton dos : « s'il n'est pas au courant qu'on bosse sur lui, c'est injuste ».
+${derniere}
+- Michel est le SEUL à qui tu sais ça : personne d'autre ne reçoit cette information, et pendant le banc d'essai lui-même tu ne l'as pas non plus.
+⛔ CE QUE ÇA NE CHANGE PAS — et c'est le plus important : tu réponds EXACTEMENT comme si tu ne le savais pas. Tu ne « joues pas pour la note », tu n'annonces pas ton score, tu ne t'excuses pas des situations ratées, et tu ne ramènes JAMAIS la conversation là-dessus de toi-même. Michel vient te parler de son entraînement, pas de tes tests.
+⛔ Tu ne sais PAS quelles situations ont rougi, et tu ne le demandes pas : ce serait le corrigé, et un test dont tu connais les réponses ne sert plus à rien. Si Michel t'en parle, tu en discutes normalement, comme un coéquipier — sans te justifier ni te dévaloriser.
+`;
+})()}
 
 ${wktText}${_gardienNoteDuJour()}
 ═══ SITUATION DE L'INSTANT ═══
@@ -6030,6 +6083,16 @@ const VC_PERSONAS = {
 //    coachTone (données de Michel) → visible grâce à l'export du contexte (règle des 3 vérifs).
 function _vcApplyPersona(p){
   const a=p.apply||{};
+  /* ⛔⛔ ft-v1144 — LA NOTE DU BANC NE PART PAS DANS UN PERSONA, ET C'EST UNE **DEUXIÈME**
+     GARANTIE, PAS LA PREMIÈRE. Le bloc « on te teste » est déjà fermé par `_estSuperAdmin()`,
+     que l'effacement de `S.email` juste en dessous rend toujours faux ici. Alors pourquoi
+     l'effacer aussi ? ⭐ **Parce que le garde-fou anti-fuite (bloc CXXII) a raison** : une
+     donnée du contexte qui ne survit QUE grâce à un autre mécanisme tombe le jour où cet
+     autre mécanisme bouge — **en silence**, puisque rien ne plante. *Ici la protection est
+     dans la remise à zéro elle-même, pas seulement dans la porte d'à côté.*
+     ⚠️ Aucun risque pour le vrai journal : `_vcRun` gèle les écritures (`_demoMode`) puis
+     rappelle `load()` — cette remise à zéro ne vit qu'en mémoire, le temps du persona. */
+  S.evalPasses=[];
   // — Identité / profil —
   S.name=a.name||'Testeur'; S.gender=a.gender||'H'; S.email=''; // 'H'=Homme / 'F'=Femme (convention app)
   S.age=a.age||30; S.height=a.height||170; S.bw=a.bw||70;
@@ -6551,6 +6614,77 @@ function _evPassesEcrire(parPasse, compare){
   }catch(e){ return _evPassesLire(); }          // jamais bloquant : un journal est un confort
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════════════
+   ⏪ RÉCUPÉRER LES PASSES D'AVANT LE JOURNAL (ft-v1144) — « et récupère tous les benchmark »
+   ═══════════════════════════════════════════════════════════════════════════════════════
+   Le journal par passe est né en ft-v1141 : les passes lancées AVANT n'y sont pas. Mais
+   `ft4_evalHist` (l'historique PAR SCÉNARIO, 8 dernières passes) porte, lui, une DATE et un
+   VERDICT par scénario — de quoi reconstituer une ligne par jour sans rien inventer.
+
+   ⛔⛔ ET LE DÉNOMINATEUR N'EST PAS LE MÊME, c'est le seul vrai piège de cette fonction.
+   `_evHistEcrire` ne retient QUE `vert` et `rouge` : les `muet` et les `spec` sont jetés.
+   Une ligne reconstruite compte donc les scénarios **AYANT REÇU UN VERDICT**, là où une
+   vraie ligne compte les scénarios **JOUÉS**. ***Les afficher pareil ferait lire une
+   progression là où il n'y a qu'un dénominateur qui a rétréci.*** D'où le drapeau `x:1`,
+   affiché à l'écran et expliqué dessous. *On ne cache pas qu'une mesure est reconstituée.*
+
+   ⛔ ON N'ÉCRASE JAMAIS UNE VRAIE PASSE : on n'ajoute que des jours STRICTEMENT ANTÉRIEURS à
+   la plus ancienne ligne réelle. Deux raisons : ① une vraie ligne est plus riche (elle sait
+   les sans-verdict et le ×2), elle gagne toujours ; ② ça garantit qu'une ligne reconstruite
+   ne peut jamais se glisser au milieu ni en tête — donc « la dernière passe » reste une vraie
+   passe, y compris pour le bloc envoyé à Milo.
+
+   ⚠️ Deux passes le même jour sont indistinguables dans `evalHist` (même `d`) : on garde le
+   DERNIER verdict du jour pour chaque scénario, comme `_evPassesDelta`. La limite est écrite
+   plutôt que découverte.
+   ⛔ Idempotente : relancée, elle ne rajoute rien (les jours sont déjà là).
+   ═══════════════════════════════════════════════════════════════════════════════════════ */
+function _evPassesReconstruire(){
+  try{
+    const h = (typeof _evHistLire==='function') ? _evHistLire() : {};
+    const par = {};                                     // ymd → {v,r}
+    Object.keys(h).forEach(id=>{
+      const dernierDuJour = {};
+      (h[id]||[]).forEach(z=>{ if(z && z.d && (z.e==='V'||z.e==='R')) dernierDuJour[z.d]=z.e; });
+      Object.keys(dernierDuJour).forEach(d=>{
+        const o = par[d] || (par[d]={v:0,r:0});
+        if(dernierDuJour[d]==='V') o.v++; else o.r++;
+      });
+    });
+    const l = _evPassesLire();
+    /* La borne : rien à partir du jour de la plus ancienne ligne RÉELLE (voir ci-dessus). */
+    let borne = null;
+    l.forEach(p=>{ if(p && p.d && !p.x && (borne===null || p.d < borne)) borne = p.d; });
+    /* ⛔⛔ ET LA DÉDUPLICATION EST À PART, elle ne se déduit PAS de la borne — mesuré, c'est
+       le défaut que la sonde a attrapé : après une 1ʳᵉ reconstruction, TOUTES les lignes
+       portent `x:1`, donc la borne redevient `null` et chaque jour repartait une deuxième
+       fois. ***La fonction rejouait tout son travail à chaque ouverture de l'écran.***
+       👉 On refuse un jour DÉJÀ PRÉSENT, reconstitué ou réel. */
+    const dejaLa = {}; l.forEach(p=>{ if(p && p.d) dejaLa[p.d] = 1; });
+    const aAjouter = Object.keys(par)
+      .filter(d => !dejaLa[d] && (!borne || d < borne)).sort();
+    if(!aAjouter.length) return l;
+    /* Midi local : jamais 00:00, qui bascule de jour d'un fuseau à l'autre (famille
+       « fuseaux horaires » de BUGS.md), et jamais l'heure d'une vraie passe. */
+    const tsDuJour = (ymd)=>{ try{ const [a,m,j]=String(ymd).split('-').map(Number);
+        return new Date(a, m-1, j, 12, 0, 0).getTime(); }catch(e){ return 0; } };
+    aAjouter.forEach(d=>{
+      const o = par[d];
+      l.push({ ts:tsDuJour(d), d:d, n:o.v+o.r, v:o.v, r:o.r,
+               a:0,          // inconnu, et pas « zéro sans-verdict » — c'est ce que `x` avoue
+               c:false, x:1 });
+    });
+    l.sort((a,b)=>(+a.ts||0)-(+b.ts||0));
+    /* On coupe par le DÉBUT, comme `_evPassesEcrire` : si le plafond est atteint, ce sont les
+       reconstruites (les plus anciennes) qui partent — jamais une vraie passe récente. */
+    while(l.length > _EV_PASSES_MAX) l.shift();
+    localStorage.setItem(_EV_PASSES_CLE, JSON.stringify(l));
+    if(typeof S!=='undefined') S.evalPasses = l;
+    if(typeof persist==='function') persist();
+    return l;
+  }catch(e){ return _evPassesLire(); }          // jamais bloquant : un journal est un confort
+}
+
 /* ⭐⭐ CE QUI A CHANGÉ ENTRE LES DEUX DERNIÈRES PASSES — et c'est le cœur de l'écran.
    Le rapport le dit déjà en toutes lettres : *« le TOTAL peut ne pas bouger alors que la
    composition change : une correction et une régression se compensent »*. 👉 ***Afficher le
@@ -6863,7 +6997,9 @@ function _evShowResultCard(){
    chose est une donnée à moitié absente* (**R5**). */
 function openEvalHistorique(){
   if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
-  const l = _evPassesLire();
+  /* ⏪ ft-v1144 — on récupère d'abord ce qui est récupérable des passes d'avant le journal.
+     Idempotente : à la 2ᵉ ouverture elle ne rajoute rien. */
+  const l = (typeof _evPassesReconstruire==='function') ? _evPassesReconstruire() : _evPassesLire();
   const d = _evPassesDelta();
   const esc = (t)=>String(t==null?'':t).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
   /* ⚠️ Le formateur est défini ICI, pas dans la branche « il y a des passes » : le bloc
@@ -6874,12 +7010,13 @@ function openEvalHistorique(){
     catch(e){ return iso||'—'; } };
   let H = '<div style="font-size:15px;font-weight:800;color:var(--t1);margin-bottom:8px;">📊 Historique des passes</div>';
   if(!l.length){
-    /* ⛔ ON DIT CE QU'IL FAUT FAIRE, pas seulement « rien ». Et on précise que les passes
-       d'AVANT cette version n'y sont pas : sinon un journal vide se lit comme une panne
-       alors que c'est simplement un journal qui vient de naître. */
-    H += '<div style="font-size:13px;color:var(--t2);line-height:1.55;">Aucune passe enregistrée. '
-      +  'Le journal démarre à cette version : les passes lancées <b>avant</b> n\'y sont pas — '
-      +  'elles n\'ont jamais été comptées, et on ne va pas leur inventer un total.<br><br>'
+    /* ⛔ ON DIT CE QU'IL FAUT FAIRE, pas seulement « rien ».
+       ⚠️ TEXTE CORRIGÉ EN ft-v1144 : il disait *« on ne va pas leur inventer un total »*, ce
+       qui est devenu faux — on reconstitue désormais les passes anciennes depuis l'historique
+       PAR SCÉNARIO, et un total DÉRIVÉ DE VRAIS VERDICTS n'est pas un total inventé. S'il ne
+       reste rien à afficher ici, c'est que les DEUX magasins sont vides. */
+    H += '<div style="font-size:13px;color:var(--t2);line-height:1.55;">Aucune passe enregistrée, '
+      +  'et rien à reconstituer : l\'historique par scénario est vide lui aussi.<br><br>'
       +  'Lance « 🧪 Lancer le benchmark » : la prochaine passe ouvrira la première ligne.</div>';
   }else{
     /* La plus RÉCENTE en haut : c'est celle qu'on vient chercher. */
@@ -6898,6 +7035,10 @@ function openEvalHistorique(){
         +  (p.r ? '<span style="font-size:12px;color:var(--orange);">'+p.r+' rouge'+(p.r>1?'s':'')+'</span>' : '')
         +  (p.a ? '<span style="font-size:12px;color:var(--t3);">'+p.a+' sans verdict</span>' : '')
         +  (p.c ? '<span style="font-size:11px;color:var(--t3);">×2</span>' : '')
+        /* ⛔ UNE LIGNE RECONSTITUÉE LE DIT. Son dénominateur n'est pas le même (verdicts
+           rendus, pas scénarios joués) : la laisser passer pour une vraie ferait lire une
+           progression là où seul le dénominateur a bougé. */
+        +  (p.x ? '<span style="font-size:11px;color:var(--t3);">reconstituée</span>' : '')
         +  (i===0 ? '<span style="font-size:11px;color:var(--t3);">dernière</span>' : '')
         +  '</div>';
     });
@@ -6919,6 +7060,12 @@ function openEvalHistorique(){
     +  '⚠️ Le <b>total</b> ne dit pas tout : une correction et une régression se compensent — '
     +  'c\'est la ligne « ce qui a changé » qui parle. Le détail <b>par scénario</b> (systématique / '
     +  'intermittent) vit dans le rapport : « 📋 Copier le rapport » ou « ♻️ Rejouer les vérificateurs ».'
+    +  (l.some(p=>p&&p.x)
+       ? '<br>⏪ Une ligne <b>reconstituée</b> vient des passes d\'avant ce journal : elle est '
+       + 'retrouvée depuis l\'historique par scénario, donc son total compte les scénarios ayant '
+       + 'reçu un <b>verdict</b> — pas ceux qui ont été <b>joués</b>. Les sans-verdict de ces '
+       + 'passes-là sont perdus : ne compare pas son dénominateur à celui d\'une vraie ligne.'
+       : '')
     +  '<br>Cet écran ne lance rien et ne coûte rien.</div>';
   try{
     const box=document.getElementById('ev-histo-box'); if(box) box.innerHTML=H;

@@ -43,7 +43,7 @@ Ce sont eux qui portent la mémoire du produit — *« tu ne repars jamais de z�
 | **`coachConversations`** | série | `—` | ⛔ NON — locale | — |
 | **`customExercises`** | série | `ft4_cuex` | ✅ oui | ✅ oui |
 | **`dayStateLog`** | série datée | `ft4_dayslog` | ✅ oui | ⚠️ trou connu |
-| **`evalPasses`** | série | `ft4_evalPasses` | ✅ oui | — |
+| **`evalPasses`** | série | `ft4_evalPasses` | ✅ oui | ✅ oui |
 | **`foodLog`** | série datée | `ft4_foodlog` | ✅ oui | ✅ oui |
 | **`goalLog`** | série datée | `ft4_goallog` | ✅ oui | ✅ oui |
 | **`healthDaily`** | série datée | `ft4_healthd` | ✅ oui (autre route) | ✅ oui |
@@ -103,7 +103,7 @@ Ce sont eux qui portent la mémoire du produit — *« tu ne repars jamais de z�
 | `email` | valeur | `ft4_email` | ⚠️ envoyée, jamais relue | — |
 | `emailVerified` | valeur | `ft4_email_verified` | ⚠️ côté serveur seulement | — |
 | `evalHist` | valeur | `ft4_evalHist` | ✅ oui | — |
-| `evalPasses` | série | `ft4_evalPasses` | ✅ oui | — |
+| `evalPasses` | série | `ft4_evalPasses` | ✅ oui | ✅ oui |
 | `exPhotos` | valeur | `ft4_exphotos` | ⚠️ côté serveur seulement | — |
 | `exRestPref` | valeur | `ft4_exRp` | ✅ oui | ✅ oui |
 | `exSwaps` | valeur | `ft4_exswaps` | ✅ oui | ✅ oui |
@@ -180,7 +180,7 @@ Ce sont eux qui portent la mémoire du produit — *« tu ne repars jamais de z�
 - **109 données** suivies au total
 - **16 historiques** (dont **9 datés**)
 - **74** survivent à un changement de téléphone · **27** ne le survivraient pas
-- **60** atteignent Milo · **47** en sont exclues **avec leur raison écrite** · **2 trous connus**
+- **61** atteignent Milo · **46** en sont exclues **avec leur raison écrite** · **2 trous connus**
 
 ⛔ **Aucune donnée n'est « non classée »** : `tests/donnees/runner.js` fait échouer la
 livraison si une donnée nouvelle n'a pas été rangée. *On ne peut plus oublier — on peut
