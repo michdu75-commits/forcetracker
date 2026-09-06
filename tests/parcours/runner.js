@@ -899,10 +899,16 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     /* ⚠️ LA SONDE DU JOUR (13/08/2026) — « le serveur répond-il MAINTENANT ? ». Elle
        manquait : la carte lisait l'historique des déploiements GitHub et affichait « serveur
        OK » (avant-hier) pendant qu'un appel échouait sous les yeux de Michel. */
-    if(u.includes('test=1')) return nom==='ok'
+    /* ⚠️⚠️ `nom!=='panne'` ET NON `nom==='ok'` — MON TÉMOIN A MORDU LÀ-DESSUS (06/09/2026).
+       Le 3ᵉ scénario `manque` tombait dans la branche « panne » de TOUTES les autres sondes
+       (stockage à 102 %, serveur injoignable, mails en échec) : la carte partait en alarme
+       générale, et mon témoin lisait 3 verts au lieu de 7. ***Il ne mesurait plus « une
+       programmation manquante », il mesurait « tout est en panne ».*** Un scénario ciblé doit
+       être SAIN partout sauf sur le point qu'il vise, sinon il ne vise rien. */
+    if(u.includes('test=1')) return nom!=='panne'
       ? J({status:'online',version:'3.5'})
       : route.fulfill({status:503,contentType:'text/plain',body:'indisponible'});
-    if(u.includes('storeHealth')) return J(nom==='ok'
+    if(u.includes('storeHealth')) return J(nom!=='panne'
       ? {status:'ok',pourcentPlein:41,totalOctets:210000,nbCles:38,testEcriture:'ok'}
       : {status:'ok',pourcentPlein:102,totalOctets:524000,nbCles:44,testEcriture:'ECHEC: quota'});
     /* ⏰ FIXTURE RECALÉE LE 06/09/2026 — elle rendait `triggersInstalled:1`, ce qui décrit
@@ -920,7 +926,7 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
       : {status:'ok',triggersInstalled:0,triggersAttendus:2,
          schedLabel:'2× par jour (2h et 14h UTC)',
          fileCount:12,lastFiles:['backup-2026-07-20.json']});
-    if(u.includes('mailFails')) return J(nom==='ok'
+    if(u.includes('mailFails')) return J(nom!=='panne'
       ? {status:'ok',fails:[],quotaRestant:98} : {status:'ok',fails:[{d:'a'},{d:'b'}]});
     // ⚠️ Le plafond de dépense fait partie de la SANTÉ depuis le 11/08 : il ne sert à rien
     //    s'il est désarmé, et cet état n'était visible nulle part (Michel a posé le secret
@@ -928,7 +934,7 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     // ⚠️ date RÉCENTE (calculée, pas figée) : une date en dur finirait par périmer toute
     //    seule et ferait rougir le témoin de péremption des mois plus tard.
     if(u.includes('aiUsage')) return J({status:'ok',used:127,limit:1000,
-      capKnown:true, capArmed:(nom==='ok'), capSeenAt:new Date(Date.now()-3600000).toISOString()});
+      capKnown:true, capArmed:(nom!=='panne'), capSeenAt:new Date(Date.now()-3600000).toISOString()});
     return J({status:'ok'});
   });
   // Les MISES EN LIGNE sont lues sur l'API publique de GitHub (dépôt public, aucun jeton).

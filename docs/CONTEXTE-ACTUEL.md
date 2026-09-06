@@ -8,7 +8,7 @@
 
 - **Version en ligne (live) :** `ft-v1145` — 🌙 **UN ÉTAT PARFAIT ANNONCÉ COMME UNE ANOMALIE.**
   ⏳ **Déploiements à vérifier des DEUX côtés** (R18) : `Code.js` modifié → le backend part seul.
-  ⏳ **Suite complète** : **parcours %PARC%** (+3), calculs 339/339, muscles 241/241,
+  ⏳ **Suite complète** : **parcours 2904/2904** (+3), calculs 339/339, muscles 241/241,
   croisés 50/50, dates 9/9, données classées 0 trou.
   Michel a lancé `reparerSauvegardeNuit` dans l'IDE : **tout a marché** (2 déclencheurs à 2h et
   14h, `backup-2026-09-06-16-27.json`, 1102 Ko, 12 comptes) — et le journal a répondu
