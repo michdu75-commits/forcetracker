@@ -7,6 +7,8 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1143` — 📐 **LES 38 PX DE VIDE EN HAUT DE TOUS LES ÉCRANS.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#933** sur `9df36c7`, **job `deploy` success**,
+  les 7 étapes vertes à **13:46:12 UTC**.
   ⭐⭐ **C'est Michel qui a vu que j'avais tort.** Je lui avais affirmé que le haut de l'en-tête
   était l'ENCOCHE, donc intouchable. Lui : *« es-tu sûr qu'on n'arrive pas à gratter ? la
   couleur bleue va jusqu'en haut »*.
