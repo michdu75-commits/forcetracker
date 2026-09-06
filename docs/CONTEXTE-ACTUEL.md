@@ -49,6 +49,11 @@
   ⏭️ **Reste ouvert, inchangé** : la réparation du passé est **derrière l'admin** · la recherche ne
   découpe pas les mots (*« biceps marteau »* → **0 résultat**) · le tiret ne dit pas « 1ʳᵉ fois ».
   ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+  ✅ **VÉRIFIÉ EN PROD PAR MICHEL le 06/09 au soir** : les **4 doublons fusionnés**, et
+  ***l'historique est revenu***. La chaîne complète est donc confirmée de bout en bout —
+  détection (ft-v1148) → étiquettes lisibles (ft-v1149) → fusion → historique retrouvé.
+  ⭐ *C'était bien un problème de NOM, jamais une perte de données* : rien n'a été récupéré,
+  tout était là sous un deuxième nom.
 
 - **Avant :** `ft-v1147` — 🔥 **L'ÉCHAUFFEMENT CARDIO DE MILO ALLAIT DANS LA LISTE DES EXERCICES.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#944** sur `248952d`, **job `deploy` success**,
