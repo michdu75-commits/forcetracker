@@ -27436,6 +27436,91 @@ console.log('\n-- CCXLI. Les mensurations survivent a un changement de telephone
   await cx.close();
 }
 
+// ═══ CCXLI. LES 38 PX DE VIDE EN HAUT DE TOUS LES ÉCRANS (06/09/2026) ══════════════════════
+// Michel, devant sa capture : « es-tu sûr qu'en haut on n'arrive pas à gratter ? la couleur
+// bleue va jusqu'en haut ». Je lui avais affirmé que c'était l'ENCOCHE, donc intouchable.
+// ⭐ MESURÉ SUR SA CAPTURE RÉELLE (Pro Max, ×3) : bandeau noir 0→59 px, bleu à 59, logo à 96
+//    → 37 px de bleu VIDE, et ce n'est pas l'encoche. La cause : le statut de barre vaut
+//    `black`, donc iOS réserve le bandeau lui-même et `env(safe-area-inset-top)` rend 0 —
+//    les 38 px s'ajoutaient PAR-DESSUS un espace déjà réservé. Gain : 26 px sur tous les écrans.
+// ⛔⛔ CE QUE CE BLOC PROTÈGE EN PRIORITÉ N'EST PAS LE GAIN, C'EST LE GARDE-FOU `max(env(...))`.
+//    Le remplacer par une valeur sèche marcherait dans TOUS les tests navigateur (où l'encoche
+//    vaut 0) et ferait passer l'en-tête SOUS l'encoche sur un vrai téléphone le jour où l'app
+//    repasse en `black-translucent`. *Un défaut qu'aucun test à l'écran ne peut voir.*
+console.log('\n═══ CCXLI. Le décalage du haut : 26 px rendus, sans casser l\'encoche ═══');
+{
+  const CSS=fs.readFileSync(path.join(ROOT,'style.css'),'utf8');
+  const m=/\.topbar\{[\s\S]*?padding:\s*([^;]+);/.exec(CSS);
+  const pad=m?m[1].trim():'(introuvable)';
+  /* ⛔ CONTRÔLE — sans la règle, tout le reste du bloc serait vert sur du vide. */
+  t('CCXLI ⛔ CONTRÔLE — la règle de décalage de l\'en-tête a bien été trouvée',
+    !!m, 'le sélecteur .topbar ou son padding a changé de forme');
+  /* ⛔⛔ LE TÉMOIN QUI PORTE LA VERSION : le garde-fou d'encoche est toujours là. */
+  t('CCXLI ⛔⛔ le décalage passe TOUJOURS par `max(env(safe-area-inset-top), …)`',
+    /max\(\s*env\(safe-area-inset-top\)\s*,/.test(pad),
+    'une valeur sèche passerait tous les tests ET casserait sous l\'encoche — reçu : '+pad);
+  /* ⭐ NON-RÉGRESSION DU GAIN — le plancher ne doit pas remonter. 38 était l'ancienne valeur. */
+  const plancher=(/max\(\s*env\(safe-area-inset-top\)\s*,\s*(\d+)px/.exec(pad)||[])[1];
+  t('CCXLI ⭐ le plancher est bien descendu (≤ 16 px, il était à 38)',
+    plancher!==undefined && Number(plancher)<=16, 'plancher = '+plancher+' px');
+
+  const ce=await b.newContext({serviceWorkers:'block',viewport:{width:393,height:852},timezoneId:'Europe/Paris'});
+  const pe=await ce.newPage(); const ee=[]; pe.on('pageerror',e=>ee.push(e.message));
+  await pe.addInitScript(seedScript({}));
+  await pe.goto('http://localhost:'+PORT+'/index.html');
+  await pe.waitForTimeout(2200);
+  const E=await pe.evaluate(async()=>{
+   try{
+    const net=()=>{document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      const o=document.getElementById('onboarding'); if(o)o.style.display='none';
+      const i=document.getElementById('install-popup'); if(i)i.classList.add('hidden');};
+    net();
+    const tb=document.querySelector('.topbar'); if(!tb) return {erreur:'.topbar absente'};
+    const o={entete:Math.round(tb.getBoundingClientRect().height)};
+    const logo=document.getElementById('tb-logo');
+    o.logoY=logo?Math.round(logo.getBoundingClientRect().top):null;
+    const fab0=()=>{const f=document.getElementById('nb-log').getBoundingClientRect();
+      return [Math.round(f.x),Math.round(f.y),Math.round(f.width),Math.round(f.height)].join(',');};
+    o.fabAvant=fab0();
+    /* ⛔ TOUS LES ONGLETS : l'en-tête est GLOBAL, donc un mauvais réglage les casse tous —
+       vérifier le seul Accueil laisserait passer cinq écrans. */
+    o.ecrans=[];
+    for(const [id,btn] of [['home','nb-home'],['progress','nb-progress'],['log','nb-log'],
+                           ['nutrition','nb-nutrition'],['coach','nb-coach'],['setup','nb-setup']]){
+      goScreen(id, document.getElementById(btn));
+      await new Promise(r=>setTimeout(r,380)); net(); await new Promise(r=>setTimeout(r,180));
+      const sc=document.querySelector('.screen.active');
+      const prem=[...(sc?sc.children:[])].find(e=>e.getBoundingClientRect().height>0);
+      const y=prem?Math.round(prem.getBoundingClientRect().top):null;
+      o.ecrans.push({id, y, ok: y===null ? null : (y >= Math.round(tb.getBoundingClientRect().bottom)-2)});
+    }
+    o.fabApres=fab0();
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  await ce.close();
+  if(E.erreur) t('CCXLI ⛔ le bloc s\'exécute', false, E.erreur);
+  /* ⭐ L'en-tête a vraiment maigri à l'écran — pas seulement dans le fichier CSS. */
+  t('CCXLI ⭐ l\'en-tête mesure moins de 100 px (il en faisait 110)',
+    E.entete>0 && E.entete<100, E.entete+' px');
+  /* ⛔ ET IL NE DÉBORDE PAS PAR LE HAUT : c'est la limite de l'exercice — trop bas, le logo
+     sortirait de l'écran, et personne ne le verrait dans un chiffre de hauteur. */
+  t('CCXLI ⛔ le logo ne sort pas par le haut de l\'écran',
+    E.logoY!==null && E.logoY>=0, 'logo à y='+E.logoY);
+  /* ⛔⛔ LES SIX ONGLETS — l'en-tête est global. */
+  {
+    const mauvais=(E.ecrans||[]).filter(x=>x.ok===false);
+    t('CCXLI ⛔⛔ sur les 6 onglets, le contenu commence bien SOUS l\'en-tête',
+      (E.ecrans||[]).length===6 && mauvais.length===0,
+      mauvais.map(x=>x.id+' à y='+x.y).join(' | '));
+  }
+  /* 🔴 RÈGLE D'OR #9 — comparé AVANT/APRÈS plutôt qu'à une valeur en dur : celle-ci deviendrait
+     fausse au premier changement de viewport du banc, sans que le bouton ait bougé d'un pixel. */
+  t('CCXLI 🔴 RÈGLE D\'OR #9 — le bouton central n\'a pas bougé',
+    E.fabAvant===E.fabApres, E.fabAvant+' → '+E.fabApres);
+  t('CCXLI aucune erreur JS sur tout le bloc', ee.length===0, ee.join(' | '));
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
