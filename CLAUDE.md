@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1141`** (prochaine : `ft-v1142`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1143`** (prochaine : `ft-v1144`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,28 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1143 — 📐 LES 38 PX DE VIDE EN HAUT DE TOUS LES ÉCRANS — ET C'EST MICHEL QUI A VU QUE J'AVAIS TORT** — je lui avais affirmé que le haut de l'en-tête était **l'encoche de l'iPhone, donc non négociable**. Sa réponse : *« es-tu sûr qu'en haut on n'arrive pas à gratter ? la couleur bleue va jusqu'en haut »*.
+
+**⭐⭐ IL AVAIT RAISON, ET LA PREUVE EST DANS SA PROPRE CAPTURE.** Mesurée au pixel (1290×2796, iPhone Pro Max, ×3) : bandeau **noir de 0 à 59 px**, le bleu commence à **59**, et le logo à **96**. 👉 ***37 px de bleu VIDE entre les deux — et ce n'est PAS l'encoche.***
+
+**⛔⛔ LA CAUSE EST UNE LIGNE DE RÉGLAGE, ET ELLE EXPLIQUE EXACTEMENT CE QUE SON ŒIL AVAIT VU.** `apple-mobile-web-app-status-bar-style` vaut **`black`** : iOS réserve donc le bandeau **lui-même**, la page démarre dessous, et `env(safe-area-inset-top)` rend **ZÉRO**. Le `max(env(...),38px)` de `.topbar` retombait sur **38 px ajoutés par-dessus un espace déjà réservé**. *Le bleu ne montait pas jusqu'en haut parce qu'on le lui avait interdit.*
+
+**👉 J'AVAIS LU LE `max()` ET SUPPOSÉ QUE L'ENCOCHE GAGNAIT — SANS LE MESURER.** C'est **R28 appliqué à moi-même** : *une limite non vérifiée devient une règle de conception silencieuse*. Celle-là coûtait **26 px sur TOUS les onglets, pour toujours**, et elle ne se serait jamais manifestée autrement que par ce qu'on n'aurait jamais demandé.
+
+**⭐ LE CORRECTIF TIENT EN UN CHIFFRE : le plancher passe de 38 à 12 px.** Gain **26 px, identique sur SE / 13 mini / 15 Pro / Pro Max** (la marge est absolue, pas proportionnelle). En-tête **110 → 84 px** sur un 15 Pro. Vérifié sur **4 formats × 6 onglets** : le contenu commence toujours **sous** l'en-tête, le logo ne sort pas par le haut, et le **bouton central ne bouge sur aucun format** (règle d'or #9, mesuré avant/après).
+
+**⛔⛔ CE QUE LE BLOC PROTÈGE EN PRIORITÉ N'EST PAS LE GAIN, C'EST LE GARDE-FOU.** Remplacer `max(env(safe-area-inset-top), 12px)` par un `12px` sec **passerait tous les tests navigateur** — l'encoche y vaut 0 — **et ferait passer l'en-tête SOUS l'encoche sur un vrai téléphone** le jour où l'app repasse en `black-translucent`. *Un défaut qu'aucun test à l'écran ne peut voir.* Un témoin refuse cette écriture.
+
+**⛔ L'OPTION A EST ÉCARTÉE POUR L'INSTANT, AVEC SA RAISON (R30)** : faire monter le dégradé derrière l'heure et la batterie (`black-translucent`) est plus **joli** mais **ne libère rien** — le décalage redeviendrait l'encoche (59 px) — et ça demande une vérification écran par écran. Michel a tranché : *le gain de place d'abord*.
+
+**⚠️ UN TÉMOIN EXISTANT A ROUGI, ET C'EST §31 UNE FOIS DE PLUS** : celui de ft-v977 exigeait `haut === '38px'` — **la valeur du jour**, pas la garantie. La garantie a toujours été *« la barre est compactée et ne remonte pas »* (elle faisait 44/14 avant). Re-visé sur une **borne haute**, ce qui protège le gain d'hier **et** celui d'aujourd'hui. *Un témoin visé sur le chiffre du jour rougit au premier progrès.*
+
+**📣 RÈGLE D'OR #11 — RIEN, et c'est argumenté.** Rien ne disparaît, rien n'est à faire, aucun chiffre enregistré ne change : **l'écran gagne de la place**. ⛔ Une pop-up dirait *« on a remonté l'en-tête de 26 px »* — du bruit pur (R19/R25), exactement comme pour le check-in de ft-v1134.
+
+**⏭️ CE QUE ÇA NE FAIT PAS, écrit pour ne pas le redécouvrir** : ⛔ sur un écran de **375 px de large**, la date passe sur **deux lignes** et l'en-tête reprend **27 px** (137 contre 110). C'est la **disposition titre/date**, pas la marge — un autre sujet, et il n'a pas été demandé. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+Tests **sur l'arbre FUSIONNÉ avec la ft-v1141 de session-A** (l'historique des passes du banc) — *c'est lui qui part en ligne* : **parcours 2883/2883** (+8, bloc **CCXLIII**), **calculs 339/339**, muscles 241/241, croisés 50/50, **dates 9/9**, données classées 0 trou. ⛔ **Un contrôle avant tout le reste** : la règle de décalage doit être **trouvée** dans le CSS — sinon tout le bloc serait vert sur du vide. ⛔⛔ **Les 6 onglets sont vérifiés, pas seulement l'Accueil** : l'en-tête est **global**, donc un mauvais réglage les casse tous et n'en regarder qu'un en laisserait passer cinq. ⛔ **Contrôle négatif : 2 rouges sur 7** sur l'arbre d'avant — et ⚠️ **je dis lesquels ne mordent pas** : les 5 verts sont des **gardes** (garde-fou d'encoche, logo qui ne déborde pas, contenu sous l'en-tête, bouton central), *ils protègent, ils ne détectent pas*. ⚠️⚠️ **29ᵉ COLLISION DE VERSION** : session-A a publié sa propre **ft-v1141** pendant ma passe de 16 min, **et elle avait déjà réservé ft-v1142** dans le journal de partage — ma version monte donc à **ft-v1143**. *Le premier publié garde le numéro ; la réservation, elle, se respecte.* ⚠️ **Et une 2ᵉ collision, d'IDENTIFIANT cette fois** : nos deux blocs de test s'appelaient **CCXLII** — le mien devient **CCXLIII** (le piège de ft-v1125 : le rapport suit les scénarios par id, donc deux blocs du même numéro fusionnent en silence). Fusion en gardant **les deux côtés** partout, puis **repasse complète**. Fichiers : `style.css`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1143. |
 
 **ft-v1141 — 📊 L'HISTORIQUE DES PASSES DU BANC — ET J'AI COMMENCÉ PAR DIRE QU'IL EN EXISTAIT DÉJÀ UN** — Michel : *« il faudrait créer un historique des benchmark »*.
 
@@ -598,24 +620,6 @@ Tests : **parcours 2807/2807** (+10, bloc **CCXXXIX**), **calculs 339/339**, mus
 **⏱️ ET UNE REMARQUE DE MICHEL QUI VAUT D'ÊTRE GARDÉE : *« je trouve ça long »*.** Chiffré : **une passe de parcours = 16 minutes**, et **5 ont tourné aujourd'hui** (~80 min) pour des retouches de mise en page. ⛔ **La cause n'est pas la suite, ce sont deux passes de rattrapage de MES erreurs** (un bloc de test placé après la fermeture du navigateur, un texte périmé manqué) — ~32 min sur 80. ⭐ **Le levier qui coûte zéro : grouper les retouches en UNE version** (4 demandes → 4 passes aujourd'hui, contre 1 si groupées). ⛔ **Ce qu'on ne fera pas : sauter la passe** — c'est elle qui a attrapé, le jour même, un texte qui envoyait les testeurs vers un écran supprimé.
 
 Tests : **parcours 2797/2797** (+4, bloc **CCXXXVIII** étendu), **calculs 339/339**, muscles 241/241, croisés 50/50, **dates 9/9**, données classées 0 trou. ⚠️ **Une honnêteté sur la méthode** : après cette passe verte, seul le **libellé affiché** d'un témoin a été réécrit (son seuil et son assertion sont inchangés) — *je n'ai pas relancé 16 minutes pour une chaîne de caractères imprimée, et je le dis plutôt que de laisser croire que la passe a tourné sur le fichier exact.* Fichiers : `screens.js`, `style.css`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1135. |
-
-**ft-v1134 — 📏 LE CHECK-IN DU JOUR MAIGRIT DE 27 PX — ET LA GRAISSE N'ÉTAIT PAS OÙ ON LA CHERCHE** — Michel : *« essaye de diminuer la taille du checking en hauteur »*.
-
-**⭐⭐ MESURÉ AVANT DE TOUCHER, ET C'EST LA MESURE QUI A CHOISI LA MÉTHODE.** La tuile faisait **94 px pour 57 px de contenu réel** — **37 px de blancs** (icône 24 + trois écarts de 6 + marges 10/9). ⛔ **La piste évidente a été simulée d'abord, et elle ne valait pas le coup** : resserrer toutes les marges ne rendait que **9 px** sur la carte. 👉 ***La graisse n'était pas dans les marges, elle était dans la DISPOSITION*** — quatre étages empilés (icône / jauge / valeur / légende). L'icône passe **à côté** de la valeur : trois étages.
-
-**⭐ RÉSULTAT, MESURÉ SUR 4 FORMATS × 2 ÉTATS** : tuile **94 → 67 px**, carte **157 → 130** (remplie) et **183 → 156** (vierge) — **−27 px partout**, aucun débordement, bouton central identique. *Le même gain sur un iPhone SE que sur un 15 Pro : ce n'est pas un réglage qui marche sur un seul écran.*
-
-**⛔ RIEN N'EST SUPPRIMÉ** — icône, jauge à 4 traits, valeur et légende sont toutes là. *On gagne de la place en RANGEANT, jamais en jetant de l'information* (**R24**).
-
-**⚠️⚠️ ET UN PLANCHER A ÉTÉ POSÉ, PARCE QUE CETTE TUILE SE TAPE.** Elle ouvre le check-in déplié : sous **44 px** — le minimum d'Apple — elle devient difficile à viser **en salle, les mains moites**. `min-height:48px`, et un témoin l'exige. 👉 *Sans ce garde-fou, le prochain resserrage la rendrait intappable, et personne ne s'en apercevrait avant d'être devant un rack.* **Un gain de 6 px ne vaut pas un tap raté.**
-
-**⭐⭐ ET LE TÉMOIN NE VÉRIFIE PAS « C'EST PLUS PETIT » — c'est le point de méthode.** N'importe quel resserrage futur referait ce vert-là ; il ne protégerait rien. Il protège **le plancher tactile**, **la présence des 4 éléments**, et **le fait que l'icône et la valeur soient sur la même ligne** — *une hauteur en dur, elle, bougerait au premier changement de police sans que rien n'ait bougé pour la personne.*
-
-**📣 RÈGLE D'OR #11 — RIEN, et c'est argumenté.** Aucun repère ne disparaît, rien n'est à faire, aucun chiffre ne change : **une carte prend moins de place**. ⛔ Une pop-up dirait *« on a raccourci une carte de 2,7 cm »* — du bruit pur (R19/R25).
-
-**⏭️ ET UNE IDÉE DE MICHEL EST NOTÉE POUR PLUS TARD, PAS TRAITÉE** : *« on verra par la suite pour supprimer le bouton commencer la séance »*. Écrite dans `IDEES-FUTURES.md` **tout de suite** — *une idée dite en conversation et non écrite disparaît avec la session* (**R27**). ⭐ Elle est sérieuse (le **FAB central** fait déjà la même chose et reste visible sur tous les formats), ⚠️ **mais le doc porte ce qu'il faudra vérifier avant** : le bouton devient **« ↩ Reprendre la séance »** quand une séance est en cours — *le FAB ne le dit pas*, donc le retirer ferait disparaître une **information**, pas seulement un raccourci. Et il pèse 54 px, quand il en manque 84 sur un 13 mini : *son retrait n'y suffirait même pas seul.*
-
-Tests : **parcours 2793/2793** (+8, bloc **CCXXXVIII**), **calculs 339/339**, muscles 241/241, croisés 50/50, **dates 9/9**, données classées 0 trou. ⛔ **Un contrôle d'abord** : les 3 tuiles doivent être présentes — *sinon « la tuile fait au moins 44 px » serait vrai sur une liste vide.* ⛔ Un témoin vérifie qu'**aucun contenu ne déborde** de sa tuile : c'est le premier symptôme d'un resserrage allé trop loin, et il est **silencieux** tant qu'on ne regarde pas. 🔴 **Règle d'or #9** : bouton central mesuré **identique sur les 4 formats**. ⚠️ **Michel doit vérifier sur Safari/iPhone.** Fichiers : `screens.js`, `style.css`, `IDEES-FUTURES.md`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1134. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
