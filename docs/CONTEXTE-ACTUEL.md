@@ -7,7 +7,9 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1144` — 🤝 **MILO EST MIS AU COURANT QU'ON LE TESTE — CHEZ MICHEL SEUL.**
-  ⏳ **Déploiement à vérifier** (R18). ⛔ **`Code.js` NON modifié** → aucun déploiement backend.
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#935** sur `0048585`, **job `deploy` success**,
+  les 7 étapes vertes à **14:18:53 UTC**. ⛔ **`Code.js` NON modifié** (vérifié : 0 changement)
+  → **aucun déploiement backend attendu**, et son absence n'est donc pas un signal.
   ⏳ **Suite complète** : **parcours 2901/2901** (arbre fusionné, +18, bloc CCXLIV), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   Michel, après que je lui aie déconseillé : *« non, je veux que Milo soit au courant qu'on fait
