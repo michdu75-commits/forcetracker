@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en cours (ft-v1153) :** 🎚️ **DEUX CHOSES SUR LE RIR.**
+- **Version en cours (ft-v1154) :** 🎚️ **DEUX CHOSES SUR LE RIR.**
   **①** *« De ne rien mettre ne compte pas comme 0 mais comme rien du tout »* (Michel). ⭐⭐ Mesuré
   sur son export réel (44 séances, 805 séries) : **8 séries de travail sur 591 portent un RIR —
   1,4 %** ; sur la fenêtre que Milo voit (5 séances), **3 sur 44**. Le per-série partait déjà

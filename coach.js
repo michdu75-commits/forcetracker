@@ -3258,7 +3258,7 @@ function buildCoachContext(msg) {
     }catch(err){ return ''; }
   };
   const _NB_DETAIL = 5;
-  /* 🎚️ COMBIEN DE RIR SONT RÉELLEMENT NOTÉS — ft-v1153 (06/09/2026).
+  /* 🎚️ COMBIEN DE RIR SONT RÉELLEMENT NOTÉS — ft-v1154 (06/09/2026).
      Michel : *« de ne rien mettre ne compte pas comme 0 mais comme rien du tout, donc Milo ne
      peut pas le comprendre »*.
      ⭐⭐ MESURÉ SUR SON EXPORT RÉEL (44 séances, 805 séries) : **8 séries de travail sur 591
@@ -3271,7 +3271,7 @@ function buildCoachContext(msg) {
      ⛔ COMPTÉ ICI, PAS DANS UNE 2ᵉ BOUCLE (R2) : les compteurs se remplissent dans la passe qui
      écrit déjà les séries — deux parcours finiraient par diverger.
      ⚠️ ET UN `X` COMPTE COMME EFFORT CONNU — mais ce n'est PAS un RIR de 0 (décision de Michel,
-     ft-v1153) : une répétition a été TENTÉE et n'est pas passée, c'est un cran au-delà. Ce qu'on
+     ft-v1154) : une répétition a été TENTÉE et n'est pas passée, c'est un cran au-delà. Ce qu'on
      compte ici n'est donc pas « a un RIR » mais « on sait ce que la série a coûté », et cette
      question a son propriétaire : `_effortConnu()` (R2). L'oublier sous-compterait exactement les
      séries les plus dures — celles dont l'effort est le mieux connu. */
@@ -4047,7 +4047,7 @@ ${recentSessions}
 → ⚠️ CE QUE TU VOIS ICI EST LE DÉTAIL DES ${_sessVues.length} SÉANCES LES PLUS RÉCENTES${_depuisQuand?' (depuis le '+_depuisQuand+')':''}, PAS SON HISTORIQUE. ${_nbTotalSess>_sessVues.length?'Il/elle a fait '+_nbTotalSess+' séances au total : son parcours complet est dans le bloc « SA MÉMOIRE LONGUE ». ':''}Ne dis JAMAIS que tu ne vois qu'une semaine ou que tu ne connais que ses dernières séances : tu connais tout son parcours, c'est seulement le détail série par série qui s'arrête ici.
 → 💪 RIR = RÉPÉTITIONS EN RÉSERVE, notées par la personne juste après la série. « RIR2 » = il lui restait environ 2 répétitions avant l'échec. ⛔⛔ ET « (X) » N'EST PAS UN RIR DE 0, NE LES CONFONDS JAMAIS : « RIR0 » = la dernière répétition est PASSÉE mais une de plus aurait échoué (série réussie à la limite) ; « (X) » = une répétition prévue a été TENTÉE et N'EST PAS PASSÉE — c'est un cran AU-DELÀ de RIR 0. Exemple : 95×3 en réussissant la 3ᵉ = RIR0 ; tenter la 4ᵉ et caler = (X). ⛔ UNE SÉRIE SANS « RIR » N'EST PAS UN RIR DE 0 : elle n'a simplement pas été notée — ne conclus rien de son absence, et ne la compte jamais comme un échec. ⭐ C'est ce qui te permet enfin de vérifier le cadre de sa discipline (« 1 à 3 en réserve », « jamais à l'échec »…) au lieu de le supposer : quand tu en parles, appuie-toi sur les RIR RÉELLEMENT notés, et dis-le s'il n'y en a pas.${(typeof _estRpe==='function'&&_estRpe())?` ⭐ ATTENTION AU VOCABULAIRE : cette personne a choisi l'échelle **RPE**, pas le RIR. Les données ci-dessus restent en RIR (c'est la mesure), mais PARLE-LUI EN RPE — la conversion est exacte : RPE = 10 − RIR (RIR0 = RPE 10, c'est-à-dire aucune répétition de plus — et un « (X) » est AU-DELÀ, il ne se dit pas en RPE ; RIR1 = RPE 9, RIR2 = RPE 8, RIR3 = RPE 7, RIR4+ = RPE 6 ou moins). ⛔ Ne lui écris JAMAIS « RIR », il ne l'emploie pas. ⛔ Et n'invente pas de demi-points (8,5 · 9,5) : l'app ne les mesure pas, donc tu n'as aucun moyen de savoir.`:''}
 ${(()=>{
-  /* 🎚️ LE COMPTE, PAS L'INVENTAIRE — ft-v1153. La règle juste au-dessus dit quoi faire d'un RIR
+  /* 🎚️ LE COMPTE, PAS L'INVENTAIRE — ft-v1154. La règle juste au-dessus dit quoi faire d'un RIR
      absent ; elle ne dit pas COMBIEN il en manque. Sans ce chiffre, « appuie-toi sur les RIR
      réellement notés, et dis-le s'il n'y en a pas » demande au modèle de compter 44 lignes.
      ⛔ Rien quand il n'y a aucune série de travail : « 0 sur 0 » n'est pas une information. */

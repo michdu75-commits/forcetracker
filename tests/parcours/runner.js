@@ -15833,14 +15833,14 @@ console.log('\n-- CXLII. Le RIR : il t\'en restait combien ? (ft-v1038) --');
 
   if(G.err)t('CXLII n\'a pas pu tourner',false,G.err);
   else{
-    /* ⛔⛔ TEMOIN RETOURNE LE 06/09/2026 (ft-v1153) — il exigeait `echec===0`, et la DECISION a
+    /* ⛔⛔ TEMOIN RETOURNE LE 06/09/2026 (ft-v1154) — il exigeait `echec===0`, et la DECISION a
        change : Michel a tranche que « X et RIR 0 ne doivent surtout pas etre consideres comme la
        meme donnee » (RIR 0 = serie REUSSIE a la limite ; X = une repetition TENTEE qui n'est pas
        passee, donc un cran au-dela). Ce n'est pas un temoin qu'on assouplit pour faire passer du
        code : c'est la regle qu'il figeait qui a ete corrigee, et on ecrit laquelle (R30).
        ⭐ Les deux questions restent chacune UN proprietaire (R2) : « combien en reserve ? » ->
        `rir` ; « la serie est-elle allee a l'echec ? » -> le TAG `type`. */
-    t('⛔⛔ `X` n\'est PLUS un RIR de 0 — deux données différentes, deux propriétaires (ft-v1153)',
+    t('⛔⛔ `X` n\'est PLUS un RIR de 0 — deux données différentes, deux propriétaires (ft-v1154)',
       G.f.echec===null, JSON.stringify(G.f));
     /* ⛔ ET LE PIEGE DE CE CHANGEMENT : `null` ici veut dire « pas de reserve chiffree », surtout
        PAS « effort inconnu ». C'est `_effortConnu` qui repond a cette question-la. */
@@ -16986,7 +16986,7 @@ console.log('\n-- CLII. Exporter l\'historique en CSV et en PDF (ft-v1048) --');
     o.n=L.length;
     o.pasDeSerieNonValidee=!L.some(r=>r.kg===80&&r.reps===8&&r.set_num===4);
     /* ⛔ Le RIR passe par son proprietaire : `X` vaut 0, non note reste VIDE (jamais 0). */
-    /* ⛔⛔ RETOURNÉ LE 06/09/2026 (ft-v1153) — il exigeait `rir===0` sur une ligne taguée `X`.
+    /* ⛔⛔ RETOURNÉ LE 06/09/2026 (ft-v1154) — il exigeait `rir===0` sur une ligne taguée `X`.
        La DÉCISION a changé (Michel) : un X n'est PAS un RIR de 0, c'est une répétition TENTÉE
        qui n'est pas passée — donc la colonne RIR reste VIDE et c'est la colonne `type` qui
        porte le X. Écrire « 0 » dans un fichier qui se relit ailleurs serait faux d'un cran.
@@ -17048,7 +17048,7 @@ console.log('\n-- CLII. Exporter l\'historique en CSV et en PDF (ft-v1048) --');
       E.n===5, 'lignes = '+E.n);
     t('⛔ une série NON validée n\'est pas exportée (elle n\'a pas eu lieu)',
       E.pasDeSerieNonValidee===true, '');
-    t('⛔ le RIR passe par son propriétaire : un `X` laisse la colonne VIDE (ft-v1153), non noté aussi',
+    t('⛔ le RIR passe par son propriétaire : un `X` laisse la colonne VIDE (ft-v1154), non noté aussi',
       E.xSansRir===true && E.nonNoteVide===true, 'X→'+E.xSansRir+' · vide→'+E.nonNoteVide);
     /* ⛔ ET RIEN N'EST PERDU : l'information « série à l'échec » vit dans la colonne `type`. */
     t('⛔ … et le `X` reste lisible dans la colonne `type` (rien n\'est perdu)',
@@ -28034,7 +28034,7 @@ console.log('\n-- CCXLIX. On ne dépend plus du NOM pour reconnaître un cardio 
   await cx.close();
 }
 
-/* ═══ CCL. LE COMPTE EXACT DES RIR NOTÉS (06/09/2026, ft-v1153) ══════════════════════════════
+/* ═══ CCL. LE COMPTE EXACT DES RIR NOTÉS (06/09/2026, ft-v1154) ══════════════════════════════
    Michel : « de ne rien mettre ne compte pas comme 0 mais comme rien du tout, donc Milo ne peut
    pas le comprendre ». MESURÉ SUR SON EXPORT RÉEL (44 séances, 805 séries) : 8 séries de travail
    sur 591 portent un RIR — 1,4 % ; sur la fenêtre que Milo voit (5 séances), 3 sur 44.
@@ -28043,7 +28043,7 @@ console.log('\n-- CCXLIX. On ne dépend plus du NOM pour reconnaître un cardio 
    en a presque aucun ». R4/R8 : la consigne nomme une source, le fait n'est pas calculé.
    ⭐ Témoins FONCTIONNELS : `buildCoachContext()` est réellement appelée dans la page, sur des
    séances semées exprès. Un `grep` dirait que le code compte, jamais qu'il compte JUSTE. */
-console.log('\n-- CCL. Le compte exact des RIR notés (ft-v1153) --');
+console.log('\n-- CCL. Le compte exact des RIR notés (ft-v1154) --');
 {
   const R=await p.evaluate(()=>{
    try{
@@ -28122,7 +28122,7 @@ console.log('\n-- CCL. Le compte exact des RIR notés (ft-v1153) --');
     t('CCL ⛔ CONTRÔLE — le recoupement lit bien le bloc « DERNIÈRES SÉANCES »', R.blocTrouve===true, '');
     /* ⛔ UN `X` COMPTE COMME EFFORT CONNU, SANS ÊTRE UN RIR DE 0 — le piège le plus facile de la
        version : la ligne n'écrit pas « RIR0 » sur un `X` (le tag le dit déjà, R2), et depuis
-       ft-v1153 `_rirDeSet` rend même `null` dessus. Compter les « RIRn » ÉCRITS sous-compterait
+       ft-v1154 `_rirDeSet` rend même `null` dessus. Compter les « RIRn » ÉCRITS sous-compterait
        donc exactement les séries les plus dures, celles dont l'effort est le mieux connu. */
     t('CCL ⛔ un « (X) » compte comme effort CONNU (sans être un RIR de 0)',
       (+R.annonce) === R.rirEcrits + R.echecs && R.echecs>0,

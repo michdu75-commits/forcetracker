@@ -162,9 +162,9 @@ ni la collecte ni le raisonnement : c'est la **restitution**.
 | L'**horodatage** d'un message | posé à la création, mais **personne ne le lisait** — l'export n'affichait aucune date | ft-v1011 |
 | Le **fil de discussion EN COURS** | l'export « avec mes discussions » ne prenait que les discussions RANGÉES : *on repartait sans celle du moment* | ft-v1013 |
 | Le **journal alimentaire** | Milo : *« en l'état je travaille à l'aveugle sur la nutrition »* — exclusion marquée « DÉCISION À CONFIRMER », jamais confirmée | ft-v1014 |
-| Le **COMPTE** des RIR notés | le RIR par série partait, la règle disait *« dis-le s'il n'y en a pas »* — mais pour obéir il fallait **balayer 44 lignes**. Mesuré : **8 séries sur 591 (1,4 %)** | ft-v1153 |
+| Le **COMPTE** des RIR notés | le RIR par série partait, la règle disait *« dis-le s'il n'y en a pas »* — mais pour obéir il fallait **balayer 44 lignes**. Mesuré : **8 séries sur 591 (1,4 %)** | ft-v1154 |
 
-### ⚠️ LA VARIANTE QUI SE VOIT LE MOINS : la donnée est là, c'est le COMPTE qui manque *(ft-v1153)*
+### ⚠️ LA VARIANTE QUI SE VOIT LE MOINS : la donnée est là, c'est le COMPTE qui manque *(ft-v1154)*
 
 Les cas du tableau sont des **absences**. Celui-ci n'en est pas une : le RIR de chaque série
 partait bien, et la règle qui dit quoi en faire était dans le prompt. Ce qui manquait, c'est
@@ -2745,7 +2745,7 @@ options est pire qu'une action absente* (**R29**).
 
 ---
 
-## 45. 🧬 UNE DÉFINITION FAUSSE NE RESTE JAMAIS À UN SEUL ENDROIT **(06/09/2026, ft-v1153)**
+## 45. 🧬 UNE DÉFINITION FAUSSE NE RESTE JAMAIS À UN SEUL ENDROIT **(06/09/2026, ft-v1154)**
 
 ft-v1038 avait écrit, dans un commentaire de code : *« le tag `X` = Échec dit exactement "cette
 série est allée à l'échec", c'est-à-dire **RIR 0** »*. C'était **faux d'un cran** — Michel l'a

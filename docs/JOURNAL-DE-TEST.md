@@ -1589,7 +1589,7 @@ l'historique. ⚠️ **Je ne sais pas si un lecteur les rapproche ou les ignore*
 pas vérifiable par du code. 👉 **Juge humain.**
 
 ### 🟡 MILO CONFOND-IL ENCORE UN `X` AVEC UN RIR 0 QUAND IL PRESCRIT ?
-**06/09/2026, ft-v1153.** Michel a tranché : *« X et RIR 0 ne doivent surtout pas être considérés
+**06/09/2026, ft-v1154.** Michel a tranché : *« X et RIR 0 ne doivent surtout pas être considérés
 comme la même donnée »* — RIR 0 = série **réussie** à la limite ; X = une répétition **tentée** qui
 n'est pas passée, donc **un cran au-delà**. Le prompt le dit maintenant, avec son exemple (*95×3
 réussi = RIR 0 ; tenter la 4ᵉ et caler = X*). ⛔ **Ce qui n'est PAS vérifié** : qu'il en tienne
@@ -1599,7 +1599,7 @@ qu'une réponse traite une série taguée X comme « tu t'es arrêté pile à 0 
 refus, jamais comme un mot-clé (**§40**). **Coût** : un appel par passe.
 
 ### 🟡 À 1,4 % DE RIR NOTÉS, EST-CE LE CONTEXTE OU LA SAISIE QU'IL FAUT CHANGER ?
-**06/09/2026, ft-v1153.** Mesuré sur l'export réel de Michel : **8 séries de travail sur 591**
+**06/09/2026, ft-v1154.** Mesuré sur l'export réel de Michel : **8 séries de travail sur 591**
 portent un RIR. Milo sait désormais **qu'il ne sait pas** (le compte lui est donné, et le vide
 est dit). ⛔ Mais ça ne fait pas noter davantage. 👉 **La question est produit, pas technique** :
 *est-ce que la question posée après la série est au bon moment, sous la bonne forme ?* — ou
