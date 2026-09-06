@@ -7,6 +7,9 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1141` — 📊 **L'HISTORIQUE DES PASSES DU BANC D'ESSAI.**
+  ✅ **LES DEUX DÉPLOIEMENTS VÉRIFIÉS VERTS** (R18) : site run **#930** (7 étapes, 12:40:09 UTC)
+  **ET** backend run **#106** (9 étapes, dont « le backend répond VRAIMENT » — 12:40:26 UTC),
+  tous deux sur `83e09e9`.
   ⏳ **Suite complète VERTE** : **parcours 2875/2875** (+16, bloc CCXLII), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   Michel : *« il faudrait créer un historique des benchmark »*.
