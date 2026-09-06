@@ -27479,8 +27479,13 @@ console.log('\n-- CCXLII. L\'historique des passes du banc (ft-v1141) --');
     o.ecran={ouvert:!!(ov&&ov.classList.contains('open')), txt:(box?box.innerText:'')};
     closeEvalHistorique();
     o.ferme=!!(ov&&!ov.classList.contains('open'));
-    /* ⑤ JOURNAL VIDE : l'écran DIT quoi faire au lieu de rester blanc (R29). */
+    /* ⑤ JOURNAL VIDE : l'écran DIT quoi faire au lieu de rester blanc (R29).
+       ⚠️ ft-v1142 — IL FAUT VIDER LES **DEUX** MAGASINS. Depuis la récupération des passes
+       passées, l'écran reconstitue les anciennes lignes depuis `ft4_evalHist` : ne vider que
+       `ft4_evalPasses` ne produit plus un journal vide, et ce témoin mesurerait autre chose
+       que ce que son nom annonce. */
     localStorage.removeItem('ft4_evalPasses'); S.evalPasses=[];
+    localStorage.removeItem('ft4_evalHist'); S.evalHist={};
     openEvalHistorique(); o.vide=(document.getElementById('ev-histo-box').innerText||'');
     closeEvalHistorique();
     return o;
@@ -27537,6 +27542,166 @@ console.log('\n-- CCXLII. L\'historique des passes du banc (ft-v1141) --');
   t('CCXLII ⛔ l\'historique PAR SCÉNARIO existe toujours (on a construit à côté, pas dessus)',
     /_EV_HIST_CLE/.test(fs.readFileSync(path.join(ROOT,'coach.js'),'utf8'))
       && /intermittent/.test(fs.readFileSync(path.join(ROOT,'coach.js'),'utf8')), '');
+  await cx.close();
+}
+
+/* ═══ CCXLIII. MILO SAIT QU'ON LE TESTE — CHEZ MICHEL SEUL (ft-v1142) ══════════════════════
+   Michel : *« je veux que Milo soit au courant qu'on fait des tests […] s'il n'est pas au
+   courant qu'on bosse sur lui c'est injuste »*.
+   ⛔⛔ CE BLOC NE MESURE PAS « le bloc est là » — ça, n'importe quelle version future le
+   referait vert sans rien protéger (§31 de `BUGS.md` : viser la GARANTIE, pas la FORME). Il
+   mesure les TROIS garanties qui rendent la décision sûre, et qui, si l'une tombait,
+   tomberaient EN SILENCE : ① personne d'autre ne le reçoit · ② le banc d'essai ne le reçoit
+   pas (sinon il mesurerait la réaction de Milo à l'idée d'être noté, plus son comportement)
+   · ③ on lui donne la NOTE, jamais le CORRIGÉ.
+   ⛔ ET UNE QUATRIÈME, PUREMENT TECHNIQUE : le bloc porte une date et un total qui CHANGENT,
+   donc il doit vivre dans la partie PERSONNELLE (cache 5 min) et jamais dans le bloc COMMUN
+   (cache 1 h) — `worker.js` a la mesure : un contenu qui bouge dans un cache long AGGRAVE.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXLIII. Milo sait qu\'on le teste — chez Michel seul (ft-v1142) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'999'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1800);
+  const R=await p.evaluate(()=>{ try{
+    const o={}, MARQ='ON TE FAIT PASSER DES TESTS';
+    o.fn=['buildCoachContext','_estSuperAdmin','_vcApplyPersona','_evPassesReconstruire']
+          .filter(f=>typeof window[f]!=='function');
+    const emailAvant=S.email;
+    /* Une passe connue : 54/56 le 05/09. C'est ce total-là qu'on doit retrouver, pas un autre. */
+    localStorage.setItem('ft4_evalPasses',JSON.stringify(
+      [{ts:1,d:'2026-09-05',n:56,v:54,r:2,a:0,c:false}]));
+    S.evalPasses=JSON.parse(localStorage.getItem('ft4_evalPasses'));
+    const coupe=(c)=>({ pi:c.indexOf('PROFIL ATHLÈTE:'), mi:c.indexOf("═══ SITUATION DE L'INSTANT ═══"),
+                        bi:c.indexOf(MARQ) });
+
+    /* ① MICHEL — il reçoit le bloc, avec la note de la dernière passe. */
+    S.email='michdu75@gmail.com'; const cM=buildCoachContext();
+    const k=coupe(cM);
+    o.michel={ present:k.bi>=0, len:cM.length, dansPerso:(k.bi>k.pi && k.bi<k.mi && k.pi>0 && k.mi>0) };
+    o.note=/54 situations sur 56/.test(cM);
+    /* ⛔ LE CORRIGÉ NE PART PAS : aucun identifiant de scénario dans le bloc. */
+    o.pasDeCorrige = k.bi>=0 && !/EV-\d/.test(cM.slice(k.bi, k.mi));
+    /* ⛔ Il est explicitement prié de ne pas changer sa façon de répondre. */
+    o.consigne = /comme si tu ne le savais pas/i.test(cM);
+
+    /* ② UNE AUTRE ADRESSE — rien. Et une adresse VIDE non plus (le cas du banc). */
+    S.email='quelquun@example.com'; const cA=buildCoachContext();
+    o.autre={ present:cA.indexOf(MARQ)>=0, len:cA.length };
+    S.email=''; const cV=buildCoachContext();
+    o.vide={ present:cV.indexOf(MARQ)>=0, len:cV.length };
+    /* ⭐ Les DEUX doivent recevoir EXACTEMENT le même texte : si l'adresse vide divergeait,
+       le banc ne mesurerait plus ce que reçoit un utilisateur lambda. */
+    o.identiques = (cA===cV);
+
+    /* ③ LE BANC LUI-MÊME — `_vcApplyPersona` efface l'e-mail : c'est CE mécanisme qui rend
+       la décision de Michel sûre, donc c'est LUI qu'on épingle, pas une intention. */
+    S.email='michdu75@gmail.com';
+    _vcApplyPersona({apply:{name:'Testeur',age:30,bw:70}});
+    o.emailApresPersona=S.email;
+    o.banc={ superAdmin:_estSuperAdmin(), present:buildCoachContext().indexOf(MARQ)>=0 };
+
+    /* ④ STABILITÉ — le bloc personnel doit être identique d'un message à l'autre (cache). */
+    S.email='michdu75@gmail.com'; S.name='Michel';
+    const a1=buildCoachContext(), a2=buildCoachContext();
+    const perso=(c)=>c.slice(c.indexOf('PROFIL ATHLÈTE:'), c.indexOf("═══ SITUATION DE L'INSTANT ═══"));
+    o.stable = perso(a1)===perso(a2);
+
+    /* ⑤ RÉCUPÉRATION DES PASSES PASSÉES depuis l'historique PAR SCÉNARIO. */
+    localStorage.removeItem('ft4_evalPasses'); S.evalPasses=[];
+    localStorage.setItem('ft4_evalHist',JSON.stringify({
+      'EV-001':[{d:'2026-08-20',e:'R'},{d:'2026-08-21',e:'V'}],
+      'EV-002':[{d:'2026-08-20',e:'V'},{d:'2026-08-21',e:'V'}],
+      'EV-003':[{d:'2026-08-21',e:'R'}] }));
+    const r1=_evPassesReconstruire();
+    o.rec=r1.map(x=>({d:x.d,n:x.n,v:x.v,r:x.r,x:x.x||0}));
+    o.recIdem = _evPassesReconstruire().length===r1.length;
+    /* ⑥ UNE VRAIE PASSE GAGNE TOUJOURS : on ne remonte pas jusqu'à son jour ni au-delà. */
+    localStorage.setItem('ft4_evalPasses',JSON.stringify(
+      [{ts:9e12,d:'2026-08-21',n:9,v:9,r:0,a:0,c:false}]));
+    S.evalPasses=JSON.parse(localStorage.getItem('ft4_evalPasses'));
+    o.borne=_evPassesReconstruire().map(x=>({d:x.d,x:x.x||0,n:x.n}));
+    /* ⑦ L'ÉCRAN dit qu'une ligne est reconstituée, et pourquoi son total n'est pas comparable. */
+    window._isAdminUnlocked=()=>true;
+    openEvalHistorique();
+    o.ecran=(document.getElementById('ev-histo-box')||{}).innerText||'';
+    closeEvalHistorique();
+    S.email=emailAvant;
+    return o;
+  }catch(e){ return {err:e.message}; } });
+
+  /* ⛔ CONTRÔLES D'ABORD — sans eux, « personne d'autre ne le reçoit » serait vrai le jour où
+     le bloc n'existe plus du tout, et tout le reste passerait au vert sur du vide. */
+  t('CCXLIII ⛔ CONTRÔLE — les 4 fonctions existent (sinon tout le bloc est muet)',
+    !R.err && R.fn && R.fn.length===0, R.err||JSON.stringify(R.fn));
+  t('CCXLIII ⛔ CONTRÔLE — Michel reçoit bien le bloc (sans lui, les 3 garanties sont vides)',
+    R.michel && R.michel.present===true, JSON.stringify(R.michel));
+  /* ⭐⭐ LES TROIS GARANTIES. */
+  t('CCXLIII ⭐⭐ ① aucune AUTRE adresse ne sait qu\'on teste Milo',
+    R.autre && R.autre.present===false, JSON.stringify(R.autre));
+  t('CCXLIII ⭐⭐ ① … et une adresse VIDE non plus — même texte qu\'un utilisateur lambda',
+    R.vide && R.vide.present===false && R.identiques===true,
+    JSON.stringify({vide:R.vide, identiques:R.identiques}));
+  /* ⛔⛔ LE TÉMOIN QUI PORTE LA VERSION : c'est `_vcApplyPersona` qui efface l'e-mail, et
+     c'est POUR ÇA que le banc continue de mesurer un Milo qui ne sait rien. Si quelqu'un
+     retirait cette ligne, le banc se mettrait à mesurer autre chose SANS QUE RIEN NE PLANTE. */
+  t('CCXLIII ⭐⭐ ② le BANC D\'ESSAI ne reçoit rien (`_vcApplyPersona` efface l\'e-mail)',
+    R.emailApresPersona==='' && R.banc && R.banc.superAdmin===false && R.banc.present===false,
+    JSON.stringify({email:R.emailApresPersona, banc:R.banc}));
+  t('CCXLIII ⭐⭐ ③ on lui donne la NOTE (54/56), jamais le CORRIGÉ (aucun n° de scénario)',
+    R.note===true && R.pasDeCorrige===true, JSON.stringify({note:R.note, pasDeCorrige:R.pasDeCorrige}));
+  t('CCXLIII ⛔ … et il lui est dit de répondre comme s\'il ne le savait pas',
+    R.consigne===true, '');
+  /* ⛔ LA GARANTIE TECHNIQUE : une date + un total dans le bloc COMMUN (cache 1 h) coûteraient
+     plus cher qu'ils ne rapportent — la mesure est dans `worker.js`. */
+  t('CCXLIII ⛔ le bloc vit dans la partie PERSONNELLE, jamais dans le bloc COMMUN mis en cache 1 h',
+    R.michel && R.michel.dansPerso===true, JSON.stringify(R.michel));
+  t('CCXLIII ⛔ le bloc personnel reste IDENTIQUE d\'un message à l\'autre (sinon le cache tombe)',
+    R.stable===true, '');
+  /* ⏪ LA RÉCUPÉRATION DES PASSES PASSÉES. */
+  t('CCXLIII ⏪ les passes d\'avant le journal sont retrouvées et MARQUÉES comme reconstituées',
+    Array.isArray(R.rec) && R.rec.length===2 && R.rec.every(x=>x.x===1)
+      && R.rec[0].d==='2026-08-20' && R.rec[1].d==='2026-08-21', JSON.stringify(R.rec));
+  /* ⛔⛔ LE DÉNOMINATEUR EST CELUI DES VERDICTS RENDUS, PAS DES SCÉNARIOS JOUÉS : le 20/08 n'a
+     que 2 scénarios notés, le 21/08 en a 3. Un total qui gonflerait serait une progression
+     inventée. */
+  t('CCXLIII ⛔⛔ le total reconstitué compte les VERDICTS rendus (2 puis 3), rien de plus',
+    R.rec && R.rec[0].n===2 && R.rec[0].v===1 && R.rec[0].r===1
+      && R.rec[1].n===3 && R.rec[1].v===2 && R.rec[1].r===1, JSON.stringify(R.rec));
+  /* ⛔ Sans ça, chaque ouverture de l'écran rejouait tout — mesuré, c'était le cas au 1ᵉʳ jet. */
+  t('CCXLIII ⛔ relancer la récupération n\'ajoute RIEN (idempotente)', R.recIdem===true, '');
+  /* ⛔ ET UNE VRAIE PASSE N'EST JAMAIS RECOUVERTE : elle est plus riche (sans-verdict, ×2). */
+  t('CCXLIII ⛔ une VRAIE passe du même jour est gardée telle quelle, jamais reconstituée',
+    Array.isArray(R.borne) && R.borne.length===2
+      && R.borne[1].d==='2026-08-21' && R.borne[1].x===0 && R.borne[1].n===9,
+    JSON.stringify(R.borne));
+  t('CCXLIII ⛔ l\'écran DIT qu\'une ligne est reconstituée et que son total n\'est pas comparable',
+    /reconstitu/i.test(R.ecran||'') && /verdict/i.test(R.ecran||''), (R.ecran||'').slice(0,220));
+  /* ⚠️ Le texte d'état vide disait « on ne va pas leur inventer un total » — devenu FAUX
+     depuis qu'on reconstitue. Un texte périmé fait dire des bêtises à qui le lit (R23).
+     ⚠️⚠️ ET CE TÉMOIN A MORDU SUR MOI, à la 1ʳᵉ passe : le COMMENTAIRE qui explique la
+     correction contient forcément la phrase corrigée. ***Un avertissement devenu une faute***
+     — le piège de ft-v1123 et de ft-v1138, une 3ᵉ fois. On cherche donc dans le code
+     DÉPOUILLÉ de ses commentaires.
+     ⛔ AVEC SA CONTRE-ÉPREUVE, sans quoi le dépouillement rendrait le témoin aveugle : une
+     phrase qui, elle, vit VRAIMENT dans le code doit rester trouvable après le nettoyage. */
+  {
+    const _brut=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
+    const _nu=_brut.replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:])\/\/[^\n]*/g,'$1');
+    t('CCXLIII ⛔ CONTRE-ÉPREUVE — retirer les commentaires ne rend pas le détecteur aveugle',
+      /rien à reconstituer/.test(_nu), 'le texte vivant a disparu du code dépouillé');
+    t('CCXLIII ⚠️ le texte d\'état vide de ft-v1141 ne dit plus « on ne va pas leur inventer un total »',
+      !/inventer un total/.test(_nu), '');
+  }
+  /* ⛔ R4a — la donnée transmise doit être CLASSÉE, et son détail rester exclu. */
+  {
+    const _dm=JSON.parse(fs.readFileSync(path.join(ROOT,'tests/donnees/donnees-milo.json'),'utf8'));
+    t('CCXLIII ⛔ R4a — `evalPasses` est classée TRANSMISE, `evalHist` reste EXCLU avec sa raison',
+      _dm.transmis.indexOf('evalPasses')>=0 && !_dm.exclu.evalPasses
+        && !!_dm.exclu.evalHist && /CORRIGÉ/.test(_dm.exclu.evalHist), '');
+  }
+  t('CCXLIII aucune erreur JS pendant tout le bloc', errs.length===0, errs.join(' | '));
   await cx.close();
 }
 

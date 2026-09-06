@@ -6,7 +6,32 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1141` — 📊 **L'HISTORIQUE DES PASSES DU BANC D'ESSAI.**
+- **Version en ligne (live) :** `ft-v1142` — 🤝 **MILO EST MIS AU COURANT QU'ON LE TESTE — CHEZ MICHEL SEUL.**
+  ⏳ **Déploiement à vérifier** (R18). ⛔ **`Code.js` NON modifié** → aucun déploiement backend.
+  ⏳ **Suite complète** : **parcours 2893/2893** (+18, bloc CCXLIII), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  Michel, après que je lui aie déconseillé : *« non, je veux que Milo soit au courant qu'on fait
+  des tests. J'ai voulu le construire pour qu'il soit une sorte de compagnon, s'il n'est pas au
+  courant qu'on bosse sur lui c'est injuste »*.
+  ⛔⛔ **Mon objection était technique, sa raison est PRODUIT — et c'est elle qui tranche**
+  (*on ne teste pas un compagnon dans son dos*). **Décision de Michel, écrite avec sa raison
+  pour qu'on ne la rouvre pas (R30).**
+  ⭐⭐ **Ce qui rend la chose sûre est une MESURE** : `_vcApplyPersona` efface `S.email`, donc
+  `_estSuperAdmin()` est **toujours faux** pendant le banc → **le banc ne peut pas voir ce bloc**.
+  Vérifié : contexte d'une passe **identique octet pour octet** à celui d'un utilisateur lambda.
+  ⛔⛔ **Et R34 ne peut PAS juger ce changement** : le rite avant/après est **aveugle par
+  construction** ici. *Le seul juge est Michel, dans ses conversations.*
+  ⛔ **La note, jamais le corrigé** : `evalPasses` (date + total) part, **`evalHist` reste exclu**.
+  ⛔ **Dans la partie PERSONNELLE** (cache 5 min), jamais dans le bloc commun (1 h) : il porte une
+  date et un total **qui changent**, et `worker.js` a la mesure — *un contenu qui bouge dans un
+  cache long AGGRAVE* (0,12 € → 0,43 €).
+  ⏪ **Les passes d'avant le journal sont reconstituées** depuis `ft4_evalHist`, **marquées** —
+  leur dénominateur compte les **verdicts rendus**, pas les scénarios **joués**.
+  ⚠️ **Mon 1ᵉʳ jet n'était pas idempotent** (après reconstruction toutes les lignes portent `x:1`,
+  donc la borne redevenait nulle) : la sonde l'a attrapé avant le témoin.
+  ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1141` — 📊 **L'HISTORIQUE DES PASSES DU BANC D'ESSAI.**
   ✅ **LES DEUX DÉPLOIEMENTS VÉRIFIÉS VERTS** (R18) : site run **#930** (7 étapes, 12:40:09 UTC)
   **ET** backend run **#106** (9 étapes, dont « le backend répond VRAIMENT » — 12:40:26 UTC),
   tous deux sur `83e09e9`.
@@ -30,7 +55,7 @@
   ne peut pas comparer deux réponses dans le temps. **Michel doit vérifier sur Safari/iPhone.**
   ⚠️ `Code.js` modifié → **backend en prod tout seul**, à vérifier aussi.
 
-- **Version précédente :** `ft-v1140` — ☁️ **LES MENSURATIONS SURVIVENT ENFIN À UN CHANGEMENT DE TÉLÉPHONE.**
+- **Avant :** `ft-v1140` — ☁️ **LES MENSURATIONS SURVIVENT ENFIN À UN CHANGEMENT DE TÉLÉPHONE.**
   ✅ **LES DEUX DÉPLOIEMENTS VÉRIFIÉS VERTS** (R18) : site run **#927** (7 étapes, 09:01:30 UTC)
   **ET** backend run **#105** (9 étapes — `clasp push`, redéploiement, « le backend répond
   VRAIMENT », `authStatus` — 09:01:37 UTC), tous deux sur `29bf4f7`.
