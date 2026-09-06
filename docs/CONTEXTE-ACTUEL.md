@@ -6,7 +6,14 @@
 
 ---
 
-- **Version en cours (ft-v1154) :** 🎚️ **DEUX CHOSES SUR LE RIR.**
+- **Version en ligne (live) :** `ft-v1154` — 🎚️ **DEUX CHOSES SUR LE RIR.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#960** sur `8d6271ac`, **job `deploy` success**,
+  les 7 étapes vertes à **21:25:30 UTC**. ⛔ `Code.js` non modifié → aucun déploiement backend attendu.
+  ⏳ **Suite complète VERTE sur l'arbre fusionné** : **parcours 3009/3009** (+13, bloc **CCL**),
+  calculs 339/339, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  ⚠️⚠️ **DEUX collisions de version dans la soirée** (leurs ft-v1152 puis ft-v1153) → **trois**
+  passes complètes pour une livraison. *Le numéro ne recule jamais.* Détail et leçon (le
+  renommage qui a failli écraser leur version) : `docs/GALERES-ET-LECONS.md`.
   **①** *« De ne rien mettre ne compte pas comme 0 mais comme rien du tout »* (Michel). ⭐⭐ Mesuré
   sur son export réel (44 séances, 805 séries) : **8 séries de travail sur 591 portent un RIR —
   1,4 %** ; sur la fenêtre que Milo voit (5 séances), **3 sur 44**. Le per-série partait déjà
@@ -30,7 +37,7 @@
   produit, non prise) · corriger la prescription trop lourde · ajouter un « RIR −1 » à l'échelle.
   ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 
-- **Version en ligne (live) :** `ft-v1150` — 🔥 **ON NE DÉPEND PLUS DU NOM POUR RECONNAÎTRE UN CARDIO.**
+- **Version précédente :** `ft-v1150` — 🔥 **ON NE DÉPEND PLUS DU NOM POUR RECONNAÎTRE UN CARDIO.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#950** sur `6c7b78f`, **job `deploy` success**,
   les 7 étapes vertes à **19:34:50 UTC**. ⛔ **`Code.js` NON modifié** → aucun déploiement backend
   attendu, son absence n'est donc pas un signal.
@@ -51,9 +58,9 @@
   **aucun champ** pour dire « ceci est du cardio » (**R4** : l'info reste dans le TEXTE).
   ⏭️ **Le vrai fix définitif = un champ structuré** → touche le **prompt** (**R34**, banc d'essai)
   et **`coach.js`** : **signalé à session-B, pas pris**.
-- **Version en ligne (live) :** `ft-v1152` — 🏁 **LE CARDIO SE DÉCLARE, IL NE SE DEVINE PLUS.**
+- **Version précédente :** `ft-v1152` — 🏁 **LE CARDIO SE DÉCLARE, IL NE SE DEVINE PLUS.**
   ⏳ **Suite complète VERTE** : **parcours 2983/2983** (+15, bloc CCLI), calculs 339/339,
-- **Version en ligne (live) :** `ft-v1153` — 🛡️ **LES AVERTISSEMENTS DE SÉANCE ARRIVENT SUR LES PROGRAMMES.**
+- **Version précédente :** `ft-v1153` — 🛡️ **LES AVERTISSEMENTS DE SÉANCE ARRIVENT SUR LES PROGRAMMES.**
   ⏳ **Suite complète VERTE** : **parcours 2996/2996** (+13, bloc CCLII), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18 — le **job**, pas seulement le run) : **run #958**, job `deploy`

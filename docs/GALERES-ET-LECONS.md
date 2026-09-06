@@ -400,3 +400,46 @@ Sur ce workflow, la remédiation est donc : **lancer un nouveau run** (`workflow
 - Et **R18 a payé une fois de plus** : *« c'est poussé » ne veut pas dire « c'est en ligne »*. Le
   backend était vert, le site non — sans vérification, Michel aurait ouvert l'app le soir même sur
   la version précédente **en croyant avoir le correctif**, sur un défaut qui détruit des données.
+
+
+---
+
+## 🔢 DEUX COLLISIONS DE VERSION EN UNE SOIRÉE — et le renommage qui a failli écraser l'autre session (06/09/2026, ft-v1154)
+
+**Ce qui s'est passé.** Ma version était prête et verte à **ft-v1151**. Le temps d'une passe de
+tests (16 min), l'autre session avait publié **ft-v1152**. Je renumérote en **ft-v1153**, je
+refusionne, je relance la passe — et pendant *cette* passe, elle publie **ft-v1153**. Ma version
+finit en **ft-v1154**, après **trois** passes complètes pour une seule livraison.
+
+### ⭐ Ce qui a bien marché, et qu'il faut garder
+L'autre session avait vu ma `ft-v1151` **poussée sur ma branche mais pas sur `master`**, a
+**respecté la réservation**, a pris le numéro suivant, et m'a laissé un mot dans le journal de
+partage — *en m'indiquant même à quel numéro monter*. **Le panneau d'affichage a fait exactement
+son travail** : aucun code perdu, aucune surprise.
+
+### ⛔⛔ Ce qui a failli mal tourner — et c'est ça, la leçon
+Mon premier réflexe a été de renommer `1153 → 1154` **après** la fusion, par un remplacement
+global. 👉 ***Ça renommait AUSSI la ft-v1153 de l'autre session*** — c'est-à-dire que je
+réécrivais **leur** version dans les journaux, en silence, sans qu'aucun test ne bouge.
+Rattrapé avant le moindre commit (`merge --abort`, puis renommage **avant** la fusion).
+
+**La règle qui en sort, et elle est simple :**
+> **On renumérote AVANT de fusionner, jamais après.** Avant la fusion, *toutes* les mentions du
+> numéro sont les miennes — le remplacement global est alors sans risque. Après, elles
+> appartiennent à deux sessions et **rien dans le texte ne dit à qui**.
+
+### ⚠️ Les deux saletés de la fusion par UNION, retrouvées le même soir
+Elles sont connues et le fichier les nomme — c'est `tools/check_regles.py` qui les a vues, pas moi :
+- une ligne **🟡 ressuscitée** alors que l'autre session l'avait close (*l'union ne supprime
+  jamais*) ;
+- une ligne **🟢 dédoublée** (modifiée des deux côtés, donc deux exemplaires qui diffèrent d'un mot).
+
+### 🛡️ Ce qui protège aujourd'hui
+- La **réservation** dans `docs/JOURNAL-DE-PARTAGE.md`, poussée **avant** de coder (règle d'or #13).
+- Le **numéro ne recule jamais** : fusionner un 1151 par-dessus un 1152 ferait redescendre ce qui
+  s'affiche dans « À propos ».
+- **On ne renumérote jamais le bloc de tests de l'autre** (le mien reste CCL, le sien CCLI/CCLII).
+- `tools/check_regles.py` sur le journal de partage, à lancer **après chaque fusion**.
+
+*Cause de fond, qu'aucune discipline ne corrigera : une passe complète dure 16 minutes, et
+l'intervalle entre deux livraisons est plus court que ça.*
