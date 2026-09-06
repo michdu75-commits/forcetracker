@@ -3258,6 +3258,22 @@ function buildCoachContext(msg) {
     }catch(err){ return ''; }
   };
   const _NB_DETAIL = 5;
+  /* 🎚️ COMBIEN DE RIR SONT RÉELLEMENT NOTÉS — ft-v1151 (06/09/2026).
+     Michel : *« de ne rien mettre ne compte pas comme 0 mais comme rien du tout, donc Milo ne
+     peut pas le comprendre »*.
+     ⭐⭐ MESURÉ SUR SON EXPORT RÉEL (44 séances, 805 séries) : **8 séries de travail sur 591
+     portent un RIR — 1,4 %** ; sur la fenêtre que Milo voit vraiment (5 séances), **3 sur 44**.
+     ⛔ Le RIR par série part bien depuis ft-v1038 et la RÈGLE est dans le prompt (« une série
+     sans RIR n'est pas un RIR de 0 ») — mais **le COMPTE n'existe nulle part**. On demandait donc
+     au modèle de balayer 44 lignes pour conclure « il n'y en a presque aucun », c'est-à-dire un
+     travail d'inventaire que le code fait sans se tromper. *C'est **R4/R8** une fois de plus : la
+     consigne nomme une source, le fait n'est pas calculé.*
+     ⛔ COMPTÉ ICI, PAS DANS UNE 2ᵉ BOUCLE (R2) : les compteurs se remplissent dans la passe qui
+     écrit déjà les séries — deux parcours finiraient par diverger.
+     ⚠️ ET UN `X` COMPTE COMME NOTÉ : l'échec EST un RIR de 0 (`_rirDeSet` le dit), même si la
+     ligne ne l'écrit pas deux fois. L'oublier sous-compterait exactement les séries les plus
+     dures — celles dont l'effort est le mieux connu. */
+  let _rirNotes = 0, _rirTrav = 0;
   const _sessVues = S.sessions.slice(0, _NB_DETAIL);
   const _nbTotalSess = (S.sessions||[]).length;
   const _depuisQuand = _sessVues.length ? _sessVues[_sessVues.length-1].date : '';
@@ -3307,6 +3323,7 @@ function buildCoachContext(msg) {
                dirait deux fois la même chose sur la même série (R2). */
             const _r = (typeof _rirDeSet==='function' && x.type!=='X') ? _rirDeSet(x) : null;
             const rir = (_r===null) ? '' : (' RIR'+_r);
+            if(!ech){ _rirTrav++; if(_r!==null || x.type==='X') _rirNotes++; }
             return `${num}${x.kg||'?'}×${x.reps||'?'}${(x.type&&x.type!=='N'&&!ech)?'('+x.type+')':''}${rir}${n?'[💬 '+n+']':''}`;
           }).join(' · ')
         : '—';
@@ -4027,7 +4044,17 @@ DERNIÈRES SÉANCES:
 ${recentSessions}
 → ⚠️ CE QUE TU VOIS ICI EST LE DÉTAIL DES ${_sessVues.length} SÉANCES LES PLUS RÉCENTES${_depuisQuand?' (depuis le '+_depuisQuand+')':''}, PAS SON HISTORIQUE. ${_nbTotalSess>_sessVues.length?'Il/elle a fait '+_nbTotalSess+' séances au total : son parcours complet est dans le bloc « SA MÉMOIRE LONGUE ». ':''}Ne dis JAMAIS que tu ne vois qu'une semaine ou que tu ne connais que ses dernières séances : tu connais tout son parcours, c'est seulement le détail série par série qui s'arrête ici.
 → 💪 RIR = RÉPÉTITIONS EN RÉSERVE, notées par la personne juste après la série. « RIR2 » = il lui restait environ 2 répétitions avant l'échec ; « (X) » = série menée À L'ÉCHEC, c'est-à-dire RIR 0. ⛔ UNE SÉRIE SANS « RIR » N'EST PAS UN RIR DE 0 : elle n'a simplement pas été notée — ne conclus rien de son absence, et ne la compte jamais comme un échec. ⭐ C'est ce qui te permet enfin de vérifier le cadre de sa discipline (« 1 à 3 en réserve », « jamais à l'échec »…) au lieu de le supposer : quand tu en parles, appuie-toi sur les RIR RÉELLEMENT notés, et dis-le s'il n'y en a pas.${(typeof _estRpe==='function'&&_estRpe())?` ⭐ ATTENTION AU VOCABULAIRE : cette personne a choisi l'échelle **RPE**, pas le RIR. Les données ci-dessus restent en RIR (c'est la mesure), mais PARLE-LUI EN RPE — la conversion est exacte : RPE = 10 − RIR (RIR0 = RPE 10 « échec », RIR1 = RPE 9, RIR2 = RPE 8, RIR3 = RPE 7, RIR4+ = RPE 6 ou moins). ⛔ Ne lui écris JAMAIS « RIR », il ne l'emploie pas. ⛔ Et n'invente pas de demi-points (8,5 · 9,5) : l'app ne les mesure pas, donc tu n'as aucun moyen de savoir.`:''}
-→ ⚡ MONTÉE EN CHARGE : quand une ligne porte « ⚠️ montée en charge insuffisante », ce n'est PAS une opinion, c'est un CALCUL de l'application (paliers de 10-15 %, départ à 40-50 %, dernier palier 5-10 % sous la charge, pas plus de 2 reps au-delà de 85 %). Tu ne dois JAMAIS écrire que la montée était propre sur un exercice ainsi marqué — dis-le franchement, explique le risque en une phrase (un saut de charge trop grand, c'est là qu'on se blesse) et donne les paliers manquants pour la prochaine fois. ⛔ MAIS AVANT DE LE DIRE, REGARDE QUI A CHOISI CES CHARGES : si elles viennent d'une séance que TU as prescrite (le marqueur te le dit, ou tu la retrouves dans votre échange), la correction porte sur TA prescription — « je t'avais donné ce palier, je le corrige » — jamais sur la personne, qui n'a fait qu'appliquer. À l'inverse, une ligne SANS ce marqueur n'appelle aucune remarque sur l'échauffement.
+${(()=>{
+  /* 🎚️ LE COMPTE, PAS L'INVENTAIRE — ft-v1151. La règle juste au-dessus dit quoi faire d'un RIR
+     absent ; elle ne dit pas COMBIEN il en manque. Sans ce chiffre, « appuie-toi sur les RIR
+     réellement notés, et dis-le s'il n'y en a pas » demande au modèle de compter 44 lignes.
+     ⛔ Rien quand il n'y a aucune série de travail : « 0 sur 0 » n'est pas une information. */
+  if(!_rirTrav) return '';
+  const pct = Math.round(100*_rirNotes/_rirTrav);
+  if(_rirNotes===0) return `\n→ 🎚️ RIR — LE COMPTE EXACT : AUCUNE des ${_rirTrav} séries de travail ci-dessus n'a de RIR noté. Tu n'as donc AUCUNE mesure de l'effort réel sur cette période. ⛔ Ne déduis RIEN de ce vide : ni qu'il/elle s'arrête loin de l'échec, ni qu'il/elle y va — tu ne sais pas. Si l'effort compte pour ce que tu réponds, DEMANDE-LE au lieu de le supposer.`;
+  if(pct<50) return `\n→ 🎚️ RIR — LE COMPTE EXACT : ${_rirNotes} série${_rirNotes>1?'s':''} de travail sur ${_rirTrav} (${pct} %) porte${_rirNotes>1?'nt':''} un RIR. ⛔ C'est trop peu pour lire une tendance : parle de CES séries-là, jamais de « ses séances » en général, et ne conclus rien des ${_rirTrav-_rirNotes} autres.`;
+  return `\n→ 🎚️ RIR — LE COMPTE EXACT : ${_rirNotes} série${_rirNotes>1?'s':''} de travail sur ${_rirTrav} (${pct} %) porte${_rirNotes>1?'nt':''} un RIR.`;
+})()}→ ⚡ MONTÉE EN CHARGE : quand une ligne porte « ⚠️ montée en charge insuffisante », ce n'est PAS une opinion, c'est un CALCUL de l'application (paliers de 10-15 %, départ à 40-50 %, dernier palier 5-10 % sous la charge, pas plus de 2 reps au-delà de 85 %). Tu ne dois JAMAIS écrire que la montée était propre sur un exercice ainsi marqué — dis-le franchement, explique le risque en une phrase (un saut de charge trop grand, c'est là qu'on se blesse) et donne les paliers manquants pour la prochaine fois. ⛔ MAIS AVANT DE LE DIRE, REGARDE QUI A CHOISI CES CHARGES : si elles viennent d'une séance que TU as prescrite (le marqueur te le dit, ou tu la retrouves dans votre échange), la correction porte sur TA prescription — « je t'avais donné ce palier, je le corrige » — jamais sur la personne, qui n'a fait qu'appliquer. À l'inverse, une ligne SANS ce marqueur n'appelle aucune remarque sur l'échauffement.
 → Parmi ces séances, chacune a bien été FAITE (avec son jour). Une séance seulement PRÉPARÉE ou DISCUTÉE en conversation n'a JAMAIS été faite : ne l'appelle pas « ta séance d'hier/de lundi… » — dis « la séance qu'on a préparée ». Si un jour COMPRIS DANS LA PÉRIODE ci-dessus n'a aucune séance listée, ce jour était un REPOS : dis-le tel quel. ⚠️ Mais ne conclus JAMAIS « repos » pour un jour PLUS ANCIEN que cette période — tu ne l'as pas sous les yeux, ce n'est pas la même chose que ne rien avoir fait. (Bug réel du 30/07 : « Ta séance d'hier, pour rappel » pour une séance juste préparée la veille — la personne a dû corriger.)
 ${(()=>{
   // PROCHAINE SÉANCE ANNONCÉE (ft-v654) — le trou le plus gênant du garde-fou des données :

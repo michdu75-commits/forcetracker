@@ -162,6 +162,20 @@ ni la collecte ni le raisonnement : c'est la **restitution**.
 | L'**horodatage** d'un message | posé à la création, mais **personne ne le lisait** — l'export n'affichait aucune date | ft-v1011 |
 | Le **fil de discussion EN COURS** | l'export « avec mes discussions » ne prenait que les discussions RANGÉES : *on repartait sans celle du moment* | ft-v1013 |
 | Le **journal alimentaire** | Milo : *« en l'état je travaille à l'aveugle sur la nutrition »* — exclusion marquée « DÉCISION À CONFIRMER », jamais confirmée | ft-v1014 |
+| Le **COMPTE** des RIR notés | le RIR par série partait, la règle disait *« dis-le s'il n'y en a pas »* — mais pour obéir il fallait **balayer 44 lignes**. Mesuré : **8 séries sur 591 (1,4 %)** | ft-v1151 |
+
+### ⚠️ LA VARIANTE QUI SE VOIT LE MOINS : la donnée est là, c'est le COMPTE qui manque *(ft-v1151)*
+
+Les cas du tableau sont des **absences**. Celui-ci n'en est pas une : le RIR de chaque série
+partait bien, et la règle qui dit quoi en faire était dans le prompt. Ce qui manquait, c'est
+**l'agrégat** — *combien* de séries en portent un.
+👉 ***Une consigne qui demande un INVENTAIRE (« dis-le s'il n'y en a pas », « appuie-toi sur les
+X réellement notés ») exige que le code fournisse le COMPTE, pas seulement les éléments.***
+Compter 44 lignes est un travail que le code fait sans se tromper et qu'un modèle fait au jugé —
+et son erreur est silencieuse, puisqu'il répond quand même.
+⭐ **Le sous-cas à ne pas rater** : ce qui est déjà dit **autrement** compte quand même. Une série
+taguée `(X)` est un RIR de 0 sans porter le mot « RIR » ; l'oublier sous-compte **exactement** les
+séries les plus dures. *L'agrégat doit compter la RÉALITÉ, pas les occurrences d'un mot.*
 
 ### 🔎 Comment le reconnaître
 **Le signe qui doit alerter** : une consigne qui **nomme une source** (« la bibliothèque », « ton

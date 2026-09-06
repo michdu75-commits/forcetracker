@@ -6,6 +6,23 @@
 
 ---
 
+- **Version en cours (ft-v1151) :** 🎚️ **LE RIR NON NOTÉ N'ÉTAIT PAS COMPTÉ.**
+  Michel : *« de ne rien mettre ne compte pas comme 0 mais comme rien du tout, donc Milo ne peut
+  pas le comprendre »*. ⭐⭐ **Mesuré sur son export réel (44 séances, 805 séries) : 8 séries de
+  travail sur 591 portent un RIR — 1,4 %** ; sur la fenêtre que Milo voit (5 séances), **3 sur 44**.
+  ⛔⛔ Le RIR par série partait déjà (ft-v1038) et la règle est dans le prompt — **c'est le COMPTE
+  qui manquait** : pour obéir à *« dis-le s'il n'y en a pas »*, il fallait balayer 44 lignes.
+  **R4/R8** : la consigne nomme une source, le fait n'est pas calculé.
+  ⛔ **Un `(X)` compte comme noté** (l'échec EST un RIR de 0) — l'oublier sous-compterait les séries
+  les plus dures ; mesuré au contrôle négatif : 5 au lieu de 10.
+  ⭐⭐ **À zéro noté, le vide est DIT avec son nombre et l'interprétation est INTERDITE** (« demande-le
+  au lieu de le supposer »). ⛔ Rien quand il n'y a aucune série de travail (« 0 sur 0 » n'informe pas).
+  ⛔⛔ **R34 ne peut pas être tenue ici, et c'est écrit** : le banc coûte des appels API que le
+  conteneur n'a pas — **le juge est Michel, dans ses conversations**. Le prompt de fond n'a pas bougé (R7).
+  ⏭️ **Ne fait PAS** : noter davantage de RIR (à 1,4 %, le levier est peut-être la SAISIE — décision
+  produit, non prise) · corriger la prescription trop lourde · remonter au-delà des 5 séances.
+  ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
 - **Version en ligne (live) :** `ft-v1150` — 🔥 **ON NE DÉPEND PLUS DU NOM POUR RECONNAÎTRE UN CARDIO.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#950** sur `6c7b78f`, **job `deploy` success**,
   les 7 étapes vertes à **19:34:50 UTC**. ⛔ **`Code.js` NON modifié** → aucun déploiement backend
