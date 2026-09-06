@@ -24,7 +24,7 @@ vidage de navigateur. C'est la règle d'or #3 appliquée ailleurs que sur une s�
 
 ## ⚠️ CE QUI SE PERDRAIT AUJOURD'HUI (à lire en premier)
 
-**27 données sur 107 ne quittent jamais le téléphone.** La plupart sont des réglages ou de
+**27 données sur 109 ne quittent jamais le téléphone.** La plupart sont des réglages ou de
 l'état passager, et c'est très bien. Celles qui posent problème sont les **historiques** :
 
 *Aucun historique daté n'est aujourd'hui hors sauvegarde.*
@@ -34,7 +34,7 @@ Les autres pertes possibles (séries non datées et valeurs) :
 
 ---
 
-## 📈 LES HISTORIQUES (15 séries)
+## 📈 LES HISTORIQUES (16 séries)
 
 Ce sont eux qui portent la mémoire du produit — *« tu ne repars jamais de zéro »*.
 
@@ -43,6 +43,7 @@ Ce sont eux qui portent la mémoire du produit — *« tu ne repars jamais de z�
 | **`coachConversations`** | série | `—` | ⛔ NON — locale | — |
 | **`customExercises`** | série | `ft4_cuex` | ✅ oui | ✅ oui |
 | **`dayStateLog`** | série datée | `ft4_dayslog` | ✅ oui | ⚠️ trou connu |
+| **`evalPasses`** | série | `ft4_evalPasses` | ✅ oui | — |
 | **`foodLog`** | série datée | `ft4_foodlog` | ✅ oui | ✅ oui |
 | **`goalLog`** | série datée | `ft4_goallog` | ✅ oui | ✅ oui |
 | **`healthDaily`** | série datée | `ft4_healthd` | ✅ oui (autre route) | ✅ oui |
@@ -58,7 +59,7 @@ Ce sont eux qui portent la mémoire du produit — *« tu ne repars jamais de z�
 
 ---
 
-## 📋 TOUT (107 données)
+## 📋 TOUT (109 données)
 
 | Donnée | Forme | Clé locale | Survit | Milo |
 |---|---|---|---|---|
@@ -101,6 +102,8 @@ Ce sont eux qui portent la mémoire du produit — *« tu ne repars jamais de z�
 | `echelleReserve` | valeur | `ft4_echelle` | ⛔ NON — locale | ✅ oui |
 | `email` | valeur | `ft4_email` | ⚠️ envoyée, jamais relue | — |
 | `emailVerified` | valeur | `ft4_email_verified` | ⚠️ côté serveur seulement | — |
+| `evalHist` | valeur | `ft4_evalHist` | ✅ oui | — |
+| `evalPasses` | série | `ft4_evalPasses` | ✅ oui | — |
 | `exPhotos` | valeur | `ft4_exphotos` | ⚠️ côté serveur seulement | — |
 | `exRestPref` | valeur | `ft4_exRp` | ✅ oui | ✅ oui |
 | `exSwaps` | valeur | `ft4_exswaps` | ✅ oui | ✅ oui |
@@ -174,10 +177,10 @@ Ce sont eux qui portent la mémoire du produit — *« tu ne repars jamais de z�
 
 ## 🔢 Le compte
 
-- **107 données** suivies au total
-- **15 historiques** (dont **9 datés**)
-- **72** survivent à un changement de téléphone · **27** ne le survivraient pas
-- **60** atteignent Milo · **45** en sont exclues **avec leur raison écrite** · **2 trous connus**
+- **109 données** suivies au total
+- **16 historiques** (dont **9 datés**)
+- **74** survivent à un changement de téléphone · **27** ne le survivraient pas
+- **60** atteignent Milo · **47** en sont exclues **avec leur raison écrite** · **2 trous connus**
 
 ⛔ **Aucune donnée n'est « non classée »** : `tests/donnees/runner.js` fait échouer la
 livraison si une donnée nouvelle n'a pas été rangée. *On ne peut plus oublier — on peut

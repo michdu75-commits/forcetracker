@@ -18,9 +18,9 @@
 |---|---|---|
 | Écrans | 7 | 0 |
 | Lignes de menu | 16 | 4 |
-| Fenêtres (modales) | 64 | 13 |
+| Fenêtres (modales) | 65 | 14 |
 | Actions du serveur | 45 | 0 |
-| Fonctions JS | 599 | — |
+| Fonctions JS | 601 | — |
 | Nouveautés annoncées | 69 | — |
 
 ## 🖥️ Écrans
@@ -175,6 +175,7 @@ Chaque action = une capacité côté serveur (IA, sauvegarde, import, premium…
 | `ov-month-summary` | ❓ |
 | `ov-prog-edit` | ✅ |
 | `ov-prog-analysis` | ✅ |
+| `ov-ev-histo` | ❓ |
 | `ov-milo-rate` | ❓ |
 
 ## ✨ Nouveautés annoncées aux utilisateurs

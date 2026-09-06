@@ -943,6 +943,12 @@ function _cloudSync(){
          un autre peut devenir faux* (**R14**). */
       mensLog:(S.mensLog||[]).slice(0,800),
       missedLog:(S.missedLog||[]).slice(-12), // même borne que le local (state.js) : 12 suffisent
+      /* 📊 ft-v1141 — l'historique du banc d'essai. Minuscule (12 passes × 6 nombres, et
+         un objet d'états V/R plafonné à 8 par scénario) : aucun risque pour le réservoir.
+         ⛔ On envoie les DEUX : les totaux sans le détail par scénario ne diraient plus
+         « systématique ou intermittent », qui est la lecture qui décide quoi corriger. */
+      evalPasses:(S.evalPasses||[]).slice(-12),
+      evalHist:S.evalHist||{},
       cycle:S.cycle||null,
       programmes:S.programmes||[],
       exRestPref:S.exRestPref||{},
@@ -3182,6 +3188,31 @@ function _applyRestoreData(raw){
     };
     _fus('mensLog',   e=>String(e&&e.d||'')+'|'+String(e&&e.k||''));
     _fus('missedLog', e=>String(e&&e.date||'')+'|'+String(e&&e.label||''));
+    /* 📊 ft-v1141 — LE BANC SE FUSIONNE AUSSI, pour la même raison que les mensurations :
+       une passe lancée sur ce téléphone et pas encore envoyée ne doit pas être effacée par
+       le serveur. La signature est l'HORODATAGE : deux passes le même jour sont distinctes.
+       ⛔ Puis on retrie par date et on recoupe à 12 — une fusion peut désordonner et
+       dépasser le plafond, et l'écran lit la liste dans l'ordre. */
+    _fus('evalPasses', e=>String(e&&e.ts||e&&e.d||''));
+    if(Array.isArray(S.evalPasses)){
+      S.evalPasses.sort((a,b)=>(+a.ts||0)-(+b.ts||0));
+      if(S.evalPasses.length>12) S.evalPasses=S.evalPasses.slice(-12);
+    }
+    /* ⛔ `evalHist` est un OBJET, pas une liste : `_fusionListe` ne s'applique pas. On
+       fusionne par clé, et pour un scénario connu des deux côtés on garde la série la
+       PLUS LONGUE — c'est celle qui porte le plus de passes, donc la plus informative.
+       *Remplacer en bloc perdrait les scénarios que seul le téléphone connaît.* */
+    try{
+      const hs=(raw&&raw.evalHist)||d.evalHist;
+      if(hs&&typeof hs==='object'){
+        S.evalHist=S.evalHist||{};
+        Object.keys(hs).forEach(id=>{
+          const srv=Array.isArray(hs[id])?hs[id]:[], loc=Array.isArray(S.evalHist[id])?S.evalHist[id]:[];
+          if(srv.length>loc.length) S.evalHist[id]=srv;
+        });
+        try{ localStorage.setItem('ft4_evalHist',JSON.stringify(S.evalHist)); }catch(e){}
+      }
+    }catch(e){console.warn('[FT restore] evalHist',e);}
     /* ⛔ La fusion peut désordonner : `mensLog` DOIT rester trié du plus récent au plus
        ancien — `mensDerniere()` prend simplement le premier élément, et un tri perdu lui
        ferait rendre une vieille valeur SANS que rien ne plante. */

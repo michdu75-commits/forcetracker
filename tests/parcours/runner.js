@@ -27444,7 +27444,110 @@ console.log('\n-- CCXLI. Les mensurations survivent a un changement de telephone
   await cx.close();
 }
 
-// ═══ CCXLII. LES 38 PX DE VIDE EN HAUT DE TOUS LES ÉCRANS (06/09/2026) ══════════════════════
+/* ═══ CCXLII. L'HISTORIQUE DES PASSES DU BANC (ft-v1141) ═══════════════════════════════════
+   Michel : *« il faudrait créer un historique des benchmark »*.
+   ⭐⭐ UN HISTORIQUE EXISTAIT DÉJÀ (`ft4_evalHist`, par SCÉNARIO) et il RESTE — ce bloc garde
+   donc les deux : le nouveau journal par PASSE, et le fait que l'ancien n'a pas été remplacé.
+   ⛔⛔ CE QUI JUSTIFIE UN SECOND MAGASIN (R2) : `_evHistEcrire` ne retient que `vert`/`rouge`
+   et jette les `muet`/`spec`. ***Un total dérivé de lui sous-compterait les scénarios joués***
+   — un compteur qui se trompe sur son dénominateur est pire qu'un compteur absent.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXLII. L\'historique des passes du banc (ft-v1141) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1800);
+  const R=await p.evaluate(()=>{ try{
+    const o={};
+    o.fn=['_evPassesLire','_evPassesEcrire','_evPassesDelta','openEvalHistorique','closeEvalHistorique']
+          .filter(f=>typeof window[f]!=='function');
+    window._isAdminUnlocked=()=>true;
+    localStorage.removeItem('ft4_evalPasses'); localStorage.removeItem('ft4_evalHist');
+    S.evalPasses=[]; S.evalHist={};
+    /* ① UNE PASSE : 4 scénarios joués, dont un MUET — il ne doit être ni vert ni rouge. */
+    _evPassesEcrire({prod:[{id:'A',etat:'vert'},{id:'B',etat:'rouge'},
+                           {id:'C',etat:'muet'},{id:'D',etat:'vert'}]}, false);
+    const l=_evPassesLire(); const p0=l[l.length-1]||{};
+    o.passe={n:l.length, joues:p0.n, v:p0.v, r:p0.r, autres:p0.a, ts:!!p0.ts};
+    /* ② LE PLAFOND tient (12), et on coupe par le DÉBUT : la plus RÉCENTE survit. */
+    for(let i=0;i<20;i++) _evPassesEcrire({prod:[{id:'Z'+i,etat:'vert'}]}, false);
+    const l2=_evPassesLire();
+    o.plafond={n:l2.length, dernierTs:l2[l2.length-1].ts>=l2[0].ts};
+    /* ③ LE DELTA EST DÉRIVÉ DE `evalHist`, son propriétaire — rien n'est recopié. */
+    localStorage.setItem('ft4_evalHist',JSON.stringify({
+      'EV-001':[{d:'2026-09-02',e:'R'},{d:'2026-09-06',e:'V'}],   // corrigé
+      'EV-002':[{d:'2026-09-02',e:'V'},{d:'2026-09-06',e:'R'}],   // régressé
+      'EV-003':[{d:'2026-09-02',e:'V'},{d:'2026-09-06',e:'V'}],   // stable
+      'EV-009':[{d:'2026-09-06',e:'R'}] }));                      // absent d'une passe
+    o.delta=_evPassesDelta();
+    /* ④ L'ÉCRAN s'ouvre, dit ce qui a changé, et se ferme. */
+    openEvalHistorique();
+    const box=document.getElementById('ev-histo-box'), ov=document.getElementById('ov-ev-histo');
+    o.ecran={ouvert:!!(ov&&ov.classList.contains('open')), txt:(box?box.innerText:'')};
+    closeEvalHistorique();
+    o.ferme=!!(ov&&!ov.classList.contains('open'));
+    /* ⑤ JOURNAL VIDE : l'écran DIT quoi faire au lieu de rester blanc (R29). */
+    localStorage.removeItem('ft4_evalPasses'); S.evalPasses=[];
+    openEvalHistorique(); o.vide=(document.getElementById('ev-histo-box').innerText||'');
+    closeEvalHistorique();
+    return o;
+  }catch(e){ return {err:e.message}; } });
+
+  t('CCXLII ⛔ CONTRÔLE — les 5 fonctions du journal existent (sinon tout le bloc est muet)',
+    !R.err && R.fn && R.fn.length===0, R.err||JSON.stringify(R.fn));
+  t('CCXLII ⭐⭐ une passe s\'inscrit avec son total et son horodatage',
+    R.passe && R.passe.n===1 && R.passe.joues===4 && R.passe.ts===true, JSON.stringify(R.passe));
+  /* ⛔⛔ LE TÉMOIN QUI JUSTIFIE LE 2ᵉ MAGASIN : un scénario MUET est compté dans les JOUÉS
+     mais ni en vert ni en rouge. Un total dérivé de `evalHist` l'aurait perdu. */
+  t('CCXLII ⛔⛔ un scénario MUET compte dans les joués, jamais en vert ni en rouge',
+    R.passe && R.passe.v===2 && R.passe.r===1 && R.passe.autres===1, JSON.stringify(R.passe));
+  t('CCXLII ⛔ le plafond tient à 12 et c\'est la plus RÉCENTE qui survit',
+    R.plafond && R.plafond.n===12 && R.plafond.dernierTs===true, JSON.stringify(R.plafond));
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : le total peut ne pas bouger pendant que DEUX choses
+     bougent en sens contraire. Sans cette ligne, on lirait « rien n'a changé » et ce serait faux. */
+  t('CCXLII ⭐⭐ le delta voit la correction ET la régression (le total, lui, ne bougerait pas)',
+    R.delta && R.delta.corriges.join()==='EV-001' && R.delta.regresses.join()==='EV-002',
+    JSON.stringify(R.delta));
+  /* ⛔ Deux contrôles pour empêcher le delta de dégénérer en « tout a changé ». */
+  t('CCXLII ⛔ un scénario STABLE n\'apparaît dans aucune des deux listes',
+    R.delta && R.delta.corriges.indexOf('EV-003')<0 && R.delta.regresses.indexOf('EV-003')<0, '');
+  t('CCXLII ⛔ un scénario absent d\'une des deux passes n\'est PAS compté comme un changement',
+    R.delta && R.delta.corriges.indexOf('EV-009')<0 && R.delta.regresses.indexOf('EV-009')<0, '');
+  t('CCXLII l\'écran s\'ouvre et affiche ce qui a changé',
+    R.ecran && R.ecran.ouvert===true && /corrigés\s*:\s*EV-001/.test(R.ecran.txt||'')
+      && /rouge\s*:\s*EV-002/.test(R.ecran.txt||''), (R.ecran&&R.ecran.txt||'').slice(0,220));
+  /* ⭐ L'écran doit DIRE que le total ne suffit pas — c'est ce qui empêche de le mal lire. */
+  t('CCXLII ⭐ l\'écran avertit que le total ne dit pas tout',
+    /total.{0,40}ne dit pas tout/i.test(R.ecran&&R.ecran.txt||''), '');
+  t('CCXLII ⛔ R15 — l\'écran se ferme (et il est enregistré dans `_OVERLAY_CLOSERS`)',
+    R.ferme===true && /'ov-ev-histo'\s*:\s*'closeEvalHistorique'/.test(
+      fs.readFileSync(path.join(ROOT,'screens.js'),'utf8')), '');
+  t('CCXLII ⭐ journal VIDE : l\'écran dit quoi faire au lieu de rester blanc (R29)',
+    /Aucune passe/.test(R.vide||'') && /benchmark/i.test(R.vide||''), (R.vide||'').slice(0,160));
+  t('CCXLII aucune erreur JS pendant tout le bloc', errs.length===0, errs.join(' | '));
+
+  /* ⛔⛔ ET LA SAUVEGARDE EST ÉPINGLÉE : sans elle, un changement de téléphone effacerait
+     l'historique — le défaut exact de `mensLog`, corrigé le matin même (ft-v1140). */
+  const _code=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  const _setup=fs.readFileSync(path.join(ROOT,'setup.js'),'utf8');
+  t('CCXLII ⛔ les deux magasins partent au cloud ET reviennent',
+    /evalPasses\s*:\s*\(S\.evalPasses/.test(_setup) && /evalHist\s*:\s*S\.evalHist/.test(_setup)
+      && /S\.evalPasses\s*=/.test(_setup) && /S\.evalHist\s*=/.test(_setup), '');
+  /* ⚠️ `evalHist` est un OBJET : un garde-fou écrit avec `.length` vaudrait `undefined` et
+     n'aurait JAMAIS protégé — il aurait l'air posé sans rien faire. */
+  t('CCXLII ⚠️ le garde-fou serveur de `evalHist` compte ses CLÉS, pas un `.length` inexistant',
+    /Object\.keys\(inEH\)\.length\s*===\s*0/.test(_code) && /GARDE-FOU evalHist/.test(_code), '');
+  t('CCXLII ⛔ … et les DEUX réponses de `loadProfile` renvoient les deux magasins',
+    (_code.match(/evalPasses:\s+data\.evalPasses/g)||[]).length===2
+      && (_code.match(/evalHist:\s+data\.evalHist/g)||[]).length===2, '');
+  /* ⛔ L'ANCIEN HISTORIQUE N'A PAS ÉTÉ REMPLACÉ — il est plus fin que le total. */
+  t('CCXLII ⛔ l\'historique PAR SCÉNARIO existe toujours (on a construit à côté, pas dessus)',
+    /_EV_HIST_CLE/.test(fs.readFileSync(path.join(ROOT,'coach.js'),'utf8'))
+      && /intermittent/.test(fs.readFileSync(path.join(ROOT,'coach.js'),'utf8')), '');
+  await cx.close();
+}
+// ═══ CCXLIII. LES 38 PX DE VIDE EN HAUT DE TOUS LES ÉCRANS (06/09/2026) ══════════════════════
 // Michel, devant sa capture : « es-tu sûr qu'en haut on n'arrive pas à gratter ? la couleur
 // bleue va jusqu'en haut ». Je lui avais affirmé que c'était l'ENCOCHE, donc intouchable.
 // ⭐ MESURÉ SUR SA CAPTURE RÉELLE (Pro Max, ×3) : bandeau noir 0→59 px, bleu à 59, logo à 96
@@ -27455,21 +27558,21 @@ console.log('\n-- CCXLI. Les mensurations survivent a un changement de telephone
 //    Le remplacer par une valeur sèche marcherait dans TOUS les tests navigateur (où l'encoche
 //    vaut 0) et ferait passer l'en-tête SOUS l'encoche sur un vrai téléphone le jour où l'app
 //    repasse en `black-translucent`. *Un défaut qu'aucun test à l'écran ne peut voir.*
-console.log('\n═══ CCXLII. Le décalage du haut : 26 px rendus, sans casser l\'encoche ═══');
+console.log('\n═══ CCXLIII. Le décalage du haut : 26 px rendus, sans casser l\'encoche ═══');
 {
   const CSS=fs.readFileSync(path.join(ROOT,'style.css'),'utf8');
   const m=/\.topbar\{[\s\S]*?padding:\s*([^;]+);/.exec(CSS);
   const pad=m?m[1].trim():'(introuvable)';
   /* ⛔ CONTRÔLE — sans la règle, tout le reste du bloc serait vert sur du vide. */
-  t('CCXLII ⛔ CONTRÔLE — la règle de décalage de l\'en-tête a bien été trouvée',
+  t('CCXLIII ⛔ CONTRÔLE — la règle de décalage de l\'en-tête a bien été trouvée',
     !!m, 'le sélecteur .topbar ou son padding a changé de forme');
   /* ⛔⛔ LE TÉMOIN QUI PORTE LA VERSION : le garde-fou d'encoche est toujours là. */
-  t('CCXLII ⛔⛔ le décalage passe TOUJOURS par `max(env(safe-area-inset-top), …)`',
+  t('CCXLIII ⛔⛔ le décalage passe TOUJOURS par `max(env(safe-area-inset-top), …)`',
     /max\(\s*env\(safe-area-inset-top\)\s*,/.test(pad),
     'une valeur sèche passerait tous les tests ET casserait sous l\'encoche — reçu : '+pad);
   /* ⭐ NON-RÉGRESSION DU GAIN — le plancher ne doit pas remonter. 38 était l'ancienne valeur. */
   const plancher=(/max\(\s*env\(safe-area-inset-top\)\s*,\s*(\d+)px/.exec(pad)||[])[1];
-  t('CCXLII ⭐ le plancher est bien descendu (≤ 16 px, il était à 38)',
+  t('CCXLIII ⭐ le plancher est bien descendu (≤ 16 px, il était à 38)',
     plancher!==undefined && Number(plancher)<=16, 'plancher = '+plancher+' px');
 
   const ce=await b.newContext({serviceWorkers:'block',viewport:{width:393,height:852},timezoneId:'Europe/Paris'});
@@ -27507,26 +27610,26 @@ console.log('\n═══ CCXLII. Le décalage du haut : 26 px rendus, sans casse
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
   });
   await ce.close();
-  if(E.erreur) t('CCXLII ⛔ le bloc s\'exécute', false, E.erreur);
+  if(E.erreur) t('CCXLIII ⛔ le bloc s\'exécute', false, E.erreur);
   /* ⭐ L'en-tête a vraiment maigri à l'écran — pas seulement dans le fichier CSS. */
-  t('CCXLII ⭐ l\'en-tête mesure moins de 100 px (il en faisait 110)',
+  t('CCXLIII ⭐ l\'en-tête mesure moins de 100 px (il en faisait 110)',
     E.entete>0 && E.entete<100, E.entete+' px');
   /* ⛔ ET IL NE DÉBORDE PAS PAR LE HAUT : c'est la limite de l'exercice — trop bas, le logo
      sortirait de l'écran, et personne ne le verrait dans un chiffre de hauteur. */
-  t('CCXLII ⛔ le logo ne sort pas par le haut de l\'écran',
+  t('CCXLIII ⛔ le logo ne sort pas par le haut de l\'écran',
     E.logoY!==null && E.logoY>=0, 'logo à y='+E.logoY);
   /* ⛔⛔ LES SIX ONGLETS — l'en-tête est global. */
   {
     const mauvais=(E.ecrans||[]).filter(x=>x.ok===false);
-    t('CCXLII ⛔⛔ sur les 6 onglets, le contenu commence bien SOUS l\'en-tête',
+    t('CCXLIII ⛔⛔ sur les 6 onglets, le contenu commence bien SOUS l\'en-tête',
       (E.ecrans||[]).length===6 && mauvais.length===0,
       mauvais.map(x=>x.id+' à y='+x.y).join(' | '));
   }
   /* 🔴 RÈGLE D'OR #9 — comparé AVANT/APRÈS plutôt qu'à une valeur en dur : celle-ci deviendrait
      fausse au premier changement de viewport du banc, sans que le bouton ait bougé d'un pixel. */
-  t('CCXLII 🔴 RÈGLE D\'OR #9 — le bouton central n\'a pas bougé',
+  t('CCXLIII 🔴 RÈGLE D\'OR #9 — le bouton central n\'a pas bougé',
     E.fabAvant===E.fabApres, E.fabAvant+' → '+E.fabApres);
-  t('CCXLII aucune erreur JS sur tout le bloc', ee.length===0, ee.join(' | '));
+  t('CCXLIII aucune erreur JS sur tout le bloc', ee.length===0, ee.join(' | '));
 }
 
 await b.close(); srv.close();
