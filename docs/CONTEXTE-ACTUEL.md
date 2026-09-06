@@ -6,9 +6,9 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1142` — 🤝 **MILO EST MIS AU COURANT QU'ON LE TESTE — CHEZ MICHEL SEUL.**
+- **Version en ligne (live) :** `ft-v1144` — 🤝 **MILO EST MIS AU COURANT QU'ON LE TESTE — CHEZ MICHEL SEUL.**
   ⏳ **Déploiement à vérifier** (R18). ⛔ **`Code.js` NON modifié** → aucun déploiement backend.
-  ⏳ **Suite complète** : **parcours 2893/2893** (+18, bloc CCXLIII), calculs 339/339,
+  ⏳ **Suite complète** : **parcours 2901/2901** (arbre fusionné, +18, bloc CCXLIV), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   Michel, après que je lui aie déconseillé : *« non, je veux que Milo soit au courant qu'on fait
   des tests. J'ai voulu le construire pour qu'il soit une sorte de compagnon, s'il n'est pas au
@@ -31,7 +31,32 @@
   donc la borne redevenait nulle) : la sonde l'a attrapé avant le témoin.
   ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 
-- **Version précédente :** `ft-v1141` — 📊 **L'HISTORIQUE DES PASSES DU BANC D'ESSAI.**
+- **Version précédente :** `ft-v1143` — 📐 **LES 38 PX DE VIDE EN HAUT DE TOUS LES ÉCRANS.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#933** sur `9df36c7`, **job `deploy` success**,
+  les 7 étapes vertes à **13:46:12 UTC**.
+  ⭐⭐ **C'est Michel qui a vu que j'avais tort.** Je lui avais affirmé que le haut de l'en-tête
+  était l'ENCOCHE, donc intouchable. Lui : *« es-tu sûr qu'on n'arrive pas à gratter ? la
+  couleur bleue va jusqu'en haut »*.
+  ⭐ **Mesuré sur SA capture** (Pro Max, ×3) : noir 0→**59**, bleu à **59**, logo à **96** →
+  **37 px de bleu vide**, et ce n'est pas l'encoche.
+  ⛔ **La cause** : `apple-mobile-web-app-status-bar-style` vaut `black`, donc iOS réserve le
+  bandeau lui-même et `env(safe-area-inset-top)` rend **0** — les 38 px s'ajoutaient par-dessus.
+  👉 **R28 appliqué à moi-même** : j'avais lu le `max()` et supposé, sans mesurer.
+  ⭐ **Plancher 38 → 12 px · 26 px rendus, identiques sur les 4 formats.** En-tête 110 → 84.
+  Vérifié **4 formats × 6 onglets** ; bouton central immobile (règle #9).
+  ⛔⛔ **Le témoin protège le garde-fou `max(env(...))`**, pas le gain : une valeur sèche
+  passerait TOUS les tests navigateur et casserait sous l'encoche sur un vrai téléphone.
+  ⛔ **Option A écartée** (`black-translucent` : joli, mais ne libère rien) — décision de Michel.
+  ⚠️ **§31** : le témoin de ft-v977 épinglait `38px` (la valeur du jour) — re-visé sur une borne.
+  ⏭️ **Reste** : à 375 px de large, la date passe sur 2 lignes et reprend 27 px (disposition
+  titre/date, autre sujet).
+  ⚠️⚠️ **29ᵉ collision** (session-A a publié sa ft-v1141 pendant ma passe et réservé ft-v1142)
+  **+ collision d'ID** (nos deux blocs s'appelaient CCXLII → le mien devient CCXLIII).
+  ⚠️ Michel doit vérifier sur **Safari/iPhone**.
+  Tests sur l'arbre **fusionné** : parcours 2883/2883, calculs 339/339, muscles 241, croisés 50,
+  dates 9/9, données 0 trou. **Contrôle négatif : 2 rouges sur 7.**
+
+- **Avant :** `ft-v1141` — 📊 **L'HISTORIQUE DES PASSES DU BANC D'ESSAI.**
   ✅ **LES DEUX DÉPLOIEMENTS VÉRIFIÉS VERTS** (R18) : site run **#930** (7 étapes, 12:40:09 UTC)
   **ET** backend run **#106** (9 étapes, dont « le backend répond VRAIMENT » — 12:40:26 UTC),
   tous deux sur `83e09e9`.

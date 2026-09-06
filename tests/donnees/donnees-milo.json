@@ -84,7 +84,7 @@
   "ecgStill": "réglage d'apparence",
   "email": "donnée de compte, jamais envoyée au modèle",
   "emailVerified": "drapeau technique : dit si l'email a été confirmé, ne décrit pas la personne",
-  "evalHist": "outil d'ADMIN : le détail par scénario du banc d'essai (V/R sur les 8 dernières passes). ⛔ RESTE EXCLU en ft-v1142, alors même que `evalPasses` (la NOTE) est désormais transmise à Michel : lui dire QUELS pièges il a ratés reviendrait à lui donner le CORRIGÉ, et il travaillerait ces situations-là plutôt que de se comporter normalement. *Savoir qu'on est noté n'est pas connaître les réponses.*",
+  "evalHist": "outil d'ADMIN : le détail par scénario du banc d'essai (V/R sur les 8 dernières passes). ⛔ RESTE EXCLU en ft-v1144, alors même que `evalPasses` (la NOTE) est désormais transmise à Michel : lui dire QUELS pièges il a ratés reviendrait à lui donner le CORRIGÉ, et il travaillerait ces situations-là plutôt que de se comporter normalement. *Savoir qu'on est noté n'est pas connaître les réponses.*",
   "exPhotos": "photos d'exercices, volumineux",
   "expandAll": "préférence d'affichage",
   "foodAiUses": "compteur d'usage, technique",

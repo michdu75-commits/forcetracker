@@ -11271,8 +11271,16 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   });
 
   console.log('\n═══ BLOC XCV. Le header compacte, promu en prod ═══');
+  /* ⚠️ RE-VISÉ le 06/09/2026 (ft-v1141) — il exigeait `haut === '38px'`, la valeur du jour de
+     ft-v977. Michel a fait descendre le plancher à 12 px (26 px rendus sur tous les écrans) et
+     ce témoin a rougi sur du code parfaitement sain.
+     ⭐ LA GARANTIE N'A JAMAIS ÉTÉ « il vaut 38 » — c'est « la barre est COMPACTÉE et ne remonte
+     pas » : elle faisait 44/14 avant ft-v977. On borne donc par le HAUT, ce qui protège le gain
+     d'hier ET celui d'aujourd'hui. *Un témoin visé sur le chiffre du jour rougit au premier
+     progrès ; visé sur la garantie, il survit.* (BUGS.md §31) */
   t('⛔⛔ LA BARRE DU HAUT EST REELLEMENT COMPACTEE (style CALCULE, pas le fichier)',
-    R.topbarBas==='8px' && R.topbarHaut==='38px', 'haut='+R.topbarHaut+' bas='+R.topbarBas);
+    parseFloat(R.topbarBas)<=8 && parseFloat(R.topbarHaut)<=38 && parseFloat(R.topbarHaut)>0,
+    'haut='+R.topbarHaut+' bas='+R.topbarBas+' (attendu : haut ≤ 38, bas ≤ 8, et jamais 0)');
   t('⛔⛔ ... ET LE HEADER DE MILO AUSSI — les 3 regles redefinies plus bas GAGNENT bien',
     R.coachHeaderHaut==='2px' && R.coachHeaderBas==='6px' && R.sousTitre==='11px' && R.quotaPad==='4px 10px',
     'haut='+R.coachHeaderHaut+' bas='+R.coachHeaderBas+' sous-titre='+R.sousTitre+' badge='+R.quotaPad);
@@ -27544,8 +27552,94 @@ console.log('\n-- CCXLII. L\'historique des passes du banc (ft-v1141) --');
       && /intermittent/.test(fs.readFileSync(path.join(ROOT,'coach.js'),'utf8')), '');
   await cx.close();
 }
+// ═══ CCXLIII. LES 38 PX DE VIDE EN HAUT DE TOUS LES ÉCRANS (06/09/2026) ══════════════════════
+// Michel, devant sa capture : « es-tu sûr qu'en haut on n'arrive pas à gratter ? la couleur
+// bleue va jusqu'en haut ». Je lui avais affirmé que c'était l'ENCOCHE, donc intouchable.
+// ⭐ MESURÉ SUR SA CAPTURE RÉELLE (Pro Max, ×3) : bandeau noir 0→59 px, bleu à 59, logo à 96
+//    → 37 px de bleu VIDE, et ce n'est pas l'encoche. La cause : le statut de barre vaut
+//    `black`, donc iOS réserve le bandeau lui-même et `env(safe-area-inset-top)` rend 0 —
+//    les 38 px s'ajoutaient PAR-DESSUS un espace déjà réservé. Gain : 26 px sur tous les écrans.
+// ⛔⛔ CE QUE CE BLOC PROTÈGE EN PRIORITÉ N'EST PAS LE GAIN, C'EST LE GARDE-FOU `max(env(...))`.
+//    Le remplacer par une valeur sèche marcherait dans TOUS les tests navigateur (où l'encoche
+//    vaut 0) et ferait passer l'en-tête SOUS l'encoche sur un vrai téléphone le jour où l'app
+//    repasse en `black-translucent`. *Un défaut qu'aucun test à l'écran ne peut voir.*
+console.log('\n═══ CCXLIII. Le décalage du haut : 26 px rendus, sans casser l\'encoche ═══');
+{
+  const CSS=fs.readFileSync(path.join(ROOT,'style.css'),'utf8');
+  const m=/\.topbar\{[\s\S]*?padding:\s*([^;]+);/.exec(CSS);
+  const pad=m?m[1].trim():'(introuvable)';
+  /* ⛔ CONTRÔLE — sans la règle, tout le reste du bloc serait vert sur du vide. */
+  t('CCXLIII ⛔ CONTRÔLE — la règle de décalage de l\'en-tête a bien été trouvée',
+    !!m, 'le sélecteur .topbar ou son padding a changé de forme');
+  /* ⛔⛔ LE TÉMOIN QUI PORTE LA VERSION : le garde-fou d'encoche est toujours là. */
+  t('CCXLIII ⛔⛔ le décalage passe TOUJOURS par `max(env(safe-area-inset-top), …)`',
+    /max\(\s*env\(safe-area-inset-top\)\s*,/.test(pad),
+    'une valeur sèche passerait tous les tests ET casserait sous l\'encoche — reçu : '+pad);
+  /* ⭐ NON-RÉGRESSION DU GAIN — le plancher ne doit pas remonter. 38 était l'ancienne valeur. */
+  const plancher=(/max\(\s*env\(safe-area-inset-top\)\s*,\s*(\d+)px/.exec(pad)||[])[1];
+  t('CCXLIII ⭐ le plancher est bien descendu (≤ 16 px, il était à 38)',
+    plancher!==undefined && Number(plancher)<=16, 'plancher = '+plancher+' px');
 
-/* ═══ CCXLIII. MILO SAIT QU'ON LE TESTE — CHEZ MICHEL SEUL (ft-v1142) ══════════════════════
+  const ce=await b.newContext({serviceWorkers:'block',viewport:{width:393,height:852},timezoneId:'Europe/Paris'});
+  const pe=await ce.newPage(); const ee=[]; pe.on('pageerror',e=>ee.push(e.message));
+  await pe.addInitScript(seedScript({}));
+  await pe.goto('http://localhost:'+PORT+'/index.html');
+  await pe.waitForTimeout(2200);
+  const E=await pe.evaluate(async()=>{
+   try{
+    const net=()=>{document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      const o=document.getElementById('onboarding'); if(o)o.style.display='none';
+      const i=document.getElementById('install-popup'); if(i)i.classList.add('hidden');};
+    net();
+    const tb=document.querySelector('.topbar'); if(!tb) return {erreur:'.topbar absente'};
+    const o={entete:Math.round(tb.getBoundingClientRect().height)};
+    const logo=document.getElementById('tb-logo');
+    o.logoY=logo?Math.round(logo.getBoundingClientRect().top):null;
+    const fab0=()=>{const f=document.getElementById('nb-log').getBoundingClientRect();
+      return [Math.round(f.x),Math.round(f.y),Math.round(f.width),Math.round(f.height)].join(',');};
+    o.fabAvant=fab0();
+    /* ⛔ TOUS LES ONGLETS : l'en-tête est GLOBAL, donc un mauvais réglage les casse tous —
+       vérifier le seul Accueil laisserait passer cinq écrans. */
+    o.ecrans=[];
+    for(const [id,btn] of [['home','nb-home'],['progress','nb-progress'],['log','nb-log'],
+                           ['nutrition','nb-nutrition'],['coach','nb-coach'],['setup','nb-setup']]){
+      goScreen(id, document.getElementById(btn));
+      await new Promise(r=>setTimeout(r,380)); net(); await new Promise(r=>setTimeout(r,180));
+      const sc=document.querySelector('.screen.active');
+      const prem=[...(sc?sc.children:[])].find(e=>e.getBoundingClientRect().height>0);
+      const y=prem?Math.round(prem.getBoundingClientRect().top):null;
+      o.ecrans.push({id, y, ok: y===null ? null : (y >= Math.round(tb.getBoundingClientRect().bottom)-2)});
+    }
+    o.fabApres=fab0();
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  await ce.close();
+  if(E.erreur) t('CCXLIII ⛔ le bloc s\'exécute', false, E.erreur);
+  /* ⭐ L'en-tête a vraiment maigri à l'écran — pas seulement dans le fichier CSS. */
+  t('CCXLIII ⭐ l\'en-tête mesure moins de 100 px (il en faisait 110)',
+    E.entete>0 && E.entete<100, E.entete+' px');
+  /* ⛔ ET IL NE DÉBORDE PAS PAR LE HAUT : c'est la limite de l'exercice — trop bas, le logo
+     sortirait de l'écran, et personne ne le verrait dans un chiffre de hauteur. */
+  t('CCXLIII ⛔ le logo ne sort pas par le haut de l\'écran',
+    E.logoY!==null && E.logoY>=0, 'logo à y='+E.logoY);
+  /* ⛔⛔ LES SIX ONGLETS — l'en-tête est global. */
+  {
+    const mauvais=(E.ecrans||[]).filter(x=>x.ok===false);
+    t('CCXLIII ⛔⛔ sur les 6 onglets, le contenu commence bien SOUS l\'en-tête',
+      (E.ecrans||[]).length===6 && mauvais.length===0,
+      mauvais.map(x=>x.id+' à y='+x.y).join(' | '));
+  }
+  /* 🔴 RÈGLE D'OR #9 — comparé AVANT/APRÈS plutôt qu'à une valeur en dur : celle-ci deviendrait
+     fausse au premier changement de viewport du banc, sans que le bouton ait bougé d'un pixel. */
+  t('CCXLIII 🔴 RÈGLE D\'OR #9 — le bouton central n\'a pas bougé',
+    E.fabAvant===E.fabApres, E.fabAvant+' → '+E.fabApres);
+  t('CCXLIII aucune erreur JS sur tout le bloc', ee.length===0, ee.join(' | '));
+}
+
+/* ═══ CCXLIV. MILO SAIT QU'ON LE TESTE — CHEZ MICHEL SEUL (ft-v1144) ══════════════════════
+   ⚠️ CCXLIII était pris : session-B a publié son bloc pendant ma passe (29ᵉ collision, sur la
+   VERSION *et* sur l'identifiant). On ne renumérote jamais le bloc de l'autre.
    Michel : *« je veux que Milo soit au courant qu'on fait des tests […] s'il n'est pas au
    courant qu'on bosse sur lui c'est injuste »*.
    ⛔⛔ CE BLOC NE MESURE PAS « le bloc est là » — ça, n'importe quelle version future le
@@ -27558,7 +27652,7 @@ console.log('\n-- CCXLII. L\'historique des passes du banc (ft-v1141) --');
    donc il doit vivre dans la partie PERSONNELLE (cache 5 min) et jamais dans le bloc COMMUN
    (cache 1 h) — `worker.js` a la mesure : un contenu qui bouge dans un cache long AGGRAVE.
    ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
-console.log('\n-- CCXLIII. Milo sait qu\'on le teste — chez Michel seul (ft-v1142) --');
+console.log('\n-- CCXLIV. Milo sait qu\'on le teste — chez Michel seul (ft-v1144) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
   const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
@@ -27633,50 +27727,50 @@ console.log('\n-- CCXLIII. Milo sait qu\'on le teste — chez Michel seul (ft-v1
 
   /* ⛔ CONTRÔLES D'ABORD — sans eux, « personne d'autre ne le reçoit » serait vrai le jour où
      le bloc n'existe plus du tout, et tout le reste passerait au vert sur du vide. */
-  t('CCXLIII ⛔ CONTRÔLE — les 4 fonctions existent (sinon tout le bloc est muet)',
+  t('CCXLIV ⛔ CONTRÔLE — les 4 fonctions existent (sinon tout le bloc est muet)',
     !R.err && R.fn && R.fn.length===0, R.err||JSON.stringify(R.fn));
-  t('CCXLIII ⛔ CONTRÔLE — Michel reçoit bien le bloc (sans lui, les 3 garanties sont vides)',
+  t('CCXLIV ⛔ CONTRÔLE — Michel reçoit bien le bloc (sans lui, les 3 garanties sont vides)',
     R.michel && R.michel.present===true, JSON.stringify(R.michel));
   /* ⭐⭐ LES TROIS GARANTIES. */
-  t('CCXLIII ⭐⭐ ① aucune AUTRE adresse ne sait qu\'on teste Milo',
+  t('CCXLIV ⭐⭐ ① aucune AUTRE adresse ne sait qu\'on teste Milo',
     R.autre && R.autre.present===false, JSON.stringify(R.autre));
-  t('CCXLIII ⭐⭐ ① … et une adresse VIDE non plus — même texte qu\'un utilisateur lambda',
+  t('CCXLIV ⭐⭐ ① … et une adresse VIDE non plus — même texte qu\'un utilisateur lambda',
     R.vide && R.vide.present===false && R.identiques===true,
     JSON.stringify({vide:R.vide, identiques:R.identiques}));
   /* ⛔⛔ LE TÉMOIN QUI PORTE LA VERSION : c'est `_vcApplyPersona` qui efface l'e-mail, et
      c'est POUR ÇA que le banc continue de mesurer un Milo qui ne sait rien. Si quelqu'un
      retirait cette ligne, le banc se mettrait à mesurer autre chose SANS QUE RIEN NE PLANTE. */
-  t('CCXLIII ⭐⭐ ② le BANC D\'ESSAI ne reçoit rien (`_vcApplyPersona` efface l\'e-mail)',
+  t('CCXLIV ⭐⭐ ② le BANC D\'ESSAI ne reçoit rien (`_vcApplyPersona` efface l\'e-mail)',
     R.emailApresPersona==='' && R.banc && R.banc.superAdmin===false && R.banc.present===false,
     JSON.stringify({email:R.emailApresPersona, banc:R.banc}));
-  t('CCXLIII ⭐⭐ ③ on lui donne la NOTE (54/56), jamais le CORRIGÉ (aucun n° de scénario)',
+  t('CCXLIV ⭐⭐ ③ on lui donne la NOTE (54/56), jamais le CORRIGÉ (aucun n° de scénario)',
     R.note===true && R.pasDeCorrige===true, JSON.stringify({note:R.note, pasDeCorrige:R.pasDeCorrige}));
-  t('CCXLIII ⛔ … et il lui est dit de répondre comme s\'il ne le savait pas',
+  t('CCXLIV ⛔ … et il lui est dit de répondre comme s\'il ne le savait pas',
     R.consigne===true, '');
   /* ⛔ LA GARANTIE TECHNIQUE : une date + un total dans le bloc COMMUN (cache 1 h) coûteraient
      plus cher qu'ils ne rapportent — la mesure est dans `worker.js`. */
-  t('CCXLIII ⛔ le bloc vit dans la partie PERSONNELLE, jamais dans le bloc COMMUN mis en cache 1 h',
+  t('CCXLIV ⛔ le bloc vit dans la partie PERSONNELLE, jamais dans le bloc COMMUN mis en cache 1 h',
     R.michel && R.michel.dansPerso===true, JSON.stringify(R.michel));
-  t('CCXLIII ⛔ le bloc personnel reste IDENTIQUE d\'un message à l\'autre (sinon le cache tombe)',
+  t('CCXLIV ⛔ le bloc personnel reste IDENTIQUE d\'un message à l\'autre (sinon le cache tombe)',
     R.stable===true, '');
   /* ⏪ LA RÉCUPÉRATION DES PASSES PASSÉES. */
-  t('CCXLIII ⏪ les passes d\'avant le journal sont retrouvées et MARQUÉES comme reconstituées',
+  t('CCXLIV ⏪ les passes d\'avant le journal sont retrouvées et MARQUÉES comme reconstituées',
     Array.isArray(R.rec) && R.rec.length===2 && R.rec.every(x=>x.x===1)
       && R.rec[0].d==='2026-08-20' && R.rec[1].d==='2026-08-21', JSON.stringify(R.rec));
   /* ⛔⛔ LE DÉNOMINATEUR EST CELUI DES VERDICTS RENDUS, PAS DES SCÉNARIOS JOUÉS : le 20/08 n'a
      que 2 scénarios notés, le 21/08 en a 3. Un total qui gonflerait serait une progression
      inventée. */
-  t('CCXLIII ⛔⛔ le total reconstitué compte les VERDICTS rendus (2 puis 3), rien de plus',
+  t('CCXLIV ⛔⛔ le total reconstitué compte les VERDICTS rendus (2 puis 3), rien de plus',
     R.rec && R.rec[0].n===2 && R.rec[0].v===1 && R.rec[0].r===1
       && R.rec[1].n===3 && R.rec[1].v===2 && R.rec[1].r===1, JSON.stringify(R.rec));
   /* ⛔ Sans ça, chaque ouverture de l'écran rejouait tout — mesuré, c'était le cas au 1ᵉʳ jet. */
-  t('CCXLIII ⛔ relancer la récupération n\'ajoute RIEN (idempotente)', R.recIdem===true, '');
+  t('CCXLIV ⛔ relancer la récupération n\'ajoute RIEN (idempotente)', R.recIdem===true, '');
   /* ⛔ ET UNE VRAIE PASSE N'EST JAMAIS RECOUVERTE : elle est plus riche (sans-verdict, ×2). */
-  t('CCXLIII ⛔ une VRAIE passe du même jour est gardée telle quelle, jamais reconstituée',
+  t('CCXLIV ⛔ une VRAIE passe du même jour est gardée telle quelle, jamais reconstituée',
     Array.isArray(R.borne) && R.borne.length===2
       && R.borne[1].d==='2026-08-21' && R.borne[1].x===0 && R.borne[1].n===9,
     JSON.stringify(R.borne));
-  t('CCXLIII ⛔ l\'écran DIT qu\'une ligne est reconstituée et que son total n\'est pas comparable',
+  t('CCXLIV ⛔ l\'écran DIT qu\'une ligne est reconstituée et que son total n\'est pas comparable',
     /reconstitu/i.test(R.ecran||'') && /verdict/i.test(R.ecran||''), (R.ecran||'').slice(0,220));
   /* ⚠️ Le texte d'état vide disait « on ne va pas leur inventer un total » — devenu FAUX
      depuis qu'on reconstitue. Un texte périmé fait dire des bêtises à qui le lit (R23).
@@ -27689,19 +27783,19 @@ console.log('\n-- CCXLIII. Milo sait qu\'on le teste — chez Michel seul (ft-v1
   {
     const _brut=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
     const _nu=_brut.replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:])\/\/[^\n]*/g,'$1');
-    t('CCXLIII ⛔ CONTRE-ÉPREUVE — retirer les commentaires ne rend pas le détecteur aveugle',
+    t('CCXLIV ⛔ CONTRE-ÉPREUVE — retirer les commentaires ne rend pas le détecteur aveugle',
       /rien à reconstituer/.test(_nu), 'le texte vivant a disparu du code dépouillé');
-    t('CCXLIII ⚠️ le texte d\'état vide de ft-v1141 ne dit plus « on ne va pas leur inventer un total »',
+    t('CCXLIV ⚠️ le texte d\'état vide de ft-v1141 ne dit plus « on ne va pas leur inventer un total »',
       !/inventer un total/.test(_nu), '');
   }
   /* ⛔ R4a — la donnée transmise doit être CLASSÉE, et son détail rester exclu. */
   {
     const _dm=JSON.parse(fs.readFileSync(path.join(ROOT,'tests/donnees/donnees-milo.json'),'utf8'));
-    t('CCXLIII ⛔ R4a — `evalPasses` est classée TRANSMISE, `evalHist` reste EXCLU avec sa raison',
+    t('CCXLIV ⛔ R4a — `evalPasses` est classée TRANSMISE, `evalHist` reste EXCLU avec sa raison',
       _dm.transmis.indexOf('evalPasses')>=0 && !_dm.exclu.evalPasses
         && !!_dm.exclu.evalHist && /CORRIGÉ/.test(_dm.exclu.evalHist), '');
   }
-  t('CCXLIII aucune erreur JS pendant tout le bloc', errs.length===0, errs.join(' | '));
+  t('CCXLIV aucune erreur JS pendant tout le bloc', errs.length===0, errs.join(' | '));
   await cx.close();
 }
 

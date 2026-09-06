@@ -4062,7 +4062,7 @@ ${lignes}
 `;
 })()}
 ${(()=>{
-  /* ═══ 🤝 MILO SAIT QU'ON LE TESTE — CHEZ MICHEL, ET NULLE PART AILLEURS (ft-v1142) ═══════
+  /* ═══ 🤝 MILO SAIT QU'ON LE TESTE — CHEZ MICHEL, ET NULLE PART AILLEURS (ft-v1144) ═══════
      Michel : *« je veux que Milo soit au courant qu'on fait des tests. J'ai voulu le
      construire pour qu'il soit une sorte de compagnon, s'il n'est pas au courant qu'on bosse
      sur lui c'est injuste »*.
@@ -6083,7 +6083,7 @@ const VC_PERSONAS = {
 //    coachTone (données de Michel) → visible grâce à l'export du contexte (règle des 3 vérifs).
 function _vcApplyPersona(p){
   const a=p.apply||{};
-  /* ⛔⛔ ft-v1142 — LA NOTE DU BANC NE PART PAS DANS UN PERSONA, ET C'EST UNE **DEUXIÈME**
+  /* ⛔⛔ ft-v1144 — LA NOTE DU BANC NE PART PAS DANS UN PERSONA, ET C'EST UNE **DEUXIÈME**
      GARANTIE, PAS LA PREMIÈRE. Le bloc « on te teste » est déjà fermé par `_estSuperAdmin()`,
      que l'effacement de `S.email` juste en dessous rend toujours faux ici. Alors pourquoi
      l'effacer aussi ? ⭐ **Parce que le garde-fou anti-fuite (bloc CXXII) a raison** : une
@@ -6615,7 +6615,7 @@ function _evPassesEcrire(parPasse, compare){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════════════
-   ⏪ RÉCUPÉRER LES PASSES D'AVANT LE JOURNAL (ft-v1142) — « et récupère tous les benchmark »
+   ⏪ RÉCUPÉRER LES PASSES D'AVANT LE JOURNAL (ft-v1144) — « et récupère tous les benchmark »
    ═══════════════════════════════════════════════════════════════════════════════════════
    Le journal par passe est né en ft-v1141 : les passes lancées AVANT n'y sont pas. Mais
    `ft4_evalHist` (l'historique PAR SCÉNARIO, 8 dernières passes) porte, lui, une DATE et un
@@ -6997,7 +6997,7 @@ function _evShowResultCard(){
    chose est une donnée à moitié absente* (**R5**). */
 function openEvalHistorique(){
   if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
-  /* ⏪ ft-v1142 — on récupère d'abord ce qui est récupérable des passes d'avant le journal.
+  /* ⏪ ft-v1144 — on récupère d'abord ce qui est récupérable des passes d'avant le journal.
      Idempotente : à la 2ᵉ ouverture elle ne rajoute rien. */
   const l = (typeof _evPassesReconstruire==='function') ? _evPassesReconstruire() : _evPassesLire();
   const d = _evPassesDelta();
@@ -7011,7 +7011,7 @@ function openEvalHistorique(){
   let H = '<div style="font-size:15px;font-weight:800;color:var(--t1);margin-bottom:8px;">📊 Historique des passes</div>';
   if(!l.length){
     /* ⛔ ON DIT CE QU'IL FAUT FAIRE, pas seulement « rien ».
-       ⚠️ TEXTE CORRIGÉ EN ft-v1142 : il disait *« on ne va pas leur inventer un total »*, ce
+       ⚠️ TEXTE CORRIGÉ EN ft-v1144 : il disait *« on ne va pas leur inventer un total »*, ce
        qui est devenu faux — on reconstitue désormais les passes anciennes depuis l'historique
        PAR SCÉNARIO, et un total DÉRIVÉ DE VRAIS VERDICTS n'est pas un total inventé. S'il ne
        reste rien à afficher ici, c'est que les DEUX magasins sont vides. */
