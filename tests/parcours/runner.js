@@ -11271,8 +11271,16 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   });
 
   console.log('\n═══ BLOC XCV. Le header compacte, promu en prod ═══');
+  /* ⚠️ RE-VISÉ le 06/09/2026 (ft-v1141) — il exigeait `haut === '38px'`, la valeur du jour de
+     ft-v977. Michel a fait descendre le plancher à 12 px (26 px rendus sur tous les écrans) et
+     ce témoin a rougi sur du code parfaitement sain.
+     ⭐ LA GARANTIE N'A JAMAIS ÉTÉ « il vaut 38 » — c'est « la barre est COMPACTÉE et ne remonte
+     pas » : elle faisait 44/14 avant ft-v977. On borne donc par le HAUT, ce qui protège le gain
+     d'hier ET celui d'aujourd'hui. *Un témoin visé sur le chiffre du jour rougit au premier
+     progrès ; visé sur la garantie, il survit.* (BUGS.md §31) */
   t('⛔⛔ LA BARRE DU HAUT EST REELLEMENT COMPACTEE (style CALCULE, pas le fichier)',
-    R.topbarBas==='8px' && R.topbarHaut==='38px', 'haut='+R.topbarHaut+' bas='+R.topbarBas);
+    parseFloat(R.topbarBas)<=8 && parseFloat(R.topbarHaut)<=38 && parseFloat(R.topbarHaut)>0,
+    'haut='+R.topbarHaut+' bas='+R.topbarBas+' (attendu : haut ≤ 38, bas ≤ 8, et jamais 0)');
   t('⛔⛔ ... ET LE HEADER DE MILO AUSSI — les 3 regles redefinies plus bas GAGNENT bien',
     R.coachHeaderHaut==='2px' && R.coachHeaderBas==='6px' && R.sousTitre==='11px' && R.quotaPad==='4px 10px',
     'haut='+R.coachHeaderHaut+' bas='+R.coachHeaderBas+' sous-titre='+R.sousTitre+' badge='+R.quotaPad);
@@ -27436,7 +27444,7 @@ console.log('\n-- CCXLI. Les mensurations survivent a un changement de telephone
   await cx.close();
 }
 
-// ═══ CCXLI. LES 38 PX DE VIDE EN HAUT DE TOUS LES ÉCRANS (06/09/2026) ══════════════════════
+// ═══ CCXLII. LES 38 PX DE VIDE EN HAUT DE TOUS LES ÉCRANS (06/09/2026) ══════════════════════
 // Michel, devant sa capture : « es-tu sûr qu'en haut on n'arrive pas à gratter ? la couleur
 // bleue va jusqu'en haut ». Je lui avais affirmé que c'était l'ENCOCHE, donc intouchable.
 // ⭐ MESURÉ SUR SA CAPTURE RÉELLE (Pro Max, ×3) : bandeau noir 0→59 px, bleu à 59, logo à 96
@@ -27447,21 +27455,21 @@ console.log('\n-- CCXLI. Les mensurations survivent a un changement de telephone
 //    Le remplacer par une valeur sèche marcherait dans TOUS les tests navigateur (où l'encoche
 //    vaut 0) et ferait passer l'en-tête SOUS l'encoche sur un vrai téléphone le jour où l'app
 //    repasse en `black-translucent`. *Un défaut qu'aucun test à l'écran ne peut voir.*
-console.log('\n═══ CCXLI. Le décalage du haut : 26 px rendus, sans casser l\'encoche ═══');
+console.log('\n═══ CCXLII. Le décalage du haut : 26 px rendus, sans casser l\'encoche ═══');
 {
   const CSS=fs.readFileSync(path.join(ROOT,'style.css'),'utf8');
   const m=/\.topbar\{[\s\S]*?padding:\s*([^;]+);/.exec(CSS);
   const pad=m?m[1].trim():'(introuvable)';
   /* ⛔ CONTRÔLE — sans la règle, tout le reste du bloc serait vert sur du vide. */
-  t('CCXLI ⛔ CONTRÔLE — la règle de décalage de l\'en-tête a bien été trouvée',
+  t('CCXLII ⛔ CONTRÔLE — la règle de décalage de l\'en-tête a bien été trouvée',
     !!m, 'le sélecteur .topbar ou son padding a changé de forme');
   /* ⛔⛔ LE TÉMOIN QUI PORTE LA VERSION : le garde-fou d'encoche est toujours là. */
-  t('CCXLI ⛔⛔ le décalage passe TOUJOURS par `max(env(safe-area-inset-top), …)`',
+  t('CCXLII ⛔⛔ le décalage passe TOUJOURS par `max(env(safe-area-inset-top), …)`',
     /max\(\s*env\(safe-area-inset-top\)\s*,/.test(pad),
     'une valeur sèche passerait tous les tests ET casserait sous l\'encoche — reçu : '+pad);
   /* ⭐ NON-RÉGRESSION DU GAIN — le plancher ne doit pas remonter. 38 était l'ancienne valeur. */
   const plancher=(/max\(\s*env\(safe-area-inset-top\)\s*,\s*(\d+)px/.exec(pad)||[])[1];
-  t('CCXLI ⭐ le plancher est bien descendu (≤ 16 px, il était à 38)',
+  t('CCXLII ⭐ le plancher est bien descendu (≤ 16 px, il était à 38)',
     plancher!==undefined && Number(plancher)<=16, 'plancher = '+plancher+' px');
 
   const ce=await b.newContext({serviceWorkers:'block',viewport:{width:393,height:852},timezoneId:'Europe/Paris'});
@@ -27499,26 +27507,26 @@ console.log('\n═══ CCXLI. Le décalage du haut : 26 px rendus, sans casser
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
   });
   await ce.close();
-  if(E.erreur) t('CCXLI ⛔ le bloc s\'exécute', false, E.erreur);
+  if(E.erreur) t('CCXLII ⛔ le bloc s\'exécute', false, E.erreur);
   /* ⭐ L'en-tête a vraiment maigri à l'écran — pas seulement dans le fichier CSS. */
-  t('CCXLI ⭐ l\'en-tête mesure moins de 100 px (il en faisait 110)',
+  t('CCXLII ⭐ l\'en-tête mesure moins de 100 px (il en faisait 110)',
     E.entete>0 && E.entete<100, E.entete+' px');
   /* ⛔ ET IL NE DÉBORDE PAS PAR LE HAUT : c'est la limite de l'exercice — trop bas, le logo
      sortirait de l'écran, et personne ne le verrait dans un chiffre de hauteur. */
-  t('CCXLI ⛔ le logo ne sort pas par le haut de l\'écran',
+  t('CCXLII ⛔ le logo ne sort pas par le haut de l\'écran',
     E.logoY!==null && E.logoY>=0, 'logo à y='+E.logoY);
   /* ⛔⛔ LES SIX ONGLETS — l'en-tête est global. */
   {
     const mauvais=(E.ecrans||[]).filter(x=>x.ok===false);
-    t('CCXLI ⛔⛔ sur les 6 onglets, le contenu commence bien SOUS l\'en-tête',
+    t('CCXLII ⛔⛔ sur les 6 onglets, le contenu commence bien SOUS l\'en-tête',
       (E.ecrans||[]).length===6 && mauvais.length===0,
       mauvais.map(x=>x.id+' à y='+x.y).join(' | '));
   }
   /* 🔴 RÈGLE D'OR #9 — comparé AVANT/APRÈS plutôt qu'à une valeur en dur : celle-ci deviendrait
      fausse au premier changement de viewport du banc, sans que le bouton ait bougé d'un pixel. */
-  t('CCXLI 🔴 RÈGLE D\'OR #9 — le bouton central n\'a pas bougé',
+  t('CCXLII 🔴 RÈGLE D\'OR #9 — le bouton central n\'a pas bougé',
     E.fabAvant===E.fabApres, E.fabAvant+' → '+E.fabApres);
-  t('CCXLI aucune erreur JS sur tout le bloc', ee.length===0, ee.join(' | '));
+  t('CCXLII aucune erreur JS sur tout le bloc', ee.length===0, ee.join(' | '));
 }
 
 await b.close(); srv.close();
