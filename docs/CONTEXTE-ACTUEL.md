@@ -7,8 +7,10 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1145` — 🌙 **UN ÉTAT PARFAIT ANNONCÉ COMME UNE ANOMALIE.**
-  ⏳ **Déploiements à vérifier des DEUX côtés** (R18) : `Code.js` modifié → le backend part seul.
-  ⏳ **Suite complète** : **parcours 2904/2904** (+3), calculs 339/339, muscles 241/241,
+  ✅ **LES DEUX DÉPLOIEMENTS VÉRIFIÉS VERTS** (R18) : site run **#939** (7 étapes, 15:05:25 UTC)
+  **ET** backend run **#107** (9 étapes, dont « le backend répond VRAIMENT » et `authStatus` —
+  15:05:37 UTC), tous deux sur `6a29f4d`.
+  ⏳ **Suite complète VERTE** : **parcours 2904/2904** (+3), calculs 339/339, muscles 241/241,
   croisés 50/50, dates 9/9, données classées 0 trou.
   Michel a lancé `reparerSauvegardeNuit` dans l'IDE : **tout a marché** (2 déclencheurs à 2h et
   14h, `backup-2026-09-06-16-27.json`, 1102 Ko, 12 comptes) — et le journal a répondu
