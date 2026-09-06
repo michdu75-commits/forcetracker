@@ -303,7 +303,7 @@ function _histoLignes(){
           const kg=+st.kg||0, reps=+st.reps||0;
           /* ⭐ Le RIR passe par son propriétaire (`_rirDeSet`) — jamais relu à la main : une série
              non notée reste VIDE, jamais 0 (règle de ft-v1038).
-             ⛔ ET DEPUIS ft-v1151, UN `X` LAISSE LA COLONNE RIR VIDE LUI AUSSI — ce n'est pas une
+             ⛔ ET DEPUIS ft-v1153, UN `X` LAISSE LA COLONNE RIR VIDE LUI AUSSI — ce n'est pas une
              perte : la colonne `type` porte déjà le `X`. Écrire « 0 » y serait faux d'un cran
              (une répétition a été TENTÉE et n'est pas passée, c'est au-delà de RIR 0), et un
              fichier exporté se relit ailleurs, sans personne pour rattraper la nuance. */

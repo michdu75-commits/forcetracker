@@ -4,6 +4,93 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## ⛔⛔ UN JOUR DE PROGRAMME NE PASSE PAR AUCUN GARDE-FOU DE LA SÉANCE — mesuré le 06/09/2026
+
+**Michel**, juste après ft-v1152 : *« malheureusement je vais intégrer un programme »*, puis
+*« et justement »*, puis *« je n'ai jamais testé cet angle »*. **Il a mis le doigt sur un trou réel.**
+
+**⭐⭐ MESURÉ, PAS SUPPOSÉ** : `_loadProgDayVraiment` (et `_loadProgVraiment`) construisent `S.wkt`
+**en direct**. Ils ne traversent **jamais** `_appliqueMiloSession` — le point où vivent tous les
+garde-fous ajoutés depuis un mois :
+
+| Garde-fou | Séance de Milo | **Jour de programme** |
+|---|---|---|
+| 🏃 Cardio rangé dans son bloc (ft-v995/1147/1150/1152) | ✅ | ❌ |
+| ⚡ Contrôle d'intensité, « 93 % du 1RM » (ft-v980) | ✅ | ❌ |
+| 🛡️ **Alerte blessure / zone protégée** (ft-v989) | ✅ | ❌ |
+| 🚫 Exercice écarté · 🔁 doublon · 🦴 charnière (ft-v989/1079) | ✅ | ❌ |
+| 📍 « aucun repère pour cet exercice » (ft-v1035) | ✅ | ❌ |
+
+**⛔ ET L'IMPORT N'AIDE PAS** : le prompt d'import de programme (`importDoc(…, 'program')`,
+`worker.js`) **ne parle pas du tout de cardio** — zéro occurrence, vérifié. Seul `seanceJson` le
+fait, depuis ft-v1152.
+
+**👉 CONSÉQUENCE CONCRÈTE** : une ligne *« Échauffement — 10 min de tapis »* dans un programme
+**reste un exercice**, et le bloc Cardio reste vide. *C'est le symptôme exact de la capture du
+06/09, par un autre chemin.*
+
+**⭐⭐ ET C'EST LA MÊME FAMILLE QUE ft-v1147 : la règle juste, définie trop étroit.** Le commentaire
+de `_appliqueMiloSession` dit *« le SEUL point que les DEUX portes traversent »* — c'est vrai, mais
+les deux portes sont **celles de Milo**. Le programme est une **troisième porte**, et personne ne
+l'a comptée. *`BUGS.md` famille 15, quatrième fois.*
+
+### ⚠️ CE QUI N'EST PAS TRANCHÉ — et pourquoi ça ne se code pas en cinq minutes
+
+Les garde-fous ne sont **pas tous du même risque**, et il faut les séparer (**R29** : le coût de
+l'erreur décide) :
+- ⭐ **Ceux qui INFORMENT sans rien changer** (blessure, exercice écarté, doublon, charnière,
+  contrôle d'intensité, absence de repère) → *aucun risque*, ils attachent un avertissement et la
+  personne décide. **Et l'alerte blessure vaut sans doute PLUS ici que chez Milo** : un programme se
+  répète pendant des semaines, pas une fois.
+- ⛔ **Celui qui DÉPLACE** (le cardio sort de la liste des exercices) → *c'est une décision produit*.
+  Chez Milo, on corrige une machine qui a mal rangé. Dans un programme, **la personne a écrit sa
+  propre liste** — la modifier est plus présomptueux. Les trois gardes de ft-v1150 (pas de charge ·
+  durée lisible · pas un exercice du catalogue) s'appliqueraient à l'identique, mais la question
+  « a-t-on le droit ? » est différente, et elle appartient à Michel.
+
+⏭️ **À décider avant de coder** : brancher les avertissements seuls, ou aussi le cardio ?
+
+---
+
+## 🧠 AMÉLIORER LE CERVELET — et d'abord POUVOIR LE NOTER (06/09/2026)
+
+**Michel**, dans la minute où **ft-v1152** est partie en ligne : *« il va falloir améliorer le
+cervelet alors dans le futur »*.
+
+**⭐⭐ C'EST LA CONSÉQUENCE EXACTE DE ft-v1152, ET IL L'A VUE AVANT MOI.** La place du cardio
+dépendait d'une **devinette de l'app** (du code, corrigeable — corrigé 3 fois). Elle dépend
+désormais d'un **champ déclaré par le cervelet**. 👉 ***Le point faible n'a pas disparu, il a
+changé de nature*** : d'un bug de code vers un comportement de modèle. **L'échange est bon** (une
+devinette a des trous par construction), mais il déplace le travail restant.
+
+**⛔⛔ L'OBSTACLE EN PREMIER, avant toute proposition** : les témoins de ft-v1152 vérifient que le
+prompt du cervelet **DIT** la règle — **aucun ne vérifie qu'il l'APPLIQUE**. Je ne peux pas le faire
+tourner (pas de clé API). *C'est §8 de `ARCHITECTURE-CERVEAU-CERVELET.md` mot pour mot : on prouve
+la PRÉSENCE, jamais l'OBÉISSANCE.* Donc **« améliorer » commence par « pouvoir noter »**, jamais par
+retoucher le prompt (**R7**).
+
+**⭐⭐ ET LA BONNE NOUVELLE EST RÉELLE : le cervelet est BEAUCOUP plus facile à noter que Milo.**
+Entrée = **un texte**. Sortie = **un JSON**. Attendu = **vérifiable par du CODE**, toujours.
+**Aucun juge humain**, jamais — il n'y a pas de ton ni de goût à arbitrer : ou bien le cardio est
+dans `cardio`, ou bien il est dans `exs`. Et le modèle est **Haiku**, le moins cher du projet.
+👉 ***C'est le seul banc d'essai de ce projet qui n'ait aucun obstacle de méthode*** — là où celui
+de Milo bute sur les scénarios qui dépendent du jugement. ⭐ Le **corpus existe déjà** (les vrais
+messages de Milo) et la sortie attendue est **ce que Michel a déjà validé à l'écran**.
+
+**🔧 L'ordre, du moins cher au plus cher** — détaillé en **§10.3** de
+`docs/ARCHITECTURE-CERVEAU-CERVELET.md` :
+1. la **validation côté code** (gratuit, aucun appel) — *le modèle propose, le code valide* ;
+2. le **banc du cervelet** (un appel Haiku par cas) ;
+3. le **prompt**, seulement une fois qu'un avant/après est mesurable (**R34**) ;
+4. le **MODÈLE** (**R9**) — *personne n'a jamais mesuré ce que la même tâche donnerait un cran
+   au-dessus de Haiku*. Sans banc, monter de gamme, c'est payer plus sans savoir si on gagne.
+
+**⛔ Ce que ça ne veut PAS dire** : aucune refonte, et **le repli reste non négociable** (§5.3bis) —
+c'est lui qui fait qu'un cervelet imparfait, ou un worker pas encore déployé, laisse l'app marcher.
+*On améliore le convertisseur, on ne devient jamais dépendant de lui.*
+
+---
+
 ## 📊 REMETTRE « VOLUME » ET « FORCE » DANS CE MOIS ? — RETIRÉES LE 05/09/2026 (ft-v1138)
 
 **Michel** : *« quand on clique sur les tuiles, c'est pas terrible où j'arrive, j'aime pas trop »*,

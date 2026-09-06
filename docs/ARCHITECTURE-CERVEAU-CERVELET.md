@@ -358,6 +358,74 @@ plus que les vrais cas difficiles.
 
 ---
 
+## 10. 🏁 LE POINT FAIBLE A BOUGÉ — et c'est Michel qui l'a nommé le premier (06/09/2026)
+
+> *« Il va falloir améliorer le cervelet alors dans le futur »* — Michel, dans la minute où
+> **ft-v1152** est partie en ligne.
+
+**⭐⭐ IL A RAISON, ET CE N'EST PAS UNE REMARQUE EN L'AIR : C'EST LA CONSÉQUENCE EXACTE DE CE QU'ON
+VIENT DE FAIRE.** Jusqu'à ft-v1150, la place du cardio dépendait d'une **devinette de l'app** — du
+code déterministe, lisible, corrigeable, et qu'on a corrigé trois fois (ft-v995, ft-v1147, ft-v1150).
+Depuis ft-v1152, elle dépend d'un **champ déclaré par le cervelet**.
+
+👉 ***On n'a pas supprimé le point faible, on l'a DÉPLACÉ*** — d'un bug de code vers un comportement
+de modèle. **C'est un échange volontaire et il est bon** (une devinette a des trous par construction,
+un champ n'en a pas), mais il change la nature du travail restant : *on ne débogue plus une fonction,
+on améliore un convertisseur.*
+
+### ⛔⛔ 10.1 L'obstacle est le même que §8, et il faut le dire avant de proposer quoi que ce soit
+
+Les témoins de ft-v1152 vérifient que le prompt du cervelet **DIT** la règle. **Aucun ne vérifie
+qu'il l'APPLIQUE.** C'est mot pour mot le constat de §8 pour Milo — *`tests/milo` prouve la PRÉSENCE,
+jamais l'OBÉISSANCE* — et il vaut à l'identique ici.
+⚠️ **Donc « améliorer le cervelet » commence par « pouvoir le noter »**, pas par retoucher son prompt.
+Sans mesure, chaque retouche est une hypothèse, et c'est **R7** appliqué à la 2ᵉ IA.
+
+### ⭐⭐ 10.2 MAIS LE CERVELET EST BEAUCOUP PLUS FACILE À NOTER QUE MILO — et c'est la vraie nouvelle
+
+C'est le point qui rend ce chantier réaliste là où celui de §9.5 traîne depuis des semaines :
+
+| | **Banc de Milo** | **Banc du cervelet** |
+|---|---|---|
+| Entrée | une conversation, un profil, un historique | **un texte, rien d'autre** |
+| Sortie | de la prose | **un JSON** |
+| Attendu | dépend souvent du **ton**, du **naturel**, du jugement | **vérifiable par du CODE**, toujours |
+| Juge humain | nécessaire pour une partie des cas | ⭐ **jamais nécessaire** |
+| Modèle | Sonnet / Opus | **Haiku** — le moins cher |
+
+👉 ***Le critère de promotion du `JOURNAL-DE-TEST.md` — « l'attendu est-il vérifiable par du CODE ? »
+— est satisfait PAR CONSTRUCTION pour le cervelet.*** Il n'y a pas de goût à arbitrer : ou bien le
+cardio est dans `cardio`, ou bien il est dans `exs`. Ou bien les 5 exercices sont là dans le bon
+ordre, ou bien non.
+
+⭐ **Et le corpus existe déjà** : les vrais messages de Milo. La sortie attendue est ce que Michel a
+**déjà validé à l'écran** — on ne l'invente pas, on l'enregistre.
+
+### 🔧 10.3 Ce que « améliorer » veut dire concrètement, du moins cher au plus cher
+
+1. **La VALIDATION côté code (gratuit, aucun appel).** C'est la moitié qu'on maîtrise entièrement, et
+   elle ne demande aucun modèle : *le modèle propose, le code valide.* Chaque fois qu'on découvre une
+   transcription douteuse, la première question est **« le code pouvait-il la refuser ? »** — pas
+   « comment reformuler le prompt ». C'est ce qui a été fait pour la durée du cardio en ft-v1152.
+2. **Le banc du cervelet** (§10.2) — N textes réels → N JSON attendus, comparés par du code. Coût :
+   un appel **Haiku** par cas, c'est-à-dire le moins cher de tout ce que le projet appelle.
+3. **Le prompt** — et seulement là, une fois qu'on peut mesurer un avant/après (**R34**, qui
+   s'applique pleinement ici : le banc du cervelet est justement ce qui rendrait le rite possible).
+4. **Le MODÈLE** — **R9** : le niveau de modèle est une variable structurelle. Le cervelet tourne sur
+   **Haiku**, choix délibéré pour une tâche de pure transcription. *Personne n'a jamais mesuré ce que
+   la même tâche donnerait un cran au-dessus.* Tant que le banc n'existe pas, monter de gamme serait
+   payer plus cher sans savoir si on gagne quelque chose.
+
+### ⚠️ 10.4 Ce que ça ne veut PAS dire
+
+⛔ **Pas de refonte.** Le cervelet fait ce pour quoi il a été conçu, et ft-v1152 lui a ajouté une
+responsabilité, pas un défaut. ⛔ **Et surtout, le REPLI reste non négociable** (§5.3bis) : chaque
+tâche du cervelet garde son chemin de secours. C'est précisément ce qui fait qu'un cervelet
+imparfait — ou un worker pas encore déployé — laisse l'app fonctionner. *On améliore le convertisseur ;
+on ne devient jamais dépendant de lui.*
+
+---
+
 ## 📌 Ce qui sort d'ici, par taille
 
 | Coût | Action |
@@ -365,7 +433,8 @@ plus que les vrais cas difficiles.
 | **fait** | mesurer la part comportement / technique (§3.2) · écrire le chemin de repli et la hiérarchie (§5.3bis/ter) · comparer les 4 listes d'actions en ensembles · trancher la fourchette de reps sans deviner en silence |
 | petit | §9.3 — énoncer la hiérarchie une fois, retirer les arbitrages éparpillés |
 | moyen | §9.1 et §9.2 — le rappel ciblé, et le Gardien de sortie |
-| gros | §9.4 — conditionner un bloc entier · **§9.5 — le benchmark, qui conditionne le sens de tout le reste** |
+| gros | §9.4 — conditionner un bloc entier · **§9.5 — le benchmark de Milo, qui conditionne le sens de tout le reste** |
+| ⭐ **moyen, et le mieux placé** | **§10.2 — le banc du CERVELET** : entrée un texte, sortie un JSON, attendu vérifiable par du code, **aucun juge humain**, modèle Haiku. *Le seul banc de ce projet qui n'ait aucun obstacle de méthode* — c'est celui qui devrait exister en premier. |
 
 ---
 

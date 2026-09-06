@@ -744,7 +744,7 @@ async function seanceJson(body, apiKey, meta) {
     + 'SI ce n\'est PAS une séance à faire maintenant, réponds exactement : {"seance":null}\n'
     + 'C\'est le cas pour : un DÉBRIEF ou bilan d\'une séance PASSÉE (charges déjà réalisées, « tu as fait », « bravo pour »), un programme sur PLUSIEURS jours/semaines, une explication, une simple discussion, une question.\n\n'
     + 'SINON, réponds au format EXACT :\n'
-    + '{"seance":{"label":"<nom court, ex. Push, Jambes, Haut du corps>","exs":[{"name":"<nom de l\'exercice>","note":"<consigne du coach pour CET exercice>","supersetGroup":"A","sets":[{"reps":8,"kg":60,"type":"N","rest":180}]}]}}\n\n'
+    + '{"seance":{"label":"<nom court, ex. Push, Jambes, Haut du corps>","exs":[{"name":"<nom de l\'exercice>","note":"<consigne du coach pour CET exercice>","supersetGroup":"A","sets":[{"reps":8,"kg":60,"type":"N","rest":180}]}],"cardio":{"avant":{"type":"elliptique","duree":8,"intensite":"leger"},"apres":null}}}\n\n'
     + 'RÈGLES DE TRANSCRIPTION :\n'
     + '- name = le nom de l\'exercice EXACTEMENT tel que le coach l\'a écrit (sans les « 4×8 », sans la charge). ⛔ Ne le remplace JAMAIS par un exercice voisin : l\'athlète travaillerait sur autre chose que ce que son coach a prescrit.\n'
     + '- sets = UNE entrée PAR SÉRIE. « 4×8 à 60 kg » donne 4 entrées {"reps":8,"kg":60}. « 12/10/8 » donne 3 entrées de reps différentes.\n'
@@ -759,7 +759,24 @@ async function seanceJson(body, apiKey, meta) {
     // fourchette part dans `note`, donc RIEN N'EST PERDU : elle reste sous les yeux pendant la série.
     + '- ⚠️ FOURCHETTE DE REPS (« 8 à 12 », « 8-12 ») : mets la borne BASSE dans reps, et écris la fourchette dans note (ex. "vise 8 à 12 reps"). Ne choisis jamais en silence.\n'
     + '- note = la consigne technique que le coach a écrite POUR CET EXERCICE, recopiée en une phrase courte (~120 caractères max). Omets note s\'il n\'a rien dit de particulier — ne meuble pas.\n'
-    + '- supersetGroup = seulement si le coach dit explicitement que deux exercices s\'enchaînent en superset : même étiquette ("A", "B") sur les deux. Sinon, omets la clé.\n\n'
+    + '- supersetGroup = seulement si le coach dit explicitement que deux exercices s\'enchaînent en superset : même étiquette ("A", "B") sur les deux. Sinon, omets la clé.\n'
+    /* 🏁 LE CARDIO SE DÉCLARE, IL NE SE DEVINE PLUS (06/09/2026, ft-v1152)
+       Michel : « j'ai créé exprès le cardio avant et après, ça ne doit pas se reproduire ».
+       ft-v1147 puis ft-v1150 ont élargi la DEVINETTE côté app (lire le nom, puis la machine).
+       Elle marche — 20 formulations sur 20 — mais elle reste une devinette : l'app décode une
+       phrase française, donc il restera toujours un cas tordu. ⭐ Le « plus jamais » n'est pas
+       une liste plus longue, c'est un CHAMP : celui qui SAIT où va le cardio le DIT.
+       ⛔ Et ça reste une TRANSCRIPTION, pas un jugement (`BRIEF-NUTRITION.md` §5) : le cervelet
+       ne décide pas qu'il faut du cardio, il recopie ce que le coach a écrit et à quel moment.
+       ⚠️ Le code VALIDE derrière (`_cardioValide`, log.js) : type connu, durée bornée,
+       intensité connue — le modèle propose, le code valide. */
+    + '- ⛔⛔ LE CARDIO NE VA JAMAIS DANS "exs" — il a son PROPRE bloc "cardio". Un échauffement cardio, un vélo, un tapis, un rameur, un elliptique, une corde à sauter, un retour au calme : ils vont dans "cardio", jamais dans la liste des exercices.\n'
+    + '   · "avant" = le cardio AVANT la muscu (échauffement), "apres" = celui APRÈS (retour au calme). Mets null celui dont le coach ne parle pas, et omets la clé "cardio" entière s\'il n\'en parle pas du tout.\n'
+    + '   · type = "elliptique", "tapis", "velo", "rameur", "corde", ou "autre" si le coach ne nomme aucune machine.\n'
+    + '   · duree = la durée en MINUTES (entier). ⛔ Si le coach ne donne pas de durée, n\'en invente pas : mets null pour ce moment-là.\n'
+    + '   · intensite = "leger", "modere" ou "intense", d\'après ce que le coach a écrit. "modere" si rien n\'est dit.\n'
+    + '   · ⚠️ Une MONTÉE EN CHARGE (« Échauffement : 40×5 → 55×3 → 70×2 ») n\'est PAS du cardio : c\'est l\'échauffement d\'un exercice, il reste dans ses sets avec type "É".\n'
+    + '   · ⚠️ Un cardio au MILIEU de la séance (entre deux exercices de muscu) n\'est ni "avant" ni "apres" : laisse-le dans "exs" comme un exercice.\n\n'
     + '⚠️ FIDÉLITÉ ABSOLUE — c\'est ta seule qualité :\n'
     + '- TOUS les exercices du message, dans le MÊME ORDRE que le coach les a écrits.\n'
     + '- ⛔ N\'en ajoute AUCUN, n\'en retire AUCUN, ne change ni une charge, ni un nombre de reps, ni un repos.\n'

@@ -69,6 +69,29 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 LE CERVELET OBÉIT-IL À SES PROPRES RÈGLES ? — personne ne le sait (06/09/2026)
+
+**Ce qui déclenche l'entrée** : **ft-v1152**. Le cervelet reçoit désormais l'ordre de déclarer le
+cardio dans `cardio:{avant,apres}` et de ne **jamais** le mettre dans `exs`. Mes témoins vérifient
+que le prompt **le dit** — ⛔ **aucun ne vérifie qu'il le FAIT**, et je ne peux pas le lancer (pas
+de clé API). Michel, dans la foulée : *« il va falloir améliorer le cervelet alors dans le futur »*.
+
+**⚠️ Le doute, écrit tel quel plutôt que perdu** : on ne sait pas à quelle fréquence le cervelet
+range correctement un cardio, ni ce qu'il fait des cas tordus (un cardio au milieu, deux cardios
+avant, une durée en secondes, « 10-15 min », un échauffement de mobilité sans machine).
+
+**⭐⭐ CE N'EST PAS UNE ENTRÉE COMME LES AUTRES, ET C'EST POUR ÇA QU'ELLE EST ICI** : c'est le
+**premier** cas de ce fichier où l'attendu est vérifiable par du code **par construction**. Entrée =
+un texte, sortie = un JSON, comparaison = du code. **Aucun juge humain n'est possible ni
+nécessaire.** 👉 *Mais elle ne peut pas devenir un `EV-0XX` : le benchmark note **Milo**, pas le
+convertisseur.* Elle attend un **banc du cervelet**, qui n'existe pas — cadré en **§10.2** de
+`docs/ARCHITECTURE-CERVEAU-CERVELET.md`.
+
+**Reste 🟡 exprès** : ce n'est pas « à trier » par paresse, c'est *prête mais sans banc pour
+l'accueillir*. Elle repassera 🟢 le jour où ce banc existera.
+
+---
+
 ### 🟢 MILO APLATIT LA RAMPE — promu **EV-057** (06/09/2026)
 
 **Ce qui déclenche l'entrée** : Michel, le jour même : *« il m'a proposé une séance avec des charges
@@ -1566,7 +1589,7 @@ l'historique. ⚠️ **Je ne sais pas si un lecteur les rapproche ou les ignore*
 pas vérifiable par du code. 👉 **Juge humain.**
 
 ### 🟡 MILO CONFOND-IL ENCORE UN `X` AVEC UN RIR 0 QUAND IL PRESCRIT ?
-**06/09/2026, ft-v1151.** Michel a tranché : *« X et RIR 0 ne doivent surtout pas être considérés
+**06/09/2026, ft-v1153.** Michel a tranché : *« X et RIR 0 ne doivent surtout pas être considérés
 comme la même donnée »* — RIR 0 = série **réussie** à la limite ; X = une répétition **tentée** qui
 n'est pas passée, donc **un cran au-delà**. Le prompt le dit maintenant, avec son exemple (*95×3
 réussi = RIR 0 ; tenter la 4ᵉ et caler = X*). ⛔ **Ce qui n'est PAS vérifié** : qu'il en tienne
@@ -1576,7 +1599,7 @@ qu'une réponse traite une série taguée X comme « tu t'es arrêté pile à 0 
 refus, jamais comme un mot-clé (**§40**). **Coût** : un appel par passe.
 
 ### 🟡 À 1,4 % DE RIR NOTÉS, EST-CE LE CONTEXTE OU LA SAISIE QU'IL FAUT CHANGER ?
-**06/09/2026, ft-v1151.** Mesuré sur l'export réel de Michel : **8 séries de travail sur 591**
+**06/09/2026, ft-v1153.** Mesuré sur l'export réel de Michel : **8 séries de travail sur 591**
 portent un RIR. Milo sait désormais **qu'il ne sait pas** (le compte lui est donné, et le vide
 est dit). ⛔ Mais ça ne fait pas noter davantage. 👉 **La question est produit, pas technique** :
 *est-ce que la question posée après la série est au bon moment, sous la bonne forme ?* — ou

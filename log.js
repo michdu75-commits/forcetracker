@@ -1209,7 +1209,7 @@ function _prevRirBadge(p){
 
    ⭐⭐ ET LE DEMI-SYSTÈME EXISTAIT DÉJÀ : le tag **`X` = Échec** (`SET_TYPE_LABELS`) dit
    « cette série est allée à l'échec ». Il pilote déjà le repos (240 s) et les avertissements.
-   ⚠️⚠️ **CETTE LIGNE DISAIT « c'est-à-dire RIR 0 » — C'EST FAUX, corrigé en ft-v1151** (Michel :
+   ⚠️⚠️ **CETTE LIGNE DISAIT « c'est-à-dire RIR 0 » — C'EST FAUX, corrigé en ft-v1153** (Michel :
    *« X et RIR 0 ne doivent surtout pas être considérés comme la même donnée »*). Gardée ici avec
    sa correction plutôt que réécrite : c'est cette phrase-là qui s'est propagée dans le prompt de
    Milo, dans l'aide et dans l'export CSV pendant dix jours. ⛔ On n'écrit donc PAS un second système à côté : `X`
@@ -1219,7 +1219,7 @@ function _prevRirBadge(p){
    ⛔ RIEN N'EST OBLIGATOIRE : `null` veut dire « je n'ai pas noté », et ce n'est PAS 0. Un RIR
    absent ne doit jamais être compté comme un échec (R29 : on ne devine pas ce qui touche la
    personne — ici, ça changerait ce que Milo lui dit de son entraînement). */
-/* ⛔⛔ CORRECTION DE FOND (06/09/2026, ft-v1151) — UN `X` N'EST PLUS UN RIR DE 0.
+/* ⛔⛔ CORRECTION DE FOND (06/09/2026, ft-v1153) — UN `X` N'EST PLUS UN RIR DE 0.
    Décision de Michel, mot pour mot : *« X et RIR 0 ne doivent surtout pas être considérés comme
    la même donnée. Le RIR 0 est une série RÉUSSIE à la limite ; le X indique qu'une répétition
    prévue/tentée a effectivement ÉCHOUÉ. »*
@@ -1243,7 +1243,7 @@ function _rirDeSet(set){
   const n=Math.round(+v);
   return (n>=0&&n<=RIR_MAX)?n:null;
 }
-/* ⭐ « SAIT-ON CE QUE CETTE SÉRIE A COÛTÉ ? » — ft-v1151, et c'est une question DIFFÉRENTE de
+/* ⭐ « SAIT-ON CE QUE CETTE SÉRIE A COÛTÉ ? » — ft-v1153, et c'est une question DIFFÉRENTE de
    « combien en réserve ? ». Deux façons de le savoir : un RIR noté, ou le tag `X` (échec).
    ⛔ Un seul propriétaire (R2) : sans lui, chaque appelant réécrirait `_rirDeSet(x)!==null ||
    x.type==='X'` et l'un d'eux finirait par oublier la moitié `X` — c'est-à-dire par sous-compter
@@ -1291,7 +1291,7 @@ function _reserveQuestion(){
   return _estRpe()?'C\'était quel RPE ?':'Il t\'en restait combien ?';
 }
 function _reserveEchecTxt(){
-  /* ⛔ ft-v1151 : plus de « 0 en réserve » ni de « RPE 10 » — une répétition a été TENTÉE et n'est
+  /* ⛔ ft-v1153 : plus de « 0 en réserve » ni de « RPE 10 » — une répétition a été TENTÉE et n'est
      pas passée, ce qui est au-delà de RIR 0 (donc au-delà de RPE 10). Dire le fait, pas un chiffre
      qui serait faux d'un cran. */
   return 'Série à l\'échec — une répétition n\'est pas passée';
@@ -5012,7 +5012,7 @@ function _renderRirRow(){
   const cur=_rirDeSet(set);
   /* ⭐ L'ÉCHEC EST DÉJÀ RÉPONDU : si la série porte le tag `X`, la question n'a plus lieu d'être
      et on le DIT au lieu de redemander (R2).
-     ⛔ MAIS ON NE SURLIGNE PLUS « 0 » (ft-v1151) : depuis que `_rirDeSet` rend `null` sur un X,
+     ⛔ MAIS ON NE SURLIGNE PLUS « 0 » (ft-v1153) : depuis que `_rirDeSet` rend `null` sur un X,
      aucun bouton n'est coché — et c'est VOULU. Surligner le 0 afficherait « ta réserve était de
      0 » sur une série où une répétition a été TENTÉE et n'est pas passée : c'est un cran au-delà,
      pas la même donnée (décision de Michel). Le libellé, lui, dit bien l'échec. */
@@ -6686,6 +6686,57 @@ function _nomMiloVersCatalogue(nom){
     return existe ? cible : brut;
   }catch(e){ return String(nom||'').trim(); }   // jamais bloquant : au pire, le comportement d'avant
 }
+/* ═══ 🏁 LE CARDIO SE DÉCLARE, IL NE SE DEVINE PLUS (06/09/2026, ft-v1152) ═══════════════════
+   Michel, une heure après ft-v1150 : *« ça ne doit pas se reproduire »*. Je lui avais répondu
+   honnêtement que je ne pouvais pas le promettre, **parce que l'app DEVINE** : Milo n'a aucun
+   endroit où dire « ceci est du cardio », il écrit une phrase et l'app la décode. C'est **R4**
+   dans sa forme pure — l'information reste dans le TEXTE et n'atteint jamais la DONNÉE.
+   Sa réponse : *« prends le, ferme ça définitivement »*.
+
+   ⭐⭐ CE QUI FERME, CE N'EST PAS UNE LISTE PLUS LONGUE, C'EST UN CHAMP. Le cervelet (`worker.js`,
+   `seanceJson`) déclare désormais `cardio:{avant,apres}` et il lui est dit de ne JAMAIS mettre le
+   cardio dans `exs`. *Celui qui SAIT où va le cardio le DIT, au lieu de laisser l'app le deviner.*
+
+   ⛔ MAIS LE MODÈLE PROPOSE, LE CODE VALIDE — c'est la règle de sécurité de la 2ᵉ IA
+   (`BRIEF-NUTRITION.md` §5), et elle n'a pas d'exception : un type hors liste retombe sur
+   « autre », une intensité inconnue sur « modéré », et **une durée absente ou absurde ANNULE le
+   cardio** plutôt que d'inventer un nombre de minutes (R29 : jamais de chiffre deviné).
+
+   ⛔⛔ ET LA DEVINETTE DE ft-v1147/1150 RESTE, EN REPLI — elle n'est pas remplacée, elle passe
+   en second. Les trois voies vers une séance ne produisent pas toutes ce champ : le repli par
+   lecture du texte (`_seanceDepuisTexte`) n'a aucun moyen de le remplir, et un cervelet en panne
+   ou un worker pas encore déployé n'en met pas non plus. *Un correctif qui remplace le filet au
+   lieu de s'ajouter dessus transforme une amélioration en régression le jour où il ne s'applique
+   pas.* Le champ déclaré GAGNE quand il est là ; sinon, on devine comme avant.
+
+   ⛔ ON BRANCHE ICI parce que `_normalizeMiloSession` est le **SEUL écrivain** de
+   `_pendingMiloSessions` en production — la leçon de `supersetGroup` (ft-v1130), payée deux
+   fois : *un champ qu'un normaliseur ne recopie pas est un champ supprimé.* */
+const _CARDIO_TYPES_OK={elliptique:1,tapis:1,velo:1,rameur:1,corde:1,autre:1};
+const _CARDIO_INT_OK={leger:1,modere:1,intense:1};
+function _cardioValide(c){
+  try{
+    if(!c||typeof c!=='object')return null;
+    // ⛔ La durée décide : sans elle, il n'y a rien à mettre dans le bloc (mêmes bornes que
+    //    `_cardioDepuisEx`, un seul repère pour les deux chemins — R2).
+    const d=parseInt(c.duree!==undefined?c.duree:c.duration);
+    if(!(d>0&&d<=180))return null;
+    const nz=x=>String(x==null?'':x).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+    const t=nz(c.type)||'autre';
+    const i=nz(c.intensite!==undefined?c.intensite:c.intensity)||'modere';
+    // ⚠️ On rend la forme INTERNE de l'app (`intensity`/`duration`), pas celle du modèle : le
+    //    format d'un producteur ne devient jamais le format interne (R33).
+    return {type:_CARDIO_TYPES_OK[t]?t:'autre', intensity:_CARDIO_INT_OK[i]?i:'modere', duration:d};
+  }catch(e){ return null; }
+}
+function _cardioDeclare(sess){
+  try{
+    const c=sess&&sess.cardio;
+    if(!c||typeof c!=='object')return null;
+    const av=_cardioValide(c.avant), ap=_cardioValide(c.apres);
+    return (av||ap)?{avant:av,apres:ap}:null;
+  }catch(e){ return null; }
+}
 function _normalizeMiloSession(sess){
   const T={N:1,'É':1,X:1,D:1,W:1}; // types de série valides
   const norm=ex=>({
@@ -6712,10 +6763,15 @@ function _normalizeMiloSession(sess){
       rest:_secRepos(s.rest)
     }))
   });
-  return {
+  const out={
     label:String(sess.label||'Séance de Milo'),
     exs:(Array.isArray(sess.exs)?sess.exs:[]).filter(e=>e&&e.name).map(norm).filter(e=>e.sets.length)
   };
+  // 🏁 ft-v1152 — le cardio DÉCLARÉ traverse (validé), quand il y en a un. Absent → la clé
+  //    n'existe pas, et `_appliqueMiloSession` retombe sur la devinette de ft-v1147/1150.
+  const _cd=_cardioDeclare(sess);
+  if(_cd) out.cardio=_cd;
+  return out;
 }
 function _startSessionFromMilo(idx,btn){
   const data=(typeof _pendingMiloSessions!=='undefined')?_pendingMiloSessions[idx]:null;
@@ -7208,6 +7264,12 @@ function _appliqueMiloSession(newExs, data, mode, btn){
   {
     var cd=_extraireCardioMilo(newExs);
     if(cd.avant||cd.apres) newExs=cd.exs;
+    /* 🏁 ft-v1152 — LE CHAMP DÉCLARÉ, s'il existe. ⛔ On le lit ICI mais on l'ÉCRIT plus bas,
+       au même endroit que la devinette : en mode « start », `S.wkt` est reconstruit à neuf
+       entre les deux et écraserait tout (la mesure de ft-v995, à ne pas repayer).
+       ⛔ Et on revalide, même si `_normalizeMiloSession` l'a déjà fait : cette fonction est le
+       point de passage des trois voies, elle ne suppose pas d'où vient son `data`. */
+    var cdecl=(typeof _cardioDeclare==='function')?_cardioDeclare(data):null;
     /* ⚠️ ET CE QU'ON N'A PAS SU PLACER SE VOIT, il ne se perd pas en silence : un cardio au
        milieu de la séance, sans durée lisible, ou un 2ᵉ du même côté (le bloc n'a qu'UNE place
        par moment) reste un exercice — et on le dit, plutôt que de le déplacer au hasard (R29). */
@@ -7291,13 +7353,19 @@ function _appliqueMiloSession(newExs, data, mode, btn){
      nulle part. *C'est R4 dans sa forme la plus bête : l'information était calculée et
      n'atteignait pas la donnée.* Mesuré sur la capture de Michel : exercices ["Hip Thrust
      Barre"] (correct) mais cardioAvant `null`. */
-  if(cd&&(cd.avant||cd.apres)){
+  /* 🏁 ft-v1152 — LE DÉCLARÉ GAGNE, LA DEVINETTE RESTE EN REPLI, moment par moment. Les deux ne
+     se contredisent pas quand les deux existent : le cervelet a déclaré son cardio ET l'a aussi
+     laissé dans `exs`, donc la devinette l'a sorti de la liste (ce qu'on veut) et la valeur
+     déclarée remplit le bloc (ce qu'on veut aussi). */
+  const _cAv=(cdecl&&cdecl.avant)||(cd&&cd.avant)||null;
+  const _cAp=(cdecl&&cdecl.apres)||(cd&&cd.apres)||null;
+  if(_cAv||_cAp){
     /* ⛔ ON N'ÉCRASE JAMAIS UN CARDIO DÉJÀ NOTÉ par la personne : en mode « replace », le
        commentaire d'origine le dit — quelqu'un qui échange un exercice au bout de 40 minutes
        ne perd pas le vélo qu'il a vraiment fait. */
-    if(cd.avant&&!(S.wkt.cardioAvant&&+S.wkt.cardioAvant.duration)) S.wkt.cardioAvant=cd.avant;
-    if(cd.apres&&!(S.wkt.cardio&&+S.wkt.cardio.duration))          S.wkt.cardio=cd.apres;
-    const _n=(cd.avant?1:0)+(cd.apres?1:0);
+    if(_cAv&&!(S.wkt.cardioAvant&&+S.wkt.cardioAvant.duration)) S.wkt.cardioAvant=_cAv;
+    if(_cAp&&!(S.wkt.cardio&&+S.wkt.cardio.duration))           S.wkt.cardio=_cAp;
+    const _n=(_cAv?1:0)+(_cAp?1:0);
     if(typeof toast==='function')
       toast('🏃 '+(_n>1?'Cardio placé avant et après la séance':'Cardio placé dans son bloc')+' — pas dans les exercices','info');
   }
