@@ -69,6 +69,65 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 MILO DIT 100, L'APP RÉPOND « VISER ~95 » — **à quelle fréquence se contredisent-ils ?** (06/09/2026)
+
+**Ce qui déclenche la question** : un cas réel de Michel. Dernier développé couché `95×3 · 95×3 ·
+99×3` ; Milo prescrit `3×3 à 100 kg` ; l'app affiche aussitôt, **sous sa propre séance** :
+*« 93 % du 1RM estimé (108 kg) — tenable sur UNE série max, pas sur 3, viser ~95 kg »*.
+
+**⛔ Ce n'est pas un bug, et c'est bien le problème.** Audit fait le jour même
+(`docs/AUDIT-GARDIEN-PRESCRIPTION.md`) : les deux nombres sont exacts, les deux raisonnements sont
+défendables, et **ils emploient le même 1RM (108)**. Milo répond à *« quelle progression ? »*
+(99 → 100, soit **+1 kg**) ; le contrôle `_intensiteDefauts` répond à *« ce triple est-il tenable
+3 fois ? »* d'après une table de pourcentages. ⭐ **La contradiction est STRUCTURELLE** : le
+contrôle tourne **après** Milo, avec l'historique récent qu'il ne lit pas, selon une règle que
+Milo n'a jamais reçue.
+
+**⛔⛔ Et la question à noter n'est pas « qui a raison ? », c'est « combien de fois ? »** — parce
+que la réponse décide du remède, et que **personne ne le sait aujourd'hui**. Une fois sur cent :
+c'est un cas limite, on reformule la phrase. Une fois sur trois : c'est le prompt de Milo qu'il
+faut changer, ou le coefficient. *On ne peut pas choisir un correctif sans cette fréquence.*
+
+**Attendu vérifiable** — ⭐ le plus rentable de tout le lot, **et il ne juge personne** : *après
+une séance proposée par Milo, `_intensiteDefauts` rend-il au moins une ligne ?* C'est un booléen,
+donc du **code**, donc promouvable (`REG-MILO-GARDIAN-CONFLICT-001`).
+⚠️ **Ce qui reste juge humain** : savoir si le `100×3×3` était réellement infaisable. Il n'a pas
+été tenté, et le seul précédent documenté (ft-v980, un `95×5`) donnait raison au contrôle — mais
+l'écart avec l'historique y était de **+4 kg**, ici il est de **+1 kg**. Ce n'est pas le même cas.
+
+**⚠️ Et un scénario existant est concerné** : `EV-019` **encode déjà la règle contestée comme la
+bonne réponse**, avec la fixture exacte de ce cas (`rm1:108`). Si Michel décide que le contrôle est
+trop catégorique, **EV-019 devient faux avant le code**. *Le §2 de sa spécification — « un calcul
+exact ne prouve pas une conclusion exacte » — s'applique d'abord au banc d'essai lui-même.*
+
+### 🟡 « ALLÈGE-MOI UN PEU » — MILO MODIFIE-T-IL LA SÉANCE, OU LA REFAIT-IL ? (06/09/2026)
+
+**Ce qui déclenche la question** : la suite du même échange. Michel écrit *« allège-moi un peu tout
+ça »*. Milo baisse le développé couché de **−10 %**… et **tous les autres exercices avec**, jusqu'à
+**−19 %** sur une machine dont personne ne s'était plaint. Amplitude mesurée sur les 6 exercices :
+de **−6,7 % à −19,1 %**, moyenne **−12,8 %**. *L'alerte portait sur UN exercice ; la baisse la plus
+forte est ailleurs.*
+
+**⛔⛔ La cause probable est mécanique, et elle est mesurée** : **il n'existe aucun objet « séance »
+à modifier.** La proposition initiale a bien été parsée en structure (`_pendingMiloSessions`), mais
+cette variable **vit en mémoire du navigateur et n'est jamais renvoyée**. Milo relit donc **son
+propre texte** dans la fenêtre des 8 derniers messages. 👉 ***Rien, dans le pipeline, ne distingue
+« modifier » de « réécrire ».***
+
+**⚠️ Et ce n'est pas forcément une faute** : alléger toute une séance après qu'elle a été jugée trop
+dure peut être un choix de coach parfaitement défendable. *Mais c'est mesurable, et personne ne le
+mesurait.*
+
+**Attendu vérifiable — la ligne de partage est nette, et il faut la tenir** :
+- ✅ **par du code** : la **structure** (mêmes exercices, même ordre, même nombre de séries), le
+  **sens** de la variation (une demande d'allègement ne monte jamais une charge), et le cas
+  *« change seulement X »* (les autres restent identiques au kilo près) ;
+- ❌ **jamais par du code** : l'**ampleur**. Décider que *« un peu » = −5 %* serait remplacer une
+  heuristique par une autre — c'est **interdit noir sur blanc par le §21** de la spécification. Le
+  chiffre est **affiché** au rapport, le verdict reste **juge humain** tant qu'aucun critère métier
+  n'a été validé. *C'est la même décision qu'en R32 : pas de score fabriqué sans méthode pour le
+  calculer.*
+
 ### 🔵 DOULEUR DU JOUR : LA SÉANCE CHANGE-T-ELLE, OU JUSTE LE COMMENTAIRE ? — promue **EV-056** (04/09/2026)
 
 **Ce qui déclenche la question** : la passe A/B « avec / sans mémoire », lancée pour de vrai par
