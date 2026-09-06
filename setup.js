@@ -3552,6 +3552,26 @@ function detectDuplicates(){
     for(let j=i+1;j<arr.length;j++){
       const nb=_normEx(arr[j]);
       if(na===nb){pairs.push([arr[i],arr[j],0]);continue;}
+      /* 🔗 LA FAMILLE « SUFFIXE » — invisible pour ce détecteur jusqu'au 06/09/2026 (ft-v1147).
+         ⛔⛔ MESURÉ SUR L'HISTORIQUE DE MICHEL : il portait **4 doublons de cette famille**
+         (`Développé Épaules Assis Machine` contre `… (Shoulder Press)`, et 3 autres) — et le
+         détecteur n'en voyait **aucun**. La raison est structurelle, pas un réglage : il
+         rapproche sur l'égalité normalisée ou une **distance de Levenshtein ≤ 1**, or
+         ` (Shoulder Press)` fait **15 caractères d'écart**. 👉 ***Il est fait pour les fautes
+         de frappe, pas pour les suffixes*** — deux familles différentes, un seul critère.
+         ⭐ R13 : `exNomCatalogue` sait déjà rapprocher un nom de base de son nom complet
+         (`_EX_BASE2NOM`, ft-v996) et refuse d'elle-même les bases ambiguës. On la BRANCHE,
+         on n'écrit pas un second rapprochement qui divergerait (R2).
+         ⛔ Ce n'est PAS un assouplissement du seuil : la distance reste ≤ 1 pour tout le
+         reste. On ajoute une famille nommée, on n'élargit pas l'à-peu-près — sinon
+         `Développé Épaules Machine` et `Développé Épaules Assis Machine`, deux machines
+         RÉELLEMENT différentes, finiraient par être proposées à la fusion. */
+      try{
+        if(typeof exNomCatalogue==='function'){
+          const ca=exNomCatalogue(arr[i]), cb=exNomCatalogue(arr[j]);
+          if(ca && cb && _normEx(ca)===_normEx(cb)){ pairs.push([arr[i],arr[j],'suffixe']); continue; }
+        }
+      }catch(e){ /* jamais bloquant : au pire on retombe sur le critère d'avant */ }
       const minL=Math.min(na.length,nb.length);
       if(minL<5)continue;
       const d=_lev(na,nb);
@@ -3564,8 +3584,17 @@ function detectDuplicates(){
   el.innerHTML=pairs.map(([a,b,d])=>{
     const la=a.length>18?a.slice(0,18)+'…':a;
     const lb=b.length>18?b.slice(0,18)+'…':b;
+    /* 🔗 ft-v1147 — on DIT de quelle famille vient le rapprochement, et laquelle est au
+       catalogue. ⛔ On ne tranche pas à sa place (R29) : les deux boutons restent, on
+       montre juste ce qu'il faut pour décider en une seconde. Un « dist.suffixe » brut
+       n'aurait rien voulu dire — et « dist.0 » ne disait déjà pas grand-chose. */
+    const _auCat=n=>{ try{ return EXLIB.some(e=>e&&e.n===n); }catch(e){ return false; } };
+    const _etiq = (d==='suffixe')
+      ? '↔ même exercice, un nom est raccourci' + (_auCat(a)?' — « '+a+' » est celui du catalogue'
+                                                 :(_auCat(b)?' — « '+b+' » est celui du catalogue':''))
+      : (d===0 ? '↔ même nom (accents ou ponctuation)' : '↔ '+d+' lettre d\'écart');
     return '<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;">'
-      +'<div style="color:var(--t3);font-size:11px;">dist.'+d+'</div>'
+      +'<div style="color:var(--t3);font-size:11px;">'+_etiq+'</div>'
       +'<div style="color:var(--t1);font-weight:600;font-size:13px;">'+a+' <span style="color:var(--t3);font-weight:400;">≈</span> '+b+'</div>'
       +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'
       +'<button class="btn btn-bg2" onclick="mergeExercises('+_argAttr(a)+','+_argAttr(b)+')" style="padding:7px 10px;font-size:12px;flex:1;">Garder "'+la+'"</button>'

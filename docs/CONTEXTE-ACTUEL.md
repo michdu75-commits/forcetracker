@@ -6,7 +6,27 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1146` — 📊 **COMBIEN DE FOIS MILO ET L'APP SE CONTREDISENT-ILS ?**
+- **Version en ligne (live) :** `ft-v1147` — 🔗 **LES NOMS D'EXERCICES SE DÉDOUBLAIENT DEPUIS LE 24/08.**
+  Michel, en salle : *« Perte de données, j'ai déjà fait cet exercice »*. ⛔⛔ **Rien n'était perdu** —
+  son historique portait un **autre nom**. Mesuré sur ses **44 séances** : **4 doublons**, tous le nom
+  privé de son suffixe entre parenthèses (`Développé Épaules Assis Machine` contre `… (Shoulder
+  Press)`, + 3 autres). Dans les 4 cas le nom complet vient d'abord, le tronqué suit — **jamais avant
+  le 24 août**.
+  ⛔⛔ **La cause : `ft-v996` (24/08)** a branché le résolveur sur **7 lectures d'AFFICHAGE** et
+  volontairement pas sur l'historique. ***Le doublon n'est pas devenu plus fréquent : il est devenu
+  INVISIBLE*** (avant, un nom tronqué n'avait ni animation ni muscles).
+  ⛔ Et `detectDuplicates` rapproche sur **≤ 1 lettre** — ` (Shoulder Press)` fait 15 caractères.
+  ⭐ **Correctif en deux moitiés** : le nom est résolu dans `_normalizeMiloSession` (seul écrivain,
+  **avant** `_intensiteDefauts` qui se tait sans record) **et** le détecteur voit la famille
+  « suffixe » → le passé se répare en un tap avec `mergeExercises`, qui existait déjà.
+  ⛔ **Garde-fou** : suffixe entre parenthèses **uniquement**, seuil de ressemblance **inchangé à 1**,
+  **aucune fusion automatique** (R29).
+  ⏭️ **Reste ouvert** : la réparation est **derrière l'admin** (les autres ne peuvent pas fusionner) ·
+  la recherche ne découpe pas les mots (*« biceps marteau »* → **0 résultat**) · le tiret ne dit pas
+  encore « 1ʳᵉ fois » · **le RIR signalé par Michel, pas encore reproduit**.
+  ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1146` — 📊 **COMBIEN DE FOIS MILO ET L'APP SE CONTREDISENT-ILS ?**
   Michel est à la salle (*« fais au mieux »*). Suite de l'audit du matin : Milo prescrit
   **3×3 à 100 kg**, l'app affiche **juste dessous** *« viser ~95 kg »*. ⛔⛔ **Personne n'a tort**
   — les deux calculs sont justes et emploient **le même 1RM** ; l'asymétrie est de **règle** et de
@@ -29,7 +49,7 @@
   🔐 Écran **derrière l'admin** → règle d'or #11 : **rien à annoncer**.
   ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 
-- **Version précédente :** `ft-v1145` — 🌙 **UN ÉTAT PARFAIT ANNONCÉ COMME UNE ANOMALIE.**
+- **Avant :** `ft-v1145` — 🌙 **UN ÉTAT PARFAIT ANNONCÉ COMME UNE ANOMALIE.**
   ✅ **LES DEUX DÉPLOIEMENTS VÉRIFIÉS VERTS** (R18) : site run **#939** (7 étapes, 15:05:25 UTC)
   **ET** backend run **#107** (9 étapes, dont « le backend répond VRAIMENT » et `authStatus` —
   15:05:37 UTC), tous deux sur `6a29f4d`.

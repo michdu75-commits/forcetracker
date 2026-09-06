@@ -28183,6 +28183,120 @@ console.log('\n-- CCXLV. Le compteur de contradictions Milo ↔ contrôle d\'int
     /onclick="showIntensiteStats\(\)"/.test(fs.readFileSync(path.join(ROOT,'index.html'),'utf8')), '');
 }
 
+/* ═══ CCXLVI. LE NOM DE MILO REJOINT CELUI DU CATALOGUE (06/09/2026, ft-v1147) ══════════════
+   Michel, en salle : « Perte de données, j'ai déjà fait cet exercice ». Rien n'était perdu :
+   son historique portait `Développé Épaules Assis Machine (Shoulder Press)` et sa séance du
+   jour `Développé Épaules Assis Machine`. Mesuré sur ses 44 séances : **4 doublons, tous le
+   même motif**, et **jamais avant le 24 août** — le jour où ft-v996 a branché le résolveur
+   sur l'AFFICHAGE et pas sur l'historique, ce qui a rendu le doublon invisible.
+   ⭐ Les témoins sont FONCTIONNELS : le résolveur est réellement exécuté sur les VRAIS noms
+   de son export. Un `grep` dirait que le code appelle une fonction, pas qu'elle résout. */
+console.log('\n-- CCXLVI. Le nom de Milo rejoint celui du catalogue (ft-v1147) --');
+{
+  const srcLog=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+  const srcSet=fs.readFileSync(path.join(ROOT,'setup.js'),'utf8');
+  const srcCst=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+
+  /* ⛔⛔ CONTRÔLE AVANT TOUT LE RESTE — et il porte sur l'ENDROIT, pas sur la présence.
+     `_normalizeMiloSession` est le SEUL écrivain de `_pendingMiloSessions` en production :
+     un résolveur branché ailleurs serait parfaitement correct et parfaitement inutile. */
+  t('CCXLVI ⛔ CONTRÔLE — le nom est résolu DANS `_normalizeMiloSession` (le seul écrivain)',
+    /function _normalizeMiloSession[\s\S]{0,900}name:_nomMiloVersCatalogue\(ex\.name\)/.test(srcLog), '');
+  t('CCXLVI ⛔ CONTRÔLE — `_nomMiloVersCatalogue` existe et s\'appuie sur `exNomCatalogue` (R13)',
+    /function _nomMiloVersCatalogue/.test(srcLog) && /exNomCatalogue\(brut\)/.test(srcLog), '');
+
+  /* ⚠️⚠️ ON EXÉCUTE LA VRAIE FONCTION DE `log.js`, PAS UNE COPIE — et cette correction a été
+     payée par un contrôle négatif raté. Ma 1ʳᵉ version reconstruisait le résolveur dans le bac
+     à sable : en retirant le garde-fou « la cible doit exister au catalogue » de la vraie
+     fonction, le bloc restait **vert 17/17**. 👉 ***Un témoin qui rejoue sa propre copie du
+     code ne teste pas le code : il se teste lui-même*** (`BUGS.md` §36). La fonction est donc
+     extraite du fichier par comptage d'accolades et exécutée telle qu'elle est écrite. */
+  let R=null;
+  try{
+    const vm=require('vm');
+    const d=srcLog.indexOf('function _nomMiloVersCatalogue(');
+    let corps=null;
+    if(d>=0){ let i=srcLog.indexOf('{',d), p=0;
+      for(let k=i;k<srcLog.length;k++){ if(srcLog[k]==='{')p++; else if(srcLog[k]==='}'){p--; if(!p){corps=srcLog.slice(d,k+1);break;}} } }
+    const sb={window:{},document:{getElementById:()=>null},navigator:{},
+              localStorage:{getItem:()=>null,setItem:()=>{}},console:{log(){},warn(){}}};
+    vm.createContext(sb);
+    vm.runInContext(srcCst+'\n'+(corps||'')
+      +'\n;globalThis.__r=(typeof _nomMiloVersCatalogue!=="undefined")?_nomMiloVersCatalogue:null;'
+      +'globalThis.__X=(typeof EXLIB!=="undefined")?EXLIB:null;', sb, {timeout:8000});
+    if(sb.__r && sb.__X){ R=sb.__r; R.cat=(n)=>sb.__X.some(e=>e&&e.n===n); }
+  }catch(e){ R=null; }
+  t('CCXLVI ⛔ CONTRÔLE — le catalogue et son résolveur se chargent (sinon tout serait vert sur du vide)',
+    !!R, R?'':'bac à sable indisponible');
+
+  if(R){
+    /* ⭐⭐ LES QUATRE VRAIS CAS DE MICHEL, pris dans son export du 06/09. */
+    const CAS=[['Développé Épaules Assis Machine','Développé Épaules Assis Machine (Shoulder Press)'],
+               ['Rowing Poitrine Appuyée','Rowing Poitrine Appuyée (Chest Supported)'],
+               ['Hip Thrust Barre','Hip Thrust Barre (Poussée de Hanche)'],
+               ['Abduction Cuisses','Abduction Cuisses (Leg Abduction)']];
+    const rates=CAS.filter(([a,b])=>R(a)!==b);
+    t('CCXLVI ⭐⭐ les 4 doublons réels de l\'historique de Michel se recollent au catalogue',
+      rates.length===0, rates.map(([a])=>a+' -> '+R(a)).join(' | '));
+
+    /* ⛔⛔ LE CONTRE-TEST, ET C'EST LUI QUI PORTE LA VERSION. Deux machines RÉELLEMENT
+       différentes ne doivent JAMAIS fusionner : afficher les charges de l'une sous l'autre
+       serait pire que l'absence, parce qu'on le croirait (R29). */
+    t('CCXLVI ⛔⛔ « Développé Épaules Machine » ne devient PAS « … Assis Machine » (2 vraies machines)',
+      R('Développé Épaules Machine')==='Développé Épaules Machine',
+      'reçu : '+R('Développé Épaules Machine'));
+    const voisins=[['Développé Épaules Machine','Développé Épaules Assis Machine (Shoulder Press)'],
+                   ['Leg Curl Assis Machine','Leg Curl Couché Machine'],
+                   ['Curl Barre','Curl EZ']];
+    const fusionnes=voisins.filter(([a,b])=>R(a)===b);
+    t('CCXLVI ⛔ aucun exercice voisin mais DIFFÉRENT n\'est rapproché',
+      fusionnes.length===0, JSON.stringify(fusionnes));
+
+    /* ⛔ Un nom que le catalogue ne connaît pas reste TEL QUEL — c'est la décision de
+       `_seanceDepuisTexte` (proposer un exercice différent de celui annoncé serait pire). */
+    ['ISO lateral low row','Chest press cable Life fitness','Un Exercice Qui N Existe Pas',''].forEach(n=>{
+      t('CCXLVI ⛔ un nom hors catalogue reste intact : « '+(n||'(vide)')+' »',
+        R(n)===String(n).trim(), 'reçu : '+R(n));
+    });
+    /* ⛔ Et on ne résout JAMAIS vers un nom qui n'existe pas au catalogue. */
+    const cibles=CAS.map(([,b])=>b).filter(b=>!R.cat(b));
+    t('CCXLVI ⛔ toute cible de résolution est un exercice RÉEL du catalogue',
+      cibles.length===0, cibles.join(' | '));
+    /* ⚠️⚠️ ET CETTE GARDE-LÀ EST DÉFENSIVE — je le dis plutôt que de laisser croire qu'elle est
+       éprouvée. `_EX_BASE2NOM` est construit DEPUIS `EXLIB`, donc aujourd'hui `exNomCatalogue`
+       ne peut pas viser un nom absent du catalogue : **aucun cas réel ne déclenche cette
+       ligne**. Elle protège une évolution future de la table, pas un défaut d'aujourd'hui.
+       ⛔ On la fige donc par sa PRÉSENCE, sans prétendre l'avoir vue mordre — un témoin qui
+       annoncerait le contraire serait un vert qui ne peut pas rougir (R35). */
+    t('CCXLVI ⚠️ la garde « la cible doit exister » est ÉCRITE (défensive : aucun cas actuel ne la déclenche)',
+      /const existe=\(typeof EXLIB!=='undefined'\) && EXLIB\.some\(e=>e && e\.n===cible\)/.test(srcLog)
+      && /return existe \? cible : brut;/.test(srcLog), '');
+    /* ⛔ Idempotent : un nom déjà complet ne bouge pas (sinon un aller-retour le casserait). */
+    t('CCXLVI ⛔ un nom DÉJÀ complet est inchangé (résolution idempotente)',
+      CAS.every(([,b])=>R(b)===b), '');
+  }
+
+  /* ── LE DÉTECTEUR DE DOUBLONS VOIT ENFIN CETTE FAMILLE ────────────────────────────────
+     Il rapprochait sur l'égalité normalisée ou une distance de Levenshtein ≤ 1 ; ` (Shoulder
+     Press)` fait 15 caractères d'écart. Il est fait pour les fautes de frappe, pas pour les
+     suffixes — deux familles, un seul critère jusqu'ici. */
+  t('CCXLVI ⭐ `detectDuplicates` reconnaît la famille « suffixe » via `exNomCatalogue`',
+    /detectDuplicates[\s\S]{0,2600}exNomCatalogue\(arr\[i\]\)[\s\S]{0,200}_normEx\(ca\)===_normEx\(cb\)/.test(srcSet), '');
+  /* ⛔⛔ ET IL NE S'EST PAS ASSOUPLI : le seuil de ressemblance reste à 1. Élargir la distance
+     aurait « marché » aussi — et aurait proposé de fusionner deux machines différentes. */
+  t('CCXLVI ⛔⛔ le seuil de ressemblance reste à 1 lettre (on ajoute une famille, on n\'élargit pas l\'à-peu-près)',
+    /const d=_lev\(na,nb\);\s*\n?\s*if\(d<=1\)pairs\.push/.test(srcSet), '');
+  t('CCXLVI ⛔ l\'écran DIT de quelle famille vient le rapprochement (« dist.suffixe » ne voulait rien dire)',
+    /même exercice, un nom est raccourci/.test(srcSet) && /celui du catalogue/.test(srcSet), '');
+  /* ⛔ La réparation du passé reste possible : l'outil de fusion n'a pas été touché. */
+  t('CCXLVI ⛔ `mergeExercises` existe toujours (réparer le passé reste possible, et reste un CHOIX)',
+    /function mergeExercises\(keep,remove\)/.test(srcSet) && /showConfirm\(/.test(srcSet), '');
+  /* ⛔ Rien n'est fusionné automatiquement : on montre, la personne tranche (R29). */
+  t('CCXLVI ⛔ aucune fusion AUTOMATIQUE n\'a été ajoutée (on informe, on ne décide pas — R29)',
+    !/mergeExercises\([^)]*\)\s*;\s*\}\s*\)\s*;?\s*\/\/\s*auto/i.test(srcSet)
+    && (srcSet.match(/mergeExercises\(/g)||[]).length<=4, '');
+}
+
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
 })().catch(e=>{console.error(e);process.exit(2);});

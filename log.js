@@ -6592,10 +6592,58 @@ function closeDaySel(){document.getElementById('ov-day-sel').classList.remove('o
 // ─── SÉANCE DU JOUR proposée par Milo → injection directe dans S.wkt (demande Michel) ───
 // _pendingMiloSessions est rempli côté coach.js ; ces 2 fonctions vivent ici pour accéder
 // aux globals de la séance (getPrev, today, _expandedEx, renderExBlocks…).
+/* ═══ 🔗 LE NOM DE MILO REJOINT CELUI DU CATALOGUE (06/09/2026, ft-v1147) ═══════════════════
+   Michel, en salle : *« Perte de données. Dans précédent j'ai déjà fait cet exercice et
+   l'historique a disparu. »* ⛔⛔ **Rien n'était perdu — son historique portait un AUTRE NOM.**
+
+   ⭐⭐ MESURÉ SUR SES 44 SÉANCES, ET LE MOTIF EST UNIQUE : **4 doublons, tous le nom privé de
+   son suffixe entre parenthèses.** `Abduction Cuisses` (1 séance) contre `… (Leg Abduction)`
+   (6) · `Hip Thrust Barre` (2) contre `… (Poussée de Hanche)` (3) · `Rowing Poitrine Appuyée`
+   (1) contre `… (Chest Supported)` (4) · `Développé Épaules Assis Machine` (1) contre
+   `… (Shoulder Press)` (4). Dans les quatre cas le nom **complet vient d'abord**, le tronqué
+   suit — et **jamais avant le 24 août**.
+
+   ⛔⛔ POURQUOI ÇA A DURÉ DEUX SEMAINES SANS QUE PERSONNE NE VOIE RIEN — c'est le vrai
+   enseignement, et il est dans le commentaire de **ft-v996** (24/08), écrit noir sur blanc :
+   *« Les deux lignes ci-dessus restent EXACTES, exprès : elles lisent ce que la personne a
+   rangé sous SON nom. Seul le catalogue est résolu. »* Le résolveur y a été branché sur
+   **sept lectures d'AFFICHAGE** (animation, image de muscle, fiche, tutoriel, vidéo) et
+   volontairement pas sur l'historique. 👉 ***Le doublon n'est pas devenu plus fréquent : il
+   est devenu INVISIBLE.*** Avant, un nom tronqué n'avait ni animation ni muscles — ça se
+   voyait au premier coup d'œil. Depuis, il a tout, et seul l'historique manque.
+   *Un choix argumenté dont personne n'a mesuré la conséquence.*
+
+   ⭐ ON BRANCHE ICI, ET PAS AILLEURS : ce normaliseur est le **SEUL écrivain** de
+   `_pendingMiloSessions` en production, donc le seul point que les trois voies traversent
+   (bloc caché · cervelet · repli par lecture du texte). ⚠️ **Et il faut que ce soit AVANT
+   `_intensiteDefauts`** (`coach.js:_appendStartSessionBtn`) : ce contrôle cherche
+   `S.prs[nom]` et **se tait sans record** — avec un nom tronqué il ne dit donc jamais rien.
+   *Un nom qui ne colle pas ne casse pas que l'affichage : il éteint un garde-fou.*
+
+   ⛔⛔ LE GARDE-FOU, NON NÉGOCIABLE. `exNomCatalogue` ne rapproche QUE sur un **suffixe entre
+   parenthèses** (`_EX_BASE2NOM`, ft-v996), jamais sur une ressemblance — et elle refuse
+   d'elle-même les bases ambiguës. `Développé Épaules Machine` et `Développé Épaules Assis
+   Machine` restent deux machines différentes. *Afficher les charges de l'une sous l'autre
+   serait pire que l'absence, parce qu'on le croirait* (R29 : le coût de l'erreur décide).
+
+   ⛔ ET ON NE RÉSOUT QUE VERS UN NOM QUI EXISTE VRAIMENT : si la cible n'est pas au catalogue,
+   on garde le texte de Milo **tel quel** — c'est la décision de `_seanceDepuisTexte`, et elle
+   ne bouge pas (proposer un exercice DIFFÉRENT de celui annoncé serait le pire des deux).  */
+function _nomMiloVersCatalogue(nom){
+  try{
+    const brut=String(nom||'').trim();
+    if(!brut || typeof exNomCatalogue!=='function') return brut;
+    const cible=exNomCatalogue(brut);
+    if(!cible || cible===brut) return brut;
+    // ⛔ La cible doit être un exercice RÉEL — sinon on renommerait vers du vide.
+    const existe=(typeof EXLIB!=='undefined') && EXLIB.some(e=>e && e.n===cible);
+    return existe ? cible : brut;
+  }catch(e){ return String(nom||'').trim(); }   // jamais bloquant : au pire, le comportement d'avant
+}
 function _normalizeMiloSession(sess){
   const T={N:1,'É':1,X:1,D:1,W:1}; // types de série valides
   const norm=ex=>({
-    name:String(ex.name||'Exercice'),
+    name:_nomMiloVersCatalogue(ex.name)||'Exercice',
     // 💬 ft-v628 : la CONSIGNE de Milo (cue technique : « omoplates serrées », « amplitude contrôlée »…)
     // devient la note de l'exercice — avant, elle était jetée (`note:''`) alors que Milo la donne dans le chat.
     note:String(ex.note||'').slice(0,300),
