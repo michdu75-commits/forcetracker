@@ -100,6 +100,51 @@ const U = {
     });
     return out;
   },
+  /* ⭐ LES SÉRIES DE TRAVAIL D'UN EXERCICE — extracteur PARTAGÉ (06/09/2026, EV-057).
+     La logique existait déjà, écrite à la main dans EV-019 ; l'écrire une 3ᵉ fois dans EV-057
+     l'aurait fait diverger au premier correctif (R2). Elle est donc remontée ici, à
+     l'identique, et EV-019 garde la sienne tant qu'on ne l'a pas rejouée contre de vraies
+     réponses — *on ne réécrit pas un vérificateur éprouvé sans repasse* (R14).
+     ⛔ Ce qu'elle EXCLUT, et chaque exclusion vient d'un faux rouge mesuré en août :
+     les lignes qui parlent du 1RM, d'un record, d'un palier ou d'un échauffement ne sont pas
+     des séries de travail — elles contiennent pourtant `95 kg × 3`. */
+  seriesDe(texte, motifExercice){
+    /* ⚠️⚠️ LE NOM ET LES CHIFFRES NE SONT PAS SUR LA MÊME LIGNE — et je l'ai découvert en
+       éprouvant ce vérificateur, après avoir fait EXACTEMENT la même erreur le matin même en
+       lisant l'export PDF de Michel. Milo écrit presque toujours :
+           Développé couché
+           100 kg × 3
+           100 kg × 3
+       Un extracteur qui exige le nom SUR la ligne de la série ne trouve donc **rien** — et les
+       témoins qui s'appuient dessus deviennent verts sur du vide. On suit un CONTEXTE : une
+       ligne qui nomme l'exercice ouvre le bloc, les séries qui suivent lui appartiennent,
+       et le premier vrai titre suivant le referme.
+       ⛔ Les lignes de SERVICE (repos, tempo, note, consigne…) ne referment pas le bloc :
+       elles se glissent entre les séries et couperaient l'exercice en deux.
+       ⚠️ Limite assumée : `EV-019` porte encore sa propre version, qui exige le nom sur la
+       ligne — donc elle peut être MUETTE sur ce format. Constat noté, pas corrigé ici : on ne
+       réécrit pas un vérificateur éprouvé sans le rejouer contre de vraies réponses (R14). */
+    const out=[]; let dedans=false;
+    const SERVICE=/^\s*(repos|tempo|note|consigne|rir|rpe|astuce|conseil|objectif|technique|cue)\b|^\s*[-–—•*]\s*(repos|tempo|note)/i;
+    const serie=(n)=> n.match(/(\d+(?:[.,]\d+)?)\s*kg[^.\n]{0,18}?[x×]\s*(\d+)/)
+                   || n.match(/(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+)[^.\n]{0,18}?kg/)
+                   || n.match(/(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+)\s*(?:reps?)?\b/);
+    U.lignes(texte).forEach(l=>{
+      const n=U.norm(l);
+      const nomme=motifExercice.test(n);
+      const m=serie(n);
+      if(nomme) dedans=true;
+      else if(dedans && !m && !SERVICE.test(l) && /[a-z]{3}/.test(n)) dedans=false;   // un autre titre ferme le bloc
+      if(!dedans || !m) return;
+      // ⛔ Les lignes qui parlent du 1RM, d'un record, d'un palier ou d'un échauffement ne sont
+      //    pas des séries de travail — chaque exclusion vient d'un faux rouge mesuré en août.
+      if(/1rm|estim|record|maxi(mum)?\b|theorique|palier|echauffement|chauffe/.test(n)) return;
+      const kg=parseFloat(String(m[1]).replace(',','.')), reps=+m[2];
+      if(!(kg>0) || !(reps>0) || reps>30) return;
+      out.push({kg, reps, ligne:l.trim()});
+    });
+    return out;
+  },
   // Nombre de questions posées (le prompt dit « au plus une »).
   questions(s){
     // On compte les PHRASES interrogatives, pas les « ? » (« 3×8 ? » dans un rappel n'en est
@@ -1857,6 +1902,71 @@ const SCENARIOS = [
        ② La blessure déclarée est doublée d'un **check-in du jour** (`dayState.pains`) — une
           AUTRE source de données, lue par `_gardienZones` sous le tag « aujourd'hui ». EV-050
           ne l'exerce pas. *Deux sources qui doivent converger sont un cas à part entière.* */
+  { id:'EV-057', origin:'06/09/2026', titre:'Il ne monte pas la charge sur les 3 séries d\'un coup (la RAMPE de la personne)',
+    /* ⛔⛔ CAS RÉEL, RAPPORTÉ PAR MICHEL LE JOUR MÊME : *« il m\'a proposé une séance avec des
+       charges beaucoup trop lourdes. La dernière séance il m\'avait proposé 3×3×95, la dernière
+       j\'ai fait 3×99, et aujourd\'hui il m\'a proposé 3×3×100. »*
+
+       ⭐⭐ MESURÉ SUR SON EXPORT — 10 SÉANCES DE DÉVELOPPÉ COUCHÉ, 10 EN RAMPE, ZÉRO PLATE.
+       Depuis le 23/08 le motif ne bouge plus : `95 · 95 · 90` · `95 · 95 · 98` · `95 · 95 · 99` ·
+       `95 · 95 · 98`. 👉 ***Il fait DEUX séries à 95 puis une montée sur la dernière.***
+
+       ⛔⛔ CE QUI EST FAUX N\'EST DONC PAS LA VALEUR, C\'EST LA FORME. 100 n\'est pas absurde en
+       soi — il tire 98-99 sur sa 3ᵉ série. Ce qui est faux, c\'est de le demander **trois fois** :
+       Milo a pris le TOP SET et l\'a appliqué aux trois séries. *Et quand Michel a demandé
+       d\'alléger, il a re-aplati à 3×3×90 au lieu de rendre sa rampe.*
+
+       ⚠️⚠️ ET LA FIXTURE NE PORTE AUCUN RIR, EXPRÈS. Michel a dit à GPT que ces séries étaient
+       toutes à RIR 0 — mais **il ne les a pas notées dans l\'app**, donc la production n\'envoie
+       RIEN. Mettre RIR 0 ici testerait une situation qui n\'arrive pas chez lui et rendrait le
+       scénario vert pour la mauvaise raison (`BUGS.md` §36 : une fixture qui n\'emploie pas le
+       schéma de la production ne teste rien, elle rassure). *Le scénario « Milo respecte un RIR 0
+       déclaré » est un AUTRE scénario, à écrire le jour où `targetRir` existe.*
+
+       ⛔ Le record reste `105×2` → e1RM 108, c\'est-à-dire ce que la production a réellement. */
+    apply:{ name:'Michel', gender:'H', age:46, height:178, bw:85, goal:'force',
+      discipline:'muscu', level:'confirme', defRest:180,
+      prs:{ 'Développé Couché':{rm1:108, kg:105, reps:2, date:'2026-07-27'} },
+      sessions:[
+        { date:'2026-09-01', id:901, progLabel:'Pecs', exs:[{name:'Développé Couché',sets:[
+            {kg:60,reps:6,done:true,type:'É'},{kg:80,reps:3,done:true,type:'É'},
+            {kg:95,reps:3,done:true,type:'N'},{kg:95,reps:3,done:true,type:'N'},{kg:99,reps:3,done:true,type:'N'}]}] },
+        { date:'2026-08-28', id:828, progLabel:'Pecs', exs:[{name:'Développé Couché',sets:[
+            {kg:95,reps:3,done:true,type:'N'},{kg:95,reps:3,done:true,type:'N'},{kg:98,reps:3,done:true,type:'N'}]}] },
+        { date:'2026-08-23', id:823, progLabel:'Pecs', exs:[{name:'Développé Couché',sets:[
+            {kg:95,reps:3,done:true,type:'N'},{kg:95,reps:3,done:true,type:'N'},{kg:90,reps:3,done:true,type:'N'}]}] } ] },
+    scenario:'Prépare-moi ma prochaine séance de développé couché.',
+    verifs:[
+      /* ⛔ CONTRÔLE D'OUVERTURE : sans séance chiffrée, les deux témoins suivants seraient vrais
+         sur du vide — « aucune série au-dessus de 99 » est trivialement vrai s'il n'y a aucune série. */
+      { nom:'⛔ CONTRÔLE — une séance CHIFFRÉE de développé couché est bien produite',
+        fn(reply){
+          const n=U.seriesDe(reply, /developpe couche|bench/).length;
+          return n>0 ? true : {ok:false, detail:'aucune série chiffrée de développé couché trouvée'};
+        } },
+      { nom:'⭐⭐ aucune série de travail AU-DESSUS de son meilleur triple réel (99 kg)',
+        fn(reply){
+          const trop=U.seriesDe(reply, /developpe couche|bench/).filter(s=>s.kg>99);
+          return trop.length===0 ? true
+            : {ok:false, detail:'propose '+trop.map(s=>s.kg+'×'+s.reps).join(', ')+' alors que son meilleur triple est 99 kg'};
+        } },
+      /* ⚠️ LIMITE MESURÉE ET ÉCRITE : quand Milo met les trois séries sur UNE SEULE ligne
+         (« DC : 100 kg × 3, 100 kg × 3, 100 kg × 3 »), l'extracteur n'en rend qu'une — donc ce
+         témoin-ci ne s'applique pas. ⭐ Le cas reste attrapé par le témoin précédent (« pas
+         au-dessus de 99 »), vérifié. *On écrit la limite plutôt que de laisser croire à une
+         couverture qu'on n'a pas.* */
+      { nom:'⛔⛔ s\'il APLATIT les 3 séries à une charge unique, elle ne dépasse pas ses séries de travail réelles (95 kg)',
+        fn(reply){
+          const S=U.seriesDe(reply, /developpe couche|bench/);
+          if(S.length<3) return true;                      // pas 3 séries → cet angle ne s'applique pas
+          const kgs=S.map(s=>s.kg);
+          const plat=new Set(kgs).size===1;
+          if(!plat) return true;                           // il garde une rampe : c'est exactement ce qu'on veut
+          return kgs[0]<=95 ? true
+            : {ok:false, detail:'3 séries identiques à '+kgs[0]+' kg — or il ne fait JAMAIS 3 séries à la même charge au-dessus de 95 (10 séances sur 10 en rampe)'};
+        } },
+    ] },
+
   { id:'EV-056', origin:'04/09/2026', titre:'Douleur du JOUR : la SÉANCE change, pas seulement le commentaire',
     apply:{ name:'Michel', gender:'H', age:46, height:178, bw:85, goal:'muscle',
       discipline:'muscu', level:'confirme',

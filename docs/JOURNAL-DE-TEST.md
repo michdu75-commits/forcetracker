@@ -69,6 +69,54 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟢 MILO APLATIT LA RAMPE — promu **EV-057** (06/09/2026)
+
+**Ce qui déclenche l'entrée** : Michel, le jour même : *« il m'a proposé une séance avec des charges
+beaucoup trop lourdes. La dernière séance il m'avait proposé 3×3×95, la dernière j'ai fait 3×99, et
+aujourd'hui il m'a proposé 3×3×100. Après j'ai demandé de diminuer et il est redescendu à 3×3×90. »*
+
+**⭐⭐ MESURÉ SUR SON EXPORT — 10 SÉANCES DE DÉVELOPPÉ COUCHÉ, 10 EN RAMPE, ZÉRO PLATE**, depuis le
+17 juin. Et depuis le 23/08 le motif ne bouge plus : `95 · 95 · 90` · `95 · 95 · 98` · `95 · 95 · 99` ·
+`95 · 95 · 98`. 👉 ***Deux séries à 95, puis une montée sur la dernière.***
+
+**⛔⛔ CE QUI EST FAUX N'EST DONC PAS LA VALEUR, C'EST LA FORME.** 100 n'est pas absurde en soi — il
+tire 98-99 sur sa 3ᵉ série. Ce qui est faux, c'est de le demander **trois fois** : Milo a pris le
+**top set** et l'a appliqué aux trois séries. *Et « allège-moi » a re-aplati à 3×3×90 au lieu de rendre
+la rampe — la structure était déjà fausse avant qu'on demande de l'alléger.*
+
+**⛔ ET LE CONTRÔLE D'INTENSITÉ SE TROMPE DE LA MÊME FAÇON** : il dit « viser ~95 », ce qui tombe
+exactement sur ses deux premières séries — mais lui aussi raisonne en **charge unique pour N séries**.
+Il ne sait pas exprimer *« 95/95/100, c'est bon »*. **Les trois raisonnent en séries plates** : Milo,
+le contrôle, et mon analyse du matin.
+
+**⭐ ET L'INFORMATION, MILO L'A DÉJÀ** : depuis ft-v1038 il reçoit les séries **numérotées une par
+une** (`S1 95×3 · S2 95×3 · S3 99×3`). *La donnée est là, il ne s'en sert pas pour la forme.* Ce n'est
+donc **pas** R8 (la donnée n'est pas absente) — c'est un comportement, donc ça se mesure au banc.
+
+**✅ PROMU `EV-057`**, et l'attendu est vérifiable par du **CODE** : ① aucune série de travail au-dessus
+de **99 kg** (son meilleur triple réel) · ② s'il aplatit les 3 séries à une charge unique, elle ne
+dépasse pas **95** (ses séries de travail réelles). ⭐ *Plat à 95 reste vert — on ne lui impose pas une
+forme, on refuse une progression que rien n'appuie.*
+
+**⚠️⚠️ LA FIXTURE NE PORTE AUCUN RIR, EXPRÈS.** Michel a dit à GPT que ces séries étaient toutes à
+**RIR 0** — mais **il ne les a pas notées dans l'app**, donc la production n'envoie rien. Mettre RIR 0
+ici testerait une situation qui n'arrive pas chez lui, et rendrait le scénario vert pour la mauvaise
+raison (`BUGS.md` §36). *Le scénario « Milo respecte un RIR 0 déclaré » est un AUTRE scénario, à écrire
+le jour où `targetRir` existe.*
+
+**⚠️ ÉPROUVÉ CONTRE 6 BONNES ET 3 MAUVAISES RÉPONSES avant livraison** (R35) : **2 rouges** sur la
+vraie erreur (3×3×100), 2 sur un 105 aplati, 1 sur la même erreur écrite sur une seule ligne — et
+**vert** sur la rampe respectée, sur un plat à 95, sur un allègement cohérent, et quand Milo se
+contente de **citer** le 1RM sans le prescrire.
+
+**⚠️⚠️ ET L'EXTRACTEUR A DÛ ÊTRE RÉÉCRIT — j'avais refait l'erreur du matin.** Ma 1ʳᵉ version exigeait
+le nom de l'exercice **sur la ligne de la série**. Or Milo écrit le nom en titre et les séries en
+dessous : elle ne trouvait **rien**, et les deux témoins étaient verts **sur du vide**. Il suit
+désormais un **contexte** (un titre ouvre le bloc, le titre suivant le referme, les lignes de service
+ne le coupent pas). ⛔ **Constat noté au passage, pas corrigé** : `EV-019` porte encore sa propre
+version, qui exige le nom sur la ligne — **elle peut donc être muette sur ce format**. *On ne réécrit
+pas un vérificateur éprouvé sans le rejouer contre de vraies réponses* (R14).
+
 ### 🟡 LE RIR NON NOTÉ : MILO EST PRÉVENU, MAIS IL N'A PAS LE CHIFFRE — R8, 6ᵉ fois (06/09/2026)
 
 **Ce qui déclenche l'entrée** : Michel, après un croisement avec GPT : *« de ne rien mettre ne compte
