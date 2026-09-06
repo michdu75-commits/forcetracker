@@ -7,6 +7,8 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1152` — 🏁 **LE CARDIO SE DÉCLARE, IL NE SE DEVINE PLUS.**
+  ⏳ **Suite complète VERTE** : **parcours 2983/2983** (+15, bloc CCLI), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⏳ **Déploiement à vérifier** (R18) : `deploy-pages.yml` **et** `deploy-worker.yml` — ⛔ **`Code.js`
   NON modifié** → aucun déploiement backend attendu, son absence n'est donc pas un signal.
   Michel, après ft-v1150 : *« prends le, ferme ça définitivement »* — après que je lui aie dit que
