@@ -5129,7 +5129,16 @@ function _exEquip(name){
   if(/trx|sangles|suspension/.test(s)) return 'trx';
   if(/elastique|bande elastique|bandes elastiques/.test(s)) return 'elast';
   // 0bis) CARDIO / conditionnement : ni charge ni série au sens muscu — un bac à part.
-  if(/air ?bike|assault|ski ?erg|ergometre|corde a sauter|saut a la corde|sauts a la corde|burpee|jumping jack|bear crawl|marche de l ours|wall ball|battle rope|box jump|jump box|mountain climber|grimpeur|rameur|tapis|elliptique|chariot|sled|traineau/.test(s)) return 'cardio';
+  /* ⛔⛔ LE `velo` MANQUAIT, ET LA RAISON EST UN PIÈGE QU'IL FAUT CONNAÎTRE (06/09/2026, ft-v1150).
+     Le mot le plus banal du cardio était absent de cette liste — pas par oubli : ***`développé`
+     désaccentué CONTIENT `velo`***. `_naz('Développé Couché')` = `developpe couche`, donc un
+     `/velo/` nu classerait **TOUS LES DÉVELOPPÉS EN CARDIO**, en silence.
+     👉 C'est « le premier match gagnant » de `BUGS.md` dans sa forme la plus vicieuse : *le motif
+     juste est piégé par un mot beaucoup plus fréquent qui le contient.*
+     ⭐ `\bvelo\b` lève le piège — vérifié : **aucun nom du catalogue** ne contient `velo` en mot
+     entier. Les bornes sont posées pareil sur `bike` et `cycl`, par principe : un motif court
+     sans bornes est une bombe à retardement dans une table de 340 noms. */
+  if(/air ?bike|assault|ski ?erg|ergometre|corde a sauter|saut a la corde|sauts a la corde|burpee|jumping jack|bear crawl|marche de l ours|wall ball|battle rope|box jump|jump box|mountain climber|grimpeur|rameur|tapis|elliptique|chariot|sled|traineau|\bvelo\b|\bbike\b|\bcycl/.test(s)) return 'cardio';
   // 0ter) ⚠️ Un ROWING à la barre ou aux haltères est un POIDS LIBRE, pas une machine.
   //    Depuis qu'on écrit le nom français dans le nom (« Rowing Barre (Tirage Horizontal) »),
   //    le mot « tirage » de la TRADUCTION le faisait basculer en ⚙️ Guidé (mesuré le 02/08).
@@ -7042,17 +7051,48 @@ function _cardioDepuisEx(o){
    ⚠️ LIMITE ÉCRITE PLUTÔT QUE DÉCOUVERTE : un « Échauffement épaules — 5 min » sans charge part
    lui aussi dans le bloc, avec le type « autre ». C'est assumé — c'est bien un échauffement sans
    charge, sa place est là, et l'erreur de calories est petite et dans le bon sens. */
-const _RE_CRENEAU_CARDIO=/^(echauffement|echauffements|warm ?up|cardio|conditionnement|retour au calme|cool ?down|recuperation active)\b/;
+const _RE_CRENEAU_CARDIO=/^(echauffement|echauffements|warm ?-? ?up|cardio|conditionnement|retour au calme|cool ?-? ?down|recuperation active|activation|mobilite|preparation)\b/;
+/* ⛔⛔ ON NE DÉPEND PLUS DU NOM — ET C'EST TOUT L'OBJET DE ft-v1150 (06/09/2026).
+   Michel, une heure après le correctif précédent : *« non mais pourquoi l'échauffement apparaît
+   dans la séance, j'ai créé exprès le cardio avant et après, ça ne doit pas se reproduire »*.
+   ⭐⭐ IL A RAISON, ET C'EST MESURÉ : ft-v1147 reconnaissait un cardio par une **liste de noms**,
+   et une liste de noms a toujours des trous. Sur **20 formulations plausibles de Milo, 6 passaient
+   encore** — `Warm-up` (le tiret !), `Mobilité`, `Activation`, `Préparation articulaire`,
+   `Fin de séance`, et **`Vélo`**.
+   👉 LA MACHINE EST LE SIGNAL FIABLE, PAS LE NOM DE L'EMPLACEMENT. Milo peut appeler son créneau
+   comme il veut ; s'il écrit « 8 min d'elliptique », c'est du cardio, quel que soit le titre.
+   ⛔ MAIS ÇA NE PEUT PAS ÊTRE UN BLANC-SEING — trois gardes, et chacun protège un vrai cas :
+     ① aucune CHARGE (le garde de ft-v1147 : la ligne de paliers porte le même nom) ;
+     ② une DURÉE réellement lisible (on n'invente jamais un nombre de minutes) ;
+     ③ ⭐ et le nom NE DOIT PAS ÊTRE UN EXERCICE DU CATALOGUE — sans lui, un « Gainage » noté
+        « 3 min, juste après le tapis » partirait au bloc cardio et **disparaîtrait de la séance**.
+        *Un exercice que le catalogue connaît est un exercice, point.* */
+function _nomEstUnExerciceConnu(nom){
+  try{
+    if(typeof _matchExercise!=='function')return false;   // pas de catalogue → on ne bloque pas
+    const r=_matchExercise(nom);
+    // ⛔ On n'accepte que la reconnaissance CERTAINE (`exact`) : un rapprochement « à peu près »
+    //    ferait refuser des créneaux légitimes au premier nom qui ressemble vaguement.
+    return !!(r && r.match && /^exact/.test(String(r.via||'')));
+  }catch(e){ return false; }
+}
 function _estCreneauCardio(o){
   try{
     if(!o||!o.name)return false;
     const nom=(typeof _naz==='function')?_naz(o.name):String(o.name).toLowerCase();
-    if(!_RE_CRENEAU_CARDIO.test(nom))return false;
-    // ⛔ LE GARDE : une charge au bout d'une série = de la musculation, jamais du cardio.
+    // ⛔ GARDE ① — une charge au bout d'une série = de la musculation, jamais du cardio.
     const sets=Array.isArray(o.sets)?o.sets:[];
     if(sets.some(s=>s&&parseFloat(String(s.kg).replace(',','.'))>0))return false;
-    // ⛔ Et il faut une durée réellement lisible — `_cardioDepuisEx` n'invente jamais un chiffre.
-    return !!_cardioDepuisEx(o);
+    // ⛔ GARDE ② — une durée réellement lisible (`_cardioDepuisEx` n'invente jamais un chiffre).
+    const c=_cardioDepuisEx(o);
+    if(!c)return false;
+    // ⭐ VOIE 1 : le nom EST un libellé d'emplacement (« Échauffement », « Cardio », « Mobilité »…).
+    if(_RE_CRENEAU_CARDIO.test(nom))return !_nomEstUnExerciceConnu(o.name);
+    /* ⭐⭐ VOIE 2, CELLE QUI FERME LES TROUS : quel que soit le titre, une MACHINE cardio est
+       nommée (dans le nom ou la note) et le nom n'est pas un exercice du catalogue. C'est ce qui
+       attrape « Fin de séance — 10 min d'elliptique » sans qu'on ait à deviner le mot « fin ». */
+    if(c.type!=='autre')return !_nomEstUnExerciceConnu(o.name);
+    return false;
   }catch(e){ return false; }
 }
 function _extraireCardioMilo(newExs){

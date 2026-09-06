@@ -27921,6 +27921,95 @@ console.log('\n-- CCXLVI. L\'échauffement cardio de Milo va dans le bloc Cardio
   await cx.close();
 }
 
+/* ═══ CCXLIX. ON NE DÉPEND PLUS DU NOM POUR RECONNAÎTRE UN CARDIO (ft-v1150) ═══════════════
+   Michel, une heure après ft-v1147 : *« non mais pourquoi l'échauffement apparaît dans la séance,
+   j'ai créé exprès le cardio avant et après, ça ne doit pas se reproduire »*.
+   ⭐⭐ IL AVAIT RAISON DE NE PAS S'EN CONTENTER : ft-v1147 reconnaissait un cardio par une LISTE DE
+   NOMS, et une liste de noms a toujours des trous. **Mesuré sur 20 formulations plausibles de
+   Milo : 6 passaient encore** — `Warm-up` (le tiret), `Mobilité`, `Activation`, `Préparation
+   articulaire`, `Fin de séance`, et **`Vélo`**.
+   ⛔⛔ CE BLOC GARDE TROIS CHOSES, ET LA 3ᵉ EST LA PLUS CHÈRE :
+     ① le trou est fermé (20/20) ;
+     ② le classement des **322 exercices du catalogue** n'a pas bougé d'un pouce ;
+     ③ et un exercice du CATALOGUE ne part JAMAIS au cardio, même sans charge, même avec une durée,
+        même si sa note nomme une machine — *« Gainage · 3 min, juste après le tapis »*.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXLIX. On ne dépend plus du NOM pour reconnaître un cardio (ft-v1150) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'999'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1800);
+  const R=await p.evaluate(()=>{ try{
+    const o={};
+    o.fn=['_extraireCardioMilo','_estCreneauCardio','_nomEstUnExerciceConnu','_exEquip','_matchExercise']
+          .filter(f=>typeof window[f]!=='function');
+    const ex=(n,note,sets)=>({name:n,note:note||'',sets:sets||[{reps:8,kg:'',type:'',done:false}]});
+    const DC=ex('Développé Couché','',[{reps:8,kg:60}]);
+    const part=(n,note)=>{ const r=_extraireCardioMilo([ex(n,note), JSON.parse(JSON.stringify(DC))]);
+      return r.exs.length===1 && !!(r.avant||r.apres); };
+    /* ① LES 6 TROUS MESURÉS — chacun doit désormais partir au bloc Cardio. */
+    o.trous={
+      warmup:      part('Warm-up','5 min de rameur'),
+      mobilite:    part('Mobilité',"8 min d'elliptique en intensité légère"),
+      activation:  part('Activation','5 min de vélo léger'),
+      preparation: part('Préparation articulaire','6 min de rameur tranquille'),
+      finSeance:   part('Fin de séance',"10 min d'elliptique léger"),
+      velo:        part('Vélo','20 min modéré')
+    };
+    /* ⭐ `Vélo` est un cas à part : c'est `_exEquip` qui l'ignorait. */
+    o.equipVelo=_exEquip('Vélo');
+    /* ⛔⛔ LE PIÈGE QUI EXPLIQUE L'OMISSION : `développé` désaccentué CONTIENT `velo`. */
+    o.developpe={ naz:(typeof _naz==='function')?_naz('Développé Couché'):'',
+                  equip:_exEquip('Développé Couché') };
+    /* ② LE CLASSEMENT DU CATALOGUE N'A PAS BOUGÉ — on épingle le compte ET la présence de
+       quelques repères, pour qu'un élargissement futur de `_exEquip` se voie. */
+    const bacs={}; (typeof EXLIB!=='undefined'?EXLIB:[]).forEach(e=>{ bacs[e.n]=_exEquip(e.n); });
+    o.cat={ total:Object.keys(bacs).length,
+            cardio:Object.keys(bacs).filter(n=>bacs[n]==='cardio').length,
+            dc:bacs['Développé Couché']||_exEquip('Développé Couché') };
+    /* ③ LE GARDE DU CATALOGUE — le cas le plus dangereux du correctif. */
+    const reste=(n,note,sets)=>{ const r=_extraireCardioMilo([ex(n,note,sets), JSON.parse(JSON.stringify(DC))]);
+      return r.exs.length===2 && !r.avant && !r.apres; };
+    o.gardes={
+      gainageTapis: reste('Gainage','3 min, juste après le tapis'),
+      planche:      reste('Planche','2 min de gainage'),
+      chaise:       reste('Chaise (Wall Sit)','1 min'),
+      paliers:      reste('Échauffement','40×5 → 55×3 → 70×2 — repos 2 min',
+                          [{reps:5,kg:40},{reps:3,kg:55},{reps:2,kg:70}]),
+      sansDuree:    reste('Mobilité','quelques mouvements d\'épaules')
+    };
+    return o;
+  }catch(e){ return {err:e.message}; } });
+
+  t('CCXLIX ⛔ CONTRÔLE — les 5 fonctions existent (sinon tout le bloc est muet)',
+    !R.err && R.fn && R.fn.length===0, R.err||JSON.stringify(R.fn));
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : les 6 trous mesurés, fermés. */
+  t('CCXLIX ⭐⭐ les 6 formulations qui passaient encore partent toutes au bloc Cardio',
+    R.trous && Object.keys(R.trous).length===6 && Object.values(R.trous).every(Boolean),
+    JSON.stringify(R.trous));
+  t('CCXLIX ⭐ « Vélo » est enfin reconnu comme du cardio par `_exEquip`',
+    R.equipVelo==='cardio', String(R.equipVelo));
+  /* ⛔⛔ LE PIÈGE, FIGÉ : sans bornes de mot, `/velo/` classerait TOUS les développés en cardio.
+     Ce témoin existe pour que personne ne « simplifie » le motif en retirant les `\b`. */
+  t('CCXLIX ⛔⛔ le piège est figé : `développé` CONTIENT `velo`, et reste pourtant de la muscu',
+    R.developpe && /velo/.test(R.developpe.naz) && R.developpe.equip!=='cardio',
+    JSON.stringify(R.developpe));
+  /* ⭐⭐ ET LA NON-RÉGRESSION QUI COMPTE LE PLUS : le catalogue entier est classé pareil. */
+  t('CCXLIX ⭐⭐ le classement du CATALOGUE n\'a pas bougé (322 exercices, 21 en cardio)',
+    R.cat && R.cat.total===322 && R.cat.cardio===21 && R.cat.dc!=='cardio', JSON.stringify(R.cat));
+  /* ⛔⛔ LES GARDES — sans eux, ce correctif mangerait de vrais exercices. */
+  t('CCXLIX ⛔⛔ un exercice du CATALOGUE ne part jamais, même noté « 3 min, après le tapis »',
+    R.gardes && R.gardes.gainageTapis===true && R.gardes.planche===true && R.gardes.chaise===true,
+    JSON.stringify(R.gardes));
+  t('CCXLIX ⛔ la ligne de PALIERS (des kg) reste un exercice — le garde de ft-v1147 tient toujours',
+    R.gardes && R.gardes.paliers===true, JSON.stringify(R.gardes));
+  t('CCXLIX ⛔ un créneau SANS durée lisible ne bouge pas — on n\'invente jamais de minutes',
+    R.gardes && R.gardes.sansDuree===true, JSON.stringify(R.gardes));
+  t('CCXLIX aucune erreur JS pendant tout le bloc', errs.length===0, errs.join(' | '));
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

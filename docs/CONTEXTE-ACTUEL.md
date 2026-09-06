@@ -6,7 +6,28 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1149` — 🔤 **LES DEUX BOUTONS DE FUSION DISAIENT LA MÊME CHOSE.**
+- **Version en ligne (live) :** `ft-v1150` — 🔥 **ON NE DÉPEND PLUS DU NOM POUR RECONNAÎTRE UN CARDIO.**
+  ⏳ **Déploiement à vérifier** (R18). ⛔ **`Code.js` NON modifié** → aucun déploiement backend.
+  ⏳ **Suite complète** : **parcours %PARC%** (+9, bloc CCXLIX), calculs 339/339, muscles 241/241,
+  croisés 50/50, dates 9/9, données classées 0 trou.
+  Michel, une heure après ft-v1147 : *« pourquoi l'échauffement apparaît dans la séance, j'ai créé
+  exprès le cardio avant et après, ça ne doit pas se reproduire »*.
+  ⭐⭐ **Il avait raison** : ft-v1147 reconnaissait un cardio par une **liste de noms**. Mesuré :
+  **6 formulations sur 20 passaient encore** (`Warm-up`, `Mobilité`, `Activation`, `Préparation
+  articulaire`, `Fin de séance`, **`Vélo`**). Après : **20/20**.
+  ⛔⛔ **Le `Vélo` était piégé** : `développé` désaccentué **contient `velo`**, donc un motif nu
+  classerait tous les développés en cardio — **mesuré : 21 → 45** exercices du catalogue.
+  `\bvelo\b` lève le piège, et le classement des **322 exercices est identique** (vérifié).
+  ⭐ **Le correctif n'allonge pas la liste, il arrête de s'y fier** : la **machine** est le signal.
+  Trois gardes : pas de **charge** · une **durée** réelle · **le nom n'est pas un exercice du
+  catalogue** (sinon « Gainage · 3 min après le tapis » disparaîtrait de la séance).
+  ⚠️⚠️ **ET LE « PLUS JAMAIS » N'EST PAS TENABLE TEL QUEL** : l'app **devine**, parce que Milo n'a
+  **aucun champ** pour dire « ceci est du cardio » (**R4** : l'info reste dans le TEXTE).
+  ⏭️ **Le vrai fix définitif = un champ structuré** → touche le **prompt** (**R34**, banc d'essai)
+  et **`coach.js`** : **signalé à session-B, pas pris**.
+  ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1149` — 🔤 **LES DEUX BOUTONS DE FUSION DISAIENT LA MÊME CHOSE.**
   Capture de Michel sur l'écran Admin, **le jour même** de ft-v1148 : ses 4 doublons sont tous
   détectés et bien étiquetés — mais les deux boutons de choix étaient coupés aux **18 premiers**
   caractères, donc **mesuré : 2 paires sur 4 affichaient DEUX FOIS LE MÊME BOUTON**.
@@ -27,7 +48,7 @@
   découpe pas les mots (*« biceps marteau »* → **0 résultat**) · le tiret ne dit pas « 1ʳᵉ fois ».
   ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 
-- **Version précédente :** `ft-v1147` — 🔥 **L'ÉCHAUFFEMENT CARDIO DE MILO ALLAIT DANS LA LISTE DES EXERCICES.**
+- **Avant :** `ft-v1147` — 🔥 **L'ÉCHAUFFEMENT CARDIO DE MILO ALLAIT DANS LA LISTE DES EXERCICES.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#944** sur `248952d`, **job `deploy` success**,
   les 7 étapes vertes à **18:05:00 UTC**. ⛔ **`Code.js` NON modifié** → aucun déploiement backend
   attendu, son absence n'est donc pas un signal.
