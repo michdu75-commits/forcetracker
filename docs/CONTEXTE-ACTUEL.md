@@ -16,8 +16,11 @@
   *« X et RIR 0 ne doivent surtout pas être considérés comme la même donnée »*). ⭐ Son exemple :
   *95×3, tu réussis la 3ᵉ mais tu sais que la 4ᵉ ne passerait pas → **RIR 0** ; tu tentes la 4ᵉ et
   elle cale → **X*** — donc le X est **un cran au-delà**.
-  ⛔ La même phrase fausse (ft-v1038) vivait à **4 endroits**, corrigés ensemble : `_rirDeSet`
-  (rend `null` sur un X) · le prompt de Milo · l'aide détaillée · l'export CSV (colonne RIR vide).
+  ⛔ La même phrase fausse (ft-v1038) vivait à **5 endroits**, corrigés ensemble : `_rirDeSet`
+  (rend `null` sur un X) · le prompt de Milo · l'aide détaillée · l'export CSV (colonne RIR vide)
+  · et le **témoin** qui figeait ce « 0 ».
+  ⭐⭐ **Le 5ᵉ, je ne l'avais pas vu — c'est un TÉMOIN qui l'a trouvé** : il ne contenait pas la
+  formule « RIR 0 », il contenait le **chiffre**. Un `grep` ne pouvait pas le voir (`BUGS.md` §45).
   ⚠️ **Le piège** : ce `null` veut dire « pas de réserve chiffrée », **pas** « effort inconnu » —
   d'où **`_effortConnu()`**, seul propriétaire de cette question (R2).
   ⛔ **Un témoin a été RETOURNÉ, pas assoupli** : c'est la règle qu'il figeait qui a changé (R30).

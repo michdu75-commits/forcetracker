@@ -2762,6 +2762,12 @@ En dix jours, la même phrase avait essaimé dans **quatre endroits qui ne se re
 | l'**aide détaillée** | la personne apprenait une définition fausse |
 | l'**export CSV** | un fichier qui se relit **ailleurs**, sans personne pour rattraper la nuance |
 
+⭐⭐ **ET J'EN AVAIS OUBLIÉ UN — c'est un TÉMOIN qui l'a trouvé, pas moi.** J'ai corrigé quatre
+endroits, lancé la passe, et un témoin écrit en **ft-v1048** (l'export CSV) est tombé rouge :
+il exigeait *« `X` vaut 0 »*. 👉 ***Le cinquième endroit n'était pas dans ma liste parce qu'il ne
+contenait pas le mot « RIR 0 » — il contenait le CHIFFRE.*** Un `grep` sur la formule ne pouvait
+pas le voir ; seul un test qui **exécute** la chaîne pouvait.
+
 👉 ***Une définition vit là où on l'a écrite ET dans tout ce qui la cite.*** Corriger le code
 seul aurait laissé Milo, l'aide et l'export dire le contraire — et c'est l'un d'eux qui aurait
 gagné, parce que c'est celui-là qu'un humain lit.

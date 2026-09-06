@@ -16986,7 +16986,14 @@ console.log('\n-- CLII. Exporter l\'historique en CSV et en PDF (ft-v1048) --');
     o.n=L.length;
     o.pasDeSerieNonValidee=!L.some(r=>r.kg===80&&r.reps===8&&r.set_num===4);
     /* ⛔ Le RIR passe par son proprietaire : `X` vaut 0, non note reste VIDE (jamais 0). */
-    o.xVaut0=(L.find(r=>r.type==='X')||{}).rir===0;
+    /* ⛔⛔ RETOURNÉ LE 06/09/2026 (ft-v1151) — il exigeait `rir===0` sur une ligne taguée `X`.
+       La DÉCISION a changé (Michel) : un X n'est PAS un RIR de 0, c'est une répétition TENTÉE
+       qui n'est pas passée — donc la colonne RIR reste VIDE et c'est la colonne `type` qui
+       porte le X. Écrire « 0 » dans un fichier qui se relit ailleurs serait faux d'un cran.
+       ⭐ ET C'EST CE TÉMOIN QUI A TROUVÉ LE 5ᵉ ENDROIT où la définition fausse vivait : j'en
+       avais corrigé quatre, l'export CSV m'avait échappé (`BUGS.md` §45). */
+    o.xSansRir=(L.find(r=>r.type==='X')||{}).rir==='';
+    o.xGardeSonTag=!!L.find(r=>r.type==='X');
     o.nonNoteVide=(L.find(r=>r.type==='É')||{}).rir==='';
     /* ⛔ AUCUNE DONNEE DE SANTE dans les colonnes. */
     o.colonnes=HISTO_COLONNES.slice();
@@ -17041,8 +17048,11 @@ console.log('\n-- CLII. Exporter l\'historique en CSV et en PDF (ft-v1048) --');
       E.n===5, 'lignes = '+E.n);
     t('⛔ une série NON validée n\'est pas exportée (elle n\'a pas eu lieu)',
       E.pasDeSerieNonValidee===true, '');
-    t('⛔ le RIR passe par son propriétaire : `X` vaut 0, non noté reste VIDE (jamais 0)',
-      E.xVaut0===true && E.nonNoteVide===true, 'X→'+E.xVaut0+' · vide→'+E.nonNoteVide);
+    t('⛔ le RIR passe par son propriétaire : un `X` laisse la colonne VIDE (ft-v1151), non noté aussi',
+      E.xSansRir===true && E.nonNoteVide===true, 'X→'+E.xSansRir+' · vide→'+E.nonNoteVide);
+    /* ⛔ ET RIEN N'EST PERDU : l'information « série à l'échec » vit dans la colonne `type`. */
+    t('⛔ … et le `X` reste lisible dans la colonne `type` (rien n\'est perdu)',
+      E.xGardeSonTag===true, '');
     t('⛔⛔ AUCUNE donnée de santé dans les colonnes (ni poids de corps, ni âge, ni sexe, ni e-mail)',
       E.aucuneSante===true, JSON.stringify(E.colonnes));
     t('⛔⛔ le CSV et le PDF lisent le MÊME producteur (deux sources se contrediraient)',
@@ -28024,6 +28034,127 @@ console.log('\n-- CCXLIX. On ne dépend plus du NOM pour reconnaître un cardio 
   await cx.close();
 }
 
+/* ═══ CCL. LE COMPTE EXACT DES RIR NOTÉS (06/09/2026, ft-v1151) ══════════════════════════════
+   Michel : « de ne rien mettre ne compte pas comme 0 mais comme rien du tout, donc Milo ne peut
+   pas le comprendre ». MESURÉ SUR SON EXPORT RÉEL (44 séances, 805 séries) : 8 séries de travail
+   sur 591 portent un RIR — 1,4 % ; sur la fenêtre que Milo voit (5 séances), 3 sur 44.
+   Le RIR par série partait déjà (ft-v1038) et la RÈGLE est dans le prompt — mais le COMPTE
+   n'existait nulle part, donc on demandait au modèle de balayer 44 lignes pour conclure « il n'y
+   en a presque aucun ». R4/R8 : la consigne nomme une source, le fait n'est pas calculé.
+   ⭐ Témoins FONCTIONNELS : `buildCoachContext()` est réellement appelée dans la page, sur des
+   séances semées exprès. Un `grep` dirait que le code compte, jamais qu'il compte JUSTE. */
+console.log('\n-- CCL. Le compte exact des RIR notés (ft-v1151) --');
+{
+  const R=await p.evaluate(()=>{
+   try{
+    const o={};
+    const j=(n)=>{const d=new Date();d.setDate(d.getDate()-n);return d.toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});};
+    const seance=(i,sets)=>({ts:9000+i,date:j(i),volume:5000,synced:true,exs:[{name:'Squat',sets}]});
+    /* ⚠️ 6 SÉANCES SEMÉES, 5 AFFICHÉES : le compte doit porter sur CE QUI EST ÉCRIT au-dessus de
+       lui, pas sur tout l'historique — sinon le chiffre contredirait les lignes que Milo lit. */
+    const jeu=()=>[
+      {kg:60,reps:5,done:true,type:'É'},                 // échauffement : hors dénominateur
+      {kg:100,reps:5,done:true,type:'N'},                // travail, non noté
+      {kg:100,reps:5,done:true,type:'N',rir:2},          // travail, noté
+      {kg:100,reps:3,done:true,type:'X'},                // ÉCHEC = RIR 0, donc NOTÉ
+      {kg:100,reps:5,done:false,type:'N',rir:1}          // non validée : n'a pas eu lieu
+    ];
+    S.sessions=[]; for(let i=0;i<6;i++) S.sessions.push(seance(i,jeu()));
+    persist();
+    const ctx=buildCoachContext();
+    const m=ctx.match(/RIR — LE COMPTE EXACT[^\n]*/);
+    o.ligne = m?m[0]:'';
+    /* ⭐⭐ LE RECOUPEMENT INTERNE : le chiffre annoncé doit égaler ce qu'on peut COMPTER dans les
+       lignes de séries juste au-dessus (les « RIRn » écrits + les séries taguées « (X) »).
+       Un compteur qui contredit les données qu'il résume est pire qu'aucun compteur. */
+    const _bloc = t => { const a=t.indexOf('DERNIÈRES SÉANCES:'), b=t.indexOf('→ ⚠️ CE QUE TU VOIS ICI');
+                         return (a>=0&&b>a) ? t.slice(a,b) : ''; };
+    const _s = _bloc(ctx);
+    o.blocTrouve = _s.length>0;
+    o.rirEcrits = (_s.match(/RIR\d/g)||[]).length;
+    o.echecs    = (_s.match(/\(X\)/g)||[]).length;
+    o.annonce   = (o.ligne.match(/:\s*(\d+)\s+série/)||[])[1];
+    o.denom     = (o.ligne.match(/sur\s+(\d+)/)||[])[1];
+
+    // ── Cas 0 : aucune série notée nulle part ────────────────────────────────
+    S.sessions=[]; for(let i=0;i<5;i++) S.sessions.push(seance(i,[
+      {kg:60,reps:5,done:true,type:'É'},
+      {kg:100,reps:5,done:true,type:'N'},
+      {kg:100,reps:5,done:true,type:'N'}
+    ]));
+    persist();
+    const c0=buildCoachContext();
+    o.ligne0=(c0.match(/RIR — LE COMPTE EXACT[^\n]*/)||[''])[0];
+
+    // ── Contrôle : AUCUNE série de travail → pas de ligne du tout ────────────
+    S.sessions=[]; for(let i=0;i<3;i++) S.sessions.push(seance(i,[{kg:60,reps:5,done:true,type:'É'}]));
+    persist();
+    o.ligneVide=(buildCoachContext().match(/RIR — LE COMPTE EXACT[^\n]*/)||[''])[0];
+
+    // ── Non-régression ft-v1038 : la règle et le RIR par série sont toujours là ──
+    S.sessions=[seance(0,jeu())]; persist();
+    const cN=buildCoachContext();
+    o.regle = /N'EST PAS UN RIR DE 0/.test(cN);
+    o.faussePhrase = /c'est-à-dire RIR 0/.test(cN);
+    o.distinction  = /cran AU-DELÀ de RIR 0/.test(cN);
+    o.parSerie = /RIR2/.test(cN);
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+
+  if(R.err) t('CCL n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔⛔ LE CONTRÔLE D'OUVERTURE : la ligne doit EXISTER dans le contexte. Sans lui, tous les
+       témoins suivants seraient verts sur une chaîne vide. */
+    t('CCL ⛔⛔ CONTRÔLE — la ligne « RIR — LE COMPTE EXACT » atteint vraiment le contexte',
+      !!R.ligne, JSON.stringify(R.ligne).slice(0,140));
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : 5 séances affichées × (2 N validées + 1 X) = 15 séries
+       de travail, dont 10 notées (le RIR2 + l'échec de chaque séance). L'échauffement, la 6ᵉ
+       séance et la série non validée sont dehors. */
+    t('CCL ⭐⭐ le compte est EXACT sur la fenêtre affichée : 10 notées sur 15 séries de travail',
+      R.annonce==='10' && R.denom==='15', 'annoncé '+R.annonce+' / '+R.denom+' — '+R.ligne);
+    /* ⛔ L'ÉCHEC COMPTE COMME NOTÉ — le piège le plus facile de la version : `_rirDeSet` rend 0
+       pour un `X`, mais la LIGNE n'écrit pas « RIR0 » (R2, le tag le dit déjà). Compter les
+       « RIRn » écrits sous-compterait donc exactement les séries les plus dures. */
+    /* ⛔ CONTRÔLE DU RECOUPEMENT LUI-MÊME : il ne vaut que s'il lit le BON bloc. Compté sur
+       TOUT le contexte, il ramassait des séries écrites ailleurs (6 et 6 au lieu de 5 et 5) —
+       une sonde qui déborde de sa cible ne rend pas « rien », elle rend un chiffre FAUX. */
+    t('CCL ⛔ CONTRÔLE — le recoupement lit bien le bloc « DERNIÈRES SÉANCES »', R.blocTrouve===true, '');
+    /* ⛔ UN `X` COMPTE COMME EFFORT CONNU, SANS ÊTRE UN RIR DE 0 — le piège le plus facile de la
+       version : la ligne n'écrit pas « RIR0 » sur un `X` (le tag le dit déjà, R2), et depuis
+       ft-v1151 `_rirDeSet` rend même `null` dessus. Compter les « RIRn » ÉCRITS sous-compterait
+       donc exactement les séries les plus dures, celles dont l'effort est le mieux connu. */
+    t('CCL ⛔ un « (X) » compte comme effort CONNU (sans être un RIR de 0)',
+      (+R.annonce) === R.rirEcrits + R.echecs && R.echecs>0,
+      'annoncé '+R.annonce+' · RIRn écrits '+R.rirEcrits+' · (X) '+R.echecs);
+    /* ⛔ L'échauffement n'est pas de l'effort à déclarer : 15 et non 20. */
+    t('CCL ⛔ les séries d\'échauffement ne sont PAS dans le dénominateur',
+      R.denom==='15', 'dénominateur annoncé : '+R.denom);
+    /* ⛔⛔ Le cas de Michel, et c'est celui qui compte : ZÉRO noté. Le vide doit être DIT et
+       interdit d'interprétation — sinon on retombe sur « ne conclus rien » que personne
+       n'applique faute de savoir combien il en manque. */
+    t('CCL ⭐⭐ zéro RIR noté : le vide est ANNONCÉ avec son nombre, et l\'interprétation interdite',
+      /AUCUNE des 10 séries/.test(R.ligne0) && /Ne déduis RIEN/.test(R.ligne0) && /DEMANDE-LE/.test(R.ligne0),
+      R.ligne0);
+    /* ⛔ « 0 sur 0 » n'est pas une information : pas de série de travail, pas de ligne. */
+    t('CCL ⛔ aucune série de travail → aucune ligne (« 0 sur 0 » ne dit rien)',
+      R.ligneVide==='', R.ligneVide);
+    /* ⛔⛔ LA CORRECTION DE FOND DEMANDÉE PAR MICHEL : le prompt disait « (X) = à l'échec,
+       c'est-à-dire RIR 0 ». C'est FAUX — RIR 0 est une série RÉUSSIE à la limite, un X est une
+       répétition TENTÉE qui n'est pas passée. Milo lisait donc une rep de moins que la réalité,
+       et une rep, sur une prescription de charge, ça compte. */
+    t('CCL ⛔⛔ le prompt ne dit PLUS « (X) … c\'est-à-dire RIR 0 »',
+      R.faussePhrase===false, 'la phrase périmée est encore envoyée à Milo');
+    t('CCL ⛔⛔ le prompt DIT la différence (X = un cran AU-DELÀ de RIR 0)',
+      R.distinction===true, '');
+    /* ⛔ NON-RÉGRESSION ft-v1038 : le compte s'AJOUTE, il ne remplace ni la règle ni la donnée. */
+    t('CCL ⛔ la règle « une série sans RIR n\'est pas un RIR de 0 » est toujours là',
+      R.regle===true, '');
+    t('CCL ⛔ le RIR par série part toujours avec la série (ft-v1038 intact)',
+      R.parSerie===true, '');
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
@@ -28586,127 +28717,6 @@ console.log('\n-- CCXLVIII. Les deux boutons de fusion sont distinguables (ft-v1
   t('CCXLVIII ⛔ la fusion reste un CHOIX : aucune fusion automatique n\'a été ajoutée (R29)',
     /function mergeExercises\(keep,remove\)/.test(srcSet) && /showConfirm\(/.test(srcSet)
     && (srcSet.match(/mergeExercises\(/g)||[]).length<=4, '');
-}
-
-/* ═══ CCL. LE COMPTE EXACT DES RIR NOTÉS (06/09/2026, ft-v1151) ══════════════════════════════
-   Michel : « de ne rien mettre ne compte pas comme 0 mais comme rien du tout, donc Milo ne peut
-   pas le comprendre ». MESURÉ SUR SON EXPORT RÉEL (44 séances, 805 séries) : 8 séries de travail
-   sur 591 portent un RIR — 1,4 % ; sur la fenêtre que Milo voit (5 séances), 3 sur 44.
-   Le RIR par série partait déjà (ft-v1038) et la RÈGLE est dans le prompt — mais le COMPTE
-   n'existait nulle part, donc on demandait au modèle de balayer 44 lignes pour conclure « il n'y
-   en a presque aucun ». R4/R8 : la consigne nomme une source, le fait n'est pas calculé.
-   ⭐ Témoins FONCTIONNELS : `buildCoachContext()` est réellement appelée dans la page, sur des
-   séances semées exprès. Un `grep` dirait que le code compte, jamais qu'il compte JUSTE. */
-console.log('\n-- CCL. Le compte exact des RIR notés (ft-v1151) --');
-{
-  const R=await p.evaluate(()=>{
-   try{
-    const o={};
-    const j=(n)=>{const d=new Date();d.setDate(d.getDate()-n);return d.toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});};
-    const seance=(i,sets)=>({ts:9000+i,date:j(i),volume:5000,synced:true,exs:[{name:'Squat',sets}]});
-    /* ⚠️ 6 SÉANCES SEMÉES, 5 AFFICHÉES : le compte doit porter sur CE QUI EST ÉCRIT au-dessus de
-       lui, pas sur tout l'historique — sinon le chiffre contredirait les lignes que Milo lit. */
-    const jeu=()=>[
-      {kg:60,reps:5,done:true,type:'É'},                 // échauffement : hors dénominateur
-      {kg:100,reps:5,done:true,type:'N'},                // travail, non noté
-      {kg:100,reps:5,done:true,type:'N',rir:2},          // travail, noté
-      {kg:100,reps:3,done:true,type:'X'},                // ÉCHEC = RIR 0, donc NOTÉ
-      {kg:100,reps:5,done:false,type:'N',rir:1}          // non validée : n'a pas eu lieu
-    ];
-    S.sessions=[]; for(let i=0;i<6;i++) S.sessions.push(seance(i,jeu()));
-    persist();
-    const ctx=buildCoachContext();
-    const m=ctx.match(/RIR — LE COMPTE EXACT[^\n]*/);
-    o.ligne = m?m[0]:'';
-    /* ⭐⭐ LE RECOUPEMENT INTERNE : le chiffre annoncé doit égaler ce qu'on peut COMPTER dans les
-       lignes de séries juste au-dessus (les « RIRn » écrits + les séries taguées « (X) »).
-       Un compteur qui contredit les données qu'il résume est pire qu'aucun compteur. */
-    const _bloc = t => { const a=t.indexOf('DERNIÈRES SÉANCES:'), b=t.indexOf('→ ⚠️ CE QUE TU VOIS ICI');
-                         return (a>=0&&b>a) ? t.slice(a,b) : ''; };
-    const _s = _bloc(ctx);
-    o.blocTrouve = _s.length>0;
-    o.rirEcrits = (_s.match(/RIR\d/g)||[]).length;
-    o.echecs    = (_s.match(/\(X\)/g)||[]).length;
-    o.annonce   = (o.ligne.match(/:\s*(\d+)\s+série/)||[])[1];
-    o.denom     = (o.ligne.match(/sur\s+(\d+)/)||[])[1];
-
-    // ── Cas 0 : aucune série notée nulle part ────────────────────────────────
-    S.sessions=[]; for(let i=0;i<5;i++) S.sessions.push(seance(i,[
-      {kg:60,reps:5,done:true,type:'É'},
-      {kg:100,reps:5,done:true,type:'N'},
-      {kg:100,reps:5,done:true,type:'N'}
-    ]));
-    persist();
-    const c0=buildCoachContext();
-    o.ligne0=(c0.match(/RIR — LE COMPTE EXACT[^\n]*/)||[''])[0];
-
-    // ── Contrôle : AUCUNE série de travail → pas de ligne du tout ────────────
-    S.sessions=[]; for(let i=0;i<3;i++) S.sessions.push(seance(i,[{kg:60,reps:5,done:true,type:'É'}]));
-    persist();
-    o.ligneVide=(buildCoachContext().match(/RIR — LE COMPTE EXACT[^\n]*/)||[''])[0];
-
-    // ── Non-régression ft-v1038 : la règle et le RIR par série sont toujours là ──
-    S.sessions=[seance(0,jeu())]; persist();
-    const cN=buildCoachContext();
-    o.regle = /N'EST PAS UN RIR DE 0/.test(cN);
-    o.faussePhrase = /c'est-à-dire RIR 0/.test(cN);
-    o.distinction  = /cran AU-DELÀ de RIR 0/.test(cN);
-    o.parSerie = /RIR2/.test(cN);
-    return o;
-   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
-  });
-
-  if(R.err) t('CCL n\'a pas pu tourner', false, R.err);
-  else{
-    /* ⛔⛔ LE CONTRÔLE D'OUVERTURE : la ligne doit EXISTER dans le contexte. Sans lui, tous les
-       témoins suivants seraient verts sur une chaîne vide. */
-    t('CCL ⛔⛔ CONTRÔLE — la ligne « RIR — LE COMPTE EXACT » atteint vraiment le contexte',
-      !!R.ligne, JSON.stringify(R.ligne).slice(0,140));
-    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : 5 séances affichées × (2 N validées + 1 X) = 15 séries
-       de travail, dont 10 notées (le RIR2 + l'échec de chaque séance). L'échauffement, la 6ᵉ
-       séance et la série non validée sont dehors. */
-    t('CCL ⭐⭐ le compte est EXACT sur la fenêtre affichée : 10 notées sur 15 séries de travail',
-      R.annonce==='10' && R.denom==='15', 'annoncé '+R.annonce+' / '+R.denom+' — '+R.ligne);
-    /* ⛔ L'ÉCHEC COMPTE COMME NOTÉ — le piège le plus facile de la version : `_rirDeSet` rend 0
-       pour un `X`, mais la LIGNE n'écrit pas « RIR0 » (R2, le tag le dit déjà). Compter les
-       « RIRn » écrits sous-compterait donc exactement les séries les plus dures. */
-    /* ⛔ CONTRÔLE DU RECOUPEMENT LUI-MÊME : il ne vaut que s'il lit le BON bloc. Compté sur
-       TOUT le contexte, il ramassait des séries écrites ailleurs (6 et 6 au lieu de 5 et 5) —
-       une sonde qui déborde de sa cible ne rend pas « rien », elle rend un chiffre FAUX. */
-    t('CCL ⛔ CONTRÔLE — le recoupement lit bien le bloc « DERNIÈRES SÉANCES »', R.blocTrouve===true, '');
-    /* ⛔ UN `X` COMPTE COMME EFFORT CONNU, SANS ÊTRE UN RIR DE 0 — le piège le plus facile de la
-       version : la ligne n'écrit pas « RIR0 » sur un `X` (le tag le dit déjà, R2), et depuis
-       ft-v1151 `_rirDeSet` rend même `null` dessus. Compter les « RIRn » ÉCRITS sous-compterait
-       donc exactement les séries les plus dures, celles dont l'effort est le mieux connu. */
-    t('CCL ⛔ un « (X) » compte comme effort CONNU (sans être un RIR de 0)',
-      (+R.annonce) === R.rirEcrits + R.echecs && R.echecs>0,
-      'annoncé '+R.annonce+' · RIRn écrits '+R.rirEcrits+' · (X) '+R.echecs);
-    /* ⛔ L'échauffement n'est pas de l'effort à déclarer : 15 et non 20. */
-    t('CCL ⛔ les séries d\'échauffement ne sont PAS dans le dénominateur',
-      R.denom==='15', 'dénominateur annoncé : '+R.denom);
-    /* ⛔⛔ Le cas de Michel, et c'est celui qui compte : ZÉRO noté. Le vide doit être DIT et
-       interdit d'interprétation — sinon on retombe sur « ne conclus rien » que personne
-       n'applique faute de savoir combien il en manque. */
-    t('CCL ⭐⭐ zéro RIR noté : le vide est ANNONCÉ avec son nombre, et l\'interprétation interdite',
-      /AUCUNE des 10 séries/.test(R.ligne0) && /Ne déduis RIEN/.test(R.ligne0) && /DEMANDE-LE/.test(R.ligne0),
-      R.ligne0);
-    /* ⛔ « 0 sur 0 » n'est pas une information : pas de série de travail, pas de ligne. */
-    t('CCL ⛔ aucune série de travail → aucune ligne (« 0 sur 0 » ne dit rien)',
-      R.ligneVide==='', R.ligneVide);
-    /* ⛔⛔ LA CORRECTION DE FOND DEMANDÉE PAR MICHEL : le prompt disait « (X) = à l'échec,
-       c'est-à-dire RIR 0 ». C'est FAUX — RIR 0 est une série RÉUSSIE à la limite, un X est une
-       répétition TENTÉE qui n'est pas passée. Milo lisait donc une rep de moins que la réalité,
-       et une rep, sur une prescription de charge, ça compte. */
-    t('CCL ⛔⛔ le prompt ne dit PLUS « (X) … c\'est-à-dire RIR 0 »',
-      R.faussePhrase===false, 'la phrase périmée est encore envoyée à Milo');
-    t('CCL ⛔⛔ le prompt DIT la différence (X = un cran AU-DELÀ de RIR 0)',
-      R.distinction===true, '');
-    /* ⛔ NON-RÉGRESSION ft-v1038 : le compte s'AJOUTE, il ne remplace ni la règle ni la donnée. */
-    t('CCL ⛔ la règle « une série sans RIR n\'est pas un RIR de 0 » est toujours là',
-      R.regle===true, '');
-    t('CCL ⛔ le RIR par série part toujours avec la série (ft-v1038 intact)',
-      R.parSerie===true, '');
-  }
 }
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
