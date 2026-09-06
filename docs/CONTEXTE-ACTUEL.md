@@ -7,6 +7,8 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1153` — 🛡️ **LES AVERTISSEMENTS DE SÉANCE ARRIVENT SUR LES PROGRAMMES.**
+  ⏳ **Suite complète VERTE** : **parcours 2996/2996** (+13, bloc CCLII), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⏳ **Déploiement à vérifier** (R18) — ⛔ **`coach.js`, `Code.js` et `worker.js` NON touchés** → ni backend ni worker.
   Michel : *« je n'ai jamais testé cet angle »*. ⛔⛔ **Il avait raison, c'est mesuré** :
   `_loadProgDayVraiment` / `_loadProgVraiment` construisent `S.wkt` **en direct** et ne traversent
