@@ -69,7 +69,42 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
-### 🟡 « IL Y A UN PROBLÈME AVEC LE RIR AUSSI » — signalé par Michel, pas encore reproduit (06/09/2026)
+### 🟡 LE RIR NON NOTÉ : MILO EST PRÉVENU, MAIS IL N'A PAS LE CHIFFRE — R8, 6ᵉ fois (06/09/2026)
+
+**Ce qui déclenche l'entrée** : Michel, après un croisement avec GPT : *« de ne rien mettre ne compte
+pas comme 0 mais comme rien du tout, donc Milo ne peut pas le comprendre »*.
+
+**⭐ LE CONSTAT SUR LA DONNÉE EST EXACT — ET C'EST VOULU.** Une série non notée n'écrit rien
+(`const rir = (_r===null) ? '' : (' RIR'+_r);`). *L'absence de mesure n'est pas une mesure* (**R29**) :
+compter un blanc comme un `0` transformerait chaque série non notée en **série menée à l'échec**.
+
+**⛔ ET MILO EST DÉJÀ PRÉVENU, mot pour mot, dans son contexte** — vérifié dans le bloc envoyé :
+*« UNE SÉRIE SANS RIR N'EST PAS UN RIR DE 0 : elle n'a simplement pas été notée — ne conclus rien de
+son absence, et ne la compte jamais comme un échec. »* Donc **ajouter la règle serait un doublon**.
+
+**⛔⛔ CE QUI MANQUE N'EST PAS LA RÈGLE, C'EST LE FAIT — et c'est mesuré.** Dans tout
+`buildCoachContext`, le RIR n'apparaît qu'**une seule fois utile** : la valeur collée à chaque série.
+**Aucun compte, aucun taux, aucun résumé.** 👉 ***La consigne lui demande de « s'appuyer sur les RIR
+réellement notés, et de le dire s'il n'y en a pas » — sans lui donner de quoi le savoir autrement
+qu'en comptant à la main dans cinq séances de vingt séries.***
+
+C'est **R8** dans sa forme exacte, pour la **6ᵉ fois** (inscription · prénom · jours à venir · dates de
+records · catalogue d'exercices · et maintenant le RIR) — et le signe d'alerte que R8 décrit est là au
+mot près : *une consigne qui NOMME une source absente du contexte*.
+
+**Attendu vérifiable** — par du **CODE**, sans juge IA : *le contexte porte le nombre de séries de
+travail et le nombre de RIR notés sur la fenêtre envoyée.* ⚠️ **Et le contre-test est obligatoire** :
+avec **zéro** RIR noté, Milo ne doit ni inventer une valeur, ni conclure à l'échec, ni faire la morale
+sur le fait de ne pas noter — *donner le chiffre ne doit pas fabriquer un reproche* (`BUGS-DE-PHILOSOPHIE`).
+
+**⛔ Non corrigé dans ft-v1147** : c'est un ajout au contexte de Milo, donc **R34 s'applique** — le rite
+avant/après au banc d'essai, pas au ressenti. Et le bloc commun est près de son plafond (**R20**).
+
+### 🔵 « MILO M'A ENCORE FAIT UNE CONNERIE AUJOURD'HUI » — signalé, contenu inconnu (06/09/2026)
+
+Michel, dans le même message. **Aucun détail encore.** La ligne est posée tout de suite, sans réponse,
+parce que c'est le régime du fichier (**R27**) — et parce que la journée a déjà montré trois fois ce
+que coûte une conclusion tirée avant la mesure. *Reste ouverte jusqu'à ce qu'il dise ce qu'il a vu.*
 
 **Ce qui déclenche l'entrée** : Michel, en salle, dans le même message que son « go » sur les doublons
 de noms : *« et il y a un problème avec le rir aussi »*. **Aucun détail encore** — la ligne est posée
