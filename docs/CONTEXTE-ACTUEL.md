@@ -6,7 +6,25 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1146` — 📊 **COMBIEN DE FOIS MILO ET L'APP SE CONTREDISENT-ILS ?**
+- **Version en ligne (live) :** `ft-v1147` — 🔥 **L'ÉCHAUFFEMENT CARDIO DE MILO ALLAIT DANS LA LISTE DES EXERCICES.**
+  ⏳ **Déploiement à vérifier** (R18). ⛔ **`Code.js` NON modifié** → aucun déploiement backend.
+  ⏳ **Suite complète** : **parcours 2929/2929** (+10, bloc CCXLVI), calculs 339/339, muscles 241/241,
+  croisés 50/50, dates 9/9, données classées 0 trou.
+  Michel : *« Milo me propose un échauffement en début de séance, ça ne va pas du tout, pourquoi ça
+  arrive ? »* — puis *« essaye de voir ça avant de modifier quoi que ce soit »*.
+  ⭐⭐ **Milo a obéi à la lettre** : son prompt lui interdit le cardio dans la liste des exercices,
+  et lui donne pour exemple **mot pour mot** *« Échauffement : 8 min d'elliptique en intensité
+  légère »*. 👉 ***Le prompt met la machine dans la NOTE, le lecteur la cherchait dans le NOM.***
+  ⭐ **Mesuré** : `_exEquip('Elliptique')` → `cardio` · `_exEquip('Échauffement')` → **`autre`**.
+  Et `_cardioDepuisEx` savait parfaitement lire la ligne — **il n'était jamais appelé**.
+  ⛔⛔ **Le garde sur la CHARGE est le cœur du correctif** : la ligne de paliers porte le même nom
+  et une durée lisible. Sans lui (contrôle M1), la montée en charge du squat **disparaît de la
+  séance**. *Une entrée dont une série porte des kg n'est jamais du cardio* (R29).
+  ⛔ **Le prompt n'a pas bougé** (R7 : dernier levier · R34 : se validerait au banc d'essai).
+  ⏭️ **Non traité, exprès** : un cardio **au milieu** de la séance reste un exercice (décision
+  ft-v995). ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1146` — 📊 **COMBIEN DE FOIS MILO ET L'APP SE CONTREDISENT-ILS ?**
   Michel est à la salle (*« fais au mieux »*). Suite de l'audit du matin : Milo prescrit
   **3×3 à 100 kg**, l'app affiche **juste dessous** *« viser ~95 kg »*. ⛔⛔ **Personne n'a tort**
   — les deux calculs sont justes et emploient **le même 1RM** ; l'asymétrie est de **règle** et de
@@ -29,7 +47,7 @@
   🔐 Écran **derrière l'admin** → règle d'or #11 : **rien à annoncer**.
   ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 
-- **Version précédente :** `ft-v1145` — 🌙 **UN ÉTAT PARFAIT ANNONCÉ COMME UNE ANOMALIE.**
+- **Avant :** `ft-v1145` — 🌙 **UN ÉTAT PARFAIT ANNONCÉ COMME UNE ANOMALIE.**
   ✅ **LES DEUX DÉPLOIEMENTS VÉRIFIÉS VERTS** (R18) : site run **#939** (7 étapes, 15:05:25 UTC)
   **ET** backend run **#107** (9 étapes, dont « le backend répond VRAIMENT » et `authStatus` —
   15:05:37 UTC), tous deux sur `6a29f4d`.

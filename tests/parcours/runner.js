@@ -27843,6 +27843,84 @@ console.log('\n-- CCXLIV. Milo sait qu\'on le teste — chez Michel seul (ft-v11
   await cx.close();
 }
 
+/* ═══ CCXLVI. L'ÉCHAUFFEMENT CARDIO DE MILO VA DANS LE BLOC CARDIO (ft-v1147) ═══════════════
+   Michel, capture à l'appui : *« Milo me propose un échauffement en début de séance, ça ne va
+   pas du tout »*. Un exercice **« Échauffement »**, note *« 8 min d'elliptique en intensité
+   légère »*, pendant que le bloc Cardio restait vide.
+   ⛔⛔ CE BLOC PROTÈGE DEUX CHOSES OPPOSÉES, et la seconde compte plus que la première :
+   ① le cardio d'échauffement rejoint bien son bloc ; ② et surtout **rien d'autre ne le suit**.
+   Élargir le détecteur peut FAIRE DISPARAÎTRE de vrais exercices — la ligne de paliers
+   « Échauffement : 40×5 → 55×3 → 70×2 — repos 2 min » porte le même nom et une durée lisible.
+   *Retirer un exercice réel coûte infiniment plus cher que laisser un échauffement dans la
+   liste* (R29). Les témoins de refus sont donc au moins aussi importants que ceux d'extraction.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCXLVI. L\'échauffement cardio de Milo va dans le bloc Cardio (ft-v1147) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'999'}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1800);
+  const R=await p.evaluate(()=>{ try{
+    const o={};
+    o.fn=['_extraireCardioMilo','_cardioDepuisEx','_estCreneauCardio','_exEquip']
+          .filter(f=>typeof window[f]!=='function');
+    const ex=(n,note,sets)=>({name:n,note:note||'',sets:sets||[{reps:8,kg:'',type:'',done:false}]});
+    const run=(l)=>{ const r=_extraireCardioMilo(JSON.parse(JSON.stringify(l)));
+      return {restants:r.exs.map(x=>x.name), avant:r.avant, apres:r.apres}; };
+    const DC=ex('Développé Couché','',[{reps:8,kg:60}]);
+    /* Le classement d'origine — c'est LUI qui explique tout le défaut. */
+    o.equip={ ell:_exEquip('Elliptique'), ech:_exEquip('Échauffement') };
+    o.michel   = run([ ex('Échauffement',"8 min d'elliptique en intensité légère"), DC ]);
+    o.nomme    = run([ ex('Elliptique','8 min en intensité légère',[{reps:1}]), DC ]);
+    o.paliers  = run([ ex('Échauffement','40×5 → 55×3 → 70×2 — repos 2 min',
+                          [{reps:5,kg:40},{reps:3,kg:55},{reps:2,kg:70}]), DC ]);
+    o.reposNote= run([ ex('Développé Couché','repos 3 min entre les séries',[{reps:8,kg:60}]),
+                       ex('Squat','',[{reps:5,kg:100}]) ]);
+    o.finCardio= run([ DC, ex('Cardio','12 min de tapis en intensité modérée') ]);
+    o.sansDuree= run([ ex('Échauffement','vélo tranquille'), DC ]);
+    /* ⚠️ L'ORDRE nom > note : le nom est la source SÛRE. */
+    o.typeOrdre=_cardioDepuisEx(ex('Rameur','10 min, comme sur le tapis'));
+    return o;
+  }catch(e){ return {err:e.message}; } });
+
+  /* ⛔ CONTRÔLES D'ABORD — sans eux, « rien ne part au cardio » serait vert sur un extracteur mort. */
+  t('CCXLVI ⛔ CONTRÔLE — les 4 fonctions existent (sinon tout le bloc est muet)',
+    !R.err && R.fn && R.fn.length===0, R.err||JSON.stringify(R.fn));
+  t('CCXLVI ⛔ CONTRÔLE — NON-RÉGRESSION ft-v995 : une machine NOMMÉE part toujours au bloc cardio',
+    R.nomme && R.nomme.restants.join()==='Développé Couché'
+      && R.nomme.avant && R.nomme.avant.type==='elliptique', JSON.stringify(R.nomme));
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION — le cas exact de la capture de Michel. */
+  t('CCXLVI ⭐⭐ « Échauffement » + note « 8 min d\'elliptique » quitte la liste et remplit le bloc AVANT',
+    R.michel && R.michel.restants.join()==='Développé Couché'
+      && R.michel.avant && R.michel.avant.duration===8
+      && R.michel.avant.intensity==='leger' && R.michel.avant.type==='elliptique',
+    JSON.stringify(R.michel));
+  /* ⭐ Et il documente la CAUSE, pour que personne ne la redécouvre : le nom n'est pas une machine. */
+  t('CCXLVI ⭐ la cause est figée : `_exEquip` classe « Elliptique » en cardio, « Échauffement » non',
+    R.equip && R.equip.ell==='cardio' && R.equip.ech!=='cardio', JSON.stringify(R.equip));
+  /* ⛔⛔ LES TROIS REFUS — ce sont eux qui empêchent le correctif de manger de vraies séances. */
+  t('CCXLVI ⛔⛔ la ligne de PALIERS (même nom, mais des KG) reste un EXERCICE, jamais du cardio',
+    R.paliers && R.paliers.restants.join()==='Échauffement,Développé Couché'
+      && R.paliers.avant===null && R.paliers.apres===null, JSON.stringify(R.paliers));
+  t('CCXLVI ⛔ un exercice de muscu dont la NOTE dit « repos 3 min » ne part pas au cardio',
+    R.reposNote && R.reposNote.restants.join()==='Développé Couché,Squat'
+      && R.reposNote.avant===null && R.reposNote.apres===null, JSON.stringify(R.reposNote));
+  t('CCXLVI ⛔ sans DURÉE lisible, rien ne bouge — on n\'invente jamais un nombre de minutes',
+    R.sansDuree && R.sansDuree.restants.join()==='Échauffement,Développé Couché'
+      && R.sansDuree.avant===null, JSON.stringify(R.sansDuree));
+  /* ⭐ La position décide encore : après le dernier exercice → cardio de FIN. */
+  t('CCXLVI ⭐ un « Cardio » en fin de séance remplit le bloc APRÈS, pas celui d\'avant',
+    R.finCardio && R.finCardio.restants.join()==='Développé Couché'
+      && R.finCardio.avant===null && R.finCardio.apres
+      && R.finCardio.apres.type==='tapis' && R.finCardio.apres.duration===12,
+    JSON.stringify(R.finCardio));
+  /* ⛔ L'ORDRE nom > note est une GARANTIE : sinon le 1ᵉʳ motif de la table gagnerait. */
+  t('CCXLVI ⛔ le TYPE se lit d\'abord dans le NOM : un « Rameur » dont la note dit « tapis » reste un rameur',
+    R.typeOrdre && R.typeOrdre.type==='rameur', JSON.stringify(R.typeOrdre));
+  t('CCXLVI aucune erreur JS pendant tout le bloc', errs.length===0, errs.join(' | '));
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
