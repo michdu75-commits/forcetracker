@@ -1,7 +1,7 @@
 # 📒 Inventaire — ce qui existe dans Force Tracker
 
 > ⚙️ **FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer avec `python3 tools/inventaire.py`.
-> Généré depuis **le code** (version `ft-v1139`, dernier commit 2026-09-05).
+> Généré depuis **le code** (version `ft-v1139`, dernier commit 2026-09-06).
 >
 > **À quoi il sert** : répondre à *« est-ce que c'est déjà construit ? »*. Le journal des versions
 > (`CLAUDE.md`, `docs/JOURNAL-ARCHIVE.md`) répond à *« que s'est-il passé, quand, pourquoi ? »* —
@@ -17,7 +17,7 @@
 | Élément | Nombre | Absents de la doc |
 |---|---|---|
 | Écrans | 7 | 0 |
-| Lignes de menu | 6 | 0 |
+| Lignes de menu | 16 | 4 |
 | Fenêtres (modales) | 64 | 13 |
 | Actions du serveur | 45 | 0 |
 | Fonctions JS | 599 | — |
@@ -35,16 +35,26 @@
 | `s-coach` | ✅ |
 | `s-cycle` | ✅ |
 
-## ☰ Menu
+## ☰ Menu (Ton suivi · Tes outils · Apprendre · L'application)
 
 | Libellé | id | ouvre | doc |
 |---|---|---|---|
-| **Ce que Milo sait de toi** | `menu-row-profil` | `closeMenuDrawer` | ✅ |
-| **Ce que Milo sait de toi** | `menu-row-premium` | `closeMenuDrawer` | ✅ |
-| **Ce que Milo sait de toi** | `menu-row-miloknows` | `closeMenuDrawer` | ✅ |
-| **Exporter mes données** | `menu-row-bilanmois` | `closeMenuDrawer` | ✅ |
+| **_(libellé rempli à l'ouverture)_** | `menu-row-profil` | `openProfil` | ✅ |
+| **Premium** | `menu-row-premium` | `openPremiumInfo` | ✅ |
+| **Ce que Milo sait de toi** | `menu-row-miloknows` | `openMiloKnows` | ✅ |
+| **Bilans mensuels** | `menu-row-bilanmois` | `openMonthReports` | ✅ |
+| **Exporter mes données** | — | `exportData` | ✅ |
+| **Cycle de force** | — | `goScreen` | ✅ |
+| **Calculateur 1RM** | — | `openDrawerContent` | ✅ |
+| **Guide de la muscu** | — | `openDrawerContent` | ✅ |
+| **Anatomie du corps humain** | — | `openDrawerContent` | ❓ |
+| **Protéines en poudre** | — | `openDrawerContent` | ✅ |
+| **Compléments alimentaires** | — | `openDrawerContent` | ✅ |
 | **Guide de l'application** | `menu-row-appguide` | `openAppGuide` | ✅ |
-| **Nouveautés** | `menu-row-whatsnew` | `closeMenuDrawer` | ✅ |
+| **Nouveautés** | `menu-row-whatsnew` | `openWhatsNewHistory` | ✅ |
+| **Aide détaillée** | — | `openDrawerContent` | ✅ |
+| **À propos** | — | `openDrawerContent` | ✅ |
+| **Confidentialité** | — | `window.open` | ✅ |
 
 ## 🔌 Actions du serveur (backend)
 

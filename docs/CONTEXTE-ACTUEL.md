@@ -6,6 +6,22 @@
 
 ---
 
+- 🧾 **HORS VERSION (06/09, matin) — L'INVENTAIRE SE TROMPAIT DE NOMS, c'est corrigé.**
+  Michel a demandé *« le tour de ce qui est comptabilisé pour faire tourner l'appli et Milo »*.
+  ⛔⛔ **Le premier défaut trouvé était dans l'OUTIL qui sert à répondre à cette question** :
+  `tools/inventaire.py` listait **6 lignes de menu sur 16** et donnait **le même libellé à trois
+  lignes différentes**. 👉 *Le document censé dire « est-ce que c'est déjà construit ? » nommait
+  les mauvaises choses* — R23 retournée contre l'outil qui existe pour l'empêcher.
+  ⭐ Corrigé : extraction **scopée au menu vivant**, libellé lu **dans la ligne**, destination
+  réelle au lieu de `closeMenuDrawer`, et les 4 rayons affichés. **6 → 16.**
+  🛡️ **Contrôle 15** de `check_regles.py` (compte **et** doublons). ⚠️ Sa 1ʳᵉ version était
+  **muette** (`_re` au lieu de `re`, avalé par un `except: pass`) — il dit maintenant quand il
+  n'a pas pu tourner. ⛔ Contrôle négatif : l'ancien outil est attrapé (6 contre 16).
+  ⛔ **Pas de bump `sw.js`** : aucun fichier de l'app ne change.
+  ⏭️ **Reste de la liste de Michel** : `translations.js` chargé par personne (n°1) ·
+  `mensLog`/`missedLog` hors cloud (n°2, **pris par session-A**) · trous Milo `badges` et
+  `dayStateLog` (n°3) · `getLevel` annoncé dormant alors qu'il est appelé (n°5).
+
 - **Version en ligne (live) :** `ft-v1139` — 🗂️ **LE MENU RANGÉ EN 4 RAYONS.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#923** sur `90c5574`, **job `deploy` success**,
   les 7 étapes vertes à **23:18:45 UTC**.

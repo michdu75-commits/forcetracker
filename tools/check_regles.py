@@ -758,3 +758,62 @@ except SystemExit:
     raise
 except Exception:
     pass                                        # jamais bloquer sur un pépin d'outillage
+
+# ── Contrôle 15 : L'INVENTAIRE COMPTE-T-IL VRAIMENT CE QU'IL PRÉTEND COMPTER ? ────────────
+# Né le 06/09/2026, en répondant à Michel qui demandait « le tour de ce qui est comptabilisé
+# pour faire tourner l'appli et Milo ». ⛔⛔ LE PREMIER DÉFAUT TROUVÉ ÉTAIT DANS L'OUTIL QUI SERT
+# À RÉPONDRE À CETTE QUESTION : `tools/inventaire.py` listait **6 lignes de menu sur 14** (il
+# exigeait un `id`, que 8 lignes n'ont pas) et affichait **trois lignes différentes sous le même
+# libellé** (sa recherche de titre courait sur le fichier ENTIER et ramenait celui d'à côté).
+# 👉 Le document censé répondre à « est-ce que c'est déjà construit ? » NOMMAIT LES MAUVAISES
+#    CHOSES — R23 retournée contre l'outil qui existe pour l'empêcher.
+# ⭐ Ce contrôle tient les DEUX moitiés du défaut : ① autant d'entrées listées que le menu vivant
+#    en contient · ② aucun libellé en double. *Le compte seul n'aurait pas vu les libellés faux ;
+#    les doublons seuls n'auraient pas vu les 8 lignes manquantes.*
+# ⚠️⚠️ ET IL DIT QUAND IL N'A PAS PU TOURNER. Sa première version employait `_re` (le module est
+#    importé sous le nom `re`) : NameError, avalé par un `except: pass`, et le contrôle est resté
+#    MUET en ayant l'air d'être passé. *Un contrôle qui ne s'exécute pas est pire que pas de
+#    contrôle : il occupe la place d'une garantie sans en être une.*
+try:
+    import os as _os2
+    _rac2 = _RACINE if '_RACINE' in dir() else '.'
+    _inv = _os2.path.join(_rac2, 'docs/INVENTAIRE.md')
+    _idx = _os2.path.join(_rac2, 'index.html')
+    if not (_os2.path.exists(_inv) and _os2.path.exists(_idx)):
+        raise FileNotFoundError('docs/INVENTAIRE.md ou index.html introuvable')
+    _H = open(_idx, encoding='utf-8').read()
+    _i = _H.find('id="menu-drawer"')
+    _j = _H.find('<!-- FOOTER -->', _i)
+    if _i < 0 or _j <= _i:
+        raise ValueError("le tiroir de menu vivant (menu-drawer) n'a pas été retrouvé")
+    _menu = _H[_i:_j]
+    # Les lignes RÉELLES du menu vivant — même définition que dans tools/inventaire.py.
+    _reel = len(re.findall(r'<div[^>]*(?:class="menu-row"|id="menu-row-[a-z0-9-]+")', _menu))
+    if not _reel:
+        raise ValueError("aucune ligne de menu trouvée dans index.html")
+    _txtI = open(_inv, encoding='utf-8').read()
+    _sec = re.search(r'\n## ☰ Menu[^\n]*\n(.*?)(?=\n## )', _txtI, re.S)
+    if not _sec:
+        raise ValueError("la section « ☰ Menu » est absente de docs/INVENTAIRE.md")
+    _lignes = re.findall(r'^\| \*\*(.+?)\*\* \|', _sec.group(1), re.M)
+    if len(_lignes) != _reel:
+        print(f"❌ docs/INVENTAIRE.md liste {len(_lignes)} entrée(s) de menu, "
+              f"le menu vivant en contient {_reel}.")
+        print("   → un inventaire qui ne voit pas tout ne dit pas « il n'y a rien », il dit "
+              "« il n'y a que ça » — et on le croit. Régénérer : python3 tools/inventaire.py")
+        sys.exit(1)
+    _dbl = sorted({x for x in _lignes if _lignes.count(x) > 1 and not x.startswith('_')})
+    if _dbl:
+        print("❌ docs/INVENTAIRE.md donne le MÊME libellé à plusieurs lignes de menu : "
+              + ", ".join('« %s »' % d for d in _dbl))
+        print("   → c'est le défaut du 06/09 : le titre était cherché dans tout le fichier, "
+              "donc une ligne sans libellé propre héritait de celui d'à côté.")
+        sys.exit(1)
+    print(f"✅ inventaire : les {_reel} entrées du menu sont listées, aucun libellé en double")
+except SystemExit:
+    raise
+except Exception as _e15:
+    # ⛔ ON NE SE TAIT PAS. Un contrôle empêché de tourner doit le DIRE, sinon son silence se
+    #    lit comme un succès — c'est exactement ce qui est arrivé à sa première version.
+    print(f"⚠️ contrôle « inventaire » NON EXÉCUTÉ ({type(_e15).__name__}: {_e15})")
+    print("   → ce n'est pas un feu vert : la garantie n'a pas été vérifiée du tout.")

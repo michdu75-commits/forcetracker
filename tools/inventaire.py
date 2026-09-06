@@ -48,7 +48,53 @@ def uniq(seq):
 # Un ÉCRAN = un <div class="screen" id="s-…">, pas n'importe quel id commençant par s-
 screens = uniq(re.findall(r'<div[^>]*class="[^"]*\bscreen\b[^"]*"[^>]*id="(s-[a-z0-9-]+)"', HTML)
              + re.findall(r'<div[^>]*id="(s-[a-z0-9-]+)"[^>]*class="[^"]*\bscreen\b[^"]*"', HTML))
-menus   = uniq(re.findall(r'id="(menu-row-[a-z0-9-]+)"[^>]*onclick="([^"]+)"', HTML))
+# ⛔⛔ LE MENU SE LIT DANS LE MENU VIVANT, LIGNE PAR LIGNE (corrigé le 06/09/2026).
+# L'ancienne extraction était `id="(menu-row-…)"[^>]*onclick=` sur le fichier ENTIER, et elle
+# avait DEUX défauts mesurés :
+#   ① elle exigeait un `id` → les 8 lignes du menu qui n'en ont pas étaient INVISIBLES.
+#      Résultat : 6 entrées listées sur 14. *Un inventaire qui ne voit pas la moitié de ce
+#      qu'il inventorie ne dit pas « il n'y a rien », il dit « il n'y a que ça » — et on le croit.*
+#   ② `menu_label` cherchait `id="…".*?menu-row-lbl">` avec re.S SUR TOUT LE FICHIER : pour une
+#      ligne sans libellé propre (la carte Profil, la ligne Premium), le `.*?` allait chercher le
+#      libellé de la ligne SUIVANTE, n'importe où après. Mesuré : `menu-row-profil`,
+#      `menu-row-premium` et `menu-row-miloknows` s'affichaient TOUS LES TROIS comme
+#      « Ce que Milo sait de toi ».
+# 👉 On découpe le tiroir VIVANT (`menu-drawer`) — surtout pas le vieux `#drawer` orphelin —
+#    puis chaque ligne est lue DANS SES PROPRES BORNES. Le libellé ne peut plus venir d'ailleurs.
+def _bloc_menu():
+    i = HTML.find('id="menu-drawer"')
+    if i < 0: return ''
+    j = HTML.find('<!-- FOOTER -->', i)
+    return HTML[i:j if j > 0 else len(HTML)]
+
+MENU = _bloc_menu()
+# Une LIGNE = un élément qui porte class="menu-row" ou un id="menu-row-…". On capture le tag
+# d'ouverture ET ce qui suit jusqu'à la ligne suivante : le libellé vit dedans, pas ailleurs.
+_bornes = [m.start() for m in re.finditer(r'<div[^>]*(?:class="menu-row"|id="menu-row-[a-z0-9-]+")', MENU)]
+menus = []
+for n, deb in enumerate(_bornes):
+    fin = _bornes[n+1] if n+1 < len(_bornes) else len(MENU)
+    row = MENU[deb:fin]
+    mid = (re.search(r'id="(menu-row-[a-z0-9-]+)"', row) or [None, ''])[1] if re.search(r'id="(menu-row-[a-z0-9-]+)"', row) else ''
+    # Le libellé, par ordre de fiabilité — et TOUJOURS pris dans `row`, jamais au-delà :
+    #   ① la classe prévue pour ça ; ② à défaut, le premier texte du bloc `flex:1` SANS id
+    #      (la carte Premium n'a pas de classe de libellé) ; ③ si le seul texte disponible porte
+    #      un `id`, c'est que JS l'écrit à l'ouverture — on le DIT au lieu d'afficher la valeur
+    #      de démonstration figée dans le HTML. *Écrire « Michel » dans un inventaire serait faux
+    #      pour tout le monde sauf une personne.*
+    lab = (re.search(r'class="menu-row-lbl">([^<]+)<', row)
+        or re.search(r'class="menu-row-t">([^<]+)<', row)
+        or re.search(r'flex:1;min-width:0;"[^>]*>\s*<div style="[^"]*">([^<]+)<', row))
+    if lab:
+        lab = lab.group(1).strip()
+    elif re.search(r'flex:1;min-width:0;"[^>]*>\s*<div id="', row):
+        lab = '_(libellé rempli à l\'ouverture)_'
+    else:
+        lab = ''
+    act = re.search(r'onclick="([^"]+)"', row)
+    menus.append((mid, act.group(1) if act else '', lab))
+# Les RAYONS du menu (Ton suivi · Tes outils · Apprendre · L'application) — ft-v1139.
+rayons = re.findall(r'<div class="sec">([^<]+)</div>', MENU)
 overlays= uniq(re.findall(r'class="overlay"\s+id="([a-z0-9-]+)"', HTML))
 actions = sorted(set(re.findall(r"action\s*===?\s*['\"]([a-zA-Z][a-zA-Z0-9_]*)['\"]", BACK))
                  | set(re.findall(r"case\s*['\"]([a-zA-Z][a-zA-Z0-9_]*)['\"]\s*:", BACK)))
@@ -63,10 +109,11 @@ for f, src in JS.items():
 # Ce qui a été ANNONCÉ aux utilisateurs (donc censé exister)
 wn = re.findall(r"\{v:(\d+),\s*ic:'([^']*)',\s*t:'((?:[^'\\]|\\.)*)'", rd('constants.js'))
 
-# Titre lisible d'une ligne de menu
+# Titre lisible d'une ligne de menu — LU DANS LA LIGNE au moment de l'extraction (voir plus haut),
+# jamais re-cherché dans le fichier entier : c'est ce qui donnait trois fois le même nom.
+_LABELS = {mid: lab for mid, _fn, lab in menus if mid}
 def menu_label(mid):
-    m = re.search(r'id="%s".*?class="menu-row-lbl">([^<]+)<' % re.escape(mid), HTML, re.S)
-    return m.group(1).strip() if m else ''
+    return _LABELS.get(mid, '')
 
 # ── Rendu ─────────────────────────────────────────────────────────────────────
 try:
@@ -111,7 +158,9 @@ w("| Élément | Nombre | Absents de la doc |")
 w("|---|---|---|")
 sets = [
     ("Écrans",            screens,               lambda x: cited(x)),
-    ("Lignes de menu",    [m[0] for m in menus], lambda x: cited(x, menu_label(x))),
+    # ⚠️ On indexe sur le LIBELLÉ, pas sur l'id : 8 lignes sur 14 n'ont pas d'id, et une clé vide
+    #    les ferait toutes fusionner en une seule (le compte retomberait à 7).
+    ("Lignes de menu",    [(m[0] or m[2]) for m in menus], lambda x: cited(x)),
     ("Fenêtres (modales)",overlays,              lambda x: cited(x)),
     ("Actions du serveur",actions,               lambda x: cited(x, 'handle%s_' % (x[0].upper()+x[1:]))),
 ]
@@ -126,9 +175,19 @@ table("🖥️ Écrans",
       [["`%s`" % s, "✅" if cited(s) else "❓"] for s in screens],
       ["Écran", "doc"])
 
-table("☰ Menu",
-      [["**%s**" % (menu_label(mid) or mid), "`%s`" % mid, "`%s`" % fn.split('(')[0].split(';')[-1],
-        "✅" if cited(mid, menu_label(mid)) else "❓"] for mid, fn in menus],
+# Où MÈNE une ligne — pas par quoi elle commence. `closeMenuDrawer();openProfil()` ouvre le
+# PROFIL ; afficher `closeMenuDrawer` nommait la plomberie et cachait la destination, sur 8 lignes
+# des 16. *Même défaut que les libellés : le document nommait la mauvaise chose.*
+_PLOMBERIE = ('closeMenuDrawer', 'closeDrawer', 'closeDrawerContent')
+def menu_cible(fn):
+    appels = [a for a in re.findall(r'([A-Za-z_][A-Za-z0-9_.]*)\s*\(', fn or '') if a not in _PLOMBERIE]
+    return appels[-1] if appels else (fn or '—')
+
+table("☰ Menu (%s)" % (" · ".join(rayons) if rayons else "sans rayons"),
+      [["**%s**" % (lab or mid or '(sans libellé)'),
+        ("`%s`" % mid) if mid else "—",
+        "`%s`" % menu_cible(fn),
+        "✅" if cited(mid, lab) else "❓"] for mid, fn, lab in menus],
       ["Libellé", "id", "ouvre", "doc"])
 
 table("🔌 Actions du serveur (backend)",
