@@ -6,7 +6,30 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1145` — 🌙 **UN ÉTAT PARFAIT ANNONCÉ COMME UNE ANOMALIE.**
+- **Version en ligne (live) :** `ft-v1146` — 📊 **COMBIEN DE FOIS MILO ET L'APP SE CONTREDISENT-ILS ?**
+  Michel est à la salle (*« fais au mieux »*). Suite de l'audit du matin : Milo prescrit
+  **3×3 à 100 kg**, l'app affiche **juste dessous** *« viser ~95 kg »*. ⛔⛔ **Personne n'a tort**
+  — les deux calculs sont justes et emploient **le même 1RM** ; l'asymétrie est de **règle** et de
+  **moment** (le contrôle tourne APRÈS Milo, selon une règle qu'il n'a jamais reçue).
+  ⭐⭐ **Donc la question n'est pas « qui a raison » mais « À QUELLE FRÉQUENCE »** — et personne ne
+  l'avait mesurée. *Un conflit sur cent : on reformule une phrase. Un sur trois : c'est le prompt
+  ou le coefficient.*
+  ⛔⛔ **Et le banc d'essai ne peut PAS y répondre, c'est mesuré** : le contrôle se tait sans record
+  (`if(!(rm1>0)) return`), et sur **56 scénarios, 7** portent un `rm1`, dont **6** demandent une
+  séance. ***Un dénominateur de 6 ne mesure pas une fréquence.***
+  ⭐ **D'où un compteur LOCAL**, au point de passage des trois voies, sur le patron de
+  `_gardienCompter` (R13). ⛔⛔ **Le 2ᵉ dénominateur est le cœur** : une séance **sans record** ne
+  peut pas déclencher le contrôle — la compter comme « pas de conflit » ferait baisser le taux
+  **dans le sens rassurant**. Les séances **jugeables** sont comptées à part.
+  ⛔ **R4a — Milo ne le reçoit pas** : lui dire « tu as été contesté 12 fois » le ferait prescrire
+  **défensivement**. ⛔ **Local, écrit plutôt que subi (R30)** : la question est « ça m'arrive
+  souvent, à MOI ? » ; le faire voyager demanderait `Code.js`, non nécessaire pour trancher.
+  ⛔ **Ça ne corrige RIEN** — ni `_INT_TENUE` (0,93), ni le prompt, ni l'ordre du pipeline : les
+  **trois décisions restent à Michel** (`docs/ADAPTATION-DES-SEANCES.md`).
+  🔐 Écran **derrière l'admin** → règle d'or #11 : **rien à annoncer**.
+  ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1145` — 🌙 **UN ÉTAT PARFAIT ANNONCÉ COMME UNE ANOMALIE.**
   ✅ **LES DEUX DÉPLOIEMENTS VÉRIFIÉS VERTS** (R18) : site run **#939** (7 étapes, 15:05:25 UTC)
   **ET** backend run **#107** (9 étapes, dont « le backend répond VRAIMENT » et `authStatus` —
   15:05:37 UTC), tous deux sur `6a29f4d`.
@@ -27,7 +50,7 @@
   **purge du dossier Drive** (append-only, ~730 fichiers/an, quota averti à 1000).
   ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 
-- **Version précédente :** `ft-v1144` — 🤝 **MILO EST MIS AU COURANT QU'ON LE TESTE — CHEZ MICHEL SEUL.**
+- **Avant :** `ft-v1144` — 🤝 **MILO EST MIS AU COURANT QU'ON LE TESTE — CHEZ MICHEL SEUL.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#935** sur `0048585`, **job `deploy` success**,
   les 7 étapes vertes à **14:18:53 UTC**. ⛔ **`Code.js` NON modifié** (vérifié : 0 changement)
   → **aucun déploiement backend attendu**, et son absence n'est donc pas un signal.

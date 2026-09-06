@@ -28036,6 +28036,153 @@ console.log('\n-- CXCI. Une mise à jour ne tue plus un banc d\'essai en cours (
 
 
 
+/* ═══ CCXLV. COMBIEN DE FOIS MILO ET L'APP SE CONTREDISENT-ILS ? (06/09/2026, ft-v1146) ═════
+   Michel : Milo prescrit 3×3 à 100 kg, et l'app affiche juste dessous « viser ~95 kg ». Les
+   deux calculs sont justes ; pour la personne, Force Tracker se contredit. La question qui
+   manquait n'est pas « qui a raison » mais « À QUELLE FRÉQUENCE » — c'est elle qui décide du
+   remède, et personne ne l'avait mesurée.
+   ⛔⛔ ET LE BANC D'ESSAI NE PEUT PAS Y RÉPONDRE, c'est mesuré : le contrôle se tait sans
+   record (`if(!(rm1>0)) return`), et sur 56 scénarios seuls 7 en portent un, dont 6 demandent
+   une séance. Un dénominateur de 6 ne mesure pas une fréquence.
+   ⭐ LES TÉMOINS SONT FONCTIONNELS, PAS DES `grep` : la fonction est réellement exécutée dans
+   un bac à sable avec un faux stockage. Un motif dirait seulement que le code RESSEMBLE à un
+   compteur ; ici on vérifie qu'il COMPTE — et surtout qu'il compte le bon dénominateur. */
+console.log('\n-- CCXLV. Le compteur de contradictions Milo ↔ contrôle d\'intensité (ft-v1146) --');
+{
+  const srcCoach=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
+  /* Extraction par comptage d'accolades — plus sûr qu'un motif, qui s'arrêterait au premier `}`. */
+  const extraire=(nom)=>{
+    const d=srcCoach.indexOf('function '+nom+'(');
+    if(d<0) return null;
+    let i=srcCoach.indexOf('{',d), p=0;
+    for(let k=i;k<srcCoach.length;k++){
+      if(srcCoach[k]==='{')p++; else if(srcCoach[k]==='}'){p--; if(!p) return srcCoach.slice(d,k+1);}
+    }
+    return null;
+  };
+  const fCompte=extraire('_intensiteCompter'), fTexte=extraire('_intensiteStatsTexte');
+
+  /* ⛔⛔ CONTRÔLE AVANT TOUT LE RESTE : sans ces deux-là, chaque témoin plus bas serait vert
+     sur du vide — et sans l'APPEL, le compteur le plus juste du monde ne compterait jamais. */
+  t('CCXLV ⛔ CONTRÔLE — `_intensiteCompter` et `_intensiteStatsTexte` existent',
+    !!fCompte && !!fTexte, 'compte='+!!fCompte+' texte='+!!fTexte);
+  t('CCXLV ⛔ CONTRÔLE — le compteur est APPELÉ depuis le point de passage des séances de Milo',
+    /_intensiteCompter\s*\(\s*norm\.exs\s*,\s*lignes\s*\)/.test(srcCoach), '');
+
+  if(fCompte && fTexte){
+    /* Bac à sable : faux stockage, faux `S`, faux `today`. On exécute le VRAI code. */
+    const bac=(prs)=>{
+      const mem={};
+      const faux={ getItem:k=>(k in mem?mem[k]:null), setItem:(k,v)=>{mem[k]=String(v);}, removeItem:k=>{delete mem[k];} };
+      const ctx=new Function('localStorage','S','today','return (function(){'
+        + 'const _INTENSITE_CLE="ft4_intensiteStats"; const _INTENSITE_REGLE=1;'
+        + fCompte + '\n' + fTexte
+        + '\nreturn {compte:_intensiteCompter, texte:_intensiteStatsTexte, lire:()=>JSON.parse(localStorage.getItem(_INTENSITE_CLE)||"{}")};})()');
+      return ctx(faux, {prs:prs||{}}, ()=> '2026-09-06');
+    };
+    const EX=n=>({name:n, sets:[{kg:100,reps:3,type:'N'},{kg:100,reps:3,type:'N'}]});
+
+    /* ⭐ LE DÉNOMINATEUR : une séance SANS alerte doit quand même être comptée. Sans ça,
+       « 12 alertes » ne voudrait rien dire — on ignorerait si c'est sur 15 séances ou 400. */
+    {
+      const b=bac({}); b.compte([EX('Développé Couché')], []);
+      const o=b.lire();
+      t('CCXLV ⭐⭐ une séance SANS contradiction est comptée quand même (le dénominateur)',
+        o.propositions===1 && !o.avecAlerte, JSON.stringify(o));
+    }
+    /* ⭐ Et une séance AVEC alerte incrémente les deux, plus le détail par exercice. */
+    {
+      const b=bac({'Développé Couché':{rm1:108}});
+      b.compte([EX('Développé Couché')], ['Développé Couché — 2×3 à 100 kg = 93 % de ton 1RM estimé (108 kg)']);
+      const o=b.lire();
+      t('CCXLV ⭐⭐ une séance AVEC contradiction incrémente le numérateur ET nomme l\'exercice',
+        o.propositions===1 && o.avecAlerte===1 && o.alertes===1 && o.exos && o.exos['Développé Couché']===1,
+        JSON.stringify(o));
+    }
+    /* ⛔⛔ LE 2ᵉ DÉNOMINATEUR — le témoin qui porte la version, et le plus facile à rater.
+       Sans record, le contrôle se TAIT par construction : compter ces séances comme « pas de
+       conflit » ferait baisser le taux sans qu'aucun conflit ait été évité. Le taux serait
+       faux dans le sens rassurant, c'est-à-dire le pire. */
+    {
+      const b=bac({});                              // aucun record connu
+      b.compte([EX('Rowing Poitrine')], []);
+      const o1=b.lire();
+      const b2=bac({'Rowing Poitrine':{rm1:90}});   // record connu
+      b2.compte([EX('Rowing Poitrine')], []);
+      const o2=b2.lire();
+      t('CCXLV ⛔⛔ une séance que le contrôle NE PEUT PAS juger (aucun record) n\'entre pas au dénominateur des jugeables',
+        !o1.jugeables && o2.jugeables===1, 'sans record='+JSON.stringify(o1.jugeables)+' avec='+JSON.stringify(o2.jugeables));
+    }
+    /* ⛔ Un `rm1` à 0 n'est pas un record — c'est exactement ce que le contrôle refuse. */
+    {
+      const b=bac({'Développé Couché':{rm1:0}});
+      b.compte([EX('Développé Couché')], []);
+      t('CCXLV ⛔ un record à 0 ne compte pas comme « jugeable » (même règle que le contrôle)',
+        !b.lire().jugeables, JSON.stringify(b.lire()));
+    }
+    /* ⛔ Le cumul : trois séances, une seule contredite → le taux se lit sur les jugeables. */
+    {
+      const b=bac({'Développé Couché':{rm1:108}});
+      b.compte([EX('Développé Couché')], []);
+      b.compte([EX('Développé Couché')], ['Développé Couché — trop lourd']);
+      b.compte([EX('Développé Couché')], []);
+      const o=b.lire();
+      t('CCXLV ⛔ le compteur CUMULE (3 séances, 3 jugeables, 1 contredite)',
+        o.propositions===3 && o.jugeables===3 && o.avecAlerte===1, JSON.stringify(o));
+    }
+    /* ⛔⛔ UNE RÈGLE QUI CHANGE REMET À ZÉRO — sinon on mélangerait deux époques et le taux
+       parlerait d'une formule qui n'existe plus. Même précaution que le Gardien (ft-v1090). */
+    {
+      const b=bac({}); b.compte([EX('Squat')], []);
+      const o=b.lire();
+      t('CCXLV ⛔⛔ le compteur porte la VERSION de la règle (un seuil qui bouge ne se mélange pas)',
+        o.regle===1 && /_INTENSITE_REGLE/.test(fCompte) && /o=\{regle:_INTENSITE_REGLE\}/.test(fCompte.replace(/\s/g,'')),
+        JSON.stringify(o));
+    }
+    /* ⛔ R2 — UN SEUL ÉCRIVAIN. Deux fonctions qui incrémenteraient le même compteur
+       finiraient par ne plus dire la même chose, et on ne saurait pas laquelle croire. */
+    {
+      const n=(srcCoach.match(/localStorage\.setItem\(\s*_INTENSITE_CLE/g)||[]).length;
+      const dans=(fCompte.match(/localStorage\.setItem\(\s*_INTENSITE_CLE/g)||[]).length;
+      t('CCXLV ⛔ R2 — seule `_intensiteCompter` écrit le compteur (aucun 2ᵉ écrivain)',
+        n>0 && n===dans, 'écritures dans le fichier='+n+' dont dans la fonction='+dans);
+    }
+    /* ⛔⛔ R4a — MILO NE REÇOIT PAS SA PROPRE NOTE. Lui dire « tu as été contesté 12 fois »
+       le ferait prescrire défensivement : on mesurerait sa réaction, plus son jugement. */
+    {
+      const d=srcCoach.indexOf('function buildCoachContext');
+      const fin=srcCoach.indexOf('\nfunction ', d+10);
+      const ctx=srcCoach.slice(d, fin>0?fin:srcCoach.length);
+      t('CCXLV ⛔⛔ R4a — le compteur n\'atteint PAS Milo (ni la clé, ni le nom, dans son contexte)',
+        !/intensiteStats/i.test(ctx) && !/ft4_intensiteStats/.test(ctx), '');
+    }
+    /* ⭐ R29 — L'ÉTAT VIDE DIT QU'IL NE REMONTE PAS DANS LE PASSÉ, plutôt que de laisser
+       croire que « 0 » veut dire « ça n'arrive jamais ». */
+    {
+      const b=bac({}); const txt=b.texte();
+      t('CCXLV ⭐ sans aucune séance vue, l\'écran DIT qu\'il ne compte pas le passé (R29)',
+        /Aucune séance/.test(txt) && /pass[ée]/i.test(txt) && !/0 %/.test(txt), txt.slice(0,90));
+    }
+    /* ⛔ ET LE TEXTE NE DÉSIGNE PAS DE COUPABLE. Les deux calculs sont justes ; présenter la
+       contradiction comme une faute de Milo ferait « corriger » le mauvais bout de la chaîne. */
+    {
+      const b=bac({'Développé Couché':{rm1:108}});
+      b.compte([EX('Développé Couché')], ['Développé Couché — trop lourd']);
+      const txt=b.texte();
+      t('CCXLV ⛔ l\'écran dit qu\'une contradiction n\'est PAS une faute de Milo',
+        /n['’]est PAS une faute/i.test(txt) && /jugeables/.test(txt), txt.slice(-260).replace(/\n/g,' | '));
+      t('CCXLV ⭐ le taux est rapporté aux séances JUGEABLES, pas à toutes',
+        /TAUX DE CONTRADICTION[\s\S]{0,60}jugeables/.test(txt), '');
+    }
+  }
+  /* ⛔ L'écran reste derrière l'admin : c'est un instrument de mesure, pas une information
+     pour la personne — et il n'y a rien à annoncer (règle d'or #11). */
+  t('CCXLV ⛔ l\'écran est réservé à l\'admin (instrument de mesure, pas une info utilisateur)',
+    /function showIntensiteStats\(\)\{[\s\S]{0,160}_isAdminUnlocked/.test(srcCoach), '');
+  t('CCXLV ⛔ … et le bouton existe vraiment dans l\'écran Admin (sinon la fonction serait orpheline)',
+    /onclick="showIntensiteStats\(\)"/.test(fs.readFileSync(path.join(ROOT,'index.html'),'utf8')), '');
+}
+
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
 })().catch(e=>{console.error(e);process.exit(2);});

@@ -1,7 +1,7 @@
 # 📒 Inventaire — ce qui existe dans Force Tracker
 
 > ⚙️ **FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer avec `python3 tools/inventaire.py`.
-> Généré depuis **le code** (version `ft-v1145`, dernier commit 2026-09-06).
+> Généré depuis **le code** (version `ft-v1146`, dernier commit 2026-09-06).
 >
 > **À quoi il sert** : répondre à *« est-ce que c'est déjà construit ? »*. Le journal des versions
 > (`CLAUDE.md`, `docs/JOURNAL-ARCHIVE.md`) répond à *« que s'est-il passé, quand, pourquoi ? »* —
@@ -20,7 +20,7 @@
 | Lignes de menu | 16 | 4 |
 | Fenêtres (modales) | 65 | 14 |
 | Actions du serveur | 45 | 0 |
-| Fonctions JS | 601 | — |
+| Fonctions JS | 602 | — |
 | Nouveautés annoncées | 69 | — |
 
 ## 🖥️ Écrans

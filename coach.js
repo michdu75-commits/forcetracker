@@ -2439,6 +2439,13 @@ function _appendStartSessionBtn(sess, cible){
       (norm.exs||[]).forEach(ex=>{
         (_intensiteDefauts(ex.name, ex.sets)||[]).forEach(d=>lignes.push(ex.name+' — '+d));
       });
+      /* 📊 ON COMPTE ICI, ET NULLE PART AILLEURS (ft-v1145) — voir `_intensiteCompter`.
+         ⭐ C'est le point de passage des TROIS voies (bloc caché · cervelet · repli par le
+         texte) : le compteur hérite donc gratuitement de la garantie que ce code porte déjà,
+         au lieu d'être posé sur une seule porte — l'erreur que le contrôle d'intensité, le
+         cardio et le superset ont chacun faite avant lui (voir `_appliqueMiloSession`).
+         ⛔ APRÈS le calcul de `lignes`, jamais avant : on compte ce qui a été MESURÉ. */
+      if(typeof _intensiteCompter==='function') _intensiteCompter(norm.exs, lignes);
       if(lignes.length){
         const vus=lignes.slice(0,3), reste=lignes.length-vus.length;
         const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
@@ -4708,6 +4715,134 @@ function showGardienStats(){
   // « Fermer » ferme ; c'est le bouton SECONDAIRE qui va chercher les autres comptes.
   showConfirm('🛡️ Gardien — ce téléphone', _gardienStatsTexte(),
     function(){}, 'Fermer', '🌍 Voir TOUS les comptes', function(){ _gardienStatsTous(); });
+}
+
+/* ═══ 📊 COMBIEN DE FOIS MILO ET L'APP SE CONTREDISENT-ILS ? (06/09/2026, ft-v1145) ═════════
+   Michel, capture à l'appui : Milo prescrit **3×3 à 100 kg** au développé couché, et l'app
+   affiche **juste dessous** *« 93 % du 1RM estimé (108 kg) — tenable sur UNE série max, pas
+   sur 3, viser ~95 kg »*. 👉 ***Pour la personne, Force Tracker se contredit lui-même.***
+
+   ⭐⭐ CE QUE CE COMPTEUR EST, ET SURTOUT CE QU'IL N'EST PAS. Il ne juge personne, il ne
+   corrige rien, il ne change aucune charge. Il répond à **une seule question, celle qui
+   manquait** : *à quelle FRÉQUENCE ça arrive ?* — parce que la réponse décide du remède.
+   *Un conflit sur cent est un cas limite : on reformule une phrase. Un sur trois, c'est le
+   prompt de Milo ou le coefficient qu'il faut revoir.* On ne peut pas choisir sans le chiffre.
+
+   ⛔⛔ POURQUOI UN COMPTEUR LOCAL ET PAS LE BANC D'ESSAI — c'est une MESURE, pas une
+   préférence, et elle est écrite pour ne pas être refaite (`docs/ADAPTATION-DES-SEANCES.md`).
+   Le contrôle d'intensité commence par `if(!(rm1>0)) return out;` : **sans record, il se tait
+   entièrement**. Or sur les **56 scénarios** du banc, **7 seulement portent un `rm1`** et
+   **6** demandent en plus une séance. 👉 ***Un dénominateur de 6 ne mesure pas une
+   fréquence*** — il rendrait un chiffre plausible entre 0 % et 100 % par pas de 17 points,
+   qu'on citerait ensuite comme s'il voulait dire quelque chose. *C'est le contrôle négatif à
+   zéro rouge de `BUGS.md`, autre déguisement.*
+
+   ⭐ R13 — ON RECOPIE LE PATRON DE `_gardienCompter`, ON N'EN INVENTE PAS UN : même clé de
+   stockage dédiée, même « un seul propriétaire qui écrit », même principe de **dénominateur**
+   (`propositions` compte TOUTES les séances vues, `avecAlerte` seulement celles qui ont
+   déclenché). *Un compteur sans dénominateur ne mesure rien : « 12 alertes » ne veut rien
+   dire tant qu'on ignore si c'est sur 15 séances ou sur 400.*
+
+   ⛔ IL RESTE LOCAL, ET C'EST ÉCRIT PLUTÔT QUE SUBI (R30). Le Gardien, lui, voyage — parce
+   que Michel voulait lire le Milo des autres. Ici la question posée est *« est-ce que ça
+   m'arrive souvent, à moi ? »* : un seul téléphone y répond. Le jour où l'on voudra le lire
+   chez d'autres, le chemin est celui de `S.gardienStats` (miroir mémoire + `Code.js`) — il
+   demande un déploiement backend, et il n'est pas nécessaire pour trancher aujourd'hui.
+
+   ⛔⛔ ET MILO NE LE REÇOIT PAS, avec sa raison (R4a). Lui dire *« tu as été contesté 12 fois »*
+   le ferait prescrire **défensivement** : on ne mesurerait plus son jugement, on mesurerait sa
+   réaction à l'idée d'être contredit — exactement l'argument qui tient `evalHist` hors de son
+   contexte. *Savoir qu'on compte n'est pas neutre quand c'est vous qu'on compte.*           */
+const _INTENSITE_CLE='ft4_intensiteStats';
+/* 🔢 LA VERSION DE LA RÈGLE — la même précaution que le Gardien, et pour la même raison.
+   Le jour où `_INT_TENUE` (0,93), la marge de 2 % ou la formule bougent, **les chiffres
+   d'avant ne mesurent plus la même chose**. Un compteur qui mélange deux règles est pire
+   qu'un compteur absent : il donne une fréquence dont personne ne sait de quoi elle parle.
+   ⚠️ À INCRÉMENTER si le contrôle change de seuil ou de formule. */
+const _INTENSITE_REGLE=1;
+/**
+ * Compte une séance proposée par Milo, et si elle a déclenché le contrôle d'intensité.
+ * @param {object[]} exs     les exercices de la séance proposée (forme `_pendingMiloSessions`)
+ * @param {string[]} lignes  ce que `_intensiteDefauts` a rendu pour cette séance (peut être vide)
+ */
+function _intensiteCompter(exs, lignes){
+  try{
+    let o={}; try{ o=JSON.parse(localStorage.getItem(_INTENSITE_CLE)||'{}')||{}; }catch(e){}
+    if((o.regle||1)!==_INTENSITE_REGLE) o={regle:_INTENSITE_REGLE};   // règle changée → on repart propre
+    o.regle=_INTENSITE_REGLE;
+    const j=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
+    o.depuis=o.depuis||j;
+    o.propositions=(o.propositions||0)+1;        // ⭐ LE DÉNOMINATEUR : toute séance vue passe ici
+    /* ⭐⭐ LE 2ᵉ DÉNOMINATEUR, ET IL EST INDISPENSABLE POUR NE PAS SE MENTIR.
+       Une séance sur un exercice **sans record** ne peut PAS déclencher le contrôle — il se
+       tait par construction. La compter comme « pas de conflit » ferait baisser le taux sans
+       qu'aucun conflit ait été évité. 👉 On compte donc à part les séances où le contrôle
+       avait **de quoi parler** : c'est ce dénominateur-là qui répond à la question de Michel. */
+    let jugeables=0;
+    try{
+      (exs||[]).forEach(ex=>{
+        const pr=(typeof S!=='undefined'&&S.prs)?S.prs[ex&&ex.name]:null;
+        if(pr && (+pr.rm1||0)>0) jugeables++;
+      });
+    }catch(e){}
+    if(jugeables>0) o.jugeables=(o.jugeables||0)+1;
+    const n=(lignes||[]).length;
+    if(!n){                                       // pas de conflit : on l'enregistre quand même
+      localStorage.setItem(_INTENSITE_CLE, JSON.stringify(o));
+      return;
+    }
+    o.avecAlerte=(o.avecAlerte||0)+1;             // nombre de SÉANCES portant au moins 1 alerte
+    o.alertes=(o.alertes||0)+n;                   // nombre d'alertes, une séance pouvant en porter plusieurs
+    o.dernier=j;
+    /* 📋 QUELS EXERCICES — la question suivante arrive toujours : *« c'est toujours le même ? »*.
+       ⛔ Le nom seul, jamais la charge ni le 1RM : ce magasin est un compteur, pas un journal
+       de séances (celui-là existe déjà, et le dupliquer serait R2). */
+    o.exos=o.exos||{};
+    (lignes||[]).forEach(l=>{
+      const nom=String(l||'').split(' — ')[0].trim();
+      if(nom) o.exos[nom]=(o.exos[nom]||0)+1;
+    });
+    localStorage.setItem(_INTENSITE_CLE, JSON.stringify(o));
+  }catch(e){ /* jamais bloquant : c'est une mesure, pas une fonctionnalité */ }
+}
+/** Le texte de l'écran admin. Rend une phrase honnête même quand il n'y a encore rien. */
+function _intensiteStatsTexte(){
+  let o={}; try{ o=JSON.parse(localStorage.getItem(_INTENSITE_CLE)||'{}')||{}; }catch(e){}
+  const prop=+o.propositions||0;
+  if(!prop) return 'Aucune séance de Milo vue pour l\'instant sur ce téléphone.\n\n'
+    + 'Le compteur démarre à la première séance qu\'il te propose dans le chat.\n'
+    + '⚠️ Il ne remonte pas dans le passé : les séances d\'avant cette version n\'ont jamais\n'
+    + '   été comptées, et on ne va pas leur inventer un chiffre.';
+  const jug=+o.jugeables||0, alert=+o.avecAlerte||0;
+  const pc=(a,b)=> b>0 ? Math.round(100*a/b)+' %' : '—';
+  const L=[];
+  L.push('Depuis le '+(o.depuis||'?')+(o.dernier?(' · dernière contradiction le '+o.dernier):''));
+  L.push('');
+  L.push('Séances proposées par Milo : '+prop);
+  L.push('  dont jugeables (au moins un record connu) : '+jug+'  ('+pc(jug,prop)+')');
+  L.push('Séances où l\'app l\'a contredit : '+alert);
+  L.push('');
+  L.push('👉 TAUX DE CONTRADICTION : '+pc(alert,jug)+' des séances jugeables');
+  L.push('   ('+pc(alert,prop)+' de toutes les séances proposées)');
+  L.push('Alertes au total : '+(+o.alertes||0)+' (une séance peut en porter plusieurs)');
+  const ex=o.exos||{}, cles=Object.keys(ex);
+  if(cles.length){
+    L.push('');
+    L.push('Exercices concernés :');
+    cles.sort((a,b)=>ex[b]-ex[a]).slice(0,8).forEach(c=>L.push('  · '+c+' : '+ex[c]));
+  }
+  L.push('');
+  L.push('⚠️ Une contradiction n\'est PAS une faute de Milo. Les deux calculs sont justes :');
+  L.push('   il regarde ta progression (99 → 100 = +1 kg), l\'app regarde un % du 1RM.');
+  L.push('   Ce chiffre sert à savoir si le cas est RARE ou FRÉQUENT — rien d\'autre.');
+  L.push('');
+  L.push('⛔ Le taux se lit sur les séances JUGEABLES : sans record sur l\'exercice,');
+  L.push('   le contrôle se tait, donc l\'absence d\'alerte ne prouve rien.');
+  return L.join('\n');
+}
+function showIntensiteStats(){
+  if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
+  showConfirm('📊 Milo ↔ contrôle d\'intensité', _intensiteStatsTexte(), function(){}, 'Fermer');
 }
 
 /* 🌍 LA MESURE CONTINUE, CHEZ DE VRAIS UTILISATEURS — demande de Michel le 21/08 :
