@@ -6,21 +6,25 @@
 
 ---
 
-- **Version en cours (ft-v1151) :** 🎚️ **LE RIR NON NOTÉ N'ÉTAIT PAS COMPTÉ.**
-  Michel : *« de ne rien mettre ne compte pas comme 0 mais comme rien du tout, donc Milo ne peut
-  pas le comprendre »*. ⭐⭐ **Mesuré sur son export réel (44 séances, 805 séries) : 8 séries de
-  travail sur 591 portent un RIR — 1,4 %** ; sur la fenêtre que Milo voit (5 séances), **3 sur 44**.
-  ⛔⛔ Le RIR par série partait déjà (ft-v1038) et la règle est dans le prompt — **c'est le COMPTE
-  qui manquait** : pour obéir à *« dis-le s'il n'y en a pas »*, il fallait balayer 44 lignes.
-  **R4/R8** : la consigne nomme une source, le fait n'est pas calculé.
-  ⛔ **Un `(X)` compte comme noté** (l'échec EST un RIR de 0) — l'oublier sous-compterait les séries
-  les plus dures ; mesuré au contrôle négatif : 5 au lieu de 10.
-  ⭐⭐ **À zéro noté, le vide est DIT avec son nombre et l'interprétation est INTERDITE** (« demande-le
-  au lieu de le supposer »). ⛔ Rien quand il n'y a aucune série de travail (« 0 sur 0 » n'informe pas).
-  ⛔⛔ **R34 ne peut pas être tenue ici, et c'est écrit** : le banc coûte des appels API que le
-  conteneur n'a pas — **le juge est Michel, dans ses conversations**. Le prompt de fond n'a pas bougé (R7).
+- **Version en cours (ft-v1151) :** 🎚️ **DEUX CHOSES SUR LE RIR.**
+  **①** *« De ne rien mettre ne compte pas comme 0 mais comme rien du tout »* (Michel). ⭐⭐ Mesuré
+  sur son export réel (44 séances, 805 séries) : **8 séries de travail sur 591 portent un RIR —
+  1,4 %** ; sur la fenêtre que Milo voit (5 séances), **3 sur 44**. Le per-série partait déjà
+  (ft-v1038), la règle est dans le prompt — **c'est le COMPTE qui manquait** (R4/R8). À zéro noté,
+  le vide est **dit avec son nombre** et l'interprétation **interdite** (« demande-le »).
+  **② ⛔⛔ UN `X` N'EST PLUS UN RIR DE 0 — Michel m'a repris** (*« euh, tu es sûr ? »*, puis
+  *« X et RIR 0 ne doivent surtout pas être considérés comme la même donnée »*). ⭐ Son exemple :
+  *95×3, tu réussis la 3ᵉ mais tu sais que la 4ᵉ ne passerait pas → **RIR 0** ; tu tentes la 4ᵉ et
+  elle cale → **X*** — donc le X est **un cran au-delà**.
+  ⛔ La même phrase fausse (ft-v1038) vivait à **4 endroits**, corrigés ensemble : `_rirDeSet`
+  (rend `null` sur un X) · le prompt de Milo · l'aide détaillée · l'export CSV (colonne RIR vide).
+  ⚠️ **Le piège** : ce `null` veut dire « pas de réserve chiffrée », **pas** « effort inconnu » —
+  d'où **`_effortConnu()`**, seul propriétaire de cette question (R2).
+  ⛔ **Un témoin a été RETOURNÉ, pas assoupli** : c'est la règle qu'il figeait qui a changé (R30).
+  ⛔⛔ **R34 ne peut pas être tenue ici** : le banc coûte des appels API que le conteneur n'a pas —
+  **le juge est Michel, dans ses conversations**.
   ⏭️ **Ne fait PAS** : noter davantage de RIR (à 1,4 %, le levier est peut-être la SAISIE — décision
-  produit, non prise) · corriger la prescription trop lourde · remonter au-delà des 5 séances.
+  produit, non prise) · corriger la prescription trop lourde · ajouter un « RIR −1 » à l'échelle.
   ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 
 - **Version en ligne (live) :** `ft-v1150` — 🔥 **ON NE DÉPEND PLUS DU NOM POUR RECONNAÎTRE UN CARDIO.**

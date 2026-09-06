@@ -301,8 +301,12 @@ function _histoLignes(){
         (ex.sets||[]).forEach((st,i)=>{
           if(!st||!st.done) return;                 // ⛔ une série non validée n'a pas eu lieu
           const kg=+st.kg||0, reps=+st.reps||0;
-          /* ⭐ Le RIR passe par son propriétaire (`_rirDeSet`) — jamais relu à la main : un `X`
-             vaut 0, et une série non notée reste VIDE, pas 0 (la règle de ft-v1038). */
+          /* ⭐ Le RIR passe par son propriétaire (`_rirDeSet`) — jamais relu à la main : une série
+             non notée reste VIDE, jamais 0 (règle de ft-v1038).
+             ⛔ ET DEPUIS ft-v1151, UN `X` LAISSE LA COLONNE RIR VIDE LUI AUSSI — ce n'est pas une
+             perte : la colonne `type` porte déjà le `X`. Écrire « 0 » y serait faux d'un cran
+             (une répétition a été TENTÉE et n'est pas passée, c'est au-delà de RIR 0), et un
+             fichier exporté se relit ailleurs, sans personne pour rattraper la nuance. */
           const r=(typeof _rirDeSet==='function')?_rirDeSet(st):null;
           out.push({date:s.date, seance:nom, exercise:ex.name, set_num:i+1,
                     type:st.type||'N', kg:kg, reps:reps,

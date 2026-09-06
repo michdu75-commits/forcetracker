@@ -1208,22 +1208,52 @@ function _prevRirBadge(p){
    consigne qui NOMME une source absente du contexte.
 
    ⭐⭐ ET LE DEMI-SYSTÈME EXISTAIT DÉJÀ : le tag **`X` = Échec** (`SET_TYPE_LABELS`) dit
-   exactement « cette série est allée à l'échec », c'est-à-dire **RIR 0**. Il pilote déjà le
-   repos (240 s) et les avertissements. ⛔ On n'écrit donc PAS un second système à côté : `X`
+   « cette série est allée à l'échec ». Il pilote déjà le repos (240 s) et les avertissements.
+   ⚠️⚠️ **CETTE LIGNE DISAIT « c'est-à-dire RIR 0 » — C'EST FAUX, corrigé en ft-v1151** (Michel :
+   *« X et RIR 0 ne doivent surtout pas être considérés comme la même donnée »*). Gardée ici avec
+   sa correction plutôt que réécrite : c'est cette phrase-là qui s'est propagée dans le prompt de
+   Milo, dans l'aide et dans l'export CSV pendant dix jours. ⛔ On n'écrit donc PAS un second système à côté : `X`
    reste le tag, `rir` est la graduation, et **une seule fonction répond à la question** — sans
    quoi les deux diraient un jour des choses différentes sur la même série (R2).
 
    ⛔ RIEN N'EST OBLIGATOIRE : `null` veut dire « je n'ai pas noté », et ce n'est PAS 0. Un RIR
    absent ne doit jamais être compté comme un échec (R29 : on ne devine pas ce qui touche la
    personne — ici, ça changerait ce que Milo lui dit de son entraînement). */
+/* ⛔⛔ CORRECTION DE FOND (06/09/2026, ft-v1151) — UN `X` N'EST PLUS UN RIR DE 0.
+   Décision de Michel, mot pour mot : *« X et RIR 0 ne doivent surtout pas être considérés comme
+   la même donnée. Le RIR 0 est une série RÉUSSIE à la limite ; le X indique qu'une répétition
+   prévue/tentée a effectivement ÉCHOUÉ. »*
+   ⭐ Son exemple, à garder : *95 kg × 3 au développé couché. Tu réussis la 3ᵉ mais tu sais que la
+   4ᵉ ne passerait pas → 95×3 @ RIR 0. Si tu TENTES la 4ᵉ et qu'elle ne passe pas → c'est un X.*
+   👉 ***Le X est donc un cran AU-DELÀ de RIR 0*** — un « RIR −1 » qui n'existe pas dans l'échelle
+   (0 à 4). Le faire retomber sur 0 écrasait la différence dans la donnée elle-même.
+   ⛔ ET LE FAIRE RENDRE `null` NE PERD RIEN, parce que la question n'est pas la même et qu'elle a
+   déjà son propriétaire : « combien en réserve ? » appartient à `rir`, « la série est-elle allée
+   à l'échec ? » appartient au TAG `type==='X'` (R2 — deux questions, deux propriétaires).
+   ⚠️ CE QUI SERAIT FAUX : lire ce `null` comme « effort inconnu ». Un X est au contraire l'effort
+   le MIEUX connu — c'est `_effortConnu()` qui répond à cette question-là, pas celle-ci.
+   ⚠️ ft-v1038 disait l'inverse (« l'échec EST un RIR de 0 ») et c'était écrit ici, dans le prompt
+   de Milo et dans l'aide : les trois sont corrigés ensemble, sinon le suivant lit la version
+   périmée et la « répare » (R23). */
 function _rirDeSet(set){
   if(!set) return null;
-  if(set.type==='X') return 0;            // ⭐ l'échec EST un RIR de 0 — un seul propriétaire
+  if(set.type==='X') return null;         // ⛔ PAS 0 : le tag `X` porte l'échec, `rir` la réserve
   const v=set.rir;
   if(v===null||v===undefined||v==='') return null;
   const n=Math.round(+v);
   return (n>=0&&n<=RIR_MAX)?n:null;
 }
+/* ⭐ « SAIT-ON CE QUE CETTE SÉRIE A COÛTÉ ? » — ft-v1151, et c'est une question DIFFÉRENTE de
+   « combien en réserve ? ». Deux façons de le savoir : un RIR noté, ou le tag `X` (échec).
+   ⛔ Un seul propriétaire (R2) : sans lui, chaque appelant réécrirait `_rirDeSet(x)!==null ||
+   x.type==='X'` et l'un d'eux finirait par oublier la moitié `X` — c'est-à-dire par sous-compter
+   exactement les séries les plus dures, celles dont l'effort est le mieux connu. */
+function _effortConnu(set){
+  if(!set) return false;
+  if(set.type==='X') return true;
+  return _rirDeSet(set)!==null;
+}
+
 /* 🎚️ LE RPE — UN CHANGEMENT DE VOCABULAIRE, PAS UN 2ᵉ SYSTÈME (28/08/2026, ft-v1046)
    Michel avait différé le RPE le 27/08, avec son critère : *« pour le RPE en général, c'est des
    gens qui connaissent bien qui connaissent le RPE et ils utilisent bien »*. Donc **optionnel et
@@ -1261,7 +1291,10 @@ function _reserveQuestion(){
   return _estRpe()?'C\'était quel RPE ?':'Il t\'en restait combien ?';
 }
 function _reserveEchecTxt(){
-  return _estRpe()?'Série à l\'échec — RPE 10':'Série à l\'échec — 0 en réserve';
+  /* ⛔ ft-v1151 : plus de « 0 en réserve » ni de « RPE 10 » — une répétition a été TENTÉE et n'est
+     pas passée, ce qui est au-delà de RIR 0 (donc au-delà de RPE 10). Dire le fait, pas un chiffre
+     qui serait faux d'un cran. */
+  return 'Série à l\'échec — une répétition n\'est pas passée';
 }
 /* Le badge de la colonne « précédent ». ⭐ `@8` est la notation standard du RPE (« 80×8 @8 ») —
    on emprunte la convention du milieu plutôt que d'en inventer une. */
@@ -4977,8 +5010,12 @@ function _renderRirRow(){
      déclarer, et poser la question à chaque palier serait du bruit (R19). */
   if(set.type==='É'||set.type==='W'){ z.innerHTML=''; return; }
   const cur=_rirDeSet(set);
-  /* ⭐ L'ÉCHEC EST DÉJÀ RÉPONDU : si la série porte le tag `X`, la réponse est 0 et on le DIT,
-     au lieu de redemander — c'est la même information, saisie autrement (R2). */
+  /* ⭐ L'ÉCHEC EST DÉJÀ RÉPONDU : si la série porte le tag `X`, la question n'a plus lieu d'être
+     et on le DIT au lieu de redemander (R2).
+     ⛔ MAIS ON NE SURLIGNE PLUS « 0 » (ft-v1151) : depuis que `_rirDeSet` rend `null` sur un X,
+     aucun bouton n'est coché — et c'est VOULU. Surligner le 0 afficherait « ta réserve était de
+     0 » sur une série où une répétition a été TENTÉE et n'est pas passée : c'est un cran au-delà,
+     pas la même donnée (décision de Michel). Le libellé, lui, dit bien l'échec. */
   const fige=(set.type==='X');
   const btn=n=>{
     const on=(cur===n);

@@ -2741,3 +2741,45 @@ options est pire qu'une action absente* (**R29**).
   et non sur la garantie), attrapé cette fois au contrôle négatif.
 - ⭐ **Le réflexe, en une ligne** : *quand un écran fait choisir, la coupe se décide sur la
   PAIRE, jamais sur un élément à la fois.*
+
+
+---
+
+## 45. 🧬 UNE DÉFINITION FAUSSE NE RESTE JAMAIS À UN SEUL ENDROIT **(06/09/2026, ft-v1151)**
+
+ft-v1038 avait écrit, dans un commentaire de code : *« le tag `X` = Échec dit exactement "cette
+série est allée à l'échec", c'est-à-dire **RIR 0** »*. C'était **faux d'un cran** — Michel l'a
+tranché dix jours plus tard : *« RIR 0 est une série RÉUSSIE à la limite ; le X indique qu'une
+répétition prévue/tentée a effectivement ÉCHOUÉ »*.
+
+### ⛔⛔ Ce qui coûte cher n'est pas l'erreur, c'est sa DIFFUSION
+En dix jours, la même phrase avait essaimé dans **quatre endroits qui ne se ressemblent pas** :
+
+| Où | Ce que ça produisait |
+|---|---|
+| `_rirDeSet()` (le code) | un `X` **devenait** un 0 dans la donnée elle-même |
+| le **prompt de Milo** | il lisait « (X) = à l'échec, c'est-à-dire RIR 0 » → **une rep d'écart** sur une prescription de charge |
+| l'**aide détaillée** | la personne apprenait une définition fausse |
+| l'**export CSV** | un fichier qui se relit **ailleurs**, sans personne pour rattraper la nuance |
+
+👉 ***Une définition vit là où on l'a écrite ET dans tout ce qui la cite.*** Corriger le code
+seul aurait laissé Milo, l'aide et l'export dire le contraire — et c'est l'un d'eux qui aurait
+gagné, parce que c'est celui-là qu'un humain lit.
+
+### 🔎 Comment la reconnaître
+- Un commentaire qui dit **« c'est-à-dire »**, **« autrement dit »**, **« la même information
+  saisie autrement »** : c'est la marque d'une **équivalence posée**, et une équivalence est
+  exactement ce qui se propage.
+- Une valeur **dérivée d'un tag** plutôt que saisie (`type==='X' → 0`) : la dérivation encode une
+  définition, et personne ne la relit.
+
+### 🛡️ Ce qui protège aujourd'hui
+- **Deux questions, deux propriétaires** (R2) : *« combien en réserve ? »* → `rir` ; *« la série
+  est-elle allée à l'échec ? »* → le TAG. Le code ne convertit plus l'une en l'autre.
+- Le commentaire périmé est **gardé avec sa correction**, pas réécrit : *c'est cette phrase-là qui
+  s'est propagée, et la voir aide le suivant à comprendre pourquoi on a changé* (R30).
+- Deux témoins lisent le **texte réellement envoyé à Milo** : l'un refuse la phrase périmée,
+  l'autre exige la distinction. *Un témoin sur le code seul aurait été vert pendant que le prompt
+  continuait de mentir.*
+- ⭐ **Le réflexe** : quand une définition change, `grep` la **formule**, pas le nom de la
+  variable — ici « RIR 0 » sortait dans quatre fichiers dont aucun n'appelle `_rirDeSet`.

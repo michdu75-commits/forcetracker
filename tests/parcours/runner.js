@@ -15767,6 +15767,9 @@ console.log('\n-- CXLII. Le RIR : il t\'en restait combien ? (ft-v1038) --');
     const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
     const o={};
     /* ── ① UN SEUL PROPRIETAIRE DE « COMBIEN EN RESERVE » ── */
+    o.effortX      = (typeof _effortConnu==='function') && _effortConnu({type:'X'});
+    o.effortNonNote= (typeof _effortConnu==='function') && _effortConnu({type:'N'});
+    o.effortRir2   = (typeof _effortConnu==='function') && _effortConnu({type:'N',rir:2});
     o.f={ echec:_rirDeSet({type:'X'}), nonNote:_rirDeSet({type:'N'}), zero:_rirDeSet({type:'N',rir:0}),
           deux:_rirDeSet({type:'N',rir:2}), horsBorne:_rirDeSet({type:'N',rir:9}), vide:_rirDeSet(null) };
     /* ── ② LE VRAI CHEMIN : valider une serie de TRAVAIL ouvre la question ── */
@@ -15830,9 +15833,20 @@ console.log('\n-- CXLII. Le RIR : il t\'en restait combien ? (ft-v1038) --');
 
   if(G.err)t('CXLII n\'a pas pu tourner',false,G.err);
   else{
-    /* ⭐⭐ L'ECHEC EST UN RIR DE 0 — un seul proprietaire, pas deux systemes qui divergent. */
-    t('⭐⭐ `X` (échec) EST un RIR de 0 — un seul propriétaire de la question',
-      G.f.echec===0, JSON.stringify(G.f));
+    /* ⛔⛔ TEMOIN RETOURNE LE 06/09/2026 (ft-v1151) — il exigeait `echec===0`, et la DECISION a
+       change : Michel a tranche que « X et RIR 0 ne doivent surtout pas etre consideres comme la
+       meme donnee » (RIR 0 = serie REUSSIE a la limite ; X = une repetition TENTEE qui n'est pas
+       passee, donc un cran au-dela). Ce n'est pas un temoin qu'on assouplit pour faire passer du
+       code : c'est la regle qu'il figeait qui a ete corrigee, et on ecrit laquelle (R30).
+       ⭐ Les deux questions restent chacune UN proprietaire (R2) : « combien en reserve ? » ->
+       `rir` ; « la serie est-elle allee a l'echec ? » -> le TAG `type`. */
+    t('⛔⛔ `X` n\'est PLUS un RIR de 0 — deux données différentes, deux propriétaires (ft-v1151)',
+      G.f.echec===null, JSON.stringify(G.f));
+    /* ⛔ ET LE PIEGE DE CE CHANGEMENT : `null` ici veut dire « pas de reserve chiffree », surtout
+       PAS « effort inconnu ». C'est `_effortConnu` qui repond a cette question-la. */
+    t('⛔ un `X` reste un effort CONNU (`_effortConnu`), même sans chiffre de réserve',
+      G.effortX===true && G.effortNonNote===false && G.effortRir2===true,
+      JSON.stringify({X:G.effortX,nonNote:G.effortNonNote,rir2:G.effortRir2}));
     /* ⛔⛔ LE TEMOIN QUI PROTEGE LA PERSONNE : non noté n'est PAS 0. */
     t('⛔⛔ non noté rend `null`, JAMAIS 0 (une absence de mesure n\'est pas une mesure)',
       G.f.nonNote===null && G.f.vide===null && G.f.zero===0, JSON.stringify(G.f));
@@ -28635,6 +28649,8 @@ console.log('\n-- CCL. Le compte exact des RIR notés (ft-v1151) --');
     S.sessions=[seance(0,jeu())]; persist();
     const cN=buildCoachContext();
     o.regle = /N'EST PAS UN RIR DE 0/.test(cN);
+    o.faussePhrase = /c'est-à-dire RIR 0/.test(cN);
+    o.distinction  = /cran AU-DELÀ de RIR 0/.test(cN);
     o.parSerie = /RIR2/.test(cN);
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
@@ -28658,7 +28674,11 @@ console.log('\n-- CCL. Le compte exact des RIR notés (ft-v1151) --');
        TOUT le contexte, il ramassait des séries écrites ailleurs (6 et 6 au lieu de 5 et 5) —
        une sonde qui déborde de sa cible ne rend pas « rien », elle rend un chiffre FAUX. */
     t('CCL ⛔ CONTRÔLE — le recoupement lit bien le bloc « DERNIÈRES SÉANCES »', R.blocTrouve===true, '');
-    t('CCL ⛔ un « (X) » compte comme noté (l\'échec EST un RIR de 0)',
+    /* ⛔ UN `X` COMPTE COMME EFFORT CONNU, SANS ÊTRE UN RIR DE 0 — le piège le plus facile de la
+       version : la ligne n'écrit pas « RIR0 » sur un `X` (le tag le dit déjà, R2), et depuis
+       ft-v1151 `_rirDeSet` rend même `null` dessus. Compter les « RIRn » ÉCRITS sous-compterait
+       donc exactement les séries les plus dures, celles dont l'effort est le mieux connu. */
+    t('CCL ⛔ un « (X) » compte comme effort CONNU (sans être un RIR de 0)',
       (+R.annonce) === R.rirEcrits + R.echecs && R.echecs>0,
       'annoncé '+R.annonce+' · RIRn écrits '+R.rirEcrits+' · (X) '+R.echecs);
     /* ⛔ L'échauffement n'est pas de l'effort à déclarer : 15 et non 20. */
@@ -28673,6 +28693,14 @@ console.log('\n-- CCL. Le compte exact des RIR notés (ft-v1151) --');
     /* ⛔ « 0 sur 0 » n'est pas une information : pas de série de travail, pas de ligne. */
     t('CCL ⛔ aucune série de travail → aucune ligne (« 0 sur 0 » ne dit rien)',
       R.ligneVide==='', R.ligneVide);
+    /* ⛔⛔ LA CORRECTION DE FOND DEMANDÉE PAR MICHEL : le prompt disait « (X) = à l'échec,
+       c'est-à-dire RIR 0 ». C'est FAUX — RIR 0 est une série RÉUSSIE à la limite, un X est une
+       répétition TENTÉE qui n'est pas passée. Milo lisait donc une rep de moins que la réalité,
+       et une rep, sur une prescription de charge, ça compte. */
+    t('CCL ⛔⛔ le prompt ne dit PLUS « (X) … c\'est-à-dire RIR 0 »',
+      R.faussePhrase===false, 'la phrase périmée est encore envoyée à Milo');
+    t('CCL ⛔⛔ le prompt DIT la différence (X = un cran AU-DELÀ de RIR 0)',
+      R.distinction===true, '');
     /* ⛔ NON-RÉGRESSION ft-v1038 : le compte s'AJOUTE, il ne remplace ni la règle ni la donnée. */
     t('CCL ⛔ la règle « une série sans RIR n\'est pas un RIR de 0 » est toujours là',
       R.regle===true, '');
