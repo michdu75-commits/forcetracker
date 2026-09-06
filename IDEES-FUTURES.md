@@ -4,6 +4,54 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## ⛔⛔ UN JOUR DE PROGRAMME NE PASSE PAR AUCUN GARDE-FOU DE LA SÉANCE — mesuré le 06/09/2026
+
+**Michel**, juste après ft-v1152 : *« malheureusement je vais intégrer un programme »*, puis
+*« et justement »*, puis *« je n'ai jamais testé cet angle »*. **Il a mis le doigt sur un trou réel.**
+
+**⭐⭐ MESURÉ, PAS SUPPOSÉ** : `_loadProgDayVraiment` (et `_loadProgVraiment`) construisent `S.wkt`
+**en direct**. Ils ne traversent **jamais** `_appliqueMiloSession` — le point où vivent tous les
+garde-fous ajoutés depuis un mois :
+
+| Garde-fou | Séance de Milo | **Jour de programme** |
+|---|---|---|
+| 🏃 Cardio rangé dans son bloc (ft-v995/1147/1150/1152) | ✅ | ❌ |
+| ⚡ Contrôle d'intensité, « 93 % du 1RM » (ft-v980) | ✅ | ❌ |
+| 🛡️ **Alerte blessure / zone protégée** (ft-v989) | ✅ | ❌ |
+| 🚫 Exercice écarté · 🔁 doublon · 🦴 charnière (ft-v989/1079) | ✅ | ❌ |
+| 📍 « aucun repère pour cet exercice » (ft-v1035) | ✅ | ❌ |
+
+**⛔ ET L'IMPORT N'AIDE PAS** : le prompt d'import de programme (`importDoc(…, 'program')`,
+`worker.js`) **ne parle pas du tout de cardio** — zéro occurrence, vérifié. Seul `seanceJson` le
+fait, depuis ft-v1152.
+
+**👉 CONSÉQUENCE CONCRÈTE** : une ligne *« Échauffement — 10 min de tapis »* dans un programme
+**reste un exercice**, et le bloc Cardio reste vide. *C'est le symptôme exact de la capture du
+06/09, par un autre chemin.*
+
+**⭐⭐ ET C'EST LA MÊME FAMILLE QUE ft-v1147 : la règle juste, définie trop étroit.** Le commentaire
+de `_appliqueMiloSession` dit *« le SEUL point que les DEUX portes traversent »* — c'est vrai, mais
+les deux portes sont **celles de Milo**. Le programme est une **troisième porte**, et personne ne
+l'a comptée. *`BUGS.md` famille 15, quatrième fois.*
+
+### ⚠️ CE QUI N'EST PAS TRANCHÉ — et pourquoi ça ne se code pas en cinq minutes
+
+Les garde-fous ne sont **pas tous du même risque**, et il faut les séparer (**R29** : le coût de
+l'erreur décide) :
+- ⭐ **Ceux qui INFORMENT sans rien changer** (blessure, exercice écarté, doublon, charnière,
+  contrôle d'intensité, absence de repère) → *aucun risque*, ils attachent un avertissement et la
+  personne décide. **Et l'alerte blessure vaut sans doute PLUS ici que chez Milo** : un programme se
+  répète pendant des semaines, pas une fois.
+- ⛔ **Celui qui DÉPLACE** (le cardio sort de la liste des exercices) → *c'est une décision produit*.
+  Chez Milo, on corrige une machine qui a mal rangé. Dans un programme, **la personne a écrit sa
+  propre liste** — la modifier est plus présomptueux. Les trois gardes de ft-v1150 (pas de charge ·
+  durée lisible · pas un exercice du catalogue) s'appliqueraient à l'identique, mais la question
+  « a-t-on le droit ? » est différente, et elle appartient à Michel.
+
+⏭️ **À décider avant de coder** : brancher les avertissements seuls, ou aussi le cardio ?
+
+---
+
 ## 🧠 AMÉLIORER LE CERVELET — et d'abord POUVOIR LE NOTER (06/09/2026)
 
 **Michel**, dans la minute où **ft-v1152** est partie en ligne : *« il va falloir améliorer le
