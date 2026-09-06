@@ -8,7 +8,7 @@
 
 - **Version en ligne (live) :** `ft-v1150` — 🔥 **ON NE DÉPEND PLUS DU NOM POUR RECONNAÎTRE UN CARDIO.**
   ⏳ **Déploiement à vérifier** (R18). ⛔ **`Code.js` NON modifié** → aucun déploiement backend.
-  ⏳ **Suite complète** : **parcours %PARC%** (+9, bloc CCXLIX), calculs 339/339, muscles 241/241,
+  ⏳ **Suite complète** : **parcours 2968/2968** (+9, bloc CCXLIX), calculs 339/339, muscles 241/241,
   croisés 50/50, dates 9/9, données classées 0 trou.
   Michel, une heure après ft-v1147 : *« pourquoi l'échauffement apparaît dans la séance, j'ai créé
   exprès le cardio avant et après, ça ne doit pas se reproduire »*.
