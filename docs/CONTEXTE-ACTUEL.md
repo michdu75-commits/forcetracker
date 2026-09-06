@@ -7,6 +7,8 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1141` — 📊 **L'HISTORIQUE DES PASSES DU BANC D'ESSAI.**
+  ⏳ **Suite complète VERTE** : **parcours 2875/2875** (+16, bloc CCXLII), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   Michel : *« il faudrait créer un historique des benchmark »*.
   ⭐⭐ **Il en existait DÉJÀ un, et je l'ai dit avant de construire** (`ft4_evalHist`, 8 passes,
   une ligne **par SCÉNARIO**). ⛔ Le manque réel était plus étroit : **rien par PASSE** (aucun
