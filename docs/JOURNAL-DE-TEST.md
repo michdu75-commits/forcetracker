@@ -69,6 +69,44 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🔵 « PERTE DE DONNÉES » EN PLEINE SÉANCE — c'était un NOM, et le code le savait déjà (06/09/2026)
+
+**Ce qui déclenche l'entrée** : Michel, en salle, séance en cours : *« Perte de données. Dans
+précédent j'ai déjà fait cet exercice et l'historique a disparu et je n'ai plus de stats non plus »*.
+Capture à l'appui, sur **Développé Épaules Assis Machine** : colonne PRÉCÉDENT à `—`.
+
+**⭐⭐ RIEN N'ÉTAIT PERDU, et trois sondes le disaient déjà** : « Historiques protégés : **aucun
+rétrécissement refusé** » (donc le téléphone n'a jamais envoyé d'historique amputé), « Stockage des
+comptes : **40 %**, écriture OK » (donc pas de troncature locale à 50), et la sauvegarde du jour
+présente. *La panne était dans la LECTURE, pas dans la donnée.*
+
+**⛔⛔ LA CAUSE, MESURÉE** : le catalogue porte `Développé Épaules Assis Machine **(Shoulder
+Press)**` ; la séance du jour porte `Développé Épaules Assis Machine` **sans le suffixe** (elle vient
+de Milo, et `_seanceDepuisTexte` garde le texte TEL QUEL quand il n'est pas reconnu à l'identique —
+c'est voulu, R29 : proposer un exercice DIFFÉRENT serait pire). Or `getPrev` compare
+`e.name === name`, **au caractère près**. 👉 ***Deux symptômes, une seule cause*** : le « précédent »
+et le bouton 📊 (`setup.js`, même `===`) cherchent tous deux par nom exact.
+
+**⚠️⚠️ ET LE CODE LE SAVAIT — c'est le vrai enseignement.** `_repereDefauts` (ft-v1035) porte ce
+commentaire, écrit noir sur blanc : *« L'historique se lit ICI et pas via `getPrev`, qui compare le
+nom EXACTEMENT et sert ailleurs : le corriger changerait le comportement de tous ses appelants
+(R14) »*. **Le défaut a été vu, contourné localement, écrit… et laissé.** Le résolveur de variantes
+(`exNomCatalogue` + `exNomActuel` + `_normEx`) existe déjà et fonctionne — *il a simplement un seul
+client.* **Une limite connue et documentée reste une limite** : elle a fini par se manifester comme
+une « perte de données » chez le fondateur, en salle.
+
+**Attendu vérifiable** — entièrement par du CODE, aucun appel API : *un exercice dont le nom diffère
+du catalogue par un suffixe, un accent ou une ponctuation retrouve son « précédent » et sa
+progression.* ⚠️ **Et le contre-test est obligatoire** : deux exercices RÉELLEMENT différents
+(`Développé Épaules Machine` vs `Développé Épaules Assis Machine`) ne doivent **jamais** être
+confondus — *un « précédent » qui affiche les charges d'un autre exercice serait bien pire que
+l'absence, parce qu'on le croirait.*
+
+**⛔ Non corrigé à chaud, et c'est délibéré** : `getPrev` a **beaucoup d'appelants** (pré-remplissage
+des séries, montée en charge, repos, cardio) — le commentaire de ft-v1035 dit exactement pourquoi on
+ne l'a pas touché. Ça mérite sa version, ses témoins et son contrôle négatif, pas un correctif posé
+pendant que Michel est à la salle.
+
 ### 🟡 MILO DIT 100, L'APP RÉPOND « VISER ~95 » — **à quelle fréquence se contredisent-ils ?** (06/09/2026)
 
 **Ce qui déclenche la question** : un cas réel de Michel. Dernier développé couché `95×3 · 95×3 ·
