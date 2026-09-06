@@ -7,8 +7,10 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1147` — 🔥 **L'ÉCHAUFFEMENT CARDIO DE MILO ALLAIT DANS LA LISTE DES EXERCICES.**
-  ⏳ **Déploiement à vérifier** (R18). ⛔ **`Code.js` NON modifié** → aucun déploiement backend.
-  ⏳ **Suite complète** : **parcours 2929/2929** (+10, bloc CCXLVI), calculs 339/339, muscles 241/241,
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#944** sur `248952d`, **job `deploy` success**,
+  les 7 étapes vertes à **18:05:00 UTC**. ⛔ **`Code.js` NON modifié** → aucun déploiement backend
+  attendu, son absence n'est donc pas un signal.
+  ⏳ **Suite complète VERTE** : **parcours 2929/2929** (+10, bloc CCXLVI), calculs 339/339, muscles 241/241,
   croisés 50/50, dates 9/9, données classées 0 trou.
   Michel : *« Milo me propose un échauffement en début de séance, ça ne va pas du tout, pourquoi ça
   arrive ? »* — puis *« essaye de voir ça avant de modifier quoi que ce soit »*.
