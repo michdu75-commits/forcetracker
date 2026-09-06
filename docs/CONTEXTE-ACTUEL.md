@@ -6,39 +6,22 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1152` — 🏁 **LE CARDIO SE DÉCLARE, IL NE SE DEVINE PLUS.**
-  ⏳ **Suite complète VERTE** : **parcours 2983/2983** (+15, bloc CCLI), calculs 339/339,
-  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
-  ✅ **LES DEUX DÉPLOIEMENTS VÉRIFIÉS VERTS** (R18 — le **job**, pas seulement le run) :
-  **Pages run #954**, job `deploy` success, 5 étapes vertes à **20:28:48 UTC** · **Worker run #26**,
-  job `deploy` success, étape « Déployer sur Cloudflare Workers » verte à **20:28:57 UTC**.
-  ⛔ **`Code.js` NON modifié** → aucun déploiement backend attendu, son absence n'est pas un signal.
-  Michel, après ft-v1150 : *« prends le, ferme ça définitivement »* — après que je lui aie dit que
-  je **ne pouvais pas** promettre « plus jamais » tant que l'app **devine**.
-  ⭐⭐ **Ce qui ferme n'est pas une liste plus longue, c'est un CHAMP** : le **cervelet**
-  (`worker.js`, `seanceJson`) déclare `cardio:{avant,apres}` et il lui est dit de ne JAMAIS mettre
-  le cardio dans `exs`. *Celui qui SAIT où va le cardio le DIT.*
-  ⭐⭐ **C'est le CERVELET, pas Milo** — le bloc caché a quitté le prompt de Milo en **ft-v919**.
-  👉 **Donc R34 ne s'applique pas** : le prompt de Milo n'a pas bougé d'un caractère, ce qui change
-  est l'instruction d'un **convertisseur** qui ne sait rien de la personne.
-  ⛔ **Le modèle propose, le code valide** : type hors liste → « autre », intensité inconnue →
-  « modéré », **durée absente ou absurde → cardio ANNULÉ**, jamais inventé (R29). Mêmes bornes que
-  `_cardioDepuisEx` (R2).
-  ⛔⛔ **La devinette de ft-v1147/1150 RESTE, en repli** — les trois voies ne produisent pas toutes
-  ce champ. *Un correctif qui remplace le filet devient une régression le jour où il ne s'applique
-  pas.* C'est le témoin qui compte le plus du bloc **CCLI**.
-  ⭐ **Branché dans `_normalizeMiloSession`**, seul écrivain de `_pendingMiloSessions` (leçon
-  `supersetGroup`, ft-v1130). ⭐⭐ **Et `coach.js` n'a PAS été touché** : mesuré, pas supposé —
-  `_cerveletFidele` fait `Object.assign` et `_completerMonteeEnCharge` mute sur place, le champ
-  transite seul. *Ma réservation annonçait 3 fichiers, il n'en a fallu que 2.*
-  ⏭️ **PROCHAINE ÉTAPE NOMMÉE PAR MICHEL** (*« il va falloir améliorer le cervelet alors dans
-  le futur »*) : ⭐⭐ **le point faible a BOUGÉ** — d'une devinette de l'app (du code, corrigé 3 fois)
-  vers un comportement de modèle. ⛔ **Et on ne sait pas le noter** : les témoins vérifient que le
-  prompt DIT la règle, jamais qu'il l'APPLIQUE (§8, comme pour Milo). ⭐ **Mais le cervelet est le
-  banc le plus facile du projet** : entrée un texte, sortie un JSON, attendu vérifiable par du CODE,
-  **aucun juge humain**, modèle Haiku. → `docs/ARCHITECTURE-CERVEAU-CERVELET.md` **§10** ·
-  `IDEES-FUTURES.md` · doute noté dans `docs/JOURNAL-DE-TEST.md`.
-  ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+- **Version en ligne (live) :** `ft-v1153` — 🛡️ **LES AVERTISSEMENTS DE SÉANCE ARRIVENT SUR LES PROGRAMMES.**
+  ⏳ **Déploiement à vérifier** (R18) — ⛔ **`coach.js`, `Code.js` et `worker.js` NON touchés** → ni backend ni worker.
+  Michel : *« je n'ai jamais testé cet angle »*. ⛔⛔ **Il avait raison, c'est mesuré** :
+  `_loadProgDayVraiment` / `_loadProgVraiment` construisent `S.wkt` **en direct** et ne traversent
+  **jamais** `_appliqueMiloSession` → un jour de programme n'avait **ni alerte blessure**, ni exercice
+  écarté, ni doublon, ni charnière, ni contrôle d'intensité, ni « aucun repère ».
+  ⭐⭐ **`BUGS.md` famille 15** — *la règle juste, définie trop étroit* : « le SEUL point que les DEUX
+  portes traversent » était **vrai**, mais les deux portes étaient celles de **Milo**. Le programme
+  était une **troisième porte** que personne n'avait comptée.
+  ⛔ **Décision de Michel (R30) : les avertissements SEULEMENT** — le cardio **ne sort pas** de la
+  liste sur un programme. *La personne a écrit sa propre liste* (R29). Figé par un témoin.
+  ⭐ **Un défaut trouvé en chemin répare aussi le chemin de Milo** : `toast()` **remplace**, donc le
+  toast d'intensité était **déjà avalé** par celui de la validation depuis ft-v989. Un seul toast joint.
+  📣 **Règle #11** : point rouge + aide détaillée, **pas de pop-up** (rien à faire, aucun repère déplacé).
+  ⚠️ **Michel intègre son programme DEMAIN — c'est le test grandeur nature.**
+
 
 - **Version précédente :** `ft-v1149` — 🔤 **LES DEUX BOUTONS DE FUSION DISAIENT LA MÊME CHOSE.**
   Capture de Michel sur l'écran Admin, **le jour même** de ft-v1148 : ses 4 doublons sont tous

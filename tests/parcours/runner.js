@@ -28157,6 +28157,141 @@ console.log('\n-- CCLI. Le cardio se DÉCLARE, il ne se devine plus (ft-v1152) -
     /MONTÉE EN CHARGE[\s\S]{0,80}PAS du cardio/.test(_sj), 'garde montée en charge absent');
 }
 
+/* ═══ CCLII. LES AVERTISSEMENTS DE SÉANCE ARRIVENT SUR LES PROGRAMMES (ft-v1153) ═══════════
+   Michel, en annonçant qu'il chargerait un programme le lendemain : *« je n'ai jamais testé cet
+   angle »*. ⛔⛔ **MESURÉ : le trou était réel.** `_loadProgDayVraiment` et `_loadProgVraiment`
+   construisent `S.wkt` **en direct** et ne traversent **jamais** `_appliqueMiloSession` — donc un
+   jour de programme n'avait ni alerte blessure, ni exercice écarté, ni doublon, ni charnière, ni
+   contrôle d'intensité, ni « aucun repère ».
+   ⭐⭐ `BUGS.md` FAMILLE 15 — *la règle juste, définie trop étroit* : le commentaire disait « le
+   SEUL point que les DEUX portes traversent », c'était vrai, mais **les deux portes étaient celles
+   de MILO**. Le programme était une TROISIÈME porte que personne n'avait comptée.
+   ⛔ **CE BLOC PROTÈGE AUSSI UNE DÉCISION** (R30) : sur un programme, **le cardio ne bouge PAS**.
+   *Chez Milo on corrige une machine ; dans un programme, la personne a écrit sa propre liste.*
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLII. Les avertissements de séance arrivent sur les programmes (ft-v1153) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'999',
+    // 🛡️ une épaule ACTIVE — c'est l'alerte qui vaut le plus sur un programme, qui se répète des semaines
+    ft4_health:JSON.stringify({conditions:[],notes:'',injuries:[{zone:'epaule_d',status:'active',since:'2026-08-01'}]}),
+    ft4_prs:JSON.stringify({'Développé Couché':{rm1:100,kg:90,reps:3,date:'2026-09-01'}})}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1800);
+  const R=await p.evaluate(()=>{ try{
+    const o={};
+    o.fn=['_avertissementsSeance','_loadProgDayVraiment','_loadProgVraiment','_appliqueMiloSession',
+          '_validationSeance','_intensiteDefauts','_gardienZones'].filter(f=>typeof window[f]!=='function');
+    /* ⛔⛔ CONTRÔLE n°2, LE PLUS IMPORTANT : les deux chargeurs doivent APPELER la fonction.
+       Une fonction d'avertissement parfaite que personne n'appelle laisserait tous les autres
+       témoins verts pendant que l'écran ne montre toujours rien. */
+    o.appelee={ jour:/_avertissementsSeance\(/.test(String(_loadProgDayVraiment)),
+                simple:/_avertissementsSeance\(/.test(String(_loadProgVraiment)),
+                milo:/_avertissementsSeance\(/.test(String(_appliqueMiloSession)) };
+    /* ⛔ ET UN SEUL PROPRIÉTAIRE (R2) : les chargeurs ne doivent pas avoir leur propre COPIE. */
+    o.pasDeCopie={ jour:!/_validationSeance\(/.test(String(_loadProgDayVraiment)),
+                   simple:!/_validationSeance\(/.test(String(_loadProgVraiment)) };
+    /* ⭐⭐ LE JOUR DE PROGRAMME : blessure + charge élevée + doublon, et le cardio qui NE bouge PAS. */
+    S.programmes=[{name:'Mon prog',days:[{label:'Jour 1',exs:[
+      {name:'Échauffement',note:'10 min de tapis',sets:[{reps:1,kg:0}]},
+      {name:'Développé Militaire',sets:[{reps:8,kg:40,type:'N'}]},
+      {name:'Développé Couché',sets:[{reps:3,kg:99,type:'N'}]},
+      {name:'Développé Couché',sets:[{reps:8,kg:60,type:'N'}]}]}]}];
+    S.wkt={};
+    _loadProgDayVraiment(0,0);
+    const par={}; (S.wkt.exs||[]).forEach(x=>{ par[x.name]=par[x.name]||
+      {intensite:!!x.intensiteWarn, warns:(x.seanceWarn||[]).slice()}; });
+    o.jour={ exs:(S.wkt.exs||[]).map(x=>x.name), cardioAvant:S.wkt.cardioAvant||null, par:par };
+    /* ⛔ LA JUMELLE (R8) — un programme à UN seul jour passe par l'autre chargeur. */
+    S.programmes=[{name:'Prog simple',exs:[{name:'Développé Militaire',sets:[{reps:8,kg:40,type:'N'}]}]}];
+    S.wkt={};
+    _loadProgVraiment(0);
+    o.simple={ exs:(S.wkt.exs||[]).map(x=>x.name),
+               warns:((S.wkt.exs||[])[0]||{}).seanceWarn||[] };
+    /* ⭐⭐ LE CHEMIN DE MILO : UN SEUL toast, et les avertissements toujours attachés.
+       ⚠️ `toast()` REMPLACE — deux appels d'affilée et le second efface le premier. */
+    const vus=[]; const vrai=window.toast; window.toast=m=>{ vus.push(m); };
+    S.wkt={}; _pendingMiloSessions.length=0;
+    const n=_normalizeMiloSession({label:'P',exs:[
+      {name:'Développé Militaire',sets:[{reps:8,kg:40}]},
+      {name:'Développé Couché',sets:[{reps:3,kg:99}]},
+      {name:'Développé Couché',sets:[{reps:8,kg:60}]}]});
+    _pendingMiloSessions.push(n);
+    _appliqueMiloSession(JSON.parse(JSON.stringify(n.exs)), n, 'start', null);
+    window.toast=vrai;
+    o.milo={ toasts:vus.slice(),
+             warns:(S.wkt.exs||[]).map(x=>({n:x.name,i:!!x.intensiteWarn,s:(x.seanceWarn||[]).length})) };
+    return o;
+  }catch(e){ return {err:e.message}; } });
+
+  /* ⛔⛔ ET LE TOAST DOIT ÊTRE VISIBLE APRÈS le « chargé ! 💪 » — mesuré à l'écran, pas par un grep :
+     `toast()` remplace, donc l'annoncer avant reviendrait à le faire EFFACER par le succès.
+     *Un avertissement invisible est pire qu'aucun avertissement : on croit être prévenu.* */
+  const T=await p.evaluate(async()=>{
+    S.programmes=[{name:'P',days:[{label:'J1',exs:[{name:'Développé Militaire',sets:[{reps:8,kg:40,type:'N'}]}]}]}];
+    S.wkt={}; _loadProgDayVraiment(0,0);
+    const lire=()=>{ const t=document.getElementById('toast'); return t?t.textContent:''; };
+    const juste=lire();
+    await new Promise(r=>setTimeout(r,2600));
+    return { juste:juste, apres:lire() };
+  });
+
+  t('CCLII ⛔ CONTRÔLE — les 7 fonctions existent (sinon tout le bloc est muet)',
+    !R.err && R.fn && R.fn.length===0, R.err||JSON.stringify(R.fn));
+  t('CCLII ⛔⛔ CONTRÔLE n°2 — les DEUX chargeurs de programme APPELLENT la fonction',
+    !!(R.appelee && R.appelee.jour && R.appelee.simple && R.appelee.milo), JSON.stringify(R.appelee));
+  t('CCLII ⛔ un seul propriétaire (R2) : aucun chargeur n\'a sa propre COPIE de la validation',
+    !!(R.pasDeCopie && R.pasDeCopie.jour && R.pasDeCopie.simple), JSON.stringify(R.pasDeCopie));
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : l'alerte blessure, celle qui vaut le plus sur un
+     programme — il se répète des semaines, pas une fois. */
+  t('CCLII ⭐⭐ un jour de programme reçoit l\'ALERTE BLESSURE (épaule active + développé militaire)',
+    !!(R.jour && R.jour.par && R.jour.par['Développé Militaire']
+       && R.jour.par['Développé Militaire'].warns.some(w=>/🛡️/.test(w)&&/épaule/i.test(w))),
+    JSON.stringify(R.jour&&R.jour.par));
+  t('CCLII ⭐ … le contrôle de charge (99 kg pour un 1RM à 100) et le doublon aussi',
+    !!(R.jour && R.jour.par['Développé Couché']
+       && R.jour.par['Développé Couché'].intensite===true
+       && R.jour.par['Développé Couché'].warns.some(w=>/🔁/.test(w))),
+    JSON.stringify(R.jour&&R.jour.par&&R.jour.par['Développé Couché']));
+  /* ⛔⛔ LA DÉCISION DE MICHEL, FIGÉE (R30) : sur un programme, le cardio NE BOUGE PAS. */
+  t('CCLII ⛔⛔ DÉCISION — sur un programme, le cardio NE sort PAS de la liste (R29/R30)',
+    !!(R.jour && R.jour.exs && R.jour.exs[0]==='Échauffement' && R.jour.exs.length===4
+       && R.jour.cardioAvant===null), JSON.stringify(R.jour&&{e:R.jour.exs,c:R.jour.cardioAvant}));
+  /* ⛔ LA JUMELLE (R8) — le correctif posé d'un seul côté est LA faute que ce fichier rattrape. */
+  t('CCLII ⛔ la JUMELLE : un programme à UN SEUL jour reçoit les mêmes avertissements',
+    !!(R.simple && R.simple.warns && R.simple.warns.some(w=>/🛡️/.test(w))),
+    JSON.stringify(R.simple));
+  /* ⭐⭐ LE DÉFAUT TROUVÉ EN CHEMIN : deux toasts d'affilée, le second EFFACE le premier. */
+  t('CCLII ⭐⭐ chemin de Milo : UN SEUL toast joint (avant, le 2ᵉ effaçait le 1ᵉʳ)',
+    !!(R.milo && R.milo.toasts && R.milo.toasts.length>=1
+       && /Charge élevée/.test(R.milo.toasts[0]) && /à vérifier/.test(R.milo.toasts[0])),
+    JSON.stringify(R.milo&&R.milo.toasts));
+  t('CCLII ⛔ non-régression : le chemin de Milo attache toujours ses avertissements',
+    !!(R.milo && R.milo.warns && R.milo.warns.some(x=>x.i===true) && R.milo.warns.some(x=>x.s>0)),
+    JSON.stringify(R.milo&&R.milo.warns));
+  t('CCLII ⛔⛔ sur un programme, l\'avertissement s\'affiche APRÈS le « chargé ! » (sinon effacé)',
+    !!(T && /chargé/.test(T.juste) && /🛡️/.test(T.apres)), JSON.stringify(T));
+  /* 📣 RÈGLE D'OR #11 — et le témoin mesure que la pastille est POSÉE, pas qu'une ligne existe.
+     ⛔⛔ MA PREMIÈRE VERSION VISAIT `spot:'log-exs'`, UN ID QUI N'EXISTE PAS : `_featSpots` fait
+     `if(!el)return;`, donc le point rouge n'aurait JAMAIS été affiché, **sans la moindre erreur**.
+     *Une annonce qui n'a pas lieu et que rien ne signale.* D'où un témoin qui compte le point,
+     pas la déclaration. */
+  const F=await p.evaluate(()=>({
+    visible:(typeof _featVisibles==='function')
+      ? _featVisibles().filter(x=>x.id==='prog-avertissements').length : -1,
+    posee:(typeof _featVisibles==='function')
+      ? _featVisibles().filter(x=>x.id==='prog-avertissements'&&!x.anchor&&!x.spot).length : -1,
+    aide:(typeof _HELP_DATA!=='undefined'&&_HELP_DATA.log)
+      ? _HELP_DATA.log.tips.filter(t=>/programmes sont v/i.test(t.t)).length : -1
+  }));
+  t('CCLII 📣 #11 — le point rouge existe ET est réellement POSÉ (pas un `spot` mort)',
+    !!(F && F.visible===1 && F.posee===1), JSON.stringify(F));
+  t('CCLII 📣 #11 — l\'aide détaillée de l\'onglet Séance explique la nouveauté ET sa limite',
+    !!(F && F.aide===1), JSON.stringify(F));
+  t('CCLII aucune erreur JS pendant tout le bloc', errs.length===0, errs.join(' | '));
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

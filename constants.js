@@ -464,6 +464,16 @@ const FEAT_SI = {
   testeur:       () => { try{ return typeof _isTester==='function' && _isTester(); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* 🛡️ POINT ROUGE sur SÉANCE (ft-v1153) : c'est là que les avertissements APPARAISSENT, donc
+     là que la pastille doit ramener. ⛔ Le poser sur l'Accueil enverrait chercher sur un écran où
+     il n'y a rien à voir — le défaut corrigé en ft-v1099.
+     ⛔⛔ ET SANS `spot`, comme les 36 autres entrées de cet écran — MESURÉ : `spot:'log-exs'` ne
+     correspond à AUCUN id réel, et `_featSpots` fait `if(!el)return;`. La pastille n'aurait
+     JAMAIS été posée, sans la moindre erreur. *Un point rouge qui vise un ancrage inexistant est
+     une annonce qui n'a pas lieu, et rien ne le signale.*
+     ⛔ ET PAS DE POP-UP : rien n'est à faire, aucun repère n'a bougé, et une charge annoncée reste
+     la charge annoncée. La pop-up ANNONCE, l'aide EXPLIQUE (R25). */
+  {id:'prog-avertissements', screen:'log', desc:'Nouveau : tes PROGRAMMES sont vérifiés comme les séances de Milo — alerte si un exercice sollicite une zone que tu protèges, si la charge est trop lourde pour ton niveau, ou si un exercice est en double'},
   /* 🔋 POINT ROUGE sur l'ACCUEIL : c'est là que le score de récup s'affiche, et c'est là que
      « Pourquoi ce score ? » explique le détail — désormais avec une ligne cardio quand il y en a. */
   /* ⛔ POINT ROUGE sur l'Accueil : le score change ET un facteur disparaît de l'explication.
