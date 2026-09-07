@@ -17367,7 +17367,10 @@ console.log('\n-- CLX. La quantité au choix : grammes ou portions (ft-v1051) --
     o.enG={macros:macros(), champVide:(document.getElementById('af-poids')||{}).value==='',
            demande:/L'app ne peut pas le deviner/.test(bloc())};
     /* ③ JE DÉCLARE 40 g — déclarer n'est PAS rescaler : les 4 valeurs ne bougent pas. */
-    document.getElementById('af-poids').value='40'; _afDeclarePoids(); await dort(150);
+    /* ⌨️ ft-v1159 — le VRAI geste : on tape, puis on ferme le clavier (le bloc se range au blur). */
+    {const _e=document.getElementById('af-poids'); _e.value='40';
+     _e.dispatchEvent(new Event('input',{bubbles:true}));
+     _e.dispatchEvent(new Event('blur',{bubbles:true}));} await dort(150);
     o.declare={macros:macros(), ref:/Référence : 40 g \(que tu as indiqué\)/.test(bloc())};
     /* ④ JE PASSE À 80 g — tout double. */
     document.getElementById('af-prop').value='80'; _afApplyProp(); await dort(150);
@@ -18824,7 +18827,11 @@ console.log('\n-- CLXVIII. La quantité et les valeurs ne se désappairent plus 
     const V=id=>(document.getElementById(id)||{}).value;
     const lire=()=>({q:V('af-prop'),kcal:+V('af-kcal'),prot:+V('af-prot')});
     const taper=(id,v)=>{const e=document.getElementById(id);e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}));};
-    const valider=id=>document.getElementById(id).dispatchEvent(new Event('change',{bubbles:true}));
+    /* ⌨️ ft-v1159 — FERMER LE CLAVIER, C'EST `change` **ET** `blur`. Le champ « poids de cette
+   portion » ne se valide plus sur `change` (il répond à la frappe, et RANGE le bloc au `blur`) :
+   ces aides simulent donc le geste réel au lieu d'un seul événement. *Plus fidèle qu'avant, pas
+   moins : un utilisateur ne déclenche jamais `change` sans `blur`.* */
+  const valider=id=>{const e=document.getElementById(id);e.dispatchEvent(new Event('change',{bubbles:true}));e.dispatchEvent(new Event('blur',{bubbles:true}));};
     /* ⭐ LES VRAIES VALEURS DE SON ÉTIQUETTE pour 30 g : 116,6 kcal · 26,4 g de protéines.
        Une fixture inventée aurait rendu le témoin vert sans rien dire de son cas. */
     openAddFood(); await d(200);
@@ -19074,7 +19081,8 @@ console.log('\n-- CLXXI. Le choix d\'unité dans « Modifier l\'aliment » (ft-v
     o.demande=/Combien pèse ce que tu as noté/.test(txt());
     o.champVide=(V('ef-poids')||'')==='';
     const p=document.getElementById('ef-poids'); p.value='30';
-    p.dispatchEvent(new Event('change',{bubbles:true})); await w(200);
+    p.dispatchEvent(new Event('input',{bubbles:true}));
+    p.dispatchEvent(new Event('blur',{bubbles:true})); await w(200);   // ft-v1159 : le bloc se range au blur
     /* ⛔ DÉCLARER N'EST PAS RESCALER : dire « ce que j'ai noté pèse 30 g » ne change pas ce qui
        a été mangé — ça dit à quoi correspondent les 156 kcal affichées. */
     o.declare={champ:V('ef-prop'), v:lire()};
@@ -19224,7 +19232,7 @@ console.log('\n-- CLXXII. Les cartes d\'entraînement ne s\'affichent que sur «
       const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
       document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
       const poser=(id,v)=>{const e=document.getElementById(id);e.value=v;
-        e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));};
+        e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));e.dispatchEvent(new Event('blur',{bubbles:true}));};
       openAddFood(); await w(200);
       document.getElementById('af-desc').value='Iso zero protein (ASL)';
       ['af-kcal','af-prot','af-carbs','af-fat'].forEach((id,i)=>{document.getElementById(id).value=[156,35,1,1][i];});
@@ -19293,7 +19301,7 @@ console.log('\n-- CLXXII. Les 4 routes de quantité se comportent pareil (ft-v10
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
     const tape=(id,v)=>{const e=document.getElementById(id);e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}));};
     const poser=(id,v)=>{const e=document.getElementById(id);e.value=v;
-      e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));};
+      e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));e.dispatchEvent(new Event('blur',{bubbles:true}));};
     /* Pour chaque route : la valeur de départ, celle avec une VIRGULE, celle du champ VIDÉ. */
     const sonde=(pre,champ,ref)=>{
       const l=()=>({k:+V(pre+'-kcal'),p:+V(pre+'-prot')});
