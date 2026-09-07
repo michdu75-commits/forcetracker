@@ -255,6 +255,13 @@ const _HELP_DATA={
   nutrition:{
     title:'🍽️ Nutrition',
     tips:[
+      /* ⚖️ ft-v1159 — CE QU'ON NE DEVINE PAS, ET MICHEL EN EST LA PREUVE : c'est l'AUTEUR de
+         l'app qui s'est fait avoir. Le champ « poids de cette portion » travaille en DEUX temps
+         — il CALE d'abord, il RECALCULE ensuite — et rien ne le disait. Son enregistrement
+         d'écran montre exactement ça : il tape 50, attend que les 156 kcal bougent, rien.
+         ⛔ L'aide dit les deux temps ET la raison, parce que la raison est ce qui rend le
+         mécanisme évident : l'app ne sait pas ce que pèse ce que tu as noté. */
+      {i:'⚖️',t:'<b>Le poids d\'une portion se règle en DEUX temps</b> — et le premier ne change rien, c\'est normal. ① <b>Tu indiques combien ça pèse</b> : l\'app ne peut pas le deviner, et les 4 valeurs que tu as sous les yeux (calories, protéines…) se <b>calent</b> sur ce poids. <b>Elles ne bougent pas à ce moment-là</b> — tu ne fais que dire à quoi elles correspondent. ② <b>Ensuite tu changes ce nombre quand tu veux</b>, et là <b>les 4 valeurs suivent en proportion</b> : 50 g → 30 g fait passer 156 kcal à 94. ⭐ Tu sais où tu en es au texte sous le champ : tant qu\'il demande « combien pèse ce que tu as noté ? », tu es à l\'étape ① ; dès qu\'il affiche <b>✅ 50 g</b>, c\'est calé.'},
       /* 🍽️ POINT 3 DE LA RÈGLE #11 — ni pop-up ni point rouge, et c'est argumenté : une ligne
          apparaît dans une carte livrée la veille, et un chiffre existant devient plus juste ;
          rien n'est à faire, aucun repère ne bouge. ⚠️ Mais la moyenne de « Ta semaine » PEUT

@@ -28873,6 +28873,136 @@ console.log('\n-- CCLVI. Le filet déterministe des échauffements (ft-v1158) --
     /N.{0,2}emploie setTypePerSet QUE d.{0,2}après cette colonne/.test(_cj), '');
 }
 
+/* ═══ CCLVII. LE CHAMP « POIDS DE CETTE PORTION » RÉPOND À LA FRAPPE (ft-v1159) ═════════════
+   Michel envoie un enregistrement d'écran : *« quand je change le poids, en fait rien au début,
+   après j'efface et ça fonctionne mais c'est pas bon non plus »*.
+   ⭐⭐ LU IMAGE PAR IMAGE : à 3,3 s « 50 » est tapé, l'aide dit encore *« Combien pèse ce que tu
+   as noté ? »*, les 4 valeurs sont INCHANGÉES ; à 4,3 s il ferme le clavier → *« Référence :
+   50 g »*. ⛔ Le champ était en **`onchange`** — il ne partait qu'à la fermeture du clavier, que
+   le pavé décimal d'iOS ne sait pas déclencher (aucune touche Entrée).
+   ⛔⛔ ET LE 2ᵉ DÉFAUT EST CELUI QU'IL DÉCRIT PAR « c'est pas bon non plus » : le sous-titre
+   annonçait « recalcule les 4 valeurs » AU-DESSUS d'un champ qui ne recalcule RIEN — il CALE les
+   valeurs existantes sur le poids déclaré.
+   ⭐⭐ LE TÉMOIN LE PLUS IMPORTANT DE CE BLOC N'EST PAS LE CORRECTIF, C'EST LE PIÈGE : passer
+   bêtement en `oninput` serait PIRE, parce que la fonction REDESSINAIT le bloc — le champ serait
+   détruit au premier chiffre et le second ne pourrait jamais être tapé. On vérifie donc que le
+   champ SURVIT à la frappe, en marquant le nœud DOM.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLVII. Le champ « poids de cette portion » répond à la frappe (ft-v1159) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:844},timezoneId:'Europe/Paris'});
+  const p=await cx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e.message).slice(0,90)));
+  /* ⛔ DATE LOCALE, JAMAIS `toISOString()` — le banc `tests/dates` l'interdit et il m'a
+     rougi dessus : une fixture datée en UTC fait 11 faux rouges au passage de minuit. */
+  const _d=new Date();
+  const _j=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
+  await p.addInitScript(seedScript({ft4_name:'Michel',ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'999',
+    // l'aliment EXACT de sa vidéo : aucune quantité connue, 156 kcal / 26 P / 1 G / 1 L
+    ft4_foodlog:JSON.stringify([{ts:1757000000000,date:_j,meal:'Petit-déj',
+      name:'Iso zero protein (ASL)',kcal:156,prot:26,carbs:1,fat:1}])}));
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1800);
+  const R=await p.evaluate(async()=>{ try{
+    const o={};
+    o.fn=['_efDeclarePoids','_afDeclarePoids','_efQtyRender','_afMajAncre','openEditFood','openAddFood']
+        .filter(f=>typeof window[f]!=='function');
+    /* ⛔ CONTRÔLE n°2 — aucun `onchange` ne doit subsister sur ces deux champs : c'est LE
+       mécanisme du défaut, et un `grep` sur la source ne dirait pas ce que le DOM porte. */
+    const attrs={};
+    // ── ÉCRAN D'ÉDITION ────────────────────────────────────────────────
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openEditFood((S.foodLog||[])[0].ts);
+    await new Promise(r=>setTimeout(r,300));
+    _efSetUnite('g'); await new Promise(r=>setTimeout(r,200));
+    const lireEf=()=>({champ:(document.getElementById('ef-poids')||{}).value,
+      aide:((document.getElementById('ef-poids-aide')||{}).textContent||''),
+      titre:((document.querySelector('#ef-qty-row div')||{}).textContent||'').slice(0,60),
+      kcal:(document.getElementById('ef-kcal')||{}).value,
+      vivant:!!document.getElementById('ef-poids')});
+    o.efDepart=lireEf();
+    const el=document.getElementById('ef-poids');
+    attrs.ef={onchange:!!el.getAttribute('onchange'), oninput:!!el.getAttribute('oninput')};
+    /* ⭐⭐ ON MARQUE LE NŒUD : s'il est remplacé par un re-rendu, la marque disparaît. C'est le
+       seul moyen de distinguer « le champ a répondu » de « le champ a été reconstruit ». */
+    el.__temoin=42;
+    el.value='5';  el.dispatchEvent(new Event('input',{bubbles:true}));
+    o.ef5=lireEf(); o.ef5.memeNoeud=(document.getElementById('ef-poids')||{}).__temoin===42;
+    el.value='50'; el.dispatchEvent(new Event('input',{bubbles:true}));
+    o.ef50=lireEf(); o.ef50.memeNoeud=(document.getElementById('ef-poids')||{}).__temoin===42;
+    /* ⛔ champ vidé → on revient à la question, et le poids déclaré retombe à 0 */
+    el.value='';   el.dispatchEvent(new Event('input',{bubbles:true}));
+    o.efVide={aide:((document.getElementById('ef-poids-aide')||{}).textContent||'').slice(0,30), declare:_efPoidsDeclare};
+    el.value='50'; el.dispatchEvent(new Event('input',{bubbles:true}));
+    el.dispatchEvent(new Event('blur',{bubbles:true}));
+    await new Promise(r=>setTimeout(r,250));
+    o.efAncre={prop:(document.getElementById('ef-prop')||{}).value,
+      kcal:(document.getElementById('ef-kcal')||{}).value,
+      titre:((document.querySelector('#ef-qty-row div')||{}).textContent||'').slice(0,60)};
+    const pr=document.getElementById('ef-prop');
+    if(pr){ pr.value='30'; pr.dispatchEvent(new Event('input',{bubbles:true})); }
+    o.efRescale={kcal:(document.getElementById('ef-kcal')||{}).value,
+      prot:(document.getElementById('ef-prot')||{}).value};
+    // ── LA JUMELLE : ÉCRAN D'AJOUT (R8) ────────────────────────────────
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await new Promise(r=>setTimeout(r,300));
+    const d=document.getElementById('af-desc'); if(d) d.value='Iso zero protein';
+    ['kcal','prot','carbs','fat'].forEach((k,i)=>{const x=document.getElementById('af-'+k); if(x)x.value=[156,26,1,1][i];});
+    _afMajAncre(true); await new Promise(r=>setTimeout(r,150));
+    _afSetUnite('g'); await new Promise(r=>setTimeout(r,150));
+    const ela=document.getElementById('af-poids');
+    if(ela){
+      attrs.af={onchange:!!ela.getAttribute('onchange'), oninput:!!ela.getAttribute('oninput')};
+      ela.__temoin=42;
+      ela.value='5';  ela.dispatchEvent(new Event('input',{bubbles:true}));
+      ela.value='50'; ela.dispatchEvent(new Event('input',{bubbles:true}));
+      o.af50={aide:((document.getElementById('af-poids-aide')||{}).textContent||''),
+        memeNoeud:(document.getElementById('af-poids')||{}).__temoin===42,
+        kcal:(document.getElementById('af-kcal')||{}).value};
+      ela.dispatchEvent(new Event('blur',{bubbles:true}));
+      await new Promise(r=>setTimeout(r,250));
+      const pa=document.getElementById('af-prop');
+      if(pa){ pa.value='30'; pa.dispatchEvent(new Event('input',{bubbles:true})); }
+      o.afRescale={prop:(document.getElementById('af-prop')||{}).value,
+        kcal:(document.getElementById('af-kcal')||{}).value};
+    }
+    o.attrs=attrs;
+    return o;
+  }catch(e){ return {err:e.message}; } });
+
+  t('CCLVII ⛔ CONTRÔLE — les 6 fonctions existent (sinon tout le bloc est muet)',
+    !R.err && R.fn && R.fn.length===0, R.err||JSON.stringify(R.fn));
+  t('CCLVII ⛔⛔ CONTRÔLE n°2 — les DEUX champs sont en `oninput`, plus aucun `onchange`',
+    !!(R.attrs && R.attrs.ef && R.attrs.ef.oninput && !R.attrs.ef.onchange
+       && R.attrs.af && R.attrs.af.oninput && !R.attrs.af.onchange), JSON.stringify(R.attrs));
+  /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION — et il mesure LE PIÈGE, pas le correctif. */
+  t('CCLVII ⭐⭐ LE PIÈGE : le champ SURVIT à la frappe (le nœud n\'est pas reconstruit)',
+    !!(R.ef5 && R.ef5.memeNoeud===true && R.ef50 && R.ef50.memeNoeud===true && R.ef50.champ==='50'),
+    JSON.stringify({ef5:R.ef5,ef50:R.ef50}));
+  t('CCLVII ⭐⭐ … et l\'app RÉPOND en direct : « ✅ 50 g » dès la frappe (c\'est ce qui manquait)',
+    !!(R.ef50 && /✅/.test(R.ef50.aide) && /50 g/.test(R.ef50.aide)), JSON.stringify(R.ef50&&R.ef50.aide));
+  /* ⛔⛔ LE SOUS-TITRE NE MENT PLUS — c'est le « c'est pas bon non plus » de Michel. */
+  t('CCLVII ⛔⛔ le sous-titre ne promet PLUS « recalcule » au-dessus d\'un champ qui CALE',
+    !!(R.efDepart && !/recalcule/.test(R.efDepart.titre) && /indique/.test(R.efDepart.titre)),
+    JSON.stringify(R.efDepart&&R.efDepart.titre));
+  t('CCLVII ⭐ … et il redevient « recalcule » une fois la référence posée — là c\'est vrai',
+    !!(R.efAncre && /recalcule/.test(R.efAncre.titre) && R.efAncre.prop==='50'),
+    JSON.stringify(R.efAncre));
+  /* ⛔ NON-RÉGRESSION : les 4 valeurs se calent (elles NE bougent PAS), puis suivent. */
+  t('CCLVII ⛔ déclarer un poids ne CHANGE PAS les 4 valeurs — elles se calent dessus',
+    !!(R.efDepart && R.efDepart.kcal==='156' && R.ef50 && R.ef50.kcal==='156'),
+    JSON.stringify({depart:R.efDepart&&R.efDepart.kcal, ap50:R.ef50&&R.ef50.kcal}));
+  t('CCLVII ⛔ … et une fois ancré, changer la quantité les fait suivre (50→30 : 156→94 kcal)',
+    !!(R.efRescale && R.efRescale.kcal==='94' && R.efRescale.prot==='16'), JSON.stringify(R.efRescale));
+  t('CCLVII ⛔ champ vidé → on revient à la question, le poids déclaré retombe à 0',
+    !!(R.efVide && !/✅/.test(R.efVide.aide) && /Combien/.test(R.efVide.aide) && R.efVide.declare===0),
+    JSON.stringify(R.efVide));
+  /* ⛔⛔ LA JUMELLE (R8) — un correctif posé d'un seul côté est LA faute que ce projet rattrape. */
+  t('CCLVII ⛔⛔ la JUMELLE : l\'écran d\'AJOUT se comporte exactement pareil',
+    !!(R.af50 && R.af50.memeNoeud===true && /✅/.test(R.af50.aide) && R.af50.kcal==='156'
+       && R.afRescale && R.afRescale.kcal==='94'), JSON.stringify({af50:R.af50,afRescale:R.afRescale}));
+  t('CCLVII aucune erreur JS pendant tout le bloc', errs.length===0, errs.join(' | '));
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
