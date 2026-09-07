@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1156`** (prochaine : `ft-v1157`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1157`** (prochaine : `ft-v1158`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,28 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1157 — 📅 L'IMPORT RECOPIAIT LA DATE DE L'EXEMPLE DU PROMPT — LE PROGRAMME NEUF DE MICHEL S'AFFICHAIT « SEMAINE 4 / 4 », C'EST-À-DIRE TERMINÉ** — vu sur sa capture, quelques minutes après l'import : *« Semaine 4 / 4 · 23 mars → 19 avr. »*, barre de cycle pleine, sur un programme qu'il venait de charger.
+
+**⭐⭐ SON PDF NE PORTE AUCUNE DATE — vérifié en l'extrayant.** Le « 23 mars » venait **du prompt lui-même** : le schéma d'exemple de `handleImportProgram_` contenait `"startDate":"2026-03-23"`.
+
+**👉 UN EXEMPLE QUI *RESSEMBLE* À UNE VRAIE DONNÉE SE FAIT RECOPIER.** Les autres champs de l'exemple sont des **mots** (`"nom du programme"`), impossibles à confondre avec du contenu ; une **date**, elle, est parfaitement plausible. *C'est la famille de ft-v1156 vue de l'autre côté : là, le modèle manquait d'un champ et a mis l'info dans le nom ; ici, il a pris le **décor** pour du contenu.*
+
+**⛔ CE QUE ÇA COÛTAIT** : `getProgCurrentWeek` rendait **4/4**, la barre était pleine, et un bloc de 4 semaines se lisait comme **fini avant d'être commencé**.
+
+**⭐ CORRECTIF EN DEUX TEMPS — et le premier est le moins spectaculaire, mais le plus efficace.** ① **On retire la tentation** : l'exemple ne porte **plus de date** (`"startDate":""`) et le prompt interdit explicitement de recopier ses valeurs. ② **On pose le filet** : le serveur refuse une date dont le **cycle est déjà terminé** le jour de l'import.
+
+**⛔⛔ LE CRITÈRE EST DU SENS, PAS UNE BORNE ARBITRAIRE — et le contre-test compte autant que le test.** *On n'importe pas un programme qui s'est fini il y a cinq mois* ; mais **une date passée dont le cycle COURT ENCORE reste acceptée** — quelqu'un qui importe un bloc commencé il y a deux semaines a **raison** de le dater ainsi. **Mesuré à la mutation D1** : un garde-fou qui refuserait *« toute date passée »* lui effacerait une information **vraie** (**R29**).
+
+**⛔ ON EFFACE LA DATE SEULEMENT, JAMAIS LA DURÉE** : `weeks` vient du document et reste vrai. Sans date, la carte affiche simplement « Semaine 1 / N » et `progPeriode` rend `null` — *l'app sait déjà vivre sans*, et la personne peut la poser à la main dans l'éditeur. ⛔ **Et sans durée (`weeks` 0), on ne juge pas** : *on ne détruit pas ce qu'on ne sait pas juger*, et c'est sans danger puisque la carte n'affiche alors aucun cycle.
+
+**⛔⛔ JE DIS MA LIMITE, la même qu'en ft-v1156** : pas de clé API ici, donc je ne peux **pas** prouver que le modèle obéira. **Je prouve le GARDE-FOU** — extrait de `Code.js` et **exécuté** — ; ***Michel prouve l'extraction en réimportant.***
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît : c'est une **réparation** de ce que l'import produit (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **le programme déjà importé n'est pas corrigé** — sa date reste à changer à la main (✏️ → section CYCLE) ou par une réimportation. ⛔ Et **rien ne relit les autres valeurs de l'exemple** (`weeks:7`, les reps) : *aucune n'a été observée recopiée, et je n'ajoute pas un garde-fou pour un problème que je n'ai pas mesuré* (**R19**). ⚠️ **`Code.js` modifié → déploiement backend automatique, à vérifier des DEUX côtés** (**R18**).
+
+Tests : **parcours PARCOURS_N** (+11, bloc **CCLV**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⭐ **Le témoin n'est pas un `grep`** : le garde-fou est **extrait de `Code.js` et exécuté** sur six cas, dont le cas exact de Michel. ⛔ **Contrôle négatif : 3 mutations** — ① l'arbre d'avant : **2 rouges**, les deux **contrôles** — ⚠️ *et je le dis : les 9 témoins suivants ne sont pas verts, ils ne sont **pas joués*** ; ② le garde-fou trop large (toute date passée refusée) : **1 rouge**, exactement le **contre-test** — *la mutation la plus utile des trois, elle prouve que ce contre-test gagne sa place* ; ③ la date de l'exemple remise : **1 rouge**, exactement son contrôle. ⚠️ **ET UN TÉMOIN A ROUGI SUR SA PROPRE CITATION — 5ᵉ fois de cette famille** : il cherchait *« L'EXEMPLE »* tel que la phrase se **lit**, alors qu'il lit la **source**, où l'apostrophe est échappée. Fichiers : `Code.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1157. |
 
 **ft-v1156 — 📥 L'IMPORT FAISAIT « 1 EXERCICE = 1 LIGNE » AU LIEU DE « 1 EXERCICE = PLUSIEURS SÉRIES »** — Michel importe son programme réel (PDF, 3 pages), me l'envoie, et tranche : *« le but n'est pas de modifier ce qui a été rentré, il faut que l'import soit PARFAIT »*.
 

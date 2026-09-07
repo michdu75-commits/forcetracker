@@ -6,6 +6,21 @@
 
 ---
 
+- **Version en cours (ft-v1157) :** 📅 **L'IMPORT RECOPIAIT LA DATE DE L'EXEMPLE DU PROMPT.**
+  Capture de Michel juste après l'import : *« Semaine 4 / 4 · 23 mars → 19 avr. »* — un programme
+  **neuf** affiché comme **terminé**. ⭐⭐ Son PDF ne porte **aucune date** : le « 23 mars » venait
+  du **schéma d'exemple** de `handleImportProgram_` (`"startDate":"2026-03-23"`).
+  👉 ***Un exemple qui RESSEMBLE à une vraie donnée se fait recopier*** — les autres champs sont
+  des mots (« nom du programme »), une date est plausible. *Famille de ft-v1156 vue de l'autre
+  côté : le modèle n'a pas manqué d'un champ, il a pris le **décor** pour du contenu.*
+  ⭐ **Deux temps** : ① l'exemple ne porte plus de date + interdiction explicite de recopier ;
+  ② le serveur refuse une date dont le **cycle est déjà terminé** le jour de l'import.
+  ⛔⛔ **Le contre-test compte autant** : une date passée dont le cycle **court encore** est
+  **gardée** — sinon on efface une information vraie (R29, mesuré à la mutation D1).
+  ⛔ On efface la **date** seulement, jamais `weeks`. Et sans durée, on ne juge pas.
+  ⏭️ **Ne fait pas** : corriger le programme **déjà** importé (✏️ → CYCLE, ou réimporter).
+  ⚠️ **`Code.js` modifié → déploiement backend automatique, à vérifier des DEUX côtés (R18).**
+
 - **Version en ligne (live) :** `ft-v1156` — 📥 **L'IMPORT FAISAIT « 1 EXERCICE = 1 LIGNE ».**
   ✅ **DÉPLOIEMENTS VÉRIFIÉS VERTS DES DEUX CÔTÉS** (R18), sur `3bd396c0` :
   · **site** run **#965**, job `deploy` success, 7 étapes vertes à **06:55:29 UTC** ;

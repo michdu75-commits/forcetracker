@@ -28620,6 +28620,70 @@ console.log('\n-- CCLIV. L\'import garde les séries d\'échauffement (ft-v1156)
     /ex\.setTypePerSet = Array\.isArray\(ex\.setTypePerSet\)[\s\S]{0,160}==='W' \? 'W' : ''/.test(_cj), '');
 }
 
+/* ═══ CCLV. UNE DATE DE DÉBUT INVENTÉE NE PASSE PLUS (07/09/2026, ft-v1157) ═════════════════
+   Michel importe son programme et la carte affiche « Semaine 4 / 4 · 23 mars → 19 avr. » :
+   TERMINÉ avant d'être commencé. Son PDF ne porte AUCUNE date — le « 23 mars » venait de
+   l'EXEMPLE DE STRUCTURE du prompt (`"startDate":"2026-03-23"`).
+   ⭐⭐ Un exemple qui RESSEMBLE à une vraie donnée se fait recopier ; les autres champs de
+   l'exemple sont des mots (« nom du programme »), impossibles à confondre.
+   ⭐ Le témoin n'est pas un `grep` : le garde-fou est EXTRAIT de `Code.js` et EXÉCUTÉ.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLV. Une date de début inventée ne passe plus (ft-v1157) --');
+{
+  const _cj=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  /* ⛔⛔ CONTRÔLE AVANT TOUT LE RESTE : plus aucune date dans l'exemple de structure. C'est la
+     moitié la moins spectaculaire du correctif et la plus efficace — on retire la tentation
+     avant de poser le filet. */
+  t('CCLV ⛔⛔ CONTRÔLE — l\'exemple de structure ne porte PLUS de date à recopier',
+    /"startDate":"","days"/.test(_cj) && !/"startDate":"2026-03-23","days"/.test(_cj), '');
+  t('CCLV ⛔ le prompt interdit explicitement de recopier les valeurs de l\'exemple',
+    /* ⚠️ ON LIT LA SOURCE, où l'apostrophe est ÉCHAPPÉE (`L\'EXEMPLE`) : le motif ne peut donc
+       pas s'écrire comme la phrase se LIT. Mesuré — ce témoin a rougi sur sa propre citation,
+       5ᵉ fois de cette famille dans le projet. */
+    /NE RECOPIE JAMAIS LES VALEURS DE L\\?'?EXEMPLE/.test(_cj)
+    && /invente AUCUNE date de début/.test(_cj), '');
+
+  /* ── LE GARDE-FOU, RÉELLEMENT EXÉCUTÉ ────────────────────────────────────────────────── */
+  let essai=null, err='';
+  try{
+    const i=_cj.indexOf('    if (data.startDate) {');
+    const bloc=_cj.slice(i, _cj.indexOf('\n    }\n', i)+7);
+    if(i<0 || !bloc) throw new Error('garde-fou introuvable');
+    essai=(sd,w)=>{ const data={startDate:sd,weeks:w}; eval(bloc); return data.startDate; };
+  }catch(e){ err=String(e.message); }
+  t('CCLV ⛔ CONTRÔLE — le garde-fou s\'extrait et s\'exécute', !!essai, err);
+
+  if(essai){
+    /* ⭐⭐ LE CAS EXACT DE MICHEL : 23 mars + 4 semaines = fini le 19 avril, donc refusé. */
+    t('CCLV ⭐⭐ le cas de Michel : un cycle DÉJÀ terminé perd sa date',
+      essai('2026-03-23',4)==='', 'reçu : '+JSON.stringify(essai('2026-03-23',4)));
+    /* ⛔⛔ ET LE CONTRE-TEST COMPTE AUTANT : une date passée mais dont le cycle COURT ENCORE
+       est parfaitement légitime — quelqu'un qui importe un bloc commencé il y a deux semaines
+       a raison de le dater ainsi. Un garde-fou qui refuserait « toute date passée » lui
+       effacerait une information VRAIE (R29). */
+    const _il_y_a=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().split('T')[0];};
+    t('CCLV ⛔⛔ un bloc commencé il y a 2 semaines et qui COURT ENCORE garde sa date',
+      essai(_il_y_a(14),4)===_il_y_a(14), 'reçu : '+JSON.stringify(essai(_il_y_a(14),4)));
+    const _dans=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().split('T')[0];};
+    t('CCLV ⛔ une date FUTURE est gardée (un programme peut commencer plus tard)',
+      essai(_dans(7),4)===_dans(7), 'reçu : '+JSON.stringify(essai(_dans(7),4)));
+    /* ⛔ SANS DURÉE, ON NE PEUT PAS JUGER — donc on ne touche à rien. Et c'est sans danger :
+       la carte n'affiche aucun cycle quand `weeks` vaut 0. On ne détruit pas ce qu'on ne sait
+       pas juger. */
+    t('CCLV ⛔ sans durée (weeks 0), la date est laissée telle quelle — on ne juge pas à l\'aveugle',
+      essai('2026-03-23',0)==='2026-03-23', 'reçu : '+JSON.stringify(essai('2026-03-23',0)));
+    t('CCLV ⛔ une date illisible est effacée, jamais gardée', essai('pas une date',4)==='', '');
+    t('CCLV ⛔ une absence de date reste une absence', essai('',4)==='', '');
+  }
+
+  /* ⛔ NON-RÉGRESSION ft-v1156 : la règle « colonne de type de série » n'a pas bougé — je ne
+     touche qu'à la date, et les deux correctifs vivent dans le même prompt. */
+  t('CCLV ⛔ la règle « colonne de type de série » de ft-v1156 est intacte',
+    /8\. COLONNE « TYPE DE SÉRIE »/.test(_cj) && /setTypePerSet/.test(_cj), '');
+  t('CCLV ⛔ la règle 4 (jamais E/W depuis une prose) est toujours là — décision @57',
+    /NE JAMAIS utiliser "E" \(Échec\) ni "W" \(Échauffement\)/.test(_cj), '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
