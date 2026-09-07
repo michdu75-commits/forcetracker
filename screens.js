@@ -411,6 +411,11 @@ const _HELP_DATA={
          charger SON programme et n'a pas trouvé l'import. « Si moi je ne le vois pas, les
          utilisateurs ne vont pas le voir non plus. » ⛔ L'aide dit la LIMITE en même temps que la
          porte : un programme créé à la main ne peut pas avoir plusieurs jours. */
+      /* \u26a0\ufe0f ft-v1166 \u2014 CE QU'ON NE DEVINE PAS : jusqu'ici, un exercice que l'app ne
+         connaissait pas \u00e9tait CR\u00c9\u00c9 en silence, et il ressemblait \u00e0 l'\u00e9cran exactement \u00e0 un
+         exercice reconnu. Michel l'a d\u00e9couvert \u00e0 la salle, devant un exercice sans figurine et
+         sans historique. On dit donc AUSSI ce que \u00e7a co\u00fbte, sinon le bouton n'a pas d'enjeu. */
+      {i:'\u26a0\ufe0f',t:'\u26a0\ufe0f L\'aper\u00e7u d\'import <b>marque en orange</b> les exercices qu\'il ne conna\u00eet pas et qui vont \u00eatre <b>cr\u00e9\u00e9s</b>. Un exercice cr\u00e9\u00e9 n\'a <b>ni photo, ni figurine, ni historique</b> \u2014 le bouton <b>\u00ab \ud83d\udd17 Rattacher \u00bb</b> le relie \u00e0 celui de ton catalogue et tout revient. <i>Exemple : \u00ab Presse 45 degr\u00e9s \u00bb \u2192 <b>Press Jambes 45\u00b0</b>.</i>'},
       {i:'📷',t:'<b>Un programme sur papier ou en PDF ?</b> Tape <b>Programme</b> → <b>« 📷 Importer un programme »</b> : l\'IA lit ta photo ou ton PDF et <b>garde tes jours</b> (Push, Pull, Legs…). ⚠️ C\'est <b>la seule façon</b> d\'avoir un programme à plusieurs jours — celui qu\'on crée à la main est forcément une séance unique.'},
       /* 🛡️ ft-v1153 — CE QU'ON NE DEVINE PAS : ces avertissements existaient DEPUIS UN MOIS,
          mais seulement sur les séances proposées par Milo. Quelqu'un qui travaille au programme

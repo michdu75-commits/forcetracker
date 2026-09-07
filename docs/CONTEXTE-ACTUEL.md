@@ -6,9 +6,47 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1166` — 🔎 **LE DÉTECTEUR DE NOMS : ARRÊTER D'ATTENDRE QUE
+- **Version en ligne (live) :** `ft-v1166` — ⚠️ **L'APERÇU D'IMPORT DIT ENFIN CE QU'IL VA
+  INVENTER — et le déclencheur n'est pas un bug, c'est une phrase de Michel.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #996**, job `deploy` success, 5 étapes vertes
+  à **17:21:21 UTC** sur `cf4a7274` — ⛔ ni backend ni worker attendus.
+  ⏳ **Suite complète VERTE** : **parcours 3195/3195 sur l'arbre FUSIONNÉ avec la ft-v1165 de session-A** (+24, bloc **CCLXIV**), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  ⭐⭐ Michel, après avoir dû réparer son programme à la main : *« ouais ok mais ça m'arrive à
+  MOI, si ça arrive à d'autres personnes je fais comment ? Je passe pour un mec qui a créé une
+  application à l'arrache »*. **Lui savait qu'un ✎ caché permettait de fusionner ; personne
+  d'autre ne le sait.**
+  ⭐⭐ **Mesuré sur ses 13 noms réels** (en exécutant `_matchExercise` dans la page) : **8**
+  reconnus tout seuls · **2** proposés · **3 créés SANS UN MOT** (*Presse 45 degrés · SDT
+  roumain · Biceps marteau*).
+  ⛔⛔ **Le défaut n'était pas le rattachement, c'était le SILENCE** : un exercice `auto` affiche
+  « ↔ reconnu depuis X » en vert, un `confirm` sa ligne de choix — et un `new` **rien du tout**.
+  *Reconnu et inventé se ressemblaient exactement à l'écran.* Le seul signal était un toast
+  **APRÈS** l'import, qui disparaît : **R29 à l'envers** (décider puis informer).
+  ⭐ **Correctif en 3 temps** : ① **R2** — `_exerciceInconnu`, propriétaire unique de la question
+  (elle était calculée **en double**, avec deux comparaisons différentes, et l'aperçu ne la
+  posait nulle part) ; ② l'aperçu **marque en orange** + bandeau qui donne le **compte** + bouton
+  **« 🔗 Rattacher »** (6ᵉ mode `imp` de `_exPickerMode`, motif établi — **R13**) ; ③ **les DEUX
+  imports**, programme **et** historique (le second n'avait même pas de toast).
+  ⭐⭐ **Ce que la mesure a imposé et que je n'avais pas prévu** : on rattache **TOUTES les lignes
+  du même nom**. `finalImportProg` dédoublonne avant de créer — *un demi-rattachement coupe
+  l'historique en deux au lieu de le laisser d'un seul côté.*
+  📣 **Règle d'or #11** : point rouge · aide `?` · aide détaillée · diapo du Guide. ⛔ **Pas de
+  pop-up** (rien à faire tant qu'on n'importe pas, aucun repère déplacé — **R25**).
+  ⚠️⚠️ **LEÇON DE MÉTHODE, ET ELLE EST À MOI** : j'avais cru trouver un piège de plan et posé un
+  `zIndex=260` sur le sélecteur. **Le contrôle négatif a montré que le retirer ne faisait rougir
+  personne** — `#mod-ex{z-index:300}` existe déjà (style.css l. 770), mon code le **descendait**.
+  *C'est **R28** appliqué à moi-même : une règle générale lue sans chercher la règle plus
+  spécifique qui la surcharge.* Code retiré, témoin **requalifié en garde**.
+  ⏭️ **Ne fait pas** : les programmes **déjà importés** ne sont pas réparés (réimporter, ou
+  fusionner à la main via le ✎ du sélecteur) · on ne **bloque** ni ne **force** rien (R24/R29) ·
+  le trou **cardio** d'un jour de programme reste · et **aucun chemin ne supprime** un exercice
+  perso. ⛔ `Code.js`/`worker.js` non touchés → **aucun déploiement backend ni worker attendu**.
+  ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+- **Version en ligne (live) :** `ft-v1167` — 🔎 **LE DÉTECTEUR DE NOMS : ARRÊTER D'ATTENDRE QUE
   MICHEL TOMBE DESSUS.**
-  ⏳ **Suite VERTE** : **parcours 3186/3186** (+15, bloc **CCLXIV**), calculs 339/339, muscles
+  ⏳ **Suite VERTE** : **parcours 3186/3186** (+15, bloc **CCLXV**), calculs 339/339, muscles
   241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   Michel, après avoir posé le principe *« tout sauvegarder et accessible du moment que ce n'est pas
   des données personnelles »* : ***« vas-y prends le détecteur de noms »***.
@@ -31,7 +69,6 @@
   ⏭️ **Pas encore couvert** : les **recherches qui ne rendent rien** (le cas ft-v1163) — même
   famille, autre point de mesure. Et **pas d'écran dans l'app** : ça se lit dans le Sheet.
   ⚠️ **`Code.js` modifié → déploiement backend automatique, à vérifier des DEUX côtés.**
-
 - **Version précédente :** `ft-v1165` — 📷 **LE SCAN TROUVE LE PRODUIT, N'A AUCUNE VALEUR,
   ET LAISSE LA PERSONNE DANS UN CUL-DE-SAC.**
   ⏳ **Suite VERTE** : **parcours 3171/3171** (+19, bloc **CCLXIII**), calculs 339/339, muscles
@@ -83,7 +120,7 @@
   qu'un exercice va être créé** — c'est le **filet** proposé, non pris (`BUGS.md` §46).
   ⚠️ **`Code.js` modifié → déploiement backend automatique, à vérifier des DEUX côtés (R18).**
 
-- **Version précédente :** `ft-v1163` — 🔎 **LA RECHERCHE D'EXERCICES NE SAVAIT PAS CHERCHER
+- **Avant :** `ft-v1163` — 🔎 **LA RECHERCHE D'EXERCICES NE SAVAIT PAS CHERCHER
   DEUX MOTS — « biceps marteau » rendait ZÉRO.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **site** run **#985**, étape *« Déployer sur GitHub
   Pages »* success à **13:37:41 UTC** sur `d2f2ed1d` — ⛔ aucun run backend attendu, `Code.js`

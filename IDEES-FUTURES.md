@@ -122,6 +122,38 @@ les mêmes exigences (`NUTRITION-MOTEUR.md` §4.0, *« DEUX BASES, pas une »*).
 route + l'onglet + les deux lois physiques), l'aide, l'écran Admin pour le lire. *Petit, parce que
 le patron existe.*
 
+## 🗑️ ON NE PEUT TOUJOURS PAS SUPPRIMER UN EXERCICE PERSO — mesuré le 07/09/2026 (ft-v1166)
+
+**Le constat est ancien et il est écrit dans le code**, commentaire de `state.js` (~l. 243) :
+*« ⛔ ET AUCUN CHEMIN NE PERMETTAIT DE LES SUPPRIMER »*. **Revérifié aujourd'hui : c'est toujours
+vrai.** On peut **créer** un exercice perso (`saveCustomEx`), le **modifier** (`openEditCustomEx`,
+atteignable par le ✎ violet du sélecteur ou le menu ⋯ d'un exercice en séance), et le **fusionner**
+dans un autre (`_mergeCustomInto`, qui déplace séances, records et programmes). ⛔ **On ne peut pas
+le supprimer.** Le *« Supprimer l'exercice »* du menu ⋯ retire l'exercice **de la séance en cours**,
+pas du catalogue.
+
+### ⭐ Pourquoi ça remonte maintenant
+ft-v1166 fait dire à l'aperçu d'import ce qu'il va créer, donc **on en crée beaucoup moins**. Mais
+tous ceux déjà créés par les imports précédents restent — chez Michel : *Presse 45 degrés · SDT
+roumain · Cardio léger · Elliptique/cardio léger*. Les deux premiers se **fusionnent** (une vraie
+fiche existe). ⛔ **Les deux lignes cardio, non** : le catalogue n'a ni tapis, ni elliptique, ni
+rameur en tant qu'*exercices* — c'est du **cardio**, et un jour de programme ne sait pas encore
+porter un bloc cardio (trou nommé en ft-v1156, toujours ouvert). *Il n'existe donc aucune façon de
+les faire disparaître.*
+
+### ⚠️ Ce qui n'est PAS tranché — et pourquoi ça ne se code pas en cinq minutes
+- **Que fait-on de l'historique ?** Un exercice perso peut porter des séances et un record. Le
+  supprimer sans rien dire **effacerait des données de la personne** (**R29**, interdit). Il faut
+  au minimum : compter ce qui y est attaché, le **montrer**, et laisser trancher — ou n'autoriser
+  la suppression que sur un exercice **à zéro séance**.
+- **Ou bien : est-ce le bon problème ?** La fusion couvre déjà le cas *« doublon d'une fiche
+  existante »*, qui est le plus fréquent. Le cas restant est *« un exercice qui ne devrait pas
+  exister du tout »* — et il vient presque toujours d'un import. ⭐ **Si ft-v1166 tarit la source,
+  le besoin peut disparaître de lui-même** : à mesurer sur les prochains imports **avant** de
+  construire (**R19** — on ne construit pas pour un volume qu'on n'a pas).
+
+*Mesuré, écrit, non construit. À rouvrir si des exercices fantômes s'accumulent malgré l'aperçu.*
+
 ---
 
 ## 🔗 SURVEILLER CE QUE MILO DÉCLARE ET QUI N'ARRIVE JAMAIS DANS LA SÉANCE (07/09/2026)
