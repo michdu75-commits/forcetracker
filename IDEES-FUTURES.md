@@ -4,6 +4,73 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🥫 RÉCOLTER LES CALIBRAGES POUR CONSTRUIRE NOTRE PROPRE BASE D'ALIMENTS (Michel, 07/09/2026)
+
+**Ce qui a déclenché l'idée** : je venais de lui proposer de regarder sa sauvegarde pour trier ses
+produits bloqués. Il a refusé, et il a dit mieux : ***« non ça ne me plaît pas ça, le but est à
+l'avenir de récupérer les données pour enrichir ma base de données »***.
+
+**⭐⭐ LA DISTINCTION QUI REND ÇA PROPRE, ET QUI DOIT ÊTRE ÉCRITE AVANT LE CODE** : *un pour-100 g
+est un fait sur un **PRODUIT**, pas sur une **personne**.* Le journal alimentaire est intime — ce
+que quelqu'un mange, quand, combien. Une étiquette est de l'information **imprimée sur une boîte**,
+publique par nature. 👉 ***C'est exactement ce qui autorise cette récolte alors que lire le journal
+de quelqu'un ne le serait pas*** (Constitution P3, et la règle que Michel s'est donnée lui-même
+sur les conversations : *« je ne veux pas savoir ce qu'ils disent à Milo »*).
+
+**⭐ CE QU'ON RÉCOLTERAIT, ET RIEN D'AUTRE** : `code-barres` · `nom du produit` · les **4 valeurs
+pour 100 g** · la façon dont c'est entré (étiquette recopiée / photo). ⛔ **Jamais** : la quantité
+mangée, la date du repas, le repas, l'e-mail. *Ce ne sont pas des données de moins par prudence,
+c'est que ce sont les seules qui servent.*
+
+**⭐⭐ LE MÉCANISME EXISTE DÉJÀ ET IL EST ÉPROUVÉ — on n'invente rien (R13)** : c'est celui des
+**« exercices manquants »**.
+- Frontend `_reportCustomEx` (log.js) : dédoublonne **en local** (`S.reportedCustomEx`, clé
+  `ft4_rep_cex`), envoie en **`no-cors` fire-and-forget** (donc ça ne bloque jamais la saisie —
+  règle d'or #3), et ne transmet qu'un **`anonId`**.
+- Backend `handleLogCustomExercise_` (Code.js) : **agrège** dans un onglet du Google Sheet —
+  nom · nb de **signalements** · IDs anonymes · première et dernière date.
+- Et ça **se lit dans l'app** : Profil → Admin → « Voir les exercices demandés » (ft-v715).
+
+👉 **La transposition est directe** : action `logCalibratedFood`, onglet **« Aliments calibrés »**,
+colonnes `Code-barres · Produit · kcal/100 · Prot/100 · Gluc/100 · Lip/100 · Signalements · IDs
+anonymes · Première date · Dernière date · Source`.
+
+**⭐⭐ LE BONUS GRATUIT, ET C'EST LE PLUS BEAU : LA VALIDATION CROISÉE SANS JUGE.** Trois personnes
+qui calibrent le **même code-barres** avec les **mêmes valeurs** = une entrée **vérifiée**, sans que
+personne n'ait rien arbitré. Trois qui divergent = une entrée à regarder. *C'est la logique de
+redondance de **R33** (chercher DANS le document de quoi vérifier la lecture), appliquée à une
+population au lieu d'un document.* ⛔ Et ça donne un **critère d'entrée mesurable** dans la base :
+*n signalements concordants*, pas « ça a l'air bon ».
+
+**⭐ ET LA MATIÈRE PREMIÈRE EST DÉJÀ PRODUITE** : depuis **ft-v1110** (calibrage à la main) et
+surtout **ft-v1165** (le scan sans valeurs ouvre le calibrage tout seul), chaque produit dont la
+fiche Open Food Facts est vide produit exactement cette donnée — **et c'est précisément celle qui
+manque à la base publique**. *On ne collecte pas ce qu'on a déjà, on collecte le trou.*
+
+**⚠️⚠️ LES TROIS CONTRAINTES À NE PAS REDÉCOUVRIR :**
+1. ⛔⛔ **PAS dans les Script Properties.** Le réservoir a été **plein à 102 %** le 29/07/2026
+   (524 Ko / 512 Ko) et **plus aucune écriture n'aboutissait pendant deux jours**, en silence.
+   Une base qui grossit va dans le **Sheet** (comme les exercices) ou le **Drive**, jamais là.
+2. ⛔ **Le consentement doit être clair**, même si la donnée n'est pas personnelle : une ligne
+   dans l'aide et un interrupteur. *Ce qui est propre techniquement doit aussi se dire.*
+3. ⚠️ **Un calibrage peut être FAUX** (colonne « par portion » recopiée dans « pour 100 g » — le
+   cas que `_masseImpossible` et `_kcalImpossibleVals` attrapent déjà à la saisie). Les deux lois
+   physiques doivent tourner **aussi côté serveur** avant qu'une valeur entre dans la base :
+   *une base alimentée par des saisies non vérifiées serait pire que pas de base.*
+
+**⏭️ NON TRANCHÉ, et ce sont des décisions produit, pas techniques** : ① **rendre à Open Food
+Facts** ce qu'on collecte (ce serait juste, et ça sort les données du dépôt — donc c'est une
+décision de Michel, pas un détail d'implémentation) · ② **à partir de combien de signalements
+concordants** une valeur entre dans la base servie à tout le monde · ③ est-ce que la base récoltée
+alimente le **Journal** (couverture) ou le **générateur de repas** (sûreté) — les deux n'ont pas
+les mêmes exigences (`NUTRITION-MOTEUR.md` §4.0, *« DEUX BASES, pas une »*).
+
+**🎯 Périmètre si on le prend** : `app.js` (l'envoi, greffé sur `_calAppliquer`), `Code.js` (la
+route + l'onglet + les deux lois physiques), l'aide, l'écran Admin pour le lire. *Petit, parce que
+le patron existe.*
+
+---
+
 ## 🔗 SURVEILLER CE QUE MILO DÉCLARE ET QUI N'ARRIVE JAMAIS DANS LA SÉANCE (07/09/2026)
 
 **Demande de Michel**, en apprenant que le superset annoncé par Milo n'atteignait pas la séance
