@@ -30047,6 +30047,143 @@ console.log('\n-- CCLXIV. Le détecteur de noms (ft-v1167) --');
     && /getRange\(rowIdx, 3, 1, 7\)/.test(_cj), '');
 }
 
+/* ═══ CCLXVI. LES RECHERCHES QUI NE RENDENT RIEN (07/09/2026, ft-v1168) ═══════════════════════
+   Michel : ***« prends aussi les recherches qui ne rendent rien »***. 2ᵉ point de mesure du
+   détecteur — même famille que ft-v1163 (« biceps marteau » → zéro, trouvé en passant).
+   ⚠️⚠️ LE RISQUE EST L'ANTI-REBOND : une recherche se tape LETTRE PAR LETTRE, donc « biceps
+   marteau » produit b, bi, bic… qui rendent tous zéro. *Signaler à chaque frappe noierait le
+   signal sous ses propres préfixes.*
+   ⛔⛔ ET LA VIE PRIVÉE : c'est du TEXTE LIBRE, donc le terme n'est écrit en clair qu'à partir
+   de TROIS identifiants distincts.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLXVI. Les recherches qui ne rendent rien (ft-v1168) --');
+{
+  const R=await p.evaluate(async()=>{
+   try{
+    const o={envois:[]};
+    o.fn=typeof _signalerRechercheVide;
+    const vrai=window.fetch;
+    window.fetch=(u,opt)=>{ try{ const b=JSON.parse((opt&&opt.body)||'{}');
+        if(b.action==='logSearchMiss') o.envois.push({terme:b.terme, genre:b.genre}); }catch(e){}
+      return Promise.resolve({ok:true,json:()=>Promise.resolve({})}); };
+    S.url=S.url||'https://exemple.test/exec';
+    S.reportedRechVide=[]; try{localStorage.removeItem('ft4_rep_rech');}catch(e){}
+    const dors=ms=>new Promise(r=>setTimeout(r,ms));
+    const champ=()=>document.getElementById('ex-search');
+
+    /* ═══ ① L'ANTI-REBOND — le cœur de la version ═══
+       On SIMULE la frappe : zzz → zzzq → zzzqq → zzzqqq. Chaque préfixe rend zéro, mais un seul
+       envoi doit partir, et c'est le DERNIER. */
+    if(typeof openExPicker==='function') openExPicker();
+    else if(typeof addExercise==='function') addExercise();
+    await dors(150);
+    o.champExiste=!!champ();
+    const taper=async(v)=>{ const c=champ(); if(!c) return; c.value=v;
+      if(typeof filterEx==='function') filterEx(); await dors(120); };
+    /* ⚠️⚠️ LES PRÉFIXES DOIVENT RENDRE ZÉRO À CHAQUE ÉTAPE — et mon premier jet ne le faisait
+       PAS : j'avais pris « bic → bice → bicep », or les trois TROUVENT des résultats (le groupe
+       « Biceps »). Un seul appel partait donc de toute façon, et le témoin était **vert pour la
+       mauvaise raison** — la mutation qui retire l'anti-rebond ne le faisait pas rougir.
+       *Un témoin qui ne peut pas rougir ne mesure rien, il rassure.* Trouvé par le contrôle
+       négatif, pas par relecture. */
+    for(const v of ['zzz','zzzq','zzzqq','zzzqqq']) await taper(v);
+    o.avantPause=o.envois.length;              // ⛔ 0 attendu : rien ne part pendant la frappe
+    await dors(1500);                          // > _RECH_PAUSE
+    o.apresPause=o.envois.slice();             // ⭐ 1 seul, et c'est le dernier terme
+
+    /* ═══ ② UN PRÉFIXE ABANDONNÉ NE PART PAS ═══
+       On tape « zzz », puis AVANT la pause on tape autre chose qui TROUVE quelque chose. */
+    o.envois.length=0; S.reportedRechVide=[];
+    await taper('zzzqqq'); await dors(200);
+    await taper('squat');                      // trouve des résultats → plus d'appel au signaleur
+    await dors(1500);
+    o.abandonne=o.envois.slice();              // ⛔ 0 attendu
+
+    /* ═══ ③ LES GARDES DE LONGUEUR ═══ */
+    /* ⚠️ ON PASSE PAR LE CHAMP, PAS PAR UN APPEL DIRECT — 2ᵉ témoin corrigé grâce au contrôle
+       négatif : appelée à vide, la fonction sortait sur la **re-vérification** (le champ ne porte
+       pas « ab »), donc la mutation qui retire la garde de longueur ne changeait rien. *Le témoin
+       mesurait le mauvais garde-fou.* En posant la valeur dans le champ, seule la longueur peut
+       encore refuser. */
+    o.envois.length=0; S.reportedRechVide=[];
+    { const c=champ(); if(c){ c.value='ab'; _signalerRechercheVide('ab','exercice'); } }
+    await dors(1500); o.tropCourt=o.envois.length;
+    { const c=champ(), L='z'.repeat(41); if(c){ c.value=L; _signalerRechercheVide(L,'exercice'); } }
+    await dors(1500); o.tropLong=o.envois.length;
+
+    /* ═══ ④ LE DÉDOUBLONNAGE LOCAL ═══ */
+    o.envois.length=0; S.reportedRechVide=[];
+    await taper('zzzqqq'); await dors(1500);
+    o.premier=o.envois.length;
+    await taper('squat'); await dors(100);
+    await taper('zzzqqq'); await dors(1500);
+    o.second=o.envois.length;                  // ⭐ toujours 1 : le même terme ne repart pas
+
+    /* ═══ ⑤ LA RECHERCHE D'ALIMENTS — la jumelle (R8) ═══ */
+    o.envois.length=0; S.reportedRechVide=[];
+    if(typeof openAddFood==='function') openAddFood();
+    await dors(150);
+    const d=document.getElementById('af-desc');
+    o.champAliment=!!d;
+    if(d){ d.value='zzzqqqwww';
+      if(typeof _afSuggInput==='function') _afSuggInput();
+      else d.dispatchEvent(new Event('input',{bubbles:true})); }
+    /* ⚠️⚠️ ON ATTEND L'ÉVÉNEMENT, PAS UN DÉLAI — et c'est une leçon payée : mon premier jet
+       dormait 1 600 ms (> `_RECH_PAUSE`) et le témoin est resté ROUGE une passe, alors que la
+       PRODUCTION marchait (vérifié à la sonde avant de toucher au test). La cause : `_afSuggInput`
+       a son PROPRE anti-rebond pour CIQUAL et Open Food Facts, donc il rappelle `_afSuggRendu`
+       plus tard — ce qui **réarme** notre minuteur. Le délai réel est donc « leur pause + la
+       nôtre », pas la nôtre seule. *Un test qui code en dur un délai mesure la machine, pas le
+       comportement.* On sonde jusqu'à 5 s, on sort dès que c'est arrivé. */
+    for(let i=0;i<50 && !o.envois.length;i++) await dors(100);
+    o.aliment=o.envois.slice();
+
+    window.fetch=vrai;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,240)};}
+  });
+
+  if(R.err) t('CCLXVI n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLXVI ⛔⛔ CONTRÔLE — le propriétaire existe et le champ s\'ouvre',
+      R.fn==='function' && R.champExiste===true, R.fn+' / champ='+R.champExiste);
+    /* ⭐⭐ LES DEUX TÉMOINS QUI PORTENT LA VERSION */
+    t('CCLXVI ⭐⭐ RIEN ne part pendant la frappe (4 préfixes tapés, 0 envoi)',
+      R.avantPause===0, 'reçu : '+R.avantPause+' envoi(s) — le signal se noierait sous ses préfixes');
+    t('CCLXVI ⭐⭐ ... et UN SEUL part après la pause, avec le DERNIER terme',
+      (R.apresPause||[]).length===1 && R.apresPause[0].terme==='zzzqqq'
+      && R.apresPause[0].genre==='exercice', JSON.stringify(R.apresPause));
+    t('CCLXVI ⛔⛔ un préfixe ABANDONNÉ ne part pas (la re-vérification du champ)',
+      (R.abandonne||[]).length===0, JSON.stringify(R.abandonne));
+    t('CCLXVI ⛔ moins de 3 caractères : on ne compte pas', R.tropCourt===0, 'reçu '+R.tropCourt);
+    t('CCLXVI ⛔ plus de 40 caractères : ce n\'est plus un mot, on ne compte pas',
+      R.tropLong===0, 'reçu '+R.tropLong);
+    t('CCLXVI ⛔ le même terme ne repart pas deux fois (dédoublonnage local)',
+      R.premier===1 && R.second===1, 'premier '+R.premier+' second '+R.second);
+    /* ⛔ LA JUMELLE : les aliments partagent le propriétaire (R8). */
+    t('CCLXVI ⭐⭐ LA JUMELLE — la recherche d\'ALIMENTS signale aussi',
+      R.champAliment===true && (R.aliment||[]).length===1
+      && R.aliment[0].genre==='aliment' && R.aliment[0].terme==='zzzqqqwww',
+      JSON.stringify(R.aliment));
+  }
+  /* ⛔⛔ LE SEUIL DES 3 IDENTIFIANTS — extrait de `Code.js` et EXÉCUTÉ, pas grepé.
+     C'est la garantie de vie privée : sans elle, un texte libre d'une seule personne serait
+     écrit tel quel dans le Sheet. */
+  const _cj=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  t('CCLXVI ⛔ la route est branchée dans l\'aiguillage',
+    /body\.action === 'logSearchMiss'\)\s+return handleLogSearchMiss_\(body\)/.test(_cj), '');
+  t('CCLXVI ⛔⛔ le seuil est de 3 IDENTIFIANTS distincts, pas d\'occurrences',
+    /_SEUIL_CLAIR_ = 3;/.test(_cj)
+    && /ids\.length >= _SEUIL_CLAIR_\) \? terme :/.test(_cj), '');
+  t('CCLXVI ⛔⛔ la PREMIÈRE occurrence n\'écrit AUCUN terme en clair',
+    /appendRow\(_safeRow_\(\[emp, '', genre, 1, anonId, today, today\]\)\)/.test(_cj), '');
+  t('CCLXVI ⭐ ... et la ligne est rétro-remplie au 3ᵉ (on ne perd pas les 2 premières)',
+    /var clair = \(ids\.length >= _SEUIL_CLAIR_\) \? terme : String\(row\[1\] \|\| ''\)/.test(_cj), '');
+  t('CCLXVI ⛔ le Sheet porte une EMPREINTE, jamais le terme comme clé',
+    /appendRow\(\['Empreinte','Terme','Type','Personnes'/.test(_cj)
+    && /_empreinte_\(genre \+ '\|' \+ norm\)/.test(_cj), '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

@@ -5545,6 +5545,11 @@ function filterEx(){
       }
     }
     list.innerHTML=_html||'<div style="padding:20px;text-align:center;color:var(--t3);">Aucun résultat</div>';
+    /* 🔎 ft-v1168 — LE POINT UNIQUE OÙ CETTE RECHERCHE REND ZÉRO. `_html` vide = aucune ligne
+       affichée, tous les élargissements épuisés (familles, synonymes, anglais, anciens noms, et
+       le repli à deux mots de ft-v1163). *Si même après tout ça il n'y a rien, le mot mérite
+       d'être compté.* ⛔ L'anti-rebond vit dans `_signalerRechercheVide`, pas ici. */
+    if(!_html && typeof _signalerRechercheVide==='function') _signalerRechercheVide(q,'exercice');
     return;
   }
   // Groupe sélectionné → exercices du groupe
@@ -5843,6 +5848,64 @@ function _reportCustomEx(name,grp,muscles,source){
   const body={action:'logCustomExercise',anonId:S.anonId||'anon',name,group:grp||'Autres',source:src};
   if(muscles){body.musclesP=muscles.p||[];body.musclesS=muscles.s||[];}
   fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}).catch(()=>{});
+}
+/* 🔎🔇 LES RECHERCHES QUI NE RENDENT RIEN (ft-v1168) — le 2ᵉ point de mesure du détecteur.
+   Michel, dans la foulée de ft-v1167 : ***« prends aussi les recherches qui ne rendent rien »***.
+
+   ⭐ C'EST LA MÊME FAMILLE QUE ft-v1163 : *« biceps marteau »* rendait **zéro** alors que
+   l'exercice s'appelle « Marteau » dans le groupe « Biceps » — les deux mots existaient, pas
+   ensemble. **Et ce bug-là non plus n'a été trouvé que parce que Michel l'a dit en passant.**
+
+   ⚠️⚠️ LE RISQUE DE CONCEPTION N'EST PAS CELUI DU DÉTECTEUR DE NOMS, ET C'EST LUI QUI DÉCIDE DE
+   TOUT : **une recherche se tape lettre par lettre.** « biceps marteau » produit `b`, `bi`,
+   `bic`, `bice`… qui rendent **tous** zéro à un moment. 👉 ***Signaler à chaque frappe noierait
+   le signal sous ses propres préfixes*** — on mesurerait la vitesse de frappe, pas les mots qui
+   manquent. D'où **l'anti-rebond** : on n'envoie qu'après `_RECH_PAUSE` ms **sans frappe**, et
+   seulement si la recherche est **encore** vide à ce moment-là.
+
+   ⛔ TROIS AUTRES GARDES, chacune pour une raison mesurée :
+   · **3 caractères minimum** — en dessous, tout le monde tape les mêmes préfixes ;
+   · **40 caractères maximum** — au-delà ce n'est plus un mot, c'est une phrase (et une phrase
+     est bien plus susceptible de contenir quelque chose de personnel) ;
+   · **dédoublonnage local** par `terme|genre`, comme `_reportCustomEx` (R13).
+
+   ⛔⛔ ET LA VIE PRIVÉE EST LE 2ᵉ SUJET, PARCE QU'UNE BARRE DE RECHERCHE EST DU **TEXTE LIBRE**.
+   Un nom d'exercice écrit par Milo décrit *le monde* ; ce que quelqu'un tape peut être
+   *« gâteau anniversaire Léa »*. 👉 **Le serveur n'écrit le terme EN CLAIR qu'à partir de TROIS
+   identifiants anonymes distincts** ; en dessous il ne garde qu'une **empreinte** et un
+   compteur. *Un mot tapé par trois personnes sans lien cesse d'être identifiant — et c'est
+   exactement le seuil à partir duquel il vaut la peine d'être traité.* **Un seul seuil, deux
+   métiers : l'anonymat ET la pertinence.**
+   ⚠️ *L'honnêteté de la limite* : le serveur **reçoit** le terme à chaque fois, il ne le
+   **conserve** qu'au 3ᵉ. C'est le motif k-anonyme standard, et il vaut d'être dit tel quel
+   plutôt que sur-vendu. */
+const _RECH_PAUSE=1200, _RECH_MIN=3, _RECH_MAX=40;
+let _rechTimer=null;
+function _signalerRechercheVide(terme, genre){
+  try{
+    if(_rechTimer){ clearTimeout(_rechTimer); _rechTimer=null; }
+    const t=String(terme||'').trim();
+    if(t.length<_RECH_MIN || t.length>_RECH_MAX) return;
+    /* ⛔ On capture le terme MAINTENANT et on revérifie PLUS TARD : entre les deux, la personne
+       a pu continuer à taper — auquel cas c'est le nouveau terme qui compte, pas celui-ci. */
+    _rechTimer=setTimeout(()=>{
+      _rechTimer=null;
+      try{
+        if(!S.url) return;
+        /* ⛔⛔ LA RE-VÉRIFICATION EST LE CŒUR DE L'ANTI-REBOND : le champ doit porter ENCORE ce
+           terme. Sans elle, un préfixe abandonné partirait quand même une seconde plus tard. */
+        const champ=document.getElementById(genre==='aliment'?'af-desc':'ex-search');
+        if(!champ || String(champ.value||'').trim().toLowerCase()!==t.toLowerCase()) return;
+        if(!S.reportedRechVide) S.reportedRechVide=[];
+        const cle=t.toLowerCase()+'|'+genre;
+        if(S.reportedRechVide.includes(cle)) return;
+        S.reportedRechVide.push(cle);
+        try{ localStorage.setItem('ft4_rep_rech',JSON.stringify(S.reportedRechVide)); }catch(e){}
+        fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
+          body:JSON.stringify({action:'logSearchMiss',anonId:S.anonId||'anon',terme:t,genre:genre})}).catch(()=>{});
+      }catch(e){}
+    }, _RECH_PAUSE);
+  }catch(e){}   // ⛔ jamais bloquant : une recherche ne doit pas dépendre d'un compteur
 }
 /* 🔎 « CE NOM DÉSIGNE-T-IL UN EXERCICE CONNU ? » — un seul propriétaire (R2).
    ⛔ Un exercice PERSO compte comme connu : la personne l'a créé exprès, il n'y a rien à

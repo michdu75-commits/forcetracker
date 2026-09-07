@@ -6,7 +6,29 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1166` — ⚠️ **L'APERÇU D'IMPORT DIT ENFIN CE QU'IL VA
+- **Version en ligne (live) :** `ft-v1168` — 🔇 **LES RECHERCHES QUI NE RENDENT RIEN — le 2ᵉ
+  point de mesure du détecteur.**
+  ⏳ **Suite VERTE** : parcours (+13, bloc **CCLXVI**), calculs 339/339, muscles 241/241,
+  croisés 50/50, dates 9/9, données classées 0 trou.
+  Michel : ***« prends aussi les recherches qui ne rendent rien »***.
+  ⭐ Même famille que **ft-v1163** (*« biceps marteau »* → zéro alors que les deux mots
+  existaient) — *et ce bug-là non plus n'a été trouvé que parce qu'il l'a dit en passant.*
+  ⚠️⚠️ **Le risque de conception est l'ANTI-REBOND** : une recherche se tape lettre par lettre,
+  donc `b`, `bi`, `bic`… rendent tous zéro. Signaler à chaque frappe mesurerait la **vitesse de
+  frappe**, pas les mots qui manquent. → **1 200 ms sans frappe**, et seulement si c'est
+  **encore** vide et que le champ porte **encore** ce terme. + 3 caractères mini, 40 maxi,
+  dédoublonnage local.
+  ⛔⛔ **Vie privée** : une barre de recherche est du **texte libre**. Le terme n'est écrit **en
+  clair qu'à partir de 3 identifiants distincts** ; en dessous, empreinte + compteur, et la
+  ligne est **rétro-remplie** au 3ᵉ. ⚠️ Limite dite : le serveur **reçoit** le terme à chaque
+  appel, il ne le **conserve** qu'au 3ᵉ (motif k-anonyme standard).
+  ⭐ **Les deux recherches**, exercices (`filterEx`) et aliments (`_afSuggRendu`), chacune à son
+  point unique de « zéro résultat ».
+  ⏭️ **Ce que ça ne fait pas** : ça ne corrige aucune recherche, il n'y a pas encore d'écran
+  dans l'app pour lire la feuille, et **il faut de l'usage** avant que ça parle.
+  ⚠️ **`Code.js` modifié → déploiement backend automatique, à vérifier des DEUX côtés.**
+
+- **Version précédente :** `ft-v1166` — ⚠️ **L'APERÇU D'IMPORT DIT ENFIN CE QU'IL VA
   INVENTER — et le déclencheur n'est pas un bug, c'est une phrase de Michel.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #996**, job `deploy` success, 5 étapes vertes
   à **17:21:21 UTC** sur `cf4a7274` — ⛔ ni backend ni worker attendus.

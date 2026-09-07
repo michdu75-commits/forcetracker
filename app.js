@@ -3177,7 +3177,16 @@ function _afSuggKcal100(p){
 }
 function _afSuggRendu(){
   const el=document.getElementById('af-sugg'); if(!el) return;
-  if(!_afSuggLoc.length && !_afSuggCiq.length && !_afSuggOff.length && !_afSuggMarq.length){ el.innerHTML=''; return; }
+  if(!_afSuggLoc.length && !_afSuggCiq.length && !_afSuggOff.length && !_afSuggMarq.length){
+    el.innerHTML='';
+    /* 🔎 ft-v1168 — LE POINT UNIQUE OÙ LA RECHERCHE D'ALIMENTS REND ZÉRO : les QUATRE sources
+       sont vides (son journal · CIQUAL · les marques · Open Food Facts). ⭐ C'est là que se
+       mesurent les mots que la table nationale n'a pas — l'aide en cite déjà quelques-uns de
+       mémoire (*whey · créatine · naan · sirop d'agave*) ; on saura enfin lesquels comptent. */
+    if(typeof _signalerRechercheVide==='function')
+      _signalerRechercheVide((document.getElementById('af-desc')||{}).value||'','aliment');
+    return;
+  }
   const ligne=(ic,titre,detail,onclick)=>
     '<button onclick="'+onclick+'" style="width:100%;text-align:left;display:flex;gap:9px;align-items:baseline;'
     +'padding:9px 11px;border:none;border-bottom:1px solid var(--sep);background:none;cursor:pointer;'

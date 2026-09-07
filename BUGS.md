@@ -3157,3 +3157,34 @@ ce qu'il ne doit PAS signaler.**
 
 *Voisine de **§15** (la règle juste, définie trop étroit) et de **§43** (deux portes mènent au même
 endroit, une seule est équipée).*
+
+
+## 49. ⌨️ CE QUI SE TAPE LETTRE PAR LETTRE SE MESURE À LA FIN, PAS À CHAQUE FRAPPE **(07/09/2026, ft-v1168)**
+
+**Instrumenter un champ de saisie sans anti-rebond, c'est mesurer la frappe au lieu du besoin.**
+Une recherche « biceps marteau » produit `b`, `bi`, `bic`, `bice`… et **chacun de ces préfixes
+rend zéro résultat** à un moment. Un compteur naïf enregistre donc **une douzaine de faux
+signaux** pour une seule question réelle — et le vrai terme se noie dedans.
+
+**⛔ À quoi on la reconnaît** : un compteur qui explose sans que rien n'aille mal, ou dont les
+valeurs les plus fréquentes sont toutes des **préfixes** les unes des autres.
+
+**⭐ Ce qui protège** : ① n'envoyer qu'après une **pause** de frappe ; ② **re-vérifier** que le
+champ porte *encore* ce terme (sinon un préfixe abandonné part quand même une seconde plus
+tard) ; ③ une **longueur minimale**, en dessous de laquelle tout le monde tape la même chose.
+
+**⚠️⚠️ ET LA FAMILLE A UN MIROIR CÔTÉ TEST, payé dans la version même.** Pour prouver
+l'anti-rebond, les préfixes du témoin doivent **eux-mêmes rendre zéro à chaque étape**. Mes
+premiers (`bic`, `bice`, `bicep`) **trouvaient des résultats** — le groupe « Biceps » — donc un
+seul envoi partait de toute façon : ***le témoin était vert pour la mauvaise raison, et la
+mutation qui retire l'anti-rebond ne le faisait pas rougir.*** C'est `BUGS.md` §34 (le vert qui
+ne peut pas rougir) appliqué à un test de frappe.
+
+**⚠️ Deuxième miroir : ne jamais coder en dur un délai dans le test.** Le chemin des aliments a
+**son propre** anti-rebond, donc il rappelle le rendu plus tard et **réarme** le nôtre : le
+délai réel est « leur pause + la nôtre ». *Un test qui code en dur un délai mesure la machine,
+pas le comportement* — on sonde jusqu'à l'événement.
+
+*Voisine de **§47** (le garde-fou dont le plancher éteint le pourcentage) et de **§48** (la porte
+de secours non proposée là où le chemin s'arrête) — trois familles nées la même journée, toutes
+trois « le mécanisme existe, il mesure ou propose la mauvaise chose ».*

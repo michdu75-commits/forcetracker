@@ -1270,6 +1270,7 @@ function doPost(e) {
   if (body.action === 'sendConfirmCode')   return handleSendConfirmCode_(body);
   if (body.action === 'verifyConfirmCode') return handleVerifyConfirmCode_(body);
   if (body.action === 'logCustomExercise') return handleLogCustomExercise_(body);
+  if (body.action === 'logSearchMiss')     return handleLogSearchMiss_(body);
   if (body.action === 'importProgram')     return handleImportProgram_(body);
   if (body.action === 'importHistory')    return handleImportHistory_(body);
   if (body.action === 'importMealPlan')    return handleImportMealPlan_(body);
@@ -2066,6 +2067,69 @@ function _dstr_(v) {
   if (!v) return '';
   if (Object.prototype.toString.call(v) === '[object Date]') return v.toISOString().slice(0,10);
   return String(v).slice(0,10);
+}
+/* 🔎🔇 LES RECHERCHES QUI NE RENDENT RIEN (ft-v1168)
+   Michel : *« prends aussi les recherches qui ne rendent rien »*. C'est le 2ᵉ point de mesure
+   du détecteur de ft-v1167 — et la même famille que **ft-v1163**, où *« biceps marteau »*
+   rendait zéro alors que les deux mots existaient. *Ce bug-là non plus n'a été trouvé que parce
+   que Michel l'a dit en passant.*
+
+   ⛔⛔ CE QUI REND CETTE ROUTE DIFFÉRENTE DE SA VOISINE : elle reçoit du **TEXTE LIBRE**. Un nom
+   d'exercice écrit par Milo décrit *le monde* ; ce que quelqu'un tape dans une barre de
+   recherche peut être *« gâteau anniversaire Léa »*.
+   👉 **LE TERME N'EST ÉCRIT EN CLAIR QU'À PARTIR DE TROIS IDENTIFIANTS ANONYMES DISTINCTS.**
+   En dessous, la ligne ne porte qu'une **empreinte** (SHA-256 tronquée) et un compteur.
+   *Un mot tapé par trois personnes sans lien cesse d'être identifiant — et c'est exactement le
+   seuil à partir duquel il vaut la peine d'être traité.* **Un seul seuil, deux métiers.**
+   ⚠️ L'HONNÊTETÉ DE LA LIMITE, écrite plutôt que sur-vendue : le serveur **reçoit** le terme à
+   chaque appel, il ne le **conserve** qu'au 3ᵉ. C'est le motif k-anonyme standard.
+   ⭐ Et la ligne est **rétro-remplie** : au 3ᵉ identifiant, le terme apparaît d'un coup avec son
+   historique complet — *on ne perd pas les deux premières occurrences, on ne les nommait pas.* */
+const _SEUIL_CLAIR_ = 3;   // ⛔ le nombre d'IDENTIFIANTS distincts, pas d'occurrences
+function _empreinte_(t) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(t), Utilities.Charset.UTF_8)
+    .map(function(b){ return ('0'+(b & 0xFF).toString(16)).slice(-2); }).join('').slice(0, 16);
+}
+function handleLogSearchMiss_(body) {
+  try {
+    var terme = String(body.terme || '').trim();
+    if (!terme || terme.length > 40) return json_({status:'ok'});
+    var genre  = (body.genre === 'aliment') ? 'aliment' : 'exercice';
+    var anonId = String(body.anonId || 'anon').trim();
+    var norm   = terme.toLowerCase();
+    var emp    = _empreinte_(genre + '|' + norm);
+    var ss     = _getSheet_();
+    var today  = new Date().toISOString().slice(0, 10);
+
+    var sheet = ss.getSheetByName('Recherches sans résultat');
+    if (!sheet) {
+      sheet = ss.insertSheet('Recherches sans résultat');
+      sheet.appendRow(['Empreinte','Terme','Type','Personnes','IDs anonymes','Première date','Dernière date']);
+      sheet.setFrozenRows(1);
+      sheet.getRange(1,1,1,7).setFontWeight('bold');
+    }
+    var data = sheet.getDataRange().getValues();
+    var rowIdx = -1;
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0] || '') === emp) { rowIdx = i + 1; break; }
+    }
+    if (rowIdx > 0) {
+      var row = data[rowIdx - 1];
+      var ids = String(row[4] || '').split(', ').filter(Boolean);
+      if (anonId && ids.indexOf(anonId) < 0) ids.push(anonId);
+      /* ⭐ LE SEUIL SE LIT SUR LES IDENTIFIANTS DISTINCTS, et le terme se pose dès qu'il est
+         franchi — y compris rétroactivement, puisque la ligne existait déjà sans son nom. */
+      var clair = (ids.length >= _SEUIL_CLAIR_) ? terme : String(row[1] || '');
+      sheet.getRange(rowIdx, 2, 1, 6).setValues([_safeRow_(
+        [clair, genre, ids.length, ids.join(', '), row[5] || today, today])]);
+    } else {
+      /* ⛔ PREMIÈRE OCCURRENCE : une personne seule, donc AUCUN terme en clair. */
+      sheet.appendRow(_safeRow_([emp, '', genre, 1, anonId, today, today]));
+    }
+    return json_({status:'ok'});
+  } catch(err) {
+    return json_({status:'error', error: err.message});
+  }
 }
 function handleLogCustomExercise_(body) {
   try {
