@@ -1463,6 +1463,12 @@ function _calAppliquer(){
      « par portion » recopiée dans la colonne « pour 100 g » — l'erreur la plus probable ici. */
   const imp=_masseImpossibleVals(100, prot, carbs, fat);
   if(imp){ dire('⚖️ '+imp.somme+' g de macros pour 100 g de produit : impossible. Tu as peut-être recopié la colonne « par portion » — reprends celle qui dit « pour 100 g ».'); return; }
+  /* ⚡ ET LE PLAFOND PHYSIQUE DES CALORIES, AU MÊME ENDROIT (ft-v1162) — c'est ici qu'entre une
+     étiquette recopiée à la main, donc c'est ici que se glisse une ligne lue de travers. La
+     règle de masse attrape « la colonne par portion dans la colonne pour 100 g » ; celle-ci
+     attrape la **ligne des calories** prise sur la mauvaise colonne, que la masse laisse passer. */
+  const kimp=_kcalImpossibleVals(100, kcal, prot, carbs, fat);
+  if(kimp){ dire('⚡ '+kimp.kcal+' kcal pour 100 g : impossible avec ces macros. Elles valent '+kimp.theo+' kcal, et les '+kimp.libre+' g restants ne peuvent pas dépasser '+kimp.plafond+' kcal au total. Vérifie la ligne des calories — elle vient peut-être d\'une autre colonne.'); return; }
   const nom=String((document.getElementById('af-desc')||{}).value||'').trim();
   if(!nom){ dire('Donne d\'abord un nom à l\'aliment, au-dessus.'); return; }
   /* ⛔⛔ UNE DÉCIMALE GARDÉE, ET CE N'EST PAS DU ZÈLE (ft-v1111). Mesuré sur le vrai pot de
@@ -3663,6 +3669,69 @@ function _masseImpossibleVals(q, prot, carbs, fat){
   if(!(somme>0) || somme<=q+2) return null;      // +2 g : l'arrondi des 4 champs, rien de plus
   return {q:q, somme:Math.round(somme*10)/10};
 }
+/* ⚡⛔⛔ LES CALORIES NE PEUVENT PAS DÉPASSER CE QUE LA PORTION PEUT PORTER (ft-v1162)
+   Michel, excédé, sur la MÊME ligne « Iso zero protein (ASL) » qu'en ft-v1103 et ft-v1104 :
+   *« toujours ma prot ça déconne et le calcul est faux. Pour 30 grammes de poudre j'ai 26,7 de
+   protéine et là ça me marque n'importe quoi. »*
+
+   ⭐⭐ REPRODUIT PAR LE VRAI CHEMIN avant d'écrire une ligne : son entrée porte **156 kcal pour
+   26 P / 1 G / 1 L**, alors que `4×26 + 4×1 + 9×1 = 117`. **39 kcal d'écart, un quart de la
+   ligne — et `_coherenceKcal` reste MUET.**
+
+   ⛔⛔ ET LE CONTRÔLE N'ÉTAIT PAS EN FAUTE, IL ÉTAIT AVEUGLE PAR CONSTRUCTION : son plancher
+   absolu est `ecart<60`. 👉 ***Pour que le test des 25 % puisse mordre, il faut `0,25 × kcal ≥
+   60`, c'est-à-dire une entrée d'au moins 240 kcal.*** En dessous, le plancher éteint le
+   pourcentage — et « en dessous de 240 kcal », c'est un shake, un yaourt, un fruit, un œuf :
+   *la majorité des lignes d'un journal alimentaire.*
+
+   ⭐⭐ CE QU'ON AJOUTE N'EST PAS UN SEUIL, C'EST UNE LOI — et c'est tout l'intérêt. Une portion
+   de `q` grammes dont `P+C+L` grammes sont déjà des macros n'a plus que `q−(P+C+L)` grammes de
+   matière libre. ⛔ **Rien n'est plus dense que le lipide (9 kcal/g)** — donc :
+       plafond = 4P + 4C + 9L + 9 × (q − P − C − L)
+   Chez Michel : 28 g de macros dans 30 g → **2 g libres → 135 kcal au maximum**, et il en
+   affiche 156. *Ce n'est plus « ça colle mal », c'est impossible.*
+
+   ⭐ C'EST LE JUMEAU EXACT DE `_masseImpossible` (ft-v1103), volontairement : même précondition
+   (une quantité **en grammes réellement affichée**), même refus d'inventer, et une **tolérance
+   DÉRIVÉE et non choisie** (R29). Le plafond se simplifie en `9q − 5P − 5C` : au pire l'arrondi
+   à l'entier rabote `q` de 0,5 g (−4,5 kcal), gonfle `P` et `C` de 0,5 g (−2,5 chacun) et gonfle
+   `kcal` de 0,5 → **10 kcal, et rien de plus**. C'est l'équivalent du « +2 g » du voisin.
+
+   ⭐⭐ MESURÉ AVANT DE CODER, SUR LES BASES QUE L'APP EMBARQUE : **0 faux positif sur les 3 217
+   aliments exploitables de CIQUAL et les 123 produits de `marques.json`** — y compris les cas
+   les plus tordus du contrôle voisin (huile, sucre, miel, beurre, blanc d'œuf).
+
+   ⛔⛔ ET AUCUNE LISTE D'EXCEPTION N'EST NÉCESSAIRE, CONTRAIREMENT AU CONTRÔLE DES 25 % : sa
+   liste `_KCAL_ALCOOL` existe parce que l'alcool apporte 7 kcal/g sans champ pour le dire. Ici
+   c'est sans objet — **7 est en dessous de 9**, donc un alcool ne peut pas franchir ce plafond.
+   *Une loi physique n'a pas besoin qu'on lui liste ses exceptions ; un pourcentage, si.*
+
+   ⛔ CE QU'ON NE FAIT PAS (R30, écrit pour que personne ne le « complète » dans six mois) : **le
+   plancher de 60 kcal ne bouge pas.** Mesuré : le descendre à 30 ne coûterait que **2 aliments
+   sur 3 126** — il est donc quasi inerte, le vrai filtre étant les 25 %. Mais choisir 30 plutôt
+   que 25 ou 40 serait un chiffre que je devrais défendre, quand le plafond physique, lui, se
+   démontre. *On préfère une loi à un seuil.* */
+const _KCAL_PAR_G_MAX=9;              // le lipide : la matière la plus dense qui existe
+function _kcalImpossibleVals(q, kcal, prot, carbs, fat){
+  if(!(q>0) || !(kcal>0)) return null;
+  const p=+prot||0, c=+carbs||0, f=+fat||0, somme=p+c+f;
+  /* ⛔ La masse ne tient déjà pas dans la portion : `_masseImpossible` a la parole, pas nous.
+     Deux alertes pour un seul défaut, ce serait dire deux fois la même chose plus mal. */
+  if(!(somme>0) || somme>q) return null;
+  const theo=4*p+4*c+9*f;
+  const plafond=theo+_KCAL_PAR_G_MAX*(q-somme);
+  const tol=0.5+5*0.5+5*0.5+_KCAL_PAR_G_MAX*0.5;   // = 10 kcal, dérivé de l'arrondi (voir ci-dessus)
+  if(kcal<=plafond+tol) return null;
+  return {q:q, kcal:Math.round(kcal), plafond:Math.round(plafond),
+          theo:Math.round(theo), libre:Math.round((q-somme)*10)/10};
+}
+/* ⭐ R2 — UNE SEULE DÉFINITION, deux lectures : celle-ci lit l'écran (les deux formulaires),
+   `_kcalImpossibleVals` travaille sur des nombres pour le calibrage à la main. */
+function _kcalImpossible(pfx){
+  const q=_qtyGrammesEcran(pfx); if(!(q>0)) return null;
+  const lu=id=>numFR((document.getElementById(pfx+'-'+id)||{}).value)||0;
+  return _kcalImpossibleVals(q, lu('kcal'), lu('prot'), lu('carbs'), lu('fat'));
+}
 function _coherenceKcal(pfx, corrigeur){
   const el=document.getElementById(pfx+'-coherence'); if(!el) return;
   const g=id=>numFR((document.getElementById(pfx+'-'+id)||{}).value)||0;
@@ -3678,6 +3747,20 @@ function _coherenceKcal(pfx, corrigeur){
       +'<b>'+masse.q+' g</b>. Un aliment ne peut pas contenir plus de matière qu\'il ne pèse.'
       +'<div style="color:var(--t3);margin-top:6px;">Soit la quantité, soit une des trois valeurs '
       +'est à revoir — <b>l\'app ne peut pas savoir laquelle</b>, elle ne touche à rien.</div>';
+    el.style.display='block'; return;
+  }
+  /* ⚡ PUIS LE PLAFOND PHYSIQUE (ft-v1162), AVANT l'heuristique — et l'ordre est le sujet :
+     ce qui se DÉMONTRE passe devant ce qui s'estime. Les deux peuvent viser la même ligne ;
+     alors c'est la phrase la plus solide qui doit s'afficher, pas la première écrite. */
+  const plaf=_kcalImpossible(pfx);
+  if(plaf){
+    el.innerHTML='⚡ <b>'+plaf.kcal+' kcal</b> ne peuvent pas tenir dans <b>'+plaf.q+' g</b>. '
+      +'Ces macros valent <b>'+plaf.theo+' kcal</b>, et les <b>'+plaf.libre+' g</b> qui restent ne peuvent pas '
+      +'en apporter plus de '+Math.round(plaf.plafond-plaf.theo)+' — même si c\'était de l\'huile pure. '
+      +'<b>'+plaf.plafond+' kcal au maximum.</b>'
+      /* ⛔ On propose la valeur théorique, PAS le plafond : les grammes qui restent sont de l'eau
+         dans l'immense majorité des aliments. C'est une proposition, elle se tape ou s'ignore. */
+      +'<button onclick="'+corrigeur+'('+plaf.theo+')" style="margin-top:6px;display:block;padding:7px 12px;border-radius:9px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:12.5px;font-weight:700;font-family:var(--font);cursor:pointer;">Mettre '+plaf.theo+' kcal</button>';
     el.style.display='block'; return;
   }
   /* ⚠️ DEUX SEUILS, DEUX MÉTIERS — et ce n'est pas une incohérence à « harmoniser » (mesuré

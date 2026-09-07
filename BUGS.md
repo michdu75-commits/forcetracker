@@ -2908,3 +2908,36 @@ non pas à du code mais à une **consigne**.
 - ⭐ **Le réflexe** : après un correctif, se demander non pas *« ai-je changé un seuil ? »* mais
   **« un chiffre déjà affiché veut-il encore dire ce qu'il disait ? »**. Si non, il y a une version
   de règle à faire bouger — ou un total à jeter.
+
+## 47. 🚧 LE GARDE-FOU DONT LE PLANCHER ÉTEINT LE POURCENTAGE **(07/09/2026, ft-v1162)**
+
+**Un contrôle qui combine un seuil RELATIF et un plancher ABSOLU avec un `ET` a une zone aveugle,
+et elle est calculable.** `_coherenceKcal` ne parlait que si l'écart dépassait **25 %** *et*
+**60 kcal**. 👉 ***Pour que les 25 % puissent mordre, il faut `0,25 × kcal ≥ 60`, donc une entrée
+d'au moins 240 kcal.*** En dessous, le plancher éteint le pourcentage — et « moins de 240 kcal »,
+c'est un shake, un yaourt, un fruit, un œuf : **la majorité des lignes d'un journal alimentaire**.
+
+**⛔ À quoi on la reconnaît** : un garde-fou qui n'a *jamais* rien signalé chez quelqu'un qui a
+pourtant de vraies données fausses. Il ne plante pas, il ne rougit dans aucun test — *il est
+silencieux, et le silence ressemble à « tout va bien »*. Le cas réel : 156 kcal affichées pour
+26 P / 1 G / 1 L (117 théoriques), tous les jours, sans un mot.
+
+**⭐ Le calcul à faire une fois** : `seuil_absolu / seuil_relatif` donne la valeur en dessous de
+laquelle le contrôle est **inerte**. Si cette valeur couvre les cas courants, le garde-fou ne
+protège que les cas rares.
+
+**⭐⭐ CE QUI PROTÈGE AUJOURD'HUI, ET CE N'EST PAS UN SEUIL RÉGLÉ AUTREMENT** : une **loi
+physique** posée à côté. Les calories ne peuvent pas dépasser ce que la portion peut porter
+(`4P+4C+9L + 9 × masse libre`, parce que rien n'est plus dense que le lipide). ⛔ *On n'a pas
+« baissé le plancher »* : mesuré, le passer de 60 à 30 n'aurait coûté que 2 aliments sur 3 126 —
+il est presque inerte — mais **30 aurait été un chiffre à défendre**, quand le plafond physique
+se démontre. **0 faux positif sur 3 235 aliments CIQUAL et 123 produits de marque.**
+
+**⛔ Et la loi n'a besoin d'aucune liste d'exception**, là où le pourcentage voisin en exige une
+(`_KCAL_ALCOOL`, parce que l'alcool fait 7 kcal/g sans champ pour le dire) : *7 est en dessous de
+9*. 👉 ***Quand un garde-fou réclame une liste d'exceptions qui s'allonge, c'est souvent qu'il
+mesure la mauvaise chose.***
+
+*Voisine de **§39** (une valeur peut être cohérente avec elle-même et impossible — c'est le même
+produit, la même ligne, l'autre moitié du problème) et de **§34** (l'hallucination crédible).*
+
