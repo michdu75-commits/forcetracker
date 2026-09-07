@@ -8,6 +8,8 @@
 
 - **Version en ligne (live) :** `ft-v1161` — 🔢 **J'AI CHANGÉ LA FAÇON DE COMPTER SANS
   INCRÉMENTER LA VERSION DE RÈGLE — le mécanisme existait, fait exactement pour ça.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **site** run **#979**, job `deploy` success, 7 étapes
+  vertes à **12:30:09 UTC** sur `9c870b3f` — ⛔ aucun run backend attendu, `Code.js` non modifié.
   ⏳ **Suite complète VERTE** : **parcours 3102/3102** (+7, bloc **CCLIX**), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⭐ **Michel rouvre son compteur après ft-v1160 : chiffres identiques** (4 séances, 0 jugeable).
