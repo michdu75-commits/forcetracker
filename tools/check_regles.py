@@ -860,3 +860,51 @@ except SystemExit:
 except Exception as _e16:
     print("⚠️ contrôle « collision de noms » NON EXÉCUTÉ (%s: %s)" % (type(_e16).__name__, _e16))
     print("   → ce n'est pas un feu vert : la garantie n'a pas été vérifiée du tout.")
+
+# ── CONTRÔLE 17 — L'ENTÊTE DE CLAUDE.md DOIT DIRE LA MÊME VERSION QUE sw.js ──────────────
+#
+# Né d'un vrai oubli (07/09/2026, ft-v1168) : j'ai ajouté l'entrée de journal et bumpé `sw.js`
+# à ft-v1168, et j'ai laissé l'entête sur « Version actuelle : ft-v1167 (prochaine : ft-v1168) ».
+#
+# ⛔⛔ CE N'EST PAS COSMÉTIQUE, ET LA JOURNÉE LE PROUVE : cette ligne est la PREMIÈRE que lit
+# une autre session pour choisir son numéro. Trois collisions de version le même jour
+# (ft-v1163, ft-v1165, ft-v1167) — une entête périmée en fabrique une quatrième, et la
+# session suivante croit de bonne foi que le numéro est libre.
+#
+# ⭐ Ici l'oubli a été rattrapé par hasard : session-A a livré derrière et a remis l'entête à
+# jour. *Une garantie qui tient parce que quelqu'un est passé après n'est pas une garantie.*
+#
+# ⚠️ On compare à `sw.js`, pas au journal : le numéro de cache est ce qui part RÉELLEMENT en
+# production (règle d'or #5), donc c'est lui la source de vérité.
+try:
+    import re as _re17
+    _sw17 = (racine / 'sw.js').read_text(encoding='utf-8', errors='replace')
+    _cl17 = (racine / 'CLAUDE.md').read_text(encoding='utf-8', errors='replace')
+    _m17c = _re17.search(r"const CACHE\s*=\s*'ft-v(\d+)'", _sw17)
+    # ⚠️ Le `**` du gras se glisse ENTRE le numéro et la parenthèse — motif vérifié sur le
+    #    fichier réel, pas deviné : sans le `\**`, ce contrôle rendait « NON EXÉCUTÉ » en silence.
+    _m17h = _re17.search(r"Version actuelle\s*:\s*`ft-v(\d+)`\**\s*\(prochaine\s*:\s*`ft-v(\d+)`", _cl17)
+    if not _m17c or not _m17h:
+        print("⚠️ contrôle « entête de version » NON EXÉCUTÉ (motif introuvable dans sw.js ou CLAUDE.md)")
+        print("   → ce n'est pas un feu vert : la garantie n'a pas été vérifiée du tout.")
+    else:
+        _cache17, _tete17, _next17 = int(_m17c.group(1)), int(_m17h.group(1)), int(_m17h.group(2))
+        _pb17 = []
+        if _tete17 != _cache17:
+            _pb17.append("l'entête annonce ft-v%d, sw.js est à ft-v%d" % (_tete17, _cache17))
+        if _next17 != _cache17 + 1:
+            _pb17.append("« prochaine » annonce ft-v%d au lieu de ft-v%d" % (_next17, _cache17 + 1))
+        if _pb17:
+            print("❌ entête de version périmée dans CLAUDE.md :")
+            for _p in _pb17:
+                print("   ⛔ " + _p)
+            print("   → c'est la PREMIÈRE ligne que lit l'autre session pour choisir son numéro.")
+            print("     Une entête en retard fabrique une collision de version (3 le 07/09/2026).")
+            sys.exit(1)
+        print("✅ entête de version : CLAUDE.md et sw.js disent tous deux ft-v%d (prochaine ft-v%d)"
+              % (_cache17, _next17))
+except SystemExit:
+    raise
+except Exception as _e17:
+    print("⚠️ contrôle « entête de version » NON EXÉCUTÉ (%s: %s)" % (type(_e17).__name__, _e17))
+    print("   → ce n'est pas un feu vert : la garantie n'a pas été vérifiée du tout.")
