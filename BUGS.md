@@ -3041,3 +3041,84 @@ trois fois en six semaines.
 
 *Voisine de **§43** (deux portes mènent au même endroit, une seule est équipée) et de **§47**
 (le garde-fou dont le plancher éteint le pourcentage — même produit, même semaine).*
+
+## 49. 🤫 L'ACTION SILENCIEUSE QUI RESSEMBLE À L'ACTION RÉUSSIE **(07/09/2026, ft-v1166)**
+
+**Le cas qui la fonde.** À l'import d'un programme, l'aperçu affichait *« ↔ reconnu depuis X »* en
+vert pour un exercice rattaché au catalogue, une ligne de choix pour un exercice **proposé**… et
+**rien du tout** pour un exercice que l'app allait **inventer**. 👉 ***Reconnu et inventé se
+ressemblaient EXACTEMENT à l'écran.***
+
+**À quoi on la reconnaît.** Trois cas possibles, **deux** ont un signal visuel. Le troisième est
+le plus lourd de conséquences, et c'est celui qui n'en a pas — souvent parce qu'il est le cas
+« par défaut » du code (`return` sans marquer, `else` vide, `tier:'new'` qui ne pose aucun champ).
+⛔ **Le signal existait, mais APRÈS** : un `toast` post-import (*« 4 exercices créés
+automatiquement »*) qui disparaît en trois secondes, alors que la décision, elle, est déjà prise.
+*L'app décidait, puis elle informait* — **R29 à l'envers**, dont le corollaire dit précisément
+« informer sans décider ».
+
+**Ce que ça coûtait ici.** Un exercice inventé n'a **ni photo, ni figurine, ni historique**.
+Michel a donc lu *« aucun repère dans ton historique »* **en salle**, sur une presse où il avait
+fait **280 kg cinq jours plus tôt** — et il a conclu, à raison de son point de vue, que l'app
+était bâclée : *« si ça arrive à d'autres personnes je fais comment ? »*.
+
+**Ce qui la protège aujourd'hui.**
+1. **Le cas silencieux se marque**, avec ce qu'il **coûte** (« sera créé — sans photo ni
+   historique »), pas seulement son nom.
+2. **Un compte en tête** : sans lui, il faut parcourir toute la liste pour savoir combien.
+3. ⭐ **Une sortie dans le même geste** (« 🔗 Rattacher »), sinon on informe sans donner la main —
+   ce qui est **pire** que de se taire : la personne voit le problème et ne peut rien en faire.
+4. ⛔ **On n'interdit pas pour autant** (**R24**) : un exercice réellement inconnu a le droit
+   d'exister. *Marquer n'est pas bloquer.*
+
+**⚠️ LE PIÈGE DANS LE PIÈGE, mesuré ici** : réparer **une seule occurrence** peut être **pire**
+que ne rien réparer. La création dédoublonne par nom ; rattacher la ligne du J1 sans celle du J2
+produisait un programme où le **même** exercice existe sous **deux** noms — *l'historique coupé en
+deux au lieu d'être d'un seul côté.* 👉 **Quand on corrige une donnée nommée, corriger TOUTES ses
+occurrences dans le même lot, ou n'en corriger aucune.**
+
+**Le réflexe.** Devant un aiguillage à trois branches, demander : *« laquelle ne dit rien, et
+est-ce la moins grave ? »* Si la branche muette est celle qui a le plus de conséquences, le défaut
+n'est pas dans le calcul — il est dans le **rendu**.
+
+**⚠️ Voisine mais distincte** de la famille **43** (deux portes, une seule équipée) : là, un
+chemin entier était oublié ; ici, **le même chemin** traite trois cas et n'en montre que deux.
+
+---
+
+## 50. 🪞 LA RÈGLE GÉNÉRALE LUE SANS CHERCHER LA RÈGLE PLUS SPÉCIFIQUE **(07/09/2026, ft-v1166)**
+
+**Le cas, et il est à moi.** J'ai lu `.overlay{z-index:200}` dans `style.css` (ligne 749),
+constaté que `#mod-ex` est déclaré **avant** les aperçus d'import dans `index.html` (2122 contre
+2348 et 2665), et conclu — logiquement — qu'à plan égal l'ordre du DOM ferait passer le sélecteur
+**derrière**. J'ai posé un `style.zIndex='260'` à l'ouverture, écrit un long commentaire sur ce
+« piège », et un témoin pour le figer.
+
+**⛔ MESURE : `#mod-ex{z-index:300;}` existe déjà, ligne 770 du MÊME fichier**, posé exactement
+pour cette raison. ***Mon « correctif » DESCENDAIT le sélecteur de 300 à 260.*** Et comme 260 reste
+au-dessus de 200, **ça marchait** — donc rien, jamais, ne l'aurait signalé.
+
+**Ce qui l'a trouvée : le contrôle négatif, et lui seul.** La mutation qui retirait le
+rehaussement n'a fait rougir **aucun** témoin. *Un témoin qui reste vert quand on supprime le code
+qu'il est censé protéger ne protège rien — il décrit un état que quelque chose d'autre garantit.*
+
+**À quoi on la reconnaît.** Une règle CSS générale (ou une valeur par défaut, ou un comportement
+« de base ») lue dans un fichier, et une conclusion tirée **sans chercher plus loin dans le même
+fichier** si une règle plus spécifique la surcharge. Le symptôme est un correctif qui n'a aucun
+effet mesurable — ou, comme ici, un effet **négatif** invisible.
+
+**Ce qui la protège.**
+1. ⭐ **Le contrôle négatif est le seul détecteur** : si aucune mutation ne mord sur un morceau de
+   code, ce code ne sert à rien — le retirer, et écrire pourquoi.
+2. Devant `.classe{prop:X}`, chercher `#id{prop:` et les sélecteurs plus spécifiques **avant** de
+   conclure. Le navigateur, lui, les applique.
+3. ⭐ **Requalifier le témoin plutôt que le jeter** : celui-ci reste, mais il fige désormais la
+   **règle CSS** au lieu du correctif — et son libellé le dit (`GARDE (pas détecteur)`), pour que
+   personne ne croie qu'il mesure autre chose.
+
+**C'est R28 appliqué à celui qui écrit le code** (*une limite non vérifiée devient une règle de
+conception silencieuse*), exactement comme le cas des adducteurs en **R31** : *j'ai écrit six fois
+dans le code qu'ils n'existaient pas dans la figurine sans jamais ouvrir le dessin.* La différence
+est qu'ici la fausse limite a produit **du code**, pas seulement de l'inaction.
+
+---

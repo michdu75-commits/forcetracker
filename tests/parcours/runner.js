@@ -29733,6 +29733,208 @@ console.log('\n-- CCLXI. Le scan sans valeurs ouvre le calibrage (ft-v1165) --')
   await p.unroute(/workers\.dev/);
 }
 
+/* ═══ CCLXIV. L'APERÇU D'IMPORT DIT CE QU'IL VA INVENTER (07/09/2026, ft-v1166) ══════════════
+   ⛔⛔ CE QUE MICHEL A DIT, et c'est le vrai sujet : *« ok mais ça m'arrive à MOI, si ça arrive
+   à d'autres personnes je fais comment ? Je passe pour un mec qui a créé une application à
+   l'arrache »*. Lui savait qu'un ✎ caché permettait de réparer ; personne d'autre ne le sait.
+   ⭐⭐ MESURÉ sur ses 13 noms réels, en exécutant `_matchExercise` dans la page : 8 reconnus
+   tout seuls, 2 proposés, et **3 créés SANS UN MOT** (« Presse 45 degrés », « SDT roumain »,
+   « Biceps marteau »). À l'écran, un exercice INVENTÉ ressemblait EXACTEMENT à un exercice
+   reconnu — le seul signal était un toast APRÈS coup. L'app décidait, puis informait : R29 à
+   l'envers.
+   ⛔ LES TÉMOINS SONT FONCTIONNELS : on ouvre le VRAI aperçu, on lit ce qu'il AFFICHE, on tape
+   « Rattacher », et on demande au NAVIGATEUR lequel des deux plans il peindrait devant. */
+{
+  const R = await p.evaluate(()=>{
+   try{
+    const o={};
+    o.fn=['_catalogueConnu','_exerciceInconnu','_vmNouveauRow','_vmNouveauBandeau',
+          'impRattacher','histRattacher','_impPickApply','_renderImpConfirm','_renderHistPreview']
+         .filter(f=>typeof window[f]!=='function');
+    /* ⛔ CONTRÔLE DE PROPRIÉTAIRE UNIQUE (R2) — la question « sera-t-il créé ? » était calculée
+       à DEUX endroits avec DEUX comparaisons (`allEx.includes` côté programme, un `Set` côté
+       historique), et l'aperçu ne la posait NULLE PART. Les deux créations doivent maintenant
+       APPELER `_exerciceInconnu` : une fonction parfaite que les créateurs n'appellent pas
+       laisserait tous les autres témoins verts pendant que l'aperçu promettrait autre chose. */
+    const src=String(window.finalImportProg)+String(window.finalImportHist||'');
+    o.appelsProprio=(src.match(/_exerciceInconnu\(/g)||[]).length;
+    /* ⚠️⚠️ CE TÉMOIN A ÉTÉ RÉÉCRIT, ET C'EST LA LEÇON DE MÉTHODE DE LA VERSION. Il cherchait
+       d'abord `allEx.includes(` dans la source des deux fonctions — et il rougissait, parce que
+       la chaîne survit DANS MON PROPRE COMMENTAIRE qui explique le défaut réparé.
+       👉 Chercher un TEXTE n'est pas vérifier un COMPORTEMENT (7ᵉ fois de cette famille).
+       ⭐ Le vrai écart entre « deux comparaisons » et « un propriétaire » est MESURABLE : côté
+       programme, l'ancienne version fabriquait un exercice perso pour un nom VIDE (`''` n'est
+       pas dans le catalogue, donc il partait en création) ; côté historique, un `if(low&&…)`
+       l'en empêchait. Le propriétaire unique reprend la version prudente. */
+    const _oP=S.programmes,_oC=S.customExercises,_oE=_impExtracted;
+    S.programmes=[]; S.customExercises=[];
+    _impExtracted={name:'Vide',days:[{label:'J',exercises:[{name:'',sets:1,reps:1,kg:0}]}]};
+    finalImportProg();
+    o.videNonCree=!(S.customExercises||[]).some(e=>!String(e&&e.n||'').trim());
+    S.programmes=_oP; S.customExercises=_oC; _impExtracted=_oE;
+    // Le J1/J2 réels : « Développé Couché » est au catalogue, les 2 autres non, et la presse
+    // apparaît DEUX FOIS (c'est ce qui a révélé le demi-rattachement).
+    _impMode='new';
+    _impExtracted={name:'PB Bloc 1',weeks:4,startDate:'',days:[
+      {label:'J1',exercises:[
+        {name:'Développé Couché',sets:3,reps:5,kg:90},
+        {name:'Presse 45 degrés',sets:3,reps:10,kg:280},
+        {name:'SDT roumain',sets:3,reps:8,kg:100}]},
+      {label:'J2',exercises:[{name:'Presse 45 degrés',sets:3,reps:12,kg:260}]}]};
+    document.getElementById('ov-import-prog').classList.add('open');
+    _renderImpConfirm();
+    let html=document.getElementById('imp-preview').innerHTML;
+    o.compte   = (html.match(/<b>(\d+) exercices?<\/b>/)||[])[1]||'0';
+    o.nbBoutons= (html.match(/🔗 Rattacher/g)||[]).length;   // 3 lignes + 1 mention du bandeau
+    /* ⛔ LE CONTRE-TEST QUI COMPTE AUTANT QUE LE TEST : un exercice DU CATALOGUE ne doit PAS
+       être marqué. Un avertissement qui crie sur tout ne se lit plus. */
+    o.connuNonMarque = !/Développé Couché[\s\S]{0,400}?🔗 Rattacher/.test(html);
+    // On tape « Rattacher » sur la presse du J1
+    impRattacher(0,1);
+    const mod=document.getElementById('mod-ex');
+    o.pickerOuvert=mod.classList.contains('open');
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+
+  /* ⚠️ CE TÉMOIN EST UN GARDE, PAS UN DÉTECTEUR — et je le dis, parce que j'ai d'abord cru
+     l'inverse. J'avais lu `.overlay{z-index:200}` et conclu que le sélecteur (déclaré AVANT
+     les aperçus dans le DOM) s'ouvrirait DERRIÈRE ; j'ai donc posé un rehaussement à 260 dans
+     `_impPickOuvre`. ⛔ Le contrôle négatif a montré que le retirer ne faisait rougir PERSONNE :
+     `#mod-ex{z-index:300;}` existe déjà (style.css ligne 770), et mon code le DESCENDAIT.
+     👉 Ce que ce témoin fige, c'est donc la RÈGLE CSS, pas mon correctif : il rougira le jour où
+     quelqu'un retirera ce z-index ou déplacera les aperçus — et ce jour-là « Rattacher »
+     n'ouvrirait rien, sans la moindre erreur de console (famille ft-v1155).
+     ⭐ `elementsFromPoint` rend TOUTE la pile du dessus vers le dessous : on demande au
+     NAVIGATEUR lequel il peindrait devant, au lieu de réimplémenter sa règle — un contrôle qui
+     recalcule la formule qu'il vérifie est un vert qui ne peut pas rougir. */
+  const plan = await p.evaluate(()=>{
+    try{
+      const mod=document.getElementById('mod-ex');
+      const card=mod.querySelector('.modal')||mod.firstElementChild;
+      const r=card.getBoundingClientRect();
+      const x=Math.round(r.left+r.width/2), y=Math.round(r.top+Math.min(r.height/2,300));
+      for(const el of document.elementsFromPoint(x,y)){
+        if(el.closest('#mod-ex'))return 'mod-ex';
+        if(el.closest('#ov-import-prog'))return 'ov-import-prog';
+      }
+      return 'aucun';
+    }catch(e){return 'err:'+e;}
+  });
+
+  const R2 = await p.evaluate(()=>{
+   try{
+    const o={};
+    _impPickApply('Press Jambes 45°');
+    o.j1=_impExtracted.days[0].exercises[1].name;
+    o.j2=_impExtracted.days[1].exercises[0].name;   // ⛔ la 2ᵉ ligne doit avoir suivi
+    o.from=_impExtracted.days[0].exercises[1]._vmFrom;
+    const html=document.getElementById('imp-preview').innerHTML;
+    o.compteApres=(html.match(/<b>(\d+) exercices?<\/b>/)||[])[1]||'0';
+    o.vert=/↔ reconnu depuis « Presse 45 degrés »/.test(html);
+    /* ⛔ ET LA CRÉATION SUIT L'APERÇU : après rattachement, `finalImportProg` — la VRAIE
+       fonction de production — ne doit plus fabriquer « Presse 45 degrés ». */
+    const _oldP=S.programmes, _oldC=S.customExercises;
+    S.programmes=[]; S.customExercises=[];
+    finalImportProg();
+    const noms=(S.customExercises||[]).map(e=>e.n);
+    o.creePresse = noms.indexOf('Press Jambes 45°')>=0 || noms.indexOf('Presse 45 degrés')>=0;
+    o.creeSDT    = noms.indexOf('SDT roumain')>=0;
+    o.nbCrees    = noms.length;
+    S.programmes=_oldP; S.customExercises=_oldC;
+    document.getElementById('ov-import-prog').classList.remove('open');
+    closeExPicker();
+    o.zApresFermeture=document.getElementById('mod-ex').style.zIndex;
+    o.cibleEffacee=(typeof _impPickTarget==='undefined')||_impPickTarget===null;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+
+  /* ⛔ LA JUMELLE — l'import d'HISTORIQUE portait le défaut à l'identique, et SANS MÊME le toast
+     que l'import de programme affichait. Le poser d'un seul côté aurait été la 5ᵉ fois de la
+     journée (ft-v1160/1161/1163/1164). */
+  const RH = await p.evaluate(()=>{
+   try{
+    const o={};
+    _histExtracted={sessions:[{date:'2026-09-04',label:'Jambes',exercises:[
+      {name:'Développé Couché',sets:[{kg:90,reps:5}]},
+      {name:'Presse 45 degrés',sets:[{kg:280,reps:10}]}]}]};
+    document.getElementById('ov-import-hist').classList.add('open');
+    _renderHistPreview();
+    const html=document.getElementById('hist-preview').innerHTML;
+    o.compte=(html.match(/<b>(\d+) exercices?<\/b>/)||[])[1]||'0';
+    o.aBouton=/histRattacher\(0,1\)/.test(html);
+    o.connuNonMarque=!/histRattacher\(0,0\)/.test(html);
+    histRattacher(0,1);
+    _impPickApply('Press Jambes 45°');
+    o.nom=_histExtracted.sessions[0].exercises[1].name;
+    document.getElementById('ov-import-hist').classList.remove('open');
+    closeExPicker();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+
+  if(R.err) t('CCLXIV n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLXIV ⛔ CONTRÔLE — les 9 fonctions existent dans la page', (R.fn||[]).length===0, (R.fn||[]).join(', '));
+    /* ⛔⛔ LE CONTRÔLE QUI PORTE TOUT LE RESTE : les DEUX créations doivent appeler le
+       propriétaire unique. Sans lui, l'aperçu pourrait promettre « 2 » pendant que la création
+       en fabrique 3 — un avertissement faux est pire que pas d'avertissement. */
+    t('CCLXIV ⛔⛔ les DEUX créations appellent `_exerciceInconnu` (R2)', R.appelsProprio===2, 'appels : '+R.appelsProprio);
+    t('CCLXIV ⛔ un nom VIDE n\'est plus transformé en exercice (divergence des 2 comparaisons)', R.videNonCree===true, '');
+    /* ⚠️ LE COMPTE EST EN NOMS DISTINCTS, pas en lignes : `toCreate` dédoublonne avant de créer,
+       donc « 3 » (les 3 lignes) contredirait ce qui se passe réellement. */
+    t('CCLXIV ⭐⭐ le bandeau annonce 2 exercices (noms DISTINCTS, 3 lignes)', R.compte==='2', 'annoncé : '+R.compte);
+    t('CCLXIV ⭐ 3 lignes orange + la mention du bandeau', R.nbBoutons===4, 'trouvé : '+R.nbBoutons);
+    t('CCLXIV ⛔ CONTRE-TEST — un exercice DU CATALOGUE n\'est PAS marqué', R.connuNonMarque===true, '');
+    t('CCLXIV ⭐ « Rattacher » ouvre bien le sélecteur', R.pickerOuvert===true, '');
+    t('CCLXIV ⛔ GARDE (pas détecteur) — le sélecteur est peint DEVANT l\'aperçu', plan==='mod-ex', 'devant : '+plan);
+  }
+  if(R2.err) t('CCLXIV (suite) n\'a pas pu tourner', false, R2.err);
+  else{
+    t('CCLXIV ⭐ le rattachement change le nom', R2.j1==='Press Jambes 45°', 'J1 : '+R2.j1);
+    /* ⛔⛔ MESURÉ, ET C'EST CE QUI A CHANGÉ LE CORRECTIF : `finalImportProg` DÉDOUBLONNE par nom.
+       Rattacher le J1 sans le J2 produisait un programme où LE MÊME exercice existe sous DEUX
+       noms — un demi-rattachement coupe l'historique en deux au lieu de le laisser d'un côté. */
+    t('CCLXIV ⭐⭐ TOUTES les lignes du même nom suivent (le J2 aussi)', R2.j2==='Press Jambes 45°', 'J2 : '+R2.j2);
+    t('CCLXIV ⭐ l\'annulation reste possible (`_vmFrom` posé)', R2.from==='Presse 45 degrés', '');
+    t('CCLXIV ⭐ le bandeau retombe à 1', R2.compteApres==='1', 'annoncé : '+R2.compteApres);
+    t('CCLXIV ⭐ la ligne verte « ↔ reconnu depuis » apparaît', R2.vert===true, '');
+    /* ⛔ ET JUSQU'AU BOUT DE LA CHAÎNE : la VRAIE fonction de production ne crée plus la presse. */
+    t('CCLXIV ⭐⭐ après rattachement, la presse n\'est PLUS créée', R2.creePresse===false, '');
+    t('CCLXIV ⛔ mais l\'exercice vraiment inconnu l\'est toujours (R24, on ne bloque pas)', R2.creeSDT===true&&R2.nbCrees===1, 'créés : '+R2.nbCrees);
+    t('CCLXIV ⛔ le rehaussement de plan est RETIRÉ à la fermeture', R2.zApresFermeture==='', 'reste : '+R2.zApresFermeture);
+    t('CCLXIV ⛔ fermer sans choisir n\'arme aucun rattachement', R2.cibleEffacee===true, '');
+  }
+  /* 📣 RÈGLE D'OR #11, points 2 à 5 — vérifiés dans la SOURCE, pas de mémoire. Une feature
+     livrée sans être annoncée devient invisible (R23) : personne, humain ou IA, ne saura
+     qu'elle existe, et on la re-proposera dans six mois.
+     ⚠️ ON CHERCHE UNE SOUS-CHAÎNE ASCII (`Rattacher`), PAS LA PHRASE TELLE QU'ELLE SE LIT :
+     les textes portent des échappements `\uXXXX`, et un témoin qui cite la phrase rougit sur
+     lui-même — c'est arrivé SEPT fois dans ce projet. */
+  {
+    // ⚠️ Chemin ABSOLU via ROOT : le répertoire courant n'est pas garanti (un banc ciblé lance
+    //    le bloc depuis ailleurs) — un `readFileSync` relatif rendrait '' et 4 faux rouges.
+    const q=f=>{ try{ return fs.readFileSync(path.join(ROOT,f),'utf8'); }catch(e){ return ''; } };
+    const aide11=[
+      ['point rouge `NEW_FEATURES`', 'constants.js', "id:'imp-nouveaux'"],
+      ['aide « ? » de l\'onglet Séance', 'screens.js', 'Rattacher'],
+      ['aide détaillée (carte Programmes)', 'coach.js', 'Rattacher'],
+      ['diapo du Guide', 'app.js', 'Rattacher'],
+    ];
+    aide11.forEach(([quoi,fic,motif])=>{
+      t('CCLXIV 📣 #11 — '+quoi, q(fic).indexOf(motif)>=0, fic+' ne parle pas du rattachement');
+    });
+  }
+
+  if(RH.err) t('CCLXIV (historique) n\'a pas pu tourner', false, RH.err);
+  else{
+    t('CCLXIV ⛔ JUMELLE — l\'aperçu d\'HISTORIQUE annonce lui aussi', RH.compte==='1'&&RH.aBouton===true, 'compte : '+RH.compte+' · bouton : '+RH.aBouton);
+    t('CCLXIV ⛔ JUMELLE — un exercice connu n\'y est pas marqué non plus', RH.connuNonMarque===true, '');
+    t('CCLXIV ⭐ JUMELLE — le rattachement y marche aussi', RH.nom==='Press Jambes 45°', 'reçu : '+RH.nom);
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

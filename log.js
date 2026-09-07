@@ -3064,6 +3064,12 @@ function addExercise(name){
     closeExPicker();
     return;
   }
+  if(_exPickerMode==='imp'){ // rattachement manuel depuis un aperçu d'import (ft-v1166)
+    _exPickerMode='workout'; // AVANT closeExPicker, comme le mode 'replace' juste au-dessus
+    if(typeof _impPickApply==='function')_impPickApply(name);
+    closeExPicker();
+    return;
+  }
   if(!S.wkt)S.wkt={date:today(),exs:[]};
   const prev=getPrev(name);
   // Pré-remplissage PAR SÉRIE depuis la séance précédente (série i → prev[i], repli dernière série).
@@ -5334,6 +5340,10 @@ function openExPicker(mode){
   document.getElementById('mod-ex').classList.add('open');
 }
 function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;if(_exPickerMode==='replace'||_exPickerMode==='replaceSess'||_exPickerMode==='addSess'||_exPickerMode==='prog'){_exPickerMode='workout';_replaceEi=null;}
+  /* ⛔ On annule un rattachement en attente (ft-v1166) : fermer le sélecteur sans choisir ne
+     doit rien rattacher plus tard, par surprise, sur une cible que personne ne regarde plus. */
+  _impPickTarget=null;
+  if(_exPickerMode==='imp')_exPickerMode='workout';
   /* ⚠️ LE SCROLL SE FAIT ICI, PAS À L'AJOUT (25/08). Tant que le sélecteur reste ouvert, faire
      défiler l'écran du dessous est un mouvement invisible — et à la fermeture on se retrouvait
      n'importe où. On amène donc la vue sur le dernier exercice ajouté au moment où l'écran
@@ -6238,6 +6248,35 @@ function _mergeImportEchauffements(){
   });
   if(fus)console.log('[Import] '+fus+' exercice(s) recomposé(s) : séries d\'échauffement regroupées avec leur série de travail');
 }
+/* ⛔⛔ R2 — UN SEUL PROPRIÉTAIRE de la question « cet exercice sera-t-il CRÉÉ à l'import ? »
+   (ft-v1166). Elle était calculée à DEUX endroits, avec DEUX comparaisons DIFFÉRENTES :
+   `finalImportProg` faisait `allEx.includes(low)` sur un tableau, l'import d'historique un
+   `Set.has(low)` — et surtout, l'APERÇU ne la posait NULLE PART.
+   ⭐⭐ CE QUE ÇA COÛTAIT, mesuré sur les 13 noms du PDF de Michel en exécutant `_matchExercise` :
+   8 reconnus tout seuls, 2 proposés, et **3 créés SANS UN MOT** (« Presse 45 degrés », « SDT
+   roumain », « Biceps marteau »). À l'écran, un exercice INVENTÉ ressemblait EXACTEMENT à un
+   exercice reconnu — le seul signal était un toast APRÈS coup, qui disparaît. L'app décidait,
+   puis elle informait : c'est R29 à l'envers.
+   👉 L'aperçu doit lire EXACTEMENT ce que la création lira. Deux façons de compter, c'est un
+   avertissement qui annonce autre chose que ce qui se produit — pire que pas d'avertissement.
+   ⛔ ON GARDE LA COMPARAISON LA PLUS PRUDENTE DES DEUX (celle de l'historique) : un nom VIDE
+   n'est pas « à créer », il est ignoré. Côté programme, `''` fabriquait un exercice perso sans
+   nom — divergence silencieuse, corrigée en passant par un propriétaire unique.
+   ⚠️ Et on ne `trim()` PAS : la création pousse `ex.name` TEL QUEL, donc juger sur une version
+   rognée ferait dire « connu » d'un nom qui serait quand même enregistré avec son espace. */
+function _catalogueConnu(){
+  const m=new Set();
+  try{
+    if(typeof EXLIB!=='undefined')EXLIB.forEach(e=>{if(e&&e.n)m.add(String(e.n).toLowerCase());});
+    (S.customExercises||[]).forEach(e=>{if(e&&e.n)m.add(String(e.n).toLowerCase());});
+  }catch(e){}
+  return m;
+}
+function _exerciceInconnu(nom,connus){
+  const low=String(nom==null?'':nom).toLowerCase();
+  if(!low)return false;
+  return !(connus||_catalogueConnu()).has(low);
+}
 // VM → import : rattache chaque exercice importé à sa RÉFÉRENCE EXLIB (fini les doublons).
 // Palier auto (confiance ≥90) = rattaché direct (nom remplacé, original gardé pour « annuler »).
 // Palier confirm (zone grise) = proposé à l'utilisateur (« ≈ Rattacher à X ? »), nom inchangé
@@ -6298,6 +6337,89 @@ function _impThumb(name){
   // vraiment inconnu (hors biblio) → icône haltère neutre
   return `<div style="${box}display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round"><path d="M6 9v6M9 7v10M15 7v10M18 9v6M9 12h6"/></svg></div>`;
 }
+/* ⭐ LA LIGNE ORANGE — jumelle de `_vmConfirmRow` juste dessous, même forme, même endroit (R13).
+   Elle dit ce que l'app va faire AVANT de le faire, et laisse la main : « 🔗 Rattacher ».
+   ⛔ Elle N'INTERDIT RIEN (R24, informer sans bloquer) : un exercice réellement absent du
+   catalogue a le droit d'exister, et le forcer dans une case voisine coûterait plus cher que
+   d'en créer un (R29 — c'est exactement pour ça que le prompt de ft-v1164 ne dit jamais
+   « uniquement ces noms »). */
+function _vmNouveauRow(rattacherCall){
+  return `<div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">`
+    +`<span style="font-size:11px;color:var(--orange);flex:1;min-width:130px;">⚠️ Pas dans ton catalogue — il sera <b>créé</b> (sans photo ni historique)</span>`
+    +`<button onclick="${rattacherCall}" style="background:var(--bg3);border:1px solid var(--orange);color:var(--orange);border-radius:6px;padding:3px 12px;font-size:12px;font-weight:700;cursor:pointer;">🔗 Rattacher</button>`
+    +`</div>`;
+}
+/* ⭐ Le bandeau de tête : le COMPTE, avant même de lire la liste. Sans lui, il faut parcourir
+   tous les jours pour savoir combien d'exercices seront inventés. */
+function _vmNouveauBandeau(n){
+  if(!n)return'';
+  return `<div style="background:rgba(255,138,114,.10);border:1px solid rgba(255,138,114,.30);border-radius:10px;padding:8px 11px;margin-bottom:8px;font-size:12px;color:var(--orange);line-height:1.45;">`
+    +`<b>${n} exercice${n>1?'s':''}</b> ne ${n>1?'sont':'est'} pas dans ton catalogue et ${n>1?'seront créés':'sera créé'}.`
+    +` <span style="color:var(--t2);">Repère-les en orange ci-dessous : « 🔗 Rattacher » les relie à un exercice existant (photo, figurine et historique retrouvés).</span>`
+    +`</div>`;
+}
+/* ── RATTACHEMENT MANUEL depuis un aperçu d'import ──────────────────────────────────────────
+   ⚠️⚠️ ICI J'AI CRU TROUVER UN PIÈGE, ET J'AI FABRIQUÉ UNE RÉGRESSION — c'est écrit pour que
+   personne ne la refasse. J'avais lu `.overlay{z-index:200}` (style.css ligne 749) et conclu
+   que TOUTES les modales étaient à 200 ; comme `#mod-ex` est déclaré AVANT les aperçus dans
+   index.html (2122 contre 2348 et 2665), j'en ai déduit que le sélecteur s'ouvrirait DERRIÈRE
+   et j'ai posé un `style.zIndex='260'` à l'ouverture.
+   ⛔ MESURÉ : `#mod-ex{z-index:300;}` existe déjà, ligne 770 du MÊME fichier — posé exactement
+   pour ça. Mon « correctif » DESCENDAIT le sélecteur de 300 à 260. Ça marchait encore (260 est
+   au-dessus de 200), donc rien ne l'aurait signalé.
+   👉 C'est R28 appliqué à moi-même : une règle générale lue sans chercher la règle PLUS
+   SPÉCIFIQUE qui la surcharge. *Une limite qu'on n'a pas vérifiée devient une règle de
+   conception silencieuse* — et ici elle m'a fait écrire du code qui n'avait aucune raison
+   d'exister. Le contrôle négatif l'a trouvée : la mutation qui retirait le rehaussement ne
+   faisait rougir AUCUN témoin.
+   ⭐ LE TÉMOIN DE PLAN RESTE, mais il change de nature : il ne protège plus mon code, il fige
+   la règle CSS. Il rougira le jour où quelqu'un retirera `#mod-ex{z-index:300}` ou déplacera
+   les aperçus dans le DOM — et ce jour-là « Rattacher » n'ouvrirait rien, en silence. */
+let _impPickTarget=null;
+function _impPickOuvre(target){
+  _impPickTarget=target;
+  openExPicker('imp');
+  toast('Choisis l\'exercice de ton catalogue','info');
+}
+function impRattacher(di,ei){ _impPickOuvre({di:di,ei:ei,hist:false}); }
+function histRattacher(si,ei){ _impPickOuvre({si:si,ei:ei,hist:true}); }
+function _impPickApply(name){
+  const t=_impPickTarget; _impPickTarget=null;
+  if(!t)return;
+  const ex = t.hist
+    ? (_histExtracted&&_histExtracted.sessions&&_histExtracted.sessions[t.si]&&(_histExtracted.sessions[t.si].exercises||[])[t.ei])
+    : (_impExtracted&&_impExtracted.days&&_impExtracted.days[t.di]&&(_impExtracted.days[t.di].exercises||[])[t.ei]);
+  if(!ex||!name||name===ex.name)return;
+  /* ⛔⛔ ON RATTACHE TOUTES LES LIGNES QUI PORTENT CE NOM, PAS SEULEMENT CELLE-CI — et c'est la
+     MESURE qui l'a imposé, pas une intuition. `finalImportProg` DÉDOUBLONNE par nom avant de
+     créer : rattacher « Presse 45 degrés » au J1 sans toucher au J2 produisait un programme où
+     LE MÊME exercice existe sous DEUX noms — le J1 sur la fiche du catalogue (avec son
+     historique), le J2 sur un exercice inventé. 👉 Un demi-rattachement est PIRE que pas de
+     rattachement : il coupe l'historique en deux au lieu de le laisser d'un seul côté.
+     ⭐ Et c'est bien ce que la personne dit : elle ne corrige pas UNE LIGNE, elle dit « ce nom
+     désigne cet exercice-là ». On l'applique donc partout dans CE document — et nulle part
+     ailleurs : on ne touche ni à ses séances, ni à ses programmes déjà enregistrés (R29). */
+  const vise=String(ex.name).toLowerCase();
+  const touche=e=>{
+    if(!e||!e.name||String(e.name).toLowerCase()!==vise)return 0;
+    // ⭐ `_vmFrom` est posé comme par le rattachement AUTOMATIQUE : la ligne verte « ↔ reconnu
+    //   depuis X · annuler » et `impUndoMatch`/`histUndoMatch` marchent alors SANS UNE LIGNE
+    //   DE PLUS (R13) — on n'écrit aucun mécanisme d'annulation.
+    e._vmFrom=e.name; e.name=name;
+    delete e._vmSuggest; delete e._vmConf;
+    return 1;
+  };
+  let n=0;
+  if(t.hist){
+    ((_histExtracted&&_histExtracted.sessions)||[]).forEach(sess=>(sess.exercises||[]).forEach(e=>{n+=touche(e);}));
+    if(typeof _renderHistPreview==='function')_renderHistPreview();
+  }else{
+    ((_impExtracted&&_impExtracted.days)||[]).forEach(day=>(day.exercises||[]).forEach(e=>{n+=touche(e);}));
+    if(typeof _renderImpConfirm==='function')_renderImpConfirm();
+  }
+  // ⭐ On DIT combien de lignes ont bougé : sinon l'écran change à un endroit qu'on ne regarde pas.
+  toast(n>1?(n+' lignes rattachées à « '+name+' »'):('Rattaché à « '+name+' »'),'success');
+}
 function _vmConfirmRow(suggest, acceptCall, rejectCall, noThumb){
   let img='';
   if(!noThumb){ let thumb=''; try{ thumb=_exImg(suggest)||_exMuscleImg(suggest)||''; }catch(e){}
@@ -6314,7 +6436,17 @@ function _renderImpConfirm(){
   const nameEl=document.getElementById('imp-prog-name');
   if(nameEl)nameEl.textContent=d.name||'Programme importé';
   const el=document.getElementById('imp-preview');if(!el)return;
-  el.innerHTML=(d.days||[]).map((day,di)=>`
+  /* ⭐ Un SEUL passage de comptage, réutilisé par le bandeau ET par chaque ligne : le compte
+     annoncé en haut ne peut pas contredire les pastilles orange du dessous. */
+  const _connus=_catalogueConnu();
+  const _neuf=ex=>!!ex&&!ex._vmSuggest&&_exerciceInconnu(ex.name,_connus);
+  /* ⚠️ ON COMPTE LES NOMS DISTINCTS, pas les lignes : `toCreate` DÉDOUBLONNE avant de créer.
+     Le même exercice répété sur trois jours ne fait qu'UN exercice créé — annoncer « 3 » serait
+     un chiffre qui contredit ce qui se passe, et c'est précisément le défaut qu'on répare. */
+  const _vus=new Set();
+  (d.days||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{ if(_neuf(ex))_vus.add(String(ex.name).toLowerCase()); }));
+  const _nbNeuf=_vus.size;
+  el.innerHTML=_vmNouveauBandeau(_nbNeuf)+(d.days||[]).map((day,di)=>`
     <div style="background:var(--bg3);border-radius:10px;padding:10px 12px;">
       <input value="${_escNote(day.label||'Jour '+(di+1)).replace(/"/g,'&quot;')}" onchange="_impSetDayLabel(${di},this.value)" title="Renomme la séance si besoin" style="width:100%;font-weight:700;font-size:13px;color:var(--red);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;background:transparent;border:none;border-bottom:1px dashed var(--sep);padding:2px 0;font-family:inherit;">
       <div id="imp-day-${di}">
@@ -6327,6 +6459,7 @@ function _renderImpConfirm(){
               ${ex._echFusion?`<div style="font-size:11px;color:var(--gold);margin-top:3px;">🔥 dont ${ex._echFusion} série${ex._echFusion>1?'s':''} d'échauffement — ${ex._echLignes} ligne${ex._echLignes>1?'s':''} du document regroupée${ex._echLignes>1?'s':''} ici</div>`:''}
               ${ex._vmFrom?`<div style="font-size:11px;color:var(--green);margin-top:3px;">↔ reconnu depuis « ${_escNote(ex._vmFrom)} » · <span onclick="impUndoMatch(${di},${ei})" style="color:var(--t3);cursor:pointer;text-decoration:underline;">annuler</span></div>`:''}
               ${ex._vmSuggest?_vmConfirmRow(ex._vmSuggest,'impAcceptMatch('+di+','+ei+')','impRejectMatch('+di+','+ei+')',true):''}
+              ${_neuf(ex)?_vmNouveauRow('impRattacher('+di+','+ei+')'):''}
               ${ex.note?`<div style="font-size:11px;color:var(--gold);margin-top:2px;font-style:italic;">📋 ${_escNote(ex.note)}</div>`:''}
             </div>
             <button onclick="removeImpEx(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;">✕</button>
@@ -6366,11 +6499,15 @@ function finalImportProg(){
   if(!_impExtracted||!(_impExtracted.days||[]).length){toast('Aucun programme à importer','error');return;}
   if(!S.programmes)S.programmes=[];
   const name=(_impExtracted.name||'Programme '+new Date().toLocaleDateString('fr-FR')).trim();
-  const allEx=[...EXLIB,...(S.customExercises||[])].map(e=>e.n.toLowerCase());
+  /* ⛔ R2 — la MÊME fonction que l'aperçu (`_exerciceInconnu`, ft-v1166). Avant, ce test était
+     écrit ici en `allEx.includes(low)` et une 2ᵉ fois dans l'import d'historique avec un `Set` :
+     l'aperçu ne pouvait pas promettre ce que la création allait faire. */
+  const connus=_catalogueConnu();
   const toCreate=[];
   _impExtracted.days.forEach(day=>(day.exercises||[]).forEach(ex=>{
-    const low=ex.name.toLowerCase();
-    if(!allEx.includes(low)&&!toCreate.find(n=>n.toLowerCase()===low))toCreate.push(ex.name);
+    if(!_exerciceInconnu(ex.name,connus))return;
+    const low=String(ex.name).toLowerCase();
+    if(!toCreate.find(n=>String(n).toLowerCase()===low))toCreate.push(ex.name);
   }));
   if(toCreate.length){
     if(!S.customExercises)S.customExercises=[];
@@ -6674,8 +6811,15 @@ function _renderHistPreview(){
   const summEl=document.getElementById('hist-summary');
   if(summEl)summEl.textContent=sessions.length+' séance'+(sessions.length>1?'s':'')+' trouvée'+(sessions.length>1?'s':'')+' · '+from+' → '+to;
 
+  // ⭐ Même propriétaire, même comptage unique que l'aperçu de programme (R2).
+  const _connusH=_catalogueConnu();
+  const _neufH=ex=>!!ex&&!ex._vmSuggest&&_exerciceInconnu(ex.name,_connusH);
+  const _vusH=new Set();
+  sessions.forEach(sess=>(sess.exercises||[]).forEach(ex=>{ if(_neufH(ex))_vusH.add(String(ex.name).toLowerCase()); }));
+  const _nbNeufH=_vusH.size;
+
   const el=document.getElementById('hist-preview');if(!el)return;
-  el.innerHTML=sessions.map((sess,i)=>{
+  el.innerHTML=_vmNouveauBandeau(_nbNeufH)+sessions.map((sess,i)=>{
     const conflict=_histConflicts.find(c=>c.idx===i);
     const dateLabel=sess.date?_histFmtDate(sess.date):'Date inconnue';
     const estBadge=sess.estimatedDate?'<span style="color:var(--gold);font-size:11px;margin-left:6px;">📅 estimée</span>':'';
@@ -6685,6 +6829,11 @@ function _renderHistPreview(){
     const vmRows=(sess.exercises||[]).map((ex,ei)=>{
       if(ex._vmFrom)return`<div style="font-size:11px;color:var(--green);margin-top:3px;">↔ « ${_escNote(ex._vmFrom)} » → <b>${_escNote(ex.name)}</b> · <span onclick="histUndoMatch(${i},${ei})" style="color:var(--t3);cursor:pointer;text-decoration:underline;">annuler</span></div>`;
       if(ex._vmSuggest)return _vmConfirmRow(ex._vmSuggest,'histAcceptMatch('+i+','+ei+')','histRejectMatch('+i+','+ei+')');
+      /* ⛔ LA JUMELLE (ft-v1166). L'import d'historique créait lui aussi des exercices en silence
+         — et SANS MÊME LE TOAST que l'import de programme affichait. Le poser d'un seul côté
+         aurait été la 5ᵉ fois de la journée (ft-v1160/1161/1163/1164) : un correctif sur une
+         porte et pas sur sa jumelle. */
+      if(_neufH(ex))return `<div style="font-size:11px;margin-top:3px;">${_escNote(ex.name)} —</div>`+_vmNouveauRow('histRattacher('+i+','+ei+')');
       return'';
     }).filter(Boolean).join('');
     const conflictHtml=conflict?`
@@ -6736,11 +6885,12 @@ function finalImportHist(){
   if(!sessions.length){toast('Aucune séance à importer','error');return;}
 
   // Créer les exercices personnalisés manquants
-  const allExNames=new Set([...EXLIB,...(S.customExercises||[])].map(e=>e.n.toLowerCase()));
+  const connusH=_catalogueConnu();   // R2 — même propriétaire que l'aperçu et que le programme
   const toCreate=[];
   sessions.forEach(sess=>(Array.isArray(sess.exercises)?sess.exercises:[]).forEach(ex=>{
-    const low=(ex.name||'').toLowerCase();
-    if(low&&!allExNames.has(low)&&!toCreate.find(n=>n.toLowerCase()===low))toCreate.push(ex.name);
+    if(!_exerciceInconnu(ex&&ex.name,connusH))return;
+    const low=String(ex.name).toLowerCase();
+    if(!toCreate.find(n=>String(n).toLowerCase()===low))toCreate.push(ex.name);
   }));
   if(toCreate.length){
     if(!S.customExercises)S.customExercises=[];
