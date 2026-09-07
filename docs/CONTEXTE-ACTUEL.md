@@ -8,8 +8,8 @@
 
 - **Version en ligne (live) :** `ft-v1166` — 🔎 **LE DÉTECTEUR DE NOMS : ARRÊTER D'ATTENDRE QUE
   MICHEL TOMBE DESSUS.**
-  ⏳ **Suite VERTE** : parcours (voir le journal), calculs 339/339, muscles 241/241, croisés 50/50,
-  dates 9/9, données classées 0 trou.
+  ⏳ **Suite VERTE** : **parcours 3186/3186** (+15, bloc **CCLXIV**), calculs 339/339, muscles
+  241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   Michel, après avoir posé le principe *« tout sauvegarder et accessible du moment que ce n'est pas
   des données personnelles »* : ***« vas-y prends le détecteur de noms »***.
   ⭐⭐ **CINQ versions en une semaine ont eu la même cause** — *un nom n'a pas retrouvé sa donnée*
