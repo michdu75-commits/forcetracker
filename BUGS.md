@@ -2879,3 +2879,32 @@ sans test rouge, sans rien.
   une absence. *Deux lookups pour une seule question finissent toujours par diverger.*
 - ⭐ **Le réflexe** : quand une précaution est écrite dans un commentaire, `grep` la **donnée**
   qu'elle protège (`S.prs[`) et regarder **qui d'autre la lit sans elle**. Ici, dix lignes plus bas.
+
+### ⚠️ Et la §15 s'est rejouée le lendemain, sur la CONSIGNE elle-même (07/09/2026, ft-v1161)
+
+ft-v1160 a changé la façon dont le compteur de contradictions retrouve un record. C'est un
+**changement de règle** : les séances comptées avant ne mesurent plus la même chose. Le projet a
+un mécanisme fait exactement pour ça — un **numéro de version de règle** qui remet le compteur à
+zéro quand il change. **Il n'a pas été incrémenté.**
+
+**⭐⭐ Et la cause n'est pas l'étourderie.** La consigne, écrite au-dessus de la constante, disait :
+*« à incrémenter si le contrôle change de **seuil** ou de **formule** »*. Le changement n'était
+**ni un seuil ni une formule** — c'était la façon de **trouver** le record.
+👉 ***La règle était juste. Elle était définie trop étroit.*** C'est la **famille 15**, appliquée
+non pas à du code mais à une **consigne**.
+
+### 🔎 Comment la reconnaître
+- Une consigne qui **énumère des causes** (« si X ou Y change ») au lieu de **nommer l'effet**
+  (« dès que le résultat ne veut plus dire la même chose »). *Une liste de causes a toujours un
+  trou ; une question n'en a pas.*
+- Un mécanisme de sécurité **présent, correct, et non déclenché**. Il ne rate pas bruyamment : il
+  ne se déclenche simplement jamais, et le total continue de s'afficher comme si de rien n'était.
+
+### 🛡️ Ce qui protège aujourd'hui
+- La consigne est reformulée **par l'effet** : *« à incrémenter dès que les chiffres d'avant ne
+  mesurent plus la même chose — seuil, formule, ou la façon dont le record est trouvé »*.
+- Un témoin vérifie que le compteur **repart réellement à zéro** (1 et pas 5), **et** que la date
+  « depuis » repart avec lui — *un total neuf sous une vieille date ment sur la période*.
+- ⭐ **Le réflexe** : après un correctif, se demander non pas *« ai-je changé un seuil ? »* mais
+  **« un chiffre déjà affiché veut-il encore dire ce qu'il disait ? »**. Si non, il y a une version
+  de règle à faire bouger — ou un total à jeter.

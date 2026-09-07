@@ -29106,6 +29106,64 @@ console.log('\n-- CCLVII. Le champ « poids de cette portion » répond à la fr
   await cx.close();
 }
 
+/* ═══ CCLIX. LE COMPTEUR REPART À ZÉRO QUAND SA RÈGLE CHANGE (07/09/2026, ft-v1161) ═══════════
+   ⛔⛔ ft-v1160 a changé la façon dont le compteur retrouve un record — et je n'ai PAS incrémenté
+   `_INTENSITE_REGLE`. Les 4 séances de Michel comptées avec l'ancien lookup cassé allaient donc
+   rester dans le **même total** que les nouvelles, correctement comptées.
+   ⭐⭐ ET LA CAUSE N'EST PAS L'ÉTOURDERIE : la consigne disait *« à incrémenter si le contrôle
+   change de SEUIL ou de FORMULE »*. Mon changement n'était **ni l'un ni l'autre** — c'était la
+   façon de **trouver** le record. ***La règle était juste, définie trop étroit*** (`BUGS.md` §15,
+   le même motif qu'en ft-v1153). Le critère est désormais l'**effet** et non la liste des causes.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLIX. Le compteur repart à zéro quand sa règle change (ft-v1161) --');
+{
+  const _cj=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
+  t('CCLIX ⛔⛔ CONTRÔLE — la version de règle a bien été INCRÉMENTÉE',
+    /const _INTENSITE_REGLE=2;/.test(_cj), '');
+  /* ⭐ ET LA CONSIGNE ELLE-MÊME EST ÉLARGIE — c'est la moitié qui protège la PROCHAINE fois :
+     sans elle, le suivant relit « seuil ou formule » et retombe exactement dans le même trou. */
+  t('CCLIX ⭐⭐ ... et la consigne dit désormais l\'EFFET, pas une liste de causes',
+    /DÈS QUE LES CHIFFRES D.{0,3}AVANT NE MESURENT PLUS LA MÊME CHOSE/.test(_cj)
+    && /façon dont le record est TROUVÉ/.test(_cj), '');
+
+  const R=await p.evaluate(()=>{
+   try{
+    const o={}, cle='ft4_intensiteStats';
+    /* ⭐⭐ LE CAS DE MICHEL : un total accumulé sous l'ANCIENNE règle (4 séances, 0 jugeable). */
+    localStorage.setItem(cle, JSON.stringify({regle:1,depuis:'2026-09-06',propositions:4,jugeables:0,avecAlerte:0,alertes:0}));
+    S.prs={'Développé Couché':{rm1:108}};
+    _intensiteCompter([{name:'Developpe Couche',sets:[{kg:100,reps:3,type:'N'}]}], []);
+    const a=JSON.parse(localStorage.getItem(cle)||'{}');
+    o.regleApres=+a.regle||0;
+    o.propApres =+a.propositions||0;   // 1 = reparti à zéro · 5 = les deux règles mélangées
+    o.jugApres  =+a.jugeables||0;
+    o.depuisNeuf=(a.depuis!=='2026-09-06');   // la date de départ aussi doit être remise à neuf
+    /* ⛔ NON-RÉGRESSION : à règle INCHANGÉE, le compteur accumule normalement. */
+    localStorage.setItem(cle, JSON.stringify({regle:2,depuis:'2026-09-07',propositions:3,jugeables:2,avecAlerte:1,alertes:1}));
+    _intensiteCompter([{name:'Developpe Couche',sets:[{kg:100,reps:3,type:'N'}]}], []);
+    const b2=JSON.parse(localStorage.getItem(cle)||'{}');
+    o.accProp=+b2.propositions||0;   // 4 attendu : 3 + 1
+    o.accJug =+b2.jugeables||0;      // 3 attendu : 2 + 1
+    localStorage.removeItem(cle);
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+
+  if(R.err) t('CCLIX n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : 1 et pas 5. Cinq voudrait dire que les 4 séances
+       mal comptées se sont ajoutées aux nouvelles — un taux qui ne décrit aucune des deux règles. */
+    t('CCLIX ⭐⭐ un total de l\'ANCIENNE règle est JETÉ, pas additionné', R.propApres===1, 'reçu : '+R.propApres+' (5 = les deux mélangées)');
+    t('CCLIX ⭐ le compteur porte désormais la règle 2', R.regleApres===2, 'reçu : '+R.regleApres);
+    /* ⛔ Et la séance neuve est comptée JUGEABLE — c'est bien le correctif de ft-v1160 qui vit. */
+    t('CCLIX ⛔ la séance neuve est comptée jugeable (ft-v1160 tient)', R.jugApres===1, 'reçu : '+R.jugApres);
+    /* ⚠️ LA DATE COMPTE AUTANT QUE LES NOMBRES : « depuis le 06/09 » au-dessus d'un total remis à
+       zéro ferait lire une fréquence sur une période qui n'est pas la sienne. */
+    t('CCLIX ⚠️ la date « depuis » repart elle aussi (sinon l\'écran ment sur la période)', R.depuisNeuf===true, '');
+    t('CCLIX ⛔ NON-RÉGRESSION — à règle inchangée, le compteur accumule normalement', R.accProp===4&&R.accJug===3, 'prop '+R.accProp+' jug '+R.accJug);
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
