@@ -3456,10 +3456,32 @@ function _efSetUnite(u){
   _efPoidsDeclare=0; _efQtyRender();
 }
 function _efDeclarePoids(){
+  /* ⛔⛔ ft-v1159 — CETTE FONCTION NE REDESSINE PLUS RIEN, et c'est TOUT le correctif.
+     Elle appelait `_efQtyRender()`, ce qui reconstruit le bloc et REMPLACE le champ : appelée à
+     chaque frappe (le comportement qu'on veut), elle détruirait le champ au premier chiffre et
+     on ne pourrait jamais taper le second. *Le correctif évident était le piège.*
+     👉 Elle enregistre le poids et le DIT sous le champ. Le rendu, lui, attend le `blur`. */
   const v=numFR((document.getElementById('ef-poids')||{}).value);
-  if(!(v>0)) return;
-  _efPoidsDeclare=v; _efQtyRender();
+  const aide=document.getElementById('ef-poids-aide');
+  if(!(v>0)){                       // champ vidé ou illisible → on revient à la question
+    _efPoidsDeclare=0;
+    if(aide) aide.innerHTML=_AIDE_POIDS_EF;
+    return;
+  }
+  _efPoidsDeclare=v;
+  /* ⭐ LE RETOUR VISIBLE QUI MANQUAIT : avant, taper « 50 » ne changeait RIEN à l'écran — ni les
+     4 valeurs (c'est normal, elles se calent), ni un mot. On ne pouvait pas savoir si l'app avait
+     entendu. *Un champ qui ne répond pas ressemble à un champ cassé.* */
+  if(aide) aide.innerHTML=_aidePoidsPose(v);
 }
+/* ⚖️ ft-v1159 — l'aide du champ de déclaration vit dans UNE constante : elle est écrite au
+   rendu ET réécrite à la frappe par `_efDeclarePoids`. Deux copies auraient divergé (R2). */
+/* ⭐ ft-v1159 — UNE SEULE PHRASE DE CONFIRMATION pour les deux écrans (R2). Je l'avais
+   d'abord écrite deux fois ; c'est une mutation de contrôle qui me l'a fait voir (elle en a
+   trouvé 2 là où elle en attendait 1). *Deux copies de la même phrase finissent par diverger,
+   et c'est l'écran qui ment.* */
+function _aidePoidsPose(v){ return '✅ <b>'+v+' g</b> — les 4 valeurs ci-dessous correspondent à ce poids. Change ce nombre et elles suivront.'; }
+const _AIDE_POIDS_EF='Combien pèse ce que tu as noté ? <b>L\'app ne peut pas le deviner, toi si.</b> Indique-le : les 4 valeurs ci-dessous se calent dessus.';
 function _efQtyRender(){
   const el=document.getElementById('ef-qty-row'); if(!el) return;
   const e=(S.foodLog||[]).find(x=>x.ts===_editFoodTs); if(!e){el.innerHTML='';return;}
@@ -3494,27 +3516,40 @@ function _efQtyRender(){
     +';color:'+(_efUnite===u?'var(--t1)':'var(--t3)')+';font-size:12.5px;font-weight:'+(_efUnite===u?'800':'700')
     +';font-family:var(--font);cursor:pointer;touch-action:manipulation;" aria-pressed="'+(_efUnite===u?'true':'false')+'">'+l+'</button>';
   const choix='<div style="display:flex;gap:6px;margin-bottom:7px;">'+onglet('g','⚖️ En grammes')+onglet('portion','🍽️ En portions')+'</div>';
-  let corps;
+  let corps, sousTitre='recalcule les 4 valeurs';
   if(_efUnite==='g'&&_efPoidsDeclare>0){
     _efRef={base:base,q:_efPoidsDeclare,u:'g'};   // l'onglet « ⚖️ En grammes » : c'est des grammes
     corps=choix
       +'<input id="ef-prop" type="text" inputmode="decimal" step="any" value="'+_efPoidsDeclare+'" oninput="_efApplyProp()" style="'+style+'">'
       +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Référence : '+_efPoidsDeclare+' g (que tu as indiqué). Change ce nombre à chaque fois que la quantité change — les 4 valeurs suivent.</div>';
   }else if(_efUnite==='g'){
+    sousTitre='indique d\'abord combien ça pèse';   // ⛔ ce champ CALE, il ne recalcule pas
     _efRef={base:base,q:1,u:null};   // ⛔ portions : aucune masse connue, le contrôle se tait
     /* ⛔ CHAMP VIDE, PAS PRÉ-REMPLI : un « 100 » proposé s'enregistrerait tel quel chez qui valide
        sans regarder — *un chiffre qu'on n'a pas choisi et qui s'enregistre est un chiffre faux
        présenté comme un fait* (R29). Tant que rien n'est indiqué, les 4 valeurs NE BOUGENT PAS. */
     corps=choix
-      +'<input id="ef-poids" type="text" inputmode="decimal" step="any" placeholder="poids de cette portion" onchange="_efDeclarePoids()" style="'+style+'">'
-      +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Combien pèse ce que tu as noté ? <b>L\'app ne peut pas le deviner, toi si.</b> Indique-le une fois : les 4 valeurs se calent dessus.</div>';
+      /* ⌨️ ft-v1159 — `oninput` POUR VOIR, `onblur` POUR RANGER. Le champ répondait à
+         `onchange`, c'est-à-dire À LA FERMETURE DU CLAVIER — et le pavé décimal d'iOS n'a
+         PAS de touche Entrée : rien n'indiquait qu'il fallait la fermer. On tapait « 50 » et
+         il ne se passait RIEN. ⛔ Mais rendre le bloc à chaque frappe serait PIRE (le champ
+         serait détruit au premier chiffre) : `_efDeclarePoids` ne redessine donc rien, il
+         écrit sous le champ. Le rendu attend le `blur`, exactement quand `onchange` partait. */
+      +'<input id="ef-poids" type="text" inputmode="decimal" step="any" placeholder="poids de cette portion" oninput="_efDeclarePoids()" onblur="_efQtyRender()" style="'+style+'">'
+      +'<div id="ef-poids-aide" style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">'+_AIDE_POIDS_EF+'</div>';
   }else{
+    sousTitre='multiplie les 4 valeurs';
     _efRef={base:base,q:1,u:null};   // ⛔ portions : aucune masse connue, le contrôle se tait
     const b=(x,l)=>'<button onclick="_efApplyPortion('+x+')" style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t2);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">'+l+'</button>';
     corps=choix+'<div style="display:flex;gap:6px;">'+[0.5,1,1.5,2,3].map(x=>b(x,_portionLbl(x))).join('')+'</div>'
       +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Les 4 valeurs ci-dessous sont <b>une portion</b>. Tu connais le poids ? Passe en <b>⚖️ grammes</b> et indique-le.</div>';
   }
-  el.innerHTML='<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité <span style="font-weight:400;">— recalcule les 4 valeurs</span></div>'+corps+'</div>';
+  /* ⛔⛔ ft-v1159 — LE SOUS-TITRE DISAIT L'INVERSE DE CE QUE LE CHAMP FAIT. Il annonçait
+     « recalcule les 4 valeurs » AU-DESSUS du champ de déclaration, qui ne recalcule RIEN : il
+     CALE les valeurs existantes sur le poids indiqué. *Michel a tapé 50, attendu que les 156
+     kcal bougent, et rien n'a bougé — l'écran le lui avait promis.* Chaque état dit maintenant
+     ce qu'il fait vraiment (R24 : informer, pas décorer). */
+  el.innerHTML='<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité <span style="font-weight:400;">— '+sousTitre+'</span></div>'+corps+'</div>';
 }
 function _efProp(f){
   if(!_efRef) return;
@@ -3746,10 +3781,14 @@ function _afSetUnite(u){
   _afMajAncre();
 }
 function _afDeclarePoids(){
+  /* ⛔⛔ ft-v1159 — NE REDESSINE PLUS RIEN (jumelle de `_efDeclarePoids`). `_afMajAncre()`
+     reconstruit le bloc et remplace le champ : appelée à chaque frappe, elle le détruirait au
+     premier chiffre. Elle enregistre, elle DIT, et le rendu attend le `blur`. */
   const v=numFR((document.getElementById('af-poids')||{}).value);
-  if(!(v>0)) return;
+  const aide=document.getElementById('af-poids-aide');
+  if(!(v>0)){ _afPoidsDeclare=0; if(aide) aide.innerHTML=_AIDE_POIDS_AF; return; }
   _afPoidsDeclare=v;
-  _afMajAncre();               // le bloc bascule dans son état « ancré », comme un poids lu
+  if(aide) aide.innerHTML=_aidePoidsPose(v);
 }
 function _afPropCacher(){
   _afRef=null;
@@ -3764,6 +3803,10 @@ function _afPropCacher(){
 /* Décide de la source et (re)construit le bloc. ⚠️ Appelée seulement quand la SOURCE des valeurs
    change — estimation IA, ou sortie d'un champ (`onchange`, donc au blur). Jamais à chaque frappe :
    reconstruire le bloc pendant qu'on tape dedans ferait perdre le curseur. */
+/* ⚖️ ft-v1159 — même raison que `_AIDE_POIDS_EF` : une seule copie, écrite au rendu et
+   réécrite à la frappe. ⚠️ Le texte diffère de celui de l'édition et c'est VOULU — ici
+   l'aliment est DEVANT la personne, là il est déjà noté. */
+const _AIDE_POIDS_AF='Combien pèse ce que tu as devant toi ? <b>L\'app ne peut pas le deviner, toi si.</b> Indique-le : les 4 valeurs ci-dessous se calent dessus, et tu pourras ensuite mettre le poids que tu veux.';
 function _afMajAncre(srcChange){
   const el=document.getElementById('af-prop-row'); if(!el) return;
   if(_bcNutr){ _afPropCacher(); return; }          // ① un pour-100 g est connu : `af-bc-row` s'en charge
@@ -3847,10 +3890,15 @@ function _afMajAncre(srcChange){
          valide sans regarder — *un chiffre pré-rempli qu'on n'a pas choisi est un chiffre faux
          présenté comme un fait* (R29). Tant que rien n'est indiqué, les 4 valeurs NE BOUGENT PAS. */
       _afRef={base:base,q:1,u:'',src:'portion'};
-      el.innerHTML='<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité <span style="font-weight:400;">— recalcule les 4 valeurs</span></div>'
+      /* ⌨️ ft-v1159 — LA JUMELLE (R8). Exactement le défaut de l'écran d'édition, au même
+         endroit : `onchange` ne partait qu'à la fermeture du clavier, que le pavé décimal d'iOS
+         ne sait pas déclencher. ⛔ Et le sous-titre promettait « recalcule les 4 valeurs »
+         au-dessus d'un champ qui ne recalcule rien — il les CALE. *Un correctif posé d'un seul
+         côté est la faute que ce fichier passe son temps à rattraper.* */
+      el.innerHTML='<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité <span style="font-weight:400;">— indique d\'abord combien ça pèse</span></div>'
         +choix
-        +'<input id="af-poids" type="text" inputmode="decimal" step="any" placeholder="poids de cette portion" onchange="_afDeclarePoids()" style="'+style+'">'
-        +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Combien pèse ce que tu as devant toi ? <b>L\'app ne peut pas le deviner, toi si.</b> Indique-le une fois : les 4 valeurs se calent dessus, et tu pourras ensuite mettre le poids que tu veux (250 g aujourd\'hui, 400 g la prochaine fois).</div>';
+        +'<input id="af-poids" type="text" inputmode="decimal" step="any" placeholder="poids de cette portion" oninput="_afDeclarePoids()" onblur="_afMajAncre()" style="'+style+'">'
+        +'<div id="af-poids-aide" style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">'+_AIDE_POIDS_AF+'</div>';
     }else{
       _afRef={base:base,q:1,u:'',src:'portion'};
       const b=(x,l)=>'<button onclick="_afApplyPortion('+x+')" style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t2);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">'+l+'</button>';

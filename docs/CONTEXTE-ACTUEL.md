@@ -39,35 +39,23 @@
   (job `deploy` success, **12 étapes** dont *« Pousser Code.js »*, *« Redéployer la web app »* et
   *« Vérifier que le backend répond VRAIMENT »*, 10:00:42 UTC).
   ⏳ **Suite complète VERTE** : **parcours 3071/3071** (+25, bloc **CCLVI**), calculs 339/339,
+
+- **Version précédente :** `ft-v1159` — ⚖️ **LE CHAMP « POIDS DE CETTE PORTION » RÉPOND ENFIN À LA FRAPPE.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#974**, job `deploy` success, 11:22:15 UTC.
+  ⏳ **Suite complète VERTE** : **parcours 3082/3082** (+11, bloc CCLVII), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
-  ⭐⭐ **Mesuré sur DEUX enregistrements d'écran de Michel** (11:06 local = **après** le déploiement
-  de 08:18 UTC). ✅ Ce qui marche : noms reconnus depuis le catalogue, colonne Type lue
-  (`ECH -` / `TRAV -`), **plus aucune date inventée** (ft-v1157 tient). ❌ Ce qui ne marche pas :
-  les échauffements sont **toujours des exercices séparés**, seulement renommés `(échauffement)`
-  au lieu de `(ECH)` — son J1 fait encore **9 blocs au lieu de 4**.
-  ⛔⛔ **Le renommage EST la preuve** : le modèle a bien reçu le nouveau prompt et ne l'a pas suivi.
-  *Un prompt est probabiliste — tant que la correction vit uniquement là, on ne peut ni la prouver
-  ni la garantir.* **R7** : ① structurel avant ③ le prompt.
-  ⭐⭐ **Correctif = un filet DÉTERMINISTE dans l'app** — `_mergeImportEchauffements`, jumeau de
-  `_mergeImportSeances` qui existe déjà juste à côté (R13) : des **lignes consécutives** portant le
-  même nom de base une fois le marqueur retiré, **suivies** de ce nom de base **nu**, = **UN**
-  exercice dont les premières séries sont des échauffements. **Il marche quel que soit le modèle.**
-  ⛔⛔ **La ligne de travail est OBLIGATOIRE** : sans elle, on ne fusionne rien et on ne renomme
-  rien (R29). ⭐⭐ **La 2ᵉ vidéo a élargi la règle** : sa ligne de travail s'appelle « Développé
-  épaules guide **/ haltères** » — donc elle peut **prolonger** le nom de base, ⛔ mais **seulement
-  derrière un séparateur** (`/`, `-`, `(`…), sinon « Squat **Bulgare** » absorberait l'échauffement
-  du squat. *Le cas et le contre-test mordent chacun sur une mutation dédiée.* ⛔ **Et ça ne remplace pas `setTypePerSet`, ça s'y AJOUTE** (leçon de ft-v1152).
-  ⭐ **L'ordre compte** : la fusion passe **avant** `_vmMatchExtracted`, sinon on rattacherait
-  « Développé couché (échauffement) » au catalogue, c'est-à-dire rien.
-  ⭐ **Les 2 défauts du prompt sont corrigés en plus, sans que le résultat en dépende** :
-  ① `setTypePerSet` était **absent du schéma d'exemple** (le **miroir** de ft-v1157 — là il avait
-  recopié une valeur, ici il a ignoré un champ qui n'y était pas) ; ② la **règle 4** interdisait
-  `"W"` en termes **absolus**, quatre règles avant que la règle 8 ne l'exige.
-  ⛔⛔ **Limite dite, 3ᵉ fois d'affilée** : pas de clé API ici, je ne peux pas prouver que le modèle
-  obéira. *La différence avec ft-v1156 : le correctif ne repose plus sur son obéissance.*
-  ⏭️ **Ne fait pas** : réparer les programmes **déjà** importés (réimporter en mode **Remplacer**) ·
-  fusionner des lignes **non consécutives** · fusionner si la ligne de travail porte un **autre nom**.
-  ⚠️ **`Code.js` modifié → déploiement backend automatique, à vérifier des DEUX côtés (R18).**
+  ⏳ **Déploiement à vérifier** (R18) — ⛔ `coach.js`/`log.js`/`Code.js`/`worker.js` **non touchés** → ni backend ni worker.
+  Michel envoie un **enregistrement d'écran** : *« je change le poids, en fait rien au début »*.
+  ⭐⭐ **Lu image par image** : à 3,3 s « 50 » est tapé et **rien ne bouge** ; à 4,3 s il ferme le
+  clavier → *« Référence : 50 g »*. ⛔ Les champs étaient en **`onchange`** (perte de focus) alors
+  que le **pavé décimal d'iOS n'a aucune touche Entrée**.
+  ⛔⛔ **2ᵉ défaut** : le titre promettait *« recalcule les 4 valeurs »* au-dessus d'un champ qui
+  **CALE** les valeurs — l'inverse de ce qu'il fait. C'est le *« c'est pas bon non plus »*.
+  ⭐⭐ **Le cœur de la version est le PIÈGE** : passer bêtement en `oninput` aurait été **pire** —
+  la fonction **redessinait** le bloc, donc le champ aurait été détruit au premier chiffre. Elle
+  ne redessine plus : elle **écrit sous le champ** (« ✅ 50 g ») et le rendu attend le `blur`.
+  ⛔ **Les deux écrans** (édition **et** ajout — R8). 📣 **Règle #11** : aide oui, point rouge non.
+  ⚠️ **Michel doit vérifier sur Safari/iPhone — c'est là que le défaut vivait.**
 
 - **Version précédente :** `ft-v1157` — 📅 **L'IMPORT RECOPIAIT LA DATE DE L'EXEMPLE DU PROMPT.**
   ✅ **DÉPLOIEMENTS VÉRIFIÉS VERTS DES DEUX CÔTÉS** (R18), sur `d389883b` : **site** run **#967**
