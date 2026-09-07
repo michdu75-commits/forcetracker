@@ -817,3 +817,46 @@ except Exception as _e15:
     #    lit comme un succès — c'est exactement ce qui est arrivé à sa première version.
     print(f"⚠️ contrôle « inventaire » NON EXÉCUTÉ ({type(_e15).__name__}: {_e15})")
     print("   → ce n'est pas un feu vert : la garantie n'a pas été vérifiée du tout.")
+
+# ── Contrôle 16 : DEUX FICHIERS SERVIS NE DÉCLARENT JAMAIS LA MÊME FONCTION ──────────────
+#
+# ⛔⛔ NÉ D'UNE ERREUR RÉELLE, LE 07/09/2026 (ft-v1168). En écrivant le filet de date de
+#    l'import de programme, j'ai nommé ma fonction `_dateImportValide` — un nom qui EXISTAIT
+#    DÉJÀ dans `state.js` (ft-v1095). Or `log.js` est chargé APRÈS `state.js` : ma déclaration
+#    a donc silencieusement ÉCRASÉ la sienne, dans le même espace global.
+#    ⭐ Résultat MESURÉ : les dates `1900-01-01` et `2099-01-01` sont redevenues importables
+#    dans l'historique. Le garde-fou de ft-v1095 était éteint — sans erreur, sans avertissement,
+#    sans que rien ne le dise. Seule une passe complète de 16 minutes l'a vu.
+#
+# 👉 CE QUE CE CONTRÔLE APPORTE : la même détection en une seconde, à chaque livraison.
+#    Mesuré au moment de l'écrire : 1532 fonctions de premier niveau, **0 collision**. Il part
+#    donc d'un état propre — il ne peut rougir que sur une VRAIE nouvelle collision, jamais
+#    sur du bruit hérité. C'est la condition pour qu'un détecteur reste crédible (ft-v1145).
+try:
+    import re as _re16
+    _RACINE16 = pathlib.Path(__file__).resolve().parent.parent
+    _FICS16 = ['constants.js', 'state.js', 'screens.js', 'log.js', 'setup.js',
+               'tracking.js', 'coach.js', 'food-health.js', 'app.js']
+    _vus16 = {}
+    for _f16 in _FICS16:
+        _p16 = _RACINE16 / _f16
+        if not _p16.exists():
+            continue
+        _t16 = _p16.read_text(encoding='utf-8')
+        for _m16 in _re16.finditer(r'^function\s+([A-Za-z_$][\w$]*)\s*\(', _t16, _re16.M):
+            _vus16.setdefault(_m16.group(1), set()).add(_f16)
+    _col16 = {k: sorted(v) for k, v in _vus16.items() if len(v) > 1}
+    if _col16:
+        print("❌ collision de noms : la MÊME fonction est déclarée dans plusieurs fichiers servis.")
+        for _k16 in sorted(_col16):
+            print("   ⛔ %s → %s" % (_k16, ", ".join(_col16[_k16])))
+        print("   → le dernier fichier chargé GAGNE, en silence : la fonction de l'autre est")
+        print("     écrasée sans erreur. C'est ainsi qu'un garde-fou meurt sans que rien ne le dise")
+        print("     (ft-v1168). Deux questions différentes = deux noms différents (R2).")
+        sys.exit(1)
+    print("✅ noms : %d fonctions de premier niveau, aucune déclarée dans deux fichiers" % len(_vus16))
+except SystemExit:
+    raise
+except Exception as _e16:
+    print("⚠️ contrôle « collision de noms » NON EXÉCUTÉ (%s: %s)" % (type(_e16).__name__, _e16))
+    print("   → ce n'est pas un feu vert : la garantie n'a pas été vérifiée du tout.")

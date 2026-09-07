@@ -475,6 +475,11 @@ const NEW_FEATURES=[
      un ancrage inexistant est une annonce qui n'a jamais lieu, en silence).
      \u26d4 ET PAS DE POP-UP : rien n'est \u00e0 faire tant qu'on n'importe pas, aucun rep\u00e8re n'a boug\u00e9,
      aucune donn\u00e9e ne change. La pop-up ANNONCE, l'aide EXPLIQUE (R25). */
+  /* \ud83c\udfc3 POINT ROUGE sur S\u00c9ANCE (ft-v1168) : c'est l\u00e0 que le bloc Cardio appara\u00eet quand on
+     charge un programme. \u26d4 SANS `spot`, comme les autres entr\u00e9es de cet \u00e9cran (ft-v1153).
+     \u26d4 ET PAS DE POP-UP : rien n'est \u00e0 faire, aucun rep\u00e8re n'a boug\u00e9 \u2014 une ligne se range au bon
+     endroit. La pop-up ANNONCE, l'aide EXPLIQUE (R25). */
+  {id:'prog-cardio', screen:'log', desc:'Nouveau : le <b>cardio d\'un programme</b> part maintenant dans le <b>bloc Cardio</b> au lieu de tra\u00eener dans la liste des exercices \u2014 y compris pour les programmes que tu as <b>d\u00e9j\u00e0</b> import\u00e9s, au moment de les charger.'},
   {id:'imp-nouveaux', screen:'log', desc:'Nouveau : \u00e0 l\'import d\'un programme ou d\'un historique, les exercices que l\'app ne conna\u00eet pas sont <b>marqu\u00e9s en orange</b> AVANT l\'import, avec un bouton \u00ab \ud83d\udd17 Rattacher \u00bb pour les relier \u00e0 ton catalogue (et retrouver photo, figurine et historique).'},
   {id:'prog-import-porte', screen:'log', desc:'Nouveau : « 📷 Importer un programme » est maintenant DANS « Mes Programmes ». Photo ou PDF, l\'IA le lit et garde tes jours (Push, Pull, Legs…) — c\'est la seule façon d\'obtenir un programme à plusieurs jours depuis un document.'},
   /* 🛡️ POINT ROUGE sur SÉANCE (ft-v1153) : c'est là que les avertissements APPARAISSENT, donc

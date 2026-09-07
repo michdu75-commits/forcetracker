@@ -6620,6 +6620,78 @@ function _setImpMode(mode){
   }
 }
 
+/* 📅 LE FILET DE DATE, CÔTÉ APP — ft-v1168 (07/09/2026).
+   Michel, sur son programme réel : « c'est quoi ce bordel de date, je l'ai mis ce matin », puis
+   « euh oui mais on est pas en mars lol on est en septembre ». Sa carte affichait « Semaine 4 / 4
+   · 23 mars → 19 avr. » : TERMINÉ avant d'être commencé.
+   ⭐⭐ MESURÉ, PDF EN MAIN : 336 lignes, ZÉRO date — ni mois, ni année. Le « 23 mars » venait de
+   l'exemple du prompt serveur. Corrigé DEUX FOIS ce matin (l'exemple vidé + un garde-fou serveur),
+   et il en avait quand même une.
+   ⛔⛔ POURQUOI : les DEUX correctifs vivent CÔTÉ SERVEUR, donc leur effet dépend de QUAND on
+   importe. Son import précède le déploiement de 08:18 UTC (= 10h18 chez lui) — vérifié par les
+   logs du run #109 et par l'ancêtre git du commit. C'est BUGS.md §46 : un correctif qu'on ne peut
+   pas vérifier là où il s'applique n'en est pas un.
+   👉 L'app applique donc le MÊME critère de sens, elle-même : un cycle déjà terminé le jour de
+   l'import n'est pas une date. Quel que soit le backend qui répond, quel que soit le cache.
+   ⛔ ON N'EFFACE QUE LA DATE, jamais `weeks` : la durée vient du document et reste vraie. Sans
+   date, la carte affiche « Semaine 1 / N » et la personne peut la poser dans l'éditeur (R29 —
+   mieux vaut ne rien dire que dire une date fausse).
+   ⛔ ET UNE DATE PASSÉE DONT LE CYCLE COURT ENCORE EST ACCEPTÉE : quelqu'un qui importe un bloc
+   commencé il y a deux semaines a RAISON de le dater ainsi. Le critère est du sens, pas une borne. */
+/* ⚠️⚠️ CE NOM A ÉTÉ CHANGÉ APRÈS UNE COLLISION QUE J'AI CRÉÉE — écrit pour que personne ne la
+   refasse. J'avais d'abord appelé cette fonction `_dateImportValide`. ⛔ CE NOM EXISTAIT DÉJÀ,
+   dans `state.js` (ft-v1095), et `log.js` charge APRÈS : j'ai donc ÉCRASÉ un garde-fou vivant,
+   silencieusement. Résultat MESURÉ : les dates `1900-01-01` et `2099-01-01` sont redevenues
+   importables dans l'historique — le garde-fou de ft-v1095 était éteint, sans la moindre erreur.
+   👉 Une collision de noms entre deux fichiers servis ne lève RIEN : le dernier chargé gagne.
+   Seuls les témoins de ft-v1095 l'ont vue (bloc CCII) — après 16 minutes de passe complète.
+   ⭐ D'où le CONTRÔLE 16 de `tools/check_regles.py`, né de cette erreur : il refait la même
+   détection en une seconde, à chaque livraison. Mesuré en l'écrivant : 1 532 fonctions de premier
+   niveau, 0 collision — il part d'un état propre, donc il ne peut rougir que sur une VRAIE.
+   ⛔⛔ ET LES DEUX FONCTIONS NE FUSIONNENT PAS, malgré l'envie : `_dateImportValide` juge une
+   date de SÉANCE (donc elle refuse le FUTUR — on ne s'est pas entraîné demain), celle-ci juge une
+   date de DÉBUT DE PROGRAMME, et un programme peut parfaitement commencer lundi prochain.
+   *Deux questions différentes, deux noms différents* (R2). */
+function _dateProgValide(d, weeks){
+  const s=String(d==null?'':d).trim();
+  if(!s)return '';
+  const d0=new Date(s);
+  if(isNaN(d0.getTime()))return '';
+  const w=parseInt(weeks)||0;
+  if(w>0){
+    const fin=new Date(d0.getTime()+(w*7-1)*86400000);
+    if(fin.getTime()<Date.now())return '';       // cycle déjà fini le jour de l'import → on n'invente pas
+  }
+  return s;
+}
+/* 🏃 LE CARDIO D'UN JOUR DE PROGRAMME — ft-v1168 (07/09/2026).
+   Michel, capture à l'appui : « Cardio léger », 1 série × 10 reps × 120 s de repos, AVEC UNE
+   FIGURINE DE JAMBES, alors que sa note dit « Échauffement général - 8 minutes ». C'est le trou
+   nommé en ft-v1156 (« la ligne de cardio reste un exercice — manque de MODÈLE ») et jamais comblé.
+   ⭐⭐ R13 — ON NE CONSTRUIT AUCUN DÉTECTEUR : `_extraireCardioMilo` existe depuis ft-v1147/1150,
+   mesuré sur 20 formulations sur 20, avec ses trois gardes (aucune charge · une durée réellement
+   lisible · le nom n'est pas un exercice du catalogue). On l'APPELLE depuis un nouvel endroit.
+   ⭐⭐ ET LE RATTRAPAGE SE FAIT AU CHARGEMENT, PAS PAR RÉÉCRITURE — c'est la décision qui compte,
+   et elle vient de Michel : « si je remets mon programme je repars à 0 c'est n'importe quoi ».
+   On ne touche à AUCUNE donnée enregistrée (R29) : un programme importé AVANT cette version est
+   réparé au moment où on le charge, sans réimportation, sans bouton, sans migration.
+   ⛔ ET ON NE RETOUCHE PAS L'AFFICHAGE DES PROGRAMMES ENREGISTRÉS : une date de cycle passée peut
+   être VRAIE (un bloc réellement terminé). Après coup, rien ne distingue une date inventée d'une
+   date vécue — on n'efface donc pas une information peut-être exacte (R29). */
+function _cardioVersWkt(day){
+  try{
+    if(typeof S==='undefined'||!S.wkt)return;
+    // ① Ce que l'import a DÉJÀ rangé (programmes importés à partir de ft-v1168).
+    if(day&&day.cardioAvant&&!S.wkt.cardioAvant)S.wkt.cardioAvant=Object.assign({},day.cardioAvant);
+    if(day&&day.cardio&&!S.wkt.cardio)          S.wkt.cardio     =Object.assign({},day.cardio);
+    // ② Le RATTRAPAGE des programmes plus anciens, où le cardio est resté un exercice.
+    if(typeof _extraireCardioMilo!=='function')return;
+    const r=_extraireCardioMilo(S.wkt.exs||[]);
+    S.wkt.exs=r.exs;
+    if(r.avant&&!S.wkt.cardioAvant)S.wkt.cardioAvant=r.avant;
+    if(r.apres&&!S.wkt.cardio)     S.wkt.cardio     =r.apres;
+  }catch(e){}
+}
 function finalImportProg(){
   if(!_impExtracted||!(_impExtracted.days||[]).length){toast('Aucun programme à importer','error');return;}
   if(!S.programmes)S.programmes=[];
@@ -6631,6 +6703,17 @@ function finalImportProg(){
   const toCreate=[];
   _impExtracted.days.forEach(day=>(day.exercises||[]).forEach(ex=>{
     if(!_exerciceInconnu(ex.name,connus))return;
+    /* 🏃 ft-v1168 — UNE LIGNE DE CARDIO NE DEVIENT PAS UN EXERCICE PERSO. Chez Michel, l'import
+       fabriquait « Cardio léger » et « Elliptique / cardio léger » dans son catalogue, avec une
+       figurine de jambes. Ce ne sont pas des exercices : ils partent dans le bloc Cardio du jour.
+       ⚠️ ON RECONSTRUIT UNE SONDE AVEC `sets` EN TABLEAU : ici `ex.sets` est un NOMBRE (3), alors
+       que `_estCreneauCardio` attend le tableau des séries pour son garde « aucune charge ». Lui
+       passer l'objet brut rendrait ce garde AVEUGLE — il ne verrait jamais de charge, donc il
+       dirait « cardio » d'une ligne de musculation dont la durée traîne dans la note. */
+    try{
+      if(typeof _estCreneauCardio==='function'
+         && _estCreneauCardio({name:ex.name,note:ex.note,sets:[{kg:ex.kg||0}]}))return;
+    }catch(e){}
     const low=String(ex.name).toLowerCase();
     if(!toCreate.find(n=>String(n).toLowerCase()===low))toCreate.push(ex.name);
   }));
@@ -6642,7 +6725,11 @@ function finalImportProg(){
   // Construire le programme avec groupes supersets et dropsets
   const _buildProgDay=(day,di)=>{
     const groupMap={};const gSeed=Date.now()+di;
-    return{
+    /* 🏃 ft-v1168 — le jour RANGE son cardio au lieu de le laisser dans la liste des exercices.
+       ⭐ Même fonction que la séance de Milo (`_extraireCardioMilo`, R13/R2) : ce sont les BORNES
+       de la partie musculation qui disent « avant » ou « après », on ne devine pas depuis le titre.
+       ⛔ Un cardio au MILIEU reste un exercice — décision de ft-v995, non rouverte ici. */
+    const _jour={
       label:day.label||'Jour '+(di+1),
       exs:(day.exercises||[]).map(ex=>{
         // Groupe superset/tri-set
@@ -6690,10 +6777,20 @@ function finalImportProg(){
         return obj;
       })
     };
+    // 🏃 ft-v1168 — on range le cardio du jour (mêmes bornes que la séance de Milo).
+    try{
+      if(typeof _extraireCardioMilo==='function'){
+        const _r=_extraireCardioMilo(_jour.exs);
+        _jour.exs=_r.exs;
+        if(_r.avant)_jour.cardioAvant=_r.avant;
+        if(_r.apres)_jour.cardio     =_r.apres;
+      }
+    }catch(e){}
+    return _jour;
   };
   const prog={id:'p'+Date.now(),name,
     weeks:_impExtracted.weeks||0,
-    startDate:_impExtracted.startDate||'',
+    startDate:_dateProgValide(_impExtracted.startDate,_impExtracted.weeks),
     days:_impExtracted.days.map((day,di)=>_buildProgDay(day,di))
   };
   if(_impMode==='replace'){
@@ -7983,6 +8080,14 @@ function _loadProgDayVraiment(progIdx,dayIdx){
     if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
     return obj;
   })};
+  /* 🏃 ft-v1168 — LE CARDIO PART DANS SON BLOC, Y COMPRIS POUR UN PROGRAMME IMPORTÉ AVANT.
+     ⛔⛔ POSÉ ICI, AVANT les avertissements : ceux-ci lisent `S.wkt.exs` et s'ATTACHENT aux
+        exercices. Extraire APRÈS laisserait la ligne de cardio recevoir des avertissements de
+        musculation, et l'écran afficherait encore un faux exercice le temps du rendu.
+     ⭐ C'est aussi ce qui répare le programme que Michel a DÉJÀ : rien n'est réécrit dans son
+        stockage — on interprète au chargement (R29, sa phrase « si je remets mon programme je
+        repars à 0 »). */
+  _cardioVersWkt(day);
   /* 🛡️ ft-v1153 — LES MÊMES AVERTISSEMENTS QUE SUR UNE SÉANCE DE MILO (une seule fonction, R2).
      ⛔ POSÉ ICI, entre la construction de `S.wkt` et le rendu : les avertissements s'ATTACHENT aux
         exercices, donc ils doivent exister AVANT `renderExBlocks()`, sinon l'écran n'en sait rien.
@@ -8374,6 +8479,10 @@ function _loadProgVraiment(idx){
       return obj;
     })
   };
+  /* 🏃 ft-v1168 — LA JUMELLE DU CARDIO AUSSI (R8). Un programme à UN SEUL jour n'a pas d'objet
+     `day` : c'est le programme lui-même qui porte ses exercices. On passe donc `prog`, et le
+     rattrapage par extraction fait le reste — c'est lui qui compte pour les programmes existants. */
+  _cardioVersWkt(prog);
   /* 🛡️ ft-v1153 — LA JUMELLE (R8). Un programme à UN SEUL jour passe par ici, pas par
      `loadProgDay` : même besoin, même fonction, même ordre. *Poser le correctif d'un seul côté
      est précisément la faute que ce fichier passe son temps à rattraper.* */

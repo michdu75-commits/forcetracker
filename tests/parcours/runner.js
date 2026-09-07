@@ -28406,10 +28406,22 @@ console.log('\n-- CCLII. Les avertissements de séance arrivent sur les programm
        && R.jour.par['Développé Couché'].intensite===true
        && R.jour.par['Développé Couché'].warns.some(w=>/🔁/.test(w))),
     JSON.stringify(R.jour&&R.jour.par&&R.jour.par['Développé Couché']));
-  /* ⛔⛔ LA DÉCISION DE MICHEL, FIGÉE (R30) : sur un programme, le cardio NE BOUGE PAS. */
-  t('CCLII ⛔⛔ DÉCISION — sur un programme, le cardio NE sort PAS de la liste (R29/R30)',
-    !!(R.jour && R.jour.exs && R.jour.exs[0]==='Échauffement' && R.jour.exs.length===4
-       && R.jour.cardioAvant===null), JSON.stringify(R.jour&&{e:R.jour.exs,c:R.jour.cardioAvant}));
+  /* ⛔⛔ CE TÉMOIN A ÉTÉ RETOURNÉ, PAS ASSOUPLI — et il faut lire POURQUOI (R30, ft-v1168).
+     Il figeait la décision de Michel du 06/09 (ft-v1153) : *sur un programme, le cardio NE sort
+     PAS de la liste* — parce que « chez Milo on corrige une machine qui a mal rangé, mais dans un
+     programme la personne a écrit sa propre liste ».
+     ⭐⭐ MICHEL A CHANGÉ D'AVIS LE 07/09, en connaissance de cause, capture à l'appui : sur son
+     programme réel, « Cardio léger » s'affichait comme un EXERCICE (1 série × 10 reps × 120 s de
+     repos, AVEC UNE FIGURINE DE JAMBES) alors que sa note dit « Échauffement général - 8 minutes ».
+     Il a demandé : « construis le filet et aussi les exercices que je t'ai montré et les autres ».
+     👉 ***Ce n'est pas un témoin qu'on adoucit pour faire passer du code : c'est la RÈGLE qu'il
+     figeait qui a été changée, et on écrit laquelle, par qui et quand*** (leçon de ft-v1154).
+     ⛔ ET LA MOITIÉ QUI SURVIT DE L'ANCIENNE DÉCISION EST DITE PLUS BAS : les CHARGES d'un
+     programme ne bougent toujours pas, et un cardio au MILIEU reste un exercice. */
+  t('CCLII ⛔⛔ DÉCISION RENVERSÉE le 07/09 — sur un programme, le cardio SORT de la liste (ft-v1168)',
+    !!(R.jour && R.jour.exs && R.jour.exs.indexOf('Échauffement')<0 && R.jour.exs.length===3
+       && R.jour.cardioAvant && R.jour.cardioAvant.duration>0),
+    JSON.stringify(R.jour&&{e:R.jour.exs,c:R.jour.cardioAvant}));
   /* ⛔ LA JUMELLE (R8) — le correctif posé d'un seul côté est LA faute que ce fichier rattrape. */
   t('CCLII ⛔ la JUMELLE : un programme à UN SEUL jour reçoit les mêmes avertissements',
     !!(R.simple && R.simple.warns && R.simple.warns.some(w=>/🛡️/.test(w))),
@@ -28594,10 +28606,14 @@ console.log('\n-- CCLIV. L\'import garde les séries d\'échauffement (ft-v1156)
   if(R.err) t('CCLIV n\'a pas pu tourner', false, R.err);
   else{
     t('CCLIV ⛔ CONTRÔLE — `finalImportProg` existe', (R.fn||[]).length===0, (R.fn||[]).join(', '));
-    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : 4 exercices (le cardio + 3), pas 9 — et le développé
-       couché porte SES 7 séries, dont les 4 premières en échauffement. */
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : le développé couché porte SES 7 séries, dont les 4
+       premières en échauffement — au lieu de 5 exercices séparés.
+       ⚠️ LE COMPTE EST PASSÉ DE 4 À 3 EN ft-v1168, et ce n'est PAS un assouplissement : la
+       ligne « Elliptique / cardio léger » de cette fixture ne compte plus comme un EXERCICE,
+       elle part dans le bloc Cardio du jour. *Le témoin mesure la même garantie, sur un modèle
+       de données qui a changé* — la ligne n'a pas disparu, elle a changé de place. */
     t('CCLIV ⭐⭐ le développé couché est UN exercice de 7 séries (et non 5 exercices)',
-      R.dcSets===7 && R.nbExs===4, 'exs='+R.nbExs+' · séries DC='+R.dcSets);
+      R.dcSets===7 && R.nbExs===3, 'exs='+R.nbExs+' · séries DC='+R.dcSets);
     t('CCLIV ⭐⭐ les 4 premières séries sont des ÉCHAUFFEMENTS, les 3 dernières du travail',
       R.dcTypes==='É|É|É|É|N|N|N', 'reçu : '+R.dcTypes);
     /* ⛔ Les charges de la montée en charge suivent, série par série — sinon on aurait 7 séries
@@ -30047,7 +30063,152 @@ console.log('\n-- CCLXIV. Le détecteur de noms (ft-v1167) --');
     && /getRange\(rowIdx, 3, 1, 7\)/.test(_cj), '');
 }
 
-/* ═══ CCLXVI. LES RECHERCHES QUI NE RENDENT RIEN (07/09/2026, ft-v1168) ═══════════════════════
+/* ═══ CCLXVI. LE CARDIO D'UN PROGRAMME + LE FILET DE DATE (07/09/2026, ft-v1168) ═══════════════
+   ⛔⛔ DEUX FAUSSES DONNÉES QUE L'IMPORT FABRIQUAIT, ET LES DEUX CORRECTIFS EXISTANTS ÉTAIENT
+   CÔTÉ SERVEUR — donc leur effet dépendait de l'HEURE de l'import. Michel : « c'est quoi ce
+   bordel de date, je l'ai mis ce matin », puis « on est pas en mars lol on est en septembre ».
+   ⭐⭐ MESURÉ, PDF EN MAIN : 336 lignes, ZÉRO date. Le « 23 mars » venait de l'exemple du prompt.
+   Corrigé deux fois côté serveur le matin même — et il avait quand même la date, parce que son
+   import précède le déploiement (run #109, 08:18 UTC = 10h18 chez lui). C'est BUGS.md §46.
+   ⭐⭐ ET LA RÉPARATION DE L'EXISTANT NE RÉÉCRIT RIEN : « si je remets mon programme je repars à
+   0 c'est n'importe quoi » (Michel). Le rattrapage se fait au CHARGEMENT (R29). */
+{
+  const R = await p.evaluate(()=>{
+   try{
+    const o={};
+    o.fn=['_dateProgValide','_cardioVersWkt','_extraireCardioMilo','_estCreneauCardio',
+          'finalImportProg','_loadProgDayVraiment','_loadProgVraiment']
+         .filter(f=>typeof window[f]!=='function');
+    /* ⛔⛔ LE CONTRÔLE QUI PORTE TOUT LE RESTE : les DEUX chargeurs doivent APPELER le rattrapage.
+       Une extraction parfaite que personne n'appelle laisserait TOUS les autres témoins verts
+       (ils interrogent la fonction en direct) pendant que l'écran continuerait d'afficher un
+       faux exercice. C'est la leçon de ft-v1158, et on la rejoue exprès. */
+    const _src=String(window._loadProgDayVraiment)+'\n@@@\n'+String(window._loadProgVraiment);
+    o.appelJour = /_cardioVersWkt\(day\)/.test(_src.split('@@@')[0]);
+    o.appelSolo = /_cardioVersWkt\(prog\)/.test(_src.split('@@@')[1]);
+    // ── ① LE FILET DE DATE ────────────────────────────────────────────────────────────
+    const ilYA=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().split('T')[0];};
+    o.dMichel  = _dateProgValide('2026-03-23',4);   // cycle fini il y a 5 mois → effacée
+    o.dEnCours = _dateProgValide(ilYA(14),4);       // commencé il y a 2 semaines, bloc de 4 → GARDÉE
+    o.dSansDur = _dateProgValide('2026-03-23',0);   // pas de durée → on ne juge pas
+    o.dAbsurde = _dateProgValide('pas une date',4);
+    o.dVide    = _dateProgValide('',4);
+    // ── ② L'IMPORT : le J3B réel de Michel ────────────────────────────────────────────
+    S.programmes=[]; S.customExercises=[]; persist();
+    _impMode='new';
+    _impExtracted={name:'PB Bloc 1',weeks:4,startDate:'2026-03-23',days:[{label:'J3B',exercises:[
+      {name:'Cardio léger',sets:1,reps:10,kg:0,note:'Échauffement général - 8 minutes'},
+      {name:'Développé épaules guidé / haltères',sets:3,reps:8,kg:57},
+      {name:'Machine Oiseau',sets:3,reps:12,kg:20}
+    ]}]};
+    finalImportProg();
+    const prog=(S.programmes||[])[0], j=prog&&prog.days&&prog.days[0];
+    o.progStart=prog?prog.startDate:'?';
+    o.progWeeks=prog?prog.weeks:-1;
+    o.nbExs=j?(j.exs||[]).length:-1;
+    o.sansCardio=j?!(j.exs||[]).some(e=>/cardio/i.test(e.name)):false;
+    o.impCardio=!!(j&&j.cardioAvant&&j.cardioAvant.duration===8);
+    /* ⭐ ET LE GAIN QU'ON NE VOIT PAS À L'ÉCRAN : « Cardio léger » n'entre plus dans son
+       CATALOGUE comme exercice perso — avec une figurine de jambes, sur 8 min d'elliptique. */
+    o.pasCreeCardio=!(S.customExercises||[]).some(e=>/cardio|elliptique/i.test(e.n));
+    /* ⛔⛔ LE CAS QUE MON PREMIER JET NE COUVRAIT PAS — trouvé par le contrôle négatif, pas par
+       la relecture. À cet endroit, `ex.sets` est un NOMBRE (3), pas le tableau des séries : on
+       reconstruit donc une sonde `sets:[{kg:…}]` pour que le garde « aucune charge » VOIE la
+       charge. Sans ça il est AVEUGLE : un exercice de musculation hors catalogue dont la NOTE
+       nomme une machine cardio (« 5 min de vélo entre les séries ») partirait au bloc cardio et
+       DISPARAÎTRAIT du jour — c'est la VOIE 2 de `_estCreneauCardio`, et seule la charge l'arrête.
+       ⚠️ La mutation qui passait l'objet brut ne mordait sur RIEN tant que ce cas manquait :
+       *une mutation qui ne mord pas ne prouve pas que le code est sûr, elle prouve qu'il manque
+       un témoin.* */
+    S.programmes=[]; S.customExercises=[]; persist();
+    _impExtracted={name:'Piège',weeks:0,startDate:'',days:[{label:'J',exercises:[
+      {name:'Squat Zzz Machine',sets:3,reps:10,kg:100,note:'5 min de vélo entre les séries'},
+      {name:'Machine Oiseau',sets:3,reps:12,kg:20}
+    ]}]};
+    finalImportProg();
+    const jp=(S.programmes||[])[0].days[0];
+    o.piegeGarde = (jp.exs||[]).some(e=>e.name==='Squat Zzz Machine') && !jp.cardioAvant;
+    o.piegeCree  = (S.customExercises||[]).some(e=>e.n==='Squat Zzz Machine');
+    // ── ③ LE RATTRAPAGE d'un programme IMPORTÉ AVANT (rien n'est réécrit) ─────────────
+    S.programmes=[{id:'vx',name:'Ancien',weeks:4,startDate:'',days:[{label:'J3B',exs:[
+      {name:'Cardio léger',note:'Échauffement général - 8 minutes',sets:[{kg:0,reps:10,type:'N'}]},
+      {name:'Machine Oiseau',note:'',sets:[{kg:20,reps:12,type:'N'}]}
+    ]}]}]; persist();
+    const _avant=JSON.stringify(S.programmes[0].days[0].exs.map(e=>e.name));
+    _loadProgDayVraiment(0,0);
+    o.rattrapExs=(S.wkt.exs||[]).map(e=>e.name).join('|');
+    o.rattrapCardio=!!(S.wkt.cardioAvant&&S.wkt.cardioAvant.duration===8);
+    o.stockageIntact=JSON.stringify(S.programmes[0].days[0].exs.map(e=>e.name))===_avant;
+    // ── ③ bis LA JUMELLE : un programme à UN SEUL jour (R8) ──────────────────────────
+    S.wkt=null;
+    S.programmes=[{id:'solo',name:'Solo',exs:[
+      {name:'Cardio léger',note:'Échauffement général - 8 minutes',sets:[{kg:0,reps:10,type:'N'}]},
+      {name:'Machine Oiseau',note:'',sets:[{kg:20,reps:12,type:'N'}]}
+    ]}]; persist();
+    _loadProgVraiment(0);
+    o.soloExs=(S.wkt&&S.wkt.exs||[]).map(e=>e.name).join('|');
+    o.soloCardio=!!(S.wkt&&S.wkt.cardioAvant&&S.wkt.cardioAvant.duration===8);
+    /* ⛔ NON-RÉGRESSION — LE GARDE QUI REND TOUT ÇA SÛR : une CHARGE au bout d'une série, c'est
+       de la musculation, jamais du cardio. Sans lui, un « Squat — repos 3 min entre séries »
+       partirait au bloc cardio et DISPARAÎTRAIT de la séance. */
+    S.wkt=null;
+    S.programmes=[{id:'m',name:'Muscu',exs:[
+      {name:'Squat à la Barre',note:'repos 3 min entre les séries',sets:[{kg:100,reps:5,type:'N'}]}
+    ]}]; persist();
+    _loadProgVraiment(0);
+    o.muscuGardee=(S.wkt&&S.wkt.exs||[]).length===1 && !(S.wkt&&S.wkt.cardioAvant);
+    S.programmes=[]; S.customExercises=[]; S.wkt=null; persist();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+
+  if(R.err) t('CCLXVI n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLXVI ⛔ CONTRÔLE — les 7 fonctions existent', (R.fn||[]).length===0, (R.fn||[]).join(', '));
+    t('CCLXVI ⛔⛔ CONTRÔLE — les DEUX chargeurs APPELLENT le rattrapage (R8)',
+      R.appelJour===true&&R.appelSolo===true, 'jour='+R.appelJour+' · solo='+R.appelSolo);
+    /* ① LE FILET DE DATE */
+    t('CCLXVI ⭐⭐ le cas de Michel : 23 mars + 4 semaines → date EFFACÉE', R.dMichel==='', 'reçu : '+JSON.stringify(R.dMichel));
+    /* ⛔⛔ LE CONTRE-TEST COMPTE AUTANT QUE LE TEST : un garde-fou qui refuserait « toute date
+       passée » effacerait une information VRAIE — quelqu'un qui importe un bloc commencé il y a
+       deux semaines a RAISON de le dater ainsi (R29). */
+    t('CCLXVI ⛔⛔ CONTRE-TEST — un cycle qui COURT ENCORE garde sa date', R.dEnCours!=='', 'reçu : '+JSON.stringify(R.dEnCours));
+    t('CCLXVI ⛔ sans durée connue, on ne juge PAS (on ne détruit pas ce qu\'on ne sait pas juger)', R.dSansDur==='2026-03-23', 'reçu : '+JSON.stringify(R.dSansDur));
+    t('CCLXVI ⛔ une date illisible ou vide ne passe pas', R.dAbsurde===''&&R.dVide==='', '');
+    t('CCLXVI ⭐ à l\'import : la date tombe, mais la DURÉE survit', R.progStart===''&&R.progWeeks===4, 'start='+JSON.stringify(R.progStart)+' · weeks='+R.progWeeks);
+    /* ② LE CARDIO À L'IMPORT */
+    t('CCLXVI ⭐⭐ le J3B donne 2 exercices, pas 3 — le cardio est sorti', R.nbExs===2&&R.sansCardio===true, 'exs='+R.nbExs);
+    t('CCLXVI ⭐ … et il est RANGÉ dans le bloc cardio du jour (8 min)', R.impCardio===true, '');
+    t('CCLXVI ⭐ … et « Cardio léger » n\'entre plus dans son CATALOGUE', R.pasCreeCardio===true, 'créés : '+R.crees);
+    /* ⛔⛔ Le garde « aucune charge » doit VOIR la charge malgré la forme du champ `sets` à l'import. */
+    t('CCLXVI ⛔⛔ un exercice CHARGÉ dont la note nomme un vélo reste un exercice',
+      R.piegeGarde===true&&R.piegeCree===true, 'gardé='+R.piegeGarde+' · créé='+R.piegeCree);
+    /* ③ LE RATTRAPAGE, SANS RIEN RÉÉCRIRE */
+    t('CCLXVI ⭐⭐ un programme importé AVANT est réparé AU CHARGEMENT', R.rattrapExs==='Machine Oiseau'&&R.rattrapCardio===true, 'exs : '+R.rattrapExs);
+    /* ⛔⛔ LE TÉMOIN QUI PORTE LA DÉCISION DE MICHEL : on n'a pas le droit de réécrire ses données
+       pour les réparer. S'il rouvre son éditeur, il doit retrouver EXACTEMENT ce qu'il avait. */
+    t('CCLXVI ⛔⛔ … et son STOCKAGE n\'est pas touché (R29)', R.stockageIntact===true, '');
+    t('CCLXVI ⛔ JUMELLE — un programme à UN SEUL jour fait pareil (R8)', R.soloExs==='Machine Oiseau'&&R.soloCardio===true, 'exs : '+R.soloExs);
+    /* NON-RÉGRESSION */
+    t('CCLXVI ⛔ un exercice AVEC CHARGE ne part jamais au cardio, même avec « 3 min » dans la note', R.muscuGardee===true, '');
+  }
+  /* 📣 RÈGLE D'OR #11, points 2 à 5 — vérifiés dans la SOURCE. Une feature livrée sans être
+     annoncée devient invisible (R23). ⚠️ On cherche une sous-chaîne ASCII, jamais la phrase telle
+     qu'elle se LIT : les textes portent des échappements `\uXXXX`, et un témoin qui cite la
+     phrase rougit sur lui-même — c'est arrivé SEPT fois dans ce projet. */
+  {
+    const q=f=>{ try{ return fs.readFileSync(path.join(ROOT,f),'utf8'); }catch(e){ return ''; } };
+    [['point rouge `NEW_FEATURES`','constants.js',"id:'prog-cardio'"],
+     ['aide « ? » de l\'onglet Séance','screens.js','bloc Cardio'],
+     ['aide détaillée (carte Programmes)','coach.js','bloc Cardio'],
+     ['diapo du Guide','app.js','bloc Cardio']
+    ].forEach(([quoi,fic,motif])=>{
+      t('CCLXVI 📣 #11 — '+quoi, q(fic).indexOf(motif)>=0, fic+' ne parle pas du bloc cardio');
+    });
+  }
+}
+
+/* ═══ CCLXVII. LES RECHERCHES QUI NE RENDENT RIEN (07/09/2026, ft-v1169) ═══════════════════════
    Michel : ***« prends aussi les recherches qui ne rendent rien »***. 2ᵉ point de mesure du
    détecteur — même famille que ft-v1163 (« biceps marteau » → zéro, trouvé en passant).
    ⚠️⚠️ LE RISQUE EST L'ANTI-REBOND : une recherche se tape LETTRE PAR LETTRE, donc « biceps
@@ -30056,7 +30217,7 @@ console.log('\n-- CCLXIV. Le détecteur de noms (ft-v1167) --');
    ⛔⛔ ET LA VIE PRIVÉE : c'est du TEXTE LIBRE, donc le terme n'est écrit en clair qu'à partir
    de TROIS identifiants distincts.
    ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
-console.log('\n-- CCLXVI. Les recherches qui ne rendent rien (ft-v1168) --');
+console.log('\n-- CCLXVII. Les recherches qui ne rendent rien (ft-v1169) --');
 {
   const R=await p.evaluate(async()=>{
    try{
@@ -30143,25 +30304,25 @@ console.log('\n-- CCLXVI. Les recherches qui ne rendent rien (ft-v1168) --');
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,240)};}
   });
 
-  if(R.err) t('CCLXVI n\'a pas pu tourner', false, R.err);
+  if(R.err) t('CCLXVII n\'a pas pu tourner', false, R.err);
   else{
-    t('CCLXVI ⛔⛔ CONTRÔLE — le propriétaire existe et le champ s\'ouvre',
+    t('CCLXVII ⛔⛔ CONTRÔLE — le propriétaire existe et le champ s\'ouvre',
       R.fn==='function' && R.champExiste===true, R.fn+' / champ='+R.champExiste);
     /* ⭐⭐ LES DEUX TÉMOINS QUI PORTENT LA VERSION */
-    t('CCLXVI ⭐⭐ RIEN ne part pendant la frappe (4 préfixes tapés, 0 envoi)',
+    t('CCLXVII ⭐⭐ RIEN ne part pendant la frappe (4 préfixes tapés, 0 envoi)',
       R.avantPause===0, 'reçu : '+R.avantPause+' envoi(s) — le signal se noierait sous ses préfixes');
-    t('CCLXVI ⭐⭐ ... et UN SEUL part après la pause, avec le DERNIER terme',
+    t('CCLXVII ⭐⭐ ... et UN SEUL part après la pause, avec le DERNIER terme',
       (R.apresPause||[]).length===1 && R.apresPause[0].terme==='zzzqqq'
       && R.apresPause[0].genre==='exercice', JSON.stringify(R.apresPause));
-    t('CCLXVI ⛔⛔ un préfixe ABANDONNÉ ne part pas (la re-vérification du champ)',
+    t('CCLXVII ⛔⛔ un préfixe ABANDONNÉ ne part pas (la re-vérification du champ)',
       (R.abandonne||[]).length===0, JSON.stringify(R.abandonne));
-    t('CCLXVI ⛔ moins de 3 caractères : on ne compte pas', R.tropCourt===0, 'reçu '+R.tropCourt);
-    t('CCLXVI ⛔ plus de 40 caractères : ce n\'est plus un mot, on ne compte pas',
+    t('CCLXVII ⛔ moins de 3 caractères : on ne compte pas', R.tropCourt===0, 'reçu '+R.tropCourt);
+    t('CCLXVII ⛔ plus de 40 caractères : ce n\'est plus un mot, on ne compte pas',
       R.tropLong===0, 'reçu '+R.tropLong);
-    t('CCLXVI ⛔ le même terme ne repart pas deux fois (dédoublonnage local)',
+    t('CCLXVII ⛔ le même terme ne repart pas deux fois (dédoublonnage local)',
       R.premier===1 && R.second===1, 'premier '+R.premier+' second '+R.second);
     /* ⛔ LA JUMELLE : les aliments partagent le propriétaire (R8). */
-    t('CCLXVI ⭐⭐ LA JUMELLE — la recherche d\'ALIMENTS signale aussi',
+    t('CCLXVII ⭐⭐ LA JUMELLE — la recherche d\'ALIMENTS signale aussi',
       R.champAliment===true && (R.aliment||[]).length===1
       && R.aliment[0].genre==='aliment' && R.aliment[0].terme==='zzzqqqwww',
       JSON.stringify(R.aliment));
@@ -30170,20 +30331,19 @@ console.log('\n-- CCLXVI. Les recherches qui ne rendent rien (ft-v1168) --');
      C'est la garantie de vie privée : sans elle, un texte libre d'une seule personne serait
      écrit tel quel dans le Sheet. */
   const _cj=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
-  t('CCLXVI ⛔ la route est branchée dans l\'aiguillage',
+  t('CCLXVII ⛔ la route est branchée dans l\'aiguillage',
     /body\.action === 'logSearchMiss'\)\s+return handleLogSearchMiss_\(body\)/.test(_cj), '');
-  t('CCLXVI ⛔⛔ le seuil est de 3 IDENTIFIANTS distincts, pas d\'occurrences',
+  t('CCLXVII ⛔⛔ le seuil est de 3 IDENTIFIANTS distincts, pas d\'occurrences',
     /_SEUIL_CLAIR_ = 3;/.test(_cj)
     && /ids\.length >= _SEUIL_CLAIR_\) \? terme :/.test(_cj), '');
-  t('CCLXVI ⛔⛔ la PREMIÈRE occurrence n\'écrit AUCUN terme en clair',
+  t('CCLXVII ⛔⛔ la PREMIÈRE occurrence n\'écrit AUCUN terme en clair',
     /appendRow\(_safeRow_\(\[emp, '', genre, 1, anonId, today, today\]\)\)/.test(_cj), '');
-  t('CCLXVI ⭐ ... et la ligne est rétro-remplie au 3ᵉ (on ne perd pas les 2 premières)',
+  t('CCLXVII ⭐ ... et la ligne est rétro-remplie au 3ᵉ (on ne perd pas les 2 premières)',
     /var clair = \(ids\.length >= _SEUIL_CLAIR_\) \? terme : String\(row\[1\] \|\| ''\)/.test(_cj), '');
-  t('CCLXVI ⛔ le Sheet porte une EMPREINTE, jamais le terme comme clé',
+  t('CCLXVII ⛔ le Sheet porte une EMPREINTE, jamais le terme comme clé',
     /appendRow\(\['Empreinte','Terme','Type','Personnes'/.test(_cj)
     && /_empreinte_\(genre \+ '\|' \+ norm\)/.test(_cj), '');
 }
-
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
