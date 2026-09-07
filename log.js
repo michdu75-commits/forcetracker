@@ -6061,7 +6061,7 @@ async function analyzeImportPhotos(){
   try{
     const r=await fetch(_aiUrl('importProgram'),{method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'importProgram',images:_impPhotos})});
+      body:JSON.stringify({action:'importProgram',images:_impPhotos,catalogue:_catalogueImport()})});
     _rawResp=await r.text();
     console.log('[Import] Réponse brute Apps Script :', _rawResp);
     const d=JSON.parse(_rawResp);
@@ -6080,6 +6080,31 @@ async function analyzeImportPhotos(){
     impGoStep(2);
     toast('Erreur analyse : '+e.message,'error');
   }
+}
+
+/* ═══ 📚 LA LISTE QUI PART AVEC LE DOCUMENT — ft-v1164 (07/09/2026) ══════════════════════════
+   ⛔⛔ MESURÉ AVANT D'ÉCRIRE UNE LIGNE : le prompt d'import faisait 8 577 caractères et contenait
+   **ZÉRO** nom du catalogue, et l'app envoyait `{action:'importProgram', images}` — la liste
+   n'était **jamais transmise**. 👉 ***Le modèle écrivait « Presse 45 degrés » parce que c'est ce
+   qu'il y a sur la feuille, et personne ne lui avait dit que l'app appelle ça « Press Jambes 45° ».***
+   Sur l'import réel de Michel : **4 exercices créés en douce**, donc sans photo, sans figurine et
+   sans historique — il a lu « aucun repère » sur une presse où il avait fait 280 kg.
+
+   ⭐⭐ C'est **R8**, et elle est écrite dans `CLAUDE.md` : *une consigne qui NOMME une source sans
+   que cette source soit dans le contexte*. `coach.js` l'envoie à **Milo depuis ft-v713** ; personne
+   ne l'avait fait pour l'import. *Un correctif posé sur une porte et pas sur sa jumelle.*
+
+   ⛔ LES EXERCICES PERSO EN FONT PARTIE, et ce n'est pas un détail : si la personne a déjà créé
+   « Presse 45 degrés » à la main, le prochain import doit retomber sur LE SIEN et non en fabriquer
+   un deuxième. C'est le même raisonnement que `_catalogueContext()` chez Milo (R13 : on reprend le
+   patron du voisin, on n'en invente pas un autre). */
+function _catalogueImport(){
+  try{
+    const noms=[];
+    if(typeof EXLIB!=='undefined') EXLIB.forEach(e=>{ if(e&&e.n) noms.push(e.n); });
+    (S.customExercises||[]).forEach(e=>{ if(e&&e.n) noms.push(e.n); });
+    return [...new Set(noms)];          // EXLIB liste un squat 2× (Jambes + Fessiers)
+  }catch(e){ return []; }               // jamais bloquant : sans liste, le serveur garde le prompt d'avant
 }
 
 // Fusionne les « jours » d'import qui partagent le MÊME numéro de séance : « Séance 1 - Dorsaux »
@@ -6518,7 +6543,7 @@ const _HIST_BATCH=3;
 async function _histAnalyzeBatch(imgs){
   const r=await fetch(_aiUrl('importHistory'),{method:'POST',redirect:'follow',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({action:'importHistory',images:imgs})});
+    body:JSON.stringify({action:'importHistory',images:imgs,catalogue:_catalogueImport()})});
   const raw=await r.text();
   console.log('[ImportHist] Réponse brute lot :', raw.slice(0,500));
   const d=JSON.parse(raw);

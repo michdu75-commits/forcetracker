@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1163`** (prochaine : `ft-v1164`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1164`** (prochaine : `ft-v1165`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,38 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1164 — 📚 LE MODÈLE QUI LIT LE PDF N'AVAIT JAMAIS VU LE CATALOGUE — ET C'EST MICHEL QUI A POINTÉ LA BONNE CAUSE** — après sa séance, devant deux exercices sans photo, sans figurine et sans historique : ***« avant de faire quoi que ce soit on utilise l'IA pour lire le PDF, elle devrait être capable d'analyser tout ça »***.
+
+**⛔⛔ IL AVAIT RAISON, ET MES DEUX PREMIÈRES PROPOSITIONS SOIGNAIENT LE SYMPTÔME.** Je partais sur un meilleur rattachement côté app et un avertissement dans l'aperçu. *Les deux traitaient ce qui arrive APRÈS.*
+
+**⭐⭐ MESURÉ AVANT D'ÉCRIRE UNE LIGNE.** Le prompt de `handleImportProgram_` fait **8 577 caractères** et contient **ZÉRO** nom du catalogue ; l'app envoyait `{action:'importProgram', images}` — **la liste n'était jamais transmise**. 👉 ***Le modèle écrivait « Presse 45 degrés » parce que c'est ce qu'il y a sur la feuille, et personne ne lui avait dit que l'app appelle ça « Press Jambes 45° ».***
+
+**⛔ CE QUE ÇA COÛTAIT, SUR SON IMPORT RÉEL : 4 EXERCICES CRÉÉS EN DOUCE** — *Presse 45 degrés · SDT roumain · Cardio léger · Elliptique/cardio léger*. Et un exercice hors catalogue n'a **ni photo, ni figurine, ni historique** : il a lu *« aucun repère dans ton historique »* sur une presse où il avait fait **280 kg le 4 septembre**. *Trois symptômes, une seule cause.*
+
+**⭐⭐ ET C'EST R8, DÉJÀ CORRIGÉE AILLEURS — LA 4ᵉ FOIS DE LA JOURNÉE.** `coach.js:_catalogueContext()` envoie la liste à **Milo depuis ft-v713**, et la règle est écrite **mot pour mot dans `CLAUDE.md`** : *« une consigne qui NOMME une source sans que cette source soit dans le contexte »*. **Personne ne l'avait fait pour l'import.** Après `_repereDefauts`/`_intensiteDefauts` (ft-v1160), la version de règle du compteur (ft-v1161) et la recherche à deux mots (ft-v1163) : *un correctif posé sur une porte et pas sur sa jumelle.*
+
+**⛔⛔ D'OÙ LES DEUX IMPORTS TRAITÉS ENSEMBLE.** `handleImportHistory_` portait **exactement le même trou** — le réparer d'un seul côté aurait été **la cinquième fois**. Un témoin exige les deux branchements, côté serveur **et** côté app.
+
+**⛔⛔ LA CONSIGNE N'EST SURTOUT PAS « UNIQUEMENT CES NOMS », et c'est le cœur de la précaution.** Un programme peut légitimement porter un exercice que l'app ne connaît pas. Forcer un nom voisin **REMPLACERAIT un exercice par un autre** — *bien pire que d'en créer un nouveau* (**R29** : le coût de l'erreur décide). On dit donc : *emploie le nom **exact** quand c'est manifestement le même exercice · **sinon garde le nom du document** · et **dans le doute**, garde le document*.
+
+**⛔ LES EXERCICES PERSO PARTENT AUSSI** : si la personne a déjà créé « Presse 45 degrés » à la main, le prochain import doit retomber **sur le sien** au lieu d'en fabriquer un deuxième (**R13** — on reprend le patron de `_catalogueContext`, on n'en invente pas un autre).
+
+**⭐ ET LA RÈGLE EST POSÉE À CÔTÉ DU CHAMP `name`, pas seulement dans un bloc à part** — c'est la leçon de **ft-v1158** : *le schéma est le signal le plus fort du prompt, une consigne éloignée ne pèse pas contre lui.*
+
+**⚠️ LE MODÈLE PROPOSE, LE CODE VALIDE** : liste bornée à **600 noms de 80 caractères**, dédoublonnée (EXLIB liste un squat 2×). ⛔ Et une charge utile **absente ou absurde rend `''`** → le prompt est **exactement** celui d'avant, donc un client pas encore à jour se comporte comme aujourd'hui.
+
+**💰 LE COÛT, MESURÉ** : 319 noms, 8 526 caractères, prompt **×2,0**, ~2 400 jetons **par import**. *Un import, on en fait quelques-uns dans sa vie.*
+
+**⚠️ R34 NE S'APPLIQUE PAS** : ce n'est pas le prompt de **Milo**, c'est celui d'un **lecteur de document** — même raisonnement qu'en ft-v1152 pour le cervelet.
+
+**⛔⛔ ET JE DIS MA LIMITE, LA 4ᵉ FOIS** : pas de clé API ici, donc je ne peux **pas** prouver que le modèle obéira. **Je prouve que la liste PART et que la consigne est juste** ; ***c'est Michel qui prouve l'extraction en réimportant.***
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les programmes déjà importés ne sont pas réparés** — il faut réimporter (**R29**). ⛔⛔ **Et l'aperçu ne DIT toujours pas qu'un exercice va être créé** : c'est le **filet** proposé à Michel, non pris pour l'instant. *Sans lui, rien ne rattrape un modèle qui n'écoute pas* — `BUGS.md` **§46**, et je le note plutôt que de faire comme si le prompt suffisait. ⚠️ **`Code.js` modifié → déploiement backend automatique, à vérifier des DEUX côtés** (**R18**).
+
+Tests : **parcours 3152/3152** (+17, bloc **CCLXII**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⭐⭐ **Témoins** : `_blocCatalogue_` est **extraite de `Code.js` et EXÉCUTÉE** (patron de ft-v1157), et `_catalogueImport` est **appelée dans la page**. ⛔ **Contrôle négatif : 5 mutations.** ① l'arbre d'avant → **9 rouges** — ⚠️ *et je dis ce que ça vaut : les 8 témoins côté serveur ne sont **pas joués**, l'extraction échoue, ce ne sont pas des verts.* ② ⭐⭐ **le serveur ne branche que le PROGRAMME → 1 rouge, exactement le témoin de la jumelle** — *c'est la mutation la plus utile du lot : elle prouve que ce témoin-là gagne sa place.* ③ l'app n'envoie la liste que sur le programme → **1 rouge**. ④ la liste déclarée **FERMÉE** → **1 rouge**, exactement le garde-fou **R29**. ⑤ plus de dédoublonnage → **1 rouge**. ⚠️ **ET UN TÉMOIN A ROUGI SUR MON PROPRE COMPTAGE** : je cherchais `_blocCatalogue_(body)` et je ramassais **aussi** la ligne `function _blocCatalogue_(body) {` — 3 au lieu de 2. *Le témoin avait raison, c'est mon motif qui était faux* : on compte désormais les **appels** (`= _blocCatalogue_(body)`), pas la définition. Fichiers : `Code.js`, `log.js`, `tests/parcours/runner.js`, `BUGS.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1164. |
 
 **ft-v1163 — 🔎 LA RECHERCHE D'EXERCICES NE SAVAIT PAS CHERCHER DEUX MOTS — « biceps marteau » RENDAIT ZÉRO** — Michel, ce matin, en passant : *« pour le biceps marteau je le trouve en marquant marteau, je précise »*.
 
@@ -618,30 +650,6 @@ Tests : **parcours 3071/3071** (+25, bloc **CCLVI**), **calculs 339/339**, muscl
 **⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **le programme déjà importé n'est pas corrigé** — sa date reste à changer à la main (✏️ → section CYCLE) ou par une réimportation. ⛔ Et **rien ne relit les autres valeurs de l'exemple** (`weeks:7`, les reps) : *aucune n'a été observée recopiée, et je n'ajoute pas un garde-fou pour un problème que je n'ai pas mesuré* (**R19**). ⚠️ **`Code.js` modifié → déploiement backend automatique, à vérifier des DEUX côtés** (**R18**).
 
 Tests : **parcours 3046/3046** (+11, bloc **CCLV**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⭐ **Le témoin n'est pas un `grep`** : le garde-fou est **extrait de `Code.js` et exécuté** sur six cas, dont le cas exact de Michel. ⛔ **Contrôle négatif : 3 mutations** — ① l'arbre d'avant : **2 rouges**, les deux **contrôles** — ⚠️ *et je le dis : les 9 témoins suivants ne sont pas verts, ils ne sont **pas joués*** ; ② le garde-fou trop large (toute date passée refusée) : **1 rouge**, exactement le **contre-test** — *la mutation la plus utile des trois, elle prouve que ce contre-test gagne sa place* ; ③ la date de l'exemple remise : **1 rouge**, exactement son contrôle. ⚠️ **ET UN TÉMOIN A ROUGI SUR SA PROPRE CITATION — 5ᵉ fois de cette famille** : il cherchait *« L'EXEMPLE »* tel que la phrase se **lit**, alors qu'il lit la **source**, où l'apostrophe est échappée. Fichiers : `Code.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1157. |
-
-**ft-v1156 — 📥 L'IMPORT FAISAIT « 1 EXERCICE = 1 LIGNE » AU LIEU DE « 1 EXERCICE = PLUSIEURS SÉRIES »** — Michel importe son programme réel (PDF, 3 pages), me l'envoie, et tranche : *« le but n'est pas de modifier ce qui a été rentré, il faut que l'import soit PARFAIT »*.
-
-**⭐⭐ MESURÉ EN COMPARANT LE PDF AU RÉSULTAT — et l'écart est net.** Son **J1** contient **9 lignes mais 5 exercices distincts** : le document a une colonne **« Type » (ECH / TRAV)**, et les **4 lignes d'échauffement** du développé couché (50×5, 65×3, 80×2, 85×1) sont ressorties en **4 exercices séparés**, tous nommés *« Développé couché (ECH) »*. Idem au Squat et au Soulevé de terre. 👉 ***9 blocs à l'écran là où le document en décrit 4 + un cardio.***
-
-**⛔⛔ LA CAUSE EST ÉCRITE DANS LE PROMPT DU BACKEND, mot pour mot** (`handleImportProgram_`, règle 4, décision **@57**) : *« NE JAMAIS utiliser "E" (Échec) ni "W" (Échauffement) […] même si le document mentionne "échauffement" »*. 👉 ***Ne pouvant pas mettre l'information dans la SÉRIE, le modèle l'a mise dans le NOM.*** C'est **R4** dans sa forme la plus pure — et un nom suffixé casse la colonne « précédent » **et** les records : *les doublons de ft-v1148, par une autre porte*.
-
-**⭐⭐ ET LA DÉCISION @57 N'EST PAS CASSÉE — c'est le cœur de la précaution.** Elle interdit de **DEVINER** un échauffement depuis une **prose** (*« à l'échec »*, *« échauffement »* lu dans une note de méthode), et elle reste juste. Ce qu'on ajoute est **conditionnel à une COLONNE qui classe chaque ligne** : *structure, pas prose*. Un témoin vérifie que la règle 4 est toujours là.
-
-**⭐ LE CHAMP EST `setTypePerSet`, un élément PAR SÉRIE** : `"W"` = échauffement, `""` = travail. Le serveur ne garde **que ces deux valeurs** — ni `E`, ni `D`, ni fantaisie.
-
-**⛔ R33 — LE MOT DU FOURNISSEUR NE DEVIENT JAMAIS LE MOT INTERNE.** `"W"` est traduit en **`É`** (le vocabulaire de `SET_TYPES`) **à l'entrée, une seule fois** ; ailleurs dans l'app, seul le mot de l'app existe. **Mesuré à la mutation I1** : sans cette traduction, 3 témoins rougissent.
-
-**⛔ ET L'ABSENCE DU CHAMP NE CHANGE RIEN** : un import sans colonne de type se comporte **exactement** comme avant — témoin de non-régression dédié.
-
-**⭐ CE QUE ÇA RÉPARE CONCRÈTEMENT POUR MICHEL** : 9 blocs deviennent **4**, les noms redeviennent ceux du catalogue (donc l'historique et les records se rattachent), et les séries d'échauffement **sortent du tonnage** — *elles y entraient*.
-
-**⛔⛔ ET JE DIS MA LIMITE PLUTÔT QUE DE FAIRE SEMBLANT** : je ne peux **pas** prouver que le modèle obéira à la nouvelle règle — il n'y a **pas de clé API dans ce conteneur**. Je prouve la **chaîne** (schéma → validation serveur → app) sur la charge utile **exacte** du J1 de Michel ; ***c'est Michel qui prouve l'EXTRACTION en réimportant son PDF.***
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît : c'est une **réparation** de ce que l'import produit. La prochaine importation sera juste, les anciennes ne bougent pas. ⛔ Pas de pop-up, pas de point rouge (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les programmes DÉJÀ importés ne sont pas réparés** — il faut réimporter (ou corriger à la main). *On ne réécrit pas les données de quelqu'un sans qu'il le demande* (**R29**). ⛔ **La ligne de cardio reste un exercice** : le bloc Cardio n'existe pas dans un jour de programme — c'est un **manque de modèle**, pas un bug d'import, et le combler touche l'éditeur, le chargement et l'enregistrement. *Noté, pas construit.* ⚠️ **`Code.js` modifié → déploiement backend automatique, à vérifier des DEUX côtés** (**R18**).
-
-Tests : **parcours 3035/3035** (+12, bloc **CCLIV**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⭐⭐ **Témoins FONCTIONNELS** : `finalImportProg()` — **la vraie fonction de production** — est appelée sur le J1 réel, et on lit ce qui **sort** (7 séries, `É|É|É|É|N|N|N`, charges `50|65|80|85|90|90|90`). ⛔ **Contrôle négatif : 3 mutations** — ① le type unique par exercice : **3 rouges** ; ② le `"W"` non traduit : **3 rouges** — ⚠️ *les mêmes trois, et je le dis : ce sont deux façons de casser la même garantie, pas six détections* ; ③ le serveur qui accepte tout : **1 rouge**, exactement le sien. ⚠️⚠️ **ET UN PIÈGE DE TEST A DÛ ÊTRE CORRIGÉ AVANT** : `_impExtracted` est déclaré en **`let` au niveau du script**, donc `window._impExtracted=` créait une **variable jumelle** que la fonction ne lisait pas — le bloc rendait **-1 partout**. *Une sonde qui écrit à côté de sa cible ne rend pas « rien » : elle rend un résultat faux.* Fichiers : `Code.js`, `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1156. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

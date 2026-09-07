@@ -6,7 +6,30 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1163` — 🔎 **LA RECHERCHE D'EXERCICES NE SAVAIT PAS CHERCHER
+- **Version en ligne (live) :** `ft-v1164` — 📚 **LE MODÈLE QUI LIT LE PDF N'AVAIT JAMAIS VU LE
+  CATALOGUE — et c'est Michel qui a pointé la bonne cause.**
+  ⏳ **Suite complète VERTE** : **parcours 3152/3152** (+17, bloc **CCLXII**), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  ⭐⭐ Michel : *« avant de faire quoi que ce soit on utilise l'IA pour lire le PDF, elle devrait
+  être capable d'analyser tout ça »*. **Il avait raison — mes deux premières propositions
+  soignaient le symptôme.** ⭐ **Mesuré** : prompt d'import **8 577 car., ZÉRO nom du catalogue**,
+  et l'app n'envoyait **jamais** la liste. Sur son import réel : **4 exercices créés en douce**,
+  donc sans photo, sans figurine et sans historique.
+  ⭐⭐ **C'est R8, déjà corrigée pour MILO en ft-v713** — 4ᵉ fois de la journée qu'un correctif est
+  posé sur une porte et pas sur sa jumelle. **Les DEUX imports** (programme + historique) sont
+  traités ensemble : le second portait le même trou.
+  ⛔⛔ **La consigne n'est PAS « uniquement ces noms »** : forcer un nom voisin **remplacerait** un
+  exercice par un autre — pire que d'en créer un (**R29**). *Sinon garde le document ; dans le
+  doute, garde le document.*
+  ⚠️ **Le modèle propose, le code valide** : 600 noms max, 80 car., dédoublonnés ; charge utile
+  absente → prompt **exactement** celui d'avant. **Coût : ×2,0 du prompt, ~2 400 jetons/import.**
+  ⛔⛔ **Limite dite, 4ᵉ fois** : pas de clé API → **je ne prouve pas que le modèle obéira**, je
+  prouve que la liste part. *C'est Michel qui prouve l'extraction en réimportant.*
+  ⏭️ **Ne fait pas** : réparer les programmes déjà importés · ⛔ **et l'aperçu ne DIT toujours pas
+  qu'un exercice va être créé** — c'est le **filet** proposé, non pris (`BUGS.md` §46).
+  ⚠️ **`Code.js` modifié → déploiement backend automatique, à vérifier des DEUX côtés (R18).**
+
+- **Version précédente :** `ft-v1163` — 🔎 **LA RECHERCHE D'EXERCICES NE SAVAIT PAS CHERCHER
   DEUX MOTS — « biceps marteau » rendait ZÉRO.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **site** run **#985**, étape *« Déployer sur GitHub
   Pages »* success à **13:37:41 UTC** sur `d2f2ed1d` — ⛔ aucun run backend attendu, `Code.js`

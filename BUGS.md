@@ -2970,3 +2970,38 @@ mesure la mauvaise chose.***
 *Voisine de **§39** (une valeur peut être cohérente avec elle-même et impossible — c'est le même
 produit, la même ligne, l'autre moitié du problème) et de **§34** (l'hallucination crédible).*
 
+
+### ⚠️ La §46 vue à l'envers (07/09/2026, ft-v1164) : **on ne corrige pas un modèle qu'on n'a pas informé**
+
+Quatre versions de suite ont buté sur des noms d'exercices mal rattachés à l'import. À chaque fois
+le correctif était **en aval** : mieux rapprocher, mieux prévenir, mieux réparer. C'est Michel qui
+a pointé l'amont : *« on utilise l'IA pour lire le PDF, elle devrait être capable d'analyser tout
+ça »*.
+
+**⭐⭐ Mesure : le prompt d'import contenait ZÉRO nom du catalogue**, et l'app ne transmettait
+jamais la liste. Le modèle écrivait « Presse 45 degrés » parce que c'est ce qu'il y a sur la
+feuille — *il n'avait aucun moyen de savoir que l'app appelle ça « Press Jambes 45° »*.
+
+👉 ***Ce n'était pas un modèle qui se trompe : c'était un modèle qu'on n'avait pas informé.*** Et
+la règle existait déjà (**R8**), appliquée à Milo depuis ft-v713.
+
+### 🔎 Comment la reconnaître
+- On envisage de **durcir un prompt**, d'ajouter un **repli** ou un **filet**, alors qu'on n'a pas
+  vérifié ce que le modèle **reçoit** réellement. *Compter les caractères du prompt et y chercher
+  la source nommée prend trente secondes.*
+- Un correctif existe pour **un** consommateur du même mécanisme (ici Milo) et pas pour son
+  **jumeau** (ici l'import). Le jumeau ne remonte jamais tout seul : il produit un résultat
+  plausible, pas une erreur.
+- Le symptôme est **à trois têtes** (pas de photo · pas de figurine · pas d'historique) : trois
+  écrans différents pour **une** cause. Une seule cause qui produit trois symptômes est presque
+  toujours en amont.
+
+### 🛡️ Ce qui protège aujourd'hui
+- La liste part avec le document, sur **les deux** imports — un témoin exige les deux
+  branchements, côté serveur **et** côté app.
+- ⛔ **La liste est OUVERTE** : « emploie le nom exact quand c'est manifestement le même exercice,
+  sinon garde le nom du document ». *Forcer un nom voisin remplacerait un exercice par un autre —
+  pire que d'en créer un* (R29). Une mutation dédiée vérifie que la liste n'est jamais fermée.
+- ⭐ **Le réflexe** : avant de corriger la sortie d'un modèle, **relire son entrée**. Pour chaque
+  source que la consigne nomme (« le catalogue », « ton planning », « ses records »), vérifier
+  qu'elle est vraiment dans le contexte — c'est R8, et elle se re-vérifie à chaque nouvelle porte.

@@ -29454,6 +29454,108 @@ console.log('\n-- CCLX. Le plafond physique des calories (ft-v1162) --');
     /rien n..est plus énergique que le gras/.test(_sc) && /135 kcal au grand maximum/.test(_sc), '');
 }
 
+/* ═══ CCLXII. LE CATALOGUE PART AVEC LE DOCUMENT D'IMPORT (07/09/2026, ft-v1164) ══════════════
+   Michel, après sa séance : *« avant de faire quoi que ce soit on utilise l'IA pour lire le PDF,
+   elle devrait être capable d'analyser tout ça »*. **Il avait raison, et mes deux premières
+   propositions soignaient le symptôme.**
+   ⭐⭐ MESURÉ : le prompt d'import faisait **8 577 caractères** et contenait **ZÉRO** nom du
+   catalogue ; l'app envoyait `{action:'importProgram', images}` — la liste n'était **jamais
+   transmise**. Le modèle écrivait « Presse 45 degrés » parce que c'est ce qu'il y a sur la feuille.
+   ⛔ Conséquence sur son import réel : **4 exercices créés en douce**, donc sans photo, sans
+   figurine et sans historique — il a lu *« aucun repère »* sur une presse où il avait fait 280 kg.
+   ⭐⭐ C'est **R8**, déjà corrigée pour **Milo** en ft-v713 : *une consigne qui NOMME une source
+   sans que cette source soit dans le contexte*. **4ᵉ fois de la journée** qu'un correctif est posé
+   sur une porte et pas sur sa jumelle — d'où les DEUX imports traités ensemble ici.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLXII. Le catalogue part avec le document d\'import (ft-v1164) --');
+{
+  const _cj=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  /* ── LE CÔTÉ SERVEUR : on EXTRAIT la fonction et on l'EXÉCUTE (patron de ft-v1157). ────── */
+  let bloc=null, err='';
+  try{
+    const i=_cj.indexOf('function _blocCatalogue_');
+    const j=_cj.indexOf('\nfunction handleImportProgram_', i);
+    if(i<0||j<0) throw new Error('_blocCatalogue_ introuvable');
+    eval(_cj.slice(i,j));
+    bloc=_blocCatalogue_;
+  }catch(e){ err=String(e.message); }
+  t('CCLXII ⛔ CONTRÔLE — `_blocCatalogue_` s\'extrait et s\'exécute', !!bloc, err);
+
+  if(bloc){
+    const r=bloc({catalogue:['Press Jambes 45°','Soulevé de Terre Roumain Barre','Développé Couché']});
+    t('CCLXII ⭐⭐ la liste des exercices est réellement injectée dans le prompt',
+      /Press Jambes 45°/.test(r) && /\(3\)/.test(r), r.slice(0,90));
+    t('CCLXII ⭐ la consigne demande le nom EXACT du catalogue', /nom EXACT de la liste/.test(r), '');
+    /* ⛔⛔ LE GARDE-FOU QUI COMPTE LE PLUS, ET C'EST UNE NON-CONSIGNE : on ne dit JAMAIS
+       « emploie uniquement ces noms ». Un programme peut légitimement porter un exercice que
+       l'app ne connaît pas ; forcer un nom voisin REMPLACERAIT un exercice par un autre —
+       bien pire que d'en créer un nouveau (R29 : le coût de l'erreur décide). */
+    t('CCLXII ⛔⛔ la liste est dite OUVERTE — jamais « uniquement ces noms »',
+      /n.est PAS une liste fermée/.test(r) && !/uniquement ces noms/i.test(r), '');
+    t('CCLXII ⛔ et le doute penche vers le document, pas vers le catalogue',
+      /Dans le doute, garde le nom du document/.test(r), '');
+    /* ⛔ NON-RÉGRESSION : sans liste, le prompt est EXACTEMENT celui d'avant — donc un client
+       pas encore à jour se comporte comme aujourd'hui, sans rien casser. */
+    t('CCLXII ⛔ NON-RÉGRESSION — sans catalogue, le bloc est vide (prompt d\'avant)',
+      bloc({})==='' && bloc({catalogue:[]})==='' && bloc(null)==='', '');
+    t('CCLXII ⛔ une charge utile absurde ne fait rien planter', bloc({catalogue:'nope'})==='', '');
+    /* ⚠️ LE MODÈLE PROPOSE, LE CODE VALIDE : la liste est bornée et nettoyée côté serveur. */
+    t('CCLXII ⚠️ la liste est plafonnée à 600 noms',
+      /\(600\)/.test(bloc({catalogue:Array.from({length:2000},(_,k)=>'Exo '+k)})), '');
+    const sale=bloc({catalogue:['  Squat  ','Squat',null,'','X'.repeat(200)]});
+    t('CCLXII ⚠️ doublons et vides retirés, noms tronqués à 80 caractères',
+      /\(2\)/.test(sale) && !/X{81}/.test(sale), sale.slice(0,90));
+  }
+
+  /* ── LES DEUX PORTES SONT BRANCHÉES, CÔTÉ SERVEUR ET CÔTÉ APP ──────────────────────────
+     ⛔⛔ C'EST LE CONTRÔLE QUI PORTE LA LEÇON DU JOUR : réparer l'import de PROGRAMME sans
+     l'import d'HISTORIQUE aurait été la 5ᵉ fois de la journée qu'on oublie la porte d'à côté. */
+  /* ⚠️ ON COMPTE LES APPELS, PAS LA DÉFINITION — mon 1ᵉʳ motif cherchait `_blocCatalogue_(body)`
+     et ramassait aussi la ligne `function _blocCatalogue_(body) {`, soit 3 au lieu de 2.
+     *Le témoin avait raison, c'est mon comptage qui était faux.* */
+  const _appels=(_cj.match(/=\s*_blocCatalogue_\(body\)/g)||[]).length;
+  t('CCLXII ⛔⛔ le serveur APPELLE le bloc dans les DEUX imports (programme + historique)',
+    _appels===2, 'appels trouvés : '+_appels);
+  t('CCLXII ⛔ la règle de nommage est posée À CÔTÉ du champ « name » (leçon ft-v1158)',
+    /"name" : quand une LISTE DES EXERCICES est fournie/.test(_cj), '');
+
+  const _lj=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+  t('CCLXII ⛔⛔ l\'app ENVOIE la liste sur les DEUX imports',
+    /action:'importProgram',images:_impPhotos,catalogue:_catalogueImport\(\)/.test(_lj)
+    && /action:'importHistory',images:imgs,catalogue:_catalogueImport\(\)/.test(_lj), '');
+
+  /* ── ET CÔTÉ APP, LA VRAIE FONCTION EST APPELÉE DANS LA PAGE ─────────────────────────── */
+  const R=await p.evaluate(()=>{
+   try{
+    const o={};
+    o.existe=(typeof _catalogueImport==='function');
+    if(!o.existe) return o;
+    const _old=S.customExercises;
+    S.customExercises=[{n:'Mon Exo Perso'},{n:'Développé Couché'}];  // doublon volontaire
+    const l=_catalogueImport();
+    o.n=l.length;
+    o.aPresse   = l.indexOf('Press Jambes 45°')>=0;
+    o.aRoumain  = l.indexOf('Soulevé de Terre Roumain Barre')>=0;
+    o.aPerso    = l.indexOf('Mon Exo Perso')>=0;
+    o.sansDoublon = l.filter(n=>n==='Développé Couché').length===1;
+    S.customExercises=_old;
+    return o;
+   }catch(e){return {err:String(e)};}
+  });
+  if(R.err) t('CCLXII n\'a pas pu tourner côté app', false, R.err);
+  else{
+    t('CCLXII ⛔ CONTRÔLE — `_catalogueImport` existe dans la page', R.existe===true, '');
+    t('CCLXII ⭐⭐ elle contient les deux noms que l\'import ratait', R.aPresse===true&&R.aRoumain===true, '');
+    /* ⛔ LES EXERCICES PERSO EN FONT PARTIE : si la personne a déjà créé « Presse 45 degrés » à
+       la main, le prochain import doit retomber sur LE SIEN, pas en fabriquer un deuxième. */
+    t('CCLXII ⛔ les exercices PERSO sont dans la liste', R.aPerso===true, '');
+    /* ⚠️ EXLIB liste un squat DEUX FOIS (Jambes + Fessiers) : sans dédoublonnage on paierait
+       des jetons pour répéter des noms, et la liste annoncerait un compte faux. */
+    t('CCLXII ⚠️ aucun doublon (EXLIB liste certains exercices 2×)', R.sansDoublon===true, '');
+    t('CCLXII ⭐ la liste est substantielle (> 300 noms)', R.n>300, 'reçu : '+R.n);
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
