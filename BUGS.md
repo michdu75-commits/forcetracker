@@ -2789,3 +2789,59 @@ gagné, parce que c'est celui-là qu'un humain lit.
   continuait de mentir.*
 - ⭐ **Le réflexe** : quand une définition change, `grep` la **formule**, pas le nom de la
   variable — ici « RIR 0 » sortait dans quatre fichiers dont aucun n'appelle `_rirDeSet`.
+
+---
+
+## 46. 🎲 UN CORRECTIF QUI VIT DANS LE PROMPT N'EST PAS UN CORRECTIF TANT QU'IL N'EST PAS VÉRIFIÉ EN PROD **(07/09/2026, ft-v1158)**
+
+**Le cas fondateur.** ft-v1156 corrige un vrai bug d'import : les 4 lignes d'échauffement du
+développé couché de Michel ressortaient en **4 exercices** nommés *« Développé couché (ECH) »*.
+Le diagnostic était juste (**R4** : le modèle, ne pouvant pas mettre l'information dans la
+**série**, l'a mise dans le **NOM**), le correctif propre — une règle 8 explicite dans le prompt
+du backend, un champ `setTypePerSet`, une validation serveur, un test qui prouve la **chaîne**.
+J'avais même **écrit ma limite** : *« je ne peux pas prouver que le modèle obéira »*.
+
+**⛔⛔ Le lendemain matin, deux vidéos de Michel : c'est le même résultat, seulement renommé
+« Développé couché (échauffement) ».** Son J1 fait encore **9 blocs au lieu de 4**.
+
+**⭐⭐ Et le renommage EST la preuve, pas un détail.** Le libellé a changé, donc le modèle a bien
+**reçu et relu** le nouveau prompt — ***il ne l'a pas suivi***. Sans cette nuance, on conclurait
+au déploiement raté et on redéploierait pour rien.
+
+### 🔎 Comment la reconnaître
+- Un correctif dont **toute la mécanique** vit dans un texte envoyé à un modèle : prompt, schéma
+  d'exemple, consigne. Les tests peuvent alors prouver la **chaîne** (le champ est accepté, validé,
+  traduit) sans jamais prouver **qu'il arrive**.
+- La phrase *« je ne peux pas prouver que le modèle obéira »* dans une entrée de journal : elle est
+  honnête, et elle est exactement le **signal** qu'il manque un étage.
+- Deux consignes **contraires** dans le même prompt, à quelques règles d'écart. Le modèle tranche —
+  et il tranche pour la plus **absolue**, pas pour la plus récente.
+- Un champ demandé par une règle mais **absent du schéma d'exemple**. *Le schéma est le signal le
+  plus fort du prompt* : un champ décrit quatre règles plus bas ne pèse pas contre lui.
+
+### 🛡️ Ce qui protège aujourd'hui
+- **R7 dans l'ordre, et pour de bon** : ① **structurel** → ② **hiérarchie** → ③ **prompt**. Le
+  correctif de ft-v1158 est un **filet déterministe dans l'app** (`_mergeImportEchauffements`) —
+  il marche **quel que soit le modèle**, et il est **prouvable ici**.
+- **Le prompt est corrigé EN PLUS, jamais À LA PLACE.** Les deux contradictions mesurables ont
+  disparu (le champ entre dans le schéma, la règle 4 dit sur quel champ elle porte) — mais le
+  résultat n'en dépend plus.
+- **Le filet s'AJOUTE, il ne remplace pas** : quand le modèle obéit, la fusion ne trouve rien à
+  faire (témoin de non-régression dédié). *Un correctif qui remplace le filet devient une
+  régression le jour où il ne s'applique pas* (ft-v1152).
+- ⭐ **Le réflexe** : avant de livrer un correctif de prompt, se demander **« qu'est-ce qui reste
+  vrai si le modèle n'écoute pas ? »**. Si la réponse est *« rien »*, le correctif n'est pas fini —
+  il attend son étage déterministe. *Un correctif qu'on ne peut pas prouver n'est pas un correctif,
+  c'est une demande polie.*
+
+### ⚠️ Le cousin trouvé le même jour : **chercher un texte n'est pas vérifier un appel**
+Le contrôle négatif de ft-v1158 a fait tomber un **garde-fou qui ne gardait rien**. Le témoin
+censé prouver que le chemin d'extraction **APPELLE** la fusion faisait
+`log.js.indexOf('_mergeImportEchauffements();')` — or la mutation qui **commente** l'appel
+(`//_mergeImportEchauffements();`) laisse la chaîne **intacte dans le fichier**. Le témoin est
+donc resté **VERT** pendant que la fusion n'avait plus lieu.
+👉 **Un `indexOf` mesure la PRÉSENCE d'un texte, jamais l'EXÉCUTION d'un appel.** Quand un témoin
+doit prouver qu'une fonction est appelée, il faut soit **l'exécuter** (le mieux), soit au minimum
+**borner la recherche à la région concernée** et **exiger le début de ligne** — ce qu'un `//` casse.
+⭐ *Et c'est le contrôle négatif qui l'a trouvé, pas la relecture* : la première passe complète
+était **verte à 3069/3069** avec ce témoin creux dedans.

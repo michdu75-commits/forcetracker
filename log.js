@@ -5975,6 +5975,9 @@ async function analyzeImportPhotos(){
     _impExtracted=d.data;
     if(!S.premium){S.progImports=(S.progImports||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();} // compte l'import réussi (limite gratuite)
     _mergeImportSeances(); // fusionne « Séance 1 - Dorsaux/Biceps/… » en UNE séance (groupes = sections internes)
+    _mergeImportEchauffements(); // ⛔ AVANT le rattachement VM, et l'ordre compte : la fusion rend au nom sa forme
+                                 // nue (« Développé couché »), et c'est CE nom-là que le catalogue sait reconnaître.
+                                 // Après, on rattacherait « Développé couché (échauffement) » — c'est-à-dire rien.
     _vmMatchExtracted();   // VM : rattache aux références EXLIB (évite les doublons) AVANT l'aperçu
     _renderImpConfirm();
     impGoStep(4);
@@ -6004,6 +6007,117 @@ function _mergeImportSeances(){
   });
   _impExtracted.days=out;
   if(merged)console.log('[Import] '+merged+' sous-séance(s) fusionnée(s) par numéro de séance');
+}
+
+/* 🔥🔥 LE FILET DÉTERMINISTE DES ÉCHAUFFEMENTS — ft-v1158 (07/09/2026).
+   Jumeau de `_mergeImportSeances` juste au-dessus, et pour EXACTEMENT la même raison :
+   le modèle découpe parfois à tort, et l'app ne doit pas en dépendre.
+
+   ⛔⛔ LE CAS RÉEL, ET IL EST MESURÉ. Le document de Michel a une colonne « Type » (ECH /
+   TRAV). Ses 4 lignes d'échauffement du développé couché (50×5, 65×3, 80×2, 85×1) sont
+   ressorties en 4 EXERCICES nommés « Développé couché (ECH) ». ft-v1156 a ajouté au prompt
+   le champ `setTypePerSet` pour que le modèle le dise proprement ; sur ses deux vidéos du
+   07/09 à 11:06 — soit APRÈS le déploiement — le résultat est le même, seulement renommé
+   « Développé couché (échauffement) ». 👉 ***Le modèle a relu la nouvelle règle et ne l'a
+   pas suivie.*** Un prompt est probabiliste : tant que la correction vit uniquement là, on
+   ne peut ni la prouver ni la garantir (R7 — le prompt est le DERNIER levier, pas le premier).
+
+   ⭐ CE QU'ON FAIT ICI, SANS MODÈLE : plusieurs lignes CONSÉCUTIVES dont le nom se réduit au
+   même nom de base une fois le marqueur d'échauffement retiré, SUIVIES d'une ligne portant ce
+   nom de base nu = UN exercice, dont les premières séries sont des échauffements.
+
+   ⛔ LA LIGNE DE TRAVAIL EST OBLIGATOIRE. Sans elle on ne fusionne rien, on ne renomme rien,
+   on ne touche à rien : un échauffement isolé reste ce que le document en dit. *On ne devine
+   pas à la place de quelqu'un quand on n'a pas de quoi trancher* (R29).
+
+   ⛔ ET ÇA NE REMPLACE PAS `setTypePerSet` (ft-v1156), ça s'y AJOUTE. Si le backend renvoie le
+   champ, les noms ne portent aucun marqueur et cette fonction ne trouve rien à faire. Les deux
+   coexistent — *un correctif qui REMPLACE le filet au lieu de s'y ajouter devient une
+   régression le jour où il ne s'applique pas* (leçon de ft-v1152). */
+function _nomSansEch(name){
+  const raw=String(name==null?'':name).trim();
+  const m=raw.match(/^(.*?)\s*[([]([^)\]]*)[)\]]\s*$/);   // un parenthésé EN FIN de nom, et lui seul
+  if(!m)return null;
+  // ⛔ borné par \b : « echauffement leger » et « ech » comptent, « leg curl » ou « shoulder press » non
+  if(!/^(ech|echauff\w*|warm[\s-]?up|warmup)\b/.test(_naz(m[2])))return null;
+  const base=m[1].trim();
+  return base||null;   // un nom qui ne serait QUE « (ECH) » n'a pas de base : on ne touche pas
+}
+/* ⭐⭐ « EST-CE LA LIGNE DE TRAVAIL DE CES ÉCHAUFFEMENTS ? » — et ce n'est PAS une simple égalité.
+   MESURÉ sur la 2ᵉ vidéo de Michel : ses échauffements s'appellent « Développé épaules guide
+   (échauffement léger / progressif) » et sa ligne de travail « **Développé épaules guide /
+   haltères** ». Une égalité stricte n'aurait rien fusionné là — et lui aurait laissé deux faux
+   exercices de plus. On accepte donc que la ligne de travail PROLONGE le nom de base.
+   ⛔⛔ MAIS SEULEMENT DERRIÈRE UN SÉPARATEUR (` / `, `-`, `(`, `:`, `,`), JAMAIS UN SIMPLE MOT.
+   *C'est ce garde-là qui décide de tout* : sans lui, « Squat (échauffement) » suivi de « Squat
+   **Bulgare** » se fusionnerait — deux exercices différents, et les charges d'échauffement du
+   squat classique se retrouveraient sur une fente. Un contre-test le fige (R29 : le coût de
+   l'erreur décide de la méthode). */
+function _estLaLigneDeTravail(nom,base){
+  const n=_naz(String(nom==null?'':nom).trim());
+  if(n===base)return true;
+  if(n.indexOf(base)!==0)return false;
+  return /^[\s]*[/\-(:,]/.test(n.slice(base.length));   // un séparateur, pas un mot de plus
+}
+// Déplie un exercice importé en séries : c'est la MÊME convention que `_buildProgDay`
+// (repsPerSet s'il existe, sinon `sets` × `reps` uniformes) — R2, une seule règle de lecture.
+function _seriesImport(ex){
+  const n=(ex.repsPerSet&&ex.repsPerSet.length)?ex.repsPerSet.length:Math.max(1,parseInt(ex.sets)||1);
+  const reps=[],kgs=[],rests=[];
+  for(let s=0;s<n;s++){
+    reps.push((ex.repsPerSet&&ex.repsPerSet[s]!=null)?ex.repsPerSet[s]:(ex.reps!=null?ex.reps:10));
+    kgs .push((ex.kgPerSet &&ex.kgPerSet [s]!=null)?ex.kgPerSet [s]:(ex.kg||0));
+    // ⛔ on garde `null` tel quel : `_restAt` retombe alors sur `ex.rest`, exactement comme avant
+    rests.push((ex.restPerSet&&ex.restPerSet[s]!=null)?ex.restPerSet[s]:(ex.rest!=null?ex.rest:null));
+  }
+  return {n,reps,kgs,rests};
+}
+function _fusionneEch(echs,trav){
+  const R=[],K=[],T=[],RE=[];
+  echs.forEach(e=>{const x=_seriesImport(e);R.push(...x.reps);K.push(...x.kgs);RE.push(...x.rests);for(let s=0;s<x.n;s++)T.push('W');});
+  const nEch=R.length;
+  const w=_seriesImport(trav);
+  R.push(...w.reps);K.push(...w.kgs);RE.push(...w.rests);for(let s=0;s<w.n;s++)T.push('');
+  const o=Object.assign({},trav);
+  o.repsPerSet=R;o.kgPerSet=K;o.setTypePerSet=T;o.sets=R.length;
+  if(RE.some(v=>v!=null))o.restPerSet=RE;
+  /* ⚠️ `specialSets` est une liste d'indices 0-based DANS la ligne de travail. Après fusion
+     elle ne désigne plus les mêmes séries : elle se DÉCALE du nombre d'échauffements ajoutés
+     devant. Sans ça, les séries marquées en rouge dans le PDF changeraient de place. */
+  if(Array.isArray(trav.specialSets)&&trav.specialSets.length)o.specialSets=trav.specialSets.map(k=>(parseInt(k)||0)+nEch);
+  /* ⛔ LA NOTE GARDÉE EST CELLE DE LA LIGNE DE TRAVAIL, ET C'EST UN CHOIX ÉCRIT (R30). C'est
+     elle qui porte la prescription (RIR cible, progression S1→S4, repos) ; les notes des lignes
+     d'échauffement sont du libellé (« ECH - série d'échauffement, non comptée »), et leurs
+     CHIFFRES survivent tous dans `repsPerSet` / `kgPerSet` / `restPerSet`. Les empiler rendrait
+     illisible la seule note que l'athlète lit vraiment. Si la ligne de travail n'a pas de note,
+     on prend la première des échauffements plutôt que de rester muet. */
+  if(!o.note){const n1=echs.map(e=>e.note).filter(Boolean)[0];if(n1)o.note=n1;}
+  o._echFusion=nEch;o._echLignes=echs.length;   // trace montrée dans l'aperçu : on informe, on ne cache pas
+  return o;
+}
+function _mergeImportEchauffements(){
+  if(!_impExtracted||!(_impExtracted.days||[]).length)return;
+  let fus=0;
+  (_impExtracted.days||[]).forEach(day=>{
+    const src=day.exercises||[],out=[];
+    for(let i=0;i<src.length;i++){
+      const b=_nomSansEch(src[i]&&src[i].name);
+      if(b===null){out.push(src[i]);continue;}
+      const bn=_naz(b);
+      let j=i;
+      while(j<src.length){const bj=_nomSansEch(src[j]&&src[j].name);if(bj===null||_naz(bj)!==bn)break;j++;}
+      const trav=src[j];
+      if(!trav||!_estLaLigneDeTravail(trav.name,bn)){
+        for(let k=i;k<j;k++)out.push(src[k]);   // pas de ligne de travail → on laisse le document tel quel
+        i=j-1;continue;
+      }
+      out.push(_fusionneEch(src.slice(i,j),trav));
+      fus++;
+      i=j;   // les échauffements ET la ligne de travail sont consommés
+    }
+    day.exercises=out;
+  });
+  if(fus)console.log('[Import] '+fus+' exercice(s) recomposé(s) : séries d\'échauffement regroupées avec leur série de travail');
 }
 // VM → import : rattache chaque exercice importé à sa RÉFÉRENCE EXLIB (fini les doublons).
 // Palier auto (confiance ≥90) = rattaché direct (nom remplacé, original gardé pour « annuler »).
@@ -6091,6 +6205,7 @@ function _renderImpConfirm(){
             <div style="flex:1;min-width:0;">
               <div style="font-size:13px;font-weight:600;">${_escNote(ex.name)}</div>
               <div style="font-size:12px;color:var(--t2);">${ex.sets}×${ex.reps} reps${ex.kg?' · '+ex.kg+' kg':''}</div>
+              ${ex._echFusion?`<div style="font-size:11px;color:var(--gold);margin-top:3px;">🔥 dont ${ex._echFusion} série${ex._echFusion>1?'s':''} d'échauffement — ${ex._echLignes} ligne${ex._echLignes>1?'s':''} du document regroupée${ex._echLignes>1?'s':''} ici</div>`:''}
               ${ex._vmFrom?`<div style="font-size:11px;color:var(--green);margin-top:3px;">↔ reconnu depuis « ${_escNote(ex._vmFrom)} » · <span onclick="impUndoMatch(${di},${ei})" style="color:var(--t3);cursor:pointer;text-decoration:underline;">annuler</span></div>`:''}
               ${ex._vmSuggest?_vmConfirmRow(ex._vmSuggest,'impAcceptMatch('+di+','+ei+')','impRejectMatch('+di+','+ei+')',true):''}
               ${ex.note?`<div style="font-size:11px;color:var(--gold);margin-top:2px;font-style:italic;">📋 ${_escNote(ex.note)}</div>`:''}

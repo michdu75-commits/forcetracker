@@ -28684,6 +28684,195 @@ console.log('\n-- CCLV. Une date de début inventée ne passe plus (ft-v1157) --
     /NE JAMAIS utiliser "E" \(Échec\) ni "W" \(Échauffement\)/.test(_cj), '');
 }
 
+/* ═══ CCLVI. LE FILET DÉTERMINISTE DES ÉCHAUFFEMENTS (07/09/2026, ft-v1158) ═════════════════
+   ft-v1156 avait ajouté au prompt le champ `setTypePerSet` pour que le modèle dise proprement
+   quelles séries sont des échauffements. MESURÉ sur les deux vidéos de Michel du 07/09 à 11:06,
+   soit APRÈS le déploiement : le résultat est le même, seulement renommé « (échauffement) » au
+   lieu de « (ECH) ». ⭐⭐ Le modèle a relu la nouvelle règle et NE L'A PAS SUIVIE.
+   👉 On refusionne donc dans l'app, SANS modèle — et c'est ça qu'on peut prouver ici.
+   ⛔ Le champ de ft-v1156 n'est pas remplacé : quand le backend l'envoie, les noms sont nus et
+      cette fonction ne trouve rien à faire. Un correctif qui REMPLACE le filet au lieu de s'y
+      ajouter devient une régression le jour où il ne s'applique pas (leçon de ft-v1152).
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLVI. Le filet déterministe des échauffements (ft-v1158) --');
+{
+  /* ⛔⛔ LE 2ᵉ CONTRÔLE EST LE PLUS IMPORTANT DES DEUX : une fusion parfaite que le chemin
+     d'extraction n'appelle pas laisserait tous les autres témoins verts (ils interrogent la
+     fonction en direct) pendant que l'aperçu continuerait d'afficher 9 blocs. Et l'ORDRE compte
+     autant que l'appel : après `_vmMatchExtracted`, on rattacherait « Développé couché
+     (échauffement) » au catalogue, c'est-à-dire rien. */
+  const _lj=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+  /* ⚠️⚠️ ET CE TÉMOIN A DÛ ÊTRE DURCI, parce que la mutation E1 NE L'A PAS FAIT ROUGIR.
+     Sa 1ʳᵉ version cherchait `_mergeImportEchauffements();` avec un `indexOf` sur tout le fichier :
+     un appel simplement COMMENTÉ (`//_mergeImportEchauffements();`) contient encore la chaîne, donc
+     il passait au vert pendant que la fusion n'avait plus lieu. 👉 *Chercher un texte n'est pas
+     vérifier un appel.* On borne désormais la recherche à la RÉGION du chemin d'extraction, et on
+     exige un appel EN DÉBUT DE LIGNE — ce qu'un `//` casse. */
+  const _reg=_lj.slice(_lj.indexOf('_mergeImportSeances();'), _lj.indexOf('_renderImpConfirm();'));
+  const _iM=_reg.indexOf('_mergeImportEchauffements();'), _iV=_reg.indexOf('_vmMatchExtracted();');
+  t('CCLVI ⛔⛔ CONTRÔLE — le chemin d\'extraction APPELLE la fusion, et AVANT le rattachement VM',
+    /^[ \t]*_mergeImportEchauffements\(\);/m.test(_reg) && _iM>=0 && _iV>=0 && _iM<_iV,
+    'appel décommenté : '+/^[ \t]*_mergeImportEchauffements\(\);/m.test(_reg)+' · fusion@'+_iM+' vm@'+_iV);
+
+  const R=await p.evaluate(()=>{
+   try{
+    const o={};
+    o.fn=['_nomSansEch','_estLaLigneDeTravail','_seriesImport','_fusionneEch','_mergeImportEchauffements','finalImportProg']
+          .filter(f=>typeof window[f]!=='function');
+    const merge=exs=>{ _impExtracted={name:'T',weeks:4,startDate:'',days:[{label:'J',exercises:exs}]};
+                       _mergeImportEchauffements(); return _impExtracted.days[0].exercises; };
+
+    /* ⭐⭐ LE J1 RÉEL DE MICHEL, tel qu'il sort VRAIMENT du modèle sur sa vidéo : 9 lignes. */
+    const j1=[
+      {name:'Elliptique / cardio léger',sets:1,reps:0,note:'ECH - 8-10 min'},
+      {name:'Développé couché (échauffement)',sets:1,reps:5,kg:50,note:'ECH - non comptée'},
+      {name:'Développé couché (échauffement)',sets:1,reps:3,kg:65,note:'ECH - non comptée'},
+      {name:'Développé couché (échauffement)',sets:1,reps:2,kg:80,note:'ECH - Repos 90s'},
+      {name:'Développé couché (échauffement)',sets:1,reps:1,kg:85,note:'ECH - Repos 2 min'},
+      {name:'Développé couché',sets:3,reps:3,kg:90,specialSets:[1,2],note:'TRAV - RIR ~2 | Repos 3-4 min'},
+      {name:'Chest Press Machine Déclinée',sets:3,reps:10,kg:40,note:'TRAV'},
+      {name:'Rowing Poitrine Appuyée',sets:3,reps:8,kg:52,note:'TRAV'},
+      {name:'Face Pull',sets:3,reps:12,kg:28,note:'TRAV'}
+    ];
+    const m=merge(JSON.parse(JSON.stringify(j1)));
+    o.nbBlocs = m.length;
+    o.noms    = m.map(e=>e.name).join(' ; ');
+    o.aucunMarqueur = m.every(e=>!/\(\s*(ech|éch|warm)/i.test(e.name));
+    const dc=m.find(e=>/^Développé couché$/i.test(e.name));
+    o.dcSets  = dc?dc.sets:-1;
+    o.dcReps  = dc?(dc.repsPerSet||[]).join('|'):'';
+    o.dcKg    = dc?(dc.kgPerSet||[]).join('|'):'';
+    o.dcTypes = dc?(dc.setTypePerSet||[]).join(','):'';
+    o.dcSpec  = dc?JSON.stringify(dc.specialSets||null):'';
+    o.dcNote  = dc?String(dc.note||''):'';
+    o.dcEch   = dc?dc._echFusion:0;
+
+    /* ⭐ L'APERÇU DOIT LE DIRE : l'app recompose ce que la personne a fourni, elle ne le fait
+       pas en douce. `${sets}×${reps}` afficherait « 7×3 » sans un mot sur les 4 échauffements. */
+    _impExtracted={name:'T',weeks:4,startDate:'',days:[{label:'J',exercises:m}]};
+    _renderImpConfirm();
+    const pv=document.getElementById('imp-preview');
+    o.apercu = pv?/4 séries d.échauffement/.test(pv.innerHTML):false;
+
+    /* ⛔ NON-RÉGRESSION ft-v1156 : quand le backend OBÉIT, les noms sont nus → aucun changement. */
+    const ok=merge([{name:'Développé couché',sets:7,reps:3,repsPerSet:[5,3,2,1,3,3,3],
+                     kgPerSet:[50,65,80,85,90,90,90],setTypePerSet:['W','W','W','W','','','']}]);
+    o.obeissant = ok.length===1 && (ok[0].setTypePerSet||[]).join(',')==='W,W,W,W,,,' && !ok[0]._echFusion;
+
+    /* ⛔⛔ LE GARDE QUI REND LA FUSION SÛRE : sans ligne de travail, on ne fusionne rien et on
+       ne renomme rien. On ne devine pas à la place de quelqu'un quand on n'a pas de quoi
+       trancher (R29) — et un échauffement isolé reste ce que le document en dit. */
+    const seul=merge([{name:'Squat (échauffement)',sets:1,reps:5,kg:40},{name:'Presse 45',sets:3,reps:8,kg:280}]);
+    o.sansTravail = seul.length===2 && seul[0].name==='Squat (échauffement)';
+
+    /* ⛔ UN PARENTHÉSÉ N'EST PAS UN MARQUEUR : « (Leg Curl) » est un nom, pas un échauffement. */
+    const lc=merge([{name:'Curl Ischio (Leg Curl)',sets:3,reps:8},{name:'Curl Ischio',sets:3,reps:8}]);
+    o.parenthNeutre = lc.length===2;
+
+    /* ⛔ ET SEULEMENT DES LIGNES CONSÉCUTIVES : un exercice glissé entre les deux coupe le lien. */
+    const nc=merge([{name:'Squat (ECH)',sets:1,reps:5,kg:40},{name:'Rowing',sets:3,reps:8},{name:'Squat',sets:3,reps:3,kg:120}]);
+    o.nonConsecutif = nc.length===3;
+
+    /* ⭐⭐ LE 2ᵉ CAS RÉEL DE SA VIDÉO, et il a élargi la règle : ses échauffements s'appellent
+       « Développé épaules guide (échauffement léger / progressif) » et sa ligne de travail
+       « Développé épaules guide / **haltères** ». Une égalité stricte n'aurait rien fusionné. */
+    const gd=merge([{name:'Développé épaules guide (échauffement léger)',sets:1,reps:10},
+                    {name:'Développé épaules guide (échauffement progressif)',sets:1,reps:5},
+                    {name:'Développé épaules guide / haltères',sets:3,reps:8,kg:55}]);
+    o.prolonge = gd.length===1 && gd[0].name==='Développé épaules guide / haltères'
+                 && gd[0].sets===5 && (gd[0].setTypePerSet||[]).join(',')==='W,W,,,';
+    /* ⛔⛔ ET LE CONTRE-TEST COMPTE AUTANT QUE LE CAS : le prolongement n'est accepté que derrière
+       un SÉPARATEUR. « Squat (échauffement) » suivi de « Squat BULGARE » sont deux exercices
+       différents — les fusionner mettrait les charges d'échauffement du squat sur une fente. */
+    const bg=merge([{name:'Squat (échauffement)',sets:1,reps:5,kg:40},{name:'Squat Bulgare',sets:3,reps:10,kg:20}]);
+    o.pasBulgare = bg.length===2;
+    /* ⭐ CASSE ET ACCENTS : « Souleve de Terre (ECH) » + « Soulevé de terre » = le même exercice. */
+    const ac=merge([{name:'Souleve de Terre (ECH)',sets:1,reps:5,kg:60},{name:'Soulevé de terre',sets:3,reps:3,kg:132.5}]);
+    o.accents = ac.length===1 && ac[0].name==='Soulevé de terre' && ac[0].sets===4;
+
+    /* ⛔ LE GAIN CACHÉ : sans la fusion, `finalImportProg` CRÉAIT « Développé couché
+       (échauffement) » comme exercice perso — 4 fois le même faux exercice dans son catalogue. */
+    S.programmes=[]; S.customExercises=[]; persist();
+    _impMode='new';
+    _impExtracted={name:'PB Bloc 1',weeks:4,startDate:'',days:[{label:'J1',exercises:JSON.parse(JSON.stringify(j1))}]};
+    _mergeImportEchauffements();
+    finalImportProg();
+    o.customEch = (S.customExercises||[]).filter(e=>/\(\s*(ech|éch)/i.test(e.n)).length;
+    const prog=(S.programmes||[])[S.programmes.length-1];
+    const dcp=prog&&prog.days[0]&&(prog.days[0].exs||[]).find(e=>/^Développé couché$/i.test(e.name));
+    o.prodTypes = dcp?(dcp.sets||[]).map(x=>x.type).join('|'):'';
+    o.prodKg    = dcp?(dcp.sets||[]).map(x=>x.kg).join('|'):'';
+    S.programmes=[]; S.customExercises=[]; persist();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+
+  if(R.err) t('CCLVI n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLVI ⛔ CONTRÔLE — les 5 fonctions existent', (R.fn||[]).length===0, (R.fn||[]).join(', '));
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : les 9 lignes de son J1 deviennent 5 blocs. */
+    t('CCLVI ⭐⭐ le J1 de Michel : 9 lignes du modèle → 5 exercices', R.nbBlocs===5, 'reçu : '+R.nbBlocs+' — '+R.noms);
+    t('CCLVI ⭐ plus aucun nom ne porte « (échauffement) »', R.aucunMarqueur===true, R.noms);
+    t('CCLVI ⭐ le développé couché porte SES 7 séries', R.dcSets===7, 'reçu : '+R.dcSets);
+    t('CCLVI ⭐ les reps de chaque série sont gardées dans l\'ordre', R.dcReps==='5|3|2|1|3|3|3', 'reçu : '+R.dcReps);
+    t('CCLVI ⭐ les charges de la montée en charge sont gardées', R.dcKg==='50|65|80|85|90|90|90', 'reçu : '+R.dcKg);
+    t('CCLVI ⭐⭐ les 4 premières séries sont marquées échauffement, les 3 autres non',
+      R.dcTypes==='W,W,W,W,,,', 'reçu : '+R.dcTypes);
+    /* ⚠️ `specialSets` désignait les séries 1 et 2 DE LA LIGNE DE TRAVAIL. Après fusion elles
+       sont en 5 et 6 : sans le décalage, les séries rouges du PDF changeraient de place. */
+    t('CCLVI ⚠️ les séries « spéciales » sont DÉCALÉES, pas laissées sur place', R.dcSpec==='[5,6]', 'reçu : '+R.dcSpec);
+    /* ⛔ CHOIX ÉCRIT (R30) : on garde la note de la ligne de TRAVAIL — c'est elle qui porte la
+       prescription. Les chiffres des échauffements survivent tous dans les tableaux ci-dessus. */
+    t('CCLVI ⛔ la note gardée est la PRESCRIPTION, pas le libellé des échauffements',
+      /RIR ~2/.test(R.dcNote), 'reçu : '+R.dcNote);
+    t('CCLVI ⭐ l\'aperçu DIT ce qu\'il a regroupé (on informe, on ne corrige pas en douce)', R.apercu===true, '');
+    /* ⛔ Les quatre gardes. Chacun protège un cas où fusionner serait FAUX. */
+    t('CCLVI ⛔ NON-RÉGRESSION ft-v1156 — si le backend obéit, la fusion ne fait RIEN', R.obeissant===true, '');
+    t('CCLVI ⛔⛔ sans ligne de travail, on ne fusionne rien et on ne renomme rien', R.sansTravail===true, '');
+    t('CCLVI ⛔ « (Leg Curl) » n\'est pas un marqueur d\'échauffement', R.parenthNeutre===true, '');
+    t('CCLVI ⛔ des lignes NON consécutives ne se fusionnent pas', R.nonConsecutif===true, '');
+    t('CCLVI ⭐⭐ 2ᵉ cas de sa vidéo : la ligne de travail peut PROLONGER le nom (« … / haltères »)', R.prolonge===true, '');
+    t('CCLVI ⛔⛔ mais « Squat Bulgare » n\'absorbe PAS l\'échauffement du Squat (le séparateur décide)', R.pasBulgare===true, '');
+    t('CCLVI ⭐ casse et accents ne coupent pas le rapprochement', R.accents===true, '');
+    /* ⭐ LE GAIN QU'ON NE VOIT PAS SUR L'ÉCRAN D'IMPORT : le catalogue perso n'est plus pollué. */
+    t('CCLVI ⭐ aucun exercice perso « (échauffement) » n\'est créé', R.customEch===0, 'créés : '+R.customEch);
+    /* ⭐⭐ ET JUSQU'AU BOUT DE LA CHAÎNE : `finalImportProg` — la VRAIE fonction de production —
+       traduit « W » en « É » (R33) et la séance enregistrée porte les bonnes charges. */
+    t('CCLVI ⭐⭐ bout en bout : le programme ENREGISTRÉ porte É|É|É|É|N|N|N', R.prodTypes==='É|É|É|É|N|N|N', 'reçu : '+R.prodTypes);
+    t('CCLVI ⭐ bout en bout : les charges arrivent intactes dans le programme', R.prodKg==='50|65|80|85|90|90|90', 'reçu : '+R.prodKg);
+  }
+}
+
+/* ── CCLVI (suite) — LES DEUX DÉFAUTS DU PROMPT QUI EXPLIQUENT POURQUOI LE MODÈLE N'A PAS SUIVI.
+   ⚠️ Je ne peux PAS prouver qu'il obéira cette fois : il n'y a pas de clé API dans ce conteneur,
+   et un prompt reste probabiliste. Ce que je prouve, c'est que les deux CONTRADICTIONS mesurables
+   ont disparu — et surtout, le filet ci-dessus rend le résultat juste même si elles n'y font rien. */
+{
+  const _cj=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  /* ⭐⭐ LE DÉFAUT LE PLUS PROBABLE, ET C'EST LE MIROIR DE ft-v1157 : là, le modèle avait recopié
+     une VALEUR de l'exemple ; ici, il a ignoré un champ ABSENT de l'exemple. Le schéma est le
+     signal le plus fort du prompt — un champ décrit 4 règles plus bas ne pèse pas contre lui.
+     ⛔ Et on met `[]`, une FORME : une valeur plausible se ferait recopier (ft-v1157). */
+  t('CCLVI ⭐⭐ le champ setTypePerSet est DANS le schéma d\'exemple, à vide',
+    /"setType":"","setTypePerSet":\[\],"note"/.test(_cj), '');
+  /* ⭐ LE 2ᵉ DÉFAUT : la règle 4 interdisait « W » en termes ABSOLUS (« Même si le document
+     mentionne échauffement »), quatre règles avant que la règle 8 ne l'exige. Entre deux
+     consignes contraires, le modèle a suivi la plus absolue — et, ne pouvant plus rien mettre
+     dans la série, il l'a remis dans le NOM. C'est R4, encore. */
+  t('CCLVI ⭐ la règle 4 dit désormais SUR QUEL CHAMP elle porte',
+    /CETTE INTERDICTION PORTE SUR LE CHAMP "setType"/.test(_cj)
+    && /"setTypePerSet"[^\n]*règle 8/.test(_cj), '');
+  /* ⛔ NON-RÉGRESSION : la décision @57 n'est pas cassée pour autant — deviner un échauffement
+     depuis une PROSE reste interdit. C'est la colonne qui autorise, jamais le mot. */
+  t('CCLVI ⛔ la décision @57 tient toujours : jamais E/W depuis une prose',
+    /NE JAMAIS utiliser "E" \(Échec\) ni "W" \(Échauffement\)/.test(_cj), '');
+  t('CCLVI ⛔ et la règle 8 reste conditionnée à une VRAIE colonne',
+    /* ⚠️ ON LIT LA SOURCE, où les apostrophes sont ÉCHAPPÉES (`N\'emploie`, `d\'après`) : le motif
+       ne peut pas s'écrire comme la phrase se LIT. 6ᵉ fois de cette famille dans le projet —
+       et cette fois elle a été prise à la pré-vérification, pas par une passe de 16 minutes. */
+    /N.{0,2}emploie setTypePerSet QUE d.{0,2}après cette colonne/.test(_cj), '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

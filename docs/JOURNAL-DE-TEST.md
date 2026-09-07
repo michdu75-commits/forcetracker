@@ -808,6 +808,20 @@ séances du **23/08 et du 24/08**, elles, le portent sur **5/5**. **ft-v989 a bo
 c'est vérifié sur des données réelles, pas sur une fixture.
 **État : écartée — corrigée** (EV-005 la couvre déjà, et il est vert). Gardée avec sa raison (R30).
 
+### 🔵 Le rattachement au catalogue propose un exercice qui n'est PAS le même mouvement
+**07/09/2026** (vu sur les vidéos d'import de Michel, ft-v1158). L'aperçu proposait
+*« ≈ Rattacher **Tirage vertical** à « **Tirage Vertical Alterné Élastique** » ? »* — or ce sont
+**deux mouvements différents** : une poulie haute face à un tirage alterné à l'élastique. Idem
+pour *« Développé épaules guide »* → *« Développé Épaules Machine »*, plus défendable mais pas sûr.
+⭐ **Ce qui rend ce doute utile** : le palier « confirm » **fait bien son travail** — il PROPOSE et
+attend un oui. Rien n'est cassé aujourd'hui. La question est **où passe le seuil** : plus la
+suggestion est mauvaise, plus la personne prend l'habitude de répondre « oui » sans lire.
+⚠️ **Pas promue, et la raison compte** : l'attendu est vérifiable par du code (le score de
+`_matchExercise` sur une paire donnée), mais **il faut d'abord mesurer** sur le catalogue entier
+combien de paires « confirm » sont de faux rapprochements — sans ce chiffre, durcir le seuil
+casserait des rattachements justes pour un défaut dont on ne connaît pas la taille (**R19/R29**).
+**État : à trier.**
+
 ### 🔵 Il attribue une note à la MAUVAISE série
 **19/08/2026.** La note *« barre raque à la 4ème »* était sur la **2ᵉ** série ; Milo l'a placée
 sur la 3ᵉ, et n'a corrigé qu'après que Michel l'ait repris (*« c'est moi qui ai mal lu, sorry »*).
