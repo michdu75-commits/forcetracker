@@ -5785,15 +5785,77 @@ function _viewExPhoto(name){
     +'</div>';
   ov.classList.add('open');
 }
-function _reportCustomEx(name,grp,muscles){
+/* 🔎⛔⛔ D'OÙ VIENT CE NOM ? — LE DÉTECTEUR (ft-v1166)
+   Michel, après avoir posé le principe *« tout sauvegarder et accessible du moment que ce n'est
+   pas des données personnelles »* : ***« vas-y prends le détecteur de noms »***.
+
+   ⭐⭐ CE QUI LE JUSTIFIE EST UNE MESURE, PAS UNE INTUITION : **cinq versions en une semaine** ont
+   eu exactement la même cause — *un nom n'a pas retrouvé sa donnée* : **ft-v1147** (cardio) ·
+   **ft-v1148** (doublons) · **ft-v1156** (l'import suffixait les noms en « (ECH) ») ·
+   **ft-v1160** (le contrôle d'intensité muet faute de record) · **ft-v1163** (la recherche à deux
+   mots). 👉 ***Les cinq ont été trouvées par hasard ou par Michel. Aucune par une mesure.***
+
+   ⛔⛔ ET LE SIGNAL EXISTAIT DÉJÀ À MOITIÉ, C'EST ÇA LE PLUS INSTRUCTIF. Cette fonction est
+   appelée depuis **trois** endroits : quand la personne crée un exercice **exprès**, et depuis
+   les **deux** chemins d'import quand un nom lu dans un document ne correspond à rien. Les trois
+   écrivaient **la même ligne**, sans dire d'où elle venait.
+   👉 ***Or un nom signalé par un IMPORT ou par MILO n'est pas une demande d'exercice : c'est un
+   bug.*** Quelqu'un qui tape « Développé Michel » veut un exercice de plus ; « Développé couché
+   (ECH) » écrit quatre fois par un import veut dire que la chaîne est cassée. **Même ligne,
+   sens opposés** — et c'est exactement pour ça que ft-v1156 est resté invisible jusqu'à ce que
+   Michel envoie une capture.
+
+   ⛔ ET LE CHEMIN DE MILO NE SIGNALAIT RIEN DU TOUT : `_nomMiloVersCatalogue` rend le nom brut
+   quand il ne reconnaît rien, en silence. La famille de bugs la plus coûteuse du moment
+   n'avait **aucun** compteur.
+
+   ⭐ R13 — ON N'INVENTE RIEN : le mécanisme est éprouvé (dédoublonnage local · `no-cors`
+   fire-and-forget, donc jamais bloquant · `anonId` seul · agrégation dans un onglet du Sheet).
+   **Il lui manquait UN CHAMP.**
+
+   ⛔ RIEN DE PERSONNEL NE PART, et c'est le critère de Michel : un nom d'exercice décrit **le
+   monde**, pas la personne. Ni e-mail, ni date de séance, ni charge.
+
+   ⚠️ LE DÉDOUBLONNAGE PORTE MAINTENANT SUR `nom|source` ET NON SUR LE NOM SEUL : sans ça, le
+   **premier** chemin qui signale un nom empêcherait les autres de le faire — on ne saurait
+   jamais que Milo écrit aussi ce nom-là. *Un dédoublonnage trop large ne réduit pas le bruit,
+   il efface le signal.* Conséquence assumée : les noms déjà signalés sous l'ancienne clé
+   repartent **une fois** chacun ; le serveur agrège, donc c'est sans dommage. */
+const _SRC_NOM={perso:1, import:1, milo:1};
+function _reportCustomEx(name,grp,muscles,source){
   if(!S.url)return;
+  const src=_SRC_NOM[source]?source:'perso';   // ⛔ jamais une valeur libre : trois sources, pas plus
   if(!S.reportedCustomEx)S.reportedCustomEx=[];
-  if(S.reportedCustomEx.includes(name))return;
-  S.reportedCustomEx.push(name);
+  const cle=name+'|'+src;
+  if(S.reportedCustomEx.includes(cle))return;
+  S.reportedCustomEx.push(cle);
   localStorage.setItem('ft4_rep_cex',JSON.stringify(S.reportedCustomEx));
-  const body={action:'logCustomExercise',anonId:S.anonId||'anon',name,group:grp||'Autres'};
+  const body={action:'logCustomExercise',anonId:S.anonId||'anon',name,group:grp||'Autres',source:src};
   if(muscles){body.musclesP=muscles.p||[];body.musclesS=muscles.s||[];}
   fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}).catch(()=>{});
+}
+/* 🔎 « CE NOM DÉSIGNE-T-IL UN EXERCICE CONNU ? » — un seul propriétaire (R2).
+   ⛔ Un exercice PERSO compte comme connu : la personne l'a créé exprès, il n'y a rien à
+   signaler. ⛔ Et en cas de doute (exception, catalogue pas encore chargé) on rend **vrai** :
+   *un détecteur qui crie à tort finit par être ignoré* — c'est la panne de ft-v1145. */
+function _nomConnuCatalogue(nom){
+  try{
+    const brut=String(nom||'').trim(); if(!brut) return true;
+    /* ⛔⛔ ON PASSE PAR `_memeExercice`, ET C'EST TOUT LE SUJET — mon premier jet comparait
+       `exId(exNomCatalogue(nom))`, donc **« Developpe Couche » sans accents ressortait INCONNU**
+       alors que l'exercice existe. C'est **exactement** le défaut que ft-v1160 a corrigé dix
+       lignes plus haut, et son commentaire le dit noir sur blanc : *« la normalisation est
+       indispensable, le résolveur NE SUFFIT PAS — `exNomCatalogue('Developpe Couche')` rend
+       `'Developpe Couche'` tel quel »*.
+       👉 ***J'ai reproduit dans le détecteur la faute qu'il est censé détecter*** — et pour un
+       détecteur c'est la pire : il aurait crié sur des noms parfaitement valides, et on aurait
+       appris à l'ignorer (la panne de ft-v1145). *Trouvé par mon propre témoin, pas par une
+       relecture.* On réemploie donc le propriétaire unique (R2), on n'en écrit pas un second. */
+    const meme=(typeof _memeExercice==='function')?_memeExercice(brut):null;
+    if(!meme) return true;                       // ⛔ pas de propriétaire → on se tait
+    if(typeof EXLIB!=='undefined' && EXLIB.some(e=>e&&meme(e.n))) return true;
+    return ((S&&S.customExercises)||[]).some(e=>e&&meme(e.n));
+  }catch(e){ return true; }
 }
 
 function saveCustomEx(){
@@ -5845,7 +5907,7 @@ function _doCreateCustomEx(name,grp){
   if(!S.customExercises)S.customExercises=[];
   const muscles=(_cexMusclesP.length||_cexMusclesS.length)?{p:[..._cexMusclesP],s:[..._cexMusclesS]}:null;
   S.customExercises.push({n:name,g:grp,custom:true,...(muscles&&{muscles}),...(_cexImg&&{img:_cexImg})});
-  persist();_reportCustomEx(name,grp,muscles);hideCustomExForm();filterEx();toast(name+' créé !','success');
+  persist();_reportCustomEx(name,grp,muscles,'perso');hideCustomExForm();filterEx();toast(name+' créé !','success');
 }
 
 // ─── IMPORT PROGRAMME PAR PHOTO ──────────────────────────────
@@ -6374,7 +6436,7 @@ function finalImportProg(){
   }));
   if(toCreate.length){
     if(!S.customExercises)S.customExercises=[];
-    toCreate.forEach(n=>{S.customExercises.push({n,g:'Autres',custom:true});_reportCustomEx(n,'Autres',null);});
+    toCreate.forEach(n=>{S.customExercises.push({n,g:'Autres',custom:true});_reportCustomEx(n,'Autres',null,'import');});
     toast(toCreate.length+' exercice'+(toCreate.length>1?'s':'')+" créé"+(toCreate.length>1?'s':'')+" automatiquement",'info');
   }
   // Construire le programme avec groupes supersets et dropsets
@@ -6744,7 +6806,7 @@ function finalImportHist(){
   }));
   if(toCreate.length){
     if(!S.customExercises)S.customExercises=[];
-    toCreate.forEach(n=>{S.customExercises.push({n,g:'Autres',custom:true});_reportCustomEx(n,'Autres',null);});
+    toCreate.forEach(n=>{S.customExercises.push({n,g:'Autres',custom:true});_reportCustomEx(n,'Autres',null,'import');});
   }
 
   const now=Date.now();
@@ -6927,6 +6989,14 @@ function _nomMiloVersCatalogue(nom){
     const brut=String(nom||'').trim();
     if(!brut || typeof exNomCatalogue!=='function') return brut;
     const cible=exNomCatalogue(brut);
+    /* 🔎⛔⛔ LE 4ᵉ APPELANT, CELUI QUI MANQUAIT (ft-v1166). Cette fonction rendait le nom BRUT
+       quand elle ne reconnaissait rien — **en silence, et sans que personne ne le compte**.
+       C'est pourtant le point exact où passent les noms écrits par Milo, et donc la famille de
+       bugs ft-v1147/1148/1160. *Le seul endroit du code qui SAIT que le nom n'a pas été
+       reconnu était aussi le seul à ne rien en dire.*
+       ⛔ On ne change RIEN au comportement : on rend le même nom qu'avant, on le compte. */
+    if(typeof _nomConnuCatalogue==='function' && !_nomConnuCatalogue(brut)
+       && typeof _reportCustomEx==='function') _reportCustomEx(brut,'Autres',null,'milo');
     if(!cible || cible===brut) return brut;
     // ⛔ La cible doit être un exercice RÉEL — sinon on renommerait vers du vide.
     const existe=(typeof EXLIB!=='undefined') && EXLIB.some(e=>e && e.n===cible);

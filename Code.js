@@ -2080,9 +2080,9 @@ function handleLogCustomExercise_(body) {
     let sheet = ss.getSheetByName('Exercices manquants');
     if (!sheet) {
       sheet = ss.insertSheet('Exercices manquants');
-      sheet.appendRow(['Exercice','Groupe','Signalements','IDs anonymes','Première date','Dernière date','Muscles principaux','Muscles secondaires']);
+      sheet.appendRow(['Exercice','Groupe','Signalements','IDs anonymes','Première date','Dernière date','Muscles principaux','Muscles secondaires','Source']);
       sheet.setFrozenRows(1);
-      sheet.getRange(1,1,1,8).setFontWeight('bold');
+      sheet.getRange(1,1,1,9).setFontWeight('bold');
     }
 
     const data = sheet.getDataRange().getValues();
@@ -2096,6 +2096,14 @@ function handleLogCustomExercise_(body) {
     // d'ajouter l'exercice au catalogue déjà correctement classé, sans avoir à deviner.
     const musP = (body.musclesP || []).join(', ');
     const musS = (body.musclesS || []).join(', ');
+    /* 🔎⛔⛔ D'OÙ VIENT CE NOM ? — ft-v1166. Trois chemins écrivaient ici la MÊME ligne : la
+       personne qui crée un exercice exprès, et les deux imports qui n'ont pas reconnu un nom.
+       👉 ***Un nom signalé par un IMPORT ou par MILO n'est pas une demande, c'est un bug*** —
+       « Développé couché (ECH) » quatre fois veut dire que la chaîne est cassée (ft-v1156),
+       « Développé Michel » veut dire qu'il manque un exercice. **Même ligne, sens opposés.**
+       ⛔ Le serveur ne garde que les trois valeurs connues : jamais une chaîne libre. */
+    const SRC_OK = {perso:1, "import":1, milo:1};
+    const src = SRC_OK[String(body.source || '')] ? String(body.source) : 'perso';
 
     if (rowIdx > 0) {
       const row = data[rowIdx - 1];
@@ -2104,9 +2112,14 @@ function handleLogCustomExercise_(body) {
       if (anonId && !ids.includes(anonId)) ids.push(anonId);
       // on n'écrase pas des muscles déjà renseignés par un envoi vide
       const p2 = musP || (row[6] || ''), s2 = musS || (row[7] || '');
-      sheet.getRange(rowIdx, 3, 1, 6).setValues([_safeRow_([count, ids.join(', '), row[4]||today, today, p2, s2])]);
+      /* ⭐ LES SOURCES S'ACCUMULENT, elles ne se remplacent pas : un même nom peut être créé à
+         la main PUIS écrit par Milo. *Écraser la source ferait disparaître la moitié du signal
+         — exactement le défaut que cette version corrige.* */
+      const srcs = String(row[8] || '').split(', ').filter(Boolean);
+      if (srcs.indexOf(src) < 0) srcs.push(src);
+      sheet.getRange(rowIdx, 3, 1, 7).setValues([_safeRow_([count, ids.join(', '), row[4]||today, today, p2, s2, srcs.join(', ')])]);
     } else {
-      sheet.appendRow(_safeRow_([name, grp, 1, anonId, today, today, musP, musS]));
+      sheet.appendRow(_safeRow_([name, grp, 1, anonId, today, today, musP, musS, src]));
     }
 
     return json_({status:'ok'});

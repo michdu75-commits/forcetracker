@@ -29733,6 +29733,118 @@ console.log('\n-- CCLXI. Le scan sans valeurs ouvre le calibrage (ft-v1165) --')
   await p.unroute(/workers\.dev/);
 }
 
+/* ═══ CCLXIV. LE DÉTECTEUR DE NOMS — D'OÙ VIENT CE NOM ? (07/09/2026, ft-v1166) ══════════════
+   Michel : ***« vas-y prends le détecteur de noms »***, après avoir posé le principe *« tout
+   sauvegarder et accessible du moment que ce n'est pas des données personnelles »*.
+   ⭐⭐ CINQ versions en une semaine ont eu la même cause — *un nom n'a pas retrouvé sa donnée*
+   (ft-v1147 · 1148 · 1156 · 1160 · 1163) — et les cinq ont été trouvées par HASARD ou par Michel.
+   ⛔⛔ Le signal existait à moitié : trois chemins écrivaient la MÊME ligne sans dire d'où elle
+   venait, et le chemin de MILO ne signalait RIEN. *Un nom venu d'un import ou de Milo n'est pas
+   une demande d'exercice : c'est un bug.*
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLXIV. Le détecteur de noms (ft-v1166) --');
+{
+  const R=await p.evaluate(()=>{
+   try{
+    const o={envois:[]};
+    o.fnConnu=typeof _nomConnuCatalogue; o.fnRep=typeof _reportCustomEx;
+    /* ⛔⛔ ON INTERCEPTE `fetch` : l'envoi est `no-cors` fire-and-forget, donc la SEULE façon de
+       vérifier ce qui part est de le capter. Un `grep` dirait que la ligne existe, jamais que
+       le corps porte la bonne source. */
+    const vraiFetch=window.fetch;
+    window.fetch=(u,opt)=>{ try{ const b=JSON.parse((opt&&opt.body)||'{}');
+        if(b.action==='logCustomExercise') o.envois.push({name:b.name, source:b.source}); }catch(e){}
+      return Promise.resolve({ok:true,json:()=>Promise.resolve({})}); };
+    S.url=S.url||'https://exemple.test/exec';
+    S.reportedCustomEx=[]; try{localStorage.removeItem('ft4_rep_cex');}catch(e){}
+
+    /* ═══ ① « CE NOM EST-IL CONNU ? » — le propriétaire unique ═══ */
+    o.connuCatalogue=_nomConnuCatalogue('Développé Couché');      // vrai nom du catalogue
+    o.connuAlias    =_nomConnuCatalogue('Developpe Couche');      // sans accents → résolu
+    o.inconnu       =_nomConnuCatalogue('Développé couché (ECH)');// le cas EXACT de ft-v1156
+    S.customExercises=[{n:'Développé Michel',g:'Autres',custom:true}];
+    o.persoConnu    =_nomConnuCatalogue('Développé Michel');      // ⛔ un perso n'est PAS un défaut
+    o.videConnu     =_nomConnuCatalogue('');                      // ⛔ rien à signaler
+    /* ⛔ EN CAS DE DOUTE ON REND VRAI : un détecteur qui crie à tort finit ignoré (ft-v1145). */
+    const gardeEx=window.exId; window.exId=()=>{throw new Error('catalogue KO');};
+    o.douteConnu=_nomConnuCatalogue('N importe quoi');
+    window.exId=gardeEx;
+
+    /* ═══ ② LES QUATRE SOURCES, ET LE DÉDOUBLONNAGE PAR nom|source ═══ */
+    _reportCustomEx('Squat Bulgare','Jambes',null,'perso');
+    _reportCustomEx('Squat Bulgare','Jambes',null,'perso');   // 2ᵉ fois : rien ne repart
+    _reportCustomEx('Squat Bulgare','Jambes',null,'import');  // MÊME nom, AUTRE source : ça repart
+    _reportCustomEx('Truc','Autres',null,'nimportequoi');     // ⛔ source libre → ramenée à 'perso'
+    o.apresSources=o.envois.slice();
+
+    /* ═══ ③ LE CHEMIN DE MILO — celui qui ne signalait RIEN ═══ */
+    o.envois.length=0; S.reportedCustomEx=[];
+    const rendu=_nomMiloVersCatalogue('Développé couché (ECH)');
+    o.miloEnvoi=o.envois.slice();
+    o.miloRendu=rendu;                                        // ⛔ le comportement ne change PAS
+    o.envois.length=0; S.reportedCustomEx=[];
+    _nomMiloVersCatalogue('Développé Couché');                 // nom connu → silence
+    o.miloConnuSilence=(o.envois.length===0);
+
+    /* ═══ ④ DE BOUT EN BOUT : une séance de Milo, par la VRAIE fonction de production ═══ */
+    o.envois.length=0; S.reportedCustomEx=[];
+    const sess=_normalizeMiloSession({label:'Test',exs:[
+      {name:'Développé couché (ECH)',sets:[{reps:5,kg:50,type:'N'}]},
+      {name:'Développé Couché',      sets:[{reps:5,kg:90,type:'N'}]}]});
+    o.bout={envois:o.envois.slice(), noms:(sess&&sess.exs||[]).map(e=>e.name)};
+
+    window.fetch=vraiFetch;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,240)};}
+  });
+
+  if(R.err) t('CCLXIV n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLXIV ⛔⛔ CONTRÔLE — les deux propriétaires existent',
+      R.fnConnu==='function'&&R.fnRep==='function', R.fnConnu+' / '+R.fnRep);
+    /* ① le résolveur */
+    t('CCLXIV ⭐ un nom du catalogue est connu (et un alias sans accents aussi)',
+      R.connuCatalogue===true && R.connuAlias===true, 'exact='+R.connuCatalogue+' alias='+R.connuAlias);
+    t('CCLXIV ⭐⭐ « Développé couché (ECH) » est INCONNU — le cas exact de ft-v1156',
+      R.inconnu===false, '');
+    t('CCLXIV ⛔ un exercice PERSO compte comme connu (créé exprès, rien à signaler)',
+      R.persoConnu===true, '');
+    t('CCLXIV ⛔ un nom vide ne déclenche rien', R.videConnu===true, '');
+    /* ⛔⛔ LE GARDE QUI COMPTE LE PLUS : en cas de doute, on se TAIT. */
+    t('CCLXIV ⛔⛔ catalogue en panne → on rend VRAI (un détecteur qui crie à tort s\'ignore)',
+      R.douteConnu===true, '');
+    /* ② les sources */
+    const e=R.apresSources||[];
+    t('CCLXIV ⭐⭐ le même nom repart pour une AUTRE source (dédoublonnage nom|source)',
+      e.length===3 && e[0].source==='perso' && e[1].source==='import',
+      JSON.stringify(e));
+    t('CCLXIV ⛔ une source inconnue est ramenée à « perso », jamais transmise telle quelle',
+      e.length===3 && e[2].source==='perso' && e[2].name==='Truc', JSON.stringify(e[2]));
+    /* ③ Milo */
+    t('CCLXIV ⭐⭐ LE CHEMIN DE MILO SIGNALE ENFIN (il ne disait rien du tout)',
+      (R.miloEnvoi||[]).length===1 && R.miloEnvoi[0].source==='milo'
+      && R.miloEnvoi[0].name==='Développé couché (ECH)', JSON.stringify(R.miloEnvoi));
+    /* ⛔⛔ ET LE COMPORTEMENT NE CHANGE PAS D'UN CHEVEU : on compte, on ne répare pas. */
+    t('CCLXIV ⛔⛔ NON-RÉGRESSION — Milo rend exactement le même nom qu\'avant',
+      R.miloRendu==='Développé couché (ECH)', 'reçu : '+R.miloRendu);
+    t('CCLXIV ⛔ un nom CONNU écrit par Milo ne signale rien', R.miloConnuSilence===true, '');
+    /* ④ de bout en bout */
+    t('CCLXIV ⭐⭐ DE BOUT EN BOUT — une séance de Milo signale l\'inconnu et lui seul',
+      !!R.bout && R.bout.envois.length===1 && R.bout.envois[0].source==='milo'
+      && R.bout.noms.length===2, JSON.stringify(R.bout));
+  }
+  /* ⛔ Le serveur garde la source, l'accumule, et n'accepte pas de valeur libre. */
+  const _cj=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  t('CCLXIV ⛔ le Sheet a sa colonne « Source »',
+    /'Muscles secondaires','Source'\]/.test(_cj), '');
+  t('CCLXIV ⛔ le serveur n\'accepte que les trois sources connues',
+    /SRC_OK\s*=\s*\{perso:1,\s*"import":1,\s*milo:1\}/.test(_cj)
+    && /SRC_OK\[String\(body\.source \|\| ''\)\] \? String\(body\.source\) : 'perso'/.test(_cj), '');
+  t('CCLXIV ⭐ les sources s\'ACCUMULENT sur une ligne existante (elles ne s\'écrasent pas)',
+    /srcs\.indexOf\(src\) < 0\) srcs\.push\(src\)/.test(_cj)
+    && /getRange\(rowIdx, 3, 1, 7\)/.test(_cj), '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
