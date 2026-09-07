@@ -808,6 +808,21 @@ séances du **23/08 et du 24/08**, elles, le portent sur **5/5**. **ft-v989 a bo
 c'est vérifié sur des données réelles, pas sur une fixture.
 **État : écartée — corrigée** (EV-005 la couvre déjà, et il est vert). Gardée avec sa raison (R30).
 
+### 🔵 Le superset annoncé par Milo arrive-t-il VRAIMENT dans la séance ?
+**07/09/2026** (demande de Michel : *« je ferai des tests, il va falloir le mettre dans les futures
+idées pour surveiller ça »*). Le superset déclaré par Milo **n'atteignait pas la séance** du
+**12/08 au 05/09** — `_normalizeMiloSession` ne recopiait pas `supersetGroup`, sans erreur ni test
+rouge. Réparé en ft-v1130.
+⭐ **Pourquoi ça reste une entrée utile même après le correctif** : ce n'est pas le superset qu'on
+surveille, c'est **le motif** — trois champs déclarés par Milo se sont perdus au même endroit en un
+mois (`supersetGroup` ft-v1130 · `cardio` ft-v1152 · les avertissements ft-v1153).
+✅ **L'attendu est vérifiable par du CODE** (le champ est là ou il n'y est pas), donc **promouvable**.
+⚠️ **Mais pas tel quel** : le scénario doit exécuter la **chaîne de production complète** — le témoin
+d'origine était vert parce qu'il écrivait à la main dans `_pendingMiloSessions` une forme que la
+production ne produit pas (`BUGS.md` §36). Et il doit **accepter les retraits légitimes** : superset
+refusé sur les mouvements lourds, groupe orphelin délié.
+**État : à trier.** Le cadre général est dans `IDEES-FUTURES.md` (« surveiller ce que Milo déclare »).
+
 ### 🔵 Le rattachement au catalogue propose un exercice qui n'est PAS le même mouvement
 **07/09/2026** (vu sur les vidéos d'import de Michel, ft-v1158). L'aperçu proposait
 *« ≈ Rattacher **Tirage vertical** à « **Tirage Vertical Alterné Élastique** » ? »* — or ce sont

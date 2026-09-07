@@ -4,6 +4,51 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🔗 SURVEILLER CE QUE MILO DÉCLARE ET QUI N'ARRIVE JAMAIS DANS LA SÉANCE (07/09/2026)
+
+**Demande de Michel**, en apprenant que le superset annoncé par Milo n'atteignait pas la séance
+pendant presque un mois : *« je ferai des tests, il va falloir le mettre dans les futures idées
+pour surveiller ça »*.
+
+### ⛔⛔ Le problème n'est pas le superset — c'est que sa disparition était MUETTE
+
+Le superset a été « corrigé » le **12/08** et **n'a jamais fonctionné en production** jusqu'au
+**05/09 (ft-v1130)** : `_normalizeMiloSession`, seul écrivain de `_pendingMiloSessions`, ne
+recopiait pas `supersetGroup`. Aucune erreur, aucun test rouge, aucun voyant. *Le témoin du banc
+était même VERT, parce qu'il écrivait à la main dans `_pendingMiloSessions` une forme que la
+production ne produit pas* (`BUGS.md` §36).
+
+👉 **Et ce n'est pas un cas isolé, c'est un MOTIF** — la même panne, à trois endroits, en un mois :
+- `supersetGroup` (ft-v1130) — *« un champ qu'un normaliseur ne recopie pas est un champ supprimé »*
+- `cardio:{avant,apres}` (ft-v1152) — même point de branchement, la leçon **payée deux fois**
+- les avertissements de séance sur un programme (ft-v1153) — troisième porte, jamais comptée
+
+*Trois fois le même mode de panne, trois fois découvert par hasard ou par une phrase de Michel.*
+
+### 🎯 L'idée : un détecteur, pas un correctif de plus
+
+Un contrôle permanent qui, pour **chaque champ que Milo (ou le cervelet) peut déclarer**, vérifie
+qu'il **atteint réellement `S.wkt`** — en exécutant la chaîne de production complète, jamais en
+écrivant à la main dans une structure intermédiaire.
+
+**Ce qui rend l'idée sérieuse plutôt que jolie** : la liste des champs déclarables est **finie et
+connue** (elle vit dans le prompt du cervelet, `worker.js`), donc le détecteur peut la lire à la
+source au lieu d'être maintenu à la main — sinon il se périmera exactement comme le reste.
+
+### ⚠️ Ce qui n'est PAS tranché
+
+- **Où il vit** : un bloc du banc de parcours, ou un contrôle de `tools/check_regles.py` ? Le
+  premier exécute vraiment la chaîne (donc il mord) mais coûte 16 min ; le second est instantané
+  mais ne peut que **lire du texte** — or *chercher un texte n'est pas vérifier un appel*
+  (`BUGS.md` §46, mesuré le 07/09).
+- **Ce qu'il fait d'un champ légitimement filtré** : le superset est **retiré exprès** sur les
+  mouvements lourds, le cardio est **annulé** si la durée est absurde. Un détecteur qui crierait
+  sur ces cas-là apprendrait à ignorer l'alarme — *exactement la panne de ft-v1145*.
+- ⛔ **Et il ne faut pas le construire avant d'avoir compté** combien de champs sont réellement
+  concernés : trois cas connus ne font pas forcément une famille à outiller (**R19**).
+
+---
+
 ## ⛔⛔ UN JOUR DE PROGRAMME NE PASSE PAR AUCUN GARDE-FOU DE LA SÉANCE — mesuré le 06/09/2026
 
 **Michel**, juste après ft-v1152 : *« malheureusement je vais intégrer un programme »*, puis
