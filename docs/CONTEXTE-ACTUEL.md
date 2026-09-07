@@ -8,7 +8,7 @@
 
 - **Version en ligne (live) :** `ft-v1160` — 🔑 **LE CONTRÔLE D'INTENSITÉ POUVAIT ÊTRE MUET POUR
   UNE RAISON DE NOM — et c'est le COMPTEUR de ft-v1146 qui l'a révélé.**
-  ⏳ **Suite complète VERTE** : **parcours 3084/3084** (+13, bloc **CCLVIII**), calculs 339/339,
+  ⏳ **Suite complète VERTE** : **parcours 3095/3095** (+13, bloc **CCLVIII**), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⭐⭐ **Capture de Michel** : *« 4 séances proposées par Milo · dont jugeables : **0** (0 %) »* —
   donc le contrôle ne s'est **jamais** déclenché, alors qu'il a des records au couché, au squat et
