@@ -415,6 +415,11 @@ const _HELP_DATA={
          connaissait pas \u00e9tait CR\u00c9\u00c9 en silence, et il ressemblait \u00e0 l'\u00e9cran exactement \u00e0 un
          exercice reconnu. Michel l'a d\u00e9couvert \u00e0 la salle, devant un exercice sans figurine et
          sans historique. On dit donc AUSSI ce que \u00e7a co\u00fbte, sinon le bouton n'a pas d'enjeu. */
+      /* \ud83c\udfc3 ft-v1168 \u2014 CE QU'ON NE DEVINE PAS : le trou existait depuis toujours (un jour de
+         programme n'avait pas de bloc cardio), et Michel l'a vu \u00e0 la salle sur \u00ab Cardio l\u00e9ger \u00bb
+         affich\u00e9 avec une figurine de JAMBES. L'aide dit AUSSI les deux limites, qui se devinent
+         encore moins que la fonctionnalit\u00e9 elle-m\u00eame. */
+      {i:'\ud83c\udfc3',t:'\ud83c\udfc3 **Le cardio d\'un programme va dans le bloc Cardio**, plus dans la liste des exercices. Une ligne du genre \u00ab Cardio l\u00e9ger \u2014 8 minutes \u00bb n\'est pas un exercice : elle n\'a ni charge ni figurine, et elle faussait ton tonnage. \u2b50 \u00c7a marche AUSSI sur les programmes d\u00e9j\u00e0 import\u00e9s, au moment de les charger \u2014 rien \u00e0 r\u00e9importer. \u26d4 Deux limites : un cardio au MILIEU de la s\u00e9ance reste un exercice, et un exercice qui porte une CHARGE n\'est jamais d\u00e9plac\u00e9, m\u00eame si sa note parle de minutes.'},
       {i:'\u26a0\ufe0f',t:'\u26a0\ufe0f L\'aper\u00e7u d\'import <b>marque en orange</b> les exercices qu\'il ne conna\u00eet pas et qui vont \u00eatre <b>cr\u00e9\u00e9s</b>. Un exercice cr\u00e9\u00e9 n\'a <b>ni photo, ni figurine, ni historique</b> \u2014 le bouton <b>\u00ab \ud83d\udd17 Rattacher \u00bb</b> le relie \u00e0 celui de ton catalogue et tout revient. <i>Exemple : \u00ab Presse 45 degr\u00e9s \u00bb \u2192 <b>Press Jambes 45\u00b0</b>.</i>'},
       {i:'📷',t:'<b>Un programme sur papier ou en PDF ?</b> Tape <b>Programme</b> → <b>« 📷 Importer un programme »</b> : l\'IA lit ta photo ou ton PDF et <b>garde tes jours</b> (Push, Pull, Legs…). ⚠️ C\'est <b>la seule façon</b> d\'avoir un programme à plusieurs jours — celui qu\'on crée à la main est forcément une séance unique.'},
       /* 🛡️ ft-v1153 — CE QU'ON NE DEVINE PAS : ces avertissements existaient DEPUIS UN MOIS,
