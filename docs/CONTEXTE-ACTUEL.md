@@ -8,6 +8,8 @@
 
 - **Version en ligne (live) :** `ft-v1160` — 🔑 **LE CONTRÔLE D'INTENSITÉ POUVAIT ÊTRE MUET POUR
   UNE RAISON DE NOM — et c'est le COMPTEUR de ft-v1146 qui l'a révélé.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **site** run **#976**, job `deploy` success à
+  **11:45:29 UTC** sur `7917e83d` — ⛔ aucun run backend attendu, `Code.js` non modifié.
   ⏳ **Suite complète VERTE** : **parcours 3095/3095** (+13, bloc **CCLVIII**), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⭐⭐ **Capture de Michel** : *« 4 séances proposées par Milo · dont jugeables : **0** (0 %) »* —
