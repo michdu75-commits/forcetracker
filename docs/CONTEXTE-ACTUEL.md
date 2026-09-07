@@ -6,7 +6,33 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1165` — 📷 **LE SCAN TROUVE LE PRODUIT, N'A AUCUNE VALEUR,
+- **Version en ligne (live) :** `ft-v1166` — 🔎 **LE DÉTECTEUR DE NOMS : ARRÊTER D'ATTENDRE QUE
+  MICHEL TOMBE DESSUS.**
+  ⏳ **Suite VERTE** : parcours (voir le journal), calculs 339/339, muscles 241/241, croisés 50/50,
+  dates 9/9, données classées 0 trou.
+  Michel, après avoir posé le principe *« tout sauvegarder et accessible du moment que ce n'est pas
+  des données personnelles »* : ***« vas-y prends le détecteur de noms »***.
+  ⭐⭐ **CINQ versions en une semaine ont eu la même cause** — *un nom n'a pas retrouvé sa donnée*
+  (ft-v1147 · 1148 · 1156 · 1160 · 1163) — et **les cinq ont été trouvées par hasard ou par Michel,
+  aucune par une mesure**.
+  ⛔⛔ **Le signal existait à moitié** : `_reportCustomEx` était appelée depuis **trois** endroits
+  (la personne qui crée un exercice exprès, et les **deux** imports) qui écrivaient **la même
+  ligne** sans dire d'où elle venait. 👉 ***Un nom venu d'un import ou de Milo n'est pas une
+  demande d'exercice : c'est un bug.*** Et **le chemin de Milo ne signalait rien du tout**.
+  ⭐ **R13, il manquait UN CHAMP** : les 4 appelants portent leur **source** (`perso`/`import`/
+  `milo`), le dédoublonnage passe à **`nom|source`** (sinon le premier chemin efface les autres),
+  et le Sheet gagne une colonne **Source** qui **s'accumule**.
+  ⛔ **On compte, on ne répare pas** : aucun écran, aucun comportement changé. Et rien de personnel
+  ne part — un nom d'exercice décrit **le monde**, pas la personne.
+  ⚠️⚠️ **Mon propre témoin m'a attrapé** : mon premier jet ne normalisait pas, donc « Developpe
+  Couche » sans accents ressortait **inconnu** — ***j'avais reproduit dans le détecteur la faute
+  qu'il détecte*** (le défaut exact de ft-v1160, dix lignes plus haut). Corrigé en réemployant
+  `_memeExercice`.
+  ⏭️ **Pas encore couvert** : les **recherches qui ne rendent rien** (le cas ft-v1163) — même
+  famille, autre point de mesure. Et **pas d'écran dans l'app** : ça se lit dans le Sheet.
+  ⚠️ **`Code.js` modifié → déploiement backend automatique, à vérifier des DEUX côtés.**
+
+- **Version précédente :** `ft-v1165` — 📷 **LE SCAN TROUVE LE PRODUIT, N'A AUCUNE VALEUR,
   ET LAISSE LA PERSONNE DANS UN CUL-DE-SAC.**
   ⏳ **Suite VERTE** : **parcours 3171/3171** (+19, bloc **CCLXIII**), calculs 339/339, muscles
   241/241, croisés 50/50, dates 9/9, données classées 0 trou.

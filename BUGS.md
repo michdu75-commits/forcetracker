@@ -3041,3 +3041,39 @@ trois fois en six semaines.
 
 *Voisine de **§43** (deux portes mènent au même endroit, une seule est équipée) et de **§47**
 (le garde-fou dont le plancher éteint le pourcentage — même produit, même semaine).*
+
+## 49. 🏷️ TROIS CHEMINS ÉCRIVENT LA MÊME LIGNE, ET ELLE NE DIT PAS D'OÙ ELLE VIENT **(07/09/2026, ft-v1166)**
+
+**Un signal peut exister, être collecté, et rester illisible parce qu'il manque sa PROVENANCE.**
+`_reportCustomEx` remontait les exercices inconnus depuis **trois** appelants : la personne qui en
+crée un **exprès**, et les **deux** chemins d'import quand un nom lu dans un document ne correspond
+à rien. Les trois écrivaient **la même ligne** du même onglet.
+
+**⛔⛔ Or les deux cas veulent dire l'inverse l'un de l'autre** : *« Développé Michel »* tapé par
+quelqu'un = **il manque un exercice au catalogue**. *« Développé couché (ECH) »* écrit quatre fois
+par un import = **la chaîne est cassée**. 👉 ***Même ligne, sens opposés*** — donc le bug de
+ft-v1156 était déjà dans le Sheet, sous les yeux, et indiscernable d'une demande légitime.
+
+**⛔ Et le 4ᵉ chemin ne signalait rien du tout** : `_nomMiloVersCatalogue` rendait le nom brut en
+silence. *Le seul endroit du code qui SAIT que le nom n'a pas été reconnu était aussi le seul à ne
+rien en dire.*
+
+**⭐ À quoi on la reconnaît** : une donnée collectée depuis plusieurs points d'entrée, dans un
+format qui ne les distingue pas. Le symptôme est qu'on **regarde la table et qu'on ne sait pas
+quoi en faire** — pas qu'elle soit vide.
+
+**⭐⭐ Ce qui protège aujourd'hui** : chaque appelant porte sa **source**, le dédoublonnage local
+porte sur **`nom|source`** (sur le nom seul, *le premier chemin qui signale empêche les autres* —
+un dédoublonnage trop large n'enlève pas du bruit, **il efface le signal**), et les sources
+**s'accumulent** sur une ligne existante au lieu de s'écraser.
+
+**⚠️ ET LE PIÈGE PROPRE AUX DÉTECTEURS, payé dans la version même** : mon premier jet comparait le
+nom **sans le normaliser**, donc un nom sans accents ressortait « inconnu » alors que l'exercice
+existe. ***J'avais reproduit dans le détecteur la faute qu'il est censé détecter*** (le défaut
+exact de ft-v1160, dix lignes plus haut). 👉 *Un détecteur qui crie à tort ne produit pas du bruit :
+il apprend aux gens à l'ignorer* — c'est la panne de ft-v1145. **Un détecteur se teste d'abord sur
+ce qu'il ne doit PAS signaler.**
+
+*Voisine de **§15** (la règle juste, définie trop étroit) et de **§43** (deux portes mènent au même
+endroit, une seule est équipée).*
+
