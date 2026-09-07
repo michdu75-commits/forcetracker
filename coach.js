@@ -4787,8 +4787,20 @@ const _INTENSITE_CLE='ft4_intensiteStats';
    Le jour où `_INT_TENUE` (0,93), la marge de 2 % ou la formule bougent, **les chiffres
    d'avant ne mesurent plus la même chose**. Un compteur qui mélange deux règles est pire
    qu'un compteur absent : il donne une fréquence dont personne ne sait de quoi elle parle.
-   ⚠️ À INCRÉMENTER si le contrôle change de seuil ou de formule. */
-const _INTENSITE_REGLE=1;
+   ⚠️⚠️ À INCRÉMENTER DÈS QUE LES CHIFFRES D'AVANT NE MESURENT PLUS LA MÊME CHOSE — seuil,
+   formule, **ou la façon dont le record est TROUVÉ**.
+
+   ⛔⛔ ET CE TROISIÈME CAS EST ARRIVÉ, LE 07/09, PARCE QUE LA CONSIGNE NE LE NOMMAIT PAS.
+   Elle disait *« à incrémenter si le contrôle change de **seuil** ou de **formule** »*. ft-v1160 a
+   changé la manière de retrouver un record (`S.prs[nom]` brut → `_recordPourNom`) : **ni un seuil,
+   ni une formule** — et pourtant *les séances comptées avant ne mesurent plus la même chose*, elles
+   étaient comptées « non jugeables » à tort. 👉 ***La règle était juste, elle était définie trop
+   étroit*** (`BUGS.md` famille 15). Le numéro n'a donc pas bougé, et les 4 séances mal comptées de
+   Michel allaient rester dans le même total que les nouvelles.
+   ⭐ **Le critère est désormais l'EFFET, pas la liste des causes** : *si un chiffre d'avant ne veut
+   plus dire ce qu'il disait, on incrémente.* Une liste de causes a toujours un trou ; une question
+   n'en a pas. */
+const _INTENSITE_REGLE=2;   // 1 = avant ft-v1160 (lookup brut, séances sous-comptées) · 2 = depuis
 /**
  * Compte une séance proposée par Milo, et si elle a déclenché le contrôle d'intensité.
  * @param {object[]} exs     les exercices de la séance proposée (forme `_pendingMiloSessions`)

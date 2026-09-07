@@ -6,7 +6,27 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1160` — 🔑 **LE CONTRÔLE D'INTENSITÉ POUVAIT ÊTRE MUET POUR
+- **Version en ligne (live) :** `ft-v1161` — 🔢 **J'AI CHANGÉ LA FAÇON DE COMPTER SANS
+  INCRÉMENTER LA VERSION DE RÈGLE — le mécanisme existait, fait exactement pour ça.**
+  ⏳ **Suite complète VERTE** : **parcours 3102/3102** (+7, bloc **CCLIX**), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  ⭐ **Michel rouvre son compteur après ft-v1160 : chiffres identiques** (4 séances, 0 jugeable).
+  *C'était normal* — le compteur ne recalcule jamais le passé et ne bouge que quand Milo propose
+  une nouvelle séance. ⛔⛔ **Mais en vérifiant pourquoi** : ft-v1160 a changé la manière de
+  retrouver un record et **`_INTENSITE_REGLE` est resté à 1** → les 4 séances comptées avec
+  l'ancien lookup cassé allaient rester dans le **même total** que les nouvelles.
+  ⭐⭐ **Et la cause n'est pas l'étourderie** : la consigne disait *« à incrémenter si le contrôle
+  change de SEUIL ou de FORMULE »* — mon changement n'était **ni l'un ni l'autre**.
+  👉 ***La règle était juste, définie trop étroit*** (`BUGS.md` §15, le motif de ft-v1153).
+  ⭐ **Correctif en deux temps** : ① la version passe à **2** (le compteur repart proprement) ;
+  ② ⭐⭐ **la consigne dit désormais l'EFFET, pas une liste de causes** — *« dès que les chiffres
+  d'avant ne mesurent plus la même chose »*. **Une liste de causes a toujours un trou.**
+  ⚠️ **La date « depuis » repart aussi** : sinon l'écran lit une fréquence sur une période qui
+  n'est pas la sienne.
+  ⏭️ **Ne fait pas** : recalculer les 4 séances passées — **impossible**, le compteur ne garde
+  que des **nombres**, jamais le détail, et c'est voulu (Constitution **P3**).
+
+- **Version précédente :** `ft-v1160` — 🔑 **LE CONTRÔLE D'INTENSITÉ POUVAIT ÊTRE MUET POUR
   UNE RAISON DE NOM — et c'est le COMPTEUR de ft-v1146 qui l'a révélé.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **site** run **#976**, job `deploy` success à
   **11:45:29 UTC** sur `7917e83d` — ⛔ aucun run backend attendu, `Code.js` non modifié.
