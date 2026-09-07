@@ -8,9 +8,8 @@
 
 - **Version en ligne (live) :** `ft-v1162` — ⚡ **156 kcal DANS 30 g DE POUDRE : PHYSIQUEMENT
   IMPOSSIBLE, ET L'APP NE DISAIT RIEN.**
-  ⏳ **Passe complète EN COURS** (dernier point : **1970 verts, 0 rouge**) — bloc **CCLX** joué
-  seul : **20/20**. Déjà verts : calculs 339/339, muscles 241/241, croisés 50/50, dates 9/9,
-  données classées 0 trou. ⚠️ **Chiffre final à recaler avant de pousser sur `master`.**
+  ⏳ **Suite VERTE** : **parcours 3122/3122** (+20, bloc **CCLX**, ses 20 témoins verts), calculs
+  339/339, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   Michel, excédé, sur la **même ligne « Iso zero protein (ASL) »** qu'en ft-v1103 et ft-v1104 :
   *« toujours ma prot ça déconne et le calcul est faux. Pour 30 grammes de poudre j'ai 26,7 de
   protéine et là ça me marque n'importe quoi. Y'a un truc qui est mal codé dans la nutrition
