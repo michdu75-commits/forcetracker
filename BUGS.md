@@ -3005,3 +3005,39 @@ la règle existait déjà (**R8**), appliquée à Milo depuis ft-v713.
 - ⭐ **Le réflexe** : avant de corriger la sortie d'un modèle, **relire son entrée**. Pour chaque
   source que la consigne nomme (« le catalogue », « ton planning », « ses records »), vérifier
   qu'elle est vraiment dans le contexte — c'est R8, et elle se re-vérifie à chaque nouvelle porte.
+
+
+## 48. 🚪 LA PORTE DE SECOURS N'EST PAS PROPOSÉE LÀ OÙ LE CHEMIN S'ARRÊTE **(07/09/2026, ft-v1165)**
+
+**Un chemin qui échoue proprement peut quand même être un cul-de-sac.** `_lookupBarcode` faisait
+tout bien : il détectait que la fiche Open Food Facts n'avait aucune valeur, le disait
+(*« saisis à la main »*), et s'arrêtait. ⛔ **Mais l'outil qui règle exactement ce problème
+existait à trois centimètres** — le calibrage « valeurs pour 100 g » (ft-v1110) — et n'était
+jamais proposé. *Le message était vrai, l'issue était fausse.*
+
+**⛔ À quoi on la reconnaît** : un message d'erreur honnête qui laisse la personne devant un
+formulaire vide, alors que l'app dispose déjà de ce qu'il faut pour l'aider. Le symptôme est
+une phrase du genre *« c'est chiant de mettre ses aliments, alors si ça ne fonctionne pas »* —
+pas un bug report, une **lassitude**.
+
+**⛔⛔ ET LE COÛT EST DIFFÉRÉ, DONC INVISIBLE** : ici la personne tapait ses macros pour une
+quantité inconnue, l'entrée partait avec `per100:null` **et** `q:null`, et **plus rien ne pouvait
+la rescaler — ni ce jour-là ni jamais**. *Un cul-de-sac ne se voit pas au moment où on y entre.*
+
+**⭐ Ce qui la trouve** : quand un chemin dit *« saisis à la main »*, *« réessaie »*, *« non
+reconnu »* — chercher si l'app possède déjà l'outil qui résout le cas, et **l'ouvrir** au lieu
+de le mentionner. C'est **R13** (la porte manque, pas la fonctionnalité) appliqué aux **branches
+d'échec** au lieu des écrans principaux — le même diagnostic que ft-v1023, ft-v1155 et celui-ci,
+trois fois en six semaines.
+
+**⚠️ Deux pièges rencontrés en la refermant, tous deux mesurés :**
+- ⛔ **une absence peut se faire passer pour une valeur** — `_bcNutr` restait posé avec des
+  **zéros**, donc le code voisin croyait qu'un pour-100 g était connu et **cachait tout le
+  réglage de quantité**, sans la moindre erreur ;
+- ⛔ **ouvrir un bloc, c'est aussi devoir le rendre** (**R15**) : le formulaire ne remettait pas
+  le bloc de calibrage à zéro entre deux aliments — rare tant qu'il s'ouvrait à la main,
+  **courant** dès qu'un chemin l'ouvre tout seul, et *l'étiquette du produit précédent restait
+  prête à être appliquée au suivant*.
+
+*Voisine de **§43** (deux portes mènent au même endroit, une seule est équipée) et de **§47**
+(le garde-fou dont le plancher éteint le pourcentage — même produit, même semaine).*

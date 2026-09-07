@@ -6,7 +6,32 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1164` — 📚 **LE MODÈLE QUI LIT LE PDF N'AVAIT JAMAIS VU LE
+- **Version en ligne (live) :** `ft-v1165` — 📷 **LE SCAN TROUVE LE PRODUIT, N'A AUCUNE VALEUR,
+  ET LAISSE LA PERSONNE DANS UN CUL-DE-SAC.**
+  ⏳ **Suite VERTE** : **parcours 3171/3171** (+19, bloc **CCLXIII**), calculs 339/339, muscles
+  241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  Michel : *« c'est surtout que c'est chiant de mettre ses aliments, alors si ça fonctionne
+  pas »*, puis la précision qui recadre tout : ***« je l'ai rentré avec le code-barres »***.
+  ⭐⭐ **REPRODUIT** avec une fiche Open Food Facts qui n'a qu'un **nom et une marque**
+  (`nutriments:{}`) — très fréquent sur les produits de marque. L'app jetait **trois** choses
+  qu'elle avait : le **nom** (champ vide, à retaper) · la disponibilité du **bloc quantité**,
+  parce qu'un `_bcNutr` **de zéros** faisait croire à `_afMajAncre` qu'un pour-100 g existait et
+  **cachait tout le réglage**, sans la moindre erreur · et le bouton **« ⚖️ Saisir les valeurs
+  pour 100 g »**, jamais proposé.
+  ⛔ **Cul-de-sac DÉFINITIF** : `per100:null` + `q:null` → plus rien ne rescale, jamais.
+  ⭐ **R13, la porte manquait** : le calibrage de ft-v1110 s'ouvre désormais tout seul et règle le
+  produit **pour toujours** (le pour-100 g est enregistré).
+  ⛔⛔ **La JUMELLE a été trouvée par MICHEL** (*« ça risque de merder aussi pour l'étiquette,
+  c'est pareil »*) : `onFoodLabelFile` portait la ligne à l'identique. **Un propriétaire, deux
+  appelants** (R8).
+  ⚠️ **Et un TÉMOIN a trouvé un 3ᵉ défaut** : `openAddFood` ne rendait pas le bloc de calibrage
+  (R15) — l'étiquette du produit précédent serait restée prête à être appliquée au suivant.
+  ⭐⭐ **RÉPONSE MESURÉE à sa question *« je dois les rentrer encore une fois ? »* : NON.** Fiche
+  complète → rien à faire · poids en grammes enregistré → marche déjà · ligne **nue** → on
+  **rescanne une fois**, on calibre, c'est réglé. ⛔ Rien du journal n'est faux ni perdu.
+  ⚠️ **Michel doit vérifier sur Safari/iPhone en rescannant sa ratatouille.**
+
+- **Version précédente :** `ft-v1164` — 📚 **LE MODÈLE QUI LIT LE PDF N'AVAIT JAMAIS VU LE
   CATALOGUE — et c'est Michel qui a pointé la bonne cause.**
   ✅ **DÉPLOIEMENTS VÉRIFIÉS VERTS DES DEUX CÔTÉS** (R18), sur `607664e3` : **site** run **#988**
   (job `deploy` success, 15:41:20 UTC) · **backend Apps Script** run **#111** (job `deploy` success,
