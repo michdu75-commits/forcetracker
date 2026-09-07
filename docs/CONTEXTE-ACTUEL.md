@@ -8,6 +8,10 @@
 
 - **Version en ligne (live) :** `ft-v1158` — 🔥 **MON CORRECTIF ft-v1156 N'A PAS PRIS — le modèle
   a relu la nouvelle règle et ne l'a PAS suivie.**
+  ✅ **DÉPLOIEMENTS VÉRIFIÉS VERTS DES DEUX CÔTÉS** (R18), sur `95aca142` : **site** run **#969**
+  (job `deploy` success, 7 étapes vertes, 10:00:41 UTC) · **backend Apps Script** run **#110**
+  (job `deploy` success, **12 étapes** dont *« Pousser Code.js »*, *« Redéployer la web app »* et
+  *« Vérifier que le backend répond VRAIMENT »*, 10:00:42 UTC).
   ⏳ **Suite complète VERTE** : **parcours 3071/3071** (+25, bloc **CCLVI**), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⭐⭐ **Mesuré sur DEUX enregistrements d'écran de Michel** (11:06 local = **après** le déploiement
