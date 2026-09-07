@@ -8,6 +8,9 @@
 
 - **Version en ligne (live) :** `ft-v1163` — 🔎 **LA RECHERCHE D'EXERCICES NE SAVAIT PAS CHERCHER
   DEUX MOTS — « biceps marteau » rendait ZÉRO.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **site** run **#985**, étape *« Déployer sur GitHub
+  Pages »* success à **13:37:41 UTC** sur `d2f2ed1d` — ⛔ aucun run backend attendu, `Code.js`
+  non modifié.
   ⏳ **Suite complète VERTE** : **parcours 3135/3135** (+13, bloc **CCLXI**), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⭐⭐ **Mesuré** : l'exercice s'appelle **« Marteau »**, groupe **« Biceps »** — et `filterEx`
