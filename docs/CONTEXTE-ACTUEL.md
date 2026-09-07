@@ -6,7 +6,11 @@
 
 ---
 
-- **Version en cours (ft-v1157) :** 📅 **L'IMPORT RECOPIAIT LA DATE DE L'EXEMPLE DU PROMPT.**
+- **Version en ligne (live) :** `ft-v1157` — 📅 **L'IMPORT RECOPIAIT LA DATE DE L'EXEMPLE DU PROMPT.**
+  ✅ **DÉPLOIEMENTS VÉRIFIÉS VERTS DES DEUX CÔTÉS** (R18), sur `d389883b` : **site** run **#967**
+  (success, 08:17:51 UTC) · **backend Apps Script** run **#109** (success, 08:18:01 UTC).
+  ⏳ **Suite complète VERTE** : **parcours 3046/3046** (+11, bloc **CCLV**), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   Capture de Michel juste après l'import : *« Semaine 4 / 4 · 23 mars → 19 avr. »* — un programme
   **neuf** affiché comme **terminé**. ⭐⭐ Son PDF ne porte **aucune date** : le « 23 mars » venait
   du **schéma d'exemple** de `handleImportProgram_` (`"startDate":"2026-03-23"`).
@@ -21,7 +25,7 @@
   ⏭️ **Ne fait pas** : corriger le programme **déjà** importé (✏️ → CYCLE, ou réimporter).
   ⚠️ **`Code.js` modifié → déploiement backend automatique, à vérifier des DEUX côtés (R18).**
 
-- **Version en ligne (live) :** `ft-v1156` — 📥 **L'IMPORT FAISAIT « 1 EXERCICE = 1 LIGNE ».**
+- **Version précédente :** `ft-v1156` — 📥 **L'IMPORT FAISAIT « 1 EXERCICE = 1 LIGNE ».**
   ✅ **DÉPLOIEMENTS VÉRIFIÉS VERTS DES DEUX CÔTÉS** (R18), sur `3bd396c0` :
   · **site** run **#965**, job `deploy` success, 7 étapes vertes à **06:55:29 UTC** ;
   · **backend Apps Script** run **#108**, job `deploy` success, **12 étapes** dont *« Pousser
