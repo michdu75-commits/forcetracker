@@ -7,6 +7,7 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1159` — ⚖️ **LE CHAMP « POIDS DE CETTE PORTION » RÉPOND ENFIN À LA FRAPPE.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#974**, job `deploy` success, 11:22:15 UTC.
   ⏳ **Suite complète VERTE** : **parcours 3082/3082** (+11, bloc CCLVII), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⏳ **Déploiement à vérifier** (R18) — ⛔ `coach.js`/`log.js`/`Code.js`/`worker.js` **non touchés** → ni backend ni worker.
