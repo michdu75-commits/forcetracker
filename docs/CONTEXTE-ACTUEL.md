@@ -6,7 +6,11 @@
 
 ---
 
-- **Version en cours (ft-v1155) :** 📷 **LA PORTE D'IMPORT MANQUAIT LÀ OÙ ON CHERCHE.**
+- **Version en ligne (live) :** `ft-v1155` — 📷 **LA PORTE D'IMPORT MANQUAIT LÀ OÙ ON CHERCHE.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#962** sur `eac493a5`, **job `deploy` success**,
+  les 7 étapes vertes à **05:31:35 UTC**. ⛔ `Code.js` non modifié → aucun déploiement backend attendu.
+  ⏳ **Suite complète VERTE** : **parcours 3023/3023** (+14, bloc **CCLIII**), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   Michel, en voulant intégrer son programme (PDF) : *« euh, j'intègre un programme comment ? »*,
   puis ***« si moi je ne le vois pas, les utilisateurs ne vont pas le voir non plus »***.
   ⛔⛔ **Mesuré** : **4 façons** d'obtenir un programme, **3 étaient dans « Mes Programmes »** —
@@ -26,7 +30,7 @@
   manque derrière celui-ci (décision produit, touche l'éditeur + l'enregistrement + le chargement).
   ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 
-- **Version en ligne (live) :** `ft-v1154` — 🎚️ **DEUX CHOSES SUR LE RIR.**
+- **Version précédente :** `ft-v1154` — 🎚️ **DEUX CHOSES SUR LE RIR.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#960** sur `8d6271ac`, **job `deploy` success**,
   les 7 étapes vertes à **21:25:30 UTC**. ⛔ `Code.js` non modifié → aucun déploiement backend attendu.
   ⏳ **Suite complète VERTE sur l'arbre fusionné** : **parcours 3009/3009** (+13, bloc **CCL**),
