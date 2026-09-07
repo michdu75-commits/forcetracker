@@ -6,7 +6,30 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1161` — 🔢 **J'AI CHANGÉ LA FAÇON DE COMPTER SANS
+- **Version en ligne (live) :** `ft-v1163` — 🔎 **LA RECHERCHE D'EXERCICES NE SAVAIT PAS CHERCHER
+  DEUX MOTS — « biceps marteau » rendait ZÉRO.**
+  ⏳ **Suite complète VERTE** : **parcours 3115/3115** (+13, bloc **CCLXI**), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  ⭐⭐ **Mesuré** : l'exercice s'appelle **« Marteau »**, groupe **« Biceps »** — et `filterEx`
+  cherchait la requête **d'un seul bloc**. *Chacun des deux mots marche seul, les deux non.*
+  ⭐ **Correctif = un REPLI qui n'agit QU'À VIDE** : si la recherche normale ne rend rien et que
+  la requête a ≥ 2 mots, on cherche les exercices où **TOUS** les mots se trouvent (nom · groupe ·
+  terme anglais · ancien nom), dans n'importe quel ordre.
+  ⛔⛔ **Le « à vide » est ce qui le rend sûr** : cette fonction porte **déjà quatre**
+  élargissements et un rang de pertinence né d'une régression que j'avais créée en l'élargissant.
+  *On n'ouvre pas un cinquième chemin dans le flux principal, on pose un filet sous le vide.*
+  ⚠️⚠️ **LA LEÇON DE MÉTHODE, elle vaut plus que le correctif** : au premier jet, **3 mutations
+  sur 4 n'ont pas mordu** — mes témoins de non-régression étaient écrits en « vide / pas vide ».
+  👉 ***Un témoin qui ne regarde que la présence ne voit ni un élargissement ni un
+  rétrécissement.*** Il a fallu MESURER (dc 8 · squat 43 · tirage horizontal 32 · biceps
+  marteau 1 · biceps zzzz 0) pour écrire des témoins capables de rougir.
+  ⭐⭐ **Et le meilleur témoin est sorti de la mesure** : « tirage horizontal » rend **32**
+  résultats par FAMILLE (le retour de **Tatiana**, 02/08) — un repli actif ailleurs qu'à vide les
+  ramènerait à **4**.
+  ⏭️ **Ne fait pas** : aucune tolérance aux fautes de frappe (« marteaux », « bicep ») — autre
+  problème, autre risque, non mesuré.
+
+- **Version précédente :** `ft-v1161` — 🔢 **J'AI CHANGÉ LA FAÇON DE COMPTER SANS
   INCRÉMENTER LA VERSION DE RÈGLE — le mécanisme existait, fait exactement pour ça.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **site** run **#979**, job `deploy` success, 7 étapes
   vertes à **12:30:09 UTC** sur `9c870b3f` — ⛔ aucun run backend attendu, `Code.js` non modifié.

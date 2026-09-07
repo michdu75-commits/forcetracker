@@ -5443,6 +5443,9 @@ function filterEx(){
     // d'un tri pour le compenser.
     // On classe donc par pertinence décroissante ; l'élargissement par famille reste utile
     // mais passe APRÈS tout ce qui correspond vraiment au nom.
+    /* 🔎 LE REPLI « TOUS LES MOTS » — ft-v1163 (07/09/2026). Rempli plus bas, et SEULEMENT si la
+       recherche normale n'a rien rendu. Déclaré ici parce que `_rang` doit pouvoir le lire. */
+    let _tousLesMots=null;
     const _rang=e=>{
       const nn=_normEx(e.n);
       if(nn===qn) return 0;                                   // le nom exact
@@ -5454,9 +5457,14 @@ function filterEx(){
       if(_synDebut&&_synDebut.has(e.n)) return 5;             // synonyme dont la frappe n'est pas finie
       if(_anciensNoms(e.n).some(a=>_normEx(a).indexOf(qn)>=0)) return 6;  // un ANCIEN nom
       if(_normEx(e.g).indexOf(qn)>=0) return 7;               // le groupe musculaire
+      /* ⚠️ 7,5 ET PAS UN ENTIER, EXPRÈS. La séparation « vrais » / « même famille » se lit
+         `_rang(e)<8` et `_rang(e)===8` juste en dessous : un 8ᵉ rang décalerait la famille à 9 et
+         il faudrait retoucher les deux tests. *On ne renumérote pas une échelle qui sert à autre
+         chose pour y insérer un cran* — le demi-rang se trie exactement pareil et ne touche rien. */
+      if(_tousLesMots&&_tousLesMots.has(e.n)) return 7.5;     // tous les mots trouvés, mais pas la phrase
       return 8;                                               // même famille de mouvement
     };
-    const f=all.filter(e=>{
+    let f=all.filter(e=>{
       if((_synExact&&_synExact.has(e.n))||(_synDebut&&_synDebut.has(e.n))) return true;
       if(_patCible){ try{ if(_movPattern(e.n)===_patCible) return true; }catch(x){} }
       // Cherche aussi dans les termes ANGLAIS (EX_EN) → « shoulder press », « bench press », « leg press »…
@@ -5465,6 +5473,40 @@ function filterEx(){
       return e.n.toLowerCase().includes(q)||_normEx(e.n).includes(qn)||e.g.toLowerCase().includes(q)||(en&&(en.includes(q)||_normEx(en).includes(qn)))
         ||_anciensNoms(e.n).some(a=>a.toLowerCase().includes(q)||_normEx(a).includes(qn));
     }).sort((a,b)=>_rang(a)-_rang(b));   // tri STABLE → l'ordre alphabétique est conservé à rang égal
+
+    /* ═══ 🔎 LE REPLI « TOUS LES MOTS » (07/09/2026, ft-v1163) ═══════════════════════════════
+       ⛔⛔ LE CAS RÉEL, ET IL EST MESURÉ. Michel : *« pour le biceps marteau je le trouve en
+       marquant marteau, je précise »*. L'exercice s'appelle **« Marteau »** au catalogue, groupe
+       **« Biceps »** — et tout ce qui précède cherche la requête **d'un seul bloc**
+       (`nn.indexOf(qn)`). Or `« biceps marteau »` n'existe **nulle part** : ni dans le nom, ni
+       dans le groupe. 👉 ***Chacun des deux mots marche seul ; les deux ensemble, non.***
+
+       ⛔⛔ ET IL N'AGIT QU'À VIDE — c'est ce qui le rend sûr, pas un détail d'implémentation.
+       Cette fonction porte déjà **quatre** élargissements successifs (familles de mouvement
+       ft-v728 · synonymes de salle 08/08 · termes anglais · anciens noms) et un **rang de
+       pertinence** né d'une régression que j'avais moi-même créée en l'élargissant : taper
+       « pec deck » rendait 45 résultats avec l'exercice cherché en DERNIER. *On n'ouvre pas un
+       cinquième chemin dans le flux principal — on pose un filet sous le vide.* Zéro résultat
+       aujourd'hui = zéro régression possible.
+
+       ⚠️ LES MOTS D'UNE SEULE LETTRE SONT IGNORÉS : ils se trouvent dans tout, donc les exiger
+       ne filtrerait rien et les compter comme « trouvés » serait faux. On les laisse tomber,
+       et s'il ne reste pas au moins **deux** mots, on ne fait rien. */
+    if(!f.length){
+      const mots=qn.split(/\s+/).filter(w=>w.length>=2);
+      if(mots.length>=2){
+        const _sac=e=>{
+          const en=(typeof EX_EN!=='undefined'&&EX_EN[e.n])?_normEx(EX_EN[e.n]):'';
+          return [_normEx(e.n), _normEx(e.g), en, _anciensNoms(e.n).map(_normEx).join(' ')].join(' ');
+        };
+        const trouve=all.filter(e=>{ const t=_sac(e); return mots.every(w=>t.indexOf(w)>=0); });
+        if(trouve.length){
+          _tousLesMots=new Set(trouve.map(e=>e.n));   // lu par `_rang` → 7,5, donc rangé en « vrai »
+          f=trouve.slice();                            // l'ordre alphabétique de `all` est conservé
+        }
+      }
+    }
+
     // Favoris/plus utilisés en PREMIER (tri stable → alpha conservé à usage égal)
     const fd=_exDedup(f);
     // ── LES « MÊME FAMILLE » PASSENT SOUS UNE LIGNE DE SÉPARATION (retour Michel, 09/08) ──

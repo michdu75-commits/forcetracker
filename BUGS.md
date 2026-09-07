@@ -2908,3 +2908,33 @@ non pas à du code mais à une **consigne**.
 - ⭐ **Le réflexe** : après un correctif, se demander non pas *« ai-je changé un seuil ? »* mais
   **« un chiffre déjà affiché veut-il encore dire ce qu'il disait ? »**. Si non, il y a une version
   de règle à faire bouger — ou un total à jeter.
+
+### ⚠️ Le corollaire de la §46, mesuré le 07/09 (ft-v1163) : **un témoin en « oui/non » ne voit pas un changement de TAILLE**
+
+La §46 dit qu'un correctif non prouvable n'est pas fini. Ce cas-ci en donne la version outillée :
+sur le repli de recherche « tous les mots », **trois mutations sur quatre n'ont pas mordu au
+premier jet**. Le code était bon ; les **témoins** ne l'étaient pas.
+
+**⛔⛔ La cause tient en une phrase** : mes témoins de non-régression étaient écrits en
+*« la liste est-elle vide ? »*. Or les mutations ne vidaient rien — elles **élargissaient** ou
+**rétrécissaient** le résultat. 👉 ***Un témoin qui ne regarde que la présence est aveugle aux
+deux défauts les plus courants d'une recherche.***
+
+### 🔎 Comment la reconnaître
+- Un témoin qui teste `!== 0`, `!vide`, `.length > 0`, `/motif/.test(html)` sur une fonction dont
+  le rôle est de **sélectionner une quantité**. Il passera aussi bien sur 1 résultat que sur 45.
+- Un contrôle négatif où **la mutation ne change rien au vert**. C'est le signal — pas la preuve
+  que le code est solide, la preuve qu'on a **mal visé**.
+- Un cas de test bâti sur deux termes **également inconnus** (`zzzz qqqq`) : il ne distingue pas
+  « tous les mots » de « au moins un mot ». Il faut **un mot qui existe et un qui n'existe pas**.
+
+### 🛡️ Ce qui protège aujourd'hui
+- Les témoins **comptent les lignes rendues** (8 · 43 · 32 · 1 · 0), ils ne demandent plus si la
+  liste est vide.
+- ⭐ **Les nombres ont été MESURÉS avant d'être écrits**, pas devinés — et c'est la mesure qui a
+  fait apparaître le meilleur témoin du lot : *« tirage horizontal »* rend **32** résultats grâce
+  à un élargissement historique (retour de Tatiana, 02/08), que la mutation ramenait à **4**.
+  *Sans ce chiffre, la mutation ne mordait sur rien.*
+- ⭐ **Le réflexe** : quand la fonction sous test **choisit combien**, le témoin doit dire
+  **combien**. Et quand une mutation laisse tout vert, ne pas conclure « c'est robuste » — aller
+  chercher le cas qui la distingue.

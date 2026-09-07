@@ -29164,6 +29164,97 @@ console.log('\n-- CCLIX. Le compteur repart à zéro quand sa règle change (ft-
   }
 }
 
+/* ═══ CCLXI. LA RECHERCHE SAIT ENFIN CHERCHER DEUX MOTS (07/09/2026, ft-v1163) ═══════════════
+   Michel : *« pour le biceps marteau je le trouve en marquant marteau, je précise »*.
+   ⭐⭐ MESURÉ : l'exercice s'appelle **« Marteau »**, groupe **« Biceps »** — et `filterEx`
+   cherchait la requête d'un seul bloc. *Chacun des deux mots marche seul ; les deux ensemble, non.*
+   ⛔⛔ LE REPLI N'AGIT QU'À VIDE : cette fonction porte déjà quatre élargissements et un rang de
+   pertinence né d'une régression. *On ne rouvre pas le flux principal, on pose un filet sous le
+   vide* — donc les témoins de non-régression comptent autant que celui qui porte la version.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLXI. La recherche sait enfin chercher deux mots (ft-v1163) --');
+{
+  const R=await p.evaluate(()=>{
+   try{
+    const o={};
+    o.fn=['filterEx'].filter(f=>typeof window[f]!=='function');
+    const inp=document.getElementById('ex-search'), lst=document.getElementById('ex-list');
+    o.dom=!!(inp&&lst);
+    // ⭐ On tape VRAIMENT dans le champ et on lit VRAIMENT la liste rendue : un test sur la
+    //   fonction seule dirait qu'elle filtre, jamais que l'écran affiche l'exercice.
+    /* ⚠️ ON COMPTE LES LIGNES, on ne se contente pas de « vide / pas vide » — mesuré : trois
+       mutations sur quatre n'ont PAS mordu sur des témoins écrits en oui/non. *Un témoin qui ne
+       regarde que la présence ne voit pas un élargissement ni un rétrécissement.* */
+    const cherche=q=>{ inp.value=q; filterEx();
+      const h=lst.innerHTML||'';
+      return {n:(h.match(/class="ex-pick"/g)||[]).length, html:h}; };
+
+    /* ⭐⭐ LE CAS DE MICHEL. */
+    const r1=cherche('biceps marteau');
+    o.bmN = r1.n;                                   // 1 attendu · 0 avant · 13 si « au moins un mot »
+    o.bmTrouve = /Marteau/.test(r1.html);
+    /* ⛔ ET L'ORDRE DES MOTS NE DOIT RIEN CHANGER — sinon on n'aurait réparé qu'une frappe. */
+    o.ordreInverse = /Marteau/.test(cherche('marteau biceps').html);
+    /* ⭐ ACCENTS ET CASSE : la normalisation existe déjà, elle doit servir ici aussi. */
+    o.accents = /Marteau/.test(cherche('BICEPS Marteau').html);
+
+    /* ⛔⛔ NON-RÉGRESSION — LE CŒUR DU BLOC. Les recherches qui marchaient déjà ne doivent
+       PAS changer : le repli ne s'active que sur un résultat VIDE. */
+    o.motSeul = /Marteau/.test(cherche('marteau').html);
+    o.dcN     = cherche('développé couché').n;      // 8
+    o.squatN  = cherche('squat').n;                 // 43
+    /* ⭐⭐ LE TÉMOIN DE NON-RÉGRESSION QUI COMPTE VRAIMENT, et il fallait le MESURER pour le
+       trouver : « tirage horizontal » rend **32** résultats grâce à l'élargissement par FAMILLE
+       de mouvement — c'est le retour de Tatiana du 02/08, celui pour lequel cet élargissement
+       existe. Si le repli agissait AUTREMENT QU'À VIDE, il écraserait ces 32 par **4**.
+       *Sans ce chiffre, ma mutation « le repli agit toujours » ne mordait sur RIEN.* */
+    o.tirageHorizN = cherche('tirage horizontal').n;
+
+    /* ⛔ UNE RECHERCHE QUI NE CORRESPOND À RIEN RESTE VIDE — le repli n'invente pas un résultat. */
+    o.rienResteN = cherche('zzzz qqqq').n;
+    /* ⛔⛔ ET CELUI-CI EXIGE **TOUS** LES MOTS, PAS UN SEUL : « biceps » existe, « zzzz » non.
+       Avec un « au moins un mot », cette recherche rendrait les **13** exercices de biceps —
+       c'est-à-dire une réponse plausible et fausse, la pire des deux. */
+    o.bicepsZzzzN = cherche('biceps zzzz').n;
+    /* ⛔ ET UN SEUL MOT INCONNU RESTE SANS RÉPONSE : le repli exige au moins DEUX mots. */
+    o.unMotInconnuN = cherche('zzzzzzz').n;
+    /* ⚠️ LES MOTS D'UNE LETTRE SONT IGNORÉS — et le témoin doit le prouver PAR L'EFFET :
+       « biceps marteau g » trouve Marteau (le « g » est écarté). En comptant les mots d'une
+       lettre, il exigerait un « g » que ni le nom, ni le groupe, ni le terme anglais ne
+       contiennent → **0 résultat**. *Un mot d'une lettre ne filtre rien, mais il peut TOUT
+       exclure.* */
+    o.uneLettreN = cherche('biceps marteau g').n;
+
+    inp.value=''; filterEx();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+
+  if(R.err) t('CCLXI n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLXI ⛔ CONTRÔLE — `filterEx` et les deux éléments de l\'écran existent',
+      (R.fn||[]).length===0 && R.dom===true, (R.fn||[]).join(', '));
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : avant, la liste était VIDE. */
+    t('CCLXI ⭐⭐ « biceps marteau » rend EXACTEMENT 1 résultat (0 avant)', R.bmN===1, 'reçu : '+R.bmN);
+    t('CCLXI ⭐⭐ ... et c\'est bien « Marteau » qui sort', R.bmTrouve===true, '');
+    t('CCLXI ⛔ l\'ordre des mots ne change rien (« marteau biceps »)', R.ordreInverse===true, '');
+    t('CCLXI ⭐ accents et majuscules n\'y changent rien', R.accents===true, '');
+    /* ⛔⛔ LES NON-RÉGRESSIONS SE LISENT EN NOMBRES, pas en « vide / pas vide » — c'est ce qui
+       manquait au premier jet, et trois mutations passaient au travers. */
+    t('CCLXI ⛔ NON-RÉGRESSION — « marteau » seul trouve toujours', R.motSeul===true, '');
+    t('CCLXI ⛔ NON-RÉGRESSION — « développé couché » rend toujours ses 8 résultats', R.dcN===8, 'reçu : '+R.dcN);
+    t('CCLXI ⛔ NON-RÉGRESSION — « squat » rend toujours ses 43 résultats', R.squatN===43, 'reçu : '+R.squatN);
+    /* ⭐⭐ CELUI-CI EST LE PLUS IMPORTANT DU BLOC : il protège l'élargissement par FAMILLE
+       (le retour de Tatiana, 02/08). Le repli qui agirait ailleurs qu'à vide le ramènerait à 4. */
+    t('CCLXI ⭐⭐ NON-RÉGRESSION — « tirage horizontal » garde ses 32 résultats de FAMILLE', R.tirageHorizN===32, 'reçu : '+R.tirageHorizN);
+    /* ⛔ ET LE REPLI N'INVENTE RIEN : deux mots inconnus restent sans réponse (R29). */
+    t('CCLXI ⛔ deux mots qui ne correspondent à rien restent SANS résultat', R.rienResteN===0, 'reçu : '+R.rienResteN);
+    t('CCLXI ⛔⛔ « biceps zzzz » reste à ZÉRO — TOUS les mots sont exigés, pas un seul', R.bicepsZzzzN===0, 'reçu : '+R.bicepsZzzzN+' (13 = « au moins un mot »)');
+    t('CCLXI ⛔ un seul mot inconnu reste sans résultat (le repli exige 2 mots)', R.unMotInconnuN===0, 'reçu : '+R.unMotInconnuN);
+    t('CCLXI ⚠️ un mot d\'UNE lettre est IGNORÉ : « biceps marteau g » trouve quand même', R.uneLettreN===1, 'reçu : '+R.uneLettreN);
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
