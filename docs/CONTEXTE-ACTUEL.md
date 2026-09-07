@@ -8,6 +8,8 @@
 
 - **Version en ligne (live) :** `ft-v1166` — ⚠️ **L'APERÇU D'IMPORT DIT ENFIN CE QU'IL VA
   INVENTER — et le déclencheur n'est pas un bug, c'est une phrase de Michel.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #996**, job `deploy` success, 5 étapes vertes
+  à **17:21:21 UTC** sur `cf4a7274` — ⛔ ni backend ni worker attendus.
   ⏳ **Suite complète VERTE** : **parcours 3195/3195 sur l'arbre FUSIONNÉ avec la ft-v1165 de session-A** (+24, bloc **CCLXIV**), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⭐⭐ Michel, après avoir dû réparer son programme à la main : *« ouais ok mais ça m'arrive à
