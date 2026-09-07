@@ -29255,6 +29255,205 @@ console.log('\n-- CCLXI. La recherche sait enfin chercher deux mots (ft-v1163) -
   }
 }
 
+/* ═══ CCLX. LES CALORIES NE PEUVENT PAS DÉPASSER CE QUE LA PORTION PORTE (07/09/2026, ft-v1162) ═
+   Michel, excédé, sur la MÊME ligne « Iso zero protein (ASL) » qu'en ft-v1103 et ft-v1104 :
+   *« toujours ma prot ça déconne et le calcul est faux. Pour 30 grammes de poudre j'ai 26,7 de
+   protéine et là ça me marque n'importe quoi. »*
+   ⭐⭐ REPRODUIT AVANT DE CODER : son entrée porte 156 kcal pour 26 P / 1 G / 1 L, quand
+   4×26+4×1+9×1 = 117 — et `_coherenceKcal` restait MUET, parce que son plancher est `ecart<60`
+   et que l'écart ne fait que 39. ⛔ Ce plancher éteint le test des 25 % sur TOUTE entrée de
+   moins de 240 kcal (il faut 0,25×kcal ≥ 60) — un shake, un yaourt, un fruit, un œuf.
+   ⭐ CE QU'ON AJOUTE N'EST PAS UN SEUIL, C'EST UNE LOI : plafond = 4P+4C+9L + 9×(masse libre),
+   parce que rien n'est plus dense que le lipide. 28 g de macros dans 30 g → 2 g libres → 135 kcal
+   au maximum, contre 156 affichées.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLX. Le plafond physique des calories (ft-v1162) --');
+{
+  const _ciqual=JSON.parse(fs.readFileSync(path.join(ROOT,'data','ciqual.json'),'utf8'));
+  const _marques=JSON.parse(fs.readFileSync(path.join(ROOT,'data','marques.json'),'utf8'));
+
+  const R=await p.evaluate(({ciqual,marques})=>{
+   try{
+    const o={js:[]};
+    o.fnVals=typeof _kcalImpossibleVals; o.fnEcran=typeof _kcalImpossible;
+
+    /* ⭐⭐ LE CAS DE MICHEL, PAR LE VRAI CHEMIN — on ouvre la modale de production et on lit ce
+       qu'elle AFFICHE. Un `grep` dirait que la fonction existe, jamais qu'elle PARLE. */
+    const ts=Date.now()-4242;
+    S.foodLog=[{ts:ts, date:new Date().toLocaleDateString('sv'), meal:'petit-dej',
+                name:'Iso zero protein (ASL)', kcal:156, prot:26, carbs:1, fat:1, q:30, u:'g'}];
+    openEditFood(ts);
+    const boite=()=>{const e=document.getElementById('ef-coherence');
+                     return (e && e.style.display!=='none' && e.innerHTML) ? e : null;};
+    const b1=boite();
+    o.michelParle = !!b1;
+    o.michelTexte = b1? b1.textContent : '';
+    /* ⛔⛔ ON LIT LE LIBELLÉ *ET* CE QUE LE BOUTON FAIT — et c'est une mutation qui me l'a
+       appris : en changeant le seul `onclick` pour proposer le plafond, le bouton continuait
+       d'AFFICHER « Mettre 117 kcal » et mon témoin restait VERT. *Un bouton dont le texte ment
+       sur son action est pire qu'un bouton faux : on ne peut pas le voir.* */
+    const _bt=b1? b1.querySelector('button'):null;
+    o.michelBouton= _bt? (_bt.textContent||''):'';
+    o.michelAction= _bt? (_bt.getAttribute('onclick')||''):'';
+
+    /* ⛔ SA VALEUR JUSTE (30 g d'isolat = ~117 kcal) : l'app doit se TAIRE. */
+    const poser=(id,v)=>{const e=document.getElementById(id); if(e){e.value=String(v);
+      e.dispatchEvent(new Event('input',{bubbles:true}));}};
+    poser('ef-kcal',117); _efCoherence();
+    o.justeMuet = !boite();
+    poser('ef-kcal',156); _efCoherence();
+    o.retourParle = !!boite();
+
+    /* ⛔ SANS QUANTITÉ DÉCLARÉE, ON NE JUGE PAS — la même précondition que le garde-fou de masse. */
+    o.sansQuantite = _kcalImpossibleVals(0,156,26,1,1)===null;
+
+    /* ⛔⛔ LA BANDE OÙ LA MASSE LIBRE DEVIENDRAIT NÉGATIVE — et c'est une mutation qui a montré
+       que ce témoin manquait. Entre `q` et `q+2`, le garde-fou de MASSE se tait encore (sa
+       tolérance d'arrondi), mais il n'y a déjà plus de matière libre. Sans le `somme>q`, le
+       plafond passerait SOUS le théorique et l'écran annoncerait « les -1 g qui restent ».
+       *Une alerte qui affiche une masse négative n'est pas une alerte, c'est un bug.* */
+    o.bandeNegative = _kcalImpossibleVals(30,200,29,1,1)===null;
+
+    /* ⛔⛔ NON-RÉGRESSION — LA MASSE GARDE LA PAROLE quand elle est en cause (ft-v1103) :
+       une seule alerte pour un seul défaut, et c'est la plus grave qui parle. */
+    poser('ef-prot',35); _efCoherence();
+    const b2=boite();
+    o.masseDabord = !!b2 && /ne tiennent pas dans/.test(b2.textContent);
+    poser('ef-prot',26); _efCoherence();
+
+    /* ⛔⛔ NON-RÉGRESSION — LE PLANCHER DE 60 kcal N'A PAS BOUGÉ (R30, décision écrite) :
+       une entrée SANS quantité connue et sous le plancher doit rester muette, exactement
+       comme avant. Sinon quelqu'un croira que j'ai « aussi » touché au seuil. */
+    S.foodLog=[{ts:ts+1, date:new Date().toLocaleDateString('sv'), meal:'collation',
+                name:'Truc sans poids', kcal:156, prot:26, carbs:1, fat:1}];
+    openEditFood(ts+1);
+    o.plancherIntact = !boite();
+
+    /* ⚡ LA BORNE, ET ELLE EST DÉRIVÉE : plafond 135 + 10 de tolérance d'arrondi = 145 muet. */
+    o.b145 = _kcalImpossibleVals(30,145,26,1,1)===null;
+    o.b146 = _kcalImpossibleVals(30,146,26,1,1)!==null;
+
+    /* ⛔ LES CAS QUI ONT PIÉGÉ LE CONTRÔLE VOISIN restent muets — huile, sucre, miel, beurre. */
+    const denses=[[10,90,0,0,10],[20,80,0,20,0],[20,61,0,16,0],[10,75,0.1,0.1,8.2],[33,17,3.6,0.2,0.1]];
+    o.densesMuets = denses.every(a=>_kcalImpossibleVals(a[0],a[1],a[2],a[3],a[4])===null);
+
+    /* ⭐⭐ ET L'ALCOOL NE DÉCLENCHE PAS *SANS AUCUNE LISTE D'EXCEPTION* — c'est ce qui distingue
+       une loi d'un pourcentage : 7 kcal/g est en dessous de 9, il ne peut pas franchir. */
+    o.alcoolMuet = _kcalImpossibleVals(100,274,0.1,2.8,0)===null
+                && _kcalImpossibleVals(40,95,0,0,0.1)===null;
+
+    /* ⛔⛔ LE CONTRE-TEST QUI DÉCIDE : les VRAIES bases que l'app embarque, passées dans la
+       VRAIE fonction. Un garde-fou qui crie sur des aliments normaux apprend à être ignoré. */
+    const passe=(rows)=>{let n=0,f=0;
+      for(const r of rows){const k=+r[3],pp=+r[4],cc=+r[5],ff=+r[6];
+        if(!(k>0)||pp+cc+ff>100) continue; n++;
+        if(_kcalImpossibleVals(100,k,pp,cc,ff)) f++;}
+      return [n,f];};
+    const [nc,fc]=passe(ciqual.a); o.ciqualN=nc; o.ciqualFaux=fc;
+    const [nm,fm]=passe(marques.a); o.marquesN=nm; o.marquesFaux=fm;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,240)};}
+  },{ciqual:_ciqual,marques:_marques});
+
+  if(R.err) t('CCLX n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔⛔ CONTRÔLE D'ABORD : sans les deux propriétaires, tout le reste ne mesure rien. */
+    t('CCLX ⛔⛔ CONTRÔLE — les deux propriétaires existent (valeurs + écran)',
+      R.fnVals==='function'&&R.fnEcran==='function', R.fnVals+' / '+R.fnEcran);
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : la modale PARLE sur le cas exact de Michel. */
+    t('CCLX ⭐⭐ le cas de Michel : la modale PARLE (156 kcal dans 30 g)',
+      R.michelParle===true, 'muette');
+    t('CCLX ⭐⭐ ... et elle donne le plafond calculé, 135 kcal',
+      /135/.test(R.michelTexte)&&/30 g/.test(R.michelTexte), R.michelTexte.slice(0,140));
+    t('CCLX ⭐ le bouton propose la valeur des macros (117), pas le plafond',
+      /117/.test(R.michelBouton)&&!/135/.test(R.michelBouton), 'bouton : '+R.michelBouton);
+    /* ⭐⭐ ET IL FAIT CE QU'IL DIT : le libellé et l'action doivent porter le MÊME nombre. */
+    t('CCLX ⭐⭐ ... et son action fait ce que son libellé annonce (117, pas 135)',
+      /\(117\)/.test(R.michelAction)&&!/135/.test(R.michelAction), 'onclick : '+R.michelAction);
+    t('CCLX ⛔ sa valeur JUSTE (117 kcal) rend l\'app muette',
+      R.justeMuet===true, '');
+    t('CCLX ⛔ ... et elle reparle dès qu\'on remet 156', R.retourParle===true, '');
+    t('CCLX ⛔ sans quantité en grammes, on ne juge pas', R.sansQuantite===true, '');
+    t('CCLX ⛔⛔ ... et on se tait aussi là où la masse libre serait NÉGATIVE',
+      R.bandeNegative===true, 'il parle, donc il annoncerait des grammes négatifs');
+    /* ⚡ LA TOLÉRANCE EST DÉRIVÉE DE L'ARRONDI, PAS CHOISIE : 145 muet / 146 parle. */
+    t('CCLX ⚡ la borne dérivée de l\'arrondi : 145 kcal muet, 146 parle',
+      R.b145===true&&R.b146===true, '145 muet='+R.b145+' 146 parle='+R.b146);
+    t('CCLX ⛔ huile, sucre, miel, beurre, blanc d\'œuf restent muets',
+      R.densesMuets===true, '');
+    /* ⭐⭐ CE TÉMOIN EST LA DIFFÉRENCE ENTRE UNE LOI ET UN SEUIL. */
+    t('CCLX ⭐⭐ l\'alcool ne déclenche PAS, et sans aucune liste d\'exception',
+      R.alcoolMuet===true, '');
+    t('CCLX ⭐⭐ CONTRE-TEST — 0 déclenchement sur toute la table CIQUAL',
+      R.ciqualFaux===0&&R.ciqualN>3000, R.ciqualFaux+' faux positifs sur '+R.ciqualN);
+    t('CCLX ⭐ ... et 0 sur les produits de marque',
+      R.marquesFaux===0&&R.marquesN>100, R.marquesFaux+' faux positifs sur '+R.marquesN);
+    /* ⛔⛔ LES DEUX NON-RÉGRESSIONS : elles protègent ce que je n'ai PAS voulu changer. */
+    t('CCLX ⛔⛔ NON-RÉGRESSION — la masse impossible garde la parole (ft-v1103)',
+      R.masseDabord===true, '');
+    t('CCLX ⛔⛔ NON-RÉGRESSION — le plancher de 60 kcal n\'a pas bougé (R30)',
+      R.plancherIntact===true, 'il parle alors qu\'il devait rester muet');
+  }
+
+  /* ⛔ LA JUMELLE (R8) : le formulaire d'AJOUT partage `_coherenceKcal`, et le calibrage à la
+     main partage `_kcalImpossibleVals`. Les deux se mesurent, pas se supposent. */
+  const J=await p.evaluate(()=>{
+   try{
+    const o={};
+    const poser=(id,v)=>{const e=document.getElementById(id); if(e){e.value=String(v);
+      e.dispatchEvent(new Event('input',{bubbles:true}));}};
+    /* ⛔⛔ L'ORDRE DES GESTES EST LE SUJET, ET MON PREMIER JET L'AVAIT FAUX — le témoin est
+       resté ROUGE une passe entière. `_afMajAncre` ne fait apparaître le bloc quantité QUE si
+       des valeurs sont déjà à l'écran (`base.kcal>0||...`), donc taper le poids AVANT les macros
+       vise un champ `af-poids` **qui n'existe pas encore** : le témoin mesurait un écran qui
+       n'avait jamais été construit. ⭐ VÉRIFIÉ AVANT DE TOUCHER AU TEST qu'aucun code de
+       PRODUCTION ne fautait — la séquence réelle (valeurs → ancre → unité → poids) affiche bien
+       l'alerte. *Un témoin qui conduit l'écran dans un ordre impossible ne prouve rien : il ne
+       rougit pas sur le code, il rougit sur lui-même.* (La leçon de ft-v1159, à l'envers.) */
+    openAddFood();
+    poser('af-desc','Iso zero protein (ASL)');
+    poser('af-kcal',156); poser('af-prot',26); poser('af-carbs',1); poser('af-fat',1);
+    _afMajAncre(true);              // les valeurs viennent d'être posées : la source a changé
+    _afSetUnite('g');               // aucune ancre → l'onglet « ⚖️ En grammes » ouvre le champ
+    poser('af-poids',30); _afMajAncre();
+    _afCoherence();
+    const e=document.getElementById('af-coherence');
+    o.parle=!!(e && e.style.display!=='none' && e.innerHTML);
+    o.texte=e? e.textContent:'';
+    /* ⛔⛔ LE CALIBRAGE SE CONDUIT, IL NE S'INTERROGE PAS — la leçon de ft-v1158 rejouée sur
+       moi : mon premier témoin appelait `_kcalImpossibleVals` en direct, donc débrancher la loi
+       de `_calAppliquer` le laissait VERT. *Vérifier la fonction n'est pas vérifier l'appel.*
+       On tape donc dans les VRAIS champs et on lit ce que la VRAIE fonction refuse. */
+    const err=()=>{const e=document.getElementById('af-cal-err');
+                   return (e&&e.style.display!=='none')?e.textContent:'';};
+    _calOuvrir();                                   // ouvre le bloc « valeurs pour 100 g »
+    poser('af-desc','Iso zero protein (ASL)');
+    poser('af-cal-kcal',900); poser('af-cal-prot',80); poser('af-cal-carbs',10); poser('af-cal-fat',5);
+    _calAppliquer();
+    o.calibRefus = err();                           // doit refuser : 900 kcal impossibles pour 100 g
+    /* ⛔ ET UN ISOLAT RÉEL PASSE : un garde-fou qui refuse une étiquette juste est pire que rien. */
+    poser('af-cal-kcal',375); poser('af-cal-prot',89); poser('af-cal-carbs',2); poser('af-cal-fat',1);
+    _calAppliquer();
+    o.calibVraiPasse = err()==='';
+    return o;
+   }catch(e2){return {err:String(e2)};}
+  });
+  if(J.err) t('CCLX la jumelle n\'a pas pu tourner', false, J.err);
+  else{
+    t('CCLX ⛔⛔ LA JUMELLE — l\'écran d\'AJOUT dit exactement la même chose (R8)',
+      J.parle===true&&/135/.test(J.texte), J.texte.slice(0,120));
+    t('CCLX ⛔⛔ le calibrage à la main REFUSE vraiment 900 kcal pour 100 g',
+      /^⚡/.test(J.calibRefus)&&/impossible/.test(J.calibRefus), 'reçu : '+J.calibRefus);
+    t('CCLX ⛔ ... et un isolat RÉEL pour 100 g y passe sans un mot',
+      J.calibVraiPasse===true, '');
+  }
+
+  /* ⛔ RÈGLE D'OR #11 — l'aide détaillée explique la loi (elle ne se devine pas). */
+  const _sc=fs.readFileSync(path.join(ROOT,'screens.js'),'utf8');
+  t('CCLX ⛔ l\'aide détaillée porte l\'explication et le cas réel',
+    /rien n..est plus énergique que le gras/.test(_sc) && /135 kcal au grand maximum/.test(_sc), '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

@@ -69,6 +69,28 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 D'OÙ VENAIENT LES 156 kcal ? — on attrape la valeur fausse, on ne l'empêche pas (07/09/2026)
+
+**Ce qui déclenche l'entrée** : **ft-v1162**. La ligne « Iso zero protein (ASL) » de Michel porte
+**156 kcal pour 26 g de protéines** dans **30 g de poudre** — physiquement impossible, désormais
+attrapé. ⛔ **Mais on n'a jamais mesuré d'où sort le 156.** L'estimation du modèle entre telle
+quelle dans `S.foodLog` depuis ft-v1103, et c'est la **troisième version d'affilée** (ft-v1103 ·
+ft-v1104 · ft-v1162) à poser un garde-fou **en aval** sur le même produit.
+
+**La question, telle qu'elle se pose** : *sur des produits que le modèle connaît mal (une poudre
+de marque, un complément), à quelle fréquence sort-il des macros crédibles et fausses — et
+est-ce qu'un simple « je ne sais pas » serait meilleur qu'une estimation ?* (**R29** : le droit
+de deviner dépend du coût de l'erreur, et ici l'erreur se **recopie** — une estimation fausse
+notée une fois devient une suggestion reprise en un tap.)
+
+**⚠️ Ce qui empêche de la promouvoir aujourd'hui** : l'attendu n'est pas vérifiable par du code
+sans **appeler le modèle**, ce que ce conteneur ne peut pas faire (pas de clé API). C'est
+mesurable, ce n'est pas gratuit. ⭐ **Et le premier pas ne coûte rien** : compter, dans les
+entrées réelles de Michel, combien portent des valeurs que les deux lois physiques rejettent.
+*Un chiffre avant une décision.*
+
+---
+
 ### 🟡 LE CERVELET OBÉIT-IL À SES PROPRES RÈGLES ? — personne ne le sait (06/09/2026)
 
 **Ce qui déclenche l'entrée** : **ft-v1152**. Le cervelet reçoit désormais l'ordre de déclarer le

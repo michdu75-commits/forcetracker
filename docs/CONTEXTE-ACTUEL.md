@@ -29,6 +29,36 @@
   ⏭️ **Ne fait pas** : aucune tolérance aux fautes de frappe (« marteaux », « bicep ») — autre
   problème, autre risque, non mesuré.
 
+- **Version précédente :** `ft-v1162` — ⚡ **156 kcal DANS 30 g DE POUDRE : PHYSIQUEMENT
+  IMPOSSIBLE, ET L'APP NE DISAIT RIEN.**
+  ⏳ **Suite VERTE** : **parcours 3122/3122** (+20, bloc **CCLX**, ses 20 témoins verts), calculs
+  339/339, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  Michel, excédé, sur la **même ligne « Iso zero protein (ASL) »** qu'en ft-v1103 et ft-v1104 :
+  *« toujours ma prot ça déconne et le calcul est faux. Pour 30 grammes de poudre j'ai 26,7 de
+  protéine et là ça me marque n'importe quoi. Y'a un truc qui est mal codé dans la nutrition
+  c'est pas possible »*.
+  ⭐⭐ **REPRODUIT PAR LE VRAI CHEMIN AVANT D'ÉCRIRE UNE LIGNE** : son entrée porte **156 kcal
+  pour 26 P / 1 G / 1 L**, quand `4×26+4×1+9×1 = 117`. **39 kcal d'écart, un quart de la ligne —
+  et le contrôle de cohérence restait MUET.**
+  ⛔⛔ **Il n'était pas en faute, il était aveugle par construction** : son plancher absolu est
+  `ecart<60`. 👉 ***Pour que le test des 25 % puisse mordre, il faut une entrée d'au moins
+  240 kcal*** — en dessous, le plancher éteint le pourcentage, et « moins de 240 kcal » c'est un
+  shake, un yaourt, un fruit, un œuf.
+  ⭐⭐ **Ce qu'on ajoute n'est pas un seuil, c'est une LOI** : `plafond = 4P+4C+9L + 9 × (masse
+  libre)`, parce que **rien n'est plus dense que le lipide**. 28 g de macros dans 30 g → 2 g
+  libres → **135 kcal au maximum** contre 156 affichées. Jumeau exact de `_masseImpossible`
+  (ft-v1103), tolérance **dérivée de l'arrondi** (10 kcal), pas choisie.
+  ⭐⭐ **Mesuré avant de coder : 0 faux positif sur 3 235 aliments CIQUAL et 123 produits de
+  marque**, huile pure, sucre, miel et beurre compris. ⛔ **Et aucune liste d'exception n'est
+  nécessaire** (l'alcool fait 7 kcal/g, il ne franchit pas un plafond calé sur 9) — *une loi n'a
+  pas besoin qu'on lui liste ses exceptions, un pourcentage si.*
+  ⛔ **Le plancher de 60 ne bouge pas** (R30) : le descendre à 30 ne coûterait que 2 aliments sur
+  3 126, il est quasi inerte — mais ce serait un chiffre à défendre, quand la loi se démontre.
+  ⏭️ **Limite dite** : sans poids en grammes déclaré, l'app se tait toujours ; et les entrées
+  déjà enregistrées ne sont pas corrigées — l'alerte apparaît à la réouverture, la personne
+  tranche (**R29**).
+  ⚠️ **Michel doit vérifier sur Safari/iPhone en rouvrant sa ligne.**
+
 - **Version précédente :** `ft-v1161` — 🔢 **J'AI CHANGÉ LA FAÇON DE COMPTER SANS
   INCRÉMENTER LA VERSION DE RÈGLE — le mécanisme existait, fait exactement pour ça.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **site** run **#979**, job `deploy` success, 7 étapes
