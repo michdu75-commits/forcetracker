@@ -8,7 +8,7 @@
 
 - **Version en ligne (live) :** `ft-v1168` — 🔇 **LES RECHERCHES QUI NE RENDENT RIEN — le 2ᵉ
   point de mesure du détecteur.**
-  ⏳ **Suite VERTE** : parcours (+13, bloc **CCLXVI**), calculs 339/339, muscles 241/241,
+  ⏳ **Suite VERTE** : **parcours 3223/3223** (+13, bloc **CCLXVI**), calculs 339/339, muscles 241/241,
   croisés 50/50, dates 9/9, données classées 0 trou.
   Michel : ***« prends aussi les recherches qui ne rendent rien »***.
   ⭐ Même famille que **ft-v1163** (*« biceps marteau »* → zéro alors que les deux mots
