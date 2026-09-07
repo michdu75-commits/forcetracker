@@ -2845,3 +2845,37 @@ doit prouver qu'une fonction est appelée, il faut soit **l'exécuter** (le mieu
 **borner la recherche à la région concernée** et **exiger le début de ligne** — ce qu'un `//` casse.
 ⭐ *Et c'est le contrôle négatif qui l'a trouvé, pas la relecture* : la première passe complète
 était **verte à 3069/3069** avec ce témoin creux dedans.
+
+### ⚠️ Le cousin de la §46, trouvé le lendemain : **le voisin savait, pas lui** (07/09/2026, ft-v1160)
+
+Le compteur de ft-v1146 devait mesurer *à quelle fréquence* Milo et le contrôle d'intensité se
+contredisent. Chez Michel il a affiché **« 4 séances proposées, 0 jugeable »** — c'est-à-dire que
+le contrôle **ne s'était jamais déclenché**, alors qu'il a des records sur ses trois gros
+mouvements.
+
+**⛔⛔ La cause : deux fonctions VOISINES répondaient à la même question et pas de la même façon.**
+*« Quel est son record pour ce nom ? »* — `_repereDefauts` essayait **quatre variantes** du nom
+puis comparait en **normalisé**, et son commentaire expliquait pourquoi **depuis des semaines** :
+*« si Milo écrit un nom voisin du catalogue, la clé de `S.prs` ne tombe pas juste »*.
+`_intensiteDefauts`, **dix lignes plus loin**, faisait `S.prs[nom]` **brut** — et commence par
+`if(!(rm1>0)) return`.
+
+👉 ***Un nom qui ne colle pas n'abîme pas l'affichage : il ÉTEINT un garde-fou.*** Sans erreur,
+sans test rouge, sans rien.
+
+### 🔎 Comment la reconnaître
+- **Deux fonctions côte à côte** qui lisent la même structure (`S.prs`, `S.sessions`, un catalogue)
+  avec des précautions **différentes**. La plus prudente est en général la plus récente : sa
+  prudence est une **cicatrice**, et la voisine n'en a pas hérité.
+- Un contrôle dont le premier réflexe est **`if (donnée absente) return`**. Son silence est légitime
+  *pour sa question*, et **indiscernable d'un « tout va bien »** pour tout le monde.
+- Un commentaire qui explique une précaution **à un seul endroit**. *S'il a fallu l'écrire, c'est
+  que le piège est réel — donc il vaut pour tous les lecteurs de cette donnée, pas pour celui-là.*
+
+### 🛡️ Ce qui protège aujourd'hui
+- **R2 appliqué à la LECTURE, pas seulement à l'écriture** : `_recordPourNom` est le seul
+  propriétaire de *« le record de ce nom »*. On a **extrait** la logique, on ne l'a pas recopiée.
+- Le **compteur lit exactement comme le contrôle** — sinon il mesure un silence en croyant mesurer
+  une absence. *Deux lookups pour une seule question finissent toujours par diverger.*
+- ⭐ **Le réflexe** : quand une précaution est écrite dans un commentaire, `grep` la **donnée**
+  qu'elle protège (`S.prs[`) et regarder **qui d'autre la lit sans elle**. Ici, dix lignes plus bas.

@@ -2149,6 +2149,68 @@ function _cadreReposLourd(disc){
   return out;
 }
 
+/* ═══ 🔑 « QUEL EST SON RECORD POUR CE NOM ? » — UN SEUL PROPRIÉTAIRE (07/09/2026, ft-v1160) ═══
+   ⛔⛔ LE DÉFAUT, ET C'EST LE COMPTEUR DE ft-v1146 QUI L'A RÉVÉLÉ EN MESURANT AUTRE CHOSE.
+   Capture de Michel : **4 séances proposées par Milo, `0 JUGEABLE`** — c'est-à-dire que le
+   contrôle d'intensité ne s'est **jamais déclenché**, alors qu'il a des records au couché, au
+   squat et au soulevé de terre.
+
+   ⭐⭐ EN CHERCHANT POURQUOI : **deux fonctions VOISINES répondaient à la même question, et pas
+   de la même façon.** `_repereDefauts` (dix lignes plus bas) essaie **quatre variantes** du nom
+   puis compare en **normalisé** — et son commentaire dit pourquoi, noir sur blanc : *« si Milo
+   écrit un nom voisin du catalogue, la clé de `S.prs` ne tombe pas juste »*. `_intensiteDefauts`,
+   lui, faisait `S.prs[nom]` **brut**… et commence par `if(!(rm1>0)) return`.
+   👉 ***Aucun record trouvé = silence TOTAL du garde-fou.*** Un nom qui ne colle pas n'abîme pas
+   l'affichage : **il éteint un contrôle**, sans la moindre erreur.
+
+   ⛔⛔ ET LE COÛT EST DOUBLE, parce que le COMPTEUR faisait le même lookup brut : une séance dont
+   le nom ne tombe pas pile était comptée *« non jugeable »*. 👉 ***On mesurait un SILENCE en
+   croyant mesurer une ABSENCE DE CONFLIT*** — le piège du test qui ne peut pas rougir, appliqué
+   à la mesure elle-même. Et tout le chantier « adaptation des séances » attend ce chiffre.
+
+   ⭐ C'EST **R2** : une question, un propriétaire. La logique existait déjà, elle était
+   **enfermée** dans `_repereDefauts` — on l'en sort, on ne la réécrit pas (**R13**).
+
+   ⚠️ QUAND PLUSIEURS CLÉS CORRESPONDENT (des doublons de nom, comme les quatre de ft-v1148), on
+   garde **le plus GRAND** `rm1`. Ce n'est pas arbitraire : un record est un **maximum**, donc la
+   plus haute des clés est la meilleure estimation de ce dont la personne est capable. Prendre la
+   plus basse ferait crier le contrôle sur des charges qu'elle tient réellement — *lui dire « trop
+   lourd » sur ce qu'elle vient de soulever est un fait faux sur elle* (**R29**). */
+function _cibleNoms(nom){
+  const variantes=[];
+  const push=v=>{ if(v&&variantes.indexOf(v)<0)variantes.push(v); };
+  push(nom);
+  if(typeof exNomCatalogue==='function') push(exNomCatalogue(nom));
+  if(typeof exNomActuel==='function')    push(exNomActuel(nom));
+  if(typeof exNomCatalogue==='function'&&typeof exNomActuel==='function')
+    push(exNomActuel(exNomCatalogue(nom)));
+  /* ⚠️ LA NORMALISATION EST INDISPENSABLE, le résolveur NE SUFFIT PAS — mesuré :
+     `exNomCatalogue('Developpe Couche')` rend `'Developpe Couche'` tel quel. Il connaît les
+     alias DÉCLARÉS, pas les variantes d'accent ou de ponctuation. */
+  const nz=(typeof _normEx==='function')?_normEx:(s=>String(s||'').toLowerCase());
+  return variantes.map(nz);
+}
+// « Ce nom-là désigne-t-il le même exercice ? » — employée pour les records ET pour l'historique.
+function _memeExercice(nom){
+  const cibles=_cibleNoms(nom);
+  const nz=(typeof _normEx==='function')?_normEx:(s=>String(s||'').toLowerCase());
+  return n=>cibles.indexOf(nz(n))>=0;
+}
+// Rend `{cle, pr, rm1}` — ou `null` quand il n'y a AUCUN record utilisable. Jamais 0, jamais {}.
+function _recordPourNom(nom){
+  try{
+    const meme=_memeExercice(nom);
+    const prs=(typeof S!=='undefined'&&S.prs)?S.prs:{};
+    let best=null;
+    Object.keys(prs).forEach(k=>{
+      if(!meme(k)) return;
+      const v=+((prs[k]||{}).rm1)||0;
+      if(v>0 && (!best||v>best.rm1)) best={cle:k, pr:prs[k], rm1:v};
+    });
+    return best;
+  }catch(e){ return null; }   // jamais bloquant : au pire, le comportement d'avant (silence)
+}
+
 /**
  * Les défauts d'INTENSITÉ d'un exercice, en clair. Même forme que `_monteeDefauts` (R13) et
  * même double usage : ① prévenir la personne quand une séance dictée arrive ; ② le DIRE à
@@ -2160,8 +2222,11 @@ function _cadreReposLourd(disc){
 function _intensiteDefauts(nom, sets){
   const out=[];
   try{
-    const pr=(S.prs||{})[nom];
-    const rm1=pr?(+pr.rm1||0):0;
+    /* ⛔ LE LOOKUP PASSE PAR LE PROPRIÉTAIRE UNIQUE (ft-v1160) : `S.prs[nom]` brut éteignait ce
+       contrôle dès que Milo écrivait un nom voisin — et le silence est indiscernable d'un « tout
+       va bien ». Le voisin `_repereDefauts` le savait depuis des semaines, pas celui-ci. */
+    const r=(typeof _recordPourNom==='function')?_recordPourNom(nom):null;
+    const rm1=r?r.rm1:0;
     if(!(rm1>0)) return out;                       // aucun record : on se tait (R29)
     // Séries de TRAVAIL seulement — un échauffement lourd est déjà l'affaire de `_monteeDefauts`.
     const trav=(sets||[]).filter(s=>s&&s.type!=='É'&&(+s.kg>0)&&(+s.reps>0));
@@ -2233,24 +2298,11 @@ function _intensiteDefauts(nom, sets){
 function _repereDefauts(nom, sets){
   const out=[];
   try{
-    const variantes=[];
-    const push=v=>{ if(v&&variantes.indexOf(v)<0)variantes.push(v); };
-    push(nom);
-    if(typeof exNomCatalogue==='function') push(exNomCatalogue(nom));
-    if(typeof exNomActuel==='function')    push(exNomActuel(nom));
-    if(typeof exNomCatalogue==='function'&&typeof exNomActuel==='function')
-      push(exNomActuel(exNomCatalogue(nom)));
-    /* ⚠️⚠️ ET LA COMPARAISON EST NORMALISÉE, parce que le résolveur NE SUFFIT PAS — mesuré :
-       `exNomCatalogue('Developpe Couche')` rend `'Developpe Couche'` tel quel. Il connaît les
-       alias DÉCLARÉS, pas les variantes d'accent ou de ponctuation. Sans cette normalisation, on
-       annonçait « pas encore de repère » à quelqu'un dont le record existait sous le vrai nom.
-       ⭐ `_normEx` existe déjà (minuscules + accents retirés + alphanumérique) — on la réutilise,
-       on n'en écrit pas une deuxième (R13/R2). */
-    const nz = (typeof _normEx==='function') ? _normEx : (s=>String(s||'').toLowerCase());
-    const cibles = variantes.map(nz);
-    const memeEx = n => cibles.indexOf(nz(n))>=0;
-    const prs=S.prs||{};
-    const aRecord = Object.keys(prs).some(k=>memeEx(k)&&(+prs[k].rm1||0)>0);
+    /* ⭐ CES DEUX LIGNES ÉTAIENT LES VINGT D'AVANT (ft-v1160). La reconnaissance de nom vivait
+       ICI, en privé, pendant que le contrôle d'intensité d'à côté faisait un lookup brut et se
+       taisait. Elle est maintenant à tout le monde — *une question, un propriétaire* (R2). */
+    const memeEx = _memeExercice(nom);
+    const aRecord = !!_recordPourNom(nom);
     /* ⛔ L'historique se lit ICI et pas via `getPrev`, qui compare le nom EXACTEMENT et sert
        ailleurs : le corriger changerait le comportement de tous ses appelants (R14). */
     const aHisto = (S.sessions||[]).some(s=>((s.exs||s.exercises||[])

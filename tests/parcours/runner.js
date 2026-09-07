@@ -28873,6 +28873,101 @@ console.log('\n-- CCLVI. Le filet déterministe des échauffements (ft-v1158) --
     /N.{0,2}emploie setTypePerSet QUE d.{0,2}après cette colonne/.test(_cj), '');
 }
 
+/* ═══ CCLVIII. LE CONTRÔLE D'INTENSITÉ NE SE TAIT PLUS SUR UN NOM VOISIN (07/09/2026, ft-v1160) ══
+   ⛔⛔ TROUVÉ PAR LE COMPTEUR DE ft-v1146, QUI MESURAIT AUTRE CHOSE. Capture de Michel :
+   « 4 séances proposées par Milo, **0 JUGEABLE** » — le contrôle ne s'était **jamais** déclenché,
+   alors qu'il a des records au couché, au squat et au soulevé de terre.
+   ⭐⭐ La cause : **deux fonctions voisines répondaient à la même question et pas pareil.**
+   `_repereDefauts` essayait 4 variantes + normalisation ; `_intensiteDefauts` faisait
+   `S.prs[nom]` **brut** et commence par `if(!(rm1>0)) return` → *un nom qui ne colle pas
+   n'abîme pas l'affichage, il ÉTEINT un garde-fou.* Et le compteur faisait le même lookup brut,
+   donc **on mesurait un SILENCE en croyant mesurer une ABSENCE DE CONFLIT**.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLVIII. Le contrôle d\'intensité ne se tait plus sur un nom voisin (ft-v1160) --');
+{
+  const R=await p.evaluate(()=>{
+   try{
+    const o={};
+    o.fn=['_cibleNoms','_memeExercice','_recordPourNom','_intensiteDefauts','_repereDefauts','_intensiteCompter']
+          .filter(f=>typeof window[f]!=='function');
+    const _prs0=S.prs;
+    /* ⭐⭐ LE CAS EXACT DE MICHEL : son record est au nom du catalogue, Milo écrit la variante
+       sans accents. Les charges sont les siennes — 100×3 trois fois pour un 1RM de 108. */
+    const sets3=[{kg:100,reps:3,type:'N'},{kg:100,reps:3,type:'N'},{kg:100,reps:3,type:'N'}];
+    S.prs={'Développé Couché':{rm1:108,kg:99,reps:3,date:'2026-09-01'}};
+
+    o.exact   = _intensiteDefauts('Développé Couché', sets3).length;   // non-régression : marchait déjà
+    o.variante= _intensiteDefauts('Developpe Couche', sets3).length;   // ⭐ LE CAS QUI ÉTAIT MUET
+    o.txt     = (_intensiteDefauts('Developpe Couche', sets3)[0]||'');
+    /* ⛔ ET LE COMPTEUR DOIT VOIR LA MÊME CHOSE : c'est lui qui a produit le « 0 jugeable ». */
+    const _cle='ft4_intensiteStats'; localStorage.removeItem(_cle);
+    _intensiteCompter([{name:'Developpe Couche',sets:sets3}], _intensiteDefauts('Developpe Couche',sets3));
+    const st=JSON.parse(localStorage.getItem(_cle)||'{}');
+    o.cptProp=+st.propositions||0; o.cptJug=+st.jugeables||0; o.cptAlerte=+st.avecAlerte||0;
+
+    /* ⛔ SANS AUCUN RECORD, ON SE TAIT — le silence reste juste quand il est justifié (R29). */
+    S.prs={};
+    o.sansRecord=_intensiteDefauts('Developpe Couche', sets3).length;
+    /* ⛔ ET UN `rm1` À 0 N'EST PAS UN RECORD. */
+    S.prs={'Développé Couché':{rm1:0,kg:0,reps:0}};
+    o.rm1Zero=_intensiteDefauts('Developpe Couche', sets3).length;
+    o.rm1ZeroRec=_recordPourNom('Developpe Couche')===null;
+
+    /* ⭐ DOUBLONS DE CLÉ (les quatre de ft-v1148) : on garde le PLUS GRAND rm1 — un record est un
+       MAXIMUM, et prendre le plus bas ferait crier le contrôle sur ce qu'il soulève vraiment. */
+    S.prs={'Développé Couché':{rm1:108},'Developpe couche':{rm1:95}};
+    const rec=_recordPourNom('Developpe Couche');
+    o.doublon = rec?rec.rm1:-1;
+
+    /* ⛔ NON-RÉGRESSION `_repereDefauts` : il reconnaissait DÉJÀ les variantes, il doit continuer. */
+    S.prs={'Développé Couché':{rm1:108}}; S.sessions=[];
+    o.repereAvecRecord=_repereDefauts('Developpe Couche',[{kg:100,reps:3,type:'N'}]).length; // 0 = se tait
+    S.prs={};
+    o.repereSansRien  =_repereDefauts('Exercice Inconnu XYZ',[{kg:60,reps:8,type:'N'}]).length; // 1 = parle
+
+    /* ⭐⭐ BOUT EN BOUT : c'est `_avertissementsSeance` qui alimente l'écran ET Milo.
+       ⚠️ ET IL FAUT REGARDER AUX DEUX ENDROITS — mon 1ᵉʳ témoin cherchait le chiffre dans le
+       message rendu et il est tombé ROUGE : le message est un RÉSUMÉ (« ⚡ Charge élevée sur X »),
+       le détail chiffré s'ATTACHE à l'exercice (`intensiteWarn`) pour être lisible au moment de
+       le faire. *Deviner le format au lieu de le lire, c'est se tromper de cible et croire que
+       le code est cassé.* */
+    S.prs={'Développé Couché':{rm1:108}};
+    const _ex={name:'Developpe Couche',sets:sets3};
+    const av=_avertissementsSeance([_ex],'start');
+    o.boutEnBoutMsg=(av||[]).filter(m=>/Charge élevée/i.test(String(m))).length;
+    o.boutEnBoutEx =((_ex.intensiteWarn||[]).filter(m=>/1RM estim/i.test(String(m))&&/108/.test(String(m)))).length;
+
+    S.prs=_prs0; localStorage.removeItem(_cle);
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+
+  if(R.err) t('CCLVIII n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLVIII ⛔ CONTRÔLE — les 6 fonctions existent', (R.fn||[]).length===0, (R.fn||[]).join(', '));
+    /* ⛔⛔ LE CONTRÔLE LE PLUS IMPORTANT EST CELUI-CI, et il n'est pas un `grep` : le nom EXACT
+       marchait déjà avant. Si seul lui était vert, on n'aurait rien corrigé du tout. */
+    t('CCLVIII ⛔⛔ CONTRÔLE — le nom EXACT déclenchait déjà (sinon on ne mesure rien)', R.exact===1, 'reçu : '+R.exact);
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : avant, il rendait 0 — silence total. */
+    t('CCLVIII ⭐⭐ un nom VOISIN (sans accents) déclenche enfin le contrôle', R.variante===1, 'reçu : '+R.variante);
+    t('CCLVIII ⭐ et il dit le bon chiffre (le 1RM retrouvé, pas un défaut)', /1RM estim/.test(R.txt)&&/108/.test(R.txt), R.txt);
+    /* ⛔⛔ LE COMPTEUR EST LA MOITIÉ QUI A RÉVÉLÉ LE BUG : sans lui, l'écran serait réparé et le
+       chiffre continuerait de dire « 0 jugeable » — on croirait mesurer une absence de conflit. */
+    t('CCLVIII ⭐⭐ le compteur voit la séance comme JUGEABLE (c\'était le « 0 sur 4 »)', R.cptJug===1, 'reçu : '+R.cptJug);
+    t('CCLVIII ⭐ ... et il enregistre la contradiction', R.cptProp===1&&R.cptAlerte===1, 'prop '+R.cptProp+' alerte '+R.cptAlerte);
+    /* ⛔ Les silences qui restent JUSTES. Un garde-fou qui se met à parler sans repère serait pire. */
+    t('CCLVIII ⛔ sans aucun record, le contrôle se tait toujours (R29)', R.sansRecord===0, 'reçu : '+R.sansRecord);
+    t('CCLVIII ⛔ un rm1 à 0 n\'est pas un record — silence', R.rm1Zero===0&&R.rm1ZeroRec===true, 'reçu : '+R.rm1Zero);
+    t('CCLVIII ⭐ sur des clés en DOUBLON, c\'est le PLUS GRAND rm1 qui gagne', R.doublon===108, 'reçu : '+R.doublon);
+    /* ⛔ NON-RÉGRESSION du voisin dont on a extrait le code — dans les DEUX sens. */
+    t('CCLVIII ⛔ `_repereDefauts` se tait toujours quand un record existe', R.repereAvecRecord===0, 'reçu : '+R.repereAvecRecord);
+    t('CCLVIII ⛔ ... et parle toujours quand il n\'y a vraiment rien', R.repereSansRien===1, 'reçu : '+R.repereSansRien);
+    /* ⭐⭐ Et jusqu'à ce que l'écran et Milo reçoivent réellement. */
+    t('CCLVIII ⭐⭐ bout en bout : le message « Charge élevée » sort de `_avertissementsSeance`', R.boutEnBoutMsg===1, 'reçu : '+R.boutEnBoutMsg);
+    t('CCLVIII ⭐⭐ ... et le DÉTAIL chiffré s\'attache à l\'exercice (c\'est lui qu\'on lit en salle)', R.boutEnBoutEx===1, 'reçu : '+R.boutEnBoutEx);
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

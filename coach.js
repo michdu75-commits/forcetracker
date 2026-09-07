@@ -4807,11 +4807,21 @@ function _intensiteCompter(exs, lignes){
        tait par construction. La compter comme « pas de conflit » ferait baisser le taux sans
        qu'aucun conflit ait été évité. 👉 On compte donc à part les séances où le contrôle
        avait **de quoi parler** : c'est ce dénominateur-là qui répond à la question de Michel. */
+    /* ⛔⛔ LE COMPTEUR DOIT CHERCHER LE RECORD **EXACTEMENT COMME LE CONTRÔLE**, sinon il ne
+       mesure pas ce qu'il croit (ft-v1160). Sa 1ʳᵉ version faisait `S.prs[ex.name]` **brut**,
+       comme `_intensiteDefauts` à l'époque — donc un nom voisin du catalogue rendait la séance
+       « non jugeable » alors que la personne a bel et bien un record. C'est ce qui donnait
+       **« 4 séances, 0 jugeable »** chez Michel le 07/09. *Deux lookups pour une seule question
+       finissent toujours par diverger ; ici ils divergeaient déjà* (R2). */
     let jugeables=0;
     try{
       (exs||[]).forEach(ex=>{
-        const pr=(typeof S!=='undefined'&&S.prs)?S.prs[ex&&ex.name]:null;
-        if(pr && (+pr.rm1||0)>0) jugeables++;
+        const r=(typeof _recordPourNom==='function')?_recordPourNom(ex&&ex.name):null;
+        if(r) { jugeables++; return; }
+        if(typeof _recordPourNom!=='function'){    // repli : le comportement d'avant, jamais une erreur
+          const pr=(typeof S!=='undefined'&&S.prs)?S.prs[ex&&ex.name]:null;
+          if(pr && (+pr.rm1||0)>0) jugeables++;
+        }
       });
     }catch(e){}
     if(jugeables>0) o.jugeables=(o.jugeables||0)+1;

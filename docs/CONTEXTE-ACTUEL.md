@@ -6,7 +6,33 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1158` — 🔥 **MON CORRECTIF ft-v1156 N'A PAS PRIS — le modèle
+- **Version en ligne (live) :** `ft-v1160` — 🔑 **LE CONTRÔLE D'INTENSITÉ POUVAIT ÊTRE MUET POUR
+  UNE RAISON DE NOM — et c'est le COMPTEUR de ft-v1146 qui l'a révélé.**
+  ⏳ **Suite complète VERTE** : **parcours 3084/3084** (+13, bloc **CCLVIII**), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  ⭐⭐ **Capture de Michel** : *« 4 séances proposées par Milo · dont jugeables : **0** (0 %) »* —
+  donc le contrôle ne s'est **jamais** déclenché, alors qu'il a des records au couché, au squat et
+  au soulevé de terre. *« 0 jugeable » n'est pas « pas de conflit », c'est « ça n'a jamais tourné ».*
+  ⭐⭐ **La cause, vérifiée** : **deux fonctions voisines répondaient à la même question et pas de la
+  même façon.** `_repereDefauts` essaie **4 variantes** du nom puis compare en **normalisé**, et son
+  commentaire dit pourquoi depuis des semaines ; `_intensiteDefauts`, **dix lignes plus loin**,
+  faisait `S.prs[nom]` **brut** et commence par `if(!(rm1>0)) return`.
+  👉 ***Un nom qui ne colle pas n'abîme pas l'affichage : il ÉTEINT un garde-fou.*** 4ᵉ fois cette
+  semaine que le nom écrit par Milo ne retrouve pas la donnée (ft-v1147 · 1148 · 1156).
+  ⛔⛔ **Coût double** : le compteur faisait le même lookup brut, donc **on mesurait un SILENCE en
+  croyant mesurer une absence de conflit** — et c'est ce chiffre qu'attend tout le chantier
+  `docs/ADAPTATION-DES-SEANCES.md`.
+  ⭐ **Correctif = R2** : `_cibleNoms` / `_memeExercice` / `_recordPourNom` **sortent** de
+  `_repereDefauts` où la logique était enfermée ; les deux appelants s'en servent (**R13**).
+  ⚠️ **Doublons de clé → le PLUS GRAND `rm1`** : un record est un maximum, et prendre le plus bas
+  ferait crier le contrôle sur des charges réellement tenues (**R29**).
+  ⛔ **Les silences justes ne bougent pas** : aucun record → toujours muet ; `rm1` à 0 ≠ record.
+  ⛔⛔ **Limite dite** : je n'ai ni ses records ni les 4 séances → **je ne prouve pas** que c'est la
+  cause de SON 0/4, je prouve le défaut de code. *C'est Michel qui rouvrira son compteur.*
+  ⏭️ **Hors périmètre, exprès** : `_forceRM` et les records **du contexte de Milo** font le même
+  lookup brut — les toucher change ce que Milo reçoit → **R34** (banc d'essai, impossible ici).
+
+- **Version précédente :** `ft-v1158` — 🔥 **MON CORRECTIF ft-v1156 N'A PAS PRIS — le modèle
   a relu la nouvelle règle et ne l'a PAS suivie.**
   ✅ **DÉPLOIEMENTS VÉRIFIÉS VERTS DES DEUX CÔTÉS** (R18), sur `95aca142` : **site** run **#969**
   (job `deploy` success, 7 étapes vertes, 10:00:41 UTC) · **backend Apps Script** run **#110**
