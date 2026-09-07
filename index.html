@@ -3155,6 +3155,22 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
          pour obtenir un programme. L'éditeur existait pourtant déjà (`_renderProgEdit`),
          atteignable seulement par le ✏️ d'un programme DÉJÀ créé. -->
     <button class="btn btn-red ft-press" onclick="creerProgramme()" style="width:100%;padding:13px;margin-bottom:10px;font-size:14px;">+ Créer un programme</button>
+    <!-- 📷 LA PORTE QUI MANQUAIT LÀ OÙ ON CHERCHE (ft-v1155, 07/09/2026)
+         Michel, en voulant charger son programme (PDF) : « euh, j'intègre un programme comment ? »,
+         puis « SI MOI JE NE LE VOIS PAS, LES UTILISATEURS NE VONT PAS LE VOIR NON PLUS ».
+         ⛔⛔ Mesuré : 4 façons d'obtenir un programme, 3 étaient ICI (Générer · Créer · Sauvegarder
+         la séance en cours) — l'import était sur l'écran d'AVANT, derrière la ligne grise repliée
+         de ft-v1024. Or c'est la SEULE qui sait faire du MULTI-JOURS depuis un document : l'éditeur
+         affiche les jours mais aucun bouton n'en ajoute, donc un programme créé à la main est
+         forcément mono-séance. *Celui qui a un vrai programme sur PDF était précisément celui qu'on
+         envoyait au mauvais endroit.*
+         ⭐ R13 : on rappelle `openImportProg()` qui existe déjà — zéro logique neuve.
+         ⛔ La ligne grise de l'écran Séance N'A PAS BOUGÉ (rangée exprès en ft-v1024, et cet écran
+         est sensible — règle d'or #9). On ajoute une porte, on n'en déplace aucune. -->
+    <button class="btn btn-bg2 ft-press" onclick="importProgDepuisProgrammes()" style="width:100%;padding:13px;margin-bottom:10px;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:2px;">
+      <span style="font-weight:700;">📷 Importer un programme</span>
+      <span style="font-size:11px;color:var(--t3);font-weight:400;">Photo ou PDF — l'IA le lit et garde tes jours (Push, Pull, Legs…)</span>
+    </button>
     <div id="prog-list-modal" style="margin-bottom:4px;"></div>
     <div id="prog-save-section" style="border-top:1px solid var(--sep);padding-top:14px;margin-top:6px;display:flex;flex-direction:column;gap:8px;">
       <div style="font-size:13px;color:var(--t2);font-weight:700;">Sauvegarder la séance actuelle :</div>

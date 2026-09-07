@@ -28437,6 +28437,86 @@ console.log('\n-- CCLII. Les avertissements de séance arrivent sur les programm
   await cx.close();
 }
 
+/* ═══ CCLIII. LA PORTE D'IMPORT EST LÀ OÙ ON CHERCHE (07/09/2026, ft-v1155) ═════════════════
+   Michel voulait charger son programme (PDF) et n'a pas trouvé comment : « euh, j'intègre un
+   programme comment ? », puis « SI MOI JE NE LE VOIS PAS, LES UTILISATEURS NE VONT PAS LE VOIR
+   NON PLUS ». Mesuré : 4 façons d'obtenir un programme, 3 étaient dans « Mes Programmes » —
+   l'import était sur l'écran d'avant, derrière la ligne grise repliée de ft-v1024. Or c'est la
+   SEULE qui produit du multi-jours depuis un document.
+   ⭐ Témoins FONCTIONNELS : la modale est réellement ouverte et le bouton réellement tapé.
+   Un `grep` dirait que le bouton EXISTE, jamais qu'il OUVRE l'import.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLIII. La porte d\'import est là où on cherche (ft-v1155) --');
+{
+  const R=await p.evaluate(async()=>{
+   try{
+    const o={};
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    o.fn = ['importProgDepuisProgrammes','openImportProg','closeProgModal','openProgModal']
+             .filter(f=>typeof window[f]!=='function');
+    /* ── ① LA MODALE « MES PROGRAMMES » PORTE BIEN LA PORTE ── */
+    if(typeof openProgModal==='function') openProgModal();
+    const mod=document.getElementById('mod-prog');
+    o.modaleOuverte = !!(mod && mod.classList.contains('open'));
+    const btn=[...(mod?mod.querySelectorAll('button'):[])]
+                .find(b=>/Importer un programme/i.test(b.textContent||''));
+    o.boutonPresent = !!btn;
+    o.boutonDitPdf  = !!(btn && /PDF/i.test(btn.textContent||''));
+    /* ⛔⛔ LE TÉMOIN QUI PORTE LA VERSION : on TAPE, et l'import doit s'ouvrir POUR DE VRAI. */
+    if(btn) btn.click();
+    await new Promise(r=>setTimeout(r,200));
+    const imp=document.getElementById('ov-import-prog');
+    o.importOuvert = !!(imp && imp.classList.contains('open'));
+    /* ⛔ ET UNE SEULE MODALE À LA FOIS : empiler deux overlays pose deux verrous de défilement
+       sur la même page — sur iOS ça bloque le scroll sans lever la moindre erreur. */
+    o.progRefermee = !!(mod && !mod.classList.contains('open'));
+    /* ⛔ L'import s'ouvre bien à l'ÉTAPE 1 (le choix de la source), pas au milieu du parcours. */
+    const s1=document.getElementById('imp-s1');
+    o.etape1 = !!(s1 && s1.style.display!=='none');
+    o.choixPdf = !!document.getElementById('imp-file-inp');
+    if(typeof closeImportProg==='function') closeImportProg();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+
+  if(R.err) t('CCLIII n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLIII ⛔ CONTRÔLE — les 4 fonctions du chemin existent', (R.fn||[]).length===0, (R.fn||[]).join(', '));
+    t('CCLIII ⛔ CONTRÔLE — la modale « Mes Programmes » s\'ouvre', R.modaleOuverte===true, '');
+    t('CCLIII ⭐ le bouton « Importer un programme » est DANS « Mes Programmes »', R.boutonPresent===true, '');
+    t('CCLIII ⛔ il dit qu\'il accepte un PDF (c\'est ce que Michel avait sous la main)', R.boutonDitPdf===true, '');
+    /* ⭐⭐ Le témoin qui porte la version : un bouton qui n'ouvre rien serait vert au `grep`. */
+    t('CCLIII ⭐⭐ le taper OUVRE réellement l\'import', R.importOuvert===true, '');
+    t('CCLIII ⛔ une seule modale ouverte à la fois (pas deux verrous de défilement)', R.progRefermee===true, '');
+    t('CCLIII ⛔ l\'import s\'ouvre à l\'étape 1 (le choix de la source)', R.etape1===true, '');
+    t('CCLIII ⛔ le choix « PDF » est bien là', R.choixPdf===true, '');
+  }
+  /* ── LES SURFACES DE LA RÈGLE D'OR #11, lues dans les fichiers servis ────────────────── */
+  const _sc=fs.readFileSync(path.join(ROOT,'screens.js'),'utf8');
+  const _cc=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
+  const _ap=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+  const _ct=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+  t('CCLIII 📣 point rouge posé sur l\'écran SÉANCE (là où la porte se trouve)',
+    /id:'prog-import-porte'[\s\S]{0,60}screen:'log'/.test(_ct), '');
+  t('CCLIII 📣 l\'aide « ? » de l\'onglet Séance explique la porte', /Un programme sur papier ou en PDF/.test(_sc), '');
+  t('CCLIII 📣 l\'aide détaillée dit les QUATRE façons', /QUATRE FAÇONS/.test(_cc), '');
+  t('CCLIII 📣 la diapo du Guide envoie sur « Programme »', /Tape <b>Programme<\/b> : tout part de là/.test(_ap), '');
+  /* ⛔⛔ ET LA LIMITE EST DITE PARTOUT OÙ LA PORTE EST ANNONCÉE — c'est elle qu'on ne devine
+     pas : un programme créé à la main ne peut pas avoir plusieurs jours. Annoncer la porte
+     sans la limite enverrait les gens créer un programme par jour, à la main. */
+  const _limite = x=>/mono|séance unique|plusieurs jours/i.test(x);
+  t('CCLIII ⛔⛔ la limite « multi-jours = import seulement » est dite dans les 3 aides',
+    _limite(_sc.slice(_sc.indexOf('Un programme sur papier'), _sc.indexOf('Un programme sur papier')+900))
+    && _limite(_cc.slice(_cc.indexOf('QUATRE FAÇONS'), _cc.indexOf('QUATRE FAÇONS')+900))
+    && _limite(_ap.slice(_ap.indexOf('Tape <b>Programme</b>'), _ap.indexOf('Tape <b>Programme</b>')+900)), '');
+  /* ⛔ NON-RÉGRESSION ft-v1024 : la ligne grise de l'écran Séance N'A PAS bougé — on ajoute une
+     porte, on n'en déplace aucune (et cet écran est sensible : règle d'or #9). */
+  const _ix=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+  t('CCLIII ⛔ la ligne grise de l\'écran Séance est intacte (ft-v1024)',
+    /J'ai déjà un programme ou un historique/.test(_ix)
+    && /id="log-import-toggle"[\s\S]{0,200}onclick="_toggleImport\(\)"/.test(_ix), '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

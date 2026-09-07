@@ -6,6 +6,26 @@
 
 ---
 
+- **Version en cours (ft-v1155) :** 📷 **LA PORTE D'IMPORT MANQUAIT LÀ OÙ ON CHERCHE.**
+  Michel, en voulant intégrer son programme (PDF) : *« euh, j'intègre un programme comment ? »*,
+  puis ***« si moi je ne le vois pas, les utilisateurs ne vont pas le voir non plus »***.
+  ⛔⛔ **Mesuré** : **4 façons** d'obtenir un programme, **3 étaient dans « Mes Programmes »** —
+  l'import était sur l'écran d'avant, derrière la ligne grise repliée de ft-v1024. Or c'est la
+  **seule qui fait du multi-jours depuis un document** : l'éditeur affiche les jours mais **aucun
+  bouton n'en ajoute**, donc un programme créé à la main est forcément mono-séance.
+  ⭐ **R13** : on rappelle `openImportProg()` qui existe déjà — *la porte manquait, pas la
+  fonctionnalité*. Même diagnostic qu'en **ft-v1023** pour « + Créer un programme ».
+  ⛔ **On ferme avant d'ouvrir** : deux overlays empilés = deux verrous de défilement sur la même
+  page, et sur iOS ça bloque le scroll **sans erreur**.
+  ⛔ **La ligne grise de l'écran Séance n'a pas bougé** (ft-v1024, et écran sensible — règle #9).
+  📣 **Règle #11, points 2 à 5** : point rouge sur Séance · aide `?` · aide détaillée · diapo du
+  Guide. **Pas de pop-up** (rien à faire, aucun repère déplacé). ⛔⛔ Et **la limite est dite dans
+  les 3 aides** : *plusieurs jours = import seulement* — sinon on envoie les gens créer un
+  programme **par jour**, à la main.
+  ⏭️ **Reste ouvert** : **on ne peut toujours pas ajouter un jour à la main** — c'est le vrai
+  manque derrière celui-ci (décision produit, touche l'éditeur + l'enregistrement + le chargement).
+  ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
 - **Version en ligne (live) :** `ft-v1154` — 🎚️ **DEUX CHOSES SUR LE RIR.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#960** sur `8d6271ac`, **job `deploy` success**,
   les 7 étapes vertes à **21:25:30 UTC**. ⛔ `Code.js` non modifié → aucun déploiement backend attendu.

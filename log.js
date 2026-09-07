@@ -7675,6 +7675,17 @@ function openProgModal(){
   renderProgModal();
   document.getElementById('mod-prog').classList.add('open');
 }
+/* 📷 IMPORTER DEPUIS « MES PROGRAMMES » — ft-v1155 (07/09/2026).
+   ⛔ ON FERME AVANT D'OUVRIR, et ce n'est pas cosmétique : empiler deux `.overlay` laisse la
+   modale des programmes derrière celle de l'import, avec deux verrous de défilement posés sur
+   la même page. Sur iOS c'est exactement le genre de superposition qui bloque le scroll sans
+   lever la moindre erreur. Une seule modale ouverte à la fois.
+   ⭐ R13 : `openImportProg()` fait déjà TOUT le travail (remise à zéro des photos, étape 1,
+   ouverture) — on ne réécrit rien, on ouvre la même porte depuis un 2ᵉ endroit. */
+function importProgDepuisProgrammes(){
+  if(typeof closeProgModal==='function') closeProgModal();
+  if(typeof openImportProg==='function') openImportProg();
+}
 function closeProgModal(){
   document.getElementById('mod-prog').classList.remove('open');
 }

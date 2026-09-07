@@ -393,6 +393,11 @@ const _HELP_DATA={
   log:{
     title:'⚡ Séance',
     tips:[
+      /* 📷 ft-v1155 — CE QU'ON NE DEVINE PAS, et Michel en est la preuve : il a cherché comment
+         charger SON programme et n'a pas trouvé l'import. « Si moi je ne le vois pas, les
+         utilisateurs ne vont pas le voir non plus. » ⛔ L'aide dit la LIMITE en même temps que la
+         porte : un programme créé à la main ne peut pas avoir plusieurs jours. */
+      {i:'📷',t:'<b>Un programme sur papier ou en PDF ?</b> Tape <b>Programme</b> → <b>« 📷 Importer un programme »</b> : l\'IA lit ta photo ou ton PDF et <b>garde tes jours</b> (Push, Pull, Legs…). ⚠️ C\'est <b>la seule façon</b> d\'avoir un programme à plusieurs jours — celui qu\'on crée à la main est forcément une séance unique.'},
       /* 🛡️ ft-v1153 — CE QU'ON NE DEVINE PAS : ces avertissements existaient DEPUIS UN MOIS,
          mais seulement sur les séances proposées par Milo. Quelqu'un qui travaille au programme
          ne les avait jamais vus — et n'avait aucune raison de savoir qu'ils existaient.

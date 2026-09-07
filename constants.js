@@ -464,6 +464,12 @@ const FEAT_SI = {
   testeur:       () => { try{ return typeof _isTester==='function' && _isTester(); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* 📷 POINT ROUGE sur SÉANCE (ft-v1155) : c'est de là qu'on ouvre « Mes Programmes », donc
+     là que la pastille doit ramener. ⛔ Sans `spot` : `_featSpots` fait `if(!el)return;`, donc
+     un ancrage qui n'existe pas est une annonce qui n'a jamais lieu, en silence (ft-v1153).
+     ⛔ ET PAS DE POP-UP : rien n'est à faire, aucun repère n'a bougé, aucune donnée ne change —
+     une porte s'ajoute. La pop-up ANNONCE, l'aide EXPLIQUE (R25). */
+  {id:'prog-import-porte', screen:'log', desc:'Nouveau : « 📷 Importer un programme » est maintenant DANS « Mes Programmes ». Photo ou PDF, l\'IA le lit et garde tes jours (Push, Pull, Legs…) — c\'est la seule façon d\'obtenir un programme à plusieurs jours depuis un document.'},
   /* 🛡️ POINT ROUGE sur SÉANCE (ft-v1153) : c'est là que les avertissements APPARAISSENT, donc
      là que la pastille doit ramener. ⛔ Le poser sur l'Accueil enverrait chercher sur un écran où
      il n'y a rien à voir — le défaut corrigé en ft-v1099.
