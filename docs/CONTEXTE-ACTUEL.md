@@ -8,6 +8,9 @@
 
 - **Version en ligne (live) :** `ft-v1164` — 📚 **LE MODÈLE QUI LIT LE PDF N'AVAIT JAMAIS VU LE
   CATALOGUE — et c'est Michel qui a pointé la bonne cause.**
+  ✅ **DÉPLOIEMENTS VÉRIFIÉS VERTS DES DEUX CÔTÉS** (R18), sur `607664e3` : **site** run **#988**
+  (job `deploy` success, 15:41:20 UTC) · **backend Apps Script** run **#111** (job `deploy` success,
+  **12 étapes** dont *« Vérifier que le backend répond VRAIMENT »*, 15:42:53 UTC).
   ⏳ **Suite complète VERTE** : **parcours 3152/3152** (+17, bloc **CCLXII**), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⭐⭐ Michel : *« avant de faire quoi que ce soit on utilise l'IA pour lire le PDF, elle devrait
