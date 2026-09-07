@@ -7,6 +7,8 @@
 ---
 
 - **Version en ligne (live) :** `ft-v1159` — ⚖️ **LE CHAMP « POIDS DE CETTE PORTION » RÉPOND ENFIN À LA FRAPPE.**
+  ⏳ **Suite complète VERTE** : **parcours 3082/3082** (+11, bloc CCLVII), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⏳ **Déploiement à vérifier** (R18) — ⛔ `coach.js`/`log.js`/`Code.js`/`worker.js` **non touchés** → ni backend ni worker.
   Michel envoie un **enregistrement d'écran** : *« je change le poids, en fait rien au début »*.
   ⭐⭐ **Lu image par image** : à 3,3 s « 50 » est tapé et **rien ne bouge** ; à 4,3 s il ferme le
