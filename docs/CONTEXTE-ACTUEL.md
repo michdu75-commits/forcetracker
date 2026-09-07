@@ -6,7 +6,14 @@
 
 ---
 
-- **Version en cours (ft-v1156) :** 📥 **L'IMPORT FAISAIT « 1 EXERCICE = 1 LIGNE ».**
+- **Version en ligne (live) :** `ft-v1156` — 📥 **L'IMPORT FAISAIT « 1 EXERCICE = 1 LIGNE ».**
+  ✅ **DÉPLOIEMENTS VÉRIFIÉS VERTS DES DEUX CÔTÉS** (R18), sur `3bd396c0` :
+  · **site** run **#965**, job `deploy` success, 7 étapes vertes à **06:55:29 UTC** ;
+  · **backend Apps Script** run **#108**, job `deploy` success, **12 étapes** dont *« Pousser
+  Code.js (respecte .claspignore) »*, *« Redéployer la web app »*, *« Vérifier que le backend
+  répond VRAIMENT »* et *« Vérifier authStatus »* — toutes vertes à **06:55:45 UTC**.
+  ⏳ **Suite complète VERTE** : **parcours 3035/3035** (+12, bloc **CCLIV**), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   Michel envoie son PDF réel : *« il faut que l'import soit PARFAIT »*. ⭐⭐ **Mesuré** : son J1 a
   **9 lignes mais 5 exercices distincts** — le PDF a une colonne **« Type » (ECH / TRAV)** et les
   4 lignes d'échauffement du développé couché sont devenues **4 exercices** nommés
@@ -24,7 +31,7 @@
   **cardio** du bloc exercices (un jour de programme n'a pas de champ cardio — manque de modèle).
   ⚠️ **`Code.js` modifié → déploiement backend automatique, à vérifier des DEUX côtés (R18).**
 
-- **Version en ligne (live) :** `ft-v1155` — 📷 **LA PORTE D'IMPORT MANQUAIT LÀ OÙ ON CHERCHE.**
+- **Version précédente :** `ft-v1155` — 📷 **LA PORTE D'IMPORT MANQUAIT LÀ OÙ ON CHERCHE.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#962** sur `eac493a5`, **job `deploy` success**,
   les 7 étapes vertes à **05:31:35 UTC**. ⛔ `Code.js` non modifié → aucun déploiement backend attendu.
   ⏳ **Suite complète VERTE** : **parcours 3023/3023** (+14, bloc **CCLIII**), calculs 339/339,
