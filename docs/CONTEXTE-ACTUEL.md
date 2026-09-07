@@ -8,6 +8,7 @@
 
 - **Version en ligne (live) :** `ft-v1168` — 🏃 **LE CARDIO D'UN PROGRAMME PART DANS SON BLOC, ET
   LE FILET DE DATE PASSE CÔTÉ APP.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1001**, `success` à **21:34:16 UTC**.
   ⏳ **Suite complète VERTE** : **parcours 3229/3229** (+19, bloc **CCLXVI**), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⭐⭐ Michel : *« c'est quoi ce bordel de date, je l'ai mis ce matin »*, puis *« on est pas en
