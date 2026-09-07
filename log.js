@@ -6157,6 +6157,19 @@ function finalImportProg(){
         }
         // Type de série (dropset D, méthode M, etc.)
         const baseType=ex.setType||'N';
+        /* 🔥 LE TYPE PAR SÉRIE — ft-v1156 (07/09/2026). Le backend peut désormais renvoyer
+           `setTypePerSet` (un élément par série) quand le document porte une COLONNE qui classe
+           chaque ligne (ECH / TRAV). Sans lui, les 4 lignes d'échauffement du développé couché
+           de Michel étaient devenues 4 EXERCICES nommés « Développé couché (ECH) ».
+           ⛔ 'W' est le mot du backend, 'É' celui de l'app (`SET_TYPES`) : la traduction se fait
+           ICI, une fois, à l'entrée — c'est R33 (le format du fournisseur ne devient jamais le
+           format interne). Ailleurs dans l'app, seul 'É' existe.
+           ⛔ Et l'absence de champ ne change RIEN : on retombe sur `baseType`, donc un import
+           sans colonne de type se comporte exactement comme avant. */
+        const _typeAt=si=>{
+          const v=(ex.setTypePerSet&&ex.setTypePerSet[si]!=null)?String(ex.setTypePerSet[si]).toUpperCase():'';
+          return v==='W' ? 'É' : baseType;
+        };
         // Séries avec reps+kg par palier (dropsets) ou repsPerSet
         let sets;
         // Repos par série : backend peut fournir restPerSet[] (secondes) ou rest unique — sinon 0 (défaut par type)
@@ -6165,14 +6178,14 @@ function finalImportProg(){
           sets=ex.repsPerSet.map((r,si)=>({
             kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
             reps:parseInt(r)||10,
-            type:baseType, /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */
+            type:_typeAt(si), /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */
             rest:_restAt(si)
           }));
         }else{
           sets=Array.from({length:Math.max(1,ex.sets||3)},(_,si)=>({
             kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
             reps:ex.reps||10,
-            type:baseType, /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */
+            type:_typeAt(si), /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */
             rest:_restAt(si)
           }));
         }

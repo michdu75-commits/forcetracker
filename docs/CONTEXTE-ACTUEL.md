@@ -6,6 +6,24 @@
 
 ---
 
+- **Version en cours (ft-v1156) :** 📥 **L'IMPORT FAISAIT « 1 EXERCICE = 1 LIGNE ».**
+  Michel envoie son PDF réel : *« il faut que l'import soit PARFAIT »*. ⭐⭐ **Mesuré** : son J1 a
+  **9 lignes mais 5 exercices distincts** — le PDF a une colonne **« Type » (ECH / TRAV)** et les
+  4 lignes d'échauffement du développé couché sont devenues **4 exercices** nommés
+  *« Développé couché (ECH) »*.
+  ⛔⛔ **Cause écrite dans le prompt** (règle 4, décision **@57**) : *« ne jamais utiliser E ni W »*.
+  Ne pouvant pas l'écrire dans la **série**, le modèle l'a écrit dans le **NOM** — **R4**.
+  ⭐ **La décision @57 n'est pas cassée** : elle interdit de deviner depuis une **prose**. Ce qu'on
+  ajoute (`setTypePerSet`) est **conditionnel à une COLONNE** qui classe chaque ligne.
+  ⛔ **R33** : `"W"` (mot du backend) est traduit en **`É`** (mot de l'app) **à l'entrée**, une fois.
+  ⭐ **Effet pour Michel** : 9 blocs → **4**, noms rattachés au catalogue, et les échauffements
+  **sortent du tonnage** (ils y entraient).
+  ⛔⛔ **Limite dite** : je ne peux pas prouver que le modèle obéira (pas de clé API ici). Je prouve
+  la **chaîne** ; **Michel prouve l'extraction en réimportant**.
+  ⏭️ **Ne fait pas** : réparer les programmes **déjà** importés (réimporter) · sortir la ligne de
+  **cardio** du bloc exercices (un jour de programme n'a pas de champ cardio — manque de modèle).
+  ⚠️ **`Code.js` modifié → déploiement backend automatique, à vérifier des DEUX côtés (R18).**
+
 - **Version en ligne (live) :** `ft-v1155` — 📷 **LA PORTE D'IMPORT MANQUAIT LÀ OÙ ON CHERCHE.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#962** sur `eac493a5`, **job `deploy` success**,
   les 7 étapes vertes à **05:31:35 UTC**. ⛔ `Code.js` non modifié → aucun déploiement backend attendu.
