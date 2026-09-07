@@ -4,6 +4,59 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 📚 TOUT SAUVEGARDER ET RENDRE ACCESSIBLE — TANT QUE CE N'EST PAS PERSONNEL (Michel, 07/09/2026)
+
+**La phrase, telle qu'il l'a dite** : ***« le but étant de tout sauvegarder et accessible du moment
+que ce n'est pas des données personnelles »***. C'est un **principe**, pas une feature — la section
+sur les calibrages d'aliments ci-dessous en devient un **cas particulier**.
+
+**⭐⭐ CE QUE LE PRINCIPE AUTORISE, ET C'EST PLUS LARGE QUE LA NUTRITION.** Ce que l'app produit et
+qui décrit **le monde** et non **la personne** :
+
+| donnée | ce qu'elle vaut | état |
+|---|---|---|
+| **Exercices perso créés** (nom · groupe · muscles cochés) | quels exercices entrent au catalogue | ✅ **récolté depuis ft-v714/715** |
+| **Calibrages d'aliments** (code-barres · pour-100 g) | la base que Open Food Facts n'a pas | ⏳ section ci-dessous |
+| **Recherches qui ne rendent RIEN** (exercices et aliments) | les mots que les gens emploient vraiment | ❌ rien |
+| **Codes-barres introuvables** | quels produits manquent, par fréquence | ❌ rien |
+| **Noms écrits par Milo qui ne retrouvent pas le catalogue** | ⭐⭐ **un détecteur de bugs** (voir ci-dessous) | ❌ rien |
+
+**⭐⭐ ET L'USAGE LE PLUS FORT N'EST PAS L'ENRICHISSEMENT, C'EST LA DÉTECTION — mesuré sur une
+semaine.** **CINQ versions** ont eu exactement la même cause : *un nom n'a pas retrouvé sa donnée*
+— **ft-v1147** · **ft-v1148** · **ft-v1156** · **ft-v1160** · **ft-v1163**. 👉 ***Les cinq ont été
+trouvées par hasard ou par Michel. Aucune par une mesure.*** Or « le mot X n'a rien rendu » et
+« Milo a écrit Y, le catalogue n'a pas suivi » sont des faits **non personnels**, et les compter
+transformerait cette famille de bugs — la plus coûteuse du moment — en **compteur** au lieu d'une
+loterie. *C'est `BUGS.md` §15 et R5 (l'audit à l'envers) rendus automatiques.*
+
+**⛔⛔ LE PRINCIPE A BESOIN D'UN COMPAGNON, SINON IL SE RETOURNE.** La frontière n'est pas toujours
+évidente :
+- un **code-barres + un pour-100 g** décrit le **monde** → propre ;
+- un **mot tapé dans une recherche** décrit ce que *quelqu'un* cherchait à un instant → plus près
+  de la personne, et une barre de recherche peut contenir **n'importe quoi** (*« gâteau
+  anniversaire Léa »*).
+
+**⭐⭐ LA RÈGLE PROPOSÉE, ET ELLE FAIT DEUX MÉTIERS D'UN COUP** : *un texte libre n'est conservé
+qu'à partir de **3 identifiants anonymes distincts**.* Un mot tapé par trois personnes sans lien
+**cesse d'être identifiant** — et c'est exactement le seuil à partir duquel il vaut la peine d'être
+traité. ***Un seul seuil : l'anonymat ET la pertinence.*** ⛔ En dessous, on ne garde qu'un
+**compteur**, jamais le texte.
+
+**⭐ LE CRITÈRE DE TRI, EN UNE QUESTION** (le jumeau de celui du cervelet — *« est-ce que ça a
+besoin de savoir QUI est la personne ? »*) : ***est-ce que cette donnée décrit LE MONDE ou LA
+PERSONNE ?*** Le monde → on garde. La personne → on ne garde que ce qu'elle a validé, dans SON
+profil, et jamais dans une base commune.
+
+**⚠️ ET UNE LIMITE QUI VAUT POUR TOUT CE QUI PRÉCÈDE** : ⛔ **pas dans les Script Properties** —
+pleines à **102 %** le 29/07/2026, plus aucune écriture pendant deux jours, **en silence**. Tout ce
+qui grossit va dans le **Sheet** (comme les exercices) ou le **Drive**.
+
+**⏭️ NON TRANCHÉ** : est-ce que ce principe monte en **règle d'architecture** (il en a la forme —
+stable, né d'un événement, applicable pendant des années : critère d'entrée **R21**) ou reste une
+note. *C'est la décision de Michel, pas la mienne : on n'ajoute pas une règle au socle tout seul.*
+
+---
+
 ## 🥫 RÉCOLTER LES CALIBRAGES POUR CONSTRUIRE NOTRE PROPRE BASE D'ALIMENTS (Michel, 07/09/2026)
 
 **Ce qui a déclenché l'idée** : je venais de lui proposer de regarder sa sauvegarde pour trier ses
