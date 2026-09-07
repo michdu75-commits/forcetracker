@@ -28517,6 +28517,109 @@ console.log('\n-- CCLIII. La porte d\'import est là où on cherche (ft-v1155) -
     && /id="log-import-toggle"[\s\S]{0,200}onclick="_toggleImport\(\)"/.test(_ix), '');
 }
 
+/* ═══ CCLIV. L'IMPORT GARDE LES SÉRIES D'ÉCHAUFFEMENT (07/09/2026, ft-v1156) ════════════════
+   Michel importe son programme réel (PDF 3 pages) : « le but n'est pas de modifier ce qui a été
+   rentré, il faut que l'import soit PARFAIT ». MESURÉ en comparant le PDF et le résultat : son J1
+   contient 9 LIGNES mais 5 EXERCICES distincts — le document a une colonne « Type » (ECH/TRAV),
+   et les 4 lignes d'échauffement du développé couché sont devenues 4 EXERCICES nommés
+   « Développé couché (ECH) ». Cause : la règle 4 du prompt interdit 'W' au setType, donc le
+   modèle a mis l'information dans le NOM (R4).
+   ⭐ Témoins FONCTIONNELS : `finalImportProg()` — la VRAIE fonction de production — est appelée
+   sur une charge utile qui reproduit le J1 de Michel. Un `grep` dirait que le champ est lu,
+   jamais que la séance en sort juste.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLIV. L\'import garde les séries d\'échauffement (ft-v1156) --');
+{
+  const R=await p.evaluate(()=>{
+   try{
+    const o={};
+    o.fn=['finalImportProg'].filter(f=>typeof window[f]!=='function');
+    S.programmes=[]; persist();
+    /* ⭐⭐ LE J1 RÉEL DE MICHEL, tel que le backend le renverra désormais : UN exercice
+       « Développé couché » avec 7 séries, dont les 4 premières marquées échauffement. */
+    _impMode='new';
+    _impExtracted={name:'PB Bloc 1',weeks:4,startDate:'',days:[{label:'J1 - Pectoraux / Dos',exercises:[
+      {name:'Elliptique / cardio léger',sets:1,reps:1,repsPerSet:[],kg:0,kgPerSet:[],setTypePerSet:[],note:'8-10 min'},
+      {name:'Développé Couché',sets:7,reps:3,repsPerSet:[5,3,2,1,3,3,3],kg:90,
+       kgPerSet:[50,65,80,85,90,90,90],setTypePerSet:['W','W','W','W','','','']},
+      {name:'Rowing Poitrine Appuyée',sets:3,reps:8,repsPerSet:[],kg:52,kgPerSet:[],setTypePerSet:[]},
+      {name:'Face Pull',sets:3,reps:12,repsPerSet:[],kg:28,kgPerSet:[],setTypePerSet:[]}
+    ]}]};
+    finalImportProg();
+    const prog=(S.programmes||[])[S.programmes.length-1];
+    const j1=prog&&prog.days&&prog.days[0];
+    const dc=j1&&(j1.exs||[]).find(e=>/Développé Couché/i.test(e.name));
+    o.nbExs   = j1?(j1.exs||[]).length:-1;
+    o.nomsSansEch = j1?(j1.exs||[]).every(e=>!/\(ECH\)|ECH\b|TRAV/i.test(e.name)):false;
+    o.dcSets  = dc?(dc.sets||[]).length:-1;
+    o.dcTypes = dc?(dc.sets||[]).map(x=>x.type).join('|'):'';
+    o.dcKg    = dc?(dc.sets||[]).map(x=>x.kg).join('|'):'';
+    /* ⛔ NON-RÉGRESSION : sans le champ, RIEN ne change — un import d'avant se comporte pareil. */
+    S.programmes=[]; persist();
+    _impExtracted={name:'Sans colonne',days:[{label:'J1',exercises:[
+      {name:'Squat',sets:3,reps:5,repsPerSet:[],kg:100,kgPerSet:[]}
+    ]}]};
+    finalImportProg();
+    const p2=(S.programmes||[])[S.programmes.length-1];
+    o.sansChamp=p2?((p2.days[0].exs[0].sets||[]).map(x=>x.type).join('|')):'';
+    /* ⛔ UNE VALEUR ABERRANTE NE PASSE PAS — et surtout ne fait rien planter. */
+    S.programmes=[]; persist();
+    _impExtracted={name:'Bizarre',days:[{label:'J1',exercises:[
+      {name:'Squat',sets:3,reps:5,repsPerSet:[5,5,5],kg:100,kgPerSet:[],setTypePerSet:['zzz','E','W']}
+    ]}]};
+    finalImportProg();
+    const p3=(S.programmes||[])[S.programmes.length-1];
+    o.aberrant=p3?((p3.days[0].exs[0].sets||[]).map(x=>x.type).join('|')):'';
+    /* ⛔ UN CHAMP PLUS COURT QUE LES SÉRIES : les suivantes restent normales, sans `undefined`. */
+    S.programmes=[]; persist();
+    _impExtracted={name:'Court',days:[{label:'J1',exercises:[
+      {name:'Squat',sets:4,reps:5,repsPerSet:[5,5,5,5],kg:100,kgPerSet:[],setTypePerSet:['W']}
+    ]}]};
+    finalImportProg();
+    const p4=(S.programmes||[])[S.programmes.length-1];
+    o.court=p4?((p4.days[0].exs[0].sets||[]).map(x=>x.type).join('|')):'';
+    S.programmes=[]; persist();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+
+  if(R.err) t('CCLIV n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLIV ⛔ CONTRÔLE — `finalImportProg` existe', (R.fn||[]).length===0, (R.fn||[]).join(', '));
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : 4 exercices (le cardio + 3), pas 9 — et le développé
+       couché porte SES 7 séries, dont les 4 premières en échauffement. */
+    t('CCLIV ⭐⭐ le développé couché est UN exercice de 7 séries (et non 5 exercices)',
+      R.dcSets===7 && R.nbExs===4, 'exs='+R.nbExs+' · séries DC='+R.dcSets);
+    t('CCLIV ⭐⭐ les 4 premières séries sont des ÉCHAUFFEMENTS, les 3 dernières du travail',
+      R.dcTypes==='É|É|É|É|N|N|N', 'reçu : '+R.dcTypes);
+    /* ⛔ Les charges de la montée en charge suivent, série par série — sinon on aurait 7 séries
+       à 90 kg et l'échauffement n'aurait plus aucun sens. */
+    t('CCLIV ⛔ chaque série garde SA charge (50/65/80/85 puis 90)',
+      R.dcKg==='50|65|80|85|90|90|90', 'reçu : '+R.dcKg);
+    /* ⛔⛔ ET LE NOM RESTE PROPRE : c'est ce qui casse l'historique et les records quand il ne
+       l'est pas (les doublons de ft-v1148, par une autre porte). */
+    t('CCLIV ⛔⛔ aucun nom d\'exercice ne porte « (ECH) » ou « TRAV »', R.nomsSansEch===true, '');
+    /* ⛔ NON-RÉGRESSION : un import SANS colonne de type se comporte exactement comme avant. */
+    t('CCLIV ⛔ sans le champ, rien ne change (séries normales)', R.sansChamp==='N|N|N', 'reçu : '+R.sansChamp);
+    t('CCLIV ⛔ une valeur aberrante retombe sur « normal » (seul « W » compte)',
+      R.aberrant==='N|N|É', 'reçu : '+R.aberrant);
+    t('CCLIV ⛔ un champ plus court que les séries ne laisse aucun `undefined`',
+      R.court==='É|N|N|N', 'reçu : '+R.court);
+  }
+  /* ── CÔTÉ BACKEND : la règle est écrite, et l'ancienne décision @57 n'est PAS cassée ──── */
+  const _cj=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  t('CCLIV ⛔ le prompt d\'import porte la règle « colonne de type de série »',
+    /8\. COLONNE « TYPE DE SÉRIE »/.test(_cj) && /setTypePerSet/.test(_cj), '');
+  t('CCLIV ⛔ il interdit explicitement de mettre « (ECH) » dans le NOM',
+    /ne mets JAMAIS[\s\S]{0,120}dans le champ/.test(_cj), '');
+  /* ⛔⛔ LA DÉCISION @57 TIENT TOUJOURS — c'est elle qui protège du mot « échauffement » lu dans
+     une PROSE. On ajoute une lecture STRUCTURELLE, on ne rouvre pas la devinette. */
+  t('CCLIV ⛔⛔ la règle 4 (jamais E/W depuis une prose) est intacte — décision @57',
+    /NE JAMAIS utiliser "E" \(Échec\) ni "W" \(Échauffement\)/.test(_cj), '');
+  t('CCLIV ⛔ le serveur ne garde que « W » ou vide (ni E, ni D, ni fantaisie)',
+    /ex\.setTypePerSet = Array\.isArray\(ex\.setTypePerSet\)[\s\S]{0,160}==='W' \? 'W' : ''/.test(_cj), '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
