@@ -8,7 +8,7 @@
 
 - **Version en ligne (live) :** `ft-v1166` — ⚠️ **L'APERÇU D'IMPORT DIT ENFIN CE QU'IL VA
   INVENTER — et le déclencheur n'est pas un bug, c'est une phrase de Michel.**
-  ⏳ **Suite complète VERTE** : **parcours 3176/3176** (+24, bloc **CCLXIV**), calculs 339/339,
+  ⏳ **Suite complète VERTE** : **parcours 3195/3195 sur l'arbre FUSIONNÉ avec la ft-v1165 de session-A** (+24, bloc **CCLXIV**), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⭐⭐ Michel, après avoir dû réparer son programme à la main : *« ouais ok mais ça m'arrive à
   MOI, si ça arrive à d'autres personnes je fais comment ? Je passe pour un mec qui a créé une
