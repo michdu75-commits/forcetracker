@@ -29556,6 +29556,183 @@ console.log('\n-- CCLXII. Le catalogue part avec le document d\'import (ft-v1164
   }
 }
 
+/* ═══ CCLXIII. LE SCAN SANS VALEURS NE LAISSE PLUS DANS UN CUL-DE-SAC (07/09/2026, ft-v1165) ═══
+   Michel : *« c'est surtout que c'est chiant de mettre ses aliments, alors si ça fonctionne pas »*,
+   puis la précision qui recadre tout : ***« je l'ai rentré avec le code-barres »***.
+   ⭐⭐ REPRODUIT AVEC UNE VRAIE FICHE Open Food Facts INCOMPLÈTE (nom + marque, `nutriments:{}`) —
+   trois choses que l'app SAVAIT étaient jetées : le NOM, la disponibilité du bloc quantité (un
+   `_bcNutr` de ZÉROS le faisait cacher), et le bouton de calibrage qui règle le produit pour
+   toujours. ⛔ Et le cul-de-sac était DÉFINITIF : `per100:null` + `q:null` = plus rien ne rescale.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLXI. Le scan sans valeurs ouvre le calibrage (ft-v1165) --');
+{
+  /* ⛔ Open Food Facts est injoignable depuis le banc : sans interception on mesurerait
+     « produit introuvable », c'est-à-dire une AUTRE branche que celle qu'on teste. */
+  const fiche=(nutriments)=>({status:1,product:{product_name_fr:'Ratatouille cuisinée',
+    brands:'Bonduelle', quantity:'660 g', nutriments:nutriments}});
+  await p.route(/openfoodfacts/, r=>r.fulfill({status:200,contentType:'application/json',
+    body:JSON.stringify(r.request().url().indexOf('SANSVAL')>=0?fiche({}):fiche({'energy-kcal_100g':72,'proteins_100g':1.2,'carbohydrates_100g':5.5,'fat_100g':4.5}))}));
+  /* ⛔⛔ ET LE WORKER AUSSI — sinon on ne peut pas CONDUIRE la photo d'étiquette, on ne peut
+     qu'interroger la fonction. C'est exactement la faute que la mutation ⑦ a révélée. */
+  await p.route(/workers\.dev/, r=>r.fulfill({status:200,contentType:'application/json',
+    body:JSON.stringify({status:'ok',name:'Ratatouille cuisinée',kcal100:0,prot100:0,carbs100:0,fat100:0})}));
+
+  const R=await p.evaluate(async()=>{
+   try{
+    const o={toasts:[]};
+    const vrai=window.toast; window.toast=(m)=>{o.toasts.push(String(m));};
+    const vis=id=>{const e=document.getElementById(id); return !!(e&&e.offsetParent!==null);};
+    const poser=(id,v)=>{const e=document.getElementById(id); if(e){e.value=String(v);
+      e.dispatchEvent(new Event('input',{bubbles:true}));}};
+    o.fnSans=typeof _bcSansValeurs;
+
+    /* ═══ ① LA FICHE SANS VALEURS — le cas de Michel ═══ */
+    openAddFood();
+    await _lookupBarcode('SANSVAL3083680085815','scan',false);
+    o.nomPose=(document.getElementById('af-desc')||{}).value||'';
+    o.bcNutrNull=(_bcNutr===null);
+    o.calibrageOuvert=vis('af-cal-row');
+    o.src=(typeof _afSrc==='object'&&_afSrc)?{o:_afSrc.origine,s:_afSrc.sourceId,p:_afSrc.per100||null}:null;
+    o.toastDit=o.toasts.join(' | ');
+    /* ⛔⛔ LE BLOC QUANTITÉ REDEVIENT DISPONIBLE — c'est le défaut silencieux : un `_bcNutr` de
+       zéros faisait croire à `_afMajAncre` qu'un pour-100 g existait, et il cachait TOUT. */
+    poser('af-kcal',180); poser('af-prot',4); poser('af-carbs',14); poser('af-fat',12);
+    _afMajAncre(true);
+    const row=document.getElementById('af-prop-row');
+    o.quantiteDispo=!!(row && row.innerHTML && /En grammes/.test(row.textContent));
+
+    /* ═══ ② LA BOUCLE COMPLÈTE : il recopie l'étiquette, le produit devient réglable ═══ */
+    poser('af-cal-kcal',72); poser('af-cal-prot',1.2); poser('af-cal-carbs',5.5); poser('af-cal-fat',4.5);
+    _calAppliquer();
+    o.grammesOuvert=vis('af-bc-row');
+    poser('af-bc-grams',250); _bcApplyGrams();
+    o.a250={kcal:(document.getElementById('af-kcal')||{}).value,
+            prot:(document.getElementById('af-prot')||{}).value,
+            carbs:(document.getElementById('af-carbs')||{}).value};
+    o.per100Garde=(typeof _afSrc==='object'&&_afSrc&&_afSrc.per100)?_afSrc.per100.kcal:null;
+
+    /* ═══ ③ LA BASCULE : un calibrage DÉJÀ ouvert ne doit pas être REFERMÉ par le scan ═══ */
+    openAddFood();
+    _calOuvrir();                                  // la personne l'a ouvert elle-même
+    const avant=vis('af-cal-row');
+    await _lookupBarcode('SANSVAL3083680085815','scan',false);
+    o.bascule={avant:avant, apres:vis('af-cal-row')};
+
+    /* ═══ ④ NON-RÉGRESSION : une fiche AVEC ses valeurs suit EXACTEMENT l'ancien chemin ═══ */
+    openAddFood();
+    o.toasts.length=0;
+    await _lookupBarcode('3083680085815','scan',false);
+    o.normale={grammes:vis('af-bc-row'), calibrage:vis('af-cal-row'),
+               bcNutr:(_bcNutr&&_bcNutr.kcal100)||0, toast:o.toasts.join(' | ')};
+
+    /* ═══ ⑤bis LA JUMELLE — LA PHOTO D'ÉTIQUETTE (R8, trouvée par MICHEL pendant la version) ═══
+       *« ça risque de merder aussi pour le scan du code-barres ou l'étiquette, c'est pareil »* —
+       il avait raison, la ligne était le clone exact. On appelle donc le MÊME propriétaire. */
+    openAddFood();
+    o.toasts.length=0;
+    S.premium=true; S.url=S.url||'x';
+    /* ⛔⛔ ON CONDUIT LA VRAIE FONCTION, ON NE L'INTERROGE PAS — ma première version appelait
+       `_bcSansValeurs` en direct, donc débrancher la jumelle laissait le témoin VERT
+       (mutation ⑦). *Vérifier la fonction n'est pas vérifier l'appel* — la leçon de ft-v1158,
+       payée une 2ᵉ fois. On fabrique donc une vraie image et on passe par `onFoodLabelFile`. */
+    const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    const blob=await (await fetch(png)).blob();
+    const fichier=new File([blob],'etiquette.png',{type:'image/png'});
+    const dt=new DataTransfer(); dt.items.add(fichier);
+    await onFoodLabelFile({files:dt.files});
+    o.etiquette={nom:(document.getElementById('af-desc')||{}).value||'',
+                 bcNutrNull:(_bcNutr===null), calibrage:vis('af-cal-row'),
+                 origine:(typeof _afSrc==='object'&&_afSrc)?_afSrc.origine:null,
+                 toast:o.toasts.join(' | ')};
+    /* ⛔ Et « Produit » (le mot par défaut quand RIEN n'a été lu) n'est pas un nom : on ne le pose pas. */
+    openAddFood();
+    _bcSansValeurs('Produit',{saisie:'photo-ia',origine:'etiquette'});
+    o.produitPasPose=((document.getElementById('af-desc')||{}).value||'')==='';
+
+    /* ═══ ⑥ LE BLOC DE CALIBRAGE SE REND À CHAQUE OUVERTURE (R15) ═══
+       Sans ça : on scanne un produit sans fiche, le calibrage s'ouvre, on renonce, on ajoute
+       autre chose — et l'étiquette du produit d'AVANT est encore là, prête à être appliquée. */
+    openAddFood();
+    _calOuvrir();
+    poser('af-cal-kcal',999); poser('af-cal-prot',88);
+    openAddFood();
+    o.calRendu={ouvert:vis('af-cal-row'),
+                kcal:(document.getElementById('af-cal-kcal')||{}).value,
+                prot:(document.getElementById('af-cal-prot')||{}).value};
+
+    /* ═══ ⑦ UN NOM DÉJÀ TAPÉ N'EST PAS ÉCRASÉ (on complète, on ne décide pas — R29) ═══ */
+    openAddFood();
+    poser('af-desc','Ma ratatouille à moi');
+    await _lookupBarcode('SANSVAL3083680085815','scan',false);
+    o.nomRespecte=(document.getElementById('af-desc')||{}).value;
+
+    window.toast=vrai;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,240)};}
+  });
+
+  if(R.err) t('CCLXIII n\'a pas pu tourner', false, R.err);
+  else{
+    /* ⛔⛔ CONTRÔLE D'ABORD : sans le propriétaire, tout le reste ne mesure rien. */
+    t('CCLXIII ⛔⛔ CONTRÔLE — le propriétaire existe', R.fnSans==='function', R.fnSans);
+    /* ⭐⭐ LES TROIS CHOSES QUE L'APP JETAIT. */
+    t('CCLXIII ⭐⭐ le NOM du produit est posé (il était jeté)',
+      R.nomPose==='Ratatouille cuisinée (Bonduelle)', 'reçu : "'+R.nomPose+'"');
+    t('CCLXIII ⭐⭐ le pour-100 g de ZÉROS est retiré (_bcNutr null)',
+      R.bcNutrNull===true, 'il reste posé, donc le bloc quantité se cache');
+    t('CCLXIII ⭐⭐ ... donc le bloc quantité redevient disponible',
+      R.quantiteDispo===true, 'aucun réglage affiché — ni grammes ni portions');
+    t('CCLXIII ⭐⭐ le calibrage « valeurs pour 100 g » s\'OUVRE tout seul',
+      R.calibrageOuvert===true, 'fermé');
+    /* ⭐ La provenance est vraie : le code-barres a identifié le produit, pas ses valeurs. */
+    t('CCLXIII ⭐ la provenance garde le produit identifié (origine + code)',
+      !!R.src && R.src.o==='off' && /3083680085815/.test(String(R.src.s||'')), JSON.stringify(R.src));
+    t('CCLXIII ⛔ ... et AUCUN pour-100 g n\'est inventé (R29)',
+      !!R.src && !R.src.p, JSON.stringify(R.src&&R.src.p));
+    t('CCLXIII ⭐ le message dit ce qu\'on y gagne, pas juste ce qui manque',
+      /aucune valeur/.test(R.toastDit) && /pour toujours/.test(R.toastDit), R.toastDit.slice(0,120));
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : la boucle entière, jusqu'au bon nombre. */
+    t('CCLXIII ⭐⭐ LA BOUCLE — après calibrage, 250 g donnent bien 180 kcal',
+      R.grammesOuvert===true && R.a250 && R.a250.kcal==='180' && R.a250.carbs==='14',
+      JSON.stringify(R.a250));
+    t('CCLXIII ⭐ ... et le pour-100 g est GARDÉ (la fois d\'après est gratuite)',
+      R.per100Garde===72, 'reçu : '+R.per100Garde);
+    /* ⛔ La bascule : `_calOuvrir` referme ce qui est ouvert — le scan fermerait la porte. */
+    t('CCLXIII ⛔⛔ un calibrage DÉJÀ ouvert n\'est pas refermé par le scan',
+      R.bascule && R.bascule.avant===true && R.bascule.apres===true, JSON.stringify(R.bascule));
+    /* ⛔ NON-RÉGRESSION : la fiche complète ne change pas d\'un cheveu. */
+    t('CCLXIII ⛔⛔ NON-RÉGRESSION — une fiche AVEC valeurs garde l\'ancien chemin',
+      R.normale && R.normale.grammes===true && R.normale.calibrage===false && R.normale.bcNutr===72,
+      JSON.stringify(R.normale));
+    t('CCLXIII ⛔ ... et son message reste « ajuste la quantité »',
+      !!R.normale && /ajuste la quantité/.test(R.normale.toast), R.normale&&R.normale.toast);
+    t('CCLXIII ⛔ un nom DÉJÀ tapé n\'est pas écrasé',
+      R.nomRespecte==='Ma ratatouille à moi', 'reçu : "'+R.nomRespecte+'"');
+    /* ⭐⭐ LA JUMELLE — c'est Michel qui l'a vue, et c'est le témoin qui la fige (R8). */
+    t('CCLXIII ⭐⭐ LA JUMELLE — la photo d\'étiquette suit EXACTEMENT le même chemin',
+      !!R.etiquette && R.etiquette.bcNutrNull===true && R.etiquette.calibrage===true
+      && R.etiquette.nom==='Ratatouille cuisinée' && R.etiquette.origine==='etiquette',
+      JSON.stringify(R.etiquette));
+    t('CCLXIII ⭐ ... avec SON message à elle (la photo, pas la fiche)',
+      !!R.etiquette && /pas été lues sur la photo/.test(R.etiquette.toast), R.etiquette&&R.etiquette.toast);
+    t('CCLXIII ⛔ « Produit » (le mot par défaut) n\'est pas posé comme un nom',
+      R.produitPasPose===true, '');
+    /* ⛔⛔ R15 — trouvé par un TÉMOIN, pas par une relecture. */
+    t('CCLXIII ⛔⛔ le bloc de calibrage se REND à chaque ouverture (R15)',
+      !!R.calRendu && R.calRendu.ouvert===false && R.calRendu.kcal==='' && R.calRendu.prot==='',
+      JSON.stringify(R.calRendu));
+  }
+  /* ⛔ RÈGLE D'OR #11 — l'aide détaillée explique CE QU'ON Y GAGNE (recopier une fois suffit). */
+  {
+    const _sc=fs.readFileSync(path.join(ROOT,'screens.js'),'utf8');
+    t('CCLXIII ⛔ l\'aide détaillée dit la porte ET le gain (une fois, puis toutes les suivantes)',
+      /ouvre la saisie pour 100 g|ouvre maintenant la saisie pour 100 g/.test(_sc)
+      && /toutes les suivantes/.test(_sc) && /photo d..\u00e9tiquette|photo d.\\u00e9tiquette|\\u00e9tiquette/.test(_sc), '');
+  }
+  await p.unroute(/openfoodfacts/);
+  await p.unroute(/workers\.dev/);
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

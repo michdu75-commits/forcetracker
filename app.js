@@ -1354,6 +1354,71 @@ function _manualBarcode(){
    ⚠️ C'est R8 (la jumelle) pour la 5ᵉ fois cette semaine : le correctif de la veille avait été
    posé sur 1 endroit des 6, et pas sur le plus utilisé. */
 function _per100d1(x){ const v=+x||0; return Math.round(v*10)/10; }
+/* 📷⛔⛔ LE SCAN TROUVE LE PRODUIT, N'A AUCUNE VALEUR, ET LAISSE LA PERSONNE LÀ (ft-v1163)
+   Michel, après trois versions passées sur la même ligne : *« c'est super chiant en fait, même
+   la ratatouille ne change pas les valeurs sur l'onglet poids. Et même par portion, ça dépend de
+   la boîte d'origine : si je mets 1 comme portion je ne connais pas la valeur en gramme de
+   départ »*, puis ***« c'est surtout que c'est chiant de mettre ses aliments, alors si ça
+   fonctionne pas »***, et la précision qui a tout recadré : ***« je l'ai rentré avec le
+   code-barres »***.
+
+   ⭐⭐ REPRODUIT PAR LE VRAI CHEMIN (fiche Open Food Facts avec un nom, une marque et
+   `nutriments:{}`) — et l'app jetait TROIS choses qu'elle avait déjà :
+     ① **le NOM du produit** — « Ratatouille cuisinée (Bonduelle) » était construit, puis perdu :
+        le champ restait VIDE et il fallait le retaper ;
+     ② ⛔⛔ **`_bcNutr` restait posé avec des ZÉROS** — donc `_afMajAncre` croyait qu'un pour-100 g
+        était connu (`if(_bcNutr){ _afPropCacher(); return; }`) et **cachait tout le bloc
+        quantité**, pendant que `af-bc-row` restait masqué faute de `_offRemplirFormulaire`.
+        *Résultat mesuré : ni grammes, ni portions, aucun réglage — et pas la moindre erreur.*
+        👉 ***Un pour-100 g de zéros n'est pas un pour-100 g : c'est une absence qui se fait
+        passer pour une valeur.***
+     ③ **le bouton « ⚖️ Saisir les valeurs pour 100 g »**, à trois centimètres, jamais proposé.
+
+   ⛔ ET LE CUL-DE-SAC EST DÉFINITIF, PAS UNE GÊNE : la personne tape ses macros pour une
+   quantité inconnue → l'entrée part avec `per100:null` ET `q:null` → plus rien ne peut la
+   rescaler, ni ce jour-là ni jamais. C'est exactement ce que décrivent les commentaires de
+   ft-v1104 et ft-v1110 (*« fiche incomplète, très fréquent sur les produits de marque : Steak
+   haché (U), Iso zero protein (ASL) »*) — **le même défaut que sa protéine ET que sa ratatouille**.
+
+   ⭐ R13 — LA PORTE MANQUAIT, PAS LA FONCTIONNALITÉ. Le calibrage de ft-v1110 fait exactement ce
+   qu'il faut et **calibre le produit pour toujours** (le pour-100 g est enregistré, donc la fois
+   d'après le champ en grammes s'ouvre tout seul). C'est mot pour mot le diagnostic de ft-v1155 :
+   *zéro logique neuve, on rappelle ce qui existe, au moment où on en a besoin.*
+
+   ⛔ ON N'INVENTE TOUJOURS AUCUNE VALEUR (R29) : on ne devine ni un poids ni un pour-100 g. On
+   pose ce que le code-barres a réellement identifié — le **nom** et la **provenance** — et on
+   ouvre le champ où la personne, elle, sait lire son étiquette.
+
+   ⛔⛔ ET LA JUMELLE A ÉTÉ TROUVÉE PAR MICHEL, PAS PAR MOI (R8). Pendant que j'écrivais ce
+   correctif : *« mais donc ça risque de merder aussi pour le scan du code-barres ou l'étiquette
+   c'est pareil. Si je mets des options et ça ne fonctionne pas ça en devient ridicule »*.
+   **Vérifié : `onFoodLabelFile` porte la ligne à l'identique** — même test des quatre zéros,
+   même `return`, même `_bcNutr` laissé posé, même nom jeté (et là c'est un nom lu par l'IA).
+   👉 *Une porte de sortie posée sur un seul des deux chemins n'est pas un correctif, c'est un
+   piège de plus* : il y a **un seul propriétaire** ici, et **deux appelants**. */
+function _bcSansValeurs(nom, opts){
+  opts=opts||{};
+  /* ⛔⛔ D'ABORD ON RETIRE LE MENSONGE : sans ça, tout le reste est inutile (mutation M2). */
+  _bcNutr=null;
+  /* ⛔ « Produit » est le mot par défaut quand rien n'a été lu — ce n'est pas un nom, on ne le
+     pose pas. Et on n'écrase jamais ce que la personne a déjà tapé (R29 : on complète, on ne
+     décide pas). */
+  const d=document.getElementById('af-desc');
+  if(d && !d.value && nom && nom!=='Produit') d.value=nom;
+  /* ⭐ LA PROVENANCE EST VRAIE ET UTILE : le chemin a bien identifié CE produit, seules ses
+     valeurs manquent. ⛔ Aucun `per100` n'est posé — on ne sait pas, et on ne fait pas semblant.
+     Si la personne calibre, `_calAppliquer` réécrit tout proprement par-dessus. */
+  if(typeof _afSetSrc==='function') _afSetSrc({saisie:opts.saisie||'scan', origine:opts.origine||'off',
+    sourceId:opts.sourceId?String(opts.sourceId).slice(0,32):null, etat:null,
+    ...(opts.codeDouteux?{codeDouteux:true}:{})});
+  /* ⛔ `_calOuvrir` est une BASCULE : l'appeler sur un bloc déjà ouvert le refermerait — c'est-à-dire
+     que le scan fermerait la porte au lieu de l'ouvrir. On ne l'appelle que s'il est fermé. */
+  const row=document.getElementById('af-cal-row');
+  if(row && row.style.display==='none' && typeof _calOuvrir==='function') _calOuvrir();
+  /* ⭐ ET ON DIT POURQUOI, avec ce qu'on y gagne — sinon recopier une étiquette ressemble à une
+     corvée de plus au lieu d'un réglage qui ne se refait jamais (R24 : informer, pas bloquer). */
+  toast((opts.cause||'Valeurs introuvables.')+' Recopie l\'étiquette pour 100 g : une fois, et ce produit sera juste pour toujours.','info');
+}
 async function _lookupBarcode(ean, saisie, codeDouteux){
   if(!codeDouteux) toast('Recherche du produit…','info');
   let p=null;
@@ -1369,7 +1434,9 @@ async function _lookupBarcode(ean, saisie, codeDouteux){
     carbs100:_per100d1(n['carbohydrates_100g']),
     fat100:_per100d1(n['fat_100g'])
   };
-  if(!_bcNutr.kcal100&&!_bcNutr.prot100&&!_bcNutr.carbs100&&!_bcNutr.fat100){toast('Produit trouvé mais sans infos nutritionnelles — saisis à la main','error');return;}
+  if(!_bcNutr.kcal100&&!_bcNutr.prot100&&!_bcNutr.carbs100&&!_bcNutr.fat100)
+    return _bcSansValeurs(_bcNutr.name, {saisie:saisie||'scan', origine:'off', sourceId:ean,
+      codeDouteux:codeDouteux===true, cause:'« '+_bcNutr.name+' » trouvé, mais sa fiche n\'a aucune valeur.'});
   _offRemplirFormulaire(p, ean, saisie||'scan', codeDouteux===true);
   toast('Produit trouvé ✅ — ajuste la quantité','success');
 }
@@ -2115,6 +2182,20 @@ function openAddFood(){
   try{ _afPropCacher(); }catch(e){}
   try{ _bcProposerDerniere(0); }catch(e){}   // ⛔ la pastille ne survit pas à l'aliment précédent
   const coh=document.getElementById('af-coherence');if(coh){coh.style.display='none';coh.innerHTML='';}
+  /* ⚖️⛔⛔ LE BLOC DE CALIBRAGE SE REND AUSSI (ft-v1163, R15) — et c'est un TÉMOIN qui l'a trouvé,
+     pas une relecture. Tout ce qui précède se remet à zéro à chaque ouverture ; `af-cal-row`,
+     lui, était le seul oublié. Le défaut existait avant, mais il était rare : il fallait ouvrir
+     le bloc à la main. ⭐ Depuis que le scan sans valeurs l'ouvre TOUT SEUL, il devient courant —
+     et le dégât est précis : on scanne un produit sans fiche, on renonce, on ajoute autre chose,
+     et **l'étiquette du produit d'avant est encore à l'écran, prête à être appliquée au suivant**.
+     *Un formulaire qui garde les chiffres de quelqu'un d'autre ne se voit pas : il se valide.* */
+  const calRow=document.getElementById('af-cal-row');
+  if(calRow) calRow.style.display='none';
+  const calBtn=document.getElementById('af-cal-btn');
+  if(calBtn) calBtn.textContent='⚖️ Saisir les valeurs pour 100 g (étiquette)';
+  ['af-cal-kcal','af-cal-prot','af-cal-carbs','af-cal-fat'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';});
+  const calErr=document.getElementById('af-cal-err'); if(calErr) calErr.style.display='none';
   const hc=document.getElementById('af-health-card');if(hc)hc.innerHTML='';
   // Code-barres + score santé : GRATUIT pour tout le monde (client-side, 0 token).
   // Les fonctions IA (📸 étiquette, 🤖 estimation) restent freemium (25 essais puis Premium).
@@ -2366,7 +2447,14 @@ async function onFoodLabelFile(input){
       carbs100:_per100d1(d.carbs100),
       fat100:_per100d1(d.fat100)
     };
-    if(!_bcNutr.kcal100&&!_bcNutr.prot100&&!_bcNutr.carbs100&&!_bcNutr.fat100){toast('Valeurs non lues — réessaie ou saisis à la main','error');return;}
+    /* ⛔⛔ LA JUMELLE (ft-v1163, R8) — même défaut, même correctif, un seul propriétaire.
+       Michel : *« ça risque de merder aussi pour le scan du code-barres ou l'étiquette,
+       c'est pareil »*. Il avait raison : cette ligne était le clone exacte de celle du
+       code-barres. ⭐ Et ici la photo est DÉJÀ dans la main de la personne — lui proposer
+       de recopier les valeurs pour 100 g est la suite la plus naturelle qui soit. */
+    if(!_bcNutr.kcal100&&!_bcNutr.prot100&&!_bcNutr.carbs100&&!_bcNutr.fat100)
+      return _bcSansValeurs(_bcNutr.name, {saisie:'photo-ia', origine:'etiquette',
+        cause:'Les valeurs n\'ont pas été lues sur la photo.'});
     const g=(parseFloat(d.serving)>0)?parseFloat(d.serving):100;
     const gramsEl=document.getElementById('af-bc-grams');if(gramsEl)gramsEl.value=g;
     _bcQsrc(g, 'l\'étiquette');       // ⛔ le nombre garde sa source écrite à côté (ft-v1105)
