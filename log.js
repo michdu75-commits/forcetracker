@@ -6575,7 +6575,21 @@ function _setImpMode(mode){
    mieux vaut ne rien dire que dire une date fausse).
    ⛔ ET UNE DATE PASSÉE DONT LE CYCLE COURT ENCORE EST ACCEPTÉE : quelqu'un qui importe un bloc
    commencé il y a deux semaines a RAISON de le dater ainsi. Le critère est du sens, pas une borne. */
-function _dateImportValide(d, weeks){
+/* ⚠️⚠️ CE NOM A ÉTÉ CHANGÉ APRÈS UNE COLLISION QUE J'AI CRÉÉE — écrit pour que personne ne la
+   refasse. J'avais d'abord appelé cette fonction `_dateImportValide`. ⛔ CE NOM EXISTAIT DÉJÀ,
+   dans `state.js` (ft-v1095), et `log.js` charge APRÈS : j'ai donc ÉCRASÉ un garde-fou vivant,
+   silencieusement. Résultat MESURÉ : les dates `1900-01-01` et `2099-01-01` sont redevenues
+   importables dans l'historique — le garde-fou de ft-v1095 était éteint, sans la moindre erreur.
+   👉 Une collision de noms entre deux fichiers servis ne lève RIEN : le dernier chargé gagne.
+   Seuls les témoins de ft-v1095 l'ont vue (bloc CCII) — après 16 minutes de passe complète.
+   ⭐ D'où le CONTRÔLE 16 de `tools/check_regles.py`, né de cette erreur : il refait la même
+   détection en une seconde, à chaque livraison. Mesuré en l'écrivant : 1 532 fonctions de premier
+   niveau, 0 collision — il part d'un état propre, donc il ne peut rougir que sur une VRAIE.
+   ⛔⛔ ET LES DEUX FONCTIONS NE FUSIONNENT PAS, malgré l'envie : `_dateImportValide` juge une
+   date de SÉANCE (donc elle refuse le FUTUR — on ne s'est pas entraîné demain), celle-ci juge une
+   date de DÉBUT DE PROGRAMME, et un programme peut parfaitement commencer lundi prochain.
+   *Deux questions différentes, deux noms différents* (R2). */
+function _dateProgValide(d, weeks){
   const s=String(d==null?'':d).trim();
   if(!s)return '';
   const d0=new Date(s);
@@ -6713,7 +6727,7 @@ function finalImportProg(){
   };
   const prog={id:'p'+Date.now(),name,
     weeks:_impExtracted.weeks||0,
-    startDate:_dateImportValide(_impExtracted.startDate,_impExtracted.weeks),
+    startDate:_dateProgValide(_impExtracted.startDate,_impExtracted.weeks),
     days:_impExtracted.days.map((day,di)=>_buildProgDay(day,di))
   };
   if(_impMode==='replace'){

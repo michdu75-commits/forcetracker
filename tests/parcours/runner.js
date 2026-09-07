@@ -28406,10 +28406,22 @@ console.log('\n-- CCLII. Les avertissements de séance arrivent sur les programm
        && R.jour.par['Développé Couché'].intensite===true
        && R.jour.par['Développé Couché'].warns.some(w=>/🔁/.test(w))),
     JSON.stringify(R.jour&&R.jour.par&&R.jour.par['Développé Couché']));
-  /* ⛔⛔ LA DÉCISION DE MICHEL, FIGÉE (R30) : sur un programme, le cardio NE BOUGE PAS. */
-  t('CCLII ⛔⛔ DÉCISION — sur un programme, le cardio NE sort PAS de la liste (R29/R30)',
-    !!(R.jour && R.jour.exs && R.jour.exs[0]==='Échauffement' && R.jour.exs.length===4
-       && R.jour.cardioAvant===null), JSON.stringify(R.jour&&{e:R.jour.exs,c:R.jour.cardioAvant}));
+  /* ⛔⛔ CE TÉMOIN A ÉTÉ RETOURNÉ, PAS ASSOUPLI — et il faut lire POURQUOI (R30, ft-v1168).
+     Il figeait la décision de Michel du 06/09 (ft-v1153) : *sur un programme, le cardio NE sort
+     PAS de la liste* — parce que « chez Milo on corrige une machine qui a mal rangé, mais dans un
+     programme la personne a écrit sa propre liste ».
+     ⭐⭐ MICHEL A CHANGÉ D'AVIS LE 07/09, en connaissance de cause, capture à l'appui : sur son
+     programme réel, « Cardio léger » s'affichait comme un EXERCICE (1 série × 10 reps × 120 s de
+     repos, AVEC UNE FIGURINE DE JAMBES) alors que sa note dit « Échauffement général - 8 minutes ».
+     Il a demandé : « construis le filet et aussi les exercices que je t'ai montré et les autres ».
+     👉 ***Ce n'est pas un témoin qu'on adoucit pour faire passer du code : c'est la RÈGLE qu'il
+     figeait qui a été changée, et on écrit laquelle, par qui et quand*** (leçon de ft-v1154).
+     ⛔ ET LA MOITIÉ QUI SURVIT DE L'ANCIENNE DÉCISION EST DITE PLUS BAS : les CHARGES d'un
+     programme ne bougent toujours pas, et un cardio au MILIEU reste un exercice. */
+  t('CCLII ⛔⛔ DÉCISION RENVERSÉE le 07/09 — sur un programme, le cardio SORT de la liste (ft-v1168)',
+    !!(R.jour && R.jour.exs && R.jour.exs.indexOf('Échauffement')<0 && R.jour.exs.length===3
+       && R.jour.cardioAvant && R.jour.cardioAvant.duration>0),
+    JSON.stringify(R.jour&&{e:R.jour.exs,c:R.jour.cardioAvant}));
   /* ⛔ LA JUMELLE (R8) — le correctif posé d'un seul côté est LA faute que ce fichier rattrape. */
   t('CCLII ⛔ la JUMELLE : un programme à UN SEUL jour reçoit les mêmes avertissements',
     !!(R.simple && R.simple.warns && R.simple.warns.some(w=>/🛡️/.test(w))),
@@ -28594,10 +28606,14 @@ console.log('\n-- CCLIV. L\'import garde les séries d\'échauffement (ft-v1156)
   if(R.err) t('CCLIV n\'a pas pu tourner', false, R.err);
   else{
     t('CCLIV ⛔ CONTRÔLE — `finalImportProg` existe', (R.fn||[]).length===0, (R.fn||[]).join(', '));
-    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : 4 exercices (le cardio + 3), pas 9 — et le développé
-       couché porte SES 7 séries, dont les 4 premières en échauffement. */
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : le développé couché porte SES 7 séries, dont les 4
+       premières en échauffement — au lieu de 5 exercices séparés.
+       ⚠️ LE COMPTE EST PASSÉ DE 4 À 3 EN ft-v1168, et ce n'est PAS un assouplissement : la
+       ligne « Elliptique / cardio léger » de cette fixture ne compte plus comme un EXERCICE,
+       elle part dans le bloc Cardio du jour. *Le témoin mesure la même garantie, sur un modèle
+       de données qui a changé* — la ligne n'a pas disparu, elle a changé de place. */
     t('CCLIV ⭐⭐ le développé couché est UN exercice de 7 séries (et non 5 exercices)',
-      R.dcSets===7 && R.nbExs===4, 'exs='+R.nbExs+' · séries DC='+R.dcSets);
+      R.dcSets===7 && R.nbExs===3, 'exs='+R.nbExs+' · séries DC='+R.dcSets);
     t('CCLIV ⭐⭐ les 4 premières séries sont des ÉCHAUFFEMENTS, les 3 dernières du travail',
       R.dcTypes==='É|É|É|É|N|N|N', 'reçu : '+R.dcTypes);
     /* ⛔ Les charges de la montée en charge suivent, série par série — sinon on aurait 7 séries
@@ -30060,7 +30076,7 @@ console.log('\n-- CCLXIV. Le détecteur de noms (ft-v1167) --');
   const R = await p.evaluate(()=>{
    try{
     const o={};
-    o.fn=['_dateImportValide','_cardioVersWkt','_extraireCardioMilo','_estCreneauCardio',
+    o.fn=['_dateProgValide','_cardioVersWkt','_extraireCardioMilo','_estCreneauCardio',
           'finalImportProg','_loadProgDayVraiment','_loadProgVraiment']
          .filter(f=>typeof window[f]!=='function');
     /* ⛔⛔ LE CONTRÔLE QUI PORTE TOUT LE RESTE : les DEUX chargeurs doivent APPELER le rattrapage.
@@ -30072,11 +30088,11 @@ console.log('\n-- CCLXIV. Le détecteur de noms (ft-v1167) --');
     o.appelSolo = /_cardioVersWkt\(prog\)/.test(_src.split('@@@')[1]);
     // ── ① LE FILET DE DATE ────────────────────────────────────────────────────────────
     const ilYA=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().split('T')[0];};
-    o.dMichel  = _dateImportValide('2026-03-23',4);   // cycle fini il y a 5 mois → effacée
-    o.dEnCours = _dateImportValide(ilYA(14),4);       // commencé il y a 2 semaines, bloc de 4 → GARDÉE
-    o.dSansDur = _dateImportValide('2026-03-23',0);   // pas de durée → on ne juge pas
-    o.dAbsurde = _dateImportValide('pas une date',4);
-    o.dVide    = _dateImportValide('',4);
+    o.dMichel  = _dateProgValide('2026-03-23',4);   // cycle fini il y a 5 mois → effacée
+    o.dEnCours = _dateProgValide(ilYA(14),4);       // commencé il y a 2 semaines, bloc de 4 → GARDÉE
+    o.dSansDur = _dateProgValide('2026-03-23',0);   // pas de durée → on ne juge pas
+    o.dAbsurde = _dateProgValide('pas une date',4);
+    o.dVide    = _dateProgValide('',4);
     // ── ② L'IMPORT : le J3B réel de Michel ────────────────────────────────────────────
     S.programmes=[]; S.customExercises=[]; persist();
     _impMode='new';

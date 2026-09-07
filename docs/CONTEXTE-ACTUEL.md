@@ -6,6 +6,48 @@
 
 ---
 
+- **Version en ligne (live) :** `ft-v1168` — 🏃 **LE CARDIO D'UN PROGRAMME PART DANS SON BLOC, ET
+  LE FILET DE DATE PASSE CÔTÉ APP.**
+  ⏳ **Suite complète VERTE** : **parcours 3229/3229** (+19, bloc **CCLXVI**), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  ⭐⭐ Michel : *« c'est quoi ce bordel de date, je l'ai mis ce matin »*, puis *« on est pas en
+  mars lol on est en septembre »*. Et sur sa capture : **« Cardio léger »** affiché comme un
+  **exercice**, avec une **figurine de jambes**, alors que sa note dit « 8 minutes ».
+  ⭐⭐ **Mesuré, PDF en main** (lu hors dépôt) : **336 lignes, ZÉRO date**. Le « 23 mars » venait
+  de l'exemple du prompt serveur — corrigé **deux fois** le matin même, et il l'avait quand même.
+  ⛔⛔ **Parce que les DEUX correctifs sont CÔTÉ SERVEUR** : leur effet dépend de **quand** on
+  importe. Son import précède le déploiement (run **#109**, **08:18 UTC = 10h18 chez lui**).
+  C'est **`BUGS.md` §46**, 2ᵉ fois de la journée.
+  ⭐ **Trois pièces** : ① `_dateImportValide` — l'app applique elle-même le critère (*un cycle déjà
+  fini n'est pas une date*), la **durée survit** ; ② une ligne de cardio n'est plus un exercice —
+  **zéro détecteur écrit**, on appelle `_extraireCardioMilo` (ft-v1147/1150, **R13**) ; ③ ⭐⭐ **le
+  rattrapage se fait AU CHARGEMENT, pas par réécriture** — décision de Michel (*« si je remets mon
+  programme je repars à 0 »*) : **aucune donnée enregistrée n'est touchée** (**R29**), un témoin
+  vérifie que le stockage est **intact**.
+  ⛔ **Les DEUX portes** (R8) : `_loadProgDayVraiment` et `_loadProgVraiment`.
+  ⛔⛔ **On ne retouche PAS l'affichage des programmes enregistrés** : une date passée peut être
+  **vraie**, et après coup rien ne distingue une date inventée d'une date vécue (**R29**). Sa date
+  reste à corriger à la main (✏️ → CYCLE).
+  📣 **Règle d'or #11** : point rouge · aide `?` · aide détaillée · diapo du Guide, chacune disant
+  **aussi les deux limites**. ⛔ Pas de pop-up (**R25**).
+  ⛔⛔ **ET LA VRAIE LEÇON EST UNE ERREUR À MOI, VUE PAR LA SEULE PASSE COMPLÈTE** : j'avais nommé
+  mon filet `_dateImportValide` — **ce nom existait déjà dans `state.js`** (ft-v1095), et `log.js`
+  charge **après** → **garde-fou écrasé en silence**, `1900-01-01` et `2099-01-01` redevenues
+  importables. Renommé `_dateProgValide`. ⭐⭐ **Un CONTRÔLE 16 est né de là** (`check_regles.py`) :
+  même détection **en 1 seconde** au lieu de 16 minutes — **1 532 fonctions, 0 collision**, donc il
+  ne peut rougir que sur une vraie. **Éprouvé en remettant la collision.**
+  ⚠️ **Et un témoin a été RETOURNÉ, pas assoupli** (R30) : celui de ft-v1153 figeait la décision
+  *« sur un programme le cardio ne bouge pas »* — **Michel l'a renversée le 07/09**, et on écrit
+  qui, quand, pourquoi. Les **charges**, elles, ne bougent toujours pas.
+  ⚠️⚠️ **LEÇON DE MÉTHODE** : une mutation **n'a pas mordu DEUX FOIS** — mes fixtures ne pouvaient
+  pas déclencher le garde visé. *Une mutation qui ne mord pas ne prouve pas que le code est sûr :
+  elle prouve qu'il manque un témoin.*
+  ⏭️ **Ne fait pas** : le **rapprochement de noms** (« Tirage vertical » → « Tirage Vertical
+  Alterné **Élastique** » à **50 %** · « Développé épaules guidé » → « Développé Épaules Machine »
+  à **67 %**) — demandé par Michel, **pris à part** : `_matchExercise` sert PARTOUT, c'est le
+  morceau le plus risqué (**règle d'or #7**). ⛔ `Code.js`/`worker.js` non touchés → aucun
+  déploiement backend ni worker attendu. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
 - **Version en ligne (live) :** `ft-v1166` — ⚠️ **L'APERÇU D'IMPORT DIT ENFIN CE QU'IL VA
   INVENTER — et le déclencheur n'est pas un bug, c'est une phrase de Michel.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #996**, job `deploy` success, 5 étapes vertes
@@ -44,7 +86,7 @@
   perso. ⛔ `Code.js`/`worker.js` non touchés → **aucun déploiement backend ni worker attendu**.
   ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 
-- **Version en ligne (live) :** `ft-v1167` — 🔎 **LE DÉTECTEUR DE NOMS : ARRÊTER D'ATTENDRE QUE
+- **Version précédente :** `ft-v1167` — 🔎 **LE DÉTECTEUR DE NOMS : ARRÊTER D'ATTENDRE QUE
   MICHEL TOMBE DESSUS.**
   ⏳ **Suite VERTE** : **parcours 3186/3186** (+15, bloc **CCLXV**), calculs 339/339, muscles
   241/241, croisés 50/50, dates 9/9, données classées 0 trou.
