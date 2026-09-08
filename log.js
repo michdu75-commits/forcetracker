@@ -2588,6 +2588,27 @@ const _EX_EQUIV={
   'chest incline':'Chest Press Machine Inclinée','chest press incline':'Chest Press Machine Inclinée','chest incline pronation':'Chest Press Machine Inclinée','developpe incline machine':'Chest Press Machine Inclinée',
   'chest decline':'Chest Press Machine Déclinée','chest press decline':'Chest Press Machine Déclinée',
   'tirage poitrine':'Tirage Poulie Haute (Lat Pulldown)','lat pulldown':'Tirage Poulie Haute (Lat Pulldown)','tirage vertical poitrine':'Tirage Poulie Haute (Lat Pulldown)',
+  /* 🔎 ft-v1170 (08/09/2026) — LES JUMEAUX FRANÇAIS QUI MANQUAIENT. Michel importe son
+     programme, et « Tirage vertical » ressort en « Tirage Vertical Alterné ÉLASTIQUE » à 50 %.
+     ⭐⭐ MESURÉ : le rapprocheur n'est PAS en cause — le catalogue ne contient QU'UN SEUL
+     exercice portant « tirage vertical », et c'est l'élastique. En salle, *tirage vertical* =
+     lat pulldown = « Tirage Poulie Haute ».
+     ⛔⛔ ET LA TABLE LE SAVAIT DÉJÀ À MOITIÉ : `lat pulldown` et `tirage vertical POITRINE`
+     visent la bonne fiche depuis toujours — c'est la forme NUE, celle que les gens tapent,
+     qui manquait. Le concept était là, le mot non.
+     ⭐ Chiffré sur la table entière : 353 clés anglaises contre 55 françaises, et 81 cibles du
+     catalogue ne sont atteignables QUE par un mot anglais. C'est R8 appliqué au vocabulaire.
+     ⛔ ON N'AJOUTE QUE CE QUI EST MESURÉ SUR UN VRAI DOCUMENT (son PDF) — un synonyme FAUX
+     redirige un exercice EN SILENCE et coupe un historique en deux, ce qui est bien pire qu'un
+     synonyme manquant (R29). Les 81 autres sont notés dans IDEES-FUTURES.md, pas devinés. */
+  'tirage vertical':'Tirage Poulie Haute (Lat Pulldown)',
+  /* ⚠️ Les DEUX formes, parce que `_normEx` les rend différemment — mesuré, pas supposé :
+     « Presse 45° » → `presse 45` (le ° tombe) et « Presse 45 degrés » → `presse 45 degres`. */
+  'presse 45':'Press Jambes 45°','presse 45 degres':'Press Jambes 45°',
+  /* ⚠️ `sdt` → « Soulevé de Terre » existe depuis longtemps, mais `sdt roumain` rendait 0 %.
+     ⛔ Et on n'ajoute PAS « souleve de terre roumain » écrit en toutes lettres : mesuré, il
+     tombe DÉJÀ juste à 100 %. Un synonyme qui double un cas qui marche est du bruit. */
+  'sdt roumain':'Soulevé de Terre Roumain Barre',
   'leg curl':'Curl Ischio-jambiers (Leg Curl)','leg extension':'Extension Quadriceps (Leg Extension)'
 };
 // Lookup équivalence tolérant au mot « machine » (et autres mots vides génériques) :

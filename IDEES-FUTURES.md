@@ -4,6 +4,54 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🗣️ LA TABLE DE SYNONYMES PARLE ANGLAIS — 81 cibles sans jumeau français (mesuré 08/09/2026, ft-v1170)
+
+**Le cas qui l'a révélé.** Michel importe son programme : *« Tirage vertical »* ressort en
+**« Tirage Vertical Alterné ÉLASTIQUE »** à 50 %. ⛔ **Et le rapprocheur n'était pas en cause** —
+le catalogue ne contient **qu'un seul** exercice portant « tirage vertical », et c'est l'élastique.
+En salle, *tirage vertical* = **lat pulldown** = « Tirage Poulie Haute ».
+
+### ⭐⭐ La mesure, sur `_EX_EQUIV` entière (525 clés après ft-v1170)
+
+| | |
+|---|---|
+| clés **anglaises** | **353** |
+| clés **françaises** | **55** |
+| autres (abréviations, marques…) | 113 |
+| ⛔ **cibles atteignables SEULEMENT par un mot anglais** | **81** |
+
+**Les trois noms cassés de son programme disaient la même chose** : `lat pulldown` ✅ mais
+`tirage vertical` ⛔ · `leg press` ✅ mais `presse 45 degrés` ⛔ · `sdt` ✅ mais `sdt roumain` ⛔.
+👉 ***La table connaît le terme anglais et pas son jumeau français.*** C'est **R8** appliqué au
+vocabulaire, et c'est systématique.
+
+⭐ **Et plus fin encore** : `'tirage vertical POITRINE'` existait **déjà**. C'est la forme **nue**,
+celle que les gens tapent, qui manquait. *Le concept était là, le mot non.*
+
+### ⛔ Pourquoi ft-v1170 n'en a comblé que QUATRE, et pas 81
+
+**Un synonyme FAUX redirige un exercice EN SILENCE** et coupe un historique en deux — *bien pire
+qu'un synonyme manquant* (**R29**, le coût de l'erreur décide). Les quatre ajoutés sont ceux
+**mesurés sur un vrai document** (son PDF). Les 81 autres demandent d'être vérifiés **un par un**
+contre le catalogue : ⚠️ mon comptage est fait à la **grosse maille** (une expression régulière de
+mots français), donc *81 est un ordre de grandeur, pas une liste* — `sdt` et `curl marteau` y sont
+comptés « anglais » à tort.
+
+### ⏭️ Comment le reprendre proprement, si on le reprend
+1. **Sortir la liste réelle** des 81 cibles et de leurs clés, à la main, pas à la regex.
+2. Pour chacune : *existe-t-il un terme français COURANT et NON AMBIGU ?* ⛔ Si l'expert hésite,
+   on n'ajoute pas — c'est le cas de *« développé épaules guidé / haltères »*, qui désigne **deux**
+   exercices (machine guidée **ou** haltères) et qu'on a donc laissé de côté exprès.
+3. Le **témoin de cohérence** de ft-v1170 protège déjà l'ajout : aucune clé ne peut viser un
+   exercice inexistant (0 morte sur 525 aujourd'hui).
+4. ⭐ **Et le détecteur de ft-v1167/1169 dira où ça manque vraiment** : les noms signalés par
+   l'import et les recherches qui ne rendent rien remontent maintenant dans le Sheet. *Mieux vaut
+   combler ce que les gens tapent réellement que ce qu'on imagine qu'ils tapent.*
+
+*Mesuré, écrit, non construit — à rouvrir quand le détecteur aura de la matière.*
+
+---
+
 ## 📚 TOUT SAUVEGARDER ET RENDRE ACCESSIBLE — TANT QUE CE N'EST PAS PERSONNEL (Michel, 07/09/2026)
 
 **La phrase, telle qu'il l'a dite** : ***« le but étant de tout sauvegarder et accessible du moment

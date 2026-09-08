@@ -30344,6 +30344,100 @@ console.log('\n-- CCLXVII. Les recherches qui ne rendent rien (ft-v1169) --');
     /appendRow\(\['Empreinte','Terme','Type','Personnes'/.test(_cj)
     && /_empreinte_\(genre \+ '\|' \+ norm\)/.test(_cj), '');
 }
+/* ═══ CCLXVIII. « TIRAGE VERTICAL » VISAIT L'ÉLASTIQUE (08/09/2026, ft-v1170) ═══════════════
+   Michel : « vas-y lance la version pour tirage vertical ».
+   ⭐⭐ MESURÉ AVANT DE TOUCHER À QUOI QUE CE SOIT, ET ÇA A CHANGÉ TOUT LE PÉRIMÈTRE :
+   `_matchExercise('Tirage vertical')` rendait « Tirage Vertical Alterné ÉLASTIQUE » à 50 %.
+   ⛔ Le rapprocheur n'était PAS en cause — le catalogue ne contient QU'UN SEUL exercice portant
+   « tirage vertical », et c'est l'élastique. En salle, tirage vertical = lat pulldown.
+   👉 JE N'AI DONC PAS TOUCHÉ À `_matchExercise` (il sert à Milo, l'import, la recherche et
+   l'historique — le morceau risqué annoncé la veille). On corrige la DONNÉE, pas le moteur.
+   ⭐ Chiffré sur la table : 353 clés anglaises contre 55 françaises, 81 cibles atteignables
+   SEULEMENT par un mot anglais. `lat pulldown` ✅ / `tirage vertical` ⛔ — R8 sur le vocabulaire. */
+{
+  const R = await p.evaluate(()=>{
+   try{
+    const o={};
+    o.existe = (typeof _EX_EQUIV!=='undefined') && (typeof _matchExercise==='function');
+    o.taille = (typeof _EX_EQUIV!=='undefined') ? Object.keys(_EX_EQUIV).length : -1;
+    const m=n=>{const r=_matchExercise(n);return {q:r.match||'—',c:r.confidence,t:r.tier,v:r.via};};
+    o.tv      = m('Tirage vertical');
+    o.presseL = m('Presse 45 degrés');   // `_normEx` → `presse 45 degres`
+    o.presseC = m('Presse 45°');         // `_normEx` → `presse 45` (le ° tombe) : DEUX clés
+    o.sdtR    = m('SDT roumain');
+    /* ⛔ NON-RÉGRESSION : l'élastique reste parfaitement trouvable par SON nom. On n'a pas
+       remplacé un exercice par un autre, on a ajouté une porte (R29). */
+    o.elast   = m('Tirage Vertical Alterné Élastique');
+    /* ⛔⛔ LE CONTRE-TEST, et il gagne sa place : « soulevé de terre roumain » écrit EN TOUTES
+       LETTRES tombait DÉJÀ juste à 100 %. On n'a donc PAS ajouté de synonyme pour lui — un
+       synonyme qui double un cas qui marche est du bruit, et il masquerait la mesure. */
+    o.sdtLong = m('Soulevé de terre roumain');
+    o.pasDeDoublon = (typeof _EX_EQUIV!=='undefined') && !('souleve de terre roumain' in _EX_EQUIV);
+    /* ⛔⛔ COHÉRENCE DE LA TABLE — 525 clés pourrissent en silence. Le fichier documente déjà
+       un cas de cible périmée (`leg curl`, rattrapé par `exNomActuel`). Une clé qui vise un
+       exercice inexistant ne lève AUCUNE erreur : elle ne trouve simplement jamais rien. */
+    const noms=(typeof EXLIB!=='undefined'?EXLIB:[]).map(x=>x.n), morts=[];
+    for(const k in _EX_EQUIV){ const c=_EX_EQUIV[k];
+      const ok = noms.indexOf(c)>=0 || (typeof exNomActuel==='function' && noms.indexOf(exNomActuel(c))>=0);
+      if(!ok) morts.push(k+' → '+c); }
+    o.morts=morts;
+    /* ⭐ ET LA RECHERCHE AUSSI : `filterEx` lit `_EX_EQUIV` depuis le 08/08 — une donnée, trois
+       lecteurs (import, Milo, recherche). On compte les VRAIS nombres, pas « vide / pas vide » :
+       c'est la leçon de ft-v1163, où trois mutations sur quatre n'avaient pas mordu. */
+    const cherche=q=>{ try{ openExPicker(); const i=document.getElementById('ex-search');
+      i.value=q; filterEx();
+      const el=document.getElementById('ex-list');
+      const noms=[...el.querySelectorAll('[onclick*="addExercise"]')].map(n=>n.textContent.trim());
+      closeExPicker(); return noms; }catch(e){ return ['ERR:'+e]; } };
+    const rTV=cherche('tirage vertical');
+    o.tvNb=rTV.length; o.tvTrouvePoulie=rTV.some(n=>/Tirage Poulie Haute/.test(n));
+    o.presseNb=cherche('presse 45').length;
+    o.sdtNb=cherche('sdt roumain').length;
+    // ⛔ Les trois recherches de référence de ft-v1163 — chiffres EXACTS, pas « pas vide ».
+    o.pecDeck=cherche('pec deck').length;
+    o.squat=cherche('squat').length;
+    o.dc=cherche('developpe couche').length;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+
+  if(R.err) t('CCLXVIII n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLXVIII ⛔ CONTRÔLE — la table et le rapprocheur existent', R.existe===true, '');
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : il rendait l'ÉLASTIQUE à 50 % (« confirm »), il rend
+       maintenant la bonne fiche à 95 % en « auto » — donc l'import la rattache TOUT SEUL. */
+    t('CCLXVIII ⭐⭐ « Tirage vertical » → Tirage Poulie Haute, en auto (était : Élastique à 50 %)',
+      R.tv.q==='Tirage Poulie Haute (Lat Pulldown)' && R.tv.t==='auto' && R.tv.v==='équivalence connue',
+      'reçu : '+R.tv.q+' · '+R.tv.c+'% · '+R.tv.t);
+    /* ⚠️ LES DEUX FORMES, parce que `_normEx` les rend DIFFÉREMMENT — mesuré, pas supposé :
+       « Presse 45° » perd son ° et devient `presse 45`. Une seule clé en raterait une. */
+    t('CCLXVIII ⭐ « Presse 45 degrés » → Press Jambes 45° (était : rien du tout)',
+      R.presseL.q==='Press Jambes 45°' && R.presseL.t==='auto', 'reçu : '+R.presseL.q);
+    t('CCLXVIII ⚠️ « Presse 45° » aussi — le ° tombe à la normalisation, donc DEUX clés',
+      R.presseC.q==='Press Jambes 45°' && R.presseC.t==='auto', 'reçu : '+R.presseC.q);
+    t('CCLXVIII ⭐ « SDT roumain » → Soulevé de Terre Roumain Barre (était : rien du tout)',
+      R.sdtR.q==='Soulevé de Terre Roumain Barre' && R.sdtR.t==='auto', 'reçu : '+R.sdtR.q);
+    t('CCLXVIII ⛔ NON-RÉGRESSION — l\'élastique reste trouvable par SON nom (R29)',
+      R.elast.q==='Tirage Vertical Alterné Élastique' && R.elast.c===100, 'reçu : '+R.elast.q+' · '+R.elast.c+'%');
+    /* ⛔⛔ CE CONTRE-TEST EST CE QUI DISTINGUE « MESURER » DE « AJOUTER PARTOUT ». */
+    t('CCLXVIII ⛔⛔ CONTRE-TEST — « soulevé de terre roumain » marchait DÉJÀ, aucun synonyme ajouté',
+      R.sdtLong.q==='Soulevé de Terre Roumain Barre' && R.sdtLong.c===100 && R.pasDeDoublon===true,
+      'rend : '+R.sdtLong.q+' ('+R.sdtLong.c+'%) · doublon absent : '+R.pasDeDoublon);
+    t('CCLXVIII ⛔⛔ COHÉRENCE — aucune des '+R.taille+' clés ne vise un exercice inexistant',
+      (R.morts||[]).length===0, (R.morts||[]).slice(0,4).join(' | '));
+    /* ⭐ UNE DONNÉE, TROIS LECTEURS (R2) : la recherche en profite sans une ligne de plus. */
+    t('CCLXVIII ⭐ la RECHERCHE « tirage vertical » trouve aussi Tirage Poulie Haute',
+      R.tvTrouvePoulie===true && R.tvNb>0, 'résultats : '+R.tvNb);
+    t('CCLXVIII ⭐ « presse 45 » et « sdt roumain » rendent enfin un résultat',
+      R.presseNb>=1 && R.sdtNb>=1, 'presse : '+R.presseNb+' · sdt : '+R.sdtNb);
+    /* ⛔ LES TROIS CHIFFRES EXACTS DE ft-v1163 — un élargissement de vocabulaire ne doit RIEN
+       déplacer ailleurs. « pas vide » ne verrait ni un élargissement ni un rétrécissement. */
+    t('CCLXVIII ⛔ NON-RÉGRESSION recherche : pec deck 2 · squat 43 · développé couché 8',
+      R.pecDeck===2 && R.squat===43 && R.dc===8,
+      'reçu : '+R.pecDeck+' / '+R.squat+' / '+R.dc);
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
