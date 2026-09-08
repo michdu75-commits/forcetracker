@@ -3273,3 +3273,44 @@ coïncidence ne mesure rien, il rassure* (§34, le vert qui ne peut pas rougir �
 *Voisine de **§46** (un correctif qui vit dans le prompt n'est pas vérifié) et de la famille
 « l'info n'atteint jamais la donnée » (**R4**), qu'elle retourne : ici c'est l'**intention** qui
 n'atteint pas le **code**.*
+
+
+---
+
+## 55. 🔗 UN TOTAL SÉPARÉ DE SA QUANTITÉ DEVIENT UNE FAUSSE RÉFÉRENCE **(08/09/2026, ft-v1177)**
+
+**À quoi on la reconnaît** : une valeur juste change de sens en changeant de contexte. Les
+chiffres restent les mêmes à l'écran, rien ne plante, rien ne rougit — et pourtant la ligne ne
+veut plus dire la même chose. Le signal typique : **une quantité qui change sans que les valeurs
+bougent**, ou l'inverse.
+
+**Le cas** : un aliment enregistré à *380 g = 274 kcal* est repris depuis « Mes aliments ». Le
+chemin recopie les **totaux** et laisse tomber la **quantité**. La personne tape 110 g → l'app
+apparie 274 kcal à 110 g, en **dérive** un pour-100 g de 249 (au lieu de 72), l'enregistre — et
+tout ce qui suit est parfaitement cohérent depuis une vérité fausse (*180 g → 448 kcal*).
+
+**Pourquoi c'est une famille** : les trois objets (une **référence**, une **quantité**, un
+**total**) sont interchangeables *à l'œil* — ce sont tous des nombres de calories. Seul leur
+**appariement** dit lequel est lequel. Un chemin qui en transporte deux sur trois ne produit
+donc pas une erreur visible : il produit un **résultat plausible**, qui se propage.
+
+**Ce qui la protège** : ⛔ ne jamais transporter des totaux sans leur quantité de référence —
+et si la quantité est inconnue, **le dire** plutôt que de laisser l'app en fabriquer une. Un
+témoin doit vérifier le **rapport** (kcal ÷ grammes), jamais les valeurs seules : c'est le seul
+chiffre qui trahit un mauvais appariement.
+
+**⚠️ ET LA VARIANTE LA PLUS COÛTEUSE EST SILENCIEUSE** : `quickAddFood` créait des lignes à
+`q:null, per100:null`. Elles ne sont **pas** fausses — elles sont **non convertibles**. Rien ne
+permet plus de savoir si 323 kcal valaient 100 g ou 300 g, et *aucune réparation automatique
+n'est possible sans inventer* (**R29**).
+
+**⛔⛔ LE MIROIR DE MÉTHODE, PAYÉ DANS LA MÊME VERSION — DEUXIÈME JOUR DE SUITE.** Mon premier
+correctif marquait le poids repris comme « déclaré par la personne ». Mesuré : après un
+aller-retour d'unité, il **rouvrait le bug**. Le drapeau voulait dire *« un poids a été déclaré
+pour CE QUI EST AFFICHÉ »* — un poids **hérité** d'une entrée enregistrée n'est pas cela.
+👉 ***Quand deux situations demandent le même geste, vérifier que c'est bien la même question
+qui est posée*** — ici : *qui* a posé ce poids, et *pour quoi*.
+
+*Voisine de **§51** (deux comparaisons pour la même question) et de **§54** (le commentaire dit
+vrai, le code ne le fait pas). Née d'un audit externe sur un export réel de 168 lignes — le
+premier bug de ce dépôt trouvé par la DONNÉE plutôt que par une capture d'écran.*

@@ -6,7 +6,33 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1175` — ⛔ **UNE CIBLE DE SYNONYME QUI N'EXISTE PLUS, ET
+- **Version en ligne (live) :** `ft-v1177` — ⚖️ **L'INVARIANT DE REPRISE : des totaux ne se
+  réapparient jamais à une autre quantité.**
+  ⏳ **Suite VERTE** : **parcours 3328/3328** (+16, bloc **CCLXXV**), calculs 339/339, muscles
+  241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  ⭐⭐ **Audit externe (GPT) sur son export réel** (168 lignes), **reproduit au chiffre près avant
+  de coder** : sa ratatouille passe de *380 g = 274 kcal* à *110 g = 274 kcal*, l'app en dérive un
+  pour-100 g de **249** (au lieu de 72), et la reprise suivante donne **448 kcal** pour 180 g —
+  ses trois lignes des 31/08, 01/09 et 02/09, à l'unité.
+  ⛔⛔ **La cause est R8 à l'état pur** : `_afSuggPrendreLocale` **préservait déjà** le couple
+  `totaux ↔ q` (79 kcal sur la même entrée) ; `quickFillFood` non (274). ***Les deux lignes
+  existaient, posées sur une seule porte.***
+  ⭐ **La propagation** : `_provFood` fabrique un pour-100 g depuis cet appariement et
+  l'enregistre — l'erreur devient la vérité du produit.
+  ⛔ **2ᵉ défaut** : `quickAddFood` écrivait `q:null, u:null, per100:null` — des lignes
+  **non convertibles**. `q`/`u` traversent enfin la liste blanche de `_provFood` (**3ᵉ fois** que
+  cet oubli s'y produit).
+  ⛔ **Non touchés, à la demande de l'audit** : `_qtyRescale` (il calcule juste depuis une
+  référence corrompue en amont) et `_afSuggPrendreLocale` (**déjà juste** — **R30**).
+  ⚠️⚠️ **Et le contrôle négatif a REFUSÉ mon premier correctif** : `_afPoidsPose=true` sur le
+  poids repris rouvrait le bug après un aller-retour d'unité. *Le drapeau dit « la personne a
+  déclaré un poids pour CE QUI EST AFFICHÉ » ; un poids hérité n'est pas cela.* **2ᵉ jour de
+  suite qu'un correctif trop large est arrêté par la mesure.**
+  ⏭️ **Rien n'est réparé rétroactivement** (son §11) : l'outil de récupération viendra après, à
+  trois niveaux (certain · ambigu · insuffisant). ⏭️ **L'exclusivité des deux blocs Quantité part
+  en version séparée** — bug distinct.
+
+- **Version précédente :** `ft-v1175` — ⛔ **UNE CIBLE DE SYNONYME QUI N'EXISTE PLUS, ET
   LE RAPPROCHEUR ÉTAIT SÛR À 95 %.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1021**, `success` à **15:39:58 UTC**.
   ⏳ **Suite complète VERTE** : parcours **3312/3312** sur l'arbre FUSIONNÉ avec la ft-v1174 de session-A (+8, bloc **CCLXXIII**), calculs 339/339,

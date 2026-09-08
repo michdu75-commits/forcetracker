@@ -31016,6 +31016,220 @@ console.log('\n-- CCLXXII. Le poids du paquet (ft-v1174) --');
   }
 }
 
+
+/* ═══ CCLXXV. L'INVARIANT DE REPRISE (08/09/2026, ft-v1177) ═════════════════════════════════
+   Audit externe sur l'export réel de Michel (168 lignes, 08/07 → 07/09), **reproduit ici au
+   chiffre près avant d'écrire une ligne de correctif** : sa ratatouille passe de *380 g = 274
+   kcal* à *110 g = 274 kcal*, l'app en dérive un pour-100 g de **249** au lieu de 72, et tout ce
+   qui suit est « cohérent » depuis une vérité fausse (*180 g → 448 kcal*, sa ligne du 02/09).
+
+   ⭐⭐ LA CAUSE EST **R8 À L'ÉTAT PUR** : `_afSuggPrendreLocale` portait DÉJÀ les deux lignes qui
+   préservent le couple `totaux ↔ q`, et rendait 79 kcal sur la même entrée là où `quickFillFood`
+   en rendait 274. *Le mécanisme existait, posé sur une seule des deux portes.*
+
+   ⛔ CE QUI N'EST PAS TOUCHÉ, ET C'EST DIT PAR L'AUDIT LUI-MÊME : `_qtyRescale` calcule
+   correctement à partir d'une référence déjà corrompue en amont — le modifier « compenserait »
+   au lieu de corriger.
+
+   L'INVARIANT, en une phrase : *une valeur nutritionnelle ne peut être redimensionnée que si sa
+   référence et sa quantité de référence sont connues et restent appariées.*
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLXXV. L\'invariant de reprise (ft-v1177) --');
+{
+  const Z=await p.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms)), t=today();
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';
+    const fermer=()=>document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const val=id=>String((document.getElementById(id)||{}).value||'');
+    const mac=()=>['af-kcal','af-prot','af-carbs','af-fat'].map(x=>val(x));
+    const vis=id=>{const x=document.getElementById(id);return !!x&&x.style.display!=='none';};
+    /* ⛔ On tape la quantité là où elle est réellement offerte : le champ absolu quand un
+       pour-100 g est connu, le champ proportionnel sinon. Une sonde qui viserait un seul des
+       deux ne testerait qu'un des deux chemins. */
+    const poserQ=async(v)=>{
+      let e=document.getElementById('af-bc-grams');
+      if(e && vis('af-bc-row')){ e.value=String(v); e.dispatchEvent(new Event('input',{bubbles:true})); }
+      else { e=document.getElementById('af-prop'); if(e){ e.value=String(v); _afApplyProp(); } }
+      await d(220);
+    };
+    const LIGNE=(per100)=>({date:t,meal:'dejeuner',name:'Ratatouille Cassegrain',
+      kcal:274,prot:4,carbs:23,fat:15,ts:Date.now()-3e6,
+      saisie:'historique',origine:'off',q:380,u:'g',per100:per100});
+    const semer=(l)=>{S.foodLog=[].concat(l); S.savedFoods=[]; S.hiddenFoods=[]; persist();
+                      goScreen('nutrition'); renderNutrition();};
+    const iQuick=(nom)=>_afQuickItems.findIndex(x=>x.name===nom);
+
+    /* ══ TEST 1+4 — sans pour-100 g : 380 g ↔ 274 kcal, on demande 110 g ══ */
+    semer(LIGNE(null));
+    fermer(); openAddFood(); await d(320);
+    quickFillFood(iQuick('Ratatouille Cassegrain')); await d(260);
+    o.t1ref = _afRef ? {base:_afRef.base.kcal, q:_afRef.q, u:_afRef.u} : null;
+    o.t1champ = val('af-prop');
+    await poserQ(110);
+    o.t1 = mac();
+
+    /* ══ TEST 2 — ce qui est ENREGISTRÉ, puis la reprise suivante à 180 g ══ */
+    addFoodEntry(); await d(320);
+    const b1=(S.foodLog||[]).slice(-1)[0];
+    o.t2enr = {q:b1.q, u:b1.u, kcal:b1.kcal, per100:b1.per100?b1.per100.kcal:null};
+    fermer(); openAddFood(); await d(320);
+    quickFillFood(iQuick('Ratatouille Cassegrain')); await d(260);
+    await poserQ(180);
+    o.t2 = mac();
+
+    /* ══ TEST 3 — avec un pour-100 g : la référence ne bouge JAMAIS ══ */
+    semer(LIGNE({kcal:72,prot:1.1,carbs:6,fat:3.9}));
+    o.t3=[];
+    for(const q of [100,380,110,180]){
+      fermer(); openAddFood(); await d(300);
+      quickFillFood(iQuick('Ratatouille Cassegrain')); await d(240);
+      await poserQ(q);
+      const k=+val('af-kcal')||0;
+      o.t3.push({q:q, kcal:k, par100:Math.round(k/q*100)});
+    }
+
+    /* ══ TEST 5 — quickAddFood : ajout DIRECT, rien ne doit devenir null ══ */
+    semer(LIGNE({kcal:72,prot:1.1,carbs:6,fat:3.9}));
+    fermer(); openAddFood(); await d(320);
+    quickAddFood(iQuick('Ratatouille Cassegrain')); await d(320);
+    const b2=(S.foodLog||[]).slice(-1)[0];
+    o.t5 = {q:b2.q, u:b2.u, per100:b2.per100?b2.per100.kcal:null,
+            kcal:b2.kcal, origine:b2.origine, saisie:b2.saisie};
+    /* ⛔ … et une entrée SANS pour-100 g garde au moins sa quantité (elle reste convertible). */
+    semer(LIGNE(null));
+    fermer(); openAddFood(); await d(320);
+    quickAddFood(iQuick('Ratatouille Cassegrain')); await d(320);
+    const b3=(S.foodLog||[]).slice(-1)[0];
+    o.t5b = {q:b3.q, u:b3.u, per100:b3.per100?b3.per100.kcal:null, kcal:b3.kcal};
+
+    /* ══ ALLER-RETOUR D'UNITÉ après une reprise — le témoin que le contrôle négatif a réclamé.
+       ⛔⛔ Il vaut plus que sa place : c'est LUI qui a refusé mon premier correctif. J'y avais
+       posé `_afPoidsPose=true` en me disant qu'un poids venu d'une entrée enregistrée est un
+       vrai poids. Mesuré : après ce geste, déclarer 110 g redonnait **274 kcal** — le défaut
+       même que la version corrige. Le drapeau dit « la personne a déclaré un poids pour CE QUI
+       EST AFFICHÉ » ; un poids HÉRITÉ n'est pas cela. ══ */
+    semer(LIGNE(null));
+    fermer(); openAddFood(); await d(320);
+    quickFillFood(iQuick('Ratatouille Cassegrain')); await d(260);
+    await poserQ(110);
+    _afSetUnite('portion'); await d(220);
+    _afSetUnite('g'); await d(220);
+    {const e=document.getElementById('af-poids');
+     if(e){ e.value='110'; e.dispatchEvent(new Event('input',{bubbles:true}));
+            e.dispatchEvent(new Event('blur',{bubbles:true})); }}
+    await d(260);
+    o.tAR = mac();
+
+    /* ══ UNE QUANTITÉ EN ml N'ANCRE RIEN — on n'invente pas de densité (R29) ══ */
+    semer({date:t,meal:'collation',name:'Sirop maison',kcal:200,prot:0,carbs:50,fat:0,
+           ts:Date.now()-7e6,saisie:'manuel',origine:'utilisateur',q:250,u:'ml',per100:null});
+    fermer(); openAddFood(); await d(320);
+    quickFillFood(iQuick('Sirop maison')); await d(260);
+    o.tMl = {unite:_afUnite, poids:_afPoidsDeclare,
+             ref:_afRef?{q:_afRef.q, u:_afRef.u}:null};
+
+    /* ══ TEST 6 — le steak U, ses VRAIS chiffres, par le chemin « Mes aliments » ══ */
+    semer({date:t,meal:'dejeuner',name:'Steak haché 5% (U)',kcal:323,prot:53,carbs:0,fat:13,
+           ts:Date.now()-4e6,saisie:'scan',origine:'off',q:250,u:'g',per100:null});
+    fermer(); openAddFood(); await d(320);
+    quickFillFood(iQuick('Steak haché 5% (U)')); await d(260);
+    await poserQ(300);
+    o.t6 = mac();   // 323 × 300/250 = 387,6
+
+    /* ══ TEST 7 — l'Iso Zero : 40 g ↔ 156 kcal, puis 20/40/50 g ══ */
+    semer({date:t,meal:'collation',name:'Iso zero protein (ASL)',kcal:156,prot:35,carbs:1,fat:1,
+           ts:Date.now()-5e6,saisie:'manuel',origine:'utilisateur',q:40,u:'g',per100:null});
+    o.t7=[];
+    for(const q of [20,40,50]){
+      fermer(); openAddFood(); await d(300);
+      quickFillFood(iQuick('Iso zero protein (ASL)')); await d(240);
+      await poserQ(q);
+      o.t7.push({q:q, kcal:+val('af-kcal')||0, prot:+val('af-prot')||0});
+    }
+
+    /* ══ TEST 9 — modifier une entrée : per100, source et nom ne bougent pas ══ */
+    const TS=Date.now()-6e6;
+    semer({date:t,meal:'dejeuner',name:'Ratatouille Cassegrain',kcal:274,prot:4,carbs:23,fat:15,
+           ts:TS,saisie:'scan',origine:'off',sourceId:'3083680085496',q:380,u:'g',
+           per100:{kcal:72,prot:1.1,carbs:6,fat:3.9}});
+    fermer(); openEditFood(TS); await d(330);
+    {const g=document.getElementById('ef-grams');
+     if(g){ g.value='110'; g.dispatchEvent(new Event('input',{bubbles:true})); }}
+    await d(240);
+    saveEditFood(); await d(300);
+    const b4=(S.foodLog||[]).find(x=>x.ts===TS);
+    o.t9 = b4 ? {q:b4.q, kcal:b4.kcal, per100:b4.per100?b4.per100.kcal:null,
+                 origine:b4.origine, sourceId:b4.sourceId, name:b4.name} : null;
+
+    /* ══ TEST 10 — DIX cycles ajout → reprise → nouvelle quantité : aucune dérive ══ */
+    semer(LIGNE(null));
+    o.t10=[];
+    for(let c=0;c<10;c++){
+      fermer(); openAddFood(); await d(260);
+      const i=iQuick('Ratatouille Cassegrain'); if(i<0){ o.t10.push({perdu:c}); break; }
+      quickFillFood(i); await d(220);
+      await poserQ(200);
+      addFoodEntry(); await d(240);
+      const b=(S.foodLog||[]).slice(-1)[0];
+      o.t10.push({q:b.q, kcal:b.kcal, par100:b.per100?b.per100.kcal:null});
+    }
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,300)};}
+  });
+  if(Z.err) t('CCLXXV n\'a pas pu tourner', false, Z.err);
+  else{
+    /* ⛔ CONTRÔLE : sans lui, tous les témoins seraient verts en ne mesurant rien. */
+    t('CCLXXV ⛔ CONTRÔLE — la reprise ancre bien les 274 kcal sur 380 g (et non sur « 1 portion »)',
+      !!Z.t1ref && Z.t1ref.base===274 && Z.t1ref.q===380 && Z.t1ref.u==='g', JSON.stringify(Z.t1ref));
+    t('CCLXXV ⛔ CONTRÔLE — et le champ s\'ouvre sur la dernière quantité connue : 380',
+      Z.t1champ==='380', 'champ='+Z.t1champ);
+    /* ⭐⭐ TEST 1 de l'audit — le témoin qui porte toute la version. */
+    t('CCLXXV ① ⭐⭐ TEST 1 — 380 g ↔ 274 kcal, on demande 110 g → 79 kcal (INTERDIT : 274)',
+      Z.t1[0]==='79', JSON.stringify(Z.t1));
+    t('CCLXXV ② TEST 4 — le calcul est bien 274 × 110/380, pas 274 × 110/110',
+      Z.t1[0]==='79' && Z.t1[1]==='1' && Z.t1[2]==='7' && Z.t1[3]==='4', JSON.stringify(Z.t1));
+    /* ⭐⭐ TEST 2 — la référence dérivée doit valoir 72, pas 249. */
+    t('CCLXXV ③ ⭐⭐ TEST 2 — le pour-100 g enregistré vaut 72 (INTERDIT : 249)',
+      Z.t2enr.per100===72 && Z.t2enr.q===110 && Z.t2enr.kcal===79, JSON.stringify(Z.t2enr));
+    t('CCLXXV ④ ⭐⭐ TEST 2 — la reprise suivante à 180 g donne 130 kcal (INTERDIT : 448)',
+      Z.t2[0]==='130', JSON.stringify(Z.t2));
+    /* ⭐ TEST 3 — per100 immuable sur quatre quantités. */
+    t('CCLXXV ⑤ TEST 3 — avec un pour-100 g, la référence reste 72 sur 100 · 380 · 110 · 180 g',
+      Z.t3.length===4 && Z.t3.every(x=>Math.abs(x.par100-72)<=1), JSON.stringify(Z.t3));
+    /* ⛔ TEST 5 — quickAddFood ne dégrade plus la ligne. */
+    t('CCLXXV ⑥ ⭐⭐ TEST 5 — l\'ajout DIRECT garde q, u ET le pour-100 g (plus de ligne morte)',
+      Z.t5.q===380 && Z.t5.u==='g' && Z.t5.per100===72 && Z.t5.origine==='reprise',
+      JSON.stringify(Z.t5));
+    t('CCLXXV ⑦ ⛔ … et sans pour-100 g, la quantité au moins survit : la ligne reste convertible',
+      Z.t5b.q===380 && Z.t5b.u==='g' && Z.t5b.kcal===274, JSON.stringify(Z.t5b));
+    /* ⛔ TEST 6 — le steak U, sur ses vrais chiffres. */
+    t('CCLXXV ⑧ TEST 6 — steak U : 250 g ↔ 323 kcal, on demande 300 g → 388 (et non ~194)',
+      Z.t6[0]==='388', JSON.stringify(Z.t6));
+    /* ⛔ TEST 7 — l'Iso Zero ne doit jamais alterner entre portion fixe et grammes. */
+    t('CCLXXV ⑨ TEST 7 — Iso Zero : 40 g ↔ 156 kcal → 20 g = 78 · 40 g = 156 · 50 g = 195',
+      JSON.stringify(Z.t7.map(x=>x.kcal))===JSON.stringify([78,156,195]), JSON.stringify(Z.t7));
+    t('CCLXXV ⑩ ⛔ … et les protéines suivent la même proportion (jamais 35 sur les trois)',
+      JSON.stringify(Z.t7.map(x=>x.prot))===JSON.stringify([18,35,44]), JSON.stringify(Z.t7));
+    /* ⛔ TEST 9 — modifier la quantité ne réécrit pas la référence. */
+    t('CCLXXV ⑪ TEST 9 — modifier la quantité laisse per100, origine, sourceId et nom intacts',
+      !!Z.t9 && Z.t9.per100===72 && Z.t9.origine==='off' && Z.t9.sourceId==='3083680085496'
+      && Z.t9.name==='Ratatouille Cassegrain' && Z.t9.q===110 && Z.t9.kcal===79,
+      JSON.stringify(Z.t9));
+    /* ⭐⭐ LE TÉMOIN QUI A REFUSÉ MON PREMIER CORRECTIF — il gagne sa place deux fois. */
+    t('CCLXXV ⑬ ⭐⭐ un ALLER-RETOUR d\'unité après la reprise ne réapparie rien : 110 g → 79 kcal',
+      Z.tAR[0]==='79', JSON.stringify(Z.tAR));
+    t('CCLXXV ⑭ ⛔ une quantité en `ml` n\'ancre RIEN — aucune densité n\'est inventée (R29)',
+      Z.tMl.poids===0 && Z.tMl.unite==='portion' && !!Z.tMl.ref && Z.tMl.ref.q===1,
+      JSON.stringify(Z.tMl));
+    /* ⭐⭐ TEST 10 — la dérive cumulative, celle qui a mangé son historique en 8 jours. */
+    const derive = Z.t10.length===10 && Z.t10.every(x=>x.q===200 && x.kcal===144 && x.par100===72);
+    t('CCLXXV ⑫ ⭐⭐ TEST 10 — DIX cycles ajout→reprise→200 g : aucune dérive (144 kcal · 72/100 g)',
+      derive, JSON.stringify(Z.t10.slice(0,4))+' … '+JSON.stringify(Z.t10.slice(-1)));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
