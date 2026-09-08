@@ -8,6 +8,9 @@
 
 - **Version en ligne (live) :** `ft-v1176` — ⏱️ **LE TEMPS DE REPOS ÉCRIT SUR LE PDF N'ÉTAIT
   JAMAIS DEMANDÉ AU MODÈLE.**
+  ✅ **DÉPLOIEMENTS VÉRIFIÉS VERTS DES DEUX CÔTÉS** (R18) : **site run #1025** et **backend
+  run #115**, `success` à **16:29:32** et **16:29:44 UTC**.
+  ⏳ **Suite complète VERTE** : parcours **3323/3323** (+11, bloc **CCLXXIV**), calculs 339/339.
   ⭐ **Michel** : *« l'application n'applique pas le temps de repos qui est marqué sur le pdf
   c'est un peu con, alors quand le temps est variable la je suis d'accord mais quand il est fixe
   il appliquait le temps »*.
