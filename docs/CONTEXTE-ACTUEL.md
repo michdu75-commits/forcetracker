@@ -32,6 +32,30 @@
   trois niveaux (certain · ambigu · insuffisant). ⏭️ **L'exclusivité des deux blocs Quantité part
   en version séparée** — bug distinct.
 
+- **Version précédente :** `ft-v1176` — ⏱️ **LE TEMPS DE REPOS ÉCRIT SUR LE PDF N'ÉTAIT
+  JAMAIS DEMANDÉ AU MODÈLE.**
+  ✅ **DÉPLOIEMENTS VÉRIFIÉS VERTS DES DEUX CÔTÉS** (R18) : **site run #1025** et **backend
+  run #115**, `success` à **16:29:32** et **16:29:44 UTC**.
+  ⏳ **Suite complète VERTE** : parcours **3323/3323** (+11, bloc **CCLXXIV**), calculs 339/339.
+  ⭐ **Michel** : *« l'application n'applique pas le temps de repos qui est marqué sur le pdf
+  c'est un peu con, alors quand le temps est variable la je suis d'accord mais quand il est fixe
+  il appliquait le temps »*.
+  ⭐⭐ **Le tuyau était DÉJÀ complet côté app** — c'est ce qui rend la version courte : `rest:180`
+  → appliqué · `restPerSet:[120,150,180]` → par série · `"2 min"` → **120 s** · `"90-120s"` →
+  **0, rien d'inventé**. ***Le code tenait déjà sa nuance avant qu'il la formule.***
+  ⛔⛔ **Ce qui manquait vivait dans le PROMPT SERVEUR** : aucun champ `rest` dans le schéma, et
+  le mot « Repos » n'y apparaissait qu'**une fois** — pour dire d'**ignorer** une page sommaire.
+  **R8 à l'envers : un lecteur qui attend un champ que personne ne produit.**
+  ⭐ Le champ est posé **dans le schéma**, pas dans une règle en bas de page (leçon ft-v1158).
+  ⚠️⚠️ **Et un trou trouvé en vérifiant ma propre consigne** : `_secRepos('1min30')` **collé**
+  rendait **0** — le `\b` interdisait la forme sans espace, celle que les gens écrivent.
+  ***Promettre au modèle un format que l'app lit comme zéro, c'est fabriquer un silence.***
+  Corrigé **côté app**, comme le prescrit le commentaire de la fonction. **23 formats, 23 justes.**
+  📣 **Règle d'or #11 : rien d'annoncé**, mais le comportement change — un programme **sans**
+  colonne Repos se comporte exactement comme avant (témoin dédié).
+  ⏭️ ⛔ Programmes déjà importés **non réécrits** (**R29**) · l'import d'**historique** n'est pas
+  touché · ⚠️ **je prouve que le champ PART, pas que le modèle obéira** — c'est Michel qui le
+  prouve en réimportant.
 - **Version précédente :** `ft-v1175` — ⛔ **UNE CIBLE DE SYNONYME QUI N'EXISTE PLUS, ET
   LE RAPPROCHEUR ÉTAIT SÛR À 95 %.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1021**, `success` à **15:39:58 UTC**.
