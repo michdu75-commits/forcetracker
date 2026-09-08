@@ -8,6 +8,7 @@
 
 - **Version en ligne (live) :** `ft-v1178` — 📷 **UN SCAN D'IMPORT MOURAIT EN ROUVRANT LA
   FENÊTRE**, et les **26** limites de hauteur passent en **`dvh`**.
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1029**, 7 étapes `success` à **18:25:25 UTC**.
   ⏳ **Suite complète VERTE** : parcours **3350/3350** sur l'arbre FUSIONNÉ avec la ft-v1177 de session-A (+11, bloc **CCLXXVI**), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⭐ **Michel** : *« si on fait une mauvaise manip on sort de la fenêtre, et hop le scan est perdu
