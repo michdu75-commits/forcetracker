@@ -3188,3 +3188,48 @@ pas le comportement* — on sonde jusqu'à l'événement.
 *Voisine de **§47** (le garde-fou dont le plancher éteint le pourcentage) et de **§48** (la porte
 de secours non proposée là où le chemin s'arrête) — trois familles nées la même journée, toutes
 trois « le mécanisme existe, il mesure ou propose la mauvaise chose ».*
+
+
+---
+
+## 51. 💬 LE COMMENTAIRE DIT VRAI, LE CODE NE LE FAIT PAS **(08/09/2026, ft-v1173)**
+
+**À quoi on la reconnaît** : un commentaire décrit un comportement **au présent**, comme un fait
+acquis — *« les 4 valeurs affichées deviennent la nouvelle référence, quelle qu'elle soit »* — et
+la ligne juste en dessous ne le produit pas. Le lecteur suivant (humain ou IA) **lit le
+commentaire et passe** : il vient de recevoir la réponse à la question qu'il allait se poser.
+
+**Le cas** : `_afSetUnite` rappelait `_afMajAncre()` **sans `srcChange`**, donc la référence
+restait l'ancienne — exactement l'inverse de ce que son propre commentaire promettait. Un `×2`
+choisi par la personne, un passage en grammes, « 100 » tapé, et l'app réaffichait la valeur
+d'origine ***juste après avoir écrit « les 4 valeurs ci-dessous correspondent à ce poids »***.
+
+**Pourquoi c'est une famille et pas un accident** : un commentaire faux ne lève rien, ne casse
+aucun test, et **survit aux relectures parce qu'il les arrête**. Il est plus dangereux qu'un
+commentaire absent : l'absence fait lire le code, la présence en dispense. *Une intention écrite
+au présent finit par être crue.*
+
+**Ce qui la protège** : ⛔ un commentaire qui décrit un comportement doit avoir **un témoin qui
+le vérifie** — sinon il s'écrit au conditionnel (« devrait », « à faire »), jamais au présent.
+Et quand on trouve la divergence, **on corrige le code, pas le commentaire** : c'est lui qui
+disait la bonne chose.
+
+**⛔⛔ LE MIROIR LE PLUS CHER, ET IL EST ARRIVÉ DANS LA MÊME VERSION : LE CORRECTIF ÉTAIT TROP
+LARGE.** Reclasser le geste en « changement de source » **sans condition** réparait le cas
+regardé et **rouvrait celui d'à côté** — la capture d'étiquette de ft-v1061, où 40 g
+réaffichait 208 kcal. Le mini-banc était à **16/16** ; c'est la **passe complète** qui a rendu
+**3 rouges**, tous dans le bloc de ft-v1061. 👉 ***Réparer le cas qu'on regarde en cassant celui
+d'à côté n'est pas un correctif, c'est un échange.*** Et les deux cas sont indiscernables par
+le **geste** : ce qui les sépare est *« l'app sait-elle déjà combien ça pèse ? »*. **Le réflexe
+qui en sort** : quand un correctif consiste à *élargir* une condition, chercher **qui d'autre
+passait par la branche étroite** — et ne jamais conclure sur un mini-banc, qui ne joue que les
+témoins qu'on a écrits soi-même.
+
+**Le miroir de méthode, payé dans la même version** : le témoin d'étape ⑤ était **vert par
+coïncidence** — il rescalait à 50 g, or l'erreur (÷2) et le rescale (÷2) se compensaient et
+donnaient le **même nombre des deux côtés**. Passé à 200 g, il rougit. *Un témoin vert par
+coïncidence ne mesure rien, il rassure* (§34, le vert qui ne peut pas rougir — 3ᵉ fois).
+
+*Voisine de **§46** (un correctif qui vit dans le prompt n'est pas vérifié) et de la famille
+« l'info n'atteint jamais la donnée » (**R4**), qu'elle retourne : ici c'est l'**intention** qui
+n'atteint pas le **code**.*

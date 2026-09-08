@@ -6,7 +6,40 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1171` — 🏷️ **LA COLONNE « SOURCE » SE REMPLISSAIT SOUS UNE
+- **Version en ligne (live) :** `ft-v1173` — ⚖️ **LE CHOIX DE PORTIONS ÉTAIT JETÉ AU PASSAGE EN
+  GRAMMES — et le commentaire juste au-dessus promettait le contraire.**
+  ⏳ **Suite VERTE** : **parcours 3276/3276** (+17, bloc **CCLXXI**), calculs 339/339, muscles 241/241, croisés
+  50/50, dates 9/9, données classées 0 trou.
+  ⭐⭐ **Lu image par image sur son enregistrement d'écran** : il tape `100`, l'app écrit
+  *« ✅ 100 g — les 4 valeurs ci-dessous correspondent à ce poids »*… et **divise ces valeurs par
+  deux** (312 → 156 kcal, 52 → 26 g), ***sans que le nombre bouge***. 156/26 = sa ligne d'origine :
+  son `×2` avait été jeté.
+  🎯 **Cause en un mot** : `_afSetUnite` rappelait `_afMajAncre()` **sans `srcChange`** → la
+  référence restait l'ancienne. Or son propre commentaire promet *« les 4 valeurs affichées
+  deviennent la nouvelle référence »*. ⛔⛔ ***Le commentaire disait vrai, le code ne le faisait
+  pas*** — nouvelle famille **`BUGS.md` §51**.
+  ⭐ Le motif existait à côté : `af-kcal` passe `true` depuis toujours. **Changer d'unité EST un
+  changement de source**, jamais classé comme tel.
+  ⛔⛔⛔ **ET MON PREMIER CORRECTIF ÉTAIT FAUX — LE BANC L'A DIT, PAS MOI.** Passé `true` **sans
+  condition**, le mini-banc était à 16/16… et la passe complète a rendu **3 rouges** dans le bloc
+  **CLXVIII (ft-v1061)**, dont *« 40 g redonne 156 / 35, plus jamais les 208 / 47 »*. ***Il
+  rouvrait un bug signalé par 4 captures d'étiquette.***
+  ⭐⭐ **Le discriminant n'est pas le geste, c'est *« l'app sait-elle déjà combien ça pèse ? »*** —
+  un booléen `_afPoidsPose` : tant qu'aucun **poids réel** n'est posé, l'écran fait foi ; dès
+  qu'il y en a un, **ft-v1061 reprend la main**. Même règle des deux côtés (**R2**).
+  ⛔⛔ **Pourquoi aucun témoin ne l'avait vu, mesuré** : **5 témoins** conduisent `_afSetUnite('g')`,
+  **les 5 juste après un remplissage neuf** — où base et écran portent les mêmes valeurs. *Le
+  déclencheur n'est pas une fonction, c'est un ORDRE : portions d'abord, grammes ensuite.*
+  ⛔ **La jumelle (R8), vérifiée et SILENCIEUSE** : `_efQtyRender` avait le même défaut sans chute
+  visible — la référence se désappaire et le rescale suivant divise depuis la mauvaise base
+  (50 g → **78** au lieu de 156). **6ᵉ fois de la semaine** qu'un correctif tenait sur une porte.
+  ⚠️ **Et le correctif fabriquait un piège** : `_efRef` survivait **déjà** d'un aliment au suivant
+  (la branche pour-100 g sort avant de le réécrire). Inoffensif tant que `base` venait de l'entrée,
+  **fatal dès qu'on la préserve** → `openEditFood` le remet à `null`, un témoin le fige.
+  ⏭️ **Ce que ça ne fait pas** : les lignes déjà enregistrées ne sont **pas** réparées (**R29**) —
+  reprendre la ligne **une fois** suffit. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1171` — 🏷️ **LA COLONNE « SOURCE » SE REMPLISSAIT SOUS UNE
   CASE DE TITRE VIDE.**
   ⏳ **Suite VERTE** : parcours (+6, bloc **CCLXIX**), calculs 339/339, muscles 241/241, croisés
   50/50, dates 9/9, données classées 0 trou.
@@ -22,7 +55,7 @@
   ⭐ **La 2ᵉ feuille n'a pas le piège** (vérifié) : elle n'existe pas encore, elle naîtra complète.
   ⚠️ **`Code.js` → déploiement backend automatique, à vérifier des deux côtés** (R18).
 
-- **Version précédente :** `ft-v1170` — 🔎 **« TIRAGE VERTICAL » VISAIT L'ÉLASTIQUE — et la
+- **Avant :** `ft-v1170` — 🔎 **« TIRAGE VERTICAL » VISAIT L'ÉLASTIQUE — et la
   mesure a dit que le rapprocheur n'était PAS en cause.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1007**, `success` à **06:24:39 UTC**.
   ⏳ **Suite complète VERTE** : **parcours 3253/3253** (+11, bloc **CCLXVIII**), calculs 339/339,

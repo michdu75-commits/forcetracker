@@ -3504,7 +3504,15 @@ function openEditFood(ts){
      ⛔ ET S'IL N'Y A AUCUN ANCRAGE, on ne devine pas un poids : on offre des **portions**
      (½ · 1½ · 2 ·…) qui multiplient les 4 macros sans jamais prétendre connaître des grammes.
      *Un « ×2 » est vrai quelle que soit la portion de départ ; un « 60 g » inventé serait faux.* */
-  _efUnite='portion'; _efPoidsDeclare=0;   // remis à zéro à chaque ouverture (comme l'écran d'ajout)
+  _efUnite='portion'; _efPoidsDeclare=0; _efPoidsPose=false;   // remis à zéro à chaque ouverture (comme l'écran d'ajout)
+  /* ⛔⛔ ft-v1172 — LA RÉFÉRENCE AUSSI, et elle manquait DÉJÀ. `_efRef` survivait d'un aliment
+     au suivant : la branche « pour-100 g » de `_efQtyRender` sort avant de le réécrire, donc
+     ouvrir un produit emballé après un aliment saisi à la main laissait pointer sur le
+     PRÉCÉDENT (`_efCorrigerKcal` écrivait alors dans la référence du mauvais aliment).
+     👉 Inoffensif tant que `base` venait de l'entrée ; **fatal dès que la référence est
+     préservée**. *Un réglage qui survit à son sujet est pire qu'un réglage absent : il a l'air
+     d'un fait* — c'est mot pour mot ce que dit `_afPropCacher` pour l'unité, une porte plus loin. */
+  _efRef=null;
   let gramsFld='<div id="ef-qty-row"></div>';
   const _mNom=String(e.name||'').match(/(\d+(?:[.,]\d+)?)\s*(g|ml)\b/i);
   ov.innerHTML='<div class="modal" style="max-width:94vw;width:400px;padding:16px;">'
@@ -3551,12 +3559,20 @@ let _efRef=null;
    seul champ actif à la fois, et une fois le poids déclaré on retombe EXACTEMENT sur le champ
    proportionnel qui existait déjà ici depuis ft-v972. */
 let _efUnite='portion', _efPoidsDeclare=0;
+/* ⚖️ ft-v1172 — la jumelle de `_afPoidsPose` (R2, même règle des deux côtés) : tant qu'aucun
+   poids réel n'a été posé pour cet aliment, les 4 valeurs affichées SONT la référence ; dès
+   qu'il y en a un, ft-v1061 reprend la main et la référence est préservée. */
+let _efPoidsPose=false;
 function _efSetUnite(u){
   if(u===_efUnite) return;
   _efUnite=(u==='g')?'g':'portion';
   /* ⛔ On ne rescale RIEN en changeant d'unité : ça ne change pas ce qu'on a mangé, ça change la
-     façon de le compter. (Même décision qu'en ft-v1056.) */
-  _efPoidsDeclare=0; _efQtyRender();
+     façon de le compter. (Même décision qu'en ft-v1056.)
+     ⛔⛔ ft-v1172 — LA JUMELLE DE `_afSetUnite` (R8), ET ELLE ÉTAIT SILENCIEUSE. Ici rien ne
+     tombait à l'écran : c'est la RÉFÉRENCE qui se désappairait, et le rescale suivant divisait
+     depuis la mauvaise base (50 g rendait 78 au lieu de 156). *Un défaut qui ne se voit pas est
+     pire que celui qui se voit : personne ne peut le signaler.* */
+  _efPoidsDeclare=0; _efQtyRender(!_efPoidsPose);
 }
 function _efDeclarePoids(){
   /* ⛔⛔ ft-v1159 — CETTE FONCTION NE REDESSINE PLUS RIEN, et c'est TOUT le correctif.
@@ -3572,6 +3588,7 @@ function _efDeclarePoids(){
     return;
   }
   _efPoidsDeclare=v;
+  _efPoidsPose=true;   // ⚖️ ft-v1172 — à partir d'ici, la référence ne se relit plus à l'écran (ft-v1061)
   /* ⭐ LE RETOUR VISIBLE QUI MANQUAIT : avant, taper « 50 » ne changeait RIEN à l'écran — ni les
      4 valeurs (c'est normal, elles se calent), ni un mot. On ne pouvait pas savoir si l'app avait
      entendu. *Un champ qui ne répond pas ressemble à un champ cassé.* */
@@ -3585,13 +3602,30 @@ function _efDeclarePoids(){
    et c'est l'écran qui ment.* */
 function _aidePoidsPose(v){ return '✅ <b>'+v+' g</b> — les 4 valeurs ci-dessous correspondent à ce poids. Change ce nombre et elles suivront.'; }
 const _AIDE_POIDS_EF='Combien pèse ce que tu as noté ? <b>L\'app ne peut pas le deviner, toi si.</b> Indique-le : les 4 valeurs ci-dessous se calent dessus.';
-function _efQtyRender(){
+/* ⚖️ ft-v1172 — la jumelle de `_afPropSetBase` : les 4 valeurs telles qu'elles sont À L'ÉCRAN. */
+function _efPropSetBase(){
+  const n=id=>parseInt((document.getElementById(id)||{}).value)||0;
+  return {kcal:n('ef-kcal'),prot:n('ef-prot'),carbs:n('ef-carbs'),fat:n('ef-fat')};
+}
+function _efQtyRender(srcChange){
   const el=document.getElementById('ef-qty-row'); if(!el) return;
   const e=(S.foodLog||[]).find(x=>x.ts===_editFoodTs); if(!e){el.innerHTML='';return;}
-  /* ⛔⛔ `base` VIENT DE L'ENTRÉE ENREGISTRÉE, JAMAIS DE L'ÉCRAN — c'est la leçon de ft-v1061,
-     appliquée ici dès l'écriture : relire des champs déjà rescalés ferait de la référence une
-     valeur dérivée d'elle-même, et l'erreur se figerait. */
-  const base={kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0};
+  /* ⛔⛔ `base` NE VIENT PAS DE L'ÉCRAN PAR DÉFAUT — c'est la leçon de ft-v1061 : relire des
+     champs déjà rescalés ferait de la référence une valeur dérivée d'elle-même, et l'erreur se
+     figerait. Trois cas, et l'ordre compte :
+       ① `srcChange` — la SOURCE des valeurs a changé (changement d'unité) : les 4 valeurs
+          affichées deviennent la nouvelle référence. *C'est le correctif de ft-v1172, et c'est
+          exactement le rôle que `srcChange` joue déjà dans `_afMajAncre`.*
+       ② une référence est en cours — on la PRÉSERVE (le blur du champ de poids ne fait que
+          redessiner : sans ça, un poids déclaré après un `×2` repartirait de l'entrée du
+          journal et jetterait le choix de la personne) ;
+       ③ à l'ouverture — l'entrée enregistrée, la seule vérité disponible.
+     ⚠️ ② N'EST SÛR QUE PARCE QUE `openEditFood` REMET `_efRef` À NULL : sans ça, l'aliment
+     suivant hériterait de la référence du précédent. *Le correctif fabriquait le piège ; il est
+     refermé au même endroit, et un témoin le fige.* */
+  const base = srcChange ? _efPropSetBase()
+             : ((_efRef && _efRef.base) ? _efRef.base
+             : {kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0});
   const style='width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);';
   const mNom=String(e.name||'').match(/(\d+(?:[.,]\d+)?)\s*(g|ml)\b/i);
   const ancre = e.per100 ? null
@@ -3950,15 +3984,46 @@ function _afApplyPortion(x){ _afProp(x); }
    la boîte, non. Retenir « 250 g » comme si c'était l'aliment ferait re-servir la boîte d'hier. */
 let _afUnite='portion';        // 'portion' | 'g' — CHOISI par la personne, jamais imposé
 let _afPoidsDeclare=0;         // le poids qu'elle a indiqué pour la portion affichée (g)
-function _afResetUnite(){ _afUnite='portion'; _afPoidsDeclare=0; }
+/* ⚖️⛔⛔ ft-v1172 — « UNE QUANTITÉ RÉELLE A-T-ELLE DÉJÀ ÉTÉ POSÉE POUR CET ALIMENT ? »
+   Ce booléen départage DEUX cas que rien d'autre ne distingue, et le banc d'essai me l'a appris
+   en refusant mon premier correctif :
+     ⓐ **ft-v1061 (sa capture d'étiquette)** — une référence en GRAMMES existe (30 g → 117 kcal).
+        L'écran montre alors les valeurs d'une AUTRE quantité (40 g → 156). Les reprendre comme
+        nouvelle référence désappaire `base` et `q`, et 40 g finit par afficher 208 kcal.
+     ⓑ **ft-v1172 (son enregistrement d'écran)** — aucune quantité n'a jamais été posée, la
+        personne a seulement tapé `×2`. Les valeurs affichées sont **la seule expression** de ce
+        qu'elle a mangé : les jeter, c'est jeter son choix.
+   👉 ***On ne relit l'écran QUE tant qu'aucun poids réel n'a été posé.*** Dès qu'il y en a un,
+   ft-v1061 reprend la main et la référence est préservée. *Le geste est le même, la question
+   n'est pas « qu'a-t-elle touché ? » mais « l'app sait-elle déjà combien ça pèse ? »* */
+let _afPoidsPose=false;
+function _afResetUnite(){ _afUnite='portion'; _afPoidsDeclare=0; _afPoidsPose=false; }
 function _afSetUnite(u){
   if(u===_afUnite) return;
   _afUnite=(u==='g')?'g':'portion';
   /* ⛔ ON NE RESCALE RIEN EN CHANGEANT D'UNITÉ. Basculer de « portion » à « g » ne change pas
      ce qu'on a mangé — ça change la façon de le COMPTER. Les 4 valeurs affichées deviennent la
-     nouvelle référence, quelle qu'elle soit. */
+     nouvelle référence, quelle qu'elle soit.
+
+     ⛔⛔ ft-v1172 — ET CETTE DERNIÈRE PHRASE ÉTAIT UNE INTENTION, PAS DU CODE. L'appel partait
+     SANS `srcChange`, donc `_afMajAncre` préservait `_afRef.base` : les valeurs affichées étaient
+     précisément celles que le commentaire promettait de reprendre, et c'est l'ANCIENNE référence
+     qui gagnait. *Le commentaire disait vrai, le code ne le faisait pas.*
+     ⭐⭐ MESURÉ SUR L'ENREGISTREMENT D'ÉCRAN DE MICHEL, image par image : un `×2` (312 kcal),
+     un passage en grammes, « 100 » tapé — et l'app réaffiche **156**, *juste après avoir écrit
+     « ✅ 100 g — les 4 valeurs ci-dessous correspondent à ce poids »*. Son choix de portions
+     était jeté, et le nombre à l'écran ne bougeait pas : rien ne disait ce qui venait d'arriver.
+     👉 CHANGER D'UNITÉ **EST** UN CHANGEMENT DE SOURCE — il n'avait jamais été classé comme tel.
+     Le motif existait déjà à côté : `af-kcal` passe `true` depuis toujours (index.html).
+
+     ⛔⛔ ET LE `!_afPoidsPose` N'EST PAS UNE PRÉCAUTION, C'EST LE BANC D'ESSAI QUI L'A IMPOSÉ.
+     Mon premier correctif passait `true` sans condition — et il **rouvrait le bug de ft-v1061** :
+     trois témoins de son ancienne capture d'étiquette sont repassés au rouge, dont *« 40 g redonne
+     156 / 35, plus jamais les 208 / 47 »*. Voir `_afPoidsPose` pour les deux cas et leur
+     départage. *Un correctif qui répare le cas qu'on regarde en cassant celui d'à côté n'est pas
+     un correctif : c'est un échange.* */
   _afPoidsDeclare=0;
-  _afMajAncre();
+  _afMajAncre(!_afPoidsPose);
 }
 function _afDeclarePoids(){
   /* ⛔⛔ ft-v1159 — NE REDESSINE PLUS RIEN (jumelle de `_efDeclarePoids`). `_afMajAncre()`
@@ -3968,6 +4033,7 @@ function _afDeclarePoids(){
   const aide=document.getElementById('af-poids-aide');
   if(!(v>0)){ _afPoidsDeclare=0; if(aide) aide.innerHTML=_AIDE_POIDS_AF; return; }
   _afPoidsDeclare=v;
+  _afPoidsPose=true;   // ⚖️ ft-v1172 — à partir d'ici, la référence ne se relit plus à l'écran (ft-v1061)
   if(aide) aide.innerHTML=_aidePoidsPose(v);
 }
 function _afPropCacher(){

@@ -30517,6 +30517,150 @@ console.log('\n-- CCLXIX. La colonne Source et son titre (ft-v1171) --');
     /appendRow\(\['Empreinte','Terme','Type','Personnes','IDs anonymes','Première date','Dernière date'\]\)/.test(_cj), '');
 }
 
+
+/* ═══ CCLXXI. LE CHOIX DE PORTIONS JETÉ AU PASSAGE EN GRAMMES (08/09/2026, ft-v1172) ═══════════
+   Michel, enregistrement d'écran à l'appui : *« pour ma prot iso quand je veux changer la valeur
+   en gramme ça ne fonctionne pas »*. ⛔⛔ Mesuré image par image : il tape `100`, l'app écrit
+   « ✅ 100 g — les 4 valeurs ci-dessous correspondent à ce poids »… et DIVISE ces valeurs par
+   deux (312/52 → 156/26) sans que le nombre bouge. 156/26 est sa ligne d'origine : son `×2` a
+   été jeté.
+   🎯 Cause : `_afSetUnite` rappelait `_afMajAncre()` SANS `srcChange`, donc `base` restait
+   l'ancienne référence — alors que son propre commentaire promet *« les 4 valeurs affichées
+   deviennent la nouvelle référence, quelle qu'elle soit »*. Le commentaire disait vrai, le code
+   ne le faisait pas.
+   ⭐⭐ LES TÉMOINS COMPTENT LES VRAIS NOMBRES DE LA VIDÉO (312/52, 156/26), jamais « a changé /
+   n'a pas changé » — c'est la leçon de ft-v1163, où trois mutations sur quatre n'avaient pas
+   mordu pour cette raison exacte.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLXXI. Portions puis grammes (ft-v1172) --');
+{
+  const V=await p.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms)), t=today();
+    S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';
+    /* LA LIGNE EXACTE DE LA VIDÉO : saisie à la main, AUCUN pour-100 g, aucune quantité. */
+    const TS=Date.now()-2e6;
+    S.foodLog=[{date:t,meal:'collation',name:'Iso zero protein (ASL)',kcal:156,prot:26,carbs:1,fat:1,
+                ts:TS,saisie:'manuel',origine:'utilisateur',q:null,u:null,per100:null}];
+    S.savedFoods=[]; S.hiddenFoods=[]; persist();
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    goScreen('nutrition'); renderNutrition();
+    const fermer=()=>document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const mac=pfx=>[pfx+'-kcal',pfx+'-prot'].map(x=>String((document.getElementById(x)||{}).value));
+    const blocA=()=>{const e=document.getElementById('af-prop-row');
+      return (e&&e.style.display!=='none')?e.innerText.replace(/\n+/g,' | '):'';};
+    const blocE=()=>{const e=document.getElementById('ef-qty-row');return e?e.innerText.replace(/\n+/g,' | '):'';};
+    /* ⌨️ LE VRAI GESTE : on tape, puis on ferme le clavier (le bloc se range au blur). */
+    const poser=(id,v)=>{const e=document.getElementById(id); if(!e) return false;
+      e.value=v; e.dispatchEvent(new Event('input',{bubbles:true}));
+      e.dispatchEvent(new Event('blur',{bubbles:true})); return true;};
+
+    /* ══ A. L'ÉCRAN D'AJOUT — le chemin exact de la vidéo ══ */
+    fermer(); openAddFood(); await d(350);
+    const i=_afQuickItems.findIndex(x=>x.name==='Iso zero protein (ASL)');
+    quickFillFood(i); await d(220);
+    o.vu = /En grammes/.test(blocA()) && /En portions/.test(blocA());
+    o.depart=mac('af');
+    _afApplyPortion(2); await d(150);
+    o.x2=mac('af');                                   // ① 312 / 52
+    o.poseAvant=(typeof _afPoidsPose!=='undefined')?_afPoidsPose:null;   /* ⛔ défensif : sur l'arbre d'AVANT la variable n'existe pas, et un ReferenceError ferait sauter TOUT le bloc — le contrôle négatif ne dirait plus rien */                         // FAUX : aucun poids posé, l'écran fait foi
+    _afSetUnite('g'); await d(200);
+    o.enG=mac('af');                                  // ② toujours 312 / 52 : changer d'unité ne rescale rien
+    poser('af-poids','100'); await d(220);
+    o.declare100=mac('af');                           // ③ ⭐⭐ LE TÉMOIN DE LA VIDÉO
+    o.ref100=/Référence : 100 g/.test(blocA());
+    o.poseApres=(typeof _afPoidsPose!=='undefined')?_afPoidsPose:null;                         // le drapeau qui départage ft-v1061 et ft-v1172
+    /* ⚠️ 200 g ET NON 50 : à 50 g, l'erreur (÷2) et le rescale (÷2) se compensent et donnent le
+       MÊME nombre des deux côtés — un témoin vert par coïncidence ne mesure rien (ft-v1163). */
+    {const e=document.getElementById('af-prop'); if(e){e.value='200'; _afApplyProp();}} await d(180);
+    o.a200=mac('af');                                 // ④ le double du poids déclaré
+    _afSetUnite('portion'); await d(200);
+    _afApplyPortion(0.5); await d(150);
+    o.retourMoitie=mac('af');                         // ⑤ un poids réel est posé → ft-v1061 reprend la main
+
+    /* ══ B. NON-RÉGRESSION — le chemin qui marchait déjà (grammes SANS portion préalable) ══ */
+    fermer(); openAddFood(); await d(350);
+    const j=_afQuickItems.findIndex(x=>x.name==='Iso zero protein (ASL)');
+    quickFillFood(j); await d(220);
+    _afSetUnite('g'); await d(200);
+    poser('af-poids','40'); await d(220);
+    o.nrDeclare=mac('af');                            // déclarer n'est PAS rescaler
+    {const e=document.getElementById('af-prop'); if(e){e.value='80'; _afApplyProp();}} await d(180);
+    o.nr80=mac('af');                                 // 80 g double
+
+    /* ══ C. LA JUMELLE — « Modifier l'aliment » (R8) ══ */
+    fermer(); openEditFood(TS); await d(320);
+    o.vuE = /En grammes/.test(blocE()) && /En portions/.test(blocE());
+    _efApplyPortion(2); await d(150);
+    o.eX2=mac('ef');
+    _efSetUnite('g'); await d(200);
+    poser('ef-poids','100'); await d(220);
+    o.eDeclare=mac('ef');
+    o.eBase=_efRef?Math.round(_efRef.base.kcal):null;  // ⭐⭐ le défaut SILENCIEUX se lit ICI
+    o.eQ=_efRef?_efRef.q:null;
+    {const e=document.getElementById('ef-prop'); if(e){e.value='50'; _efApplyProp();}} await d(180);
+    o.e50=mac('ef');
+    /* ⛔ LE PIÈGE QUE LE CORRECTIF POUVAIT CRÉER : `_efRef` ne doit pas survivre d'un aliment
+       à l'autre — sinon le suivant hériterait de la référence du précédent. */
+    S.foodLog.push({date:t,meal:'midi',name:'Riz cuit',kcal:130,prot:3,carbs:28,fat:0,
+                    ts:TS+1000,saisie:'manuel',origine:'utilisateur',q:100,u:'g',
+                    per100:{kcal:130,prot:3,carbs:28,fat:0}});
+    persist(); fermer(); openEditFood(TS+1000); await d(320);
+    o.efRefApres = _efRef ? Math.round(_efRef.base.kcal) : null;   // doit être null (branche per100)
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,240)};}
+  });
+  if(V.err) t('CCLXXI n\'a pas pu tourner', false, V.err);
+  else{
+    /* ⛔ LE CONTRÔLE QUI PORTE TOUT LE RESTE : sans lui, les témoins seraient verts en ne
+       mesurant rien (la leçon de ft-v1166, mutation ①). */
+    t('CCLXXI ⛔ CONTRÔLE — le bloc quantité de l\'AJOUT est vu, avec ses deux onglets', V.vu===true, '');
+    t('CCLXXI ⛔ CONTRÔLE — au départ, la ligne de Michel : 156 kcal / 26 g',
+      V.depart[0]==='156'&&V.depart[1]==='26', JSON.stringify(V.depart));
+    t('CCLXXI ① ×2 double bien : 312 kcal / 52 g',
+      V.x2[0]==='312'&&V.x2[1]==='52', JSON.stringify(V.x2));
+    t('CCLXXI ② passer en grammes ne rescale RIEN : toujours 312 / 52',
+      V.enG[0]==='312'&&V.enG[1]==='52', JSON.stringify(V.enG));
+    /* ⭐⭐ LE TÉMOIN DE LA VIDÉO. Avant le correctif : 156 / 26 — l'app contredisait sa
+       propre phrase « les 4 valeurs ci-dessous correspondent à ce poids ». */
+    t('CCLXXI ③ ⭐⭐ après avoir déclaré 100 g, les 4 valeurs NE TOMBENT PLUS à 156/26 : 312 / 52',
+      V.declare100[0]==='312'&&V.declare100[1]==='52', JSON.stringify(V.declare100));
+    t('CCLXXI ③b … et la référence écrite dit bien « 100 g »', V.ref100===true, '');
+    /* ⭐⭐ LE DISCRIMINANT RENDU VISIBLE : c'est LUI qui fait cohabiter ft-v1061 et ft-v1172.
+       Sans poids réel posé, l'écran fait foi ; dès qu'il y en a un, la référence est préservée. */
+    t('CCLXXI ③c ⭐⭐ le drapeau `_afPoidsPose` bascule : FAUX avant le poids, VRAI après',
+      V.poseAvant===false && V.poseApres===true, 'avant='+V.poseAvant+' après='+V.poseApres);
+    t('CCLXXI ④ ⭐ le rescale suivant part de LÀ : 200 g → 624 / 104 (et non 312)',
+      V.a200[0]==='624'&&V.a200[1]==='104', JSON.stringify(V.a200));
+    /* ⛔⛔ ⑤ EST LE TÉMOIN QUE LE BANC D'ESSAI M'A FAIT RÉÉCRIRE, ET C'EST LE PLUS INSTRUCTIF DU
+       BLOC. Je l'attendais à 312 (« ½ de ce qui est à l'écran »). ***C'est ft-v1061 qui a raison,
+       pas moi*** : à cet instant un poids RÉEL a été posé (100 g), donc la référence n'est plus
+       l'écran — elle vaut « 100 g = 312 kcal », et une demi-portion en fait 156. Mon attente
+       d'origine venait d'un correctif TROP LARGE, qui rouvrait sa capture d'étiquette de
+       ft-v1061 (30 g → 208 kcal). *Le témoin d'hier a corrigé le correctif d'aujourd'hui.* */
+    t('CCLXXI ⑤ ⛔⛔ une fois un POIDS RÉEL posé, ft-v1061 reprend la main : ½ → 156 (et non 312)',
+      V.retourMoitie[0]==='156'&&V.retourMoitie[1]==='26', JSON.stringify(V.retourMoitie));
+    /* ⛔ NON-RÉGRESSION : le chemin qui marchait doit marcher à l'identique. */
+    t('CCLXXI ⑥ NON-RÉGRESSION — sans portion préalable, déclarer 40 g ne bouge rien : 156 / 26',
+      V.nrDeclare[0]==='156'&&V.nrDeclare[1]==='26', JSON.stringify(V.nrDeclare));
+    t('CCLXXI ⑦ NON-RÉGRESSION — 80 g double : 312 / 52',
+      V.nr80[0]==='312'&&V.nr80[1]==='52', JSON.stringify(V.nr80));
+    /* ⛔ LA JUMELLE (R8) — même défaut, mais SILENCIEUX : rien ne tombe à l'écran, c'est la
+       référence qui se désappaire, et le rescale suivant divise depuis la mauvaise base. */
+    t('CCLXXI ⛔ CONTRÔLE — le bloc quantité de l\'ÉDITION est vu, avec ses deux onglets', V.vuE===true, '');
+    t('CCLXXI ⑧ édition : ×2 double bien : 312 / 52',
+      V.eX2[0]==='312'&&V.eX2[1]==='52', JSON.stringify(V.eX2));
+    t('CCLXXI ⑨ édition — après 100 g déclarés, l\'écran garde 312 / 52',
+      V.eDeclare[0]==='312'&&V.eDeclare[1]==='52', JSON.stringify(V.eDeclare));
+    t('CCLXXI ⑨b ⭐⭐ édition — et la RÉFÉRENCE vaut 312 (et non 156) : le défaut SILENCIEUX',
+      V.eBase===312&&V.eQ===100, 'base='+V.eBase+' q='+V.eQ);
+    t('CCLXXI ⑩ édition — le rescale suivant est juste : 50 → 156 (et non 78)',
+      V.e50[0]==='156'&&V.e50[1]==='26', JSON.stringify(V.e50));
+    t('CCLXXI ⑪ ⛔ `_efRef` ne survit PLUS d\'un aliment à l\'autre (le piège du correctif)',
+      V.efRefApres===null, 'base='+V.efRefApres);
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
