@@ -118,6 +118,44 @@ exploitées) doivent être soit branchées, soit retirées.
 
 ---
 
+### R36 — Ce qui décrit LE MONDE se récolte ; ce qui décrit LA PERSONNE reste chez elle
+*« Le but étant de tout sauvegarder et accessible du moment que ce n'est pas des données
+personnelles »* (Michel, 07/09/2026). **Le critère tient en une question**, jumelle de celle du
+cervelet (*« a-t-on besoin de savoir QUI est la personne ? »*) : ***cette donnée décrit-elle le
+monde ou la personne ?*** Un code-barres et un pour-100 g décrivent un **produit** ; un nom
+d'exercice écrit par Milo décrit le **catalogue** ; ce que quelqu'un mange, quand et combien
+décrit **elle**. Le monde → on récolte, on agrège, on rend accessible. La personne → ça reste
+dans son profil, jamais dans une base commune (Constitution **P3**).
+
+**⛔ LE COMPAGNON EST OBLIGATOIRE, sinon la règle se retourne** : un **texte libre** (une barre de
+recherche, un nom tapé à la main) peut contenir n'importe quoi — *« gâteau anniversaire Léa »*.
+👉 **Un texte libre n'est conservé en clair qu'à partir de 3 identifiants anonymes distincts** ;
+en dessous, une **empreinte** et un compteur. *Un mot tapé par trois personnes sans lien cesse
+d'être identifiant — et c'est exactement le seuil à partir duquel il vaut la peine d'être
+traité.* **Un seul seuil, deux métiers : l'anonymat ET la pertinence.**
+⚠️ *Limite à dire, pas à masquer* : le serveur **reçoit** la donnée à chaque fois, il ne la
+**conserve** qu'au seuil. C'est le motif k-anonyme standard.
+
+**⭐ L'usage le plus fort n'est pas l'enrichissement, c'est la DÉTECTION** — mesuré : **cinq
+versions en une semaine** (ft-v1147 · 1148 · 1156 · 1160 · 1163) ont eu la même cause, *un nom
+qui ne retrouve pas sa donnée*, et **les cinq ont été trouvées par hasard ou par Michel, aucune
+par une mesure**. Récolter ces faits-là transforme la famille de bugs la plus coûteuse en
+**compteur** au lieu d'une loterie. C'est **R5** (l'audit à l'envers) rendu automatique.
+
+**⛔ Trois garde-fous, chacun payé** : ① **jamais dans les Script Properties** — pleines à 102 %
+le 29/07/2026, plus aucune écriture pendant deux jours, *en silence* (Sheet ou Drive) ;
+② ce qui entre dans une base servie à tous **repasse par les contrôles** (les lois physiques de
+la nutrition côté serveur) — *une base alimentée par des saisies non vérifiées est pire que pas
+de base* ; ③ **le consentement se dit**, même quand la donnée n'est pas personnelle.
+
+*Origine : Michel, 07/09/2026, après avoir refusé que je lise sa sauvegarde pour déboguer —
+« le but est à l'avenir de récupérer les données pour enrichir ma base ». Mise en œuvre :
+ft-v1167 (source des noms) et ft-v1169 (recherches vides). Voisine de **R1**/**R2** (une donnée,
+un propriétaire), **R13** (le mécanisme des « exercices manquants » existait déjà) et **R29**
+(le droit de deviner dépend du coût de l'erreur).*
+
+---
+
 ## 2. Les décisions
 
 ### R6 — Une seule mémoire, une seule VOIX — mais construite de façon ÉMERGENTE

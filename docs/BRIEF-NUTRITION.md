@@ -431,7 +431,7 @@ Michel — auteur et unique décideur du produit. **Il n'est ni développeur ni 
 | **L'architecture cerveau/cervelet en entier** (frontière chiffrée, contraintes, questions ouvertes) | `docs/ARCHITECTURE-CERVEAU-CERVELET.md` |
 | **Le COMMENT de la nutrition** (chaîne complète, les 5 trous, schéma d'aliment, générateur en 10 lignes) | `docs/NUTRITION-MOTEUR.md` |
 | **L'ESPRIT** (les principes, les 4 niveaux de précision, le Gardien nutrition, l'anti-TCA) | `docs/NUTRITION-PHILOSOPHIE.md` |
-| Comment on construit (31 règles, chacune née d'un vrai bug) | `docs/REGLES-ARCHITECTURE.md` |
+| Comment on construit (38 règles, chacune née d'un vrai bug) | `docs/REGLES-ARCHITECTURE.md` |
 | Comment Milo se comporte envers la personne | `CONSTITUTION-MILO.md` (**P21** = la nutrition) |
 | Les familles de bugs du projet, et à quoi on les reconnaît | `BUGS.md` |
 | Ce qui EXISTE déjà (généré depuis le code, jamais écrit à la main) | `docs/INVENTAIRE.md` |
