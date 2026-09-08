@@ -8,6 +8,7 @@
 
 - **Version en ligne (live) :** `ft-v1170` — 🔎 **« TIRAGE VERTICAL » VISAIT L'ÉLASTIQUE — et la
   mesure a dit que le rapprocheur n'était PAS en cause.**
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1007**, `success` à **06:24:39 UTC**.
   ⏳ **Suite complète VERTE** : **parcours 3253/3253** (+11, bloc **CCLXVIII**), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⭐⭐ **Mesuré AVANT de coder, et ça a changé tout le périmètre** : `_matchExercise('Tirage
