@@ -31438,6 +31438,236 @@ console.log('\n-- CCLXXV. L\'invariant de reprise (ft-v1177) --');
   }
 }
 
+/* == BLOC CCLXXVII - L'EXCLUSIVITÉ DES DEUX BLOCS QUANTITÉ (ft-v1179) ==
+   Michel, test réel iPhone après ft-v1177 : sa ratatouille s'ouvre sur *100 g = 274 kcal*, avec
+   « Référence : 100 g (que tu as indiqué) » — là où mon test l'ouvrait sur 380 g. Il ajoute :
+   « Ne corrige rien pour l'instant. Trace pourquoi. »
+
+   ⭐⭐ TRACÉ PUIS REPRODUIT PAR DE VRAIS GESTES, AVANT D'ÉCRIRE UNE LIGNE DE CORRECTIF : deux
+   scans dans la MÊME ouverture — un produit complet, puis un produit dont la fiche Open Food
+   Facts n'a AUCUNE valeur — écrivent une entrée `q:100, u:'g', per100 absent, 274/4/23/15`, et
+   sa reprise rend EXACTEMENT son écran, ligne « Référence » comprise.
+
+   ⛔⛔ LA CAUSE : `_bcSansValeurs` était le SEUL des quatre endroits qui éteignent `_bcNutr` à ne
+   pas cacher `af-bc-row` (les trois autres le font). Et `_provFood` lisait la quantité de ce bloc
+   DU MOMENT QU'IL EST VISIBLE, sans vérifier qu'elle appartient à l'aliment affiché — or le champ
+   porte `value="100"` EN DUR dans `index.html`, donc un bloc laissé ouvert ne se tait pas : il
+   répond 100. *Les 274 kcal de sa ratatouille ont été mariées aux 100 g hérités du thon.*
+
+   ⛔ ET LA PISTE DU FORMAT DE BOÎTE (ouverte par l'audit externe) EST ÉLIMINÉE PAR LA MESURE :
+   `_offPoidsPaquet` rend 380/660/800/1000 sur les vrais formats, JAMAIS 100 ; elle écrit dans
+   `af-bc-grams` et seulement si on tape la pastille ; et ft-v1174 est postérieure à sa ligne.
+   Le 100 n'est pas un poids de boîte, c'est un DÉFAUT.
+
+   ⭐ LA MOITIÉ QUI COMPTE LE PLUS EST L'INVARIANT, pas le correctif d'affichage : « le bloc est
+   visible » n'a jamais voulu dire « cette quantité est celle de cet aliment ». `_bcNutr` est le
+   seul témoin honnête de l'appartenance — et il referme aussi les portes qu'on n'a pas prévues.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLXXVII. L\'exclusivité des deux blocs Quantité (ft-v1179) --');
+{
+  const _htmlAF=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+  const _defautEnDur=/id="af-bc-grams"[^>]*\svalue="100"/.test(_htmlAF);
+  const Z=await p.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms)), t=today();
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    const fermer=()=>document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const val=id=>String((document.getElementById(id)||{}).value||'');
+    const vis=id=>{const x=document.getElementById(id);return !!x&&x.style.display!=='none';};
+    const dernier=()=>{const e=(S.foodLog||[]).slice(-1)[0]||{};
+      return {q:e.q===undefined?'(absent)':e.q, u:e.u===undefined?'(absent)':e.u,
+              per100:e.per100?e.per100.kcal:null,
+              kcal:e.kcal, prot:e.prot, carbs:e.carbs, fat:e.fat};};
+    const taper=(v)=>['af-kcal','af-prot','af-carbs','af-fat'].forEach((id,i)=>{
+      const el=document.getElementById(id); el.value=v[i];
+      el.dispatchEvent(new Event('input',{bubbles:true}));
+      el.dispatchEvent(new Event('change',{bubbles:true}));});
+
+    /* ⛔ Open Food Facts est injoignable depuis ce conteneur (le proxy le refuse, vérifié) : on
+       intercepte `fetch` avec des fiches À LA FORME EXACTE de l'API v2. C'est le SEUL moyen de
+       conduire le vrai `_lookupBarcode` — et donc le vrai `_bcSansValeurs`. */
+    const vraiFetch=window.fetch;
+    const FICHES={
+      '1111111111111':{product_name:'Thon au naturel',brands:'Petit Navire',quantity:'160 g',
+        nutriments:{'energy-kcal_100g':103,'proteins_100g':24,'carbohydrates_100g':0,'fat_100g':1}},
+      /* ⬅ le cas RÉEL de sa ratatouille : la fiche existe, elle n'a aucune valeur. */
+      '2222222222222':{product_name:'Ratatouille Cuisinée à la Provençale',brands:'Cassegrain',
+        quantity:'380 g', nutriments:{}}
+    };
+    window.fetch=async(u,opt)=>{
+      const s=String(u), m=s.match(/product\/(\d+)\.json/);
+      if(m) return {ok:true,json:async()=>({status:FICHES[m[1]]?1:0,product:FICHES[m[1]]||null})};
+      if(/openfoodfacts/.test(s)) return {ok:true,json:async()=>({products:[]})};
+      return vraiFetch(u,opt);
+    };
+
+    /* ══ ① LE CAS DE MICHEL — deux scans, le second sans valeurs ══ */
+    S.foodLog=[]; S.savedFoods=[]; S.hiddenFoods=[]; persist();
+    fermer(); openAddFood(); await d(300);
+    await _lookupBarcode('1111111111111','scan',false); await d(280);
+    o.apres1={row:vis('af-bc-row'), grams:val('af-bc-grams'), bc:!!_bcNutr};
+    await _lookupBarcode('2222222222222','scan',false); await d(280);
+    o.apres2={row:vis('af-bc-row'), grams:val('af-bc-grams'), bc:!!_bcNutr};
+    document.getElementById('af-desc').value='Ratatouille Cassegrain';
+    taper([274,4,23,15]); await d(240);
+    o.onglets = vis('af-prop-row') && /En grammes/.test(document.getElementById('af-prop-row').textContent||'');
+    addFoodEntry(); await d(300);
+    o.enr1=dernier();
+
+    /* ══ ② LA REPRISE de cette entrée ne réinvente aucune référence ══ */
+    fermer(); openAddFood(); await d(300);
+    const iR=_afQuickItems.findIndex(x=>/Ratatouille/i.test(x.name));
+    if(iR>=0){ quickFillFood(iR); await d(260); }
+    o.reprise={champ:val('af-prop'),
+      ligne:/Référence\s*:/.test((document.getElementById('af-prop-row')||{}).textContent||'')};
+
+    /* ══ ③ LES QUATRE PORTES qui éteignent le pour-100 g cachent le bloc (R8) ══
+       ⛔ On MESURE le comportement : on force le bloc visible, on franchit la porte, on relit
+       l'écran. Chercher le texte du correctif dans la source dirait qu'une ligne existe, jamais
+       qu'elle CACHE (leçon de ft-v1158). */
+    const ouvrirBloc=()=>{const r=document.getElementById('af-bc-row'); if(r)r.style.display='block';
+      _bcNutr={name:'X',kcal100:103,prot100:24,carbs100:0,fat100:1};};
+    o.portes={};
+    ouvrirBloc(); openAddFood(); await d(200);            o.portes.openAddFood=!vis('af-bc-row');
+    ouvrirBloc(); await _lookupBarcode('2222222222222','scan',false); await d(260);
+                                                          o.portes.bcSansValeurs=!vis('af-bc-row');
+    S.foodLog=[{date:t,meal:'diner',name:'Sans per100',kcal:200,prot:5,carbs:20,fat:8,
+                ts:Date.now(),q:0,u:null,per100:null}]; persist();
+    fermer(); openAddFood(); await d(240); ouvrirBloc();
+    {const i=_afQuickItems.findIndex(x=>x.name==='Sans per100');
+     if(i>=0){ quickFillFood(i); await d(240); }}
+    o.portes.quickFillFood=!vis('af-bc-row');
+    ouvrirBloc();
+    _afSuggLoc=[{name:'Sans per100',kcal:200,prot:5,carbs:20,fat:8,per100:null,q:0,u:null}];
+    _afSuggPrendreLocale(0); await d(240);
+    o.portes.afSuggPrendreLocale=!vis('af-bc-row');
+
+    /* ══ ④ L'INVARIANT — un bloc visible SANS pour-100 g ne donne plus sa quantité ══
+       C'est la garantie qui survit à la prochaine fonction qu'on ajoutera : même si quelqu'un
+       ré-affiche ce bloc par un chemin qu'on n'a pas prévu, la quantité n'est pas reprise. */
+    S.foodLog=[]; persist(); fermer(); openAddFood(); await d(260);
+    {const r=document.getElementById('af-bc-row'); if(r)r.style.display='block';}
+    {const g=document.getElementById('af-bc-grams'); if(g)g.value='100';}
+    _bcNutr=null;                                  // ⬅ le bloc n'appartient à AUCUN aliment
+    _afSetSrc({saisie:'manuel',origine:'utilisateur',per100:null});
+    document.getElementById('af-desc').value='Ratatouille Cassegrain';
+    taper([274,4,23,15]); await d(220);
+    addFoodEntry(); await d(280);
+    o.invariant=dernier();
+
+    /* ══ ⑤ NON-RÉGRESSION — un scan NORMAL garde sa quantité et son pour-100 g ══ */
+    S.foodLog=[]; persist(); fermer(); openAddFood(); await d(260);
+    await _lookupBarcode('1111111111111','scan',false); await d(280);
+    o.scanRow={row:vis('af-bc-row'), grams:val('af-bc-grams')};
+    addFoodEntry(); await d(280);
+    o.scanNormal=dernier();
+
+    /* ══ ⑥ NON-RÉGRESSION — la personne tape 250 g dans le bloc ══ */
+    S.foodLog=[]; persist(); fermer(); openAddFood(); await d(260);
+    await _lookupBarcode('1111111111111','scan',false); await d(280);
+    {const g=document.getElementById('af-bc-grams');
+     g.value='250'; g.dispatchEvent(new Event('input',{bubbles:true}));}
+    await d(240); addFoodEntry(); await d(280);
+    o.scan250=dernier();
+
+    /* ══ ⑦ NON-RÉGRESSION — le chemin ⚖️ grammes (elle déclare 100 g pour CE qu'elle voit) ══ */
+    S.foodLog=[]; persist(); fermer(); openAddFood(); await d(260);
+    document.getElementById('af-desc').value='Ratatouille maison';
+    taper([274,4,23,15]); await d(220);
+    _afSetUnite('g'); await d(220);
+    {const c=document.getElementById('af-poids');
+     if(c){ c.value='100'; c.dispatchEvent(new Event('input',{bubbles:true}));
+            c.dispatchEvent(new Event('blur',{bubbles:true})); }}
+    await d(260); addFoodEntry(); await d(280);
+    o.grammes100=dernier();
+
+    /* ══ ⑧ NON-RÉGRESSION ft-v1177 — une entrée AVEC q s'ancre toujours ══ */
+    S.foodLog=[{date:t,meal:'dejeuner',name:'Ratatouille Cassegrain',kcal:274,prot:4,carbs:23,
+                fat:15,ts:Date.now(),saisie:'historique',origine:'off',q:380,u:'g',per100:null}];
+    S.savedFoods=[]; S.hiddenFoods=[]; persist();
+    fermer(); openAddFood(); await d(300);
+    {const i=_afQuickItems.findIndex(x=>/Ratatouille/i.test(x.name));
+     if(i>=0){ quickFillFood(i); await d(260);
+       const e=document.getElementById('af-prop');
+       if(e){ e.value='110'; _afApplyProp(); await d(220); } }}
+    o.ancrage={champ:val('af-prop'), kcal:+val('af-kcal')||0};
+
+    /* ══ ⑨ LE POIDS DE PAQUET ne vaut jamais 100 (la piste écartée, figée) ══ */
+    o.paquet=(typeof _offPoidsPaquet==='function')
+      ? ['380 g','660 g','800 g','1 kg','375g'].map(f=>_offPoidsPaquet(f)) : null;
+
+    /* ══ ⑩ LA 2ᵉ ROUTE — trouvée par une relecture croisée, pas par moi ══
+       Le format de la boîte n'explique PAS le 100 de Michel (sa ligne précède ft-v1174 d'une
+       semaine). ⛔ MAIS depuis ft-v1174, le poids de paquet TAPÉ écrit dans `af-bc-grams` — et
+       si un scan « fiche sans valeurs » survient ensuite, ce poids devenait le `q` d'une entrée
+       sans pour-100 g, par le trou exact réparé ici. *La piste était fausse sur le cas de Michel
+       et juste sur le mécanisme.* Le témoin fige que le même correctif ferme aussi cette porte. */
+    S.foodLog=[]; persist(); fermer(); openAddFood(); await d(260);
+    await _lookupBarcode('1111111111111','scan',false); await d(280);
+    if(typeof _bcReprendrePaquet==='function') _bcReprendrePaquet();   // ⬅ elle tape « 📦 160 g »
+    await d(220);
+    o.paquetPose=val('af-bc-grams');
+    await _lookupBarcode('2222222222222','scan',false); await d(280);
+    document.getElementById('af-desc').value='Ratatouille Cassegrain';
+    taper([274,4,23,15]); await d(220);
+    addFoodEntry(); await d(280);
+    o.fuitePaquet=dernier();
+
+    window.fetch=vraiFetch;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,300)};}
+  });
+  if(Z.err) t('CCLXXVII n\'a pas pu tourner', false, Z.err);
+  else{
+    /* ⛔ CONTRÔLE — sans lui, tous les témoins seraient verts en ne mesurant rien : il faut que
+       le PREMIER scan ait bien ouvert le bloc avec son défaut à 100. */
+    t('CCLXXVII ⛔ CONTRÔLE — le 1ᵉʳ scan ouvre bien le bloc pour-100 g, avec 100 dedans',
+      Z.apres1.row===true && Z.apres1.grams==='100' && Z.apres1.bc===true, JSON.stringify(Z.apres1));
+    t('CCLXXVII ① ⭐⭐ SON CAS — après un 2ᵉ scan SANS valeurs, le bloc pour-100 g est CACHÉ',
+      Z.apres2.row===false && Z.apres2.bc===false, JSON.stringify(Z.apres2));
+    t('CCLXXVII ② ⭐⭐ … et l\'entrée ne porte AUCUNE quantité (INTERDIT : 100)',
+      Z.enr1.q===null && Z.enr1.u===null,
+      'q='+Z.enr1.q+' u='+Z.enr1.u);
+    t('CCLXXVII ③ ⛔ … pendant que ses 4 valeurs sont intactes (274/4/23/15)',
+      Z.enr1.kcal===274 && Z.enr1.prot===4 && Z.enr1.carbs===23 && Z.enr1.fat===15,
+      JSON.stringify(Z.enr1));
+    t('CCLXXVII ④ ⛔ … et les onglets ⚖️/🍽️ restent offerts (on ne ferme pas la porte de sortie)',
+      Z.onglets===true, 'onglets : '+Z.onglets);
+    t('CCLXXVII ⑤ ⭐ SA CAPTURE — la reprise n\'affiche plus « Référence : 100 g »',
+      Z.reprise.ligne===false && Z.reprise.champ==='',
+      'champ="'+Z.reprise.champ+'" ligne='+Z.reprise.ligne);
+    t('CCLXXVII ⑥ ⛔⛔ LES QUATRE PORTES qui éteignent le pour-100 g cachent le bloc (R8)',
+      Z.portes.openAddFood===true && Z.portes.bcSansValeurs===true &&
+      Z.portes.quickFillFood===true && Z.portes.afSuggPrendreLocale===true,
+      JSON.stringify(Z.portes));
+    t('CCLXXVII ⑦ ⭐⭐ L\'INVARIANT — un bloc visible SANS pour-100 g ne donne plus sa quantité',
+      Z.invariant.q===null && Z.invariant.kcal===274,
+      'q='+Z.invariant.q+' kcal='+Z.invariant.kcal);
+    t('CCLXXVII ⑧ ⛔ LA RAISON DE L\'INVARIANT — le champ porte value="100" EN DUR dans index.html',
+      _defautEnDur===true, 'trouvé : '+_defautEnDur);
+    t('CCLXXVII ⑨ ⛔ NON-RÉGRESSION — un scan normal enregistre 100 g ET son pour-100 g',
+      Z.scanNormal.q===100 && Z.scanNormal.u==='g' && Z.scanNormal.per100===103,
+      JSON.stringify(Z.scanNormal));
+    t('CCLXXVII ⑩ ⛔ NON-RÉGRESSION — 250 g tapés dans le bloc arrivent bien à la donnée',
+      Z.scan250.q===250 && Z.scan250.kcal===258,
+      JSON.stringify(Z.scan250));
+    t('CCLXXVII ⑪ ⛔ NON-RÉGRESSION — le chemin ⚖️ grammes garde q=100 ET dérive son pour-100 g',
+      Z.grammes100.q===100 && Z.grammes100.u==='g' && Z.grammes100.per100===274,
+      JSON.stringify(Z.grammes100));
+    t('CCLXXVII ⑫ ⛔ NON-RÉGRESSION ft-v1177 — 380 g ↔ 274 kcal, on demande 110 g → 79',
+      Z.ancrage.champ==='110' && Z.ancrage.kcal===79,
+      JSON.stringify(Z.ancrage));
+    t('CCLXXVII ⑬ ⛔ LA PISTE ÉCARTÉE — un poids de paquet ne vaut JAMAIS 100',
+      Array.isArray(Z.paquet) && Z.paquet.join(',')==='380,660,800,1000,375',
+      'lus : '+(Z.paquet||[]).join(','));
+    t('CCLXXVII ⑭ ⛔⛔ CONTRÔLE — la pastille 📦 pose bien 160 g dans le champ',
+      Z.paquetPose==='160', 'champ : '+Z.paquetPose);
+    t('CCLXXVII ⑮ ⭐⭐ LA 2ᵉ ROUTE — un poids de PAQUET tapé ne fuit plus sur l\'aliment suivant (INTERDIT : 160)',
+      Z.fuitePaquet.q===null && Z.fuitePaquet.kcal===274,
+      'q='+Z.fuitePaquet.q+' kcal='+Z.fuitePaquet.kcal);
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

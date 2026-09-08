@@ -3314,3 +3314,40 @@ qui est posée*** — ici : *qui* a posé ce poids, et *pour quoi*.
 *Voisine de **§51** (deux comparaisons pour la même question) et de **§54** (le commentaire dit
 vrai, le code ne le fait pas). Née d'un audit externe sur un export réel de 168 lignes — le
 premier bug de ce dépôt trouvé par la DONNÉE plutôt que par une capture d'écran.*
+
+
+## 56. 🪟 UN BLOC RESTÉ VISIBLE N'EST PAS INERTE — IL RÉPOND POUR L'ALIMENT D'AVANT **(08/09/2026, ft-v1179)**
+
+**À quoi on la reconnaît** : une valeur *plausible* apparaît sur un écran sans qu'on l'ait tapée, et
+elle appartient à **ce qu'on regardait juste avant**. Rien ne plante, rien n'est vide — c'est un
+chiffre juste, sur le mauvais sujet.
+
+**Le cas** : Michel scanne un produit complet (le bloc « pour 100 g » s'ouvre avec son défaut à
+**100**), puis un produit dont la fiche Open Food Facts n'a **aucune valeur**. L'app éteint bien le
+pour-100 g et bascule sur les onglets ⚖️/🍽️ — **mais elle laisse le bloc précédent affiché**. À
+l'enregistrement, `_provFood` lit sa quantité *du moment qu'il est visible* : les **274 kcal de la
+ratatouille** partent mariées aux **100 g du thon**, et la ligne se relit pour toujours comme
+« 274 kcal = 100 g ».
+
+**⛔ CE QUI REND LA FAMILLE VICIEUSE, ET IL FAUT LE SAVOIR** : le champ portait **`value="100"` en
+dur dans le HTML**. Un bloc caché n'est donc **jamais vide** — il attend. *Une garantie qui repose
+sur « ce n'est pas affiché » suppose que personne ne l'affichera par un autre chemin.*
+
+**Ce qui la protège aujourd'hui** : deux moitiés, et la seconde compte plus que la première.
+① **Toute porte qui éteint une référence cache le bloc qui la présente** — c'était posé sur trois
+portes sur quatre (**R8**). ② **Un bloc ne donne sa valeur que s'il APPARTIENT à ce qui est
+affiché** : la visibilité n'est pas une preuve d'appartenance, il faut un témoin explicite
+(`_bcNutr` ici). *La moitié ② referme aussi les portes qu'on n'a pas prévues — mesuré : sans elle,
+l'invariant tombe même quand ① est en place.*
+
+**Le réflexe** : quand un écran a **deux réglages pour la même grandeur**, ne pas se demander
+seulement *« lequel est visible ? »* mais *« celui-ci parle-t-il de l'aliment que j'ai sous les
+yeux ? »*. Et quand un champ a une valeur par défaut dans le HTML, se rappeler qu'**il répond même
+quand on ne lui demande rien**.
+
+*Voisine de **§55** (un total séparé de sa quantité) dont c'est la porte d'entrée en amont, de
+**R15** (tout chemin de fermeture pose son marqueur) et du « voisinage muet » de ft-v966 / ft-v1042
+/ ft-v1051 — un chiffre juste à côté d'un autre chiffre juste, et l'ensemble ment. ⚠️ Née d'une
+consigne de Michel plutôt que d'un correctif : *« Ne corrige rien pour l'instant. Trace pourquoi. »*
+— la trace a donné la cause, une piste de travers a été éliminée par la mesure, et une **2ᵉ route**
+(le poids de paquet tapé, ft-v1174) a été trouvée par une relecture croisée.*

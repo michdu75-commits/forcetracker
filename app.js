@@ -1209,10 +1209,27 @@ function _provFood(vals){
     const a=_afSrc.attendu;
     if(a&&vals) p.modifie=['kcal','prot','carbs','fat'].some(k=>(+a[k]||0)!==(+vals[k]||0));
   }
-  // La quantité n'existe que si le champ grammes est réellement affiché (scan / étiquette).
+  /* La quantité n'existe que si le champ grammes est réellement affiché (scan / étiquette).
+     ⚖️⛔⛔ ft-v1179 — ET SURTOUT : SEULEMENT S'IL APPARTIENT À L'ALIMENT AFFICHÉ. C'est
+     l'invariant, et il vaut plus que le correctif d'à côté. « Le bloc est visible » n'a JAMAIS
+     voulu dire « cette quantité est celle de cet aliment » : le champ porte `value="100"` en dur
+     dans `index.html`, donc un bloc laissé ouvert par mégarde ne se tait pas — il répond 100.
+     ⭐ `_bcNutr` est le seul témoin honnête de l'appartenance : les QUATRE endroits qui affichent
+     ce bloc le renseignent d'abord (`_offRemplirFormulaire` via ses appelants, `onFoodLabelFile`,
+     `quickFillFood`, `_afSuggPrendreLocale`), et les quatre qui l'éteignent cachent le bloc
+     depuis ft-v1179. *La condition ci-dessous referme donc aussi les portes qu'on n'a pas
+     prévues* — c'est la moitié qui survit à la prochaine fonction qu'on ajoutera.
+     ⛔ ON GARDE LES DEUX TESTS. Le bloc caché est déjà une réponse suffisante aujourd'hui ; le
+     jour où quelqu'un l'affiche sans pour-100 g, c'est `_bcNutr` qui tient. *Une garantie qui
+     dépend d'un `style.display` est une garantie qu'un futur correctif d'affichage peut annuler
+     sans le savoir.*
+     👉 CE QUE ÇA RÉPARE, mesuré sur son vrai cas : deux scans dans la même ouverture, le second
+     sans valeurs → l'entrée partait en `q:100, u:'g'` avec les 274 kcal de la ratatouille, et se
+     relisait pour toujours comme « 274 kcal = 100 g ». Elle repart désormais SANS quantité —
+     honnêtement inconnue plutôt que faussement connue (R29). */
   const row=document.getElementById('af-bc-row');
   const g=numFR((document.getElementById('af-bc-grams')||{}).value)||0;
-  if(row&&row.style.display!=='none'&&g>0){ p.q=g; p.u='g'; }
+  if(row&&row.style.display!=='none'&&_bcNutr&&g>0){ p.q=g; p.u='g'; }
   /* ⚖️ LE POIDS DÉCLARÉ À LA MAIN DESCEND JUSQU'À LA DONNÉE (ft-v1051) — R4, et c'est LA
      moitié qui manquait : sans ces lignes, la personne voit son poids à l'écran, les 4 valeurs
      se recalculent… et rien n'est enregistré. *L'app aurait su, et n'aurait rien retenu.*
@@ -1469,6 +1486,23 @@ function _bcSansValeurs(nom, opts){
   opts=opts||{};
   /* ⛔⛔ D'ABORD ON RETIRE LE MENSONGE : sans ça, tout le reste est inutile (mutation M2). */
   _bcNutr=null;
+  /* ⚖️⛔⛔ ft-v1179 — ET LE BLOC QUI VA AVEC SE CACHE. C'était le SEUL des quatre endroits qui
+     éteignent `_bcNutr` à ne pas le faire : `openAddFood`, `quickFillFood` et
+     `_afSuggPrendreLocale` cachent tous `af-bc-row` dans la foulée. *Un correctif posé sur
+     trois portes sur quatre n'est pas un correctif* (R8) — et la quatrième est justement celle
+     qu'on emprunte quand une fiche n'a pas de valeurs, c'est-à-dire le cas de la ratatouille.
+     ⛔ CE QUE ÇA COÛTAIT, mesuré par de vrais gestes : deux scans dans la MÊME ouverture (un
+     produit complet, puis un produit sans valeurs) laissaient le bloc du PREMIER affiché, avec
+     son champ à 100. La personne tapait alors ses macros dans les onglets ⚖️/🍽️ — et
+     `_provFood` mariait ses 274 kcal aux **100 g hérités du produit d'avant**. L'entrée partait
+     en `q:100, u:'g'`, sans pour-100 g, et se relisait pour toujours comme « 274 kcal = 100 g ».
+     👉 Le champ, lui, porte `value="100"` **en dur dans `index.html`** : il n'est jamais vide,
+     donc un bloc resté visible n'est pas un bloc inerte, c'est un bloc qui RÉPOND.
+     ⭐ UNE SEULE LIGNE SUFFIT, ET C'EST MESURÉ : la provenance (`af-bc-qsrc`), le total vert
+     (`af-bc-total`), la pastille « la dernière fois » (`af-bc-last`) et celle du paquet
+     (`af-bc-paquet`) vivent TOUTES à l'intérieur de `af-bc-row` — les rendre une par une ici
+     serait du code qu'aucun témoin ne pourrait faire rougir (la garde morte de ft-v1174). */
+  const bcRow=document.getElementById('af-bc-row'); if(bcRow) bcRow.style.display='none';
   /* ⛔ « Produit » est le mot par défaut quand rien n'a été lu — ce n'est pas un nom, on ne le
      pose pas. Et on n'écrase jamais ce que la personne a déjà tapé (R29 : on complète, on ne
      décide pas). */

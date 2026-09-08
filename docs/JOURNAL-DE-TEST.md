@@ -69,6 +69,41 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟢 PRÊTE — UN ALLER-RETOUR D'ONGLET D'UNITÉ ROUVRE ft-v1177 (08/09/2026, MESURÉ)
+
+**Trouvé par une relecture croisée, pas par moi.** Un relecteur adverse affirmait que ft-v1177 était
+« rouvert par un aller-retour d'onglet ». **Vérifié dans un vrai navigateur, il avait raison** :
+
+| geste, sur une entrée SAINE `{q:380, u:'g', per100 absent, 274 kcal}` | résultat |
+|---|---|
+| reprise → on tape **110 g** directement | **79 kcal** ✅ (ft-v1177 fait son travail) |
+| reprise → 🍽️ portions → ⚖️ grammes → on tape **110 g** | **274 kcal** ⛔ |
+
+**Ce qui se passe** : `_afSetUnite` rappelle `_afMajAncre(!_afPoidsPose)` — et `_afPoidsPose` est
+**faux** sur un poids *hérité* (c'est voulu depuis ft-v1177, la mesure l'avait imposé). La référence
+retombe donc à `{q:1, u:''}`, `_afPoidsDeclare` à **0**, le champ redevient **vide**, et le `q:380`
+qui venait de son journal est **jeté**. La ligne s'enregistre ensuite en **`q:110, per100:249`** —
+*exactement le chiffre relevé par l'audit externe sur son export réel.*
+
+**⚠️ Ce que ça oblige à dire honnêtement sur ft-v1179** : l'écran que Michel a photographié
+(*100 g = 274 kcal*) peut naître de **deux** histoires — une entrée déjà à `q:100` (le bug des deux
+blocs, corrigé en ft-v1179), **ou** une entrée saine à `q:380` plus deux taps et « 100 » tapé. Il dit
+n'avoir rien tapé, ce qui désigne la première ; *mais l'écran seul ne tranche pas, et il faut l'écrire.*
+
+**⛔ Pourquoi ce n'est PAS corrigé dans ft-v1179** : c'est un mécanisme distinct (`_afSetUnite` /
+`_afPoidsPose`), pas l'exclusivité des deux blocs. *Une chose à la fois, testée avant de continuer*
+(règle d'or #7) — et ft-v1173 a déjà montré ce que coûte un correctif élargi en cours de route.
+
+**⭐ La vraie question à trancher, et elle n'est pas technique** : quand quelqu'un revient sur un
+aliment dont l'app connaît la quantité (380 g), un changement d'unité doit-il **oublier** cette
+quantité ? *Le geste dit « je veux changer d'unité », pas « oublie ce que tu sais de moi ».*
+⚠️ Mais la réponse inverse rouvrirait ft-v1061 (la capture d'étiquette de Michel) si elle est posée
+sans discriminant — c'est exactement le piège que `_afPoidsPose` existe pour éviter. **À mesurer aux
+deux bouts avant de coder.**
+
+*Sonde reproductible : `scratchpad/sonde-allerretour.js`.*
+
+
 ### 🟣 LA PASSE DE VÉRIFICATION DU PROCHAIN IMPORT — 5 choses à regarder EN UNE FOIS, vers le 06/10/2026 (08/09/2026)
 
 **Ce qui déclenche l'entrée** : Michel, après une journée entière sur l'import : ***« alors je

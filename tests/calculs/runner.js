@@ -1409,6 +1409,19 @@ console.log('\n═══ 12. Journal alimentaire : la provenance de chaque ligne
     S.foodLog=[]; persist();
     const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
     const bcRow=()=>document.getElementById('af-bc-row');
+    /* /!\ ft-v1179 — POSER `_bcNutr` FAIT PARTIE DU SCAN, ce n'est pas une commodite de test.
+       Cette fixture ouvrait `af-bc-row` a la main SANS jamais renseigner `_bcNutr` : aucun scan
+       reel ne fait ca. Les QUATRE endroits qui affichent ce bloc en production le renseignent
+       d'abord (`_offRemplirFormulaire` via ses appelants, `onFoodLabelFile`, `quickFillFood`,
+       `_afSuggPrendreLocale`). Depuis ft-v1179, `_provFood` exige ce temoin d'appartenance :
+       « le bloc est visible » n'a jamais voulu dire « cette quantite est celle de cet aliment ».
+       => la fixture est rendue FIDELE, elle n'est pas assouplie. Le chemin de production est
+       verifie de bout en bout par le bloc CCLXXVII du parcours, qui conduit le vrai
+       `_lookupBarcode` (25 g ici, 100 g et 250 g la-bas) et lit ce que l'app ECRIT.
+       *Un test qui n'emploie pas le schema de la production ne teste rien, il rassure.* */
+    const scanBloc=(n)=>{ _bcNutr={name:n.name,kcal100:n.kcal,prot100:n.prot||0,
+                                   carbs100:n.carbs||0,fat100:n.fat||0};
+                          if(bcRow())bcRow().style.display='block'; };
     // ── ① saisie 100 % MANUELLE ────────────────────────────────────────────────
     openAddFood();
     set('af-desc','Poulet maison'); set('af-kcal',300); set('af-prot',40); set('af-carbs',0); set('af-fat',12);
@@ -1418,7 +1431,7 @@ console.log('\n═══ 12. Journal alimentaire : la provenance de chaque ligne
     openAddFood();
     src({saisie:'scan',origine:'off',sourceId:'3017620422003',
       per100:{kcal:539,prot:6.3,carbs:57.5,fat:30.9},attendu:{kcal:135,prot:2,carbs:14,fat:8}});
-    if(bcRow())bcRow().style.display='block';
+    scanBloc({name:'Pate a tartiner',kcal:539,prot:6.3,carbs:57.5,fat:30.9});
     set('af-bc-grams',25);
     set('af-desc','Pate a tartiner'); set('af-kcal',135); set('af-prot',2); set('af-carbs',14); set('af-fat',8);
     addFoodEntry();
@@ -1427,7 +1440,7 @@ console.log('\n═══ 12. Journal alimentaire : la provenance de chaque ligne
     openAddFood();
     src({saisie:'scan',origine:'off',sourceId:'3017620422003',
       per100:{kcal:539},attendu:{kcal:135,prot:2,carbs:14,fat:8}});
-    if(bcRow())bcRow().style.display='block';
+    scanBloc({name:'Pate a tartiner',kcal:539,prot:6.3,carbs:57.5,fat:30.9});
     set('af-bc-grams',25);
     set('af-desc','Pate a tartiner'); set('af-kcal',200); set('af-prot',2); set('af-carbs',14); set('af-fat',8);
     addFoodEntry();

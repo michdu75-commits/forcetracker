@@ -20,7 +20,36 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1178` — 📷 **UN SCAN D'IMPORT MOURAIT EN ROUVRANT LA
+- **Version en ligne (live) :** `ft-v1179` — ⚖️ **LES CALORIES D'UN ALIMENT ÉTAIENT MARIÉES À LA
+  QUANTITÉ DU PRODUIT D'AVANT.**
+  ⭐⭐ **Née d'une consigne de Michel, pas d'un correctif** : test réel iPhone après ft-v1177, sa
+  ratatouille s'ouvre sur *100 g = 274 kcal* — puis *« Ne corrige rien pour l'instant. Trace
+  pourquoi. »* **Reproduit par de vrais gestes avant d'écrire une ligne** : deux scans dans la
+  même ouverture, le second sur une fiche **sans valeurs**, écrivent `q:100, u:'g'` sans
+  pour-100 g — et la reprise rend **exactement son écran**.
+  ⛔ **Cause** : `_bcSansValeurs` était le SEUL des 4 endroits qui éteignent `_bcNutr` à ne pas
+  cacher `af-bc-row`, et `_provFood` lisait sa quantité **du moment qu'il est visible**. Le champ
+  porte `value="100"` **en dur** dans `index.html` — *un bloc laissé ouvert ne se tait pas, il
+  répond 100*.
+  ⭐ **Deux moitiés, la 2ᵉ vaut plus que la 1ʳᵉ** : cacher le bloc (**R8**) · et n'en lire la
+  quantité **que si `_bcNutr` existe** (l'appartenance, qui referme aussi les portes futures).
+  Mesuré séparément : sans la 1ʳᵉ → 2 rouges d'affichage, la **donnée reste protégée** ; sans la
+  2ᵉ → **1 rouge chirurgical**, l'invariant tombe.
+  ⛔ **La piste du format de boîte (audit externe) est ÉLIMINÉE** : `_offPoidsPaquet` rend
+  380/660/800/1000/375, **jamais 100** ; ft-v1174 est postérieure d'une semaine à sa ligne.
+  ⚠️ **Mais une relecture croisée a trouvé une 2ᵉ route vraie** : un poids de paquet **tapé**
+  fuyait sur l'aliment suivant par le même trou — fermée, et figée par un témoin.
+  ⏭️ **Les lignes déjà abîmées ne sont PAS réparées** (§11 de l'audit) : sa ratatouille reste à
+  reprendre **une fois**. Une quantité inconnue repart désormais **absente** plutôt que fausse.
+  ⏳ **Suite VERTE** : parcours (+16, bloc **CCLXXVII**), calculs **339/339**, muscles 241/241,
+  croisés 50/50, dates 9/9, données 0 trou. **10 mutations, toutes mordent.**
+  ⚠️ **Deux leçons de méthode, les deux à moi** : une mutation qui **échoue en silence** (motif
+  présent 2×) ressemble à un témoin inutile · et un témoin de `tests/calculs` forçait le bloc
+  visible **sans poser `_bcNutr`**, ce qu'aucun scan réel ne fait — fixture rendue **fidèle**, pas
+  assouplie, et **éprouvée**.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1178` — 📷 **UN SCAN D'IMPORT MOURAIT EN ROUVRANT LA
   FENÊTRE**, et les **26** limites de hauteur passent en **`dvh`**.
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1029**, 7 étapes `success` à **18:25:25 UTC**.
   ⏳ **Suite complète VERTE** : parcours **3350/3350** sur l'arbre FUSIONNÉ avec la ft-v1177 de session-A (+11, bloc **CCLXXVI**), calculs 339/339,
