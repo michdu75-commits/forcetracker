@@ -6066,10 +6066,49 @@ function _doCreateCustomEx(name,grp){
 let _impPhotos=[],_impExtracted=null,_impMode='new';
 let _histPhotos=[],_histExtracted=null,_histConflicts=[];
 
+/* 📷 ft-v1178 — UN SCAN NE MEURT PLUS EN ROUVRANT LA FENÊTRE. R2 : un seul propriétaire pour
+   les trois imports (programme, historique, repas).
+   ⛔⛔ LE DÉFAUT, ET IL N'EST PAS OÙ ON LE CROIT. Michel : *« si on fait une mauvaise manip on
+   sort de la fenêtre, et hop le scan est perdu et je dois recommencer »*. Mesuré : `close*()`
+   ne détruit **RIEN** — il retire juste la classe `open`. C'est `open*()` qui remettait tout à
+   zéro. 👉 ***Le scan survivait à la fermeture et mourait à la réouverture*** : entre les deux,
+   les photos ET le programme extrait étaient encore en mémoire, personne n'allait les chercher.
+   ⛔ ET LE CLIC À CÔTÉ FERME SANS RIEN DEMANDER (aucun `data-no-dismiss` sur les 3 overlays).
+   Donc une mauvaise manip suffisait à jeter **un appel IA déjà payé**.
+   ⭐ L'AUDIT (demandé par Michel avant de coder) a trouvé que ce sont **TROIS** imports, pas un :
+   programme, historique **et repas** — les trois avec une extraction issue d'un appel IA.
+   ⚠️ LA MOITIÉ QUI REND L'AUTRE SÛRE : il faut VIDER après un import réussi. Sans ça, on
+   proposerait de reprendre un scan déjà importé — un piège pire que le défaut réparé. */
+function _scanEnCours(photos, extrait){
+  return (Array.isArray(photos) && photos.length>0) || !!extrait;
+}
+/* Affiche la bande « scan repris · Recommencer ». ⛔ R24 — on informe SANS BLOQUER : pas de
+   pop-up qui se met en travers, mais une sortie **visible** (ft-v633), parce qu'on ne devine pas
+   qu'un scan a été repris et on doit pouvoir en relancer un. */
+function _bandeauReprise(id, onReset){
+  const el=document.getElementById(id); if(!el) return;
+  el.style.display='flex';
+  el.onclick=e=>{ if(e.target && e.target.dataset && e.target.dataset.reset!==undefined){ onReset(); } };
+}
+function _cacheReprise(id){ const el=document.getElementById(id); if(el)el.style.display='none'; }
+
 function openImportProg(){
-  _impPhotos=[];_impExtracted=null;_impMode='new';
-  impGoStep(1);
+  /* ⭐ On REPREND si un scan est en cours, sinon on repart de zéro comme avant. */
+  if(_scanEnCours(_impPhotos,_impExtracted)){
+    _bandeauReprise('imp-reprise', impRecommencer);
+    if(_impExtracted){ impGoStep(4); if(typeof _renderImpConfirm==='function')_renderImpConfirm(); }
+    else { impGoStep(2); if(typeof _renderImpThumbs==='function')_renderImpThumbs(); }
+  }else{
+    impRecommencer(true);
+  }
   document.getElementById('ov-import-prog').classList.add('open');
+}
+/* Vide le scan. `silencieux` = appelé à l'ouverture d'un import neuf (rien à annoncer). */
+function impRecommencer(silencieux){
+  _impPhotos=[];_impExtracted=null;_impMode='new';
+  _cacheReprise('imp-reprise');
+  impGoStep(1);
+  if(!silencieux && typeof toast==='function')toast('Nouveau scan','info');
 }
 function closeImportProg(){document.getElementById('ov-import-prog').classList.remove('open');}
 
@@ -6907,13 +6946,14 @@ function finalImportProg(){
       const oldName=S.programmes[idx].name;
       prog.name=prog.name||oldName;
       S.programmes[idx]=prog;
-      persist();closeImportProg();
+      persist();impRecommencer(true);closeImportProg();   // ft-v1178 : scan consommé → on le vide
       toast('"'+oldName+'" mis à jour ✅','success');
       openProgModal();return;
     }
   }
   S.programmes.push(prog);
   persist();
+  impRecommencer(true);                                  // ft-v1178 : scan consommé → on le vide
   closeImportProg();
   toast('"'+name+'" importé ! 💪','success');
   openProgModal();
@@ -6921,10 +6961,22 @@ function finalImportProg(){
 
 // ─── IMPORT HISTORIQUE (flow isolé — ne touche pas au flow programme) ─────────
 
+/* 📷 ft-v1178 — LA JUMELLE (R8). Le poser d'un seul côté aurait été la 8ᵉ fois de la journée. */
 function openImportHist(){
-  _histPhotos=[];_histExtracted=null;_histConflicts=[];
-  histGoStep(1);
+  if(_scanEnCours(_histPhotos,_histExtracted)){
+    _bandeauReprise('hist-reprise', histRecommencer);
+    if(_histExtracted){ histGoStep(4); if(typeof _renderHistPreview==='function')_renderHistPreview(); }
+    else { histGoStep(2); if(typeof _renderHistThumbs==='function')_renderHistThumbs(); }
+  }else{
+    histRecommencer(true);
+  }
   document.getElementById('ov-import-hist').classList.add('open');
+}
+function histRecommencer(silencieux){
+  _histPhotos=[];_histExtracted=null;_histConflicts=[];
+  _cacheReprise('hist-reprise');
+  histGoStep(1);
+  if(!silencieux && typeof toast==='function')toast('Nouveau scan','info');
 }
 function closeImportHist(){document.getElementById('ov-import-hist').classList.remove('open');}
 
@@ -7332,6 +7384,7 @@ function finalImportHist(){
   persist();
   _cloudSyncSessions();
   checkBadges(true);
+  histRecommencer(true);                                 // ft-v1178 : scan consommé → on le vide
   closeImportHist();
   /* ⭐ ft-v1095 — un rejet SILENCIEUX est indiscernable d'un import réussi : on dit ce qui
      n'est pas entré, et pourquoi, pour que la personne puisse vérifier sa page (R29). */

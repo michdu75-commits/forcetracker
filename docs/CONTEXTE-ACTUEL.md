@@ -6,9 +6,36 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1177` — ⚖️ **L'INVARIANT DE REPRISE : des totaux ne se
+- **Version en ligne (live) :** `ft-v1178` — 📷 **UN SCAN D'IMPORT MOURAIT EN ROUVRANT LA
+  FENÊTRE**, et les **26** limites de hauteur passent en **`dvh`**.
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1029**, 7 étapes `success` à **18:25:25 UTC**.
+  ⏳ **Suite complète VERTE** : parcours **3350/3350** sur l'arbre FUSIONNÉ avec la ft-v1177 de session-A (+11, bloc **CCLXXVI**), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  ⭐ **Michel** : *« si on fait une mauvaise manip on sort de la fenêtre, et hop le scan est perdu
+  et je dois recommencer »* + *« la fenêtre ne va pas jusqu'en haut, donc elle est petite »*.
+  Puis, avant que je code : *« refais un petit audit stp »* — **et cet audit a trouvé deux choses
+  qu'il n'avait pas vues.**
+  ⛔⛔ **Le défaut n'est pas où on le croit** : `close*()` ne détruit **rien**, c'est `open*()` qui
+  effaçait. ***Le scan survivait à la fermeture et mourait à la réouverture.*** Et le clic à côté
+  ferme sans rien demander → **une mauvaise manip jetait un appel IA déjà payé**.
+  ⛔⛔ **Ce sont TROIS imports** — programme, historique **et repas** (non signalé). Les 6 autres
+  `open*()` vérifiées : positions et compteurs, rien qui coûte. ***Un audit qui ne cherche que le
+  cas signalé n'est pas un audit.***
+  ⭐ Propriétaire unique `_scanEnCours` + trois `*Recommencer()` ; on **reprend** sur l'aperçu (ou
+  les vignettes), avec un **bandeau « Scan repris »** et une sortie **visible** (**R24**).
+  ⚠️ **La moitié qui rend l'autre sûre, non demandée** : **vider après un import réussi** — sinon
+  on proposerait de reprendre un scan **déjà importé**, pire que le défaut réparé.
+  ③ **26 limites en `dvh`** (23 dans `index.html` + 3 dans `style.css`) ; les **2 animations**
+  gardent `vh` **exprès** (une animation doit voler sur une distance stable).
+  ⚠️⚠️ **Et je dis ce que je ne sais pas** : aucune décision écrite n'explique le `dvh` de base —
+  ma supposition « correctif iOS » a été **retirée**. *L'incohérence est mesurée ; que ce soit LA
+  cause du symptôme ne l'est pas* (pas de WebKit ici). Le correctif reste sûr.
+  📣 **Règle d'or #11** : le bandeau **est** l'annonce, au moment où ça sert. Ni pastille ni pop-up.
+  ⏭️ ⛔ Le scan ne survit **pas** à la fermeture de l'app (mémoire, pas stockage) — noté, pas fait.
+  ⚠️ **Michel doit vérifier sur Safari/iPhone** : c'est lui qui dira si le `dvh` règle sa fenêtre.
+- **Version précédente :** `ft-v1177` — ⚖️ **L'INVARIANT DE REPRISE : des totaux ne se
   réapparient jamais à une autre quantité.**
-  ⏳ **Suite VERTE** : **parcours 3339/3339** sur l'arbre FUSIONNÉ (+16, bloc **CCLXXV**), calculs 339/339, muscles
+  ⏳ **Suite VERTE** : **parcours 3339/3339** sur l'arbre FUSIONNÉ (+16, bloc **CCLXXVI**), calculs 339/339, muscles
   241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⭐⭐ **Audit externe (GPT) sur son export réel** (168 lignes), **reproduit au chiffre près avant
   de coder** : sa ratatouille passe de *380 g = 274 kcal* à *110 g = 274 kcal*, l'app en dérive un
