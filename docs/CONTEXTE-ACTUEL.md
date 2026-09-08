@@ -6,7 +6,41 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1173` — ⚖️ **LE CHOIX DE PORTIONS ÉTAIT JETÉ AU PASSAGE EN
+- **Version en ligne (live) :** `ft-v1175` — ⛔ **UNE CIBLE DE SYNONYME QUI N'EXISTE PLUS, ET
+  LE RAPPROCHEUR ÉTAIT SÛR À 95 %.**
+  ⏳ **Suite complète VERTE** : parcours **3300/3300** (+8, bloc **CCLXXII**), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  ⭐ **Le déclencheur est une contestation de Michel** : *« curl ischios c'est leg curl ischios et
+  rien a voir avec poussée de hanche hein »*. Il avait raison sur les **deux** points — je les
+  avais mis dans la même ligne d'un tableau (ils n'ont en commun que la *raison* de leur mise à
+  l'écart), et cette raison était **fausse** pour le sien : `leg curl` rendait **95 % `auto`**,
+  `curl ischios` **33 % `confirm`** — *le même exercice, deux réponses*. **R8** sur le vocabulaire,
+  2ᵉ fois après `abducteurs`/`adducteurs`.
+  ⛔⛔ **Et en vérifiant, pire — mesuré de bout en bout sur un vrai import** : « Leg curl » était
+  rapproché en **`auto` à 95 %** vers **« Curl Ischio-jambiers (Leg Curl) »**, un nom **renommé**
+  depuis en « Leg Curl Couché Machine » donc **absent d'EXLIB** → **exercice perso créé**, sans
+  photo ni figurine ni historique. 👉 **Le pire des deux cas : l'app est sûre d'elle et elle a
+  tort** — et la marque orange de ft-v1166 **ne se déclenche pas** puisque c'est `auto`.
+  ⚠️ **Pourquoi le filet n'a pas joué** : `exNomActuel` vit dans la **recherche**, pas dans le
+  rapprochement. *Un rattrapage posé sur un seul des deux lecteurs ressemble à un rattrapage.*
+  ⛔ **On corrige la DONNÉE, pas le moteur** (règle ft-v1170) : 4 clés vers le nom actuel, et
+  **`nordic curl` / `trx ham curl` RETIRÉES** plutôt que redirigées vers une machine couchée —
+  ce sont des exercices au **poids du corps** (**R30**). Mesuré : **531 clés, 0 cible périmée**.
+  ⚠️⚠️ **Le témoin de cohérence de ft-v1170 est DURCI** : il acceptait `exNomActuel`, donc il
+  était **vert** pendant que l'import écrivait un fantôme. *Un contrôle qui accepte le rattrapage
+  ne voit pas que le rattrapage n'a pas lieu.*
+  ⚠️ **Et deux témoins de ft-v1172 sont RETOURNÉS, pas adoucis** (**R30**) : c'est la règle qu'ils
+  figeaient qui a changé, pas le code qu'on fait passer.
+  📣 **Règle d'or #11 : RIEN** — aucun écran ne change.
+  ⏭️ **Trois pistes mesurées, notées, PAS construites** : ① le modèle **voit déjà les images**
+  (`_pdfToImages` envoie chaque page en JPEG 1200 px) — l'idée de Michel est exacte, la consigne
+  coûte quelques dizaines de jetons ; ② ⭐⭐ **la vignette dans l'aperçu** (`_exImg` existe) —
+  *« Curl Ischio-jambiers (Leg Curl) » sonne juste, mais sa vignette aurait été VIDE* : **une
+  vignette absente est un signal qu'aucun texte ne donne**, et c'est la réponse à *« une personne
+  qui ne connaît pas »* ; ③ **le TEMPS DE REPOS du PDF** — mesuré, le tuyau est **complet**
+  (`rest:180` → appliqué · `restPerSet` → par série · `"2 min"` → 120 s · `"90-120s"` → **0, rien
+  d'inventé**). *Il ne manque QUE le champ dans le schéma du prompt serveur.*
+- **Version précédente :** `ft-v1173` — ⚖️ **LE CHOIX DE PORTIONS ÉTAIT JETÉ AU PASSAGE EN
   GRAMMES — et le commentaire juste au-dessus promettait le contraire.**
   ⏳ **Suite VERTE** : **parcours 3291/3291** sur l'arbre FUSIONNÉ (+17, bloc **CCLXXI**), calculs 339/339, muscles 241/241, croisés
   50/50, dates 9/9, données classées 0 trou.

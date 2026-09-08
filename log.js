@@ -2632,7 +2632,24 @@ const _EX_EQUIV={
   'biceps marteau':'Marteau',
   'adducteurs machine':'Adduction Cuisses (Leg Adduction)','assis adducteurs machine':'Adduction Cuisses (Leg Adduction)',
   'presse a mollets':'Presse Mollets (Leg Press)',
-  'leg curl':'Curl Ischio-jambiers (Leg Curl)','leg extension':'Extension Quadriceps (Leg Extension)'
+  /* ⛔⛔ ft-v1175 (08/09/2026) — LA CIBLE N'EXISTAIT PLUS, ET LE RAPPROCHEUR ÉTAIT SÛR À 95 %.
+     Trouvé parce que Michel a contesté un classement (« curl ischios c'est leg curl ischios ») —
+     il avait raison, et en vérifiant je suis tombé sur pire.
+     ⭐⭐ MESURÉ DE BOUT EN BOUT sur un vrai import : « Leg curl » était rapproché en `auto` (95 %)
+     vers « Curl Ischio-jambiers (Leg Curl) » — un nom RENOMMÉ depuis en « Leg Curl Couché Machine ». Résultat : un
+     EXERCICE PERSO créé, sans photo ni figurine ni historique, et ⛔ **la marque orange de
+     ft-v1166 ne se déclenche pas puisque c'est `auto`** : ça passe entièrement sous le radar.
+     *L'app était sûre d'elle et elle avait tort — le pire des deux cas.*
+     ⚠️ `exNomActuel` rattrapait bien le nom AILLEURS (recherche, records), mais `_matchExercise`
+     rendait le nom mort tel quel, et c'est LUI que l'import écrit.
+     ⛔ ON CORRIGE LA DONNÉE, PAS LE MOTEUR (la règle de ft-v1170) : les cibles pointent vers le
+     nom actuel. La destination ne change pas — c'est déjà là qu'`exNomActuel` menait. */
+  'leg curl':'Leg Curl Couché Machine','leg extension':'Extension Quadriceps (Leg Extension)',
+  /* ⭐ LES JUMEAUX FRANÇAIS, le point de Michel : `leg curl` rendait 95 % en `auto` et
+     `curl ischios` 33 % en `confirm` — *le même exercice, deux réponses différentes*. C'est
+     `abducteurs`/`adducteurs` une 2ᵉ fois (R8 sur le vocabulaire). */
+  'curl ischios':'Leg Curl Couché Machine','curl ischio':'Leg Curl Couché Machine','curl ischio jambiers':'Leg Curl Couché Machine',
+  'leg curl ischios':'Leg Curl Couché Machine'   /* la forme exacte que Michel emploie ; sans elle, le recouvrement de mots l'envoyait sur « Leg Curl Haltère » à 67 % */
 };
 // Lookup équivalence tolérant au mot « machine » (et autres mots vides génériques) :
 // on tente la forme complète, puis la forme réduite aux mots utiles (_exTokens) —
@@ -2702,7 +2719,14 @@ Object.assign(_EX_EQUIV,{
   // 5e vague (rapport HELL MODE v2, validé GPT) : squat profond + presse mollets
   'atg squat':'Squat à la Barre','mollet presse':'Presse Mollets (Leg Press)',
   // 6e vague (rapport TRX/poids du corps) : 3 suggestions absurdes corrigées (muscle faux)
-  'trx ham curl':'Curl Ischio-jambiers (Leg Curl)','nordic curl':'Curl Ischio-jambiers (Leg Curl)',
+  /* ⛔⛔ ft-v1175 — `trx ham curl` ET `nordic curl` RETIRÉS, ET C'EST UNE DÉCISION, PAS UN OUBLI
+     (R30). Ils visaient le générique « Curl Ischio-jambiers (Leg Curl) » ; ce nom est mort, et son
+     remplaçant est « Leg Curl Couché Machine » — une machine COUCHÉE. Or un nordic curl et un
+     ham curl TRX sont au POIDS DU CORPS. ⛔ Les rediriger vers une machine serait exactement le
+     « synonyme FAUX » qu'on refuse partout ailleurs : il fusionnerait en silence l'historique de
+     deux exercices très différents. Vérifié : le catalogue n'a ni nordic curl ni ham curl TRX.
+     👉 Ils redeviennent donc des exercices INCONNUS — c'est honnête, ça se voit (marque orange
+     de ft-v1166), et la personne choisit. *Un synonyme manquant se voit, un synonyme faux non.* */
   'chin up':'Traction Prise Neutre',
   // 7e vague (rapport CrossFit/haltéro) : 5 suggestions absurdes corrigées (muscle/mouvement faux)
   'push press':'Développé Militaire','strict press':'Développé Militaire','push jerk':'Développé Militaire',
@@ -2759,7 +2783,7 @@ Object.assign(_EX_EQUIV,{
   'ez bar curl':'Curl EZ','ez curl':'Curl EZ',
   'db curl':'Curl Haltères','dumbbell curl':'Curl Haltères',
   'incline curl':'Curl Incliné','incline dumbbell curl':'Curl Incliné',
-  'cable leg curl':'Curl Ischio-jambiers (Leg Curl)','leg curl poulie':'Curl Ischio-jambiers (Leg Curl)','low cable leg curl':'Curl Ischio-jambiers (Leg Curl)',
+  'cable leg curl':'Leg Curl Couché Machine','leg curl poulie':'Leg Curl Couché Machine','low cable leg curl':'Leg Curl Couché Machine',   // ft-v1175 : cible renommée (voir plus haut)
   'cable curl':'Curl Poulie','standing cable curl':'Curl Poulie',
   'curl pupitre':'Curl Pupitre Machine','preacher curl':'Curl Pupitre Machine','preacher machine curl':'Curl Pupitre Machine','scott curl':'Curl Pupitre Machine',
   'dragon flag':'Drapeau (Dragon Flag)','dragon flag hold':'Drapeau (Dragon Flag)',
@@ -5467,10 +5491,14 @@ function filterEx(){
     try{
       if(typeof _EX_EQUIV!=='undefined' && qn.length>=2){
         const ex=new Set(), db=new Set();
-        // ⚠️ La table peut viser un ANCIEN nom : 'leg curl' → « Curl Ischio-jambiers (Leg Curl) »,
-        // qui n'est plus au catalogue depuis son renommage en « Leg Curl Couché Machine ». Sans
-        // exNomActuel, ce synonyme viserait le vide — le correctif serait mort en silence pour
-        // lui, sans erreur ni test rouge. (Seul cas au 08/08, vérifié sur les 505 clés.)
+        // ⚠️ La table PEUT viser un ANCIEN nom, d'où `exNomActuel` : sans lui un tel synonyme
+        // viserait le vide, et le correctif serait mort en silence, sans erreur ni test rouge.
+        // ⛔⛔ MAIS CE FILET N'A JAMAIS PROTÉGÉ L'IMPORT, et ça a coûté cher (ft-v1175) : il vit
+        // ICI, dans la recherche. `_matchExercise` rendait le nom MORT tel quel, en `auto` à
+        // 95 % — donc l'import écrivait un exercice fantôme sans rien demander. *Un rattrapage
+        // posé sur un seul des deux lecteurs ressemble à un rattrapage.* Les 6 clés concernées
+        // pointent désormais vers le nom actuel (mesuré : 0 cible périmée sur les 530), et un
+        // témoin exige que le nom RENDU existe vraiment — pas seulement qu'il soit résoluble.
         const cibleDe=k=>{const v=_EX_EQUIV[k];return (typeof exNomActuel==='function')?exNomActuel(v):v;};
         for(const k in _EX_EQUIV){
           if(k===qn){ const c=cibleDe(k); if(c)ex.add(c); }
