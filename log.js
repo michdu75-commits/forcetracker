@@ -2609,6 +2609,29 @@ const _EX_EQUIV={
      ⛔ Et on n'ajoute PAS « souleve de terre roumain » écrit en toutes lettres : mesuré, il
      tombe DÉJÀ juste à 100 %. Un synonyme qui double un cas qui marche est du bruit. */
   'sdt roumain':'Soulevé de Terre Roumain Barre',
+  /* 🔎 ft-v1172 (08/09/2026) — LA RÉCOLTE, ET ELLE EST COURTE EXPRÈS. Michel : *« pk ne pas
+     rentrer tous ces noms dans une base de données invisible pour faire directement le bon
+     changement »*. La base existe (c'est celle-ci, 525 clés) ; la question est ce qu'on a le
+     DROIT d'y mettre.
+     ⭐⭐ MESURÉ sur du vocabulaire de salle réel, `_matchExercise` exécuté dans la page — et le
+     résultat a réduit la liste, pas allongé : sur 24 formes testées, **4 seulement ont UNE seule
+     réponse possible**. Chaque cible ci-dessous est vérifiée UNIQUE dans le catalogue (un seul
+     « marteau », une seule « adduction », une seule « presse mollets »).
+     ⛔⛔ CE QUI A ÉTÉ ÉCARTÉ, ET POURQUOI ÇA COMPTE PLUS QUE CE QUI EST AJOUTÉ :
+       · `curl ischios` (33 %) et `poussee de hanche` (50 %) → **4 à 5 variantes** chacun
+         (barre / haltère / machine / unilatéral). Un synonyme trancherait EN SILENCE.
+       · `developpe epaules guide` (67 %) → c'est LE cas de Michel, et il est **ambigu par
+         nature** : machine guidée ou haltères ? *Si l'expert hésite, on n'ajoute pas* (R29).
+       · `tirage vertical nuque` → **6 exercices** portent « nuque ». Écarté pour la même raison.
+       · `elliptique`, `velo`, `rameur`, `tapis de course` → ⛔ **surtout pas ici** : mesuré,
+         `_estCreneauCardio` les rend TOUS `true` (ft-v1168). Ce ne sont pas des exercices, ce
+         sont des créneaux de cardio. Les mettre dans cette table les transformerait en exercices
+         de musculation — le défaut exact que ft-v1168 vient de réparer.
+     ⭐ `adducteurs machine` est un cas R8 en miniature : `abducteurs machine` était là depuis
+     toujours, **son jumeau non** — mesuré, l'un rendait 95 % et l'autre 0 %. */
+  'biceps marteau':'Marteau',
+  'adducteurs machine':'Adduction Cuisses (Leg Adduction)','assis adducteurs machine':'Adduction Cuisses (Leg Adduction)',
+  'presse a mollets':'Presse Mollets (Leg Press)',
   'leg curl':'Curl Ischio-jambiers (Leg Curl)','leg extension':'Extension Quadriceps (Leg Extension)'
 };
 // Lookup équivalence tolérant au mot « machine » (et autres mots vides génériques) :
@@ -5684,9 +5707,16 @@ function _saveCustomExEdit(newName,grp){
   const oldName=_editingCustomExName;
   const c=(S.customExercises||[]).find(e=>e.n===oldName);
   if(!c){_editingCustomExName=null;hideCustomExForm();return;}
-  if(newName.toLowerCase()!==oldName.toLowerCase()){
+  /* 🔤 ft-v1172 — LA MÊME CLÉ QUE L'IMPORT (`_cleNom`), et ici ça se voit tout de suite.
+     ⛔ MESURÉ AVANT : renommer « SDT roumain » en « Souleve de Terre Roumain Barre » (sans
+     l'accent) ne déclenchait AUCUNE fusion — l'app renommait simplement le perso, et il fallait
+     recommencer. Or c'est exactement le geste qu'on demande à quelqu'un qui répare un import :
+     *retaper à la main le nom du catalogue*, sur un téléphone, avec des accents et un « ° ».
+     👉 Une frappe qui manque un accent DOIT fusionner, comme celle qui l'a. Et un renommage qui
+     ne change QUE l'accent reste un simple renommage (la garde ci-dessous compare les clés). */
+  if(_cleNom(newName)!==_cleNom(oldName)){
     const all=[...EXLIB,...(S.customExercises||[])];
-    const clash=all.find(e=>e.n.toLowerCase()===newName.toLowerCase());
+    const clash=all.find(e=>_cleNom(e.n)===_cleNom(newName));
     if(clash){
       // Nom déjà pris → proposer de FUSIONNER : déplacer l'historique dans l'exercice existant + supprimer le perso
       showConfirm('Fusionner les exercices',
@@ -6408,18 +6438,44 @@ function _mergeImportEchauffements(){
    ⛔ ON GARDE LA COMPARAISON LA PLUS PRUDENTE DES DEUX (celle de l'historique) : un nom VIDE
    n'est pas « à créer », il est ignoré. Côté programme, `''` fabriquait un exercice perso sans
    nom — divergence silencieuse, corrigée en passant par un propriétaire unique.
-   ⚠️ Et on ne `trim()` PAS : la création pousse `ex.name` TEL QUEL, donc juger sur une version
-   rognée ferait dire « connu » d'un nom qui serait quand même enregistré avec son espace. */
+   ⚠️ ft-v1166 disait ici « on ne `trim()` PAS » — la crainte étant qu'un nom jugé sur sa version
+   rognée soit dit « connu » puis enregistré AVEC son espace. ⭐ **ft-v1172 rend cette crainte
+   sans objet, et c'est mesuré, pas supposé** : `_matchExercise('  Squat  ')` rend « Squat à la
+   Barre » à **95 % en `auto`** — un nom du catalogue mal espacé est RATTACHÉ bien avant
+   d'arriver ici, et `_memeExercice('  Squat  ')('Squat')` rend `true`, donc records et historique
+   le retrouvent de toute façon. *Ce qui restait possible était l'inverse : créer un doublon dont
+   le seul défaut est un espace.* La clé normalise donc, volontairement. */
+/* 🔤 ft-v1172 — LA CLÉ D'UN NOM D'EXERCICE, ET ELLE ENLÈVE LES ACCENTS.
+   ⛔⛔ LE DÉFAUT RÉPARÉ, MESURÉ SUR UN VRAI CAS : Michel importe son programme et se retrouve
+   avec CINQ exercices perso pour UN seul mouvement d'épaules — dont **deux qui sont le même
+   nom** : « Développé Épaules Guide / Haltères » et « Développé épaules guidé / haltères ».
+   Le test « existe-t-il déjà ? » comparait en `toLowerCase()` SEUL → `guide` ≠ `guidé` → deux
+   exercices créés pour un. *Et un doublon d'accent ne se voit pas : il se lit comme un vrai
+   exercice, avec son propre historique, et coupe les charges en deux.*
+   ⭐⭐ L'APP SAVAIT DÉJÀ LE FAIRE : `_normEx` (accents, ponctuation, espaces) rend le MÊME
+   texte pour ces deux noms — mesuré. C'était **R2** : deux façons d'écrire la même question,
+   celle qui décide de créer étant la moins fine des deux.
+   ⛔ CE QUE ÇA NE FUSIONNE PAS, et c'est la garantie qui rend le changement sûr : mesuré sur
+   les **322 noms du catalogue, ZÉRO collision** sous `_normEx` — deux exercices réellement
+   différents ne peuvent donc pas se confondre. « Développé Épaules Guide (ECH) » reste bien
+   un nom distinct.
+   ⚠️ Repli sur `toLowerCase()` si `_normEx` manque : le comportement d'avant, jamais une
+   exception (cette fonction décide d'une CRÉATION, elle ne doit jamais lever). */
+function _cleNom(nom){
+  const s=String(nom==null?'':nom);
+  if(!s)return '';
+  return (typeof _normEx==='function')?_normEx(s):s.toLowerCase();
+}
 function _catalogueConnu(){
   const m=new Set();
   try{
-    if(typeof EXLIB!=='undefined')EXLIB.forEach(e=>{if(e&&e.n)m.add(String(e.n).toLowerCase());});
-    (S.customExercises||[]).forEach(e=>{if(e&&e.n)m.add(String(e.n).toLowerCase());});
+    if(typeof EXLIB!=='undefined')EXLIB.forEach(e=>{if(e&&e.n)m.add(_cleNom(e.n));});
+    (S.customExercises||[]).forEach(e=>{if(e&&e.n)m.add(_cleNom(e.n));});
   }catch(e){}
   return m;
 }
 function _exerciceInconnu(nom,connus){
-  const low=String(nom==null?'':nom).toLowerCase();
+  const low=_cleNom(nom);
   if(!low)return false;
   return !(connus||_catalogueConnu()).has(low);
 }
@@ -6590,7 +6646,7 @@ function _renderImpConfirm(){
      Le même exercice répété sur trois jours ne fait qu'UN exercice créé — annoncer « 3 » serait
      un chiffre qui contredit ce qui se passe, et c'est précisément le défaut qu'on répare. */
   const _vus=new Set();
-  (d.days||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{ if(_neuf(ex))_vus.add(String(ex.name).toLowerCase()); }));
+  (d.days||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{ if(_neuf(ex))_vus.add(_cleNom(ex.name)); }));
   const _nbNeuf=_vus.size;
   el.innerHTML=_vmNouveauBandeau(_nbNeuf)+(d.days||[]).map((day,di)=>`
     <div style="background:var(--bg3);border-radius:10px;padding:10px 12px;">
@@ -6735,8 +6791,11 @@ function finalImportProg(){
       if(typeof _estCreneauCardio==='function'
          && _estCreneauCardio({name:ex.name,note:ex.note,sets:[{kg:ex.kg||0}]}))return;
     }catch(e){}
-    const low=String(ex.name).toLowerCase();
-    if(!toCreate.find(n=>String(n).toLowerCase()===low))toCreate.push(ex.name);
+    /* 🔤 ft-v1172 — le dédoublonnage passe par `_cleNom` : sans lui, « Développé Épaules Guide /
+       Haltères » et « Développé épaules guidé / haltères » sont DEUX entrées de `toCreate`, donc
+       deux exercices perso pour un seul mouvement. Mesuré sur le vrai import de Michel. */
+    const low=_cleNom(ex.name);
+    if(!toCreate.find(n=>_cleNom(n)===low))toCreate.push(ex.name);
   }));
   if(toCreate.length){
     if(!S.customExercises)S.customExercises=[];
@@ -7058,7 +7117,7 @@ function _renderHistPreview(){
   const _connusH=_catalogueConnu();
   const _neufH=ex=>!!ex&&!ex._vmSuggest&&_exerciceInconnu(ex.name,_connusH);
   const _vusH=new Set();
-  sessions.forEach(sess=>(sess.exercises||[]).forEach(ex=>{ if(_neufH(ex))_vusH.add(String(ex.name).toLowerCase()); }));
+  sessions.forEach(sess=>(sess.exercises||[]).forEach(ex=>{ if(_neufH(ex))_vusH.add(_cleNom(ex.name)); }));
   const _nbNeufH=_vusH.size;
 
   const el=document.getElementById('hist-preview');if(!el)return;
@@ -7132,8 +7191,8 @@ function finalImportHist(){
   const toCreate=[];
   sessions.forEach(sess=>(Array.isArray(sess.exercises)?sess.exercises:[]).forEach(ex=>{
     if(!_exerciceInconnu(ex&&ex.name,connusH))return;
-    const low=String(ex.name).toLowerCase();
-    if(!toCreate.find(n=>String(n).toLowerCase()===low))toCreate.push(ex.name);
+    const low=_cleNom(ex.name);   // 🔤 ft-v1172 — R8 : la MÊME clé que la porte jumelle (programme)
+    if(!toCreate.find(n=>_cleNom(n)===low))toCreate.push(ex.name);
   }));
   if(toCreate.length){
     if(!S.customExercises)S.customExercises=[];

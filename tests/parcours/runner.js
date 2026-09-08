@@ -30437,6 +30437,132 @@ console.log('\n-- CCLXVII. Les recherches qui ne rendent rien (ft-v1169) --');
       'reçu : '+R.pecDeck+' / '+R.squat+' / '+R.dc);
   }
 }
+/* ═══ CCLXX. LES ACCENTS FABRIQUAIENT DES DOUBLONS INVISIBLES (08/09/2026, ft-v1172) ═══════
+   Michel envoie une capture : CINQ exercices perso créés par UN import pour UN seul mouvement
+   d'épaules. Puis : « pk ne pas rentrer tous ses noms dans une base de données invisible pour
+   faire directement le bon changement ».
+   ⭐⭐ MESURÉ, ET LE DIAGNOSTIC S'EST SÉPARÉ EN DEUX :
+   ① les 5 pointent TOUS vers « Développé Épaules Machine » à 50-67 % (palier `confirm`) — l'app
+      a demandé, personne n'a répondu. Ce n'est PAS un trou de vocabulaire.
+   ② ...MAIS DEUX D'ENTRE EUX SONT LE MÊME NOM : « Développé Épaules Guide / Haltères » et
+      « Développé épaules guidé / haltères ». Le test « existe déjà ? » comparait en
+      `toLowerCase()` SEUL → `guide` ≠ `guidé` → deux exercices créés pour un.
+   ⭐⭐ ET L'APP SAVAIT DÉJÀ LE FAIRE : `_normEx` rend le MÊME texte pour ces deux noms. C'était
+   R2 — deux façons d'écrire la même question, celle qui décide de CRÉER étant la moins fine.
+   ⛔ LA GARANTIE QUI REND LE CHANGEMENT SÛR, mesurée : sur les 322 noms du catalogue, ZÉRO
+   collision sous `_normEx`. Deux exercices réellement différents ne peuvent pas se confondre. */
+{
+  const R = await p.evaluate(()=>{
+   try{
+    const o={};
+    o.existe = (typeof _cleNom==='function') && (typeof _exerciceInconnu==='function');
+    /* ⛔⛔ LA MESURE QUI PORTE LA VERSION : zéro collision dans le catalogue. Si elle rougit,
+       c'est que `_cleNom` confondrait deux exercices RÉELS — et là il faut arrêter, pas ajuster. */
+    const noms=[...new Set((typeof EXLIB!=='undefined'?EXLIB:[]).map(e=>e.n))];
+    o.nbNoms=noms.length;
+    const par={}; noms.forEach(n=>{const k=_cleNom(n);(par[k]=par[k]||[]).push(n);});
+    o.collisions=Object.values(par).filter(v=>v.length>1).map(v=>v.join(' == '));
+    /* Le cas RÉEL de Michel, ses trois noms tels qu'il les a à l'écran. */
+    const A='Développé Épaules Guide / Haltères', B='Développé épaules guidé / haltères',
+          C='Développé Épaules Guide (ECH)';
+    S.customExercises=[{n:A,g:'Autres',custom:true}];
+    const connus=_catalogueConnu();
+    o.bMeme   = _exerciceInconnu(B,connus);   // false attendu : MÊME nom aux accents près
+    o.cAutre  = _exerciceInconnu(C,connus);   // true  attendu : « (ECH) » est vraiment autre
+    o.connuEx = _exerciceInconnu('Marteau',connus);      // false : nom exact du catalogue
+    o.connuAcc= _exerciceInconnu('Developpe Couche',connus); // false : sans accents
+    o.inconnu = _exerciceInconnu('Zzzz Machine',connus); // true
+    o.vide    = _exerciceInconnu('',connus);             // false : un nom vide ne se crée pas
+    /* ⛔⛔ TÉMOIN FONCTIONNEL — ON APPELLE `finalImportProg`, LA VRAIE FONCTION DE PRODUCTION.
+       ⚠️ ET C'EST LE CONTRÔLE NÉGATIF QUI L'A EXIGÉ : mon premier jet REJOUAIT le dédoublonnage
+       dans le test (`toCreate.find(x=>_cleNom(x)===low)`). Résultat mesuré : la mutation qui
+       remettait `toLowerCase()` dans la production ne faisait rougir PERSONNE — *un contrôle qui
+       recalcule la formule qu'il vérifie est un vert qui ne peut pas rougir* (`BUGS.md`).
+       Ici on lit ce que l'app ÉCRIT vraiment dans `S.customExercises`. */
+    S.customExercises=[]; S.programmes=[]; persist();
+    _impMode='new';
+    _impExtracted={name:'Bloc épaules',weeks:4,startDate:'',days:[{label:'J1',exercises:[
+      {name:A,sets:3,reps:8,repsPerSet:[],kg:20,kgPerSet:[],setTypePerSet:[]},
+      {name:B,sets:3,reps:8,repsPerSet:[],kg:20,kgPerSet:[],setTypePerSet:[]},
+      {name:C,sets:2,reps:12,repsPerSet:[],kg:10,kgPerSet:[],setTypePerSet:[]}
+    ]}]};
+    finalImportProg();
+    o.crees=(S.customExercises||[]).map(e=>e.n);
+    o.toCreate=o.crees.length;   // 2 attendu (A/B fusionnés, C à part), 3 avant le correctif
+    /* on remet l'état du témoin précédent pour ne rien laisser traîner */
+    S.customExercises=[{n:A,g:'Autres',custom:true}]; S.programmes=[]; persist();
+    /* ⭐ LES 4 CLÉS DE LA RÉCOLTE — les seules du lot mesuré à n'avoir qu'UNE réponse possible. */
+    const m=n=>{const r=_matchExercise(n);return {q:r.match||'—',c:r.confidence,t:r.tier};};
+    o.marteau = m('biceps marteau');
+    o.addMach = m('adducteurs machine');
+    o.addAssis= m('assis adducteurs machine');
+    o.presseM = m('presse à mollets');
+    o.abdMach = m('abducteurs machine');   // le jumeau qui marchait DÉJÀ (R8)
+    /* ⛔⛔ LES CONTRE-TESTS — CE QUI A ÉTÉ ÉCARTÉ DOIT LE RESTER. Ce sont eux qui distinguent
+       « récolter ce qui est sûr » de « remplir la table ». Chacun a PLUSIEURS réponses
+       possibles : un synonyme trancherait EN SILENCE et couperait un historique en deux (R29). */
+    o.ischios = m('curl ischios');            // 4-5 variantes de leg curl
+    o.hanche  = m('poussee de hanche');       // 4 variantes de hip thrust
+    o.epaules = m('developpe epaules guide'); // LE cas de Michel : ambigu par nature
+    o.absents = ['curl ischios','poussee de hanche','developpe epaules guide',
+                 'tirage vertical nuque','elliptique','velo','rameur','tapis de course']
+                .filter(k=>k in _EX_EQUIV);
+    /* ⛔⛔ ET LES 4 MACHINES DE CARDIO NE SONT PAS DES EXERCICES : mesuré, `_estCreneauCardio`
+       les rend toutes `true` (ft-v1168). Les mettre dans la table les retransformerait en
+       musculation — le défaut exact que ft-v1168 vient de réparer. */
+    o.cardio=['Elliptique','Vélo','Rameur','Tapis de course']
+      .map(n=>{try{return !!_estCreneauCardio({name:n,note:'10 min',sets:[{kg:0}]});}catch(e){return false;}});
+    /* ⭐ LA FUSION MANUELLE TOLÈRE ENFIN L'ACCENT — c'est le geste qu'on demande à quelqu'un
+       qui répare un import : retaper le nom du catalogue, sur un téléphone. */
+    o.clashSrc=String(_saveCustomExEdit);
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+
+  if(R.err) t('CCLXX n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLXX ⛔ CONTRÔLE — le propriétaire unique `_cleNom` existe', R.existe===true, '');
+    t('CCLXX ⛔⛔ GARANTIE — zéro collision sous `_cleNom` sur les '+R.nbNoms+' noms du catalogue',
+      (R.collisions||[]).length===0, (R.collisions||[]).slice(0,3).join(' | '));
+    t('CCLXX ⭐⭐ « guidé » et « guide » sont LE MÊME exercice (le défaut réparé)',
+      R.bMeme===false, 'inconnu ? '+R.bMeme);
+    t('CCLXX ⛔ ... mais « (ECH) » reste un nom DIFFÉRENT (on ne fusionne pas trop large)',
+      R.cAutre===true, 'inconnu ? '+R.cAutre);
+    t('CCLXX ⛔ un nom du catalogue reste connu, avec ou sans accents',
+      R.connuEx===false && R.connuAcc===false, 'Marteau : '+R.connuEx+' · sans accents : '+R.connuAcc);
+    t('CCLXX ⛔ un vrai inconnu reste inconnu · un nom VIDE ne se crée pas',
+      R.inconnu===true && R.vide===false, 'inconnu : '+R.inconnu+' · vide : '+R.vide);
+    /* ⭐⭐ LE TÉMOIN FONCTIONNEL : vérifier `_cleNom` ne suffit pas, c'est le DÉDOUBLONNAGE de
+       la création qui écrivait deux lignes. Sans lui, tous les autres resteraient verts pendant
+       que l'import continuerait de fabriquer des doublons (leçon de ft-v1158). */
+    t('CCLXX ⭐⭐ l\'import n\'écrit plus que 2 exercices perso là où il en écrivait 3',
+      R.toCreate===2, 'créés : '+JSON.stringify(R.crees));
+    t('CCLXX ⭐ « biceps marteau » → Marteau, en auto (était : rien du tout)',
+      R.marteau.q==='Marteau' && R.marteau.t==='auto', 'reçu : '+R.marteau.q+' · '+R.marteau.c+'%');
+    t('CCLXX ⭐ R8 — « adducteurs machine » rejoint son jumeau « abducteurs machine »',
+      R.addMach.q==='Adduction Cuisses (Leg Adduction)' && R.addMach.t==='auto'
+      && R.addAssis.q==='Adduction Cuisses (Leg Adduction)'
+      && R.abdMach.q==='Abduction Cuisses (Leg Abduction)' && R.abdMach.t==='auto',
+      'add : '+R.addMach.q+' · abd : '+R.abdMach.q);
+    t('CCLXX ⭐ « presse à mollets » → Presse Mollets (était : 50 %, donc une question)',
+      R.presseM.q==='Presse Mollets (Leg Press)' && R.presseM.t==='auto', 'reçu : '+R.presseM.q);
+    /* ⛔⛔ LES TÉMOINS LES PLUS IMPORTANTS DU BLOC : ils figent ce qu'on a REFUSÉ d'ajouter.
+       Sans eux, la prochaine session « complète » la table et personne ne voit qu'elle vient de
+       faire trancher l'app à la place de la personne. */
+    t('CCLXX ⛔⛔ ÉCARTÉ — « curl ischios » et « poussée de hanche » restent une QUESTION (R29)',
+      R.ischios.t==='confirm' && R.hanche.t==='confirm',
+      'ischios : '+R.ischios.t+' · hanche : '+R.hanche.t);
+    t('CCLXX ⛔⛔ ÉCARTÉ — « développé épaules guidé » reste ambigu : machine OU haltères',
+      R.epaules.t==='confirm', 'reçu : '+R.epaules.q+' · '+R.epaules.t);
+    t('CCLXX ⛔⛔ aucune des 8 formes écartées n\'a été glissée dans la table',
+      (R.absents||[]).length===0, 'trouvées : '+(R.absents||[]).join(', '));
+    t('CCLXX ⛔⛔ les 4 machines de cardio restent du CARDIO, pas des exercices (ft-v1168)',
+      Array.isArray(R.cardio) && R.cardio.length===4 && R.cardio.every(Boolean), JSON.stringify(R.cardio));
+    t('CCLXX ⭐ la fusion manuelle compare des CLÉS, donc un accent oublié fusionne quand même',
+      /_cleNom\(newName\)!==_cleNom\(oldName\)/.test(R.clashSrc)
+      && /_cleNom\(e\.n\)===_cleNom\(newName\)/.test(R.clashSrc), '');
+  }
+}
 
 /* ═══ CCLXIX. LA COLONNE « SOURCE » SOUS UNE CASE DE TITRE VIDE (08/09/2026, ft-v1171) ════════
    Défaut trouvé en EXPLIQUANT à Michel où lire le résultat de ft-v1167 — pas en relisant le code.
@@ -30518,7 +30644,7 @@ console.log('\n-- CCLXIX. La colonne Source et son titre (ft-v1171) --');
 }
 
 
-/* ═══ CCLXXI. LE CHOIX DE PORTIONS JETÉ AU PASSAGE EN GRAMMES (08/09/2026, ft-v1172) ═══════════
+/* ═══ CCLXXI. LE CHOIX DE PORTIONS JETÉ AU PASSAGE EN GRAMMES (08/09/2026, ft-v1173) ═══════════
    Michel, enregistrement d'écran à l'appui : *« pour ma prot iso quand je veux changer la valeur
    en gramme ça ne fonctionne pas »*. ⛔⛔ Mesuré image par image : il tape `100`, l'app écrit
    « ✅ 100 g — les 4 valeurs ci-dessous correspondent à ce poids »… et DIVISE ces valeurs par
@@ -30532,7 +30658,7 @@ console.log('\n-- CCLXIX. La colonne Source et son titre (ft-v1171) --');
    n'a pas changé » — c'est la leçon de ft-v1163, où trois mutations sur quatre n'avaient pas
    mordu pour cette raison exacte.
    ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
-console.log('\n-- CCLXXI. Portions puis grammes (ft-v1172) --');
+console.log('\n-- CCLXXI. Portions puis grammes (ft-v1173) --');
 {
   const V=await p.evaluate(async()=>{
    try{
@@ -30569,7 +30695,7 @@ console.log('\n-- CCLXXI. Portions puis grammes (ft-v1172) --');
     poser('af-poids','100'); await d(220);
     o.declare100=mac('af');                           // ③ ⭐⭐ LE TÉMOIN DE LA VIDÉO
     o.ref100=/Référence : 100 g/.test(blocA());
-    o.poseApres=(typeof _afPoidsPose!=='undefined')?_afPoidsPose:null;                         // le drapeau qui départage ft-v1061 et ft-v1172
+    o.poseApres=(typeof _afPoidsPose!=='undefined')?_afPoidsPose:null;                         // le drapeau qui départage ft-v1061 et ft-v1173
     /* ⚠️ 200 g ET NON 50 : à 50 g, l'erreur (÷2) et le rescale (÷2) se compensent et donnent le
        MÊME nombre des deux côtés — un témoin vert par coïncidence ne mesure rien (ft-v1163). */
     {const e=document.getElementById('af-prop'); if(e){e.value='200'; _afApplyProp();}} await d(180);
@@ -30626,7 +30752,7 @@ console.log('\n-- CCLXXI. Portions puis grammes (ft-v1172) --');
     t('CCLXXI ③ ⭐⭐ après avoir déclaré 100 g, les 4 valeurs NE TOMBENT PLUS à 156/26 : 312 / 52',
       V.declare100[0]==='312'&&V.declare100[1]==='52', JSON.stringify(V.declare100));
     t('CCLXXI ③b … et la référence écrite dit bien « 100 g »', V.ref100===true, '');
-    /* ⭐⭐ LE DISCRIMINANT RENDU VISIBLE : c'est LUI qui fait cohabiter ft-v1061 et ft-v1172.
+    /* ⭐⭐ LE DISCRIMINANT RENDU VISIBLE : c'est LUI qui fait cohabiter ft-v1061 et ft-v1173.
        Sans poids réel posé, l'écran fait foi ; dès qu'il y en a un, la référence est préservée. */
     t('CCLXXI ③c ⭐⭐ le drapeau `_afPoidsPose` bascule : FAUX avant le poids, VRAI après',
       V.poseAvant===false && V.poseApres===true, 'avant='+V.poseAvant+' après='+V.poseApres);
