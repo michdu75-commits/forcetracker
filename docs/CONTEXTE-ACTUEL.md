@@ -8,7 +8,7 @@
 
 - **Version en ligne (live) :** `ft-v1175` — ⛔ **UNE CIBLE DE SYNONYME QUI N'EXISTE PLUS, ET
   LE RAPPROCHEUR ÉTAIT SÛR À 95 %.**
-  ⏳ **Suite complète VERTE** : parcours **3300/3300** (+8, bloc **CCLXXII**), calculs 339/339,
+  ⏳ **Suite complète VERTE** : parcours **3312/3312** sur l'arbre FUSIONNÉ avec la ft-v1174 de session-A (+8, bloc **CCLXXIII**), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⭐ **Le déclencheur est une contestation de Michel** : *« curl ischios c'est leg curl ischios et
   rien a voir avec poussée de hanche hein »*. Il avait raison sur les **deux** points — je les
