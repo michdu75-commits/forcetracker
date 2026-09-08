@@ -69,6 +69,48 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟣 LA PASSE DE VÉRIFICATION DU PROCHAIN IMPORT — 5 choses à regarder EN UNE FOIS, vers le 06/10/2026 (08/09/2026)
+
+**Ce qui déclenche l'entrée** : Michel, après une journée entière sur l'import : ***« alors je
+verrais ça dans 4 semaines quand je vais remettre un programme, mets-le dans le journal et on
+fera l'essai à ce moment-là »***. ⭐ **Il a raison de ne pas réimporter maintenant** : mesuré le
+même jour, un réimport ne lui coûterait ni séance ni record, mais il remettrait sa **semaine de
+cycle à 1** — et il vient de finir de réparer son programme à la main.
+
+**⛔⛔ POURQUOI CETTE ENTRÉE EXISTE, ET C'EST LE POINT** : sur ces cinq versions, **je peux prouver
+que la donnée part et que l'app l'applique — pas que le modèle lise correctement le document.**
+Il n'y a **pas de clé API** dans le conteneur, et le proxy réseau **bloque `script.google.com`**
+(vérifié : `connect_rejected`). *Le bout de chaîne PDF → modèle → JSON est le seul que je ne peux
+pas jouer, et c'est exactement là que les cinq versions se jugent.*
+
+**Ce qu'il faut regarder, en un seul import** (son bloc de powerbuilding, PDF de 336 lignes) :
+
+| # | Version | Ce qui doit se produire | Ce que je sais déjà |
+|---|---|---|---|
+| ① | **ft-v1176** | le **temps de repos** du document arrive sur les séries (`2 min` → 120 s) | le tuyau côté app est **prouvé** ; le champ dans le prompt, non joué |
+| ② | **ft-v1176** | un repos **variable** (`90-120s`, « selon ressenti ») **n'écrit rien** | prouvé côté app |
+| ③ | **ft-v1170 + ft-v1175** | *tirage vertical · presse 45 degrés · sdt roumain · curl ischios* tombent sur la **bonne fiche**, **zéro exercice perso créé** | les synonymes rendent **95 % en `auto`** — mesuré |
+| ④ | **ft-v1168** | **aucune date inventée** : son PDF n'en porte aucune, donc le cycle doit rester **vide**, pas « 23 mars » | le filet est prouvé côté app |
+| ⑤ | **ft-v1166** | *« Développé épaules guidé / haltères »* sort **en orange**, avec le bouton **🔗 Rattacher** — c'est le seul nom **ambigu par nature** | l'aperçu est prouvé ; c'est le rendu réel sur iPhone qui reste |
+
+**⚠️ Et deux vérifications qui ne dépendent pas de l'import, à faire au passage** (ft-v1178) :
+la **reprise du scan** après une fermeture accidentelle (bandeau « Scan repris » + bouton
+« Recommencer »), et surtout la **hauteur de la fenêtre** — *« la fenêtre ne va pas jusqu'en haut,
+donc elle est petite »*. ⛔ **Sur celle-là je n'ai PAS de preuve** : les 26 limites sont passées
+en `dvh`, mais **je n'ai pas de WebKit** pour reproduire le symptôme, et aucune décision écrite
+n'expliquait le `dvh` d'origine. *L'incohérence est mesurée ; la guérison ne l'est pas.*
+
+**Pourquoi ça reste ici et ne devient pas un scénario** (🟣) : l'attendu n'est pas mécanisable
+depuis ce conteneur — il faut **un vrai PDF, un vrai appel au modèle et un vrai iPhone**. C'est
+le critère du fichier : *l'attendu est-il vérifiable par du CODE ?* Ici, non — c'est un **juge
+humain**, et le juge s'appelle Michel.
+
+**⭐ Ce qu'on en fera** : si un point tombe faux, il devient un **cas mesuré** (et, pour ①–④, un
+scénario du banc d'essai — **R35** : le banc grandit à chaque bug rencontré, sans cible). Si tout
+tombe juste, l'entrée passe en ⚪ **écartée avec sa raison** — *une vérification réussie qu'on
+n'écrit pas se refait deux fois*.
+
+
 ### 🟡 D'OÙ VENAIENT LES 156 kcal ? — on attrape la valeur fausse, on ne l'empêche pas (07/09/2026)
 
 **Ce qui déclenche l'entrée** : **ft-v1162**. La ligne « Iso zero protein (ASL) » de Michel porte
