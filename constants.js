@@ -2459,8 +2459,15 @@ function _secRepos(v){
   let m;
   // « 1:30 » ou « 1'30 » → minutes:secondes
   if((m=s.match(/^(\d+)\s*[:'’]\s*(\d{1,2})$/)))return (+m[1])*60+(+m[2]);
-  // « 1 min 30 », « 1 minute 30 s »
-  if((m=s.match(/^(\d+(?:\.\d+)?)\s*(?:min|minutes?|mn|m)\b\s*(\d{1,2})\s*(?:s|sec|secondes?)?$/)))
+  /* « 1 min 30 », « 1 minute 30 s » — ET « 1min30 » COLLÉ (ft-v1176).
+     ⚠️ LE `\b` QUI ÉTAIT ICI INTERDISAIT LA FORME COLLÉE, et c'est celle que les gens écrivent :
+     entre le « n » de min et le « 3 », il n'y a **aucune** frontière de mot, donc `1min30`
+     rendait **0** — le chrono retombait sur le réglage par défaut, sans erreur, sans message.
+     ⭐ Trouvé en vérifiant ma PROPRE consigne : le prompt d'import (règle 9) annonce ce format
+     au modèle. *Promettre au modèle un format que l'app lit comme zéro, c'est fabriquer un
+     silence.* Et le correctif est celui que cette fonction prescrit dix lignes plus haut :
+     on rend l'app tolérante, on ne durcit pas la consigne. */
+  if((m=s.match(/^(\d+(?:\.\d+)?)\s*(?:minutes?|min|mn|m)\s*(\d{1,2})\s*(?:s|sec|secs?|secondes?)?$/)))
     return Math.round((+m[1])*60)+(+m[2]);
   // « 3 min », « 2.5 minutes », « 3mn »
   if((m=s.match(/^(\d+(?:\.\d+)?)\s*(?:min|minutes?|mn|m)\b$/)))return Math.round((+m[1])*60);

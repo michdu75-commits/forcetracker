@@ -28877,8 +28877,16 @@ console.log('\n-- CCLVI. Le filet déterministe des échauffements (ft-v1158) --
      une VALEUR de l'exemple ; ici, il a ignoré un champ ABSENT de l'exemple. Le schéma est le
      signal le plus fort du prompt — un champ décrit 4 règles plus bas ne pèse pas contre lui.
      ⛔ Et on met `[]`, une FORME : une valeur plausible se ferait recopier (ft-v1157). */
+  /* ⚠️ MOTIF ASSOUPLI LE 08/09 (ft-v1176) — ET LA GARANTIE N'EST PAS TOUCHÉE, C'EST LE CONTRAIRE.
+     Il codait en dur le champ SUIVANT (`,"note"`). En ajoutant `rest`/`restPerSet` au schéma,
+     ce témoin est devenu rouge alors que ce qu'il protège — *`setTypePerSet` est dans le schéma
+     d'exemple, à vide* — restait parfaitement vrai. 👉 **Un témoin qui fige plus que sa garantie
+     rougit sur des changements légitimes, et on finit par le desserrer pour de mauvaises raisons.**
+     Il vérifie donc maintenant EXACTEMENT sa garantie : le champ est dans le schéma, à `[]`
+     (une FORME, jamais une valeur plausible — ft-v1157), précédé de `setType` à vide. */
   t('CCLVI ⭐⭐ le champ setTypePerSet est DANS le schéma d\'exemple, à vide',
-    /"setType":"","setTypePerSet":\[\],"note"/.test(_cj), '');
+    /"setType":"","setTypePerSet":\[\]/.test(_cj)
+    && /\{"name":"nom complet de l[^\n]*"setTypePerSet":\[\]/.test(_cj), '');
   /* ⭐ LE 2ᵉ DÉFAUT : la règle 4 interdisait « W » en termes ABSOLUS (« Même si le document
      mentionne échauffement »), quatre règles avant que la règle 8 ne l'exige. Entre deux
      consignes contraires, le modèle a suivi la plus absolue — et, ne pouvant plus rien mettre
@@ -31013,6 +31021,88 @@ console.log('\n-- CCLXXII. Le poids du paquet (ft-v1174) --');
       R.hanche.t==='confirm', 'reçu : '+R.hanche.q+' · '+R.hanche.t);
     t('CCLXXIII ⛔ NON-RÉGRESSION — les 4 clés des versions précédentes sont intactes',
       R.temoins.every(x=>x.t==='auto'), R.temoins.map(x=>x.q+'('+x.t+')').join(' | '));
+  }
+}
+
+/* ═══ CCLXXIV. LE TEMPS DE REPOS DU PDF N'ÉTAIT JAMAIS DEMANDÉ (08/09/2026, ft-v1176) ════════
+   Michel : « l'application n'applique pas le temps de repos qui est marqué sur le pdf c'est un
+   peu con, alors quand le temps est variable la je suis d'accord mais quand il est fixe il
+   appliquait le temps ».
+   ⭐⭐ MESURÉ, ET LE TUYAU ÉTAIT DÉJÀ COMPLET CÔTÉ APP : `finalImportProg` lit `ex.rest` et
+   `ex.restPerSet` depuis toujours, et `_secRepos` sait lire le texte. Ce qui manquait vivait
+   dans le PROMPT SERVEUR : le schéma JSON n'avait AUCUN champ `rest`, et le mot « Repos » n'y
+   apparaissait qu'une fois — pour dire d'ignorer une page sommaire.
+   👉 *Le modèle voyait la colonne Repos et on ne lui demandait jamais de la lire.*
+   **R8 À L'ENVERS : un lecteur qui attend un champ que personne ne produit.**
+   ⛔ LA NUANCE DE MICHEL EST LA GARANTIE CENTRALE : un repos VARIABLE n'est pas un repos. Le
+   code la tenait déjà (`_secRepos('90-120s')` = 0) ; le prompt la dit maintenant explicitement.
+   ⚠️ ET UN TROU TROUVÉ EN VÉRIFIANT MA PROPRE CONSIGNE : `1min30` COLLÉ rendait 0. */
+{
+  const R = await p.evaluate(()=>{
+   try{
+    const o={};
+    o.existe = typeof _secRepos==='function' && typeof finalImportProg==='function';
+    /* ⭐ LES FORMATS QUE LE PROMPT PROMET AU MODÈLE — s'il en promet un que l'app lit comme
+       zéro, il fabrique un silence. Les 3 derniers sont les formes COLLÉES (le défaut réparé). */
+    o.lus=[['2 min',120],['90s',90],['120',120],['1 min 30',90],['2 minutes',120],['90 sec',90],
+           ['1:30',90],["1'30",90],['3mn',180],['2min',120],
+           ['1min30',90],['1m30',90],['2minutes30',150]]
+      .filter(([v,att])=>_secRepos(v)!==att).map(([v,att])=>v+' → '+_secRepos(v)+' (attendu '+att+')');
+    /* ⛔⛔ LA NUANCE DE MICHEL : un repos FLOU ne doit RIEN produire. C'est le témoin qui
+       protège le plus : inventer « 105 s » à partir de « 90-120s » serait une donnée fausse
+       présentée comme une consigne du coach (R29). */
+    o.flous=['90-120s','1 à 2 min','selon ressenti','au feeling','quand tu es prêt','','abc']
+      .filter(v=>_secRepos(v)!==0).map(v=>v+' → '+_secRepos(v));
+    /* ⭐⭐ TÉMOIN FONCTIONNEL : on conduit `finalImportProg`, la vraie fonction, et on lit le
+       repos que les SÉRIES portent à l'arrivée. Vérifier `_secRepos` ne prouverait rien du
+       chemin (la leçon de ft-v1158, payée trois fois). */
+    const passe=(ex)=>{ S.programmes=[];S.customExercises=[];persist(); _impMode='new';
+      _impExtracted={name:'T',weeks:4,startDate:'',days:[{label:'J1',exercises:[Object.assign(
+        {name:'Squat à la Barre',sets:3,reps:8,repsPerSet:[],kg:100,kgPerSet:[],setTypePerSet:[]},ex)]}]};
+      finalImportProg();
+      const pr=S.programmes[0], e=pr.days?pr.days[0].exs[0]:pr.exs[0];
+      return (e.sets||[]).map(x=>x.rest); };
+    o.sansRest = passe({});
+    o.restFixe = passe({rest:'2 min'});
+    o.restColle= passe({rest:'1min30'});
+    o.restParSerie = passe({restPerSet:['2min','2min','3min']});
+    o.restFlou = passe({rest:'90-120s'});
+    S.programmes=[];S.customExercises=[];persist();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+
+  /* ⛔⛔ LE PROMPT SERVEUR EST EXTRAIT DE `Code.js` ET LU — un `grep` sur « repos » attraperait
+     la phrase qui parle d'IGNORER une page sommaire. On vérifie le CHAMP et la RÈGLE. */
+  const _cj = fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  const _iP = _cj.indexOf("Analyse ces images/documents et extrait le programme");
+  const _prompt = _iP>=0 ? _cj.slice(_iP, _iP+18000) : '';
+
+  if(R.err) t('CCLXXIV n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLXXIV ⛔ CONTRÔLE — `_secRepos` et `finalImportProg` existent', R.existe===true, '');
+    t('CCLXXIV ⭐ les 13 formats promis au modèle sont TOUS lus par l\'app',
+      (R.lus||[]).length===0, (R.lus||[]).join(' | '));
+    t('CCLXXIV ⛔⛔ LA NUANCE DE MICHEL — un repos FLOU ne produit RIEN (jamais inventé)',
+      (R.flous||[]).length===0, (R.flous||[]).join(' | '));
+    t('CCLXXIV ⭐⭐ un repos FIXE du document atteint les SÉRIES (le défaut réparé)',
+      JSON.stringify(R.restFixe)==='[120,120,120]', JSON.stringify(R.restFixe));
+    t('CCLXXIV ⭐ ... y compris écrit COLLÉ « 1min30 », la forme que les gens tapent',
+      JSON.stringify(R.restColle)==='[90,90,90]', JSON.stringify(R.restColle));
+    t('CCLXXIV ⭐ un repos DIFFÉRENT par série suit chaque série',
+      JSON.stringify(R.restParSerie)==='[120,120,180]', JSON.stringify(R.restParSerie));
+    t('CCLXXIV ⛔⛔ ... et un repos VARIABLE laisse l\'app à SON réglage (0, pas 105)',
+      JSON.stringify(R.restFlou)==='[0,0,0]', JSON.stringify(R.restFlou));
+    t('CCLXXIV ⛔ NON-RÉGRESSION — sans champ `rest`, rien ne change',
+      JSON.stringify(R.sansRest)==='[0,0,0]', JSON.stringify(R.sansRest));
+    /* ⛔ Côté serveur : le champ DANS LE SCHÉMA (le signal le plus fort du prompt — ft-v1158),
+       pas seulement une règle en bas de page. */
+    t('CCLXXIV ⛔⛔ le SCHÉMA JSON du prompt porte `rest` et `restPerSet`',
+      /"rest":"","restPerSet":\[\]/.test(_prompt), '');
+    t('CCLXXIV ⛔ la règle 9 existe et INTERDIT d\'inventer un repos',
+      /9\. TEMPS DE REPOS/.test(_prompt) && /N\\'INVENTE JAMAIS UN REPOS/.test(_prompt), '');
+    t('CCLXXIV ⛔⛔ ... et elle nomme explicitement les valeurs VARIABLES à refuser',
+      /90-120s/.test(_prompt) && /selon ressenti/.test(_prompt), '');
   }
 }
 
