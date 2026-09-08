@@ -31,6 +31,53 @@
 
 ---
 
+## 🧑‍💻 Michel (fondateur), 07/09/2026 — **la journée où DEUX de ses remarques ont trouvé du code que je n'avais pas vu**
+
+> ⭐⭐ **Pourquoi cette entrée existe** : d'habitude un retour signale un **symptôme** et le
+> diagnostic vient d'ici. Ce jour-là, **deux de ses phrases ont directement localisé le défaut** —
+> et l'une a trouvé la moitié du bug que j'étais en train de corriger sans l'avoir vue.
+
+**① *« je l'ai rentré avec le code-barres »*** — lâché en passant, après trois versions passées à
+poser des garde-fous sur la même ligne (son isolat de protéine). ⭐⭐ **Cette précision a recadré tout
+le diagnostic** : je cherchais pourquoi les *valeurs* étaient fausses ; le vrai défaut était que le
+**scan d'un produit dont la fiche Open Food Facts est vide** jetait le nom, cachait tout le réglage
+de quantité (un `_bcNutr` **de zéros** faisait croire qu'un pour-100 g était connu) et ne proposait
+jamais le bouton qui règle ça. **Cul-de-sac définitif** : `per100:null` **et** `q:null` → plus rien
+ne rescale, jamais. → **ft-v1165**.
+
+**② *« mais donc ça risque de merder aussi pour le scan du code-barres ou l'étiquette c'est pareil.
+Si je mets des options et ça ne fonctionne pas ça en devient ridicule »*** — dit **pendant** que
+j'écrivais le correctif. ⛔⛔ **Vérifié : `onFoodLabelFile` portait la ligne à l'identique.** *Il a
+trouvé la jumelle (R8) avant moi.* Un seul propriétaire, deux appelants.
+
+**③ *« c'est chiant de mettre ses aliments, alors si ça ne fonctionne pas »*** — ⭐ **le symptôme
+n'est pas un bug report, c'est de la LASSITUDE**, et c'est ce qui a donné la famille `BUGS.md` **§48**
+(*la porte de secours n'est pas proposée là où le chemin s'arrête*). *Un message d'erreur honnête qui
+laisse la personne devant un formulaire vide reste un cul-de-sac.*
+
+**④ *« si je mets 1 comme portion je ne connais pas la valeur en gramme de départ »*** — ⭐ un vrai
+**trou de conception** qu'aucun test n'aurait trouvé : les boutons ½ · 1 · 1½ · 2 · 3 multiplient une
+quantité **que personne ne connaît**. *Mesuré, noté ; le calibrage de ft-v1165 le contourne, il ne le
+supprime pas.*
+
+**⑤ *« ouais ok mais ça m'arrive à MOI, si ça arrive à d'autres personnes je fais comment moi ? Je
+passe pour un mec qui a créé une application à l'arrache »*** — ⭐⭐ **la phrase qui a transformé une
+réparation en principe** : lui savait qu'un ✎ violet caché permettait de rattacher un exercice
+inventé. **Personne d'autre ne le sait.** → l'aperçu d'import dit désormais ce qu'il va créer
+(ft-v1166).
+
+### ⭐⭐ Ce que ces retours ont appris sur la MÉTHODE
+
+- ***La précision qui recadre tout arrive souvent APRÈS coup, et en passant.*** « Je l'ai rentré avec
+  le code-barres » n'était pas présenté comme une information — c'était une remarque. **Réflexe :
+  quand un défaut résiste à trois versions, redemander comment la donnée est ENTRÉE.**
+- ***Quand il dit « ça risque de merder aussi pour X », il faut aller VÉRIFIER X tout de suite*** —
+  c'était vrai, au caractère près.
+- ***Une plainte de lassitude vaut un rapport de bug*** : « c'est chiant » désigne un chemin sans
+  issue, pas une préférence.
+
+---
+
 ## 👩‍🦱 Tatiana (Tanna Valery) — `tanna.valery.studio@gmail.com`
 **Profil** : testeuse ET **coach sportive** (clientèle, dont russophone). Ex-athlète de
 **force athlétique en compétition (28→34 ans)**, sport de combat plus jeune, muscu depuis
