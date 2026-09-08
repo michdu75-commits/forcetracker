@@ -1025,6 +1025,62 @@ function closeFoodWall(){const el=document.getElementById('ov-food-wall');if(el)
 // ─── SCAN CODE-BARRES (ZXing local + Open Food Facts) ─────────
 let _bcNutr=null; // {name, kcal100, prot100, carbs100, fat100}
 
+/* ═══ 📦 LE POIDS DU PAQUET — DEMANDÉ À OPEN FOOD FACTS DEPUIS TOUJOURS, JAMAIS LU (08/09/2026)
+   Michel : *« mais normalement le code-barres donne le poids avec non ? »*
+   ⭐⭐ IL AVAIT RAISON, ET C'ÉTAIT PIRE QUE ÇA : le champ `quantity` est **déjà** dans la liste
+   des champs demandés à OFF, à **DEUX** endroits (`_offFetchProduct` et `_offRechercher`) — et
+   **ZÉRO ligne du fichier ne le lisait**. Le seul poids employé était `serving_quantity`, la
+   *portion* déclarée, qui est souvent absente : on retombait alors sur **100 g par défaut**.
+   *On payait la bande passante d'une donnée qu'on jetait à l'arrivée.*
+
+   ⛔⛔ ET ON NE LE PRÉ-REMPLIT PAS, C'EST LA DÉCISION QUI TIENT TOUT LE RESTE. `quantity` est le
+   poids **DU PAQUET**, pas de ce qui a été mangé :
+     · une boîte de ratatouille qu'on vide dans l'assiette → c'est le bon chiffre ;
+     · un pot d'isolat de **1 kg** → personne n'en mange 1 kg.
+   👉 *Un chiffre pré-rempli qu'on n'a pas choisi est un chiffre faux présenté comme un fait*
+   (**R29**) — c'est mot pour mot la raison écrite deux fois ailleurs dans ce fichier. On PROPOSE
+   donc une pastille tapable, sur le patron exact de `_bcProposerDerniere` (**R13**).
+
+   ⚠️ LIMITE DITE PLUTÔT QUE MASQUÉE : je n'ai pas pu interroger Open Food Facts (réseau bloqué
+   depuis le conteneur de développement), donc **la couverture réelle du champ n'est pas mesurée**.
+   Les témoins portent sur le PARSEUR et sur le CHEMIN, jamais sur un taux de remplissage. */
+const _PAQUET_MIN_G=1, _PAQUET_MAX_G=5000;
+function _offPoidsPaquet(txt){
+  const t=String(txt==null?'':txt).trim().toLowerCase().replace(',','.');
+  if(!t) return 0;
+  /* ⛔ LES VOLUMES SONT EXCLUS EXPRÈS (R30 : un retrait volontaire s'écrit, sinon il redevient un
+     bug). « 1 L » n'est pas « 1000 g » : ça dépend de la densité — 1,0 pour l'eau, 0,92 pour
+     l'huile, 1,4 pour le miel. *Convertir reviendrait à inventer une densité qu'on ne connaît
+     pas*, et l'app afficherait un poids crédible et faux. Le sujet est noté, pas pris.
+
+     ⛔⛔ ET LES LOTS SONT REFUSÉS PAR L'ANCRAGE, PAS PAR UNE GARDE — c'est le contrôle négatif
+     qui me l'a appris. J'avais écrit un `if(/[x×*]/.test(t)) return 0;` au-dessus, avec sa
+     justification (« 6 x 125 g » vaut 750 g en paquet et 125 g en unité, donc ambigu). **La
+     mutation qui le retirait ne faisait rougir personne** : l'expression ci-dessous est ancrée
+     `^…$` sur *un* nombre et *une* unité, donc aucun lot ne peut la traverser de toute façon.
+     👉 *Une garde qu'aucun témoin ne peut faire rougir n'est pas une sécurité, c'est de la
+     décoration* — et elle laisse croire que le sujet est traité. Elle est donc retirée, et c'est
+     le TÉMOIN (« 6 x 125 g » et « 6 × 125 g » rendent 0) qui fige la règle : si quelqu'un
+     desserre un jour cet ancrage, il rougira. */
+  const m=t.match(/^([0-9]+(?:\.[0-9]+)?)\s*(kg|kilogrammes?|g|gr|grammes?)\s*e?$/);
+  if(!m) return 0;
+  let g=parseFloat(m[1]); if(!(g>0)) return 0;
+  if(m[2][0]==='k') g*=1000;
+  /* ⛔ BORNES : au-delà de 5 kg ce n'est plus une référence de portion (sac, format restauration),
+     et en dessous du gramme c'est une coquille. On se tait dans les deux cas. */
+  if(g<_PAQUET_MIN_G || g>_PAQUET_MAX_G) return 0;
+  return Math.round(g*10)/10;
+}
+/* ⛔ DEUX VARIABLES, DEUX MÉTIERS (R2) — et la seconde n'existe que pour UN chemin.
+   `_bcPaquetG` = le poids en grammes du produit À L'ÉCRAN ; son propriétaire unique est
+   `_offRemplirFormulaire`, que TOUS les remplissages traversent (scan, recherche par nom,
+   CIQUAL, marque, étiquette) — donc il ne peut jamais rester périmé d'un aliment à l'autre.
+   `_bcPaquetTxt` = le texte brut renvoyé par OFF, mis de côté par `_lookupBarcode`. Il existe
+   pour le cas de ft-v1165 : une fiche TROUVÉE mais SANS valeurs part au calibrage, où l'objet
+   produit n'existe plus — sans cette réserve, c'est exactement le produit de Michel qui
+   perdrait son poids, celui-là même qui en a le plus besoin. */
+let _bcPaquetG=0, _bcPaquetTxt='';
+
 /* ═══ BRIQUE 0 — LA PROVENANCE DE CHAQUE LIGNE DU JOURNAL (18/08/2026) ══════════════════════
    Jusqu'ici une entrée du journal alimentaire s'écrivait :
        { date, meal, name, kcal, prot, carbs, fat, ts }
@@ -1425,6 +1481,10 @@ async function _lookupBarcode(ean, saisie, codeDouteux){
   try{ p=await _offFetchProduct(ean); }
   catch(e){ toast('Réseau indisponible pour la recherche produit','error'); return; }
   if(!p){ toast('Produit introuvable dans la base (code '+ean+') — saisis à la main','error'); return; }
+  /* 📦 ft-v1174 — MIS DE CÔTÉ **AVANT** LE BRANCHEMENT « aucune valeur », et c'est le point.
+     Une fiche sans tableau nutritionnel part au calibrage (ft-v1165) et l'objet produit
+     disparaît avec elle — or c'est précisément ce produit-là qui a le plus besoin de son poids. */
+  _bcPaquetTxt = String((p&&p.quantity)||'');
   const n=p.nutriments||{};
   const kcal100=_per100d1(n['energy-kcal_100g']||(n['energy_100g']?n['energy_100g']/4.184:0)||0);
   _bcNutr={
@@ -1461,6 +1521,11 @@ function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux, origine){
   /* ⛔ Un scan NEUF n'a pas de « dernière fois » : la pastille d'un aliment précédent doit
      disparaître, sinon elle proposerait le poids de quelqu'un d'autre que le produit affiché. */
   if(typeof _bcProposerDerniere==='function') _bcProposerDerniere(0);
+  /* 📦 ft-v1174 — LE PROPRIÉTAIRE UNIQUE DU POIDS DE PAQUET (R2). Tous les remplissages passent
+     ici, y compris ceux qui n'ont PAS de produit OFF (CIQUAL, marque, étiquette recopiée) : ils
+     posent donc 0, et la pastille du produit précédent ne peut pas survivre. */
+  _bcPaquetG = (typeof _offPoidsPaquet==='function') ? _offPoidsPaquet(p&&p.quantity) : 0;
+  if(typeof _bcProposerPaquet==='function') _bcProposerPaquet();
   const nameEl=document.getElementById('af-bc-name');if(nameEl)nameEl.textContent=_bcNutr.name+' · '+_bcNutr.kcal100+' kcal/100g';
   const row=document.getElementById('af-bc-row');if(row)row.style.display='block';
   document.getElementById('af-desc').value=_bcNutr.name;
@@ -1551,7 +1616,13 @@ function _calAppliquer(){
            carbs100:_per100d1(carbs), fat100:_per100d1(fat)};
   /* ⭐ LE CHEMIN DE CIQUAL, MOT POUR MOT — produit vide, pas de portion déclarée (donc 100 g
      par défaut, que la personne remplace par sa dose), et une provenance qui dit la vérité. */
-  _offRemplirFormulaire({serving_quantity:0, nutriments:{}}, null, 'etiquette-main', false, 'etiquette');
+  /* 📦 ft-v1174 — LE POIDS DU PAQUET TRAVERSE LE CALIBRAGE, et c'est LE cas de Michel. Sa
+     ratatouille était **trouvée** par le code-barres mais sa fiche n'avait aucune valeur : elle
+     part donc ici (ft-v1165), et l'objet produit d'Open Food Facts n'existe plus. Sans ce
+     report, le produit qui a le PLUS besoin de son poids serait justement le seul à le perdre.
+     ⛔ Et c'est bien le texte BRUT qu'on repasse, pas des grammes : `_offRemplirFormulaire`
+     reste le seul endroit qui interprète (R2). */
+  _offRemplirFormulaire({serving_quantity:0, quantity:_bcPaquetTxt, nutriments:{}}, null, 'etiquette-main', false, 'etiquette');
   _calOuvrir();   // on referme : le bloc quantité prend le relais juste au-dessus
   toast('Produit calibré ⚖️ — tape ta quantité','success');
 }
@@ -1679,6 +1750,26 @@ function _bcProposerDerniere(q){
   b.dataset.q=String(+q);
   b.textContent='↩ '+(+q)+' g (la dernière fois)';
   b.style.display='inline-block';
+}
+/* 📦 ft-v1174 — LA PASTILLE DU PAQUET. Jumelle de `_bcProposerDerniere`, à une différence près
+   et elle est volontaire : ⛔ **celle-ci ne VIDE PAS le champ**. « La dernière fois » remplace
+   une proposition par une autre ; le poids du paquet s'AJOUTE à ce qui est déjà là (la portion
+   du fabricant, ou les 100 g par défaut) — *effacer le champ retirerait un repli valable pour le
+   remplacer par une proposition qui n'a pas encore été acceptée*. */
+function _bcProposerPaquet(){
+  const b=document.getElementById('af-bc-paquet'); if(!b) return;
+  const g=+_bcPaquetG||0;
+  if(!(g>0)){ b.style.display='none'; b.textContent=''; delete b.dataset.q; return; }
+  b.dataset.q=String(g);
+  b.textContent='📦 '+g+' g (le paquet entier)';
+  b.style.display='inline-block';
+}
+function _bcReprendrePaquet(){
+  const b=document.getElementById('af-bc-paquet'); if(!b) return;
+  const q=parseFloat(b.dataset.q)||0; if(!(q>0)) return;
+  const g=document.getElementById('af-bc-grams'); if(g) g.value=q;
+  _bcApplyGrams();                        // R2 : le même calcul que la saisie à la main
+  b.style.display='none';                 // proposition consommée — elle ne repropose pas
 }
 function _bcReprendreDerniere(){
   const b=document.getElementById('af-bc-last'); if(!b) return;
@@ -2181,6 +2272,12 @@ function openAddFood(){
   window._afIaGrammes=0; window._afIaDesc='';
   try{ _afPropCacher(); }catch(e){}
   try{ _bcProposerDerniere(0); }catch(e){}   // ⛔ la pastille ne survit pas à l'aliment précédent
+  /* 📦 ft-v1174 — MÊME RAISON POUR LA PASTILLE DU PAQUET, et pour sa RÉSERVE. `_bcPaquetTxt`
+     n'est écrit que par `_lookupBarcode` : si on ouvre l'écran d'ajout sans scanner, il porterait
+     encore le poids du produit d'AVANT et le calibrage le reproposerait. *Un réglage qui survit à
+     son sujet est pire qu'un réglage absent : il a l'air d'un fait.* */
+  _bcPaquetG=0; _bcPaquetTxt='';
+  try{ _bcProposerPaquet(); }catch(e){}
   const coh=document.getElementById('af-coherence');if(coh){coh.style.display='none';coh.innerHTML='';}
   /* ⚖️⛔⛔ LE BLOC DE CALIBRAGE SE REND AUSSI (ft-v1163, R15) — et c'est un TÉMOIN qui l'a trouvé,
      pas une relecture. Tout ce qui précède se remet à zéro à chaque ouverture ; `af-cal-row`,

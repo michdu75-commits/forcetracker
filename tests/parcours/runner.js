@@ -30806,7 +30806,137 @@ console.log('\n-- CCLXXI. Portions puis grammes (ft-v1175) --');
   }
 }
 
-/* ═══ CCLXXII. UNE CIBLE DE SYNONYME QUI N'EXISTE PLUS, EN `auto` À 95 % (08/09/2026, ft-v1175) ═
+
+/* ═══ CCLXXII. LE POIDS DU PAQUET D'OPEN FOOD FACTS (08/09/2026, ft-v1174) ═══════════════════
+   Michel : *« mais normalement le code-barres donne le poids avec non ? »*
+   ⭐⭐ Il avait raison, et c'était pire : `quantity` est **déjà** demandé à OFF à DEUX endroits
+   (`_offFetchProduct` et `_offRechercher`) et **zéro ligne ne le lisait**. On payait la bande
+   passante d'une donnée qu'on jetait.
+   ⛔⛔ ON NE LE PRÉ-REMPLIT PAS : c'est le poids du PAQUET, pas de ce qu'on a mangé — juste pour
+   une boîte de ratatouille, absurde pour un pot d'isolat de 1 kg (**R29**). Pastille tapable.
+   ⚠️ LIMITE DITE : le réseau OFF est bloqué depuis le conteneur de développement, donc la
+   COUVERTURE réelle du champ n'est pas mesurée. Ces témoins portent sur le PARSEUR et sur le
+   CHEMIN, jamais sur un taux de remplissage.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLXXII. Le poids du paquet (ft-v1174) --');
+{
+  const Q=await p.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms)), t=today();
+    S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';
+    S.foodLog=[]; S.savedFoods=[]; S.hiddenFoods=[]; persist();
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    goScreen('nutrition'); renderNutrition();
+    const fermer=()=>document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const vis=id=>{const x=document.getElementById(id);return !!x&&x.style.display!=='none';};
+    const val=id=>String((document.getElementById(id)||{}).value||'');
+
+    /* ══ A. LE PARSEUR, SUR DES CHAÎNES RÉELLES D'OPEN FOOD FACTS ══ */
+    /* ⛔ DÉFENSIF : sur l'arbre d'AVANT la fonction n'existe pas, et un `ReferenceError` ferait
+       sauter TOUT le bloc — le contrôle négatif ne dirait plus rien (leçon de ft-v1173). */
+    const PP = (typeof _offPoidsPaquet==='function') ? _offPoidsPaquet : (()=>-1);
+    o.lit  = ['250 g','1 kg','500g','1,5 kg','125 g e','250 grammes','2 KG'].map(PP);
+    o.tait = ['1 L','330 ml','33 cl','6 x 125 g','6 × 125 g','','   ',null,undefined,
+              '20 kg','0 g','0.5 g','environ 250 g','g','250'].map(PP);
+
+    /* ══ B. LE CHEMIN DU SCAN — fiche AVEC valeurs ══ */
+    const FICHE={product_name:'Ratatouille cuisinée', brands:'Bonduelle', quantity:'250 g',
+                 serving_quantity:'', nutriments:{'energy-kcal_100g':72,'proteins_100g':1.5,
+                 'carbohydrates_100g':5.4,'fat_100g':4.2}};
+    const vraiFetch=window.fetch;
+    window.fetch=async(u,i)=>{
+      if(String(u).indexOf('openfoodfacts')>=0)
+        return {ok:true, json:async()=>({status:1, product:FICHE})};
+      return vraiFetch(u,i);
+    };
+    fermer(); openAddFood(); await d(320);
+    await _lookupBarcode('3083680085496','scan'); await d(320);
+    const bp=document.getElementById('af-bc-paquet');
+    o.scan={pastille:vis('af-bc-paquet'), texte:(bp&&bp.textContent)||'',
+            champ:val('af-bc-grams'), kcal:val('af-kcal')};
+    /* ⛔ LE CŒUR DE LA DÉCISION : la pastille ne touche PAS au champ tant qu'on ne tape pas. */
+    if(bp) bp.click(); await d(220);
+    o.apresClic={champ:val('af-bc-grams'), kcal:val('af-kcal'), prot:val('af-prot'),
+                 pastille:vis('af-bc-paquet')};
+
+    /* ══ C. UNE FICHE SANS POIDS LISIBLE NE PROPOSE RIEN ══ */
+    FICHE.quantity='1 L';
+    fermer(); openAddFood(); await d(320);
+    await _lookupBarcode('3083680085496','scan'); await d(320);
+    o.volume={pastille:vis('af-bc-paquet'), champ:val('af-bc-grams')};
+
+    /* ══ D. LE CAS DE MICHEL — fiche TROUVÉE, AUCUNE valeur → calibrage (ft-v1165) ══ */
+    FICHE.quantity='250 g'; FICHE.nutriments={};
+    fermer(); openAddFood(); await d(320);
+    await _lookupBarcode('3083680085496','scan'); await d(350);
+    o.sansVal={calOuvert:vis('af-cal-row'), pastilleAvant:vis('af-bc-paquet')};
+    ['kcal','prot','carbs','fat'].forEach((k,i)=>{const e=document.getElementById('af-cal-'+k);
+      if(e) e.value=[72,1.5,5.4,4.2][i];});
+    _calAppliquer(); await d(320);
+    const bp2=document.getElementById('af-bc-paquet');
+    o.apresCal={pastille:vis('af-bc-paquet'), texte:(bp2&&bp2.textContent)||''};
+    if(bp2) bp2.click(); await d(220);
+    o.calClic={champ:val('af-bc-grams'), kcal:val('af-kcal')};
+
+    /* ══ E. LA PASTILLE NE SURVIT PAS À L'ALIMENT SUIVANT ══ */
+    fermer(); openAddFood(); await d(320);
+    o.suivant={pastille:vis('af-bc-paquet'),
+               reserve:(typeof _bcPaquetTxt==='undefined')?null:_bcPaquetTxt,
+               g:(typeof _bcPaquetG==='undefined')?null:_bcPaquetG};
+    /* ⛔ … NI À UN REMPLISSAGE QUI N'A PAS DE PRODUIT OFF (CIQUAL / marque / étiquette). */
+    if(typeof _bcPaquetG!=='undefined'){ _bcPaquetG=999; _bcProposerPaquet(); }
+    /* ⛔ Le vrai chemin CIQUAL pose `_bcNutr` AVANT d'appeler — une sonde qui l'oublie ne teste
+       pas le code, elle le fait planter (et le rouge parlerait du test, pas du produit). */
+    _bcNutr={name:'Riz cuit',kcal100:130,prot100:2.7,carbs100:28,fat100:0.3};
+    _offRemplirFormulaire({serving_quantity:0, nutriments:{}}, 'ciqual:1', 'ciqual'); await d(200);
+    o.ciqual={pastille:vis('af-bc-paquet'), g:(typeof _bcPaquetG==='undefined')?null:_bcPaquetG};
+
+    window.fetch=vraiFetch;
+    /* ══ F. LES DEUX APPELS RÉSEAU DEMANDENT BIEN LE CHAMP (sinon tout le reste est théorique) ══ */
+    o.demande={ fiche:/fields=[^']*\bquantity\b/.test(String(_offFetchProduct)),
+                recherche:/fields=[^']*\bquantity\b/.test(String(_offRechercher)) };
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,240)};}
+  });
+  if(Q.err) t('CCLXXII n\'a pas pu tourner', false, Q.err);
+  else{
+    /* ⛔ CONTRÔLE : sans lui, tout le bloc serait vert en ne mesurant rien. */
+    t('CCLXXII ⛔ CONTRÔLE — les DEUX appels OFF demandent bien `quantity`',
+      Q.demande.fiche===true && Q.demande.recherche===true, JSON.stringify(Q.demande));
+    /* ① LE PARSEUR — les vrais nombres, jamais « lit / ne lit pas ». */
+    t('CCLXXII ① le parseur lit les poids en masse : 250 · 1000 · 500 · 1500 · 125 · 250 · 2000',
+      JSON.stringify(Q.lit)===JSON.stringify([250,1000,500,1500,125,250,2000]), JSON.stringify(Q.lit));
+    t('CCLXXII ② ⛔ et il SE TAIT sur tout le reste (volumes, lots, bornes, texte libre) : 15 zéros',
+      Q.tait.length===15 && Q.tait.every(x=>x===0), JSON.stringify(Q.tait));
+    /* ③ LE CHEMIN DU SCAN */
+    t('CCLXXII ③ un scan avec un poids de paquet affiche la pastille « 📦 250 g (le paquet entier) »',
+      Q.scan.pastille===true && /📦\s*250 g/.test(Q.scan.texte), Q.scan.texte);
+    /* ⭐⭐ LA DÉCISION QUI PORTE LA VERSION : on PROPOSE, on ne pré-remplit pas (R29). */
+    t('CCLXXII ④ ⭐⭐ … et le champ N\'EST PAS pré-rempli : il vaut toujours 100, pas 250',
+      Q.scan.champ==='100', 'champ='+Q.scan.champ);
+    t('CCLXXII ⑤ un appui applique le poids, recalcule les macros, et la pastille disparaît',
+      Q.apresClic.champ==='250' && Q.apresClic.kcal==='180' && Q.apresClic.pastille===false,
+      JSON.stringify(Q.apresClic));
+    /* ⑥ CE QUI N'EST PAS LISIBLE NE PROPOSE RIEN */
+    t('CCLXXII ⑥ ⛔ un volume (« 1 L ») ne propose RIEN — on n\'invente pas de densité',
+      Q.volume.pastille===false && Q.volume.champ==='100', JSON.stringify(Q.volume));
+    /* ⑦ LE CAS DE MICHEL — la fiche sans valeurs */
+    t('CCLXXII ⑦ ⛔ CONTRÔLE — une fiche sans valeurs part bien au calibrage (ft-v1165)',
+      Q.sansVal.calOuvert===true, JSON.stringify(Q.sansVal));
+    t('CCLXXII ⑧ ⭐⭐ … et le poids du paquet SURVIT au calibrage : « 📦 250 g » est reproposé',
+      Q.apresCal.pastille===true && /📦\s*250 g/.test(Q.apresCal.texte), Q.apresCal.texte);
+    t('CCLXXII ⑨ … et il s\'applique : 250 g → 180 kcal, le chiffre de sa ratatouille',
+      Q.calClic.champ==='250' && Q.calClic.kcal==='180', JSON.stringify(Q.calClic));
+    /* ⑩ AUCUNE SURVIVANCE */
+    t('CCLXXII ⑩ ⛔ la pastille ET sa réserve ne survivent pas à l\'aliment suivant',
+      Q.suivant.pastille===false && Q.suivant.reserve==='' && Q.suivant.g===0,
+      JSON.stringify(Q.suivant));
+    t('CCLXXII ⑪ ⛔ un remplissage SANS produit OFF (CIQUAL) efface la pastille du précédent',
+      Q.ciqual.pastille===false && Q.ciqual.g===0, JSON.stringify(Q.ciqual));
+  }
+}
+
+/* ═══ CCLXXIII. UNE CIBLE DE SYNONYME QUI N'EXISTE PLUS, EN `auto` À 95 % (08/09/2026, ft-v1175) ═
    Michel conteste un de mes classements : « curl ischios c'est leg curl ischios et rien a voir
    avec poussée de hanche hein ». Il avait raison — et en vérifiant je suis tombé sur pire.
    ⭐⭐ MESURÉ DE BOUT EN BOUT sur un vrai import : « Leg curl » était rapproché en `auto` (95 %)
@@ -30855,33 +30985,33 @@ console.log('\n-- CCLXXI. Portions puis grammes (ft-v1175) --');
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
   });
 
-  if(R.err) t('CCLXXII n\'a pas pu tourner', false, R.err);
+  if(R.err) t('CCLXXIII n\'a pas pu tourner', false, R.err);
   else{
-    t('CCLXXII ⭐⭐ « Leg curl » ne fabrique PLUS d\'exercice fantôme (le défaut réparé)',
+    t('CCLXXIII ⭐⭐ « Leg curl » ne fabrique PLUS d\'exercice fantôme (le défaut réparé)',
       R.persoCrees.length===0 && R.aUneFiche===true,
       'créés : '+JSON.stringify(R.persoCrees)+' · nom : '+R.nomDansProg+' · fiche : '+R.aUneFiche);
-    t('CCLXXII ⛔ ... et le nom écrit dans le programme est le nom ACTUEL du catalogue',
+    t('CCLXXIII ⛔ ... et le nom écrit dans le programme est le nom ACTUEL du catalogue',
       R.nomApresMatch==='Leg Curl Couché Machine' && R.nomDansProg==='Leg Curl Couché Machine',
       'après match : '+R.nomApresMatch+' · dans le prog : '+R.nomDansProg);
     /* ⭐ LE POINT DE MICHEL : « curl ischios c'est leg curl ischios ». */
-    t('CCLXXII ⭐ les 4 formes FRANÇAISES rendent la même chose que « leg curl » (R8)',
+    t('CCLXXIII ⭐ les 4 formes FRANÇAISES rendent la même chose que « leg curl » (R8)',
       R.en.t==='auto' && R.fr.every(x=>x.q===R.en.q && x.t==='auto'),
       'en : '+R.en.q+' · fr : '+R.fr.map(x=>x.q+'('+x.t+')').join(' | '));
-    t('CCLXXII ⛔ les 3 formes « poulie » suivent aussi le nom actuel',
+    t('CCLXXIII ⛔ les 3 formes « poulie » suivent aussi le nom actuel',
       R.poulie.every(x=>x.q==='Leg Curl Couché Machine' && x.t==='auto'),
       R.poulie.map(x=>x.q).join(' | '));
     /* ⛔⛔ LE TÉMOIN QUI FIGE UN RETRAIT (R30) : sans lui, la prochaine session « répare » en
        remettant les deux clés, et refait le synonyme faux. */
-    t('CCLXXII ⛔⛔ RETRAIT VOLONTAIRE — « nordic curl » et « trx ham curl » ne sont PLUS dans la table',
+    t('CCLXXIII ⛔⛔ RETRAIT VOLONTAIRE — « nordic curl » et « trx ham curl » ne sont PLUS dans la table',
       R.nordicDansTable===false && R.trxDansTable===false,
       'nordic : '+R.nordicDansTable+' · trx : '+R.trxDansTable);
-    t('CCLXXII ⛔ ... et ils redeviennent une QUESTION, pas une certitude fausse',
+    t('CCLXXIII ⛔ ... et ils redeviennent une QUESTION, pas une certitude fausse',
       R.nordic.t==='confirm' && R.trx.t==='confirm',
       'nordic : '+R.nordic.t+' · trx : '+R.trx.t);
     /* ⛔ CE QUI ÉTAIT AMBIGU LE RESTE : la poussée de hanche a 4 variantes et AUCUN générique. */
-    t('CCLXXII ⛔ CONTRE-TEST — « poussée de hanche » reste une question (4 variantes, pas de générique)',
+    t('CCLXXIII ⛔ CONTRE-TEST — « poussée de hanche » reste une question (4 variantes, pas de générique)',
       R.hanche.t==='confirm', 'reçu : '+R.hanche.q+' · '+R.hanche.t);
-    t('CCLXXII ⛔ NON-RÉGRESSION — les 4 clés des versions précédentes sont intactes',
+    t('CCLXXIII ⛔ NON-RÉGRESSION — les 4 clés des versions précédentes sont intactes',
       R.temoins.every(x=>x.t==='auto'), R.temoins.map(x=>x.q+'('+x.t+')').join(' | '));
   }
 }
