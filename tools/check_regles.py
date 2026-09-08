@@ -901,7 +901,33 @@ try:
             print("   → c'est la PREMIÈRE ligne que lit l'autre session pour choisir son numéro.")
             print("     Une entête en retard fabrique une collision de version (3 le 07/09/2026).")
             sys.exit(1)
-        print("✅ entête de version : CLAUDE.md et sw.js disent tous deux ft-v%d (prochaine ft-v%d)"
+        # ── ET LE MÊME CONTRÔLE SUR docs/CONTEXTE-ACTUEL.md — « à lire EN PREMIER » ──────
+        # Dérive mesurée le 08/09/2026 : le fichier portait **24** puces « Version en ligne
+        # (live) », donc il annonçait la version courante 24 fois avec 24 réponses différentes.
+        # Chaque version ajoutait la sienne sans rétrograder la précédente, et la fusion entre
+        # deux sessions empilait les deux. ⛔ C'est le fichier que TOUTE session lit en premier.
+        # ⚠️ ET LE CORRECTIF NAÏF COÛTE CHER — payé le jour même : trier par numéro puis
+        # dédoublonner a fait perdre **88 lignes**, parce que deux blocs portant le même
+        # ft-vNNNN n'avaient PAS le même contenu (un « live » périmé et une « précédente »
+        # enrichie plus tard). Le bon geste est de RÉTIQUETER SUR PLACE, sans rien déplacer.
+        _ctx17 = (racine / 'docs' / 'CONTEXTE-ACTUEL.md')
+        if _ctx17.exists():
+            _tc = _ctx17.read_text(encoding='utf-8', errors='replace')
+            _lives = _re17.findall(r"^- \*\*Version en ligne \(live\) :\*\* `ft-v(\d+)`", _tc, _re17.M)
+            _pb = []
+            if len(_lives) != 1:
+                _pb.append("%d puces « Version en ligne (live) » au lieu d'une seule" % len(_lives))
+            elif int(_lives[0]) != _cache17:
+                _pb.append("annonce ft-v%s en ligne, sw.js est à ft-v%d" % (_lives[0], _cache17))
+            if _pb:
+                print("❌ docs/CONTEXTE-ACTUEL.md — le fichier « à lire en premier » se contredit :")
+                for _x in _pb:
+                    print("   ⛔ " + _x)
+                print("   → rétrograder les puces périmées EN PLACE (« Version précédente »).")
+                print("     ⚠️ Ne PAS trier/dédoublonner par numéro : deux blocs de même version")
+                print("     peuvent avoir des contenus différents (88 lignes perdues le 08/09).")
+                sys.exit(1)
+        print("✅ entête de version : CLAUDE.md, docs/CONTEXTE-ACTUEL.md et sw.js disent tous ft-v%d (prochaine ft-v%d)"
               % (_cache17, _next17))
 except SystemExit:
     raise

@@ -6,7 +6,33 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1168` — 🏃 **LE CARDIO D'UN PROGRAMME PART DANS SON BLOC, ET
+- **Version en ligne (live) :** `ft-v1170` — 🔎 **« TIRAGE VERTICAL » VISAIT L'ÉLASTIQUE — et la
+  mesure a dit que le rapprocheur n'était PAS en cause.**
+  ⏳ **Suite complète VERTE** : **parcours 3253/3253** (+11, bloc **CCLXVIII**), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  ⭐⭐ **Mesuré AVANT de coder, et ça a changé tout le périmètre** : `_matchExercise('Tirage
+  vertical')` rendait **« Tirage Vertical Alterné ÉLASTIQUE » à 50 %** — et il avait raison, le
+  catalogue ne contient **qu'un seul** exercice portant ces deux mots. En salle, *tirage vertical*
+  = **lat pulldown** = « Tirage Poulie Haute ».
+  👉 **Je n'ai donc PAS touché à `_matchExercise`** (le morceau risqué annoncé la veille : Milo,
+  import, recherche, historique). ***On corrige la DONNÉE, pas le moteur.***
+  ⭐⭐ **Le trou est systématique** : `_EX_EQUIV` = **353 clés anglaises contre 55 françaises**, et
+  **81 cibles atteignables SEULEMENT en anglais**. `lat pulldown` ✅ / `tirage vertical` ⛔ —
+  **R8** appliqué au vocabulaire. ⭐ Et `'tirage vertical POITRINE'` existait **déjà** : c'est la
+  forme **nue** qui manquait.
+  ⭐ **4 clés ajoutées**, uniquement celles mesurées sur son PDF → les quatre passent de **50 % ou
+  0 %** à **95 % en `auto`**. ⛔ **Pas les 81** : un synonyme FAUX redirige un exercice en silence
+  et coupe un historique en deux (**R29**) — chiffre et méthode dans `IDEES-FUTURES.md`.
+  ⛔⛔ **Contre-test** : *« soulevé de terre roumain »* en toutes lettres marchait **déjà à 100 %**
+  → aucun synonyme ajouté pour lui. *Un synonyme qui double un cas qui marche est du bruit.*
+  ⛔ **Témoin de cohérence** : aucune des **525** clés ne vise un exercice inexistant (0 morte).
+  ⏭️ **Ne fait pas** : l'**ORDRE** de la recherche n'est pas touché (l'élastique reste 1ᵉʳ, la
+  poulie haute 2ᵉ — toucher `_rang` changerait TOUTES les recherches, et ft-v1163 documente une
+  régression que j'avais créée ainsi) · le programme déjà importé n'est pas réécrit (**R29**) ·
+  *« Développé épaules guidé / haltères »* laissé de côté **exprès** (il désigne DEUX exercices).
+  ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1168` — 🏃 **LE CARDIO D'UN PROGRAMME PART DANS SON BLOC, ET
   LE FILET DE DATE PASSE CÔTÉ APP.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1001**, `success` à **21:34:16 UTC**.
   ⏳ **Suite complète VERTE** : **parcours 3229/3229** (+19, bloc **CCLXVII**), calculs 339/339,
@@ -49,8 +75,8 @@
   morceau le plus risqué (**règle d'or #7**). ⛔ `Code.js`/`worker.js` non touchés → aucun
   déploiement backend ni worker attendu. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 
-- **Version en ligne (live) :** `ft-v1166` — ⚠️ **L'APERÇU D'IMPORT DIT ENFIN CE QU'IL VA
-- **Version en ligne (live) :** `ft-v1169` — 🔇 **LES RECHERCHES QUI NE RENDENT RIEN — le 2ᵉ
+- **Version précédente :** `ft-v1166` — ⚠️ **L'APERÇU D'IMPORT DIT ENFIN CE QU'IL VA
+- **Version précédente :** `ft-v1169` — 🔇 **LES RECHERCHES QUI NE RENDENT RIEN — le 2ᵉ
   point de mesure du détecteur.**
   ⏳ **Suite VERTE** : **parcours 3223/3223** (+13, bloc **CCLXVII**), calculs 339/339, muscles 241/241,
   croisés 50/50, dates 9/9, données classées 0 trou.
@@ -958,7 +984,7 @@
   croit avoir cassé l'app. **§40bis** de `BUGS.md`. **18 fixtures corrigées**, un seul motif qui
   marche dans Node ET dans le navigateur. ⏭️ `tests/dates` ne scanne toujours pas les runners.
 
-- **Version en ligne (live) :** `ft-v1127` — 🔋 **OPTION B DE LA RÉCUP : LA CHARGE S'ADDITIONNE.**
+- **Version précédente :** `ft-v1127` — 🔋 **OPTION B DE LA RÉCUP : LA CHARGE S'ADDITIONNE.**
   ⚠️⚠️ **26ᵉ COLLISION, la 2ᵉ de la journée** : session-A avait publié et déployé sa ft-v1126
   (run #887) pendant ma passe de parcours — *même scénario que la 25ᵉ, deux heures plus tôt*.
   ⭐ C'est **structurel** : toute version bump la même ligne de `sw.js`, et une suite complète
@@ -988,7 +1014,7 @@
   écrasées ; sa plus grosse fait 24 séries).
 - ⚠️ **Et je me suis trompé en route** : j'avais dit que la saturation ne le touchait pas (vrai
   sur 60 jours) — **son profil sature avec une seule mauvaise nuit** (5 h + 20 séries).
-- **Version en ligne (live) :** `ft-v1126` — 💰 **« COÛT RÉEL DU JOUR » DIT DE QUEL JOUR.**
+- **Version précédente :** `ft-v1126` — 💰 **« COÛT RÉEL DU JOUR » DIT DE QUEL JOUR.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#887** sur `353b2b7`, **job `deploy` success**,
   les 7 étapes vertes à 20:59:17 UTC. Michel : *« on ne sait pas si c'est dans la journée
   ou depuis 1 mois »*. Le titre disait « du jour » — **exact**, mais rien ne le prouvait à l'écran.
@@ -1036,7 +1062,7 @@
   ⏭️ **Les 2 suites sont PASSÉES À session-B** (leur couloir) : corriger le sens du temps, et
   **promouvoir AB-2 au banc** — *« épaule douloureuse → aucune presse au-dessus de la tête »* est
   vérifiable par du CODE, donc gratuit à chaque passe au lieu d'un test manuel à 0,26 €.
-- **Version en ligne (live) :** `ft-v1125` — 🤝 **LES 2 SUITES DU RELAIS DE SESSION-A** (Michel :
+- **Version précédente :** `ft-v1125` — 🤝 **LES 2 SUITES DU RELAIS DE SESSION-A** (Michel :
   *« il a fini »*, puis il choisit le relais). ⛔ **① `_abHistoDC` ne faisait pas ce qu'elle
   annonçait** : commentaire « des charges qui PROGRESSENT », barème qui **descendait** — la séance
   la plus récente était la plus légère (80 kg la veille) pour un record de 95 kg il y a 9 jours.
@@ -1061,7 +1087,7 @@
   où on tombe dedans* (R17).
 - ⛔ **Contrôle négatif : 4 rouges** sur l'ancien code. Suite : **2712/2712**, calculs 298/298,
   **0 rouge**. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
-- **Version en ligne (live) :** `ft-v1124` — ⚡ **« CETTE SÉANCE TE CONVIENT ? » NE S'AFFICHE PLUS
+- **Version précédente :** `ft-v1124` — ⚡ **« CETTE SÉANCE TE CONVIENT ? » NE S'AFFICHE PLUS
   SOUS UN REPROCHE.** Michel, enregistrement d'écran à l'appui : il écrit *« pourquoi tu me donnes
   la séance à faire ? »* et l'app propose **« ⚡ Oui, on démarre »** sous une réponse de Milo qui dit
   le contraire.
@@ -1086,7 +1112,7 @@
   quoi » **sans apostrophe** ne déclenchent pas — ratés **pré-existants**, sans rapport avec ce
   correctif qui ne fait que **retirer** des déclenchements.
 
-- **Version en ligne (live) :** `ft-v1123` — 🧠 **LE TEST A/B MÉMOIRE REÇOIT SA PORTE D'ENTRÉE.**
+- **Version précédente :** `ft-v1123` — 🧠 **LE TEST A/B MÉMOIRE REÇOIT SA PORTE D'ENTRÉE.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#878** sur `7d1bc06`, **job `deploy` success**,
   les 7 étapes vertes à 17:43:22 UTC. ⭐ Suite **sur l'arbre FUSIONNÉ** : parcours **2699/2699**,
   calculs **290/290**, muscles 241, croisés 50, dates **7/7**, données 0 trou — *c'est l'arbre
@@ -1153,7 +1179,7 @@
 - ⛔ **R30** : retrait déclaré dans le générateur avec sa raison, figé par 2 témoins.
 - ⚠️ **L'aide de la veille est devenue fausse** (« taper tacos te rendra une glace ») — corrigée
   dans le même mouvement, **3ᵉ cas §31 de la série**.
-- **Version en ligne (live) :** `ft-v1120` — 🍔 **LA BASE FAST-FOOD : 27 → 128 PRODUITS.**
+- **Version précédente :** `ft-v1120` — 🍔 **LA BASE FAST-FOOD : 27 → 128 PRODUITS.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#870** sur `3df7411`, **job `deploy` success**,
   les 7 étapes vertes à 13:12:02 UTC. ⭐ Suite : **2672/2672, 0 rouge**.
 - ⭐ **Aller-retour : 0 écart sur 116 vérifiés**, et le Big Mac tombe au chiffre près sur
@@ -1171,7 +1197,7 @@
   Bueno), donc taper `tacos` rend une glace. Gardé parce que la règle est la sienne (*« il faut
   tout mettre »*), signalé parce qu'il doit le savoir. L'aide le dit en clair.
 - ⛔ **N'entrent pas** : 8 Subway (macros absentes), 5 desserts O'Tacos (calories absentes).
-- **Version en ligne (live) :** `ft-v1119` — 🔍 **LES 2 DÉFAUTS DE LA RECHERCHE ALIMENTAIRE.**
+- **Version précédente :** `ft-v1119` — 🔍 **LES 2 DÉFAUTS DE LA RECHERCHE ALIMENTAIRE.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#866** sur `726ea99`, **job `deploy` success**,
   les 7 étapes vertes à 08:44:38 UTC. ⭐ Suite : **2653/2653, 0 rouge**.
   ⚠️ La fusion avec session-B n'a apporté que **2 fichiers de doc** (contre-audit récup),
@@ -1191,7 +1217,7 @@
   source de GPT vivait dans le dossier temporaire et a disparu au redémarrage du conteneur.
   *Un fichier généré dont la source n'est pas versionnée est un fichier figé qui s'ignore.*
   👉 Verser le classeur dans le dépôt, ou accepter que la table soit figée. **Décision de Michel.**
-- **Version en ligne (live) :** `ft-v1118` — 🏃 **UNE SÉANCE DE CARDIO SEUL N'EST PLUS INVISIBLE.**
+- **Version précédente :** `ft-v1118` — 🏃 **UNE SÉANCE DE CARDIO SEUL N'EST PLUS INVISIBLE.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#861** sur `273a347`, **job `deploy` success**,
   les 7 étapes vertes à 07:47:07 UTC. ⚠️ *Je n'ai PAS pu lire l'URL live moi-même* — le proxy du
   conteneur refuse `github.io` (`CONNECT tunnel failed, 403`), comme il refuse le Worker. La preuve
@@ -1235,7 +1261,7 @@
   seul qui n'en a pas, et c'est exactement pour ça qu'il n'a jamais tourné.*
   ⚠️ **Ce qu'on perd en attendant** : la mesure avant/après de la **mémoire à 2 vitesses** (R34).
   *On ne construira donc pas cette brique sur une intuition — elle attend son instrument.*
-- **Version en ligne (live) :** `ft-v1117` — 🥤 **LE PIÈGE DU COCA : IL Y EN AVAIT NEUF.**
+- **Version précédente :** `ft-v1117` — 🥤 **LE PIÈGE DU COCA : IL Y EN AVAIT NEUF.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#859** sur `dd36727`, **job `deploy` success**,
   les 7 étapes vertes à 20:11:20 UTC. ⚠️ Le run est resté marqué `in_progress` plusieurs minutes
   après la fin du job — *l'''état du run retarde sur celui du job, on regarde le JOB*.
@@ -1253,7 +1279,7 @@
   porte, vérifier qu'elle n'est pas déjà ouverte.*
 - ⭐ **80 boissons mesurées : 28 sans résultat → 9.** Ce qui reste vide est **listé** (powerade,
   gatorade, mojito, whey — aucune boisson isotonique n'existe dans CIQUAL).
-- **Version en ligne (live) :** `ft-v1116` — 🥤 **LE COCA ZÉRO ÉTAIT COMPTÉ 24 FOIS TROP.**
+- **Version précédente :** `ft-v1116` — 🥤 **LE COCA ZÉRO ÉTAIT COMPTÉ 24 FOIS TROP.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#857** sur `414cdce`, **job `deploy` success**,
   les 7 étapes vertes (« Déployer sur GitHub Pages » comprise) à 19:22:50 UTC.
   ⚠️ **Le RUN était encore marqué `in_progress` quand le JOB était déjà fini** — l'état du run
@@ -1272,7 +1298,7 @@
   reste **juste en dessous** (R29). ⛔ Et la variante **sans caféine** garde son entrée propre.
 - ⛔⛔ **Les ajouts vivent dans `tools/alias.py`**, jamais dans `data/alias.json` qui est **généré** :
   une retouche à la main y disparaîtrait **sans bruit** (R27). Deux témoins l'épinglent.
-- **Version en ligne (live) :** `ft-v1115` — 🥗 **LES MOTS QU'ON EMPLOIE ATTEIGNENT UN ALIMENT.**
+- **Version précédente :** `ft-v1115` — 🥗 **LES MOTS QU'ON EMPLOIE ATTEIGNENT UN ALIMENT.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#854** sur `ec64523`, `success` à 18:05 UTC.
   ⭐ Suite re-passée sur l'**arbre FUSIONNÉ** avec session-B : **2578/2578, 0 rouge**.
 - ⭐⭐ **569 alias** (`data/alias.json`, 4 Ko gzippés) produits par **GPT à partir de l'export CSV
@@ -1291,7 +1317,7 @@
 - ⏭️ **Toujours non corrigés** (audit du matin) : la **ponctuation collée** (`Boulgour, cuit` →
   rien) et les **mots-outils exigés** (`filet de bœuf` → rien). La table les **contourne**, elle
   ne les répare pas. ⚠️ **Safari/iPhone non vérifié.**
-- **Version en ligne (live) :** `ft-v1114` — 🍔 **ON MET TOUT ET ON MARQUE LE DOUTE.**
+- **Version précédente :** `ft-v1114` — 🍔 **ON MET TOUT ET ON MARQUE LE DOUTE.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#849** sur `9b2676d`, `success` à 16:52 UTC.
   ⭐ Suite re-passée sur l'**arbre FUSIONNÉ** avec session-B : **2554/2554, 0 rouge**.
   ⚠️ *Le proxy de ce conteneur bloque `github.io` : je vérifie le RUN, pas la page servie.*
@@ -1319,14 +1345,14 @@
   pour GPT — la **ponctuation reste collée** au mot tapé (`Boulgour, cuit` → rien) et les
   **mots-outils sont exigés** (`filet de bœuf` → rien, alors que `6116 · Boeuf, filet cru`
   existe). Mesurés, **à décider par Michel**. ⚠️ **Safari/iPhone toujours non vérifié.**
-- **Version en ligne (live) :** `ft-v1113` — 🍔 **LES MOTS QU'ON DIT ATTEIGNENT LES ALIMENTS.**
+- **Version précédente :** `ft-v1113` — 🍔 **LES MOTS QU'ON DIT ATTEIGNENT LES ALIMENTS.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#845**.
 - ⭐ `coca` ne rendait **rien** alors que « Cola, sucré » est dans le fichier — **une lettre**.
   `soda`, `mcdo`, `fast food` non plus. ⚠️ **Trou invisible au bureau, béant à la salle** : en
   ligne, Open Food Facts rattrape ; hors ligne on n'a rien (règle d'or #4).
 - ⛔ **On répartit, on n'empile pas** : `mcdo` rendait **six sandwichs** et coupait les frites et
   les nuggets — or qui tape « mcdo » compose un **menu**.
-- **Version en ligne (live) :** `ft-v1112` — 🔢 **UNE SEULE PRÉCISION POUR LE POUR-100 g.**
+- **Version précédente :** `ft-v1112` — 🔢 **UNE SEULE PRÉCISION POUR LE POUR-100 g.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#842** sur `01b1adb`, `success` à 11:35.
   ⭐ Suite re-passée sur l'**arbre FUSIONNÉ** avec session-B : **2514/2514**.
 - ⭐ **La question de Michel** (*« ça va être comme ça sur tous les produits ? »*) a une réponse
@@ -1350,7 +1376,7 @@
 - ⏭️ **Inchangé** : les lignes déjà enregistrées gardent leur `per100` arrondi (on ne réécrit pas
   l'historique — R29) ; elles se corrigeront à la prochaine reprise du produit. ⚠️ **Safari/iPhone
   toujours non vérifié.**
-- **Version en ligne (live) :** `ft-v1111` — 🔢 **LE CALIBRAGE GARDE LA DÉCIMALE DE
+- **Version précédente :** `ft-v1111` — 🔢 **LE CALIBRAGE GARDE LA DÉCIMALE DE
   L'ÉTIQUETTE.** ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
 - ⭐ **Le calibrage de ft-v1110 tombe juste sur les vrais chiffres** : l'étiquette de Michel
   (388,5 kcal · 88 g de protéines · 2,8 g de glucides · 3,3 g de lipides / 100 g) rend
@@ -1369,7 +1395,7 @@
   décrit qu'un chiffre périmé dans le test.*
 - ⏭️ **Inchangé** : les lignes **déjà enregistrées** ne se corrigent pas (le calibrage vit dans
   l'écran d'ajout). ⚠️ Et **Safari/iPhone reste non vérifié** (Chromium seulement).
-- **Version en ligne (live) :** `ft-v1110` — ⚖️ **UN PRODUIT DEVIENT CALIBRABLE À LA MAIN.**
+- **Version précédente :** `ft-v1110` — ⚖️ **UN PRODUIT DEVIENT CALIBRABLE À LA MAIN.**
   ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
 - ⛔⛔ **Michel, 4ᵉ passe sur le même pot** : *« il y a toujours le problème avec ma prot »*. La
   cause est **structurelle**, mesurée : sa ligne porte `per100 = null`, et **aucun champ de
@@ -1391,7 +1417,7 @@
 - ⏭️ **Ce que ça ne fait PAS** : les lignes **déjà enregistrées** ne se corrigent pas — le
   calibrage vit dans l'écran d'**ajout**, pas dans la modale de modification. Décision de
   périmètre, pas un oubli. ⚠️ Et **Safari/iPhone non vérifié** (Chromium seulement).
-- **Version en ligne (live) :** `ft-v1109` — 📌 **LA LIGNE « REPAS » RESTE À L'ÉCRAN, ET LA
+- **Version précédente :** `ft-v1109` — 📌 **LA LIGNE « REPAS » RESTE À L'ÉCRAN, ET LA
   CONFIRMATION DIT OÙ.** ⏳ **POUSSÉ, DÉPLOIEMENT À VÉRIFIER** (R18).
 - ⛔⛔ **Mesuré avant de coder** : les puces de repas sortaient de l'écran dès **236 px**, sur une
   modale qui en défile **951** — or **tout** ce qui sert à saisir l'aliment vit en dessous. 👉
@@ -1415,7 +1441,7 @@
 - ⏭️ **Question ouverte notée au journal de test** : le repas deviné part dans le contexte de
   Milo — *tire-t-il des conclusions d'une étiquette souvent fausse ?* Non mesuré (coûte des
   appels réels, **R34**).
-- **Version en ligne (live) :** `ft-v1108` — ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#826**
+- **Version précédente :** `ft-v1108` — ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : run **#826**
   sur le commit `ce8a05b`, `success` à 05:12. ⚠️ **Et il a fallu débloquer la file d'abord** :
   le job du run **#820** (session-B) est resté **7 h 52** à l'entrée de l'environnement
   `github-pages` (20:24 → 04:16), et comme les déploiements Pages sont **sérialisés**, les runs
@@ -1465,7 +1491,7 @@
   reçoit** (**R34**, décision de Michel). **Mesurée sans être appliquée** : quelqu'un qui a changé
   d'alimentation il y a 4 mois annonce à Milo *« Riz basmati (60×) »* comme déjeuner habituel —
   un aliment qu'il ne mange plus.
-- **Version en ligne (live) :** `ft-v1106`. ⏳ **Déploiement à vérifier** (R18).
+- **Version précédente :** `ft-v1106`. ⏳ **Déploiement à vérifier** (R18).
   ⚠️ Aucun déploiement backend.
 - 🧪⛔⛔ **LE BANC D'ESSAI RETROUVE SA MÉMOIRE, ET CESSE DE FUIR** (ft-v1106). Michel :
   *« corrige les 3 lignes du banc et les fuites »*. **Aucun écran, aucun calcul de l'app n'est
@@ -1833,7 +1859,7 @@
   **incidente**.
   ⏭️ **À surveiller chez Michel** : les comptes migrent **à leur prochaine sauvegarde**, pas
   d'un coup. Tant que `h_` n'existe pas pour quelqu'un, sa santé reste dans `u_` — c'est voulu.
-- **Version en ligne (live) :** `ft-v1091`.
+- **Version précédente :** `ft-v1091`.
 - 👆⭐⭐ **CE QU'UNE FERMETURE AU DOIGT EMPORTE — dont la CAMÉRA** (ft-v1091). Michel :
   *« continue à chercher des incohérences »*. Même méthode qu'en ft-v1089 — **des détecteurs,
   pas des avis** — en privilégiant ceux qui **mesurent un comportement**.
@@ -2019,7 +2045,7 @@
   disparaître « ⏭️ Ensuite : … ») — **c'est un chantier à part** (R30).
   ⏭️ **Non traité, écrit plutôt que corrigé** : à égalité de trous, l'insertion prend toujours le
   plus **bas** (à 90 kg elle bouche 40→60 et laisse 60→80). Comportement d'avant ce chantier.
-- **Version en ligne (live) :** `ft-v1081`.
+- **Version précédente :** `ft-v1081`.
 - 🔁 **VOIR LES DOUBLONS DU CLASSEUR, SANS RIEN SUPPRIMER** (ft-v1081). Michel : *« comment
   vérifier si ma séance a été écrite plusieurs fois ? »* ⚠️ **Ces doublons viennent de nous** :
   avant ft-v1077, le téléphone abandonnait à 8 s **pendant que Google finissait d'écrire**, donc
