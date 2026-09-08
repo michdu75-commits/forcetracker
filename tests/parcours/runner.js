@@ -30376,10 +30376,18 @@ console.log('\n-- CCLXVII. Les recherches qui ne rendent rien (ft-v1169) --');
     /* ⛔⛔ COHÉRENCE DE LA TABLE — 525 clés pourrissent en silence. Le fichier documente déjà
        un cas de cible périmée (`leg curl`, rattrapé par `exNomActuel`). Une clé qui vise un
        exercice inexistant ne lève AUCUNE erreur : elle ne trouve simplement jamais rien. */
+    /* ⛔⛔ TÉMOIN DURCI EN ft-v1175, ET C'EST UNE LEÇON, PAS UN AJUSTEMENT.
+       La version d'hier acceptait `exNomActuel(c)` : elle vérifiait que la clé MÈNE QUELQUE PART,
+       pas que le nom RENDU par `_matchExercise` soit utilisable. Elle était donc VERTE pendant
+       que « leg curl » écrivait un exercice fantôme dans les programmes, en `auto` à 95 %.
+       👉 *Un contrôle qui accepte le rattrapage ne voit pas que le rattrapage n'a pas lieu* —
+       parce que le filet `exNomActuel` vit dans la RECHERCHE, pas dans le rapprochement.
+       On exige désormais que la cible existe TELLE QUELLE dans le catalogue. Mesuré à l'écriture :
+       0 périmée sur 531 clés — le témoin part d'un état propre, donc il ne peut rougir que sur
+       une vraie (condition de crédibilité, ft-v1145). */
     const noms=(typeof EXLIB!=='undefined'?EXLIB:[]).map(x=>x.n), morts=[];
     for(const k in _EX_EQUIV){ const c=_EX_EQUIV[k];
-      const ok = noms.indexOf(c)>=0 || (typeof exNomActuel==='function' && noms.indexOf(exNomActuel(c))>=0);
-      if(!ok) morts.push(k+' → '+c); }
+      if(noms.indexOf(c)<0) morts.push(k+' → '+c); }
     o.morts=morts;
     /* ⭐ ET LA RECHERCHE AUSSI : `filterEx` lit `_EX_EQUIV` depuis le 08/08 — une donnée, trois
        lecteurs (import, Milo, recherche). On compte les VRAIS nombres, pas « vide / pas vide » :
@@ -30423,7 +30431,7 @@ console.log('\n-- CCLXVII. Les recherches qui ne rendent rien (ft-v1169) --');
     t('CCLXVIII ⛔⛔ CONTRE-TEST — « soulevé de terre roumain » marchait DÉJÀ, aucun synonyme ajouté',
       R.sdtLong.q==='Soulevé de Terre Roumain Barre' && R.sdtLong.c===100 && R.pasDeDoublon===true,
       'rend : '+R.sdtLong.q+' ('+R.sdtLong.c+'%) · doublon absent : '+R.pasDeDoublon);
-    t('CCLXVIII ⛔⛔ COHÉRENCE — aucune des '+R.taille+' clés ne vise un exercice inexistant',
+    t('CCLXVIII ⛔⛔ COHÉRENCE (durci ft-v1175) — les '+R.taille+' cibles existent TELLES QUELLES',
       (R.morts||[]).length===0, (R.morts||[]).slice(0,4).join(' | '));
     /* ⭐ UNE DONNÉE, TROIS LECTEURS (R2) : la recherche en profite sans une ligne de plus. */
     t('CCLXVIII ⭐ la RECHERCHE « tirage vertical » trouve aussi Tirage Poulie Haute',
@@ -30504,7 +30512,13 @@ console.log('\n-- CCLXVII. Les recherches qui ne rendent rien (ft-v1169) --');
     o.ischios = m('curl ischios');            // 4-5 variantes de leg curl
     o.hanche  = m('poussee de hanche');       // 4 variantes de hip thrust
     o.epaules = m('developpe epaules guide'); // LE cas de Michel : ambigu par nature
-    o.absents = ['curl ischios','poussee de hanche','developpe epaules guide',
+    /* ⚠️⚠️ LISTE RETOURNÉE LE 08/09 (ft-v1175), PAS ADOUCIE — R30. `curl ischios` en SORT :
+       Michel a démontré que je l'avais mal classé (« curl ischios c'est leg curl ischios et rien
+       a voir avec poussée de hanche hein »), et la mesure lui a donné raison — `leg curl` rendait
+       95 % en `auto` quand `curl ischios` rendait 33 % : *le même exercice, deux réponses*.
+       ⛔ Ce n'est pas un témoin qu'on assouplit pour faire passer du code : c'est la RÈGLE qu'il
+       figeait qui a changé, et on écrit laquelle, par qui et quand. Les 7 autres restent. */
+    o.absents = ['poussee de hanche','developpe epaules guide',
                  'tirage vertical nuque','elliptique','velo','rameur','tapis de course']
                 .filter(k=>k in _EX_EQUIV);
     /* ⛔⛔ ET LES 4 MACHINES DE CARDIO NE SONT PAS DES EXERCICES : mesuré, `_estCreneauCardio`
@@ -30549,12 +30563,17 @@ console.log('\n-- CCLXVII. Les recherches qui ne rendent rien (ft-v1169) --');
     /* ⛔⛔ LES TÉMOINS LES PLUS IMPORTANTS DU BLOC : ils figent ce qu'on a REFUSÉ d'ajouter.
        Sans eux, la prochaine session « complète » la table et personne ne voit qu'elle vient de
        faire trancher l'app à la place de la personne. */
-    t('CCLXX ⛔⛔ ÉCARTÉ — « curl ischios » et « poussée de hanche » restent une QUESTION (R29)',
-      R.ischios.t==='confirm' && R.hanche.t==='confirm',
-      'ischios : '+R.ischios.t+' · hanche : '+R.hanche.t);
+    /* ⚠️ RETOURNÉ le 08/09 (ft-v1175) : `curl ischios` était mal classé — il n'a qu'UNE réponse,
+       la même que `leg curl`, et il est désormais en `auto`. La « poussée de hanche », elle, garde
+       ses 4 variantes SANS générique : elle reste une question, et c'est ce qui compte ici. */
+    t('CCLXX ⛔⛔ ÉCARTÉ — « poussée de hanche » reste une QUESTION (4 variantes, R29)',
+      R.hanche.t==='confirm', 'hanche : '+R.hanche.t);
+    t('CCLXX ⚠️ RETOURNÉ ft-v1175 — « curl ischios » est PROMU : même réponse que « leg curl »',
+      R.ischios.t==='auto' && R.ischios.q==='Leg Curl Couché Machine',
+      'reçu : '+R.ischios.q+' · '+R.ischios.t);
     t('CCLXX ⛔⛔ ÉCARTÉ — « développé épaules guidé » reste ambigu : machine OU haltères',
       R.epaules.t==='confirm', 'reçu : '+R.epaules.q+' · '+R.epaules.t);
-    t('CCLXX ⛔⛔ aucune des 8 formes écartées n\'a été glissée dans la table',
+    t('CCLXX ⛔⛔ aucune des 7 formes écartées n\'a été glissée dans la table',
       (R.absents||[]).length===0, 'trouvées : '+(R.absents||[]).join(', '));
     t('CCLXX ⛔⛔ les 4 machines de cardio restent du CARDIO, pas des exercices (ft-v1168)',
       Array.isArray(R.cardio) && R.cardio.length===4 && R.cardio.every(Boolean), JSON.stringify(R.cardio));
@@ -30644,7 +30663,7 @@ console.log('\n-- CCLXIX. La colonne Source et son titre (ft-v1171) --');
 }
 
 
-/* ═══ CCLXXI. LE CHOIX DE PORTIONS JETÉ AU PASSAGE EN GRAMMES (08/09/2026, ft-v1173) ═══════════
+/* ═══ CCLXXI. LE CHOIX DE PORTIONS JETÉ AU PASSAGE EN GRAMMES (08/09/2026, ft-v1175) ═══════════
    Michel, enregistrement d'écran à l'appui : *« pour ma prot iso quand je veux changer la valeur
    en gramme ça ne fonctionne pas »*. ⛔⛔ Mesuré image par image : il tape `100`, l'app écrit
    « ✅ 100 g — les 4 valeurs ci-dessous correspondent à ce poids »… et DIVISE ces valeurs par
@@ -30658,7 +30677,7 @@ console.log('\n-- CCLXIX. La colonne Source et son titre (ft-v1171) --');
    n'a pas changé » — c'est la leçon de ft-v1163, où trois mutations sur quatre n'avaient pas
    mordu pour cette raison exacte.
    ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
-console.log('\n-- CCLXXI. Portions puis grammes (ft-v1173) --');
+console.log('\n-- CCLXXI. Portions puis grammes (ft-v1175) --');
 {
   const V=await p.evaluate(async()=>{
    try{
@@ -30695,7 +30714,7 @@ console.log('\n-- CCLXXI. Portions puis grammes (ft-v1173) --');
     poser('af-poids','100'); await d(220);
     o.declare100=mac('af');                           // ③ ⭐⭐ LE TÉMOIN DE LA VIDÉO
     o.ref100=/Référence : 100 g/.test(blocA());
-    o.poseApres=(typeof _afPoidsPose!=='undefined')?_afPoidsPose:null;                         // le drapeau qui départage ft-v1061 et ft-v1173
+    o.poseApres=(typeof _afPoidsPose!=='undefined')?_afPoidsPose:null;                         // le drapeau qui départage ft-v1061 et ft-v1175
     /* ⚠️ 200 g ET NON 50 : à 50 g, l'erreur (÷2) et le rescale (÷2) se compensent et donnent le
        MÊME nombre des deux côtés — un témoin vert par coïncidence ne mesure rien (ft-v1163). */
     {const e=document.getElementById('af-prop'); if(e){e.value='200'; _afApplyProp();}} await d(180);
@@ -30752,7 +30771,7 @@ console.log('\n-- CCLXXI. Portions puis grammes (ft-v1173) --');
     t('CCLXXI ③ ⭐⭐ après avoir déclaré 100 g, les 4 valeurs NE TOMBENT PLUS à 156/26 : 312 / 52',
       V.declare100[0]==='312'&&V.declare100[1]==='52', JSON.stringify(V.declare100));
     t('CCLXXI ③b … et la référence écrite dit bien « 100 g »', V.ref100===true, '');
-    /* ⭐⭐ LE DISCRIMINANT RENDU VISIBLE : c'est LUI qui fait cohabiter ft-v1061 et ft-v1173.
+    /* ⭐⭐ LE DISCRIMINANT RENDU VISIBLE : c'est LUI qui fait cohabiter ft-v1061 et ft-v1175.
        Sans poids réel posé, l'écran fait foi ; dès qu'il y en a un, la référence est préservée. */
     t('CCLXXI ③c ⭐⭐ le drapeau `_afPoidsPose` bascule : FAUX avant le poids, VRAI après',
       V.poseAvant===false && V.poseApres===true, 'avant='+V.poseAvant+' après='+V.poseApres);
@@ -30914,6 +30933,86 @@ console.log('\n-- CCLXXII. Le poids du paquet (ft-v1174) --');
       JSON.stringify(Q.suivant));
     t('CCLXXII ⑪ ⛔ un remplissage SANS produit OFF (CIQUAL) efface la pastille du précédent',
       Q.ciqual.pastille===false && Q.ciqual.g===0, JSON.stringify(Q.ciqual));
+  }
+}
+
+/* ═══ CCLXXIII. UNE CIBLE DE SYNONYME QUI N'EXISTE PLUS, EN `auto` À 95 % (08/09/2026, ft-v1175) ═
+   Michel conteste un de mes classements : « curl ischios c'est leg curl ischios et rien a voir
+   avec poussée de hanche hein ». Il avait raison — et en vérifiant je suis tombé sur pire.
+   ⭐⭐ MESURÉ DE BOUT EN BOUT sur un vrai import : « Leg curl » était rapproché en `auto` (95 %)
+   vers « Curl Ischio-jambiers (Leg Curl) », un nom RENOMMÉ depuis en « Leg Curl Couché Machine ».
+   Résultat : un EXERCICE PERSO créé, sans photo ni figurine ni historique.
+   ⛔⛔ ET LA MARQUE ORANGE DE ft-v1166 NE SE DÉCLENCHE PAS, puisque c'est `auto` : ça passe
+   entièrement sous le radar. *L'app était sûre d'elle et elle avait tort — le pire des deux cas.*
+   ⚠️ `exNomActuel` rattrapait le nom dans la RECHERCHE, pas dans le rapprochement : un rattrapage
+   posé sur un seul des deux lecteurs ressemble à un rattrapage (R8).
+   ⛔ ON CORRIGE LA DONNÉE, PAS LE MOTEUR — `_matchExercise` n'est pas touchée (règle ft-v1170). */
+{
+  const R = await p.evaluate(()=>{
+   try{
+    const o={};
+    const m=n=>{const r=_matchExercise(n);return {q:r.match||'—',c:r.confidence,t:r.tier};};
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : il est FONCTIONNEL, il conduit le vrai import.
+       Vérifier `_matchExercise` ne suffirait pas — c'est `finalImportProg` qui ÉCRIT. */
+    S.customExercises=[]; S.programmes=[]; persist();
+    _impMode='new';
+    _impExtracted={name:'T',weeks:4,startDate:'',days:[{label:'J1',exercises:[
+      {name:'Leg curl',sets:3,reps:10,repsPerSet:[],kg:40,kgPerSet:[],setTypePerSet:[]}
+    ]}]};
+    if(typeof _vmMatchExtracted==='function')_vmMatchExtracted();
+    o.nomApresMatch=_impExtracted.days[0].exercises[0].name;
+    finalImportProg();
+    o.persoCrees=(S.customExercises||[]).map(e=>e.n);
+    const prog=(S.programmes||[])[0];
+    const ex=prog&&(prog.days?prog.days[0].exs[0]:prog.exs[0]);
+    o.nomDansProg=(ex||{}).name;
+    o.aUneFiche=(typeof EXLIB!=='undefined')&&EXLIB.some(e=>e.n===o.nomDansProg);
+    S.customExercises=[]; S.programmes=[]; persist();
+    /* ⭐ LE POINT DE MICHEL : le même exercice doit donner la MÊME réponse en français. */
+    o.fr=['curl ischios','curl ischio','curl ischio-jambiers','leg curl ischios'].map(m);
+    o.en=m('leg curl');
+    o.poulie=['cable leg curl','leg curl poulie','low cable leg curl'].map(m);
+    /* ⛔⛔ LES DEUX RETIRÉS (R30) : un nordic curl et un ham curl TRX sont au POIDS DU CORPS ;
+       les rediriger vers une machine COUCHÉE serait le « synonyme FAUX » qu'on refuse partout
+       ailleurs. Ils redeviennent une QUESTION — ce qui est honnête et se voit. */
+    o.nordicDansTable = 'nordic curl' in _EX_EQUIV;
+    o.trxDansTable    = 'trx ham curl' in _EX_EQUIV;
+    o.nordic=m('nordic curl'); o.trx=m('trx ham curl');
+    /* ⛔ CONTRE-TESTS — ce qui était ambigu doit LE RESTER, et le reste ne bouge pas. */
+    o.hanche=m('poussee de hanche');
+    o.temoins=['biceps marteau','adducteurs machine','tirage vertical','presse 45 degres'].map(m);
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+
+  if(R.err) t('CCLXXIII n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLXXIII ⭐⭐ « Leg curl » ne fabrique PLUS d\'exercice fantôme (le défaut réparé)',
+      R.persoCrees.length===0 && R.aUneFiche===true,
+      'créés : '+JSON.stringify(R.persoCrees)+' · nom : '+R.nomDansProg+' · fiche : '+R.aUneFiche);
+    t('CCLXXIII ⛔ ... et le nom écrit dans le programme est le nom ACTUEL du catalogue',
+      R.nomApresMatch==='Leg Curl Couché Machine' && R.nomDansProg==='Leg Curl Couché Machine',
+      'après match : '+R.nomApresMatch+' · dans le prog : '+R.nomDansProg);
+    /* ⭐ LE POINT DE MICHEL : « curl ischios c'est leg curl ischios ». */
+    t('CCLXXIII ⭐ les 4 formes FRANÇAISES rendent la même chose que « leg curl » (R8)',
+      R.en.t==='auto' && R.fr.every(x=>x.q===R.en.q && x.t==='auto'),
+      'en : '+R.en.q+' · fr : '+R.fr.map(x=>x.q+'('+x.t+')').join(' | '));
+    t('CCLXXIII ⛔ les 3 formes « poulie » suivent aussi le nom actuel',
+      R.poulie.every(x=>x.q==='Leg Curl Couché Machine' && x.t==='auto'),
+      R.poulie.map(x=>x.q).join(' | '));
+    /* ⛔⛔ LE TÉMOIN QUI FIGE UN RETRAIT (R30) : sans lui, la prochaine session « répare » en
+       remettant les deux clés, et refait le synonyme faux. */
+    t('CCLXXIII ⛔⛔ RETRAIT VOLONTAIRE — « nordic curl » et « trx ham curl » ne sont PLUS dans la table',
+      R.nordicDansTable===false && R.trxDansTable===false,
+      'nordic : '+R.nordicDansTable+' · trx : '+R.trxDansTable);
+    t('CCLXXIII ⛔ ... et ils redeviennent une QUESTION, pas une certitude fausse',
+      R.nordic.t==='confirm' && R.trx.t==='confirm',
+      'nordic : '+R.nordic.t+' · trx : '+R.trx.t);
+    /* ⛔ CE QUI ÉTAIT AMBIGU LE RESTE : la poussée de hanche a 4 variantes et AUCUN générique. */
+    t('CCLXXIII ⛔ CONTRE-TEST — « poussée de hanche » reste une question (4 variantes, pas de générique)',
+      R.hanche.t==='confirm', 'reçu : '+R.hanche.q+' · '+R.hanche.t);
+    t('CCLXXIII ⛔ NON-RÉGRESSION — les 4 clés des versions précédentes sont intactes',
+      R.temoins.every(x=>x.t==='auto'), R.temoins.map(x=>x.q+'('+x.t+')').join(' | '));
   }
 }
 
