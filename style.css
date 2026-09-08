@@ -286,7 +286,7 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
 .ds-side{padding:5px 12px;border-radius:14px;border:none;background:var(--bg3);box-shadow:inset 0 0 0 1px var(--sep);color:var(--t2);font-size:12px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;font-family:inherit;}
 .ds-side.on{background:var(--red);color:#fff;box-shadow:none;}
 /* ── Écran de fin de séance ── */
-.se-modal{max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;text-align:left;}
+.se-modal{max-height:92dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;text-align:left;}
 .se-hd{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
 .se-badge{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#FF6A73,#EF3E57);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;box-shadow:0 6px 16px -4px rgba(239,62,87,.45);}
 .se-ttl{font-size:20px;font-weight:800;color:var(--t1);line-height:1.1;}
@@ -756,7 +756,7 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
 #install-progress .ip-track{height:4px;background:var(--bg3);border-radius:3px;overflow:hidden;}
 #install-progress .ip-bar{height:100%;width:0;background:linear-gradient(90deg,#FF6A73,#EF3E57);border-radius:3px;transition:width .35s ease;}
 /* Scan « analyse du rapport » — retour visuel pendant la lecture IA */
-.bs-scan-frame{position:relative;border-radius:12px;overflow:hidden;max-height:44vh;background:var(--bg3);box-shadow:inset 0 0 0 1px var(--sep);}
+.bs-scan-frame{position:relative;border-radius:12px;overflow:hidden;max-height:44dvh;background:var(--bg3);box-shadow:inset 0 0 0 1px var(--sep);}
 .bs-scan-frame img{width:100%;display:block;}
 .bs-scan-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,224,158,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(0,224,158,.08) 1px,transparent 1px);background-size:26px 26px;pointer-events:none;}
 .bs-scan-line{position:absolute;left:0;right:0;top:-130px;height:130px;background:linear-gradient(180deg,rgba(0,224,158,0) 0%,rgba(0,224,158,.10) 40%,rgba(140,255,220,.80) 50%,rgba(0,224,158,.10) 60%,rgba(0,224,158,0) 100%);box-shadow:0 0 22px 6px rgba(0,224,158,.38);animation:bsScan 3.2s ease-in-out infinite;}
@@ -917,7 +917,7 @@ html.is-clone .ob-clone-only{ display:block; }
 .drawer-item .di-arr{margin-left:auto;font-size:11px;color:var(--t3);}
 /* ─── DRAWER CONTENT OVERLAY ─── */
 #ov-drawer-cnt{background:var(--bg);}
-#ov-drawer-cnt .modal{max-width:460px;max-height:88vh;overflow-y:auto;}
+#ov-drawer-cnt .modal{max-width:460px;max-height:88dvh;overflow-y:auto;}
 /* Sous-menus (Menu → 1RM, guide, protéines…) : ouverture ET fermeture en glissé doux (avant : instantané, « ça claque ») */
 #ov-drawer-cnt.open .modal{animation:dcUp .30s cubic-bezier(.32,.72,0,1);}
 #ov-drawer-cnt.dc-closing{display:flex;}

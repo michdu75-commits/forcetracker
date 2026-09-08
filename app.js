@@ -6100,10 +6100,25 @@ async function generateMealPlan(regenDay,regenMeal){
 
 // ─── IMPORT PLAN ALIMENTAIRE (photo/PDF d'un diététicien) ──────────────
 let _mealImpPhotos=[],_mealImpExtracted=null;
+/* 📷 ft-v1178 — LE 3ᵉ IMPORT, celui que Michel n'avait PAS signalé. Trouvé par l'audit qu'il a
+   demandé avant de coder : il portait le défaut à l'identique (extraction issue d'un appel IA,
+   effacée à la réouverture, overlay sans `data-no-dismiss`). Même propriétaire (`_scanEnCours`,
+   log.js) — *un audit qui ne cherche que le cas signalé n'est pas un audit*. */
 function openImportMeal(){
-  _mealImpPhotos=[];_mealImpExtracted=null;
-  mealImpGoStep(1);
+  if(typeof _scanEnCours==='function' && _scanEnCours(_mealImpPhotos,_mealImpExtracted)){
+    if(typeof _bandeauReprise==='function')_bandeauReprise('mimp-reprise', mealImpRecommencer);
+    if(_mealImpExtracted){ mealImpGoStep(4); if(typeof _renderMealImpConfirm==='function')_renderMealImpConfirm(); }
+    else { mealImpGoStep(2); if(typeof _renderMealImpThumbs==='function')_renderMealImpThumbs(); }
+  }else{
+    mealImpRecommencer(true);
+  }
   document.getElementById('ov-import-meal').classList.add('open');
+}
+function mealImpRecommencer(silencieux){
+  _mealImpPhotos=[];_mealImpExtracted=null;
+  if(typeof _cacheReprise==='function')_cacheReprise('mimp-reprise');
+  mealImpGoStep(1);
+  if(!silencieux && typeof toast==='function')toast('Nouveau scan','info');
 }
 function closeImportMeal(){document.getElementById('ov-import-meal').classList.remove('open');}
 function mealImpGoStep(n){
@@ -6224,6 +6239,7 @@ function finalImportMeal(){
   });
   S.mealPlan={days,generatedAt:td,regenDate:null,regenCount:0,imported:true,planName:d.planName||''};
   persist();
+  mealImpRecommencer(true);                              // ft-v1178 : scan consommé → on le vide
   closeImportMeal();
   if(typeof renderMealPlanIA==='function')renderMealPlanIA();
   toast('Plan alimentaire importé ! 🍽️','success');

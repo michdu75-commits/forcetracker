@@ -28732,7 +28732,15 @@ console.log('\n-- CCLVI. Le filet déterministe des échauffements (ft-v1158) --
      il passait au vert pendant que la fusion n'avait plus lieu. 👉 *Chercher un texte n'est pas
      vérifier un appel.* On borne désormais la recherche à la RÉGION du chemin d'extraction, et on
      exige un appel EN DÉBUT DE LIGNE — ce qu'un `//` casse. */
-  const _reg=_lj.slice(_lj.indexOf('_mergeImportSeances();'), _lj.indexOf('_renderImpConfirm();'));
+  /* ⚠️ BORNAGE CORRIGÉ LE 08/09 (ft-v1178) — ET LA GARANTIE N'EST PAS TOUCHÉE.
+     La borne de FIN était cherchée depuis le DÉBUT du fichier. En ajoutant un appel à
+     `_renderImpConfirm()` dans `openImportProg` (la reprise de scan), cette borne est passée
+     AVANT la borne de début : la région se retournait, `slice` rendait du vide, et le témoin
+     rougissait sur un code parfaitement juste. 👉 **Une borne de fin se cherche APRÈS la borne
+     de début** — sinon le témoin dépend de l'ordre des fonctions dans le fichier, ce que
+     personne n'a jamais décidé de figer. */
+  const _iDeb=_lj.indexOf('_mergeImportSeances();');
+  const _reg=_lj.slice(_iDeb, _lj.indexOf('_renderImpConfirm();', _iDeb));
   const _iM=_reg.indexOf('_mergeImportEchauffements();'), _iV=_reg.indexOf('_vmMatchExtracted();');
   t('CCLVI ⛔⛔ CONTRÔLE — le chemin d\'extraction APPELLE la fusion, et AVANT le rattachement VM',
     /^[ \t]*_mergeImportEchauffements\(\);/m.test(_reg) && _iM>=0 && _iV>=0 && _iM<_iV,
@@ -31103,6 +31111,116 @@ console.log('\n-- CCLXXII. Le poids du paquet (ft-v1174) --');
       /9\. TEMPS DE REPOS/.test(_prompt) && /N\\'INVENTE JAMAIS UN REPOS/.test(_prompt), '');
     t('CCLXXIV ⛔⛔ ... et elle nomme explicitement les valeurs VARIABLES à refuser',
       /90-120s/.test(_prompt) && /selon ressenti/.test(_prompt), '');
+  }
+}
+
+/* ═══ CCLXXV. UN SCAN D'IMPORT MOURAIT EN ROUVRANT LA FENÊTRE (08/09/2026, ft-v1178) ═════════
+   Michel : « quand on scan un pdf, si on fait une mauvaise manip on sort de la fenêtre, et hop
+   le scan est perdu et je dois recommencer ».
+   ⛔⛔ LE DÉFAUT N'EST PAS OÙ ON LE CROIT : `close*()` ne détruit RIEN — il retire la classe
+   `open`. C'est `open*()` qui remettait tout à zéro. Le scan SURVIVAIT à la fermeture et MOURAIT
+   à la réouverture : entre les deux, photos et extraction étaient encore en mémoire.
+   ⭐⭐ L'AUDIT (demandé par Michel AVANT de coder) a trouvé que ce sont TROIS imports, pas un :
+   programme, historique ET repas — les trois avec une extraction issue d'un APPEL IA PAYÉ, et
+   aucun `data-no-dismiss` (un clic à côté ferme). *Un audit qui ne cherche que le cas signalé
+   n'est pas un audit.*
+   ⚠️ LA MOITIÉ QUI REND L'AUTRE SÛRE : vider APRÈS un import réussi. Sans ça, on proposerait de
+   reprendre un scan déjà importé — un piège pire que le défaut réparé. */
+{
+  const R = await p.evaluate(()=>{
+   try{
+    const o={};
+    o.existe = typeof _scanEnCours==='function' && typeof impRecommencer==='function'
+            && typeof histRecommencer==='function' && typeof mealImpRecommencer==='function';
+    const etape=(pre)=>[1,2,3,4].filter(i=>{const e=document.getElementById(pre+i);return e&&e.style.display!=='none';}).join(',');
+    const jour=n=>({label:'SÉANCE '+n,exercises:[1,2,3].map(i=>({name:'Exercice '+i,sets:4,reps:8,repsPerSet:[],kg:60,kgPerSet:[],setTypePerSet:[],note:''}))});
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION — on rejoue SA manip : fermer par mégarde, rouvrir. */
+    openImportProg();
+    _impExtracted={name:'PB',weeks:4,startDate:'',days:[jour(1),jour(2)]};
+    _impPhotos=[{data:'x',type:'image/jpeg',name:'p1'}];
+    impGoStep(4);
+    closeImportProg();
+    o.surviteFermeture = !!_impExtracted;      // close ne détruit rien
+    openImportProg();
+    o.repris = !!_impExtracted;                // open ne détruit plus
+    o.etapeReprise = etape('imp-s');           // « 4 » : on revient sur l'aperçu
+    const bd=document.getElementById('imp-reprise');
+    o.bandeau = !!bd && bd.style.display==='flex';
+    o.boutonReset = !!(bd && bd.querySelector('[data-reset]'));
+    /* ⛔ R24 — la sortie doit être VISIBLE et MARCHER : sans elle, reprendre serait un piège
+       (on ne pourrait plus lancer un scan neuf). */
+    if(o.boutonReset) bd.querySelector('[data-reset]').click();
+    o.resetVide = !_impExtracted && (_impPhotos||[]).length===0;
+    o.bandeauCache = !!bd && bd.style.display==='none';
+    /* ⛔⛔ LE PIÈGE : un import RÉUSSI ne doit PAS être proposé à la reprise. */
+    _impExtracted={name:'X',weeks:1,startDate:'',days:[jour(1)]}; _impPhotos=[{data:'x'}]; _impMode='new';
+    S.programmes=[];S.customExercises=[];persist();
+    finalImportProg();
+    o.videApresImport = !_scanEnCours(_impPhotos,_impExtracted);
+    openImportProg(); o.etapeApresImport = etape('imp-s');   // « 1 » : on repart de zéro
+    impRecommencer(true); closeImportProg();
+    /* ⭐ PHOTOS SANS EXTRACTION → on reprend à l'étape 2, pas à l'aperçu vide. */
+    openImportProg(); _impPhotos=[{data:'x',type:'image/jpeg',name:'p'}]; _impExtracted=null;
+    closeImportProg(); openImportProg();
+    o.etapePhotos = etape('imp-s');
+    impRecommencer(true); closeImportProg();
+    /* ⛔⛔ LES DEUX JUMELLES (R8) — le poser d'un seul côté aurait été la 8ᵉ fois de la journée. */
+    openImportHist();
+    _histExtracted={sessions:[{date:'2026-09-01',label:'J1',exercises:[{name:'Squat',sets:[{kg:100,reps:5}]}]}]};
+    _histPhotos=[{data:'x'}];
+    closeImportHist(); openImportHist();
+    const bh=document.getElementById('hist-reprise');
+    o.histRepris = !!_histExtracted && !!bh && bh.style.display==='flex' && etape('hist-s')==='4';
+    if(bh&&bh.querySelector('[data-reset]')) bh.querySelector('[data-reset]').click();
+    o.histReset = !_histExtracted;
+    closeImportHist();
+    openImportMeal();
+    _mealImpExtracted={planName:'P',days:[{name:'Lundi',meals:[]}]}; _mealImpPhotos=[{data:'x'}];
+    closeImportMeal(); openImportMeal();
+    const bm=document.getElementById('mimp-reprise');
+    o.mealRepris = !!_mealImpExtracted && !!bm && bm.style.display==='flex' && etape('mimp-s')==='4';
+    if(bm&&bm.querySelector('[data-reset]')) bm.querySelector('[data-reset]').click();
+    o.mealReset = !_mealImpExtracted;
+    closeImportMeal();
+    S.programmes=[];S.customExercises=[];persist();
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+
+  /* ⛔⛔ LES HAUTEURS — 26 limites d'interface converties en `dvh`. ⚠️ ON DIT CE QU'ON SAIT ET CE
+     QU'ON NE SAIT PAS : l'incohérence est MESURÉE (1 règle en `dvh`, 26 surcharges en `vh`) ;
+     que ce soit LA cause du symptôme de Michel ne l'est PAS — pas de WebKit ici. Le témoin fige
+     donc la COHÉRENCE, pas une guérison. */
+  const _ih=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+  const _cs=fs.readFileSync(path.join(ROOT,'style.css'),'utf8');
+  const _vhRestants=[...(_ih+_cs).matchAll(/max-height:\d+vh/g)].map(m=>m[0]);
+  /* ⛔ Les keyframes gardent `vh` EXPRÈS : une animation doit voler sur une distance STABLE,
+     `dvh` change quand la barre d'adresse se rétracte et ferait sauter le confetti. */
+  const _anim=[...(_cs).matchAll(/translateY\((-?\d+)vh\)/g)].length;
+
+  if(R.err) t('CCLXXV n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLXXV ⛔ CONTRÔLE — le propriétaire unique et les 3 « Recommencer » existent', R.existe===true, '');
+    t('CCLXXV ⛔ fermer ne détruit rien (c\'était déjà vrai — on le fige)', R.surviteFermeture===true, '');
+    t('CCLXXV ⭐⭐ ROUVRIR NE DÉTRUIT PLUS : le scan est REPRIS, sur l\'aperçu (le défaut réparé)',
+      R.repris===true && R.etapeReprise==='4', 'repris : '+R.repris+' · étape : '+R.etapeReprise);
+    t('CCLXXV ⛔ R24 — le bandeau « Scan repris » et sa sortie sont VISIBLES',
+      R.bandeau===true && R.boutonReset===true, 'bandeau : '+R.bandeau+' · bouton : '+R.boutonReset);
+    t('CCLXXV ⛔ ... et « Recommencer » vide vraiment (sinon reprendre serait un piège)',
+      R.resetVide===true && R.bandeauCache===true, 'vidé : '+R.resetVide+' · caché : '+R.bandeauCache);
+    t('CCLXXV ⛔⛔ un import RÉUSSI n\'est PAS proposé à la reprise (la moitié qui rend l\'autre sûre)',
+      R.videApresImport===true && R.etapeApresImport==='1',
+      'vidé : '+R.videApresImport+' · étape : '+R.etapeApresImport);
+    t('CCLXXV ⭐ des PHOTOS sans extraction reprennent à l\'étape 2, pas sur un aperçu vide',
+      R.etapePhotos==='2', 'étape : '+R.etapePhotos);
+    t('CCLXXV ⛔⛔ LA JUMELLE HISTORIQUE reprend et se remet à zéro (R8)',
+      R.histRepris===true && R.histReset===true, 'repris : '+R.histRepris+' · reset : '+R.histReset);
+    t('CCLXXV ⛔⛔ LA JUMELLE REPAS aussi — celle que Michel n\'avait PAS signalée (R8)',
+      R.mealRepris===true && R.mealReset===true, 'repris : '+R.mealRepris+' · reset : '+R.mealReset);
+    t('CCLXXV ⛔ COHÉRENCE DES HAUTEURS — plus aucune limite d\'interface en `vh`',
+      _vhRestants.length===0, 'restantes : '+_vhRestants.slice(0,4).join(', '));
+    t('CCLXXV ⛔ ... et les 2 ANIMATIONS gardent `vh` exprès (distance stable)',
+      _anim===2, 'trouvées : '+_anim);
   }
 }
 
