@@ -8,7 +8,7 @@
 
 - **Version en ligne (live) :** `ft-v1173` — ⚖️ **LE CHOIX DE PORTIONS ÉTAIT JETÉ AU PASSAGE EN
   GRAMMES — et le commentaire juste au-dessus promettait le contraire.**
-  ⏳ **Suite VERTE** : **parcours 3276/3276** (+17, bloc **CCLXXI**), calculs 339/339, muscles 241/241, croisés
+  ⏳ **Suite VERTE** : **parcours 3291/3291** sur l'arbre FUSIONNÉ (+17, bloc **CCLXXI**), calculs 339/339, muscles 241/241, croisés
   50/50, dates 9/9, données classées 0 trou.
   ⭐⭐ **Lu image par image sur son enregistrement d'écran** : il tape `100`, l'app écrit
   *« ✅ 100 g — les 4 valeurs ci-dessous correspondent à ce poids »*… et **divise ces valeurs par
