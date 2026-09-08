@@ -443,3 +443,51 @@ Elles sont connues et le fichier les nomme — c'est `tools/check_regles.py` qui
 
 *Cause de fond, qu'aucune discipline ne corrigera : une passe complète dure 16 minutes, et
 l'intervalle entre deux livraisons est plus court que ça.*
+
+
+## 🧨 TROIS COLLISIONS EN UNE JOURNÉE — et cette fois c'est la RÉSOLUTION qui a fait le dégât (07/09/2026)
+
+**La section précédente (06/09) parlait du NUMÉRO. Celle-ci parle de la FUSION elle-même, et c'est
+pire** : un numéro en double se voit tout de suite ; une fusion mal résolue **produit du code qui ne
+compile pas**, ou pire, **efface silencieusement**.
+
+**⭐ D'abord le chiffre, parce qu'il change la nature du problème** : **trois** collisions dans la
+même journée (ft-v1162/1163 · ft-v1166/1167 · ft-v1168/1169). À ce rythme-là, ce n'est plus de la
+malchance, c'est **le régime normal** — la cause de fond était déjà écrite : *une passe complète dure
+plus longtemps que l'intervalle entre deux livraisons.*
+
+### ⛔⛔ Le dégât n°1 : une fusion « les deux côtés » a coupé le bloc de tests de l'autre EN DEUX
+
+En résolvant `tests/parcours/runner.js` par « je garde leur version **puis** la mienne », mon bloc
+s'est retrouvé **inséré au milieu du leur** — entre leur `}catch(e){…}` et le `});` qui le referme.
+👉 Résultat : **`SyntaxError: await is only valid in async functions`**, et *tout* le banc d'essai
+mort, pas seulement les deux blocs concernés.
+
+**⭐⭐ Ce qui l'a attrapé** : `node --check` avant de pousser. **Ce qui l'a réparé** — et c'est la
+leçon : ⛔ **on ne rafistole pas une fusion ratée sur un gros fichier.** On **reconstruit** :
+`git show origin/master:<fichier>` (leur version **intacte**), puis on ré-applique **son propre bloc**
+au bon endroit. *Recoller des morceaux dans un fichier de 30 000 lignes, c'est fabriquer le prochain
+bug.*
+
+### ⛔ Le dégât n°2 : la ligne déjà close, ressuscitée — DEUX fois dans la journée
+
+Une fusion « union » sur `docs/JOURNAL-DE-PARTAGE.md` **fait revenir les lignes supprimées**. Ma
+ligne 🟡 *« en cours »*, pourtant remplacée par sa clôture 🟢, est réapparue **le matin ET le soir**.
+👉 *Une ligne 🟡 fantôme dit à l'autre session « ne touche pas à ça », sur un sujet livré depuis
+des heures.*
+**⭐ Attrapé les deux fois par `python3 tools/check_regles.py`** — qui détecte précisément *« des
+lignes 🟡 qui ont DÉJÀ leur clôture 🟢 »*. **C'est le contrôle qui rend ce fichier utilisable à deux.**
+
+### 🧭 Les réflexes qui en sortent (à appliquer APRÈS chaque fusion, dans cet ordre)
+
+1. **`node --check`** sur chaque `.js` fusionné — avant tout le reste, c'est gratuit et ça attrape le
+   dégât n°1 ;
+2. **`python3 tools/check_regles.py`** — attrape le n°2, les entrées d'archive perdues et les
+   marqueurs de conflit oubliés ;
+3. **rejouer SON bloc seul** (le mini-runner) sur l'arbre fusionné : *un bloc vert avant la fusion ne
+   prouve rien après* ;
+4. **`git diff --numstat`** sur les fichiers-journaux : un nombre de **suppressions** non nul sur une
+   archive ou un journal de partage est un signal, jamais un détail.
+
+*Et la règle de fond, inchangée depuis le 06/09 : **le premier publié garde le numéro**, on ne
+renumérote jamais le bloc de l'autre, et le vrai verrou reste git — un push non-fast-forward échoue.*

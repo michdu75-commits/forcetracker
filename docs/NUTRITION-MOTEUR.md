@@ -245,6 +245,48 @@ portions. Conséquences :
   **« Thon » seul n'était couvert par aucune substitution, depuis toujours** ;
 - **pas de fibres, pas de micronutriments** — donc rien à dire sur le fer, la B12, le calcium.
 
+> ⭐⭐ **MISE À JOUR DU 07/09/2026 — LA 2ᵉ BASE A ENFIN UNE SOURCE, ET ELLE SE FABRIQUE TOUTE SEULE.**
+> Le manque décrit ci-dessus (« ~300 aliments `composable`, liste blanche relue à la main ») supposait
+> qu'il fallait **écrire** la base. **ft-v1110** (calibrage à la main) puis **ft-v1165** (le scan sans
+> valeurs ouvre le calibrage tout seul) produisent exactement la matière première : **un code-barres +
+> un pour-100 g recopié sur la vraie étiquette, par quelqu'un qui avait le produit en main**.
+> 👉 ***C'est plus fiable que ce que la base publique porte, et c'est précisément ce qui lui manque.***
+> ⛔ **Rien n'est encore récolté** : le mécanisme est **décrit et chiffré** dans `IDEES-FUTURES.md`
+> (« Récolter les calibrages »), avec le patron à réutiliser (celui des « exercices manquants »), la
+> validation croisée gratuite (3 calibrages concordants = valeur vérifiée) et les 3 contraintes —
+> dont ⛔ **pas dans les Script Properties** (pleines à 102 % le 29/07).
+> ⚠️ **Et le tri journal / générateur du §4.0 reste entier** : une base récoltée sert d'abord la
+> **couverture** (Journal) ; l'employer pour le **générateur** demanderait la liste blanche
+> `regimes`/`allergenes`, qui ne se récolte pas.
+
+### 🆕 3.2bis Les valeurs saisies peuvent être IMPOSSIBLES — deux lois physiques, ajoutées le 07/09
+
+> **Le trou n'était pas la variété, c'était la CONFIANCE dans les chiffres du journal.** Trois versions
+> ont buté sur la même ligne réelle de Michel (« Iso zero protein (ASL) »), et chacune a ajouté une
+> **loi**, jamais un seuil choisi :
+>
+> | loi | question posée | ajoutée |
+> |---|---|---|
+> | **`_masseImpossible`** | *les macros TIENNENT-elles dans la portion ?* (35 g dans 30 g = impossible) | ft-v1103 |
+> | **`_kcalImpossibleVals`** | *les calories peuvent-elles tenir ?* `plafond = 4P+4C+9L + 9 × masse libre` | **ft-v1162** |
+>
+> ⭐⭐ **La 2ᵉ est née d'une CÉCITÉ mesurée du contrôle voisin** : `_coherenceKcal` combine 25 % **et**
+> un plancher de **60 kcal**, or pour que le pourcentage morde il faut `0,25 × kcal ≥ 60` — donc
+> **une entrée d'au moins 240 kcal**. 👉 ***En dessous, le plancher éteint le pourcentage*** — et
+> « moins de 240 kcal », c'est un shake, un yaourt, un fruit, un œuf : **la majorité des lignes**.
+> (`BUGS.md` **§47**.)
+> ⭐ **Mesuré avant de coder : 0 faux positif sur les 3 235 aliments exploitables de CIQUAL et les 123
+> produits de `marques.json`** — huile pure, sucre, miel et beurre compris. ⛔ Et **aucune liste
+> d'exception n'est nécessaire**, contrairement au contrôle des 25 % (`_KCAL_ALCOOL`) : *7 kcal/g est
+> en dessous de 9*. **Une loi physique n'a pas besoin qu'on lui liste ses exceptions ; un pourcentage,
+> si.**
+> ⛔ **Le plancher de 60 n'a PAS bougé** (R30) : mesuré, le descendre à 30 ne coûterait que 2 aliments
+> sur 3 126 — quasi inerte — mais ce serait un chiffre à défendre, quand la loi se démontre.
+> ⏭️ **La suite est nommée, pas construite** : quand un `per100` est connu (donc après tout scan), on
+> n'a plus besoin de deviner — **chaque champ implique une quantité**, et si les quatre ne concordent
+> ni entre elles ni avec la quantité affichée, l'app le sait déjà. *Comparaison exacte, pas loi
+> générale ; ça mérite sa propre version.*
+
 ### ✅ 3.3 Le Journal et le Plan ne se parlent pas — **BOUCHÉ le 26/08/2026 (ft-v1019)**
 
 > ⭐ **« Ce qu'il te reste, en vrai »** : le manque de chaque macro est traduit en **aliments à
