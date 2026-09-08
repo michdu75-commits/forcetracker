@@ -8,7 +8,7 @@
 
 - **Version en ligne (live) :** `ft-v1178` — 📷 **UN SCAN D'IMPORT MOURAIT EN ROUVRANT LA
   FENÊTRE**, et les **26** limites de hauteur passent en **`dvh`**.
-  ⏳ **Suite complète VERTE** : parcours **3334/3334** (+11, bloc **CCLXXV**), calculs 339/339,
+  ⏳ **Suite complète VERTE** : parcours **3334/3334** (+11, bloc **CCLXXVI**), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⭐ **Michel** : *« si on fait une mauvaise manip on sort de la fenêtre, et hop le scan est perdu
   et je dois recommencer »* + *« la fenêtre ne va pas jusqu'en haut, donc elle est petite »*.
@@ -32,6 +32,32 @@
   📣 **Règle d'or #11** : le bandeau **est** l'annonce, au moment où ça sert. Ni pastille ni pop-up.
   ⏭️ ⛔ Le scan ne survit **pas** à la fermeture de l'app (mémoire, pas stockage) — noté, pas fait.
   ⚠️ **Michel doit vérifier sur Safari/iPhone** : c'est lui qui dira si le `dvh` règle sa fenêtre.
+- **Version précédente :** `ft-v1177` — ⚖️ **L'INVARIANT DE REPRISE : des totaux ne se
+  réapparient jamais à une autre quantité.**
+  ⏳ **Suite VERTE** : **parcours 3339/3339** sur l'arbre FUSIONNÉ (+16, bloc **CCLXXVI**), calculs 339/339, muscles
+  241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  ⭐⭐ **Audit externe (GPT) sur son export réel** (168 lignes), **reproduit au chiffre près avant
+  de coder** : sa ratatouille passe de *380 g = 274 kcal* à *110 g = 274 kcal*, l'app en dérive un
+  pour-100 g de **249** (au lieu de 72), et la reprise suivante donne **448 kcal** pour 180 g —
+  ses trois lignes des 31/08, 01/09 et 02/09, à l'unité.
+  ⛔⛔ **La cause est R8 à l'état pur** : `_afSuggPrendreLocale` **préservait déjà** le couple
+  `totaux ↔ q` (79 kcal sur la même entrée) ; `quickFillFood` non (274). ***Les deux lignes
+  existaient, posées sur une seule porte.***
+  ⭐ **La propagation** : `_provFood` fabrique un pour-100 g depuis cet appariement et
+  l'enregistre — l'erreur devient la vérité du produit.
+  ⛔ **2ᵉ défaut** : `quickAddFood` écrivait `q:null, u:null, per100:null` — des lignes
+  **non convertibles**. `q`/`u` traversent enfin la liste blanche de `_provFood` (**3ᵉ fois** que
+  cet oubli s'y produit).
+  ⛔ **Non touchés, à la demande de l'audit** : `_qtyRescale` (il calcule juste depuis une
+  référence corrompue en amont) et `_afSuggPrendreLocale` (**déjà juste** — **R30**).
+  ⚠️⚠️ **Et le contrôle négatif a REFUSÉ mon premier correctif** : `_afPoidsPose=true` sur le
+  poids repris rouvrait le bug après un aller-retour d'unité. *Le drapeau dit « la personne a
+  déclaré un poids pour CE QUI EST AFFICHÉ » ; un poids hérité n'est pas cela.* **2ᵉ jour de
+  suite qu'un correctif trop large est arrêté par la mesure.**
+  ⏭️ **Rien n'est réparé rétroactivement** (son §11) : l'outil de récupération viendra après, à
+  trois niveaux (certain · ambigu · insuffisant). ⏭️ **L'exclusivité des deux blocs Quantité part
+  en version séparée** — bug distinct.
+
 - **Version précédente :** `ft-v1176` — ⏱️ **LE TEMPS DE REPOS ÉCRIT SUR LE PDF N'ÉTAIT
   JAMAIS DEMANDÉ AU MODÈLE.**
   ✅ **DÉPLOIEMENTS VÉRIFIÉS VERTS DES DEUX CÔTÉS** (R18) : **site run #1025** et **backend

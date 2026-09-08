@@ -1182,6 +1182,19 @@ function _provFood(vals){
        ⛔ Posé SEULEMENT s'il est vrai : un `false` recopié partout annoncerait une
        vérification qui n'a pas eu lieu sur les chemins décodés par ZXing. */
     if(_afSrc.codeDouteux===true)p.codeDouteux=true;
+    /* ⚖️⛔⛔ ft-v1176 — `q`/`u` TRAVERSENT ENFIN LA LISTE BLANCHE, ET C'EST LA **3ᵉ FOIS** QUE CE
+       MÊME OUBLI SE PRODUIT ICI. Les deux avertissements en majuscules ci-dessus le disent déjà :
+       *un champ posé par `_afSetSrc` et non recopié ici n'atteint jamais l'entrée enregistrée,
+       sans erreur, sans test rouge.*
+       👉 CE QUE ÇA COÛTAIT : `quickAddFood` (l'ajout DIRECT depuis la liste, sans ouvrir le
+       formulaire) ne peut pas passer par les champs de l'écran — ils n'existent pas à ce
+       moment-là. Il recopiait donc les **totaux** d'une entrée et créait une ligne à
+       `q:null, u:null, per100:null` : **mathématiquement non convertible**. Rien ne permet plus
+       de savoir si 323 kcal valaient 100, 250 ou 300 g. C'est la forme des lignes « quantité
+       vide » relevées dans l'export réel (steak haché, 24/08 · 25/08 · 28/08).
+       ⛔ Uniquement en grammes, et seulement si la valeur est plausible : on transmet ce qu'on
+       sait, on ne complète pas ce qu'on ignore (R29). */
+    if(+_afSrc.q>0 && (!_afSrc.u || _afSrc.u==='g')){ p.q=+_afSrc.q; p.u='g'; }
     /* ⚠️⚠️ TROISIÈME FOIS AU MÊME ENDROIT (03/09/2026, ft-v1114) — et l'avertissement est écrit
        en majuscules juste au-dessus. J'ai posé `doute` et `kcalDerivee` dans `_afSetSrc`, écrit
        en commentaire « le doute descend jusqu'à la donnée (R4) »… et la ligne enregistrée
@@ -2421,6 +2434,36 @@ function quickFillFood(i){
     _bcNutr=null;
     if(typeof _bcMontrerTotal==='function') _bcMontrerTotal(0);   // ⛔ pas de total orphelin
   }
+  /* ⚖️⛔⛔ ft-v1176 — L'INVARIANT DE REPRISE : DES TOTAUX NE SE RÉAPPARIENT JAMAIS À UNE AUTRE
+     QUANTITÉ. Audit externe sur l'export réel de Michel, **reproduit ici au chiffre près** :
+     sa ratatouille passe de *380 g = 274 kcal* à *110 g = 274 kcal*, l'app en dérive un
+     pour-100 g de **249** au lieu de 72, et tout ce qui suit est « cohérent » depuis une vérité
+     fausse (*180 g → 448 kcal*, exactement sa ligne du 02/09).
+
+     ⭐⭐ ET LA CAUSE EST **R8 À L'ÉTAT PUR, MESURÉE** : `_afSuggPrendreLocale` — la reprise par la
+     recherche dans le journal — porte **déjà** ces deux lignes et rend **79 kcal** sur la même
+     entrée. Cette fonction-ci rendait **274**. *Le mécanisme existait, posé sur une seule des
+     deux portes* — pour la 6ᵉ fois dans ce fichier.
+
+     👉 Sans pour-100 g, la seule chose qui relie les 274 kcal au monde réel est `it.q`. La
+     branche `else` ci-dessus le **jetait**, et `_afMajAncre` traitait alors l'écran comme « une
+     portion » (`q:1`) : déclarer 110 g revenait à affirmer que ces 274 kcal pèsent 110 g.
+     ⛔ Et **uniquement en grammes** : une quantité en `ml` ou une portion sans masse ne dit pas
+     ce que pèse l'aliment, et on n'invente pas une densité (R29).
+
+     ⛔⛔⛔ ET `_afPoidsPose` N'EST **PAS** POSÉ ICI — J'AVAIS ÉCRIT LE CONTRAIRE, LA MESURE M'A
+     REPRIS. Mon premier jet le posait, en se disant *« ce poids vient d'une saisie enregistrée,
+     donc c'en est un vrai »*. **Mesuré : ça ROUVRAIT le bug.** Après un aller-retour d'unité,
+     déclarer 110 g redonnait **274 kcal** — exactement le défaut que cette version corrige.
+     👉 La raison tient en une phrase : `_afPoidsPose` veut dire *« la personne a déclaré un
+     poids pour CE QUI EST AFFICHÉ »*, et seul `_afDeclarePoids` peut l'affirmer. Un poids
+     **hérité** d'une entrée enregistrée ne dit rien de l'écran : dès que la personne change la
+     quantité, `_afRef.q` (380) ne correspond plus à ce qu'elle voit (79). Préserver cette base
+     périmée, c'est réapparier des totaux à une autre quantité — la faute même du jour.
+     *La différence avec ft-v1173 n'est pas le geste, c'est QUI a posé le poids.* */
+  if(!_bcNutr && +it.q>0 && (!it.u||it.u==='g')){
+    _afUnite='g'; _afPoidsDeclare=+it.q;
+  }
   /* Se tait tout seul si un pour-100 g existe (`if(_bcNutr) → cacher`) : R2, un seul réglage
      de quantité visible à la fois. */
   if(typeof _afMajAncre==='function') _afMajAncre(true);   // reprise d'un aliment : la source change
@@ -2434,7 +2477,17 @@ function quickAddFood(i){
      `origine:'reprise'` le dit — ce n'est ni une mesure, ni une saisie fraîche, et surtout ça ne
      ment pas en héritant de la source d'origine, qu'on n'a pas conservée sur les favoris. */
   const _vals={kcal:it.kcal||0,prot:it.prot||0,carbs:it.carbs||0,fat:it.fat||0};
-  _afSetSrc({saisie:'liste',origine:'reprise'});
+  /* ⚖️⛔⛔ ft-v1176 — ON REPREND LA LIGNE ENTIÈRE, PAS SEULEMENT SES QUATRE CHIFFRES. Ce chemin
+     recopiait les **totaux** et rien d'autre : la ligne créée portait `q:null, u:null,
+     per100:null`, c'est-à-dire des calories **qu'aucun calcul ne pourra plus jamais
+     redimensionner**. On ne saurait plus dire si 323 kcal valaient 100 g ou 300 g.
+     👉 Or l'information est là, dans `it` : la quantité, son unité et le pour-100 g de l'entrée
+     d'origine. *Ce n'est pas une déduction, c'est une recopie* — les jeter était le défaut.
+     ⛔ ET CE N'EST PAS UNE NOUVELLE MESURE : `origine:'reprise'` continue de dire exactement ce
+     que c'est, et `sourceId`/`etat` suivent pour que la provenance ne mente pas (R33). */
+  _afSetSrc({saisie:'liste', origine:'reprise',
+             q:(+it.q>0 && (!it.u||it.u==='g')) ? +it.q : null, u:it.u||null,
+             per100:it.per100||null, sourceId:it.sourceId||null, etat:it.etat||null});
   S.foodLog.push(Object.assign({date:_journalJourActif(),meal:_afMeal,name:(it.name||'').slice(0,80),ts:Date.now()},_vals,_provFood(_vals)));
   _afSetSrc(null);
   _unhideFood(it.name);
@@ -3479,6 +3532,14 @@ function _afSuggPrendreLocale(i){
      et le libellé « que tu as indiqué » reste VRAI — elle l'a indiqué la fois d'avant.
      ⛔ Grammes seulement, et jamais par-dessus un pour-100 g (qui a déjà son propre champ). */
   if(!_bcNutr && +e.q>0 && (!e.u||e.u==='g')){
+    /* ⭐ CES DEUX LIGNES SONT LE MODÈLE, et l'audit du 08/09 l'a confirmé en les mesurant : sur
+       une entrée sans pour-100 g, ce chemin-ci rendait déjà **79 kcal** pour 110 g là où
+       `quickFillFood` en rendait **274**. C'est de là que vient le correctif de ft-v1176 — on
+       n'a rien inventé, on a porté ce qui était ici sur la porte jumelle (R8).
+       ⛔⛔ ET ON N'Y AJOUTE PAS `_afPoidsPose` — j'ai essayé en ft-v1176, la mesure l'a refusé :
+       il rouvrait le bug après un aller-retour d'unité (voir le commentaire de `quickFillFood`).
+       Ce drapeau dit *« la personne a déclaré un poids pour ce qui est AFFICHÉ »* ; un poids
+       hérité d'une entrée enregistrée n'est pas cela. **On ne touche pas à ce qui marche** (R30). */
     _afUnite='g'; _afPoidsDeclare=+e.q;
   }
   if(typeof _afMajAncre==='function') _afMajAncre(true);   // reprise depuis le journal : la source change
