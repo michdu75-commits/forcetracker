@@ -6,7 +6,34 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1173` — ⚖️ **LE CHOIX DE PORTIONS ÉTAIT JETÉ AU PASSAGE EN
+- **Version en ligne (live) :** `ft-v1174` — 📦 **LE POIDS DU PAQUET ÉTAIT DEMANDÉ À OPEN FOOD
+  FACTS DEPUIS TOUJOURS, ET JETÉ À L'ARRIVÉE.**
+  ⏳ **Suite VERTE** : **parcours 3303/3303** (+12, bloc **CCLXXII**), calculs 339/339, muscles
+  241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  ⭐⭐ Michel : *« mais normalement le code-barres donne le poids avec non ? »* — **il avait raison,
+  et c'était pire** : `quantity` est **déjà** demandé à OFF à **DEUX endroits** (`_offFetchProduct`,
+  `_offRechercher`) et **zéro ligne ne le lisait**. *On payait la bande passante d'une donnée qu'on
+  jetait* (**R5**, l'audit à l'envers).
+  ⛔⛔ **On ne le PRÉ-REMPLIT PAS** : c'est le poids **du paquet**, pas de ce qu'on a mangé — juste
+  pour une boîte de ratatouille, absurde pour un pot d'isolat de 1 kg (**R29**). **Pastille
+  tapable** sur le patron de `_bcProposerDerniere` (**R13**), avec **une seule différence voulue** :
+  elle **ne vide pas** le champ, elle s'ajoute à ce qui est déjà là.
+  ⭐⭐ **Et ça traverse le calibrage — le cas exact de sa ratatouille** : une fiche trouvée mais
+  **sans valeurs** part à l'écran étiquette (ft-v1165) et l'objet produit disparaît. *Sans report,
+  le produit qui a le plus besoin de son poids serait le seul à le perdre.*
+  ⛔ **Refusé exprès (R30)** : volumes (*1 L d'eau = 1 kg · d'huile = 920 g · de miel = 1,4 kg*),
+  lots (*« 6 x 125 g »*), au-delà de 5 kg.
+  ⚠️⚠️ **Leçon de méthode** : j'avais écrit une **garde anti-lot que la mutation ne faisait rougir
+  personne** — l'expression est ancrée, aucun lot ne pouvait passer. *Une garde qu'aucun témoin ne
+  peut faire rougir n'est pas une sécurité, c'est de la décoration.* Retirée ; c'est le **témoin**
+  qui fige la règle.
+  ⚠️ **Limite dite** : le réseau OFF est **bloqué** depuis le conteneur — **la couverture réelle du
+  champ n'est pas mesurée**. C'est Michel qui la verra en scannant.
+  ⭐ **Partage clarifié** : ses tables (`marques.json` — **123/123 avec un poids de portion, déjà
+  utilisé** —, `alias.json`, `ciqual.json`, `complalim.json`) sont **locales** ; Open Food Facts est
+  un **appel réseau en direct**. Le trou était sur ce seul chemin.
+
+- **Version précédente :** `ft-v1173` — ⚖️ **LE CHOIX DE PORTIONS ÉTAIT JETÉ AU PASSAGE EN
   GRAMMES — et le commentaire juste au-dessus promettait le contraire.**
   ⏳ **Suite VERTE** : **parcours 3291/3291** sur l'arbre FUSIONNÉ (+17, bloc **CCLXXI**), calculs 339/339, muscles 241/241, croisés
   50/50, dates 9/9, données classées 0 trou.
