@@ -8,7 +8,7 @@
 
 - **Version en ligne (live) :** `ft-v1172` — 🔤 **LES ACCENTS FABRIQUAIENT DES DOUBLONS
   INVISIBLES — et la récolte de synonymes est COURTE exprès.**
-  ⏳ **Suite complète VERTE** : parcours **3268/3268** (+15, bloc **CCLXX**), calculs 339/339, muscles 241/241,
+  ⏳ **Suite complète VERTE** : parcours **3274/3274** sur l'arbre FUSIONNÉ avec la ft-v1171 de session-A (+15, bloc **CCLXX**), calculs 339/339, muscles 241/241,
   croisés 50/50, dates 9/9, données classées 0 trou.
   ⭐⭐ **Le déclencheur est une capture de Michel** : **CINQ** exercices perso créés par UN import
   pour **UN SEUL** mouvement d'épaules. Puis sa question : *« pk ne pas rentrer tous ses noms dans
