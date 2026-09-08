@@ -6,6 +6,20 @@
 
 ---
 
+- ⏳ **EN ATTENTE DE MICHEL — la passe de vérification du prochain import, vers le 06/10/2026.**
+  Sa décision du 08/09 : *« je verrais ça dans 4 semaines quand je vais remettre un programme,
+  mets-le dans le journal et on fera l'essai à ce moment-là »*. ⛔ **Il ne réimporte rien d'ici
+  là** — mesuré, un réimport ne lui coûterait ni séance ni record, mais remettrait sa **semaine
+  de cycle à 1**, et il vient de réparer son programme à la main.
+  ⛔⛔ **Ce qui reste à prouver, et pourquoi je ne peux pas le faire** : sur **ft-v1176 · v1175 ·
+  v1170 · v1168 · v1166**, je prouve que la donnée part et que l'app l'applique — **pas que le
+  modèle lise le document**. Pas de clé API ici, et le proxy bloque `script.google.com`.
+  *Le bout PDF → modèle → JSON est le seul que je ne peux pas jouer.*
+  👉 **Les 5 points + les 2 de ft-v1178 (reprise du scan, hauteur `dvh`) sont listés en une seule
+  entrée dans `docs/JOURNAL-DE-TEST.md`** (état 🟣 juge humain) — à regarder **en un seul import**.
+  ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
+  n'expliquait le `dvh` d'origine.
+
 - **Version en ligne (live) :** `ft-v1178` — 📷 **UN SCAN D'IMPORT MOURAIT EN ROUVRANT LA
   FENÊTRE**, et les **26** limites de hauteur passent en **`dvh`**.
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1029**, 7 étapes `success` à **18:25:25 UTC**.
