@@ -8,7 +8,7 @@
 
 - **Version en ligne (live) :** `ft-v1177` — ⚖️ **L'INVARIANT DE REPRISE : des totaux ne se
   réapparient jamais à une autre quantité.**
-  ⏳ **Suite VERTE** : **parcours 3328/3328** (+16, bloc **CCLXXV**), calculs 339/339, muscles
+  ⏳ **Suite VERTE** : **parcours 3339/3339** sur l'arbre FUSIONNÉ (+16, bloc **CCLXXV**), calculs 339/339, muscles
   241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⭐⭐ **Audit externe (GPT) sur son export réel** (168 lignes), **reproduit au chiffre près avant
   de coder** : sa ratatouille passe de *380 g = 274 kcal* à *110 g = 274 kcal*, l'app en dérive un
