@@ -6,7 +6,51 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v1170` — 🔎 **« TIRAGE VERTICAL » VISAIT L'ÉLASTIQUE — et la
+- **Version en ligne (live) :** `ft-v1172` — 🔤 **LES ACCENTS FABRIQUAIENT DES DOUBLONS
+  INVISIBLES — et la récolte de synonymes est COURTE exprès.**
+  ⏳ **Suite complète VERTE** : parcours **3268/3268** (+15, bloc **CCLXX**), calculs 339/339, muscles 241/241,
+  croisés 50/50, dates 9/9, données classées 0 trou.
+  ⭐⭐ **Le déclencheur est une capture de Michel** : **CINQ** exercices perso créés par UN import
+  pour **UN SEUL** mouvement d'épaules. Puis sa question : *« pk ne pas rentrer tous ses noms dans
+  une base de données invisible pour faire directement le bon changement »*.
+  ⭐⭐ **MESURÉ, ET LE DIAGNOSTIC S'EST SÉPARÉ EN DEUX.** ① Les 5 pointent **tous** vers
+  « Développé Épaules Machine » à **50-67 %** — le palier `confirm` : l'app a **demandé**,
+  personne n'a répondu, elle a créé. *Ce n'est pas un trou de vocabulaire, c'est la question qui
+  ne se voyait pas* — réparé par ft-v1166. ② **Mais deux d'entre eux sont LE MÊME NOM** :
+  « Développé Épaules Guide / Haltères » et « Développé épaules **guidé** / haltères ».
+  ⛔⛔ **Le test « existe-t-il déjà ? » comparait en `toLowerCase()` SEUL, sans les accents** →
+  `guide` ≠ `guidé` → **deux exercices pour un**. *Et un doublon d'accent ne se voit pas : il se
+  lit comme un vrai exercice, avec son propre historique, et coupe les charges en deux.*
+  ⭐⭐ **L'app savait déjà le faire** : `_normEx` rend le **même** texte pour ces deux noms.
+  C'était **R2**. Un seul propriétaire désormais, **`_cleNom`**, employé aux **cinq** endroits qui
+  posaient la question à leur façon (**R8**).
+  ⛔ **La garantie est une mesure** : sur les **322** noms du catalogue, **zéro collision** sous
+  `_cleNom` — deux exercices réellement différents ne peuvent pas se confondre, et « (ECH) » reste
+  distinct. L'import écrit **2** exercices là où il en écrivait **3**.
+  ⭐ **La fusion manuelle tolère enfin l'accent**, et ce n'est pas un détail : le geste demandé à
+  qui répare un import est de **retaper** le nom du catalogue, sur un téléphone, avec des accents
+  et un « ° ». Avant, l'accent oublié renommait le perso **en silence**.
+  ⭐ **LA RÉCOLTE : 4 clés sur 24 formes testées.** `biceps marteau` → Marteau · `adducteurs
+  machine` (+ `assis …`) → Adduction Cuisses · `presse à mollets` → Presse Mollets. Chaque cible
+  vérifiée **unique** dans le catalogue. *`adducteurs machine` est un **R8** en miniature : son
+  jumeau `abducteurs machine` était là depuis toujours.*
+  ⛔⛔ **CE QUI A ÉTÉ ÉCARTÉ COMPTE PLUS, et des témoins le figent** : `curl ischios` (33 %) et
+  `poussée de hanche` (50 %) ont **4-5 variantes** · `développé épaules guidé` (67 %) est **le cas
+  de Michel** et il est **ambigu par nature** · `tirage vertical nuque` : **6** exercices portent
+  « nuque ». *Si l'expert hésite, on n'ajoute pas* (**R29**). ⛔ Et **elliptique / vélo / rameur /
+  tapis** surtout pas : mesuré, `_estCreneauCardio` les rend **tous `true`** (ft-v1168) — les
+  mettre là les retransformerait en musculation.
+  ⭐ **La récolte MÉCANIQUE n'a rien donné, et c'est un résultat** : les **77** noms du catalogue
+  à parenthèse retombent **déjà** juste sous leur forme nue. *Les vrais trous sont dans l'argot de
+  salle* — donc la bonne source est la feuille récoltée par **ft-v1167**, pas la devinette.
+  📣 **Règle d'or #11 : RIEN** — aucun écran ne change, rien n'est à faire (**R19/R25**).
+  ⏭️ **Ce que ça ne fait pas** : les 5 exercices déjà créés chez Michel ne sont **pas réécrits**
+  (**R29**) — il les fusionne à la main, et l'accent oublié ne le bloque plus.
+  ⚠️⚠️ **La leçon de méthode est à moi, trouvée par la mutation ②** : mon premier témoin
+  **rejouait** le dédoublonnage **dans le test** au lieu d'appeler `finalImportProg` — la mutation
+  ne faisait rougir **personne**. *Un contrôle qui recalcule la formule qu'il vérifie est un vert
+  qui ne peut pas rougir.* ⛔ **Contrôle négatif : 7 mutations, toutes mordent.**
+- **Version précédente :** `ft-v1170` — 🔎 **« TIRAGE VERTICAL » VISAIT L'ÉLASTIQUE — et la
   mesure a dit que le rapprocheur n'était PAS en cause.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1007**, `success` à **06:24:39 UTC**.
   ⏳ **Suite complète VERTE** : **parcours 3253/3253** (+11, bloc **CCLXVIII**), calculs 339/339,

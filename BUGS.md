@@ -3123,7 +3123,7 @@ est qu'ici la fausse limite a produit **du code**, pas seulement de l'inaction.
 
 ---
 
-## 49. 🏷️ TROIS CHEMINS ÉCRIVENT LA MÊME LIGNE, ET ELLE NE DIT PAS D'OÙ ELLE VIENT **(07/09/2026, ft-v1167)**
+## 51. 🏷️ TROIS CHEMINS ÉCRIVENT LA MÊME LIGNE, ET ELLE NE DIT PAS D'OÙ ELLE VIENT **(07/09/2026, ft-v1167)**
 
 **Un signal peut exister, être collecté, et rester illisible parce qu'il manque sa PROVENANCE.**
 `_reportCustomEx` remontait les exercices inconnus depuis **trois** appelants : la personne qui en
@@ -3159,7 +3159,7 @@ ce qu'il ne doit PAS signaler.**
 endroit, une seule est équipée).*
 
 
-## 49. ⌨️ CE QUI SE TAPE LETTRE PAR LETTRE SE MESURE À LA FIN, PAS À CHAQUE FRAPPE **(07/09/2026, ft-v1168)**
+## 52. ⌨️ CE QUI SE TAPE LETTRE PAR LETTRE SE MESURE À LA FIN, PAS À CHAQUE FRAPPE **(07/09/2026, ft-v1168)**
 
 **Instrumenter un champ de saisie sans anti-rebond, c'est mesurer la frappe au lieu du besoin.**
 Une recherche « biceps marteau » produit `b`, `bi`, `bic`, `bice`… et **chacun de ces préfixes
@@ -3188,3 +3188,44 @@ pas le comportement* — on sonde jusqu'à l'événement.
 *Voisine de **§47** (le garde-fou dont le plancher éteint le pourcentage) et de **§48** (la porte
 de secours non proposée là où le chemin s'arrête) — trois familles nées la même journée, toutes
 trois « le mécanisme existe, il mesure ou propose la mauvaise chose ».*
+
+---
+
+## 53. 🔤 DEUX COMPARAISONS POUR LA MÊME QUESTION — ET C'EST LA PLUS GROSSIÈRE QUI DÉCIDE **(08/09/2026, ft-v1172)**
+
+**Le cas.** Michel importe son programme et se retrouve avec **CINQ** exercices perso pour **UN
+SEUL** mouvement d'épaules. Deux d'entre eux sont **le même nom** : « Développé Épaules Guide /
+Haltères » et « Développé épaules **guidé** / haltères ». Le test *« cet exercice existe-t-il
+déjà ? »* comparait en `toLowerCase()` **seul** → `guide` ≠ `guidé` → **deux exercices créés pour
+un**.
+
+**⭐⭐ Ce qui fait la famille, et pas seulement le bug** : l'app possédait **déjà** une comparaison
+plus fine — `_normEx` (accents, ponctuation, espaces) — employée par la **recherche**, le
+**rapprochement d'exercices**, les **records** et l'**historique**. *La seule qui ne l'employait
+pas était celle qui décide de **créer**, c'est-à-dire celle dont l'erreur est la plus chère.*
+
+**🔎 Comment la reconnaître.** Chercher une question métier (« est-ce le même nom ? », « est-ce le
+même jour ? », « est-ce le même produit ? ») posée à **deux endroits avec deux formules** — et
+regarder laquelle des deux **écrit** dans les données. ⚠️ Le signe : une fonction de normalisation
+qui existe et qui est appelée **partout sauf là**.
+
+**⛔ Pourquoi personne ne le voit.** Un doublon d'accent **ne ressemble pas à un bug** : il se lit
+comme un vrai exercice, il a son propre historique, sa propre ligne dans le catalogue. *Rien ne
+plante, aucun test ne rougit — les charges se coupent simplement en deux.* C'est la même
+signature que **§46** (le correctif invérifiable) : l'absence de symptôme visible.
+
+**🛡️ Ce qui protège aujourd'hui.**
+1. Un **propriétaire unique**, `_cleNom`, employé aux **cinq** endroits qui posaient la question
+   (le test d'existence, les **deux** compteurs d'aperçu, les **deux** dédoublonnages de création)
+   — **R2** + **R8**.
+2. Un témoin qui **mesure la garantie** plutôt que la formule : *zéro collision sous `_cleNom` sur
+   les 322 noms du catalogue*. S'il rougit, c'est que la normalisation confondrait deux exercices
+   **réels** — et là il faut arrêter, pas ajuster.
+3. Un témoin **fonctionnel** qui appelle `finalImportProg` et lit ce que l'app **écrit**.
+   ⚠️ **Payé au contrôle négatif** : mon premier témoin **rejouait** le dédoublonnage dans le test,
+   et la mutation ne faisait rougir **personne**. *Un contrôle qui recalcule la formule qu'il
+   vérifie est un vert qui ne peut pas rougir.*
+
+*Voisine de **§50** (la règle générale lue sans chercher la plus spécifique) et de **§51** (trois
+chemins qui écrivent la même ligne) — même racine : **plusieurs endroits répondent à une seule
+question**, et on ne sait pas lequel gagne.*
