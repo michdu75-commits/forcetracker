@@ -99,9 +99,13 @@ profil, et jamais dans une base commune.
 pleines à **102 %** le 29/07/2026, plus aucune écriture pendant deux jours, **en silence**. Tout ce
 qui grossit va dans le **Sheet** (comme les exercices) ou le **Drive**.
 
-**⏭️ NON TRANCHÉ** : est-ce que ce principe monte en **règle d'architecture** (il en a la forme —
-stable, né d'un événement, applicable pendant des années : critère d'entrée **R21**) ou reste une
-note. *C'est la décision de Michel, pas la mienne : on n'ajoute pas une règle au socle tout seul.*
+**✅ TRANCHÉ LE 08/09/2026 — MICHEL : *« oui mets-la en R36 »*.** Le principe est monté au socle :
+**R36 — *ce qui décrit LE MONDE se récolte, ce qui décrit LA PERSONNE reste chez elle*** (avec son
+compagnon obligatoire : un **texte libre** ne se garde en clair qu'à partir de **3 identifiants
+anonymes distincts**). Voir `docs/REGLES-ARCHITECTURE.md` §1. ⭐ **Deux mises en œuvre existent
+déjà** : **ft-v1167** (la source des noms — `perso` / `import` / `milo`) et **ft-v1169** (les
+recherches qui ne rendent rien). ⏭️ **Ce qui reste de cette note** : la **récolte des calibrages**
+ci-dessous, qui n'est pas construite.
 
 ---
 

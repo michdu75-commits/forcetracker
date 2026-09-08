@@ -50,6 +50,22 @@
   **rejouait** le dédoublonnage **dans le test** au lieu d'appeler `finalImportProg` — la mutation
   ne faisait rougir **personne**. *Un contrôle qui recalcule la formule qu'il vérifie est un vert
   qui ne peut pas rougir.* ⛔ **Contrôle négatif : 7 mutations, toutes mordent.**
+- **Version précédente :** `ft-v1171` — 🏷️ **LA COLONNE « SOURCE » SE REMPLISSAIT SOUS UNE
+  CASE DE TITRE VIDE.**
+  ⏳ **Suite VERTE** : parcours (+6, bloc **CCLXIX**), calculs 339/339, muscles 241/241, croisés
+  50/50, dates 9/9, données classées 0 trou.
+  ⭐⭐ **Trouvé en EXPLIQUANT à Michel où lire le résultat, pas en relisant le code** — il dit
+  *« ça non plus je n'ai pas compris »* sur les deux feuilles du Sheet ; en rédigeant la réponse,
+  doute → lecture de `handleLogCustomExercise_`.
+  ⛔⛔ Les titres ne sont écrits qu'à la **CRÉATION** (`if (!sheet)`), or sa feuille existe depuis
+  **ft-v714**. Les lignes écrivent 9 valeurs → la colonne **I** se remplit de `perso`/`import`/
+  `milo` **sans titre**. 👉 ***Une colonne de données sans son titre ne se lit pas : elle
+  s'ignore*** — le détecteur de ft-v1167 aurait marché et n'aurait servi à personne.
+  ⭐ **Correctif** : une branche qui écrit **la seule case manquante**. ⛔ Jamais toute la ligne
+  (les titres sont à lui — **R29**), et **idempotent**.
+  ⭐ **La 2ᵉ feuille n'a pas le piège** (vérifié) : elle n'existe pas encore, elle naîtra complète.
+  ⚠️ **`Code.js` → déploiement backend automatique, à vérifier des deux côtés** (R18).
+
 - **Version précédente :** `ft-v1170` — 🔎 **« TIRAGE VERTICAL » VISAIT L'ÉLASTIQUE — et la
   mesure a dit que le rapprocheur n'était PAS en cause.**
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1007**, `success` à **06:24:39 UTC**.

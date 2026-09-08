@@ -30564,6 +30564,85 @@ console.log('\n-- CCLXVII. Les recherches qui ne rendent rien (ft-v1169) --');
   }
 }
 
+/* ═══ CCLXIX. LA COLONNE « SOURCE » SOUS UNE CASE DE TITRE VIDE (08/09/2026, ft-v1171) ════════
+   Défaut trouvé en EXPLIQUANT à Michel où lire le résultat de ft-v1167 — pas en relisant le code.
+   ⛔⛔ Les titres ne sont écrits qu'à la CRÉATION de la feuille (`if (!sheet)`), or celle de
+   Michel existe depuis ft-v714. Les lignes écrivent 9 valeurs → la colonne I se remplissait
+   sous une case de titre VIDE. *Une colonne de données sans son titre ne se lit pas.*
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLXIX. La colonne Source et son titre (ft-v1171) --');
+{
+  const _cj=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  /* ⭐⭐ ON EXÉCUTE LA RÉPARATION, ON NE LA CHERCHE PAS DANS LE TEXTE — la leçon de ft-v1158 :
+     *vérifier la fonction n'est pas vérifier l'appel*, et un `grep` dirait que la ligne existe,
+     jamais qu'elle répare. On rejoue donc la branche avec une fausse feuille Apps Script. */
+  const R=await p.evaluate((src)=>{
+   try{
+    const o={};
+    // on extrait la branche de titres telle qu'elle est écrite dans Code.js
+    const i=src.indexOf("let sheet = ss.getSheetByName('Exercices manquants');");
+    const j=src.indexOf('const data = sheet.getDataRange().getValues();', i);
+    o.trouve = i>0 && j>i;
+    if(!o.trouve) return o;
+    const bloc=src.slice(i,j);
+    const faireFeuille=(titres)=>{
+      const cellules={};
+      return {_t:titres.slice(), gele:0, gras:[],
+        appendRow(r){ this._t=r.slice(); },
+        setFrozenRows(n){ this.gele=n; },
+        getRange(l,c,h,w){ const self=this;
+          return { setValue(v){ self._t[c-1]=v; return this; },
+                   getValue(){ return self._t[c-1]; },
+                   setFontWeight(f){ self.gras.push(c); return this; } }; }};
+    };
+    const jouer=(titres)=>{
+      const sheet0=titres?faireFeuille(titres):null;
+      const ss={ getSheetByName(){ return sheet0; },
+                 insertSheet(){ return faireFeuille([]); } };
+      let sheet=null;
+      // on exécute la vraie branche, avec `sheet` et `ss` en portée
+      eval('(function(ss){ '+bloc+' return sheet; })')(ss);
+      return eval('(function(ss){ '+bloc+' return sheet; })')(ss);
+    };
+    // ① feuille ANCIENNE (8 titres, comme celle de Michel depuis ft-v714)
+    const vieille=jouer(['Exercice','Groupe','Signalements','IDs anonymes','Première date','Dernière date','Muscles principaux','Muscles secondaires']);
+    o.titre9Repare = String(vieille._t[8]||'');
+    o.titresIntacts = vieille._t.slice(0,8).join('|');
+    // ② feuille DÉJÀ à jour : on ne doit rien réécrire (idempotent)
+    const ajour=jouer(['Exercice','Groupe','Signalements','IDs anonymes','Première date','Dernière date','Muscles principaux','Muscles secondaires','Source']);
+    o.dejaAjour = String(ajour._t[8]||'');
+    o.pasDeReecriture = ajour.gras.length===0;
+    // ③ feuille INEXISTANTE : elle naît complète
+    const neuve=jouer(null);
+    o.neuve = (neuve._t||[]).length;
+    o.neuveSource = String((neuve._t||[])[8]||'');
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,220)};}
+  }, _cj);
+
+  if(R.err) t('CCLXIX n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLXIX ⛔⛔ CONTRÔLE — la branche des titres est bien extraite de Code.js', R.trouve===true, '');
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION */
+    t('CCLXIX ⭐⭐ une feuille ANCIENNE (8 titres) reçoit son titre « Source »',
+      R.titre9Repare==='Source', 'reçu : "'+R.titre9Repare+'"');
+    /* ⛔ ET ON NE TOUCHE À RIEN D'AUTRE — les titres appartiennent à la feuille de Michel. */
+    t('CCLXIX ⛔⛔ ... et les 8 titres existants ne sont PAS réécrits (R29)',
+      R.titresIntacts==='Exercice|Groupe|Signalements|IDs anonymes|Première date|Dernière date|Muscles principaux|Muscles secondaires',
+      R.titresIntacts);
+    /* ⛔ IDEMPOTENT : une feuille déjà à jour ne se fait pas réécrire à chaque signalement. */
+    t('CCLXIX ⛔ une feuille DÉJÀ à jour n\'est pas retouchée', R.dejaAjour==='Source' && R.pasDeReecriture===true,
+      'titre='+R.dejaAjour+' reecritures='+(R.pasDeReecriture?0:'>0'));
+    /* ⭐ NON-RÉGRESSION : une feuille neuve naît toujours complète. */
+    t('CCLXIX ⭐ une feuille NEUVE naît avec ses 9 titres, dont « Source »',
+      R.neuve===9 && R.neuveSource==='Source', 'colonnes='+R.neuve+' 9e="'+R.neuveSource+'"');
+  }
+  /* ⛔ LA 2ᵉ FEUILLE N'A PAS LE PIÈGE — elle n'existe pas encore, donc elle naîtra complète.
+     On le FIGE : si quelqu'un lui ajoute une colonne un jour, il faudra la même réparation. */
+  t('CCLXIX ⛔ la feuille des recherches vides naît avec ses 7 titres',
+    /appendRow\(\['Empreinte','Terme','Type','Personnes','IDs anonymes','Première date','Dernière date'\]\)/.test(_cj), '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

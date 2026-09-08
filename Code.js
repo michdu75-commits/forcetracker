@@ -2147,6 +2147,17 @@ function handleLogCustomExercise_(body) {
       sheet.appendRow(['Exercice','Groupe','Signalements','IDs anonymes','Première date','Dernière date','Muscles principaux','Muscles secondaires','Source']);
       sheet.setFrozenRows(1);
       sheet.getRange(1,1,1,9).setFontWeight('bold');
+    } else if (String(sheet.getRange(1, 9).getValue() || '') !== 'Source') {
+      /* ⚠️⚠️ L'EN-TÊTE NE SE MET PAS À JOUR TOUT SEUL — défaut trouvé APRÈS la livraison de
+         ft-v1167, en expliquant à Michel où lire le résultat. Le bloc ci-dessus n'écrit les
+         titres qu'à la CRÉATION de la feuille ; celle de Michel existe depuis ft-v714. Les
+         lignes écrivent bien 9 valeurs, donc la colonne I se remplissait de `perso`/`import`/
+         `milo` **sous une case de titre VIDE**.
+         👉 ***Une colonne de données sans son titre ne se lit pas : elle s'ignore.*** Le
+         détecteur aurait fonctionné parfaitement et n'aurait servi à personne.
+         ⛔ On ne réécrit QUE la case manquante, jamais toute la ligne : les titres existants
+         appartiennent à la feuille de Michel, et rien ne dit qu'il ne les a pas renommés. */
+      sheet.getRange(1, 9).setValue('Source').setFontWeight('bold');
     }
 
     const data = sheet.getDataRange().getValues();
