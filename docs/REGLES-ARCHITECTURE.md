@@ -148,8 +148,18 @@ le 29/07/2026, plus aucune écriture pendant deux jours, *en silence* (Sheet ou 
 la nutrition côté serveur) — *une base alimentée par des saisies non vérifiées est pire que pas
 de base* ; ③ **le consentement se dit**, même quand la donnée n'est pas personnelle.
 
-*Origine : Michel, 07/09/2026, après avoir refusé que je lise sa sauvegarde pour déboguer —
-« le but est à l'avenir de récupérer les données pour enrichir ma base ». Mise en œuvre :
+*Origine : Michel, 07/09/2026 — « le but est à l'avenir de récupérer les données pour enrichir
+ma base ». ⚠️ **CETTE LIGNE DISAIT LE CONTRAIRE JUSQU'AU 08/09, ET C'EST MOI QUI L'AVAIS ÉCRITE**
+(« après avoir refusé que je lise sa sauvegarde pour déboguer »). Relu dans la conversation :
+Michel **proposait** l'accès — « donc tu peux toi regarder ma sauvegarde » — et c'est **moi** qui
+ai répondu « non, je ne peux pas », le conteneur ne pouvant pas joindre le backend (`CONNECT
+tunnel failed, 403` ; seul GitHub est autorisé). Son « non ça me plaît pas ça » portait sur mon
+**repli manuel** (qu'il m'envoie un export CSV à la main), pas sur ses données — et la suite de
+sa phrase dit exactement pourquoi : il ne voulait pas d'un bricolage ponctuel, il voulait que
+**l'app récolte**. 👉 C'est **R23 retourné contre son auteur** : *un document d'état faux fait
+dire des bêtises à celui qui le lit* — et le 08/09 il m'a fait affirmer à Michel qu'il m'avait
+refusé un accès qu'il m'avait offert. **Une origine de règle se vérifie dans la transcription,
+pas dans le souvenir.** Mise en œuvre :
 ft-v1167 (source des noms) et ft-v1169 (recherches vides). Voisine de **R1**/**R2** (une donnée,
 un propriétaire), **R13** (le mécanisme des « exercices manquants » existait déjà) et **R29**
 (le droit de deviner dépend du coût de l'erreur).*
