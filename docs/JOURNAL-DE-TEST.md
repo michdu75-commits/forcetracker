@@ -69,6 +69,54 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟢 PRÊTE — L'ONGLET « PORTIONS » FOSSILISE LE RATIO ET FABRIQUE DES LIGNES MORTES (09/09/2026)
+
+**Michel, en une phrase qui vaut tout un audit** : *« pour l'onglet, je ne connais pas la quantité
+de la portion c'est ça le souci, et le ratio utilisé »*. **Les deux moitiés de sa phrase sont deux
+défauts distincts, mesurés.**
+
+| geste | enregistré |
+|---|---|
+| gratin 300 kcal → **×2** (onglet 🍽️) | **600 kcal · `q:null` · `u:null` · `per100:null`** ⛔ |
+| gratin 300 kcal → **250 g** (onglet ⚖️) | 300 kcal · `q:250` · `u:'g'` · `per100:120` ✅ |
+
+**① LE RATIO N'EST PAS CONSERVÉ.** `_afApplyPortion(x)` → `_afProp(x)` **multiplie les 4 valeurs
+affichées** et laisse `_afRef = {base:300, q:1, u:''}` — mesuré, `q` reste à **1** après le ×2.
+L'app ne retient donc pas *« 2 portions »*, elle retient *« 600 »*.
+
+**② ET LE ×2 SE FOSSILISE À LA REPRISE — c'est le plus grave.** Le lendemain, l'écran réaffiche les
+600 kcal sous le texte *« Les 4 valeurs ci-dessous sont **une portion** »*. 👉 ***« 2 portions de
+300 » est devenu « 1 portion de 600 ».*** Un nouveau ×2 donne **1200**. *La définition de l'aliment
+dérive à chaque usage, en silence, et rien à l'écran ne le dit.*
+
+**③ LA LIGNE EST MATHÉMATIQUEMENT IRRÉCUPÉRABLE.** Mesuré dans `_provFood` : *le pour-100 g n'est
+dérivé QUE si `_afRef.u === 'g'`*. En portions, `u` vaut `''` → ni `q`, ni `u`, ni `per100`. C'est
+**exactement la famille des « lignes mortes »** relevée dans l'export réel de Michel (steak haché,
+24/08 · 25/08 · 28/08) et déjà nommée en ft-v1177.
+
+**⛔ CE QUI N'EST PAS LA CAUSE, ET IL FAUT LE DIRE** : Michel proposait de *« garder les grammes »*
+et de supprimer l'onglet. **Mesuré : 5 des 6 cas de contamination entre aliments se produisent en
+grammes purs, sans jamais toucher l'onglet.** Supprimer les portions réparerait **1 cas sur 6** et
+casserait le seul chemin de *« je ne sais pas combien ça pèse »* — un plat maison, une assiette au
+resto. C'est le principe **précision au CHOIX** de `NUTRITION-PHILOSOPHIE.md`, et c'est Michel
+lui-même qui s'en est servi en ft-v1173 (son isolat, ×2).
+
+**⭐ LA PISTE LA PLUS SIMPLE (non écrite, à trancher) : faire de « portion » une VRAIE unité.**
+Au lieu de multiplier les valeurs, l'onglet poserait une **quantité** — `q:2, u:'portion'` — en
+laissant `base` à 300. Trois gains d'un coup : le ratio est **conservé**, *« 1 portion »* garde le
+**même sens** d'un jour à l'autre, et la ligne redevient **convertible** (2 portions ↔ 600 kcal
+donne 1 portion = 300). ⚠️ **Ce qui reste à mesurer avant de coder** : `_provFood` n'accepte
+aujourd'hui `q` **que** si `u === 'g'` — c'est le garde-fou **R29** posé en ft-v1177 contre les `ml`
+(*on n'invente pas une densité*). Élargir à `'portion'` **ne crée pas** ce risque (une portion n'a
+pas de densité, elle n'a pas de gramme non plus), mais il faut vérifier **tous** les lecteurs de
+`q`/`u` avant — la nutrition, l'écran d'édition, l'export CSV. *Une unité nouvelle qui traverse mal
+est pire qu'une ligne morte : elle a l'air convertible.*
+
+**🔧 Reproduire** : `openAddFood()` → taper un nom et 300/20/30/12 → `_afApplyPortion(2)` → lire
+`_afRef` (reste `q:1`) → `addFoodEntry()` → lire la dernière entrée de `S.foodLog`. Puis rouvrir et
+`quickFillFood` : l'écran annonce 600 kcal = « une portion ».
+
+
 ### 🟢 PRÊTE — LA QUANTITÉ D'UN ALIMENT CONTAMINE LE SUIVANT : 6 CAS MESURÉS (08-09/09/2026, CONTRE-AUDIT)
 
 **⚠️ Écrit AVANT tout correctif, et c'est la consigne du contre-audit** (GPT, §Contraintes : *« ne
