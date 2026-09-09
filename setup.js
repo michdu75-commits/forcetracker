@@ -433,7 +433,9 @@ async function _csvFichier(colonnes, lignes, nomCourt, unite){
    ⛔ ON EXPORTE AUSSI LA PROVENANCE (`saisie`, `origine`) : c'est ce qui permet, en relisant le
    fichier, de savoir si une valeur a été SCANNÉE, tapée à la main ou estimée par l'IA. Sans
    elle, toutes les lignes se ressemblent et on ne peut plus juger laquelle croire (R33). */
-const NUTRI_COLONNES = ['date','repas','aliment','quantite','unite','kcal','proteines_g','glucides_g','lipides_g','saisie','source'];
+/* 🏷️ ft-v1186 — DEUX COLONNES DE PLUS : sans elles, l'export perd exactement l'information
+   qu'on vient de sauver — « 2 portions » sans dire de QUOI ne vaut pas mieux qu'avant. */
+const NUTRI_COLONNES = ['date','repas','aliment','quantite','unite','portion_label','portion_poids_g','kcal','proteines_g','glucides_g','lipides_g','saisie','source'];
 async function exportNutritionCsv(){
   const REPAS = {matin:'Petit-déjeuner', midi:'Déjeuner', soir:'Dîner', collation:'Collation'};
   const L = (S.foodLog || [])
@@ -444,6 +446,8 @@ async function exportNutritionCsv(){
       date: e && e.date || '', repas: REPAS[e && e.meal] || (e && e.meal) || '',
       aliment: e && e.name || '',
       quantite: (e && e.q != null) ? e.q : '', unite: e && e.u || '',
+      portion_label: e && e.portionLabel || '',
+      portion_poids_g: (e && +e.portionWeightG > 0) ? e.portionWeightG : '',
       kcal: (e && e.kcal != null) ? e.kcal : '',
       proteines_g: (e && e.prot != null) ? e.prot : '',
       glucides_g: (e && e.carbs != null) ? e.carbs : '',

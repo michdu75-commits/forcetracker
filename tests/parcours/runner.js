@@ -32583,6 +32583,202 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
   }
 }
 
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   BLOC CCLXXXI — 🏷️⚖️ LA PORTION NOMMÉE : `portionLabel` + `portionWeightG` (ft-v1186)
+   Les 10 témoins validés par Michel après sa relecture de ft-v1183 : *« 1 portion = 300 kcal,
+   poids inconnu » ne suffit pas — je veux savoir si c'est 1 steak, 1 yaourt, 1 dose*.
+   ⛔⛔ LE TÉMOIN LE PLUS IMPORTANT EST LE ③ : déclarer le poids d'UNE portion ne doit PAS
+   basculer l'unité en grammes. C'est sa demande n°2, mot pour mot — sans lui, on perd
+   l'information « 2 steaks » en croyant gagner une conversion.
+   ══════════════════════════════════════════════════════════════════════════════════════════ */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2400);
+  const Q=await pg.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const set=(id,v)=>{const el=document.getElementById(id); if(el){el.value=v;
+      el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true}));}};
+    const der=()=>{const e=S.foodLog[S.foodLog.length-1]||{};
+      return {kcal:e.kcal,prot:e.prot,q:e.q,u:e.u,lab:e.portionLabel,pw:e.portionWeightG,per100:e.per100};};
+    const def=()=>(document.getElementById('af-pdef')||{textContent:''}).textContent.replace(/\s+/g,' ').trim();
+    const saisir=async(nom,k,pr,g,l)=>{ document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      openAddFood(); await d(320); set('af-desc',nom); set('af-kcal',k); set('af-prot',pr);
+      set('af-carbs',g); set('af-fat',l); _afMajAncre(true); await d(220); };
+
+    /* ① 2 steaks de 125 g : tout descend jusqu'à la donnée, masse totale DÉRIVÉE */
+    S.foodLog=[]; S.savedFoods=[]; S.hiddenFoods=[]; persist();
+    await saisir('Steak hache','300','20','30','10');
+    _afApplyPortion(2); await d(220); _afPortionNom('steak'); await d(220);
+    set('af-ppoids','125'); await d(240);
+    o.deuxSteaks={def:def(), ecran:+(document.getElementById('af-kcal')||{}).value};
+    addFoodEntry(); await d(320); o.deuxSteaks.ligne=der();
+
+    /* ② poids INCONNU : l'écran le DIT, et rien n'est inventé */
+    S.foodLog=[]; persist();
+    await saisir('Assiette maison','300','20','30','10');
+    _afApplyPortion(2); await d(220); _afPortionNom('assiette'); await d(240);
+    o.sansPoids={def:def()};
+    addFoodEntry(); await d(320); o.sansPoids.ligne=der();
+
+    /* ③ ⭐⭐ LE POIDS D'UNE PORTION NE BASCULE PAS L'UNITÉ, ET NE RESCALE RIEN */
+    S.foodLog=[]; persist();
+    await saisir('Yaourt','120','8','12','4');
+    _afApplyPortion(2); await d(220);
+    const av=[+(document.getElementById('af-kcal')||{}).value,+(document.getElementById('af-prot')||{}).value];
+    set('af-ppoids','125'); await d(260);
+    o.pasDeBascule={unite:_afUnite, poidsTotal:_afPoidsDeclare, avant:av,
+      apres:[+(document.getElementById('af-kcal')||{}).value,+(document.getElementById('af-prot')||{}).value]};
+    addFoodEntry(); await d(320); o.pasDeBascule.ligne=der();
+
+    /* ④ NON-RÉGRESSION : l'onglet ⚖️ grammes est inchangé (ft-v1183 ⑥) */
+    S.foodLog=[]; persist();
+    await saisir('Gratin','300','20','30','10');
+    _afApplyPortion(2); await d(200); _afSetUnite('g'); await d(260);
+    set('af-poids','500'); const pe=document.getElementById('af-poids');
+    if(pe) pe.dispatchEvent(new Event('blur')); _afMajAncre(); await d(300);
+    addFoodEntry(); await d(320); o.grammes=der();
+
+    /* ⑤ ⭐⭐ REPRISE : « 2 steaks » revient EN PORTIONS, même si un pour-100 g existe */
+    S.foodLog=[{date:today(),meal:'midi',name:'Steak hache',kcal:600,prot:40,carbs:60,fat:20,
+                ts:5150,v:1,saisie:'manuel',origine:'utilisateur',q:2,u:'portion',
+                per100:{kcal:240,prot:16,carbs:24,fat:8},portionLabel:'steak',portionWeightG:125}];
+    S.savedFoods=[]; persist();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await d(340); _renderFoodQuickList(); await d(240);
+    const i=(_afQuickItems||[]).findIndex(x=>x.name==='Steak hache');
+    o.repriseIdx=i;
+    if(i>=0){ quickFillFood(i); await d(420);
+      o.reprise={lab:_afPortionLabel, pw:_afPortionPoids, portions:_afPortions, unite:_afUnite,
+                 ecran:+(document.getElementById('af-kcal')||{}).value,
+                 base:(_afRef&&_afRef.base)?_afRef.base.kcal:null}; }
+
+    /* ⑤bis NON-RÉGRESSION ft-v1042 : un aliment en GRAMMES avec pour-100 g ouvre bien le champ grammes */
+    S.foodLog=[{date:today(),meal:'midi',name:'Thon boite',kcal:110,prot:26,carbs:0,fat:1,
+                ts:5151,v:1,saisie:'scan',origine:'openfoodfacts',q:100,u:'g',
+                per100:{kcal:110,prot:26,carbs:0,fat:1}}];
+    persist();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await d(340); _renderFoodQuickList(); await d(240);
+    const j=(_afQuickItems||[]).findIndex(x=>x.name==='Thon boite');
+    if(j>=0){ quickFillFood(j); await d(400);
+      const row=document.getElementById('af-bc-row');
+      o.scanGrammes={blocGrammes:!!(row&&row.style.display!=='none'), bcNutr:!!_bcNutr}; }
+
+    /* ⑥ A -> B : ni l'étiquette ni le poids ne traversent */
+    S.foodLog=[]; persist();
+    await saisir('Plat A','300','20','30','10');
+    _afApplyPortion(3); await d(200); _afPortionNom('part'); await d(200);
+    set('af-ppoids','200'); await d(240);
+    await saisir('Plat B','200','10','20','5');
+    o.aVersB={lab:_afPortionLabel, pw:_afPortionPoids, portions:_afPortions, def:def()};
+    addFoodEntry(); await d(320); o.aVersB.ligne=der();
+
+    /* ⑦ étiquette absente -> « non définie », aucune invention */
+    S.foodLog=[]; persist();
+    await saisir('Truc','450','12','40','20');
+    _afApplyPortion(2); await d(240);
+    o.sansNom={def:def()};
+    addFoodEntry(); await d(320); o.sansNom.ligne=der();
+
+    /* ⑧ 601 kcal / 3 portions : la référence dérivée ne dérive pas (la mesure de Michel) */
+    S.foodLog=[{date:today(),meal:'midi',name:'Plat 601',kcal:601,prot:37,carbs:61,fat:19,
+                ts:601601,v:1,saisie:'manuel',origine:'utilisateur',q:3,u:'portion',per100:null}];
+    S.savedFoods=[]; persist();
+    const cyc=[];
+    for(let n=0;n<10;n++){
+      document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      openAddFood(); await d(260); _renderFoodQuickList(); await d(180);
+      const k=(_afQuickItems||[]).findIndex(x=>x.name==='Plat 601');
+      if(k<0) break;
+      quickFillFood(k); await d(340); addFoodEntry(); await d(280);
+      const e=S.foodLog[S.foodLog.length-1];
+      cyc.push({kcal:e.kcal,q:e.q}); S.foodLog=[e];
+    }
+    o.dixCycles=cyc;
+
+    /* ⑨ export CSV : les deux colonnes */
+    o.csv=(typeof NUTRI_COLONNES!=='undefined')?NUTRI_COLONNES:null;
+
+    /* ⑩ le favori se rafraîchit — pas de vieille définition silencieuse.
+       ⛔⛔ LES MACROS DU FAVORI (600) ET CELLES DE L'ENTRÉE (2 x 250 = 500) SONT VOLONTAIREMENT
+       DIFFÉRENTES. Ma première fixture mettait 300 x 2 = 600 des deux côtés : écraser les macros
+       du favori était alors **invisible**, et le contrôle négatif a bien montré 0 rouge sur cette
+       mutation. *Une fixture où les deux valeurs coïncident ne peut pas voir l'écrasement* —
+       troisième fois dans ce chantier qu'une protection manque de témoin. */
+    S.foodLog=[]; S.savedFoods=[{name:'Steak hache',kcal:600,prot:40,carbs:60,fat:20,per100:null,
+                                 q:2,u:'portion',portionLabel:'steak',portionWeightG:100}];
+    persist();
+    await saisir('Steak hache','250','20','30','10');
+    _afApplyPortion(2); await d(200); _afPortionNom('steak'); await d(200);
+    set('af-ppoids','125'); await d(240);
+    addFoodEntry(); await d(340);
+    o.favori=JSON.parse(JSON.stringify(S.savedFoods[0]));
+    return o;
+   }catch(e){ return {err:String(e&&e.message||e)}; }
+  });
+  console.log('\n== BLOC CCLXXXI — 🏷️ la portion nommée : label + poids (ft-v1186) ==');
+  if(Q.err){ t('CCLXXXI bloc exécuté',false,Q.err); }
+  else{
+    t('CCLXXXI ① ⭐⭐ 2 STEAKS DE 125 G : q=2 · u=portion · label · poids · per100 dérivé (240)',
+      Q.deuxSteaks && Q.deuxSteaks.ligne.q===2 && Q.deuxSteaks.ligne.u==='portion'
+      && Q.deuxSteaks.ligne.lab==='steak' && Q.deuxSteaks.ligne.pw===125
+      && Q.deuxSteaks.ligne.kcal===600 && Q.deuxSteaks.ligne.per100
+      && Q.deuxSteaks.ligne.per100.kcal===240, JSON.stringify(Q.deuxSteaks&&Q.deuxSteaks.ligne));
+    t('CCLXXXI ② ⛔ L\'ÉCRAN DIT LE NOM ET LA MASSE TOTALE, qui est DÉRIVÉE (250 g), jamais stockée',
+      Q.deuxSteaks && /1 steak \(125 g\)/.test(Q.deuxSteaks.def)
+      && /250 g en tout/.test(Q.deuxSteaks.def), Q.deuxSteaks&&Q.deuxSteaks.def);
+    t('CCLXXXI ③ ⛔⛔ POIDS INCONNU : l\'écran LE DIT, et aucun poids n\'est inventé',
+      Q.sansPoids && /1 assiette, poids inconnu/.test(Q.sansPoids.def)
+      && Q.sansPoids.ligne.lab==='assiette' && Q.sansPoids.ligne.pw===undefined
+      && Q.sansPoids.ligne.per100===null, JSON.stringify(Q.sansPoids));
+    t('CCLXXXI ④ ⭐⭐ LE POIDS D\'UNE PORTION NE BASCULE PAS L\'UNITÉ (demande n°2 de Michel)',
+      Q.pasDeBascule && Q.pasDeBascule.unite==='portion' && Q.pasDeBascule.poidsTotal===0
+      && Q.pasDeBascule.ligne.u==='portion' && Q.pasDeBascule.ligne.q===2,
+      JSON.stringify(Q.pasDeBascule));
+    t('CCLXXXI ⑤ ⛔ ... ET IL NE RESCALE RIEN : les 4 valeurs ne bougent pas (240/16 avant et après)',
+      Q.pasDeBascule && Q.pasDeBascule.avant[0]===Q.pasDeBascule.apres[0]
+      && Q.pasDeBascule.avant[1]===Q.pasDeBascule.apres[1] && Q.pasDeBascule.apres[0]===240,
+      JSON.stringify(Q.pasDeBascule));
+    t('CCLXXXI ⑥ ⛔ NON-RÉGRESSION : l\'onglet ⚖️ grammes est INCHANGÉ (500 g -> q:500, u:g, per100 120)',
+      Q.grammes && Q.grammes.q===500 && Q.grammes.u==='g' && Q.grammes.per100
+      && Q.grammes.per100.kcal===120, JSON.stringify(Q.grammes));
+    t('CCLXXXI ⑦ ⭐⭐ REPRISE : « 2 steaks » revient EN PORTIONS même avec un pour-100 g',
+      Q.reprise && Q.reprise.unite==='portion' && Q.reprise.portions===2
+      && Q.reprise.lab==='steak' && Q.reprise.pw===125
+      && Q.reprise.ecran===600 && Q.reprise.base===300, JSON.stringify(Q.reprise));
+    t('CCLXXXI ⑧ ⛔ NON-RÉGRESSION ft-v1042 : un aliment en GRAMMES ouvre bien son champ grammes',
+      Q.scanGrammes && Q.scanGrammes.blocGrammes===true && Q.scanGrammes.bcNutr===true,
+      JSON.stringify(Q.scanGrammes));
+    t('CCLXXXI ⑨ ⛔⛔ A -> B : ni l\'étiquette ni le poids de portion ne traversent',
+      Q.aVersB && Q.aVersB.lab==='' && Q.aVersB.pw===0 && Q.aVersB.portions===1
+      && Q.aVersB.ligne.q==null && Q.aVersB.ligne.kcal===200, JSON.stringify(Q.aVersB));
+    t('CCLXXXI ⑩ ⛔ ÉTIQUETTE ABSENTE -> « portion non définie », aucune invention',
+      Q.sansNom && /non définie/.test(Q.sansNom.def) && Q.sansNom.ligne.lab===undefined
+      && Q.sansNom.ligne.q===2 && Q.sansNom.ligne.u==='portion', JSON.stringify(Q.sansNom));
+    t('CCLXXXI ⑪ ⭐ 601 kcal / 3 portions : DIX cycles sans une dérive (la mesure de Michel)',
+      Q.dixCycles && Q.dixCycles.length===10
+      && Q.dixCycles.every(c=>c.kcal===601 && c.q===3), JSON.stringify(Q.dixCycles));
+    t('CCLXXXI ⑫ L\'EXPORT CSV porte `portion_label` et `portion_poids_g`',
+      Q.csv && Q.csv.indexOf('portion_label')>=0 && Q.csv.indexOf('portion_poids_g')>=0,
+      JSON.stringify(Q.csv));
+    t('CCLXXXI ⑬ ⛔ LE FAVORI SE RAFRAÎCHIT : sa DÉFINITION suit (100 g -> 125 g)',
+      Q.favori && Q.favori.portionWeightG===125 && Q.favori.portionLabel==='steak',
+      JSON.stringify(Q.favori));
+    /* ⛔⛔ LE TÉMOIN QUI MANQUAIT : la définition est un fait sur l'ALIMENT, les macros un fait
+       sur CE repas-là. Sans lui, un correctif trop large qui écraserait les macros du favori
+       passait inaperçu — mesuré, la mutation rendait 0 rouge. */
+    t('CCLXXXI ⑭ ⛔⛔ ... MAIS SES MACROS NE SONT PAS ÉCRASÉES (favori 600, repas 500)',
+      Q.favori && Q.favori.kcal===600 && Q.favori.prot===40, JSON.stringify(Q.favori));
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

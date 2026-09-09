@@ -20,7 +20,26 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1185` — 🧾 **LE DÉBRIEF SUR TOUTES LES COMBINAISONS DE
+- **Version en ligne (live) :** `ft-v1186` — 🏷️⚖️ **la portion NOMMÉE : `portionLabel` +
+  `portionWeightG`.**
+  ⛔⛔ Michel après ft-v1183 : *« 1 portion = 300 kcal, poids inconnu ne suffit pas — je veux
+  savoir si c'est 1 steak, 1 yaourt, 1 dose »*. **Il a raison, et mon refus était mal fondé** :
+  j'avais écrit que l'état « portion dont on connaît le poids » n'existe pas — vrai du
+  **comportement actuel**, faux du **besoin**.
+  ⭐⭐ **La leçon, écrite pour être reconnaissable** : *une mesure de ce que l'app FAIT ne
+  justifie jamais un refus de ce qu'elle DOIT faire.*
+  ⭐ **Livré** : étiquette (8 puces + champ libre, jamais devinée) · poids d'**UNE** portion, la
+  masse totale restant **dérivée** · `per100` recalculé depuis `q × poids` · le favori qui
+  rafraîchit sa **définition** sans toucher ses macros.
+  ⛔⛔ **Le piège nommé avant d'être commis** : `_afPortionPoids` n'est PAS `_afPoidsDeclare`
+  (poids d'une portion vs poids du total) — deux variables, jamais la même.
+  ⭐ **Le seul rouge, trouvé avant livraison** : reprendre « 2 steaks » rouvrait le champ grammes
+  et l'écran perdait le « 2 ». *La donnée était intacte, l'écran mentait.* Le pour-100 g ne
+  décide plus de l'unité.
+  Bloc **CCLXXXI 14/14** · **12 mutations, toutes mordent**.
+  ⏭️ **Chantier suivant, décidé par Michel** : afficher « 2 steaks » dans le journal du jour.
+
+- **Version précédente (session-B) :** `ft-v1185` — 🧾 **LE DÉBRIEF SUR TOUTES LES COMBINAISONS DE
   SÉANCE** : balayage complet, et **témoins permanents**.
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1051** `success` sur `9253161e`.
   ⏳ **Suite complète VERTE** : parcours **3437/3437** (+13, bloc **CCLXXXII**), calculs 339/339,

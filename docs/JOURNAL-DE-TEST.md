@@ -2190,3 +2190,37 @@ posant une ligne qui porte 601 **au total** pour `q:3`. *Une mesure qui n'exerce
 qu'on croit mesurer rassure au lieu de prouver.*
 
 **À promouvoir** en témoin permanent si le chantier « portion nommée » est lancé.
+
+---
+
+### 🔵 PROMUE — LE POUR-100 G DÉCIDAIT DE L'UNITÉ À LA REPRISE (09/09 → CORRIGÉ EN ft-v1186, 14 témoins)
+
+Trouvé **par la mesure, avant livraison**, en jouant les 10 témoins validés par Michel : reprendre
+une ligne « 2 steaks de 125 g » qui porte un pour-100 g **rouvrait le champ GRAMMES**, et l'écran
+perdait le « 2 ». ⭐ ***La donnée était intacte — c'est l'écran qui mentait.***
+
+👉 C'est mot pour mot ce que Michel refuse dans son point 2 : *« je ne veux pas que l'application
+transforme tout ça en `q:250, u:'g'`, car on perd l'information "2 steaks" »*.
+
+**La règle qui en sort** : *le pour-100 g ne décide plus de l'unité — **l'unité appartient à la
+personne, pas à la richesse de la fiche**.* Corrigé sur les **deux** portes de reprise (R8), et
+ft-v1042 (un aliment scanné ouvre bien son champ grammes) est figée par un témoin de non-régression.
+
+⚠️ **La leçon de méthode qui vaut plus que le correctif** : ce rouge n'est apparu qu'en **mesurant
+les témoins avant de les écrire**. Une relecture ne l'aurait pas vu — le code était juste, c'est
+la *combinaison* « portions + pour-100 g » qui ne l'était pas.
+
+---
+
+### ⚪ MESURÉ — UNE FIXTURE OÙ LES DEUX VALEURS COÏNCIDENT NE PEUT RIEN VOIR (09/09)
+
+Contrôle négatif de ft-v1186 : la mutation *« le favori se fait écraser ses macros »* rendait
+**0 rouge**. Ce n'était pas du code inutile — ma fixture mettait **600 des deux côtés** (favori
+600, repas 300 × 2 = 600), donc l'écrasement était **arithmétiquement invisible**.
+
+Fixture rendue discriminante (favori **600**, repas **500**), 14ᵉ témoin écrit, la mutation mord.
+
+⚠️ **Troisième fois de suite dans ce chantier** qu'une protection se révèle sans témoin — après
+l'état « boutons de portion » de l'édition et le drapeau côté édition en ft-v1183. 👉 ***Une
+protection sans témoin n'est pas une protection***, et le contrôle négatif ne le dit que si la
+fixture peut faire la différence.

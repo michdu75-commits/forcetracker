@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1185`** (prochaine : `ft-v1186`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1186`** (prochaine : `ft-v1187`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,47 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1186 — 🏷️⚖️ LA PORTION NOMMÉE : `portionLabel` + `portionWeightG` — ET MON REFUS ÉTAIT MAL FONDÉ** — Michel, en relisant ft-v1183 : ***« 1 portion = 300 kcal, poids inconnu » ne suffit pas — je veux savoir si la portion représente 1 steak, 1 yaourt, 1 dose, 1 part***.
+
+**⛔⛔⛔ IL A RAISON, ET LA FORME DE MON ERREUR VAUT PLUS QUE LE CORRECTIF.** J'avais refusé `portionWeightG` en écrivant *« cet état n'existe pas »*, mesure à l'appui : déclarer un poids fait basculer l'app en grammes, donc le champ ne se remplirait jamais. **Chaque maillon était vrai et la conclusion était fausse** — j'ai mesuré ce que l'app **FAIT** et conclu sur ce qu'elle **DOIT** faire.
+
+👉 ***Une mesure du comportement actuel ne peut JAMAIS justifier un refus de BESOIN.*** Elle décrit ce qui est, pas ce qui manque. Le seul refus qu'elle autorise est *« ce champ est aujourd'hui inutile »* — jamais *« il ne servira jamais »*. ⚠️ Ce n'est pas **R28** (une limite non vérifiée) : ici la limite **était** vérifiée. C'est la **question** qui était mauvaise.
+
+**⭐ SON CAS TRANCHE TOUT EN UNE LIGNE** : *« 1 steak = 125 g, 2 steaks = 250 g — je ne veux pas que ça devienne `q:250, u:'g'`, car on perd l'information « 2 steaks » »*. **Basculer en grammes est une PERTE, pas une simplification.**
+
+**⭐⭐ CE QUI EST LIVRÉ, SUR SES 6 DÉCISIONS** :
+
+| | décision | ce qui est fait |
+|---|---|---|
+| ① | `portionLabel` **stocké** | nom court au singulier, **jamais deviné** · 8 puces + champ libre |
+| ② | `portionWeightG` **à part** | poids d'**UNE** portion · la **masse totale reste DÉRIVÉE** (`q × poids`) |
+| ③ | référence **dérivée** | `totaux ÷ q` — sa mesure 601/3 a tranché |
+| ④ | `per100` écrit **et recalculé** | depuis `q × portionWeightG`, jamais vérité indépendante |
+| ⑤ | le **favori se rafraîchit** | sa **définition** seulement, jamais ses macros |
+| ⑥ | « 2 steaks » dans le journal | **chantier séparé**, juste après |
+
+**⛔ LES PUCES NE SONT PAS DU CONFORT** (steak · part · tranche · yaourt · dose · sachet · bol · assiette) : *taper une étiquette au clavier à chaque repas sur un téléphone ne tiendrait pas trois jours, et **un champ qu'on ne remplit plus est pire qu'un champ absent** — il donne l'illusion que l'information existe.* ⭐ Et **l'étiquette ne se saisit qu'une fois par ALIMENT** : la reprise la repropose, exactement comme le pour-100 g depuis ft-v1042.
+
+**⛔⛔ LE PIÈGE STRUCTUREL, NOMMÉ AVANT D'ÊTRE COMMIS** : `_afPortionPoids` **n'est pas** `_afPoidsDeclare`. Le premier est le poids d'**une portion**, le second celui de **ce qui est affiché** (le total). *Deux notions, deux variables, jamais la même* — consigne écrite de Michel, et c'est la famille **« deux sources qui se contredisent »** de `BUGS.md`.
+
+**⭐ ET LE POIDS D'UNE PORTION NE RESCALE RIEN** : savoir qu'un steak pèse 125 g ne change pas ce qu'on a mangé — les 4 valeurs ne bougent pas (mesuré : 240/16 avant **et** après). *C'est toute la différence avec `af-poids`*, et deux témoins la figent.
+
+**⛔⛔⛔ LE SEUL ROUGE DE LA VERSION, TROUVÉ PAR LA MESURE AVANT LIVRAISON.** Reprendre « 2 steaks de 125 g » **rouvrait le champ GRAMMES** — parce qu'un pour-100 g existait — et l'écran perdait le « 2 ». ***La donnée était intacte, l'écran mentait***, et c'est mot pour mot ce que Michel refuse au point 2. ⭐ Corrigé sur **les deux portes** (R8) : **le pour-100 g ne décide plus de l'unité**. *L'unité appartient à la personne, pas à la richesse de la fiche.* ⛔ **ft-v1042 n'est pas touchée** (un aliment scanné n'est pas compté en portions) — un témoin de non-régression le fige.
+
+**⚠️ ET LA LISTE BLANCHE DE `_provFood` A OUBLIÉ UN CHAMP POUR LA 4ᵉ FOIS** — c'est écrit **trois fois en majuscules juste au-dessus**. Cette fois un **témoin dédié** fige la traversée, au lieu de compter sur l'attention.
+
+**📣 RÈGLE D'OR #11 — L'ANNONCE EST À L'ÉCRAN**, au moment où ça sert : le bloc portions gagne des puces et deux champs **visibles**, et la définition s'écrit dessous. Aucune pop-up, **rien n'est obligatoire** — la définition est facultative, et son absence se dit (**R24/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les lignes déjà abîmées ne sont pas réparées**, la migration des 17 jours reste **intacte** · ⛔ ni cru/cuit, ni recherche/CIQUAL, ni scan · ⛔ le journal du jour n'affiche toujours **aucune** quantité — c'est le chantier ⑥, décidé séparé. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+⚠️⚠️ **33ᵉ COLLISION DE VERSION** : session-B a publié **ft-v1184 et ft-v1185** pendant que je posais ma ligne de partage. **Mon push a échoué en non-fast-forward** — *le vrai verrou a encore joué, rien n'a été écrasé*. Convention du dépôt : **la première publiée garde le numéro** → je suis passé en ft-v1186.
+
+Tests : **parcours PASSE_PARCOURS** (+14, bloc **CCLXXXI**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 12 MUTATIONS, TOUTES MORDENT** — l'étiquette retirée · le poids retiré · ⭐ **le poids qui ferait basculer l'unité** (3 rouges, exactement ce que Michel refuse) · le `per100` dérivé supprimé · la définition qui ne revient pas à la reprise · ⭐ **le pour-100 g qui reprend la main sur l'unité** (le rouge d'origine, rejoué) · la définition qui traverse d'un aliment à l'autre (3 rouges) · le favori qui garde sa vieille définition · le favori dont on écrase les macros · l'export CSV amputé · le « poids inconnu » qui ne se dit plus · la liste « Mes aliments » qui perd la définition.
+
+⚠️⚠️ **ET LA MÊME LEÇON POUR LA TROISIÈME FOIS DE SUITE** : une mutation **ne mordait pas** — écraser les macros du favori — et ce n'était **pas** du code inutile, c'était un **trou de témoin** : ma fixture mettait **600 des deux côtés**, donc l'écrasement était *invisible*. Fixture rendue discriminante (favori 600, repas 500), **14ᵉ témoin écrit**, la mutation mord. 👉 ***Une protection sans témoin n'est pas une protection*** — et une fixture où les deux valeurs coïncident ne peut rien voir.
+
+Fichiers : `app.js`, `setup.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1186. |
 
 **ft-v1185 — 🧾 LE DÉBRIEF SUR TOUTES LES COMBINAISONS DE SÉANCE : BALAYAGE, ET TÉMOINS PERMANENTS** — Michel, juste après ft-v1184 : ***« on est bien d'accord que le débrief il faut le faire pour une séance créée, ensuite une séance par rapport à un programme, et une séance avec Milo, et aussi le cardio, et aussi si il y a le cardio plus une séance — enfin toutes les possibilités qui peuvent y avoir, sans rien casser et en vérifiant bien que ça ne crée pas de bugs »***.
 
@@ -683,33 +724,6 @@ Tests : **parcours +16 (bloc CCLXXVII)**, **calculs 339/339**, muscles 241/241, 
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `tests/calculs/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `BUGS.md`. sw.js ft-v1179. |
 
-**ft-v1178 — 📷 UN SCAN D'IMPORT MOURAIT EN ROUVRANT LA FENÊTRE, ET LES 26 LIMITES DE HAUTEUR PASSENT EN `dvh`** — Michel, deux retours : ***« quand on scan un pdf, si on fait une mauvaise manip on sort de la fenêtre, et hop le scan est perdu et je dois recommencer »*** et ***« la fenêtre qui montre le programme ne va pas jusqu'en haut, donc la fenêtre est petite »***. Puis, avant que je code : ***« refais un petit audit stp »***.
-
-**⭐⭐ ET CET AUDIT A TROUVÉ DEUX CHOSES QU'IL N'AVAIT PAS VUES.**
-
-**① ⛔⛔ LE DÉFAUT N'EST PAS OÙ ON LE CROIT.** Mesuré : `close*()` ne détruit **RIEN** — il retire juste la classe `open`. C'est **`open*()`** qui remettait tout à zéro. 👉 ***Le scan survivait à la fermeture et mourait à la RÉOUVERTURE*** : entre les deux, les photos **et** l'extraction étaient encore en mémoire, personne n'allait les chercher. ⛔ Et le clic à côté ferme sans rien demander (aucun `data-no-dismiss` sur les 3 overlays) : **une mauvaise manip suffisait à jeter un appel IA déjà payé.**
-
-**② ⛔⛔ CE SONT TROIS IMPORTS, PAS UN** : programme, historique **et repas** — ce dernier que Michel n'avait pas signalé. Les trois portaient le défaut à l'identique. ⭐ Les **6 autres** `open*()` qui remettent un état à zéro ont été vérifiées une par une : positions d'affichage et compteurs, **rien qui coûte** (le check-in reperd un tap — noté, hors périmètre). 👉 ***Un audit qui ne cherche que le cas signalé n'est pas un audit.***
-
-**⭐ LE CORRECTIF** : un propriétaire unique `_scanEnCours(photos,extrait)` et trois `*Recommencer()` (**R2**). À la réouverture, si un scan est en cours, on **REPREND** — sur l'aperçu si l'extraction existe, sur les vignettes s'il n'y a que des photos — au lieu d'effacer en silence.
-
-**⛔ R24 — ON INFORME SANS BLOQUER** : pas de pop-up en travers, mais un **bandeau orange « Scan repris »** avec un bouton **« Recommencer » visible** (ft-v633). *Sans cette sortie, reprendre serait un piège : on ne pourrait plus lancer un scan neuf.*
-
-**⚠️ LA MOITIÉ QUI REND L'AUTRE SÛRE, ET ELLE N'ÉTAIT PAS DEMANDÉE : VIDER APRÈS UN IMPORT RÉUSSI.** Sans ça, l'app proposerait de reprendre un scan **déjà importé** — *un piège pire que le défaut réparé*. Trois appels posés (programme sur ses **deux** chemins, historique, repas).
-
-**③ LES HAUTEURS.** `style.css` avait `.modal` en **`85dvh`** et **toutes** les surcharges étaient en **`vh`** — **23** dans `index.html` (dont **9 entre 92 et 94vh**, précisément les fenêtres à contenu long) et **3 de plus** dans `style.css`. **26 limites converties.** Sur iOS Safari, `vh` compte la barre d'adresse rétractée et peut donc **dépasser la zone visible** ; `dvh` la suit.
-
-**⚠️⚠️ ET JE DIS CE QUE JE NE SAIS PAS.** J'ai cherché **pourquoi** `dvh` était sur la règle de base : **aucune décision écrite**, il était déjà là. *Mon « c'était un correctif iOS » était une supposition — je l'ai retirée devant Michel.* 👉 **L'incohérence est mesurée ; que ce soit LA cause de son symptôme ne l'est pas** — pas de WebKit dans ce conteneur, donc je ne peux pas le reproduire. Le correctif reste **sûr dans tous les cas** : `dvh` ne peut pas dépasser la zone visible.
-
-**⛔ ET LES 2 ANIMATIONS GARDENT `vh` EXPRÈS** : une animation doit voler sur une distance **stable** ; `dvh` change quand la barre d'adresse se rétracte et **ferait sauter le confetti**. Un témoin le fige.
-
-**📣 RÈGLE D'OR #11 — LE BANDEAU EST L'ANNONCE**, au moment où ça sert. Aucun point rouge, aucune pop-up : rien n'est à faire tant qu'on n'importe pas, et *personne n'ira chercher une pastille pour un comportement qui n'apparaît qu'après une mauvaise manip* (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **le scan ne survit pas à la fermeture de l'application** — il vit en mémoire, pas dans le stockage. Le rendre persistant demanderait d'écrire des photos en base64 dans `localStorage`, ce qui heurte le plafond de stockage : *noté, pas fait*. ⛔ **Et on n'a PAS ajouté `data-no-dismiss`** : *reprendre vaut mieux qu'empêcher de fermer* (**R24**). ⚠️ **Michel doit vérifier sur Safari/iPhone** — c'est lui qui dira si le `dvh` règle sa fenêtre.
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1029**, les **7 étapes** en `success` à **18:25:25 UTC** sur `1a81bd48`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés).
-
-Tests : **parcours 3350/3350 sur l'arbre FUSIONNÉ avec la ft-v1177 de session-A** (+11, bloc **CCLXXVI**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⚠️⚠️ **ET LA PASSE A ENCORE ROUGI SUR UN TÉMOIN DE ft-v1158 — POUR UNE AUTRE RAISON QUE LA VEILLE, ET C'EST LA MÊME LEÇON.** Il bornait sa région d'analyse avec `indexOf('_renderImpConfirm();')` cherché **depuis le début du fichier**. En ajoutant un appel à cette fonction dans `openImportProg` (la reprise de scan), la borne de **fin** est passée **avant** la borne de **début** : la région se retournait, `slice` rendait du vide, et le témoin rougissait sur un code parfaitement juste. 👉 ***Une borne de fin se cherche APRÈS la borne de début*** — sinon le témoin fige l'ordre des fonctions dans le fichier, ce que personne n'a jamais décidé. Corrigé et **éprouvé** : l'appel commenté le fait toujours rougir. ⭐ **Deux jours de suite, le même témoin a rougi sur un changement légitime** : *un témoin qui fige plus que sa garantie coûte du temps à chaque version et finit par être desserré pour de mauvaises raisons.* ⛔ **CONTRÔLE NÉGATIF : 7 mutations, toutes mordent** — ① `open()` qui efface de nouveau → **3 rouges** · ② le vidage après import retiré → **1 rouge**, exactement le piège · ③ la jumelle historique → **1** · ④ la jumelle repas → **1** · ⑤ le bandeau **sans sortie** → **2 rouges** · ⑥ une seule surcharge laissée en `vh` → **1** · ⑦ ⭐ les animations converties **par erreur** → **1 rouge**, exactement le témoin qui protège le confetti. Fichiers : `log.js`, `app.js`, `index.html`, `style.css`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1178. |
 
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
