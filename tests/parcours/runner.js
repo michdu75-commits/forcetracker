@@ -32490,6 +32490,99 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
   }
 }
 
+/* ═══ CCLXXXII. LE DÉBRIEF SUR TOUTES LES COMBINAISONS DE SÉANCE (09/09/2026, ft-v1185) ══════
+   Michel, après ft-v1184 : « on est bien d'accord que le débrief il faut le faire pour une séance
+   créée, ensuite une séance par rapport à un programme, et une séance avec Milo, et aussi le
+   cardio, et aussi si il y a le cardio plus une séance — enfin toutes les possibilités qui peuvent
+   y avoir, sans rien casser et en vérifiant bien que ça ne crée pas de bugs ».
+   ⭐⭐ LA LISTE EST TIRÉE DU CODE, PAS INVENTÉE : SEPT portes créent une séance — `startWorkout`,
+   `lancerTypeSeance`, `renderLog`, `addExercise`, `_appliqueMiloSession`, `_loadProgDayVraiment`
+   (multi-jours) et `_loadProgVraiment` (un seul jour). *J'en avais testé DEUX sur sept.*
+   ⛔ RÉSULTAT DU BALAYAGE : les 12 combinaisons donnaient DÉJÀ un débrief — il n'y avait rien à
+   réparer. Ce bloc n'apporte donc pas un correctif mais une GARANTIE (R17/R35 : chaque cas vécu
+   devient un témoin permanent). *Un balayage qu'on ne fige pas est un balayage à refaire.*
+   ⚠️⚠️ ET IL A ÉTÉ ÉPROUVÉ AVANT D'ÊTRE CRU : en neutralisant `_showSessionEnd`, LES 12
+   ROUGISSENT. *Un contrôle tout vert qu'on n'a pas vu échouer ne mesure rien* (ft-v994).
+   ⚠️ LE CARDIO S'ÉCRIT `duration`, PAS `min` — et ça m'a coûté un FAUX BUG annoncé à Michel le
+   09/09 : ma sonde employait `min`, donc le cardio n'était pas reconnu et j'ai cru qu'un cardio
+   seul n'ouvrait pas d'écran de fin. *Un test qui n'emploie pas le schéma de la production ne
+   teste rien : il fabrique un faux bug.* */
+{
+  const CAS=[
+    ["① séance créée à la main (startWorkout)", "startWorkout(); addExercise('Squat à la Barre'); S.wkt.exs[0].sets.forEach(s=>{s.kg=100;s.reps=5;s.done=true;});"],
+    ["② carte type de séance (lancerTypeSeance)", "if(typeof lancerTypeSeance==='function'&&typeof DISC_SEANCE!=='undefined'){lancerTypeSeance(Object.keys(DISC_SEANCE)[0]);}else{startWorkout();addExercise('Squat à la Barre');} (S.wkt.exs||[]).forEach(e=>e.sets.forEach(s=>{s.kg=50;s.reps=10;s.done=true;}));"],
+    ["③ ajout direct d'un exercice (addExercise)", "addExercise('Développé Couché'); S.wkt.exs[0].sets.forEach(s=>{s.kg=80;s.reps=8;s.done=true;});"],
+    ["④ SÉANCE DE MILO (_appliqueMiloSession)", "_appliqueMiloSession([{name:'Squat à la Barre',sets:[{kg:100,reps:5,type:'N'}]}],{label:'Séance de Milo'},'new',null); (S.wkt.exs||[]).forEach(e=>e.sets.forEach(s=>{s.done=true;}));"],
+    ["⑤ programme MULTI-JOURS (_loadProgDayVraiment)", "S.programmes=[{id:'p',name:'PB',weeks:4,startDate:'',days:[{label:'J2',exs:[{name:'Squat à la Barre',note:'',sets:[{kg:100,reps:5,type:'N'}]}]}]}];persist(); _loadProgDayVraiment(0,0); (S.wkt.exs||[]).forEach(e=>e.sets.forEach(s=>{s.done=true;}));"],
+    ["⑥ programme UN SEUL JOUR (_loadProgVraiment)", "S.programmes=[{id:'q',name:'Full',weeks:4,startDate:'',exs:[{name:'Développé Couché',note:'',sets:[{kg:80,reps:8,type:'N'}]}]}];persist(); _loadProgVraiment(0); (S.wkt.exs||[]).forEach(e=>e.sets.forEach(s=>{s.done=true;}));"],
+    ["⑦ CARDIO SEUL (après)", "startWorkout(); S.wkt.exs=[]; S.wkt.cardio={type:'velo',intensity:'modere',duration:30};"],
+    ["⑧ CARDIO SEUL (échauffement AVANT)", "startWorkout(); S.wkt.exs=[]; S.wkt.cardioAvant={type:'elliptique',intensity:'facile',duration:15};"],
+    ["⑨ CARDIO avant + après, sans muscu", "startWorkout(); S.wkt.exs=[]; S.wkt.cardioAvant={type:'elliptique',intensity:'facile',duration:10}; S.wkt.cardio={type:'velo',intensity:'modere',duration:20};"],
+    ["⑩ CARDIO + MUSCU", "startWorkout(); addExercise('Squat à la Barre'); S.wkt.exs[0].sets.forEach(s=>{s.kg=100;s.reps=5;s.done=true;}); S.wkt.cardioAvant={type:'elliptique',intensity:'facile',duration:15};"],
+    ["⑪ séance mise en PAUSE puis terminée", "startWorkout(); addExercise('Squat à la Barre'); S.wkt.exs[0].sets.forEach(s=>{s.kg=100;s.reps=5;s.done=true;}); S.wkt.pausedAt=Date.now()-60000;"],
+    ["⑫ SUPERSET (deux exercices groupés)", "startWorkout(); addExercise('Squat à la Barre'); addExercise('Développé Couché'); (S.wkt.exs||[]).forEach(e=>{e.gid='g1';e.gtype='super';e.sets.forEach(s=>{s.kg=60;s.reps=8;s.done=true;});});"]
+  ];
+  const R = await p.evaluate(async(CAS)=>{
+   const out=[];
+   const of=window.fetch;
+   window.fetch=function(u){ if(/script\.google|workers\.dev/.test(String(u)))
+     return Promise.resolve(new Response(JSON.stringify({reply:'Bonne séance.'}),{status:200,headers:{'Content-Type':'application/json'}}));
+     return of.apply(this,arguments); };
+   for(let i=0;i<CAS.length;i++){
+    try{
+      /* ⛔ REMISE À ZÉRO ENTRE CHAQUE CAS — sinon un reste du précédent (overlay encore ouvert,
+         texte du débrief) ferait passer le suivant au vert sans rien prouver. */
+      S.sessions=[];S.prs={};S.programmes=[];S.customExercises=[];S.wkt=null;persist();
+      const ovR=document.getElementById('ov-session-end'); if(ovR)ovR.classList.remove('open');
+      const dR=document.getElementById('se-debrief'); if(dR)dR.innerHTML='';
+      try{localStorage.removeItem('ft4_pending_debrief');}catch(e){}
+      goScreen('log',document.getElementById('nb-log'));
+      eval(CAS[i][1]); persist();
+      await finishWorkout();
+      await new Promise(r=>setTimeout(r,700));
+      const ov=document.getElementById('ov-session-end'), d=document.getElementById('se-debrief');
+      const txt=d?d.textContent.replace(/\s+/g,' ').trim():'';
+      /* ⚠️⚠️ « IL Y A DU TEXTE » NE SUFFIT PAS — le contrôle négatif l'a prouvé : en tuant le
+         socle `_debriefLocal`, `_runSeDebrief` retombe sur un repli de trois lignes écrit à la
+         main, donc le texte reste long et le témoin restait VERT. *Un témoin qui mesure la
+         longueur mesure la longueur, pas le débrief.*
+         👉 On vérifie AUSSI que le socle chiffré produit réellement quelque chose POUR CETTE
+         SÉANCE — c'est lui qui porte le contenu utile, et il ne dépend d'aucun réseau. */
+      /* ⚠️⚠️ ET LA 1ʳᵉ VERSION DE CE CONTRÔLE NE MORDAIT PAS NON PLUS : elle APPELAIT
+         `_debriefLocal` en direct, donc elle restait verte quand `_runSeDebrief` cessait de
+         l'employer. ***Je venais d'écrire §58 sur exactement ça.*** 👉 On vérifie que le texte
+         AFFICHÉ contient bien ce que le socle produit — c'est le CHEMIN, pas la fonction. */
+      let socle=null;
+      try{
+        if(typeof _debriefLocal==='function' && S.sessions[0]){
+          const brut=String(_debriefLocal(S.sessions[0],0,{chiffres:false})||'')
+            .replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+          const bout=brut.slice(0,40);
+          socle = bout.length>20 && txt.indexOf(bout)>=0;
+        }
+      }catch(e){ socle=false; }
+      out.push({n:CAS[i][0], ouvert:!!(ov&&ov.classList.contains('open')),
+                seances:S.sessions.length, debrief:txt.length>20, socle:socle});
+      if(ov)ov.classList.remove('open');
+    }catch(e){ out.push({n:CAS[i][0], err:String(e).slice(0,90)}); }
+   }
+   window.fetch=of;
+   S.sessions=[];S.prs={};S.programmes=[];S.customExercises=[];S.wkt=null;persist();
+   return out;
+  }, CAS);
+
+  if(!Array.isArray(R)) t('CCLXXXII n\'a pas pu tourner', false, String(R));
+  else{
+    R.forEach(r=>{
+      t('CCLXXXII '+r.n+' → écran de fin + séance + débrief',
+        !r.err && r.ouvert===true && r.seances===1 && r.debrief===true && r.socle===true,
+        r.err ? r.err : ('écran : '+r.ouvert+' · séances : '+r.seances+' · débrief : '+r.debrief
+                         +' · socle chiffré : '+r.socle));
+    });
+    t('CCLXXXII ⛔ CONTRÔLE — les 12 combinaisons ont bien été jouées', R.length===12, 'jouées : '+R.length);
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

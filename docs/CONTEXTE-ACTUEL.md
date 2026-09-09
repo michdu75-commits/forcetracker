@@ -20,7 +20,26 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1184` — ⏱️ **LA MISE À JOUR VOLAIT LE DÉBRIEF DE FIN DE
+- **Version en ligne (live) :** `ft-v1185` — 🧾 **LE DÉBRIEF SUR TOUTES LES COMBINAISONS DE
+  SÉANCE** : balayage complet, et **témoins permanents**.
+  ⏳ **Suite complète VERTE** : parcours **3437/3437** (+13, bloc **CCLXXXII**), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  ⭐ **Michel** : *« le débrief il faut le faire pour une séance créée, une séance par rapport à un
+  programme, une séance avec Milo, et aussi le cardio, et le cardio plus une séance — toutes les
+  possibilités, sans rien casser »*.
+  ⭐⭐ **La liste est tirée du CODE** : **7 portes** créent une séance (`startWorkout` ·
+  `lancerTypeSeance` · `renderLog` · `addExercise` · **Milo** · programme **multi-jours** ·
+  programme **un seul jour**). ***J'en avais testé 2 sur 7.***
+  ⛔ **Résultat : les 12 combinaisons donnaient DÉJÀ un débrief — rien à réparer.** La version
+  n'apporte **aucune ligne de production**, seulement une **garantie** (**R17/R35**).
+  ⚠️ **Éprouvé** : en neutralisant `_showSessionEnd`, **les 12 rougissent**.
+  ⚠️⚠️ **Et le contrôle négatif a corrigé mon témoin DEUX fois** — d'abord il mesurait la
+  *longueur* du texte, puis il *appelait* `_debriefLocal` en direct. ***C'est `BUGS.md` §58, que
+  je venais d'écrire une heure plus tôt.*** La bonne version vérifie que le texte **affiché**
+  vient du socle : le **chemin**, pas la fonction.
+  ⏭️ ⛔ Ça ne juge pas la **qualité** du débrief · le seul cas sans écran reste « aucune série
+  cochée », qui est **voulu**.
+- **Version précédente :** `ft-v1184` — ⏱️ **LA MISE À JOUR VOLAIT LE DÉBRIEF DE FIN DE
   SÉANCE**, et c'est **Michel** qui a trouvé la cause.
   ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1049**, `success` à **16:09:35 UTC**.
   ⏳ **Suite complète VERTE** : parcours **3424/3424** (+9, bloc **CCLXXXI**), calculs 339/339,

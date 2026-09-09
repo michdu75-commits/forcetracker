@@ -3461,6 +3461,16 @@ on lit le test et on n'y trouve **aucun appel** au vrai chemin.
    ⚠️ Payé au contrôle négatif : ma mutation « garde du récap retiré » ne faisait rougir personne,
    parce qu'aucun de mes témoins ne tentait une mise à jour **pendant** que l'écran est affiché.
 
+**⚠️⚠️ RECHUTE LE JOUR MÊME, PAR CELUI QUI VENAIT D'ÉCRIRE CETTE FAMILLE (ft-v1185).** En figeant
+le balayage du débrief, j'ai voulu vérifier que le socle chiffré produisait bien quelque chose. Ma
+1ʳᵉ version mesurait la **longueur du texte** — verte alors que le socle était mort, parce qu'un
+repli écrit à la main prend le relais. Ma 2ᵉ version **appelait `_debriefLocal` en direct** — verte
+aussi, parce que la fonction existe toujours : c'est son **usage par l'écran** qui avait disparu.
+👉 ***J'ai écrit §58 puis je l'ai refaite dans l'heure.*** La 3ᵉ version vérifie que le texte
+**affiché** contient ce que le socle produit — le **chemin**, pas la fonction : la mutation fait
+alors **12 rouges**. *Écrire une famille de bugs ne vaccine pas contre elle ; seul le contrôle
+négatif attrape la rechute.*
+
 *Voisine de **§46** (un correctif qu'on ne peut pas vérifier là où il s'applique) et de la leçon de
 ft-v1158 — « vérifier la fonction n'est pas vérifier l'appel » : celle-ci en est la version
 **temporelle** au lieu de spatiale.*

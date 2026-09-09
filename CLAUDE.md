@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1184`** (prochaine : `ft-v1185`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1185`** (prochaine : `ft-v1186`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,27 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1185 — 🧾 LE DÉBRIEF SUR TOUTES LES COMBINAISONS DE SÉANCE : BALAYAGE, ET TÉMOINS PERMANENTS** — Michel, juste après ft-v1184 : ***« on est bien d'accord que le débrief il faut le faire pour une séance créée, ensuite une séance par rapport à un programme, et une séance avec Milo, et aussi le cardio, et aussi si il y a le cardio plus une séance — enfin toutes les possibilités qui peuvent y avoir, sans rien casser et en vérifiant bien que ça ne crée pas de bugs »***.
+
+**⭐⭐ LA LISTE EST TIRÉE DU CODE, PAS INVENTÉE.** **SEPT portes** créent une séance : `startWorkout` · `lancerTypeSeance` · `renderLog` · `addExercise` · **`_appliqueMiloSession`** · **`_loadProgDayVraiment`** (multi-jours) · **`_loadProgVraiment`** (un seul jour). 👉 ***J'en avais testé DEUX sur sept*** — inventer la liste m'aurait fait rater les cinq autres.
+
+**⛔ RÉSULTAT : LES 12 COMBINAISONS DONNAIENT DÉJÀ UN DÉBRIEF. Il n'y avait rien à réparer.** Cette version n'apporte donc **pas un correctif mais une garantie** (**R17/R35** — chaque cas vécu devient un témoin permanent). *Un balayage qu'on ne fige pas est un balayage à refaire.* ⛔ **Aucune ligne de production ne change.**
+
+**Les 12 cas** : séance créée à la main · carte « type de séance » · ajout direct d'un exercice · **séance de Milo** · programme **multi-jours** · programme **un seul jour** · **cardio seul (après)** · **cardio seul (échauffement avant)** · cardio avant **+** après sans muscu · **cardio + muscu** · séance mise en **pause** puis terminée · **superset**.
+
+**⚠️⚠️ ÉPROUVÉ AVANT D'ÊTRE CRU** : en neutralisant `_showSessionEnd`, **les 12 rougissent**. *Un contrôle tout vert qu'on n'a pas vu échouer ne mesure rien, il rassure* (ft-v994).
+
+**⚠️⚠️⚠️ ET LA LEÇON DE LA VERSION EST QUE LE CONTRÔLE NÉGATIF A CORRIGÉ MON TÉMOIN DEUX FOIS.**
+- **①** Ma 1ʳᵉ version mesurait **la longueur du texte**. En tuant le socle `_debriefLocal`, `_runSeDebrief` retombe sur un repli de trois lignes écrit à la main : le texte reste long, **le témoin restait VERT**. *Un témoin qui mesure la longueur mesure la longueur, pas le débrief.*
+- **②** Ma 2ᵉ version **appelait `_debriefLocal` en direct** — verte aussi, parce que la fonction **existe toujours** : c'est son **usage par l'écran** qui avait disparu. 👉 ***C'est `BUGS.md` §58, que je venais d'écrire une heure plus tôt, et que j'ai refaite aussitôt.***
+- **③** La bonne version vérifie que le texte **affiché** contient ce que le socle **produit** — le **chemin**, pas la fonction. La mutation fait alors **12 rouges**. *Écrire une famille de bugs ne vaccine pas contre elle ; seul le contrôle négatif attrape la rechute.* (§58 complétée.)
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun code de production ne change (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **ça ne juge pas la QUALITÉ du débrief**, seulement qu'il existe et qu'il **vient du socle calculé**. ⛔ Et le seul cas sans écran de fin reste **« aucune série cochée »**, qui est **voulu** : l'app refuse de terminer et le dit.
+
+Tests : **parcours 3437/3437** (+13, bloc **CCLXXXII**), **calculs 339/339**, muscles, croisés, dates, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 5 mutations** — ① l'écran de fin non ouvert → **12 rouges** · ② le cardio non reconnu comme validant → **3 rouges**, exactement les trois cas de cardio seul · ③ l'échauffement **avant** qui ne compte plus → **1 rouge**, exactement ce cas · ④ le socle non employé → **12 rouges** (après mes deux corrections) · ⑤ la régression de ft-v1184 → **0 rouge ici**, mais elle mord dans le bloc **CCLXXXI** qui la couvre — *je le dis plutôt que de prétendre l'avoir testée*. Fichiers : `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `BUGS.md`. sw.js ft-v1185. |
 
 **ft-v1184 — ⏱️ LA MISE À JOUR VOLAIT LE DÉBRIEF DE FIN DE SÉANCE — ET C'EST MICHEL QUI A TROUVÉ LA CAUSE** — il signale d'abord le symptôme : ***« quand on fait la séance avec Milo à la fin on a un débrief, mais quand on intègre un programme ou on fait sa propre séance, il n'y en a pas »***.
 
@@ -689,40 +710,6 @@ Fichiers : `app.js`, `tests/parcours/runner.js`, `tests/calculs/runner.js`, `sw.
 Tests : **parcours 3350/3350 sur l'arbre FUSIONNÉ avec la ft-v1177 de session-A** (+11, bloc **CCLXXVI**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⚠️⚠️ **ET LA PASSE A ENCORE ROUGI SUR UN TÉMOIN DE ft-v1158 — POUR UNE AUTRE RAISON QUE LA VEILLE, ET C'EST LA MÊME LEÇON.** Il bornait sa région d'analyse avec `indexOf('_renderImpConfirm();')` cherché **depuis le début du fichier**. En ajoutant un appel à cette fonction dans `openImportProg` (la reprise de scan), la borne de **fin** est passée **avant** la borne de **début** : la région se retournait, `slice` rendait du vide, et le témoin rougissait sur un code parfaitement juste. 👉 ***Une borne de fin se cherche APRÈS la borne de début*** — sinon le témoin fige l'ordre des fonctions dans le fichier, ce que personne n'a jamais décidé. Corrigé et **éprouvé** : l'appel commenté le fait toujours rougir. ⭐ **Deux jours de suite, le même témoin a rougi sur un changement légitime** : *un témoin qui fige plus que sa garantie coûte du temps à chaque version et finit par être desserré pour de mauvaises raisons.* ⛔ **CONTRÔLE NÉGATIF : 7 mutations, toutes mordent** — ① `open()` qui efface de nouveau → **3 rouges** · ② le vidage après import retiré → **1 rouge**, exactement le piège · ③ la jumelle historique → **1** · ④ la jumelle repas → **1** · ⑤ le bandeau **sans sortie** → **2 rouges** · ⑥ une seule surcharge laissée en `vh` → **1** · ⑦ ⭐ les animations converties **par erreur** → **1 rouge**, exactement le témoin qui protège le confetti. Fichiers : `log.js`, `app.js`, `index.html`, `style.css`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1178. |
 
 
-**ft-v1177 — ⚖️ L'INVARIANT DE REPRISE : DES TOTAUX NE SE RÉAPPARIENT JAMAIS À UNE AUTRE QUANTITÉ — ET LE CORRECTIF ÉTAIT DÉJÀ ÉCRIT, SUR L'AUTRE PORTE** — Michel fait auditer sa chaîne nutrition par GPT sur son **export réel** (168 lignes, 08/07 → 07/09), puis me passe les conclusions : ***« la quantité change de 380 g à 110 g, alors que les valeurs nutritionnelles restent identiques »***.
-
-**⭐⭐ REPRODUIT AU CHIFFRE PRÈS AVANT D'ÉCRIRE UNE LIGNE DE CORRECTIF**, dans un vrai navigateur, par les vraies fonctions. Les **trois** états de son journal, à l'unité :
-
-| son export | ma reproduction |
-|---|---|
-| 01/09 · 110 g → **274 kcal / 4 / 23 / 15** | **274 / 4 / 23 / 15** |
-| référence dérivée ≈ **249 kcal/100 g** | **249** |
-| 02/09 · 180 g → **448 / 7 / 38 / 25** | **448 / 7 / 38 / 25** |
-
-**⛔⛔ ET LA CAUSE EST R8 À L'ÉTAT PUR, MESURÉE, PAS DEVINÉE.** Deux chemins de reprise, la **même** entrée sans pour-100 g :
-
-- **`_afSuggPrendreLocale`** (retrouver l'aliment en tapant son nom) → `_afRef = {base:274, **q:380**, u:'g'}` → 110 g rend **79 kcal** ✅
-- **`quickFillFood`** (« Mes aliments ») → `_afRef = {base:274, **q:1**, u:''}` → 110 g rend **274 kcal** ⛔
-
-👉 ***Les deux lignes qui préservent le couple `totaux ↔ q` existaient déjà. Elles étaient posées sur une seule des deux portes.*** Sixième fois dans ce fichier. Sans pour-100 g, `it.q` est **la seule chose** qui relie 274 kcal au monde réel — la branche `else` le jetait, et `_afMajAncre` traitait alors l'écran comme « une portion » (`q:1`) : déclarer 110 g revenait à **affirmer que ces 274 kcal pèsent 110 g**.
-
-**⭐ ET LA PROPAGATION EST LA MOITIÉ QUE L'AUDIT N'AVAIT PAS VUE** : `_provFood` **fabrique** alors un pour-100 g à partir de cet appariement (274 ÷ 110 × 100 = **249**) et l'enregistre avec l'aliment. À partir de là tout est « cohérent » depuis une vérité fausse. ⚠️ **Ce code n'est pas un bug** : c'est le calibrage par le poids, juste pour un aliment neuf. **Le défaut est en amont.**
-
-**⛔ 2ᵉ DÉFAUT, CONFIRMÉ : `quickAddFood` ÉCRIVAIT DES LIGNES MORTES.** L'ajout **direct** depuis la liste recopiait les **totaux** et créait `q:null, u:null, per100:null` — *mathématiquement non convertible* : rien ne permet plus de savoir si 323 kcal valaient 100 ou 300 g. C'est la forme des lignes « quantité vide » de son export (steak haché, 24/08 · 25/08 · 28/08). Il ne peut pas passer par les champs de l'écran (le formulaire n'est pas ouvert) → **`q`/`u` traversent enfin la liste blanche de `_provFood`**, ⚠️ pour la **3ᵉ fois** que ce même oubli s'y produit, dans la fonction qui porte **déjà deux avertissements en majuscules** disant exactement ça.
-
-**⛔⛔ CE QUI N'EST PAS TOUCHÉ, ET C'EST L'AUDIT QUI LE DEMANDE** : ⓐ **`_qtyRescale`** — *« il calcule correctement à partir d'une référence déjà corrompue en amont »*, le modifier compenserait au lieu de corriger ; ⓑ **`_afSuggPrendreLocale`** — son §8-3 demandait de la vérifier : **elle est déjà juste**, mesuré, on ne répare pas ce qui marche (**R30**).
-
-**⚠️⚠️⚠️ ET LA VRAIE LEÇON EST QUE LE CONTRÔLE NÉGATIF A REFUSÉ MON PREMIER CORRECTIF.** J'avais ajouté `_afPoidsPose=true` en me disant : *« ce poids vient d'une saisie enregistrée, donc c'en est un vrai »*. Le mini-banc était à **14/14**. ⛔ **Mesuré sur un aller-retour d'unité : déclarer 110 g redonnait 274 kcal** — ***le défaut même que la version corrige***. 👉 La raison tient en une phrase : `_afPoidsPose` veut dire *« la personne a déclaré un poids pour **CE QUI EST AFFICHÉ** »*, et seul `_afDeclarePoids` peut l'affirmer. Un poids **hérité** ne dit rien de l'écran : dès qu'elle change la quantité, `_afRef.q` (380) ne correspond plus à ce qu'elle voit (79). *La différence avec ft-v1173 n'est pas le geste, c'est **QUI** a posé le poids.* **Deuxième jour de suite qu'un correctif trop large est arrêté par la mesure** — et cette fois par un témoin que le contrôle négatif m'a **fait écrire**.
-
-**⭐ ET LA CONCLUSION DE L'AUDIT QUE J'ADOPTE TELLE QUELLE, parce qu'elle me reprend** : j'avais écrit *« le reste du code est juste »*. Son §7 refuse la formule, à raison — l'existence de `per100`, de `q`/`u` et d'un `_qtyRescale` déterministe **ne prouve rien** sur la transmission. La bonne phrase est la sienne : ***le modèle de données existe et est exploitable, mais ses invariants n'étaient pas protégés sur tous les chemins de reprise.***
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît : un calcul faux devient juste (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔⛔ **les lignes déjà corrompues ne sont PAS réparées** — c'est son §11, et il a raison : *aucune correction silencieuse par approximation*. Une ligne à `q:null, per100:null` ne permet **pas** de deviner si 323 kcal valaient 100 ou 300 g ; l'outil de récupération viendra après, à trois niveaux (certain · ambigu · insuffisant). ⛔ **L'exclusivité des deux blocs Quantité part en version SÉPARÉE** — l'audit dit que c'est un bug distinct, et c'en est un. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1027**, job `deploy` — **les 7 étapes** en `success`, « Déployer sur GitHub Pages » comprise, à **17:18:10 UTC** sur `73f0d5b8`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés).
-
-Tests : **parcours 3339/3339 sur l'arbre FUSIONNÉ avec la ft-v1176 de session-B** (+16, bloc **CCLXXVI**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⭐⭐ **LES DIX TESTS DE NON-RÉGRESSION DE L'AUDIT SONT ÉCRITS TELS QU'IL LES A DEMANDÉS**, avec ses valeurs interdites : *110 g → 79 (interdit 274)* · *180 g → 130 (interdit 448)* · *per100 stable à 72 sur quatre quantités* · *steak U 250→300 g = 388* · *Iso Zero 20/40/50 g = 78 · 156 · 195* · *dix cycles sans une dérive*. ⛔ **CONTRÔLE NÉGATIF : 6 MUTATIONS, TOUTES MORDENT** — ① l'arbre d'avant → **13 rouges** ; ② `quickFillFood` qui rejette `it.q` → **11 rouges**, le défaut d'origine ; ③ `quickAddFood` qui ne transmet plus rien → **2**, chirurgical ; ④ la liste blanche de `_provFood` → **2**, les mêmes (*ce sont deux faces d'une garantie, je le dis, pas deux détections*) ; ⑤ ⭐⭐ **mon premier correctif remis** → **1 rouge**, exactement le témoin de l'aller-retour — *c'est la mutation la plus utile du lot : elle rejoue mon erreur* ; ⑥ l'ancrage qui accepterait les `ml` → **1**, exactement le garde-fou **R29**. Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `BUGS.md`. sw.js ft-v1177. |
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
 > **Ce qui RESTE réservé (statut, pas des features)** : carte dorée « Testeur Fondateur » + Espace testeur (`_isTester()`, `TESTER_EMAILS` : christophe/eline/emma/tanna) · suivi photos approfondi (`_isSuperTester()`) · outils de test clone-only (badge Gardien, questions illimitées).
