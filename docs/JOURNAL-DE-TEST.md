@@ -2058,3 +2058,50 @@ essai à blanc avant écriture** · une ligne non récupérable se **marque**, e
 et `S.savedFoods` s'audite **avec** `S.foodLog`. L'ordre de priorité aussi : *saisie fiable → I4 → P1
 → migration*.
 
+### ⚪ ÉCARTÉE — « LA RECHERCHE NE TROUVE PAS COQUILLETTES » : FAUX, MESURÉ (09/09/2026)
+
+**Une note de GPT** livrée avec un classeur consolidé de 603 alias affirme : *« la recherche Force
+Tracker ne retrouve pourtant pas certains termes utilisateur évidents, notamment coquillettes »*.
+⭐ **Sa propre règle finale disait la bonne chose** : *« le fait qu'un aliment ne soit pas trouvé dans
+l'interface ne prouve pas qu'il manque dans les fichiers source — vérifier le pipeline avant
+d'ajouter des données »*. Vérifié. **Il n'y avait rien à réparer.**
+
+**⛔ LES 12 TERMES DE SA LISTE, CONDUITS DANS UN VRAI NAVIGATEUR PAR `_ciqualChercher` : 12 PASS.**
+
+| terme | code | libellé | kcal | P | G | L |
+|---|---|---|---|---|---|---|
+| coquillettes · coquillette · pates · pâtes · spaghetti · penne · fusilli | **9811** | Pâtes sèches, standard, cuites | **167** | 6,7 | 31,4 | 1,1 |
+| riz basmati · basmati | 9125 | Riz basmati, cuit | 148 | 3,2 | 32,9 | 0,4 |
+| riz complet | 9103 | Riz complet, cuit | 187 | 4,1 | 37,6 | 1,8 |
+| riz etuve · riz étuvé | 9105 | Riz blanc étuvé, cuit | 146 | 3,1 | 31,7 | 0,6 |
+
+`data/alias.json` porte **632 alias** (le classeur en a 570 exploitables), `coquillettes → 9811` y est
+depuis toujours, `9811` est bien dans `data/ciqual.json`, et le chargement est **attendu** avant de
+re-rendre la liste — avec un garde anti-frappe-périmée.
+
+**⛔⛔ ET LE CLASSEUR N'EST PAS UNE AMÉLIORATION : IL PORTE UNE RÉGRESSION SÉRIEUSE.** Comparé avec
+la **normalisation du projet** (`tools/alias.py`), pas la mienne :
+
+| | |
+|---|---|
+| alias du classeur absents de la prod | **1** — `fromage blanc 0`, et **la recherche le trouve déjà** sans alias |
+| alias de la prod absents du classeur | **63** — l'importer en écrasant en **perdrait** |
+| codes qui divergent | **2**, et ce sont les mêmes : ⛔ `tomate`/`tomates` → **20189 « Tomate, SÉCHÉE »** (`kcal: None`, **43,5 g** de glucides) au lieu de **20385 « Tomate crue »** (19 kcal, 3,7 g) |
+
+👉 ***Importer ce classeur ferait rendre « tomate séchée sans calories » à qui tape « tomate »*** —
+un facteur **12** sur les glucides, et pas de kcal du tout.
+
+**⚠️⚠️ ET LA LEÇON DE MÉTHODE EST À MOI : MON PREMIER DIFF ANNONÇAIT 17 ALIAS MANQUANTS.** Ils
+étaient faux — j'avais normalisé avec un `ascii ignore` maison, qui **détruit la ligature `œ`**
+(`pates aux œufs` → `pates aux ufs`) et **espace l'apostrophe** là où le projet la **supprime**
+(`blanc d oeuf` vs `blanc doeuf`). 👉 ***Je mesurais ma propre normalisation, pas un trou de la
+base.*** En important `norm` depuis `tools/alias.py`, les 17 tombent à **1**. *Deux normalisations
+qui divergent d'un caractère font apparaître — ou disparaître — des entrées en silence* : c'est
+exactement l'avertissement déjà écrit dans cette fonction, et je l'ai payé en le lisant après.
+
+**⛔ DÉCISION : ON N'IMPORTE PAS.** Rien n'est ajouté, rien n'est retiré, aucun code n'est touché
+(le moteur de portion, I4, P1 et la migration restent intacts — c'était sa consigne §7 et elle est
+respectée). ⭐ **Le classeur reste utile comme AUDIT** : ses onglets fast-food validé/legacy et sa
+séparation des sources documentent d'où viennent les données. *Ce qui est écarté reste écrit avec sa
+raison* (**R30**) — sinon quelqu'un le réimporte dans six mois et « répare » la tomate.
+
