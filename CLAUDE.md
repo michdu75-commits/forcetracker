@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1180`** (prochaine : `ft-v1181`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1181`** (prochaine : `ft-v1182`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,46 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1181 — ⚖️ LE COUPLE `base`/`q` SURVIT ENFIN À L'ALLER-RETOUR D'ONGLET — ET LA QUANTITÉ AFFICHÉE A UN PROPRIÉTAIRE** — cahier des charges de Michel après ft-v1180 : ***« préserver la quantité affichée liée au couple base/q, pas seulement `_afPoidsDeclare` »***.
+
+**⭐⭐ LA CAUSE, MESURÉE GESTE PAR GESTE AVANT D'ÉCRIRE UNE LIGNE** — son étiquette d'Iso Zero :
+
+| geste | `_afRef` | champ | écran |
+|---|---|---|---|
+| déclarer **30 g** | `{base:117, q:30}` | 30 | 117 |
+| taper **40** | **inchangé** — c'est l'invariant | 40 | **156** |
+| 🍽️ portions | `{base:117, **q:1**, u:''}` ⛔ | *détruit* | 156 |
+| ⚖️ grammes | `{q:1, u:''}` | *détruit*, `af-poids` vide | 156 |
+
+👉 ***L'app affiche 156 kcal sans plus aucune idée de ce que ça pèse.*** Taper 110 g ensuite appariait 274 kcal à 110 g — le cas exact du journal de test.
+
+**⭐⭐ ET C'EST LE MIROIR EXACT DE ft-v1180.** Là, le DOM se souvenait **trop** (la quantité d'un aliment traversait jusqu'au suivant) ; ici il se souvient **trop peu** — il est la **seule** mémoire de la quantité affichée, et redessiner le bloc la détruit. *Même racine, deux symptômes opposés : la quantité affichée n'appartenait à personne.*
+
+**⭐ LE CORRECTIF MET DE CÔTÉ LE COUPLE ENTIER**, `base` **et** `q`, plus la quantité affichée — et le remet **tel quel** au retour, gardé par le **nom** de l'aliment (le garde-fou de ft-v1180). *On ne recalcule rien, on remet ce qui était là.*
+
+**⛔⛔ ET C'EST LA DIFFÉRENCE AVEC MON CORRECTIF DE LA VEILLE, QUE LE BANC AVAIT REFUSÉ** : il ne restituait que `_afPoidsDeclare` (30), donc l'écran repassait à 30 g / 117 kcal et **le 40 qu'elle venait de taper disparaissait**. *Réparer la donnée en cassant l'écran n'est pas un correctif, c'est un échange.* Ici l'écran redevient **identique à ce qu'il était**.
+
+**⚠️⚠️ LE TÉMOIN ft-v1061 A ÉTÉ ADAPTÉ — SUR DÉCISION DE MICHEL, ET LA MARCHE À SUIVRE A ÉTÉ RESPECTÉE.** Sa consigne était : *« si ft-v1061 rougit, tu t'arrêtes et tu traces pourquoi »*. Il a rougi, **je me suis arrêté**, j'ai tracé sans toucher au témoin, et il a tranché (**option A**).
+- **ancien geste** : `taper('af-poids','30')` — le bloc **re-déclarait** le poids après l'aller-retour, parce que l'app l'avait oublié et le redemandait ;
+- **comportement voulu** : l'aller-retour ne perd plus la quantité, donc l'app ne redemande plus rien — `af-poids` a cédé la place à `af-prop`, et *cette re-déclaration était le contournement du bug* ;
+- **la garantie est inchangée** : `base` et `q` ne doivent JAMAIS être désappariés. **Les 8 assertions et leurs valeurs sont conservées à l'identique** (117/26 · 12/3 · 156/35 · q=30 · base 200 / q 40).
+
+⭐ **Le témoin y gagne** : il vérifie désormais que le couple est intact **dès la sortie de l'aller-retour**, sans qu'on ait rien re-déclaré. **Une seule ligne a été retirée du fichier de tests.** ⛔ *Ce n'est pas un témoin qu'on assouplit pour faire passer du code : c'est le COMPORTEMENT qu'il figeait qui a changé, et on écrit lequel, par qui et quand* (**ft-v1175**).
+
+**⭐ LES 5 CAS DE MICHEL, MESURÉS** : *40 g → portions → grammes* = **champ 40, écran 156/35** · *110 g → portions → grammes* = **110 g** · *A 110 g → portions → B → grammes* = **rien de A** · *après le retour la quantité se modifie encore* (200 g → **498 kcal**, et le champ existe enfin) · *aucune contamination entre aliments*.
+
+**⛔ ET LE CHEMIN `af-poids` RESTE VIVANT — c'est le garde-fou qui empêche le correctif d'en faire trop** : sans quantité connue, l'app **demande** toujours le poids au lieu d'en inventer un (**R29**), et ce chemin marche (150 g déclarés → `q=150`). Deux témoins le figent, à la demande de Michel.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît : une quantité qui se perdait cesse de se perdre (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les lignes déjà abîmées ne sont pas réparées** · ⛔ **P1** (« portion » comme vraie unité) et ⛔ **la migration des 17 jours** restent ouverts et **intacts** — décision de Michel : rien de tout ça avant son retour iPhone. ⚠️ **C'est lui qui valide en conditions réelles** : pas de WebKit dans ce conteneur, je ne peux pas le faire à sa place.
+
+DEPLOIEMENT_ICI
+
+Tests : **parcours 3391/3391** (+7), bloc **CLXVIII 12/12**, bloc **CCLXXVIII 21/21**, **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 3 mutations, toutes mordent** — ① correctif entier retiré → **1 rouge dans chaque bloc** · ② ⭐⭐ **la quantité affichée non restituée, c'est-à-dire MON correctif de la veille** → **2 rouges**, exactement *« le champ redonne 40 g »* et *« les macros redonnent 156/35 »* — *c'est la mutation la plus utile du lot : elle rejoue mon erreur* · ③ le garde **nom** retiré → **1 rouge**, exactement le témoin A→B. ⚠️ **Honnêteté sur la première** : retirer le correctif fait **mourir** le bloc CLXVIII (son aide `taper` n'a pas de garde sur `null`), donc il rend **1 rouge** — *le même signal qu'une assertion cassée*. Le bloc ne distingue pas « correctif absent » de « bloc en panne ». *Je le dis plutôt que de compter ce 1 comme une détection fine.*
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1181. |
 
 **ft-v1180 — 🧹 « ON CHANGE D'ALIMENT » N'AVAIT AUCUN PROPRIÉTAIRE — ET LE MÉCANISME DE REMISE À ZÉRO EXISTAIT DÉJÀ** — cahier des charges de GPT après son contre-audit, transmis par Michel : ***« Michel ne peut actuellement plus remplir sa nutrition avec confiance »***.
 
@@ -656,35 +696,6 @@ Tests : **parcours 3312/3312 sur l'arbre FUSIONNÉ avec la ft-v1174 de session-A
 
 Tests : **parcours 3303/3303** (+12, bloc **CCLXXII**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⭐⭐ **Les témoins CONDUISENT le vrai chemin** : `fetch` est intercepté avec une fausse fiche Open Food Facts, `_lookupBarcode` et `_calAppliquer` sont **réellement appelées**, et on **tape sur la pastille** — jusqu'au chiffre de bout en bout, **250 g → 180 kcal**. ⛔ **CONTRÔLE NÉGATIF : 8 MUTATIONS, TOUTES MORDENT** — ① l'arbre d'avant → **8 rouges** ; ② ⭐⭐ **la pastille qui pré-remplit le champ → 1 rouge, exactement la décision R29** — *c'est la mutation la plus utile du lot* ; ③ les volumes acceptés → **2 rouges** ; ④′ **l'ancrage desserré** (ce qui protège vraiment des lots) → **1 rouge** ; ⑤ les bornes retirées → **1** ; ⑥ **le poids qui ne traverse plus le calibrage** → **2 rouges**, exactement le cas de Michel ; ⑦ la réserve non remise à zéro → **1** ; ⑧ le propriétaire unique cassé (CIQUAL garde le poids d'avant) → **1** ; ⑨ le champ retiré de l'appel réseau → **1**, exactement le contrôle. ⚠️ **Et les sondes du parseur sont DÉFENSIVES** (`typeof`) : sur l'arbre d'avant la fonction n'existe pas, et un `ReferenceError` ferait sauter **tout le bloc** — *une mutation qui casse le fichier ne prouve rien, elle empêche de mesurer* (leçon de ft-v1173, appliquée d'emblée). ⚠️ **Un témoin a aussi rougi sur MA sonde, pas sur le code** : j'appelais `_offRemplirFormulaire` sans poser `_bcNutr`, ce que le vrai chemin CIQUAL fait toujours — *une sonde qui saute une étape de production ne teste pas le code, elle le fait planter*. Fichiers : `app.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1174. |
 
-**ft-v1173 — ⚖️ LE CHOIX DE PORTIONS ÉTAIT JETÉ AU PASSAGE EN GRAMMES — ET C'EST UN TÉMOIN DE ft-v1061 QUI A ARRÊTÉ MON PREMIER CORRECTIF** — Michel, enregistrement d'écran à l'appui : ***« ça me fait péter un câble lol, pour ma prot iso quand je veux changer la valeur en gramme ça ne fonctionne pas, regarde la vidéo »***.
-
-**⭐⭐ LU IMAGE PAR IMAGE, PAS DE MÉMOIRE — ET C'EST L'IMAGE QUI A DONNÉ LA CAUSE.** Il tape `100`, l'app écrit *« ✅ 100 g — les 4 valeurs ci-dessous correspondent à ce poids »*… et **divise ces valeurs par deux** : **312 → 156 kcal**, **52 → 26 g** de protéines, ***sans que le nombre `100` bouge d'un pixel***. 👉 Rien à l'écran ne dit ce qui vient d'arriver : *un chiffre qui change tout seul pendant que la cause reste identique est illisible*. Et **156 / 26 est exactement sa ligne d'origine** — son `×2` avait été jeté.
-
-**🎯 LA CAUSE ÉTAIT ÉCRITE DANS LE FICHIER, TROIS LIGNES AU-DESSUS.** `_afSetUnite` rappelait `_afMajAncre()` **sans `srcChange`**, donc la fonction **préservait `_afRef.base`** — l'ancienne référence. Or son commentaire promet mot pour mot : *« Les 4 valeurs affichées deviennent la nouvelle référence, quelle qu'elle soit. »* ⛔⛔ ***Le commentaire disait vrai, le code ne le faisait pas.*** C'est **R4 retourné** — d'habitude l'information n'atteint pas la donnée ; ici l'**intention** n'atteignait pas le **code**, et le commentaire **endormait le lecteur** en décrivant un comportement inexistant. Nouvelle famille **`BUGS.md` §54**.
-
-**⛔⛔⛔ ET LA VRAIE LEÇON DE CETTE VERSION EST QUE MON PREMIER CORRECTIF ÉTAIT FAUX — LE BANC L'A DIT, PAS MOI.** J'avais passé `true` **sans condition** : le mini-banc était à **16/16**, les mutations mordaient, tout allait bien. La passe complète a rendu **3 rouges**, tous dans le bloc **CLXVIII (ft-v1061)** — dont *« SA CAPTURE : 40 g redonne 156 / 35, plus jamais les 208 / 47 »*. 👉 ***Mon correctif rouvrait un bug que Michel avait signalé avec quatre captures d'étiquette.*** *Réparer le cas qu'on regarde en cassant celui d'à côté n'est pas un correctif, c'est un échange.*
-
-**⭐⭐ ET LES DEUX CAS SE RESSEMBLENT COMME DEUX GOUTTES D'EAU — LE GESTE EST LE MÊME, LA QUESTION N'EST PAS LÀ.**
-- **ft-v1061** : une référence en **grammes** existe (30 g → 117 kcal). L'écran montre alors les valeurs d'une **AUTRE** quantité (40 g → 156). Les reprendre désappaire `base` et `q`, et 40 g finit par afficher **208 kcal**.
-- **ft-v1173** : **aucune** quantité n'a jamais été posée, la personne a seulement tapé `×2`. Les valeurs affichées sont **la seule expression** de ce qu'elle a mangé — les jeter, c'est jeter son choix.
-
-👉 **LE DISCRIMINANT N'EST PAS LE GESTE, C'EST *« L'APP SAIT-ELLE DÉJÀ COMBIEN ÇA PÈSE ? »*** — un booléen, `_afPoidsPose`. **Tant qu'aucun poids réel n'est posé, l'écran fait foi ; dès qu'il y en a un, ft-v1061 reprend la main.** ⭐ C'est la même question que partout ailleurs dans ce fichier : *les valeurs affichées et la quantité affichée vont toujours ensemble* — sauf qu'ici, il n'y a pas de quantité.
-
-**⭐ LE MOTIF EXISTAIT À CÔTÉ, DEPUIS TOUJOURS** : `af-kcal` passe `onchange="_afMajAncre(true)"` dans `index.html`. Changer d'unité **est** un changement de source — ça n'avait simplement jamais été classé comme tel.
-
-**⛔⛔ POURQUOI AUCUN TÉMOIN NE L'AVAIT VU — MESURÉ, PAS SUPPOSÉ : `_afSetUnite('g')` EST CONDUIT PAR CINQ TÉMOINS EXISTANTS, ET LES CINQ LE FONT JUSTE APRÈS UN REMPLISSAGE NEUF.** Dans ce cas `base` et l'écran portent les **mêmes** valeurs, et le défaut est invisible. **Le déclencheur n'est pas une fonction, c'est un ORDRE** : *portions d'abord, grammes ensuite*. Aller directement en grammes marche — et c'est le seul chemin qui était testé. *Un banc d'essai qui n'exerce qu'un ordre ne couvre pas la fonctionnalité, il couvre son mode d'emploi.*
-
-**⛔⛔ LA JUMELLE ÉTAIT LÀ, VÉRIFIÉE ET NON SUPPOSÉE (R8) — ET ELLE ÉTAIT SILENCIEUSE.** `_efQtyRender` (« Modifier l'aliment ») portait le même défaut sous une autre forme : **rien ne tombe à l'écran**, mais la **référence se désappaire** — l'app affiche 312 kcal en annonçant « 100 g » pendant que sa base vaut 156, et le **rescale suivant divise depuis la mauvaise base** : taper 50 g rendait **78 kcal au lieu de 156**. *Un défaut qui ne se voit pas est pire que celui qui se voit : personne ne peut le signaler.* Après ft-v1160, ft-v1161, ft-v1163, ft-v1164 et ft-v1166, c'est la **6ᵉ fois** qu'un correctif devait être posé sur les deux portes. **Le discriminant y est le même** (`_efPoidsPose`) — une règle, deux écrans (**R2**).
-
-**⚠️⚠️ ET LE CORRECTIF DE LA JUMELLE FABRIQUAIT UN PIÈGE QU'IL A FALLU REFERMER AU MÊME ENDROIT.** Pour que le poids déclaré ne reparte pas de l'entrée du journal, `_efQtyRender` doit **préserver** `_efRef` au redessin. Or **`_efRef` survivait déjà d'un aliment au suivant** : la branche « pour-100 g » sort **avant** de le réécrire, donc ouvrir un produit emballé après un aliment saisi à la main laissait pointer sur le **précédent** (et `_efCorrigerKcal` écrivait alors dans la référence du mauvais aliment). 👉 **Inoffensif tant que `base` venait de l'entrée ; fatal dès que la référence est préservée.** `openEditFood` remet donc `_efRef` à `null`, et un témoin le fige. ⭐ *C'est mot pour mot ce que `_afPropCacher` fait pour l'unité, une porte plus loin* — **R13**, la moitié manquante d'un motif déjà écrit.
-
-**📣 RÈGLE D'OR #11 — RIEN.** Un écran qui se contredisait cesse de se contredire : aucun bouton n'apparaît, aucun repère ne bouge, rien n'est à faire. Même famille que ft-v1163 et ft-v1170 (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les lignes déjà enregistrées ne sont pas réparées** (**R29**) — une entrée validée à la mauvaise valeur reste à la mauvaise valeur ; il faut la reprendre **une fois**, et ensuite le chemin est droit. ⛔ **Aucun autre chemin n'est touché** : un aliment avec un **pour-100 g**, un poids **lu dans la phrase** ou **estimé par l'IA** n'a jamais eu ce défaut (ces branches n'ont pas d'onglets d'unité) — vérifié, et deux témoins de non-régression le figent. ⛔ **Et on n'a pas ajouté de re-synchronisation des 4 champs côté édition** : elle serait sans effet aujourd'hui, et *du code qu'aucun témoin ne peut faire rougir est du code qu'on ne saura pas maintenir*. ⚠️ **Michel doit vérifier sur Safari/iPhone**, en reprenant sa ligne d'isolat : `×2`, puis ⚖️ grammes, puis `100`.
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1015**, job `deploy` en `success`, **les 7 étapes** — « Déployer sur GitHub Pages » comprise — à **13:59:03 UTC** sur `a721a9ff` — ⛔ ni backend ni worker attendus (`Code.js`/`worker.js` non touchés).
-
-Tests : **parcours 3291/3291 sur l'arbre FUSIONNÉ avec la ft-v1172 de session-B** (+17, bloc **CCLXXI**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⭐⭐ **LES TÉMOINS COMPTENT LES VRAIS NOMBRES DE LA VIDÉO** (312/52 · 156/26 · 624/104), jamais « a changé / n'a pas changé » — et le geste est le **vrai** : on tape dans le champ, puis on **ferme le clavier** (`input` puis `blur`), parce que c'est au `blur` que le bloc se range. ⛔⛔ **CONTRÔLE NÉGATIF : 7 MUTATIONS, TOUTES MORDENT** — ① l'arbre d'avant → **7 rouges** ; ② **l'écran d'AJOUT seul remis en arrière → 3 rouges**, exactement les siens, *la jumelle reste verte* ; ③ **la JUMELLE seule remise en arrière → 2 rouges**, exactement les siens — *ces deux-là, côte à côte, prouvent que les deux moitiés sont nécessaires et indépendantes* ; ④ `_efRef` non remis à `null` → **1 rouge**, exactement le piège ; ⑤ la préservation de la référence retirée → **2 rouges** ; ⑥ ⭐⭐ **MON PREMIER CORRECTIF, celui qui ignore le drapeau → 4 rouges, dont LES TROIS de sa capture d'étiquette de ft-v1061** — *c'est la mutation la plus utile du lot : elle rejoue mon erreur et prouve que le discriminant gagne sa place* ; ⑦ le drapeau jamais levé → **5 rouges**. ⚠️ **Et le témoin du drapeau est DÉFENSIF** (`typeof`) : sur l'arbre d'avant la variable n'existe pas, et un `ReferenceError` ferait sauter **tout le bloc** — *une mutation qui casse le fichier ne prouve rien, elle empêche de mesurer*. ⚠️⚠️ **UNE 2ᵉ LEÇON DE MÉTHODE, À MOI AUSSI : UN DE MES TÉMOINS ÉTAIT VERT PAR COÏNCIDENCE.** Mon étape ⑤ rescalait à **50 g** — or à 50 g, **l'erreur (÷2) et le rescale (÷2) se compensent** et donnent le **même nombre des deux côtés**. Passé à **200 g**, il rougit. *Un témoin vert par coïncidence ne mesure rien, il rassure* (ft-v1163, 3ᵉ fois). Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `BUGS.md`. sw.js ft-v1173. |
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
 > **Ce qui RESTE réservé (statut, pas des features)** : carte dorée « Testeur Fondateur » + Espace testeur (`_isTester()`, `TESTER_EMAILS` : christophe/eline/emma/tanna) · suivi photos approfondi (`_isSuperTester()`) · outils de test clone-only (badge Gardien, questions illimitées).

@@ -20,7 +20,26 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1180` — 🧹 **P0 « SAISIE NUTRITION SÛRE » : « on change
+- **Version en ligne (live) :** `ft-v1181` — ⚖️ **I4 : le couple `base`/`q` survit à
+  l'aller-retour d'onglet.**
+  ⭐⭐ Cahier des charges de Michel : *« préserver la quantité affichée liée au couple base/q, pas
+  seulement `_afPoidsDeclare` »*. **Cause mesurée geste par geste** : passer en portions écrasait
+  `_afRef` par `{q:1}` — le `q` était jeté — et la quantité affichée n'existait **que** dans le
+  champ `af-prop`, que le rendu détruit. L'app affichait alors 156 kcal sans plus savoir ce que ça
+  pèse ; taper 110 g ensuite appariait 274 kcal à 110 g.
+  ⭐⭐ **Miroir exact de ft-v1180** : là le DOM se souvenait TROP, ici TROP PEU. *Même racine : la
+  quantité affichée n'appartenait à personne.*
+  ⭐ **Le correctif met de côté le COUPLE ENTIER** (`base` + `q` + la quantité affichée) et le remet
+  tel quel, gardé par le **nom** de l'aliment. On ne recalcule rien.
+  ⚠️⚠️ **Le témoin ft-v1061 a été adapté SUR DÉCISION DE MICHEL (option A)**, après que le bloc a
+  rougi : je me suis **arrêté**, j'ai tracé, il a tranché. Son ancien geste re-déclarait le poids —
+  le contournement du bug. **Ses 8 assertions et leurs valeurs sont intactes** ; une seule ligne a
+  été retirée du fichier de tests.
+  ⛔ **Le chemin `af-poids` reste vivant** : sans quantité connue, l'app demande toujours le poids
+  (**R29**). Deux témoins le figent, à la demande de Michel.
+  ⏭️ **P1 et la migration des 17 jours restent INTACTS** — rien avant le retour iPhone de Michel.
+
+- **Version précédente :** `ft-v1180` — 🧹 **P0 « SAISIE NUTRITION SÛRE » : « on change
   d'aliment » a enfin un propriétaire.**
   ⭐⭐ Cahier des charges de **GPT** après son contre-audit, transmis par Michel : *« Michel ne peut
   actuellement plus remplir sa nutrition avec confiance »*. **Six contaminations mesurées**, toutes

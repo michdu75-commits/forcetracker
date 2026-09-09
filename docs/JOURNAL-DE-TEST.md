@@ -193,7 +193,7 @@ l'exclusivité réelle des deux blocs. C'est **R2** posé là où il manque, et 
 coup. **V6 reste séparé.**
 
 
-### 🟢 PRÊTE — UN ALLER-RETOUR D'ONGLET D'UNITÉ ROUVRE ft-v1177 (08/09/2026, MESURÉ)
+### 🔵 PROMUE — UN ALLER-RETOUR D'ONGLET D'UNITÉ ROUVRAIT ft-v1177 (08/09 → CORRIGÉ EN ft-v1181, 7 témoins permanents)
 
 **Trouvé par une relecture croisée, pas par moi.** Un relecteur adverse affirmait que ft-v1177 était
 « rouvert par un aller-retour d'onglet ». **Vérifié dans un vrai navigateur, il avait raison** :
@@ -248,6 +248,17 @@ mesurer la prochaine fois — et elle touche au couple `base`/`q` que CLXVIII pr
 juge contre CLXVIII, qui EST isolable (il crée son propre contexte : `scratchpad/mini168.js`).*
 ⚠️ **J'avais écrit dans le code qu'il ne l'était pas, sans l'avoir essayé** — et c'est ce qui m'a
 fait livrer la régression sur la branche (**R28**, retourné contre son auteur).
+
+**✅ RÉGLÉ EN ft-v1181 (09/09/2026)** — et la piste écrite ci-dessus était la bonne : le correctif
+porte sur la **quantité affichée**, pas sur le poids déclaré. `_afSetUnite` met de côté le **couple
+entier** `base`/`q` **plus** la quantité affichée, et le remet tel quel au retour, gardé par le nom
+de l'aliment. **Mesuré** : *40 g → portions → grammes* rend champ **40** et **156/35**, couple
+`{117, 30}` intact.
+⚠️ **Le bloc CLXVIII a bien rougi**, comme prévu ici — et la marche à suivre a tenu : arrêt, trace,
+décision de Michel (**option A**), puis adaptation du **geste** seulement, ses 8 assertions et leurs
+valeurs conservées. *Une seule ligne retirée du fichier de tests.*
+⭐ **Sept témoins permanents** figent désormais le comportement, dont deux qui protègent le chemin
+`af-poids` — *sans quantité connue, l'app doit toujours DEMANDER le poids* (**R29**).
 
 *Sonde reproductible : `scratchpad/sonde-allerretour.js` · et `scratchpad/mini168.js` pour le
 bloc qui arbitre.*
