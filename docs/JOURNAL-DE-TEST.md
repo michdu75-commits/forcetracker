@@ -2160,3 +2160,33 @@ l'amont filtre encore**, et la relecture ne le voit pas.
 **Reste à vérifier par Michel (iPhone)** : que le bouton allumé et la ligne de définition
 (*« Tu notes 2 portions (1 portion = 300 kcal, poids inconnu) »*) se lisent bien sur son écran.
 Je n'ai pas de WebKit ici.
+
+---
+
+### ⚪ MESURÉ, PAS ENCORE PROMU — LA RÉFÉRENCE D'UNE PORTION : DÉRIVÉE OU STOCKÉE ? (09/09)
+
+Question de Michel dans sa relecture de P1 : *« vérifie le risque d'arrondi et de dérive »*, sur
+son exemple **601 kcal / 3 portions**. Mesuré dans un vrai navigateur, 10 cycles de reprise →
+réenregistrement, sans jamais rien retoucher :
+
+| | référence | totaux après 10 cycles |
+|---|---|---|
+| **dérivée** (`totaux ÷ q`, le code actuel) | 200,3333 stable | **601** — inchangés |
+| **stockée arrondie** (simulation) | 200 | **600 dès le 1ᵉʳ cycle**, puis figé |
+
+👉 ***Dériver est plus sûr que stocker un entier*** — et la raison n'est pas l'élégance : les
+**totaux** sont la donnée que la personne a validée à l'écran, `q` est son choix ; la référence
+n'est qu'une **vue** de ces deux-là. Stocker une vue crée une seconde source qu'il faut arrondir
+pour l'écrire.
+
+⚠️ **La limite de cette conclusion, écrite pour qu'on ne la sur-généralise pas** : elle ne tient
+que parce que les totaux sont la vérité stockée. Si on décidait un jour que la RÉFÉRENCE est la
+vérité et les totaux la vue — ce qui est défendable — la conclusion s'inverserait. Ce n'est pas
+le modèle actuel, et en changer toucherait tout le monde.
+
+⚠️ **Et ma première fixture était fausse** : j'avais saisi 601 **par portion** (donc 1803 au
+total), et la division tombait juste — *elle ne testait pas la fraction du tout*. Corrigée en
+posant une ligne qui porte 601 **au total** pour `q:3`. *Une mesure qui n'exerce pas le cas
+qu'on croit mesurer rassure au lieu de prouver.*
+
+**À promouvoir** en témoin permanent si le chantier « portion nommée » est lancé.
