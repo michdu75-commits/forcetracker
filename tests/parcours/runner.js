@@ -31668,6 +31668,238 @@ console.log('\n-- CCLXXVII. L\'exclusivité des deux blocs Quantité (ft-v1179) 
   }
 }
 
+/* == BLOC CCLXXVIII - P0 : « ON CHANGE D'ALIMENT » A ENFIN UN PROPRIÉTAIRE (ft-v1180) ==
+   Cahier des charges de GPT après son contre-audit, transmis par Michel : *« Michel ne peut
+   actuellement plus remplir sa nutrition avec confiance »*. Six contaminations avaient été
+   mesurées ; elles sont ici figées une par une, avec leurs valeurs INTERDITES.
+
+   ⛔⛔ LA CAUSE TENAIT EN DEUX LIGNES, ET AUCUNE N'ÉTAIT UN CALCUL FAUX : `quickFillFood` posait
+   `_afPoidsDeclare = it.q` sans aucun `else`, et `_afMajAncre` relisait ensuite la quantité DANS
+   LE CHAMP DU DOM — qui portait encore le nombre de l'aliment précédent. *Le DOM servait de
+   mémoire entre deux aliments.*
+
+   ⭐⭐ ET LE MÉCANISME DE REMISE À ZÉRO EXISTAIT DÉJÀ : `_afPropCacher`, que `openAddFood`
+   appelle depuis toujours. Il n'était jamais appelé quand on change d'aliment SANS changer
+   d'écran. `_afOublierAliment` lui ajoute la moitié pour-100 g et le pose sur les onze portes.
+
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
+console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-v1180) --');
+{
+  const Z=await p.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms)), t=today();
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    const fermer=()=>document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const val=id=>{const e=document.getElementById(id);return e?String(e.value||''):null;};
+    const vis=id=>{const e=document.getElementById(id);return !!e&&e.style.display!=='none';};
+    const enr=()=>{const e=(S.foodLog||[]).slice(-1)[0]||{};
+      return {nom:e.name,q:e.q===undefined?null:e.q,u:e.u===undefined?null:e.u,
+              kcal:e.kcal,per100:e.per100?e.per100.kcal:null};};
+    const iQ=n=>_afQuickItems.findIndex(x=>new RegExp(n,'i').test(x.name));
+    const taper=(v)=>['af-kcal','af-prot','af-carbs','af-fat'].forEach((id,i)=>{
+      const el=document.getElementById(id); el.value=v[i];
+      el.dispatchEvent(new Event('input',{bubbles:true}));
+      el.dispatchEvent(new Event('change',{bubbles:true}));});
+    const declarer=async(g)=>{ _afSetUnite('g'); await d(200);
+      const c=document.getElementById('af-poids');
+      if(c){ c.value=String(g); c.dispatchEvent(new Event('input',{bubbles:true}));
+             c.dispatchEvent(new Event('blur',{bubbles:true})); }
+      await d(240); };
+    const RATA=q=>({date:t,meal:'dejeuner',name:'Ratatouille Cassegrain',kcal:274,prot:4,carbs:23,
+      fat:15,ts:Date.now()-9000,saisie:'historique',origine:'off',q:q,u:'g',per100:null});
+
+    /* ⛔ Le reseau est bloque : fiche SANS valeurs, forme exacte de l'API v2 d'Open Food Facts. */
+    const vraiFetch=window.fetch;
+    window.fetch=async(u,opt)=>{ const s=String(u), m=s.match(/product\/(\d+)\.json/);
+      if(m) return {ok:true,json:async()=>({status:1,product:{product_name:'Sardines Petit Navire',
+        brands:'Petit Navire', quantity:'115 g', nutriments:{}}})};
+      if(/openfoodfacts/.test(s)) return {ok:true,json:async()=>({products:[]})};
+      return vraiFetch(u,opt); };
+
+    /* ══ CONTRÔLE — sans lui, tous les temoins seraient verts en ne mesurant rien ══ */
+    S.foodLog=[RATA(380)]; S.savedFoods=[]; S.hiddenFoods=[]; persist();
+    fermer(); openAddFood(); await d(320);
+    quickFillFood(iQ('Ratatouille')); await d(280);
+    o.ctrl={ref:_afRef?{q:_afRef.q,u:_afRef.u,base:_afRef.base.kcal}:null, champ:val('af-prop')};
+
+    /* ══ V1 — aliment B SANS quantite ══ */
+    S.foodLog=[RATA(380),{date:t,meal:'diner',name:'Poulet maison',kcal:200,prot:30,carbs:0,fat:8,
+      ts:Date.now()-8000,saisie:'manuel',origine:'utilisateur',q:null,u:null,per100:null}];
+    S.savedFoods=[];S.hiddenFoods=[];persist();
+    fermer(); openAddFood(); await d(300);
+    quickFillFood(iQ('Ratatouille')); await d(240);
+    quickFillFood(iQ('Poulet'));      await d(260);
+    addFoodEntry(); await d(280); o.v1=enr();
+
+    /* ══ V2 — aliment B a SA PROPRE quantite : c'est elle qui doit gagner ══ */
+    S.foodLog=[RATA(380),{date:t,meal:'diner',name:'Steak U',kcal:300,prot:26,carbs:0,fat:21,
+      ts:Date.now()-8000,saisie:'scan',origine:'off',q:150,u:'g',per100:null}];
+    S.savedFoods=[];S.hiddenFoods=[];persist();
+    fermer(); openAddFood(); await d(300);
+    quickFillFood(iQ('Ratatouille')); await d(240);
+    quickFillFood(iQ('Steak'));       await d(260);
+    addFoodEntry(); await d(280); o.v2=enr();
+
+    /* ══ V3 — un aliment NEUF tape entierement a la main (aucune porte franchie) ══ */
+    S.foodLog=[RATA(380)]; S.savedFoods=[];S.hiddenFoods=[];persist();
+    fermer(); openAddFood(); await d(300);
+    quickFillFood(iQ('Ratatouille')); await d(250);
+    document.getElementById('af-desc').value='Omelette maison';
+    taper([350,25,2,27]); await d(280);
+    addFoodEntry(); await d(280); o.v3=enr();
+
+    /* ══ V4 — un calibrage d'etiquette ne laisse pas les DEUX blocs affiches ══ */
+    S.foodLog=[RATA(380)]; S.savedFoods=[];S.hiddenFoods=[];persist();
+    fermer(); openAddFood(); await d(300);
+    quickFillFood(iQ('Ratatouille')); await d(250);
+    o.v4avant={prop:vis('af-prop-row'),bc:vis('af-bc-row')};
+    if(typeof _calOuvrir==='function'){ _calOuvrir(); await d(200); }
+    ['af-cal-kcal','af-cal-prot','af-cal-carbs','af-cal-fat'].forEach((id,i)=>{
+      const el=document.getElementById(id); if(el){el.value=[390,87,3,3][i];
+        el.dispatchEvent(new Event('input',{bubbles:true}));}});
+    if(typeof _calAppliquer==='function'){ _calAppliquer(); await d(320); }
+    o.v4={prop:vis('af-prop-row'),bc:vis('af-bc-row')};
+
+    /* ══ V5 — un poids DECLARE a la main ne fuit pas sur le produit scanne suivant ══ */
+    S.foodLog=[]; S.savedFoods=[]; persist();
+    fermer(); openAddFood(); await d(300);
+    document.getElementById('af-desc').value='Plat maison';
+    taper([300,20,30,10]); await d(200);
+    await declarer(150);
+    o.v5avant={pd:_afPoidsDeclare, pose:_afPoidsPose};
+    await _lookupBarcode('7777777777777','scan',false); await d(320);
+    document.getElementById('af-desc').value='Sardines Petit Navire';
+    taper([220,25,0,13]); await d(240);
+    addFoodEntry(); await d(280); o.v5=enr();
+
+    /* ══ V6 — un aller-retour d'onglet ne jette pas une declaration explicite ══ */
+    S.foodLog=[]; S.savedFoods=[]; persist();
+    fermer(); openAddFood(); await d(300);
+    document.getElementById('af-desc').value='Plat maison';
+    taper([274,4,23,15]); await d(200);
+    await declarer(110);
+    o.v6avant=_afRef?{q:_afRef.q,u:_afRef.u,base:_afRef.base.kcal}:null;
+    _afSetUnite('portion'); await d(230);
+    _afSetUnite('g');       await d(230);
+    o.v6=_afRef?{q:_afRef.q,u:_afRef.u,base:_afRef.base.kcal}:null;
+
+    /* ══ V7 — et la quantite mise de cote ne fuit PAS sur un autre aliment ══
+       C'est le garde-fou de mon propre correctif : `_afQtyG` pourrait devenir la fuite
+       suivante. Il doit mourir avec l'aliment. */
+    S.foodLog=[{date:t,meal:'diner',name:'Yaourt nature',kcal:60,prot:5,carbs:6,fat:2,
+      ts:Date.now()-7000,saisie:'manuel',origine:'utilisateur',q:null,u:null,per100:null}];
+    S.savedFoods=[];S.hiddenFoods=[];persist();
+    fermer(); openAddFood(); await d(300);
+    document.getElementById('af-desc').value='Plat maison';
+    taper([300,20,30,10]); await d(200);
+    await declarer(150);
+    quickFillFood(iQ('Yaourt')); await d(260);
+    _afSetUnite('g'); await d(240);
+    o.v7={pd:_afPoidsDeclare, champ:val('af-poids'), ref:_afRef?{q:_afRef.q,u:_afRef.u}:null};
+
+    /* ══ V12 — §13 du cahier des charges : A AVEC pour-100 g -> B SANS ══
+       La declinaison que les autres cas ne couvrent pas : quand A ouvre le bloc pour-100 g,
+       c'est `af-bc-grams` (et non `af-prop`) qui porte une quantite. Elle ne doit pas davantage
+       traverser vers B. */
+    S.foodLog=[{date:t,meal:'dejeuner',name:'Skyr nature',kcal:120,prot:20,carbs:6,fat:0,
+                ts:Date.now()-9500,saisie:'scan',origine:'off',q:200,u:'g',
+                per100:{kcal:60,prot:10,carbs:3,fat:0}},
+               {date:t,meal:'diner',name:'Soupe maison',kcal:90,prot:3,carbs:12,fat:3,
+                ts:Date.now()-9400,saisie:'manuel',origine:'utilisateur',q:null,u:null,per100:null}];
+    S.savedFoods=[];S.hiddenFoods=[];persist();
+    fermer(); openAddFood(); await d(300);
+    quickFillFood(iQ('Skyr')); await d(250);
+    o.v12avant={bc:vis('af-bc-row'), bcNutr:_bcNutr?_bcNutr.kcal100:null};
+    {const g=document.getElementById('af-bc-grams');
+     if(g){ g.value='200'; g.dispatchEvent(new Event('input',{bubbles:true})); }}
+    await d(240);
+    quickFillFood(iQ('Soupe')); await d(280);
+    addFoodEntry(); await d(280); o.v12=enr();
+
+    /* ══ V8 — « + Ajouter » (quickAddFood) juste apres une reprise ══ */
+    S.foodLog=[RATA(380),{date:t,meal:'diner',name:'Yaourt nature',kcal:60,prot:5,carbs:6,fat:2,
+      ts:Date.now()-7000,saisie:'manuel',origine:'utilisateur',q:null,u:null,per100:null}];
+    S.savedFoods=[];S.hiddenFoods=[];persist();
+    fermer(); openAddFood(); await d(300);
+    quickFillFood(iQ('Ratatouille')); await d(250);
+    quickAddFood(iQ('Yaourt')); await d(300);
+    o.v8=enr();
+
+    /* ══ V9 — NON-REGRESSION ft-v1177 : 380 g / 274 kcal, on demande 110 g ══ */
+    S.foodLog=[RATA(380)]; S.savedFoods=[];S.hiddenFoods=[];persist();
+    fermer(); openAddFood(); await d(300);
+    quickFillFood(iQ('Ratatouille')); await d(260);
+    {const e=document.getElementById('af-prop');
+     if(e){ e.value='110'; _afApplyProp(); await d(220); }}
+    o.v9={champ:val('af-prop'), kcal:+val('af-kcal')||0};
+
+    /* ══ V10 — NON-REGRESSION : le nom INCHANGE ne perd pas le poids declare ══ */
+    S.foodLog=[]; S.savedFoods=[]; persist();
+    fermer(); openAddFood(); await d(300);
+    document.getElementById('af-desc').value='Plat maison';
+    taper([300,20,30,10]); await d(200);
+    await declarer(150);
+    _afMajAncre();   // un geste quelconque qui redessine, SANS changer le nom
+    await d(240);
+    o.v10={pd:_afPoidsDeclare, ref:_afRef?{q:_afRef.q,u:_afRef.u}:null};
+
+    /* ══ V11 — un FAVORI sain se reprend a l'identique (§15 du cahier des charges) ══ */
+    S.foodLog=[]; S.hiddenFoods=[];
+    S.savedFoods=[{name:'Skyr nature',kcal:120,prot:20,carbs:6,fat:0,
+                   per100:{kcal:60,prot:10,carbs:3,fat:0},q:200,u:'g'}];
+    persist();
+    fermer(); openAddFood(); await d(300);
+    quickFillFood(iQ('Skyr')); await d(280);
+    o.v11={bc:vis('af-bc-row'), bcNutr:_bcNutr?_bcNutr.kcal100:null,
+           kcal:val('af-kcal'), prot:val('af-prot')};
+
+    window.fetch=vraiFetch;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,300)};}
+  });
+  if(Z.err) t('CCLXXVIII n\'a pas pu tourner', false, Z.err);
+  else{
+    t('CCLXXVIII ⛔ CONTRÔLE — la reprise ancre bien les 274 kcal sur 380 g',
+      !!Z.ctrl.ref && Z.ctrl.ref.q===380 && Z.ctrl.ref.u==='g' && Z.ctrl.champ==='380',
+      JSON.stringify(Z.ctrl));
+    t('CCLXXVIII ① ⭐⭐ V1 — un aliment SANS quantité n\'hérite plus de celle du précédent (INTERDIT : 380)',
+      Z.v1.q===null && Z.v1.u===null && Z.v1.per100===null && Z.v1.kcal===200, JSON.stringify(Z.v1));
+    t('CCLXXVIII ② ⭐⭐ V2 — un aliment garde SA quantité, elle n\'est plus écrasée (150, pas 380)',
+      Z.v2.q===150 && Z.v2.u==='g' && Z.v2.per100===200, JSON.stringify(Z.v2));
+    t('CCLXXVIII ③ ⭐⭐ V3 — un aliment tapé À LA MAIN part sans quantité (INTERDIT : 380)',
+      Z.v3.q===null && Z.v3.per100===null && Z.v3.kcal===350, JSON.stringify(Z.v3));
+    t('CCLXXVIII ④ ⛔ CONTRÔLE — avant le calibrage, seul le bloc portions/grammes est ouvert',
+      Z.v4avant.prop===true && Z.v4avant.bc===false, JSON.stringify(Z.v4avant));
+    t('CCLXXVIII ⑤ ⭐⭐ V4 — après un calibrage, les DEUX blocs Quantité ne coexistent plus',
+      !(Z.v4.prop && Z.v4.bc) && Z.v4.bc===true, JSON.stringify(Z.v4));
+    t('CCLXXVIII ⑥ ⛔ CONTRÔLE — le poids de 150 g est bien déclaré avant le scan',
+      Z.v5avant.pd===150 && Z.v5avant.pose===true, JSON.stringify(Z.v5avant));
+    t('CCLXXVIII ⑦ ⭐⭐ V5 — un poids DÉCLARÉ ne fuit plus sur le produit scanné (INTERDIT : 150)',
+      Z.v5.q===null && Z.v5.per100===null && Z.v5.kcal===220, JSON.stringify(Z.v5));
+    t('CCLXXVIII ⑧ ⛔ CONTRÔLE — la déclaration de 110 g est bien posée',
+      !!Z.v6avant && Z.v6avant.q===110 && Z.v6avant.u==='g', JSON.stringify(Z.v6avant));
+    t('CCLXXVIII ⑨ ⭐⭐ V6 — un aller-retour d\'onglet ne jette plus la déclaration (INTERDIT : q=1)',
+      !!Z.v6 && Z.v6.q===110 && Z.v6.u==='g' && Z.v6.base===274, JSON.stringify(Z.v6));
+    t('CCLXXVIII ⑩ ⭐⭐ V7 — … et la quantité mise de côté NE FUIT PAS sur l\'aliment suivant',
+      Z.v7.pd===0 && (Z.v7.champ===''||Z.v7.champ===null) && (!Z.v7.ref || Z.v7.ref.q!==150),
+      JSON.stringify(Z.v7));
+    t('CCLXXVIII ⑮ ⛔ CONTRÔLE — A ouvre bien son bloc pour-100 g',
+      Z.v12avant.bc===true && Z.v12avant.bcNutr===60, JSON.stringify(Z.v12avant));
+    t('CCLXXVIII ⑯ ⭐⭐ §13 — A AVEC pour-100 g → B SANS : rien de A ne participe à B (INTERDIT : 200)',
+      Z.v12.nom==='Soupe maison' && Z.v12.q===null && Z.v12.per100===null && Z.v12.kcal===90,
+      JSON.stringify(Z.v12));
+    t('CCLXXVIII ⑪ ⭐ V8 — « + Ajouter » après une reprise n\'emporte pas la quantité d\'à côté',
+      Z.v8.nom==='Yaourt nature' && Z.v8.q===null && Z.v8.per100===null, JSON.stringify(Z.v8));
+    t('CCLXXVIII ⑫ ⛔ NON-RÉGRESSION ft-v1177 — 380 g ↔ 274 kcal, on demande 110 g → 79',
+      Z.v9.champ==='110' && Z.v9.kcal===79, JSON.stringify(Z.v9));
+    t('CCLXXVIII ⑬ ⛔ NON-RÉGRESSION — un nom INCHANGÉ ne fait pas perdre le poids déclaré',
+      Z.v10.pd===150 && !!Z.v10.ref && Z.v10.ref.q===150 && Z.v10.ref.u==='g', JSON.stringify(Z.v10));
+    t('CCLXXVIII ⑭ ⛔ NON-RÉGRESSION — un FAVORI sain se reprend avec son pour-100 g intact',
+      Z.v11.bc===true && Z.v11.bcNutr===60 && Z.v11.kcal==='120' && Z.v11.prot==='20',
+      JSON.stringify(Z.v11));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

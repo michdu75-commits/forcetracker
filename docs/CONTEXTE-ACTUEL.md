@@ -20,7 +20,32 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1179` — ⚖️ **LES CALORIES D'UN ALIMENT ÉTAIENT MARIÉES À LA
+- **Version en ligne (live) :** `ft-v1180` — 🧹 **P0 « SAISIE NUTRITION SÛRE » : « on change
+  d'aliment » a enfin un propriétaire.**
+  ⭐⭐ Cahier des charges de **GPT** après son contre-audit, transmis par Michel : *« Michel ne peut
+  actuellement plus remplir sa nutrition avec confiance »*. **Six contaminations mesurées**, toutes
+  dans la MÊME ouverture de l'écran d'ajout — un aliment sans quantité héritait des 380 g du
+  précédent, un aliment **avec sa propre quantité** se la faisait écraser, une saisie **à la main**
+  héritait aussi, un calibrage laissait **les deux blocs affichés ensemble**, un poids **déclaré**
+  fuyait sur le produit scanné, et un aller-retour d'onglet jetait une déclaration explicite.
+  ⛔ **Cause** : `quickFillFood` posait la quantité **sans `else`**, et `_afMajAncre` la relisait
+  **dans le champ du DOM** de l'aliment précédent. *Le DOM servait de mémoire entre deux aliments.*
+  ⭐ **Le mécanisme de remise à zéro existait déjà** (`_afPropCacher`, appelé par `openAddFood`
+  depuis toujours) : on ne l'a pas réinventé, on l'a posé sur les **onze portes** (**R2/R13**).
+  ⭐ **Plus une 2ᵉ idée** pour la porte qu'on ne franchit pas — taper un aliment neuf à la main :
+  la quantité retient le **NOM** auquel elle se rapporte.
+  ⚠️ **Deux erreurs à moi, trouvées par la mesure** : une variable de sauvegarde **locale** (elle
+  mourait entre les deux clics — mon correctif ne faisait rien) et une **capture après** le
+  changement d'unité.
+  ⛔ **Trois mutations ne mordent pas, et c'est écrit** : deux gardes sont nommés « garde, pas
+  détecteur » plutôt que présentés comme des protections mesurées.
+  ⏭️ ⛔⛔ **Les lignes déjà abîmées ne sont PAS réparées — et retaper la vraie quantité ne les
+  répare pas non plus** (946 kcal au lieu de 274). *Le seul geste : **supprimer puis ressaisir**,
+  et retirer l'étoile si l'aliment est en favori.*
+  ⏭️ **P1 ouvert** : « portion » comme vraie unité (un ×2 enregistre `q:null` et se fossilise).
+  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1179` — ⚖️ **LES CALORIES D'UN ALIMENT ÉTAIENT MARIÉES À LA
   QUANTITÉ DU PRODUIT D'AVANT.**
   ⭐⭐ **Née d'une consigne de Michel, pas d'un correctif** : test réel iPhone après ft-v1177, sa
   ratatouille s'ouvre sur *100 g = 274 kcal* — puis *« Ne corrige rien pour l'instant. Trace

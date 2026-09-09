@@ -3351,3 +3351,38 @@ quand on ne lui demande rien**.
 consigne de Michel plutôt que d'un correctif : *« Ne corrige rien pour l'instant. Trace pourquoi. »*
 — la trace a donné la cause, une piste de travers a été éliminée par la mesure, et une **2ᵉ route**
 (le poids de paquet tapé, ft-v1174) a été trouvée par une relecture croisée.*
+
+
+## 57. 🧠 LE DOM COMME MÉMOIRE ENTRE DEUX SUJETS **(09/09/2026, ft-v1180)**
+
+**À quoi on la reconnaît** : on passe d'un sujet au suivant **sans changer d'écran**, et le second
+hérite d'une valeur du premier. Le chiffre est plausible, personne ne l'a tapé, et rien ne signale
+qu'il vient d'ailleurs.
+
+**Le cas** : dans l'écran « Ajouter un aliment », on reprend une ratatouille (380 g), puis on touche
+un autre aliment. Le poulet, le steak, l'omelette tapée à la main, la boîte scannée — **tous
+repartaient avec les 380 g**, et l'app en dérivait un pour-100 g inventé (53, 79, 92, 147).
+
+**⛔ CE QUI REND LA FAMILLE VICIEUSE** : le code ne lisait pas une variable, il lisait **un champ
+affiché**. `_afMajAncre` prenait la quantité dans `af-prop`, et ce champ n'appartient à personne —
+il contient ce que le dernier rendu y a laissé. *Un champ qui affiche « 380 » ne dit pas « le
+nouvel aliment pèse 380 » : il dit « je n'ai pas été effacé ».*
+
+**Ce qui la protège aujourd'hui** :
+① **« Changer de sujet » est un GESTE, et un geste a un propriétaire.** Une seule fonction oublie
+l'état du précédent, appelée par **toutes** les portes — pas une remise à zéro recopiée dans
+chacune, qui divergerait (**R2**).
+② **La valeur retient à QUI elle appartient.** Quand aucune porte n'est franchie (ici : effacer le
+nom et taper à la main), le propriétaire ne peut pas se déclencher — il faut alors que la donnée
+elle-même sache de quel sujet elle parle. C'est la forme minimale du jeton de révision.
+
+**Le réflexe** : quand une valeur peut survivre à son sujet, ne pas se demander *« qui l'efface ? »*
+mais ***« à quoi appartient-elle, et comment le sait-on ? »***. Et se méfier de tout code qui lit
+un champ du DOM pour décider — le DOM est fait pour **afficher** et pour **recevoir une saisie**,
+jamais pour se souvenir.
+
+*Voisine de **§56** (un bloc resté visible répond pour l'aliment d'avant) dont c'est la
+généralisation : §56 est le cas où le conteneur survit, §57 le cas où la valeur survit. Voisine
+aussi de **R15** (tout chemin de fermeture pose son marqueur) — ici c'est tout chemin
+d'**ouverture** qui doit effacer. ⚠️ Née d'un cahier des charges externe (GPT) rédigé après un
+contre-audit, et de six mesures faites dans un vrai navigateur avant d'écrire une ligne.*
