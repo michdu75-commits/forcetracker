@@ -40,6 +40,7 @@
   ⚠️ **La passe a rougi sur 2 témoins de ft-v1183** qui figeaient une **formulation**, pas leur
   garantie (*« 1 portion = 300 kcal »*, alors que le texte gagne le NOM). Motifs resserrés sur
   les trois exigences réelles **et éprouvés** — ce n'est pas un desserrage, c'est le cas ft-v1176.
+  ✅ **Run #1054 vert** à 19:54:25 UTC sur `fcab2a18` · **parcours 3451/3451**.
   ⏭️ **Chantier suivant, décidé par Michel** : afficher « 2 steaks » dans le journal du jour.
 
 - **Version précédente (session-B) :** `ft-v1185` — 🧾 **LE DÉBRIEF SUR TOUTES LES COMBINAISONS DE
