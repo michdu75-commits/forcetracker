@@ -4229,11 +4229,45 @@ let _afPoidsPose=false;
    garder une quantité qui ne décrit plus rien fabrique un pour-100 g faux, définitif, et
    silencieux. *Entre une gêne visible et une donnée fausse invisible, on choisit la gêne.* */
 let _afQtyNom='';              // le nom de l'aliment auquel _afPoidsDeclare se rapporte
-function _afResetUnite(){ _afUnite='portion'; _afPoidsDeclare=0; _afPoidsPose=false; _afQtyNom=''; }
+/* ⚖️⛔⛔ ft-v1181 — I4 : LA QUANTITÉ AFFICHÉE N'AVAIT AUCUN PROPRIÉTAIRE DANS L'ÉTAT.
+   ⭐⭐ ET C'EST LE MIROIR EXACT DE ft-v1180 : là, le DOM se souvenait TROP (la quantité d'un
+   aliment traversait jusqu'au suivant) ; ici il se souvient TROP PEU — il est la **seule**
+   mémoire de la quantité affichée, et le simple fait de redessiner le bloc la détruit.
+   *Même racine, deux symptômes opposés : la quantité affichée n'appartenait à personne.*
+
+   ⛔ MESURÉ, geste par geste, avant d'écrire une ligne (l'étiquette d'isolat de Michel) :
+     · on déclare 30 g  → `_afRef={base:117, q:30}`, champ `af-prop` = 30, écran 117
+     · on tape 40       → `_afRef` NE BOUGE PAS (c'est l'invariant), champ = 40, écran **156**
+     · 🍽️ portions      → `_afRef={base:117, q:1, u:''}` — **le `q:30` est jeté**
+     · ⚖️ grammes       → champ `af-prop` **détruit**, `af-poids` vide, écran resté à 156
+   👉 L'app affiche alors 156 kcal en n'ayant plus aucune idée de ce que ça pèse. Taper 110 g
+   ensuite appariait 274 kcal à 110 g — le cas exact du journal de test.
+
+   ⭐ CE QUI SURVIT ICI EST LE **COUPLE ENTIER**, pas `_afPoidsDeclare` : `base` ET `q` ensemble,
+   plus la quantité affichée. C'est la consigne de Michel mot pour mot, et c'est ce qui rend le
+   retour sûr — on ne recalcule rien, on **remet ce qui était là**.
+   ⛔⛔ ET C'EST LA DIFFÉRENCE AVEC MON CORRECTIF D'HIER, QUE LE BANC AVAIT REFUSÉ : il ne
+   restituait que `_afPoidsDeclare` (30), donc l'écran repassait à 30 g / 117 kcal et **le 40
+   qu'elle venait de taper disparaissait**. *Réparer la donnée en cassant l'écran n'est pas un
+   correctif, c'est un échange.* Ici l'écran est rendu **identique à ce qu'il était**.
+   ⛔ `nom` est le même garde-fou qu'en ft-v1180 : une quantité mise de côté ne peut jamais
+   revenir sur un AUTRE aliment. */
+let _afQtyMemo=null;
+function _afResetUnite(){ _afUnite='portion'; _afPoidsDeclare=0; _afPoidsPose=false; _afQtyNom=''; _afQtyMemo=null; }
 /* Le nom courant, tel qu'il est A L'ÉCRAN — c'est lui l'identité de l'aliment affiché. */
 function _afNomCourant(){ return String((document.getElementById('af-desc')||{}).value||'').trim(); }
 function _afSetUnite(u){
   if(u===_afUnite) return;
+  /* ⚖️ ft-v1181 — ON MET DE CÔTÉ AVANT DE CHANGER : le couple `base`/`q` tel qu'il est
+     APPARIÉ à cet instant, plus la quantité réellement affichée dans le champ. Lire après
+     l'affectation ci-dessous rendrait l'état de l'unité qu'on REJOINT (erreur commise hier,
+     puis mesurée). */
+  if(_afUnite==='g' && _afPoidsDeclare>0 && _afRef && _afRef.base){
+    const b=_afRef.base, qa=numFR((document.getElementById('af-prop')||{}).value);
+    _afQtyMemo={ base:{kcal:b.kcal,prot:b.prot,carbs:b.carbs,fat:b.fat},
+                 q:_afRef.q, u:_afRef.u||'g', src:_afRef.src||'que tu as indiqué',
+                 qAff:(qa>0?qa:_afRef.q), nom:_afNomCourant() };
+  }
   _afUnite=(u==='g')?'g':'portion';
   /* ⛔ ON NE RESCALE RIEN EN CHANGEANT D'UNITÉ. Basculer de « portion » à « g » ne change pas
      ce qu'on a mangé — ça change la façon de le COMPTER. Les 4 valeurs affichées deviennent la
@@ -4279,7 +4313,27 @@ function _afSetUnite(u){
      protège, et se décide avec une mesure des deux bouts, pas dans la foulée d'un P0.
      👉 Le trou est écrit dans `docs/JOURNAL-DE-TEST.md` avec sa sonde. */
   _afPoidsDeclare=0;
+  /* ⚖️ ft-v1181 — ON REVIENT EN GRAMMES SUR LE MÊME ALIMENT → on remet ce qui était là.
+     ⛔ `nom` d'abord : sans lui, la quantité d'un aliment reviendrait sur un autre — c'est
+     exactement le défaut que ft-v1180 vient de fermer, et on ne le rouvre pas par la fenêtre. */
+  const memo=(_afUnite==='g' && _afQtyMemo && _afQtyMemo.q>0
+              && _afQtyMemo.nom===_afNomCourant()) ? _afQtyMemo : null;
+  if(memo) _afPoidsDeclare=memo.q;      // pour que `_afMajAncre` redessine le bloc ANCRÉ
   _afMajAncre(!_afPoidsPose);
+  if(memo){
+    /* ⛔⛔ LE COUPLE EST REMIS TEL QUEL, PAS RECALCULÉ. `_afMajAncre` vient de le reconstruire
+       à partir de l'écran (et pour un poids HÉRITÉ, `srcChange` valait `true`, donc `base` a été
+       relue sur des valeurs peut-être déjà rescalées). On écrase par le couple mis de côté, qui
+       est le seul dont on sache qu'il était apparié. */
+    const m=memo.base;
+    _afRef={base:{kcal:m.kcal,prot:m.prot,carbs:m.carbs,fat:m.fat}, q:memo.q, u:memo.u, src:memo.src};
+    /* ⭐ ET L'ÉCRAN REDEVIENT CE QU'IL ÉTAIT : la quantité affichée, puis le rescale qui va avec.
+       `_afApplyProp` divise par `_afRef.q` — le couple qu'on vient de remettre — donc il ne peut
+       pas se désapparier. Sans ces deux lignes, on afficherait la référence (30 g) à la place de
+       ce qu'elle avait tapé (40 g) : le correctif refusé hier. */
+    const champ=document.getElementById('af-prop');
+    if(champ && memo.qAff>0){ champ.value=memo.qAff; _afApplyProp(); }
+  }
 }
 function _afDeclarePoids(){
   /* ⛔⛔ ft-v1159 — NE REDESSINE PLUS RIEN (jumelle de `_efDeclarePoids`). `_afMajAncre()`
