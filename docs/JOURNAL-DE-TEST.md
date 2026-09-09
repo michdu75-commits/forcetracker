@@ -2011,3 +2011,39 @@ laissée dans une conversation disparaît avec elle. **Ce qui est ici est dans l
 
 *À remplir au fil de l'eau — une ligne, tout de suite, sans attendre d'avoir la réponse. Une question
 notée coûte dix secondes ; une question perdue coûte la session entière (R27).*
+
+### 🟣 VÉRIFIÉ ET MESURÉ — « MICHEL NE PEUT PAS SUPPRIMER SES LIGNES » EST FAUX (09/09/2026)
+
+**Une note de GPT** (`Historique_Nutrition_Migration`, §0 et §18) pose en prémisse : *« Michel ne peut
+pas supprimer les données nutritionnelles déjà enregistrées depuis l'interface actuelle »*, et en tire
+la consigne *« aucune consigne du type supprime et ressaisis n'est recevable »*.
+
+**⛔ MESURÉ DANS UN VRAI NAVIGATEUR, PAR LES VRAIS GESTES — LA PRÉMISSE EST FAUSSE.** Il y a **deux**
+chemins de suppression, aucun conditionné :
+
+| chemin | où | mesure |
+|---|---|---|
+| **✕** sur chaque ligne | `screens.js` — Nutrition → Journal → déplier le repas | **visible et cliquable, 21×20 px, rien ne le cache** |
+| **🗑 Supprimer** | `app.js` — « Modifier l'aliment » | présent dans la modale |
+
+`removeFoodEntry` exécutée : **la ligne part** (1 → 0), `persist()` et la sync suivent.
+
+**⭐⭐ MAIS SON §3 EST VRAI, ET C'EST LUI QUI COMPTE** : le **favori survit avec son pour-100 g faux**.
+Mesuré — journal vidé, `S.savedFoods` garde encore `per100.kcal = 249`. 👉 *Supprimer la ligne ne
+suffit donc pas : il faut aussi retirer l'étoile*, sinon la prochaine reprise réinjecte la référence
+corrompue. C'est déjà ce que dit l'entrée ft-v1180, et c'est maintenant **mesuré** au lieu d'être
+supposé.
+
+**⚠️ ET LA LEÇON DE MÉTHODE EST À MOI, ENCORE** : mes trois premières sondes ont rendu
+*« croix non cliquable »* — parce que **je n'avais pas fait les gestes** (mauvais identifiant d'écran :
+`goScreen('s-nutrition')` alors que la barre appelle `goScreen('nutrition')`, et l'onglet Journal
+jamais ouvert). 👉 ***Une sonde qui saute les gestes de l'utilisateur mesure sa propre erreur, pas
+l'application*** — et elle aurait confirmé une prémisse fausse. C'est la 3ᵉ fois cette semaine ;
+famille **§12** de `BUGS.md`.
+
+**⛔ CE QUI RESTE VRAI DANS SA NOTE, ET QU'ON ADOPTE** : les lignes historiques restent **figées** ·
+aucune correction silencieuse · classification **CERTAIN / AMBIGU / INSUFFISANT** · **sauvegarde puis
+essai à blanc avant écriture** · une ligne non récupérable se **marque**, elle ne se supprime pas ·
+et `S.savedFoods` s'audite **avec** `S.foodLog`. L'ordre de priorité aussi : *saisie fiable → I4 → P1
+→ migration*.
+
