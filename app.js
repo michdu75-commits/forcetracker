@@ -8323,6 +8323,24 @@ function _majPeutSAppliquer(){
   if(!window._swReloadPending) return false;
   if(typeof _seanceOuverte==='function' ? _seanceOuverte()
      : (S.wkt&&S.wkt.exs&&S.wkt.exs.length)) return false;             // séance non terminée
+  /* ⛔⛔ ft-v1184 — LA FIN DE SÉANCE EST UNE FENÊTRE, PAS UN INSTANT. C'est MICHEL qui a trouvé
+     la cause : *« il n'y a pas de mise à jour pendant une séance mais dès qu'on fait terminé la
+     mise à jour se fait et donc on ne voit pas le débrief »*.
+     ⭐⭐ REPRODUIT — au moment où le rechargement part, les trois gardes ci-dessous tombent EN
+     MÊME TEMPS : `écran=home · séance ouverte=false · récap ouvert=false`. Parce que
+     `finishWorkout` vide `S.wkt`, fait `goScreen('home')` (« évite le double-tap sur DOM stale »),
+     puis **attend `syncSheets` pendant plusieurs SECONDES**, et n'ouvre l'écran de fin qu'après.
+     👉 ***Le garde `ov-session-end` juste en dessous arrive trop tard : il protège une fenêtre qui
+     n'est pas encore ouverte*** — et chaque `persist()` de cette zone rappelle `_appliquerMaj()`.
+     ⚠️ Le commentaire du haut de ce bloc disait DÉJÀ la règle juste — *« la séance ne se termine
+     pas quand la donnée est écrite : elle se termine quand la personne a vu ce qu'elle a fait »* —
+     mais le code ne la tenait que sur une partie du chemin. *Le commentaire dit vrai, le code ne
+     le fait pas* (`BUGS.md` §54).
+     ⭐ R13 — ON N'INVENTE PAS DE VERROU : `_finishing` (log.js) existe, il est posé au tout début
+     de `finishWorkout` et **levé sur ses 5 sorties**, y compris les trois refus (pas de séance,
+     pas d'exercice, pas de série validée). Il manquait **un lecteur**, pas un mécanisme.
+     ⛔ Et `typeof` est indispensable : `_finishing` vit dans un AUTRE fichier, chargé après. */
+  if(typeof _finishing!=='undefined' && _finishing) return false;      // fin de séance en cours
   const ov=document.getElementById('ov-session-end');
   if(ov&&ov.classList.contains('open')) return false;                  // récapitulatif à l'écran
   /* ⛔⛔ LE BANC D'ESSAI EST LA SEULE CHOSE DE L'APP QUI COÛTE DE L'ARGENT (01/09/2026).
