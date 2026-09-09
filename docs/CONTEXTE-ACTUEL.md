@@ -36,7 +36,10 @@
   ⭐ **Le seul rouge, trouvé avant livraison** : reprendre « 2 steaks » rouvrait le champ grammes
   et l'écran perdait le « 2 ». *La donnée était intacte, l'écran mentait.* Le pour-100 g ne
   décide plus de l'unité.
-  Bloc **CCLXXXI 14/14** · **12 mutations, toutes mordent**.
+  Bloc **CCLXXXI 14/14** · **15 mutations, toutes mordent**.
+  ⚠️ **La passe a rougi sur 2 témoins de ft-v1183** qui figeaient une **formulation**, pas leur
+  garantie (*« 1 portion = 300 kcal »*, alors que le texte gagne le NOM). Motifs resserrés sur
+  les trois exigences réelles **et éprouvés** — ce n'est pas un desserrage, c'est le cas ft-v1176.
   ⏭️ **Chantier suivant, décidé par Michel** : afficher « 2 steaks » dans le journal du jour.
 
 - **Version précédente (session-B) :** `ft-v1185` — 🧾 **LE DÉBRIEF SUR TOUTES LES COMBINAISONS DE

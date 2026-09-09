@@ -32309,8 +32309,19 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
     t('CCLXXX ② ⛔ LA RÉFÉRENCE NE SE RÉÉCRIT PAS : `_afRef.base` reste 300 pendant que l\'écran montre 600',
       P.x2 && P.x2.ref.base.kcal===300 && P.x2.ecran[0]===600,
       JSON.stringify(P.x2&&{base:P.x2.ref.base,ecran:P.x2.ecran}));
+    /* ⚠️ MOTIF RESSERRÉ SUR SA GARANTIE LE 09/09 (ft-v1186), ET C'EST ÉCRIT ICI PARCE QU'UN
+       TÉMOIN QU'ON TOUCHE DOIT DIRE LEQUEL, PAR QUI ET QUAND (ft-v1175).
+       · ancien motif : `1 portion = 300 kcal` — il codait la MISE EN FORME du texte ;
+       · ce qui a changé : ft-v1186 ajoute le NOM de la portion, donc la phrase devient
+         « 1 portion = portion non définie, poids inconnu · 300 kcal » ;
+       · la garantie, elle, est INCHANGÉE et même plus forte : *une portion ne s'affiche jamais
+         sans sa définition, et ce qu'on ignore est dit*. Les trois exigences restent vérifiées
+         (le nombre de portions, la valeur d'une portion, le poids annoncé comme inconnu).
+       ⛔ Ce n'est PAS un témoin assoupli pour faire passer du code : le comportement figé est
+       intact, c'est le motif qui figeait plus que lui. Éprouvé : retirer la définition de
+       l'écran le fait toujours rougir (mutation du contrôle négatif). */
     t('CCLXXX ③ ⛔ UNE PORTION NE S\'AFFICHE JAMAIS SANS SA DÉFINITION (consigne de Michel)',
-      P.x2 && /2 portions/.test(P.x2.texte) && /1 portion = 300 kcal/.test(P.x2.texte)
+      P.x2 && /2 portions/.test(P.x2.texte) && /300 kcal/.test(P.x2.texte)
       && /poids inconnu/.test(P.x2.texte), P.x2&&P.x2.texte);
     t('CCLXXX ④ REPRISE PAR « MES ALIMENTS » : écran 600, référence 300, q=2 réenregistré',
       P.reprise && P.reprise.ecran[0]===600 && P.reprise.base.kcal===300
@@ -32337,8 +32348,9 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
     t('CCLXXX ⑩ AJOUT DIRECT depuis la liste : la portion est recopiée (q=2, pas null)',
       P.direct && P.direct.q===2 && P.direct.u==='portion' && P.direct.kcal===600,
       JSON.stringify(P.direct));
+    /* ⚠️ Même resserrage que le ③ ci-dessus, même raison, même jour. */
     t('CCLXXX ⑪ ÉCRAN D\'ÉDITION : « 2 portions » AVEC sa définition, pas « 2 portion » nu',
-      P.edit && /2 portions/.test(P.edit.texte) && /1 portion = 300 kcal/.test(P.edit.texte)
+      P.edit && /2 portions/.test(P.edit.texte) && /300 kcal/.test(P.edit.texte)
       && P.edit.val==='2', P.edit&&P.edit.texte);
     t('CCLXXX ⑫ ⭐ ×3 DANS L\'ÉDITION s\'enregistre : 900 kcal · q=3 · u=portion',
       P.edit && P.edit.sauve.kcal===900 && P.edit.sauve.prot===60
