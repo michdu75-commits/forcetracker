@@ -69,6 +69,82 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟢 PRÊTE — LA QUANTITÉ D'UN ALIMENT CONTAMINE LE SUIVANT : 6 CAS MESURÉS (08-09/09/2026, CONTRE-AUDIT)
+
+**⚠️ Écrit AVANT tout correctif, et c'est la consigne du contre-audit** (GPT, §Contraintes : *« ne
+corrige rien avant d'avoir tracé la cause »*). ⭐ **Et écrit tout de suite parce que le conteneur a
+redémarré juste après la mesure** — ces chiffres n'existaient que dans la conversation (**R27**).
+
+**LA CAUSE EST UNIQUE** : *rien ne remet la quantité à zéro quand on change d'aliment sans fermer
+l'écran d'ajout.* `quickFillFood` pose `_afPoidsDeclare = it.q` quand l'aliment a une quantité —
+**sans `else`** pour l'effacer quand il n'en a pas (`app.js:2498`). Et `_afMajAncre` relit ensuite
+`qAff` **dans le champ du DOM** (`app.js:4282`), qui porte encore le nombre de l'aliment précédent,
+puis **écrase même la quantité propre** du nouvel aliment (`app.js:4320`).
+
+👉 ⛔⛔ **C'est la PORTE JUMELLE de ft-v1179.** ft-v1179 a fermé le bloc **pour-100 g**
+(`af-bc-row`). Le bloc **portions/grammes** (`af-prop-row`) est resté ouvert avec le même dégât.
+**R8, 7ᵉ fois dans ce fichier — et cette fois c'est moi qui n'ai regardé qu'une seule porte.**
+
+**⭐⭐ LES SIX CAS, MESURÉS PAR MOI dans un vrai navigateur** (le contre-audit les avait trouvés ;
+je les ai **remesurés** avant de les écrire, chiffres identiques). Point de départ commun : on
+reprend la ratatouille (`q:380, 274 kcal`, sans pour-100 g) depuis « Mes aliments ».
+
+| # | geste suivant, **sans fermer l'écran** | ce qui s'enregistre | attendu |
+|---|---|---|---|
+| **V1** | on tape un **poulet sans quantité** | `q:380` · `per100:53` inventé | `q:null` |
+| **V2** | on tape un **steak qui a SA quantité (150 g)** | `q:380` · `per100:79` | `q:150` · `per100:200` |
+| **V3** | on efface tout, on tape une **omelette à la main** | `q:380` · `per100:92` | `q:null` |
+| **V4** | on recopie une **étiquette** (calibrage) | ⛔ **les DEUX blocs affichés ensemble** : « Référence : 380 g » sous un isolat à 390 kcal/100 g | un seul bloc |
+| **V5** | on **déclare 150 g à la main**, puis on scanne une boîte **sans valeurs** | sardines `q:150` · `per100:147` | `q:null` |
+| **V6** | on déclare 110 g, puis 🍽️ puis ⚖️ | `_afRef` passe de `{q:110,u:'g'}` à **`{q:1,u:''}`** | la déclaration tient |
+
+⛔ **V5 est le plus parlant** : `_bcSansValeurs` cache bien `af-bc-row` (le correctif de ft-v1179
+**fonctionne**) — et laisse `af-prop-row` visible à 150. *Un correctif posé sur une porte sur deux
+ressemble à un correctif.*
+⛔ **V4 contredit le titre même de ft-v1179** : `_offRemplirFormulaire` (`app.js:1559`) affiche
+`af-bc-row` **sans jamais appeler `_afMajAncre`**, seul endroit qui détruit `af-prop`.
+
+**⛔⛔ §4 DU CONTRE-AUDIT — « SAISIR LA VRAIE QUANTITÉ RÉPARE-T-IL UNE LIGNE ABÎMÉE ? » : NON.**
+Mesuré sur `{q:110, kcal:274, per100:249}` (la vérité : 380 g ↔ 274 kcal, soit 72/100 g) :
+
+| geste de réparation | résultat |
+|---|---|
+| reprise « Mes aliments » → taper **380 g** | **946 kcal** ⛔ (×3,45) |
+| reprise par la recherche → **380 g** | **946 kcal** ⛔ |
+| « Modifier l'aliment » → **380 g** | **946 kcal** ⛔ |
+| retaper les **4 valeurs** à la main | 274 ✅ mais `q:null` **et `per100:249` conservé** ⛔ |
+| ⭐ **SUPPRIMER la ligne puis la ressaisir** | **`q:380 · 274 kcal · per100:72`** ✅ **le seul** |
+
+⚠️ **ET LE PIÈGE DU FAVORI, mesuré** : si l'aliment est en ⭐, le `per100:249` **survit à la
+suppression de la ligne** — `S.savedFoods` en garde une copie et « Mes aliments » continue de
+proposer la version abîmée. *Il faut retirer l'étoile aussi.*
+👉 **Catégorie D confirmée** : *aucune correction silencieuse par approximation* n'est possible.
+J'avais conseillé à Michel de « retaper la vraie quantité » — **c'était faux, je l'ai corrigé
+devant lui.**
+
+**⭐ CE QUI TIENT (catégorie A, mesuré)** : quatre changements de quantité d'affilée · vider puis
+retaper le champ → `per100` **ne bouge pas**. `_qtyRescale` n'est pas en cause, et le contre-audit
+interdit d'y toucher.
+
+**⛔ CE QUI N'EST PAS TRANCHÉ, ET CE N'EST PAS TECHNIQUE (V6)** : *un changement d'unité doit-il
+oublier une quantité que l'app connaît déjà ?* La perte se situe à l'instruction près —
+`app.js:4217`, `_afPoidsDeclare=0;` dans `_afSetUnite`, puis `_afMajAncre(!_afPoidsPose)` en 4218.
+⚠️ **La réponse naïve (préserver la quantité) rouvre ft-v1061**, la capture d'étiquette de Michel —
+c'est exactement le piège que `_afPoidsPose` existe pour éviter, et que la mesure a déjà refusé une
+fois en ft-v1177. **À mesurer aux DEUX bouts avant de coder.**
+
+**🔧 POUR REPRODUIRE** (les sondes vivaient dans le scratchpad, mort avec la session) : servir le
+dépôt en HTTP, ouvrir `index.html` dans Chromium, puis dans la page — `openAddFood()`, semer
+`S.foodLog`, `quickFillFood(i)`, lire `_afRef` / `_afPoidsDeclare` / `_afPoidsPose` / `_bcNutr` et
+la visibilité de `af-prop-row` / `af-bc-row`, puis `addFoodEntry()` et lire la dernière entrée.
+
+**⭐ LE CORRECTIF PRESSENTI (non écrit, en attente de la décision de Michel)** : **un propriétaire
+unique de la remise à zéro** — `_afOublierQuantite()` — appelé par TOUT ce qui change l'aliment
+affiché (reprise liste, reprise recherche, calibrage, scan sans valeurs, saisie neuve), plus
+l'exclusivité réelle des deux blocs. C'est **R2** posé là où il manque, et ça referme V1→V5 d'un
+coup. **V6 reste séparé.**
+
+
 ### 🟢 PRÊTE — UN ALLER-RETOUR D'ONGLET D'UNITÉ ROUVRE ft-v1177 (08/09/2026, MESURÉ)
 
 **Trouvé par une relecture croisée, pas par moi.** Un relecteur adverse affirmait que ft-v1177 était
