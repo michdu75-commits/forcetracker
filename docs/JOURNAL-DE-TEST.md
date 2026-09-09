@@ -225,7 +225,32 @@ quantité ? *Le geste dit « je veux changer d'unité », pas « oublie ce que t
 sans discriminant — c'est exactement le piège que `_afPoidsPose` existe pour éviter. **À mesurer aux
 deux bouts avant de coder.**
 
-*Sonde reproductible : `scratchpad/sonde-allerretour.js`.*
+**⛔⛔ MISE À JOUR ft-v1180 (09/09/2026) — ESSAYÉ, MESURÉ, RETIRÉ. L'ENTRÉE RESTE 🟢 PRÊTE.**
+J'ai écrit la réparation (mettre de côté le poids posé, le rendre au retour d'onglet), elle était
+gelée et commitée. **La passe complète l'a refusée** : `3373 ✅ · 1 ❌`, le bloc **CLXVIII** —
+celui de la capture d'étiquette de ft-v1061. Mesuré au même instant du même geste (déclarer 30 g,
+taper 40 dans la quantité, aller-retour d'onglet) :
+
+| | `af-prop` | affiché | `_afRef` |
+|---|---|---|---|
+| **sans restitution** | *(champ poids vide)* | 156 / 35 | `{q:1, u:''}` ⛔ ancre perdue |
+| **avec restitution** | 30 | 117 / 26 | `{q:30, u:'g'}` ✅ mais **son 40 a disparu** |
+
+👉 ***Les deux font changer un chiffre sans que rien ne l'explique.*** La restitution répare la
+**donnée** en cassant l'**écran** — le reproche exact de Michel en ft-v1173. *Ce n'est pas un
+correctif, c'est un échange.*
+⭐⭐ **CE QUE LA MESURE APPORTE À L'ENTRÉE, ET C'EST ELLE QUI COMPTE POUR LA SUITE** : ma
+justification écrite était fausse. J'affirmais que `_afMajAncre` recale `_afPoidsDeclare` sur le
+champ (donc qu'on mémoriserait 40) — **sondé, il reste à 30**. 👉 **La bonne restitution ne porte
+donc PAS sur le poids déclaré, mais sur la QUANTITÉ AFFICHÉE** : rendre le champ à 40 en laissant
+`_afRef` intact (`{q:30, base:117}`) et laisser `_qtyRescale` rendre 156/35. *C'est la piste à
+mesurer la prochaine fois — et elle touche au couple `base`/`q` que CLXVIII protège, donc elle se
+juge contre CLXVIII, qui EST isolable (il crée son propre contexte : `scratchpad/mini168.js`).*
+⚠️ **J'avais écrit dans le code qu'il ne l'était pas, sans l'avoir essayé** — et c'est ce qui m'a
+fait livrer la régression sur la branche (**R28**, retourné contre son auteur).
+
+*Sonde reproductible : `scratchpad/sonde-allerretour.js` · et `scratchpad/mini168.js` pour le
+bloc qui arbitre.*
 
 
 ### 🟣 LA PASSE DE VÉRIFICATION DU PROCHAIN IMPORT — 5 choses à regarder EN UNE FOIS, vers le 06/10/2026 (08/09/2026)

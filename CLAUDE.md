@@ -449,7 +449,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 **ft-v1180 — 🧹 « ON CHANGE D'ALIMENT » N'AVAIT AUCUN PROPRIÉTAIRE — ET LE MÉCANISME DE REMISE À ZÉRO EXISTAIT DÉJÀ** — cahier des charges de GPT après son contre-audit, transmis par Michel : ***« Michel ne peut actuellement plus remplir sa nutrition avec confiance »***.
 
-**⭐⭐ SIX CONTAMINATIONS MESURÉES, TOUTES DANS LA MÊME OUVERTURE DE L'ÉCRAN D'AJOUT** — en repartant d'une ratatouille reprise à 380 g / 274 kcal :
+**⭐⭐ SIX CONTAMINATIONS MESURÉES, TOUTES DANS LA MÊME OUVERTURE DE L'ÉCRAN D'AJOUT** — en repartant d'une ratatouille reprise à 380 g / 274 kcal. **CINQ SONT RÉPARÉES ; LA SIXIÈME A ÉTÉ RETIRÉE DE LA VERSION, ET C'EST LE BANC QUI L'A EXIGÉ** (voir plus bas) :
 
 | geste suivant | avant | après |
 |---|---|---|
@@ -457,8 +457,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | un steak **avec SA quantité (150 g)** | `q:380` · `per100:79` | **`q:150` · `per100:200`** ✅ |
 | une omelette tapée **à la main** | `q:380` · `per100:92` | **`q:null`** ✅ |
 | un **calibrage d'étiquette** | **les DEUX blocs affichés ensemble** | un seul ✅ |
-| un poids **déclaré 150 g** puis un scan sans valeurs | sardines `q:150` | **`q:null`** ✅ |
-| un **aller-retour d'onglet** sur 110 g déclarés | `{q:1, u:''}` | **`{q:110, u:'g'}`** ✅ |
+| un poids **déclaré 150 g** puis un scan | sardines `q:150` | **`q:null`** ✅ (les **deux** chemins de scan) |
+| un **aller-retour d'onglet** sur 110 g déclarés | `{q:1, u:''}` | ⛔ **non réparé — retiré** |
 
 **⛔⛔ LA CAUSE TENAIT EN DEUX LIGNES, ET AUCUNE N'ÉTAIT UN CALCUL FAUX.** `quickFillFood` posait `_afPoidsDeclare = it.q` **sans aucun `else`** ; et `_afMajAncre` relisait ensuite la quantité **DANS LE CHAMP DU DOM**, qui portait encore le nombre de l'aliment précédent — et **l'écrasait même sur celle du nouveau**. 👉 ***Le DOM servait de mémoire entre deux aliments.***
 
@@ -466,17 +466,30 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 **⭐ UNE PORTE NE SE FRANCHIT PAS, ET IL A FALLU UNE 2ᵉ IDÉE** : effacer le nom et taper un aliment neuf **n'appelle aucune fonction de sélection**. On retient donc le **NOM** auquel la quantité se rapporte (`_afQtyNom`) — la forme la plus simple du jeton de révision demandé par l'audit — et `_afMajAncre` oublie une quantité qui ne décrit plus l'aliment affiché. ⭐ *Le crochet existait déjà* : `af-desc` appelle `_afMajAncre` sur son `onchange`. ⚠️ **Le coût est assumé (R29)** : corriger une faute de frappe dans le nom fera perdre le poids déclaré — *ça se VOIT et ça se retape en trois secondes ; garder une quantité qui ne décrit plus rien fabrique un pour-100 g faux, définitif et silencieux.*
 
-**⚠️⚠️ DEUX ERREURS À MOI, TROUVÉES PAR LA MESURE ET PAS PAR LA RELECTURE.** ⓐ J'avais écrit la sauvegarde de l'aller-retour dans une variable **LOCALE** : elle mourait à la fin du premier clic, donc ***mon correctif ne faisait rien du tout*** — la sonde l'a dit, pas moi. ⓑ Et je **capturais après avoir déjà changé `_afUnite`**, donc je lisais la nouvelle unité au lieu de celle qu'on quitte. *Les deux étaient invisibles à la relecture et évidentes à la mesure.* ⚠️ J'ai aussi laissé un instant une ligne morte référençant une variable inexistante — `node --check` ne voit pas un `ReferenceError`.
+**⛔⛔⛔ ET LA MOITIÉ « ALLER-RETOUR D'ONGLET » A ÉTÉ RETIRÉE DE LA VERSION — C'EST LA PASSE COMPLÈTE QUI L'A REFUSÉE, PAS MOI.** Je l'avais écrite, gelée, commitée sur la branche. La passe a rendu **3373 ✅ · 1 ❌** : le bloc **CLXVIII**, celui de **ft-v1061**. ⭐⭐ **Et j'avais écrit dans le code, deux heures plus tôt, que ce bloc « n'était pas isolable » — c'était faux : il crée son propre contexte.** Isolé, il rougit en deux minutes. *Une limite affirmée sans être vérifiée m'a fait livrer une régression* (**R28**, contre son auteur).
 
-**⛔⛔ TROIS MUTATIONS NE MORDENT PAS, ET JE LE DIS PLUTÔT QUE D'ANNONCER UN 8/8.** ① la remise à zéro de `_afQtyG` est une **GARDE, PAS UN DÉTECTEUR** — les deux vrais verrous sont `_afPoidsPose` et `_afQtyNom` ; gardée pour la cohérence d'état, *en sachant ce qu'elle vaut* (même nommage qu'en ft-v1166) · ② le verrou `_afPoidsPose` de la restitution est **conservateur PAR CHOIX, pas par mesure** : la mutation qui l'enlève ne fait rougir aucun témoin de ce bloc, et **je n'ai PAS pu la juger contre ceux de ft-v1061** — leur bloc dépend de l'état posé par les blocs précédents, l'isoler le fait planter. *Une sonde qui saute une étape de production ne mesure rien* → on garde la version **étroite** · ③ effacer aussi les macros ne casse rien (chaque chemin les réécrit juste après).
+**⭐⭐ LA MESURE, AU MÊME INSTANT DU MÊME GESTE** (déclarer 30 g, taper 40 dans la quantité, aller-retour d'onglet) :
+
+| | `af-prop` | affiché | `_afRef` |
+|---|---|---|---|
+| **sans restitution** (ft-v1179) | *(champ poids vide)* | 156 / 35 | `{q:1, u:''}` ⛔ **ancre perdue** |
+| **avec restitution** (mon correctif) | 30 | 117 / 26 | `{q:30, u:'g'}` ✅ mais **son 40 a disparu** |
+
+👉 ***Les deux font changer un chiffre sans que rien ne l'explique.*** Ma version répare la **donnée** en cassant l'**écran** — exactement le reproche de Michel en ft-v1173 (*« un chiffre qui change tout seul pendant que la cause reste identique est illisible »*). **Ce n'est pas un correctif, c'est un échange**, et un échange ne se livre pas sous couvert de P0. ⚠️ **Et ma justification écrite était fausse, la sonde l'a dit** : j'affirmais que `_afMajAncre` recale `_afPoidsDeclare` sur le champ (donc qu'on mémoriserait 40) — **il reste à 30**. La vraie réparation porte sur la **quantité affichée**, pas sur le poids déclaré : elle touche au couple `base`/`q` que ft-v1061 protège. *Le trou reste ouvert, écrit dans `docs/JOURNAL-DE-TEST.md` avec sa sonde.*
+
+**⚠️⚠️ TROIS ERREURS À MOI SUR CETTE SEULE MOITIÉ, TOUTES TROUVÉES PAR LA MESURE.** ⓐ la sauvegarde était dans une variable **LOCALE** : elle mourait à la fin du premier clic, donc ***le correctif ne faisait rien du tout*** · ⓑ je **capturais après avoir changé `_afUnite`**, donc je lisais la nouvelle unité au lieu de celle qu'on quitte · ⓒ et une ligne morte référençant une variable inexistante — `node --check` ne voit pas un `ReferenceError`. *Trois passages de relecture n'en avaient attrapé aucune ; la sonde les a toutes rendues évidentes.*
+
+**⭐⭐ ET UNE MUTATION QUI NE MORDAIT PAS A TROUVÉ UN TROU DE TÉMOIN, PAS DU CODE MORT.** Retirer la porte de `_lookupBarcode` ne faisait **rougir personne** — j'ai failli conclure à de la décoration et l'enlever. Mesuré : un scan emprunte **deux chemins**, et ma fausse fiche Open Food Facts n'en exerçait qu'un. Une fiche **sans** valeurs part vers `_bcSansValeurs`, qui oublie lui-même ; une fiche **avec** valeurs part vers `_offRemplirFormulaire`, qui **n'oublie pas** — là, cette porte est **la seule**. Le faux réseau sert désormais **deux fiches**, et la mutation mord chirurgicalement. 👉 ***Une porte sans témoin ressemble à de la décoration ; c'est comme ça qu'on retire une vraie protection.***
 
 **⛔ CE QUI N'EST PAS TOUCHÉ, SUR CONSIGNE ÉCRITE DE GPT** : `_qtyRescale` (classé sain, **mesuré** : quatre changements de quantité d'affilée et vider/retaper ne bougent pas le pour-100 g) · l'import de programmes IA · et la réparation des lignes déjà abîmées.
 
 **📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît : une quantité inventée cesse d'être inventée (**R19/R25**).
 
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔⛔ **les lignes déjà abîmées ne sont pas réparées — et retaper la vraie quantité ne les répare PAS non plus** (mesuré : **946 kcal au lieu de 274** sur les trois chemins). *Le seul geste efficace est **supprimer puis ressaisir**, et si l'aliment est en ⭐ favori il faut aussi retirer l'étoile* — `S.savedFoods` garde une copie du pour-100 g faux. ⛔ **P1 reste ouvert** : « portion » comme vraie unité (aujourd'hui un ×2 enregistre `q:null` et se fossilise — *« 2 portions de 300 » devient « 1 portion de 600 »*). ⛔ Et la restitution d'un poids **hérité** après un aller-retour d'onglet demande de décider si l'écran ou la quantité fait foi. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔⛔ **les lignes déjà abîmées ne sont pas réparées — et retaper la vraie quantité ne les répare PAS non plus** (mesuré : **946 kcal au lieu de 274** sur les trois chemins). *Le seul geste efficace est **supprimer puis ressaisir**, et si l'aliment est en ⭐ favori il faut aussi retirer l'étoile* — `S.savedFoods` garde une copie du pour-100 g faux. ⛔ **P1 reste ouvert** : « portion » comme vraie unité (aujourd'hui un ×2 enregistre `q:null` et se fossilise — *« 2 portions de 300 » devient « 1 portion de 600 »*). ⛔⛔ **Et l'aller-retour d'onglet perd toujours l'ancre** (`{q:110}` → `{q:1}`) : c'est l'invariant **I4** du contre-audit, il n'est **pas** réparé ici, et le dire vaut mieux que de livrer l'échange ci-dessus. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 
-Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `BUGS.md`. sw.js ft-v1180. |
+Tests : **parcours 3383/3383** (+17, bloc **CCLXXVIII**) — après une 1ʳᵉ passe à **3373 ✅ · 1 ❌** qui a fait retirer la moitié ci-dessus, **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF sur les moitiés CONSERVÉES : 3 mutations, toutes mordent** — ① la porte « Mes aliments » retirée → **1 rouge** · ② la péremption par le NOM retirée → **1 rouge** · ③ ⭐ la porte du scan retirée → **1 rouge**, *mais seulement APRÈS avoir ajouté la 2ᵉ fiche* (voir ci-dessus : avant, elle ne mordait pas et j'allais retirer une vraie protection). ⭐ **Le bloc CLXVIII de ft-v1061 est repassé à 8/8** en isolé avant la passe complète — c'est lui l'arbitre de cette version. Nouvelle famille **`BUGS.md` §58**.
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `BUGS.md`. sw.js ft-v1180. |
 
 **ft-v1179 — ⚖️ LES CALORIES D'UN ALIMENT ÉTAIENT MARIÉES À LA QUANTITÉ DU PRODUIT D'AVANT — ET C'EST SA CONSIGNE « NE CORRIGE RIEN, TRACE » QUI A TOUT DONNÉ** — Michel, test réel iPhone après ft-v1177 : sa ratatouille s'ouvre sur **100 g = 274 kcal** avec *« Référence : 100 g (que tu as indiqué) »*, là où mon test l'ouvrait sur 380 g. Puis : ***« Ne corrige rien pour l'instant. Trace pourquoi. »***
 

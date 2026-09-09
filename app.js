@@ -4229,28 +4229,11 @@ let _afPoidsPose=false;
    garder une quantité qui ne décrit plus rien fabrique un pour-100 g faux, définitif, et
    silencieux. *Entre une gêne visible et une donnée fausse invisible, on choisit la gêne.* */
 let _afQtyNom='';              // le nom de l'aliment auquel _afPoidsDeclare se rapporte
-/* ⚖️ ft-v1180 — la derniere quantite en GRAMMES reellement posee par la personne, mise de cote
-   le temps d'un aller-retour d'onglet. ⚠️ Elle DOIT survivre entre deux appels de
-   `_afSetUnite` (une variable locale meurt a la fin du premier — erreur commise, puis mesuree :
-   le correctif ne faisait rien).
-   ⚠️⚠️ SA REMISE A ZERO DANS `_afResetUnite` EST UNE GARDE, PAS UN DETECTEUR — et je le dis
-   parce que je l'ai mesure : la mutation qui la retire ne fait rougir PERSONNE. Les deux
-   verrous qui protegent vraiment sont `_afPoidsPose` (seul un poids POSE PAR LA PERSONNE est
-   restitue) et `_afQtyNom` (et seulement pour le meme aliment). La remise a zero est donc de
-   la COHERENCE d'etat, pas une protection : `_afResetUnite` est LA fonction qui remet l'etat
-   de quantite a plat, et y laisser un champ debout se paierait le jour ou quelqu'un desserre
-   un des deux verrous. *On la garde en sachant ce qu'elle vaut, au lieu de croire qu'elle
-   protege.* (Meme nommage qu'en ft-v1166 : « GARDE (pas detecteur) ».) */
-let _afQtyG=0;
-function _afResetUnite(){ _afUnite='portion'; _afPoidsDeclare=0; _afPoidsPose=false; _afQtyNom=''; _afQtyG=0; }
+function _afResetUnite(){ _afUnite='portion'; _afPoidsDeclare=0; _afPoidsPose=false; _afQtyNom=''; }
 /* Le nom courant, tel qu'il est A L'ÉCRAN — c'est lui l'identité de l'aliment affiché. */
 function _afNomCourant(){ return String((document.getElementById('af-desc')||{}).value||'').trim(); }
 function _afSetUnite(u){
   if(u===_afUnite) return;
-  /* ⚖️ ft-v1180 — ON CAPTURE AVANT DE CHANGER : la quantite qu'on met de cote est celle de
-     l'unite qu'on QUITTE. La lire apres l'affectation ci-dessous rendrait la nouvelle, et le
-     correctif ne ferait rien du tout (erreur commise puis mesuree). */
-  if(_afUnite==='g' && _afPoidsPose && _afPoidsDeclare>0) _afQtyG=_afPoidsDeclare;
   _afUnite=(u==='g')?'g':'portion';
   /* ⛔ ON NE RESCALE RIEN EN CHANGEANT D'UNITÉ. Basculer de « portion » à « g » ne change pas
      ce qu'on a mangé — ça change la façon de le COMPTER. Les 4 valeurs affichées deviennent la
@@ -4273,32 +4256,29 @@ function _afSetUnite(u){
      156 / 35, plus jamais les 208 / 47 »*. Voir `_afPoidsPose` pour les deux cas et leur
      départage. *Un correctif qui répare le cas qu'on regarde en cassant celui d'à côté n'est pas
      un correctif : c'est un échange.* */
-  /* ⚖️⛔⛔ ft-v1180 — CHANGER D'UNITÉ N'EST PAS CHANGER D'ALIMENT (invariant I4 du contre-audit).
-     Mesuré : on déclare 110 g À LA MAIN, on regarde l'onglet portions, on revient sur grammes —
-     et la déclaration a disparu (`_afRef` passe de `{q:110,u:'g'}` à `{q:1,u:''}`). Le geste dit
-     « je veux voir autrement », pas « oublie ce que je viens de te dire ».
-     ⭐ CE QUI REND LE RETOUR SÛR, ET C'EST TOUT LE POINT : on ne restitue QUE si la personne a
-     elle-même posé ce poids (`_afPoidsPose`). Dans ce cas `srcChange` vaut `false`, donc
-     `_afMajAncre` PRÉSERVE `base` — et `base` retrouve exactement le `q` qui allait avec.
-     *Le couple n'est jamais désapparié : il est mis de côté et remis tel quel.*
-     ⛔ ET ON MÉMORISE LA VALEUR COURANTE, pas la valeur déclarée à l'origine : si elle a déclaré
-     30 g puis tapé 40 dans le champ, c'est 40 qui décrit l'écran (`_afMajAncre` a déjà recalé
-     `_afPoidsDeclare` sur le champ). Restituer 30 rejouerait exactement ft-v1061.
-     ⛔ ET SEULEMENT POUR LE MÊME ALIMENT (`_afQtyNom`) : sinon on ressusciterait la quantité du
-     précédent, c'est-à-dire le défaut que cette version répare.
-     ⚠️⚠️ ET LE VERROU `_afPoidsPose` EST CONSERVATEUR PAR CHOIX, PAS PAR MESURE — je le dis
-     plutôt que de laisser croire l'inverse. La mutation qui l'enlève (restituer AUSSI un poids
-     hérité) ne fait rougir aucun témoin de ce bloc, et je n'ai pas pu la juger contre ceux de
-     ft-v1061 : leur bloc dépend de l'état posé par les blocs précédents, l'isoler le fait
-     planter. *Une sonde qui saute une étape de production ne mesure rien.*
-     👉 On garde donc la version ÉTROITE : elle répare le cas mesuré (un poids déclaré à la main)
-     sans toucher au cas que la mesure n'a pas tranché. Élargir demande de décider si l'écran ou
-     la quantité fait foi quand les valeurs ont été rescalées entre-temps — c'est la question
-     ouverte posée à Michel et à GPT, et une réponse naïve rouvre ft-v1061. */
+  /* ⚖️⛔⛔ ft-v1180 — TROU CONNU, MESURÉ, VOLONTAIREMENT LAISSÉ OUVERT : un aller-retour
+     d'onglet JETTE une déclaration de poids. On déclare 110 g à la main, on regarde l'onglet
+     portions, on revient sur grammes — et `_afRef` passe de `{q:110,u:'g'}` à `{q:1,u:''}`.
+     C'est l'invariant I4 du contre-audit, et il n'est PAS réparé ici.
+
+     ⛔⛔ POURQUOI : j'avais écrit la restitution (remettre de côté le poids posé, le rendre au
+     retour), et la PASSE COMPLÈTE l'a refusée — bloc CLXVIII, celui de ft-v1061. Mesuré sur les
+     deux arbres, au même instant du même geste (déclarer 30 g, taper 40 dans la quantité,
+     aller-retour d'onglet) :
+       · sans restitution : l'écran garde 156/35 (les valeurs de 40 g) et PERD son ancre → `{q:1}`
+       · avec restitution : l'ancre survit → `{q:30}`… mais l'écran repasse à 30 g / 117 kcal,
+         c'est-à-dire que **son 40 disparaît tout seul**.
+     👉 *Les deux versions font changer un chiffre sans que rien ne l'explique* — la seconde
+     répare la donnée en cassant l'écran, exactement le reproche de ft-v1173. **Ce n'est pas un
+     correctif, c'est un échange**, et un échange ne se livre pas sous couvert de P0.
+
+     ⚠️ ET MA JUSTIFICATION ÉCRITE ÉTAIT FAUSSE, la mesure l'a dit : j'affirmais que
+     `_afMajAncre` recale `_afPoidsDeclare` sur le champ, donc qu'on mémoriserait 40. Sondé :
+     il reste à **30** après avoir tapé 40. La bonne restitution ne porte donc pas sur le poids
+     déclaré mais sur la QUANTITÉ AFFICHÉE — ce qui touche au couple `base`/`q` que ft-v1061
+     protège, et se décide avec une mesure des deux bouts, pas dans la foulée d'un P0.
+     👉 Le trou est écrit dans `docs/JOURNAL-DE-TEST.md` avec sa sonde. */
   _afPoidsDeclare=0;
-  if(_afUnite==='g' && _afPoidsPose && _afQtyG>0 && _afQtyNom && _afQtyNom===_afNomCourant()){
-    _afPoidsDeclare=_afQtyG;
-  }
   _afMajAncre(!_afPoidsPose);
 }
 function _afDeclarePoids(){

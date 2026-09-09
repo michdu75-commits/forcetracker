@@ -28,21 +28,36 @@
   précédent, un aliment **avec sa propre quantité** se la faisait écraser, une saisie **à la main**
   héritait aussi, un calibrage laissait **les deux blocs affichés ensemble**, un poids **déclaré**
   fuyait sur le produit scanné, et un aller-retour d'onglet jetait une déclaration explicite.
+  ⛔⛔ **CINQ SONT RÉPARÉES ; LA SIXIÈME — L'ALLER-RETOUR D'ONGLET — A ÉTÉ RETIRÉE DE LA VERSION,
+  ET C'EST LA PASSE COMPLÈTE QUI L'A EXIGÉ.** Elle rougissait le bloc **CLXVIII (ft-v1061)**.
+  Mesuré des deux côtés : sans restitution l'écran garde 156/35 et **perd l'ancre** (`{q:1}`) ;
+  avec restitution l'ancre survit (`{q:30}`) mais **le 40 qu'elle venait de taper disparaît**.
+  👉 *Les deux font changer un chiffre sans que rien ne l'explique — ce n'est pas un correctif,
+  c'est un échange.* Le trou (**I4**) reste ouvert et écrit dans `docs/JOURNAL-DE-TEST.md`.
+  ⚠️ **Et j'avais écrit dans le code que ce bloc « n'était pas isolable » — c'était faux**, il
+  crée son propre contexte. *Une limite affirmée sans être vérifiée* (**R28**, contre son auteur).
   ⛔ **Cause** : `quickFillFood` posait la quantité **sans `else`**, et `_afMajAncre` la relisait
   **dans le champ du DOM** de l'aliment précédent. *Le DOM servait de mémoire entre deux aliments.*
   ⭐ **Le mécanisme de remise à zéro existait déjà** (`_afPropCacher`, appelé par `openAddFood`
   depuis toujours) : on ne l'a pas réinventé, on l'a posé sur les **onze portes** (**R2/R13**).
   ⭐ **Plus une 2ᵉ idée** pour la porte qu'on ne franchit pas — taper un aliment neuf à la main :
   la quantité retient le **NOM** auquel elle se rapporte.
-  ⚠️ **Deux erreurs à moi, trouvées par la mesure** : une variable de sauvegarde **locale** (elle
-  mourait entre les deux clics — mon correctif ne faisait rien) et une **capture après** le
-  changement d'unité.
-  ⛔ **Trois mutations ne mordent pas, et c'est écrit** : deux gardes sont nommés « garde, pas
-  détecteur » plutôt que présentés comme des protections mesurées.
+  ⚠️ **Trois erreurs à moi sur cette seule moitié retirée, toutes trouvées par la mesure** : une
+  variable de sauvegarde **locale** (elle mourait entre les deux clics — le correctif ne faisait
+  rien), une **capture après** le changement d'unité, et une ligne morte référençant une variable
+  inexistante. *Trois relectures n'en avaient attrapé aucune.*
+  ⭐⭐ **Et une mutation qui ne mordait pas a trouvé un trou de TÉMOIN, pas du code mort** :
+  retirer la porte de `_lookupBarcode` ne faisait rougir personne — parce que ma fausse fiche
+  Open Food Facts n'exerçait qu'**un** des deux chemins de scan. Sur une fiche **avec** valeurs,
+  cette porte est **la seule**. Deux fiches servies désormais ; la mutation mord.
+  👉 *Une porte sans témoin ressemble à de la décoration — c'est comme ça qu'on retire une vraie
+  protection.*
   ⏭️ ⛔⛔ **Les lignes déjà abîmées ne sont PAS réparées — et retaper la vraie quantité ne les
   répare pas non plus** (946 kcal au lieu de 274). *Le seul geste : **supprimer puis ressaisir**,
   et retirer l'étoile si l'aliment est en favori.*
   ⏭️ **P1 ouvert** : « portion » comme vraie unité (un ×2 enregistre `q:null` et se fossilise).
+  ⏭️ ⛔ **I4 ouvert** : l'aller-retour d'onglet perd l'ancre. Sa vraie réparation porte sur la
+  **quantité affichée**, pas sur le poids déclaré — donc sur le couple `base`/`q` de ft-v1061.
   ⚠️ **À vérifier par Michel sur Safari/iPhone.**
 
 - **Version précédente :** `ft-v1179` — ⚖️ **LES CALORIES D'UN ALIMENT ÉTAIENT MARIÉES À LA

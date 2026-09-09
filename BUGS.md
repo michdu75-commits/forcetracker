@@ -3386,3 +3386,40 @@ généralisation : §56 est le cas où le conteneur survit, §57 le cas où la v
 aussi de **R15** (tout chemin de fermeture pose son marqueur) — ici c'est tout chemin
 d'**ouverture** qui doit effacer. ⚠️ Née d'un cahier des charges externe (GPT) rédigé après un
 contre-audit, et de six mesures faites dans un vrai navigateur avant d'écrire une ligne.*
+
+---
+
+## §58 — ⛔⛔ UNE PORTE SANS TÉMOIN RESSEMBLE À DE LA DÉCORATION *(ft-v1180, 09/09/2026)*
+
+**Famille : erreurs de MÉTHODE (§12).** Le contrôle négatif dit *« cette mutation ne fait rougir
+personne »*. Deux lectures sont possibles, et **elles sont opposées** :
+
+| lecture | conséquence si on se trompe |
+|---|---|
+| *le code est de la décoration* | on **retire une vraie protection** |
+| *le témoin manque* | on croit couvert un chemin qui ne l'est pas |
+
+**LE CAS.** Retirer l'appel qui « oublie l'aliment précédent » dans `_lookupBarcode` ne faisait
+rougir **aucun** témoin. J'ai failli conclure à du code mort et l'enlever. Mesuré avant de le
+faire : **un scan emprunte deux chemins**, et ma fausse fiche Open Food Facts n'en exerçait qu'un.
+Une fiche **sans** valeurs part vers `_bcSansValeurs`, qui oublie lui-même ; une fiche **avec**
+valeurs part vers `_offRemplirFormulaire`, qui **n'oublie pas** — là, cette porte est **la seule**.
+👉 *Ma fixture couvrait une branche sur deux, et le silence du contrôle négatif ressemblait
+exactement à celui d'une garde inutile.*
+
+**Ce qui la distingue de la garde morte de ft-v1174** (où la conclusion « décoration » était la
+bonne) : là-bas, **aucune entrée possible** ne pouvait franchir la garde — c'était prouvable en
+lisant l'expression. Ici, l'entrée existait, c'est **mon faux réseau** qui ne la produisait pas.
+
+**Ce qui la protège aujourd'hui** : devant une mutation muette, on ne tranche pas au jugé — on
+cherche **par quel chemin la valeur arrive**, et on vérifie que la fixture les produit tous. Si le
+chemin existe, on **ajoute le témoin** ; si aucune entrée ne peut l'atteindre, alors seulement on
+retire le code.
+
+**Le réflexe** : *une mutation muette est une QUESTION, pas une réponse* — et la question est
+toujours la même : **« quelle entrée emprunte ce chemin, et ma fixture la fabrique-t-elle ? »**
+
+*Voisine de **§12** (une mesure fausse rassure) et de la leçon de **ft-v1179** (une mutation qui
+échoue en silence ressemble à un témoin inutile) : là c'était la mutation qui ne s'appliquait pas,
+ici c'est la fixture qui n'atteignait pas le code. **Les deux rendent « 0 rouge », et aucune des
+deux ne veut dire « c'est couvert ».***

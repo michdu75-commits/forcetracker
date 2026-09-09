@@ -31708,9 +31708,19 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
     const RATA=q=>({date:t,meal:'dejeuner',name:'Ratatouille Cassegrain',kcal:274,prot:4,carbs:23,
       fat:15,ts:Date.now()-9000,saisie:'historique',origine:'off',q:q,u:'g',per100:null});
 
-    /* ⛔ Le reseau est bloque : fiche SANS valeurs, forme exacte de l'API v2 d'Open Food Facts. */
+    /* ⛔ Le reseau est bloque : deux fiches, forme exacte de l'API v2 d'Open Food Facts.
+       ⭐⭐ IL EN FAUT DEUX, ET C'EST UNE MUTATION QUI L'A DIT. Un scan emprunte l'un OU l'autre
+       de deux chemins, et ils n'oublient pas l'aliment precedent au meme endroit :
+         · fiche SANS valeurs (7777…) -> `_bcSansValeurs`, qui oublie lui-meme ;
+         · fiche AVEC valeurs (3333…) -> `_offRemplirFormulaire`, qui n'oublie PAS.
+       Sur ce second chemin, l'appel pose dans `_lookupBarcode` est **la seule porte**. Avec la
+       seule fiche sans valeurs, la mutation qui retire cette porte ne faisait rougir personne —
+       *une porte sans temoin ressemble a de la decoration, et j'ai failli la retirer.* */
     const vraiFetch=window.fetch;
     window.fetch=async(u,opt)=>{ const s=String(u), m=s.match(/product\/(\d+)\.json/);
+      if(m && m[1]==='3333333333333') return {ok:true,json:async()=>({status:1,product:{
+        product_name:'Thon naturel', brands:'Petit Navire', quantity:'140 g',
+        nutriments:{'energy-kcal_100g':110,'proteins_100g':26,'carbohydrates_100g':0,'fat_100g':1}}})};
       if(m) return {ok:true,json:async()=>({status:1,product:{product_name:'Sardines Petit Navire',
         brands:'Petit Navire', quantity:'115 g', nutriments:{}}})};
       if(/openfoodfacts/.test(s)) return {ok:true,json:async()=>({products:[]})};
@@ -31771,6 +31781,19 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
     document.getElementById('af-desc').value='Sardines Petit Navire';
     taper([220,25,0,13]); await d(240);
     addFoodEntry(); await d(280); o.v5=enr();
+
+    /* ══ V5b — LE MEME GESTE, MAIS SUR UNE FICHE QUI A SES VALEURS ══
+       L'autre chemin du scan (`_offRemplirFormulaire`), ou la porte de `_lookupBarcode` est la
+       SEULE. Le poids declare a la main (150 g) ne doit pas devenir la quantite du thon. */
+    S.foodLog=[]; S.savedFoods=[]; persist();
+    fermer(); openAddFood(); await d(300);
+    document.getElementById('af-desc').value='Plat maison';
+    taper([300,20,30,10]); await d(200);
+    await declarer(150);
+    o.v5bavant={pd:_afPoidsDeclare, pose:_afPoidsPose};
+    await _lookupBarcode('3333333333333','scan',false); await d(340);
+    o.v5b={pd:_afPoidsDeclare, pose:_afPoidsPose, bcNutr:_bcNutr?_bcNutr.kcal100:null,
+           ref:_afRef?{q:_afRef.q,u:_afRef.u}:null};
 
     /* ══ V6 — un aller-retour d'onglet ne jette pas une declaration explicite ══ */
     S.foodLog=[]; S.savedFoods=[]; persist();
@@ -31876,13 +31899,24 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
       Z.v5avant.pd===150 && Z.v5avant.pose===true, JSON.stringify(Z.v5avant));
     t('CCLXXVIII ⑦ ⭐⭐ V5 — un poids DÉCLARÉ ne fuit plus sur le produit scanné (INTERDIT : 150)',
       Z.v5.q===null && Z.v5.per100===null && Z.v5.kcal===220, JSON.stringify(Z.v5));
+    t('CCLXXVIII ⑰ ⛔ CONTRÔLE — les 150 g sont bien déclarés avant le scan d\'une fiche COMPLÈTE',
+      Z.v5bavant.pd===150 && Z.v5bavant.pose===true, JSON.stringify(Z.v5bavant));
+    t('CCLXXVIII ⑱ ⭐⭐ V5b — l\'AUTRE chemin du scan oublie aussi (INTERDIT : pd=150 sur le thon)',
+      Z.v5b.bcNutr===110 && Z.v5b.pd===0 && Z.v5b.pose===false, JSON.stringify(Z.v5b));
     t('CCLXXVIII ⑧ ⛔ CONTRÔLE — la déclaration de 110 g est bien posée',
       !!Z.v6avant && Z.v6avant.q===110 && Z.v6avant.u==='g', JSON.stringify(Z.v6avant));
-    t('CCLXXVIII ⑨ ⭐⭐ V6 — un aller-retour d\'onglet ne jette plus la déclaration (INTERDIT : q=1)',
-      !!Z.v6 && Z.v6.q===110 && Z.v6.u==='g' && Z.v6.base===274, JSON.stringify(Z.v6));
-    t('CCLXXVIII ⑩ ⭐⭐ V7 — … et la quantité mise de côté NE FUIT PAS sur l\'aliment suivant',
-      Z.v7.pd===0 && (Z.v7.champ===''||Z.v7.champ===null) && (!Z.v7.ref || Z.v7.ref.q!==150),
-      JSON.stringify(Z.v7));
+    /* ⛔⛔ V6/V7 — LES DEUX TÉMOINS DE LA RESTITUTION D'ONGLET ONT ÉTÉ RETIRÉS, ET C'EST LA
+       PASSE COMPLÈTE QUI L'A EXIGÉ, pas moi. Ils figeaient un correctif que le bloc **CLXVIII
+       (ft-v1061)** a refusé : rendre le poids déclaré au retour d'onglet fait disparaître de
+       l'écran la quantité que la personne venait de taper (mesuré : elle déclare 30 g, tape 40,
+       revient — l'app réaffiche 30 g / 117 kcal). *Réparer la donnée en cassant l'écran n'est
+       pas un correctif, c'est un échange.*
+       ⚠️ LE TROU RESTE DONC OUVERT ET ON L'ÉCRIT PLUTÔT QUE DE LE FIGER À L'ENVERS : un
+       aller-retour d'onglet perd encore l'ancre (`{q:110}` → `{q:1}`). Il est dans
+       `docs/JOURNAL-DE-TEST.md` avec sa sonde, et sa vraie réparation porte sur la QUANTITÉ
+       AFFICHÉE, pas sur le poids déclaré — donc sur le couple `base`/`q` que CLXVIII protège.
+       ⭐ Le contrôle ⑧ RESTE : il prouve que la déclaration de 110 g est bien posée, ce qui est
+       le point de départ commun aux deux versions et reste vrai. */
     t('CCLXXVIII ⑮ ⛔ CONTRÔLE — A ouvre bien son bloc pour-100 g',
       Z.v12avant.bc===true && Z.v12avant.bcNutr===60, JSON.stringify(Z.v12avant));
     t('CCLXXVIII ⑯ ⭐⭐ §13 — A AVEC pour-100 g → B SANS : rien de A ne participe à B (INTERDIT : 200)',
