@@ -79,12 +79,12 @@ st = {
 
 
 def P(t, s='p'):
-    return Paragraph(t, st[s])
+    return Paragraph(_v(t, 'paragraphe'), st[s])
 
 
 def encadre(titre, corps, couleur=ROUGE):
-    inner = [[Paragraph('<b>%s</b>' % titre, st['cellb'])],
-             [Paragraph(corps, st['cell'])]]
+    inner = [[Paragraph('<b>%s</b>' % _v(titre, 'titre d\'encadré'), st['cellb'])],
+             [Paragraph(_v(corps, 'corps d\'encadré'), st['cell'])]]
     t = Table(inner, colWidths=[165 * mm])
     t.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), FOND),
@@ -97,9 +97,9 @@ def encadre(titre, corps, couleur=ROUGE):
 
 
 def tableau(entetes, lignes, largeurs):
-    data = [[Paragraph('<b>%s</b>' % h, st['cellb']) for h in entetes]]
+    data = [[Paragraph('<b>%s</b>' % _v(h, 'en-tête de tableau'), st['cellb']) for h in entetes]]
     for l in lignes:
-        data.append([Paragraph(c, st['cell']) for c in l])
+        data.append([Paragraph(_v(c, 'cellule'), st['cell']) for c in l])
     t = Table(data, colWidths=largeurs, repeatRows=1)
     t.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#EDEDEA')),
@@ -123,6 +123,25 @@ def pied(canvas, doc):
     canvas.line(22 * mm, 16 * mm, 188 * mm, 16 * mm)
     canvas.restoreState()
 
+
+
+# ⛔⛔ GARDE-FOU — ET IL EST POSÉ A LA SOURCE, PAS A LA FIN.
+#    Trois emoji avaient fui dans le contenu et sortaient en CARRES NOIRS, alors que l'en-tête de
+#    ce fichier l'annonce : *un avertissement en commentaire ne protège de rien, seul un contrôle
+#    qui échoue protège.*
+#    ⚠️ ET MA PREMIERE VERSION DE CE GARDE-FOU ETAIT FAUSSE : elle n'inspectait que le `.text` des
+#    Paragraph de premier niveau, donc elle ne voyait NI les encadrés NI les tableaux. Éprouvée,
+#    elle a laissé passer un emoji dans un titre d'encadré. *Une protection partielle qui a l'air
+#    complète est pire qu'une protection absente.*
+#    👉 Elle est donc posée sur les TROIS portes par lesquelles le texte entre (R8 : jamais une
+#    seule), et éprouvée sur chacune.
+_HORS = set('\u26a0\u2b50\u26d4\u2696\u2192\u2705\u23ed\u2b07\u274c')
+def _v(x, ou='texte'):
+    if isinstance(x, str):
+        for ch in x:
+            if ch in _HORS or 0x1F000 <= ord(ch) <= 0x1FAFF or 0xFE00 <= ord(ch) <= 0xFE0F:
+                raise SystemExit('CARACTERE NON RENDU %r (%s) dans %s' % (ch, hex(ord(ch)), ou))
+    return x
 
 C = "<font face='Courier'>%s</font>"
 F = []
@@ -165,7 +184,7 @@ F.append(encadre(
     "<b>Une mesure du comportement actuel ne peut jamais justifier un refus de BESOIN.</b> Elle "
     "décrit ce qui est, pas ce qui manque. Le seul refus qu'elle autorise est <i>« ce champ est "
     "aujourd'hui inutile »</i> — jamais <i>« il ne servira jamais »</i>. "
-    "⚠️ Ce n'est <b>pas</b> le cas classique d'une limite affirmée sans être vérifiée : ici la "
+    "<b>Nuance</b> : ce n'est <b>pas</b> le cas classique d'une limite affirmée sans être vérifiée — ici la "
     "limite <b>était</b> vérifiée. C'est la <b>question posée</b> qui était mauvaise, et c'est "
     "beaucoup plus difficile à voir.", ORANGE))
 F.append(Spacer(1, 5))
@@ -207,7 +226,7 @@ F.append(encadre(
     "Taper une étiquette au clavier à chaque repas sur un téléphone ne tiendrait pas trois jours, "
     "et <b>un champ qu'on ne remplit plus est pire qu'un champ absent</b> : il donne l'illusion "
     "que l'information existe. "
-    "⭐ Et l'étiquette ne se saisit qu'<b>une fois par aliment</b> : la liste « Mes aliments » et "
+    "Et l'étiquette ne se saisit qu'<b>une fois par aliment</b> : la liste « Mes aliments » et "
     "les favoris la reproposent, exactement comme ils portent déjà le pour-100 g.", VERT))
 
 # ─────────────────── 3. LE PIEGE ───────────────────
@@ -253,7 +272,7 @@ F.append(P(
     "<i>L'unité appartient à la personne, pas à la richesse de la fiche.</i> "
     "Posé sur les <b>deux</b> portes de reprise, jamais une seule."))
 F.append(P(
-    "⛔ Non-régression vérifiée : un aliment scanné (compté en grammes) ouvre toujours son champ "
+    "Non-régression vérifiée : un aliment scanné (compté en grammes) ouvre toujours son champ "
     "grammes — un témoin dédié le fige, parce que c'était le comportement voulu depuis longtemps.",
     'petit'))
 
@@ -275,7 +294,7 @@ F.append(tableau(
      ["Parcours complet (bout en bout, vrai navigateur)", PASSE],
      ["Calculs / muscles / croisés / dates", "339/339 · 241/241 · 50/50 · 9/9"],
      ["Données classées face au moteur conversationnel", "0 trou non classé"],
-     ["Contrôle négatif", "<b>12 mutations, toutes mordent</b>"]],
+     ["Contrôle négatif", "<b>15 mutations, toutes mordent</b>"]],
     [70 * mm, 95 * mm]))
 F.append(Spacer(1, 6))
 
@@ -288,6 +307,23 @@ F.append(P(
     "<b>·</b> la définition qui <b>traverse d'un aliment au suivant</b> -> 3 rouges ; &nbsp; "
     "<b>·</b> le favori dont on <b>écrase les macros</b> -> voir ci-dessous."))
 
+F.append(P("Deux témoins de la version précédente ont été touchés — et je dis lesquels", 'h2'))
+F.append(P(
+    "La passe complète a fait rougir <b>deux témoins de ft-v1183</b>. Ils exigeaient le motif exact "
+    "<i>« 1 portion = 300 kcal »</i> ; en ajoutant le nom, la phrase devient <i>« 1 portion = "
+    "portion non définie, poids inconnu · 300 kcal »</i>. "
+    "<b>La garantie qu'ils figeaient — une portion ne s'affiche jamais sans sa définition, et ce "
+    "qu'on ignore est dit — est intacte, et même plus forte</b> : l'écran annonce désormais aussi "
+    "que le nom manque."))
+F.append(P(
+    "<b>Ce n'est pas un témoin qu'on desserre pour faire passer du code</b> : le comportement figé "
+    "n'a pas changé, c'est le motif qui figeait plus que lui. Motifs resserrés sur les trois "
+    "exigences réelles, modification datée et signée dans le fichier de tests, et surtout "
+    "<b>éprouvée</b> : retirer la définition, taire le poids inconnu ou supprimer le nombre de "
+    "portions les fait toujours rougir. <i>La différence entre une mise au point et un "
+    "assouplissement se mesure — ce sont les trois mutations qui portent le contrôle négatif de "
+    "12 à 15.</i>"))
+
 F.append(encadre(
     "UNE PROTECTION SANS TÉMOIN N'EST PAS UNE PROTECTION — troisième fois de suite",
     "La mutation « le favori se fait écraser ses macros » rendait <b>zéro rouge</b>. Ce n'était "
@@ -298,6 +334,18 @@ F.append(encadre(
     "<i>Après l'état « boutons de portion » et le drapeau côté édition en ft-v1183, c'est la "
     "troisième protection de ce chantier qui se révèle sans témoin. Le contrôle négatif ne le dit "
     "que si la fixture peut faire la différence.</i>", ORANGE))
+F.append(Spacer(1, 5))
+F.append(encadre(
+    "ET LA MÊME FAUTE, COMMISE PAR MOI, SUR CE DOCUMENT-CI",
+    "Trois emoji ont fui dans le texte de ce PDF et sortaient en <b>carrés noirs</b> — alors que "
+    "l'en-tête du générateur l'annonce noir sur blanc. <i>Un avertissement en commentaire ne "
+    "protège de rien ; seul un contrôle qui échoue protège.</i> Un garde-fou refuse désormais de "
+    "produire le document. "
+    "<b>Et ma première version de ce garde-fou était fausse</b> : elle n'inspectait que les "
+    "paragraphes, donc ni les encadrés ni les tableaux — éprouvée, elle a laissé passer un emoji "
+    "dans un titre. <i>Une protection partielle qui a l'air complète est pire qu'une protection "
+    "absente.</i> Elle est maintenant posée sur les cinq portes par lesquelles le texte entre, et "
+    "les cinq sont éprouvées.", ORANGE))
 
 # ─────────────────── 6. RESTE OUVERT ───────────────────
 F.append(P("6. Ce qui reste ouvert", 'h1'))
