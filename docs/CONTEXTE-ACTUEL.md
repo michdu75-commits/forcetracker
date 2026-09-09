@@ -22,6 +22,7 @@
 
 - **Version en ligne (live) :** `ft-v1185` — 🧾 **LE DÉBRIEF SUR TOUTES LES COMBINAISONS DE
   SÉANCE** : balayage complet, et **témoins permanents**.
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1051** `success` sur `9253161e`.
   ⏳ **Suite complète VERTE** : parcours **3437/3437** (+13, bloc **CCLXXXII**), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⭐ **Michel** : *« le débrief il faut le faire pour une séance créée, une séance par rapport à un
