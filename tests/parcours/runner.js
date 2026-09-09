@@ -32272,6 +32272,19 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
       const e8=S.foodLog.find(x=>x.ts===888)||{};
       o.editBoutons.sauve={kcal:e8.kcal,prot:e8.prot,q:e8.q,u:e8.u}; }
 
+    /* ⑨ter ⛔⛔ ÉDITION SANS RIEN TOUCHER : le drapeau côté édition n'avait AUCUN témoin, et
+       le contrôle négatif l'a dit (mutation ⑬ à 0 rouge). *Une porte sans témoin ressemble à de
+       la décoration* — c'est comme ça qu'on retire une vraie protection (leçon ft-v1180).
+       On ouvre une ligne muette, on ne touche à AUCUN bouton, on enregistre : rien ne s'invente. */
+    S.foodLog=[{date:today(),meal:'midi',name:'Ligne muette 2',kcal:300,prot:20,carbs:30,fat:10,
+                ts:889,v:1,saisie:'manuel',origine:'utilisateur',q:null,u:null,per100:null}];
+    persist();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openEditFood(889); await d(400);
+    saveEditFood(); await d(300);
+    const e9=S.foodLog.find(x=>x.ts===889)||{};
+    o.editSansGeste={q:e9.q, u:e9.u, kcal:e9.kcal};
+
     /* ⑩ LE REJEU D'UN REPAS ne tue plus la portion */
     const hier=new Date(Date.now()-86400000).toISOString().slice(0,10);
     const av=new Date(Date.now()-2*86400000).toISOString().slice(0,10);
@@ -32312,12 +32325,15 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
     t('CCLXXX ⑦ ⛔⛔ LE GARDE : onglet ⚖️ grammes SANS poids → aucune unité inventée (q:null)',
       P.grammesSansPoids && P.grammesSansPoids.q==null && P.grammesSansPoids.u==null,
       JSON.stringify(P.grammesSansPoids));
-    t('CCLXXX ⑧ ⛔ A → B : le ×3 de A ne contamine pas B (q=1, totaux de B)',
-      P.aVersB && P.aVersB.ecran[0]===200 && P.aVersB.ligne.q===1
-      && P.aVersB.ligne.kcal===200, JSON.stringify(P.aVersB));
-    t('CCLXXX ⑨ ⛔⛔ RETOUCHE À LA MAIN → le compteur repart à 1 (l\'écran EST une portion)',
-      P.retouche && P.retouche.ligne.q===1 && P.retouche.ligne.kcal===600
-      && P.retouche.ligne.prot===45, JSON.stringify(P.retouche));
+    /* ⛔⛔ L'ATTENDU EST `q:null`, ET C'EST LA PASSE COMPLÈTE QUI L'A DICTÉ. Mon premier jet
+       attendait `q:1` — la passe a rendu 7 rouges (ft-v1177/1179/1180), tous « on n'invente pas
+       une quantité qu'elle n'a jamais eue ». La personne n'a rien choisi sur B : rien ne s'écrit. */
+    t('CCLXXX ⑧ ⛔⛔ A → B : le ×3 de A ne contamine pas B, ET rien n\'est inventé (q:null)',
+      P.aVersB && P.aVersB.ecran[0]===200 && P.aVersB.ligne.q==null
+      && P.aVersB.ligne.u==null && P.aVersB.ligne.kcal===200, JSON.stringify(P.aVersB));
+    t('CCLXXX ⑨ ⛔⛔ RETOUCHE À LA MAIN → le choix retombe (q:null), les valeurs sont celles de l\'écran',
+      P.retouche && P.retouche.ligne.q==null && P.retouche.ligne.u==null
+      && P.retouche.ligne.kcal===600 && P.retouche.ligne.prot===45, JSON.stringify(P.retouche));
     t('CCLXXX ⑩ AJOUT DIRECT depuis la liste : la portion est recopiée (q=2, pas null)',
       P.direct && P.direct.q===2 && P.direct.u==='portion' && P.direct.kcal===600,
       JSON.stringify(P.direct));
@@ -32332,7 +32348,10 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
       && P.editBoutons.ecran && P.editBoutons.ecran[0]===600
       && P.editBoutons.sauve.q===2 && P.editBoutons.sauve.u==='portion'
       && P.editBoutons.sauve.kcal===600, JSON.stringify(P.editBoutons));
-    t('CCLXXX ⑭ ⛔ LE REJEU D\'UN REPAS ne tue plus la portion (q=2 conservé)',
+    t('CCLXXX ⑭ ⛔⛔ ÉDITION SANS AUCUN GESTE : rien ne s\'invente (q:null) — la porte du drapeau',
+      P.editSansGeste && P.editSansGeste.q==null && P.editSansGeste.u==null
+      && P.editSansGeste.kcal===300, JSON.stringify(P.editSansGeste));
+    t('CCLXXX ⑮ ⛔ LE REJEU D\'UN REPAS ne tue plus la portion (q=2 conservé)',
       P.rejouable>0 && P.rejeu && P.rejeu.q===2 && P.rejeu.u==='portion' && P.rejeu.kcal===600,
       JSON.stringify({n:P.rejouable,rejeu:P.rejeu}));
   }

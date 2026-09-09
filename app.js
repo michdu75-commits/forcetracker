@@ -1272,7 +1272,7 @@ function _provFood(vals){
      « portions » — une unité qu'il n'a pas choisie (R29).
      ⛔ ET ON NE PASSE JAMAIS DEVANT UNE QUANTITÉ DÉJÀ POSÉE (`!p.q`) : les grammes et le
      pour-100 g sont plus précis, ils gardent la main (R32 — mesuré > estimé > déclaré). */
-  if(!p.q && _afUnite==='portion' && typeof _afRef==='object' && _afRef && _afRef.u==='' && vals){
+  if(!p.q && _afPortionPose && _afUnite==='portion' && typeof _afRef==='object' && _afRef && _afRef.u==='' && vals){
     const n=(typeof _afPortions==='number' && _afPortions>0)?_afPortions:1;
     p.q=n; p.u='portion';
   }
@@ -3825,7 +3825,7 @@ function openEditFood(ts){
      ⛔ ET S'IL N'Y A AUCUN ANCRAGE, on ne devine pas un poids : on offre des **portions**
      (½ · 1½ · 2 ·…) qui multiplient les 4 macros sans jamais prétendre connaître des grammes.
      *Un « ×2 » est vrai quelle que soit la portion de départ ; un « 60 g » inventé serait faux.* */
-  _efUnite='portion'; _efPoidsDeclare=0; _efPoidsPose=false; _efPortions=1;   // remis à zéro à chaque ouverture (comme l'écran d'ajout)
+  _efUnite='portion'; _efPoidsDeclare=0; _efPoidsPose=false; _efPortions=1; _efPortionPose=false;   // remis à zéro à chaque ouverture (comme l'écran d'ajout)
   /* ⛔⛔ ft-v1172 — LA RÉFÉRENCE AUSSI, et elle manquait DÉJÀ. `_efRef` survivait d'un aliment
      au suivant : la branche « pour-100 g » de `_efQtyRender` sort avant de le réécrire, donc
      ouvrir un produit emballé après un aliment saisi à la main laissait pointer sur le
@@ -3885,7 +3885,7 @@ let _efUnite='portion', _efPoidsDeclare=0;
    et `ef-prop` — deux champs qui n'existent pas dans l'état « portions ». Un « ×2 » y était donc
    affiché puis perdu, comme à l'ajout. *Corriger une seule des deux portes, c'est la faute que
    ce fichier recense six fois.* */
-let _efPortions=1;
+let _efPortions=1, _efPortionPose=false;
 /* ⚖️ ft-v1172 — la jumelle de `_afPoidsPose` (R2, même règle des deux côtés) : tant qu'aucun
    poids réel n'a été posé pour cet aliment, les 4 valeurs affichées SONT la référence ; dès
    qu'il y en a un, ft-v1061 reprend la main et la référence est préservée. */
@@ -3952,7 +3952,7 @@ function _efQtyRender(srcChange){
      refermé au même endroit, et un témoin le fige.* */
   /* 🍽️ ft-v1183 — même invariant qu'à l'ajout : quand l'écran redevient la référence, le
      multiplicateur repart à 1 (ce qui est affiché est UNE portion de lui-même). */
-  if(srcChange) _efPortions=1;
+  if(srcChange){ _efPortions=1; _efPortionPose=false; }
   const base = srcChange ? _efPropSetBase()
              : ((_efRef && _efRef.base) ? _efRef.base
              : {kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0});
@@ -4049,6 +4049,7 @@ function _efApplyProp(){
 }
 function _efApplyPortion(x){
   _efPortions=(+x>0)?+x:1;
+  _efPortionPose=true;
   _efQtyRender();          // ⛔ SANS `srcChange` : on redessine, on ne relit pas l'écran (ft-v1061)
   _efProp(_efPortions);
 }
@@ -4318,6 +4319,7 @@ function _afApplyProp(){
    sinon `base` deviendrait les valeurs déjà multipliées et l'erreur se figerait (ft-v1061). */
 function _afApplyPortion(x){
   _afPortions=(+x>0)?+x:1;
+  _afPortionPose=true;   // ⭐ SEUL un clic sur un bouton peut l'affirmer (jumeau de `_afPoidsPose`)
   if(typeof _afMajAncre==='function') _afMajAncre();
   _afProp(_afPortions);
 }
@@ -4416,7 +4418,19 @@ let _afQtyMemo=null;
    NULLE PART. Cette variable est son exacte jumelle (R2 : un propriétaire, un seul).
    ⛔ Elle se remet à 1 partout où l'écran redevient la référence — voir `_afMajAncre`. */
 let _afPortions=1;
-function _afResetUnite(){ _afUnite='portion'; _afPoidsDeclare=0; _afPoidsPose=false; _afQtyNom=''; _afQtyMemo=null; _afPortions=1; }
+/* ⛔⛔⛔ ET LE DRAPEAU QUI VA AVEC — LA PASSE COMPLÈTE L'A EXIGÉ, PAS MOI.
+   Mon premier correctif écrivait `q:1, u:'portion'` dès que le bloc portions était affiché.
+   Le bloc CCLXXX était à 14/14 ; la passe complète a rendu **7 ROUGES** — ft-v1177, ft-v1179 et
+   ft-v1180, tous des témoins qui disent *« on n'invente pas une quantité qu'elle n'a jamais
+   eue »*, tous avec le même message : `q=1 u=portion` au lieu de `q=null`.
+   👉 `_afPortions` vaut 1 par défaut : ***« jamais touché » et « ×1 choisi » étaient
+   indiscernables***. Le bloc portions est l'état PAR DÉFAUT de l'écran — l'afficher ne prouve
+   aucun choix. Écrire une unité que la personne n'a pas choisie, c'est exactement le reproche
+   que je me faisais à moi-même deux fonctions plus haut, pour l'onglet grammes (R29).
+   ⭐ R13 — le mécanisme existait : c'est `_afPoidsPose`, mot pour mot, pour les portions.
+   ⛔ Ce n'est PAS un témoin qu'on desserre : c'est mon code qui était trop large. */
+let _afPortionPose=false;
+function _afResetUnite(){ _afUnite='portion'; _afPoidsDeclare=0; _afPoidsPose=false; _afQtyNom=''; _afQtyMemo=null; _afPortions=1; _afPortionPose=false; }
 /* Le nom courant, tel qu'il est A L'ÉCRAN — c'est lui l'identité de l'aliment affiché. */
 function _afNomCourant(){ return String((document.getElementById('af-desc')||{}).value||'').trim(); }
 function _afSetUnite(u){
@@ -4593,7 +4607,7 @@ function _afMajAncre(srcChange){
      enregistrer *« 2 portions »* pour des totaux qui sont déjà ceux de deux portions : la ligne
      vaudrait 300 la portion à l'écran et 600 dans la donnée.
      👉 Ce qui est affiché est, par définition, **une** portion de lui-même. */
-  if(relit) _afPortions=1;
+  if(relit){ _afPortions=1; _afPortionPose=false; }
   /* ⛔ « Y A-T-IL QUELQUE CHOSE À RESCALER ? » SE MESURE SUR LES QUATRE, PAS SUR LES CALORIES.
      Trouvé à la mesure (ft-v1065) : le garde testait `base.kcal>0`, donc mettre les calories à 0
      faisait DISPARAÎTRE tout le bloc quantité — alors que 35 g de protéines restaient à l'écran,
@@ -4739,7 +4753,7 @@ function saveEditFood(){
      `ef-prop` : les deux lignes ci-dessus ne peuvent rien voir, donc un « ×2 » se voyait à
      l'écran et ne s'écrivait nulle part. *Le même trou qu'à l'ajout, sur la porte jumelle.*
      ⛔ Seulement dans l'état « portions », et jamais par-dessus une quantité déjà écrite. */
-  if(!gEl && !pEl && _efUnite==='portion' && +_efPortions>0){ e.q=+_efPortions; e.u='portion'; }
+  if(!gEl && !pEl && _efPortionPose && _efUnite==='portion' && +_efPortions>0){ e.q=+_efPortions; e.u='portion'; }
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   const ov=document.getElementById('ov-edit-food'); if(ov)ov.classList.remove('open');
   renderFoodJournal();
