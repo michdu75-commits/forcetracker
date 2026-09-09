@@ -32021,6 +32021,132 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
   }
 }
 
+/* == BLOC CCLXXIX - LES RESULTATS DE RECHERCHE TOMBAIENT SOUS L'ECRAN (ft-v1182) ==
+   Michel : « dans l'ecran Mes aliments, quand je tape coquillette, je n'ai aucun resultat ».
+   ⛔⛔ MESURE AVANT DE CODER : ce n'etait NI la donnee NI la recherche. `coquillette` rendait
+   deja 9811 · 167 kcal · 6,7 · 31,4 · 1,1, six lignes, 4 506 caracteres de HTML — posees a
+   top:1382 sur un ecran de 844, soit 538 px SOUS le bas. Rien n'y descendait.
+   ⭐⭐ ET LE CONTROLE A NOMME LA CAUSE : meme code, meme geste — liste « Mes aliments » VIDE
+   -> visible ; liste a 12 aliments (703 px) -> hors ecran. C'est la LISTE qui pousse les
+   resultats dehors.
+   ⚠️ Et c'est pour ca que mes sondes ne le voyaient pas : elles tournaient avec un journal
+   VIDE. *Une sonde qui n'a pas les donnees de la personne ne mesure pas son ecran.*
+   ⛔ CE BLOC NE VERIFIE AUCUN RESULTAT DE RECHERCHE NOUVEAU : il verifie qu'ils sont VISIBLES,
+   et qu'ils n'ont PAS change. */
+console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) --');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2400);
+  const G=await pg.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const t=today(), now=Date.now();
+    const sugg=()=>document.getElementById('af-sugg');
+    const quick=()=>document.getElementById('af-quick-list');
+    /* ⭐ « visible » se mesure sur la zone REELLEMENT vue : `visualViewport` si elle existe,
+       sinon `innerHeight` — exactement ce que fait `_afSuggVoir`. */
+    const vh=()=>(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
+    const visible=el=>{ if(!el||!el.innerHTML) return false;
+      const r=el.getBoundingClientRect(); return r.top<vh() && r.bottom>0 && r.height>0; };
+    const taper=async(v)=>{ const c=document.getElementById('af-desc');
+      c.value=v; c.dispatchEvent(new Event('input',{bubbles:true})); await d(1400); };
+    const lignes=()=>sugg().querySelectorAll('button').length;
+    const texte =()=>(sugg().textContent||'').replace(/\s+/g,' ');
+
+    /* ══ ① LISTE VIDE ══ */
+    S.savedFoods=[]; S.foodLog=[]; S.hiddenFoods=[]; persist();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await d(350);
+    await taper('coquillette');
+    o.vide={visible:visible(sugg()), lignes:lignes(), a9811:/167 kcal/.test(texte())};
+
+    /* ══ ② SON ECRAN : 12 aliments dans « Mes aliments » ══ */
+    S.savedFoods=[{name:'Ratatouille Cassegrain',kcal:274,prot:4,carbs:23,fat:15,per100:null,q:380,u:'g'},
+                  {name:'Iso zero protein (ASL)',kcal:117,prot:26,carbs:1,fat:1,per100:null,q:30,u:'g'}];
+    S.foodLog=[];
+    for(let i=0;i<12;i++) S.foodLog.push({date:t,meal:'dejeuner',name:'Aliment recent '+i,
+      kcal:100+i,prot:10,carbs:10,fat:5,ts:now-i*1000,saisie:'manuel',origine:'utilisateur',
+      q:null,u:null,per100:null});
+    persist();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await d(400);
+    o.douzeAvant={ listeAffichee:getComputedStyle(quick()).display!=='none',
+                   hauteur:Math.round(quick().getBoundingClientRect().height) };
+    await taper('coquillette');
+    o.douze={ visible:visible(sugg()), lignes:lignes(), a9811:/167 kcal/.test(texte()),
+              listeRepliee:getComputedStyle(quick()).display==='none',
+              suggTop:Math.round(sugg().getBoundingClientRect().top),
+              premier:(texte().match(/🥗([^0-9]+)167 kcal/)||[])[1]||texte().slice(0,60) };
+
+    /* ══ ③ CHAMP VIDE : « Mes aliments » revient, et les favoris sont intacts ══ */
+    await taper('');
+    o.vide2={ listeAffichee:getComputedStyle(quick()).display!=='none',
+              favoris:(S.savedFoods||[]).length,
+              nomsFavoris:(S.savedFoods||[]).map(f=>f.name).join(' | '),
+              elements:_afQuickItems.length };
+
+    /* ══ ④ CLAVIER OUVERT : la zone visible retrecit de 350 px ══
+       ⛔ Sur iOS, `innerHeight` NE retrecit PAS quand le clavier s'ouvre — c'est
+       `visualViewport` qui le dit. On simule exactement ca. */
+    const vraiVV=window.visualViewport;
+    try{ Object.defineProperty(window,'visualViewport',
+      {configurable:true,get:()=>({height:window.innerHeight-350,width:window.innerWidth,offsetTop:0})}); }catch(e){}
+    o.clavierSimule=(window.visualViewport||{}).height;
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await d(400);
+    await taper('coquillette');
+    o.clavier={ visible:visible(sugg()), lignes:lignes(), a9811:/167 kcal/.test(texte()),
+                suggTop:Math.round(sugg().getBoundingClientRect().top), vh:vh() };
+    try{ Object.defineProperty(window,'visualViewport',{configurable:true,get:()=>vraiVV}); }catch(e){}
+
+    /* ══ ⑤ NON-REGRESSION : les RESULTATS eux-memes n'ont pas bouge ══ */
+    o.recherche={};
+    for(const q of ['coquillette','coquillettes','riz basmati','penne']){
+      const r=_ciqualChercher(q,6);
+      o.recherche[q]=r.length?{code:r[0][0],kcal:r[0][3],p:r[0][4],g:r[0][5],l:r[0][6],n:r.length}:null;
+    }
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+  if(G.err) t('CCLXXIX n\'a pas pu tourner', false, G.err);
+  else{
+    t('CCLXXIX ⛔ CONTRÔLE — avec 12 aliments, « Mes aliments » est bien AFFICHÉE et haute au départ',
+      G.douzeAvant.listeAffichee===true && G.douzeAvant.hauteur>300,
+      JSON.stringify(G.douzeAvant));
+    t('CCLXXIX ① liste « Mes aliments » VIDE → les suggestions sont visibles',
+      G.vide.visible===true && G.vide.lignes>0, JSON.stringify(G.vide));
+    t('CCLXXIX ② ⭐⭐ SON ÉCRAN : 12 aliments → les suggestions sont visibles (INTERDIT : hors écran)',
+      G.douze.visible===true && G.douze.lignes>0, JSON.stringify(G.douze));
+    t('CCLXXIX ③ … parce que « Mes aliments » s\'est REPLIÉE dès la saisie utile',
+      G.douze.listeRepliee===true, 'repliee='+G.douze.listeRepliee);
+    t('CCLXXIX ④ ⭐⭐ « coquillette » → 9811 · 167 kcal AFFICHÉ à l\'écran',
+      G.douze.a9811===true && /Pâtes sèches, standard, cuites/.test(G.douze.premier||''),
+      JSON.stringify(G.douze.premier));
+    t('CCLXXIX ⑤ ⭐⭐ CLAVIER MOBILE OUVERT (zone visible −350 px) → suggestions toujours visibles',
+      G.clavier.visible===true && G.clavier.lignes>0 && G.clavier.a9811===true,
+      'vh='+G.clavier.vh+' '+JSON.stringify(G.clavier));
+    t('CCLXXIX ⑥ champ VIDÉ → « Mes aliments » revient',
+      G.vide2.listeAffichee===true && G.vide2.elements>0, JSON.stringify(G.vide2));
+    t('CCLXXIX ⑦ ⛔ AUCUNE PERTE DE FAVORIS — les 2 favoris sont intacts, nom pour nom',
+      G.vide2.favoris===2 && /Ratatouille Cassegrain/.test(G.vide2.nomsFavoris)
+      && /Iso zero protein/.test(G.vide2.nomsFavoris), G.vide2.nomsFavoris);
+    /* ⛔⛔ LE TÉMOIN QUI PROTÈGE LA CONSIGNE DE MICHEL : « corrige l'UX, pas la recherche ». */
+    t('CCLXXIX ⑧ ⛔⛔ AUCUN RÉSULTAT DE RECHERCHE NE CHANGE (coquillette → 9811 · 167 · 6.7 · 31.4 · 1.1)',
+      G.recherche['coquillette'] && G.recherche['coquillette'].code===9811
+      && G.recherche['coquillette'].kcal===167 && G.recherche['coquillette'].p===6.7
+      && G.recherche['coquillette'].g===31.4 && G.recherche['coquillette'].l===1.1
+      && G.recherche['coquillettes'].code===9811
+      && G.recherche['riz basmati'].code===9125 && G.recherche['penne'].code===9811,
+      JSON.stringify(G.recherche));
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

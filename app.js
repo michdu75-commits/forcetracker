@@ -3445,11 +3445,50 @@ function _afSuggRendu(){
   if(_afSuggCiq.length) h+='<div style="font-size:10.5px;color:var(--t3);padding:6px 11px 8px;line-height:1.4;">Données aliments : table Ciqual 2025 — ANSES</div>';
   el.innerHTML=h+'</div>';
 }
-function _afSuggVider(){ _afSuggLoc=[]; _afSuggOff=[]; _afSuggCiq=[]; _afSuggMarq=[]; _afSuggRendu(); }
+/* 🔎⛔⛔ ft-v1182 — LES RÉSULTATS ÉTAIENT RENDUS, ILS TOMBAIENT SOUS L'ÉCRAN.
+   Michel : *« dans l'écran Mes aliments, quand je tape coquillette, je n'ai aucun résultat »*.
+   ⛔ MESURÉ, ET CE N'EST NI LA DONNÉE NI LA RECHERCHE : `coquillette` rend bien 9811 ·
+   167 kcal · 6,7 · 31,4 · 1,1 — **6 lignes, 4 506 caractères de HTML**, posées à `top:1382`
+   sur un écran de **844**. Elles étaient à **538 px sous le bas**, et rien n'y descendait.
+   ⭐⭐ LE CONTRÔLE TRANCHE, et c'est lui qui nomme la cause : même code, même geste —
+   liste « Mes aliments » **vide** → `suggVisible:true` · liste à **12 aliments (703 px)** →
+   `suggVisible:false`. *C'est la liste qui pousse les résultats hors champ, pas la recherche.*
+   ⚠️ ET C'EST POUR ÇA QUE JE NE LE VOYAIS PAS : mes sondes tournaient avec un journal VIDE.
+   *Une sonde qui n'a pas les données de la personne ne mesure pas son écran.*
+   ⛔ Rien de la recherche n'est touché : mêmes sources, même ordre, mêmes résultats. */
+function _afQuickReplier(replier){
+  const el=document.getElementById('af-quick-list'); if(!el) return;
+  /* ⛔ ON CACHE, ON NE VIDE PAS : `_afQuickItems` et `S.savedFoods` restent intacts, donc
+     aucun favori ne se perd et la liste revient telle quelle quand le champ est vidé. */
+  el.style.display = replier ? 'none' : '';
+}
+/* ⚖️ ft-v1182 — ON NE FAIT DÉFILER QUE SI C'EST NÉCESSAIRE (la consigne de Michel).
+   ⭐⭐ ET LA HAUTEUR VISIBLE SE LIT SUR `visualViewport`, PAS SUR `innerHeight` : sur iOS,
+   `innerHeight` NE RÉTRÉCIT PAS quand le clavier s'ouvre — le bloc serait donc « visible »
+   pour le code et caché sous le clavier pour la personne. *C'est exactement le cas de Michel :
+   il tape, donc son clavier est ouvert.* Repli sur `innerHeight` là où l'API n'existe pas.
+   ⛔ `block:'nearest'` : on amène le bloc au plus près, on ne recentre pas l'écran sous les
+   doigts de quelqu'un qui est en train de taper. */
+function _afSuggVoir(){
+  const el=document.getElementById('af-sugg');
+  if(!el || !el.innerHTML) return;
+  const vh=(window.visualViewport && window.visualViewport.height) || window.innerHeight;
+  const r=el.getBoundingClientRect();
+  if(r.top < vh && r.bottom > 0) return;          // déjà dans la zone visible : on ne bouge rien
+  try{ el.scrollIntoView({behavior:'smooth', block:'nearest'}); }
+  catch(e){ try{ el.scrollIntoView(); }catch(e2){} }
+}
+function _afSuggVider(){ _afSuggLoc=[]; _afSuggOff=[]; _afSuggCiq=[]; _afSuggMarq=[]; _afSuggRendu();
+  _afQuickReplier(false);   // ⛔ la remise à zéro rend « Mes aliments » : `openAddFood` passe ici
+}
 /* Déclenché à la frappe. Les LOCALES sortent tout de suite (aucun réseau) ; la recherche
    distante attend une pause de frappe — sinon on interroge Open Food Facts à chaque lettre. */
 function _afSuggInput(){
   const q=(document.getElementById('af-desc')||{}).value||'';
+  /* 🔎 ft-v1182 — DÈS QUE LA SAISIE EST UTILE, « Mes aliments » SE REPLIE. Le même seuil que
+     la recherche (`_AF_SUGG_MIN`, R2 : un seul nombre décide) — donc la liste se replie
+     exactement quand des résultats arrivent, jamais avant. Champ vidé → elle revient. */
+  _afQuickReplier(_afNorm(q).length>=_AF_SUGG_MIN);
   _afSuggLoc=_afSuggLocales(q);
   _afSuggOff=[]; _afSuggCiq=[]; _afSuggMarq=[];
   _afSuggRendu();
@@ -3460,6 +3499,7 @@ function _afSuggInput(){
       const enCours=(document.getElementById('af-desc')||{}).value||'';
       if(_afNorm(enCours)!==_afNorm(q)) return;    // la frappe a continué : résultat périmé
       _afSuggCiq=_ciqualChercher(q,6); _afSuggRendu();
+      _afSuggVoir();   // ⚖️ ft-v1182 — APRÈS le rendu : avant, le bloc est vide et n'a pas de hauteur
     });
     /* 🥗 LA TABLE D'ALIAS, MÊME RÉGIME (ft-v1115) : locale, 4 Ko gzippés, chargée au premier
        besoin et jamais au démarrage. ⛔ Elle est demandée APRÈS CIQUAL et re-rend la liste :
@@ -3469,6 +3509,7 @@ function _afSuggInput(){
       const enCours=(document.getElementById('af-desc')||{}).value||'';
       if(_afNorm(enCours)!==_afNorm(q)) return;
       _afSuggCiq=_ciqualChercher(q,6); _afSuggRendu();
+      _afSuggVoir();   // ⚖️ ft-v1182 — la passe avec alias re-rend : elle doit voir aussi
     });
     /* 🍔 LA BASE DE MARQUES, MÊME RÉGIME (ft-v1114) : locale, chargée au premier besoin et
        jamais au démarrage. ⭐ Elle est petite (23 produits) mais son fichier est SÉPARÉ de
