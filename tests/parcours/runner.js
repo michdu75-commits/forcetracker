@@ -18847,7 +18847,26 @@ console.log('\n-- CLXVIII. La quantité et les valeurs ne se désappairent plus 
     taper('af-prop','40'); await d(120); o.a40=lire();
     _afSetUnite('portion'); await d(120);
     _afSetUnite('g'); await d(120);
-    taper('af-poids','30'); valider('af-poids'); await d(200);
+    /* ⚖️⛔⛔ ft-v1181 — UN SEUL GESTE A CHANGÉ ICI, ET LA RAISON EST ÉCRITE PARCE QU'ELLE SE
+       DISCUTE. **Décision de Michel, 09/09/2026, option A**, après que ce bloc a fait rougir la
+       passe complète et que la cause a été tracée sans toucher au témoin.
+         · **ANCIEN GESTE** : `taper('af-poids','30')` — le bloc RE-DÉCLARAIT le poids après
+           l'aller-retour, parce que l'app l'avait oublié et le redemandait (`af-poids`,
+           « indique d'abord combien ça pèse »).
+         · **COMPORTEMENT VOULU DEPUIS ft-v1181** : l'aller-retour ne perd plus la quantité —
+           donc l'app ne redemande plus rien, et `af-poids` **n'existe plus** à cet instant.
+           *Cette re-déclaration était le contournement du bug ; elle n'a plus lieu d'être.*
+         · **LA GARANTIE DE ft-v1061 EST INCHANGÉE** : `base` et `q` ne doivent JAMAIS être
+           désappariés. Les huit assertions ci-dessous et **leurs valeurs** (117/26 · 12/3 ·
+           156/35 · q=30 · base 200 / q 40) sont conservées à l'identique.
+       ⭐ ET LE TÉMOIN Y GAGNE : il vérifie maintenant que le couple est intact **à la sortie de
+       l'aller-retour**, sans qu'on ait rien re-déclaré — c'est plus fort que ce qu'il exigeait.
+       ⛔ *Ce n'est pas un témoin qu'on assouplit pour faire passer du code : c'est le
+       COMPORTEMENT qu'il figeait qui a changé, et on écrit lequel, par qui et quand* (ft-v1175). */
+    o.postAllerRetourPoids=!!document.getElementById('af-poids');   // doit être FAUX
+    o.postAllerRetourProp =!!document.getElementById('af-prop');    // doit être VRAI
+    o.postBase={...(_afRef&&_afRef.base)}; o.postQ=_afRef&&_afRef.q; o.postEcran=lire();
+    taper('af-prop','30'); await d(150);
     o.re30=lire(); o.baseGardee={...(_afRef&&_afRef.base)}; o.refQ=_afRef&&_afRef.q;
     taper('af-prop','40'); await d(120); o.re40=lire();
     /* ③ NON-RÉGRESSION : corriger une macro À LA MAIN doit bien REDEVENIR la référence */
@@ -18879,6 +18898,19 @@ console.log('\n-- CLXVIII. La quantité et les valeurs ne se désappairent plus 
     /* ③ */
     t('⛔ NON-RÉGRESSION : une macro corrigée À LA MAIN devient bien la nouvelle référence',
       F.mainBase===200 && F.mainQ===40, 'base.kcal='+F.mainBase+' q='+F.mainQ);
+    /* ⚖️ ft-v1181 — LE TEST DEMANDÉ PAR MICHEL, ÉCRIT AVEC SES MOTS :
+       « 40 g → portions → grammes → champ = 40 g → macros = 156/35 → couple base/q d'origine
+       intact ». Il porte sur l'état À LA SORTIE de l'aller-retour, avant tout autre geste. */
+    t('⚖️⭐⭐ ft-v1181 — 40 g → portions → grammes : le CHAMP redonne 40 g',
+      F.postEcran.q==='40', 'champ='+F.postEcran.q);
+    t('⚖️⭐⭐ ft-v1181 — … et les MACROS redonnent 156 / 35 (le 40 qu\'elle a tapé ne disparaît pas)',
+      F.postEcran.kcal===156 && F.postEcran.prot===35, JSON.stringify(F.postEcran));
+    t('⚖️⛔⛔ ft-v1181 — … et le COUPLE d\'origine est intact : base 117/26 apparié à q=30',
+      F.postBase.kcal===117 && F.postBase.prot===26 && F.postQ===30,
+      'base='+JSON.stringify(F.postBase)+' q='+F.postQ);
+    t('⚖️⛔ ft-v1181 — l\'app ne redemande PLUS le poids : `af-poids` a cédé la place à `af-prop`',
+      F.postAllerRetourPoids===false && F.postAllerRetourProp===true,
+      'af-poids='+F.postAllerRetourPoids+' af-prop='+F.postAllerRetourProp);
   }
   await cx.close();
 }
@@ -31805,6 +31837,46 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
     _afSetUnite('portion'); await d(230);
     _afSetUnite('g');       await d(230);
     o.v6=_afRef?{q:_afRef.q,u:_afRef.u,base:_afRef.base.kcal}:null;
+    o.v6champ=(document.getElementById('af-prop')||{}).value;
+
+    /* ══ ft-v1181 · V6b — « A 110 g -> portions -> B -> grammes : AUCUNE quantite de A » ══
+       Le cas demande par Michel. On change d'aliment SANS franchir de porte de selection —
+       on efface le nom et on tape le suivant a la main — donc c'est le garde `nom` qui doit
+       tenir, pas `_afOublierAliment`. */
+    S.foodLog=[]; S.savedFoods=[]; persist();
+    fermer(); openAddFood(); await d(300);
+    document.getElementById('af-desc').value='Plat maison';
+    taper([274,4,23,15]); await d(200);
+    await declarer(110);
+    _afSetUnite('portion'); await d(230);
+    document.getElementById('af-desc').value='Soupe maison';
+    taper([90,3,12,2]);
+    document.getElementById('af-desc').dispatchEvent(new Event('change',{bubbles:true}));
+    await d(260);
+    _afSetUnite('g'); await d(230);
+    o.v6b={q:_afRef?_afRef.q:null, u:_afRef?_afRef.u:null, base:_afRef?_afRef.base.kcal:null,
+           champ:(document.getElementById('af-prop')||{}).value,
+           poidsDemande:!!document.getElementById('af-poids'), pd:_afPoidsDeclare};
+
+    /* ══ ft-v1181 · V6c — LE CHEMIN `af-poids` RESTE VIVANT ══
+       Michel : *« je veux vérifier que le chemin initial af-poids reste fonctionnel quand on
+       part d'un aliment qui n'a encore aucune quantité connue »*. ⛔ C'est le contrôle qui
+       empêche le correctif de trop en faire : sans quantité connue, l'app doit toujours
+       DEMANDER le poids au lieu d'en inventer un (R29). */
+    S.foodLog=[]; S.savedFoods=[]; persist();
+    fermer(); openAddFood(); await d(300);
+    document.getElementById('af-desc').value='Omelette maison';
+    taper([350,25,2,27]); await d(200);
+    _afSetUnite('g'); await d(240);
+    o.v6c_demande={poids:!!document.getElementById('af-poids'),
+                   prop:!!document.getElementById('af-prop'),
+                   ref:_afRef?{q:_afRef.q,u:_afRef.u}:null};
+    {const cc=document.getElementById('af-poids');
+     if(cc){cc.value='150'; cc.dispatchEvent(new Event('input',{bubbles:true}));
+            cc.dispatchEvent(new Event('blur',{bubbles:true}));}}
+    await d(260);
+    o.v6c_apres={ref:_afRef?{q:_afRef.q,u:_afRef.u,base:_afRef.base.kcal}:null,
+                 champ:(document.getElementById('af-prop')||{}).value};
 
     /* ══ V7 — et la quantite mise de cote ne fuit PAS sur un autre aliment ══
        C'est le garde-fou de mon propre correctif : `_afQtyG` pourrait devenir la fuite
@@ -31905,6 +31977,21 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
       Z.v5b.bcNutr===110 && Z.v5b.pd===0 && Z.v5b.pose===false, JSON.stringify(Z.v5b));
     t('CCLXXVIII ⑧ ⛔ CONTRÔLE — la déclaration de 110 g est bien posée',
       !!Z.v6avant && Z.v6avant.q===110 && Z.v6avant.u==='g', JSON.stringify(Z.v6avant));
+    /* ⚖️ ft-v1181 — I4 est réparé : les trois témoins que Michel a demandés. */
+    t('CCLXXVIII ⑲ ⚖️⭐⭐ ft-v1181 — 110 g → portions → grammes redonne 110 g (INTERDIT : q=1)',
+      !!Z.v6 && Z.v6.q===110 && Z.v6.u==='g' && Z.v6.base===274 && Z.v6champ==='110',
+      JSON.stringify(Z.v6)+' champ='+Z.v6champ);
+    t('CCLXXVIII ⑳ ⚖️⛔⛔ ft-v1181 — A 110 g → portions → B → grammes : RIEN de A (INTERDIT : 110)',
+      !!Z.v6b && Z.v6b.q===1 && Z.v6b.base===90 && Z.v6b.pd===0 && Z.v6b.poidsDemande===true
+      && (Z.v6b.champ===''||Z.v6b.champ===undefined),
+      JSON.stringify(Z.v6b));
+    t('CCLXXVIII ㉑ ⚖️⛔ ft-v1181 — sans quantité connue, l\'app DEMANDE toujours le poids (R29)',
+      Z.v6c_demande.poids===true && Z.v6c_demande.prop===false && Z.v6c_demande.ref.q===1,
+      JSON.stringify(Z.v6c_demande));
+    t('CCLXXVIII ㉒ ⚖️⛔ ft-v1181 — … et ce chemin marche toujours : 150 g déclarés → q=150',
+      !!Z.v6c_apres.ref && Z.v6c_apres.ref.q===150 && Z.v6c_apres.ref.u==='g'
+      && Z.v6c_apres.ref.base===350 && Z.v6c_apres.champ==='150',
+      JSON.stringify(Z.v6c_apres));
     /* ⛔⛔ V6/V7 — LES DEUX TÉMOINS DE LA RESTITUTION D'ONGLET ONT ÉTÉ RETIRÉS, ET C'EST LA
        PASSE COMPLÈTE QUI L'A EXIGÉ, pas moi. Ils figeaient un correctif que le bloc **CLXVIII
        (ft-v1061)** a refusé : rendre le poids déclaré au retour d'onglet fait disparaître de
