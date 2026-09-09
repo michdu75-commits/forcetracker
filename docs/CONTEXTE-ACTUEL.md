@@ -42,9 +42,11 @@
   jamais `finishWorkout`. ***Un témoin qui pose l'état final ne voit pas le chemin qui y mène***
   — `BUGS.md` **§58**, le banc était vert un mois sur ce bug.
   📣 **Règle d'or #11 : rien** — aucun écran ne change (**R19/R25**).
-  ⏭️ ⛔ **Le cardio SEUL n'ouvre toujours pas d'écran de fin et n'enregistre aucune séance** —
-  mesuré, signalé, **pas encore traité** : Michel dit *« il va falloir creuser »*, et je cherche
-  la décision avant de « réparer » (**R30**).
+  ⚠️⚠️ **CORRECTION DU JOUR MÊME : il n'y a PAS de bug cardio.** J'avais signalé qu'un cardio
+  seul n'ouvrait pas d'écran de fin — **c'était ma fixture** (`min` au lieu de **`duration`**).
+  Remesuré : écran ouvert, séance enregistrée, débrief présent. ***Un test qui n'emploie pas le
+  schéma de la production fabrique un faux bug.*** ⛔ Le seul cas sans écran reste « aucune série
+  cochée », et il est **voulu** (l'app refuse de terminer et le dit).
 - **Version précédente :** `ft-v1183` — 🍽️ **« portion » devient une VRAIE unité, et le
   multiplicateur n'avait aucun propriétaire.**
   ⛔⛔ **Mesuré avant de coder** (sa consigne : *audit avant code*) : on saisit 300 kcal, on tape
