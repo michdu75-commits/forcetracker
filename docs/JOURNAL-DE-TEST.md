@@ -2105,3 +2105,33 @@ respectée). ⭐ **Le classeur reste utile comme AUDIT** : ses onglets fast-food
 séparation des sources documentent d'où viennent les données. *Ce qui est écarté reste écrit avec sa
 raison* (**R30**) — sinon quelqu'un le réimporte dans six mois et « répare » la tomate.
 
+### 🟡 À TRIER — LA LIGNE « 910 kcal » DE SON JOURNAL N'EST PAS CORROMPUE, ELLE EST *CRUE* (09/09/2026)
+
+**Michel, en validant ft-v1182 sur iPhone** : *« la section “Déjà noté par toi” affiche encore une
+ancienne ligne Pâtes sèches, standard, crues — 910 kcal, donc l'historique/local reste à traiter
+séparément »*. ⛔ **Point noté et NON traité ici, comme il l'a demandé.** Mais une mesure, prise au
+passage, change ce qu'il faudra chercher :
+
+| | |
+|---|---|
+| sa ligne | **910 kcal · P 33 · G 182 · L 4** |
+| CIQUAL **9810** « Pâtes sèches, standard, **crues** » | 364 · 13,1 · 72,7 · 1,6 /100 g |
+| × **250 g** | **910 · 33 · 182 · 4** |
+
+👉 ***La ligne est arithmétiquement JUSTE*** : c'est 250 g de pâtes **crues**, exactement. Ce n'est
+donc **pas** une ligne abîmée par les bugs de quantité (ft-v1177/1179/1180) — le calcul est bon.
+
+**⚠️ CE QUI RESTE À REGARDER, ET CE N'EST PAS LA MÊME CHOSE** :
+- ⓐ **cru vs cuit** — on pèse et on mange des pâtes **cuites** ; 250 g de *crues* donnent ~600 g
+  cuites. Si la personne a choisi « crues » en croyant peser son assiette, l'entrée est **juste
+  dans la table et fausse dans la vie**. *L'app propose les deux, cuit en premier (ft-v1115) — donc
+  c'est un piège de CHOIX, pas un défaut de calcul.*
+- ⓑ **la quantité ne s'affiche pas** dans « Déjà noté par toi » : on lit *910 kcal* sans le *250 g*
+  qui l'explique, ce qui fait ressembler une ligne saine à une ligne cassée. *C'est peut-être ça,
+  le vrai sujet d'affichage.*
+
+⛔ **À NE PAS CONFONDRE avec la migration des 17 jours** (lignes sans `q`/`per100`, mathématiquement
+non convertibles). Celle-ci a toutes ses données ; elle pose une question de **sens**, pas de
+récupération. *Deux problèmes qui se ressemblent à l'écran et n'ont ni la même cause ni le même
+remède* — les mélanger ferait « réparer » une ligne juste.
+

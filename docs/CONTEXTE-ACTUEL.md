@@ -20,7 +20,25 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1181` — ⚖️ **I4 : le couple `base`/`q` survit à
+- **Version en ligne (live) :** `ft-v1182` — 🔎 **les résultats de recherche d'aliments étaient
+  calculés mais tombaient SOUS l'écran.**
+  ⛔⛔ Michel : *« quand je tape coquillette, je n'ai aucun résultat »* — **ce n'était ni la donnée
+  ni la recherche** : `coquillette` rendait déjà 9811 · 167 kcal, 6 lignes, posées à `top:1382` sur
+  un écran de **844**. ⭐ **Le contrôle a nommé la cause** : liste « Mes aliments » vide → visibles ;
+  à 12 aliments (**703 px**) → hors écran. *C'est la liste qui les pousse dehors.*
+  ⚠️ **Et mes sondes ne le voyaient pas : elles tournaient avec un journal VIDE.**
+  ⭐ **Correctif UX en 3 gestes** (choisis par Michel) : repli de la liste au **même seuil** que la
+  recherche · on **cache**, on ne vide pas (aucun favori perdu) · `scrollIntoView` doux **seulement**
+  si hors zone visible — mesurée sur **`visualViewport`**, pas `innerHeight` (sur iOS, `innerHeight`
+  ne rétrécit pas quand le clavier s'ouvre).
+  ✅ **Validé sur son iPhone**, capture à l'appui.
+  ⛔ **Rien touché** à `alias.json`, CIQUAL, le moteur de recherche, I4, P1, `_qtyRescale` ni la
+  migration — un témoin fige qu'aucun résultat ne change.
+  ⏭️ **La ligne « 910 kcal » de son journal n'est PAS un bug** : mesuré, c'est exactement 250 g de
+  CIQUAL 9810 (pâtes **crues**). Le sujet est le **choix cru/cuit** et la **quantité non affichée**,
+  pas une corruption — à ne pas confondre avec la migration des 17 jours.
+
+- **Version précédente :** `ft-v1181` — ⚖️ **I4 : le couple `base`/`q` survit à
   l'aller-retour d'onglet.**
   ⭐⭐ Cahier des charges de Michel : *« préserver la quantité affichée liée au couple base/q, pas
   seulement `_afPoidsDeclare` »*. **Cause mesurée geste par geste** : passer en portions écrasait

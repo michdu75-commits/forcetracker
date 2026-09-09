@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1181`** (prochaine : `ft-v1182`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1182`** (prochaine : `ft-v1183`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,39 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1182 — 🔎 LES RÉSULTATS DE RECHERCHE ÉTAIENT CALCULÉS, ILS TOMBAIENT SOUS L'ÉCRAN** — Michel : ***« dans l'écran Mes aliments, quand je tape coquillette, je n'ai aucun résultat »***. ⚠️ **Et il m'avait repris à juste titre** : j'avais testé `_ciqualChercher` **en direct**, pas le chemin de son écran.
+
+**⛔⛔ MESURÉ AVANT DE CODER — CE N'ÉTAIT NI LA DONNÉE NI LA RECHERCHE.** `coquillette` rendait **déjà** 9811 · 167 kcal · 6,7 · 31,4 · 1,1 : **six lignes, 4 506 caractères de HTML** — posées à **`top:1382` sur un écran de 844**, soit **538 px sous le bas**. *Rien n'y descendait.*
+
+**⭐⭐ ET C'EST LE CONTRÔLE QUI A NOMMÉ LA CAUSE**, pas moi — même code, même geste :
+
+| liste « Mes aliments » | hauteur | position des résultats | visibles ? |
+|---|---|---|---|
+| **vide** | 0 px | 663 | ✅ |
+| **12 aliments (le sien)** | **703 px** | **1382** | ⛔ |
+
+👉 ***C'est la LISTE qui pousse les résultats hors champ.*** ⚠️ **Et c'est pour ça que mes sondes ne le voyaient pas : elles tournaient avec un journal VIDE.** *Une sonde qui n'a pas les données de la personne ne mesure pas son écran.*
+
+**⭐ LE CHEMIN D'ÉCRAN, TRACÉ COMME IL L'A DEMANDÉ** : `af-desc` est le **seul** champ de recherche d'aliments de toute l'app (`oninput="_afSuggInput()"`) ; « Mes aliments » (`af-quick-list`) est une liste **statique** de 12 éléments, **sans champ**, posée **au-dessus**. `_afSuggInput` appelle **quatre** sources (journal · CIQUAL+alias · marques · Open Food Facts à 450 ms), CIQUAL dès 2 caractères, deux fois, avec un garde anti-frappe-périmée. ⛔ **Vérifié aussi service worker ACTIF et contrôlant, après rechargement** : identique — *ce n'était pas un problème de cache.*
+
+**⭐ LE CORRECTIF, TROIS GESTES CHOISIS PAR MICHEL** : ① « Mes aliments » se replie dès que la saisie est utile — au **même seuil que la recherche** (`_AF_SUGG_MIN`, **R2** : un seul nombre décide) · ② **on CACHE, on ne vide pas** : `_afQuickItems` et `S.savedFoods` restent intacts, donc *aucun favori ne se perd* et la liste revient telle quelle · ③ `scrollIntoView` doux **seulement** si le bloc reste hors zone visible.
+
+**⭐⭐ ET LE POINT QUI COMPTE POUR SON IPHONE : la hauteur visible se lit sur `visualViewport`, PAS sur `innerHeight`.** Sur iOS, `innerHeight` **ne rétrécit pas** quand le clavier s'ouvre — le bloc serait « visible » pour le code et **caché sous le clavier** pour la personne. *C'est exactement son cas : il tape, donc son clavier est ouvert.* Repli sur `innerHeight` là où l'API n'existe pas.
+
+**Mesure après**, avec ses 12 aliments : la liste passe de **703 px à 0**, le champ remonte de **1299 à 580**, les suggestions de **1382 à 663** — visibles. Toujours 6 lignes, 9811 en tête.
+
+✅ **VALIDÉ SUR SON IPHONE, capture à l'appui** : *« Coquillettes affiche bien les suggestions CIQUAL à l'écran après repli de Mes aliments. Résultat en tête : 167 kcal/100 g · P6,7 · G31,4 · L1,1. »*
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun bouton n'apparaît, aucun repère ne bouge : *ce qui était déjà calculé devient simplement visible* (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **rien touché à** `alias.json` · CIQUAL · le moteur de recherche · **I4** · **P1** · `_qtyRescale` · la migration historique — sa consigne, et un témoin fige qu'**aucun résultat ne change**. ⛔⛔ **Et la ligne « 910 kcal » qu'il signale dans « Déjà noté par toi » n'est PAS traitée ici, à sa demande** — mais mesurée au passage et notée : **910/33/182/4 = EXACTEMENT 250 g de CIQUAL 9810** (pâtes sèches **crues**). ***Cette ligne est arithmétiquement juste, ce n'est pas une ligne abîmée.*** Ce qui reste à regarder est ailleurs : le **choix cru/cuit**, et le fait que **la quantité ne s'affiche pas** dans cette liste. ⚠️ *À ne pas confondre avec la migration des 17 jours* — les mélanger ferait « réparer » une ligne juste.
+
+DEPLOIEMENT_ICI
+
+Tests : **parcours 3400/3400** (+9, bloc **CCLXXIX**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⭐ **Les 7 exigences de Michel sont couvertes une par une** : liste vide · liste à 12 · **clavier ouvert (zone visible −350 px)** · `coquillette` → 9811 affiché · champ vidé → la liste revient · aucune perte de favoris · aucun changement des résultats. ⛔ **CONTRÔLE NÉGATIF : 4 mutations, toutes mordent, 1 rouge chacune** — ① le repli retiré · ② ⭐ **le clavier ignoré (`innerHeight` seul)** · ③ la liste ne revient plus · ④ on **VIDE** la liste au lieu de la cacher.
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1182. |
 
 **ft-v1181 — ⚖️ LE COUPLE `base`/`q` SURVIT ENFIN À L'ALLER-RETOUR D'ONGLET — ET LA QUANTITÉ AFFICHÉE A UN PROPRIÉTAIRE** — cahier des charges de Michel après ft-v1180 : ***« préserver la quantité affichée liée au couple base/q, pas seulement `_afPoidsDeclare` »***.
 
@@ -668,33 +701,6 @@ Tests : **parcours 3323/3323** (+11, bloc **CCLXXIV**), **calculs 339/339**, mus
 
 Tests : **parcours 3312/3312 sur l'arbre FUSIONNÉ avec la ft-v1174 de session-A** (+8, bloc **CCLXXIII**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 5 mutations** — ① la cible périmée remise → **3 rouges** · ② seules les formes anglaises corrigées → **1 rouge**, exactement le point de Michel · ③ les formes « poulie » oubliées → **1 rouge**, la porte jumelle · ④ le synonyme faux remis → **2 rouges** · ⑤ ⭐ une cible périmée **ailleurs** → **1 rouge**, exactement le témoin durci — *c'est celle qui prouve que le durcissement sert à quelque chose*. Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `IDEES-FUTURES.md`. sw.js ft-v1175. |
 
-**ft-v1174 — 📦 LE POIDS DU PAQUET ÉTAIT DEMANDÉ À OPEN FOOD FACTS DEPUIS TOUJOURS, ET JETÉ À L'ARRIVÉE** — Michel, en une phrase : ***« mais normalement le code-barres donne le poids avec non ? »***
-
-**⭐⭐ IL AVAIT RAISON, ET C'ÉTAIT PIRE QUE ÇA — MESURÉ DANS LE FICHIER.** Le champ `quantity` est **déjà** dans la liste des champs demandés à Open Food Facts, à **DEUX endroits** (`_offFetchProduct` pour le code-barres, `_offRechercher` pour la recherche par nom) — et **ZÉRO ligne de l'app ne le lisait**. Le seul poids employé était `serving_quantity`, la *portion* déclarée, souvent absente : on retombait alors sur **100 g par défaut**. 👉 ***On payait la bande passante d'une donnée qu'on jetait à l'arrivée.*** C'est **R5** (l'audit à l'envers — *« où cette information ressort-elle concrètement ? »*), et personne ne l'avait posée sur ce champ.
-
-**⛔⛔ ET LA DÉCISION QUI TIENT TOUT LE RESTE EST DE NE PAS LE PRÉ-REMPLIR.** `quantity` est le poids **DU PAQUET**, pas de ce qui a été mangé : une boîte de ratatouille qu'on vide dans l'assiette → **c'est le bon chiffre** ; un pot d'isolat de **1 kg** → personne n'en mange 1 kg. *Un chiffre pré-rempli qu'on n'a pas choisi est un chiffre faux présenté comme un fait* (**R29**) — la phrase est déjà écrite **deux fois** ailleurs dans ce fichier, pour le champ de poids et pour le champ de portion. On **PROPOSE** donc une pastille tapable — **📦 250 g (le paquet entier)** — sur le patron exact de `_bcProposerDerniere` (**R13**, le mécanisme est éprouvé depuis ft-v1105).
-
-**⭐ UNE SEULE DIFFÉRENCE AVEC SA JUMELLE, ET ELLE EST VOULUE** : *« la dernière fois »* **vide** le champ (elle remplace une proposition par une autre) ; le poids du paquet, lui, **s'ajoute** à ce qui est déjà là — la portion du fabricant, ou les 100 g par défaut. *Effacer le champ retirerait un repli valable pour le remplacer par une proposition qui n'a pas encore été acceptée.*
-
-**⭐⭐ ET ÇA TRAVERSE LE CALIBRAGE — C'EST LE CAS EXACT DE SA RATATOUILLE.** Une fiche **trouvée mais sans valeurs** part à l'écran « recopie ton étiquette » (ft-v1165), et l'objet produit d'Open Food Facts disparaît avec elle. 👉 ***Sans report, le produit qui a le plus besoin de son poids serait le seul à le perdre.*** D'où **deux variables, deux métiers** (**R2**) : `_bcPaquetG` (les grammes du produit à l'écran) a **un propriétaire unique**, `_offRemplirFormulaire`, que **les cinq** remplissages traversent — scan, recherche par nom, CIQUAL, marque, étiquette — donc la pastille ne peut jamais survivre d'un aliment à l'autre ; et `_bcPaquetTxt` (le texte brut d'OFF) n'existe **que** pour ce report-là. Un témoin fige chacune des deux.
-
-**⛔ CE QUI EST REFUSÉ EST ÉCRIT, PAS SILENCIEUX (R30)** : ⚠️ **les volumes** — *« 1 L » n'est pas « 1000 g »*, ça dépend de la densité (1,0 pour l'eau, **0,92** pour l'huile, **1,4** pour le miel) ; *convertir reviendrait à inventer une densité qu'on ne connaît pas*, et l'app afficherait un poids **crédible et faux** ; ⚠️ **les lots** — « 6 x 125 g » vaut 750 g en paquet et 125 g en unité, et c'est l'unité qu'on mange : *si l'expert hésite, on n'ajoute pas* ; ⚠️ **au-delà de 5 kg** — ce n'est plus une référence de portion mais un sac ou un format restauration.
-
-**⚠️⚠️ ET LA LEÇON DE MÉTHODE EST À MOI, TROUVÉE PAR LE CONTRÔLE NÉGATIF : J'AVAIS ÉCRIT UNE GARDE QUI NE SERVAIT À RIEN.** Mon premier jet portait un `if(/[x×*]/.test(t)) return 0;` anti-lot, avec sa belle justification. ⛔⛔ **La mutation qui le retirait ne faisait rougir PERSONNE** — et pour cause : l'expression régulière est **ancrée `^…$`** sur *un* nombre et *une* unité, donc aucun lot ne pouvait la traverser de toute façon. 👉 ***Une garde qu'aucun témoin ne peut faire rougir n'est pas une sécurité, c'est de la décoration*** — et elle est pire que rien, parce qu'elle laisse croire que le sujet est traité. Elle est **retirée**, et c'est le **témoin** qui fige la règle : si quelqu'un desserre un jour cet ancrage, il rougit (mutation M4′, vérifiée). *C'est exactement le « GARDE (pas détecteur) » de ft-v1166, mais cette fois j'ai supprimé au lieu de renommer.*
-
-**⚠️ ET JE DIS MA LIMITE PLUTÔT QUE DE LA MASQUER** : le réseau Open Food Facts est **bloqué depuis le conteneur de développement**, donc **la couverture réelle du champ n'est pas mesurée** — je ne sais pas sur quelle proportion des fiches `quantity` est rempli, ni lisible. Les témoins portent sur le **parseur** et sur le **chemin**, jamais sur un taux de remplissage. *C'est Michel qui le mesurera en scannant.*
-
-**⭐ ET LE PARTAGE EST CLARIFIÉ AU PASSAGE, PARCE QUE JE LE MÉLANGEAIS** : les tables que Michel a fournies et corrigées — `marques.json` (**123 produits fast-food, 123/123 avec un poids de portion, déjà utilisé**), `alias.json` (632 alias → CIQUAL), `ciqual.json` (3 484 aliments), `complalim.json` — sont **locales, dans le dépôt, hors ligne**. **Open Food Facts n'en fait PAS partie** : c'est un **appel réseau en direct**, produit par produit. *Le trou était donc sur ce seul chemin, et pas sur ses tables.*
-
-**📣 RÈGLE D'OR #11 — AIDE OUI, POINT ROUGE NON, POP-UP NON** — et c'est la décision de **ft-v1165 rejouée**, pas un raccourci : la pastille n'apparaît **que** sur un scan dont la fiche porte un poids lisible. ⛔ Un point rouge enverrait donc chercher **quelque chose d'invisible** tant qu'on n'a pas scanné le bon produit, et une pop-up annoncerait un bouton qu'on ne peut pas aller voir. ⭐ **L'aide détaillée du Journal, elle, dit ce que la pastille N'EST PAS** — le poids du **paquet**, pas celui de l'assiette — avec les trois chiffres qui le rendent parlant (1 L d'eau = 1 kg · d'huile = 920 g · de miel = 1,4 kg). *C'est ça qui évite de la taper les yeux fermés sur un pot de 1 kg* (**R25** : la pop-up annonce, l'aide explique).
-
-⚠️ **Et cette ligne a été RÉÉCRITE avant d'être livrée** : mon premier jet annonçait « points 2 à 5 » — un point rouge, l'aide `?`, l'aide détaillée et une diapo — **que je n'avais pas posés**. 👉 ***C'est exactement la famille §54 que cette semaine vient de créer*** (*le journal dit vrai, le code ne le fait pas*), et je l'ai attrapée en relisant ma propre entrée. *Un journal qui annonce une checklist non faite est pire qu'un journal muet : il fait croire que c'est fait.*
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **ça ne remplit rien tout seul** — sans appui, le comportement est **exactement** celui d'hier (deux témoins de non-régression le figent). ⛔ **Les lignes déjà enregistrées ne changent pas** (**R29**). ⛔ **Et les volumes restent un trou connu** : une bouteille de 33 cl ne propose rien. *Noté, pas pris* — il faudrait une table de densités, donc une décision produit, pas une ligne de code. ⚠️ **Michel doit vérifier sur Safari/iPhone** en rescannant sa ratatouille.
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1018**, conclusion `success` à **15:15:36 UTC** sur `8de76d85` — ⛔ ni backend ni worker attendus (`Code.js`/`worker.js` non touchés).
-
-Tests : **parcours 3303/3303** (+12, bloc **CCLXXII**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⭐⭐ **Les témoins CONDUISENT le vrai chemin** : `fetch` est intercepté avec une fausse fiche Open Food Facts, `_lookupBarcode` et `_calAppliquer` sont **réellement appelées**, et on **tape sur la pastille** — jusqu'au chiffre de bout en bout, **250 g → 180 kcal**. ⛔ **CONTRÔLE NÉGATIF : 8 MUTATIONS, TOUTES MORDENT** — ① l'arbre d'avant → **8 rouges** ; ② ⭐⭐ **la pastille qui pré-remplit le champ → 1 rouge, exactement la décision R29** — *c'est la mutation la plus utile du lot* ; ③ les volumes acceptés → **2 rouges** ; ④′ **l'ancrage desserré** (ce qui protège vraiment des lots) → **1 rouge** ; ⑤ les bornes retirées → **1** ; ⑥ **le poids qui ne traverse plus le calibrage** → **2 rouges**, exactement le cas de Michel ; ⑦ la réserve non remise à zéro → **1** ; ⑧ le propriétaire unique cassé (CIQUAL garde le poids d'avant) → **1** ; ⑨ le champ retiré de l'appel réseau → **1**, exactement le contrôle. ⚠️ **Et les sondes du parseur sont DÉFENSIVES** (`typeof`) : sur l'arbre d'avant la fonction n'existe pas, et un `ReferenceError` ferait sauter **tout le bloc** — *une mutation qui casse le fichier ne prouve rien, elle empêche de mesurer* (leçon de ft-v1173, appliquée d'emblée). ⚠️ **Un témoin a aussi rougi sur MA sonde, pas sur le code** : j'appelais `_offRemplirFormulaire` sans poser `_bcNutr`, ce que le vrai chemin CIQUAL fait toujours — *une sonde qui saute une étape de production ne teste pas le code, elle le fait planter*. Fichiers : `app.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1174. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
