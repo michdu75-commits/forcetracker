@@ -2135,3 +2135,28 @@ non convertibles). Celle-ci a toutes ses données ; elle pose une question de **
 récupération. *Deux problèmes qui se ressemblent à l'écran et n'ont ni la même cause ni le même
 remède* — les mélanger ferait « réparer » une ligne juste.
 
+
+
+---
+
+### 🔵 PROMUE — UN « ×2 » EN PORTIONS S'AFFICHAIT ET NE S'ÉCRIVAIT NULLE PART (09/09 → CORRIGÉ EN ft-v1183, 14 témoins permanents)
+
+**Le doute qui l'a ouverte**, écrit dans le journal de ft-v1180 : *« P1 reste ouvert — un ×2
+enregistre `q:null` et se fossilise ; "2 portions de 300" devient "1 portion de 600" »*.
+⭐ **Il était juste, et la mesure l'a confirmé au chiffre près** avant qu'une ligne de correctif
+soit écrite : `_afApplyPortion` ne faisait QUE réécrire les 4 champs, `_afRef` restait
+`{base:300, q:1, u:''}`, et `_provFood` n'avait **aucune branche** pour l'unité « portion ».
+
+**Ce que l'audit a trouvé en plus, et qui ne se devinait pas** : l'écran d'**édition** savait déjà
+faire (`q:2, u:'portion'` → « Quantité (portion) », un ×3 rend 900 et s'enregistre). *Les portes
+cassées étaient toutes du côté ajout.* 👉 **La leçon à garder : avant de construire un mécanisme,
+mesurer s'il n'existe pas déjà sur la porte d'à côté** — c'est R13, et c'est la 7ᵉ fois ici.
+
+**⚠️ ET DEUX TROUS N'ONT ÉTÉ TROUVÉS QU'APRÈS LE PREMIER CORRECTIF, PAR LA MESURE** : `quickAddFood`
+filtrait encore **en amont**, et `rejouerRepas` forçait `q:null` à l'écriture — *rejouer un repas
+aurait tué les portions qu'on venait de sauver*. **Ouvrir une porte en aval ne sert à rien si
+l'amont filtre encore**, et la relecture ne le voit pas.
+
+**Reste à vérifier par Michel (iPhone)** : que le bouton allumé et la ligne de définition
+(*« Tu notes 2 portions (1 portion = 300 kcal, poids inconnu) »*) se lisent bien sur son écran.
+Je n'ai pas de WebKit ici.

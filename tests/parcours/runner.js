@@ -32147,6 +32147,198 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
   await cx.close();
 }
 
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   BLOC CCLXXX — 🍽️ P1 : « PORTION » DEVIENT UNE VRAIE UNITÉ (ft-v1183)
+   Cahier des charges de Michel. Mesuré AVANT de coder : on saisit 300 kcal, on tape « ×2 »,
+   l'écran affiche 600 — et la ligne partait en `q:null, u:null, per100:null`.
+   👉 *« 2 portions de 300 » se fossilisait en « 1 portion de 600 »*, et plus rien ne pouvait la
+   redimensionner. La cause : `_afApplyPortion` n'écrivait le multiplicateur NULLE PART, et
+   `_provFood` n'avait aucune branche pour l'unité « portion ».
+   ⛔ Les témoins CONDUISENT les vrais gestes (openAddFood → boutons → addFoodEntry) et lisent
+   la LIGNE ENREGISTRÉE : vérifier `_afPortions` ne prouverait rien du chemin (leçon ft-v1158).
+   ══════════════════════════════════════════════════════════════════════════════════════════ */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2400);
+  const P=await pg.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const set=(id,v)=>{const el=document.getElementById(id); if(el){el.value=v;
+      el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true}));}};
+    const ecr=()=>['af-kcal','af-prot','af-carbs','af-fat'].map(x=>+((document.getElementById(x)||{}).value||0));
+    const der=()=>{const e=S.foodLog[S.foodLog.length-1]||{};
+      return {kcal:e.kcal,prot:e.prot,carbs:e.carbs,fat:e.fat,q:e.q,u:e.u,per100:e.per100};};
+    const saisir=async(nom,k,p,g,l)=>{ document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      openAddFood(); await d(300);
+      set('af-desc',nom); set('af-kcal',k); set('af-prot',p); set('af-carbs',g); set('af-fat',l);
+      _afMajAncre(true); await d(200); };
+    const bloc=()=>(document.getElementById('af-prop-row')||{textContent:''}).textContent.replace(/\s+/g,' ');
+
+    /* ① LE GESTE DE MICHEL : ×2 sur un plat de 300 kcal */
+    S.foodLog=[]; S.savedFoods=[]; S.hiddenFoods=[]; persist();
+    await saisir('Assiette maison','300','20','30','10');
+    _afApplyPortion(2); await d(220);
+    o.x2={ecran:ecr(), ref:JSON.parse(JSON.stringify(_afRef)), texte:bloc()};
+    addFoodEntry(); await d(300);
+    o.x2.ligne=der();
+
+    /* ② LA REPRISE PAR « MES ALIMENTS » — la référence doit rester 300 */
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await d(320); _renderFoodQuickList(); await d(220);
+    const i=(_afQuickItems||[]).findIndex(x=>x.name==='Assiette maison');
+    o.repriseIdx=i;
+    if(i>=0){ quickFillFood(i); await d(400);
+      o.reprise={ecran:ecr(), base:JSON.parse(JSON.stringify(_afRef.base)), unite:_afUnite, texte:bloc()};
+      addFoodEntry(); await d(300); o.reprise.ligne=der(); }
+
+    /* ③ LA PORTE JUMELLE : la reprise par la RECHERCHE dans le journal (R8) */
+    S.foodLog=S.foodLog.slice(0,1); persist();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await d(320);
+    set('af-desc','Assiette'); if(typeof _afSuggInput==='function')_afSuggInput(); await d(1200);
+    if((typeof _afSuggLoc!=='undefined'?_afSuggLoc:[]).length){ _afSuggPrendreLocale(0); await d(400);
+      o.recherche={ecran:ecr(), base:JSON.parse(JSON.stringify(_afRef.base)), unite:_afUnite}; }
+
+    /* ④ LE POIDS CONNU PLUS TARD : 2 portions pesées 500 g → per100 = 120 */
+    S.foodLog=[]; persist();
+    await saisir('Gratin','300','20','30','10');
+    _afApplyPortion(2); await d(200);
+    _afSetUnite('g'); await d(250);
+    set('af-poids','500'); const pe=document.getElementById('af-poids');
+    if(pe) pe.dispatchEvent(new Event('blur')); _afMajAncre(); await d(280);
+    addFoodEntry(); await d(300); o.pesee=der();
+
+    /* ⑤ ⛔ LE GARDE : onglet ⚖️ GRAMMES sans poids déclaré → PAS d'unité « portion » inventée */
+    S.foodLog=[]; persist();
+    await saisir('Hesitation','250','10','20','8');
+    _afSetUnite('g'); await d(250);
+    addFoodEntry(); await d(300); o.grammesSansPoids=der();
+
+    /* ⑥ ⛔⛔ A → B : aucune quantité ne traverse d'un aliment à l'autre (ft-v1180) */
+    S.foodLog=[]; persist();
+    await saisir('Plat A','300','20','30','10');
+    _afApplyPortion(3); await d(220);
+    await saisir('Plat B','200','10','20','5');
+    o.aVersB={ecran:ecr()};
+    addFoodEntry(); await d(300); o.aVersB.ligne=der();
+
+    /* ⑦ ⛔ LA RETOUCHE À LA MAIN REMET LE COMPTEUR À 1 (invariant ft-v1061 côté portions) */
+    S.foodLog=[]; persist();
+    await saisir('Soupe','300','20','30','10');
+    _afApplyPortion(2); await d(220);
+    set('af-prot','45'); await d(280);      // l'écran devient la référence
+    o.retouche={ecran:ecr()};
+    addFoodEntry(); await d(300); o.retouche.ligne=der();
+
+    /* ⑧ L'AJOUT DIRECT depuis la liste (quickAddFood) recopie la portion */
+    S.foodLog=[{date:today(),meal:'midi',name:'Assiette maison',kcal:600,prot:40,carbs:60,fat:20,
+                ts:Date.now()-90000,v:1,saisie:'manuel',origine:'utilisateur',q:2,u:'portion',per100:null}];
+    persist();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await d(320); _renderFoodQuickList(); await d(220);
+    const j=(_afQuickItems||[]).findIndex(x=>x.name==='Assiette maison');
+    if(j>=0){ quickAddFood(j); await d(320); o.direct=der(); }
+
+    /* ⑨ L'ÉCRAN D'ÉDITION : « 2 portions » avec sa DÉFINITION, et un ×3 qui s'enregistre */
+    S.foodLog=[{date:today(),meal:'midi',name:'Assiette maison',kcal:600,prot:40,carbs:60,fat:20,
+                ts:777,v:1,saisie:'manuel',origine:'utilisateur',q:2,u:'portion',per100:null}];
+    persist();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openEditFood(777); await d(400);
+    o.edit={texte:(document.getElementById('ef-qty-row')||{textContent:''}).textContent.replace(/\s+/g,' '),
+            val:(document.getElementById('ef-prop')||{}).value};
+    set('ef-prop','3'); await d(250); saveEditFood(); await d(300);
+    const ee=S.foodLog.find(x=>x.ts===777)||{};
+    o.edit.sauve={kcal:ee.kcal,prot:ee.prot,q:ee.q,u:ee.u};
+
+    /* ⑨bis ⛔ L'ÉTAT « BOUTONS DE PORTION » DE L'ÉDITION — il n'a NI `ef-grams` NI `ef-prop`,
+       donc `saveEditFood` n'y voyait rien : un ×2 s'affichait et ne s'écrivait nulle part.
+       ⭐ Sans ce témoin, la porte ajoutée dans `saveEditFood` ressemblerait à de la décoration
+       et le contrôle négatif la déclarerait morte (leçon ft-v1180). */
+    S.foodLog=[{date:today(),meal:'midi',name:'Ligne muette',kcal:300,prot:20,carbs:30,fat:10,
+                ts:888,v:1,saisie:'manuel',origine:'utilisateur',q:null,u:null,per100:null}];
+    persist();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openEditFood(888); await d(400);
+    o.editBoutons={aProp:!!document.getElementById('ef-prop'), aGrams:!!document.getElementById('ef-grams')};
+    if(typeof _efApplyPortion==='function'){ _efApplyPortion(2); await d(280);
+      o.editBoutons.ecran=['ef-kcal','ef-prot'].map(x=>+((document.getElementById(x)||{}).value||0));
+      saveEditFood(); await d(300);
+      const e8=S.foodLog.find(x=>x.ts===888)||{};
+      o.editBoutons.sauve={kcal:e8.kcal,prot:e8.prot,q:e8.q,u:e8.u}; }
+
+    /* ⑩ LE REJEU D'UN REPAS ne tue plus la portion */
+    const hier=new Date(Date.now()-86400000).toISOString().slice(0,10);
+    const av=new Date(Date.now()-2*86400000).toISOString().slice(0,10);
+    S.foodLog=[{date:hier,meal:'midi',name:'Assiette maison',kcal:600,prot:40,carbs:60,fat:20,ts:1001,
+                v:1,saisie:'manuel',origine:'utilisateur',q:2,u:'portion',per100:null},
+               {date:av,meal:'midi',name:'Assiette maison',kcal:600,prot:40,carbs:60,fat:20,ts:1002,
+                v:1,saisie:'manuel',origine:'utilisateur',q:2,u:'portion',per100:null}];
+    persist();
+    const rh=(typeof _repasHabituels==='function')?_repasHabituels():[];
+    o.rejouable=rh.length;
+    if(rh.length){ rejouerRepas(rh[0].sig,'midi'); await d(320); o.rejeu=der(); }
+    return o;
+   }catch(e){ return {err:String(e&&e.message||e)}; }
+  });
+  console.log('\n== BLOC CCLXXX — 🍽️ P1 : « portion » devient une vraie unité (ft-v1183) ==');
+  if(P.err){ t('CCLXXX bloc exécuté',false,P.err); }
+  else{
+    t('CCLXXX ① ⭐⭐ « ×2 » S\'ENREGISTRE : q=2 · u=portion · totaux 600 (avant : q:null, u:null)',
+      P.x2 && P.x2.ligne.q===2 && P.x2.ligne.u==='portion'
+      && P.x2.ligne.kcal===600 && P.x2.ligne.prot===40 && P.x2.ligne.carbs===60 && P.x2.ligne.fat===20,
+      JSON.stringify(P.x2&&P.x2.ligne));
+    t('CCLXXX ② ⛔ LA RÉFÉRENCE NE SE RÉÉCRIT PAS : `_afRef.base` reste 300 pendant que l\'écran montre 600',
+      P.x2 && P.x2.ref.base.kcal===300 && P.x2.ecran[0]===600,
+      JSON.stringify(P.x2&&{base:P.x2.ref.base,ecran:P.x2.ecran}));
+    t('CCLXXX ③ ⛔ UNE PORTION NE S\'AFFICHE JAMAIS SANS SA DÉFINITION (consigne de Michel)',
+      P.x2 && /2 portions/.test(P.x2.texte) && /1 portion = 300 kcal/.test(P.x2.texte)
+      && /poids inconnu/.test(P.x2.texte), P.x2&&P.x2.texte);
+    t('CCLXXX ④ REPRISE PAR « MES ALIMENTS » : écran 600, référence 300, q=2 réenregistré',
+      P.reprise && P.reprise.ecran[0]===600 && P.reprise.base.kcal===300
+      && P.reprise.ligne.q===2 && P.reprise.ligne.u==='portion' && P.reprise.ligne.kcal===600,
+      JSON.stringify(P.reprise));
+    t('CCLXXX ⑤ ⭐ LA PORTE JUMELLE (recherche dans le journal) fait exactement pareil — R8',
+      P.recherche && P.recherche.ecran[0]===600 && P.recherche.base.kcal===300
+      && P.recherche.unite==='portion', JSON.stringify(P.recherche));
+    t('CCLXXX ⑥ POIDS CONNU PLUS TARD : 2 portions pesées 500 g → q=500 g, per100 = 120 kcal',
+      P.pesee && P.pesee.q===500 && P.pesee.u==='g' && P.pesee.per100 && P.pesee.per100.kcal===120
+      && P.pesee.kcal===600, JSON.stringify(P.pesee));
+    t('CCLXXX ⑦ ⛔⛔ LE GARDE : onglet ⚖️ grammes SANS poids → aucune unité inventée (q:null)',
+      P.grammesSansPoids && P.grammesSansPoids.q==null && P.grammesSansPoids.u==null,
+      JSON.stringify(P.grammesSansPoids));
+    t('CCLXXX ⑧ ⛔ A → B : le ×3 de A ne contamine pas B (q=1, totaux de B)',
+      P.aVersB && P.aVersB.ecran[0]===200 && P.aVersB.ligne.q===1
+      && P.aVersB.ligne.kcal===200, JSON.stringify(P.aVersB));
+    t('CCLXXX ⑨ ⛔⛔ RETOUCHE À LA MAIN → le compteur repart à 1 (l\'écran EST une portion)',
+      P.retouche && P.retouche.ligne.q===1 && P.retouche.ligne.kcal===600
+      && P.retouche.ligne.prot===45, JSON.stringify(P.retouche));
+    t('CCLXXX ⑩ AJOUT DIRECT depuis la liste : la portion est recopiée (q=2, pas null)',
+      P.direct && P.direct.q===2 && P.direct.u==='portion' && P.direct.kcal===600,
+      JSON.stringify(P.direct));
+    t('CCLXXX ⑪ ÉCRAN D\'ÉDITION : « 2 portions » AVEC sa définition, pas « 2 portion » nu',
+      P.edit && /2 portions/.test(P.edit.texte) && /1 portion = 300 kcal/.test(P.edit.texte)
+      && P.edit.val==='2', P.edit&&P.edit.texte);
+    t('CCLXXX ⑫ ⭐ ×3 DANS L\'ÉDITION s\'enregistre : 900 kcal · q=3 · u=portion',
+      P.edit && P.edit.sauve.kcal===900 && P.edit.sauve.prot===60
+      && P.edit.sauve.q===3 && P.edit.sauve.u==='portion', JSON.stringify(P.edit&&P.edit.sauve));
+    t('CCLXXX ⑬ ⭐ L\'ÉTAT « BOUTONS » DE L\'ÉDITION : un ×2 y descend jusqu\'à la donnée (q=2)',
+      P.editBoutons && P.editBoutons.aProp===false && P.editBoutons.aGrams===false
+      && P.editBoutons.ecran && P.editBoutons.ecran[0]===600
+      && P.editBoutons.sauve.q===2 && P.editBoutons.sauve.u==='portion'
+      && P.editBoutons.sauve.kcal===600, JSON.stringify(P.editBoutons));
+    t('CCLXXX ⑭ ⛔ LE REJEU D\'UN REPAS ne tue plus la portion (q=2 conservé)',
+      P.rejouable>0 && P.rejeu && P.rejeu.q===2 && P.rejeu.u==='portion' && P.rejeu.kcal===600,
+      JSON.stringify({n:P.rejouable,rejeu:P.rejeu}));
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

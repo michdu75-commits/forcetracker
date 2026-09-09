@@ -20,7 +20,28 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1182` — 🔎 **les résultats de recherche d'aliments étaient
+- **Version en ligne (live) :** `ft-v1183` — 🍽️ **« portion » devient une VRAIE unité, et le
+  multiplicateur n'avait aucun propriétaire.**
+  ⛔⛔ **Mesuré avant de coder** (sa consigne : *audit avant code*) : on saisit 300 kcal, on tape
+  **« ×2 »**, l'écran affiche 600 — et la ligne partait en **`q:null, u:null, per100:null`**.
+  *« 2 portions de 300 » se fossilisait en « 1 portion de 600 ».*
+  ⭐ **La cause, en deux morceaux** : `_afApplyPortion` ne réécrivait que les 4 champs (le
+  multiplicateur n'était écrit **nulle part**), et `_provFood` n'avait **aucune branche** pour
+  l'unité « portion ». *En grammes la quantité affichée vit dans `af-prop` ; en portions, nulle part.*
+  ⭐⭐ **Et l'audit a réduit le travail** : sur 8 chemins tracés, l'**écran d'édition savait déjà
+  faire** (`q:2, u:'portion'` → « Quantité (portion) », ×3 → 900). Les portes cassées étaient
+  toutes du côté **ajout** — R8/R13, la 7ᵉ fois.
+  ⚠️ **3 écarts assumés à la spec, chacun mesuré** : pas de renommage `referenceType`… (les noms
+  internes existent, R33) · pas de `portion_weight_g` (dès que le poids est connu on bascule en
+  grammes et le pour-100 g se calcule : cet état **n'existe pas**, R3) · pas de `portion_label`
+  stocké (il se dérive, R2). **L'exigence d'affichage, elle, est tenue** : *« Tu notes 2 portions
+  (1 portion = 300 kcal, poids inconnu) »*, propriétaire unique lu par les deux écrans.
+  ⚠️ **Comportement qui change** : un aliment tapé à la main s'enregistre en `q:1, u:'portion'`
+  au lieu de `q:null` — donc **redimensionnable plus tard** au lieu de naître mort.
+  ⛔ **Les lignes déjà abîmées ne sont pas réparées** (la migration reste un chantier à part).
+  Bloc **CCLXXX 14/14** · **10 mutations, toutes mordent**, 7 chirurgicales.
+
+- **Version précédente :** `ft-v1182` — 🔎 **les résultats de recherche d'aliments étaient
   calculés mais tombaient SOUS l'écran.**
   ⛔⛔ Michel : *« quand je tape coquillette, je n'ai aucun résultat »* — **ce n'était ni la donnée
   ni la recherche** : `coquillette` rendait déjà 9811 · 167 kcal, 6 lignes, posées à `top:1382` sur

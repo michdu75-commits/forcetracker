@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1182`** (prochaine : `ft-v1183`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1183`** (prochaine : `ft-v1184`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,47 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1183 — 🍽️ « PORTION » DEVIENT UNE VRAIE UNITÉ — ET LE MULTIPLICATEUR N'AVAIT AUCUN PROPRIÉTAIRE** — cahier des charges de Michel (P1), avec sa consigne d'ouverture : ***« avant de modifier quoi que ce soit, tracer tous les lecteurs/écrivains »***. **Audit avant code, et c'est l'audit qui a fixé le périmètre.**
+
+**⭐⭐ LE GESTE, MESURÉ AVANT D'ÉCRIRE UNE LIGNE** : on saisit 300 kcal, on tape **« ×2 »**, l'écran affiche bien **600** — et la ligne partait en **`q:null, u:null, per100:null`**. 👉 ***« 2 portions de 300 » se fossilisait en « 1 portion de 600 »***, et plus rien ne pouvait la redimensionner. C'est la mort exacte des lignes réparées en ft-v1176.
+
+**⛔⛔ LA CAUSE, EN DEUX MORCEAUX, ET AUCUN CALCUL N'ÉTAIT FAUX** : `_afApplyPortion` ne faisait **QUE** réécrire les 4 champs (`_afProp(x)`) — le multiplicateur n'était écrit **nulle part**, `_afRef` restait `{base:300, q:1, u:''}` — et `_provFood` n'avait **aucune branche** pour l'unité « portion », sa liste blanche n'acceptant que les grammes. ⭐ **En grammes, la quantité affichée vit dans le champ `af-prop` ; en portions, elle ne vivait nulle part.** `_afPortions` est sa jumelle exacte (**R2**).
+
+**⭐⭐ ET L'AUDIT A TROUVÉ AUTRE CHOSE, QUI A RÉDUIT LE TRAVAIL** — les 8 chemins tracés, mesurés un par un sur une ligne `q:2, u:'portion'` :
+
+| chemin | avant |
+|---|---|
+| stockage · liste · favori · export CSV · cloud | ✅ passe-plats, rien à faire |
+| **`quickFillFood`** (reprise « Mes aliments ») | ⛔ `{q:1,u:''}` — les 600 redevenaient **une** portion |
+| **`quickAddFood`** (ajout direct) | ⛔ `q:null` |
+| **`_afSuggPrendreLocale`** (reprise recherche) | ⛔ idem |
+| **`openEditFood` / `saveEditFood`** | ✅ **savait déjà faire** : « Quantité (portion) », ×3 → 900, sauve `q:3` |
+
+👉 ***Les portes cassées étaient toutes du côté AJOUT.*** On n'a donc rien inventé : on a porté sur les portes jumelles ce qui existait déjà (**R8/R13**), pour la **7ᵉ** fois recensée dans ce fichier.
+
+**⚠️ TROIS ÉCARTS ASSUMÉS À LA SPEC, CHACUN AVEC SA MESURE** — je les dis parce qu'ils changent ce qui est construit :
+- ⛔ **pas de renommage** `referenceType`/`referenceQuantity`/`totals` : les noms internes existent déjà (`q`/`u`/`per100`) et sont relus partout — les renommer casserait tous les lecteurs pour zéro gain (**R33** : un seul nom interne par grandeur, il est **déjà** posé) ;
+- ⛔ **pas de champ `portion_weight_g`** : **mesuré**, déclarer le poids fait basculer en grammes et calcule déjà le pour-100 g (2 portions pesées 500 g → `q:500, u:'g', per100:120`). *« Portion + poids connu » n'existe pas comme état* — ce champ ne se remplirait jamais (**R3** : qui le produit ?) ;
+- ⛔ **pas de `portion_label` stocké** : il se **dérive** des totaux et de `q`, et deux copies finiraient par diverger (**R2**).
+
+**⭐ MAIS LA CONSIGNE D'AFFICHAGE EST TENUE, ET C'EST ELLE QUI COMPTE** : `_portionDefTexte` est le **propriétaire unique** du texte, lu par l'écran d'ajout **et** par celui d'édition. Il dit toujours à quoi une portion correspond **et** ce qu'on ignore — *« Tu notes **2 portions** (1 portion = 300 kcal, poids inconnu) »*. ⛔ L'écran d'édition affichait **« 2 portion »** nu : sans définition, et au singulier.
+
+**⛔⛔ LE GARDE QUI N'EST PAS DÉCORATIF, ET QUE LA MESURE A EXIGÉ** : l'onglet **⚖️ En grammes**, *avant* qu'un poids soit déclaré, pose **lui aussi** `_afRef={q:1,u:''}`. Sans le test sur `_afUnite`, quelqu'un qui hésite sur cet onglet verrait sa ligne enregistrée **en « portions »** — une unité qu'il n'a pas choisie (**R29**). Un témoin le fige.
+
+**⛔ L'INVARIANT ft-v1061, APPLIQUÉ AUX PORTIONS** : quand l'écran redevient la référence (retouche d'une macro à la main), le multiplicateur **repart à 1** — *ce qui est affiché est, par définition, **une** portion de lui-même*. Sans ça, un ×2 suivi d'une correction enregistrerait « 2 portions » pour des totaux qui sont **déjà** ceux de deux portions.
+
+**⚠️ DEUX TROUS TROUVÉS PAR LA MESURE APRÈS MON PREMIER CORRECTIF, ET FERMÉS** : ① `quickAddFood` **filtrait encore en amont** (`q:null` si l'unité n'est pas `g`) — *une porte ouverte en aval ne sert à rien si l'amont filtre encore* ; ② `rejouerRepas` **forçait** `q:null,u:null` à l'écriture, donc rejouer un repas aurait **tué les portions qu'on venait de sauver**. *Les deux ne se voyaient pas à la relecture ; la sonde les a rendues évidentes.*
+
+**⚠️ CHANGEMENT DE COMPORTEMENT À CONNAÎTRE** : un aliment tapé à la main et validé tel quel s'enregistre désormais en **`q:1, u:'portion'`** au lieu de `q:null`. C'est exactement ce que l'écran annonce (*« les 4 valeurs ci-dessous sont 1 portion »*), et c'est ce qui rend la ligne **redimensionnable plus tard** au lieu de naître morte.
+
+**📣 RÈGLE D'OR #11 — LE BOUTON CHOISI S'ALLUME** et la définition s'écrit sous les boutons : l'annonce est **à l'écran, au moment où ça sert**. Aucune pop-up, rien à faire — mais *un choix invisible est un choix qu'on ne peut pas vérifier* (**R24/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les lignes déjà abîmées ne sont pas réparées** — la migration reste un chantier à part, intact. ⛔ Ni le cru/cuit, ni l'affichage de la quantité dans « Déjà noté par toi », ni `alias.json`/CIQUAL, ni la recherche mobile : sa liste de non-touche, respectée. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+Tests : **parcours PASSE_PARCOURS** (+14, bloc **CCLXXX**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 10 MUTATIONS, TOUTES MORDENT**, dont **7 chirurgicales à 1 rouge** — ① la branche portion de `_provFood` retirée → **5 rouges** · ② ⭐ le garde `_afUnite` retiré → **1**, exactement le témoin de l'hésitation · ③ `_afApplyPortion` qui n'enregistre plus → **4** · ④ et ⑤ chacune des deux portes de reprise → **1** chacune · ⑥ l'invariant retiré → **1** · ⑦ la définition retirée → **2** · ⑧ `saveEditFood` → **1** · ⑨ le filtre amont de `quickAddFood` → **1** · ⑩ le rejeu de repas → **1**. ⚠️ **Honnêteté sur la ③** : ses 4 rouges incluent le témoin de la **définition** — c'est le même défaut vu deux fois (le texte lit `_afPortions`), pas deux détections indépendantes. ⭐⭐ **Et un témoin a été ajouté parce qu'une porte n'en avait aucun** : l'état « boutons de portion » de l'écran d'édition n'a **ni `ef-grams` ni `ef-prop`**, donc `saveEditFood` n'y voyait rien ; *sans témoin, cette porte aurait ressemblé à de la décoration et le contrôle négatif l'aurait déclarée morte* (leçon ft-v1180).
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1183. |
 
 **ft-v1182 — 🔎 LES RÉSULTATS DE RECHERCHE ÉTAIENT CALCULÉS, ILS TOMBAIENT SOUS L'ÉCRAN** — Michel : ***« dans l'écran Mes aliments, quand je tape coquillette, je n'ai aucun résultat »***. ⚠️ **Et il m'avait repris à juste titre** : j'avais testé `_ciqualChercher` **en direct**, pas le chemin de son écran.
 
@@ -673,33 +714,6 @@ Tests : **parcours 3339/3339 sur l'arbre FUSIONNÉ avec la ft-v1176 de session-B
 
 Tests : **parcours 3323/3323** (+11, bloc **CCLXXIV**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⭐⭐ **Les témoins CONDUISENT `finalImportProg`** et lisent le repos que les **séries** portent à l'arrivée — *vérifier `_secRepos` ne prouverait rien du chemin* (leçon de ft-v1158, payée trois fois). ⛔ Et le prompt serveur est **extrait de `Code.js` et lu** : *un `grep` sur « repos » attraperait la phrase qui parle d'ignorer une page sommaire*. ⚠️⚠️ **ET LA PASSE COMPLÈTE A ROUGI SUR UN TÉMOIN DE ft-v1158, QUI FAISAIT SON TRAVAIL.** Il vérifiait que `setTypePerSet` est dans le schéma d'exemple… avec un motif qui codait en dur le champ **suivant** (`,"note"`). Mon insertion de `rest`/`restPerSet` s'est glissée entre les deux : **rouge**, alors que la garantie — *le champ est dans le schéma, à vide* — restait parfaitement vraie. 👉 ***Un témoin qui fige plus que sa garantie rougit sur des changements légitimes, et on finit par le desserrer pour de mauvaises raisons.*** Motif resserré sur **exactement** sa garantie, et **éprouvé** : retirer le champ du schéma le fait toujours rougir. *Ce n'est pas un assouplissement, c'est une mise au point* — la différence se mesure, et je l'ai mesurée. ⛔ **CONTRÔLE NÉGATIF : 5 mutations, toutes mordent** — ① le `\b` remis → **2 rouges**, dont la forme collée · ② le champ retiré du **schéma** → **1 rouge** · ③ la règle 9 qui n'interdit plus d'inventer → **1 rouge** · ④ la règle qui ne nomme plus les valeurs variables → **1 rouge** · ⑤ ⭐ `_secRepos` qui **invente 90** au lieu de rendre 0 → **2 rouges**, exactement les deux témoins de la nuance de Michel. Fichiers : `constants.js`, `Code.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1176. |
 
-**ft-v1175 — ⛔ UNE CIBLE DE SYNONYME QUI N'EXISTE PLUS, ET LE RAPPROCHEUR ÉTAIT SÛR À 95 %** — Michel conteste un de mes classements : ***« curl ischios c'est leg curl ischios et rien a voir avec poussée de hanche hein »***.
-
-**⭐ IL AVAIT RAISON SUR LES DEUX POINTS.** ① Je les avais mis **dans la même ligne d'un tableau** — ils n'ont en commun que la *raison* pour laquelle je les avais écartés, pas le mouvement ; ça se lisait comme si je les rapprochais. ② Et cette raison était **fausse** pour le sien : mesuré, `leg curl` rendait **95 % en `auto`** quand `curl ischios` rendait **33 % en `confirm`**. ***Le même exercice, deux réponses différentes.*** C'est `abducteurs`/`adducteurs` une **2ᵉ fois** — **R8** sur le vocabulaire.
-
-**⛔⛔ ET EN VÉRIFIANT SON POINT, JE SUIS TOMBÉ SUR BIEN PIRE — MESURÉ DE BOUT EN BOUT SUR UN VRAI IMPORT.** « Leg curl » était rapproché en **`auto` à 95 %** vers **« Curl Ischio-jambiers (Leg Curl) »** — un nom **renommé depuis** en « Leg Curl Couché Machine », donc **absent d'EXLIB**. Résultat : **un exercice perso créé**, sans photo ni figurine ni historique, et un nom sans aucune fiche écrit dans le programme.
-
-**👉 C'EST LE PIRE DES DEUX CAS : l'app est SÛRE D'ELLE et elle a tort.** ⛔⛔ Et **la marque orange de ft-v1166 ne se déclenche pas**, puisque c'est `auto` : *ça passe entièrement sous le radar — personne ne peut le voir.*
-
-**⚠️ POURQUOI LE FILET N'A PAS JOUÉ** : `exNomActuel` rattrape bien les anciens noms… mais il vit dans la **RECHERCHE** (`filterEx`), pas dans le rapprochement. `_matchExercise` rendait le nom mort **tel quel**, et c'est **lui** que l'import écrit. ***Un rattrapage posé sur un seul des deux lecteurs RESSEMBLE à un rattrapage*** (**R8**).
-
-**⛔ ON CORRIGE LA DONNÉE, PAS LE MOTEUR** (la règle de ft-v1170) : `_matchExercise` n'est pas touchée. Les **4** clés qui désignent bien un leg curl machine/poulie pointent vers le **nom actuel** — *la destination ne change pas, c'est déjà là qu'`exNomActuel` menait ; seul le nom cesse d'être un fantôme.*
-
-**⛔⛔ ET LES DEUX AUTRES SONT RETIRÉES, PAS REDIRIGÉES (R30).** Un **nordic curl** et un **ham curl TRX** sont au **poids du corps** ; les envoyer vers une machine **couchée** serait exactement le « synonyme FAUX » qu'on refuse partout ailleurs — *il fusionnerait en silence l'historique de deux exercices très différents*. Vérifié : le catalogue n'a ni l'un ni l'autre. Ils redeviennent une **QUESTION** (palier `confirm`), ce qui est honnête et **se voit**.
-
-**⭐ LE POINT DE MICHEL EST APPLIQUÉ** : `curl ischios`, `curl ischio`, `curl ischio jambiers` et `leg curl ischios` rendent tous **95 % en `auto`**, la même réponse que `leg curl`. **Mesuré : 531 clés, 0 cible périmée.**
-
-**⚠️⚠️ MON TÉMOIN DE COHÉRENCE DE ft-v1170 EST DURCI, ET C'EST LA VRAIE LEÇON.** Il acceptait `exNomActuel(cible)` — donc il vérifiait que la clé **mène quelque part**, pas que le nom **rendu** soit utilisable. **Il était VERT** pendant que « leg curl » écrivait un exercice fantôme dans les programmes. 👉 ***Un contrôle qui accepte le rattrapage ne voit pas que le rattrapage n'a pas lieu.*** On exige désormais que la cible existe **telle quelle**.
-
-**⚠️ ET DEUX TÉMOINS DE ft-v1172 SONT RETOURNÉS, PAS ADOUCIS (R30).** Ce matin j'y avais figé *« curl ischios reste une question »* ; Michel a démontré le contraire **le jour même**. *Ce n'est pas un témoin qu'on assouplit pour faire passer du code : c'est la RÈGLE qu'il figeait qui a changé — et on écrit laquelle, par qui et quand.* ⛔ La « poussée de hanche », elle, garde ses **4 variantes sans générique** : elle reste une question, et son témoin reste.
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change ; un import qui fabriquait un exercice fantôme tombe sur la bonne fiche (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS, ET DEUX PISTES MESURÉES EN CHEMIN** : ⛔ **les programmes déjà importés ne sont pas réécrits** (**R29**). ⛔ **Et ça ne résout pas le problème de fond que Michel soulève dans la foulée** : *« une personne qui connait va voir le truc mais une personne qui ne connait pas »*. ① **Son idée est exacte, vérifiée dans le code** : l'import ne lit pas le texte du PDF, `_pdfToImages` **rend chaque page en JPEG 1200 px** — *le modèle VOIT donc déjà les photos et les schémas*, on ne lui demande pas de s'en servir ; la consigne coûte quelques dizaines de jetons. ② ⭐⭐ **Plus fort parce que vérifiable** : l'aperçu n'affiche que le **nom** alors que `_exImg` existe — *« Curl Ischio-jambiers (Leg Curl) » sonne parfaitement juste, mais sa vignette aurait été VIDE*. **Une vignette absente est un signal qu'aucun texte ne donne**, et quelqu'un qui ne connaît aucun nom **reconnaît une machine sur une photo**. ③ **Et le TEMPS DE REPOS du PDF n'est pas appliqué** — mesuré : le tuyau est **complet** (`rest:180` → appliqué · `restPerSet` → par série · `rest:"2 min"` → 120 s · `rest:"90-120s"` → **0, rien d'inventé**, exactement la nuance de Michel). *Il ne manque QUE le champ dans le schéma du prompt serveur.* **R8 à l'envers : un lecteur qui attend un champ que personne ne produit.**
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1021**, conclusion `success` à **15:39:58 UTC** sur `16ee78ee`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés).
-
-Tests : **parcours 3312/3312 sur l'arbre FUSIONNÉ avec la ft-v1174 de session-A** (+8, bloc **CCLXXIII**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 5 mutations** — ① la cible périmée remise → **3 rouges** · ② seules les formes anglaises corrigées → **1 rouge**, exactement le point de Michel · ③ les formes « poulie » oubliées → **1 rouge**, la porte jumelle · ④ le synonyme faux remis → **2 rouges** · ⑤ ⭐ une cible périmée **ailleurs** → **1 rouge**, exactement le témoin durci — *c'est celle qui prouve que le durcissement sert à quelque chose*. Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `IDEES-FUTURES.md`. sw.js ft-v1175. |
 
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
