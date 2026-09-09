@@ -22,6 +22,7 @@
 
 - **Version en ligne (live) :** `ft-v1184` — ⏱️ **LA MISE À JOUR VOLAIT LE DÉBRIEF DE FIN DE
   SÉANCE**, et c'est **Michel** qui a trouvé la cause.
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1049**, `success` à **16:09:35 UTC**.
   ⏳ **Suite complète VERTE** : parcours **3424/3424** (+9, bloc **CCLXXXI**), calculs 339/339,
   muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
   ⭐ Il signale d'abord : *« quand on fait la séance avec Milo on a un débrief, mais quand on
