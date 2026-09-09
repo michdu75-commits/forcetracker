@@ -32358,6 +32358,231 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
   await cx.close();
 }
 
+/* ═══ CCLXXXI. LA MISE À JOUR VOLAIT LE DÉBRIEF DE FIN DE SÉANCE (09/09/2026, ft-v1184) ══════
+   ⭐⭐ LA CAUSE EST DE MICHEL, PAS DE MOI : « il n'y a pas de mise à jour pendant une séance mais
+   dès qu'on fait terminé la mise à jour se fait et donc on ne voit pas le débrief ». Puis la
+   règle, de lui aussi : « à partir du moment où on valide / on sort de la fenêtre du débrief, là
+   on peut faire la mise à jour ».
+   ⛔⛔ REPRODUIT : au moment du rechargement, `_majPeutSAppliquer` voit
+   `écran=home · séance ouverte=false · récap ouvert=false` — LES TROIS GARDES TOMBENT ENSEMBLE.
+   `finishWorkout` vide `S.wkt`, fait `goScreen('home')`, puis attend `syncSheets` PLUSIEURS
+   SECONDES, et n'ouvre l'écran de fin qu'après.
+   👉 *Le garde `ov-session-end` protège une fenêtre qui n'est pas encore ouverte.*
+   ⭐ R13 — le verrou existait (`_finishing`, posé au début et levé sur ses 5 sorties) ; il
+   manquait UN LECTEUR, pas un mécanisme. */
+{
+  const R = await p.evaluate(async()=>{
+   try{
+    const o={}; const T=[];
+    o.existe = typeof _majPeutSAppliquer==='function' && typeof finishWorkout==='function'
+            && typeof closeSessionEnd==='function';
+    /* ⛔ On NEUTRALISE le rechargement mais on garde la DÉCISION — c'est elle qu'on mesure.
+       Recharger pour de vrai détruirait le contexte du test (mesuré : « Execution context was
+       destroyed »), donc on ne saurait plus RIEN. */
+    const vrai=window._appliquerMaj;
+    window._appliquerMaj=function(){
+      const ok=_majPeutSAppliquer();
+      if(ok){ T.push({ecran:window._curScreen}); window._swReloadPending=false; }
+      return ok;
+    };
+    const of=window.fetch;
+    window.fetch=function(u){ if(/script\.google|workers\.dev/.test(String(u)))
+      return Promise.resolve(new Response(JSON.stringify({reply:'ok'}),{status:200,headers:{'Content-Type':'application/json'}}));
+      return of.apply(this,arguments); };
+    const seance=()=>{ S.wkt={date:today(),progLabel:'Ma séance',startTs:Date.now()-3600e3,startHour:10,
+      exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true},{kg:100,reps:5,done:true}]}]}; persist(); };
+    const ouvert=()=>{ const ov=document.getElementById('ov-session-end');
+      return !!(ov&&ov.classList.contains('open')); };
+
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION — on rejoue SA séance, avec une mise à jour EN ATTENTE. */
+    S.sessions=[];S.prs={};persist(); T.length=0;
+    seance(); window._swReloadPending=true;
+    await finishWorkout(); await new Promise(r=>setTimeout(r,600));
+    o.rechargePendant = T.length;              // 0 attendu (1 avant le correctif)
+    o.ecranDeFinVisible = ouvert();
+    o.majEncoreEnAttente = !!window._swReloadPending;
+    /* ⛔⛔ ET PENDANT QU'ON LIT LE DÉBRIEF — c'est le contrôle négatif qui a exigé ce témoin :
+       la mutation « garde du récap retiré » ne faisait rougir PERSONNE, parce qu'aucun de mes
+       témoins ne tentait une mise à jour PENDANT que l'écran est affiché.
+       ⭐ Or ce cas est RÉEL et fréquent : taper son ressenti sur l'écran de fin appelle
+       `setDayEnergy` → `persist()` → `_appliquerMaj()`. Michel peut rester une minute sur cet
+       écran (le débrief de Milo arrive après coup) — c'est le garde `ov-session-end` qui tient
+       tout ce temps-là, `_finishing` étant déjà levé. *Les deux gardes se relaient ; il fallait
+       un témoin pour chacun.* */
+    T.length=0; window._swReloadPending=true;
+    if(typeof _seSetMood==='function') _seSetMood(2);   // le vrai geste : « comment tu t'es senti »
+    else persist();
+    await new Promise(r=>setTimeout(r,200));
+    o.rechargePendantLecture = T.length;      // 0 attendu
+    o.ecranTientPendantLecture = ouvert();
+    /* ⭐ LA MOITIÉ QUE MICHEL A DEMANDÉE : elle repart dès qu'on SORT. */
+    closeSessionEnd('home');
+    await new Promise(r=>setTimeout(r,300));
+    o.rechargeApresSortie = T.length;          // ≥1 attendu
+    o.ecranApres = window._curScreen;
+
+    /* ⛔ SORTIE VERS LE COACH : elle attend, exprès — on ne recharge pas quelqu'un au milieu
+       d'une conversation avec Milo. C'est la règle « on n'applique que sur l'Accueil », et ce
+       témoin la FIGE pour qu'on ne l'élargisse pas par mégarde. */
+    S.sessions=[];S.prs={};persist(); T.length=0;
+    seance(); window._swReloadPending=true;
+    await finishWorkout(); await new Promise(r=>setTimeout(r,600));
+    closeSessionEnd('coach');
+    await new Promise(r=>setTimeout(r,300));
+    o.rechargeVersCoach = T.length;            // 0 attendu
+    o.majApresCoach = !!window._swReloadPending;
+
+    /* ⛔⛔ LE VERROU DOIT SE LEVER SUR LES SORTIES EN ÉCHEC — sinon plus AUCUNE mise à jour ne
+       s'applique jamais, et on aurait échangé un bug visible contre un bug muet. Les trois refus
+       de `finishWorkout` : pas de séance · pas d'exercice · aucune série validée. */
+    const refus=async(prep)=>{ S.sessions=[];S.prs={};persist(); prep();
+      try{ await finishWorkout(); }catch(e){}
+      return (typeof _finishing!=='undefined') ? _finishing : null; };
+    o.refusSansSeance = await refus(()=>{ S.wkt=null; persist(); });
+    o.refusSansExo    = await refus(()=>{ S.wkt={date:today(),startHour:10,exs:[]}; persist(); });
+    o.refusSansSerie  = await refus(()=>{ S.wkt={date:today(),startHour:10,
+      exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:false}]}]}; persist(); });
+    /* ⛔ NON-RÉGRESSION : sans fin de séance ni récap, une mise à jour en attente DOIT partir —
+       sinon le correctif aurait simplement éteint les mises à jour. */
+    S.wkt=null; persist();
+    const ovf=document.getElementById('ov-session-end'); if(ovf)ovf.classList.remove('open');
+    goScreen('home',document.getElementById('nb-home'));
+    T.length=0; window._swReloadPending=true;
+    window._appliquerMaj();
+    o.majNormalePasse = T.length>0;
+
+    window.fetch=of; window._appliquerMaj=vrai; window._swReloadPending=false;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
+  });
+
+  const _aj=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+
+  if(R.err) t('CCLXXXI n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLXXXI ⛔ CONTRÔLE — les 3 fonctions existent', R.existe===true, '');
+    t('CCLXXXI ⭐⭐ AUCUN rechargement pendant la fin de séance (le défaut réparé)',
+      R.rechargePendant===0, 'rechargements : '+R.rechargePendant);
+    t('CCLXXXI ⭐⭐ ... et l\'écran de débrief est bien là, la mise à jour toujours en attente',
+      R.ecranDeFinVisible===true && R.majEncoreEnAttente===true,
+      'écran : '+R.ecranDeFinVisible+' · en attente : '+R.majEncoreEnAttente);
+    t('CCLXXXI ⛔⛔ PENDANT la lecture du débrief : noter son ressenti ne déclenche RIEN',
+      R.rechargePendantLecture===0 && R.ecranTientPendantLecture===true,
+      'rechargements : '+R.rechargePendantLecture+' · écran tient : '+R.ecranTientPendantLecture);
+    t('CCLXXXI ⭐ LA RÈGLE DE MICHEL — dès qu\'on SORT du débrief, la mise à jour repart',
+      R.rechargeApresSortie>R.rechargePendant && R.ecranApres==='home',
+      'après sortie : '+R.rechargeApresSortie+' · écran : '+R.ecranApres);
+    t('CCLXXXI ⛔ sortir vers le COACH ne recharge PAS (on n\'interrompt pas une conversation)',
+      R.rechargeVersCoach===0 && R.majApresCoach===true,
+      'rechargements : '+R.rechargeVersCoach+' · en attente : '+R.majApresCoach);
+    /* ⛔⛔ LES TÉMOINS LES PLUS IMPORTANTS DU BLOC : un verrou qui ne se lève pas est PIRE que
+       pas de verrou — il éteindrait toutes les mises à jour, en silence. */
+    t('CCLXXXI ⛔⛔ le verrou se LÈVE sur les 3 refus de finishWorkout (sinon plus jamais de maj)',
+      R.refusSansSeance===false && R.refusSansExo===false && R.refusSansSerie===false,
+      'sans séance : '+R.refusSansSeance+' · sans exo : '+R.refusSansExo+' · sans série : '+R.refusSansSerie);
+    t('CCLXXXI ⛔ NON-RÉGRESSION — hors fin de séance, une mise à jour en attente s\'applique',
+      R.majNormalePasse===true, 'appliquée : '+R.majNormalePasse);
+    /* ⛔ Le lecteur est DÉFENSIF : `_finishing` vit dans log.js, chargé APRÈS app.js. Sans
+       `typeof`, `_majPeutSAppliquer` lèverait une ReferenceError au premier appel. */
+    t('CCLXXXI ⛔ le lecteur de `_finishing` est protégé par `typeof` (autre fichier)',
+      /typeof _finishing!=='undefined' && _finishing\) return false;/.test(_aj)
+      || /typeof _finishing!=='undefined'\s*&&\s*_finishing\)\s*return false;/.test(_aj), '');
+  }
+}
+
+/* ═══ CCLXXXII. LE DÉBRIEF SUR TOUTES LES COMBINAISONS DE SÉANCE (09/09/2026, ft-v1185) ══════
+   Michel, après ft-v1184 : « on est bien d'accord que le débrief il faut le faire pour une séance
+   créée, ensuite une séance par rapport à un programme, et une séance avec Milo, et aussi le
+   cardio, et aussi si il y a le cardio plus une séance — enfin toutes les possibilités qui peuvent
+   y avoir, sans rien casser et en vérifiant bien que ça ne crée pas de bugs ».
+   ⭐⭐ LA LISTE EST TIRÉE DU CODE, PAS INVENTÉE : SEPT portes créent une séance — `startWorkout`,
+   `lancerTypeSeance`, `renderLog`, `addExercise`, `_appliqueMiloSession`, `_loadProgDayVraiment`
+   (multi-jours) et `_loadProgVraiment` (un seul jour). *J'en avais testé DEUX sur sept.*
+   ⛔ RÉSULTAT DU BALAYAGE : les 12 combinaisons donnaient DÉJÀ un débrief — il n'y avait rien à
+   réparer. Ce bloc n'apporte donc pas un correctif mais une GARANTIE (R17/R35 : chaque cas vécu
+   devient un témoin permanent). *Un balayage qu'on ne fige pas est un balayage à refaire.*
+   ⚠️⚠️ ET IL A ÉTÉ ÉPROUVÉ AVANT D'ÊTRE CRU : en neutralisant `_showSessionEnd`, LES 12
+   ROUGISSENT. *Un contrôle tout vert qu'on n'a pas vu échouer ne mesure rien* (ft-v994).
+   ⚠️ LE CARDIO S'ÉCRIT `duration`, PAS `min` — et ça m'a coûté un FAUX BUG annoncé à Michel le
+   09/09 : ma sonde employait `min`, donc le cardio n'était pas reconnu et j'ai cru qu'un cardio
+   seul n'ouvrait pas d'écran de fin. *Un test qui n'emploie pas le schéma de la production ne
+   teste rien : il fabrique un faux bug.* */
+{
+  const CAS=[
+    ["① séance créée à la main (startWorkout)", "startWorkout(); addExercise('Squat à la Barre'); S.wkt.exs[0].sets.forEach(s=>{s.kg=100;s.reps=5;s.done=true;});"],
+    ["② carte type de séance (lancerTypeSeance)", "if(typeof lancerTypeSeance==='function'&&typeof DISC_SEANCE!=='undefined'){lancerTypeSeance(Object.keys(DISC_SEANCE)[0]);}else{startWorkout();addExercise('Squat à la Barre');} (S.wkt.exs||[]).forEach(e=>e.sets.forEach(s=>{s.kg=50;s.reps=10;s.done=true;}));"],
+    ["③ ajout direct d'un exercice (addExercise)", "addExercise('Développé Couché'); S.wkt.exs[0].sets.forEach(s=>{s.kg=80;s.reps=8;s.done=true;});"],
+    ["④ SÉANCE DE MILO (_appliqueMiloSession)", "_appliqueMiloSession([{name:'Squat à la Barre',sets:[{kg:100,reps:5,type:'N'}]}],{label:'Séance de Milo'},'new',null); (S.wkt.exs||[]).forEach(e=>e.sets.forEach(s=>{s.done=true;}));"],
+    ["⑤ programme MULTI-JOURS (_loadProgDayVraiment)", "S.programmes=[{id:'p',name:'PB',weeks:4,startDate:'',days:[{label:'J2',exs:[{name:'Squat à la Barre',note:'',sets:[{kg:100,reps:5,type:'N'}]}]}]}];persist(); _loadProgDayVraiment(0,0); (S.wkt.exs||[]).forEach(e=>e.sets.forEach(s=>{s.done=true;}));"],
+    ["⑥ programme UN SEUL JOUR (_loadProgVraiment)", "S.programmes=[{id:'q',name:'Full',weeks:4,startDate:'',exs:[{name:'Développé Couché',note:'',sets:[{kg:80,reps:8,type:'N'}]}]}];persist(); _loadProgVraiment(0); (S.wkt.exs||[]).forEach(e=>e.sets.forEach(s=>{s.done=true;}));"],
+    ["⑦ CARDIO SEUL (après)", "startWorkout(); S.wkt.exs=[]; S.wkt.cardio={type:'velo',intensity:'modere',duration:30};"],
+    ["⑧ CARDIO SEUL (échauffement AVANT)", "startWorkout(); S.wkt.exs=[]; S.wkt.cardioAvant={type:'elliptique',intensity:'facile',duration:15};"],
+    ["⑨ CARDIO avant + après, sans muscu", "startWorkout(); S.wkt.exs=[]; S.wkt.cardioAvant={type:'elliptique',intensity:'facile',duration:10}; S.wkt.cardio={type:'velo',intensity:'modere',duration:20};"],
+    ["⑩ CARDIO + MUSCU", "startWorkout(); addExercise('Squat à la Barre'); S.wkt.exs[0].sets.forEach(s=>{s.kg=100;s.reps=5;s.done=true;}); S.wkt.cardioAvant={type:'elliptique',intensity:'facile',duration:15};"],
+    ["⑪ séance mise en PAUSE puis terminée", "startWorkout(); addExercise('Squat à la Barre'); S.wkt.exs[0].sets.forEach(s=>{s.kg=100;s.reps=5;s.done=true;}); S.wkt.pausedAt=Date.now()-60000;"],
+    ["⑫ SUPERSET (deux exercices groupés)", "startWorkout(); addExercise('Squat à la Barre'); addExercise('Développé Couché'); (S.wkt.exs||[]).forEach(e=>{e.gid='g1';e.gtype='super';e.sets.forEach(s=>{s.kg=60;s.reps=8;s.done=true;});});"]
+  ];
+  const R = await p.evaluate(async(CAS)=>{
+   const out=[];
+   const of=window.fetch;
+   window.fetch=function(u){ if(/script\.google|workers\.dev/.test(String(u)))
+     return Promise.resolve(new Response(JSON.stringify({reply:'Bonne séance.'}),{status:200,headers:{'Content-Type':'application/json'}}));
+     return of.apply(this,arguments); };
+   for(let i=0;i<CAS.length;i++){
+    try{
+      /* ⛔ REMISE À ZÉRO ENTRE CHAQUE CAS — sinon un reste du précédent (overlay encore ouvert,
+         texte du débrief) ferait passer le suivant au vert sans rien prouver. */
+      S.sessions=[];S.prs={};S.programmes=[];S.customExercises=[];S.wkt=null;persist();
+      const ovR=document.getElementById('ov-session-end'); if(ovR)ovR.classList.remove('open');
+      const dR=document.getElementById('se-debrief'); if(dR)dR.innerHTML='';
+      try{localStorage.removeItem('ft4_pending_debrief');}catch(e){}
+      goScreen('log',document.getElementById('nb-log'));
+      eval(CAS[i][1]); persist();
+      await finishWorkout();
+      await new Promise(r=>setTimeout(r,700));
+      const ov=document.getElementById('ov-session-end'), d=document.getElementById('se-debrief');
+      const txt=d?d.textContent.replace(/\s+/g,' ').trim():'';
+      /* ⚠️⚠️ « IL Y A DU TEXTE » NE SUFFIT PAS — le contrôle négatif l'a prouvé : en tuant le
+         socle `_debriefLocal`, `_runSeDebrief` retombe sur un repli de trois lignes écrit à la
+         main, donc le texte reste long et le témoin restait VERT. *Un témoin qui mesure la
+         longueur mesure la longueur, pas le débrief.*
+         👉 On vérifie AUSSI que le socle chiffré produit réellement quelque chose POUR CETTE
+         SÉANCE — c'est lui qui porte le contenu utile, et il ne dépend d'aucun réseau. */
+      /* ⚠️⚠️ ET LA 1ʳᵉ VERSION DE CE CONTRÔLE NE MORDAIT PAS NON PLUS : elle APPELAIT
+         `_debriefLocal` en direct, donc elle restait verte quand `_runSeDebrief` cessait de
+         l'employer. ***Je venais d'écrire §58 sur exactement ça.*** 👉 On vérifie que le texte
+         AFFICHÉ contient bien ce que le socle produit — c'est le CHEMIN, pas la fonction. */
+      let socle=null;
+      try{
+        if(typeof _debriefLocal==='function' && S.sessions[0]){
+          const brut=String(_debriefLocal(S.sessions[0],0,{chiffres:false})||'')
+            .replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+          const bout=brut.slice(0,40);
+          socle = bout.length>20 && txt.indexOf(bout)>=0;
+        }
+      }catch(e){ socle=false; }
+      out.push({n:CAS[i][0], ouvert:!!(ov&&ov.classList.contains('open')),
+                seances:S.sessions.length, debrief:txt.length>20, socle:socle});
+      if(ov)ov.classList.remove('open');
+    }catch(e){ out.push({n:CAS[i][0], err:String(e).slice(0,90)}); }
+   }
+   window.fetch=of;
+   S.sessions=[];S.prs={};S.programmes=[];S.customExercises=[];S.wkt=null;persist();
+   return out;
+  }, CAS);
+
+  if(!Array.isArray(R)) t('CCLXXXII n\'a pas pu tourner', false, String(R));
+  else{
+    R.forEach(r=>{
+      t('CCLXXXII '+r.n+' → écran de fin + séance + débrief',
+        !r.err && r.ouvert===true && r.seances===1 && r.debrief===true && r.socle===true,
+        r.err ? r.err : ('écran : '+r.ouvert+' · séances : '+r.seances+' · débrief : '+r.debrief
+                         +' · socle chiffré : '+r.socle));
+    });
+    t('CCLXXXII ⛔ CONTRÔLE — les 12 combinaisons ont bien été jouées', R.length===12, 'jouées : '+R.length);
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

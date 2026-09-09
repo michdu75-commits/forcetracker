@@ -3423,3 +3423,55 @@ toujours la même : **« quelle entrée emprunte ce chemin, et ma fixture la fab
 échoue en silence ressemble à un témoin inutile) : là c'était la mutation qui ne s'appliquait pas,
 ici c'est la fixture qui n'atteignait pas le code. **Les deux rendent « 0 rouge », et aucune des
 deux ne veut dire « c'est couvert ».***
+
+---
+
+## 58. ⏳ UN TÉMOIN QUI POSE L'ÉTAT FINAL À LA MAIN NE VOIT PAS LE CHEMIN QUI Y MÈNE **(09/09/2026, ft-v1184)**
+
+**Le cas, et il est humiliant parce que tout était déjà écrit.** Le **15/08/2026**, Michel signale :
+*« putain la mise à jour s'est faite au moment où j'ai terminé ma séance, donc j'ai pas vu mon
+récapitulatif »*. Un garde-fou est posé (`ov-session-end` ouvert → pas de rechargement) et un
+témoin permanent est écrit — le **bloc XXII** du banc de parcours.
+**Le 09/09, Michel re-signale exactement le même symptôme.** *Un mois avec le banc au vert.*
+
+**⛔⛔ Ce que le témoin faisait** — il posait les états **à la main** :
+```js
+S.wkt = null; ov.classList.add('open');     // « le récapitulatif est à l'écran »
+o.pendantRecap = _majPeutSAppliquer();      // false ✅
+```
+👉 Il teste l'**état final**, l'écran **déjà** ouvert. Il ne conduit **jamais** `finishWorkout`.
+Or la vraie fenêtre est **avant** : `finishWorkout` vide `S.wkt`, passe à l'accueil, puis **attend
+le réseau plusieurs secondes**, et n'ouvre l'écran de fin qu'après. Pendant tout ce temps les
+trois gardes tombent ensemble, et chaque `persist()` retente la mise à jour.
+
+**⚠️⚠️ ET LE PLUS COÛTEUX : LE COMMENTAIRE DU TÉMOIN NOMMAIT DÉJÀ LA CAUSE**, mot pour mot —
+*« le garde-fou se relâchait à la milliseconde où S.wkt se vide, c'est-à-dire juste avant que
+l'écran de fin s'ouvre »*. **La cause était comprise en août.** Le correctif n'a couvert que
+l'**après**, le témoin a figé l'**après**, et personne n'a vu que l'**avant** restait ouvert.
+
+**🔎 Comment la reconnaître.** Un témoin qui **fabrique** la situation (`x=null`, `classList.add`,
+un objet posé directement) au lieu d'**appeler la fonction de production** qui y mène. Le signe :
+on lit le test et on n'y trouve **aucun appel** au vrai chemin.
+
+**🛡️ Ce qui protège.**
+1. **Conduire la fonction réelle** — ici `finishWorkout()`, pas un état reconstruit.
+2. Se demander, pour chaque garde temporel : *entre quel instant et quel instant tient-il ?*
+   Une fin de séance est une **fenêtre**, pas un instant ; deux gardes se **relaient**
+   (`_finishing` avant l'ouverture, `ov-session-end` après) et **il faut un témoin pour chacun**.
+   ⚠️ Payé au contrôle négatif : ma mutation « garde du récap retiré » ne faisait rougir personne,
+   parce qu'aucun de mes témoins ne tentait une mise à jour **pendant** que l'écran est affiché.
+
+**⚠️⚠️ RECHUTE LE JOUR MÊME, PAR CELUI QUI VENAIT D'ÉCRIRE CETTE FAMILLE (ft-v1185).** En figeant
+le balayage du débrief, j'ai voulu vérifier que le socle chiffré produisait bien quelque chose. Ma
+1ʳᵉ version mesurait la **longueur du texte** — verte alors que le socle était mort, parce qu'un
+repli écrit à la main prend le relais. Ma 2ᵉ version **appelait `_debriefLocal` en direct** — verte
+aussi, parce que la fonction existe toujours : c'est son **usage par l'écran** qui avait disparu.
+👉 ***J'ai écrit §58 puis je l'ai refaite dans l'heure.*** La 3ᵉ version vérifie que le texte
+**affiché** contient ce que le socle produit — le **chemin**, pas la fonction : la mutation fait
+alors **12 rouges**. *Écrire une famille de bugs ne vaccine pas contre elle ; seul le contrôle
+négatif attrape la rechute.*
+
+*Voisine de **§46** (un correctif qu'on ne peut pas vérifier là où il s'applique) et de la leçon de
+ft-v1158 — « vérifier la fonction n'est pas vérifier l'appel » : celle-ci en est la version
+**temporelle** au lieu de spatiale.*
+

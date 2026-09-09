@@ -20,7 +20,55 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1183` — 🍽️ **« portion » devient une VRAIE unité, et le
+- **Version en ligne (live) :** `ft-v1185` — 🧾 **LE DÉBRIEF SUR TOUTES LES COMBINAISONS DE
+  SÉANCE** : balayage complet, et **témoins permanents**.
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1051** `success` sur `9253161e`.
+  ⏳ **Suite complète VERTE** : parcours **3437/3437** (+13, bloc **CCLXXXII**), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  ⭐ **Michel** : *« le débrief il faut le faire pour une séance créée, une séance par rapport à un
+  programme, une séance avec Milo, et aussi le cardio, et le cardio plus une séance — toutes les
+  possibilités, sans rien casser »*.
+  ⭐⭐ **La liste est tirée du CODE** : **7 portes** créent une séance (`startWorkout` ·
+  `lancerTypeSeance` · `renderLog` · `addExercise` · **Milo** · programme **multi-jours** ·
+  programme **un seul jour**). ***J'en avais testé 2 sur 7.***
+  ⛔ **Résultat : les 12 combinaisons donnaient DÉJÀ un débrief — rien à réparer.** La version
+  n'apporte **aucune ligne de production**, seulement une **garantie** (**R17/R35**).
+  ⚠️ **Éprouvé** : en neutralisant `_showSessionEnd`, **les 12 rougissent**.
+  ⚠️⚠️ **Et le contrôle négatif a corrigé mon témoin DEUX fois** — d'abord il mesurait la
+  *longueur* du texte, puis il *appelait* `_debriefLocal` en direct. ***C'est `BUGS.md` §58, que
+  je venais d'écrire une heure plus tôt.*** La bonne version vérifie que le texte **affiché**
+  vient du socle : le **chemin**, pas la fonction.
+  ⏭️ ⛔ Ça ne juge pas la **qualité** du débrief · le seul cas sans écran reste « aucune série
+  cochée », qui est **voulu**.
+- **Version précédente :** `ft-v1184` — ⏱️ **LA MISE À JOUR VOLAIT LE DÉBRIEF DE FIN DE
+  SÉANCE**, et c'est **Michel** qui a trouvé la cause.
+  ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1049**, `success` à **16:09:35 UTC**.
+  ⏳ **Suite complète VERTE** : parcours **3424/3424** (+9, bloc **CCLXXXI**), calculs 339/339,
+  muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou.
+  ⭐ Il signale d'abord : *« quand on fait la séance avec Milo on a un débrief, mais quand on
+  intègre un programme ou on fait sa propre séance, il n'y en a pas »*. **Mesuré : le débrief ne
+  dépend PAS de Milo** — un programme l'ouvre exactement pareil, le seul critère est **au moins
+  une série cochée**.
+  ⭐⭐ **Sa cause, et elle est juste** : *« dès qu'on fait terminé la mise à jour se fait et donc
+  on ne voit pas le débrief »*. ⛔⛔ **Reproduit** : `écran=home · séance ouverte=false · récap
+  ouvert=false` — ***les trois gardes tombent ensemble***, parce que `finishWorkout` vide `S.wkt`,
+  passe à l'accueil, **attend `syncSheets` plusieurs secondes**, et n'ouvre l'écran qu'après.
+  *Le garde `ov-session-end` protège une fenêtre qui n'est pas encore ouverte.*
+  ⭐ **R13** : `_finishing` existait déjà (levé sur ses **5** sorties) — il manquait **un
+  lecteur**, pas un mécanisme. **Une ligne.**
+  ⭐ **Sa règle de sortie appliquée** : Accueil → mise à jour **tout de suite** · Coach → elle
+  **attend** (on n'interrompt pas une conversation avec Milo).
+  ⚠️⚠️ **La vraie leçon** : le **bloc XXII** du banc porte ce symptôme **depuis le 15/08** et son
+  commentaire **nommait la cause**… mais son témoin **pose les états à la main** et ne conduit
+  jamais `finishWorkout`. ***Un témoin qui pose l'état final ne voit pas le chemin qui y mène***
+  — `BUGS.md` **§58**, le banc était vert un mois sur ce bug.
+  📣 **Règle d'or #11 : rien** — aucun écran ne change (**R19/R25**).
+  ⚠️⚠️ **CORRECTION DU JOUR MÊME : il n'y a PAS de bug cardio.** J'avais signalé qu'un cardio
+  seul n'ouvrait pas d'écran de fin — **c'était ma fixture** (`min` au lieu de **`duration`**).
+  Remesuré : écran ouvert, séance enregistrée, débrief présent. ***Un test qui n'emploie pas le
+  schéma de la production fabrique un faux bug.*** ⛔ Le seul cas sans écran reste « aucune série
+  cochée », et il est **voulu** (l'app refuse de terminer et le dit).
+- **Version précédente :** `ft-v1183` — 🍽️ **« portion » devient une VRAIE unité, et le
   multiplicateur n'avait aucun propriétaire.**
   ⛔⛔ **Mesuré avant de coder** (sa consigne : *audit avant code*) : on saisit 300 kcal, on tape
   **« ×2 »**, l'écran affiche 600 — et la ligne partait en **`q:null, u:null, per100:null`**.
