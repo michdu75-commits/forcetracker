@@ -39,7 +39,15 @@
   ⚠️ **Comportement qui change** : un aliment tapé à la main s'enregistre en `q:1, u:'portion'`
   au lieu de `q:null` — donc **redimensionnable plus tard** au lieu de naître mort.
   ⛔ **Les lignes déjà abîmées ne sont pas réparées** (la migration reste un chantier à part).
-  Bloc **CCLXXX 14/14** · **10 mutations, toutes mordent**, 7 chirurgicales.
+  ⛔⛔ **ET LA PASSE COMPLÈTE A REFUSÉ MON PREMIER CORRECTIF — 7 ROUGES.** Mon bloc était à
+  14/14 ; la passe a fait rougir 7 témoins de ft-v1177/1179/1180, tous *« on n'invente pas une
+  quantité qu'elle n'a jamais eue »*. Cause : `_afPortions` vaut 1 par défaut, donc *« jamais
+  touché »* et *« ×1 choisi »* étaient **indiscernables** — le bloc portions est l'état PAR
+  DÉFAUT de l'écran, l'afficher ne prouve aucun choix. ⭐ Correctif : un drapeau
+  `_afPortionPose`, jumeau de `_afPoidsPose` (R13). ⛔ **Aucun témoin desserré** : les deux du
+  mien qui attendaient `q:1` sont passés à la garantie plus forte (`q:null`).
+  Bloc **CCLXXX 15/15** · **parcours 3415/3415** · **14 mutations, toutes mordent**.
+  ✅ **Run #1045 vert** à 15:33:38 UTC sur `050109be`.
 
 - **Version précédente :** `ft-v1182` — 🔎 **les résultats de recherche d'aliments étaient
   calculés mais tombaient SOUS l'écran.**
