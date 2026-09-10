@@ -2095,6 +2095,42 @@ La condition de `_provFood` :
 de ce qui est **AFFICHÉ**, jamais de ce qui est **ENREGISTRÉ**. *Les deux exigences ne se
 contredisent pas : un drapeau laisse l'écran intact et empêche l'écriture.*
 
+---
+
+### 🟡 §18 — L'OPTION B MESURÉE AVANT D'ÊTRE CHOISIE : ELLE NE FABRIQUE PAS LE BUG HISTORIQUE *(10/09/2026)*
+
+**La crainte de GPT (§8), et elle était fondée** : corriger en posant `q=null` alors que les macros
+restent celles de 205 g produirait *« des totaux consommés sans quantité permettant de reconstruire
+leur origine »* — c'est-à-dire **le bug d'origine sous un autre déguisement**.
+
+**⭐ MESURÉ EN SIMULANT L'OPTION B** (drapeau `_bcQtyPose` posé sur le modèle de `_afPoidsPose`,
+patch **temporaire**, retiré aussitôt, jamais committé) :
+
+| cas | `q` | `u` | macros | `per100` | quantité reconstructible ? |
+|---|---|---|---|---|---|
+| **portion 205, aucun geste** | `null` | `null` | 193/11/25/5 | **94 / 5,2 / 12 / 2,4** | ✅ **205 g** |
+| **repli 100, aucun geste** | `null` | `null` | 94/5/12/2 | **94 / 5,2 / 12 / 2,4** | ✅ **100 g** |
+| *contrôle* — on **tape 300 g** | **300** | `g` | 282/16/36/7 | idem | ✅ 300 g |
+| *contrôle* — on **clique le paquet** | **410** | `g` | 385/21/49/10 | idem | ✅ 410 g |
+
+**⭐⭐ LA RÉPONSE TIENT EN UNE LIGNE, ET ELLE EST STRUCTURELLE** : le bug historique était
+`q:null` **ET `per100:null`** — *c'est le second qui tuait la ligne*. Ici `per100` est écrit par un
+chemin **totalement indépendant de la quantité** : il vient de la fiche produit, pas du champ. Donc
+`kcal ÷ per100 × 100` **redonne exactement la quantité affichée**, et la ligne reste redimensionnable.
+👉 ***Une ligne sans quantité n'est morte que si elle n'a pas non plus de référence.***
+
+**⭐ Et les deux contrôles prouvent que le chemin normal n'est pas cassé** : taper une quantité et
+cliquer une pastille écrivent toujours `q` et `u`.
+
+**⚠️ UNE CONSÉQUENCE RÉELLE, DITE AVANT LE CHOIX** : `_bcProposerDerniere` est alimentée par le `q`
+enregistré (`app.js:2579` et `3719`). Avec `q:null`, la pastille **« ↩ 205 g (la dernière fois) »
+n'apparaîtra pas** à la reprise suivante de cet aliment. *C'est cohérent — on ne propose pas comme
+« dernière fois » une quantité que personne n'a choisie* — mais c'est un changement visible, et il
+disparaît dès le premier vrai choix.
+
+⛔ **Aucune ligne de production n'a été modifiée.** Le patch de simulation a été posé, mesuré, puis
+retiré ; l'arbre a été vérifié propre après coup.
+
 ## ⚠️ Comment fouiller les conversations (leçon du 21/08)
 
 En remontant trois semaines de transcriptions, mon filtre cherchait le mot **« Milo »**, **« coach »**,
