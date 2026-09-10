@@ -32595,6 +32595,102 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
   }
 }
 
+
+/* ═══ CCLXXXIII. RATTACHER UN EXERCICE PERSO AU CATALOGUE EN UN GESTE (10/09/2026, ft-v1187) ══
+   Michel, capture de sa séance du 9 sept : « Tirage vertical c'est pas bon non plus ».
+   ⭐⭐ MESURÉ AVANT DE CODER, ET LE RAPPROCHEUR N'EST PAS EN CAUSE : `_matchExercise('Tirage
+   vertical')` rend « Tirage Poulie Haute (Lat Pulldown) » à 95 %, via « équivalence connue » —
+   c'est ft-v1170, livrée le 08/09. Son programme a été importé AVANT, donc le nom est figé dans
+   son historique ; l'app ne réécrit pas le passé toute seule (R29).
+   ⛔⛔ LE VRAI TROU EST DANS LA RÉPARATION, PAS DANS L'IMPORT. La fusion existe depuis longtemps
+   (`_saveCustomExEdit` → `_mergeCustomInto` → `_renameExEverywhere`), mais elle n'est atteinte
+   que si le nom retapé tombe PILE sur un nom du catalogue. Mesuré : « Tirage Poulie Haute » (la
+   forme naturelle) → aucune fusion, l'app renomme le fantôme et ON EN A DEUX. Sur un téléphone,
+   avec un « (Lat Pulldown) » à écrire de mémoire.
+   ⭐ ON N'INVENTE NI MÉCANISME NI SEUIL (R13/R2) : la fusion est celle qui existait, et « est-ce
+   assez sûr ? » a déjà un propriétaire — le `tier` de `_matchExercise`. On propose EXACTEMENT
+   quand l'import aurait rattaché tout seul (`tier==='auto'`), jamais dans la zone grise.
+   ⚠️ LE TÉMOIN CONDUIT LE VRAI CHEMIN : `openEditCustomEx` puis le clic, jamais l'appel direct à
+   `_mergeCustomInto` — sinon il figerait la FONCTION et pas l'ACCÈS (BUGS.md §58, la famille que
+   je viens de me reprendre deux fois). */
+{
+  const R=await p.evaluate(()=>{
+    const o={};
+    try{
+      // ── LE FANTÔME DE MICHEL : un perso, son historique, son record, son programme
+      S.customExercises=[{n:'Tirage vertical',g:'Dos'}];
+      S.sessions=[{date:'2026-09-09',exs:[{name:'Tirage vertical',sets:[{kg:61,reps:10,done:true,type:'N',rm1:81.4}]}],vol:610}];
+      S.prs={'Tirage vertical':{rm1:81.4,kg:61,reps:10,date:'2026-09-09'}};
+      S.programmes=[{id:'p',name:'Prog',days:[{label:'J1',exs:[{name:'Tirage vertical'}]}]}];
+      persist();
+      // ── CE QUE L'APP SAIT DÉJÀ (ft-v1170) — le socle du bandeau
+      const r=_matchExercise('Tirage vertical');
+      o.reconnu=r&&r.match; o.tier=r&&r.tier; o.conf=r&&r.confidence;
+      // ── LE GESTE RÉEL : ouvrir l'édition du perso
+      openEditCustomEx('Tirage vertical');
+      const box=document.getElementById('cex-rattacher'), btn=document.getElementById('cex-rattacher-btn');
+      o.bandeau = !!box && box.style.display==='flex';
+      o.bouton  = !!btn && btn.style.display!=='none';
+      o.texte   = (document.getElementById('cex-rattacher-txt')||{}).textContent||'';
+      // ⛔ le bandeau doit NOMMER les deux côtés — informer sans décider (R29)
+      o.nommeLes2 = o.texte.indexOf('Tirage Poulie Haute (Lat Pulldown)')>-1 && o.texte.indexOf('Tirage vertical')>-1;
+      // ── LE CLIC (showConfirm court-circuité : on mesure l'EFFET, pas la pop-up)
+      const vrai=window.showConfirm; window.showConfirm=(t,m,ok)=>ok();
+      _cexRattacherMaintenant();
+      window.showConfirm=vrai;
+      o.fantomeParti = (S.customExercises||[]).length===0;
+      o.seance = S.sessions[0].exs[0].name;
+      o.prNoms = Object.keys(S.prs);
+      o.prRm1  = (S.prs['Tirage Poulie Haute (Lat Pulldown)']||{}).rm1;
+      o.prog   = S.programmes[0].days[0].exs[0].name;
+      // ── CRÉATION : on informe, on ne propose PAS de fusion (aucun historique à déplacer)
+      hideCustomExForm(); showCustomExForm();
+      const ni=document.getElementById('custom-ex-name');
+      /* ⚠️ ON TAPE POUR DE VRAI — `input` dispatché, JAMAIS `_majCexRattacher()` appelée à la
+         main. Ma 1ʳᵉ version appelait la fonction : retirer le `oninput` du champ ne faisait
+         alors rougir PERSONNE, et le câblage aurait ressemblé à de la décoration. C'est la même
+         leçon qu'en ft-v1183 et ft-v1186 — *une protection sans témoin n'est pas une protection*
+         — et c'est BUGS.md §58 : vérifier la fonction n'est pas vérifier l'appel. */
+      const tape=v=>{ni.value=v;ni.dispatchEvent(new Event('input',{bubbles:true}));};
+      tape('Tirage vertical');
+      o.creaBandeau=box.style.display==='flex';
+      o.creaBouton =btn.style.display!=='none';
+      // ── LE SILENCE, quatre fois : un vrai exercice neuf, un champ vide, un nom déjà juste
+      const muet=v=>{tape(v);return box.style.display==='none';};
+      o.muetNeuf1 = muet('Machine Oiseau Booty Builder X900');
+      o.muetNeuf2 = muet('Zercher Squat Bulgare Sauté');
+      o.muetVide  = muet('');
+      o.muetDejaJuste = muet('Tirage Poulie Haute (Lat Pulldown)');
+      // ── ⭐⭐ LA ZONE GRISE RESTE MUETTE : le cas AMBIGU de Michel (ft-v1172), 67 % / confirm
+      const g=_matchExercise('developpe epaules guide');
+      o.grisTier=g&&g.tier;
+      o.muetGris = muet('developpe epaules guide');
+    }catch(e){ o.err=e.message; }
+    return o;
+  });
+  console.log('\n-- CCLXXXIII. Rattacher un exercice perso au catalogue (ft-v1187) --');
+  if(R.err) t('CCLXXXIII n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLXXXIII ⛔ CONTRÔLE — l\'app RECONNAÎT déjà « Tirage vertical » (ft-v1170)',
+      R.reconnu==='Tirage Poulie Haute (Lat Pulldown)' && R.tier==='auto', 'reçu : '+R.reconnu+' · '+R.tier+' · '+R.conf+'%');
+    t('CCLXXXIII ⭐⭐ ouvrir l\'exo perso PROPOSE le rattachement (bandeau + bouton)',
+      R.bandeau===true && R.bouton===true, 'bandeau '+R.bandeau+' · bouton '+R.bouton);
+    t('CCLXXXIII ⛔ le bandeau NOMME les deux côtés (informer sans décider, R29)',
+      R.nommeLes2===true, R.texte);
+    t('CCLXXXIII ⭐⭐ le clic déplace la SÉANCE du 9 sept', R.seance==='Tirage Poulie Haute (Lat Pulldown)', 'reçu : '+R.seance);
+    t('CCLXXXIII ⭐⭐ ... le RECORD suit, avec sa valeur (81.4)',
+      R.prNoms.length===1 && R.prNoms[0]==='Tirage Poulie Haute (Lat Pulldown)' && R.prRm1===81.4, 'reçu : '+R.prNoms.join(',')+' · '+R.prRm1);
+    t('CCLXXXIII ⭐ ... le PROGRAMME suit', R.prog==='Tirage Poulie Haute (Lat Pulldown)', 'reçu : '+R.prog);
+    t('CCLXXXIII ⭐⭐ ... et le FANTÔME disparaît (plus de doublon dans le sélecteur)', R.fantomeParti===true);
+    t('CCLXXXIII ⛔ en CRÉATION on informe, mais AUCUN bouton de fusion (rien à déplacer)',
+      R.creaBandeau===true && R.creaBouton===false, 'bandeau '+R.creaBandeau+' · bouton '+R.creaBouton);
+    t('CCLXXXIII ⛔ un exercice VRAIMENT nouveau ne déclenche rien (×2)', R.muetNeuf1===true && R.muetNeuf2===true);
+    t('CCLXXXIII ⛔ champ vide : rien', R.muetVide===true);
+    t('CCLXXXIII ⛔ un nom DÉJÀ juste ne se propose pas lui-même', R.muetDejaJuste===true);
+    t('CCLXXXIII ⭐⭐ LA ZONE GRISE RESTE MUETTE — « développé épaules guidé », le cas ambigu de Michel',
+      R.grisTier==='confirm' && R.muetGris===true, 'tier '+R.grisTier+' · muet '+R.muetGris);
+  }
+}
 /* ══════════════════════════════════════════════════════════════════════════════════════════
    BLOC CCLXXXI — 🏷️⚖️ LA PORTION NOMMÉE : `portionLabel` + `portionWeightG` (ft-v1186)
    Les 10 témoins validés par Michel après sa relecture de ft-v1183 : *« 1 portion = 300 kcal,

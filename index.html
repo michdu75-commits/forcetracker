@@ -2129,7 +2129,18 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="btn btn-bg2" style="width:100%;margin-bottom:0;" id="custom-ex-add-btn" onclick="showCustomExForm()">+ Créer un exercice</button>
       <div id="custom-ex-form" style="display:none;flex-direction:column;gap:8px;margin-top:10px;">
         <div id="cex-form-title" style="font-size:13px;font-weight:800;color:var(--t1);">Nouvel exercice</div>
-        <input type="text" id="custom-ex-name" placeholder="Nom de l'exercice">
+        <input type="text" id="custom-ex-name" placeholder="Nom de l'exercice" oninput="_majCexRattacher()">
+        <!-- 🔗 ft-v1187 — LE RATTACHEMENT EN UN GESTE. L'app RECONNAÎT déjà le nom (« Tirage
+             vertical » → « Tirage Poulie Haute (Lat Pulldown) » à 95 %) mais ne le proposait
+             nulle part : pour fusionner, il fallait retaper le nom EXACT du catalogue,
+             parenthèses comprises. Mesuré : « Tirage Poulie Haute » (la forme naturelle) ne
+             déclenche AUCUNE fusion et fabrique un 2ᵉ fantôme. Le texte est rempli par
+             `_majCexRattacher()` ; le bouton n'apparaît qu'en MODIFICATION (il n'y a rien à
+             déplacer quand on crée). -->
+        <div id="cex-rattacher" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 11px;border-radius:var(--r-sm);background:rgba(255,159,10,.10);border:1px solid rgba(255,159,10,.35);">
+          <span id="cex-rattacher-txt" style="flex:1;min-width:150px;font-size:12.5px;color:var(--t2);font-weight:600;line-height:1.35;"></span>
+          <button class="btn btn-bg2" id="cex-rattacher-btn" style="display:none;padding:7px 12px;font-size:12.5px;font-weight:800;flex:0 0 auto;" onclick="_cexRattacherMaintenant()">🔗 Rattacher</button>
+        </div>
         <select id="custom-ex-grp" style="padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:14px;">
           <option value="Pectoraux">Pectoraux</option>
           <option value="Dos">Dos</option>

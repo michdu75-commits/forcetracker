@@ -5689,6 +5689,63 @@ function hideCustomExForm(){
 function _setCexFormMode(editing){
   const b=document.getElementById('cex-save-btn');if(b)b.textContent=editing?'Enregistrer':'Créer';
   const t=document.getElementById('cex-form-title');if(t)t.textContent=editing?'Modifier l\'exercice':'Nouvel exercice';
+  _majCexRattacher();
+}
+
+/* 🔗 ft-v1187 (10/09/2026) — « TIRAGE VERTICAL » : L'APP SAVAIT LA RÉPONSE ET NE LA PROPOSAIT PAS.
+   Michel, capture de sa séance du 9 sept : *« Tirage vertical c'est pas bon non plus »*.
+   ⭐⭐ MESURÉ AVANT DE CODER, et le rapprocheur n'est PAS en cause : `_matchExercise('Tirage
+   vertical')` rend « Tirage Poulie Haute (Lat Pulldown) » à **95 %, via « équivalence connue »**
+   — c'est ft-v1170, livrée le 08/09. Son programme a été importé AVANT, donc le nom est figé
+   dans son historique ; l'app ne réécrit pas le passé toute seule (R29).
+   ⛔⛔ LE VRAI TROU EST DANS LA RÉPARATION, PAS DANS L'IMPORT. Le chemin de fusion existe depuis
+   longtemps (`_saveCustomExEdit` → `_mergeCustomInto` → `_renameExEverywhere`, qui déplace
+   séances + records + programmes + séance en cours), mais il n'est atteint que si le nom retapé
+   **tombe pile** sur un nom du catalogue. Or `_normEx` aplatit la ponctuation SANS la supprimer :
+   mesuré, « Tirage Poulie Haute » → `tirage poulie haute` ≠ `tirage poulie haute lat pulldown`.
+   👉 Taper la forme naturelle ne fusionne RIEN : ça renomme le fantôme, et on en a DEUX.
+   Sur un téléphone, avec un « (Lat Pulldown) » à écrire de mémoire.
+   ⭐ ON N'INVENTE NI MÉCANISME NI SEUIL (R13/R2) : la fusion est celle qui existe, et « est-ce
+   assez sûr ? » a déjà un propriétaire — le `tier` de `_matchExercise`. On propose EXACTEMENT
+   quand l'import aurait rattaché tout seul (`tier==='auto'`), jamais dans la zone grise.
+   ⚠️ Et la source de la fusion est TOUJOURS `_editingCustomExName`, pas ce qu'il y a dans le
+   champ : c'est l'historique de l'exercice RÉEL qu'on déplace, pas celui d'un nom en cours de
+   frappe. Le texte du bandeau nomme les deux côtés pour que la décision soit facile (R29). */
+let _cexCible=null;                                       // la cible affichée par le bandeau
+function _cexCibleCatalogue(nom){
+  if(typeof _matchExercise!=='function')return null;
+  const s=String(nom==null?'':nom).trim();
+  if(!s)return null;
+  let r=null; try{ r=_matchExercise(s); }catch(e){ return null; }
+  if(!r||!r.match||r.tier!=='auto')return null;
+  if(_cleNom(r.match)===_cleNom(s))return null;          // c'est déjà ce nom-là : rien à rattacher
+  return r;
+}
+// Met à jour le bandeau orange sous le champ « Nom ». En MODIFICATION il porte le bouton qui
+// fusionne ; en CRÉATION il informe seulement — il n'y a aucun historique à déplacer, et on
+// n'empêche personne de créer son exercice (R24 : informer sans bloquer).
+function _majCexRattacher(){
+  const box=document.getElementById('cex-rattacher');if(!box)return;
+  const txt=document.getElementById('cex-rattacher-txt');
+  const btn=document.getElementById('cex-rattacher-btn');
+  const ni=document.getElementById('custom-ex-name');
+  const r=_cexCibleCatalogue(ni?ni.value:'');
+  if(!r){box.style.display='none';if(btn)btn.style.display='none';_cexCible=null;return;}
+  _cexCible=r.match;
+  const enEdition=!!_editingCustomExName;
+  box.style.display='flex';
+  if(txt)txt.textContent=enEdition
+    ? 'C\'est « '+r.match+' » du catalogue. Rattacher déplace l\'historique et les records de « '+_editingCustomExName+' », puis supprime le doublon.'
+    : '« '+r.match+' » existe déjà dans le catalogue — inutile d\'en créer un deuxième.';
+  if(btn)btn.style.display=enEdition?'':'none';
+}
+function _cexRattacherMaintenant(){
+  const src=_editingCustomExName, cible=_cexCible;
+  if(!src||!cible)return;
+  if(typeof showConfirm!=='function'){_mergeCustomInto(src,cible);return;}
+  showConfirm('Rattacher au catalogue',
+    'Déplacer l\'historique et les records de « '+src+' » dans « '+cible+' », puis supprimer « '+src+' » ?',
+    ()=>_mergeCustomInto(src,cible),'Rattacher');
 }
 // Ouvre le formulaire pré-rempli pour MODIFIER un exercice perso existant
 function openEditCustomEx(name){

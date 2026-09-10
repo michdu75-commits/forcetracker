@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1186`** (prochaine : `ft-v1187`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1187`** (prochaine : `ft-v1188`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,39 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1187 — 🔗 RATTACHER UN EXERCICE PERSO AU CATALOGUE EN UN GESTE — L'APP SAVAIT LA RÉPONSE ET NE LA PROPOSAIT PAS** — Michel, capture de sa séance du 9 sept : ***« Tirage vertical c'est pas bon non plus »***.
+
+**⭐⭐ MESURÉ AVANT DE CODER, ET LE RAPPROCHEUR N'EST PAS EN CAUSE.** `_matchExercise('Tirage vertical')` rend **« Tirage Poulie Haute (Lat Pulldown) » à 95 %, via « équivalence connue »** — c'est **ft-v1170, livrée le 08/09**. Son programme a été importé **avant**, donc le nom est figé dans son historique. 👉 *L'app ne réécrit pas le passé toute seule* (**R29**), et c'est voulu.
+
+**⛔⛔ LE VRAI TROU EST DANS LA RÉPARATION, PAS DANS L'IMPORT.** La fusion existe depuis longtemps — `_saveCustomExEdit` → `_mergeCustomInto` → `_renameExEverywhere`, qui déplace **séances + records + programmes + séance en cours** — mais elle n'est atteinte que si le nom retapé tombe **PILE** sur un nom du catalogue. Or `_normEx` **aplatit** la ponctuation sans la supprimer :
+
+| ce qu'on tape | clé obtenue | fusion ? |
+|---|---|---|
+| `Tirage Poulie Haute (Lat Pulldown)` | `tirage poulie haute lat pulldown` | ✅ |
+| **`Tirage Poulie Haute`** (la forme naturelle) | `tirage poulie haute` | ⛔ **aucune** |
+
+👉 ***Taper la forme naturelle ne fusionne rien : ça renomme le fantôme, et on en a DEUX.*** Sur un téléphone, avec un « (Lat Pulldown) » à écrire de mémoire. Et l'écran d'édition n'avait **aucun** bouton de rattachement — mesuré : 5 contrôles, le mot `rattach` absent du HTML.
+
+**⭐ ON N'INVENTE NI MÉCANISME NI SEUIL (R13/R2).** La fusion est **celle qui existait** ; et *« est-ce assez sûr ? »* a **déjà un propriétaire** — le `tier` de `_matchExercise`. On propose **exactement** quand l'import aurait rattaché tout seul (`tier==='auto'`), jamais dans la zone grise.
+
+**⛔⛔ ET LA ZONE GRISE RESTE MUETTE, C'EST LE GARDE-FOU DE LA VERSION** : « développé épaules guidé » — **le cas ambigu de Michel** en ft-v1172 — sort à **67 % / `confirm`**, et le bandeau ne dit rien. *Si l'expert hésite, l'app se tait* (**R29**). Un rattachement faux couperait un historique en deux, en silence.
+
+**⚠️ LA SOURCE DE LA FUSION EST TOUJOURS `_editingCustomExName`, jamais le contenu du champ** : c'est l'historique de l'exercice **réel** qu'on déplace, pas celui d'un nom en cours de frappe. Le bandeau **nomme les deux côtés** — *« C'est « Tirage Poulie Haute (Lat Pulldown) » du catalogue. Rattacher déplace l'historique et les records de « Tirage vertical », puis supprime le doublon. »* — pour que la décision soit facile (**R29** : informer sans décider).
+
+**⭐ EN CRÉATION ON INFORME, SANS BOUTON** : il n'y a aucun historique à déplacer, et on n'empêche personne de créer son exercice (**R24**). *C'est pourtant la porte par laquelle les fantômes NAISSENT, et elle était muette.*
+
+**📣 RÈGLE D'OR #11 — LE BANDEAU EST L'ANNONCE**, à l'écran au moment où ça sert. Aucune pop-up, aucun point rouge : rien n'est à faire tant qu'on n'ouvre pas un exercice perso (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **ça ne répare RIEN tout seul** — c'est la personne qui tape « Rattacher », par choix. ⛔ Ni l'import, ni le rapprocheur, ni `_EX_EQUIV` ne sont touchés. ⛔ Et rien n'est proposé dans la zone grise, **exprès**. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+Tests : **bloc CCLXXXIII 12/12**, **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 6 mutations, TOUTES MORDENT** — ① le bandeau neutralisé → **7 rouges** · ② le seuil `auto` retiré (zone grise acceptée) → **2 rouges**, exactement l'exercice neuf et le cas ambigu · ③ le garde « c'est déjà ce nom-là » retiré → **1** · ④ le bouton de fusion affiché même en création → **1** · ⑤ le câblage `oninput` du champ retiré → **1** · ⑥ `_setCexFormMode` qui n'appelle plus le bandeau → **6**.
+
+**⚠️⚠️ ET UN TROU DE TÉMOIN TROUVÉ PAR LA MUTATION ⑤, POUR LA TROISIÈME VERSION DE SUITE.** Ma 1ʳᵉ version **appelait `_majCexRattacher()` à la main** dans les témoins de silence : retirer le `oninput` du champ ne faisait alors rougir **personne**, et le câblage aurait ressemblé à de la décoration. Les témoins **tapent désormais pour de vrai** (événement `input` dispatché). ⭐ **Honnêteté sur cette mutation** : elle ne fait **qu'un** rouge, celui de la création — et c'est **structurel, pas un oubli** : *un témoin qui affirme « le bandeau est CACHÉ » ne peut pas distinguer « correctement muet » de « fil débranché »*. **Seul un témoin qui attend du VISIBLE attrape un câblage mort.**
+
+**⚠️ ET MON HARNAIS DE MUTATION M'A MENTI AU PASSAGE** : il coupait la sortie à `tail -4`, donc un rouge en 8ᵉ position sur 12 était **invisible** — j'ai lu « 0 rouge » sur une mutation qui mordait, et j'ai failli en conclure que le câblage était mort. 👉 ***Un outil de mesure tronqué ressemble à un code sans défaut.***
+
+Fichiers : `log.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1187. |
 
 **ft-v1186 — 🏷️⚖️ LA PORTION NOMMÉE : `portionLabel` + `portionWeightG` — ET MON REFUS ÉTAIT MAL FONDÉ** — Michel, en relisant ft-v1183 : ***« 1 portion = 300 kcal, poids inconnu » ne suffit pas — je veux savoir si la portion représente 1 steak, 1 yaourt, 1 dose, 1 part***.
 
@@ -704,29 +737,6 @@ Tests : **parcours 3383/3383** (+17, bloc **CCLXXVIII**) — après une 1ʳᵉ p
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `BUGS.md`. sw.js ft-v1180. |
 
-**ft-v1179 — ⚖️ LES CALORIES D'UN ALIMENT ÉTAIENT MARIÉES À LA QUANTITÉ DU PRODUIT D'AVANT — ET C'EST SA CONSIGNE « NE CORRIGE RIEN, TRACE » QUI A TOUT DONNÉ** — Michel, test réel iPhone après ft-v1177 : sa ratatouille s'ouvre sur **100 g = 274 kcal** avec *« Référence : 100 g (que tu as indiqué) »*, là où mon test l'ouvrait sur 380 g. Puis : ***« Ne corrige rien pour l'instant. Trace pourquoi. »***
-
-**⭐⭐ TRACÉ PUIS REPRODUIT PAR DE VRAIS GESTES AVANT D'ÉCRIRE UNE LIGNE DE CORRECTIF.** Deux scans dans la **même** ouverture — un produit complet, puis un produit dont la fiche Open Food Facts n'a **aucune valeur** — écrivent une entrée `q:100, u:'g'`, **sans pour-100 g**, 274/4/23/15. Et sa reprise rend **exactement son écran**, ligne « Référence » comprise. *Sa consigne valait mieux qu'un correctif rapide : elle a transformé une capture en cause.*
-
-**⛔⛔ LA CAUSE.** `_bcSansValeurs` était **le SEUL des quatre endroits** qui éteignent `_bcNutr` à ne pas cacher `af-bc-row` (`openAddFood`, `quickFillFood` et `_afSuggPrendreLocale` le font tous). Et `_provFood` lisait la quantité de ce bloc **du moment qu'il est VISIBLE**, sans vérifier qu'elle appartient à l'aliment affiché — or le champ porte **`value="100"` EN DUR** dans `index.html`. 👉 ***Un bloc laissé ouvert ne se tait pas : il répond 100.*** Les 274 kcal de sa ratatouille ont été mariées aux **100 g hérités du thon**.
-
-**⭐⭐ LE CORRECTIF EST EN DEUX MOITIÉS, ET LA SECONDE VAUT PLUS QUE LA PREMIÈRE.** ① `_bcSansValeurs` cache le bloc, comme ses trois jumelles (**R8**). ② `_provFood` n'en lit la quantité **que si `_bcNutr` existe** — *« le bloc est visible » n'a jamais voulu dire « cette quantité est celle de cet aliment »*. `_bcNutr` est le seul témoin honnête de l'**appartenance**, et cette condition **referme aussi les portes qu'on n'a pas prévues**. ⛔ **Mesuré par mutations séparées** : sans ①, la **donnée reste protégée** (2 rouges d'affichage seulement) ; sans ②, l'**invariant tombe** (1 rouge, chirurgical). *Les deux sont nécessaires et indépendantes — et c'est la mesure qui le dit, pas moi.*
-
-**⭐ UNE LIGNE SUFFIT POUR ①, ET C'EST MESURÉ** : `af-bc-qsrc`, `af-bc-total`, `af-bc-last` et `af-bc-paquet` vivent **tous à l'intérieur** de `af-bc-row`. Les rendre un par un aurait été *du code qu'aucun témoin ne peut faire rougir* — la garde morte de ft-v1174, évitée cette fois avant de la commettre.
-
-**⛔⛔ LA PISTE DU FORMAT DE BOÎTE EST ÉLIMINÉE PAR LA MESURE.** Un audit externe soupçonnait le poids de la boîte Cassegrain. Mesuré : `_offPoidsPaquet` rend **380/660/800/1000/375** sur les vrais formats, **jamais 100** ; elle écrit dans `af-bc-grams` et **seulement si on tape la pastille** ; et ft-v1174 est postérieure d'**une semaine** à sa ligne du 31/08. ***Le 100 n'est pas un poids de boîte, c'est un DÉFAUT.*** ⭐ Michel avait d'ailleurs **déjà écarté cette piste lui-même** en ft-v1051, et c'est écrit dans le code : *« ce qu'on garde est le pour-100 g, PAS la boîte — tu prends la ratatouille, il y a différentes boîtes de différent poids »*.
-
-**⚠️ MAIS UNE RELECTURE CROISÉE A TROUVÉ UNE 2ᵉ ROUTE QUE J'AVAIS MANQUÉE, ET ELLE EST VRAIE** : depuis ft-v1174, un poids de paquet **tapé** écrit dans `af-bc-grams`, et un scan « fiche sans valeurs » survenant ensuite le transformait en `q` d'une entrée sans pour-100 g. 👉 *La piste était **fausse sur le cas de Michel** et **juste sur le mécanisme**.* Le même correctif ferme cette porte, et un témoin la fige (**INTERDIT : 160**).
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît : une quantité inventée cesse d'être inventée (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les lignes DÉJÀ abîmées ne sont pas réparées** (§11 de l'audit : *aucune correction silencieuse par approximation*) — sa ratatouille reste à reprendre **une fois**. ⛔ Et une entrée dont la quantité est inconnue repart désormais **SANS quantité** : *honnêtement inconnue plutôt que faussement connue* (**R29**) — les onglets ⚖️/🍽️ restent offerts pour la déclarer, un témoin le fige. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
-
-Tests : **parcours +16 (bloc CCLXXVII)**, **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔⛔ **CONTRÔLE NÉGATIF : 10 MUTATIONS, TOUTES MORDENT** — ① l'arbre d'avant → **6 rouges** · ② la moitié ① seule retirée → **2**, *la donnée reste protégée* · ③ la moitié ② seule retirée → **1**, chirurgical · ④ les deux → **5** · ⑤ et ⑥ chacune des deux autres portes → **1** chacune · ⑦ correctif **TROP LARGE** (bloc caché même sur un scan normal) → **3**, dont le contrôle · ⑧ le poids de paquet qui rendrait 100 → **1** · ⑨ le défaut 100 retiré du HTML → **1**.
-
-**⚠️⚠️ ET DEUX LEÇONS DE MÉTHODE, LES DEUX À MOI.** ⓐ **Une de mes mutations ne s'est JAMAIS APPLIQUÉE** : le motif existait **deux fois** (`quickFillFood` **et** `_afSuggPrendreLocale`), l'assertion a sauté, et le résultat affichait **0 rouge** — *c'est-à-dire exactement ce que montre une mutation qui ne mord pas*. 👉 ***Une mutation qui échoue en silence ressemble à un témoin inutile.*** Refaite par position, elle mord des deux côtés. ⓑ **La passe complète a rougi sur un témoin de `tests/calculs`** qui forçait `af-bc-row` visible **à la main sans jamais poser `_bcNutr`** — ce qu'aucun scan réel ne fait. La fixture est rendue **FIDÈLE, pas assouplie**, et **éprouvée** : elle rougit toujours quand la quantité cesse d'atteindre la donnée. *Un test qui n'emploie pas le schéma de la production ne teste rien, il rassure.*
-
-Fichiers : `app.js`, `tests/parcours/runner.js`, `tests/calculs/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `BUGS.md`. sw.js ft-v1179. |
 
 
 

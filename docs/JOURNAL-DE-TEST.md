@@ -2224,3 +2224,26 @@ Fixture rendue discriminante (favori **600**, repas **500**), 14ᵉ témoin écr
 l'état « boutons de portion » de l'édition et le drapeau côté édition en ft-v1183. 👉 ***Une
 protection sans témoin n'est pas une protection***, et le contrôle négatif ne le dit que si la
 fixture peut faire la différence.
+
+---
+
+### 🟣 JUGE HUMAIN — LE BOUTON « RATTACHER » EST-IL TROUVABLE ? (10/09/2026, ft-v1187)
+
+ft-v1187 pose un bandeau *« C'est « Tirage Poulie Haute (Lat Pulldown) » du catalogue »* avec un
+bouton **🔗 Rattacher** — mais **seulement dans l'écran « Modifier l'exercice »** d'un exercice
+perso. Le chemin complet est : sélecteur d'exercices → trouver son exo perso → ✏️ → lire le
+bandeau.
+
+⛔ **Le doute, et il n'est pas vérifiable par du code** : *quelqu'un qui voit « Tirage vertical »
+dans sa séance a-t-il seulement l'idée d'aller dans « Modifier l'exercice » ?* Rien, sur la carte
+de la séance, ne dit que ce nom est un doublon réparable.
+
+**Deux pistes, aucune tranchée** — les deux ont un coût qu'on ne veut pas payer à l'aveugle :
+- une **pastille dans le sélecteur** sur les persos rattachables (visible, mais ça ajoute un
+  repère permanent dans un écran déjà chargé) ;
+- un **passage en revue** proposé une seule fois (« 3 de tes exercices ont un jumeau au
+  catalogue »), qui interrompt — et **R24** dit qu'on n'interrompt pas pour ça.
+
+👉 **Réponse attendue de Michel**, une fois qu'il aura réparé son « Tirage vertical » : *est-ce
+qu'il l'a trouvé tout seul ?* Si oui, on ne touche à rien. **Ne peut pas devenir un scénario :
+l'attendu est « est-ce que c'est trouvable », pas un état vérifiable.**

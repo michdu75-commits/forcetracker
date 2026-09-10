@@ -20,7 +20,22 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1186` — 🏷️⚖️ **la portion NOMMÉE : `portionLabel` +
+- **Version en ligne (live) :** `ft-v1187` — 🔗 **rattacher un exercice perso au catalogue en UN
+  geste.** Michel, capture de sa séance du 9 sept : *« Tirage vertical c'est pas bon non plus »*.
+  ⭐⭐ **Mesuré avant de coder, le rapprocheur n'est PAS en cause** : `_matchExercise('Tirage
+  vertical')` rend « Tirage Poulie Haute (Lat Pulldown) » à **95 %** — c'est ft-v1170, livrée le
+  **08/09**, et son programme a été importé **avant**. L'app ne réécrit pas le passé toute seule
+  (**R29**).
+  ⛔⛔ **Le vrai trou est dans la RÉPARATION** : la fusion existait, mais elle exigeait de retaper
+  le nom **exact**, parenthèses comprises. Mesuré — taper « Tirage Poulie Haute » ne fusionne
+  **rien** et fabrique un **2ᵉ** fantôme.
+  ⭐ **Ni mécanisme ni seuil inventés** : la fusion est celle qui existait, et le `tier` de
+  `_matchExercise` décide — on propose **exactement** quand l'import aurait rattaché tout seul.
+  ⛔ **La zone grise reste muette** : « développé épaules guidé » (67 % / `confirm`) ne déclenche
+  rien. *Si l'expert hésite, l'app se tait.*
+  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1186` — 🏷️⚖️ **la portion NOMMÉE : `portionLabel` +
   `portionWeightG`.**
   ⛔⛔ Michel après ft-v1183 : *« 1 portion = 300 kcal, poids inconnu ne suffit pas — je veux
   savoir si c'est 1 steak, 1 yaourt, 1 dose »*. **Il a raison, et mon refus était mal fondé** :
