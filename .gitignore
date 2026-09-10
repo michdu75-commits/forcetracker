@@ -26,3 +26,11 @@ captures/
 captures-nutrition/
 
 tests/milo/ab-report.json
+
+# 🔬 Tranches de mesure temporaires (10/09/2026) — un morceau du runner découpé pour
+# reproduire un échec sans payer la passe entière. ⛔ NE JAMAIS COMMITTER : ce serait une
+# COPIE du runner, donc une 2ᵉ source de vérité qui se périme dès le commit suivant (R2).
+# Elles vivent dans tests/parcours/ et non dans le scratchpad, parce que les blocs font des
+# `require` relatifs à __dirname — dehors, la tranche plante au lieu de mesurer.
+tests/parcours/_tranche_tmp*.js
+tests/**/_tmp*.js
