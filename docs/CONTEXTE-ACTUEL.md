@@ -20,7 +20,25 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1188` — 🔬 **les 3 vérifications de GPT avant validation de P1.**
+- **Version en ligne (live) :** `ft-v1189` — 🔗 **renommer un exercice dans une séance passée
+  laissait un RECORD ORPHELIN.** Michel, en cherchant le bouton de ft-v1187 : *« je ne trouve pas
+  dans choisir un exercice tirage vertical »*.
+  ⭐⭐ **Mesuré, et c'est moi qui l'avais envoyé au mauvais endroit** : il n'a **plus** d'exercice
+  perso « Tirage vertical » — le nom ne vit que dans sa **séance du 9 sept**, hors d'atteinte du
+  bouton de ft-v1187 (qui ne travaille que sur `S.customExercises`).
+  ⭐ **Le bon geste existait déjà** : le **🔄** de la carte, dans l'écran de la séance. Séries
+  gardées, volume inchangé, record 81,4 kg sous le bon nom.
+  ⛔⛔ **Mais `S.prs['Tirage vertical']` restait** — un exercice fantôme avec un record, dans
+  Progrès. **R8 pour la 9ᵉ fois** ; la porte jumelle le déplace depuis toujours.
+  ⛔ **On ne déplace que si plus AUCUNE séance ne porte le nom** (R29) — sinon on effacerait le
+  record d'un exercice encore vivant.
+  ⚠️ **Le contrôle négatif a trouvé un vrai défaut** : sans repli des chaînes A→B→C, un record de
+  l'étape intermédiaire partait avec. Témoin ④bis écrit.
+  ⛔ **Reste ouvert** : un exercice **supprimé** d'une séance passée laisse toujours son record —
+  troisième porte, non traitée.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1188` — 🔬 **les 3 vérifications de GPT avant validation de P1.**
   ⛔⛔ **① `portionWeightG` corrigé APRÈS COUP : le chemin n'existait pas.** Aucun champ de l'écran
   d'édition ne touchait la définition — et ouvrir « 2 steaks de 125 g » affichait *« Quantité (g) =
   250 »*, puis **enregistrer sans rien toucher** réécrivait la ligne en **`q:250, u:'g'`**. *Mot pour

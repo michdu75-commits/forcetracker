@@ -32719,6 +32719,105 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
       R.grisTier==='confirm' && R.muetGris===true, 'tier '+R.grisTier+' · muet '+R.muetGris);
   }
 }
+
+/* ═══ CCLXXXVI. LE RECORD ORPHELIN APRÈS UN RENOMMAGE EN SÉANCE PASSÉE (10/09/2026, ft-v1189) ═
+   Michel, en cherchant le bouton de ft-v1187 : « je ne trouve pas dans choisir un exercice
+   tirage vertical ».
+   ⭐⭐ MESURÉ, ET C'EST MOI QUI L'AVAIS ENVOYÉ AU MAUVAIS ENDROIT : il n'a PLUS d'exercice perso
+   « Tirage vertical » (s'il en avait un, il sortirait EN TÊTE du sélecteur — vérifié dans la
+   page). Le nom ne vit plus que dans sa SÉANCE DU 9 SEPT. Le bouton « Rattacher » ne l'atteint
+   donc pas ; le bon geste est le 🔄 de la carte, dans l'écran de la séance.
+   ⛔⛔ CE CHEMIN MARCHAIT, MAIS IL LAISSAIT UN RECORD DERRIÈRE LUI : `S.prs['Tirage vertical']`
+   restait intact, donc un exercice FANTÔME continuait d'apparaître dans Progrès, avec un record
+   dedans, alors que plus aucune séance ne le portait. C'est R8 pour la 9ᵉ fois — la porte
+   jumelle (`_renameExEverywhere`, chemin exo perso) déplace le record depuis toujours.
+   ⛔⛔ ET LE CORRECTIF NE POUVAIT PAS ÊTRE « SUPPRIMER L'ANCIEN RECORD » : le nom peut vivre
+   dans D'AUTRES séances. On ne déplace QUE si plus AUCUNE séance ne le porte (R29) — le cas ②
+   ci-dessous est le garde-fou, et c'est lui qui empêche une perte de donnée silencieuse. */
+{
+  const R=await p.evaluate(()=>{
+    const o={}; const TPH='Tirage Poulie Haute (Lat Pulldown)';
+    try{
+      const seed=()=>{
+        S.customExercises=[];
+        S.sessions=[{ts:111,date:'2026-09-09',exs:[{name:'Tirage vertical',sets:[
+          {kg:61,reps:10,done:true,type:'N',rm1:81.4},{kg:61,reps:10,done:true,type:'N',rm1:81.4}]}],volume:1220}];
+        S.prs={'Tirage vertical':{rm1:81.4,kg:61,reps:10,date:'2026-09-09'}};
+        persist();
+      };
+      /* ⚠️ ON CONDUIT LE VRAI CHEMIN : `openSessDetail` → `replaceSessEx` → le choix dans le
+         sélecteur → `saveSessEdits`. Jamais `_deplacerRecordsRenommes` en direct — ce serait
+         vérifier la fonction au lieu de l'appel (BUGS.md §58).
+         ⚠️ Et `openSessDetail` prend le ts/id, PAS l'index : ma 1ʳᵉ sonde passait 0, le
+         renommage ne se produisait pas, et j'ai failli conclure que le chemin était cassé.
+         Un test qui n'emploie pas la signature de la production ne teste rien. */
+      // ① LE CAS DE MICHEL : plus aucune séance ne porte l'ancien nom
+      seed(); openSessDetail(111); replaceSessEx(0); _replaceSessExPick(TPH); saveSessEdits();
+      o.c1={nom:S.sessions[0].exs[0].name, prs:Object.keys(S.prs).sort(),
+            rm1:(S.prs[TPH]||{}).rm1, series:S.sessions[0].exs[0].sets.length, vol:S.sessions[0].volume};
+      // ② LE GARDE-FOU : le nom vit AUSSI ailleurs → on ne touche à RIEN
+      seed(); S.sessions.push({ts:222,date:'2026-09-02',exs:[{name:'Tirage vertical',
+        sets:[{kg:55,reps:10,done:true,type:'N',rm1:73}]}],volume:550}); persist();
+      openSessDetail(111); replaceSessEx(0); _replaceSessExPick(TPH); saveSessEdits();
+      o.c2={ancienGarde:!!S.prs['Tirage vertical']};
+      // ③ LA CIBLE A DÉJÀ MIEUX (120) → on n'écrase jamais un meilleur record
+      seed(); S.prs[TPH]={rm1:120,kg:90,reps:8,date:'2026-08-01'}; persist();
+      openSessDetail(111); replaceSessEx(0); _replaceSessExPick(TPH); saveSessEdits();
+      o.c3={rm1:(S.prs[TPH]||{}).rm1, ancienParti:!S.prs['Tirage vertical']};
+      // ④ CHAÎNE A→B→C : c'est le record de A qui bouge, et B ne doit RIEN laisser
+      seed(); openSessDetail(111);
+      replaceSessEx(0); _replaceSessExPick('Tirage Nuque');
+      replaceSessEx(0); _replaceSessExPick(TPH);
+      saveSessEdits();
+      o.c4={prs:Object.keys(S.prs).sort(), rm1:(S.prs[TPH]||{}).rm1};
+      /* ④bis LE CAS QUI FAIT MORDRE LE REPLI DE CHAÎNE, et il manquait à ma 1ʳᵉ version :
+         l'étape intermédiaire a DÉJÀ un record à elle (un orphelin d'avant). Sans repli, le
+         traitement séquentiel déplacerait CE record-là vers la cible — un record qui n'a rien
+         à voir avec la séance qu'on renomme. Avec repli, on ne voit que « Tirage vertical →
+         TPH » et « Tirage Nuque » reste intact. */
+      seed(); S.prs['Tirage Nuque']={rm1:90,kg:70,reps:8,date:'2026-07-01'}; persist();
+      openSessDetail(111);
+      replaceSessEx(0); _replaceSessExPick('Tirage Nuque');
+      replaceSessEx(0); _replaceSessExPick(TPH);
+      saveSessEdits();
+      o.c4b={nuqueIntact:(S.prs['Tirage Nuque']||{}).rm1, cible:(S.prs[TPH]||{}).rm1};
+      // ⑤ ALLER-RETOUR A→B→A : aucun record ne bouge
+      seed(); openSessDetail(111);
+      replaceSessEx(0); _replaceSessExPick(TPH);
+      replaceSessEx(0); _replaceSessExPick('Tirage vertical');
+      saveSessEdits();
+      o.c5={prs:Object.keys(S.prs).sort(), nom:S.sessions[0].exs[0].name};
+      // ⑥ FERMER SANS ENREGISTRER n'emporte AUCUN renommage dans la fenêtre suivante
+      seed(); openSessDetail(111); replaceSessEx(0); _replaceSessExPick(TPH); closeSessDetail();
+      openSessDetail(111); saveSessEdits();
+      o.c6={prs:Object.keys(S.prs).sort(), nom:S.sessions[0].exs[0].name};
+    }catch(e){ o.err=e.message; }
+    return o;
+  });
+  console.log('\n-- CCLXXXVI. Le record orphelin après un renommage en séance passée (ft-v1189) --');
+  const TPH='Tirage Poulie Haute (Lat Pulldown)';
+  if(R.err) t('CCLXXXVI n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLXXXVI ⛔ CONTRÔLE — le 🔄 renomme bien dans la séance passée', R.c1.nom===TPH, 'reçu : '+R.c1.nom);
+    t('CCLXXXVI ⛔ CONTRÔLE — les séries et le volume ne bougent pas',
+      R.c1.series===2 && R.c1.vol===1220, 'séries '+R.c1.series+' · volume '+R.c1.vol);
+    t('CCLXXXVI ⭐⭐ le record SUIT le nouveau nom, avec sa valeur (81.4)', R.c1.rm1===81.4, 'reçu : '+R.c1.rm1);
+    t('CCLXXXVI ⭐⭐ ... et l\'ANCIEN record ne reste PAS (plus de fantôme dans Progrès)',
+      R.c1.prs.length===1 && R.c1.prs[0]===TPH, 'reçu : '+R.c1.prs.join(' · '));
+    t('CCLXXXVI ⛔⛔ LE GARDE-FOU — le nom vit dans une AUTRE séance : son record est GARDÉ',
+      R.c2.ancienGarde===true, 'record supprimé alors qu\'une séance le porte encore');
+    t('CCLXXXVI ⛔ on n\'écrase JAMAIS un meilleur record de la cible (120 > 81.4)',
+      R.c3.rm1===120 && R.c3.ancienParti===true, 'reçu : '+R.c3.rm1+' · ancien parti : '+R.c3.ancienParti);
+    t('CCLXXXVI ⭐ chaîne A→B→C : le record de A arrive en C, et B ne laisse rien',
+      R.c4.prs.length===1 && R.c4.prs[0]===TPH && R.c4.rm1===81.4, 'reçu : '+R.c4.prs.join(' · '));
+    t('CCLXXXVI ⭐⭐ ... et un record de l\'ÉTAPE INTERMÉDIAIRE n\'est PAS emporté (repli de chaîne)',
+      R.c4b.nuqueIntact===90 && R.c4b.cible===81.4, 'Nuque : '+R.c4b.nuqueIntact+' · cible : '+R.c4b.cible);
+    t('CCLXXXVI ⛔ aller-retour A→B→A : aucun record ne bouge',
+      R.c5.prs.length===1 && R.c5.prs[0]==='Tirage vertical' && R.c5.nom==='Tirage vertical', 'reçu : '+R.c5.prs.join(' · '));
+    t('CCLXXXVI ⛔ fermer SANS enregistrer n\'emporte aucun renommage',
+      R.c6.prs.length===1 && R.c6.prs[0]==='Tirage vertical' && R.c6.nom==='Tirage vertical', 'reçu : '+R.c6.prs.join(' · '));
+  }
+}
 /* ══════════════════════════════════════════════════════════════════════════════════════════
    BLOC CCLXXXIV — 🏷️⚖️ LA PORTION NOMMÉE : `portionLabel` + `portionWeightG` (ft-v1186)
    Les 10 témoins validés par Michel après sa relecture de ft-v1183 : *« 1 portion = 300 kcal,

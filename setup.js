@@ -1036,6 +1036,14 @@ function openSessDetail(id){
   if(!sess)return;
   _sessId=id;
   _sessEdits=JSON.parse(JSON.stringify(sess));
+  /* ⚠️ UNE SEULE remise à zéro, et c'est MESURÉ : j'en avais posé deux (ici et à la fermeture).
+     Le contrôle négatif a montré qu'aucune des deux ne pouvait faire rougir un témoin — elles se
+     couvraient l'une l'autre. La seconde est donc retirée (R19). ⛔ Et je dis ce que la mesure
+     dit VRAIMENT : même celle-ci n'a aucun cas d'échec atteignable, parce que le garde
+     `encoreLa` fait déjà le travail — une séance fermée sans enregistrer porte encore l'ancien
+     nom, donc aucun record ne bouge. Elle reste parce qu'elle garantit qu'une fenêtre s'ouvre
+     TOUJOURS propre, pas parce qu'un témoin l'exige. */
+  _sessRenames=[];
   _sdDelConfirm=false;
   if(_sdDelTimer)clearTimeout(_sdDelTimer);
   const db=document.getElementById('sd-del-btn');
@@ -1411,6 +1419,24 @@ function deleteSessEx(ei){
 // Remplacer un exercice mal choisi dans une SÉANCE PASSÉE (garde les séries).
 // Ouvre le sélecteur ; le choix est routé par addExercise (mode 'replaceSess').
 let _replaceSessEi=null;
+/* 🔗 ft-v1189 (10/09/2026) — LE RECORD ORPHELIN, ET C'EST LA PORTE JUMELLE DE ft-v1187.
+   Michel : « je ne trouve pas dans choisir un exercice tirage vertical ». MESURÉ, et c'est moi
+   qui l'avais envoyé au mauvais endroit : il n'a PLUS d'exercice perso « Tirage vertical » (s'il
+   en avait un, il sortirait EN TÊTE du sélecteur). Le nom ne vit plus que dans sa séance du
+   9 sept — donc le bouton « Rattacher » de ft-v1187 ne l'atteint pas, et le bon geste est le 🔄
+   de la carte, ici.
+   ⛔⛔ CE CHEMIN MARCHE, MAIS IL LAISSE UN RECORD DERRIÈRE LUI. Mesuré de bout en bout :
+   séries gardées, volume inchangé, `S.prs['Tirage Poulie Haute (Lat Pulldown)']` créé à 81,4 —
+   et `S.prs['Tirage vertical']` TOUJOURS LÀ. Un exercice fantôme continue donc d'apparaître
+   dans Progrès, avec un record dedans, alors que plus aucune séance ne le porte.
+   ⭐ C'est R8 pour la 9ᵉ fois : `_renameExEverywhere` (chemin exo perso) déplace le record et
+   supprime l'ancien ; cette porte-ci, non. On ne réécrit pas la règle de fusion — on applique
+   LA MÊME (garder le meilleur 1RM, puis supprimer la source), R2/R13.
+   ⛔⛔ ET LE CORRECTIF NE PEUT PAS ÊTRE « SUPPRIMER L'ANCIEN RECORD » : le nom peut vivre dans
+   D'AUTRES séances (on ne renomme qu'ici). On ne déplace donc QUE si plus AUCUNE séance ne le
+   porte — sinon on effacerait le record d'un exercice encore bien vivant (R29 : le droit de
+   trancher dépend du coût de l'erreur, et celui-là est une perte de donnée silencieuse). */
+let _sessRenames=[];                                      // [[ancien, nouveau], …] de CETTE fenêtre
 function replaceSessEx(ei){
   if(!_sessEdits||!_sessEdits.exs[ei])return;
   _replaceSessEi=ei;
@@ -1423,9 +1449,38 @@ function _replaceSessExPick(name){
   const old=_sessEdits.exs[ei].name;
   if(name===old){_renderSessDetailContent();return;}
   _sessEdits.exs[ei].name=name; // on garde toutes les séries, on change juste le nom
+  _noterRenommageSeance(old,name);
   _renderSessDetailContent();
   _updateSdMuscles(_sessEdits);
   toast('Remplacé par '+name+' — pense à Enregistrer','info');
+}
+/* Enregistre le renommage, en REPLIANT les chaînes : A→B puis B→C doit valoir A→C, sinon on
+   chercherait à déplacer le record de B, un nom qui n'a jamais rien porté. Et A→B puis B→A
+   s'annule — on ne touche alors à aucun record. */
+function _noterRenommageSeance(ancien,nouveau){
+  const dejaLa=_sessRenames.find(r=>r[1]===ancien);
+  if(dejaLa){ dejaLa[1]=nouveau; }
+  else if(!_sessRenames.some(r=>r[0]===ancien&&r[1]===nouveau)){ _sessRenames.push([ancien,nouveau]); }
+  /* ⚠️ HONNÊTETÉ : le contrôle négatif ne peut PAS faire rougir cette ligne — un aller-retour
+     A→B→A laisse le nom dans la séance, donc `encoreLa` bloque de toute façon. Elle reste parce
+     qu'elle protège l'endroit qui FAIT MAL : sans elle, une entrée `[A,A]` ferait
+     `S.prs[A]=S.prs[A]` puis `delete S.prs[A]` — le record disparaîtrait. On garde un invariant
+     à côté d'un `delete`, et on écrit qu'aucun témoin ne le couvre plutôt que de le prétendre. */
+  _sessRenames=_sessRenames.filter(r=>r[0]!==r[1]);
+}
+// Déplace les records des noms qui ont VRAIMENT disparu de l'historique. Appelée APRÈS
+// l'écriture de la séance, sinon la séance qu'on vient de renommer porterait encore l'ancien nom.
+function _deplacerRecordsRenommes(){
+  if(!_sessRenames.length)return;
+  _sessRenames.forEach(([o,n])=>{
+    if(!S.prs||!S.prs[o])return;
+    const encoreLa=(S.sessions||[]).some(s=>(s.exs||s.exercises||[]).some(e=>e.name===o));
+    if(encoreLa)return;                                   // le nom sert ailleurs : on ne touche à rien
+    // MÊME RÈGLE QUE `_renameExEverywhere` : on garde le meilleur 1RM, jamais on n'écrase mieux.
+    if(!S.prs[n]||(S.prs[o].rm1||0)>(S.prs[n].rm1||0))S.prs[n]=S.prs[o];
+    delete S.prs[o];
+  });
+  _sessRenames=[];
 }
 
 function deleteSessOrConfirm(){
@@ -1462,6 +1517,7 @@ function saveSessEdits(){
   _sessEdits.calories=calData.total;
   _sessEdits.calData=calData;
   S.sessions[idx]=_sessEdits;
+  _deplacerRecordsRenommes();   // ⚠️ APRÈS l'écriture : avant, la séance porterait encore l'ancien nom
   persist();_cloudSyncSessions();renderSessions();closeSessDetail();
   toast('Séance mise à jour ✓','success');
 }

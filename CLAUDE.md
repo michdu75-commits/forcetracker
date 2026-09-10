@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1188`** (prochaine : `ft-v1189`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1189`** (prochaine : `ft-v1190`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,32 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1189 — 🔗 RENOMMER UN EXERCICE DANS UNE SÉANCE PASSÉE LAISSAIT UN RECORD ORPHELIN — LA PORTE JUMELLE DE ft-v1187** — Michel, en cherchant le bouton que je venais de livrer : ***« je ne trouve pas dans choisir un exercice tirage vertical »***.
+
+**⭐⭐ MESURÉ, ET C'EST MOI QUI L'AVAIS ENVOYÉ AU MAUVAIS ENDROIT.** Il n'a **plus** d'exercice perso « Tirage vertical » — il les avait déjà remplacés. *Vérifié dans la page* : s'il en avait un, il sortirait **en tête** du sélecteur dès qu'on tape « tirage vertical ». Le nom ne vit plus que dans sa **séance du 9 sept**. 👉 **Mon bouton de ft-v1187 ne pouvait pas l'atteindre** : il ne travaille que sur `S.customExercises`.
+
+**⭐ LE BON GESTE EXISTAIT DÉJÀ, ET IL ÉTAIT SUR L'ÉCRAN DE SA CAPTURE** : le **🔄** de la carte → `replaceSessEx` → `_replaceSessExPick` → **💾 Enregistrer**. Conduit de bout en bout : **séries gardées, volume inchangé (1220), record 81,4 kg créé sous le bon nom**.
+
+**⛔⛔ MAIS IL LAISSAIT UN RECORD DERRIÈRE LUI.** `S.prs['Tirage vertical']` restait **intact** — donc un exercice **fantôme** continuait d'apparaître dans **Progrès**, avec un record dedans, alors que **plus aucune séance ne le portait**. 👉 **C'est R8 pour la 9ᵉ fois** : la porte jumelle (`_renameExEverywhere`, chemin exercice perso) déplace le record **depuis toujours** ; celle-ci, non.
+
+**⛔⛔ ET LE CORRECTIF NE POUVAIT PAS ÊTRE « SUPPRIMER L'ANCIEN RECORD »** : le nom peut vivre dans **d'autres** séances — on n'en renomme qu'une. On ne déplace donc **que si plus aucune séance ne le porte** (**R29** : le coût de l'erreur est ici une **perte de donnée silencieuse**). Un témoin dédié fige ce garde-fou.
+
+**⭐ AUCUNE RÈGLE NOUVELLE (R2/R13)** : on applique **celle de `_renameExEverywhere`** — garder le meilleur 1RM, puis supprimer la source. Mesuré : cible déjà à **120 kg** → elle n'est **pas** écrasée par les 81,4.
+
+**⚠️⚠️ ET LE CONTRÔLE NÉGATIF A TROUVÉ UN VRAI DÉFAUT QUE J'ALLAIS LIVRER.** Trois de mes sept mutations ne mordaient pas. En cherchant pourquoi — au lieu de conclure à du code décoratif — **le repli des chaînes s'est révélé nécessaire, et mon témoin incomplet** : sur *A→B→C*, un traitement séquentiel déplace d'abord le record de A vers **B**, puis celui de **B** vers C. Si **B avait déjà un record à lui** (un orphelin d'avant), ***ce record-là partait avec***. Mon cas ④ ne le voyait pas parce que B n'avait rien. Cas **④bis** écrit — B porte 90 kg — et la mutation mord chirurgicalement : sans repli, les 90 kg de « Tirage Nuque » atterrissaient sur le lat pulldown.
+
+**⛔ ET DEUX AUTRES « PROTECTIONS » ONT ÉTÉ MESURÉES INUTILES, DONC UNE A ÉTÉ RETIRÉE.** J'avais posé la remise à zéro des renommages **à l'ouverture ET à la fermeture** : chacune neutralisée seule, **0 rouge** — *elles se couvraient l'une l'autre*. La seconde est retirée (**R19**). ⚠️ **Et je dis ce que la mesure dit vraiment** : même celle qui reste **n'a aucun cas d'échec atteignable**, parce que le garde `encoreLa` fait déjà le travail — une séance fermée sans enregistrer porte encore l'ancien nom. Elle reste pour qu'une fenêtre s'ouvre **toujours** propre, **pas parce qu'un témoin l'exige** — c'est écrit dans le code. *Le contraire de ft-v1180, où j'avais failli retirer une vraie protection : ici j'ai cherché le cas, et il n'existe pas.*
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît : un record fantôme cesse d'apparaître (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **ça ne renomme rien tout seul** — c'est toujours la personne qui tape 🔄 puis Enregistrer. ⛔ Ni l'import, ni le rapprocheur, ni `_EX_EQUIV`, ni le bouton de ft-v1187 ne sont touchés. ⛔ **Et un exercice SUPPRIMÉ d'une séance passée laisse toujours son record** — c'est une **troisième** porte, non traitée ici, et je préfère l'écrire que la laisser se découvrir (**R30**). ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+Tests : **parcours PASSE_TOTAL** (+10, bloc **CCLXXXVI**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⭐ **Le témoin CONDUIT le vrai chemin** (`openSessDetail` → `replaceSessEx` → le choix → `saveSessEdits`), jamais `_deplacerRecordsRenommes` en direct — *vérifier la fonction n'est pas vérifier l'appel* (`BUGS.md` §58). ⛔ **CONTRÔLE NÉGATIF : 5 mutations, TOUTES MORDENT** — ① le correctif entier retiré → **3 rouges** · ② le garde-fou « le nom vit ailleurs » retiré → **1**, exactement lui · ③ on écrase le record de la cible sans comparer → **1** · ④ le repli de chaîne retiré → **1**, exactement le cas ④bis · ⑤ le renommage plus noté du tout → **3**.
+
+**⚠️ UNE ERREUR DE SONDE À MOI, DITE PLUTÔT QUE TUE** : ma 1ʳᵉ mesure passait `openSessDetail(0)` — or elle prend le **ts/id**, pas l'index. Le renommage ne se produisait donc **pas**, et j'ai failli conclure que le chemin 🔄 était cassé. 👉 ***Un test qui n'emploie pas la signature de la production ne teste rien*** — la même famille que le `cardio.min`/`duration` de ft-v1184.
+
+Fichiers : `setup.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1189. |
 
 **ft-v1188 — 🔬 LES 3 VÉRIFICATIONS DE GPT AVANT VALIDATION DE P1 — DEUX TROUS RÉELS SUR TROIS, ET LE TROISIÈME DÉMONTRÉ SAIN** — cahier de GPT transmis par Michel : ***« je veux mesurer trois points précis. Ne touche à rien d'autre. »*** **Mesuré avant la moindre ligne de code, sur les trois.**
 
@@ -688,45 +714,6 @@ Tests : **parcours 3400/3400** (+9, bloc **CCLXXIX**), **calculs 339/339**, musc
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1182. |
 
-**ft-v1181 — ⚖️ LE COUPLE `base`/`q` SURVIT ENFIN À L'ALLER-RETOUR D'ONGLET — ET LA QUANTITÉ AFFICHÉE A UN PROPRIÉTAIRE** — cahier des charges de Michel après ft-v1180 : ***« préserver la quantité affichée liée au couple base/q, pas seulement `_afPoidsDeclare` »***.
-
-**⭐⭐ LA CAUSE, MESURÉE GESTE PAR GESTE AVANT D'ÉCRIRE UNE LIGNE** — son étiquette d'Iso Zero :
-
-| geste | `_afRef` | champ | écran |
-|---|---|---|---|
-| déclarer **30 g** | `{base:117, q:30}` | 30 | 117 |
-| taper **40** | **inchangé** — c'est l'invariant | 40 | **156** |
-| 🍽️ portions | `{base:117, **q:1**, u:''}` ⛔ | *détruit* | 156 |
-| ⚖️ grammes | `{q:1, u:''}` | *détruit*, `af-poids` vide | 156 |
-
-👉 ***L'app affiche 156 kcal sans plus aucune idée de ce que ça pèse.*** Taper 110 g ensuite appariait 274 kcal à 110 g — le cas exact du journal de test.
-
-**⭐⭐ ET C'EST LE MIROIR EXACT DE ft-v1180.** Là, le DOM se souvenait **trop** (la quantité d'un aliment traversait jusqu'au suivant) ; ici il se souvient **trop peu** — il est la **seule** mémoire de la quantité affichée, et redessiner le bloc la détruit. *Même racine, deux symptômes opposés : la quantité affichée n'appartenait à personne.*
-
-**⭐ LE CORRECTIF MET DE CÔTÉ LE COUPLE ENTIER**, `base` **et** `q`, plus la quantité affichée — et le remet **tel quel** au retour, gardé par le **nom** de l'aliment (le garde-fou de ft-v1180). *On ne recalcule rien, on remet ce qui était là.*
-
-**⛔⛔ ET C'EST LA DIFFÉRENCE AVEC MON CORRECTIF DE LA VEILLE, QUE LE BANC AVAIT REFUSÉ** : il ne restituait que `_afPoidsDeclare` (30), donc l'écran repassait à 30 g / 117 kcal et **le 40 qu'elle venait de taper disparaissait**. *Réparer la donnée en cassant l'écran n'est pas un correctif, c'est un échange.* Ici l'écran redevient **identique à ce qu'il était**.
-
-**⚠️⚠️ LE TÉMOIN ft-v1061 A ÉTÉ ADAPTÉ — SUR DÉCISION DE MICHEL, ET LA MARCHE À SUIVRE A ÉTÉ RESPECTÉE.** Sa consigne était : *« si ft-v1061 rougit, tu t'arrêtes et tu traces pourquoi »*. Il a rougi, **je me suis arrêté**, j'ai tracé sans toucher au témoin, et il a tranché (**option A**).
-- **ancien geste** : `taper('af-poids','30')` — le bloc **re-déclarait** le poids après l'aller-retour, parce que l'app l'avait oublié et le redemandait ;
-- **comportement voulu** : l'aller-retour ne perd plus la quantité, donc l'app ne redemande plus rien — `af-poids` a cédé la place à `af-prop`, et *cette re-déclaration était le contournement du bug* ;
-- **la garantie est inchangée** : `base` et `q` ne doivent JAMAIS être désappariés. **Les 8 assertions et leurs valeurs sont conservées à l'identique** (117/26 · 12/3 · 156/35 · q=30 · base 200 / q 40).
-
-⭐ **Le témoin y gagne** : il vérifie désormais que le couple est intact **dès la sortie de l'aller-retour**, sans qu'on ait rien re-déclaré. **Une seule ligne a été retirée du fichier de tests.** ⛔ *Ce n'est pas un témoin qu'on assouplit pour faire passer du code : c'est le COMPORTEMENT qu'il figeait qui a changé, et on écrit lequel, par qui et quand* (**ft-v1175**).
-
-**⭐ LES 5 CAS DE MICHEL, MESURÉS** : *40 g → portions → grammes* = **champ 40, écran 156/35** · *110 g → portions → grammes* = **110 g** · *A 110 g → portions → B → grammes* = **rien de A** · *après le retour la quantité se modifie encore* (200 g → **498 kcal**, et le champ existe enfin) · *aucune contamination entre aliments*.
-
-**⛔ ET LE CHEMIN `af-poids` RESTE VIVANT — c'est le garde-fou qui empêche le correctif d'en faire trop** : sans quantité connue, l'app **demande** toujours le poids au lieu d'en inventer un (**R29**), et ce chemin marche (150 g déclarés → `q=150`). Deux témoins le figent, à la demande de Michel.
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît : une quantité qui se perdait cesse de se perdre (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les lignes déjà abîmées ne sont pas réparées** · ⛔ **P1** (« portion » comme vraie unité) et ⛔ **la migration des 17 jours** restent ouverts et **intacts** — décision de Michel : rien de tout ça avant son retour iPhone. ⚠️ **C'est lui qui valide en conditions réelles** : pas de WebKit dans ce conteneur, je ne peux pas le faire à sa place.
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1038**, job `deploy` — **les 7 étapes** en `success`, « Déployer sur GitHub Pages » comprise, à **11:17:00 UTC** sur `d99d8294` (job clos à 11:17:01). ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur le `completed_at` du job, pas sur son `status`* — la leçon de ft-v1180, où une réponse en cache m'a fait croire à huit minutes d'attente sur un job terminé en 17 secondes.
-
-Tests : **parcours 3391/3391** (+7), bloc **CLXVIII 12/12**, bloc **CCLXXVIII 21/21**, **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 3 mutations, toutes mordent** — ① correctif entier retiré → **1 rouge dans chaque bloc** · ② ⭐⭐ **la quantité affichée non restituée, c'est-à-dire MON correctif de la veille** → **2 rouges**, exactement *« le champ redonne 40 g »* et *« les macros redonnent 156/35 »* — *c'est la mutation la plus utile du lot : elle rejoue mon erreur* · ③ le garde **nom** retiré → **1 rouge**, exactement le témoin A→B. ⚠️ **Honnêteté sur la première** : retirer le correctif fait **mourir** le bloc CLXVIII (son aide `taper` n'a pas de garde sur `null`), donc il rend **1 rouge** — *le même signal qu'une assertion cassée*. Le bloc ne distingue pas « correctif absent » de « bloc en panne ». *Je le dis plutôt que de compter ce 1 comme une détection fine.*
-
-Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1181. |
 
 
 
