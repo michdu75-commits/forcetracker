@@ -11970,10 +11970,29 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       if(!res.length){ o.pasDeCiqual=true; return o; }
       _afSuggCiq=res; _afSuggPrendreCiqual(0);
       o.premiereFois={ bloc:vis('af-bc-row') };
+      /* ⚖️⛔⛔ ft-v1190 — LE GESTE, ET SON ORDRE EST LE POINT DÉLICAT (option A, Michel 10/09/2026).
+         CIQUAL pose `_bcNutr` et ouvre le bloc quantité : sans geste, l'app refuse d'enregistrer.
+         ⛔ MAIS LE GESTE DOIT VENIR **AVANT** LA CORRECTION À LA MAIN, jamais après : taper une
+         quantité recalcule les 4 champs depuis le pour-100 g, donc un geste posé après le « 29 »
+         l'écraserait — et le témoin d'en dessous (« les macros corrigées à la main ne sont pas
+         écrasées ») mesurerait alors l'inverse de ce qu'il dit. *L'ordre des gestes fait partie
+         du témoin, pas du décor.* ⛔ Aucune valeur attendue ne bouge. */
+      {const _g=document.getElementById('af-bc-grams');
+       if(_g){ _g.value='100'; _g.dispatchEvent(new Event('input',{bubbles:true})); }}
+      await new Promise(r=>setTimeout(r,220));
       document.getElementById('af-kcal').value='29';    // il corrige à la main
       document.getElementById('af-prot').value='7';
+      /* ⚠️ ft-v1190 — CE RELEVÉ EXISTE PARCE QUE CE BLOC A ROUGI EN PASSE COMPLÈTE ALORS QU'IL
+         PASSAIT EN ISOLÉ, et que le message ne disait pas POURQUOI. *Un témoin qui échoue sans
+         dire ce qu'il a vu coûte une passe entière à chaque hypothèse.* */
+      o.avantEnr={ geste:(typeof _bcQtyPose!=='undefined')?_bcQtyPose:'(absent)',
+                   champ:(document.getElementById('af-bc-grams')||{}).value,
+                   bloc:vis('af-bc-row'), bc:!!(typeof _bcNutr!=='undefined'&&_bcNutr),
+                   kcal:(document.getElementById('af-kcal')||{}).value,
+                   nom:(document.getElementById('af-desc')||{}).value,
+                   src:(typeof _afSrc!=='undefined'&&_afSrc)?!!_afSrc.per100:'(absent)' };
       addFoodEntry();
-      o.enregistre={ per100:!!((S.foodLog||[])[0]||{}).per100 };
+      o.enregistre={ per100:!!((S.foodLog||[])[0]||{}).per100, n:(S.foodLog||[]).length };
 
       // ② il le reprend depuis SON JOURNAL — le vrai chemin
       openAddFood();
@@ -23909,8 +23928,22 @@ console.log('\n-- CCXIV. La portion pré-remplie n\'est pas la tienne (ft-v1105)
       await _lookupBarcode('5999886331696','clavier'); await w(600);
       const qs=document.getElementById('af-bc-qsrc');
       const lu=id=>(document.getElementById(id)||{}).value;
-      return {vu:!!(qs&&qs.offsetParent!==null), txt:(qs&&qs.innerText||'').replace(/\n/g,' '),
-              grams:lu('af-bc-grams'), kcal:lu('af-kcal'), prot:lu('af-prot')};
+      const vis=id=>{const e=document.getElementById(id); return !!e && e.style.display!=='none';};
+      /* ⚖️⛔⛔ ft-v1190 — CE BLOC MESURE DÉSORMAIS DEUX INSTANTS, ET C'EST TOUT LE SUJET.
+         ft-v1105 avait tranché « ON NE RETIRE PAS LE PRÉ-REMPLISSAGE : on le NOMME ». Michel a
+         décidé l'inverse le 10/09/2026 (option A) : *« Force Tracker peut me proposer une
+         quantité. Il ne doit jamais décider à ma place combien j'ai mangé. »*
+         👉 Le nombre n'est plus DANS le champ, il est SUR UNE PASTILLE. Donc on relève
+         l'écran AVANT tout geste (ce que l'app propose et ce qu'elle dit), puis on TOUCHE la
+         pastille et on relève les chiffres — qui doivent être exactement ceux de sa capture. */
+      const pastille=document.getElementById('af-bc-portion');
+      const avant={vu:!!(qs&&qs.offsetParent!==null), txt:(qs&&qs.innerText||'').replace(/\n/g,' '),
+                   grams:lu('af-bc-grams'),
+                   pastille:{vue:vis('af-bc-portion'), txt:((pastille&&pastille.textContent)||'').trim()}};
+      if(vis('af-bc-portion') && pastille) pastille.click();
+      await w(260);
+      return Object.assign(avant, {kcal:lu('af-kcal'), prot:lu('af-prot'),
+                                   gramsApres:lu('af-bc-grams')});
     };
     const q40=await scan(40), q30=await scan(30), q0=await scan(0);
     // ⛔ et elle doit DISPARAÎTRE quand on reprend un aliment qui n'a pas de fiche
@@ -23934,20 +23967,39 @@ console.log('\n-- CCXIV. La portion pré-remplie n\'est pas la tienne (ft-v1105)
        156), alors que la vraie valeur est 388,5 x 0,4 = 155,4 -> 155.
        ⭐ CE QUE LE TEMOIN GARANTIT N'A PAS CHANGE : une portion declaree a 40 g produit les
        chiffres qu'il a vus — dont 35 g de proteines au chiffre pres. */
-    t('⭐⭐ une portion déclarée à 40 g reproduit SES chiffres : 155 kcal (156 sur sa capture, double arrondi) · 35 g',
-      String(R.q40.kcal)==='155' && String(R.q40.prot)==='35' && String(R.q40.grams)==='40',
+    /* ⚖️ ft-v1190 — LE CHIFFRE S'OBTIENT PAR UN CLIC AU LIEU D'ARRIVER TOUT SEUL, ET C'EST
+       TOUTE LA DÉCISION DE MICHEL. ⛔ LES DEUX VALEURS QUI PORTENT LA VERSION — 155 kcal et
+       35 g de protéines, les chiffres de sa capture — SONT INCHANGÉES AU CARACTÈRE PRÈS. */
+    t('⭐⭐ une portion déclarée à 40 g reproduit SES chiffres après un clic : 155 kcal (156 sur sa capture, double arrondi) · 35 g',
+      String(R.q40.kcal)==='155' && String(R.q40.prot)==='35' && String(R.q40.gramsApres)==='40',
       JSON.stringify(R.q40));
     /* ⛔ ET LE CAS JUSTE DOIT RESTER JUSTE : 30 g → 117 kcal · 26 g (la vraie étiquette). */
     t('⛔ … et une portion déclarée à 30 g donne bien 117 kcal · 26 g (l\'étiquette réelle)',
       String(R.q30.kcal)==='117' && String(R.q30.prot)==='26', JSON.stringify(R.q30));
-    t('⛔⛔ le nombre pré-rempli DIT d\'où il vient (il ne le disait pas)',
-      R.q40.vu===true && /portion déclarée/.test(R.q40.txt) && /40/.test(R.q40.txt), R.q40.txt.slice(0,80));
-    /* ⛔ IL INVITE À VÉRIFIER, IL N'AFFIRME PAS QUE C'EST FAUX (R29) : l'app ne sait pas quelle
-       dosette la personne emploie — elle nomme la source et laisse trancher. */
-    t('⛔ il invite à vérifier sa dosette, il n\'accuse pas',
-      /vérifie ta dosette/.test(R.q40.txt) && !/erreur|faux/i.test(R.q40.txt), R.q40.txt.slice(0,80));
-    t('⛔ sans portion déclarée, il dit que 100 g est un DÉFAUT, pas une mesure',
-      R.q0.vu===true && /100/.test(R.q0.txt) && /défaut/.test(R.q0.txt), R.q0.txt.slice(0,80));
+    /* ⚖️⛔⛔ LA GARANTIE DE ft-v1105 SURVIT, DÉPLACÉE : elle exigeait qu'un nombre déjà inscrit
+       DISE d'où il vient. Il n'y a plus de nombre inscrit — donc c'est la PASTILLE qui doit le
+       dire, et le champ doit être VIDE. *On ne supprime pas la garantie, on la suit là où le
+       nombre est parti.* ⛔ Et on exige les trois à la fois : champ vide, pastille nommée,
+       écran qui DEMANDE — les trois peuvent rougir séparément. */
+    t('⛔⛔ le nombre n\'est plus pré-rempli, et c\'est la PASTILLE qui dit d\'où il vient (ft-v1190)',
+      R.q40.grams==='' && R.q40.pastille.vue===true &&
+      /40\s*g/.test(R.q40.pastille.txt) && /portion fabricant/i.test(R.q40.pastille.txt),
+      JSON.stringify({champ:R.q40.grams, pastille:R.q40.pastille}));
+    /* ⛔ IL N'ACCUSE PAS (R29) — ET IL FAIT MIEUX QU'AVANT : ft-v1105 lui faisait dire « vérifie
+       ta dosette » à côté d'un nombre déjà écrit, c'est-à-dire AFFIRMER puis demander de
+       contrôler. Il POSE LA QUESTION, et ne décide plus rien à la place de la personne. */
+    t('⛔ il DEMANDE au lieu d\'affirmer, il n\'accuse pas',
+      R.q40.vu===true && /Combien en as-tu mangé/.test(R.q40.txt) &&
+      /portion de\s*40\s*g/.test(R.q40.txt.replace(/ /g,' ')) && !/erreur|faux/i.test(R.q40.txt),
+      R.q40.txt.slice(0,120));
+    /* ⛔⛔ SANS PORTION DÉCLARÉE, IL N'INVENTE PLUS RIEN. ft-v1105 se contentait de NOMMER le
+       repli à 100 g (« c'est un défaut, pas une mesure ») ; le repli lui-même a disparu.
+       *Annoncer honnêtement un chiffre qu'on n'a pas choisi restait un chiffre qu'on n'a pas
+       choisi.* Trois exigences, dont l'INTERDIT explicite du 100. */
+    t('⛔ sans portion déclarée, il n\'invente RIEN : ni pastille, ni chiffre (INTERDIT : 100)',
+      R.q0.vu===true && /Aucune portion déclarée/.test(R.q0.txt) &&
+      R.q0.grams==='' && R.q0.pastille.vue===false,
+      JSON.stringify({txt:R.q0.txt.slice(0,90), champ:R.q0.grams, pastille:R.q0.pastille.vue}));
     /* ⛔ PAS DE PROVENANCE ORPHELINE — le défaut de ft-v1042, sur un autre objet. */
     t('⛔ elle disparaît sur un aliment sans fiche (pas de provenance orpheline)',
       R.orpheline===false, 'encore visible='+R.orpheline);
@@ -24602,7 +24654,15 @@ console.log('\n-- CCXIX. Un produit devient calibrable à la main (ft-v1110) --'
     o.per100Garde=(typeof _bcNutr!=='undefined'&&_bcNutr)?{c:_bcNutr.carbs100,f:_bcNutr.fat100,k:_bcNutr.kcal100}:null;
     o.blocApres=(()=>{const e=document.getElementById('af-bc-row');return !!(e&&e.offsetParent!==null);})();
     o.pour100={kcal:V('af-kcal'),prot:V('af-prot')};
-    document.getElementById('af-bc-grams').value='30'; _bcApplyGrams(); await w(200);
+    /* ⚖️ ft-v1190 — ON TAPE POUR DE VRAI (option A, décision Michel du 10/09/2026).
+       Poser `.value` à la main ne lève PAS `_bcQtyPose` : l'app ne verrait aucun geste et
+       refuserait d'enregistrer. C'est exactement ce que le garde-fou doit faire, et c'est
+       pour ça que ce témoin a rougi. ⛔ AUCUNE valeur attendue ne change ici : on ajoute
+       le geste, rien d'autre (sa consigne : « modifier le geste ; NE PAS affaiblir les
+       assertions »). */
+    {const _g=document.getElementById('af-bc-grams');
+     _g.value='30'; _g.dispatchEvent(new Event('input',{bubbles:true}));}
+    await w(200);
     o.pour30={kcal:+V('af-kcal'),prot:+V('af-prot')};
     o.alerteMuette=(document.getElementById('af-coherence')||{}).style.display==='none';
     addFoodEntry(); await w(400);
@@ -24912,6 +24972,12 @@ console.log('\n-- CCXXII. On met tout et on marque le doute (ft-v1114) --');
     o.noteEcran=((document.getElementById('af-etat-note')||{}).textContent||'').slice(0,120);
     o.qsrc=((document.getElementById('af-bc-qsrc')||{}).textContent||'').slice(0,160);
     document.getElementById('af-desc').value='Korean Whopper test';
+    /* ⚖️ ft-v1190 — LE GESTE (option A, décision Michel du 10/09/2026). `_afSuggPrendreMarque`
+       pose `_bcNutr` et ouvre le bloc quantité : sans un geste, l'app refuse d'enregistrer.
+       ⛔ Les assertions de ce témoin — le doute, la provenance « marque » — sont INCHANGÉES ;
+       c'est le chemin pour y arriver qui a une étape de plus. */
+    {const _g=document.getElementById('af-bc-grams');
+     if(_g){ _g.value='100'; _g.dispatchEvent(new Event('input',{bubbles:true})); }}
     addFoodEntry();
     const e=(S.foodLog||[]).slice(-1)[0]||{};
     o.entree={ doute:e.doute||null, saisie:e.saisie||null, origine:e.origine||null,
@@ -30968,15 +31034,24 @@ console.log('\n-- CCLXXII. Le poids du paquet (ft-v1174) --');
     /* ③ LE CHEMIN DU SCAN */
     t('CCLXXII ③ un scan avec un poids de paquet affiche la pastille « 📦 250 g (le paquet entier) »',
       Q.scan.pastille===true && /📦\s*250 g/.test(Q.scan.texte), Q.scan.texte);
-    /* ⭐⭐ LA DÉCISION QUI PORTE LA VERSION : on PROPOSE, on ne pré-remplit pas (R29). */
-    t('CCLXXII ④ ⭐⭐ … et le champ N\'EST PAS pré-rempli : il vaut toujours 100, pas 250',
-      Q.scan.champ==='100', 'champ='+Q.scan.champ);
+    /* ⭐⭐ LA DÉCISION QUI PORTE LA VERSION : on PROPOSE, on ne pré-remplit pas (R29).
+       ⚖️⛔ ft-v1190 — LE « 100 » A ÉTÉ PÉRIMÉ PAR MICHEL LE 10/09/2026 (option A) : il n'y a
+       plus AUCUN pré-remplissage, donc le champ est VIDE. *La garantie de ce témoin n'est pas
+       affaiblie, elle est renforcée* : elle disait « le champ ne vaut pas 250 » en tolérant un
+       100 que personne n'avait choisi ; elle dit maintenant que le champ ne vaut RIEN DU TOUT.
+       ⛔ L'interdit d'origine reste écrit noir sur blanc, c'est lui qui portait la version. */
+    t('CCLXXII ④ ⭐⭐ … et le champ n\'est PAS pré-rempli — il est VIDE (INTERDIT : 250, et depuis ft-v1190 : 100)',
+      Q.scan.champ==='' && Q.scan.champ!=='250', 'champ='+JSON.stringify(Q.scan.champ));
     t('CCLXXII ⑤ un appui applique le poids, recalcule les macros, et la pastille disparaît',
       Q.apresClic.champ==='250' && Q.apresClic.kcal==='180' && Q.apresClic.pastille===false,
       JSON.stringify(Q.apresClic));
     /* ⑥ CE QUI N'EST PAS LISIBLE NE PROPOSE RIEN */
-    t('CCLXXII ⑥ ⛔ un volume (« 1 L ») ne propose RIEN — on n\'invente pas de densité',
-      Q.volume.pastille===false && Q.volume.champ==='100', JSON.stringify(Q.volume));
+    /* ⚖️ ft-v1190 — même mise à jour que ④ : plus de pré-remplissage, le champ est vide.
+       ⭐ Et ici la garantie devient VRAIMENT plus forte : avant, « ne propose rien » laissait
+       quand même 100 g dans le champ, donc un volume illisible aboutissait à une quantité que
+       personne n'avait choisie. Maintenant, ne rien proposer veut dire ne RIEN écrire. */
+    t('CCLXXII ⑥ ⛔ un volume (« 1 L ») ne propose RIEN — ni pastille, ni chiffre dans le champ',
+      Q.volume.pastille===false && Q.volume.champ==='', JSON.stringify(Q.volume));
     /* ⑦ LE CAS DE MICHEL — la fiche sans valeurs */
     t('CCLXXII ⑦ ⛔ CONTRÔLE — une fiche sans valeurs part bien au calibrage (ft-v1165)',
       Q.sansVal.calOuvert===true, JSON.stringify(Q.sansVal));
@@ -31615,10 +31690,16 @@ console.log('\n-- CCLXXVII. L\'exclusivité des deux blocs Quantité (ft-v1179) 
     addFoodEntry(); await d(280);
     o.invariant=dernier();
 
-    /* ══ ⑤ NON-RÉGRESSION — un scan NORMAL garde sa quantité et son pour-100 g ══ */
+    /* ══ ⑤ NON-RÉGRESSION — un scan NORMAL garde sa quantité et son pour-100 g ══
+       ⚖️ ft-v1190 — LE GESTE (option A). Les 100 g venaient du pré-remplissage, qui n'existe
+       plus : la personne les TAPE. ⛔ Les valeurs attendues plus bas sont inchangées au
+       caractère près (q=100, u='g', per100=103) — c'est le geste qui a changé, pas la garantie. */
     S.foodLog=[]; persist(); fermer(); openAddFood(); await d(260);
     await _lookupBarcode('1111111111111','scan',false); await d(280);
     o.scanRow={row:vis('af-bc-row'), grams:val('af-bc-grams')};
+    {const g=document.getElementById('af-bc-grams');
+     g.value='100'; g.dispatchEvent(new Event('input',{bubbles:true}));}
+    await d(240);
     addFoodEntry(); await d(280);
     o.scanNormal=dernier();
 
@@ -31680,9 +31761,14 @@ console.log('\n-- CCLXXVII. L\'exclusivité des deux blocs Quantité (ft-v1179) 
   if(Z.err) t('CCLXXVII n\'a pas pu tourner', false, Z.err);
   else{
     /* ⛔ CONTRÔLE — sans lui, tous les témoins seraient verts en ne mesurant rien : il faut que
-       le PREMIER scan ait bien ouvert le bloc avec son défaut à 100. */
-    t('CCLXXVII ⛔ CONTRÔLE — le 1ᵉʳ scan ouvre bien le bloc pour-100 g, avec 100 dedans',
-      Z.apres1.row===true && Z.apres1.grams==='100' && Z.apres1.bc===true, JSON.stringify(Z.apres1));
+       le PREMIER scan ait bien OUVERT le bloc et l'ait RATTACHÉ à un aliment.
+       ⚖️ ft-v1190 — LA MOITIÉ « avec 100 dedans » A ÉTÉ PÉRIMÉE PAR MICHEL le 10/09/2026
+       (option A : plus aucun pré-remplissage). ⛔ Ce n'est pas un contrôle qu'on desserre :
+       sa fonction est de prouver que le bloc s'ouvre — si le scan ne l'ouvrait pas, `row` ou
+       `bc` rougirait exactement comme avant. Le champ vide est simplement devenu la valeur
+       exacte à cet instant, et on l'exige au lieu de ne plus rien regarder. */
+    t('CCLXXVII ⛔ CONTRÔLE — le 1ᵉʳ scan ouvre bien le bloc pour-100 g, rattaché à l\'aliment, champ VIDE',
+      Z.apres1.row===true && Z.apres1.grams==='' && Z.apres1.bc===true, JSON.stringify(Z.apres1));
     t('CCLXXVII ① ⭐⭐ SON CAS — après un 2ᵉ scan SANS valeurs, le bloc pour-100 g est CACHÉ',
       Z.apres2.row===false && Z.apres2.bc===false, JSON.stringify(Z.apres2));
     t('CCLXXVII ② ⭐⭐ … et l\'entrée ne porte AUCUNE quantité (INTERDIT : 100)',

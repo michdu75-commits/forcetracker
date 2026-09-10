@@ -1422,6 +1422,15 @@ console.log('\n═══ 12. Journal alimentaire : la provenance de chaque ligne
     const scanBloc=(n)=>{ _bcNutr={name:n.name,kcal100:n.kcal,prot100:n.prot||0,
                                    carbs100:n.carbs||0,fat100:n.fat||0};
                           if(bcRow())bcRow().style.display='block'; };
+    /* ft-v1190 — ON TAPE LA QUANTITE POUR DE VRAI (option A, decision Michel du 10/09/2026).
+       `set('af-bc-grams', 25)` posait `.value` SANS evenement : l'app n'y voyait aucun geste et
+       refusait d'enregistrer, exactement comme elle doit le faire. C'est le meme defaut que
+       celui que ce bloc se reproche DEJA quatre lignes plus haut a propos de `_bcNutr` --
+       *un test qui n'emploie pas le schema de la production ne teste rien, il rassure*.
+       => la fixture est rendue FIDELE, elle n'est pas assouplie : aucune valeur attendue ne
+       change (25 g, sa source, son identifiant, son pour-100 g). */
+    const taperGrammes=(v)=>{ const el=document.getElementById('af-bc-grams');
+                              if(el){ el.value=v; el.dispatchEvent(new Event('input',{bubbles:true})); } };
     // ── ① saisie 100 % MANUELLE ────────────────────────────────────────────────
     openAddFood();
     set('af-desc','Poulet maison'); set('af-kcal',300); set('af-prot',40); set('af-carbs',0); set('af-fat',12);
@@ -1432,7 +1441,7 @@ console.log('\n═══ 12. Journal alimentaire : la provenance de chaque ligne
     src({saisie:'scan',origine:'off',sourceId:'3017620422003',
       per100:{kcal:539,prot:6.3,carbs:57.5,fat:30.9},attendu:{kcal:135,prot:2,carbs:14,fat:8}});
     scanBloc({name:'Pate a tartiner',kcal:539,prot:6.3,carbs:57.5,fat:30.9});
-    set('af-bc-grams',25);
+    taperGrammes(25);
     set('af-desc','Pate a tartiner'); set('af-kcal',135); set('af-prot',2); set('af-carbs',14); set('af-fat',8);
     addFoodEntry();
     o.scan=S.foodLog[S.foodLog.length-1];
@@ -1441,7 +1450,7 @@ console.log('\n═══ 12. Journal alimentaire : la provenance de chaque ligne
     src({saisie:'scan',origine:'off',sourceId:'3017620422003',
       per100:{kcal:539},attendu:{kcal:135,prot:2,carbs:14,fat:8}});
     scanBloc({name:'Pate a tartiner',kcal:539,prot:6.3,carbs:57.5,fat:30.9});
-    set('af-bc-grams',25);
+    taperGrammes(25);
     set('af-desc','Pate a tartiner'); set('af-kcal',200); set('af-prot',2); set('af-carbs',14); set('af-fat',8);
     addFoodEntry();
     o.retouche=S.foodLog[S.foodLog.length-1];
