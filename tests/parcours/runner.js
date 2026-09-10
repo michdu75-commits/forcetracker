@@ -33407,6 +33407,52 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
     o.reprise.ajoutees=(S.foodLog||[]).length-n3;
     o.reprise.ligne=ligne();
 
+    /* ⑨ ⛔⛔ LE GESTE NE SURVIT PAS NON PLUS À UNE AUTRE PORTE QUE LE SCAN.
+       Le témoin ⑫ enchaîne deux SCANS — or `_offRemplirFormulaire` repose le drapeau lui-même,
+       donc il ne prouve rien sur `_afOublierAliment`. Mesuré : sans ce témoin, retirer la remise
+       à zéro des 13 portes ne fait rougir PERSONNE. *Une protection sans témoin n'est pas une
+       protection.* Ici on scanne, on CLIQUE, puis on reprend un AUTRE aliment depuis la liste. */
+    S.foodLog=[{ts:Date.now()-2e6,date:today(),meal:'midi',name:'Autre aliment',
+      kcal:150,prot:8,carbs:20,fat:4,q:100,u:'g',
+      per100:{kcal:150,prot:8,carbs:20,fat:4},saisie:'scan',origine:'off'}];
+    S.savedFoods=[]; S.hiddenFoods=[]; persist();
+    await scanner(fiche('Lentilles','205','410 g'));
+    _bcReprendrePortion(); await d(260);            // geste sur les lentilles
+    fermer(); openAddFood(); await d(300);
+    _afQuickItems=_buildFoodQuickItems();
+    quickFillFood(_afQuickItems.findIndex(x=>x.name==='Autre aliment')); await d(320);
+    const n4=(S.foodLog||[]).length;
+    addFoodEntry(); await d(320);
+    o.gesteVersAutrePorte={ajoutees:(S.foodLog||[]).length-n4};
+
+    /* ⑩ LA PHOTO D'ÉTIQUETTE — la porte JUMELLE, qui n'avait aucun témoin.
+       Mesuré : la remettre au pré-remplissage ne faisait rougir personne. */
+    S.foodLog=[]; S.savedFoods=[]; S.hiddenFoods=[]; persist();
+    fermer(); openAddFood(); await d(300);
+    /* ⚠️ `_aiUrl` rend l'URL du PROXY, sans le nom de l'action : filtrer sur « foodLabel » dans
+       l'ADRESSE ne marche pas — c'est le CORPS qui la porte. Ma 1ʳᵉ version du témoin l'a appris
+       en rendant « porte non couverte ». *Un test qui n'emploie pas le schéma de la production
+       ne teste rien.* */
+    const vraiF=window.fetch;
+    window.fetch=async(u,opt)=>{
+      let corps=''; try{ corps=String((opt&&opt.body)||''); }catch(e){}
+      if(corps.indexOf('foodLabel')>=0) return {ok:true,json:async()=>({status:'ok',
+        name:'Pot etiquette', kcal100:94, prot100:5.2, carbs100:12, fat100:2.4, serving:40})};
+      return vraiF(u,opt);};
+    S.premium=true;                       // ⛔ sinon le mur payant coupe le chemin avant la mesure
+    const vraiResize=window._resizeToB64;
+    window._resizeToB64=async()=>'BASE64FAKE';   // pas de vraie image dans un test
+    try{
+      const f=new File([new Uint8Array([1,2,3])],'etiquette.jpg',{type:'image/jpeg'});
+      await onFoodLabelFile({files:[f]});
+    }catch(e){ o.etiquetteErr=String(e&&e.message||e); }
+    await d(460);
+    window._resizeToB64=vraiResize;
+    window.fetch=vraiF;
+    o.etiquette={dispo:!!(_bcNutr && _bcNutr.name==='Pot etiquette'),
+                 champ:val('af-bc-grams'),
+                 pastille:vis('af-bc-portion')?txt('af-bc-portion'):'(cachée)'};
+
     window.fetch=vrai;
     return o;
    }catch(e){ return {err:String(e&&e.message||e)}; }
@@ -33460,6 +33506,22 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
     t('CCLXXXVII ⑯ ⭐ ... et un clic sur « la dernière fois » enregistre bien (q=205 · 193 kcal)',
       W.reprise && W.reprise.ajoutees===1 && W.reprise.ligne
       && W.reprise.ligne.q===205 && W.reprise.ligne.kcal===193, JSON.stringify(W.reprise));
+    /* ⛔⛔ CE TÉMOIN EXISTE PARCE QU'UNE MUTATION NE MORDAIT PAS : le ⑫ enchaîne deux SCANS, et
+       `_offRemplirFormulaire` repose le drapeau tout seul — il ne prouvait donc rien sur la remise
+       à zéro des 13 portes. *Un témoin qui passe par la porte qui se répare elle-même ne teste
+       pas le réparateur.* */
+    t('CCLXXXVII ⑰ ⛔⛔ UN GESTE SUR UN SCAN NE VAUT PAS CHOIX SUR UN ALIMENT REPRIS ENSUITE',
+      W.gesteVersAutrePorte && W.gesteVersAutrePorte.ajoutees===0,
+      JSON.stringify(W.gesteVersAutrePorte));
+    /* ⛔ LA PORTE JUMELLE (photo d'étiquette) N'AVAIT AUCUN TÉMOIN — mesuré, la remettre au
+       pré-remplissage ne faisait rougir personne. */
+    if(W.etiquette && W.etiquette.dispo){
+      t('CCLXXXVII ⑱ ⭐ PHOTO D\'ÉTIQUETTE : champ VIDE et portion proposée en pastille (40 g)',
+        W.etiquette.champ==='' && /40/.test(W.etiquette.pastille), JSON.stringify(W.etiquette));
+    } else {
+      t('CCLXXXVII ⑱ /!\\ la photo d\'étiquette n\'a pas pu être conduite ici — porte non couverte',
+        false, JSON.stringify(W.etiquette));
+    }
   }
   await cx.close();
 }

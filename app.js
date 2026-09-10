@@ -1252,7 +1252,16 @@ function _provFood(vals){
      reconstructible**, parce que `per100` arrive par un chemin INDÉPENDANT de la quantité.
      *Le bug historique n'était pas `q:null`, c'était `per100:null`* — et `193 / 94 × 100` redonne
      exactement 205. **Une ligne sans quantité n'est morte que si elle n'a pas non plus de
-     référence.** */
+     référence.**
+     ⚠️⚠️ HONNÊTETÉ SUR CE TEST : **aucun témoin ne l'exige aujourd'hui**, et c'est mesuré — la
+     mutation qui le retire rend **0 rouge**. Ses trois appelants sont déjà couverts ailleurs :
+     `addFoodEntry` refuse avant d'arriver ici · `quickAddFood` appelle `_afOublierAliment` qui
+     cache le bloc · `rejouerRepas` tourne écran fermé. *Les deux protections se couvrent* — le
+     cas exact de ft-v1189.
+     ⭐ IL RESTE POUR UNE RAISON NOMMABLE, PAS PAR PRUDENCE VAGUE : si le garde-fou d'écriture
+     était un jour restreint au seul scan (une question ouverte posée à Michel), ce test
+     redeviendrait **la seule** protection sur ce chemin. *Une protection dont on sait dire quand
+     elle servira n'est pas du code mort ; une qu'on garde « au cas où » en est.* */
   if(row&&row.style.display!=='none'&&_bcNutr&&g>0&&_bcQtyPose){ p.q=g; p.u='g'; }
   /* ⚖️ LE POIDS DÉCLARÉ À LA MAIN DESCEND JUSQU'À LA DONNÉE (ft-v1051) — R4, et c'est LA
      moitié qui manquait : sans ces lignes, la personne voit son poids à l'écran, les 4 valeurs
