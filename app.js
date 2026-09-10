@@ -1264,8 +1264,23 @@ function _provFood(vals){
     if(q>0){
       const f=100/q;
       p.q=q; p.u='g';
-      p.per100={kcal:Math.round((+vals.kcal||0)*f), prot:Math.round((+vals.prot||0)*f),
-                carbs:Math.round((+vals.carbs||0)*f), fat:Math.round((+vals.fat||0)*f)};
+      /* ⚖️⭐ LA DÉCIMALE (10/09/2026) — `_per100d1` SERVAIT DÉJÀ 7 PORTES, PAS CELLE-CI.
+         Open Food Facts, CIQUAL, les marques, l'étiquette photo et le scan gardent une décimale
+         depuis ft-v1170 ; les DEUX pour-100 g **dérivés** de `_provFood` étaient restés en
+         `Math.round`. *C'est R8, la jumelle, à la 8ᵉ porte.*
+         ⛔⛔ ET LE COÛT EST MESURÉ, PAS SUPPOSÉ : 1 part de 140 g valant 355/30/44/6 donne un
+         pour-100 g exact de 253,6 / 21,4 / 31,4 / 4,3 — arrondi entier, les lipides tombent à
+         **4**. En redemandant 280 g l'écran affiche alors **11 g de lipides au lieu de 12,
+         soit −8,3 %**. Plus la macro est petite, plus l'erreur relative est grosse (le
+         commentaire de `_per100d1` l'avait déjà chiffré : 1 159 aliments CIQUAL ont une macro
+         entre 0 et 1 g/100 g, où l'arrondi coûte 100 %).
+         ⭐ Il n'y a AUCUNE dérive cumulative pour autant (mesuré sur 10 cycles de reprise :
+         chiffres identiques) — parce que le pour-100 g se redérive toujours des TOTAUX, jamais
+         du pour-100 g précédent. *L'arrondi n'est pas un cumul, c'est une perte sèche, une
+         fois — et elle se paie à chaque redimensionnement ensuite.*
+         ⭐ Et ça ne change rien à l'écran : `_qtyRescale` arrondit déjà les 4 champs à l'entier. */
+      p.per100={kcal:_per100d1((+vals.kcal||0)*f), prot:_per100d1((+vals.prot||0)*f),
+                carbs:_per100d1((+vals.carbs||0)*f), fat:_per100d1((+vals.fat||0)*f)};
     }
   }
   /* 🍽️⛔⛔ ft-v1183 — LA PORTION DESCEND ENFIN JUSQU'À LA DONNÉE (R4). C'est LE correctif :
@@ -1299,8 +1314,8 @@ function _provFood(vals){
     const masse=n*(+_afPortionPoids||0);
     if(!p.per100 && masse>0){
       const f=100/masse;
-      p.per100={kcal:Math.round((+vals.kcal||0)*f), prot:Math.round((+vals.prot||0)*f),
-                carbs:Math.round((+vals.carbs||0)*f), fat:Math.round((+vals.fat||0)*f)};
+      p.per100={kcal:_per100d1((+vals.kcal||0)*f), prot:_per100d1((+vals.prot||0)*f),
+                carbs:_per100d1((+vals.carbs||0)*f), fat:_per100d1((+vals.fat||0)*f)};
     }
   }
   return p;
@@ -3804,10 +3819,23 @@ function _afSuggPrendreOff(i){
    les macros ferait qu'un gros repas redéfinirait le favori pour toujours.
    ⛔ Et on n'efface jamais une définition existante avec du vide : seule une définition
    RENSEIGNÉE peut en remplacer une autre (R29). */
+/* ⛔⛔ ET SI DEUX FAVORIS PORTAIENT LE MÊME NOM ? (10/09/2026, question de GPT)
+   ⭐ MESURÉ PAR LA VRAIE PORTE, PAS DÉDUIT : `toggleFavFood` cherche `name.toLowerCase()` et
+   **retire** au lieu d'ajouter quand il trouve — trois clics d'étoile d'affilée donnent 1 favori,
+   puis 0, puis 1. *Le doublon de nom est impossible à créer*, casse comprise, et une restauration
+   cloud REMPLACE la liste en bloc (`setup.js`) au lieu de concaténer. Le nom EST donc l'identité
+   d'un favori dans cette app — par construction, pas par hasard. Et le favori ne porte AUCUN
+   autre identifiant (mesuré : pas de `sourceId`), donc il n'y a rien de plus fiable à employer.
+   ⛔ MAIS `.find()` REND LE PREMIER : si un tel état arrivait quand même (sauvegarde retouchée à
+   la main, chemin futur), modifier A écrirait sur B — mesuré, 150 g atterrissaient sur le mauvais
+   produit. On ne devine pas lequel : **on ne fait rien** (R29). *Ne pas agir sur une identité
+   ambiguë vaut mieux qu'agir sur la mauvaise ligne* — et ça ne coûte pas un identifiant inventé
+   pour un cas que l'app ne sait pas produire (R3). */
 function _majDefFavori(e){
   try{
     if(!e || e.u!=='portion' || !Array.isArray(S.savedFoods)) return;
     const k=String(e.name||'').toLowerCase(); if(!k) return;
+    if(S.savedFoods.filter(x=>String(x.name||'').toLowerCase()===k).length>1) return;
     const f=S.savedFoods.find(x=>String(x.name||'').toLowerCase()===k); if(!f) return;
     if(e.portionLabel && f.portionLabel!==e.portionLabel) f.portionLabel=e.portionLabel;
     if(+e.portionWeightG>0 && +f.portionWeightG!==+e.portionWeightG) f.portionWeightG=+e.portionWeightG;
@@ -3918,6 +3946,11 @@ function openEditFood(ts){
      (½ · 1½ · 2 ·…) qui multiplient les 4 macros sans jamais prétendre connaître des grammes.
      *Un « ×2 » est vrai quelle que soit la portion de départ ; un « 60 g » inventé serait faux.* */
   _efUnite='portion'; _efPoidsDeclare=0; _efPoidsPose=false; _efPortions=1; _efPortionPose=false;   // remis à zéro à chaque ouverture (comme l'écran d'ajout)
+  /* 🏷️ …et la définition de la portion est HYDRATÉE depuis l'entrée (elle, on ne la remet pas à
+     zéro : elle appartient à la ligne qu'on ouvre). Remise à zéro d'abord, donc aucune définition
+     ne peut traverser d'un aliment au suivant — c'est l'acquis de ft-v1180, côté édition. */
+  _efPortionLabel=String(e.portionLabel||'').slice(0,24);
+  _efPortionPoids=(+e.portionWeightG>0)?+e.portionWeightG:0;
   /* ⛔⛔ ft-v1172 — LA RÉFÉRENCE AUSSI, et elle manquait DÉJÀ. `_efRef` survivait d'un aliment
      au suivant : la branche « pour-100 g » de `_efQtyRender` sort avant de le réécrire, donc
      ouvrir un produit emballé après un aliment saisi à la main laissait pointer sur le
@@ -3978,6 +4011,30 @@ let _efUnite='portion', _efPoidsDeclare=0;
    affiché puis perdu, comme à l'ajout. *Corriger une seule des deux portes, c'est la faute que
    ce fichier recense six fois.* */
 let _efPortions=1, _efPortionPose=false;
+/* 🏷️ 10/09/2026 — LES JUMELLES DE `_afPortionLabel`/`_afPortionPoids` (R2 : même grandeur, même
+   nom, un seul sens). ⛔ `_efPortionPoids` est le poids d'UNE portion — ce n'est PAS
+   `_efPoidsDeclare`, qui est le poids de ce qui est affiché. */
+let _efPortionLabel='', _efPortionPoids=0;
+/* ⌨️ Ces deux-là ÉCRIVENT la variable et rafraîchissent la seule ligne de texte — jamais le bloc
+   (ft-v1159 : un rendu à chaque frappe détruit le champ au premier chiffre). */
+function _efMajDefPortion(){
+  const el=document.getElementById('ef-pdef'); if(!el||!_efRef||!_efRef.base) return;
+  const qRef=(+_efRef.q>0)?+_efRef.q:1;
+  const b=_efRef.base;
+  const une={kcal:(+b.kcal||0)/qRef, prot:(+b.prot||0)/qRef, carbs:(+b.carbs||0)/qRef, fat:(+b.fat||0)/qRef};
+  const aff=numFR((document.getElementById('ef-prop')||{}).value);
+  const q=(aff>0)?aff:qRef;   // ⛔ la masse totale annoncée suit le nombre AFFICHÉ, sinon elle ment
+  el.innerHTML=_portionDefTexte(une,q,_efPortionLabel,_efPortionPoids)+' Les 4 valeurs suivent en proportion.';
+}
+function _efPortionNomSaisi(){
+  _efPortionLabel=String((document.getElementById('ef-pnom')||{}).value||'').trim().slice(0,24);
+  _efMajDefPortion();
+}
+function _efPortionPoidsSaisi(){
+  const v=numFR((document.getElementById('ef-ppoids')||{}).value);
+  _efPortionPoids=(v>0&&v<10000)?v:0;   // ⛔ NE RESCALE RIEN : savoir qu'un steak pèse 125 g ne change pas ce qu'on a mangé
+  _efMajDefPortion();
+}
 /* ⚖️ ft-v1172 — la jumelle de `_afPoidsPose` (R2, même règle des deux côtés) : tant qu'aucun
    poids réel n'a été posé pour cet aliment, les 4 valeurs affichées SONT la référence ; dès
    qu'il y en a un, ft-v1061 reprend la main et la référence est préservée. */
@@ -4050,10 +4107,21 @@ function _efQtyRender(srcChange){
              : {kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0});
   const style='width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);';
   const mNom=String(e.name||'').match(/(\d+(?:[.,]\d+)?)\s*(g|ml)\b/i);
-  const ancre = e.per100 ? null
+  /* 🏷️⛔⛔ LE POUR-100 g NE DÉCIDE PLUS DE L'UNITÉ, ICI NON PLUS (10/09/2026) — LA JUMELLE DE
+     ft-v1186, ET ELLE ÉTAIT RESTÉE OUVERTE. Mesuré sur « 2 steaks de 125 g »
+     (`q:2, u:'portion', portionWeightG:125, per100:{200,16,0,14}`) : l'écran d'édition affichait
+     **« Quantité (g) = 250 »**, et *enregistrer SANS RIEN TOUCHER* réécrivait la ligne en
+     **`q:250, u:'g'`**. 👉 C'est mot pour mot ce que Michel refuse au point ② de ses décisions :
+     *« je ne veux pas que l'application transforme automatiquement toute cette information en
+     seulement q = 250, u = "g", car on perd alors l'information "2 steaks" »*.
+     ⛔ Et `portionLabel`/`portionWeightG` SURVIVAIENT à côté d'un `u:'g'` — deux sources qui se
+     contredisent, la famille de `BUGS.md` que cette consigne nommait justement.
+     ⭐ L'unité appartient à la personne, pas à la richesse de la fiche. Le test porte sur `e.u`,
+     donc un produit scanné (`u:'g'`) garde EXACTEMENT son champ grammes : rien ne change pour lui. */
+  const ancre = (e.per100 && e.u!=='portion') ? null
     : (e.q>0 ? {v:e.q,u:e.u||'g',src:'quantité enregistrée'}
     : (mNom ? {v:parseFloat(mNom[1].replace(',','.')),u:mNom[2].toLowerCase(),src:'lu dans le nom'} : null));
-  if(e.per100){
+  if(e.per100 && e.u!=='portion'){
     let g;
     if(e.q&&e.u==='g') g=Math.round(e.q);
     else if(e.per100.kcal>0) g=Math.round((e.kcal||0)/e.per100.kcal*100);
@@ -4073,11 +4141,30 @@ function _efQtyRender(srcChange){
     const une=estPortion?{kcal:(+base.kcal||0)/ancre.v, prot:(+base.prot||0)/ancre.v,
                           carbs:(+base.carbs||0)/ancre.v, fat:(+base.fat||0)/ancre.v}:null;
     const sousLigne=estPortion
-      ? _portionDefTexte(une,ancre.v,e.portionLabel,e.portionWeightG)+' Les 4 valeurs suivent en proportion.'
+      ? _portionDefTexte(une,ancre.v,_efPortionLabel,_efPortionPoids)+' Les 4 valeurs suivent en proportion.'
       : 'Référence '+ancre.src+' : '+ancre.v+' '+ancre.u+'. Les 4 valeurs suivent en proportion.';
+    /* 🏷️⚖️ CORRIGER LA DÉFINITION APRÈS COUP (10/09/2026) — le doc P1 disait lui-même que ce
+       chemin n'était **pas testé** ; mesuré, il n'existait pas du tout : aucun champ de l'écran
+       d'édition ne touchait `portionLabel` ni `portionWeightG`. *Une portion nommée le jour de la
+       saisie l'était pour toujours, faute ou pas.*
+       ⛔⛔ CES DEUX CHAMPS NE SONT PAS `ef-poids` : celui-là déclare le poids de CE QUI EST
+       AFFICHÉ (le total), ceux-ci le poids et le nom d'**UNE** portion. Deux notions, deux
+       champs, deux variables — la consigne de Michel, la même qu'à l'ajout.
+       ⛔ Pas de puces ici, exprès (R19) : les puces existent parce qu'on saisit un repas tous les
+       jours ; corriger une définition est un geste rare et délibéré, et le nom est déjà rempli.
+       ⌨️ `oninput` MET À JOUR LE TEXTE, JAMAIS LE BLOC (leçon ft-v1159 : redessiner à chaque
+       frappe détruit le champ au premier chiffre). */
+    const chDef=estPortion
+      ? '<div style="font-size:11px;color:var(--t3);font-weight:700;margin:9px 0 4px;">Une portion, c\'est quoi ? <span style="font-weight:400;">— facultatif, corrigeable</span></div>'
+        +'<div style="display:flex;gap:6px;">'
+          +'<input id="ef-pnom" type="text" maxlength="24" placeholder="steak, part, bol…" value="'+String(_efPortionLabel||'').replace(/"/g,'&quot;')+'" oninput="_efPortionNomSaisi()" style="flex:2;'+style+'">'
+          +'<input id="ef-ppoids" type="text" inputmode="decimal" placeholder="poids d\'1 portion (g)" value="'+(_efPortionPoids>0?_efPortionPoids:'')+'" oninput="_efPortionPoidsSaisi()" style="flex:1.4;'+style+'">'
+        +'</div>'
+      : '';
     el.innerHTML='<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Quantité ('+(estPortion?'portions':ancre.u)+') <span style="font-weight:400;">— recalcule les macros ci-dessous</span></div>'
       +'<input id="ef-prop" type="text" inputmode="decimal" step="any" value="'+ancre.v+'" oninput="_efApplyProp()" style="'+style+'">'
-      +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">'+sousLigne+'</div></div>';
+      +chDef
+      +'<div id="ef-pdef" style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">'+sousLigne+'</div></div>';
     return;
   }
   /* ⚖️ AUCUN ANCRAGE — on ne devine pas, ON DEMANDE (le correctif de ft-v1064). */
@@ -4138,6 +4225,7 @@ function _efApplyProp(){
      l'écran, exactement le défaut corrigé sur l'écran d'ajout en ft-v1061. La jumelle vivait ici
      depuis ce matin. Elle ne peut plus diverger : les deux passent par `_qtyRescale`. */
   _qtyRescale('ef', _efRef.base, _efRef.q, (document.getElementById('ef-prop')||{}).value);
+  if(typeof _efMajDefPortion==='function') _efMajDefPortion();   // « soit 450 g en tout » suit le nombre tapé
 }
 function _efApplyPortion(x){
   _efPortions=(+x>0)?+x:1;
@@ -4888,8 +4976,32 @@ function _efApplyGrams(){
   const e=(S.foodLog||[]).find(x=>x.ts===_editFoodTs); if(!e||!e.per100) return;
   _qtyRescale('ef', e.per100, 100, (document.getElementById('ef-grams')||{}).value);
 }
+/* 🏷️⚖️ LE POUR-100 g STOCKÉ SUIVAIT-IL VRAIMENT L'ANCIENNE DÉFINITION ? (10/09/2026)
+   ⛔ La question n'est pas rhétorique : si on redérive à l'aveugle, on ÉCRASE le pour-100 g d'un
+   produit SCANNÉ dès que quelqu'un touche au poids d'une portion — une valeur publiée remplacée
+   par une déclaration (R32 : mesuré > estimé > déclaré). Et si on ne redérive jamais, un
+   pour-100 g calculé pour 125 g survit à un passage à 150 g — ce que GPT interdit explicitement.
+   ⭐ ON NE DEVINE PAS, ON VÉRIFIE : un pour-100 g dérivé est, par construction, exactement
+   `totaux × 100 / (q × poids)`. On refait le calcul avec l'ANCIEN état ; s'il retombe dessus,
+   il en venait, donc il doit suivre. Sinon il vient d'ailleurs et on n'y touche pas.
+   *C'est la redondance interne du document, la même idée que R33 pour les bilans de balance —
+   une mesure, pas une supposition.*
+   ⚠️ La tolérance de 0,6 couvre les deux arrondis qui ont existé ici : l'entier (avant
+   aujourd'hui) et la décimale (`_per100d1`). */
+function _per100SuitLaPortion(av){
+  if(!av.per100) return true;                 // rien à contredire : dériver est le comportement attendu
+  const m=(+av.q||0)*(+av.pw||0);
+  if(!(m>0)) return false;                    // aucune définition d'avant → ce pour-100 g vient d'ailleurs
+  const f=100/m, ok=(a,b)=>Math.abs((+a||0)-(+b||0))<=0.6;
+  return ok(av.per100.kcal,(+av.kcal||0)*f) && ok(av.per100.prot,(+av.prot||0)*f)
+      && ok(av.per100.carbs,(+av.carbs||0)*f) && ok(av.per100.fat,(+av.fat||0)*f);
+}
 function saveEditFood(){
   const e=(S.foodLog||[]).find(x=>x.ts===_editFoodTs); if(!e){toast('Entrée introuvable','error');return;}
+  /* ⛔ L'ÉTAT D'AVANT SE CAPTURE ICI, avant que les lignes suivantes ne réécrivent `e` : sans ça
+     on jugerait la provenance de l'ancien pour-100 g sur les NOUVELLES valeurs. */
+  const _av={q:+e.q||0, pw:+e.portionWeightG||0, kcal:+e.kcal||0, prot:+e.prot||0,
+             carbs:+e.carbs||0, fat:+e.fat||0, per100:e.per100||null};
   const name=(document.getElementById('ef-name').value||'').trim();
   e.name=(name||e.name).slice(0,80);
   e.meal=_editFoodMeal;
@@ -4913,6 +5025,34 @@ function saveEditFood(){
      l'écran et ne s'écrivait nulle part. *Le même trou qu'à l'ajout, sur la porte jumelle.*
      ⛔ Seulement dans l'état « portions », et jamais par-dessus une quantité déjà écrite. */
   if(!gEl && !pEl && _efPortionPose && _efUnite==='portion' && +_efPortions>0){ e.q=+_efPortions; e.u='portion'; }
+  /* 🏷️⚖️ LA DÉFINITION CORRIGÉE DESCEND JUSQU'À LA DONNÉE (R4), ET CE QUI EN DÉRIVE SUIT.
+     Règle de GPT, mot pour mot : *« une définition de portion qui change doit invalider ou
+     recalculer toute donnée dérivée de l'ancienne définition »*. Les deux champs sont
+     facultatifs : vidés, la définition est RETIRÉE — on n'affiche pas un poids que la personne
+     vient d'effacer (R29). */
+  if(e.u==='portion'){
+    const nomEl=document.getElementById('ef-pnom'), pdsEl=document.getElementById('ef-ppoids');
+    if(nomEl||pdsEl){
+      const nom=String((nomEl||{}).value||'').trim().slice(0,24);
+      const pds=numFR((pdsEl||{}).value);
+      const suivait=_per100SuitLaPortion(_av);
+      if(nom) e.portionLabel=nom; else delete e.portionLabel;
+      if(pds>0&&pds<10000) e.portionWeightG=pds; else delete e.portionWeightG;
+      if(suivait){
+        const masse=(+e.q||0)*(+e.portionWeightG||0);
+        if(masse>0){
+          const f=100/masse;   // ⭐ recalculé depuis la NOUVELLE définition et les NOUVEAUX totaux (décision ④)
+          e.per100={kcal:_per100d1((+e.kcal||0)*f), prot:_per100d1((+e.prot||0)*f),
+                    carbs:_per100d1((+e.carbs||0)*f), fat:_per100d1((+e.fat||0)*f)};
+        }else if(e.per100) delete e.per100;   // ⛔ le poids retiré emporte ce qui en dépendait
+      }
+      /* ⭐ ET LE FAVORI SUIT (décision ⑤ de Michel), CE QU'IL NE FAISAIT PAS : mesuré, corriger
+         « 1 steak = 150 g » dans l'édition laissait le favori à 125 g — la vieille copie
+         silencieuse que ft-v1186 voulait justement empêcher. `_majDefFavori` existait déjà et
+         n'était appelée qu'à l'AJOUT : c'est la porte jumelle (R8/R13), pas un mécanisme neuf. */
+      _majDefFavori(e);
+    }
+  }
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   const ov=document.getElementById('ov-edit-food'); if(ov)ov.classList.remove('open');
   renderFoodJournal();

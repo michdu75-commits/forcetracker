@@ -20,7 +20,28 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1187` — 🔗 **rattacher un exercice perso au catalogue en UN
+- **Version en ligne (live) :** `ft-v1188` — 🔬 **les 3 vérifications de GPT avant validation de P1.**
+  ⛔⛔ **① `portionWeightG` corrigé APRÈS COUP : le chemin n'existait pas.** Aucun champ de l'écran
+  d'édition ne touchait la définition — et ouvrir « 2 steaks de 125 g » affichait *« Quantité (g) =
+  250 »*, puis **enregistrer sans rien toucher** réécrivait la ligne en **`q:250, u:'g'`**. *Mot pour
+  mot ce que Michel refuse au point ②.*
+  ⛔⛔ **C'est la JUMELLE de ft-v1186, restée ouverte** : le même défaut corrigé sur l'écran d'ajout
+  vivait sur celui d'édition, **dans la même version**. Nouvelle famille **`BUGS.md` §59** — elle ne
+  se voit ni à la relecture ni au banc d'essai.
+  ⭐⭐ **Le correctif ne redérive pas à l'aveugle** : un pour-100 g dérivé vaut, par construction,
+  `totaux × 100 / (q × poids)`. On refait le calcul avec l'ANCIEN état — s'il retombe dessus il en
+  venait, donc il suit ; sinon il vient d'un scan et **on n'y touche pas** (**R32**).
+  ⭐ **② Deux favoris de même nom : impossible à créer** (mesuré par la vraie porte — l'étoile
+  *retire* au lieu d'ajouter). Mais `.find()` rend le premier, donc on **refuse d'agir sur une
+  identité ambiguë** au lieu d'inventer un identifiant (**R3/R29**). Au passage : le favori **ne
+  suivait pas** une définition corrigée depuis l'édition — corrigé, définition seule.
+  ⭐ **③ Aucune dérive cumulative** (10 cycles identiques) — mais l'arrondi entier coûtait **−8,3 %
+  sur les lipides** en aval. `_per100d1` servait **7 portes** ; `_provFood` était la 8ᵉ.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone** — et **4 trous restent ouverts, écrits dans
+  `docs/JOURNAL-DE-TEST.md`** (l'état « boutons » de l'édition · retirer une étiquette depuis
+  l'ajout · la tolérance de 0,6 qui attend une **provenance** · la quantité dans le journal).
+
+- **Version précédente :** `ft-v1187` — 🔗 **rattacher un exercice perso au catalogue en UN
   geste.** Michel, capture de sa séance du 9 sept : *« Tirage vertical c'est pas bon non plus »*.
   ⭐⭐ **Mesuré avant de coder, le rapprocheur n'est PAS en cause** : `_matchExercise('Tirage
   vertical')` rend « Tirage Poulie Haute (Lat Pulldown) » à **95 %** — c'est ft-v1170, livrée le

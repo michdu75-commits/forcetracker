@@ -17426,9 +17426,18 @@ console.log('\n-- CLX. La quantité au choix : grammes ou portions (ft-v1051) --
     /* ⭐⭐ R4 : sans ça, la personne voit son poids à l'écran et RIEN n'est enregistré. */
     t('⭐⭐ R4 : le poids ATTEINT la donnée — q=80 g enregistré avec l\'entrée',
       F.enr.q===80 && F.enr.u==='g' && F.enr.kcal===312, JSON.stringify({q:F.enr.q,u:F.enr.u,kcal:F.enr.kcal}));
-    /* ⚠️ LE PIÈGE DU CALCUL : divisé par 80 (affiché), pas par 40 (référence). */
+    /* ⚠️ LE PIÈGE DU CALCUL : divisé par 80 (affiché), pas par 40 (référence).
+       ⚠️⚠️ VALEUR RESSERRÉE LE 10/09/2026 (ft-v1188), ET IL FAUT DIRE POURQUOI. Ce témoin
+       attendait `prot===88`, c'est-à-dire l'ARRONDI ENTIER de 70/80×100 = **87,5**. Le
+       pour-100 g dérivé garde désormais une décimale (`_per100d1`, la correction demandée par
+       GPT au point ③ : l'arrondi entier coûtait −8,3 % sur une petite macro en aval).
+       ⛔ CE N'EST PAS UN TÉMOIN QU'ON DESSERRE POUR FAIRE PASSER DU CODE : la garantie —
+       *on divise par la quantité AFFICHÉE (80), pas par la référence (40)* — est intacte, et
+       le témoin est même PLUS strict qu'avant, puisqu'il exige la valeur exacte au lieu de son
+       arrondi. Diviser par 40 donnerait 780 / 175 : les deux assertions rougissent toujours.
+       ⭐ ÉPROUVÉ, pas supposé : la mutation « on divise par `_afRef.q` » le fait rougir. */
     t('⚠️ le pour-100 g est calculé sur la quantité AFFICHÉE : 312/80×100 = 390, pas 780',
-      !!F.enr.per100 && F.enr.per100.kcal===390 && F.enr.per100.prot===88,
+      !!F.enr.per100 && F.enr.per100.kcal===390 && F.enr.per100.prot===87.5,
       JSON.stringify(F.enr.per100));
     /* ⭐ CE QUI EST RETENU CALIBRE L'ALIMENT POUR TOUJOURS (machinerie ft-v1042). */
     /* ⚠️ RE-VISÉ dans la même version, après la décision de Michel : le champ ne se
@@ -31319,11 +31328,30 @@ console.log('\n-- CCLXXV. L\'invariant de reprise (ft-v1177) --');
       Z.t1[0]==='79', JSON.stringify(Z.t1));
     t('CCLXXV ② TEST 4 — le calcul est bien 274 × 110/380, pas 274 × 110/110',
       Z.t1[0]==='79' && Z.t1[1]==='1' && Z.t1[2]==='7' && Z.t1[3]==='4', JSON.stringify(Z.t1));
-    /* ⭐⭐ TEST 2 — la référence dérivée doit valoir 72, pas 249. */
-    t('CCLXXV ③ ⭐⭐ TEST 2 — le pour-100 g enregistré vaut 72 (INTERDIT : 249)',
-      Z.t2enr.per100===72 && Z.t2enr.q===110 && Z.t2enr.kcal===79, JSON.stringify(Z.t2enr));
-    t('CCLXXV ④ ⭐⭐ TEST 2 — la reprise suivante à 180 g donne 130 kcal (INTERDIT : 448)',
-      Z.t2[0]==='130', JSON.stringify(Z.t2));
+    /* ⭐⭐ TEST 2 — la référence dérivée doit valoir ~72, pas 249.
+       ⚠️⚠️ VALEURS RESSERRÉES LE 10/09/2026 (ft-v1188), ET C'EST LE CAS LE PLUS DÉLICAT DE LA
+       VERSION — il faut le lire en entier avant de croire que j'ai desserré un témoin.
+       Le pour-100 g dérivé garde une décimale depuis aujourd'hui (`_per100d1`, point ③ de GPT) :
+       79 kcal pour 110 g rendent **71,8** au lieu de **72**, et la reprise à 180 g affiche
+       **129** au lieu de **130**.
+       ⛔⛔ AU PREMIER REGARD, LA DÉCIMALE A L'AIR MOINS PRÉCISE ICI — et c'est faux. Mesuré :
+         · vérité d'origine .......... 274/380 × 180 = **129,79**
+         · ce que l'app STOCKE ....... **79 kcal pour 110 g** (les totaux sont des ENTIERS)
+         · depuis cette donnée ....... 79/110 × 180 = **129,27**
+         · chemin entier (72) ........ 129,60 → 130   ← plus proche de 129,79 **par chance**
+         · chemin décimal (71,8) ..... 129,24 → 129   ← fidèle à ce qui est RÉELLEMENT stocké
+       👉 ***Le 130 d'avant venait d'une erreur d'arrondi qui pointait dans le bon sens.***
+       L'app ne PEUT PLUS connaître 129,79 : le 79 a été arrondi avant d'être écrit. **129 est la
+       seule réponse juste au regard de la donnée**, et 71,8 est la valeur exacte de « 79 pour
+       110 g ». *Le vrai plancher de précision n'est pas le pour-100 g, ce sont les totaux
+       entiers* — noté dans `docs/JOURNAL-DE-TEST.md`, hors périmètre ici.
+       ⛔ LA GARANTIE FIGÉE N'A PAS BOUGÉ D'UN POUCE : l'interdit est **249** et **448** (le
+       défaut de l'audit, un facteur 3,4). 71,8 et 129 en sont aussi loin que 72 et 130.
+       ⭐ ÉPROUVÉ, PAS SUPPOSÉ : la mutation qui rétablit le défaut d'origine les fait rougir. */
+    t('CCLXXV ③ ⭐⭐ TEST 2 — le pour-100 g enregistré vaut 71,8 (INTERDIT : 249)',
+      Z.t2enr.per100===71.8 && Z.t2enr.q===110 && Z.t2enr.kcal===79, JSON.stringify(Z.t2enr));
+    t('CCLXXV ④ ⭐⭐ TEST 2 — la reprise suivante à 180 g donne 129 kcal (INTERDIT : 448)',
+      Z.t2[0]==='129', JSON.stringify(Z.t2));
     /* ⭐ TEST 3 — per100 immuable sur quatre quantités. */
     t('CCLXXV ⑤ TEST 3 — avec un pour-100 g, la référence reste 72 sur 100 · 380 · 110 · 180 g',
       Z.t3.length===4 && Z.t3.every(x=>Math.abs(x.par100-72)<=1), JSON.stringify(Z.t3));
@@ -32692,7 +32720,7 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
   }
 }
 /* ══════════════════════════════════════════════════════════════════════════════════════════
-   BLOC CCLXXXI — 🏷️⚖️ LA PORTION NOMMÉE : `portionLabel` + `portionWeightG` (ft-v1186)
+   BLOC CCLXXXIV — 🏷️⚖️ LA PORTION NOMMÉE : `portionLabel` + `portionWeightG` (ft-v1186)
    Les 10 témoins validés par Michel après sa relecture de ft-v1183 : *« 1 portion = 300 kcal,
    poids inconnu » ne suffit pas — je veux savoir si c'est 1 steak, 1 yaourt, 1 dose*.
    ⛔⛔ LE TÉMOIN LE PLUS IMPORTANT EST LE ③ : déclarer le poids d'UNE portion ne doit PAS
@@ -32830,59 +32858,291 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
     return o;
    }catch(e){ return {err:String(e&&e.message||e)}; }
   });
-  console.log('\n== BLOC CCLXXXI — 🏷️ la portion nommée : label + poids (ft-v1186) ==');
-  if(Q.err){ t('CCLXXXI bloc exécuté',false,Q.err); }
+  console.log('\n== BLOC CCLXXXIV — 🏷️ la portion nommée : label + poids (ft-v1186) ==');
+  if(Q.err){ t('CCLXXXIV bloc exécuté',false,Q.err); }
   else{
-    t('CCLXXXI ① ⭐⭐ 2 STEAKS DE 125 G : q=2 · u=portion · label · poids · per100 dérivé (240)',
+    t('CCLXXXIV ① ⭐⭐ 2 STEAKS DE 125 G : q=2 · u=portion · label · poids · per100 dérivé (240)',
       Q.deuxSteaks && Q.deuxSteaks.ligne.q===2 && Q.deuxSteaks.ligne.u==='portion'
       && Q.deuxSteaks.ligne.lab==='steak' && Q.deuxSteaks.ligne.pw===125
       && Q.deuxSteaks.ligne.kcal===600 && Q.deuxSteaks.ligne.per100
       && Q.deuxSteaks.ligne.per100.kcal===240, JSON.stringify(Q.deuxSteaks&&Q.deuxSteaks.ligne));
-    t('CCLXXXI ② ⛔ L\'ÉCRAN DIT LE NOM ET LA MASSE TOTALE, qui est DÉRIVÉE (250 g), jamais stockée',
+    t('CCLXXXIV ② ⛔ L\'ÉCRAN DIT LE NOM ET LA MASSE TOTALE, qui est DÉRIVÉE (250 g), jamais stockée',
       Q.deuxSteaks && /1 steak \(125 g\)/.test(Q.deuxSteaks.def)
       && /250 g en tout/.test(Q.deuxSteaks.def), Q.deuxSteaks&&Q.deuxSteaks.def);
-    t('CCLXXXI ③ ⛔⛔ POIDS INCONNU : l\'écran LE DIT, et aucun poids n\'est inventé',
+    t('CCLXXXIV ③ ⛔⛔ POIDS INCONNU : l\'écran LE DIT, et aucun poids n\'est inventé',
       Q.sansPoids && /1 assiette, poids inconnu/.test(Q.sansPoids.def)
       && Q.sansPoids.ligne.lab==='assiette' && Q.sansPoids.ligne.pw===undefined
       && Q.sansPoids.ligne.per100===null, JSON.stringify(Q.sansPoids));
-    t('CCLXXXI ④ ⭐⭐ LE POIDS D\'UNE PORTION NE BASCULE PAS L\'UNITÉ (demande n°2 de Michel)',
+    t('CCLXXXIV ④ ⭐⭐ LE POIDS D\'UNE PORTION NE BASCULE PAS L\'UNITÉ (demande n°2 de Michel)',
       Q.pasDeBascule && Q.pasDeBascule.unite==='portion' && Q.pasDeBascule.poidsTotal===0
       && Q.pasDeBascule.ligne.u==='portion' && Q.pasDeBascule.ligne.q===2,
       JSON.stringify(Q.pasDeBascule));
-    t('CCLXXXI ⑤ ⛔ ... ET IL NE RESCALE RIEN : les 4 valeurs ne bougent pas (240/16 avant et après)',
+    t('CCLXXXIV ⑤ ⛔ ... ET IL NE RESCALE RIEN : les 4 valeurs ne bougent pas (240/16 avant et après)',
       Q.pasDeBascule && Q.pasDeBascule.avant[0]===Q.pasDeBascule.apres[0]
       && Q.pasDeBascule.avant[1]===Q.pasDeBascule.apres[1] && Q.pasDeBascule.apres[0]===240,
       JSON.stringify(Q.pasDeBascule));
-    t('CCLXXXI ⑥ ⛔ NON-RÉGRESSION : l\'onglet ⚖️ grammes est INCHANGÉ (500 g -> q:500, u:g, per100 120)',
+    t('CCLXXXIV ⑥ ⛔ NON-RÉGRESSION : l\'onglet ⚖️ grammes est INCHANGÉ (500 g -> q:500, u:g, per100 120)',
       Q.grammes && Q.grammes.q===500 && Q.grammes.u==='g' && Q.grammes.per100
       && Q.grammes.per100.kcal===120, JSON.stringify(Q.grammes));
-    t('CCLXXXI ⑦ ⭐⭐ REPRISE : « 2 steaks » revient EN PORTIONS même avec un pour-100 g',
+    t('CCLXXXIV ⑦ ⭐⭐ REPRISE : « 2 steaks » revient EN PORTIONS même avec un pour-100 g',
       Q.reprise && Q.reprise.unite==='portion' && Q.reprise.portions===2
       && Q.reprise.lab==='steak' && Q.reprise.pw===125
       && Q.reprise.ecran===600 && Q.reprise.base===300, JSON.stringify(Q.reprise));
-    t('CCLXXXI ⑧ ⛔ NON-RÉGRESSION ft-v1042 : un aliment en GRAMMES ouvre bien son champ grammes',
+    t('CCLXXXIV ⑧ ⛔ NON-RÉGRESSION ft-v1042 : un aliment en GRAMMES ouvre bien son champ grammes',
       Q.scanGrammes && Q.scanGrammes.blocGrammes===true && Q.scanGrammes.bcNutr===true,
       JSON.stringify(Q.scanGrammes));
-    t('CCLXXXI ⑨ ⛔⛔ A -> B : ni l\'étiquette ni le poids de portion ne traversent',
+    t('CCLXXXIV ⑨ ⛔⛔ A -> B : ni l\'étiquette ni le poids de portion ne traversent',
       Q.aVersB && Q.aVersB.lab==='' && Q.aVersB.pw===0 && Q.aVersB.portions===1
       && Q.aVersB.ligne.q==null && Q.aVersB.ligne.kcal===200, JSON.stringify(Q.aVersB));
-    t('CCLXXXI ⑩ ⛔ ÉTIQUETTE ABSENTE -> « portion non définie », aucune invention',
+    t('CCLXXXIV ⑩ ⛔ ÉTIQUETTE ABSENTE -> « portion non définie », aucune invention',
       Q.sansNom && /non définie/.test(Q.sansNom.def) && Q.sansNom.ligne.lab===undefined
       && Q.sansNom.ligne.q===2 && Q.sansNom.ligne.u==='portion', JSON.stringify(Q.sansNom));
-    t('CCLXXXI ⑪ ⭐ 601 kcal / 3 portions : DIX cycles sans une dérive (la mesure de Michel)',
+    t('CCLXXXIV ⑪ ⭐ 601 kcal / 3 portions : DIX cycles sans une dérive (la mesure de Michel)',
       Q.dixCycles && Q.dixCycles.length===10
       && Q.dixCycles.every(c=>c.kcal===601 && c.q===3), JSON.stringify(Q.dixCycles));
-    t('CCLXXXI ⑫ L\'EXPORT CSV porte `portion_label` et `portion_poids_g`',
+    t('CCLXXXIV ⑫ L\'EXPORT CSV porte `portion_label` et `portion_poids_g`',
       Q.csv && Q.csv.indexOf('portion_label')>=0 && Q.csv.indexOf('portion_poids_g')>=0,
       JSON.stringify(Q.csv));
-    t('CCLXXXI ⑬ ⛔ LE FAVORI SE RAFRAÎCHIT : sa DÉFINITION suit (100 g -> 125 g)',
+    t('CCLXXXIV ⑬ ⛔ LE FAVORI SE RAFRAÎCHIT : sa DÉFINITION suit (100 g -> 125 g)',
       Q.favori && Q.favori.portionWeightG===125 && Q.favori.portionLabel==='steak',
       JSON.stringify(Q.favori));
     /* ⛔⛔ LE TÉMOIN QUI MANQUAIT : la définition est un fait sur l'ALIMENT, les macros un fait
        sur CE repas-là. Sans lui, un correctif trop large qui écraserait les macros du favori
        passait inaperçu — mesuré, la mutation rendait 0 rouge. */
-    t('CCLXXXI ⑭ ⛔⛔ ... MAIS SES MACROS NE SONT PAS ÉCRASÉES (favori 600, repas 500)',
+    t('CCLXXXIV ⑭ ⛔⛔ ... MAIS SES MACROS NE SONT PAS ÉCRASÉES (favori 600, repas 500)',
       Q.favori && Q.favori.kcal===600 && Q.favori.prot===40, JSON.stringify(Q.favori));
+  }
+  await cx.close();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+   BLOC CCLXXXV — 🔬 LES 3 VÉRIFICATIONS DE GPT AVANT VALIDATION DE P1 (10/09/2026)
+   Cahier de GPT transmis par Michel : « je veux mesurer trois points précis, ne touche à rien
+   d'autre ». Deux trous réels sur trois, et le troisième démontré sain.
+
+   ① ⛔⛔ CORRIGER `portionWeightG` APRÈS COUP — le doc P1 disait « chemin non testé » ; mesuré,
+      IL N'EXISTAIT PAS. Pire : ouvrir « 2 steaks de 125 g » dans l'écran d'édition affichait
+      « Quantité (g) = 250 », et *enregistrer sans rien toucher* réécrivait la ligne en
+      `q:250, u:'g'`. C'est mot pour mot ce que Michel refuse au point ② de ses décisions —
+      et c'est la JUMELLE de ft-v1186, restée ouverte (R8, 8ᵉ fois recensée).
+
+   ② ⭐ DEUX FAVORIS DE MÊME NOM — mesuré par la VRAIE porte : `toggleFavFood` retire au lieu
+      d'ajouter quand le nom existe, donc le doublon est IMPOSSIBLE à créer (casse comprise), et
+      une restauration cloud remplace la liste en bloc. *Le nom EST l'identité d'un favori ici.*
+      Mais `.find()` rend le premier : si l'état arrivait quand même, modifier A écrivait sur B
+      (mesuré : 150 g atterrissaient sur le mauvais produit). On refuse d'agir sur une identité
+      ambiguë plutôt que d'inventer un identifiant pour un cas que l'app ne sait pas produire.
+
+   ③ ⭐ PRÉCISION DU `per100` DÉRIVÉ — **aucune dérive cumulative** (10 cycles, chiffres
+      identiques : le pour-100 g se redérive des TOTAUX, jamais de lui-même). Mais l'arrondi
+      ENTIER coûtait 8,3 % sur les lipides dès qu'on redimensionne. `_per100d1` (une décimale)
+      servait DÉJÀ 7 portes ; `_provFood` était la 8ᵉ, la seule restée en `Math.round`.
+
+   ⚠️ FIXTURE À CONNAÎTRE : `toggleFavFood` finit par `_renderFoodQuickList()`, qui RECONSTRUIT
+   `_afQuickItems`. Un test qui pose la liste à la main puis clique deux fois tape dans le vide
+   au 2ᵉ clic — ma première mesure du point ② disait « impossible » pour cette raison, pas pour
+   la bonne. On repose la fixture avant chaque clic.
+   ═══════════════════════════════════════════════════════════════════════════════════════════ */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2400);
+  const V=await pg.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const set=(id,v)=>{const el=document.getElementById(id); if(el){el.value=v;
+      el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true}));}};
+    const has=id=>!!document.getElementById(id);
+    const val=id=>(document.getElementById(id)||{}).value;
+    const pdef=()=>(document.getElementById('ef-pdef')||{textContent:''}).textContent.replace(/\s+/g,' ').trim();
+    const lig=()=>{const e=S.foodLog[0]||{};
+      return {kcal:e.kcal,prot:e.prot,carbs:e.carbs,fat:e.fat,q:e.q,u:e.u,
+              lab:e.portionLabel,pw:e.portionWeightG,per100:e.per100||null};};
+    const STEAK=(ts)=>({ts:ts,date:today(),meal:'midi',name:'Steak hache',
+      kcal:500,prot:40,carbs:0,fat:36,q:2,u:'portion',portionLabel:'steak',portionWeightG:125,
+      per100:{kcal:200,prot:16,carbs:0,fat:14.4},v:1,saisie:'manuel',origine:'utilisateur'});
+    const ouvrir=async(ts)=>{document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      openEditFood(ts); await d(320);};
+
+    /* ①a L'ÉCRAN D'ÉDITION RESTE EN PORTIONS — le pour-100 g ne décide plus de l'unité */
+    S.foodLog=[STEAK(6100)]; S.savedFoods=[]; S.hiddenFoods=[]; persist();
+    await ouvrir(6100);
+    o.editPortion={grammes:has('ef-grams'), prop:val('ef-prop'),
+                   nom:val('ef-pnom'), poids:val('ef-ppoids'), def:pdef()};
+
+    /* ①b LA DÉFINITION SE MET À JOUR PENDANT LA FRAPPE, sans détruire le champ (ft-v1159) */
+    set('ef-ppoids','150'); await d(240);
+    o.frappe={def:pdef(), champVivant:has('ef-ppoids'), valeur:val('ef-ppoids')};
+
+    /* ①c ENREGISTRER : la définition descend, le pour-100 g SUIT la nouvelle définition */
+    saveEditFood(); await d(320);
+    o.corrige=lig();
+    o.corrigeExact={kcal:Math.round(500/3*10)/10, prot:Math.round(40/3*10)/10, fat:12};
+
+    /* ①d ⛔⛔ LE DÉFAUT D'ORIGINE : ouvrir + enregistrer SANS RIEN TOUCHER ne change rien */
+    S.foodLog=[STEAK(6101)]; persist();
+    await ouvrir(6101); saveEditFood(); await d(320);
+    o.sansGeste=lig();
+
+    /* ①e NON-RÉGRESSION : un produit SCANNÉ en grammes garde son champ et son pour-100 g */
+    S.foodLog=[{ts:6102,date:today(),meal:'midi',name:'Thon Petit Navire',
+      kcal:260,prot:52,carbs:0,fat:6,q:200,u:'g',per100:{kcal:130,prot:26,carbs:0,fat:3},
+      v:1,saisie:'scan',origine:'off',sourceId:'3165950'}];
+    persist();
+    await ouvrir(6102);
+    o.scanGrammes={grammes:has('ef-grams'), v:val('ef-grams'), poidsPortion:has('ef-ppoids')};
+    saveEditFood(); await d(320); o.scanGrammesApres=lig();
+
+    /* ①f ⛔⛔ R32 — UN POUR-100 g PUBLIÉ NE SE FAIT PAS ÉCRASER par une définition déclarée */
+    S.foodLog=[{ts:6103,date:today(),meal:'midi',name:'Yaourt marque',
+      kcal:120,prot:5,carbs:14,fat:4,q:1,u:'portion',portionLabel:'yaourt',
+      per100:{kcal:97,prot:4,carbs:11.3,fat:3.2},v:1,saisie:'scan',origine:'off',sourceId:'3033710'}];
+    persist();
+    await ouvrir(6103); set('ef-ppoids','125'); await d(200); saveEditFood(); await d(320);
+    o.scanProtege=lig();
+
+    /* ①g LE POIDS RETIRÉ EMPORTE CE QUI EN DÉPENDAIT (aucune vérité orpheline) */
+    S.foodLog=[STEAK(6104)]; persist();
+    await ouvrir(6104); set('ef-ppoids',''); await d(200); saveEditFood(); await d(320);
+    o.poidsRetire=lig();
+
+    /* ② DEUX FAVORIS DE MÊME NOM : impossible à créer, et refus d'agir si ça arrivait */
+    const A={name:'Steak hache',kcal:250,prot:20,carbs:0,fat:18,q:1,u:'portion',portionLabel:'steak',portionWeightG:125};
+    const B={name:'STEAK HACHE',kcal:200,prot:18,carbs:0,fat:14,q:1,u:'portion',portionLabel:'steak',portionWeightG:100};
+    S.savedFoods=[]; S.foodLog=[]; S.hiddenFoods=[]; persist();
+    _afQuickItems=[A,B]; toggleFavFood(0);
+    _afQuickItems=[A,B]; toggleFavFood(1);          // ⭐ la fixture se REPOSE : le rendu l'écrase
+    const n2=S.savedFoods.length;
+    _afQuickItems=[A,B]; toggleFavFood(1);
+    o.favUnique={apres2:n2, apres3:S.savedFoods.length};
+    // l'état impossible, forcé : A ne doit PAS écrire sur B
+    S.savedFoods=[{name:'Steak hache',portionWeightG:100,portionLabel:'steak',kcal:200,prot:18,carbs:0,fat:14,sourceId:'off:BBB'},
+                  {name:'Steak hache',portionWeightG:125,portionLabel:'steak',kcal:250,prot:20,carbs:0,fat:18,sourceId:'off:AAA'}];
+    _majDefFavori({name:'Steak hache',u:'portion',portionLabel:'pave',portionWeightG:150,sourceId:'off:AAA'});
+    o.ambigu=S.savedFoods.map(f=>f.sourceId+':'+f.portionWeightG+':'+f.portionLabel).join(' | ');
+
+    /* ②b LE FAVORI SUIT UNE DÉFINITION CORRIGÉE DEPUIS L'ÉDITION — définition SEULE */
+    S.savedFoods=[{name:'Steak hache',kcal:250,prot:20,carbs:0,fat:18,
+                   per100:{kcal:200,prot:16,carbs:0,fat:14.4},q:1,u:'portion',
+                   portionLabel:'steak',portionWeightG:125}];
+    S.foodLog=[STEAK(6105)]; persist();
+    await ouvrir(6105); set('ef-ppoids','150'); await d(160); set('ef-pnom','pave'); await d(160);
+    saveEditFood(); await d(320);
+    const f0=S.savedFoods[0]||{};
+    o.favSuit={pw:f0.portionWeightG, lab:f0.portionLabel, kcal:f0.kcal, prot:f0.prot};
+
+    /* ③ LA DÉCIMALE DU POUR-100 g DÉRIVÉ — à l'ajout, en portions ET en grammes */
+    S.foodLog=[]; S.savedFoods=[]; persist();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await d(320);
+    set('af-desc','Galette test'); set('af-kcal','355'); set('af-prot','30');
+    set('af-carbs','44'); set('af-fat','6'); _afMajAncre(true); await d(220);
+    _afApplyPortion(1); await d(200); _afPortionNom('part'); await d(200);
+    set('af-ppoids','140'); await d(240);
+    addFoodEntry(); await d(320);
+    o.decimalePortion=(S.foodLog[0]||{}).per100||null;
+
+    S.foodLog=[]; persist();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await d(320);
+    set('af-desc','Gratin test'); set('af-kcal','355'); set('af-prot','30');
+    set('af-carbs','44'); set('af-fat','6'); _afMajAncre(true); await d(220);
+    _afSetUnite('g'); await d(240); set('af-poids','140');
+    const pe=document.getElementById('af-poids'); if(pe) pe.dispatchEvent(new Event('blur'));
+    _afMajAncre(); await d(300);
+    addFoodEntry(); await d(320);
+    o.decimaleGrammes=(S.foodLog[0]||{}).per100||null;
+
+    /* ③b AUCUNE DÉRIVE CUMULATIVE : 10 reprises d'affilée, chiffres identiques */
+    S.foodLog=[]; S.savedFoods=[]; S.hiddenFoods=[]; persist();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await d(300);
+    set('af-desc','Cycle test'); set('af-kcal','355'); set('af-prot','30');
+    set('af-carbs','44'); set('af-fat','6'); _afMajAncre(true); await d(200);
+    _afApplyPortion(1); await d(180); _afPortionNom('part'); await d(180);
+    set('af-ppoids','140'); await d(220); addFoodEntry(); await d(300);
+    const empreinte=e=>[e.kcal,e.prot,e.carbs,e.fat,e.q,e.u,e.portionWeightG,
+      e.per100?[e.per100.kcal,e.per100.prot,e.per100.carbs,e.per100.fat].join('/'):'-'].join('|');
+    const c1=empreinte(S.foodLog[0]);
+    for(let i=2;i<=10;i++){
+      S.foodLog=[S.foodLog[S.foodLog.length-1]]; persist();
+      document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      openAddFood(); await d(220);
+      _afQuickItems=_buildFoodQuickItems();
+      const k=_afQuickItems.findIndex(x=>x.name==='Cycle test');
+      if(k<0){ o.cycleErr='introuvable au tour '+i; break; }
+      quickFillFood(k); await d(240); addFoodEntry(); await d(240);
+    }
+    o.cycles={un:c1, dix:empreinte(S.foodLog[S.foodLog.length-1])};
+    return o;
+   }catch(e){ return {err:String(e&&e.message||e)}; }
+  });
+
+  console.log('\n== BLOC CCLXXXV — 🔬 les 3 vérifications de GPT avant validation de P1 ==');
+  if(V.err){ t('CCLXXXV bloc exécuté',false,V.err); }
+  else{
+    /* ①  CORRIGER LA DÉFINITION APRÈS COUP */
+    t('CCLXXXV ① ⭐⭐ « 2 STEAKS » S\'OUVRE EN PORTIONS, PAS EN GRAMMES (le pour-100 g ne décide plus de l\'unité)',
+      V.editPortion && V.editPortion.grammes===false && V.editPortion.prop==='2', JSON.stringify(V.editPortion));
+    t('CCLXXXV ② ⭐ LES DEUX CHAMPS DE DÉFINITION EXISTENT ENFIN, pré-remplis (steak · 125)',
+      V.editPortion && V.editPortion.nom==='steak' && V.editPortion.poids==='125', JSON.stringify(V.editPortion));
+    t('CCLXXXV ③ ⛔ L\'ÉCRAN DIT LA DÉFINITION ET LA MASSE TOTALE DÉRIVÉE (250 g)',
+      /1 steak/.test(V.editPortion.def) && /125 g/.test(V.editPortion.def) && /250 g/.test(V.editPortion.def),
+      V.editPortion.def);
+    t('CCLXXXV ④ ⌨️ LA FRAPPE MET À JOUR LE TEXTE SANS DÉTRUIRE LE CHAMP (leçon ft-v1159)',
+      V.frappe && V.frappe.champVivant===true && V.frappe.valeur==='150'
+      && /150 g/.test(V.frappe.def) && /300 g/.test(V.frappe.def), JSON.stringify(V.frappe));
+    t('CCLXXXV ⑤ ⭐⭐ 125 → 150 : LE POUR-100 g SUIT LA NOUVELLE DÉFINITION (166,7 / 13,3 / 12)',
+      V.corrige && V.corrige.pw===150 && V.corrige.per100
+      && V.corrige.per100.kcal===V.corrigeExact.kcal && V.corrige.per100.prot===V.corrigeExact.prot
+      && V.corrige.per100.fat===V.corrigeExact.fat, JSON.stringify(V.corrige));
+    t('CCLXXXV ⑥ ⛔ ... ET LA QUANTITÉ N\'EST PAS TOUCHÉE : q=2 · u=portion · label gardé',
+      V.corrige && V.corrige.q===2 && V.corrige.u==='portion' && V.corrige.lab==='steak'
+      && V.corrige.kcal===500, JSON.stringify(V.corrige));
+    t('CCLXXXV ⑦ ⛔⛔ LE DÉFAUT D\'ORIGINE : ouvrir + enregistrer SANS RIEN TOUCHER ne change rien (avant : q:250, u:g)',
+      V.sansGeste && V.sansGeste.q===2 && V.sansGeste.u==='portion' && V.sansGeste.pw===125
+      && V.sansGeste.lab==='steak' && V.sansGeste.per100 && V.sansGeste.per100.kcal===200,
+      JSON.stringify(V.sansGeste));
+    t('CCLXXXV ⑧ ⛔ NON-RÉGRESSION : un produit SCANNÉ en grammes garde SON champ (200 g), sans champ de portion',
+      V.scanGrammes && V.scanGrammes.grammes===true && V.scanGrammes.v==='200'
+      && V.scanGrammes.poidsPortion===false, JSON.stringify(V.scanGrammes));
+    t('CCLXXXV ⑨ ⛔ ... et son pour-100 g publié est INTACT après enregistrement (130/26/0/3)',
+      V.scanGrammesApres && V.scanGrammesApres.u==='g' && V.scanGrammesApres.q===200
+      && V.scanGrammesApres.per100 && V.scanGrammesApres.per100.kcal===130,
+      JSON.stringify(V.scanGrammesApres));
+    t('CCLXXXV ⑩ ⛔⛔ R32 — UN POUR-100 g PUBLIÉ NE SE FAIT PAS ÉCRASER par un poids déclaré (97 reste 97)',
+      V.scanProtege && V.scanProtege.pw===125 && V.scanProtege.per100
+      && V.scanProtege.per100.kcal===97 && V.scanProtege.per100.fat===3.2,
+      JSON.stringify(V.scanProtege));
+    t('CCLXXXV ⑪ ⛔ LE POIDS RETIRÉ EMPORTE CE QUI EN DÉPENDAIT (pas de pour-100 g orphelin)',
+      V.poidsRetire && !V.poidsRetire.pw && !V.poidsRetire.per100
+      && V.poidsRetire.q===2 && V.poidsRetire.u==='portion', JSON.stringify(V.poidsRetire));
+
+    /* ②  LES FAVORIS DE MÊME NOM */
+    t('CCLXXXV ⑫ ⭐ DEUX FAVORIS DE MÊME NOM SONT IMPOSSIBLES À CRÉER (l\'étoile retire au lieu d\'ajouter)',
+      V.favUnique && V.favUnique.apres2===0 && V.favUnique.apres3===1, JSON.stringify(V.favUnique));
+    t('CCLXXXV ⑬ ⛔⛔ ... ET SI L\'ÉTAT ARRIVAIT QUAND MÊME : on ne touche à RIEN (100 et 125 intacts)',
+      V.ambigu==='off:BBB:100:steak | off:AAA:125:steak', V.ambigu);
+    t('CCLXXXV ⑭ ⭐ LE FAVORI SUIT UNE DÉFINITION CORRIGÉE DEPUIS L\'ÉDITION (125 → 150, steak → pave)',
+      V.favSuit && V.favSuit.pw===150 && V.favSuit.lab==='pave', JSON.stringify(V.favSuit));
+    t('CCLXXXV ⑮ ⛔⛔ ... MAIS SES MACROS NE BOUGENT PAS (favori 250/20, repas 500/40)',
+      V.favSuit && V.favSuit.kcal===250 && V.favSuit.prot===20, JSON.stringify(V.favSuit));
+
+    /* ③  LA PRÉCISION */
+    t('CCLXXXV ⑯ ⭐⭐ LE POUR-100 g DÉRIVÉ D\'UNE PORTION GARDE LA DÉCIMALE (253,6 / 21,4 / 31,4 / 4,3)',
+      V.decimalePortion && V.decimalePortion.kcal===253.6 && V.decimalePortion.prot===21.4
+      && V.decimalePortion.carbs===31.4 && V.decimalePortion.fat===4.3,
+      JSON.stringify(V.decimalePortion));
+    t('CCLXXXV ⑰ ⭐ ... ET CELUI DÉRIVÉ DES GRAMMES AUSSI (la porte jumelle, R8)',
+      V.decimaleGrammes && V.decimaleGrammes.prot===21.4 && V.decimaleGrammes.fat===4.3,
+      JSON.stringify(V.decimaleGrammes));
+    t('CCLXXXV ⑱ ⭐ AUCUNE DÉRIVE CUMULATIVE : le 10ᵉ cycle est identique au 1ᵉʳ, au caractère près',
+      V.cycles && V.cycles.un===V.cycles.dix && !V.cycleErr,
+      JSON.stringify(V.cycles)+(V.cycleErr?' · '+V.cycleErr:''));
   }
   await cx.close();
 }

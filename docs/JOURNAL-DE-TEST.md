@@ -1896,6 +1896,63 @@ inventer la réponse : la mesure existe (le compteur), il suffit de la relire da
 
 ---
 
+---
+
+### 🟡 Les 5 trous que les 3 vérifications de GPT laissent ouverts *(10/09/2026, ft-v1188)*
+
+**Contexte** : GPT demandait trois mesures avant de valider P1. Deux trous réels sur trois ont été
+corrigés. Ce qui suit est **ce qui reste**, écrit tout de suite pour ne pas disparaître avec la
+session (**R27**).
+
+**① ⚠️ Une ligne SANS aucune quantité ne peut pas recevoir de définition de portion.**
+L'écran d'édition a **trois** états, et je n'ai ouvert les deux champs que dans **un** : celui où
+`q > 0` avec `u:'portion'`. L'état « aucun ancrage » (les boutons ½ · 1 · 1½ · 2 · 3) écrit pourtant
+`q:n, u:'portion'` à l'enregistrement — donc une portion y naît **sans jamais pouvoir être nommée
+ni pesée**. *C'est le même défaut que je viens de corriger, une branche plus bas.* ⛔ **Pas
+élargi exprès** : le périmètre de GPT dit « ne touche à rien d'autre », et l'élargir sans mesure
+serait exactement ce que ce fichier reproche. **Attendu vérifiable par du code → promouvable.**
+
+**② ⚠️ Une étiquette FAUSSE ne se retire pas depuis l'écran d'AJOUT.** Les puces basculent
+(recliquer « steak » l'enlève) et le champ libre se vide — mais une étiquette reprise d'un
+aliment précédent ne se corrige qu'en repassant par l'édition. **Mesuré : le champ existe et se
+vide, donc ce n'est pas bloqué** ; c'est juste moins évident qu'à l'édition. ⚠️ **À regarder par
+Michel sur son iPhone** — la question est « est-ce qu'on le devine ? », donc **juge humain**.
+
+**③ ⭐ LA TOLÉRANCE DE 0,6 DE `_per100SuitLaPortion` EST UN CHOIX, PAS UNE VÉRITÉ.** Elle couvre les
+deux arrondis qui ont existé ici (l'entier d'avant, la décimale d'aujourd'hui). ⛔ **Sa limite se
+dit** : un pour-100 g **publié** qui tomberait par hasard à 0,6 près de ce que la définition
+produirait serait considéré comme dérivé, donc recalculé. *Probabilité faible, conséquence
+réelle.* Le seul remède propre serait une **provenance écrite** sur le `per100` (**R33** le
+demande déjà : « ce qui est normalisé garde d'où il vient ») — et `S.foodLog` ne stocke
+aujourd'hui **ni source ni version** pour ce champ. **Promouvable le jour où la provenance
+existe ; pas avant.**
+
+**④ ⭐⭐ LE VRAI PLANCHER DE PRÉCISION N'EST PAS LE `per100`, CE SONT LES TOTAUX ENTIERS** —
+trouvé par la passe complète, pas par moi. Deux témoins de ft-v1162 (bloc **CCLXXV**) ont rougi
+en passant le pour-100 g à la décimale, et **la décimale avait l'air moins précise**. Mesuré :
+
+| | valeur |
+|---|---|
+| vérité d'origine (274 kcal / 380 g × 180) | **129,79** |
+| ce que l'app **stocke** | **79 kcal pour 110 g** (les totaux sont des **entiers**) |
+| depuis cette donnée : 79/110 × 180 | **129,27** |
+| chemin **entier** (per100 = 72) | 129,60 → **130** — plus proche de 129,79 **par chance** |
+| chemin **décimal** (per100 = 71,8) | 129,24 → **129** — fidèle à ce qui est réellement stocké |
+
+👉 ***Le 130 venait d'une erreur d'arrondi qui pointait dans le bon sens.*** L'app ne **peut plus**
+connaître 129,79 : le 79 a été arrondi **avant** d'être écrit (`parseInt` sur les 4 champs).
+⛔ **Donc affiner le `per100` ne peut pas aller plus loin que ça.** Le seul gain restant serait de
+stocker les **totaux** avec une décimale — ce qui touche `addFoodEntry`, `_qtyRescale`, l'affichage,
+l'export CSV et le cloud. **Chantier à part, pas décidé, hors périmètre.**
+⚠️ **À dire à Michel s'il compare deux copies d'écran** : une même ligne reprise peut afficher
+**1 kcal de moins** qu'avant ft-v1188. Ce n'est pas une perte, c'est l'arrondi de chance qui
+disparaît.
+
+**⑤ ⛔ LE JOURNAL DU JOUR N'AFFICHE TOUJOURS AUCUNE QUANTITÉ.** Ni « 2 steaks », ni « 250 g ».
+C'est le chantier ⑥ décidé par Michel, **séparé exprès** — rappelé ici pour qu'il ne se perde pas
+entre deux versions.
+
+
 ## ⚠️ Comment fouiller les conversations (leçon du 21/08)
 
 En remontant trois semaines de transcriptions, mon filtre cherchait le mot **« Milo »**, **« coach »**,

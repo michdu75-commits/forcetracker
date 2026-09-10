@@ -3475,3 +3475,41 @@ négatif attrape la rechute.*
 ft-v1158 — « vérifier la fonction n'est pas vérifier l'appel » : celle-ci en est la version
 **temporelle** au lieu de spatiale.*
 
+
+---
+
+## §59 — ⛔⛔ CORRIGER UNE PORTE ET PAS SA JUMELLE : LA 8ᵉ FOIS RECENSÉE, ET LA PLUS COÛTEUSE *(10/09/2026)*
+
+**À quoi on la reconnaît** : un correctif est écrit, mesuré, éprouvé par mutation, livré vert — et
+le même défaut vit toujours **à côté**, sur l'écran jumeau, dans la fonction jumelle, sur l'autre
+porte du même geste. *Le témoin ne peut pas le voir : il regarde la porte qu'on vient de réparer.*
+
+**Le cas de cette version** : ft-v1186 corrige, sur l'écran d'**ajout**, un défaut nommé par Michel
+— *« le pour-100 g ne doit pas décider de l'unité »*. Deux portes corrigées (`quickFillFood`,
+`_afSuggPrendreLocale`), un témoin de non-régression, contrôle négatif à 15 mutations, tout vert.
+⛔⛔ **Et l'écran d'ÉDITION faisait exactement la même chose, intact.** Mesuré : ouvrir « 2 steaks
+de 125 g » affichait *« Quantité (g) = 250 »*, et **enregistrer sans rien toucher** réécrivait la
+ligne en `q:250, u:'g'`. La consigne était respectée d'un côté et violée de l'autre, dans la même
+version, à 900 lignes d'écart.
+
+**Ce qui rend cette famille différente des autres** : elle ne se voit **ni à la relecture ni au
+banc d'essai**. Le code corrigé est juste ; les témoins sont verts et le méritent ; le contrôle
+négatif mord. *Tout ce qui mesure dit vrai — et pourtant la moitié du bug est encore là.*
+
+**Le recensement, parce que le nombre est l'argument** : ce fichier et le journal portent la même
+faute à `_afPoidsDeclare`/`_efPoidsDeclare` (ft-v1064), au champ de quantité (ft-v1056), au
+rescale (ft-v1067), à la référence préservée (ft-v1172), aux portes de reprise (ft-v1180), au
+pour-100 g dérivé (ft-v1183), à l'unité (ft-v1186) — **et le pour-100 g à une décimale, où
+`_per100d1` servait DÉJÀ 7 portes et pas la 8ᵉ**. Huit fois, toujours entre l'écran d'ajout et
+l'écran d'édition.
+
+**Ce qui protège aujourd'hui** :
+- ⭐ **la question se pose AVANT de livrer, pas après** : *« cette fonction a-t-elle une jumelle
+  `_ef*` / `_af*` ? »* — la réponse est **oui** pour presque tout le module nutrition ;
+- ⭐⭐ **et le témoin se pose sur les DEUX**, même quand la seconde est déjà correcte. Un témoin
+  sur une porte saine coûte trois lignes ; le trouver six mois plus tard coûte une version ;
+- ⛔ **ce que ça n'autorise pas** : corriger la jumelle « pour faire propre » sans mesurer qu'elle
+  est cassée. Ici les deux étaient mesurées cassées avant qu'une ligne ne change.
+
+*Voisine de **§58** (une porte sans témoin ressemble à de la décoration) : celle-là dit qu'un
+mécanisme sans témoin passe pour mort, celle-ci qu'un mécanisme **à moitié posé** passe pour vivant.*
