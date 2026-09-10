@@ -20,7 +20,42 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1189` — 🔗 **renommer un exercice dans une séance passée
+- **Version en ligne (live) :** `ft-v1190` — ⚖️ **le garde-fou LARGE, et la passe que j'ai
+  faussée moi-même.**
+  ⭐⭐ **Michel a tranché** : *« Aucune ligne alimentaire ne peut être enregistrée sans une quantité
+  réellement choisie par l'utilisateur »*, **indépendamment de l'origine technique de l'aliment**.
+  Sa raison est architecturale : *« je préfère une règle métier unique à huit comportements
+  différents »* — l'option étroite aurait recréé **les frontières techniques qui ont déjà produit
+  plusieurs familles de bugs ici** (**R19**).
+  ⛔ **Aucune ligne de production ne change** : le garde-fou couvrait **déjà** les huit portes qui
+  posent `_bcNutr`. ⚠️ **Sauf un commentaire — le mien, et il était FAUX** : il annonçait *« n'impacte
+  que le bloc scan »* et citait l'estimation IA comme non concernée, alors que `_calAppliquer` pose
+  bien une fiche (**R23** appliqué au code).
+  ⭐ **23 témoins, pas 19** (4 vivaient dans `tests/calculs`). **16 famille A** (le geste change,
+  *aucune* valeur attendue ne bouge) · **7 famille B** (le témoin figeait le pré-remplissage, il se
+  réécrit) · **0 vraie régression** — le seul candidat sérieux **écarté par la mesure** : `p.per100`
+  est écrit **indépendamment** du drapeau.
+  ⭐⭐ **La garantie ne se supprime pas, elle se DÉPLACE** : le bloc CCXIV est **ft-v1105 périmée par
+  Michel**, et **les deux chiffres de sa capture (155 kcal · 35 g) sont inchangés au caractère près** —
+  ils s'obtiennent par un clic. Sur deux autres blocs elle est même **plus forte** : *« pas 250 »*
+  tolérait un **100** que personne n'avait choisi.
+  ⛔⛔ **ET LE VRAI SUJET EST AILLEURS : j'ai faussé ma propre passe.** 5 rouges sur un bloc qui
+  **passe en isolé** — j'ai failli « réparer » du code sain. **La cause est de moi** : j'avais muté
+  `index.html` **pendant** que la passe tournait (16:21 démarrage · 16:27 mutation · ~16:29 le bloc ·
+  16:39 fin), et le serveur du banc relit le fichier **à chaque requête**.
+  ⭐ **Ce qui l'a évité** : tester du moins cher au plus cher — le bloc seul **6 fois → 6 verts** ·
+  la passe rejouée **jusqu'à** lui → **1310 ✅ · 0 ❌** · les fonctions suspectes **lues** (toutes
+  synchrones) · puis **les horodatages**. ✅ Confirmé : passe propre **3513 ✅ · 0 ❌**.
+  ⛔ **Nouvelle famille `BUGS.md` §60** — et ce qui la rend vicieuse : modifier les fichiers de
+  **TEST** pendant une passe est **sans danger** (lus une fois au démarrage), donc l'habitude est
+  bonne et le piège **invisible**.
+  ⏭️ **Reste ouvert, écrit** : l'**historique abîmé** (chantier à part) · l'**unité de la portion**
+  (`serving_size` n'est jamais demandé à Open Food Facts — « 250 g » peut être 250 ml sur un liquide ;
+  *pas une régression*, le champ pré-rempli faisait la même hypothèse en silence).
+  ⚠️ **À vérifier par Michel sur Safari/iPhone** : les trois pastilles, le champ vide, la reprise en
+  **un seul tap**.
+
+- **Version précédente :** `ft-v1189` — 🔗 **renommer un exercice dans une séance passée
   laissait un RECORD ORPHELIN, et un GRAPHIQUE qui contredisait l'écran.** Michel, en cherchant le bouton de ft-v1187 : *« je ne trouve pas
   dans choisir un exercice tirage vertical »*.
   ⭐⭐ **Mesuré, et c'est moi qui l'avais envoyé au mauvais endroit** : il n'a **plus** d'exercice

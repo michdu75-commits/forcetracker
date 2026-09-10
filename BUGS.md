@@ -3513,3 +3513,61 @@ l'écran d'édition.
 
 *Voisine de **§58** (une porte sans témoin ressemble à de la décoration) : celle-là dit qu'un
 mécanisme sans témoin passe pour mort, celle-ci qu'un mécanisme **à moitié posé** passe pour vivant.*
+
+---
+
+## §60 — ⛔⛔ MUTER UN FICHIER **SERVI** PENDANT QU'UNE PASSE TOURNE FAUSSE LA PASSE **EN SILENCE** *(10/09/2026, ft-v1190)*
+
+**À quoi on la reconnaît** : une passe complète rend des rouges **sur un bloc qui passe en isolé**,
+et le message d'échec est **plausible** — il tombe sur de vrais témoins, dans le bloc qu'on vient
+justement de modifier.
+
+**Le cas vécu (ft-v1190)** — 5 témoins rouges dans le bloc CII, et j'ai bien failli conclure que le
+correctif d'option A cassait quelque chose de réel, donc « réparer » du code sain.
+
+| heure | ce qui s'est passé |
+|---|---|
+| **16:21:05** | la passe complète démarre |
+| **16:25:19** | je corrige une autre suite de tests |
+| **16:27:10** | ⛔ **je mute `index.html`** pour vérifier que ce correctif-là mord (je retire `_bcQtyPose=true` du `oninput`) |
+| **~16:29** | la passe atteint le bloc CII |
+| **16:39:57** | la passe finit — `index.html` est restauré depuis longtemps, donc **tous les blocs suivants sont verts** |
+
+👉 **La cause tient au serveur du banc d'essai** : il relit le fichier **à chaque requête**
+(`fs.createReadStream`). Le contexte navigateur créé par CII a donc reçu la **version cassée**.
+*C'était exactement ma mutation n° 4, celle qui fait 12 rouges quand on la lance exprès.*
+
+**⭐⭐ CE QUI REND CETTE FAMILLE VICIEUSE — et c'est le point à retenir** : modifier les fichiers de
+**TEST** pendant une passe est **sans danger** (Node les lit une seule fois au démarrage). L'habitude
+est donc bonne, elle ne fait jamais de dégât… et elle rend le piège **invisible** le jour où on touche
+un fichier **servi à l'app**.
+
+**⛔ LA RÈGLE** : pendant une passe, on ne touche à **aucun** fichier servi — `app.js`, `index.html`,
+`style.css`, `constants.js`, tous les `.js` de la racine. **Le contrôle négatif se fait AVANT la passe
+ou APRÈS, jamais pendant.**
+
+**⭐ CE QUI L'A TROUVÉE — tester du moins cher au plus cher, au lieu de conclure** :
+
+| mesure | résultat | ce que ça élimine |
+|---|---|---|
+| le bloc seul, **6 fois** | **6 verts** | ce n'est pas un témoin instable |
+| **toute la passe rejouée jusqu'à** ce bloc | **1310 ✅ · 0 ❌** | ce n'est pas l'état accumulé avant lui |
+| les 3 fonctions suspectes, **lues dans le code** | toutes **synchrones**, et les 12 remises à zéro du drapeau sont **directes** | ce n'est pas une course introduite par le correctif |
+| **les horodatages des fichiers** | voir le tableau ci-dessus | **la cause** |
+
+✅ **CONFIRMÉ PAR LA MESURE, pas par déduction** : la passe relancée **sans rien toucher** rend
+**3513 ✅ · 0 ❌**.
+
+⚠️ **Et je l'ai refaite en plus petit dans la même heure** : j'ai écrit un générateur de PDF et son
+document **pendant** la passe suivante. Vérifié après coup qu'aucun témoin ne les lit (celui qui
+scanne `tools/` ne retient que les générateurs contenant `.xlsx`) — *mais la vérification vient après
+le geste, ce qui est l'ordre inverse du bon.*
+
+⭐ **Le témoin en est sorti meilleur** : il rendait « faux » sans dire ce qu'il avait vu. Il rend
+désormais l'état du drapeau, du champ, du bloc et du nom. *Un témoin qui échoue sans dire ce qu'il a
+vu coûte une passe entière par hypothèse.*
+
+**Voisine de** : §58 (un témoin qui pose l'état final à la main ne voit pas le chemin) · la famille
+« déploiement silencieux » (le vrai état n'est pas celui qu'on croit mesurer) · et la leçon de
+ft-v994 — *un contrôle qu'on n'a pas vu échouer ne mesure rien*. Ici c'est le contraire et c'est
+aussi grave : **un contrôle qui échoue pour une raison qui n'est pas son sujet**.

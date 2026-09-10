@@ -7883,3 +7883,39 @@ Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CON
 Tests : **parcours 3391/3391** (+7), bloc **CLXVIII 12/12**, bloc **CCLXXVIII 21/21**, **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 3 mutations, toutes mordent** — ① correctif entier retiré → **1 rouge dans chaque bloc** · ② ⭐⭐ **la quantité affichée non restituée, c'est-à-dire MON correctif de la veille** → **2 rouges**, exactement *« le champ redonne 40 g »* et *« les macros redonnent 156/35 »* — *c'est la mutation la plus utile du lot : elle rejoue mon erreur* · ③ le garde **nom** retiré → **1 rouge**, exactement le témoin A→B. ⚠️ **Honnêteté sur la première** : retirer le correctif fait **mourir** le bloc CLXVIII (son aide `taper` n'a pas de garde sur `null`), donc il rend **1 rouge** — *le même signal qu'une assertion cassée*. Le bloc ne distingue pas « correctif absent » de « bloc en panne ». *Je le dis plutôt que de compter ce 1 comme une détection fine.*
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1181. |
+
+
+---
+
+**ft-v1182 — 🔎 LES RÉSULTATS DE RECHERCHE ÉTAIENT CALCULÉS, ILS TOMBAIENT SOUS L'ÉCRAN** — Michel : ***« dans l'écran Mes aliments, quand je tape coquillette, je n'ai aucun résultat »***. ⚠️ **Et il m'avait repris à juste titre** : j'avais testé `_ciqualChercher` **en direct**, pas le chemin de son écran.
+
+**⛔⛔ MESURÉ AVANT DE CODER — CE N'ÉTAIT NI LA DONNÉE NI LA RECHERCHE.** `coquillette` rendait **déjà** 9811 · 167 kcal · 6,7 · 31,4 · 1,1 : **six lignes, 4 506 caractères de HTML** — posées à **`top:1382` sur un écran de 844**, soit **538 px sous le bas**. *Rien n'y descendait.*
+
+**⭐⭐ ET C'EST LE CONTRÔLE QUI A NOMMÉ LA CAUSE**, pas moi — même code, même geste :
+
+| liste « Mes aliments » | hauteur | position des résultats | visibles ? |
+|---|---|---|---|
+| **vide** | 0 px | 663 | ✅ |
+| **12 aliments (le sien)** | **703 px** | **1382** | ⛔ |
+
+👉 ***C'est la LISTE qui pousse les résultats hors champ.*** ⚠️ **Et c'est pour ça que mes sondes ne le voyaient pas : elles tournaient avec un journal VIDE.** *Une sonde qui n'a pas les données de la personne ne mesure pas son écran.*
+
+**⭐ LE CHEMIN D'ÉCRAN, TRACÉ COMME IL L'A DEMANDÉ** : `af-desc` est le **seul** champ de recherche d'aliments de toute l'app (`oninput="_afSuggInput()"`) ; « Mes aliments » (`af-quick-list`) est une liste **statique** de 12 éléments, **sans champ**, posée **au-dessus**. `_afSuggInput` appelle **quatre** sources (journal · CIQUAL+alias · marques · Open Food Facts à 450 ms), CIQUAL dès 2 caractères, deux fois, avec un garde anti-frappe-périmée. ⛔ **Vérifié aussi service worker ACTIF et contrôlant, après rechargement** : identique — *ce n'était pas un problème de cache.*
+
+**⭐ LE CORRECTIF, TROIS GESTES CHOISIS PAR MICHEL** : ① « Mes aliments » se replie dès que la saisie est utile — au **même seuil que la recherche** (`_AF_SUGG_MIN`, **R2** : un seul nombre décide) · ② **on CACHE, on ne vide pas** : `_afQuickItems` et `S.savedFoods` restent intacts, donc *aucun favori ne se perd* et la liste revient telle quelle · ③ `scrollIntoView` doux **seulement** si le bloc reste hors zone visible.
+
+**⭐⭐ ET LE POINT QUI COMPTE POUR SON IPHONE : la hauteur visible se lit sur `visualViewport`, PAS sur `innerHeight`.** Sur iOS, `innerHeight` **ne rétrécit pas** quand le clavier s'ouvre — le bloc serait « visible » pour le code et **caché sous le clavier** pour la personne. *C'est exactement son cas : il tape, donc son clavier est ouvert.* Repli sur `innerHeight` là où l'API n'existe pas.
+
+**Mesure après**, avec ses 12 aliments : la liste passe de **703 px à 0**, le champ remonte de **1299 à 580**, les suggestions de **1382 à 663** — visibles. Toujours 6 lignes, 9811 en tête.
+
+✅ **VALIDÉ SUR SON IPHONE, capture à l'appui** : *« Coquillettes affiche bien les suggestions CIQUAL à l'écran après repli de Mes aliments. Résultat en tête : 167 kcal/100 g · P6,7 · G31,4 · L1,1. »*
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun bouton n'apparaît, aucun repère ne bouge : *ce qui était déjà calculé devient simplement visible* (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **rien touché à** `alias.json` · CIQUAL · le moteur de recherche · **I4** · **P1** · `_qtyRescale` · la migration historique — sa consigne, et un témoin fige qu'**aucun résultat ne change**. ⛔⛔ **Et la ligne « 910 kcal » qu'il signale dans « Déjà noté par toi » n'est PAS traitée ici, à sa demande** — mais mesurée au passage et notée : **910/33/182/4 = EXACTEMENT 250 g de CIQUAL 9810** (pâtes sèches **crues**). ***Cette ligne est arithmétiquement juste, ce n'est pas une ligne abîmée.*** Ce qui reste à regarder est ailleurs : le **choix cru/cuit**, et le fait que **la quantité ne s'affiche pas** dans cette liste. ⚠️ *À ne pas confondre avec la migration des 17 jours* — les mélanger ferait « réparer » une ligne juste.
+
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1042**, `conclusion: success` à **12:46:39 UTC** sur `3376f791`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⚠️ *Deuxième fois aujourd'hui que l'API GitHub me sert un état PÉRIMÉ* — `in_progress` figé, `updated_at` immobile pendant dix minutes sur un run déjà clos. ⭐ **Ce qui a rendu l'état frais : demander la liste avec le filtre `status: completed`** au lieu d'interroger le run ou ses jobs. *À retenir : quand un run semble bloqué, ce n'est pas lui qu'il faut relancer, c'est la question qu'il faut poser autrement.*
+
+Tests : **parcours 3400/3400** (+9, bloc **CCLXXIX**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⭐ **Les 7 exigences de Michel sont couvertes une par une** : liste vide · liste à 12 · **clavier ouvert (zone visible −350 px)** · `coquillette` → 9811 affiché · champ vidé → la liste revient · aucune perte de favoris · aucun changement des résultats. ⛔ **CONTRÔLE NÉGATIF : 4 mutations, toutes mordent, 1 rouge chacune** — ① le repli retiré · ② ⭐ **le clavier ignoré (`innerHeight` seul)** · ③ la liste ne revient plus · ④ on **VIDE** la liste au lieu de la cacher.
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1182. |

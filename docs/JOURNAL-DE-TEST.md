@@ -2485,7 +2485,7 @@ l'attendu est « est-ce que c'est trouvable », pas un état vérifiable.**
 
 ---
 
-### 🟠 ÉCARTÉE AVEC SA RAISON — « REPRENDRE UN ALIMENT DÉRIVE DE 1 kcal » : NON, C'ÉTAIT MA SONDE (10/09/2026)
+### ⚪ ÉCARTÉE AVEC SA RAISON — « REPRENDRE UN ALIMENT DÉRIVE DE 1 kcal » : NON, C'ÉTAIT MA SONDE (10/09/2026)
 
 En mesurant la contrainte d'UX de Michel (*« la reprise Mes aliments doit rester à UN tap »*), ma
 sonde a affiché un rouge : un aliment repris à **la même quantité** ressortait à **251 kcal** au

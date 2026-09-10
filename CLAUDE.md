@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1189`** (prochaine : `ft-v1190`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1190`** (prochaine : `ft-v1191`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,50 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1190 — ⚖️ LE GARDE-FOU LARGE, ET LA PASSE QUE J'AI FAUSSÉE MOI-MÊME** — Michel tranche la question ouverte de ft-v1189 : ***« Aucune ligne alimentaire ne peut être enregistrée sans une quantité réellement choisie par l'utilisateur »***, **indépendamment de l'origine technique de l'aliment**.
+
+**⭐⭐ SA RAISON VAUT PLUS QUE LA DÉCISION, ET ELLE EST ARCHITECTURALE** : *« je préfère une règle métier unique à huit comportements différents »*. L'option étroite aurait donné `scan → une règle · CIQUAL → une autre · reprise → une autre · IA → une autre` — ***c'est-à-dire exactement les frontières techniques qui ont déjà produit plusieurs familles de bugs dans ce dépôt***. C'est **R19** énoncé par lui : *une section coûte zéro, une frontière coûte cher.*
+
+**⛔ AUCUNE LIGNE DE PRODUCTION NE CHANGE** : le garde-fou couvrait **déjà** les huit portes qui posent `_bcNutr` (`_lookupBarcode` · `_calAppliquer` · `onFoodLabelFile` · `quickFillFood` · `_afSuggPrendreMarque` · `_afSuggPrendreCiqual` · `_afSuggPrendreLocale` · `_afSuggPrendreOff`). *La décision confirme le code au lieu de le corriger.*
+
+**⚠️⚠️ SAUF UN COMMENTAIRE — LE MIEN, ET IL ÉTAIT FAUX.** Celui du garde-fou annonçait ⛔ *« N'IMPACTE QUE LE BLOC SCAN »* et citait nommément **l'estimation IA comme NON concernée** — alors que `_calAppliquer` pose bien `_bcNutr`. 👉 ***Un commentaire qui annonce une portée plus étroite que le code est pire qu'un commentaire absent : il dispense le lecteur suivant d'aller vérifier*** (**R23** appliqué au code). ⭐ Et le cas retourne l'argument : cette porte pose `serving_quantity:0` et affiche **déjà** *« tape ta quantité »* — le refus ne lui ajoute rien, il rend vraie une phrase qu'elle disait déjà.
+
+**⭐⭐ 23 TÉMOINS, PAS 19** — mon chiffre ne couvrait que la passe parcours ; **4 autres** vivaient dans `tests/calculs`, même cause. Deux familles, **zéro vraie régression** :
+
+| famille | combien | ce qu'on fait |
+|---|---|---|
+| **A — le geste a changé** | **16** | on ajoute la frappe ou le clic. ⛔ **Aucune valeur attendue ne bouge** — sa consigne mot pour mot : *« modifier le geste ; NE PAS affaiblir les assertions »* |
+| **B — comportement périmé par lui** | **7** | le témoin figeait **le pré-remplissage lui-même**. Il se réécrit, en disant **qui a décidé et quand** |
+| **C — vraie régression** | **0** | le seul candidat sérieux **écarté par la mesure** : `p.per100` (app.js @1170) est écrit **indépendamment** du drapeau |
+
+**⭐⭐ LA GARANTIE NE SE SUPPRIME PAS, ELLE SE DÉPLACE — le bloc CCXIV est le cas d'école, parce que c'est ft-v1105 que Michel vient de PÉRIMER** (elle avait tranché ⛔ *« on ne retire pas le pré-remplissage : on le NOMME »*). *« Le nombre pré-rempli dit d'où il vient »* devient *« la **PASTILLE** le dit, et le champ est vide »* · *« il invite à vérifier ta dosette »* devient *« il **DEMANDE** au lieu d'affirmer »* · *« il dit que 100 g est un DÉFAUT »* devient *« il **n'invente RIEN** »*. ⭐ **Et les deux chiffres de sa capture — 155 kcal et 35 g — sont INCHANGÉS au caractère près** : ils s'obtiennent par un clic. ⭐ Sur CCLXXII et CCLXXVII la garantie est même **plus forte** : *« le champ ne vaut pas 250 »* tolérait un **100** que personne n'avait choisi ; *« le champ est VIDE »* ne tolère plus rien.
+
+**⭐ LE POINT DÉLICAT EST UN ORDRE, PAS UNE VALEUR** : dans CII, le geste doit venir **AVANT** la correction manuelle des macros. Après, le recalcul depuis le pour-100 g écraserait le « 29 » — et le témoin d'en dessous mesurerait **l'inverse de ce qu'il dit**. *L'ordre des gestes fait partie du témoin, pas du décor.*
+
+**⭐ J'AI MESURÉ MOI-MÊME SA CONTRAINTE D'UX** (*« je ne veux pas transformer Force Tracker en formulaire administratif »*) : la reprise « Mes aliments » tient en **UN SEUL TAP** — champ vide, pastille *« ↩ 150 g (la dernière fois) »*, un tap, enregistré.
+
+**⛔⛔⛔ ET LE VRAI SUJET DE CETTE VERSION EST AILLEURS : J'AI FAUSSÉ MA PROPRE PASSE.** Elle a rendu **5 rouges** dans le bloc CII… **qui passe en isolé**. J'ai failli conclure qu'option A cassait quelque chose de réel, donc **« réparer » du code sain**.
+
+**⭐ CE QUI L'A ÉVITÉ N'EST PAS UNE INTUITION — tester du moins cher au plus cher** : le bloc seul **6 fois → 6 verts** (pas instable) · **toute la passe rejouée jusqu'à lui → 1310 ✅ · 0 ❌** (pas l'état accumulé) · les 3 fonctions suspectes **lues dans le code** → toutes **synchrones**, et les 12 remises à zéro du drapeau sont **directes** (pas une course) · puis **les horodatages**, qui donnent la cause.
+
+**⛔⛔ LA CAUSE, ET ELLE EST DE MOI** : **16:21:05** la passe démarre · **16:27:10** je **mute `index.html`** pour vérifier qu'un autre correctif mord (je retire `_bcQtyPose=true` du `oninput`) · **~16:29** la passe atteint CII · **16:39:57** elle finit, le fichier étant restauré depuis longtemps — d'où des blocs suivants **tous verts**. 👉 **Le serveur du banc relit le fichier à CHAQUE requête** (`fs.createReadStream`) : le contexte créé par CII a reçu **la version cassée**. *C'était exactement ma mutation ④, celle qui fait 12 rouges quand on la lance exprès.*
+
+**⭐⭐ CE QUI REND LA FAMILLE VICIEUSE (`BUGS.md` §60, nouvelle)** : modifier les fichiers de **TEST** pendant une passe est **sans danger** (Node les lit une fois au démarrage). L'habitude est donc bonne, elle ne fait jamais de dégât… et **elle rend le piège invisible** le jour où on touche un fichier **servi à l'app**. ⛔ **La règle** : pendant une passe, aucun fichier servi ne bouge ; le contrôle négatif se fait **avant ou après, jamais pendant**. ✅ **CONFIRMÉ PAR LA MESURE** : la passe relancée sans rien toucher rend **3513 ✅ · 0 ❌**.
+
+**⚠️ ET JE L'AI REFAITE EN PLUS PETIT DANS L'HEURE** — générateur de PDF et document écrits **pendant** la passe suivante. Vérifié après coup qu'aucun témoin ne les lit (celui qui scanne `tools/` ne retient que les générateurs contenant `.xlsx`), *mais la vérification vient après le geste, ce qui est l'ordre inverse du bon.*
+
+**⭐ LE TÉMOIN EN EST SORTI MEILLEUR** : il rendait « faux » sans dire ce qu'il avait vu. Il rend désormais l'état du drapeau, du champ, du bloc et du nom. *Un témoin qui échoue sans dire ce qu'il a vu coûte une passe entière par hypothèse.*
+
+**⚠️ UNE ERREUR DE SONDE, DITE PLUTÔT QUE TUE** : en mesurant la reprise, ma sonde a annoncé une dérive de **1 kcal** (251 au lieu de 250). Remesuré sur trois fixtures — avec un `per100` **exact**, reprendre à la même quantité ne change **RIEN** (200 → 200, 300 → 300). Ma fixture écrivait **167** là où la vraie valeur est **166,67** : *le code calculait juste depuis une référence que j'avais arrondie moi-même.* C'est le **plancher des totaux entiers** de ft-v1188, vu par l'autre bout. Écartée avec sa raison (**R30**).
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change dans cette version : le champ vide et les trois pastilles sont **déjà** l'annonce, livrés avec le code (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **l'historique abîmé n'est PAS touché** (chantier à part : backup · essai à blanc · rapport · retour arrière) · ⛔ **l'UNITÉ de la portion reste inconnue** — l'app demande `serving_quantity` à Open Food Facts, **jamais `serving_size`**, donc sur un liquide la pastille affiche « 250 g » pour ce qui peut être 250 ml ; *ce n'est pas une régression* (le champ pré-rempli faisait la même hypothèse **en silence**), et c'est un **sujet séparé** à sa demande · ⛔ ni cru/cuit, ni le journal du jour avec « 2 steaks », ni la provenance du `per100`, ni Milo, ni les programmes, ni les débriefs. ⚠️ **Michel doit vérifier sur Safari/iPhone** (les trois pastilles, le champ vide, la reprise en un tap).
+
+Tests : **parcours 3513/3513 sur l'arbre FINAL**, **calculs 339/339** (elles portaient 4 des 23 témoins), muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 6 mutations** — ② le champ redevient pré-rempli → **5 rouges**, exactement les 5 témoins du champ vide · ③ la pastille de portion retirée → **3**, exactement CCXIV · ④ la frappe qui ne lève plus le drapeau → **12**, exactement la famille A (*donc les témoins tapent pour de vrai au lieu de poser le drapeau à la main*) · ⑤ l'ancienne formulation de l'écran → **3**, dont un témoin de ft-v1114 qui interdisait **déjà** le mot « dosette » (R14). ⚠️ **Deux mutations ne mordent pas sur ces blocs, et je dis pourquoi** : ① le garde-fou retiré → **0**, *attendu* puisque ces blocs ont tous un geste désormais ; ⑥ le clic de pastille qui ne lève plus le drapeau → **0 ici**, parce qu'aucun de ces 6 blocs n'ENREGISTRE après un clic. ⭐ **Les deux sont couvertes par le bloc CCLXXXVII, et je l'ai VÉRIFIÉ au lieu de le supposer** : la ⑥ y fait **3 rouges**, exactement les trois témoins de clic.
+
+Fichiers : `app.js` (un commentaire), `tests/parcours/runner.js`, `tests/calculs/runner.js`, `.gitignore`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/GARDE-FOU-LARGE-ET-LA-PASSE-FAUSSEE.pdf`. sw.js ft-v1190. |
 
 **ft-v1189 — 🔗📊 RENOMMER UN EXERCICE DANS UNE SÉANCE PASSÉE : UN RECORD ORPHELIN, ET UN GRAPHIQUE QUI CONTREDISAIT L'ÉCRAN** — Michel, en cherchant le bouton que je venais de livrer : ***« je ne trouve pas dans choisir un exercice tirage vertical »***.
 
@@ -692,40 +736,6 @@ Tests : **parcours 3424/3424** (+9, bloc **CCLXXXI**), **calculs 339/339**, musc
 Tests : **parcours 3415/3415 sur l'arbre FINAL** (+15, bloc **CCLXXX**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 14 MUTATIONS, TOUTES MORDENT** (10 sur le correctif, **4 sur le drapeau**) — ① la branche portion de `_provFood` retirée → **5 rouges** · ② ⭐ le garde `_afUnite` retiré → **1**, exactement le témoin de l'hésitation · ③ `_afApplyPortion` qui n'enregistre plus → **4** · ④ et ⑤ chacune des deux portes de reprise → **1** chacune · ⑥ l'invariant retiré → **1** · ⑦ la définition retirée → **2** · ⑧ `saveEditFood` → **1** · ⑨ le filtre amont de `quickAddFood` → **1** · ⑩ le rejeu de repas → **1**. ⚠️ **Honnêteté sur la ③** : ses 4 rouges incluent le témoin de la **définition** — c'est le même défaut vu deux fois (le texte lit `_afPortions`), pas deux détections indépendantes. ⭐⭐ **Et un témoin a été ajouté parce qu'une porte n'en avait aucun** : l'état « boutons de portion » de l'écran d'édition n'a **ni `ef-grams` ni `ef-prop`**, donc `saveEditFood` n'y voyait rien ; *sans témoin, cette porte aurait ressemblé à de la décoration et le contrôle négatif l'aurait déclarée morte* (leçon ft-v1180). ⭐⭐ **ET ÇA S'EST REPRODUIT SUR LE DRAPEAU, AU MÊME ENDROIT** : la mutation qui retire `_efPortionPose` de `saveEditFood` rendait **0 rouge**. Un 15ᵉ témoin a été écrit — *ouvrir une ligne muette dans l'édition, ne toucher à AUCUN bouton, enregistrer* — et la mutation mord désormais chirurgicalement. *La même leçon, deux fois dans la même version : une protection sans témoin n'est pas une protection.*
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1183. |
-
-**ft-v1182 — 🔎 LES RÉSULTATS DE RECHERCHE ÉTAIENT CALCULÉS, ILS TOMBAIENT SOUS L'ÉCRAN** — Michel : ***« dans l'écran Mes aliments, quand je tape coquillette, je n'ai aucun résultat »***. ⚠️ **Et il m'avait repris à juste titre** : j'avais testé `_ciqualChercher` **en direct**, pas le chemin de son écran.
-
-**⛔⛔ MESURÉ AVANT DE CODER — CE N'ÉTAIT NI LA DONNÉE NI LA RECHERCHE.** `coquillette` rendait **déjà** 9811 · 167 kcal · 6,7 · 31,4 · 1,1 : **six lignes, 4 506 caractères de HTML** — posées à **`top:1382` sur un écran de 844**, soit **538 px sous le bas**. *Rien n'y descendait.*
-
-**⭐⭐ ET C'EST LE CONTRÔLE QUI A NOMMÉ LA CAUSE**, pas moi — même code, même geste :
-
-| liste « Mes aliments » | hauteur | position des résultats | visibles ? |
-|---|---|---|---|
-| **vide** | 0 px | 663 | ✅ |
-| **12 aliments (le sien)** | **703 px** | **1382** | ⛔ |
-
-👉 ***C'est la LISTE qui pousse les résultats hors champ.*** ⚠️ **Et c'est pour ça que mes sondes ne le voyaient pas : elles tournaient avec un journal VIDE.** *Une sonde qui n'a pas les données de la personne ne mesure pas son écran.*
-
-**⭐ LE CHEMIN D'ÉCRAN, TRACÉ COMME IL L'A DEMANDÉ** : `af-desc` est le **seul** champ de recherche d'aliments de toute l'app (`oninput="_afSuggInput()"`) ; « Mes aliments » (`af-quick-list`) est une liste **statique** de 12 éléments, **sans champ**, posée **au-dessus**. `_afSuggInput` appelle **quatre** sources (journal · CIQUAL+alias · marques · Open Food Facts à 450 ms), CIQUAL dès 2 caractères, deux fois, avec un garde anti-frappe-périmée. ⛔ **Vérifié aussi service worker ACTIF et contrôlant, après rechargement** : identique — *ce n'était pas un problème de cache.*
-
-**⭐ LE CORRECTIF, TROIS GESTES CHOISIS PAR MICHEL** : ① « Mes aliments » se replie dès que la saisie est utile — au **même seuil que la recherche** (`_AF_SUGG_MIN`, **R2** : un seul nombre décide) · ② **on CACHE, on ne vide pas** : `_afQuickItems` et `S.savedFoods` restent intacts, donc *aucun favori ne se perd* et la liste revient telle quelle · ③ `scrollIntoView` doux **seulement** si le bloc reste hors zone visible.
-
-**⭐⭐ ET LE POINT QUI COMPTE POUR SON IPHONE : la hauteur visible se lit sur `visualViewport`, PAS sur `innerHeight`.** Sur iOS, `innerHeight` **ne rétrécit pas** quand le clavier s'ouvre — le bloc serait « visible » pour le code et **caché sous le clavier** pour la personne. *C'est exactement son cas : il tape, donc son clavier est ouvert.* Repli sur `innerHeight` là où l'API n'existe pas.
-
-**Mesure après**, avec ses 12 aliments : la liste passe de **703 px à 0**, le champ remonte de **1299 à 580**, les suggestions de **1382 à 663** — visibles. Toujours 6 lignes, 9811 en tête.
-
-✅ **VALIDÉ SUR SON IPHONE, capture à l'appui** : *« Coquillettes affiche bien les suggestions CIQUAL à l'écran après repli de Mes aliments. Résultat en tête : 167 kcal/100 g · P6,7 · G31,4 · L1,1. »*
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun bouton n'apparaît, aucun repère ne bouge : *ce qui était déjà calculé devient simplement visible* (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **rien touché à** `alias.json` · CIQUAL · le moteur de recherche · **I4** · **P1** · `_qtyRescale` · la migration historique — sa consigne, et un témoin fige qu'**aucun résultat ne change**. ⛔⛔ **Et la ligne « 910 kcal » qu'il signale dans « Déjà noté par toi » n'est PAS traitée ici, à sa demande** — mais mesurée au passage et notée : **910/33/182/4 = EXACTEMENT 250 g de CIQUAL 9810** (pâtes sèches **crues**). ***Cette ligne est arithmétiquement juste, ce n'est pas une ligne abîmée.*** Ce qui reste à regarder est ailleurs : le **choix cru/cuit**, et le fait que **la quantité ne s'affiche pas** dans cette liste. ⚠️ *À ne pas confondre avec la migration des 17 jours* — les mélanger ferait « réparer » une ligne juste.
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1042**, `conclusion: success` à **12:46:39 UTC** sur `3376f791`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⚠️ *Deuxième fois aujourd'hui que l'API GitHub me sert un état PÉRIMÉ* — `in_progress` figé, `updated_at` immobile pendant dix minutes sur un run déjà clos. ⭐ **Ce qui a rendu l'état frais : demander la liste avec le filtre `status: completed`** au lieu d'interroger le run ou ses jobs. *À retenir : quand un run semble bloqué, ce n'est pas lui qu'il faut relancer, c'est la question qu'il faut poser autrement.*
-
-Tests : **parcours 3400/3400** (+9, bloc **CCLXXIX**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⭐ **Les 7 exigences de Michel sont couvertes une par une** : liste vide · liste à 12 · **clavier ouvert (zone visible −350 px)** · `coquillette` → 9811 affiché · champ vidé → la liste revient · aucune perte de favoris · aucun changement des résultats. ⛔ **CONTRÔLE NÉGATIF : 4 mutations, toutes mordent, 1 rouge chacune** — ① le repli retiré · ② ⭐ **le clavier ignoré (`innerHeight` seul)** · ③ la liste ne revient plus · ④ on **VIDE** la liste au lieu de la cacher.
-
-Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1182. |
-
 
 
 

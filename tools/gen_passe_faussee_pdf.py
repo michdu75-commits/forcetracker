@@ -422,8 +422,9 @@ F.append(P("5. Ce qui n'est pas fait, et ce que je ne sais pas", 'h1'))
 F.append(tableau(
     ['point', 'etat'],
     [["<b>rien n'est deploye</b>",
-      "le travail vit sur une branche ; " + C % 'master' + " est intact. La passe propre — celle ou "
-      "je ne touche a rien — tourne au moment ou ce document est genere."],
+      "la passe propre — celle ou je ne touche a rien — rend <b>3513 verts, 0 rouge</b>. "
+      "<b>La cause est donc confirmee par la mesure</b>, plus seulement deduite. Le deploiement "
+      "suit ce document."],
      ["<b>iPhone</b>",
       "les trois pastilles, le champ vide et la reprise en un tap restent a valider par Michel sur "
       "Safari. Pas de WebKit dans ce conteneur."],
