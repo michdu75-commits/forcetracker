@@ -32791,6 +32791,27 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
       seed(); openSessDetail(111); replaceSessEx(0); _replaceSessExPick(TPH); closeSessDetail();
       openSessDetail(111); saveSessEdits();
       o.c6={prs:Object.keys(S.prs).sort(), nom:S.sessions[0].exs[0].name};
+      /* ⑦ 📊 LE GRAPHIQUE CONTREDISAIT L'ÉCRAN — Michel : « On a une perte d'historique ».
+         RIEN n'était perdu (vérifié dans son export), mais le 📊 ouvert depuis la carte lit
+         `S.sessions` (l'ENREGISTRÉ) alors que la carte vit dans `_sessEdits`. On DIT ce qui
+         manque au lieu de mélanger les deux sources (R2/R29). */
+      const txt=()=>{const e=document.getElementById('ov-ex-hist');return e?e.textContent:'';};
+      const bandeau=()=>/pas encore enregistr/i.test(txt());
+      seed();
+      S.sessions.push({ts:100,date:'2026-08-31',exs:[{name:TPH,sets:[{kg:66,reps:8,done:true,type:'N',rm1:82}]}],volume:528});
+      S.sessions.push({ts:99, date:'2026-08-20',exs:[{name:TPH,sets:[{kg:65,reps:8,done:true,type:'N',rm1:81}]}],volume:520});
+      persist();
+      openSessDetail(111); replaceSessEx(0); _replaceSessExPick(TPH); openExHistory(TPH);
+      o.c7={bandeau:bandeau(), date:/9 sept/i.test(txt()), points:_getExHistory(TPH,5).length};
+      closeExHistory();
+      saveSessEdits(); openSessDetail(111); openExHistory(TPH);
+      o.c7b={bandeau:bandeau(), points:_getExHistory(TPH,5).length};
+      closeExHistory(); closeSessDetail();
+      // ⑧ IL SE TAIT partout ailleurs : hors fenêtre · fenêtre sans modif · autre exercice
+      openExHistory(TPH); o.c8a=bandeau(); closeExHistory();
+      seed(); openSessDetail(111); openExHistory('Tirage vertical'); o.c8b=bandeau(); closeExHistory(); closeSessDetail();
+      seed(); openSessDetail(111); replaceSessEx(0); _replaceSessExPick(TPH);
+      openExHistory('Développé Couché'); o.c8c=bandeau(); closeExHistory(); closeSessDetail();
     }catch(e){ o.err=e.message; }
     return o;
   });
@@ -32816,6 +32837,14 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
       R.c5.prs.length===1 && R.c5.prs[0]==='Tirage vertical' && R.c5.nom==='Tirage vertical', 'reçu : '+R.c5.prs.join(' · '));
     t('CCLXXXVI ⛔ fermer SANS enregistrer n\'emporte aucun renommage',
       R.c6.prs.length===1 && R.c6.prs[0]==='Tirage vertical' && R.c6.nom==='Tirage vertical', 'reçu : '+R.c6.prs.join(' · '));
+    t('CCLXXXVI ⭐⭐ 📊 le graphique DIT que la séance n\'est pas encore enregistrée, et la DATE',
+      R.c7.bandeau===true && R.c7.date===true, 'bandeau '+R.c7.bandeau+' · date nommée '+R.c7.date);
+    t('CCLXXXVI ⛔ ... et il ne fabrique AUCUN point : la courbe reste à 2 avant enregistrement',
+      R.c7.points===2, 'points : '+R.c7.points);
+    t('CCLXXXVI ⭐⭐ après 💾 Enregistrer : le bandeau part ET le point apparaît (2 → 3)',
+      R.c7b.bandeau===false && R.c7b.points===3, 'bandeau '+R.c7b.bandeau+' · points '+R.c7b.points);
+    t('CCLXXXVI ⛔ il SE TAIT hors fenêtre, fenêtre sans modif, et sur un autre exercice',
+      R.c8a===false && R.c8b===false && R.c8c===false, 'hors '+R.c8a+' · sans modif '+R.c8b+' · autre exo '+R.c8c);
   }
 }
 /* ══════════════════════════════════════════════════════════════════════════════════════════

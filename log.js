@@ -1013,6 +1013,30 @@ function openExMenu(ei,hasGif){
 }
 function closeExMenu(){const ov=document.getElementById('ov-ex-menu');if(ov)ov.classList.remove('open');}
 
+/* 📊 ft-v1189 — LE GRAPHIQUE CONTREDISAIT L'ÉCRAN, ET MICHEL A CRU À UNE PERTE D'HISTORIQUE.
+   Son message, capture à l'appui : « On a une perte d'historique. » ⛔ MESURÉ DANS SON PROPRE
+   EXPORT : rien n'était perdu — ses 2 séries de 61 kg × 10 du 09/09 y étaient, intactes, sous
+   l'ancien nom. Il venait de taper le 🔄 sans avoir encore tapé 💾 Enregistrer.
+   ⭐⭐ LA CAUSE EST UNE SOURCE, PAS UN CALCUL : `_getExHistory` lit `S.sessions` — l'état
+   ENREGISTRÉ — alors que la carte qu'il regardait vit dans `_sessEdits`, l'état EN COURS
+   D'ÉDITION. Le 📊 ouvert depuis cette carte montrait donc les 5 dernières séances SANS celle
+   qu'il avait sous les yeux. *Un chiffre qui contredit l'écran est indiscernable d'une perte de
+   données* — et c'est bien ce qu'il a conclu, à juste titre.
+   ⛔ ON NE MÉLANGE PAS LES DEUX SOURCES : afficher l'édition non enregistrée dans une courbe
+   d'historique fabriquerait un point qui n'existe pas encore (R2 — un propriétaire par état).
+   👉 On DIT ce qui manque au lieu de le deviner (R29 : informer sans décider). */
+function _histSeanceNonEnregistree(name){
+  try{
+    if(typeof _sessEdits==='undefined'||!_sessEdits)return null;
+    if(typeof _sessId==='undefined'||_sessId===null)return null;
+    if(!(_sessEdits.exs||[]).some(e=>e.name===name))return null;      // pas cet exercice-là
+    const sauv=(S.sessions||[]).find(s=>(s.ts||s.id)===_sessId);
+    if(!sauv)return null;
+    // La séance ENREGISTRÉE porte-t-elle déjà ce nom ? Si oui, la courbe est complète.
+    if((sauv.exs||sauv.exercises||[]).some(e=>e.name===name))return null;
+    return _sessEdits.date||'';
+  }catch(e){ return null; }
+}
 function openExHistory(name){
   const data=_getExHistory(name,5);
   let el=document.getElementById('ov-ex-hist');
@@ -1041,12 +1065,22 @@ function openExHistory(name){
     +`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">`
     +`<div style="font-weight:800;font-size:15px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%;">${_escNote(name)}</div>`
     +`<button onclick="closeExHistory()" style="width:30px;height:30px;border-radius:50%;background:var(--bg3);border:none;font-size:15px;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;">✕</button>`
-    +`</div>${progHtml}${inner}`
+    +`</div>${_histBandeauNonEnregistre(name)}${progHtml}${inner}`
     +`<div style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px;">Poids max · 5 dernières séances</div>`
     +`</div>`;
   el.classList.add('open');
 }
 function closeExHistory(){const el=document.getElementById('ov-ex-hist');if(el)el.classList.remove('open');}
+// Le bandeau qui explique le trou. ⛔ Il ne se montre QUE quand la courbe est réellement
+// incomplète — pas « à chaque fois qu'une fenêtre est ouverte » : un avertissement permanent
+// cesse d'être lu (R24/R25). Il NOMME la date, sinon on ne sait pas de quelle séance il parle.
+function _histBandeauNonEnregistre(name){
+  const d=_histSeanceNonEnregistree(name);
+  if(d===null)return '';
+  const jour=(typeof fmtD==='function'&&d)?fmtD(d):'';
+  return `<div style="display:flex;gap:8px;align-items:flex-start;padding:9px 11px;margin-bottom:10px;border-radius:var(--r-sm);background:rgba(255,159,10,.10);border:1px solid rgba(255,159,10,.35);font-size:12.5px;color:var(--t2);font-weight:600;line-height:1.4;">`
+    +`<span style="flex-shrink:0">⚠️</span><span>Ta séance${jour?' du '+jour:''} n'est <b>pas encore enregistrée</b> — elle n'apparaît donc pas dans cette courbe. Tape <b>💾 Enregistrer</b> pour l'y voir.</span></div>`;
+}
 
 /* 🐢 LA PASTILLE DE TEMPO — ce que l'app a COMPRIS, montré à côté de ce qui l'a produit.
    Pourquoi elle existe : `_tempoSec` (app.js) change désormais la durée et l'intensité comptées

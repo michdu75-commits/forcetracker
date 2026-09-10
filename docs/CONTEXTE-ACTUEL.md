@@ -21,7 +21,7 @@
   n'expliquait le `dvh` d'origine.
 
 - **Version en ligne (live) :** `ft-v1189` — 🔗 **renommer un exercice dans une séance passée
-  laissait un RECORD ORPHELIN.** Michel, en cherchant le bouton de ft-v1187 : *« je ne trouve pas
+  laissait un RECORD ORPHELIN, et un GRAPHIQUE qui contredisait l'écran.** Michel, en cherchant le bouton de ft-v1187 : *« je ne trouve pas
   dans choisir un exercice tirage vertical »*.
   ⭐⭐ **Mesuré, et c'est moi qui l'avais envoyé au mauvais endroit** : il n'a **plus** d'exercice
   perso « Tirage vertical » — le nom ne vit que dans sa **séance du 9 sept**, hors d'atteinte du
@@ -34,6 +34,11 @@
   record d'un exercice encore vivant.
   ⚠️ **Le contrôle négatif a trouvé un vrai défaut** : sans repli des chaînes A→B→C, un record de
   l'étape intermédiaire partait avec. Témoin ④bis écrit.
+  📊 **2ᵉ moitié, une heure plus tard** — Michel : *« On a une perte d'historique »*. ⛔ **Rien
+  n'était perdu** (vérifié dans son export : ses 2 séries de 61 kg y sont). Le 📊 lit
+  `S.sessions` (l'**enregistré**) alors que la carte vit dans `_sessEdits` : le graphique était
+  **exact** et **contredisait l'écran**. On ne mélange pas les deux sources (**R2**) — on **dit**
+  ce qui manque, avec la date. Et il **se tait** partout ailleurs (**R24**).
   ⛔ **Reste ouvert** : un exercice **supprimé** d'une séance passée laisse toujours son record —
   troisième porte, non traitée.
   ⚠️ **À vérifier par Michel sur Safari/iPhone.**
