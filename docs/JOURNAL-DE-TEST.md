@@ -2038,6 +2038,63 @@ qu'un signalement peut être juste sur le symptôme et faux sur la cause : le 20
 n'en était pas un (410 g / 2 portions fabricant), et le vrai défaut n'était dans aucun des deux
 rapports.*
 
+---
+
+### 🟡 LA PORTION DU FABRICANT S'ENREGISTRE COMME QUANTITÉ CONSOMMÉE — LE CHEMIN, PROUVÉ *(10/09/2026)*
+
+**Consigne de Michel** : *« ne corrige rien avant mesure. Je veux la preuve du chemin exact :
+portion fabricant → quantité affichée → quantité éventuellement enregistrée. »* ⛔ Périmètre isolé :
+**pas** les kcal d'Open Food Facts, **pas** la cohérence énergie/macros, **pas** la visibilité de
+l'alerte, **pas** P1, **pas** la migration.
+
+**⭐ SES TROIS CAS RÉELS, REPRODUITS À L'IDENTIQUE** — on scanne, **on ne touche à rien**, on
+enregistre :
+
+| produit | `serving_quantity` envoyé | champ affiché | **`q` enregistré** |
+|---|---|---|---|
+| Raynal | `205` | 205 | ⛔ **`q:205, u:'g'`** |
+| Thon | `140` | 140 | ⛔ **`q:140, u:'g'`** |
+| Cassegrain | `187.5` | 187,5 | ⛔ **`q:187.5, u:'g'`** |
+| ⭐ **aucune portion** | *(absent)* | **100** | ⛔ **`q:100, u:'g'`** |
+| ⭐ **portion = 0** | `0` | **100** | ⛔ **`q:100, u:'g'`** |
+
+**① Le champ source** : `serving_quantity` de la fiche Open Food Facts. Rien d'autre — la variation
+du seul champ suffit à faire varier le résultat, et **le 187,5 le prouve** (aucun calcul de l'app ne
+produit une décimale ; ce n'est pas `410/2`).
+
+**② La fonction qui l'injecte**, `_offRemplirFormulaire` :
+`const serv=parseFloat(p.serving_quantity)||0; const g=serv>0?serv:100; gramsEl.value=g;`
+
+**③ Visuel ou écrit ?** ⛔ **RÉELLEMENT ÉCRIT** dans `S.foodLog`. Ce n'est pas un pré-remplissage
+d'écran : la ligne du journal porte `q` et `u`.
+
+**④ Sur quels produits ?** ⛔⛔ **PIRE QUE « ceux qui ont une portion fabricant » : sur TOUS les
+produits scannés.** Sans portion déclarée, l'app écrit quand même **`q:100`** — un défaut du HTML
+(`value="100"`), que **rien ni personne n'a choisi**. La règle vaut donc pour les deux : *une valeur
+de référence ne devient pas un choix*.
+
+**⑤ ⭐⭐ POURQUOI L'APP LE PREND POUR UN CHOIX — LA RÉPONSE EST QU'ELLE NE POSE JAMAIS LA QUESTION.**
+La condition de `_provFood` :
+`if(row && row.style.display!=='none' && _bcNutr && g>0){ p.q=g; p.u='g'; }`
+👉 Elle demande *« le bloc est-il visible ? »* et *« le champ contient-il un nombre ? »*.
+**Elle ne demande jamais *« la personne a-t-elle fait un geste ? »***
+
+⛔⛔ **ET CE N'EST PAS QU'IL MANQUE UNE IDÉE — IL MANQUE UN DRAPEAU QUE L'APP POSSÈDE DÉJÀ DEUX FOIS** :
+
+| bloc | drapeau de geste | mesuré |
+|---|---|---|
+| poids déclaré à la main | `_afPoidsPose` | ✅ **EXISTE** |
+| boutons de portion | `_afPortionPose` | ✅ **EXISTE** |
+| **bloc du SCAN** | — | ⛔ **AUCUN** |
+
+*Le bloc du scan est le seul des trois à ne pas savoir distinguer « rempli par la fiche » de
+« choisi par la personne ».* C'est **R8, la jumelle**, et la 10ᵉ fois recensée dans ce dépôt.
+
+⚠️ **NON CORRIGÉ À CETTE DATE.** Et une décision antérieure doit être relue avant tout correctif
+(**R30**) : **ft-v1105** écrit ⛔ *« ON NE RETIRE PAS LE PRÉ-REMPLISSAGE »* — mais elle ne parle que
+de ce qui est **AFFICHÉ**, jamais de ce qui est **ENREGISTRÉ**. *Les deux exigences ne se
+contredisent pas : un drapeau laisse l'écran intact et empêche l'écriture.*
+
 ## ⚠️ Comment fouiller les conversations (leçon du 21/08)
 
 En remontant trois semaines de transcriptions, mon filtre cherchait le mot **« Milo »**, **« coach »**,
