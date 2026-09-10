@@ -1242,7 +1242,18 @@ function _provFood(vals){
      honnêtement inconnue plutôt que faussement connue (R29). */
   const row=document.getElementById('af-bc-row');
   const g=numFR((document.getElementById('af-bc-grams')||{}).value)||0;
-  if(row&&row.style.display!=='none'&&_bcNutr&&g>0){ p.q=g; p.u='g'; }
+  /* ⚖️⛔⛔ LA CONDITION DEMANDE ENFIN S'IL Y A EU UN GESTE (10/09/2026, option A).
+     Les trois tests d'avant — bloc visible, fiche chargée, nombre présent — ne disaient RIEN
+     de la personne : un champ rempli par Open Food Facts et un champ tapé à la main y étaient
+     *strictement indiscernables*. `_bcQtyPose` est la quatrième question, et la seule qui porte
+     sur elle.
+     ⭐ MESURÉ AVANT DE CHOISIR (la crainte de GPT, et elle était fondée) : sans quantité, la
+     ligne garde des macros calculées pour 205 g — mais elle reste **entièrement
+     reconstructible**, parce que `per100` arrive par un chemin INDÉPENDANT de la quantité.
+     *Le bug historique n'était pas `q:null`, c'était `per100:null`* — et `193 / 94 × 100` redonne
+     exactement 205. **Une ligne sans quantité n'est morte que si elle n'a pas non plus de
+     référence.** */
+  if(row&&row.style.display!=='none'&&_bcNutr&&g>0&&_bcQtyPose){ p.q=g; p.u='g'; }
   /* ⚖️ LE POIDS DÉCLARÉ À LA MAIN DESCEND JUSQU'À LA DONNÉE (ft-v1051) — R4, et c'est LA
      moitié qui manquait : sans ces lignes, la personne voit son poids à l'écran, les 4 valeurs
      se recalculent… et rien n'est enregistré. *L'app aurait su, et n'aurait rien retenu.*
@@ -1625,10 +1636,22 @@ async function _lookupBarcode(ean, saisie, codeDouteux){
    pour le calibrage à la main, qui doit s'enregistrer comme « étiquette » et surtout PAS comme
    une fiche Open Food Facts — *une provenance fausse est pire que pas de provenance* (R33). */
 function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux, origine){
-  // Quantité par défaut : portion si connue, sinon 100 g
+  /* ⚖️⛔⛔ LE CHAMP RESTE VIDE, LA PORTION DEVIENT UNE PASTILLE (option A, décision de Michel).
+     ⛔ AVANT : `const g = serv>0 ? serv : 100;` puis `gramsEl.value=g;` — et cette valeur
+     descendait jusqu'à `S.foodLog` sans qu'aucun geste n'ait eu lieu.
+     ⭐ CE N'EST PAS UN RETRAIT, C'EST UN DÉPLACEMENT : le nombre ne disparaît pas, il change de
+     statut — il passe de *valeur inscrite* à *proposition à accepter*. C'est mot pour mot ce que
+     ft-v1051 avait fait pour « la dernière fois », et ce que ft-v1174 avait fait pour le paquet.
+     ⚠️ ft-v1105 disait ⛔ *« on ne retire pas le pré-remplissage : sans lui on retombe à 100 g,
+     ce qui est pire »*. **Sa raison est satisfaite** — on ne retombe pas à 100, la portion reste
+     à UN clic — et son propre commentaire nommait déjà la jumelle qu'il n'avait pas faite.
+     ⛔ ET LE REPLI À 100 DISPARAÎT AVEC : un produit sans portion déclarée n'a **aucune** quantité
+     à proposer, donc on n'en propose aucune (R29). */
   const serv=parseFloat(p.serving_quantity)||0;
-  const g=serv>0?serv:100;
-  const gramsEl=document.getElementById('af-bc-grams');if(gramsEl)gramsEl.value=g;
+  const gramsEl=document.getElementById('af-bc-grams');if(gramsEl)gramsEl.value='';
+  _bcQtyPose=false;   // ⛔ remplir depuis une fiche n'est pas un choix — le drapeau retombe ici
+  _bcProposerPortion(serv, (origine==='marque' && _bcNutr && _bcNutr.name && _bcNutr.name.indexOf(' · ')>0)
+                            ? _bcNutr.name.split(' · ').pop() : 'portion fabricant');
   /* ⛔ LE NOMBRE GARDE SA SOURCE ÉCRITE À CÔTÉ (ft-v1105) — et pour un produit de marque, la
      source est l'ENSEIGNE, pas « la fiche produit » : c'est elle qui publie ce poids. */
   _bcQsrc(serv, (origine==='marque' && _bcNutr && _bcNutr.name && _bcNutr.name.indexOf(' · ')>0)
@@ -1849,12 +1872,56 @@ function _bcQsrc(serv, source){
      entier — il n'y a rien à doser. On l'annonce comme un fait, et on laisse la porte ouverte
      (« si tu n'as pas tout mangé, mets ton poids ») sans réclamer de vérification. */
   const marque = /^(McDonald|Burger King|KFC|Quick|Domino|Subway)/i.test(src) || src==='son enseigne';
+  /* ⚖️⛔⛔ CETTE PHRASE A CHANGÉ DE MÉTIER LE 10/09/2026, ET C'EST LE CŒUR DE L'OPTION A.
+     Elle JUSTIFIAIT un nombre déjà inscrit (« 205 g est la portion déclarée par… ») ; le champ
+     est désormais VIDE, donc elle POSE LA QUESTION. *Garder l'ancienne formulation à côté d'un
+     champ vide aurait été le pire des deux mondes : un écran qui affirme là où il demande.*
+     ⛔ Et le cas « aucune portion » ne dit plus « 100 g par défaut » — il n'y a plus de défaut,
+     et annoncer un repli qui n'existe pas serait un mensonge d'écran (R24 : informer, pas décorer). */
   qs.innerHTML = (+serv>0)
     ? (marque
-        ? '⚖️ <b>'+(+serv)+'&nbsp;g</b> est le poids de la portion publiée par '+src+'. Si tu n\'as pas tout mangé, mets ton poids.'
-        : '⚖️ <b>'+(+serv)+'&nbsp;g</b> est la portion déclarée par '+src+' — <b>vérifie ta dosette</b>, elle peut être différente.')
-    : 'Aucune portion déclarée par '+src+' : <b>100&nbsp;g</b> par défaut. Mets ta quantité réelle.';
+        ? '<b>Combien en as-tu mangé&nbsp;?</b> ' + src + ' publie une portion de <b>'+(+serv)+'&nbsp;g</b> — touche la pastille, ou tape ton poids.'
+        : '<b>Combien en as-tu mangé&nbsp;?</b> ' + src + ' déclare une portion de <b>'+(+serv)+'&nbsp;g</b> — touche la pastille si ça correspond, sinon tape ton poids.')
+    : '<b>Combien en as-tu mangé&nbsp;?</b> Aucune portion déclarée par '+src+' — tape ton poids en grammes.';
   qs.style.display='block';
+}
+/* ⚖️⛔⛔ LE DRAPEAU QUI MANQUAIT AU BLOC DU SCAN (10/09/2026) — décision de Michel, option A :
+   *« Force Tracker peut proposer une quantité. Il ne doit jamais décider à ma place combien j'ai
+   mangé. »*
+   ⛔⛔ CE QUI SE PASSAIT, MESURÉ SUR TROIS VRAIS PRODUITS (Raynal 205 g · Thon 140 g ·
+   Cassegrain 187,5 g) : on scanne, **on ne touche à rien**, on enregistre — et la ligne partait
+   avec `q:205, u:'g'` ET les 4 macros calculées sur ces 205 g. *Une journée comptait 193 kcal que
+   personne n'avait décidé de manger.*
+   ⭐ LA VALEUR VENAIT DE `serving_quantity` (la portion du FABRICANT), et le **187,5** le prouve :
+   aucun calcul de l'app ne produit une décimale — ce n'est pas « la boîte de 410 g / 2 ».
+   ⛔⛔ ET C'ÉTAIT PIRE QUE « les produits qui déclarent une portion » : SANS portion déclarée,
+   l'app écrivait quand même **`q:100`** — le `value="100"` du HTML, que personne n'a jamais choisi.
+   ⭐⭐ LA CAUSE TIENT EN UNE LIGNE, ET CE N'EST PAS UNE IDÉE QUI MANQUAIT : `_provFood` demandait
+   *« le bloc est-il visible ? »* et *« le champ contient-il un nombre ? »*, **jamais *« y a-t-il eu
+   un geste ? »***. Or l'app possède DÉJÀ ce drapeau deux fois — `_afPoidsPose` et `_afPortionPose`.
+   *Le bloc du scan était le seul des trois à ne pas savoir distinguer « rempli par la fiche » de
+   « choisi par la personne ».* R8, la jumelle, pour la 10ᵉ fois recensée ici.
+   ⭐ CELUI-CI EST LEUR COPIE EXACTE : seul un **clic sur une pastille** ou une **frappe dans le
+   champ** peut le lever, et il retombe dès qu'on change d'aliment. */
+let _bcQtyPose=false;
+/* 🏷️ LA PASTILLE DE LA PORTION FABRICANT (option A) — jumelle mot pour mot de `_bcProposerPaquet`.
+   ⛔ Elle ne vide pas le champ non plus : c'est `_offRemplirFormulaire` qui le laisse vide, et
+   les trois pastilles cohabitent alors sans se voler la place (R2 : un seul videur). */
+function _bcProposerPortion(q, src){
+  const b=document.getElementById('af-bc-portion'); if(!b) return;
+  const v=+q||0;
+  if(!(v>0)){ b.style.display='none'; b.textContent=''; delete b.dataset.q; return; }
+  b.dataset.q=String(v);
+  b.textContent='⚖️ '+v+' g ('+(src||'portion fabricant')+')';
+  b.style.display='inline-block';
+}
+function _bcReprendrePortion(){
+  const b=document.getElementById('af-bc-portion'); if(!b) return;
+  const q=parseFloat(b.dataset.q)||0; if(!(q>0)) return;
+  const g=document.getElementById('af-bc-grams'); if(g) g.value=q;
+  _bcQtyPose=true;                        // ⭐ un clic EST un geste
+  _bcApplyGrams();                        // R2 : le même calcul que la saisie à la main
+  b.style.display='none';                 // proposition consommée — elle ne repropose pas
 }
 function _bcProposerDerniere(q){
   const b=document.getElementById('af-bc-last'); if(!b) return;
@@ -1885,6 +1952,7 @@ function _bcReprendrePaquet(){
   const b=document.getElementById('af-bc-paquet'); if(!b) return;
   const q=parseFloat(b.dataset.q)||0; if(!(q>0)) return;
   const g=document.getElementById('af-bc-grams'); if(g) g.value=q;
+  _bcQtyPose=true;                        // ⭐ un clic EST un geste
   _bcApplyGrams();                        // R2 : le même calcul que la saisie à la main
   b.style.display='none';                 // proposition consommée — elle ne repropose pas
 }
@@ -1892,6 +1960,7 @@ function _bcReprendreDerniere(){
   const b=document.getElementById('af-bc-last'); if(!b) return;
   const q=parseFloat(b.dataset.q)||0; if(!(q>0)) return;
   const g=document.getElementById('af-bc-grams'); if(g) g.value=q;
+  _bcQtyPose=true;                        // ⭐ un clic EST un geste
   _bcApplyGrams();                        // R2 : le même calcul que la saisie à la main
   b.style.display='none';                 // proposition consommée — elle ne repropose pas
 }
@@ -2796,8 +2865,14 @@ async function onFoodLabelFile(input){
     if(!_bcNutr.kcal100&&!_bcNutr.prot100&&!_bcNutr.carbs100&&!_bcNutr.fat100)
       return _bcSansValeurs(_bcNutr.name, {saisie:'photo-ia', origine:'etiquette',
         cause:'Les valeurs n\'ont pas été lues sur la photo.'});
-    const g=(parseFloat(d.serving)>0)?parseFloat(d.serving):100;
-    const gramsEl=document.getElementById('af-bc-grams');if(gramsEl)gramsEl.value=g;
+    /* ⚖️⛔ LA PORTE JUMELLE (R8) — même défaut, même correctif, le même jour. La photo
+       d'étiquette remplissait le champ avec `d.serving`, ou 100 par défaut : c'est exactement
+       ce que faisait `_offRemplirFormulaire`. *Corriger une porte et pas sa jumelle est la faute
+       que ce fichier recense dix fois.* */
+    const g=parseFloat(d.serving)>0?parseFloat(d.serving):0;
+    const gramsEl=document.getElementById('af-bc-grams');if(gramsEl)gramsEl.value='';
+    _bcQtyPose=false;
+    _bcProposerPortion(g, 'lu sur l\'étiquette');
     _bcQsrc(g, 'l\'étiquette');       // ⛔ le nombre garde sa source écrite à côté (ft-v1105)
     const nameEl=document.getElementById('af-bc-name');if(nameEl)nameEl.textContent=_bcNutr.name+' · '+_bcNutr.kcal100+' kcal/100g (lu sur l\'étiquette)';
     const row=document.getElementById('af-bc-row');if(row)row.style.display='block';
@@ -3849,6 +3924,25 @@ function addFoodEntry(){
   const fat=parseInt(document.getElementById('af-fat').value)||0;
   if(!name){toast('Donne un nom à l\'aliment','error');return;}
   if(!kcal&&!prot&&!carbs&&!fat){toast('Renseigne au moins les calories','error');return;}
+  /* ⚖️⛔⛔ UN PRODUIT SCANNÉ NE S'ENREGISTRE PAS SANS QUANTITÉ CHOISIE — ET CE GARDE-FOU EST NÉ
+     D'UN TROU DANS MON PROPRE CORRECTIF, TROUVÉ PAR LA MESURE.
+     Vider le champ suffisait à ne plus écrire `q`… mais l'écran retombait sur les valeurs POUR
+     100 g, et enregistrer sans rien toucher partait avec **`kcal:94` sans quantité**. 👉 *On
+     remplaçait une quantité inventée par des MACROS inventées* — c'est-à-dire exactement la
+     dérive que GPT nomme au §8 de son état des lieux : *« totaux consommés sans quantité
+     permettant de reconstruire leur origine »*.
+     ⭐ R13 — ON N'INVENTE PAS DE MÉCANISME : les deux lignes au-dessus refusent déjà un aliment
+     sans nom et un aliment sans valeur, avec un toast qui dit quoi faire. C'est la même porte,
+     le même motif, un cas de plus.
+     ⛔ CE N'EST PAS « INFORMER SANS BLOQUER » RETOURNÉ (R24) : on ne bloque pas une information,
+     on refuse d'**inventer une donnée**. L'app refuse déjà de terminer une séance sans série
+     cochée, pour la même raison. Et la sortie est à un doigt : trois pastilles et un champ.
+     ⛔ N'IMPACTE QUE LE BLOC SCAN (`_bcNutr` posé) : un aliment tapé à la main, une portion, une
+     estimation IA n'ont pas de `_bcNutr` et passent exactement comme avant. */
+  const _bcRow=document.getElementById('af-bc-row');
+  if(_bcRow && _bcRow.style.display!=='none' && _bcNutr && !_bcQtyPose){
+    toast('Combien en as-tu mangé ? Touche une pastille ou tape ton poids.','error'); return;
+  }
   if(!S.foodLog)S.foodLog=[];
   const _e=Object.assign({date:_journalJourActif(),meal:_afMeal,name:name.slice(0,80),kcal,prot,carbs,fat,ts:Date.now()},
     _provFood({kcal,prot,carbs,fat}));
@@ -4801,6 +4895,13 @@ function _afOublierAliment(){
   /* ⛔ La moitié « pour-100 g » : le bloc et sa valeur ne décrivent plus rien. */
   _bcNutr=null;
   const bc=document.getElementById('af-bc-row'); if(bc) bc.style.display='none';
+  /* ⚖️⛔ ET LE GESTE MEURT AVEC L'ALIMENT (10/09/2026) — un clic fait sur le produit PRÉCÉDENT ne
+     vaut pas choix sur celui-ci. Sans cette ligne, scanner A, cliquer sa pastille, puis scanner B
+     ferait enregistrer B avec une quantité que personne n'a choisie POUR B : le défaut exact de
+     ft-v1180, transposé au drapeau. ⭐ Posé ICI, donc sur les 13 portes d'un coup (R2). */
+  try{ _bcQtyPose=false; }catch(e){}
+  const bp=document.getElementById('af-bc-portion');
+  if(bp){ bp.style.display='none'; bp.textContent=''; delete bp.dataset.q; }
   /* ⛔ La moitié « portions/grammes » — et c'est elle qui vidait le champ relu par `_afMajAncre`. */
   try{ _afPropCacher(); }catch(e){}
   /* ⛔ Le poids supposé par l'IA appartient à LA PHRASE qui a été estimée. Sur un autre aliment

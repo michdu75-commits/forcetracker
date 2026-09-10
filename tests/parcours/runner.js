@@ -33275,6 +33275,195 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
   await cx.close();
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+   BLOC CCLXXXVII — ⚖️ LA PORTION DU FABRICANT N'EST PLUS UNE CONSOMMATION (10/09/2026, option A)
+   Michel, sur trois vrais produits iPhone (Raynal 205 g · Thon 140 g · Cassegrain 187,5 g) :
+   on scanne, on ne touche à rien, et la ligne partait avec `q:205, u:'g'` ET les 4 macros
+   calculées dessus. Sa décision : ⭐ *« Force Tracker peut proposer une quantité. Il ne doit
+   jamais décider à ma place combien j'ai mangé. »*
+
+   ⛔ CE QUE LE BLOC FIGE :
+   ① après un scan, le champ est VIDE et la portion devient une PASTILLE ;
+   ② sans geste, RIEN ne s'enregistre — ni quantité, ni macros ;
+   ③ les trois gestes (portion · paquet · frappe) écrivent bien `q` et `u` ;
+   ④ sans portion déclarée, aucune pastille de portion n'apparaît — et surtout plus de repli
+      à 100 g, qui était le cas le plus indéfendable : personne n'a jamais choisi ce nombre ;
+   ⑤ un geste fait sur l'aliment PRÉCÉDENT ne vaut pas choix sur le suivant.
+
+   ⚠️ LE GARDE-FOU ② EST NÉ D'UN TROU DANS LE CORRECTIF LUI-MÊME, TROUVÉ PAR LA MESURE : vider
+   le champ suffisait à ne plus écrire `q`, mais l'écran retombait sur les valeurs POUR 100 g et
+   la ligne partait avec `kcal:94` SANS quantité. *On remplaçait une quantité inventée par des
+   MACROS inventées* — la dérive exacte que GPT nomme au §8 de son état des lieux.
+   ═══════════════════════════════════════════════════════════════════════════════════════════ */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2400);
+  const W=await pg.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
+    const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
+    const id=x=>document.getElementById(x);
+    const val=x=>(id(x)||{}).value;
+    const txt=x=>((id(x)||{textContent:''}).textContent||'').replace(/\s+/g,' ').trim();
+    const vis=x=>{const e=id(x); return !!e && e.style.display!=='none';};
+    const fermer=()=>document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const set=(i,v)=>{const el=id(i); if(!el)return; el.value=v;
+      el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true}));};
+    const P100={kcal:94,prot:5.2,carbs:12,fat:2.4};
+    const fiche=(nom,sq,paquet)=>{const F={code:'X',product_name:nom,brands:'Raynal',
+      nutriments:{'energy-kcal_100g':P100.kcal,'proteins_100g':P100.prot,
+                  'carbohydrates_100g':P100.carbs,'fat_100g':P100.fat}};
+      if(paquet)F.quantity=paquet; if(sq!==undefined)F.serving_quantity=sq; return F;};
+    let COURANTE=null;
+    const vrai=window.fetch;
+    window.fetch=async(u,opt)=>{const s=String(u);
+      if(s.indexOf('openfoodfacts')>=0) return {ok:true,json:async()=>({status:1,product:COURANTE})};
+      return vrai(u,opt);};
+    const scanner=async(f)=>{ COURANTE=f; fermer(); openAddFood(); await d(300);
+      await _lookupBarcode('X'); await d(440); };
+    const ligne=()=>{const e=(S.foodLog||[])[S.foodLog.length-1]; if(!e)return null;
+      return {kcal:e.kcal,prot:e.prot,q:(e.q===undefined||e.q===null)?null:e.q,u:e.u||null,
+              per100:e.per100?e.per100.kcal:null};};
+
+    /* ① le champ est VIDE, la portion est une PASTILLE */
+    S.foodLog=[]; S.savedFoods=[]; S.hiddenFoods=[]; persist();
+    await scanner(fiche('Lentilles','205','410 g'));
+    o.apresScan={champ:val('af-bc-grams'),
+                 pastillePortion:vis('af-bc-portion')?txt('af-bc-portion'):'(cachée)',
+                 pastillePaquet:vis('af-bc-paquet')?txt('af-bc-paquet'):'(cachée)',
+                 question:txt('af-bc-qsrc')};
+
+    /* ② AUCUN geste -> RIEN ne s'enregistre */
+    const n0=(S.foodLog||[]).length;
+    addFoodEntry(); await d(320);
+    o.sansGeste={ajoutees:(S.foodLog||[]).length-n0, ligne:ligne()};
+
+    /* ③a CLIC sur la portion */
+    S.foodLog=[]; persist(); await scanner(fiche('Lentilles','205','410 g'));
+    _bcReprendrePortion(); await d(280); addFoodEntry(); await d(320);
+    o.clicPortion=ligne();
+    /* ③b CLIC sur le paquet */
+    S.foodLog=[]; persist(); await scanner(fiche('Lentilles','205','410 g'));
+    _bcReprendrePaquet(); await d(280); addFoodEntry(); await d(320);
+    o.clicPaquet=ligne();
+    /* ③c FRAPPE dans le champ */
+    S.foodLog=[]; persist(); await scanner(fiche('Lentilles','205','410 g'));
+    set('af-bc-grams','300'); await d(280); addFoodEntry(); await d(320);
+    o.frappe=ligne();
+
+    /* ④ AUCUNE portion déclarée : pas de pastille, pas de repli à 100 */
+    S.foodLog=[]; persist(); await scanner(fiche('Sans portion',undefined,'410 g'));
+    o.sansPortion={champ:val('af-bc-grams'),
+                   pastillePortion:vis('af-bc-portion')?txt('af-bc-portion'):'(cachée)',
+                   question:txt('af-bc-qsrc')};
+    const n1=(S.foodLog||[]).length; addFoodEntry(); await d(320);
+    o.sansPortion.ajoutees=(S.foodLog||[]).length-n1;
+    /* ④b ... mais taper marche */
+    set('af-bc-grams','300'); await d(280); addFoodEntry(); await d(320);
+    o.sansPortionFrappe=ligne();
+
+    /* ⑤ le geste ne traverse PAS d'un aliment à l'autre */
+    S.foodLog=[]; persist();
+    await scanner(fiche('Produit A','205','410 g'));
+    _bcReprendrePortion(); await d(260);
+    COURANTE=fiche('Produit B','140','410 g');
+    await _lookupBarcode('X'); await d(440);
+    const n2=(S.foodLog||[]).length;
+    o.aVersB={champ:val('af-bc-grams')};
+    addFoodEntry(); await d(320);
+    o.aVersB.ajoutees=(S.foodLog||[]).length-n2;
+
+    /* ⑥ NON-RÉGRESSION : l'aliment tapé à la main passe toujours */
+    S.foodLog=[]; S.savedFoods=[]; S.hiddenFoods=[]; persist();
+    fermer(); openAddFood(); await d(300);
+    set('af-desc','Omelette maison'); set('af-kcal','300'); set('af-prot','20');
+    set('af-carbs','2'); set('af-fat','22'); await d(240);
+    addFoodEntry(); await d(320);
+    o.manuel=ligne();
+
+    /* ⑦ NON-RÉGRESSION : une PORTION (P1) passe toujours */
+    S.foodLog=[]; persist(); fermer(); openAddFood(); await d(300);
+    set('af-desc','Steak'); set('af-kcal','250'); set('af-prot','20');
+    set('af-carbs','0'); set('af-fat','18'); _afMajAncre(true); await d(220);
+    _afApplyPortion(2); await d(240);
+    addFoodEntry(); await d(320);
+    o.portion=ligne();
+
+    /* ⑧ LA REPRISE : le champ reste vide (ft-v1051) et la pastille suffit */
+    S.foodLog=[{ts:Date.now()-1e6,date:today(),meal:'midi',name:'Lentilles',
+      kcal:193,prot:11,carbs:25,fat:5,q:205,u:'g',
+      per100:{kcal:94,prot:5.2,carbs:12,fat:2.4},saisie:'scan',origine:'off'}];
+    S.savedFoods=[]; S.hiddenFoods=[]; persist();
+    fermer(); openAddFood(); await d(320);
+    _afQuickItems=_buildFoodQuickItems();
+    quickFillFood(_afQuickItems.findIndex(x=>x.name==='Lentilles')); await d(320);
+    o.reprise={champ:val('af-bc-grams'),
+               pastille:vis('af-bc-last')?txt('af-bc-last'):'(cachée)'};
+    _bcReprendreDerniere(); await d(280);
+    const n3=(S.foodLog||[]).length; addFoodEntry(); await d(320);
+    o.reprise.ajoutees=(S.foodLog||[]).length-n3;
+    o.reprise.ligne=ligne();
+
+    window.fetch=vrai;
+    return o;
+   }catch(e){ return {err:String(e&&e.message||e)}; }
+  });
+
+  console.log('\n== BLOC CCLXXXVII — ⚖️ la portion fabricant n\'est plus une consommation ==');
+  if(W.err){ t('CCLXXXVII bloc exécuté',false,W.err); }
+  else{
+    t('CCLXXXVII ① ⭐⭐ APRÈS UN SCAN, LE CHAMP QUANTITÉ EST VIDE (avant : 205 pré-rempli)',
+      W.apresScan && W.apresScan.champ==='', JSON.stringify(W.apresScan));
+    t('CCLXXXVII ② ⭐ LA PORTION FABRICANT EST UNE PASTILLE (205 g), pas une valeur inscrite',
+      /205/.test(W.apresScan.pastillePortion) && /portion fabricant/.test(W.apresScan.pastillePortion),
+      W.apresScan.pastillePortion);
+    t('CCLXXXVII ③ ⭐ LE PAQUET RESTE PROPOSÉ À CÔTÉ (410 g) — les deux cohabitent',
+      /410/.test(W.apresScan.pastillePaquet), W.apresScan.pastillePaquet);
+    t('CCLXXXVII ④ ⛔ L\'ÉCRAN POSE LA QUESTION au lieu de justifier un nombre inscrit',
+      /Combien en as-tu mangé/.test(W.apresScan.question) && /205/.test(W.apresScan.question),
+      W.apresScan.question);
+    /* ⛔⛔ LE TÉMOIN CENTRAL — et il vérifie l'ABSENCE de ligne, pas seulement `q:null`. */
+    t('CCLXXXVII ⑤ ⛔⛔ AUCUN GESTE -> RIEN N\'EST ENREGISTRÉ (ni quantité, NI MACROS)',
+      W.sansGeste && W.sansGeste.ajoutees===0 && W.sansGeste.ligne===null,
+      JSON.stringify(W.sansGeste));
+    t('CCLXXXVII ⑥ ⭐ CLIC « portion fabricant » -> q=205 · u=g · 193 kcal',
+      W.clicPortion && W.clicPortion.q===205 && W.clicPortion.u==='g' && W.clicPortion.kcal===193,
+      JSON.stringify(W.clicPortion));
+    t('CCLXXXVII ⑦ ⭐ CLIC « paquet entier » -> q=410 · u=g · 385 kcal',
+      W.clicPaquet && W.clicPaquet.q===410 && W.clicPaquet.u==='g' && W.clicPaquet.kcal===385,
+      JSON.stringify(W.clicPaquet));
+    t('CCLXXXVII ⑧ ⭐ FRAPPE de 300 g -> q=300 · u=g · 282 kcal',
+      W.frappe && W.frappe.q===300 && W.frappe.u==='g' && W.frappe.kcal===282,
+      JSON.stringify(W.frappe));
+    /* ⛔⛔ LE CAS LE PLUS INDÉFENDABLE D'AVANT : le 100 g du HTML, que personne n'a choisi. */
+    t('CCLXXXVII ⑨ ⛔⛔ SANS PORTION DÉCLARÉE : aucune pastille de portion, et PLUS DE REPLI À 100',
+      W.sansPortion && W.sansPortion.champ==='' && W.sansPortion.pastillePortion==='(cachée)'
+      && !/100/.test(W.sansPortion.question), JSON.stringify(W.sansPortion));
+    t('CCLXXXVII ⑩ ⛔ ... et sans geste, rien ne s\'enregistre non plus',
+      W.sansPortion && W.sansPortion.ajoutees===0, JSON.stringify(W.sansPortion));
+    t('CCLXXXVII ⑪ ⭐ ... mais taper 300 g marche (le chemin reste ouvert)',
+      W.sansPortionFrappe && W.sansPortionFrappe.q===300 && W.sansPortionFrappe.kcal===282,
+      JSON.stringify(W.sansPortionFrappe));
+    /* ⛔⛔ L'ACQUIS DE ft-v1180, TRANSPOSÉ AU DRAPEAU. */
+    t('CCLXXXVII ⑫ ⛔⛔ UN GESTE FAIT SUR A NE VAUT PAS CHOIX SUR B (champ vide, rien enregistré)',
+      W.aVersB && W.aVersB.champ==='' && W.aVersB.ajoutees===0, JSON.stringify(W.aVersB));
+    t('CCLXXXVII ⑬ ⛔ NON-RÉGRESSION : un aliment TAPÉ À LA MAIN passe toujours (300 kcal)',
+      W.manuel && W.manuel.kcal===300, JSON.stringify(W.manuel));
+    t('CCLXXXVII ⑭ ⛔ NON-RÉGRESSION : une PORTION ×2 (P1) passe toujours (500 kcal · q=2 · portion)',
+      W.portion && W.portion.kcal===500 && W.portion.q===2 && W.portion.u==='portion',
+      JSON.stringify(W.portion));
+    t('CCLXXXVII ⑮ ⭐ LA REPRISE garde son champ vide et sa pastille (ft-v1051, inchangée)',
+      W.reprise && W.reprise.champ==='' && /205/.test(W.reprise.pastille), JSON.stringify(W.reprise));
+    t('CCLXXXVII ⑯ ⭐ ... et un clic sur « la dernière fois » enregistre bien (q=205 · 193 kcal)',
+      W.reprise && W.reprise.ajoutees===1 && W.reprise.ligne
+      && W.reprise.ligne.q===205 && W.reprise.ligne.kcal===193, JSON.stringify(W.reprise));
+  }
+  await cx.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
