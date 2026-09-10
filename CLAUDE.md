@@ -478,6 +478,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 Tests : **parcours 3481/3481 sur l'arbre FINAL** (+18, bloc **CCLXXXV**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔⛔ **CONTRÔLE NÉGATIF : 13 MUTATIONS, TOUTES MORDENT, chacune chirurgicalement** — l'unité volée par le pour-100 g → **8 rouges** · la branche grammes qui reprend la main → **10** · les deux champs retirés → **6** · le pour-100 g qui ne suit plus → **2** · ⭐ la redérivation **à l'aveugle** → **1**, exactement le scan protégé · le refus d'agir sur une identité ambiguë retiré → **1** · le favori qui ne suit plus l'édition → **1** · l'arrondi entier côté portion → **1** · côté grammes → **1** · la frappe qui ne met plus à jour la définition → **1** · les macros du favori écrasées → **1** · le poids retiré qui laisse un pour-100 g orphelin → **1** · la définition non hydratée à l'ouverture → **4**.
 
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1060**, `conclusion: success` à **08:52:22 UTC** sur `fb392db4`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur la liste filtrée `status: completed`* — la leçon de ft-v1182.
+
 Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1188. |
 
 **ft-v1187 — 🔗 RATTACHER UN EXERCICE PERSO AU CATALOGUE EN UN GESTE — L'APP SAVAIT LA RÉPONSE ET NE LA PROPOSAIT PAS** — Michel, capture de sa séance du 9 sept : ***« Tirage vertical c'est pas bon non plus »***.
