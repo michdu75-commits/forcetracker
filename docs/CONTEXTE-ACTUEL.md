@@ -54,6 +54,12 @@
   *pas une régression*, le champ pré-rempli faisait la même hypothèse en silence).
   ⚠️ **À vérifier par Michel sur Safari/iPhone** : les trois pastilles, le champ vide, la reprise en
   **un seul tap**.
+  ✅ **Déploiement vérifié vert** (R18) : run **#1073**, `success` à 19:08:12 sur `e066bd78`.
+  ⚠️ **Il a fallu débloquer la file** : le run #1072 était en `waiting` depuis **5 h 30**, en silence.
+  Annulé (son commit est déjà dans celui-ci) → la file est repartie dans la minute. *Famille
+  « déploiement silencieux ».* ⛔ Ni relance de jobs échoués, ni modification du workflow.
+  ⚠️ **Limite** : `github.io` est bloqué depuis le conteneur (403), donc le `sw.js` réellement servi
+  n'est pas lu — la vérification s'arrête à l'API.
 
 - **Version précédente :** `ft-v1189` — 🔗 **renommer un exercice dans une séance passée
   laissait un RECORD ORPHELIN, et un GRAPHIQUE qui contredisait l'écran.** Michel, en cherchant le bouton de ft-v1187 : *« je ne trouve pas
