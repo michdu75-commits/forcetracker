@@ -157,26 +157,29 @@ st = {
                            fontSize=6.9, leading=8.6, textColor=ENCRE),
 }
 
-# ⛔⛔ GARDE-FOU sur les CINQ portes de texte (lecon du 09/09 : ma premiere version
-#    n'inspectait que les paragraphes et a laisse passer un emoji dans un titre d'encadre —
-#    une protection partielle qui a l'air complete est pire qu'une protection absente).
-_HORS = set('⚠⭐⛔⚖→✅⏭⬇❌⬆⚙')
-
-
+# ⛔⛔⛔ CE GARDE-FOU EST PASSE D'UNE LISTE NOIRE A UNE LISTE BLANCHE, APRES LA 3e FUITE.
+#    Historique, parce qu'il explique le correctif : (1) au debut il n'inspectait que les
+#    paragraphes -> un emoji est passe par un TITRE d'encadre. (2) Elargi aux cinq portes, il ne
+#    lisait que les CARACTERES -> l'entite HTML `&#9888;` est passee et est sortie en carre noir.
+#    (3) Elargi aux entites, il ne connaissait qu'une LISTE de caracteres interdits -> les puces
+#    numerotees ① ② (0x2460) sont passees, elles non plus n'etaient pas dans la liste.
+#    👉 *Une liste noire a toujours un trou : elle ne protege que de ce qu'on a pense a y mettre.*
+#    Le seul test qui ne peut pas en avoir est celui de la POLICE elle-meme : est-ce que ce
+#    caractere existe en WinAnsi/cp1252 ? Tout le reste est refuse, sans qu'on ait a l'enumerer.
 def _v(x, ou='texte'):
-    """⚠️ LE GARDE-FOU AVAIT UN TROU, ET IL A PRODUIT UN CARRE NOIR DANS CE DOCUMENT MEME.
-       Il n'inspectait que les CARACTERES. Or reportlab interprete aussi les entites HTML
-       numeriques : `&#9888;` traverse un test caractere par caractere sans encombre, et
-       ressort en ■ dans le PDF. On refuse donc aussi toute entite au-dessus de WinAnsi.
-       👉 *Une protection qui ne connait qu'une des deux ecritures de la meme chose n'en
-       protege qu'une* — la 3e fois que ce garde-fou est elargi apres une fuite reelle."""
+    """Refuse tout ce que la police du PDF ne sait pas rendre — caracteres ET entites HTML."""
     if isinstance(x, str):
         for ch in x:
-            if ch in _HORS or 0x1F000 <= ord(ch) <= 0x1FAFF or 0xFE00 <= ord(ch) <= 0xFE0F:
-                raise SystemExit('CARACTERE NON RENDU %r (%s) dans %s' % (ch, hex(ord(ch)), ou))
+            try:
+                ch.encode('cp1252')
+            except UnicodeEncodeError:
+                raise SystemExit('CARACTERE NON RENDU %r (%s) dans %s — la police du PDF est '
+                                 'WinAnsi/cp1252' % (ch, hex(ord(ch)), ou))
         for m in re.finditer(r'&#(\d+);|&#[xX]([0-9a-fA-F]+);', x):
             n = int(m.group(1)) if m.group(1) else int(m.group(2), 16)
-            if n > 0x255:
+            try:
+                chr(n).encode('cp1252')
+            except UnicodeEncodeError:
                 raise SystemExit('ENTITE HTML NON RENDUE %s (%s) dans %s' % (m.group(0), hex(n), ou))
     return x
 
@@ -284,7 +287,7 @@ def pied(canvas, doc):
     canvas.setFont('Helvetica', 7.5)
     canvas.setFillColor(GRIS)
     canvas.drawString(22 * mm, 12 * mm,
-                      'Force Tracker — le garde-fou LARGE, et la passe faussee — 10/09/2026')
+                      'Force Tracker — le garde-fou LARGE livre, et les deux incidents — 10/09/2026')
     canvas.drawRightString(188 * mm, 12 * mm, 'page %d' % doc.page)
     canvas.setStrokeColor(TRAIT)
     canvas.setLineWidth(0.4)
@@ -293,12 +296,13 @@ def pied(canvas, doc):
 
 
 F = []
-F.append(P("Le garde-fou LARGE, et la passe que j'ai faussee moi-meme", 'titre'))
+F.append(P("Le garde-fou LARGE : livre — et les deux incidents du chemin", 'titre'))
 F.append(P("Force Tracker — 10/09/2026. Michel a tranche le garde-fou LARGE. Le code de production "
            "ne change pas : il faisait deja ca. Ce qui change, ce sont les temoins — <b>23</b>, pas "
-           "19. Et le document raconte surtout <b>le probleme rencontre</b> : une passe de tests "
-           "faussee par ma propre mutation, qui m'a fait chercher pendant une heure un defaut qui "
-           "n'existait pas.", 'sous'))
+           "19. <b>ft-v1190 est en ligne</b> (run #1073 vert, passe propre 3513/0). Et le document "
+           "raconte surtout <b>les deux incidents</b> : une passe de tests faussee par ma propre "
+           "mutation, qui m'a fait chercher pendant une heure un defaut qui n'existait pas ; puis "
+           "un <b>deploiement bloque depuis 5 h 30</b>, en silence.", 'sous'))
 
 F.append(encadre(
     'EN UNE PHRASE',
@@ -418,13 +422,48 @@ F.append(tableau(
     [42 * mm, 123 * mm]))
 F.append(Spacer(1, 6))
 
-F.append(P("5. Ce qui n'est pas fait, et ce que je ne sais pas", 'h1'))
+F.append(P("5. LE SECOND INCIDENT — un deploiement bloque depuis 5 h 30, en silence", 'h1'))
+F.append(P("Le code etait pret, la passe verte, le commit pousse sur " + C % 'master' + " — et "
+           "<b>rien ne partait</b>. Mon run restait en " + C % 'pending' + ", horodatage <b>fige</b>."))
+F.append(tableau(
+    ['run', 'etat', 'ce que ca voulait dire'],
+    [["<b>#1072</b> (13:34)", "job " + C % 'deploy' + " en " + C % 'waiting' + " depuis "
+      "<b>13:34:56</b>", "<b>plus de 5 h 30</b>, et <b>personne n'en savait rien</b> : aucune "
+      "alerte, aucun mail, aucun rouge. Il tenait la file."],
+     ["<b>#1073</b> (19:04)", C % 'pending' + ", " + C % 'updated_at' + " immobile",
+      "le mien, derriere lui."]],
+    [34 * mm, 52 * mm, 79 * mm]))
+F.append(Spacer(1, 5))
+F.append(encadre(
+    "CE QUI A ETE FAIT, ET POURQUOI C'ETAIT SANS PERTE",
+    "Le run bloque portait le commit " + C % '6fdd0661' + ", <b>entierement contenu</b> dans "
+    "" + C % 'e066bd78' + " — il n'aurait donc fait que deployer un etat <b>plus ancien</b>. "
+    "L'annuler ne perdait rien. <b>Effet mesure dans la minute</b> : " + C % 'pending' + " -&gt; "
+    "" + C % 'queued' + ", " + C % 'updated_at' + " reparti (19:04:55 -&gt; 19:07:42), puis vert a "
+    "19:08:12.<br/><br/>"
+    "<b>Et ce n'est PAS la manoeuvre interdite du projet.</b> Une regle ecrite dit : en cas "
+    "d'echec, <b>lancer un nouveau run, jamais relancer les jobs echoues</b> — une relance rejoue "
+    "l'empaquetage et produit deux artefacts, que l'action de deploiement refuse de departager. "
+    "Ici on n'a <b>ni relance</b> de jobs, <b>ni touche au workflow</b> : on a <b>retire de la file "
+    "un run perime</b>.", ORANGE))
+F.append(Spacer(1, 5))
+F.append(encadre(
+    "LE POINT COMMUN DES DEUX INCIDENTS",
+    "<b>Aucun des deux ne s'annonce.</b> Le premier produit un rouge <b>plausible</b> sur un vrai "
+    "temoin ; le second ne produit <b>rien du tout</b> — juste une absence. Dans les deux cas, ce "
+    "qui les a trouves est le meme geste : <b>aller regarder l'etat reel au lieu de faire "
+    "confiance a ce qui est affiche</b>. Le projet a deja une famille pour ca, le <i>&laquo; "
+    "deploiement silencieux &raquo;</i> ; le premier incident en ouvre une nouvelle."))
+F.append(Spacer(1, 6))
+
+F.append(P("6. Ce qui n'est pas fait, et ce que je ne sais pas", 'h1'))
 F.append(tableau(
     ['point', 'etat'],
-    [["<b>rien n'est deploye</b>",
-      "la passe propre — celle ou je ne touche a rien — rend <b>3513 verts, 0 rouge</b>. "
-      "<b>La cause est donc confirmee par la mesure</b>, plus seulement deduite. Le deploiement "
-      "suit ce document."],
+    [["<b>DEPLOYE ET VERIFIE VERT</b>",
+      "run <b>#1073</b>, " + C % 'conclusion: success' + " a <b>19:08:12 UTC</b> sur " +
+      C % 'e066bd78' + ". La passe propre — celle ou je ne touche a rien — rend <b>3513 verts, "
+      "0 rouge</b> : <b>la cause du chapitre 3 est confirmee par la mesure</b>, plus seulement "
+      "deduite."],
      ["<b>iPhone</b>",
       "les trois pastilles, le champ vide et la reprise en un tap restent a valider par Michel sur "
       "Safari. Pas de WebKit dans ce conteneur."],
@@ -436,9 +475,11 @@ F.append(tableau(
      ["<b>l'historique abime</b>", "pas touche, comme demande. Chantier a part, avec backup, "
       "essai a blanc, rapport et retour arriere."],
      ["<b>ce que je ne sais pas</b>",
-      "je n'ai <b>pas</b> rejoue les 6 mutations du controle negatif apres la passe propre : elles "
-      "ont ete mesurees avant, sur les blocs en isole. <i>Je le dis plutot que de le compter comme "
-      "verifie.</i>"]],
+      "<b>(1)</b> je n'ai <b>pas</b> rejoue les 6 mutations du controle negatif apres la passe propre : "
+      "elles ont ete mesurees avant, sur les blocs en isole. <b>(2)</b> le proxy de ce conteneur "
+      "<b>refuse " + C % 'github.io' + "</b> (403), donc je n'ai <b>pas pu lire le " + C % 'sw.js' +
+      " reellement servi</b> : ma verification s'arrete a l'API GitHub. <i>Que l'app affiche bien "
+      "ft-v1190 reste a confirmer par Michel. Je le dis plutot que de le compter comme verifie.</i>"]],
     [42 * mm, 123 * mm]))
 F.append(Spacer(1, 6))
 
@@ -462,7 +503,7 @@ F.append(encadre(
 doc = SimpleDocTemplate(OUT, pagesize=A4,
  leftMargin=22 * mm, rightMargin=22 * mm,
  topMargin=20 * mm, bottomMargin=22 * mm,
- title='Force Tracker — le garde-fou LARGE, les 23 temoins, et la passe faussee par ma propre mutation',
+ title='Force Tracker — le garde-fou LARGE livre, les 23 temoins, et les deux incidents du chemin',
  author='Force Tracker')
 doc.build(F, onFirstPage=pied, onLaterPages=pied)
 print('OK ->', OUT)
