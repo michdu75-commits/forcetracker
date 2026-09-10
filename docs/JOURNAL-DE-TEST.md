@@ -1991,6 +1991,53 @@ WebKit** dans le conteneur :
 👉 **Reste au juge humain** : l'attendu est *« est-ce que c'est confortable »*, pas un état
 vérifiable par du code — donc **ne deviendra jamais un scénario** (critère du fichier).
 
+---
+
+### 🟡 L'ALERTE DE COHÉRENCE EST AFFICHÉE À 892 px SOUS LE BAS DE L'ÉCRAN *(10/09/2026)*
+
+**Point de départ** : Michel signale que Force Tracker affiche **48,3 kcal/100 g** sur les Lentilles
+Raynal & Roquelaure, alors que MyFitnessPal donne **110 kcal · 6,6 P · 11 G · 3,6 L**.
+Consigne : *« vérifier la source réelle des kcal avant toute correction »*.
+
+**⭐ CE QUI EST MESURÉ, ET ÇA DISCULPE L'APP** — les deux formes possibles de la fiche donnent le
+même résultat, donc **l'app ne fabrique pas le 48,3, elle le reçoit** :
+
+| fiche Open Food Facts | ce que l'app lit |
+|---|---|
+| `energy-kcal_100g: 48.3` | **48,3** (pris tel quel) |
+| `energy_100g: 202` (kJ) → ÷ 4,184 | **48,3** |
+| ⭐ **contrôle** `energy-kcal_100g: 110` | **110** — aucune alerte |
+| ⭐ **contrôle** `energy_100g: 460` (kJ) | **109,9** — la conversion est bonne |
+
+⛔ **L'app ne calcule JAMAIS les kcal depuis les macros** : elle lit le champ énergie. Donc des
+macros à 6,6/11/3,6 (= **102,8 kcal** calculées) à côté d'une énergie à 48,3 signifient que **la
+fiche est incohérente à la source**, pas que l'app se trompe. *Écart : 113 %.*
+
+**⭐⭐ ET LE GARDE-FOU DE ft-v972 MARCHE — IL SE DÉCLENCHE** :
+*« ⚠️ 99 kcal ne colle pas à ces macros : 14 g de protéines, 23 g de glucides et 7 g de lipides
+donnent **211 kcal**. Mettre 211 kcal »*. **211 kcal pour 205 g ≈ 103 kcal/100 g** — c'est-à-dire
+la valeur de MyFitnessPal, à 6 % près. ***L'app connaît la bonne réponse et la propose.***
+
+**⛔⛔ LE VRAI DÉFAUT EST AILLEURS, ET C'EST LA FAMILLE ft-v1182 REJOUÉE** : cette alerte est
+`display:block`, mais **posée hors de l'écran**.
+
+| journal | position de l'alerte | hauteur d'écran | visible ? |
+|---|---|---|---|
+| **vide** | `top: 1736` | 844 | ⛔ **892 px sous le bas** |
+| **12 aliments** | `top: 2455` | 844 | ⛔ **1611 px sous le bas** |
+
+👉 ***L'app savait, elle le disait, et personne ne pouvait le lire.*** Et l'entrée s'enregistre
+quand même (`q:205, u:'g', per100:48.3`) — ce qui est **voulu** (informer sans bloquer, **R24**),
+mais seulement si l'information atteint la personne.
+
+**⭐ Le mécanisme du correctif existe déjà** : ft-v1182 a posé `scrollIntoView` doux **conditionné à
+`visualViewport`** (et pas `innerHeight`, à cause du clavier iOS). **Rien à inventer** (**R13**).
+
+⚠️ **NON CORRIGÉ À CETTE DATE — en attente de la décision de Michel.** *Et la leçon du jour est
+qu'un signalement peut être juste sur le symptôme et faux sur la cause : le 205 g signalé comme bug
+n'en était pas un (410 g / 2 portions fabricant), et le vrai défaut n'était dans aucun des deux
+rapports.*
+
 ## ⚠️ Comment fouiller les conversations (leçon du 21/08)
 
 En remontant trois semaines de transcriptions, mon filtre cherchait le mot **« Milo »**, **« coach »**,
