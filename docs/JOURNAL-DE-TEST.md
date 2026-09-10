@@ -1953,6 +1953,44 @@ C'est le chantier ⑥ décidé par Michel, **séparé exprès** — rappelé ici
 entre deux versions.
 
 
+---
+
+### 🟣 P1 — le parcours de validation iPhone, avec les valeurs MESURÉES *(10/09/2026, après ft-v1188)*
+
+**GPT a validé P1 côté code** et demande la validation réelle sur iPhone, en 10 gestes. ⭐ **Le
+scénario a d'abord été joué en entier dans Chromium** : les valeurs ci-dessous ne sont donc pas des
+prédictions, ce sont des **mesures**. *Une liste de contrôle dont les attendus sont devinés fait
+douter la personne au lieu de la rassurer.*
+
+| geste | ce qui doit s'afficher |
+|---|---|
+| ① Nutrition → ajouter · « Steak haché » · **250 / 20 / 0 / 18** · 🍽️ portions · puce **steak** · poids **125** | *« Les 4 valeurs ci-dessous sont **1 portion** (1 portion = 1 steak (125 g) · 250 kcal). »* |
+| ② clic **×2** | écran **500 / 40 / 0 / 36** · *« Tu notes **2 portions** … **Soit 250 g en tout**. »* |
+| ③ Enregistrer | — |
+| ④ rouvrir → **Mes aliments** → la ligne | revient **en portions** (pas en grammes), le **×2 est allumé**, « steak » et « 125 » sont **déjà remplis** |
+| ⑤ ouvrir la ligne du journal (**Modifier**) | *« Quantité (**portions**) »* = **2** ⛔ **surtout PAS « Quantité (g) = 250 »** |
+| ⑥ remplacer le poids **125 → 150** | la phrase change **pendant la frappe** : *« 1 steak (**150 g**) … **Soit 300 g en tout** »* — et le champ **ne disparaît pas** |
+| ⑦ Enregistrer | les **4 valeurs ne bougent pas** : toujours 500 / 40 / 0 / 36 |
+| ⑧ mettre l'**étoile** ⭐, puis re-corriger en **160 g / « pavé »** | le favori suit : **160 g · pavé** — et **ses macros restent 500/40/0/36** |
+| ⑨ | l'unité reste **« portion »**, jamais « g » |
+| ⑩ reprendre une dernière fois | *« 2 portions (1 portion = 1 **pavé** (160 g) · 250 kcal). **Soit 320 g en tout**. »* |
+
+**⭐⭐ LE POINT LE PLUS IMPORTANT À REGARDER, ET IL TIENT EN UNE LIGNE** : les 4 valeurs valent
+**500 / 40 / 0 / 36 de l'étape ② à l'étape ⑩**, quoi qu'on fasse au poids d'une portion. *Savoir
+qu'un steak pèse 150 g plutôt que 125 ne change pas ce qu'on a mangé.* **Si un de ces quatre
+chiffres bouge tout seul, c'est un bug.**
+
+**⛔ CE QUE LE BANC NE PEUT PAS JUGER, ET QUI EST LA VRAIE RAISON DE CE TEST** — il n'y a **pas de
+WebKit** dans le conteneur :
+- la **rangée de 8 puces** pousse-t-elle les 4 valeurs hors de l'écran sur un iPhone ?
+- le **pavé décimal** d'iOS n'a pas de touche Entrée — le champ *poids d'1 portion* réagit-il
+  bien à la frappe (`oninput`, pas `onchange`) ?
+- la ligne de définition reste-t-elle **lisible** en 430 px, ou passe-t-elle sur trois lignes ?
+- ⚠️ et le repère de **ft-v1182** : le clavier ouvert ne pousse-t-il rien sous lui ?
+
+👉 **Reste au juge humain** : l'attendu est *« est-ce que c'est confortable »*, pas un état
+vérifiable par du code — donc **ne deviendra jamais un scénario** (critère du fichier).
+
 ## ⚠️ Comment fouiller les conversations (leçon du 21/08)
 
 En remontant trois semaines de transcriptions, mon filtre cherchait le mot **« Milo »**, **« coach »**,
