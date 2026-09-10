@@ -3946,8 +3946,19 @@ function addFoodEntry(){
      ⛔ CE N'EST PAS « INFORMER SANS BLOQUER » RETOURNÉ (R24) : on ne bloque pas une information,
      on refuse d'**inventer une donnée**. L'app refuse déjà de terminer une séance sans série
      cochée, pour la même raison. Et la sortie est à un doigt : trois pastilles et un champ.
-     ⛔ N'IMPACTE QUE LE BLOC SCAN (`_bcNutr` posé) : un aliment tapé à la main, une portion, une
-     estimation IA n'ont pas de `_bcNutr` et passent exactement comme avant. */
+     ⚠️⚠️ CE COMMENTAIRE DISAIT « N'IMPACTE QUE LE BLOC SCAN », ET C'ÉTAIT FAUX — MESURÉ.
+     `_bcNutr` est posé par **HUIT** portes, pas une : `_lookupBarcode` (scan) · `_calAppliquer`
+     (**l'estimation IA**, que ce commentaire citait comme NON concernée) · `onFoodLabelFile`
+     (photo d'étiquette) · `quickFillFood` (reprise « Mes aliments ») · `_afSuggPrendreMarque` ·
+     `_afSuggPrendreCiqual` · `_afSuggPrendreLocale` · `_afSuggPrendreOff`. Les huit rendent le
+     bloc visible (cinq via `_offRemplirFormulaire`, trois en direct), donc les huit passent par
+     ce refus. 👉 *Un commentaire qui annonce une portée plus étroite que le code est pire qu'un
+     commentaire absent : il dispense le lecteur suivant d'aller vérifier* (R23 appliqué au code).
+     ⭐ Et le cas de `_calAppliquer` retourne l'argument : cette porte pose `serving_quantity:0`
+     et affiche déjà *« tape ta quantité »*. Le refus ne lui ajoute rien — il rend vraie une
+     phrase qu'elle disait déjà.
+     ⛔ CE QUI RESTE VRAIMENT HORS PORTÉE : un aliment tapé entièrement à la main, sans aucune
+     fiche nutritionnelle posée — `_bcNutr` est nul, le bloc est masqué, rien ne change. */
   const _bcRow=document.getElementById('af-bc-row');
   if(_bcRow && _bcRow.style.display!=='none' && _bcNutr && !_bcQtyPose){
     toast('Combien en as-tu mangé ? Touche une pastille ou tape ton poids.','error'); return;
