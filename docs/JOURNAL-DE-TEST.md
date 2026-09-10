@@ -2482,3 +2482,32 @@ de la séance, ne dit que ce nom est un doublon réparable.
 👉 **Réponse attendue de Michel**, une fois qu'il aura réparé son « Tirage vertical » : *est-ce
 qu'il l'a trouvé tout seul ?* Si oui, on ne touche à rien. **Ne peut pas devenir un scénario :
 l'attendu est « est-ce que c'est trouvable », pas un état vérifiable.**
+
+---
+
+### 🟠 ÉCARTÉE AVEC SA RAISON — « REPRENDRE UN ALIMENT DÉRIVE DE 1 kcal » : NON, C'ÉTAIT MA SONDE (10/09/2026)
+
+En mesurant la contrainte d'UX de Michel (*« la reprise Mes aliments doit rester à UN tap »*), ma
+sonde a affiché un rouge : un aliment repris à **la même quantité** ressortait à **251 kcal** au
+lieu de 250. J'ai failli en conclure à une dérive du recalcul.
+
+⛔ **Mesuré avant de conclure, sur trois fixtures — le code est un POINT FIXE :**
+
+| fixture | avant | après |
+|---|---|---|
+| 200 kcal pour 100 g, `per100` = **200** (exact) | 200 / 30 P | **200 / 30 P** — rien ne bouge |
+| 300 kcal pour 250 g, `per100` = **120** (exact) | 300 / 25 P | **300 / 25 P** — rien ne bouge |
+| 250 kcal pour 150 g, `per100` = **167** (arrondi) | 250 | **251** |
+
+👉 **La troisième ligne est MA faute** : 250 ÷ 1,5 = **166,67**, que j'avais écrit **167** dans la
+fixture. Le code repart de 167 et rend 250,5 → 251. *Il calcule juste depuis une référence que
+j'avais arrondie moi-même.*
+
+⭐ **C'est le PLANCHER DES TOTAUX ENTIERS déjà noté en ft-v1188**, vu par l'autre bout : là-bas
+c'était le `per100` stocké arrondi, ici c'est ma fixture. La grandeur est la même, et elle n'est
+pas réparable tant que les totaux sont des entiers.
+
+**Écartée — ne devient PAS un scénario** : il n'y a rien à figer côté produit, et un témoin écrit
+là-dessus figerait mon erreur d'arrondi au lieu d'une garantie. ⚠️ **Ce qui reste vrai et qu'il
+faut garder** : *une fixture arithmétiquement incohérente fabrique un faux bug*, et j'ai bien
+failli faire creuser Michel dessus — la même famille que le `cardio.min`/`duration` de ft-v1184.
