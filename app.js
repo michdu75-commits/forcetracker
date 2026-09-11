@@ -3694,15 +3694,28 @@ function _afQuickReplier(replier){
    pour le code et caché sous le clavier pour la personne. *C'est exactement le cas de Michel :
    il tape, donc son clavier est ouvert.* Repli sur `innerHeight` là où l'API n'existe pas.
    ⛔ `block:'nearest'` : on amène le bloc au plus près, on ne recentre pas l'écran sous les
-   doigts de quelqu'un qui est en train de taper. */
+   doigts de quelqu'un qui est en train de taper.
+
+   ⚖️⭐⭐ ft-v1191 — CETTE LOGIQUE EST SORTIE DE SA FONCTION, ELLE N'EST PAS RECOPIÉE.
+   Elle était **enfermée** dans `_afSuggVoir`, qui ne sait amener qu'UN élément (`af-sugg`).
+   Le contrôle de cohérence kcal/macros a exactement le même besoin — Michel : *« le mécanisme
+   existe déjà ailleurs dans Force Tracker, il ne faut pas créer une nouvelle logique
+   parallèle »*. 👉 On extrait **un propriétaire unique** (**R2**) et les deux l'appellent ;
+   écrire un second `scrollIntoView` conditionnel aurait fabriqué deux règles de visibilité qui
+   finiraient par diverger — et c'est *toujours* la seconde qui oublie `visualViewport`. */
+function _amenerALaVue(el){
+  if(!el) return false;
+  const vh=(window.visualViewport && window.visualViewport.height) || window.innerHeight;
+  const r=el.getBoundingClientRect();
+  if(r.top < vh && r.bottom > 0) return false;    // déjà dans la zone visible : on ne bouge rien
+  try{ el.scrollIntoView({behavior:'smooth', block:'nearest'}); }
+  catch(e){ try{ el.scrollIntoView(); }catch(e2){} }
+  return true;
+}
 function _afSuggVoir(){
   const el=document.getElementById('af-sugg');
   if(!el || !el.innerHTML) return;
-  const vh=(window.visualViewport && window.visualViewport.height) || window.innerHeight;
-  const r=el.getBoundingClientRect();
-  if(r.top < vh && r.bottom > 0) return;          // déjà dans la zone visible : on ne bouge rien
-  try{ el.scrollIntoView({behavior:'smooth', block:'nearest'}); }
-  catch(e){ try{ el.scrollIntoView(); }catch(e2){} }
+  _amenerALaVue(el);
 }
 function _afSuggVider(){ _afSuggLoc=[]; _afSuggOff=[]; _afSuggCiq=[]; _afSuggMarq=[]; _afSuggRendu();
   _afQuickReplier(false);   // ⛔ la remise à zéro rend « Mes aliments » : `openAddFood` passe ici
@@ -4509,6 +4522,38 @@ function _kcalImpossible(pfx){
 }
 function _coherenceKcal(pfx, corrigeur){
   const el=document.getElementById(pfx+'-coherence'); if(!el) return;
+  /* ⚖️⛔⛔ ft-v1191 — L'AVERTISSEMENT ÉTAIT JUSTE, ET À 1 132 px SOUS L'ÉCRAN.
+     Mesuré sur le cas de Michel (lentilles Raynal, 410 g) : la fiche fait **1 907 px** pour
+     **775 px visibles**, et cet encadré apparaît à `top 1734` — pendant que le geste qui le
+     déclenche (la pastille « paquet entier ») est tout en HAUT. Il était atteignable en
+     défilant. 👉 *Un avertissement qu'on ne voit qu'en défilant ne protège que ceux qui
+     défilaient déjà.* C'est **ft-v1182 sur un autre bloc** : calculé, correct, hors champ.
+     ⛔⛔ ET ON NE REMONTE QU'À L'APPARITION, JAMAIS À CHAQUE APPEL — c'est tout l'arbitrage.
+     Cette fonction tourne à **chaque frappe** des quatre champs (`oninput`) : faire défiler à
+     chaque appel arracherait l'écran sous les doigts de quelqu'un qui tape son chiffre, et
+     **R24** dit qu'on informe sans se mettre en travers. On compare donc l'état AVANT : la
+     remontée n'a lieu que sur la transition *caché → affiché*.
+     ⭐ `_amenerALaVue` est le propriétaire unique, partagé avec les suggestions (**R2**) : il
+     ne bouge rien si le bloc est déjà dans la zone visible, et il lit cette zone sur
+     `visualViewport` — sur iOS le clavier ne rétrécit pas `innerHeight`, et la personne qui
+     vient de taper une quantité a justement son clavier ouvert. */
+  const etaitVu = el.style.display!=='none';
+  /* ⛔⛔⛔ ET ON NE REMONTE PAS SOUS LES DOIGTS DE QUELQU'UN QUI TAPE — c'est LE CONTRÔLE NÉGATIF
+     QUI L'A TROUVÉ, pas la relecture, et j'ai failli livrer le défaut.
+     Mesuré : en tapant `200 / 20 / 20 / 4` (une ligne parfaitement cohérente à l'arrivée), la
+     saisie traverse un état INTERMÉDIAIRE incohérent — après le 2ᵉ champ, 200 kcal face à
+     80 kcal théoriques dépasse les deux seuils. L'alerte s'affichait donc une fraction de
+     seconde, et **l'écran sautait au milieu de la frappe**, sur une ligne qui n'avait aucun
+     problème. *Le pire des deux mondes : le défaut disparaît, le dégât reste.*
+     ⭐ Le test ne devine rien : si le focus est dans l'un des quatre champs, la personne
+     REGARDE son champ, pas l'avertissement. Elle le verra quand elle aura fini — et à ce
+     moment-là, soit il a disparu, soit le prochain geste (une quantité, une pastille) le lui
+     amènera. C'est **R24** : on informe, on ne se met pas en travers. */
+  const _a=document.activeElement;
+  const enTrainDeTaper = !!(_a && _a.id && new RegExp('^'+pfx+'-(kcal|prot|carbs|fat)$').test(_a.id));
+  const montrer = ()=>{ el.style.display='block';
+                        if(!etaitVu && !enTrainDeTaper && typeof _amenerALaVue==='function')
+                          _amenerALaVue(el); };
   const g=id=>numFR((document.getElementById(pfx+'-'+id)||{}).value)||0;
   const nom=String((document.getElementById(pfx+'-'+(pfx==='af'?'desc':'name'))||{}).value||'');
   const kcal=g('kcal'), theo=4*g('prot')+4*g('carbs')+9*g('fat');
@@ -4522,7 +4567,7 @@ function _coherenceKcal(pfx, corrigeur){
       +'<b>'+masse.q+' g</b>. Un aliment ne peut pas contenir plus de matière qu\'il ne pèse.'
       +'<div style="color:var(--t3);margin-top:6px;">Soit la quantité, soit une des trois valeurs '
       +'est à revoir — <b>l\'app ne peut pas savoir laquelle</b>, elle ne touche à rien.</div>';
-    el.style.display='block'; return;
+    montrer(); return;
   }
   /* ⚡ PUIS LE PLAFOND PHYSIQUE (ft-v1162), AVANT l'heuristique — et l'ordre est le sujet :
      ce qui se DÉMONTRE passe devant ce qui s'estime. Les deux peuvent viser la même ligne ;
@@ -4536,7 +4581,7 @@ function _coherenceKcal(pfx, corrigeur){
       /* ⛔ On propose la valeur théorique, PAS le plafond : les grammes qui restent sont de l'eau
          dans l'immense majorité des aliments. C'est une proposition, elle se tape ou s'ignore. */
       +'<button onclick="'+corrigeur+'('+plaf.theo+')" style="margin-top:6px;display:block;padding:7px 12px;border-radius:9px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:12.5px;font-weight:700;font-family:var(--font);cursor:pointer;">Mettre '+plaf.theo+' kcal</button>';
-    el.style.display='block'; return;
+    montrer(); return;
   }
   /* ⚠️ DEUX SEUILS, DEUX MÉTIERS — et ce n'est pas une incohérence à « harmoniser » (mesuré
      le 03/09/2026, ft-v1114). Ici : 25 % et 60 kcal, parce que ce contrôle se déclenche à
@@ -4554,7 +4599,7 @@ function _coherenceKcal(pfx, corrigeur){
     +g('prot')+' g de protéines, '+g('carbs')+' g de glucides et '+g('fat')+' g de lipides '
     +'donnent <b>'+Math.round(theo)+' kcal</b>. '
     +'<button onclick="'+corrigeur+'('+Math.round(theo)+')" style="margin-top:6px;display:block;padding:7px 12px;border-radius:9px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:12.5px;font-weight:700;font-family:var(--font);cursor:pointer;">Mettre '+Math.round(theo)+' kcal</button>';
-  el.style.display='block';
+  montrer();
 }
 function _efCoherence(){ _coherenceKcal('ef','_efCorrigerKcal'); }
 function _efCorrigerKcal(v){

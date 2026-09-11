@@ -33612,6 +33612,141 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
   await cx.close();
 }
 
+
+/* == BLOC CCLXXXVIII - L'AVERTISSEMENT kcal/macros ETAIT JUSTE, ET HORS DE L'ECRAN (11/09/2026, ft-v1191) ==
+   Cas reel de Michel via GPT : lentilles Raynal & Roquelaure (3021690201123), 410 g -> l'ecran
+   affiche 198 kcal pour 25 P / 41 G / 13 L, qui valent 381 kcal.
+
+   ⭐⭐ CE QUE LA MESURE A DEPLACE : le controle de coherence n'est NI absent NI muet. Il se
+   declenche, ses deux seuils sont largement franchis (183 kcal, 48 %), et il dit exactement ce
+   qu'il faut, avec un bouton « Mettre 381 kcal » -- donc aucune correction silencieuse.
+   ⛔⛔ LE DEFAUT EST UNE POSITION : la fiche fait 1907 px pour 775 visibles, et l'alerte apparait
+   a top 1734, soit 1132 px SOUS la zone visible -- pendant que le geste qui la declenche (la
+   pastille « paquet entier ») est tout en HAUT. C'est ft-v1182 sur un autre bloc.
+
+   ⭐ R2/R13 : la logique de remontee n'est pas recopiee, elle est SORTIE de `_afSuggVoir` ou elle
+   etait enfermee. Un seul proprietaire (`_amenerALaVue`), deux appelants.
+
+   ⛔⛔⛔ ET LE CONTROLE NEGATIF A TROUVE UN VRAI DEFAUT QUE J'ALLAIS LIVRER : en tapant
+   200/20/20/4 -- une ligne parfaitement coherente A L'ARRIVEE -- la saisie traverse un etat
+   INTERMEDIAIRE incoherent (200 kcal face a 80 theoriques apres le 2e champ). L'alerte
+   s'affichait une fraction de seconde et L'ECRAN SAUTAIT AU MILIEU DE LA FRAPPE, sur une ligne
+   sans probleme. D'ou le garde sur le focus : si la personne tape, elle regarde son champ.
+   ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Pose apres, il ne rate pas : il PLANTE. */
+console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vue ==');
+{
+  const W=await p.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
+    const vis=id=>{const e=document.getElementById(id); return !!e&&e.style.display!=='none';};
+    const dansLaVue=id=>{const e=document.getElementById(id); if(!e) return null;
+      const vh=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
+      const r=e.getBoundingClientRect(); return r.top<vh && r.bottom>0;};
+    const scTop=()=>{const m=document.getElementById('af-coherence');
+      let x=m&&m.parentElement; while(x&&x!==document.body){
+        const st=getComputedStyle(x); if(/auto|scroll/.test(st.overflowY)&&x.scrollHeight>x.clientHeight+4) return x;
+        x=x.parentElement;} return null;};
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    /* ⛔ Open Food Facts est injoignable depuis ce conteneur (403 au CONNECT, verifie) : la fiche
+       est FABRIQUEE a la forme exacte de l'API v2, avec les per-100 g deduits des chiffres de
+       son ecran. Elle reproduit le cas ; elle ne prouve pas d'ou vient le 48,3. */
+    const FICHE={product_name:'Lentilles Cuisinees a l\'Auvergnate',brands:'Raynal & Roquelaure',
+      quantity:'410 g',serving_quantity:205,
+      nutriments:{'energy-kcal_100g':48.3,'proteins_100g':6.1,'carbohydrates_100g':10,'fat_100g':3.2}};
+    const vrai=window.fetch;
+    window.fetch=async(u,i)=>{const s=String(u);
+      if(s.indexOf('openfoodfacts')>=0&&/product\//.test(s))return{ok:true,json:async()=>({status:1,product:FICHE})};
+      if(s.indexOf('openfoodfacts')>=0)return{ok:true,json:async()=>({products:[]})};
+      return vrai(u,i);};
+
+    /* ① SON CAS : scan -> clic « paquet entier » -> l'alerte doit VENIR A LUI */
+    S.foodLog=[];S.savedFoods=[];persist();
+    openAddFood(); await d(320);
+    await _lookupBarcode('3021690201123','scan',false); await d(400);
+    const sc=scTop();
+    const paq=document.getElementById('af-bc-paquet'); if(paq&&vis('af-bc-paquet')) paq.click();
+    await d(700);
+    o.cas1={alerteVue:vis('af-coherence'), dansLaVue:dansLaVue('af-coherence'),
+            kcal:(document.getElementById('af-kcal')||{}).value,
+            txt:((document.getElementById('af-coherence')||{}).textContent||'').replace(/\s+/g,' ').slice(0,160)};
+
+    /* ② ON NE REMONTE PAS A CHAQUE APPEL (l'alerte est deja affichee) */
+    if(sc) sc.scrollTop=0; await d(150);
+    {const k=document.getElementById('af-kcal'); k.value='199';
+     k.dispatchEvent(new Event('input',{bubbles:true}));}
+    await d(600);
+    o.cas2={aRemonte: sc? sc.scrollTop>20 : null, alerteEncoreVue:vis('af-coherence')};
+
+    /* ③ PENDANT LA FRAPPE, une alerte qui apparait NE vient PAS a nous (R24) */
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await d(300);
+    {const s3=scTop(); if(s3) s3.scrollTop=0;} await d(120);
+    {const ek=document.getElementById('af-kcal'); ek.focus(); ek.value='1117';
+     ek.dispatchEvent(new Event('input',{bubbles:true}));
+     const ep=document.getElementById('af-prot'); ep.focus(); ep.value='26';
+     ep.dispatchEvent(new Event('input',{bubbles:true}));}
+    await d(600);
+    o.cas3={alerteVue:vis('af-coherence'), dansLaVue:dansLaVue('af-coherence'),
+            focusDansUnChamp:/^af-(kcal|prot|carbs|fat)$/.test((document.activeElement||{}).id||'')};
+
+    /* ④ UNE LIGNE COHERENTE NE DECLENCHE AUCUNE ALERTE */
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await d(300);
+    ['kcal','prot','carbs','fat'].forEach((n,i)=>{const e=document.getElementById('af-'+n);
+      e.focus(); e.value=[200,20,20,4][i]; e.dispatchEvent(new Event('input',{bubbles:true}));});
+    await d(500);
+    o.cas4={alerteVue:vis('af-coherence')};
+
+    /* ⑤ LE CLAVIER iOS — sans ce temoin, `visualViewport` serait DECORATIF : Playwright n'a pas
+       de clavier virtuel, donc visualViewport.height === innerHeight et aucune autre mesure ne
+       peut distinguer les deux lectures (verifie : la mutation rendait 0 rouge). */
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await d(300);
+    {const e=document.getElementById('af-coherence');
+     e.innerHTML='alerte de mesure'; e.style.display='block';}   // il lui faut des dimensions
+    {const s5=scTop(); const e=document.getElementById('af-coherence');
+     if(s5){ s5.scrollTop=0; await d(100);
+       const r=e.getBoundingClientRect();
+       s5.scrollTop = r.top - (window.innerHeight - 160); await d(150); }}
+    const rAv=document.getElementById('af-coherence').getBoundingClientRect();
+    o.cas5={topAvant:Math.round(rAv.top),
+            visibleSelonInnerHeight: rAv.top<window.innerHeight && rAv.bottom>0};
+    const vvOrig=window.visualViewport;
+    try{ Object.defineProperty(window,'visualViewport',
+          {configurable:true,get:()=>({height:window.innerHeight-350,width:window.innerWidth})}); }catch(e){}
+    o.cas5.hauteurAvecClavier=(window.visualViewport&&window.visualViewport.height)||null;
+    o.cas5.cacheParLeClavier = rAv.top >= o.cas5.hauteurAvecClavier;
+    o.cas5.aRemonte=_amenerALaVue(document.getElementById('af-coherence'));
+    try{ Object.defineProperty(window,'visualViewport',{configurable:true,get:()=>vvOrig}); }catch(e){}
+
+    /* ⑥ R2 — UN SEUL PROPRIETAIRE : les suggestions passent par la MEME fonction */
+    o.cas6={unSeulProprietaire:/_amenerALaVue\(/.test(String(_afSuggVoir))};
+    window.fetch=vrai;
+    return o;
+   }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,300)};}
+  });
+  if(W.err){ t('CCLXXXVIII n\'a pas pu tourner', false, W.err); }
+  else{
+    t('CCLXXXVIII ⓪ ⛔ CONTRÔLE — son cas est bien reproduit (198 kcal, et l\'alerte parle)',
+      W.cas1.kcal==='198' && W.cas1.alerteVue===true && /381/.test(W.cas1.txt),
+      JSON.stringify(W.cas1));
+    t('CCLXXXVIII ① ⭐⭐ L\'ALERTE VIENT À LA VUE après le clic « paquet entier » (elle était 1132 px plus bas)',
+      W.cas1.dansLaVue===true, JSON.stringify(W.cas1));
+    t('CCLXXXVIII ② ⛔⛔ … et elle NE remonte PAS à chaque appel (elle était déjà affichée)',
+      W.cas2.aRemonte===false && W.cas2.alerteEncoreVue===true, JSON.stringify(W.cas2));
+    t('CCLXXXVIII ③ ⛔⛔ PENDANT LA FRAPPE elle apparaît mais ne vient PAS à nous (R24)',
+      W.cas3.alerteVue===true && W.cas3.dansLaVue===false && W.cas3.focusDansUnChamp===true,
+      JSON.stringify(W.cas3));
+    t('CCLXXXVIII ④ ⛔ une ligne COHÉRENTE ne déclenche aucune alerte',
+      W.cas4.alerteVue===false, JSON.stringify(W.cas4));
+    t('CCLXXXVIII ⑤ ⭐⭐ CLAVIER iOS — « visible » selon innerHeight mais caché sous le clavier : ça remonte',
+      W.cas5.visibleSelonInnerHeight===true && W.cas5.cacheParLeClavier===true && W.cas5.aRemonte===true,
+      JSON.stringify(W.cas5));
+    t('CCLXXXVIII ⑥ ⛔ R2 — un SEUL propriétaire : les suggestions passent par la même fonction',
+      W.cas6.unSeulProprietaire===true, JSON.stringify(W.cas6));
+  }
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
