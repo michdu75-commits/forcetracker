@@ -42,7 +42,10 @@
   base** (403 au CONNECT), elles sont larges et le nom sert de filet ; et **l'origine du 48,3 reste
   non tracée** — deux champs de la fiche suffiraient, il faut un téléphone.
   ⛔ **L'app ne choisit toujours pas** entre 48,3 et 381 : c'est voulu, et c'était sa demande.
-  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+  ✅ **Déploiement vérifié vert** (R18) : run **#1078**, `success` à 08:01:50 sur `25afcc0f` —
+  vert du premier coup, sans blocage de file.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone** : l'avertissement doit **venir à lui** après le
+  clic sur la pastille, et le message « produit SEC » doit avoir disparu sur sa boîte de lentilles.
 
 - **Version précédente :** `ft-v1190` — ⚖️ **le garde-fou LARGE, et la passe que j'ai
   faussée moi-même.**
