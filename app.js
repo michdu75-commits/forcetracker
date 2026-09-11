@@ -1140,6 +1140,31 @@ function _afSetSrc(o){ _afSrc=o||null; }
    cuisson et qu'on achète secs. Un aliment dont le poids ne bouge pas (yaourt, fromage, huile)
    n'a rien à faire ici — une note qui s'affiche pour tout n'est plus lue (R24). */
 const _SECS_QUI_GONFLENT=/p[âa]tes|spaghetti|macaroni|penne|tagliatelle|coquillettes|riz\b|basmati|quinoa|semoule|couscous|boulgour|lentille|pois cass|pois chiche|haricot sec|flageolet|avoine|floconn/i;
+/* ⚖️⛔⛔ ft-v1191 — « LENTILLES CUISINÉES » ÉTAIT CLASSÉ SEC PARCE QUE LE MOT « lentille » EST
+   DEDANS, ET RIEN D'AUTRE. Michel, sur sa boîte de Raynal & Roquelaure : *« pour une boîte de
+   lentilles cuisinées prête à consommer, cet avertissement semble faux »*. **Il avait raison.**
+   ⛔ La règle au-dessus est testée sur le NOM seul, et **elle ne contient aucun mot de cuisson** —
+   elle ne pouvait donc pas voir le « Cuisinées » écrit juste à côté. Mesuré, ce n'était pas isolé :
+   *riz cuit en sachet* · *poêlée de lentilles cuisinées* · *soupe de lentilles corail* · *salade de
+   pois chiches* · *pâtes fraîches cuites* sortaient **tous** en SEC.
+   👉 C'est la famille n°1 du dépôt, ***le premier match gagnant*** (`BUGS.md`, ≥ 12 fois) : un mot
+   suffit, et le contexte qui l'annule n'est jamais lu.
+
+   ⭐⭐ DEUX SOURCES, DANS CET ORDRE — décision de Michel : *« je préfère ne pas rester sur une
+   simple liste de mots »*. La **catégorie** d'Open Food Facts tranche quand elle parle ; le **nom**
+   reste le filet quand elle se tait — et elle se tait souvent, `categories_tags` n'étant pas
+   toujours renseigné. *Garder le nom n'est pas une faiblesse assumée : c'est le seul recours des
+   produits que la base connaît mal.*
+   ⚠️ **LIMITE DITE** : `openfoodfacts.org` est injoignable depuis le conteneur de développement
+   (403 au CONNECT, vérifié), donc **ces étiquettes n'ont pas pu être confrontées à la vraie base**.
+   Elles sont volontairement LARGES, et le repli par le nom couvre à lui seul les huit cas de
+   Michel — si une étiquette se révélait fausse, le filet tient quand même. */
+const _CAT_PRET=/plats?-|prepared|ready-|canned|conserve|soupe|soup|salade|salad|couscous-prepar|cuisine/i;
+const _NOM_CUISINE=/cuisin|\bcuit|\bcuite|conserve|bo[iî]te|pr[êe]t[se]?[- ]?[àa]?[- ]?(consommer|manger)?|soupe|potage|salade|po[êe]l[ée]e|mijot|\bfra[îi]ch/i;
+/* ⛔ `_bcCategories` se rend comme la provenance et le poids de paquet (R15) : sans ça, la
+   catégorie du produit précédent déciderait pour le suivant — exactement le défaut que
+   `_afOublierAliment` existe pour empêcher. */
+let _bcCategories='';
 function _afNoteEtat(nom){
   const el=document.getElementById('af-etat-note'); if(!el) return;
   /* ⚠️ UN MESSAGE DIRECT PASSE TEL QUEL (ft-v1114) : cette zone était réservée à un seul cas
@@ -1150,7 +1175,17 @@ function _afNoteEtat(nom){
   if(nom && String(nom).indexOf('⚠️')===0){
     el.textContent=String(nom); el.style.display='block'; return;
   }
-  if(nom && _SECS_QUI_GONFLENT.test(String(nom))){
+  /* ⛔⛔ LE PRODUIT EST-IL DÉJÀ PRÊT ? On regarde la CATÉGORIE d'abord, puis le NOM. Les deux
+     répondent à la même question — *ce que j'ai dans la main est-il déjà cuit ?* — et une seule
+     réponse « oui » suffit à faire taire l'avertissement.
+     ⭐ L'asymétrie est voulue et elle se mesure au coût de l'erreur (R29) : se taire à tort sur un
+     vrai paquet sec coûte une erreur de facteur 2 à 3 **que la personne peut encore voir** (les
+     chiffres sont à l'écran) ; crier à tort sur une conserve coûte la **crédibilité de tous les
+     avertissements**, y compris les vrais. *Un message qui se trompe cesse d'être lu, et on perd
+     alors les deux.* */
+  const pret = (_bcCategories && _CAT_PRET.test(String(_bcCategories)))
+            || (nom && _NOM_CUISINE.test(String(nom)));
+  if(nom && !pret && _SECS_QUI_GONFLENT.test(String(nom))){
     el.textContent='⚖️ Les valeurs du paquet sont pour le produit SEC. Si tu pèses après cuisson, '
       +'note le poids SEC (une portion cuite pèse 2 à 3 fois plus, et le compte serait faux d\'autant).';
     el.style.display='block';
@@ -1451,7 +1486,7 @@ async function onBarcodeFile(input){
 // l'objet product contient de vraies données (nom, marque ou nutriments).
 async function _offFetchProduct(ean){
   const urls=[
-    'https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(ean)+'.json?fields=product_name,product_name_fr,generic_name,generic_name_fr,brands,quantity,nutriments,serving_quantity,nutriscore_grade,nova_group,additives_n,labels_tags,image_front_small_url',
+    'https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(ean)+'.json?fields=product_name,product_name_fr,generic_name,generic_name_fr,brands,quantity,nutriments,serving_quantity,nutriscore_grade,nova_group,additives_n,labels_tags,categories_tags,image_front_small_url',
     'https://world.openfoodfacts.org/api/v0/product/'+encodeURIComponent(ean)+'.json'
   ];
   for(let i=0;i<urls.length;i++){
@@ -1618,10 +1653,17 @@ async function _lookupBarcode(ean, saisie, codeDouteux){
      Une fiche sans tableau nutritionnel part au calibrage (ft-v1165) et l'objet produit
      disparaît avec elle — or c'est précisément ce produit-là qui a le plus besoin de son poids. */
   _bcPaquetTxt = String((p&&p.quantity)||'');
+  /* ⚖️ ft-v1191 — LA CATÉGORIE EST MISE DE CÔTÉ ICI, pour la même raison que le poids de paquet
+     juste au-dessus : une fiche sans tableau nutritionnel part au calibrage et l'objet produit
+     disparaît avec elle. ⛔ Et elle est posée **avant** `_afOublierAliment`, qui la remet à zéro —
+     donc l'ordre compte : on prend d'abord, on oublie, on repose. */
+  const _catLue = Array.isArray(p&&p.categories_tags) ? p.categories_tags.join(' ')
+                                                     : String((p&&p.categories_tags)||'');
   const n=p.nutriments||{};
   const kcal100=_per100d1(n['energy-kcal_100g']||(n['energy_100g']?n['energy_100g']/4.184:0)||0);
   /* 🧹 ft-v1180 — RESET puis HYDRATATION : on oublie l'aliment PRÉCÉDENT avant de poser celui-ci (scan code-barres). */
   try{ _afOublierAliment(); }catch(e){}
+  _bcCategories=_catLue;          // ⬅ APRES l'oubli, sinon elle serait effacee aussitot
   _bcNutr={
     name:((p.product_name_fr||p.product_name||p.generic_name_fr||p.generic_name||'Produit')+(p.brands?' ('+String(p.brands).split(',')[0].trim()+')':'')).slice(0,60),
     kcal100:kcal100,
@@ -3587,7 +3629,7 @@ function _afSuggLocales(q){
 async function _offRechercher(q){
   const url='https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(q)
     +'&search_simple=1&action=process&json=1&page_size=6&sort_by=unique_scans_n'
-    +'&fields=code,product_name,product_name_fr,generic_name,generic_name_fr,brands,quantity,serving_quantity,nutriments,nutriscore_grade,nova_group,additives_n,labels_tags';
+    +'&fields=code,product_name,product_name_fr,generic_name,generic_name_fr,brands,quantity,serving_quantity,nutriments,nutriscore_grade,nova_group,additives_n,labels_tags,categories_tags';
   try{
     const r=await fetch(url,{headers:{'Accept':'application/json'}});
     if(!r.ok) return [];
@@ -4965,6 +5007,10 @@ function _afOublierAliment(){
      ferait enregistrer B avec une quantité que personne n'a choisie POUR B : le défaut exact de
      ft-v1180, transposé au drapeau. ⭐ Posé ICI, donc sur les 13 portes d'un coup (R2). */
   try{ _bcQtyPose=false; }catch(e){}
+  /* ⚖️ ft-v1191 — ET LA CATÉGORIE MEURT AVEC L'ALIMENT (R15) : sans cette ligne, la catégorie
+     « plat cuisiné » du produit précédent ferait taire l'avertissement du paquet de pâtes
+     suivant. C'est le défaut exact que cette fonction existe pour empêcher. */
+  try{ _bcCategories=''; }catch(e){}
   const bp=document.getElementById('af-bc-portion');
   if(bp){ bp.style.display='none'; bp.textContent=''; delete bp.dataset.q; }
   /* ⛔ La moitié « portions/grammes » — et c'est elle qui vidait le champ relu par `_afMajAncre`. */

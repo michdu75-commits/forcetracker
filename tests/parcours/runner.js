@@ -33670,12 +33670,25 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
             kcal:(document.getElementById('af-kcal')||{}).value,
             txt:((document.getElementById('af-coherence')||{}).textContent||'').replace(/\s+/g,' ').slice(0,160)};
 
-    /* ② ON NE REMONTE PAS A CHAQUE APPEL (l'alerte est deja affichee) */
+    /* ② ON NE REMONTE PAS A CHAQUE APPEL (l'alerte est deja affichee)
+       ⚠️⚠️ CE TEMOIN A ROUGI EN PASSE COMPLETE EN PASSANT 5/5 EN ISOLE, ET LA CAUSE ETAIT MA
+       SONDE : le defilement du cas ① est `smooth`, donc ASYNCHRONE. Un delai fixe suffit sur une
+       machine au repos et pas sous charge — on remettait `scrollTop` a zero pendant que le
+       defilement etait encore en vol, et il repartait tout seul. 👉 *Un temoin qui parie sur une
+       duree mesure la machine ; un temoin qui attend une CONDITION mesure le produit.*
+       ⭐ On attend donc que le defilement se STABILISE, et le diagnostic reste dans la sortie :
+       un temoin qui echoue sans dire ce qu'il a vu coute une passe entiere par hypothese. */
+    const stable=async(el)=>{ if(!el) return 0; let a=-1,b=el.scrollTop,n=0;
+      while(a!==b && n<25){ a=b; await d(80); b=el.scrollTop; n++; } return n; };
+    o.toursAvantStabilite=await stable(sc);
+    o.scrollStabilise = sc?Math.round(sc.scrollTop):null;
     if(sc) sc.scrollTop=0; await d(150);
+    o.scrollApresReset = sc?Math.round(sc.scrollTop):null;
     {const k=document.getElementById('af-kcal'); k.value='199';
      k.dispatchEvent(new Event('input',{bubbles:true}));}
     await d(600);
-    o.cas2={aRemonte: sc? sc.scrollTop>20 : null, alerteEncoreVue:vis('af-coherence')};
+    o.cas2={aRemonte: sc? sc.scrollTop>20 : null, alerteEncoreVue:vis('af-coherence'),
+            tours:o.toursAvantStabilite, stabiliseA:o.scrollStabilise, apresReset:o.scrollApresReset};
 
     /* ③ PENDANT LA FRAPPE, une alerte qui apparait NE vient PAS a nous (R24) */
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
@@ -33721,6 +33734,37 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
 
     /* ⑥ R2 — UN SEUL PROPRIETAIRE : les suggestions passent par la MEME fonction */
     o.cas6={unSeulProprietaire:/_amenerALaVue\(/.test(String(_afSuggVoir))};
+
+    /* ══ ⑦-⑩ LE MESSAGE « PRODUIT SEC » — les 8 cas du §14, puis la categorie, puis R15 ══
+       ⛔ On teste la REGLE par sa vraie porte (`_afNoteEtat`), pas la regex en direct : verifier
+       la fonction n'est pas verifier l'appel (`BUGS.md` §58). */
+    {const visN=()=>{const e=document.getElementById('af-etat-note');
+       return !!e && e.style.display!=='none';};
+     const essai=(nom,cat)=>{ _bcCategories=cat||''; _afNoteEtat(nom); return visN(); };
+     const cas=[['Lentilles vertes sèches','',true],
+                ['Lentilles Cuisinées à l\'Auvergnate','',false],
+                ['Soupe de lentilles corail','',false],
+                ['Salade de pois chiches','',false],
+                ['Riz basmati','',true],
+                ['Riz cuit en sachet','',false],
+                ['Pâtes Panzani','',true],
+                ['Pâtes fraîches cuites','',false]]
+       .map(([n,c,a])=>({nom:n,attendu:a,obtenu:essai(n,c)}));
+     const cat=[{cat:'en:canned-foods en:legumes',attendu:false},
+                {cat:'en:plant-based-foods en:legumes',attendu:true},
+                {cat:'fr:plats-cuisines',attendu:false},
+                {cat:'en:soups',attendu:false}]
+       .map(c=>({...c, obtenu:essai('Lentilles à l\'Auvergnate', c.cat)}));
+     _bcCategories='fr:plats-cuisines'; _afOublierAliment();
+     const apresOubli=_bcCategories;
+     _afNoteEtat('Pâtes Panzani'); const crieSurPates=visN();
+     o.sec={ tousJustes:cas.every(c=>c.obtenu===c.attendu),
+             rates:cas.filter(c=>c.obtenu!==c.attendu).map(c=>c.nom),
+             categorieOk:cat.every(c=>c.obtenu===c.attendu),
+             catRates:cat.filter(c=>c.obtenu!==c.attendu).map(c=>c.cat),
+             apresOubli, crieSurPates, survit:{apresOubli, crieSurPates},
+             demandeFiche:/categories_tags/.test(String(_offFetchProduct)),
+             demandeRecherche:/categories_tags/.test(String(_offRechercher)) };}
     window.fetch=vrai;
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,300)};}
@@ -33744,6 +33788,16 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
       JSON.stringify(W.cas5));
     t('CCLXXXVIII ⑥ ⛔ R2 — un SEUL propriétaire : les suggestions passent par la même fonction',
       W.cas6.unSeulProprietaire===true, JSON.stringify(W.cas6));
+    /* ══ CORRECTIF 2 — LE MESSAGE « PRODUIT SEC » (§14 du cahier de Michel) ══ */
+    t('CCLXXXVIII ⑦ ⭐⭐ LES 8 CAS DU §14 : l\'avertissement SEC parle sur le sec et SE TAIT sur le cuisiné',
+      W.sec && W.sec.tousJustes===true, JSON.stringify((W.sec&&W.sec.rates)||null));
+    t('CCLXXXVIII ⑧ ⭐ … et la CATÉGORIE tranche quand le nom ne dit rien de la cuisson',
+      W.sec && W.sec.categorieOk===true, JSON.stringify((W.sec&&W.sec.catRates)||null));
+    t('CCLXXXVIII ⑨ ⛔⛔ … et elle NE SURVIT PAS à l\'aliment suivant (R15)',
+      !!(W.sec && W.sec.apresOubli==='' && W.sec.crieSurPates===true), JSON.stringify(W.sec&&W.sec.survit));
+    t('CCLXXXVIII ⑩ ⛔ CONTRÔLE — `categories_tags` est demandé aux DEUX requêtes OFF',
+      !!(W.sec && W.sec.demandeFiche===true && W.sec.demandeRecherche===true),
+      JSON.stringify(W.sec&&{f:W.sec.demandeFiche,r:W.sec.demandeRecherche}));
   }
 }
 
