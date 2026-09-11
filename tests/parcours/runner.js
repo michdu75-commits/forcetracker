@@ -33801,6 +33801,99 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   }
 }
 
+/* ═══ CCLXXXIX. L'ALTERNANCE SEMAINE A / SEMAINE B (11/09/2026, ft-v1192) ════════════════════
+   Michel, capture du sélecteur de son Powerbuilding : « est-ce que la semaine A/B sont en
+   charge ? » — puis, à ma proposition : « À et b ».
+   ⛔ MESURÉ AVANT DE CODER : NON, rien n'était géré — `openDaySel` listait les jours À PLAT.
+   ⭐⭐ ET L'INFO EXISTAIT : `getProgCurrentWeek` calcule la semaine en cours et l'affiche même
+   en « Semaine 2 / 4 » sur la carte du programme. Elle ne descendait pas jusqu'à la DÉCISION
+   (R4 en miniature).
+   ⛔⛔ ON MET EN AVANT, ON NE CHOISIT PAS : les 5 jours restent cliquables (R24/R29) — un témoin
+   dédié le fige, parce que c'est la garantie la plus facile à casser par inadvertance.
+   ⚠️ LES LIBELLÉS SONT RECOPIÉS DE SA CAPTURE, pas inventés : une détection qui marche sur des
+   libellés fabriqués ne prouve rien sur les siens. */
+{
+  const R=await p.evaluate(()=>{
+    const o={};
+    try{
+      const JOURS=[
+        'J1 - Pectoraux / Dos - DC performance',
+        'J2 - Quadriceps / Chaîne postérieure - Squat',
+        'J3A - Haut du corps hypertrophie - Semaine A (Larsen)',
+        'J3B - Haut du corps hypertrophie - Semaine B (Épaules)',
+        'J4 - Dos / Ischios - SDT performance'];
+      const mkProg=(ilYaJours,weeks)=>{
+        const d=new Date(); d.setDate(d.getDate()-ilYaJours);
+        return {id:'p1',name:'Programme Powerbuilding - Bloc 1 - V2',weeks:weeks,
+          startDate:d.toISOString().slice(0,10),
+          days:JOURS.map(l=>({label:l,exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,type:'N'}]}]}))};
+      };
+      const badges=()=>[...document.querySelectorAll('#day-sel-btns button')]
+        .map(bt=>{const m=bt.textContent.match(/👉 ta semaine ([AB]) \(semaine (\d+) \/ (\d+)\)/);return m?m[0]:'';});
+      const poser=pr=>{S.programmes=[pr];persist();openDaySel(0);return badges();};
+      o.variantes=JOURS.map(l=>_varianteSemaine(l));
+      o.paires=_pairesSemaineAB(JOURS.map(l=>({label:l})));
+      o.sem1=poser(mkProg(0,8));      // semaine 1 → A
+      o.sem2=poser(mkProg(7,8));      // semaine 2 → B
+      o.sem3=poser(mkProg(14,8));     // semaine 3 → A
+      // ⛔ CE QU'ON NE SAIT PAS, ON SE TAIT
+      const sansDate=mkProg(0,8); sansDate.startDate='';
+      o.sansDate=poser(sansDate); o.vSansDate=_varianteDeLaSemaine(sansDate);
+      const sansW=mkProg(0,0);
+      o.sansWeeks=poser(sansW);  o.vSansWeeks=_varianteDeLaSemaine(sansW);
+      // ⛔ UN « J3A » SOLITAIRE NE DÉCLENCHE RIEN (l'appariement est le garde-fou)
+      const solo=mkProg(0,8); solo.days=solo.days.filter(d=>!/Semaine B/.test(d.label));
+      o.solo=poser(solo);
+      // ⛔ UN PROGRAMME SANS VARIANTE : rien, et tous ses jours restent affichés
+      const plain=mkProg(0,8); plain.days=[{label:'J1 - Haut',exs:[]},{label:'J2 - Bas',exs:[]}];
+      o.plain=poser(plain); o.plainN=document.querySelectorAll('#day-sel-btns button').length;
+      // ⛔⛔ ON NE BLOQUE RIEN : les 5 jours restent cliquables en semaine 2
+      poser(mkProg(7,8));
+      const bts=[...document.querySelectorAll('#day-sel-btns button')];
+      o.tousCliquables = bts.length===5 && bts.every(bt=>!bt.disabled && /loadProgDay/.test(bt.getAttribute('onclick')||''));
+      // ⛔ et le jour de l'AUTRE variante se charge vraiment quand on le tape
+      loadProgDay(0,2);
+      o.autreVarianteChargeable = !!(S.wkt && /Semaine A/.test(S.wkt.progLabel||''));
+    }catch(e){ o.err=e.message; }
+    return o;
+  });
+  console.log('\n-- CCLXXXIX. L\'alternance semaine A / semaine B (ft-v1192) --');
+  if(R.err) t('CCLXXXIX n\'a pas pu tourner', false, R.err);
+  else{
+    t('CCLXXXIX ⛔ CONTRÔLE — la variante se lit sur SES libellés (A, B, et rien ailleurs)',
+      JSON.stringify(R.variantes)===JSON.stringify([null,null,'A','B',null]), 'reçu : '+JSON.stringify(R.variantes));
+    t('CCLXXXIX ⛔ CONTRÔLE — J3A et J3B sont appariés par leur NUMÉRO',
+      R.paires && R.paires.J3 && R.paires.J3.A===2 && R.paires.J3.B===3, 'reçu : '+JSON.stringify(R.paires));
+    t('CCLXXXIX ⭐⭐ semaine 1 → le repère est sur J3A',
+      R.sem1[2]==='👉 ta semaine A (semaine 1 / 8)' && R.sem1[3]==='', 'reçu : '+JSON.stringify(R.sem1));
+    t('CCLXXXIX ⭐⭐ semaine 2 → il PASSE sur J3B',
+      R.sem2[3]==='👉 ta semaine B (semaine 2 / 8)' && R.sem2[2]==='', 'reçu : '+JSON.stringify(R.sem2));
+    t('CCLXXXIX ⭐ semaine 3 → il revient sur J3A (l\'alternance tient)',
+      R.sem3[2]==='👉 ta semaine A (semaine 3 / 8)' && R.sem3[3]==='', 'reçu : '+JSON.stringify(R.sem3));
+    t('CCLXXXIX ⛔⛔ sans date de début : on ne sait pas, donc on se TAIT',
+      R.vSansDate===null && R.sansDate.every(x=>x===''), 'variante '+R.vSansDate+' · '+JSON.stringify(R.sansDate));
+    t('CCLXXXIX ⛔⛔ sans nombre de semaines : idem, aucun repère inventé',
+      R.vSansWeeks===null && R.sansWeeks.every(x=>x===''), 'variante '+R.vSansWeeks+' · '+JSON.stringify(R.sansWeeks));
+    t('CCLXXXIX ⛔ un « J3A » SOLITAIRE ne déclenche rien (l\'appariement est le garde-fou)',
+      R.solo.every(x=>x===''), 'reçu : '+JSON.stringify(R.solo));
+    t('CCLXXXIX ⛔ un programme sans variante : aucun repère, et ses 2 jours restent affichés',
+      R.plain.every(x=>x==='') && R.plainN===2, 'badges '+JSON.stringify(R.plain)+' · jours '+R.plainN);
+    t('CCLXXXIX ⛔⛔ ON NE BLOQUE RIEN — les 5 jours restent cliquables', R.tousCliquables===true);
+    t('CCLXXXIX ⛔⛔ ... et le jour de l\'AUTRE variante se charge vraiment quand on le tape',
+      R.autreVarianteChargeable===true);
+  }
+}
+
+/* ⚠️ CE BLOC DOIT RESTER AVANT `b.close()` — leçon payée le 11/09/2026.
+   Je l'avais posé APRÈS, dans la zone des blocs qui n'ouvrent PAS de navigateur (ils lisent
+   les fichiers source avec `fs`). Il a demandé une page déjà fermée, a levé « Target page,
+   context or browser has been closed », et a fait TOMBER TOUTE LA FIN DE LA PASSE : 56
+   témoins n'ont jamais tourné — les 11 miens et les 45 d'après.
+   ⛔ Et le plus dangereux est que la passe rendait « 3479 ✅ · 0 ❌ » : AUCUN ROUGE.
+   👉 Un runner qui s'interrompt sans rougir ressemble à une passe verte. Le total est donc
+   la seule chose qui trahit une passe tronquée — il se COMPARE à la passe précédente, il ne
+   se lit pas seul. (Même famille que le harnais coupé à `tail -4` en ft-v1187 :
+   un outil de mesure tronqué ressemble à un code sans défaut.) */
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
@@ -33995,88 +34088,6 @@ console.log('\n-- CXCI. Une mise à jour ne tue plus un banc d\'essai en cours (
 
 
 
-/* ═══ CCLXXXIX. L'ALTERNANCE SEMAINE A / SEMAINE B (11/09/2026, ft-v1192) ════════════════════
-   Michel, capture du sélecteur de son Powerbuilding : « est-ce que la semaine A/B sont en
-   charge ? » — puis, à ma proposition : « À et b ».
-   ⛔ MESURÉ AVANT DE CODER : NON, rien n'était géré — `openDaySel` listait les jours À PLAT.
-   ⭐⭐ ET L'INFO EXISTAIT : `getProgCurrentWeek` calcule la semaine en cours et l'affiche même
-   en « Semaine 2 / 4 » sur la carte du programme. Elle ne descendait pas jusqu'à la DÉCISION
-   (R4 en miniature).
-   ⛔⛔ ON MET EN AVANT, ON NE CHOISIT PAS : les 5 jours restent cliquables (R24/R29) — un témoin
-   dédié le fige, parce que c'est la garantie la plus facile à casser par inadvertance.
-   ⚠️ LES LIBELLÉS SONT RECOPIÉS DE SA CAPTURE, pas inventés : une détection qui marche sur des
-   libellés fabriqués ne prouve rien sur les siens. */
-{
-  const R=await p.evaluate(()=>{
-    const o={};
-    try{
-      const JOURS=[
-        'J1 - Pectoraux / Dos - DC performance',
-        'J2 - Quadriceps / Chaîne postérieure - Squat',
-        'J3A - Haut du corps hypertrophie - Semaine A (Larsen)',
-        'J3B - Haut du corps hypertrophie - Semaine B (Épaules)',
-        'J4 - Dos / Ischios - SDT performance'];
-      const mkProg=(ilYaJours,weeks)=>{
-        const d=new Date(); d.setDate(d.getDate()-ilYaJours);
-        return {id:'p1',name:'Programme Powerbuilding - Bloc 1 - V2',weeks:weeks,
-          startDate:d.toISOString().slice(0,10),
-          days:JOURS.map(l=>({label:l,exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,type:'N'}]}]}))};
-      };
-      const badges=()=>[...document.querySelectorAll('#day-sel-btns button')]
-        .map(bt=>{const m=bt.textContent.match(/👉 ta semaine ([AB]) \(semaine (\d+) \/ (\d+)\)/);return m?m[0]:'';});
-      const poser=pr=>{S.programmes=[pr];persist();openDaySel(0);return badges();};
-      o.variantes=JOURS.map(l=>_varianteSemaine(l));
-      o.paires=_pairesSemaineAB(JOURS.map(l=>({label:l})));
-      o.sem1=poser(mkProg(0,8));      // semaine 1 → A
-      o.sem2=poser(mkProg(7,8));      // semaine 2 → B
-      o.sem3=poser(mkProg(14,8));     // semaine 3 → A
-      // ⛔ CE QU'ON NE SAIT PAS, ON SE TAIT
-      const sansDate=mkProg(0,8); sansDate.startDate='';
-      o.sansDate=poser(sansDate); o.vSansDate=_varianteDeLaSemaine(sansDate);
-      const sansW=mkProg(0,0);
-      o.sansWeeks=poser(sansW);  o.vSansWeeks=_varianteDeLaSemaine(sansW);
-      // ⛔ UN « J3A » SOLITAIRE NE DÉCLENCHE RIEN (l'appariement est le garde-fou)
-      const solo=mkProg(0,8); solo.days=solo.days.filter(d=>!/Semaine B/.test(d.label));
-      o.solo=poser(solo);
-      // ⛔ UN PROGRAMME SANS VARIANTE : rien, et tous ses jours restent affichés
-      const plain=mkProg(0,8); plain.days=[{label:'J1 - Haut',exs:[]},{label:'J2 - Bas',exs:[]}];
-      o.plain=poser(plain); o.plainN=document.querySelectorAll('#day-sel-btns button').length;
-      // ⛔⛔ ON NE BLOQUE RIEN : les 5 jours restent cliquables en semaine 2
-      poser(mkProg(7,8));
-      const bts=[...document.querySelectorAll('#day-sel-btns button')];
-      o.tousCliquables = bts.length===5 && bts.every(bt=>!bt.disabled && /loadProgDay/.test(bt.getAttribute('onclick')||''));
-      // ⛔ et le jour de l'AUTRE variante se charge vraiment quand on le tape
-      loadProgDay(0,2);
-      o.autreVarianteChargeable = !!(S.wkt && /Semaine A/.test(S.wkt.progLabel||''));
-    }catch(e){ o.err=e.message; }
-    return o;
-  });
-  console.log('\n-- CCLXXXIX. L\'alternance semaine A / semaine B (ft-v1192) --');
-  if(R.err) t('CCLXXXIX n\'a pas pu tourner', false, R.err);
-  else{
-    t('CCLXXXIX ⛔ CONTRÔLE — la variante se lit sur SES libellés (A, B, et rien ailleurs)',
-      JSON.stringify(R.variantes)===JSON.stringify([null,null,'A','B',null]), 'reçu : '+JSON.stringify(R.variantes));
-    t('CCLXXXIX ⛔ CONTRÔLE — J3A et J3B sont appariés par leur NUMÉRO',
-      R.paires && R.paires.J3 && R.paires.J3.A===2 && R.paires.J3.B===3, 'reçu : '+JSON.stringify(R.paires));
-    t('CCLXXXIX ⭐⭐ semaine 1 → le repère est sur J3A',
-      R.sem1[2]==='👉 ta semaine A (semaine 1 / 8)' && R.sem1[3]==='', 'reçu : '+JSON.stringify(R.sem1));
-    t('CCLXXXIX ⭐⭐ semaine 2 → il PASSE sur J3B',
-      R.sem2[3]==='👉 ta semaine B (semaine 2 / 8)' && R.sem2[2]==='', 'reçu : '+JSON.stringify(R.sem2));
-    t('CCLXXXIX ⭐ semaine 3 → il revient sur J3A (l\'alternance tient)',
-      R.sem3[2]==='👉 ta semaine A (semaine 3 / 8)' && R.sem3[3]==='', 'reçu : '+JSON.stringify(R.sem3));
-    t('CCLXXXIX ⛔⛔ sans date de début : on ne sait pas, donc on se TAIT',
-      R.vSansDate===null && R.sansDate.every(x=>x===''), 'variante '+R.vSansDate+' · '+JSON.stringify(R.sansDate));
-    t('CCLXXXIX ⛔⛔ sans nombre de semaines : idem, aucun repère inventé',
-      R.vSansWeeks===null && R.sansWeeks.every(x=>x===''), 'variante '+R.vSansWeeks+' · '+JSON.stringify(R.sansWeeks));
-    t('CCLXXXIX ⛔ un « J3A » SOLITAIRE ne déclenche rien (l\'appariement est le garde-fou)',
-      R.solo.every(x=>x===''), 'reçu : '+JSON.stringify(R.solo));
-    t('CCLXXXIX ⛔ un programme sans variante : aucun repère, et ses 2 jours restent affichés',
-      R.plain.every(x=>x==='') && R.plainN===2, 'badges '+JSON.stringify(R.plain)+' · jours '+R.plainN);
-    t('CCLXXXIX ⛔⛔ ON NE BLOQUE RIEN — les 5 jours restent cliquables', R.tousCliquables===true);
-    t('CCLXXXIX ⛔⛔ ... et le jour de l\'AUTRE variante se charge vraiment quand on le tape',
-      R.autreVarianteChargeable===true);
-  }
-}
 /* ═══ CCXLV. COMBIEN DE FOIS MILO ET L'APP SE CONTREDISENT-ILS ? (06/09/2026, ft-v1146) ═════
    Michel : Milo prescrit 3×3 à 100 kg, et l'app affiche juste dessous « viser ~95 kg ». Les
    deux calculs sont justes ; pour la personne, Force Tracker se contredit. La question qui
