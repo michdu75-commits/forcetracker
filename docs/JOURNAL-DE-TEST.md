@@ -2462,7 +2462,7 @@ fixture peut faire la différence.
 
 ---
 
-### 🟣 JUGE HUMAIN — LE BOUTON « RATTACHER » EST-IL TROUVABLE ? (10/09/2026, ft-v1187)
+### ⚪ RÉPONDUE PUIS ÉCARTÉE PAR MICHEL — LE BOUTON « RATTACHER » EST-IL TROUVABLE ? (10→11/09/2026)
 
 ft-v1187 pose un bandeau *« C'est « Tirage Poulie Haute (Lat Pulldown) » du catalogue »* avec un
 bouton **🔗 Rattacher** — mais **seulement dans l'écran « Modifier l'exercice »** d'un exercice
@@ -2601,3 +2601,34 @@ C'est **R8** — un prompt (ici une regex) ne compense jamais une donnée absent
 sur un scan — et c'est **correct**, Open Food Facts donne bien les valeurs telles que vendues. ⭐ Mais
 ça nomme le vrai trou : *« tel que vendu » ne distingue pas un paquet SEC d'une conserve CUISINÉE* —
 et c'est exactement la distinction dont le message a besoin.
+
+---
+
+**⛔ RÉPONSE MESURÉE, PUIS DÉCISION DE MICHEL (11/09/2026).**
+
+**La réponse à la question posée est NON, et elle est mesurée sur trois jours consécutifs** : Michel
+a buté sur **trois portes différentes** pour le même mot (« Tirage vertical »), et **n'en a trouvé
+aucune tout seul** :
+
+| où vit le nom | le geste | il l'a trouvé ? |
+|---|---|---|
+| exercice perso | ✏️ → 🔗 Rattacher (ft-v1187) | ⛔ *« je ne trouve pas »* |
+| séance passée | 🔄 sur la carte → 💾 (ft-v1189) | ⛔ il a fallu le lui dire |
+| **programme** | ✏️ → 🧹 Rattacher → 💾 (existe depuis longtemps) | ⛔ *« toujours le tirage vertical dans le programme »* |
+
+⭐ **Et le 3ᵉ bouton existait déjà** — vérifié dans la page, pas supposé : `_cleanProgEditExercises`
+rend « Tirage Poulie Haute (Lat Pulldown) », **notes et séries intactes**, et son bouton s'affiche
+bien **en première position** de l'éditeur de programme. *Le trou n'était pas dans le code.*
+
+**⛔⛔ J'AI PROPOSÉ DE SIGNALER LE NOM RATTACHABLE DEPUIS L'ÉCRAN SÉANCE. MICHEL A DIT NON** —
+*« Non, j'ai supprimé la séance »*. **Décision enregistrée, on n'ajoute pas de 4ᵉ signal** (**R30** :
+un refus s'écrit avec sa raison, sinon il revient dans six mois et quelqu'un le « répare »).
+
+⚠️ **Ce que la décision NE dit PAS** : que le problème de découvrabilité n'existe pas — il est
+mesuré ci-dessus. Elle dit que **le coût d'un repère de plus sur l'écran Séance est jugé supérieur
+au gain**, sur un cas qui se règle en trois taps une fois qu'on sait où ils sont (**R19/R24** : la
+gouvernance et les repères servent le produit, pas l'inverse). *Si le cas revient chez quelqu'un
+d'autre que Michel, la question se rouvre — avec cette mesure déjà faite.*
+
+⛔ **Ne devient pas un scénario** : l'attendu est *« est-ce trouvable »*, pas un état vérifiable par
+du code.
