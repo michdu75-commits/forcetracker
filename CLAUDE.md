@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1192`** (prochaine : `ft-v1193`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1193`** (prochaine : `ft-v1194`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,40 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1193 — 🏗️ PHASE 0a + ÉTAPE 1a DU PLAN NUTRITION — UNE FUITE FERMÉE, UN CONSTRUCTEUR UNIQUE, ET UNE RÉGRESSION ATTRAPÉE PAR LE BANC** — Michel valide `docs/PLAN-NUTRITION.pdf` : ***« exécute la phase 0 puis l'étape 1a, avec les témoins et les critères écrits dans ce plan »***.
+
+**⭐ PHASE 0a — LE POIDS DU PAQUET NE SE RENDAIT PAS.** Mesuré à la sonde (`tools/sonde_fuites_nutrition.js`, **rejouable**) : après un scan à **410 g**, reprendre un « Yaourt nature » par **Mes aliments sans fermer l'écran** laissait la pastille **« 📦 410 g (le paquet entier) »** affichée — *sur le yaourt*. ⛔ **Deux causes cumulées** : `_afOublierAliment` remettait à zéro `_bcNutr`, `_bcQtyPose`, `_bcCategories` et les grammes IA **mais pas `_bcPaquetG`** (nettoyé seulement dans `openAddFood`, donc jamais **entre** deux aliments d'une même ouverture), et la pastille n'est repeinte que par le **hub** — donc les 3 portes hors hub la laissaient telle quelle. 👉 ***C'est le défaut `_bcCategories` de ft-v1191, sur une autre variable*** (**R15**).
+
+**⭐⭐ ÉTAPE 1a — UN SEUL CONSTRUCTEUR DE POUR-100 g.** Les **8** écritures `_bcNutr={…}` à la main et les **4** lignes `per100:{kcal:_bcNutr.kcal100,…}` **identiques au caractère près** deviennent `_ref100()` + `_per100De()`.
+
+**⛔⛔ C'EST UNE EXTRACTION, PAS UNE UNIFORMISATION — et la nuance est tout le contrat.** **2 portes sur 8 n'arrondissent pas** (les reprises : « Mes aliments » et la recherche dans le journal, qui recopient un pour-100 g déjà stocké). Les faire traverser `_per100d1` **changerait une valeur enregistrée** : ce serait une **décision**, pas un rangement. D'où `{normaliser:false}` — *on extrait ce qui existe, on ne redresse rien au passage.*
+
+**⭐ LE CRITÈRE ÉTAIT BINAIRE, ET IL EST ATTEINT** : un **instantané** de la sortie des 8 portes (`tools/instantane_ref100.js`) figé **avant**, rejoué **après** → **identique octet pour octet, même sha256** (`a8065e73…`). *Une passe verte prouve que ce que les témoins REGARDENT n'a pas bougé ; l'instantané prouve que RIEN n'a bougé.*
+
+**⚠️⚠️ ET LE PLAN DISAIT « UN OBJET QUI PORTE LES DEUX FACES » — LA MESURE A DIT NON.** Poser `per100` **dans** `_bcNutr` aurait ajouté un champ à l'objet que l'instantané sérialise : le critère aurait été violé **par construction**, et on n'aurait plus pu distinguer *« rien n'a changé »* de *« tout a changé un peu »*. 👉 **Deux petites fonctions au lieu d'une maligne.** *Un critère qu'on est obligé d'assouplir pour faire passer son propre code n'est plus un critère.*
+
+**⛔⛔⛔ ET LA PASSE COMPLÈTE A TROUVÉ UNE VRAIE RÉGRESSION DE MA PHASE 0a.** Les témoins **CCLXXII ⑧ et ⑨** (ft-v1174) sont devenus rouges : la ratatouille **trouvée mais sans valeurs** perdait son « 250 g » en partant au calibrage. 👉 ***`_bcPaquetTxt` n'était protégé que PAR ACCIDENT*** — parce que personne ne le nettoyait. *Un correctif juste peut casser ce qui ne tenait que par l'absence de ménage.* ⭐ **Et c'est le CONTRÔLE qui l'a attrapé, pas la relecture.**
+
+**⚠️⚠️ MA PREMIÈRE RÉPONSE ÉTAIT FAUSSE, ET SA FORME VAUT PLUS QUE LE CORRECTIF.** J'ai recopié *« on prend, on oublie, on repose »* chez `_lookupBarcode`, puis chez `_calAppliquer` — **et le témoin est resté rouge**, parce qu'il existe une **TROISIÈME** porte sur ce chemin : `_bcSansValeurs`. 👉 ***R8, la porte jumelle, à l'intérieur même du correctif censé fermer une fuite — et pour la 3ᵉ fois dans la même heure.*** ⭐ **Un patron qu'on recopie à chaque porte EST la duplication que cette étape supprime ailleurs** : d'où un **paramètre nommé sur le propriétaire unique** (`{garderPaquet:true}`) pour les **2 appelants sur 13** qui poursuivent le **MÊME** aliment au lieu d'en changer. *Une distinction dite une fois, pas trois.*
+
+**📣 PHASE 0b — MESURÉE, PAS CORRIGÉE (décision de Michel attendue).** `S.savedFoods` **se perd entre deux onglets** — mesuré, **avec un témoin de contrôle** : la même manœuvre sur `foodLog` (liste fusionnée) garde les deux entrées, `savedFoods` n'en garde qu'une. ⛔⛔ **Et le correctif évident est FAUX** : ajouter `savedFoods` à `_fusionListe` ferait une **union par nom**, donc **retirer une étoile dans un onglet serait annulé par la liste périmée de l'autre**. *Les 5 listes fusionnées sont des journaux qui ne font qu'AJOUTER ; les favoris se SUPPRIMENT.* Écrit dans `docs/JOURNAL-DE-TEST.md` avec sa raison (**R30**).
+
+**⚠️ ET L'INSTANTANÉ A TROUVÉ UNE DIVERGENCE QUE PERSONNE NE CHERCHAIT** : sur **la même fiche**, le **scan** rend `48,3 kcal/100 g` et la **recherche par nom** rend `48`. Cause : `_afSuggKcal100` réécrit la formule de `_lookupBarcode` (`energy-kcal_100g || energy_100g/4.184`) **avec `Math.round`** au lieu de `_per100d1`. ⛔ **NON CORRIGÉ ICI, exprès** : corriger changerait une valeur enregistrée, donc ce n'est pas une extraction. 9ᵉ occurrence de la famille `BUGS.md` §59, écrite dans `docs/JOURNAL-DE-TEST.md`.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît : une pastille cesse de mentir (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ l'historique · les migrations · la réécriture des 13 portes · le hub rendu obligatoire (étape 4) · la douane (étape 5) · ⛔ et **aucun changement de comportement** aux étapes 1-2-3, c'était le contrat. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+Tests : **parcours 3549/3549 sur l'arbre FINAL** (+14, bloc **CCXC**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 8 MUTATIONS, TOUTES MORDENT** — ① `_ref100` rend `null` → **le runner MEURT** (elle mord au maximum) · ② `_per100d1` retiré · ③ `_per100De` rend un objet vide · ④ le poids du paquet n'est plus effacé → **3 rouges** · ⑤ la variable est propre mais **l'écran n'est pas repeint** → **2** · ⑥ `garderPaquet` ignoré → **2**, exactement les deux témoins de la ratatouille · ⑦ `{normaliser:false}` ignoré · ⑧ `maxNom` ignoré.
+
+**⚠️⚠️ ET MON HARNAIS DE MUTATION M'A MENTI, AVEC LA MÊME FAMILLE QUE §61.** La mutation ① affichait **« 0 rouges »** — je l'ai lue comme *« elle ne mord pas »*. En regardant la sortie **complète** : le runner **plantait** (`TypeError` sur `null`), donc il n'affichait **rien**, et mon `grep -c "❌"` comptait 0 sur une sortie **vide**. 👉 ***Un harnais qui compte les rouges doit d'abord vérifier que le runner a FINI.*** Corrigé : il cherche la ligne de total et distingue *« 0 rouge »* de *« n'a pas tourné »*.
+
+**⚠️ DEUX AUTRES PIÈGES D'OUTILLAGE, DITS PARCE QU'ILS RESSERVIRONT** : ① mon témoin « plus aucune traduction » comptait aussi **le commentaire qui CITE le motif supprimé** — *un témoin qui ne distingue pas le code de ce qui en PARLE finit par interdire d'écrire la documentation du correctif* ; ② `pgrep -f "node tests/parcours/runner.js"` **matche son propre shell** (le motif est dans sa ligne de commande) → boucle d'attente infinie sur une passe déjà terminée. C'est le piège de ft-v1189, repayé.
+
+**⭐ ET UN TÉMOIN PLUS ANCIEN A FAIT SON TRAVAIL CONTRE MOI** : le contrôle *« les constructions de `_bcNutr` sont bien trouvées »* a rougi — parce que son voisin (*« aucune construction ne ré-arrondit »*) était passé **VERT sur une liste VIDE**. Sans lui, l'étape 1a aurait transformé une vraie garantie en vert décoratif, **en silence**. Réécrit sur le propriétaire unique ; la garantie ne s'affaiblit pas, elle se déplace.
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_ref100.js`, `tools/sonde_fuites_nutrition.js`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1193. |
 
 **ft-v1192 — 🅰️🅱️ L'ALTERNANCE SEMAINE A / SEMAINE B DANS LE SÉLECTEUR DE JOUR** — Michel, capture du sélecteur de son Powerbuilding (J3A « Semaine A » · J3B « Semaine B ») : ***« est-ce que la semaine A/B sont en charge ? »***, puis ***« À et b »***.
 
@@ -715,33 +749,6 @@ Tests : **parcours 3451/3451 sur l'arbre FINAL** (+14, bloc **CCLXXXI**), **calc
 ⚠️⚠️ **ET LA MÊME LEÇON POUR LA TROISIÈME FOIS DE SUITE** : une mutation **ne mordait pas** — écraser les macros du favori — et ce n'était **pas** du code inutile, c'était un **trou de témoin** : ma fixture mettait **600 des deux côtés**, donc l'écrasement était *invisible*. Fixture rendue discriminante (favori 600, repas 500), **14ᵉ témoin écrit**, la mutation mord. 👉 ***Une protection sans témoin n'est pas une protection*** — et une fixture où les deux valeurs coïncident ne peut rien voir.
 
 Fichiers : `app.js`, `setup.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1186. |
-
-**ft-v1185 — 🧾 LE DÉBRIEF SUR TOUTES LES COMBINAISONS DE SÉANCE : BALAYAGE, ET TÉMOINS PERMANENTS** — Michel, juste après ft-v1184 : ***« on est bien d'accord que le débrief il faut le faire pour une séance créée, ensuite une séance par rapport à un programme, et une séance avec Milo, et aussi le cardio, et aussi si il y a le cardio plus une séance — enfin toutes les possibilités qui peuvent y avoir, sans rien casser et en vérifiant bien que ça ne crée pas de bugs »***.
-
-**⭐⭐ LA LISTE EST TIRÉE DU CODE, PAS INVENTÉE.** **SEPT portes** créent une séance : `startWorkout` · `lancerTypeSeance` · `renderLog` · `addExercise` · **`_appliqueMiloSession`** · **`_loadProgDayVraiment`** (multi-jours) · **`_loadProgVraiment`** (un seul jour). 👉 ***J'en avais testé DEUX sur sept*** — inventer la liste m'aurait fait rater les cinq autres.
-
-**⛔ RÉSULTAT : LES 12 COMBINAISONS DONNAIENT DÉJÀ UN DÉBRIEF. Il n'y avait rien à réparer.** Cette version n'apporte donc **pas un correctif mais une garantie** (**R17/R35** — chaque cas vécu devient un témoin permanent). *Un balayage qu'on ne fige pas est un balayage à refaire.* ⛔ **Aucune ligne de production ne change.**
-
-**Les 12 cas** : séance créée à la main · carte « type de séance » · ajout direct d'un exercice · **séance de Milo** · programme **multi-jours** · programme **un seul jour** · **cardio seul (après)** · **cardio seul (échauffement avant)** · cardio avant **+** après sans muscu · **cardio + muscu** · séance mise en **pause** puis terminée · **superset**.
-
-**⚠️⚠️ ÉPROUVÉ AVANT D'ÊTRE CRU** : en neutralisant `_showSessionEnd`, **les 12 rougissent**. *Un contrôle tout vert qu'on n'a pas vu échouer ne mesure rien, il rassure* (ft-v994).
-
-**⚠️⚠️⚠️ ET LA LEÇON DE LA VERSION EST QUE LE CONTRÔLE NÉGATIF A CORRIGÉ MON TÉMOIN DEUX FOIS.**
-- **①** Ma 1ʳᵉ version mesurait **la longueur du texte**. En tuant le socle `_debriefLocal`, `_runSeDebrief` retombe sur un repli de trois lignes écrit à la main : le texte reste long, **le témoin restait VERT**. *Un témoin qui mesure la longueur mesure la longueur, pas le débrief.*
-- **②** Ma 2ᵉ version **appelait `_debriefLocal` en direct** — verte aussi, parce que la fonction **existe toujours** : c'est son **usage par l'écran** qui avait disparu. 👉 ***C'est `BUGS.md` §58, que je venais d'écrire une heure plus tôt, et que j'ai refaite aussitôt.***
-- **③** La bonne version vérifie que le texte **affiché** contient ce que le socle **produit** — le **chemin**, pas la fonction. La mutation fait alors **12 rouges**. *Écrire une famille de bugs ne vaccine pas contre elle ; seul le contrôle négatif attrape la rechute.* (§58 complétée.)
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun code de production ne change (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **ça ne juge pas la QUALITÉ du débrief**, seulement qu'il existe et qu'il **vient du socle calculé**. ⛔ Et le seul cas sans écran de fin reste **« aucune série cochée »**, qui est **voulu** : l'app refuse de terminer et le dit.
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1051**, conclusion `success` sur `9253161e`. ⛔ Ni backend ni worker attendus. ⚠️ *Au passage : l'API a rendu l'étape « Déployer sur GitHub Pages » comme `in_progress` pendant 13 minutes alors que le run était déjà terminé — un état périmé, pas un déploiement lent. **Vérifier le RUN, pas seulement l'étape.***
-
-Tests : **parcours 3437/3437** (+13, bloc **CCLXXXII**), **calculs 339/339**, muscles, croisés, dates, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 5 mutations** — ① l'écran de fin non ouvert → **12 rouges** · ② le cardio non reconnu comme validant → **3 rouges**, exactement les trois cas de cardio seul · ③ l'échauffement **avant** qui ne compte plus → **1 rouge**, exactement ce cas · ④ le socle non employé → **12 rouges** (après mes deux corrections) · ⑤ la régression de ft-v1184 → **0 rouge ici**, mais elle mord dans le bloc **CCLXXXI** qui la couvre — *je le dis plutôt que de prétendre l'avoir testée*. Fichiers : `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `BUGS.md`. sw.js ft-v1185. |
-
-
-
-
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

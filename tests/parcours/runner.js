@@ -24825,14 +24825,27 @@ console.log('\n-- CCXX. Une seule précision pour le pour-100 g (ft-v1112) --');
       JSON.stringify(R.champs));
     /* ⛔⛔ ET LES SIX CONSTRUCTIONS PASSENT PAR LE MÊME PROPRIÉTAIRE — c'est la rechute à
        empêcher : un 7ᵉ chemin qui ré-arrondirait ferait revenir le défaut en silence. */
+    /* ⚠️⚠️ RÉÉCRIT LE 11/09/2026 (étape 1a) — ET SON CONTRÔLE A FAIT SON TRAVAIL AVANT MOI.
+       Ce témoin cherchait les `_bcNutr={…}` écrits à la main pour vérifier qu'il en trouvait
+       assez. L'étape 1a les a TOUS remplacés par des appels à `_ref100` : il en a trouvé **1**
+       (le motif cité dans un commentaire) et il a rougi.
+       ⭐⭐ CE N'EST PAS UN FAUX POSITIF, C'EST EXACTEMENT SA RAISON D'ÊTRE : son voisin
+       (« aucune construction ne ré-arrondit ») était passé **VERT sur une liste VIDE**. Sans ce
+       contrôle, l'étape 1a aurait transformé une vraie garantie en vert décoratif, en silence.
+       *Un témoin qui vérifie qu'un autre témoin a bien quelque chose à mesurer vaut son coût.*
+       ⛔ LA GARANTIE NE S'AFFAIBLIT PAS, ELLE SE DÉPLACE : il n'y a plus huit constructions à
+       surveiller, il y en a UNE — donc on exige que le propriétaire unique existe, qu'il soit
+       réellement employé par les huit portes, et qu'il n'arrondisse QUE par `_per100d1`. */
     {
       const app=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
-      const cons=(app.match(/_bcNutr\s*=\s*\{[\s\S]{0,400}?\}/g)||[]);
-      const fautifs=cons.filter(c=>/Math\.round\s*\(\s*(n\[|a\[|d\.|kcal|prot|carbs|fat)/.test(c));
-      t('⛔ CONTRÔLE — les constructions de `_bcNutr` sont bien trouvées (sinon le témoin est vide)',
-        cons.length>=5, cons.length+' trouvées');
+      const aLaMain=(app.match(/^\s*_bcNutr\s*=\s*\{/gm)||[]).length;
+      const appels=(app.match(/_ref100\(/g)||[]).length;
+      const corps=(app.match(/function _ref100\([\s\S]{0,400}?\n\}/)||[''])[0];
+      t('⛔ CONTRÔLE — le constructeur unique est bien TROUVÉ et EMPLOYÉ (sinon le témoin est vide)',
+        corps.length>0 && appels>=9, appels+' occurrences · corps '+corps.length+' car.');
       t('⛔⛔ aucune construction du pour-100 g ne ré-arrondit à l\'entier (R2 : un seul propriétaire)',
-        fautifs.length===0, fautifs.map(x=>x.slice(0,70)).join(' | '));
+        aLaMain===0 && !/Math\.round/.test(corps),
+        aLaMain+' à la main · corps : '+corps.replace(/\s+/g,' ').slice(0,90));
       t('⛔ … et le propriétaire existe vraiment', /function _per100d1\(/.test(app), '');
     }
     t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
@@ -33882,6 +33895,117 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     t('CCLXXXIX ⛔⛔ ... et le jour de l\'AUTRE variante se charge vraiment quand on le tape',
       R.autreVarianteChargeable===true);
   }
+}
+
+
+/* ═══════════ CCXC — PHASE 0a + ÉTAPE 1a DU PLAN NUTRITION (11/09/2026) ═══════════
+   Michel a validé `docs/PLAN-NUTRITION.pdf` : *« exécute la phase 0 puis l'étape 1a, avec les
+   témoins et les critères écrits dans ce plan »*.
+
+   ⭐⭐ CE BLOC NE MESURE PAS LA MÊME CHOSE QUE L'INSTANTANÉ, ET LES DEUX SONT NÉCESSAIRES.
+   `tools/instantane_ref100.js` prouve qu'AUCUNE VALEUR N'A CHANGÉ (il compare octet pour octet
+   la sortie des 8 portes, avant et après). Il est PONCTUEL : personne ne le rejouera dans six
+   mois. Ce bloc-ci, lui, est PERMANENT : il fige les garanties, pas les chiffres d'un jour.
+   *Un instantané prouve qu'on n'a rien cassé aujourd'hui ; un témoin empêche de le casser demain.* */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
+
+  const R = await p.evaluate(async()=>{
+    const o={};
+    const vis=id=>{const e=document.getElementById(id);
+                   return !!(e && e.style.display!=='none' && e.offsetParent!==null);};
+    const FICHE={ product_name_fr:'Lentilles Cuisinees', brands:'Raynal & Roquelaure',
+                  quantity:'410 g', serving_quantity:205, categories_tags:['en:canned-lentils'],
+                  code:'3021690201123',
+                  nutriments:{ 'energy-kcal_100g':48.34, 'proteins_100g':6.13,
+                               'carbohydrates_100g':10.07, 'fat_100g':3.17 } };
+    window._offFetchProduct=async()=>FICHE;
+
+    /* ── PHASE 0a : le poids du paquet meurt avec l'aliment ── */
+    openAddFood();
+    await _lookupBarcode('3021690201123','scan',false);
+    o.A_paquet=_bcPaquetG; o.A_pastille=vis('af-bc-paquet');     // non-régression : le hub l'affiche
+
+    _afQuickItems=[{name:'Yaourt nature',kcal:60,prot:4,carbs:5,fat:2,
+                    per100:{kcal:47.62,prot:3.17,carbs:3.97,fat:1.59},q:126,u:'g',fav:true}];
+    quickFillFood(0);                                             // porte HORS hub, écran ouvert
+    o.B_paquet=_bcPaquetG; o.B_pastille=vis('af-bc-paquet');
+    o.B_nom=(document.getElementById('af-desc')||{}).value||'';
+
+    /* la jumelle : la reprise depuis le journal, l'autre porte hors hub */
+    openAddFood(); await _lookupBarcode('3021690201123','scan',false);
+    o.C_paquetAvant=_bcPaquetG;
+    _afSuggLoc=[{name:'Steak hache',kcal:250,prot:26,carbs:0,fat:16,
+                 per100:{kcal:166.67,prot:17.33,carbs:0,fat:10.67},q:150,u:'g',origine:'reprise'}];
+    _afSuggPrendreLocale(0);
+    o.C_paquet=_bcPaquetG; o.C_pastille=vis('af-bc-paquet');
+
+    /* ── ÉTAPE 1a : le constructeur unique ── */
+    o.fnRef=typeof _ref100; o.fnTrad=typeof _per100De;
+    const r1=_ref100('Produit', 48.34, 6.13, 10.07, 3.17);
+    o.normalise=[r1.kcal100,r1.prot100,r1.carbs100,r1.fat100];                    // 48.3 / 6.1 / 10.1 / 3.2
+    const r2=_ref100('Repris', 166.67, 17.33, 0, 10.67, {normaliser:false});
+    o.brut=[r2.kcal100,r2.prot100,r2.carbs100,r2.fat100];                         // inchangés
+    o.nom60=_ref100('x'.repeat(90),0,0,0,0).name.length;
+    o.nom80=_ref100('x'.repeat(90),0,0,0,0,{maxNom:80}).name.length;
+    o.trad=JSON.stringify(_per100De(r2));
+    o.tradNull=_per100De(null);
+    /* ⛔ les 4 champs, et RIEN d'autre : si `_ref100` se mettait à poser `per100` dans l'objet,
+       l'instantané de contrôle deviendrait incomparable — c'est la raison du design (deux
+       fonctions au lieu d'une maligne), et elle se fige ici. */
+    o.champs=Object.keys(r1).sort().join(',');
+    return o;
+  });
+
+  t('CCXC ⛔ non-régression : après un scan, le hub affiche BIEN la pastille du paquet (410 g)',
+    R.A_paquet===410 && R.A_pastille===true, 'paquet '+R.A_paquet+' · visible '+R.A_pastille);
+  t('CCXC ⛔⛔ PHASE 0a — reprendre « Mes aliments » efface le poids du paquet précédent',
+    R.B_paquet===0, '_bcPaquetG='+R.B_paquet+' sur « '+R.B_nom+' »');
+  t('CCXC ⛔⛔ ... et la PASTILLE disparaît de l\'écran (c\'est elle qu\'on voit, pas la variable)',
+    R.B_pastille===false, 'pastille encore visible sur « '+R.B_nom+' »');
+  t('CCXC ⛔ la jumelle : la reprise depuis le journal l\'efface aussi',
+    R.C_paquetAvant===410 && R.C_paquet===0 && R.C_pastille===false,
+    'avant '+R.C_paquetAvant+' · après '+R.C_paquet+' · pastille '+R.C_pastille);
+
+  t('CCXC ÉTAPE 1a — `_ref100` et `_per100De` existent',
+    R.fnRef==='function' && R.fnTrad==='function', R.fnRef+' / '+R.fnTrad);
+  t('CCXC ⛔ `_ref100` normalise à UNE décimale par défaut',
+    JSON.stringify(R.normalise)==='[48.3,6.1,10.1,3.2]', JSON.stringify(R.normalise));
+  t('CCXC ⛔⛔ ... et `{normaliser:false}` NE touche à rien (les 2 portes de REPRISE)',
+    JSON.stringify(R.brut)==='[166.67,17.33,0,10.67]', JSON.stringify(R.brut));
+  t('CCXC ⛔ le nom est coupé à 60, et à 80 avec `{maxNom:80}` (l\'étiquette recopiée)',
+    R.nom60===60 && R.nom80===80, R.nom60+' / '+R.nom80);
+  t('CCXC ⛔ `_per100De` TRADUIT et ne calcule rien (aucun arrondi au passage)',
+    R.trad==='{"kcal":166.67,"prot":17.33,"carbs":0,"fat":10.67}', R.trad);
+  t('CCXC ⛔ `_per100De(null)` rend `null` — il n\'invente pas un objet vide', R.tradNull===null);
+  t('CCXC ⛔⛔ `_ref100` rend EXACTEMENT les 5 champs de `_bcNutr`, pas un de plus',
+    R.champs==='carbs100,fat100,kcal100,name,prot100', R.champs);
+}
+
+/* ⛔⛔ ET LE TÉMOIN QUI COMPTE LES ENDROITS — celui qu'aucun parcours ne peut remplacer.
+   Un parcours prouve que le code MARCHE ; il ne peut pas prouver qu'il n'existe pas une 9ᵉ copie
+   ailleurs dans le fichier. C'est pourtant la famille de bugs n°1 du dépôt (la porte jumelle, R8,
+   citée neuf fois). On lit donc la SOURCE SERVIE, et on exige zéro. */
+{
+  const src=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+  const aLaMain=(src.match(/^\s*_bcNutr\s*=\s*\{/gm)||[]).length;
+  /* ⛔⛔ ON NE COMPTE QUE LE CODE — et ce témoin a rougi pour le découvrir, ce qui est exactement
+     son travail. Le commentaire de `_ref100` CITE le motif supprimé (c'est tout son intérêt
+     documentaire : dire ce qui existait avant). Un compteur brut le comptait comme une rechute.
+     👉 *Un témoin qui ne distingue pas le code de ce qui en PARLE finit par interdire d'écrire
+     la documentation du correctif.* On écarte donc les lignes de commentaire (`*`, `//`) et les
+     citations entre accents graves, qui sont la convention de ce dépôt. */
+  const estCommentaire=l=>{const x=l.trim();
+    return x.startsWith('*')||x.startsWith('//')||x.startsWith('/*')||x.startsWith('`');};
+  const traductions=src.split('\n')
+    .filter(l=>/per100:\{kcal:_bcNutr\.kcal100/.test(l) && !estCommentaire(l)).length;
+  const appels=(src.match(/_ref100\(/g)||[]).length;
+  t('CCXC ⛔⛔ plus AUCUN `_bcNutr={…}` écrit à la main dans app.js', aLaMain===0, aLaMain+' restants');
+  t('CCXC ⛔⛔ plus AUCUNE des 4 traductions `per100:{kcal:_bcNutr.kcal100…}`',
+    traductions===0, traductions+' restantes');
+  t('CCXC ⭐ les 8 portes passent par `_ref100` (8 appels + 1 déclaration)',
+    appels===9, appels+' occurrences');
 }
 
 /* ⚠️ CE BLOC DOIT RESTER AVANT `b.close()` — leçon payée le 11/09/2026.

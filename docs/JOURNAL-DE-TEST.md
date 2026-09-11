@@ -69,6 +69,61 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 `S.savedFoods` SE PERD ENTRE DEUX ONGLETS — **mesuré, et le correctif évident est FAUX** (11/09/2026)
+
+**Mesuré à la sonde `tools/sonde_fuites_nutrition.js` (rejouable), avec un témoin de contrôle :**
+
+```
+onglet A écrit « Pain »              → disque : ["Pain"]
+onglet B (liste périmée) écrit « Fromage » → disque : ["Fromage"]     ⛔ Pain perdu
+TÉMOIN foodLog, exactement le même scénario → ["Fromage","Pain"]      ✅ gardé
+```
+
+⭐ **Le témoin de contrôle valide la mesure** : la même manœuvre sur une liste **fusionnée** garde
+les deux entrées. Ce n'est donc pas le banc qui déraille — `_fusionListe` (state.js) protège **5**
+listes contre l'écrasement entre onglets, et `savedFoods` n'en fait pas partie.
+
+**⛔⛔ ET AJOUTER `savedFoods` À `_fusionListe` SERAIT UNE ERREUR — c'est le point de cette entrée.**
+La fusion fait une **union par clé**. Or les 5 listes qu'elle protège sont des **journaux qui ne
+font qu'AJOUTER** (séances, pesées, mensurations, sommeil, repas) : pour elles, une union ne perd
+rien. **Les favoris, eux, se SUPPRIMENT couramment** — on retire une étoile. Avec une union,
+*retirer une étoile dans l'onglet A serait annulé par la liste périmée de l'onglet B*.
+
+> **Une fusion par union sur une liste où l'on retire n'est pas une protection, c'est une résurrection.**
+
+**Ce qu'il faudrait vraiment** : un horodatage par favori, ou une pierre tombale (garder la trace
+du retrait). ⛔ **C'est une décision produit, pas une rustine** — elle attend Michel.
+
+⚠️ **Découvert pendant la phase 0 du plan Nutrition, et volontairement NON corrigé** (R30 : un
+sujet écarté reste écrit avec sa raison, sinon il revient dans six mois et quelqu'un le « répare »
+avec l'union).
+
+---
+
+### 🟡 LE SCAN DIT `48,3` ET LA RECHERCHE PAR NOM DIT `48` — **sur la même fiche** (11/09/2026)
+
+Trouvé par l'instantané de l'étape 1a (`tools/instantane_ref100.js`), **alors que personne ne le
+cherchait** : la même fiche Open Food Facts, passée par deux portes, donne deux pour-100 g.
+
+| porte | ce qu'elle rend | pourquoi |
+|---|---|---|
+| scan code-barres | **48,3** | `_lookupBarcode` : `_per100d1(…)` |
+| recherche par nom | **48** | `_afSuggKcal100` : **`Math.round(…)`** |
+
+**La formule est écrite DEUX fois** — `energy-kcal_100g || energy_100g/4.184` — une fois avec une
+décimale, une fois arrondie à l'entier. C'est la **9ᵉ occurrence** de la famille `BUGS.md` §59
+(la porte jumelle qui n'a pas reçu le même correctif).
+
+**⛔ NON CORRIGÉ, ET LA RAISON EST LE CONTRAT DE L'ÉTAPE 1a** : corriger changerait une **valeur
+enregistrée**, donc ce ne serait plus une extraction mais une **décision**. L'étape 1a promettait
+*« aucune valeur ne change »*, et cette promesse est ce qui rend son instantané lisible.
+
+**Ce que ça coûte** : un produit ajouté par la recherche perd jusqu'à 0,5 kcal/100 g par rapport au
+même produit scanné — donc **jusqu'à 2 kcal sur 400 g**. Petit, mais c'est une divergence entre
+deux chemins censés donner le même résultat, et elle se corrige en un mot le jour où Michel le dit.
+
+---
+
 ### 🟢 PRÊTE — L'ONGLET « PORTIONS » FOSSILISE LE RATIO ET FABRIQUE DES LIGNES MORTES (09/09/2026)
 
 **Michel, en une phrase qui vaut tout un audit** : *« pour l'onglet, je ne connais pas la quantité

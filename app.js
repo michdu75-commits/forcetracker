@@ -1558,6 +1558,40 @@ function _manualBarcode(){
    ⚠️ C'est R8 (la jumelle) pour la 5ᵉ fois cette semaine : le correctif de la veille avait été
    posé sur 1 endroit des 6, et pas sur le plus utilisé. */
 function _per100d1(x){ const v=+x||0; return Math.round(v*10)/10; }
+/* ═══════════ UN SEUL CONSTRUCTEUR DE POUR-100 g (11/09/2026, étape 1a du plan) ═══════════
+   Michel, après la cartographie : *« éviter que les 13 portes reconstruisent chacune leur propre
+   forme d'aliment »*. **HUIT** portes écrivaient `_bcNutr={name, kcal100, prot100, carbs100,
+   fat100}` à la main, et **QUATRE** d'entre elles recopiaient ensuite, mot pour mot :
+   `per100:{kcal:_bcNutr.kcal100, prot:_bcNutr.prot100, carbs:_bcNutr.carbs100, fat:_bcNutr.fat100}`
+   — quatre lignes **identiques au caractère près**, pour traduire un nom de champ en un autre.
+
+   ⛔⛔ C'EST UNE EXTRACTION, PAS UNE UNIFORMISATION — et la nuance est tout le contrat de
+   l'étape. **Deux portes sur huit n'arrondissent PAS** (les reprises : « Mes aliments » et la
+   recherche dans le journal, qui recopient un pour-100 g déjà stocké). Leur faire traverser
+   `_per100d1` changerait une valeur enregistrée : ce serait une DÉCISION, pas un rangement.
+   D'où `{normaliser:false}` — *on extrait ce qui existe, on ne redresse rien au passage*.
+
+   ⚠️⚠️ ET LE PLAN DISAIT « UN OBJET QUI PORTE LES DEUX FACES » — LA MESURE A DIT NON.
+   Poser `per100` **dans** `_bcNutr` aurait ajouté un champ à un objet que l'instantané sérialise,
+   donc le critère de réussite de l'étape (*identique octet pour octet*) aurait été violé **par
+   construction** : impossible de distinguer « rien n'a changé » de « tout a changé un peu ».
+   👉 Deux petites fonctions au lieu d'une maligne. *Un critère qu'on est obligé d'assouplir pour
+   faire passer son propre code n'est plus un critère.*
+
+   ⚠️ `maxNom` existe parce que les portes ne coupent pas toutes pareil : 60 partout, **80** pour
+   l'étiquette recopiée à la main. Ce n'est pas une coquille à harmoniser ici — c'est un écart
+   qu'on TRANSPORTE tel quel, pour que l'instantané ne bouge pas. */
+function _ref100(nom, kcal, prot, carbs, fat, opts){
+  const n = (opts && opts.normaliser===false) ? (x=>+x||0) : _per100d1;
+  return { name:String(nom==null?'':nom).slice(0, (opts && opts.maxNom) || 60),
+           kcal100:n(kcal), prot100:n(prot), carbs100:n(carbs), fat100:n(fat) };
+}
+/* La traduction `kcal100…` → `per100.kcal…`, à un seul endroit. ⛔ Elle ne CALCULE rien : si elle
+   se mettait à arrondir ou à compléter, elle cesserait d'être une traduction et deviendrait une
+   seconde source de vérité (R2) — exactement ce que cette étape supprime. */
+function _per100De(r){
+  return r ? {kcal:r.kcal100, prot:r.prot100, carbs:r.carbs100, fat:r.fat100} : null;
+}
 /* 📷⛔⛔ LE SCAN TROUVE LE PRODUIT, N'A AUCUNE VALEUR, ET LAISSE LA PERSONNE LÀ (ft-v1163)
    Michel, après trois versions passées sur la même ligne : *« c'est super chiant en fait, même
    la ratatouille ne change pas les valeurs sur l'onglet poids. Et même par portion, ça dépend de
@@ -1603,8 +1637,10 @@ function _per100d1(x){ const v=+x||0; return Math.round(v*10)/10; }
 function _bcSansValeurs(nom, opts){
   opts=opts||{};
   /* 🧹 ft-v1180 — porte a part entiere : elle pose un nouveau nom et une nouvelle
-     provenance. Idempotent quand l'appelant (scan, photo d'etiquette) l'a deja appelee. */
-  try{ _afOublierAliment(); }catch(e){}
+     provenance. Idempotent quand l'appelant (scan, photo d'etiquette) l'a deja appelee.
+     📦 `garderPaquet` : on ne change PAS d'aliment ici, on poursuit celui dont la fiche est
+     vide — son poids de paquet doit traverser jusqu'au calibrage (ft-v1174). */
+  try{ _afOublierAliment({garderPaquet:true}); }catch(e){}
   /* ⛔⛔ D'ABORD ON RETIRE LE MENSONGE : sans ça, tout le reste est inutile (mutation M2). */
   _bcNutr=null;
   /* ⚖️⛔⛔ ft-v1179 — ET LE BLOC QUI VA AVEC SE CACHE. C'était le SEUL des quatre endroits qui
@@ -1652,7 +1688,19 @@ async function _lookupBarcode(ean, saisie, codeDouteux){
   /* 📦 ft-v1174 — MIS DE CÔTÉ **AVANT** LE BRANCHEMENT « aucune valeur », et c'est le point.
      Une fiche sans tableau nutritionnel part au calibrage (ft-v1165) et l'objet produit
      disparaît avec elle — or c'est précisément ce produit-là qui a le plus besoin de son poids. */
-  _bcPaquetTxt = String((p&&p.quantity)||'');
+  /* ⚠️⚠️ ON PREND, ON OUBLIE, ON REPOSE — ET C'EST MA PHASE 0a QUI A RENDU CE DÉPLACEMENT
+     NÉCESSAIRE (11/09/2026). Cette ligne posait `_bcPaquetTxt` **avant** `_afOublierAliment()`,
+     et ça marchait uniquement parce que personne ne nettoyait cette variable-là : elle était
+     protégée **par accident**, pas par conception. Le jour où `_afOublierAliment` a enfin remis
+     le poids de paquet à zéro (c'était le but : la pastille « 410 g » survivait à l'aliment
+     suivant), la ratatouille sans valeurs a perdu son « 250 g » en partant au calibrage — soit
+     exactement le défaut que ft-v1174 avait corrigé.
+     ⛔⛔ LE CONTRÔLE L'A ATTRAPÉ, PAS LA RELECTURE : deux témoins de ft-v1174 (bloc CCLXXII ⑧ et
+     ⑨) sont devenus rouges en passe complète. *Un correctif juste peut casser ce qui ne tenait
+     que par l'absence de ménage.*
+     ⭐ Et le patron était déjà écrit quatre lignes plus bas pour `_bcCategories`, dans les mêmes
+     termes : on met de côté, on oublie, on repose. On l'applique, on n'en invente pas un autre. */
+  const _paquetLu = String((p&&p.quantity)||'');
   /* ⚖️ ft-v1191 — LA CATÉGORIE EST MISE DE CÔTÉ ICI, pour la même raison que le poids de paquet
      juste au-dessus : une fiche sans tableau nutritionnel part au calibrage et l'objet produit
      disparaît avec elle. ⛔ Et elle est posée **avant** `_afOublierAliment`, qui la remet à zéro —
@@ -1664,13 +1712,10 @@ async function _lookupBarcode(ean, saisie, codeDouteux){
   /* 🧹 ft-v1180 — RESET puis HYDRATATION : on oublie l'aliment PRÉCÉDENT avant de poser celui-ci (scan code-barres). */
   try{ _afOublierAliment(); }catch(e){}
   _bcCategories=_catLue;          // ⬅ APRES l'oubli, sinon elle serait effacee aussitot
-  _bcNutr={
-    name:((p.product_name_fr||p.product_name||p.generic_name_fr||p.generic_name||'Produit')+(p.brands?' ('+String(p.brands).split(',')[0].trim()+')':'')).slice(0,60),
-    kcal100:kcal100,
-    prot100:_per100d1(n['proteins_100g']),
-    carbs100:_per100d1(n['carbohydrates_100g']),
-    fat100:_per100d1(n['fat_100g'])
-  };
+  _bcPaquetTxt=_paquetLu;         // ⬅ idem depuis la phase 0a (voir le commentaire plus haut)
+  _bcNutr=_ref100((p.product_name_fr||p.product_name||p.generic_name_fr||p.generic_name||'Produit')
+                    +(p.brands?' ('+String(p.brands).split(',')[0].trim()+')':''),
+                  kcal100, n['proteins_100g'], n['carbohydrates_100g'], n['fat_100g']);
   if(!_bcNutr.kcal100&&!_bcNutr.prot100&&!_bcNutr.carbs100&&!_bcNutr.fat100)
     return _bcSansValeurs(_bcNutr.name, {saisie:saisie||'scan', origine:'off', sourceId:ean,
       codeDouteux:codeDouteux===true, cause:'« '+_bcNutr.name+' » trouvé, mais sa fiche n\'a aucune valeur.'});
@@ -1728,7 +1773,7 @@ function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux, origine){
   _afSetSrc({saisie:saisie||'scan',origine:origine||'off',sourceId:sourceId?String(sourceId).slice(0,32):null,
     etat:'tel-que-vendu',
     ...(codeDouteux?{codeDouteux:true}:{}),
-    per100:{kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
+    per100:_per100De(_bcNutr),
     attendu:_afLuFormulaire()});
   _afNoteEtat(_bcNutr.name);
   /* Score santé indicatif (Nutri-Score + NOVA + additifs) — module food-health.js.
@@ -1802,9 +1847,17 @@ function _calAppliquer(){
      ⭐ Et ça ne change rien à l'affichage : `_qtyRescale` arrondit déjà les 4 champs à l'entier
      au moment de les écrire. La décimale ne sert qu'à ce qui est CONSERVÉ. */
   /* 🧹 ft-v1180 — RESET puis HYDRATATION : on oublie l'aliment PRÉCÉDENT avant de poser celui-ci (calibrage d'etiquette). */
-  try{ _afOublierAliment(); }catch(e){}
-  _bcNutr={name:nom.slice(0,80), kcal100:_per100d1(kcal), prot100:_per100d1(prot),
-           carbs100:_per100d1(carbs), fat100:_per100d1(fat)};
+  /* ⚠️⚠️ MÊME PATRON QUE `_lookupBarcode`, ET IL A FALLU DEUX TOURS POUR LE VOIR (11/09/2026).
+     Depuis la phase 0a, `_afOublierAliment()` remet le poids du paquet à zéro — or le poids que
+     cette fonction veut réutiliser n'appartient PAS à l'aliment précédent : c'est celui du
+     produit qu'on est en train de calibrer (la ratatouille trouvée par son code-barres, dont la
+     fiche n'a aucune valeur). ⛔ Corriger `_lookupBarcode` seul ne suffisait donc pas : les
+     témoins ⑧ et ⑨ de CCLXXII sont restés rouges, parce que le `_bcPaquetTxt` lu plus bas était
+     effacé ICI, dans une porte que je n'avais pas regardée.
+     👉 *C'est la porte jumelle (R8), à l'intérieur même du correctif censé fermer une fuite.*
+     On met de côté, on oublie, on repose — comme partout ailleurs dans ce fichier. */
+  try{ _afOublierAliment({garderPaquet:true}); }catch(e){}   // on calibre CE produit, pas un autre
+  _bcNutr=_ref100(nom, kcal, prot, carbs, fat, {maxNom:80});
   /* ⭐ LE CHEMIN DE CIQUAL, MOT POUR MOT — produit vide, pas de portion déclarée (donc 100 g
      par défaut, que la personne remplace par sa dose), et une provenance qui dit la vérité. */
   /* 📦 ft-v1174 — LE POIDS DU PAQUET TRAVERSE LE CALIBRAGE, et c'est LE cas de Michel. Sa
@@ -2691,8 +2744,7 @@ function quickFillFood(i){
      ⛔ ft-v1042 n'est PAS touchée : un aliment scanné n'est pas compté en portions, donc son
      champ grammes s'ouvre exactement comme avant. Un témoin de non-régression le fige. */
   if(P && it.u!=='portion' && (+P.kcal>0 || +P.prot>0 || +P.carbs>0 || +P.fat>0)){
-    _bcNutr={ name:(it.name||'').slice(0,60), kcal100:+P.kcal||0,
-              prot100:+P.prot||0, carbs100:+P.carbs||0, fat100:+P.fat||0 };
+    _bcNutr=_ref100(it.name, P.kcal, P.prot, P.carbs, P.fat, {normaliser:false});
     const g=document.getElementById('af-bc-grams');
     /* ⚖️ ft-v1051 : PROPOSÉE, plus imposée — le champ reste vide, la pastille offre le rappel. */
     if(g) g.value='';
@@ -2898,16 +2950,7 @@ async function onFoodLabelFile(input){
     if(!d||d.status!=='ok'){toast('Étiquette illisible — rapproche-toi, éclaire, ou saisis à la main','error');return;}
   /* 🧹 ft-v1180 — RESET puis HYDRATATION : on oublie l'aliment PRÉCÉDENT avant de poser celui-ci (photo d'etiquette). */
   try{ _afOublierAliment(); }catch(e){}
-    _bcNutr={
-      name:(d.name||'Produit').slice(0,60),
-      /* ⚠️ LES CALORIES ÉTAIENT LE SEUL CHAMP ARRONDI ICI, alors que le serveur demande
-         explicitement « garde 1 decimale si presente » : l'information était produite puis
-         jetée à l'arrivée (R4, dans sa forme la plus pure). */
-      kcal100:_per100d1(d.kcal100),
-      prot100:_per100d1(d.prot100),
-      carbs100:_per100d1(d.carbs100),
-      fat100:_per100d1(d.fat100)
-    };
+    _bcNutr=_ref100(d.name||'Produit', d.kcal100, d.prot100, d.carbs100, d.fat100);
     /* ⛔⛔ LA JUMELLE (ft-v1163, R8) — même défaut, même correctif, un seul propriétaire.
        Michel : *« ça risque de merder aussi pour le scan du code-barres ou l'étiquette,
        c'est pareil »*. Il avait raison : cette ligne était le clone exacte de celle du
@@ -2930,7 +2973,7 @@ async function onFoodLabelFile(input){
     document.getElementById('af-desc').value=_bcNutr.name;
     _bcApplyGrams();
     _afSetSrc({saisie:'photo-ia',origine:'etiquette',
-      per100:{kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
+      per100:_per100De(_bcNutr),
       attendu:_afLuFormulaire()});
     if(!S.premium){S.foodAiUses=(S.foodAiUses||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();if(typeof _renderAfAiNote==='function')_renderAfAiNote();}
     toast('Étiquette lue ✅ — ajuste la quantité','success');
@@ -3467,8 +3510,7 @@ function _afSuggPrendreMarque(i){
   const a=_marques.a[idx];
   /* 🧹 ft-v1180 — RESET puis HYDRATATION : on oublie l'aliment PRÉCÉDENT avant de poser celui-ci (proposition marque). */
   try{ _afOublierAliment(); }catch(e){}
-  _bcNutr={ name:(a[1]+' · '+a[0]).slice(0,60), kcal100:_per100d1(a[3]),
-            prot100:_per100d1(a[4]), carbs100:_per100d1(a[5]), fat100:_per100d1(a[6]) };
+  _bcNutr=_ref100(a[1]+' · '+a[0], a[3], a[4], a[5], a[6]);
   const sid=('marque:'+a[0]+':'+a[1]).slice(0,32);
   _offRemplirFormulaire({serving_quantity:a[7]||0, nutriments:{}}, sid, 'marque', false, 'marque');
   /* ⛔ LA PROVENANCE DIT CE QU'ELLE EST, y compris quand les kcal ont été DÉRIVÉES des macros
@@ -3480,7 +3522,7 @@ function _afSuggPrendreMarque(i){
   _afSetSrc({saisie:'marque', origine:'marque', sourceId:sid, etat:null,
              ...(a[9]? {doute:String(a[9]).slice(0,90)} : {}),
              ...(a[8]? {kcalDerivee:true} : {}),
-             per100:{kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
+             per100:_per100De(_bcNutr),
              attendu:_afLuFormulaire()});
   /* ⚠️ ET IL SE REDIT DANS LE FORMULAIRE, là où on appuie sur « Ajouter » : la liste défile,
      le formulaire est le dernier écran avant l'enregistrement. */
@@ -3494,8 +3536,7 @@ function _afSuggPrendreCiqual(i){
      3 484), et on les jetait ici même, à la lecture. */
   /* 🧹 ft-v1180 — RESET puis HYDRATATION : on oublie l'aliment PRÉCÉDENT avant de poser celui-ci (proposition CIQUAL). */
   try{ _afOublierAliment(); }catch(e){}
-  _bcNutr={ name:a[1].slice(0,60), kcal100:_per100d1(a[3]),
-            prot100:_per100d1(a[4]), carbs100:_per100d1(a[5]), fat100:_per100d1(a[6]) };
+  _bcNutr=_ref100(a[1], a[3], a[4], a[5], a[6]);
   /* ⚠️ PAS D'ÉTAT « tel-que-vendu » DANS LA PROVENANCE, et c'est une vraie différence avec
      Open Food Facts : un produit emballé donne toujours ses valeurs TELLES QUE VENDUES (donc
      sèches pour des pâtes), alors que CIQUAL dit l'état EN TOUTES LETTRES dans le nom — « Riz
@@ -3504,7 +3545,7 @@ function _afSuggPrendreCiqual(i){
      puisqu'un « Riz blanc, cru » pèse bien 3 fois moins que le même riz cuit. */
   _offRemplirFormulaire({serving_quantity:0, nutriments:{}}, 'ciqual:'+a[0], 'ciqual');
   _afSetSrc({saisie:'ciqual', origine:'ciqual', sourceId:'ciqual:'+a[0], etat:null,
-             per100:{kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
+             per100:_per100De(_bcNutr),
              attendu:_afLuFormulaire()});
   _afSuggVider();
   toast('Ajuste la quantité ✅','success');
@@ -3850,8 +3891,7 @@ function _afSuggPrendreLocale(i){
   const P=e.per100;
   /* 🍽️ ft-v1186 — la porte JUMELLE, même règle (R8). */
   if(P && e.u!=='portion' && (+P.kcal>0 || +P.prot>0 || +P.carbs>0 || +P.fat>0)){
-    _bcNutr={ name:(e.name||'').slice(0,60), kcal100:+P.kcal||0,
-              prot100:+P.prot||0, carbs100:+P.carbs||0, fat100:+P.fat||0 };
+    _bcNutr=_ref100(e.name, P.kcal, P.prot, P.carbs, P.fat, {normaliser:false});
     const g=document.getElementById('af-bc-grams');
     /* ⚖️ ft-v1051 : la JUMELLE (R8) — le même correctif, sur le chemin « reprendre depuis le journal ». */
     if(g) g.value='';
@@ -3940,10 +3980,8 @@ function _afSuggPrendreOff(i){
   const n=p.nutriments||{};
   /* 🧹 ft-v1180 — RESET puis HYDRATATION : on oublie l'aliment PRÉCÉDENT avant de poser celui-ci (recherche Open Food Facts par nom). */
   try{ _afOublierAliment(); }catch(e){}
-  _bcNutr={ name:_afSuggNom(p), kcal100:_per100d1(_afSuggKcal100(p)),
-            prot100:_per100d1(n['proteins_100g']),
-            carbs100:_per100d1(n['carbohydrates_100g']),
-            fat100:_per100d1(n['fat_100g']) };
+  _bcNutr=_ref100(_afSuggNom(p), _afSuggKcal100(p),
+                  n['proteins_100g'], n['carbohydrates_100g'], n['fat_100g']);
   _offRemplirFormulaire(p, p.code||null, 'recherche');
   _afSuggVider();
   toast('Ajuste la quantité ✅','success');
@@ -4998,7 +5036,7 @@ function _afPropCacher(){
    ⚠️ ORDRE OBLIGATOIRE — RESET puis HYDRATATION. Elle s'appelle AVANT que le nouvel aliment
    pose son `_bcNutr` : `_offRemplirFormulaire` LIT `_bcNutr` (elle affiche son nom), donc
    l'appeler depuis l'intérieur détruirait ce que l'appelant vient d'écrire. */
-function _afOublierAliment(){
+function _afOublierAliment(opts){
   /* ⛔ La moitié « pour-100 g » : le bloc et sa valeur ne décrivent plus rien. */
   _bcNutr=null;
   const bc=document.getElementById('af-bc-row'); if(bc) bc.style.display='none';
@@ -5011,6 +5049,31 @@ function _afOublierAliment(){
      « plat cuisiné » du produit précédent ferait taire l'avertissement du paquet de pâtes
      suivant. C'est le défaut exact que cette fonction existe pour empêcher. */
   try{ _bcCategories=''; }catch(e){}
+  /* 📦⛔⛔ LE POIDS DU PAQUET SE REND AUSSI (11/09/2026, phase 0a) — MESURÉ, PAS SUPPOSÉ.
+     Sonde `tools/sonde_fuites_nutrition.js`, rejouable : on scanne une boîte de **410 g**, puis
+     on reprend un « Yaourt nature » par « Mes aliments » **sans fermer l'écran** — et la pastille
+     **« 📦 410 g (le paquet entier) »** est TOUJOURS là, sur le yaourt, avec `_bcPaquetG` à 410.
+     ⛔ Deux raisons se cumulaient : `_bcPaquetG` n'était nettoyé que dans `openAddFood` (donc
+     jamais ENTRE deux aliments d'une même ouverture), et la pastille n'est repeinte que par
+     `_offRemplirFormulaire` — donc les trois portes qui ne passent pas par le hub (photo
+     d'étiquette, « Mes aliments », reprise du journal) la laissaient telle quelle à l'écran.
+     👉 ***C'est exactement le défaut `_bcCategories` de ft-v1191, sur une autre variable*** — et
+     c'est la raison d'être de cette fonction (R15) : *tout ce qui décrit l'aliment affiché doit
+     mourir avec lui*. Posé ICI, donc sur les 13 portes d'un coup (R2), pas porte par porte.
+     ⚠️ `_bcProposerPaquet()` est appelée juste après : sans elle la variable serait propre et
+     **l'écran mentirait encore** — c'est le bouton qu'on voit, pas la variable. */
+  /* ⛔⛔ « OUBLIER L'ALIMENT » ET « REMETTRE L'ÉCRAN À PLAT POUR LE MÊME ALIMENT » SONT DEUX
+     GESTES DIFFÉRENTS — et il a fallu trois tours de mesure pour le voir (11/09/2026).
+     Sur les 13 appelants, DEUX poursuivent le produit courant au lieu d'en changer :
+     `_bcSansValeurs` (la fiche est trouvée mais VIDE, on part au calibrage) et `_calAppliquer`
+     (on calibre CE produit-là). Effacer leur poids de paquet fait perdre le « 250 g » de la
+     ratatouille — le défaut exact que ft-v1174 avait corrigé, et que deux témoins protègent.
+     ⚠️ MA PREMIÈRE RÉPONSE ÉTAIT DE RECOPIER « on prend, on oublie, on repose » CHEZ CHAQUE
+     APPELANT. Posée deux fois, elle a raté la troisième porte et le témoin est resté rouge.
+     👉 *Un patron qu'on recopie à chaque porte EST la duplication que cette étape supprime
+     ailleurs.* Un paramètre nommé, sur le propriétaire unique, dit la distinction UNE fois. */
+  try{ if(!(opts && opts.garderPaquet)){ _bcPaquetG=0; _bcPaquetTxt='';
+         if(typeof _bcProposerPaquet==='function') _bcProposerPaquet(); } }catch(e){}
   const bp=document.getElementById('af-bc-portion');
   if(bp){ bp.style.display='none'; bp.textContent=''; delete bp.dataset.q; }
   /* ⛔ La moitié « portions/grammes » — et c'est elle qui vidait le champ relu par `_afMajAncre`. */

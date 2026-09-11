@@ -20,7 +20,28 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1192` — 🅰️🅱️ **l'alternance semaine A / semaine B dans le
+- **Version en ligne (live) :** `ft-v1193` — 🏗️ **phase 0a + étape 1a du plan Nutrition.**
+  Michel valide `docs/PLAN-NUTRITION.pdf` : *« exécute la phase 0 puis l'étape 1a »*.
+  ⭐ **Phase 0a** : le poids du paquet **ne se rendait pas** — mesuré, la pastille « 📦 410 g (le
+  paquet entier) » survivait d'un aliment au suivant (sonde `tools/sonde_fuites_nutrition.js`,
+  rejouable). C'était le défaut `_bcCategories` de ft-v1191 **sur une autre variable** (**R15**).
+  ⭐⭐ **Étape 1a** : les **8** `_bcNutr={…}` à la main et les **4** traductions identiques au
+  caractère près deviennent `_ref100()` + `_per100De()`.
+  ⛔ **C'est une EXTRACTION, pas une uniformisation** : 2 portes sur 8 n'arrondissent pas (les
+  reprises) et gardent `{normaliser:false}` — les normaliser changerait une **valeur enregistrée**,
+  ce serait une **décision**.
+  ⭐ **Critère binaire, atteint** : l'instantané des 8 portes est **identique octet pour octet**,
+  même sha256, avant et après (`tools/instantane_ref100.js`).
+  ⚠️⚠️ **Et la passe a trouvé une vraie régression de la phase 0a** : `_bcPaquetTxt` n'était
+  protégé que **par accident**, faute de ménage → nouvelle famille **`BUGS.md` §62**. Corrigée par
+  un **paramètre nommé** sur le propriétaire unique (`{garderPaquet:true}`), pas par un patron
+  recopié à chaque porte.
+  ⏭️ **Prochaine étape du plan** : 1b/2/3 (extractions), puis le hub (phase 2), puis la douane.
+  📣 **Deux points MESURÉS et non corrigés, en attente de décision** : `S.savedFoods` perdu entre
+  deux onglets (⛔ l'union par nom serait fausse) · le scan rend `48,3` là où la recherche rend `48`.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1192` — 🅰️🅱️ **l'alternance semaine A / semaine B dans le
   sélecteur de jour.** Michel, capture de son Powerbuilding : *« est-ce que la semaine A/B sont en
   charge ? »* → **non**, mesuré : `openDaySel` listait les jours **à plat**.
   ⭐⭐ **L'info existait pourtant** — `getProgCurrentWeek` s'affiche déjà en « Semaine 2 / 4 » sur la

@@ -3598,3 +3598,61 @@ autre chose. Un outil TRONQUÉ, lui, **conforte** — il donne exactement le sig
 - ⛔ un bloc de témoins qui a besoin d'un navigateur **doit vivre avant `b.close()`** dans
   `tests/parcours/runner.js` — la raison est écrite à l'endroit exact dans le fichier ;
 - ⚠️ et le réflexe : **un exit code 0 ne prouve pas qu'un runner est allé au bout.**
+
+### ⭐ Rechute du 11/09/2026 (ft-v1193) — et elle dit que la famille est **transversale**
+
+Mon **harnais de mutation** a affiché **« 0 rouges »** pour une mutation qui était en réalité la
+plus violente de toutes (`_ref100` rend `null`). J'ai failli en conclure qu'elle ne mordait pas,
+donc que le code muté était **décoratif**.
+
+**La cause** : la mutation faisait *planter* le runner (`TypeError` sur `null`), donc il n'affichait
+**aucune ligne** — et mon `grep -c "❌"` comptait 0 sur une sortie **vide**.
+
+> **Un compteur de rouges doit d'abord vérifier que le runner a FINI.**
+> « 0 rouge » et « n'a pas tourné » produisent le même chiffre.
+
+**Le garde-fou posé** : le harnais cherche la **ligne de total** avant de compter, et distingue
+explicitement les deux cas (`⛔ RUNNER MORT` vs `n rouge(s)`).
+
+⚠️ **Et le même jour, une troisième forme de la même famille** : `pgrep -f "node tests/parcours/runner.js"`
+**matche son propre shell**, parce que le motif figure dans sa ligne de commande — une boucle
+d'attente sur une passe **déjà terminée** tourne alors indéfiniment. C'est le piège de ft-v1189
+(`pkill` qui tue son propre shell), repayé sous une autre forme.
+
+👉 *Les trois cas — sortie tronquée, sortie vide, motif qui se matche lui-même — ont la même
+signature : **l'outil de mesure se décrit comme un résultat**.*
+
+## §62 — ⛔⛔ UNE PROTECTION QUI NE TENAIT QUE PAR L'ABSENCE DE MÉNAGE *(11/09/2026, ft-v1193)*
+
+**À quoi on la reconnaît** : un correctif **juste**, qui nettoie enfin une variable oubliée, fait
+rougir des témoins qui n'ont **aucun rapport** avec son sujet.
+
+**Le cas** : `_afOublierAliment` ne remettait pas `_bcPaquetG` à zéro — d'où une pastille
+« 📦 410 g (le paquet entier) » qui survivait d'un aliment au suivant (mesuré). Le correctif tient
+en une ligne. Mais deux témoins de **ft-v1174** sont aussitôt devenus rouges : une ratatouille
+*trouvée sans valeurs* perdait son « 250 g » en partant au calibrage.
+
+**Pourquoi** : `_bcPaquetTxt` traversait ce chemin **uniquement parce que personne ne la nettoyait**.
+Elle était protégée **par accident**, pas par conception — et rien ne le disait.
+
+> **Le jour où l'on range enfin, on découvre ce qui ne tenait que par le désordre.**
+
+**Ce qui l'attrape** : la passe complète, et elle seule. Ni la relecture, ni le contrôle négatif du
+correctif (qui mordait parfaitement sur **ses** témoins), ni l'instantané avant/après (identique
+octet pour octet, parce que le chemin cassé n'y figurait pas).
+
+**Le réflexe** : après un correctif qui **nettoie** un état partagé, chercher **qui comptait sur le
+fait qu'il ne soit PAS nettoyé**. `grep` le nom de la variable, et regarder chaque lecteur.
+
+**⚠️ Et le piège dans le piège, payé trois fois en une heure.** Ma première réponse a été de
+recopier le patron *« on prend, on oublie, on repose »* chez chaque appelant. Posé chez
+`_lookupBarcode`, puis chez `_calAppliquer`, il a **raté la troisième porte** (`_bcSansValeurs`) —
+et le témoin est resté rouge. C'est **R8** (la porte jumelle) **à l'intérieur du correctif censé
+fermer une fuite**.
+
+> **Un patron qu'on recopie à chaque porte EST la duplication qu'on prétend supprimer.**
+
+**Le bon geste** : un **paramètre nommé sur le propriétaire unique** (`_afOublierAliment({garderPaquet:true})`),
+qui dit **une seule fois** la distinction entre *« j'oublie l'aliment »* et *« je remets l'écran à
+plat pour le MÊME aliment »* — 2 appelants sur 13.
+
