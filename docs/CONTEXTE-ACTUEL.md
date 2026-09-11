@@ -20,7 +20,31 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1190` — ⚖️ **le garde-fou LARGE, et la passe que j'ai
+- **Version en ligne (live) :** `ft-v1191` — 🔢⚖️ **l'avertissement kcal/macros était JUSTE et hors
+  de l'écran · et « produit SEC » se déclenchait sur un MOT.**
+  ⭐⭐ **Ce que la mesure a déplacé** : le contrôle de cohérence n'est **ni absent ni muet**. Il se
+  déclenche (183 kcal d'écart, 48 %), dit exactement ce qu'il faut, et propose un bouton
+  **« Mettre 381 kcal »** — donc **aucune correction silencieuse**. *Le cahier demandait de
+  l'ajouter ; il existait déjà* (**R23**).
+  ⛔⛔ **Le défaut était une POSITION** : fiche de **1 907 px** pour **775 visibles**, alerte à
+  **1 132 px sous la zone visible** — pendant que le geste qui la déclenche est tout en haut.
+  C'est **ft-v1182 sur un autre bloc**.
+  ⭐ **R2/R13** : la logique n'est pas recopiée, elle est **sortie** de `_afSuggVoir` où elle était
+  enfermée. Un propriétaire (`_amenerALaVue`), deux appelants.
+  ⛔⛔ **Le contrôle négatif a trouvé un vrai défaut que j'allais livrer** : en tapant 200/20/20/4 —
+  ligne **cohérente à l'arrivée** — un état **intermédiaire** incohérent faisait **sauter l'écran au
+  milieu de la frappe**. D'où le garde sur le focus (**R24**).
+  🏷️ **Et « produit SEC »** : une regex sur le **nom seul**, mot déclencheur « Lentille », sans
+  aucun mot de cuisson — *le premier match gagnant*, famille n°1 du dépôt. `categories_tags` n'était
+  **même pas demandé** (**R8**) ; il l'est désormais aux **deux** requêtes. **Les 8 cas du §14 de
+  Michel passent.**
+  ⚠️ **Deux limites dites** : les étiquettes de catégorie **n'ont pas pu être confrontées à la vraie
+  base** (403 au CONNECT), elles sont larges et le nom sert de filet ; et **l'origine du 48,3 reste
+  non tracée** — deux champs de la fiche suffiraient, il faut un téléphone.
+  ⛔ **L'app ne choisit toujours pas** entre 48,3 et 381 : c'est voulu, et c'était sa demande.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1190` — ⚖️ **le garde-fou LARGE, et la passe que j'ai
   faussée moi-même.**
   ⭐⭐ **Michel a tranché** : *« Aucune ligne alimentaire ne peut être enregistrée sans une quantité
   réellement choisie par l'utilisateur »*, **indépendamment de l'origine technique de l'aliment**.

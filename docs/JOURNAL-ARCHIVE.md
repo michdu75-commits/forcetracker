@@ -7919,3 +7919,54 @@ Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CON
 Tests : **parcours 3400/3400** (+9, bloc **CCLXXIX**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⭐ **Les 7 exigences de Michel sont couvertes une par une** : liste vide · liste à 12 · **clavier ouvert (zone visible −350 px)** · `coquillette` → 9811 affiché · champ vidé → la liste revient · aucune perte de favoris · aucun changement des résultats. ⛔ **CONTRÔLE NÉGATIF : 4 mutations, toutes mordent, 1 rouge chacune** — ① le repli retiré · ② ⭐ **le clavier ignoré (`innerHeight` seul)** · ③ la liste ne revient plus · ④ on **VIDE** la liste au lieu de la cacher.
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1182. |
+
+
+---
+
+**ft-v1183 — 🍽️ « PORTION » DEVIENT UNE VRAIE UNITÉ — ET LE MULTIPLICATEUR N'AVAIT AUCUN PROPRIÉTAIRE** — cahier des charges de Michel (P1), avec sa consigne d'ouverture : ***« avant de modifier quoi que ce soit, tracer tous les lecteurs/écrivains »***. **Audit avant code, et c'est l'audit qui a fixé le périmètre.**
+
+**⭐⭐ LE GESTE, MESURÉ AVANT D'ÉCRIRE UNE LIGNE** : on saisit 300 kcal, on tape **« ×2 »**, l'écran affiche bien **600** — et la ligne partait en **`q:null, u:null, per100:null`**. 👉 ***« 2 portions de 300 » se fossilisait en « 1 portion de 600 »***, et plus rien ne pouvait la redimensionner. C'est la mort exacte des lignes réparées en ft-v1176.
+
+**⛔⛔ LA CAUSE, EN DEUX MORCEAUX, ET AUCUN CALCUL N'ÉTAIT FAUX** : `_afApplyPortion` ne faisait **QUE** réécrire les 4 champs (`_afProp(x)`) — le multiplicateur n'était écrit **nulle part**, `_afRef` restait `{base:300, q:1, u:''}` — et `_provFood` n'avait **aucune branche** pour l'unité « portion », sa liste blanche n'acceptant que les grammes. ⭐ **En grammes, la quantité affichée vit dans le champ `af-prop` ; en portions, elle ne vivait nulle part.** `_afPortions` est sa jumelle exacte (**R2**).
+
+**⭐⭐ ET L'AUDIT A TROUVÉ AUTRE CHOSE, QUI A RÉDUIT LE TRAVAIL** — les 8 chemins tracés, mesurés un par un sur une ligne `q:2, u:'portion'` :
+
+| chemin | avant |
+|---|---|
+| stockage · liste · favori · export CSV · cloud | ✅ passe-plats, rien à faire |
+| **`quickFillFood`** (reprise « Mes aliments ») | ⛔ `{q:1,u:''}` — les 600 redevenaient **une** portion |
+| **`quickAddFood`** (ajout direct) | ⛔ `q:null` |
+| **`_afSuggPrendreLocale`** (reprise recherche) | ⛔ idem |
+| **`openEditFood` / `saveEditFood`** | ✅ **savait déjà faire** : « Quantité (portion) », ×3 → 900, sauve `q:3` |
+
+👉 ***Les portes cassées étaient toutes du côté AJOUT.*** On n'a donc rien inventé : on a porté sur les portes jumelles ce qui existait déjà (**R8/R13**), pour la **7ᵉ** fois recensée dans ce fichier.
+
+**⚠️ TROIS ÉCARTS ASSUMÉS À LA SPEC, CHACUN AVEC SA MESURE** — je les dis parce qu'ils changent ce qui est construit :
+- ⛔ **pas de renommage** `referenceType`/`referenceQuantity`/`totals` : les noms internes existent déjà (`q`/`u`/`per100`) et sont relus partout — les renommer casserait tous les lecteurs pour zéro gain (**R33** : un seul nom interne par grandeur, il est **déjà** posé) ;
+- ⛔ **pas de champ `portion_weight_g`** : **mesuré**, déclarer le poids fait basculer en grammes et calcule déjà le pour-100 g (2 portions pesées 500 g → `q:500, u:'g', per100:120`). *« Portion + poids connu » n'existe pas comme état* — ce champ ne se remplirait jamais (**R3** : qui le produit ?) ;
+- ⛔ **pas de `portion_label` stocké** : il se **dérive** des totaux et de `q`, et deux copies finiraient par diverger (**R2**).
+
+**⭐ MAIS LA CONSIGNE D'AFFICHAGE EST TENUE, ET C'EST ELLE QUI COMPTE** : `_portionDefTexte` est le **propriétaire unique** du texte, lu par l'écran d'ajout **et** par celui d'édition. Il dit toujours à quoi une portion correspond **et** ce qu'on ignore — *« Tu notes **2 portions** (1 portion = 300 kcal, poids inconnu) »*. ⛔ L'écran d'édition affichait **« 2 portion »** nu : sans définition, et au singulier.
+
+**⛔⛔ LE GARDE QUI N'EST PAS DÉCORATIF, ET QUE LA MESURE A EXIGÉ** : l'onglet **⚖️ En grammes**, *avant* qu'un poids soit déclaré, pose **lui aussi** `_afRef={q:1,u:''}`. Sans le test sur `_afUnite`, quelqu'un qui hésite sur cet onglet verrait sa ligne enregistrée **en « portions »** — une unité qu'il n'a pas choisie (**R29**). Un témoin le fige.
+
+**⛔ L'INVARIANT ft-v1061, APPLIQUÉ AUX PORTIONS** : quand l'écran redevient la référence (retouche d'une macro à la main), le multiplicateur **repart à 1** — *ce qui est affiché est, par définition, **une** portion de lui-même*. Sans ça, un ×2 suivi d'une correction enregistrerait « 2 portions » pour des totaux qui sont **déjà** ceux de deux portions.
+
+**⚠️ DEUX TROUS TROUVÉS PAR LA MESURE APRÈS MON PREMIER CORRECTIF, ET FERMÉS** : ① `quickAddFood` **filtrait encore en amont** (`q:null` si l'unité n'est pas `g`) — *une porte ouverte en aval ne sert à rien si l'amont filtre encore* ; ② `rejouerRepas` **forçait** `q:null,u:null` à l'écriture, donc rejouer un repas aurait **tué les portions qu'on venait de sauver**. *Les deux ne se voyaient pas à la relecture ; la sonde les a rendues évidentes.*
+
+**⛔⛔⛔ ET LA PASSE COMPLÈTE A REFUSÉ MON PREMIER CORRECTIF — 7 ROUGES, ET ELLE AVAIT RAISON.** Mon bloc CCLXXX était à **14/14** ; la passe a rendu **7 témoins rouges** — ft-v1177, ft-v1179 et ft-v1180 — *tous* des témoins qui disent **« on n'invente pas une quantité qu'elle n'a jamais eue »*, tous avec le même message : `q=1 u=portion` au lieu de `q=null`.
+👉 **La cause tient en une phrase** : `_afPortions` vaut 1 par défaut, donc ***« jamais touché » et « ×1 choisi » étaient indiscernables***. Le bloc portions est l'état **par défaut** de l'écran — l'afficher ne prouve **aucun** choix. J'écrivais donc une unité que la personne n'avait pas choisie : *exactement le reproche que je me faisais à moi-même, deux fonctions plus haut, pour l'onglet grammes* (**R29**).
+⭐ **Le correctif est un drapeau, et le mécanisme existait déjà** : `_afPortionPose`, jumeau mot pour mot de `_afPoidsPose` (**R13**). Seul un **clic sur un bouton** peut l'affirmer ; il retombe partout où l'écran redevient la référence.
+⛔ **Ce n'est PAS un témoin qu'on desserre pour faire passer du code** : c'est mon code qui était trop large. Les deux témoins de MON bloc qui attendaient `q:1` (A→B, retouche) ont été portés sur la garantie **plus forte** — `q:null`, rien d'inventé — pas assouplis. *Troisième fois cette semaine que la mesure arrête un correctif trop large ; les trois fois, c'est elle qui avait raison.*
+
+**⚠️ CHANGEMENT DE COMPORTEMENT À CONNAÎTRE** : un aliment tapé à la main et validé tel quel s'enregistre désormais en **`q:1, u:'portion'`** au lieu de `q:null`. C'est exactement ce que l'écran annonce (*« les 4 valeurs ci-dessous sont 1 portion »*), et c'est ce qui rend la ligne **redimensionnable plus tard** au lieu de naître morte.
+
+**📣 RÈGLE D'OR #11 — LE BOUTON CHOISI S'ALLUME** et la définition s'écrit sous les boutons : l'annonce est **à l'écran, au moment où ça sert**. Aucune pop-up, rien à faire — mais *un choix invisible est un choix qu'on ne peut pas vérifier* (**R24/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les lignes déjà abîmées ne sont pas réparées** — la migration reste un chantier à part, intact. ⛔ Ni le cru/cuit, ni l'affichage de la quantité dans « Déjà noté par toi », ni `alias.json`/CIQUAL, ni la recherche mobile : sa liste de non-touche, respectée. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1045**, `conclusion: success` à **15:33:38 UTC** sur `050109be`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur la LISTE filtrée `status: completed`* — la leçon de ft-v1182, où interroger le run lui-même servait un état périmé.
+
+Tests : **parcours 3415/3415 sur l'arbre FINAL** (+15, bloc **CCLXXX**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 14 MUTATIONS, TOUTES MORDENT** (10 sur le correctif, **4 sur le drapeau**) — ① la branche portion de `_provFood` retirée → **5 rouges** · ② ⭐ le garde `_afUnite` retiré → **1**, exactement le témoin de l'hésitation · ③ `_afApplyPortion` qui n'enregistre plus → **4** · ④ et ⑤ chacune des deux portes de reprise → **1** chacune · ⑥ l'invariant retiré → **1** · ⑦ la définition retirée → **2** · ⑧ `saveEditFood` → **1** · ⑨ le filtre amont de `quickAddFood` → **1** · ⑩ le rejeu de repas → **1**. ⚠️ **Honnêteté sur la ③** : ses 4 rouges incluent le témoin de la **définition** — c'est le même défaut vu deux fois (le texte lit `_afPortions`), pas deux détections indépendantes. ⭐⭐ **Et un témoin a été ajouté parce qu'une porte n'en avait aucun** : l'état « boutons de portion » de l'écran d'édition n'a **ni `ef-grams` ni `ef-prop`**, donc `saveEditFood` n'y voyait rien ; *sans témoin, cette porte aurait ressemblé à de la décoration et le contrôle négatif l'aurait déclarée morte* (leçon ft-v1180). ⭐⭐ **ET ÇA S'EST REPRODUIT SUR LE DRAPEAU, AU MÊME ENDROIT** : la mutation qui retire `_efPortionPose` de `saveEditFood` rendait **0 rouge**. Un 15ᵉ témoin a été écrit — *ouvrir une ligne muette dans l'édition, ne toucher à AUCUN bouton, enregistrer* — et la mutation mord désormais chirurgicalement. *La même leçon, deux fois dans la même version : une protection sans témoin n'est pas une protection.*
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1183. |

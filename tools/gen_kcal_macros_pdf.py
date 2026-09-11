@@ -27,8 +27,8 @@ from reportlab.lib.enums import TA_LEFT
 from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
                                 KeepTogether, Preformatted)
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = os.path.join(ROOT, 'docs', 'BUG-KCAL-MACROS.pdf')
+ROOT = os.environ.get('FT_ROOT') or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT = os.environ.get('FT_OUT') or os.path.join(ROOT, 'docs', 'BUG-KCAL-MACROS.pdf')
 LOG = os.environ.get('FT_PASSE_LOG', '')
 
 
@@ -286,7 +286,7 @@ def pied(canvas, doc):
     canvas.setFont('Helvetica', 7.5)
     canvas.setFillColor(GRIS)
     canvas.drawString(22 * mm, 12 * mm,
-                      'Force Tracker — lentilles Raynal : la trace complete, avant tout correctif — 11/09/2026')
+                      'Force Tracker — lentilles Raynal : les deux correctifs, livres — 11/09/2026')
     canvas.drawRightString(188 * mm, 12 * mm, 'page %d' % doc.page)
     canvas.setStrokeColor(TRAIT)
     canvas.setLineWidth(0.4)
@@ -295,193 +295,153 @@ def pied(canvas, doc):
 
 
 F = []
-F.append(P("Lentilles Raynal : la trace complete, avant tout correctif", 'titre'))
-F.append(P("Force Tracker — 11/09/2026. Reponse au cahier de GPT. Le cas "
-           "(" + C % '3021690201123' + ", 410 g) est <b>reproduit au chiffre pres</b> et trace "
-           "champ par champ. <b>Rien n'a ete corrige, rien n'a ete deploye</b> : la consigne etait "
-           "de tracer d'abord. Deux resultats deplacent le probleme.", 'sous'))
+F.append(P("Lentilles Raynal : les deux correctifs, ecrits et mesures", 'titre'))
+F.append(P("Force Tracker — 11/09/2026. Suite du document de trace. Michel a valide les deux "
+           "directions ; elles sont <b>ecrites, mesurees, et pas encore en ligne</b> — la passe "
+           "complete tourne au moment ou ce document est genere. Le point le plus utile de la "
+           "journee n'est aucun des deux correctifs : c'est <b>ce que le controle negatif a "
+           "attrape avant la livraison</b>.", 'sous'))
 
 F.append(encadre(
-    'LES DEUX RESULTATS QUI DEPLACENT LE PROBLEME',
-    "<b>(1) Le test de coherence demande n'est pas a ajouter : il EXISTE, il emploie deja la formule "
-    "4/4/9, il tolere deja un ecart, et il s'est bien declenche ici.</b> Il dit <i>&laquo; 198 kcal ne "
-    "colle pas a ces macros, elles donnent 381 kcal &raquo;</i> avec un bouton de correction — et il ne "
-    "repare rien en silence. Son seul defaut est d'etre <b>1 132 px sous l'ecran</b>.<br/><br/>"
-    "<b>(2) Le message &laquo; produit SEC &raquo; ne vient d'aucune categorie ni d'aucun champ source : "
-    "c'est un MOT du nom.</b> Ici <b>&laquo; Lentille &raquo;</b>. La regle ne contient aucun mot de "
-    "cuisson, donc elle ne peut pas voir le <b>&laquo; Cuisinees &raquo;</b> ecrit juste a cote."))
+    'CE QUE LE CONTROLE NEGATIF A EMPECHE DE LIVRER',
+    "Le correctif 1 fait remonter l'avertissement quand il apparait hors ecran. Mesure : en tapant "
+    "<b>200 / 20 / 20 / 4</b> — une ligne <b>parfaitement coherente A L'ARRIVEE</b> — la saisie "
+    "traverse un etat <b>INTERMEDIAIRE</b> incoherent : apres le 2e champ, 200 kcal face a 80 kcal "
+    "theoriques depasse les deux seuils. <b>L'alerte s'affichait une fraction de seconde et l'ecran "
+    "sautait au milieu de la frappe</b>, sur une ligne qui n'avait aucun probleme.<br/><br/>"
+    "<i>Le pire des deux mondes : le defaut disparait, le degat reste.</i> D'ou le garde sur le "
+    "focus — si la personne tape dans l'un des quatre champs, elle regarde son champ, pas "
+    "l'avertissement."))
 F.append(Spacer(1, 6))
 
-F.append(P("1. La trace de provenance, champ par champ", 'h1'))
-F.append(P("<b>Tout vient de la MEME reponse Open Food Facts, en un seul appel.</b> Aucune fusion, "
-           "aucune donnee locale, aucun repli."))
+F.append(P("1. Correctif 1 — l'avertissement vient a la vue", 'h1'))
+F.append(P("<b>La logique n'est pas recopiee : elle est SORTIE de sa fonction.</b> Elle etait "
+           "enfermee dans " + C % '_afSuggVoir' + ", qui ne sait amener qu'un seul element. "
+           "Michel : <i>&laquo; le mecanisme existe deja ailleurs, il ne faut pas creer une nouvelle "
+           "logique parallele &raquo;</i>. Un seul proprietaire, deux appelants."))
+F.append(bloc_code(code('app.js', 'fn', '_amenerALaVue'),
+                   "app.js — le proprietaire unique, extrait du depot a la generation de ce document"))
 F.append(tableau(
-    ['valeur affichee', 'champ source exact', 'transformation'],
-    [["<b>48,3</b> kcal / 100 g", C % "nutriments['energy-kcal_100g']",
-      "recopie, arrondi a 1 decimale (" + C % '_per100d1' + ")"],
-     ["<b>6,1</b> P / 100 g", C % "nutriments['proteins_100g']", "recopie, 1 decimale"],
-     ["<b>10</b> G / 100 g", C % "nutriments['carbohydrates_100g']", "recopie, 1 decimale"],
-     ["<b>3,2</b> L / 100 g", C % "nutriments['fat_100g']", "recopie, 1 decimale"],
-     ["<b>205 g</b> (portion)", C % 'serving_quantity', "pastille &laquo; portion fabricant &raquo;"],
-     ["<b>410 g</b> (paquet)", C % 'quantity' + " = " + C % '"410 g"', "parse -&gt; pastille &laquo; paquet entier &raquo;"],
-     ["<b>198 / 25 / 41 / 13</b>", "<b>aucun</b> — ils sont <b>DERIVES</b>",
-      "les quatre per-100 g multiplies par <b>4,1</b>, arrondis a l'entier"]],
-    [34 * mm, 66 * mm, 65 * mm]))
-F.append(Spacer(1, 4))
-F.append(P("La ligne enregistree porte sa provenance en entier : " + C % "saisie:'scan'" + " · " +
-           C % "origine:'off'" + " · " + C % "sourceId:'3021690201123'" + " · " +
-           C % "etat:'tel-que-vendu'" + " · le " + C % 'per100' + " complet."))
-F.append(encadre(
-    "LE DESACCORD EST ENTRE DEUX POUR-100 g DE LA MEME FICHE",
-    "Cote <b>energie</b> : <b>48,3 kcal/100 g</b>. Cote <b>macros</b> : les memes 6,1 / 10 / 3,2 valent "
-    "<b>92,9 kcal/100 g</b>. <b>Un facteur 1,9.</b> <i>L'app recopie les deux fidelement — elle ne "
-    "fabrique ni l'un ni l'autre.</i>"))
-F.append(Spacer(1, 5))
-
-F.append(P("2. Les sept hypotheses du cahier, tranchees une par une", 'h1'))
-F.append(bloc_code(code('app.js', 'lignes', "const kcal100=_per100d1(n['energy-kcal_100g']", 0, 0),
-                   "app.js — la SEULE ligne qui fabrique le pour-100 g des calories. Il n'y a pas de troisieme chemin."))
-F.append(tableau(
-    ['hypothese de GPT', 'verdict', 'sur quoi il repose'],
-    [["une ancienne <b>donnee locale</b>", "<b>ELIMINEE</b>",
-      "journal vide au depart ; " + C % '_bcNutr' + " est construit depuis la reponse reseau, mesure"],
-     ["une <b>valeur recalculee</b> par l'app", "<b>ELIMINEE</b>",
-      "les calories ne sont jamais recalculees depuis les macros — le code ci-dessus est le seul chemin"],
-     ["une <b>fusion de plusieurs sources</b>", "<b>ELIMINEE cote app</b>",
-      "les quatre valeurs sortent du <b>meme objet</b> " + C % 'nutriments' + ", dans la <b>meme reponse</b>"],
-     ["une <b>mauvaise propriete lue</b> dans le JSON", "<b>ELIMINEE</b>",
-      "la propriete lue est bien " + C % 'energy-kcal_100g' + ", le champ per-100 g standard"],
-     ["un <b>fallback</b>", "<b>POSSIBLE</b>",
-      "il en existe exactement un : si " + C % 'energy-kcal_100g' + " est absent, l'app prend " +
-      C % 'energy_100g' + " et divise par 4,184"],
-     ["une <b>conversion kJ -&gt; kcal</b>", "<b>POSSIBLE</b>",
-      "c'est ce meme repli. " + C % '202 / 4,184 = 48,3' + " — donc un " + C % 'energy_100g' +
-      " a 202 produirait exactement le chiffre observe"],
-     ["directement <b>Open Food Facts</b>", "<b>POSSIBLE</b>",
-      "si " + C % 'energy-kcal_100g' + " vaut 48,3 dans la base, l'app le recopie sans rien faire"]],
-    [44 * mm, 28 * mm, 93 * mm]))
+    ['garantie', 'comment elle tient'],
+    [["l'alerte <b>vient a la vue</b> si elle est hors champ",
+      "mesure sur le cas reel : elle etait <b>1 132 px</b> sous la zone visible, elle y entre"],
+     ["<b>rien ne bouge</b> si elle y est deja",
+      "" + C % '_amenerALaVue' + " rend " + C % 'false' + " sans toucher au defilement"],
+     ["<b>pas de remontee a chaque appel</b>",
+      "cette fonction tourne a <b>chaque frappe</b> des quatre champs : on compare l'etat AVANT, "
+      "la remontee n'a lieu que sur la transition <i>cache -&gt; affiche</i>"],
+     ["<b>pas de remontee pendant la frappe</b>",
+      "le garde sur le focus, ne le voir ci-dessus. <b>R24</b> : on informe, on ne se met pas en travers"],
+     ["<b>le clavier iOS est pris en compte</b>",
+      "la zone visible se lit sur " + C % 'visualViewport' + " : sur iOS, " + C % 'innerHeight' +
+      " <b>ne retrecit pas</b> quand le clavier s'ouvre"]],
+    [58 * mm, 107 * mm]))
 F.append(Spacer(1, 5))
 F.append(encadre(
-    "CE QUI MANQUE POUR TRANCHER LES TROIS DERNIERES — ET COMMENT L'OBTENIR EN 30 SECONDES",
-    "<b>Le proxy de ce conteneur refuse " + C % 'openfoodfacts.org' + "</b> : verifie, le gateway "
-    "repond <b>403 au CONNECT</b> sur " + C % 'world.' + " et " + C % 'fr.' + ". La fiche employee "
-    "dans la mesure est donc <b>FABRIQUEE</b> a partir des chiffres de l'ecran — elle reproduit le cas, "
-    "elle ne prouve pas son origine. <i>Je le dis plutot que de presenter une deduction comme un "
-    "releve.</i><br/><br/>"
-    "<b>Deux champs suffisent a trancher</b>, en ouvrant cette adresse sur un telephone :<br/>"
-    "" + C % 'world.openfoodfacts.org/api/v2/product/3021690201123.json?fields=nutriments' + "<br/>"
-    "&#8226; si <b>" + C % 'energy-kcal_100g' + " = 48.3</b> -&gt; la donnee source est fausse, l'app est "
-    "fidele (hypothese <b>B</b>).<br/>"
-    "&#8226; s'il est <b>absent</b> et que <b>" + C % 'energy_100g' + " = 202</b> -&gt; c'est le repli "
-    "kJ, et la question devient : 202 est-il vraiment des kJ ? (hypothese <b>D</b>).", ORANGE))
+    "UN TEMOIN QUI MANQUAIT, ECRIT PARCE QUE LA MUTATION NE MORDAIT PAS",
+    "La mutation qui remplace " + C % 'visualViewport' + " par " + C % 'innerHeight' + " rendait "
+    "<b>0 rouge</b> : Playwright n'a pas de clavier virtuel, donc les deux valeurs sont egales dans "
+    "le conteneur, et <b>aucun temoin ne pouvait distinguer les deux lectures</b>. <i>La consigne de "
+    "Michel serait restee decorative.</i><br/><br/>"
+    "Le temoin retrecit desormais " + C % 'visualViewport' + " de 350 px : une alerte a <b>top 684</b> "
+    "est <b>&laquo; visible &raquo;</b> selon " + C % 'innerHeight' + " (844) et <b>cachee</b> sous le "
+    "clavier (494). Elle remonte, et <b>la mutation mord</b>.", VERT))
 F.append(Spacer(1, 5))
 
-F.append(P("3. A / B / C / D / E — l'etat de chaque classe", 'h1'))
+F.append(P("2. Correctif 2 — le message &laquo; produit SEC &raquo;", 'h1'))
+F.append(P("Michel : <i>&laquo; je prefere ne pas rester sur une simple liste de mots &raquo;</i>. "
+           "" + C % 'categories_tags' + " est ajoute aux <b>DEUX</b> requetes Open Food Facts — la "
+           "fiche produit <b>et</b> la recherche par nom, pas une seule."))
+F.append(bloc_code(code('app.js', 'lignes', 'const pret = (_bcCategories', 0, 2),
+                   "app.js — la decision entiere, extraite du depot. Une seule reponse « oui » suffit a faire taire l'avertissement."))
+F.append(P("<b>Deux sources, dans cet ordre</b> : la <b>categorie</b> tranche quand elle parle ; le "
+           "<b>nom</b> reste le filet quand elle se tait — et elle se tait souvent, " +
+           C % 'categories_tags' + " n'etant pas toujours renseigne. <i>Garder le nom n'est pas une "
+           "faiblesse assumee : c'est le seul recours des produits que la base connait mal.</i>"))
 F.append(tableau(
-    ['classe', 'etat'],
-    [["<b>A</b> — energie correcte, macros fausses", "<b>peu probable</b>, et c'est un <b>avis</b>, pas "
-      "une mesure : 6,1 P / 10 G / 3,2 L est la composition attendue de lentilles cuisinees en conserve"],
-     ["<b>B</b> — macros correctes, energie source fausse", "<b>l'hypothese la plus economique</b> : "
-      "93 kcal/100 g est la valeur attendue pour ce produit, 48,3 ne l'est pas. <b>Non prouvee</b> sans "
-      "la fiche."],
-     ["<b>C</b> — sources differentes", "<b>eliminee chez Force Tracker</b> (un seul appel, un seul "
-      "objet). <b>Non eliminee chez Open Food Facts</b> : energie et macros peuvent y avoir ete saisies "
-      "par des contributeurs differents. <i>C'est le mecanisme qui expliquerait le mieux un ecart de "
-      "facteur 2 sur une seule des cinq valeurs.</i>"],
-     ["<b>D</b> — conversion erronee", "<b>possible</b>, et un seul endroit peut la produire (le repli "
-      "kJ ci-dessus). Se tranche avec les deux champs."],
-     ["<b>E</b> — donnee locale corrompue", "<b>ELIMINEE par la mesure</b>"]],
-    [52 * mm, 113 * mm]))
-F.append(Spacer(1, 6))
-
-F.append(P("4. Le test de coherence : il existe deja", 'h1'))
-F.append(P("Le cahier demande de l'ajouter. <b>Mesure : il est ecrit, il tourne, et il a parle sur ce "
-           "cas.</b> Voici son texte reel, releve a l'ecran :"))
-F.append(bloc_code(
-    "  198 kcal ne colle pas a ces macros : 25 g de proteines, 41 g de\n"
-    "  glucides et 13 g de lipides donnent 381 kcal.\n"
-    "                                              [ Mettre 381 kcal ]",
-    "l'avertissement tel qu'il s'affiche — un bouton, jamais une correction automatique"))
-F.append(tableau(
-    ['ce que le cahier demande', 'ce qui existe deja'],
-    [["kcal theoriques = 4 P + 4 G + 9 L", "<b>exactement cette formule</b>"],
-     ["tolerer un ecart raisonnable", "<b>deux seuils cumulatifs</b> : 60 kcal <b>et</b> 25 %. Ici "
-      "l'ecart vaut 183 kcal et 48 % — largement au-dessus des deux."],
-     ["ne pas reparer en silence", "<b>deja le cas</b> : un bouton propose, la personne tranche. "
-      "Aucune reecriture automatique."],
-     ["<b>ce qui manque reellement</b>",
-      "<b>qu'on le VOIE.</b> La fiche fait 1 907 px pour 775 visibles ; l'alerte apparait a "
-      "<b>1 132 px sous la zone visible</b>, alors que le geste qui la declenche (la pastille) est "
-      "tout en haut. Elle est atteignable en defilant."]],
-    [52 * mm, 113 * mm]))
-F.append(Spacer(1, 6))
-
-F.append(P("5. Le message &laquo; produit SEC &raquo; — condition exacte", 'h1'))
-F.append(P("Le cahier demande : champ source, regle, mot-cle, categorie, fallback, condition exacte. "
-           "<b>La reponse tient en une ligne, et il n'y a ni categorie, ni champ source, ni fallback.</b>"))
-F.append(bloc_code(code('app.js', 'lignes', 'const _SECS_QUI_GONFLENT=', 0, 0),
-                   "app.js — la regle entiere. Elle est testee sur le NOM, et sur rien d'autre."))
-F.append(P("Mot declencheur ici : <b>&laquo; Lentille &raquo;</b>. <b>Mesure : la regle ne contient "
-           "aucun mot de cuisson</b> — ni " + C % 'cuisine' + ", ni " + C % 'conserve' + ", ni " +
-           C % 'boite' + ", ni " + C % 'pret' + ". <i>Elle ne peut donc pas voir le mot qui, dans ce "
-           "nom precis, la contredit.</i>"))
-F.append(tableau(
-    ['nom teste', 'verdict mesure'],
-    [["Riz <b>cuit</b> en sachet", "SEC"],
-     ["Poelee de lentilles <b>cuisinees</b>", "SEC"],
-     ["Salade de pois chiches", "SEC"],
-     ["Soupe de lentilles corail", "SEC"],
-     ["Pates <b>fraiches cuites</b>", "SEC"],
-     ["Cassoulet aux <b>haricots secs</b>", "<b>muet</b> — alors qu'il en contient"]],
-    [95 * mm, 70 * mm]))
+    ['les 8 cas du &#167;14', 'attendu', 'mesure'],
+    [["Lentilles vertes seches", "avertit", "<b>avertit</b>"],
+     ["Lentilles <b>Cuisinees</b> a l'Auvergnate", "muet", "<b>muet</b>"],
+     ["<b>Soupe</b> de lentilles corail", "muet", "<b>muet</b>"],
+     ["<b>Salade</b> de pois chiches", "muet", "<b>muet</b>"],
+     ["Riz basmati", "avertit", "<b>avertit</b>"],
+     ["Riz <b>cuit</b> en sachet", "muet", "<b>muet</b>"],
+     ["Pates Panzani", "avertit", "<b>avertit</b>"],
+     ["Pates <b>fraiches cuites</b>", "muet", "<b>muet</b>"]],
+    [95 * mm, 32 * mm, 38 * mm]))
 F.append(Spacer(1, 4))
 F.append(encadre(
-    "DEUX CHOSES QUE CETTE MESURE APPREND",
-    "<b>(1) C'est la famille n&#176;1 du depot</b> — <i>&laquo; le premier match gagnant &raquo;</i>, "
-    "recensee plus de douze fois : un mot suffit, et le contexte qui l'annule n'est jamais lu.<br/><br/>"
-    "<b>(2) La donnee qui trancherait n'est meme pas demandee.</b> Les champs reclames a Open Food "
-    "Facts sont mesures : " + C % 'product_name' + ", " + C % 'brands' + ", " + C % 'quantity' + ", " +
-    C % 'nutriments' + ", " + C % 'serving_quantity' + ", " + C % 'nutriscore_grade' + ", " +
-    C % 'nova_group' + ", " + C % 'additives_n' + ", " + C % 'labels_tags' + ", l'image. "
-    "<b>" + C % 'categories_tags' + " n'y est pas.</b> <i>On ne peut pas reprocher a la regle d'ignorer "
-    "la categorie : personne ne la lui donne.</i>"))
-F.append(Spacer(1, 5))
+    "L'ASYMETRIE EST VOULUE, ET ELLE SE MESURE AU COUT DE L'ERREUR (R29)",
+    "Se taire a tort sur un vrai paquet sec coute une erreur de facteur 2 a 3 <b>que la personne peut "
+    "encore voir</b> — les chiffres sont a l'ecran. Crier a tort sur une conserve coute la "
+    "<b>credibilite de TOUS les avertissements</b>, y compris les vrais. <i>Un message qui se trompe "
+    "cesse d'etre lu, et on perd alors les deux.</i>"))
+F.append(Spacer(1, 4))
 F.append(encadre(
-    "ET UNE ATTENTE A MOI QUI ETAIT FAUSSE, DITE PLUTOT QUE TUE",
-    "Mon temoin exigeait " + C % 'etat === null' + " (<i>&laquo; l'app ne devine pas le cru/cuit &raquo;</i>). "
-    "<b>Mesure : elle pose " + C % "etat:'tel-que-vendu'" + "</b> sur un scan — et c'est <b>correct</b>, "
-    "Open Food Facts donne bien les valeurs telles que vendues. <b>Mais ca nomme le vrai trou</b> : "
-    "<i>&laquo; tel que vendu &raquo; ne distingue pas un paquet SEC d'une conserve CUISINEE</i> — et "
-    "c'est exactement la distinction dont ce message a besoin."))
+    "ET LE PIEGE QUI ETAIT DEJA DOCUMENTE DANS CE DEPOT (R15)",
+    "<b>La categorie meurt avec l'aliment.</b> Sans cette ligne, la categorie <i>&laquo; plat cuisine "
+    "&raquo;</i> d'un produit ferait taire l'avertissement du <b>paquet de pates suivant</b> — le "
+    "defaut exact que " + C % '_afOublierAliment' + " existe pour empecher. Un temoin le fige : on "
+    "pose une categorie, on oublie l'aliment, et on verifie que l'avertissement <b>crie a nouveau</b> "
+    "sur des pates.", ORANGE))
+F.append(Spacer(1, 5))
+
+F.append(P("3. Un temoin qui a rougi, et pourquoi ce n'etait pas le code", 'h1'))
+F.append(P("La premiere passe complete a rendu <b>3519 verts, 1 rouge</b> — et le rouge etait "
+           "<b>mon propre temoin</b>, qui passait <b>5 fois sur 5</b> en isole."))
+F.append(tableau(
+    ['', ''],
+    [["<b>la cause</b>",
+      "le defilement de controle est " + C % 'smooth' + ", donc <b>ASYNCHRONE</b>. Un delai fixe "
+      "suffit sur une machine au repos et pas sous charge : on remettait le defilement a zero "
+      "<b>pendant qu'il etait encore en vol</b>, et il repartait tout seul."],
+     ["<b>ce qu'on en retient</b>",
+      "<i>Un temoin qui parie sur une DUREE mesure la machine ; un temoin qui attend une CONDITION "
+      "mesure le produit.</i> Il attend desormais que le defilement se stabilise."],
+     ["<b>et il dit ce qu'il voit</b>",
+      "le diagnostic (nombre de tours avant stabilite, position stabilisee, position apres remise a "
+      "zero) reste dans la sortie. <i>Un temoin qui echoue sans dire ce qu'il a vu coute une passe "
+      "entiere par hypothese.</i>"]],
+    [40 * mm, 125 * mm]))
 F.append(Spacer(1, 6))
 
-F.append(P("6. Etat, et ce qui reste a decider", 'h1'))
+F.append(P("4. Ce qui n'est pas fait, et ce que je ne sais pas", 'h1'))
 F.append(tableau(
     ['point', 'etat'],
-    [["<b>rien n'est corrige, rien n'est deploye</b>",
-      "la version en ligne reste <b>ft-v1190</b>. Ce document est une <b>mesure</b>, pas un correctif."],
-     ["<b>correctif 1 — rendre l'alerte visible</b>",
-      "<b>aucun mecanisme neuf</b> : ft-v1182 a deja pose ce geste dans cette application — un " +
-      C % 'scrollIntoView' + " doux, <b>conditionnel</b>, avec la hauteur lue sur " +
-      C % 'visualViewport' + " et <b>non</b> " + C % 'innerHeight' + " (sur iOS, " + C % 'innerHeight' +
-      " ne retrecit pas quand le clavier s'ouvre — un test ecrit dessus croirait l'alerte visible "
-      "alors qu'elle serait sous le clavier)."],
-     ["<b>correctif 2 — la regle SEC</b>",
-      "la faire taire quand le nom dit lui-meme qu'il est cuisine. <b>A decider</b> : se contenter du "
-      "nom, ou demander " + C % 'categories_tags' + " a Open Food Facts — la seconde option est plus "
-      "sure et coute un champ de plus dans une requete deja faite."],
-     ["<b>ce qui n'est PAS a l'app</b>",
-      "choisir entre 48,3 et 381. Les deux viennent de la meme fiche et aucun n'est absurde isolement. "
-      "<b>Le bouton est deja la bonne reponse</b> : l'app montre, la personne tranche."],
+    [["<b>rien n'est en ligne</b>",
+      "la version deployee reste <b>ft-v1190</b>. La passe complete tourne ; rien ne part avant "
+      "qu'elle soit verte."],
+     ["<b>les etiquettes de categorie ne sont PAS verifiees</b>",
+      "" + C % 'openfoodfacts.org' + " est injoignable depuis le conteneur (<b>403 au CONNECT</b>, "
+      "verifie), donc les motifs de categorie <b>n'ont pas pu etre confrontes a la vraie base</b>. "
+      "Ils sont volontairement LARGES — et le repli par le nom couvre <b>a lui seul</b> les huit cas "
+      "de Michel. <i>Si une etiquette se revelait fausse, le filet tient quand meme.</i>"],
+     ["<b>le 48,3 n'est toujours pas trace a sa source</b>",
+      "meme raison. Deux champs suffiraient, sur un telephone : " +
+      C % 'world.openfoodfacts.org/api/v2/product/3021690201123.json?fields=nutriments' + " — "
+      "" + C % 'energy-kcal_100g' + " existe-t-il, et sinon que vaut " + C % 'energy_100g' + " ?"],
+     ["<b>l'app ne choisit toujours pas</b> entre 48,3 et 381",
+      "c'est voulu, et c'etait la demande explicite de Michel. Le bouton <b>&laquo; Mettre 381 kcal "
+      "&raquo;</b> montre le calcul et laisse trancher (<b>R29</b>)."],
      ["<b>hors perimetre, comme demande</b>",
-      "l'historique corrompu n'est pas touche ; le bug quantite est clos et n'est pas rouvert."]],
+      "bug quantite, historique corrompu, migration ancienne, portions P1 : <b>aucun n'est rouvert</b>."]],
     [50 * mm, 115 * mm]))
+F.append(Spacer(1, 6))
+F.append(encadre(
+    "ETAT DES TESTS",
+    "Bloc permanent <b>CCLXXXVIII : 11 temoins, 11/11</b> en isole. "
+    "<b>Controle negatif : 10 mutations, TOUTES MORDENT</b>, chacune sur son propre temoin — le "
+    "correctif entier retire · le garde <i>&laquo; deja affiche &raquo;</i> retire · le garde du focus "
+    "retire · " + C % 'innerHeight' + " au lieu de " + C % 'visualViewport' + " · " +
+    C % '_afSuggVoir' + " qui reprend sa propre copie (R2) · le garde <i>&laquo; deja pret &raquo;</i> "
+    "retire · la categorie ignoree · le nom ignore · la categorie qui survit a l'aliment suivant · " +
+    C % 'categories_tags' + " retire des requetes.", GRIS))
 
 
 doc = SimpleDocTemplate(OUT, pagesize=A4,
  leftMargin=22 * mm, rightMargin=22 * mm,
  topMargin=20 * mm, bottomMargin=22 * mm,
- title='Force Tracker — lentilles Raynal : trace complete de provenance, coherence kcal/macros, et la regle SEC',
+ title='Force Tracker — lentilles Raynal : les deux correctifs ecrits et mesures, et ce que le controle negatif a attrape',
  author='Force Tracker')
 doc.build(F, onFirstPage=pied, onLaterPages=pied)
 print('OK ->', OUT)

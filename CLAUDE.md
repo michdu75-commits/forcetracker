@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1190`** (prochaine : `ft-v1191`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1191`** (prochaine : `ft-v1192`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,40 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1191 — 🔢⚖️ L'AVERTISSEMENT kcal/macros ÉTAIT JUSTE ET HORS DE L'ÉCRAN · ET « PRODUIT SEC » SE DÉCLENCHAIT SUR UN MOT** — cas réel de Michel via GPT : **Lentilles Raynal & Roquelaure** (`3021690201123`), **410 g** → l'écran affiche **198 kcal** pour **25 P · 41 G · 13 L**, qui valent **381 kcal**.
+
+**⭐⭐ CE QUE LA MESURE A DÉPLACÉ, ET C'EST TOUT LE SUJET : le contrôle de cohérence n'est NI absent NI muet.** Il se déclenche, ses deux seuils sont largement franchis (**183 kcal · 48 %**), il dit exactement ce qu'il faut et propose un bouton **« Mettre 381 kcal »** — donc **aucune correction silencieuse**, ce que Michel exigeait explicitement. 👉 *Le cahier demandait d'ajouter ce contrôle ; il existait déjà, avec sa formule 4/4/9 et ses tolérances.* (**R23** : vérifier avant d'affirmer qu'une chose manque.)
+
+**⛔⛔ LE DÉFAUT EST UNE POSITION, PAS UN CALCUL** : la fiche fait **1 907 px** pour **775 visibles**, et l'alerte apparaît à `top 1734` — soit **1 132 px SOUS la zone visible**, pendant que le geste qui la déclenche (la pastille « paquet entier ») est tout en **HAUT**. Elle était atteignable en défilant, mais *un avertissement qu'on ne voit qu'en défilant ne protège que ceux qui défilaient déjà*. **C'est ft-v1182 sur un autre bloc** : calculé, correct, hors du champ de vision.
+
+**⭐ R2/R13 — LA LOGIQUE N'EST PAS RECOPIÉE, ELLE EST SORTIE DE SA FONCTION.** Elle était **enfermée** dans `_afSuggVoir`, qui ne sait amener qu'**UN** élément. Michel : *« le mécanisme existe déjà ailleurs, il ne faut pas créer une nouvelle logique parallèle »*. Un seul propriétaire (`_amenerALaVue`), deux appelants — *un second `scrollIntoView` conditionnel aurait fabriqué deux règles de visibilité qui divergent, et c'est **toujours** la seconde qui oublie `visualViewport`*.
+
+**⛔⛔⛔ ET LE CONTRÔLE NÉGATIF A TROUVÉ UN VRAI DÉFAUT QUE J'ALLAIS LIVRER.** En tapant **200/20/20/4** — une ligne **parfaitement COHÉRENTE à l'arrivée** — la saisie traverse un état **INTERMÉDIAIRE** incohérent : après le 2ᵉ champ, 200 kcal face à 80 théoriques dépasse les deux seuils. L'alerte s'affichait une fraction de seconde et **l'écran sautait AU MILIEU DE LA FRAPPE**, sur une ligne sans aucun problème. 👉 ***Le pire des deux mondes : le défaut disparaît, le dégât reste.*** D'où le garde sur le focus — si la personne tape dans l'un des quatre champs, elle **regarde son champ**, pas l'avertissement (**R24**).
+
+**⚠️⚠️ ET UN TÉMOIN QUI MANQUAIT, ÉCRIT PARCE QUE LA MUTATION NE MORDAIT PAS.** Remplacer `visualViewport` par `innerHeight` rendait **0 rouge** : Playwright n'a **pas de clavier virtuel**, donc les deux valeurs sont égales ici et **aucun témoin ne pouvait distinguer les deux lectures** — *la consigne de Michel serait restée décorative*. Le témoin rétrécit désormais `visualViewport` de **350 px** : une alerte à `top 684` est « visible » selon `innerHeight` (844) et **cachée** sous le clavier (494). Elle remonte, et la mutation mord.
+
+**🏷️ SECONDE MOITIÉ — « PRODUIT SEC » SUR UNE BOÎTE DE LENTILLES CUISINÉES.** Michel : *« pour une boîte prête à consommer, cet avertissement semble faux »*. ⛔ **Cause mesurée : une regex sur le NOM seul**, mot déclencheur **« Lentille »**, et **la règle ne contient aucun mot de cuisson** — elle ne pouvait pas voir le « Cuisinées » écrit juste à côté. *C'est la famille n°1 du dépôt, **le premier match gagnant*** (≥ 12 fois). Contre-épreuves : *riz cuit en sachet* · *poêlée de lentilles cuisinées* · *soupe de lentilles corail* · *salade de pois chiches* · *pâtes fraîches cuites* sortaient **tous** en SEC ; et *cassoulet aux haricots secs* restait **muet**, alors qu'il en contient.
+
+**⛔⛔ ET LA DONNÉE QUI TRANCHERAIT N'ÉTAIT MÊME PAS DEMANDÉE** : `categories_tags` ne figurait dans **aucune** des deux requêtes Open Food Facts. *On ne peut pas reprocher à une règle d'ignorer la catégorie : personne ne la lui donnait* (**R8**). Elle est ajoutée aux **DEUX** requêtes — la fiche produit **et** la recherche par nom.
+
+**⭐ DEUX SOURCES, DANS L'ORDRE VOULU PAR MICHEL** (*« je préfère ne pas rester sur une simple liste de mots »*) : la **catégorie** tranche quand elle parle, le **nom** reste le filet quand elle se tait — et elle se tait souvent. *Garder le nom n'est pas une faiblesse assumée : c'est le seul recours des produits que la base connaît mal.* **Ses 8 cas du §14 passent tous.**
+
+**⭐⭐ L'ASYMÉTRIE EST VOULUE, ET ELLE SE MESURE AU COÛT DE L'ERREUR (R29)** : se taire à tort sur un vrai paquet sec coûte un facteur 2-3 **que la personne peut encore voir** (les chiffres sont à l'écran) ; crier à tort sur une conserve coûte la **crédibilité de TOUS les avertissements**, y compris les vrais. *Un message qui se trompe cesse d'être lu, et on perd alors les deux.*
+
+**⛔ R15 — LA CATÉGORIE MEURT AVEC L'ALIMENT.** Sans ça, le « plat cuisiné » d'un produit ferait taire l'avertissement du **paquet de pâtes suivant** — le défaut exact que `_afOublierAliment` existe pour empêcher. Un témoin le fige.
+
+**⚠️⚠️ ET UN TÉMOIN À MOI A ROUGI EN PASSE COMPLÈTE EN PASSANT 5/5 EN ISOLÉ — la cause était MA SONDE.** Le défilement de contrôle est **`smooth`**, donc **asynchrone** : un délai fixe suffit sur une machine au repos et pas sous charge, et je remettais `scrollTop` à zéro **pendant qu'il était encore en vol**. 👉 ***Un témoin qui parie sur une DURÉE mesure la machine ; un témoin qui attend une CONDITION mesure le produit.*** Il attend désormais la stabilité, et son **diagnostic reste dans la sortie** — *un témoin qui échoue sans dire ce qu'il a vu coûte une passe entière par hypothèse*.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît : un avertissement qui existait déjà devient **visible**, et un autre cesse de crier à tort (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **ça ne choisit PAS entre 48,3 et 381** — les deux viennent de la **même fiche** Open Food Facts et aucun n'est absurde isolément ; le bouton reste la bonne réponse, l'app montre et la personne tranche (**R29**, demande explicite de Michel). ⛔ Ni le bug quantité, ni l'historique corrompu, ni la migration, ni les portions P1 — *son périmètre du §15, respecté*. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+**⚠️⚠️ DEUX LIMITES DITES PLUTÔT QUE TUES** : ① **les étiquettes de catégorie n'ont PAS pu être confrontées à la vraie base** — `openfoodfacts.org` répond **403 au CONNECT** depuis ce conteneur (vérifié dans l'état du proxy). Elles sont volontairement **larges**, et le repli par le nom couvre **à lui seul** les huit cas. ② **L'origine du 48,3 reste non tracée** : deux champs suffiraient (`energy-kcal_100g` existe-t-il ? sinon que vaut `energy_100g` ?), et il faut un téléphone pour les lire.
+
+Tests : **parcours 3524/3524 sur l'arbre FINAL** (+11, bloc **CCLXXXVIII**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 10 MUTATIONS, TOUTES MORDENT**, chacune sur son propre témoin — ① le correctif entier retiré · ② le garde « déjà affiché » retiré · ③ le garde du **focus** retiré · ④ `innerHeight` au lieu de `visualViewport` · ⑤ `_afSuggVoir` qui reprend sa propre copie (R2) · ⑥ le garde « déjà prêt » retiré (retour au premier match gagnant) → **2 rouges** · ⑦ la catégorie ignorée · ⑧ le nom ignoré · ⑨ la catégorie qui survit à l'aliment suivant · ⑩ `categories_tags` retiré des requêtes.
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/BUG-KCAL-MACROS.pdf`, `tools/gen_kcal_macros_pdf.py`. sw.js ft-v1191. |
 
 **ft-v1190 — ⚖️ LE GARDE-FOU LARGE, ET LA PASSE QUE J'AI FAUSSÉE MOI-MÊME** — Michel tranche la question ouverte de ft-v1189 : ***« Aucune ligne alimentaire ne peut être enregistrée sans une quantité réellement choisie par l'utilisateur »***, **indépendamment de l'origine technique de l'aliment**.
 
@@ -693,54 +727,6 @@ Tests : **parcours 3437/3437** (+13, bloc **CCLXXXII**), **calculs 339/339**, mu
 ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1049**, « Déployer sur GitHub Pages » en `success` à **16:09:35 UTC** sur `a771f323`. ⛔ Ni backend ni worker attendus.
 
 Tests : **parcours 3424/3424** (+9, bloc **CCLXXXI**), **calculs 339/339**, muscles, croisés, dates, données classées 0 trou. ⭐⭐ **Le témoin CONDUIT `finishWorkout`** — c'est toute la différence avec celui d'août. ⛔ **CONTRÔLE NÉGATIF : 4 mutations** — ① le lecteur retiré → **5 rouges** · ② le garde du récap retiré → **1 rouge chirurgical** · ③ le verrou non levé sur le refus « aucune série validée » → **2 rouges** · ④ le garde « accueil seulement » retiré → **0 rouge chez moi**, mais il **mord dans le bloc XXII** qui le couvre déjà — *je le dis plutôt que de prétendre l'avoir testé*. ⚠️ **Et la mutation ② a exigé un témoin que je n'avais pas écrit** : aucun des miens ne tentait une mise à jour **pendant** que l'écran est affiché. Or le cas est réel et fréquent — *taper son ressenti sur l'écran de fin appelle `setDayEnergy` → `persist()` → `_appliquerMaj()`*. **Les deux gardes se relaient** (`_finishing` avant l'ouverture, `ov-session-end` après), **et il fallait un témoin pour chacun**. Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `BUGS.md`. sw.js ft-v1184. |
-
-**ft-v1183 — 🍽️ « PORTION » DEVIENT UNE VRAIE UNITÉ — ET LE MULTIPLICATEUR N'AVAIT AUCUN PROPRIÉTAIRE** — cahier des charges de Michel (P1), avec sa consigne d'ouverture : ***« avant de modifier quoi que ce soit, tracer tous les lecteurs/écrivains »***. **Audit avant code, et c'est l'audit qui a fixé le périmètre.**
-
-**⭐⭐ LE GESTE, MESURÉ AVANT D'ÉCRIRE UNE LIGNE** : on saisit 300 kcal, on tape **« ×2 »**, l'écran affiche bien **600** — et la ligne partait en **`q:null, u:null, per100:null`**. 👉 ***« 2 portions de 300 » se fossilisait en « 1 portion de 600 »***, et plus rien ne pouvait la redimensionner. C'est la mort exacte des lignes réparées en ft-v1176.
-
-**⛔⛔ LA CAUSE, EN DEUX MORCEAUX, ET AUCUN CALCUL N'ÉTAIT FAUX** : `_afApplyPortion` ne faisait **QUE** réécrire les 4 champs (`_afProp(x)`) — le multiplicateur n'était écrit **nulle part**, `_afRef` restait `{base:300, q:1, u:''}` — et `_provFood` n'avait **aucune branche** pour l'unité « portion », sa liste blanche n'acceptant que les grammes. ⭐ **En grammes, la quantité affichée vit dans le champ `af-prop` ; en portions, elle ne vivait nulle part.** `_afPortions` est sa jumelle exacte (**R2**).
-
-**⭐⭐ ET L'AUDIT A TROUVÉ AUTRE CHOSE, QUI A RÉDUIT LE TRAVAIL** — les 8 chemins tracés, mesurés un par un sur une ligne `q:2, u:'portion'` :
-
-| chemin | avant |
-|---|---|
-| stockage · liste · favori · export CSV · cloud | ✅ passe-plats, rien à faire |
-| **`quickFillFood`** (reprise « Mes aliments ») | ⛔ `{q:1,u:''}` — les 600 redevenaient **une** portion |
-| **`quickAddFood`** (ajout direct) | ⛔ `q:null` |
-| **`_afSuggPrendreLocale`** (reprise recherche) | ⛔ idem |
-| **`openEditFood` / `saveEditFood`** | ✅ **savait déjà faire** : « Quantité (portion) », ×3 → 900, sauve `q:3` |
-
-👉 ***Les portes cassées étaient toutes du côté AJOUT.*** On n'a donc rien inventé : on a porté sur les portes jumelles ce qui existait déjà (**R8/R13**), pour la **7ᵉ** fois recensée dans ce fichier.
-
-**⚠️ TROIS ÉCARTS ASSUMÉS À LA SPEC, CHACUN AVEC SA MESURE** — je les dis parce qu'ils changent ce qui est construit :
-- ⛔ **pas de renommage** `referenceType`/`referenceQuantity`/`totals` : les noms internes existent déjà (`q`/`u`/`per100`) et sont relus partout — les renommer casserait tous les lecteurs pour zéro gain (**R33** : un seul nom interne par grandeur, il est **déjà** posé) ;
-- ⛔ **pas de champ `portion_weight_g`** : **mesuré**, déclarer le poids fait basculer en grammes et calcule déjà le pour-100 g (2 portions pesées 500 g → `q:500, u:'g', per100:120`). *« Portion + poids connu » n'existe pas comme état* — ce champ ne se remplirait jamais (**R3** : qui le produit ?) ;
-- ⛔ **pas de `portion_label` stocké** : il se **dérive** des totaux et de `q`, et deux copies finiraient par diverger (**R2**).
-
-**⭐ MAIS LA CONSIGNE D'AFFICHAGE EST TENUE, ET C'EST ELLE QUI COMPTE** : `_portionDefTexte` est le **propriétaire unique** du texte, lu par l'écran d'ajout **et** par celui d'édition. Il dit toujours à quoi une portion correspond **et** ce qu'on ignore — *« Tu notes **2 portions** (1 portion = 300 kcal, poids inconnu) »*. ⛔ L'écran d'édition affichait **« 2 portion »** nu : sans définition, et au singulier.
-
-**⛔⛔ LE GARDE QUI N'EST PAS DÉCORATIF, ET QUE LA MESURE A EXIGÉ** : l'onglet **⚖️ En grammes**, *avant* qu'un poids soit déclaré, pose **lui aussi** `_afRef={q:1,u:''}`. Sans le test sur `_afUnite`, quelqu'un qui hésite sur cet onglet verrait sa ligne enregistrée **en « portions »** — une unité qu'il n'a pas choisie (**R29**). Un témoin le fige.
-
-**⛔ L'INVARIANT ft-v1061, APPLIQUÉ AUX PORTIONS** : quand l'écran redevient la référence (retouche d'une macro à la main), le multiplicateur **repart à 1** — *ce qui est affiché est, par définition, **une** portion de lui-même*. Sans ça, un ×2 suivi d'une correction enregistrerait « 2 portions » pour des totaux qui sont **déjà** ceux de deux portions.
-
-**⚠️ DEUX TROUS TROUVÉS PAR LA MESURE APRÈS MON PREMIER CORRECTIF, ET FERMÉS** : ① `quickAddFood` **filtrait encore en amont** (`q:null` si l'unité n'est pas `g`) — *une porte ouverte en aval ne sert à rien si l'amont filtre encore* ; ② `rejouerRepas` **forçait** `q:null,u:null` à l'écriture, donc rejouer un repas aurait **tué les portions qu'on venait de sauver**. *Les deux ne se voyaient pas à la relecture ; la sonde les a rendues évidentes.*
-
-**⛔⛔⛔ ET LA PASSE COMPLÈTE A REFUSÉ MON PREMIER CORRECTIF — 7 ROUGES, ET ELLE AVAIT RAISON.** Mon bloc CCLXXX était à **14/14** ; la passe a rendu **7 témoins rouges** — ft-v1177, ft-v1179 et ft-v1180 — *tous* des témoins qui disent **« on n'invente pas une quantité qu'elle n'a jamais eue »*, tous avec le même message : `q=1 u=portion` au lieu de `q=null`.
-👉 **La cause tient en une phrase** : `_afPortions` vaut 1 par défaut, donc ***« jamais touché » et « ×1 choisi » étaient indiscernables***. Le bloc portions est l'état **par défaut** de l'écran — l'afficher ne prouve **aucun** choix. J'écrivais donc une unité que la personne n'avait pas choisie : *exactement le reproche que je me faisais à moi-même, deux fonctions plus haut, pour l'onglet grammes* (**R29**).
-⭐ **Le correctif est un drapeau, et le mécanisme existait déjà** : `_afPortionPose`, jumeau mot pour mot de `_afPoidsPose` (**R13**). Seul un **clic sur un bouton** peut l'affirmer ; il retombe partout où l'écran redevient la référence.
-⛔ **Ce n'est PAS un témoin qu'on desserre pour faire passer du code** : c'est mon code qui était trop large. Les deux témoins de MON bloc qui attendaient `q:1` (A→B, retouche) ont été portés sur la garantie **plus forte** — `q:null`, rien d'inventé — pas assouplis. *Troisième fois cette semaine que la mesure arrête un correctif trop large ; les trois fois, c'est elle qui avait raison.*
-
-**⚠️ CHANGEMENT DE COMPORTEMENT À CONNAÎTRE** : un aliment tapé à la main et validé tel quel s'enregistre désormais en **`q:1, u:'portion'`** au lieu de `q:null`. C'est exactement ce que l'écran annonce (*« les 4 valeurs ci-dessous sont 1 portion »*), et c'est ce qui rend la ligne **redimensionnable plus tard** au lieu de naître morte.
-
-**📣 RÈGLE D'OR #11 — LE BOUTON CHOISI S'ALLUME** et la définition s'écrit sous les boutons : l'annonce est **à l'écran, au moment où ça sert**. Aucune pop-up, rien à faire — mais *un choix invisible est un choix qu'on ne peut pas vérifier* (**R24/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les lignes déjà abîmées ne sont pas réparées** — la migration reste un chantier à part, intact. ⛔ Ni le cru/cuit, ni l'affichage de la quantité dans « Déjà noté par toi », ni `alias.json`/CIQUAL, ni la recherche mobile : sa liste de non-touche, respectée. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1045**, `conclusion: success` à **15:33:38 UTC** sur `050109be`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur la LISTE filtrée `status: completed`* — la leçon de ft-v1182, où interroger le run lui-même servait un état périmé.
-
-Tests : **parcours 3415/3415 sur l'arbre FINAL** (+15, bloc **CCLXXX**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 14 MUTATIONS, TOUTES MORDENT** (10 sur le correctif, **4 sur le drapeau**) — ① la branche portion de `_provFood` retirée → **5 rouges** · ② ⭐ le garde `_afUnite` retiré → **1**, exactement le témoin de l'hésitation · ③ `_afApplyPortion` qui n'enregistre plus → **4** · ④ et ⑤ chacune des deux portes de reprise → **1** chacune · ⑥ l'invariant retiré → **1** · ⑦ la définition retirée → **2** · ⑧ `saveEditFood` → **1** · ⑨ le filtre amont de `quickAddFood` → **1** · ⑩ le rejeu de repas → **1**. ⚠️ **Honnêteté sur la ③** : ses 4 rouges incluent le témoin de la **définition** — c'est le même défaut vu deux fois (le texte lit `_afPortions`), pas deux détections indépendantes. ⭐⭐ **Et un témoin a été ajouté parce qu'une porte n'en avait aucun** : l'état « boutons de portion » de l'écran d'édition n'a **ni `ef-grams` ni `ef-prop`**, donc `saveEditFood` n'y voyait rien ; *sans témoin, cette porte aurait ressemblé à de la décoration et le contrôle négatif l'aurait déclarée morte* (leçon ft-v1180). ⭐⭐ **ET ÇA S'EST REPRODUIT SUR LE DRAPEAU, AU MÊME ENDROIT** : la mutation qui retire `_efPortionPose` de `saveEditFood` rendait **0 rouge**. Un 15ᵉ témoin a été écrit — *ouvrir une ligne muette dans l'édition, ne toucher à AUCUN bouton, enregistrer* — et la mutation mord désormais chirurgicalement. *La même leçon, deux fois dans la même version : une protection sans témoin n'est pas une protection.*
-
-Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1183. |
 
 
 
