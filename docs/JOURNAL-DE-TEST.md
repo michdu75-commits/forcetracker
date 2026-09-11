@@ -2511,3 +2511,46 @@ pas réparable tant que les totaux sont des entiers.
 là-dessus figerait mon erreur d'arrondi au lieu d'une garantie. ⚠️ **Ce qui reste vrai et qu'il
 faut garder** : *une fixture arithmétiquement incohérente fabrique un faux bug*, et j'ai bien
 failli faire creuser Michel dessus — la même famille que le `cardio.min`/`duration` de ft-v1184.
+
+---
+
+### 🟢 PRÊTE — L'AVERTISSEMENT « LES KCAL NE COLLENT PAS AUX MACROS » EST CALCULÉ, JUSTE, ET À 1 132 px SOUS L'ÉCRAN (11/09/2026)
+
+Cas réel de Michel (via GPT), **reproduit au chiffre près** : **Lentilles Raynal & Roquelaure**
+(`3021690201123`), **410 g**, l'écran affiche **198 kcal · 25 P · 41 G · 13 L** alors que les macros
+valent **381 kcal**.
+
+**⭐⭐ LE GARDE-FOU N'EST PAS MUET — IL PARLE, ET IL A RAISON.** Mesuré, il affiche mot pour mot :
+*« ⚠️ 198 kcal ne colle pas à ces macros : 25 g de protéines, 41 g de glucides et 13 g de lipides
+donnent 381 kcal. »* avec un bouton **« Mettre 381 kcal »**. Écart 183 kcal (48 %), très au-dessus
+de ses deux seuils (60 kcal · 25 %).
+
+**⛔⛔ LE DÉFAUT EST UNE POSITION, PAS UN CALCUL :**
+
+| mesure | valeur |
+|---|---|
+| hauteur de la modale | **1 907 px** |
+| hauteur visible | **775 px** |
+| position de l'alerte quand elle apparaît | **top 1 734** — soit **1 132 px sous la zone visible** |
+| après défilement jusqu'en bas | top 602 — **visible** |
+| distance champ kcal → alerte | **150 px**, avec `af-carbs`, `af-fat` et `af-cal-btn` entre les deux |
+
+👉 ***C'est ft-v1182 sur un autre bloc*** : calculé, correct, et hors de l'écran. Et le geste
+l'aggrave — on touche la pastille **en haut** de la fiche, les quatre valeurs se recalculent, et
+l'avertissement apparaît **tout en bas**. *Un avertissement qu'on ne voit qu'en défilant ne
+protège que ceux qui défilaient déjà.*
+
+**⭐ LE MÉCANISME DU CORRECTIF EXISTE DÉJÀ** (R13) : ft-v1182 a posé un `scrollIntoView` doux
+**seulement si le bloc reste hors zone visible**, avec la hauteur lue sur `visualViewport` et non
+`innerHeight` — *sur iOS, `innerHeight` ne rétrécit pas quand le clavier s'ouvre*.
+
+**⚠️ CE QUI N'EST PAS MESURÉ, ET QUI NE PEUT PAS L'ÊTRE ICI** : que le **48,3 kcal/100 g** vienne
+bien de la fiche Open Food Facts. Le proxy de ce conteneur refuse `openfoodfacts.org`, donc la
+fiche employée est **fabriquée** à partir de ses chiffres à l'écran. ⭐ Ce que je peux dire : **le
+code ne peut pas fabriquer ce nombre** — il recopie `energy-kcal_100g`, ou convertit
+`energy_100g / 4.184` à défaut (app.js @1622). *Deux pour-100 g qui ne parlent pas de la même
+chose : 48,3 côté énergie, 93 côté macros.*
+
+**⛔ ET CE QUI N'EST PAS À L'APP DE TRANCHER** : lequel des deux est juste. Elle ne peut pas savoir.
+Le bouton « Mettre 381 kcal » est déjà la bonne réponse (**R29** : informer sans décider) — il
+manque seulement qu'on le **voie**.
