@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1191`** (prochaine : `ft-v1192`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1192`** (prochaine : `ft-v1193`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,30 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1192 — 🅰️🅱️ L'ALTERNANCE SEMAINE A / SEMAINE B DANS LE SÉLECTEUR DE JOUR** — Michel, capture du sélecteur de son Powerbuilding (J3A « Semaine A » · J3B « Semaine B ») : ***« est-ce que la semaine A/B sont en charge ? »***, puis ***« À et b »***.
+
+**⛔ MESURÉ AVANT DE CODER : NON, rien n'était géré.** `openDaySel` listait les jours **à plat**, sans aucune notion de variante — *c'est lui qui devait se souvenir où il en était.*
+
+**⭐⭐ ET L'INFORMATION EXISTAIT DÉJÀ.** `getProgCurrentWeek(prog)` calcule la semaine en cours et s'affiche même en **« Semaine 2 / 4 »** sur la carte du programme. 👉 ***Elle ne descendait simplement pas jusqu'à la DÉCISION*** — **R4** en miniature : *une information qui reste dans un écran et n'atteint pas celui où l'on CHOISIT n'existe pas pour la personne.*
+
+**⭐ CE QUI EST LIVRÉ** : le jour de la variante en cours porte un repère — *« 👉 ta semaine B (semaine 2 / 8) »*. Semaine 1 → **A**, 2 → **B**, 3 → **A**… (convention confirmée par Michel).
+
+**⛔⛔ ON MET EN AVANT, ON NE CHOISIT PAS.** Le jour de l'autre variante reste **cliquable, au même endroit, avec la même apparence** : une semaine peut se décaler, on peut vouloir refaire la A (**R24** informer sans bloquer · **R29** on ne tranche pas à sa place). **Deux témoins figent cette garantie**, dont un qui **CHARGE vraiment** l'autre variante — et la mutation qui grise le bouton rougit exactement là.
+
+**⚠️ LA LIMITE EST DITE PLUTÔT QUE CACHÉE** : l'app ne **sait** pas que « A » et « B » forment une paire, elle ne voit que des **libellés** — il faut le **deviner**. C'est acceptable ici parce que le **coût d'une erreur est faible** (un jour mis en avant à tort, on tape l'autre), et le garde-fou est l'**APPARIEMENT** : rien ne s'affiche tant qu'on n'a pas trouvé un **A et** un **B** portant **le même numéro de jour**. *Un « J3A » solitaire ne déclenche rien.*
+
+**⛔⛔ ET CE QU'ON NE SAIT PAS, ON SE TAIT** : sans `startDate` ni `weeks`, `_varianteDeLaSemaine` rend `null`. ⚠️ *Le piège était juste à côté* — `getProgCurrentWeek` rend **1 par défaut** dans ce cas, et s'en servir afficherait *« ta semaine A »* **avec l'aplomb d'un calcul** alors que ce serait une valeur de repli. **Une fonction qui ne sait pas doit rendre `null`, et ce `null` ne se remplace jamais par un défaut** (**R29**).
+
+**⚠️ LES LIBELLÉS DES TÉMOINS SONT RECOPIÉS DE SA CAPTURE, PAS INVENTÉS** — *une détection qui marche sur des libellés fabriqués ne prouve rien sur les siens.*
+
+**📣 RÈGLE D'OR #11 — LE REPÈRE EST L'ANNONCE**, à l'écran au moment où ça sert. Aucune pop-up, aucun point rouge, rien à faire (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **ça ne charge rien tout seul** · ⛔ ça ne renomme ni ne réordonne aucun jour · ⛔ ça ne gère que **A/B**, pas A/B/C · ⛔ et un programme **sans numéro de jour** (« Haut du corps A ») n'est **pas** apparié — la base est le numéro, c'est écrit et assumé. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+Tests : **parcours PASSE_TOTAL** (+11, bloc **CCLXXXIX**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 6 mutations, TOUTES MORDENT** — ① le repère non calculé → **3 rouges** · ② l'alternance figée sur A → **1**, exactement la semaine 2 · ③ on invente une semaine qu'on ne connaît pas → **2**, exactement les deux cas sans donnée · ④ l'appariement retiré → **1**, exactement le J3A solitaire · ⑤ le badge non affiché → **3** · ⑥ ⭐ **on BLOQUE l'autre variante** → **1 rouge**, exactement le témoin qui protège ce droit.
+
+Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1192. |
 
 **ft-v1191 — 🔢⚖️ L'AVERTISSEMENT kcal/macros ÉTAIT JUSTE ET HORS DE L'ÉCRAN · ET « PRODUIT SEC » SE DÉCLENCHAIT SUR UN MOT** — cas réel de Michel via GPT : **Lentilles Raynal & Roquelaure** (`3021690201123`), **410 g** → l'écran affiche **198 kcal** pour **25 P · 41 G · 13 L**, qui valent **381 kcal**.
 
@@ -710,27 +734,6 @@ Fichiers : `app.js`, `setup.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md
 
 Tests : **parcours 3437/3437** (+13, bloc **CCLXXXII**), **calculs 339/339**, muscles, croisés, dates, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 5 mutations** — ① l'écran de fin non ouvert → **12 rouges** · ② le cardio non reconnu comme validant → **3 rouges**, exactement les trois cas de cardio seul · ③ l'échauffement **avant** qui ne compte plus → **1 rouge**, exactement ce cas · ④ le socle non employé → **12 rouges** (après mes deux corrections) · ⑤ la régression de ft-v1184 → **0 rouge ici**, mais elle mord dans le bloc **CCLXXXI** qui la couvre — *je le dis plutôt que de prétendre l'avoir testée*. Fichiers : `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `BUGS.md`. sw.js ft-v1185. |
 
-**ft-v1184 — ⏱️ LA MISE À JOUR VOLAIT LE DÉBRIEF DE FIN DE SÉANCE — ET C'EST MICHEL QUI A TROUVÉ LA CAUSE** — il signale d'abord le symptôme : ***« quand on fait la séance avec Milo à la fin on a un débrief, mais quand on intègre un programme ou on fait sa propre séance, il n'y en a pas »***.
-
-**⭐ PREMIÈRE MESURE : LE DÉBRIEF NE DÉPEND PAS DE MILO.** Conduit de bout en bout — une séance chargée **depuis un programme** ouvre l'écran de fin et appelle Milo **exactement** comme les autres. Le seul critère est **au moins une série cochée**. *Son intuition « c'est lié à Milo » était fausse, et c'est lui qui a trouvé la vraie.*
-
-**⭐⭐ SA CAUSE, ET ELLE EST JUSTE** : ***« il n'y a pas de mise à jour pendant une séance mais dès qu'on fait terminé la mise à jour se fait et donc on ne voit pas le débrief »***.
-
-**⛔⛔ REPRODUIT.** Au moment où le rechargement part, `_majPeutSAppliquer` voit `écran=home · séance ouverte=false · récap ouvert=false` — ***les trois gardes tombent en même temps***. Parce que `finishWorkout` vide `S.wkt`, fait `goScreen('home')` (« évite le double-tap sur DOM stale »), puis **attend `syncSheets` pendant plusieurs SECONDES**, et n'ouvre l'écran de fin qu'**après**. 👉 **Le garde `ov-session-end` arrive trop tard : il protège une fenêtre qui n'est pas encore ouverte** — et chaque `persist()` de cette zone rappelle `_appliquerMaj()`.
-
-**⭐ R13 — ON N'INVENTE PAS DE VERROU.** `_finishing` existe dans `log.js`, posé au tout début de `finishWorkout` et **levé sur ses 5 sorties**, y compris les trois refus. **Il manquait un LECTEUR, pas un mécanisme** : le correctif fait **une ligne**, protégée par `typeof` parce que `_finishing` vit dans un autre fichier chargé après.
-
-**⭐ LA RÈGLE DE SORTIE EST DE MICHEL AUSSI** : *« à partir du moment où on valide / on sort de la fenêtre du débrief, là on peut faire la mise à jour »*. **Vérifié** : sortie vers l'**Accueil** → appliquée **tout de suite** · sortie vers le **Coach** → elle **attend**, exprès (on ne recharge pas quelqu'un au milieu d'une conversation avec Milo — règle existante, non touchée, et un témoin la fige).
-
-**⚠️⚠️ ET LA VRAIE LEÇON EST AILLEURS — LE BANC ÉTAIT VERT PENDANT UN MOIS SUR CE BUG.** Le **bloc XXII** existe depuis le **15/08** et porte **exactement le même symptôme** de Michel (*« la mise à jour s'est faite au moment où j'ai terminé ma séance, donc j'ai pas vu mon récapitulatif »*). ⛔⛔ **Et son commentaire NOMMAIT déjà la cause** : *« le garde-fou se relâchait à la milliseconde où S.wkt se vide, c'est-à-dire juste avant que l'écran de fin s'ouvre. »* **Mais son témoin pose les états à la main** (`S.wkt=null` ; `ov.classList.add('open')`) : il teste l'**état final**, l'écran **déjà** ouvert, et **ne conduit jamais `finishWorkout`**. 👉 ***Un témoin qui pose l'état final à la main ne voit pas le chemin qui y mène.*** *La cause était écrite en août ; le correctif n'a couvert que l'APRÈS ; le témoin a figé l'APRÈS ; la fenêtre d'avant est restée ouverte un mois.* C'est « vérifier la fonction n'est pas vérifier l'appel » (ft-v1158) appliqué au **TEMPS** au lieu de l'espace — nouvelle famille **`BUGS.md` §58**.
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît : un écran qui disparaissait reste (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : rien d'autre — et ⚠️⚠️ **CORRECTION, LE JOUR MÊME — IL N'Y A PAS DE BUG CARDIO, C'ÉTAIT MA FIXTURE.** J'avais signalé à Michel qu'un cardio seul n'ouvrait pas d'écran de fin. **Faux** : ma sonde écrivait `cardio:{min:30}` alors que le champ de production est **`duration`**. Remesuré avec le vrai schéma : **écran de fin ouvert, séance enregistrée, débrief présent, appel à Milo parti**. 👉 ***Un test qui n'emploie pas le schéma de la production ne teste rien — il fabrique un faux bug*** (`docs/SUIVI-AUDIT.md`). J'ai failli faire creuser Michel sur un problème inexistant, et une fausse piste laissée dans un journal coûte encore plus cher six mois plus tard (**R30**). ⛔ **Le seul cas sans écran de fin reste « aucune série cochée », et il est VOULU** : l'app refuse de terminer et le dit — *« Valide une série ou ajoute un cardio ! »*. 
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1049**, « Déployer sur GitHub Pages » en `success` à **16:09:35 UTC** sur `a771f323`. ⛔ Ni backend ni worker attendus.
-
-Tests : **parcours 3424/3424** (+9, bloc **CCLXXXI**), **calculs 339/339**, muscles, croisés, dates, données classées 0 trou. ⭐⭐ **Le témoin CONDUIT `finishWorkout`** — c'est toute la différence avec celui d'août. ⛔ **CONTRÔLE NÉGATIF : 4 mutations** — ① le lecteur retiré → **5 rouges** · ② le garde du récap retiré → **1 rouge chirurgical** · ③ le verrou non levé sur le refus « aucune série validée » → **2 rouges** · ④ le garde « accueil seulement » retiré → **0 rouge chez moi**, mais il **mord dans le bloc XXII** qui le couvre déjà — *je le dis plutôt que de prétendre l'avoir testé*. ⚠️ **Et la mutation ② a exigé un témoin que je n'avais pas écrit** : aucun des miens ne tentait une mise à jour **pendant** que l'écran est affiché. Or le cas est réel et fréquent — *taper son ressenti sur l'écran de fin appelle `setDayEnergy` → `persist()` → `_appliquerMaj()`*. **Les deux gardes se relaient** (`_finishing` avant l'ouverture, `ov-session-end` après), **et il fallait un témoin pour chacun**. Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `BUGS.md`. sw.js ft-v1184. |
 
 
 

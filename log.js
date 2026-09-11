@@ -7490,16 +7490,79 @@ function finalImportHist(){
 // ─── SÉLECTION DU JOUR ────────────────────────────────────────
 let _daySelProgIdx=-1;
 
+/* 🅰️🅱️ ft-v1192 (11/09/2026) — L'ALTERNANCE SEMAINE A / SEMAINE B.
+   Michel, capture de son Powerbuilding (J3A « Semaine A » · J3B « Semaine B ») : *« est-ce que
+   la semaine A/B sont en charge ? »*. ⛔ MESURÉ : NON — `openDaySel` listait les jours À PLAT,
+   sans aucune notion de variante, et c'est lui qui devait se souvenir où il en était.
+   ⭐⭐ ET L'INFO EXISTAIT DÉJÀ : `getProgCurrentWeek(prog)` calcule la semaine en cours, et elle
+   s'affiche même en « Semaine 2 / 4 » sur la carte du programme. *Elle ne descendait simplement
+   pas jusqu'à la DÉCISION* — R4 en miniature : une information qui reste dans un écran et
+   n'atteint pas celui où l'on choisit n'existe pas pour la personne.
+   ⛔⛔ ON MET EN AVANT, ON NE CHOISIT PAS. Le jour de l'autre variante reste **cliquable,
+   au même endroit, avec la même apparence** : une semaine peut se décaler, on peut vouloir
+   refaire la A (R24 : informer sans bloquer · R29 : on ne tranche pas à sa place).
+   ⚠️ ET LA LIMITE EST DITE PLUTÔT QUE CACHÉE : l'app ne SAIT pas que « A » et « B » forment une
+   paire, elle ne voit que des libellés — il faut le DEVINER. C'est acceptable ici parce que le
+   coût d'une erreur est faible (un jour mis en avant à tort, on tape l'autre), et le garde-fou
+   est l'APPARIEMENT : rien ne s'affiche tant qu'on n'a pas trouvé un A **et** un B portant le
+   même numéro de jour. Un « J3A » solitaire ne déclenche rien. */
+function _varianteSemaine(label){
+  const s=String(label==null?'':label);
+  if(!s)return null;
+  let m=s.match(/\bsemaine\s*([AB])\b/i);        // « Semaine A », « - semaine b (Épaules) »
+  if(m)return m[1].toUpperCase();
+  m=s.match(/^\s*J\s*\d+\s*([AB])\b/i);          // « J3A », « J 3 B »
+  return m?m[1].toUpperCase():null;
+}
+// La « base » d'un jour = son NUMÉRO (J3A et J3B partagent J3). C'est le seul appariement
+// accepté : deux jours ne forment une paire que s'ils portent le même numéro.
+// ⛔ Pas de base → pas de paire → l'app se tait (R29).
+function _baseJour(label){
+  const m=String(label==null?'':label).match(/^\s*J\s*(\d+)\s*[AB]?\b/i);
+  return m?('J'+m[1]):null;
+}
+// Rend { J3:{A:2,B:3} } — uniquement les bases qui ont VRAIMENT les deux variantes.
+function _pairesSemaineAB(days){
+  const par={};
+  (days||[]).forEach((d,i)=>{
+    const v=_varianteSemaine(d&&d.label), b=_baseJour(d&&d.label);
+    if(!v||!b)return;
+    if(!par[b])par[b]={};
+    if(par[b][v]==null)par[b][v]=i;              // le PREMIER de chaque variante fait foi
+  });
+  const out={};
+  Object.keys(par).forEach(b=>{ if(par[b].A!=null&&par[b].B!=null)out[b]=par[b]; });
+  return out;
+}
+/* Quelle variante cette semaine ? Semaine 1 → A, 2 → B, 3 → A…  (convention confirmée par
+   Michel : « À et b ».)
+   ⛔ SANS DATE DE DÉBUT NI NOMBRE DE SEMAINES, ON NE SAIT PAS — et on se TAIT. `getProgCurrentWeek`
+   rend 1 par défaut dans ce cas : s'en servir afficherait « ta semaine A » avec l'aplomb d'un
+   calcul, alors que ce serait une valeur de repli. Une fonction qui ne sait pas doit rendre
+   `null`, et ce `null` ne se remplace jamais par un défaut (R29). */
+function _varianteDeLaSemaine(prog){
+  if(!prog||!prog.startDate||!(+prog.weeks>0))return null;
+  const w=getProgCurrentWeek(prog);
+  return (w%2===1)?'A':'B';
+}
+
 function openDaySel(progIdx){
   const prog=(S.programmes||[])[progIdx];if(!prog||!prog.days)return;
   _daySelProgIdx=progIdx;
   const nameEl=document.getElementById('day-sel-prog-name');
   if(nameEl)nameEl.textContent=prog.name;
+  // 🅰️🅱️ Quelle variante cette semaine ? (null = on ne sait pas → aucun repère affiché)
+  const _vSem=_varianteDeLaSemaine(prog);
+  const _paires=_vSem?_pairesSemaineAB(prog.days):{};
+  const _aMettreEnAvant={};
+  Object.keys(_paires).forEach(b=>{ const idx=_paires[b][_vSem]; if(idx!=null)_aMettreEnAvant[idx]=true; });
+  const _semTxt=_vSem?(' (semaine '+getProgCurrentWeek(prog)+' / '+prog.weeks+')'):'';
   const btns=document.getElementById('day-sel-btns');
   if(btns)btns.innerHTML=(prog.days||[]).map((d,i)=>`
     <button class="btn btn-bg2" style="padding:14px 16px;text-align:left;" onclick="loadProgDay(${progIdx},${i})">
       <div style="font-weight:700;font-size:14px;">${_escNote(d.label)}</div>
       <div style="font-size:12px;color:var(--t2);margin-top:3px;">${_escNote((d.exs||[]).slice(0,3).map(e=>e.name).join(', '))}${(d.exs||[]).length>3?' +'+((d.exs||[]).length-3):''}</div>
+      ${_aMettreEnAvant[i]?`<div style="display:inline-block;margin-top:7px;padding:3px 9px;border-radius:999px;background:rgba(255,159,10,.14);border:1px solid rgba(255,159,10,.35);font-size:11px;font-weight:800;color:var(--t2);">👉 ta semaine ${_vSem}${_semTxt}</div>`:''}
     </button>`).join('');
   document.getElementById('ov-day-sel').classList.add('open');
 }

@@ -20,7 +20,20 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1191` — 🔢⚖️ **l'avertissement kcal/macros était JUSTE et hors
+- **Version en ligne (live) :** `ft-v1192` — 🅰️🅱️ **l'alternance semaine A / semaine B dans le
+  sélecteur de jour.** Michel, capture de son Powerbuilding : *« est-ce que la semaine A/B sont en
+  charge ? »* → **non**, mesuré : `openDaySel` listait les jours **à plat**.
+  ⭐⭐ **L'info existait pourtant** — `getProgCurrentWeek` s'affiche déjà en « Semaine 2 / 4 » sur la
+  carte du programme ; *elle ne descendait pas jusqu'à la **décision*** (**R4** en miniature).
+  ⛔⛔ **On met en avant, on ne choisit pas** : l'autre variante reste **cliquable**, même endroit,
+  même apparence (**R24/R29**) — deux témoins le figent, dont un qui la **charge** vraiment.
+  ⛔ **Garde-fou : l'APPARIEMENT.** Rien ne s'affiche sans un **A et** un **B** portant le même
+  numéro de jour ; un « J3A » solitaire ne déclenche rien.
+  ⛔ **Et sans `startDate`/`weeks`, l'app se TAIT** — `getProgCurrentWeek` rend 1 par défaut, s'en
+  servir afficherait un repli avec l'aplomb d'un calcul.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1191` — 🔢⚖️ **l'avertissement kcal/macros était JUSTE et hors
   de l'écran · et « produit SEC » se déclenchait sur un MOT.**
   ⭐⭐ **Ce que la mesure a déplacé** : le contrôle de cohérence n'est **ni absent ni muet**. Il se
   déclenche (183 kcal d'écart, 48 %), dit exactement ce qu'il faut, et propose un bouton
