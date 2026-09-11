@@ -286,7 +286,7 @@ def pied(canvas, doc):
     canvas.setFont('Helvetica', 7.5)
     canvas.setFillColor(GRIS)
     canvas.drawString(22 * mm, 12 * mm,
-                      'Force Tracker — lentilles Raynal : les deux correctifs, livres — 11/09/2026')
+                      'Force Tracker — lentilles Raynal : les deux correctifs livres, ft-v1191 — 11/09/2026')
     canvas.drawRightString(188 * mm, 12 * mm, 'page %d' % doc.page)
     canvas.setStrokeColor(TRAIT)
     canvas.setLineWidth(0.4)
@@ -295,12 +295,12 @@ def pied(canvas, doc):
 
 
 F = []
-F.append(P("Lentilles Raynal : les deux correctifs, ecrits et mesures", 'titre'))
+F.append(P("Lentilles Raynal : les deux correctifs, livres", 'titre'))
 F.append(P("Force Tracker — 11/09/2026. Suite du document de trace. Michel a valide les deux "
-           "directions ; elles sont <b>ecrites, mesurees, et pas encore en ligne</b> — la passe "
-           "complete tourne au moment ou ce document est genere. Le point le plus utile de la "
-           "journee n'est aucun des deux correctifs : c'est <b>ce que le controle negatif a "
-           "attrape avant la livraison</b>.", 'sous'))
+           "directions ; elles sont <b>en ligne</b> — <b>ft-v1191</b>, run #1078 vert a 08:01:50, "
+           "passe complete <b>3524/3524</b>. Le point le plus utile de la journee n'est aucun des "
+           "deux correctifs : c'est <b>ce que le controle negatif a attrape avant la livraison</b>.",
+           'sous'))
 
 F.append(encadre(
     'CE QUE LE CONTROLE NEGATIF A EMPECHE DE LIVRER',
@@ -405,12 +405,21 @@ F.append(tableau(
     [40 * mm, 125 * mm]))
 F.append(Spacer(1, 6))
 
-F.append(P("4. Ce qui n'est pas fait, et ce que je ne sais pas", 'h1'))
+F.append(P("4. Etat, et ce que je ne sais pas", 'h1'))
 F.append(tableau(
     ['point', 'etat'],
-    [["<b>rien n'est en ligne</b>",
-      "la version deployee reste <b>ft-v1190</b>. La passe complete tourne ; rien ne part avant "
-      "qu'elle soit verte."],
+    [["<b>LIVRE ET VERIFIE VERT</b>",
+      "<b>ft-v1191</b> est en ligne : run <b>#1078</b>, " + C % 'conclusion: success' + " a "
+      "<b>08:01:50 UTC</b> sur " + C % '25afcc0f' + ", vert du premier coup. Passe complete "
+      "<b>3524/3524</b>, calculs 339/339, muscles 241/241, croises 50/50, dates 9/9, donnees 0 trou."],
+     ["<b>le " + C % 'sw.js' + " reellement servi n'est pas lu</b>",
+      "le proxy du conteneur refuse aussi " + C % 'github.io' + " (403). <b>Le run est vert</b> ; que "
+      "l'application affiche bien <b>ft-v1191</b> dans &laquo; A propos &raquo; reste a confirmer par "
+      "Michel. <i>Je le dis plutot que de le compter comme verifie.</i>"],
+     ["<b>la validation iPhone</b>",
+      "deux choses a regarder sur Safari : l'avertissement doit <b>venir a lui</b> apres le clic sur "
+      "la pastille &laquo; paquet entier &raquo;, et le message &laquo; produit SEC &raquo; doit avoir "
+      "<b>disparu</b> sur sa boite de lentilles."],
      ["<b>les etiquettes de categorie ne sont PAS verifiees</b>",
       "" + C % 'openfoodfacts.org' + " est injoignable depuis le conteneur (<b>403 au CONNECT</b>, "
       "verifie), donc les motifs de categorie <b>n'ont pas pu etre confrontes a la vraie base</b>. "
@@ -429,7 +438,8 @@ F.append(tableau(
 F.append(Spacer(1, 6))
 F.append(encadre(
     "ETAT DES TESTS",
-    "Bloc permanent <b>CCLXXXVIII : 11 temoins, 11/11</b> en isole. "
+    "<b>Passe complete : 3524 verts, 0 rouge</b> — calculs 339/339, muscles 241/241, croises 50/50, "
+    "dates 9/9, donnees classees 0 trou. Bloc permanent <b>CCLXXXVIII : 11 temoins, 11/11</b>. "
     "<b>Controle negatif : 10 mutations, TOUTES MORDENT</b>, chacune sur son propre temoin — le "
     "correctif entier retire · le garde <i>&laquo; deja affiche &raquo;</i> retire · le garde du focus "
     "retire · " + C % 'innerHeight' + " au lieu de " + C % 'visualViewport' + " · " +
@@ -441,7 +451,7 @@ F.append(encadre(
 doc = SimpleDocTemplate(OUT, pagesize=A4,
  leftMargin=22 * mm, rightMargin=22 * mm,
  topMargin=20 * mm, bottomMargin=22 * mm,
- title='Force Tracker — lentilles Raynal : les deux correctifs ecrits et mesures, et ce que le controle negatif a attrape',
+ title='Force Tracker — lentilles Raynal : les deux correctifs livres en ft-v1191, et ce que le controle negatif a attrape',
  author='Force Tracker')
 doc.build(F, onFirstPage=pied, onLaterPages=pied)
 print('OK ->', OUT)
