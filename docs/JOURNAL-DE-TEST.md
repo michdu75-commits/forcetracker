@@ -2554,3 +2554,50 @@ chose : 48,3 côté énergie, 93 côté macros.*
 **⛔ ET CE QUI N'EST PAS À L'APP DE TRANCHER** : lequel des deux est juste. Elle ne peut pas savoir.
 Le bouton « Mettre 381 kcal » est déjà la bonne réponse (**R29** : informer sans décider) — il
 manque seulement qu'on le **voie**.
+
+---
+
+### 🟢 PRÊTE — LE MESSAGE « PRODUIT SEC » SE DÉCLENCHE SUR UN MOT DU NOM, ET IGNORE « CUISINÉES » (11/09/2026)
+
+Michel, sur sa capture des **Lentilles Cuisinées à l'Auvergnate** : *« pour une boîte de lentilles
+cuisinées prête à consommer, cet avertissement semble faux »*. **Il a raison, et la cause est
+entièrement dans une ligne.**
+
+**⭐⭐ LA CONDITION EXACTE, MESURÉE — il n'y a ni catégorie, ni champ source, ni repli** :
+
+```
+_SECS_QUI_GONFLENT = /p[âa]tes|spaghetti|…|lentille|pois cass|pois chiche|haricot sec|…/i
+```
+
+Elle est testée **sur le NOM**, et rien d'autre. Mot déclencheur ici : **« Lentille »**.
+⛔ **Mesuré : la règle ne contient AUCUN mot de cuisson** — ni `cuisiné`, ni `conserve`, ni `boîte`,
+ni `prêt`. *Elle ne peut donc pas voir le mot qui, dans ce nom précis, la contredit.*
+
+**⛔⛔ ET CE N'EST PAS UN CAS ISOLÉ — contre-épreuves mesurées :**
+
+| nom | verdict |
+|---|---|
+| Riz **cuit** en sachet | ⛔ SEC |
+| Poêlée de lentilles **cuisinées** | ⛔ SEC |
+| Salade de pois chiches | ⛔ SEC |
+| Soupe de lentilles corail | ⛔ SEC |
+| Pâtes **fraîches cuites** | ⛔ SEC |
+| Cassoulet aux **haricots secs** | ✅ muet — *alors qu'il en contient* |
+
+👉 ***C'est la famille n°1 du dépôt, « le premier match gagnant »*** (`BUGS.md`, ≥ 12 fois) : un
+mot suffit, et le contexte qui l'annule n'est jamais lu. C'est aussi **R14** — la liste a été
+écrite pour des **paquets** de féculents secs (ft-v1103), elle s'applique telle quelle à une
+**conserve cuisinée**.
+
+**⛔⛔ ET LA DONNÉE QUI PERMETTRAIT DE TRANCHER N'EST MÊME PAS DEMANDÉE.** Les champs réclamés à
+Open Food Facts sont mesurés : `product_name` · `product_name_fr` · `generic_name` ·
+`generic_name_fr` · `brands` · `quantity` · `nutriments` · `serving_quantity` · `nutriscore_grade` ·
+`nova_group` · `additives_n` · `labels_tags` · `image_front_small_url`. ⛔ **`categories_tags` n'y
+est pas.** *On ne peut pas reprocher à la règle d'ignorer la catégorie : personne ne la lui donne.*
+C'est **R8** — un prompt (ici une regex) ne compense jamais une donnée absente.
+
+**⚠️ ET UNE ATTENTE À MOI QUI ÉTAIT FAUSSE, DITE PLUTÔT QUE TUE** : mon témoin exigeait
+`etat === null` (*« l'app ne devine pas le cru/cuit »*). **Mesuré : elle pose `etat:'tel-que-vendu'`**
+sur un scan — et c'est **correct**, Open Food Facts donne bien les valeurs telles que vendues. ⭐ Mais
+ça nomme le vrai trou : *« tel que vendu » ne distingue pas un paquet SEC d'une conserve CUISINÉE* —
+et c'est exactement la distinction dont le message a besoin.
