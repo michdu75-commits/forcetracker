@@ -3571,3 +3571,30 @@ vu coûte une passe entière par hypothèse.*
 « déploiement silencieux » (le vrai état n'est pas celui qu'on croit mesurer) · et la leçon de
 ft-v994 — *un contrôle qu'on n'a pas vu échouer ne mesure rien*. Ici c'est le contraire et c'est
 aussi grave : **un contrôle qui échoue pour une raison qui n'est pas son sujet**.
+
+## §61 — ⛔⛔ L'OUTIL DE MESURE TRONQUÉ : « aucun rouge » n'est pas « tout est vert » *(11/09/2026, ft-v1192)*
+
+**À quoi on la reconnaît** : une mesure qui rend **0 rouge** alors qu'elle n'a pas mesuré tout ce
+qu'elle prétend mesurer. Elle ne ment jamais sur ce qu'elle a vu — elle **se tait sur ce qu'elle
+n'a pas vu**, et ce silence est indiscernable d'un succès.
+
+**Les trois cas vécus, en cinq jours :**
+
+| quand | l'outil | ce qu'il affichait | ce qui manquait |
+|---|---|---|---|
+| ft-v1187 | harnais de mutation coupé à `tail -4` | « 0 rouge » | un rouge en 8ᵉ position sur 12 |
+| ft-v1192 | passe complète arrêtée sur `b.close()` | **« 3479 ✅ · 0 ❌ »** | **56 témoins jamais exécutés** |
+| ft-v1190 | (passe faussée par ma propre fixture) | vert | le cas réel |
+
+**Pourquoi c'est une famille à part, et pas « un bug de test »** : un test FAUX finit par rougir sur
+autre chose. Un outil TRONQUÉ, lui, **conforte** — il donne exactement le signal qu'on espérait.
+*C'est la seule catégorie d'erreur où plus on est rassuré, moins on a mesuré.*
+
+**Ce qui protège aujourd'hui** :
+- ⭐ **le TOTAL se COMPARE, il ne se lit pas seul** — 3479 est un beau chiffre ; c'est `3524 + 11 =
+  3535` qui dit qu'il en manque 56. **Toute passe doit être rapprochée de la précédente** ;
+- ⛔ **ne jamais couper la sortie d'un outil de mesure** (`tail`, `head`, `| grep` sur les rouges
+  seuls) — filtrer l'affichage est déjà tronquer la mesure ;
+- ⛔ un bloc de témoins qui a besoin d'un navigateur **doit vivre avant `b.close()`** dans
+  `tests/parcours/runner.js` — la raison est écrite à l'endroit exact dans le fichier ;
+- ⚠️ et le réflexe : **un exit code 0 ne prouve pas qu'un runner est allé au bout.**
