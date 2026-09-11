@@ -18,6 +18,7 @@
 ⚠️ CONTRAINTE DE POLICE : WinAnsi/cp1252 — pas d'emoji. `_v` est une LISTE BLANCHE (le caractere
    est-il encodable ?), pas une liste noire : c'est le seul test sans trou.
 """
+import html
 import os
 import re
 from reportlab.lib.pagesizes import A4
@@ -215,6 +216,22 @@ def _v(x, ou='texte'):
                 chr(n).encode('cp1252')
             except UnicodeEncodeError:
                 raise SystemExit('ENTITE HTML NON RENDUE %s dans %s' % (m.group(0), ou))
+        # ⛔⛔ QUATRIEME TROU DE CE GARDE-FOU, ET LA MEME LECON A CHAQUE FOIS.
+        #    (1) il n'inspectait que les paragraphes -> un emoji est passe par un titre.
+        #    (2) il ne lisait que les CARACTERES -> l'entite `&#9888;` est passee.
+        #    (3) il ne connaissait qu'une LISTE noire -> les puces ① sont passees.
+        #    (4) ICI : il lisait les entites NUMERIQUES et pas les NOMMEES -> `-&gt;` (U+2192)
+        #        est passe, et cette fleche n'existe pas en WinAnsi : carre noir a l'ecran.
+        #    👉 *Une liste blanche ne protege que ce qu'elle REGARDE.* Le test est bon depuis (3) ;
+        #    c'est sa COUVERTURE qui etait incomplete — un angle mort, pas une erreur de critere.
+        for m in re.finditer(r'&([A-Za-z][A-Za-z0-9]{1,15});', x):
+            ch = html.unescape(m.group(0))
+            if len(ch) == 1:
+                try:
+                    ch.encode('cp1252')
+                except UnicodeEncodeError:
+                    raise SystemExit('ENTITE NOMMEE NON RENDUE %s (%s) dans %s — police '
+                                     'WinAnsi/cp1252' % (m.group(0), hex(ord(ch)), ou))
     return x
 
 
