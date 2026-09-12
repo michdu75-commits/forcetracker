@@ -36,6 +36,7 @@
   ⚠️ **Deux pièges d'outillage** : mon témoin listait **8 clés au lieu de 9** et rougissait sur du
   code **sain** ; et une mutation ne mordait pas parce qu'elle frappait **une autre fonction**
   portant le même motif. *Une mutation mal placée est indiscernable d'un témoin aveugle.*
+  ✅ **Déploiement vérifié vert (R18)** : run **#1108**, `success` à 17:10:07 UTC.
   ⏭️ **EN ATTENTE DE MICHEL — les 4 harmonisations.** **5 sous-étapes réelles restantes** avant le hub.
   📣 **Toujours ouverts** : `S.savedFoods` · l'écart `48,3`/`48`.
   ⚠️ **À vérifier par Michel sur Safari/iPhone.**

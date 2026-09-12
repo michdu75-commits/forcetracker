@@ -476,6 +476,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 **⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **la divergence `portionWeightG` n'est PAS harmonisée** — décision produit n°2, en attente · ⛔ ni le **hub** (4) ni la **douane** (5) · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique et les migrations restent ouverts. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1108**, `conclusion: success` à **17:10:07 UTC** sur `7dd2bc45`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *le run est vert, l'app affichant ft-v1198 reste à confirmer par Michel.*
+
 Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1198. |
 
 **ft-v1197 — 🏷️ 1b-ii : LA PROVENANCE REPRISE · ET UNE SOUS-ÉTAPE DE MON PROPRE PLAN QUI N'AVAIT RIEN À EXTRAIRE** — Michel : ***« continue selon le découpage, une sous-étape à la fois »***, puis ***« après avoir bossé, fais-moi un PDF direct pour GPT »***.
