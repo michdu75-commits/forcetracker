@@ -473,7 +473,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 **⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les 8 autres sous-étapes ne sont pas faites** — elles sont écrites, ordonnées et dépendancées dans `docs/SOUS-ETAPES-1B-3.md` · ⛔ **aucun défaut divergent n'est harmonisé** · ⛔ ni le **hub** (étape 4) ni la **douane** (étape 5) · ⛔ `S.savedFoods` et l'écart **48,3 / 48** restent ouverts · ⛔ ni l'historique ni les migrations. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 
-✅ **DÉPLOIEMENT** (R18) : à vérifier après le push.
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1096**, `conclusion: success` à **11:39:31 UTC** sur `2d6bcbcb`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *le run est vert, l'app affichant ft-v1195 reste à confirmer par Michel.*
 
 Tests : **parcours 3578/3578 sur l'arbre FINAL** (+14, bloc **CCXCII**) — ⭐ **total prédit = total obtenu** (3564 + 14, §61). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées — **aucun trou nouveau**. ⛔ **CONTRÔLE NÉGATIF : 10 MUTATIONS, TOUTES MORDENT** — ① le propriétaire rend un objet vide → **7 rouges** · ② `qOk` ignoré → **3** · ③ `portionWeightG` rend `0` (la fausse harmonisation) → **2** · ④ `per100` retiré → **4** · ⑤ `portionLabel` retiré → **4** · ⑥ ⭐ **`sourceId`/`etat` donnés au rejeu** → **1 rouge, exactement le témoin qui protège l'écart** · ⑦ l'inverse, la porte directe les perd → **1** · ⑧ **débordement : l'étape 3 faite au passage** → **1** *(après réécriture du témoin — voir plus haut)* · ⑨ une 2ᵉ copie du bloc réapparaît → **2** · ⑩ la règle retirée du rejeu (contrôle) → **1**.
 
