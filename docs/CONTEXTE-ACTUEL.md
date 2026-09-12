@@ -62,26 +62,168 @@
   repli de `state.js`) — écrites pour que personne ne les « répare » dans six mois (**R30**).
   👉 **Détail chiffré : `docs/SUIVI-AUDIT.md` · les témoins : bloc CCXCII du banc parcours.**
 
-- **Version en ligne (live) :** `ft-v1195` — 🔧 **les 3 constats de l'audit « onglet Séance »,
-  corrigés — et aucun n'était visible à l'écran.** Michel lève lui-même l'ordre qu'il avait posé le
-  matin : ***« vas-y corrige tout »***.
-  ⛔⛔ **Donc le contrat est celui des extractions nutrition** : ce sont des *pièges pour plus tard*,
-  pas des bugs subis → **aucune valeur affichée ne doit bouger**, prouvé par
-  `tools/instantane_seance_audit.js` (avant/après, rejouable).
+- **Version précédente :** `ft-v1194` — 🧮 **un seul propriétaire pour le pour-100 g dérivé,
+
+- **Version en ligne (live) :** `ft-v1200` — 🔧 **les 3 constats de l'audit « onglet Séance »,
+  corrigés — et aucun n'était visible à l'écran.** Michel lève lui-même l'ordre du matin :
+  ***« vas-y corrige tout »***.
+  ⛔⛔ **Contrat : aucune valeur affichée ne doit bouger** — prouvé par `tools/instantane_seance_audit.js`
+  (bloc « vraie vie » identique **octet pour octet** ; bloc « état impossible » qui rend désormais **le
+  même sha** que lui : *le repli a cessé de changer quoi que ce soit*).
   ⭐ ① `_rpeDeRir` était **appelée 0 fois** pendant que `10−n` était retapée dans **3 fonctions /
-  6 occurrences** — *l'avertissement était écrit juste au-dessus du code qui l'ignore* (**R2**).
-  ⛔ **Garde ajouté** : hors échelle, un cran `null` sortait **« 10 »** en RPE, c'est-à-dire
-  « série à l'échec » pour une série **non notée** — la confusion de ft-v1154. Il rend `''`.
-  ⭐ ② `_rirTxt` **morte en production** et **périmée deux fois**, retirée avec sa raison (**R30**) ;
-  son témoin remis sur le **vrai** chemin (`_reserveEchecTxt`, §58).
-  ⭐ ③ `reposDefaut()` remplace **trois** replis (130 / 120 / 90) — dormant, mais **déjà mordu** en
-  ft-v1080.
-  ⭐⭐ **Le correctif dit en une mesure** : le bloc « vraie vie » de l'instantané est **identique
-  octet pour octet**, et le bloc « état impossible » rend désormais **le même sha** que lui.
+  6 occurrences** (**R2**) · ② `_rirTxt` **morte et périmée deux fois**, retirée avec sa raison
+  (**R30**), son témoin remis sur le vrai chemin (**§58**) · ③ `reposDefaut()` remplace **trois**
+  replis (130 / 120 / 90) — dormant, mais **déjà mordu** en ft-v1080.
+  ⚠️⚠️ **Renumérotée de ft-v1195 à ft-v1200, et le bloc CCXCII → CCXCVI** : session-A a publié
+  ft-v1195→1199 pendant la journée. *La première publiée garde le numéro.*
   ⚠️ **À vérifier par Michel sur Safari/iPhone** — en principe **rien** n'a changé, et c'est
   exactement ça qu'il y a à vérifier.
 
-- **Version précédente :** `ft-v1194` — 🧮 **un seul propriétaire pour le pour-100 g dérivé,
+- **Version précédente :** `ft-v1199` — 🔢 **3-ii : la pastille « ta dernière quantité » ·
+  et un défaut RÉEL trouvé par la sonde, mesuré et NON corrigé.**
+  ⭐ **Test d'entrée passé** : 2 copies strictement identiques → **`_qGrammes(src)`**.
+  ⭐ **Elle rend un NOMBRE, pas un booléen** — `_qGrammes(x) > 0` **est** la condition, donc
+  3-iii et 3-iv lui ajouteront leurs appelants **sans réécrire la règle**. Un propriétaire pour
+  trois sous-étapes.
+  ⛔⛔ **Ce n'est PAS `_qReprenable`** : celle de 3-i accepte les **portions**, celle-ci les
+  **refuse** (ses appelants alimentent un champ en grammes). **Deux témoins figent qu'elles
+  restent DEUX** — les fusionner dans un sens comme dans l'autre fait rougir.
+  ⭐ **Le témoin de périmètre de 3-i SE DÉPLACE** : « écrite 5 fois » → **3 écritures + 2
+  appelants**, avec ce que deviendra le compte après 3-iii et 3-iv.
+  ⛔⛔ **DÉFAUT RÉEL, HORS PÉRIMÈTRE** : `_afOublierAliment` **ne rend pas** la pastille « la
+  dernière fois » (seule `openAddFood` le fait) → entre deux aliments d'une même ouverture, celle
+  du précédent **reste affichée** sur un aliment en portions. ***Jumelle exacte du défaut du
+  PAQUET corrigé en ft-v1193*** (R8). **Mesuré, écrit dans `docs/JOURNAL-DE-TEST.md` avec son
+  correctif d'une ligne, NON corrigé** — une extraction ne change aucun comportement.
+  ⚠️ **Et la sonde me l'a appris à mes dépens** : le site est **dans un garde** (`P = it.per100`)
+  — sans pour-100 g, le bloc est sauté et **les 6 cas rendaient la même valeur**, un reliquat.
+  *Une sonde qui n'atteint pas la ligne visée mesure l'écran d'avant, pas la règle.*
+  ⭐ **Instantané 15 → 17 clés** (les portes étaient **conduites**, mais rien ne **lisait**
+  `#af-bc-last` — *conduire n'est pas observer*), **identique octet pour octet**, sha
+  `b8f06e45d8c91fcc`.
+  ✅ **Déploiement vérifié vert (R18)** : run **#1112**, étape Pages `success` à 19:16:04 UTC.
+  ⏭️ **EN ATTENTE DE MICHEL** : les 4 harmonisations **+ la pastille périmée**.
+  **4 sous-étapes réelles restantes** avant le hub.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1198` — 📋 **1b-iii : le noyau d'un item de liste · et le
+  plan annonçait DEUX divergences, il n'y en a qu'UNE.**
+  ⭐ **Test d'entrée passé** (sa consigne permanente) : **3 sites réels** — les deux branches de
+  `_buildFoodQuickItems` et `toggleFavFood`. **9 champs strictement identiques** mesurés champ par
+  champ → **`_itemListe(src)`**.
+  ⛔⛔ **Le document se trompait pour la 3ᵉ sous-étape d'affilée** : il annonçait que `q` valait
+  `0` ici et `null` là, et en déduisait un propriétaire **à paramètre**. **Mesuré : `q` ne diverge
+  pas** (`+X.q>0?+X.q:0` aux trois). **Seul `portionWeightG` diverge** (`0` · `0` · `null`).
+  👉 *Le paramètre était dimensionné pour deux écarts alors qu'il n'y en a qu'un* — **il n'a pas
+  été écrit**. `portionWeightG` et `fav` restent **écrits chez chaque appelant**.
+  ⛔ Et `origine`/`sourceId`/`etat` ne bougent pas : **une seule copie**.
+  ⚠️ **Sonde ouverte, pas crue — et juste cette fois** (après deux étiquettes fausses de suite).
+  ⭐ **Instantané identique octet pour octet**, sha `7a52c37da93e17a3`.
+  ⚠️ **Deux pièges d'outillage** : mon témoin listait **8 clés au lieu de 9** et rougissait sur du
+  code **sain** ; et une mutation ne mordait pas parce qu'elle frappait **une autre fonction**
+  portant le même motif. *Une mutation mal placée est indiscernable d'un témoin aveugle.*
+  ✅ **Déploiement vérifié vert (R18)** : run **#1108**, `success` à 17:10:07 UTC.
+  ⏭️ **EN ATTENTE DE MICHEL — les 4 harmonisations.** **5 sous-étapes réelles restantes** avant le hub.
+  📣 **Toujours ouverts** : `S.savedFoods` · l'écart `48,3`/`48`.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+
+- **Avant :** `ft-v1197` — 🏷️ **1b-ii : la provenance reprise · et une
+  sous-étape de mon propre plan qui n'avait RIEN à extraire.**
+  ⛔⛔ **LE FAIT DE LA VERSION EST UNE SOUS-ÉTAPE SUPPRIMÉE.** La suivante dans l'ordre était
+  **1b-iv** (l'export CSV), décrite comme *« la moins risquée du lot »*. Mesuré avant la moindre
+  ligne : **`NUTRI_COLONNES` et sa construction existent UNE SEULE FOIS**, aucun import ne les
+  relit, et `_csvFichier(...)` est **déjà** le propriétaire commun (nutrition **et** poids).
+  👉 ***Une extraction exige au moins DEUX copies*** — en sortir une créerait un propriétaire à
+  **un seul appelant** (**R19**).
+  ⭐⭐ **Et l'erreur qui l'a fait entrer dans le plan vaut plus que la sous-étape** : sa
+  justification était *« invisible au compteur »* (le cas d'école de `BUGS.md` §63) — j'ai versé au
+  découpage **tout ce que le compteur avait raté**, sans demander site par site *s'il était
+  DUPLIQUÉ*. ***Réparer l'instrument et refaire l'inventaire sont deux gestes différents.***
+  **Test d'entrée désormais écrit : compter les copies AVANT de décrire une sous-étape.**
+  ⚠️ Son étiquette « instantané » était fausse **des deux côtés** (elle disait *« aucune sonde »*,
+  or le bloc CCIV conduit vraiment l'export et lit le CSV) — *le miroir de ft-v1196*.
+  ⛔ **1b-iv reste écrite à sa place AVEC SA RAISON** (**R30**). ⭐ Les 8 autres, auditées au même
+  test, **tiennent toutes**.
+  ⭐ **Livré : 1b-ii** — `{sourceId, etat, per100}` → **`_srcProvenance(src)`**, 3 appelants.
+  ⛔⛔ **`origine` et `saisie` NE SONT PAS dedans, et c'est la coupe** : ils disent trois choses
+  différentes aux trois portes, et la porte directe **ignore la source exprès** (une ligne venue
+  d'un code-barres se réenregistre en `'reprise'` — en hériter affirmerait une provenance qu'on
+  n'a pas relue, **R33**). **Décision produit n°4, transportée et figée par 2 témoins.**
+  ⚠️⚠️ **Ma sonde était MORTE, et vu AVANT de capturer le BEFORE** : `_afSuggPrendreLocale` lit
+  `_afSuggLoc[i]`, pas `S.foodLog`. *Un BEFORE capturé ainsi est pire qu'aucun BEFORE — il PRODUIT
+  une preuve et aurait validé n'importe quelle extraction.*
+  ⭐ **Critère binaire atteint** : sonde de **12 à 15 clés**, instantané **identique octet pour
+  octet**, sha `7a52c37da93e17a3`.
+  ⛔ **Et j'ai refait §60** : muté des fichiers **servis pendant ma propre passe**. Vu tout de
+  suite → passe **relancée de zéro**. *Le contrôle négatif d'un PDF se fait avant ou après, jamais
+  pendant.*
+  ✅ **Déploiement vérifié vert (R18)** : run **#1104**, job `deploy` `success` à 14:54:37 UTC.
+  ⏭️ **EN ATTENTE DE MICHEL — les 4 harmonisations.** **6 sous-étapes restantes.**
+  📣 **Toujours ouverts** : `S.savedFoods` · l'écart `48,3`/`48`.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+
+- **Avant :** `ft-v1196` — 🔍 **sous-étape 3-i : un propriétaire pour « cette
+  quantité est-elle reprenable ? », et la sonde qui ne couvrait rien.**
+  Michel : *« continue selon `docs/SOUS-ETAPES-1B-3.md`, une sous-étape à la fois »*, mêmes règles.
+  ⭐ **Livré** : le TEST écrit deux fois (`rejouerRepas` · `quickAddFood`) devient **`_qReprenable(src)`**
+  — un **booléen**, qui ne touche à rien. Accepte grammes, **portions**, unité absente ; refuse `0`,
+  le négatif et les **ml** (*sans densité, un volume ne dit pas ce que PÈSE l'aliment* — **R29**).
+  ⛔⛔ **LE FAIT DE LA VERSION EST AVANT LE CODE, et il porte sur MON document** : il annonçait
+  *« instantané : couvert »* pour 3-i. Ouvert la sonde → **à moitié faux**. `3_regle_avec_portions`
+  **RECOPIE la règle dans la sonde** sans appeler la production (*une table de vérité, pas une
+  couverture*), et **`rejouerRepas` n'était sondé par rien**. 👉 ***Une sonde qui recopie la règle
+  mesure ce qu'on CROYAIT écrire, pas ce qui est exécuté*** — `BUGS.md` §58 côté sonde.
+  ⭐ **Corrigé AVANT toute ligne de code** : `3_via_rejouerRepas` écrite, l'instantané passe de **11
+  à 12 clés**, BEFORE capturé avec la sonde étendue.
+  ⛔ **Les 5 sites « grammes seuls » sont INTACTS** — ils refusent les portions exprès. Les fondre
+  serait un changement de comportement (3-ii/iii/iv). Un témoin de périmètre exige que ce compte
+  reste à **5**.
+  ⭐ **Le témoin de périmètre de 1b-i se DÉPLACE** (il exigeait que chaque porte calcule `qOk` ; il
+  exige maintenant **un seul propriétaire et deux appelants**) — et les mêmes mutations le font
+  toujours rougir, par l'autre bout.
+  ⚠️⚠️ **Critère binaire atteint, mais la sha que j'avais publiée était FAUSSE** : l'instantané est
+  identique **octet pour octet** (diff vide) à **`d5b0572cafcc4477`**, pas au `64099b39025027ec` du
+  message de commit, qui venait d'une version intermédiaire de la sonde. Vérifié en rejouant la
+  sonde actuelle sur l'`app.js` d'AVANT 3-i. *Une sha publiée qu'on ne peut pas reproduire est pire
+  que pas de sha.*
+  ⚠️⚠️ **Mon harnais de mutation était MORT, et c'est le contrôle sain qui l'a dit** : il lisait la
+  **dernière ligne** d'un JSON multi-ligne (donc `}`) et rendait *« SONDE MORTE »* partout, **y
+  compris sur du code sain**. §61 pour la **4ᵉ fois**. *Le contrôle sain est le seul témoin du
+  harnais lui-même.*
+  ✅ **Déploiement vérifié vert (R18)** : run **#1100**, `success` à 14:10:53 UTC sur `175213ff`.
+  ⏭️ **EN ATTENTE DE MICHEL — les 4 harmonisations** (décisions produit, §3 du découpage).
+  **Le hub et la douane restent après.** 📣 **Toujours ouverts** : `S.savedFoods` · l'écart `48,3`/`48`.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+
+- **Avant :** `ft-v1195` — ✂️ **le redécoupage de 1b et 3, et la sous-étape 1b-i.**
+  Michel tranche : ⛔ *« je ne veux pas traiter 1b et 3 en un seul gros chantier — redécoupe-les en
+  sous-étapes plus petites, mesurables et réversibles »* · ⛔⛔ *« je ne veux pas harmoniser
+  maintenant les défauts divergents : à ce stade on doit les **TRANSPORTER** explicitement sans les
+  corriger »*.
+  ⭐⭐ **Ce que la mesure a nommé, et qui change le découpage** : `quickFillFood` et
+  `_afSuggPrendreLocale` partagent **36 lignes utiles IDENTIQUES** (40 % de squelette commun) — *ce
+  ne sont pas quinze sites éparpillés, c'est la reprise d'un aliment à l'écran, **écrite deux
+  fois***. Et l'historique le disait déjà : ft-v973/975/984/1176 ont chacune porté un correctif
+  d'une porte à l'autre. **5 des 10 sous-étapes portent sur cette paire.**
+  📄 **Découpage complet : `docs/SOUS-ETAPES-1B-3.md`** — périmètre, sites, instantané, mutations,
+  rollback et dépendances pour chacune.
+  ⭐ **Livré : 1b-i SEULE** — le bloc `{q,u,per100,portionLabel,portionWeightG}` repris d'une ligne
+  existante devient `_srcRepriseQ(src, qOk)`. ⛔ `qOk` reste calculé par **chaque appelant** :
+  l'étape 3 n'est pas touchée, un témoin de périmètre l'exige. ⛔ `sourceId`/`etat` restent chez
+  `quickAddFood` seul — **écart transporté**, deux témoins figent les deux moitiés.
+  ⭐ **Critère binaire atteint** : les 11 sondes de `tools/instantane_1b23.js` sont identiques
+  **octet pour octet**, même sha256 `ace2a744dc89e6ec`.
+  ⚠️⚠️ **Le contrôle négatif a corrigé mon témoin de périmètre** : il comptait les **lignes**
+  portant le motif — or extraire la règle en laisse une dans le propriétaire et une chez l'autre
+  appelant, donc le compte restait à 2 et le témoin passait **au vert sur ce qu'il devait
+  interdire**. *Compter les occurrences d'un motif ne dit pas QUI décide.*
+  ⏭️ **EN ATTENTE DE MICHEL — les 4 harmonisations** qui sont des **décisions produit** (critère :
+  *est-ce que ça modifie ce qui est ÉCRIT dans `S.foodLog`/`S.savedFoods` ?*), listées au §3 du
+  découpage. **Le hub et la douane restent après.**
+  📣 **Toujours ouverts** : `S.savedFoods` entre deux onglets · l'écart `48,3` / `48`.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+
+- **Avant :** `ft-v1194` — 🧮 **un seul propriétaire pour le pour-100 g dérivé,
   et le périmètre du plan était FAUX pour les deux autres étapes.**
   Michel valide la phase 0a **sur iPhone** et donne le feu vert pour **1b, 2 et 3** — avec la
   consigne qui décide de tout : *« si une divergence réelle apparaît, mesure-la et **arrête-toi
@@ -108,7 +250,6 @@
   produit) ? Écrites dans `docs/JOURNAL-DE-TEST.md`. **Le hub et la douane restent après.**
   📣 **Toujours ouverts** : `S.savedFoods` perdu entre deux onglets · l'écart `48,3` / `48`.
   ⚠️ **À vérifier par Michel sur Safari/iPhone.**
-
 - **Version précédente :** `ft-v1193` — 🏗️ **phase 0a + étape 1a du plan Nutrition.**
   Michel valide `docs/PLAN-NUTRITION.pdf` : *« exécute la phase 0 puis l'étape 1a »*.
   ⭐ **Phase 0a** : le poids du paquet **ne se rendait pas** — mesuré, la pastille « 📦 410 g (le

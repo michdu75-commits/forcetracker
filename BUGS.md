@@ -3475,6 +3475,29 @@ négatif attrape la rechute.*
 ft-v1158 — « vérifier la fonction n'est pas vérifier l'appel » : celle-ci en est la version
 **temporelle** au lieu de spatiale.*
 
+**⭐⭐ ET LA MÊME FAMILLE FRAPPE LES SONDES, PAS SEULEMENT LES TÉMOINS *(12/09/2026, ft-v1196)*.**
+L'instantané du chantier Nutrition portait deux sondes nommées `3_regle_grammes_seuls` et
+`3_regle_avec_portions`. Mesuré avant la sous-étape 3-i : elles **RECOPIENT la règle dans la
+sonde** —
+
+```js
+const regleP = c => (+c.q>0 && (!c.u||c.u==='g'||c.u==='portion'));   // dans la SONDE
+```
+
+— donc elles **n'appellent aucun code de production**, et ne peuvent rien détecter d'une
+extraction. Ce sont des **tables de vérité**, ce qui est utile, mais ce n'est **pas** de la
+couverture. Et la seule sonde qui conduisait vraiment une porte n'en conduisait **qu'une sur deux**.
+
+> **Une sonde qui recopie la règle mesure ce qu'on CROYAIT écrire, pas ce qui est exécuté.**
+
+⚠️ **Le signe qui aurait dû alerter était dans le commentaire lui-même** : il annonçait *« les six
+sites conduits par leur VRAIE porte »* pour une boucle qui n'en conduit **qu'une**. *C'est le
+miroir du commentaire de ft-v1190, qui annonçait une portée plus ÉTROITE que le code — dans les
+deux sens, un commentaire qui décrit mal sa portée dispense le lecteur suivant d'aller vérifier.*
+
+**Le réflexe** : avant d'écrire « instantané couvert », **ouvrir la sonde** et chercher le nom de
+la fonction de production dedans. S'il n'y est pas, la sonde ne couvre rien.
+
 
 ---
 
@@ -3517,6 +3540,28 @@ mécanisme sans témoin passe pour mort, celle-ci qu'un mécanisme **à moitié 
 ---
 
 ## §60 — ⛔⛔ MUTER UN FICHIER **SERVI** PENDANT QU'UNE PASSE TOURNE FAUSSE LA PASSE **EN SILENCE** *(10/09/2026, ft-v1190)*
+
+> **⚠️⚠️ RÉCIDIVE LE 12/09/2026 (ft-v1197), PAR CELUI QUI A ÉCRIT CETTE SECTION — et elle ajoute
+> quelque chose.** Je n'ai pas muté du code applicatif : j'éprouvais les **gardes d'un PDF**, en
+> mutant `app.js` et `setup.js` pour vérifier qu'ils refusaient de produire. **Pendant que la passe
+> tournait.**
+>
+> ⭐⭐ **Ce que la récidive apprend** : la règle telle qu'elle était écrite parle du *contrôle négatif
+> du **correctif***. Or **un document a ses gardes, et les éprouver mute les mêmes fichiers** — le
+> geste est identique, seule l'intention diffère, et *l'intention n'est pas ce que le serveur du banc
+> lit*. 👉 **La règle se généralise : pendant une passe, aucun fichier servi ne bouge, quelle que
+> soit la RAISON de le faire.** Contrôle négatif du code, gardes d'un PDF, essai rapide, mesure de
+> curiosité — même interdit.
+>
+> ⛔ **Et il y a pire à savoir** : la veille (ft-v1196), j'avais fait la même chose en plus petit et
+> **vérifié après coup** que ça n'avait rien touché. *Une vérification qui vient après le geste ne
+> protège pas, elle rassure* — c'était déjà écrit dans ft-v1190, et ça n'a pas suffi.
+>
+> ✅ **Ce qui a limité les dégâts n'est pas la règle, c'est le réflexe** : passe **arrêtée
+> immédiatement**, les trois fichiers **vérifiés restaurés au diff**, puis **relancée de zéro sans
+> rien toucher** — elle a rendu **3605 ✅ · 0 ❌**, le total exactement prédit. *Rien n'a été conclu
+> sur une passe faussée, et c'est la seule chose qui compte une fois la faute commise.*
+
 
 **À quoi on la reconnaît** : une passe complète rend des rouges **sur un bloc qui passe en isolé**,
 et le message d'échec est **plausible** — il tombe sur de vrais témoins, dans le bloc qu'on vient
@@ -3578,13 +3623,28 @@ aussi grave : **un contrôle qui échoue pour une raison qui n'est pas son sujet
 qu'elle prétend mesurer. Elle ne ment jamais sur ce qu'elle a vu — elle **se tait sur ce qu'elle
 n'a pas vu**, et ce silence est indiscernable d'un succès.
 
-**Les trois cas vécus, en cinq jours :**
+**Les cinq cas vécus :**
 
 | quand | l'outil | ce qu'il affichait | ce qui manquait |
 |---|---|---|---|
 | ft-v1187 | harnais de mutation coupé à `tail -4` | « 0 rouge » | un rouge en 8ᵉ position sur 12 |
 | ft-v1192 | passe complète arrêtée sur `b.close()` | **« 3479 ✅ · 0 ❌ »** | **56 témoins jamais exécutés** |
 | ft-v1190 | (passe faussée par ma propre fixture) | vert | le cas réel |
+| ft-v1193 | le runner **plante** sur `null` | « 0 rouge » sur une sortie **vide** | la passe entière |
+| **ft-v1196** | harnais lisant la **DERNIÈRE LIGNE** d'un JSON **multi-ligne** | **« SONDE MORTE » × 10** | **tout** — y compris le **contrôle sain** |
+
+**⭐⭐ ET LE CAS ft-v1196 RETOURNE LA FAMILLE, CE QUI LA REND ENFIN FACILE À ATTRAPER.** Les quatre
+premiers cas affichaient du **vert** ; celui-ci affichait du **rouge partout** — *« SONDE MORTE »*
+sur les 10 mutations. Il était donc tentant de conclure que les mutations mordaient toutes, ou que
+le code était cassé. 👉 ***Ce qui a tranché n'est aucune des dix : c'est le CONTRÔLE SAIN, lancé en
+premier, qui rendait « SONDE MORTE » sur du code intact.*** Cause : la sonde imprime un JSON
+**multi-ligne** et le harnais prenait `stdout.split('\n')[-1]`, donc `}`.
+
+**⛔ La règle qui en sort, et elle coûte une ligne** : *un harnais de mutation commence TOUJOURS par
+le cas sain, et son résultat attendu est écrit à l'avance.* Sans lui, on ne distingue pas *« la
+mutation mord »* de *« l'instrument est mort »* — et un résultat **uniforme**, vert ou rouge, est le
+signe de l'instrument, jamais celui du code. *Un harnais uniforme ressemble à un code uniformément
+cassé, exactement comme un harnais tronqué ressemble à un code sans défaut.*
 
 **Pourquoi c'est une famille à part, et pas « un bug de test »** : un test FAUX finit par rougir sur
 autre chose. Un outil TRONQUÉ, lui, **conforte** — il donne exactement le signal qu'on espérait.

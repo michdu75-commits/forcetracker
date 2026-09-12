@@ -34327,6 +34327,611 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     verif===2 && /<=0\.6/.test(src), verif+' occurrences');
 }
 
+/* ═══ CCXCII — SOUS-ÉTAPE 1b-i : LA QUANTITÉ REPRISE D'UNE LIGNE EXISTANTE (12/09/2026) ═══
+   Michel, après la mesure du périmètre : ⛔ *« redécoupe 1b et 3 en sous-étapes plus petites,
+   mesurables et réversibles »* · ⛔⛔ *« je ne veux pas harmoniser maintenant les défauts
+   divergents : on doit les TRANSPORTER explicitement sans les corriger »*.
+
+   ⭐⭐ CE BLOC FIGE DEUX CHOSES DE NATURE OPPOSÉE, ET C'EST VOULU.
+   ① ce que l'extraction garantit (un seul propriétaire, les mêmes valeurs) ;
+   ② ce qu'elle s'INTERDIT — la divergence `sourceId`/`etat` entre les deux portes.
+   *Sans le second, rien n'empêcherait un futur « rangement » d'harmoniser en silence ce que
+   Michel a explicitement demandé de laisser en l'état.* */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
+
+  const R = await p.evaluate(async()=>{
+    const o={};
+    o.fn=typeof _srcRepriseQ;
+
+    const LIGNE={name:'Steak', kcal:400, prot:32, carbs:0, fat:28,
+                 per100:{kcal:160,prot:12.8,carbs:0,fat:11.2}, q:2, u:'portion',
+                 portionLabel:'steak', portionWeightG:125,
+                 origine:'off', sourceId:'3021690201123', etat:'tel-que-vendu'};
+    const r1=_srcRepriseQ(LIGNE, true);
+    o.champs=r1?Object.keys(r1).sort().join(','):'RIEN';
+    o.avecQ=JSON.stringify(r1);
+    o.sansQ=JSON.stringify(_srcRepriseQ(LIGNE, false));
+    /* ⛔ LE DÉFAUT TRANSPORTÉ TEL QUEL : `portionWeightG` rend `null`, pas `0`. Ça ressemble à
+       une coquille ; c'est ce que le code faisait, donc c'est ce qu'on garde (consigne de
+       Michel). Le jour où ça change, c'est une DÉCISION, et ce témoin la rendra visible.
+       ⚠⚠ ET ON PASSE `false`, PAS `true`, APRÈS MESURE : avec `true` sur une ligne SANS `q`,
+       `+undefined` vaut **NaN** — que `JSON.stringify` sérialise en `null`. Le témoin aurait
+       donc été vert sur un NaN en croyant voir un `null`, et sur un état que les deux portes
+       ne peuvent pas produire (`qOk` n'est vrai que si `+q>0`). *Un témoin qui fige un état
+       inatteignable ne protège rien, et masque le type réel de ce qu'il mesure.* */
+    o.nu=JSON.stringify(_srcRepriseQ({name:'Nu', kcal:1}, false));
+    // `u` retombe sur 'g' quand elle manque — mais seulement si la quantité est acceptée
+    o.uParDefaut=JSON.stringify(_srcRepriseQ({q:150}, true));
+
+    /* ── bout en bout ① : REJOUER UN REPAS ─────────────────────────────────────
+       `_repasHabituels` exige la MÊME signature sur 2 dates, la dernière n'étant pas
+       aujourd'hui — on conduit donc la vraie porte, pas la fonction (BUGS.md §58). */
+    const ITEM=d=>Object.assign({date:d, meal:'midi', ts:Date.parse(d)}, LIGNE);
+    S.foodLog=[ITEM('2026-09-01'), ITEM('2026-09-02')];
+    const sig=(_repasHabituels()[0]||{}).sig||'';
+    o.sig=!!sig;
+    if(sig){
+      const avant=S.foodLog.length;
+      rejouerRepas(sig,'midi');
+      const n=S.foodLog[S.foodLog.length-1];
+      o.rejeu=(S.foodLog.length===avant+1) ? JSON.stringify(
+        {q:n.q,u:n.u,pl:n.portionLabel,pw:n.portionWeightG,p100:!!n.per100}) : 'rien ajoute';
+      /* ⛔⛔ LA DIVERGENCE TRANSPORTÉE : le rejeu n'a JAMAIS posé `sourceId`/`etat`.
+         Les lui donner changerait la provenance ENREGISTRÉE — décision produit (1b-ii). */
+      o.rejeuProv=JSON.stringify({src:n.sourceId, etat:n.etat, origine:n.origine});
+    }
+
+    /* ── bout en bout ② : AJOUTER DEPUIS LA LISTE (la porte jumelle) ───────────── */
+    S.foodLog=[]; _afMeal='midi';
+    _afQuickItems=[Object.assign({}, LIGNE)];
+    quickAddFood(0);
+    const m=(S.foodLog||[])[0]||{};
+    o.direct=JSON.stringify({q:m.q,u:m.u,pl:m.portionLabel,pw:m.portionWeightG,p100:!!m.per100});
+    // ⭐ celle-ci, elle, les pose — et c'est l'autre moitié de l'écart
+    o.directProv=JSON.stringify({src:m.sourceId, etat:m.etat, origine:m.origine});
+    return o;
+  });
+
+  t('CCXCII 1b-i — `_srcRepriseQ` existe', R.fn==='function', R.fn);
+  t('CCXCII ⛔ elle rend EXACTEMENT 5 champs, pas un de plus',
+    R.champs==='per100,portionLabel,portionWeightG,q,u', R.champs);
+  t('CCXCII ⭐ quantité acceptée : `q`, `u` et la définition de portion traversent',
+    R.avecQ==='{"q":2,"u":"portion","per100":{"kcal":160,"prot":12.8,"carbs":0,"fat":11.2},'+
+              '"portionLabel":"steak","portionWeightG":125}', R.avecQ);
+  t('CCXCII ⛔ quantité REFUSÉE : `q` et `u` tombent à `null`, le reste traverse quand même',
+    R.sansQ==='{"q":null,"u":null,"per100":{"kcal":160,"prot":12.8,"carbs":0,"fat":11.2},'+
+              '"portionLabel":"steak","portionWeightG":125}', R.sansQ);
+  t('CCXCII ⛔⛔ le DÉFAUT est transporté tel quel : `portionWeightG` rend `null`, PAS `0`',
+    R.nu==='{"q":null,"u":null,"per100":null,"portionLabel":null,"portionWeightG":null}', R.nu);
+  t('CCXCII ⛔ `u` retombe sur « g » quand elle manque',
+    R.uParDefaut==='{"q":150,"u":"g","per100":null,"portionLabel":null,"portionWeightG":null}',
+    R.uParDefaut);
+
+  t('CCXCII ⛔ CONTRÔLE — le repas habituel est bien reconnu (sinon le témoin suivant ne mesure rien)',
+    R.sig===true, 'signature trouvée : '+R.sig);
+  t('CCXCII ⭐ bout en bout — REJOUER un repas garde « 2 portions de 125 g »',
+    R.rejeu==='{"q":2,"u":"portion","pl":"steak","pw":125,"p100":true}', R.rejeu);
+  t('CCXCII ⛔⛔ ... et le rejeu n\'écrit TOUJOURS PAS `sourceId`/`etat` (écart TRANSPORTÉ, 1b-ii)',
+    R.rejeuProv==='{"src":null,"etat":null,"origine":"reprise"}', R.rejeuProv);
+  t('CCXCII ⭐ bout en bout — AJOUTER depuis la liste garde la même quantité',
+    R.direct==='{"q":2,"u":"portion","pl":"steak","pw":125,"p100":true}', R.direct);
+  t('CCXCII ⭐ ... et cette porte-ci pose BIEN `sourceId`/`etat` — l\'autre moitié de l\'écart',
+    R.directProv==='{"src":"3021690201123","etat":"tel-que-vendu","origine":"reprise"}',
+    R.directProv);
+}
+
+/* ⛔⛔ LES TÉMOINS DE SOURCE — un parcours ne peut pas prouver qu'il n'existe pas une 3ᵉ copie,
+   ni que la sous-étape est restée DANS SON PÉRIMÈTRE. Les deux se lisent dans le fichier servi. */
+{
+  const src=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+  const estCommentaire=l=>{const x=l.trim();
+    return x.startsWith('*')||x.startsWith('//')||x.startsWith('/*')||x.startsWith('`');};
+  const lignes=src.split('\n').filter(l=>!estCommentaire(l));
+  const aLaMain=lignes.filter(l=>/q\s*:\s*_?qOk\s*\?/.test(l)).length;
+  const appels=(src.match(/_srcRepriseQ\(/g)||[]).length;
+  /* ⛔⛔ CE TÉMOIN A CHANGÉ DE FORME EN ft-v1196, ET LA GARANTIE S'EST DÉPLACÉE SANS S'AFFAIBLIR.
+     En 1b-i il exigeait que `rejouerRepas` ET `quickAddFood` calculent ENCORE `qOk` **chacun dans
+     son propre corps** — c'était le garde-fou qui empêchait la sous-étape de déborder sur l'étape
+     3. ⭐ **La sous-étape 3-i EST précisément celle qui le retire**, sur décision de Michel
+     (*« continue, une sous-étape à la fois »*) : la règle a désormais un propriétaire,
+     `_qReprenable`.
+     👉 On n'efface donc pas la garantie, **on la retourne** : la règle « avec portions » doit
+     exister à **UN SEUL** endroit, et les deux portes doivent l'APPELER. *La différence entre
+     un témoin qu'on retire et un témoin qui se déplace se mesure : les deux mutations qui le
+     faisaient rougir en 1b-i (une porte qui délègue · la règle retirée d'une porte) le font
+     toujours rougir, par l'autre bout.*
+     ⚠️ ET ON GARDE LE PRINCIPE APPRIS EN 1b-i : on ne compte pas les occurrences d'un motif —
+     *ça ne dit pas QUI décide* — on regarde le corps de chaque fonction. */
+  const corpsDe=n=>{const m=new RegExp('^function '+n+'\\(.*?^\\}','ms').exec(src);
+                    return m?m[0]:'';};
+  const RE_P=/\(!\w+\.u \|\| \w+\.u === 'g' \|\| \w+\.u === 'portion'\)/;
+  const regleAilleurs=lignes.filter(l=>RE_P.test(l)).length;
+  const appellent=['rejouerRepas','quickAddFood']
+    .filter(n=>/_qReprenable\(/.test(corpsDe(n))).length;
+  t('CCXCII ⛔⛔ le bloc `q:qOk?…` n\'existe QU\'À UN endroit : le propriétaire',
+    aLaMain===1, aLaMain+' occurrences de code');
+  t('CCXCII ⭐ les 2 portes passent par `_srcRepriseQ` (2 appels + 1 déclaration)',
+    appels===3, appels+' occurrences');
+  t('CCXCII ⛔⛔ 3-i — la règle « avec portions » n\'existe QU\'À UN endroit : `_qReprenable`',
+    regleAilleurs===1, regleAilleurs+' écritures de la règle');
+  t('CCXCII ⭐ ... et les DEUX portes l\'APPELLENT (la garantie de 1b-i, retournée)',
+    appellent===2, appellent+' fonctions sur 2 appellent `_qReprenable`');
+}
+
+/* ═══ CCXCIII — SOUS-ÉTAPE 3-i : « CETTE QUANTITÉ EST-ELLE REPRENABLE ? » (12/09/2026) ═══
+   La suite naturelle de 1b-i : même couple de fonctions, l'AUTRE moitié de la ligne. Le bloc
+   `{q,u,per100,…}` a son propriétaire depuis ft-v1195 ; le TEST qui décide si la quantité passe
+   restait écrit deux fois → `_qReprenable(src)`.
+
+   ⭐⭐ CE BLOC FIGE AUSSI CE QU'ON N'A PAS FAIT, et c'est la moitié qui compte : les **5** sites
+   « grammes seuls » (3-ii/iii/iv) ne sont **PAS** touchés. *Les deux règles se ressemblent à un
+   `||` près et ne disent pas la même chose* — les fondre serait un changement de comportement,
+   pas une extraction. */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
+
+  const R = await p.evaluate(async()=>{
+    const o={};
+    o.fn=typeof _qReprenable;
+
+    /* ⛔ LA TABLE DE VÉRITÉ, conduite sur la fonction de PRODUCTION (pas une règle recopiée :
+       c'est justement le défaut de la sonde `3_regle_avec_portions`, mesuré le 12/09). */
+    const CAS=[{q:120,u:'g'},{q:2,u:'portion'},{q:0,u:'g'},{q:150,u:'ml'},{q:80,u:null},{q:-5,u:'g'}];
+    o.table=JSON.stringify(CAS.map(c=>_qReprenable(c)));
+    /* ⛔ Elle ne PLANTE pas sur rien du tout — les portes l'appellent après un garde, mais une
+       règle qui lève déplace le défaut au lieu de le dire (R29). */
+    /* ⛔⛔ LE `try` N'EST PAS DE LA PRUDENCE VAGUE, IL EST PAYÉ : sans lui, une règle qui LÈVE
+       sur `null` fait rejeter l'`evaluate` entier — le bloc DISPARAÎT de la passe, qui ne
+       rougit pas pour autant (§61). Mesuré ici : la mutation « le garde `src||{}` retiré »
+       tuait la sonde ; elle fait maintenant un rouge NOMMÉ. */
+    try{ o.rien=JSON.stringify([_qReprenable(null), _qReprenable(undefined), _qReprenable({})]); }
+    catch(err){ o.rien='LÈVE : '+String(err && err.message || err); }
+    /* ⛔ Elle rend un BOOLÉEN et ne touche à rien : c'est `_srcRepriseQ` qui décide quoi en faire. */
+    const av={q:2,u:'portion',per100:null};
+    const r=_qReprenable(av);
+    o.pur=(typeof r==='boolean') && JSON.stringify(av)==='{"q":2,"u":"portion","per100":null}';
+
+    /* ── bout en bout, les DEUX portes ─────────────────────────────────────── */
+    const LIGNE=(q,u)=>({name:'Steak', kcal:400, prot:32, carbs:0, fat:28,
+                         per100:{kcal:160,prot:12.8,carbs:0,fat:11.2}, q:q, u:u,
+                         portionLabel:'steak', portionWeightG:125});
+    const parListe=(q,u)=>{ S.foodLog=[]; _afMeal='midi'; _afQuickItems=[LIGNE(q,u)];
+                            quickAddFood(0);
+                            const m=(S.foodLog||[])[0]||{}; return {q:m.q,u:m.u}; };
+    o.listePortion=JSON.stringify(parListe(2,'portion'));
+    o.listeMl=JSON.stringify(parListe(150,'ml'));
+
+    const parRejeu=(q,u)=>{
+      const it=LIGNE(q,u);
+      S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1},it),
+                 Object.assign({date:'2026-09-02',meal:'midi',ts:2},it)];
+      const sig=(_repasHabituels()[0]||{}).sig||'';
+      if(!sig) return 'pas de repas habituel';
+      const n0=S.foodLog.length; rejouerRepas(sig,'midi');
+      const l=S.foodLog[S.foodLog.length-1];
+      return (S.foodLog.length>n0 && l) ? {q:l.q,u:l.u} : 'rien ajoute';
+    };
+    o.rejeuPortion=JSON.stringify(parRejeu(2,'portion'));
+    o.rejeuMl=JSON.stringify(parRejeu(150,'ml'));
+    return o;
+  });
+
+  t('CCXCIII 3-i — `_qReprenable` existe', R.fn==='function', R.fn);
+  t('CCXCIII ⭐ la table de vérité, conduite sur la PRODUCTION : g ✓ · portion ✓ · 0 ✗ · ml ✗ · sans unité ✓ · négatif ✗',
+    R.table==='[true,true,false,false,true,false]', R.table);
+  t('CCXCIII ⛔ `ml` est REFUSÉ — sans densité, un volume ne dit pas ce que pèse l\'aliment (R29)',
+    JSON.parse(R.table)[3]===false, R.table);
+  t('CCXCIII ⛔ elle ne plante pas sur `null` / `undefined` / objet vide',
+    R.rien==='[false,false,false]', R.rien);
+  t('CCXCIII ⛔ elle rend un BOOLÉEN et ne modifie pas ce qu\'on lui passe', R.pur===true);
+
+  t('CCXCIII ⭐ bout en bout — AJOUTER depuis la liste garde « 2 portions »',
+    R.listePortion==='{"q":2,"u":"portion"}', R.listePortion);
+  t('CCXCIII ⛔ ... et refuse les 150 ml (la ligne part sans quantité, honnêtement inconnue)',
+    R.listeMl==='{"q":null,"u":null}', R.listeMl);
+  t('CCXCIII ⭐ bout en bout — REJOUER un repas garde « 2 portions »',
+    R.rejeuPortion==='{"q":2,"u":"portion"}', R.rejeuPortion);
+  t('CCXCIII ⛔ ... et refuse les 150 ml, exactement pareil',
+    R.rejeuMl==='{"q":null,"u":null}', R.rejeuMl);
+}
+
+/* ⛔⛔ LES TÉMOINS DE SOURCE — et celui du PÉRIMÈTRE est le plus important des deux.
+   Un parcours prouve que la règle marche ; il ne peut pas prouver qu'on n'a pas fait au passage
+   les sous-étapes SUIVANTES. Or 3-ii, 3-iii et 3-iv portent une règle qui ressemble à celle-ci à
+   un `||` près — et les fondre serait un changement de comportement. */
+{
+  const src=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+  const estCommentaire=l=>{const x=l.trim();
+    return x.startsWith('*')||x.startsWith('//')||x.startsWith('/*')||x.startsWith('`');};
+  const lignes=src.split('\n').filter(l=>!estCommentaire(l));
+  const appels=(src.match(/_qReprenable\(/g)||[]).length;
+  /* ⛔⛔ LA RÈGLE « GRAMMES SEULS » DOIT ÊTRE ENCORE ÉCRITE **5 FOIS**. Ce n'est pas une dette
+     qu'on tolère, c'est le PÉRIMÈTRE de cette sous-étape : ces 5 sites alimentent un champ en
+     grammes, ils refusent les portions **exprès**. Le jour où ce compte tombe à 1, c'est que
+     3-ii/iii/iv ont été faites — et ce témoin doit alors se DÉPLACER, pas disparaître. */
+  /* ⚠️ LES `\s*` NE SONT PAS DÉCORATIFS : `_provFood` @1232 écrit `(!_afSrc.u || _afSrc.u==='g')`
+     AVEC des espaces autour du `||`, les quatre autres sans. Ma 1ʳᵉ version comptait 4 au lieu
+     de 5 — et c'est la passe de RÉFÉRENCE qui l'a dit, avant la moindre mutation. *Un témoin
+     de source se vérifie d'abord contre le code SAIN : s'il rougit là, il ne mesure pas ce
+     qu'il croit.* */
+  const grammesSeuls=lignes.filter(l=>/q>0\s*&&\s*\(!\w+\.u\s*\|\|\s*\w+\.u\s*===?\s*'g'\)/.test(l)).length;
+  t('CCXCIII ⭐ les 2 portes passent par `_qReprenable` (2 appels + 1 déclaration)',
+    appels===3, appels+' occurrences');
+  /* ⛔⛔ CE TÉMOIN S'EST DÉPLACÉ EN ft-v1199, IL N'A PAS ÉTÉ AFFAIBLI.
+     Il exigeait « la règle est écrite 5 fois » — c'était le garde-fou qui empêchait 3-i de
+     déborder sur 3-ii/iii/iv. La sous-étape 3-ii a été faite EXPRÈS : elle donne au
+     propriétaire `_qGrammes` ses 2 premiers appelants (la pastille), donc il reste
+     **3 écritures + 2 appelants**. La garantie ne s'affaiblit pas : elle change de forme,
+     exactement comme le témoin de 1b-i s'est déplacé en 3-i.
+     ⛔ Le jour où elle tombera à 1, ce sera que 3-iii a été faite ; à 0, que 3-iv l'a été. */
+  t('CCXCIII ⛔⛔ PÉRIMÈTRE — la règle « grammes seuls » n\'est plus écrite que 3 fois '+
+    '(3-ii faite ; 3-iii et 3-iv PAS faites au passage)',
+    grammesSeuls===3, grammesSeuls+' écritures');
+}
+
+/* ══════════ BLOC CCXCIV — 🏷️ 1b-ii : la provenance reprise (ft-v1197) ══════════
+   ⛔⛔ ON CONDUIT LES VRAIES PORTES, jamais `_srcProvenance` en direct : vérifier la fonction
+   n'est pas vérifier l'appel (BUGS.md §58), et la version d'avant a montré qu'une sonde qui
+   recopie la règle ne mesure rien. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const V=await pg.evaluate(async()=>{
+   try{
+    const o={}; const d=ms=>new Promise(r=>setTimeout(r,ms));
+    const PLEIN={name:'Plat A',kcal:200,prot:10,carbs:20,fat:5,q:150,u:'g',
+                 sourceId:'off:123',etat:'valide',
+                 per100:{kcal:133,prot:6.7,carbs:13.3,fat:3.3},origine:'off'};
+    const NU={name:'Plat B',kcal:100,prot:5,carbs:10,fat:2};
+    const lu=()=>{ try{ return (typeof _afSrc!=='undefined'&&_afSrc)?_afSrc:{}; }catch(e){ return {}; } };
+
+    o.type=typeof _srcProvenance;
+    /* ⛔ Le propriétaire rend TROIS clés, pas plus : `origine`/`saisie` doivent rester dehors.
+       Défensif — si la fonction lève, le bloc ne doit pas disparaître de la passe (§61). */
+    try{ o.cles=Object.keys(_srcProvenance(PLEIN)).sort().join(','); }
+    catch(e){ o.cles='LÈVE : '+String(e&&e.message||e); }
+    try{ o.vide=JSON.stringify(_srcProvenance(null)); }
+    catch(e){ o.vide='LÈVE : '+String(e&&e.message||e); }
+
+    /* ── porte 1 : quickFillFood ── */
+    try{ _afOublierAliment(); }catch(e){}
+    _afSetSrc(null); _afQuickItems=[Object.assign({fav:false},PLEIN)];
+    quickFillFood(0); await d(160);
+    let v=lu(); o.qf={sourceId:v.sourceId,etat:v.etat,per100:v.per100?v.per100.kcal:null,
+                     origine:v.origine,saisie:v.saisie};
+    try{ _afOublierAliment(); }catch(e){}
+    _afSetSrc(null); _afQuickItems=[Object.assign({fav:false},NU)];
+    quickFillFood(0); await d(160);
+    v=lu(); o.qfNu={sourceId:v.sourceId,etat:v.etat,per100:v.per100,origine:v.origine};
+
+    /* ── porte 2 : _afSuggPrendreLocale — elle lit `_afSuggLoc`, PAS `S.foodLog`
+       (ma sonde s'y est fait prendre : `if(!e) return` et elle sortait sans rien faire). */
+    S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1},PLEIN)]; persist();
+    try{ _afOublierAliment(); }catch(e){}
+    _afSetSrc(null); _afSuggLoc=_afSuggLocales('Plat A');
+    o.locListe=_afSuggLoc.length;
+    _afSuggPrendreLocale(0); await d(160);
+    v=lu(); o.loc={sourceId:v.sourceId,etat:v.etat,per100:v.per100?v.per100.kcal:null,
+                   origine:v.origine,saisie:v.saisie};
+    S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1},NU)]; persist();
+    try{ _afOublierAliment(); }catch(e){}
+    _afSetSrc(null); _afSuggLoc=_afSuggLocales('Plat B');
+    _afSuggPrendreLocale(0); await d(160);
+    v=lu(); o.locNu={origine:v.origine};
+
+    /* ── porte 3 : quickAddFood — elle ÉCRIT ── */
+    S.foodLog=[]; S.savedFoods=[]; persist();
+    try{ _afOublierAliment(); }catch(e){}
+    _afSetSrc(null); _afQuickItems=[Object.assign({fav:false},PLEIN)];
+    quickAddFood(0); await d(260);
+    const l=(S.foodLog||[])[S.foodLog.length-1]||{};
+    o.qa={sourceId:l.sourceId,etat:l.etat,per100:l.per100?l.per100.kcal:null,
+          origine:l.origine,saisie:l.saisie};
+    return o;
+   }catch(e){return {err:String(e&&e.message||e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+  console.log('\n== BLOC CCXCIV — 🏷️ 1b-ii : la provenance reprise (ft-v1197) ==');
+  if(V.err){ t('CCXCIV bloc exécuté', false, V.err); }
+  else{
+    t('CCXCIV ① `_srcProvenance` existe', V.type==='function', V.type);
+    t('CCXCIV ② ⛔⛔ PÉRIMÈTRE — elle rend EXACTEMENT 3 clés : `origine`/`saisie` restent DEHORS '+
+      '(les unifier changerait ce que le journal dit de lui-même — décision produit n°4)',
+      V.cles==='etat,per100,sourceId', String(V.cles));
+    t('CCXCIV ③ une source vide rend trois `null`, jamais un objet à moitié rempli',
+      V.vide==='{"sourceId":null,"etat":null,"per100":null}', String(V.vide));
+
+    t('CCXCIV ④ ⭐ PORTE « Mes aliments » : les 3 champs voyagent',
+      V.qf && V.qf.sourceId==='off:123' && V.qf.etat==='valide' && V.qf.per100===133,
+      JSON.stringify(V.qf));
+    t('CCXCIV ⑤ ⛔ ÉCART TRANSPORTÉ — elle garde SON repli `reprise` et SA saisie `liste`',
+      V.qf && V.qf.origine==='off' && V.qf.saisie==='liste' && V.qfNu && V.qfNu.origine==='reprise',
+      JSON.stringify([V.qf&&V.qf.origine, V.qf&&V.qf.saisie, V.qfNu&&V.qfNu.origine]));
+    t('CCXCIV ⑥ une reprise sans provenance ne fabrique rien (3 `null`)',
+      V.qfNu && V.qfNu.sourceId===null && V.qfNu.etat===null && V.qfNu.per100===null,
+      JSON.stringify(V.qfNu));
+
+    t('CCXCIV ⑦ ⛔ le témoin conduit VRAIMENT la 2ᵉ porte (liste locale non vide) — sinon tout '+
+      'ce qui suit serait vert sur une fonction qui sort au 3ᵉ caractère',
+      V.locListe>0, 'items='+String(V.locListe));
+    t('CCXCIV ⑧ ⭐ PORTE « recherche du journal » : les 3 mêmes champs voyagent',
+      V.loc && V.loc.sourceId==='off:123' && V.loc.etat==='valide' && V.loc.per100===133,
+      JSON.stringify(V.loc));
+    t('CCXCIV ⑨ ⛔⛔ ÉCART TRANSPORTÉ — elle, c\'est `utilisateur` et `historique`, PAS `reprise`/`liste`',
+      V.loc && V.loc.saisie==='historique' && V.locNu && V.locNu.origine==='utilisateur',
+      JSON.stringify([V.loc&&V.loc.saisie, V.locNu&&V.locNu.origine]));
+
+    t('CCXCIV ⑩ ⭐ PORTE « ajout direct » : la paire est enregistrée sur la ligne',
+      V.qa && V.qa.sourceId==='off:123' && V.qa.etat==='valide', JSON.stringify(V.qa));
+    t('CCXCIV ⑪ ⛔⛔ ET ELLE IGNORE `it.origine` EXPRÈS : une ligne venue d\'un code-barres se '+
+      'réenregistre en `reprise` — on n\'a pas gardé la source sur les favoris, donc en hériter MENTIRAIT (R33)',
+      V.qa && V.qa.origine==='reprise', String(V.qa&&V.qa.origine));
+    t('CCXCIV ⑫ ⭐ `per100` lui vient de `_srcRepriseQ` et le propriétaire le repose à l\'identique',
+      V.qa && V.qa.per100===133, String(V.qa&&V.qa.per100));
+    t('CCXCIV ⑬ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+  await cx.close();
+}
+
+/* ⚠️ Témoins de SOURCE — ils lisent le fichier, pas la page. */
+{
+  const src=fs.readFileSync(ROOT+'/app.js','utf8');
+  const sansComm=src.split('\n').filter(l=>{const x=l.trim();
+    return !(x.startsWith('*')||x.startsWith('//')||x.startsWith('/*'));}).join('\n');
+  const nb=(sansComm.match(/_srcProvenance\(/g)||[]).length;
+  t('CCXCIV ⑭ ⭐ les 3 portes passent par `_srcProvenance` (1 déclaration + 3 appels)',
+    nb===4, 'occurrences='+nb);
+  /* ⛔⛔ LE TÉMOIN DE PÉRIMÈTRE : `origine` ne doit JAMAIS entrer dans le propriétaire.
+     On ne compte pas un motif — on lit le CORPS de la fonction, parce que compter les
+     occurrences d'un motif ne dit pas QUI décide (leçon de ft-v1195). */
+  const corps=(sansComm.match(/function _srcProvenance\(src\)\{[\s\S]*?\n\}/)||[''])[0];
+  t('CCXCIV ⑮ ⛔⛔ PÉRIMÈTRE — ni `origine` ni `saisie` dans le corps du propriétaire : '+
+    'l\'écart des 3 portes est TRANSPORTÉ, pas harmonisé (décision produit n°4, en attente)',
+    corps.length>0 && !/origine/.test(corps) && !/saisie/.test(corps),
+    'corps='+corps.slice(0,120));
+}
+
+/* ══════════ BLOC CCXCV — 📋 1b-iii : l'item de liste affichée (ft-v1198) ══════════
+   ⛔⛔ ON CONDUIT LES VRAIES PORTES : `_buildFoodQuickItems()` avec les DEUX branches garnies,
+   et `toggleFavFood` — jamais `_itemListe` en direct pour juger du comportement. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const W=await pg.evaluate(async()=>{
+   try{
+    const o={}; const d=ms=>new Promise(r=>setTimeout(r,ms));
+    o.type=typeof _itemListe;
+    /* Défensif : si le propriétaire lève, le bloc ne doit pas DISPARAÎTRE de la passe (§61). */
+    try{ o.cles=Object.keys(_itemListe({name:'X'})).sort().join(','); }
+    catch(e){ o.cles='LÈVE : '+String(e&&e.message||e); }
+    try{ o.nu=JSON.stringify(_itemListe(null)); }
+    catch(e){ o.nu='LÈVE : '+String(e&&e.message||e); }
+
+    const COMPLET={name:'Lentilles',kcal:198,prot:25,carbs:41,fat:13,
+                   per100:{kcal:48.3,prot:6.1,carbs:10.1,fat:3.2},
+                   q:410,u:'g',portionLabel:'boite',portionWeightG:410};
+    const NU={name:'Pomme',kcal:52,prot:0,carbs:14,fat:0};
+
+    /* ── les DEUX branches de la liste, en une seule construction ── */
+    S.savedFoods=[Object.assign({},COMPLET)];
+    S.foodLog=[Object.assign({date:'2026-09-12',meal:'midi',ts:3,
+                              origine:'off',sourceId:'302169',etat:'tel-que-vendu'},
+                             {name:'Steak',kcal:250,prot:26,carbs:0,fat:16,
+                              per100:{kcal:166.67,prot:17.33,carbs:0,fat:10.67},
+                              q:150,u:'g',portionLabel:'steak',portionWeightG:125}),
+               Object.assign({date:'2026-09-12',meal:'soir',ts:2},NU)];
+    S.hiddenFoods=[]; persist();
+    const L=_buildFoodQuickItems();
+    o.nbListe=L.length;
+    o.favori = L[0] ? {name:L[0].name,kcal:L[0].kcal,q:L[0].q,u:L[0].u,
+                       lab:L[0].portionLabel,pw:L[0].portionWeightG,fav:L[0].fav,
+                       p100:L[0].per100?L[0].per100.kcal:null} : null;
+    const rec = L.filter(x=>x && x.fav===false);
+    o.recent = rec[0] ? {name:rec[0].name,q:rec[0].q,pw:rec[0].portionWeightG,
+                         origine:rec[0].origine,sourceId:rec[0].sourceId,etat:rec[0].etat,
+                         fav:rec[0].fav} : null;
+    /* ⛔ Le RÉCENT NU : c'est lui qui montre les replis quand rien n'est renseigné. */
+    const nu = rec.find(x=>x.name==='Pomme');
+    o.recentNu = nu ? {q:nu.q,u:nu.u,lab:nu.portionLabel,pw:nu.portionWeightG,p100:nu.per100} : null;
+
+    /* ── la 3ᵉ porte : toggleFavFood, qui ÉCRIT dans S.savedFoods ──
+       ⛔ PIÈGE ft-v1188 : elle finit par `_renderFoodQuickList()`, qui RECONSTRUIT
+          `_afQuickItems`. On repose donc la fixture AVANT chaque appel. */
+    S.savedFoods=[]; persist();
+    _afQuickItems=[Object.assign({},COMPLET)];
+    toggleFavFood(0); await d(140);
+    const f=(S.savedFoods||[])[0]||{};
+    o.togComplet={name:f.name,q:f.q,u:f.u,lab:f.portionLabel,pw:f.portionWeightG,
+                  p100:f.per100?f.per100.kcal:null,
+                  aFav:Object.prototype.hasOwnProperty.call(f,'fav')};
+    S.savedFoods=[]; persist();
+    _afQuickItems=[Object.assign({},NU)];
+    toggleFavFood(0); await d(140);
+    const g=(S.savedFoods||[])[0]||{};
+    o.togNu={q:g.q,u:g.u,lab:g.portionLabel,pw:g.portionWeightG,p100:g.per100,
+             pwEstNull: g.portionWeightG===null};
+    return o;
+   }catch(e){return {err:String(e&&e.message||e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+  console.log('\n== BLOC CCXCV — 📋 1b-iii : l\'item de liste affichée (ft-v1198) ==');
+  if(W.err){ t('CCXCV bloc exécuté', false, W.err); }
+  else{
+    t('CCXCV ① `_itemListe` existe', W.type==='function', W.type);
+    t('CCXCV ② ⛔⛔ PÉRIMÈTRE — elle rend EXACTEMENT les 9 champs identiques : ni `portionWeightG` '+
+      'ni `fav` dedans (ils DIVERGENT, décision produit n°2)',
+      W.cles==='carbs,fat,kcal,name,per100,portionLabel,prot,q,u', String(W.cles));
+    t('CCXCV ③ une source vide rend les replis, sans rien inventer',
+      W.nu==='{"kcal":0,"prot":0,"carbs":0,"fat":0,"per100":null,"q":0,"u":null,"portionLabel":null}',
+      String(W.nu));
+
+    t('CCXCV ④ ⭐ BRANCHE FAVORIS : les 9 champs voyagent, et `fav` reste true',
+      W.favori && W.favori.name==='Lentilles' && W.favori.kcal===198 && W.favori.q===410
+      && W.favori.u==='g' && W.favori.lab==='boite' && W.favori.p100===48.3
+      && W.favori.fav===true, JSON.stringify(W.favori));
+    t('CCXCV ⑤ ⭐ BRANCHE RÉCENTS : les 9 champs voyagent aussi, `fav` reste false',
+      W.recent && W.recent.name==='Steak' && W.recent.q===150 && W.recent.fav===false,
+      JSON.stringify(W.recent));
+    t('CCXCV ⑥ ⛔ la provenance reste chez la branche RÉCENTS seule — une seule copie, '+
+      'donc AUCUN propriétaire créé pour elle',
+      W.recent && W.recent.origine==='off' && W.recent.sourceId==='302169'
+      && W.recent.etat==='tel-que-vendu', JSON.stringify(W.recent));
+    t('CCXCV ⑦ un récent NU ne fabrique rien : q=0, u/label/per100 à null',
+      W.recentNu && W.recentNu.q===0 && W.recentNu.u===null && W.recentNu.lab===null
+      && W.recentNu.p100===null, JSON.stringify(W.recentNu));
+
+    t('CCXCV ⑧ ⭐ PORTE « mettre une étoile » : les 9 champs voyagent (la définition ne se perd pas)',
+      W.togComplet && W.togComplet.name==='Lentilles' && W.togComplet.q===410
+      && W.togComplet.lab==='boite' && W.togComplet.p100===48.3, JSON.stringify(W.togComplet));
+    t('CCXCV ⑨ ⛔ et le favori ne porte PAS `fav` (il n\'en a jamais eu) — écart transporté',
+      W.togComplet && W.togComplet.aFav===false, String(W.togComplet&&W.togComplet.aFav));
+
+    t('CCXCV ⑩ ⛔⛔ LA DIVERGENCE, MESURÉE DES DEUX CÔTÉS : `portionWeightG` replie sur **0** dans '+
+      'la liste et sur **null** dans le favori — un `0` et un `null` ne se relisent pas pareil, '+
+      'l\'unifier changerait `S.savedFoods` (décision produit n°2, NON tranchée)',
+      W.recentNu && W.recentNu.pw===0 && W.togNu && W.togNu.pwEstNull===true,
+      'liste='+JSON.stringify(W.recentNu&&W.recentNu.pw)+' favori='+JSON.stringify(W.togNu&&W.togNu.pw));
+    t('CCXCV ⑪ ⭐ et `q` NE diverge PAS : il vaut 0 des deux côtés (le plan annonçait un écart '+
+      'qui n\'existe pas — c\'est pourquoi le propriétaire n\'a aucun paramètre)',
+      W.recentNu && W.recentNu.q===0 && W.togNu && W.togNu.q===0,
+      'liste='+String(W.recentNu&&W.recentNu.q)+' favori='+String(W.togNu&&W.togNu.q));
+    t('CCXCV ⑫ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+  await cx.close();
+}
+
+/* ⚠️ Témoins de SOURCE — ils lisent le fichier, pas la page. */
+{
+  const src=fs.readFileSync(ROOT+'/app.js','utf8');
+  const sansComm=src.split('\n').filter(l=>{const x=l.trim();
+    return !(x.startsWith('*')||x.startsWith('//')||x.startsWith('/*'));}).join('\n');
+  const nb=(sansComm.match(/_itemListe\(/g)||[]).length;
+  t('CCXCV ⑬ ⭐ les 3 sites passent par `_itemListe` (1 déclaration + 3 appels)',
+    nb===4, 'occurrences='+nb);
+  /* ⛔⛔ TÉMOIN DE PÉRIMÈTRE : on lit le CORPS, pas un motif — compter les occurrences d'un
+     motif ne dit pas QUI décide (leçon de ft-v1195). */
+  const corps=(sansComm.match(/function _itemListe\(src\)\{[\s\S]*?\n\}/)||[''])[0];
+  t('CCXCV ⑭ ⛔⛔ PÉRIMÈTRE — ni `portionWeightG` ni `fav` dans le corps du propriétaire : '+
+    'la divergence est TRANSPORTÉE chez les appelants, pas harmonisée',
+    corps.length>0 && !/portionWeightG/.test(corps) && !/fav/.test(corps),
+    'corps='+corps.slice(0,120));
+  /* ⛔ Et elle ne prend AUCUN paramètre : le plan en proposait un pour un 2ᵉ écart qui n'existe pas. */
+  t('CCXCV ⑮ ⭐ `_itemListe` ne prend qu\'UNE source, aucun paramètre de défaut — mesuré, `q` ne '+
+    'diverge pas, donc un paramètre déplacerait l\'écart DANS le propriétaire pour rien',
+    /function _itemListe\(src\)\{/.test(sansComm), 'signature absente');
+}
+
+/* ══════════ BLOC CCXCVI — 🔢 3-ii : la pastille « ta dernière quantité » (ft-v1199) ══════════ */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const X=await pg.evaluate(async()=>{
+   try{
+    const o={}; const d=ms=>new Promise(r=>setTimeout(r,ms));
+    o.type=typeof _qGrammes;
+    /* Défensif : si le propriétaire lève, le bloc ne doit pas DISPARAÎTRE de la passe (§61). */
+    try{
+      o.table=JSON.stringify([
+        _qGrammes({q:150,u:'g'}), _qGrammes({q:80}), _qGrammes({q:2,u:'portion'}),
+        _qGrammes({q:0,u:'g'}),   _qGrammes({q:-5,u:'g'}), _qGrammes({q:250,u:'ml'}),
+        _qGrammes(null), _qGrammes({})]);
+    }catch(e){ o.table='LÈVE : '+String(e&&e.message||e); }
+
+    /* ⛔⛔ LA PASTILLE EST DANS UN GARDE : `if(P && it.u!=='portion' && …)` où P = it.per100.
+       Sans pour-100 g le bloc est SAUTÉ et la pastille n'est jamais appelée — ma 1ʳᵉ sonde
+       n'avait pas de `per100` et les 6 cas rendaient la même valeur, un reliquat. */
+    const P100={kcal:66.7,prot:0.7,carbs:1.3,fat:2};
+    const lire=()=>{ const b=document.getElementById('af-bc-last');
+      return b ? {vue:b.style.display==='inline-block', q:(b.dataset&&b.dataset.q)||'ABSENT'} : 'ABSENT'; };
+    const CAS=[['grammes',{q:150,u:'g'}], ['sans unité',{q:80}], ['portions',{q:2,u:'portion'}],
+               ['zéro',{q:0,u:'g'}], ['négatif',{q:-5,u:'g'}], ['millilitres',{q:250,u:'ml'}]];
+
+    const par=(conduire)=>{ const r={};
+      CAS.forEach(([nom,q])=>{
+        try{ _afOublierAliment(); }catch(e){}
+        /* ⛔ La pastille N'EST PAS rendue par `_afOublierAliment` (seule `openAddFood` le fait) :
+           sans cette ligne, le cas « portions » lirait le reliquat du cas précédent. Défaut RÉEL,
+           mesuré et écrit dans docs/JOURNAL-DE-TEST.md — NON corrigé ici, une extraction ne
+           change aucun comportement. */
+        try{ _bcProposerDerniere(0); }catch(e){}
+        _afSetSrc(null);
+        conduire(Object.assign({name:'Aliment '+nom,kcal:100,prot:1,carbs:2,fat:3,per100:P100,fav:false}, q));
+        r[nom]=lire();
+      });
+      return r; };
+
+    o.qf = par(it=>{ S.foodLog=[]; S.savedFoods=[]; persist(); _afQuickItems=[it]; quickFillFood(0); });
+    o.loc = par(it=>{ S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1},it)]; persist();
+                      _afSuggLoc=_afSuggLocales(it.name);
+                      if(!_afSuggLoc.length) throw new Error('liste locale VIDE');
+                      _afSuggPrendreLocale(0); });
+    return o;
+   }catch(e){return {err:String(e&&e.message||e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+  console.log('\n== BLOC CCXCVI — 🔢 3-ii : la pastille « ta dernière quantité » (ft-v1199) ==');
+  if(X.err){ t('CCXCVI bloc exécuté', false, X.err); }
+  else{
+    t('CCXCVI ① `_qGrammes` existe', X.type==='function', X.type);
+    t('CCXCVI ② ⭐ elle rend un NOMBRE : 150 · 80 · 0 (portions) · 0 · 0 · 0 (ml) · 0 · 0 — '+
+      'et c\'est ce qui evite une duplication en 3-iii/3-iv (`>0` EST la condition)',
+      X.table==='[150,80,0,0,0,0,0,0]', String(X.table));
+
+    ['qf','loc'].forEach((k,i)=>{
+      const nom = i===0 ? 'PORTE « Mes aliments »' : 'PORTE « recherche du journal »';
+      const r = X[k] || {};
+      t('CCXCVI '+(i===0?'③':'⑥')+' ⭐ '+nom+' : les grammes sont reproposés (150), '+
+        'et l\'unité ABSENTE aussi (80)',
+        r['grammes'] && r['grammes'].vue===true && r['grammes'].q==='150'
+        && r['sans unité'] && r['sans unité'].q==='80', JSON.stringify([r['grammes'],r['sans unité']]));
+      t('CCXCVI '+(i===0?'④':'⑦')+' ⛔ '+nom+' : les PORTIONS ne proposent rien — la règle '+
+        'refuse ce que `_qReprenable` accepte, et c\'est voulu',
+        r['portions'] && r['portions'].vue===false, JSON.stringify(r['portions']));
+      t('CCXCVI '+(i===0?'⑤':'⑧')+' ⛔ '+nom+' : zéro, négatif et millilitres ne proposent rien '+
+        '(sans densité, un volume ne dit pas ce que PÈSE l\'aliment — R29)',
+        r['zéro'] && r['zéro'].vue===false && r['négatif'] && r['négatif'].vue===false
+        && r['millilitres'] && r['millilitres'].vue===false,
+        JSON.stringify([r['zéro'],r['négatif'],r['millilitres']]));
+    });
+    t('CCXCVI ⑨ ⭐⭐ LES DEUX PORTES DONNENT EXACTEMENT LE MÊME RÉSULTAT sur les 6 cas — '+
+      'c\'est ce qui rend l\'extraction légitime',
+      JSON.stringify(X.qf)===JSON.stringify(X.loc),
+      JSON.stringify(X.qf)+' vs '+JSON.stringify(X.loc));
+    t('CCXCVI ⑩ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+  await cx.close();
+}
+
+/* ⚠️ Témoins de SOURCE — ils lisent le fichier, pas la page. */
+{
+  const src=fs.readFileSync(ROOT+'/app.js','utf8');
+  /* ⛔ Le backtick fait partie des débuts de ligne à écarter : le commentaire du propriétaire
+     CITE `_qGrammes(x) > 0`, et un témoin qui ne distingue pas le code de ce qui en PARLE
+     finit par interdire d'écrire la documentation de ce qu'il protège (leçon ft-v1193). */
+  const sansComm=src.split('\n').filter(l=>{const x=l.trim();
+    return !(x.startsWith('*')||x.startsWith('//')||x.startsWith('/*')||x.startsWith('`'));}).join('\n');
+  const nb=(sansComm.match(/_qGrammes\(/g)||[]).length;
+  t('CCXCVI ⑪ ⭐ les 2 portes passent par `_qGrammes` (1 déclaration + 2 appels)',
+    nb===3, 'occurrences='+nb);
+  const corps=(sansComm.match(/function _qGrammes\(src\)\{[\s\S]*?\n\}/)||[''])[0];
+  t('CCXCVI ⑫ ⛔⛔ PÉRIMÈTRE — `_qGrammes` REFUSE les portions : le `|| === \'portion\'` de '+
+    '`_qReprenable` n\'est PAS entré dedans (les fondre serait un changement de comportement)',
+    corps.length>0 && !/portion/.test(corps), 'corps='+corps.slice(0,140));
+  t('CCXCVI ⑬ ⛔ et `_qReprenable` existe TOUJOURS à côté, avec ses portions — deux règles, '+
+    'pas une',
+    /function _qReprenable\(src\)\{/.test(sansComm) && /=== 'portion'/.test(sansComm),
+    'une des deux a disparu');
+}
+
 /* ⚠️ CE BLOC DOIT RESTER AVANT `b.close()` — leçon payée le 11/09/2026.
    Je l'avais posé APRÈS, dans la zone des blocs qui n'ouvrent PAS de navigateur (ils lisent
    les fichiers source avec `fs`). Il a demandé une page déjà fermée, a levé « Target page,

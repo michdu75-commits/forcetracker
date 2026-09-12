@@ -150,8 +150,15 @@ const snap=await p.evaluate(async()=>{
   out['3_regle_grammes_seuls']=J(CAS.map(c=>[c.q, c.u, regleG(c)]));
   out['3_regle_avec_portions']=J(CAS.map(c=>[c.q, c.u, regleP(c)]));
 
-  /* ⛔ ET SURTOUT : les six sites conduits par leur VRAIE porte, pas la regle recopiee.
-     *Verifier la regle n'est pas verifier l'appel* (BUGS.md §58). */
+  /* ⛔⛔ CE COMMENTAIRE ANNONCAIT « LES SIX SITES » ET LA BOUCLE N'EN CONDUIT QU'UN (12/09/2026).
+     Mesure faite avant la sous-etape 3-i : cette boucle ne conduit que `quickAddFood`, et les deux
+     sondes `3_regle_*` ci-dessus RECOPIENT la regle dans la sonde (`const regleG/regleP = ...`) —
+     elles n'appellent aucun code de production, donc elles ne peuvent RIEN detecter d'une
+     extraction. Ce sont des tables de verite, pas une couverture.
+     👉 Un commentaire qui annonce une portee plus LARGE que le code est le miroir de celui de
+        ft-v1190 (qui en annoncait une plus etroite) : dans les deux cas il dispense le lecteur
+        suivant d'aller verifier. La sonde `3_via_rejouerRepas` ci-dessous comble la moitie
+        manquante — *verifier la regle n'est pas verifier l'appel* (BUGS.md §58). */
   const viaRejeu=[];
   CAS.forEach((cs,i)=>{
     S.foodLog=[]; S.savedFoods=[];
@@ -163,6 +170,187 @@ const snap=await p.evaluate(async()=>{
     viaRejeu.push([cs.q, cs.u, l?J({q:l.q,u:l.u}):null]);
   });
   out['3_via_quickAddFood']=J(viaRejeu);
+
+  /* ⭐ LA MOITIE QUI MANQUAIT : `rejouerRepas`, la SECONDE porte qui porte la meme regle.
+     ⚠️ `_repasHabituels` exige la MEME signature sur 2 dates dont la derniere n'est pas
+     aujourd'hui — on conduit donc la vraie porte, avec sa vraie condition d'entree. */
+  const viaRejeuRepas=[];
+  CAS.forEach((cs,i)=>{
+    const base={name:'R'+i, kcal:100, prot:1, carbs:2, fat:3, q:cs.q, u:cs.u,
+                per100:{kcal:50,prot:0.5,carbs:1,fat:1.5}};
+    S.foodLog=[Object.assign({date:'2026-09-01', meal:'midi', ts:1}, base),
+               Object.assign({date:'2026-09-02', meal:'midi', ts:2}, base)];
+    const sig=(_repasHabituels()[0]||{}).sig||'';
+    let res=null;
+    if(sig){
+      const avant=S.foodLog.length;
+      try{ rejouerRepas(sig,'midi'); }catch(e){}
+      const l=(S.foodLog||[])[S.foodLog.length-1];
+      res=(S.foodLog.length>avant && l) ? J({q:l.q,u:l.u}) : 'rien ajoute';
+    }
+    viaRejeuRepas.push([cs.q, cs.u, res]);
+  });
+  out['3_via_rejouerRepas']=J(viaRejeuRepas);
+
+  /* ══ 1b-ii — LA PROVENANCE REPRISE, CONDUITE PAR LES VRAIES PORTES ══
+     ⛔⛔ ON N'APPELLE PAS `_afSetSrc` A LA MAIN ICI, ET C'EST TOUT L'INTERET.
+     Le reste de ce fichier le faisait (lignes 113 et 120) : ca pose un objet choisi par la
+     sonde, donc ca ne peut RIEN detecter d'une extraction faite dans quickFillFood ou
+     _afSuggPrendreLocale. C'est exactement le defaut de `3_regle_avec_portions`, mesure le
+     12/09 : une sonde qui recopie la regle mesure ce qu'on CROYAIT ecrire, pas ce qui est
+     execute (BUGS.md §58 cote sonde). On conduit donc la porte, et on lit `_afSrc` apres.
+     ⚠️ `_afSrc` n'est pas expose : on le lit par `_afLireSrc()` si elle existe, sinon par la
+     variable globale — et on DIT laquelle a servi, pour qu'un jour ou l'acces change, on ne
+     croie pas a une regression du code. */
+  const lireSrc = () => {
+    try{ if(typeof _afSrc!=='undefined' && _afSrc) return _afSrc; }catch(e){}
+    return null;
+  };
+  /* On ne garde que les 3 champs du perimetre + les 2 divergents, pour que la sonde ne bouge
+     pas au moindre changement sans rapport ailleurs dans l'objet. */
+  const provLue = () => { const v=lireSrc()||{};
+    return {sourceId:v.sourceId===undefined?'ABSENT':v.sourceId,
+            etat:v.etat===undefined?'ABSENT':v.etat,
+            per100:v.per100===undefined?'ABSENT':v.per100,
+            origine:v.origine===undefined?'ABSENT':v.origine,
+            saisie:v.saisie===undefined?'ABSENT':v.saisie}; };
+
+  /* Les 3 formes qui comptent : tout renseigne · tout absent · origine DEJA portee par la
+     source (c'est elle qui distingue `it.origine||'reprise'` d'un 'reprise' en dur). */
+  const CAS_PROV = [
+    {name:'Plat A', kcal:200, prot:10, carbs:20, fat:5, q:150, u:'g',
+     sourceId:'off:123', etat:'valide', per100:{kcal:133,prot:6.7,carbs:13.3,fat:3.3}, origine:'off'},
+    {name:'Plat B', kcal:100, prot:5, carbs:10, fat:2},
+    {name:'Plat C', kcal:300, prot:20, carbs:30, fat:8, q:2, u:'portion',
+     portionLabel:'part', portionWeightG:120, sourceId:'ciqual:42', etat:null, origine:'ciqual'},
+  ];
+
+  /* ── porte 1 : quickFillFood (« Mes aliments ») ── */
+  const viaQuickFill=[];
+  CAS_PROV.forEach(cs=>{
+    try{
+      S.foodLog=[]; S.savedFoods=[]; persist();
+      try{ _afOublierAliment(); }catch(e){}
+      _afSetSrc(null);
+      _afQuickItems=[Object.assign({fav:false}, cs)];
+      quickFillFood(0);
+      viaQuickFill.push([cs.name, J(provLue())]);
+    }catch(e){ viaQuickFill.push([cs.name, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['1bii_via_quickFillFood']=J(viaQuickFill);
+
+  /* ── porte 2 : _afSuggPrendreLocale (la recherche dans le journal) ── */
+  const viaLocale=[];
+  CAS_PROV.forEach(cs=>{
+    try{
+      S.foodLog=[Object.assign({date:'2026-09-01', meal:'midi', ts:1}, cs)];
+      persist();
+      try{ _afOublierAliment(); }catch(e){}
+      _afSetSrc(null);
+      /* ⛔⛔ ELLE LIT `_afSuggLoc[i]`, PAS `S.foodLog` — ma 1re version passait l'index du
+         journal et la fonction SORTAIT immediatement (`if(!e) return`), donc la sonde
+         rendait ABSENT partout : morte, et un BEFORE capture ainsi serait reste identique
+         quoi qu'on fasse au code. C'est le piege d'`openSessDetail(0)` de ft-v1189.
+         On remplit donc par la VRAIE fonction de production, pas a la main. */
+      _afSuggLoc = _afSuggLocales(cs.name);
+      if(!_afSuggLoc.length) throw new Error('liste locale VIDE — la sonde ne conduirait rien');
+      _afSuggPrendreLocale(0);
+      viaLocale.push([cs.name, J(provLue())]);
+    }catch(e){ viaLocale.push([cs.name, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['1bii_via_afSuggPrendreLocale']=J(viaLocale);
+
+  /* ── porte 3 : quickAddFood — elle ECRIT une ligne, on lit ce qui s'est enregistre ──
+     ⚠️ Elle ne porte que la PAIRE : `per100` lui vient de `_srcRepriseQ` depuis ft-v1195. */
+  const viaQuickAdd=[];
+  CAS_PROV.forEach(cs=>{
+    try{
+      S.foodLog=[]; S.savedFoods=[]; persist();
+      try{ _afOublierAliment(); }catch(e){}
+      _afSetSrc(null);
+      _afQuickItems=[Object.assign({fav:false}, cs)];
+      quickAddFood(0);
+      const l=(S.foodLog||[])[S.foodLog.length-1]||{};
+      viaQuickAdd.push([cs.name, J({sourceId:l.sourceId===undefined?'ABSENT':l.sourceId,
+                                    etat:l.etat===undefined?'ABSENT':l.etat,
+                                    per100:l.per100===undefined?'ABSENT':l.per100,
+                                    origine:l.origine===undefined?'ABSENT':l.origine,
+                                    saisie:l.saisie===undefined?'ABSENT':l.saisie})]);
+    }catch(e){ viaQuickAdd.push([cs.name, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['1bii_via_quickAddFood']=J(viaQuickAdd);
+
+  /* ══ 3-ii — LA PASTILLE « ta derniere quantite », LUE A L'ECRAN ══
+     ⛔⛔ LES DEUX PORTES ETAIENT DEJA CONDUITES (sondes 1bii_*), MAIS RIEN NE LISAIT LA
+     PASTILLE : les sondes au-dessus ne regardent que `_afSrc`. L'instantane serait donc reste
+     IDENTIQUE quoi qu'on fasse a `_bcProposerDerniere` — conduire n'est pas observer, et c'est
+     le meme defaut que `3_regle_avec_portions` sous un autre angle (12/09).
+     On lit donc ce que la pastille MET A L'ECRAN : visible ? quel texte ? quelle valeur portee ? */
+  const lirePastille = () => {
+    const b = document.getElementById('af-bc-last');
+    if(!b) return 'ELEMENT ABSENT';
+    return { vue: b.style.display !== 'none' && b.style.display !== '',
+             txt: b.textContent || '',
+             q: (b.dataset && b.dataset.q !== undefined) ? b.dataset.q : 'ABSENT' };
+  };
+
+  /* Les cas qui font la regle « grammes seuls » : grammes OK · portions REFUSEES ·
+     unite absente ACCEPTEE · zero · negatif · ml refuses. */
+  /* ⛔⛔ LE `per100` EST OBLIGATOIRE DANS CES FIXTURES, ET C'EST LA SONDE QUI L'A APPRIS.
+     Le site de la pastille est DANS un garde : `if(P && it.u!=='portion' && (+P.kcal>0||...))`,
+     ou `P` vaut `it.per100`. Sans pour-100 g, le bloc entier est saute et la pastille n'est
+     JAMAIS appelee : mes 6 premiers cas rendaient tous la meme valeur, un reliquat.
+     *Une sonde qui n'atteint pas la ligne visee mesure l'ecran d'avant, pas la regle.* */
+  const P100 = {kcal:66.7, prot:0.7, carbs:1.3, fat:2};
+  const CAS_PAST = [
+    {name:'En grammes',   kcal:100, prot:1, carbs:2, fat:3, per100:P100, q:150, u:'g'},
+    {name:'En portions',  kcal:100, prot:1, carbs:2, fat:3, per100:P100, q:2,   u:'portion', portionLabel:'part', portionWeightG:120},
+    {name:'Sans unite',   kcal:100, prot:1, carbs:2, fat:3, per100:P100, q:80},
+    {name:'Quantite nulle',kcal:100,prot:1, carbs:2, fat:3, per100:P100, q:0,   u:'g'},
+    {name:'Negatif',      kcal:100, prot:1, carbs:2, fat:3, per100:P100, q:-5,  u:'g'},
+    {name:'En millilitres',kcal:100,prot:1, carbs:2, fat:3, per100:P100, q:250, u:'ml'},
+  ];
+
+  /* ── porte 1 : quickFillFood ── */
+  const pastQuickFill=[];
+  CAS_PAST.forEach(cs=>{
+    try{
+      S.foodLog=[]; S.savedFoods=[]; persist();
+      try{ _afOublierAliment(); }catch(e){}
+      /* ⛔⛔ REMISE A ZERO EXPLICITE DE LA PASTILLE, ET C'EST UNE MESURE, PAS UNE PRECAUTION.
+         `_afOublierAliment` ne rend PAS cette pastille : seule `openAddFood` le fait. Donc
+         entre deux aliments d'une meme ouverture, celle du precedent reste affichee quand le
+         site est saute (aliment en portions, ou sans pour-100 g). C'est un VRAI defaut, la
+         jumelle exacte de celui du paquet corrige en ft-v1193 — mesure, ecrit dans
+         docs/JOURNAL-DE-TEST.md, et NON corrige ici (une extraction ne change rien).
+         Sans cette ligne, le cas « En portions » lirait le reliquat du cas precedent :
+         *la sonde mesurerait l'ecran d'avant au lieu de la regle.* */
+      try{ _bcProposerDerniere(0); }catch(e){}
+      _afSetSrc(null);
+      _afQuickItems=[Object.assign({fav:false}, cs)];
+      quickFillFood(0);
+      pastQuickFill.push([cs.name, J(lirePastille())]);
+    }catch(e){ pastQuickFill.push([cs.name, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['3ii_pastille_quickFillFood']=J(pastQuickFill);
+
+  /* ── porte 2 : _afSuggPrendreLocale — elle lit `_afSuggLoc[i]`, PAS `S.foodLog` (piege
+     mesure le 12/09 : une sonde qui passe l'index du journal sort au 3e caractere). ── */
+  const pastLocale=[];
+  CAS_PAST.forEach(cs=>{
+    try{
+      S.foodLog=[Object.assign({date:'2026-09-01', meal:'midi', ts:1}, cs)];
+      persist();
+      try{ _afOublierAliment(); }catch(e){}
+      try{ _bcProposerDerniere(0); }catch(e){}   // meme raison qu'au-dessus (defaut mesure, non corrige)
+      _afSetSrc(null);
+      _afSuggLoc = _afSuggLocales(cs.name);
+      if(!_afSuggLoc.length) throw new Error('liste locale VIDE — la sonde ne conduirait rien');
+      _afSuggPrendreLocale(0);
+      pastLocale.push([cs.name, J(lirePastille())]);
+    }catch(e){ pastLocale.push([cs.name, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['3ii_pastille_afSuggPrendreLocale']=J(pastLocale);
 
   return out;
 });

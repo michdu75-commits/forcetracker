@@ -1618,6 +1618,98 @@ function _per100Derive(vals, masse){
   return {kcal:_per100d1((+vals.kcal||0)*f), prot:_per100d1((+vals.prot||0)*f),
           carbs:_per100d1((+vals.carbs||0)*f), fat:_per100d1((+vals.fat||0)*f)};
 }
+/* ═══════════ LA QUANTITÉ REPRISE D'UNE LIGNE EXISTANTE (12/09/2026, sous-étape 1b-i) ═══════════
+   Michel, après la mesure du périmètre : ⛔ *« je ne veux pas traiter 1b et 3 en un seul gros
+   chantier — redécoupe-les en sous-étapes plus petites, mesurables et réversibles »*, et
+   ⛔⛔ *« je ne veux pas harmoniser maintenant les défauts divergents : à ce stade on doit les
+   TRANSPORTER explicitement sans les corriger »*.
+
+   DEUX endroits recopiaient le même bloc, **caractère pour caractère** (aux noms de variable
+   près), pour dire à `_provFood` ce qu'une ligne déjà enregistrée portait comme quantité :
+   `rejouerRepas` (rejouer un repas d'hier) et `quickAddFood` (ajouter depuis la liste).
+
+   ⛔⛔ `qOk` N'EST PAS CALCULÉ ICI, ET C'EST TOUT LE DÉCOUPAGE. Le test *« cette quantité
+   est-elle utilisable ? »* est le sujet de l'étape **3**, pas de celle-ci — l'absorber ferait
+   deux extractions dans une seule sous-étape, donc un retour arrière qui ne peut plus être
+   partiel. *Une sous-étape réversible est une sous-étape qui ne fait qu'une chose.*
+
+   ⛔⛔ ET CE QUI N'EST **PAS** ICI EST AUSSI IMPORTANT : `sourceId` et `etat` restent chez
+   `quickAddFood` seul — `rejouerRepas` ne les a jamais posés. **La divergence est TRANSPORTÉE,
+   pas corrigée.** Les lui donner changerait la provenance ENREGISTRÉE d'une ligne rejouée :
+   c'est une **décision produit** (sous-étape 1b-ii), pas un rangement. Un témoin l'interdit.
+
+   ⚠️ Les défauts sont recopiés tels quels, y compris ce qui ressemble à une coquille :
+   `portionWeightG` rend `null` (et non `0`) quand il n'y a rien — parce que c'est ce que le
+   code faisait. *On extrait ce qui existe, on ne redresse rien au passage.* */
+/* ═══════ « CETTE QUANTITÉ EST-ELLE REPRENABLE ? » (12/09/2026, sous-étape 3-i) ═══════
+   La question que `_srcRepriseQ` reçoit en paramètre, et qui restait écrite **deux fois** —
+   c'est l'AUTRE moitié de la ligne, chez les deux mêmes portes : `rejouerRepas` et `quickAddFood`.
+
+   ⭐ CE QU'ELLE DIT : une quantité reprise d'une ligne enregistrée n'est utilisable que si elle
+   est **positive** ET exprimée dans une unité qu'on sait redimensionner — les **grammes**, les
+   **portions**, ou **rien du tout** (auquel cas `_srcRepriseQ` retombe sur « g »).
+   ⛔ `ml` est REFUSÉ, et ce n'est pas un oubli : sans densité, un volume ne dit pas ce que pèse
+   l'aliment, et on n'invente pas une densité (R29).
+
+   ⛔⛔ ELLE ACCEPTE LES PORTIONS, ET C'EST LA MOITIÉ « AVEC PORTIONS » — pas la règle des
+   **5 autres** sites, qui n'acceptent que les grammes parce qu'ils alimentent un champ en
+   grammes. *Les deux règles se ressemblent à un `||` près et ne disent pas la même chose* :
+   les fondre serait un changement de comportement, pas une extraction (sous-étapes 3-ii/iii/iv,
+   et c'est l'une des 4 décisions produit qui attendent Michel).
+
+   ⚠️ Elle rend un BOOLÉEN et ne touche à rien : c'est `_srcRepriseQ` qui décide quoi en faire.
+   *Une sous-étape réversible est une sous-étape qui ne fait qu'une chose.* */
+/* 🔢 3-ii (ft-v1199) — « QUELLE QUANTITE EN GRAMMES PEUT-ON REPROPOSER ? »
+   Rend un NOMBRE : la quantite en grammes, ou 0 quand il n'y en a pas.
+
+   ⛔⛔ CE N'EST PAS `_qReprenable`, ET LA DIFFERENCE EST VOULUE.
+   `_qReprenable` (3-i) accepte les PORTIONS ; celle-ci les REFUSE, parce que ses appelants
+   alimentent un champ **en grammes**. Les deux regles se ressemblent a un `||` pres et ne
+   disent pas la meme chose — les fondre serait un changement de comportement, pas une
+   extraction. Un temoin de perimetre fige qu'elles restent deux.
+
+   ⭐ ELLE REND UN NOMBRE, PAS UN BOOLEEN, et c'est ce qui evite une duplication plus tard :
+   `_qGrammes(x) > 0` est EXACTEMENT la condition, donc les sous-etapes 3-iii et 3-iv
+   pourront lui ajouter leurs appelants sans reecrire la regle.
+
+   ⚠️ L'unite ABSENTE est acceptee (elle vaut grammes par defaut) ; `0`, le negatif, les
+   portions et les `ml` sont refuses — sans densite, un volume ne dit pas ce que PESE
+   l'aliment, et on n'invente pas une densite (R29). */
+function _qGrammes(src){
+  const s = src || {};
+  return (+s.q > 0 && (!s.u || s.u === 'g')) ? +s.q : 0;
+}
+
+function _qReprenable(src){
+  const s = src || {};
+  return (+s.q > 0 && (!s.u || s.u === 'g' || s.u === 'portion'));
+}
+/* 🏷️ 1b-ii (ft-v1197) — LA PROVENANCE RECOPIEE D'UNE LIGNE DEJA ENREGISTREE.
+   Trois champs, ecrits a l'identique par `quickFillFood` et `_afSuggPrendreLocale` ; la paire
+   `sourceId`/`etat` l'est aussi par `quickAddFood`, qui tient son `per100` de `_srcRepriseQ`.
+
+   ⛔⛔ `origine` ET `saisie` NE SONT PAS DEDANS, ET C'EST LA COUPE ELLE-MEME.
+   Ils DIVERGENT aux trois portes — `it.origine||'reprise'` · `e.origine||'utilisateur'` ·
+   `'reprise'` en dur (cette derniere ignore meme la source : une ligne venue d'un code-barres
+   se reenregistre en 'reprise', et c'est un choix assume — on n'a pas garde la source sur les
+   favoris, donc en heriter MENTIRAIT). Les unifier changerait ce que le journal DIT DE
+   LUI-MEME : c'est une DECISION PRODUIT (n°4 du §3 de docs/SOUS-ETAPES-1B-3.md), pas un
+   rangement. On extrait donc ce qui est IDENTIQUE et on laisse VISIBLE chez l'appelant ce qui
+   diverge — un ecart qu'on lit dans le code ne se perd pas ; un ecart absorbe dans un
+   proprietaire, si. */
+function _srcProvenance(src){
+  const s = src || {};
+  return { sourceId: s.sourceId || null, etat: s.etat || null, per100: s.per100 || null };
+}
+
+function _srcRepriseQ(src, qOk){
+  const s = src || {};
+  return { q: qOk ? +s.q : null,
+           u: qOk ? (s.u || 'g') : null,
+           per100: s.per100 || null,
+           portionLabel: s.portionLabel || null,
+           portionWeightG: +s.portionWeightG > 0 ? +s.portionWeightG : null };
+}
 /* 📷⛔⛔ LE SCAN TROUVE LE PRODUIT, N'A AUCUNE VALEUR, ET LAISSE LA PERSONNE LÀ (ft-v1163)
    Michel, après trois versions passées sur la même ligne : *« c'est super chiant en fait, même
    la ratatouille ne change pas les valeurs sur l'onglet poids. Et même par portion, ça dépend de
@@ -2209,10 +2301,11 @@ function rejouerRepas(sig, meal){
        que `quickAddFood` avant ft-v1176 — des lignes que plus rien ne peut redimensionner.
        ⭐ On garde la protection (la quantité vient de l'ITEM, jamais du DOM) et on transmet ce
        qui est écrit. *Sans ça, rejouer un repas tuerait les portions qu'on vient de sauver.* */
-    const qOk=(+e.q>0 && (!e.u||e.u==='g'||e.u==='portion'));
-    if(typeof _afSetSrc==='function')_afSetSrc({saisie:'liste',origine:'reprise',
-      q:qOk?+e.q:null, u:qOk?(e.u||'g'):null, per100:e.per100||null,
-      portionLabel:e.portionLabel||null, portionWeightG:+e.portionWeightG>0?+e.portionWeightG:null});
+    const qOk=_qReprenable(e);
+    /* ⛔ PAS de `sourceId`/`etat` ici, et ce n'est pas un oubli : le rejeu n'en a jamais posé.
+       Les ajouter changerait la provenance enregistrée — décision produit, sous-étape 1b-ii. */
+    if(typeof _afSetSrc==='function')_afSetSrc(
+      Object.assign({saisie:'liste',origine:'reprise'}, _srcRepriseQ(e, qOk)));
     const prov=(typeof _provFood==='function')?_provFood(vals):{};
     S.foodLog.push(Object.assign({date:_journalJourActif(),meal:moment,name:e.name,ts:Date.now()},vals,prov,
       qOk?{}:{q:null,u:null}));
@@ -2684,21 +2777,49 @@ let _afQuickItems=[];
    pourtant présent dans l'entrée du journal, était **jeté au moment précis où il sert**.
    *L'information existait et n'atteignait pas l'écran* — le défaut n'était pas dans le calcul
    de quantité (qui marche depuis ft-v965), il était dans le transport. */
+/* 📋 1b-iii (ft-v1198) — LE NOYAU D'UN ITEM DE LISTE « Mes aliments ».
+   Neuf champs recopies a l'IDENTIQUE par les trois sites : la branche favoris et la branche
+   recents de `_buildFoodQuickItems`, et le favori ecrit par `toggleFavFood`.
+
+   ⛔⛔ `portionWeightG` ET `fav` NE SONT PAS DEDANS, ET C'EST LA COUPE.
+   `portionWeightG` DIVERGE : les deux branches de la liste replient sur `0`, le favori sur
+   `null`. Un `0` et un `null` ne se relisent pas pareil en aval (`+x>0` les traite pareil,
+   `x===null` non), donc unifier changerait le contenu de `S.savedFoods` : c'est une DECISION
+   PRODUIT (n°2 du §3 de docs/SOUS-ETAPES-1B-3.md), pas un rangement. `fav` vaut true, false,
+   et n'existe pas chez le troisieme. Les deux restent ECRITS chez chaque appelant, ou l'ecart
+   se lit a l'oeil nu.
+
+   ⚠️ ET LE PLAN ANNONCAIT DEUX DIVERGENCES, IL N'Y EN A QU'UNE. Il disait que `q` valait `0`
+   ici et `null` la ; mesure champ par champ, `q` vaut `+X.q>0?+X.q:0` aux TROIS sites. D'ou
+   l'absence de parametre `{vide:...}` : on n'en a pas besoin pour un seul ecart, et un
+   parametre inutile deplace l'ecart DANS le proprietaire au lieu de le laisser visible. */
+function _itemListe(src){
+  const s = src || {};
+  return { name: s.name,
+           kcal: s.kcal || 0, prot: s.prot || 0, carbs: s.carbs || 0, fat: s.fat || 0,
+           per100: s.per100 || null,
+           q: +s.q > 0 ? +s.q : 0,
+           u: s.u || null,
+           portionLabel: s.portionLabel || null };
+}
+
 function _buildFoodQuickItems(){
-  const favs=(S.savedFoods||[]).map(f=>({name:f.name,kcal:f.kcal||0,prot:f.prot||0,carbs:f.carbs||0,fat:f.fat||0,
-                                         per100:f.per100||null,q:+f.q>0?+f.q:0,u:f.u||null,
-                                         portionLabel:f.portionLabel||null,portionWeightG:+f.portionWeightG>0?+f.portionWeightG:0,fav:true}));
+  /* ⚠️ `portionWeightG` replie sur 0 ICI et sur null chez `toggleFavFood` — ecart TRANSPORTE,
+     decision produit n°2. Il reste ecrit ici expres, pour qu'on le voie. */
+  const favs=(S.savedFoods||[]).map(f=>Object.assign(_itemListe(f),
+    {portionWeightG:+f.portionWeightG>0?+f.portionWeightG:0, fav:true}));
   const seen=new Set(favs.map(f=>(f.name||'').toLowerCase()));
   const hidden=new Set((S.hiddenFoods||[]).map(x=>(x||'').toLowerCase()));
   const recent=[];
   (S.foodLog||[]).slice().sort((a,b)=>b.ts-a.ts).forEach(e=>{
     const k=(e.name||'').toLowerCase(); if(!k||seen.has(k)||hidden.has(k))return; seen.add(k);
-    recent.push({name:e.name,kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0,
-                 per100:e.per100||null,q:+e.q>0?+e.q:0,u:e.u||null,
-                 /* 🏷️ ft-v1186 — sans ces deux-là, la reprise ne retrouve pas la définition et
-                    l'étiquette serait à retaper à chaque repas. */
-                 portionLabel:e.portionLabel||null,portionWeightG:+e.portionWeightG>0?+e.portionWeightG:0,
-                 origine:e.origine||null,sourceId:e.sourceId||null,etat:e.etat||null,fav:false});
+    /* 🏷️ ft-v1186 — `portionLabel`/`portionWeightG` voyagent : sans eux, la reprise ne
+       retrouve pas la définition et l'étiquette serait à retaper à chaque repas.
+       ⛔ `origine`/`sourceId`/`etat` ne sont PAS dans `_itemListe` : cette forme n'existe
+          qu'ICI (une seule copie), et on ne crée pas un propriétaire pour une forme unique. */
+    recent.push(Object.assign(_itemListe(e),
+      {portionWeightG:+e.portionWeightG>0?+e.portionWeightG:0,
+       origine:e.origine||null, sourceId:e.sourceId||null, etat:e.etat||null, fav:false}));
   });
   return favs.concat(recent).slice(0,12);
 }
@@ -2755,9 +2876,10 @@ function quickFillFood(i){
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
   set('af-desc',it.name); set('af-kcal',it.kcal||0); set('af-prot',it.prot||0); set('af-carbs',it.carbs||0); set('af-fat',it.fat||0);
   /* La provenance dit ce que c'est : une REPRISE, ni une mesure ni une saisie fraîche. */
-  if(typeof _afSetSrc==='function') _afSetSrc({saisie:'liste', origine:it.origine||'reprise',
-    sourceId:it.sourceId||null, etat:it.etat||null, per100:it.per100||null,
-    attendu:(typeof _afLuFormulaire==='function')?_afLuFormulaire():null});
+  if(typeof _afSetSrc==='function') _afSetSrc(Object.assign(
+    {saisie:'liste', origine:it.origine||'reprise'},
+    _srcProvenance(it),
+    {attendu:(typeof _afLuFormulaire==='function')?_afLuFormulaire():null}));
   const row=document.getElementById('af-bc-row');
   const P=it.per100;
   /* 🍽️⛔⛔ ft-v1186 — UNE LIGNE COMPTÉE EN PORTIONS REVIENT EN PORTIONS, MÊME AVEC UN POUR-100 g.
@@ -2774,7 +2896,7 @@ function quickFillFood(i){
     const g=document.getElementById('af-bc-grams');
     /* ⚖️ ft-v1051 : PROPOSÉE, plus imposée — le champ reste vide, la pastille offre le rappel. */
     if(g) g.value='';
-    if(typeof _bcProposerDerniere==='function') _bcProposerDerniere((+it.q>0 && (!it.u||it.u==='g')) ? +it.q : 0);
+    if(typeof _bcProposerDerniere==='function') _bcProposerDerniere(_qGrammes(it));
     const nm=document.getElementById('af-bc-name');
     if(nm) nm.textContent=_bcNutr.name+' · '+Math.round(_bcNutr.kcal100)+' kcal/100g (ta dernière saisie)';
     if(row) row.style.display='block';
@@ -2865,12 +2987,18 @@ function quickAddFood(i){
      blanche de `_provFood` aux portions, et cette ligne rendait quand même `q:null` : elle
      n'acceptait que les grammes. *Une porte ouverte en aval ne sert à rien si l'amont filtre
      encore* — mesuré sur une ligne « 2 portions », qui repartait morte. */
-  const _qOk=(+it.q>0 && (!it.u||it.u==='g'||it.u==='portion'));
-  _afSetSrc({saisie:'liste', origine:'reprise',
-             q:_qOk ? +it.q : null, u:_qOk ? (it.u||'g') : null,
-             per100:it.per100||null, sourceId:it.sourceId||null, etat:it.etat||null,
-             /* 🏷️ ft-v1186 — « 2 portions » sans dire de QUOI ne vaut pas mieux qu'avant. */
-             portionLabel:it.portionLabel||null, portionWeightG:+it.portionWeightG>0?+it.portionWeightG:null});
+  const _qOk=_qReprenable(it);
+  /* 🏷️ ft-v1186 — « 2 portions » sans dire de QUOI ne vaut pas mieux qu'avant : le nom et le
+     poids de la portion voyagent avec la quantité, dans `_srcRepriseQ`.
+     ⭐ `sourceId`/`etat` restent ICI, en plus : cette porte-ci les a toujours posés (R33 — la
+     provenance ne ment pas), et le rejeu ne les a jamais eus. L'écart est transporté. */
+  _afSetSrc(Object.assign({saisie:'liste', origine:'reprise'},
+                          _srcRepriseQ(it, _qOk),
+                          /* ⚠️ `per100` arrive par `_srcRepriseQ` juste au-dessus ; le
+                             proprietaire le repose a la MEME valeur (les deux lisent
+                             `it.per100||null`), donc l'objet final ne bouge pas d'un octet —
+                             c'est l'instantane qui le prouve, pas ce commentaire. */
+                          _srcProvenance(it)));
   S.foodLog.push(Object.assign({date:_journalJourActif(),meal:_afMeal,name:(it.name||'').slice(0,80),ts:Date.now()},_vals,_provFood(_vals)));
   _afSetSrc(null);
   _unhideFood(it.name);
@@ -2887,12 +3015,14 @@ function toggleFavFood(i){
   if(idx>=0){ S.savedFoods.splice(idx,1); toast('Retiré des favoris','info'); }
   /* ⛔ LE FAVORI GARDE SON POUR-100 G (ft-v1042) : sans ça, mettre une étoile FAISAIT PERDRE
      la quantité — l'aliment devenait moins réglable qu'avant d'être mis en favori. */
-  else { S.savedFoods.push({name:it.name,kcal:it.kcal||0,prot:it.prot||0,carbs:it.carbs||0,fat:it.fat||0,
-                            per100:it.per100||null,q:+it.q>0?+it.q:0,u:it.u||null,
-                            /* 🏷️ ft-v1186 — mettre une étoile ne doit pas faire perdre la définition
-                               (c'est déjà la raison pour laquelle le favori garde son pour-100 g). */
-                            portionLabel:it.portionLabel||null,
-                            portionWeightG:+it.portionWeightG>0?+it.portionWeightG:null}); toast('Ajouté aux favoris ⭐','success'); }
+  /* 🏷️ ft-v1186 — mettre une étoile ne doit pas faire perdre la définition (c'est déjà la
+     raison pour laquelle le favori garde son pour-100 g).
+     ⛔⛔ ET LE REPLI EST `null` ICI, `0` DANS LA LISTE. C'est l'écart de la décision produit
+        n°2 : il est TRANSPORTÉ tel quel, pas harmonisé — l'unifier changerait ce qui est
+        écrit dans `S.savedFoods`. */
+  else { S.savedFoods.push(Object.assign(_itemListe(it),
+           {portionWeightG:+it.portionWeightG>0?+it.portionWeightG:null}));
+         toast('Ajouté aux favoris ⭐','success'); }
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   _renderFoodQuickList();
 }
@@ -3921,7 +4051,7 @@ function _afSuggPrendreLocale(i){
     const g=document.getElementById('af-bc-grams');
     /* ⚖️ ft-v1051 : la JUMELLE (R8) — le même correctif, sur le chemin « reprendre depuis le journal ». */
     if(g) g.value='';
-    if(typeof _bcProposerDerniere==='function') _bcProposerDerniere((+e.q>0 && (!e.u||e.u==='g')) ? +e.q : 0);
+    if(typeof _bcProposerDerniere==='function') _bcProposerDerniere(_qGrammes(e));
     const nm=document.getElementById('af-bc-name');
     if(nm) nm.textContent=_bcNutr.name+' · '+Math.round(_bcNutr.kcal100)+' kcal/100g (ta dernière saisie)';
     if(row) row.style.display='block';
@@ -3945,9 +4075,9 @@ function _afSuggPrendreLocale(i){
     _bcNutr=null;
     if(typeof _bcMontrerTotal==='function') _bcMontrerTotal(0);   // ⛔ pas de total orphelin
   }
-  _afSetSrc({saisie:'historique', origine:e.origine||'utilisateur',
-             sourceId:e.sourceId||null, etat:e.etat||null, per100:e.per100||null,
-             attendu:_afLuFormulaire()});
+  _afSetSrc(Object.assign({saisie:'historique', origine:e.origine||'utilisateur'},
+                          _srcProvenance(e),
+                          {attendu:_afLuFormulaire()}));
   /* ⚖️ SANS POUR-100 G, ON PROPOSE QUAND MÊME DE CHANGER LA QUANTITÉ (ft-v999+)
      Michel, deux captures à l'appui : « il y a toujours le bug sur des aliments que j'ai rentrés
      moi-même et que je veux réutiliser — comme je l'ai rentré avec le code-barre on ne peut plus

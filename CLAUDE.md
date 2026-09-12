@@ -157,7 +157,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v973`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1199`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1195`** (prochaine : `ft-v1196`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1200`** (prochaine : `ft-v1201`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -447,7 +447,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
 
-**ft-v1195 — 🔧 LES 3 CONSTATS DE L'AUDIT « ONGLET SÉANCE », CORRIGÉS — ET AUCUN N'ÉTAIT VISIBLE À L'ÉCRAN** — Michel lève lui-même l'ordre qu'il avait posé le matin (*« on refera un état des lieux quand j'aurai fini les bugs de la nutrition »*) : ***« vas-y corrige tout »***.
+**ft-v1200 — 🔧 LES 3 CONSTATS DE L'AUDIT « ONGLET SÉANCE », CORRIGÉS — ET AUCUN N'ÉTAIT VISIBLE À L'ÉCRAN** — Michel lève lui-même l'ordre qu'il avait posé le matin (*« on refera un état des lieux quand j'aurai fini les bugs de la nutrition »*) : ***« vas-y corrige tout »***.
 
 **⛔⛔ LE CONTRAT EST DONC CELUI DES EXTRACTIONS NUTRITION, ET POUR LA MÊME RAISON** : les trois constats sont **des pièges pour plus tard, pas des bugs qu'on subit** — donc *aucune valeur affichée ne doit bouger*. Une passe verte ne prouve pas ça (elle prouve que ce que les témoins **regardent** n'a pas bougé) : d'où un **instantané** avant/après, `tools/instantane_seance_audit.js`, rejouable.
 
@@ -471,7 +471,181 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 Tests : **parcours 3583/3583 sur l'arbre FINAL** (+19, bloc **CCXCII**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées — aucun trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 11 MUTATIONS, TOUTES MORDENT, chacune sur son témoin** — ① le propriétaire rend un chiffre au lieu de `null` → **2** · ② une copie de la conversion réapparaît → **1** · ③ le propriétaire redevient décoratif → **1** · ④ le garde « pas un cran » retiré → **2** · ⑤ `_rirTxt` remise en place → **1** · ⑥ l'écran n'affiche plus le libellé du propriétaire → **1** · ⑦ le repos ignore le réglage de la personne → **1** · ⑧ un site garde son propre repli → **2** · ⑨ le repli n'est plus celui de l'installation → **1** · ⑩ les règles par TYPE avalées → **1** · ⭐ ⑪ **une copie qui ÉCHAPPE au motif** (`10 - +n`) → **1 rouge, exactement le second verrou** — *c'est elle qui prouve que le témoin « le propriétaire est vraiment appelé » n'est pas décoratif.*
 
-Fichiers : `log.js`, `state.js`, `app.js`, `coach.js`, `tests/parcours/runner.js`, `tools/instantane_seance_audit.js`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1195. |
+Fichiers : `log.js`, `state.js`, `app.js`, `coach.js`, `tests/parcours/runner.js`, `tools/instantane_seance_audit.js`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1200. |
+
+**ft-v1199 — 🔢 3-ii : LA PASTILLE « TA DERNIÈRE QUANTITÉ » · ET UN DÉFAUT RÉEL TROUVÉ PAR LA SONDE, MESURÉ ET NON CORRIGÉ** — Michel valide 1b-iii et redemande la même méthode, avec le **test d'entrée** en tête.
+
+**⭐ TEST D'ENTRÉE PASSÉ : 2 copies STRICTEMENT identiques** — `_bcProposerDerniere((+X.q>0 && (!X.u||X.u==='g')) ? +X.q : 0)` chez `quickFillFood` et `_afSuggPrendreLocale`, au nom de variable près → **`_qGrammes(src)`**.
+
+**⭐⭐ ET LES 5 SITES « GRAMMES SEULS » ONT ÉTÉ MAPPÉS AVANT DE CHOISIR : ILS N'ONT PAS LA MÊME FORME.**
+
+| ligne | forme | sous-étape |
+|---|---|---|
+| `_provFood` @1232 | `if(cond){ p.q=…; p.u='g' }` — **ÉCRIT** | 3-iv |
+| **@2878 · @4033** | `(cond) ? +X.q : 0` — une **valeur** | **3-ii, livrée** |
+| @2929 · @4089 | `if(!_bcNutr && cond){` | 3-iii |
+
+👉 ***Ce qui est commun aux CINQ est la condition ; ce qui est commun aux DEUX de 3-ii est l'expression entière.*** ⭐ **Elle rend donc un NOMBRE, pas un booléen** — et ce n'est pas un détail : `_qGrammes(x) > 0` **est** exactement la condition, donc 3-iii et 3-iv lui ajouteront leurs appelants **sans réécrire la règle**. *Un seul propriétaire pour trois sous-étapes.*
+
+**⛔⛔ CE N'EST PAS `_qReprenable`, ET LA DIFFÉRENCE EST LE POINT DE CONCEPTION.** Celle de 3-i **accepte les portions** ; celle-ci les **refuse**, parce que ses appelants alimentent un champ **en grammes**. Elles se ressemblent à un `||` près et ne disent pas la même chose — les fondre serait un **changement de comportement**. **Deux témoins figent qu'elles restent DEUX**, et les mutations qui les fusionnent *dans un sens comme dans l'autre* rougissent.
+
+**⭐ LE TÉMOIN DE PÉRIMÈTRE DE 3-i SE DÉPLACE, IL N'EST PAS AFFAIBLI.** Il exigeait *« la règle est écrite **5 fois** »* — c'était le garde-fou qui empêchait 3-i de déborder. 3-ii ayant été faite **exprès**, c'est désormais **3 écritures + 2 appelants**, avec la raison écrite à l'endroit exact **et ce que deviendra le compte après 3-iii et 3-iv**. *Deuxième fois qu'un témoin de périmètre se déplace au lieu de disparaître.*
+
+**⛔⛔ ET LA SONDE A TROUVÉ UN VRAI DÉFAUT, HORS PÉRIMÈTRE — MESURÉ, ÉCRIT, NON CORRIGÉ.** `_afOublierAliment` **ne rend PAS** la pastille « la dernière fois » : seule `openAddFood` le fait. Donc **entre deux aliments d'une même ouverture**, celle du précédent **reste affichée** quand le site est sauté — un aliment **en portions**, ou sans pour-100 g. Mesuré à la sonde : après un aliment à 150 g, un aliment en portions garde *« ↩ 150 g (la dernière fois) »* **sur le mauvais aliment**. 👉 ***C'est la JUMELLE EXACTE du défaut du PAQUET corrigé en ft-v1193*** — à cette date `_afOublierAliment` a reçu le rendu de `_bcProposerPaquet`, **et pas celui-ci**. **R8, à l'intérieur même du correctif qui a fermé sa sœur.** ⛔ **Non corrigé ici** : une extraction ne change **aucun** comportement, et son critère est un instantané identique — poser l'appel manquant changerait ce que l'écran affiche. *Écrit dans `docs/JOURNAL-DE-TEST.md` avec sa mesure et son correctif d'une ligne, et laissé à Michel.*
+
+**⚠️⚠️ ET LA SONDE M'A APPRIS OÙ VIT LA LIGNE, À MES DÉPENS.** Le site de la pastille est **dans un garde** : `if(P && it.u!=='portion' && …)` où `P = it.per100`. **Mes 6 premiers cas n'avaient pas de `per100`** → le bloc était **sauté**, `_bcProposerDerniere` jamais appelée, et **les six rendaient la même valeur** — un reliquat. 👉 ***Une sonde qui n'atteint pas la ligne visée mesure l'écran d'avant, pas la règle.*** *Et elle est verte, ce qui est le pire des cas.*
+
+**⭐ CRITÈRE BINAIRE ATTEINT** : l'instantané passe de **15 à 17 clés** — les deux portes étaient **conduites** depuis 1b-ii, mais **rien ne LISAIT `#af-bc-last`**, donc il serait resté identique quoi qu'on fasse à la pastille. ***Conduire n'est pas observer.*** Identique **octet pour octet** avant/après, sha256 **`b8f06e45d8c91fcc`**.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change : deux copies d'une règle deviennent une (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **la pastille périmée n'est PAS corrigée** (mesurée, écrite, décision de Michel) · ⛔ ni 3-iii, ni 3-iv, ni 1b-v · ⛔ ni le **hub** ni la **douane** · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique et les migrations restent ouverts. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+Tests : **parcours 3633/3633 sur l'arbre FINAL** (+13, bloc **CCXCVI**) — **total prédit = total obtenu** (3620 + 13). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 11 MUTATIONS, TOUTES MORDENT, contrôle sain à 0 rouge sur 13 témoins** — ① rend toujours 0 → **3** · ② la règle ignorée → **3** · ③ le test `>0` retiré → **1** · ④ ⭐ **débordement : les portions acceptées (fusion avec `_qReprenable`)** → **2**, dont le témoin de périmètre · ⑤ les `ml` acceptés → **3** · ⑥ l'unité absente refusée → **3** · ⑦ elle rend un booléen → **3** · ⑧/⑨ une porte garde sa copie → **1** chacune · ⑩ ⭐ **débordement INVERSE : `_qReprenable` perd ses portions** → **1**, exactement le témoin qui protège les deux règles · ⑪ une porte appelle la mauvaise → **1**. ⭐ **Mutations ancrées sur la signature de `_qGrammes`** : `_qReprenable` porte un motif très proche et vit **juste après** dans le fichier — la leçon de la veille, appliquée d'avance.
+
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1112**, l'étape « Déployer sur GitHub Pages » **`success` à 19:16:04 UTC** sur `5f16740e`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur les JOBS, pas sur le statut du run* — la leçon de ft-v1196. ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *l'étape est verte, l'app affichant ft-v1199 reste à confirmer par Michel.*
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `sw.js`, `CLAUDE.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1199. |
+
+**ft-v1198 — 📋 1b-iii : LE NOYAU D'UN ITEM DE LISTE · ET LE PLAN ANNONÇAIT DEUX DIVERGENCES, IL N'Y EN A QU'UNE** — Michel valide 1b-ii et pose le **test d'entrée** en consigne permanente : ***« avant toute extraction, vérifie d'abord qu'il y a réellement au moins deux copies »*** · ***« extrait uniquement ce qui est strictement identique »*** · ***« toute divergence métier reste visible chez les appelants »***.
+
+**⭐ TEST D'ENTRÉE PASSÉ** : **3 sites réels** — `_buildFoodQuickItems` branche **favoris** et branche **récents**, plus `toggleFavFood` (le favori enregistré).
+
+**⭐⭐ ET LE NOYAU A ÉTÉ MESURÉ CHAMP PAR CHAMP, PAS ESTIMÉ** : **9 champs strictement identiques aux trois** — `name` · `kcal`/`prot`/`carbs`/`fat` en `||0` · `per100` · `q` · `u` · `portionLabel`. Ils deviennent **`_itemListe(src)`**.
+
+**⛔⛔ ET LE DOCUMENT SE TROMPE À MOITIÉ, POUR LA TROISIÈME SOUS-ÉTAPE D'AFFILÉE.** Il annonçait : *« `q` vaut `0` chez `_buildFoodQuickItems` et `null` chez `toggleFavFood` ; `portionWeightG` pareil »*, et en déduisait un propriétaire à **paramètre** — `_itemListe(src, {vide:0})` vs `{vide:null}`.
+
+| champ | ce que le plan disait | ce que la MESURE dit |
+|---|---|---|
+| `q` | « `0` ici, `null` là » | ⛔ **`+X.q>0?+X.q:0` aux TROIS sites** — il ne diverge pas |
+| `portionWeightG` | « pareil » | ⭐ **la SEULE vraie divergence** : `0` · `0` · **`null`** |
+
+👉 ***Le paramètre était dimensionné pour deux écarts alors qu'il n'y en a qu'un.*** **Il n'a donc pas été écrit** : `portionWeightG` et `fav` restent **écrits chez chaque appelant**, où l'écart se lit à l'œil nu. *Un paramètre inutile déplace la divergence DANS le propriétaire au lieu de la laisser visible* — c'est exactement ce que la consigne interdit.
+
+**⛔ ET `origine`/`sourceId`/`etat` NE BOUGENT PAS** : cette forme n'existe qu'**à la branche récents**, **une seule copie**. *On ne crée pas de propriétaire pour une forme unique* (la règle qui a fait écarter 1b-iv la veille) — et une mutation qui les y ferait entrer rougit.
+
+**⚠️ SONDE : OUVERTE, PAS CRUE — et l'étiquette était juste cette fois.** `1b_buildFoodQuickItems` appelle **la production** avec les **deux** branches garnies (`savedFoods` ET `foodLog`), et `1b_toggleFavFood_complet`/`_nu` conduisent `toggleFavFood` deux fois, **dont le cas `null`**. ⭐ *Après deux étiquettes fausses de suite (3-i « couvert » alors que non, 1b-iv « aucune sonde » alors que si), celle-ci tient — vérifiée en l'ouvrant, pas en la lisant.*
+
+**⭐ CRITÈRE BINAIRE ATTEINT** : instantané **identique octet pour octet** avant/après, **sha256 `7a52c37da93e17a3`**, diff vide.
+
+**⚠️ MON TÉMOIN DE PÉRIMÈTRE ÉTAIT FAUX, ET LE CODE SAIN L'A DIT.** Le témoin ② listait les clés attendues du propriétaire : j'en avais écrit **8 au lieu de 9**, en oubliant `name`. Il rougissait sur du code parfaitement juste. 👉 ***Un témoin de source se vérifie d'abord contre le code SAIN*** — s'il rougit là, c'est l'attendu qui est faux, pas le code. *Corrigé avant toute mutation, sinon j'aurais cherché un bug qui n'existait pas.*
+
+**⚠️⚠️ ET UNE MUTATION NE MORDAIT PAS — MAIS LA CAUSE N'ÉTAIT PAS UN TÉMOIN MANQUANT.** *« `per100` perdu »* rendait **0 rouge**. En cherchant pourquoi au lieu de conclure : **`_srcRepriseQ` porte le MÊME motif** (`per100: s.per100 || null,`) et **vient AVANT dans le fichier** — ma mutation frappait donc **l'autre fonction**, dont les témoins vivent dans un autre bloc. 👉 ***Une mutation mal placée est indiscernable d'un témoin aveugle.*** Réancrée sur deux lignes contiguës propres à `_itemListe` : **2 rouges, exactement les deux témoins du pour-100 g**. *C'est le piège de ft-v1195, repayé — et il resservira, parce que plus on extrait de propriétaires, plus les motifs se ressemblent d'une fonction à l'autre.*
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change : trois copies d'un objet deviennent une (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **la divergence `portionWeightG` n'est PAS harmonisée** — décision produit n°2, en attente · ⛔ ni le **hub** (4) ni la **douane** (5) · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique et les migrations restent ouverts. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1108**, `conclusion: success` à **17:10:07 UTC** sur `7dd2bc45`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *le run est vert, l'app affichant ft-v1198 reste à confirmer par Michel.*
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1198. |
+
+**ft-v1197 — 🏷️ 1b-ii : LA PROVENANCE REPRISE · ET UNE SOUS-ÉTAPE DE MON PROPRE PLAN QUI N'AVAIT RIEN À EXTRAIRE** — Michel : ***« continue selon le découpage, une sous-étape à la fois »***, puis ***« après avoir bossé, fais-moi un PDF direct pour GPT »***.
+
+**⛔⛔ LE FAIT DE LA VERSION EST UNE SOUS-ÉTAPE SUPPRIMÉE, PAS LE CODE LIVRÉ.** La suivante dans l'ordre était **1b-iv** (l'export CSV), que mon propre document décrivait comme ⭐ *« la sous-étape la moins risquée du lot »*. **Mesuré avant la moindre ligne : elle est VIDE.**
+- `NUTRI_COLONNES` et sa construction de ligne existent **une seule fois** dans tout le code servi ;
+- **aucun import ne les relit** ;
+- et le partage était **DÉJÀ fait au bon niveau** : `_csvFichier(colonnes, lignes, …)` est le propriétaire commun, appelé par l'export **nutrition ET poids**, bien avant ce chantier.
+
+👉 ***Une extraction exige au moins DEUX copies.*** En sortir une créerait un propriétaire à **un seul appelant** — pas du rangement, de la complexité sans contrepartie (**R19**).
+
+**⭐⭐ ET L'ERREUR QUI L'A FAIT ENTRER DANS LE PLAN VAUT PLUS QUE LA SOUS-ÉTAPE.** Sa justification écrite était *« c'est elle qui était invisible au compteur »* — **vrai**, c'est le cas d'école de `BUGS.md` §63 (ft-v1194). Mais j'en ai tiré la mauvaise conclusion : j'ai versé au découpage **tout ce que le compteur avait raté**, sans jamais demander, site par site, **s'il était DUPLIQUÉ**. 👉 ***Un site qu'un compteur défaillant a manqué n'est pas pour autant un site à extraire*** : *réparer l'instrument* et *refaire l'inventaire* sont deux gestes différents, et j'avais fait le premier en croyant avoir fait le second. **Le test d'entrée est désormais écrit : compter les copies AVANT de décrire une sous-étape.**
+
+**⚠️ ET SON ÉTIQUETTE « INSTANTANÉ » ÉTAIT FAUSSE DES DEUX CÔTÉS** : elle annonçait *« AUCUNE sonde aujourd'hui — prérequis absolu »*, or le bloc **CCIV** conduit **vraiment** `exportNutritionCsv()`, intercepte la remise du fichier et **lit le CSV produit**. 👉 **C'est le miroir exact de ft-v1196**, où l'étiquette disait *« couvert »* pour une sonde qui ne couvrait rien. ***Dans les deux sens, l'étiquette ne remplace pas l'ouverture du fichier.*** ⛔ **1b-iv reste écrite à sa place AVEC SA RAISON** (**R30**) — une sous-étape effacée ressemble à un oubli, et quelqu'un la remettrait dans six mois. ⭐ **Les 8 autres ont été auditées au même test : toutes tiennent.** Une seule était vide sur dix.
+
+**⭐ CE QUI EST DONC LIVRÉ : 1b-ii**, la provenance recopiée d'une ligne existante — `{sourceId, etat, per100}` → **`_srcProvenance(src)`**, 3 appelants.
+
+**⛔⛔ ET LA COUPE EST DICTÉE PAR LES DIVERGENCES, PAS PAR LA RESSEMBLANCE.** `origine` et `saisie` sont sur la même ligne et ressemblent au reste — **ils ne disent pas la même chose aux trois portes** :
+
+| porte | `origine` | `saisie` |
+|---|---|---|
+| « Mes aliments » | `it.origine\|\|'reprise'` | `'liste'` |
+| recherche du journal | `e.origine\|\|'utilisateur'` | `'historique'` |
+| ajout direct | **`'reprise'` en dur** | `'liste'` |
+
+⭐ **Mesuré à la sonde** : une ligne venue d'un code-barres (`origine:'off'`) se réenregistre par la porte directe en **`'reprise'`**. ⛔ **Ce n'est pas un bug** — la source n'est pas conservée sur les favoris, donc en hériter **affirmerait une provenance qu'on n'a pas relue** (**R33**). 👉 **Les unifier changerait ce que le journal DIT DE LUI-MÊME** : décision produit n°4, **transportée et figée par 2 témoins de périmètre**. *Un écart qu'on lit dans le code ne se perd pas ; un écart absorbé dans un propriétaire, si.*
+
+**⭐ ET LE PÉRIMÈTRE DU DOCUMENT ÉTAIT FAUX AUSSI, EN PLUS PETIT** : le 4ᵉ site qu'il citait (`_buildFoodQuickItems`) **n'en est pas un** — il construit un **item de liste**, pas une provenance (c'est 1b-iii) ; et `quickAddFood` ne porte que **la paire**, son `per100` lui venant de `_srcRepriseQ` depuis ft-v1195.
+
+**⚠️⚠️ MA SONDE ÉTAIT MORTE, ET JE L'AI VU AVANT DE CAPTURER LE BEFORE — c'est le moment qui compte, pas l'erreur.** Ma 1ʳᵉ version appelait `_afSuggPrendreLocale(0)` après avoir garni `S.foodLog` : **elle lit `_afSuggLoc[i]`, pas `S.foodLog`**, donc elle sortait au 3ᵉ caractère (`if(!e) return`) et la sonde rendait **`ABSENT` partout**. 👉 ***Un BEFORE capturé avec une sonde morte est pire qu'aucun BEFORE, parce qu'il PRODUIT une preuve*** : il serait resté identique quoi qu'on fasse au code, donc il aurait **validé n'importe quelle extraction**. Corrigée en remplissant par `_afSuggLocales()`, la **vraie** fonction de production, **avec un garde qui LÈVE si la liste est vide**. *C'est le piège d'`openSessDetail(0)` de ft-v1189, repayé.*
+
+**⭐ CRITÈRE BINAIRE ATTEINT** : la sonde passe de **12 à 15 clés** (3 portes réellement conduites), et l'instantané est **identique octet pour octet** avant/après — **sha256 `7a52c37da93e17a3`**, diff vide.
+
+**⛔⛔ ET J'AI REFAIT §60 : J'AI MUTÉ DES FICHIERS SERVIS PENDANT MA PROPRE PASSE.** En éprouvant les gardes du PDF, j'ai muté `app.js` et `setup.js` **alors que la passe tournait** — exactement la faute que j'ai documentée en ft-v1190, dans le fichier qui la documente. ⭐ **Rien n'a été conclu à tort parce que je l'ai vu tout de suite** : passe **arrêtée**, fichiers vérifiés restaurés, **passe relancée de zéro sans rien toucher**. 👉 ***La règle ne suffit pas : il faut que le geste soit impossible au mauvais moment.*** Le contrôle négatif d'un PDF se fait **avant de lancer la passe, ou après** — jamais pendant, comme celui du code.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change : trois champs recopiés deviennent un propriétaire (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les 6 sous-étapes restantes** ne sont pas faites · ⛔ **aucun défaut divergent n'est harmonisé** · ⛔ ni le **hub** (4) ni la **douane** (5) · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique et les migrations restent ouverts. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1104**, job `deploy` **`success`** à **14:54:37 UTC** sur `a7d6e172` — l'étape « Déployer sur GitHub Pages » close à **14:54:35**. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur les JOBS, pas sur le statut du run* — la leçon de ft-v1196, où un `in_progress` avec `updated_at` figé cachait un déploiement déjà réussi. ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *le run est vert, l'app affichant ft-v1197 reste à confirmer par Michel.*
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `tools/gen_1bii_pdf.py`, `docs/SOUS-ETAPE-1BII.pdf`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1197. |
+
+**ft-v1196 — 🔍 SOUS-ÉTAPE 3-i : UN PROPRIÉTAIRE POUR « CETTE QUANTITÉ EST-ELLE REPRENABLE ? » · ET LA SONDE QUI NE COUVRAIT RIEN** — Michel : ***« continue selon `docs/SOUS-ETAPES-1B-3.md`, une sous-étape à la fois, en gardant exactement les mêmes règles »*** — une seule chose · sonde/instantané avant si nécessaire · aucun changement de comportement · divergences transportées, pas harmonisées · mutations qui mordent · rollback simple.
+
+**⭐ CE QUI EST LIVRÉ** : la suite naturelle de 1b-i, sur **le même couple de fonctions** (`rejouerRepas` · `quickAddFood`). Le bloc `{q, u, per100, …}` a son propriétaire depuis ft-v1195 ; le **TEST** qui décide si la quantité passe restait écrit deux fois → **`_qReprenable(src)`**. Elle rend un **booléen** et ne touche à rien : c'est `_srcRepriseQ` qui décide quoi en faire. Accepte les grammes, les **portions** et l'unité absente ; refuse `0`, le négatif, et les **ml** — *sans densité, un volume ne dit pas ce que PÈSE l'aliment, et on n'invente pas une densité* (**R29**).
+
+**⛔⛔ MAIS LE FAIT DE CETTE VERSION EST AVANT LE CODE, ET IL PORTE SUR MON PROPRE DOCUMENT.** `docs/SOUS-ETAPES-1B-3.md` annonçait pour 3-i ⭐ *« instantané : couvert »*. **Ouvert la sonde : à moitié faux.**
+- `3_regle_avec_portions` **RECOPIE la règle dans la sonde** (`const regleP = c => …`) et **n'appelle pas une seule ligne de production** → elle ne peut **rien** détecter d'une extraction. *C'est une table de vérité, pas une couverture.*
+- et `3_via_quickAddFood` ne conduisait qu'**UNE** des deux portes — ⛔ **`rejouerRepas` n'était sondé par rien.**
+
+👉 ***Une sonde qui recopie la règle mesure ce qu'on CROYAIT écrire, pas ce qui est exécuté.*** Le critère de chaque sous-étape étant **binaire** (l'instantané identique octet pour octet), un instantané qui ne conduit pas la production **ne peut pas remplir ce rôle** : il resterait identique quoi qu'on fasse au code. **`BUGS.md` §58 complétée côté SONDE** — le réflexe est d'**ouvrir la sonde et d'y chercher le nom de la fonction de production** ; s'il n'y est pas, elle ne couvre rien.
+
+**⭐ CORRIGÉ AVANT TOUTE LIGNE DE CODE**, comme la règle de découpage l'exige : `3_via_rejouerRepas` écrite, l'instantané passe de **11 à 12 clés**, et le **BEFORE capturé avec la sonde étendue** — *l'étendre après l'extraction aurait donné un avant/après incomparable.*
+
+**⚠️ ET LE SIGNE ÉTAIT DANS LE COMMENTAIRE LUI-MÊME** : il annonçait *« les six sites conduits par leur VRAIE porte »* pour une boucle qui n'en conduit qu'**une**. 👉 **C'est le miroir exact de ft-v1190**, dont le commentaire annonçait une portée plus **ÉTROITE** que le code. *Dans les deux sens, un commentaire qui décrit mal sa portée dispense le lecteur suivant d'aller vérifier.*
+
+**⛔⛔ CE QUE 3-i N'A PAS FAIT, ET C'EST LA MOITIÉ QUI COMPTE : LES 5 SITES « GRAMMES SEULS » SONT INTACTS.** Ils refusent les portions **exprès** — ils alimentent un champ **en grammes**. Les deux règles se ressemblent à un `||` près et **ne disent pas la même chose** : les fondre serait un **changement de comportement**, pas une extraction (sous-étapes **3-ii/iii/iv**, et l'une des 4 décisions produit qui attendent Michel). **Un témoin de périmètre exige que ce compte reste à 5.**
+
+**⭐ LE TÉMOIN DE PÉRIMÈTRE DE 1b-i SE DÉPLACE, IL N'EST PAS SUPPRIMÉ.** Il exigeait que *les deux portes calculent encore `qOk` chacune dans son corps* (le garde-fou qui empêchait 1b-i de déborder sur l'étape 3) ; il exige maintenant que *la règle vive à **UN SEUL** endroit et que les deux portes l'**APPELLENT*** — puisque 3-i est précisément la sous-étape qui retire le premier. ⭐ **Et la différence entre un témoin qu'on retire et un témoin qui se déplace se MESURE** : les deux mutations qui le faisaient rougir en 1b-i le font toujours rougir, par l'autre bout.
+
+**⚠️⚠️ CRITÈRE BINAIRE ATTEINT — ET LA SHA QUE J'AVAIS PUBLIÉE ÉTAIT FAUSSE.** L'instantané des 12 sondes est **identique octet pour octet** avant/après, **diff vide** — mais sa sha256 est **`d5b0572cafcc4477`**, pas le `64099b39025027ec` annoncé dans mon message de commit, qui venait d'une **version intermédiaire de la sonde**. Vérifié en rejouant la sonde **actuelle** sur l'`app.js` d'**AVANT** 3-i : **même sha des deux côtés**. 👉 ***Une sha publiée qu'on ne peut pas reproduire est pire que pas de sha*** — elle transforme un critère vérifiable en affirmation d'autorité.
+
+**⚠️⚠️ ET MON HARNAIS DE MUTATION ÉTAIT MORT — C'EST LE CONTRÔLE SAIN QUI L'A DIT, PAS UNE INTUITION.** Les 10 mutations rendaient toutes *« SONDE MORTE »*… **y compris le contrôle sur du code sain**. Cause : la sonde imprime un **JSON multi-ligne**, et mon harnais prenait la **DERNIÈRE LIGNE** — donc `}`, qui n'est pas du JSON. 👉 ***Un harnais uniforme ressemble à un code uniformément cassé.*** C'est **§61 pour la 4ᵉ fois** (le `tail -4` de ft-v1187 · le runner planté de ft-v1193 · la passe tronquée de ft-v1192). **Le contrôle sain n'est pas une formalité : il est le seul témoin du harnais lui-même.**
+
+**⚠️ ET UN GARDE DE MON PROPRE PDF ÉTAIT AVEUGLE, TROUVÉ EN L'ÉPROUVANT.** Celui qui protège `3_via_rejouerRepas` cherchait le nom **n'importe où dans le fichier** — or il apparaît **aussi dans un commentaire**. Renommer la **clé** le laissait muet. Recorrigé pour lire l'**ensemble des clés réellement écrites**. *C'est le défaut de ft-v1193 (un témoin qui ne distingue pas le code de ce qui en PARLE), reposé par moi dans l'outil qui documente ce défaut.*
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun comportement ne bouge : un test écrit deux fois devient un propriétaire unique (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les 8 autres sous-étapes ne sont pas faites** · ⛔ **aucun défaut divergent n'est harmonisé** · ⛔ ni le **hub** (étape 4) ni la **douane** (étape 5) · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique et les migrations restent ouverts — *le périmètre de Michel, respecté*. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+Tests : **parcours 3590/3590 sur l'arbre FINAL** — ⭐ **et le total a demandé une explication au lieu d'être accepté** : 3578 + 11 (bloc **CCXCIII**) = 3589 prédits, **3590 obtenus**. L'écart est la **réécriture du témoin de périmètre de CCXCII**, qui passe de 14 à 15 assertions (§61 : *le total est la seule chose qui trahit une passe tronquée* — encore faut-il expliquer un écart de +1). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées — aucun trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 10 MUTATIONS, TOUTES MORDENT, contrôle sain à 0 rouge** — ① le propriétaire rend toujours `true` → **4 rouges** · ② toujours `false` → **4** · ③ le test `>0` retiré → **2** · ④ les portions refusées → **4** · ⑤ les `ml` acceptés → **3** · ⑥ `rejouerRepas` garde sa copie → **2** · ⑦ `quickAddFood` garde sa copie → **2** · ⑧ **débordement : un site « grammes seuls » fondu dans la règle large** → **3**, dont le témoin de périmètre · ⑨ une 2ᵉ copie de la règle réapparaît → **1** · ⑩ le garde `src||{}` retiré (**celle qui TUAIT la sonde**) → **1 rouge nommé**, grâce au `try/catch` posé exprès.
+
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1100**, `conclusion: success` à **14:10:53 UTC** sur `175213ff`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⚠️ **Et l'API a d'abord montré le symptôme du run bloqué** — `status: in_progress` avec un `updated_at` **figé**, comme en ft-v1190. ⭐ *Ce sont les JOBS qui ont tranché* : l'étape « Déployer sur GitHub Pages » était **`success` à 14:10:51**, seul le nettoyage traînait. 👉 **Un run « en cours » n'est pas un déploiement en attente : l'étape qui compte peut être finie.** ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *le run est vert, l'app affichant ft-v1196 reste à confirmer par Michel.*
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `tools/gen_3i_pdf.py`, `docs/SOUS-ETAPE-3I.pdf`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1196. |
+
+**ft-v1195 — ✂️ LE REDÉCOUPAGE DE 1b ET 3, ET LA PREMIÈRE SOUS-ÉTAPE · UNE PAIRE DE FONCTIONS QUE PERSONNE N'AVAIT COMPTÉE** — Michel tranche les deux questions laissées ouvertes par ft-v1194 : ⛔ ***« je ne veux pas traiter 1b et 3 en un seul gros chantier — redécoupe-les en sous-étapes plus petites, mesurables et réversibles »*** · ⛔⛔ ***« je ne veux pas harmoniser maintenant les défauts divergents (0, null, clé absente, origine différente) : à ce stade, on doit les TRANSPORTER explicitement sans les corriger »***.
+
+**⭐⭐ ET LA MESURE A NOMMÉ CE QUI CHANGE LE DÉCOUPAGE, QUE NI LE PLAN NI MON BALAYAGE N'AVAIENT VU** : `quickFillFood` et `_afSuggPrendreLocale` partagent **36 lignes utiles IDENTIQUES** — diff normalisé, 81 et 99 lignes utiles, **40 % de squelette commun**. 👉 ***Ce ne sont pas quinze sites éparpillés : c'est LA REPRISE D'UN ALIMENT À L'ÉCRAN, ÉCRITE DEUX FOIS.*** L'une prend l'item dans « Mes aliments », l'autre dans la recherche du journal, et à partir de là elles font la même chose.
+
+**⚠️ ET L'HISTORIQUE LE DISAIT DÉJÀ — on ne l'avait jamais COMPTÉ** : ft-v973, ft-v975, ft-v984 et ft-v1176 ont **chacune** porté un correctif d'une porte à l'autre, et les commentaires du code le répètent mot pour mot (*« le mécanisme existait, posé sur une seule des deux portes — pour la 6ᵉ fois dans ce fichier »*). **5 des 10 sous-étapes portent sur cette paire** : c'est là qu'est le gisement. Découpage complet dans **`docs/SOUS-ETAPES-1B-3.md`**.
+
+**⭐ LIVRÉ : LA SOUS-ÉTAPE 1b-i SEULE**, la seule strictement extractive. Deux endroits recopiaient le même bloc **caractère pour caractère** pour dire à `_provFood` ce qu'une ligne déjà enregistrée portait comme quantité — `rejouerRepas` (rejouer un repas d'hier) et `quickAddFood` (ajouter depuis la liste) → **`_srcRepriseQ(src, qOk)`**, `{q, u, per100, portionLabel, portionWeightG}`.
+
+**⛔⛔ `qOk` N'EST PAS CALCULÉ DEDANS, ET C'EST TOUT LE DÉCOUPAGE.** Le test *« cette quantité est-elle utilisable ? »* est le sujet de **l'étape 3**. L'absorber ferait deux extractions dans une seule sous-étape — donc *un retour arrière qui ne peut plus être partiel*. ⭐ **Une sous-étape réversible est une sous-étape qui ne fait qu'UNE chose**, et un témoin de périmètre l'exige explicitement.
+
+**⛔⛔ ET CE QUI N'EST PAS DEDANS COMPTE AUTANT : `sourceId`/`etat` restent chez `quickAddFood` seul.** Le rejeu ne les a **jamais** posés. La divergence est **TRANSPORTÉE, pas corrigée** — les lui donner changerait la **provenance enregistrée** d'une ligne rejouée, qui affirmerait venir d'un code-barres qu'on n'a pas relu (**R33** : la provenance ne ment pas). **Deux témoins figent les deux moitiés** : l'un exige leur ABSENCE au rejeu, l'autre leur PRÉSENCE à la porte directe.
+
+**⭐ LE CRITÈRE ÉTAIT BINAIRE, ET IL EST ATTEINT** : les **11 sondes** de `tools/instantane_1b23.js` sont **identiques octet pour octet** avant et après — **même sha256 `ace2a744dc89e6ec`**, le même qu'en ft-v1194.
+
+**⚖️ ET LE DOCUMENT DIT MAINTENANT QUAND UNE HARMONISATION DEVIENT UNE DÉCISION PRODUIT**, avec un critère qui ne dépend pas du code : *est-ce que le changement modifie ce qui est ÉCRIT dans `S.foodLog` ou `S.savedFoods` ?* **Quatre cas nommés** — la provenance du rejeu · l'unification `0`/`null`/clé absente · faire accepter les portions aux 5 sites « grammes seuls » · les trois formulations d'`origine`. **Tant qu'elles ne sont pas tranchées, chaque sous-étape les transporte et les fige.** *C'est le seul moyen qu'une harmonisation future soit un CHOIX et pas un effet de bord découvert trois versions plus tard.*
+
+**⚠️⚠️ UN TÉMOIN À MOI MESURAIT UN ÉTAT INATTEIGNABLE, ET LA SONDE L'A DIT AVANT LA PASSE.** Mon témoin du défaut appelait `_srcRepriseQ({name:'Nu'}, true)` : avec `qOk` vrai et pas de `q`, `+undefined` vaut **NaN** — que `JSON.stringify` sérialise en **`null`**. 👉 *Le témoin aurait été vert sur un NaN en croyant voir un `null`*, et sur un état que les deux portes ne peuvent pas produire (`qOk` n'est vrai que si `+q>0`). Réécrit avec `false`, le cas réel. **Un témoin qui fige un état inatteignable ne protège rien, et masque le type réel de ce qu'il mesure.**
+
+**⚠️⚠️⚠️ ET LE CONTRÔLE NÉGATIF A CORRIGÉ MON TÉMOIN DE PÉRIMÈTRE — c'est la trouvaille de la version.** La mutation *« l'étape 3 faite au passage »* rendait **0 rouge**. Ma 1ʳᵉ version comptait les **LIGNES** portant le motif : extraire la règle dans un propriétaire laisse le motif écrit **une fois dans ce propriétaire, plus une fois chez l'autre appelant** — le compte restait à 2, et le témoin passait au **vert sur exactement ce qu'il devait interdire**. 👉 ***Compter les occurrences d'un motif ne dit pas QUI décide.*** Le témoin exige désormais que **les DEUX fonctions portent la règle chacune dans son propre corps** : si l'une délègue, elle ne la porte plus, et il rougit. **C'est `BUGS.md` §63 retourné contre mon propre témoin**, écrite la veille.
+
+**⚠️ ET MA PREMIÈRE MUTERATION DE CE CAS ÉTAIT MAL FAITE, DIT PARCE QUE ÇA RESSERVIRA** : elle déclarait le helper **à l'intérieur** de `quickAddFood`, donc le motif restait dans son corps et le témoin corrigé ne rougissait toujours pas. *Une mutation mal placée ressemble trait pour trait à un témoin aveugle.* Refaite avec le helper posé **hors** de la fonction : **1 rouge, exactement lui** — et le contrôle inverse (la règle retirée du rejeu) rougit pareil.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun comportement ne bouge : deux copies d'un bloc deviennent une (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les 8 autres sous-étapes ne sont pas faites** — elles sont écrites, ordonnées et dépendancées dans `docs/SOUS-ETAPES-1B-3.md` · ⛔ **aucun défaut divergent n'est harmonisé** · ⛔ ni le **hub** (étape 4) ni la **douane** (étape 5) · ⛔ `S.savedFoods` et l'écart **48,3 / 48** restent ouverts · ⛔ ni l'historique ni les migrations. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1096**, `conclusion: success` à **11:39:31 UTC** sur `2d6bcbcb`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *le run est vert, l'app affichant ft-v1195 reste à confirmer par Michel.*
+
+Tests : **parcours 3578/3578 sur l'arbre FINAL** (+14, bloc **CCXCII**) — ⭐ **total prédit = total obtenu** (3564 + 14, §61). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées — **aucun trou nouveau**. ⛔ **CONTRÔLE NÉGATIF : 10 MUTATIONS, TOUTES MORDENT** — ① le propriétaire rend un objet vide → **7 rouges** · ② `qOk` ignoré → **3** · ③ `portionWeightG` rend `0` (la fausse harmonisation) → **2** · ④ `per100` retiré → **4** · ⑤ `portionLabel` retiré → **4** · ⑥ ⭐ **`sourceId`/`etat` donnés au rejeu** → **1 rouge, exactement le témoin qui protège l'écart** · ⑦ l'inverse, la porte directe les perd → **1** · ⑧ **débordement : l'étape 3 faite au passage** → **1** *(après réécriture du témoin — voir plus haut)* · ⑨ une 2ᵉ copie du bloc réapparaît → **2** · ⑩ la règle retirée du rejeu (contrôle) → **1**.
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/SOUS-ETAPES-1B-3.md` (nouveau), `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1195. |
 
 **ft-v1194 — 🧮 UN SEUL PROPRIÉTAIRE POUR LE POUR-100 g DÉRIVÉ · ET LE PÉRIMÈTRE DU PLAN ÉTAIT FAUX POUR LES DEUX AUTRES ÉTAPES** — Michel valide la phase 0a **sur iPhone** (la pastille « 410 g » ne survit pas au passage à un autre aliment) et donne le feu vert : ***« tu peux maintenant poursuivre le plan prévu : étape 1b ; étape 2 ; étape 3 »***, même méthode que 1a — *« extraction sans changement de comportement · témoins avant modification · instantané avant/après · aucune valeur attendue ne doit bouger · mutations négatives qui doivent mordre »*.
 
@@ -544,195 +718,6 @@ Tests : **parcours 3549/3549 sur l'arbre FINAL** (+14, bloc **CCXC**), **calculs
 **⭐ ET UN TÉMOIN PLUS ANCIEN A FAIT SON TRAVAIL CONTRE MOI** : le contrôle *« les constructions de `_bcNutr` sont bien trouvées »* a rougi — parce que son voisin (*« aucune construction ne ré-arrondit »*) était passé **VERT sur une liste VIDE**. Sans lui, l'étape 1a aurait transformé une vraie garantie en vert décoratif, **en silence**. Réécrit sur le propriétaire unique ; la garantie ne s'affaiblit pas, elle se déplace.
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_ref100.js`, `tools/sonde_fuites_nutrition.js`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1193. |
-
-**ft-v1192 — 🅰️🅱️ L'ALTERNANCE SEMAINE A / SEMAINE B DANS LE SÉLECTEUR DE JOUR** — Michel, capture du sélecteur de son Powerbuilding (J3A « Semaine A » · J3B « Semaine B ») : ***« est-ce que la semaine A/B sont en charge ? »***, puis ***« À et b »***.
-
-**⛔ MESURÉ AVANT DE CODER : NON, rien n'était géré.** `openDaySel` listait les jours **à plat**, sans aucune notion de variante — *c'est lui qui devait se souvenir où il en était.*
-
-**⭐⭐ ET L'INFORMATION EXISTAIT DÉJÀ.** `getProgCurrentWeek(prog)` calcule la semaine en cours et s'affiche même en **« Semaine 2 / 4 »** sur la carte du programme. 👉 ***Elle ne descendait simplement pas jusqu'à la DÉCISION*** — **R4** en miniature : *une information qui reste dans un écran et n'atteint pas celui où l'on CHOISIT n'existe pas pour la personne.*
-
-**⭐ CE QUI EST LIVRÉ** : le jour de la variante en cours porte un repère — *« 👉 ta semaine B (semaine 2 / 8) »*. Semaine 1 → **A**, 2 → **B**, 3 → **A**… (convention confirmée par Michel).
-
-**⛔⛔ ON MET EN AVANT, ON NE CHOISIT PAS.** Le jour de l'autre variante reste **cliquable, au même endroit, avec la même apparence** : une semaine peut se décaler, on peut vouloir refaire la A (**R24** informer sans bloquer · **R29** on ne tranche pas à sa place). **Deux témoins figent cette garantie**, dont un qui **CHARGE vraiment** l'autre variante — et la mutation qui grise le bouton rougit exactement là.
-
-**⚠️ LA LIMITE EST DITE PLUTÔT QUE CACHÉE** : l'app ne **sait** pas que « A » et « B » forment une paire, elle ne voit que des **libellés** — il faut le **deviner**. C'est acceptable ici parce que le **coût d'une erreur est faible** (un jour mis en avant à tort, on tape l'autre), et le garde-fou est l'**APPARIEMENT** : rien ne s'affiche tant qu'on n'a pas trouvé un **A et** un **B** portant **le même numéro de jour**. *Un « J3A » solitaire ne déclenche rien.*
-
-**⛔⛔ ET CE QU'ON NE SAIT PAS, ON SE TAIT** : sans `startDate` ni `weeks`, `_varianteDeLaSemaine` rend `null`. ⚠️ *Le piège était juste à côté* — `getProgCurrentWeek` rend **1 par défaut** dans ce cas, et s'en servir afficherait *« ta semaine A »* **avec l'aplomb d'un calcul** alors que ce serait une valeur de repli. **Une fonction qui ne sait pas doit rendre `null`, et ce `null` ne se remplace jamais par un défaut** (**R29**).
-
-**⚠️ LES LIBELLÉS DES TÉMOINS SONT RECOPIÉS DE SA CAPTURE, PAS INVENTÉS** — *une détection qui marche sur des libellés fabriqués ne prouve rien sur les siens.*
-
-**📣 RÈGLE D'OR #11 — LE REPÈRE EST L'ANNONCE**, à l'écran au moment où ça sert. Aucune pop-up, aucun point rouge, rien à faire (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **ça ne charge rien tout seul** · ⛔ ça ne renomme ni ne réordonne aucun jour · ⛔ ça ne gère que **A/B**, pas A/B/C · ⛔ et un programme **sans numéro de jour** (« Haut du corps A ») n'est **pas** apparié — la base est le numéro, c'est écrit et assumé. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1081**, `conclusion: success` à **08:31:05 UTC** sur `0c5643cc`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés).
-
-**⚠️⚠️ ET MA PASSE COMPLÈTE ÉTAIT FAUSSE — ELLE S'EST ARRÊTÉE EN ROUTE SANS AUCUN ROUGE.** J'avais posé le bloc **après** `b.close()`, dans la zone des blocs qui **n'ouvrent pas de navigateur** (ils lisent les fichiers source avec `fs`). Il a demandé une page déjà fermée → *« Target page, context or browser has been closed »* → **toute la fin de la passe est tombée** : **56 témoins n'ont jamais tourné**, les 11 miens **et les 45 d'après**.
-👉 ***Et elle affichait « 3479 ✅ · 0 ❌ ».*** **Aucun rouge.** *Un runner qui s'interrompt ne rougit pas : il ressemble trait pour trait à une passe verte.* ⛔ **Le TOTAL est la seule chose qui trahit une passe tronquée — et il ne se lit pas seul, il se COMPARE à la passe précédente** (3524 + 11 = **3535** attendus ; j'en avais **3479**). Bloc remis avant `b.close()`, **avec la raison écrite à l'endroit exact** pour que le prochain ne le repose pas là. C'est la même famille que le harnais coupé à `tail -4` en ft-v1187 : *un outil de mesure tronqué ressemble à un code sans défaut* — nouvelle famille **`BUGS.md` §61**.
-
-Tests : **parcours 3535/3535 sur l'arbre FINAL** (+11, bloc **CCLXXXIX**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 6 mutations, TOUTES MORDENT** — ① le repère non calculé → **3 rouges** · ② l'alternance figée sur A → **1**, exactement la semaine 2 · ③ on invente une semaine qu'on ne connaît pas → **2**, exactement les deux cas sans donnée · ④ l'appariement retiré → **1**, exactement le J3A solitaire · ⑤ le badge non affiché → **3** · ⑥ ⭐ **on BLOQUE l'autre variante** → **1 rouge**, exactement le témoin qui protège ce droit.
-
-Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `BUGS.md`. sw.js ft-v1192. |
-
-**ft-v1191 — 🔢⚖️ L'AVERTISSEMENT kcal/macros ÉTAIT JUSTE ET HORS DE L'ÉCRAN · ET « PRODUIT SEC » SE DÉCLENCHAIT SUR UN MOT** — cas réel de Michel via GPT : **Lentilles Raynal & Roquelaure** (`3021690201123`), **410 g** → l'écran affiche **198 kcal** pour **25 P · 41 G · 13 L**, qui valent **381 kcal**.
-
-**⭐⭐ CE QUE LA MESURE A DÉPLACÉ, ET C'EST TOUT LE SUJET : le contrôle de cohérence n'est NI absent NI muet.** Il se déclenche, ses deux seuils sont largement franchis (**183 kcal · 48 %**), il dit exactement ce qu'il faut et propose un bouton **« Mettre 381 kcal »** — donc **aucune correction silencieuse**, ce que Michel exigeait explicitement. 👉 *Le cahier demandait d'ajouter ce contrôle ; il existait déjà, avec sa formule 4/4/9 et ses tolérances.* (**R23** : vérifier avant d'affirmer qu'une chose manque.)
-
-**⛔⛔ LE DÉFAUT EST UNE POSITION, PAS UN CALCUL** : la fiche fait **1 907 px** pour **775 visibles**, et l'alerte apparaît à `top 1734` — soit **1 132 px SOUS la zone visible**, pendant que le geste qui la déclenche (la pastille « paquet entier ») est tout en **HAUT**. Elle était atteignable en défilant, mais *un avertissement qu'on ne voit qu'en défilant ne protège que ceux qui défilaient déjà*. **C'est ft-v1182 sur un autre bloc** : calculé, correct, hors du champ de vision.
-
-**⭐ R2/R13 — LA LOGIQUE N'EST PAS RECOPIÉE, ELLE EST SORTIE DE SA FONCTION.** Elle était **enfermée** dans `_afSuggVoir`, qui ne sait amener qu'**UN** élément. Michel : *« le mécanisme existe déjà ailleurs, il ne faut pas créer une nouvelle logique parallèle »*. Un seul propriétaire (`_amenerALaVue`), deux appelants — *un second `scrollIntoView` conditionnel aurait fabriqué deux règles de visibilité qui divergent, et c'est **toujours** la seconde qui oublie `visualViewport`*.
-
-**⛔⛔⛔ ET LE CONTRÔLE NÉGATIF A TROUVÉ UN VRAI DÉFAUT QUE J'ALLAIS LIVRER.** En tapant **200/20/20/4** — une ligne **parfaitement COHÉRENTE à l'arrivée** — la saisie traverse un état **INTERMÉDIAIRE** incohérent : après le 2ᵉ champ, 200 kcal face à 80 théoriques dépasse les deux seuils. L'alerte s'affichait une fraction de seconde et **l'écran sautait AU MILIEU DE LA FRAPPE**, sur une ligne sans aucun problème. 👉 ***Le pire des deux mondes : le défaut disparaît, le dégât reste.*** D'où le garde sur le focus — si la personne tape dans l'un des quatre champs, elle **regarde son champ**, pas l'avertissement (**R24**).
-
-**⚠️⚠️ ET UN TÉMOIN QUI MANQUAIT, ÉCRIT PARCE QUE LA MUTATION NE MORDAIT PAS.** Remplacer `visualViewport` par `innerHeight` rendait **0 rouge** : Playwright n'a **pas de clavier virtuel**, donc les deux valeurs sont égales ici et **aucun témoin ne pouvait distinguer les deux lectures** — *la consigne de Michel serait restée décorative*. Le témoin rétrécit désormais `visualViewport` de **350 px** : une alerte à `top 684` est « visible » selon `innerHeight` (844) et **cachée** sous le clavier (494). Elle remonte, et la mutation mord.
-
-**🏷️ SECONDE MOITIÉ — « PRODUIT SEC » SUR UNE BOÎTE DE LENTILLES CUISINÉES.** Michel : *« pour une boîte prête à consommer, cet avertissement semble faux »*. ⛔ **Cause mesurée : une regex sur le NOM seul**, mot déclencheur **« Lentille »**, et **la règle ne contient aucun mot de cuisson** — elle ne pouvait pas voir le « Cuisinées » écrit juste à côté. *C'est la famille n°1 du dépôt, **le premier match gagnant*** (≥ 12 fois). Contre-épreuves : *riz cuit en sachet* · *poêlée de lentilles cuisinées* · *soupe de lentilles corail* · *salade de pois chiches* · *pâtes fraîches cuites* sortaient **tous** en SEC ; et *cassoulet aux haricots secs* restait **muet**, alors qu'il en contient.
-
-**⛔⛔ ET LA DONNÉE QUI TRANCHERAIT N'ÉTAIT MÊME PAS DEMANDÉE** : `categories_tags` ne figurait dans **aucune** des deux requêtes Open Food Facts. *On ne peut pas reprocher à une règle d'ignorer la catégorie : personne ne la lui donnait* (**R8**). Elle est ajoutée aux **DEUX** requêtes — la fiche produit **et** la recherche par nom.
-
-**⭐ DEUX SOURCES, DANS L'ORDRE VOULU PAR MICHEL** (*« je préfère ne pas rester sur une simple liste de mots »*) : la **catégorie** tranche quand elle parle, le **nom** reste le filet quand elle se tait — et elle se tait souvent. *Garder le nom n'est pas une faiblesse assumée : c'est le seul recours des produits que la base connaît mal.* **Ses 8 cas du §14 passent tous.**
-
-**⭐⭐ L'ASYMÉTRIE EST VOULUE, ET ELLE SE MESURE AU COÛT DE L'ERREUR (R29)** : se taire à tort sur un vrai paquet sec coûte un facteur 2-3 **que la personne peut encore voir** (les chiffres sont à l'écran) ; crier à tort sur une conserve coûte la **crédibilité de TOUS les avertissements**, y compris les vrais. *Un message qui se trompe cesse d'être lu, et on perd alors les deux.*
-
-**⛔ R15 — LA CATÉGORIE MEURT AVEC L'ALIMENT.** Sans ça, le « plat cuisiné » d'un produit ferait taire l'avertissement du **paquet de pâtes suivant** — le défaut exact que `_afOublierAliment` existe pour empêcher. Un témoin le fige.
-
-**⚠️⚠️ ET UN TÉMOIN À MOI A ROUGI EN PASSE COMPLÈTE EN PASSANT 5/5 EN ISOLÉ — la cause était MA SONDE.** Le défilement de contrôle est **`smooth`**, donc **asynchrone** : un délai fixe suffit sur une machine au repos et pas sous charge, et je remettais `scrollTop` à zéro **pendant qu'il était encore en vol**. 👉 ***Un témoin qui parie sur une DURÉE mesure la machine ; un témoin qui attend une CONDITION mesure le produit.*** Il attend désormais la stabilité, et son **diagnostic reste dans la sortie** — *un témoin qui échoue sans dire ce qu'il a vu coûte une passe entière par hypothèse*.
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît : un avertissement qui existait déjà devient **visible**, et un autre cesse de crier à tort (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **ça ne choisit PAS entre 48,3 et 381** — les deux viennent de la **même fiche** Open Food Facts et aucun n'est absurde isolément ; le bouton reste la bonne réponse, l'app montre et la personne tranche (**R29**, demande explicite de Michel). ⛔ Ni le bug quantité, ni l'historique corrompu, ni la migration, ni les portions P1 — *son périmètre du §15, respecté*. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
-
-**⚠️⚠️ DEUX LIMITES DITES PLUTÔT QUE TUES** : ① **les étiquettes de catégorie n'ont PAS pu être confrontées à la vraie base** — `openfoodfacts.org` répond **403 au CONNECT** depuis ce conteneur (vérifié dans l'état du proxy). Elles sont volontairement **larges**, et le repli par le nom couvre **à lui seul** les huit cas. ② **L'origine du 48,3 reste non tracée** : deux champs suffiraient (`energy-kcal_100g` existe-t-il ? sinon que vaut `energy_100g` ?), et il faut un téléphone pour les lire.
-
-Tests : **parcours 3524/3524 sur l'arbre FINAL** (+11, bloc **CCLXXXVIII**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 10 MUTATIONS, TOUTES MORDENT**, chacune sur son propre témoin — ① le correctif entier retiré · ② le garde « déjà affiché » retiré · ③ le garde du **focus** retiré · ④ `innerHeight` au lieu de `visualViewport` · ⑤ `_afSuggVoir` qui reprend sa propre copie (R2) · ⑥ le garde « déjà prêt » retiré (retour au premier match gagnant) → **2 rouges** · ⑦ la catégorie ignorée · ⑧ le nom ignoré · ⑨ la catégorie qui survit à l'aliment suivant · ⑩ `categories_tags` retiré des requêtes.
-
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1078**, `conclusion: success` à **08:01:50 UTC** sur `25afcc0f`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Vert du premier coup, sans blocage de file* — contrairement à ft-v1190, où un run coincé depuis 5 h 30 avait dû être retiré de la file.
-⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je **ne peux pas** lire le `sw.js` réellement servi. La vérification s'arrête à l'API — *le run est vert, l'app affichant ft-v1191 reste à confirmer par Michel.*
-
-Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/BUG-KCAL-MACROS.pdf`, `tools/gen_kcal_macros_pdf.py`. sw.js ft-v1191. |
-
-**ft-v1190 — ⚖️ LE GARDE-FOU LARGE, ET LA PASSE QUE J'AI FAUSSÉE MOI-MÊME** — Michel tranche la question ouverte de ft-v1189 : ***« Aucune ligne alimentaire ne peut être enregistrée sans une quantité réellement choisie par l'utilisateur »***, **indépendamment de l'origine technique de l'aliment**.
-
-**⭐⭐ SA RAISON VAUT PLUS QUE LA DÉCISION, ET ELLE EST ARCHITECTURALE** : *« je préfère une règle métier unique à huit comportements différents »*. L'option étroite aurait donné `scan → une règle · CIQUAL → une autre · reprise → une autre · IA → une autre` — ***c'est-à-dire exactement les frontières techniques qui ont déjà produit plusieurs familles de bugs dans ce dépôt***. C'est **R19** énoncé par lui : *une section coûte zéro, une frontière coûte cher.*
-
-**⛔ AUCUNE LIGNE DE PRODUCTION NE CHANGE** : le garde-fou couvrait **déjà** les huit portes qui posent `_bcNutr` (`_lookupBarcode` · `_calAppliquer` · `onFoodLabelFile` · `quickFillFood` · `_afSuggPrendreMarque` · `_afSuggPrendreCiqual` · `_afSuggPrendreLocale` · `_afSuggPrendreOff`). *La décision confirme le code au lieu de le corriger.*
-
-**⚠️⚠️ SAUF UN COMMENTAIRE — LE MIEN, ET IL ÉTAIT FAUX.** Celui du garde-fou annonçait ⛔ *« N'IMPACTE QUE LE BLOC SCAN »* et citait nommément **l'estimation IA comme NON concernée** — alors que `_calAppliquer` pose bien `_bcNutr`. 👉 ***Un commentaire qui annonce une portée plus étroite que le code est pire qu'un commentaire absent : il dispense le lecteur suivant d'aller vérifier*** (**R23** appliqué au code). ⭐ Et le cas retourne l'argument : cette porte pose `serving_quantity:0` et affiche **déjà** *« tape ta quantité »* — le refus ne lui ajoute rien, il rend vraie une phrase qu'elle disait déjà.
-
-**⭐⭐ 23 TÉMOINS, PAS 19** — mon chiffre ne couvrait que la passe parcours ; **4 autres** vivaient dans `tests/calculs`, même cause. Deux familles, **zéro vraie régression** :
-
-| famille | combien | ce qu'on fait |
-|---|---|---|
-| **A — le geste a changé** | **16** | on ajoute la frappe ou le clic. ⛔ **Aucune valeur attendue ne bouge** — sa consigne mot pour mot : *« modifier le geste ; NE PAS affaiblir les assertions »* |
-| **B — comportement périmé par lui** | **7** | le témoin figeait **le pré-remplissage lui-même**. Il se réécrit, en disant **qui a décidé et quand** |
-| **C — vraie régression** | **0** | le seul candidat sérieux **écarté par la mesure** : `p.per100` (app.js @1170) est écrit **indépendamment** du drapeau |
-
-**⭐⭐ LA GARANTIE NE SE SUPPRIME PAS, ELLE SE DÉPLACE — le bloc CCXIV est le cas d'école, parce que c'est ft-v1105 que Michel vient de PÉRIMER** (elle avait tranché ⛔ *« on ne retire pas le pré-remplissage : on le NOMME »*). *« Le nombre pré-rempli dit d'où il vient »* devient *« la **PASTILLE** le dit, et le champ est vide »* · *« il invite à vérifier ta dosette »* devient *« il **DEMANDE** au lieu d'affirmer »* · *« il dit que 100 g est un DÉFAUT »* devient *« il **n'invente RIEN** »*. ⭐ **Et les deux chiffres de sa capture — 155 kcal et 35 g — sont INCHANGÉS au caractère près** : ils s'obtiennent par un clic. ⭐ Sur CCLXXII et CCLXXVII la garantie est même **plus forte** : *« le champ ne vaut pas 250 »* tolérait un **100** que personne n'avait choisi ; *« le champ est VIDE »* ne tolère plus rien.
-
-**⭐ LE POINT DÉLICAT EST UN ORDRE, PAS UNE VALEUR** : dans CII, le geste doit venir **AVANT** la correction manuelle des macros. Après, le recalcul depuis le pour-100 g écraserait le « 29 » — et le témoin d'en dessous mesurerait **l'inverse de ce qu'il dit**. *L'ordre des gestes fait partie du témoin, pas du décor.*
-
-**⭐ J'AI MESURÉ MOI-MÊME SA CONTRAINTE D'UX** (*« je ne veux pas transformer Force Tracker en formulaire administratif »*) : la reprise « Mes aliments » tient en **UN SEUL TAP** — champ vide, pastille *« ↩ 150 g (la dernière fois) »*, un tap, enregistré.
-
-**⛔⛔⛔ ET LE VRAI SUJET DE CETTE VERSION EST AILLEURS : J'AI FAUSSÉ MA PROPRE PASSE.** Elle a rendu **5 rouges** dans le bloc CII… **qui passe en isolé**. J'ai failli conclure qu'option A cassait quelque chose de réel, donc **« réparer » du code sain**.
-
-**⭐ CE QUI L'A ÉVITÉ N'EST PAS UNE INTUITION — tester du moins cher au plus cher** : le bloc seul **6 fois → 6 verts** (pas instable) · **toute la passe rejouée jusqu'à lui → 1310 ✅ · 0 ❌** (pas l'état accumulé) · les 3 fonctions suspectes **lues dans le code** → toutes **synchrones**, et les 12 remises à zéro du drapeau sont **directes** (pas une course) · puis **les horodatages**, qui donnent la cause.
-
-**⛔⛔ LA CAUSE, ET ELLE EST DE MOI** : **16:21:05** la passe démarre · **16:27:10** je **mute `index.html`** pour vérifier qu'un autre correctif mord (je retire `_bcQtyPose=true` du `oninput`) · **~16:29** la passe atteint CII · **16:39:57** elle finit, le fichier étant restauré depuis longtemps — d'où des blocs suivants **tous verts**. 👉 **Le serveur du banc relit le fichier à CHAQUE requête** (`fs.createReadStream`) : le contexte créé par CII a reçu **la version cassée**. *C'était exactement ma mutation ④, celle qui fait 12 rouges quand on la lance exprès.*
-
-**⭐⭐ CE QUI REND LA FAMILLE VICIEUSE (`BUGS.md` §60, nouvelle)** : modifier les fichiers de **TEST** pendant une passe est **sans danger** (Node les lit une fois au démarrage). L'habitude est donc bonne, elle ne fait jamais de dégât… et **elle rend le piège invisible** le jour où on touche un fichier **servi à l'app**. ⛔ **La règle** : pendant une passe, aucun fichier servi ne bouge ; le contrôle négatif se fait **avant ou après, jamais pendant**. ✅ **CONFIRMÉ PAR LA MESURE** : la passe relancée sans rien toucher rend **3513 ✅ · 0 ❌**.
-
-**⚠️ ET JE L'AI REFAITE EN PLUS PETIT DANS L'HEURE** — générateur de PDF et document écrits **pendant** la passe suivante. Vérifié après coup qu'aucun témoin ne les lit (celui qui scanne `tools/` ne retient que les générateurs contenant `.xlsx`), *mais la vérification vient après le geste, ce qui est l'ordre inverse du bon.*
-
-**⭐ LE TÉMOIN EN EST SORTI MEILLEUR** : il rendait « faux » sans dire ce qu'il avait vu. Il rend désormais l'état du drapeau, du champ, du bloc et du nom. *Un témoin qui échoue sans dire ce qu'il a vu coûte une passe entière par hypothèse.*
-
-**⚠️ UNE ERREUR DE SONDE, DITE PLUTÔT QUE TUE** : en mesurant la reprise, ma sonde a annoncé une dérive de **1 kcal** (251 au lieu de 250). Remesuré sur trois fixtures — avec un `per100` **exact**, reprendre à la même quantité ne change **RIEN** (200 → 200, 300 → 300). Ma fixture écrivait **167** là où la vraie valeur est **166,67** : *le code calculait juste depuis une référence que j'avais arrondie moi-même.* C'est le **plancher des totaux entiers** de ft-v1188, vu par l'autre bout. Écartée avec sa raison (**R30**).
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change dans cette version : le champ vide et les trois pastilles sont **déjà** l'annonce, livrés avec le code (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **l'historique abîmé n'est PAS touché** (chantier à part : backup · essai à blanc · rapport · retour arrière) · ⛔ **l'UNITÉ de la portion reste inconnue** — l'app demande `serving_quantity` à Open Food Facts, **jamais `serving_size`**, donc sur un liquide la pastille affiche « 250 g » pour ce qui peut être 250 ml ; *ce n'est pas une régression* (le champ pré-rempli faisait la même hypothèse **en silence**), et c'est un **sujet séparé** à sa demande · ⛔ ni cru/cuit, ni le journal du jour avec « 2 steaks », ni la provenance du `per100`, ni Milo, ni les programmes, ni les débriefs. ⚠️ **Michel doit vérifier sur Safari/iPhone** (les trois pastilles, le champ vide, la reprise en un tap).
-
-Tests : **parcours 3513/3513 sur l'arbre FINAL**, **calculs 339/339** (elles portaient 4 des 23 témoins), muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 6 mutations** — ② le champ redevient pré-rempli → **5 rouges**, exactement les 5 témoins du champ vide · ③ la pastille de portion retirée → **3**, exactement CCXIV · ④ la frappe qui ne lève plus le drapeau → **12**, exactement la famille A (*donc les témoins tapent pour de vrai au lieu de poser le drapeau à la main*) · ⑤ l'ancienne formulation de l'écran → **3**, dont un témoin de ft-v1114 qui interdisait **déjà** le mot « dosette » (R14). ⚠️ **Deux mutations ne mordent pas sur ces blocs, et je dis pourquoi** : ① le garde-fou retiré → **0**, *attendu* puisque ces blocs ont tous un geste désormais ; ⑥ le clic de pastille qui ne lève plus le drapeau → **0 ici**, parce qu'aucun de ces 6 blocs n'ENREGISTRE après un clic. ⭐ **Les deux sont couvertes par le bloc CCLXXXVII, et je l'ai VÉRIFIÉ au lieu de le supposer** : la ⑥ y fait **3 rouges**, exactement les trois témoins de clic.
-
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1073**, `conclusion: success` à **19:08:12 UTC** sur `e066bd78`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés).
-⚠️⚠️ **ET IL A FALLU DÉBLOQUER LA FILE — UN RUN ÉTAIT COINCÉ DEPUIS 5 H 30, EN SILENCE.** Le run **#1072** (mon push de 13:34) avait son job `deploy` en **`waiting`** depuis `13:34:56`, et il bloquait tous les suivants : le mien restait en `pending`, horodatage **figé**. ⭐ Son commit `6fdd0661` étant **entièrement contenu** dans `e066bd78`, l'annuler ne perdait rien — il aurait seulement déployé un état plus ancien. **Effet mesuré dans la minute** : `pending` → `queued`, `updated_at` reparti (19:04:55 → 19:07:42), puis vert. 👉 *C'est encore la famille « déploiement silencieux » : rien ne prévient, et on ne le voit qu'en allant regarder.* ⛔ **Et ce n'est PAS la manœuvre interdite** — on n'a ni relancé les jobs échoués ni touché au workflow (leçon ft-v1090) : on a **retiré de la file un run périmé**.
-⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je **ne peux pas** lire le `sw.js` réellement servi. La vérification s'arrête à l'API — *le run est vert, l'app affichant ft-v1190 reste à confirmer par Michel.*
-
-Fichiers : `app.js` (un commentaire), `tests/parcours/runner.js`, `tests/calculs/runner.js`, `.gitignore`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/GARDE-FOU-LARGE-ET-LA-PASSE-FAUSSEE.pdf`. sw.js ft-v1190. |
-
-**ft-v1189 — 🔗📊 RENOMMER UN EXERCICE DANS UNE SÉANCE PASSÉE : UN RECORD ORPHELIN, ET UN GRAPHIQUE QUI CONTREDISAIT L'ÉCRAN** — Michel, en cherchant le bouton que je venais de livrer : ***« je ne trouve pas dans choisir un exercice tirage vertical »***.
-
-**⭐⭐ MESURÉ, ET C'EST MOI QUI L'AVAIS ENVOYÉ AU MAUVAIS ENDROIT.** Il n'a **plus** d'exercice perso « Tirage vertical » — il les avait déjà remplacés. *Vérifié dans la page* : s'il en avait un, il sortirait **en tête** du sélecteur dès qu'on tape « tirage vertical ». Le nom ne vit plus que dans sa **séance du 9 sept**. 👉 **Mon bouton de ft-v1187 ne pouvait pas l'atteindre** : il ne travaille que sur `S.customExercises`.
-
-**⭐ LE BON GESTE EXISTAIT DÉJÀ, ET IL ÉTAIT SUR L'ÉCRAN DE SA CAPTURE** : le **🔄** de la carte → `replaceSessEx` → `_replaceSessExPick` → **💾 Enregistrer**. Conduit de bout en bout : **séries gardées, volume inchangé (1220), record 81,4 kg créé sous le bon nom**.
-
-**⛔⛔ MAIS IL LAISSAIT UN RECORD DERRIÈRE LUI.** `S.prs['Tirage vertical']` restait **intact** — donc un exercice **fantôme** continuait d'apparaître dans **Progrès**, avec un record dedans, alors que **plus aucune séance ne le portait**. 👉 **C'est R8 pour la 9ᵉ fois** : la porte jumelle (`_renameExEverywhere`, chemin exercice perso) déplace le record **depuis toujours** ; celle-ci, non.
-
-**⛔⛔ ET LE CORRECTIF NE POUVAIT PAS ÊTRE « SUPPRIMER L'ANCIEN RECORD »** : le nom peut vivre dans **d'autres** séances — on n'en renomme qu'une. On ne déplace donc **que si plus aucune séance ne le porte** (**R29** : le coût de l'erreur est ici une **perte de donnée silencieuse**). Un témoin dédié fige ce garde-fou.
-
-**⭐ AUCUNE RÈGLE NOUVELLE (R2/R13)** : on applique **celle de `_renameExEverywhere`** — garder le meilleur 1RM, puis supprimer la source. Mesuré : cible déjà à **120 kg** → elle n'est **pas** écrasée par les 81,4.
-
-**⚠️⚠️ ET LE CONTRÔLE NÉGATIF A TROUVÉ UN VRAI DÉFAUT QUE J'ALLAIS LIVRER.** Trois de mes sept mutations ne mordaient pas. En cherchant pourquoi — au lieu de conclure à du code décoratif — **le repli des chaînes s'est révélé nécessaire, et mon témoin incomplet** : sur *A→B→C*, un traitement séquentiel déplace d'abord le record de A vers **B**, puis celui de **B** vers C. Si **B avait déjà un record à lui** (un orphelin d'avant), ***ce record-là partait avec***. Mon cas ④ ne le voyait pas parce que B n'avait rien. Cas **④bis** écrit — B porte 90 kg — et la mutation mord chirurgicalement : sans repli, les 90 kg de « Tirage Nuque » atterrissaient sur le lat pulldown.
-
-**⛔ ET DEUX AUTRES « PROTECTIONS » ONT ÉTÉ MESURÉES INUTILES, DONC UNE A ÉTÉ RETIRÉE.** J'avais posé la remise à zéro des renommages **à l'ouverture ET à la fermeture** : chacune neutralisée seule, **0 rouge** — *elles se couvraient l'une l'autre*. La seconde est retirée (**R19**). ⚠️ **Et je dis ce que la mesure dit vraiment** : même celle qui reste **n'a aucun cas d'échec atteignable**, parce que le garde `encoreLa` fait déjà le travail — une séance fermée sans enregistrer porte encore l'ancien nom. Elle reste pour qu'une fenêtre s'ouvre **toujours** propre, **pas parce qu'un témoin l'exige** — c'est écrit dans le code. *Le contraire de ft-v1180, où j'avais failli retirer une vraie protection : ici j'ai cherché le cas, et il n'existe pas.*
-
-**📊 ET LA SECONDE MOITIÉ VIENT DE MICHEL, UNE HEURE PLUS TARD : « ON A UNE PERTE D'HISTORIQUE ».** Capture à l'appui : il vient de taper le 🔄, la carte affiche « Tirage Poulie Haute (Lat Pulldown) », et le 📊 ouvert **depuis cette carte** montre 5 séances **sans la sienne du 9 sept**.
-
-**⛔⛔ MESURÉ DANS SON PROPRE EXPORT — RIEN N'ÉTAIT PERDU.** Ses deux séries y sont, intactes : `2026-09-09 · Tirage vertical · 61 kg × 10` ×2, et la séance entière (Larsen 6 séries · Tirage 2 · Épaules 2 · Machine Oiseau 3 · 9 min de cardio). *L'export portait encore l'ANCIEN nom* — donc il n'avait pas encore tapé 💾 Enregistrer.
-
-**⭐⭐ LA CAUSE EST UNE SOURCE, PAS UN CALCUL** : `_getExHistory` lit **`S.sessions`** (l'état ENREGISTRÉ) pendant que la carte qu'il regarde vit dans **`_sessEdits`** (l'état EN COURS D'ÉDITION). Le graphique était donc **exact** et **contredisait l'écran**. 👉 ***Un chiffre qui contredit l'écran est indiscernable d'une perte de données*** — et c'est exactement la conclusion qu'il en a tirée, à juste titre.
-
-**⛔ ON NE MÉLANGE PAS LES DEUX SOURCES** : afficher l'édition non enregistrée dans une courbe d'historique fabriquerait un point qui n'existe pas encore (**R2**). On **DIT ce qui manque** — bandeau orange, avec **la date nommée** : *« Ta séance du 9 sept n'est pas encore enregistrée — elle n'apparaît donc pas dans cette courbe. Tape 💾 Enregistrer pour l'y voir. »* (**R29** : informer sans décider.)
-
-**⛔ ET IL SE TAIT PARTOUT AILLEURS** — hors fenêtre de séance · fenêtre ouverte sans rien changer · sur un **autre** exercice que celui renommé. *Un avertissement permanent cesse d'être lu* (**R24/R25**). Trois témoins le figent.
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît : un record fantôme cesse d'apparaître (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **ça ne renomme rien tout seul** — c'est toujours la personne qui tape 🔄 puis Enregistrer. ⛔ Ni l'import, ni le rapprocheur, ni `_EX_EQUIV`, ni le bouton de ft-v1187 ne sont touchés. ⛔ **Et un exercice SUPPRIMÉ d'une séance passée laisse toujours son record** — c'est une **troisième** porte, non traitée ici, et je préfère l'écrire que la laisser se découvrir (**R30**). ⚠️ **Michel doit vérifier sur Safari/iPhone.**
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1064**, `conclusion: success` à **10:50:01 UTC** sur `7ec189ef`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⚠️ *Et l'API a de nouveau servi un état PÉRIMÉ* — la liste filtrée `status: completed` ignorait encore le run alors qu'il était clos ; c'est **`get_workflow_run` sur l'ID** qui a rendu l'état frais. 👉 **La leçon de ft-v1182 s'inverse selon les jours : ce n'est pas UNE requête qui est fiable, c'est d'en croiser DEUX.**
-
-Tests : **parcours 3495/3495 sur l'arbre FINAL** (+14, bloc **CCLXXXVI**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⭐ **Le témoin CONDUIT le vrai chemin** (`openSessDetail` → `replaceSessEx` → le choix → `saveSessEdits`), jamais `_deplacerRecordsRenommes` en direct — *vérifier la fonction n'est pas vérifier l'appel* (`BUGS.md` §58). ⛔ **CONTRÔLE NÉGATIF : 9 mutations, TOUTES MORDENT** — ① le correctif entier retiré → **3 rouges** · ② le garde-fou « le nom vit ailleurs » retiré → **1**, exactement lui · ③ on écrase le record de la cible sans comparer → **1** · ④ le repli de chaîne retiré → **1**, exactement le cas ④bis · ⑤ le renommage plus noté du tout → **3** · ⑥ le bandeau non affiché → **1** · ⑦ le bandeau qui ne regarde plus QUEL exercice → **1**, exactement le témoin du silence · ⑧ le bandeau qui ne vérifie plus la séance ENREGISTRÉE → **2** · ⑨ la date retirée du bandeau → **1**.
-
-**⚠️ UNE ERREUR DE SONDE À MOI, DITE PLUTÔT QUE TUE** : ma 1ʳᵉ mesure passait `openSessDetail(0)` — or elle prend le **ts/id**, pas l'index. Le renommage ne se produisait donc **pas**, et j'ai failli conclure que le chemin 🔄 était cassé. 👉 ***Un test qui n'emploie pas la signature de la production ne teste rien*** — la même famille que le `cardio.min`/`duration` de ft-v1184.
-
-Fichiers : `setup.js`, `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1189. |
-
-**ft-v1188 — 🔬 LES 3 VÉRIFICATIONS DE GPT AVANT VALIDATION DE P1 — DEUX TROUS RÉELS SUR TROIS, ET LE TROISIÈME DÉMONTRÉ SAIN** — cahier de GPT transmis par Michel : ***« je veux mesurer trois points précis. Ne touche à rien d'autre. »*** **Mesuré avant la moindre ligne de code, sur les trois.**
-
-**⛔⛔ ① CORRIGER `portionWeightG` APRÈS COUP — LE DOC P1 DISAIT « CHEMIN NON TESTÉ » ; MESURÉ, IL N'EXISTAIT PAS.** Aucun champ de l'écran d'édition ne touchait `portionLabel` ni `portionWeightG`. **Et pire** : ouvrir « 2 steaks de 125 g » affichait ***« Quantité (g) = 250 »***, et **enregistrer SANS RIEN TOUCHER** réécrivait la ligne en **`q:250, u:'g'`**.
-
-👉 ***C'est mot pour mot ce que Michel refuse au point ② de ses décisions*** — *« on perd alors l'information 2 steaks »* — et `portionLabel`/`portionWeightG` **survivaient à côté d'un `u:'g'`** : deux sources qui se contredisent.
-
-**⛔⛔⛔ ET C'EST LA JUMELLE DE ft-v1186, RESTÉE OUVERTE.** J'avais corrigé *« le pour-100 g ne décide plus de l'unité »* sur les **deux** portes de l'écran d'**ajout**, avec témoin de non-régression et 15 mutations. **L'écran d'ÉDITION faisait exactement la même chose, dans la même version, à 900 lignes d'écart.** ⚠️ **Cette famille ne se voit NI à la relecture NI au banc d'essai** : le code corrigé est juste, les témoins verts le méritent, le contrôle négatif mord — *tout ce qui mesure dit vrai, et la moitié du bug est encore là.* **8ᵉ fois recensée** → nouvelle famille **`BUGS.md` §59**.
-
-**⭐⭐ LE POINT DÉLICAT DU CORRECTIF, ET C'EST LUI QUI VALAIT LA MESURE** : redériver le pour-100 g **toujours** écraserait celui d'un produit **scanné** dès qu'on touche au poids (**R32** : mesuré > estimé > déclaré) ; ne **jamais** redériver laisserait un pour-100 g calculé pour 125 g survivre à un passage à 150 g — ce que GPT interdit. 👉 ***On ne devine pas, on vérifie*** : un pour-100 g dérivé vaut, **par construction**, `totaux × 100 / (q × poids)`. On refait le calcul avec l'**ancien** état ; s'il retombe dessus, il en venait, donc il suit. Sinon il vient d'ailleurs et **on n'y touche pas**. *C'est la redondance interne du document — l'idée de **R33** pour les bilans de balance, appliquée ici.* **Mesuré : 125 → 150 donne 166,7 / 13,3 / 0 / 12, la valeur exacte, `q=2` · `u=portion` · label intacts.**
-
-**⭐ ② DEUX FAVORIS DE MÊME NOM : LE DOUBLON EST IMPOSSIBLE À CRÉER, ET C'EST MESURÉ PAR LA VRAIE PORTE.** `toggleFavFood` cherche `name.toLowerCase()` et **retire** au lieu d'ajouter quand il trouve — trois clics d'étoile donnent **1 favori, puis 0, puis 1**, casse comprise ; et une restauration cloud **remplace** la liste en bloc au lieu de concaténer. *Le nom EST l'identité d'un favori ici, par construction.* Le favori ne porte **aucun** autre identifiant (mesuré : pas de `sourceId`) — inventer un identifiant pour un cas que l'app ne sait pas produire serait du code sans producteur (**R3**).
-⛔ **MAIS `.find()` REND LE PREMIER** : si l'état arrivait quand même, modifier A écrivait sur B (**mesuré** : 150 g atterrissaient sur le mauvais produit). On **refuse d'agir sur une identité ambiguë** plutôt que d'agir sur la mauvaise ligne (**R29**) — une ligne, un témoin.
-**⭐ ET LE POINT ② A DÉCOUVERT AUTRE CHOSE** : le favori **ne suivait pas** une définition corrigée depuis l'édition (`_majDefFavori` n'était appelée qu'à l'**ajout**) — *la vieille copie silencieuse que ft-v1186 voulait justement empêcher*. La porte jumelle, encore (**R8/R13**) : aucun mécanisme neuf, **un appel**. Ses macros restent intactes (décision ⑤).
-
-**⭐ ③ LA PRÉCISION DU `per100` : AUCUNE DÉRIVE CUMULATIVE, ET C'EST DÉMONTRÉ** — 10 cycles de reprise réels, chiffres **identiques au caractère près**, parce que le pour-100 g se redérive toujours des **TOTAUX**, jamais de lui-même. *C'est un point fixe, pas une cascade.*
-⛔⛔ **Mais l'arrondi ENTIER coûtait cher EN AVAL** : 1 part de 140 g valant 355/30/44/6 donne un pour-100 g exact de **253,6 / 21,4 / 31,4 / 4,3** ; arrondi entier, les lipides tombent à **4**, et redemander 280 g affichait **11 g de lipides au lieu de 12 — −8,3 %**.
-⭐⭐ **LA CORRECTION EXISTAIT DÉJÀ ET N'ÉTAIT PAS POSÉE ICI** : `_per100d1` (une décimale) sert **7 portes** depuis ft-v1170 — Open Food Facts, CIQUAL, marques, étiquette photo, scan — et les **deux** pour-100 g **dérivés** de `_provFood` étaient restés en `Math.round`. **La 8ᵉ porte, même famille §59.** ⭐ Et ça ne change **rien à l'écran** : `_qtyRescale` arrondit déjà les 4 champs à l'entier.
-
-**📣 RÈGLE D'OR #11 — RIEN À FAIRE.** Aucune pop-up, aucun point rouge : deux champs **facultatifs** apparaissent dans l'écran d'édition d'une portion, *là où on va justement pour corriger* (**R24/R25**). ⛔ **Pas de puces ici, exprès** : les puces existent parce qu'on saisit un repas tous les jours ; corriger une définition est un geste **rare et délibéré**, et le nom est déjà rempli (**R19**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ les lignes déjà abîmées **ne sont pas réparées**, la migration des 17 jours reste **intacte** · ⛔ ni cru/cuit, ni recherche CIQUAL, ni `alias.json`, ni scan, ni **I4**, ni `visualViewport`, ni Milo, ni programmes, ni débriefs de séance — *le périmètre interdit de GPT, respecté* · ⛔ le journal du jour n'affiche toujours **aucune** quantité (chantier ⑥, décidé séparé).
-**⚠️ ET 4 TROUS RESTENT OUVERTS, ÉCRITS DANS `docs/JOURNAL-DE-TEST.md` PLUTÔT QUE TUS** : une ligne **sans aucune quantité** ne peut toujours pas recevoir de définition (l'état « boutons » de l'édition — **non élargi exprès**) · une étiquette fausse ne se retire que par l'édition · **la tolérance de 0,6 est un CHOIX**, qui ne sera propre que le jour où le `per100` portera sa **provenance** (**R33** la demande déjà) · et l'affichage de la quantité. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
-
-**⚠️ ET UN PIÈGE DE FIXTURE QUI M'A FAIT CONCLURE TROP VITE, DIT PARCE QU'IL RESSERVIRA** : ma première mesure du point ② annonçait « impossible de créer deux favoris » — **vrai, mais pour la mauvaise raison**. `toggleFavFood` finit par `_renderFoodQuickList()`, qui **reconstruit `_afQuickItems`** : ma liste posée à la main était écrasée et **mon 2ᵉ clic tapait dans le vide**. 👉 *Un test qui n'emploie pas le schéma de la production ne teste rien, il rassure.* Refait en reposant la fixture avant chaque clic — la conclusion tient, la mesure aussi.
-
-**⚠️ COLLISION DE BLOC RÉGLÉE AU PASSAGE** : mon bloc ft-v1186 portait **CCLXXXI**, déjà pris par ft-v1184 de session-B, **qui l'avait signalée**. Convention du dépôt — *la première publiée garde le numéro* → le mien passe en **CCLXXXIV**. ⛔ Aucun témoin touché, **seulement son étiquette**.
-
-**⚠️⚠️ ET LA PASSE COMPLÈTE A ROUGI SUR TROIS TÉMOINS PLUS ANCIENS — TOUS LES TROIS FIGEAIENT `Math.round`, PAS LEUR GARANTIE.** Un de ft-v1051, deux de ft-v1162. ⭐⭐ **Et le cas de ft-v1162 est le plus délicat de la version, parce que la décimale y a l'air MOINS précise** : la reprise à 180 g affiche **129** au lieu de **130**. Mesuré, chiffre par chiffre — vérité d'origine **129,79** · ce que l'app **stocke** : **79 kcal pour 110 g** (les totaux sont des **entiers**) · depuis cette donnée : **129,27** · chemin entier **129,60 → 130** · chemin décimal **129,24 → 129**. 👉 ***Le 130 venait d'une erreur d'arrondi qui pointait dans le bon sens.*** L'app ne **peut plus** connaître 129,79 : le 79 a été arrondi **avant** d'être écrit. **129 est la seule réponse juste au regard de la donnée.** ⛔ **Les interdits que ces témoins figent — 249, 448, 780 — n'ont pas bougé d'un pouce**, et les trois ont été **ÉPROUVÉS** : la mutation qui rétablit le défaut d'origine les fait rougir. *La différence entre une mise au point et un assouplissement se mesure, et je l'ai mesurée.* ⭐ **Au passage, la mesure a nommé une limite plus profonde que celle que GPT visait** : *le vrai plancher de précision n'est pas le pour-100 g, ce sont les TOTAUX ENTIERS* — écrit dans `docs/JOURNAL-DE-TEST.md`, chantier à part. ⚠️ **À savoir si Michel compare deux copies d'écran** : une même ligne reprise peut afficher **1 kcal de moins** qu'avant.
-
-Tests : **parcours 3481/3481 sur l'arbre FINAL** (+18, bloc **CCLXXXV**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔⛔ **CONTRÔLE NÉGATIF : 13 MUTATIONS, TOUTES MORDENT, chacune chirurgicalement** — l'unité volée par le pour-100 g → **8 rouges** · la branche grammes qui reprend la main → **10** · les deux champs retirés → **6** · le pour-100 g qui ne suit plus → **2** · ⭐ la redérivation **à l'aveugle** → **1**, exactement le scan protégé · le refus d'agir sur une identité ambiguë retiré → **1** · le favori qui ne suit plus l'édition → **1** · l'arrondi entier côté portion → **1** · côté grammes → **1** · la frappe qui ne met plus à jour la définition → **1** · les macros du favori écrasées → **1** · le poids retiré qui laisse un pour-100 g orphelin → **1** · la définition non hydratée à l'ouverture → **4**.
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1060**, `conclusion: success` à **08:52:22 UTC** sur `fb392db4`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur la liste filtrée `status: completed`* — la leçon de ft-v1182.
-
-Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1188. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
