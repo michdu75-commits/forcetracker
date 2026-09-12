@@ -33903,7 +33903,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
 }
 
 
-/* ═══ CCXCII. LES 3 CONSTATS DE L'AUDIT « ONGLET SÉANCE » (12/09/2026, ft-v1195) ═══════════
+/* ═══ CCXCVI. LES 3 CONSTATS DE L'AUDIT « ONGLET SÉANCE » (12/09/2026, ft-v1195) ═══════════
    Michel, après avoir lu les trois constats : *« vas-y corrige tout »*. Il lève lui-même l'ordre
    qu'il avait posé le matin même (*« on refera un état des lieux quand j'aurai fini les bugs de
    la nutrition »*).
@@ -33991,35 +33991,35 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     return o;
   });
 
-  console.log('\n-- CCXCII. Les 3 constats de l\'audit « onglet Séance » (ft-v1195) --');
-  t('CCXCII ① le propriétaire de la conversion RPE existe', R.owner===true);
-  t('CCXCII ① ... et il convertit juste (0→10 … 4→6)', R.ownerOK==='10,9,8,7,6', 'reçu : '+R.ownerOK);
-  t('CCXCII ① ⛔ R29 — il rend `null` quand il ne sait pas, jamais un chiffre', R.ownerNull===true);
-  t('CCXCII ⭐ AUCUN LIBELLÉ N\'A BOUGÉ — boutons RIR', R.rirBouton==='échec|1|2|3|4+', 'reçu : '+R.rirBouton);
-  t('CCXCII ⭐ ... badges RIR', R.rirBadge==='0r|1r|2r|3r|4+r', 'reçu : '+R.rirBadge);
-  t('CCXCII ⭐ ... boutons RPE', R.rpeBouton==='10|9|8|7|≤6', 'reçu : '+R.rpeBouton);
-  t('CCXCII ⭐ ... badges RPE', R.rpeBadge==='@10|@9|@8|@7|@≤6', 'reçu : '+R.rpeBadge);
-  t('CCXCII ⭐ ... et la colonne « précédent » par son VRAI appel (§58), X compris',
+  console.log('\n-- CCXCVI. Les 3 constats de l\'audit « onglet Séance » (ft-v1195) --');
+  t('CCXCVI ① le propriétaire de la conversion RPE existe', R.owner===true);
+  t('CCXCVI ① ... et il convertit juste (0→10 … 4→6)', R.ownerOK==='10,9,8,7,6', 'reçu : '+R.ownerOK);
+  t('CCXCVI ① ⛔ R29 — il rend `null` quand il ne sait pas, jamais un chiffre', R.ownerNull===true);
+  t('CCXCVI ⭐ AUCUN LIBELLÉ N\'A BOUGÉ — boutons RIR', R.rirBouton==='échec|1|2|3|4+', 'reçu : '+R.rirBouton);
+  t('CCXCVI ⭐ ... badges RIR', R.rirBadge==='0r|1r|2r|3r|4+r', 'reçu : '+R.rirBadge);
+  t('CCXCVI ⭐ ... boutons RPE', R.rpeBouton==='10|9|8|7|≤6', 'reçu : '+R.rpeBouton);
+  t('CCXCVI ⭐ ... badges RPE', R.rpeBadge==='@10|@9|@8|@7|@≤6', 'reçu : '+R.rpeBadge);
+  t('CCXCVI ⭐ ... et la colonne « précédent » par son VRAI appel (§58), X compris',
     R.prevRir==='<span class="prev-rir">·2r</span>|<span class="prev-rir">·0r</span>|<span class="prev-rir">·4+r</span>|'
     && R.prevRpe==='<span class="prev-rir">·@8</span>|<span class="prev-rir">·@10</span>|<span class="prev-rir">·@≤6</span>|',
     'RIR '+R.prevRir+' · RPE '+R.prevRpe);
-  t('CCXCII ⛔⛔ hors de l\'échelle, l\'app NE DIT RIEN (plus de « 10 » pour une série non notée)',
+  t('CCXCVI ⛔⛔ hors de l\'échelle, l\'app NE DIT RIEN (plus de « 10 » pour une série non notée)',
     R.horsEchelleRpe==='|||' && R.horsEchelleRir==='|', 'RPE ['+R.horsEchelleRpe+'] · RIR ['+R.horsEchelleRir+']');
-  t('CCXCII ② `_rirTxt` (morte en production) a été retirée', R.rirTxtPartie===true);
-  t('CCXCII ② ⭐⭐ et l\'écran affiche bien le libellé d\'échec de `_reserveEchecTxt`',
+  t('CCXCVI ② `_rirTxt` (morte en production) a été retirée', R.rirTxtPartie===true);
+  t('CCXCVI ② ⭐⭐ et l\'écran affiche bien le libellé d\'échec de `_reserveEchecTxt`',
     R.echecAffiche===R.echecProprio && /une répétition n'est pas passée/.test(R.echecAffiche),
     'écran : "'+R.echecAffiche+'" · propriétaire : "'+R.echecProprio+'"');
-  t('CCXCII ③ le propriétaire du repos par défaut existe', R.reposProprio===true);
-  t('CCXCII ③ ⭐ le réglage de la personne gagne toujours (180 s partout)',
+  t('CCXCVI ③ le propriétaire du repos par défaut existe', R.reposProprio===true);
+  t('CCXCVI ③ ⭐ le réglage de la personne gagne toujours (180 s partout)',
     R.regle==='180|180|4.2', 'reçu : '+R.regle);
-  t('CCXCII ③ ⛔⛔ UN SEUL REPLI — sans réglage, les 3 fichiers disent la MÊME chose (avant : 90 · 120 · 130)',
+  t('CCXCVI ③ ⛔⛔ UN SEUL REPLI — sans réglage, les 3 fichiers disent la MÊME chose (avant : 90 · 120 · 130)',
     R.sansReglage && R.sansReglage.log===R.sansReglage.proprio
       && R.sansReglage.coach===Math.round(((R.sansReglage.proprio+70)/60)*10)/10
       && Math.abs(R.sansReglage.app-(5*(30+R.sansReglage.proprio)/60))<0.01,
     'reçu : '+JSON.stringify(R.sansReglage));
-  t('CCXCII ③ ... et ce repli est celui de l\'installation (130 s)',
+  t('CCXCVI ③ ... et ce repli est celui de l\'installation (130 s)',
     R.sansReglage && R.sansReglage.proprio===130, 'reçu : '+(R.sansReglage||{}).proprio);
-  t('CCXCII ③ ⛔ les règles par TYPE ne sont pas avalées (échauffement 45 · échec 240 · dropset 20)',
+  t('CCXCVI ③ ⛔ les règles par TYPE ne sont pas avalées (échauffement 45 · échec 240 · dropset 20)',
     R.parType==='45|45|240|240|20', 'reçu : '+R.parType);
 
   /* ⛔⛔ ET LE TÉMOIN QUI EMPÊCHE LA RECHUTE — il lit la SOURCE, parce qu'une copie de la
@@ -34043,9 +34043,9 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
                         .split('\n').filter(l=>!/function _rpeDeRir\(/.test(l)).join('\n');
     const copies=(horsProprio.match(/10\s*-\s*(n|RIR_MAX)\b/g)||[]);
     const appels=(lg.match(/_rpeDeRir\s*\(/g)||[]).length-1;   // -1 : sa propre déclaration
-    t('CCXCII ① ⛔ plus AUCUNE copie de la conversion dans log.js', proprio && copies.length===0,
+    t('CCXCVI ① ⛔ plus AUCUNE copie de la conversion dans log.js', proprio && copies.length===0,
       'trouvé : '+JSON.stringify(copies));
-    t('CCXCII ① ⛔ ... et le propriétaire est VRAIMENT appelé (sinon il redevient décoratif)',
+    t('CCXCVI ① ⛔ ... et le propriétaire est VRAIMENT appelé (sinon il redevient décoratif)',
       appels>=2, appels+' appel(s)');
   })();
 
@@ -34058,7 +34058,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
       (src.match(/S\.defRest\s*(\|\|\s*\d+|[?:]\s*\d+)/g)||[]).forEach(m=>mauvais.push(f+' : '+m));
       (src.match(/\+S\.defRest\s*>\s*0\s*\)\s*\?/g)||[]).forEach(m=>mauvais.push(f+' : '+m));
     });
-    t('CCXCII ③ ⛔ aucun repli numérique ne reste collé à `S.defRest` dans les fichiers servis',
+    t('CCXCVI ③ ⛔ aucun repli numérique ne reste collé à `S.defRest` dans les fichiers servis',
       mauvais.length===0, mauvais.join(' · '));
   })();
 }
