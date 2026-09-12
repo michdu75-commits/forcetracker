@@ -68,7 +68,7 @@ sujet de **l'étape 3**. L'absorber ferait deux extractions dans une seule sous-
 ⛔ **`sourceId`/`etat` restent chez `quickAddFood` seul** — le rejeu ne les a jamais posés. **Écart
 transporté**, figé par deux témoins (l'un exige leur absence, l'autre leur présence).
 
-### 1b-ii — la provenance reprise `{sourceId, etat, per100}`
+### 1b-ii — la provenance reprise `{sourceId, etat, per100}` ✅ **LIVRÉE (ft-v1197)**
 
 | | |
 |---|---|
@@ -80,6 +80,21 @@ transporté**, figé par deux témoins (l'un exige leur absence, l'autre leur pr
 | **Rollback** | 1 commit |
 
 ⚖️ **POINT DE DÉCISION PRODUIT n°1** — voir §3.
+
+**⭐ CE QUE LA MESURE A CORRIGÉ DANS CETTE FICHE (12/09)** :
+- **le 4ᵉ site cité (`_buildFoodQuickItems`) n'en est PAS un** — il construit un **item de liste**,
+  pas une provenance pour `_afSetSrc` : c'est **1b-iii**, autre consommateur ;
+- **`quickAddFood` ne porte que la PAIRE** (`sourceId`/`etat`) : son `per100` lui vient de
+  `_srcRepriseQ` depuis ft-v1195 ;
+- ⛔⛔ **`origine` et `saisie` NE SONT PAS entrés dans le propriétaire, et c'est la coupe elle-même** :
+  ils divergent aux 3 portes (`it.origine||'reprise'` · `e.origine||'utilisateur'` · `'reprise'` en
+  dur, qui **ignore la source exprès**). Les unifier changerait ce que le journal **dit de lui-même**
+  → **décision produit n°4**, transportée et figée par **2 témoins de périmètre**.
+- ⚠️ **L'étiquette « instantané » était juste, mais ma 1ʳᵉ sonde était MORTE** :
+  `_afSuggPrendreLocale` lit **`_afSuggLoc[i]`, pas `S.foodLog`** — elle sortait au 3ᵉ caractère et
+  la sonde rendait `ABSENT` partout. *Un BEFORE capturé ainsi serait resté identique quoi qu'on
+  fasse au code* : il aurait **validé n'importe quelle extraction**. Corrigée en remplissant par
+  `_afSuggLocales()`, la vraie fonction de production, **avec un garde qui LÈVE si la liste est vide**.
 
 ### 1b-iii — l'item de liste affichée
 
@@ -220,7 +235,9 @@ qu'on découvre trois versions plus tard.
   │
   ├─ 1b-iv    ⛔ ÉCARTÉE — rien à extraire (une seule copie). Raison écrite ci-dessus.
   │
-  └─ 1b-ii ──┬─ 3-ii     ┐
+  ├─ 1b-ii  ✅ livrée (ft-v1197)
+  │
+  └─ suite ──┬─ 3-ii     ┐
              ├─ 3-iii    │  les 4 sous-étapes de la PAIRE
              ├─ 3-v ─────┤  quickFillFood / _afSuggPrendreLocale
              └─ 1b-v ────┘

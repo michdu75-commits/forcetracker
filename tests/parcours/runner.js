@@ -34399,6 +34399,130 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     grammesSeuls===5, grammesSeuls+' écritures');
 }
 
+/* ══════════ BLOC CCXCIV — 🏷️ 1b-ii : la provenance reprise (ft-v1197) ══════════
+   ⛔⛔ ON CONDUIT LES VRAIES PORTES, jamais `_srcProvenance` en direct : vérifier la fonction
+   n'est pas vérifier l'appel (BUGS.md §58), et la version d'avant a montré qu'une sonde qui
+   recopie la règle ne mesure rien. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const V=await pg.evaluate(async()=>{
+   try{
+    const o={}; const d=ms=>new Promise(r=>setTimeout(r,ms));
+    const PLEIN={name:'Plat A',kcal:200,prot:10,carbs:20,fat:5,q:150,u:'g',
+                 sourceId:'off:123',etat:'valide',
+                 per100:{kcal:133,prot:6.7,carbs:13.3,fat:3.3},origine:'off'};
+    const NU={name:'Plat B',kcal:100,prot:5,carbs:10,fat:2};
+    const lu=()=>{ try{ return (typeof _afSrc!=='undefined'&&_afSrc)?_afSrc:{}; }catch(e){ return {}; } };
+
+    o.type=typeof _srcProvenance;
+    /* ⛔ Le propriétaire rend TROIS clés, pas plus : `origine`/`saisie` doivent rester dehors.
+       Défensif — si la fonction lève, le bloc ne doit pas disparaître de la passe (§61). */
+    try{ o.cles=Object.keys(_srcProvenance(PLEIN)).sort().join(','); }
+    catch(e){ o.cles='LÈVE : '+String(e&&e.message||e); }
+    try{ o.vide=JSON.stringify(_srcProvenance(null)); }
+    catch(e){ o.vide='LÈVE : '+String(e&&e.message||e); }
+
+    /* ── porte 1 : quickFillFood ── */
+    try{ _afOublierAliment(); }catch(e){}
+    _afSetSrc(null); _afQuickItems=[Object.assign({fav:false},PLEIN)];
+    quickFillFood(0); await d(160);
+    let v=lu(); o.qf={sourceId:v.sourceId,etat:v.etat,per100:v.per100?v.per100.kcal:null,
+                     origine:v.origine,saisie:v.saisie};
+    try{ _afOublierAliment(); }catch(e){}
+    _afSetSrc(null); _afQuickItems=[Object.assign({fav:false},NU)];
+    quickFillFood(0); await d(160);
+    v=lu(); o.qfNu={sourceId:v.sourceId,etat:v.etat,per100:v.per100,origine:v.origine};
+
+    /* ── porte 2 : _afSuggPrendreLocale — elle lit `_afSuggLoc`, PAS `S.foodLog`
+       (ma sonde s'y est fait prendre : `if(!e) return` et elle sortait sans rien faire). */
+    S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1},PLEIN)]; persist();
+    try{ _afOublierAliment(); }catch(e){}
+    _afSetSrc(null); _afSuggLoc=_afSuggLocales('Plat A');
+    o.locListe=_afSuggLoc.length;
+    _afSuggPrendreLocale(0); await d(160);
+    v=lu(); o.loc={sourceId:v.sourceId,etat:v.etat,per100:v.per100?v.per100.kcal:null,
+                   origine:v.origine,saisie:v.saisie};
+    S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1},NU)]; persist();
+    try{ _afOublierAliment(); }catch(e){}
+    _afSetSrc(null); _afSuggLoc=_afSuggLocales('Plat B');
+    _afSuggPrendreLocale(0); await d(160);
+    v=lu(); o.locNu={origine:v.origine};
+
+    /* ── porte 3 : quickAddFood — elle ÉCRIT ── */
+    S.foodLog=[]; S.savedFoods=[]; persist();
+    try{ _afOublierAliment(); }catch(e){}
+    _afSetSrc(null); _afQuickItems=[Object.assign({fav:false},PLEIN)];
+    quickAddFood(0); await d(260);
+    const l=(S.foodLog||[])[S.foodLog.length-1]||{};
+    o.qa={sourceId:l.sourceId,etat:l.etat,per100:l.per100?l.per100.kcal:null,
+          origine:l.origine,saisie:l.saisie};
+    return o;
+   }catch(e){return {err:String(e&&e.message||e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+  console.log('\n== BLOC CCXCIV — 🏷️ 1b-ii : la provenance reprise (ft-v1197) ==');
+  if(V.err){ t('CCXCIV bloc exécuté', false, V.err); }
+  else{
+    t('CCXCIV ① `_srcProvenance` existe', V.type==='function', V.type);
+    t('CCXCIV ② ⛔⛔ PÉRIMÈTRE — elle rend EXACTEMENT 3 clés : `origine`/`saisie` restent DEHORS '+
+      '(les unifier changerait ce que le journal dit de lui-même — décision produit n°4)',
+      V.cles==='etat,per100,sourceId', String(V.cles));
+    t('CCXCIV ③ une source vide rend trois `null`, jamais un objet à moitié rempli',
+      V.vide==='{"sourceId":null,"etat":null,"per100":null}', String(V.vide));
+
+    t('CCXCIV ④ ⭐ PORTE « Mes aliments » : les 3 champs voyagent',
+      V.qf && V.qf.sourceId==='off:123' && V.qf.etat==='valide' && V.qf.per100===133,
+      JSON.stringify(V.qf));
+    t('CCXCIV ⑤ ⛔ ÉCART TRANSPORTÉ — elle garde SON repli `reprise` et SA saisie `liste`',
+      V.qf && V.qf.origine==='off' && V.qf.saisie==='liste' && V.qfNu && V.qfNu.origine==='reprise',
+      JSON.stringify([V.qf&&V.qf.origine, V.qf&&V.qf.saisie, V.qfNu&&V.qfNu.origine]));
+    t('CCXCIV ⑥ une reprise sans provenance ne fabrique rien (3 `null`)',
+      V.qfNu && V.qfNu.sourceId===null && V.qfNu.etat===null && V.qfNu.per100===null,
+      JSON.stringify(V.qfNu));
+
+    t('CCXCIV ⑦ ⛔ le témoin conduit VRAIMENT la 2ᵉ porte (liste locale non vide) — sinon tout '+
+      'ce qui suit serait vert sur une fonction qui sort au 3ᵉ caractère',
+      V.locListe>0, 'items='+String(V.locListe));
+    t('CCXCIV ⑧ ⭐ PORTE « recherche du journal » : les 3 mêmes champs voyagent',
+      V.loc && V.loc.sourceId==='off:123' && V.loc.etat==='valide' && V.loc.per100===133,
+      JSON.stringify(V.loc));
+    t('CCXCIV ⑨ ⛔⛔ ÉCART TRANSPORTÉ — elle, c\'est `utilisateur` et `historique`, PAS `reprise`/`liste`',
+      V.loc && V.loc.saisie==='historique' && V.locNu && V.locNu.origine==='utilisateur',
+      JSON.stringify([V.loc&&V.loc.saisie, V.locNu&&V.locNu.origine]));
+
+    t('CCXCIV ⑩ ⭐ PORTE « ajout direct » : la paire est enregistrée sur la ligne',
+      V.qa && V.qa.sourceId==='off:123' && V.qa.etat==='valide', JSON.stringify(V.qa));
+    t('CCXCIV ⑪ ⛔⛔ ET ELLE IGNORE `it.origine` EXPRÈS : une ligne venue d\'un code-barres se '+
+      'réenregistre en `reprise` — on n\'a pas gardé la source sur les favoris, donc en hériter MENTIRAIT (R33)',
+      V.qa && V.qa.origine==='reprise', String(V.qa&&V.qa.origine));
+    t('CCXCIV ⑫ ⭐ `per100` lui vient de `_srcRepriseQ` et le propriétaire le repose à l\'identique',
+      V.qa && V.qa.per100===133, String(V.qa&&V.qa.per100));
+    t('CCXCIV ⑬ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+  await cx.close();
+}
+
+/* ⚠️ Témoins de SOURCE — ils lisent le fichier, pas la page. */
+{
+  const src=fs.readFileSync(ROOT+'/app.js','utf8');
+  const sansComm=src.split('\n').filter(l=>{const x=l.trim();
+    return !(x.startsWith('*')||x.startsWith('//')||x.startsWith('/*'));}).join('\n');
+  const nb=(sansComm.match(/_srcProvenance\(/g)||[]).length;
+  t('CCXCIV ⑭ ⭐ les 3 portes passent par `_srcProvenance` (1 déclaration + 3 appels)',
+    nb===4, 'occurrences='+nb);
+  /* ⛔⛔ LE TÉMOIN DE PÉRIMÈTRE : `origine` ne doit JAMAIS entrer dans le propriétaire.
+     On ne compte pas un motif — on lit le CORPS de la fonction, parce que compter les
+     occurrences d'un motif ne dit pas QUI décide (leçon de ft-v1195). */
+  const corps=(sansComm.match(/function _srcProvenance\(src\)\{[\s\S]*?\n\}/)||[''])[0];
+  t('CCXCIV ⑮ ⛔⛔ PÉRIMÈTRE — ni `origine` ni `saisie` dans le corps du propriétaire : '+
+    'l\'écart des 3 portes est TRANSPORTÉ, pas harmonisé (décision produit n°4, en attente)',
+    corps.length>0 && !/origine/.test(corps) && !/saisie/.test(corps),
+    'corps='+corps.slice(0,120));
+}
+
 /* ⚠️ CE BLOC DOIT RESTER AVANT `b.close()` — leçon payée le 11/09/2026.
    Je l'avais posé APRÈS, dans la zone des blocs qui n'ouvrent PAS de navigateur (ils lisent
    les fichiers source avec `fs`). Il a demandé une page déjà fermée, a levé « Target page,

@@ -192,6 +192,94 @@ const snap=await p.evaluate(async()=>{
   });
   out['3_via_rejouerRepas']=J(viaRejeuRepas);
 
+  /* ══ 1b-ii — LA PROVENANCE REPRISE, CONDUITE PAR LES VRAIES PORTES ══
+     ⛔⛔ ON N'APPELLE PAS `_afSetSrc` A LA MAIN ICI, ET C'EST TOUT L'INTERET.
+     Le reste de ce fichier le faisait (lignes 113 et 120) : ca pose un objet choisi par la
+     sonde, donc ca ne peut RIEN detecter d'une extraction faite dans quickFillFood ou
+     _afSuggPrendreLocale. C'est exactement le defaut de `3_regle_avec_portions`, mesure le
+     12/09 : une sonde qui recopie la regle mesure ce qu'on CROYAIT ecrire, pas ce qui est
+     execute (BUGS.md §58 cote sonde). On conduit donc la porte, et on lit `_afSrc` apres.
+     ⚠️ `_afSrc` n'est pas expose : on le lit par `_afLireSrc()` si elle existe, sinon par la
+     variable globale — et on DIT laquelle a servi, pour qu'un jour ou l'acces change, on ne
+     croie pas a une regression du code. */
+  const lireSrc = () => {
+    try{ if(typeof _afSrc!=='undefined' && _afSrc) return _afSrc; }catch(e){}
+    return null;
+  };
+  /* On ne garde que les 3 champs du perimetre + les 2 divergents, pour que la sonde ne bouge
+     pas au moindre changement sans rapport ailleurs dans l'objet. */
+  const provLue = () => { const v=lireSrc()||{};
+    return {sourceId:v.sourceId===undefined?'ABSENT':v.sourceId,
+            etat:v.etat===undefined?'ABSENT':v.etat,
+            per100:v.per100===undefined?'ABSENT':v.per100,
+            origine:v.origine===undefined?'ABSENT':v.origine,
+            saisie:v.saisie===undefined?'ABSENT':v.saisie}; };
+
+  /* Les 3 formes qui comptent : tout renseigne · tout absent · origine DEJA portee par la
+     source (c'est elle qui distingue `it.origine||'reprise'` d'un 'reprise' en dur). */
+  const CAS_PROV = [
+    {name:'Plat A', kcal:200, prot:10, carbs:20, fat:5, q:150, u:'g',
+     sourceId:'off:123', etat:'valide', per100:{kcal:133,prot:6.7,carbs:13.3,fat:3.3}, origine:'off'},
+    {name:'Plat B', kcal:100, prot:5, carbs:10, fat:2},
+    {name:'Plat C', kcal:300, prot:20, carbs:30, fat:8, q:2, u:'portion',
+     portionLabel:'part', portionWeightG:120, sourceId:'ciqual:42', etat:null, origine:'ciqual'},
+  ];
+
+  /* ── porte 1 : quickFillFood (« Mes aliments ») ── */
+  const viaQuickFill=[];
+  CAS_PROV.forEach(cs=>{
+    try{
+      S.foodLog=[]; S.savedFoods=[]; persist();
+      try{ _afOublierAliment(); }catch(e){}
+      _afSetSrc(null);
+      _afQuickItems=[Object.assign({fav:false}, cs)];
+      quickFillFood(0);
+      viaQuickFill.push([cs.name, J(provLue())]);
+    }catch(e){ viaQuickFill.push([cs.name, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['1bii_via_quickFillFood']=J(viaQuickFill);
+
+  /* ── porte 2 : _afSuggPrendreLocale (la recherche dans le journal) ── */
+  const viaLocale=[];
+  CAS_PROV.forEach(cs=>{
+    try{
+      S.foodLog=[Object.assign({date:'2026-09-01', meal:'midi', ts:1}, cs)];
+      persist();
+      try{ _afOublierAliment(); }catch(e){}
+      _afSetSrc(null);
+      /* ⛔⛔ ELLE LIT `_afSuggLoc[i]`, PAS `S.foodLog` — ma 1re version passait l'index du
+         journal et la fonction SORTAIT immediatement (`if(!e) return`), donc la sonde
+         rendait ABSENT partout : morte, et un BEFORE capture ainsi serait reste identique
+         quoi qu'on fasse au code. C'est le piege d'`openSessDetail(0)` de ft-v1189.
+         On remplit donc par la VRAIE fonction de production, pas a la main. */
+      _afSuggLoc = _afSuggLocales(cs.name);
+      if(!_afSuggLoc.length) throw new Error('liste locale VIDE — la sonde ne conduirait rien');
+      _afSuggPrendreLocale(0);
+      viaLocale.push([cs.name, J(provLue())]);
+    }catch(e){ viaLocale.push([cs.name, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['1bii_via_afSuggPrendreLocale']=J(viaLocale);
+
+  /* ── porte 3 : quickAddFood — elle ECRIT une ligne, on lit ce qui s'est enregistre ──
+     ⚠️ Elle ne porte que la PAIRE : `per100` lui vient de `_srcRepriseQ` depuis ft-v1195. */
+  const viaQuickAdd=[];
+  CAS_PROV.forEach(cs=>{
+    try{
+      S.foodLog=[]; S.savedFoods=[]; persist();
+      try{ _afOublierAliment(); }catch(e){}
+      _afSetSrc(null);
+      _afQuickItems=[Object.assign({fav:false}, cs)];
+      quickAddFood(0);
+      const l=(S.foodLog||[])[S.foodLog.length-1]||{};
+      viaQuickAdd.push([cs.name, J({sourceId:l.sourceId===undefined?'ABSENT':l.sourceId,
+                                    etat:l.etat===undefined?'ABSENT':l.etat,
+                                    per100:l.per100===undefined?'ABSENT':l.per100,
+                                    origine:l.origine===undefined?'ABSENT':l.origine,
+                                    saisie:l.saisie===undefined?'ABSENT':l.saisie})]);
+    }catch(e){ viaQuickAdd.push([cs.name, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['1bii_via_quickAddFood']=J(viaQuickAdd);
+
   return out;
 });
 

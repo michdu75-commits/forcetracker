@@ -1663,6 +1663,24 @@ function _qReprenable(src){
   const s = src || {};
   return (+s.q > 0 && (!s.u || s.u === 'g' || s.u === 'portion'));
 }
+/* 🏷️ 1b-ii (ft-v1197) — LA PROVENANCE RECOPIEE D'UNE LIGNE DEJA ENREGISTREE.
+   Trois champs, ecrits a l'identique par `quickFillFood` et `_afSuggPrendreLocale` ; la paire
+   `sourceId`/`etat` l'est aussi par `quickAddFood`, qui tient son `per100` de `_srcRepriseQ`.
+
+   ⛔⛔ `origine` ET `saisie` NE SONT PAS DEDANS, ET C'EST LA COUPE ELLE-MEME.
+   Ils DIVERGENT aux trois portes — `it.origine||'reprise'` · `e.origine||'utilisateur'` ·
+   `'reprise'` en dur (cette derniere ignore meme la source : une ligne venue d'un code-barres
+   se reenregistre en 'reprise', et c'est un choix assume — on n'a pas garde la source sur les
+   favoris, donc en heriter MENTIRAIT). Les unifier changerait ce que le journal DIT DE
+   LUI-MEME : c'est une DECISION PRODUIT (n°4 du §3 de docs/SOUS-ETAPES-1B-3.md), pas un
+   rangement. On extrait donc ce qui est IDENTIQUE et on laisse VISIBLE chez l'appelant ce qui
+   diverge — un ecart qu'on lit dans le code ne se perd pas ; un ecart absorbe dans un
+   proprietaire, si. */
+function _srcProvenance(src){
+  const s = src || {};
+  return { sourceId: s.sourceId || null, etat: s.etat || null, per100: s.per100 || null };
+}
+
 function _srcRepriseQ(src, qOk){
   const s = src || {};
   return { q: qOk ? +s.q : null,
@@ -2809,9 +2827,10 @@ function quickFillFood(i){
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
   set('af-desc',it.name); set('af-kcal',it.kcal||0); set('af-prot',it.prot||0); set('af-carbs',it.carbs||0); set('af-fat',it.fat||0);
   /* La provenance dit ce que c'est : une REPRISE, ni une mesure ni une saisie fraîche. */
-  if(typeof _afSetSrc==='function') _afSetSrc({saisie:'liste', origine:it.origine||'reprise',
-    sourceId:it.sourceId||null, etat:it.etat||null, per100:it.per100||null,
-    attendu:(typeof _afLuFormulaire==='function')?_afLuFormulaire():null});
+  if(typeof _afSetSrc==='function') _afSetSrc(Object.assign(
+    {saisie:'liste', origine:it.origine||'reprise'},
+    _srcProvenance(it),
+    {attendu:(typeof _afLuFormulaire==='function')?_afLuFormulaire():null}));
   const row=document.getElementById('af-bc-row');
   const P=it.per100;
   /* 🍽️⛔⛔ ft-v1186 — UNE LIGNE COMPTÉE EN PORTIONS REVIENT EN PORTIONS, MÊME AVEC UN POUR-100 g.
@@ -2926,7 +2945,11 @@ function quickAddFood(i){
      provenance ne ment pas), et le rejeu ne les a jamais eus. L'écart est transporté. */
   _afSetSrc(Object.assign({saisie:'liste', origine:'reprise'},
                           _srcRepriseQ(it, _qOk),
-                          {sourceId:it.sourceId||null, etat:it.etat||null}));
+                          /* ⚠️ `per100` arrive par `_srcRepriseQ` juste au-dessus ; le
+                             proprietaire le repose a la MEME valeur (les deux lisent
+                             `it.per100||null`), donc l'objet final ne bouge pas d'un octet —
+                             c'est l'instantane qui le prouve, pas ce commentaire. */
+                          _srcProvenance(it)));
   S.foodLog.push(Object.assign({date:_journalJourActif(),meal:_afMeal,name:(it.name||'').slice(0,80),ts:Date.now()},_vals,_provFood(_vals)));
   _afSetSrc(null);
   _unhideFood(it.name);
@@ -4001,9 +4024,9 @@ function _afSuggPrendreLocale(i){
     _bcNutr=null;
     if(typeof _bcMontrerTotal==='function') _bcMontrerTotal(0);   // ⛔ pas de total orphelin
   }
-  _afSetSrc({saisie:'historique', origine:e.origine||'utilisateur',
-             sourceId:e.sourceId||null, etat:e.etat||null, per100:e.per100||null,
-             attendu:_afLuFormulaire()});
+  _afSetSrc(Object.assign({saisie:'historique', origine:e.origine||'utilisateur'},
+                          _srcProvenance(e),
+                          {attendu:_afLuFormulaire()}));
   /* ⚖️ SANS POUR-100 G, ON PROPOSE QUAND MÊME DE CHANGER LA QUANTITÉ (ft-v999+)
      Michel, deux captures à l'appui : « il y a toujours le bug sur des aliments que j'ai rentrés
      moi-même et que je veux réutiliser — comme je l'ai rentré avec le code-barre on ne peut plus
