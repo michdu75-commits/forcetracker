@@ -2756,21 +2756,49 @@ let _afQuickItems=[];
    pourtant présent dans l'entrée du journal, était **jeté au moment précis où il sert**.
    *L'information existait et n'atteignait pas l'écran* — le défaut n'était pas dans le calcul
    de quantité (qui marche depuis ft-v965), il était dans le transport. */
+/* 📋 1b-iii (ft-v1198) — LE NOYAU D'UN ITEM DE LISTE « Mes aliments ».
+   Neuf champs recopies a l'IDENTIQUE par les trois sites : la branche favoris et la branche
+   recents de `_buildFoodQuickItems`, et le favori ecrit par `toggleFavFood`.
+
+   ⛔⛔ `portionWeightG` ET `fav` NE SONT PAS DEDANS, ET C'EST LA COUPE.
+   `portionWeightG` DIVERGE : les deux branches de la liste replient sur `0`, le favori sur
+   `null`. Un `0` et un `null` ne se relisent pas pareil en aval (`+x>0` les traite pareil,
+   `x===null` non), donc unifier changerait le contenu de `S.savedFoods` : c'est une DECISION
+   PRODUIT (n°2 du §3 de docs/SOUS-ETAPES-1B-3.md), pas un rangement. `fav` vaut true, false,
+   et n'existe pas chez le troisieme. Les deux restent ECRITS chez chaque appelant, ou l'ecart
+   se lit a l'oeil nu.
+
+   ⚠️ ET LE PLAN ANNONCAIT DEUX DIVERGENCES, IL N'Y EN A QU'UNE. Il disait que `q` valait `0`
+   ici et `null` la ; mesure champ par champ, `q` vaut `+X.q>0?+X.q:0` aux TROIS sites. D'ou
+   l'absence de parametre `{vide:...}` : on n'en a pas besoin pour un seul ecart, et un
+   parametre inutile deplace l'ecart DANS le proprietaire au lieu de le laisser visible. */
+function _itemListe(src){
+  const s = src || {};
+  return { name: s.name,
+           kcal: s.kcal || 0, prot: s.prot || 0, carbs: s.carbs || 0, fat: s.fat || 0,
+           per100: s.per100 || null,
+           q: +s.q > 0 ? +s.q : 0,
+           u: s.u || null,
+           portionLabel: s.portionLabel || null };
+}
+
 function _buildFoodQuickItems(){
-  const favs=(S.savedFoods||[]).map(f=>({name:f.name,kcal:f.kcal||0,prot:f.prot||0,carbs:f.carbs||0,fat:f.fat||0,
-                                         per100:f.per100||null,q:+f.q>0?+f.q:0,u:f.u||null,
-                                         portionLabel:f.portionLabel||null,portionWeightG:+f.portionWeightG>0?+f.portionWeightG:0,fav:true}));
+  /* ⚠️ `portionWeightG` replie sur 0 ICI et sur null chez `toggleFavFood` — ecart TRANSPORTE,
+     decision produit n°2. Il reste ecrit ici expres, pour qu'on le voie. */
+  const favs=(S.savedFoods||[]).map(f=>Object.assign(_itemListe(f),
+    {portionWeightG:+f.portionWeightG>0?+f.portionWeightG:0, fav:true}));
   const seen=new Set(favs.map(f=>(f.name||'').toLowerCase()));
   const hidden=new Set((S.hiddenFoods||[]).map(x=>(x||'').toLowerCase()));
   const recent=[];
   (S.foodLog||[]).slice().sort((a,b)=>b.ts-a.ts).forEach(e=>{
     const k=(e.name||'').toLowerCase(); if(!k||seen.has(k)||hidden.has(k))return; seen.add(k);
-    recent.push({name:e.name,kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0,
-                 per100:e.per100||null,q:+e.q>0?+e.q:0,u:e.u||null,
-                 /* 🏷️ ft-v1186 — sans ces deux-là, la reprise ne retrouve pas la définition et
-                    l'étiquette serait à retaper à chaque repas. */
-                 portionLabel:e.portionLabel||null,portionWeightG:+e.portionWeightG>0?+e.portionWeightG:0,
-                 origine:e.origine||null,sourceId:e.sourceId||null,etat:e.etat||null,fav:false});
+    /* 🏷️ ft-v1186 — `portionLabel`/`portionWeightG` voyagent : sans eux, la reprise ne
+       retrouve pas la définition et l'étiquette serait à retaper à chaque repas.
+       ⛔ `origine`/`sourceId`/`etat` ne sont PAS dans `_itemListe` : cette forme n'existe
+          qu'ICI (une seule copie), et on ne crée pas un propriétaire pour une forme unique. */
+    recent.push(Object.assign(_itemListe(e),
+      {portionWeightG:+e.portionWeightG>0?+e.portionWeightG:0,
+       origine:e.origine||null, sourceId:e.sourceId||null, etat:e.etat||null, fav:false}));
   });
   return favs.concat(recent).slice(0,12);
 }
@@ -2966,12 +2994,14 @@ function toggleFavFood(i){
   if(idx>=0){ S.savedFoods.splice(idx,1); toast('Retiré des favoris','info'); }
   /* ⛔ LE FAVORI GARDE SON POUR-100 G (ft-v1042) : sans ça, mettre une étoile FAISAIT PERDRE
      la quantité — l'aliment devenait moins réglable qu'avant d'être mis en favori. */
-  else { S.savedFoods.push({name:it.name,kcal:it.kcal||0,prot:it.prot||0,carbs:it.carbs||0,fat:it.fat||0,
-                            per100:it.per100||null,q:+it.q>0?+it.q:0,u:it.u||null,
-                            /* 🏷️ ft-v1186 — mettre une étoile ne doit pas faire perdre la définition
-                               (c'est déjà la raison pour laquelle le favori garde son pour-100 g). */
-                            portionLabel:it.portionLabel||null,
-                            portionWeightG:+it.portionWeightG>0?+it.portionWeightG:null}); toast('Ajouté aux favoris ⭐','success'); }
+  /* 🏷️ ft-v1186 — mettre une étoile ne doit pas faire perdre la définition (c'est déjà la
+     raison pour laquelle le favori garde son pour-100 g).
+     ⛔⛔ ET LE REPLI EST `null` ICI, `0` DANS LA LISTE. C'est l'écart de la décision produit
+        n°2 : il est TRANSPORTÉ tel quel, pas harmonisé — l'unifier changerait ce qui est
+        écrit dans `S.savedFoods`. */
+  else { S.savedFoods.push(Object.assign(_itemListe(it),
+           {portionWeightG:+it.portionWeightG>0?+it.portionWeightG:null}));
+         toast('Ajouté aux favoris ⭐','success'); }
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   _renderFoodQuickList();
 }

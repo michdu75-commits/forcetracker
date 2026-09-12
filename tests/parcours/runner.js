@@ -34523,6 +34523,138 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     'corps='+corps.slice(0,120));
 }
 
+/* ══════════ BLOC CCXCV — 📋 1b-iii : l'item de liste affichée (ft-v1198) ══════════
+   ⛔⛔ ON CONDUIT LES VRAIES PORTES : `_buildFoodQuickItems()` avec les DEUX branches garnies,
+   et `toggleFavFood` — jamais `_itemListe` en direct pour juger du comportement. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const W=await pg.evaluate(async()=>{
+   try{
+    const o={}; const d=ms=>new Promise(r=>setTimeout(r,ms));
+    o.type=typeof _itemListe;
+    /* Défensif : si le propriétaire lève, le bloc ne doit pas DISPARAÎTRE de la passe (§61). */
+    try{ o.cles=Object.keys(_itemListe({name:'X'})).sort().join(','); }
+    catch(e){ o.cles='LÈVE : '+String(e&&e.message||e); }
+    try{ o.nu=JSON.stringify(_itemListe(null)); }
+    catch(e){ o.nu='LÈVE : '+String(e&&e.message||e); }
+
+    const COMPLET={name:'Lentilles',kcal:198,prot:25,carbs:41,fat:13,
+                   per100:{kcal:48.3,prot:6.1,carbs:10.1,fat:3.2},
+                   q:410,u:'g',portionLabel:'boite',portionWeightG:410};
+    const NU={name:'Pomme',kcal:52,prot:0,carbs:14,fat:0};
+
+    /* ── les DEUX branches de la liste, en une seule construction ── */
+    S.savedFoods=[Object.assign({},COMPLET)];
+    S.foodLog=[Object.assign({date:'2026-09-12',meal:'midi',ts:3,
+                              origine:'off',sourceId:'302169',etat:'tel-que-vendu'},
+                             {name:'Steak',kcal:250,prot:26,carbs:0,fat:16,
+                              per100:{kcal:166.67,prot:17.33,carbs:0,fat:10.67},
+                              q:150,u:'g',portionLabel:'steak',portionWeightG:125}),
+               Object.assign({date:'2026-09-12',meal:'soir',ts:2},NU)];
+    S.hiddenFoods=[]; persist();
+    const L=_buildFoodQuickItems();
+    o.nbListe=L.length;
+    o.favori = L[0] ? {name:L[0].name,kcal:L[0].kcal,q:L[0].q,u:L[0].u,
+                       lab:L[0].portionLabel,pw:L[0].portionWeightG,fav:L[0].fav,
+                       p100:L[0].per100?L[0].per100.kcal:null} : null;
+    const rec = L.filter(x=>x && x.fav===false);
+    o.recent = rec[0] ? {name:rec[0].name,q:rec[0].q,pw:rec[0].portionWeightG,
+                         origine:rec[0].origine,sourceId:rec[0].sourceId,etat:rec[0].etat,
+                         fav:rec[0].fav} : null;
+    /* ⛔ Le RÉCENT NU : c'est lui qui montre les replis quand rien n'est renseigné. */
+    const nu = rec.find(x=>x.name==='Pomme');
+    o.recentNu = nu ? {q:nu.q,u:nu.u,lab:nu.portionLabel,pw:nu.portionWeightG,p100:nu.per100} : null;
+
+    /* ── la 3ᵉ porte : toggleFavFood, qui ÉCRIT dans S.savedFoods ──
+       ⛔ PIÈGE ft-v1188 : elle finit par `_renderFoodQuickList()`, qui RECONSTRUIT
+          `_afQuickItems`. On repose donc la fixture AVANT chaque appel. */
+    S.savedFoods=[]; persist();
+    _afQuickItems=[Object.assign({},COMPLET)];
+    toggleFavFood(0); await d(140);
+    const f=(S.savedFoods||[])[0]||{};
+    o.togComplet={name:f.name,q:f.q,u:f.u,lab:f.portionLabel,pw:f.portionWeightG,
+                  p100:f.per100?f.per100.kcal:null,
+                  aFav:Object.prototype.hasOwnProperty.call(f,'fav')};
+    S.savedFoods=[]; persist();
+    _afQuickItems=[Object.assign({},NU)];
+    toggleFavFood(0); await d(140);
+    const g=(S.savedFoods||[])[0]||{};
+    o.togNu={q:g.q,u:g.u,lab:g.portionLabel,pw:g.portionWeightG,p100:g.per100,
+             pwEstNull: g.portionWeightG===null};
+    return o;
+   }catch(e){return {err:String(e&&e.message||e)+' | '+(e.stack||'').slice(0,200)};}
+  });
+  console.log('\n== BLOC CCXCV — 📋 1b-iii : l\'item de liste affichée (ft-v1198) ==');
+  if(W.err){ t('CCXCV bloc exécuté', false, W.err); }
+  else{
+    t('CCXCV ① `_itemListe` existe', W.type==='function', W.type);
+    t('CCXCV ② ⛔⛔ PÉRIMÈTRE — elle rend EXACTEMENT les 9 champs identiques : ni `portionWeightG` '+
+      'ni `fav` dedans (ils DIVERGENT, décision produit n°2)',
+      W.cles==='carbs,fat,kcal,name,per100,portionLabel,prot,q,u', String(W.cles));
+    t('CCXCV ③ une source vide rend les replis, sans rien inventer',
+      W.nu==='{"kcal":0,"prot":0,"carbs":0,"fat":0,"per100":null,"q":0,"u":null,"portionLabel":null}',
+      String(W.nu));
+
+    t('CCXCV ④ ⭐ BRANCHE FAVORIS : les 9 champs voyagent, et `fav` reste true',
+      W.favori && W.favori.name==='Lentilles' && W.favori.kcal===198 && W.favori.q===410
+      && W.favori.u==='g' && W.favori.lab==='boite' && W.favori.p100===48.3
+      && W.favori.fav===true, JSON.stringify(W.favori));
+    t('CCXCV ⑤ ⭐ BRANCHE RÉCENTS : les 9 champs voyagent aussi, `fav` reste false',
+      W.recent && W.recent.name==='Steak' && W.recent.q===150 && W.recent.fav===false,
+      JSON.stringify(W.recent));
+    t('CCXCV ⑥ ⛔ la provenance reste chez la branche RÉCENTS seule — une seule copie, '+
+      'donc AUCUN propriétaire créé pour elle',
+      W.recent && W.recent.origine==='off' && W.recent.sourceId==='302169'
+      && W.recent.etat==='tel-que-vendu', JSON.stringify(W.recent));
+    t('CCXCV ⑦ un récent NU ne fabrique rien : q=0, u/label/per100 à null',
+      W.recentNu && W.recentNu.q===0 && W.recentNu.u===null && W.recentNu.lab===null
+      && W.recentNu.p100===null, JSON.stringify(W.recentNu));
+
+    t('CCXCV ⑧ ⭐ PORTE « mettre une étoile » : les 9 champs voyagent (la définition ne se perd pas)',
+      W.togComplet && W.togComplet.name==='Lentilles' && W.togComplet.q===410
+      && W.togComplet.lab==='boite' && W.togComplet.p100===48.3, JSON.stringify(W.togComplet));
+    t('CCXCV ⑨ ⛔ et le favori ne porte PAS `fav` (il n\'en a jamais eu) — écart transporté',
+      W.togComplet && W.togComplet.aFav===false, String(W.togComplet&&W.togComplet.aFav));
+
+    t('CCXCV ⑩ ⛔⛔ LA DIVERGENCE, MESURÉE DES DEUX CÔTÉS : `portionWeightG` replie sur **0** dans '+
+      'la liste et sur **null** dans le favori — un `0` et un `null` ne se relisent pas pareil, '+
+      'l\'unifier changerait `S.savedFoods` (décision produit n°2, NON tranchée)',
+      W.recentNu && W.recentNu.pw===0 && W.togNu && W.togNu.pwEstNull===true,
+      'liste='+JSON.stringify(W.recentNu&&W.recentNu.pw)+' favori='+JSON.stringify(W.togNu&&W.togNu.pw));
+    t('CCXCV ⑪ ⭐ et `q` NE diverge PAS : il vaut 0 des deux côtés (le plan annonçait un écart '+
+      'qui n\'existe pas — c\'est pourquoi le propriétaire n\'a aucun paramètre)',
+      W.recentNu && W.recentNu.q===0 && W.togNu && W.togNu.q===0,
+      'liste='+String(W.recentNu&&W.recentNu.q)+' favori='+String(W.togNu&&W.togNu.q));
+    t('CCXCV ⑫ 0 erreur JS', errs.length===0, errs.join(' | '));
+  }
+  await cx.close();
+}
+
+/* ⚠️ Témoins de SOURCE — ils lisent le fichier, pas la page. */
+{
+  const src=fs.readFileSync(ROOT+'/app.js','utf8');
+  const sansComm=src.split('\n').filter(l=>{const x=l.trim();
+    return !(x.startsWith('*')||x.startsWith('//')||x.startsWith('/*'));}).join('\n');
+  const nb=(sansComm.match(/_itemListe\(/g)||[]).length;
+  t('CCXCV ⑬ ⭐ les 3 sites passent par `_itemListe` (1 déclaration + 3 appels)',
+    nb===4, 'occurrences='+nb);
+  /* ⛔⛔ TÉMOIN DE PÉRIMÈTRE : on lit le CORPS, pas un motif — compter les occurrences d'un
+     motif ne dit pas QUI décide (leçon de ft-v1195). */
+  const corps=(sansComm.match(/function _itemListe\(src\)\{[\s\S]*?\n\}/)||[''])[0];
+  t('CCXCV ⑭ ⛔⛔ PÉRIMÈTRE — ni `portionWeightG` ni `fav` dans le corps du propriétaire : '+
+    'la divergence est TRANSPORTÉE chez les appelants, pas harmonisée',
+    corps.length>0 && !/portionWeightG/.test(corps) && !/fav/.test(corps),
+    'corps='+corps.slice(0,120));
+  /* ⛔ Et elle ne prend AUCUN paramètre : le plan en proposait un pour un 2ᵉ écart qui n'existe pas. */
+  t('CCXCV ⑮ ⭐ `_itemListe` ne prend qu\'UNE source, aucun paramètre de défaut — mesuré, `q` ne '+
+    'diverge pas, donc un paramètre déplacerait l\'écart DANS le propriétaire pour rien',
+    /function _itemListe\(src\)\{/.test(sansComm), 'signature absente');
+}
+
 /* ⚠️ CE BLOC DOIT RESTER AVANT `b.close()` — leçon payée le 11/09/2026.
    Je l'avais posé APRÈS, dans la zone des blocs qui n'ouvrent PAS de navigateur (ils lisent
    les fichiers source avec `fs`). Il a demandé une page déjà fermée, a levé « Target page,
