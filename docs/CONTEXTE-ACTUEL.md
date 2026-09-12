@@ -42,6 +42,7 @@
   ⭐ **Instantané 15 → 17 clés** (les portes étaient **conduites**, mais rien ne **lisait**
   `#af-bc-last` — *conduire n'est pas observer*), **identique octet pour octet**, sha
   `b8f06e45d8c91fcc`.
+  ✅ **Déploiement vérifié vert (R18)** : run **#1112**, étape Pages `success` à 19:16:04 UTC.
   ⏭️ **EN ATTENTE DE MICHEL** : les 4 harmonisations **+ la pastille périmée**.
   **4 sous-étapes réelles restantes** avant le hub.
   ⚠️ **À vérifier par Michel sur Safari/iPhone.**
