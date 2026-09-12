@@ -98,18 +98,40 @@ copies.*
 
 ⚖️ **POINT DE DÉCISION PRODUIT n°2** — voir §3.
 
-### 1b-iv — l'export CSV
+### 1b-iv — l'export CSV ⛔ **ÉCARTÉE (12/09/2026) — IL N'Y A RIEN À EXTRAIRE**
+
+> ⚠️ **Elle reste écrite ici AVEC SA RAISON, elle ne disparaît pas** (**R30**) : une sous-étape
+> effacée du plan ressemble à un oubli, et quelqu'un la remettrait dans six mois.
 
 | | |
 |---|---|
-| **Périmètre** | la ligne CSV du journal nutrition, 13 colonnes aux noms **français** |
-| **Sites** | `setup.js` : `NUTRI_COLONNES` (@438) + `exportNutritionCsv` (@441-455) |
-| **Instantané** | ⛔ **AUCUNE sonde aujourd'hui — prérequis absolu, à écrire AVANT de toucher au code** |
-| **Rollback** | 1 commit, fichier isolé |
+| **Ce que le plan annonçait** | « la ligne CSV du journal nutrition, 13 colonnes aux noms français » |
+| **Ce que la MESURE dit** | `NUTRI_COLONNES` et son `.map()` existent **une seule fois** dans tout le code servi. Aucun import ne les relit, aucun second aplatissement en noms français n'existe |
+| **Et le partage est DÉJÀ fait** | `_csvFichier(colonnes, lignes, nom, unité)` est le propriétaire commun, appelé par **nutrition ET poids** — la factorisation a été faite au bon niveau, avant ce chantier |
 
-⭐ **Lecteur pur, aucun écrivain** : c'est la sous-étape la moins risquée du lot — *à condition*
-d'écrire la sonde d'abord. **C'est elle qui était invisible au compteur** (noms français, liste de
-colonnes figée à part) : elle a sa place dans le découpage précisément pour ça.
+**⛔⛔ UNE EXTRACTION EXIGE AU MOINS DEUX COPIES.** Sortir `_ligneCsvNutri(e)` créerait un
+propriétaire à **un seul appelant** : ce n'est pas une extraction, c'est une abstraction pour
+elle-même — et c'est **R19** qui l'interdit (*la gouvernance sert le produit, jamais l'inverse*).
+
+**⭐⭐ ET L'ERREUR QUI L'A FAIT ENTRER DANS LE PLAN VAUT PLUS QUE LA SOUS-ÉTAPE.** Sa justification
+écrite était : *« c'est elle qui était invisible au compteur (noms français, liste de colonnes figée
+à part) »*. C'est **vrai** — c'est le cas d'école de `BUGS.md` §63. Mais j'en ai tiré la mauvaise
+conclusion : j'ai versé au découpage **tout ce que le compteur avait raté**, sans jamais demander,
+site par site, *s'il était DUPLIQUÉ*.
+👉 ***Un site qu'un compteur défaillant a manqué n'est pas pour autant un site à extraire.***
+Réparer l'instrument (§63) et refaire l'inventaire sont **deux gestes différents** ; j'ai fait le
+premier et cru avoir fait le second.
+
+**⛔ Le test d'entrée, désormais explicite pour toute sous-étape** : *compter les copies AVANT de la
+décrire*. Appliqué aux 8 restantes le 12/09 — **1b-ii** (3-4 sites) · **1b-iii** (2) · **1b-v** (2,
+identiques au caractère près) · **3-ii/iii/iv/v** (les 5 sites « grammes seuls ») **tiennent toutes** ;
+seule celle-ci était vide.
+
+**⚠️ Et l'étiquette « instantané » était fausse DES DEUX CÔTÉS** : elle annonçait *« AUCUNE sonde
+aujourd'hui »*, or le bloc **CCIV** conduit vraiment `exportNutritionCsv()`, intercepte la remise du
+fichier et **lit le CSV produit** (échappement de la virgule, BOM, provenance, ordre). *C'est le
+miroir de 3-i, où l'étiquette annonçait « couvert » pour une sonde qui ne couvrait rien.*
+👉 **Dans les deux sens, l'étiquette ne remplace pas l'ouverture du fichier.**
 
 ### 1b-v — l'hydratation des écrans
 
@@ -196,7 +218,7 @@ qu'on découvre trois versions plus tard.
   │
   ├─ 3-i   ✅ livrée (ft-v1196)
   │
-  ├─ 1b-iv    (isolée — mais PRÉREQUIS : écrire la sonde CSV d'abord)
+  ├─ 1b-iv    ⛔ ÉCARTÉE — rien à extraire (une seule copie). Raison écrite ci-dessus.
   │
   └─ 1b-ii ──┬─ 3-ii     ┐
              ├─ 3-iii    │  les 4 sous-étapes de la PAIRE
