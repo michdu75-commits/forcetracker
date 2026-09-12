@@ -16,6 +16,23 @@
   cette ligne le prochain à le lire les prendrait pour du travail disponible. **R30** — un refus
   volontaire s'écrit avec sa raison, sinon il redevient un bug.
 
+- 🗺️🔌 **DEUX ÉTUDES EN LECTURE SEULE (12/09/2026) — rien n'est corrigé, tout est mesuré.**
+  · **`docs/CARTE-DONNEES-MILO.md`** — qui écrit / qui lit / Milo la voit-il vraiment / est-elle en
+  double. ⛔ **3 trous confirmés** : `dayStateLog` **jamais envoyé** (0 occurrence dans `coach.js`) ·
+  le **tour de taille réclamé DEUX FOIS par le prompt** et absent du contexte (**R8**, 6ᵉ fois) ·
+  `badges` déclaré transmis et ne l'est pas. ⚠️ **2 doublons risqués** : la **règle de rythme des
+  questions ×3** (une divergence rend Milo collant *sans qu'aucun chiffre soit faux*) et la règle
+  « compte pour un PR » (1 propriétaire, 2 copies). 📊 Contexte : **~80 000 car., 13 sections**,
+  dont **31 091 rien que pour « ta personnalité »**.
+  ⭐ **Réponse à la question de fond** : *si Milo disparaît, l'app continue* — tout l'affichage est
+  local. Ce qu'il apporte d'irremplaçable : **relier ce qui n'est écrit dans aucun champ**.
+  · **`docs/AUTONOMIE-ET-CONNECTEURS.md`** — ⭐⭐ **l'app n'a pas un problème d'IA, elle a un problème
+  de BARREAUX SAUTÉS** : les 4 étages de l'échelle des sources (**R33**) sont **déjà embarqués**
+  (xlsx · `healthInbox` · **`_pdfToText`** · Tesseract · ZXing), et **3 ne servent qu'à un endroit
+  chacun**. ⛔ **`_pdfToText` (« 100 % local, 0 IA ») a UN appelant : le banc d'essai** — pendant que
+  les **4 imports** envoient des **images** au modèle. ⏭️ **Étape 0 avant tout** : mesurer combien des
+  vrais PDF de Michel ont une couche texte.
+
 - ⏳ **EN ATTENTE DE MICHEL — la passe de vérification du prochain import, vers le 06/10/2026.**
   Sa décision du 08/09 : *« je verrais ça dans 4 semaines quand je vais remettre un programme,
   mets-le dans le journal et on fera l'essai à ce moment-là »*. ⛔ **Il ne réimporte rien d'ici
