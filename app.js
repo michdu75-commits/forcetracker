@@ -1659,6 +1659,27 @@ function _per100Derive(vals, masse){
 
    ⚠️ Elle rend un BOOLÉEN et ne touche à rien : c'est `_srcRepriseQ` qui décide quoi en faire.
    *Une sous-étape réversible est une sous-étape qui ne fait qu'une chose.* */
+/* 🔢 3-ii (ft-v1199) — « QUELLE QUANTITE EN GRAMMES PEUT-ON REPROPOSER ? »
+   Rend un NOMBRE : la quantite en grammes, ou 0 quand il n'y en a pas.
+
+   ⛔⛔ CE N'EST PAS `_qReprenable`, ET LA DIFFERENCE EST VOULUE.
+   `_qReprenable` (3-i) accepte les PORTIONS ; celle-ci les REFUSE, parce que ses appelants
+   alimentent un champ **en grammes**. Les deux regles se ressemblent a un `||` pres et ne
+   disent pas la meme chose — les fondre serait un changement de comportement, pas une
+   extraction. Un temoin de perimetre fige qu'elles restent deux.
+
+   ⭐ ELLE REND UN NOMBRE, PAS UN BOOLEEN, et c'est ce qui evite une duplication plus tard :
+   `_qGrammes(x) > 0` est EXACTEMENT la condition, donc les sous-etapes 3-iii et 3-iv
+   pourront lui ajouter leurs appelants sans reecrire la regle.
+
+   ⚠️ L'unite ABSENTE est acceptee (elle vaut grammes par defaut) ; `0`, le negatif, les
+   portions et les `ml` sont refuses — sans densite, un volume ne dit pas ce que PESE
+   l'aliment, et on n'invente pas une densite (R29). */
+function _qGrammes(src){
+  const s = src || {};
+  return (+s.q > 0 && (!s.u || s.u === 'g')) ? +s.q : 0;
+}
+
 function _qReprenable(src){
   const s = src || {};
   return (+s.q > 0 && (!s.u || s.u === 'g' || s.u === 'portion'));
@@ -2875,7 +2896,7 @@ function quickFillFood(i){
     const g=document.getElementById('af-bc-grams');
     /* ⚖️ ft-v1051 : PROPOSÉE, plus imposée — le champ reste vide, la pastille offre le rappel. */
     if(g) g.value='';
-    if(typeof _bcProposerDerniere==='function') _bcProposerDerniere((+it.q>0 && (!it.u||it.u==='g')) ? +it.q : 0);
+    if(typeof _bcProposerDerniere==='function') _bcProposerDerniere(_qGrammes(it));
     const nm=document.getElementById('af-bc-name');
     if(nm) nm.textContent=_bcNutr.name+' · '+Math.round(_bcNutr.kcal100)+' kcal/100g (ta dernière saisie)';
     if(row) row.style.display='block';
@@ -4030,7 +4051,7 @@ function _afSuggPrendreLocale(i){
     const g=document.getElementById('af-bc-grams');
     /* ⚖️ ft-v1051 : la JUMELLE (R8) — le même correctif, sur le chemin « reprendre depuis le journal ». */
     if(g) g.value='';
-    if(typeof _bcProposerDerniere==='function') _bcProposerDerniere((+e.q>0 && (!e.u||e.u==='g')) ? +e.q : 0);
+    if(typeof _bcProposerDerniere==='function') _bcProposerDerniere(_qGrammes(e));
     const nm=document.getElementById('af-bc-name');
     if(nm) nm.textContent=_bcNutr.name+' · '+Math.round(_bcNutr.kcal100)+' kcal/100g (ta dernière saisie)';
     if(row) row.style.display='block';

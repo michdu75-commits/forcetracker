@@ -280,6 +280,78 @@ const snap=await p.evaluate(async()=>{
   });
   out['1bii_via_quickAddFood']=J(viaQuickAdd);
 
+  /* ══ 3-ii — LA PASTILLE « ta derniere quantite », LUE A L'ECRAN ══
+     ⛔⛔ LES DEUX PORTES ETAIENT DEJA CONDUITES (sondes 1bii_*), MAIS RIEN NE LISAIT LA
+     PASTILLE : les sondes au-dessus ne regardent que `_afSrc`. L'instantane serait donc reste
+     IDENTIQUE quoi qu'on fasse a `_bcProposerDerniere` — conduire n'est pas observer, et c'est
+     le meme defaut que `3_regle_avec_portions` sous un autre angle (12/09).
+     On lit donc ce que la pastille MET A L'ECRAN : visible ? quel texte ? quelle valeur portee ? */
+  const lirePastille = () => {
+    const b = document.getElementById('af-bc-last');
+    if(!b) return 'ELEMENT ABSENT';
+    return { vue: b.style.display !== 'none' && b.style.display !== '',
+             txt: b.textContent || '',
+             q: (b.dataset && b.dataset.q !== undefined) ? b.dataset.q : 'ABSENT' };
+  };
+
+  /* Les cas qui font la regle « grammes seuls » : grammes OK · portions REFUSEES ·
+     unite absente ACCEPTEE · zero · negatif · ml refuses. */
+  /* ⛔⛔ LE `per100` EST OBLIGATOIRE DANS CES FIXTURES, ET C'EST LA SONDE QUI L'A APPRIS.
+     Le site de la pastille est DANS un garde : `if(P && it.u!=='portion' && (+P.kcal>0||...))`,
+     ou `P` vaut `it.per100`. Sans pour-100 g, le bloc entier est saute et la pastille n'est
+     JAMAIS appelee : mes 6 premiers cas rendaient tous la meme valeur, un reliquat.
+     *Une sonde qui n'atteint pas la ligne visee mesure l'ecran d'avant, pas la regle.* */
+  const P100 = {kcal:66.7, prot:0.7, carbs:1.3, fat:2};
+  const CAS_PAST = [
+    {name:'En grammes',   kcal:100, prot:1, carbs:2, fat:3, per100:P100, q:150, u:'g'},
+    {name:'En portions',  kcal:100, prot:1, carbs:2, fat:3, per100:P100, q:2,   u:'portion', portionLabel:'part', portionWeightG:120},
+    {name:'Sans unite',   kcal:100, prot:1, carbs:2, fat:3, per100:P100, q:80},
+    {name:'Quantite nulle',kcal:100,prot:1, carbs:2, fat:3, per100:P100, q:0,   u:'g'},
+    {name:'Negatif',      kcal:100, prot:1, carbs:2, fat:3, per100:P100, q:-5,  u:'g'},
+    {name:'En millilitres',kcal:100,prot:1, carbs:2, fat:3, per100:P100, q:250, u:'ml'},
+  ];
+
+  /* ── porte 1 : quickFillFood ── */
+  const pastQuickFill=[];
+  CAS_PAST.forEach(cs=>{
+    try{
+      S.foodLog=[]; S.savedFoods=[]; persist();
+      try{ _afOublierAliment(); }catch(e){}
+      /* ⛔⛔ REMISE A ZERO EXPLICITE DE LA PASTILLE, ET C'EST UNE MESURE, PAS UNE PRECAUTION.
+         `_afOublierAliment` ne rend PAS cette pastille : seule `openAddFood` le fait. Donc
+         entre deux aliments d'une meme ouverture, celle du precedent reste affichee quand le
+         site est saute (aliment en portions, ou sans pour-100 g). C'est un VRAI defaut, la
+         jumelle exacte de celui du paquet corrige en ft-v1193 — mesure, ecrit dans
+         docs/JOURNAL-DE-TEST.md, et NON corrige ici (une extraction ne change rien).
+         Sans cette ligne, le cas « En portions » lirait le reliquat du cas precedent :
+         *la sonde mesurerait l'ecran d'avant au lieu de la regle.* */
+      try{ _bcProposerDerniere(0); }catch(e){}
+      _afSetSrc(null);
+      _afQuickItems=[Object.assign({fav:false}, cs)];
+      quickFillFood(0);
+      pastQuickFill.push([cs.name, J(lirePastille())]);
+    }catch(e){ pastQuickFill.push([cs.name, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['3ii_pastille_quickFillFood']=J(pastQuickFill);
+
+  /* ── porte 2 : _afSuggPrendreLocale — elle lit `_afSuggLoc[i]`, PAS `S.foodLog` (piege
+     mesure le 12/09 : une sonde qui passe l'index du journal sort au 3e caractere). ── */
+  const pastLocale=[];
+  CAS_PAST.forEach(cs=>{
+    try{
+      S.foodLog=[Object.assign({date:'2026-09-01', meal:'midi', ts:1}, cs)];
+      persist();
+      try{ _afOublierAliment(); }catch(e){}
+      try{ _bcProposerDerniere(0); }catch(e){}   // meme raison qu'au-dessus (defaut mesure, non corrige)
+      _afSetSrc(null);
+      _afSuggLoc = _afSuggLocales(cs.name);
+      if(!_afSuggLoc.length) throw new Error('liste locale VIDE — la sonde ne conduirait rien');
+      _afSuggPrendreLocale(0);
+      pastLocale.push([cs.name, J(lirePastille())]);
+    }catch(e){ pastLocale.push([cs.name, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['3ii_pastille_afSuggPrendreLocale']=J(pastLocale);
+
   return out;
 });
 

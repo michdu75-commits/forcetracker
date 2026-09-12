@@ -4,6 +4,47 @@
 > questions ou les discussions que l'on peut avoir, on remplit ce fichier, 1 semaine, 1 mois et un jour
 > on aura plus questions »*.
 
+### 🟠 La pastille « ↩ … g (la dernière fois) » SURVIT à l'aliment suivant *(mesuré 12/09/2026, ft-v1199)*
+
+**État : à trier — MESURÉ, NON CORRIGÉ** (trouvé en étendant la sonde pour 3-ii ; hors périmètre
+d'une sous-étape d'extraction, qui ne change aucun comportement).
+
+**Ce qui est mesuré**, à la sonde, dans un navigateur :
+
+| geste | pastille affichée |
+|---|---|
+| reprendre un aliment **en grammes** (150 g) | `↩ 150 g` ✅ |
+| appeler `_afOublierAliment()` **seule** | **`↩ 150 g` — elle reste** ⛔ |
+| puis reprendre un aliment **en portions** | **`↩ 150 g` — sur le mauvais aliment** ⛔ |
+
+**⛔ La cause est nommée** : `_bcProposerDerniere(0)` n'est appelée que par **`openAddFood()`**,
+donc la pastille se rend **à l'ouverture de l'écran** — jamais **entre deux aliments** d'une même
+ouverture. Et le site qui la repose est **dans un garde** (`if(P && it.u!=='portion' && …)`) :
+quand ce garde est faux (un aliment **en portions**, ou **sans pour-100 g**), personne ne la
+touche, et **celle de l'aliment précédent reste à l'écran**.
+
+**⭐⭐ ET C'EST EXACTEMENT LE DÉFAUT DE LA PHASE 0a (ft-v1193), SUR L'AUTRE PASTILLE.** À cette
+date, `_afOublierAliment` a été complétée pour rendre le **poids du paquet** (`_bcPaquetG` +
+`_bcProposerPaquet()`) — *la pastille jumelle, « 📦 410 g (le paquet entier) »*. La pastille
+« la dernière fois » **n'a pas reçu le même traitement**. 👉 **R8, la porte jumelle** — et cette
+fois à l'intérieur même du correctif qui a fermé sa sœur.
+
+**⚠️ Pourquoi ça ne s'est pas vu plus tôt** : sur le chemin le plus courant (deux aliments avec
+un pour-100 g, comptés en grammes), le garde est vrai les deux fois, donc la pastille est
+**repeinte** et rien ne fuit. Il faut un aliment **en portions** — ou sans pour-100 g — en
+deuxième position pour que le reliquat reste visible.
+
+**⛔ NON CORRIGÉ ICI, et la raison est la méthode** : une sous-étape d'extraction ne change
+**aucun** comportement, et son critère est un instantané identique octet pour octet. Poser
+l'appel manquant **changerait ce que l'écran affiche** — c'est un correctif, pas un rangement.
+*Mesuré, écrit, et laissé à Michel.*
+
+⏭️ **Le correctif tiendrait en une ligne** dans `_afOublierAliment`, à côté de celui du paquet :
+`try{ _bcProposerDerniere(0); }catch(e){}`. **Un témoin devra figer les deux moitiés**, comme
+pour le paquet en ft-v1193.
+
+---
+
 ## Pourquoi ce fichier existe
 
 **Les 6 meilleurs scénarios du benchmark viennent de bugs vécus en salle** (la charge de 82,5 kg,
