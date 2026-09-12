@@ -198,7 +198,7 @@ réintégrées à l'inventaire. **16 décisions** sur l'unité au total.
 > 👉 **Leçon à appliquer aux sous-étapes suivantes** : avant d'écrire « instantané couvert »,
 > **ouvrir la sonde** et vérifier qu'elle conduit la production, pas une copie de la règle.
 
-### 3-ii — la pastille « ta dernière quantité »
+### 3-ii — la pastille « ta dernière quantité » ✅ **LIVRÉE (ft-v1199)**
 - **Sites** : `quickFillFood` (@2777) · `_afSuggPrendreLocale` (@3924) — **2, identiques**
 - **Instantané** : ⚠️ à étendre (la pastille n'est pas sondée)
 

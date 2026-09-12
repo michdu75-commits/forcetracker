@@ -4,9 +4,9 @@
 > questions ou les discussions que l'on peut avoir, on remplit ce fichier, 1 semaine, 1 mois et un jour
 > on aura plus questions »*.
 
-### 🟠 La pastille « ↩ … g (la dernière fois) » SURVIT à l'aliment suivant *(mesuré 12/09/2026, ft-v1199)*
+### 🟡 La pastille « ↩ … g (la dernière fois) » SURVIT à l'aliment suivant *(mesuré 12/09/2026, ft-v1199)*
 
-**État : à trier — MESURÉ, NON CORRIGÉ** (trouvé en étendant la sonde pour 3-ii ; hors périmètre
+**État : 🟡 à trier — MESURÉ, NON CORRIGÉ** (trouvé en étendant la sonde pour 3-ii ; hors périmètre
 d'une sous-étape d'extraction, qui ne change aucun comportement).
 
 **Ce qui est mesuré**, à la sonde, dans un navigateur :

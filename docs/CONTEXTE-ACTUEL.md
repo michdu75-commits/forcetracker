@@ -20,7 +20,33 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1198` — 📋 **1b-iii : le noyau d'un item de liste · et le
+- **Version en ligne (live) :** `ft-v1199` — 🔢 **3-ii : la pastille « ta dernière quantité » ·
+  et un défaut RÉEL trouvé par la sonde, mesuré et NON corrigé.**
+  ⭐ **Test d'entrée passé** : 2 copies strictement identiques → **`_qGrammes(src)`**.
+  ⭐ **Elle rend un NOMBRE, pas un booléen** — `_qGrammes(x) > 0` **est** la condition, donc
+  3-iii et 3-iv lui ajouteront leurs appelants **sans réécrire la règle**. Un propriétaire pour
+  trois sous-étapes.
+  ⛔⛔ **Ce n'est PAS `_qReprenable`** : celle de 3-i accepte les **portions**, celle-ci les
+  **refuse** (ses appelants alimentent un champ en grammes). **Deux témoins figent qu'elles
+  restent DEUX** — les fusionner dans un sens comme dans l'autre fait rougir.
+  ⭐ **Le témoin de périmètre de 3-i SE DÉPLACE** : « écrite 5 fois » → **3 écritures + 2
+  appelants**, avec ce que deviendra le compte après 3-iii et 3-iv.
+  ⛔⛔ **DÉFAUT RÉEL, HORS PÉRIMÈTRE** : `_afOublierAliment` **ne rend pas** la pastille « la
+  dernière fois » (seule `openAddFood` le fait) → entre deux aliments d'une même ouverture, celle
+  du précédent **reste affichée** sur un aliment en portions. ***Jumelle exacte du défaut du
+  PAQUET corrigé en ft-v1193*** (R8). **Mesuré, écrit dans `docs/JOURNAL-DE-TEST.md` avec son
+  correctif d'une ligne, NON corrigé** — une extraction ne change aucun comportement.
+  ⚠️ **Et la sonde me l'a appris à mes dépens** : le site est **dans un garde** (`P = it.per100`)
+  — sans pour-100 g, le bloc est sauté et **les 6 cas rendaient la même valeur**, un reliquat.
+  *Une sonde qui n'atteint pas la ligne visée mesure l'écran d'avant, pas la règle.*
+  ⭐ **Instantané 15 → 17 clés** (les portes étaient **conduites**, mais rien ne **lisait**
+  `#af-bc-last` — *conduire n'est pas observer*), **identique octet pour octet**, sha
+  `b8f06e45d8c91fcc`.
+  ⏭️ **EN ATTENTE DE MICHEL** : les 4 harmonisations **+ la pastille périmée**.
+  **4 sous-étapes réelles restantes** avant le hub.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1198` — 📋 **1b-iii : le noyau d'un item de liste · et le
   plan annonçait DEUX divergences, il n'y en a qu'UNE.**
   ⭐ **Test d'entrée passé** (sa consigne permanente) : **3 sites réels** — les deux branches de
   `_buildFoodQuickItems` et `toggleFavFood`. **9 champs strictement identiques** mesurés champ par
@@ -41,7 +67,7 @@
   📣 **Toujours ouverts** : `S.savedFoods` · l'écart `48,3`/`48`.
   ⚠️ **À vérifier par Michel sur Safari/iPhone.**
 
-- **Version précédente :** `ft-v1197` — 🏷️ **1b-ii : la provenance reprise · et une
+- **Avant :** `ft-v1197` — 🏷️ **1b-ii : la provenance reprise · et une
   sous-étape de mon propre plan qui n'avait RIEN à extraire.**
   ⛔⛔ **LE FAIT DE LA VERSION EST UNE SOUS-ÉTAPE SUPPRIMÉE.** La suivante dans l'ordre était
   **1b-iv** (l'export CSV), décrite comme *« la moins risquée du lot »*. Mesuré avant la moindre
