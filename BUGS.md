@@ -3541,6 +3541,28 @@ mécanisme sans témoin passe pour mort, celle-ci qu'un mécanisme **à moitié 
 
 ## §60 — ⛔⛔ MUTER UN FICHIER **SERVI** PENDANT QU'UNE PASSE TOURNE FAUSSE LA PASSE **EN SILENCE** *(10/09/2026, ft-v1190)*
 
+> **⚠️⚠️ RÉCIDIVE LE 12/09/2026 (ft-v1197), PAR CELUI QUI A ÉCRIT CETTE SECTION — et elle ajoute
+> quelque chose.** Je n'ai pas muté du code applicatif : j'éprouvais les **gardes d'un PDF**, en
+> mutant `app.js` et `setup.js` pour vérifier qu'ils refusaient de produire. **Pendant que la passe
+> tournait.**
+>
+> ⭐⭐ **Ce que la récidive apprend** : la règle telle qu'elle était écrite parle du *contrôle négatif
+> du **correctif***. Or **un document a ses gardes, et les éprouver mute les mêmes fichiers** — le
+> geste est identique, seule l'intention diffère, et *l'intention n'est pas ce que le serveur du banc
+> lit*. 👉 **La règle se généralise : pendant une passe, aucun fichier servi ne bouge, quelle que
+> soit la RAISON de le faire.** Contrôle négatif du code, gardes d'un PDF, essai rapide, mesure de
+> curiosité — même interdit.
+>
+> ⛔ **Et il y a pire à savoir** : la veille (ft-v1196), j'avais fait la même chose en plus petit et
+> **vérifié après coup** que ça n'avait rien touché. *Une vérification qui vient après le geste ne
+> protège pas, elle rassure* — c'était déjà écrit dans ft-v1190, et ça n'a pas suffi.
+>
+> ✅ **Ce qui a limité les dégâts n'est pas la règle, c'est le réflexe** : passe **arrêtée
+> immédiatement**, les trois fichiers **vérifiés restaurés au diff**, puis **relancée de zéro sans
+> rien toucher** — elle a rendu **3605 ✅ · 0 ❌**, le total exactement prédit. *Rien n'a été conclu
+> sur une passe faussée, et c'est la seule chose qui compte une fois la faute commise.*
+
+
 **À quoi on la reconnaît** : une passe complète rend des rouges **sur un bloc qui passe en isolé**,
 et le message d'échec est **plausible** — il tombe sur de vrais témoins, dans le bloc qu'on vient
 justement de modifier.

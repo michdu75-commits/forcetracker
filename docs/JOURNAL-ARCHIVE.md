@@ -8131,3 +8131,41 @@ Tests : **parcours 3481/3481 sur l'arbre FINAL** (+18, bloc **CCLXXXV**), **calc
 ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1060**, `conclusion: success` à **08:52:22 UTC** sur `fb392db4`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur la liste filtrée `status: completed`* — la leçon de ft-v1182.
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1188. |
+
+**ft-v1189 — 🔗📊 RENOMMER UN EXERCICE DANS UNE SÉANCE PASSÉE : UN RECORD ORPHELIN, ET UN GRAPHIQUE QUI CONTREDISAIT L'ÉCRAN** — Michel, en cherchant le bouton que je venais de livrer : ***« je ne trouve pas dans choisir un exercice tirage vertical »***.
+
+**⭐⭐ MESURÉ, ET C'EST MOI QUI L'AVAIS ENVOYÉ AU MAUVAIS ENDROIT.** Il n'a **plus** d'exercice perso « Tirage vertical » — il les avait déjà remplacés. *Vérifié dans la page* : s'il en avait un, il sortirait **en tête** du sélecteur dès qu'on tape « tirage vertical ». Le nom ne vit plus que dans sa **séance du 9 sept**. 👉 **Mon bouton de ft-v1187 ne pouvait pas l'atteindre** : il ne travaille que sur `S.customExercises`.
+
+**⭐ LE BON GESTE EXISTAIT DÉJÀ, ET IL ÉTAIT SUR L'ÉCRAN DE SA CAPTURE** : le **🔄** de la carte → `replaceSessEx` → `_replaceSessExPick` → **💾 Enregistrer**. Conduit de bout en bout : **séries gardées, volume inchangé (1220), record 81,4 kg créé sous le bon nom**.
+
+**⛔⛔ MAIS IL LAISSAIT UN RECORD DERRIÈRE LUI.** `S.prs['Tirage vertical']` restait **intact** — donc un exercice **fantôme** continuait d'apparaître dans **Progrès**, avec un record dedans, alors que **plus aucune séance ne le portait**. 👉 **C'est R8 pour la 9ᵉ fois** : la porte jumelle (`_renameExEverywhere`, chemin exercice perso) déplace le record **depuis toujours** ; celle-ci, non.
+
+**⛔⛔ ET LE CORRECTIF NE POUVAIT PAS ÊTRE « SUPPRIMER L'ANCIEN RECORD »** : le nom peut vivre dans **d'autres** séances — on n'en renomme qu'une. On ne déplace donc **que si plus aucune séance ne le porte** (**R29** : le coût de l'erreur est ici une **perte de donnée silencieuse**). Un témoin dédié fige ce garde-fou.
+
+**⭐ AUCUNE RÈGLE NOUVELLE (R2/R13)** : on applique **celle de `_renameExEverywhere`** — garder le meilleur 1RM, puis supprimer la source. Mesuré : cible déjà à **120 kg** → elle n'est **pas** écrasée par les 81,4.
+
+**⚠️⚠️ ET LE CONTRÔLE NÉGATIF A TROUVÉ UN VRAI DÉFAUT QUE J'ALLAIS LIVRER.** Trois de mes sept mutations ne mordaient pas. En cherchant pourquoi — au lieu de conclure à du code décoratif — **le repli des chaînes s'est révélé nécessaire, et mon témoin incomplet** : sur *A→B→C*, un traitement séquentiel déplace d'abord le record de A vers **B**, puis celui de **B** vers C. Si **B avait déjà un record à lui** (un orphelin d'avant), ***ce record-là partait avec***. Mon cas ④ ne le voyait pas parce que B n'avait rien. Cas **④bis** écrit — B porte 90 kg — et la mutation mord chirurgicalement : sans repli, les 90 kg de « Tirage Nuque » atterrissaient sur le lat pulldown.
+
+**⛔ ET DEUX AUTRES « PROTECTIONS » ONT ÉTÉ MESURÉES INUTILES, DONC UNE A ÉTÉ RETIRÉE.** J'avais posé la remise à zéro des renommages **à l'ouverture ET à la fermeture** : chacune neutralisée seule, **0 rouge** — *elles se couvraient l'une l'autre*. La seconde est retirée (**R19**). ⚠️ **Et je dis ce que la mesure dit vraiment** : même celle qui reste **n'a aucun cas d'échec atteignable**, parce que le garde `encoreLa` fait déjà le travail — une séance fermée sans enregistrer porte encore l'ancien nom. Elle reste pour qu'une fenêtre s'ouvre **toujours** propre, **pas parce qu'un témoin l'exige** — c'est écrit dans le code. *Le contraire de ft-v1180, où j'avais failli retirer une vraie protection : ici j'ai cherché le cas, et il n'existe pas.*
+
+**📊 ET LA SECONDE MOITIÉ VIENT DE MICHEL, UNE HEURE PLUS TARD : « ON A UNE PERTE D'HISTORIQUE ».** Capture à l'appui : il vient de taper le 🔄, la carte affiche « Tirage Poulie Haute (Lat Pulldown) », et le 📊 ouvert **depuis cette carte** montre 5 séances **sans la sienne du 9 sept**.
+
+**⛔⛔ MESURÉ DANS SON PROPRE EXPORT — RIEN N'ÉTAIT PERDU.** Ses deux séries y sont, intactes : `2026-09-09 · Tirage vertical · 61 kg × 10` ×2, et la séance entière (Larsen 6 séries · Tirage 2 · Épaules 2 · Machine Oiseau 3 · 9 min de cardio). *L'export portait encore l'ANCIEN nom* — donc il n'avait pas encore tapé 💾 Enregistrer.
+
+**⭐⭐ LA CAUSE EST UNE SOURCE, PAS UN CALCUL** : `_getExHistory` lit **`S.sessions`** (l'état ENREGISTRÉ) pendant que la carte qu'il regarde vit dans **`_sessEdits`** (l'état EN COURS D'ÉDITION). Le graphique était donc **exact** et **contredisait l'écran**. 👉 ***Un chiffre qui contredit l'écran est indiscernable d'une perte de données*** — et c'est exactement la conclusion qu'il en a tirée, à juste titre.
+
+**⛔ ON NE MÉLANGE PAS LES DEUX SOURCES** : afficher l'édition non enregistrée dans une courbe d'historique fabriquerait un point qui n'existe pas encore (**R2**). On **DIT ce qui manque** — bandeau orange, avec **la date nommée** : *« Ta séance du 9 sept n'est pas encore enregistrée — elle n'apparaît donc pas dans cette courbe. Tape 💾 Enregistrer pour l'y voir. »* (**R29** : informer sans décider.)
+
+**⛔ ET IL SE TAIT PARTOUT AILLEURS** — hors fenêtre de séance · fenêtre ouverte sans rien changer · sur un **autre** exercice que celui renommé. *Un avertissement permanent cesse d'être lu* (**R24/R25**). Trois témoins le figent.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît : un record fantôme cesse d'apparaître (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **ça ne renomme rien tout seul** — c'est toujours la personne qui tape 🔄 puis Enregistrer. ⛔ Ni l'import, ni le rapprocheur, ni `_EX_EQUIV`, ni le bouton de ft-v1187 ne sont touchés. ⛔ **Et un exercice SUPPRIMÉ d'une séance passée laisse toujours son record** — c'est une **troisième** porte, non traitée ici, et je préfère l'écrire que la laisser se découvrir (**R30**). ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1064**, `conclusion: success` à **10:50:01 UTC** sur `7ec189ef`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⚠️ *Et l'API a de nouveau servi un état PÉRIMÉ* — la liste filtrée `status: completed` ignorait encore le run alors qu'il était clos ; c'est **`get_workflow_run` sur l'ID** qui a rendu l'état frais. 👉 **La leçon de ft-v1182 s'inverse selon les jours : ce n'est pas UNE requête qui est fiable, c'est d'en croiser DEUX.**
+
+Tests : **parcours 3495/3495 sur l'arbre FINAL** (+14, bloc **CCLXXXVI**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⭐ **Le témoin CONDUIT le vrai chemin** (`openSessDetail` → `replaceSessEx` → le choix → `saveSessEdits`), jamais `_deplacerRecordsRenommes` en direct — *vérifier la fonction n'est pas vérifier l'appel* (`BUGS.md` §58). ⛔ **CONTRÔLE NÉGATIF : 9 mutations, TOUTES MORDENT** — ① le correctif entier retiré → **3 rouges** · ② le garde-fou « le nom vit ailleurs » retiré → **1**, exactement lui · ③ on écrase le record de la cible sans comparer → **1** · ④ le repli de chaîne retiré → **1**, exactement le cas ④bis · ⑤ le renommage plus noté du tout → **3** · ⑥ le bandeau non affiché → **1** · ⑦ le bandeau qui ne regarde plus QUEL exercice → **1**, exactement le témoin du silence · ⑧ le bandeau qui ne vérifie plus la séance ENREGISTRÉE → **2** · ⑨ la date retirée du bandeau → **1**.
+
+**⚠️ UNE ERREUR DE SONDE À MOI, DITE PLUTÔT QUE TUE** : ma 1ʳᵉ mesure passait `openSessDetail(0)` — or elle prend le **ts/id**, pas l'index. Le renommage ne se produisait donc **pas**, et j'ai failli conclure que le chemin 🔄 était cassé. 👉 ***Un test qui n'emploie pas la signature de la production ne teste rien*** — la même famille que le `cardio.min`/`duration` de ft-v1184.
+
+Fichiers : `setup.js`, `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1189. |

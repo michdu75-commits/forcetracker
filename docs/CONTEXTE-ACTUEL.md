@@ -20,7 +20,41 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1196` — 🔍 **sous-étape 3-i : un propriétaire pour « cette
+- **Version en ligne (live) :** `ft-v1197` — 🏷️ **1b-ii : la provenance reprise · et une
+  sous-étape de mon propre plan qui n'avait RIEN à extraire.**
+  ⛔⛔ **LE FAIT DE LA VERSION EST UNE SOUS-ÉTAPE SUPPRIMÉE.** La suivante dans l'ordre était
+  **1b-iv** (l'export CSV), décrite comme *« la moins risquée du lot »*. Mesuré avant la moindre
+  ligne : **`NUTRI_COLONNES` et sa construction existent UNE SEULE FOIS**, aucun import ne les
+  relit, et `_csvFichier(...)` est **déjà** le propriétaire commun (nutrition **et** poids).
+  👉 ***Une extraction exige au moins DEUX copies*** — en sortir une créerait un propriétaire à
+  **un seul appelant** (**R19**).
+  ⭐⭐ **Et l'erreur qui l'a fait entrer dans le plan vaut plus que la sous-étape** : sa
+  justification était *« invisible au compteur »* (le cas d'école de `BUGS.md` §63) — j'ai versé au
+  découpage **tout ce que le compteur avait raté**, sans demander site par site *s'il était
+  DUPLIQUÉ*. ***Réparer l'instrument et refaire l'inventaire sont deux gestes différents.***
+  **Test d'entrée désormais écrit : compter les copies AVANT de décrire une sous-étape.**
+  ⚠️ Son étiquette « instantané » était fausse **des deux côtés** (elle disait *« aucune sonde »*,
+  or le bloc CCIV conduit vraiment l'export et lit le CSV) — *le miroir de ft-v1196*.
+  ⛔ **1b-iv reste écrite à sa place AVEC SA RAISON** (**R30**). ⭐ Les 8 autres, auditées au même
+  test, **tiennent toutes**.
+  ⭐ **Livré : 1b-ii** — `{sourceId, etat, per100}` → **`_srcProvenance(src)`**, 3 appelants.
+  ⛔⛔ **`origine` et `saisie` NE SONT PAS dedans, et c'est la coupe** : ils disent trois choses
+  différentes aux trois portes, et la porte directe **ignore la source exprès** (une ligne venue
+  d'un code-barres se réenregistre en `'reprise'` — en hériter affirmerait une provenance qu'on
+  n'a pas relue, **R33**). **Décision produit n°4, transportée et figée par 2 témoins.**
+  ⚠️⚠️ **Ma sonde était MORTE, et vu AVANT de capturer le BEFORE** : `_afSuggPrendreLocale` lit
+  `_afSuggLoc[i]`, pas `S.foodLog`. *Un BEFORE capturé ainsi est pire qu'aucun BEFORE — il PRODUIT
+  une preuve et aurait validé n'importe quelle extraction.*
+  ⭐ **Critère binaire atteint** : sonde de **12 à 15 clés**, instantané **identique octet pour
+  octet**, sha `7a52c37da93e17a3`.
+  ⛔ **Et j'ai refait §60** : muté des fichiers **servis pendant ma propre passe**. Vu tout de
+  suite → passe **relancée de zéro**. *Le contrôle négatif d'un PDF se fait avant ou après, jamais
+  pendant.*
+  ⏭️ **EN ATTENTE DE MICHEL — les 4 harmonisations.** **6 sous-étapes restantes.**
+  📣 **Toujours ouverts** : `S.savedFoods` · l'écart `48,3`/`48`.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1196` — 🔍 **sous-étape 3-i : un propriétaire pour « cette
   quantité est-elle reprenable ? », et la sonde qui ne couvrait rien.**
   Michel : *« continue selon `docs/SOUS-ETAPES-1B-3.md`, une sous-étape à la fois »*, mêmes règles.
   ⭐ **Livré** : le TEST écrit deux fois (`rejouerRepas` · `quickAddFood`) devient **`_qReprenable(src)`**
@@ -53,7 +87,7 @@
   **Le hub et la douane restent après.** 📣 **Toujours ouverts** : `S.savedFoods` · l'écart `48,3`/`48`.
   ⚠️ **À vérifier par Michel sur Safari/iPhone.**
 
-- **Version précédente :** `ft-v1195` — ✂️ **le redécoupage de 1b et 3, et la sous-étape 1b-i.**
+- **Avant :** `ft-v1195` — ✂️ **le redécoupage de 1b et 3, et la sous-étape 1b-i.**
   Michel tranche : ⛔ *« je ne veux pas traiter 1b et 3 en un seul gros chantier — redécoupe-les en
   sous-étapes plus petites, mesurables et réversibles »* · ⛔⛔ *« je ne veux pas harmoniser
   maintenant les défauts divergents : à ce stade on doit les **TRANSPORTER** explicitement sans les

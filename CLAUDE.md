@@ -157,7 +157,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1196`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1197`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1196`** (prochaine : `ft-v1197`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1197`** (prochaine : `ft-v1198`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,45 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1197 — 🏷️ 1b-ii : LA PROVENANCE REPRISE · ET UNE SOUS-ÉTAPE DE MON PROPRE PLAN QUI N'AVAIT RIEN À EXTRAIRE** — Michel : ***« continue selon le découpage, une sous-étape à la fois »***, puis ***« après avoir bossé, fais-moi un PDF direct pour GPT »***.
+
+**⛔⛔ LE FAIT DE LA VERSION EST UNE SOUS-ÉTAPE SUPPRIMÉE, PAS LE CODE LIVRÉ.** La suivante dans l'ordre était **1b-iv** (l'export CSV), que mon propre document décrivait comme ⭐ *« la sous-étape la moins risquée du lot »*. **Mesuré avant la moindre ligne : elle est VIDE.**
+- `NUTRI_COLONNES` et sa construction de ligne existent **une seule fois** dans tout le code servi ;
+- **aucun import ne les relit** ;
+- et le partage était **DÉJÀ fait au bon niveau** : `_csvFichier(colonnes, lignes, …)` est le propriétaire commun, appelé par l'export **nutrition ET poids**, bien avant ce chantier.
+
+👉 ***Une extraction exige au moins DEUX copies.*** En sortir une créerait un propriétaire à **un seul appelant** — pas du rangement, de la complexité sans contrepartie (**R19**).
+
+**⭐⭐ ET L'ERREUR QUI L'A FAIT ENTRER DANS LE PLAN VAUT PLUS QUE LA SOUS-ÉTAPE.** Sa justification écrite était *« c'est elle qui était invisible au compteur »* — **vrai**, c'est le cas d'école de `BUGS.md` §63 (ft-v1194). Mais j'en ai tiré la mauvaise conclusion : j'ai versé au découpage **tout ce que le compteur avait raté**, sans jamais demander, site par site, **s'il était DUPLIQUÉ**. 👉 ***Un site qu'un compteur défaillant a manqué n'est pas pour autant un site à extraire*** : *réparer l'instrument* et *refaire l'inventaire* sont deux gestes différents, et j'avais fait le premier en croyant avoir fait le second. **Le test d'entrée est désormais écrit : compter les copies AVANT de décrire une sous-étape.**
+
+**⚠️ ET SON ÉTIQUETTE « INSTANTANÉ » ÉTAIT FAUSSE DES DEUX CÔTÉS** : elle annonçait *« AUCUNE sonde aujourd'hui — prérequis absolu »*, or le bloc **CCIV** conduit **vraiment** `exportNutritionCsv()`, intercepte la remise du fichier et **lit le CSV produit**. 👉 **C'est le miroir exact de ft-v1196**, où l'étiquette disait *« couvert »* pour une sonde qui ne couvrait rien. ***Dans les deux sens, l'étiquette ne remplace pas l'ouverture du fichier.*** ⛔ **1b-iv reste écrite à sa place AVEC SA RAISON** (**R30**) — une sous-étape effacée ressemble à un oubli, et quelqu'un la remettrait dans six mois. ⭐ **Les 8 autres ont été auditées au même test : toutes tiennent.** Une seule était vide sur dix.
+
+**⭐ CE QUI EST DONC LIVRÉ : 1b-ii**, la provenance recopiée d'une ligne existante — `{sourceId, etat, per100}` → **`_srcProvenance(src)`**, 3 appelants.
+
+**⛔⛔ ET LA COUPE EST DICTÉE PAR LES DIVERGENCES, PAS PAR LA RESSEMBLANCE.** `origine` et `saisie` sont sur la même ligne et ressemblent au reste — **ils ne disent pas la même chose aux trois portes** :
+
+| porte | `origine` | `saisie` |
+|---|---|---|
+| « Mes aliments » | `it.origine\|\|'reprise'` | `'liste'` |
+| recherche du journal | `e.origine\|\|'utilisateur'` | `'historique'` |
+| ajout direct | **`'reprise'` en dur** | `'liste'` |
+
+⭐ **Mesuré à la sonde** : une ligne venue d'un code-barres (`origine:'off'`) se réenregistre par la porte directe en **`'reprise'`**. ⛔ **Ce n'est pas un bug** — la source n'est pas conservée sur les favoris, donc en hériter **affirmerait une provenance qu'on n'a pas relue** (**R33**). 👉 **Les unifier changerait ce que le journal DIT DE LUI-MÊME** : décision produit n°4, **transportée et figée par 2 témoins de périmètre**. *Un écart qu'on lit dans le code ne se perd pas ; un écart absorbé dans un propriétaire, si.*
+
+**⭐ ET LE PÉRIMÈTRE DU DOCUMENT ÉTAIT FAUX AUSSI, EN PLUS PETIT** : le 4ᵉ site qu'il citait (`_buildFoodQuickItems`) **n'en est pas un** — il construit un **item de liste**, pas une provenance (c'est 1b-iii) ; et `quickAddFood` ne porte que **la paire**, son `per100` lui venant de `_srcRepriseQ` depuis ft-v1195.
+
+**⚠️⚠️ MA SONDE ÉTAIT MORTE, ET JE L'AI VU AVANT DE CAPTURER LE BEFORE — c'est le moment qui compte, pas l'erreur.** Ma 1ʳᵉ version appelait `_afSuggPrendreLocale(0)` après avoir garni `S.foodLog` : **elle lit `_afSuggLoc[i]`, pas `S.foodLog`**, donc elle sortait au 3ᵉ caractère (`if(!e) return`) et la sonde rendait **`ABSENT` partout**. 👉 ***Un BEFORE capturé avec une sonde morte est pire qu'aucun BEFORE, parce qu'il PRODUIT une preuve*** : il serait resté identique quoi qu'on fasse au code, donc il aurait **validé n'importe quelle extraction**. Corrigée en remplissant par `_afSuggLocales()`, la **vraie** fonction de production, **avec un garde qui LÈVE si la liste est vide**. *C'est le piège d'`openSessDetail(0)` de ft-v1189, repayé.*
+
+**⭐ CRITÈRE BINAIRE ATTEINT** : la sonde passe de **12 à 15 clés** (3 portes réellement conduites), et l'instantané est **identique octet pour octet** avant/après — **sha256 `7a52c37da93e17a3`**, diff vide.
+
+**⛔⛔ ET J'AI REFAIT §60 : J'AI MUTÉ DES FICHIERS SERVIS PENDANT MA PROPRE PASSE.** En éprouvant les gardes du PDF, j'ai muté `app.js` et `setup.js` **alors que la passe tournait** — exactement la faute que j'ai documentée en ft-v1190, dans le fichier qui la documente. ⭐ **Rien n'a été conclu à tort parce que je l'ai vu tout de suite** : passe **arrêtée**, fichiers vérifiés restaurés, **passe relancée de zéro sans rien toucher**. 👉 ***La règle ne suffit pas : il faut que le geste soit impossible au mauvais moment.*** Le contrôle négatif d'un PDF se fait **avant de lancer la passe, ou après** — jamais pendant, comme celui du code.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change : trois champs recopiés deviennent un propriétaire (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les 6 sous-étapes restantes** ne sont pas faites · ⛔ **aucun défaut divergent n'est harmonisé** · ⛔ ni le **hub** (4) ni la **douane** (5) · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique et les migrations restent ouverts. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `tools/gen_1bii_pdf.py`, `docs/SOUS-ETAPE-1BII.pdf`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1197. |
 
 **ft-v1196 — 🔍 SOUS-ÉTAPE 3-i : UN PROPRIÉTAIRE POUR « CETTE QUANTITÉ EST-ELLE REPRENABLE ? » · ET LA SONDE QUI NE COUVRAIT RIEN** — Michel : ***« continue selon `docs/SOUS-ETAPES-1B-3.md`, une sous-étape à la fois, en gardant exactement les mêmes règles »*** — une seule chose · sonde/instantané avant si nécessaire · aucun changement de comportement · divergences transportées, pas harmonisées · mutations qui mordent · rollback simple.
 
@@ -700,44 +739,6 @@ Tests : **parcours 3513/3513 sur l'arbre FINAL**, **calculs 339/339** (elles por
 ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je **ne peux pas** lire le `sw.js` réellement servi. La vérification s'arrête à l'API — *le run est vert, l'app affichant ft-v1190 reste à confirmer par Michel.*
 
 Fichiers : `app.js` (un commentaire), `tests/parcours/runner.js`, `tests/calculs/runner.js`, `.gitignore`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/GARDE-FOU-LARGE-ET-LA-PASSE-FAUSSEE.pdf`. sw.js ft-v1190. |
-
-**ft-v1189 — 🔗📊 RENOMMER UN EXERCICE DANS UNE SÉANCE PASSÉE : UN RECORD ORPHELIN, ET UN GRAPHIQUE QUI CONTREDISAIT L'ÉCRAN** — Michel, en cherchant le bouton que je venais de livrer : ***« je ne trouve pas dans choisir un exercice tirage vertical »***.
-
-**⭐⭐ MESURÉ, ET C'EST MOI QUI L'AVAIS ENVOYÉ AU MAUVAIS ENDROIT.** Il n'a **plus** d'exercice perso « Tirage vertical » — il les avait déjà remplacés. *Vérifié dans la page* : s'il en avait un, il sortirait **en tête** du sélecteur dès qu'on tape « tirage vertical ». Le nom ne vit plus que dans sa **séance du 9 sept**. 👉 **Mon bouton de ft-v1187 ne pouvait pas l'atteindre** : il ne travaille que sur `S.customExercises`.
-
-**⭐ LE BON GESTE EXISTAIT DÉJÀ, ET IL ÉTAIT SUR L'ÉCRAN DE SA CAPTURE** : le **🔄** de la carte → `replaceSessEx` → `_replaceSessExPick` → **💾 Enregistrer**. Conduit de bout en bout : **séries gardées, volume inchangé (1220), record 81,4 kg créé sous le bon nom**.
-
-**⛔⛔ MAIS IL LAISSAIT UN RECORD DERRIÈRE LUI.** `S.prs['Tirage vertical']` restait **intact** — donc un exercice **fantôme** continuait d'apparaître dans **Progrès**, avec un record dedans, alors que **plus aucune séance ne le portait**. 👉 **C'est R8 pour la 9ᵉ fois** : la porte jumelle (`_renameExEverywhere`, chemin exercice perso) déplace le record **depuis toujours** ; celle-ci, non.
-
-**⛔⛔ ET LE CORRECTIF NE POUVAIT PAS ÊTRE « SUPPRIMER L'ANCIEN RECORD »** : le nom peut vivre dans **d'autres** séances — on n'en renomme qu'une. On ne déplace donc **que si plus aucune séance ne le porte** (**R29** : le coût de l'erreur est ici une **perte de donnée silencieuse**). Un témoin dédié fige ce garde-fou.
-
-**⭐ AUCUNE RÈGLE NOUVELLE (R2/R13)** : on applique **celle de `_renameExEverywhere`** — garder le meilleur 1RM, puis supprimer la source. Mesuré : cible déjà à **120 kg** → elle n'est **pas** écrasée par les 81,4.
-
-**⚠️⚠️ ET LE CONTRÔLE NÉGATIF A TROUVÉ UN VRAI DÉFAUT QUE J'ALLAIS LIVRER.** Trois de mes sept mutations ne mordaient pas. En cherchant pourquoi — au lieu de conclure à du code décoratif — **le repli des chaînes s'est révélé nécessaire, et mon témoin incomplet** : sur *A→B→C*, un traitement séquentiel déplace d'abord le record de A vers **B**, puis celui de **B** vers C. Si **B avait déjà un record à lui** (un orphelin d'avant), ***ce record-là partait avec***. Mon cas ④ ne le voyait pas parce que B n'avait rien. Cas **④bis** écrit — B porte 90 kg — et la mutation mord chirurgicalement : sans repli, les 90 kg de « Tirage Nuque » atterrissaient sur le lat pulldown.
-
-**⛔ ET DEUX AUTRES « PROTECTIONS » ONT ÉTÉ MESURÉES INUTILES, DONC UNE A ÉTÉ RETIRÉE.** J'avais posé la remise à zéro des renommages **à l'ouverture ET à la fermeture** : chacune neutralisée seule, **0 rouge** — *elles se couvraient l'une l'autre*. La seconde est retirée (**R19**). ⚠️ **Et je dis ce que la mesure dit vraiment** : même celle qui reste **n'a aucun cas d'échec atteignable**, parce que le garde `encoreLa` fait déjà le travail — une séance fermée sans enregistrer porte encore l'ancien nom. Elle reste pour qu'une fenêtre s'ouvre **toujours** propre, **pas parce qu'un témoin l'exige** — c'est écrit dans le code. *Le contraire de ft-v1180, où j'avais failli retirer une vraie protection : ici j'ai cherché le cas, et il n'existe pas.*
-
-**📊 ET LA SECONDE MOITIÉ VIENT DE MICHEL, UNE HEURE PLUS TARD : « ON A UNE PERTE D'HISTORIQUE ».** Capture à l'appui : il vient de taper le 🔄, la carte affiche « Tirage Poulie Haute (Lat Pulldown) », et le 📊 ouvert **depuis cette carte** montre 5 séances **sans la sienne du 9 sept**.
-
-**⛔⛔ MESURÉ DANS SON PROPRE EXPORT — RIEN N'ÉTAIT PERDU.** Ses deux séries y sont, intactes : `2026-09-09 · Tirage vertical · 61 kg × 10` ×2, et la séance entière (Larsen 6 séries · Tirage 2 · Épaules 2 · Machine Oiseau 3 · 9 min de cardio). *L'export portait encore l'ANCIEN nom* — donc il n'avait pas encore tapé 💾 Enregistrer.
-
-**⭐⭐ LA CAUSE EST UNE SOURCE, PAS UN CALCUL** : `_getExHistory` lit **`S.sessions`** (l'état ENREGISTRÉ) pendant que la carte qu'il regarde vit dans **`_sessEdits`** (l'état EN COURS D'ÉDITION). Le graphique était donc **exact** et **contredisait l'écran**. 👉 ***Un chiffre qui contredit l'écran est indiscernable d'une perte de données*** — et c'est exactement la conclusion qu'il en a tirée, à juste titre.
-
-**⛔ ON NE MÉLANGE PAS LES DEUX SOURCES** : afficher l'édition non enregistrée dans une courbe d'historique fabriquerait un point qui n'existe pas encore (**R2**). On **DIT ce qui manque** — bandeau orange, avec **la date nommée** : *« Ta séance du 9 sept n'est pas encore enregistrée — elle n'apparaît donc pas dans cette courbe. Tape 💾 Enregistrer pour l'y voir. »* (**R29** : informer sans décider.)
-
-**⛔ ET IL SE TAIT PARTOUT AILLEURS** — hors fenêtre de séance · fenêtre ouverte sans rien changer · sur un **autre** exercice que celui renommé. *Un avertissement permanent cesse d'être lu* (**R24/R25**). Trois témoins le figent.
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît : un record fantôme cesse d'apparaître (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **ça ne renomme rien tout seul** — c'est toujours la personne qui tape 🔄 puis Enregistrer. ⛔ Ni l'import, ni le rapprocheur, ni `_EX_EQUIV`, ni le bouton de ft-v1187 ne sont touchés. ⛔ **Et un exercice SUPPRIMÉ d'une séance passée laisse toujours son record** — c'est une **troisième** porte, non traitée ici, et je préfère l'écrire que la laisser se découvrir (**R30**). ⚠️ **Michel doit vérifier sur Safari/iPhone.**
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1064**, `conclusion: success` à **10:50:01 UTC** sur `7ec189ef`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⚠️ *Et l'API a de nouveau servi un état PÉRIMÉ* — la liste filtrée `status: completed` ignorait encore le run alors qu'il était clos ; c'est **`get_workflow_run` sur l'ID** qui a rendu l'état frais. 👉 **La leçon de ft-v1182 s'inverse selon les jours : ce n'est pas UNE requête qui est fiable, c'est d'en croiser DEUX.**
-
-Tests : **parcours 3495/3495 sur l'arbre FINAL** (+14, bloc **CCLXXXVI**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⭐ **Le témoin CONDUIT le vrai chemin** (`openSessDetail` → `replaceSessEx` → le choix → `saveSessEdits`), jamais `_deplacerRecordsRenommes` en direct — *vérifier la fonction n'est pas vérifier l'appel* (`BUGS.md` §58). ⛔ **CONTRÔLE NÉGATIF : 9 mutations, TOUTES MORDENT** — ① le correctif entier retiré → **3 rouges** · ② le garde-fou « le nom vit ailleurs » retiré → **1**, exactement lui · ③ on écrase le record de la cible sans comparer → **1** · ④ le repli de chaîne retiré → **1**, exactement le cas ④bis · ⑤ le renommage plus noté du tout → **3** · ⑥ le bandeau non affiché → **1** · ⑦ le bandeau qui ne regarde plus QUEL exercice → **1**, exactement le témoin du silence · ⑧ le bandeau qui ne vérifie plus la séance ENREGISTRÉE → **2** · ⑨ la date retirée du bandeau → **1**.
-
-**⚠️ UNE ERREUR DE SONDE À MOI, DITE PLUTÔT QUE TUE** : ma 1ʳᵉ mesure passait `openSessDetail(0)` — or elle prend le **ts/id**, pas l'index. Le renommage ne se produisait donc **pas**, et j'ai failli conclure que le chemin 🔄 était cassé. 👉 ***Un test qui n'emploie pas la signature de la production ne teste rien*** — la même famille que le `cardio.min`/`duration` de ft-v1184.
-
-Fichiers : `setup.js`, `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1189. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.
