@@ -20,7 +20,39 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1195` — ✂️ **le redécoupage de 1b et 3, et la sous-étape 1b-i.**
+- **Version en ligne (live) :** `ft-v1196` — 🔍 **sous-étape 3-i : un propriétaire pour « cette
+  quantité est-elle reprenable ? », et la sonde qui ne couvrait rien.**
+  Michel : *« continue selon `docs/SOUS-ETAPES-1B-3.md`, une sous-étape à la fois »*, mêmes règles.
+  ⭐ **Livré** : le TEST écrit deux fois (`rejouerRepas` · `quickAddFood`) devient **`_qReprenable(src)`**
+  — un **booléen**, qui ne touche à rien. Accepte grammes, **portions**, unité absente ; refuse `0`,
+  le négatif et les **ml** (*sans densité, un volume ne dit pas ce que PÈSE l'aliment* — **R29**).
+  ⛔⛔ **LE FAIT DE LA VERSION EST AVANT LE CODE, et il porte sur MON document** : il annonçait
+  *« instantané : couvert »* pour 3-i. Ouvert la sonde → **à moitié faux**. `3_regle_avec_portions`
+  **RECOPIE la règle dans la sonde** sans appeler la production (*une table de vérité, pas une
+  couverture*), et **`rejouerRepas` n'était sondé par rien**. 👉 ***Une sonde qui recopie la règle
+  mesure ce qu'on CROYAIT écrire, pas ce qui est exécuté*** — `BUGS.md` §58 côté sonde.
+  ⭐ **Corrigé AVANT toute ligne de code** : `3_via_rejouerRepas` écrite, l'instantané passe de **11
+  à 12 clés**, BEFORE capturé avec la sonde étendue.
+  ⛔ **Les 5 sites « grammes seuls » sont INTACTS** — ils refusent les portions exprès. Les fondre
+  serait un changement de comportement (3-ii/iii/iv). Un témoin de périmètre exige que ce compte
+  reste à **5**.
+  ⭐ **Le témoin de périmètre de 1b-i se DÉPLACE** (il exigeait que chaque porte calcule `qOk` ; il
+  exige maintenant **un seul propriétaire et deux appelants**) — et les mêmes mutations le font
+  toujours rougir, par l'autre bout.
+  ⚠️⚠️ **Critère binaire atteint, mais la sha que j'avais publiée était FAUSSE** : l'instantané est
+  identique **octet pour octet** (diff vide) à **`d5b0572cafcc4477`**, pas au `64099b39025027ec` du
+  message de commit, qui venait d'une version intermédiaire de la sonde. Vérifié en rejouant la
+  sonde actuelle sur l'`app.js` d'AVANT 3-i. *Une sha publiée qu'on ne peut pas reproduire est pire
+  que pas de sha.*
+  ⚠️⚠️ **Mon harnais de mutation était MORT, et c'est le contrôle sain qui l'a dit** : il lisait la
+  **dernière ligne** d'un JSON multi-ligne (donc `}`) et rendait *« SONDE MORTE »* partout, **y
+  compris sur du code sain**. §61 pour la **4ᵉ fois**. *Le contrôle sain est le seul témoin du
+  harnais lui-même.*
+  ⏭️ **EN ATTENTE DE MICHEL — les 4 harmonisations** (décisions produit, §3 du découpage).
+  **Le hub et la douane restent après.** 📣 **Toujours ouverts** : `S.savedFoods` · l'écart `48,3`/`48`.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1195` — ✂️ **le redécoupage de 1b et 3, et la sous-étape 1b-i.**
   Michel tranche : ⛔ *« je ne veux pas traiter 1b et 3 en un seul gros chantier — redécoupe-les en
   sous-étapes plus petites, mesurables et réversibles »* · ⛔⛔ *« je ne veux pas harmoniser
   maintenant les défauts divergents : à ce stade on doit les **TRANSPORTER** explicitement sans les
@@ -48,7 +80,7 @@
   📣 **Toujours ouverts** : `S.savedFoods` entre deux onglets · l'écart `48,3` / `48`.
   ⚠️ **À vérifier par Michel sur Safari/iPhone.**
 
-- **Version précédente :** `ft-v1194` — 🧮 **un seul propriétaire pour le pour-100 g dérivé,
+- **Avant :** `ft-v1194` — 🧮 **un seul propriétaire pour le pour-100 g dérivé,
   et le périmètre du plan était FAUX pour les deux autres étapes.**
   Michel valide la phase 0a **sur iPhone** et donne le feu vert pour **1b, 2 et 3** — avec la
   consigne qui décide de tout : *« si une divergence réelle apparaît, mesure-la et **arrête-toi
